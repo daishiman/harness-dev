@@ -13,7 +13,7 @@ effect: none
 output_language: ja
 source: plugin-plans/guide-doc-generator/component-inventory.json#C04
 since: 2026-08-17
-version: 0.1.0
+version: 0.2.0
 ---
 
 # ref-handout-design-system
@@ -21,12 +21,13 @@ version: 0.1.0
 ## Purpose & Output Contract
 
 guide-doc-generator が生成する資料のデザイン言語について、問い合わせに対して規範を
-引用で返す参照。返す面は 4 つに限る。
+引用で返す参照。返す面は 5 つに限る。
 
 1. 部品カタログの構成データ表現
 2. CSS 変数トークン一覧
 3. アイコン規約
 4. 文章設計の型
+5. カードとナビの視覚設計 (R25)
 
 デザイン言語の出所は jp-web-design のモードB「Pop・親しみ」である。実行時に
 plugin の外を読まないため、採用した規範は `assets/jp-web-design-mode-b.md` へ
@@ -43,6 +44,10 @@ vendoring した。回答の組み立て方は `references/answer-patterns.md` �
   規約は C18、物語構造は C22 が判定する。
 - 語彙を自分の側へ複製しない。部品 id・用途語彙・セクション種別はいずれも別
   component が所有するデータファイルが正本で、この skill は毎回それを読む。
+- 生成物は外部参照ゼロの単一 HTML である。CDN・web font・外部 URL・外部アイコン
+  フォントを前提とする設計回答をしない。取得を発生させる参照が違反かどうかの判定
+  規則の正本は C16 `verify-handout-selfcontained.py` の CR-EXT であり、この skill
+  はその所在を示すだけで自分では判定しない。
 - 規範と実装が食い違って見えるときは、描画の実装 (C11) が正本である。この skill
   は参照回答であって仕様の決定主体ではない。
 
@@ -53,6 +58,9 @@ vendoring した。回答の組み立て方は `references/answer-patterns.md` �
 | 部品の id と属性 | `config/handout-parts.json` | C11 |
 | 用途の語彙とプリセット | `config/handout-purposes.json` | C23 |
 | セクション種別 | `config/handout-sections.json` | C12 (writer) |
+| 冒頭カード・ナビの閾値と見出し語 | `config/handout-visual-policy.json` | C12 (閾値解決) |
+| カードの CSS クラス名と DOM 構造 | C11 `render-handout.py` のブリーフ | C11 |
+| 外部参照ゼロの判定規則 | C16 `verify-handout-selfcontained.py` の CR-EXT | C16 |
 | テーマトークンの実値 | `assets/tokens/<theme>.json` | C11 (スキーマ owner は C11) |
 | 採用したデザイン言語 | `assets/jp-web-design-mode-b.md` | C04 (vendoring 実体) |
 | 回答の型 | `references/answer-patterns.md` | C04 |
@@ -166,9 +174,9 @@ viewBox を混ぜない。
 読み手は初心者・非エンジニアである。抽象と具体を往復させる型を守る。
 
 1. 冒頭は一文の主題。到達ゴールはチップで並べ、読み終えた後の状態を示す。
-2. 全体像と所要時間を先に出し、読み手が残量を把握できるようにする。
-3. 各セクションは「番号 + 見出し + 所要時間」から始め、次に 1 行の抽象
-   (lead-line)、その後に具体部品を置く。
+2. 全体像を先に出し、読み手が残量を把握できるようにする。
+3. 各セクションは「番号 + 見出し」から始め、次に絵、その後に 1 行の抽象
+   (lead-line) と具体部品を置く。
 4. 抽象を出したら具体例を続け、最後に判断軸を一文で締める。判断軸が無い節は
    読み手が自分の状況へ当てはめられない。
 5. 専門用語には必ず括弧書きの言い換えを添える。初出で言い換えなかった語は以降も
@@ -178,3 +186,30 @@ viewBox を混ぜない。
 
 判定は人手ではなく C18 と C22 と C06 が行う。この skill はその規範の出典を
 示すだけで、個別の原稿を採点しない。
+
+## 面 5: カードとナビの視覚設計 (R25)
+
+冒頭は段落で埋めず、1 行の宣言とカードで見せる。ナビは読み手が残量を把握する
+ための導線である。この面で返すのは「どこに正本があるか」であって、閾値の実値
+でも DOM の写しでもない。値も構造もこの本文へ複製しない。
+
+- 冒頭を hero-card 化する対象フィールドと、そこで用いる見出し語は
+  `config/handout-visual-policy.json` の `#opening.hero_card_fields.layout` /
+  `#opening.list_headings.headings` / `#opening.connector_card.heading` を
+  読んで答える。
+- nav 項目のラベル上限は同じファイルの `#micro_copy.roles` のうち
+  `role="label"` のエントリ (`fields` に `nav_item` を含むもの) を読む。
+  上限の数値をこの本文へ書き写さない。
+- nav の置き場所 (左の柱か上の帯か)・柱の幅・帯へ戻す画面幅は同じファイルの
+  `#nav.layout` / `#nav.sidebar_width_px` / `#nav.collapse_below_px` を読む。
+  どちらの置き場所でも sticky は維持する (スクロールしても目次は消えない)。
+  柱では札を縦に積み、行頭を左で揃える。値をこの本文へ書き写さない。
+- CSS クラス名と DOM 構造の正本は C11 `render-handout.py` のブリーフにある
+  `block_to_component_map` の冒頭ブロックのエントリである。`.hero-card-grid` /
+  `.hero-card` / `.hero-card-label` / `.hero-card-body` / `.section-card` と
+  いった名前はそこで決まる。この skill は所在を示すだけで複製しない。
+- 冒頭の分量が上限を超えているかの判定 (W-HERO-LONG / W-HERO-HEAVY) は C12
+  `validate-handout-config.py` の責務である。この skill は値を読まないし
+  判定もしない。
+- 参照先のキーが正本ファイルに存在しないときは、記憶や推測で埋めない。
+  「未確定」と答え、正本の owner へ差し戻す。

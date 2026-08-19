@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-demo-first-no-fallback",
+  "reason": "CR-DEMO-NO-FALLBACK が provenance.presentation_order_source の explicit/derived で自律範囲を分けるが、この値が HTML から復元できるか未確認。復元できないと R5-refine の周回で明示指定が derived へ退化し『明示指示は覆さない』が黙って効かなくなる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-demo-first-no-fallback.json",
+  "proposed_node": {
+    "id": "P05-x-128-presentation-order-source-roundtrip",
+    "title": "presentation_order_source の round-trip 裁定を確定し必要ならマーカーを刻む",
+    "phase_ref": "P05",
+    "entity_ref": "C11",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+    "acceptance_criterion": "provenance.presentation_order_source が ROUNDTRIP-CONTRACT.md#adjudications に載り、marker なら C11 が刻み C20 が戻すこと。免除を採る場合は、R5-refine の周回で explicit が失われる帰結を裁定文に明記すること",
+    "execution_kind": "component-build",
+    "route_ref": "C11"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  }
+}

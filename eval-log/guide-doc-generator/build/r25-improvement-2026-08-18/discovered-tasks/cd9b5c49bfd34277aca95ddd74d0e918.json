@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "実測: dir_name_format は出荷ツリーに 0 件で C19 は読んでいない。route-handout-output.py:433 が {date}-{token}-{slug} を直接焼き、verify-handout-language.py:379 が dir_separator='-' を独立に持ち、hook が ^\\d{4}-\\d{2}-\\d{2}- を正規表現で持つ。config を足すだけでは何も変わらず、C19 単独修正は C18 DATE-03 を必ず落とす。3 者同時修正でなければ緑にならない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-33-dirname-triple-owner",
+    "title": "ディレクトリ命名を config 単一正本へ寄せる (C19/C18/C10 の三重焼きを同時に解消)",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "config/handout-output.json#dir_name_format を唯一の正本とし、C19/C18/C10 の 3 者がそこから読む。yyyy-mm-dd_日本語命名 で出力され C18 の日付ゲートと hook が同時に緑になる",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

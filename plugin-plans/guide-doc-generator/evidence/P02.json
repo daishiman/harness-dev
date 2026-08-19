@@ -1,31 +1,48 @@
 {
   "task_id": "P02-x-01",
   "phase_ref": "P02",
-  "status": "blocked",
+  "status": "pass",
+  "measured_at": "2026-08-18",
+  "acceptance_criterion": "23 component 全てに設計ブリーフが存在し、依存 DAG に循環が無く、実体解決が HB_ROOT 起点の 4 段で宣言されている",
+  "status_scope": "本 status は acceptance_criterion の 3 点 (ブリーフの実在 / DAG の非循環 / 実体解決 4 段の宣言) に対する判定であり、対象は plugin-plans/ 配下の設計成果物 (brief) のみである。**『brief が揃った』は『出荷物が動く』を意味しない。** 出荷実体 (plugins/guide-doc-generator/) 側は release_readiness に記録したとおり blocked であり、現状の出荷物では資料が 1 本も生成されない。この 2 つを混同して読まないこと。",
   "checks": [
     {
       "id": "brief-coverage",
+      "claim": "23 component 全てに対応する設計ブリーフが実在する",
       "status": "pass",
-      "detail": "23/23 component (C01-C23) に対応するブリーフが存在し、全て JSON として parse でき、いずれも非空 (最小 863 bytes = skill-brief-C04.json、最大 37759 bytes = script-brief-C12.json)。命名規約も種別と一致する: skill-brief-C01..C04 / agent-brief-C05,C06 / command-brief-C07..C09 / hook-brief-C10 / script-brief-C11..C23。component-inventory.json の components 23 件の id 集合と過不足なく一致する。",
+      "method": "component-inventory.json の components を parse し、各要素の id と component_kind から期待ファイル名 (skill|agent|command|script|hook)-brief-<id>.json を導出して os.path.isfile で 1 件ずつ確認。あわせて briefs/*-brief-C*.json のファイル名から id 集合を再構成し、inventory の id 集合との差集合を両方向で測定",
+      "detail": "23/23 が実在。件数一致だけでなく **id 集合が完全一致** (inventory-only 0 件 / brief-only 0 件)。内訳は skill 4 (C01-C04) / sub-agent 2 (C05,C06) / slash-command 3 (C07-C09) / hook 1 (C10) / script 13 (C11-C23) で、命名規約と component_kind が全件一致。",
+      "inventory_ids": ["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23"],
+      "brief_file_ids": ["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23"],
+      "set_equal": true,
       "missing": []
     },
     {
       "id": "dag-acyclic",
+      "claim": "依存 DAG に循環が無い",
       "status": "pass",
-      "detail": "component-inventory.json の depends_on から有向グラフを構築 (23 node / 未知参照 0 件) し Kahn 法でトポロジカルソートが成立。残余 in-degree>0 の node は 0 件で循環なし。inventory の couples_with (C11<->C20, C19<->C18) は相互参照だが depends_on ではないため DAG には算入していない。",
-      "topological_order": ["C04", "C13", "C14", "C15", "C16", "C10", "C17", "C21", "C23", "C05", "C12", "C11", "C18", "C03", "C06", "C19", "C20", "C02", "C08", "C22", "C01", "C07", "C09"]
+      "method": "inventory の depends_on から有向グラフ (23 node) を構築し、まず未知参照 (depends_on の値が id 集合に無いもの) を検査、続いて Kahn 法でトポロジカルソート。順序長が node 数に満たない場合は DFS で閉路を列挙する実装で走らせた",
+      "detail": "未知参照 0 件。トポロジカル順序が 23/23 で成立し、残余 in-degree>0 の node は 0 件のため **循環なし (DAG)**。閉路列挙は発火せず。inventory の couples_with (C11<->C20 / C19<->C18) は相互参照だが depends_on ではないため DAG には算入していない (前 cycle と同じ扱い)。根 (depends_on 空) は C04/C13/C14/C15/C16/C17/C21/C23 の 8 件、最大入次数は C01 の 15 件。",
+      "topological_order": ["C04","C13","C14","C15","C16","C10","C17","C21","C23","C05","C12","C11","C18","C03","C06","C19","C20","C02","C08","C22","C01","C07","C09"],
+      "cycles": []
     },
     {
       "id": "root-resolution-4stage",
+      "claim": "実体解決が HB_ROOT 起点の 4 段で宣言されている",
       "status": "pass",
-      "detail": "index.md L96 に 4 段防御が宣言済み: HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest (.claude-plugin/plugin.json) の name 照合 / __file__ 相対の自己解決フォールバック。plugin root 実体を必要とする 6 component (C09, C10, C12, C15, C21, C23) の全てが同じ 4 段を同順で明記し、矛盾する独自解決を持たない。C21 のみ --srg-root / SRG_ROOT を先行させるが、それは SRG 側 root の解決であり handout 側 root は 4 段目まで同一。C11 は plugin 同梱 assets/tokens・assets/mascot を読むにもかかわらず 4 段解決を明記していない (failure_modes に『plugin 実体解決の失敗』とだけ記載) が、方針と矛盾はしないため軽微不整合として findings へ記録した。",
-      "stages": ["HB_ROOT", "${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}", "plugin.json name==guide-doc-generator 照合", "__file__ 相対"]
+      "method": "identifier grep 'HB_ROOT' と和文 grep '実体解決' / '4 段' / '解決順' を plugin-plans/guide-doc-generator/ 全域へ。宣言箇所を特定したうえで、plugin root 実体を必要とする component の brief 側の記述と段数を 1 本ずつ突合",
+      "detail": "plan レベルで 3 箇所に宣言済み。(1) index.md:97 『実体解決は専用 env HB_ROOT を一次、${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} を二次とし、manifest の name 照合による二重防御と __file__ 相対の自己解決フォールバックを重ねる』 (2) phase-02-design.md:84 『実体解決は HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → manifest name 照合 → __file__ 相対の 4 段で行う。CLAUDE_PLUGIN_ROOT 単独依存にはしない』 (3) component-inventory.json#envelope_design.env_resolution (primary / fallback_expression / second_fallback / guard の 4 要素として構造化)。専用 env を立てる理由 (.claude/ 平置き projection では CLAUDE_PLUGIN_ROOT が 1 値しか持てず別 plugin が保持している) も同フィールドに記録されている。component 側では C11:51 / C12:827 / C15:39 / C21:76 / C23:87 / C10 が 4 段を同順で明記。前 cycle の X-05 (C11 が 4 段を宣言していない) は C11 の plugin_root_resolution 新設により解消済み。",
+      "declaration_sites": ["index.md:97", "phase-02-design.md:84", "component-inventory.json#envelope_design.env_resolution"],
+      "stages": ["HB_ROOT", "${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}", ".claude-plugin/plugin.json の name==guide-doc-generator 照合", "__file__ 相対の自己解決"],
+      "partial_declarations": ["C17 (script-brief-C17.json:36) は 'HB_ROOT → CLAUDE_PLUGIN_ROOT → 本 script の 2 階層上' の 3 段で manifest name 照合を欠く", "C09 (command-brief-C09.json:127) は解決試行経路を 'HB_ROOT / CLAUDE_PLUGIN_ROOT / __file__ 相対' の 3 経路として提示"]
     },
     {
-      "id": "cross-brief-consistency",
-      "status": "fail",
-      "detail": "6 観点のうち 3 観点 (種別語彙の単一正本 / 逆抽出マーカーの要求と供給 / 検証責務の非重複) は成立、画像パイプラインと write_scope 衝突も問題なし。ただし日付の単一 writer 観点で C12 と C11/C18/C19 の間に正規化後フォーマットの直接矛盾 (X-01)、および構成データの文書レベルフィールド名で C12 (schema 正本) と C11/C19 の間に不一致かつ `purpose` キーの意味衝突 (X-02) を検出した。いずれも下流 build が追加決定なしに着手できない。",
-      "conflicts": ["X-01", "X-02", "X-03", "X-04", "X-05"]
+      "id": "prior-cycle-conflicts-resolved",
+      "claim": "前 cycle の P02 が blocked の理由とした X-01..X-08 が解消している",
+      "status": "pass",
+      "method": "各 conflict の判定根拠を再測定 (日付書式の grep / 旧フィールド名 purpose_kind・core_problem・audience・prior_knowledge の全 brief 走査 / C11 の data-hb-* 出現数 / handout-presets.json の参照数 / C19 の subprocess vs importlib / README.md の writer 宣言)",
+      "detail": "X-01 (日付書式の食い違い) 解消: C12:245 が正規化後の正本を ^\\d{4}/\\d{2}/\\d{2}$ と定め、C19:56 が『書式の正本は C12 の config_schema.document_level_fields#date』と明記して date.replace('/','-') で派生させ、C19:101 に『ソースに ^\\d{4}-\\d{2}-\\d{2}$ で検証する記述が 0 件』の受入検査を持つ。X-02 (フィールド名の二重化) 解消: purpose_kind 0 件 / core_problem 0 件 (audience は C21 の SRG 側語彙として残るのみ)。X-03 (属性名前空間の割れ) 解消: 供給側 C11 が data-hb-* を 57 箇所で宣言し、data-part/data-role/data-kind は各 2 箇所の参照に縮退。X-04 解消: handout-presets.json の参照 0 件。X-06 解消: C19 は importlib.util.spec_from_file_location へ統一され、受入検査に『subprocess の import と起動が 0 件』を持つ。X-08 解消: C19:36 と C01:13 の双方が README.md の単独 writer を C01 と明記 (『X-08 の決着』として相互参照)。X-05 は上記 root-resolution 参照。X-07 (checklist ID と component ID の名前空間衝突) は未解消だが severity=info で acceptance には影響しない。",
+      "unresolved": ["X-07 (checklist ID と component ID がどちらも Cnn 形式・severity info)"]
     }
   ],
   "gates": [
@@ -40,92 +57,97 @@
       "stdout": "OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み"
     }
   ],
+  "release_readiness": {
+    "state": "blocked",
+    "scope": "plugins/guide-doc-generator/ (出荷実体)",
+    "why_separate_from_status": "acceptance_criterion は設計ブリーフ側の 3 点しか問うておらず、両ゲートもブリーフと inventory しか見ない。したがって status=pass は『設計が確定した』の意味に限られ、出荷物の動作可否とは独立である。R25 改善 cycle の 23 ノードは brief を確定させたが、その確定内容を出荷実体へ反映する build (主に P05 系) は未実施であり、下記の理由で現状の出荷物は資料を 1 本も生成できない。",
+    "blocker_count": 18,
+    "measured_here": [
+      {
+        "id": "RB-01",
+        "title": "出荷 config/handout-output.json に dir_name_format が無く C19 は必ず exit2",
+        "verified_by": "python3 で plugins/guide-doc-generator/config/handout-output.json を parse。top keys = ['_meta','version','default_out_dir','size_limits'] で dir_name_format は不在",
+        "impact": "C19 algorithm 手順 7 が出力ディレクトリ名を組み立てられず exit2。**現状の出荷物では資料が 1 本も生成されない**",
+        "producer": "P05-x-03 (単独)"
+      },
+      {
+        "id": "RB-02",
+        "title": "出荷 config に min_images_per_main_section / nav_item / hook_scan_budget が不在",
+        "verified_by": "handout-visual-policy.json の thresholds は ['min_visual_parts_per_main_section','min_diagrams_per_main_sections'] のみ。min_images_per_main_section は 0 件、singular の min_diagrams_per_main_section も 0 件 (既存キーは旧複数形)。micro_copy.roles は ['label','title','caption'] で nav_item は 0 件。handout-output.json#size_limits に hook_scan_budget は 0 件",
+        "impact": "R25/REQ-2・REQ-3 の per-section 視覚ゲート (E-IMAGE-ABSENT / W-DIAGRAM-FEW) と nav ラベル上限、C10 hook の走査予算がいずれも参照先を失う",
+        "producer": "P05-x-03 (単独)"
+      },
+      {
+        "id": "RB-03",
+        "title": "出荷 handout-readability-reviewer.md が実在しない references/ を参照",
+        "verified_by": "ls plugins/guide-doc-generator/references → No such file or directory。同 agent md 内の 'references/' 参照は 2 箇所",
+        "impact": "C06 が評価規範を読めず、意味レビューの根拠が失われる"
+      }
+    ],
+    "carried_from_p02_nodes": [
+      "R25 の 9 要求に可読性レビューの担当が不在 (C06 の axis 6 種に hero 順序 / 図解・画像の噛み合い / カード粒度 / nav ラベルの拾いやすさ に対応する軸が無い。P02-C03-01 で実測)",
+      "data-hb-field=\"heading\" 未実装で round-trip 等価 (C02 OUT1) が成立しない",
+      "command-brief 用 JSON Schema が repo に不在で C07 / C08 / C09 が schema 未検証 (hook-brief 用 schema も同様に不在で C10 が未検証。brief 系 schema は prompt-brief と skill-brief の 2 件のみ)",
+      "出荷 hooks/guard-handout-external-ref.py:62 の DATED_DIR_RE が R25/REQ-6 の {date}_{slug} にマッチせず hook が恒久沈黙",
+      "出荷 script に予算閾値 (SIZE_LIMIT_BYTES / TIME_BUDGET_SECONDS) が焼き込まれている"
+    ],
+    "note": "本ノードの write_scope は evidence/P02.json のみであり、plugins/ 配下は read-only で測定した。上記の解消はいずれも P05 系 build leaf の責務であって本ノードでは触れていない。blocker 総数 18 件の完全な一覧は dispatcher 側の集計を正とする (ここには本ノードで直接再測定した 3 件と、P02 ノード群から申し送られた主要 5 件のみを記録している)。"
+  },
   "findings": [
     {
-      "id": "X-01",
+      "id": "P02X-01",
       "severity": "blocking",
-      "title": "正規化後の date フォーマットが単一 writer と全消費者で食い違う",
-      "components": ["C12", "C11", "C18", "C19"],
-      "detail": "C12 (日付解決の単一 writer・schema 正本) は config_schema.document_level_fields で date の制約を『正規化後は ^\\\\d{4}/\\\\d{2}/\\\\d{2}$ (ゼロ埋め・スラッシュ区切り) の完全一致』と定義し、date_single_source_guarantee で『ディレクトリ名の <YYYY-MM-DD> は date.replace('/', '-') で C19 が導く』と明記している。一方で消費者 3 本が逆の前提で書かれている: C19 は algorithm 手順 3 で『date フィールドを ^\\\\d{4}-\\\\d{2}-\\\\d{2}$ で検証し、値をそのまま連結に使う』とし、書式不一致で exit2。C18 は DATE-02 で『config.date (正規化済みで YYYY-MM-DD 形式) を yyyy/mm/dd へ機械変換』。C11 は algorithm で『date (ISO 8601 の YYYY-MM-DD) を yyyy/mm/dd へ変換』。現状の brief をそのまま実装すると、C12 --normalize の出力を渡した C19 が常に exit2 になり、C11/C18 の変換も no-op と二重変換の分岐が壊れる。日付の単一 writer 原則そのもの (R18 / checklist C33-C35) が成立しない。",
-      "resolution_hint": "正規化後の正本表現を 1 つに確定する。C12 が正本なので (a) 正規化後は yyyy/mm/dd とし C11 は変換せずそのまま描画・C19 は replace('/','-')・C18 は config.date と date-pill を無変換比較、(b) 正規化後は YYYY-MM-DD とし C12 の制約と guarantee 文を改める、のいずれか。多数決ではなく単一 writer 側の宣言を起点に決めること。"
+      "title": "設計は確定したが出荷実体が未追随で、現状の出荷物は資料を 1 本も生成できない",
+      "detail": "release_readiness の RB-01 を筆頭に、config の producer である P05-x-03 が未実行であることが単一の律速になっている。dir_name_format / min_images_per_main_section / nav_item / hook_scan_budget の 4 キーがいずれも同一ファイル群の同一 producer に属するため、P05-x-03 を 1 本通すだけで RB-01 と RB-02 が同時に解消する。P02 の acceptance には影響しないが、P02 done を『動く』と読むと最初の実行で必ず躓く。",
+      "scope": "acceptance_criterion 外 (出荷実体側)"
     },
     {
-      "id": "X-02",
-      "severity": "blocking",
-      "title": "構成データの文書レベルフィールド名が schema 正本と食い違い、`purpose` キーの意味が二重化している",
-      "components": ["C12", "C11", "C19", "C22", "C20"],
-      "detail": "C12 の config_schema が文書レベルの正本で、種別は doc_type、想定読者は reader、前提知識は prior_knowledge_level (enum none|basic|intermediate)、本質的問題は essential_problem、そして purpose は『R19 の 3 要素のひとつ = 目的の自由記述テキスト (10..400 文字)』と定義されている。C20 と C22 はこれに整合している (C20 は data-hb-doc-type / data-hb-meta-reader / data-hb-meta-knowledge / data-hb-meta-problem、C22 の NAR-02 は config.purpose を目的テキストとして扱う)。しかし C11 は algorithm 手順 5-6 で種別を doc.purpose_kind と呼び、必須フィールドを title / date / audience / prior_knowledge / purpose_kind / core_problem / background / goal / duration / sections[] と列挙しており、4 フィールド名が正本と異なる。さらに C19 は algorithm 手順 4 と exit_codes で『構成データの purpose を C23 の語彙一覧に照合』『purpose フィールド欠落で exit2』としており、C12/C22 が目的テキストに割り当てている purpose キーを種別として読む。同一キーに 2 つの意味が割り当たっているため、C19 は目的の自由記述を語彙照合して常に exit1 (語彙違反) を返す。C42 (語彙の単一正本) は守られているが、その語彙を載せるフィールドの同定が壊れている。",
-      "resolution_hint": "C12 の config_schema を唯一の正本と宣言し、C11 の purpose_kind→doc_type / audience→reader / prior_knowledge→prior_knowledge_level / core_problem→essential_problem、C19 の purpose→doc_type へ揃える。あわせて C12 が notes で述べる『同じ概念に 2 つの入口を作らない』方針をブリーフ横断の不変条件として P03 で固定する。"
-    },
-    {
-      "id": "X-03",
-      "severity": "high",
-      "title": "HTML の機械可読属性について、唯一の供給側 C11 が何も宣言しておらず、要求側は 2 つの命名空間に割れている",
-      "components": ["C11", "C16", "C17", "C18", "C20", "C22"],
-      "detail": "生成 HTML の単独 writer は C11 だが、C11 のブリーフに現れる data-* 属性は data-title / data-detail / data-single の 3 個のみで、下流が要求する検査アンカーを 1 つも出力契約として宣言していない。要求側は 5 本ある: C16 が data-kind (7 箇所)、C17 が data-part (13) と data-kind (8)、C18 が data-role (17) と data-part (5)、C22 が data-role (20) と data-part (6)、C20 が data-hb-* (31 種・49 箇所)。さらに要求側どうしで命名空間が二重化している — 部品同定は C20 の data-hb-part (値 B03..B16) と C17/C18/C22 の data-part (値 B05/B08/B13/section/lightbox/memo) の 2 系統、フィールド同定は C20 の data-hb-field (title|date|purpose|goal|lead_line|judgment_axis|section_goal) と C18/C22 の data-role (date-pill|lead-line|decision-axis|purpose|background|doc-goal|section-goal) の 2 系統で、同じ情報に 2 つの属性名が割り当たっている。C11 が両方を出力しない限りどちらかのゲートが必ず全項目 FAIL する。",
-      "mitigation": "inventory が couples_with: C11<->C20 を宣言しており、C16/C17/C18/C22 の open_questions が『属性語彙の正本をどこに置くか』を明示的に P03 design-gate へ委ねているため、決定点が設計上存在する。ただし供給側 C11 の open_questions にはこの論点が記録されておらず、C11 単体を先に build すると必ず作り直しになる。",
-      "resolution_hint": "P03 で属性語彙の正本を 1 箇所 (例: C11 のブリーフ、または plugin-level の attribute-contract として) に確定し、data-hb-* と data-part/data-role/data-kind を単一系統へ統合する。統合後に C11 の出力契約へ全属性を明記し、C16/C17/C18/C20/C22 は参照のみとする。"
-    },
-    {
-      "id": "X-04",
+      "id": "P02X-02",
       "severity": "medium",
-      "title": "C11 が参照する用途語彙カタログのファイル名が正本と異なる",
-      "components": ["C11", "C12", "C23"],
-      "detail": "語彙正本カタログの実ファイルは config/handout-purposes.json (C23 が単独 owner、C12 の --catalog 既定値も同じ)。しかし C11 の dependencies.reads は 'config/handout-presets.json (用途語彙正本・C23 経由で読む)' としており、存在しないファイル名を指している。C11 は C23 を module import して照合する設計なので実害は間接的だが、この記述のまま build すると別ファイルが新規作成され語彙正本が二重化しうる。",
-      "resolution_hint": "C11 の dependencies.reads を config/handout-purposes.json へ訂正するか、C23 module API 経由である旨だけを残してファイル名の直接言及を削る。"
+      "title": "実体解決 4 段が component レベルでは 2 本だけ 3 段に縮退している",
+      "detail": "plan レベル 3 箇所の宣言は 4 段で一致しており acceptance は満たすが、C17 (script-brief-C17.json:36) は 'HB_ROOT → CLAUDE_PLUGIN_ROOT → 本 script の 2 階層上' の 3 段で manifest name 照合を欠き、C09 (command-brief-C09.json:127) も試行経路を 3 経路として提示する。manifest 照合は『別 plugin の root を誤って掴まない』ための二重防御であり、これを欠く経路は .claude/ 平置き projection で他 plugin の root を採用しうる。C15 は逆に『4 段すべて外れたら exit2 で試した 4 経路と各々の不成立理由を stderr へ』と最も厳密で、同一方針の実装が component 間で 3 段と 4 段に割れている。",
+      "scope": "acceptance_criterion 内 (plan レベルの宣言は成立しているため pass 判定には影響しない)",
+      "resolution_hint": "C17 と C09 の brief へ manifest name 照合を追加し、4 段の記述を C15 の形へ揃える。P05 の該当 build leaf の前に行うこと。"
     },
     {
-      "id": "X-05",
+      "id": "P02X-03",
+      "severity": "medium",
+      "title": "command-brief / hook-brief 用の JSON Schema が repo に存在せず、23 件中 4 件が schema 未検証のまま done になっている",
+      "detail": "brief 系の schema は prompt-brief.schema.json と skill-brief.schema.json の 2 件のみで、command-brief (C07/C08/C09) と hook-brief (C10) を検証する schema が無い。skill-brief.schema.json は kind の enum が [ref,run,wrap,assign,delegate] で hook/command を含まず additionalProperties:false のため流用もできない。結果として 23 ブリーフのうち schema 検証を通したのは skill 4 件 (C01-C04) と agent 系のみで、残りは構造検証 (JSON parse + キー列挙) に留まる。生成側 plugin (harness-creator / plugin-dev-planner) の欠落であり、本 plugin の write_scope では埋められない。",
+      "scope": "acceptance_criterion 外 (verify 手段の不足)"
+    },
+    {
+      "id": "P02X-04",
       "severity": "low",
-      "title": "C11 が plugin root 実体解決の 4 段を宣言していない",
-      "components": ["C11"],
-      "detail": "C11 は assets/tokens/*.json と assets/mascot/*.svg という plugin 同梱リソースを読むが、index.md の 4 段解決を明記せず failure_modes に『plugin 実体解決の失敗』とだけ書いている。他の plugin root 参照 component (C09/C10/C12/C15/C21/C23) は全て 4 段を同順で明記しており、C11 だけ暗黙。方針と矛盾はしないが、実装者が独自解決を書く余地が残る。",
-      "resolution_hint": "C11 のブリーフへ 4 段解決の明記を追加する (P03)。"
+      "title": "checklist ID と component ID がどちらも Cnn 形式で名前空間が衝突している (前 cycle X-07 が未解消)",
+      "detail": "各ブリーフの checklist_covered が C15 / C17 / C40 / C44 といった形式で component ID (C01-C23) と見分けがつかない。例えば agent-brief-C06.json の checklist_covered=['C15','C16','C40','C44'] は component C15/C16 ではなく goal-spec の checklist 項目。散文中の『(C17)』『(C18)』も同様で、下流 build の読み手が component 依存と誤読しうる。inventory 全体の一括変更を伴うため前 cycle から据え置かれている。",
+      "scope": "acceptance_criterion 外"
     },
     {
-      "id": "X-06",
-      "severity": "low",
-      "title": "C23 の呼び出し形式が module import と subprocess で混在している",
-      "components": ["C23", "C11", "C12", "C19", "C05"],
-      "detail": "C23 の invoked_by は C12 / C19 / C05 をいずれも『モジュール import 経由』と記載し、C11 も module import で照合する。一方 C19 自身の dependencies.invokes は 'C23 resolve-handout-preset.py --list (subprocess で起動し stdout の JSON を読む)' としており、algorithm 手順 4 も subprocess 前提 (C23 が非 0 終了なら exit2)。矛盾というより契約の記載ずれで、C23 は CLI (--purpose/--list/--audit-duplication) と module API の両方を持つ設計なのでどちらでも動く。ただし『C23 不在時に exit2』の判定条件が import 失敗か subprocess 失敗かで実装が変わる。",
-      "resolution_hint": "C23 の呼び出し形式を stdlib-only の全 script で module import に統一する (subprocess は起動コストと Python 実体解決の不確定性を持ち込む)。"
-    },
-    {
-      "id": "X-07",
+      "id": "P02X-05",
       "severity": "info",
-      "title": "checklist ID 名前空間が component ID 名前空間と衝突している",
-      "components": ["all"],
-      "detail": "各ブリーフの checklist_covered が C5 / C17 / C18 / C23 / C27 / C42 といった形式で、component ID (C01-C23) と見分けがつかない。例えば C21 の checklist_covered=['C17','C18','C27'] は component C17/C18 ではなく checklist 項目、C19 の checklist_covered=['C23','C24','C35','C42','C27'] も同様。散文中でも『(C17)』『(C18・fail-soft)』のような表記が checklist 項目を指しており、下流 build の読み手が component 依存と誤読するリスクがある。",
-      "resolution_hint": "checklist 側に接頭辞 (例 CK-17) を付けて名前空間を分離する。inventory 全体の一括変更になるため P03 以降で判断。"
-    },
-    {
-      "id": "X-08",
-      "severity": "info",
-      "title": "出力ディレクトリ同梱物の生成主体が未確定として残っている",
-      "components": ["C19", "C11", "C01"],
-      "detail": "C19 は同梱 4 点 (handout.html / handout-config.json / assets/ / README.md) の存在検査のみを行い、mkdir 以外の書込をしない。README.md の生成主体は C19 の open_questions で『C01 か C13 系レンダラかは P02 の他 leaf の確定待ち』とされたまま。C11 も同梱 handout-config.json の書き戻し先について『C19 が解決する出力ディレクトリの同梱物名と一致しているか P03 で照合が要る』と open_questions に残している。write_scope の衝突は無い (C11=out-file、C19=out-dir の mkdir のみ、build_target 重複 0 件) が、README.md については現状どの component も writer になっていないため、そのまま build すると C19 の同梱 4 点検査が必ず exit1 になる。",
-      "resolution_hint": "README.md の writer を C01 (skill) に確定するのが自然 (原題・目的・適用プリセットの文言生成を伴うため決定論 script の責務ではない)。P03 で確定させる。"
+      "title": "verify ゲート 2 本は本 acceptance の 3 点を 1 つも直接は検査していない",
+      "detail": "detect-unassigned.py は『13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持』を、check-surface-inventory.py は『5 component_kind の検討証跡と plugin-level surface の採否』を見る。どちらも brief ファイルの実在・DAG の非循環・4 段解決の宣言を検査しない。したがって両ゲート exit0 は acceptance の必要条件ですらなく、3 点の判定は本ノードで別途実装した機械検査 (集合比較 / Kahn 法 / grep + 突合) に依存している。ゲートが緑であることを acceptance の根拠として読まないこと。",
+      "scope": "verify 手段の性質"
     }
   ],
   "notes": {
     "went_well": [
-      "23 ブリーフが独立 context で書かれたにもかかわらず、種別語彙の単一正本は完全に守られていた。C23 が唯一 8 語を列挙し、C07 と C19 は語彙を再列挙せず C23 の --list / module API を参照する設計。両者に現れる 8 語は『script 本文に語彙リテラルが 0 件であること』を確認する acceptance_check の grep 対象としての出現であり、二重定義ではない。C23 は --audit-duplication モードで語彙ハードコードの重複検出まで用意している。",
-      "検証責務 4 分割が明確に非重複。C16=自己完結性/絵文字/アイコン様式/nav アンカー解決 (SC-01..08)、C17=a11y/印刷/sticky オフセット (A11Y-01..07, PRINT-01..04, STICKY-01)、C18=言語規約と日付 (LANG-01,04,05,06 / DATE-01..04)、C22=筋道のみ (NAR-01..06)。C22 は open_questions で『team-lead 案では R11/R18 も含める話だったが phase-02 の検証面独立に従い C18 へ寄せた』と分界の根拠まで記録している。hook C10 は boundary_with_C16 を独立フィールドで持ち、行単位 1 パスで判定できる D1 (外部 URL) と D2 (絵文字) だけに限定し、二重報告が起きる 2 種を『水際 + 完成物の意図的な二重防御』として明示的に残している。",
-      "画像パイプラインが一意。C21 は SRG の build-image-prompts.js / generate-images-codex.js へ subprocess 委譲するアダプタに徹し、プロンプト組み立てと画像生成の再実装 0 件を acceptance_check で grep 検証する。生成 PNG の base64 data URI 化は C21 が『行わず C13 へ委譲する』と明記し、C13 も『data URI を作る側だけを担い HTML/JS への焼き込みは一切行わない』と対称に書いており、責務が両側から一意に閉じている。",
-      "write_scope の衝突なし。build_target の重複 0 件、生成 HTML の単独 writer は C11、正規化済み構成データの単独 writer は C12、日付既定値充填の単独 writer も C12、出力ディレクトリ作成は C19 の mkdir のみ、素材ディレクトリは C21 のみ。single_writer フィールドを持つ 6 component が互いの領分を名指しで除外している。"
+      "23 ブリーフの id 集合一致を件数一致ではなく双方向の差集合で確認でき、inventory-only / brief-only ともに 0 件を機械的に示せた",
+      "前 cycle で P02 を blocked にしていた X-01..X-08 のうち 7 件が、R25 cycle の component ノード群によって解消済みであることを個別に再測定できた。特に X-03 (属性名前空間の割れ) は供給側 C11 の data-hb-* が 57 箇所へ増え、要求側の data-part/data-role/data-kind が各 2 箇所へ縮退するという明確な形で決着している",
+      "実体解決 4 段は index.md / phase-02-design.md / component-inventory.json の 3 箇所に冗長化されており、単一ファイル消失で決着が失われない形になっている",
+      "両ゲートとも exit0 で、警告出力も無い"
     ],
     "friction_points": [
-      "独立 context で書かれた結果、供給側 (C11) と要求側 (C16/C17/C18/C20/C22) の非対称が生じた。要求側 5 本は自分が必要とする属性を詳細に列挙し open_questions で『C11 と突き合わせが要る』と書いているが、C11 のブリーフにはその要求が 1 件も届いていない。ハブになる component のブリーフを最後に書くか、属性契約を先に plugin-level surface として固定する順序が要る。",
-      "schema 正本を持つ C12 が最も詳細 (37KB) だが、C11 と C19 はその正本を参照せず独自のフィールド名で書いている。X-01 と X-02 はいずれも『C12 のブリーフを読んでいれば起きなかった』種類の不一致で、並列 agent に共通の先行成果物 (schema) を渡す設計が要る。",
-      "checklist ID と component ID がどちらも Cnn 形式で、突合の自動化に追加の文脈判断が必要だった (X-07)。"
+      "acceptance_criterion の 3 点と verify の 2 ゲートが対応しておらず (P02X-05)、ゲートを信頼して pass と書くと 3 点を 1 つも測らないまま done になる構造だった。3 点はいずれも本ノードで検査を自作して測った",
+      "『brief が揃った』と『出荷物が動く』の距離が大きく、status 1 語では表現できなかった。status_scope と release_readiness を分けて書くことで、P02 done を動作保証と誤読させない形にした",
+      "component-inventory.json の components は id 順に並んでおらず (C12 が先頭・C09 が末尾)、順序に依存した読み方ができない"
     ],
     "downstream_watchouts": [
-      "P03 design-gate は X-01 / X-02 を最優先で決着させること。両方とも C12 の config_schema を正本として C11 と C19 を合わせるのが自然で、逆向き (C12 を変える) にすると C20/C22 側も連鎖修正になる。",
-      "X-03 の属性語彙統一までは C11 の実装に着手しないこと。C16/C17/C18/C20/C22 の検査アンカーが全て C11 の出力に依存しており、属性名が確定する前に C11 を書くと 5 本のゲートが全項目 FAIL のまま作り直しになる。",
-      "C05 / C06 の open_questions に共通する未確定 3 点 (responsibility anchor の R<数字> 形式、prompt_ref の基準ディレクトリ、model 指定 inherit/sonnet) は P05 implementation で 2 agent 同時に決めること。片方だけ決めると lint-agent-prompt-section.py の ANCHOR_RE で片側が落ちる。",
-      "X-08 の README.md writer 不在は P05 までに埋めること。埋めないと C19 の同梱 4 点検査 (exit1) が P06 のテスト実行で必ず赤になる。",
-      "C09 の description が 3 ゲートしか列挙していないのに depends_on は C22 を含む 4 ゲート (C09 open_questions で自己申告済み)。P03 で description 文言を 4 面へ揃えるか判断すること。",
-      "C10 の matcher が Write|Edit で MultiEdit を含まない。MultiEdit で書かれた handout.html は hook を素通りするが C16 で捕まる。inventory 更新を伴うため P03 判断。"
+      "P05-x-03 を最優先で通すこと。dir_name_format / min_images_per_main_section / nav_item / hook_scan_budget の 4 キーは同一 producer に属し、これ 1 本で RB-01 と RB-02 が同時に解消する。逆に通さない限り出力ディレクトリの解決 (C19) が exit2 で止まり、他の build を進めても資料は 1 本も出ない",
+      "P02X-02 の 3 段解決 (C17 / C09) は P05 の該当 build leaf の前に 4 段へ揃えること。build 後に直すと manifest 照合の追加が振る舞い変更になり、テストの作り直しを伴う",
+      "R25 の per-section 視覚ゲートは『件数を機械が見て意味は誰も見ない』状態にある。C06 の axis 拡張 (P02-C03-01 の申し送り) を P05 の agent build より前に裁定しないと、build 後の agent md を書き直すことになる",
+      "本 evidence の status=pass を後続ノードが『P02 完了 = 出荷可能』と読まないこと。release_readiness.state=blocked が同一ファイル内にあることを handoff 時に必ず併記する"
     ]
   }
 }

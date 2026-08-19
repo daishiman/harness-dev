@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C02-01",
+ "covered_task_ids": [
+  "P02-C02-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+ "verified_by": [
+  {
+   "claim": "skill-brief.schema.json 適合 (余剰キー 0・required 充足)",
+   "method": "dispatcher が jsonschema.Draft202012Validator を skill-brief-C02.json へ再適用",
+   "result": "pass: errors 0 (top-level 22 キー)。追加された key_constraints (3 件) / open_questions (1 件) はいずれも schema 宣言済みプロパティで additionalProperties:false 下でも適合"
+  },
+  {
+   "claim": "C20 の data URI 裁定反転 (P05-x-28) の取り残しが C02 に無い",
+   "method": "JSON 全文へ identifier 系 (asset / CR-EXTRACT) を dispatcher が再計数",
+   "result": "pass: asset 0 件 / CR-EXTRACT 0 件。C02 はペイロードの扱いを自ら規定しておらず、C20 側の裁定がそのまま効く構造。data-hb は 4 件だが全て今回追加の key_constraints 内の『語彙を複製せず C11/C20 から引く』という非複製規約の文脈"
+  },
+  {
+   "claim": "depends_on (C11/C12/C16/C20) と deterministic_checks が 1 対 1 で対称",
+   "method": "deterministic_checks の 4 要素を直読み",
+   "result": "pass: extract(C20) / validate(C12) / render(C11) / selfcontained(C16) の 4 本で非対称なし"
+  },
+  {
+   "claim": "R2-complete の補完対象が E-EXTRACT-UNRECOVERABLE 限定へ条件づけられた (主修正)",
+   "method": "E-EXTRACT-UNRECOVERABLE の出現を計数し、C20 の never_guessed 原文 (script-brief-C20.json:375) と突合",
+   "result": "pass: C02 内 3 件。C20:375 は『マーカーが無い限り推測しない。必ず null + E-EXTRACT-UNRECOVERABLE として人間の判断へ返す』と明記しており、修正後の C02 はこの null だけを補完対象にしている。C20:78 が『heading / section_goal / lead_line / judgment_axis は data-hb-field から』取ると規定している事実とも整合"
+  },
+  {
+   "claim": "/sections/*/heading の復元不能が C02 の OUT1 を構造的に阻害する",
+   "method": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md:265-271 を dispatcher が直接引用確認",
+   "result": "pass(=報告どおり): marker_status='absent'、evidence に『render-handout.py:1511 は <h2 class=\"section-label\"> を出し data-hb-field を持たない』、rationale に『見出しテキストからの復元は <span class=\"section-num\"> の連番が混入するため不可 (実測: 1全体の流れ)』、residual_work は C11 側。C02 は待つ立場で正しい"
+  },
+  {
+   "claim": "CR-EXTRACT-ARGS が契約側 (briefs/) に producer を持たない",
+   "method": "grep -rl 'CR-EXTRACT-ARGS' を plan dir 全体へ実行",
+   "result": "pass(=報告どおり): ヒットは task-graph-status.json / task-execution-report.html / evidence/P05.json の 3 件のみで、いずれも build 実績ログ。briefs/ 配下は 0 件"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git diff --stat を対象 2 ファイルへ限定",
+   "result": "pass: skill-brief-C02.json は 10 行変更 (報告の 9 insertions / 1 deletion と一致)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C02-01",
+   "level": "blocking-for-release",
+   "summary": "ROUNDTRIP-CONTRACT.md:271 の residual_work (C11 が見出し要素へ data-hb-field=\"heading\" を付ける) が未着手のため、本 plugin 自身が生成した HTML でも round-trip の構成データ等価 (C02 feedback_contract OUT1) が成立しない。C11 側の起票と束ねる必要がある"
+  },
+  {
+   "id": "F-C02-02",
+   "level": "resolved",
+   "summary": "R2-complete が『lead-line や判断軸は HTML から一意に定まらない』と全称で書き、C20 が捏造防止のために返す null を consumer 側で『補完せよ』の指示へ化けさせていた。マーカー有無で条件づけて解消"
+  },
+  {
+   "id": "F-C02-03",
+   "level": "resolved",
+   "summary": "C02 brief が inventory の逐語射影のままで key_constraints / open_questions を一切持たなかった。語彙の非複製・元 HTML 非改変・推測禁止の 3 制約を明文化"
+  },
+  {
+   "id": "F-C02-04",
+   "level": "carry-forward",
+   "summary": "CR-EXTRACT-ARGS が build 実績ログにのみ存在し、RESOLUTION-P03.md:208-216 の正本一覧にも briefs/ にも producer が無い。C08 ノードへ申し送り済み"
+  }
+ ]
+}

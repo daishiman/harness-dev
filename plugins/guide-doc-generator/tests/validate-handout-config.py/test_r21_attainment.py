@@ -20,7 +20,7 @@ def leveled_config(declared, steps):
         H.section("s%d" % i, id="s%d" % i, attainment_step=step)
         for i, step in enumerate(steps)
     ]
-    return cfg
+    return H.with_visual_floor(cfg)
 
 
 class AttainmentLevel(H.C12TestCase):

@@ -77,20 +77,16 @@ class SourceHygiene(H.C12TestCase):
                          "generated-chrome 部品の id を script が列挙している (section_scope で判定すべき): %r" % found)
 
     def test_no_section_kind_threshold_literals(self):
-        """C46 / C59: 閾値をデータファイル側から読み、script へ書かない。"""
+        """C46: 閾値をデータファイル側から読み、script へ書かない。"""
         catalog = self.sections_catalog()
         thresholds = set()
         for kind in catalog["section_kinds"]:
-            for key in ("max_items", "min_duration_share"):
+            for key in ("max_items",):
                 if key in kind:
                     thresholds.add(kind[key])
         self.assertTrue(thresholds, "閾値属性が正本に 1 件も無い")
         found = sorted(str(v) for v in thresholds & set(self._numeric_literals()))
         self.assertEqual([], found, "閾値が script に埋まっている: %r" % found)
-
-    def test_no_min_duration_share_literal(self):
-        """0.15 という具体値がソースに現れない (運用で調整できる値のため)。"""
-        self.assertNotRegex(self.source, r"0\.15\b", "min_duration_share の値が script に埋まっている")
 
     def test_section_kind_default_is_not_hardcoded(self):
         """N7 の既定値 'standard' も catalog の default から読む。"""

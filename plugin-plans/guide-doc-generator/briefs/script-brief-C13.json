@@ -3,7 +3,7 @@
   "component_kind": "script",
   "name": "embed-assets.py",
   "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
-  "purpose": "正規化済み構成データが参照するローカル画像 (R03) と任意添付ファイル (xlsx/zip/pdf 等・R05) を base64 data URI へ決定論的に変換して構成データへ畳み込み、1 件あたりの上限を超えた素材は埋め込まずに warning と代替手段の材料を残して処理を継続する (C30)。data URI を作る側だけを担い、HTML/JS への焼き込み (img/lightbox/DL ボタン/Blob 変換/.dl-hint) は一切行わない。ファイルの『配置』には一切関与しない — 素材原本を出力ディレクトリの assets/ へ複製するのは C19 resolve-handout-output.py であり (P03 Y-04 の裁定)、本 script は素材を読んで data URI 文字列へ変換し構成データへ畳み込むだけで、出力ディレクトリ配下へ 1 ファイルも置かない",
+  "purpose": "正規化済み構成データが参照するローカル画像 (R03) と任意添付ファイル (xlsx/zip/pdf 等・R05) を base64 data URI へ決定論的に変換して構成データへ畳み込み、1 件あたりの上限を超えた素材は埋め込まずに warning と代替手段の材料を残して処理を継続する (C30)。data URI を作る側だけを担い、HTML/JS への焼き込み (img/lightbox/DL ボタン/Blob 変換/.dl-hint) は一切行わない。ファイルの『配置』には一切関与しない — 素材原本を出力ディレクトリの assets/ へ複製するのは C19 route-handout-output.py であり (P03 Y-04 の裁定)、本 script は素材を読んで data URI 文字列へ変換し構成データへ畳み込むだけで、出力ディレクトリ配下へ 1 ファイルも置かない",
   "argv": [
     {
       "flag": "--config",
@@ -123,7 +123,7 @@
     {
       "case": "宣言された素材ファイルが assets-dir に無い",
       "behavior": "exit1 で停止し、出力を書かない",
-      "rationale": "上限超過と違い、これは構成データの誤り。黙って空の資料を出荷すると C24 (同梱物の充足) が後段で初めて落ちて差し戻し先が分からなくなる"
+      "rationale": "R25 (goal-spec C69) の責務境界。上限超過と違い、これは構成データの誤り。黙って空の資料を出荷すると C24 (同梱物の充足) が後段で初めて落ちて差し戻し先が分からなくなる。role=screenshot の素材が実際に無い場合の救済 (illustration への role 差し替え・C21 srg-image-bridge.py への生成委譲切り替え) は本 script の責務ではなく、本 script を呼ぶ前に C01 run-handout-build の R3-render が構成データ側の role を確定させる (正本 improvement/visual-per-section-decision.json#role_split.fallback)。本 script は role の意味を解釈せず、渡された構成データが参照する素材の存在だけを見る"
     },
     {
       "case": "拡張子が MIME 対応表に無い",

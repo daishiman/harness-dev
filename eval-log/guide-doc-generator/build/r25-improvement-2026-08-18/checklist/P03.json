@@ -1,0 +1,32 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P03",
+ "covered_task_ids": ["P03"],
+ "status": "success",
+ "write_scope": "(phase-gate: 投影のみ・書き込み無し)",
+ "verified_by": [
+  {
+   "claim": "P03 phase-gate の依存 4 件がすべて done で、各々に checklist-verification report が存在する",
+   "method": "dispatcher が task-graph の depends_on を列挙し、task-state.json の state と checklist/ 配下の実ファイルを突合",
+   "result": "pass: 依存は P03-x-01 / P03-x-02 / P03-x-03 / P03-x-04 の 4 件で全て done。checklist/P03-x-01.json (verified_by 11 / findings 7) / P03-x-02.json / P03-x-03.json (verified_by 9 / findings 5) / P03-x-04.json (verified_by 9 / findings 7) が実在する"
+  },
+  {
+   "claim": "phase-gate は投影でありエージェントを起動しない",
+   "method": "task-graph の execution_kind を確認",
+   "result": "pass: execution_kind=phase-gate。依存 proof の投影のため本ノード自身の作業と書き込みは無い"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P03-GATE-01",
+   "level": "carry-forward",
+   "summary": "設計側 (P03 の 4 ノード) は pass だが、繰り越された blocking-for-release が累積している。F-P03X01-01/-02 (4 段手順文の複製 6 component・正本主張 3 者)、F-P03X01-05 (C16/C18 の open_questions が briefs へ書き戻されていない)、F-P03X01-06 (RG-01/RG-04 の第 2 正本居座りが P05-x-03 の完了条件に未反映)、F-P03X03-01 (dir_token の正本 2 つ)、F-P03X04-02 (C46 の走査対象非対称)、F-P03X04-03 (A5c 未出荷)。設計 gate が緑であることを出荷可能性の根拠として読ませない"
+  },
+  {
+   "id": "F-P03-GATE-02",
+   "level": "carry-forward",
+   "summary": "P03 の 4 ノードを通じて、ドリフトが順向き (設計が正しく出荷が未追随) と逆向き (出荷が正しく設計散文が古い) の両方向に存在することが確定した。逆向きは P03-x-04 で初めて 2 件検出され、検出手段が存在しない (P05-x-66)。設計 gate は brief しか見ないため、この gate 自体が逆向きドリフトに対して構造的に盲目である"
+  }
+ ]
+}

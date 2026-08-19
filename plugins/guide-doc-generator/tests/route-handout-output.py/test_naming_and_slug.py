@@ -1,4 +1,8 @@
-"""ディレクトリ命名規則 <YYYY-MM-DD>-<種別>-<主題slug> — AC-C19-06 / 11、algorithm 3 / 5 / 7。"""
+"""ディレクトリ命名規則 — AC-C19-06 / 11、algorithm 3 / 5 / 7。
+
+書式そのものは config/handout-output.json#dir_name_format が正本 (R25 以降は
+{date}_{slug})。本ファイルはその書式をテストへ焼かず _harness 経由で引く。
+"""
 
 import tempfile
 import unicodedata
@@ -24,19 +28,21 @@ class DatePrefixTest(unittest.TestCase):
         H.require_script(self)
 
     def test_directory_date_is_pure_transform_of_config_date(self):
-        """AC-C19-06: date=2026/08/17 → ディレクトリ名の先頭が 2026-08-17-。"""
+        """AC-C19-06: ディレクトリ名の先頭が date の純変換 (replace('/','-'))。"""
         with tempfile.TemporaryDirectory() as tmp:
             _, _, name = _dirname(self, tmp)
             self.assertTrue(
-                name.startswith(H.FIXTURE_DATE.replace("/", "-") + "-"),
+                name.startswith(H.FIXTURE_DATE.replace("/", "-")),
                 "ディレクトリ名 {!r} が date の純変換で始まっていない".format(name),
             )
+            self.assertTrue(name.startswith(H.name_prefix(self)), name)
 
     def test_directory_date_follows_a_different_config_date(self):
         """現在日ではなく構成データの日付に追従する (algorithm 3: 現在時刻を取らない)。"""
         with tempfile.TemporaryDirectory() as tmp:
             _, _, name = _dirname(self, tmp, date="1999/01/02")
-            self.assertTrue(name.startswith("1999-01-02-"), name)
+            self.assertTrue(name.startswith("1999-01-02"), name)
+            self.assertNotIn(H.FIXTURE_DATE_DIR, name, "fixture の日付が残っている")
 
     def test_derived_date_is_not_persisted_as_a_field(self):
         """algorithm 3: 派生値をフィールドとして保存しない (来歴には date が入る)。"""
@@ -56,32 +62,59 @@ class DatePrefixTest(unittest.TestCase):
 
 
 class PurposeTokenTest(unittest.TestCase):
+    """種別トークンの居場所 (R25): ディレクトリ名ではなく来歴マーカー。
+
+    dir_name_format が {date}_{slug} になった結果、日本語 slug の直前に英字
+    トークンが挟まらない。種別そのものは捨てず marker.json へ残す。
+    """
+
     def setUp(self):
         H.require_script(self)
 
-    def test_second_segment_is_catalog_dir_token(self):
-        """algorithm 4 / C23 dir_token: <種別> の値は語彙正本の dir_token。"""
+    def test_dir_token_is_not_a_segment_of_the_directory_name(self):
         with tempfile.TemporaryDirectory() as tmp:
             slug = H.any_doc_type(self)
             token = H.dir_token_of(self, slug)
             _, _, name = _dirname(self, tmp, doc_type=slug)
-            prefix = "{}-{}-".format(H.FIXTURE_DATE_DIR, token)
-            self.assertTrue(
-                name.startswith(prefix),
-                "ディレクトリ名 {!r} が <date>-<dir_token>- で始まっていない".format(name),
+            self.assertNotIn(
+                "-{}-".format(token),
+                name,
+                "命名に種別トークンが挟まっている: {!r}".format(name),
             )
 
-    def test_every_catalog_slug_produces_its_own_dir_token(self):
+    def test_directory_name_follows_the_canonical_format(self):
+        """algorithm 4: 命名は config/handout-output.json の書式そのもの。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            slug = H.any_doc_type(self)
+            _, _, name = _dirname(self, tmp, doc_type=slug)
+            expected = H.dir_name_format(self).format(
+                date=H.FIXTURE_DATE_DIR, slug=H.slug_part(self, name)
+            )
+            self.assertEqual(expected, name)
+
+    def test_every_catalog_slug_produces_the_same_shape(self):
         """語彙全件で命名が成立する (語彙を列挙せず正本から回す)。"""
         with tempfile.TemporaryDirectory() as tmp:
+            prefix = H.name_prefix(self)
             for entry in H.vocabulary_entries(self):
                 slug = entry["slug"]
-                token = entry.get("dir_token", slug)
                 _, _, name = _dirname(self, tmp, doc_type=slug)
                 self.assertTrue(
-                    name.startswith("{}-{}-".format(H.FIXTURE_DATE_DIR, token)),
-                    "{} の命名: {}".format(slug, name),
+                    name.startswith(prefix), "{} の命名: {}".format(slug, name)
                 )
+
+    def test_dir_token_still_lives_in_the_route_marker(self):
+        """命名から外しても種別は失われない (来歴に残る)。"""
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            slug = H.any_doc_type(self)
+            root, _, name = _dirname(self, tmp, doc_type=slug)
+            marker = root / name / H.ROUTE_MARKER
+            if not marker.is_file():
+                self.fail("来歴マーカー {} が無い".format(marker))
+            blob = "\n".join(H.flatten_strings(json.loads(marker.read_text("utf-8"))))
+            self.assertIn(H.dir_token_of(self, slug), blob)
 
 
 class SlugTest(unittest.TestCase):
@@ -92,7 +125,7 @@ class SlugTest(unittest.TestCase):
         """slug_rule (a): 明示 subject_slug は検証だけして採用する。"""
         with tempfile.TemporaryDirectory() as tmp:
             _, _, name = _dirname(self, tmp, subject_slug="explicit-slug")
-            self.assertTrue(name.endswith("-explicit-slug"), name)
+            self.assertEqual("explicit-slug", H.slug_part(self, name), name)
 
     def test_japanese_only_title_yields_non_empty_slug(self):
         """AC-C19-11: 日本語のみの title でも slug が空にならない。"""
@@ -158,7 +191,7 @@ class SlugTest(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as tmp:
             _, _, name = _dirname(self, tmp, subject_slug=H.OMIT, title=title)
-            self.assertTrue(name.endswith("-" + expected), "{} != ...-{}".format(name, expected))
+            self.assertEqual(expected, H.slug_part(self, name), name)
 
 
 class DirectoryStructureTest(unittest.TestCase):

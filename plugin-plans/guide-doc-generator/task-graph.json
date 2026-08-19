@@ -312,6 +312,343 @@
       "task_spec_ref": "task-specs/P02-C23-01.md"
     },
     {
+      "id": "P02-c01-verdict-vocab-dedup",
+      "title": "C01 R4-verify の verdict 語彙を C09 の評価順へ一本化する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+      "acceptance_criterion": "C01 の R4-verify が verdict 語彙と評価順を自前定義せず command-brief-C09.json の評価順を正本として参照していること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c01-verdict-vocab-dedup.md"
+    },
+    {
+      "id": "P02-c02-checklist-covered-declare",
+      "title": "C02 の checklist_covered を宣言する (現状 null)",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+      "acceptance_criterion": "skill-brief-C02.json の checklist_covered が null でなく、goal-spec.checklist のうち C02 が担う項目を列挙し、隣接する C20 (script 実装側) との重複分は副として理由つきで宣言していること。担わない隣接項目は担当 component が明示されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c02-checklist-covered-declare.md"
+    },
+    {
+      "id": "P02-c02-report-shape-binding",
+      "title": "C02 の output_contract を C20 の report_shape へ束縛する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+      "acceptance_criterion": "C02 の output_contract が逆抽出レポートの構造を C20#report_shape の参照として持ち、フィールドを自前で再定義していないこと",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c02-report-shape-binding.md"
+    },
+    {
+      "id": "P02-c03-axis-vocab-removal",
+      "title": "C03 の key_constraints から軸名の列挙を除き C06 参照へ寄せる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+      "acceptance_criterion": "skill-brief-C03.json に軸名 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness / opening-order / visual-fit / card-granularity / nav-scannability) が 1 件も現れず、軸の正本として agent-brief-C06.json#output_contract.returns の axis を参照する記述だけが残ること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c03-axis-vocab-removal.md"
+    },
+    {
+      "id": "P02-c03-c12-report-routing",
+      "title": "C12 の json-report を C06 の委譲入力へ含めるかを裁定する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+      "acceptance_criterion": "C12 の json-report を gate_reports に含めるか否かが 1 箇所で裁定され、C03 の deterministic_checks と C06 の input_contract.receives が同じ結論を持つこと",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c03-c12-report-routing.md"
+    },
+    {
+      "id": "P02-c05-image-role-source",
+      "title": "C05 の role 読取り先を C23 の section_order[].image_role へ明示する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "acceptance_criterion": "agent-brief-C05.json の役採用手順が参照先として config/handout-purposes.json の presets[].section_order[].image_role を名指しし、値域 screenshot|illustration を C23 と一致させていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c05-image-role-source.md"
+    },
+    {
+      "id": "P02-c06-description-align",
+      "title": "C06 の description を inventory / brief / 出荷物の 3 者で一致させる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "inventory C06 / agent-brief-C06.json / handout-readability-reviewer.md の description が同一文字列で、lint-skill-description.py が exit0 になること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c06-description-align.md"
+    },
+    {
+      "id": "P02-c06-r25-axes",
+      "title": "C06 の評価軸へ R25 の視覚・構造 4 面を追加する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+      "acceptance_criterion": "agent-brief-C06.json の axis 語彙に R25 の 4 面が REQ 番号つきで追加され、C03 側は軸を持たないまま (正本が C06 1 箇所) であること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c06-r25-axes.md"
+    },
+    {
+      "id": "P02-c07-img-skip-ruling-ref",
+      "title": "C07 の fail-soft 規約から CR-IMG-SKIP-COUNT を参照させる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+      "acceptance_criterion": "command-brief-C07.json の挿絵 skip の fail-soft 規約が improvement/visual-per-section-decision.json#decision.skipped_image_counting (CR-IMG-SKIP-COUNT) を名指しで参照し、E-IMAGE-ABSENT の緑を『各セクションに画像がある』の証明として読まない旨を裁定の複製ではなく参照として持つこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c07-img-skip-ruling-ref.md"
+    },
+    {
+      "id": "P02-c07-regression-scope",
+      "title": "inventory C07 へ harness_coverage.regression_scope を追加する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "component C07 の harness_coverage に regression_scope が存在し、他 command component と同一の粒度で記述されていること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c07-regression-scope.md"
+    },
+    {
+      "id": "P02-c08-checklist-coverage",
+      "title": "C08 の checklist_covered を C20/C02 の checklist と突合して補完する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+      "acceptance_criterion": "C08 の checklist_covered が C20 と C02 の checklist 項目のうち C08 が実際に担う分を漏れなく列挙し、担わない項目は担当 component が明示されていること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c08-checklist-coverage.md"
+    },
+    {
+      "id": "P02-c08-strict-fidelity-expose",
+      "title": "C08 へ --strict-fidelity を露出するか裁定し inventory の argument-hint を揃える",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "inventory C08 の argument-hint と command-brief-C08.json の arguments が同一のフラグ集合を持ち、--strict-fidelity の採否理由が 1 箇所に記録されていること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c08-strict-fidelity-expose.md"
+    },
+    {
+      "id": "P02-c11-consumers-single",
+      "title": "C11 の consumers 行へ data-hb-single を追加する",
+      "phase_ref": "P02",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "script-brief-C11.json:341 の consumers 行で C17 の読む属性に data-hb-single が含まれること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c11-consumers-single.md"
+    },
+    {
+      "id": "P02-c11-heading-field-marker",
+      "title": "C11 が見出し要素へ data-hb-field=heading を付ける契約を brief へ入れる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "script-brief-C11.json が見出しテキストのみを持つ要素へ data-hb-field=\"heading\" を付けると明記し、C20 の data-hb-field 値の列挙にも heading が含まれること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-c11-heading-field-marker.md"
+    },
+    {
+      "id": "P02-c11-heading-marker",
+      "title": "C11 の data-hb-field enum へ heading を追加し裁定表へ /assets/*/role を記録する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "script-brief-C11.json の data-hb-field enum に heading が含まれ、見出しテキストのみを持つ要素へ付与する手順が algorithm に現れること。あわせて plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md へ /assets/*/role のエントリ (decision=marker / marker=data-hb-asset-role) が追加され、13 pointer の包含関係が brief 側と一致すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c11-heading-marker.md"
+    },
+    {
+      "id": "P02-c11-img-alt-attribute",
+      "title": "C11 が alt 値を alt 属性として描くことを契約に書く",
+      "phase_ref": "P02",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "script-brief-C11.json の画像描画 algorithm に、assets[].alt の値を <img> の alt 属性へ無変換で出すことが明記されていること。data-hb-asset-alt は逆抽出用の marker であり支援技術向けの機構ではない旨を併記し、alt が空文字になる経路が無いこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c11-img-alt-attribute.md"
+    },
+    {
+      "id": "P02-c12-alt-attribution",
+      "title": "C12 の alt 必須理由の帰属先を C17 へ訂正する",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "script-brief-C12.json:482 の『a11y ゲート (C22)』が C17 へ訂正され、C22 は筋道ゲートである分界が保たれること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c12-alt-attribution.md"
+    },
+    {
+      "id": "P02-c12-copy-long-impl",
+      "title": "W-COPY-LONG の判定を C12 へ実装記述する",
+      "phase_ref": "P02",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "script-brief-C12.json に W-COPY-LONG の detection が実在し、閾値を config/handout-visual-policy.json#micro_copy から解決し、対象フィールドの決定規則 (roles の fields 対応・exempt_parts / exempt_fields の除外) が書かれていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c12-copy-long-impl.md"
+    },
+    {
+      "id": "P02-c12-opens-prose-overview-codes",
+      "title": "C12 brief に W-OPENS-PROSE と E-OVERVIEW-SECTION-MISSING の実体を定義する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "script-brief-C12.json の detections 本体に W-OPENS-PROSE と E-OVERVIEW-SECTION-MISSING が定義され、それぞれ検査規則・違反例・exit code クラスへの割当を持つこと。AC 側の『または該当コード』という留保表現が残らないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c12-opens-prose-overview-codes.md"
+    },
+    {
+      "id": "P02-c16-c10-ghost-name",
+      "title": "C16 が参照する C10 の名前を実在名へ訂正する",
+      "phase_ref": "P02",
+      "entity_ref": "C16",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+      "acceptance_criterion": "script-brief-C16.json に handout-emoji-and-external-ref-guard が 0 件、guard-handout-external-ref が 1 件以上あること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c16-c10-ghost-name.md"
+    },
+    {
+      "id": "P02-c23-preset-definitions-visual-sync",
+      "title": "script-brief-C23.json#preset_definitions を DIAGRAM/IMG/image_role 込みの出荷形へ揃える",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+      "acceptance_criterion": "script-brief-C23.json#preset_definitions の各 section_order 要素が id/heading/section_kind/recommended_parts/required/image_role の 6 キーを持ち、全 main 節の recommended_parts が DIAGRAM と IMG を含み、image_role が {screenshot, illustration} に閉じる。かつ出荷 config/handout-purposes.json との差分が 0 であることを実測した証跡がある",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-c23-preset-definitions-visual-sync.md"
+    },
+    {
+      "id": "P02-demo-first-no-fallback",
+      "title": "demo_first の先頭 main セクションで illustration fallback を禁止する配線を C01/C05 へ入れる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+      "acceptance_criterion": "skill-brief-C01.json の R3-render に、presentation_order=demo_first のとき最初の main セクションの assets[].role を illustration へ書き換えない例外が明記され、素材が無い場合の代替 (live_demo=true の B17 を先頭に置く) と、それも不可能な場合の失敗の出し方が定まっていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-demo-first-no-fallback.md"
+    },
+    {
+      "id": "P02-hero-card-element-fix",
+      "title": "hero-card の要素名を決定ファイルへ昇格させる",
+      "phase_ref": "P02",
+      "entity_ref": "C11",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/improvement/hero-card-decision.json",
+      "acceptance_criterion": "improvement/hero-card-decision.json が hero カードの DOM を .hero-card-grid > .hero-card として明示し、script-brief-C11.json:352 と一致すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-hero-card-element-fix.md"
+    },
+    {
+      "id": "P02-illustration-skip-ruling",
+      "title": "挿絵 skipped と per-section 必須要件の関係を裁定する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+      "acceptance_criterion": "status=skipped の IMG が E-IMAGE-ABSENT の充足に数えられるか否かが 1 箇所で明文化され、C01/C07/C12 の 3 brief がその裁定を参照していること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-illustration-skip-ruling.md"
+    },
+    {
+      "id": "P02-img-realization-gate-owner",
+      "title": "宣言された IMG に実体が無い状態を捕まえる機械ゲートの担い手を決める",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+      "acceptance_criterion": "レンダリング後の HTML に対する『IMG 宣言に対応する img 実体の存在』検査の担当 component が 1 つ決まり、その component の brief に検査コードと fail 条件が書かれていること。担い手を置かない裁定を採る場合は、E-IMAGE-ABSENT の緑が実体を保証しないことを利用者向け提示のどこで必ず伝えるかが明記されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-img-realization-gate-owner.md"
+    },
+    {
+      "id": "P02-inventory-c01-c21-align",
+      "title": "component-inventory.json の C01 deterministic_checks と C21 purpose を brief 正本へ整合させる",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "inventory C21 の purpose が『生成対象は role=illustration の節に限る』と読める文言であること、および inventory C01 の deterministic_checks が skill-brief-C01.json の R3-render 呼出し列 (validate / resolve / embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout / C09 4 ゲート / route) を欠落なく列挙すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-inventory-c01-c21-align.md"
+    },
+    {
+      "id": "P02-nav-overflow-design",
+      "title": "ナビ項目の字数超過と項目過多に対する描画時の破綻回避を定める",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "acceptance_criterion": "script-brief-C11.json のナビ描画契約が (1) ラベルが 14 字上限を超えた場合の扱い (2) 項目数が多い場合の折返しまたは横スクロール、の 2 点を決定論的に定め、いずれも外部依存なしに実現できる形で記述されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-nav-overflow-design.md"
+    },
+    {
+      "id": "P02-root-resolution-align",
+      "title": "C17 / C09 の実体解決を C15 と同じ 4 段へ揃える",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "script-brief-C17.json と command-brief-C09.json の root 解決が plugin.json の name 照合を含む 4 段になり、C15 と同じく全段外れた場合の挙動が明記されていること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P02-root-resolution-align.md"
+    },
+    {
+      "id": "P02-visual-policy-readers-c11",
+      "title": "handout-visual-policy.json の _meta.readers へ C11 を追加する",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/config/handout-visual-policy.json",
+      "acceptance_criterion": "_meta.readers に C11 が含まれ、かつ列挙された全 reader が実際に本ファイルを読む component であること (逆方向の余剰も 0)",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P02-visual-policy-readers-c11.md"
+    },
+    {
       "id": "P02-x-01",
       "title": "23 component の設計を確定する",
       "phase_ref": "P02",
@@ -861,6 +1198,17 @@
       "task_spec_ref": "task-specs/P05-C06-01.md"
     },
     {
+      "id": "P05-C06-rebuild",
+      "title": "handout-readability-reviewer.md を訂正後の brief から再 build する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+      "acceptance_criterion": "出荷物が plugins/guide-doc-generator/references/ を 1 件も参照せず (実在は skills/ref-handout-design-system/references/)、文長・文数の担当が C12 と書かれており C18 と書かれた箇所が 0 件であること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-C06-rebuild.md"
+    },
+    {
       "id": "P05-C07-01",
       "title": "handout-build (slash-command) を build する",
       "phase_ref": "P05",
@@ -909,6 +1257,18 @@
       "task_spec_ref": "task-specs/P05-C10-01.md"
     },
     {
+      "id": "P05-C10-01-dated-dir-regex",
+      "title": "出荷 hook の DATED_DIR_RE を区切り文字非依存へ rebuild する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+      "acceptance_criterion": "hooks/guard-handout-external-ref.py の適用対象判定が先頭 ISO 日付のみを見る形 (例 ^\\\\d{4}-\\\\d{2}-\\\\d{2}(?!\\\\d)) になり、2026-08-18_日本語名 と 2026-08-18-ascii-slug の両方に発火し、非日付ディレクトリには発火しないこと。区切り文字の正本は config/handout-output.json#dir_name_format であり hook はそれを複製しないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-C10-01-dated-dir-regex.md"
+    },
+    {
       "id": "P05-C11-01",
       "title": "render-handout.py (script) を build する",
       "phase_ref": "P05",
@@ -931,6 +1291,30 @@
       "execution_kind": "component-build",
       "route_ref": "C12",
       "task_spec_ref": "task-specs/P05-C12-01.md"
+    },
+    {
+      "id": "P05-C12-01-shared-fixture-visuals",
+      "title": "共有テストフィクスチャの最小構成データへ図解と画像を持たせる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "[要再定義] 発見時の記述から機械生成した暫定条件。着手前に実測可能な条件へ差し替えること。暫定: 「共有テストフィクスチャの最小構成データへ図解と画像を持たせる」を解消し、その根拠 (発見理由: R8 (図解と画像を毎回セクションごとに) で E-IMAGE-ABSENT / W-DIAGRAM-FEW を main セクション単位の error に上げた結果、plugins/guide-doc-generator/tests/validate-handout-config.py/_harness.py が組み立てる最小構成データが IMG も DIAGRAM も持たないため、密度検査と無関係な検査 (micro_copy / layering / normalize_date / r21_text_fold ほか) まで exit=0 の前提が崩れて赤になった。_harness.py の baseline 構成データへ IMG と DIAGRAM の部品および assets/diagrams の実体を足し、密度検査を意図的に検証するテストだけが欠落状態を作る形へ揃える。原因は 1 箇所 (共有フィクスチャ) であり、個々のテストの期待値ではない。) が再現しないことを実測で示す。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-C12-01-shared-fixture-visuals.md"
+    },
+    {
+      "id": "P05-C12-01-visual-density-tests",
+      "title": "test_visual_density.py を節単位ゲート契約 (W-DIAGRAM-FEW / E-IMAGE-ABSENT / level 正本) へ追従させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/validate-handout-config.py/test_visual_density.py",
+      "acceptance_criterion": "pytest plugins/guide-doc-generator/tests/validate-handout-config.py/test_visual_density.py が exit0。かつ (a) W-DIAGRAM-FEW / E-IMAGE-ABSENT が main セクション単位の pointer (/sections/<i>/parts) で assert されている、(b) 総量比キー min_diagrams_per_main_sections への参照が 0 件、(c) level:'error' 宣言により W-DIAGRAM-FEW 単独で exit=1 になることを --strict 無しで assert する回帰が 1 本ある",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-C12-01-visual-density-tests.md"
     },
     {
       "id": "P05-C13-01",
@@ -1065,6 +1449,18 @@
       "task_spec_ref": "task-specs/P05-C23-01.md"
     },
     {
+      "id": "P05-C23-01-section-key-surface-tests",
+      "title": "resolve-handout-preset のテストを image_role 込みのキー面へ追従させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+      "acceptance_criterion": "pytest plugins/guide-doc-generator/tests/resolve-handout-preset.py/test_r20_invariants.py が exit0。かつ (a) キー面の期待値をテストへ書き写さず script の SECTION_ENTRY_KEYS から実測して突き合わせる、(b) image_role 欠落が E-PRESET-IMAGE-ROLE-MISSING で、列挙外が E-PRESET-IMAGE-ROLE-UNKNOWN で落ちることの回帰が各 1 本ある、(c) 既存の dir_token 2 件の赤 (DT-1 裁定待ち) を緑化しない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-C23-01-section-key-surface-tests.md"
+    },
+    {
       "id": "P05-x-01",
       "title": "23 component の実装完了を集約する",
       "phase_ref": "P05",
@@ -1083,10 +1479,22 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/assets/",
-      "acceptance_criterion": "plugins/guide-doc-generator/assets/ 配下に (1) テーマトークン JSON が 1 件以上あり text_limits.block_body_max_chars と text_limits.block_body_max_chars_by_detail_level (overview=180 / standard=400 / detailed=900) を持つこと (2) icons/icon-set.json が存在し全アイコンが viewBox='0 0 24 24' / stroke='currentColor' / fill='none' / stroke-linecap='round' の統一様式であること (3) マスコット SVG が存在すること (4) 配下の全ファイルが外部 URL 参照を 1 件も含まないこと、の 4 点を満たす",
+      "acceptance_criterion": "plugins/guide-doc-generator/assets/ 配下に (1) テーマトークン JSON が 1 件以上あり text_limits.block_body_max_chars (既定 100) と text_limits.block_body_max_chars_by_detail_level (overview=60 / standard=100 / detailed=160) を持つこと (2) icons/icon-set.json が存在し全アイコンが viewBox='0 0 24 24' / stroke='currentColor' / fill='none' / stroke-linecap='round' の統一様式であること (3) マスコット SVG が存在すること (4) 配下の全ファイルが外部 URL 参照を 1 件も含まないこと、の 4 点を満たす。R25/REQ-8 (goal-spec C74) の hero フィールド文字数/文数上限はここへ新規フィールドを持たない (正本は config/handout-visual-policy.json 側の 1 箇所。P05-x-03 が producer)",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-02.md"
+    },
+    {
+      "id": "P05-x-02-geometry-acceptance",
+      "title": "P05-x-02 の受入基準を属性様式から幾何規約へ言い換える",
+      "phase_ref": "P05",
+      "entity_ref": "C15",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-02.md",
+      "acceptance_criterion": "task-specs/P05-x-02.md の acceptance_criterion (2) が icon-set.json の属性文字列 (viewBox/stroke/fill/stroke-linecap) の存在を要求せず、幾何規約 (path 座標が 0-24 座標系内・stroke_width 2.2-2.6・線表現) で判定されること。task-graph 上の P05-x-02 ノードの acceptance も同時に追従すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-02-geometry-acceptance.md"
     },
     {
       "id": "P05-x-03",
@@ -1095,10 +1503,70 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/config/",
-      "acceptance_criterion": "plugins/guide-doc-generator/config/ 配下に (1) handout-parts.json (部品 id 語彙 B01..B16 / IMG / DIAGRAM / TEXT・owner 宣言は C11) (2) handout-sections.json (section_kind 語彙と R21 の max_items / forbid_row_detail / min_duration_share / required_role・owner 宣言は C12) (3) handout-purposes.json (用途語彙 8 語と各 preset の section_order / recommended_parts / notes / presentation_order_variants / required_document_fields / granularity_defaults・owner 宣言は C23) (4) handout-output.json (default_out_dir とサイズ上限・owner 宣言は C19) の 4 本が存在し、それぞれ対応するブリーフの schema 節に適合し、環境固有の絶対パスと外部 URL を含まないこと",
+      "acceptance_criterion": "plugins/guide-doc-generator/config/ 配下に (1) handout-parts.json (部品 id 語彙 B01..B16 / IMG / DIAGRAM / TEXT・owner 宣言は C11) (2) handout-sections.json (section_kind 語彙と R21 の max_items / forbid_row_detail / min_duration_share / required_role・owner 宣言は C12) (3) handout-purposes.json (用途語彙 8 語と各 preset の section_order / recommended_parts / notes / presentation_order_variants / required_document_fields / granularity_defaults・owner 宣言は C23) (4) handout-output.json (default_out_dir とサイズ上限・owner 宣言は C19) (5) handout-visual-policy.json (図解密度・散文量・冒頭宣言・長文閾値の方針正本。owner 宣言は C12、値の一部は C11 のテーマトークンと対で持つ) (6) handout-vocabulary.json (R25/REQ-9・goal-spec C74/C75。attainment_level の表示ラベル語彙と前提コネクタ名語彙の単一正本・owner 宣言は C12) の 6 本が存在し、それぞれ対応するブリーフの schema 節に適合し、環境固有の絶対パスと外部 URL を含まないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-03.md"
+    },
+    {
+      "id": "P05-x-03-acceptance-hardening",
+      "title": "P05-x-03 の acceptance_criterion を節単位の視覚部品充足へ強化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-03.md",
+      "acceptance_criterion": "P05-x-03.md の acceptance_criterion が、config/handout-purposes.json の全 preset の全 main セクションについて (1) recommended_parts に DIAGRAM が 1 件以上 (2) 同じく IMG が 1 件以上 (3) section_order[] の各要素が image_role を screenshot|illustration のいずれかで宣言、の 3 点を明示要求すること。キー名の存在のみを問う表現を残さないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03-acceptance-hardening.md"
+    },
+    {
+      "id": "P05-x-03-dir-name-format",
+      "title": "config/handout-output.json へ dir_name_format を追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+      "acceptance_criterion": "config/handout-output.json が dir_name_format キーを持ち、値が {date} と {slug} の 2 プレースホルダのみを含む文字列 (現行裁定値 '{date}_{slug}') であること。script 側ソースに同等の書式リテラルが 0 件であること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03-dir-name-format.md"
+    },
+    {
+      "id": "P05-x-03-hook-scan-budget",
+      "title": "hook 走査予算の受け皿キーを config へ新設する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+      "acceptance_criterion": "config/handout-output.json#size_limits.hook_scan_budget に max_bytes と max_seconds が実在し、R25 の per-section IMG 必須化後の規模 (上限素材 2 点で 8 MiB 超・1 MiB 挿絵 6 節で約 8 MiB) を踏まえた値であること。asset_max_bytes とは別キーとして分離されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03-hook-scan-budget.md"
+    },
+    {
+      "id": "P05-x-03-image-threshold-key",
+      "title": "出荷 config の per-section 閾値キーを正本へ追従させる",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+      "acceptance_criterion": "config/handout-visual-policy.json#thresholds に min_diagrams_per_main_section (単数形) と min_images_per_main_section が実在し、旧 min_diagrams_per_main_sections (複数形・総量比) が 0 件であること。値は improvement/visual-per-section-decision.json#decision の value=1 と一致すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03-image-threshold-key.md"
+    },
+    {
+      "id": "P05-x-03-nav-item-threshold",
+      "title": "nav ラベルの文字数上限を出荷 config へ載せ検査範囲を届かせる",
+      "phase_ref": "P05",
+      "entity_ref": "C12",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+      "acceptance_criterion": "出荷 config に nav ラベルの文字数上限が実在し (plan 側 briefs/config/handout-visual-policy.json の nav_item と同値)、micro_copy.note の適用範囲または専用の検査点により C11 algorithm 14 が描く nav ラベルが検査対象に入ること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-03-nav-item-threshold.md"
     },
     {
       "id": "P05-x-04",
@@ -1185,6 +1653,138 @@
       "task_spec_ref": "task-specs/P05-x-10.md"
     },
     {
+      "id": "P05-x-100",
+      "title": "Markdown kind 7 component へ判定器再現性テストを移植する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "handout-build / handout-extract / run-handout-extract / assign-handout-readability-evaluator / ref-handout-design-system / handout-content-architect / handout-readability-reviewer の7件が判定器の再現性 (in-process 2回 + subprocess 別プロセス2回) を測り、各 component で何の再現性かを明記していること。移植先で実際に赤にできることを変異で確認すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-100.md"
+    },
+    {
+      "id": "P05-x-101",
+      "title": "hook 予算宣言 size_limits.hook_scan_budget を config へ追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+      "acceptance_criterion": "config/handout-output.json の size_limits に hook_scan_budget が存在し、tests/guard-handout-external-ref/test_no_side_effects.py:30 TestWriteScopeNone::test_target_is_untouched_on_block が exit2 を得て緑になること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-101.md"
+    },
+    {
+      "id": "P05-x-102",
+      "title": "verify-handout-selfcontained の json-report 生成 assert を C17 と対称にする",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+      "acceptance_criterion": "test_cli_contract.py:260 test_json_report_is_byte_identical_across_runs が report 生成の assert を持ち、report 不在時に error でなく failure として立つこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-102.md"
+    },
+    {
+      "id": "P05-x-102-mutation-evidence-slot",
+      "title": "route-build-report schema に変異証跡 (mutation evidence) の格納枠を新設する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/skills/run-build-skill/schemas/route-build-report.schema.json",
+      "acceptance_criterion": "route-build-report.schema.json に変異証跡を構造化して置ける枠 (例: mutation_evidence[] で command / exit_code / passed / failed / mutation (何をどう壊したか) / baseline_matches (復元後の baseline 一致) を保持) が存在し、status=success の report で exit_code!=0 の item を持てること。validate-route-build-reports.py がその枠を検証し、かつ従来どおり test_evidence[] へは非ゼロ exit を置けないままであること。eval-log/guide-doc-generator/build/route-C10.json の evidence[] にある変異証跡 A/B/C が数値を落とさず新枠へ移せること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-102-mutation-evidence-slot.md"
+    },
+    {
+      "id": "P05-x-103",
+      "title": "自己言及テストと番人テストを構造で識別できるようにする",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "assert の両辺がテストディレクトリ内で閉じる検査について、実装の契約を測るつもりのもの (型A=欠陥) と裁定済みの方針を意図的に固定する番人 (正当) が命名規約など構造で識別でき、docstring の読解に依存せず機械で仕分けできること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-103.md"
+    },
+    {
+      "id": "P05-x-104",
+      "title": "config/handout-output.json へ size_limits.hook_scan_budget を追加し producer を明示する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-output.json",
+      "acceptance_criterion": "config/handout-output.json に size_limits.hook_scan_budget = {max_bytes, max_seconds} が実在し、guard-handout-external-ref.py を予算キー注入なしで起動したとき違反入り HTML が exit2 になること。値は R25 の per-section IMG 必須化 (挿絵 6 節で約 8MiB) と C16 scan_emoji の実測 (7MiB で約 13 秒) の両方を根拠として記録すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-104.md"
+    },
+    {
+      "id": "P05-x-105",
+      "title": "tests/guard-handout-external-ref/hb_c10.py:41 の SIZE_LIMIT_BYTES を config からの実測導出へ置換する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+      "acceptance_criterion": "hb_c10.py に走査予算のリテラルが存在せず config/handout-output.json#size_limits.hook_scan_budget から導出されること。config の値を変えて再実行したとき TestOversizedFileAborts の期待値が追随すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-105.md"
+    },
+    {
+      "id": "P05-x-106",
+      "title": "撤回済み契約を守るテスト test_date_without_trailing_hyphen_passes_through を撤回する",
+      "phase_ref": "P05",
+      "entity_ref": "C10",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+      "acceptance_criterion": "『日付の直後がハイフンでなければ素通し』を期待値として固定するテストが存在しないこと。R25 書式 2026-08-18_日本語名 が適用対象になることを固定する回帰テストが同 suite に存在すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-106.md"
+    },
+    {
+      "id": "P05-x-107",
+      "title": "derive-task-graph.py に書き込みを伴わない再導出経路が無い (-o が黙って無視される)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+      "acceptance_criterion": "-o <path> を渡したとき指定パスへ書くか、受理できない引数として exit2 で明示的に拒否すること。既定の task-graph.json へ黙って書いて exit2 を返す現在の挙動が再現しないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-107.md"
+    },
+    {
+      "id": "P05-x-108",
+      "title": "references/answer-patterns.md が 4 面のままで面 5 へ到達できない",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/references/answer-patterns.md",
+      "acceptance_criterion": "answer-patterns.md の手順 1 の面分類が SKILL.md の面数と一致し、カード/ナビの問い合わせが面 5 へ割り当てられること。手順 2 の正本ファイル列挙に config/handout-visual-policy.json が含まれること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-108.md"
+    },
+    {
+      "id": "P05-x-109",
+      "title": "contract_lib.py の REQUIRED_FACES が brief の面数に追随しない片方向関係",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+      "acceptance_criterion": "REQUIRED_FACES が skill-brief-C04.json#output_contract から導出され、brief の面追加でテストが赤くなること。key_constraints の CR-EXT (外部参照ゼロ) が検査されること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-109.md"
+    },
+    {
       "id": "P05-x-11",
       "title": "逆抽出の round-trip 成立条件を確定する (C11 マーカー契約の拡張か C12 schema の round-trip 免除か)",
       "phase_ref": "P05",
@@ -1197,6 +1797,126 @@
       "task_spec_ref": "task-specs/P05-x-11.md"
     },
     {
+      "id": "P05-x-110",
+      "title": "SKILL.md 面 5 が指す config/handout-visual-policy.json のキーが実在しない (dangling canon pointer)",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+      "acceptance_criterion": "opening.hero_card_fields.layout / opening.list_headings.headings / opening.connector_card.heading と micro_copy.roles.label.fields[nav_item] が実在するか、または面 5 の参照先が実在キーへ書き換えられていること。いずれかが満たされ、面 5 が未確定へ落ちないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-110.md"
+    },
+    {
+      "id": "P05-x-111",
+      "title": "ref- 規約違反: frontmatter disable-model-invocation が false",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/SKILL.md",
+      "acceptance_criterion": "ref- prefix skill の frontmatter が disable-model-invocation: true を持つこと。ref-skill-naming-convention の規約と一致すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-111.md"
+    },
+    {
+      "id": "P05-x-112",
+      "title": "SKILL.md 面 2 の『既定 400』が C11 brief の R25 改定値 100 と食い違う",
+      "phase_ref": "P05",
+      "entity_ref": "C04",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/SKILL.md",
+      "acceptance_criterion": "面 2 が実値を焼かず正本アドレスのみを示すか、または C11 brief の R25 値と一致すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-112.md"
+    },
+    {
+      "id": "P05-x-113",
+      "title": "P01 の AC が範囲を件数リテラル C1-C45 で書いたため 30 件が検査外に落ちている",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "P01 の acceptance_criterion が件数リテラルでなく母集団参照 (goal-spec.checklist の全件) で範囲を表すこと。checklist へ項目を追加したとき AC の被覆範囲が自動で追随すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-113.md"
+    },
+    {
+      "id": "P05-x-114",
+      "title": "1 つの criterion が 2 種の検証手段を要求するが verify_by は単一値しか持てない (enum の human は未使用)",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C69 のように test と human の両方を要する criterion が、両方の検証手段を表現できる形になっていること。check-plugin-goal-spec.py の enum に実在する human が実際に使われるか、使わない理由が記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-114.md"
+    },
+    {
+      "id": "P05-x-115",
+      "title": "C64 が LLM 側の唯一の要件文でありながら verify_by=script で実質未検証",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C64 の検証手段が述語の観測可能性と一致すること。LLM 側の分界線を守る要件が、決定論ラベルのために検証されない状態が解消されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-115.md"
+    },
+    {
+      "id": "P05-x-116",
+      "title": "reference-analysis §12.3 の正本宣言と出荷 config が既に食い違い、要件文が 3 つ目の写しになっている",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "micro_copy の字数上限について正本が 1 つに定まっていること。title の 24 から 22 への変更に理由の記録があるか、§12.3 が更新されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-116.md"
+    },
+    {
+      "id": "P05-x-117",
+      "title": "C75/C70 が『script へ焼くな』と要求しながら要件文自身が語彙・部品 id を焼いている",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C75 が Google Drive / OneDrive / kintone の 3 種を列挙せず正本 (briefs/config/handout-vocabulary.json#connectors) を参照すること。C70 の器指定が個別部品 id を焼かないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-117.md"
+    },
+    {
+      "id": "P05-x-118",
+      "title": "C74 が単独 900 字・8 個以上の独立した合否条件を持ち criterion 単位で測定できない",
+      "phase_ref": "P02",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "1 criterion が 1 つの合否条件を持つ粒度になっているか、複数条件を持つ criterion に対する測定単位が定義されていること。P04 で『どのテスト関数がこの criterion を担うか』を 1 対 1 で名指しできること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-118.md"
+    },
+    {
+      "id": "P05-x-119",
+      "title": "reference-analysis.md:38 の見出しは『12 種』だが同節の表は 15 行あり B01-B15 の出典自体が不整合",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "参照解析の節見出しの件数と表の行数が一致すること。要件文が出典の数を写す場合、出典側のどの数を写したかが記録されること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-119.md"
+    },
+    {
       "id": "P05-x-12",
       "title": "B03/B09 の rows[].key について schema と tests のどちらが正本かを確定する",
       "phase_ref": "P05",
@@ -1207,6 +1927,126 @@
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-12.md"
+    },
+    {
+      "id": "P05-x-120",
+      "title": "述語単点棄却テストの assert を『違反が 1 件以上』から『その変異に対応する述語のメッセージが出ること』へ変える",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "PredicateSinglePointRejectabilityTest 相当の assert が、変異に対応する述語の違反メッセージの出現を検査すること。別の述語がたまたま拾っている状態が緑にならないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-120.md"
+    },
+    {
+      "id": "P05-x-121",
+      "title": "ACCENT_TOKENS の存在述語が AC-C04-14 の副作用でたまたま守られている",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+      "acceptance_criterion": "ACCENT_TOKENS 述語が単独で単点棄却可能であること。AC-C04-14 の書き方が変わっても検出力が失われないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-121.md"
+    },
+    {
+      "id": "P05-x-122",
+      "title": "同一行スコープの述語ヘルパが 3 component で別々に書かれている",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "_lines_with / _has_negated / _units_with 相当のスコープ限定ヘルパが component 間で共有されるか、共有しない理由が記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-122.md"
+    },
+    {
+      "id": "P05-x-123",
+      "title": "移植元である C01/C09 の CheckerReproducibilityTest 自身が現時点で空ゲートである",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "C01/C09 の再現性テストが、判定器へ list(set(v)) / random.shuffle(v) を注入したとき赤になること。比較対象が違反 2 件以上を出す入力を含むこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-123.md"
+    },
+    {
+      "id": "P05-x-124",
+      "title": "P05-x-100 の完了条件を『テンプレート移植』から『違反 2 件以上の入力で M1/M2 が赤になること』へ書き換える",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "対象 8 件 (新規 5 + 別形式 1 + 既存改修 2) の各 component で、違反を 2 件以上出す入力を用意し判定器へ M1/M2 を注入したとき赤になること。handout-readability-reviewer は判定器不在のため除外理由を記録すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-124.md"
+    },
+    {
+      "id": "P05-x-125",
+      "title": "handout-readability-reviewer は判定器を持たず再現性テンプレートが原理的に適用できない",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+      "acceptance_criterion": "判定器の出力列という単一の測定対象が無いことが記録され、再現性面の扱い (別手段か対象外か) が決まっていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-125.md"
+    },
+    {
+      "id": "P05-x-126-route-report-build-dir",
+      "title": "route-build-report の書込先を cycle build_dir へ統一し TG-C05/TG-C08 から可視化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/scripts/",
+      "acceptance_criterion": "route executor 群の書込先と TG-C05/TG-C08 の読込先が同一 build_dir を指すことを、route-build-report を 1 件生成したうえで TG-C05 の route_report_count が 0 でなく実数を返すことで実証する。既存 report の inputs_consumed 相互参照が dangling にならないことも同時に確認する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-126-route-report-build-dir.md"
+    },
+    {
+      "id": "P05-x-127-tg-c08-knowledge-on-blocked",
+      "title": "TG-C08 の knowledge 記録を completion_gate=blocked 経路でも実行する (疎結合の逆方向)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/scripts/",
+      "acceptance_criterion": "未処理 discovered-task が残る状態で TG-C08 を --target-knowledge-dir 配線ありで実行したとき、completion_gate=blocked を保ちつつ出力に knowledge_record_status が現れ、knowledge へ実際に entry が追記されることを実測で示す。あわせて capability-build SKILL 本文と script header コメントのどちらを正本とするかを決め、他方を追従させる。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-127-tg-c08-knowledge-on-blocked.md"
+    },
+    {
+      "id": "P05-x-128-discovered-task-leaf-contract-gap",
+      "title": "discovered-task の実行可能 leaf 契約 (task_spec_ref/produces) を埋める owner を定め外ループを閉じる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/scripts/emit-discovered-task.py",
+      "acceptance_criterion": "task_spec_ref/produces を埋める owner を emit 側・planner E4 側のいずれかに確定し実装したうえで、discovered-task を 2 件以上含む inbox に対して --approved ドレインを実行し accepted>0 かつ graph_hash が変化することを実測する。あわせて accept-discovered-task.py の inbox summary へ validation_failed を含め、拒否時に理由が stdout から失われないことを、意図的に不備のある form 1 件で確認する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-128-discovered-task-leaf-contract-gap.md"
+    },
+    {
+      "id": "P05-x-129-repin-does-not-seed",
+      "title": "外ループ再入時に task-state へ新 node を seed する手順を機構化する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/scripts/sync-task-state.py",
+      "acceptance_criterion": "node を 1 件以上増やした task-graph に対し外ループ再入の再 pin を 1 回行った後、追加呼出しなしで task-state.nodes 数が graph の node 数と一致することを実測する。一致しない実装のままなら、SKILL の外ループ手順へ seed 呼出しを明記し、欠落時に赤くなる検査を置く。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-129-repin-does-not-seed.md"
     },
     {
       "id": "P05-x-13",
@@ -1233,6 +2073,18 @@
       "task_spec_ref": "task-specs/P05-x-14.md"
     },
     {
+      "id": "P05-x-14-ac-denylist-delegate",
+      "title": "C14 の AC から絵文字/外部参照 denylist の複製を除去し C16 委譲へ寄せる",
+      "phase_ref": "P05",
+      "entity_ref": "C14",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "acceptance_criterion": "script-brief-C14.json の AC-C14-3 / AC-C14-4 が U+1F300-1FAFF / U+2600-27BF / U+FE0F および http:// https:// // xlink:href を独自列挙せず、C16 の scan_emoji / scan_external_references の呼出し結果で判定していること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-14-ac-denylist-delegate.md"
+    },
+    {
       "id": "P05-x-15",
       "title": "component-inventory の argument_hint を brief の正本へ同期する",
       "phase_ref": "P05",
@@ -1257,6 +2109,18 @@
       "task_spec_ref": "task-specs/P05-x-16.md"
     },
     {
+      "id": "P05-x-16-cr-owner-registry",
+      "title": "CR-* prefix の owner 登録表を作る",
+      "phase_ref": "P05",
+      "entity_ref": "C16",
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P03.md",
+      "acceptance_criterion": "CR-* prefix を持つ全 rule (CR-EXT / CR-EMOJI / CR-EXTRACT-ARGS) が 1 つの表に owner component 付きで列挙され、新規追加時に衝突を検出できること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-16-cr-owner-registry.md"
+    },
+    {
       "id": "P05-x-17",
       "title": "contract_lib の body 全体一致述語について reject 可能性の方針を決める",
       "phase_ref": "P05",
@@ -1275,19 +2139,19 @@
       "entity_ref": "C11",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/scripts",
-      "acceptance_criterion": "tests/render-handout.py の test_accent_token_change_only_diffs_root_block / FlowRenderingTest.test_flow_is_delegated_to_inline_svg / FlowRenderingTest.test_diagram_pattern_is_exposed および test_cross_component.GateHandoffTest.test_language_gate_passes の 4 件が緑になる。加えて生成 HTML から title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / sections[].heading が抽出器の読み飛ばし規則の下でも到達可能になり、ties_to が ROUNDTRIP-CONTRACT.md の required_serialization に従って直列化される。テストの assert を弱めない。アクセント実値の重複を現状の 4 箇所から増やさない",
+      "acceptance_criterion": "tests/render-handout.py の test_accent_token_change_only_diffs_root_block / FlowRenderingTest.test_flow_is_delegated_to_inline_svg / FlowRenderingTest.test_diagram_pattern_is_exposed および test_cross_component.GateHandoffTest.test_language_gate_passes の 4 件が緑になる。加えて生成 HTML から title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / sections[].heading が抽出器の読み飛ばし規則 (data-hb-generated による部分木スキップ) の下でも到達可能になり、sections[].ties_to が ROUNDTRIP-CONTRACT.md の定める形式で直列化される。テストの assert を弱めない。アクセント実値の重複を現状の 4 箇所から増やさない",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-18.md"
     },
     {
       "id": "P05-x-19",
-      "title": "C20 extract-handout-config.py の照合表と読み取り範囲を裁定結果へ追随させる",
+      "title": "C20 の PART_CLASS_MAP を brief の class_map へ追随させる",
       "phase_ref": "P05",
       "entity_ref": "C20",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/scripts",
-      "acceptance_criterion": "完全マーカー付き HTML への正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 0 行。双方向の drift 検査 (:261-267) は無改変で、カタログ側・照合表側それぞれへ不整合を注入すると依然として鳴ること。TEXT 行は本文の受け皿でタグ名照合のため最後に置く。加えて ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目が復元され、復元結果が validate-handout-config.py --config を exit0 で通過する。schema に無いキーを発明しない。tests/extract-handout-config.py が緑を維持する",
+      "acceptance_criterion": "完全マーカー付き HTML (tests/extract-handout-config.py/_harness.py の full_html) への extract-handout-config.py 正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 0 行。双方向の drift 検査 (:261-267) は無改変で、カタログ側・照合表側それぞれへ不整合を注入すると依然として鳴ること。TEXT 行は本文の受け皿でタグ名照合のため最後に置く。tests/extract-handout-config.py が Ran 152 で緑を維持する",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-19.md"
@@ -1296,10 +2160,10 @@
       "id": "P05-x-20",
       "title": "C11 と C12 の入力契約の乖離を裁定して統一する",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "C11",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/",
-      "acceptance_criterion": "schema 準拠かつ validate-handout-config.py --normalize を通った構成データをそのまま render-handout.py へ渡して exit0 になり、生成 HTML に部品が 1 件以上描画される (blocks_by_type が非空)。normalized / nav / blocks-parts の 3 点について schema と renderer のどちらを正本としたかと理由が INPUT-CONTRACT-RESOLUTION.md に記録されている。schema の値域・required・additionalProperties を緩める解は不可",
+      "acceptance_criterion": "schema (handout-config.schema.json) に適合する構成データを render-handout.py へ渡すと exit0 で HTML が生成され、その HTML に sections[].parts の全部品が描画される (blocks_by_type が空でない)。normalized / nav の扱いをどちらの正本へ寄せたかと理由が INPUT-CONTRACT-RESOLUTION.md に記録されている。schema の required / 値域 / additionalProperties を緩めることで解決しない。既存テストの assert を弱めない。tests/render-handout.py・tests/validate-handout-config.py・tests/extract-handout-config.py の失敗テスト名の集合が増えない",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-20.md"
@@ -1311,7 +2175,7 @@
       "entity_ref": "C20",
       "state": "pending",
       "write_scope": "plugin-plans/guide-doc-generator/briefs",
-      "acceptance_criterion": "ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目の marker 名が script-brief-C20.json の宣言集合に含まれる。chrome 読み飛ばし規約が『data-hb-field を持つ子孫は読み飛ばさない』か『data-hb-generated は枠自体に限る』のどちらへ改まったかが明記されている。既存の stderr 契約行 (P05-x-16 の担当) は触らない。加えて exit_codes の各文言が言及する失敗事由に対応する診断コード名が stderr 契約のコード名と相互参照できる状態になっている",
+      "acceptance_criterion": "ROUNDTRIP-CONTRACT.md の adjudications に現れる全マーカー (data-hb-field の各値 / data-hb-ties-to / data-hb-notes-enabled / data-hb-section-role / data-hb-attainment-step / data-hb-src) が script-brief-C20.json の required_markers またはそれに相当する節へ列挙され、data-hb-generated による部分木読み飛ばしの適用範囲 (chrome 境界) が明文で規定されている。加えて exit_codes の各文言が言及する失敗事由に対応する診断コード名が stderr 契約のコード名と相互参照できる状態になっている。既存の class_map 18 行と class_map_completeness / recovery_limits (いずれも heuristic_fallback 配下) と P05-x-16 が整えた stderr キーを壊さない。JSON として妥当で、C20 の他 leaf が編集する stderr 契約行と衝突しない",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-21.md"
@@ -1320,7 +2184,7 @@
       "id": "P05-x-22",
       "title": "C08 テストの argument-hint 突合基準を brief 正本へ移す",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "C08",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
       "acceptance_criterion": "tests/handout-extract/contract_lib.py が argument-hint の期待値を plugin-plans/guide-doc-generator/briefs/command-brief-C08.json#argument_hint から読み取り、完全文字列リテラルを保持しない。frontmatter と component-inventory.json 双方への完全一致検査は維持する (assert を弱めない)。brief の値を変えると当該テストが追随して赤くなることを実測で示す。tests/handout-extract が緑のままであること",
@@ -1332,10 +2196,10 @@
       "id": "P05-x-23",
       "title": "部品 id ↔ CSS クラス名 写像の owner を裁定し AC-C11-19 と SSOT テストの二重契約を解消する",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "C20",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "tests/render-handout.py/test_parts_catalog.py::test_part_ids_are_not_enumerated_outside_the_catalog と tests/extract-handout-config.py/test_parts_catalog_ssot.py が同時に緑になる。どちらのテストの assert も弱めない。extract-handout-config.py の正常系実行で W-EXTRACT-CATALOG-DRIFT が 0 行のまま。カタログ側・照合表側それぞれへ不整合を注入すると依然として drift 検査が鳴ること。3 スイートの失敗テスト名の集合が着手前から増えないこと。裁定内容と退けた案が schemas/PART-CLASS-MAP-RESOLUTION.md に記録されていること",
+      "acceptance_criterion": "tests/render-handout.py/test_parts_catalog.py::test_part_ids_are_not_enumerated_outside_the_catalog と tests/extract-handout-config.py/test_parts_catalog_ssot.py が同時に緑になる。どちらのテストの assert も弱めない (削除・許容範囲拡大・skip・部分文字列化のいずれも不可)。extract-handout-config.py の正常系実行で W-EXTRACT-CATALOG-DRIFT が 0 行のまま。カタログ側・照合表側それぞれへ不整合を注入すると依然として drift 検査が鳴ること。tests/render-handout.py / tests/extract-handout-config.py / tests/verify-handout-a11y-print.py の失敗テスト名の集合が着手前から増えないこと。裁定内容と退けた案が schemas/PART-CLASS-MAP-RESOLUTION.md に記録されていること",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-23.md"
@@ -1344,58 +2208,34 @@
       "id": "P05-x-24",
       "title": "C17 / C22 brief を実装が獲得した実行時依存と失敗経路へ追随させる",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "C17",
       "state": "pending",
       "write_scope": "plugin-plans/guide-doc-generator/briefs",
-      "acceptance_criterion": "script-brief-C17.json に verify-handout-a11y-print.py の config/handout-parts.json への実行時依存とカタログ読取失敗時の exit 2 が宣言されている。script-brief-C22.json に hero 内フィールドの解決規約がマーカーで引く形で宣言されている。両ファイルが json.load を通り編集前後でトップレベルキーの集合が保存されていること。script-brief-C20.json には触れないこと",
+      "acceptance_criterion": "script-brief-C17.json に verify-handout-a11y-print.py の config/handout-parts.json への実行時依存と、カタログ読取失敗時の exit 2 が宣言されている。script-brief-C22.json に hero 内フィールド (title / date / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember) の解決規約が宣言されている。両ファイルが json.load を通り、編集前後でトップレベルキーの集合が保存されていること。他 leaf が編集中の script-brief-C20.json には触れないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-24.md"
     },
     {
       "id": "P05-x-25",
-      "title": "C11/C20/C17 brief の未追随 3 件を解消する (受け皿消滅分の再割当)",
+      "title": "長文検査・図解密度の新予算 (R25) に合わせて examples/ と tests/ を書き直す",
       "phase_ref": "P05",
-      "entity_ref": "C11",
+      "entity_ref": "C12",
       "state": "pending",
-      "write_scope": "plugin-plans/guide-doc-generator/briefs",
-      "acceptance_criterion": "3 件それぞれについて brief 本文が現行実装と一致するか、一致しない場合は『実装を直すべき』と明記されている。実装と brief のどちらを正本とするかの裁定と根拠が RESOLUTION-P05-x-25.md に記録されている。既存のトップレベルキー集合・class_map の行数と順序・stderr 診断コード集合を壊さない。導出可能な値を brief へ literal で書き下さない (PAT-1)",
+      "write_scope": "plugins/guide-doc-generator/tests/validate-handout-config.py/test_long_text_gate.py",
+      "acceptance_criterion": "旧予算 (block_body_max_chars=180/400/900、45字×3件の警告、min_diagrams_per_main_sections=0.6 という資料全体の総量比) を前提に書かれた `plugins/guide-doc-generator/examples/` の同梱構成データと `plugins/guide-doc-generator/tests/validate-handout-config.py/` 配下のテストが、新予算 (overview=60/standard=100/detailed=160、1文60字・1本文3文・折り畳み逃避0件は全て error、main セクション単位の下限 min_diagrams_per_main_section=1 と新設 min_images_per_main_section=1 [E-IMAGE-ABSENT] はいずれも error) の下で意図どおりに pass/fail し、`tests/validate-handout-config.py/test_long_text_gate.py` (新規) が『750字 TEXT を B10 へ入れて --normalize しても exit0 で通ってしまう』旧挙動の再現ケースを持ち新実装では非 0 exit になることを assert し、examples/ 配下の同梱構成データが全 main セクションに DIAGRAM と IMG を最低 1 件ずつ持つよう書き直されていること",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-25.md"
     },
     {
-      "id": "P05-x-26",
-      "title": "prune_chrome を chrome_boundary.rule の穴あき走査へ合わせる (宣言と実装の乖離解消)",
-      "phase_ref": "P05",
-      "entity_ref": "C20",
-      "state": "pending",
-      "write_scope": "plugins/guide-doc-generator/scripts",
-      "acceptance_criterion": "chrome 部分木の内側へ著者データマーカーを持つノードを 1 個置いた HTML を prune_chrome() へ通すと、そのノードが生き残ることを実測で示す (現状は消えることを反例として先に実測し、両方向を測る)。既存の chrome 読み飛ばし自体は弱めない — マーカーを持たない chrome ノードは従来どおり捨てられること。読み飛ばし対象から外す著者データマーカーの集合は literal で列挙せず schemas/ROUNDTRIP-CONTRACT.md の裁定表から導出する (PAT-1)。tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
-      "execution_kind": "direct-task",
-      "route_ref": null,
-      "task_spec_ref": "task-specs/P05-x-26.md"
-    },
-    {
-      "id": "P05-x-27",
-      "title": "B08/B13/B15/B16 の rows[].key に同定根拠の description を与える",
-      "phase_ref": "P05",
-      "entity_ref": "C12",
-      "state": "pending",
-      "write_scope": "plugins/guide-doc-generator/schemas",
-      "acceptance_criterion": "4 部品それぞれの key.description に『何を同定する鍵か』と『省略/重複したとき何が壊れるか』が部品ごとの実際の用途に即して書かれている (B09 の文面の複製でない)。各記述の根拠を render-handout.py の実装で確認したうえで書く。additionalProperties:false と required を緩めない。key を新たに required へ昇格させない (著者が省略した config も正当であるため)。tests/validate-handout-config.py / tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
-      "execution_kind": "direct-task",
-      "route_ref": null,
-      "task_spec_ref": "task-specs/P05-x-27.md"
-    },
-    {
       "id": "P05-x-28",
       "title": "AC-C20-06 と ROUNDTRIP-CONTRACT の data URI 保持契約を裁定する",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "assets[] の data URI 保持について schema・ROUNDTRIP-CONTRACT・AC-C20-06 の 3 者が同一の契約を述べる状態にする。テストの assert を弱めずに達成すること (弱める場合は裁定文書へ理由を書き、代替の検査を残す)。着手前後で 3 スイートの失敗テスト名の集合が増えないこと。",
+      "acceptance_criterion": "assets[] の data URI 保持について schema・ROUNDTRIP-CONTRACT・AC-C20-06 の 3 者が同一の契約を述べる状態にする。テストの assert を弱めずに達成すること (弱める場合は裁定文書へ理由を書き、代替の検査を残す)。着手前後で 4 スイートの失敗テスト名の集合が増えないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-28.md"
@@ -1404,10 +2244,10 @@
       "id": "P05-x-29",
       "title": "AC-C11-19 の走査除外を『読まれないテキスト』へ厳密化し scripts/*.json の抜け道を塞ぐ",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator/tests",
-      "acceptance_criterion": "scripts/ 配下のデータファイル (.json 等) へ部品 id の名簿を置いた反例が RED になること。同時に、scripts/*.md の作業記録と .py の docstring/コメント内の散文は GREEN のままであること (P05-x-23 が確立した『そのテキストを何かが読むか』の基準を保つ)。両方向を反例注入で実測すること。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+      "acceptance_criterion": "scripts/ 配下のデータファイル (.json 等) へ部品 id の名簿を置いた反例が RED になること。同時に scripts/*.md の作業記録と .py の docstring/コメント内の散文は GREEN のままであること。両方向を反例注入で実測すること。着手前後で 4 スイートの失敗テスト名の集合が増えないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-29.md"
@@ -1416,25 +2256,895 @@
       "id": "P05-x-30",
       "title": "validate-handout-config.py の残存する赤 4 件を解消する",
       "phase_ref": "P05",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "tests/validate-handout-config.py の失敗テスト名の集合が空になること。テストの assert を弱めずに達成すること。とくに (1)(2) は ERROR であり検査本体へ到達していないので、形状 drift を直した後に『検査が実際に働いている』ことを反例注入で示すこと (到達していない 0 件と直った 0 件は出力では区別が付かない)。着手前後で他 3 スイートの失敗テスト名の集合が増えないこと。",
+      "acceptance_criterion": "tests/validate-handout-config.py の失敗テスト名の集合が空になること。テストの assert を弱めずに達成すること。とくに (1)(2) は ERROR であり検査本体へ到達していないので、形状 drift を直した後に『検査が実際に働いている』ことを反例注入で示すこと。着手前後で他 3 スイートの失敗テスト名の集合が増えないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-30.md"
     },
     {
-      "id": "P05-x-31",
-      "title": "C20 の抽出粒度を上げて round-trip 等価性を成立させる",
+      "id": "P05-x-30-command-brief-schema",
+      "title": "command-brief 用 JSON Schema を harness-creator へ追加する",
       "phase_ref": "P05",
       "entity_ref": null,
       "state": "pending",
+      "write_scope": "plugins/harness-creator/skills/run-skill-create/schemas/",
+      "acceptance_criterion": "command-brief.schema.json が存在し、command-brief-C07/C08/C09.json の 3 本を Draft202012Validator で検証して errors 0 になること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-30-command-brief-schema.md"
+    },
+    {
+      "id": "P05-x-31",
+      "title": "C20 の抽出粒度を上げて round-trip 等価性を成立させる",
+      "phase_ref": "P05",
+      "entity_ref": "null",
+      "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "test_round_trip_equivalence が緑になること。抽出器が部品を『それらしく』復元して等価に見せるのではなく、往復が本当に一致していることを反例注入で示すこと (構成データを 1 箇所変えたら往復が壊れることを実測する)。ROUNDTRIP-CONTRACT.md の裁定と矛盾する場合は先に裁定を更新し、更新理由を書くこと。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+      "acceptance_criterion": "test_round_trip_equivalence が緑になること。抽出器が部品を『それらしく』復元して等価に見せるのではなく、往復が本当に一致していることを反例注入で示すこと (構成データを 1 箇所変えたら往復が壊れることを実測する)。ROUNDTRIP-CONTRACT.md の裁定と矛盾する場合は先に裁定を更新し、更新理由を書くこと。着手前後で 4 スイートの失敗テスト名の集合が増えないこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P05-x-31.md"
+    },
+    {
+      "id": "P05-x-31-brief-schema-sweep",
+      "title": "skill-brief 系 brief 全件へ schema 検証を一括適用する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "skill-brief-*.json の全件が Draft202012Validator で errors 0 になり、違反があった場合の修正箇所が一覧で記録されていること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-31-brief-schema-sweep.md"
+    },
+    {
+      "id": "P05-x-32",
+      "title": "出力ディレクトリ命名の新書式 (R25/REQ-6) に合わせて route-handout-output.py のテストを書き直す",
+      "phase_ref": "P05",
+      "entity_ref": "C19",
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/route-handout-output.py/",
+      "acceptance_criterion": "旧書式 <YYYY-MM-DD>-<種別>-<主題slug>/ (例: 2026-08-18-報告資料-kpi) を前提に書かれた `plugins/guide-doc-generator/tests/route-handout-output.py/` 配下のテストが、新書式 {date}_{slug}/ (正本: `improvement/output-naming-decision.json`、例: 2026-08-18_KPI進捗管理の業務フロー) の下で意図どおりに pass/fail すること。`script-brief-C19.json#acceptance_checks` の AC-C19-R25-72a〜72f (大文字小文字保持・非日本語 title 許容・doc_type 違いでの衝突拡大・来歴メタデータへの dir_token 退避・旧 3 要素ハイフン連結の禁止) を回帰テストとして追加すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-32.md"
+    },
+    {
+      "id": "P05-x-32-p02-acceptance-gate",
+      "title": "P02 の acceptance 3 点を機械検査する gate を用意する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/P02.json",
+      "acceptance_criterion": "brief 実在の id 集合一致・依存 DAG の非循環・実体解決 4 段の宣言の 3 点を検査する決定論スクリプトが存在し exit0 になること",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-32-p02-acceptance-gate.md"
+    },
+    {
+      "id": "P05-x-33-dirname-triple-owner",
+      "title": "ディレクトリ命名を config 単一正本へ寄せる (C19/C18/C10 の三重焼きを同時に解消)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "config/handout-output.json#dir_name_format を唯一の正本とし、C19/C18/C10 の 3 者がそこから読む。yyyy-mm-dd_日本語命名 で出力され C18 の日付ゲートと hook が同時に緑になる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-33-dirname-triple-owner.md"
+    },
+    {
+      "id": "P05-x-34-vocabulary-config-missing",
+      "title": "config/handout-vocabulary.json を新設し connectors / attainment_level_labels を実装する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "config/handout-vocabulary.json が実在し connectors に Google Drive / OneDrive / kintone を含む。C11 が前提セクションへ描画し C20 が round-trip で復元する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-34-vocabulary-config-missing.md"
+    },
+    {
+      "id": "P05-x-35-sentence-length-error-gate",
+      "title": "文長判定を warning から error へ昇格し config#sentence を正本にする",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "handout-visual-policy.json#sentence が正本となり、閾値超過が E-TEXT-* として exit1 で build を止める。Python 定数の重複保持が 0 件",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-35-sentence-length-error-gate.md"
+    },
+    {
+      "id": "P05-x-36-per-section-visual-gate",
+      "title": "図解・画像の充足判定を文書全体比率から per-section 判定へ変える",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "全 main section が図解 1 点以上と画像 1 点以上を持つことを per-section で検査し、欠けたセクションを pointer 付きで error として報告する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-36-per-section-visual-gate.md"
+    },
+    {
+      "id": "P05-x-37-dangling-reference-with-test",
+      "title": "実在しない references/ 参照 3 箇所を出荷物とテストで同時に直す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "3 箇所すべてが skills/ref-handout-design-system/references/ を指し、:155 の担当が C12 と書かれ、当該テストが緑で通る",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-37-dangling-reference-with-test.md"
+    },
+    {
+      "id": "P05-x-38-lint-glob-coverage",
+      "title": "skill-governance-lint の検査対象へ guide-doc-generator を含める",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/skill-governance-lint/",
+      "acceptance_criterion": "SKILL_GLOBS が guide-doc-generator の skills/agents を含み、CI の既定実行で本 plugin が検査される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-38-lint-glob-coverage.md"
+    },
+    {
+      "id": "P05-x-39-content-side-image-emission",
+      "title": "構成データ生成側が画像を 1 枚も指定しない欠陥を直す (当たり先は C11 ではない)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "構成データ生成が全 main section へ図解 1 点以上と画像 1 点以上を必ず割り当て、handout-config.json の assets が非空になる。P05-x-36 の per-section ゲートと対で緑になる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-39-content-side-image-emission.md"
+    },
+    {
+      "id": "P05-x-40-opening-goal-first-cards",
+      "title": "冒頭を goal 先頭のカード群へ再構成する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "冒頭が goal → 全体像 → 各カードの順に並び、hero が個別カードとして描画され、冒頭ブロックの 1 文が閾値内に収まる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-40-opening-goal-first-cards.md"
+    },
+    {
+      "id": "P05-x-41-prerequisite-section-missing",
+      "title": "前提セクションの器そのものを新設する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "handout-sections.json に前提セクションが定義され、外部コネクタが前提セクション内へ描画される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-41-prerequisite-section-missing.md"
+    },
+    {
+      "id": "P05-x-42-collision-empty-dir-residue",
+      "title": "衝突回避で描画未到達の空ディレクトリが残る問題を直す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "描画未到達のディレクトリが残らない、または残骸が識別可能に印付けされる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-42-collision-empty-dir-residue.md"
+    },
+    {
+      "id": "P05-x-43-heading-marker-terminal",
+      "title": "render-handout.py へ span.section-title data-hb-field=heading を実装する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "render-handout.py が span.section-title data-hb-field=heading を出し、ROUNDTRIP-CONTRACT.md の marker_status が present になり、round-trip で heading が復元される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-43-heading-marker-terminal.md"
+    },
+    {
+      "id": "P05-x-44-c06-r25-axes-shipped",
+      "title": "R25 意味軸 4 種を agents/handout-readability-reviewer.md へ反映する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/agents/",
+      "acceptance_criterion": "出荷 md が 10 軸を持ち AC8-AC10 が緑になる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-44-c06-r25-axes-shipped.md"
+    },
+    {
+      "id": "P05-x-45-root-resolution-shipped",
+      "title": "C17 / C09 の 4 段実体解決を出荷物へ反映する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "両出荷物が 4 段解決を行い、全段外れで exit 2 となる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-45-root-resolution-shipped.md"
+    },
+    {
+      "id": "P05-x-46-root-resolution-dedup",
+      "title": "実体解決 4 段の手順文を 6 本の brief から参照形へ集約する",
+      "phase_ref": "P03",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "4 段の完全手順文を持つ brief が C15 の 1 本のみになり、他は参照で成立する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-46-root-resolution-dedup.md"
+    },
+    {
+      "id": "P05-x-47",
+      "title": "実体解決 4 段手順文の正本を 1 つに裁定し 6 component + index.md を参照形へ集約する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "4 段手順文の全文を持つ箇所が 1 つだけになり、他は全て正本を名指す参照形になる。C11 の manifest name 照合の具体化と C15 の exit2 + 試行 4 経路 stderr 列挙は正本側へ吸い上げられている。C12:827 の manifest name 照合 略記が残っていないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-47.md"
+    },
+    {
+      "id": "P05-x-48",
+      "title": "C05 の閾値リテラルを canon 参照へ置換し閾値リテラル 0 件の AC を追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "acceptance_criterion": "C05 の数値リテラルが 0 件になり、C06 と同型の 閾値リテラルを持たない AC が grep 可能な形で追加されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-48.md"
+    },
+    {
+      "id": "P05-x-49",
+      "title": "component-inventory.json の C11.depends_on へ C16 を追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "C11.depends_on に C16 が含まれ、Kahn 法で 23/23 の位相順序が成立すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-49.md"
+    },
+    {
+      "id": "P05-x-50",
+      "title": "P03 裁定 3 件を C16 / C18 の open_questions へ書き戻す (P05-C18 build より前)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "(1) glossary 網羅性の LLM 工程は採らない (2) LANG-05 は存在と形式のみ検査する現案で可 (3) SC-08 の data-hb-nav=exclude は導入せず C11 側の不変条件で閉じる の 3 裁定が C16/C18 の brief 本体へ決定として書かれ、open_questions から外れていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-50.md"
+    },
+    {
+      "id": "P05-x-51",
+      "title": "P05-x-03 の完了条件へ literal 除去 grep と文長系 5 コードの exit1 を明記する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/task-specs/",
+      "acceptance_criterion": "task-spec に (a) dir_separator / DATED_DIR_RE / 書式文字列の literal が出荷ツリーから 0 件になる grep 検査 (b) W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / W-HERO-LONG / W-HERO-HEAVY が level=error で exit1 になる検査 の 2 つが完了条件として書かれていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-51.md"
+    },
+    {
+      "id": "P05-x-52",
+      "title": "決定論ゲート 4 本の宣言を C09 へ一本化するか P04 で集合一致を機械検査に固定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "ゲート集合の正本が 1 箇所になるか、または 3 箇所の集合一致を検査する機械検査が P04 の受入テストに存在すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-52.md"
+    },
+    {
+      "id": "P05-x-53",
+      "title": "per-section 下限検査における 1 節 の定義を確定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "図解・画像の per-section 下限が数える対象セクションの定義 (どの class / どの section_kind を含み何を除くか) が 1 箇所に明記され、その定義で出荷 HTML 4 本を数えた値が再現できること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-53.md"
+    },
+    {
+      "id": "P05-x-54",
+      "title": "画像計画 12 フィールドの受け皿を schema へ新設する (sections[].image_plan 案)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "acceptance_criterion": "agent が書くよう指示されている画像計画フィールドが schema 上に受理先を持ち、additionalProperties:false 下でも検証を通ること。assets[] へ載せるか sections[].image_plan を新設するかの選択理由が記録されていること。この節点は P05-x-36 / P05-x-39 より先に閉じる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-54.md"
+    },
+    {
+      "id": "P05-x-55",
+      "title": "asset.role と image_role の語彙衝突を裁定する (illustration の扱い)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "acceptance_criterion": "role 語彙が 1 つに収束し、C05 の『そのまま写す』が enum 違反を起こさないこと。illustration を落とす場合は script-brief-C22.json:127 の『illustration は demo_first を満たさない』という意味論が figure/photo で失われない代替表現を持つこと。C22 NAR-07 が role をどう読むかの実測を根拠に含めること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-55.md"
+    },
+    {
+      "id": "P05-x-56",
+      "title": "extract-handout-config.py の抽出フィールド表へ lead / goal_chips / prerequisite_connectors を追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "acceptance_criterion": "3 フィールドが data-hb-field から復元でき、P05-x-40 / P05-x-34 の変更後も round-trip の構成データ等価が成立すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-56.md"
+    },
+    {
+      "id": "P05-x-57",
+      "title": "connectors の reader 記述の字句矛盾を解消する (C12 単独 reader vs C11 も読む)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "C12 側が『検証目的の単独 reader』へ絞られ、C11 の表示目的 read-only reader と両立する記述になっていること。C11 を切り離して C12 が表示ラベルを焼き込む案を採らない理由 (attainment_level で data-hb-raw により回避した生値 vs 表示値の二重管理の再発) が記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-57.md"
+    },
+    {
+      "id": "P05-x-58",
+      "title": "dir_token の正本を 1 つに裁定し出荷と brief を一致させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "dir_token の値域が出荷 config と script-brief-C23.json#vocabulary_ssot で一致し、_dir_token_is_safe の検査が採用した正本の契約と同一になること。ASCII slug へ戻すか和文を維持するかの裁定理由が記録されていること — 日本語ディレクトリ名は slug が運ぶため R5 はどちらでも壊れないが、索引メタデータとしての望ましい形は別問題であり、決めずに片方だけ直すと再び正本が 2 つになる",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-58.md"
+    },
+    {
+      "id": "P05-x-59",
+      "title": "component-inventory.json の C15.depends_on へ C16 を追加する (P05-x-49 と同一ノードで処理)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "C15.depends_on に C16 が含まれ、Kahn 法で 23/23 の位相順序が成立すること。P05-x-49 と同時に適用して 1 回で検証すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-59.md"
+    },
+    {
+      "id": "P05-x-60",
+      "title": "C12:1253 の部品範囲表記を handout-parts.json の述語参照へ置換する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "範囲表記が消え、kind / data_block_type などカタログ側の述語で視覚部品を指す形になること。AC-C11-19 の用途基準 (値域をその場で定める記述に範囲表記が現れたら不合格) を満たすこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-60.md"
+    },
+    {
+      "id": "P05-x-61",
+      "title": "用途語彙の物理正本を briefs/config/handout-purposes.json へ出し 3 語彙の照合方法を揃える",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+      "acceptance_criterion": "用途語彙が中立データファイルへ出て、部品 id / section_kind と同じ方法 (出荷ファイルとの機械比較) で照合できること。P05-x-58 の裁定を先に取り込むこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-61.md"
+    },
+    {
+      "id": "P05-x-62-overview-three-types-not-shipped",
+      "title": "全体像 3 種の型 (timeline/map/thesis) を出荷 section_kinds へ反映し version を drift 検出子にする",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "出荷 config/handout-sections.json の section_kinds が timeline / map / thesis を含み flow-overview に deprecated と superseded_by が付く。かつ plan 側と出荷側の section_kinds が内容一致することを機械検査するゲートが存在し、内容が異なるのに version が同値なら fail する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-62-overview-three-types-not-shipped.md"
+    },
+    {
+      "id": "P05-x-63-c58-owner-declaration-missing",
+      "title": "C58 の checklist_covered 宣言を C12 へ追加する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "acceptance_criterion": "C46-C59 の 14 件すべてが いずれかの brief の checklist_covered に現れる。宣言 0 件の checklist id が存在しないことを機械検査するゲートを持つ",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-63-c58-owner-declaration-missing.md"
+    },
+    {
+      "id": "P05-x-64-c46-rowdetail-scope-asymmetry",
+      "title": "forbid_row_detail の走査対象を cards へ拡張し row 本文の手順記述も検出する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "forbid_row_detail を持つ section_kind について rows と cards の両方が検査され、cards で組んだ冒頭概観でも E-SECTIONKIND-ROWDETAIL が発火する。かつ row/card 本文へ手順・操作の詳細を書いた構成データが exit 1 になる。回帰テストは走査対象キーをデータファイルから導出し ('rows','cards') をテストへ literal で書かない",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-64-c46-rowdetail-scope-asymmetry.md"
+    },
+    {
+      "id": "P05-x-65-a5c-not-shipped",
+      "title": "provenance ゲート付き必須性 (A5c) を出荷 schema と validate へ実装する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/",
+      "acceptance_criterion": "provenance を持つ構成データで normalize 充填クラスのフィールドが欠落すると E-FIELD-MISSING で exit 1 になり、provenance を持たない手書き入力では exit 0 のままであることを両側から測るテストが存在する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-65-a5c-not-shipped.md"
+    },
+    {
+      "id": "P05-x-66-c59-dialogue-share-fail-open",
+      "title": "C59 の下限割合検査が dialogue 不在で発火しない fail-open を塞ぐ",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "acceptance_criterion": "min_duration_share を持つ section_kind が構成データに 1 件も無いとき、continue で検査を飛ばさず必須性違反として落ちること。dialogue を削るだけで C59 が無効化できないことを回帰テストで固定する",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-66-c59-dialogue-share-fail-open.md"
+    },
+    {
+      "id": "P05-x-66-reverse-drift-sweep",
+      "title": "実装から設計へ向けた逆向き突合を全 AC へ一度通す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/evidence/",
+      "acceptance_criterion": "全 component の AC について『出荷実装が brief より厳しい / 適用対象が広い』箇所を列挙した evidence が存在し、各件が順向き・逆向きのどちらのドリフトかで分類されている",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-66-reverse-drift-sweep.md"
+    },
+    {
+      "id": "P05-x-67-e-text-folded-absent-in-shipping",
+      "title": "E-TEXT-FOLDED が設計にのみ存在し出荷コードに無い件を裁定して解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "acceptance_criterion": "E-TEXT-FOLDED を出荷側に実装するか、設計側から幻の detection 名を撤回するかの裁定が下され、goal-spec C52 と C73 の矛盾も同時に解消していること。--normalize の有無で超過検出と畳み込みが排他になっている状態が解消されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-67-e-text-folded-absent-in-shipping.md"
+    },
+    {
+      "id": "P05-x-67-new-section-kinds-stale",
+      "title": "r21_decisions.new_section_kinds の読み方を確定し R25 追加分との関係を明記する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+      "acceptance_criterion": "new_section_kinds が R21 由来の記録であることが明示されるか、R25 追加分を含めて section_kind 追加の完全な履歴になるかのいずれかに決着し、どちらかが機械検査される",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-67-new-section-kinds-stale.md"
+    },
+    {
+      "id": "P05-x-68-goal-spec-c52-c73-contradiction",
+      "title": "goal-spec 内の C52 と C73(3) の矛盾を裁定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C52 の criterion 文と C73 (REQ-7) の (3) が同一事項について逆を要求していない状態。どちらを採るかの根拠が goal-spec 内に記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-68-goal-spec-c52-c73-contradiction.md"
+    },
+    {
+      "id": "P05-x-69-c50-four-steps-vs-three-slots",
+      "title": "C50 の 4 段と slot enum の 3 区画の不一致を裁定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C50 の criterion が要求する段数と schemas/handout-config.schema.json の part.slot enum の区画数が一致していること。操作を 4 つ目の区画として足すか C50 を 3 段へ改めるかの裁定根拠が記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-69-c50-four-steps-vs-three-slots.md"
+    },
+    {
+      "id": "P05-x-70-required-slot-described-but-unimplemented",
+      "title": "required_slot の schema 記述と slug 直書き実装の不一致を解消する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "acceptance_criterion": "slot 検査の適用対象が section_kind 属性から決まるか、あるいは schema 記述が実装どおりへ改まっているかのいずれかで、記述と実装が一致していること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-70-required-slot-described-but-unimplemented.md"
+    },
+    {
+      "id": "P05-x-71-nar07-checks-only-first-main-section",
+      "title": "NAR-07 が最初の本編セクション 1 つしか見ていない件を塞ぐ",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "acceptance_criterion": "C56 criterion 後半 機能説明が必ず実画面より後に置かれる が全本編セクションに対して検査されること。実画面を 1 枚置いて以降を概念説明で埋めた入力が exit 1 になる回帰テストが tests/verify-handout-narrative.py/test_nar07_demo_first.py に存在すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-71-nar07-checks-only-first-main-section.md"
+    },
+    {
+      "id": "P05-x-72-criterion-proxy-trio",
+      "title": "C46(b) / C51(a) / C54 が criterion をプロキシで代替している件を裁定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "3 件それぞれについて、プロキシで妥協するのか criterion を実装可能な文へ書き直すのかの裁定が記録され、プロキシを採る場合は criterion 側にその旨が明記されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-72-criterion-proxy-trio.md"
+    },
+    {
+      "id": "P05-x-73-presentation-order-derivation-enum-index-coupling",
+      "title": "C49 の presentation_order 導出が enum の並び順に依存している件を外す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "acceptance_criterion": "導出が値の名前による写像で表現され、prior_knowledge_level か presentation_order の enum を並べ替えても写像が変わらないこと。並べ替えを入れた回帰テストが落ちること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-73-presentation-order-derivation-enum-index-coupling.md"
+    },
+    {
+      "id": "P05-x-74-required-config-keys-null-passthrough",
+      "title": "必須フィールド検査が null を素通りする fail-open を塞ぐ",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "acceptance_criterion": "REQUIRED_CONFIG_KEYS の各キーについて、キー不在と null 代入が同じ扱い (exit 2) になること。tests/verify-handout-narrative.py/test_nar07_demo_first.py::TestNar07CannotBeDisabledByNulling の 3 本が緑になること。空文字・空配列でも同型でないことを併せて確認すること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-74-required-config-keys-null-passthrough.md"
+    },
+    {
+      "id": "P05-x-75-c22-brief-ac-id-duplication",
+      "title": "script-brief-C22.json の AC id 重複と expected 破壊を復旧する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+      "acceptance_criterion": "acceptance_checks[].id が一意であること。1 つ目の AC-C22-R21-56b の expected が HEAD 原文 (exit 0、NAR-07 PASS。概念図の存在自体は禁じておらず、実画面より前に置くことだけが禁止であることの回帰テスト) へ復元されていること。P03-x-04 で追加された方が AC-C22-R21-56d へ改番されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-75-c22-brief-ac-id-duplication.md"
+    },
+    {
+      "id": "P05-x-76-brief-acceptance-checks-shape-and-id-gate",
+      "title": "brief の acceptance_checks の形と id 一意性を機械検査するゲートを置く",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "全 brief の acceptance_checks について (a) id が brief 内で一意、(b) 要素の形が brief 間で統一されている、のいずれも機械検査するゲートが存在し exit0 であること。統一しない判断を採る場合はその根拠が記録されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-76-brief-acceptance-checks-shape-and-id-gate.md"
+    },
+    {
+      "id": "P05-x-77-ac-unimplemented-build-target-unmeasurable",
+      "title": "P04 全ノードの AC 後半 (build_target 未実装時に失敗する) を測定可能な文へ改める",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/task-graph.json",
+      "acceptance_criterion": "P04 の component ノードの acceptance_criterion 後半が、実装を消さずに測定できる文へ改められていること (例: build_target 不在時に全テストが fail する仕掛けを持つこと)。または測定手段が用意されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-77-ac-unimplemented-build-target-unmeasurable.md"
+    },
+    {
+      "id": "P05-x-78-permissive-exit-code-asserts",
+      "title": "assertIn(rc, (1,2)) 型の許容 assert を横断確認して契約を固定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "テスト名が特定の exit code を主張しているのにその code を固定していない assert が 0 件であること。exit code の主張は assertEqual で単一値へ固定されていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-78-permissive-exit-code-asserts.md"
+    },
+    {
+      "id": "P05-x-79-required-config-keys-test-net-narrower-than-impl",
+      "title": "必須フィールドのテスト網を実装の定数から導出する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+      "acceptance_criterion": "TestArgvAndExit2 の必須フィールド系テストが REQUIRED_CONFIG_KEYS から導出され、定数へ要素を足すとテストが自動的に増えること。手書き列挙が残っていないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-79-required-config-keys-test-net-narrower-than-impl.md"
+    },
+    {
+      "id": "P05-x-80",
+      "title": "dispatch-ready-set が stage_gate.deferred_to_release を知らず draft でも defer 対象を ready に出す",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/scripts/",
+      "acceptance_criterion": "dispatch-ready-set.py が route-build-plan.json を入力に取れる形へ拡張され、--stage draft の plan を渡したとき ready_batch に deferred_to_release の 52 件が 1 件も現れないことを実測する。plan 未指定時は従来どおり全件を返す後方互換も同時に実測する。deferred 対象を 1 件 ready へ混ぜる変異で赤になることを確認し、検査が空ゲートでないことを示す。",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-80.md"
+    },
+    {
+      "id": "P05-x-81",
+      "title": "handoff の plugin-scaffold script route が script_path を repo 相対で書き draft build 全体を止めていた",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "check-build-handoff.py へ placement_scope と script_path の基準一致を検査する規則を追加し、script_path を repo 相対で書いた script route を含む handoff で exit 非 0 になることを実測する。あわせて planner の handoff emitter を plugin-root 相対で出すよう修正し、plan を再生成しても再発しないことを examples/sample-plan/handoff-run-plugin-dev-plan.json (C09/C10 とも script_path='scripts/x.py') との一致で確認する。",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-81.md"
+    },
+    {
+      "id": "P05-x-82",
+      "title": "build-script-route.py が current handoff の構造化証跡を書かず script route が全滅していた (dispatcher が修正済・要レビュー)",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/harness-creator/",
+      "acceptance_criterion": "dispatcher が write_scope 外で行った plugins/harness-creator/scripts/build-script-route.py の 3 点修正 (validate_route への plan_dir 伝播 / artifact_sha256・graph_hash・test_evidence・generated_at・tool_versions の writer 追加 / test discover の起動形) を差分単位でレビューし採否を記録する。採用する場合は harness-creator の全テストが緑であることを再実行で確認し、plan_dir を落とす変異が『検査が成立しないまま fail-closed』ではなく明示的な赤になることを実測する。",
+      "execution_kind": "direct-task",
+      "task_spec_ref": "task-specs/P05-x-82.md"
+    },
+    {
+      "id": "P05-x-83",
+      "title": "テーマトークンの本文文字数予算を正本の決定値へ追随させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/assets/tokens/",
+      "acceptance_criterion": "assets/tokens/ 配下の出荷テーマトークンの本文文字数予算が正本 brief の決定値と一致し、C11 の赤 5 件と C12 の赤 1 件が緑になることを実測する。値は brief から実測導出しトークン側へ第 2 正本を作らない。brief 側の値を変える変異でトークン検査が追随して赤くなることを確認する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-83.md"
+    },
+    {
+      "id": "P05-x-84",
+      "title": "正本の契約撤回がテストの期待値へ伝播する経路を設ける",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/improvement/",
+      "acceptance_criterion": "撤回済み契約 (折り畳みで超過を逃がす / 文長超過を警告止まりにする) を期待値として守っているテストを特定して撤回し、同じ入力に対し現行契約どおり赤になる回帰テストへ置換する。置換後、撤回した挙動を復活させる変異が赤になることを実測する。あわせて正本の撤回がテスト期待値へ伝播しなかった経路を記述し、再発を検出する手段を 1 つ置く。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-84.md"
+    },
+    {
+      "id": "P05-x-85",
+      "title": "文長ゲートの閾値を正本設定へ移し検査スクリプトの直書きを除去する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/config/",
+      "acceptance_criterion": "文長ゲートの閾値が config の正本設定節に存在し、検査スクリプトから当該リテラルが grep で 0 件になることを実測する。config の値を変える変異で判定が追随して変わること、およびキーが不在のとき既定値へ倒さず赤になること (fail-open を作らない) の両方を確認する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-85.md"
+    },
+    {
+      "id": "P05-x-86",
+      "title": "既定本文上限の旧予算フォールバックを塞ぐ",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/scripts/",
+      "acceptance_criterion": "上限指定を持たないテーマが旧予算で通る抜け道が塞がれ、上限指定を削除した入力が既定値へ倒れず赤になることを実測する。スクリプト内に既定本文上限のリテラルが 0 件であることを grep で示す。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-86.md"
+    },
+    {
+      "id": "P05-x-87",
+      "title": "受入基準の面をタスクグラフと dispatch 本文で一致させる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "task-graph の acceptance_criterion と dispatch 本文が測る面の差分を全 P04 ノードについて列挙し、どちらへ寄せるかを裁定して記録する。裁定後、graph だけを読む後続ノードが同じ面を測れることを、graph の AC のみを入力にした dispatch 1 件で実測する。差分 0 件と主張する場合もその根拠を列挙で示す。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-87.md"
+    },
+    {
+      "id": "P05-x-88",
+      "title": "再現性の面が語のヒットで充足と誤判定されていないか受入テスト全体を横断確認する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "eval-log/guide-doc-generator/",
+      "acceptance_criterion": "受入テスト全ノードについて再現性の面が検出力を持つかを変異で確認する。判定器へ非決定性 (順序 shuffle 等) を注入して赤にならないノードを空ゲートとして列挙し、件数と対象 id を記録する。語のヒット (determin / 決定) を充足の根拠に使わず、根拠列には変異の結果のみを載せる。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-88.md"
+    },
+    {
+      "id": "P05-x-89",
+      "title": "本文全体への部分一致で契約を検査している判定を棚卸しし対応関係の検査へ寄せる",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "本文全体への部分一致で契約を検査している判定を全件列挙し、対応関係を測る形へ寄せる。完了は 『X not in body』形の残存件数 0 で示す。寄せた各判定について、必要な要素を落とす変異と不要な要素を足す変異の双方で赤になることを実測する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-89.md"
+    },
+    {
+      "id": "P05-x-90",
+      "title": "自己言及テストが他の受入テストに残っていないか横断確認する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "eval-log/guide-doc-generator/",
+      "acceptance_criterion": "テスト側の定数をテスト側のリテラルと比較する自己言及テストを全受入テストから列挙し、実装を読む形へ置換する。置換後、実装側の値を変える変異で赤になることを実測する。列挙結果は件数と対象 id を記録し、0 件と主張する場合もその根拠を変異で示す。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-90.md"
+    },
+    {
+      "id": "P05-x-91",
+      "title": "既存起票の前提を実測どおりに書き直し承認済みテストの扱いを裁定する",
+      "phase_ref": "P05",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/",
+      "acceptance_criterion": "既存起票の前提を実測どおり (射程は最初の本編セクション内ではなく文書全体で最初の 1 件のみ) へ書き直す。あわせて現行の狭い射程を明示的に承認している既存テストを存置するか撤回するかを裁定して記録し、裁定に沿って実装とテストが一致することを、先頭に実画面を 1 枚置き以降のセクションを概念図で始める入力で実測する。",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-91.md"
+    },
+    {
+      "id": "P05-x-92",
+      "title": "verify_by を pointer 型へ移し欠落検出を fail-closed 化する",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "checklist[] の verify_by が検証手段の実体 (gate script のパス / テストファイル::関数名) を名指ししており、check-plugin-goal-spec.py が verify_by 欠落を exit1 で落とすこと。欠落を注入した複製で exit1 になることを実測で示す",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-92.md"
+    },
+    {
+      "id": "P05-x-93",
+      "title": "要件文の B01-B15 を handout-parts.json 単一正本へ寄せる",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "C12/C45 の criterion 本文が部品を範囲リテラルで列挙せずカタログを参照する形になっており、カタログへ部品を追加しても要件文が陳腐化しないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-93.md"
+    },
+    {
+      "id": "P05-x-94",
+      "title": "LLM 側の分界線を要件文として立てる",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "LLM が担う責務が checklist の criterion として存在し、決定論化する設計変更が要件違反として検出できること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-94.md"
+    },
+    {
+      "id": "P05-x-95",
+      "title": "open_questions を機械可読な解決状態付き構造へ移す",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+      "acceptance_criterion": "open_questions の各要素が id と解決状態フィールドを持ち、未解決件数がスクリプトで一意に数えられること。phase-01 完了条件がその件数を参照して判定できること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-95.md"
+    },
+    {
+      "id": "P05-x-96",
+      "title": "checklist C46-C75 を P01 の AC 対象範囲へ含める",
+      "phase_ref": "P01",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugin-plans/guide-doc-generator/task-graph.json",
+      "acceptance_criterion": "P01 系ノードの acceptance_criterion が goal-spec.checklist の全件を対象として名指ししており、件数が増えたときに範囲外へ落ちる criterion が生じないこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-96.md"
+    },
+    {
+      "id": "P05-x-97",
+      "title": "NoLiteralCopyOfCanonTest のトートロジーを解き実際の写し4定数を対象に入れる",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+      "acceptance_criterion": "検出器の左辺が正本 (command-brief-C09.json) 側・右辺がテスト側の定数であり、正本の語彙を改名した変異 (M-A1/M-A2/M-A3 相当) で赤になること。GATE_STATES / NOT_RUN_REASONS / VERDICTS / EXIT_CODE_TO_STATE の4定数が検出器の対象に入っていること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-97.md"
+    },
+    {
+      "id": "P05-x-98",
+      "title": "handout-verify の本文全体述語を宣言行スコープへ寄せる",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+      "acceptance_criterion": "契約文を実装本文から削除する単点変異で violations>0 になること。とくに AC-C09-7 (html-path ディレクトリ停止) と AC-C09-6 (read-only 境界) の削除が検出できること",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-98.md"
+    },
+    {
+      "id": "P05-x-99",
+      "title": "test_predicate_scope.py を残り7 component へ横展開する",
+      "phase_ref": "P04",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/guide-doc-generator/tests/",
+      "acceptance_criterion": "reject_cases.py を持つ8 component すべてが test_predicate_scope.py を持ち、(a) 全述語の単点変異発火 (b) 本文側述語の語がスコープ内で一意 (c) 述語追加時に変異を足し忘れたら赤 の3点を満たすこと",
+      "execution_kind": "direct-task",
+      "route_ref": null,
+      "task_spec_ref": "task-specs/P05-x-99.md"
     },
     {
       "id": "P06",
@@ -1624,10 +3334,10 @@
       "id": "P13-x-02",
       "title": "plugin envelope を実体化しローカル marketplace 経路の install を成立させる",
       "phase_ref": "P13",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "plugin_level_surfaces で required:true の 3 サーフェスの実体が存在し、build-local-marketplace.py --check が exit0 で guide-doc-generator を掲載対象として解決できること。掲載を生成物から実測し、manifest を壊した反例で --check が RED になることを示すこと",
+      "acceptance_criterion": "component-inventory.json の plugin_level_surfaces で required:true と宣言済みの 3 サーフェス (manifest / composition / harness_eval) の実体が存在し、build-local-marketplace.py --check が exit0 で guide-doc-generator を掲載対象として解決できること。実体を置いただけで終わらせず、掲載されていることを生成物から実測して示すこと",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P13-x-02.md"
@@ -1636,10 +3346,10 @@
       "id": "P13-x-03",
       "title": "配布可否の裁定を反転し公開 marketplace への GitHub 経路 install を成立させる",
       "phase_ref": "P13",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugins/guide-doc-generator",
-      "acceptance_criterion": "guide-doc-generator が .claude-plugin/marketplace.json (name: skills) に登録され validate-plugin-completeness.py が exit0 になること。lint-readme-plugin-root-portability.py が skip でなく exit0 になること。phase-13-release.md の事前解決済み判断が新裁定と矛盾しない状態になっていること",
+      "acceptance_criterion": "guide-doc-generator が `.claude-plugin/marketplace.json` (name: skills) に登録され、`python3 scripts/validate-plugin-completeness.py` が exit0 になること。README の絶対パス依存が `lint-readme-plugin-root-portability.py` で exit0 になること (非配布時は skip されていた検査が配布可で初めて効くため、skip 頼みで通さないこと)。phase-13-release.md の『事前解決済み判断』が新しい裁定と矛盾しない状態になっていること",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P13-x-03.md"
@@ -1648,16 +3358,21 @@
       "id": "P13-x-04",
       "title": "ローカル経路と GitHub 経路の install 可能性を実測して証跡化する",
       "phase_ref": "P13",
-      "entity_ref": null,
+      "entity_ref": "null",
       "state": "pending",
       "write_scope": "plugin-plans/guide-doc-generator/evidence",
-      "acceptance_criterion": "2 経路それぞれについて実行コマンド・exit code・実測範囲と未実測範囲が evidence へ記録されていること。機械実行できない手順を pass と推定しないこと",
+      "acceptance_criterion": "2 経路それぞれについて『何を実行し・何が返り・どこまでが実測でどこからが未実測か』が evidence へ記録されていること。install そのものが対話 UI を要して機械実行できない部分は、pass と推定せず未実測と明記すること",
       "execution_kind": "direct-task",
       "route_ref": null,
       "task_spec_ref": "task-specs/P13-x-04.md"
     }
   ],
   "edges": [
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/RESOLUTION-P05-x-15-argument-hint.md",
+      "to": "P05-x-22"
+    },
     {
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md",
@@ -1677,6 +3392,11 @@
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md",
       "to": "P05-x-19"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md",
+      "to": "P05-x-21"
     },
     {
       "type": "consumes",
@@ -1735,6 +3455,11 @@
     },
     {
       "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+      "to": "P05-x-15"
+    },
+    {
+      "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
       "to": "P04-C08-01"
     },
@@ -1742,6 +3467,11 @@
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
       "to": "P05-C08-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+      "to": "P05-x-22"
     },
     {
       "type": "consumes",
@@ -1776,6 +3506,11 @@
     {
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+      "to": "P05-x-02"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
       "to": "P05-x-03"
     },
     {
@@ -1797,6 +3532,11 @@
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
       "to": "P05-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+      "to": "P05-x-25"
     },
     {
       "type": "consumes",
@@ -1875,6 +3615,11 @@
     },
     {
       "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+      "to": "P05-x-32"
+    },
+    {
+      "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
       "to": "P04-C20-01"
     },
@@ -1886,17 +3631,27 @@
     {
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-13"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "to": "P05-x-16"
+    },
+    {
+      "type": "consumes",
+      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
       "to": "P05-x-19"
     },
     {
       "type": "consumes",
       "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
-      "to": "P05-x-25"
-    },
-    {
-      "type": "consumes",
-      "from": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
-      "to": "P05-x-26"
+      "to": "P05-x-23"
     },
     {
       "type": "consumes",
@@ -2030,6 +3785,26 @@
     },
     {
       "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/",
+      "to": "P05-x-25"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/handout-parts.json",
+      "to": "P04-x-09"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/handout-parts.json",
+      "to": "P05-x-07"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/config/handout-parts.json",
+      "to": "P05-x-23"
+    },
+    {
+      "type": "consumes",
       "from": "plugins/guide-doc-generator/genomes/",
       "to": "P05-C21-01"
     },
@@ -2055,18 +3830,8 @@
     },
     {
       "type": "consumes",
-      "from": "plugins/guide-doc-generator/schemas/RESOLUTION-P13-x-03.md",
-      "to": "P13-x-04"
-    },
-    {
-      "type": "consumes",
       "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
       "to": "P05-x-18"
-    },
-    {
-      "type": "consumes",
-      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
-      "to": "P05-x-19"
     },
     {
       "type": "consumes",
@@ -2081,7 +3846,27 @@
     {
       "type": "consumes",
       "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
-      "to": "P05-x-26"
+      "to": "P05-x-28"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+      "to": "P05-x-31"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "to": "P04-x-09"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "to": "P05-x-09"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "to": "P05-x-11"
     },
     {
       "type": "consumes",
@@ -2091,12 +3876,42 @@
     {
       "type": "consumes",
       "from": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
-      "to": "P05-x-27"
+      "to": "P05-x-28"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "to": "P05-x-16"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+      "to": "P05-x-31"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/render-handout.py",
+      "to": "P05-x-20"
     },
     {
       "type": "consumes",
       "from": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
       "to": "P05-x-05"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+      "to": "P05-x-30"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
+      "to": "P05-x-24"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "to": "P05-x-24"
     },
     {
       "type": "consumes",
@@ -2107,6 +3922,11 @@
       "type": "consumes",
       "from": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/",
       "to": "P05-C03-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/",
+      "to": "P05-x-10"
     },
     {
       "type": "consumes",
@@ -2122,6 +3942,16 @@
       "type": "consumes",
       "from": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
       "to": "P05-C20-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
+      "to": "P05-x-12"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/extract-handout-config.py/",
+      "to": "P05-x-28"
     },
     {
       "type": "consumes",
@@ -2171,7 +4001,32 @@
     {
       "type": "consumes",
       "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-x-06"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-x-08"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
       "to": "P05-x-18"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-x-29"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/",
+      "to": "P05-x-31"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/render-handout.py/_harness.py",
+      "to": "P05-x-29"
     },
     {
       "type": "consumes",
@@ -2195,6 +4050,16 @@
     },
     {
       "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/run-handout-build/",
+      "to": "P05-x-14"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/run-handout-build/",
+      "to": "P05-x-17"
+    },
+    {
+      "type": "consumes",
       "from": "plugins/guide-doc-generator/tests/run-handout-extract/",
       "to": "P05-C02-01"
     },
@@ -2207,6 +4072,11 @@
       "type": "consumes",
       "from": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
       "to": "P05-C12-01"
+    },
+    {
+      "type": "consumes",
+      "from": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
+      "to": "P05-x-30"
     },
     {
       "type": "consumes",
@@ -2232,6 +4102,61 @@
       "type": "depends_on",
       "from": "P01",
       "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-113"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-114"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-115"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-116"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-117"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-119"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-92"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-93"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-94"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-95"
+    },
+    {
+      "type": "depends_on",
+      "from": "P01",
+      "to": "P05-x-96"
     },
     {
       "type": "depends_on",
@@ -2351,7 +4276,152 @@
     {
       "type": "depends_on",
       "from": "P02",
+      "to": "P02-c01-verdict-vocab-dedup"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c02-checklist-covered-declare"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c02-report-shape-binding"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c03-axis-vocab-removal"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c03-c12-report-routing"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c05-image-role-source"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c06-description-align"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c06-r25-axes"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c07-img-skip-ruling-ref"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c07-regression-scope"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c08-checklist-coverage"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c08-strict-fidelity-expose"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c11-consumers-single"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c11-heading-field-marker"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c11-heading-marker"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c11-img-alt-attribute"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c12-alt-attribution"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c12-copy-long-impl"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c12-opens-prose-overview-codes"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-c16-c10-ghost-name"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-demo-first-no-fallback"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-hero-card-element-fix"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-illustration-skip-ruling"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-img-realization-gate-owner"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-inventory-c01-c21-align"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-nav-overflow-design"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-root-resolution-align"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P02-visual-policy-readers-c11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
       "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02",
+      "to": "P05-x-118"
     },
     {
       "type": "depends_on",
@@ -2467,6 +4537,151 @@
       "type": "depends_on",
       "from": "P02-C23-01",
       "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c01-verdict-vocab-dedup",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c02-checklist-covered-declare",
+      "to": "P02-c08-checklist-coverage"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c02-report-shape-binding",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c03-axis-vocab-removal",
+      "to": "P02-c06-r25-axes"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c03-c12-report-routing",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c05-image-role-source",
+      "to": "P02-C05-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c06-description-align",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c06-r25-axes",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c07-img-skip-ruling-ref",
+      "to": "P02-illustration-skip-ruling"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c07-regression-scope",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c08-checklist-coverage",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c08-strict-fidelity-expose",
+      "to": "P02-C08-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c11-consumers-single",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c11-heading-field-marker",
+      "to": "P02-C02-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c11-heading-marker",
+      "to": "P02-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c11-img-alt-attribute",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c12-alt-attribution",
+      "to": "P02-C17-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c12-copy-long-impl",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c12-opens-prose-overview-codes",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c16-c10-ghost-name",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-c23-preset-definitions-visual-sync",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-demo-first-no-fallback",
+      "to": "P02-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-hero-card-element-fix",
+      "to": "P02-C18-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-illustration-skip-ruling",
+      "to": "P02-C07-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-img-realization-gate-owner",
+      "to": "P02-illustration-skip-ruling"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-inventory-c01-c21-align",
+      "to": "P02-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-nav-overflow-design",
+      "to": "P02-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-root-resolution-align",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P02-visual-policy-readers-c11",
+      "to": "P02-C11-01"
     },
     {
       "type": "depends_on",
@@ -2607,6 +4822,11 @@
       "type": "depends_on",
       "from": "P03",
       "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P03",
+      "to": "P05-x-46-root-resolution-dedup"
     },
     {
       "type": "depends_on",
@@ -2792,6 +5012,66 @@
       "type": "depends_on",
       "from": "P04",
       "to": "P04-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-100"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-102"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-103"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-120"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-121"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-122"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-123"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-124"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-125"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-97"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-98"
+    },
+    {
+      "type": "depends_on",
+      "from": "P04",
+      "to": "P05-x-99"
     },
     {
       "type": "depends_on",
@@ -3511,6 +5791,11 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P02-c23-preset-definitions-visual-sync"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-C01-01"
     },
     {
@@ -3541,6 +5826,11 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-C06-rebuild"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-C07-01"
     },
     {
@@ -3561,12 +5851,27 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-C10-01-dated-dir-regex"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-C11-01"
     },
     {
       "type": "depends_on",
       "from": "P05",
       "to": "P05-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C12-01-shared-fixture-visuals"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-C12-01-visual-density-tests"
     },
     {
       "type": "depends_on",
@@ -3626,6 +5931,11 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-C23-01-section-key-surface-tests"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-01"
     },
     {
@@ -3636,7 +5946,37 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-x-02-geometry-acceptance"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03-acceptance-hardening"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03-dir-name-format"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03-hook-scan-budget"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03-image-threshold-key"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-03-nav-item-threshold"
     },
     {
       "type": "depends_on",
@@ -3676,12 +6016,87 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-x-101"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-102-mutation-evidence-slot"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-104"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-105"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-106"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-107"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-108"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-109"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-11"
     },
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-x-110"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-111"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-112"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-126-route-report-build-dir"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-127-tg-c08-knowledge-on-blocked"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-128-discovered-task-leaf-contract-gap"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-129-repin-does-not-seed"
     },
     {
       "type": "depends_on",
@@ -3696,12 +6111,22 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-x-14-ac-denylist-delegate"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-15"
     },
     {
       "type": "depends_on",
       "from": "P05",
       "to": "P05-x-16"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-16-cr-owner-registry"
     },
     {
       "type": "depends_on",
@@ -3751,16 +6176,6 @@
     {
       "type": "depends_on",
       "from": "P05",
-      "to": "P05-x-26"
-    },
-    {
-      "type": "depends_on",
-      "from": "P05",
-      "to": "P05-x-27"
-    },
-    {
-      "type": "depends_on",
-      "from": "P05",
       "to": "P05-x-28"
     },
     {
@@ -3776,7 +6191,327 @@
     {
       "type": "depends_on",
       "from": "P05",
+      "to": "P05-x-30-command-brief-schema"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
       "to": "P05-x-31"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-31-brief-schema-sweep"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-32"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-32-p02-acceptance-gate"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-33-dirname-triple-owner"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-34-vocabulary-config-missing"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-35-sentence-length-error-gate"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-36-per-section-visual-gate"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-37-dangling-reference-with-test"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-38-lint-glob-coverage"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-39-content-side-image-emission"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-40-opening-goal-first-cards"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-41-prerequisite-section-missing"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-42-collision-empty-dir-residue"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-43-heading-marker-terminal"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-44-c06-r25-axes-shipped"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-45-root-resolution-shipped"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-47"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-48"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-49"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-50"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-51"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-52"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-53"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-54"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-55"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-56"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-57"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-58"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-59"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-60"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-61"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-62-overview-three-types-not-shipped"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-63-c58-owner-declaration-missing"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-64-c46-rowdetail-scope-asymmetry"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-65-a5c-not-shipped"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-66-c59-dialogue-share-fail-open"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-66-reverse-drift-sweep"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-67-e-text-folded-absent-in-shipping"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-67-new-section-kinds-stale"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-68-goal-spec-c52-c73-contradiction"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-69-c50-four-steps-vs-three-slots"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-70-required-slot-described-but-unimplemented"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-71-nar07-checks-only-first-main-section"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-72-criterion-proxy-trio"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-73-presentation-order-derivation-enum-index-coupling"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-74-required-config-keys-null-passthrough"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-75-c22-brief-ac-id-duplication"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-76-brief-acceptance-checks-shape-and-id-gate"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-77-ac-unimplemented-build-target-unmeasurable"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-78-permissive-exit-code-asserts"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-79-required-config-keys-test-net-narrower-than-impl"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-80"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-81"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-82"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-83"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-84"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-85"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-86"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-87"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-88"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-89"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-90"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05",
+      "to": "P05-x-91"
     },
     {
       "type": "depends_on",
@@ -3970,6 +6705,11 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-C06-rebuild",
+      "to": "P02-C06-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-C07-01",
       "to": "P02-C07-01"
     },
@@ -4045,6 +6785,11 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-C10-01-dated-dir-regex",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-C11-01",
       "to": "P02-C11-01"
     },
@@ -4112,6 +6857,16 @@
       "type": "depends_on",
       "from": "P05-C12-01",
       "to": "P05-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01-shared-fixture-visuals",
+      "to": "P05-x-86"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-C12-01-visual-density-tests",
+      "to": "P05-C12-01"
     },
     {
       "type": "depends_on",
@@ -4305,6 +7060,11 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-C23-01-section-key-surface-tests",
+      "to": "P05-C23-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-01",
       "to": "P04-x-01"
     },
@@ -4450,6 +7210,11 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-x-02-geometry-acceptance",
+      "to": "P02-C15-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-03",
       "to": "P04-x-05"
     },
@@ -4457,6 +7222,31 @@
       "type": "depends_on",
       "from": "P05-x-03",
       "to": "P04-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03-acceptance-hardening",
+      "to": "P02-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03-dir-name-format",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03-hook-scan-budget",
+      "to": "P02-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03-image-threshold-key",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-03-nav-item-threshold",
+      "to": "P02-C18-01"
     },
     {
       "type": "depends_on",
@@ -4500,13 +7290,168 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-x-100",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-101",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-102",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-102-mutation-evidence-slot",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-103",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-104",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-105",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-106",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-107",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-108",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-109",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-11",
       "to": "P05-C20-01"
     },
     {
       "type": "depends_on",
+      "from": "P05-x-110",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-111",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-112",
+      "to": "P05-C04-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-113",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-114",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-115",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-116",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-117",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-118",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-119",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-12",
       "to": "P05-C20-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-120",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-121",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-122",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-123",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-124",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-125",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-126-route-report-build-dir",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-127-tg-c08-knowledge-on-blocked",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-128-discovered-task-leaf-contract-gap",
+      "to": "P05-C10-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-129-repin-does-not-seed",
+      "to": "P05-x-128-discovered-task-leaf-contract-gap"
     },
     {
       "type": "depends_on",
@@ -4520,6 +7465,11 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-x-14-ac-denylist-delegate",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-15",
       "to": "P05-C07-01"
     },
@@ -4530,8 +7480,53 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-x-16-cr-owner-registry",
+      "to": "P02-C16-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-17",
       "to": "P05-x-14"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-18",
+      "to": "P04-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-18",
+      "to": "P05-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-18",
+      "to": "P05-x-09"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-18",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-19",
+      "to": "P05-x-13"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-20",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-21",
+      "to": "P05-x-11"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-21",
+      "to": "P05-x-13"
     },
     {
       "type": "depends_on",
@@ -4551,17 +7546,22 @@
     {
       "type": "depends_on",
       "from": "P05-x-25",
-      "to": "P05-x-24"
+      "to": "P04-C12-01"
     },
     {
       "type": "depends_on",
-      "from": "P05-x-26",
-      "to": "P05-x-24"
+      "from": "P05-x-25",
+      "to": "P05-x-03"
     },
     {
       "type": "depends_on",
-      "from": "P05-x-27",
-      "to": "P05-x-12"
+      "from": "P05-x-25",
+      "to": "P05-x-08"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-25",
+      "to": "P05-x-30"
     },
     {
       "type": "depends_on",
@@ -4580,8 +7580,383 @@
     },
     {
       "type": "depends_on",
+      "from": "P05-x-30-command-brief-schema",
+      "to": "P02-C09-01"
+    },
+    {
+      "type": "depends_on",
       "from": "P05-x-31",
       "to": "P05-x-23"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-31-brief-schema-sweep",
+      "to": "P02-C03-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-32",
+      "to": "P02-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-32",
+      "to": "P04-C19-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-32",
+      "to": "P05-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-32-p02-acceptance-gate",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-33-dirname-triple-owner",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-34-vocabulary-config-missing",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-35-sentence-length-error-gate",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-36-per-section-visual-gate",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-37-dangling-reference-with-test",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-38-lint-glob-coverage",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-39-content-side-image-emission",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-40-opening-goal-first-cards",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-41-prerequisite-section-missing",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-42-collision-empty-dir-residue",
+      "to": "P02-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-43-heading-marker-terminal",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-44-c06-r25-axes-shipped",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-45-root-resolution-shipped",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-46-root-resolution-dedup",
+      "to": "P03-x-02"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-47",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-48",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-49",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-50",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-51",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-52",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-53",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-54",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-55",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-56",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-57",
+      "to": "P03-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-58",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-59",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-60",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-61",
+      "to": "P03-x-03"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-62-overview-three-types-not-shipped",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-63-c58-owner-declaration-missing",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-64-c46-rowdetail-scope-asymmetry",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-65-a5c-not-shipped",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-66-c59-dialogue-share-fail-open",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-66-reverse-drift-sweep",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-67-e-text-folded-absent-in-shipping",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-67-new-section-kinds-stale",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-68-goal-spec-c52-c73-contradiction",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-69-c50-four-steps-vs-three-slots",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-70-required-slot-described-but-unimplemented",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-71-nar07-checks-only-first-main-section",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-72-criterion-proxy-trio",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-73-presentation-order-derivation-enum-index-coupling",
+      "to": "P03-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-74-required-config-keys-null-passthrough",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-75-c22-brief-ac-id-duplication",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-76-brief-acceptance-checks-shape-and-id-gate",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-77-ac-unimplemented-build-target-unmeasurable",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-78-permissive-exit-code-asserts",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-79-required-config-keys-test-net-narrower-than-impl",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-80",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-81",
+      "to": "P04-C23-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-82",
+      "to": "P04-C16-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-83",
+      "to": "P04-C11-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-84",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-85",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-86",
+      "to": "P04-C12-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-87",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-88",
+      "to": "P04-C01-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-89",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-90",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-91",
+      "to": "P04-C22-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-92",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-93",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-94",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-95",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-96",
+      "to": "P01-x-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-97",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-98",
+      "to": "P04-C09-01"
+    },
+    {
+      "type": "depends_on",
+      "from": "P05-x-99",
+      "to": "P04-C01-01"
     },
     {
       "type": "depends_on",
@@ -4681,22 +8056,77 @@
     {
       "type": "depends_on",
       "from": "P13-x-02",
-      "to": "P13-x-01"
+      "to": "P12-x-01"
     },
     {
       "type": "depends_on",
       "from": "P13-x-03",
-      "to": "P13-x-01"
+      "to": "P13-x-02"
     },
     {
       "type": "depends_on",
       "from": "P13-x-04",
-      "to": "P13-x-01"
+      "to": "P13-x-03"
     },
     {
       "type": "parent_of",
       "from": "P01",
       "to": "P01-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-113"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-114"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-115"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-116"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-117"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-119"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-92"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-93"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-94"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-95"
+    },
+    {
+      "type": "parent_of",
+      "from": "P01",
+      "to": "P05-x-96"
     },
     {
       "type": "parent_of",
@@ -4816,7 +8246,152 @@
     {
       "type": "parent_of",
       "from": "P02",
+      "to": "P02-c01-verdict-vocab-dedup"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c02-checklist-covered-declare"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c02-report-shape-binding"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c03-axis-vocab-removal"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c03-c12-report-routing"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c05-image-role-source"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c06-description-align"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c06-r25-axes"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c07-img-skip-ruling-ref"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c07-regression-scope"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c08-checklist-coverage"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c08-strict-fidelity-expose"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c11-consumers-single"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c11-heading-field-marker"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c11-heading-marker"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c11-img-alt-attribute"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c12-alt-attribution"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c12-copy-long-impl"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c12-opens-prose-overview-codes"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-c16-c10-ghost-name"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-demo-first-no-fallback"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-hero-card-element-fix"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-illustration-skip-ruling"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-img-realization-gate-owner"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-inventory-c01-c21-align"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-nav-overflow-design"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-root-resolution-align"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P02-visual-policy-readers-c11"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
       "to": "P02-x-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P02",
+      "to": "P05-x-118"
     },
     {
       "type": "parent_of",
@@ -4837,6 +8412,11 @@
       "type": "parent_of",
       "from": "P03",
       "to": "P03-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P03",
+      "to": "P05-x-46-root-resolution-dedup"
     },
     {
       "type": "parent_of",
@@ -5000,6 +8580,71 @@
     },
     {
       "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-100"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-102"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-103"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-120"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-121"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-122"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-123"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-124"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-125"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-97"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-98"
+    },
+    {
+      "type": "parent_of",
+      "from": "P04",
+      "to": "P05-x-99"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P02-c23-preset-definitions-visual-sync"
+    },
+    {
+      "type": "parent_of",
       "from": "P05",
       "to": "P05-C01-01"
     },
@@ -5031,6 +8676,11 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-C06-rebuild"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-C07-01"
     },
     {
@@ -5051,12 +8701,27 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-C10-01-dated-dir-regex"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-C11-01"
     },
     {
       "type": "parent_of",
       "from": "P05",
       "to": "P05-C12-01"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C12-01-shared-fixture-visuals"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-C12-01-visual-density-tests"
     },
     {
       "type": "parent_of",
@@ -5116,6 +8781,11 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-C23-01-section-key-surface-tests"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-01"
     },
     {
@@ -5126,7 +8796,37 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-x-02-geometry-acceptance"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03-acceptance-hardening"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03-dir-name-format"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03-hook-scan-budget"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03-image-threshold-key"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-03-nav-item-threshold"
     },
     {
       "type": "parent_of",
@@ -5166,12 +8866,87 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-x-101"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-102-mutation-evidence-slot"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-104"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-105"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-106"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-107"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-108"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-109"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-11"
     },
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-x-110"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-111"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-112"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-12"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-126-route-report-build-dir"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-127-tg-c08-knowledge-on-blocked"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-128-discovered-task-leaf-contract-gap"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-129-repin-does-not-seed"
     },
     {
       "type": "parent_of",
@@ -5186,12 +8961,22 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-x-14-ac-denylist-delegate"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-15"
     },
     {
       "type": "parent_of",
       "from": "P05",
       "to": "P05-x-16"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-16-cr-owner-registry"
     },
     {
       "type": "parent_of",
@@ -5241,16 +9026,6 @@
     {
       "type": "parent_of",
       "from": "P05",
-      "to": "P05-x-26"
-    },
-    {
-      "type": "parent_of",
-      "from": "P05",
-      "to": "P05-x-27"
-    },
-    {
-      "type": "parent_of",
-      "from": "P05",
       "to": "P05-x-28"
     },
     {
@@ -5266,7 +9041,327 @@
     {
       "type": "parent_of",
       "from": "P05",
+      "to": "P05-x-30-command-brief-schema"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
       "to": "P05-x-31"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-31-brief-schema-sweep"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-32"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-32-p02-acceptance-gate"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-33-dirname-triple-owner"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-34-vocabulary-config-missing"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-35-sentence-length-error-gate"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-36-per-section-visual-gate"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-37-dangling-reference-with-test"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-38-lint-glob-coverage"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-39-content-side-image-emission"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-40-opening-goal-first-cards"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-41-prerequisite-section-missing"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-42-collision-empty-dir-residue"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-43-heading-marker-terminal"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-44-c06-r25-axes-shipped"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-45-root-resolution-shipped"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-47"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-48"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-49"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-50"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-51"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-52"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-53"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-54"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-55"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-56"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-57"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-58"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-59"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-60"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-61"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-62-overview-three-types-not-shipped"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-63-c58-owner-declaration-missing"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-64-c46-rowdetail-scope-asymmetry"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-65-a5c-not-shipped"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-66-c59-dialogue-share-fail-open"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-66-reverse-drift-sweep"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-67-e-text-folded-absent-in-shipping"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-67-new-section-kinds-stale"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-68-goal-spec-c52-c73-contradiction"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-69-c50-four-steps-vs-three-slots"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-70-required-slot-described-but-unimplemented"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-71-nar07-checks-only-first-main-section"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-72-criterion-proxy-trio"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-73-presentation-order-derivation-enum-index-coupling"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-74-required-config-keys-null-passthrough"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-75-c22-brief-ac-id-duplication"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-76-brief-acceptance-checks-shape-and-id-gate"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-77-ac-unimplemented-build-target-unmeasurable"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-78-permissive-exit-code-asserts"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-79-required-config-keys-test-net-narrower-than-impl"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-80"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-81"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-82"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-83"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-84"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-85"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-86"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-87"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-88"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-89"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-90"
+    },
+    {
+      "type": "parent_of",
+      "from": "P05",
+      "to": "P05-x-91"
     },
     {
       "type": "parent_of",
@@ -5442,6 +9537,151 @@
       "type": "produces",
       "from": "P02-C23-01",
       "to": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c01-verdict-vocab-dedup",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c01-verdict-vocab-dedup.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c02-checklist-covered-declare",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c02-checklist-covered-declare.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c02-report-shape-binding",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c02-report-shape-binding.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c03-axis-vocab-removal",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c03-axis-vocab-removal.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c03-c12-report-routing",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c03-c12-report-routing.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c05-image-role-source",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c05-image-role-source.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c06-description-align",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c06-description-align.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c06-r25-axes",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c06-r25-axes.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c07-img-skip-ruling-ref",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c07-img-skip-ruling-ref.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c07-regression-scope",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c07-regression-scope.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c08-checklist-coverage",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c08-checklist-coverage.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c08-strict-fidelity-expose",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c08-strict-fidelity-expose.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c11-consumers-single",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c11-consumers-single.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c11-heading-field-marker",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c11-heading-field-marker.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c11-heading-marker",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c11-heading-marker.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c11-img-alt-attribute",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c11-img-alt-attribute.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c12-alt-attribution",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c12-alt-attribution.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c12-copy-long-impl",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c12-copy-long-impl.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c12-opens-prose-overview-codes",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c12-opens-prose-overview-codes.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c16-c10-ghost-name",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c16-c10-ghost-name.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-c23-preset-definitions-visual-sync",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-c23-preset-definitions-visual-sync.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-demo-first-no-fallback",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-demo-first-no-fallback.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-hero-card-element-fix",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-hero-card-element-fix.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-illustration-skip-ruling",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-illustration-skip-ruling.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-img-realization-gate-owner",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-img-realization-gate-owner.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-inventory-c01-c21-align",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-inventory-c01-c21-align.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-nav-overflow-design",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-nav-overflow-design.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-root-resolution-align",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-root-resolution-align.md"
+    },
+    {
+      "type": "produces",
+      "from": "P02-visual-policy-readers-c11",
+      "to": "plugin-plans/guide-doc-generator/discovered/P02-visual-policy-readers-c11.md"
     },
     {
       "type": "produces",
@@ -5660,6 +9900,11 @@
     },
     {
       "type": "produces",
+      "from": "P05-C06-rebuild",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-C06-rebuild.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-C07-01",
       "to": "plugins/guide-doc-generator/commands/handout-build.md"
     },
@@ -5680,6 +9925,11 @@
     },
     {
       "type": "produces",
+      "from": "P05-C10-01-dated-dir-regex",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-C10-01-dated-dir-regex.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-C11-01",
       "to": "plugins/guide-doc-generator/scripts/render-handout.py"
     },
@@ -5687,6 +9937,16 @@
       "type": "produces",
       "from": "P05-C12-01",
       "to": "plugins/guide-doc-generator/scripts/validate-handout-config.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C12-01-shared-fixture-visuals",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-C12-01-shared-fixture-visuals.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-C12-01-visual-density-tests",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-C12-01-visual-density-tests.md"
     },
     {
       "type": "produces",
@@ -5745,6 +10005,11 @@
     },
     {
       "type": "produces",
+      "from": "P05-C23-01-section-key-surface-tests",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-C23-01-section-key-surface-tests.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-01",
       "to": "plugin-plans/guide-doc-generator/evidence/P05.json"
     },
@@ -5755,8 +10020,38 @@
     },
     {
       "type": "produces",
+      "from": "P05-x-02-geometry-acceptance",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-02-geometry-acceptance.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-03",
       "to": "plugins/guide-doc-generator/config/"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03-acceptance-hardening",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-03-acceptance-hardening.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03-dir-name-format",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-03-dir-name-format.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03-hook-scan-budget",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-03-hook-scan-budget.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03-image-threshold-key",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-03-image-threshold-key.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-03-nav-item-threshold",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-03-nav-item-threshold.md"
     },
     {
       "type": "produces",
@@ -5795,13 +10090,168 @@
     },
     {
       "type": "produces",
+      "from": "P05-x-100",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-100.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-101",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-101.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-102",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-102.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-102-mutation-evidence-slot",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-102-mutation-evidence-slot.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-103",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-103.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-104",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-104.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-105",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-105.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-106",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-106.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-107",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-107.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-108",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-108.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-109",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-109.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-11",
       "to": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
     },
     {
       "type": "produces",
+      "from": "P05-x-110",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-110.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-111",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-111.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-112",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-112.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-113",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-113.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-114",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-114.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-115",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-115.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-116",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-116.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-117",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-117.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-118",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-118.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-119",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-119.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-12",
       "to": "plugins/guide-doc-generator/schemas/handout-config.schema.json"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-120",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-120.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-121",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-121.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-122",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-122.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-123",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-123.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-124",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-124.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-125",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-125.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-126-route-report-build-dir",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-126-route-report-build-dir.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-127-tg-c08-knowledge-on-blocked",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-127-tg-c08-knowledge-on-blocked.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-128-discovered-task-leaf-contract-gap",
+      "to": "plugin-plans/guide-doc-generator/task-graph.json"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-129-repin-does-not-seed",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-129-repin-does-not-seed.md"
     },
     {
       "type": "produces",
@@ -5815,6 +10265,11 @@
     },
     {
       "type": "produces",
+      "from": "P05-x-14-ac-denylist-delegate",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-14-ac-denylist-delegate.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-15",
       "to": "plugin-plans/guide-doc-generator/RESOLUTION-P05-x-15-argument-hint.md"
     },
@@ -5822,6 +10277,11 @@
       "type": "produces",
       "from": "P05-x-16",
       "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-16.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-16-cr-owner-registry",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-16-cr-owner-registry.md"
     },
     {
       "type": "produces",
@@ -5866,17 +10326,12 @@
     {
       "type": "produces",
       "from": "P05-x-25",
-      "to": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-25.md"
+      "to": "plugins/guide-doc-generator/examples/"
     },
     {
       "type": "produces",
-      "from": "P05-x-26",
-      "to": "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-26.md"
-    },
-    {
-      "type": "produces",
-      "from": "P05-x-27",
-      "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-27.md"
+      "from": "P05-x-25",
+      "to": "plugins/guide-doc-generator/tests/validate-handout-config.py/test_long_text_gate.py"
     },
     {
       "type": "produces",
@@ -5895,8 +10350,373 @@
     },
     {
       "type": "produces",
+      "from": "P05-x-30-command-brief-schema",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-30-command-brief-schema.md"
+    },
+    {
+      "type": "produces",
       "from": "P05-x-31",
       "to": "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-31.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-31-brief-schema-sweep",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-31-brief-schema-sweep.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-32",
+      "to": "plugins/guide-doc-generator/tests/route-handout-output.py/test_naming_format.py"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-32-p02-acceptance-gate",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-32-p02-acceptance-gate.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-33-dirname-triple-owner",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-33-dirname-triple-owner.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-34-vocabulary-config-missing",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-34-vocabulary-config-missing.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-35-sentence-length-error-gate",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-35-sentence-length-error-gate.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-36-per-section-visual-gate",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-36-per-section-visual-gate.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-37-dangling-reference-with-test",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-37-dangling-reference-with-test.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-38-lint-glob-coverage",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-38-lint-glob-coverage.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-39-content-side-image-emission",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-39-content-side-image-emission.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-40-opening-goal-first-cards",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-40-opening-goal-first-cards.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-41-prerequisite-section-missing",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-41-prerequisite-section-missing.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-42-collision-empty-dir-residue",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-42-collision-empty-dir-residue.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-43-heading-marker-terminal",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-43-heading-marker-terminal.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-44-c06-r25-axes-shipped",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-44-c06-r25-axes-shipped.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-45-root-resolution-shipped",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-45-root-resolution-shipped.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-46-root-resolution-dedup",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-46-root-resolution-dedup.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-47",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-47.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-48",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-48.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-49",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-49.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-50",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-50.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-51",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-51.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-52",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-52.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-53",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-53.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-54",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-54.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-55",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-55.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-56",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-56.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-57",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-57.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-58",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-58.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-59",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-59.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-60",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-60.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-61",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-61.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-62-overview-three-types-not-shipped",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-62-overview-three-types-not-shipped.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-63-c58-owner-declaration-missing",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-63-c58-owner-declaration-missing.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-64-c46-rowdetail-scope-asymmetry",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-64-c46-rowdetail-scope-asymmetry.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-65-a5c-not-shipped",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-65-a5c-not-shipped.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-66-c59-dialogue-share-fail-open",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-66-c59-dialogue-share-fail-open.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-66-reverse-drift-sweep",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-66-reverse-drift-sweep.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-67-e-text-folded-absent-in-shipping",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-67-e-text-folded-absent-in-shipping.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-67-new-section-kinds-stale",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-67-new-section-kinds-stale.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-68-goal-spec-c52-c73-contradiction",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-68-goal-spec-c52-c73-contradiction.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-69-c50-four-steps-vs-three-slots",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-69-c50-four-steps-vs-three-slots.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-70-required-slot-described-but-unimplemented",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-70-required-slot-described-but-unimplemented.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-71-nar07-checks-only-first-main-section",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-71-nar07-checks-only-first-main-section.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-72-criterion-proxy-trio",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-72-criterion-proxy-trio.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-73-presentation-order-derivation-enum-index-coupling",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-73-presentation-order-derivation-enum-index-coupling.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-74-required-config-keys-null-passthrough",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-74-required-config-keys-null-passthrough.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-75-c22-brief-ac-id-duplication",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-75-c22-brief-ac-id-duplication.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-76-brief-acceptance-checks-shape-and-id-gate",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-76-brief-acceptance-checks-shape-and-id-gate.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-77-ac-unimplemented-build-target-unmeasurable",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-77-ac-unimplemented-build-target-unmeasurable.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-78-permissive-exit-code-asserts",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-78-permissive-exit-code-asserts.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-79-required-config-keys-test-net-narrower-than-impl",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-79-required-config-keys-test-net-narrower-than-impl.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-80",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-80.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-81",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-81.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-82",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-82.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-83",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-83.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-84",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-84.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-85",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-85.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-86",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-86.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-87",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-87.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-88",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-88.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-89",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-89.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-90",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-90.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-91",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-91.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-92",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-92.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-93",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-93.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-94",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-94.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-95",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-95.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-96",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-96.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-97",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-97.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-98",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-98.md"
+    },
+    {
+      "type": "produces",
+      "from": "P05-x-99",
+      "to": "plugin-plans/guide-doc-generator/discovered/P05-x-99.md"
     },
     {
       "type": "produces",

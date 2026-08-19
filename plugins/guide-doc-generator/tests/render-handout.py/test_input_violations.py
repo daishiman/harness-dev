@@ -53,7 +53,7 @@ class UnnormalizedConfigTest(ViolationTestBase):
 class DocumentFieldTest(ViolationTestBase):
     REQUIRED = (
         "title", "date", "reader", "prior_knowledge_level", "doc_type",
-        "essential_problem", "purpose", "background", "goal", "duration", "sections",
+        "essential_problem", "purpose", "background", "goal", "sections",
     )
 
     def test_each_required_document_field_missing_is_exit1(self):

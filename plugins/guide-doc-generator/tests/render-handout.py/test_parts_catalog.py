@@ -16,7 +16,6 @@ EXTRA_ASSERTIONS = {
     "B01": lambda t, html, el: t.assertTrue(H.elements_with(html, "data-hb-nav-goal")),
     "B02": lambda t, html, el: t.assertTrue(H.field_elements(html, "purpose")),
     "B03": lambda t, html, el: (
-        t.assertTrue(H.elements_with(html, "data-hb-time")),
         t.assertTrue([e for e in H.parse(html) if "step-num" in e.classes()]),
     ),
     "B05": lambda t, html, el: (

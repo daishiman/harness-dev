@@ -82,7 +82,9 @@ SELF_EVAL_DIMENSIONS = ("完全性", "一貫性", "深度", "検証可能性", "
 # agent-brief-C05.json prompt_ref と open_questions[0] (R1- へ揃える案が残る)
 PROMPT_REF_BASENAMES = ("R-design-config.md", "R1-design-config.md")
 
-# agent-brief-C05.json input_contract.receives の hearing_result 14 項目
+# agent-brief-C05.json input_contract.receives の hearing_result 13 項目
+# (duration_or_volume は所要時間の撤去で消えた。時間・分量の宣言は資料の
+#  記述から外し、分量は detail_level / evidence_depth が担う)
 HEARING_FIELDS = (
     "reader",
     "prior_knowledge_level",
@@ -90,7 +92,6 @@ HEARING_FIELDS = (
     "essential_problem",
     "background",
     "overall_goal",
-    "duration_or_volume",
     "section_outline",
     "focus_theme",
     "target_tasks",
@@ -463,7 +464,6 @@ def check_agent(agent_md) -> list:
     # literal を要求しない (要求すると 2 つの契約が同時に満たせなくなる)。
     _requires(v, "AC-C05-17", body, r"data_block_type\s*=\s*handson",
               "ハンズオン部品をカタログ述語 (data_block_type=handson) で指す記述が無い")
-    _requires(v, "AC-C05-17", body, r"duration", "section.duration への言及が無い (C59)")
 
     # --- AC-C05-18: must_remember と no_need_to_remember の対 (C57) ----
     _requires(v, "AC-C05-18", body, r"must_remember", "must_remember への言及が無い")

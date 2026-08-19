@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import unittest
 
-from _support import NarrativeGateTestCase, base_config, build_html
+from _support import (
+    NarrativeGateTestCase, base_config, build_html, canonical_hero_field_order)
 
 HERO_FIELDS = ("purpose", "background", "goal")
 
@@ -102,23 +103,42 @@ class TestNar01Position(NarrativeGateTestCase):
         res = self.run_gate(html, self.write_config(cfg))
         self.assert_gate_fail(res, "NAR-01")
 
-    def test_document_order_purpose_background_goal_enforced(self):
+    def test_reversed_order_is_violation(self):
+        """正本の並びを逆にしたら落ちる。
+
+        旧版はこの位置に「purpose → background → goal でなければ落ちる」を
+        literal で書いていた。順序の正本は config 側 (opening.hero_card_fields
+        .order) にあり、利用者要求 R3 でゴール先頭へ変わったので、ここでは
+        「正本どおりか」だけを見る (script も fixture もテストも順序を持たない)。
+        """
         cfg = base_config()
-        html = self.write_html(build_html(cfg, hero_field_order=["goal", "background", "purpose"]))
+        reversed_order = list(reversed(canonical_hero_field_order()))
+        html = self.write_html(build_html(cfg, hero_field_order=reversed_order))
         res = self.run_gate(html, self.write_config(cfg))
         self.assert_gate_fail(res, "NAR-01")
 
-    def test_background_before_purpose_is_violation(self):
+    def test_swapping_the_first_two_is_violation(self):
         cfg = base_config()
-        html = self.write_html(build_html(cfg, hero_field_order=["background", "purpose", "goal"]))
+        order = canonical_hero_field_order()
+        order[0], order[1] = order[1], order[0]
+        html = self.write_html(build_html(cfg, hero_field_order=order))
         res = self.run_gate(html, self.write_config(cfg))
         self.assert_gate_fail(res, "NAR-01")
 
-    def test_correct_order_passes(self):
+    def test_canonical_order_passes(self):
         cfg = base_config()
-        html = self.write_html(build_html(cfg, hero_field_order=["purpose", "background", "goal"]))
+        html = self.write_html(
+            build_html(cfg, hero_field_order=canonical_hero_field_order()))
         res = self.run_gate(html, self.write_config(cfg))
         self.assert_gate_pass(res)
+
+    def test_goal_comes_first_in_the_canon(self):
+        """利用者要求 R3 の受け皿。正本そのものを固定する。
+
+        並び順の検査が正本から引けていても、正本が旧順序のままなら要求は
+        満たされない。「ゴールが最初」はここでしか押さえられない。
+        """
+        self.assertEqual("goal", canonical_hero_field_order()[0])
 
 
 class TestNar02TextMatch(NarrativeGateTestCase):

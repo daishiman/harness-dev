@@ -43,6 +43,16 @@ DETECTION_LINE_RE = re.compile(r"^(NAR-\S+)\b")
 
 NORMALIZED_BY = "validate-handout-config.py"  # C12 provenance.normalized_by
 
+# 冒頭 3 要素の並び順の正本。fixture も検査も同じ 1 か所から引く。
+VISUAL_POLICY_PATH = (
+    REPO_ROOT / "plugins" / "guide-doc-generator" / "config" /
+    "handout-visual-policy.json")
+
+
+def canonical_hero_field_order():
+    policy = json.loads(VISUAL_POLICY_PATH.read_text(encoding="utf-8"))
+    return list(policy["opening"]["hero_card_fields"]["order"])
+
 SECTION_DEFS = [
     ("s1", "はじめての 1 回", "読み終えたら、今日やることが分かる。", "main", "standard"),
     ("s2", "できること", "読み終えたら、依頼の書き方が 1 つ選べる。", "main", "capability-explainer"),
@@ -89,7 +99,6 @@ def base_config(**overrides):
                 "role": role,
                 "section_kind": kind,
                 "ties_to": "goal",
-                "duration": "10分",
             }
             for sid, title, goal, role, kind in SECTION_DEFS
         ],
@@ -300,7 +309,9 @@ def build_html(cfg, **opts):
         "goal": cfg["goal"],
     }
     texts.update(opts.get("hero_text_override", {}))
-    hero_order = opts.get("hero_field_order", ["purpose", "background", "goal"])
+    # 既定の並びは正本から引く。ここに順序を literal で書くと、正本を変えたとき
+    # 「実装は追従したのに fixture だけ旧順序」で全件が赤くなる (P05-x-40)。
+    hero_order = opts.get("hero_field_order", canonical_hero_field_order())
 
     out.append('<div class="pop-hero" data-hb-part="B02" data-hb-generated="true">\n')
     out.append("    <h1>%s</h1>\n" % cfg["title"])

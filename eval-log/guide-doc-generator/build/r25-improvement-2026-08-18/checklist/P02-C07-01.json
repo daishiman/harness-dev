@@ -1,0 +1,74 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C07-01",
+ "covered_task_ids": [
+  "P02-C07-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+ "verified_by": [
+  {
+   "claim": "出力先解決が 4 段の完全な連鎖として記述されている (修正前は第 1 段のみ)",
+   "method": "command-brief-C07.json の resolution_chain を dispatcher が直接読み出し",
+   "result": "pass: 『--out-dir > 環境変数 HB_OUT_DIR > config/handout-output.json の default_out_dir > いずれも無ければ exit2』の 4 段を確認。正本は C19 algorithm 6 と明示され command 側は再定義しない旨も併記"
+  },
+  {
+   "claim": "C19 が『焼かない』と裁定した書式リテラル {date}_{slug} が brief から消えている",
+   "method": "JSON 全文を文字列化して {date}_{slug} を計数",
+   "result": "pass: 0 件。代わりに『書式文字列そのものを command のブリーフにも本文にも書かない』が override_rule として明文化されている"
+  },
+  {
+   "claim": "HB_OUT_DIR が固定出力先の案内経路として brief に配線されている",
+   "method": "同上文字列で HB_OUT_DIR を計数",
+   "result": "pass: 6 件。behavior 6 で『C19 が記録したどの段で解決したかをそのまま伝える』へ接続"
+  },
+  {
+   "claim": "第 1 稿と完了が分離され、第 1 稿を完了と称さない",
+   "method": "『第 1 稿』/『完了』の出現を計数し文脈確認",
+   "result": "pass: 第 1 稿 10 件 / 完了 8 件。draft stage の『未完了だが動く』契約と一致"
+  },
+  {
+   "claim": "command 面の必須キー disable_model_invocation が存在する",
+   "method": "JSON キー直読み",
+   "result": "pass: disable_model_invocation=false + disable_model_invocation_rationale の対で存在 (top-level 21 キー)"
+  },
+  {
+   "claim": "出荷 config に dir_name_format が実在するか (SubAgent の blocking 報告の再測定)",
+   "method": "dispatcher が plugins/guide-doc-generator/config/handout-output.json の top-level キーを直接列挙",
+   "result": "fail(=報告どおり): 実キーは _meta / version / default_out_dir / size_limits の 4 つのみ。dir_name_format は不在"
+  },
+  {
+   "claim": "その不在が C19 を必ず停止させるか",
+   "method": "script-brief-C19.json の algorithm 7 を全文引用して確認",
+   "result": "pass(報告の severity を裏付け): 『キーが無い / 文字列でない / {date} か {slug} を欠く場合は exit2』と fail-closed が明記。出荷 config のままでは資料が 1 本も出ない"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git status --porcelain plugin-plans/ を dispatcher が確認",
+   "result": "pass: command-brief-C07.json 以外に本 SubAgent 由来の変更なし (35 insertions / 8 deletions)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C07-01",
+   "level": "blocking-for-release",
+   "summary": "出荷 config/handout-output.json に dir_name_format が無く、C19 は algorithm 7 で fail-closed exit2 になる。現状の出荷物では build が 1 本も完走しない。P05-x-03 が唯一の producer であり、本 cycle 最上位の release ブロッカー"
+  },
+  {
+   "id": "F-C07-02",
+   "level": "blocking-for-release",
+   "summary": "command-brief 用 JSON Schema が repo に存在せず (skill-brief / prompt-brief のみ)、C07 は構造検証を受けずに積まれている。C08/C09 も同条件"
+  },
+  {
+   "id": "F-C07-03",
+   "level": "carry-forward",
+   "summary": "挿絵取得失敗時の fail-soft (status=skipped) と R25/REQ-3『図解と画像を毎セクション必須』が衝突する。skipped を含む稿を完了と呼べるかの裁定が未了"
+  },
+  {
+   "id": "F-C07-04",
+   "level": "carry-forward",
+   "summary": "inventory C07 に harness_coverage.regression_scope が無く、command 面の回帰対象が宣言されていない"
+  }
+ ]
+}

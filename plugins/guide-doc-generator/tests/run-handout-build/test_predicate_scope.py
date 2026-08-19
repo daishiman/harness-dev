@@ -119,15 +119,15 @@ def _mutations():
     # AC-C01-6: combinators / goal_seek
     for comb in contract_lib.REQUIRED_COMBINATORS:
         add(_sub(f"combinator-dropped-{comb}", "AC-C01-6", f"  - {comb}\n", ""))
-    add(_sub(
-        "goal-seek-block-removed",
-        "AC-C01-6",
-        "goal_seek:\n  engine: inline\n  fork: subagent\n  max_loops: 5\n",
-        "",
-    ))
-    add(_sub("goal-seek-engine", "AC-C01-6", "  engine: inline\n", "  engine: subagent\n"))
-    add(_sub("goal-seek-fork", "AC-C01-6", "  fork: subagent\n", "  fork: inline\n"))
-    add(_sub("goal-seek-max-loops", "AC-C01-6", "  max_loops: 5\n", "  max_loops: 3\n"))
+    # goal_seek の値 (engine / fork / max_loops) の正本は component-inventory.json
+    # #C01 goal_seek ただ 1 つ (F-C06-04)。ここへ値を写すと正本が 2 つになるため、
+    # 注入前後の文字列も正本から組み立てる。
+    goal_seek = contract_lib.REQUIRED_GOAL_SEEK
+    goal_seek_block = "goal_seek:\n" + "".join(f"  {k}: {v}\n" for k, v in goal_seek.items())
+    add(_sub("goal-seek-block-removed", "AC-C01-6", goal_seek_block, ""))
+    for key, value in goal_seek.items():
+        mutated = value + 1 if isinstance(value, int) and not isinstance(value, bool) else f"{value}-changed"
+        add(_sub(f"goal-seek-{key}", "AC-C01-6", f"  {key}: {value}\n", f"  {key}: {mutated}\n"))
 
     # AC-C01-7: feedback_contract.criteria
     add(_sub("criteria-block-removed", "AC-C01-7", "  criteria:\n", ""))

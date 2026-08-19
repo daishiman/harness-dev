@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-85",
+  "covered_task_ids": [
+    "P05-x-85"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/config/",
+  "verified_by": [
+    {
+      "claim": "文長・文数・折り畳みの閾値が config に正本として存在する",
+      "method": "handout-visual-policy.json へ sentence / fold セクションを追加し、script 側から読めることを実行で確認",
+      "result": "sentence.max_chars={value:60, count_threshold:1, code:W-SENTENCE-LONG, level:error} / sentence.max_sentences_per_body={value:3, code:E-TEXT-PARAGRAPH, level:error} / fold.max_folds_per_section={value:0, code:E-TEXT-FOLDED, level:error}"
+    },
+    {
+      "claim": "重大度の正本が config 側の level フィールドに一本化されている",
+      "method": "陽性/陰性対照の実測。73 文字 1 文だけが違反の構成データと、同じ内容を 2 文へ割った構成データを validate-handout-config.py に通した",
+      "result": "陽性は W-SENTENCE-LONG のみを出して exit=1 (W- 接頭辞にもかかわらず完了を止めた)。陰性は診断ゼロで exit=0。level:\"error\" が接頭辞に優越していることが単独で確認できた"
+    },
+    {
+      "claim": "canon_authority が新規 code を網羅している",
+      "method": "_meta.canon_authority の列挙を確認",
+      "result": "W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / E-IMAGE-ABSENT を追加した"
+    },
+    {
+      "claim": "旧来の「なぜ warning に留めるか」の記述が残って新方針と矛盾していない",
+      "method": "_meta の該当キーを確認",
+      "result": "_meta.why_warning_not_error を削除し、_meta.severity_is_declared_not_inferred へ置き換えた"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X85-SEV-01",
+      "level": "info",
+      "summary": "重大度を接頭辞 (E-/W-) から推論する経路は「正本で error へ上げても code 名を改名しない限り効かない」二重正本だった。config の level を唯一の正本にしたので、以後 code 名は識別子としてのみ働く"
+    },
+    {
+      "id": "F-P05X85-SEV-02",
+      "level": "warn",
+      "summary": "fold.max_folds_per_section は現行設定では発火しない (詳細は P05-x-86 の F-P05X86-FOLD-01)。config に閾値はあるが、これを「今この検査が長文を止めている」根拠として数えてはならない"
+    }
+  ]
+}

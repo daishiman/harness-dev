@@ -1,0 +1,84 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C10-01",
+ "covered_task_ids": [
+  "P02-C10-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+ "verified_by": [
+  {
+   "claim": "R25/REQ-6 のディレクトリ改名で出荷 hook が一切発火しなくなるか",
+   "method": "dispatcher が出荷 hooks/guard-handout-external-ref.py の DATED_DIR_RE を直接読み、利用者指定の出力名で実マッチ",
+   "result": "pass (欠陥は実在・最重要): 出荷正規表現は r'^\\d{4}-\\d{2}-\\d{2}-' で末尾がハイフン固定。利用者指定の 'yyyy-mm-dd_日本語命名' 形 (例 2026-08-18_KPI進捗管理の業務フロー) は **False**、旧形 2026-08-18-kpi-flow のみ True。brief 側の新式 r'^\\d{4}-\\d{2}-\\d{2}(?!\\d)' は新旧両形に True・非日付 20260818x に False で意図どおり。利用者要求 R5 (出力先の日本語命名) をそのまま満たすと外部参照ガードが恒久沈黙するという、要求同士が衝突する構図だった"
+  },
+  {
+   "claim": "打ち切り予算 8 MiB / 3 秒 に config 側の受け皿があるか",
+   "method": "dispatcher が config/handout-output.json の size_limits を直接展開",
+   "result": "pass (受け皿なし): size_limits のキーは note / asset_max_bytes (5242880) / asset_max_bytes_semantics / asset_max_bytes_source の 4 つのみで hook_scan_budget は不在。asset_max_bytes は『1 素材あたり・base64 化前・累積閾値は持たない』と自ら明記しており、HTML 全体・base64 後を対象とする hook の走査予算とは単位も対象も別物なので流用不可という判断は正しい。数値を brief へ焼き直さず canonical_location だけ書いた対処も正しい"
+  },
+  {
+   "claim": "brief に予算の数値リテラルが規範として残っていないか",
+   "method": "dispatcher が '8 MiB' 6 件 / '3 秒' 1 件の出現文脈を全件目視",
+   "result": "pass: 全件が scale_check の規模見積り・open_questions の決着記録・asset_max_bytes との非流用理由であり、規範 (rule / fail_closed_scope) 側の literal は budget_thresholds 参照へ置換済み。C19 の dir_name_format で確立した『数値ではなく正本の所在を書く』が守られている"
+  },
+  {
+   "claim": "C10 の D1/D2 と C16 の SC-* の対応が定義されていたか",
+   "method": "SubAgent が identifier (D1/D2/SC-01..10/CR-EXT/CR-EMOJI/scan_*) と和文 8 語 (絵文字/外部参照/打ち切り/予算/自己完結/埋め込み/通信/相対パス) の両系統で grep し、出荷 script の format_line も読解",
+   "result": "pass (未定義だった): 対応表が brief に存在せず出荷 hook では worker 裁量で実装されていた。code_mapping (D1←SC-01/02/03/04/10、D2←SC-05) の新設と、振り分けを文字列マッチではなく『どの関数が返したか』で行う明記は妥当"
+  },
+  {
+   "claim": "invariant の非対称が両側で解消したか",
+   "method": "dispatcher が hook-brief-C10.json の rule_delegation.invariant / invariant_scope を展開し、前ノードで限定した script-brief-C16.json 側と対で読む",
+   "result": "pass: C10 側も『本 hook が検査を完走した入力に対し』へ限定され、invariant_scope が C16 側の同名キーと明示的に対になっている。予算超過時に C10=exit0 / C16=exit1 になり得ることを『規則の乖離ではなく意図的な二重防御』と書き分けており、C16 側へ打ち切りを足す誤実装 (最終ゲートの fail-open) を両側から塞いだ"
+  },
+  {
+   "claim": "R25 で hook の検査クラスが増えるか",
+   "method": "SubAgent が illustration / C14 の inline SVG / hero カード群を要素別に分析",
+   "result": "pass (件数のみ増・クラス不変): C16 で得た結論と同じ。ただし発火率が上がる分だけ予算超過による打ち切りが常態化する側へ動くという指摘は C16 では出ていなかった観点で、blocking の根拠として有効"
+  },
+  {
+   "claim": "schema 検証",
+   "method": "SubAgent が repo 全域を find",
+   "result": "実施不能 (正直な未達報告): hook-brief 用 schema はリポジトリに存在しない (brief 系 schema は prompt-brief と skill-brief の 2 件のみ)。skill-brief schema は kind enum が ref|run|wrap|assign|delegate で hook を含まず additionalProperties:false のため流用すると全キーが余剰になる。代替として json.load + top keys 24 / AC 23 / failure_modes 6 / open_questions 4 の構造検証のみ。dispatcher も同数を再測定し一致"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git diff --stat plugin-plans/",
+   "result": "pass: hook-brief-C10.json のみ (46 insertions / 10 deletions)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C10-01",
+   "level": "blocking-for-release",
+   "summary": "出荷 hooks/guard-handout-external-ref.py:62 の DATED_DIR_RE が R25/REQ-6 の {date}_{slug} 形に一切マッチせず、外部参照ガードが恒久沈黙する。利用者指定の出力先 05_Project/説明資料/yyyy-mm-dd_日本語命名 をそのまま使うと必ず踏む。brief は修正済みで script の rebuild (P05-C10-01) が必要"
+  },
+  {
+   "id": "F-C10-02",
+   "level": "blocking-for-release",
+   "summary": "打ち切り予算がソース焼き込みで config に受け皿キーが無い (size_limits.hook_scan_budget.{max_bytes,max_seconds} が不在)。R25 後の規模では上限素材 2 点、または 1 MiB の挿絵 6 節で 8 MiB に達し、打ち切りが例外ではなく常態になる。P05-x-03 の対象"
+  },
+  {
+   "id": "F-C10-03",
+   "level": "blocking-for-release",
+   "summary": "script-brief-C16.json:31 が C10 を実在しない名前 handout-emoji-and-external-ref-guard で呼んでいる (dispatcher 実測: 誤名 1 件 / 正名 guard-handout-external-ref 0 件)。ghost-name 型で、前ノード P02-C16-01 での見落とし"
+  },
+  {
+   "id": "F-C10-04",
+   "level": "carry-forward",
+   "summary": "plugin-plans/guide-doc-generator/envelope-draft/plugin.json:32 が plugin.json の hooks キー経由で hook を登録し、brief が定義しない --scope handout-output-html を argv に持つ。settings.json 単独登録の規則に反する第 2 の登録面。出荷側 .claude-plugin/plugin.json は hooks が null で正しい"
+  },
+  {
+   "id": "F-C10-05",
+   "level": "carry-forward",
+   "summary": "harness-creator に hook-brief 用 schema が存在せず、hook component の brief は構造検証を受けられない (skill / prompt のみ schema あり)。生成側 plugin の欠落"
+  },
+  {
+   "id": "F-C10-06",
+   "level": "carry-forward",
+   "summary": "script-brief-C14.json:70-71 の AC が絵文字レンジ U+2600-27BF を列挙しており ★ U+2605 を誤検出する潜在バグを含む。既に P05-x-14-ac-denylist-delegate として起票済みだが、単なる重複ではなく誤判定を生む点を追記対象とする"
+  }
+ ]
+}

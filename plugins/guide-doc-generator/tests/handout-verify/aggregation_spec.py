@@ -16,22 +16,45 @@ verdict_table をこの表と突き合わせるのが test_aggregation_rule.py �
 
 from __future__ import annotations
 
+import json
 from itertools import product
+from pathlib import Path
 
 # --------------------------------------------------------------------------
-# 語彙 (brief 由来。ここを勝手に増やさない)
+# 語彙
+#
+# ゲート面の名簿 (gate_id / 担当 component / 起動 script / 受け取る argv) の
+# 正本は command-brief-C09.json#gates[] ただ 1 つであり、ここへは写さず実測で
+# 導出する。正本が読めなければ import 時点で落とす (fail-closed)。
 # --------------------------------------------------------------------------
 
-# canonical_aggregation.gate_faces — C16 / C17 / C18 / C22 の 4 面ちょうど。
+BRIEF_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "plugin-plans"
+    / "guide-doc-generator"
+    / "briefs"
+    / "command-brief-C09.json"
+)
+
+
+def _load_brief():
+    try:
+        with BRIEF_PATH.open(encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, ValueError) as exc:  # pragma: no cover - 正本欠落は即座に落とす
+        raise RuntimeError(f"契約の正本が読めない: {BRIEF_PATH} ({exc})") from exc
+
+
+BRIEF = _load_brief()
+_GATES = BRIEF["gates"]
+if not _GATES:  # pragma: no cover
+    raise RuntimeError(f"command-brief-C09.json の gates[] が空: {BRIEF_PATH}")
+
+# gates[].gate_id -> component。C16 / C17 / C18 / C22 の 4 面ちょうど。
 # inventory の C09 description が 3 面と書いていたのは誤りで、P03 Y-07 で 4 面に確定。
-GATE_FACES = {
-    "selfcontained": "C16",
-    "a11y-print": "C17",
-    "language": "C18",
-    "narrative": "C22",
-}
+GATE_FACES = {g["gate_id"]: g["component"] for g in _GATES}
 
-GATE_IDS = ("selfcontained", "a11y-print", "language", "narrative")
+GATE_IDS = tuple(g["gate_id"] for g in _GATES)
 
 # behavior 4: ゲート結果の 4 状態
 GATE_STATES = ("pass", "fail", "error", "not-run")
@@ -47,23 +70,16 @@ NOT_RUN_REASONS = (
 # behavior 5 + --only の規約
 VERDICTS = ("pass", "fail", "incomplete", "partial")
 
-# gate_id -> 起動する script (behavior 3 / gates[])
-GATE_SCRIPTS = {
-    "selfcontained": "verify-handout-selfcontained.py",
-    "a11y-print": "verify-handout-a11y-print.py",
-    "language": "verify-handout-language.py",
-    "narrative": "verify-handout-narrative.py",
-}
+# gate_id -> 起動する script (gates[].script)
+GATE_SCRIPTS = {g["gate_id"]: g["script"] for g in _GATES}
 
-# gates[].requires — config を必須にするのは language / narrative の 2 面だけ
-GATES_REQUIRING_CONFIG = ("language", "narrative")
+# gates[].requires に config を含む面 (config 必須ゲート)
+GATES_REQUIRING_CONFIG = tuple(g["gate_id"] for g in _GATES if "config" in g.get("requires", []))
 
-# 各 script が受け取る argv (delegation_form / arguments)
+# 各 script が受け取る argv = gates[].requires + gates[].optional をフラグ化したもの
 GATE_ARGV = {
-    "selfcontained": ("--html",),
-    "a11y-print": ("--html",),
-    "language": ("--html", "--config", "--out-dir"),
-    "narrative": ("--html", "--config"),
+    g["gate_id"]: tuple(f"--{name}" for name in list(g.get("requires", [])) + list(g.get("optional", [])))
+    for g in _GATES
 }
 
 # script の exit code から状態への写像 (behavior 4)

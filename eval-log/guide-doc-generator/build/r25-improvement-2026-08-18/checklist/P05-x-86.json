@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-86",
+  "covered_task_ids": [
+    "P05-x-86"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/scripts/",
+  "verified_by": [
+    {
+      "claim": "--normalize の逃げ道が塞がれ、長文が正規化で握り潰されない",
+      "method": "text-length-gate-decision.json#_meta.current_state.reproduced のシナリオ (overview 節に 780 文字の TEXT) を --normalize --out 付きで実行",
+      "result": "exit=1。E-TEXT-OVERFLOW (本文が上限 60 文字を超える・実際 780 文字) と E-TEXT-PARAGRAPH (本文が 30 文ある・上限 3 文) が出た。裁定前は同じ入力が exit=0 で通っていた"
+    },
+    {
+      "claim": "文字数予算内でも長い 1 文は落ちる",
+      "method": "陽性対照: standard (予算 100 文字) の節に 73 文字の 1 文だけを置き、他の違反をすべて解消した構成データで実行",
+      "result": "W-SENTENCE-LONG /sections/0/parts/1 のみを出して exit=1"
+    },
+    {
+      "claim": "短い文は誤検出しない",
+      "method": "陰性対照: 上と同じ内容を 2 文へ割った構成データで実行",
+      "result": "診断ゼロ・exit=0 (OK handout-config: sections=1 parts=5 warnings=0)"
+    },
+    {
+      "claim": "図解密度の判定が資料全体の総量比ではなく main セクション 1 個単位になった",
+      "method": "DIAGRAM も IMG も持たない main 節 1 個の構成データで実行",
+      "result": "W-DIAGRAM-FEW と E-IMAGE-ABSENT がその節に対して出た。変更前は削除済みの複数形キー min_diagrams_per_main_sections を読んで比率 0.34 へ fallback しており、この節は無警告で通っていた"
+    },
+    {
+      "claim": "重大度が config の level 宣言から決まる",
+      "method": "main() の is_error が ctx.error_codes を参照する経路を実装し、陽性対照 (W-SENTENCE-LONG 単独) の exit code を実測",
+      "result": "exit=1。W- 接頭辞の code が config の level:\"error\" 宣言だけで完了を止めることを単独で確認した"
+    },
+    {
+      "claim": "正本が読めないときにゲートが緩まない",
+      "method": "FALLBACK_ERROR_CODES を空集合にせず、正本不在時も error 宣言が残る実装にした",
+      "result": "方針ファイルを壊すとゲートが緩む fail-open 経路を持たない (fail-closed)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X86-FOLD-01",
+      "level": "warn",
+      "summary": "E-TEXT-FOLDED は現行設定では構造上到達不能である。E-TEXT-OVERFLOW が error になったため main() は normalize_config を呼ぶ前に EXIT_VIOLATION を返し、かつ fold_section は同じ ctx.body_limit を使う。したがって超過本文が折り畳み経路へ到達しない。これは意図した結末 (超過は畳まず書き手が短くして解決する) だが、『今この検査が長文を止めている』根拠として数えてはならない。残しているのは両閾値が将来分かれた場合の二重化としてのみである"
+    },
+    {
+      "id": "F-P05X86-TESTS-00",
+      "level": "warn",
+      "summary": "plugins/guide-doc-generator/tests/validate-handout-config.py の同梱テストは 155 failed / 186 passed。原因を可逆プローブで切り分けた: handout-visual-policy.json の min_diagrams_per_main_section / min_images_per_main_section を 0 にして再実行すると 21 failed / 320 passed になる。したがって 134 件は共有フィクスチャ _harness.py の最小構成データが IMG も DIAGRAM も持たないことだけに由来し、残り 21 件が本文予算と文長ゲートの期待値に由来する。155 件の独立した欠陥ではない。なおリポジトリ直下の pytest (tests/) は 9 failed / 7306 passed で、うち guide-doc-generator 由来は criteria の 4 件のみ (本変更以前からの既存の赤)"
+    },
+    {
+      "id": "F-P05X86-TESTS-01",
+      "level": "warn",
+      "summary": "134 件分: 共有フィクスチャ plugins/guide-doc-generator/tests/validate-handout-config.py/_harness.py へ IMG と DIAGRAM を持たせる修正が要る。密度検査と無関係な test_micro_copy / test_layering / test_normalize_date_determinism まで巻き込んでいる。write_scope 外のため discovered-task P05-C12-01-shared-fixture-visuals (structural) として emit 済み。先行して emit した P05-C12-01-visual-density-tests (test_visual_density.py の総量比前提の期待値) と併せて 2 件"
+    },
+    {
+      "id": "F-P05X86-TESTS-02",
+      "level": "warn",
+      "summary": "21 件分: 本文予算 (60/100/160) と文長ゲートの導入により plugins/guide-doc-generator/tests/validate-handout-config.py/test_r21_text_fold.py の期待値が合わなくなった。text-length-gate-decision.json#risk_and_impact.existing_artifacts はこれを求めている変更そのものと裁定しており、追従は P05-x-25 の担当。同 node は現在 not-ready のため未着手"
+    },
+    {
+      "id": "F-P05X86-MSG-01",
+      "level": "info",
+      "summary": "W-SENTENCE-LONG の文言は当初 count_threshold-1 を『上限 N 件』と表示していた。閾値 1 のとき『上限 0 件』となり読み違えを招くため『N 件で違反』へ改めた"
+    }
+  ]
+}

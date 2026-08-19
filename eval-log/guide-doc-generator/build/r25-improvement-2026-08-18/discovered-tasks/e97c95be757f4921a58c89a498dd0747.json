@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C18-01",
+  "reason": "実測: 出荷 config の micro_copy.roles は label/title/caption の 3 種のみで nav_item が存在せず、note の適用範囲も sections[].parts[].data と diagrams[].data に限定。nav ラベルは C11 が section 見出しから描く値のため二重に範囲外。利用者要求 R11 (上部ナビを見やすく) の決定論的担保がこの 1 点に懸かる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C18-01.json",
+  "proposed_node": {
+    "id": "P05-x-03-nav-item-threshold",
+    "title": "nav ラベルの文字数上限を出荷 config へ載せ検査範囲を届かせる",
+    "phase_ref": "P05",
+    "entity_ref": "C12",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+    "acceptance_criterion": "出荷 config に nav ラベルの文字数上限が実在し (plan 側 briefs/config/handout-visual-policy.json の nav_item と同値)、micro_copy.note の適用範囲または専用の検査点により C11 algorithm 14 が描く nav ラベルが検査対象に入ること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

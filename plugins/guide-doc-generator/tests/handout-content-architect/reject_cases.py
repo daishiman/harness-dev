@@ -117,8 +117,8 @@ REJECT_CASES = [
     ),
     (
         "dialogue-and-handson-dropped",
-        "- dialogue 枠と handson (config/handout-parts.json で data_block_type=handson を持つ部品) と anticipated-qa を preset の required に従って置き、\n  各セクションへ duration を書く。",
-        "- 時間が余りそうなら質疑の時間を取る。",
+        "- dialogue 枠と handson (config/handout-parts.json で data_block_type=handson を持つ部品) と anticipated-qa を preset の required に従って置く。",
+        "- 余裕がありそうなら質疑の枠を取る。",
         "AC-C05-17",
     ),
     (

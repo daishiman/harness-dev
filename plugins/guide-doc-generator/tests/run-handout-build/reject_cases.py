@@ -5,6 +5,18 @@
 明示的に持ち、チェッカが常時 PASS する空ゲートになっていないことを固定する。
 """
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import contract_lib  # noqa: E402
+
+# goal_seek の数値は component-inventory.json #C01 goal_seek が唯一の正本
+# (F-C06-04)。fixture 側へ写すと正本が 2 つになり、正本が変わったときに
+# 「正しい値と誤った値の両方が誤り」になって注入検査が黙って空振りする。
+_MAX_LOOPS = contract_lib.REQUIRED_GOAL_SEEK["max_loops"]
+
 # (case_name, 置換前, 置換後, 落ちるべき契約 id)
 REJECT_CASES = [
     (
@@ -72,8 +84,8 @@ REJECT_CASES = [
     ),
     (
         "goal-seek-max-loops-changed",
-        "  max_loops: 5",
-        "  max_loops: 3",
+        f"  max_loops: {_MAX_LOOPS}",
+        f"  max_loops: {_MAX_LOOPS + 1}",
         "AC-C01-6",
     ),
     (

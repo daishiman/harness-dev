@@ -107,7 +107,6 @@ class TestNar08Logistics(NarrativeGateTestCase):
                 "role": "appendix",
                 "section_kind": "sources",
                 "ties_to": "goal",
-                "duration": "5分",
             }
         )
         html = self.write_html(build_html(cfg))
@@ -124,7 +123,6 @@ class TestNar08Logistics(NarrativeGateTestCase):
                 "role": "appendix",
                 "section_kind": "sources",
                 "ties_to": "goal",
-                "duration": "5分",
             }
         )
         html = self.write_html(

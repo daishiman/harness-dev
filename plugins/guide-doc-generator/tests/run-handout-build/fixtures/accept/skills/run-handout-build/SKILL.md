@@ -9,7 +9,7 @@ prefix: run
 hierarchy: L1
 user-invocable: true
 output_language: ja
-argument-hint: "[--config <handout-config.json>] [--out-root <dir>]"
+argument-hint: "[--config <handout-config.json>] [--out-dir <dir>] [--assets-src <dir>]"
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]
 depends_on: [C03, C04, C05, C11, C12, C13, C14, C15, C16, C17, C18, C19, C21, C22, C23]
 script_refs:
@@ -95,7 +95,7 @@ feedback_contract:
       verify_by: test
     - id: OUT3
       loop_scope: outer
-      text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D9 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲と挿絵生成 (C13) が draft 段で起動していないことを実走の痕跡で確認する"
+      text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D10 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する"
       verify_by: live-trial
 ---
 
@@ -161,7 +161,7 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 - `criteria:IN1`: validate-handout-config.py が exit0 で必須項目欠落 0 件である。
 - `criteria:OUT1`: 4 ゲートが exit0 で同梱 4 点が揃うことを受入テストが確認する。
 - `criteria:OUT2`: 同梱構成データからの 2 回生成で出力 HTML がバイト一致する。
-- `criteria:OUT3`: 実起動で第1稿が 1 質問ラウンド以内に出て D1-D9 到達時に停止し、C03 委譲と C13 挿絵が draft で起動しないことを確認する。
+- `criteria:OUT3`: 実起動で第1稿が 1 質問ラウンド以内に出て D1-D10 到達時に停止し、C03 委譲が draft で起動せず、C21 挿絵は draft でも起動することを確認する。
 
 ## Gotchas
 

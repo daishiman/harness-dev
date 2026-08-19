@@ -166,9 +166,24 @@ def dir_token_of(tc: unittest.TestCase, slug: str) -> str:
 
 
 def name_prefix(tc: unittest.TestCase, doc_type: str | None = None) -> str:
-    """<date>-<dir_token>- までの固定部 (slug 部を切り出すための境界)。"""
-    slug = doc_type or any_doc_type(tc)
-    return "{}-{}-".format(FIXTURE_DATE_DIR, dir_token_of(tc, slug))
+    """slug 部の直前までの固定部 (slug 部を切り出すための境界)。
+
+    書式そのものはテストへ書かず config/handout-output.json の dir_name_format
+    から作る。R25 で {date}-{doc_type}-{slug} から {date}_{slug} へ変わったとき、
+    ここに書式が焼かれていたため命名側の変更が全テストの前提を壊した。
+    doc_type 引数は署名互換のため残すが、現行書式では命名に現れない。
+    """
+    return dir_name_format(tc).split("{slug}", 1)[0].format(date=FIXTURE_DATE_DIR)
+
+
+def dir_name_format(tc: unittest.TestCase) -> str:
+    """出力ディレクトリ名の書式 (正本 = config/handout-output.json)。"""
+    require_file(tc, OUTPUT_CONFIG, "C19")
+    data = json.loads(OUTPUT_CONFIG.read_text(encoding="utf-8"))
+    value = data.get("dir_name_format")
+    if not isinstance(value, str) or "{slug}" not in value:
+        tc.fail("dir_name_format が無いか {{slug}} を含まない: {!r}".format(value))
+    return value
 
 
 def slug_part(tc: unittest.TestCase, dirname: str, doc_type: str | None = None) -> str:
@@ -216,7 +231,6 @@ def normalized_config(tc: unittest.TestCase, **overrides) -> dict:
         "reader": "P05 の実装担当",
         "prior_knowledge_level": "basic",
         "essential_problem": "出力先の命名規則が二重定義されると変更が片方に取り残される",
-        "duration": "30分",
         "sections": [],
         "provenance": {
             "normalized_by": "validate-handout-config.py",

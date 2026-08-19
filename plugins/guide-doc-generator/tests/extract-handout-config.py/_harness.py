@@ -95,11 +95,12 @@ DOC_META = {
     "prior_knowledge_level": "basic",
     "essential_problem": "手順は分かっていても、どこから自動化に着手すればよいかを決められない",
     "title": "生成 AI で月次集計を組み立てる",
-    "date": "2026年8月17日",
+    # 日付は紙面に出さず root 属性 data-hb-date で運ぶ (C11 build_doc_head)。
+    # 値は構成データの date をそのまま刻むので、ここも正規化後の書式にする。
+    "date": "2026/08/17",
     "purpose": "生成 AI を日々の集計業務へ組み込む手順を、その場で再現できる形で共有する",
     "background": "現場では月次の車両収支集計を手作業で行っており、締め日前の残業が慢性化している",
     "goal": "受講者が自分の集計業務を 1 つ選び、生成 AI へ渡す指示文を自力で書けるようになる",
-    "duration": "60分",
     # R21 / R22 の型フィールド。C11 は文書レベル属性として出しており、
     # 逆抽出はこれらを既定値で埋めずに読む (埋めると著者の選択が化ける)。
     "presentation_order": "demo_first",
@@ -146,7 +147,9 @@ def _html_open_tag():
         ' data-hb-detail-level="%(detail_level)s"'
         ' data-hb-evidence-depth="%(evidence_depth)s"'
         ' data-hb-must-remember-max="%(must_remember_max)s"'
-        ' data-hb-notes-enabled="%(notes_enabled)s">' % DOC_META
+        ' data-hb-notes-enabled="%(notes_enabled)s"'
+        # 日付は可視要素をやめ root 属性で運ぶ (利用者指定 2026-08-19 / C11)。
+        ' data-hb-date="%(date)s">' % DOC_META
     )
 
 
@@ -186,11 +189,9 @@ def doc_head():
 def doc_fields():
     return (
         '<h1 data-hb-field="title">%(title)s</h1>\n'
-        '<p data-hb-field="date">%(date)s</p>\n'
         '<p data-hb-field="purpose">%(purpose)s</p>\n'
         '<p data-hb-field="background">%(background)s</p>\n'
         '<p data-hb-field="goal">%(goal)s</p>\n'
-        '<p data-hb-field="duration">%(duration)s</p>\n'
         '<p data-hb-field="attainment_level">%(attainment_level)s</p>\n' % DOC_META
         # 配列項目は同じ印を持つ要素が文書順に並ぶ。target_task だけは id を
         # 本文でなく data-hb-key が運ぶ (label と id の 2 値を持つため)。
@@ -207,7 +208,7 @@ def section_html(section_id="intro", kind="standard", parts="", heading="導入"
                  goal="この節を読み終えると、着手点を自分で決められるようになる",
                  lead_line="指示は目的から書くと崩れない",
                  judgment_axis="迷ったら、受け取る人が何を判断できるかで決める",
-                 duration="20分", role="main", ties_to=("monthly-close",),
+                 role="main", ties_to=("monthly-close",),
                  attainment_step="operable"):
     # R21 C48/C54/C58: 本編か付録か・どの業務に紐づくか・どこまで到達するか。
     # 既定値で埋めると appendix が本編扱いになるため C11 は属性で明示する。
@@ -222,9 +223,8 @@ def section_html(section_id="intro", kind="standard", parts="", heading="導入"
         '  <p data-hb-field="section_goal">%s</p>\n'
         '  <p data-hb-field="lead_line">%s</p>\n'
         '  <p data-hb-field="judgment_axis">%s</p>\n'
-        '  <p data-hb-field="section_duration">%s</p>\n'
         '%s'
-        '</section>\n' % (heading, goal, lead_line, judgment_axis, duration, parts)
+        '</section>\n' % (heading, goal, lead_line, judgment_axis, parts)
     )
 
 
@@ -234,9 +234,9 @@ def part_b03(part_id="intro-steps"):
         # data-hb-<field> が各値を運ぶ (表示テキストからは切り出さない)。
         '  <ol data-hb-part="B03" data-hb-part-id="%s" data-hb-entries="rows">\n'
         '    <li class="step-row" data-hb-key="collect" data-hb-text="元データを集める"'
-        ' data-hb-time="10分"><span>元データを集める</span></li>\n'
+        '><span>元データを集める</span></li>\n'
         '    <li class="step-row" data-hb-key="ask" data-hb-text="指示文を書く"'
-        ' data-hb-time="10分"><span>指示文を書く</span></li>\n'
+        '><span>指示文を書く</span></li>\n'
         '  </ol>\n' % part_id
     )
 
@@ -383,7 +383,6 @@ def expected_document_fields():
         "date": DOC_META["date"],
         "doc_type": DOC_META["doc_type"],
         "subject_slug": DOC_META["subject_slug"],
-        "duration": DOC_META["duration"],
         "theme": DOC_META["theme"],
         "purpose": DOC_META["purpose"],
         "background": DOC_META["background"],

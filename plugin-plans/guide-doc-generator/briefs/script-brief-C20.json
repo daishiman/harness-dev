@@ -74,11 +74,11 @@
     "A2. --html を UTF-8 で読み、parsing_strategy に従って html.parser でノード木を構築する。スタックが破綻したら E-HTML-MALFORMED で exit 1",
     "A3. renderer_marker_requirements.chrome_boundary の規定に従って生成 chrome を走査対象から外す。マーカーが無い場合は .pop-header / .pop-bottom / .memo-* のクラス名でも切り落とす (二重防御)。いずれの経路でも chrome 内側の著者データマーカーは規定どおり残す",
     "A4. <html> の data-hb-schema-version / doc-type / subject-slug / theme / meta-* / notes-enabled から文書レベルのメタを取り出す。data-hb-notes-enabled は boolean へ戻す (属性が無ければ null を書かず unrecoverable へ積む)。欠けているものは null として記録し unrecoverable へ積む",
-    "A5. data-hb-field を持つ要素から title / date / purpose / background / goal / duration / focus_theme / target_task (data-hb-key が id) / attainment_level / must_remember / no_need_to_remember を取り出す。配列フィールドは同じ data-hb-field 値を持つ要素を文書順に集める。マーカーが無ければ heuristic_fallback の never_guessed 規則により推測せず unrecoverable へ積む",
+    "A5. data-hb-field を持つ要素から title / date / purpose / background / goal / duration / focus_theme / target_task (data-hb-key が id) / attainment_level / must_remember / no_need_to_remember / lead / goal_chips / prerequisite_connectors (data-hb-key が connector id) を取り出す。essential_problem は引き続き data-hb-field ではなく data-hb-meta-problem (<html> または hero 直下) から取り出す (R25/REQ-8 でも変更なし)。配列フィールドは同じ data-hb-field 値を持つ要素を文書順に集める。data-hb-field=\"attainment_level\" の要素は可視テキストではなく data-hb-raw 属性の値を復元対象とする (R25/REQ-8。可視テキストは C18 の ENUM-01 が検査する表示ラベルであり、構成データの正本は enum 生値である)。マーカーが無ければ heuristic_fallback の never_guessed 規則により推測せず unrecoverable へ積む",
     "A6. <section> を文書順に走査する。id は要素の id 属性、heading / section_goal / lead_line / judgment_axis は data-hb-field から、section_kind は data-hb-section-kind、role は data-hb-section-role、attainment_step は data-hb-attainment-step、ties_to は data-hb-ties-to を required_serialization に従って分解して取る。section id の重複は E-EXTRACT-UNRECOVERABLE",
     "A7. 各 section 配下を DOM 順に走査し、data-hb-part を持つ要素を部品として復元する。data-hb-key / owner / due / time などの素値属性を優先して data を組み立て、表示テキストからの切り出しはマーカーが無い場合の代替に留める",
     "A8. マーカーを持たない要素は heuristic_fallback の class_map で部品種別を推定し、W-EXTRACT-HEURISTIC として記録する。どれにも当たらず本文とみなせるものは TEXT 部品にする",
-    "A9. <img> / <a download> / 図解ラッパから assets / attachments / diagrams を復元する。data URI 本体はそのまま文字列として保持する",
+    "A9. <img> / <a download> / 図解ラッパから assets / attachments / diagrams を復元する。data URI 本体はそのまま文字列として保持し、payload_placement の規則 (data-hb-src が非空なら src へ原本パスを戻し data URI は data_uri へ入れる) に従って置き場を決める。assets[].role は data-hb-asset-role から復元し、属性が無ければ既定値で埋めず unrecoverable へ積む",
     "A10. data-hb-glossary-term / plain / scope から glossary を document スコープと section スコープへ振り分けて復元する",
     "A11. unrecoverable を集計する。必須フィールドに 1 件でもあれば exit 1 を予定し、任意フィールドのみなら --strict-fidelity の有無で判定を決める",
     "A12. --out があれば復元結果を C12 と同じ書式規約 (ensure_ascii=false, indent=2, sort_keys=true, LF, 末尾改行 1 個) で一時ファイルへ書き os.replace で差し替える。fail_semantics に従い E-ROUNDTRIP-DIFF / E-HTML-MALFORMED / exit 2 のときは書かない",
@@ -97,16 +97,18 @@
   "roundtrip_granularity": {
     "verdict": "バイト一致ではなく『正規化済み構成データの比較対象射影 (comparable projection) 上での深い等価』を round-trip の合格条件とする。バイト一致は同一構成データからの再生成 (C29) にのみ課す",
     "why": "HTML は空白・属性順・改行位置で差が出るうえ、C11 は nav / sprite / CSS / JS / footer を構成データから毎回生成する。これらを逆抽出して構成データへ戻すと、構成データが生成物を抱え込み単一正本が崩れる。したがって『再生成できるものは復元しない』ことを設計として宣言し、比較は構成データ側で行う",
+    "relation_to_c11_acceptance": "C11 の AC-C11-R25-74-roundtrip は『purpose / background / goal / attainment_level (data-hb-raw の enum 生値) / lead / goal_chips の全フィールドがバイト一致で復元される』と書くが、これは**フィールド値の文字列としての一致**を指し、HTML またはファイル全体のバイト一致ではない。本 brief の verdict (射影上の深い等価) と衝突しない: 深い等価は文字列フィールドに対しては文字列の完全一致を要求するため、C11 側の期待は本 brief の compare_procedure 4 でそのまま満たされる。ファイル全体のバイト一致を課すのは C29 (同一構成データからの再生成) だけであり、往復にはいかなる経路でも課さない",
     "comparable_projection": "正規化済み構成データから provenance ブロック全体 (normalized_by / schema_version / catalog_sha256 / date_source) を除いた残り。provenance は実行環境と catalog 版に依存するため、意味的同一性には属さない",
     "preserved_exact": [
       "title / date / doc_type / subject_slug / duration / theme",
       "purpose / background / goal (文書レベル)",
       "focus_theme / target_tasks[].id / target_tasks[].label / attainment_level / must_remember / no_need_to_remember (文書レベルの著者記述。配列は順序込み)",
+      "lead / goal_chips / prerequisite_connectors[].id (文書レベル。R25/REQ-8・REQ-9・goal-spec C74/C75。attainment_level は data-hb-raw 属性の生値を比較対象とし可視テキスト側は比較対象に含めない。essential_problem は従来どおり preserved_only_with_markers 側の扱いのまま変更なし)",
       "sections[].id / heading / goal / lead_line / judgment_axis / duration / section_kind / role / attainment_step / ties_to (ties_to は配列として順序込みで比較する)",
       "parts[].part / id / data の全キー (部品ごとの許容キーに従う)",
       "glossary[].term / plain (文書スコープ・セクションスコープの別も含む)",
       "attachments[].filename / mime / fallback_hint と data URI 本体",
-      "assets[].alt / caption と data URI 本体",
+      "assets[].alt / caption / role (role の値域は screenshot | figure | photo | illustration。R25/REQ-3 で illustration が追加された。data-hb-asset-role から復元し、既定値で埋めない) と data URI 本体",
       "diagrams[].id / title / pattern (構造データ data は data-hb-diagram-data の JSON から復元)",
       "notes_enabled"
     ],
@@ -167,8 +169,14 @@
       {
         "marker": "data-hb-field",
         "on": "当該テキストを持つ要素 (配列フィールドは要素 1 件につき 1 要素)",
-        "value": "title|date|purpose|background|goal|duration|focus_theme|target_task|attainment_level|must_remember|no_need_to_remember|lead_line|judgment_axis|section_goal|section_duration|heading",
-        "why": "見た目のクラス名に依存せずフィールドを同定する。テーマ変更でクラス名が変わっても逆抽出が壊れない。値の集合は marker_source_of_truth の裁定表から導出したものであり、この列挙を先に書いて裁定表を後から合わせない"
+        "value": "title|date|purpose|background|goal|duration|focus_theme|target_task|attainment_level|must_remember|no_need_to_remember|lead_line|judgment_axis|section_goal|section_duration|heading|lead|goal_chips|prerequisite_connectors",
+        "why": "見た目のクラス名に依存せずフィールドを同定する。テーマ変更でクラス名が変わっても逆抽出が壊れない。値の集合は marker_source_of_truth の裁定表から導出したものであり、この列挙を先に書いて裁定表を後から合わせない。lead / goal_chips / prerequisite_connectors は R25/REQ-8・REQ-9 (goal-spec C74/C75) でヒーローカード化された文書レベルフィールドの追加分 (C11 が同時に data-hb-field enum を拡張する)。essential_problem は data-hb-field ではなく data-hb-meta-problem のまま (変更なし)"
+      },
+      {
+        "marker": "data-hb-raw",
+        "on": "data-hb-field=\"attainment_level\" を持つ要素",
+        "value": "attainment_level の enum 生値",
+        "why": "R25/REQ-8 で可視テキストが表示ラベル (config/handout-vocabulary.json 由来) へ変換されたため、可視テキストからは構成データを復元できなくなった。生値を属性側に残すことで往復抽出の非破壊を保つ (C18 の ENUM-01 は逆にこの属性値を表示テキストと区別する側)"
       },
       {
         "marker": "data-hb-section-kind",
@@ -179,14 +187,14 @@
       {
         "marker": "data-hb-part / data-hb-part-id",
         "on": "各部品のルート要素",
-        "value": "B03..B16 / IMG / DIAGRAM / TEXT と部品 id",
+        "value": "config/handout-parts.json の parts[] のうち section_scope が in-section の id (値域をここへ列挙しない — 正本 owner は C11・P03 Y-05)",
         "why": "部品種別の同定をクラス名推定ではなく確定情報にする。これが parts 復元の主経路"
       },
       {
         "marker": "data-hb-key",
-        "on": "行・カード・チップ・タブ等の反復要素、および data-hb-field=\"target_task\" の各要素",
-        "value": "rows[].key / cards[].label / chips[].key 等の識別子。target_task では target_tasks[].id",
-        "why": "B09 / B15 / B16 のキーは localStorage の保存キーでもあり、失うとメモ状態と構成データの対応が切れる。target_tasks[].id は sections[].ties_to の参照先実体であり、失うと ties_to が必ず dangling になる"
+        "on": "行・カード・チップ・タブ等の反復要素、および data-hb-field=\"target_task\" / data-hb-field=\"prerequisite_connectors\" の各要素",
+        "value": "rows[].key / cards[].label / chips[].key 等の識別子。target_task では target_tasks[].id、prerequisite_connectors では connector の vocabulary id (config/handout-vocabulary.json#connectors。R25/REQ-9・goal-spec C75)",
+        "why": "B09 / B15 / B16 のキーは localStorage の保存キーでもあり、失うとメモ状態と構成データの対応が切れる。target_tasks[].id は sections[].ties_to の参照先実体であり、失うと ties_to が必ず dangling になる。prerequisite_connectors の id を失うと表示ラベルからの逆引きが必要になり ENUM-01 型の問題を再発させる"
       },
       {
         "marker": "data-hb-ties-to",
@@ -238,11 +246,12 @@
         "why": "どちらのスコープに書かれていたかを復元して round-trip 等価を成立させる"
       },
       {
-        "marker": "data-hb-asset-id / data-hb-asset-alt / data-hb-asset-caption / data-hb-src",
+        "marker": "data-hb-asset-id / data-hb-asset-alt / data-hb-asset-caption / data-hb-src / data-hb-asset-role",
         "on": "<img> と画像ブロック",
-        "value": "assets の各値と原本相対パス",
+        "value": "assets の各値と原本相対パス。data-hb-asset-role は assets[].role の素値で、値域は screenshot | figure | photo | illustration (illustration は R25/REQ-3 で C12 の config_schema へ追加された。値域の正本は C12・列挙をこの script へ焼かず属性値をそのまま復元する)",
+        "why_role": "assets[].role は C12 が既定値を持たない必須値 (E-ASSET-ROLE-MISSING) であり、描画差分からは逆算できない。属性から復元しないと逆抽出結果が必ず C12 の必須検査で落ち、round-trip も /assets/N/role で不一致になる。C11 は既にこの属性を出している (script-brief-C11.json の data-hb-asset-role)",
         "why": "data URI 化後に原本パスを取り戻す唯一の手段",
-        "payload_placement": "埋め込みペイロードの置き場は schema 上 assets[]/attachments[] の src ただ 1 箇所 ($defs.local_source の src は ^data: を既に許す)。data-hb-src が非空ならその値を src へ戻し data URI は捨てる (再埋め込みは C13 の責務)。schema に無い data_uri キーを復元結果へ新設しない — 新設は C12 の E-KEY-UNKNOWN になり、それを受け入れるために schema を緩めるのは基準を弱める側に当たる"
+        "payload_placement": "P05-x-28 の裁定反転後の規則に従う (正本: schemas/ROUNDTRIP-CONTRACT.md の /assets/*/data_uri エントリ + schemas/RESOLUTION-P05-x-28.md)。data-hb-src が非空ならその値を src へ戻し、**data URI は捨てず data_uri へ入れる**。data-hb-src が空なら data URI を src へ戻す (著者が src へ直書きした経路)。同じ規則が /attachments/*/data_uri にも及ぶ。旧記述 (『ペイロードの置き場は src ただ 1 箇所。data URI は捨てる。schema に無い data_uri キーを新設しない』) は裁定反転前のものであり破棄した — data_uri を書いているのは C20 ではなく C13 embed-assets.py であり、R14 の逆抽出では原本 assets/ が手元に無く HTML 中の data URI が唯一の実体コピーであるため、捨てると無損失性を守るつもりで値を消失させる"
       },
       {
         "marker": "data-hb-attachment-id / data-hb-filename / data-hb-mime / data-hb-fallback-hint",
@@ -272,7 +281,7 @@
     "chrome_boundary": {
       "purpose": "data-hb-generated による読み飛ばしの適用範囲を宣言で確定する。範囲が未定義であったため、著者記述を内包する hero 枠が chrome として丸ごと捨てられ、既に刻まれている data-hb-field へ到達できない状態が生じた",
       "what_is_chrome": "構成データから決定論的に再生成できる提示層のみ。すなわち sticky ナビ (B01) / ヒーロー枠 (B02 の枠そのもの) / アイコン sprite / CSS 変数ブロック / JS / footer / メモ UI / lightbox。これは roundtrip_granularity.not_preserved_by_design の P1 免除と同じ集合であり、本規定は範囲を広げない",
-      "what_is_not_chrome": "著者が書いた内容。chrome の内側に描画されていても chrome ではない。とくに hero 枠の内側にある文書レベルのフィールド (title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember とその data-hb-key) は著者記述であり、枠が生成物であることを理由に捨ててはならない",
+      "what_is_not_chrome": "著者が書いた内容。chrome の内側に描画されていても chrome ではない。とくに hero 枠の内側にある文書レベルのフィールド (title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / lead / goal_chips / prerequisite_connectors とその data-hb-key、および essential_problem とその data-hb-meta-problem) は著者記述であり、枠が生成物であることを理由に捨ててはならない。R25/REQ-8 でヒーロー枠の DOM がカード形へ変わっても、この点は変わらない — カードの見出しやレイアウト部分 (list_headings 等) のみが chrome であり、著者記述フィールドと data-hb-field/data-hb-raw/data-hb-meta-* の付与点は不変",
       "rule": "data-hb-generated=\"true\" は『この要素とその子孫のうち、著者データマーカーを持たないノード』が再生成可能であることの宣言である。したがって読み飛ばしの単位は部分木そのものではなく『著者データマーカーを持つノードを抜いた部分木』である。chrome 部分木の内側で著者データマーカーを持つ要素に出会ったら、その要素と、値の復元に必要なその子孫・属性は読み飛ばしの対象から外れる",
       "authored_data_markers": "読み飛ばしから除外される著者データマーカーは required_markers のうち文書・セクション・部品・用語・添付・図解の値を運ぶもの全てであり、その集合は marker_source_of_truth の裁定表から導出する。除外されないのは data-hb-generated 自身と、純粋な提示属性のみ",
       "nesting": "chrome の内側の著者データ領域に、さらに data-hb-generated=\"true\" の子 (例: 枠内の装飾スプライト) が現れた場合、その子は再び読み飛ばし対象へ戻る。判定は最も内側の宣言が勝つ",
@@ -377,12 +386,16 @@
   "report_shape": "{\"source_html\": path, \"sections\": [{\"id\":..., \"parts\": [{\"id\":..., \"part\":..., \"fidelity\": \"exact|heuristic\"}]}], \"fidelity_summary\": {\"exact\": N, \"heuristic\": N, \"unrecoverable\": N}, \"unrecoverable\": [{\"pointer\":..., \"reason\":...}], \"roundtrip\": {\"compared\": bool, \"equivalent\": bool, \"diffs\": [{\"pointer\":..., \"expected\":..., \"actual\":...}]}}",
   "requirements_covered": [
     "R14",
-    "R13 (部品カタログの逆写像として)"
+    "R13 (部品カタログの逆写像として)",
+    "R25-REQ-8 (C74. ヒーローカード化された文書レベルフィールドと attainment_level の enum 生値/表示ラベル分離を非破壊で往復抽出する)",
+    "R25-REQ-9 (C75. prerequisite_connectors の id を data-hb-key から復元する)"
   ],
   "checklist_covered": [
     "C20",
     "C27",
-    "C29 (バイト一致の適用範囲を構成データ等価と切り分ける側)"
+    "C29 (バイト一致の適用範囲を構成データ等価と切り分ける側)",
+    "C74 (副。C11 の DOM 変更に対する往復抽出の非破壊を担保する側。正本は C11/C12 canon)",
+    "C75 (副。同上、prerequisite_connectors 分)"
   ],
   "acceptance_checks": [
     {
@@ -407,7 +420,7 @@
     },
     {
       "id": "AC-C20-05",
-      "how": "B03..B16 + IMG / DIAGRAM / TEXT を 1 つずつ含む構成データで round-trip を回す",
+      "how": "config/handout-parts.json を読み、section_scope が in-section の部品を 1 つずつ含む構成データを機械生成して round-trip を回す (テスト側にも id を列挙しない。カタログに部品が増えれば fixture も自動で増える)",
       "expected": "全部品が exact で復元され unrecoverable=0"
     },
     {
@@ -459,6 +472,21 @@
       "id": "AC-C20-15",
       "how": "import 文を検査する",
       "expected": "html.parser / json / sys / argparse / pathlib / re / unicodedata / importlib.util / os / tempfile のみ。yaml と外部パッケージが 0 件、BeautifulSoup 等の HTML ライブラリも 0 件 (C27)"
+    },
+    {
+      "id": "AC-C20-R25-74-HERO-ROUNDTRIP",
+      "how": "lead / goal_chips / essential_problem / attainment_level (可視テキストは表示ラベル、data-hb-raw は enum 生値) を含む R25 ヒーローカード構成データ A を C11 でレンダリングし、その HTML を --html に、A を --compare に与える。essential_problem は従来どおり data-hb-meta-problem 経由 (DOM 変更の影響を受けない)",
+      "expected": "roundtrip=EQUIVALENT で exit 0。attainment_level は data-hb-raw の enum 生値が復元され、可視テキスト (表示ラベル) は比較対象に含まれない。essential_problem は非回帰 (既存の meta 抽出経路のまま壊れていない)"
+    },
+    {
+      "id": "AC-C20-R25-75-CONNECTOR-ROUNDTRIP",
+      "how": "prerequisite_connectors=[\"google-drive\",\"kintone\"] を含む構成データ A を C11 でレンダリングし round-trip する",
+      "expected": "roundtrip=EQUIVALENT で exit 0。連携先の並び順が保持される (data-hb-key から id を復元し、表示ラベルからの逆引きは行わない)"
+    },
+    {
+      "id": "AC-C20-R25-DECLARE-OPTIONAL",
+      "how": "prerequisite_connectors を宣言しない (キー自体が無い) 構成データで round-trip する",
+      "expected": "roundtrip=EQUIVALENT で exit 0。宣言なしを null 復元へ捏造しない (前提コネクタ宣言は任意という R25/REQ-9 の制約どおり)"
     }
   ],
   "failure_modes": [

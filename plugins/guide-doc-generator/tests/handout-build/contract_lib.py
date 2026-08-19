@@ -82,7 +82,7 @@ REPORT_ELEMENTS = (
     re.compile(r"ゲート"),
 )
 
-# failure_modes[6] の任意依存
+# failure_modes 末尾の任意依存
 OPTIONAL_DEP = "slide-report-generator"
 
 
@@ -224,6 +224,18 @@ def strip_fenced_json(body: str) -> str:
 
 def plugin_root() -> Path:
     return Path(__file__).resolve().parents[2]
+
+
+def dir_name_shape() -> str:
+    """出力ディレクトリ名の人間可読な形。正本は config/handout-output.json。
+
+    ここで形を綴らないのは、R25 のように書式が変わったとき本テストだけ旧形を
+    要求して赤くなる (= 契約でなく写しになる) のを避けるため。
+    """
+    fmt = json.loads(
+        (plugin_root() / "config" / "handout-output.json").read_text(encoding="utf-8")
+    )["dir_name_format"]
+    return fmt.replace("{date}", "<YYYY-MM-DD>").replace("{slug}", "<主題slug>")
 
 
 def build_target() -> Path:
@@ -481,7 +493,7 @@ def _check_out_dir(body, v):
         body,
         [
             r"親ディレクトリ.{0,20}(だけ|のみ).{0,20}上書き",
-            r"<YYYY-MM-DD>-<種別>-<主題slug>",
+            re.escape(dir_name_shape()),
             r"命名規則.{0,30}上書きでき(ない|ず)",
             re.escape(OUTPUT_ROUTER),
         ],
@@ -588,7 +600,7 @@ def _check_behavior_stops(body, v):
     )
 
 
-# --- AC-C07-FM-1..6: failure_modes -----------------------------------------
+# --- AC-C07-FM-1..7: failure_modes -----------------------------------------
 
 def _check_failure_modes(body, v):
     _requires(
@@ -647,12 +659,23 @@ def _check_failure_modes(body, v):
         "AC-C07-FM-6",
         body,
         [
+            r"HB_OUT_DIR",
+            r"default_out_dir",
+            r"exit\s*2.{0,40}停止",
+        ],
+        "AC-C07-FM-6 出力先が解決できない",
+    )
+    _requires(
+        v,
+        "AC-C07-FM-7",
+        body,
+        [
             rf"{re.escape(OPTIONAL_DEP)}.{{0,40}}(不在|無い|ない)",
             r"skip.{0,20}(理由)",
             r"(他|残り).{0,20}(ステップ|工程).{0,20}(は)?.{0,10}(完走|継続)",
             r"fail-soft",
         ],
-        "AC-C07-FM-6 任意依存の不在",
+        "AC-C07-FM-7 任意依存の不在",
     )
 
 

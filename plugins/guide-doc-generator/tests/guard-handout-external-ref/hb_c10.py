@@ -17,6 +17,7 @@ C16 の module_api を正解として突き合わせる形で検査する。
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -31,14 +32,62 @@ REPO_ROOT = TESTS_DIR.parents[3]            # repo root
 HOOK = PLUGIN_ROOT / "hooks" / "guard-handout-external-ref.py"
 C16_SCRIPT = PLUGIN_ROOT / "scripts" / "verify-handout-selfcontained.py"
 
+#: 走査予算の正本 (hook-brief-C10.json#budget_thresholds.canonical_location)
+BUDGET_CONFIG = PLUGIN_ROOT / "config" / "handout-output.json"
+BUDGET_SECTION_KEY = "size_limits"
+BUDGET_KEY = "hook_scan_budget"
+
 # output_contract.block の stderr 先頭 (hook-brief-C10.json#output_contract.block)
 BLOCK_PREFIX = "[guard-handout-external-ref] BLOCKED:"
 
 D1 = "D1-external-url-attr"
 D2 = "D2-emoji"
 
-# fail_closed_scope (c) の閾値 (hook-brief-C10.json)
-SIZE_LIMIT_BYTES = 8 * 1024 * 1024
+def scan_budget():
+    """fail_closed_scope (c) の走査予算を **config から実測で** 読む。
+
+    数値をここへ写すとテストが第 2 正本になり、config を変えた瞬間に
+    「上限超え」fixture が上限未満へ落ちて検査が黙って空振りする。
+    acceptance_checks[10] も『閾値はテスト側も config から読み、テストに
+    数値を焼かない』を明示的に要求している。
+
+    キーが無い / 型が違う場合は既定値へ倒さず AssertionError で赤にする
+    (倒すと config 不在という不具合そのものを見逃す)。
+    """
+    if not BUDGET_CONFIG.is_file():
+        raise AssertionError("走査予算の正本が存在しない: {}".format(BUDGET_CONFIG))
+    try:
+        data = json.loads(BUDGET_CONFIG.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise AssertionError("{} が JSON として読めない: {}".format(BUDGET_CONFIG, exc))
+    section = data.get(BUDGET_SECTION_KEY)
+    if not isinstance(section, dict) or BUDGET_KEY not in section:
+        raise AssertionError(
+            "{}#{}.{} が無い。hook はこのキーを正本として参照しており、"
+            "不在なら全経路で未検査 (exit0 + systemMessage) になる "
+            "(hook-brief-C10.json#budget_thresholds.if_key_missing)".format(
+                BUDGET_CONFIG, BUDGET_SECTION_KEY, BUDGET_KEY))
+    budget = section[BUDGET_KEY]
+    if not isinstance(budget, dict):
+        raise AssertionError("{} は object でなければならない: {!r}".format(BUDGET_KEY, budget))
+    out = {}
+    for key in ("max_bytes", "max_seconds"):
+        value = budget.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+            raise AssertionError(
+                "{}.{} は正の数でなければならない: {!r}".format(BUDGET_KEY, key, value))
+        out[key] = value
+    return out
+
+
+def size_limit_bytes():
+    """走査予算の max_bytes (バイト)。"""
+    return int(scan_budget()["max_bytes"])
+
+
+def time_budget_seconds():
+    """走査予算の max_seconds (秒)。"""
+    return float(scan_budget()["max_seconds"])
 
 
 def require_hook():
@@ -225,10 +274,16 @@ class C10TestCase(unittest.TestCase):
     # --- 実行 ---
     def run_hook_raw(self, stdin_text, hook_path=None):
         require_hook()
+        # 実体解決は hook 自身の 4 段解決に委ねる。呼び出し側の shell に
+        # HB_ROOT / CLAUDE_PLUGIN_ROOT が残っていると、複製 root を指した
+        # 起動が黙って正本の config を読んでしまい検査が空になる。
+        env = dict(os.environ)
+        for name in ("HB_ROOT", "CLAUDE_PLUGIN_ROOT"):
+            env.pop(name, None)
         proc = subprocess.run(
             [sys.executable, str(hook_path or HOOK)],
             input=stdin_text, capture_output=True, text=True,
-            cwd=str(self.tmp), timeout=120,
+            cwd=str(self.tmp), timeout=120, env=env,
         )
         return Result(proc.returncode, proc.stdout, proc.stderr)
 

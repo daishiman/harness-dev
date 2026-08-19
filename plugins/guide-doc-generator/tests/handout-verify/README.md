@@ -81,6 +81,50 @@ brief は集約規則を散文でしか持たないため、機械検査でき�
 | AC-C09-AGG-3 | 4 状態 / 4 verdict / not-run 理由 4 種 / exit 0-1-2 の写像が宣言されている | brief behavior 4, `open_questions`「exit code 規約」 | `test_AC_C09_AGG_3_states_reasons_and_exit_codes_declared` |
 | AC-C09-AGG-4 | not-run を pass へ畳む記述が無く、畳まない旨が明示される | brief `canonical_aggregation.statement`, behavior 5 | `test_AC_C09_AGG_4_not_run_is_never_folded_into_pass`, `test_not_run_is_never_folded_into_pass` |
 
+## 3 面の担当 (どのファイルのどのテストが何を見ているか)
+
+| 面 | 担当 |
+|---|---|
+| 違反系入力で落ちる | `reject_cases.py` + `test_contract_checker.py::TestRejectFixtures` |
+| argv と exit code 契約 | `test_handout_verify_command.py::test_AC_C09_2_*` / `::test_AC_C09_11_*`、`test_aggregation_rule.py::TestOracleShape::test_exit_code_mapping`、`test_argv_and_reproducibility.py::GateArgvMatchesRealScriptsTest` |
+| 再現性 | `test_argv_and_reproducibility.py::CheckerReproducibilityTest` / `::AggregationReproducibilityTest` |
+
+build_target が Markdown であるため、この 2 面は次の対応物として定義した。
+
+- **argv**: 従来の AC-C09-2 は「command 本文にフラグが現れるか」をテスト側の表と
+  突き合わせるだけで、実 script が受け取らないフラグでも緑になった。
+  `GateArgvMatchesRealScriptsTest` は同じフラグを実 script の argparse と突合し、
+  config 必須ゲートと `--config` の受け口が一致することまで見る。
+  さらに `contract_lib._check_scripts` の argv 検査を、本文全体への出現から
+  **当該 script を名指しする行への束縛**へ変更した (他ゲート専用フラグの混入も違反)。
+  従来は本文のどこかに `--config` が一度あれば全ゲート分が満たされていた。
+- **exit code**: C09 が持つ対応物は「起動した script の exit code をどう読むか」
+  という**解釈規則**で、これは実行ではなく写像宣言なので Markdown でも成立する。
+  `AC-C09-AGG-3` は従来 `exit 0` という番号の出現しか見ておらず
+  `exit 0 -> fail` と書いても緑だったため、**同じ行に対応状態語があること**と
+  **他状態へ写す宣言が無いこと**まで見るようにした。その先の 4 状態集約は
+  `test_aggregation_rule.py` の担当。
+- **再現性**: 実行の再現性ではなく、(1) 判定器が同一入力へ同一の違反列を返すこと
+  (同プロセス 2 回 + 別プロセス 2 回)、(2) 集約オラクルと実装の宣言表が全組み合わせで
+  安定し、ゲートの並び順にも抽出の再読み込みにも依存しないこと。
+
+## 正本リテラルを写さない方針
+
+ゲート名簿 (gate_id / component / script / argv / config 必須面) の正本は
+`command-brief-C09.json#gates[]` ただ 1 つで、`aggregation_spec.py` は import 時に
+そこから実測で導出する (読めなければ `RuntimeError` で fail-closed)。
+`ARGUMENT_HINT_TOKENS` は brief の `argument_hint` から、`--only` 未指定時の全実行
+本数はゲート名簿の要素数から導く。散文中の「4 面」という記述は説明であって期待値
+ではないため、そのまま残している。
+
+## acceptance_criterion 後半について
+
+「build_target が未実装の時点で実行すると失敗する」は、実装が既に存在するため
+**現物では再現できない**。実装を削除して測ることは禁止されているので、
+`UnimplementedBuildTargetSurrogateTest` が空ディレクトリを plugin root と見立てて
+判定器の挙動 (AC-C09-1 で停止する) だけを固定している。これは代理であって
+現物での再現ではない。
+
 ## 実装前の実行結果 (赤の記録)
 
 ```

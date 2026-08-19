@@ -1,0 +1,157 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P03-x-04",
+ "covered_task_ids": [
+  "P03-x-04"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/",
+ "verified_by": [
+  {
+   "claim": "C49 の『構成データスキーマの必須フィールド』が修正前は不成立だった",
+   "method": "dispatcher が出荷 schemas/handout-config.schema.json を json.load し top-level required を全件列挙",
+   "result": "pass(=報告どおり): required は 16 件 (title / doc_type / purpose / background / goal / reader / prior_knowledge_level / essential_problem / duration / focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / glossary / sections) で presentation_order は不在。報告の実測値と完全一致"
+  },
+  {
+   "claim": "C22 の出荷実装が既に塞いでおり、設計側だけが実装より緩かった",
+   "method": "dispatcher が verify-handout-narrative.py の該当行を直読み",
+   "result": "pass(=報告どおり): :77 に REQUIRED_CONFIG_KEYS = (\"purpose\", \"background\", \"goal\", \"sections\", \"presentation_order\") が実在。行番号まで一致。報告が当初 brief へ書いた exit 1 を出荷実装と C22 既存 exit_codes 契約に照らして exit 2 へ書き直した判断は妥当で、修正後の brief にも『必須フィールドへ presentation_order を含めるのは、欠落を explain_first だったと読んで NAR-07 を無効化させないため』という理由が入っている"
+  },
+  {
+   "claim": "C12 に A5c (provenance ゲート付きの必須性) が新設された",
+   "method": "dispatcher が script-brief-C12.json:837 と対応 AC :953 を直読み",
+   "result": "pass: A5c は『provenance ブロックを持つ構成データでは normalize 充填クラス (schema_version / subject_slug / date / detail_level / evidence_depth / presentation_order / must_remember_max) の欠落・null を E-FIELD-MISSING で exit 1、provenance を持たない手書き入力には適用しない』。対応 AC が両側の境界を測る (provenance 無しは exit 0)。必須性を無条件にすると手書き入力が壊れ、無条件に緩めると値を削るだけで下流が黙って無効化される、という両失敗を同時に避ける形として妥当"
+  },
+  {
+   "claim": "C22 の NAR-07 が SKIP fail-open から exit 2 へ移った",
+   "method": "dispatcher が script-brief-C22.json の NAR-07 言及を全件抽出し文脈確認",
+   "result": "pass: 『presentation_order が欠落・null のときは SKIP にしない — その欠落は値が explain_first だったではなく入力が正規化済みでないを意味する。手順 2 の必須フィールド検査で捕らえて exit 2。SKIP へ倒すと値を削るだけで C56 の検査を無効化できる経路が残る』と明記。回帰 AC も『stdout に NAR-07 SKIP は出ない』まで指定。加えて評価対象外を PASS でなく SKIP 行として開示する契約が保たれており、P02-x-01 の F-P02X-05 で述べた『射程外は検査して緑ではなく見ていない』の実装形になっている"
+  },
+  {
+   "claim": "C46 の適用対象が slug 名指しから属性駆動へ書き換わった",
+   "method": "dispatcher が script-brief-C12.json の flow-overview 出現 5 件を全件文脈確認し、うち A9 本体 (:674) と回帰 AC (:947-948) を全文直読み",
+   "result": "pass: :674 が『当該 section_kind が config/handout-sections.json で max_items を持つとき / forbid_row_detail=true を持つとき』という属性駆動へ書き換わり、理由 (C46 の要求は冒頭概観という役に掛かり種別 slug に掛かっていない・slug 名指しにすると deprecated 側だけを見張る検査になる) まで書かれている。回帰 AC :947 は期待対象をデータファイルの属性から実測で導出し slug 名も件数もテストへ書かない形で、:948 が『flow-overview だけが落ちて timeline が素通りする状態を退行として検出する』と明示。残る flow-overview 言及 3 件は A9 の where ラベル・fixture の how・実測時点の注記で、いずれも値域をその場で定める記述ではない"
+  },
+  {
+   "claim": "C58 の被覆宣言の漏れが本ノードで解消された",
+   "method": "dispatcher が script-brief-C12.json の checklist_covered を json.load して集合確認",
+   "result": "pass: C58 が checklist_covered (32 件) に実在。dispatcher が dispatch 前に実測した『C58 のみ宣言者 0 件』が解消された。dispatcher が並行して起票した P05-x-63 は本ノードで消化されたため重複起票になる"
+  },
+  {
+   "claim": "閾値リテラルの写しが除去された",
+   "method": "dispatcher が component-inventory.json へ 0.15 を、briefs と inventory へ 『既定 5』 を grep",
+   "result": "pass: 0.15 の出現 0 件、『既定 5』の出現 0 件。C46 の上限と C59 の下限割合はいずれも config/handout-sections.json の属性 1 箇所のみ。C57 の『既定 2』を schema の must_remember_max 既定に置いたまま写しでないと判定した理由 (利用者が上書きするフィールドそのものの既定値であり、schema がその唯一の住所) も成立する"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git diff --stat と git status --porcelain plugins/ を独立実行",
+   "result": "pass: 差分は briefs/script-brief-C12.json (200) / briefs/script-brief-C22.json (22) / component-inventory.json (138) の 3 ファイル 296 insertions / 64 deletions で報告と完全一致。plugins/ の変更はセッション開始時の git status と同一 (README.md / handout-purposes.json / resolve-handout-preset.py / harness-creator plugin.json 2 件 / plugin-dev-planner plugin.json / 未追跡 skills/run-skill-feedback) で本ノード由来 0 件。報告が自主開示した plugins/guide-doc-generator/.claude/handoff/20260818T210155.md は実在するが git check-ignore で .gitignore:111 の plugins/**/.claude/handoff/ に該当し追跡対象外。同ディレクトリには本 build と無関係な 20260818T151136.md も存在しhook 由来という説明と整合する"
+  },
+  {
+   "claim": "決定論ゲートが緑であること",
+   "method": "dispatcher が check-surface-inventory.py と detect-unassigned.py を再実行",
+   "result": "fail(=報告と食い違い): check-surface-inventory.py は exit 0 で報告どおり。しかし detect-unassigned.py は dispatcher の実行では現行 inventory・HEAD 版 inventory とも exit 0 (出力は 'OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持') であり、報告の『exit 1 だが HEAD 版でも同一出力なので退行ではない』とは exit code が異なる。ゲートが緑である点は変わらないため本ノードの結論は動かないが、報告は赤を既存挙動として受理しており、起動形の誤りを疑う手順が抜けている"
+  }
+ ],
+ "note_dual_execution": "本ノードは dispatcher の判断ミスにより 2 者 (orange=P02-C05-01c / cyan=P02-C23-01c) が並行実行した。dispatcher は cyan へ stand-down を送ったが cyan は既に完了しており report も送信済みだった (dispatcher へ到達していなかった)。両者の書込は競合せず共存している: orange が briefs/script-brief-C12.json (+200) / -C22.json (+22) / component-inventory.json (+138) の規則本体を書き、cyan が improvement/r21-criterion-coverage.json を新規作成し 5 brief (C12/C16/C18/C22/C23) へ ledger 参照キーを 1 行ずつ足した。6 ファイルとも json.load を通る。重複実行のコストは dispatcher の責による。ただし結果として 2 者独立測定になり、下記 F-P03X04-08 以降の criterion 乖離 6 件はどちらか一方だけでは検出されなかった。",
+ "verified_by_second_pass": [
+  {
+   "claim": "C58 の宣言について 2 報告が矛盾する (orange=本ノードで追加した / cyan=元から実在した)",
+   "method": "dispatcher が HEAD 版と working tree の script-brief-C12.json#checklist_covered を json.load して比較",
+   "result": "orange が正しい。HEAD 版は 22 件で C58 不在、working tree は 32 件で C58 実在。dispatcher の dispatch 前実測 (宣言者 0 件) とも整合する。cyan の測定は orange の書込後に行われたため実在と観測されたもので、矛盾ではなく時系列の産物。ただし cyan は自分の観測を dispatcher の事前実測への反証として提示しており、後発測定を先行測定の反証に使う際は測定時刻の前後を確認する段が要る"
+  },
+  {
+   "claim": "E-TEXT-FOLDED がリポジトリのどこにも存在しない (orange)",
+   "method": "dispatcher が repo 全体へ grep",
+   "result": "fail(=orange の射程指定が不正確)。E-TEXT-FOLDED は plugin-plans/ と eval-log/ に 20 件以上実在する (script-brief-C12.json だけで 7 件)。0 件なのは plugins/ 配下 = 出荷コードのみ。したがって『どこにも存在しない』ではなく『設計に厚く存在し出荷に無い』= 順向きドリフト。結論 (C52 の detection が実装されていない) は変わらないが、射程を落とした言明は修正の向きを誤らせる"
+  },
+  {
+   "claim": "C59 は fail-open である (orange) / full である (cyan) — 判定が割れた",
+   "method": "dispatcher が validate-handout-config.py:1348-1350 を直読み",
+   "result": "orange が正しい。`for slug, minimum in sorted(share_kinds.items()): if slug not in used: continue` が実在し、dialogue 節が 1 つも無ければ share 検査へ入らない。P05-x-66 として起票"
+  },
+  {
+   "claim": "C51 の実装が slug 直書きで、schema の required_slot 記述に実体が無い (cyan)",
+   "method": "dispatcher が :1160 を直読みし required_slot を repo 全体へ grep",
+   "result": "pass(=cyan どおり)。:1160 は `if kind == KIND_CAPABILITY_EXPLAINER: self.check_slots(...)` の slug 直書き。required_slot の出現は schema:400 の description 文字列 1 件のみで、属性としては出荷・plan いずれの handout-sections.json にも 0 件。C46 で属性駆動へ直したのと同型の欠陥が C51 側に残存。P05-x-70 として起票"
+  },
+  {
+   "claim": "C50 の 4 段に対し slot enum は 3 区画しかない (cyan)",
+   "method": "dispatcher が schemas/handout-config.schema.json の $defs.part.properties.slot を json.load",
+   "result": "pass(=cyan どおり)。enum は ['outcome','breakdown','feature',None] の 3 区画 + null。criterion C50 が要求する 4 段目 (操作) に対応する区画が存在しない。P05-x-69 として起票"
+  },
+  {
+   "claim": "NAR-07 が最初の本編セクションしか見ていない (cyan)",
+   "method": "dispatcher が verify-handout-narrative.py:1010-1015 を直読み",
+   "result": "pass(=cyan どおり)。`mains = doc.main_section_nodes()` / `start = mains[0]` / `_first_presentation_item(doc, start)` で、検査対象は最初の本編セクションの先頭要素 1 つ。orange が本 cycle で塞いだのは presentation_order 欠落の fail-open であり、criterion 後半の穴は別物。両者の C56 判定 (orange=○ / cyan=partial) はどちらも自分が見た面については正しく、面が違っていた。P05-x-71 として起票"
+  },
+  {
+   "claim": "--normalize 付きでは E-TEXT-OVERFLOW も出ない (orange・cyan 双方)",
+   "method": "dispatcher が :1977 と :1402/:1420 を直読み",
+   "result": "pass: :1977 `checker.check_text_bodies(cfg, report_overflow=not args.normalize)` が実在し、:1420 が `if report_overflow and len(body) > self.ctx.body_limit:` で報告を抑止する。超過検出と畳み込みが --normalize の有無で排他"
+  },
+  {
+   "claim": "plan / 出荷の section_kinds 共通 12 種に属性値の drift は無い (orange)",
+   "method": "orange が全フィールド機械突合。dispatcher は先行実測 (attr 一致 11/12) と対照",
+   "result": "pass: 食い違うのは flow-overview の 4 フィールドのみで、すべて plan 側の非推奨マーキング (deprecated / superseded_by / label_ja / description)。max_items:5 / forbid_row_detail:true / min_duration_share:0.15 / required_role:'appendix' は完全一致。したがって P05-x-62 は DT-1 型 (値が 2 正本に割れる) ではなく欠落型 (timeline/map/thesis が出荷に無い) と確定する。dispatcher の先行実測『attr 一致 11/12』の不一致 1 件が flow-overview であったことと整合"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P03X04-01",
+   "level": "resolved",
+   "summary": "C46-C59 の 14 件は ① owner と検証手段がある 11 件 / ② owner はあるが検証手段が要件に届いていない 3 件 (C46 / C49 / C56) / ③ どちらも無い 0 件。③ が 0 件だったのは component-inventory.json#r21_decisions.ownership_map に既に 14 件全件の owner + verify_detail が入っていたためで、設計は先行ノード P03-x-02 で実質完了していた。② の 3 件は本ノードで修正済み (C46 = 属性駆動化 / C49 = A5c 新設 / C56 = SKIP から exit 2)。acceptance の 12 面はすべて pass。14 → 12 の残差は C49+C50 が presentation_order 節へ写り C51 がどの面にも対応しない追加被覆である点で、面だけを数えると C51 が落ちる"
+  },
+  {
+   "id": "F-P03X04-02",
+   "level": "blocking-for-release",
+   "summary": "C46 の実装は属性駆動化後もなお criterion に届いていない (dispatcher が独立に検出・報告に無い)。validate-handout-config.py:1075 の max_items 検査は ('rows', 'cards') の両方を走査するのに対し、直下 :1081-1087 の forbid_row_detail 検査は :1082 で rows ブロックに限定し cards を一切見ない。同一 section_kind に掛かる隣り合う 2 検査の走査対象が非対称であり、冒頭概観を B04 cards で組むと forbid_row_detail は 1 件も検査せず max_items だけが効く。さらに検査対象が row.sub is not None のみであるため、row 本文へ手順・操作の詳細を書けば criterion の『個々の手順・操作の詳細を冒頭の流れに含めない』を素通りする。本ノードの修正 (brief:674 / 回帰 AC:947-948) はいずれも rows 前提のままで、この 2 つの穴を塞いでいない"
+  },
+  {
+   "id": "F-P03X04-03",
+   "level": "blocking-for-release",
+   "summary": "出荷 schemas/handout-config.schema.json に A5c 相当が無く、presentation_order が top-level required (16 件) に不在。validate-handout-config.py にも provenance ゲート付きの必須性検査が無い。現状は verify-handout-narrative.py:77 の REQUIRED_CONFIG_KEYS が偶然の第 2 防壁になっているだけで、C11 や C20 の経路には防壁が無い。報告の DT-A に一致"
+  },
+  {
+   "id": "F-P03X04-04",
+   "level": "carry-forward",
+   "summary": "本 cycle で初めて『出荷実装の方が正しく設計散文が古い』逆向きドリフトが 2 件検出された (C46 の slug 名指し / C49 の必須性欠落。いずれも出荷側は ATTR_MAX_ITEMS の属性駆動と REQUIRED_CONFIG_KEYS で既に正しい)。これまで検出してきた RG-01 / RG-02 / RG-04 / DT-1 はすべて『設計が正しく出荷が未追随』の順向きで、逆向きを検出する手段が存在しない。brief だけを読んで修正すると、実装側を壊す方向の提案になる。報告の DT-C に一致し、報告自身が『実装まで降りて確認した結果、修正の向きが逆だと判明した』と方法論として述べている点も妥当"
+  },
+  {
+   "id": "F-P03X04-05",
+   "level": "carry-forward",
+   "summary": "決定論ゲートの exit code が報告と dispatcher で食い違う。報告は detect-unassigned.py を exit 1 とし『HEAD 版でも出力が同一なので既存挙動』と受理したが、dispatcher の実行では現行・HEAD 版とも exit 0 で出力もバイト一致する。報告側の起動形 (cwd / --specs-dir の有無) が異なった可能性が高い。赤を『既存の挙動』として受理する手順には、起動形が正しいかを疑う段が要る — 既存挙動として受理された赤は誰も直さないまま残る。P03-x-01 で orange が起こした過剰訂正 (ヒットの前半だけ読んで否定へ倒す) と鏡像の関係にある"
+  },
+  {
+   "id": "F-P03X04-06",
+   "level": "carry-forward",
+   "summary": "component-inventory.json#r21_decisions.new_section_kinds が 6 件 (flow-overview / capability-explainer / handson / anticipated-qa / dialogue / logistics) のままで、R25/REQ-4 で足した timeline / map / thesis が入っていない。R21 の記述としては正しいが new_section_kinds を section_kind 追加の履歴と読むと不完全。報告の DT-B に一致。dispatcher が別途起票した P05-x-62 (出荷 config に timeline/map/thesis が不在・かつ両ファイルとも version:2 で drift 検出子として機能していない) と同じ根を持つ"
+  },
+  {
+   "id": "F-P03X04-07",
+   "level": "resolved",
+   "summary": "dispatcher が dispatch 前に実測した C58 の宣言欠落 (checklist_covered 0 件) は本ノードで C12 へ追加され解消。dispatcher が並行して起票した P05-x-63-c58-owner-declaration-missing は本ノードで消化済みのため取り下げる必要がある"
+  },
+  {
+   "id": "F-P03X04-08",
+   "level": "blocking-for-release",
+   "summary": "criterion 文と実装の一致を問うと、14 件のうち 6 件で乖離が出る。内訳は (a) fail-open 2 件 = C59 の dialogue 不在で share 検査が飛ぶ (:1349) / C52 の超過検出が --normalize と排他 (:1977)、(b) 検査対象の取りこぼし 1 件 = C56 の NAR-07 が mains[0] しか見ない (:1012)、(c) プロキシ代替 3 件 = C46(b) の row.sub のみ / C51(a) の slot ラベル順序 / C54 の attainment_step 自己申告。いずれも『検出コードが実在する』を満たしながら criterion を破れる。P05-x-66 / -67 / -71 / -72 として起票。この 6 件は『owner と検証手段の実在』を問う従来の測り方では 1 件も出ず、criterion 文を全文引いて実装本体と並べて初めて出た"
+  },
+  {
+   "id": "F-P03X04-09",
+   "level": "blocking-for-release",
+   "summary": "goal-spec が自己矛盾している。C52 は超過分を既定で畳んだアコーディオンへ格納することを要求し、同じ goal-spec の C73 (REQ-7) の (3) は fold_section による折り畳み退避の回数上限を 0 とし超過を E-TEXT-FOLDED で落とすことを要求する。設計側 (script-brief-C12#r21_type_constraints.text_length_fold) は C73 準拠へ倒れているが、goal-spec が両方を要求したままなので P07 の受入で必ず割れる。R7 (長い文章を絶対に防ぐ) は C73 側に対応するため裁定の向きは C73 優先が濃厚だが、checklist を書き換えるのは受入基準の変更であり本ノードの権限外。P05-x-68 として起票"
+  },
+  {
+   "id": "F-P03X04-10",
+   "level": "carry-forward",
+   "summary": "同一 criterion に対する 2 者の判定が 4 件で割れた (C48 / C50 / C56 / C59)。dispatcher が実装を直読みした結果、割れた 4 件すべてで『partial 側が正しい』か『両者が別の面を見ていた』のどちらかであり、full 判定が正しかった例は 0 件。criterion 一致の判定は full 側へ倒れやすい — 検出コードの実在を確認した時点で満足し、criterion 文の残りの句を読まずに終わる形。判定を割った 2 者独立測定が無ければ 6 件のうち 4 件は検出されなかった"
+  },
+  {
+   "id": "F-P03X04-11",
+   "level": "carry-forward",
+   "summary": "『repo 全体で 0 件』という言明の射程が検証されずに流通した。orange は E-TEXT-FOLDED を repo 全体 0 件と報告したが、実際に 0 件なのは plugins/ 配下のみで plugin-plans/ には 20 件以上ある。結論 (C52 の detection が未実装) は変わらないが、『どこにも無い』と『設計にあり出荷に無い』では治療方針が正反対になる (前者は brief から名前を消す・後者は出荷へ実装する)。F-P03X03-03 で cyan が指摘した『grep 射程がそのまま欠陥の溜まり場を決める』の言明側の版であり、報告に grep コマンドの射程指定を明記させる必要がある"
+  }
+ ]
+}

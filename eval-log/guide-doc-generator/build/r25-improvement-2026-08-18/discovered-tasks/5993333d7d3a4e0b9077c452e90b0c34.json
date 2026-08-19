@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C16-01",
+  "reason": "G-03 が撤去したはずの Unicode ブロック denylist が C14 の test 側にだけ残存。C15 が過去に踏んだ『test だけが古い denylist を持つ』構図と同型。現時点の実害は 0 だが正本の二重化",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C16-01.json",
+  "proposed_node": {
+    "id": "P05-x-14-ac-denylist-delegate",
+    "title": "C14 の AC から絵文字/外部参照 denylist の複製を除去し C16 委譲へ寄せる",
+    "phase_ref": "P05",
+    "entity_ref": "C14",
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+    "acceptance_criterion": "script-brief-C14.json の AC-C14-3 / AC-C14-4 が U+1F300-1FAFF / U+2600-27BF / U+FE0F および http:// https:// // xlink:href を独自列挙せず、C16 の scan_emoji / scan_external_references の呼出し結果で判定していること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C14"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

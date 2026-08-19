@@ -26,7 +26,7 @@
       presentation_order / role の値域、単一行フィールドの最大長
   - config/handout-parts.json           … data-hb-part の部品語彙と section_scope
   - config/handout-sections.json        … section_kind の語彙と required_role
-  - assets/tokens/<theme>.json          … text_limits.block_body_max_chars_by_detail_level
+  - assets/tokens/<theme>.json          … text_limits.section_body_chars_by_detail_level
 
 いずれかが読めない場合は検査を成立させず exit 2 (fail-closed)。
 
@@ -50,10 +50,14 @@ PLUGIN_ROOT = SCRIPT_DIR.parent
 SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "handout-config.schema.json"
 PARTS_PATH = PLUGIN_ROOT / "config" / "handout-parts.json"
 SECTIONS_PATH = PLUGIN_ROOT / "config" / "handout-sections.json"
+VISUAL_POLICY_PATH = PLUGIN_ROOT / "config" / "handout-visual-policy.json"
 TOKENS_DIR = PLUGIN_ROOT / "assets" / "tokens"
 
 # テーマトークンが持つ水準別上限のキー。値 (数値) は本 script に持たない。
-BY_DETAIL_KEY = "block_body_max_chars_by_detail_level"
+# 節あたりの文章量予算 (min/max)。1 ブロックの上限 (block_body_max_chars_by_detail_level)
+# とは単位が違う — NAR-09 が測るのは「節にどれだけ載っているか」であり、
+# 単位の違う block 上限と節の実測平均を比べていた旧実装では両端の水準しか発火しなかった。
+BY_DETAIL_KEY = "section_body_chars_by_detail_level"
 
 NORMALIZED_BY = "validate-handout-config.py"
 
@@ -370,7 +374,11 @@ def load_resources(config):
 
 
 def _load_detail_limits(config, detail_levels):
-    """水準別上限をテーマトークンから引く (本 script は数値を持たない)。"""
+    """水準別の節あたり文章量予算 (min/max) をテーマトークンから引く。
+
+    本 script は数値を持たない。水準の境界値はテーマトークンが正本で、
+    「どれだけ書くか」を調整したい利用者はここだけを触れば全水準へ効く。
+    """
     if not TOKENS_DIR.is_dir():
         raise GateError("テーマトークンのディレクトリが無い: %s" % TOKENS_DIR)
     candidates = []
@@ -386,9 +394,15 @@ def _load_detail_limits(config, detail_levels):
         data = _load_json(path, "assets/tokens/%s" % path.name)
         limits = (data.get("text_limits") or {}).get(BY_DETAIL_KEY)
         if isinstance(limits, dict) and all(
-            isinstance(limits.get(level), int) for level in detail_levels
+            isinstance(limits.get(level), dict)
+            and isinstance(limits[level].get("min"), int)
+            and isinstance(limits[level].get("max"), int)
+            for level in detail_levels
         ):
-            return dict((level, limits[level]) for level in detail_levels)
+            return dict(
+                (level, {"min": limits[level]["min"], "max": limits[level]["max"]})
+                for level in detail_levels
+            )
     raise GateError(
         "テーマトークンに text_limits.%s が無い (水準の境界値を script に持たない)" % BY_DETAIL_KEY
     )
@@ -558,6 +572,13 @@ def load_config(path):
     for key in REQUIRED_CONFIG_KEYS:
         if key not in config:
             raise GateError("--config に必須フィールド %s が無い" % key)
+        if config[key] is None:
+            # 正規化済み構成データに null は無い (C12 が値を埋めるか落とすかを決める)。
+            # null を「未宣言」として検査を飛ばすと、値を消すだけでゲートを
+            # 無効化できてしまう — キー削除と同じ入力契約違反として扱う。
+            raise GateError(
+                "--config の必須フィールド %s が null (正規化済み構成データでは"
+                "起こらない。キーの削除と同じ入力契約違反として扱う)" % key)
     sections = config.get("sections")
     if not isinstance(sections, list) or not sections:
         raise GateError("--config の sections が 0 件 (R19 の対象として成立しない)")
@@ -661,13 +682,47 @@ class Document(object):
 # NAR-01 / NAR-02
 # --------------------------------------------------------------------------
 
-HERO_FIELD_ORDER = (FIELD_PURPOSE, FIELD_BACKGROUND, FIELD_GOAL)
+_HERO_FIELD_ORDER_CACHE = None
+# 冒頭に必ず在ることを求める 3 要素。順序は持たない (順序は正本の側にある)。
+HERO_REQUIRED_FIELDS = frozenset((FIELD_PURPOSE, FIELD_BACKGROUND, FIELD_GOAL))
+
+
+def hero_field_order():
+    """冒頭 3 要素の文書順を正本から引く (fail-closed)。
+
+    順序を本 script の定数で持たない。持つと、描画する C11 と順序を検査する
+    本 script が別々の順序を持つ二名簿になり、正本を書き換えても片方だけが
+    動く。正本は config/handout-visual-policy.json#opening.hero_card_fields.order。
+
+    正本が読めないときに既定順へ落とさないのは、既定順が『何かの順に並んで
+    いる』ことだけを担保して『正本どおりに並んでいる』ことを担保しないため。
+    黙って旧順序を通す方が事故になる (利用者要求 R3 はゴール先頭)。
+    """
+    global _HERO_FIELD_ORDER_CACHE
+    if _HERO_FIELD_ORDER_CACHE is not None:
+        return _HERO_FIELD_ORDER_CACHE
+    policy = _load_json(VISUAL_POLICY_PATH, "config/handout-visual-policy.json")
+    order = (((policy.get("opening") or {}).get("hero_card_fields") or {})
+             .get("order"))
+    if not isinstance(order, list) or not order:
+        raise GateError(
+            "config/handout-visual-policy.json に "
+            "opening.hero_card_fields.order が無い (冒頭の並び順の単一正本)")
+    names = tuple(name for name in order if isinstance(name, str) and name)
+    missing = HERO_REQUIRED_FIELDS - set(names)
+    if missing:
+        raise GateError(
+            "opening.hero_card_fields.order に冒頭 3 要素が揃っていない (欠落: %s)"
+            % ", ".join(sorted(missing)))
+    _HERO_FIELD_ORDER_CACHE = names
+    return names
 
 
 def check_nar01(doc):
     violations = []
     seen = {}
-    for name in HERO_FIELD_ORDER:
+    order = hero_field_order()
+    for name in order:
         elements = doc.fields(name)
         if not elements:
             violations.append(
@@ -710,17 +765,18 @@ def check_nar01(doc):
                     "%s が冒頭 (hero または最初の section より前) に無い" % name,
                 )
             )
-    ordered = [seen[name].seq for name in HERO_FIELD_ORDER if name in seen]
+    ordered = [seen[name].seq for name in order if name in seen]
     if len(ordered) > 1 and ordered != sorted(ordered):
         violations.append(
             Violation(
                 "NAR-01",
                 "-",
-                " → ".join(name for name in HERO_FIELD_ORDER if name in seen),
-                "文書順は purpose → background → goal であること",
+                " → ".join(name for name in order if name in seen),
+                "文書順は %s であること (正本: config/handout-visual-policy.json"
+                "#opening.hero_card_fields.order)" % " → ".join(order),
             )
         )
-    return make_result("NAR-01", len(HERO_FIELD_ORDER), violations)
+    return make_result("NAR-01", len(order), violations)
 
 
 def _is_in_hero_region(doc, node):
@@ -734,7 +790,7 @@ def _is_in_hero_region(doc, node):
 def check_nar02(doc):
     violations = []
     checked = 0
-    for name in HERO_FIELD_ORDER:
+    for name in hero_field_order():
         elements = doc.fields(name)
         if not elements:
             continue
@@ -819,14 +875,28 @@ def check_nar03(doc):
     return make_result("NAR-03", len(doc.cfg_sections), violations)
 
 
+# 見出しの直後に置く絵。ここに並ぶ部品が節の先頭 1 個目に来ているときは、
+# セクションゴールより前にあっても「冒頭を占めた」とは数えない
+# (利用者指定 2026-08-19『セクションはタイトル → 画像 → 目的の順』)。
+LEADING_VISUAL_PARTS = ("IMG", "DIAGRAM")
+
+
 def _section_body_boundary(doc, section_node):
-    """『冒頭』の境界: lead_line と具体部品のうち文書順で最初のもの。"""
-    boundary = None
+    """『冒頭』の境界: lead_line と具体部品のうち文書順で最初のもの。
+
+    ただし節の 1 個目の部品が絵 (LEADING_VISUAL_PARTS) なら、それは境界に
+    数えない。絵は読み手が文を読む前に何の話かを掴むための面であり、
+    ゴールを押し下げる本文ではない。2 個目以降の絵は通常どおり境界になる
+    (絵を並べてゴールを下へ流すことは許さない)。
+    """
+    candidates = []
     for child in section_node.descendants():
         if child.attr("data-hb-field") == FIELD_LEAD_LINE or doc.is_part(child):
-            if boundary is None or child.seq < boundary.seq:
-                boundary = child
-    return boundary
+            candidates.append(child)
+    candidates.sort(key=lambda node: node.seq)
+    if candidates and candidates[0].attr("data-hb-part") in LEADING_VISUAL_PARTS:
+        candidates = candidates[1:]
+    return candidates[0] if candidates else None
 
 
 def check_nar04(doc):
@@ -1190,28 +1260,35 @@ def check_nar09(doc):
     total = sum(node.text_length() for node in mains)
     average = total // len(mains)
     limits = doc.res["detail_limits"]
-    low = levels[0]
-    high = levels[-1]
+    budget = limits[declared]
 
+    # 宣言した水準の予算帯で直接検査する。以前は「両端の水準を比べる」形だったため、
+    # standard を宣言した資料は何字書いても素通りしていた (どの水準を宣言しても
+    # 同じ検査が効かなければ、detail_level は調整軸として機能しない)。
+    # 上下どちらの逸脱も同じ失敗 — 読み手は宣言された詳しさを期待して読み始める。
     violations = []
-    if declared == high and average <= limits[low]:
+    if average > budget["max"]:
         violations.append(
             Violation(
                 "NAR-09",
                 "-",
                 "declared=%s measured_avg_chars=%d" % (declared, average),
-                "宣言 %s に対し本編 %d セクションの平均本文量が %s 水準の上限 (%d) 以下"
-                % (declared, len(mains), low, limits[low]),
+                "宣言 %s に対し本編 %d セクションの平均本文量が予算上限 (%d 字) を超えている "
+                "(詳しく書くなら detail_level を上げる。水準を上げずに書き足すと、"
+                "要点だけを期待した読み手に読み切れない量が渡る)"
+                % (declared, len(mains), budget["max"]),
             )
         )
-    elif declared == low and average > limits[high]:
+    elif average < budget["min"]:
         violations.append(
             Violation(
                 "NAR-09",
                 "-",
                 "declared=%s measured_avg_chars=%d" % (declared, average),
-                "宣言 %s に対し本編 %d セクションの平均本文量が %s 水準の上限 (%d) を超えている"
-                % (declared, len(mains), high, limits[high]),
+                "宣言 %s に対し本編 %d セクションの平均本文量が予算下限 (%d 字) に届かない "
+                "(要点だけで足りるなら detail_level を下げる。宣言だけ詳しくして中身が"
+                "薄いと、読み手は書かれていない説明を探し続ける)"
+                % (declared, len(mains), budget["min"]),
             )
         )
     return Result(

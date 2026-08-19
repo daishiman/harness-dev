@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "brief 側にのみ存在する C11→C16 の依存辺が inventory に無い。C16.depends_on=[] のため追加しても循環しないことを dispatcher が Kahn 法で独立確認済み",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-01.json",
+  "proposed_node": {
+    "id": "P05-x-49",
+    "title": "component-inventory.json の C11.depends_on へ C16 を追加する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+    "acceptance_criterion": "C11.depends_on に C16 が含まれ、Kahn 法で 23/23 の位相順序が成立すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

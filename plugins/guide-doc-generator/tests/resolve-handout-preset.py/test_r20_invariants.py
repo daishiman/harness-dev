@@ -68,8 +68,15 @@ class PresetKeySurfaceTest(unittest.TestCase):
                         self.assertNotIn(fragment, lowered, "不変項へ到達しうるキー名")
 
     def test_section_entry_keys_are_fixed(self):
-        """section の形も固定 (id / heading / section_kind / recommended_parts / required)。"""
-        expected = {"id", "heading", "section_kind", "recommended_parts", "required"}
+        """section の形も固定。
+
+        image_role は利用者要求 R8 (図解と画像を毎回セクションごとに必ず)
+        で加わった 6 番目のキーで、『どの役の画像を置く節か』を骨格の時点で
+        宣言させる。ここは形の固定 (増えても減ってもいない) だけを見る。値域と
+        宣言漏れの扱いは test_image_role.py が持つ。
+        """
+        expected = {"id", "heading", "section_kind", "recommended_parts", "required",
+                    "image_role"}
         for slug, preset in H.presets(self).items():
             for section in preset["section_order"]:
                 with self.subTest(slug=slug, section=section.get("id")):

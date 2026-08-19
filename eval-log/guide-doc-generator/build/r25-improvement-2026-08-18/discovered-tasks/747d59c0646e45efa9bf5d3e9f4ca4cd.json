@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C12-01-visual-density-tests",
+  "reason": "handout-visual-policy.json の thresholds[].level が重大度を昇格しかできず降格できない。validate-handout-config.py は ctx.error_codes = set(FALLBACK_ERROR_CODES) から始めて level=='error' の code を union するため、FALLBACK_ERROR_CODES に載る 5 code は正本で warning へ書き換えても error のまま完了を止める。正本を編集した利用者に無言で無視されるつまみであり、設定の意味と実装が食い違う",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P05-C12-01-visual-density-tests.json",
+  "proposed_node": {
+    "id": "P05-x-115-severity-level-one-way",
+    "title": "重大度 level の片方向性を裁定し、降格可能にするか宣言不能にするかを決める",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "config/handout-visual-policy.json の level を warning へ書き換えたときの挙動が、実装・正本の記述・同梱テストの 3 者で一致する。降格を許すなら FALLBACK_ERROR_CODES を『正本不在時の既定』へ限定し正本が読めた場合は level を唯一の出所とする。降格を許さないなら当該 code を level 宣言の対象外と正本側へ明記し、書き換えても効かないことを検証時に警告する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  }
+}

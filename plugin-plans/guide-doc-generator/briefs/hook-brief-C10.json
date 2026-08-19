@@ -8,10 +8,12 @@
   "matcher": "Write|Edit",
   "event_rationale": "PreToolUse ではなく PostToolUse を採る。Edit の PreToolUse ペイロードは old_string/new_string の差分しか持たず、書込後の文書全体を判定できないため誤検出と見逃しが同時に出る。PostToolUse なら書込済みの実ファイルを読めるので、Write と Edit を同一の判定で扱える。ただし PostToolUse は書込自体を止められないので、本 hook の fail-closed は「書込を阻止する」意味ではなく「違反があるとき exit2 が必ず立ち、後段が無検査で先へ進めない」意味である (inventory の exit_semantics: fail-closed-exit2 と同義)。ファイルの削除やロールバックは行わない (write-scope: none)",
   "applies_to": {
-    "rule": "以下を上から順に評価し、外れた時点で exit0 (素通し)。(1) tool_name が Write / Edit のいずれか。(2) tool_input から書込先パスを取り出せる (file_path > filePath > path の順)。(3) 拡張子が .html (大小文字無視)。(4) そのファイルと同じディレクトリに handout-config.json が存在する。(5) そのディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}- に一致する。(4) と (5) を両方満たしたときだけ検査対象とする",
+    "rule": "以下を上から順に評価し、外れた時点で exit0 (素通し)。(1) tool_name が Write / Edit のいずれか。(2) tool_input から書込先パスを取り出せる (file_path > filePath > path の順)。(3) 拡張子が .html (大小文字無視)。(4) そのファイルと同じディレクトリに handout-config.json が存在する。(5) そのディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}(?!\\d) に一致する (日付部だけを見て、日付の直後の区切り文字は問わない)。(4) と (5) を両方満たしたときだけ検査対象とする",
+    "separator_agnostic_rationale": "(5) が日付の直後の区切り文字を問わないのは必須の設計である。R25 (改善 2026-08-18・REQ-6) でディレクトリ名の書式が `{date}-{doc_type}-{slug}` から `{date}_{slug}` へ変わり、区切りがハイフンからアンダースコアへ移った (正本 improvement/output-naming-decision.json、実行時の書式は config/handout-output.json#dir_name_format)。旧規則の `^\\d{4}-\\d{2}-\\d{2}-` は末尾のハイフンを必須にしていたため、新書式の `2026-08-18_KPI進捗管理の業務フロー` に一致せず、資料出力ディレクトリ全体が本 hook の適用範囲から外れて hook が恒久的に無音になる。区切り文字は config/handout-output.json#dir_name_format が正本であり、本 hook はそれを読まないし複製もしない — 書式の変化に影響されない最小の条件 (先頭の ISO 日付) だけを見ることで、正本を参照せずに追従不要にする。(?!\\d) は `2026-08-180...` のような日付でない連番を拾わないための境界であり、区切り文字の種類を列挙するものではない",
     "resolution_rationale": "判定を環境変数や設定ファイル由来の out-dir ルートに依存させない。--out-dir で任意の場所へ出せる以上、ルート一致を必須条件にすると上書き出力時に hook が黙り、逆にルート未解決時の扱いで挙動が二分してしまう。代わりに『C19 が作ったディレクトリにしか存在しない 2 つのマーカー (日付接頭のディレクトリ名 + 同階層の handout-config.json)』で同定する。この判定は C19 の命名規則にのみ依存し、種別語彙は一切参照しないので C42 のハードコード重複を作らない",
     "in_scope_examples": [
-      "<out-dir>/2026-08-17-lecture-生成AIの業務活用入門/handout.html (同階層に handout-config.json あり)",
+      "<out-dir>/2026-08-18_生成AIの業務活用入門/handout.html (R25 以降の書式。同階層に handout-config.json あり)",
+      "<out-dir>/2026-08-17-lecture-生成AIの業務活用入門/handout.html (R25 前の書式。既存の出力ディレクトリを後から編集する経路が残るため、旧書式も適用対象であり続ける)",
       "利用者が --out-dir で repo 配下へ出した 2026-08-17-agenda-月次定例/handout.html (同階層に handout-config.json あり)"
     ],
     "out_of_scope_examples": [
@@ -29,13 +31,20 @@
     "block": "exit 2。stderr に [guard-handout-external-ref] BLOCKED: を先頭に付けて、違反ごとに 1 行 (検出規則 id / 行番号 / 該当箇所の抜粋 120 文字以内) を出す。PostToolUse の exit 2 は stderr が Claude へ返る経路であり (dev-graph の guard-graph-schema.py が同じ契約で block している)、直後の修正を促す",
     "abort": "検査を最後まで実行できなかった場合 (読込失敗・予算超過) は exit 0 とし、stdout へ {\"systemMessage\": \"...\"} の JSON を 1 行出して打ち切りを明示する (stdout に JSON を書く形は hook-postgen-eval.py の実装で確認済み)。exit 2 を立てない理由は fail_closed_scope を参照"
   },
-  "fail_closed_scope": "fail-closed にする範囲は『適用対象と同定できたファイルを最後まで読めて、検出規則が違反を見つけたとき』に限る。この範囲では例外なく exit2 を立て、警告に留めない (外部参照の混入は成果物の正しさを壊すため、index.md の fail-soft/fail-closed 分界で fail-closed 側に置かれている)。fail-closed にしない範囲は 3 つ: (a) 適用対象かどうかを判定できないとき (パス取得不能・ペイロード不正) は exit0。判定不能で止めると導入環境の無関係な編集が動かなくなり、誤爆コストが見逃しコストを大きく上回る。(b) 対象ファイルを読めないとき (削除済み・権限不足) は exit0。(c) 自前予算 3 秒またはファイルサイズ 8 MiB を超えて検査を完走できないとき は打ち切って exit0。(a)-(c) のいずれも、見逃しは C16 verify-handout-selfcontained.py の完成物ゲートで必ず捕まる二重防御の内側であり、hook 側で無理に止める必要がない。ただし (c) は打ち切った事実を stdout の systemMessage で必ず可視化し、黙って合格に見せない",
+  "fail_closed_scope": "fail-closed にする範囲は『適用対象と同定できたファイルを最後まで読めて、検出規則が違反を見つけたとき』に限る。この範囲では例外なく exit2 を立て、警告に留めない (外部参照の混入は成果物の正しさを壊すため、index.md の fail-soft/fail-closed 分界で fail-closed 側に置かれている)。fail-closed にしない範囲は 3 つ: (a) 適用対象かどうかを判定できないとき (パス取得不能・ペイロード不正) は exit0。判定不能で止めると導入環境の無関係な編集が動かなくなり、誤爆コストが見逃しコストを大きく上回る。(b) 対象ファイルを読めないとき (削除済み・権限不足) は exit0。(c) budget_thresholds が定める走査予算 (config/handout-output.json#size_limits.hook_scan_budget の max_seconds / max_bytes) を超えて検査を完走できないとき は打ち切って exit0。数値は本 brief にも hook ソースにも持たない (budget_thresholds 参照)。(a)-(c) のいずれも、見逃しは C16 verify-handout-selfcontained.py の完成物ゲートで必ず捕まる二重防御の内側であり、hook 側で無理に止める必要がない。ただし (c) は打ち切った事実を stdout の systemMessage で必ず可視化し、黙って合格に見せない",
+  "budget_thresholds": {
+    "canonical_location": "config/handout-output.json#size_limits.hook_scan_budget の max_bytes / max_seconds。producer は P05-x-03 (config/ の唯一の producer)。本 hook のソースへ数値を焼かない — 同ファイルの size_limits.note が『値をここに置くのは閾値を script ソースへ焼き込まないためであり、超過時の挙動 (fail-soft / warning 継続) の定義は各 component 側が持つ』と定めており、本 hook はその『超過時の挙動』(打ち切って exit0 + systemMessage) の側だけを持つ",
+    "why_not_asset_max_bytes": "既存の size_limits.asset_max_bytes (5242880) を流用してはならない。これは『1 素材あたりの埋め込み上限 (原本バイト数・base64 化前)』であり、同キーの semantics が『累積合計に対する閾値は持たない』と明記している。本 hook の予算は生成 HTML 全体のテキスト長に対する走査予算であって、単位も対象も異なる。同じ数値を 2 つの意味で使うと、片方の改定がもう片方を黙って壊す",
+    "scale_check": "R25 (per-section IMG 必須化) 後の規模と突き合わせると、旧仮置きの 8 MiB は小さすぎる可能性が高い。asset_max_bytes の 5242880 バイトの素材 1 点は base64 化で約 4/3 の約 6.99 MB (約 6.67 MiB) になるため、上限いっぱいの素材が 2 点あれば単体で 8 MiB を超える。R25 は main セクション (第1稿の目安 4-6 節) ごとに IMG を 1 件以上必須とするため、1 枚 1 MiB 程度の穏当な挿絵でも 6 節で約 8 MiB に達する。すなわち旧閾値のままでは打ち切り (exit0) が例外ではなく常態になり、水際ガードとしての本 hook が実質的に無音化する。ただし具体値の決定は config 側 (P05-x-03) の責務であり、本 brief では正本の所在と単位・意味だけを固定して数値は持たない",
+    "if_key_missing": "config に hook_scan_budget が無い場合は、本 hook のソース側の既定値へ倒さず fail_closed_scope (a) と同じ扱いで exit0 とし、stdout の systemMessage へ『予算宣言 (config/handout-output.json#size_limits.hook_scan_budget) が解決できないため未検査』と欠落キー名を明示して出す。ソース側の既定値を持たせるとそれが config と乖離した第 2 の正本になり、config を直しても効かなくなる (C15 が絵文字 denylist で、C19 が dir_name_format で踏んだのと同じ構造)。黙って合格に見せない点は (c) と同じで、見逃しは C16 の完成物ゲートで捕まる",
+    "tradeoff": "この設計は config へキーが入るまで本 hook を無音にする。fail-closed (exit2) にしない理由は、hook が導入環境の全 Write|Edit で走るため、設定不備で無関係な編集まで止めると誤爆コストが見逃しコストを大きく上回るからであり、fail_closed_scope (a) の判断と同一である。無音であることは systemMessage で毎回可視化されるので、黙って壊れている状態にはならない"
+  },
   "detection_rules": [
     {
       "id": "D1-external-url-attr",
-      "rule": "外部参照の判定規則は本 hook では定義しない。C16 script-brief の canonical_rules.external_reference_rule (CR-EXT) を単一正本とし、その判定を module_api.scan_external_references(html_text) の呼び出しで再実行して結果を受け取る。すなわち『取得 (fetch) を発生させる参照だけが違反』であり、src / href / srcset / poster / data-src 等の属性値と CSS の url() / @import が data: 以外の実体を指すときに違反、text node の URL 文字列は違反ではない、という区別は CR-EXT の定義そのものである。本 hook は対象ファイルの同定と exit code への写像だけを行う",
-      "rule_source": "C16 canonical_rules.external_reference_rule (CR-EXT)",
-      "violation_example": "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+JP\">",
+      "rule": "外部参照の判定規則は本 hook では定義しない。C16 script-brief の canonical_rules.external_reference_rule (CR-EXT) を単一正本とし、その判定を module_api.scan_external_references(html_text) の呼び出しで再実行して結果を受け取る。すなわち『取得 (fetch) を発生させる参照だけが違反』であり、src / href / srcset / poster / data-src 等の属性値と CSS の url() / @import が data: 以外の実体を指すときに違反、text node の URL 文字列は違反ではない、という区別は CR-EXT の定義そのものである。本 hook は対象ファイルの同定と exit code への写像だけを行う。C60 (2026-08-17) で CR-EXT へ追加された包括規則 SC-10 (取得を発生させ得る参照は data: でなければ一律違反。スキームを持たない相対パスも違反。iframe / frame / portal は要素の存在自体が違反) も本 id の担当範囲に含まれる — script-brief-C16.json の delegated_consumers が『SC-10 を含む CR-EXT 全体が対象』と明記しており、scan_external_references の返り値に SC-10 の違反が含まれる以上、本 hook が受け取る違反にも当然含まれる。判定軸が『外部スキームか否か』ではなく『data: か否か』へ反転している点は本 id の名称 (external-url-attr) からは読めないため、ここに明記して名称の古さが範囲の誤解にならないようにする",
+      "rule_source": "C16 canonical_rules.external_reference_rule (CR-EXT。SC-01 / SC-02 / SC-03 / SC-04 / SC-10 の 5 detection を含む)",
+      "violation_example": "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+JP\"> (SC-01 / SC-04) / <script src=\"./app.js\"></script> (相対パスでも SC-10 で違反) / <iframe srcdoc=\"<p>x</p>\"></iframe> (SC-10 は要素の存在自体を違反とする)",
       "pass_example": "<img src=\"data:image/png;base64,iVBORw0KG...\" alt=\"構成図\"> と <a href=\"#section-3\">3. 手順</a>"
     },
     {
@@ -46,14 +55,33 @@
       "pass_example": "<h2><svg class=\"icon\"><use href=\"#icon-rocket\"/></svg> ポイント 3 つ</h2> / <h2>★ ポイント 3 つ</h2> (U+2605 は絵文字ではない)"
     }
   ],
+  "code_mapping": {
+    "why": "本 hook が stderr へ出す id (D1 / D2) と、C16 の判定関数が Violation.detection_id として返す id (SC-01..SC-10) は別の名前空間である。写像を明文化しないと、実装者が D1/D2 を出すか SC-* を出すかを勝手に決めることになり、acceptance_checks が期待する文字列と食い違う",
+    "map": {
+      "D1-external-url-attr": "scan_external_references が返す全ての detection_id (SC-01 / SC-02 / SC-03 / SC-04 / SC-10)",
+      "D2-emoji": "scan_emoji が返す detection_id (SC-05)"
+    },
+    "stderr_form": "1 違反 1 行で、本 hook の id と C16 の detection_id を両方出す。前者だけでは『CR-EXT のどの規則クラスか』が失われ、後者だけでは本 brief の検出規則 id と対応が取れなくなる。行の要素は 本 hook の id / C16 の detection_id / 行番号 (と列) / 該当箇所の抜粋 120 文字以内 とする",
+    "unknown_detection_id": "将来 C16 が SC-11 以降を追加した場合、写像表に無い detection_id は D1 側 (scan_external_references の返り値なら) / D2 側 (scan_emoji の返り値なら) へ、返した関数を根拠に振り分ける。id の文字列で分岐して未知を捨てる実装にしない — 捨てると C16 が規則を足したとき hook だけが黙って古くなり、invariant が破れる"
+  },
   "rule_delegation": {
     "canonical_owner": "C16 verify-handout-selfcontained.py",
     "how": "importlib.util.spec_from_file_location('hb_selfcontained', <plugin_root>/scripts/verify-handout-selfcontained.py) で C16 を module として読み込み、scan_external_references / scan_emoji を呼ぶ。本 hook のソースに外部スキームの列挙も絵文字コードポイントの列挙も置かない (AC で grep 検査する)",
-    "invariant": "C10 と C16 は同一入力に対し必ず同一判定を返す。同一の判定関数を通すため、片方だけが FAIL/PASS になる状態は設計上存在しない。差異が出たらそれは実装バグである",
+    "invariant": "本 hook が検査を完走した入力に対し、C10 と C16 は必ず同一判定を返す。同一の判定関数を通すため、完走した範囲で片方だけが FAIL/PASS になる状態は設計上存在しない。差異が出たらそれは実装バグである",
+    "invariant_scope": "『完走した入力に対し』の限定は必須であり、C16 側 (script-brief-C16.json の canonical_rules.invariant / invariant_scope) と同一の限定で対になっている。本 hook は fail_closed_scope (a)-(c) により、適用対象と同定できないとき・読めないとき・予算超過のときに exit0 で打ち切る。したがって予算超過の資料では C10 が exit0・C16 が exit1 になり得るが、これは判定規則の乖離ではなく hook 側の予算による意図的な二重防御であり、最終判定は常に C16 が持つ。打ち切りは stdout の systemMessage で必ず可視化する。この非対称を invariant の例外として書かずに『必ず同一判定』とだけ書くと、実装者が C16 側にも打ち切りを付ける (完成物ゲートが fail-open になる) か、本 hook から予算を外す (書込のたびに待ちが出る) かのどちらかへ倒れる。突合テスト (本 brief の acceptance_checks と AC-C16-11) の fixture は予算内 (max_bytes 未満・max_seconds 以内) のものに限る",
     "if_import_fails": "C16 を module として読めないときは fail_closed_scope (a) と同じ扱いで exit0 とし、stdout の systemMessage に『判定モジュール解決不能のため未検査』を出す。見逃しは C16 の完成物ゲートで捕まる"
   },
   "boundary_with_C16": "hook は『書込のたびに走る小さな予算で、ファイル内の他の箇所を参照せずに判定できるもの』だけを見る。それが D1 と D2 に限られる。C16 側に置き hook では一切実行しないのは次の 4 つ: (1) アイコン様式検査 (viewBox / stroke=currentColor / fill=none / stroke-linecap=round) — 全 SVG の集計が要る、(2) 未使用 symbol 0 件 — 定義と参照の突合が要る、(3) ナビ href と section id のアンカー整合 — 文書全体の相互参照が要る、(4) data URI のサイズ上限と a11y / 印刷ゲート — 別 component (C22 系) の領分。D1 / D2 が hook と C16 の両方から報告されるのは『二重実装』ではなく『同一規則の二重適用』である: 規則の定義は C16 に 1 つしかなく、hook はそれを早い時点 (水際) でもう一度当てているだけで、判定結果は常に一致する",
-  "settings_registration": "inventory の settings_wiring: settings.json に従い、導入環境の settings.json (project の .claude/settings.json または user の ~/.claude/settings.json) の hooks.PostToolUse へ登録する。エントリは {\"matcher\": \"Write|Edit\", \"hooks\": [{\"type\": \"command\", \"command\": \"python3 \\\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\\\"\", \"timeout\": 10}]}。パスは index.md の実行時可搬性方針 (HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest name 照合 / __file__ 相対の自己解決フォールバック) に従い、どちらの env も効かない .claude/ 平置き projection では hook 本体が Path(__file__).resolve().parent.parent で自己解決する。repo 内には他に 2 つの登録面が実在する (plugins/dev-graph/hooks/hooks.json 方式と、plugins/slide-report-generator/.claude-plugin/plugin.json の hooks キー方式)。dev-graph の hooks.json が冒頭 description で『project settings fallback を同時に有効化してはならない』と明示しているとおり、settings.json 登録と plugin 同梱登録を同時に有効化すると 1 回の書込で 2 回発火するため、本 component はどちらか一方のみとし、settings.json 側を正本とする",
+  "r25_scope_note": {
+    "conclusion": "R25 (改善 2026-08-18) が資料へ加える新要素は、本 hook の検査対象の『件数』を増やすだけで『クラス』を増やさない。D1 / D2 の 2 規則も、boundary_with_C16 の分界も変更しない",
+    "per_element": [
+      "挿絵 (role=illustration・C21 srg-image-bridge.py の生成画像): C13 embed-assets.py が data URI 化して埋め込むため、hook から見れば既存の素材埋め込みと同じ img@src の data: 値である。SC-03 / SC-10 が既に data: を許可する規則として書かれており、枚数が main セクション数に比例して増えるだけ。ただし本文サイズが伸びるため budget_thresholds の予算に直接効く",
+      "図解 SVG (C14 render-diagram-svg.py の inline 出力): 外部参照を持たない契約 (script-brief-C14.json の font_family が @font-face / web font / 外部参照を持たないと宣言) であり、絵文字も自ら書き出さない (AC-C14-4)。要素数は増えるが D1 / D2 の判定対象としては新種ではない。アイコン様式・未使用 symbol・アンカー整合といった集計が要る検査は boundary_with_C16 のとおり本 hook では一切行わないので、SVG が増えても hook の走査量は本文テキスト長にしか比例しない",
+      "hero カード群 (R25/REQ-8・C74): 増えるのは text node の量であり、D2 の絵文字走査の対象が増える。絵文字の判定規則は CR-EMOJI のままで、hero 固有の文字数・文数上限 (正本 config/handout-visual-policy.json#opening.hero_fields) は構成データ側の検査であって本 hook の担当ではない"
+    ],
+    "what_actually_changed": "クラスではなく発火率が変わった。per-section IMG 必須化で HTML が節数に比例して伸びるため、fail_closed_scope (c) の打ち切り (exit0 + systemMessage) が例外から常態へ動く。R25 が本 hook に与えた実質的な影響はこの 1 点に集約され、対処は budget_thresholds で予算の正本を config へ置くことに尽きる"
+  },
+  "settings_registration":"inventory の settings_wiring: settings.json に従い、導入環境の settings.json (project の .claude/settings.json または user の ~/.claude/settings.json) の hooks.PostToolUse へ登録する。エントリは {\"matcher\": \"Write|Edit\", \"hooks\": [{\"type\": \"command\", \"command\": \"python3 \\\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\\\"\", \"timeout\": 10}]}。パスは index.md の実行時可搬性方針 (HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest name 照合 / __file__ 相対の自己解決フォールバック) に従い、どちらの env も効かない .claude/ 平置き projection では hook 本体が Path(__file__).resolve().parent.parent で自己解決する。repo 内には他に 2 つの登録面が実在する (plugins/dev-graph/hooks/hooks.json 方式と、plugins/slide-report-generator/.claude-plugin/plugin.json の hooks キー方式)。dev-graph の hooks.json が冒頭 description で『project settings fallback を同時に有効化してはならない』と明示しているとおり、settings.json 登録と plugin 同梱登録を同時に有効化すると 1 回の書込で 2 回発火するため、本 component はどちらか一方のみとし、settings.json 側を正本とする",
   "requirements_covered": [
     "R01 (外部依存ゼロの単一 HTML) の運用時防御",
     "R08 (絵文字ゼロ・アイコン規約) のうち絵文字混入の水際検出"
@@ -74,7 +102,14 @@
     "同じ構成で data URI 画像とページ内アンカーのみを含むとき exit0 かつ無出力",
     "地の文に https://example.com という文字列だけがあり属性値では参照していないとき exit0 (過剰検出しない)",
     "書込先ファイルが既に削除されているペイロードで exit0 かつ非ゼロ終了しない",
-    "8 MiB を超える handout.html で exit0 になり、stdout に打ち切りの systemMessage JSON が 1 行出る",
+    "config/handout-output.json#size_limits.hook_scan_budget.max_bytes を超える handout.html で exit0 になり、stdout に打ち切りの systemMessage JSON が 1 行出る (閾値はテスト側も config から読み、テストに数値を焼かない)",
+    "config から size_limits.hook_scan_budget を削除した状態で適用対象の handout.html を渡すと exit0 になり、systemMessage に欠落キー名 size_limits.hook_scan_budget が出る (ソース側の既定値へ倒れないことの検査)",
+    "hook 本体を grep したとき、走査予算のバイト数・秒数のリテラルが 0 件である (8388608 / 8 * 1024 * 1024 / 3.0 などの直書きが無く、値は config 由来である)",
+    "R25 の新書式ディレクトリ 2026-08-18_KPI進捗管理の業務フロー/handout.html + 同階層 handout-config.json で、外部 CDN の link を含むとき exit2 になる (区切りがアンダースコアでも適用対象から外れないことの回帰テスト)",
+    "R25 前の旧書式ディレクトリ 2026-08-17-lecture-xxx/handout.html でも同じ入力で exit2 になる (新旧どちらの書式でも適用対象であること)",
+    "先頭が日付でないディレクトリ (handout-output/ 直下や draft-2026-08-18_x/) の handout.html は handout-config.json があっても exit0",
+    "適用対象の handout.html が <script src=\"./app.js\"> を含むとき exit2 になり、stderr の行に D1-external-url-attr と C16 の detection_id SC-10 が両方出る (C60 の SC-10 が hook 経路にも届くこと・code_mapping の stderr_form の検査)",
+    "適用対象の handout.html が <iframe srcdoc=\"<p>x</p>\"> を含むとき exit2 になる (SC-10 は要素の存在自体を違反とする)",
     "地の文に ★ ✔ © (VS16 なし) を含むとき exit0 (CR-EMOJI 層 2 の記号を殺さない。旧 denylist U+2600-U+27BF が撤去されたことの回帰テスト)",
     "C16 と共通の境界事例 fixture 群を両者へ同一入力で掛け、判定 (違反有無・違反コードポイント) が全件一致する (AC-C16-11 と対をなす)",
     "hook 本体を grep したとき、外部スキームの列挙と絵文字コードポイントの列挙が 0 件で、判定が C16 module_api の呼び出しに一本化されている",
@@ -92,6 +127,7 @@
   "open_questions": [
     "matcher が Write|Edit で MultiEdit を含まない (inventory の宣言に従った)。slide-report-generator の同種 hook は Write|Edit|MultiEdit を採っており、MultiEdit で書かれた handout.html は本 hook を素通りする。見逃しは C16 で捕まる範囲だが、matcher に MultiEdit を足すかは inventory 側の更新を伴うため本 leaf では変更せず未確定として残す",
     "PostToolUse hook の exit 2 が Claude へ返る挙動は repo 内の実装契約 (dev-graph が同形式で block している) から確定させたが、PostToolUse 固有の停止セマンティクスを公式仕様で再確認していない。P04 のテストでは stderr 出力と exit code の 2 点のみを検証対象とし、上位の停止挙動には依存しない設計にする",
-    "8 MiB / 3 秒という打ち切り閾値は、data URI 埋め込みで肥大した資料を想定した仮置きであり、実測に基づく値ではない。index.md の現状値非焼込方針もあるため、config/handout-output.json のサイズ上限宣言と揃えるかどうかは C12 / config 側の確定待ち"
+    "【R25 で決着・記録】打ち切り閾値の正本は config/handout-output.json#size_limits.hook_scan_budget (max_bytes / max_seconds) とし、本 brief にも hook ソースにも数値を持たない (budget_thresholds 参照)。旧記述の『8 MiB / 3 秒は実測に基づく値ではない仮置き』という自認はそのまま有効で、既存の size_limits.asset_max_bytes とは単位も対象も異なるため流用もしない。残る未確定は具体値のみで、決定は config の producer である P05-x-03 の責務。R25 の per-section IMG 必須化を踏まえた規模の見積り (上限素材 2 点で 8 MiB 超・1 MiB の挿絵 6 節で約 8 MiB) は budget_thresholds.scale_check に根拠つきで置いた",
+    "本 hook の適用対象判定 (5) は先頭の ISO 日付だけを見る。より強い同定 (handout-config.json の中身を読んで正規化マーカーを確認する等) を採らないのは、書込のたびに走る hook で追加の JSON パースを行いたくないためである。日付接頭ディレクトリかつ同階層に handout-config.json がある、という 2 条件の同時成立で誤爆は十分に低いと判断しているが、この判断は実測ではなく設計上の見立てである"
   ]
 }

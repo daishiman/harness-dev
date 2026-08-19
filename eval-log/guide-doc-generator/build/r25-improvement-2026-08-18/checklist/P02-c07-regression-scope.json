@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c07-regression-scope",
+  "covered_task_ids": [
+    "P02-c07-regression-scope"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+  "acceptance_criterion_restated": "component C07 の harness_coverage に regression_scope が存在し、他 command component と同一の粒度で記述されていること",
+  "verified_by": [
+    {
+      "claim": "既存の regression_scope の粒度を実測してから書いた",
+      "method": "inventory 全 component を走査し regression_scope を持つ 10 件のキー構成を列挙 (since / checklist[] / new_acceptance_checks[] / resolution_ref / resolution_ref_addendum / note または boundary)",
+      "result": "C07 も同じキー構成で記述した。since は既存と同じ 'R25 (改善 2026-08-18)' の表記に揃えた"
+    },
+    {
+      "claim": "checklist の値を brief から導出した (発明していない)",
+      "method": "command-brief-C07.json の requirements_covered が名指しする R25 項目を読み取り、C68 / C69 / C72 / C73 を抽出",
+      "result": "checklist=[C68,C69,C72,C73]。requirements_covered が『副。提示する面のみ』と自ら範囲を限定しているため、判定側の C67/C70/C71/C74/C75 は入れていない"
+    },
+    {
+      "claim": "acceptance_checks の実在を突合した",
+      "method": "brief の acceptance_checks の id 一覧を実測 (AC-C07-1..5 / R24-01 / R25-72 / R25-DRAFT / R25-REPORT / R25-IMGSKIP)",
+      "result": "R25 由来の 4 本を new_acceptance_checks へ列挙した。存在しない id を書いていない (他 component の regression_scope でも id は brief の実在 AC を指している)"
+    },
+    {
+      "claim": "回帰範囲が広がりすぎない境界を書いた",
+      "method": "boundary キーを追加し、閾値・判定規則は C12 / C22 / C16 / C19 側にあり command は運ぶだけである旨を記述",
+      "result": "『閾値をここへ複製した時点で回帰範囲が誤って広がる』と理由つきで書いた。C13 の regression_scope が boundary キーで同種の責務外宣言をしている前例に揃えた"
+    },
+    {
+      "claim": "決定論ゲートで守れない回帰を名指しした",
+      "method": "must_not_regress を追加。全ゲート緑 + C21 skip での『画像は揃っています』への畳み込み、および第 1 稿での完了宣言の 2 件",
+      "result": "どちらも提示文面を読む検査でしか守れない旨を明記した。regression_scope が『テストで守られている範囲』と誤読されると、この 2 件が守られていないことが見えなくなる"
+    },
+    {
+      "claim": "inventory の決定論ゲートを通した",
+      "method": "check-surface-inventory.py と check-spec-gates.py を実行",
+      "result": "いずれも exit0。JSON の round-trip (indent=2 / ensure_ascii=False / 末尾改行) も編集前後で保存されている"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C07REG-PEERGAP-01",
+      "level": "warn",
+      "summary": "受入条件は『他 command component と同一の粒度』を求めるが、slash-command は C07/C08/C09 の 3 件で、C08 と C09 は regression_scope を 1 つも持たない。したがって『他 command と同一』は比較対象が空で、実際には script/skill component の記述を手本にした。C08 (handout-extract) と C09 (ゲート集約) も R25 の影響を受ける (前者は round-trip 対象フィールドの増加、後者は新設コード E-IMG-UNREALIZED 等の集約) ため、両者にも同じ欠落がある"
+    },
+    {
+      "id": "F-P02C07REG-NOSCHEMA-01",
+      "level": "info",
+      "summary": "regression_scope は schema で規定されておらず、キー構成は既存記述の模倣で決まっている。実際 note を使う component と boundary を使う component が混在し、意味は同じ (責務外の宣言)。check-spec-gates.py は harness_coverage の min / kind_pass だけを見ており regression_scope の中身は検査しない — 存在しなくても緑、キー名が揺れても緑"
+    },
+    {
+      "id": "F-P02C07REG-STALE-01",
+      "level": "info",
+      "summary": "new_acceptance_checks は brief の AC id を文字列で持つだけで、id が改名・削除されても壊れたことが機械的に分からない。裁定 pointer と同じ弱い参照 (F-P02C07REF-POINTER-01 と同型) が inventory 側にもある"
+    }
+  ]
+}

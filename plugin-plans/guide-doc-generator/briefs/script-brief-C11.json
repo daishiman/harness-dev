@@ -54,8 +54,11 @@
       "--config の正規化済み構成データ JSON",
       "assets/tokens/*.json (CSS 変数トークン定義 + R21 で追加した text_limits ブロック) と assets/mascot/*.svg (plugin 同梱・read-only)",
       "config/handout-parts.json (部品 id 語彙の正本。ファイルの単独 owner は本 script だが、実行時は plugin 同梱ファイルとして read-only で読む。部品テーブルの写像先はこのファイルの id に一致させ、id を実装へ列挙しない)",
-      "config/handout-purposes.json (用途語彙正本・ファイルの単独 owner は C23 であり、本 script は C23 のモジュール API 経由でのみ読む。ファイル名の正本は C23 のブリーフ)"
+      "config/handout-purposes.json (用途語彙正本・ファイルの単独 owner は C23 であり、本 script は C23 のモジュール API 経由でのみ読む。ファイル名の正本は C23 のブリーフ)",
+      "config/handout-visual-policy.json (owner は C12・本 script は read-only の reader。読むのは opening.hero_card_fields.layout / .list_headings.headings / .connector_card.heading (algorithm 16 の hero-card 見出し語) と micro_copy.roles の role=\"label\" の max_chars と fields (nav_item — algorithm 14 の nav ラベル長) だけであり、閾値判定は行わない (W-HERO-LONG / W-HERO-HEAVY の判定は C12)。日本語見出しを script へ焼かないための唯一の入口",
+      "config/handout-vocabulary.json (owner は C12・本 script は read-only の reader。attainment_level_labels (enum → 表示ラベル。algorithm 16 の可視テキスト差し替え) と connectors (id → 表示ラベル。REQ-9 の前提 hero-card) を引く。語彙の妥当性判定 (E-ENUM-VOCAB-INCOMPLETE / E-CONNECTOR-UNKNOWN) は C12 が持ち、本 script は引くだけ)"
     ],
+    "config_read_style": "config/handout-visual-policy.json と config/handout-vocabulary.json は owner が C12 だが、C12 のモジュール API 経由では読まず、plugin_root_resolution で解決した plugin root 配下の当該ファイルを json.load で直接読む。C12 は本 script の module API (load_parts_catalog 等・consumer_contract 参照) を読む側であり、本 script が C12 を import すると相互 import になるため。config/handout-parts.json (自ファイル) / config/handout-purposes.json (C23 の module API 経由) との経路差はこの理由による。いずれの場合も表示ラベル・見出し語・数値を script へ literal で書かない",
     "invoked_by": [
       "C01 run-handout-build (R3-render)",
       "C02 run-handout-extract (round-trip の再レンダリング)"
@@ -72,7 +75,7 @@
   "parts_catalog_ssot": {
     "catalog_path": "plugins/guide-doc-generator/config/handout-parts.json",
     "plan_representation": "plugin-plans/guide-doc-generator/briefs/config/handout-parts.json (実装前の設計 plan 上の同内容表現。実ファイル生成は P05 の担当)",
-    "ownership": "本ファイルの単独 owner (writer) は C11 render-handout.py である。part id 語彙 (B01..B16 / IMG / DIAGRAM / TEXT) の正本はこの 1 ファイルだけであり、index.md・C04・C12・C18・C23 はいずれもこのファイルを参照する側で、id を自分の側へ列挙しない。C23 の config/handout-purposes.json と同形 (データファイルを 1 component が所有し、他は読むだけ) にそろえている",
+    "ownership": "本ファイルの単独 owner (writer) は C11 render-handout.py である。part id 語彙 (値域はこのデータファイルの parts[] が定める。ここに写さない) の正本はこの 1 ファイルだけであり、index.md・C04・C12・C18・C23 はいずれもこのファイルを参照する側で、id を自分の側へ列挙しない。C23 の config/handout-purposes.json と同形 (データファイルを 1 component が所有し、他は読むだけ) にそろえている",
     "why_data_file": "part id は index.md / C04 の参照回答 / C12 のスキーマ検査 / C18 の LANG-06 / C23 のプリセット recommended_parts の 5 箇所で必要になる横断語彙で、どこか 1 component の散文へ書くと必ず写し違いが起きる (実際 B01-B15 と B03-B16 と B01..B16 の 3 版が並存していた)。データファイルにすれば読み手は全員同じ 1 ファイルを読み、追加時の更新点も 1 箇所になる",
     "schema": {
       "version": "スキーマ版 (C12 の schema_version とは独立)",
@@ -92,7 +95,7 @@
         "component-inventory.json の preset_addon_decisions にある『アクションアイテム』要件が verdict=new で採択され、new_component_ref が『C11 のレンダラへ追加する担当と期限を持つ行部品』となっている。これが B16 の出自である",
         "C12 の config_schema.part_catalog と C23 の preset_definitions (agenda / report / proposal の recommended_parts) が既に B16 を前提に書かれている"
       ],
-      "consequence": "catalog は B01-B16 の 16 部品を持ち、B01-B15 は since=v1、B16 は since=plan とする。『B01-B15』とだけ書いてある記述 (index.md・C04・AC-C11-5) は B16 を落としているので誤りであり、カタログ参照へ置き換える"
+      "consequence": "catalog は B16 を since=plan として持つ (参照資料由来の部品は since=v1)。部品の総数・id の範囲・追加後の顔ぶれは catalog_path のデータファイルだけが定め、本ブリーフを含むどの散文もそれを写さない (P03-x-03 で『B01-B16 の 16 部品』という写しを撤回した — 撤回時点の実カタログは既に B17 を含んでおり、写した瞬間に古くなることが実証された)。『B01-B15』とだけ書いてある記述はカタログ参照へ置き換える"
     },
     "consumer_contract": {
       "sanctioned_access": "Python 側は本 script が公開する module API (importlib.util.spec_from_file_location('hb_parts', <plugin_root>/scripts/render-handout.py) で読み込み load_parts_catalog() / is_known_part(id) / in_section_parts() を呼ぶ) を使う。skill / agent / 文書は config/handout-parts.json を直接読む。いずれの経路でも id を自分の側へハードコードしない",
@@ -110,22 +113,32 @@
   "theme_token_schema_ownership": {
     "since": "R21 (goal-spec C52)",
     "owner": "C11 (assets/tokens/<theme>.json のスキーマ正本。ファイルの物理 writer も C11 の同梱リソースとして P05 が生成する)",
-    "added_block": "text_limits { block_body_max_chars: integer (既定 400) }",
+    "added_block": "text_limits { block_body_max_chars: integer (既定 180 (2026-08-19 改定。旧 100)。R25/REQ-7 で standard_equals_default により 100 へ改定。旧既定 400) }",
     "why_theme_scoped": "説明の長さの上限は版面の設計に属する値であり、テーマ (字送り・欄幅・想定印刷サイズ) が変われば妥当な値も変わる。script のソースへ数値を書くと、テーマを足すたびにコード変更が要る。値をテーマトークンへ置けば、上限の変更はデータ 1 行の編集で済む",
-    "consumer": "C12 --normalize (CR-TEXT-FOLD)。C12 はこのファイルを read-only で読み、キーが無いテーマに対しては既定 400 を使う。C11 自身は本文を切り詰めず、採用値を data-hb-text-limit として焼くだけ。R22 以降は C12 が detail_level をキーに block_body_max_chars_by_detail_level を引く (CR-DETAIL-TEXT-BUDGET)",
+    "consumer": "C12 --normalize (CR-TEXT-FOLD)。C12 はこのファイルを read-only で読み、キーが無いテーマに対しては既定 180 を使う (R25/REQ-7 で旧既定 400 から改定)。C11 自身は本文を切り詰めず、採用値を data-hb-text-limit として焼くだけ。R22 以降は C12 が detail_level をキーに block_body_max_chars_by_detail_level を引く (CR-DETAIL-TEXT-BUDGET)",
     "not_a_new_config_file": "config/ 配下へ 4 本目のデータファイルを作らない。テーマ依存の値はテーマトークンに属するという既存の切り分けをそのまま延長する",
     "added_block_r22": "text_limits { block_body_max_chars_by_detail_level: { overview: integer, standard: integer, detailed: integer } } — R22 (C63) で追加。既存の block_body_max_chars は standard の値として残し、水準別の値は本キーが持つ。キーを持たないテーマでは C12 が block_body_max_chars を全水準へ適用する (fail-soft・既存テーマを壊さない)",
     "why_by_detail_level_lives_here": "detail_level ごとに変わるのは『どれだけ書くか』であって版面設計そのものではない、という反論があり得る。しかし上限の絶対値はテーマの字送り・欄幅に依存するため、水準別の値も同じテーマ空間に属する。水準別の値だけを script 側へ持つと、テーマを差し替えたときに standard の上限だけが追従して detailed が追従しない不整合が起きる",
     "added_block_r22_values": {
-      "overview": 180,
-      "standard": 400,
-      "detailed": 900,
-      "decided_by": "dispatcher (P04-x-03)",
-      "why_standard_is_400": "R21 C52 の既定値と一致させる。既存テーマが持つ block_body_max_chars をそのまま standard として読めるようにするため動かせない",
-      "why_overview_is_180": "日本語で 3〜4 文。lead_line と要点 2 つが収まり、それ以上は入らない量。これ以上下げると『大まかに伝える』資料で折り畳みが多発し、畳まれた中身の総量は変わらないので粗さが実現しない (折り畳みは要約ではない)",
-      "why_detailed_is_900": "standard の 2.25 倍。overview との比を 5 倍に開いてあるのは NAR-09 のためで、この 3 値は折り畳み閾値であると同時に宣言↔実態判定の帯でもある。差が小さいと『detailed と宣言したが実態は overview 相当』を検出できない",
-      "fold_behavior_at_detailed": "detailed でも CR-TEXT-FOLD の折り畳みは行うが、生成する B10 を open=true で出力する (overview / standard は open=false)",
-      "why_open_true_not_no_fold": "折り畳み自体を止めると --normalize に水準依存の分岐が生まれ、構成データと HTML の構造対応が水準ごとに変わる。open 属性を変えるだけなら構造は全水準で同一のまま読み味だけが変わり、C20 の round-trip 等価 (C31) も C65 の共有の型の保持も無傷で、既存のアコーディオン部品に相乗りできる。『詳しく書いたのに畳まれている』も『版面が長大化して離脱する』も同時に避ける"
+      "overview": 110,
+      "standard": 180,
+      "detailed": 280,
+      "decided_by": "improvement/text-length-gate-decision.json (R25 / REQ-7 / C73)",
+      "why_standard_is_100": "参照資料 /Users/dm/Downloads/guide (2).html の全 <p> 実測 (段落 43 件: 中央値 21 字・p90 54 字・最大 81 字・200 字超ゼロ) に基づく。standard=100 はこの実測最大値 81 字に余裕を足した値で、およそ 2〜3 行に収まる。旧値 400 は実測最大の 4.9 倍あり、予算内でも参照資料の 5 倍近い長さの散文が書けてしまっていた",
+      "why_overview_is_60": "段落中央値 21 字の約 3 倍。1〜2 行で収まる量。旧値 180 は『これ以上下げると折り畳みが多発する』という理由で決めていたが、R25 で fold 実行回数の上限を 0 (E-TEXT-FOLDED) へ変更したため、折り畳みへ逃がす前提そのものが無くなった。超過は必ず書き手が短くして解決する",
+      "why_detailed_is_160": "参照資料の段落最大値 81 字の約 2 倍までしか許さない。旧値 900 は実測最大の 11.1 倍あり、detailed と宣言しても実質無制限だった。overview との比は 60:160 (約 2.7 倍) とし、宣言↔実態判定の帯として機能する差を保つ",
+      "fold_behavior_at_detailed": "R25 (REQ-7) により fold_section の実行回数上限は全経路・全 detail_level で 0 になった。detailed でも本文が上限を超えたら E-TEXT-OVERFLOW (error) で止まり、B10 への折り畳み退避では救済しない。B10 は micro_copy.exempt_parts のまま残るが、そこへ逃がす経路自体が無くなった",
+      "why_no_longer_open_true": "旧方針は detailed のみ B10 を open=true で出す『折り畳みはするが開いた状態で見せる』妥協だった。R25 は折り畳みそのものを長文の逃げ道として塞ぐため、この妥協は不要になった。B10 の open 属性は既存の用途 (著者が明示的に畳みたい補足) のみに残る",
+      "values_previous": {
+        "overview": 60,
+        "standard": 100,
+        "detailed": 160
+      },
+      "why_raised_2026_08_19": "利用者指定 2026-08-19『各セクションごとの情報量が少ないように感じます。情報をかなり絞っている印象ですが、このままでは情報量が不足している可能性があります。もう少し情報量を増やすことを検討してください。ただし、バランスが重要です』。参照資料の段落実測 (中央値 21 字・p90 54 字・最大 81 字) は『1 個の段落』の長さであり、節全体で伝えられる量の上限ではない。旧値は段落実測をそのまま節の予算として使っていたため、節が 2〜3 行で終わり情報が痩せた。改定値は standard=180 (参照資料の段落最大 81 字の約 2.2 倍・およそ 4〜5 行)、overview=110、detailed=280 とし、段落 1 個ではなく『節の中の 1 部品』として読める量へ広げる。無制限へは戻さない (旧 400/900 は実測の 5〜11 倍で、予算があってないのと同じだった)。水準比 110:180:280 は宣言↔実態を NAR-09 が判別できる帯を保つ"
+    },
+    "no_new_hero_token_block": {
+      "note": "R25/REQ-8 (goal-spec C74) の hero フィールド文字数/文数上限は assets/tokens/<theme>.json 側に新設ブロックを作らない。正本は config/handout-visual-policy.json#opening.hero_fields.max_chars (既存 W-HERO-LONG。purpose=60/background=80/goal=50/lead=40。値は変更しない) と新設 max_sentences (purpose=1/goal=1/lead=1/background=2) の 1 箇所に一本化する (C12 が opening.hero_fields を直接読んで検査する)。C11 のテーマトークン側には並行する新規フィールドを作らない (team-lead 2026-08-18 追補訂正により旧版のトークン新設案は撤回済み)。C11 自身はこの上限を強制せず、hero-card の DOM 構造 (hero_card_contract) のみを担う",
+      "decided_by": "improvement/hero-card-decision.json#decision.hero_field_budget (R25 / REQ-8 / C74)"
     },
     "accent_entry_point": "アクセント色を含むデザイントークンの唯一の入口は assets/tokens/<theme>.json である。本 script は色の実値を一切持たず、読み込んだトークンを <style> 冒頭の :root へ CSS 変数として展開するだけで、以降の全 CSS 規則と SVG は var() 参照になる (algorithm 手順 11)。したがってアクセントの差し替えはトークン 1 ファイルの編集で閉じ、生成 HTML の差分は :root の定義行だけに現れる (AC-C11-11 がこの性質を固定する)",
     "theme_resolution_order": "テーマ名の決定点は 1 つだけであることを実行時に強制する。(a) 構成データがテーマ欄を持ち、かつ --theme も指定された場合は DataError で exit 1 (どちらを採るかを暗黙に決めない)。(b) --theme は書き戻し先を要するため --config-out との併用を必須とし、単独指定は exit 2。(c) 採用順は 構成データの theme 欄 → --theme → 既定テーマ。既定テーマ名は script へ literal で書かず、トークン側の is_default 宣言から読む (is_default:true がちょうど 1 件でなければ LaunchError)。この節は決定規則の正本であり、既定テーマの具体名はここにも書かない (導出値である)"
@@ -162,7 +175,7 @@
       {
         "name": "data-hb-field",
         "on": "当該テキストを持つ要素",
-        "value": "title | date | purpose | background | goal | duration | lead_line | judgment_axis | section_goal | section_duration | focus_theme | target_task | attainment_level | must_remember | no_need_to_remember。値は C12 config_schema のキー名に一致させる。資料全体ゴールは goal、セクションゴールは section_goal で名前が分かれており、取り違えが構造的に起きない。末尾 5 値は R21 で追加した描画必須フィールド (C47 冒頭主題 / C58 具体業務 / C54 到達レベル / C57 覚えること・覚えなくてよいことの対) であり、must_remember と no_need_to_remember は必ず両方を描画する — 片方だけ出す経路をレンダラに設けない",
+        "value": "title | date | purpose | background | goal | duration | heading | lead_line | judgment_axis | section_goal | section_duration | focus_theme | target_task | attainment_level | must_remember | no_need_to_remember | lead | goal_chips | prerequisite_connectors。値は C12 config_schema のキー名に一致させる。資料全体ゴールは goal、セクションゴールは section_goal で名前が分かれており、取り違えが構造的に起きない。末尾 5 値 (focus_theme..no_need_to_remember) は R21 で追加した描画必須フィールド (C47 冒頭主題 / C58 具体業務 / C54 到達レベル / C57 覚えること・覚えなくてよいことの対) であり、must_remember と no_need_to_remember は必ず両方を描画する — 片方だけ出す経路をレンダラに設けない。R25 (goal-spec C74/C75): lead / goal_chips は REQ-1 で schema へ受理されて以降 data-hb-field の enum に無いまま描画だけが先行していた残存漏れであり、hero カード化 (REQ-8) の実装に合わせてここで閉じる (C20 の round-trip 抽出対象へ正式に入る)。essential_problem は本節の対象に含めない — 引き続き data-hb-meta-problem (本文へ描画されない必須メタ) として持ち、data-hb-field 化しない (可視フィールドへ昇格させる決定は無い)。prerequisite_connectors は REQ-9 (C75) の新規フィールドで、宣言時のみ描画され配列要素ごとに出す。goal_chips も配列フィールドであるため、札の列を囲む要素ではなく各 .goal-chip 要素 1 個ずつへ data-hb-field=\"goal_chips\" を付ける (focus_theme / must_remember 等の既存配列フィールドと同じ付与単位。囲む要素側へ 1 個だけ付けると C20 が要素境界を復元できず AC-C11-R25-74-roundtrip のバイト一致が成立しない)。**heading の終端 (P03-x-02 で新設・出荷実装に反映済み)**: セクション見出しラベル (build_section が出す <h2 class=\"section-label\">) は連番 <span class=\"section-num\"> と見出しテキストを同一要素の中に並べており、h2 そのものへ data-hb-field=\"heading\" を付けると C20 が連番を見出しテキストの一部として復元してしまう (実測値 \"1全体の流れ\")。したがって付与先は h2 ではなく、**内容が見出しテキストだけである内側の要素 1 個**とし、連番と所要時間はその外に置く。この運搬体の class 名は装飾であって契約ではない — 契約は『data-hb-field=\"heading\" を持つ要素の textContent が heading の素値と完全一致すること』の 1 点であり、class 名を契約へ書くと同じ事実の第 2 の出所になって実装のリネームで brief だけが古くなる (出荷実装が使う名は class=\"section-heading\"、外に置かれる連番が .section-num、所要時間が .section-duration)。この運搬体の内側へ装飾要素を入れない (入れた時点で textContent が素値と一致しなくなる)。C20 側の renderer_marker_requirements の data-hb-field 列挙には heading が入っており、本項は producer 側 (C11) だけの片側欠落だった。なお plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md の /sections/*/heading エントリは marker_status=\"absent\" と residual_work を持ったままで、終端が実装された現在は stale である (同ファイルは本 brief の write_scope 外のため是正は discovered-task 側で扱う)",
         "replaces": "旧 data-role (date-pill / lead-line / decision-axis / purpose / background / doc-goal / section-goal) はこの属性へ統合。date-pill→date、lead-line→lead_line、decision-axis→judgment_axis、doc-goal→goal、section-goal→section_goal"
       },
       {
@@ -233,7 +246,7 @@
       {
         "name": "data-hb-asset-id / data-hb-asset-alt / data-hb-asset-caption / data-hb-src",
         "on": "<img> と画像ブロック",
-        "value": "assets の各値と原本相対パス"
+        "value": "assets の各値と原本相対パス。**これらは逆抽出 (C20) 用のマーカーであり、支援技術向けの機構ではない** — 代替テキストの本体は <img alt>、説明文の本体は <figcaption> で、マーカーは同じ値の写しにすぎない。マーカーがあることを理由に alt 属性や figcaption を省かない (手順 10b)"
       },
       {
         "name": "data-hb-attachment-id / data-hb-filename / data-hb-mime / data-hb-fallback-hint",
@@ -278,7 +291,7 @@
       {
         "name": "data-hb-asset-role",
         "on": "<img> と画像ブロックのルート",
-        "value": "screenshot | figure | photo (R21 C56)。assets[].role の素値。既定値を持たないため、値が無い状態で描画されることはない (C12 が E-ASSET-ROLE-MISSING で先に落とす)。C22 NAR-07 が実画面判定に使う",
+        "value": "screenshot | figure | photo | illustration (R21 C56。illustration は R25/REQ-3(b) (goal-spec C69) で追加され、C12 の schema (script-brief-C12.json の assets[].role) と値域を一致させる。screenshot 役で素材が無い節が C01 R3-render により illustration へ落とされて到達するため、本 script が illustration を未知値として扱うと第 1 稿の fallback 経路が描画できない)。assets[].role の素値。既定値を持たないため、値が無い状態で描画されることはない (C12 が E-ASSET-ROLE-MISSING で先に落とす)。C22 NAR-07 が実画面判定に使う",
         "since": "R21"
       },
       {
@@ -329,20 +342,20 @@
         "value": "クライアント側 JS が拾う操作種別。生成 chrome 側の語彙であり著者データではない"
       }
     ],
-    "consumers": "C16 (data-hb-kind / R21 で data-hb-part=IMG・DIAGRAM を SC-09 の対象特定に使う)、C17 (data-hb-part / data-hb-part-role / data-hb-kind)、C18 (data-hb-field / data-hb-part / R21 で data-hb-section-kind と data-hb-slot)、C20 (全属性)、C22 (data-hb-field / data-hb-part / R21 で data-hb-presentation-order・data-hb-asset-role・data-hb-section-role)。5 本の検査アンカーはすべて本節の出力に依存するため、本節を変えるときは 5 本を同時に更新する",
+    "consumers": "C16 (data-hb-kind / R21 で data-hb-part=IMG・DIAGRAM を SC-09 の対象特定に使う)、C17 (data-hb-part / data-hb-part-role / data-hb-kind / data-hb-single — A11Y-01 が『data-hb-single を持つチップ群では aria-pressed=\"true\" が高々 1 個』を検査し、data-hb-part-role=\"aux\" を除外口に使うため、この 2 属性は C17 の検査が成立する前提そのもの。P03-x-02 で data-hb-single の欠落を追加)、C18 (data-hb-field / data-hb-part / R21 で data-hb-section-kind と data-hb-slot)、C20 (全属性)、C22 (data-hb-field / data-hb-part / R21 で data-hb-presentation-order・data-hb-asset-role・data-hb-section-role)。5 本の検査アンカーはすべて本節の出力に依存するため、本節を変えるときは 5 本を同時に更新する",
     "data-hb-detail-level": "root 要素へ焼く。構成データの detail_level をそのまま出力する。C22 の宣言↔実態突合 (C66) と C20 の逆抽出が読む",
     "data-hb-evidence-depth": "root 要素へ焼く。構成データの evidence_depth をそのまま出力する。detail_level とは独立に判定されるため 2 属性に分ける (1 属性へ連結すると C22 が分解を要する)"
   },
   "block_to_component_map": [
     {
       "data": "doc.title / doc.date / sections[] (nav は sections から導出する。doc.nav という入力欄は存在しない)",
-      "component": "B01 sticky ナビ",
-      "notes": "header.pop-header に position:sticky。nav 各項目は href=\"#s{n}\" と data-hb-nav-goal=\"{section.goal}\" と title=\"{section.goal}\" と aria-describedby=\"goal-s{n}\" を持つ (nav 本体のラベルは section の短縮見出しのみ・ゴール本文は補助属性側)"
+      "component": "B01 sticky ナビ (R25/REQ-8 でチップ列へ改版・goal-spec C74)",
+      "notes": "header.pop-header に position:sticky。nav 各項目は href=\"#s{n}\" と data-hb-nav-goal=\"{section.goal}\" と title=\"{section.goal}\" と aria-describedby=\"goal-s{n}\" を持つ (nav 本体のラベルは section の短縮見出しのみ・ゴール本文は補助属性側)。旧: 素のリンク行 (旧 render-handout.py:2012-2021 相当)。新: date-pill と同系の見た目 (.nav-chip) へ揃え、項目間に明示的な区切りを置き、現在位置 (aria-current=\"true\" またはスクロール連動クラス。スクロール連動そのものは必須にしない) を表せる状態にする。ラベル文字数は micro_copy.label (14 字。config/handout-visual-policy.json#micro_copy.roles.label.fields へ nav item を追加) を適用する"
     },
     {
-      "data": "doc.title / doc.lead / doc.purpose / doc.background / doc.goal / doc.goal_chips[]",
-      "component": "B02 ヒーロー",
-      "notes": "h1 + lead 1 行 + 目的/背景/ゴールの 3 要素ブロック + .goal-chip 群"
+      "data": "doc.title / doc.lead / doc.purpose / doc.background / doc.goal / doc.essential_problem / doc.attainment_level / doc.duration / doc.goal_chips[] / doc.focus_theme[] / doc.target_tasks[] / doc.must_remember[] / doc.no_need_to_remember[] / doc.prerequisite_connectors[]?",
+      "component": "B02 ヒーロー (R25/REQ-8 で hero-card グリッドへ改版・goal-spec C74)",
+      "notes": "旧: `<p class=\"hero-purpose\">` 等の段落連結 (旧 render-handout.py:1947-1951 相当) で目的/背景/ゴールを縦に並べ、ラベルを行頭 inline span で付けていた (improvement/hero-card-decision.json#root_cause.not_a_card)。新: h1 + lead 1 行 + .goal-chip 群 (doc.goal_chips) の直下に、section-card と同系の hero-card グリッド (.hero-card-grid > .hero-card*) を敷く。hero-card は 1 枚が 1 フィールドの器で、見出し (.hero-card-label) と本文 (.hero-card-body、data-hb-field 付与先) を持つ。purpose / background / goal をそれぞれ独立した hero-card にする (hero_card_contract.rules が挙げるのはこの 3 項目のみ。囲む要素だけを section-card 系へ変え、data-hb-field の付与対象と値は変えない。C20 の抽出は data-hb-field を見るだけなので囲む DOM の変更では壊れない)。essential_problem は従来どおり本文へ描画しない必須メタのまま (data-hb-meta-problem。hero-card 化の対象に含めない — 決定に明記が無い)。attainment_level は描画位置を変えず、可視テキストのみ生の enum 値ではなく E-ENUM-RAW (C18) が要求する表示語彙 (config/handout-vocabulary.json#attainment_level_labels、canon: C12) 経由の日本語ラベルへ差し替える。data-hb-field=attainment_level の値は変換後の表示文字列ではなく元の enum 値を data-hb-raw 属性へ別途保持し、C20 が enum を復元できるようにする。見出しの無い箇条書き (旧 render-handout.py:1962-1990 の meta-list 4 本連続) は廃止し、focus_theme / target_tasks / must_remember / no_need_to_remember の各リストへ config/handout-visual-policy.json#opening.hero_card_fields.list_headings (canon: C12) から引いた見出し (.hero-card-label) を hero-card として個別に付ける (script へ日本語見出しを焼かない)。prerequisite_connectors が宣言されている場合のみ『前提』hero-card を 1 枚追加し、各コネクタ名を config/handout-vocabulary.json#connectors の表示ラベル経由で描画する (REQ-9・goal-spec C75。宣言が無ければカード自体を出さない)。doc.duration は独立 hero-card にはせず、date-pill と並ぶチップ (.duration-pill、既存 .num クラスを継承) として hero 冒頭のメタ行へ出す (W-HERO-LONG/W-HERO-HEAVY の対象外。書式は C12 の正規表現で既に短く絞られている)。狭い画面では hero-card-grid を 1 列へ折り返す (既存 responsive 規約に従う。新規ブレークポイントを増やさない)"
     },
     {
       "data": "block.type=\"steps\" items[].{label, detail?, time?, icon?}",
@@ -439,20 +452,21 @@
     "1. argv を解析する。--theme 指定かつ --config-out 未指定なら exit 2 (採用テーマの書き戻し先が無く、再現性の単位が構成データ 1 点に閉じなくなるため)。",
     "2. --config を UTF-8 で読み json.load する (object_pairs_hook で入力順を保持)。不在・構文エラーは exit 2。",
     "3. 正規化済みであることを確認する。判定材料は provenance.normalized_by が構成データ schema の $defs.provenance.properties.normalized_by.const と一致することであり、normalized:true のような schema に無いフラグは要求しない (const の値は schema から引き、script へ literal で書かない)。一致しなければ exit 1 (未正規化の構成データを受けると日付既定値の充填が 2 箇所に生まれ、日付の単一ソース原則が崩れる)。現在日時を自前で取得する処理をこの script は一切持たない。",
-    "4. テーマを決める。構成データに theme 欄があればそれを採用し、--theme が同時指定されていたら exit 1。theme 欄が無く --theme があれば採用し、後段 (手順 25) で --config-out へ書き戻す。どちらも無ければ既定テーマ pop。",
+    "4. テーマを決める。構成データに theme 欄があればそれを採用し、--theme が同時指定されていたら exit 1。theme 欄が無く --theme があれば採用し、後段 (手順 25) で --config-out へ書き戻す。どちらも無ければ既定テーマを採るが、既定テーマ名を script へ literal で書かず assets/tokens/*.json の is_default:true 宣言から読む (is_default:true がちょうど 1 件でなければ LaunchError)。決定規則の正本は theme_resolution_order であり、既定テーマの具体名はここにも書かない。",
     "5. 用途語彙を照合する。C23 の resolver を import して doc.doc_type が語彙正本に含まれることを確認する (含まれなければ exit 1)。語彙 8 語をこの script へ列挙しない (checklist C42)。フィールド名の正本は C12 validate-handout-config.py の config_schema.document_level_fields であり、本 script はそこに定義された名前をそのまま使う (doc_type が種別、purpose は目的の自由記述テキストで別フィールド)。",
     "6. 資料単位の必須フィールドを検査する: title / date / reader / prior_knowledge_level / doc_type / essential_problem / purpose / background / goal / duration / sections[]。フィールド名と制約の正本は C12 の config_schema であり、本 script は再定義せず存在と非空だけを確認する。いずれか欠落または空文字なら exit 1 でキーパスを stderr へ (checklist C36 と二重に閉じる)。",
     "7. 各セクションを検査する: id / heading / goal (非空) / lead_line (非空) / judgment_axis (非空) / blocks[]。セクションレベルのフィールド名も C12 の config_schema.section_fields が正本 (heading = 見出し、judgment_axis = 判断軸の一文)。goal 欠落は 1 件でも exit 1 (checklist C38)。lead_line と judgment_axis は R11 側の必須で、goal とは別軸として両方を独立に課す (checklist C40)。",
     "8. ナビを sections から導出する。構成データは nav[] を持たない (持たせると section 集合と nav 集合という同じ情報の二重管理になる = PAT-1)。導出した nav 項目の href の fragment 集合と section id 集合が 1:1 で一致することを事後に確認し、崩れていれば exit 1 (checklist C3 を生成側でも閉じる)。section id は構成データが持つ id をそのまま使い、無ければ s{index+1} を採番する。",
     "9. アイコン sprite を作る。C15 の build_sprite を呼ぶ。exit 1 相当なら診断を転記して exit 1、exit 2 相当なら exit 2。返った symbols_svg は <body> 直後へ 1 度だけ置き、参照は <use href=\"#hbic-{name}\"> のみを使う (未使用 symbol は定義上 0 件)。",
     "10. 図解を作る。block.type が flow/diagram/(versus かつ render=svg) のものについて C14 の render_diagram を呼び、返った SVG 断片を figure 内へ埋め込む。座標計算をレンダラ側に持たない。",
+    "10b. 画像を出す。block.type=\"image\" は assets レジストリから asset_id で実体を引き、<img> の src へ data URI を、**alt 属性へ assets[].alt の値を無変換で出す** (要約・切り詰め・既定文の合成をしない。alt は著者が書いた代替テキストであり、レンダラが言い換えた時点で著者記述でなくなる)。alt が空文字になる経路は無い — assets[].alt は C12 の構成データ検査で非空必須であり (script-brief-C12.json の assets 要素制約『alt: 非空 string』)、空や未指定の構成データはレンダラへ到達する前に exit 1 で落ちる。したがって本 script は alt 欠落時の既定文を持たない。万一 asset_id が assets レジストリで解決できない構成データが到達した場合は、alt を空にして描画を続けず exit 1 とする — 空 alt の <img> は C17 の a11y ゲート (A11Y 系) を通ってしまう形 (装飾画像の宣言) であり、解決失敗を装飾の宣言として出力するのは黙った免除にあたる。**alt の運搬体は alt 属性 1 つである**: 同じ値を出す data-hb-asset-alt は C20 の逆抽出用マーカーであって支援技術が読む機構ではない。マーカーが付いていることを理由に alt 属性を省く経路を作らない (スクリーンリーダーは data-* を読まない)。caption も同様に <figcaption> が本体で、data-hb-asset-caption は marker 側である。",
     "11. デザイントークンを CSS 変数として <style> 冒頭の :root へ展開する。--pop-primary / --pop-primary-pastel / --pop-primary-soft / --pop-primary-deep / --pop-bg / --ink / --ink-muted / --line / --subtle / --card-radius / --font-num をテーマ定義 JSON から出す。アクセント色の実値が現れるのはこの :root ブロックだけで、以降の全 CSS 規則と SVG は var() 参照にする (checklist C14)。",
     "12. 全体タイポグラフィを焼く。body に font-feature-settings:\"palt\"、.num クラスに font-variant-numeric: tabular-nums と letter-spacing:-0.015em を出す。",
     "13. 日付を出す。doc.date は C12 --normalize の時点で既に yyyy/mm/dd (ゼロ埋め・スラッシュ区切り) へ確定済みなので、本 script は書式変換もゼロ埋め補正も行わず値をそのまま .date-pill として 1 個だけ出す。置き場所は文書冒頭の <header class=\"doc-head\"> の内側に限り、sticky ナビの <header class=\"pop-header\"> の内側には置かない (header 要素が 2 つあるため『header の中』では場所が一意に決まらない。sticky ナビは印刷時に position:static へ落ちる帯であり、日付は資料の属性であってナビの属性ではない) (正本は C12 の config_schema.document_level_fields#date と date_single_source_guarantee#handoff_to_c11)。文字列操作のみで行い datetime.now() を呼ばない (checklist C33/C34/C35)。なお R17 のディレクトリ命名規則に現れる <YYYY-MM-DD> は日付『表示』の書式ではなく、C19 が date.replace('/','-') で導くディレクトリ名専用の派生表現であり、本 script は一切関与しない。",
-    "14. sticky ナビを出す。header.pop-header は position:sticky; top:0。nav 各項目は簡潔なラベルのみを表示し、対応セクションのゴールは data-hb-nav-goal 属性と title 属性 (同値) と aria-describedby=\"goal-s{n}\" で持たせる (phase-02 の事前解決: nav 本体は簡潔に保つ)。参照先 id=\"goal-s{n}\" の要素はセクション冒頭のゴールチップそのものであり、ゴール文言を nav 用に複製しない。",
+    "14. sticky ナビを出す。header.pop-header は position:sticky; top:0。nav 各項目は簡潔なラベルのみを表示し、対応セクションのゴールは data-hb-nav-goal 属性と title 属性 (同値) と aria-describedby=\"goal-s{n}\" で持たせる (phase-02 の事前解決: nav 本体は簡潔に保つ)。参照先 id=\"goal-s{n}\" の要素はセクション冒頭のゴールチップそのものであり、ゴール文言を nav 用に複製しない。R25/REQ-8 (goal-spec C74): 各 nav 項目を .nav-chip として date-pill と同系の見た目で描き、項目間の区切りを明示する。ラベル文字数は micro_copy.label (14 字) を適用する。項目が長い/多い場合の描画時の破綻回避は nav_overflow_contract が定める 2 規則 (NAV-OVF-1 ラベル長・NAV-OVF-2 項目数) に従い、本手順はそれを再記述しない。",
     "15. オフセット補正を二重に焼く。CSS 側は全 section へ scroll-margin-top: var(--nav-h, 96px)。JS 側は nav クリック時に header.getBoundingClientRect().height + 12 を実測して window.scrollTo する (checklist C4)。",
-    "16. hero を出す。h1 + lead + 目的/背景/ゴールの 3 要素 (それぞれ独立の要素として出し、1 つでも欠けたら手順 6 で既に止まっている) + .goal-chip 群 (checklist C37)。",
-    "17. 各セクションを固定順序で組み立てる: (a) .section-label (連番 + 見出し + 所要時間) → (b) .goal-chip (セクションゴール・常時表示・id=\"goal-s{n}\") → (c) .lead-line (1 行の抽象) → (d) blocks[] を配列順に部品テーブルで写像 → (e) .decision-axis (判断軸の一文) → (f) セクションメモ欄。この順序は参照解析 §5 の『抽象 → 具体 → 判断軸』を構造として固定するもので、構成データの並びでは変えられない。",
+    "16. hero を出す。h1 + lead + .goal-chip 群 (checklist C37) + hero-card グリッド (R25/REQ-8・goal-spec C74)。hero-card 化の対象は config/handout-visual-policy.json#opening.hero_card_fields.layout が定める purpose / background / goal の 3 項目だけで、それぞれ独立したカード要素として出す (1 つでも欠けたら手順 6 で既に止まっている)。essential_problem は本文へ描画しない必須メタのまま (data-hb-meta-problem) でカード化しない。attainment_level は描画位置を変えず、可視テキストのみ config/handout-vocabulary.json#attainment_level_labels 経由の表示ラベルへ差し替え、元の enum 値は data-hb-raw へ保持する (E-ENUM-RAW / C18)。続けて focus_theme / target_tasks / must_remember / no_need_to_remember の各リストを、それぞれ見出し付きの hero-card として並べる (見出し語は config/handout-visual-policy.json#opening.hero_card_fields.list_headings.headings から引き、日本語を script へ焼かない)。prerequisite_connectors が宣言されていれば、見出しを config/handout-visual-policy.json#opening.hero_card_fields.connector_card.heading から引いたコネクタ hero-card を末尾へ追加する (R25/REQ-9・goal-spec C75)。doc.duration は date-pill 隣接のチップとして描く。block_to_component_map の B02 節が DOM とデータ対応の正本。",
+    "17. 各セクションを固定順序で組み立てる: (a) .section-label (連番 + 見出し) → (b) .goal-chip (セクションゴール・常時表示・id=\"goal-s{n}\") → (c) .lead-line (1 行の抽象) → (d) 所要時間 (.section-duration・宣言があるときだけ) → (e) blocks[] を配列順に部品テーブルで写像 → (f) .decision-axis (判断軸の一文) → (g) セクションメモ欄。この順序は参照解析 §5 の『抽象 → 具体 → 判断軸』を構造として固定するもので、構成データの並びでは変えられない。**(a) の内部構造は round-trip 契約に拘束される**: 連番は index から再生成できる派生物なので、heading の素値を運ぶ要素の外へ出す。すなわち <h2 class=\"section-label\"> の直下へ 連番用要素と heading 運搬体を並べ、data-hb-field=\"heading\" は後者だけに付ける (h2 へ付けると textContent が \"1全体の流れ\" となり C20 が素値へ戻せない)。所要時間も同じ理由で運搬体の外に置く — 現行実装では (d) の位置に独立要素として出しており、(a) の内側には入れない。",
     "18. スタガー入場を焼く。@keyframes rise-in と animation-delay: var(--stagger, 0ms) を CSS に置き、各セクション/カードへ style=\"--stagger: {min(index*120, 720)}ms\" をインライン付与する。JS を一切使わない (checklist C14)。@media (prefers-reduced-motion: reduce) で animation と scroll-behavior と transition を無効化する。",
     "19. 機構スクリプトを 1 つの <script> へ 'use strict' で出す。(a) nav オフセットスクロール (b) lightbox 開閉 (ESC / 背景クリック / フォーカストラップ / 開閉前の focus を復帰) (c) data URI → Blob 変換ダウンロード + 失敗時の .dl-hint 表示 (d) clipboard コピー + Range 選択フォールバック (e) タブ / 選択マップ / 選択チップ / チェック行のトグルと aria 状態更新 (f) メモ機構。素の DOM API のみでフレームワーク・CDN を一切参照しない。",
     "20. メモ機構を焼く。セクション別メモ + 全体メモ + チェック行 + 選択チップ + 選択マップの状態を、キー `handout:{doc.slug}:{kind}:{id}` で localStorage へ input/change 時に保存し、DOMContentLoaded で復元する。Markdown 書き出し (コピー / .md としてダウンロード) と全消去ボタンを付ける。slug は構成データの slug をそのまま使い、生成のたびに変わる値をキーへ混ぜない (再訪時にメモが消えないため)。",
@@ -480,7 +494,10 @@
     "R19",
     "R20",
     "R21 (描画面のみ。B17 の描画・R21 追加属性の焼き込み・text_limits トークンの提供。判定は C12 / C16 / C18 / C22 が持ち C11 は判定しない)",
-    "R22 (detail_level ごとの本文上限をテーマトークンへ持ち、宣言 2 軸を data 属性として出力する)"
+    "R22 (detail_level ごとの本文上限をテーマトークンへ持ち、宣言 2 軸を data 属性として出力する)",
+    "R25-REQ-7 (C73。added_block_r22_values を 60/100/160 へ改定した最優先事項。判定 (E-TEXT-OVERFLOW / E-TEXT-FOLDED) は C12 が持ち、C11 はテーマトークンとして新値を提供し data-hb-text-limit へ焼くだけ)",
+    "R25-REQ-8 (C74。hero-card グリッド (purpose/background/goal)・見出し付き箇条書き・nav/duration のチップ化・表示語彙経由の enum 変換描画。文字数/文数上限の値は config/handout-visual-policy.json#opening.hero_fields (既存 W-HERO-LONG) の 1 箇所を正本としトークン側の並行フィールドは持たない。判定 (W-HERO-LONG / W-HERO-HEAVY / E-ENUM-RAW) は C12 / C18 が持ち C11 は判定しない)",
+    "R25-REQ-9 (C75。prerequisite_connectors の『前提』hero-card 描画。語彙照合は C12 が持つ)"
   ],
   "checklist_covered": [
     "C1",
@@ -505,7 +522,9 @@
     "C40",
     "C44",
     "C63",
-    "C65"
+    "C65",
+    "C74",
+    "C75"
   ],
   "acceptance_checks": [
     {
@@ -531,7 +550,7 @@
     {
       "id": "AC-C11-5",
       "how": "config/handout-parts.json の全 id を 1 個ずつ含む fixture で生成し、部品 id ごとに golden HTML と比較する。fixture の網羅性はカタログを読んで機械判定する (テスト側にも id を列挙しない)",
-      "expected": "カタログの全部品 (現在 B01-B16 + IMG / DIAGRAM / TEXT の 19 件) に独立したレンダリングテストがあり全て一致。カタログに部品を足したのにテストが無い状態は網羅検査で FAIL する (checklist C12)"
+      "expected": "カタログの全部品 (件数と id の範囲は config/handout-parts.json の parts[] を読んで確定する。ここに件数リテラルを書かない) に独立したレンダリングテストがあり全て一致。カタログに部品を足したのにテストが無い状態は網羅検査で FAIL する (checklist C12)"
     },
     {
       "id": "AC-C11-6",
@@ -610,8 +629,8 @@
     },
     {
       "id": "AC-C11-19",
-      "how": "plugins/guide-doc-generator 配下 (scripts / skills / agents / commands / hooks / references) を `B0[0-9]|B1[0-9]` で grep する",
-      "expected": "config/handout-parts.json 以外に part id のリテラル列挙が 0 件。部品 id を必要とする箇所はすべて catalog の読み込み経由になっている (Y-05 の単一語彙の担保)"
+      "how": "plugins/guide-doc-generator 配下 (scripts / skills / agents / commands / hooks / references) と plugin-plans/guide-doc-generator/briefs 配下を `B0[0-9]|B1[0-9]` で grep する。設計側も対象にするのは、P03-x-03 で実際に列挙が残っていたのが出荷物ではなく brief 側 (C11 自身の 2 箇所・C17・C20) だったため",
+      "expected": "config/handout-parts.json (およびその plan 表現 briefs/config/handout-parts.json) 以外に part id のリテラル列挙が 0 件。部品 id を必要とする箇所はすべて catalog の読み込み経由になっている (Y-05 の単一語彙の担保)。判定は用途で行う: 値域・語彙・fixture・検査対象の集合をその場で定める記述に範囲表記 (B01-B16 / B03..B16) や件数リテラルが現れたら不合格。参照資料からの実測引用・撤回の記録・『こう書くな』の禁止例は、集合をその場で定めていないため合格とする"
     },
     {
       "id": "AC-C11-20",
@@ -622,6 +641,46 @@
       "id": "AC-C11-18",
       "how": "生成 HTML を走査し、html_attribute_contract の全属性について (a) 定義された要素に付いているか (b) `data-` で始まり `data-hb-` で始まらない属性が 0 件か を確認する",
       "expected": "全部品ルートに data-hb-part、全 svg/symbol に data-hb-kind、全 chrome に data-hb-generated が付き、非 data-hb- の独自 data 属性が 0 件 (X-03 の単一系統化の担保)"
+    },
+    {
+      "id": "AC-C11-R25-73",
+      "how": "assets/tokens/*.json の全テーマについて text_limits.block_body_max_chars_by_detail_level と block_body_max_chars を読む",
+      "expected": "全テーマで overview=60 / standard=100 / detailed=160、block_body_max_chars=100 (standard_equals_default)。旧値 180/400/900 が 0 件 (R25 / REQ-7 / C73)"
+    },
+    {
+      "id": "AC-C11-R25-73b",
+      "how": "detail_level=standard の正規化済み構成データで生成し data-hb-text-limit を読む",
+      "expected": "\"100\" (テーマトークンの standard 値をそのまま焼く。旧値 400 が出ないことの回帰)"
+    },
+    {
+      "id": "AC-C11-R25-74",
+      "how": "生成 HTML を走査し (a) `<p class=\"hero-purpose\">` 相当の段落連結が 0 件であること (b) 目的/背景/ゴールの各 hero-card が独立要素として存在し data-hb-field を持つこと (c) focus_theme/target_tasks/must_remember/no_need_to_remember の各リストに hero-card 見出しが付いていること (d) attainment_level の可視テキストが生の enum 文字列 (例: 'operable') ではなく表示語彙の日本語であること (e) nav 項目が .nav-chip として描かれ区切りを持つこと",
+      "expected": "(a) 0 件 (旧構造の廃止) / (b)-(c) 全て存在 / (d) 日本語表示 (旧: 'operable' がそのまま出ていた) / (e) 全 nav 項目が .nav-chip クラスを持つ (C74)"
+    },
+    {
+      "id": "AC-C11-R25-74-roundtrip",
+      "how": "hero-card 化した生成 HTML を C20 extract-handout-config.py で逆抽出し、正規化済み入力構成データと比較する",
+      "expected": "purpose / background / goal / attainment_level (data-hb-raw の enum 生値) / lead / goal_chips の全フィールドが data-hb-field (attainment_level のみ data-hb-raw) 経由でバイト一致で復元される (囲む DOM 要素の変更が付与対象・値に影響しないことの回帰。C31 の round-trip 等価契約は無傷)"
+    },
+    {
+      "id": "AC-C11-R25-75",
+      "how": "prerequisite_connectors に 2 件のコネクタを宣言した構成データで生成する / prerequisite_connectors を省略した構成データで生成する",
+      "expected": "前者は『前提』hero-card が 1 枚生成され各コネクタの表示ラベルが載る。後者は『前提』hero-card 自体が生成 HTML に存在しない (宣言が任意であることの反映) (C75)"
+    },
+    {
+      "id": "AC-C11-R25-HEADING",
+      "how": "heading に '全体の流れ' を持つセクションを含む構成データで生成し、生成 HTML の data-hb-field=\"heading\" を持つ要素を全て取り出して (a) 各セクションにつき 1 個だけ存在すること (b) その textContent が構成データの heading と完全一致すること (c) 連番 (.section-num) と所要時間 (.section-duration) がその要素の外側にあること を見る。併せて同じ HTML を C20 で逆抽出し /sections/*/heading が unrecoverable にならないことを確認する",
+      "expected": "(a) 1 個 (b) '全体の流れ' — 連番が混ざった '1全体の流れ' は不合格 (この混入が終端を新設した理由そのもの) (c) 外側。逆抽出は E-EXTRACT-UNRECOVERABLE /sections/*/heading を出さない。連番を運搬体の内側へ戻す変更が入ったときに (b) が落ちる形にしてある — 現状この回帰を捕まえる test は render 側にも extract 側にも無い (extract 側 fixture は自前で正しい HTML を書くため producer の退行を検出しない)"
+    },
+    {
+      "id": "AC-C11-R25-ALT",
+      "how": "assets[].alt に 40 字の代替テキストを持つ構成データで生成し、(a) <img> に alt 属性が出てその値が構成データと 1 バイト一致すること (b) data-hb-asset-alt が同値であること を見る。さらに asset_id が assets レジストリに存在しない構成データ (C12 を迂回して直接 C11 へ渡す) で生成し、exit code を見る",
+      "expected": "(a) 一致 (要約・切り詰めが入らない) (b) 同値。asset_id 未解決の入力は exit 1 で、alt=\"\" の <img> を出力して exit 0 にはしない。現行実装は asset を空 dict で受けて alt='' へ落ちるため、この検査は現状 FAIL する見込みであり、是正は P05-x-139 が持つ"
+    },
+    {
+      "id": "AC-C11-R25-NAVOVERFLOW",
+      "how": "(a) 見出しが max_chars を明確に超えるセクションを含む構成データで生成し、nav リンクの textContent を構成データの短縮見出しと突合する。(b) 生成 CSS に .nav-chip の max-width / overflow / text-overflow / white-space が揃って出ているかを見る。(c) セクションを十分多く持つ構成データで生成し、.navbar の flex-wrap と overflow-x を見る。(d) @media print ブロック内に .navbar の flex-wrap: wrap と overflow-x: visible が出ているかを見る",
+      "expected": "(a) 1 バイト一致 (省略記号が textContent へ入らない)。(b) 4 宣言が揃い max-width の数値が handout-visual-policy の max_chars と一致する。(c) flex-wrap: nowrap かつ overflow-x: auto。(d) 両宣言が存在する。現行実装は (b)(c)(d) すべて FAIL する見込みで (.nav-chip 未実装・flex-wrap: wrap・print 側の指定なし)、是正は P05-x-141-nav-overflow-impl が持つ"
     }
   ],
   "failure_modes": [
@@ -694,5 +753,42 @@
   "open_questions": [
     "【X-07 先送り・未解決の記録】checklist ID 名前空間 (C1-C45) と component ID 名前空間 (C01-C23) がどちらも Cnn 形式で衝突している。本ブリーフの checklist_covered の C1/C2/C3/C4/C6/... や散文中の『(checklist C42)』はいずれも checklist 項目であって component C01-C23 ではない。P02 evidence X-07 (severity: info) の裁定により、接頭辞導入 (例 CK-17) は component-inventory.json 全体の一括変更を伴うため P03 では解消せず先送りとする。本 plugin-plan 全体で唯一の記録箇所としてここに残す — 読み手は Cnn 表記を、checklist_covered 配列内および『checklist』の語を伴う文脈では checklist 項目、dependencies / depends_on / couples_with では component と読むこと。解消するまでこの曖昧さは残る",
     "【P03 Y-04 で決着】採用テーマの書き戻し先は新設した --config-out で明示する。出力ディレクトリ配下の handout-config.json は C19 --place-config が唯一の writer であり、本 script はそこへ書かない。旧記述 (『--out と同一ディレクトリの handout-config.json へ書く』) は同梱物の writer が 2 つになるため破棄した。component-inventory.json の C11 inputs/outputs もこの形へ揃える"
-  ]
+  ],
+  "roundtrip_marker_pointers": {
+    "why": "schemas/ROUNDTRIP-CONTRACT.md の裁定表は『どの pointer をマーカーで運ぶか』の正本であり、そのうち decision=marker のものは実際に属性を刻む担い手が C11 である。本節は裁定表を複製せず、C11 が担う分の対応と欠落だけを記録する (裁定の本文は裁定表が持つ)。",
+    "source_of_truth": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md#adjudications",
+    "measured_entry_count": "15 (実測。/focus_theme /target_tasks /prerequisite_connectors /lead /goal_chips /attainment_level /must_remember /no_need_to_remember /sections/*/ties_to /notes_enabled /date /assets/*/data_uri /sections/*/heading /sections/*/role /sections/*/attainment_step)。本 brief は件数を主張しない — 件数を 2 箇所に書くと裁定表の増減で必ずずれるため、対応の有無だけを持ち件数は裁定表から数える",
+    "produced_by_c11": "上記 15 件のうち exempt を除く全てのマーカーは html_attribute_contract に定義があり、手順 22b が刻む。/sections/*/heading の終端は data-hb-field 項に記した内側要素で満たしている",
+    "known_gap": {
+      "pointer": "/assets/*/role",
+      "state": "裁定表にエントリが無い",
+      "marker": "data-hb-asset-role (html_attribute_contract に定義があり実装も刻んでいる)",
+      "why_it_matters": "role は C22 NAR-07 の実画面判定と C01 R3-render の screenshot→illustration fallback の両方が読む著者記述であり、schema の $defs.asset にも属する。マーカーは出ているのに裁定表に無いため、C20 が読む対象として正式に宣言されておらず /sections/*/role と同じ 『emitted-but-not-in-brief-and-not-read』の状態に置かれている疑いがある",
+      "why_not_fixed_here": "裁定表の実体は plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md にあり 本ノードの write_scope 外。エントリ追加は discovered-task P05-x-135-roundtrip-contract-asset-role として外へ出した",
+      "since": "P02-c11-heading-marker (2026-08-19)"
+    }
+  },
+  "nav_overflow_contract": {
+    "why": "ナビのラベル長と項目数は構成データ側の内容で決まり、レンダラは値を選べない。閾値超過の警告は C12 が出すが、警告は著者への通知であって描画の防波堤ではない — 警告を無視した構成データも C11 へ到達する。到達したときに何が起きるかを決めておかないと、破綻の形が入力とブラウザ次第になる",
+    "canonical_thresholds": "字数の値の正本は config/handout-visual-policy.json#micro_copy.roles.label.max_chars (現在 14) 一箇所。本 script はこの値を読むが判定はしない。ただし『C12 が nav ラベル長を検査している』とは書けない — 実測すると micro_copy.roles.label.fields に nav_item は含まれておらず、さらに micro_copy.note が適用範囲を sections[].parts[].data と diagrams[].data に限ると宣言し、validate-handout-config.py の check_micro_copy も part['data'] と diagram['data'] しか走査しない。nav ラベルは section 直下の heading から導出する派生物なのでこの walk に入らない。したがって nav ラベル長を検査する機構は現時点で存在せず、本契約は『超過していても描画が壊れない』ことだけを保証する。この空白の是正は P05-x-142-nav-label-length-check が持つ (fields へ nav_item を足すだけでは walk の対象外なので効かない = つまみだけ増える)",
+    "NAV-OVF-1": {
+      "case": "ラベルが max_chars を超えた",
+      "rule": "文字列は切らない。DOM のテキストノードは section の短縮見出しの素値をそのまま持つ。視覚上の省略は CSS だけで行う: .nav-chip { max-width: <max_chars>em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }。max-width の数値は handout-visual-policy から読んだ max_chars をそのまま em 数として焼き、script 側に別の定数を置かない",
+      "why_not_truncate": [
+        "textContent を切ると、逆抽出 (C20)・支援技術・ブラウザ内テキスト検索のいずれもが短縮後の語しか得られない。ナビは sections から導出する派生物なので round-trip は sections 側から復元できるが、読み上げと検索は復元できない",
+        "省略記号を script が合成すると表示語の第 2 の出所ができる。alt (手順 10b) と heading (手順 17) で同じ形の裁定を既にしており、向きを揃える",
+        "em 指定は文字幅の実測を要さずフォントサイズ変更に追随する。ここで JS の文字幅計測を使うと、同じ構成データからの描画結果が環境依存になる"
+      ],
+      "title_attribute": "全文の受け皿に title を使わない。title は data-hb-nav-goal と同値の goal を既に運んでおり (html_attribute_contract)、ここへラベル全文を入れると 1 属性が 2 つの意味を持つ。全文は textContent が保持する"
+    },
+    "NAV-OVF-2": {
+      "case": "項目数が多く 1 行に収まらない",
+      "rule": "画面表示では 1 行固定 + 横スクロールにする: .navbar { flex-wrap: nowrap; overflow-x: auto; }。折返し (flex-wrap: wrap) は採らない",
+      "why_not_wrap": "折返しを許すと sticky ナビの高さが項目数で可変になる。オフセット補正は二重に焼かれており (手順 15)、JS 側は header の高さを実測するが CSS 側は scroll-margin-top: var(--nav-h, 96px) の固定値である。高さが 96px を超えた瞬間、CSS 側だけが不足し、ナビをクリックした経路 (JS 実測) は正しいのに fragment 直リンク・リロード時のアンカー復元・戻る操作ではセクション先頭がナビ帯の下へ潜る。症状が経路によって出たり出なかったりするため発見が遅れる。1 行固定なら高さが項目数に依存せず、二重補正の前提が保たれる",
+      "keyboard": "各項目は <a> でフォーカス可能なため、Tab 移動でブラウザがスクロールコンテナを自動的に追従させる。スクロールコンテナ側へ tabindex を付けない (フォーカス可能な子を持つコンテナに tabindex を足すと、意味のないタブストップが 1 つ増える)",
+      "print": "@media print では .navbar { flex-wrap: wrap; overflow-x: visible; } へ戻す。印刷面では .pop-header が position: static へ落ちる (sticky でない) ため高さ可変が無害になり、かつ紙にはスクロールが無いので 1 行固定のままだと横にはみ出した項目が黙って消える。印刷でだけ項目が欠ける状態は、画面で確認した人には見えない欠落になる",
+      "no_runtime_measurement": "何項目まで 1 行に置くかを JS の実測で決めない。レイアウトの分岐は CSS の宣言だけで閉じ、外部フォント・計測・メディアクエリ以外の環境判定に依存しない"
+    },
+    "current_implementation_gap": "実装 (render-handout.py) は .navbar { display:flex; gap:12px; flex-wrap: wrap; } であり NAV-OVF-2 に反する。--nav-h は NAV_OFFSET_PX の固定値 (render-handout.py:1550) で焼かれるため、上記の経路依存な潜り込みが現に起こりうる。また .nav-chip クラス自体が実装に存在せず (R25/REQ-8 の chip 化が未実装)、NAV-OVF-1 の max-width も掛かる先が無い。是正は P05-x-141-nav-overflow-impl が持つ"
+  }
 }

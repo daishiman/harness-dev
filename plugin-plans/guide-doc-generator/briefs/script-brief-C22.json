@@ -10,12 +10,12 @@
     "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す"
   ],
   "stdin": "使用しない。HTML と構成データの 2 入力を突合するため両方をパスで受ける。両方を入力にする根拠: goal の『文言そのもの』の真値は構成データ側にあり、『どこに何が描かれ読者に見えるか』の真値は HTML 側にある。片方だけでは R19 の要求 (行き先が読者に見えること) を機械化できない。構成データだけを見ればレンダラの脱落を見逃し、HTML だけを見れば文言の捏造や取り違えを見逃す",
-  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (NAR-01..NAR-10 の 10 行ちょうど。detections 配列の定義順と一致し、R22 で追加された NAR-09 / NAR-10 も常に出力する) で出力する。NAR-07 は評価対象外のとき `NAR-07 SKIP order=explain_first` を出し、PASS と区別する。末尾に `OUT-OF-SCOPE:` 節を出し、(1) ゴールの意味的妥当性 (section goal が全体 goal に資するか) は判定していないこと (2) R11 と R18 は本ゲートの担当外で C18 が判定すること、を毎回明示する",
+  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (本ブリーフの detections 配列の定義順そのまま。1 detection = 1 行で、SKIP になる detection も必ず 1 行出す) で出力する。行数は detections 配列から導出される値であり、独立した数値契約として別途書かない (canonical_rules.detection_order_contract)。NAR-07 は評価対象外のとき `NAR-07 SKIP order=explain_first` を出し、PASS と区別する。末尾に `OUT-OF-SCOPE:` 節を出し、(1) ゴールの意味的妥当性 (section goal が全体 goal に資するか) は判定していないこと (2) R11 と R18 は本ゲートの担当外で C18 が判定すること、を毎回明示する",
   "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB><section_id または line:col><TAB><欠落した要素または不一致の値><TAB><理由>`。使用法・入出力エラーは `ERROR<TAB><reason>`",
   "exit_codes": {
     "0": "全 detection が違反 0 件。目的・背景・ゴールの 3 要素が揃い、全セクションのゴールが常時表示され、nav 全項目がゴールを参照している",
     "1": "1 件以上の違反を検出した。検査アンカー (data-hb-field) が 1 個も存在せず判定できない場合もここに落とす",
-    "2": "検査が成立しなかった。引数不正、--html / --config の不在・読み取り不可・デコード不能、--config が JSON として不正または正規化済みでない、必須フィールド (purpose / background / goal / sections) の欠落、--json-report の書き込み失敗、および dependencies.runtime_data に挙げた同梱データ (部品カタログ・セクション語彙・スキーマ・テーマトークン) を解決できない場合。同梱データ失敗に別番号を割かない — 2 の意味は『検査が成立しなかった』であり、語彙や部品マーカーを導出できない状態はその一例だからである"
+    "2": "検査が成立しなかった。引数不正、--html / --config の不在・読み取り不可・デコード不能、--config が JSON として不正または正規化済みでない、必須フィールド (purpose / background / goal / sections / presentation_order) の欠落、--json-report の書き込み失敗、および dependencies.runtime_data に挙げた同梱データ (部品カタログ・セクション語彙・スキーマ・テーマトークン) を解決できない場合。同梱データ失敗に別番号を割かない — 2 の意味は『検査が成立しなかった』であり、語彙や部品マーカーを導出できない状態はその一例だからである。必須フィールドへ presentation_order を含めるのは、欠落を『explain_first だった』と読んで NAR-07 を SKIP へ倒す経路を塞ぐため (R21 C56)"
   },
   "write_scope": [
     "--json-report で明示指定されたファイル 1 点のみ"
@@ -45,7 +45,7 @@
   },
   "algorithm": [
     "1. argparse で 3 引数を解析。--html / --config 不在は exit 2",
-    "2. --config を json.load し、正規化済みマーカーと purpose / background / goal / sections[] の存在を確認。欠落は exit 2",
+    "2. --config を json.load し、正規化済みマーカーと purpose / background / goal / sections[] / presentation_order の存在を確認。欠落は exit 2",
     "3. --html を html.parser 派生の収集器で走査し、要素ツリー (tag, attrs, data-hb-field, 位置, 親子関係) と text node を得る。<style> 本文も保持する",
     "4. テキスト比較用の正規化関数を定義する: NFKC → 連続空白 (U+0020 / U+3000 / 改行 / タブ) を 1 個へ圧縮 → 前後トリム。これ以上の変形 (句読点除去など) は行わない (レンダラが文言を改変していないことを検査するのが目的のため)",
     "5. NAR-01 / NAR-02 を hero 周辺に対して評価する",
@@ -55,7 +55,7 @@
     "8b. NAR-07 を評価する (R21 C56)。config.presentation_order が demo_first のときだけ、hero より後・最初の role=main セクションから文書順で最初の提示物を 1 件特定し CR-DEMO1 を適用する。explain_first のときは SKIP 行を出す",
     "8c. NAR-08 を評価する (R21 C48)。config.sections[].role と HTML の描画順・nav 順を突き合わせ、appendix が main より前に出ていないかを見る",
     "8d. NAR-09 / NAR-10 を評価する (R22 C66)。root の data-hb-detail-level / data-hb-evidence-depth を読み、水準の境界値は C11 のテーマトークン text_limits.block_body_max_chars_by_detail_level から read-only で引く (本 script に数値を持たない)。属性が欠落している HTML は checked=0 の PASS にせず違反として計上する (宣言が無ければ突合が成立しないため)",
-    "9. 違反を stderr、サマリと OUT-OF-SCOPE を stdout、詳細を --json-report へ出す。stdout の detection 行は NAR-01..NAR-10 の 10 行ちょうどで、件数はブリーフの detections 配列と常に一致する",
+    "9. 違反を stderr、サマリと OUT-OF-SCOPE を stdout、詳細を --json-report へ出す。stdout の detection 行は本ブリーフの detections 配列と id・順序・件数が常に一致する (件数を実装側の定数として持たず配列から導く)",
     "10. 違反 0 なら exit 0、違反ありは exit 1、検査不能は exit 2"
   ],
   "requirements_covered": [
@@ -63,6 +63,7 @@
     "R21 (実画面先行の禁止 C56 と、付録隔離の描画面 C48 の副検査)",
     "R22 (宣言した detail_level / evidence_depth と生成物の実態の一致を検査する)"
   ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C56 (NAR-07) と C48 の描画面 (NAR-08)。criterion 文の残余 (NAR-07 が本編先頭の最初の 1 要素しか見ていない点を含む) は ledger 側にのみ書き、ここへ写さない",
   "checklist_covered": [
     "C37",
     "C38",
@@ -118,12 +119,13 @@
       "id": "NAR-07",
       "since": "R21 (goal-spec C56)",
       "implements_canonical_rule": "CR-DEMO1",
-      "rule": "demo_first のとき、読み手が最初に出会う実体は実際の画面でなければならず、抽象物の先行提示を禁じる。config.presentation_order == \"demo_first\" のときだけ評価する。判定対象は、hero 部品マーカー (CR-HERO1 の part_id_literals に従いカタログから導出。literal の部品 id を書かない) より後、かつ role=\"main\" の最初のセクションから文書順に走査して最初に現れる『提示物』1 件。提示物とは data-hb-part が IMG / DIAGRAM / B05 / B07 / B14 のいずれかである要素、または data-hb-field=\"lead_line\" 以外の本文段落のうち 120 文字を超えるもの。この最初の提示物が (a) data-hb-part=\"IMG\" かつ配下 img が data-hb-asset-role=\"screenshot\" を持つ、または (b) data-hb-part=\"B17\" (ハンズオン手順) で live_demo フラグを持つ、のいずれでもなければ違反。とくに DIAGRAM (概念図解) / B14 (フロー) / B07 (特徴カード) / 120 文字超の説明段落がこの位置に現れた場合は、それを違反として明示的に列挙する",
+      "rule": "demo_first のとき、読み手が最初に出会う実体は実際の画面でなければならず、抽象物の先行提示を禁じる。config.presentation_order == \"demo_first\" のときだけ評価する。判定対象は、hero 部品マーカー (CR-HERO1 の part_id_literals に従いカタログから導出。literal の部品 id を書かない) より後、かつ role=\"main\" の最初のセクションから文書順に走査して最初に現れる『提示物』1 件。提示物とは data-hb-part が IMG / DIAGRAM / B05 / B07 / B14 のいずれかである要素、または data-hb-field=\"lead_line\" 以外の本文段落のうち 120 文字を超えるもの。この最初の提示物が (a) data-hb-part=\"IMG\" かつ配下 img が data-hb-asset-role=\"screenshot\" を持つ、または (b) ハンズオン手順の部品で live demo の宣言属性を持つ (属性名の正本は C11 render-handout.py の html_attribute_contract にある data-hb-live-demo で、構成データ側のフィールド名 live_demo:true から C11 が付ける。本 script は HTML を読む側なので構成データのフィールド名ではなくこの描画属性で判定し、属性名を再定義しない)、のいずれでもなければ違反。とくに DIAGRAM (概念図解) / B14 (フロー) / B07 (特徴カード) / 120 文字超の説明段落がこの位置に現れた場合は、それを違反として明示的に列挙する",
       "prohibition_form": "本項目は推奨ではなく禁止として書く。『実画面を先に置くことが望ましい』ではなく『実画面より前に概念図・抽象説明を置いてはならない』を判定式とする。理由: 推奨形は『実画面もどこかにある』で満たされてしまい、冒頭に概念図が居座る状態を落とせない。禁止形にすると位置関係だけで機械判定でき、逃げ道が data-hb-asset-role の偽装しか残らない (それは C16 SC-09 と C11 の属性契約が別途塞ぐ)",
       "violation_example": "presentation_order=demo_first で、最初の main セクションの先頭に <figure data-hb-part=\"DIAGRAM\">…</figure> がある / 先頭に 400 文字の概説段落がある",
       "pass_example": "presentation_order=demo_first で、最初の main セクション先頭が <div data-hb-part=\"IMG\"><img data-hb-asset-role=\"screenshot\" src=\"data:image/png;base64,…\" alt=\"Claude の入力欄\"></div>",
       "false_positive_risk": "低〜中。lead_line (1 行の抽象) は R11 が要求する型なので提示物から除外している。120 文字の閾値は『1 行の抽象』と『概説段落』を分ける線であり、C12 の text_limits とは別軸の判定値なので本ブリーフに持つ",
-      "not_evaluated_when": "presentation_order == \"explain_first\" のときは checked=0 の PASS とせず、stdout の当該行を `NAR-07 SKIP order=explain_first` と出す (評価していないことを PASS と区別して開示する)"
+      "not_evaluated_when": "presentation_order == \"explain_first\" のときは checked=0 の PASS とせず、stdout の当該行を `NAR-07 SKIP order=explain_first` と出す (評価していないことを PASS と区別して開示する)。presentation_order が欠落・null のときは SKIP にしない — 正規化済み構成データでは必須フィールドであり (必須性の実行点は C12 A5c)、その欠落は『値が explain_first だった』ではなく『入力が正規化済みでない』を意味する。したがって NAR-07 の判定へ入る前に、手順 2 の必須フィールド検査 (purpose / background / goal / sections と同列) で捕らえて exit 2 (検査が成立しなかった) とする。SKIP へ倒すと、値を削るだけで C56 の検査を無効化できる経路が残る",
+      "interaction_with_r25_image_fallback": "R25/REQ-3 (goal-spec C69) で assets[].role に illustration が加わり、素材の無い screenshot 役の節は illustration へ落ちる (config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split.fallback)。この fallback は本判定を緩めない — 実画面と認めるのは role=screenshot と live demo 宣言の 2 つだけであり、illustration (生成された挿絵) を実画面の代替に加えてはならない。加えると demo_first の意味 (『まず本物の画面を見せる』) が生成画像で満たされたことになり、CR-DEMO1 の禁止形が空洞化する。したがって demo_first の資料で最初の main セクションだけは素材を確保して fallback させない責務が上流 (C01 の R3-render と C05 の設計) 側に要る。本 script はその責務を持たず、満たされていなければ FAIL にする"
     },
     {
       "id": "NAR-08",
@@ -208,7 +210,7 @@
     {
       "id": "AC-C22-01",
       "how": "data-hb-field の purpose / background / goal が冒頭の窓 (hero 部品マーカー以降・最初の section より前) に描画され、全 7 section が冒頭に data-hb-field=\"section_goal\" を持ち、nav 7 項目すべてが data-hb-nav-goal を持つ HTML と一致する config を渡す",
-      "expected": "exit 0、stderr 空、stdout に NAR-01..NAR-10 の 10 行ちょうど (NAR-07 は fixture の presentation_order に応じて PASS または SKIP) と OUT-OF-SCOPE 節。行数が detections 配列の件数と一致することを assertEqual で固定する"
+      "expected": "exit 0、stderr 空、stdout の detection 行が detections 配列と 1 対 1 (NAR-07 は fixture の presentation_order に応じて PASS または SKIP) で OUT-OF-SCOPE 節を伴う。期待値は detections 配列から導いた列と assertEqual で突き合わせ、行数を数値リテラルで書かない"
     },
     {
       "id": "AC-C22-02",
@@ -263,12 +265,17 @@
     {
       "id": "AC-C22-R21-56b",
       "how": "同じ HTML の DIAGRAM の前に data-hb-asset-role=\"screenshot\" の IMG を 1 件挿入して再実行する",
-      "expected": "exit 0、NAR-07 PASS。概念図の存在自体は禁じておらず、実画面より前に置くことだけが禁止であることの回帰テスト"
+      "expected": "いずれも exit 2 (検査が成立しなかった) で、stderr に presentation_order の欠落が必須フィールド不足として出る。stdout に `NAR-07 SKIP` は出ない。値を削るだけで C56 の検査を無効化できないことの回帰"
     },
     {
       "id": "AC-C22-R21-56c",
       "how": "最初の提示物が data-hb-asset-role=\"figure\" の IMG である HTML を demo_first で渡す / 同じ HTML を presentation_order=explain_first で渡す",
       "expected": "前者は exit 1 (screenshot 以外の画像は実画面と認めない)。後者は exit 0 で stdout に `NAR-07 SKIP order=explain_first` が出る (未評価が PASS に化けない)"
+    },
+    {
+      "id": "AC-C22-R21-56b",
+      "how": "presentation_order のキーを持たない構成データと、null を代入した構成データの 2 通りを、最初の main セクション先頭が DIAGRAM の HTML と組で渡す",
+      "expected": "いずれも exit 2 (検査が成立しなかった) で、stderr に presentation_order の欠落が必須フィールド不足として出る。stdout に `NAR-07 SKIP` は出ない。値を削るだけで C56 の検査を無効化できないことの回帰"
     },
     {
       "id": "AC-C22-R21-48",

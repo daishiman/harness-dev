@@ -5,6 +5,8 @@
   "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
   "description": "題材から単一 HTML の資料生成を手動起動する (--theme は構成データにテーマ欄が無い場合のみ有効で、採用値は同梱構成データへ書き戻されるため再現の単位は同梱構成データに閉じる)",
   "argument_hint": "[題材] [--config <config.json>] [--doc-type <種別>] [--out-dir <path>] [--theme <preset>] [--date <yyyy/mm/dd>]",
+  "disable_model_invocation": false,
+  "disable_model_invocation_rationale": "component-inventory.json#C07 の disable-model-invocation と一致させる (AC-C07-1 がこの 1 値も照合対象にしているが、ブリーフ側に値が無いと builder が frontmatter の値を推測することになるため明示する)。false = モデル側から起動できる。利用者が『資料を作って』と自然文で頼む経路を塞がないため",
   "allowed_tools": [
     "Read",
     "Write",
@@ -40,9 +42,10 @@
     {
       "name": "--out-dir",
       "required": false,
-      "default": "なし (未指定時は route-handout-output.py が既定出力先を決定論解決する)",
-      "override_rule": "出力先の親ディレクトリだけを上書きする。その配下に作られる `<YYYY-MM-DD>-<種別>-<主題slug>/` の命名規則自体は上書きできず、常に route-handout-output.py (C19) が構成データから導出する",
-      "rationale": "R17/C23。親の場所は利用者の都合で変わるが、命名規則が変わると生成物の同定と検査が壊れる。可変部と不変部を引数の粒度で分離する"
+      "default": "なし (未指定時は route-handout-output.py (C19) が既定出力先を決定論解決する。解決は 4 段で、本引数はその第 1 段にあたる)",
+      "resolution_chain": "--out-dir > 環境変数 HB_OUT_DIR > config/handout-output.json の default_out_dir > いずれも無ければ exit2 (script-brief-C19.json の algorithm 6 が正本。段の順序も『どの段で解決したかを stdout と --json-report に記録する』契約も C19 側にあり、command は再定義しない)。command はこの 4 段のうち第 1 段の値を渡すだけで、第 2・第 3 段の解決には関与しない。ただし利用者から見ると『--out-dir を付けなくても毎回同じ場所へ出したい』が最も多い要求なので、--out-dir 未指定で起動した際の提示では C19 が記録した『どの段で解決したか』をそのまま伝える (behavior 6)。固定の出力先を持ちたい利用者へは HB_OUT_DIR の設定を案内する。具体的なパス文字列を command 本文へ書かない (環境固有の絶対パスは配布物に入れないという improvement/output-naming-decision.json#decision.base_dir の裁定に従う)",
+      "override_rule": "出力先の**親ディレクトリだけ**を上書きする。その配下に作られるディレクトリの命名規則は上書きできず、常に route-handout-output.py (C19) が構成データから導出する。**書式文字列そのもの (プレースホルダの並び・区切り文字・日付書式) を command のブリーフにも command 本文にも書かない**。実行時の正本は config/handout-output.json の dir_name_format ただ 1 箇所で (script-brief-C19.json:83 naming_rule.pattern_source。裁定は improvement/output-naming-decision.json#decision.dir_name_format、R25/REQ-6・C72)、C19 は当該キーが欠けた場合に既定書式へ倒れず exit2 になる。command 側に書式を写すと、config を直しても command の説明だけが旧書式のまま残る",
+      "rationale": "R17/R25-REQ-6/C23。親の場所は利用者の都合で変わるが、命名規則が変わると生成物の同定と検査が壊れる。可変部と不変部を引数の粒度で分離する"
     },
     {
       "name": "--theme",
@@ -65,7 +68,8 @@
     "3. --config 指定時のみ、Read で当該パスの存在と JSON としての読み取り可否だけを確認する (内容の妥当性判定はしない。それは validate-handout-config.py の責務)",
     "4. --theme / --date / --doc-type が指定されていて、かつ --config の構成データに対応する欄が既にある場合、上書きせず矛盾として停止し、構成データ側を正として編集するよう案内する",
     "5. Skill(run-handout-build, args=\"$ARGUMENTS\") を起動し、以降のヒアリング (R1) → 構成設計 (R2) → 決定論レンダリング (R3) → ゲート実行と出力先ルーティング (R4) を委譲する。command はこの間、判断も加工もしない",
-    "6. 完了後、委譲先が返す生成レポート (出力ディレクトリのパス / 同梱 4 点 (資料 HTML・構成データ JSON・素材・README) の有無 / 適用部品 / 埋め込みサイズと warning / 各ゲートの結果) をそのまま提示する。ゲート FAIL 時は成功と読める要約を書かない",
+    "6. 委譲先から制御が戻ったら、返された生成レポート (出力ディレクトリのパスと『解決に使った段』(--out-dir / HB_OUT_DIR / config の default_out_dir のどれか) / 同梱 4 点 (資料 HTML・構成データ JSON・素材・README) の有無 / 適用部品 / 埋め込みサイズと warning / 各ゲートの結果) をそのまま提示する。R25 以降はこれに加えて、委譲先が返した (a) 各 main セクションの図解と画像の充足状況 (充足していないセクションがあれば節名を列挙) (b) 冒頭が『ゴール → 今日の流れ (全体像) → 各項目のカード』の並びになっているか の 2 点を必ず提示へ含める。いずれも判定は C12 / C22 が行った結果を運ぶだけで、command 側で数えたり閾値を持ったりしない (充足件数の下限や文字数の値を command 本文へ書かない)。ゲート FAIL 時は成功と読める要約を書かない",
+    "6b. 『第 1 稿が出た』と『完了した』を同じ語で表示しない。C01 の完了条件は決定論ゲート 4 本の exit0 に加えて視覚密度・散文量の警告 0 件と可読性レビュー (skill-brief-C01.json の完了条件/deterministic_gates・完了条件/visual_density) を含み、第 1 稿の時点では config/handout-visual-policy.json#draft_first.skipped_in_draft の工程が未実施であるため、第 1 稿は定義上まだ完了ではない。提示では『第 1 稿 (たたき台)』であることと、完了までに何が残っているか (未実施の工程・残っている警告) を委譲先の返した内容のまま示す。残項目の一覧を command 側で作らない",
     "7. 第1稿の提示では『これはたたき台であり、直したい箇所を指してもらえば差分で作り直す』ことと、仮置きで埋めた項目の一覧を必ず添える (R24 D3)。直す指示が返ったときは新規実行として起動し直さず、R5-refine の周回として同じ skill 起動へ渡す",
     "8. 指摘を受けたときは command 側で解釈も要約もしない。原文のまま skill へ渡す (言い換えた時点で利用者が指した箇所が見えなくなる)",
     "9. --theme を採用した場合、『採用テーマは同梱構成データへ書き戻された。以後の再現は同梱構成データ 1 点で足り、--theme の再指定は不要』を明示的に伝える"
@@ -98,9 +102,16 @@
       "rationale": "C01 の OUT1 は全ゲート exit0 を条件とする。部分成功を成功と報告すると受入判定が Goodhart 化する"
     },
     {
-      "case": "slide-report-generator (画像生成の委譲先) が不在",
-      "behavior": "画像生成ステップのみ skip されたことを skip 理由つきで報告し、他ステップは完走させる (fail-soft)",
-      "rationale": "C18。任意依存の不在で全体を止めない。ただし skip は黙って落とさず必ず報告する"
+      "case": "出力先が 4 段のいずれでも解決できない (--out-dir 未指定・HB_OUT_DIR 未設定・config の default_out_dir 不在)",
+      "behavior": "C19 の exit2 を受けて停止し、解決を試みた 3 段を順に示したうえで --out-dir の指定または HB_OUT_DIR の設定を案内する。cwd 等の暫定の場所へ勝手に出力しない",
+      "rationale": "既定出力先を command 側の fallback で補うと、C19 が『config を出力先の正本にする』ために fail-closed にした意味が消える。利用者の資料が本人の意図しない場所に散らばるのは、生成が止まるより回復が難しい"
+    },
+    {
+      "case": "挿絵生成の委譲先 (C21 srg-image-bridge.py 経由の slide-report-generator) またはそのランタイムが不在",
+      "behavior": "C21 が返す status=\"skipped\" と skip_reason (srg-absent / runtime-absent) をそのまま提示し、他ステップは完走させる (fail-soft)。**R25/REQ-3 が求める『各セクションに画像』が満たされていない稿であることを併せて明示**し、skip を含む稿を完了として提示しない (behavior 6b)",
+      "rationale": "任意依存の不在で全体を止めないという既存方針 (script-brief-C21.json の exit_codes 0 の定義) は維持する。ただし R25 で画像は毎セクション必須になったため、skip したまま『できました』と提示すると利用者要求そのものが黙って欠けた資料が完成品として渡る。skip 理由の語彙は C21 の stdout 契約が正本で、command は再定義しない",
+      "ruling_ref": "improvement/visual-per-section-decision.json#decision.skipped_image_counting (CR-IMG-SKIP-COUNT)。裁定の本文はここへ複製しない (裁定の第 2 の出所を作らない)。本 command が負うのは、その裁定が『C07 の提示が現状の唯一の受け皿である』と名指しした受け皿の実装だけである",
+      "why_the_gate_is_green": "C12 の E-IMAGE-ABSENT は構成データ段で宣言された IMG 部品の件数だけを数えるため、C21 が skip しても緑のままである (CR-IMG-SKIP-COUNT の ruling)。よって提示側は『ゲートが緑だから各セクションに画像がある』と読んではならず、読み替えを利用者に対しても起こさせないために、緑のゲート結果と skip の事実を同じ画面へ並べて出す。実体側の機械ゲートは CR-IMG-REALIZED で C16 SC-11 (E-IMG-UNREALIZED) へ割り当てられたが、実装されるまでは本提示が唯一の受け皿である"
     }
   ],
   "requirements_covered": [
@@ -109,7 +120,9 @@
     "R17",
     "R18",
     "R19",
-    "R20"
+    "R20",
+    "R25-REQ-6 (C72。副。親ディレクトリの受け渡しと解決 4 段の案内という入口面のみ。命名書式の導出は C19、書式の正本は config/handout-output.json)",
+    "R25-REQ-2 / REQ-3 / REQ-7 (C68 / C69 / C73。副。充足状況と未充足セクションを利用者へ提示する面のみ。判定と閾値は C12 / C22 が持ち、command は運ぶだけ)"
   ],
   "checklist_covered": [
     "C14",
@@ -150,10 +163,31 @@
       "id": "AC-C07-R24-01",
       "how": "build 後の plugins/guide-doc-generator/commands/handout-build.md 本文を読む",
       "expected": "第1稿がたたき台である旨と仮置き一覧の提示が behavior に現れ、指摘を command 側で要約・解釈する記述が 0 件。質問ラウンド数や粒度の数値が直書きされていない"
+    },
+    {
+      "id": "AC-C07-R25-72",
+      "how": "build 後の handout-build.md 本文を grep し、ディレクトリ命名の書式リテラル (`{date}`・`{slug}`・`yyyy-mm-dd` 等の書式片) と環境固有の絶対パスの出現を数える",
+      "expected": "いずれも 0 件。--out-dir の説明は『親ディレクトリだけを上書きする』ことと解決 4 段 (--out-dir / HB_OUT_DIR / config の default_out_dir / 未解決は停止) の案内に留まり、書式は C19 と config/handout-output.json への参照のみ"
+    },
+    {
+      "id": "AC-C07-R25-DRAFT",
+      "how": "第 1 稿が出た直後の提示文面を読む (skipped_in_draft の工程が未実施で、視覚密度の警告が残っている状態を模した委譲先レポートを与える)",
+      "expected": "『完了』『できました』に相当する表現が使われず、第 1 稿である旨と残作業が提示される。skip された挿絵生成がある場合は『各セクションに画像』が未充足である旨も出る"
+    },
+    {
+      "id": "AC-C07-R25-REPORT",
+      "how": "委譲先が『main セクション 5 件のうち 2 件に図解が無い』というレポートを返した起動を模し、提示内容を読む",
+      "expected": "未充足のセクション名が提示に現れる。かつ command 本文に充足件数の下限値や文字数の閾値が 0 件 (判定は C12 / C22 の結果を運ぶだけ)"
+    },
+    {
+      "id": "AC-C07-R25-IMGSKIP",
+      "how": "C12 の検査結果が全て緑 (E-IMAGE-ABSENT を含む) で、かつ C21 が status=\"skipped\" / skip_reason=\"srg-absent\" を返した委譲先レポートを与えて提示文面を読む",
+      "expected": "『各セクションに画像』が未充足である旨が出る。ゲートが全て緑であることを理由に『画像は揃っています』に相当する表現へ畳まない (緑は宣言の存在しか保証しないという CR-IMG-SKIP-COUNT の therefore_not を提示が破らないことの確認)。裁定文そのものの引き写しが提示に混ざらないことも併せて見る"
     }
   ],
   "open_questions": [
     "--theme / --date が構成データの既存欄と衝突したときの停止は command 側の前段チェックだが、render-handout.py (C11) 側が同じ状況で『無視』か『exit≠0』かは C11 の brief に従う。両者が食い違うと、command を経由しない直叩き時に挙動が変わる。P03 design-gate で C11 brief と突き合わせて統一すること",
+    "【R25 未決・inventory 側】component-inventory.json#C07 は harness_coverage に regression_scope を持たない (C18・C05 等は R25 の checklist / new_codes / new_acceptance_checks を持つ)。C07 は R25 の判定を持たないので new_codes は不要だが、本ブリーフで追加した提示面の AC 3 件 (AC-C07-R25-72 / -DRAFT / -REPORT) が inventory の回帰範囲に現れないままだと、R25 の回帰確認から入口だけが外れる。inventory は本ノードの write_scope 外のため未反映",
     "【X-01 決着済み・記録】--date の受理形式は C12 の N4 に一任し、command 側では判定しない形で解決した。表示の正本表現は yyyy/mm/dd 一つ (C12 config_schema#date)、R17 のディレクトリ名 <YYYY-MM-DD> は C19 が導く派生表現で別概念、と読み分けること"
   ],
   "draft_first_ux": {

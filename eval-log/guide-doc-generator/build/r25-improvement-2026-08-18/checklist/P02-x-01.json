@@ -1,0 +1,84 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-x-01",
+ "covered_task_ids": [
+  "P02-x-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/evidence/P02.json",
+ "verified_by": [
+  {
+   "claim": "23 component すべてに設計ブリーフが実在し id 集合が一致する",
+   "method": "dispatcher が inventory の components を parse し component_kind から期待ファイル名を導出して os.path.isfile、別途 briefs/*-brief-C*.json のファイル名から id 集合を再構成し双方向の差集合を測定",
+   "result": "pass: 23/23 実在。inventory-only 0 件 / brief-only 0 件 / set_equal True。内訳 script 13 / skill 4 / slash-command 3 / sub-agent 2 / hook 1 で SubAgent 報告と完全一致"
+  },
+  {
+   "claim": "依存 DAG に循環が無い",
+   "method": "dispatcher が depends_on から有向グラフを構築し未知参照検査 + Kahn 法トポロジカルソートを独立実行",
+   "result": "pass: 未知参照 0 件、topo 順序 23/23 成立 (acyclic True)。根は C04/C13/C14/C15/C16/C17/C21/C23 の 8 件、最大入次数は C01 の 15 件で SubAgent の測定と一致"
+  },
+  {
+   "claim": "verify ゲート 2 本が exit0",
+   "method": "dispatcher が detect-unassigned.py と check-surface-inventory.py を再実行",
+   "result": "pass: 両方 exit0。'OK: 13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持' / 'OK: 5 component_kind 検討証跡 + plugin-level surface 採否が明示済み'"
+  },
+  {
+   "claim": "この 2 本は acceptance_criterion の 3 点を検査していない (SubAgent の自己申告の妥当性)",
+   "method": "両ゲートの stdout 文言と acceptance_criterion (brief 実在 / DAG 非循環 / 4 段解決の宣言) を対照",
+   "result": "pass(=報告どおり): ゲートが見るのは phase 完全性・orphan・build_target 保持・component_kind 検討証跡のみ。3 点はいずれも非対象で、判定は本ノードの自作検査に依存する。この自己申告は誠実であり、dispatcher 側で独立再測定して裏付けた"
+  },
+  {
+   "claim": "実体解決 4 段が plan レベルで宣言されている",
+   "method": "component-inventory.json#envelope_design.env_resolution と phase-02-design.md / index.md の記述を確認",
+   "result": "pass: 'HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → manifest name 照合 → __file__ 相対' の 4 段が 3 箇所で一致"
+  },
+  {
+   "claim": "component レベルで C17 / C09 が manifest name 照合を欠く (P02X-02)",
+   "method": "dispatcher が script-brief-C17 / command-brief-C09 / script-brief-C15 の 3 本で HB_ROOT / manifest の出現を計数し前後文脈を確認",
+   "result": "fail(=報告どおり): C17 は root_resolution が『HB_ROOT → CLAUDE_PLUGIN_ROOT → 本 script の 2 階層上』の 3 段で manifest 0 件。C09 は delegation_form が ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} のみで manifest 0 件。対して C15 は『HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → plugin.json の name=guide-doc-generator 照合 → __file__ 相対』の 4 段を明記 (manifest 3 件)。同一方針の実装が 3 段と 4 段に割れている"
+  },
+  {
+   "claim": "出荷側 blocker 3 件の再測定",
+   "method": "dispatcher が handout-output.json / handout-visual-policy.json の実キーを列挙し references ディレクトリを ls",
+   "result": "pass(=報告どおり): dir_name_format 不在 / min_images_per_main_section 0 件 / nav_item 0 件 / hook_scan_budget 0 件 / plugins/guide-doc-generator/references は No such file or directory。本 cycle の他ノードでの測定とも一致"
+  },
+  {
+   "claim": "evidence が status と release_readiness を分離している",
+   "method": "evidence/P02.json のキー構成と release_readiness を直読み",
+   "result": "pass: 11 キー。status=pass (設計側) と release_readiness.state=blocked (出荷実体側) を別フィールドに分け、why_separate_from_status に『acceptance_criterion は設計ブリーフ側の 3 点しか問うておらず、両ゲートもブリーフと inventory しか見ない』と明記"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git status --porcelain evidence/ を確認",
+   "result": "pass: P02.json のみが本ノード由来。P01.json は dispatcher が先に書いたもので本ノードは Read のみという SubAgent の申告と一致"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02X-01",
+   "level": "blocking-for-release",
+   "summary": "設計 (brief) は 23/23 確定したが出荷実体が未追随で、現状の出荷物は資料を 1 本も生成できない。dir_name_format / min_images_per_main_section / nav_item / hook_scan_budget の 4 キーはすべて P05-x-03 という同一 producer に属し、この 1 本が事実上唯一のクリティカルパス"
+  },
+  {
+   "id": "F-P02X-02",
+   "level": "blocking-for-release",
+   "summary": "実体解決が C17 と C09 で manifest name 照合を欠く 3 段へ縮退している。.claude/ 平置き projection では CLAUDE_PLUGIN_ROOT が 1 値しか持てないため、manifest 照合を欠くと他 plugin の root を掴みうる。C15 は 4 段すべて外れたら exit2 まで実装しており、同一方針が割れている"
+  },
+  {
+   "id": "F-P02X-03",
+   "level": "blocking-for-release",
+   "summary": "command-brief / hook-brief 用 schema が repo に不在で、23 件中 4 件 (C07/C08/C09/C10) が schema 未検証のまま done。生成側 plugin (harness-creator) の欠落で本 plugin の write_scope では埋められない"
+  },
+  {
+   "id": "F-P02X-04",
+   "level": "carry-forward",
+   "summary": "前 cycle の X-07 (checklist ID と component ID がどちらも Cnn で名前空間が衝突) が未解消。他 7 件 (X-01..X-06, X-08) は解消を確認"
+  },
+  {
+   "id": "F-P02X-05",
+   "level": "carry-forward",
+   "summary": "verify ゲート 2 本が acceptance_criterion の 3 点を 1 つも検査していない。ゲート緑を acceptance の根拠として読ませない注記は evidence に入っているが、3 点を機械検査する gate 自体が存在しない構造は残る"
+  }
+ ]
+}

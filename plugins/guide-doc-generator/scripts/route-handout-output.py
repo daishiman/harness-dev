@@ -51,6 +51,10 @@ PRESET_MODULE_NAME = "hb_preset"
 
 OUTPUT_CONFIG_RELPATH = "config/handout-output.json"
 OUTPUT_CONFIG_KEY = "default_out_dir"
+#: ディレクトリ名書式の正本キー。書式そのものは本ソースへ持たない (C18 / C10 と
+#: 同じ値を 3 箇所へ焼いた結果、1 箇所を直しても他が古い区切りで判定していた)。
+DIRNAME_CONFIG_KEY = "dir_name_format"
+DIRNAME_PLACEHOLDERS = ("{date}", "{slug}")
 ENV_OUT_DIR = "HB_OUT_DIR"
 
 STAGE_ARGV = "--out-dir"
@@ -270,6 +274,44 @@ def declared_default_out_dir():
     return value
 
 
+def declared_dir_name_format() -> str:
+    """ディレクトリ名書式を正本から引く (algorithm 6 と同じ config を読む)。
+
+    キー不在・型不正・未知プレースホルダはいずれも既定値へ倒さず ContractError に
+    する。既定値へ倒すと、正本を書き換えても script が黙って旧書式で出し続ける。
+    """
+    path = PLUGIN_ROOT / OUTPUT_CONFIG_RELPATH
+    if not path.is_file():
+        raise ContractError("{} が無い ({} を解決できない)".format(
+            OUTPUT_CONFIG_RELPATH, DIRNAME_CONFIG_KEY))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ContractError("{} を読めない: {}".format(OUTPUT_CONFIG_RELPATH, exc))
+    value = data.get(DIRNAME_CONFIG_KEY) if isinstance(data, dict) else None
+    if not isinstance(value, str) or not value.strip():
+        raise ContractError("{} に {} が無いか文字列でない: {!r}".format(
+            OUTPUT_CONFIG_RELPATH, DIRNAME_CONFIG_KEY, value))
+    for placeholder in DIRNAME_PLACEHOLDERS:
+        if placeholder not in value:
+            raise ContractError("{} に {} が含まれない: {!r}".format(
+                DIRNAME_CONFIG_KEY, placeholder, value))
+    stripped = value
+    for placeholder in DIRNAME_PLACEHOLDERS:
+        stripped = stripped.replace(placeholder, "")
+    if "{" in stripped or "}" in stripped:
+        raise ContractError("{} に未知のプレースホルダがある: {!r}".format(
+            DIRNAME_CONFIG_KEY, value))
+    return value
+
+
+def build_base_name(date_value: str, slug: str) -> str:
+    """正本の書式へ date / slug を差し込む。書式を組み立てる場所はここ 1 箇所。"""
+    return declared_dir_name_format().format(
+        date=date_value.replace("/", "-"), slug=slug
+    )
+
+
 def resolve_root(argv_value):
     """解決 4 段。どの段で解決したかを合わせて返す。"""
     if argv_value:
@@ -430,7 +472,10 @@ def run(args) -> int:
     root_text, stage = resolve_root(args.out_dir)
     root_real = prepare_root(root_text, create=not args.check_only)
 
-    base_name = "{}-{}-{}".format(date_value.replace("/", "-"), token, slug)
+    # doc_type 由来の token はディレクトリ名へ出さず marker.json の dir_token として
+    # 残す (語彙照合そのものは resolve_dir_token で済んでおり、未知 doc_type は
+    # ここへ到達しない)。
+    base_name = build_base_name(date_value, slug)
     confine(root_real, base_name)
 
     digest = hashlib.sha256(config_bytes).hexdigest()

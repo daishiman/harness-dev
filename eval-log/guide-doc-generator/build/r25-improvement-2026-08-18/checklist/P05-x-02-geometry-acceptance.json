@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-02-geometry-acceptance",
+ "covered_task_ids": [
+  "P05-x-02-geometry-acceptance"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-02.md",
+ "verified_by": [
+  {
+   "claim": "受入条件が SVG 属性名の綴りの有無でなく幾何的性質で書かれている",
+   "method": "task-specs/P05-x-02.md に対し viewBox の出現数を grep -c で計測",
+   "result": "pass: 0 件。frontmatter 節 (2) は『各図形の座標値がすべて 0-24 の座標系内』『線幅が 2.2-2.6』『塗りを持つ図形が 0 件』へ書き換え済みで、末尾に『属性文字列の綴りの有無では判定しない』を明記した"
+  },
+  {
+   "claim": "3 つの幾何条件それぞれに空ゲートでないことを示す変異が対応している",
+   "method": "アイコンセット節の直読みで条件と変異の対応を突合",
+   "result": "pass: (a) 座標を 25 へ 1 つずらす → 座標系条件が赤、(b) 線幅を 2.0 にする → 線幅条件が赤、(c) 図形 1 つを塗りに変える → 線表現条件が赤。1 条件 1 変異で対応が付いており、まとめて 1 変異にしていない"
+  },
+  {
+   "claim": "task-graph 側の同 node の acceptance_criterion をこの場で書き換えていない",
+   "method": "編集対象ファイルの確認と、追記した『task-graph 側の追従』節の記述",
+   "result": "pass: 書き換えていない。task-graph.json は単一 writer (derive/accept) の不変 SSOT であり、手で書くと accepted form の resulting_graph_hash が認可する再 pin の provenance 鎖が切れる。次回 derive で spec 側から伝播する旨を節として残した"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x02-01",
+   "level": "carry-forward",
+   "summary": "task-spec と task-graph の acceptance_criterion が次回 derive まで食い違う窓が開く。この窓の間、graph だけを読む後続ノードは旧い属性ベースの AC を読む。P05-x-87 (graph の AC と dispatch 本文が測る面の差分) と同じ二正本問題で、spec→graph の伝播が起きたことを確認する手段が無い"
+  }
+ ]
+}

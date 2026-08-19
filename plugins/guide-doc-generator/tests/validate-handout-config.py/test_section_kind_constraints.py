@@ -16,7 +16,7 @@ def one_section(section_kind, parts, **over):
     sec = H.section("s1", section_kind=section_kind, parts=parts)
     sec.update(over)
     cfg["sections"] = [sec]
-    return cfg
+    return H.with_visual_floor(cfg)
 
 
 class ActionItems(H.C12TestCase):

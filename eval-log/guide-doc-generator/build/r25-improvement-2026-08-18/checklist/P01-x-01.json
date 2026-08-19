@@ -1,0 +1,79 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P01-x-01",
+ "covered_task_ids": [
+  "P01-x-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/evidence/P01.json",
+ "verified_by": [
+  {
+   "claim": "既存 evidence/P01.json が『主張する文書』であり、その主張を独立に測り直した",
+   "method": "dispatcher が報告の手順を確認",
+   "result": "pass(=罠への回答として正しい): 前版は status=pass + checks[3] 全 pass で、主張と根拠が同一ファイルに閉じていた。報告は 3 主張の根拠を goal-spec.json / index.md / phase-01-requirements.md / 判定ゲートの実装 側で測り直し、2 つが形式充足を実質充足と読んでいたことを特定して判定を partial へ改めた。document_kind: requirements-record を明記して自己言及を解いた点も正しい"
+  },
+  {
+   "claim": "verify_by は 45/45 で形式充足するが、検証手段を名指ししていない",
+   "method": "dispatcher が goal-spec.json の checklist を直読みして集計",
+   "result": "pass(=報告どおり): checklist は全 75 件で verify_by の欠落 0・enum 外 0。値は script 47 / test 27 / reasoning 1 の裸の 3 値ラベルのみで、どの script か・どのテスト関数かは 1 件も書かれていない。よって『verify_by を持つ』は全件について自明であり、要件間の識別力がゼロ。AC 第 1 節は字義どおり測ると必ず pass になる形をしている、という報告の指摘は正しい"
+  },
+  {
+   "claim": "その形式充足を守る機械ゲートが fail-open である",
+   "method": "dispatcher が check-plugin-goal-spec.py:185-186 を直読み",
+   "result": "pass(=最重要・実測で確定): 該当行は `verify_by = item.get(\"verify_by\")` に続く `if verify_by is not None and verify_by not in {...}` で、None (キー欠落) は条件の第 1 項で弾かれ検査に入らない。すなわち enum 外だけを落とし、欠落は素通しする。報告の変異注入 (C12 から verify_by を削除した複製が exit 0 / 空文字のみ exit 1) と完全に整合する。本 cycle で 6 例目の fail-open であり、形は C22 の `key not in config` (F-P04C22-01) と同一"
+  },
+  {
+   "claim": "criterion 本文に自己言及型が 9 件ある",
+   "method": "dispatcher が報告の名指し先を確認",
+   "result": "pass: C9 / C12 / C20 / C25 / C28 / C29 / C30 / C44 / C45 が『検査が存在すること』しか要求せず、検査が何を測るかを要求していない。C25 は『index に明記されている』で、要件が『要件が文書に書いてあること』を要求する純粋な自己言及。C20 の『意味的に一致』は一致の定義が要件文に無くテスト実装へ委譲されており、テスト側が定義を持てばそれが正本になる。C26 は verify_by=script でありながら述語が『後続 build が追加質問なしで実行できる』で script では観測不能。ラベルと観測可能性の食い違いが上記 (a) のため検出されない"
+  },
+  {
+   "claim": "生の実測値の混入は 0 件、ただし B01-B15 が参照資料由来で既に現物と食い違う",
+   "method": "dispatcher が出荷カタログ config/handout-parts.json を直読み",
+   "result": "pass(=報告どおり・食い違いを実測で確認): parts は 20 件。報告のとおり B01-B17 + DIAGRAM / IMG / TEXT の構成で、要件文 C12 / C45 が名指す B01-B15 は現在の部品集合を記述していない。B01-B15 は要件が定義した語彙ではなく reference-analysis.md §2 のカタログ表の行数 (15 行) であり、参照資料が差し替われば要件が嘘になるという害が既に現実化している。実装側の被覆検査 CatalogCoverageTest はカタログから期待集合を導出するため緑のままで、要件文の陳腐化を検出しない。前版が見逃したのは突合対象を数量事実セクションの数値トークンに限っていたためで、数値 grep では範囲リテラルを拾えない — 測定イディオムの盲点として記録に値する"
+  },
+  {
+   "claim": "分界線は決定論側のみ要件文として成立し、LLM 側は不成立",
+   "method": "dispatcher が報告の和文/identifier 両系統 grep の結果と節種別判定を確認",
+   "result": "pass: 決定論側は C29 (LLM 非依存・2 回バイト一致) / C17 (再実装 0 件) / C13 / C27 / C18 が検出可能な要件文として立つ。LLM 側は C1-C45 に 1 件も無く、所在は goal-spec constraints[8] (規範) と index.md L64 / phase-01-requirements.md L36 の『ドメイン知識』節 (背景説明) のみ。前版が index.md L64 を『要件文で宣言』と記述していたのは節種別の誤読で、報告がこれを訂正している。phase-01-requirements.md:57 の完了チェックリストを根拠に『明示されている』と判定すると自己言及になる、という指摘も正しい"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が報告の git status 提示を確認",
+   "result": "pass: 本ノード由来は evidence/P01.json の 1 件のみ。同ディレクトリの P02.json / P03.json は並行ノード由来で、報告がこれを自主開示している。plugins/ 配下への書き込みは 0 件"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P01-X01-00",
+   "level": "blocking-for-release",
+   "summary": "本ノードの AC 3 節のうち 2 節が成立していない。第 1 節 (verify_by の網羅) は字義上 45/45 だが AC 自身が実質を測れない形。第 2 節は生の実測値については成立するが B01-B15 の 1 件が不成立。第 3 節 (分界線が要件文として明示) は決定論側のみ成立で LLM 側が不成立。したがって本ノードを done にした意味は『要件の正本が健全である』ではなく『要件記録が何を確立し何を確立していないかを正直に述べる状態になった』である。前版の status=pass を partial へ改めたことが本ノードの実質的な成果であり、AC の未達部分の修正先はすべて goal-spec.json = write_scope 外。この区別を明示せずに done を根拠として release へ進めてはならない"
+  },
+  {
+   "id": "F-P01-X01-01",
+   "level": "blocking-for-release",
+   "summary": "本 cycle で見つけてきた空ゲート族の上流が要件層にあることが確定した。(1) verify_by が検証手段を指さない裸のラベルであり、(2) それを守るゲートが欠落を素通しし (fail-open 6 例目)、(3) criterion 本文の 9 件が『検査が存在すること』しか要求していない。この 3 つが揃うと、下流の実装者は『検査を置いた』だけで要件を満たせる。P04 で繰り返し見つかった『0 件を検査して緑』『存在しか測らない』『自己言及テスト』は、要件がその形を許していることの帰結であり、下流だけを直しても再生産される。verify_by を pointer 型 (どの gate script / どのテスト関数) へ移し、ゲートを欠落検出 fail-closed へ変えることが根治。P05-x-92"
+  },
+  {
+   "id": "F-P01-X01-02",
+   "level": "blocking-for-release",
+   "summary": "C12 / C45 の B01-B15 が出荷カタログ 20 件と食い違う (dispatcher 実測)。B16 は briefs/RESOLUTION-P03.md:107-111 が参照解析に無いことを明記のうえ since:'plan' で追加、B17 は index.md:174 が C53 のために追加しており、追加自体は正当。問題は要件文が範囲リテラルで部品集合を記述しているため追加のたびに嘘になる点で、しかも実装側の被覆検査はカタログから導出するため陳腐化を検出しない。要件文をカタログ単一正本へ寄せる裁定が要る。P05-x-93"
+  },
+  {
+   "id": "F-P01-X01-03",
+   "level": "carry-forward",
+   "summary": "分界線の LLM 側が要件文でない (F-P01-04)。C29 は『レンダラが LLM 非依存であること』という逆方向しか守らないため、本来 LLM が担うべき責務を決定論化する設計変更は要件違反として検出されない。分界線が片側しか立っていない状態は、越境の一方向だけを塞ぐ検査と同じで、塞いでいない側から静かに崩れる。P05-x-94"
+  },
+  {
+   "id": "F-P01-X01-04",
+   "level": "carry-forward",
+   "summary": "open_questions が『未解決件数を測れない』構造になっている。dispatcher が goal-spec.json の top-level open_questions を直読みしたところ 18 件 (総数は報告どおり・前版の 16 件は誤り) だが、18 件すべてが素の文字列であり status / resolved / resolved_by いずれのフィールドも持たない。よって『15 件が未確定』は文字列本文の読解による判断であって機械では測れない。実際 #14 と #16 は『…を確定したが …は未確定』という部分解決を 1 文字列に畳んでおり、#17 / #18 は本文先頭の [2026-08-18 発見・本改善の対象外] という注記でのみ範囲外を表現している。件数を数える主体が変われば答えが変わる形。phase-01-requirements.md:59 は open_questions の解消を P01 完了条件に挙げているが、この構造ではその完了条件自体が判定不能であり、本ノードの AC 3 点にも含まれず check-plugin-goal-spec.py も見ない。『phase の完了条件』と『task node の AC』の食い違い (P05-x-87 と同型) に加え、完了条件が指す対象が機械可読でないという二重の欠陥。P05-x-95"
+  },
+  {
+   "id": "F-P01-X01-05",
+   "level": "carry-forward",
+   "summary": "測定イディオムの盲点が具体化した。前版は『実測値の混入』を数量事実セクションの数値トークン突合で測り、範囲リテラル B01-B15 を拾えなかった。数値の混入を数値 grep で測るのは自然だが、参照資料由来の識別子・範囲・列挙は数値の形をしていない。『どこから来た値か』を出典まで遡る手順でしか検出できない。本 cycle の測定失敗族 (n) テストファイル数を数える / (o) 測定イディオム盲目 に連なる 3 例目"
+  }
+ ]
+}

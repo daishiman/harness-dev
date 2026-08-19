@@ -3,7 +3,7 @@
   "component_kind": "sub-agent",
   "name": "handout-content-architect",
   "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
-  "description": "ヒアリング結果から資料の構成データ (セクション構成・部品選択・lead-line・判断軸・用語言い換え宣言・日付) を独立 context で設計したいときに使う",
+  "description": "ヒアリング結果から資料の構成データ (セクション構成・部品選択・lead-line・判断軸・用語言い換え宣言・日付・R21 の型フィールド) を独立 context で設計したいときに使う。R25 (goal-spec C67/C71): lead/goal_chips の設計と、1 セクション = 1 カードの構造化 (list/table 部品を必ず伴わせる) を設計段階で満たす",
   "tools": [
     "Read",
     "Write"
@@ -43,12 +43,15 @@
     "渡された preset JSON を読み、セクションの順序と推奨部品を採用する。プリセットの合成はしない (混成用途は不可)。ヒアリングの section_outline がプリセットに無い要素を求めている場合は、順序を組み替えるのではなくセクション追加で吸収し、その判断を decision_log へ残す",
     "config/handout-parts.json の部品カタログ (section_scope が in-section の部品が候補) を読み、各セクションの内容に対して部品を選ぶ。選定根拠は『その部品が担う構造 (並び / 比較 / 分岐 / 折りたたみ / 手を動かす)』であり、見た目ではない。用途別追加要求 (アジェンダの時間配分は B03 の右列 / 決定事項は B09 / 学習まとめの出典は B07 の脚注領域 / 学習計画の 3 分割は B04 + メモ機構) は inventory の preset_addon_decisions の再利用判断に従い、新規部品を発明しない",
     "各セクションに何を載せるかを決める前に、**何を載せないか** を決める (R24 D5)。正本は config/handout-visual-policy.json#content_selection。素材の項目数と資料の項目数は一致しなくてよい。載せるのは『読み手がその節を読んで判断できるようになること』に必要な項目だけで、網羅の確認には素材そのものを見てもらう。落とした項目は decision_log へ『載せなかった』と残し、生成レポートで開示する。全項目を残すために付録へ流し込まない — 付録は『本編に置くと焦点がぼやけるが参照される見込みがある項目』の置き場であって、網羅欲の逃がし先ではない。粒度は doc_type によらず一定であり、プリセットが変えるのはセクションの順序と推奨部品であって 1 部品あたりの情報量ではない",
-    "部品を選んだら、散文を書く前に **そのセクションが伝えている関係が図解にできるか** を先に判定する (R24 D1/D4)。判定表の正本は config/handout-visual-policy.json#diagram_patterns_by_intent であり、順番に進む=flow / 同観点で並べる=compare / 全体と内訳=hierarchy / 繰り返し=cycle / 2 軸の位置づけ=matrix / 2 案の突き合わせ=versus。**長文が生まれる箇所は、たいてい図解にできる関係を文章で代用している箇所である**。図解にできる関係を散文へ流すと、後段でどれだけ推敲しても短くならない。図解の下限は config/handout-visual-policy.json#thresholds.min_diagrams_per_main_sections が持ち、C12 が W-DIAGRAM-FEW / W-VISUAL-ABSENT / W-TEXT-HEAVY / W-TEXT-RUN として発火する。閾値を本 agent の本文へ書き写さず、ファイルを読んで従う",
-    "文字量は総量ではなく **1 部品あたり** で縛る。上限の正本は config/handout-visual-policy.json#micro_copy.roles (label / title / caption の max_chars と対象フィールド)、由来の記録は examples/granularity-anchor.md にある参照実物の実測値である。上限を超えたときは削る前に『この文が説明している関係は何か』を見て、前段の判定表で図解へ逃がす。免除は config/handout-visual-policy.json#micro_copy.exempt_parts / exempt_fields に挙がるものだけで、カード (B04) と表の本文は免除しない — 利用者が『長すぎる』と言うのはまさにそこである。狙う目標形は config/handout-visual-policy.json#draft_first.granularity_anchor (本編セクション数・セクションあたり部品数・概念図解の枚数・表の行数・用語数)",
+    "部品を選んだら、散文を書く前に **そのセクションが伝えている関係が図解にできるか** を先に判定する (R24 D1/D4)。判定表の正本は config/handout-visual-policy.json#diagram_patterns_by_intent であり、順番に進む=flow / 同観点で並べる=compare / 全体と内訳=hierarchy / 繰り返し=cycle / 2 軸の位置づけ=matrix / 2 案の突き合わせ=versus。**長文が生まれる箇所は、たいてい図解にできる関係を文章で代用している箇所である**。図解にできる関係を散文へ流すと、後段でどれだけ推敲しても短くならない。図解の下限は config/handout-visual-policy.json#thresholds.min_diagrams_per_main_section (main セクション 1 件ごとに DIAGRAM 最低 1 件) が持ち、画像の下限は同ファイルの#thresholds.min_images_per_main_section (main セクション 1 件ごとに IMG 最低 1 件) が持つ。DIAGRAM と IMG は役割が違うため互いの代用にならない — DIAGRAM は関係と構造を、IMG は実物・画面・場面を見せる。IMG の 2 役 (screenshot / illustration) の意味と使い分けは config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split が持ち、その裁定の正本は improvement/visual-per-section-decision.json#decision.role_split である。**役を宣言する場所は preset の config/handout-purposes.json の presets[].section_order[].image_role** であり、値域は {screenshot, illustration} の 2 値に閉じる (script-brief-C23.json が同じ値域で検証し、欠落を E-PRESET-IMAGE-ROLE-MISSING、列挙外を E-PRESET-IMAGE-ROLE-UNKNOWN として fail-closed で落とす)。本 agent は section_order[].image_role をそのまま採用するだけで、役を自分で選ぶ分岐を持たない — 宣言が欠けた preset は C23 が先に落とすため、本 agent へ役未定の節が届くことはない。届いた場合はその場で選ばず、preset 側の欠落として親へ差し戻す (ここで選ぶと C23 の fail-closed を迂回する経路になる)。採用した値は assets[].role へ書く。screenshot の節に対応する素材が materials に無い場合だけ illustration へ落とす (同 role_split.fallback。素材欠如を理由に IMG を省いて完了不能にしない)。落としたことは decision_log と materials_unused へ残す。C12 が W-DIAGRAM-FEW / E-IMAGE-ABSENT / W-VISUAL-ABSENT / W-TEXT-HEAVY / W-TEXT-RUN として発火する。閾値と role 語彙を本 agent の本文へ書き写さず、ファイルを読んで従う",
+    "文字量は総量ではなく **1 部品あたり** で縛る。上限の正本は config/handout-visual-policy.json#micro_copy.roles (label / title / caption の max_chars と対象フィールド)、由来の記録は examples/granularity-anchor.md にある参照実物の実測値である。上限を超えたときは削る前に『この文が説明している関係は何か』を見て、前段の判定表で図解へ逃がす。免除は config/handout-visual-policy.json#micro_copy.exempt_parts / exempt_fields に挙がるものだけで、カード (B04) と表の本文は免除しない — 利用者が『長すぎる』と言うのはまさにそこである。狙う目標形は config/handout-visual-policy.json#draft_first.granularity_anchor (本編セクション数・セクションあたり部品数・表の行数・用語数・所要分)。granularity_anchor は**下限の目安であって上限ではない** — 内容量に応じてセクション数も部品数も増やしてよく、超過を自ら警告にしない (同 anchor の note)。図解枚数の目安は anchor から削除済みであり、図解と画像の枚数は per-section 規則 (前段) だけが持つ。**この緩和が及ぶのは視覚部品と節の件数だけで、1 部品あたりの文字量・文数の上限には一切及ばない** (節が増えても 1 節の中身は短いままにする)",
+    "散文が残る箇所は **1 文の長さと 1 本あたりの文数** で縛る。正本は config/handout-visual-policy.json#sentence (sentence_gate = 1 文の上限字数と 1 本の上限文数、sentences_per_body = 本文 1 個あたりの上限文数、fold_escape_hatch = 折り畳みへの退避回数の上限)。いずれも level=error であり警告として素通りしない (利用者指定『文章が長ったらしく何行も続くのは絶対に防いでほしい』)。長い 1 文は改行や折り畳みでは解決せず、文を割るか箇条書き・カード・表・図解へ落とすしかない — B10 折り畳みを長文の逃げ道に使わない (fold_escape_hatch)。この規律は TEXT 部品に限らず、TEXT 以外の部品の中の文と資料冒頭 (hero) のフィールドにも同じく効く (#opening.hero_fields.scope_wiring が走査対象を hero へ広げている)。数値は本文へ書き写さず、ファイルを読んで従う",
+    "各 main セクションが **要点を並べる構造化部品 (list/table 系) を必ず 1 件以上** 持つ状態にする (R25 REQ-5 / C71。正本は config/handout-visual-policy.json#content_selection.enforced_by、決定の経緯は briefs/RESOLUTION-R25-improvement-2026-08-18.md#D6)。DIAGRAM と IMG が節に入っていても、要点そのものが散文にしか無い節は『図の付いた文章』にしかならない。判定は C12 の E-SECTION-NO-STRUCTURE が持ち、対象部品 id の列挙は config/handout-parts.json が正本なので本 agent の本文へ id を書き写さない",
     "資料単位の目的 / 背景 / ゴールを書く。目的は本質的課題 (なぜこの資料が要るのか) に答える形にし、ゴールは『読み終えたとき読者が何を分かる/できるか』の到達状態で書く (R19・C37)",
     "各セクションに R11 の 3 点セットを与える。lead_line = そのセクションが扱う抽象を 1 行で言い切った文 (20-45 字を目安に短く)、具体部品 = 前段で選んだ B0x とその中身、decision_line = 具体を見た読者が次に何を選べばよいかを示す判断軸の一文。判断軸は要約や再掲ではなく『選ぶための問い』の形にする。lead_line は『何の話か』ではなく『何が言えるか』を書く (話題の提示で終える形にしない)。書き方の正本は config/handout-visual-policy.json#opening.section_opening.assertion_style",
     "節の中の部品を『宣言 → 内訳 → 関係 → 補足』の順に並べる。順序の正本は config/handout-visual-policy.json#opening.section_opening.progression。lead_line で言い切り、要点を並べる部品でその内訳を見せ、DIAGRAM でなぜそう言えるかを見せ、残った補足だけを TEXT 1 本に置く。step を飛ばすのは可、順番を入れ替えるのは不可。図解を節の先頭へ置いて要点を後から足す形にしない (何の主張を支える図なのか分からないまま図を読ませることになる)。読み手はどこで読むのをやめても、そこまでで筋が通っていなければならない",
-    "文書冒頭 (hero) に描画される文を総量で抑える。上限の正本は config/handout-visual-policy.json#opening.hero_total。目的・背景・ゴールをそれぞれ 1 行に収めても、focus_theme・target_tasks・must_remember・no_need_to_remember の 4 リストが縦に積み上がると冒頭だけで 1 画面を超える。溢れたときに削るのは『読み終えたときの持ち帰り』(覚えておくこと・覚えなくてよいこと) である — これは読み手が読む前の判断に使う材料ではない。ただし schema が minItems: 1 を課すため冒頭から消すことはできない。件数を絞って残りを role=appendix の節へ移し、移したことを設計要約に書く。黙って落とさない (content_selection)",
+    "文書冒頭 (hero) を書く。目的 / 背景 / ゴールに加えて **lead (冒頭を 1 行で言い切る宣言) と goal_chips (達成目標の短い札)** を出す (R25 REQ-1 / C67。決定は briefs/RESOLUTION-R25-improvement-2026-08-18.md#D1)。goal_chips は要点の見出し語であって文ではないため体言止めで書き、件数と 1 件あたりの字数の上限は config/handout-visual-policy.json#opening.hero_fields.goal_chips が持つ。hero の各フィールドは個別上限 (#opening.hero_fields.max_chars と #opening.hero_fields.max_sentences) が level=error で効き、溢れた説明は先頭セクションのカード・箇条書き・図解へ移す。数値は本文へ書き写さず、ファイルを読んで従う",
+    "文書冒頭 (hero) に描画される文を総量でも抑える。上限の正本は config/handout-visual-policy.json#opening.hero_total。個別フィールドの上限をどれも超えていなくても、短い行の積み上げで冒頭は 1 画面を超える。focus_theme・target_tasks・must_remember・no_need_to_remember の 4 リストが縦に積み上がるのが主因である。溢れたときに削るのは『読み終えたときの持ち帰り』(覚えておくこと・覚えなくてよいこと) である — これは読み手が読む前の判断に使う材料ではない。ただし schema が minItems: 1 を課すため冒頭から消すことはできない。件数を絞って残りを role=appendix の節へ移し、移したことを設計要約に書く。黙って落とさない (content_selection)",
     "各セクションに R19 の goal を与える。goal は lead_line と別フィールドであり、lead_line で代替しない (C40: 同一セクションに両方が併存し、R11 ゲートと R19 ゲートが同時に exit0 になる必要がある)。全体ゴール → 各セクション goal の連なりが辿れることを自分で確認する",
     "初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の言い換え宣言を出す。言い換えは前提知識レベルに合わせ、別の専門用語で言い換えない (『コネクタ = 外とつながる』の水準)。宣言した用語が本文フィールドで初出時に括弧書き併記される形になっていることを確認する (C16)",
     "図解が要るセクションについて、6 パターン (フロー / 比較 / 階層 / サイクル / マトリクス / 対比2択) から 1 つを選び、構造データを宣言する。パターンで表せない内容は図解にせず部品で表す",
@@ -70,7 +73,8 @@
     "R19",
     "R20",
     "R21 (構成データを R21 の型に沿って書く側。判定は持たない)",
-    "R23 (セクション別内容適応と焼き込み規律を書く側。判定は C21)"
+    "R23 (セクション別内容適応と焼き込み規律を書く側。判定は C21)",
+    "R25 (REQ-1 hero の lead/goal_chips・REQ-2/REQ-3 の per-section 図解と画像・REQ-5 の構造化部品・REQ-7 の文長規律を設計段階で満たす側。判定は C12)"
   ],
   "checklist_covered": [
     "C10",
@@ -87,7 +91,9 @@
     "C41",
     "C43",
     "C44",
-    "C45"
+    "C45",
+    "C67 (hero の lead / goal_chips を書く側)",
+    "C71 (main セクションへ構造化部品を必ず伴わせる側)"
   ],
   "acceptance_checks": [
     {
@@ -148,7 +154,7 @@
     {
       "id": "AC-C05-R24-02",
       "how": "agent が出力した構成データ JSON に python3 plugins/guide-doc-generator/scripts/validate-handout-config.py --config <out> --strict を掛け、警告一覧を見る",
-      "expected": "W-VISUAL-ABSENT / W-DIAGRAM-FEW / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG が 0 件。0 件でない場合は C01 のゴールシークが本 agent を再委譲する (exit code は warning なので変わらない)"
+      "expected": "W-VISUAL-ABSENT / W-DIAGRAM-FEW / E-IMAGE-ABSENT / E-SECTION-NO-STRUCTURE / W-SENTENCE-LONG / E-TEXT-PARAGRAPH / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG が 0 件 (W-DIAGRAM-FEW / E-IMAGE-ABSENT / W-SENTENCE-LONG / E-TEXT-PARAGRAPH は level=error なので exit も 0 でなくなる)。0 件でない場合は C01 のゴールシークが本 agent を再委譲する"
     },
     {
       "id": "AC-C05-R24-03",
@@ -163,7 +169,7 @@
     {
       "id": "AC-C05-R24-05",
       "how": "agent が出力した構成データ JSON に python3 plugins/guide-doc-generator/scripts/validate-handout-config.py --config <out> --strict を掛け、警告一覧を見る",
-      "expected": "W-HERO-HEAVY が 0 件。上限を超えていた場合、超過分は role=appendix の節へ移されており、移した事実が設計要約に記録されている (黙って落としていない)"
+      "expected": "W-HERO-HEAVY と W-HERO-LONG が 0 件で、hero に lead と goal_chips が存在する (C67)。上限を超えていた場合、超過分は role=appendix の節へ移されており、移した事実が設計要約に記録されている (黙って落としていない)"
     }
   ],
   "frontmatter_fields": {

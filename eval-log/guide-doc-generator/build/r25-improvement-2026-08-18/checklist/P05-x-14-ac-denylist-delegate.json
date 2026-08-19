@@ -1,0 +1,44 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-14-ac-denylist-delegate",
+ "covered_task_ids": [
+  "P05-x-14-ac-denylist-delegate"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+ "verified_by": [
+  {
+   "claim": "AC-C14-3 / AC-C14-4 が絵文字レンジと外部参照綴りを独自列挙していない",
+   "method": "当該 2 AC の JSON 本文に対し 1F300 / 1FAFF / 2600 / 27BF / FE0F / http:// / https:// / xlink:href の 8 リテラルを検索",
+   "result": "pass: 残存 0 件。否定文 (『列挙しない』) の中に綴りを書くと部分一致の判定器が誤検出するため、綴りを意味語 (スキーム付き URL・プロトコル相対・SVG の外部リンク属性・絵文字の Unicode 範囲) へ置き換えてある"
+  },
+  {
+   "claim": "判定が C16 の公開 API 呼出し結果に委譲されている",
+   "method": "同じ 2 AC 本文に scan_emoji / scan_external_references が現れることを確認し、C16 の module_api 宣言 (script-brief-C16.json:293-294) と突合",
+   "result": "pass: 両関数とも C16 側で module_api として公開済み。scan_external_references は SC-01..SC-04 と SC-10 を、scan_emoji は CR-EMOJI の二層規則を返す。C15 が P04-x-05 G-03 で受けたのと同一の委譲形へ揃えた"
+  },
+  {
+   "claim": "C16 を解決できないときに自前判定へ退避しない契約が書かれている",
+   "method": "AC 本文の直読み",
+   "result": "pass: 両 AC とも『自前の grep / 自前判定へ退避せず exit 2』と明記。退避を許すと、委譲先が壊れた瞬間に判定が黙って 2 箇所へ戻る"
+  },
+  {
+   "claim": "委譲が空ゲートでないことを測る手段が AC に書かれている",
+   "method": "AC の expected 節の直読み",
+   "result": "pass: AC-C14-3 は C16 の CR-EXT へ検出綴りを 1 件足す変異、AC-C14-4 は CR-EMOJI の二層規則から 1 層を外す変異で、本検査が追随して赤になることを要求している。追随しなければ denylist が C14 側へ複製されている証拠になる、という形で変異の意味も書いてある"
+  },
+  {
+   "claim": "実行時依存を増やしていない (stdlib_only と AC-C14-8 が不変)",
+   "method": "dependencies の差分を確認",
+   "result": "pass: invokes は空のまま。新設した test_time_only へ C16 を置き、受入検査だけが呼ぶことと、それゆえ stdlib_only / AC-C14-8 が不変であることを明記した。実行時依存と検査時依存を同じ配列に混ぜると、script が C16 を import する設計だと誤読される"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x14-01",
+   "level": "carry-forward",
+   "summary": "dependencies.test_time_only は本 brief で新設したキーであり、他 brief には無い。検査時のみの依存を表す場所が brief schema に無かったことの回避であって、schema 側に居場所を作るのが本筋。C16 以外にも検査時だけ他 component を呼ぶ AC があれば同じ回避が要る。P05-x-102 (mutation_evidence の置き場所が無い) と同型の『証跡に schema 上の居場所が無い』"
+  }
+ ]
+}

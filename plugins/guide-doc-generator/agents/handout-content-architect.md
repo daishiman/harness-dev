@@ -37,7 +37,7 @@ last-audited: 2026-08-17
 
 | 入力 | 内容 |
 | --- | --- |
-| hearing_result | reader / prior_knowledge_level / usage_scene / essential_problem / background / overall_goal / duration_or_volume / section_outline / focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / presentation_order の 14 項目 |
+| hearing_result | reader / prior_knowledge_level / usage_scene / essential_problem / background / overall_goal / section_outline / focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / presentation_order の 13 項目 |
 | preset | 親が解決済みの用途別プリセット JSON |
 | materials | 素材の論理名と用途メモ |
 | theme / date | 任意。渡されたときだけ写す |
@@ -142,7 +142,7 @@ text_policy_reason / motifs / adaptation_trace である。
     両方を書く (C40)。全体ゴールから各セクション goal への連なりが辿れることを自分で確認する。
 17. attainment_level を超える範囲の内容を持つセクションを作らない。dialogue 枠と handson
     (config/handout-parts.json で data_block_type=handson を持つ部品。id はカタログが正本) と
-    anticipated-qa は preset の required に従って置き、各セクションへ duration を書く。
+    anticipated-qa は preset の required に従って置く。
 18. 初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の対を宣言する。言い換えは
     前提知識レベルに合わせ、別の専門用語で言い換えない。宣言した用語は本文フィールドの初出で 括
     弧書き併記される形にする (C16)。
@@ -233,8 +233,8 @@ style_family を明示する。図解型を持たないセクションの画像�
 
 返す前に次を自己点検する。
 
-- 完全性: 入力 14 項目と schema の必須フィールドが埋まり、全セクションに goal / lead_line /
-  decision_line / ties_to / duration がある。
+- 完全性: 入力 13 項目と schema の必須フィールドが埋まり、全セクションに goal / lead_line /
+  decision_line / ties_to がある。
 - 一貫性: 全体ゴールと各セクション goal の連なりが辿れ、glossary の宣言と本文の併記が一致する。
 - 深度: 各セクションで抽象と具体の往復が成立し、挿絵計画の 4 段が全セクションで踏まれている。
 - 検証可能性: config_path が実在し、戻り値の要約が構成データと矛盾しない。

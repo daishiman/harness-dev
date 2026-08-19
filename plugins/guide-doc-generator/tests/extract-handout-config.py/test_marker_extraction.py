@@ -59,7 +59,6 @@ class DocumentLevelExtraction(H.C20TestCase):
         self.assertEqual("この節を読み終えると、着手点を自分で決められるようになる", section["goal"])
         self.assertEqual("指示は目的から書くと崩れない", section["lead_line"])
         self.assertEqual("迷ったら、受け取る人が何を判断できるかで決める", section["judgment_axis"])
-        self.assertEqual("20分", section["duration"])
 
     def test_section_kind_is_taken_from_marker(self):
         section = self.read_out()["sections"][0]
@@ -67,10 +66,10 @@ class DocumentLevelExtraction(H.C20TestCase):
 
     def test_non_default_section_kind_is_restored(self):
         res, _ = self.extract(H.full_html(sections=[
-            H.section_html("agenda", kind="agenda-timebox", parts=H.part_b03("agenda-steps")),
+            H.section_html("agenda", kind="flow-overview", parts=H.part_b03("agenda-steps")),
         ]))
         self.assert_exit(res, 0)
-        self.assertEqual("agenda-timebox", self.read_out()["sections"][0]["section_kind"])
+        self.assertEqual("flow-overview", self.read_out()["sections"][0]["section_kind"])
 
     def test_summary_counts_match_extracted_content(self):
         fields = self.summary(self.res)
@@ -109,13 +108,12 @@ class PartExtraction(H.C20TestCase):
         self.assert_exit(res, 0)
         self.assertEqual(["B03", "TEXT", "B15"], [p["part"] for p in parts])
 
-    def test_b03_rows_keep_key_and_raw_time(self):
-        """data-hb-key / data-hb-time の素値を優先し、装飾つき表示から切り出さない。"""
+    def test_b03_rows_keep_raw_key(self):
+        """data-hb-key の素値を優先し、装飾つき表示から切り出さない。"""
         res, parts = self._extract_parts(H.part_b03())
         self.assert_exit(res, 0)
         rows = parts[0]["data"]["rows"]
         self.assertEqual(["collect", "ask"], [r["key"] for r in rows])
-        self.assertEqual(["10分", "10分"], [r["time"] for r in rows])
 
     def test_b09_rows_keep_key(self):
         res, parts = self._extract_parts(H.part_b09())

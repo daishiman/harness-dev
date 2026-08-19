@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "handout-extract は 26 述語中 出現≥2 が 6 件・確定空振り 2 トークンだけで 4 component 中もっとも健全だった。理由は同一行・同一単位スコープのヘルパを多用し PREDICATE-SCOPE-POLICY.md の選択肢 (A) へ独立に到達していたため。ただし contract_lib 間でヘルパを共有しておらず同じ解が 3 箇所で別々に書かれている。良い解が横展開されない構造として起票価値がある",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-typeB-remainder.json",
+  "proposed_node": {
+    "id": "P05-x-122",
+    "title": "同一行スコープの述語ヘルパが 3 component で別々に書かれている",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "_lines_with / _has_negated / _units_with 相当のスコープ限定ヘルパが component 間で共有されるか、共有しない理由が記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

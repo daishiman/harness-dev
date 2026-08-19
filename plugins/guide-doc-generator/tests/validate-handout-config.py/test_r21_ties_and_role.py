@@ -117,6 +117,7 @@ class RoleAndAppendix(H.C12TestCase):
             H.section("notice", section_kind="logistics", role="main",
                       ties_to=["goal", "target_task:vehicle-pl"], attainment_step=None)
         )
+        H.with_visual_floor(cfg)
         res, _ = self.validate(cfg)
         self.assert_no_diag(res, "E-SECTION-ROLE-CONFLICT")
         self.assert_exit(res, 0)

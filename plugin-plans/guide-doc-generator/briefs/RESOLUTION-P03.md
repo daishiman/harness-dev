@@ -218,3 +218,49 @@ C23 の `ownership` に「section_kind の正本はこの component ではない
 | 同梱物ごとの writer | `briefs/script-brief-C19.json` `bundle_writers` | C19 |
 | `data-hb-*` 属性語彙 | `briefs/script-brief-C11.json` `html_attribute_contract` | C11 |
 | 依存グラフ | `component-inventory.json` | — |
+
+---
+
+## 付記 2: `CR-*` prefix の owner 登録表 (P05-x-16)
+
+`CR-*` は「plugin 内で 1 箇所にしか書かない判定規則」に付ける prefix だが、prefix そのものに owner の登録先が無く、同名を別 component が定義しても誰も気づけない状態だった。本節をその**単一の登録表**とする。新しい `CR-*` を導入するときは、規則本体を owner の brief へ書いたうえで、必ずここへ 1 行足す。
+
+| rule id | 意味 | 規則本体の所在 (正本) | owner |
+| --- | --- | --- | --- |
+| `CR-EXT` | 外部参照の判定 (SC-01..SC-04 / SC-10) | `script-brief-C16.json` `canonical_rules.external_reference_rule` | C16 |
+| `CR-EMOJI` | 絵文字の二層判定 (SC-05) | `script-brief-C16.json` `canonical_rules.emoji_rule` | C16 |
+| `CR-HERO1` | 冒頭 1 枚の実画面規律 | `script-brief-C22.json` `canonical_rules` | C22 |
+| `CR-DEMO1` | デモ節の実画面規律 | `script-brief-C22.json` `canonical_rules` | C22 |
+| `CR-GATE-AGG` | ゲート結果の集約 (C16/C17/C18/C22 の 4 面) | `command-brief-C09.json` `canonical_aggregation` | C09 |
+| `CR-PRESENTATION-ORDER` | `presentation_order` の既定値導出 | `script-brief-C12.json` `r21_type_constraints.presentation_order_derivation` | C12 |
+| `CR-TEXT-FOLD` | 説明文の折り畳み規則 | `script-brief-C12.json` `r21_type_constraints` | C12 |
+| `CR-GRANULARITY-ORTHOGONAL` | `detail_level` と `evidence_depth` の直交性 | `script-brief-C12.json` `r22_granularity_constraints.granularity_orthogonality` | C12 |
+| `CR-GRANULARITY-PRESET-DEFAULT-ONLY` | プリセットは既定値のみを与え値を固定しない | `script-brief-C12.json` `r22_granularity_constraints.preset_default_only` | C12 |
+| `CR-GRANULARITY-DECLARED-VS-ACTUAL` | 宣言値と実測の突合 | `script-brief-C12.json` `r22_granularity_constraints.declared_vs_actual` | C22 (検査) / C12 (宣言値の正規化) |
+| `CR-DETAIL-TEXT-BUDGET` | 詳細度別の本文文字数予算 | `script-brief-C12.json` `r22_granularity_constraints.detail_text_budget` (数値の正本はテーマトークン) | C12 (適用) / C11 (スキーマ正本かつ物理 writer) |
+| `CR-TEXT-LENGTH-DELIVERY` | 文長系 5 コードの配達経路 | `script-brief-C12.json` `text_length_verdict_delivery` | C12 |
+| `CR-R25-SEMANTIC-AXES` | R25 の意味 4 軸の定義 | `agent-brief-C06.json` `r25_semantic_axes` | C06 |
+
+**owner 欄が 2 つある 3 件について**: `CR-GRANULARITY-DECLARED-VS-ACTUAL` / `CR-DETAIL-TEXT-BUDGET` は規則本体の所在が 1 箇所であり、複数の component が現れるのは「規則を書く側」と「値を持つ側 / 検査する側」の役割分担を明示しているためで、正本が 2 つあるという意味ではない。登録表としての一意性は **rule id → 規則本体の所在** の対応で判定する。
+
+### 衝突検出の手順 (決定論・そのまま実行できる)
+
+```bash
+PLAN_DIR=plugin-plans/guide-doc-generator
+# (a) briefs/ 配下に現れる全 CR-* を実測列挙する。
+#     登録表である本ファイルは走査対象から外す — 表と解説文が自分で id を供給してしまい、
+#     未登録の id を本ファイルへ書いた瞬間に「登録済み」と誤判定されるため (自己言及の遮断)。
+grep -rho --exclude=RESOLUTION-P03.md "CR-[A-Z][A-Z0-9-]*" "$PLAN_DIR/briefs/" | sed 's/-$//' | sort -u > /tmp/cr-seen.txt
+# (b) 本表に登録済みの id を取り出す
+grep -o '^| `CR-[A-Z0-9-]*`' "$PLAN_DIR/briefs/RESOLUTION-P03.md" | tr -d '|` ' | sort -u > /tmp/cr-registered.txt
+# (c) 差集合が空でなければ未登録の新規 CR-* があるということ (赤にする)
+comm -23 /tmp/cr-seen.txt /tmp/cr-registered.txt
+```
+
+(c) の出力が 1 行でもあれば、登録表を通さずに `CR-*` が増えている。**空でなければ赤**として扱う。逆向き (登録済みだが briefs に現れない) は `comm -13` で取れ、規則が消えたのに表が残っているケースを拾う。
+
+**この手順が空ゲートでないことの確認方法**: 本ファイル**以外**の brief へ実在しない probe id を 1 語だけ足して (a)(b)(c) を回すと (c) がその id を出す。出なければ検出が働いていない。実測 (2026-08-19): probe を `script-brief-C13.json` へ 1 語足した状態で (c) が 1 行を出し、取り除くと 0 行に戻った。
+
+**なぜ本ファイルを走査から外すか**: 外さないと、登録表の解説文に書いた id が (a) 側の「使われている id」として数えられ、表へ書いた行が自分自身を根拠に緑になる。判定器の haystack に判定対象の主張文が混ざる形で、本 cycle が繰り返し踏んでいる「本文が語を供給する」型そのものである。
+
+**P05-x-16 起票時の前提との差分 (記録として残す)**: 起票時の受入基準は対象を 3 件と書いていたが、上記 (a) の実測では 13 件あり、起票時に挙げられていた 3 件目の id は briefs 配下に 1 件も存在しない。起票時の列挙が現物と合っていなかったということで、本表は列挙ではなく実測に合わせてある。

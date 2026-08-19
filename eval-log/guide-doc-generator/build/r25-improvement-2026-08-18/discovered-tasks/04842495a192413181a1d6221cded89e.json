@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-img-realization-gate-owner",
+  "reason": "『role 不在 = main』の既定値が C12 (構成データ側) と C16 SC-11 (HTML 側) の 2 箇所に書かれる。C11 が data-hb-section-role へ正規化済みの値を刻めば解釈は 1 箇所へ寄る",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-img-realization-gate-owner.json",
+  "proposed_node": {
+    "id": "P05-x-126-section-role-normalized-marker",
+    "title": "C11 が data-hb-section-role へ正規化済みの role を刻み既定値の解釈を 1 箇所へ寄せる",
+    "phase_ref": "P05",
+    "entity_ref": "C11",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/render-handout.py",
+    "acceptance_criterion": "role 未指定の節でも data-hb-section-role=\"main\" が出力され、空文字が出ないこと。C20 が正規化値から復元できないなら ROUNDTRIP-CONTRACT へ裁定を載せること",
+    "execution_kind": "component-build",
+    "route_ref": "C11"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C16"
+  }
+}

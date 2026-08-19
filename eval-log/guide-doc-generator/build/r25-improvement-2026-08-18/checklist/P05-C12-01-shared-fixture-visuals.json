@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-C12-01-shared-fixture-visuals",
+  "covered_task_ids": [
+    "P05-C12-01-shared-fixture-visuals"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/tests/",
+  "acceptance_criterion_restated": "共有フィクスチャ _harness.py の最小構成データが R25 の per-section 視覚下限 (main セクション 1 個あたり DIAGRAM 1 件・IMG 1 件) を満たし、図解密度と無関係な検査 (micro copy・layering・日付正規化・section_kind 制約など) が下限未達だけを理由に赤くならないこと。かつ下限の数値がテスト側へ書き写されないこと",
+  "verified_by": [
+    {
+      "claim": "R25 の視覚下限に起因する失敗が 0 件になった",
+      "method": "python3 -m pytest -q を plugins/guide-doc-generator/tests/validate-handout-config.py 直下で全件実行",
+      "result": "15 failed / 338 passed (着手前は 155 failed / 186 passed)。残る 15 件はいずれも視覚下限が原因ではない (内訳は findings F-C1201SFV-REMAIN-01 / 02)"
+    },
+    {
+      "claim": "下限の充足がフィクスチャ 1 箇所に閉じ、閾値の数値がテストへ写らない",
+      "method": "_harness.with_visual_floor(cfg, **part_over) を新設し、DIAGRAM / IMG を持たない main セクションにだけ部品を末尾へ追加する実装にした。呼び出し側は 1 行の H.with_visual_floor(cfg) だけを書く",
+      "result": "12 ファイルの fixture 生成箇所 (leveled_config / timed_config / rows_config / cards_config / flow_config / capability_config / text_config ×2 / one_section / layered_config ほか) が同関数を経由する。テスト本体に 1 も 2 も現れない"
+    },
+    {
+      "claim": "末尾追加であって先頭追加でないこと (既存の添字と冒頭検査を壊さない)",
+      "method": "W-OPENS-PROSE (節の始まり方を見る検査) と /sections/N/parts/M を名指しする assert の両方を含む test_opening.py / test_micro_copy.py で実行",
+      "result": "test_opening.py 全 12 件・test_micro_copy.py 全 15 件が green。冒頭が散文である構成の陽性対照 (W-OPENS-PROSE /sections/0/parts/0) も従前どおり発火する"
+    },
+    {
+      "claim": "追加した部品が section_kind 固有の規則へ巻き込まれない",
+      "method": "capability-explainer は全部品へ slot を課すため、下限充足で足した DIAGRAM/IMG が E-CAPABILITY-SLOT-MISSING を誘発した。with_visual_floor に **part_over を設け capability_config 側から slot=\"feature\" を渡す形へ変更",
+      "result": "CapabilityExplainerSlots 全 8 件が green。slot 欠落の陽性対照 (E-CAPABILITY-SLOT-MISSING /sections/0/parts/1) は発火したままである"
+    },
+    {
+      "claim": "節を差し替えた fixture で参照されない実体を残さない",
+      "method": "with_visual_floor の末尾で、どの part からも参照されない diagrams[] / assets[] を落とす実装にした",
+      "result": "W-REF-UNUSED が無関係な fixture の stderr に混ざらなくなり、assert 失敗メッセージが読める状態を保つ。未参照の陽性対照 test_unused_asset_is_warning は追加位置に合わせ /assets/2 で緑"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-C1201SFV-REMAIN-01",
+      "level": "info",
+      "summary": "残 15 件のうち 3 件 (test_r21_row_detail_scope.py) は意図的に赤で固定されたファイルである。冒頭 docstring が『本ファイルは現行実装に対して赤で固定される。P05-x-64 の受け皿であり、緑にするには validate-handout-config.py の修正が要る』と自己申告しており、forbid_row_detail の走査対象が rows だけ・見るフィールドが row.sub だけという 2 つの穴を待つ TDD の受け皿。本ノードの write_scope (tests/) で緑にしてはならない"
+    },
+    {
+      "id": "F-C1201SFV-REMAIN-02",
+      "level": "warn",
+      "summary": "残 15 件のうち 12 件 (test_r21_text_fold.py ×7 / test_r22_detail_budget.py ×5) は本文予算 60/100/160 と文長ゲートの導入に伴う期待値ずれで、P05-x-86 の finding F-P05X86-TESTS-02 が既に P05-x-25 の担当と裁定している。実測した症状は E-TEXT-FOLDED を期待する箇所で E-TEXT-OVERFLOW が出ることであり、これは F-P05X86-FOLD-01 (折り畳み経路が構造上到達不能) の帰結。本ノードでは触れない"
+    },
+    {
+      "id": "F-C1201SFV-LEVEL-01",
+      "level": "warn",
+      "summary": "handout-visual-policy.json の thresholds[].level は重大度を昇格しかできず降格できない。validate-handout-config.py が ctx.error_codes = set(FALLBACK_ERROR_CODES) から始めて level==\"error\" の code を union するため、FALLBACK_ERROR_CODES に載る 5 code (W-DIAGRAM-FEW / E-IMAGE-ABSENT / W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED) は正本で warning へ書き換えても error のまま完了を止める。設定できるように見えて片方向にしか効かないつまみであり、利用者は『正本で調整できる』と読む。test_visual_density.py::TestSeverityIsDeclaredNotInferred に実測どおりの片方向契約として固定したが、機構としての是非は別途裁定が要る (discovered-task として emit する)"
+    },
+    {
+      "id": "F-C1201SFV-FLOWLESS-01",
+      "level": "warn",
+      "summary": "W-DETAIL-FLOWLESS は完了ゲートを通る構成データでは構造上発火しない。DIAGRAM が R25 の per-section error 下限であると同時に layering.detail_parts.ids の一員でもあるため、下限を満たした時点で『詳細に流れ部品が無い』状態が作れない。test_layering.py::TestDetailFlowless を、下限と流れ部品の集合が重なる限り到達不能であることと、detail_parts.ids から DIAGRAM を外せば到達することの 2 本へ書き換えて事実を固定した (discovered-task として emit する)"
+    }
+  ]
+}

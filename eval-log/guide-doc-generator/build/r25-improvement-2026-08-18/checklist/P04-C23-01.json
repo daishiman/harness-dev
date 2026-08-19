@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C23-01",
+ "covered_task_ids": [
+  "P04-C23-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/resolve-handout-preset.py/",
+ "verified_by": [
+  {
+   "claim": "3 面がすべて充足しており、面の名指しが関数名で示された",
+   "method": "dispatcher が報告の名指し先を確認し、suite を独立実行",
+   "result": "pass: 違反系 exit1 は test_purpose_resolution / test_presentation_order / test_catalog_integrity / test_lecture_preset / test_r22_granularity_defaults / test_audit_duplication に分散し、共通ヘルパ assert_data_violation (:27) が exit1 と stdout 空と診断コードを同時に締める。argv/exit code 契約は test_cli_modes.py の 6 関数 + test_presentation_order.py の 2 関数 + test_catalog_integrity.py の 2 関数。再現性は test_determinism_and_readonly.py の 7 関数。exit 0/1/2 の 3 値が別々に固定されており、C09 で実測した exit_codes 規約と整合する"
+  },
+  {
+   "claim": "既存 11 本は DT-1 (dir_token の正本 2 つ) を検出できていなかった",
+   "method": "dispatcher が既存の dir_token 系テスト 3 件の検査範囲を確認",
+   "result": "pass(=報告どおり): test_cli_modes.py::test_dir_tokens_and_aliases_are_globally_unique / test_catalog_integrity.py::test_duplicate_dir_token / test_module_api.py::test_dir_token_matches_cli はいずれも出荷 config の内側だけを見ており、brief の vocabulary_ssot と突き合わせる経路が 1 つも無かった。出荷 _meta.source_of_truth が brief を正本に指名しているのに、その指名を検査する主体が存在しない状態。F-P03X03-01 の構造的な理由がこれで説明される"
+  },
+  {
+   "claim": "追加テストが赤 2 件・緑 3 件を出し、赤は DT-1 の実在を固定している",
+   "method": "dispatcher が対象ディレクトリで unittest discover を独立実行",
+   "result": "pass(=結論一致・件数に差異あり): dispatcher の実行は Ran 135 tests / FAILED (failures=2)。報告の Ran 133 とは 2 件の差があり、起動形の違い (discover vs 個別指定) と推定されるが未特定。失敗内容は報告どおりで、出力に 8/8 の対応表が全件出る ({'agenda': ('agenda','定例会議'), 'guide': ('guide','配布資料'), 'lecture': ('lecture','勉強会'), 'onboarding': ('onboarding','導入ガイド'), 'proposal': ('proposal','提案資料'), 'report': ('report','報告資料'), 'study-notes': ('study-notes','学習まとめ'), 'study-plan': ('study-plan','学習計画')})。緑 3 件 (source_of_truth 指名の実在 / slug 集合 8/8 一致 / label_ja と aliases 全件一致) により、割れているのが dir_token だけであることが示され、F-P03X03-02 の裁定材料になる"
+  },
+  {
+   "claim": "テストが 3 つ目の正本にならない形で書かれている",
+   "method": "dispatcher が追加ファイルに値のリテラルが無いことを確認",
+   "result": "pass: 値は brief と出荷 config の両方から実測して突き合わせる形で、docstring に理由 (値を写すとこのテスト自体が 3 つ目の正本になる) が明記されている。テストは『正本が 2 つある状態』だけを落とし、どちらへ寄せても緑になる。F-P03X03-02 で裁定が未了である以上、修正方向を先取りしないこの形が正しい"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): pass と書かず再現不能と記録し、さらに require_script(tc) (:64) が『ファイルが無い』を落とすだけで『空ファイルが置かれている』『別物が置かれている』場合を測っていないことまで明示している。必要条件と十分条件の区別が正しい。P05-x-77 として起票"
+  },
+  {
+   "claim": "P04-C15-01 (build-icon-sprite.py) は追加不要という判断",
+   "method": "dispatcher が対象ディレクトリで unittest discover を独立実行",
+   "result": "pass: Ran 128 tests / OK。3 面の名指しも成立しており (再現性は 2 回実行のバイト一致に加え PYTHONHASHSEED と cwd という非決定論の入口を個別に潰す 7 関数)、追加不要の判断は妥当。C29 の要求より強い形になっている"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/resolve-handout-preset.py/test_dir_token_single_canon.py の新規 1 件のみ。scripts/resolve-handout-preset.py は read-only を守り未変更。報告が検出した『自分由来でない差分』(tests/verify-handout-narrative.py/test_nar07_demo_first.py) は orange の P04-C22-01 由来で正しい"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C23-01",
+   "level": "resolved",
+   "summary": "DT-1 (F-P03X03-01) が初めて機械検査で固定された。dir_token は brief の ASCII slug 8 件と出荷の和文 8 件で 8/8 不一致であり、赤 2 件がこれを保持する。緑 3 件が『割れているのは dir_token だけで語彙全体は一致している』ことを示すため、裁定 (F-P03X03-02) はどちらへ寄せるかだけの問題に絞られた"
+  },
+  {
+   "id": "F-P04C23-02",
+   "level": "carry-forward",
+   "summary": "テストの実行本数が報告 (133) と dispatcher 実測 (135) で 2 件食い違う。失敗内容と失敗件数 (2) は一致するため結論は動かないが、起動形の違いが本数を変える状態は『同じスイートが緑にも赤にもなる』余地を残す。P03-x-04 の F-P03X04-05 (起動形の違いで exit code が食い違った件) と同型で、報告に起動コマンドの完全形を書かせる必要がある"
+  },
+  {
+   "id": "F-P04C23-03",
+   "level": "carry-forward",
+   "summary": "赤を expectedFailure へ落とさず failures のまま持つ、という判断を orange と cyan が独立に同じ理由 (expectedFailure にすると直った瞬間に誰も気づかない / 既知だから緑に化ける) で採った。本 cycle のチーム規約として採用する。ただし CI ゲートが tests/ 全緑を要求する場合、DT-1 と P05-x-74 の裁定が付くまで赤が残る点は release 前に扱いを決める必要がある"
+  }
+ ]
+}

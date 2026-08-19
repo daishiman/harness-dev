@@ -1,0 +1,54 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C14-01",
+ "covered_task_ids": [
+  "P02-C14-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+ "verified_by": [
+  {
+   "claim": "C23 が要求する DIAGRAM pattern が C14 の 6 語 enum で全て描けるか",
+   "method": "dispatcher が script-brief-C23.json から DIAGRAM(pattern=...) を正規表現で全件抽出し集計",
+   "result": "pass: 計 42 件 = hierarchy 16 / flow 15 / compare 5 / matrix 3 / versus 2 / cycle 1。enum 外 0 件。SubAgent 報告値と完全一致"
+  },
+  {
+   "claim": "決定論性 (同一入力からバイト一致) が保証されている",
+   "method": "algorithm 手順 7/11/12 と AC-C14-1/2 を確認",
+   "result": "pass: 乱数・時刻・オブジェクト id 不使用、id は hbdg-{pattern}-{連番}、整数 px の明示丸め、OrderedDict で入力順保持、2 回実行の sha256 一致検査あり"
+  },
+  {
+   "claim": "外部依存ゼロ (URL とフォントの両面)",
+   "method": "AC-C14-3 の URL grep 契約を確認し、font-family / web font の記述を identifier と和文の両系統で再検索",
+   "result": "URL は pass。フォントは修正前 0 件 (空白) → typography_and_layout_constants で font-family 非出力・@font-face 禁止・幅見積りのフォントメトリクス非依存を明文化して閉じた"
+  },
+  {
+   "claim": "AC-C14-4 (絵文字 0 件) に達成手段が存在するか",
+   "method": "CR-EMOJI / C16 の言及を grep",
+   "result": "修正前 fail: 言及 0 件で、algorithm・failure_modes・exit code のいずれにも絵文字規則が無く達成手段の無い受入条件だった。修正後 pass: 入力由来は C16 CR-EMOJI の単一判定点、C14 側は『自ら絵文字を書き出さない』の検査へ意味確定 (P05-x-02.md:31 と同型の分界)"
+  },
+  {
+   "claim": "追記 4 キーが JSON として妥当で既存契約を壊していない",
+   "method": "dispatcher が json.load しキー存在を確認",
+   "result": "pass: invocation_context / roundtrip_contract / typography_and_layout_constants / pattern_coverage_vs_c23 の 4 キー。argv/stdout/stderr/exit_codes/algorithm/failure_modes は無改変"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C14-01",
+   "level": "carry-forward",
+   "summary": "C11 の algorithm 手順 10 に data-hb-diagram-id/-pattern/-data のマーカー付与手順が書かれているかが未確認。ここが抜けると C20 の唯一の復元路が実装されないまま通る"
+  },
+  {
+   "id": "F-C14-02",
+   "level": "carry-forward",
+   "summary": "AC-C14-1 が要求する golden SVG fixture の置き場所が C14 brief にも P05 系 task-spec にも無い"
+  },
+  {
+   "id": "F-C14-03",
+   "level": "carry-forward",
+   "summary": "C14 手順 4 の必須フィールドが C12 所有の schemas/handout-config.schema.json#$defs.diagram と一致するかの突合が未実施"
+  }
+ ]
+}

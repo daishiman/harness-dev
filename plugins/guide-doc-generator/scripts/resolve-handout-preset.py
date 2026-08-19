@@ -52,6 +52,7 @@ SECTIONS_RELNAME = "handout-sections.json"
 PARTS_RELNAME = "handout-parts.json"
 SCHEMA_RELPATH = "schemas/handout-config.schema.json"
 AUDIT_ALLOWLIST_RELPATH = "config/vocabulary-audit-allowlist.json"
+VISUAL_POLICY_RELNAME = "handout-visual-policy.json"
 MANIFEST_RELPATH = ".claude-plugin/plugin.json"
 MANIFEST_NAME = "guide-doc-generator"
 
@@ -71,7 +72,20 @@ ALLOWED_PRESET_KEYS = frozenset(
     }
 )
 REQUIRED_PRESET_KEYS = frozenset({"section_order", "recommended_parts", "granularity_defaults"})
-SECTION_ENTRY_KEYS = frozenset({"id", "heading", "section_kind", "recommended_parts", "required"})
+SECTION_ENTRY_KEYS = frozenset(
+    {"id", "heading", "section_kind", "recommended_parts", "required", "image_role"}
+)
+# IMG 部品の役の値域。正本は
+# config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split.roles
+# であり (裁定の正本は improvement/visual-per-section-decision.json#decision.role_split)、
+# 本 script が持つのは「宣言が有るか・列挙内か」の形式検査だけである。役を選ぶ分岐は
+# 持たない (選ぶ主体は preset の著者であって、この resolver でも C05 でもない)。
+#
+# 下の tuple は正本を読めなかった経路のための控えであって値の出所ではない。視覚方針の
+# 正本は fail-soft (不在で検査ごと消えるのでなく既定へ落ちる) 契約なので控えを消せない。
+# 代わりに「控えが出荷中の正本とずれたまま出荷できない」を受入テストで固定する
+# (P05-x-35 の FallbackMirrorsTheShippedCanon と同じ形)。
+FALLBACK_IMAGE_ROLES = ("screenshot", "illustration")
 VOCABULARY_ENTRY_KEYS = ("slug", "label_ja", "dir_token", "aliases")
 
 # R21 C50: 提示順の変種はこの 2 モードだけを持つ (値の導出は C12 の責務で本 script は行わない)
@@ -83,6 +97,10 @@ GRANULARITY_KEYS = frozenset({"detail_level", "evidence_depth"})
 GRANULARITY_FIELDS = tuple(sorted(GRANULARITY_KEYS))
 
 SLUG_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
+# dir_token は成果物ディレクトリ名に出る「読み手向けの用途名」であり、slug (機械 id) と
+# 役割が違う。人が Finder やエクスプローラで一覧して用途を読み取れることが要件なので
+# 日本語を許し、形式検査は「パス名として安全か」だけに絞る (R17 / C19 の命名規約)。
+DIR_TOKEN_FORBIDDEN = frozenset('/\\:*?"<>|')
 COMPOSITE_SEPARATORS = (",", "+", "/")
 INTERNAL_SPACE = re.compile(r"\s")
 
@@ -110,6 +128,9 @@ E_CATALOG_MALFORMED = "E-CATALOG-MALFORMED"
 E_GRANULARITY_MISSING = "E-PRESET-GRANULARITY-MISSING"
 E_GRANULARITY_KEYS = "E-PRESET-GRANULARITY-KEYS"
 E_GRANULARITY_VALUE = "E-PRESET-GRANULARITY-VALUE"
+# REQ-3 (図解と画像を毎回セクションごとに): IMG の役の宣言漏れと列挙外を fail-closed で落とす
+E_PRESET_IMAGE_ROLE_MISSING = "E-PRESET-IMAGE-ROLE-MISSING"
+E_PRESET_IMAGE_ROLE_UNKNOWN = "E-PRESET-IMAGE-ROLE-UNKNOWN"
 
 
 # ---------------------------------------------------------------------------
@@ -271,6 +292,35 @@ def _part_ids(catalog_dir: Path):
     return known, in_section
 
 
+def _image_roles(catalog_dir: Path):
+    """IMG の役の値域を視覚方針の正本から引く。
+
+    正本は thresholds.min_images_per_main_section.role_split.roles[].role。読めない
+    経路では FALLBACK_IMAGE_ROLES へ落ちる (視覚方針は fail-soft 契約であり、正本の
+    不在で『役の検査そのものが消える』方が事故になる)。落ちた先が出荷中の正本と
+    ずれていないことは受入テストが押さえる。
+    """
+    path = catalog_dir / VISUAL_POLICY_RELNAME
+    if not path.is_file():
+        return FALLBACK_IMAGE_ROLES
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return FALLBACK_IMAGE_ROLES
+    if not isinstance(data, dict):
+        return FALLBACK_IMAGE_ROLES
+    split = (((data.get("thresholds") or {}).get("min_images_per_main_section") or {})
+             .get("role_split") or {})
+    entries = split.get("roles") if isinstance(split, dict) else None
+    if not isinstance(entries, list):
+        return FALLBACK_IMAGE_ROLES
+    roles = tuple(
+        entry["role"] for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get("role"), str) and entry["role"]
+    )
+    return roles or FALLBACK_IMAGE_ROLES
+
+
 def _config_schema(catalog_dir: Path):
     """C12 の構成データスキーマ。未実体なら None (照合できない検査は行わない)。"""
     path = catalog_dir.parent / SCHEMA_RELPATH
@@ -322,6 +372,22 @@ def _malformed(message: str) -> str:
     return "{} {}".format(E_CATALOG_MALFORMED, message)
 
 
+def _dir_token_is_safe(token: str) -> bool:
+    """dir_token がディレクトリ名として安全か (文字種は問わない)。
+
+    日本語を許すため字種の allowlist は張らない。代わりに、パスを飛び出す / 不可視文字で
+    区別が付かない / 隠しディレクトリになる、という実害のある形だけを落とす。
+    """
+    if not token or token != token.strip():
+        return False
+    if token.startswith("."):
+        return False
+    for ch in token:
+        if ch in DIR_TOKEN_FORBIDDEN or ch.isspace() or ord(ch) < 32 or ord(ch) == 127:
+            return False
+    return True
+
+
 def _validate_vocabulary(catalog, diagnostics) -> list:
     entries = catalog.get("vocabulary")
     if not isinstance(entries, list) or not entries:
@@ -354,9 +420,12 @@ def _validate_vocabulary(catalog, diagnostics) -> list:
             ok = False
         else:
             seen_slugs.add(slug)
-        if not isinstance(token, str) or not SLUG_PATTERN.match(token):
+        if not isinstance(token, str) or not _dir_token_is_safe(token):
             diagnostics.append(
-                _malformed("dir_token が ^[a-z][a-z0-9-]*$ に一致しない: {!r}".format(token))
+                _malformed(
+                    "dir_token がディレクトリ名として安全でない "
+                    "(空・空白・パス区切り・禁止文字・ドット始まりのいずれか): {!r}".format(token)
+                )
             )
             ok = False
         elif token in seen_tokens:
@@ -402,7 +471,23 @@ def _validate_section_order(slug, preset, context, diagnostics) -> list:
                 _malformed("{}: section_order[{}] がオブジェクトでない".format(slug, index))
             )
             continue
-        if set(section.keys()) != SECTION_ENTRY_KEYS:
+        present = set(section.keys())
+        if present != SECTION_ENTRY_KEYS:
+            # image_role の欠落だけは専用コードで落とす。汎用の「キー面が違う」に混ぜると、
+            # 役の宣言漏れという直せる 1 事実が preset 全体の形の崩れと区別できなくなる。
+            if SECTION_ENTRY_KEYS - present == {"image_role"} and not (
+                present - SECTION_ENTRY_KEYS
+            ):
+                diagnostics.append(
+                    "{} {}: section_order[{}] に image_role が無い。IMG 部品の役は "
+                    "preset が宣言する ({} のいずれか)".format(
+                        E_PRESET_IMAGE_ROLE_MISSING,
+                        slug,
+                        index,
+                        "/".join(context["image_roles"]),
+                    )
+                )
+                continue
             diagnostics.append(
                 _malformed(
                     "{}: section_order[{}] のキー面が固定形と一致しない: {}".format(
@@ -429,6 +514,17 @@ def _validate_section_order(slug, preset, context, diagnostics) -> list:
                     "{}/{}: section_kind が {} の語彙に存在しない: {!r}".format(
                         slug, section_id, SECTIONS_RELNAME, kind
                     )
+                )
+            )
+        image_role = section["image_role"]
+        if image_role not in context["image_roles"]:
+            diagnostics.append(
+                "{} {}/{}: image_role が列挙外: {!r} (許すのは {})".format(
+                    E_PRESET_IMAGE_ROLE_UNKNOWN,
+                    slug,
+                    section_id,
+                    image_role,
+                    "/".join(context["image_roles"]),
                 )
             )
         recommended = section["recommended_parts"]
@@ -604,6 +700,7 @@ def validate_catalog(catalog, catalog_path) -> None:
         "in_section_parts": in_section_parts,
         "document_fields": _document_field_names(schema),
         "granularity_domains": _granularity_value_domains(schema),
+        "image_roles": _image_roles(catalog_dir),
     }
 
     entries = _validate_vocabulary(catalog, diagnostics)

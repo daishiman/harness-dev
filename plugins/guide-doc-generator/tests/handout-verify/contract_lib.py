@@ -36,16 +36,26 @@ REQUIRED_TOOLS = ("Read", "Bash")
 # allowed_tools_rationale: Skill と Write を持たないのは意図的
 FORBIDDEN_TOOLS = ("Skill", "Write", "Edit", "MultiEdit", "NotebookEdit")
 
-# inventory の argument-hint が持つ最小語 + brief argument_hint の全フラグ
-ARGUMENT_HINT_TOKENS = ("<html-path>", "--config", "--out-dir", "--only", "--json-report")
+# brief argument_hint から実測 (positional の <...> と全フラグ)。語をここへ写さない
+def _argument_hint_tokens():
+    hint = spec.BRIEF["argument_hint"]
+    positional = re.match(r"\s*(<[a-z][a-z0-9-]*>)", hint)
+    if not positional:
+        raise RuntimeError(f"command-brief-C09.json argument_hint の先頭が positional でない: {hint!r}")
+    flags = dict.fromkeys(re.findall(r"(?<![\w-])--[a-z][a-z0-9-]*", hint))
+    return (positional.group(1),) + tuple(flags)
 
-# brief arguments[] の name と default の要点 (既定値と上書き規則の宣言検査に使う)
+
+ARGUMENT_HINT_TOKENS = _argument_hint_tokens()
+
+# brief arguments[] の name と default の要点 (既定値と上書き規則の宣言検査に使う)。
+# ゲート本数は spec.GATE_IDS (= brief gates[]) が正本なので数値を写さない
 ARGUMENT_DEFAULTS = {
     "html-path": "なし",
-    "--config": "not-run",           # 未指定時は language / narrative が not-run
-    "--out-dir": "親ディレクトリ",     # 未指定時は html-path の親
-    "--only": "4",                    # 未指定時は 4 ゲート全実行
-    "--json-report": "stdout",        # 未指定時は stdout/stderr のみ
+    "--config": "not-run",              # 未指定時は language / narrative が not-run
+    "--out-dir": "親ディレクトリ",        # 未指定時は html-path の親
+    "--only": str(len(spec.GATE_IDS)),   # 未指定時は全ゲート実行
+    "--json-report": "stdout",           # 未指定時は stdout/stderr のみ
 }
 
 # canonical_aggregation / behavior に現れる必須語
@@ -300,11 +310,31 @@ def _check_scripts(plugin_root, body, v):
             "script の解決パスが ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/ 形で宣言されていない",
         ))
 
-    # argv の形
+    # argv の形。本文全体への出現ではなく、当該 script を名指しする行に
+    # そのゲートの argv が揃っているかを見る。全体一致だと、どこかに一度
+    # --config と書いてあるだけで「config を要らないゲートにも渡す」宣言や
+    # 「必要なゲートに渡さない」宣言を見逃す (ゲートと argv の対応が
+    #  検査されないまま緑になる)。
     for gate_id, argv in spec.GATE_ARGV.items():
+        script = spec.GATE_SCRIPTS[gate_id]
+        declaring = [ln for ln in body.splitlines() if script in ln]
+        if not declaring:
+            continue  # script 参照そのものの欠落は上で報告済み
         for flag in argv:
-            if flag not in body:
-                v.append(Violation("AC-C09-2", f"ゲート {gate_id} へ渡す argv {flag} の宣言が無い"))
+            if not any(flag in ln for ln in declaring):
+                v.append(Violation(
+                    "AC-C09-2",
+                    f"ゲート {gate_id} へ渡す argv {flag} が {script} を名指しする行に無い",
+                ))
+        # 他ゲート専用のフラグを混ぜていないこと (--config を要らない面へ渡さない)
+        foreign = {f for flags in spec.GATE_ARGV.values() for f in flags} - set(argv)
+        for flag in sorted(foreign):
+            hit = [ln for ln in declaring if flag in ln]
+            if hit:
+                v.append(Violation(
+                    "AC-C09-2",
+                    f"ゲート {gate_id} は {flag} を受け取らないのに宣言行にある: {hit}",
+                ))
     if "--json-report" not in body:
         v.append(Violation("AC-C09-2", "各 script の --json-report を使う宣言が無い"))
 
@@ -390,8 +420,31 @@ def _check_states_and_reasons(body, v):
         if reason not in body:
             v.append(Violation("AC-C09-AGG-3", f"not-run の理由 {reason!r} の宣言が無い"))
     for code, state in spec.EXIT_CODE_TO_STATE.items():
-        if not re.search(rf"exit\s*(code\s*)?{code}\D", body):
+        # 写像は「exit <code> の行に対応する状態語がある」ことまで見る。
+        # exit <code> の出現だけを見ると exit 0 -> fail と書いても通ってしまい、
+        # 検査しているのは番号の存在であって対応づけではなくなる。
+        declaring = [
+            ln for ln in body.splitlines() if re.search(rf"exit\s*(code\s*)?{code}\D", ln)
+        ]
+        if not declaring:
             v.append(Violation("AC-C09-AGG-3", f"exit {code} -> {state} の写像宣言が無い"))
+            continue
+        if not any(state in ln for ln in declaring):
+            v.append(Violation(
+                "AC-C09-AGG-3",
+                f"exit {code} の行に対応状態 {state!r} が書かれていない (実際の行: {declaring})",
+            ))
+        wrong = [
+            (ln, other)
+            for ln in declaring
+            for other in spec.EXIT_CODE_TO_STATE.values()
+            if other != state and re.search(rf"->\s*{other}\b", ln)
+        ]
+        if wrong:
+            v.append(Violation(
+                "AC-C09-AGG-3",
+                f"exit {code} を {state!r} 以外へ写す宣言がある: {wrong}",
+            ))
 
     for pattern in NOT_RUN_TO_PASS_PATTERNS:
         hit = pattern.search(body)

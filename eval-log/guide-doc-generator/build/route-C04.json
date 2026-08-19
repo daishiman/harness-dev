@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "guide-doc-generator",
+  "route_id": "C04",
+  "component_kind": "skill",
+  "name": "ref-handout-design-system",
+  "builder": "run-skill-create",
+  "build_kind": "skill",
+  "build_target": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+  "status": "success",
+  "summary": "既存 SKILL.md を非破壊で拡張し、brief が要求していて現物に欠けていた 2 点 (面 5 = カードとナビの視覚設計 R25、key_constraints の外部参照ゼロ / C16 CR-EXT) を追記した。既存の 4 面・frontmatter・vendoring 実体は 1 行も書き換えていない。",
+  "deviations": [
+    "brief が名指しする config/handout-visual-policy.json の #opening.hero_card_fields.layout / #opening.list_headings.headings / #opening.connector_card.heading と、#micro_copy.roles role=\"label\" の fields に含まれるはずの nav_item は、現在の config に存在しない (opening の実キーは note / why / hero_fields / hero_total / section_opening)。config は write_scope 外のため作成せず、SKILL.md 側には brief どおりの正本アドレスを書いたうえで『参照先のキーが正本に無いときは未確定と答え owner へ差し戻す』という fail-closed の回答規則を添えた。",
+    "brief は block_to_component_map の冒頭ブロック 2 件を id で名指ししているが、contract_lib の AC-C04-10 が散文中の部品 id (B\\d{2}) を Y-05 違反として禁じているため、id を書かず『冒頭ブロックのエントリ』と位置で指した。"
+  ],
+  "evidence": [
+    "plugins/guide-doc-generator/skills/ref-handout-design-system/SKILL.md exists sha256=7c69ed2b469a4dfd2b05bc2c133130abfdc0ead0ef751fac44378a86c4a3ffd5",
+    "plugins/guide-doc-generator/skills/ref-handout-design-system/assets/jp-web-design-mode-b.md exists (vendoring 実体・未変更)",
+    "plugins/guide-doc-generator/skills/ref-handout-design-system/references/answer-patterns.md exists (未変更)",
+    "ref prefix 規約: frontmatter に cli_tools / mcp_tools / deterministic_checks / combinators / goal_seek を持たない (AC-C04-7 緑)"
+  ],
+  "inputs_consumed": [
+    "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+    "plugins/guide-doc-generator/config/handout-visual-policy.json (read-only)",
+    "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json (read-only)",
+    "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py (read-only)",
+    "plugins/guide-doc-generator/tests/ref-handout-design-system/contract_lib.py (read-only)"
+  ],
+  "handover": "skill route C04 is available at plugins/guide-doc-generator/skills/ref-handout-design-system/. 面 5 が指す config キー (opening.hero_card_fields / list_headings / connector_card, micro_copy.roles.label.fields[nav_item]) は config 側が未実装のため dangling pointer である。config の producer (P05-x-03) 側で追補が要る。",
+  "covered_task_ids": [
+    "P05-C04-01"
+  ],
+  "artifact_sha256": "7c69ed2b469a4dfd2b05bc2c133130abfdc0ead0ef751fac44378a86c4a3ffd5",
+  "test_evidence": [
+    {
+      "command": "cd plugins/guide-doc-generator/tests/ref-handout-design-system && python3 -m unittest discover -p 'test_*.py'",
+      "exit_code": 0,
+      "passed": 37,
+      "failed": 0,
+      "started_at": "2026-08-18T13:16:40Z",
+      "completed_at": "2026-08-18T13:16:41Z",
+      "note": "編集前も 37/37 緑だった。この suite は brief の R25 追補 (面 5) と key_constraints の CR-EXT を 1 件も検査していないため、今回埋めた差分はテストでは測れていない。"
+    }
+  ],
+  "generated_at": "2026-08-18T13:17:10Z",
+  "tool_versions": {
+    "python": "3.11.4",
+    "unittest": "3.11.4"
+  },
+  "graph_hash": "sha256:c640fb14a767468c8b886222beebca5f62a06b2b995bd44f39c6b8dedb048452",
+  "discovered_defects": [
+    {
+      "id": "C04-D1",
+      "kind": "test-coverage-gap",
+      "where": "plugins/guide-doc-generator/tests/ref-handout-design-system/contract_lib.py",
+      "detail": "REQUIRED_FACES は 4 面しか持たず、brief の output_contract が 5 面 (面 5 = カードとナビの視覚設計 R25) に更新された後も追従していない。key_constraints の『CDN・web font・外部 URL・外部アイコンフォントを前提にしない / 正本は C16 CR-EXT』も未検査。brief 更新がテストへ伝播しない片方向の関係になっている。"
+    },
+    {
+      "id": "C04-D2",
+      "kind": "dangling-canon-pointer",
+      "where": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json -> plugins/guide-doc-generator/config/handout-visual-policy.json",
+      "detail": "brief が正本として名指す opening.hero_card_fields.layout / opening.list_headings.headings / opening.connector_card.heading と micro_copy.roles の label.fields[nav_item] が config に存在しない。brief 側だけが先行し config producer (P05-x-03) が追従していない。"
+    },
+    {
+      "id": "C04-D3",
+      "kind": "substring-match-on-whole-body",
+      "where": "contract_lib.py:526 (AC-C04-16)",
+      "detail": "既知欠陥として共有済み。`if \"400\" not in body` は本文全体への数値 3 文字の部分一致であり、CSS の 400 (font-weight) やトークン例示でも通る。実際に今回の本文では :root 例示や無関係な数値でも成立しうる。"
+    },
+    {
+      "id": "C04-D4",
+      "kind": "absence-as-evidence",
+      "where": "contract_lib.py _check_ref_kind (AC-C04-7)",
+      "detail": "既知欠陥として共有済み。deterministic_checks に関する検査は『宣言を持たないこと』の確認であり、再現性の充足を測っていない。ref skill の判定力はテキストの部分一致に依存し、実際の回答挙動 (正本を読んで答えるか) は 1 件も検査されていない。"
+    }
+  ]
+}

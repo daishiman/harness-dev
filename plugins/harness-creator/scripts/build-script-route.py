@@ -33,7 +33,11 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import platform
+import re
+import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -114,7 +118,27 @@ def _preflight_parity(handoff_path: Path) -> list[str]:
     return parity.check_parity(data.get("routes"), inv.get("components"))
 
 
-def _dependency_inputs(handoff: dict, route: dict, reports_dir: Path, slug: str, repo_root: Path) -> tuple[list[str], list[str]]:
+def _plan_dir(handoff: dict, handoff_path: Path, repo_root: Path) -> Path:
+    """handoff.plan_dir を絶対 Path へ解決する (validator の structured evidence 検査に渡す)。
+
+    plan_dir が絶対ならそのまま、相対なら repo root 基準、未設定なら handoff の所在ディレクトリ。
+    _covered_task_ids の task_graph_ref 解決と同じ基準を使う。
+    """
+    raw = str(handoff.get("plan_dir", "")).strip()
+    if not raw:
+        return handoff_path.parent.resolve()
+    path = Path(raw)
+    return path.resolve() if path.is_absolute() else (repo_root / path).resolve()
+
+
+def _dependency_inputs(
+    handoff: dict,
+    route: dict,
+    reports_dir: Path,
+    slug: str,
+    repo_root: Path,
+    plan_dir: Path,
+) -> tuple[list[str], list[str]]:
     validator = _load_module(
         TOOL_ROOT / "plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py",
         "route_report_validator",
@@ -126,7 +150,7 @@ def _dependency_inputs(handoff: dict, route: dict, reports_dir: Path, slug: str,
         if dep_id not in route_ids:
             findings.append(f"dependency route is not in handoff: {dep_id}")
             continue
-        dep_findings = validator.validate_route(handoff, reports_dir, dep_id, repo_root)
+        dep_findings = validator.validate_route(handoff, reports_dir, dep_id, repo_root, plan_dir)
         if dep_findings:
             findings.extend(f"dependency {dep_id}: {f}" for f in dep_findings)
             continue
@@ -137,6 +161,68 @@ def _dependency_inputs(handoff: dict, route: dict, reports_dir: Path, slug: str,
             findings.append(f"dependency {dep_id}: status={dep_status}")
         consumed.append(_report_rel_dyn(reports_dir, repo_root, dep_id))
     return consumed, findings
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+
+def _tool_versions() -> dict:
+    return {"python": platform.python_version(), "unittest": platform.python_version()}
+
+
+_UNITTEST_RAN_RE = re.compile(r"^Ran (\d+) tests?", re.MULTILINE)
+_UNITTEST_COUNT_RE = re.compile(r"(failures|errors)=(\d+)")
+
+
+def _component_test_dir(repo_root: Path, slug: str, route: dict) -> Path:
+    return repo_root / "plugins" / slug / "tests" / str(route.get("name", ""))
+
+
+def _run_component_tests(repo_root: Path, slug: str, route: dict, target_rel: str) -> list[dict]:
+    """component 直下の test suite を実行し構造化 test_evidence を返す。
+
+    suite が無い route は嘘の緑を作らず、代わりに build_target の compile 検査を
+    1 件の evidence として記録する (何を測ったかが command に残る)。
+    """
+    test_dir = _component_test_dir(repo_root, slug, route)
+    # test ディレクトリ名は component 名 (script は .py 付き) ゆえ package として
+    # import できない。discover は top-level を test dir 自身に置く形でのみ成立する
+    # (-t リポジトリルートだと Start directory is not importable で落ちる)。
+    if test_dir.is_dir():
+        cwd = test_dir
+        argv = ["python3", "-m", "unittest", "discover"]
+        command = f"cd {test_dir.relative_to(repo_root).as_posix()} && python3 -m unittest discover"
+    else:
+        cwd = repo_root
+        argv = ["python3", "-m", "py_compile", target_rel]
+        command = f"python3 -m py_compile {target_rel}"
+    started_at = _utc_now()
+    proc = subprocess.run(
+        argv,
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+    completed_at = _utc_now()
+    out = (proc.stdout or "") + (proc.stderr or "")
+    if test_dir.is_dir():
+        ran_match = _UNITTEST_RAN_RE.search(out)
+        ran = int(ran_match.group(1)) if ran_match else 0
+        failed = sum(int(n) for _, n in _UNITTEST_COUNT_RE.findall(out))
+        passed = max(ran - failed, 0)
+    else:
+        passed, failed = (1, 0) if proc.returncode == 0 else (0, 1)
+    return [
+        {
+            "command": command,
+            "exit_code": proc.returncode,
+            "passed": passed,
+            "failed": failed,
+            "started_at": started_at,
+            "completed_at": completed_at,
+        }
+    ]
 
 
 def _target_path(route: dict, repo_root: Path) -> Path:
@@ -291,6 +377,7 @@ def _write_report(
     handover: str | None,
     skip_reason: str | None = None,
     covered_task_ids: list[str] | None = None,
+    structured: dict | None = None,
 ) -> Path:
     reports_dir.mkdir(parents=True, exist_ok=True)
     report = {
@@ -312,6 +399,8 @@ def _write_report(
         report["skip_reason"] = skip_reason
     if covered_task_ids is not None:
         report["covered_task_ids"] = covered_task_ids
+    if structured:
+        report.update(structured)
     out = reports_dir / f"route-{route['id']}.json"
     out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return out
@@ -344,7 +433,8 @@ def build_script_route(
         return 1, {"ok": False, "route_id": route_id, "errors": errors}
 
     reports_dir = _reports_dir(repo_root, slug, reports_dir_arg)
-    inputs_consumed, dep_errors = _dependency_inputs(handoff, route, reports_dir, slug, repo_root)
+    plan_dir = _plan_dir(handoff, handoff_path, repo_root)
+    inputs_consumed, dep_errors = _dependency_inputs(handoff, route, reports_dir, slug, repo_root, plan_dir)
     if dep_errors:
         return 1, {"ok": False, "route_id": route_id, "errors": dep_errors}
 
@@ -385,6 +475,36 @@ def build_script_route(
             "would_report_status": status,
         }
 
+    covered_task_ids = _covered_task_ids(handoff, handoff_path.resolve(), route_id)
+    structured: dict = {}
+    if status == "success" and isinstance(handoff.get("task_graph_ref"), dict):
+        # current handoff の success report は artifact/graph/test の構造化証跡を要求される
+        # (validate-route-build-reports.validate_current_handoff_evidence)。writer 側が
+        # これを出さないと全 route が fail-closed で落ちるため、ここで実測して埋める。
+        validator_mod = _load_module(
+            TOOL_ROOT / "plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py",
+            "route_report_validator_structured",
+        )
+        graph_rel = str(handoff["task_graph_ref"].get("path", "")).strip()
+        graph_hash, _graph_err = validator_mod._producer_graph_hash(plan_dir / graph_rel, repo_root)
+        test_evidence = _run_component_tests(repo_root, slug, route, target_rel)
+        failed_total = sum(int(e.get("failed", 0)) for e in test_evidence)
+        if failed_total or any(int(e.get("exit_code", 0)) for e in test_evidence):
+            status = "failure"
+            deviations.append(
+                "component test suite が緑でないため success を宣言しない "
+                f"(failed={failed_total})"
+            )
+        else:
+            structured = {
+                "artifact_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+                "test_evidence": test_evidence,
+                "generated_at": _utc_now(),
+                "tool_versions": _tool_versions(),
+            }
+            if graph_hash:
+                structured["graph_hash"] = graph_hash
+
     report_path = _write_report(
         reports_dir=reports_dir,
         slug=slug,
@@ -396,14 +516,15 @@ def build_script_route(
         inputs_consumed=inputs_consumed,
         handover=f"script route {route_id} is available at {target_rel}",
         skip_reason=skip_reason,
-        covered_task_ids=_covered_task_ids(handoff, handoff_path.resolve(), route_id),
+        covered_task_ids=covered_task_ids,
+        structured=structured,
     )
 
     validator = _load_module(
         TOOL_ROOT / "plugins/harness-creator/skills/run-build-skill/scripts/validate-route-build-reports.py",
         "route_report_validator_after",
     )
-    findings = validator.validate_route(handoff, reports_dir, route_id, repo_root)
+    findings = validator.validate_route(handoff, reports_dir, route_id, repo_root, plan_dir)
     if findings:
         return 1, {"ok": False, "route_id": route_id, "report": str(report_path), "errors": findings}
     return 0, {"ok": True, "route_id": route_id, "status": status, "build_target": target_rel, "report": str(report_path)}

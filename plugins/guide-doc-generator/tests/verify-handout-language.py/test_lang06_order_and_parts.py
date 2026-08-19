@@ -19,9 +19,11 @@ from _support import (
     NON_PART_MARKERS,
     PARTS_CATALOG,
     SCRIPT,
+    VISUAL_PARTS,
     LanguageGateTestCase,
     base_config,
     build_html,
+    parts_for,
 )
 
 
@@ -103,11 +105,38 @@ class TestLang06ConcretePartPredicate(LanguageGateTestCase):
         self.assert_gate_fail(res, "LANG-06", count=1)
 
     def test_every_in_section_part_id_is_accepted_alone(self):
-        """カタログの in-section 部品はどれ 1 つでも『具体』として成立する。"""
+        """カタログの in-section 部品はどれ 1 種でも『具体』として成立する。
+
+        絵だけは先頭 1 枚が順序の起点から外れるので 2 枚で確かめる
+        (parts_for が同じ規則をカタログから引いて並びを作る)。
+        """
         for pid in IN_SECTION_PARTS:
             with self.subTest(part=pid):
-                res = self.run_default(part_ids={"s3": [pid]})
+                res = self.run_default(part_ids={"s3": parts_for(pid)})
                 self.assert_detection_pass(res, "LANG-06")
+
+    def test_a_section_carrying_only_the_leading_visual_is_a_violation(self):
+        """見出し直後の絵 1 枚しかない節は『具体部品 0 個』と同じ扱い。
+
+        画像先頭の並びを既定にした結果 (利用者指定 2026-08-19)、絵を 1 枚置いた
+        だけで本文が無い節が素通りしてしまうため、ここを違反として閉じる。
+        """
+        for pid in sorted(VISUAL_PARTS):
+            with self.subTest(part=pid):
+                res = self.run_default(part_ids={"s3": [pid]})
+                self.assert_gate_fail(res, "LANG-06", count=1)
+
+    def test_leading_visual_reason_says_the_first_picture_was_excluded(self):
+        pid = sorted(VISUAL_PARTS)[0]
+        res = self.run_default(part_ids={"s3": [pid]})
+        reason = "\t".join(self.stderr_rows(res, "LANG-06")[0][3:])
+        self.assertIn("先頭の絵", reason, "reason=%r" % reason)
+
+    def test_leading_visual_plus_text_part_passes(self):
+        """絵の次に本文の具体があれば成立する (既定の並びそのもの)。"""
+        pid = sorted(VISUAL_PARTS)[0]
+        res = self.run_default(part_ids={"s3": [pid, "B05"]})
+        self.assert_detection_pass(res, "LANG-06")
 
     def test_first_concrete_part_defines_the_boundary(self):
         """document 部品が先にあっても、境界は最初の in-section 部品で決まる。"""
@@ -122,14 +151,14 @@ class TestLang06CatalogDriven(LanguageGateTestCase):
         """B16 / B17 は旧記述 (B03..B15) の外。カタログ駆動なら合格する。"""
         for pid in ("B16", "B17"):
             with self.subTest(part=pid):
-                res = self.run_default(part_ids={"s3": [pid]})
+                res = self.run_default(part_ids={"s3": parts_for(pid)})
                 self.assert_detection_pass(res, "LANG-06")
 
     def test_non_b_prefixed_part_is_recognized(self):
         """IMG / DIAGRAM / TEXT は B\\d\\d 形ではない。id の形に依存していないこと。"""
         for pid in ("IMG", "DIAGRAM", "TEXT"):
             with self.subTest(part=pid):
-                res = self.run_default(part_ids={"s3": [pid]})
+                res = self.run_default(part_ids={"s3": parts_for(pid)})
                 self.assert_detection_pass(res, "LANG-06")
 
     def test_script_reads_the_parts_catalog(self):

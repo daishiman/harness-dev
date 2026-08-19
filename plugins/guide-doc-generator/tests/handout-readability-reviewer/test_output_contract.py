@@ -90,16 +90,36 @@ class TestFindingShape(H.AgentContractTestCase):
         )
 
 
+# R25 以前からの基本軸の数。増えた分は正本 (r25_semantic_axes) から数えるので
+# ここに焼くのはこの 1 個だけにする。
+BASE_AXIS_COUNT = 6
+
+
+def r25_axes():
+    return [entry["axis"] for entry in H.BRIEF["r25_semantic_axes"]["axes"]]
+
+
 class TestAxisVocabulary(H.AgentContractTestCase):
-    """axis 語彙 6 件。ブリーフの returns 宣言が正本。"""
+    """axis 語彙。ブリーフの returns 宣言が正本。"""
 
     def test_all_axes_declared(self):
         for axis in H.brief_axes():
             with self.subTest(axis=axis):
                 self.assert_mentions(axis, "axis 語彙 '{}' の宣言".format(axis))
 
-    def test_axis_count_is_six(self):
-        self.assertEqual(6, len(H.brief_axes()), "brief 側の axis 語彙が 6 件でない")
+    def test_r25_axes_are_part_of_the_vocabulary(self):
+        """軸定義 (r25_semantic_axes) と戻り値語彙が同じ正本を指していること。"""
+        axes = r25_axes()
+        self.assertTrue(axes, "r25_semantic_axes.axes が空")
+        for axis in axes:
+            self.assertIn(axis, H.brief_axes(), "軸定義が returns の語彙に無い")
+
+    def test_axis_count_matches_the_declared_axes(self):
+        self.assertEqual(
+            BASE_AXIS_COUNT + len(r25_axes()),
+            len(H.brief_axes()),
+            "brief 側の axis 語彙が『基本 6 軸 + r25_semantic_axes』と合わない",
+        )
 
 
 class TestSeverityVocabulary(H.AgentContractTestCase):

@@ -115,8 +115,13 @@ class ThemeTokenLevelLimitsTest(unittest.TestCase):
         src = H.source_text()
         for level, value in brief_limits(self).items():
             with self.subTest(level=level):
+                # 直後の % を除外するのは CSS の長さ指定 (width: 100%) を上限の
+                # 焼き込みと読み違えないため。上限は文字数なので単位を伴わない。
+                # この除外を入れないと、上限値が 100 のように CSS で頻出する数へ
+                # 決まった瞬間に本検査が偽陽性で赤くなり、直し方が「CSS を壊す」
+                # しか無くなる (実際 R25/REQ-7 で standard=100 になり発生した)。
                 self.assertIsNone(
-                    re.search(r"(?<![\w.])%d(?![\w.])" % value, src),
+                    re.search(r"(?<![\w.])%d(?![\w.%%])" % value, src),
                     "上限 %s (%d) が script へ数値リテラルとして埋め込まれている" % (level, value),
                 )
 

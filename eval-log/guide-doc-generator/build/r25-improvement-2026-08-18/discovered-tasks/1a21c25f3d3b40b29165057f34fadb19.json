@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P01-x-01",
+  "reason": "C75 は『script へコネクタ名を焼かず、3 種以外への拡張が正本への追記だけで済む』と要求しながら、同じ文で 3 種を列挙している。正本は closed:false で実在するので設計は正しく、要件文が第 2 正本になっている。C70 の B03+DIAGRAM(flow) / B08+DIAGRAM(hierarchy) / B07+DIAGRAM(compare) も個別 id を焼いており、範囲リテラルより結合が強い。いずれも数値 grep では検出できない混入",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P01-c46-c75.json",
+  "proposed_node": {
+    "id": "P05-x-117",
+    "title": "C75/C70 が『script へ焼くな』と要求しながら要件文自身が語彙・部品 id を焼いている",
+    "phase_ref": "phase-01-requirements.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+    "acceptance_criterion": "C75 が Google Drive / OneDrive / kintone の 3 種を列挙せず正本 (briefs/config/handout-vocabulary.json#connectors) を参照すること。C70 の器指定が個別部品 id を焼かないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

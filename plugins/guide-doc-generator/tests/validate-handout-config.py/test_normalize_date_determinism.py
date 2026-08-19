@@ -271,6 +271,7 @@ class EncodingAndDeterminism(H.C12TestCase):
         """encoding_rules: 配列は意味を持つので再ソートしない。"""
         cfg = H.valid_config()
         cfg["sections"] = [H.section("zulu"), H.section("alpha", id="alpha")]
+        H.with_visual_floor(cfg)
         res, _, out = self.normalize(cfg)
         self.assert_exit(res, 0)
         self.assertEqual(["zulu", "alpha"], [s["id"] for s in self.read_out(out)["sections"]])
@@ -305,6 +306,7 @@ class EncodingAndDeterminism(H.C12TestCase):
         """encoding_rules: 行末空白は除去、文字列内の改行は保持。"""
         cfg = H.valid_config()
         cfg["sections"][0]["parts"] = [H.text_part("t1", "1 行目です。   \n2 行目です。  ")]
+        H.with_visual_floor(cfg)
         res, _, out = self.normalize(cfg)
         self.assert_exit(res, 0)
         body = self.read_out(out)["sections"][0]["parts"][0]["data"]["body"]

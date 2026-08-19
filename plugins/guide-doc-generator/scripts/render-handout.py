@@ -41,6 +41,7 @@ import importlib.util
 import json
 import os
 import sys
+import urllib.parse
 from collections import OrderedDict
 from pathlib import Path
 
@@ -55,6 +56,8 @@ ROOT_ENV_VARS = ("HB_ROOT", "CLAUDE_PLUGIN_ROOT")
 
 PARTS_CATALOG_RELPATH = "config/handout-parts.json"
 CONFIG_SCHEMA_RELPATH = "schemas/handout-config.schema.json"
+VOCABULARY_RELPATH = "config/handout-vocabulary.json"
+VISUAL_POLICY_RELPATH = "config/handout-visual-policy.json"
 TOKENS_RELDIR = "assets/tokens"
 ICON_SET_RELPATH = "assets/icons/icon-set.json"
 
@@ -79,6 +82,12 @@ STAGGER_CAP_MS = 720
 
 NAV_OFFSET_PX = 96
 
+# 目次の置き場所として受理する値。実際にどちらを使うかは
+# config/handout-visual-policy.json#nav.layout が決める (ここは受理集合だけ)。
+NAV_LAYOUT_SIDEBAR = "sidebar"
+NAV_LAYOUT_BAND = "band"
+NAV_LAYOUTS = (NAV_LAYOUT_SIDEBAR, NAV_LAYOUT_BAND)
+
 TEXT_LIMITS_KEY = "text_limits"
 DEFAULT_LIMIT_KEY = "block_body_max_chars"
 BY_LEVEL_LIMIT_KEY = "block_body_max_chars_by_detail_level"
@@ -86,7 +95,7 @@ CSS_VARIABLES_KEY = "css_variables"
 
 DOC_REQUIRED_FIELDS = (
     "title", "date", "reader", "prior_knowledge_level", "doc_type",
-    "essential_problem", "purpose", "background", "goal", "duration", "sections",
+    "essential_problem", "purpose", "background", "goal", "sections",
 )
 SECTION_REQUIRED_FIELDS = ("id", "heading", "goal", "lead_line", "judgment_axis")
 
@@ -98,6 +107,10 @@ MARKER_LIGHTBOX = "lightbox"
 MARKER_MEMO = "memo"
 MARKER_MEMO_GLOBAL = "memo-global"
 MARKER_TOOLBAR = "toolbar"
+
+# 節の先頭で見出しの直後に置いてよい部品 (絵)。ここに並ぶ type が節の 1 番目に
+# 来ているときだけ、目的・言いたいことより前へ描く (利用者指定 2026-08-19)。
+SECTION_LEAD_VISUAL_TYPES = ("image", "diagram")
 
 
 # ---------------------------------------------------------------------------
@@ -266,6 +279,137 @@ def load_parts_catalog(path=None):
     if path is None:
         _CATALOG_CACHE = data
     return data
+
+
+_VOCABULARY_CACHE = None
+
+
+def load_vocabulary(path=None):
+    """表示語彙の単一正本を読む。
+
+    この script は日本語のラベルを 1 つも持たない。コネクタ名も達成段階の
+    表示も、構成データが運ぶのは id / enum だけで、読者に見える表記は
+    ここから引く。読めないときは既定の表記へ落とさず落ちる — 落とすと
+    『語彙を書き換えたのに表示が変わらない』という無言の食い違いが出る。
+    """
+    global _VOCABULARY_CACHE
+    if path is None and _VOCABULARY_CACHE is not None:
+        return _VOCABULARY_CACHE
+    target = Path(path) if path is not None else resolve_under_roots(
+        VOCABULARY_RELPATH, "表示語彙正本")
+    data = read_json(target, "表示語彙正本")
+    if not isinstance(data, dict):
+        raise LaunchError("表示語彙正本の形が壊れている: {}".format(target))
+    if path is None:
+        _VOCABULARY_CACHE = data
+    return data
+
+
+def vocabulary_labels(group, key_field):
+    entries = (load_vocabulary().get(group) or {}).get("entries")
+    if not isinstance(entries, list):
+        raise LaunchError("表示語彙正本に {}.entries が無い".format(group))
+    labels = {}
+    for entry in entries:
+        if isinstance(entry, dict) and isinstance(entry.get(key_field), str):
+            labels[entry[key_field]] = entry.get("label")
+    return labels
+
+
+_VISUAL_POLICY_CACHE = None
+
+
+def load_visual_policy(path=None):
+    """視覚方針の正本を読む。"""
+    global _VISUAL_POLICY_CACHE
+    if path is None and _VISUAL_POLICY_CACHE is not None:
+        return _VISUAL_POLICY_CACHE
+    target = Path(path) if path is not None else resolve_under_roots(
+        VISUAL_POLICY_RELPATH, "視覚方針正本")
+    data = read_json(target, "視覚方針正本")
+    if not isinstance(data, dict):
+        raise LaunchError("視覚方針正本の形が壊れている: {}".format(target))
+    if path is None:
+        _VISUAL_POLICY_CACHE = data
+    return data
+
+
+def hero_card_order():
+    """冒頭カードの並び順を正本から引く。
+
+    順序を script の定数で持たない。持つと『正本を書き換えたのに並びが
+    変わらない』食い違いが出るうえ、順序を検査する C22 と描画する C11 が
+    それぞれ別の順序を持つ二名簿になる。読めなければ既定順へ落とさず落ちる
+    (利用者要求 R3 のゴール先頭は既定値で黙って崩れてよい性質ではない)。
+    """
+    order = (((load_visual_policy().get("opening") or {})
+              .get("hero_card_fields") or {}).get("order"))
+    if not isinstance(order, list) or not order:
+        raise LaunchError(
+            "視覚方針正本に opening.hero_card_fields.order が無い "
+            "(冒頭カードの並び順の単一正本)")
+    names = [name for name in order if isinstance(name, str) and name]
+    if not names:
+        raise LaunchError("opening.hero_card_fields.order が空")
+    return names
+
+
+def nav_max_rows() -> int:
+    """目次を帯として出すときに占めてよい行数。正本は nav.max_rows。
+
+    節数が増えると 1 行に収まらなくなる。何行まで見せるかは読み手の視野の
+    問題であり、描画側の定数ではない (既定値へ落とさず、無ければ落とす)。
+    layout=sidebar では柱に縦積みするため、この上限は帯へ戻す幅
+    (nav.collapse_below_px 未満) と印刷でだけ効く。
+    """
+    value = (load_visual_policy().get("nav") or {}).get("max_rows")
+    if not isinstance(value, int) or value < 1:
+        raise LaunchError(
+            "視覚方針正本に nav.max_rows (正の整数) が無い "
+            "(目次の帯の行数上限の単一正本)")
+    return value
+
+
+def nav_positive_int(key: str, why: str) -> int:
+    """nav 配下の寸法を 1 個引く。既定値へ落とさず、無ければ落とす。"""
+    value = (load_visual_policy().get("nav") or {}).get(key)
+    if not isinstance(value, int) or value < 1:
+        raise LaunchError(
+            "視覚方針正本に nav.{} (正の整数) が無い ({})".format(key, why))
+    return value
+
+
+def nav_collapse_below_px() -> int:
+    """柱をやめて帯へ戻す画面幅。正本は nav.collapse_below_px。"""
+    return nav_positive_int(
+        "collapse_below_px", "目次を柱から帯へ戻す画面幅の単一正本")
+
+
+def nav_layout() -> str:
+    """目次の置き場所。正本は nav.layout。
+
+    `sidebar` は左の柱 (常時表示・左揃え)、`band` は従来の上帯。どちらでも
+    sticky は維持するので「スクロールしても目次が消えない」は共通。値を
+    描画側の既定へ落とさないのは、置き場所が読み手の視野設計そのものであり
+    資料ごとに正本で決まるべきものだから。
+    """
+    value = (load_visual_policy().get("nav") or {}).get("layout")
+    if value not in NAV_LAYOUTS:
+        raise LaunchError(
+            "視覚方針正本の nav.layout が {} のいずれでもない "
+            "(目次の置き場所の単一正本)".format(" / ".join(NAV_LAYOUTS)))
+    return value
+
+
+def section_number_separator() -> str:
+    """節番号と見出しの間に置く記号。正本は opening.section_heading.number_separator。"""
+    value = ((load_visual_policy().get("opening") or {})
+             .get("section_heading") or {}).get("number_separator")
+    if not isinstance(value, str) or not value:
+        raise LaunchError(
+            "視覚方針正本に opening.section_heading.number_separator が無い "
+            "(節番号と見出しの区切り記号の単一正本)")
+    return value
 
 
 def is_known_part(part_id) -> bool:
@@ -443,7 +587,7 @@ def _entry(*pairs):
 def _project_steps(data, ctx):
     return {"items": [
         _entry(("key", row.get("key")), ("label", row.get("text")),
-               ("detail", row.get("sub")), ("time", row.get("time")))
+               ("detail", row.get("sub")))
         for row in data.get("rows") or []
     ]}
 
@@ -1007,9 +1151,6 @@ class Renderer:
                 '<span class="step-label">{}</span>'.format(esc(item.get("label"))),
                 '<span class="step-detail">{}</span>'.format(esc(item.get("detail"))),
             ]
-            if _nonempty(item.get("time")):
-                inner.append('<span class="step-time num">{}</span>'.format(
-                    esc(item.get("time"))))
             inner.append(icon_svg(item.get("icon")))
             rows.append(tag("li", [
                 ("class", "step-row"),
@@ -1472,7 +1613,12 @@ def css_variables_of(tokens):
 def build_css(tokens) -> str:
     variables = css_variables_of(tokens)
     lines = [":root {"]
-    lines.append("  --nav-h: {}px;".format(NAV_OFFSET_PX))
+    # --nav-h は「本文の上に目次が被る量」。柱では被らないので 0 になり、
+    # 帯へ戻る幅 (下の @media) でだけ NAV_OFFSET_PX へ戻す。
+    lines.append("  --nav-h: {}px;".format(
+        0 if nav_layout() == NAV_LAYOUT_SIDEBAR else NAV_OFFSET_PX))
+    lines.append("  --side-nav-w: {}px;".format(
+        nav_positive_int("sidebar_width_px", "目次の柱の幅の単一正本")))
     for name, value in variables.items():
         lines.append("  {}: {};".format(name, value))
     lines.append("}")
@@ -1481,7 +1627,10 @@ def build_css(tokens) -> str:
     body_feature = (typography.get("body") or {}).get("font_feature_settings") or '"palt"'
     rest = """
 * { box-sizing: border-box; }
-html { scroll-padding-top: {NAV}px; }
+/* 停止位置の余白は 2 段に分ける。ここは節の上へ必ず空ける最小の余白 (定数)、
+   目次に被る分は .section-card の scroll-margin-top (--nav-h) が足す。
+   柱では --nav-h が 0 になるため、残るのはこの余白だけになる。 */
+html { scroll-padding-top: 12px; }
 body {
   margin: 0;
   background: var(--pop-bg);
@@ -1503,9 +1652,141 @@ body {
   z-index: 20;
   background: var(--subtle);
   border-bottom: 1px solid var(--line);
+  /* 本文がナビ帯の下へ潜るとき、境界が線 1 本だと重なりが読めない。
+     影は高さを持たないので sticky のオフセット計算 (--nav-h) に影響しない。 */
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
 }
-.navbar { display: flex; gap: 12px; flex-wrap: wrap; padding: 10px 16px; }
+/* 節が増えても目次を隠さない。1 行に収まらなくなったら横スクロールではなく
+   折り返して 2 行目へ回す (横スクロールは「まだ右に項目がある」ことが見えない)。
+   行数の上限は config/handout-visual-policy.json#nav.max_rows が正本で、
+   そこを超えた分だけこの帯の中で縦スクロールする。帯そのものは sticky なので
+   どこまでスクロールしても目次は消えない。 */
+/* 目次を左の柱へ置く (nav.layout=sidebar)。柱は本文と横に並ぶので、
+   縦は 100vh を丸ごと使えて全項目が一望でき、本文の上には一切被らない
+   (--nav-h が 0 になるのはこのため)。柱の中で溢れた分だけが柱の中で
+   縦スクロールし、柱そのものは sticky なのでどこまで読んでも消えない。 */
+.page-shell { display: block; }
+.doc-title-bar {
+  margin: 0;
+  padding: 8px 16px 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.navbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: flex-start;
+  max-height: calc({NAV_ROWS} * 2.5rem + 20px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 16px;
+  scrollbar-width: thin;
+}
+@media (min-width: {NAV_COLLAPSE}px) {
+  .page-shell {
+    display: grid;
+    /* 柱の幅は正本 (nav.sidebar_width_px)。本文側は minmax(0,1fr) にする —
+       auto のままだと図表 1 枚が列幅を押し広げ、柱ごと横スクロールになる。 */
+    grid-template-columns: var(--side-nav-w) minmax(0, 1fr);
+    align-items: start;
+  }
+  .pop-header--sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    border-bottom: none;
+    border-right: 1px solid var(--line);
+    box-shadow: 1px 0 6px rgba(15, 23, 42, 0.06);
+  }
+  .pop-header--sidebar .doc-title-bar {
+    /* 左揃え。柱では行頭が視線の起点になるため、題も札も同じ縦線へ揃える。 */
+    text-align: left;
+    white-space: normal;
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pop-header--sidebar .navbar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 4px;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    padding: 10px;
+  }
+  .pop-header--sidebar .nav-chip {
+    max-width: none;
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    border-radius: 10px;
+    border-color: transparent;
+    background: transparent;
+  }
+  .pop-header--sidebar .nav-chip:hover,
+  .pop-header--sidebar .nav-chip:focus-visible { background: #fff; }
+  .pop-header--sidebar .nav-chip[aria-current="true"] {
+    background: var(--chip-accent);
+    border-color: var(--chip-accent);
+  }
+}
+@media (max-width: {NAV_COLLAPSE_MAX}px) {
+  /* 柱を置くと本文が読める幅を割る画面では、従来どおり上の帯へ戻す
+     (nav.collapse_below_px が正本)。帯は本文の上に被るので、被る量
+     --nav-h を戻さないとアンカー移動でセクション先頭が帯の下へ潜る。 */
+  :root { --nav-h: {NAV}px; }
+}
 .navbar a { color: var(--pop-primary-deep); text-decoration: none; }
+.nav-chip {
+  /* 単色。未読・既読で色を変えず、現在地だけを塗りで示す。 */
+  --chip-accent: var(--pop-primary-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  max-width: 16em;
+  padding: 3px 12px 3px 3px;
+  /* 未選択の枠は罫線色。全チップを主題色で囲うと現在地の塗りが埋もれる。 */
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--chip-accent);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.nav-chip-num {
+  flex: 0 0 auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--chip-accent);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.nav-chip-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-chip:hover, .nav-chip:focus-visible { background: var(--subtle); }
+.nav-chip[aria-current="true"] {
+  background: var(--chip-accent);
+  border-color: var(--chip-accent);
+  color: #fff;
+}
+.nav-chip[aria-current="true"] .nav-chip-num { background: #fff; color: var(--chip-accent); }
 .wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
 .doc-head { padding: 10px 16px 0; }
 .doc-date { margin: 0; }
@@ -1523,6 +1804,22 @@ body {
   pointer-events: none;
 }
 .hero > *:not(.hero-frame) { position: relative; }
+.hero-thumb {
+  margin: 0 0 16px;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.hero-thumb-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* 縦横比を固定して切り出す。素材の比率がまちまちでも冒頭の高さが揃い、
+     タイトルの位置が資料ごとに上下しない。 */
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
 .hero h1 { margin: 0 0 8px; }
 .date-pill {
   display: inline-block;
@@ -1539,7 +1836,82 @@ body {
   background: var(--pop-primary-soft);
   color: var(--pop-primary-deep);
 }
+/* 冒頭は「読む段落」でなく「見比べるカード」。ラベルを行頭の inline span から
+   カードの見出しへ格上げし、3 枚を横に並べる (利用者要求 R9/R3)。
+   列数は幅に追従させ、数値の折り返し位置を固定しない。 */
+.hero-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+/* 面は白 1 色、区別は主題色 1 色の細い帯だけで付ける。新しい色トークンは足さない
+   (テーマのアクセント 4 段以外の色を増やさない規約)。冒頭は 3 枚が横並びになる
+   ので、枠線だけだと 3 枚が同じ濃さの箱に見えて読み始める場所が決まらない。 */
+.hero-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--pop-primary);
+  border-radius: var(--card-radius);
+  padding: 14px 16px;
+  background: #fff;
+}
+.hero-card-label {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+  font-size: 0.8em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.hero-card-body { margin: 0; line-height: 1.85; }
+/* 最初に読む 1 枚 (並び順の先頭 = goal) だけ面を淡く塗って視線の入口にする。 */
+.hero-card:first-child { background: var(--pop-primary-soft); }
+.hero-card:first-child .hero-card-label { background: #fff; }
+/* 見出しの無い ul が縦に積まれると、何の一覧かを知らないまま行を読むことに
+   なる。リストごとに見出しを付け、塊として区切る。 */
+.hero-list {
+  margin: 12px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: #fff;
+}
+.hero-list-heading {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--pop-primary-soft);
+  color: var(--pop-primary-deep);
+  font-size: 0.8em;
+  font-weight: 700;
+}
 .meta-list { margin: 8px 0; padding-left: 1.2em; }
+/* 前提コネクタは「読む文」でなく「並ぶ札」。行頭記号と字下げを外し、
+   チップとして横に並べる (箇条書きのまま長い行にしない・R11/R9)。 */
+.prerequisite-connectors {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.prerequisite-connectors .connector {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--subtle);
+  font-size: 0.92em;
+}
+.prerequisite-connectors .connector-label { font-weight: 600; }
+.prerequisite-connectors .connector-note { color: var(--ink-muted); font-size: 0.9em; }
 .section-card {
   background: var(--subtle);
   border: 1px solid var(--line);
@@ -1630,7 +2002,35 @@ body {
   background: var(--pop-bg);
 }
 .memo-body { width: 100%; min-height: 4.5em; border: 1px solid var(--line); border-radius: 12px; }
-.toolbar { position: fixed; right: 16px; bottom: 16px; z-index: 30; }
+.memo-note { margin: 8px 0; font-size: 0.85rem; color: var(--muted); line-height: 1.7; }
+/* 画面下に常駐する帯。メモを残す手段 (埋め込み保存) は、全体メモの箱まで
+   スクロールしないと押せない位置に置かない — 押されなければメモは消える。
+   利用者指定 2026-08-19『フッターも常に表示。メモを埋め込んだ HTML のボタンは
+   常に表示する』。 */
+.toolbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  background: var(--subtle);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -1px 6px rgba(15, 23, 42, 0.06);
+}
+/* 帯の下へ本文の最後が潜らないようにする (帯は本文の上に浮いている)。 */
+body.handout { padding-bottom: 64px; }
+.toolbar-primary {
+  background: var(--pop-primary-deep);
+  border-color: var(--pop-primary-deep);
+  color: #fff;
+  font-weight: 700;
+}
 .lightbox {
   position: fixed;
   inset: 0;
@@ -1659,6 +2059,15 @@ textarea:focus-visible {
 @page { size: A4; margin: 14mm; }
 @media print {
   .pop-header { position: static; }
+  /* 紙には横スクロールが無い。1 行固定のままだと溢れた項目が黙って消えるため
+     折返しへ戻す (sticky でなくなるので高さ可変が無害になる)。
+     柱も紙では成立しない (100vh の柱が 1 ページ目を占領する) ので、
+     段組みを解いて目次を先頭の帯へ戻す。 */
+  .page-shell { display: block; }
+  .pop-header--sidebar { height: auto; border-right: none; box-shadow: none; }
+  .navbar { flex-wrap: wrap; overflow-x: visible; }
+  .pop-header--sidebar .navbar { flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
+  .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
   .toolbar { position: static; }
   .lightbox { display: none; }
   [data-hb-part="{LIGHTBOX}"] { display: none; }
@@ -1670,6 +2079,9 @@ textarea:focus-visible {
 }
 """
     rest = (rest
+            .replace("{NAV_ROWS}", str(nav_max_rows()))
+            .replace("{NAV_COLLAPSE_MAX}", str(nav_collapse_below_px() - 1))
+            .replace("{NAV_COLLAPSE}", str(nav_collapse_below_px()))
             .replace("{NAV}", str(NAV_OFFSET_PX))
             .replace("{PALT}", str(body_feature))
             .replace("{TABULAR}", str(numeric.get("font_variant_numeric") or "tabular-nums"))
@@ -1693,7 +2105,12 @@ SCRIPT_BODY = """'use strict';
   function headerOffset() {
     var header = document.querySelector('.pop-header');
     if (!header) { return 0; }
-    return Math.ceil(header.getBoundingClientRect().height);
+    var box = header.getBoundingClientRect();
+    // 補正したいのは「目次が本文の上に被る量」であって目次の高さではない。
+    // 柱 (画面の左端に立つ縦長) は本文に被らないので補正 0。画面幅の過半を
+    // 占める帯のときだけ高さを引く (柱の 100vh を引くと行き過ぎる)。
+    if (box.width < window.innerWidth * 0.5) { return 0; }
+    return Math.ceil(box.height);
   }
 
   function jumpTo(id) {
@@ -1714,6 +2131,39 @@ SCRIPT_BODY = """'use strict';
           window.history.replaceState(null, '', link.getAttribute('href'));
         }
       });
+    });
+  }
+
+  function wireNavCurrent() {
+    var chips = document.querySelectorAll('.nav-chip[href^="#"]');
+    if (!chips.length || !window.IntersectionObserver) { return; }
+    var byId = {};
+    Array.prototype.forEach.call(chips, function (chip) {
+      byId[chip.getAttribute('href').slice(1)] = chip;
+    });
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) { return; }
+        Array.prototype.forEach.call(chips, function (chip) {
+          chip.removeAttribute('aria-current');
+        });
+        var chip = byId[entry.target.id];
+        if (!chip) { return; }
+        chip.setAttribute('aria-current', 'true');
+        // 節が多いと現在地の札が柱の外へ出る。柱の中だけを送り、
+        // ページ本体は動かさない (読んでいる位置が飛ぶのを避ける)。
+        var box = chip.parentNode;
+        if (!box || box.scrollHeight <= box.clientHeight) { return; }
+        var top = chip.offsetTop - box.offsetTop;
+        if (top < box.scrollTop) { box.scrollTop = top; }
+        else if (top + chip.offsetHeight > box.scrollTop + box.clientHeight) {
+          box.scrollTop = top + chip.offsetHeight - box.clientHeight;
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    Object.keys(byId).forEach(function (id) {
+      var target = document.getElementById(id);
+      if (target) { observer.observe(target); }
     });
   }
 
@@ -1776,7 +2226,11 @@ SCRIPT_BODY = """'use strict';
     Array.prototype.forEach.call(memoFields(), function (field) {
       var key = storeKey('memo', field.id);
       try {
-        field.value = window.localStorage.getItem(key) || '';
+        // 保存済みが無いときは HTML に書き込まれた本文を残す。空文字で上書きすると、
+        // メモを焼き込んだ HTML を別の環境 (localStorage が空) で開いた瞬間に
+        // 画面から消える — 保存したはずの物が最初の描画で失われる。
+        var stored = window.localStorage.getItem(key);
+        if (stored !== null) { field.value = stored; }
       } catch (err) { /* noop */ }
       field.addEventListener('input', function () {
         try { window.localStorage.setItem(key, field.value); } catch (err) { /* noop */ }
@@ -1794,10 +2248,53 @@ SCRIPT_BODY = """'use strict';
     return out.join('\\n\\n');
   }
 
+  function embedMemoHtml() {
+    // 入力値は DOM の属性ではないため、そのまま直列化しても保存されない。
+    // 書き込んだ内容を textarea の中身と checkbox の属性へ写してから直列化する
+    // (これで出来上がった HTML は、localStorage が使えない環境で開いても
+    //  メモが載ったまま読める — file:// では localStorage が働かない環境がある)。
+    Array.prototype.forEach.call(memoFields(), function (field) {
+      field.textContent = field.value;
+    });
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.check-row input[type="checkbox"]'),
+      function (box) {
+        if (box.checked) { box.setAttribute('checked', 'checked'); }
+        else { box.removeAttribute('checked'); }
+      }
+    );
+    var root = document.documentElement;
+    root.setAttribute('data-hb-memo-embedded', 'true');
+    return '<!doctype html>\\n' + root.outerHTML;
+  }
+
   function wireMemoActions() {
+    var embedBtn = document.querySelector('[data-hb-action="embed"]');
     var copyBtn = document.querySelector('[data-hb-action="copy"]');
     var saveBtn = document.querySelector('[data-hb-action="save"]');
     var clearBtn = document.querySelector('[data-hb-action="clear"]');
+    if (embedBtn) {
+      embedBtn.addEventListener('click', function () {
+        var html = embedMemoHtml();
+        var url;
+        try {
+          url = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
+        } catch (err) {
+          // Blob が作れない環境でも書き出せる方が良い。素材が data URI で
+          // 畳まれている分だけ長くなるが、落として何も出さないよりは渡る。
+          url = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+        }
+        var link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', (SLUG || 'handout') + '-メモ入り.html');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (url.slice(0, 5) === 'blob:') {
+          window.setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+        }
+      });
+    }
     if (copyBtn) {
       copyBtn.addEventListener('click', function () {
         var text = collectMemo();
@@ -1873,6 +2370,7 @@ SCRIPT_BODY = """'use strict';
 
   document.addEventListener('DOMContentLoaded', function () {
     wireNav();
+    wireNavCurrent();
     wireToggles();
     wireTabs();
     wireCheckboxes();
@@ -1924,43 +2422,177 @@ def decorative_icon_set(icon_set):
 
 
 def build_doc_head(config) -> str:
-    """日付表記を文書の冒頭 (header 要素の内側) へ 1 個だけ出す。
+    """日付は紙面へ出さない (利用者指定 2026-08-19『日付はこの HTML の中には不要』)。
 
-    sticky ナビ (B01) は生成 chrome なので `data-hb-generated="true"` を持ち、
-    抽出器はその部分木を丸ごと読み飛ばす。日付は著者記述であり読み飛ばして
-    よい値ではないので、ナビとは別の header 要素へ置く。
+    値そのものは捨てない — 資料の日付は構成データの記述であり、読み戻し (C20) の
+    対象でもある。可視要素をやめて root の data-hb-date で運ぶ (reader などの
+    文書メタと同じ運び方)。表示しないだけで、記録は残る。
     """
-    return tag("header", [("class", "doc-head")],
-               '<p class="doc-date">{}</p>'.format(
-                   field_span("date", config.get("date"), klass="date-pill num")))
+    return ""
+
+
+def hero_card(field, label, body_html) -> str:
+    """冒頭カード 1 枚。見出し語と本文を分けて積む。
+
+    `data-hb-field` は本文側の要素にだけ置く。カードの外枠へ置くと、見出し語
+    (語彙正本から引いた「目的」等) がマーカー要素の可視テキストに混ざり、
+    NAR-02 の『可視テキスト == 構成データ』と C20 の読み戻しが同時に壊れる。
+    """
+    return tag("div", [("class", "hero-card"), ("data-hb-card-field", field)],
+               '<p class="hero-card-label">{}</p>'
+               '<p class="hero-card-body">{}</p>'.format(esc(label), body_html))
+
+
+def hero_list_block(field, headings, list_html) -> str:
+    """冒頭の箇条リスト 1 本を、見出し付きの塊にする。
+
+    見出し語は語彙正本にしか無い。引けない項目を無題の ul として黙って出すと、
+    読み手は何の一覧かを知らないまま行を読むことになる (利用者要求 R9)。
+    """
+    label = headings.get(field)
+    if not _nonempty(label):
+        raise DataError(
+            "冒頭リストの見出し語が表示語彙正本 (hero_list_headings) に無い: {!r}"
+            .format(field))
+    return tag("div", [("class", "hero-list"), ("data-hb-list-field", field)],
+               '<p class="hero-list-heading">{}</p>{}'.format(esc(label), list_html))
+
+
+def resolve_thumbnail_asset(config):
+    """thumbnail_asset_id が指す素材。未指定なら None。
+
+    既定で先頭節の挿絵を流用するような充填はしない。どれを資料の顔にするかは
+    書き手の選択であり、推測させると意図しない絵が代表になる。
+    冒頭表示 (build_hero_thumbnail) と共有プレビュー (build_share_meta) は
+    この 1 つの解決を共有する — 顔になる 1 枚が 2 箇所でずれないようにする。
+    """
+    asset_id = config.get("thumbnail_asset_id")
+    if not _nonempty(asset_id):
+        return None
+    for candidate in config.get("assets") or []:
+        if isinstance(candidate, dict) and candidate.get("id") == asset_id:
+            return candidate
+    # 解決不能は C12 が E-THUMBNAIL-UNRESOLVED で止めている。ここへ到達するのは
+    # 検証を迂回した経路だけなので、空 alt の画像を出して黙って続行しない。
+    raise DataError(
+        "thumbnail_asset_id が assets[] で解決できない: {!r}".format(asset_id))
+
+
+def build_hero_thumbnail(config) -> str:
+    """冒頭サムネイル。thumbnail_asset_id が無ければ何も描かない。"""
+    asset = resolve_thumbnail_asset(config)
+    if asset is None:
+        return ""
+    asset_id = config.get("thumbnail_asset_id")
+    data_uri = asset.get("data_uri") or ""
+    img = tag("img", [
+        ("class", "hero-thumb-img"),
+        ("src", data_uri),
+        ("alt", asset.get("alt") or ""),
+    ], void=True)
+    return tag("figure", [
+        ("class", "hero-thumb"),
+        ("data-hb-thumbnail", asset_id),
+    ], img)
+
+
+def build_share_meta(config, tokens) -> list:
+    """共有時のプレビュー (OGP / Twitter Card / favicon) を head へ出す。
+
+    利用者指定 2026-08-19『HTML を共有した時に、サムネイル画像として表示できる
+    ように』。出所は thumbnail_asset_id ただ 1 つ — 共有用に別の画像欄を足すと、
+    一覧の顔と共有の顔が食い違ったまま気付けなくなる。
+
+    画像は data: URI のまま載せる。外部 URL にすると 1 枚の絵のためだけに配布先の
+    ホスティングが要り、SC-01/SC-10 の自己完結契約 (この資料は単体で完結する) も
+    崩れる。data: URI を読まない配布先 (一部の SNS クローラ) では画像なしの
+    タイトル・説明カードへ落ちるだけで、資料自体の表示には影響しない。
+    """
+    meta = []
+    title = config.get("title") or ""
+    # 説明文は goal をそのまま使う。ここで別の要約を書くと、資料本文と共有カードで
+    # 言っていることが違う 2 つ目の正本になる。
+    description = config.get("goal") or config.get("purpose") or ""
+    asset = resolve_thumbnail_asset(config)
+
+    meta.append('<meta name="description" content="{}">'.format(esc(description)))
+    meta.append('<meta property="og:type" content="article">')
+    meta.append('<meta property="og:locale" content="ja_JP">')
+    meta.append('<meta property="og:title" content="{}">'.format(esc(title)))
+    meta.append('<meta property="og:description" content="{}">'.format(esc(description)))
+    if asset is not None:
+        meta.append('<meta property="og:image" content="{}">'.format(
+            esc(asset.get("data_uri") or "")))
+        meta.append('<meta property="og:image:alt" content="{}">'.format(
+            esc(asset.get("alt") or "")))
+        meta.append('<meta name="twitter:card" content="summary_large_image">')
+    else:
+        meta.append('<meta name="twitter:card" content="summary">')
+
+    # favicon は素材の再掲 (数百 KB) を避け、テーマのアクセント 1 色だけの図形を
+    # その場で描く。文字を入れない — 絵文字禁止 (CR-EMOJI) と表示言語検査の
+    # 対象を head へ持ち込まないため。
+    accent = ((tokens.get("accent") or {}).get("base")
+              or tokens.get("--pop-primary") or "#000000")
+    favicon = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>"
+        "<rect width='64' height='64' rx='14' fill='{c}'/>"
+        "<rect x='14' y='18' width='36' height='6' rx='3' fill='white'/>"
+        "<rect x='14' y='30' width='36' height='6' rx='3' fill='white' opacity='.75'/>"
+        "<rect x='14' y='42' width='22' height='6' rx='3' fill='white' opacity='.5'/>"
+        "</svg>"
+    ).format(c=accent)
+    meta.append('<link rel="icon" href="data:image/svg+xml,{}">'.format(
+        urllib.parse.quote(favicon, safe="")))
+    meta.append('<meta name="theme-color" content="{}">'.format(esc(accent)))
+    return meta
 
 
 def build_hero(config, hero_part) -> str:
     parts = []
+    labels = vocabulary_labels("hero_card_labels", "field")
+    headings = vocabulary_labels("hero_list_headings", "field")
+    parts.append(build_hero_thumbnail(config))
     parts.append('<h1 data-hb-field="title">{}</h1>'.format(esc(config.get("title"))))
-    parts.append('<p class="hero-meta">')
-    parts.append(field_span("duration", config.get("duration"), klass="hero-duration num"))
-    parts.append("</p>")
     if _nonempty(config.get("lead")):
-        parts.append('<p class="hero-lead">{}</p>'.format(esc(config.get("lead"))))
-    parts.append('<p class="hero-purpose"><span class="hero-label">目的</span>'
-                 + field_span("purpose", config.get("purpose")) + "</p>")
-    parts.append('<p class="hero-background"><span class="hero-label">背景</span>'
-                 + field_span("background", config.get("background")) + "</p>")
-    parts.append('<p class="hero-goal"><span class="hero-label">ゴール</span>'
-                 + field_span("goal", config.get("goal")) + "</p>")
+        # 著者記述なのでマーカーを刻む。刻まないと裁定表のどちらの側にも載らない
+        # まま黙って round-trip 対象外になる (免除は宣言して初めて免除である)。
+        parts.append(field_span(
+            "lead", config.get("lead"), klass="hero-lead", element="p"))
+
+    # 並び順の正本は config/handout-visual-policy.json#opening.hero_card_fields.order。
+    # ここで順序を書かないので、正本を変えれば描画も C22 の順序検査も同時に動く。
+    cards = []
+    for field in hero_card_order():
+        value = config.get(field)
+        if not _nonempty(value):
+            continue
+        label = labels.get(field)
+        if not _nonempty(label):
+            raise DataError(
+                "冒頭カードの見出し語が表示語彙正本 (hero_card_labels) に無い: {!r}"
+                .format(field))
+        cards.append(hero_card(field, label, field_span(field, value)))
+    if cards:
+        parts.append('<div class="hero-card-grid">{}</div>'.format("".join(cards)))
 
     chips = []
     for chip in config.get("goal_chips") or []:
-        chips.append('<span class="goal-chip">{}</span>'.format(esc(chip)))
+        # 1 チップ 1 マーカー。外枠 (data-hb-list-field) だけでは何個あったかは
+        # 読めても各値の境界が読めないため、配列の要素側へ刻む (focus_theme と同型)。
+        chips.append(field_span("goal_chips", chip, klass="goal-chip"))
     if chips:
-        parts.append('<p class="goal-chips">{}</p>'.format("".join(chips)))
+        parts.append(hero_list_block(
+            "goal_chips", headings,
+            '<p class="goal-chips">{}</p>'.format("".join(chips))))
 
     focus = config.get("focus_theme") or []
     if focus:
         items = "".join(
             field_span("focus_theme", value, element="li") for value in focus)
-        parts.append('<ul class="meta-list focus-theme">{}</ul>'.format(items))
+        parts.append(hero_list_block(
+            "focus_theme", headings,
+            '<ul class="meta-list focus-theme">{}</ul>'.format(items)))
 
     tasks = config.get("target_tasks") or []
     if tasks:
@@ -1971,22 +2603,65 @@ def build_hero(config, hero_part) -> str:
             if isinstance(task, dict) and _nonempty(task.get("id")):
                 extra.append(("data-hb-key", task.get("id")))
             items.append(field_span("target_task", label, element="li", extra=extra))
-        parts.append('<ul class="meta-list target-tasks">{}</ul>'.format("".join(items)))
+        parts.append(hero_list_block(
+            "target_tasks", headings,
+            '<ul class="meta-list target-tasks">{}</ul>'.format("".join(items))))
 
     if _nonempty(config.get("attainment_level")):
-        parts.append('<p class="attainment">'
-                     + field_span("attainment_level", config.get("attainment_level"))
-                     + "</p>")
+        parts.append(hero_list_block(
+            "attainment_level", headings,
+            '<p class="attainment">'
+            + field_span("attainment_level", config.get("attainment_level"))
+            + "</p>"))
+
+    connectors = config.get("prerequisite_connectors")
+    if isinstance(connectors, list) and connectors:
+        labels = vocabulary_labels("connectors", "id")
+        items = []
+        for entry in connectors:
+            if not isinstance(entry, dict):
+                continue
+            cid = entry.get("connector")
+            # 語彙に無い id は C12 が E-CONNECTOR-UNKNOWN で止める。ここへ来た値は
+            # 語彙にあるはずなので、引けない場合に id を描いて取り繕わない。
+            label = labels.get(cid)
+            if label is None:
+                raise DataError(
+                    "prerequisite_connectors: 表示語彙に無いコネクタ id: {!r}".format(cid))
+            note = entry.get("note")
+            # 印は項目 (li) 側へ置く。表示ラベルは語彙正本にしか無い値なので
+            # 印を付けず、but 書きだけを内側の印付き要素にする。こうすると
+            # C20 は data-hb-key と but 書きだけを読み戻し、ラベルを構成データへ
+            # 逆流させない (ROUNDTRIP-CONTRACT /prerequisite_connectors)。
+            body = tag("span", [("class", "connector-label")], esc(label))
+            if _nonempty(note):
+                body += field_span("prerequisite_connector_note", note,
+                                   klass="connector-note")
+            items.append(tag("li", [
+                ("class", "connector"),
+                ("data-hb-field", "prerequisite_connector"),
+                ("data-hb-key", cid),
+            ], body))
+        # 見出しを見える形で置いたので aria-label は付けない (同じ名前の
+        # 出所が 2 つになり、支援技術側だけ別の呼び名になる)。
+        parts.append(hero_list_block(
+            "prerequisite_connectors", headings,
+            '<ul class="meta-list prerequisite-connectors">{}</ul>'
+            .format("".join(items))))
 
     must = config.get("must_remember") or []
     if must:
         items = "".join(field_span("must_remember", value, element="li") for value in must)
-        parts.append('<ul class="meta-list must-remember">{}</ul>'.format(items))
+        parts.append(hero_list_block(
+            "must_remember", headings,
+            '<ul class="meta-list must-remember">{}</ul>'.format(items)))
     no_need = config.get("no_need_to_remember") or []
     if no_need:
         items = "".join(
             field_span("no_need_to_remember", value, element="li") for value in no_need)
-        parts.append('<ul class="meta-list no-need">{}</ul>'.format(items))
+        parts.append(hero_list_block(
+            "no_need_to_remember", headings,
+            '<ul class="meta-list no-need">{}</ul>'.format(items)))
 
     # ヒーローの「枠」だけが再生成可能な chrome である。枠の内側に並ぶのは
     # 著者が書いた文書レベルの記述そのものなので、読み飛ばし境界を枠の要素へ
@@ -2009,22 +2684,43 @@ def build_nav(config, nav_part) -> str:
     for section in config.get("sections") or []:
         goals[section.get("id")] = section.get("goal")
     links = []
-    for entry in config.get("nav") or []:
+    for index, entry in enumerate(config.get("nav") or []):
         href = entry.get("href")
         sid = href[1:]
+        # 色は主題色 1 色に統一する。節ごとに色を変えると 8 色の意味を読み手が
+        # 探すことになるが、そこに意味は無い。色は「今どこを見ているか」だけを
+        # 表す — 現在地のチップだけが塗りつぶされる (下の aria-current)。
+        num = tag("span", [("class", "nav-chip-num"), ("aria-hidden", "true")],
+                  esc(str(index + 1)))
+        # ラベルは切らない。省略は CSS (text-overflow) だけで行い、
+        # DOM のテキストは素値のまま残す (読み上げとページ内検索が全文を得る)。
+        label = tag("span", [("class", "nav-chip-label")], esc(entry.get("label")))
         links.append(tag("a", [
             ("href", href),
+            ("class", "nav-chip"),
+            ("data-hb-nav-index", str(index + 1)),
             ("data-hb-nav-goal", goals.get(sid, "")),
             ("title", goals.get(sid, "")),
             ("aria-describedby", "goal-{}".format(sid)),
-        ], esc(entry.get("label"))))
+        ], num + label))
     nav = tag("nav", [("class", "navbar"), ("aria-label", "目次")], "".join(links))
+    # 資料の題を帯の一番上へ置く (利用者指定 2026-08-19)。どこまでスクロールしても
+    # 「何の資料を読んでいるか」が見えている状態にする。header 全体が
+    # data-hb-generated="true" の chrome なので、抽出器はこの写しを読み戻さない
+    # — 題の素値は冒頭の h1 (data-hb-field="title") 1 箇所だけが持つ。
+    title_bar = tag("p", [("class", "doc-title-bar"), ("aria-hidden", "true")],
+                    esc(config.get("title")))
+    # 置き場所 (柱 / 帯) は class 1 個の差だけで表し、DOM の形は変えない。
+    # `pop-header` は残す — C20 の chrome 判定・C17 の PRINT-02・C16 の nav 認識が
+    # この名前に接地しているため、見た目の変更で読み戻しと検査を道連れにしない。
+    layout_class = "pop-header pop-header--{}".format(nav_layout())
     return tag("header", [
-        ("class", "pop-header"),
+        ("class", layout_class),
+        ("data-hb-nav-layout", nav_layout()),
         ("data-hb-part", nav_part),
         ("data-hb-part-id", "{}-1".format(nav_part.lower())),
         ("data-hb-generated", "true"),
-    ], nav)
+    ], title_bar + nav)
 
 
 def build_glossary(entries, scope) -> str:
@@ -2068,6 +2764,8 @@ def build_memo(scope_id) -> str:
 
 def build_memo_global() -> str:
     buttons = (
+        # 焼き込み保存のボタンは画面下の常駐帯 (build_toolbar) が持つ。ここへ
+        # 二つ目を置かない — 残す手段はどこからでも押せる 1 つに閉じる。
         '<button type="button" class="memo-btn" data-hb-action="copy">'
         "メモをクリップボードへコピーする</button>"
         '<button type="button" class="memo-btn" data-hb-action="save">'
@@ -2079,6 +2777,10 @@ def build_memo_global() -> str:
         '<h2 class="memo-title">全体メモ</h2>'
         '<label class="memo-label" for="memo-all">資料全体のメモ</label>'
         '<textarea class="memo-body" id="memo-all" data-hb-key="all"></textarea>'
+        '<p class="memo-note">書いたメモは自動では残らない。'
+        '画面下の帯にある<strong>メモを埋め込んだ HTML を保存する</strong>を押すと、'
+        'メモとチェックの状態を書き込んだ HTML が 1 つ落ちてくる。'
+        '次からはその HTML を開く。</p>'
         + buttons
     )
     return tag("div", [
@@ -2105,7 +2807,12 @@ def build_lightbox() -> str:
 
 
 def build_toolbar() -> str:
+    # 焼き込み保存はここ (常駐帯) に 1 つだけ置く。全体メモの箱の中にも置くと
+    # 同じ操作の入口が 2 つになり、JS の querySelector がどちらか一方しか
+    # 拾わないまま「押しても何も起きないボタン」ができる。
     inner = (
+        '<button type="button" class="memo-btn toolbar-primary" '
+        'data-hb-action="embed">メモを埋め込んだ HTML を保存する</button>'
         '<button type="button" class="toolbar-toggle" aria-pressed="false" '
         'data-hb-part-role="aux">メモ欄の表示を切り替える</button>'
     )
@@ -2140,9 +2847,24 @@ def build_section(renderer, section, index) -> str:
     parts = []
     # 連番は index から再生成できる派生物なので、見出しの素値を運ぶ要素の
     # 外へ出す (見出しのテキストへ連番が混ざると素値へ戻せない)。
-    parts.append('<h2 class="section-label"><span class="section-num num">{}</span>{}</h2>'.format(
-        index + 1,
-        field_span("heading", section.get("heading"), klass="section-heading")))
+    # 区切り記号は正本から引く。数字の直後に見出しが続くと「1毎日の…」と読めて
+    # しまい、番号と題が 1 つの語に見える。
+    parts.append(
+        '<h2 class="section-label"><span class="section-num num">{}{}</span>{}</h2>'.format(
+            index + 1,
+            esc(section_number_separator()),
+            field_span("heading", section.get("heading"), klass="section-heading")))
+
+    # 節の並びは 見出し → 絵 → 目的・言いたいこと → 残りの部品 (利用者指定
+    # 2026-08-19)。並べ替えはここで行わない — DOM の並びは構成データの並びの
+    # 写しであり、描画側で入れ替えると round-trip (C20) が別の並びを読み戻す。
+    # 「絵が先頭」は構成データ側の契約として C12 の W-SECTION-VISUAL-NOT-FIRST が
+    # 見る (正本: handout-visual-policy.json#opening.section_opening.order)。
+    blocks = list(section.get("blocks") or [])
+    for block in blocks[:1]:
+        if isinstance(block, dict) and block.get("type") in SECTION_LEAD_VISUAL_TYPES:
+            parts.append(renderer.block(blocks.pop(0)))
+
     parts.append(tag("p", [
         ("class", "goal-chip section-goal"),
         ("id", "goal-{}".format(sid)),
@@ -2150,10 +2872,7 @@ def build_section(renderer, section, index) -> str:
     ], esc(section.get("goal"))))
     parts.append(tag("p", [("class", "lead-line"), ("data-hb-field", "lead_line")],
                      esc(section.get("lead_line"))))
-    if _nonempty(section.get("duration")):
-        parts.append(field_span("section_duration", section.get("duration"),
-                                klass="section-duration num"))
-    for block in section.get("blocks") or []:
+    for block in blocks:
         parts.append(renderer.block(block))
     parts.append(tag("p", [("class", "judgment-axis"), ("data-hb-field", "judgment_axis")],
                      esc(section.get("judgment_axis"))))
@@ -2229,6 +2948,8 @@ def render_document(config, theme, tokens, modules):
         # round-trip はその区別を要するので、著者が書いた値を別の印で運ぶ。
         ("data-hb-theme", theme),
         ("data-hb-config-theme", config.get("theme") or ""),
+        # 日付は紙面に出さないが記録は残す (build_doc_head の判断)。
+        ("data-hb-date", config.get("date", "")),
         ("data-hb-meta-reader", config.get("reader", "")),
         ("data-hb-meta-knowledge", config.get("prior_knowledge_level", "")),
         ("data-hb-meta-problem", config.get("essential_problem", "")),
@@ -2251,6 +2972,11 @@ def render_document(config, theme, tokens, modules):
     body = [
         sprite["symbols_svg"],
         build_doc_head(config),
+        # 目次 (柱) と本文を 1 個の器へ入れる。器を挟むのは、柱を sticky に
+        # したまま本文と横に並べるため — body 直下のままだと lightbox や
+        # toolbar (画面固定の chrome) まで段組みの列に数えられてしまう。
+        # 器は装飾でなく配置の骨なので、DOM 順 (目次 → 本文) は変えない。
+        '<div class="page-shell">',
         build_nav(config, nav_part),
         '<main class="wrap">',
         build_hero(config, hero_part),
@@ -2258,6 +2984,7 @@ def render_document(config, theme, tokens, modules):
         build_glossary(config.get("glossary"), SECTION_SCOPE_DOCUMENT),
         build_memo_global(),
         "</main>",
+        "</div>",
         build_lightbox(),
         build_toolbar(),
         "<script>\n{}</script>".format(build_script()),
@@ -2270,6 +2997,7 @@ def render_document(config, theme, tokens, modules):
         '<meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
         "<title>{}</title>".format(esc(config.get("title"))),
+        "\n".join(build_share_meta(config, tokens)),
         "<style>\n{}</style>".format(build_css(tokens)),
         "</head>",
         '<body class="handout">',

@@ -143,9 +143,13 @@ class HandoutBuildCommandContractTest(unittest.TestCase):
         """ゲート FAIL 時に成功と読める要約を書かない。"""
         self.assertContract("AC-C07-FM-5")
 
-    def test_AC_C07_FM_6_optional_dependency_absence_is_fail_soft(self):
-        """slide-report-generator 不在は skip 理由つき報告で他ステップを完走させる。"""
+    def test_AC_C07_FM_6_unresolvable_out_dir_stops_without_guessing(self):
+        """出力先 4 段が解決できないときは推測せず停止し、解決手段を案内する。"""
         self.assertContract("AC-C07-FM-6")
+
+    def test_AC_C07_FM_7_optional_dependency_absence_is_fail_soft(self):
+        """slide-report-generator 不在は skip 理由つき報告で他ステップを完走させる。"""
+        self.assertContract("AC-C07-FM-7")
 
     # --- 報告 -------------------------------------------------------------
     def test_AC_C07_REPORT_five_elements(self):
@@ -253,8 +257,12 @@ class SourceOfTruthTest(unittest.TestCase):
             self.assertIn(slug, purpose)
 
     def test_failure_mode_count_matches_brief(self):
-        """failure_modes を 1 つでも落として実装しないよう件数を固定する。"""
-        self.assertEqual(6, len(_load_json(BRIEF)["failure_modes"]))
+        """failure_modes を 1 つでも落として実装しないよう件数を固定する。
+
+        件数が動いたら contract_lib の AC-C07-FM-* も同数へ揃える (件数だけ直して
+        検査を足さないと、増えた停止条件が本文に無いまま緑になる)。
+        """
+        self.assertEqual(7, len(_load_json(BRIEF)["failure_modes"]))
 
 
 if __name__ == "__main__":

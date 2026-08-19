@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-C06-rebuild",
+  "covered_task_ids": ["P05-C06-rebuild"],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+  "verified_by": [
+    {
+      "claim": "出荷物が plugins/guide-doc-generator/references/ を 1 件も参照しない",
+      "method": "grep -c 'guide-doc-generator/references/' (新パスは skills/ を含むため本パターンに一致しない)",
+      "result": "pass: 0 件。編集前は 2 件 (:57 読むファイル一覧、:125 手順 3) で、いずれも実在しないディレクトリを規範の正本として指していた。実体である skills/ref-handout-design-system/references/ へ差し替え済み"
+    },
+    {
+      "claim": "文長・文数の担当が C12 と書かれている",
+      "method": "『見ない面』節の grep",
+      "result": "pass: :157 に『C12 (構成データ検証): 一文の字数上限・1 本あたりの文数・冒頭フィールドの文字量・図解と画像の枚数・nav ラベルの字数』を新設し、数値の正本が config/handout-visual-policy.json であることを併記"
+    },
+    {
+      "claim": "文長の担当を C18 と書いた箇所が 0 件",
+      "method": "grep -c 'C18.*字数上限'",
+      "result": "pass: 0 件。編集前は :155-156 が『C18 (言語と日付): …一文の字数上限』として文長を C18 に帰属させていた。C18 は文長を判定しないため、指摘の差し戻し先が誤っていた"
+    },
+    {
+      "claim": "gate_reports の 4 本列挙としての C18 は残っている",
+      "method": "grep -n 'C18'",
+      "result": "pass: :23 と :45 の『決定論ゲート (C16 / C17 / C18 / C22)』と :155 の C18 担当面 (日付書式・存在検査・glossary) は保持。AC の『C18 が 0 件』は文長帰属の文脈に限る解釈で、ゲート列挙まで消すと C03/C06/C09 の 4 本一致が壊れる"
+    },
+    {
+      "claim": "description が brief 正本と一致し lint が通る",
+      "method": "frontmatter description を brief の description へ置換し lint-skill-description.py を実行",
+      "result": "pass: exit=0 / OK=191 VIOLATION=0"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05C06-01",
+      "level": "carry-forward",
+      "summary": "参照パスの実在検査が無い。存在しない plugins/guide-doc-generator/references/ を 2 箇所で規範の正本として指していたが、どのゲートも落ちなかった。agent 本文中のリポジトリ相対パスの実在検査を release で追加する候補"
+    }
+  ]
+}

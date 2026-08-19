@@ -172,9 +172,9 @@ class PresetSharedShapeTest(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as td:
                     res, html_text, _ = H.render_html(td, cfg)
                 self.assertEqual(0, res.returncode, res.stderr)
-                # sticky 目次 / date-pill / 目的・背景・ゴール
+                # sticky 目次 / 日付の運び手 / 目的・背景・ゴール
                 self.assertTrue(H.elements_with(html_text, "data-hb-nav-goal"))
-                self.assertEqual(1, len(H.field_elements(html_text, "date")))
+                self.assertIsNotNone(H.doc_date(html_text))
                 for field in ("purpose", "background", "goal"):
                     self.assertTrue(H.field_elements(html_text, field))
                 # セクション内の固定順序

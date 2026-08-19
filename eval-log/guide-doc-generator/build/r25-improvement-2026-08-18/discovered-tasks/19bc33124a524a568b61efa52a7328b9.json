@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-nav-overflow-design",
+  "reason": "render-handout.py の .navbar は flex-wrap: wrap で sticky ナビ高さが項目数で可変になる一方、--nav-h は NAV_OFFSET_PX の固定値で焼かれる。ナビをクリックした経路は JS 実測で救われるが、fragment 直リンク・リロード時のアンカー復元ではセクション先頭がナビ帯の下へ潜る (経路依存で症状が出たり出なかったりする)。加えて R25/REQ-8 の .nav-chip が実装に存在せず、NAV-OVF-1 の max-width が掛かる先が無い",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/render-handout.py",
+  "proposed_node": {
+    "id": "P05-x-141-nav-overflow-impl",
+    "title": "ナビの折返しを 1 行 + 横スクロールへ改め .nav-chip と print 分岐を実装する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/render-handout.py"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

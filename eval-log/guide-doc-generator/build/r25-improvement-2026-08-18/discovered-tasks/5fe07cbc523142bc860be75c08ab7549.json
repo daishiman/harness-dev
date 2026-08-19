@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "利用者裁定『全体像は timeline / map / thesis の 3 種の型に集約』は plan 側 briefs/config/handout-sections.json にのみ反映済み (section_kinds に timeline/map/thesis が実在し flow-overview は deprecated:true + superseded_by:timeline)。出荷 config/handout-sections.json には 3 件とも不在で flow-overview も現役。にもかかわらず両ファイルとも version:2 を宣言しており version が drift 検出子として機能していない。DT-1 (dir_token 8/8 不一致) と同型の第二正本問題だが、利用者裁定そのものが出荷へ届いていない点でより重い",
+  "discovered_at_artifact": "plugins/guide-doc-generator/config/handout-sections.json",
+  "proposed_node": {
+    "id": "P05-x-62-overview-three-types-not-shipped",
+    "title": "全体像 3 種の型 (timeline/map/thesis) を出荷 section_kinds へ反映し version を drift 検出子にする",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "出荷 config/handout-sections.json の section_kinds が timeline / map / thesis を含み flow-overview に deprecated と superseded_by が付く。かつ plan 側と出荷側の section_kinds が内容一致することを機械検査するゲートが存在し、内容が異なるのに version が同値なら fail する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

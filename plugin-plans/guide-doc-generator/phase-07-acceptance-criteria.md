@@ -55,6 +55,13 @@ applicability:
 - [ ] 出力先へ同梱された構成データからの再生成がバイト一致する (起動引数ではなく同梱構成データが再現の単位である)
 - [ ] 冒頭に目的・背景・ゴールが揃い、各セクションのゴールが目次から追える
 - [ ] 8 用途のプリセットいずれで生成しても共有の型が保たれ、差分が宣言済みの 4 軸 (セクションの並び・推奨部品・粒度既定値・用途固有の必須項目) に限定される
+- [ ] 冒頭に lead (1 行宣言) と goal_chips (達成目標の札) が描画され E-KEY-UNKNOWN が出ない (R25 / goal-spec C67)
+- [ ] 8 用途全てで main セクションに DIAGRAM が最低 1 件配線され、密度不足は error (exit 非 0) で止まる (R25 / goal-spec C68)
+- [ ] draft_first でも挿絵生成委譲 (C21) が起動し、全 8 プリセットの全 main セクションで role=screenshot/illustration の IMG が配線される (R25 / goal-spec C69)
+- [ ] 全 8 doc_type の最初の main セクションが timeline/map/thesis のいずれかであり、抜けは error で止まる (R25 / goal-spec C70)
+- [ ] 各セクションに所要時間または件数のラベルがあり、list/table 系構造化部品を最低 1 件持つ (R25 / goal-spec C71)
+- [ ] 出力ディレクトリが `{date}_{日本語命名}` 形式になり、大文字小文字と非日本語タイトルがそのまま保たれる (R25 / goal-spec C72)
+- [ ] 1 文 60 字・1 本文 3 文・折り畳み逃避 0 件の長文検査が全て error であり、exit 0 で通る経路が無い (R25 / goal-spec C73・最優先)
 
 ### 受入例 (満たす例 / 満たさない例)
 
@@ -71,11 +78,13 @@ applicability:
 - 読みやすさの受入は決定論ゲート (文長・言い換え被覆・日付) と独立 context の意味判定の二段構えで行い、生成した本人が採点しない。
 - 導入一文と判断軸の検査と、目的・背景・ゴールの検査は独立の受入面として扱い、一方の PASS を他方の代替にしない。
 - **2026-08-18 にプリセットの受入基準を訂正した (裁定の履歴を消さず追記で残す)。** 元の文言は「6 用途」「差分はセクションの並びと推奨部品の 2 軸」だったが、同じフェーズの用途語彙は当初から 8 語であり、R21 (用途固有の必須項目) と R22 (粒度既定値) が軸を 2 本増やしていた。基準文だけが古いまま残っていたため、実測 (`preset-matrix.json`: doc_type 8 種・共有鍵 10 個・変動 4 軸) に合わせて 8 用途 / 4 軸へ改めた。**基準を実測に合わせて緩めたのではなく、実装より古い基準文を実装の宣言済み仕様へ追随させた訂正である。**
+- **R25 (改善 2026-08-18・goal-spec C67-C73)**: 利用者原文「文章が長ったらしく何行も続くのは絶対に防いでほしい。資料として見にくいから」を受け、長文系検査 (`W-SENTENCE-LONG` / `E-TEXT-OVERFLOW` / `E-TEXT-FOLDED` / `E-TEXT-PARAGRAPH`) を warning から error へ全て昇格し、exit 0 で通る経路を残さない。図解密度下限 (`W-DIAGRAM-FEW`) と画像密度下限 (`E-IMAGE-ABSENT`、新設) も同時に error 化する。**2026-08-18 追補で判定単位を訂正した**: 当初は資料全体の総量比 (value=0.4, floor=2) を正本としていたが、利用者追補指定「図解と画像は毎回セクションごとに必ず追加する」により、main セクション単位の下限 (min_diagrams_per_main_section=1 / min_images_per_main_section=1、いずれも level=error) へ置き換わった (旧正本 `improvement/diagram-gate-decision.json` は superseded)。確定値の正本は `improvement/visual-per-section-decision.json` / `improvement/output-naming-decision.json` / `improvement/text-length-gate-decision.json`、担い手一覧は `briefs/RESOLUTION-R25-improvement-2026-08-18.md`。旧予算 (180/400/900 字、45字×3件警告) で書かれた `examples/` と `tests/` は新予算で意図的に落ちるようになる — これは副作用ではなく本改善そのものであり、P05 (実装) で新予算・新配線 (全 main セクションへの DIAGRAM/IMG 配線) へ書き直す。
 
 ## 参照情報
 
-- 要件正本: `goal-spec.json` (checklist C1-C45)
+- 要件正本: `goal-spec.json` (checklist C1-C45 + R21/R22-R24/R25 追補分 C46-C73)
 - component 正本: `component-inventory.json`
 - 参照解析: `{{PROJECT_ROOT}}/analysis/guide-doc-generator/reference-analysis.md`
 - plan 全体像と用語集: `index.md`
+- R25 裁定: `briefs/RESOLUTION-R25-improvement-2026-08-18.md`、確定値: `improvement/*.json`
 

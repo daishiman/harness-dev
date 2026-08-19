@@ -68,7 +68,7 @@ discovered-task (`eval-log/guide-doc-generator/build/discovered-tasks/553225a4�
 - `render-handout.py:1536` `("data-hb-ties-to", section.get("ties_to", ""))`
 
 生成 HTML を実測すると `data-hb-field` の値として
-`title / date / purpose / background / goal / duration / focus_theme / target_task /
+`title / date / purpose / background / goal / focus_theme / target_task /
 attainment_level / must_remember / no_need_to_remember` が実在し、
 `data-hb-ties-to` も section 要素に実在する。**マーカーは刻まれている。**
 
@@ -88,7 +88,7 @@ E-EXTRACT-UNRECOVERABLE /date date を運ぶ data-hb-field="date" が無い
 E-EXTRACT-UNRECOVERABLE /purpose ...
 E-EXTRACT-UNRECOVERABLE /background ...
 E-EXTRACT-UNRECOVERABLE /goal ...
-E-EXTRACT-UNRECOVERABLE /duration ...
+E-EXTRACT-UNRECOVERABLE /goal ...
 E-EXTRACT-UNRECOVERABLE /sections/0/heading heading を運ぶ data-hb-field="heading" が無い
 E-EXTRACT-UNRECOVERABLE /sections/1/heading ...
 ```
@@ -104,7 +104,7 @@ E-EXTRACT-UNRECOVERABLE /sections/1/heading ...
 
 結果として **hero の内側にある `data-hb-field` は全て読み飛ばされる**。
 2.1 で確認した focus_theme / target_tasks / attainment_level / must_remember /
-no_need_to_remember のマーカーも、title / date / purpose / background / goal / duration の
+no_need_to_remember のマーカーも、title / date / purpose / background / goal の
 マーカーも、同じ理由で到達不能になっている。
 これは「マーカーが無い」問題ではなく「マーカーが chrome 境界の内側にある」問題である。
 
@@ -194,6 +194,33 @@ C20 route report (`eval-log/guide-doc-generator/build/route-P05-C20-01.json`) �
       "evidence": "render-handout.py:1368 (data-hb-key に target_tasks[].id)",
       "rationale": "著者記述。かつ sections[].ties_to の参照先実体であるため、失うと ties_to が必ず dangling になる。id は data-hb-key に既に載っており復元路は存在する。",
       "residual_work": "同上"
+    },
+    {
+      "pointer": "/prerequisite_connectors",
+      "decision": "marker",
+      "marker": "data-hb-field=\"prerequisite_connector\" + data-hb-key (= connectors 語彙の id) / data-hb-field=\"prerequisite_connector_note\"",
+      "marker_status": "emitted",
+      "evidence": "render-handout.py build_hero の前提カード (R25/REQ-9・goal-spec C75)",
+      "rationale": "著者記述。読者に見えるのは config/handout-vocabulary.json#connectors の表示ラベルであり、構成データが持つのは id だけ。よって復元は data-hb-key からのみ行い、要素本文 (表示ラベル) は読み戻さない — 読み戻すとラベルが構成データ側にも生まれ、語彙正本と 2 つの出所ができる。but 書き (note) は語彙に無い著者記述なので本文から復元する。",
+      "residual_work": "なし (抽出器 DOC_KEY_ONLY_ENTRY_FIELDS が実装)"
+    },
+    {
+      "pointer": "/lead",
+      "decision": "marker",
+      "marker": "data-hb-field=\"lead\"",
+      "marker_status": "emitted",
+      "evidence": "render-handout.py build_hero (hero-lead)",
+      "rationale": "著者記述の 1 行 (『この資料の要点』)。P1/P2/P3 のいずれにも当たらない。任意項目だが、書かれた資料で失えば冒頭の要点が消える。不在は欠落ではないため、抽出器はキーを作らず警告も出さない (null を置くと『null と書いた』になり schema の型検査で落ちる)。",
+      "residual_work": "なし (C11 が刻み C20 DOC_FIELDS が読む)"
+    },
+    {
+      "pointer": "/goal_chips",
+      "decision": "marker",
+      "marker": "data-hb-field=\"goal_chips\" (1 チップ 1 要素・文書順が配列順)",
+      "marker_status": "emitted",
+      "evidence": "render-handout.py build_hero (goal-chip)",
+      "rationale": "著者記述。goal を読み手が自分の状態として確かめられる到達形へ割ったもので、冒頭の散文を伸ばさないための受け皿である (利用者要求 R9)。外枠の data-hb-list-field だけでは各値の境界が読めないため、配列の要素側へ刻む (focus_theme と同型)。",
+      "residual_work": "なし (C20 DOC_LIST_FIELDS が読む)"
     },
     {
       "pointer": "/attainment_level",

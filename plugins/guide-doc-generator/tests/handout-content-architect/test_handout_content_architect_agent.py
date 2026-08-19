@@ -111,8 +111,8 @@ class HandoutContentArchitectContractTest(unittest.TestCase):
         """outcome → breakdown → feature の順と、機能名から始めない指示 (C51)。"""
         self.assertContract("AC-C05-16")
 
-    def test_AC_C05_17_attainment_dialogue_handson_duration(self):
-        """attainment_level の範囲 / dialogue / handson (B17) / anticipated-qa / duration。"""
+    def test_AC_C05_17_attainment_dialogue_handson(self):
+        """attainment_level の範囲 / dialogue / handson (B17) / anticipated-qa。"""
         self.assertContract("AC-C05-17")
 
     def test_AC_C05_18_remember_pair_is_blocking(self):
@@ -121,7 +121,7 @@ class HandoutContentArchitectContractTest(unittest.TestCase):
 
     # --- 入出力契約 ------------------------------------------------------
     def test_AC_C05_19_input_fields_and_blocked_handback(self):
-        """hearing_result 14 項目の宣言と、質問を返さず blocked で差し戻す旨。"""
+        """hearing_result 13 項目の宣言と、質問を返さず blocked で差し戻す旨。"""
         self.assertContract("AC-C05-19")
 
     def test_AC_C05_20_output_contract_keys(self):

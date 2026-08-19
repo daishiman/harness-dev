@@ -61,8 +61,8 @@
   "stderr": "違反と warning のみ。1 行 1 件で先頭に診断コード、続けて JSON Pointer 形式のキーパス、続けて説明。例: 'E-FIELD-EMPTY /sections/2/goal セクション goal が空文字。読み終えて何が分かるかを 1 文で書く'。warning は 'W-' 接頭辞",
   "exit_codes": {
     "0": "スキーマと意味規約の違反が 0 件。--strict 併用時は warning も 0 件。--normalize 指定時は --out への書き出しまで完了している",
-    "1": "構成データ側の違反。schema 違反 / 必須フィールドの欠落または空 / 型不一致 / 未知キー / 日付書式違反 / doc_type が語彙正本に無い / section id の重複または不正 / 部品データの必須キー欠落 / section_kind の追加制約違反 / glossary の重複または空 / --strict 下での warning。JSON として parse できない場合もここ (内容の問題)。fail-closed で --out へは一切書かない",
-    "2": "起動側の不正。--config 未指定 / --config が存在しないか読めない / --schema や --catalog が解決できない / --normalize を --out なしで指定 / --out が --config と同一 realpath / --out の親ディレクトリが存在しない / --today の書式が YYYY-MM-DD でない"
+    "1": "構成データ側の違反、および plugin 同梱の正本どうしの不整合 (A6c の自己整合検査)。schema 違反 / 必須フィールドの欠落または空 / 型不一致 / 未知キー / 日付書式違反 / doc_type が語彙正本に無い / prerequisite_connectors[].connector が config/handout-vocabulary.json#connectors の id 語彙に無い (E-CONNECTOR-UNKNOWN) / section id の重複または不正 / 部品データの必須キー欠落 / section_kind の追加制約違反 / 本編の先頭が全体像セクションでない (E-OVERVIEW-SECTION-MISSING・C70) / glossary の重複または空 / hero フィールドの文章長・文数超過 (W-HERO-LONG / W-HERO-HEAVY はいずれも level=error のため --strict の有無に関わらずここ) / --strict 下での warning。JSON として parse できない場合もここ (内容の問題)。A6c の E-ENUM-VOCAB-INCOMPLETE (config_schema.attainment_level の enum に対し handout-vocabulary.json#attainment_level_labels.entries[].enum が不足) は構成データの内容に依存しないが、起動引数の誤りではなく『同梱データを直せば解消する内容の不備』であるため exit 2 ではなく exit 1 に置く (差し戻し先は argv ではなくファイル)。fail-closed で --out へは一切書かない",
+    "2": "起動側の不正。--config 未指定 / --config が存在しないか読めない / --schema や --catalog が解決できない / config/handout-vocabulary.json が解決できないか JSON として読めない (語彙が読めないまま E-CONNECTOR-UNKNOWN / E-ENUM-VOCAB-INCOMPLETE を素通しさせないため、照合スキップの fail-soft にせず LaunchError とする) / --normalize を --out なしで指定 / --out が --config と同一 realpath / --out の親ディレクトリが存在しない / --today の書式が YYYY-MM-DD でない"
   },
   "write_scope": [
     "--out で指定された 1 ファイルのみ (out-file)"
@@ -75,8 +75,9 @@
       "config/handout-purposes.json (doc_type 語彙の照合。直接読まず C23 のモジュール API 経由)",
       "config/handout-parts.json (part id 語彙の正本。ファイルの単独 owner は C11 であり、本 script は C11 の module API (load_parts_catalog) 経由で読む。id を自前に列挙しない)",
       "config/handout-sections.json (section_kind 語彙。本 script が単独 owner のデータファイルで、検証時も同じファイルを読んで enum を得る。R21 で追加した max_items / forbid_row_detail / min_duration_share / required_role の各属性もここから読み、閾値を script へ書かない)",
-      "assets/tokens/<theme>.json (R21 C52 の説明文字数上限 text_limits.block_body_max_chars だけを読む。テーマ定義ファイルの schema owner は C11 であり、本 script はこの 1 キーの read-only consumer。config.theme が null / 不在なら既定テーマの値を使い、キー自体が無ければ 400 を用いる)",
-      "config/handout-visual-policy.json (図解密度・散文量・役割別の文字数上限の閾値正本。本 script が単独 reader であり、閾値を script へ書かない。読めない場合は fallback 定数で fail-soft に進む。裁定は briefs/RESOLUTION-R24-visual-first-draft-first.md)"
+      "assets/tokens/<theme>.json (R21 C52 の説明文字数上限 text_limits.block_body_max_chars を読む。テーマ定義ファイルの schema owner は C11 であり、本 script は read-only consumer。config.theme が null / 不在なら既定テーマの値を使い、block_body_max_chars のキー自体が無ければ 100 を用いる。R25/REQ-7 で既定 400 から 100 へ改定 [正本 improvement/text-length-gate-decision.json]。R25/REQ-8 (goal-spec C74) の hero フィールド上限はここへ並行フィールドを作らず config/handout-visual-policy.json#opening.hero_fields 側の 1 箇所を正本とする [team-lead 2026-08-18 追補訂正])",
+      "config/handout-visual-policy.json (図解密度・散文量・役割別の文字数上限の閾値正本。本 script が単独 reader であり、閾値を script へ書かない。読めない場合は fallback 定数で fail-soft に進む。裁定は briefs/RESOLUTION-R24-visual-first-draft-first.md)",
+      "config/handout-vocabulary.json (REQ-9 / goal-spec C75。prerequisite_connectors[].connector の id 語彙正本。本 script が単独 reader であり、connector 名を script へ列挙しない。読めない場合は fallback として prerequisite_connectors の照合自体をスキップする fail-soft ではなく、正規化・検証いずれの経路でも読めなければ LaunchError で exit 2 とする — 語彙欠落を無検査で通すと E-CONNECTOR-UNKNOWN が機能しなくなるため plugin-level surface (schemas と同格) として扱う)"
     ],
     "invoked_by": [
       "C01 run-handout-build (対話経路の構成データ確定ゲート。skill 名の正本は skill-brief-C01.json の skill_name)",
@@ -103,6 +104,7 @@
   },
   "r21_type_constraints": {
     "role": "R21 (goal-spec C46-C59) が求める『資料の型』のうち、構成データ層で表現・検査できるものの単一正本。P03-x-04 の裁定に従い、新 component を作らず本 script の責務追加として実装する",
+    "criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — C46-C59 の 14 件について owner・検証手段の実在・criterion 文との一致度を確定させた単一正本 (P03-x-04)。本 brief の checks は『本 script が持つ検出コード』を書く場所であり、criterion 文の残余 (検査は在るが criterion の一部しか見ていない箇所) をここへ写さない。残余は 5 component へ跨るため、中立な位置にある ledger 側 1 箇所に置く",
     "presentation_order_derivation": {
       "id": "CR-PRESENTATION-ORDER",
       "owner": "C12 (単一正本。この導出規則を他のいかなる component・ブリーフ・prompt にも複製しない)",
@@ -114,10 +116,11 @@
     "text_length_fold": {
       "id": "CR-TEXT-FOLD",
       "owner": "C12",
-      "limit_source": "assets/tokens/<theme>.json の text_limits.block_body_max_chars (既定 400。テーマ設定で変更できるという C52 の要求はこの 1 キーで満たす)",
-      "rule": "TEXT 部品の body が上限を超えるとき、--normalize は body を上限以下の先頭部分と残余へ分割し、残余を同一セクションの直後に置く B10 (items 1 件・summary は固定文字列 '詳しい説明 (続き)'・open=false) へ移す。分割点は上限位置以前で最後に現れる文末 (。 ! ? のいずれか) の直後とし、文末が 1 つも無ければ上限位置の直後で切る (決定論)。折り畳んだ件数を provenance.text_fold_count に記録する",
-      "why_normalize_not_render": "折り畳みをレンダラ (C11) 側で行うと、生成 HTML には B10 があるのに構成データには TEXT しか無い状態になり、C20 の逆抽出による round-trip 等価 (C31) が原理的に成立しない。正規化済み構成データを唯一の真値に保つため、変形は --normalize の中で完結させる",
-      "why_not_new_part": "『長い説明を畳む』器は部品カタログの B10 アコーディオンが既に持っている。折り畳み専用部品を新設すると同じ構造に 2 つの表現ができる (P03-x-04 の裁定)"
+      "limit_source": "assets/tokens/<theme>.json の text_limits.block_body_max_chars_by_detail_level (既定 overview=60/standard=100/detailed=160。R25/REQ-7 で 180/400/900 から改定。block_body_max_chars の既定も 100。テーマ設定で変更できるという C52 の要求はこの 1 キーで満たす)",
+      "rule": "R25/REQ-7 (goal-spec C73 / RESOLUTION-R25 D8-3) により旧仕様 (超過分を B10 へ分割して逃がす) は廃止された。TEXT 部品の body が上限を超えるとき、--normalize は分割も折り畳みもせず E-TEXT-FOLDED (level=error) を計上して exit 1 にする。fold の実行回数上限は第 1 稿を含む全経路で 0 であり、超過は書き手が本文を短くするか REQ-5(b) の構造化検査に従って箇条書き・図解へ落とすことでのみ解消する。provenance.text_fold_count は常に 0 になる (フィールド自体は互換のため残すが、非 0 になる経路が無い)",
+      "why_error_not_fold": "旧方式は『予算内に収まっていても畳み先 (B10) が micro_copy.exempt_parts のため文字数を一切問われない』逃げ道になっており、利用者の最優先指定 (2026-08-18)『文章が長ったらしく何行も続くのは絶対に防いでほしい』を満たせなかった (改善サイクル finding の再現: 750 字 TEXT が --normalize を exit0 で通っていた)。折り畳みを禁じることで、超過は必ず build を止める",
+      "b10_exemption_unchanged": "B10 が micro_copy.exempt_parts であること自体は変更しない (免除規則自体は妥当という決定に従う)。塞いだのは fold 回数の側 (max_fold_count=0) であり、免除規則ではない",
+      "why_not_new_part": "『長い説明を畳む』器は部品カタログの B10 アコーディオンが既に持っている。折り畳み専用部品を新設すると同じ構造に 2 つの表現ができる (P03-x-04 の裁定)。この判断は fold=0 化後も変わらない (B10 自体は著者が明示的に畳みたい補足として引き続き使える)"
     },
     "checks": [
       {
@@ -150,8 +153,8 @@
       },
       {
         "checklist": "C52",
-        "detection": "E-TEXT-OVERFLOW (検証時) / CR-TEXT-FOLD (正規化時)",
-        "where": "A8c / N14"
+        "detection": "E-TEXT-OVERFLOW (検証時) / E-TEXT-FOLDED (正規化時。R25/REQ-7 で fold 上限 0 に伴い CR-TEXT-FOLD から改称)",
+        "where": "A8c / N10b"
       },
       {
         "checklist": "C54",
@@ -210,11 +213,31 @@
         "key": "subject_slug",
         "type": "string",
         "required": "normalize が導出または要求",
-        "constraint": "^[a-z0-9][a-z0-9-]{0,39}$",
+        "constraint": "REQ-6 (goal-spec C72 / RESOLUTION-R25 D7) により C19 derive_slug と同一の SLUG_FORBIDDEN (パス禁止文字のみ) 規則を採る。日本語・大文字小文字を保持するため ASCII 限定 regex ではなく『パス禁止文字を含まない・1..40 文字』を制約とする",
         "covers": [
           "C23"
         ],
-        "notes": "C19 のディレクトリ名 <主題slug> の値。導出規則は normalize_algorithm 参照。日本語のみのタイトルからは導出できないため明示指定を要求する"
+        "notes": "C19 のディレクトリ名 <date>_<主題slug> (REQ-6 で書式変更、旧 <date>-<dir_token>-<slug>) の値。導出規則は normalize_algorithm N5 参照。全体がパス禁止文字だけのタイトルからのみ導出できないため明示指定を要求する"
+      },
+      {
+        "key": "lead",
+        "type": "string",
+        "required": false,
+        "constraint": "非空なら 1..80 文字 (警告閾値は config/handout-visual-policy.json#opening.hero_fields.max_chars.lead=40)",
+        "covers": [
+          "C67"
+        ],
+        "notes": "REQ-1 (goal-spec C67)。資料全体の 1 行宣言。render-handout.py:1944-1957 が既に描画対応済みで、schema 未対応 (E-KEY-UNKNOWN) のみが欠けていた"
+      },
+      {
+        "key": "goal_chips",
+        "type": "array of string",
+        "required": false,
+        "constraint": "0..4 件、各要素 1..14 文字 (config/handout-visual-policy.json#opening.hero_fields.goal_chips)",
+        "covers": [
+          "C67"
+        ],
+        "notes": "REQ-1 (goal-spec C67)。lead の直後に置く達成目標の短い札"
       },
       {
         "key": "date",
@@ -360,8 +383,8 @@
       {
         "key": "presentation_order",
         "type": "string",
-        "required": "normalize が導出または照合",
-        "constraint": "enum: demo_first | explain_first。列挙外は E-PRESENTATION-ORDER",
+        "required": "正規化済み構成データでは必須 (normalize 前の手書き入力でのみ省略可)",
+        "constraint": "enum: demo_first | explain_first。列挙外は E-PRESENTATION-ORDER。provenance を持つ構成データ (= normalize 通過済み) で欠落または null なら E-FIELD-MISSING",
         "covers": [
           "C49",
           "C50"
@@ -409,6 +432,16 @@
         "notes": "R21 C57。『覚えなくてよいこと (その場で調べればよい / 本資料を見返せば足りる)』。must_remember と対で必須にする理由: 覚える対象を絞っても、覚えなくてよい範囲を宣言しない限り読み手は残り全部を暗記対象と見なし、認知負荷が下がらない。片方だけが非空の状態は E-REMEMBER-PAIR で落とす (どちらを先に書いたかに依らない対称な検査)"
       },
       {
+        "key": "prerequisite_connectors",
+        "type": "array<object>",
+        "required": false,
+        "constraint": "任意 (外部データを使わない資料があるため未指定・0 件を許す)。要素は {connector: string, detail: string 任意}。connector は config/handout-vocabulary.json#connectors の id (現行語彙: google-drive / onedrive / kintone) に存在すること。語彙正本に無い id は E-CONNECTOR-UNKNOWN で exit 1。detail は非空なら 1..32 文字 (micro_copy.caption)",
+        "covers": [
+          "C75"
+        ],
+        "notes": "REQ-9 (goal-spec C75)。資料が前提とする外部コネクタの宣言。語彙の正本は config/handout-vocabulary.json (canon: C12) の 1 箇所のみで、connector 名を script へ焼かない。3 種以外への拡張は語彙ファイルへの追記だけで済む。冒頭カードグリッド (REQ-8 / goal-spec C74) の『前提』カードとして C11 が描画する"
+      },
+      {
         "key": "theme",
         "type": "string | null",
         "required": false,
@@ -441,13 +474,13 @@
         "key": "assets",
         "type": "array<object>",
         "required": false,
-        "constraint": "要素は {id: ^[a-z0-9][a-z0-9-]*$ 一意, kind: image, src: 相対パスまたは data URI, alt: 非空 string, caption: string | null, role: screenshot | figure | photo}",
+        "constraint": "要素は {id: ^[a-z0-9][a-z0-9-]*$ 一意, kind: image, src: 相対パスまたは data URI, alt: 非空 string, caption: string | null, role: screenshot | figure | photo | illustration}。illustration は REQ-3(b) (goal-spec C69) で追加 (概念・人物など実画面でないセクションの挿絵)",
         "covers": [
           "C5",
           "C6",
           "C56"
         ],
-        "notes": "画像ノード。C13 embed-assets.py が src を data URI へ畳み込む。alt を必須にしているのは a11y ゲート (C22) を構成データ段階で満たすため。role は R21 C56 の『実際の画面かどうか』を機械判定するための必須メタで、normalize は既定値を充填しない (推測させない。未指定は E-ASSET-ROLE-MISSING)。C11 は値を data-hb-asset-role として出し、C22 NAR-07 がそれを読む"
+        "notes": "画像ノード。C13 embed-assets.py が src を data URI へ畳み込む。alt を必須にしているのは a11y ゲート (C17 verify-handout-a11y-print.py の A11Y-01..A11Y-07) を構成データ段階で満たすためであり、C22 ではない。C22 は筋道 (narrative) ゲートであって a11y 判定を持たない — この分界を崩すと、alt 欠落の直し先が 2 component に見える。role は R21 C56 の『実際の画面かどうか』を機械判定するための必須メタで、normalize は既定値を充填しない (推測させない。未指定は E-ASSET-ROLE-MISSING)。C11 は値を data-hb-asset-role として出し、C22 NAR-07 がそれを読む"
       },
       {
         "key": "attachments",
@@ -639,7 +672,7 @@
         "data_keys": [
           "rows: array<{num: int|null, text: 非空, time: string|null, sub: string|null}> (1 件以上)"
         ],
-        "notes": "section_kind が agenda-timebox のとき全 row の time が非空であり、time の総和が当該 section.duration と一致すること (E-TIMEBOX-SUM) を追加検査する。section_kind が flow-overview のとき rows 件数が当該 section_kind の max_items (既定 5) 以下であり (E-SECTIONKIND-MAXITEMS)、全 row の sub が null であること (E-SECTIONKIND-ROWDETAIL) を追加検査する — R21 C46 の『大きな流れだけを列挙し、個々の手順・操作の詳細を冒頭に含めない』の実体"
+        "notes": "section_kind が agenda-timebox のとき全 row の time が非空であり、time の総和が当該 section.duration と一致すること (E-TIMEBOX-SUM) を追加検査する。当該 section_kind が config/handout-sections.json で max_items を持つとき rows 件数がその値以下であること (E-SECTIONKIND-MAXITEMS)、forbid_row_detail=true を持つとき全 row の sub が null であること (E-SECTIONKIND-ROWDETAIL) を追加検査する — R21 C46 の『大きな流れだけを列挙し、個々の手順・操作の詳細を冒頭に含めない』の実体。適用対象を slug で名指しせず属性の有無で決めるのは、C46 の要求が『冒頭概観セクションという役』に掛かっており種別 slug に掛かっていないためで、flow_overview_relation により冒頭概観の正規種別が flow-overview から timeline へ移っても検査が抜けない (slug 名指しにすると deprecated 側だけを見張る検査になる)。上限値と禁止フラグを本ブリーフへ写さない"
       },
       {
         "part": "B04",
@@ -786,7 +819,7 @@
         "data_keys": [
           "body: 非空 string"
         ],
-        "notes": "部品に当てはまらない散文。1 文が 45 文字を超える文が 3 つ以上あると W-SENTENCE-LONG (参照解析 §5-6 の『一文が短い』の型)。R21 C52: body の文字数がテーマ設定の上限を超える場合、--normalize が超過分を既定で畳んだ B10 へ切り出す (text_length_fold 参照)。--normalize なしの検証では超過を E-TEXT-OVERFLOW として落とす"
+        "notes": "部品に当てはまらない散文。R25/REQ-7 (goal-spec C73) により、1 文でも sentence.sentence_gate.max_chars (既定 60 字) を超えれば W-SENTENCE-LONG を level=error として計上し (旧: 45 字超が 3 つ以上で警告)、1 body あたり sentence.sentences_per_body.max_sentences (既定 3 文) を超えれば E-TEXT-PARAGRAPH を計上する。R21 C52: body の文字数がテーマ設定の上限 (detail_level 別。既定 overview=60/standard=100/detailed=160) を超える場合、R25 により --normalize でも折り畳んで逃がさず E-TEXT-FOLDED (level=error) として exit 1 にする (旧: 既定で畳んだ B10 へ切り出していた。text_length_fold 参照)。--normalize なしの検証では従来どおり超過を E-TEXT-OVERFLOW として落とす"
       }
     ]
   },
@@ -797,27 +830,35 @@
     "A4. schema ファイルを読み、自前の決定論バリデータで解釈する (jsonschema パッケージは使えない: C27)",
     "A5. 文書レベルの検査を行う。既知キー以外の混入 (E-KEY-UNKNOWN) / 必須フィールドの欠落と空 (E-FIELD-MISSING / E-FIELD-EMPTY) / 型と長さと enum と正規表現の適合",
     "A6. doc_type を C23 のモジュール API (load_catalog → resolve) で照合する。語彙リテラルを自前に持たない。未定義は E-DOCTYPE-UNKNOWN",
+    "A6b. REQ-9 (goal-spec C75): prerequisite_connectors が非空のとき、各要素の connector を config/handout-vocabulary.json#connectors の id 語彙と照合する。語彙リテラルを自前に持たず、ファイルを読んで照合するだけ。未定義は E-CONNECTOR-UNKNOWN で exit 1。未指定 (フィールド自体が無い、または 0 件) は正常 (外部データを使わない資料を許す)",
+    "A6c. REQ-8 (goal-spec C74): 自己整合検査。本 script の config_schema が定義する attainment_level の enum 値集合と、config/handout-vocabulary.json#attainment_level_labels.entries[].enum の集合を突き合わせる。config_schema の enum に有って entries に無い値が 1 件でもあれば E-ENUM-VOCAB-INCOMPLETE で exit 1 (構成データの attainment_level の値そのものではなく、語彙ファイルの被覆漏れを検査する — 構成データ検証とは独立に、起動時ないし --normalize 実行のたびに走る自己診断)。entries に有って enum に無い側 (使われない表示ラベルが残っている) は fail-closed の対象にせず warning に留める (E-ENUM-VOCAB-STALE は新設しない。診断メッセージへ注記するだけで exit code へは影響させない)。これにより handout-vocabulary.json#attainment_level_labels.closed:true (C18 の ENUM-01 が前提とする『変換のしようが無い違反が起きない』性質) を機械的に担保する",
     "A7. sections を走査する。id の書式・一意性・予約語衝突 / heading / goal / lead_line / judgment_axis の非空と長さと単一行 / section_kind の enum",
     "A8. parts を走査する。part id が config/handout-parts.json に存在すること、その部品の section_scope が in-section であること (document スコープの部品は generated-chrome なので指定不可)、data の許容キーと形 (E-PART-SHAPE)、B13 のネスト制限",
     "A5b. R21 の document 追加検査を行う。focus_theme が 1..2 件で全件非空 (E-FOCUS-THEME) / target_tasks が 1 件以上で id 一意 (E-TARGET-TASKS-EMPTY) / attainment_level が順序つき enum に含まれる (E-ATTAINMENT-LEVEL) / must_remember が 1..must_remember_max 件 (E-REMEMBER-MAX) / must_remember と no_need_to_remember が両方とも非空 (片方だけ非空は E-REMEMBER-PAIR) / presentation_order が enum に含まれる (E-PRESENTATION-ORDER)",
+    "A5c. R21 C49 の必須性を検査する。provenance ブロックを持つ構成データ (= 一度 normalize を通っている) では、normalize が充填・導出するクラスのフィールド (schema_version / subject_slug / date / detail_level / evidence_depth / presentation_order / must_remember_max) が欠落・null であってはならず、欠ければ E-FIELD-MISSING で exit 1 とする。この段が無いと『normalize 後に手で presentation_order を削った構成データ』が検証を素通りし、C22 NAR-07 (C56 の実画面先行検査) が評価対象外として黙って無効化される — 必須フィールドであることの実行点はこの 1 箇所であり、下流の各 component は値の存在を前提にしてよい。provenance を持たない手書き入力に対しては適用しない (N4b の導出が未実行であるため欠落が正常)",
     "A8b. section_kind=capability-explainer のセクションについて parts[].slot を検査する。全 part が slot を持つこと (E-CAPABILITY-SLOT-MISSING) と、並びが outcome+ → breakdown+ → feature+ の 3 区画に分かれ各区画 1 件以上で出戻りが無いこと (E-CAPABILITY-SLOT-ORDER)。他の section_kind では slot は任意で、値があっても順序を要求しない",
-    "A8c. TEXT 部品の body 長を text_length_fold の上限と突き合わせる。--normalize が無い実行では超過を E-TEXT-OVERFLOW として計上する (この経路では折り畳まない。検証専用実行が入力を変えないため)",
-    "A9. section_kind ごとの追加制約を検査する (agenda-timebox の time 非空と総和一致 / decisions の decided が bool / action-items の owner と due 非空 / sources の footnote 非空 / known-unknown-next の cards 3 件と note_key / flow-overview の max_items と sub 禁止 / handson の B17 1 件以上 / anticipated-qa の B10 2 件以上かつ open=false)。閾値はすべて config/handout-sections.json 側の属性から読む",
+    "A8c. TEXT 部品の body 長を text_length_fold の上限と突き合わせる。REQ-7 (goal-spec C73 / RESOLUTION-R25 D8-2) により --normalize の有無に関わらず超過を E-TEXT-OVERFLOW として常に計上する (旧: report_overflow=not args.normalize により --normalize 経路では報告されなかった。round-trip の都合で本文を切る必要があっても、切った事実の報告まで消さない)",
+    "A8d. sentence 節 (config/handout-visual-policy.json#sentence、無ければ script 内 fallback 定数 LONG_SENTENCE_CHARS / LONG_SENTENCE_COUNT) を TEXT 部品の body へ適用する。1 文でも sentence.sentence_gate.max_chars (既定 60) を超えれば W-SENTENCE-LONG を level=error として計上する。1 body あたりの文数が sentence.sentences_per_body.max_sentences (既定 3) を超えれば E-TEXT-PARAGRAPH を計上する (REQ-7 (4)(5) / goal-spec C73)",
+    "A8e. content_selection.prose_vs_list の代理指標として、main セクションが list/table 系の構造化部品 (B03/B04/B05/B06/B07/B08/B09/B13/B14/B15/B16) を 1 件も持たない場合 E-SECTION-NO-STRUCTURE を計上する (REQ-5(b) / goal-spec C71)",
+    "A8f. REQ-8 (goal-spec C74 / improvement/hero-card-decision.json#decision.hero_field_budget): これまで未実装だった check_text_bodies の走査対象 (現状 sections[].parts[] の TEXT 部品のみ) へ、資料レベルの hero フィールド purpose / goal / lead / background を加える。上限は config/handout-visual-policy.json#opening.hero_fields.max_chars の既存値 (purpose=60 / background=80 / goal=50 / lead=40。値は変更しない) をそのまま用い、超過を W-HERO-LONG (level=error。新コードは作らない — 同 decision の _meta.correction_2026-08-18 により当初検討していた新規コード案と 60/60/100 の数値は撤回済み) として計上する。あわせて同節へ新設した max_sentences (purpose=1/goal=1/lead=1/background=2) を A8c/A8d の sentence_gate 実装へ渡して超過を判定する。REQ-7 の 1 文 60 字検査 (W-SENTENCE-LONG) も対象集合を hero フィールドへ広げ、同じ判定ロジックをそのまま流用する (新設閾値・新設ロジックはいずれも作らない)。opening.hero_total.max_chars (合計 400。W-HERO-HEAVY, level=error) も同じ経路で計上する。essential_problem / attainment_level はこの検査の対象に含めない (measured_from の実測対象外であり budget が定義されていない)。診断メッセージには『箇条書きへ落とす』か『セクション本文へ移す』のどちらかを逃がし先として含める (B10 折り畳みへは REQ-7 と同様に逃がさない)",
+    "A9. section_kind ごとの追加制約を検査する (agenda-timebox の time 非空と総和一致 / decisions の decided が bool / action-items の owner と due 非空 / sources の footnote 非空 / known-unknown-next の cards 3 件と note_key / handson の B17 1 件以上 / anticipated-qa の B10 2 件以上かつ open=false)。config/handout-sections.json の kind_attribute_semantics が定める属性 (max_items / forbid_row_detail / min_duration_share / required_role) については、slug を名指しせず『その属性を持つ section_kind すべて』へ一律に適用する — 上限件数の超過は E-SECTIONKIND-MAXITEMS、行詳細の混入は E-SECTIONKIND-ROWDETAIL。閾値も適用対象も config/handout-sections.json 側から読み、本 script へ slug 名も数値も書かない",
     "A9b. R21 の紐づけと隔離を検査する。role の enum と section_kind.required_role との一致 (E-SECTION-ROLE-CONFLICT) / appendix セクションが全 main セクションより後ろにあること (E-APPENDIX-ORDER) / role=main の ties_to が 1 件以上でありゴールか主題への参照を 1 件以上含むこと (E-SECTION-UNTIED-GOAL) / 同じく具体業務への参照を 1 件以上含むこと (E-SECTION-UNTIED-TASK) / 参照先の実在 (E-TIES-DANGLING)",
     "A9c. 到達レベルの整合を検査する。全 section.attainment_step が document.attainment_level 以下 (E-ATTAINMENT-OVERRUN) かつ、少なくとも 1 セクションが document.attainment_level と一致すること (E-ATTAINMENT-UNREACHED)",
     "A9d. 時間配分を検査する。section.duration の書式 (E-SECTION-DURATION-FORMAT) / min_duration_share を持つ section_kind が 1 件でもあるとき全セクションの duration が非空であること (E-DURATION-INCOMPLETE) / agenda-timebox の B03 行 time の総和が当該 section.duration と一致すること (E-TIMEBOX-SUM) / min_duration_share を持つ種別ごとに『その種別のセクションの duration 合計 ÷ 全セクションの duration 合計』が下限以上であること (E-SECTIONKIND-DURATION-SHARE)",
+    "A9e. REQ-5(a) (goal-spec C71 / RESOLUTION-R25 D6): 各セクションの節ラベルに所要時間または件数のいずれかが必ず載ることを検査する。section.duration が非空ならそれで充足する。空の場合は section.parts (または section_kind に応じた行配列 rows/items/cards の該当フィールド) の件数が 1 件以上あり、C11 の描画契約 (section-label) がその件数を代替表示できることを構成データ側から保証する — 具体的には、duration が空かつ parts の総件数が 0 の場合にのみ E-SECTION-LABEL-MEASURE-MISSING で exit 1 とする。所要時間と件数のどちらも持たないセクションは、節ラベルが『見出しだけ』になり読み手が分量を見積もれない (参照解析 §5 の型と対で効く検査)",
     "A10. 参照整合 (attachment_id / asset_id / diagram_id) と未参照アセットの warning を検査する",
     "A11. glossary の一意性をスコープ横断で検査する",
     "A12. 診断を集計する。E- が 1 件以上、または --strict かつ W- が 1 件以上なら、全件を stderr へ列挙して exit 1 (--out へは書かない)",
     "A13. --normalize が無ければ stdout へ OK サマリを出して exit 0",
-    "A14. --normalize があれば normalize_algorithm の N1-N13 (R21 で挿入した N4b / N7b / N7c / N10b を含む) を実行し、完了後に stdout へ OK サマリを出して exit 0"
+    "A14. --normalize があれば normalize_algorithm の N1-N13 (R21 で挿入した N4b / N7b / N7c / N10b を含む) を実行し、完了後に stdout へ OK サマリを出して exit 0",
+    "A9f. REQ-4 (goal-spec C70): 本編の先頭が全体像セクションであることを検査する。config/handout-sections.json の kind_attribute_semantics が定める全体像属性 (overview_type) を持つ section_kind を『全体像セクションの種別』とし、slug を名指ししない — C70 の 3 型 (timeline / map / thesis) は config 側の集約定義であり、script へ型名を書くと集約の変更が script の変更になる (C46 で採った属性駆動と同じ原則)。最初の main セクション (role が main か未指定である最初の要素) の section_kind が overview_type を持たなければ E-OVERVIEW-SECTION-MISSING で exit 1。全体像セクションが本編の先頭以外に置かれている場合は本検査では落とさない (置いてよい位置の規約が別に無いため、ここで独自に禁じない)"
   ],
   "normalize_algorithm": [
     "N1. 前段として検証を完了させる。1 件でも E- 診断があれば --out へは書かず exit 1 (fail-closed。部分成果物を残さない)",
     "N2. 入力の BOM 除去 / CRLF→LF / 全文字列の NFC 正規化 / 行末空白除去を適用する",
     "N3. schema_version が無ければ現行版を充填し、あれば照合のみ",
     "N4. date を確定する。値があれば yyyy/mm/dd / yyyy-mm-dd / yyyy/m/d / yyyy-m-d を受理して yyyy/mm/dd へ整形し、暦として実在するかを datetime.date で検査する。値が無いか null なら --today の値 (未指定ならシステムのローカル日付) を yyyy/mm/dd へ整形して充填し、provenance.date_source に 'default-today' を記録する。これが plugin 全体で唯一の日付解決点である",
-    "N5. subject_slug を確定する。値があれば書式検査のみ。無ければ title から導出する: NFKC 正規化 → 小文字化 → [a-z0-9] 以外を '-' へ置換 → 連続する '-' を 1 個へ畳む → 前後の '-' を除去 → 40 文字で切る。結果が空文字になる場合 (日本語のみのタイトル) は導出せず E-SLUG-UNDERIVABLE で exit 1 とし、subject_slug を明示指定するよう stderr で促す。ここでローマ字化やハッシュ化に逃げないのは、ディレクトリ名は人間が後から探す索引であり、機械が作った無意味文字列を残すと R17 の目的を損なうため",
+    "N5. subject_slug を確定する。値があれば書式検査のみ。無ければ title から導出する。REQ-6 (goal-spec C72 / improvement/output-naming-decision.json / RESOLUTION-R25 D7) により導出規則は C19 route-handout-output.py の derive_slug と同一のものを使う (二重実装をしない。import するかロジックを C19 と共有する): NFKC 正規化 → SLUG_FORBIDDEN (パス禁止文字) のみを '-' へ置換 → 連続する '-' を 1 個へ畳む → 前後の '-' を除去 → 40 文字で切る。旧実装が行っていた [a-z0-9] 以外の一律置換 (ASCII 以外を全て潰す) と小文字化は廃止し、日本語や大文字小文字はそのまま保持する。結果が空文字になる場合 (全体がパス禁止文字だけのタイトル) のみ導出せず E-SLUG-UNDERIVABLE で exit 1 とし、subject_slug を明示指定するよう stderr で促す。非日本語タイトルは警告なくそのまま通す。ここでローマ字化やハッシュ化に逃げないのは、ディレクトリ名は人間が後から探す索引であり、機械が作った無意味文字列を残すと R17 の目的を損なうため",
     "N6. doc_type を C23 のモジュール API で解決する。alias で書かれていた場合は正規の slug へ置き換える (正規化の一部)。未定義なら E-DOCTYPE-UNKNOWN で exit 1",
     "N7. 各 section の section_kind が無ければ 'standard' を充填する。notes_enabled が無ければ true を充填する",
     "N8. section_kind ごとの追加制約 (part_data_schema の notes に記した agenda-timebox / decisions / action-items / sources / known-unknown-next の各条件) を検査する。違反は E-SECTIONKIND-CONSTRAINT",
@@ -826,7 +867,7 @@
     "N4b. presentation_order を確定する。値があれば enum 検査のみを行い provenance.presentation_order_source = 'explicit' を記録する。無いか null なら r21_type_constraints.presentation_order_derivation (CR-PRESENTATION-ORDER) に従い prior_knowledge_level から導出して充填し、'derived-from-prior-knowledge' を記録する。導出は本ステップが plugin 全体で唯一の実行点である (日付の N4 と同じ扱い)",
     "N7b. R21 の既定値を充填する。各 section の role が無ければ 'main' を充填する。must_remember_max が無ければ 2 を充填する。attainment_step / attainment_level / focus_theme / target_tasks / ties_to は推測で埋めない (欠落は N1 の検証段で E- として落ちる)",
     "N7c. section.duration を整形する。'1時間' → '60分'、'90 分' → '90分'、'1時間30分' → '90分' の純変換を行い ^\\d{1,3}分$ へ揃える。範囲表記は変換せず E-SECTION-DURATION-FORMAT。agenda-timebox で section.duration が空かつ B03 行 time が全て埋まっている場合に限り、行 time の総和を section.duration へ充填する (導出は 1 方向のみ。逆に section.duration から行 time を割り振ることはしない)",
-    "N10b. text_length_fold (CR-TEXT-FOLD) を適用する。TEXT 部品の body が上限超過なら分割し、残余を直後の B10 (open=false) へ移す。生成する B10 の part id は元の TEXT の id に '-cont' を付与した値とし、セクション内一意性が破れる場合は '-cont2', '-cont3' と連番を伸ばす (決定論)。折り畳み件数を provenance.text_fold_count に記録する。折り畳み後の body も上限を超えない",
+    "N10b. text_length_fold (CR-TEXT-FOLD) を適用する。REQ-7 (goal-spec C73 / RESOLUTION-R25 D8-3) により折り畳みの実行回数上限は第1稿を含む全経路で 0 とする。TEXT 部品の body が上限超過した時点で折り畳まずに E-TEXT-FOLDED (level=error) を計上し exit 1 とする (旧: 分割して残余を直後の B10 (open=false) へ移していた)。B10 が micro_copy.exempt_parts であること自体は変更しない (免除規則は妥当。塞ぐのは fold 回数の側)。超過は書き手が本文を短くするか、REQ-5(b) の構造化検査に従い箇条書き・図解へ落とすことでのみ解消する",
     "N11. provenance を組み立てる。normalized_by / schema_version / C23 の catalog_sha256 / date_source / presentation_order_source / text_fold_count を記録する",
     "N12. --out へ書き出す。まず --out と同一ディレクトリへ一時ファイルを作り、書き終えてから os.replace で原子的に差し替える (途中失敗で壊れた JSON を残さない)。書式は encoding_rules に従い、同一入力から常にバイト一致する",
     "N13. --config のパス・タイムスタンプ・内容が無変更であることを実装上保証する (--config を開くのは 'r' モードのみ)"
@@ -834,7 +875,7 @@
   "date_single_source_guarantee": {
     "problem": "R17 のディレクトリ名 <YYYY-MM-DD> と R18 の本文表示 yyyy/mm/dd が別々に日付を取得すると、日付境界をまたぐ実行で不一致が起きる (goal-spec C35)",
     "mechanism": "(1) 日付フィールドは date ただ 1 つ。派生形をスキーマに保存しない。(2) 既定値の充填はこの script の N4 だけで行い、C11 / C19 / C18 は現在日時を一切取得しない (実装検査: これらの script に datetime.now / date.today / time.time が出現しないことを P09 のゲートで grep する)。(3) ディレクトリ名の <YYYY-MM-DD> は date.replace('/', '-') という純変換で C19 が導く。保存された第 2 のフィールドを持たないため、2 値が乖離する状態そのものを表現できない。(4) C18 は同じ純変換を HTML 側の date-pill と出力ディレクトリ名の双方へ適用して照合する側であり、日付のソースにはならない",
-    "handoff_to_c19": "C19 は正規化済み構成データの date と、C23 の dir_token(doc_type)、subject_slug の 3 値だけからディレクトリ名を組む。すなわち <date.replace('/','-')>-<dir_token>-<subject_slug>",
+    "handoff_to_c19": "C19 は正規化済み構成データの date と subject_slug の 2 値だけからディレクトリ名を組む (R25/REQ-6 C72。正本 improvement/output-naming-decision.json#decision.dir_name_format)。すなわち <date.replace('/','-')>_<subject_slug>。doc_type / C23 の dir_token はディレクトリ名から外れ、索引メタデータ (.handout-route.json) 側だけへ残る (旧書式 <date.replace('/','-')>-<dir_token>-<subject_slug> は廃止済み)",
     "handoff_to_c11": "C11 は date をそのまま date-pill へ出す。書式変換もゼロ埋め補正も行わない (N4 で確定済み)"
   },
   "requirements_covered": [
@@ -844,7 +885,9 @@
     "R19",
     "R20 (語彙照合の consumer として)",
     "R21 (構成データ層で表現・検査できる項目の担い手)",
-    "R22 (記述粒度の可変。detail_level と evidence_depth の 2 軸を直交独立に持ち、用途プリセットは既定値のみを与える)"
+    "R22 (記述粒度の可変。detail_level と evidence_depth の 2 軸を直交独立に持ち、用途プリセットは既定値のみを与える)",
+    "R25-REQ-8 (C74。冒頭資料レベルフィールドを文章長ゲート (W-HERO-LONG / W-HERO-HEAVY、level=error) の対象へ加える。カード化・列挙値表示・ナビの描画側の担いは C11/C18。加えて A6c で config_schema.attainment_level の enum と config/handout-vocabulary.json#attainment_level_labels の対応表を自己整合検査し、被覆漏れを E-ENUM-VOCAB-INCOMPLETE で止める)",
+    "R25-REQ-9 (C75。prerequisite_connectors の任意宣言と語彙照合 (E-CONNECTOR-UNKNOWN))"
   ],
   "checklist_covered": [
     "C15",
@@ -865,10 +908,20 @@
     "C52",
     "C54",
     "C57",
+    "C58",
     "C59",
     "C61",
     "C62",
-    "C63"
+    "C63",
+    "C67",
+    "C68",
+    "C69",
+    "C70",
+    "C71",
+    "C72",
+    "C73",
+    "C74",
+    "C75"
   ],
   "acceptance_checks": [
     {
@@ -892,14 +945,24 @@
       "expected": "順に demo_first / demo_first / explain_first が充填され provenance.presentation_order_source='derived-from-prior-knowledge'、明示指定の 1 件は explain_first のまま 'explicit' (C49)。同一入力に対し何度実行しても同じ値 (決定論)"
     },
     {
+      "id": "AC-C12-R21-46b",
+      "how": "config/handout-sections.json で max_items と forbid_row_detail を持つ section_kind を実測で列挙し (現時点は flow-overview と timeline の 2 件)、その各々について B03 rows を上限+1 件置いた構成データと rows[].sub を書いた構成データを与える",
+      "expected": "列挙されたどの section_kind でも E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL で exit 1 (C46)。期待対象はデータファイルの属性から導出し、slug 名も件数もテストへ書かない。flow-overview だけが落ちて timeline が素通りする状態を退行として検出する — deprecated 側だけを見張る検査になっていないことの回帰"
+    },
+    {
+      "id": "AC-C12-R21-49b",
+      "how": "--normalize で presentation_order を充填した構成データから、(a) presentation_order のキーごと削除 (b) null を代入 の 2 通りを作り、--normalize なしで検証する。対照として provenance ブロックごと削除した同じ構成データも検証する",
+      "expected": "(a)(b) はいずれも E-FIELD-MISSING で exit 1 (C49 の必須フィールド性。A5c)。対照の provenance 無し構成データは presentation_order が無くても exit 0 (手書き入力では欠落が正常であり、必須性は正規化済みに限って掛かることの境界確認)"
+    },
+    {
       "id": "AC-C12-R21-51",
       "how": "section_kind=capability-explainer のセクションで parts を feature → outcome の順に置く / slot を 1 件だけ省く",
       "expected": "順に E-CAPABILITY-SLOT-ORDER / E-CAPABILITY-SLOT-MISSING で exit 1 (C51)"
     },
     {
       "id": "AC-C12-R21-52",
-      "how": "上限 (既定 400) を 120 文字超過する TEXT を持つ構成データを (a) --normalize 無し (b) --normalize 付き で実行し、(c) テーマの text_limits.block_body_max_chars を大きくして再実行",
-      "expected": "(a) E-TEXT-OVERFLOW で exit 1 / (b) exit 0 かつ out.json で TEXT の body が上限以下へ縮み、直後に open=false の B10 が 1 件増え、provenance.text_fold_count=1 / (c) 折り畳みが起きず TEXT が元のまま (C52)。(b) を 2 回実行してバイト一致すること"
+      "how": "上限 (既定 100。R25/REQ-7 で 400→100 へ改定) を 120 文字超過する TEXT を持つ構成データを (a) --normalize 無し (b) --normalize 付き で実行し、(c) テーマの text_limits.block_body_max_chars を大きくして再実行",
+      "expected": "(a) E-TEXT-OVERFLOW で exit 1 / (b) R25/REQ-7 (D8-3・goal-spec C73) により fold 実行回数上限が全経路で 0 になったため、折り畳んで exit 0 にする旧経路は廃止された。--normalize を付けても E-TEXT-FOLDED (level=error) で exit 1 になり、B10 への切り出しも provenance.text_fold_count のインクリメントも起きない / (c) 上限を引き上げれば超過が解消し exit 0 で TEXT が元のまま (C52)。**本項は AC-C12-R25-73 と同一の対象 (750 字超過 TEXT の --normalize 挙動) を扱う旧テストであり、両者が食い違う場合は AC-C12-R25-73 (E-TEXT-FOLDED による fail-closed) を正とする。旧 (b) の『exit 0 で B10 へ折り畳まれる』という期待値は撤回済み**"
     },
     {
       "id": "AC-C12-R21-54",
@@ -1038,13 +1101,74 @@
     },
     {
       "id": "AC-C12-R24-01",
-      "how": "概念図解 0 枚・main セクション 5 個の構成データを検証する / config/handout-visual-policy.json の thresholds.min_diagrams_per_main_sections.value を 0 にして再実行する",
-      "expected": "前者は W-DIAGRAM-FEW を stderr に出して exit 0 (--strict では exit 1)。後者は同じ構成データで警告が消える (閾値が script に埋まっていないことの回帰)"
+      "how": "main セクション 5 個中 1 個だけ DIAGRAM を持たない構成データを検証する / config/handout-visual-policy.json の thresholds.min_diagrams_per_main_section.value を 0 にして再実行する",
+      "expected": "前者は W-DIAGRAM-FEW (level=error) が DIAGRAM を持たない main セクションを列挙して exit 1。後者は同じ構成データで検査が通る (閾値が script に埋まっていないことの回帰)"
     },
     {
       "id": "AC-C12-R24-02",
       "how": "config/handout-visual-policy.json を一時的に退避して検証を実行する",
       "expected": "図解密度の警告は出ないが、他の検査は従来どおり動き exit code が変わらない (fail-soft の回帰)"
+    },
+    {
+      "id": "AC-C12-R25-67",
+      "how": "lead と goal_chips (4件) を含む構成データを検証する / lead を持たない従来の構成データを検証する",
+      "expected": "前者は exit 0 (E-KEY-UNKNOWN が出ない)。後者も lead が任意項目のため exit 0 のまま (C67)"
+    },
+    {
+      "id": "AC-C12-R25-68",
+      "how": "main セクション 7 件全てが DIAGRAM を 1 件以上持つ構成データを検証する / main セクション 7 件のうち 1 件だけ DIAGRAM を持たない構成データ (概念図解の総量は変えず配置だけ 1 節から外す) を検証する。あわせて examples/minimal-config.json 相当の main 1 節・図解 0 枚ケースを検証する",
+      "expected": "前者は exit 0。後者は W-DIAGRAM-FEW が DIAGRAM 欠如の main セクションを列挙し level=error として exit 1 (総量が足りていても該当節が 1 つでもあれば FAIL することの確認)。examples/minimal-config.json 相当ケースも同様に exit 1 (旧: 総量比なら通っていた) (C68)"
+    },
+    {
+      "id": "AC-C12-R25-69",
+      "how": "main セクション 7 件全てが IMG を 1 件以上持つ構成データを検証する / main セクション 7 件のうち 1 件だけ IMG を持たず DIAGRAM や B03 など他の視覚部品のみを持つ構成データを検証する / screenshot 役の節で asset の実体が無く illustration へ fallback した構成データを検証する",
+      "expected": "前者は exit 0。後者は E-IMAGE-ABSENT が IMG 欠如の main セクションを列挙して exit 1 (W-VISUAL-ABSENT は他の視覚部品があるため発火しないが E-IMAGE-ABSENT は独立に発火することの確認)。3 件目は illustration への fallback 後 IMG として充足しているため exit 0 (C69)"
+    },
+    {
+      "id": "AC-C12-R25-70",
+      "how": "doc_type=guide の構成データで最初の main セクションの section_kind を、overview_type 属性を持たない種別 ('standard') にする / 持つ種別 (guide の型である map) にする",
+      "expected": "前者は E-OVERVIEW-SECTION-MISSING で exit 1、後者は exit 0 (C70)",
+      "why_attribute_not_slug": "期待値は config/handout-sections.json から overview_type を持つ種別を実測で引いて組み立てる。テストへ slug を直書きすると、3 型の集約定義が変わったときテストだけが古い種別を見張る"
+    },
+    {
+      "id": "AC-C12-R25-71",
+      "how": "main セクションを DIAGRAM 1 件のみ (list/table 部品を持たない) で構成する",
+      "expected": "E-SECTION-NO-STRUCTURE で exit 1 (C71)"
+    },
+    {
+      "id": "AC-C12-R25-71b",
+      "how": "REQ-5(a) の検査 (A9e)。section.duration を空にし parts も 0 件のセクションで実行する / section.duration を空にするが parts を 1 件以上持つセクションで実行する / section.duration を非空にし parts を 0 件にするセクションで実行する",
+      "expected": "1 件目のみ E-SECTION-LABEL-MEASURE-MISSING で exit 1。2 件目・3 件目は所要時間または件数のいずれかで充足しており exit 0 (C71)"
+    },
+    {
+      "id": "AC-C12-R25-72",
+      "how": "subject_slug 未指定・title='KPI進捗管理の業務フロー' で --normalize",
+      "expected": "out.json の subject_slug が日本語を保持し大文字小文字も保つ (旧: ASCII 潰しで空同然になっていた) (C72)"
+    },
+    {
+      "id": "AC-C12-R25-73",
+      "how": "detail_level=overview の節へ 750 字の TEXT を入れて --normalize / 60 字を 1 字だけ超える 1 文を含む TEXT / 4 文で構成された TEXT",
+      "expected": "1 件目 (750 字超過) は E-TEXT-FOLDED (fold 実行回数上限 0 に抵触) で exit 1 / 2 件目は W-SENTENCE-LONG (level=error) で exit 1 / 3 件目は E-TEXT-PARAGRAPH で exit 1。いずれも --normalize の有無にかかわらず exit 1 が維持される (旧: 750 字は B10 へ折り畳まれ exit 0 だった。この回帰が新予算と fold 上限 0 が効いていることの証拠)。本項は AC-C12-R21-52 と対象が重複する箇所 (750 字超過 TEXT の --normalize 挙動) を持ち、本項の期待値が正 (C73)"
+    },
+    {
+      "id": "AC-C12-R25-74a",
+      "how": "利用者提示の実測値 (purpose=102 字 1 文 / background=185 字 4 文 / goal=89 字 1 文) をそのまま document レベルフィールドへ入れて --normalize なしで検証する / 同じ構成データを --normalize 付きで実行する",
+      "expected": "両方とも W-HERO-LONG (level=error) が purpose (60 字 1 文超過) と goal (50 字 1 文超過) と background (80 字 2 文超過) の 3 件を JSON Pointer 付きで列挙して exit 1。--normalize の有無で結果が変わらない (REQ-7 の A8c と同じ fail-closed の性質を hero フィールドにも持たせたことの回帰。旧: この 3 フィールドはどの経路でも検査されず exit 0 だった) (C74)"
+    },
+    {
+      "id": "AC-C12-R25-74b",
+      "how": "purpose を 60 字ちょうど 1 文にする / lead を 41 字にする / background を 80 字 2 文にする / background を 3 文にする / attainment_level を宣言する enum 値のまま (最大 'reproducible' で 13 字) にする",
+      "expected": "1 件目 (60 字ちょうど) は exit 0。2 件目 (lead 41 字、上限 40 超過) は W-HERO-LONG で exit 1。3 件目 (background 80 字 2 文) は exit 0。4 件目 (background 3 文) は W-HERO-LONG (max_sentences=2 超過) で exit 1。5 件目は exit 0 (attainment_level は hero_field_budget の対象外であり本項目では検査しない。可視表示の変換は C18 の責務) (C74)"
+    },
+    {
+      "id": "AC-C12-R25-75",
+      "how": "prerequisite_connectors に {connector: 'google-drive'} {connector: 'onedrive'} {connector: 'kintone'} の 3 件を入れて検証する / prerequisite_connectors を省略した構成データを検証する / {connector: 'dropbox'} (語彙正本に無い値) を入れて検証する",
+      "expected": "1 件目・2 件目は exit 0 (宣言は任意)。3 件目は E-CONNECTOR-UNKNOWN が該当要素の JSON Pointer と語彙正本のパスを添えて exit 1 (C75)"
+    },
+    {
+      "id": "AC-C12-R25-76",
+      "how": "本 script の config_schema.attainment_level の enum へ値を 1 件追加し (例: 'expert-authoring')、config/handout-vocabulary.json#attainment_level_labels.entries に対応する enum 値を追加しないまま --normalize なし / --normalize 付き の両方で実行する / 対応する entries を追加してから再実行する / 逆に entries 側にだけ余分な enum 値が残っている状態で実行する",
+      "expected": "1 件目・2 件目は A6c の自己整合検査 (構成データの内容とは無関係に、script 起動のたびに config_schema と語彙ファイルを突き合わせる) が E-ENUM-VOCAB-INCOMPLETE で exit 1 (未対応の enum 値を列挙する。--normalize の有無で結果は変わらない)。3 件目は対応が揃うため exit 0。4 件目 (entries 側の余分) は fail-closed の対象にせず診断メッセージへ警告として注記するのみで exit 0 (attainment_level_labels.closed:true が保証する『変換できない構成データが通らない』性質を機械的に担保する回帰。旧: この対応表の被覆漏れはどの経路でも検査されず、handout-vocabulary.json の note に書かれた記述だけが唯一の根拠だった) (C74)"
     }
   ],
   "failure_modes": [
@@ -1080,8 +1204,8 @@
     },
     {
       "case": "TEXT 部品に長文が並んでいる",
-      "behavior": "W-SENTENCE-LONG を出すが既定では通す",
-      "rationale": "参照解析 §5-6 の『一文は 20〜45 字』は観測された型であって達成必須の閾値ではない (goal-spec の constraints が実測値を目標値に焼くことを禁じている)。助言として出し、判断は --strict の有無に委ねる"
+      "behavior": "REQ-7 (goal-spec C73) により W-SENTENCE-LONG は level=error として exit 1 で落とす (--strict の有無に関わらない)",
+      "rationale": "利用者指定 (2026-08-18)『文章が長ったらしく何行も続くのは絶対に防いでほしい』。旧方針 (助言として出し判断は --strict に委ねる) では一度も build を止めなかったため、error へ昇格する。上限そのもの (60 字 / 1 body 3 文まで) は sentence.sentence_gate / sentence.sentences_per_body (config/handout-visual-policy.json) が正本であり script へ焼かない"
     },
     {
       "case": "同一の意味を持つフィールドを利用者が use_scene として書いてきた",
@@ -1135,8 +1259,13 @@
       },
       {
         "code": "W-DIAGRAM-FEW",
-        "threshold_key": "thresholds.min_diagrams_per_main_sections",
-        "meaning": "概念図解が main セクション数に対して不足"
+        "threshold_key": "thresholds.min_diagrams_per_main_section",
+        "meaning": "main セクションを 1 つずつ走査し、DIAGRAM を 1 件も持たない main セクションを列挙する。1 件でも該当があれば FAIL。REQ-2(b) (goal-spec C68 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補『図解と画像は毎回セクションごとに必ず追加する』) により判定単位を資料全体の総量比から main セクション単位へ変更し level=error へ昇格済み。旧: 総量比 (main セクション数 × 0.4 と floor 2 の大きい方) required = max(floor, ceil(main_count * value)) の実装 (validate-handout-config.py:934-935 相当) は残さない。コード体系 (W- prefix) は据え置き、重大度は level フィールドで表現する"
+      },
+      {
+        "code": "E-IMAGE-ABSENT",
+        "threshold_key": "thresholds.min_images_per_main_section",
+        "meaning": "main セクションを 1 つずつ走査し、IMG を 1 件も持たない main セクションを列挙する。1 件でも該当があれば FAIL。REQ-3(b) (goal-spec C69 / improvement/visual-per-section-decision.json 正本) による新設コード。既存 W-VISUAL-ABSENT は視覚部品 (DIAGRAM/IMG/B03..B17) の総称を数えるため B03 が 1 件あれば満たされてしまい IMG の有無を判定できない。level=error。screenshot 役の節で素材が無く illustration へ落ちた場合は IMG として引き続き数える (fallback 後も充足扱い)"
       },
       {
         "code": "W-TEXT-HEAVY",
@@ -1147,8 +1276,62 @@
         "code": "W-TEXT-RUN",
         "threshold_key": "thresholds.max_consecutive_text_parts",
         "meaning": "TEXT が連続し画面上 1 つの長文と区別が付かない"
+      },
+      {
+        "code": "W-COPY-LONG",
+        "threshold_key": "micro_copy (thresholds ではなく micro_copy 直下。roles[].max_chars が上限、roles[].fields が当てるフィールド名の集合)",
+        "meaning": "図解・カード・表の中の 1 要素が段落になっている。利用者要求 R7 (『文章が長ったらしく何行も書く』の絶対防止) を、資料全体の分量ではなく 1 要素の長さとして当てる検査であり、REQ-8 の『数を絞らない』緩和の対象外である (節を増やしてよいが 1 要素は短いまま・improvement/visual-per-section-decision.json#decision.no_quantity_cap.keep)",
+        "scope": "sections[].parts[].data の中の文字列と diagrams[].data の中の文字列のみ。文書直下・セクション直下のフィールドには当てない (hero は thresholds.hero_fields、本文は detail_level の文字数予算が別に持つ。同じ値に 2 つの上限を持たせない)",
+        "field_resolution": "data を再帰的に辿り、各文字列の『役割』を JSON pointer の末尾セグメントで決める。末尾が数字 (配列添字) のときは 1 つ上のセグメント名を役割とする — columns[] / cells[] のように『名前は複数形・中身は 1 要素』の形へ上限を当てるため。決めた名前で roles[].fields を逆引きし、(role, max_chars) が引ければ len(値.strip()) と比較する",
+        "exclusions": [
+          "exempt_parts.ids に含まれる part は data ごと走査しない (TEXT / B10 / B11)。理由は方針ファイル側の why が正本 — 本 brief へ複製しない",
+          "exempt_fields.names に含まれるフィールド名は部品を問わず当てない (識別子・機械値であり読み手が読む文ではない)",
+          "diagrams[].data には exempt_parts を当てない (部品 id を持たないため)。exempt_fields は当てる"
+        ],
+        "unlisted_fields_are_uncapped": "roles[].fields のいずれにも現れないフィールド名は上限が引けず、検査せずに素通りする。これは仕様であって漏れではない (未知の役割へ勝手な上限を当てない) が、部品の data に新しいフィールドが増えたとき既定で無制限になるという性質を持つ。部品カタログのフィールド名と roles[].fields の突合は本 script の責務ではない",
+        "fail_soft_thresholds": "方針ファイルが読めない・roles が壊れている場合は FALLBACK_MICRO_COPY_LIMITS / FALLBACK_MICRO_COPY_EXEMPT_PARTS / FALLBACK_MICRO_COPY_EXEMPT_FIELDS を使い、検証そのものは止めない (visual_density_constraints.fail_soft と同じ扱い)。fallback は出荷時の方針ファイルと同じ値を持つこと — 食い違うと、方針ファイルが読めないときだけ別の基準で通る 【現状の不一致 (2026-08-19 実測)】FALLBACK_MICRO_COPY_LIMITS は title=24 / caption=40 で、出荷時の方針ファイル (title=22 / caption=32) より緩い。caption の 32 字は利用者フィードバック 2026-08-18 で『40 字では 2 文が入りカードが小さな段落になった』として引き下げた値であり、方針ファイルが読めない経路だけ R7 の締めが黙って元へ戻る。exempt_parts も canon {TEXT,B10,B11} に対し fallback は (TEXT,) のみ、exempt_fields は canon が key を免除する一方 fallback は key を label 14 として当てる。是正は P05-x-129-micro-copy-fallback-drift。",
+        "message_contract": "診断は pointer 付きで『<フィールド名> は N 文字 (上限 M 文字・役割 <role>)』と、部品と図解のどちらの中かを示す語を出す。上限値を message へ入れるのは、警告を見た人が方針ファイルを開かずに直せるようにするため"
+      },
+      {
+        "code": "W-OPENS-PROSE",
+        "level": "warning",
+        "exit_code_class": "既定は exit 0 (warning)。--strict 併用時のみ exit 1 (exit_codes の『--strict 下での warning』に含まれる)。level=error へは昇格させない — 節の並びは書き手の判断で覆せる余地を残す (図解が主張そのものである節など) ため",
+        "threshold_key": "閾値を持たない。opening.section_opening の rule (本編の節は散文で始めない) をそのまま当てる真偽検査であり、config 側にも数値は無い",
+        "meaning": "本編 (role が main か未指定) の節で、部品の並びの先頭が TEXT である。判定は section.parts の出現順の先頭 1 件のみを見る (タブの中身は数えない・part_ids_of の規約)",
+        "why": "何を言いたいかは lead_line が既に 1 行で担っている。その直後に段落が来ると、読み手は形を見る前に文章を読まされる。正本 config/handout-visual-policy.json#opening.section_opening (order と progression) — 理由と並びの定義は複製しない",
+        "violation_example": "sections[0].parts = [{\"part\":\"TEXT\",…}, {\"part\":\"B04\",…}] (main セクションで TEXT が先頭)",
+        "pass_example": "sections[0].parts = [{\"part\":\"B04\",…}, {\"part\":\"DIAGRAM\",…}, {\"part\":\"TEXT\",…}] (要点 → 形 → 補足)",
+        "scope_limit": "progression の 4 段のうち機械検査が持つのは『step 4 (TEXT) を先頭に置いていないか』だけである。step 2 (要点を並べる部品) と step 3 (DIAGRAM) の前後は値域で判定できないため C05 の設計時と C01 の完了条件が持つ (正本 opening.section_opening.progression.enforced_by)。この検査が緑であることを『節の並びが正しい』の証明として読まない",
+        "not_applicable_to": "appendix セクション (role=appendix) は対象外。付録は読み進める順序を前提にしない"
       }
     ],
-    "fail_soft": "方針ファイルが読めなくても検証そのものを止めない。閾値は編集方針であって構成データの妥当性ではない"
+    "fail_soft": "方針ファイルが読めなくても検証そのものを止めない。閾値は編集方針であって構成データの妥当性ではない",
+    "_note_non_density_codes": "以下の codes[] は視覚密度の枠に置いているが、W-OPENS-PROSE のように閾値を持たない真偽検査も含む。閾値の有無ではなく『編集方針 (handout-visual-policy.json) が正本であるコード』であることが所属の基準である"
+  },
+  "text_length_verdict_delivery": {
+    "id": "CR-TEXT-LENGTH-DELIVERY",
+    "owner": "C12 (この配達経路の主張の単一正本。C03 / C06 / C09 は本項を参照し、経路の説明を複製しない)",
+    "since": "P03-x-02 (2026-08-18)",
+    "rule": "文長系 5 コード (W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / W-HERO-LONG / W-HERO-HEAVY) の判定結果を、機械可読レポートとして下流へ配達しない。本 script は --json-report に相当する引数を持たず (argv は 7 本)、stdout は人間可読の 1 行サマリのみである。配達の代わりに fail-closed で止める: 5 コードはいずれも level=error であり、--strict の有無にも --normalize の有無にも関わらず exit 1 となり --out へ一切書かない",
+    "why_this_is_sufficient": "C19 route-handout-output.py は正規化済み構成データしか受け取らない (未正規化は『C12 の --normalize を先に通すこと』で拒否) ため、ビルド経路は必ず本 script を通過する。したがって HTML が存在するという事実そのものが『文長判定を通過済み』の証明になる。利用者要件『文章が長ったらしく何行も書くのを絶対に防ぐ』(R25/REQ-7・goal-spec C73) は、下流へ警告を運ぶことではなく本 script が止めることで担保されている",
+    "why_not_a_fifth_gate": "本 script を C09 handout-verify の第 5 ゲートへ加える案は採らない。C09 は生成済み HTML を対象とする検査の口であり、本 script は構成データを対象とする (command-brief-C09.json#scope_boundary_vs_config_gates の裁定)。加えて『決定論ゲートは C16/C17/C18/C22 の 4 本』という同一事実が skill-brief-C03.json#deterministic_checks と agent-brief-C06.json#input_contract.receives と C09 の 3 箇所に書かれており、片側だけを 5 本へ広げると割れる",
+    "consumers": "C06 は本項を前提として長さを finding にしない (agent-brief-C06.json#text_length_ownership.why_c12_report_is_not_an_input)。C03 は委譲入力へ本 script の結果を含めない (skill-brief-C03.json#open_questions 第 4 項)。C09 は本 script を起動口に持たない",
+    "exception": "逆抽出 (C02/C20) 由来や手書きの HTML を対象に C06 が呼ばれた場合、本 script は一度も走っておらず通過保証も存在しない。この場合も C06 は長さを判定せず not_reviewed へ『C12 未実行』として記録する"
+  },
+  "r25_structure_constraints": {
+    "note": "R25 (改善 2026-08-18) で追加した構成の型の検査。R21 の型制約表とは別に置く — R21 は『section_kind ごとの属性が守られているか』、R25 は『資料全体の並びが利用者要求の型 (ゴール → 全体像 → カード) になっているか』であり、掛かっている対象が違う",
+    "canonical_refs": [
+      "goal-spec C70 (3 型 timeline / map / thesis への集約)",
+      "config/handout-sections.json#kind_attribute_semantics.overview_type (どの種別が全体像かの正本)",
+      "config/handout-visual-policy.json#opening (節の中の並びの正本)"
+    ],
+    "checks": [
+      {
+        "checklist": "C70",
+        "detection": "E-OVERVIEW-SECTION-MISSING",
+        "where": "A9f (最初の main セクションの section_kind が overview_type 属性を持つか)",
+        "note": "検査対象の種別は config/handout-sections.json の overview_type 属性から導出する。timeline / map / thesis という型名も、どの doc_type がどの型を取るかも本ブリーフと script へ書かない。属性が 1 つも定義されていない状態では全 doc_type が落ちるため、config 側の属性追加 (P05-x-131) と同じ稿で入れる"
+      }
+    ]
   }
 }

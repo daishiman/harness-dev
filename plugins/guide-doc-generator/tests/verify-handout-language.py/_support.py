@@ -41,12 +41,44 @@ DETECTION_ORDER = [
 
 NORMALIZED_BY = "validate-handout-config.py"  # C12 provenance.normalized_by
 CONFIG_DATE = "2026/08/17"
-OUT_DIR_NAME = "2026-08-17-lecture-claude-intro"
+
+# 出力ディレクトリ名の書式は C19 と C18 DATE-03 が同じ 1 本の正本
+# (config/handout-output.json#dir_name_format) を読む。fixture 側でも同じ正本から
+# 組み立て、R25 のように書式が変わったとき test 側だけ旧形で固まらないようにする。
+OUTPUT_CONFIG = REPO_ROOT / "plugins" / "guide-doc-generator" / "config" / "handout-output.json"
+DIR_NAME_FORMAT = json.loads(OUTPUT_CONFIG.read_text(encoding="utf-8"))["dir_name_format"]
+DIR_SEPARATOR = DIR_NAME_FORMAT.split("{date}", 1)[1].split("{slug}", 1)[0]
+DEFAULT_SLUG = "lecture-claude-intro"
+
+
+def out_dir_name(date=CONFIG_DATE, slug=DEFAULT_SLUG):
+    """命名用ディレクトリ名。日付は表示正本の純変換 (replace('/','-'))。"""
+    return DIR_NAME_FORMAT.format(date=date.replace("/", "-"), slug=slug)
+
+
+OUT_DIR_NAME = out_dir_name()
 
 # 部品カタログ (config/handout-parts.json, owner C11) の section_scope 別代表値。
 # id をここへ列挙しているのはテスト fixture の都合であり、
 # 「script が id を焼き込んでいないこと」は test_lang06 の CAT 系が別途固定する。
 IN_SECTION_PARTS = ["B03", "B05", "B07", "B10", "B16", "B17", "IMG", "DIAGRAM", "TEXT"]
+# 「見出しの直後の絵」= LANG-06 の順序判定で起点に数えない部品。
+# id を並べず data_block_type からカタログ経由で引く (script 側と同じ導出)。
+VISUAL_PARTS = frozenset(
+    part["id"]
+    for part in json.loads(PARTS_CATALOG.read_text(encoding="utf-8"))["parts"]
+    if part.get("section_scope") == "in-section"
+    and part.get("data_block_type") in ("image", "diagram")
+)
+
+
+def parts_for(part_id):
+    """その部品 1 種だけで『具体部品あり』を成立させる最小の並び。
+
+    絵は節の先頭 1 枚だけ順序の起点から外れる (利用者指定 2026-08-19) ので、
+    絵の id は 2 枚置いて「2 枚目は具体として数える」ことまで含めて確かめる。
+    """
+    return [part_id, part_id] if part_id in VISUAL_PARTS else [part_id]
 DOCUMENT_PARTS = ["B01", "B02"]
 NON_PART_MARKERS = ["section", "lightbox", "memo", "memo-global", "toolbar"]
 
@@ -118,7 +150,6 @@ def base_config(**overrides):
         "reader": "はじめて触る社内メンバー",
         "prior_knowledge_level": "none",
         "essential_problem": "何ができるのかの像が無いまま説明を聞いて離脱する。",
-        "duration": "90分",
         "presentation_order": "demo_first",
         "attainment_level": "operable",
         "glossary": [dict(g) for g in GLOSSARY],
@@ -135,7 +166,6 @@ def base_config(**overrides):
                 "judgment_axis": DEFAULT_JUDGMENT_AXIS,
                 "section_kind": s["kind"],
                 "role": "main",
-                "duration": "20分",
             }
             for s in SECTION_DEFS
         ],

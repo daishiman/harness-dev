@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C10-01",
+  "reason": "SIZE_LIMIT_BYTES = 8*1024*1024 が第 2 正本になっている。config へ 32MiB を注入した実測で TestOversizedFileAborts 5 件が失敗し、『上限超え』fixture が上限未満になって検査が黙って空振りする経路が実証された。P04-C01-01 の max_loops 写しと同型",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-C10.json",
+  "proposed_node": {
+    "id": "P05-x-105",
+    "title": "tests/guard-handout-external-ref/hb_c10.py:41 の SIZE_LIMIT_BYTES を config からの実測導出へ置換する",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": "C10",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+    "acceptance_criterion": "hb_c10.py に走査予算のリテラルが存在せず config/handout-output.json#size_limits.hook_scan_budget から導出されること。config の値を変えて再実行したとき TestOversizedFileAborts の期待値が追随すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C10"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -8,14 +8,14 @@
     {"flag": "--config", "required": true, "type": "path", "description": "正規化済み構成データ JSON (C12 --normalize の出力)。ここからアイコン参照を走査する", "default": null},
     {"flag": "--icon-set", "required": false, "type": "path", "description": "アイコンセット正本 JSON。未指定時は plugin 実体解決 (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → plugin.json の name=guide-doc-generator 照合 → __file__ 相対) で assets/icons/icon-set.json を求める", "default": "<plugin-root>/assets/icons/icon-set.json"},
     {"flag": "--format", "required": false, "type": "enum", "description": "both | symbols | manifest。both は結果 JSON 1 オブジェクト (symbols 文字列 + 参照表)、symbols は SVG 定義ブロックのみを raw で、manifest は参照表 JSON のみを出す。既定 both", "default": "both"},
-    {"flag": "--strict-style", "required": false, "type": "flag", "description": "アイコンセット正本側の様式違反を warning でなく exit 1 にする。C01 の build 経路と C16 の検査経路は常にこれを付けて呼ぶ", "default": false}
+    {"flag": "--strict-style", "required": false, "type": "flag", "description": "アイコンセット正本側の幾何規約違反 (stroke_width が 2.2-2.6 の範囲外 / path 座標が 0-24 の外) を warning でなく exit 1 にする。属性様式そのものは本 script が付与するため正本側の検査対象ではない (icon_set_source.style_canonicality 参照)。C01 の build 経路と C16 の検査経路は常にこれを付けて呼ぶ", "default": false}
   ],
   "stdin": "使わない (--config のパス指定のみ)",
   "stdout": "--format=both のとき機械可読な結果 JSON 1 オブジェクト: {\"symbols_svg\": \"<svg width=\\\"0\\\" height=\\\"0\\\" ...>...</svg>\", \"used\": [{\"name\": \"...\", \"symbol_id\": \"hbic-...\", \"use_href\": \"#hbic-...\", \"ref_count\": N, \"ref_paths\": [\"sections[0].blocks[2].icon\"]}], \"unused_in_set\": [\"...\"], \"set_version\": \"...\"}。--format=symbols は symbols_svg の中身のみ、--format=manifest は used 配列を持つ JSON のみ",
   "stderr": "人間向け診断のみ。未定義アイコン名とその参照キーパス / 様式違反の symbol 名と違反項目 / アイコンセット正本の読み込み経路 (実体解決でどこを採ったか)",
   "exit_codes": {
     "0": "使用アイコンを解決し symbol 定義と参照表を出力した (使用 0 件のときも空 sprite を出して 0)",
-    "1": "入力データの規約違反 (構成データが参照するアイコン名がセットに無い / --strict-style 時の様式違反 / セット内の symbol id 重複 / アイコン名または title が C16 CR-EMOJI に違反 / 24x24 以外の viewBox)。差し戻し先は構成データまたはアイコンセット正本",
+    "1": "入力データの規約違反 (構成データが参照するアイコン名がセットに無い / --strict-style 時の幾何規約違反 / セット内の symbol id 重複 / アイコン名または title が C16 CR-EMOJI に違反 / path 座標が 24x24 座標系の外)。差し戻し先は構成データまたはアイコンセット正本",
     "2": "実行不能 (argv 不正・--config または --icon-set のファイル不在・JSON 構文エラー・plugin 実体解決の失敗)。差し戻し先は呼び出し側"
   },
   "write_scope": ["なし (write_scope=none)。ファイルを一切作成・更新・削除せず、出力は stdout のみ。アイコンセット正本 (assets/icons/icon-set.json) は read-only で扱い、本 script は決して書き戻さない"],
@@ -28,8 +28,9 @@
   },
   "icon_set_source": {
     "location": "plugins/guide-doc-generator/assets/icons/icon-set.json (plugin 同梱・単一ファイル正本)",
-    "why_single_json_not_directory": "1 アイコン 1 ファイルのディレクトリ形式にすると、走査順が OS のファイル列挙順に依存して sprite の並びが環境で変わり、C29 のバイト一致再現性が壊れる。単一 JSON なら配列順が正本の順であり、決定論が入力データだけで閉じる。加えて様式 (viewBox/stroke/fill) をフィールドとして持たせられるため、様式違反の検査が SVG のパースなしで済む",
+    "why_single_json_not_directory": "1 アイコン 1 ファイルのディレクトリ形式にすると、走査順が OS のファイル列挙順に依存して sprite の並びが環境で変わり、C29 のバイト一致再現性が壊れる。単一 JSON なら配列順が正本の順であり、決定論が入力データだけで閉じる。加えて幾何値 (paths / stroke_width) を数値フィールドとして持てるため、規約違反の検査が SVG のパースなしで済む (属性様式は正本側に持たせない。style_canonicality 参照)",
     "schema": "{\"set_version\": \"1\", \"icons\": [{\"name\": \"<語彙>\", \"paths\": [\"M...\"], \"stroke_width\": 2.2, \"title\": \"<意味を持つ場合のみ>\"}]}。viewBox / fill / stroke / stroke-linecap / stroke-linejoin は本 script が統一様式として付与し、正本側には持たせない (様式のブレを構造的に起こせなくする)",
+    "style_canonicality": "R08 の統一様式 (viewBox=\"0 0 24 24\" / fill=\"none\" / stroke=\"currentColor\" / stroke-linecap=\"round\") の正本は本 script の手順 9 の属性リテラル 1 箇所であり、icon-set.json 側はこれらのフィールドを一切持たない。正本 JSON が負うのは属性文字列ではなく幾何規約 — 『0-24 の座標系で描かれ、塗りでなく線で表現され、stroke_width が 2.2-2.6 に収まる path であること』— であり、これだけが --strict-style の検査対象になる。producer 側の受入条件 task-specs/P05-x-02.md:29 と task-graph.json の P05-x-02 acceptance が『全アイコンが viewBox=\"0 0 24 24\" / stroke=\"currentColor\" / fill=\"none\" / stroke-linecap=\"round\" の統一様式を満たす』と書いているのは、icon-set.json へ属性文字列を格納せよという意味ではなく上記の幾何規約を満たす path を置けという意味として読む。両側に属性を持たせると 41 アイコン × 5 属性の重複データになり、片方だけ古くなる様式のブレがまさに構造として発生する。producer 側が属性文字列を実際に書いた場合でも本 script はそれを読まず手順 9 のリテラルで上書きする (無視であって違反ではない)",
     "vocabulary": ["check", "cross", "arrow-right", "arrow-down", "clock", "calendar", "user", "users", "chat", "document", "folder", "download", "upload", "link", "search", "settings", "lightbulb", "warning", "info", "star", "flag", "target", "book", "pencil", "list", "grid", "chart", "play", "pause", "refresh", "lock", "unlock", "mail", "bell", "bookmark", "sparkle", "puzzle", "compass", "step-1", "step-2", "step-3"],
     "vocabulary_rationale": "参照解析 §2 の部品 B01-B15 と §10 の用途 (ステップ番号バッジ・チェック行・DL ボタン・タブ・アコーディオン・特徴カード・判断軸の注意喚起) を被覆する最小集合として 41 語に閉じた。語彙の追加は icon-set.json への追記 1 箇所で完結し、script 側にアイコン名のハードコードを一切持たない (checklist C42 と同じ単一正本の原則をアイコン語彙へも適用する)"
   },
@@ -43,10 +44,10 @@
     "7. 使用アイコンを一意化する。並び順は『正本 icons 配列の定義順』に射影して決める。参照の出現順にしないのは、同じアイコン集合なら常に同じ sprite が出るようにして、セクションの並べ替えだけで sprite のバイト列が変わるのを防ぐため。",
     "8. symbol id を採番する。id = \"hbic-\" + name (name は既に [a-z0-9-]+ に正規化済み)。連番やハッシュを使わないのは、逆抽出 (C20) が id から語彙を一意に復元できるようにするため。",
     "9. symbol 定義ブロックを組み立てる。外枠は <svg width=\"0\" height=\"0\" aria-hidden=\"true\" style=\"position:absolute\"><defs> ... </defs></svg> (参照解析 §9 D1 のマスコットと同じ機構)。各 symbol は <symbol id=\"hbic-{name}\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"{stroke_width}\" stroke-linecap=\"round\" stroke-linejoin=\"round\"> + <path d=\"...\"/> の並び + (title があれば <title>) で構成する。属性順は上記で固定する。",
-    "10. 参照表を組み立てる。各エントリは name / symbol_id / use_href (\"#hbic-{name}\") / ref_count / ref_paths (走査順)。C11 は use_href を <use href=\"...\"> へ渡し、参照側の <svg> には width/height と aria-hidden=\"true\" (title を持つ場合のみ role=\"img\" と <title>) を付ける。",
+    "10. 参照表を組み立てる。各エントリは name / symbol_id / use_href (\"#hbic-{name}\") / ref_count / ref_paths (走査順)。C11 は use_href を <use href=\"...\"> へ渡し、参照側の <svg> には width/height と aria-hidden=\"true\" (title を持つ場合のみ role=\"img\" と <title>) を付ける。use_href は必ず同一文書内フラグメント参照 \"#hbic-{name}\" であり、外部 URL・ファイルパス・data: URI を値に取らない。属性名は SVG2 の href 単独で、xlink:href も xmlns:xlink 宣言も出力しない (xlink は非推奨で、外部文書参照を書ける形を残すこと自体が checklist C2 の自己完結の穴になる)。手順 9 の symbols_svg は C11 が <use> と同じ HTML 文書内へ inline するため、解決先は常に同一文書内にある。",
     "11. unused_in_set (正本にあるが未使用の名前) を並べて返す。これは診断情報であって出力 SVG には一切含めない。生成 HTML 側の未使用 symbol は定義上 0 件になり、checklist C11 を構造で満たす。",
     "12. 使用アイコンが 0 件のときは symbols_svg を空文字列にして exit 0 で返す (空の <defs> すら出さない)。アイコンを使わない資料を失敗にしない。",
-    "13. 文字列は html.escape(quote=True) でエスケープし、インデント 2 スペース・改行 \\n 固定で出力する。JSON 出力は json.dumps(ensure_ascii=False, indent=2, sort_keys=False) で入力順を保つ。同一入力から常にバイト一致する。"
+    "13. 文字列は html.escape(quote=True) でエスケープし、インデント 2 スペース・改行 \\n 固定で出力する。JSON 出力は json.dumps(ensure_ascii=False, indent=2, sort_keys=False) で入力順を保つ。乱数・現在時刻・オブジェクト id (id() / hash() / uuid) ・set の反復順・環境変数の値を出力へ一切載せない。出力を決めるのは (a) 手順 7 の正本 icons 配列順、(b) 手順 8 の name 由来 id、(c) 正本の数値フィールド、(d) 手順 9 の固定属性順、の 4 つだけであり、同一入力から常にバイト一致する (checklist C29)。"
   ],
   "requirements_covered": ["R01", "R08", "R10"],
   "checklist_covered": ["C2", "C10", "C11", "C13", "C29"],
@@ -58,6 +59,8 @@
     {"id": "AC-C15-3c", "how": "title に U+2699 U+FE0F (歯車 + VS16) を含むアイコンセットで実行する", "expected": "exit 1 / stderr へ detection_id=SC-05 と codepoints。層 2 + VS16 は C16 側の規則で違反になる"},
     {"id": "AC-C15-11", "how": "script 本文を Unicode コードポイント表記 (U+XXXX / \\\\u / \\\\U / re のコードポイント範囲クラス) で grep する", "expected": "絵文字判定に関するコードポイント列挙が 0 件。絵文字の語彙の正本は C16 の CR-EMOJI 1 箇所 (checklist C42 と同じ単一正本の原則)"},
     {"id": "AC-C15-4", "how": "同じアイコン集合を参照しつつセクション順だけ入れ替えた 2 つの構成データで実行し symbols_svg の sha256 を比較する", "expected": "sha256 が一致 (並び順が正本定義順に射影されている・checklist C29)"},
+    {"id": "AC-C15-4b", "how": "同一の構成データ・同一のアイコンセットで 2 回実行し、symbols_svg と参照表 JSON の sha256 をそれぞれ比較する。あわせて script 本文を random / time / datetime / uuid / id( / hash( / os.environ で grep する", "expected": "2 回とも sha256 が一致。grep は決定論に影響する用途で 0 件 (checklist C29。手順 13 の 4 入力以外は出力に載らない)"},
+    {"id": "AC-C15-12", "how": "symbols_svg と参照表 JSON を https?:// / xlink / xmlns:xlink / file:// / data: で grep する", "expected": "0 件。use_href は \"#hbic-\" で始まるフラグメントのみ (checklist C2。C16 の外部参照検査と同じ判定を出力側で先に満たす)"},
     {"id": "AC-C15-5", "how": "正本に無い名前 (例 rocket) を参照する構成データで実行する", "expected": "exit 1 / stderr に名前・キーパス・近似候補"},
     {"id": "AC-C15-6", "how": "アイコン参照 0 件の構成データで実行する", "expected": "exit 0 / symbols_svg が空文字列 / used が空配列"},
     {"id": "AC-C15-7", "how": "HB_ROOT も CLAUDE_PLUGIN_ROOT も未設定の環境で --icon-set 未指定で実行する", "expected": "__file__ 相対の自己解決で正本が見つかり exit 0。見つからない場合のみ exit 2 で試行経路が stderr に出る"},

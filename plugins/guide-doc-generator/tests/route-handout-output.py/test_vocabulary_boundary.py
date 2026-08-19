@@ -128,13 +128,18 @@ class CatalogUnavailableTest(unittest.TestCase):
             self.assertEqual(2, proc.returncode, H.describe(proc))
             self.assertEqual([], list(target.iterdir()))
 
-    def test_catalog_change_changes_the_dir_token(self):
-        """語彙は正本にしか無い: カタログ側の dir_token を変えると命名も変わる。"""
+    def test_catalog_change_changes_the_recorded_dir_token(self):
+        """語彙は正本にしか無い: カタログ側の dir_token を変えると来歴も変わる。
+
+        R25 でディレクトリ名から種別トークンが外れたため、カタログ由来である
+        ことの観測点は命名ではなく来歴マーカー (.handout-route.json) になった。
+        命名は変わらないこと自体も併せて固定する。
+        """
+        import json
+
         slug = H.any_doc_type(self)
 
         def mutate_catalog(root: Path):
-            import json
-
             path = root / H.CATALOG_RELPATH
             data = json.loads(path.read_text(encoding="utf-8"))
             for entry in data["vocabulary"]:
@@ -157,14 +162,18 @@ class CatalogUnavailableTest(unittest.TestCase):
                 ["--config", cfg, "--out-dir", target], script=H.fixture_script(root)
             )
             self.assertEqual(0, proc.returncode, H.describe(proc))
-            self.assertTrue(
-                H.resolved_path(self, proc).name.startswith(
-                    "{}-retokened-".format(H.FIXTURE_DATE_DIR)
-                ),
-                "カタログの dir_token が命名へ反映されていない: {}".format(
-                    H.resolved_path(self, proc).name
-                ),
+            resolved = H.resolved_path(self, proc)
+            marker = resolved / H.ROUTE_MARKER
+            if not marker.is_file():
+                self.fail("来歴マーカー {} が無い".format(marker))
+            blob = "\n".join(H.flatten_strings(json.loads(marker.read_text("utf-8"))))
+            self.assertIn(
+                "retokened",
+                blob,
+                "カタログの dir_token が来歴へ反映されていない: {}".format(blob),
             )
+            self.assertTrue(resolved.name.startswith(H.name_prefix(self)), resolved.name)
+            self.assertNotIn("retokened", resolved.name, "命名に種別が漏れている")
 
 
 class SingleAccessPathTest(unittest.TestCase):

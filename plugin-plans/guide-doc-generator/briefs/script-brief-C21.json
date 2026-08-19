@@ -3,7 +3,13 @@
   "component_kind": "script",
   "name": "srg-image-bridge.py",
   "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
-  "purpose": "資料の各セクション向けアニメ調図解イメージの生成を slide-report-generator (SRG) の既存 2 段パイプラインへ委譲するアダプタ。handout 側の画像計画を SRG の image-deck-plan.json へ機械変換し、SRG の vendor script を subprocess で順に起動して生成 PNG を素材ディレクトリへ回収する。プロンプト組み立ても画像生成も guide-doc-generator 側に再実装しない (C17)。SRG 実体または委譲先ランタイムが解決できないときは起動前に skip を宣言して exit0 で返す (C18・fail-soft)。回収した PNG の base64 data URI 化は行わず C13 へ委譲する。加えて本 script は『画像が読み手に直感的に伝わる形になっているか』の唯一の機械検査点である — 焼き込みテキストの量的規律 (baked_text_discipline)、style family の決定論選択 (image_style_families)、平坦化退化の代理指標 (degradation_proxy_checks) を起動前に検査し、違反は差し戻し先が handout の計画側だと分かる位置で exit2 にする (RESOLUTION-R23)",
+  "purpose": "資料の各セクション向けアニメ調図解イメージの生成を slide-report-generator (SRG) の既存 2 段パイプラインへ委譲するアダプタ。handout 側の画像計画を SRG の image-deck-plan.json へ機械変換し、SRG の vendor script を subprocess で順に起動して生成 PNG を素材ディレクトリへ回収する。プロンプト組み立ても画像生成も guide-doc-generator 側に再実装しない (C17)。SRG 実体または委譲先ランタイムが解決できないときは起動前に skip を宣言して exit0 で返す (C18・fail-soft)。回収した PNG の base64 data URI 化は行わず C13 へ委譲する。加えて本 script は『画像が読み手に直感的に伝わる形になっているか』の唯一の機械検査点である — 焼き込みテキストの量的規律 (baked_text_discipline)、style family の決定論選択 (image_style_families)、平坦化退化の代理指標 (degradation_proxy_checks) を起動前に検査し、違反は差し戻し先が handout の計画側だと分かる位置で exit2 にする (RESOLUTION-R23)。R25 (goal-spec C69): 本 script は第 1 稿スキップ対象から外れ、draft_first 経路でも起動する (config/handout-visual-policy.json#draft_first.skipped_in_draft から srg_images を削除・裁定理由は同 #why_srg_images_no_longer_skipped)。draft と release で本 script の挙動は変わらない — 段の別は呼び出し側 (C01) が持ち、本 script は段を表す引数も分岐も持たない",
+  "generation_scope": {
+    "target_set": "生成対象は --image-plan の sections[] に載っているセクションが全てであり、本 script はそこから対象を絞り込まない。1 セクション = 1 slide = 1 slug で機械変換する (algorithm 6)",
+    "who_selects": "どのセクションを sections[] へ載せるかは呼び出し側 (C01 run-handout-build の R3-render が role 確定後に組み立て、内容は C05 handout-content-architect が書く) の責務。正本 improvement/visual-per-section-decision.json#cost_and_risk.mitigation により、載せてよいのは role=illustration の節に限られる — role=screenshot の節は実素材の埋め込み (C13) で足りるため生成が不要であり、待ち時間が節数に比例する問題 (同 #cost_and_risk.draft_latency。9 節なら 9 枚) の抑制がこの選定に依存する",
+    "role_is_not_interpreted_here": "本 script は role フィールドを読まず、解釈も差し替えもしない。role=screenshot の素材が実在しないときの illustration への差し替えは C01 の R3-render が C13 を呼ぶ前に完了させ (skill-brief-C01.json の R3-render・正本 improvement/visual-per-section-decision.json#decision.role_split.fallback)、宣言された素材の存在確認と exit1 の fail-closed は C13 が持つ (script-brief-C13.json の failure_modes)。3 者で責務が閉じているため、本 script が role 意味論を持つと正本が三重化する",
+    "if_screenshot_sections_are_passed": "role=screenshot の節が sections[] へ混ざっていても本 script は検知できない (role を読まないため)。混入は余分な生成課金と待ち時間として現れるだけで、契約違反としては落とさない。検知が要るなら呼び出し側か画像計画 schema の責務であり、本 script へ role 検査を足さない"
+  },
   "argv": [
     {
       "flag": "--image-plan",
@@ -57,7 +63,7 @@
       "plugins/guide-doc-generator/genomes/style-genome-flat-infographic-jp.json (style family flat-infographic-jp の正本。producer は P05-x-04。read-only。上と同じ用途で参照する。不在時の扱いは algorithm 3b)"
     ],
     "invoked_by": [
-      "C01 run-handout-build (R3-render の script 列。画像を使う資料のときだけ呼ばれる)"
+      "C01 run-handout-build (R3-render の script 列。画像を使う資料のときだけ呼ばれる。R25/REQ-3(a) (goal-spec C69) 以降は第 1 稿 (draft) と推敲後 (release) の双方で呼ばれる — 呼ばれる段が増えただけで本 script 側の契約は変わらない。生成対象セクションの選定は generation_scope を参照)"
     ],
     "invokes": [
       "node <SRG_ROOT>/vendor/scripts/build-image-prompts.js <work-dir> --plan <work-dir>/assets/generated/image-deck-plan.json --genome <genome> [--source codex-image2]",
@@ -105,7 +111,7 @@
       "provenance": "metric ブロックの数字部分は、そのセクションの構成データに逐語で存在すること。存在しない数字は exit2 (E-IMG-METRIC-UNSOURCED)",
       "rationale": "数値強調を無条件の推奨として置くと、生成側は『効果的に見える数字』を捏造する誘因を持つ。数字の出所を構成データへ固定すれば、強調は『持っている数字を大きく描く』だけの操作になり、捏造が契約違反として落ちる。参考画像の『約94%削減』『約8時間→約30分』が読み手に効いているのは大きさではなく、その数字が実測に裏づけられているからである"
     },
-    "not_c11_text_limits": "C11 の text_limits (C63 の 180 / 400 / 900) と本規律は別系統であり、同じキー名へ寄せない。あちらは HTML 本文の折り畳み閾値で単位は『セクション本文の字数』、writer は C11、失敗時の症状は『折り畳まれる』。こちらは画像内に焼く文字の量で単位は『ブロック数と 1 ブロックの字数』、writer は C05、失敗時の症状は『文字が潰れて読めない』。混同すると正本が二重化する"
+    "not_c11_text_limits": "C11 の text_limits (C63。R25 改定後の現在値は overview=60 / standard=100 / detailed=160、正本 improvement/text-length-gate-decision.json。旧値 180/400/900 は R25 で改定済み) と本規律は別系統であり、同じキー名へ寄せない。あちらは HTML 本文の折り畳み閾値で単位は『セクション本文の字数』、writer は C11、失敗時の症状は『折り畳まれる』。こちらは画像内に焼く文字の量で単位は『ブロック数と 1 ブロックの字数』、writer は C05、失敗時の症状は『文字が潰れて読めない』。混同すると正本が二重化する"
   },
   "image_style_families": {
     "resolution_ref": "RESOLUTION-R23 (c)",
@@ -277,6 +283,17 @@
     "value": true,
     "rationale": "本 script 自身は socket を開かないが、委譲先 generate-images-codex.js が codex CLI を execSync し codex がモデル API へ通信する。network=false と宣言すると『委譲を経由した通信』が棚卸しから漏れるため、実効の通信有無で true を宣言する。--dry-run 経路 (prompt/meta の機械展開のみ) は通信しない",
     "inventory_sync": "component-inventory.json の components[C21].network も true"
+  },
+  "determinism_boundary": {
+    "note": "本 script が決定論経路の外に居てよい根拠は network フラグではなく、この 1 ブロックである (P03 Y-01 の決着)。network=true は『通信の棚卸しに載る』ことだけを意味し、再現性については何も述べない",
+    "c29_is_closed_at_c11": "checklist C29 (同一構成データから 2 回生成してバイト一致) が成立する範囲は C11 render-handout.py の入出力であり、本 script の出力は C11 の入力に入る前に構成データ側で確定した素材である。したがって本 script を checklist_covered へ挙げない — 挙げると『非決定論な component がバイト一致を保証している』という読みを作る",
+    "why_not_deterministic": "画像生成は gpt-image-2 に seed が無く本質的に非決定論である。同一 prompt でも異なる PNG が返る",
+    "how_the_chain_stays_closed": "既存 PNG の再利用 (algorithm の冪等スキップ。<assets-dir>/images/<slug>.png が実在し先頭 4 バイトが PNG 署名なら再生成しない) により、2 回目以降の実行では素材が固定される。素材が固定されれば C11 の入力が固定され、C29 のバイト一致は C11 の決定論だけで成立する",
+    "fail_soft_skip": "SRG 未導入・codex 不在・生成失敗のいずれでも本 script は exit0 で skip する (failure_modes 参照)。止めない代わりに skip_reason を stdout へ出す。これにより本 script の成否がビルド全体の再現性判定に影響しない",
+    "consumers": [
+      "component-inventory.json#components[C21] — network と stdlib_only の宣言はここを根拠として読む",
+      "script-brief-C11.json — C29 の owner 側。本ブロックの主張の受け手"
+    ]
   },
   "failure_modes": [
     {

@@ -1,0 +1,44 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-33-dirname-triple-owner",
+ "covered_task_ids": [
+  "P05-x-33-dirname-triple-owner"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/",
+ "verified_by": [
+  {
+   "claim": "C19 が config の dir_name_format からディレクトリ名を組み立てる",
+   "method": "route-handout-output.py へ declared_dir_name_format() / build_base_name() を追加し、旧 '{}-{}-{}'.format(date, token, slug) を置換。実値で呼び出して確認",
+   "result": "pass: build_base_name('2026/08/18','kpi進捗管理の業務フロー') → '2026-08-18_kpi進捗管理の業務フロー'。利用者指定の yyyy-mm-dd_日本語命名 になっている。doc_type 由来 token は marker.json の dir_token として残り、語彙照合 (未知 doc_type の拒否) も従来どおり resolve_dir_token で効く"
+  },
+  {
+   "claim": "C18 の DATE-03 が区切り文字を焼き込まず正本から導出する",
+   "method": "Vocabulary.dir_separator の固定値 '-' を _load_dir_separator() へ置換し、実測",
+   "result": "pass: セパレータ '_' を config から導出。{date} と {slug} の間が 1 文字でない書式は fail_closed にした (複数文字の区切りは DATE-03 の basename[10] 検査と整合しないため、黙って先頭 1 文字を採らない)"
+  },
+  {
+   "claim": "C10 hook が書式を複製せず、新旧どちらの区切りにも発火する",
+   "method": "DATED_DIR_RE を実測入力 7 件へ当てた",
+   "result": "pass: 2026-08-18_日本語名 / 2026-08-18-ascii-slug / 2026-08-18_x に発火し、handout-output / docs / 2026-08-180000-x / 20260818_x に非発火。regex は先頭 ISO 日付のみを見ており区切り文字を列挙していない。hook 側は既に区切り非依存で、今回の変更は説明コメントから旧書式の逐語を外しただけ"
+  },
+  {
+   "claim": "3 者が同時に追随する (三重焼きが解消している)",
+   "method": "dir_name_format を '{date}-{slug}' へ変異 → C19 と C18 を再読込 → 復元して再読込",
+   "result": "pass: 変異時 C19 が '2026-08-18-x'、C18 のセパレータが '-' へ同時に変わり、復元で両方 '_' へ戻った。hook は両方に発火するため変異の影響を受けない。1 箇所を直すと 3 者が同じ結論になる"
+  },
+  {
+   "claim": "編集した 3 ファイルが構文として壊れていない",
+   "method": "ast.parse を 3 ファイルへ実行",
+   "result": "pass: route-handout-output.py / verify-handout-language.py / guard-handout-external-ref.py すべて syntax ok"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x33-01",
+   "level": "carry-forward",
+   "summary": "追随の実測は module を再 import して関数を直接呼ぶ形で行っており、C19 の run() 全経路や C18 の DATE-03 検査本体を通した end-to-end ではない。DATE-03 は basename[:10] の日付一致と basename[10] のセパレータ一致を見る実装で、セパレータは正本化したが日付長 10 は依然 dir_date_len=10 のリテラルである。日付書式自体が変わる改版では同じ三重焼きが再発する"
+  }
+ ]
+}

@@ -85,6 +85,46 @@ prompt ファイル欠落 / 参照 script 実体欠落)。責務境界に関す�
 | `extra-responsibility-added` | 自作の自己レビュー責務 R5 を足す | AC-C01-4 |
 | `html-written-by-llm` | HTML を skill が直接書くと書く | AC-C01-20 |
 
+## 3 面の担当 (どのファイルのどのテストが何を見ているか)
+
+| 面 | 担当 |
+|---|---|
+| 違反系入力で落ちる | `reject_cases.py` + `test_contract_checker.py::TestRejectFixtures` / `test_predicate_scope.py::PredicateSinglePointRejectabilityTest` (1 点注入) |
+| 委譲 argv と exit code 契約 | `test_argv_and_reproducibility.py::DelegationArgvContractTest` |
+| 再現性 | `test_argv_and_reproducibility.py::CheckerReproducibilityTest` / `::Out2RegenerationInvariantTest` |
+
+skill component は自身が argv を受けて exit code を返すわけではないため、
+この 2 面は次の対応物として定義した。
+
+- **argv**: SKILL.md が決定論 script の名前の隣に書いたフラグは、その script の
+  argparse に実在しなければならない (宣言はあるが受け口が無い型を落とす)。
+- **exit code**: 0/1/2 → pass/fail/error の意味づけの正本は C09 の CR-GATE-AGG
+  であり、C01 はそれを再定義しない (再定義していたら赤)。
+- **再現性**: (1) 判定器が同一入力に対し同一の違反列を返すこと (同プロセス 2 回 +
+  別プロセス 2 回)、(2) 契約としての再現性 = OUT2 (同梱構成データからの 2 回生成で
+  バイト一致) を壊さないための宣言、すなわち R5-refine が生成済み HTML の直接編集を
+  禁じ決定論経路で作り直すと書いていること。
+
+## 正本リテラルを写さない方針
+
+`contract_lib.py` の値域・件数は `skill-brief-C01.json` と
+`component-inventory.json#C01` から import 時に実測で導出する (読めなければ
+`RuntimeError` で fail-closed)。とくに `goal_seek.max_loops` は F-C06-04 で
+C01 goal_seek を唯一の owner に畳んだ経緯があるため、テスト側・reject fixture 側
+(`reject_cases.py` / `test_predicate_scope.py`) の注入文字列も正本から組み立てる。
+`test_argv_and_reproducibility.py::NoLiteralCopyOfCanonTest` がこの退行を検出する。
+
+`fixtures/accept/.../SKILL.md` は SKILL.md の例示なので具体値を持つ。正本の値が
+変わればこの fixture は AC-C01-6 で赤くなる (黙って古くなるのではなく落ちる)。
+
+## acceptance_criterion 後半について
+
+「build_target が未実装の時点で実行すると失敗する」は、実装が既に存在するため
+**現物では再現できない**。実装を削除して測ることは禁止されているので、
+`UnimplementedBuildTargetSurrogateTest` が空ディレクトリを build_target と見立てて
+判定器の挙動 (AC-C01-1 で停止する) だけを固定している。これは代理であって
+現物での再現ではない。
+
 ## P05 実装者への注意
 
 - テストを緑にするために `contract_lib.py` / `reject_cases.py` / `fixtures/` を

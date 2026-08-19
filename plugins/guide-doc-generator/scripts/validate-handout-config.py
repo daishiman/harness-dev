@@ -39,7 +39,6 @@ import argparse
 import datetime
 import importlib.util
 import json
-import math
 import os
 import re
 import sys
@@ -61,21 +60,29 @@ SCHEMA_RELPATH = Path("schemas") / "handout-config.schema.json"
 SECTIONS_RELPATH = Path("config") / "handout-sections.json"
 PARTS_RELPATH = Path("config") / "handout-parts.json"
 VISUAL_POLICY_RELPATH = Path("config") / "handout-visual-policy.json"
+VOCABULARY_RELPATH = Path("config") / "handout-vocabulary.json"
 TOKENS_RELDIR = Path("assets") / "tokens"
 
 NORMALIZED_BY = "validate-handout-config.py"
 
-# R21 C52 の既定上限。テーマトークンが text_limits を持たないときだけ使う
-# (水準別の値はテーマトークンが正本であり、ここには持たない)。
-FALLBACK_BODY_MAX_CHARS = 400
+# 既定上限。テーマトークンが text_limits を持たないときだけ使う (水準別の値はテーマ
+# トークンが正本であり、ここには持たない)。値の正本は improvement/
+# text-length-gate-decision.json#decision.body_budget が canonical_location として指名する
+# assets/tokens/*.json であり、旧 R21 C52 の 400 は同裁定で superseded された。fallback を
+# 旧予算のまま残すと、tokens を読み損ねた経路だけ 4 倍の散文が通る (fail-open) ため、
+# fallback も standard の確定値へ揃える。
+FALLBACK_BODY_MAX_CHARS = 100
 SENTENCE_ENDINGS_CLASS = "[。!?！？]"
-LONG_SENTENCE_CHARS = 45
-LONG_SENTENCE_COUNT = 3
+# 文長系の閾値の正本は config/handout-visual-policy.json#sentence。ここにあるのは正本を
+# 読めなかったときだけ使う fallback である (micro_copy / thresholds と同じ扱い)。
+FALLBACK_LONG_SENTENCE_CHARS = 60
+FALLBACK_LONG_SENTENCE_COUNT = 1
+FALLBACK_MAX_SENTENCES_PER_BODY = 3
+FALLBACK_MAX_FOLDS_PER_SECTION = 0
 TITLE_WARN_CHARS = 60
 LEAD_LINE_WARN_CHARS = 60
 SECTIONS_WARN_COUNT = 12
 SLUG_MAX_CHARS = 40
-MINUTES_PER_HOUR = 60
 
 # 図解密度と散文量の方針。正本は config/handout-visual-policy.json であり、
 # ここにあるのは正本を読めなかったときだけ使う fallback である (fail-soft)。
@@ -83,16 +90,30 @@ MINUTES_PER_HOUR = 60
 # 部品 id の集合は fallback にも書き下さない。部品 id の語彙は C11 の
 # config/handout-parts.json だけが持ち、どの部品が視覚部品かは上記の正本だけが
 # 持つ (AC-C11-19 / Y-05)。正本を読めないときは、id を綴らずに済む最小の集合
-# (図解と画像) へ退避する。集合が狭いぶん警告は出やすくなるが、いずれも warning
-# であり exit code は 0 のままなので、検証そのものは止まらない。
+# (図解と画像) へ退避する。集合が狭いぶん指摘は出やすくなるが、退避で増えるのは
+# W-VISUAL-ABSENT (warning) 側だけであり、検証そのものは止まらない。
+#
+# ただし重大度は接頭辞 (E-/W-) からは決めない。正本の各閾値が持つ level フィールド
+# が唯一の正本であり、level:"error" を宣言した code は W- 接頭辞であっても error
+# として扱う (ERROR_LEVEL / Context.error_codes)。接頭辞と level の二重管理は
+# 「正本で error にしたのにゲートが緑のまま」を生むためである。
+ERROR_LEVEL = "error"
+FALLBACK_ERROR_CODES = (
+    "W-DIAGRAM-FEW", "E-IMAGE-ABSENT",
+    "W-SENTENCE-LONG", "E-TEXT-PARAGRAPH", "E-TEXT-FOLDED",
+    # 冒頭は読み手が最初に見る場所であり、そこが段落だと本文へ着く前に離脱する。
+    # 正本が読めない経路でも緩まないよう、error 側の既定に含める。
+    "W-HERO-LONG", "W-HERO-HEAVY", "E-HERO-PARAGRAPH",
+)
 FALLBACK_VISUAL_PART_IDS = ("DIAGRAM", "IMG")
 FALLBACK_MIN_VISUAL_PER_SECTION = 1
-FALLBACK_MIN_DIAGRAM_RATIO = 0.34
-FALLBACK_MIN_DIAGRAM_FLOOR = 1
+FALLBACK_MIN_DIAGRAM_PER_SECTION = 1
+FALLBACK_MIN_IMAGE_PER_SECTION = 1
 FALLBACK_MAX_TEXT_RATIO = 0.5
 FALLBACK_MAX_TEXT_RUN = 1
 TEXT_PART_ID = "TEXT"
 DIAGRAM_PART_ID = "DIAGRAM"
+IMAGE_PART_ID = "IMG"
 ROLE_MAIN = "main"
 FALLBACK_MICRO_COPY_LIMITS = {
     "label": ("label", 14), "key": ("label", 14), "term": ("label", 14),
@@ -110,7 +131,15 @@ FALLBACK_MICRO_COPY_EXEMPT_FIELDS = (
     "id", "asset_id", "diagram_id", "attachment_id", "filename",
     "mime", "due", "owner", "fallback_hint", "note_key", "tone", "time")
 
-FALLBACK_HERO_FIELD_LIMITS = {"purpose": 60, "background": 80, "goal": 50}
+FALLBACK_HERO_FIELD_LIMITS = {
+    "purpose": 60, "background": 80, "goal": 50, "lead": 40}
+# 冒頭 1 件あたりの文数。宣言は 1 文が既定で、背景だけ『こうだから』を足せる
+FALLBACK_HERO_SENTENCE_LIMITS = {
+    "purpose": 1, "background": 2, "goal": 1, "lead": 1}
+FALLBACK_HERO_SENTENCE_CODE = "E-HERO-PARAGRAPH"
+FALLBACK_HERO_ESCAPE = (
+    "溢れた説明は冒頭の外へ出す。箇条書きへ落とすか、先頭セクションの本文・"
+    "カード・図解へ移す")
 # hero の総量。1 フィールドずつ短くても、短い行が積み上がれば冒頭は長くなる
 FALLBACK_HERO_TOTAL_CHARS = 400
 FALLBACK_HERO_TOTAL_FIELDS = (
@@ -125,7 +154,6 @@ CONT_SUFFIX = "-cont"
 
 # section_kind ごとの追加検査規則の分岐点。値 (閾値) は catalog 側にあり、
 # ここにあるのは「どの種別にどの規則を当てるか」という C12 固有の対応だけ。
-KIND_AGENDA_TIMEBOX = "agenda-timebox"
 KIND_DECISIONS = "decisions"
 KIND_ACTION_ITEMS = "action-items"
 KIND_SOURCES = "sources"
@@ -136,8 +164,9 @@ KIND_CAPABILITY_EXPLAINER = "capability-explainer"
 
 ATTR_MAX_ITEMS = "max_items"
 ATTR_FORBID_ROW_DETAIL = "forbid_row_detail"
-ATTR_MIN_DURATION_SHARE = "min_duration_share"
 ATTR_REQUIRED_ROLE = "required_role"
+ATTR_PLACEMENT = "placement"
+PLACEMENT_LAST_MAIN = "last-main"
 
 # 追加検査規則が名指しする「器」は構成データ側の block.type で指す (P03 Y-05 /
 # AC-C11-19)。部品 id の literal はこの script に一切持たず、id が要る箇所は
@@ -169,9 +198,6 @@ TIE_TASK_PREFIX = "target_task:"
 
 DATE_INPUT_RE = re.compile(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$")
 TODAY_ARG_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
-MINUTES_RE = re.compile(r"^(\d{1,3})\s*分$")
-HOURS_RE = re.compile(r"^(\d{1,3})\s*時間$")
-HOURS_MINUTES_RE = re.compile(r"^(\d{1,3})\s*時間\s*(\d{1,3})\s*分$")
 PART_DATA_POINTER_RE = re.compile(r"/parts/\d+/data(/|$)")
 ASSET_ROLE_POINTER_RE = re.compile(r"^/assets/\d+/role$")
 
@@ -290,22 +316,6 @@ def is_blank(value):
     return not isinstance(value, str) or not value.strip()
 
 
-def parse_minutes(value):
-    """'30分' / '1時間' / '90 分' / '1時間30分' を分へ。解釈できなければ None。"""
-    if not isinstance(value, str):
-        return None
-    text = value.strip()
-    match = MINUTES_RE.match(text)
-    if match:
-        return int(match.group(1))
-    match = HOURS_MINUTES_RE.match(text)
-    if match:
-        return int(match.group(1)) * MINUTES_PER_HOUR + int(match.group(2))
-    match = HOURS_RE.match(text)
-    if match:
-        return int(match.group(1)) * MINUTES_PER_HOUR
-    return None
-
 
 def parse_date_parts(value):
     """受理する 4 書式を (year, month, day) へ。書式外は None。"""
@@ -352,9 +362,27 @@ def split_body(text, limit):
     return chunks
 
 
-def long_sentence_count(body):
-    return sum(1 for piece in re.split(SENTENCE_ENDINGS_CLASS, body)
-               if len(piece.strip()) > LONG_SENTENCE_CHARS)
+def split_sentences(body):
+    """本文を文へ割る。句点は落とさず、その文の一部として残す。
+
+    長さの上限は「読み手が目にする 1 文の長さ」に対する上限であり、句点も
+    読み手には見えている。落として数えると上限が実質 1 文字ぶん緩み、正本が
+    60 と宣言していても 61 字の文が素通りする (off-by-one)。文数を数える側は
+    len() しか見ないので、句点を残しても結果は変わらない。
+    """
+    pieces = re.split("(" + SENTENCE_ENDINGS_CLASS + ")", body)
+    sentences = []
+    for index in range(0, len(pieces), 2):
+        text = pieces[index].strip()
+        if not text:
+            continue
+        ending = pieces[index + 1] if index + 1 < len(pieces) else ""
+        sentences.append(text + ending)
+    return sentences
+
+
+def long_sentence_count(body, max_chars):
+    return sum(1 for piece in split_sentences(body) if len(piece) > max_chars)
 
 
 def same_scalar(left, right):
@@ -584,6 +612,8 @@ class Checker(object):
         self.check_date(cfg)
         self.check_doc_type(cfg)
         self.check_remember(cfg)
+        self.check_connectors(cfg)
+        self.check_attainment_vocabulary(cfg)
         self.check_warnings(cfg)
         sections = cfg.get("sections")
         if isinstance(sections, list):
@@ -596,13 +626,52 @@ class Checker(object):
             self.check_ties(cfg, sections)
             self.check_roles(cfg, sections)
             self.check_attainment(cfg, sections)
-            self.check_durations(sections)
             self.check_glossary_scopes(cfg, sections)
         self.check_references(cfg)
         del ctx
         return self.diags
 
     # ---- document ---------------------------------------------------------
+
+    def check_connectors(self, cfg):
+        """前提コネクタの id が表示語彙に載っていること (R25/REQ-9・goal-spec C75)。
+
+        構成データが持つのは id だけで、読者に見える表記は
+        config/handout-vocabulary.json#connectors が唯一の出所である。ここで
+        未知の id を止めないと、C11 は表示ラベルを引けず素の id を描くことになる。
+        接続先を増やすときに触る場所は語彙正本 1 つ、という設計をこの検査が支える。
+        """
+        entries = cfg.get("prerequisite_connectors")
+        if entries is None or not isinstance(entries, list):
+            return
+        known = self.ctx.connector_ids
+        for index, entry in enumerate(entries):
+            if not isinstance(entry, dict):
+                continue
+            value = entry.get("connector")
+            if not isinstance(value, str) or value in known:
+                continue
+            self.add("E-CONNECTOR-UNKNOWN",
+                     "/prerequisite_connectors/%d/connector" % index,
+                     "表示語彙に無いコネクタ id: %s (語彙: %s)。"
+                     "接続先を増やすときは config/handout-vocabulary.json#connectors へ追記する"
+                     % (value, ", ".join(known) if known else "(空)"))
+
+    def check_attainment_vocabulary(self, cfg):
+        """達成段階に表示ラベルの対応があること。
+
+        対応が無い値は C18 の E-ENUM-RAW が『変換のしようが無い』違反として
+        出すしかなくなる。原因は構成データでなく語彙の取り残しなので、
+        どちらが欠けているかが分かる別コードで先に止める。
+        """
+        value = cfg.get("attainment_level")
+        if not isinstance(value, str) or value in self.ctx.attainment_labels:
+            return
+        if value not in self.ctx.attainment_levels:
+            return  # 値そのものが enum 外。E-ENUM-INVALID の管轄であり二重に出さない
+        self.add("E-ENUM-VOCAB-INCOMPLETE", "/attainment_level",
+                 "達成段階 %s に対応する表示ラベルが表示語彙に無い "
+                 "(config/handout-vocabulary.json#attainment_level_labels)" % value)
 
     def check_date(self, cfg):
         if "date" not in cfg:
@@ -697,6 +766,7 @@ class Checker(object):
         文書の冒頭 (hero の 3 要素) と、各節の冒頭 (最初の部品) の両方を見る。
         正本は config/handout-visual-policy.json の opening にある。
         """
+        escape = self.ctx.hero_escape or FALLBACK_HERO_ESCAPE
         for field, cap in sorted(self.ctx.hero_field_limits.items()):
             value = cfg.get(field)
             if not isinstance(value, str):
@@ -704,9 +774,34 @@ class Checker(object):
             length = len(value.strip())
             if length > cap:
                 self.add("W-HERO-LONG", "/" + field,
-                         "%d 文字 (上限 %d 文字)。冒頭の 3 要素は宣言であって説明ではない。"
-                         "説明したい中身は先頭セクションのカードと図解へ移す"
-                         % (length, cap))
+                         "%d 文字 (上限 %d 文字)。冒頭の各要素は宣言であって説明ではない。%s"
+                         % (length, cap, escape))
+
+        # 冒頭は「読み手が最初に見る 1 文」であり、文書中で最も長い文がここに
+        # 置かれるのが最悪の分布。TEXT 本文と同じ 1 文長の上限をそのまま当てる
+        # (閾値も判定も新設せず、対象集合だけを冒頭へ広げる)。
+        for field in sorted(self.ctx.hero_field_limits):
+            value = cfg.get(field)
+            if not isinstance(value, str) or not value.strip():
+                continue
+            body = value.strip()
+            long_count = long_sentence_count(body, self.ctx.long_sentence_chars)
+            # 比較は本文側 (check_text_bodies) と同じ >= にする。max_count は
+            # 「何件あれば落とすか」であって「何件まで許すか」ではない。
+            if long_count >= self.ctx.long_sentence_count:
+                self.add("W-SENTENCE-LONG", "/" + field,
+                         "%d 字を超える文が %d 件ある (%d 件で落とす)。%s"
+                         % (self.ctx.long_sentence_chars, long_count,
+                            self.ctx.long_sentence_count, escape))
+            cap = self.ctx.hero_sentence_limits.get(field)
+            if not isinstance(cap, int):
+                continue
+            count = len(split_sentences(body))
+            if count > cap:
+                self.add(self.ctx.hero_sentence_code, "/" + field,
+                         "%d 文ある (上限 %d 文)。冒頭で読ませてよいのは宣言だけで、"
+                         "そこへ説明を足すと読み手は本文の 1 行目に着く前に読むのをやめる。%s"
+                         % (count, cap, escape))
 
         total, lines = self.hero_volume(cfg)
         if total > self.ctx.hero_total_chars:
@@ -731,6 +826,17 @@ class Checker(object):
                          "節が散文で始まっている。言いたいことは lead_line が 1 行で"
                          "担っている。その直後は形 (図解・カード・表) を置き、"
                          "TEXT はその後の補足として置く")
+            # 絵は節の 1 番目に置く。描画側は並べ替えないので (DOM の並び =
+            # 構成データの並び)、『見出しの次に絵』は構成データの並びで決まる。
+            # 絵の有無そのものは E-IMAGE-ABSENT が別に見ている。ここは
+            # 「持っているのに先頭にない」だけを見る。
+            if (ids and ids[0] not in (IMAGE_PART_ID, DIAGRAM_PART_ID)
+                    and (IMAGE_PART_ID in ids or DIAGRAM_PART_ID in ids)):
+                self.add("W-SECTION-VISUAL-NOT-FIRST",
+                         "/sections/%d/parts/0" % index,
+                         "絵を持っているのに節の先頭に無い。見出しの次に絵を置き、"
+                         "目的・言いたいことはその後に置く (読み手が文の意味を取る前に"
+                         "『何の話か』を目で掴めるようにする)")
 
     # ---- 要点層と詳細層の切り分け ------------------------------------------
 
@@ -885,15 +991,23 @@ class Checker(object):
     def check_visual_density(self, cfg):
         """『図があるのとないのとで理解の粒度が変わる』を数値で当てる検査。
 
-        いずれも warning である。値域の縛りではなく編集方針であり、警告 0 件を
-        完了条件にするかは呼び出し側 (C01 のゴールシーク) が決める。
+        判定単位は main セクション 1 個である。資料全体の総枚数を main セクション数で
+        割る総量比では、図解を 1 枚も持たない節が残っていても合格しうる (9 節 4 枚で
+        通る)。正本 config/handout-visual-policy.json は総量比の閾値を superseded と
+        宣言し、min_diagrams_per_main_section / min_images_per_main_section の 2 つを
+        level:"error" として持つ。したがって W-DIAGRAM-FEW と E-IMAGE-ABSENT は
+        警告ではなく完了を止めるゲートであり、warning は W-VISUAL-ABSENT /
+        W-TEXT-HEAVY / W-TEXT-RUN の 3 つに限られる (重大度の正本は同 config の
+        level であって、この関数でも code の接頭辞でもない)。
+
+        DIAGRAM と IMG を別々に数えるのは役割が違うためである。図解は構造を示し、
+        画像は実物・画面・場面を見せる。視覚部品の総称 (W-VISUAL-ABSENT) はどちらか
+        1 つで満たされるので、両方あることの証明にはならない。
         """
         sections = cfg.get("sections")
         if not isinstance(sections, list):
             return
 
-        main_count = 0
-        diagram_count = 0
         for index, section in enumerate(sections):
             if not isinstance(section, dict):
                 continue
@@ -902,9 +1016,22 @@ class Checker(object):
             if not ids:
                 continue
             is_main = section.get("role") in (None, ROLE_MAIN)
+
             if is_main:
-                main_count += 1
-            diagram_count += sum(1 for pid in ids if pid == DIAGRAM_PART_ID)
+                diagrams = sum(1 for pid in ids if pid == DIAGRAM_PART_ID)
+                if diagrams < self.ctx.min_diagram_per_section:
+                    self.add("W-DIAGRAM-FEW", pointer + "/parts",
+                             "概念図解が %d 件しかない (main セクション 1 個あたりの下限 %d 件)。"
+                             "表と手順だけでは部分の詳細は伝わっても全体の関係が残らない"
+                             % (diagrams, self.ctx.min_diagram_per_section))
+
+                images = sum(1 for pid in ids if pid == IMAGE_PART_ID)
+                if images < self.ctx.min_image_per_section:
+                    self.add("E-IMAGE-ABSENT", pointer + "/parts",
+                             "画像が %d 件しかない (main セクション 1 個あたりの下限 %d 件)。"
+                             "図解が構造を示すのに対し、画像は実物・画面・場面を見せる別の"
+                             "役割を持つ。どちらか一方では節の顔にならない"
+                             % (images, self.ctx.min_image_per_section))
 
             visual = sum(1 for pid in ids if pid in self.ctx.visual_part_ids)
             if is_main and visual < self.ctx.min_visual_per_section:
@@ -930,21 +1057,12 @@ class Checker(object):
                              % (run, self.ctx.max_text_run))
                     break
 
-        if main_count:
-            required = max(self.ctx.min_diagram_floor,
-                           int(math.ceil(main_count * self.ctx.min_diagram_ratio)))
-            if diagram_count < required:
-                self.add("W-DIAGRAM-FEW", "/diagrams",
-                         "概念図解が %d 枚しかない (main セクション %d 個に対し下限 %d 枚)。"
-                         "表と手順だけでは部分の詳細は伝わっても全体の関係が残らない"
-                         % (diagram_count, main_count, required))
-
     # ---- section ----------------------------------------------------------
 
     def check_section(self, section, index):
         pointer = "/sections/%d" % index
         section_def = self.schema["$defs"]["section"]
-        self.check(section_def, section, pointer, skip=("parts", "duration"))
+        self.check(section_def, section, pointer, skip=("parts",))
 
         reserved = (section_def["properties"]["id"].get("x_reserved_ids") or [])
         if section.get("id") in reserved:
@@ -955,8 +1073,6 @@ class Checker(object):
         if isinstance(lead_line, str) and len(lead_line) > LEAD_LINE_WARN_CHARS:
             self.add("W-LEADLINE-LONG", pointer + "/lead_line",
                      "%d 文字を超える 1 行抽象は読みにくい" % LEAD_LINE_WARN_CHARS)
-
-        self.check_section_duration(section, pointer)
 
         kind = section.get("section_kind")
         if kind is None:
@@ -989,18 +1105,6 @@ class Checker(object):
                     seen_ids.add(part_id)
             self.check_kind_constraints(section, parts, pointer, kind, attrs or {})
 
-    def check_section_duration(self, section, pointer):
-        if "duration" not in section:
-            return
-        value = section["duration"]
-        if value is None:
-            return
-        if not isinstance(value, str):
-            self.emit("type", pointer + "/duration", "文字列でない")
-            return
-        if parse_minutes(value) is None:
-            self.add("E-SECTION-DURATION-FORMAT", pointer + "/duration",
-                     "セクションの所要時間は分の単位で 1 値だけ書く (範囲表記や分量表記は不可)")
 
     def check_part(self, part, pointer, nested=False):
         self.check(self.schema["$defs"]["part"], part, pointer, skip=("data",))
@@ -1155,33 +1259,9 @@ class Checker(object):
                        for part in parts):
                 self.add("E-SECTIONKIND-HANDSON", pointer,
                          "この section_kind ではその場で手を動かす手順部品が 1 件以上要る")
-        if kind == KIND_AGENDA_TIMEBOX:
-            self.check_timebox(section, parts, pointer)
         if kind == KIND_CAPABILITY_EXPLAINER:
             self.check_slots(parts, pointer)
 
-    def check_timebox(self, section, parts, pointer):
-        total = 0
-        complete = True
-        rows_part = self.ctx.part_of_block(BLOCK_ROWS)
-        for part in parts:
-            if not isinstance(part, dict) or part.get("part") != rows_part:
-                continue
-            for row in (part.get("data") or {}).get("rows") or []:
-                if not isinstance(row, dict):
-                    continue
-                minutes = parse_minutes(row.get("time"))
-                if minutes is None:
-                    complete = False
-                    self.add("E-SECTIONKIND-CONSTRAINT", pointer,
-                             "この section_kind では全ての行に時間が要る")
-                else:
-                    total += minutes
-        declared = parse_minutes(section.get("duration"))
-        if complete and declared is not None and total != declared:
-            self.add("E-TIMEBOX-SUM", pointer,
-                     "行の時間の総和 %d 分がセクションの所要時間 %d 分と一致しない"
-                     % (total, declared))
 
     def check_slots(self, parts, pointer):
         zones = [value for value in
@@ -1281,10 +1361,21 @@ class Checker(object):
             kind = section.get("section_kind")
             if kind is None:
                 kind = self.ctx.default_section_kind
-            required_role = (self.ctx.kind_attributes.get(kind) or {}).get(ATTR_REQUIRED_ROLE)
+            attrs = self.ctx.kind_attributes.get(kind) or {}
+            required_role = attrs.get(ATTR_REQUIRED_ROLE)
             if isinstance(required_role, str) and role != required_role:
                 self.add("E-SECTION-ROLE-CONFLICT", pointer,
                          "この section_kind は %s にしか置けない" % required_role)
+            if attrs.get(ATTR_PLACEMENT) == PLACEMENT_LAST_MAIN:
+                # 総括は「読み終えた後」に効く。途中に置くと、まだ読んでいない節の
+                # 結論を先に読ませることになり、予告 (冒頭の goal) と区別が付かない。
+                later_mains = [i for i, s in enumerate(sections[index + 1:], index + 1)
+                               if isinstance(s, dict)
+                               and self.section_role(s) == self.ctx.default_role]
+                if later_mains:
+                    self.add("E-SECTION-PLACEMENT", pointer,
+                             "この section_kind は本編の最後に置く "
+                             "(後ろに本編セクションが %d 件ある)" % len(later_mains))
         for index, role in enumerate(roles):
             if role != self.ctx.appendix_role:
                 continue
@@ -1315,52 +1406,6 @@ class Checker(object):
             self.add("E-ATTAINMENT-UNREACHED", "/attainment_level",
                      "宣言した到達段に届くセクションが 1 件も無い")
 
-    def check_durations(self, sections):
-        share_kinds = {slug: attrs[ATTR_MIN_DURATION_SHARE]
-                       for slug, attrs in self.ctx.kind_attributes.items()
-                       if isinstance(attrs.get(ATTR_MIN_DURATION_SHARE), (int, float))}
-        used = []
-        for section in sections:
-            if not isinstance(section, dict):
-                continue
-            kind = section.get("section_kind")
-            if kind is None:
-                kind = self.ctx.default_section_kind
-            used.append(kind)
-        if not any(kind in share_kinds for kind in used):
-            return
-        total = 0
-        per_kind = {}
-        for index, section in enumerate(sections):
-            if not isinstance(section, dict):
-                continue
-            kind = section.get("section_kind")
-            if kind is None:
-                kind = self.ctx.default_section_kind
-            minutes = parse_minutes(section.get("duration"))
-            if minutes is None:
-                if section.get("duration") is None:
-                    self.add("E-DURATION-INCOMPLETE", "/sections/%d/duration" % index,
-                             "所要時間の下限割合を持つ種別がある資料では全セクションに所要時間が要る")
-                continue
-            total += minutes
-            per_kind[kind] = per_kind.get(kind, 0) + minutes
-        for slug, minimum in sorted(share_kinds.items()):
-            if slug not in used:
-                continue
-            share = (per_kind.get(slug, 0) / total) if total > 0 else 0
-            if share < minimum:
-                pointer = "/sections"
-                for index, section in enumerate(sections):
-                    kind = section.get("section_kind") if isinstance(section, dict) else None
-                    if kind is None:
-                        kind = self.ctx.default_section_kind
-                    if kind == slug:
-                        pointer = "/sections/%d" % index
-                        break
-                self.add("E-SECTIONKIND-DURATION-SHARE", pointer,
-                         "この種別の所要時間が全体に占める割合 %.3f が下限 %s を下回る"
-                         % (share, minimum))
 
     def check_glossary_scopes(self, cfg, sections):
         seen = {}
@@ -1390,12 +1435,34 @@ class Checker(object):
         assets = cfg.get("assets")
         if not isinstance(assets, list):
             return
+        declared = set()
+        for asset in assets:
+            if isinstance(asset, dict) and isinstance(asset.get("id"), str):
+                declared.add(asset["id"])
+
+        # 冒頭サムネイルは部品ではなく文書直下の参照なので used には入らない。
+        # ここで解決を見ないと、存在しない id を書いても描画側が黙って
+        # 「サムネイル無し」として続行してしまう (指定したのに出ない状態になる)。
+        thumb = cfg.get("thumbnail_asset_id")
+        if isinstance(thumb, str) and thumb:
+            if thumb not in declared:
+                self.add("E-THUMBNAIL-UNRESOLVED", "/thumbnail_asset_id",
+                         "assets[] に id=%r が無い。冒頭サムネイルは assets の"
+                         "参照であり、素材そのものを別に持たない" % thumb)
+        elif declared:
+            # 素材はあるのに顔が決まっていない状態。描画は続くが、この 1 枚は
+            # 冒頭だけでなく共有時のプレビュー画像 (og:image) も兼ねるため、
+            # 未指定のまま配ると「リンクを貼っても絵が出ない」資料になる。
+            self.add("W-THUMBNAIL-ABSENT", "/thumbnail_asset_id",
+                     "素材があるのに冒頭・共有プレビューの 1 枚が選ばれていない"
+                     " (共有時のカードが画像なしになる)")
+
         used = self.ctx.used_references.get("assets", set())
         for index, asset in enumerate(assets):
             if not isinstance(asset, dict):
                 continue
             asset_id = asset.get("id")
-            if isinstance(asset_id, str) and asset_id not in used:
+            if isinstance(asset_id, str) and asset_id not in used and asset_id != thumb:
                 self.add("W-REF-UNUSED", "/assets/%d" % index,
                          "どの部品からも参照されていない")
 
@@ -1421,10 +1488,20 @@ class Checker(object):
                     self.add("E-TEXT-OVERFLOW", pointer,
                              "本文が上限 %d 文字を超える (実際 %d 文字)"
                              % (self.ctx.body_limit, len(body)))
-                if long_sentence_count(body) >= LONG_SENTENCE_COUNT:
+                long_count = long_sentence_count(body, self.ctx.long_sentence_chars)
+                if long_count >= self.ctx.long_sentence_count:
                     self.add("W-SENTENCE-LONG", pointer,
-                             "%d 文字を超える文が %d つ以上ある"
-                             % (LONG_SENTENCE_CHARS, LONG_SENTENCE_COUNT))
+                             "%d 文字を超える文が %d 件ある (%d 件で違反)。"
+                             "長い 1 文は改行では解決せず、文を割るしかない"
+                             % (self.ctx.long_sentence_chars, long_count,
+                                self.ctx.long_sentence_count))
+
+                sentences = len(split_sentences(body))
+                if sentences > self.ctx.max_sentences_per_body:
+                    self.add("E-TEXT-PARAGRAPH", pointer,
+                             "本文が %d 文ある (上限 %d 文)。文字数が予算内でも、"
+                             "短い文を並べれば段落になる。これ以上は箇条書きへ落とす"
+                             % (sentences, self.ctx.max_sentences_per_body))
 
 
 # ---------------------------------------------------------------------------
@@ -1435,7 +1512,7 @@ class Checker(object):
 class Context(object):
 
     def __init__(self, root, schema, schema_path, sections_catalog, parts_catalog,
-                 catalog, catalog_path, c23, visual_policy=None):
+                 catalog, catalog_path, c23, visual_policy=None, vocabulary=None):
         self.root = root
         self.schema = schema
         self.schema_path = schema_path
@@ -1446,6 +1523,7 @@ class Context(object):
         self.c23 = c23
 
         self.load_visual_policy(visual_policy)
+        self.load_vocabulary(vocabulary)
 
         self.default_section_kind = sections_catalog.get("default")
 
@@ -1493,6 +1571,36 @@ class Context(object):
         self.reference_ids = {}
         self.used_references = {}
         self.body_limit = FALLBACK_BODY_MAX_CHARS
+
+    def load_vocabulary(self, vocabulary):
+        """表示語彙正本を読み、id 集合と対応表だけを持つ (語そのものを持たない)。
+
+        entries が list でない・id が文字列でないといった壊れ方は起動時に落とす。
+        空集合を許すと「語彙に載っていないから違反」の判定が全件違反へ倒れるか、
+        逆に判定不能で黙るかのどちらかになり、どちらも語彙を編集した利用者へ
+        原因が伝わらない。
+        """
+        if not isinstance(vocabulary, dict):
+            raise LaunchAbort("表示語彙正本がオブジェクトでない")
+
+        def entries_of(group):
+            node = vocabulary.get(group)
+            if not isinstance(node, dict) or not isinstance(node.get("entries"), list):
+                raise LaunchAbort("表示語彙正本に %s.entries が無い" % group)
+            return node["entries"]
+
+        self.connector_ids = []
+        for entry in entries_of("connectors"):
+            if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
+                raise LaunchAbort("表示語彙正本の connectors.entries に id の無い項目がある")
+            self.connector_ids.append(entry["id"])
+
+        self.attainment_labels = {}
+        for entry in entries_of("attainment_level_labels"):
+            if not isinstance(entry, dict) or not isinstance(entry.get("enum"), str):
+                raise LaunchAbort(
+                    "表示語彙正本の attainment_level_labels.entries に enum の無い項目がある")
+            self.attainment_labels[entry["enum"]] = entry.get("label")
 
     def part_of_block(self, block_type):
         """block.type からカタログの部品 id を引く (id 語彙をここに持たないため)。"""
@@ -1557,17 +1665,71 @@ class Context(object):
 
         self.min_visual_per_section = number(
             "min_visual_parts_per_main_section", "value", FALLBACK_MIN_VISUAL_PER_SECTION)
-        self.min_diagram_ratio = number(
-            "min_diagrams_per_main_sections", "value", FALLBACK_MIN_DIAGRAM_RATIO)
-        self.min_diagram_floor = number(
-            "min_diagrams_per_main_sections", "floor", FALLBACK_MIN_DIAGRAM_FLOOR)
+        # 単数形 (per_main_section)。判定単位は資料全体の総量比ではなく main セクション
+        # 1 個であり、総量比の閾値 (旧 min_diagrams_per_main_sections) は正本側で
+        # superseded 済みなので読まない。
+        self.min_diagram_per_section = number(
+            "min_diagrams_per_main_section", "value", FALLBACK_MIN_DIAGRAM_PER_SECTION)
+        self.min_image_per_section = number(
+            "min_images_per_main_section", "value", FALLBACK_MIN_IMAGE_PER_SECTION)
+        # fallback を空集合にしない。正本が読めないときに error 宣言だけが消えると、
+        # 「方針ファイルを壊せばゲートが緩む」経路になるためである (fail-closed)。
+        self.error_codes = set(FALLBACK_ERROR_CODES)
+        for entry in thresholds.values():
+            if not isinstance(entry, dict) or entry.get("level") != ERROR_LEVEL:
+                continue
+            code = entry.get("code")
+            if isinstance(code, str) and code:
+                self.error_codes.add(code)
         self.max_text_ratio = number(
             "max_text_parts_ratio_per_section", "value", FALLBACK_MAX_TEXT_RATIO)
         self.max_text_run = number(
             "max_consecutive_text_parts", "value", FALLBACK_MAX_TEXT_RUN)
+        self.load_sentence(policy.get("sentence"), policy.get("fold"))
         self.load_micro_copy(policy.get("micro_copy"))
         self.load_layering(policy.get("layering"))
         self.load_opening(policy.get("opening"))
+
+    def load_sentence(self, sentence, fold):
+        """1 文の長さ・1 本文あたりの文数・折り畳み回数の上限を正本から引く。
+
+        値の正本は config/handout-visual-policy.json#sentence と #fold であり、script は
+        読めなかったときの fallback だけを持つ。level:"error" 宣言はここでも error_codes
+        へ回収するので、重大度も config が決める (接頭辞は根拠にしない)。
+        """
+        sentence = sentence if isinstance(sentence, dict) else {}
+        fold = fold if isinstance(fold, dict) else {}
+
+        def number(entry, field, fallback):
+            if isinstance(entry, dict):
+                value = entry.get(field)
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    return value
+            return fallback
+
+        # フィールド名の正本は briefs/config/handout-visual-policy.json#sentence。
+        # 実体化のときに value / count_threshold へ言い換えた版があったが、名前が
+        # 違うと「正本を読んだつもり」の検査が空振りして fallback だけが効く。
+        gate = sentence.get("sentence_gate")
+        per_body = sentence.get("sentences_per_body")
+        self.long_sentence_chars = number(
+            gate, "max_chars", FALLBACK_LONG_SENTENCE_CHARS)
+        self.long_sentence_count = number(
+            gate, "max_count", FALLBACK_LONG_SENTENCE_COUNT)
+        self.max_sentences_per_body = number(
+            per_body, "max_sentences", FALLBACK_MAX_SENTENCES_PER_BODY)
+        self.sentences_per_body_canon = per_body if isinstance(per_body, dict) else {}
+        self.max_folds_per_section = number(
+            fold.get("max_folds_per_section"), "value",
+            FALLBACK_MAX_FOLDS_PER_SECTION)
+
+        for entry in (gate, per_body,
+                      fold.get("max_folds_per_section")):
+            if not isinstance(entry, dict) or entry.get("level") != ERROR_LEVEL:
+                continue
+            code = entry.get("code")
+            if isinstance(code, str) and code:
+                self.error_codes.add(code)
 
     def load_opening(self, opening):
         """冒頭の置き方の上限を正本から引く (fail-soft)。"""
@@ -1580,6 +1742,32 @@ class Context(object):
                 if isinstance(value, int) and not isinstance(value, bool) and value > 0:
                     limits[name] = value
         self.hero_field_limits = limits or dict(FALLBACK_HERO_FIELD_LIMITS)
+
+        # 冒頭 1 件あたりの文数。字数が収まっていても短い文を並べれば段落になる。
+        sentences = ((opening.get("hero_fields") or {}).get("max_sentences")
+                     if isinstance(opening.get("hero_fields"), dict) else None)
+        sentences = sentences if isinstance(sentences, dict) else {}
+        values = sentences.get("value")
+        caps = {}
+        if isinstance(values, dict):
+            for name, value in values.items():
+                if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+                    caps[name] = value
+        self.hero_sentence_limits = caps or dict(FALLBACK_HERO_SENTENCE_LIMITS)
+        code = sentences.get("code")
+        self.hero_sentence_code = (
+            code if isinstance(code, str) and code else FALLBACK_HERO_SENTENCE_CODE)
+        self.hero_escape = opening.get("hero_fields", {}).get("escape") \
+            if isinstance(opening.get("hero_fields"), dict) else None
+
+        # level は昇格だけができる (降格経路は意図的に無い。P05-x-115)。
+        for entry in (opening.get("hero_fields"), sentences,
+                      opening.get("hero_total")):
+            if not isinstance(entry, dict) or entry.get("level") != ERROR_LEVEL:
+                continue
+            code = entry.get("code")
+            if isinstance(code, str) and code:
+                self.error_codes.add(code)
 
         total = opening.get("hero_total")
         total = total if isinstance(total, dict) else {}
@@ -1667,6 +1855,27 @@ class Context(object):
                 if isinstance(value, int) and not isinstance(value, bool):
                     return value
         return default_limit
+
+    def resolve_max_sentences(self, cfg):
+        """1 本文あたりの文数上限。字数予算と同じ水準で動かす。
+
+        文数だけを 3 文に固定したまま字数予算を広げると、広げた分は 1 文を
+        長くすることでしか使えず、W-SENTENCE-LONG (1 文 60 字) に当たって
+        使えないままになる。予算だけが名目上増えて実際には書けない状態を
+        避けるため、水準別の値がある場合はそちらを使う (無ければ既定値の
+        fail-soft)。正本は config/handout-visual-policy.json#sentence.
+        sentences_per_body.max_sentences_by_detail_level。
+        """
+        per_body = self.sentences_per_body_canon
+        explicit = cfg.get("detail_level")
+        if isinstance(per_body, dict) and isinstance(explicit, str) \
+                and explicit in self.detail_levels:
+            by_level = per_body.get("max_sentences_by_detail_level")
+            if isinstance(by_level, dict):
+                value = by_level.get(explicit)
+                if isinstance(value, int) and not isinstance(value, bool):
+                    return value
+        return self.max_sentences_per_body
 
 
 # ---------------------------------------------------------------------------
@@ -1756,10 +1965,22 @@ def normalize_config(cfg, ctx, today, diags):
             section["role"] = ctx.default_role
         if is_blank(section.get("section_kind")):
             section["section_kind"] = ctx.default_section_kind
-        normalize_section_duration(section, ctx)
         normalize_part_defaults(section, ctx)
         drop_empty_optionals(section, ("glossary",))
-        fold_count += fold_section(section, ctx, ctx.body_limit, open_at_detailed)
+        # 現行設定では E-TEXT-OVERFLOW (error) が先に返るため、超過本文を持つ構成データが
+        # ここへ到達することはなく、本ゲートは発火しない。それは意図した結末である
+        # (超過は畳まず書き手が短くして解決する)。ゲートを残すのは、両者の閾値が将来
+        # 分かれた場合 — 例えば fold 側だけを緩めた場合 — に逃げ道が復活しないための
+        # 二重化であり、「今この検査が長文を止めている」根拠として読まないこと。
+        folded = fold_section(section, ctx, ctx.body_limit, open_at_detailed)
+        fold_count += folded
+        if folded > ctx.max_folds_per_section:
+            diags.append(
+                ("E-TEXT-FOLDED", "/sections/%s/parts" % section.get("id"),
+                 "本文の超過分を折り畳みへ %d 回退避した (上限 %d 回)。折り畳みは構造上"
+                 "どうしても長い本文の救済であって、要約を省く手段ではない。書き手が"
+                 "短くするか、節を分けるか、箇条書きへ落とす"
+                 % (folded, ctx.max_folds_per_section)))
 
     drop_empty_optionals(data, ("assets", "attachments", "diagrams"))
 
@@ -1775,32 +1996,6 @@ def normalize_config(cfg, ctx, today, diags):
     }
     return data, fold_count
 
-
-def normalize_section_duration(section, ctx):
-    minutes = parse_minutes(section.get("duration"))
-    if minutes is not None:
-        section["duration"] = "%d分" % minutes
-        return
-    if section.get("duration") is not None:
-        return
-    if section.get("section_kind") != KIND_AGENDA_TIMEBOX:
-        return
-    total = 0
-    found = False
-    rows_part = ctx.part_of_block(BLOCK_ROWS)
-    for part in section.get("parts") or []:
-        if not isinstance(part, dict) or part.get("part") != rows_part:
-            continue
-        for row in (part.get("data") or {}).get("rows") or []:
-            if not isinstance(row, dict):
-                continue
-            row_minutes = parse_minutes(row.get("time"))
-            if row_minutes is None:
-                return
-            total += row_minutes
-            found = True
-    if found:
-        section["duration"] = "%d分" % total
 
 
 def normalize_part_defaults(section, ctx):
@@ -1937,6 +2132,10 @@ def run(args):
         visual_policy = read_json_file(root / VISUAL_POLICY_RELPATH, "図解方針正本")
     except Exception:
         visual_policy = None
+    # 表示語彙は fallback を持たせない。コネクタ id の妥当性も達成段階の表示ラベルも
+    # 「この語彙に載っているか」でしか判定できないため、読めないときに既定値へ落とすと
+    # 未知のコネクタが素通りする fail-open になる。
+    vocabulary = read_json_file(root / VOCABULARY_RELPATH, "表示語彙正本")
 
     try:
         catalog_path = c23.resolve_catalog_path(args.catalog)
@@ -1948,7 +2147,7 @@ def run(args):
         return EXIT_VIOLATION
 
     ctx = Context(root, schema, schema_path, sections_catalog, parts_catalog,
-                  catalog, catalog_path, c23, visual_policy)
+                  catalog, catalog_path, c23, visual_policy, vocabulary)
 
     catalog_ids = {part_id for part_id in ctx.part_scopes}
     if catalog_ids != set(ctx.part_data):
@@ -1971,13 +2170,27 @@ def run(args):
     cfg = normalize_strings(parsed)
     ctx.collect_reference_ids(cfg)
     ctx.body_limit = ctx.resolve_body_limit(cfg)
+    ctx.max_sentences_per_body = ctx.resolve_max_sentences(cfg)
 
     checker = Checker(ctx)
     diags = checker.run(cfg)
-    checker.check_text_bodies(cfg, report_overflow=not args.normalize)
+    # 本文超過の報告を --normalize の有無で切り替えない。正規化は round-trip の都合で
+    # 本文を畳むが、畳んだ事実の報告まで消す理由は無い。切り替えていたために、実運用の
+    # 経路 (--normalize あり) だけ長文検査が丸ごと消えていた
+    # (improvement/text-length-gate-decision.json#decision.close_the_escape_hatch)。
+    checker.check_text_bodies(cfg, report_overflow=True)
 
-    errors = [entry for entry in diags if entry[0].startswith("E-")]
-    warnings = [entry for entry in diags if not entry[0].startswith("E-")]
+    # 重大度は接頭辞 (E-) だけでは決めない。config/handout-visual-policy.json が
+    # level:"error" を宣言した code は、W- 接頭辞であっても完了を止める
+    # (ctx.error_codes)。接頭辞を唯一の根拠にすると、正本で error へ上げた閾値が
+    # code 名の改名なしには効かず、設定を変えてもゲートが緑のままになる。
+    error_codes = getattr(ctx, "error_codes", frozenset())
+
+    def is_error(code):
+        return code.startswith("E-") or code in error_codes
+
+    errors = [entry for entry in diags if is_error(entry[0])]
+    warnings = [entry for entry in diags if not is_error(entry[0])]
     if errors:
         emit_diagnostics(diags)
         return EXIT_VIOLATION
@@ -1989,6 +2202,12 @@ def run(args):
         normalize_diags = []
         normalized, _ = normalize_config(cfg, ctx, today, normalize_diags)
         if normalized is None:
+            emit_diagnostics(warnings + normalize_diags)
+            return EXIT_VIOLATION
+        # 正規化中に出た error は正規化が成功しても握り潰さない。E-TEXT-FOLDED は
+        # 「畳めたので通った」の実体そのものであり、normalized が返ったことを合格の
+        # 根拠に読むと逃げ道が残る。
+        if [entry for entry in normalize_diags if is_error(entry[0])]:
             emit_diagnostics(warnings + normalize_diags)
             return EXIT_VIOLATION
         payload = json.dumps(normalized, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

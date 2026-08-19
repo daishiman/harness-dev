@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-illustration-skip-ruling",
+  "reason": "CR-IMG-SKIP-COUNT の known_gap: レンダリング後の HTML に対して『IMG 部品が宣言されているのに img 実体が無い』を機械判定するゲートが存在しない。E-IMAGE-ABSENT は構成データ段の宣言しか数えられず (時系列上 skip を観測できない)、実体の欠落を捕まえるのは C07 の提示規約だけで、これは人間への申告であって機械の関門ではない。C07 を経由しない経路では宣言と実体の乖離が黙って通る",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+  "proposed_node": {
+    "id": "P02-img-realization-gate-owner",
+    "title": "宣言された IMG に実体が無い状態を捕まえる機械ゲートの担い手を決める",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+    "acceptance_criterion": "レンダリング後の HTML に対する『IMG 宣言に対応する img 実体の存在』検査の担当 component が 1 つ決まり、その component の brief に検査コードと fail 条件が書かれていること。担い手を置かない裁定を採る場合は、E-IMAGE-ABSENT の緑が実体を保証しないことを利用者向け提示のどこで必ず伝えるかが明記されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

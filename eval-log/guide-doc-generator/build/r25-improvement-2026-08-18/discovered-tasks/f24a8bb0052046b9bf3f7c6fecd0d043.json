@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C04-01",
+  "reason": "contract_lib.py:57 に『skill-brief-C04.json output_contract の 4 面』というコメント付きで 4 面がハードコードされている。このため面 5 と CR-EXT を追記しても 37/37 緑のままで、追記の正しさをテストで測れない。builder 自己申告 (C04-D1) を独立レビューが原因まで特定した",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/ref-handout-design-system/content-review/rubric-verdict.json",
+  "proposed_node": {
+    "id": "P05-x-109",
+    "title": "contract_lib.py の REQUIRED_FACES が brief の面数に追随しない片方向関係",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": "C04",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/ref-handout-design-system/",
+    "acceptance_criterion": "REQUIRED_FACES が skill-brief-C04.json#output_contract から導出され、brief の面追加でテストが赤くなること。key_constraints の CR-EXT (外部参照ゼロ) が検査されること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C04"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

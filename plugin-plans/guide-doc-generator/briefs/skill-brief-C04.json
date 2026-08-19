@@ -8,8 +8,12 @@
     "デザイントークンの値を引く",
     "アイコン規約を確認"
   ],
-  "output_contract": "部品カタログ (config/handout-parts.json が定める全部品。id 一覧をこの skill 側へ列挙せず、常にカタログを読んで答える — 正本 owner は C11・P03 Y-05) の構成データ表現 / CSS 変数トークン一覧 / アイコン規約 (viewBox・stroke・symbol+use) / 文章設計の型 の参照回答",
-  "boundary": "入力=部品またはトークンの問い合わせ/出力=規範の引用。部品 id 語彙は config/handout-parts.json、用途語彙は config/handout-purposes.json、section_kind は config/handout-sections.json を読んで答え、この skill の本文へ語彙を複製しない。HTML の生成・検証はしない (C11/C16-C18 の責務)",
+  "output_contract": "部品カタログ (config/handout-parts.json が定める全部品。id 一覧をこの skill 側へ列挙せず、常にカタログを読んで答える — 正本 owner は C11・P03 Y-05) の構成データ表現 / CSS 変数トークン一覧 / アイコン規約 (viewBox・stroke・symbol+use) / 文章設計の型 / カードとナビの視覚設計 (R25。冒頭の hero-card 化の対象フィールドと見出し語は config/handout-visual-policy.json#opening.hero_card_fields.layout / .list_headings.headings / .connector_card.heading、nav 項目のラベル上限は同 #micro_copy.roles の role=\"label\" (max_chars 14・fields に nav_item) を読んで答える。.hero-card-grid / .hero-card / .hero-card-label / .hero-card-body / .section-card といった CSS クラス名と DOM 構造の正本は C11 render-handout.py のブリーフ (block_to_component_map の B01/B02) であり、この skill は所在を示すだけで複製しない) の参照回答",
+  "key_constraints": [
+    "生成物は外部参照ゼロの単一 HTML であるため、CDN・web font・外部 URL・外部アイコンフォントを前提とする設計回答をしない (判定規則の正本は C16 verify-handout-selfcontained.py の CR-EXT)",
+    "カード/ナビの視覚設計は、閾値と見出し語を config/handout-visual-policy.json、DOM とクラス名を C11 のブリーフから引用する。どちらもこの skill の本文へ複製せず、値の判定 (W-HERO-LONG / W-HERO-HEAVY) は C12 の責務として案内する"
+  ],
+  "boundary": "入力=部品/トークン/カード・ナビ設計の問い合わせ/出力=規範の引用。語彙は config/handout-parts.json・handout-purposes.json・handout-sections.json・handout-visual-policy.json を読んで答える。HTML の生成・検証はしない (C11/C16-C18 の責務)",
   "placement_candidates": [
     "Skill"
   ],

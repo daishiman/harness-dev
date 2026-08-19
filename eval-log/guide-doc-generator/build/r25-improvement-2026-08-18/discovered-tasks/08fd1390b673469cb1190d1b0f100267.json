@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "『7 件へ CheckerReproducibilityTest を移植する』をそのまま承認すると、緑だが何も検出しないテストが 7 件増える。実測で naive port (入口の名前だけ置換) は M1/M2 とも緑のまま、adapted port (違反入力あり) だけが赤になった。差分は violating fixture を targets に足したかどうかのみ。違反が 2 件以上ないと順序の非決定が観測できない (1 件では順序が定義されない) ため、これは component 固有の作業で 11 行では済まず adapted port は 119 行だった。C01/C09 を対象に含めないと欠陥のあるテンプレートを増殖させたうえ元凶が残る",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-100-portability-spike.json",
+  "proposed_node": {
+    "id": "P05-x-124",
+    "title": "P05-x-100 の完了条件を『テンプレート移植』から『違反 2 件以上の入力で M1/M2 が赤になること』へ書き換える",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "対象 8 件 (新規 5 + 別形式 1 + 既存改修 2) の各 component で、違反を 2 件以上出す入力を用意し判定器へ M1/M2 を注入したとき赤になること。handout-readability-reviewer は判定器不在のため除外理由を記録すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

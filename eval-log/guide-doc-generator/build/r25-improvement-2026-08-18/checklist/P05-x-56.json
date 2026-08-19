@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-56",
+  "covered_task_ids": [
+    "P05-x-56"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/",
+  "acceptance_criterion_restated": "lead / goal_chips / prerequisite_connectors の 3 フィールドが data-hb-field から復元でき、P05-x-40 (goal 先頭化) / P05-x-34 (connectors) の変更後も round-trip の構成データ等価が成立すること",
+  "verified_by": [
+    {
+      "claim": "prerequisite_connectors は既に復元できていた (本ノードで足すべきものが無い)",
+      "method": "extract-handout-config.py の DOC_KEY_ONLY_ENTRY_FIELDS を確認。表示ラベルは語彙正本にしか無いので data-hb-key から id だけを戻し、but 書き (note) だけ本文から拾う設計",
+      "result": "実装済み。裁定表 (ROUNDTRIP-CONTRACT.md /prerequisite_connectors) の marker_status も emitted で residual_work なし。利用者要求 R10 (Google Drive / OneDrive / kintone) の受け皿はここに載っている"
+    },
+    {
+      "claim": "lead と goal_chips は『抽出器の表に無い』以前に、構成データとして書けなかった",
+      "method": "schemas/handout-config.schema.json の properties を列挙。additionalProperties:false のもとで lead / goal_chips のプロパティ宣言が 1 件も無い",
+      "result": "両方とも未宣言だった。つまり C11 の描画分岐 (hero-lead / goal-chip) も C12 の hero_fields 文長ゲート (lead: 40 字 / 1 文) も、書けば必ず E-KEY-UNKNOWN で落ちる構成データに対してしか書かれておらず、到達不能な検査だった"
+    },
+    {
+      "claim": "2 フィールドを schema へ宣言し、実効の締めは正本 (visual-policy) 側に残した",
+      "method": "lead は maxLength 120 (canon の W-HERO-LONG は 40 字)、goal_chips は maxItems 4 / 1 チップ 4-24 字。schema を canon の値まで絞ると、締めている当の検査が発火できなくなるため意図的に緩い上限にした",
+      "result": "C12 の有効構成へ 2 フィールドを足して exit0。長い lead (46 字) で W-HERO-LONG が、2 文の lead で E-HERO-PARAGRAPH がいずれも exit1 で発火することを実測。利用者要求 R7 (長い文章の絶対防止) が lead に対しても効くようになった"
+    },
+    {
+      "claim": "C11 が両フィールドへマーカーを刻む",
+      "method": "build_hero の lead を field_span(\"lead\", ...) へ、goal_chips の各チップを field_span(\"goal_chips\", ...) へ変更。配列は外枠 (data-hb-list-field) でなく要素側へ刻む (focus_theme と同型・外枠だけでは各値の境界が読めない)",
+      "result": "実描画で data-hb-field=\"lead\" 1 件 / data-hb-field=\"goal_chips\" 2 件 (チップ 2 件) を実測。C11 スイート 239 本 green"
+    },
+    {
+      "claim": "C20 が両フィールドを復元する",
+      "method": "DOC_FIELDS へ lead を、DOC_LIST_FIELDS へ goal_chips を追加。新設 tests/extract-handout-config.py/test_hero_optional_fields.py (6 本)",
+      "result": "6 本 green。値の復元・チップの文書順・チップを入れ替えると復元順も変わる対照 (順序が本当に文書から来ていることの確認) を含む"
+    },
+    {
+      "claim": "書かれていない任意項目を『欠落』として数えない",
+      "method": "ABSENCE_IS_NOT_A_GAP を新設し、不在時はキーを作らず gap も立てない。null を置くと『null と書いた』になり、読み戻した構成データが schema の型検査 (string / array) で落ちて round-trip が成立しない",
+      "result": "実際に一度 null を置いて E-TYPE-INVALID /lead・/goal_chips で round-trip が落ちることを観測してから、キー不在へ改めた。C11 の AC-C11-15 round-trip 等価テストが green"
+    },
+    {
+      "claim": "裁定表に載せてから読めるようにした",
+      "method": "ROUNDTRIP-CONTRACT.md#adjudications へ /lead と /goal_chips を decision=marker で追加。TheAdjudicationIsDeclared テストが表を JSON として読んで照合する",
+      "result": "2 本 green。表に載せずに抽出器だけ増やすと、契約の外で挙動が増える (免除は宣言して初めて免除である)"
+    },
+    {
+      "claim": "隣接スイートを壊していない",
+      "method": "C11 / C20 / C17 / C12 / C22 / C23 を実行",
+      "result": "C11 239 OK・C20 165 OK・C17 187 OK・C12 386 中 16 failed・C22 224 中 8 failed・C23 150 中 2 failed。failed の件数は本ノード着手前と同一 (P05-x-25 / P05-x-64 / P05-x-71 / dir_token 裁定待ちの既存赤)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X56-SCOPE-01",
+      "level": "warn",
+      "summary": "宣言された write_scope は scripts/extract-handout-config.py 1 本だが、実際には schema (2 プロパティ追加)・render-handout.py (マーカー 2 箇所)・ROUNDTRIP-CONTRACT.md (裁定 2 件)・新規テスト 1 本にも書いた。受入条件が『data-hb-field から復元できること』である以上、刻む側と書ける側を抽出器の外に置いたままでは達成が原理的に不可能で、write_scope の方が受入条件より狭かった。同一 plugin 内で他ノードの実行中 write_scope とは衝突していない"
+    },
+    {
+      "id": "F-P05X56-UNREACHABLE-01",
+      "level": "warn",
+      "summary": "本ノードの表向きの症状は『抽出器の表に 3 行足りない』だったが、実体は『C11 の描画分岐と C12 の文長ゲートが、schema 上書けない構成データに向けて書かれていた』という到達不能な検査だった。visual-policy には lead の字数・文数・hero_total の counted_fields まで細かく裁定されており、正本だけを読むと機能しているように見える。宣言 (canon) と受理 (schema) の突合が無いことがこの見え方を許している"
+    },
+    {
+      "id": "F-P05X56-SILENT-EXEMPT-01",
+      "level": "warn",
+      "summary": "ROUNDTRIP-CONTRACT.md は裁定原則で『著者記述の項目に round-trip 免除を 1 件も採らない』と宣言しているが、その宣言を守っているかを検査する機構が無い。実際 lead と goal_chips は adjudications にも exemptions にも載らないまま黙って対象外になっていた。schema の著者記述プロパティ集合と裁定表の pointer 集合を突合する検査が要る (discovered-task P05-x-124 として emit 済み)"
+    },
+    {
+      "id": "F-P05X56-OPTIONAL-EXIT-01",
+      "level": "info",
+      "summary": "--strict-fidelity は optional gap (W-EXTRACT-OPTIONAL) でも exit1 になる。今回は不在を gap と数えるのをやめたことで通ったが、『任意項目が刻まれていない』と『任意項目が書かれていない』を W- 1 種で表しているため、strict モードでの意味が曖昧なまま残っている"
+    }
+  ]
+}

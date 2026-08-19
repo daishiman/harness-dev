@@ -1,0 +1,84 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C03-01",
+ "covered_task_ids": [
+  "P02-C03-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+ "verified_by": [
+  {
+   "claim": "skill-brief.schema.json 適合 (boundary の maxLength:200 を含む)",
+   "method": "dispatcher が Draft202012Validator を再適用し、boundary の実文字数と schema の maxLength を直読み",
+   "result": "pass: errors 0 (top-level 23 キー)。boundary は 176 字で maxLength 200 に適合。SubAgent が過程で検出した 470 字違反は解消済み"
+  },
+  {
+   "claim": "C03 が決定論ゲートの数値閾値を持たない",
+   "method": "JSON 全文へ正規表現 \\d+ ?字 を適用し全ヒットの文脈を確認",
+   "result": "pass: ヒットは『200 字』1 件のみで schema の maxLength への言及。ドメイン閾値 0 件。W-SENTENCE-LONG は 2 件出現するが、いずれも『計数は C12 が終えており C03 は再計算しない』という非再計算規約の文脈"
+  },
+  {
+   "claim": "deterministic_checks が C06 の入力契約 (C16/C17/C18/C22 の 4 本) と一致する",
+   "method": "C03 の deterministic_checks と agent-brief-C06.json の input_contract.receives を dispatcher が突合",
+   "result": "pass: C03 側は verify-handout-selfcontained / a11y-print / language / narrative の 4 本。C06 の receives は『gate_reports: 決定論ゲート (C16/C17/C18/C22) の json-report のパス一覧と各 exit code。全て exit0 であることが起動の前提』で完全一致。修正前は C18 の 1 本のみだった"
+  },
+  {
+   "claim": "C03 が C06 を名指しで参照するようになった (双方向接続)",
+   "method": "JSON 全文の C06 出現を計数",
+   "result": "pass: 27 件。修正前は 0 件で、委譲元が委譲先を知らない状態だった"
+  },
+  {
+   "claim": "R25 の 9 要求が可読性レビューへ一度も接地していない (blocking finding の根拠)",
+   "method": "improvement/findings-2026-08-18.json 全文へ C03 / 可読性 / レビュー を dispatcher が再計数",
+   "result": "pass(=報告どおり・3 語すべて 0 件): R25 の要求側に可読性レビューへの言及が皆無。C06 の axis 6 種 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness) も実在を確認し、冒頭順序・図解と本文の噛み合い・カード粒度・nav ラベルに対応する軸が無いことを裏付けた"
+  },
+  {
+   "claim": "第 1 稿で C03 が起動しない設計が config 側に実在する",
+   "method": "briefs/config/handout-visual-policy.json:442 を直接確認",
+   "result": "pass: draft_first.skipped_in_draft.readability_review = 『C03 への意味レビュー委譲。第1稿は利用者本人が現物を見るため、レビュアーより早い』。C03 側 key_constraints への明文化は妥当"
+  },
+  {
+   "claim": "軸を C03 側へ新設していない (正本の二重化回避)",
+   "method": "C03 の open_questions (4 件) と checklist (6 件) を読み、軸定義の有無を確認",
+   "result": "pass: 4 面は open_questions 第 1 項に REQ 番号つきで記録されるに留まり、C03 は判定基準を持たない。軸の正本は C06 側のまま"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git diff --stat を対象ファイルへ限定",
+   "result": "pass: skill-brief-C03.json は 52 行変更 (報告の 44 insertions / 8 deletions と一致)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C03-01",
+   "level": "blocking-for-release",
+   "summary": "R25 の 9 要求 (冒頭のゴール→全体像→カード順・図解と本文の噛み合い・カード粒度・nav ラベルの拾いやすさ) に対応する評価軸が C06 の axis 6 種に無く、機械側が件数だけを見て意味側の担当が誰もいない。軸の正本は C06 なので C06 側での裁定が必要"
+  },
+  {
+   "id": "F-C03-02",
+   "level": "blocking-for-release",
+   "summary": "C03 の deterministic_checks が C18 の 1 本のみで C06 の入力契約 4 本と不一致だった。brief は修正済みだが実体は P05-C03-01 の build が必要"
+  },
+  {
+   "id": "F-C03-03",
+   "level": "carry-forward",
+   "summary": "C12 は C09 の 4 ゲートに含まれない構成データ側ゲートのため、R25/REQ-7 で error 化された文長判定 (W-SENTENCE-LONG 等) の結果が C06 へ届かない。C12 の json-report を委譲入力へ含めるかが未確定"
+  },
+  {
+   "id": "F-C03-04",
+   "level": "carry-forward",
+   "summary": "skill-brief.schema.json の boundary に maxLength:200 があり、他の既存 brief が超過している可能性がある。skill-brief 系の一括 schema 検証を別ノードで回す価値がある"
+  },
+  {
+   "id": "F-C03-05",
+   "level": "resolved",
+   "summary": "C03 が C06 を一度も名指さず、委譲先・入力 5 点・戻り値構造・prompt ファイルの所在が未定義だった。双方向に接続し、戻り値は素通し搬送 (増減・改称・再判定の禁止) として確定"
+  },
+  {
+   "id": "F-C03-06",
+   "level": "resolved",
+   "summary": "『第1稿を止めるのは決定論ゲートだけ』『verdict=FAIL でも成果物を破棄しない』が C01 と config にしか無く、C03 単独では止める設計にも読めた。key_constraints で明文化"
+  }
+ ]
+}

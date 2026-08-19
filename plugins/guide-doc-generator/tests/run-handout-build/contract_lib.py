@@ -16,6 +16,7 @@ SKILL.md が使う YAML 部分集合だけを解釈する簡易パーサで読�
 
 from __future__ import annotations
 
+import json
 import re
 from collections import namedtuple
 from pathlib import Path
@@ -24,48 +25,78 @@ Violation = namedtuple("Violation", ["contract_id", "message"])
 
 
 # --------------------------------------------------------------------------
-# 契約の定数 (すべてブリーフ / inventory / RESOLUTION 由来)
+# 契約の定数
+#
+# 値域・件数のリテラルはここに焼かず、正本のデータファイル (ブリーフ /
+# inventory) から実測で導出する。正本が読めない場合は import 時点で
+# RuntimeError にする (fail-closed。読めなかったことを「制約なし」として
+# 緑に化けさせない)。
 # --------------------------------------------------------------------------
 
 SKILL_NAME = "run-handout-build"
 BUILD_TARGET = "plugins/guide-doc-generator/skills/run-handout-build/"
 
+_PLAN_ROOT = Path(__file__).resolve().parents[4] / "plugin-plans" / "guide-doc-generator"
+C01_BRIEF_PATH = _PLAN_ROOT / "briefs" / "skill-brief-C01.json"
+INVENTORY_PATH = _PLAN_ROOT / "component-inventory.json"
+
+
+def _load_json(path: Path):
+    try:
+        with path.open(encoding="utf-8") as handle:
+            return json.load(handle)
+    except (OSError, ValueError) as exc:  # pragma: no cover - 正本欠落は即座に落とす
+        raise RuntimeError(f"契約の正本が読めない: {path} ({exc})") from exc
+
+
+_BRIEF = _load_json(C01_BRIEF_PATH)
+_INVENTORY_C01 = next(
+    (c for c in _load_json(INVENTORY_PATH).get("components", []) if c.get("id") == "C01"),
+    None,
+)
+if _INVENTORY_C01 is None:  # pragma: no cover - 正本欠落は即座に落とす
+    raise RuntimeError(f"component-inventory.json に C01 が無い: {INVENTORY_PATH}")
+
+
+def _responsibility(rid: str):
+    for item in _BRIEF["responsibilities"]:
+        if item.get("id") == rid:
+            return item
+    raise RuntimeError(f"skill-brief-C01.json responsibilities に {rid} が無い")
+
+
 # skill-brief-C01.json responsibilities[].id
-REQUIRED_RESPONSIBILITIES = ("R1-elicit", "R2-design", "R3-render", "R4-verify", "R5-refine")
+REQUIRED_RESPONSIBILITIES = tuple(r["id"] for r in _BRIEF["responsibilities"])
 
 # skill-brief-C01.json deterministic_checks
-REQUIRED_SCRIPTS = (
-    "validate-handout-config.py",
-    "resolve-handout-preset.py",
-    "verify-handout-selfcontained.py",
-    "verify-handout-a11y-print.py",
-    "verify-handout-language.py",
-    "verify-handout-narrative.py",
-    "route-handout-output.py",
-)
+REQUIRED_SCRIPTS = tuple(_BRIEF["deterministic_checks"])
 
 # component-inventory.json #C01 feedback_contract.criteria
 REQUIRED_CRITERIA = {
-    "IN1": ("inner", "script"),
-    "OUT1": ("outer", "test"),
-    "OUT2": ("outer", "test"),
-    "OUT3": ("outer", "live-trial"),
+    c["id"]: (c["loop_scope"], c["verify_by"])
+    for c in _INVENTORY_C01["feedback_contract"]["criteria"]
 }
 
-# component-inventory.json #C01 goal_seek
-REQUIRED_GOAL_SEEK = {"engine": "inline", "fork": "subagent", "max_loops": 5}
+# component-inventory.json #C01 goal_seek (数値の正本はここだけ。
+# F-C06-04 で C06 側の max_loops 数値コピーを削除し C01 goal_seek を唯一の
+# owner にした経緯があるため、テスト側へ写すと正本が再び 2 つになる)
+REQUIRED_GOAL_SEEK = dict(_INVENTORY_C01["goal_seek"])
 
 # component-inventory.json #C01 combinators
-REQUIRED_COMBINATORS = ("with-goal-seek", "with-feedback-contract")
+REQUIRED_COMBINATORS = tuple(_INVENTORY_C01["combinators"])
 
-# skill-brief-C01.json hearing_required_items_r21.items[].field
-REQUIRED_HEARING_FIELDS = (
-    "target_tasks",
-    "focus_theme",
-    "attainment_level",
-    "must_remember",
-    "no_need_to_remember",
+# skill-brief-C01.json responsibilities[R1-elicit].hearing_required_items_r21.items[].field
+REQUIRED_HEARING_FIELDS = tuple(
+    item["field"] for item in _responsibility("R1-elicit")["hearing_required_items_r21"]["items"]
 )
+
+# 同上 items[] の件数制約と対関係 (値域リテラルをテスト側へ写さないため実測で持つ)
+HEARING_BOUNDS = {
+    item["field"]: {
+        key: item[key] for key in ("min_count", "max_count", "paired_with") if key in item
+    }
+    for item in _responsibility("R1-elicit")["hearing_required_items_r21"]["items"]
+}
 
 # 本 repo の run 系 skill が共有する本文骨格 (plugins/dev-graph/skills/run-*/SKILL.md)
 REQUIRED_SECTIONS = (
@@ -84,11 +115,40 @@ REQUIRED_SUBSECTIONS = (
     "### ゴールシーク検証",
 )
 
-# skill-brief-C01.json readme_writer の 5 節
-README_SECTIONS = ("原題", "目的", "適用プリセット", "同梱物一覧", "使い方")
+def _readme_sections():
+    """skill-brief-C01.json file_ownership の README.md 節構成を実測で導出する。
+
+    「内容は A / B / … の N 節」という宣言から節名を取り、宣言された N と
+    実際の要素数が食い違えばエラーにする (件数リテラルをテスト側へ写さず、
+    かつ正本の中の自己矛盾も検出できる形)。
+    """
+    for own in _BRIEF["file_ownership"]:
+        m = re.search(r"内容は(.+?)の\s*(\d+)\s*節", own)
+        if not m:
+            continue
+        sections = tuple(s.strip() for s in m.group(1).split("/") if s.strip())
+        if len(sections) != int(m.group(2)):
+            raise RuntimeError(
+                f"skill-brief-C01.json file_ownership の節数が本文と不一致: "
+                f"{sections} vs 宣言 {m.group(2)}"
+            )
+        return sections
+    raise RuntimeError("skill-brief-C01.json file_ownership に README.md の節構成宣言が無い")
+
+
+def _report_elements():
+    """skill-brief-C01.json output_contract の生成レポート要素を実測で導出する。"""
+    m = re.search(r"生成レポート\s*[（(](.+?)[）)]", _BRIEF["output_contract"])
+    if not m:
+        raise RuntimeError("skill-brief-C01.json output_contract に生成レポート要素の宣言が無い")
+    return tuple(s.strip() for s in re.split(r"[・/]", m.group(1)) if s.strip())
+
+
+# skill-brief-C01.json file_ownership[README.md] の節構成
+README_SECTIONS = _readme_sections()
 
 # skill-brief-C01.json output_contract の生成レポート要素
-REPORT_ELEMENTS = ("適用部品", "埋め込みサイズ", "warning", "ゲート結果")
+REPORT_ELEMENTS = _report_elements()
 
 WRITE_VERBS = ("書く", "書き込", "複製", "配置")
 
@@ -354,8 +414,9 @@ def check_skill(skill_dir) -> list:
     if tt is None:
         v.append(Violation("AC-C01-12", "ヒアリング項目 target_tasks が宣言されていない (R21 C58)"))
     else:
-        if tt.get("min_count") != 1:
-            v.append(Violation("AC-C01-12", f"target_tasks.min_count は 1 (実際: {tt.get('min_count')!r})"))
+        expected_min = HEARING_BOUNDS["target_tasks"]["min_count"]
+        if tt.get("min_count") != expected_min:
+            v.append(Violation("AC-C01-12", f"target_tasks.min_count は {expected_min} (実際: {tt.get('min_count')!r})"))
         if "E-TARGET-TASKS-EMPTY" not in str(tt.get("checked_by") or ""):
             v.append(Violation("AC-C01-12", "target_tasks.checked_by が C12 E-TARGET-TASKS-EMPTY を指していない"))
 
@@ -365,12 +426,15 @@ def check_skill(skill_dir) -> list:
     if mr is None or nn is None:
         v.append(Violation("AC-C01-13", "must_remember と no_need_to_remember は対で宣言しなければならない"))
     else:
-        if mr.get("paired_with") != "no_need_to_remember":
-            v.append(Violation("AC-C01-13", "must_remember.paired_with が no_need_to_remember でない"))
-        if nn.get("paired_with") != "must_remember":
-            v.append(Violation("AC-C01-13", "no_need_to_remember.paired_with が must_remember でない"))
-        if mr.get("max_count") != 2:
-            v.append(Violation("AC-C01-13", f"must_remember.max_count は 2 (実際: {mr.get('max_count')!r})"))
+        expected_mr_pair = HEARING_BOUNDS["must_remember"]["paired_with"]
+        expected_nn_pair = HEARING_BOUNDS["no_need_to_remember"]["paired_with"]
+        expected_mr_max = HEARING_BOUNDS["must_remember"]["max_count"]
+        if mr.get("paired_with") != expected_mr_pair:
+            v.append(Violation("AC-C01-13", f"must_remember.paired_with が {expected_mr_pair} でない"))
+        if nn.get("paired_with") != expected_nn_pair:
+            v.append(Violation("AC-C01-13", f"no_need_to_remember.paired_with が {expected_nn_pair} でない"))
+        if mr.get("max_count") != expected_mr_max:
+            v.append(Violation("AC-C01-13", f"must_remember.max_count は {expected_mr_max} (実際: {mr.get('max_count')!r})"))
         for item, field in ((mr, "must_remember"), (nn, "no_need_to_remember")):
             if "E-REMEMBER-PAIR" not in str(item.get("checked_by") or ""):
                 v.append(Violation("AC-C01-13", f"{field}.checked_by が C12 E-REMEMBER-PAIR を指していない"))

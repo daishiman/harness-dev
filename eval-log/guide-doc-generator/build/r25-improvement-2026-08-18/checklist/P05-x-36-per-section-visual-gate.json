@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-36-per-section-visual-gate",
+  "covered_task_ids": [
+    "P05-x-36-per-section-visual-gate"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/",
+  "acceptance_criterion_restated": "全 main section が図解 1 点以上と画像 1 点以上を持つことを per-section で検査し、欠けたセクションを pointer 付きで error として報告する (利用者要求 R8『図解と画像は毎回セクションごとに必ず追加する』)",
+  "verified_by": [
+    {
+      "claim": "判定単位が文書全体の総量比でなく main セクション 1 個である",
+      "method": "C12 check_visual_density が sections を 1 個ずつ回り、DIAGRAM と IMG をセクション内で数える。pointer は /sections/<index>/parts であってドキュメント直下の /diagrams ではない",
+      "result": "test_visual_density.py の TestDiagramFew.test_other_sections_diagrams_do_not_cover_a_bare_section が、他の節に図解が何枚あっても図解ゼロの節を救わないことを固定して green。27 本全 green"
+    },
+    {
+      "claim": "図解と画像を別々に数えており、片方で他方を代替できない",
+      "method": "DIAGRAM_PART_ID と IMAGE_PART_ID を別のカウンタで数える。視覚部品の総称 (W-VISUAL-ABSENT) は B03 が 1 件あれば満たされるので、両方あることの証明にならない",
+      "result": "TestImageAbsent.test_diagram_does_not_substitute_for_an_image が green (図解だけの節は E-IMAGE-ABSENT で落ちる)"
+    },
+    {
+      "claim": "欠けたセクションが warning でなく完了を止める error として報告される",
+      "method": "正本 thresholds.min_diagrams_per_main_section / min_images_per_main_section が level:error を宣言し、W-DIAGRAM-FEW と E-IMAGE-ABSENT が FALLBACK_ERROR_CODES にも入っている",
+      "result": "TestSeverityIsDeclaredNotInferred の 3 本が green。W- 接頭辞でも exit1 になること、正本で level を下げても緩まないこと、正本が消えても緩まないこと (TestCanonAbsenceFailsClosed) を含む"
+    },
+    {
+      "claim": "部品が 1 件も無い main セクションが検査をすり抜けない",
+      "method": "check_visual_density は parts が空だと continue するため、この経路だけでは図解・画像ゼロが黙る。実際にはスキーマ側が sections[].parts に minItems:1 と required を課しており、先に E-ARRAY-LENGTH で exit1 になる",
+      "result": "main セクションの parts を空にした構成データを実行して確認 (exit=1・E-ARRAY-LENGTH /sections/0/parts)。fail-open ではなく fail-closed で塞がっている"
+    },
+    {
+      "claim": "骨格 (preset) の側でも『どの役の画像を置く節か』が宣言されている",
+      "method": "C23 の image_role 検査 (E-PRESET-IMAGE-ROLE-MISSING / E-PRESET-IMAGE-ROLE-UNKNOWN) は診断コードが定義されているだけで受入テストが 1 本も無かった。tests/resolve-handout-preset.py/test_image_role.py を新設 (15 本)",
+      "result": "15 本 green。出荷中の全 preset の全 section が image_role を宣言し、その値が正本の値域内であることを含む。宣言漏れが汎用の E-CATALOG-MALFORMED へ混ざらないこと (直せる 1 事実として名指しされること) も固定した"
+    },
+    {
+      "claim": "役の値域の出所が正本であって script の定数ではない",
+      "method": "IMAGE_ROLES / IMAGE_ROLE_VALUES の 2 定数を廃し、config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split.roles から引く _image_roles() を新設して context へ配線した。控えは FALLBACK_IMAGE_ROLES へ改名し、名前で『値の出所ではない』ことを示す",
+      "result": "TheValueDomainComesFromTheCanon の 3 本が green。正本へ役を足せば script を触らずにその役が使えるようになり、正本から外せば出荷中の骨格が使っていても落ちる (双方向の対照)"
+    },
+    {
+      "claim": "正本が読めない経路でも役の検査が消えず、控えがずれたまま出荷できない",
+      "method": "視覚方針は fail-soft 契約 (正本不在でゲートごと消える方が事故) なので控えを残し、代わりに『控えが出荷中の正本と一致すること』を機械で押さえる (P05-x-35 の FallbackMirrorsTheShippedCanon と同じ形)",
+      "result": "FallbackMirrorsTheShippedCanon の 3 本が green。正本を置かない fixture でも列挙外の役が落ち、role_split が壊れた形でも resolver は落ちない"
+    },
+    {
+      "claim": "隣接スイートを壊していない",
+      "method": "C23 スイート 150 本を実行",
+      "result": "148 green / 2 failed。残る 2 本は test_dir_token_single_canon.py の意図的な赤 (dir_token の正本が brief 側と出荷 config で食い違う件) で、出力先ディレクトリ命名の裁定を待つ別ノードの持ち物。本ノードの変更とは無関係 (image_role にも視覚方針にも触れていない)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X36VIS-KEYSURF-01",
+      "level": "warn",
+      "summary": "test_r20_invariants.py::test_section_entry_keys_are_fixed が section_order の要素キー面を 5 個の literal で固定したままで、image_role を加えた出荷 catalog に対して 43 subtest が赤になっていた (契約を広げた側がテストの期待値を更新していない片側更新)。本ノードで image_role を含む 6 個へ更新し、なぜ 6 個目が要るのか (R8) を docstring へ書いた。値域と宣言漏れの扱いは test_image_role.py 側が持ち、この検査は形の固定だけを見る"
+    },
+    {
+      "id": "F-P05X36VIS-EMPTY-01",
+      "level": "info",
+      "summary": "check_visual_density は parts が空のセクションを continue で飛ばすため、この関数だけを読むと『部品ゼロの節は図解も画像も要求されない』ように見える。実際はスキーマ (sections[].parts の minItems:1 / required) が先に E-ARRAY-LENGTH で落とすので穴にはなっていない。ただし塞いでいるのが別レイヤなので、スキーマ側の minItems を緩めると同時にここが fail-open へ変わる。将来 parts 任意化の議論が出たら、この continue を先に消す必要がある"
+    },
+    {
+      "id": "F-P05X36VIS-DIRTOKEN-01",
+      "level": "info",
+      "summary": "C23 スイートに残る 2 件の赤 (test_dir_token_single_canon.py) は、dir_token の正本を brief 側 (英語 slug と同形) に指名しているのに出荷 config が日本語トークン (勉強会・配布資料など) を持つ食い違い。出力先ディレクトリ名は利用者が Finder で用途を読み取るためのものなので日本語側が要求に合っており、正本の指名の方を直すのが筋に見えるが、これは出力先ディレクトリ命名の裁定 (05_Project/説明資料/yyyy-mm-dd_日本語命名) と同じ論点に属するため本ノードでは触っていない"
+    },
+    {
+      "id": "F-P05X36VIS-PIPELINE-01",
+      "level": "info",
+      "summary": "本ノードが保証するのは『図解と画像が無い構成データを通さない』ところまでで、『実際に図解と画像が生成されて出力へ載る』ことは保証しない (利用者要求 R2 が指摘した『機構はあるのに出ていない』の後半)。生成側は C21 srg-image-bridge.py の委譲と C13 embed-assets.py の埋め込みが担い、素材欠如時に illustration へ落とす fallback は role_split.fallback が裁定済み。その配線の受け皿は別ノードにある"
+    }
+  ]
+}

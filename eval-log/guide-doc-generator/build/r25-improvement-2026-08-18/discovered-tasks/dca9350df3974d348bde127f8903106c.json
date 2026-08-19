@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "P05-x-88 事前実測 (audit/P05-x-88.json) より: Markdown kind 9件中7件で再現性の面が空。うち5件は grep で determin/再現/バイト一致 がヒットし3件は関数名に deterministic を含むため語検索でも関数名一覧でも素通りする。script/hook 14件は 14/14 covered で、差は手法でなく測る対象の定義が Markdown kind へ渡っていなかったこと",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-88.json",
+  "proposed_node": {
+    "id": "P05-x-100",
+    "title": "Markdown kind 7 component へ判定器再現性テストを移植する",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "handout-build / handout-extract / run-handout-extract / assign-handout-readability-evaluator / ref-handout-design-system / handout-content-architect / handout-readability-reviewer の7件が判定器の再現性 (in-process 2回 + subprocess 別プロセス2回) を測り、各 component で何の再現性かを明記していること。移植先で実際に赤にできることを変異で確認すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

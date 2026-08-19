@@ -249,9 +249,16 @@ def _changed_paths() -> list[str]:
 
 
 def _is_skill_md(path: str) -> bool:
-    """plugins/*/skills/*/SKILL.md に該当するか (深さは問わずファイル名+配置で判定)。"""
-    norm = path.replace("\\", "/")
-    return norm.startswith("plugins/") and "/skills/" in norm and norm.endswith("/SKILL.md")
+    """`plugins/<plugin>/skills/<skill>/SKILL.md` ちょうどの形かを判定する。
+
+    深さを問わない部分一致にしない。任意深度を許すと、テスト fixture
+    (`plugins/<p>/tests/<s>/fixtures/accept/skills/<s>/SKILL.md`) が本物と同じ
+    (plugin, skill) へ潰れ、fixture の sha が verdict と一致しないため恒久 stale になる。
+    正本は content-review-protocol.md の `plugins/*/skills/*/SKILL.md` (3 セグメント glob)
+    であり、強制層 lint-content-review.py の `_all_skills()` も同じ 1 階層だけを列挙する。
+    """
+    parts = path.replace("\\", "/").split("/")
+    return len(parts) == 5 and parts[0] == "plugins" and parts[2] == "skills" and parts[4] == "SKILL.md"
 
 
 def _semantic_changed_paths(paths: list[str]) -> list[str]:

@@ -10,7 +10,7 @@
 import json
 import unittest
 
-from _harness import section, text_part
+from _harness import section, text_part, with_visual_floor
 from test_visual_density import VisualDensityTestBase, diagram, diagram_part, table_part
 
 VISUAL_POLICY_RELPATH = "config/handout-visual-policy.json"
@@ -23,7 +23,7 @@ def steps_part(part_id):
     """手順の並び (B03)。詳細層が持つべき『流れ』の部品。"""
     return {"part": "B03", "id": part_id, "data": {"rows": [
         {"key": "s1", "num": 1, "text": "受注を取り込む"},
-        {"key": "s2", "num": 2, "text": "所要時間へ換算"},
+        {"key": "s2", "num": 2, "text": "件数へ換算"},
     ]}}
 
 
@@ -44,6 +44,7 @@ class LayeringTestBase(VisualDensityTestBase):
             section("practice", id="practice", attainment_step=DETAIL,
                     parts=detail_parts or [steps_part("practice-s1"), text_part("practice-t1")]),
         ]
+        with_visual_floor(cfg)
         cfg.update(over)
         return cfg
 
@@ -99,9 +100,28 @@ class TestLayerOrder(LayeringTestBase):
 
 
 class TestDetailFlowless(LayeringTestBase):
-    """詳細層を散文と表だけで書くと、要点層より読みにくい塊が後半に生まれる。"""
+    """詳細層を散文と表だけで書くと、要点層より読みにくい塊が後半に生まれる。
 
-    def test_detail_without_flow_part_warns(self):
+    現行の正本では、この警告は完了ゲートを通る資料には当たらない。R25 で
+    DIAGRAM は main セクション 1 個あたりの error 下限になり、かつ DIAGRAM は
+    detail_parts.ids に含まれるためである — 完了できる資料の詳細層は必ず
+    DIAGRAM を 1 枚持ち、したがって「手順の形が無い」状態を作れない。
+    検査を残すのは、detail_parts.ids から DIAGRAM が外れた場合に逃げ道が
+    復活しないための二重化であって、「今この検査が散文の詳細層を止めている」
+    根拠として読んではならない。到達可能な形での固定は
+    test_flowless_is_reachable_only_when_diagram_is_not_a_flow_part が担う。
+    """
+
+    def test_flowless_is_unreachable_while_diagram_is_a_floor_and_a_flow_part(self):
+        cfg = self.layered_config(
+            detail_parts=[table_part("practice-b1"), text_part("practice-t1")])
+        res, _ = self.validate(cfg)
+        self.assert_exit(res, 0)
+        self.assert_no_diag(res, "W-DETAIL-FLOWLESS")
+
+    def test_flowless_is_reachable_only_when_diagram_is_not_a_flow_part(self):
+        """DIAGRAM を手順部品の集合から外すと、表と散文だけの詳細層が鳴る。"""
+        self.patch_layering(detail_parts={"ids": ["B03", "B13", "B14", "B17"]})
         cfg = self.layered_config(
             detail_parts=[table_part("practice-b1"), text_part("practice-t1")])
         res, _ = self.validate(cfg)

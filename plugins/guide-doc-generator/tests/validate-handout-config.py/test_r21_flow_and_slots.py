@@ -16,7 +16,7 @@ def b03(part_id, rows):
 
 
 def row(num, text, time=None, sub=None):
-    return {"num": num, "text": text, "time": time, "sub": sub}
+    return {"num": num, "text": text, "sub": sub}
 
 
 def flow_config(rows):
@@ -25,7 +25,7 @@ def flow_config(rows):
         H.section("flow", section_kind="flow-overview", parts=[b03("flow-steps", rows)]),
         H.section("practice", id="practice"),
     ]
-    return cfg
+    return H.with_visual_floor(cfg)
 
 
 def slot_part(part_id, slot):
@@ -46,7 +46,9 @@ def capability_config(slots):
             ],
         ),
     ]
-    return cfg
+    # この section_kind は全部品に区画ラベルを課すので、下限を満たすために足す
+    # 図解と画像にも slot が要る。末尾へ足すため最後の区画 (feature) を与える。
+    return H.with_visual_floor(cfg, slot="feature")
 
 
 class FlowOverviewMaxItems(H.C12TestCase):
@@ -103,6 +105,7 @@ class FlowOverviewMaxItems(H.C12TestCase):
         cfg["sections"] = [
             H.section("steps", parts=[b03("s", [row(i + 1, "手順 %d" % (i + 1)) for i in range(8)])]),
         ]
+        H.with_visual_floor(cfg)
         res, _ = self.validate(cfg)
         self.assert_exit(res, 0)
 
@@ -163,6 +166,7 @@ class CapabilityExplainerSlots(H.C12TestCase):
         cfg["sections"] = [
             H.section("std", parts=[slot_part("p0", "feature"), slot_part("p1", "outcome")]),
         ]
+        H.with_visual_floor(cfg)
         res, _ = self.validate(cfg)
         self.assert_exit(res, 0)
         self.assert_no_diag(res, "E-CAPABILITY-SLOT-ORDER")

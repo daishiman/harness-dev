@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "guide-doc-generator",
+  "route_id": "C23",
+  "component_kind": "script",
+  "name": "resolve-handout-preset.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
+  "status": "success",
+  "summary": "REQ-3 の image_role 宣言を受理・検証する側を実装した。section_order[] のキー面へ image_role を必須追加し、欠落を E-PRESET-IMAGE-ROLE-MISSING、列挙外 ({screenshot, illustration}) を E-PRESET-IMAGE-ROLE-UNKNOWN として fail-closed で落とす。欠落だけは汎用の E-CATALOG-MALFORMED へ混ぜず専用コードで分離した (役の宣言漏れという直せる 1 事実を preset 全体の形の崩れと区別するため)。役の意味と使い分けは持たず、宣言の有無と列挙内かの形式検査だけを持つ",
+  "deviations": [
+    "tests/resolve-handout-preset.py/test_r20_invariants.py が 5 キーの固定集合を書き写しているため 1 件 fail する。テストは write_scope 外のため discovered-task P05-C23-01-section-key-surface-tests として emit 済み"
+  ],
+  "evidence": [
+    "plugins/guide-doc-generator/scripts/resolve-handout-preset.py exists sha256=69fd41971c34d30433b3a439b8ffc689c4a2edf14d0c87000b90765cf2fbd8ae",
+    "plugins/guide-doc-generator/config/handout-visual-policy.json",
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/aa77c09e433845afab5839c8fc4161a1.json"
+  ],
+  "inputs_consumed": [
+    "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+    "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json"
+  ],
+  "handover": "preset の各節は image_role を必ず宣言する。宣言が無い preset は resolve 段で exit=1 で止まるため、C05 へ役未定の節が届くことはない",
+  "covered_task_ids": [
+    "P05-C23-01"
+  ],
+  "metrics": {
+    "measured_missing_role_exit_before_config_fix": 1,
+    "measured_all_presets_exit_after_config_fix": 0,
+    "tests_newly_failing": 1
+  }
+}

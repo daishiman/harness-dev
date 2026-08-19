@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c06-description-align",
+  "covered_task_ids": ["P02-c06-description-align"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+  "verified_by": [
+    {
+      "claim": "編集前は 3 者が 3 通りに割れていた",
+      "method": "inventory C06.description / agent-brief-C06.json#description / handout-readability-reviewer.md frontmatter description を文字列比較",
+      "result": "pass (差分を実測): inventory=『…一文の長さを指摘したいときに使う』(句点なし)、brief=『…文の連なりの読みにくさを指摘したいときに使う。』、md=『…一文の長さを指摘したいときに使う。』の 3 通り"
+    },
+    {
+      "claim": "正本を brief 側に置く根拠がある",
+      "method": "agent-brief-C06.json#description_constraints の読解",
+      "result": "pass: 末尾句点は lint の R5 (ALLOWED_TAIL) が要求し、『一文の長さ』の語は C12 との boundary と矛盾するため使わない、と正本側だけが理由を保持している"
+    },
+    {
+      "claim": "3 者の description が同一文字列になった",
+      "method": "python3 で 3 者を読み出し == 比較",
+      "result": "pass: brief==inventory True / brief==md True。canon=『生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・文の連なりの読みにくさを指摘したいときに使う。』"
+    },
+    {
+      "claim": "lint-skill-description.py が exit0",
+      "method": "scripts/lint-skill-description.py を実行し、出力を変数へ受けてから $? を読む (pipeline 越しに $? を読むと tail の終了コードを拾うため)",
+      "result": "pass: exit=0 / summary: OK=191 VIOLATION=0"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c06-01",
+      "level": "carry-forward",
+      "summary": "md 側の実体修正は write_scope の別ノード P05-C06-rebuild で行った (本ノードの write_scope は component-inventory.json のみ)。3 者一致は 2 ノードの合成で成立しており、片方だけを巻き戻すと一致が崩れる"
+    },
+    {
+      "id": "F-P02c06-02",
+      "level": "carry-forward",
+      "summary": "description の 3 者一致を検査する決定論ゲートが無い。lint-skill-description.py は書式 (末尾語・字数) のみを見ており、inventory / brief / 出荷物の同一性は見ていないため、再び割れても緑のまま通る。release で同一性検査の追加を検討"
+    }
+  ]
+}

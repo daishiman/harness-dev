@@ -9,7 +9,9 @@
     "handout を作る"
   ],
   "output_contract": "出力ディレクトリ 1 個 (資料 HTML / 構成データ JSON / 素材 / README) + 生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果)",
-  "readme_writer": "同梱 4 点のうち README.md の単独 writer は本 skill (C01) である (P02 evidence X-08 の裁定)。原題・目的・適用プリセットの文言生成を伴うため決定論 script の責務ではない。内容は原題 / 目的 / 適用プリセット / 同梱物一覧 / 各同梱物の使い方の 5 節。書き込み先は C19 route-handout-output.py が stdout / --json-report で返した出力ディレクトリ直下で、ディレクトリ自体の作成は C19 の write_scope。他の component (C11 render-handout.py / C13 embed-assets.py / C19 / C21) は README.md を書かず、C19 は存在検査のみを行う",
+  "file_ownership": [
+    "README.md (単独 writer): 同梱 4 点のうち README.md の単独 writer は本 skill (C01) である (P02 evidence X-08 の裁定)。原題・目的・適用プリセットの文言生成を伴うため決定論 script の責務ではない。内容は原題 / 目的 / 適用プリセット / 同梱物一覧 / 各同梱物の使い方の 5 節。書き込み先は C19 route-handout-output.py が stdout / --json-report で返した出力ディレクトリ直下で、ディレクトリ自体の作成は C19 の write_scope。他の component (C11 render-handout.py / C13 embed-assets.py / C19 / C21) は README.md を書かず、C19 は存在検査のみを行う"
+  ],
   "boundary": "入力=題材と素材、または検証済みの構成データ/出力=単一 HTML と同梱物。対話は既定経路であって唯一経路ではない (逆抽出からの再生成と自動実行を対話で塞がない)。HTML の組み立て自体は決定論 script へ委譲し LLM で書かない。読みやすさの最終判定は C03 へ委譲する",
   "placement_candidates": [
     "Skill"
@@ -39,26 +41,29 @@
     "detail_level / evidence_depth を提示し、上書きの要否だけを聞いた (無回答なら既定を採用して停止しない)",
     "第 1 稿を config/handout-visual-policy.json#draft_first.first_draft_detail_level の粒度で 1 回出し、質問ラウンドが上限以内である",
     "推定で埋めた項目が生成レポートで『仮置き』として一覧になっている",
-    "C12 の図解密度・散文量の警告 (W-VISUAL-ABSENT / W-DIAGRAM-FEW / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG) が 0 件である",
+    "C12 の図解密度・散文量の警告 (W-VISUAL-ABSENT / W-DIAGRAM-FEW / E-IMAGE-ABSENT / W-TEXT-HEAVY / W-TEXT-RUN / W-COPY-LONG) が 0 件である。W-DIAGRAM-FEW と E-IMAGE-ABSENT は main セクション単位の判定 (正本 improvement/visual-per-section-decision.json) であり、DIAGRAM または IMG を持たない main セクションが 1 件でも残っていれば満たさない",
     "載せなかった項目を生成レポートで明示した (config/handout-visual-policy.json#content_selection。黙って落とさない)",
     "各節が『言いたいこと 1 行 → 要点の内訳 → 図解 → 補足』の順に並んでいる (config/handout-visual-policy.json#opening.section_opening.progression。図解を節の先頭に置いて要点を後から足していない)",
-    "冒頭 (目的・背景・ゴール・箇条リスト) の総量が config/handout-visual-policy.json#opening.hero_total の上限内である (W-HERO-HEAVY)。1 行ずつが短くても、リストが縦に積み上がって 1 画面を超えていないかを描画結果で確かめる"
+    "冒頭 (目的・背景・ゴール・箇条リスト) の総量が config/handout-visual-policy.json#opening.hero_total の上限内である (W-HERO-HEAVY)。1 行ずつが短くても、リストが縦に積み上がって 1 画面を超えていないかを描画結果で確かめる",
+    "R25/REQ-3(a) (C69): 第 1 稿の生成物に、IMG ブロック (role=screenshot / role=illustration) を持つセクションがあれば C21 srg-image-bridge.py が起動しており、挿絵が埋め込まれた状態で利用者へ提示している (第 1 稿での skip が config/handout-visual-policy.json#draft_first.skipped_in_draft から外れていることの実地確認)",
+    "R25/REQ-8 (C74): 冒頭ヒーローがカード形で描画され、purpose / background / goal / lead の各文が config/handout-visual-policy.json#opening.hero_fields の文字数・文数上限内であり (W-HERO-LONG / W-HERO-HEAVY が level=error で 0 件。essential_problem / attainment_level は文字数上限の対象外)、attainment_level が生の enum 値ではなく config/handout-vocabulary.json 由来の表示ラベルで読者へ見えている (E-ENUM-RAW が 0 件)",
+    "R25/REQ-9 (C75): 前提コネクタを宣言した場合、その全件が config/handout-vocabulary.json#connectors の語彙に含まれ (E-CONNECTOR-UNKNOWN が 0 件)、冒頭カード群に『前提』カードとして提示されている。宣言自体が無い (講義型など) 場合はその状態を仮置きではなく正当な省略として扱う"
   ],
   "goal": "題材のヒアリングから構成データを確定し、外部依存ゼロの単一 HTML 資料 1 個と同梱物一式が既定の命名規則で出力され、自己完結性・a11y・印刷・言語規約・日付表記の全ゲートが exit0 になった状態。加えて R24 以降は、図解密度と散文量の警告が 0 件であることを完了条件に含める。C12 はこれらを warning として発火するだけで exit code を変えない — **強制はこのゴールシーク側が持つ** (裁定と層分けの理由は briefs/RESOLUTION-R24-visual-first-draft-first.md)",
   "goal_seek": {
     "engine": "inline",
     "fork": "subagent",
-    "max_loops": 5,
-    "completion_conditions": {
-      "deterministic_gates": "C09 の集約 verdict が pass (4 ゲートすべて exit0)",
-      "visual_density": "C12 --strict の警告一覧に config/handout-visual-policy.json#thresholds と #micro_copy.code の各コードが 1 件も無い",
-      "why_here": "値域の縛りを C12 の error にすると既存の構成データと最小例が一斉に落ちる。機械検査の互換性を壊さずに編集方針だけを厳しくするため、発火は C12・強制は本 skill と層を分ける",
-      "on_violation": "警告が残る場合は R2-design へ戻して C05 へ再委譲する。人手で構成データを直接書き換えて警告を消さない (再現経路が失われる)",
-      "content_selection": "粒度は doc_type によらず一定である (config/handout-visual-policy.json#content_selection)。網羅のために部品や項目を積み増していない。この条件は機械検査できないため、R4-verify の生成レポートで『載せなかった項目』を提示して利用者の判断へ渡す",
-      "section_opening": "各 main セクションが『言いたいこと 1 行 → 要点の内訳 → 図解 → 補足』の順で並んでいる (config/handout-visual-policy.json#opening.section_opening)。lead_line が話題の提示ではなく主張の言い切りである。機械検査は W-HERO-LONG / W-HERO-HEAVY / W-OPENS-PROSE / W-LEADLINE-LONG が代理指標として持ち、step 2 と step 3 の前後は本 skill が読んで判定する",
-      "hero_volume": "冒頭に描画される文の総量が config/handout-visual-policy.json#opening.hero_total の上限内である (W-HERO-HEAVY)。個別フィールドの上限を超えていなくても、短い行が縦に積み上がれば冒頭は長くなる。溢れたら『読み終えたときの持ち帰り』を本編末尾か role=appendix の節へ移す。schema が minItems: 1 を課すフィールドは冒頭から消せないので短くする。移すのであって黙って落とさない"
-    }
+    "max_loops": 5
   },
+  "key_constraints": [
+    "完了条件/deterministic_gates: C09 の集約 verdict が pass (4 ゲートすべて exit0)",
+    "完了条件/visual_density: C12 --strict の警告一覧に config/handout-visual-policy.json#thresholds と #micro_copy.code の各コードが 1 件も無い",
+    "完了条件/why_here: 値域の縛りを C12 の error にすると既存の構成データと最小例が一斉に落ちる。機械検査の互換性を壊さずに編集方針だけを厳しくするため、発火は C12・強制は本 skill と層を分ける",
+    "完了条件/on_violation: 警告が残る場合は R2-design へ戻して C05 へ再委譲する。人手で構成データを直接書き換えて警告を消さない (再現経路が失われる)",
+    "完了条件/content_selection: 粒度は doc_type によらず一定である (config/handout-visual-policy.json#content_selection)。網羅のために部品や項目を積み増していない。この条件は機械検査できないため、R4-verify の生成レポートで『載せなかった項目』を提示して利用者の判断へ渡す",
+    "完了条件/section_opening: 各 main セクションが『言いたいこと 1 行 → 要点の内訳 → 図解 → 補足』の順で並んでいる (config/handout-visual-policy.json#opening.section_opening)。lead_line が話題の提示ではなく主張の言い切りである。機械検査は W-HERO-LONG / W-HERO-HEAVY / W-OPENS-PROSE / W-LEADLINE-LONG が代理指標として持ち、step 2 と step 3 の前後は本 skill が読んで判定する",
+    "完了条件/hero_volume: 冒頭に描画される文の総量が config/handout-visual-policy.json#opening.hero_total の上限内である (W-HERO-HEAVY)。個別フィールドの上限を超えていなくても、短い行が縦に積み上がれば冒頭は長くなる。溢れたら『読み終えたときの持ち帰り』を本編末尾か role=appendix の節へ移す。schema が minItems: 1 を課すフィールドは冒頭から消せないので短くする。移すのであって黙って落とさない"
+  ],
   "output_language": "ja",
   "purpose_background": "初心者・非エンジニア向けの資料は毎回ゼロから手書きされ、部品もデザイン言語も資産として残らない。構成データ駆動へ移せば反復配布できるテンプレートになる",
   "responsibilities": [
@@ -133,6 +138,20 @@
         ],
         "why_not_derived_like_presentation_order": "presentation_order は prior_knowledge_level から導出できたが、粒度は既存のどのヒアリング項目からも導出できない。同じ読者・同じ用途でも『今日は要点だけ』『今回は詳しく』が変わるのは利用者側の事情であり、資料の属性からは決まらない。利用者が明示的に『ヒアリングしながら整えられるように』と要求したのもこの性質による"
       },
+      "hearing_required_items_r25_req9": {
+        "note": "R25/REQ-9 (goal-spec C75) で本責務へ追加したヒアリング項目。required:false であり、無回答 (講義型など外部データを一切使わない資料) は正当な省略として扱い、既定は『宣言なし』",
+        "elicitation_form": "『この資料を進めるうえで、読者が事前に接続しておく必要がある外部サービス (Google Drive / OneDrive / kintone 等) はありますか。無ければそのまま進めます』の 1 問として提示する",
+        "items": [
+          {
+            "field": "prerequisite_connectors",
+            "question_ja": "この資料の前提として、読者が事前に接続しておく必要がある外部コネクタはありますか (該当があれば全て挙げてください)",
+            "required": false,
+            "vocabulary_source": "config/handout-vocabulary.json#connectors (canon: C12。本 skill は語彙を prompt へ列挙しない — 語彙が増えても質問文を書き換えずに済むようにする)",
+            "on_no_answer": "宣言なしのまま進む。null や空配列への変換は構成データ側の意味論であり C12 が持つ",
+            "checked_by": "C12 E-CONNECTOR-UNKNOWN"
+          }
+        ]
+      },
       "draft_first": {
         "ssot": "config/handout-visual-policy.json#draft_first",
         "rule": "速さは『質問を減らすこと』ではなく『確定を待たずに一度出すこと』で得る。質問ラウンドの上限・初回の粒度・目標形は方針ファイルが持ち、本 brief にも prompt 本文にも数値を書かない",
@@ -142,17 +161,31 @@
     },
     {
       "id": "R2-design",
-      "summary": "用途に対応するプリセットを選び、構成データ設計を handout-content-architect へ委譲して、部品選択と lead-line・判断軸・セクションゴール・用語言い換え宣言を含む構成データを確定する",
+      "summary": "用途に対応するプリセットを選び、構成データ設計を handout-content-architect へ委譲して、部品選択と lead-line・判断軸・セクションゴール・用語言い換え宣言を含む構成データを確定する。R25/REQ-8 (C74) により、purpose / background / goal / lead はヒーローカードの各文が config/handout-visual-policy.json#opening.hero_fields の文字数・文数上限に収まるよう最初から短く設計する (超過を前提に描画側で丸めない)。超過が避けられない場合の逃げ先は箇条書き化または本編セクションへの移動であり、B10 の折りたたみは使わない (REQ-7 と同じ制約)。R25/REQ-9 (C75) の前提コネクタ宣言があれば、その語彙妥当性は構成データ確定時点で C12 へ委ねる (この責務では語彙を検証しない)",
       "prompt_required": true
     },
     {
       "id": "R3-render",
-      "summary": "検証済み構成データからアセット埋め込み・図解・アイコン sprite・レンダリングを決定論 script 列で実行し単一 HTML を生成する",
-      "prompt_required": true
+      "summary": "検証済み構成データからアセット埋め込み・図解・アイコン sprite・レンダリングを決定論 script 列で実行し単一 HTML を生成する。R25/REQ-3(a) (C69) により C21 srg-image-bridge.py (挿絵生成) は第 1 稿から起動する — config/handout-visual-policy.json#draft_first.skipped_in_draft から srg_images を除いた裁定 (why_srg_images_no_longer_skipped) に従い、待ち時間増は利用者が受け入れ済みである。**本責務の最初のステップ (C13 embed-assets.py を呼ぶ前) として**、R2-design で確定した構成データが role=screenshot を宣言している asset ごとに、対応する実画面素材ファイルが assets-dir に実在するかを C01 自身が確認する。存在しなければ、C13 を呼ぶ前に構成データ側の当該 asset の role を illustration へ書き換える (正本 improvement/visual-per-section-decision.json#role_split.fallback)。role の確定が終わった構成データだけを C13 embed-assets.py へ渡し (C13 は role 意味論に関与せず、宣言された素材の存在確認と exit1 による fail-closed のみを担う。script-brief-C13.json の失敗モード宣言を参照)、続けて role=illustration の IMG ブロックに対してのみ C21 を呼んで挿絵を生成し埋め込む (正本 improvement/visual-per-section-decision.json#cost_and_risk.mitigation『生成対象は illustration 役の節に限られる』。role=screenshot の節は C13 による実素材の埋め込みで足りるため C21 へ渡さない — 渡すと待ち時間が節数に比例する問題 (同 #draft_latency) の抑制策が無効化する) (利用者判断で採否できる状態のまま第 1 稿へ出す)。素材欠如で E-IMAGE-ABSENT を満たせず第 1 稿が止まることを避けるための手順であり、role を差し替えたことは生成レポートへ『仮置き』として記録する",
+      "prompt_required": true,
+      "demo_first_screenshot_exception": {
+        "id": "CR-DEMO-NO-FALLBACK",
+        "applies_when": "構成データの presentation_order が demo_first であるとき、最初の main セクションの最初の提示物 1 件のみ",
+        "rule": "その 1 件が role=screenshot を宣言している場合、素材が実在しなくても role を illustration へ書き換えない。role_split.fallback (素材が無ければ illustration へ落とす) の唯一の例外である",
+        "why": "demo_first の意味は『説明より先に実物を見せる』ことであり、C22 NAR-07 はそれを『最初の提示物が data-hb-asset-role=screenshot の画像か data-hb-live-demo=true の B17 のいずれかであること』として機械判定する。illustration へ落とすと画像は生成されるので E-IMAGE-ABSENT も IMG の実体検査 (C16 SC-11) も緑になるが、実物ではない絵が先頭に来た資料になり、demo_first という構成の意図だけが黙って失われる。fallback の目的は『素材が無いから完了できない』で詰まらせないことであって、構成の型を書き換えることではない",
+        "alternative": "当該セクションに live_demo=true の B17 (ハンズオン手順) が既に設計されている場合は、それをセクションの先頭へ移す。NAR-07 が実画面の代替として認めるのはこの 2 種だけであり、B17 は素材ファイルを必要としないため素材欠如でも成立する。B17 が無い場合に C01 が手順を創作して足すことはしない (ヒアリングで得ていない操作手順を書くことになる)",
+        "when_neither_is_possible": "C13 を呼ぶ前に停止し、欠けている素材のパスを名指しで提示したうえで利用者へ 2 択を出す: (a) 実画面素材を渡す、(b) presentation_order を explain_first にする。どちらも C01 の側で黙って選ばない",
+        "provenance_dependent_autonomy": "ただし (b) の自動適用は provenance.presentation_order_source が 'derived' (prior_knowledge_level から C12 が導出・CR-PRESENTATION-ORDER) のときに限り、生成レポートへ『素材が無いため explain_first へ変更した』と記録することを条件に認める。'explicit' (利用者が『デモから始めたい』と述べた) のときは自動変更を禁止し、必ず停止して問う。導出値は本プラグインの推定であって利用者の指示ではないため覆せるが、明示指示を素材の都合で覆すのは指示の握り潰しである",
+        "not_fail_open": "本例外を実装し忘れて先頭を illustration へ落とした場合は、生成後の HTML で C22 NAR-07 が違反として捕まえる。よってこの規約は『黙って通る欠陥』を防ぐためのものではなく、NAR-07 が赤になってから作り直す往復を減らすための前段である。NAR-07 側の判定を緩める変更とは無関係であり、緩めてはならない",
+        "canonical_refs": [
+          "improvement/visual-per-section-decision.json#decision.role_split.fallback (この例外が上書きする一般規則)",
+          "scripts/verify-handout-narrative.py NAR-07 (実画面の定義の正本。C01 はこの定義を複製せず『NAR-07 が認める 2 種』として参照する)"
+        ]
+      }
     },
     {
       "id": "R4-verify",
-      "summary": "自己完結性・a11y と印刷・言語と日付・語りの一貫性の 4 ゲートを /handout-verify (C09) 経由で実行し、その集約結果を受け取って出力先ルーティングまで通し生成レポートを返す。ゲート結果の 4 状態分類 (pass/fail/error/not-run) と全体 verdict の判定規則は C09 の canonical_aggregation (CR-GATE-AGG) が単一正本であり、この責務では再実装も再解釈もしない — not-run を『通った』と読み替える判断をこちら側で持たない (P03 Y-07)。ルーティングで確定した出力ディレクトリへ README.md を書くのはこの責務 (readme_writer 参照)。handout-config.json と assets/ 原本の配置は C19 が writer であり、この責務は C19 に --place-config / --assets-src を渡すだけで自分では置かない (P03 Y-04)",
+      "summary": "自己完結性・a11y と印刷・言語と日付・語りの一貫性の 4 ゲートを /handout-verify (C09) 経由で実行し、その集約結果を受け取って出力先ルーティングまで通し生成レポートを返す。ゲート結果の状態語彙・全体 verdict の語彙・両者の評価順はいずれも command-brief-C09.json#canonical_aggregation (CR-GATE-AGG) と、そこが正本と指す C09 の behavior 4-6 を参照する。本ブリーフは語彙を列挙せず評価順も書かない — 列挙すると C09 側の改訂が取り残され、同じ 4 ゲート結果に対して C01 経路と C09 直叩き経路が別の verdict を返す (CR-GATE-AGG の invariant が壊れる)。この責務では再実装も再解釈もせず、集約は必ず C09 を起動して得た結果をそのまま載せる。とりわけ『実行されなかったゲート』を『通った』と読み替える判断をこちら側で持たない (P03 Y-07)。R25/REQ-8・REQ-9 (C74/C75) の W-HERO-LONG/W-HERO-HEAVY (level=error 昇格) / E-CONNECTOR-UNKNOWN は C12 (自己完結性ゲートの一部)、E-ENUM-RAW (新設コード) は C18 (言語ゲートの一部) がそれぞれ既存 4 ゲート内で検査するため、この責務が個別に呼び分ける対象は増えない。ルーティングで確定した出力ディレクトリへ README.md を書くのはこの責務 (file_ownership 参照)。handout-config.json と assets/ 原本の配置は C19 が writer であり、この責務は C19 に --place-config / --assets-src を渡すだけで自分では置かない (P03 Y-04)",
       "prompt_required": true
     },
     {
@@ -160,7 +193,7 @@
       "summary": "第 1 稿の現物を見た利用者の指摘を、差分として受け取り該当箇所だけを作り直す。ヒアリングを最初からやり直さない。指摘が仮置きの項目を覆したときは当該項目だけを更新して R2-design へ戻し、粒度を上げる指示は指された箇所だけ detail_level を上げる (資料全体を上げない)。R3-render 以降は毎周回そのまま通す — 決定論ゲートは数百ミリ秒で終わるため、推敲のたびに検査を省く理由がない",
       "prompt_required": true,
       "entry_condition": "第 1 稿の生成レポートを利用者へ提示済みで、指摘が返っていること。指摘が無い状態でこちらから周回を始めない",
-      "skipped_in_draft_are_enabled_here": "config/handout-visual-policy.json#draft_first.skipped_in_draft に挙げた工程 (C21 挿絵生成・C03 可読性レビュー) は第 1 稿では回さず、この責務の周回で初めて回す。いずれも『現物が出てから効く』工程であり、初回の待ち時間へ入れると出力が遅れるだけで質は上がらない"
+      "skipped_in_draft_are_enabled_here": "config/handout-visual-policy.json#draft_first.skipped_in_draft に挙げた工程 (C03 可読性レビュー) は第 1 稿では回さず、この責務の周回で初めて回す。『現物が出てから効く』工程であり、初回の待ち時間へ入れると出力が遅れるだけで質は上がらない。C21 挿絵生成は R25/REQ-3(a) (C69) により対象外になった — R3-render の記述のとおり第 1 稿から回すため、ここでの再起動対象ではない"
     }
   ]
 }

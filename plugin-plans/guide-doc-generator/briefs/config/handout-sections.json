@@ -23,11 +23,19 @@
     {"slug": "action-items", "label_ja": "アクションアイテム", "description": "担当と期限を持つ行の列挙。B16 を主部品とする"},
     {"slug": "sources", "label_ja": "出典・参考", "description": "参照元の表記。外部 URL はリンクにせず出所のテキスト表記に留める (自己完結性)"},
     {"slug": "known-unknown-next", "label_ja": "分かっている / 分からない / 次に調べる", "description": "学習計画型の 3 分割。B04 トリオカードを器として使う"},
-    {"slug": "flow-overview", "label_ja": "冒頭の大きな流れ", "description": "冒頭に置く『今日の流れ』枠。大きな流れだけを列挙し、個々の手順・操作の詳細は書かない (R21 C46)。B03 を器として使い、time は任意 (書けば当該セクションの内訳)", "max_items": 5, "forbid_row_detail": true},
+    {"slug": "flow-overview", "label_ja": "冒頭の大きな流れ (非推奨・timeline に統合)", "description": "冒頭に置く『今日の流れ』枠。大きな流れだけを列挙し、個々の手順・操作の詳細は書かない (R21 C46)。B03 を器として使い、time は任意 (書けば当該セクションの内訳)。R25/REQ-4 (C70) で新設した timeline がこの制約を duration 必須つきで上位互換するため、新規プリセットの冒頭概観セクションへは割り当てない (詳細は flow_overview_relation)。既存資料との互換のため enum からは削除しない", "max_items": 5, "forbid_row_detail": true, "deprecated": true, "superseded_by": "timeline"},
     {"slug": "capability-explainer", "label_ja": "できること起点の機能解説", "description": "機能名から始めず『成果 (何ができるか) → 分解 → 用いる機能』の順で書く解説セクション (R21 C51)。parts[].slot が outcome → breakdown → feature の順に現れることを C12 が検査する"},
     {"slug": "handson", "label_ja": "その場で手を動かす", "description": "読み手が実際に操作するハンズオン枠 (R21 C53)。B17 ハンズオン手順を 1 件以上必須とする"},
     {"slug": "anticipated-qa", "label_ja": "先回り Q&A", "description": "聞き手が疑問を持ちやすい点 (生成内容の誤り・精度の限界・費用・情報の扱い等) へ先に答える枠 (R21 C53)。新部品を作らず B10 アコーディオンを器として使い、items を 2 件以上必須とする"},
     {"slug": "dialogue", "label_ja": "悩み・やりたいことを聞く対話枠", "description": "受講者の具体業務と困りごとを聞き出す時間 (R21 C59)。時間配分へ載せない限り必ず削られるため、全体所要時間に占める下限割合を数値で持つ", "min_duration_share": 0.15},
-    {"slug": "logistics", "label_ja": "運営連絡", "description": "日程調整・事務連絡など、資料のゴールにも主題にも紐づかない伝達事項 (R21 C48)。本編に置けず付録に隔離される", "required_role": "appendix"}
-  ]
+    {"slug": "logistics", "label_ja": "運営連絡", "description": "日程調整・事務連絡など、資料のゴールにも主題にも紐づかない伝達事項 (R21 C48)。本編に置けず付録に隔離される", "required_role": "appendix"},
+    {"slug": "timeline", "label_ja": "冒頭の概観 (時系列型)", "description": "R25/REQ-4 (C70)。冒頭で『いつ・何が起きるか』を時系列に沿って見せる概観セクション。器は B03 (ステップ行) + DIAGRAM(pattern=flow)。項目は 5 件以下、各行に duration (所要時間相当。行 time または section.duration からの按分表示) を必須とし、手順の詳細 (sub) は書かない。対象 doc_type: lecture / agenda / study-plan の 3 用途。各 doc_type の section_order[0] がこの種別であることを C12 が新設 E-OVERVIEW-SECTION-MISSING / E-OVERVIEW-SECTION-ORDER で検査する", "max_items": 5, "forbid_row_detail": true, "require_duration": true, "container": {"part": "B03", "diagram_pattern": "flow"}, "applicable_doc_types": ["lecture", "agenda", "study-plan"]},
+    {"slug": "map", "label_ja": "冒頭の概観 (章立て地図型)", "description": "R25/REQ-4 (C70)。時系列を持たない章立ての地図として資料全体の構成を見せる概観セクション。器は B08 (選択マップ) + DIAGRAM(pattern=hierarchy)。対象 doc_type: guide / onboarding / study-notes の 3 用途。各 doc_type の section_order[0] がこの種別であることを C12 が検査する", "container": {"part": "B08", "diagram_pattern": "hierarchy"}, "applicable_doc_types": ["guide", "onboarding", "study-notes"]},
+    {"slug": "thesis", "label_ja": "冒頭の概観 (結論先出し型)", "description": "R25/REQ-4 (C70)。要点 3 件を最初に置いてから詳細へ進む概観セクション。器は B07 (特徴カード) + DIAGRAM(pattern=compare)。対象 doc_type: report / proposal の 2 用途。各 doc_type の section_order[0] がこの種別であることを C12 が検査する", "container": {"part": "B07", "diagram_pattern": "compare"}, "applicable_doc_types": ["report", "proposal"]}
+  ],
+  "flow_overview_relation": {
+    "decision": "timeline が flow-overview を吸収する。R25/REQ-4 の timeline は flow-overview と同一の制約 (max_items=5・forbid_row_detail=true) を持ったうえで duration 必須を追加した上位互換であり、両者を並存させると『冒頭概観セクションの型は timeline か flow-overview か』という二択が生まれ C70 の検査が一意に定まらない",
+    "migration": "lecture プリセットの冒頭セクション (現行 section_kind=flow-overview) は P05-x-03 の実データ反映時に section_kind=timeline へ置き換える (id=flow はそのまま、種別のみ変更)。flow-overview slug は enum から削除せず既存の資料互換のため残すが、新規プリセットの冒頭概観には割り当てない (deprecated: 新規使用しない)",
+    "why_not_delete": "配布済みテンプレートや利用者が保存済みの構成データが section_kind=flow-overview を参照している可能性があるため、enum からの削除は既存資料を C12 --normalize で落とす。deprecated のまま残し、C23 の新規プリセットデータだけを timeline へ寄せる"
+  }
 }

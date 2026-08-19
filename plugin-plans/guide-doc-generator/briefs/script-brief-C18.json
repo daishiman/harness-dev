@@ -3,7 +3,7 @@
   "component_kind": "script",
   "name": "verify-handout-language.py",
   "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
-  "purpose": "初心者向けの言語規約 (R11) と日付表記 (R18) を検査する fail-closed ゲート。(a) 正規化済み構成データが宣言した用語 (glossary) が、生成 HTML の本文で初出時に括弧書きの言い換えを伴っているか (b) 各セクションが lead-line (抽象 1 行) → 具体部品 → 判断軸の一文 という R11 の書き方の型で並んでいるか (c) 冒頭の日付表記が yyyy/mm/dd (ゼロ埋め) で正規化済み構成データの date フィールドと無変換で一致し、かつ出力ディレクトリ名の先頭が同じ date の純変換 date.replace('/','-') と一致するか、を検査する。日付『表示』の正本表現は yyyy/mm/dd ただ一つ (R18・書式の正本は C12 の config_schema#date) であり、R17 のディレクトリ名に現れる <YYYY-MM-DD> は C19 が導く命名専用の派生表現という別概念である (本 script は両者を別の detection = DATE-02 と DATE-03 で分けて検査する)。用語の同定は自然言語処理ではなく構成データの宣言駆動で行い、日付は自前で現在日を取得せず常に正規化済み構成データ 1 点を基準にする",
+  "purpose": "初心者向けの言語規約 (R11) と日付表記 (R18) を検査する fail-closed ゲート。(a) 正規化済み構成データが宣言した用語 (glossary) が、生成 HTML の本文で初出時に括弧書きの言い換えを伴っているか (b) 各セクションが lead-line (抽象 1 行) → 具体部品 → 判断軸の一文 という R11 の書き方の型で並んでいるか (c) 冒頭の日付表記が yyyy/mm/dd (ゼロ埋め) で正規化済み構成データの date フィールドと無変換で一致し、かつ出力ディレクトリ名の先頭が同じ date の純変換 date.replace('/','-') と一致するか、を検査する。日付『表示』の正本表現は yyyy/mm/dd ただ一つ (R18・書式の正本は C12 の config_schema#date) であり、R17 のディレクトリ名に現れる <YYYY-MM-DD> は C19 が導く命名専用の派生表現という別概念である (本 script は両者を別の detection = DATE-02 と DATE-03 で分けて検査する)。用語の同定は自然言語処理ではなく構成データの宣言駆動で行い、日付は自前で現在日を取得せず常に正規化済み構成データ 1 点を基準にする。R25 (goal-spec C74): 生成 HTML が読者に見せる列挙値表示が表示語彙経由で日本語化されているか (ENUM-01・E-ENUM-RAW) も検査する。判定は構成データの enum 生値集合を config/handout-vocabulary.json の表示語彙で置換した文字列が本文中に現れるかを見る宣言駆動の照合であり、LANG-01 の用語言い換え検査と同型 (自然言語処理をしない)",
   "argv": [
     "--html FILE (必須): 検査対象の生成 HTML",
     "--config FILE (必須): C12 validate-handout-config.py --normalize が確定した正規化済み構成データ JSON。未正規化の構成データを渡された場合 (正規化マーカーの欠落や日付フィールド未充填) は exit 2",
@@ -11,7 +11,7 @@
     "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す"
   ],
   "stdin": "使用しない。HTML と構成データの 2 入力を突合するため、両方をパスで受ける",
-  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL|NOT-REQUESTED> checked=<件数> violations=<件数>` を固定順 (LANG-01, LANG-04, LANG-05, LANG-06, LANG-07, DATE-01..DATE-04) で出力する。末尾に `OUT-OF-SCOPE:` 節を出し、未宣言の専門用語は検出できないこと・文体の平易さは判定していないことを毎回明示する",
+  "stdout": "人間可読の検査サマリ。1 行目 `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL|NOT-REQUESTED> checked=<件数> violations=<件数>` を固定順 (LANG-01, LANG-04, LANG-05, LANG-06, LANG-07, DATE-01..DATE-04, ENUM-01) で出力する。末尾に `OUT-OF-SCOPE:` 節を出し、未宣言の専門用語は検出できないこと・文体の平易さは判定していないこと・**本文の 1 文の長さと 1 本あたりの文数 (R25/REQ-7 の W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED) および micro_copy の 1 要素文字数 (W-COPY-LONG) は本 script の担当ではないこと**・表示語彙に無い列挙値の翻訳は行わず未定義のまま FAIL することを毎回明示する。文量系を担当しない理由と判定点の所在は text_volume_boundary に書く",
   "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB>line:col または section_id<TAB><対象 (用語 / セクション id / 日付値)><TAB><理由>`。用語違反は初出位置の前後 40 文字を evidence に付ける。使用法・入出力エラーは `ERROR<TAB><reason>`",
   "exit_codes": {
     "0": "全 detection が違反 0 件",
@@ -22,13 +22,21 @@
     "--json-report で明示指定されたファイル 1 点のみ"
   ],
   "single_writer": "--json-report のパス。HTML・構成データ・出力ディレクトリには一切書き込まない (検査器は読み取りのみ)",
+  "text_volume_boundary": {
+    "note": "R25/REQ-7 (goal-spec C73) の文量ゲートと micro_copy の 1 要素文字数ゲートを本 script が持たないことの明示。利用者要件 R7 (『文章が長ったらしく何行も書かれるのを絶対に防ぐ』) の最終判定点がどこかを brief 間で一意にするために置く",
+    "judgment_point": "構成データ段の C12 validate-handout-config.py が唯一の判定点。閾値の正本は config/handout-visual-policy.json#sentence (sentence_gate / sentences_per_body / fold_escape_hatch) と #opening.hero_fields で、同ファイル冒頭が canon_authority を C12 と宣言している",
+    "why_not_here": "C11 は構成データの本文文字列を無変換で描画し (切り詰め禁止)、その無変換性は C22 が HTML 側で検証する。よって構成データ段で通った文字列と HTML 上の文字列は同一であり、HTML 段で文長・文数を数え直しても同じ判定を二重に持つだけになる。二重に持つと緩い方が実質の基準になり厳しい方が意味を失う (C12 は構造、C18 は文言、という LANG-07 の why_here で引いた分界をここでも維持する)",
+    "consequence": "本 script は文の長さ・文数・段落化・折り畳み件数を一切数えない。stdout の OUT-OF-SCOPE 節でその旨を毎回明示し、『長文が通った』ことを本ゲートの PASS が保証したように読ませない",
+    "unowned": "micro_copy の 1 要素文字数 (W-COPY-LONG。role=label の 14 字上限、nav_item を含む) は、正本 (config/handout-visual-policy.json#micro_copy) が canon_authority を C12 と宣言しているにもかかわらず、2026-08-18 時点で C12 のブリーフに実装記述が無い。本 script も持たない (open_questions 参照)。所属未定のまま build へ持ち込まないこと"
+  },
   "stdlib_only": true,
   "dependencies": {
     "reads": [
       "--html の生成 HTML",
       "--config の正規化済み構成データ JSON (date / glossary[] / sections[] を読む)",
       "--out-dir のディレクトリ名 (basename のみ。配下のファイルは読まない)",
-      "config/handout-parts.json (部品 id 語彙の正本。LANG-06 の『具体部品』述語に使う。C11 の consumer_contract 経由で読む)"
+      "config/handout-parts.json (部品 id 語彙の正本。LANG-06 の『具体部品』述語に使う。C11 の consumer_contract 経由で読む)",
+      "config/handout-vocabulary.json (REQ-8 / goal-spec C74。読者に見せる列挙フィールド (attainment_level を含む) の enum→表示ラベル対応表。本 script が単独 reader であり、ENUM-01 の照合表として使うだけで語彙を自前に列挙しない)"
     ],
     "invoked_by": [
       "C01 run-handout-build (生成後の品質ゲート段)",
@@ -45,19 +53,23 @@
     "6. LANG-04 / LANG-05 / LANG-06 を section 単位で評価する",
     "6b. LANG-07 を data-hb-section-kind=\"capability-explainer\" の section だけに対して評価する (R21 C51)。当該 section 内の data-hb-slot=\"feature\" 部品の見出しテキスト集合を作り、lead_line の書き出しと突き合わせる。対象 section が 0 件なら checked=0 の PASS",
     "7. DATE-01..DATE-04 を評価する。datetime.date.today() を呼ばないことを実装上の不変条件とし、P06 でソース中に today( の出現が 0 件であることを検査する",
+    "7b. ENUM-01 (R25 / goal-spec C74) を評価する。config/handout-vocabulary.json を読み、attainment_level など読者に見える列挙フィールドの config 値 (enum 生値) に対応する表示ラベルを引く。生成 HTML の data-hb-field=attainment_level 要素の可視テキストが表示ラベルと一致し、かつ本文中に enum 生値 (例: 'operable') がそのまま出現しないことを確認する。表示語彙に対応が無い enum 値は変換のしようが無いため違反として扱う (E-ENUM-RAW)",
     "8. 違反を stderr、サマリと OUT-OF-SCOPE を stdout、詳細を --json-report へ出す",
     "9. 違反 0 なら exit 0、違反ありは exit 1、検査不能は exit 2"
   ],
   "requirements_covered": [
     "R11",
     "R18",
-    "R21 (機能名から始めない C51 の描画テキスト面のみ。構成データ側の slot 順序検査は C12)"
+    "R21 (機能名から始めない C51 の描画テキスト面のみ。構成データ側の slot 順序検査は C12)",
+    "R25-REQ-8 (C74. attainment_level 等の列挙フィールドが読者向け表示で生の enum 値のまま漏れていないことを ENUM-01 で検査する。表示語彙の正本 config/handout-vocabulary.json は C12 canon)"
   ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C51 の描画テキスト面 (LANG-07)。C46 の『冒頭の流れに手順の詳細を書かない』は現状どの検査にも割り当たっておらず、構造検査 (C12) では到達できないため文面側の候補として ledger に記録してある。criterion 文の残余は ledger 側にのみ書き、ここへ写さない",
   "checklist_covered": [
     "C16",
     "C34",
     "C35",
-    "C51 (副。正本判定は C12 の slot 順序検査)"
+    "C51 (副。正本判定は C12 の slot 順序検査)",
+    "C74 (副。生値の enum → 表示ラベル変換の是非を検査する側。語彙の正本と config 側の変換適用は C12)"
   ],
   "detections": [
     {
@@ -69,7 +81,8 @@
     },
     {
       "id": "LANG-04",
-      "rule": "各セクションが lead-line を持つこと。data-hb-part=\"section\" または id を持つ <section> のそれぞれについて、配下に data-hb-field=\"lead_line\" の要素がちょうど 1 個存在し、その text が空白を除いて非空であること。0 個・2 個以上はいずれも違反 (2 個以上は『どれが抽象 1 行か』が決まらず R11 の型が崩れるため)",
+      "rule": "各セクションが lead-line を持つこと。対象は data-hb-part=\"section\" を持つ要素だけとする (この値は部品ではなく構造枠として C11 render-handout.py の html_attribute_contract#data-hb-part が唯一定義しており、部品カタログ config/handout-parts.json には存在しない)。旧記述にあった『または id を持つ <section>』の分岐は採らない — 属性契約が確定した後の現在は冗長であり、かつ R25/REQ-8 (goal-spec C74) の hero カード化のように冒頭へカード枠が増えたとき、それが <section id=...> で描かれただけで lead_line を要求してしまう誤検出源になる。各対象について配下に data-hb-field=\"lead_line\" の要素がちょうど 1 個存在し、その text が空白を除いて非空であること。0 個・2 個以上はいずれも違反 (2 個以上は『どれが抽象 1 行か』が決まらず R11 の型が崩れるため)",
+      "hero_is_out_of_scope": "冒頭ヒーローは data-hb-part=\"section\" を持たない (.hero-card-grid > .hero-card。C11 の block_to_component_map の B02 節が DOM の正本) ため本項目の対象外。文書レベルの 1 行は data-hb-field=\"lead\" (R25/REQ-1・goal-spec C67) でセクションの data-hb-field=\"lead_line\" とは別値であり、両者を同一視しない。hero 側の文字数・文数は opening.hero_fields (C12) の担当",
       "violation_example": "<section id=\"s3\"><div class=\"section-label\">3. 出力形式</div><div class=\"vs-grid\">…</div></section> (lead-line 不在)",
       "pass_example": "<section id=\"s3\"><div class=\"section-label\">3. 出力形式</div><p data-hb-field=\"lead_line\">出力の形は、読む人と次の使い道で決まる。</p><div class=\"vs-grid\" data-hb-part=\"B06\">…</div><p data-hb-field=\"judgment_axis\">形をえらぶ質問はひとつ。『誰が見て、次に何につながる？』</p></section>",
       "false_positive_risk": "低。data-hb-field の付与はレンダラの決定論出力に依存するため、契約が守られていれば揺れない"
@@ -99,9 +112,10 @@
     },
     {
       "id": "DATE-01",
-      "rule": "冒頭の日付表記が yyyy/mm/dd であること。data-hb-field=\"date\" (参照 v1 の .date-pill を継承) の要素が、<header> 内または hero 要素より文書順で前に 1 個以上存在し、その text (前後空白除去後) が正規表現 `^\\d{4}/\\d{2}/\\d{2}$` に完全一致すること。さらに datetime.date(yyyy, mm, dd) が構築できること (2026/02/30 のような不存在日は違反)。ゼロ埋め欠けは不一致として違反",
-      "violation_example": "<span data-hb-field=\"date\">2026/8/17</span> (ゼロ埋め欠け) / <span data-hb-field=\"date\">2026-08-17</span> (区切り違い) / <span data-hb-field=\"date\">2026/08/17 (月)</span> (完全一致しない) / date-pill が hero より後にある",
-      "pass_example": "<header class=\"pop-header\"><div class=\"head-top\"><h1>…</h1><span class=\"date-pill\" data-hb-field=\"date\">2026/08/17</span></div></header>",
+      "rule": "冒頭の日付表記が yyyy/mm/dd であること。data-hb-field=\"date\" (参照 v1 の .date-pill を継承) の要素が、**文書冒頭ヘッダ `<header class=\"doc-head\">` の内側にちょうど 1 個**存在し、その text (前後空白除去後) が正規表現 `^\\d{4}/\\d{2}/\\d{2}$` に完全一致すること。さらに datetime.date(yyyy, mm, dd) が構築できること (2026/02/30 のような不存在日は違反)。ゼロ埋め欠けは不一致として違反",
+      "dom_anchor": "『<header> 内』という旧記述は、生成 HTML に header 要素が 2 つある (sticky ナビの <header class=\"pop-header\"> と文書冒頭の <header class=\"doc-head\">) ため場所が一意に決まらなかった。C11 の algorithm 13 が『置き場所は文書冒頭の <header class=\"doc-head\"> の内側に限り、sticky ナビの <header class=\"pop-header\"> の内側には置かない』と確定させているので、本項目もその 1 箇所へ接地する。『hero 要素より前』という文書順条件は、R25/REQ-8 の hero カード化で hero の DOM が .hero-card-grid へ変わったため位置の基準として使わない (doc-head 内という所属条件が同じことを DOM 変更に強い形で表す)",
+      "violation_example": "<span data-hb-field=\"date\">2026/8/17</span> (ゼロ埋め欠け) / <span data-hb-field=\"date\">2026-08-17</span> (区切り違い) / <span data-hb-field=\"date\">2026/08/17 (月)</span> (完全一致しない) / date-pill が <header class=\"pop-header\"> (sticky ナビ) の内側にある",
+      "pass_example": "<header class=\"doc-head\"><div class=\"head-top\"><h1>…</h1><span class=\"date-pill\" data-hb-field=\"date\">2026/08/17</span></div></header>",
       "false_positive_risk": "中。曜日や和暦の併記を許すかが未確定 (goal-spec open_questions)。現案は完全一致のため併記を一律違反とする。併記を許す場合は date-pill 内に data-hb-field=\"date-text\" の子要素を切り、その子だけを完全一致検査の対象にする案へ切り替える (open_questions 参照)"
     },
     {
@@ -113,9 +127,9 @@
     },
     {
       "id": "DATE-03",
-      "rule": "出力ディレクトリ名の日付が構成データと一致すること (goal-spec C35)。--out-dir 指定時、その basename の先頭 10 文字が `^\\d{4}-\\d{2}-\\d{2}$` に一致し、その値が config.date.replace('/', '-') (C19 と同一の純変換) と文字列一致すること。ここでのハイフン形は R17 のディレクトリ命名専用の派生表現であり、R18 の日付表示の正本 (yyyy/mm/dd) とは別概念であることに注意する — 表示側を検査するのは DATE-01/02、命名側を検査するのが本項目。11 文字目が `-` であること (`<YYYY-MM-DD>-<種別>-<主題slug>` の区切り) も検査する。種別語彙と slug の妥当性は C19 route-handout-output.py の責務なので本項目では判定しない。--out-dir 未指定時は NOT-REQUESTED として stdout に出し、PASS とは区別して表示する",
-      "violation_example": "--out-dir が `2026-8-17-lecture-claude-intro` (ゼロ埋め欠け) / `2026-08-16-lecture-claude-intro` で config.date=2026/08/17 (不一致) / `lecture-2026-08-17-claude-intro` (先頭が日付でない)",
-      "pass_example": "--out-dir が `/Users/x/handouts/2026-08-17-lecture-claude-intro` で config.date=\"2026/08/17\" (純変換後 2026-08-17 が一致)",
+      "rule": "出力ディレクトリ名の日付が構成データと一致すること (goal-spec C35)。--out-dir 指定時、その basename の先頭 10 文字が `^\\d{4}-\\d{2}-\\d{2}$` に一致し、その値が config.date.replace('/', '-') (C19 と同一の純変換) と文字列一致すること。ここでのハイフン形は R17/R25-REQ-6 のディレクトリ命名専用の派生表現であり、R18 の日付表示の正本 (yyyy/mm/dd) とは別概念であることに注意する — 表示側を検査するのは DATE-01/02、命名側を検査するのが本項目。11 文字目が `_` であること (R25/REQ-6 (C72)。正本 improvement/output-naming-decision.json#decision.dir_name_format={date}_{slug}。区切りは '_' 固定で date と slug の 2 要素のみであり、doc_type = dir_token はパスに含めない。旧書式 `<YYYY-MM-DD>-<種別>-<主題slug>` の 3 要素ハイフン連結は廃止済み) も検査する。slug の妥当性は C19 route-handout-output.py の責務なので本項目では判定しない。--out-dir 未指定時は NOT-REQUESTED として stdout に出し、PASS とは区別して表示する",
+      "violation_example": "--out-dir が `2026-8-17_claude-intro` (ゼロ埋め欠け) / `2026-08-16_claude-intro` で config.date=2026/08/17 (不一致) / `claude-intro_2026-08-17` (先頭が日付でない) / `2026-08-17-claude-intro` (11 文字目が '_' でなく '-'。旧書式の残存)",
+      "pass_example": "--out-dir が `/Users/x/handouts/2026-08-17_claude-intro` で config.date=\"2026/08/17\" (純変換後 2026-08-17 が一致し、11 文字目が '_')",
       "false_positive_risk": "低。ディレクトリ名の残り (種別・slug) を一切見ないことで C19 との責務重複を避けている"
     },
     {
@@ -124,6 +138,14 @@
       "violation_example": "header の date-pill が 2026/08/17、footer の date-pill が 2026/08/10",
       "pass_example": "date-pill は 1 個で 2026/08/17。本文に「提出期限は 2026/08/24 まで」とあっても info のみで違反にしない",
       "false_positive_risk": "低。本文中の日付言及を違反にしないことで、資料の内容表現を殺さない。ただし『資料日付を本文へ手書きして date-pill と食い違う』ケースは info 止まりで検出されない (goal-spec open_questions の『日付が指す意味』が確定するまでは違反へ昇格させない)"
+    },
+    {
+      "id": "ENUM-01",
+      "since": "R25 / REQ-8 (goal-spec C74)",
+      "rule": "読者に見える列挙フィールドが生の enum 値のまま出力されていないこと。config/handout-vocabulary.json (正本 owner: C12) の attainment_level_labels を読み、config.attainment_level の値に対応する表示ラベルを引く。data-hb-field=\"attainment_level\" を持つ要素の可視テキスト (text node) が表示ラベルと一致することを要求し、本文中のどこであれ enum 生値 (例 'operable' 'overview' 'reproducible' 'skill-authoring') がそのまま出現する場合は違反とする。data-hb-field=\"attainment_level\" 要素自体は、可視テキストとは別に data-hb-raw=\"<enum 生値>\" 属性で元値を保持してよく (C20 の往復抽出はこちらを読む)、この属性値に enum 生値が入ることは違反にしない (属性値は『読者に見える』の対象外)。attainment_level_labels に対応が無い enum 値は変換のしようが無いため、その事実自体を違反として扱う (E-VOCAB-INCOMPLETE は C12 側の config 検査の責務であり、本 script は表示面のみを見る)",
+      "violation_example": "<p data-hb-field=\"attainment_level\">operable</p> (ラベル未変換のまま生値が可視化) / attainment_level_labels に operable の対応が無く、フォールバックとして生値がそのまま出力されている",
+      "pass_example": "<p data-hb-field=\"attainment_level\" data-hb-raw=\"operable\">実務で使える</p> (可視テキストはラベル、生値は属性側にのみ残る)",
+      "false_positive_risk": "低〜中。将来 attainment_level 以外の列挙フィールドが増えたとき、本項目は data-hb-field の値集合をハードコードせず config/handout-vocabulary.json のキー集合から動的に対象を決める設計とし、語彙ファイルへの追加だけで検査対象が広がるようにする (script へ列挙値を書かない既存原則の延長)"
     }
   ],
   "acceptance_checks": [
@@ -179,7 +201,7 @@
     },
     {
       "id": "AC-C18-09",
-      "how": "--out-dir に `2026-08-16-lecture-x` を渡し config.date=2026-08-17 とする",
+      "how": "--out-dir に `2026-08-16_x` を渡し config.date=2026-08-17 とする",
       "expected": "exit 1、DATE-03 に不一致の違反 1 件"
     },
     {
@@ -206,6 +228,31 @@
       "id": "AC-C18-LANG06-CAT",
       "how": "カタログへ section_scope=\"in-section\" の部品 id を 1 件追加し、その部品だけを含む section を渡す",
       "expected": "script を書き換えずに具体部品として認識され合格する (部品 id が本 script へ焼き込まれていないことの担保)"
+    },
+    {
+      "id": "AC-C18-R25-74-PASS",
+      "how": "config/handout-vocabulary.json の attainment_level_labels に operable → '実務で使える' が定義されている状態で、config.attainment_level=\"operable\" を持つ config と、<p data-hb-field=\"attainment_level\" data-hb-raw=\"operable\">実務で使える</p> を含む HTML を渡す",
+      "expected": "ENUM-01 が PASS。可視テキストがラベル一致し、data-hb-raw 属性値の生 enum は違反対象から除外される"
+    },
+    {
+      "id": "AC-C18-R25-74-FAIL",
+      "how": "同じ config に対し、HTML 側の data-hb-field=\"attainment_level\" 要素の可視テキストが生値 'operable' のまま (ラベル変換されていない) の状態で渡す",
+      "expected": "ENUM-01 が違反 (E-ENUM-RAW) を報告して exit 1。stderr に対象要素と本文中の生値出現箇所を列挙する"
+    },
+    {
+      "id": "AC-C18-R25-74-EXTENSIBLE",
+      "how": "config/handout-vocabulary.json の attainment_level_labels へ新しい enum 値と表示ラベルの対を 1 件追加するだけで (script を書き換えずに) 検査対象へ反映されるかを確認する",
+      "expected": "追加したラベルが検査に反映される (enum 値の集合が script へ焼き込まれていないことの担保)"
+    },
+    {
+      "id": "AC-C18-R25-74-HERO",
+      "how": "R25/REQ-8 の hero カード群を `<section id=\"hero-purpose\">` のように id つき section 要素で描いた HTML (data-hb-part=\"section\" は付かない) を、本編セクションが全て lead_line を持つ状態で渡す",
+      "expected": "exit 0。LANG-04 の checked は本編セクション数と一致し、hero カードは対象に入らない (冒頭カード化で LANG-04 が誤検出しないことの回帰テスト)"
+    },
+    {
+      "id": "AC-C18-DATE01-HEAD",
+      "how": "data-hb-field=\"date\" を sticky ナビ側の <header class=\"pop-header\"> の内側だけに置いた HTML を渡す",
+      "expected": "exit 1、DATE-01 に違反 1 件 (<header class=\"doc-head\"> 内に日付が無い)。header が 2 つある HTML でも判定が一意に決まることの回帰テスト"
     }
   ],
   "failure_modes": [
@@ -235,6 +282,7 @@
     "LANG-01 の合格形を括弧書きのみに限定するか、参照 §5 に実在する『用語 ＝ 言い換え』形も許すか。現案は goal-spec C16 の文言に従い括弧書きのみ。許容形を増やすなら goal-spec 側の文言も合わせる必要がある",
     "未宣言の専門用語は本ゲートでは原理的に検出できない (自然言語での用語同定は決定論にならないため意図的に採らない)。この面を C06 handout-readability-reviewer が担う分界で足りるか、glossary の網羅性を別途 LLM で埋める工程を入れるかは P03 の判断",
     "LANG-05 の『判断軸として意味のある一文か』は静的検査の外。存在と形式のみを検査する現案でよいかを P03 design-gate で確認する",
+    "【R25 未決・build 前に所属を決める】micro_copy の 1 要素文字数 (W-COPY-LONG。config/handout-visual-policy.json#micro_copy。role=label 14 字 / title 22 字 / caption 32 字、label には nav_item を含む) を検査する component が存在しない。同ファイル冒頭は canon_authority を C12 と宣言しているが script-brief-C12.json に W-COPY-LONG の実装記述が無く、本 script にも無い (text_volume_boundary.unowned)。さらに micro_copy.note は適用範囲を『sections[].parts[].data と diagrams[].data の中の文字列に限る』としており、nav_item のラベル (C11 の algorithm 14 が section 見出しから描く) はこの範囲外にあるため、C12 が実装しても現行の範囲規定のままでは nav_item を覆えない。範囲規定の改訂と担当の確定は本 script の write_scope 外 (C12 側 / config 側) の決定であり、決まらないまま build へ進めると『上限値はあるが誰も測らない』状態が固定する",
     "【X-03 決着済み・記録】data-hb-field (本 script が使うのは date / lead_line / judgment_axis) と data-hb-part の語彙の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定した。本 script は参照するだけで再定義しない。旧称 data-role=\"date-pill|lead-line|decision-axis\" と data-part は data-hb-* 系統へ統合済み"
   ]
 }

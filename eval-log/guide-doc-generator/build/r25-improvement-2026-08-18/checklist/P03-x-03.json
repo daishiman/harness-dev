@@ -1,0 +1,84 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P03-x-03",
+ "covered_task_ids": [
+  "P03-x-03"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/",
+ "verified_by": [
+  {
+   "claim": "Y-05 の未解消部分が実在した — 部品 id 語彙の写しが正本の外に残り、全て B17 を落とした古い値だった",
+   "method": "dispatcher が briefs/config/handout-parts.json と出荷 plugins/guide-doc-generator/config/handout-parts.json の parts[].id 集合を独立に列挙し、あわせて script-brief-C11.json の範囲表記 (B01..B16 / B01-B16 / B03..B16) を行番号つきで再計数",
+   "result": "pass(=報告どおり): 両ファイルとも実 id は B01..B17 + IMG / DIAGRAM / TEXT の 20 件で完全一致。B17 が実在する一方、報告が挙げた写し 6 箇所はすべて B16 止まりだった。修正後の C11 に残る範囲表記は :79 (『実際 B01-B15 と B03-B16 と B01..B16 の 3 版が並存していた』= 歴史記述) / :98 (『B01-B16 の 16 部品という写しを撤回した』= 撤回記録) / :626 (AC-C11-19 の禁止例) の 3 件のみで、いずれも新しい用途基準 (値域をその場で定める記述か否か) の下で正しく合格側。dispatcher が 3 件とも全文を直読みして確認した"
+  },
+  {
+   "claim": "AC-C11-19 の grep 射程が plugins/ 配下に限られていたため違反が brief 側に溜まっていた (構造原因の妥当性)",
+   "method": "dispatcher が AC-C11-19 の how / expected を修正後の状態で直読みし、射程の拡張を確認",
+   "result": "pass: expected は『config/handout-parts.json (およびその plan 表現 briefs/config/handout-parts.json) 以外に part id のリテラル列挙が 0 件』へ、判定は『値域・語彙・fixture・検査対象の集合をその場で定める記述に範囲表記や件数リテラルが現れたら不合格。参照資料からの実測引用・撤回の記録・禁止例は合格』という用途基準へ書き換わっている。件数一致でなく用途で判定する形は、B17 追加のような語彙の成長で自動的に古くならない点で妥当"
+  },
+  {
+   "claim": "DT-1 — 用途語彙の dir_token が正本と出荷で全 8 件不一致",
+   "method": "dispatcher が script-brief-C23.json#vocabulary_ssot.entries と出荷 config/handout-purposes.json の dir_token を独立に抽出して突合",
+   "result": "pass(=報告どおり): 正本は lecture/agenda/guide/onboarding/report/proposal/study-notes/study-plan の ASCII slug 8 件、出荷は 勉強会/定例会議/配布資料/導入ガイド/報告資料/提案資料/学習まとめ/学習計画 の和文 8 件で 8/8 不一致。出荷 _meta.source_of_truth は『plugin-plans/…/script-brief-C23.json の vocabulary_ssot.entries と preset_definitions』と brief を正本に指名しており、正本が 2 つある状態という判定は正確。なお dir_token は出荷 config では presets[] 配下ではなく vocabulary 配下に置かれている"
+  },
+  {
+   "claim": "出荷 script が brief の fail-closed 検査を緩和している",
+   "method": "dispatcher が resolve-handout-preset.py:329 _dir_token_is_safe() の実装を直読み",
+   "result": "pass(=報告どおり): docstring が『dir_token がディレクトリ名として安全か (文字種は問わない)』『日本語を許すため字種の allowlist は張らない』と明記し、パス脱出・不可視文字・先頭ドットのみを落とす。brief 手順 4(d) の ^[a-z][a-z0-9-]*$ による fail-closed 検査は実装で無効化されている"
+  },
+  {
+   "claim": "DT-1 の修正方向 (出荷を ASCII slug へ戻す) が R5 の日本語ディレクトリ命名と衝突しないか",
+   "method": "dispatcher が goal-spec.json:145 (R17/C72) と script-brief-C19.json:60,72,83 を独立に読み、日本語名の供給源を特定",
+   "result": "pass(=衝突しない): R25/REQ-6 で書式は {date}_{slug} に確定し『種別語 (dir_token) はパスから外して索引メタデータ側へ置く』と明記。日本語のディレクトリ名は dir_token ではなく slug (title 由来・derive_slug の小文字化撤廃・非日本語 title の無変換許容) が運ぶ。したがって出荷 dir_token を ASCII へ戻しても R5 は壊れない。ただしそれは『メタデータとしての dir_token を ASCII にすべき』ことを含意しない — パス安全性の論拠 (:86 のコメント) が REQ-6 で失効した以上、和文を維持する裁定もありうる。報告も両方向を提示しており、この点は DT-1 の起票時に裁定要件として明記した"
+  },
+  {
+   "claim": "DT-2 — C15 → C16 の brief-only 辺が P05-x-49 と同型で未起票",
+   "method": "dispatcher が script-brief-C15.json#dependencies.invokes と inventory C15.depends_on を突合",
+   "result": "pass(=報告どおり): invokes は『C16 verify-handout-selfcontained.py (module import 経由: scan_emoji(text) -> list[Violation]。CR-EMOJI の唯一の実装点であり、C15 は結果を受け取るだけで独自の絵文字判定を持たない)』の 1 件、inventory C15.depends_on=[]。C16 は根 (depends_on=[]) なので辺追加で循環は生じない (P05-x-49 の検証時に Kahn 法で確認済みの性質と同じ)"
+  },
+  {
+   "claim": "Y-01 の未解消部分が別フィールドで解消された",
+   "method": "dispatcher が script-brief-C21.json の determinism_boundary と checklist_covered を直読み",
+   "result": "pass: determinism_boundary が note / c29_is_closed_at_c11 / why_not_deterministic / how_the_chain_stays_closed / fail_soft_skip / consumers の 6 キーで新設済み。checklist_covered は ['C17','C18','C27'] のままで C29 を足していない。『足すと非決定論な component がバイト一致を保証しているという読みを作る』という不採用理由が同ブロックに書かれており、suggested_resolution が求めた『network フラグ以外の別フィールドで根拠を明示する』を満たす"
+  },
+  {
+   "claim": "節 3 の裁定 (ゲート集約が単一実装に帰属・4 本という集合の宣言が 3 箇所あることを許す) の妥当性",
+   "method": "dispatcher が裁定の論拠を、本 cycle の先行 checklist (P02-C03-01 の『C03 は判定基準を持たない』AC 検証結果) と対照",
+   "result": "pass(=裁定を受理): 節が問うのは集約の実装の帰属であり、集約の実装 = 4 状態分類と全体 verdict の判定規則は C09 の CR-GATE-AGG ただ 1 つ。C03 deterministic_checks と C06 input_contract.receives が持つのは入力契約であって判定規則ではない、という区別は P02-C03-01 で独立検証済みの事実と整合する。『集合の宣言も 1 つでなければならない』と読むと C06 が自分の受け取るものを書けなくなる、という反証も妥当。drift リスクを節 3 ではなく単一正本原則の一般則 (F-P03-03 / P05-x-52) の担当としたのも、責務の切り分けとして正しい"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を確認し、変更ファイルを git diff --stat で限定",
+   "result": "pass: plugins/ 配下の変更はセッション開始時の git status と同一で本ノード由来 0 件。plugin-plans/ 側の変更は briefs/ 配下の C11 / C17 / C20 / C21 の 4 ファイルに限られ、いずれも write_scope (plugin-plans/guide-doc-generator/) の内側。component-inventory.json / evidence/P03.json / index.md は未変更"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P03X03-01",
+   "level": "blocking-for-release",
+   "summary": "用途語彙 dir_token の正本が 2 つある。出荷 config は和文 8 件・brief の vocabulary_ssot は ASCII slug 8 件で 8/8 不一致でありながら、出荷 _meta.source_of_truth は brief を正本と宣言している。さらに出荷 resolve-handout-preset.py:329 _dir_token_is_safe() が brief 手順 4(d) の ^[a-z][a-z0-9-]*$ fail-closed 検査を『文字種は問わない』へ緩和しており、正本側の契約が実装で無効化されている。緩和の根拠 (:86 の『成果物ディレクトリ名に出る読み手向けの用途名』) は R25/REQ-6 で dir_token がパスから外れた時点で失効している"
+  },
+  {
+   "id": "F-P03X03-02",
+   "level": "carry-forward",
+   "summary": "F-P03X03-01 の修正方向は自明ではない。日本語ディレクトリ名は slug が運ぶため出荷を ASCII へ戻しても R5 は壊れないが、それは『索引メタデータとしての dir_token が ASCII であるべき』ことを含意しない。パス安全性という緩和の論拠が失効した以上、和文を維持して brief 4(d) を変える裁定もありうる。どちらを採るかを決めずに片方だけ直すと、また正本が 2 つになる"
+  },
+  {
+   "id": "F-P03X03-03",
+   "level": "carry-forward",
+   "summary": "AC の grep 射程がそのまま欠陥の溜まり場を決めていた。AC-C11-19 は『part id のリテラル列挙 0 件』を要求していたが grep 範囲が plugins/ 配下のみで、違反 6 件がすべて射程外の brief 側に溜まっていた。射程外は『検査して緑』ではなく『見ていない』であり、report 上で両者が区別できない。他の AC にも同型の射程漏れがないかの横断確認は本ノードの範囲外"
+  },
+  {
+   "id": "F-P03X03-04",
+   "level": "resolved",
+   "summary": "Y-01..Y-09 の 9 件はすべて解消。blocking (Y-02 / Y-04 / Y-08) と high (Y-03 / Y-05) の 5 件が acceptance_criterion の要求範囲で、うち Y-05 のみ本ノードでの修正を要した (残り 4 件は先行ノードで解消済みを再測定で確認)。Y-01 は本ノードで determinism_boundary を新設して解消、Y-06 / Y-07 / Y-09 は解消済みを確認"
+  },
+  {
+   "id": "F-P03X03-05",
+   "level": "resolved",
+   "summary": "acceptance の 4 節はすべて pass。節 1 (外部参照検査) / 節 2 (絵文字検査) は CR-EXT / CR-EMOJI が単一定義で C10・C11・C15 はいずれも module_api 呼び出しに委譲。節 3 (ゲート集約) は CR-GATE-AGG が単一正本で、C09 の invariant が二重化を検出可能な形で禁じている。節 4 は部品 id 語彙が測定時点で fail だったものを本ノードで修正して pass (ただし用途語彙の出荷側は F-P03X03-01 として残る)"
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-nav-overflow-design",
+  "reason": "micro_copy.roles.label.fields へ nav_item を足す計画が C11 brief の 2 箇所に書かれているが、micro_copy.note が適用範囲を sections[].parts[].data と diagrams[].data に限り、validate-handout-config.py の check_micro_copy も part['data'] / diagram['data'] しか走査しない。fields へ足しても nav ラベルは walk に入らず効かない (設定できるように見えて効かないつまみになる)。nav ラベルは section.heading からの派生物であり、検査するなら別の入口が要る",
+  "discovered_at_artifact": "plugins/guide-doc-generator/config/",
+  "proposed_node": {
+    "id": "P05-x-142-nav-label-length-check",
+    "title": "nav ラベル長を実際に検査する機構を置くか、検査しないと宣言するかを裁定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

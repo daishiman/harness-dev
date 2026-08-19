@@ -1,0 +1,39 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-16-cr-owner-registry",
+ "covered_task_ids": [
+  "P05-x-16-cr-owner-registry"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P03.md",
+ "verified_by": [
+  {
+   "claim": "briefs/ に出現する全 CR-* prefix が owner 登録表に載っている",
+   "method": "grep -rho --exclude=RESOLUTION-P03.md で briefs 配下の CR-[A-Z][A-Z0-9-]* を収集し、登録表の行頭パターンから登録済み集合を作り comm -23 で差分を取った",
+   "result": "pass: 出現 13 / 登録 13 / 未登録 0。owner は C16 2件・C22 2件・C09 1件・C12 5件・C22+C12 1件・C12+C11 1件・C06 1件"
+  },
+  {
+   "claim": "この検査が空ゲートでない",
+   "method": "script-brief-C13.json へ未登録の CR-QQQ-PROBE を 1 件注入して再実行し、その後復元して再実行",
+   "result": "pass: 変異時 未登録 1 件を検出、復元後 0 件。検出も復帰も実測した"
+  },
+  {
+   "claim": "検査対象の集合に判定文書自身が混入していない",
+   "method": "--exclude=RESOLUTION-P03.md の有無で結果を比較",
+   "result": "pass: exclude 無しでは本文の説明文が供給する語 2 件を誤検出した。owner 表を書いた文書がその表を検査する haystack にも入っていると、表へ語を書くだけで『出現側』も増えるため差分が常に閉じてしまう。除外が正しい"
+  },
+  {
+   "claim": "複数 owner を持つ CR が単独 owner に丸められていない",
+   "method": "登録表の owner 列を直読み",
+   "result": "pass: CR-GRANULARITY-DECLARED-VS-ACTUAL は C22 (宣言側) と C12 (実測側) の両方、CR-DETAIL-TEXT-BUDGET は C12 (判定) と C11 (予算値の正本) の両方を明記。単独へ丸めると、どちらを直せばよいか読めない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x16-01",
+   "level": "carry-forward",
+   "summary": "登録表は手書きの一覧であり、新しい CR-* を brief へ足しても表を更新しなければ誰も赤にならない。付記に検出手順 (comm -23) を書いたが、これを回す常設ゲートは無い。P05-x-89 (部分一致判定の棚卸し) と同じく、手順が文書にあるだけで実行が保証されていない層"
+  }
+ ]
+}

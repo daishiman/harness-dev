@@ -3,8 +3,12 @@
   "component_kind": "sub-agent",
   "name": "handout-readability-reviewer",
   "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
-  "description": "生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・一文の長さを指摘したいときに使う",
-  "tools": ["Read", "Bash"],
+  "description": "生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・文の連なりの読みにくさを指摘したいときに使う。",
+  "description_constraints": "末尾の句点は lint-skill-description.py の R5 (ALLOWED_TAIL = 『使う。』『読む。』『起動する。』) が要求するため必須。AC1 は『成果物の description が本ブリーフと一致』かつ『lint exit0』の両方を求めるので、句点を落とすと両立不能になる (P05 evidence の canon-conflict として実測記録あり)。『一文の長さ』という語は使わない — 文の長さの判定は C12 が持ち (text_length_ownership 参照)、C06 が見るのは長さではなく読みの詰まりであるため、description に長さを書くと boundary と矛盾する",
+  "tools": [
+    "Read",
+    "Bash"
+  ],
   "tools_rationale": "Read は判定対象 (生成 HTML・同梱の正規化済み構成データ・親が渡す決定論ゲートの json-report) と評価規範 (ref-handout-design-system の文章設計の型) を読むために要る。Bash は verify-handout-language.py / verify-handout-narrative.py を --json-report 付きで自ら再実行し、機械が既に判定済みの面を自分の指摘対象から除外するために要る (機械結果を親の申告だけに頼ると、親が渡し忘れた面を重複指摘してしまう)。Bash の用途はこの 2 本 + verify-handout-selfcontained.py / verify-handout-a11y-print.py の読み取り実行に限定し、書き込みは --json-report の一時パスのみとする。Write は持たせない: レビュアーが資料や構成データを直接書き換えられると proposer≠approver が崩れ、指摘と修正が同一 context で閉じて『自分が直したものを自分が合格させる』構図になる。修正は C01 の責務、verdict の受け渡しは C03 の責務。findings は戻り値 (JSON) で返し、ファイルを介さない。inventory C06.tools=[Read, Bash] と一致する",
   "question_solved": "決定論ゲート (C16 自己完結性 / C17 a11y と印刷 / C18 言語と日付 / C22 筋道) が全て exit0 になった資料について、その知見を持たない読者が実際に読んだとき、意味の水準でどこが伝わらないか (lead-line が抽象を 1 行で言えているか / 判断軸が意思決定を助けるか / 言い換えが初心者に通じるか / 全体ゴールからセクション goal への連なりが腑に落ちるか)",
   "input_contract": {
@@ -19,34 +23,57 @@
       "html_path (生成 HTML)",
       "config_path (正規化済み構成データ)",
       "gate_reports の json-report",
-      "plugins/guide-doc-generator/references/ (文章設計の型・部品カタログ。ref-handout-design-system の規範正本)"
+      "plugins/guide-doc-generator/skills/ref-handout-design-system/references/ (文章設計の型・部品カタログ。C04 ref-handout-design-system の規範正本。**プラグイン直下の plugins/guide-doc-generator/references/ ではない** — 直下の references/ は P13 の package-contract.json を置く配布物用ディレクトリで、設計規範は skill 配下に置かれている。C04 の build_target が plugins/guide-doc-generator/skills/ref-handout-design-system/ であることが inventory 側の裏づけ)"
     ],
     "must_not_assume": "親会話 (C01 run-handout-build / C03 assign-handout-readability-evaluator) に載っている次のものを持ち込まない。(1) 構成データを設計したときの意図・言い訳・『ここはこういう狙い』という説明。読者はそれを読めない。判定は HTML と構成データに書かれている文字だけを根拠にする。(2) ヒアリングの生ログと、そこで語られた背景の補足。reader_profile に明示された属性を超える前提知識を読者に仮定しない。(3) 参照 HTML v1/v2 の文面。『参照ではこう書いていた』は指摘根拠にならない (規範として参照するのは文章設計の型であって文面ではない)。(4) 生成が何周目か・どこを直した結果か・締切や残り loop 数。これを知ると『もう十分だろう』という妥協が verdict へ入る。(5) 自分が過去に出した findings。毎回 HTML を読み直して判定する"
   },
   "output_contract": {
-    "returns": "{\"status\": \"ok|blocked\", \"verdict\": \"PASS|FAIL\", \"reviewed_as\": \"読者としての立場 (reader_profile の写し)\", \"findings\": [{\"id\": \"F1\", \"severity\": \"high|medium|low\", \"axis\": \"lead-line|decision-line|glossary|goal-chain|sentence-flow|concreteness\", \"location\": {\"section_id\": \"s3\", \"element\": \"lead-line\", \"quote\": \"該当箇所の逐語引用\"}, \"why_not_understood\": \"知見のない読者として何が分からなかったかの説明\", \"suggestion\": \"改善案 (書き換え文の提案は可・適用はしない)\", \"machine_gate_overlap\": false}], \"strengths\": [\"意味水準で機能している点 (次の修正で壊さないための保護対象)\"], \"not_reviewed\": [{\"axis\": \"\", \"reason\": \"機械ゲート C1x が担当\"}], \"blocked_reason\": \"status=blocked のときだけ非空\"} — verdict は findings に severity=high が 1 件でもあれば FAIL、それ以外は PASS。machine_gate_overlap=true の finding を出してはならず、自己検査で除去する",
+    "returns": "{\"status\": \"ok|blocked\", \"verdict\": \"PASS|FAIL\", \"reviewed_as\": \"読者としての立場 (reader_profile の写し)\", \"findings\": [{\"id\": \"F1\", \"severity\": \"high|medium|low\", \"axis\": \"lead-line|decision-line|glossary|goal-chain|sentence-flow|concreteness|opening-order|visual-fit|card-granularity|nav-scannability\", \"location\": {\"section_id\": \"s3\", \"element\": \"lead-line\", \"quote\": \"該当箇所の逐語引用\"}, \"why_not_understood\": \"知見のない読者として何が分からなかったかの説明\", \"suggestion\": \"改善案 (書き換え文の提案は可・適用はしない)\", \"machine_gate_overlap\": false}], \"strengths\": [\"意味水準で機能している点 (次の修正で壊さないための保護対象)\"], \"not_reviewed\": [{\"axis\": \"\", \"reason\": \"機械ゲート C1x が担当\"}], \"blocked_reason\": \"status=blocked のときだけ非空\"} — verdict は findings に severity=high が 1 件でもあれば FAIL、それ以外は PASS。machine_gate_overlap=true の finding を出してはならず、自己検査で除去する",
     "writes_files": []
   },
-  "boundary": "機械が判定できる面を重複して見ない。次は C06 の対象外であり、findings に挙げてはならない: 絵文字の有無・アイコン様式・未使用 symbol・外部参照の有無 (C16)、aria 属性の欠落・印刷版面 (C17)、日付書式 yyyy/mm/dd と出力ディレクトリ名の一致・lead-line と判断軸の『存在』・glossary 宣言の被覆・一文の字数上限 (C18)、目的/背景/ゴール 3 要素の描画・section goal の描画・nav からの goal 参照の『存在』(C22)。C06 が見るのは同じ対象の意味の側だけである — lead-line が存在するかではなく『その 1 行で抽象が言い切れているか』、判断軸が存在するかではなく『その一文が読者の次の選択を助けるか』、言い換えが宣言されているかではなく『その言い換えが初心者に通じるか (別の専門用語で言い換えていないか)』、goal が描画されているかではなく『全体ゴールから各 goal への連なりが読者に辿れるか』、字数が上限内かではなく『文の連なりとして読み進められるか』。資料も構成データも書き換えない (read-only レビュアー)。verdict の受け渡し・再修正の起動・loop 制御は行わない。C03 (assign-handout-readability-evaluator, L2 assign skill) との分界: C03 は入力の組み立て (HTML / 構成データ / 決定論ゲート結果の収集) と独立 context への委譲と verdict の回収を担う skill 側の手続きで、C06 は委譲先で実際に読んで判定する主体。C03 は判定基準を持たず、C06 は入出力の運搬とループ制御を持たない。修正そのものは C01 の責務であり、C06 の suggestion は提案であって適用指示ではない",
+  "boundary": "機械が判定できる面を重複して見ない。次は C06 の対象外であり、findings に挙げてはならない: 絵文字の有無・アイコン様式・未使用 symbol・外部参照の有無 (C16)、aria 属性の欠落・印刷版面 (C17)、日付書式 yyyy/mm/dd と出力ディレクトリ名の一致・lead-line と判断軸の『存在』・glossary 宣言の被覆 (C18)、1 文の文字数上限と 1 本あたりの文数・冒頭フィールドの文字量 (C12。R25/REQ-7 の W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED と opening.hero_fields の W-HERO-LONG / W-HERO-HEAVY)、目的/背景/ゴール 3 要素の描画・section goal の描画・nav からの goal 参照の『存在』(C22)。C06 が見るのは同じ対象の意味の側だけである — lead-line が存在するかではなく『その 1 行で抽象が言い切れているか』、判断軸が存在するかではなく『その一文が読者の次の選択を助けるか』、言い換えが宣言されているかではなく『その言い換えが初心者に通じるか (別の専門用語で言い換えていないか)』、goal が描画されているかではなく『全体ゴールから各 goal への連なりが読者に辿れるか』、字数が上限内かではなく『文の連なりとして読み進められるか』。資料も構成データも書き換えない (read-only レビュアー)。verdict の受け渡し・再修正の起動・loop 制御は行わない。C03 (assign-handout-readability-evaluator, L2 assign skill) との分界: C03 は入力の組み立て (HTML / 構成データ / 決定論ゲート結果の収集) と独立 context への委譲と verdict の回収を担う skill 側の手続きで、C06 は委譲先で実際に読んで判定する主体。C03 は判定基準を持たず、C06 は入出力の運搬とループ制御を持たない。修正そのものは C01 の責務であり、C06 の suggestion は提案であって適用指示ではない",
+  "text_length_ownership": {
+    "note": "R25/REQ-7 (goal-spec C73。利用者要件『文章が長ったらしく何行も書かれるのを絶対に防ぐ』) に対する C06 の立ち位置を一意にする。旧記述は文字数上限を C18 verify-handout-language.py の担当としていたが、C18 のブリーフには文長・文数の判定が 1 件も無い (W-SENTENCE-LONG / E-TEXT-PARAGRAPH / sentence_gate / sentences_per_body いずれも 0 件。script-brief-C18.json の text_volume_boundary が非担当を明記している)",
+    "owner": "C12 validate-handout-config.py。閾値の正本は config/handout-visual-policy.json#sentence (sentence_gate / sentences_per_body / fold_escape_hatch) と #opening.hero_fields の 1 箇所で、同ファイルが canon_authority を C12 と宣言している",
+    "c06_stance": "本 agent は文字数も文数も数えない。**閾値の数値をプロンプト本文へ書かない** (書いた時点で正本が 2 つになり、config を直しても agent の判定だけが旧値のまま残る)。C06 が見るのは長さの数値ではなく、主語の欠落・指示語の指す先の不明・受動と能動の混在といった『読みが止まる』現象で、これは長さが上限内でも起きる",
+    "if_long_text_is_seen": "**P03-x-02 で改訂**。旧記述は『C12 の警告が残ったまま第 1 稿が回ってきた場合』を想定していたが、この状況はビルド経路では起こらない: R25/REQ-7 以降 W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / W-HERO-LONG / W-HERO-HEAVY はいずれも level=error で、C12 は --strict の有無にも --normalize の有無にも関わらず exit 1 で止まり --out へ一切書かない (script-brief-C12.json の exit_codes[1] と r21_type_constraints.text_length_fold)。C19 は正規化済み構成しか受け取らないため、ビルド経路は必ず C12 exit0 を通過している。したがって C06 が読む HTML は『文長判定を通過済み』であることが構造的に保証される。例外は逆抽出 (C02/C20) 由来や手書きの HTML を対象に C06 が呼ばれた場合で、このとき C12 は一度も走っておらず report も存在しない。いずれの場合も C06 は長さそのものを finding にしない。not_reviewed へ axis=sentence-length / reason=『C12 が判定する面 (未実行の場合はその旨)』として記録し、機械側の未解決として親へ返す (machine_gate_overlap=true の finding を出さないという output_contract の規約と同じ扱い)",
+    "why_c12_report_is_not_an_input": "P03-x-02 の裁定: **C12 の判定結果を C06 の input_contract.receives へ含めない**。理由は 3 つで、いずれも実測に基づく。(1) C12 には --json-report に相当する引数が存在しない — script-brief-C12.json の argv は --config / --schema / --strict / --normalize / --out / --today / --catalog の 7 本のみで、stdout は『OK handout-config: sections=6 ...』形式の人間可読 1 行サマリと定義されている。渡せる機械可読成果物がそもそも無い。(2) 文長系 5 コードは全て level=error であり fail-closed で exit 1 になるため、C12 の結果は C06 への『助言入力』ではなくビルド経路の『前提条件』である。前提条件は入力として運ぶのではなく満たされたことを利用する。(3) gate_reports を 5 本へ広げると、command-brief-C09.json が scope_boundary_vs_config_gates で確定させた『C09 は構成データ側ゲートを起動口に持たない』という裁定および skill-brief-C03.json の deterministic_checks 4 本と食い違い、『決定論ゲートは 4 本』という同一事実の記述が 3 箇所で割れる。利用者要件『文章が長ったらしく何行も書くのを絶対に防ぐ』の担保は、C06 へ結果を運ぶことではなく C12 が exit 1 でビルドを止めることで達成されている (経路は切れておらず、C12 の手前で完結している)"
+  },
   "isolation_rationale": "この agent の価値は『知見を持たない読者を演じられること』1 点にかかっており、それは context に何が載っていないかで決まる。親会話には構成データを設計した意図、ヒアリングで語られた背景、参照 HTML、そして直前に何を直したかが全て載っている。同一 context で読むと、書かれていない情報で行間が埋まり『これで分かる』と判定してしまう — 初心者が分からない箇所ほど、設計意図を知っている側には自明に見える。加えて生成した本人が採点する構図 (proposer=approver) では、指摘が自分の直前の判断への否定になるため甘くなる。inventory の evaluator_pair=C01 はこの対を明示したもので、独立 context は『別人格』ではなく『別の情報集合』を作るための仕組みである",
   "procedure": [
     "gate_reports を確認する。C16/C17/C18/C22 のいずれかが exit0 でなければ意味レビューへ進まず status=blocked で差し戻す (機械で落ちる資料を意味水準で読んでも指摘が形式問題に埋もれる)。必要なら Bash で該当検査を --json-report つきで再実行して確認する",
     "reader_profile を読み、これから演じる読者を 1 文で確定する (誰で、何を知らず、どういう場面でこれを読むのか)。以降の判定は全てこの読者の立場から行い、判定文の中でその立場を明示する",
     "references の文章設計の型 (抽象 1 行 → 具体部品 → 判断軸 1 行 / 専門用語には括弧書きの言い換え / 一文を短く) を規範として読む。参照 HTML の文面は読まない",
     "HTML を冒頭から通読する。hero の目的・背景・ゴールを読んだ時点で『この資料を読み終えたら自分は何ができるようになるのか』が言えるかを最初に判定する。言えないなら goal-chain 軸の finding にする",
+    "冒頭を上から順に読み直し、lead と goal_chips → 全体像セクション → 各カードの並びが読者の頭に入る順序になっているかを判定する。ゴールが全体像より後に来る・全体像が本文各節と対応づかない・hero の箇条書きがどれも何の一覧か分からない場合を opening-order 軸の finding にする (r25_semantic_axes / REQ-1・REQ-4・REQ-8。フィールドの存在と字数は見ない)",
     "sticky nav と目次を見て、読む前に全体像と残量が掴めるかを判定する。各項目の goal 参照が読者にとって意味のある差分になっているかを見る (機械は参照の存在だけを見ている)",
+    "上部ナビと目次のラベルを流し読みして、探している節へ一度で辿り着けるかを判定する。ラベルが節の中身を代表していない・隣接ラベルが互いに区別できない場合を nav-scannability 軸の finding にする (r25_semantic_axes。ラベルの字数上限は config/handout-visual-policy.json#micro_copy.roles が正本で C12 が判定する)",
     "各セクションを順に読む。lead-line を読んだ時点で『このセクションが何の話か』が分かるかを判定し、抽象になっていない (具体の要約になっている / 手続きの宣言になっている) 場合を lead-line 軸の finding にする",
     "具体部品を読み、lead-line が示した抽象の実例になっているかを見る。抽象と具体が別の話になっている、または具体が 1 例しかなく型が見えない場合を concreteness 軸の finding にする",
+    "その節の図解・画像を本文と並べて読み、理解を実際に助けているかを判定する。図解のパターンが節の論理構造と合っていない・図中のラベルが本文の用語と違う・画像が装飾で終わっている場合を visual-fit 軸の finding にする (r25_semantic_axes / REQ-2・REQ-3。枚数と有無は C12 の W-DIAGRAM-FEW / E-IMAGE-ABSENT が見ている)",
+    "節をカードの列として俯瞰し、1 枚が 1 話題で閉じているか・隣り合うカードの重さが極端に違わないか・中身が散文の塊でなく読者が拾える構造に落ちているかを判定する。崩れていれば card-granularity 軸の finding にする (r25_semantic_axes / REQ-5。カード要素の描画と節ラベルの存在は C11/C12/C22 が見ている)",
     "判断軸の一文を読み、読者がその場で選択できる問いになっているかを判定する。要約・再掲・感想になっている場合を decision-line 軸の finding にする",
     "初出の専門用語と固有名詞を拾い、括弧書きの言い換えが reader_profile の水準で通じるかを判定する。言い換え先に別の専門用語が入っている、比喩が読者の生活圏の外にある場合を glossary 軸の finding にする (宣言の有無は C18 が見ている)",
     "セクション間の移りを見る。前のセクションの goal を達成した読者が次の lead-line を読んだとき飛躍がないかを判定し、飛躍を goal-chain 軸の finding にする",
-    "文の連なりを見る。字数は C18 が見ているので、ここでは主語の欠落・指示語の指す先の不明・受動と能動の混在で読みが止まる箇所を sentence-flow 軸の finding にする",
+    "文の連なりを見る。1 文の長さと文数は C12 が構成データ段で判定済み (text_length_ownership) なので、ここでは主語の欠落・指示語の指す先の不明・受動と能動の混在で読みが止まる箇所を sentence-flow 軸の finding にする",
     "各 finding に severity を付ける。high = その箇所で読者が読み進めるのをやめる/誤って理解する、medium = 読み返せば分かるが負荷が高い、low = より良くできる。high が 1 件でもあれば verdict=FAIL",
-    "全 finding を boundary の除外リストと突き合わせ、機械ゲートが担当する面の指摘 (絵文字・aria・日付書式・存在検査・字数) を除去する。除去したものは not_reviewed へ理由付きで残す",
+    "全 finding を boundary の除外リストと突き合わせ、機械ゲートが担当する面の指摘 (絵文字・aria・日付書式・存在検査 = C16/C17/C18/C22、文字数と文数 = C12、図解と画像の枚数 = C12 の W-DIAGRAM-FEW / E-IMAGE-ABSENT、nav ラベルの字数 = C12 の micro_copy) を除去する。R25 由来の 4 軸については r25_semantic_axes の各 not_judged を突き合わせ先として使う。除去したものは not_reviewed へ理由付きで残す",
     "意味水準で機能している点を strengths へ挙げる (次の修正で壊されないための保護対象)。findings / strengths / not_reviewed / verdict を戻り値として返し、ファイルは書かない"
   ],
-  "requirements_covered": ["R11", "R19", "R20"],
-  "checklist_covered": ["C15", "C16", "C40", "C44"],
+  "requirements_covered": [
+    "R11",
+    "R19",
+    "R20",
+    "R25-REQ-1 / REQ-4 / REQ-8 (副。冒頭の読み順が成立しているかの意味判定のみ。フィールドの存在と字数は C11/C12/C22)",
+    "R25-REQ-2 / REQ-3 (副。図解・画像が本文と噛み合っているかの意味判定のみ。枚数と有無は C12)",
+    "R25-REQ-5 (副。カード粒度と nav ラベルの拾いやすさの意味判定のみ。描画と字数上限は C11/C12)"
+  ],
+  "checklist_covered": [
+    "C15",
+    "C16",
+    "C40",
+    "C44"
+  ],
   "checklist_coverage_note": "いずれも機械ゲートが形式面 (存在・被覆・両立の同時 exit0) を担い、C06 は同じ checklist 項目の意味面だけを担う。C06 の verdict が checklist の合否を置き換えることはない",
   "acceptance_checks": [
     {
@@ -62,7 +89,7 @@
     {
       "id": "AC3",
       "how": "agent 本文の boundary 節を読む",
-      "expected": "機械ゲート C16/C17/C18/C22 が担当する面が除外リストとして列挙され、C06 が見る意味面と 1 対 1 で対比されている (絵文字・aria・日付書式・存在検査・字数が『見ない』側に明記)"
+      "expected": "機械ゲート C16/C17/C18/C22 が担当する面が除外リストとして列挙され、C06 が見る意味面と 1 対 1 で対比されている (絵文字・aria・日付書式・存在検査が『見ない』側に明記)。加えて文字数と文数が『見ない』側にあり、その担当が **C12** と書かれている (C18 と書かれていたら不合格 — C18 は文長を判定しない)"
     },
     {
       "id": "AC4",
@@ -83,14 +110,56 @@
       "id": "AC7",
       "how": "決定論ゲートが FAIL の状態で起動する",
       "expected": "status=blocked と blocked_reason が返り、意味レビューの findings を返さない"
+    },
+    {
+      "id": "AC8",
+      "how": "build 後の handout-readability-reviewer.md 本文へ opening-order / visual-fit / card-granularity / nav-scannability の 4 語を grep し、あわせて axis の列挙が 10 種であることを数える",
+      "expected": "4 語がそれぞれ 1 件以上ヒットし、axis 列挙は既存 6 種 + R25 由来 4 種 = 10 種。1 種でも欠けると R25 の意味側に担当が戻らないため不合格 (r25_semantic_axes の退行検出)"
+    },
+    {
+      "id": "AC9",
+      "how": "同じ本文へ数値閾値のリテラル (\\d+ 字 / \\d+ 文 / \\d+ 枚 / min_images_per_main_section / max_chars / max_sentences) を正規表現 grep する",
+      "expected": "0 件。閾値の正本は config/handout-visual-policy.json と improvement/visual-per-section-decision.json であり、prompt 本文へ写した時点で正本が 2 つになる (r25_semantic_axes.no_threshold_in_this_brief / text_length_ownership.c06_stance と同一規約)"
+    },
+    {
+      "id": "AC10",
+      "how": "同じ本文の入力節へ C12 / validate-handout-config の出現を grep し、gate_reports として列挙されるゲート本数を数える",
+      "expected": "gate_reports は C16/C17/C18/C22 の 4 本のままで C12 を第 5 のゲートとして含まない。C12 への言及は『長さは C12 が判定済みなので見ない』という非担当宣言の文脈に限る (text_length_ownership.why_c12_report_is_not_an_input の退行検出。5 本へ増えていたら C09/C03 の 4 本記述と割れるため不合格)"
     }
   ],
   "frontmatter_fields": {
-    "observed_from": ["plugins/slide-report-generator/agents/ui-quality-reviewer.md", "plugins/slide-report-generator/agents/structure-validator.md"],
-    "fields": ["name", "description", "kind: agent", "version", "owner", "tools", "isolation: fork", "model", "owner_skill", "prompt_ref", "prompt_layer: 7layer", "since", "last-audited"],
+    "observed_from": [
+      "plugins/slide-report-generator/agents/ui-quality-reviewer.md",
+      "plugins/slide-report-generator/agents/structure-validator.md"
+    ],
+    "fields": [
+      "name",
+      "description",
+      "kind: agent",
+      "version",
+      "owner",
+      "tools",
+      "isolation: fork",
+      "model",
+      "owner_skill",
+      "prompt_ref",
+      "prompt_layer: 7layer",
+      "since",
+      "last-audited"
+    ],
     "note": "レビュアー系 (ui-quality-reviewer / structure-validator) は tools: Read, Bash・isolation: fork で揃っており、C06 はこの先例と同型"
   },
-  "body_sections": ["# handout-readability-reviewer", "<!-- responsibility: R1 --> アンカー", "## Purpose", "## Inputs", "## Outputs", "## Goal-Seeking Execution", "## Constraints", "## Prompt Templates", "## Self-Evaluation"],
+  "body_sections": [
+    "# handout-readability-reviewer",
+    "<!-- responsibility: R1 --> アンカー",
+    "## Purpose",
+    "## Inputs",
+    "## Outputs",
+    "## Goal-Seeking Execution",
+    "## Constraints",
+    "## Prompt Templates",
+    "## Self-Evaluation"
+  ],
   "prompt_ref": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/prompts/R-review-readability.md",
   "failure_modes": [
     "機械面の重複指摘: findings が『絵文字が使われている』『aria-label がない』で埋まり、意味の指摘が 0 件になる。boundary の除外リストと突合する手順を最終ステップに固定して防ぐ",
@@ -102,10 +171,45 @@
     "blocked の握りつぶし: 機械ゲート FAIL のまま意味レビューを始め、形式起因の読みにくさを意味の問題として報告する"
   ],
   "open_questions": [
-    "responsibility_anchor が inventory では 'prompts/R-review-readability.md' だが lint-agent-prompt-section.py の ANCHOR_RE は `R<数字>` のみを受ける。本文アンカーは `<!-- responsibility: R1 -->` とし prompt 名は据え置く案を推奨するが、C05 と揃えて P05 で確定が要る",
+    "【決着済み・記録】本文アンカーは `<!-- responsibility: R1 -->`、inventory の responsibility_anchor は 'prompts/R-review-readability.md' のまま据え置きで確定した (成果物 plugins/guide-doc-generator/agents/handout-readability-reviewer.md:19 に当該アンカーが実在。lint-agent-prompt-section.py の ANCHOR_RE が `R<数字>` のみを受けるという制約と両立している)",
+    "【要 discovered-task・成果物側の追従】成果物 handout-readability-reviewer.md が本ブリーフの旧記述をそのまま焼いている箇所が 2 件ある。(1) :57 と :125 の `plugins/guide-doc-generator/references/` (実体は skills/ref-handout-design-system/references/。当該直下ディレクトリは存在しない) (2) :156 の『C18 (言語と日付): …一文の字数上限』(C18 は文長を判定しない。正本は C12)。plugins/ は本ノードの write_scope 外のため未修正。P05-C06 の再 build で追従が要る",
     "prompt_ref の基準を owner skill (assign-handout-readability-evaluator) 配下としたが、inventory は相対名しか持たない。C03 側の brief (skill-brief-C03.json) の responsibilities は R1-assign 1 本で、prompt ファイル名との対応は P05 で確定",
-    "verdict=FAIL のときの再レビュー回数上限を C06 が持つか C01 の goal_seek (max_loops 5) 側だけが持つかが未確定。C06 は loop 制御を持たない設計にしたが、C03 が verdict を返すだけで打ち切り判断をしない点は C01 の feedback_contract 側と突合が要る",
-    "model 指定 (sonnet 固定 / inherit) が inventory に無い。SRG のレビュアー系は sonnet 固定。初心者演技の質は model 依存が大きいため inherit を推奨するが未確定",
+    "【決着済み・記録】再レビュー回数の上限は C06 が持たない。収束制御 (max_loops 等) は C01 の goal_seek が単独で持ち、その数値は C01 側の 1 箇所が正本なので本ブリーフへ写さない (P05 evidence の handoff-to-downstream-leaf(2) で C01 へ申し送り済み。C03 は verdict を運ぶだけで打ち切り判断をしない)",
+    "【決着済み・記録】model は成果物 frontmatter で inherit を採用済み (plugins/guide-doc-generator/agents/handout-readability-reviewer.md の実測)。初心者演技の質が model 依存であるため固定しない。inventory C06 に model キーが無い点は inventory 側の追補課題",
     "Bash で再実行する検査 script の --json-report 出力先 (一時ディレクトリ) を誰が用意するかが未確定。C03 が渡す案と C06 が $TMPDIR を使う案があり、read-only 性の見え方が変わる"
-  ]
+  ],
+  "r25_semantic_axes": {
+    "id": "CR-R25-SEMANTIC-AXES",
+    "owner": "C06 (軸定義の単一正本。C03 は軸を持たず、この 4 軸の名前も判定文も複製しない)",
+    "since": "P03-x-02 (2026-08-18)。skill-brief-C03.json の open_questions 第 1 項が挙げた『担当がいない 4 面』を、軸の正本である本ブリーフ側で閉じたもの",
+    "why": "R25 の 9 要求に対して機械側 (C12) が持つのは件数と字数の判定だけである。W-DIAGRAM-FEW は図解が何枚あるかを数えるが、その図解が本文の話と噛み合っているかは数えられない。E-IMAGE-ABSENT は画像の有無しか見ない。micro_copy の上限は nav ラベルの字数を縛るが、上限内でも拾えないラベルは通る。この『件数は満たすが意味は満たさない』帯域に担当がいないまま R25 を完了させると、要求は緑になるのに読者体験は改善しない (Goodhart)。既存 6 軸はいずれもセクション本文の中を見る軸で、資料全体の入口・視覚部品・カード単位・ナビという 4 面をどれも覆っていない",
+    "axes": [
+      {
+        "axis": "opening-order",
+        "covers": "REQ-1 / REQ-4 / REQ-8",
+        "judges": "冒頭を上から読んだとき『ゴール → 全体像 → 各カード』の順に頭が入るか。lead と goal_chips を読んだ時点で『読み終えたとき自分が何をできていればよいか』が言えるか、その直後に来る全体像セクション (timeline / map / いずれの型でも) が本文各節の見出しと対応づけて読めるか、hero カードのどれが何の一覧かがカード見出しから判別できるか",
+        "not_judged": "lead / goal_chips / 全体像セクションが存在するか、フィールドが何字か (存在は C12 と C22、字数は C12 の W-HERO-LONG / W-HERO-HEAVY)"
+      },
+      {
+        "axis": "visual-fit",
+        "covers": "REQ-2 / REQ-3",
+        "judges": "その節に置かれた図解・画像が、その節の本文が言っていることの理解を実際に助けているか。図解のパターン (flow / compare / hierarchy / cycle / matrix / versus) が節の論理構造と一致しているか、画像が装飾で終わっていないか、図中のラベルが本文の用語と同じ言葉になっているか",
+        "not_judged": "図解・画像の枚数と有無 (C12 の W-DIAGRAM-FEW / E-IMAGE-ABSENT)、枠が中身を持つこと (C16 の SC-09)"
+      },
+      {
+        "axis": "card-granularity",
+        "covers": "REQ-5",
+        "judges": "節がカードとして揃った粒度の単位で並んでいるか。1 枚のカードが 1 つの話題で閉じているか、隣り合うカードの重さが極端に違わないか、カードの中身が散文の塊ではなく読者が拾える構造 (箇条・表・二択) に落ちているか",
+        "not_judged": "section-card 要素で囲まれているか・節ラベルに所要時間や件数が載っているか (描画は C11、存在検査は C12/C22)、本文の字数と文数 (C12)"
+      },
+      {
+        "axis": "nav-scannability",
+        "covers": "REQ-5 (d 面)",
+        "judges": "上部ナビと目次のラベルを流し読みしたとき、読者が探している節へ一度で辿り着けるか。ラベルが節の中身を代表しているか、隣接ラベルが互いに区別できるか、参照している goal が読者にとって意味のある差分になっているか",
+        "not_judged": "ラベルの字数上限 (config/handout-visual-policy.json#micro_copy.roles の role=\"label\" が正本で、判定は C12)、nav からの goal 参照の存在 (C22)"
+      }
+    ],
+    "no_threshold_in_this_brief": "上の 4 軸に数値閾値を 1 つも書かない。枚数・字数・件数の正本は config/handout-visual-policy.json と improvement/visual-per-section-decision.json であり、本 agent がその値を本文へ写すと config を直しても agent の判定だけが旧値のまま残る (text_length_ownership.c06_stance と同一の理由・同一の扱い)",
+    "overlap_rule": "4 軸の finding も既存 6 軸と同じく machine_gate_overlap=true を出してはならない。各軸の not_judged に挙げた面が指摘の実質になっていたら、それは機械側の担当であり not_reviewed へ回す"
+  }
 }

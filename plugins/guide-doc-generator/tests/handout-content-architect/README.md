@@ -51,7 +51,7 @@ sub-agent は実行そのものを機械検査できないため、検査対象�
 | AC-C05-14 | `focus_theme` 1-2 件 / `ties_to` / logistics を appendix へ隔離 | R21 C47 C48 / brief procedure 2(a)(b) |
 | AC-C05-15 | 冒頭 `flow-overview` は手順の詳細を書かず、件数上限は `config/handout-sections.json` に従う | R21 C46 / brief procedure 2(c) |
 | AC-C05-16 | `capability-explainer` の `parts[].slot` を outcome → breakdown → feature、lead_line を機能名から始めない | R21 C51 / brief procedure 2(d) |
-| AC-C05-17 | `attainment_level` の範囲 / `dialogue` / `handson` (B17) / `anticipated-qa` / `duration` | R21 C53 C54 C59 / brief procedure 2(e)(f) |
+| AC-C05-17 | `attainment_level` の範囲 / `dialogue` / `handson` (B17) / `anticipated-qa` | R21 C53 C54 C59 / brief procedure 2(e)(f) |
 | AC-C05-18 | `must_remember` と `no_need_to_remember` は対。片方だけの入力は blocked | R21 C57 / brief procedure 1 |
 | AC-C05-19 | `## Inputs` に hearing_result 14 項目。質問を返さず `blocked_reason` で差し戻す | brief `input_contract.receives` / `boundary` |
 | AC-C05-20 | `## Outputs` に戻り値 11 キーと `out_config_path` 1 ファイルのみの宣言 | brief `output_contract` |

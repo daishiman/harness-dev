@@ -300,8 +300,8 @@ BLOCK_FIXTURES = {
         "id": "blk-steps",
         "type": "steps",
         "items": [
-            {"key": "st1", "label": "資料を開く", "detail": "手元で開く", "time": "5分", "icon": "check"},
-            {"key": "st2", "label": "設定を確認する", "detail": "権限を見る", "time": "5分"},
+            {"key": "st1", "label": "資料を開く", "detail": "手元で開く", "icon": "check"},
+            {"key": "st2", "label": "設定を確認する", "detail": "権限を見る"},
         ],
     },
     "action-items": {
@@ -445,7 +445,6 @@ def base_section(index=1, blocks=None, **over):
         "goal": "セクション%d のゴールをここに書く" % index,
         "lead_line": "このセクションで押さえる 1 行の抽象",
         "judgment_axis": "迷ったら手戻りの少ない方を選ぶ",
-        "duration": "10分",
         "role": "main",
         "ties_to": "goal",
         "section_kind": "standard",
@@ -473,7 +472,6 @@ def base_config(sections=None, **over):
         "purpose": "同じ手順で誰でも同じ結果に届くようにする",
         "background": "これまで口頭で共有しており、抜けが起きていた",
         "goal": "配布後 1 週間で全員が自力で最後まで実施できる",
-        "duration": "約60分",
         "focus_theme": ["手順をそろえる"],
         "target_tasks": [{"id": "tt1", "label": "週次レポートを自分で作る"}],
         "attainment_level": "operable",
@@ -603,6 +601,16 @@ def field_elements(html_text, field):
 
 def field_texts(html_text, field):
     return [el.text.strip() for el in field_elements(html_text, field)]
+
+
+def doc_date(html_text):
+    """紙面に出さなくなった日付の唯一の運び手 (root の data-hb-date)。
+
+    利用者指定 2026-08-19 で可視の date-pill を廃止した。日付そのものは
+    逆抽出 (C20) と C18 DATE-02 が読むため属性として残る。
+    """
+    carriers = elements_with(html_text, "data-hb-date")
+    return carriers[0].attrs["data-hb-date"] if carriers else None
 
 
 def part_elements(html_text, part_id):

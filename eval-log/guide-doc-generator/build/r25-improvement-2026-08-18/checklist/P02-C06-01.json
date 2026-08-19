@@ -1,0 +1,79 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C06-01",
+ "covered_task_ids": [
+  "P02-C06-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+ "verified_by": [
+  {
+   "claim": "reads_files が指していた plugins/guide-doc-generator/references/ は実在しない",
+   "method": "dispatcher が ls -d を実行し、対比として skills/ref-handout-design-system/references/ の中身を列挙",
+   "result": "fail(=報告どおり): plugin 直下の references/ は No such file or directory。実在する canon は skills/ref-handout-design-system/references/ (answer-patterns.md を確認)。brief 側は修正済みで、否定形 (『プラグイン直下ではない』) まで書き込まれている"
+  },
+  {
+   "claim": "文長・文数の owner は C18 ではなく C12 である",
+   "method": "script-brief-C18.json の stdout / text_volume_boundary を直接引用確認",
+   "result": "pass(=報告どおり): C18 自身が『本文の 1 文の長さと 1 本あたりの文数 (R25/REQ-7 の W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED) および micro_copy の 1 要素文字数 (W-COPY-LONG) は本 script の担当ではない』と毎回出力する契約を持つ。C06 の旧 boundary の C18 帰属は誤り"
+  },
+  {
+   "claim": "誤帰属が brief の 3 箇所すべてで C12 へ訂正された",
+   "method": "boundary / procedure / acceptance_checks を横断 grep",
+   "result": "pass: boundary は『1 文の文字数上限と 1 本あたりの文数・冒頭フィールドの文字量 (C12。W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED と opening.hero_fields の W-HERO-LONG / W-HERO-HEAVY)』へ訂正。procedure の除外ステップも『文字数と文数 = C12』。AC は『C18 と書かれていたら不合格』という退行検出つき"
+  },
+  {
+   "claim": "同種の誤帰属が他の brief に残っていないか (横断確認・dispatcher 実施)",
+   "method": "briefs/*.json 全件へ 一文|字数|文長 を grep し C18/verify-handout-language と共起する行を抽出",
+   "result": "pass: 共起ヒットは C06 の訂正済み記述と C18 自身の非担当宣言、C11:492 の『判定 (W-HERO-LONG / W-HERO-HEAVY / E-ENUM-RAW) は C12 / C18 が持ち C11 は判定しない』のみ。誤帰属の残存 0 件"
+  },
+  {
+   "claim": "R25/REQ-7 の閾値数値が C06 に焼かれていない",
+   "method": "JSON 全文から数値リテラルを抽出し文脈確認",
+   "result": "pass: 閾値らしき数値は 0 件 (抽出された数値は検出コード番号と行番号のみ)。text_length_ownership.owner が config/handout-visual-policy.json#sentence を正本として参照する形"
+  },
+  {
+   "claim": "description の 句点 欠落で AC1 が充足不能だった",
+   "method": "plugins/skill-governance-lint/scripts/lint-skill-description.py:53,85 を直接確認",
+   "result": "pass(=報告どおり): ALLOWED_TAIL = ('使う。', '読む。', '起動する。') を rstrip().endswith で検査。brief は句点つきへ修正済み。ただし inventory C06 の description は句点を欠いたままで、dispatcher の Python 比較でも brief と inventory は不一致"
+  },
+  {
+   "claim": "tools 制約が inventory と一致し read-only 性が保たれている",
+   "method": "brief の tools と inventory C06 の tools を Python 比較",
+   "result": "pass: 双方 ['Read', 'Bash'] で一致。Write 非保持により proposer≠approver を維持"
+  },
+  {
+   "claim": "C03 との責務境界に二重保持も終端欠落も無い",
+   "method": "skill-brief-C03.json (本 cycle で修正済み) の割当規則と C06 の boundary を対照",
+   "result": "pass: boundary に『C03 は判定基準を持たず、C06 は入出力の運搬とループ制御を持たない』と双方向で明記。C03 側 brief の記述と整合"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git status --porcelain plugin-plans/ を確認",
+   "result": "pass: agent-brief-C06.json のみ (17 insertions / 9 deletions)。top-level 24 キー / procedure 14 / acceptance_checks 7 / open_questions 6"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C06-01",
+   "level": "blocking-for-release",
+   "summary": "出荷物 plugins/guide-doc-generator/agents/handout-readability-reviewer.md の :57 と :125 が実在しないディレクトリ plugins/guide-doc-generator/references/ を規範の所在として指している。brief 側は訂正済みだが出荷物の再 build が必要"
+  },
+  {
+   "id": "F-C06-02",
+   "level": "blocking-for-release",
+   "summary": "同出荷物 :155 が『C18 (言語と日付)』の担当として文長系を含む記述を焼いている。C18 自身が非担当を宣言しており、正本の owner は C12。brief 側は 3 箇所とも訂正済みだが出荷物の再 build が必要"
+  },
+  {
+   "id": "F-C06-03",
+   "level": "blocking-for-release",
+   "summary": "inventory C06 の description が句点を欠き、lint-skill-description.py:53 の ALLOWED_TAIL を満たさない。AC1 は inventory 一致と lint exit0 の両方を要求するため、inventory・出荷物・brief の 3 者を揃えるまで AC1 は red のまま。write_scope が 3 つに跨るため 1 ノードに束ねる必要がある"
+  },
+  {
+   "id": "F-C06-04",
+   "level": "resolved",
+   "summary": "未決 open_question 3 件を実測で決着 (responsibility_anchor の実在・model: inherit の出荷済み確認・max_loops の数値コピー削除で C01 goal_seek を唯一の owner に)"
+  }
+ ]
+}

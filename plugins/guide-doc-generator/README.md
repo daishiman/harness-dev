@@ -255,6 +255,10 @@ python3 "$HB/scripts/verify-handout-narrative.py"     --html ./handout.html --co
 
 なお、書き込み時に働く hook が 1 つ入っています。資料 HTML へ外部 URL や絵文字が混ざった書き込みが起きると、その場で検出して知らせます。判定規則は selfcontained ゲートと同じものを呼んでいるので、hook と最終ゲートの判定が食い違うことはありません。
 
+## 改善要望を出す
+
+使っていて「ここが違う」と思ったら `run-skill-feedback` で本 plugin の skill への改善要望を起票できます。`skills/run-skill-feedback` は harness-creator の正本へ向けた symlink adapter であり、本 plugin が所有する entry point ではないため、`plugin-composition.yaml` の公開 capability には含めていません。
+
 ## 困ったとき
 
 | 症状 | 見るところ |

@@ -181,6 +181,11 @@ def test_is_skill_md():
     assert MOD._is_skill_md("plugins\\demo\\skills\\run-x\\SKILL.md")  # backslash 正規化
     assert not MOD._is_skill_md("plugins/demo/skills/run-x/scripts/foo.py")
     assert not MOD._is_skill_md("docs/skills/run-x/SKILL.md")  # plugins/ 始まりでない
+    # テスト fixture は評価対象でない。任意深度を許すと本物と同じ (plugin, skill) へ潰れ、
+    # fixture の sha が verdict と一致せず恒久 stale になる (強制層 lint も列挙しない)。
+    assert not MOD._is_skill_md(
+        "plugins/demo/tests/run-x/fixtures/accept/skills/run-x/SKILL.md"
+    )
 
 
 def test_parse_plugin_skill():

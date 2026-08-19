@@ -80,8 +80,12 @@ OUT_OF_SCOPE_LINES = [
 # 中立データの所在 (cwd 非依存)
 PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 PARTS_CATALOG_PATH = PLUGIN_ROOT / "config" / "handout-parts.json"
+#: 見出しの直後に置く「絵」の data_block_type (部品 id はカタログから引く)。
+VISUAL_BLOCK_TYPES = ("image", "diagram")
 SECTIONS_CATALOG_PATH = PLUGIN_ROOT / "config" / "handout-sections.json"
 CONFIG_SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "handout-config.schema.json"
+#: DATE-03 の区切り文字の正本 (C19 の生成書式と同一ファイルを読む)。
+OUTPUT_CONFIG_PATH = PLUGIN_ROOT / "config" / "handout-output.json"
 
 # LANG-07 の対象種別 slug。値そのものは config/handout-sections.json が正本であり、
 # 本 script は「その語彙に実在すること」を起動時に確認したうえで参照する (不在なら exit 2)。
@@ -330,6 +334,10 @@ class Vocabulary(object):
             fail_closed("部品カタログに parts が無い: %s" % PARTS_CATALOG_PATH)
         self.in_section_part_ids = set()
         self.document_part_ids = set()
+        # 「見出しの直後に置く絵」の集合も id を焼かずカタログから引く
+        # (data_block_type が絵の型のもの)。id 列挙にすると部品が増えたとき
+        # LANG-06 の起点判定だけが旧語彙のまま取り残される。
+        self.visual_part_ids = set()
         for part in parts:
             if not isinstance(part, dict) or "id" not in part or "section_scope" not in part:
                 fail_closed(
@@ -337,6 +345,8 @@ class Vocabulary(object):
                 )
             if part["section_scope"] == "in-section":
                 self.in_section_part_ids.add(part["id"])
+                if part.get("data_block_type") in VISUAL_BLOCK_TYPES:
+                    self.visual_part_ids.add(part["id"])
             elif part["section_scope"] == "document":
                 self.document_part_ids.add(part["id"])
         if not self.in_section_part_ids:
@@ -376,7 +386,31 @@ class Vocabulary(object):
         except re.error:
             fail_closed("構成データスキーマの日付書式パターンが正規表現として不正")
         self.dir_date_len = 10
-        self.dir_separator = "-"
+        # DATE-03 の区切り文字は本ソースへ焼かず config/handout-output.json の
+        # dir_name_format から導出する。R25 で書式が種別トークンを挟む 3 要素形から
+        # 日付と slug の 2 要素形へ変わったとき、ここに区切り文字が焼かれていたため
+        # C19 の生成は通るのに本検査だけが落ちた。キー不在は既定値へ倒さず fail_closed に
+        # (倒すと正本を変えても旧区切りで判定し続ける)。
+        self.dir_separator, self.dir_name_shape = self._load_dir_name_format()
+
+    @staticmethod
+    def _load_dir_name_format():
+        data = load_json_file(OUTPUT_CONFIG_PATH, "出力先設定")
+        value = data.get("dir_name_format") if isinstance(data, dict) else None
+        if not isinstance(value, str) or "{date}" not in value or "{slug}" not in value:
+            fail_closed(
+                "%s の dir_name_format が無いか {date}/{slug} を含まない: %r"
+                % (OUTPUT_CONFIG_PATH, value)
+            )
+        between = value.split("{date}", 1)[1].split("{slug}", 1)[0]
+        if len(between) != 1:
+            fail_closed(
+                "dir_name_format の {date} と {slug} の間が 1 文字でない: %r" % (between,)
+            )
+        # 違反メッセージに出す形も同じ正本から作る (書式が変わったとき本文だけ
+        # 旧形のまま残らないように、文言をハードコードしない)。
+        shape = value.replace("{date}", "<YYYY-MM-DD>").replace("{slug}", "<主題slug>")
+        return between, shape
 
 
 # --------------------------------------------------------------------------
@@ -573,6 +607,8 @@ def _locator(node):
     return "%d:%d" % (node.line, node.col + 1)
 
 
+
+
 def analyse_sections(text, sections, vocab):
     lang04 = Detection("LANG-04", checked=len(sections))
     lang05 = Detection("LANG-05", checked=len(sections))
@@ -635,7 +671,23 @@ def analyse_sections(text, sections, vocab):
         else:
             lead_order = leads[0].order
             axis_order = axes[0].order
-            first_part = min(part.order for part in parts)
+            # 節の 1 個目が絵なら、それは順序の起点に数えない。見出しの直後へ絵を
+            # 置くのが既定の並びであり (利用者指定 2026-08-19)、絵は lead-line が
+            # 主張する内容を目で見せる面であって「lead-line の後に来る具体」ではない。
+            # 2 枚目以降の絵は通常どおり具体部品として数える。
+            ordered = sorted(parts, key=lambda part: part.order)
+            if ordered[0].attrs.get("data-hb-part") in vocab.visual_part_ids:
+                ordered = ordered[1:]
+            if not ordered:
+                # 絵 1 枚しか無い節は「具体部品が 0 個」と同じ形なので、
+                # 上の分岐と同じ診断へ落とす。
+                lang06.add(
+                    loc,
+                    sid,
+                    "先頭の絵を除くと具体部品が 0 個で、抽象と判断軸だけになっている",
+                )
+                continue
+            first_part = min(part.order for part in ordered)
             if not (lead_order < first_part < axis_order):
                 lang06.add(
                     loc,
@@ -744,16 +796,39 @@ def analyse_dates(text, root, sections, vocab, config_date, out_dir_arg):
     values = [(_node_text(text, node).strip(), node) for node in date_nodes]
 
     if not date_nodes:
-        date01.add(
-            "-",
-            "(data-hb-field=\"date\")",
-            "冒頭の日付表記が 1 個も存在しない (R18 は日付表記の存在を必須とする)",
-        )
-        date02.add(
-            "-",
-            config_date,
-            "日付表記が無く、正規化済み構成データの date と突合できない",
-        )
+        # 日付は紙面に出さない (利用者指定 2026-08-19『日付はこの HTML の中には
+        # 不要』)。ただし値を捨ててよいとは決めていないので、root の
+        # data-hb-date で運ばれていることをここで確かめる。属性も無ければ
+        # 「日付を持たない資料」になってしまうので、そのときだけ違反にする。
+        # root は #document の合成ノードなので、属性は実体である <html> 要素から
+        # 読む (合成ノードには属性が付かない)。
+        carried = ""
+        for node in root.descendants():
+            value = (node.attrs.get("data-hb-date") or "").strip()
+            if value:
+                carried = value
+                break
+        date01.checked = 1
+        date02.checked = 1
+        if not carried:
+            date01.add(
+                "-",
+                '(data-hb-field="date" / data-hb-date)',
+                "日付が可視表記としても root の data-hb-date としても存在しない "
+                "(表示しないことと記録を捨てることは別である)",
+            )
+            date02.add(
+                "-",
+                config_date,
+                "日付が無く、正規化済み構成データの date と突合できない",
+            )
+        elif carried != config_date:
+            date02.add(
+                "-",
+                carried,
+                "root の data-hb-date が正規化済み構成データの date と一致しない "
+                "(構成データ: %s / 属性: %s)" % (config_date, carried),
+            )
     else:
         for value, node in values:
             if not vocab.date_re.fullmatch(value):
@@ -832,8 +907,8 @@ def analyse_dates(text, root, sections, vocab, config_date, out_dir_arg):
             date03.add(
                 basename,
                 basename[: vocab.dir_date_len + 1],
-                "日付の直後が区切り文字 %s でない (<YYYY-MM-DD>-<種別>-<主題slug>)"
-                % vocab.dir_separator,
+                "日付の直後が区切り文字 %s でない (%s)"
+                % (vocab.dir_separator, vocab.dir_name_shape),
             )
 
     return date01, date02, date03, date04, body_dates

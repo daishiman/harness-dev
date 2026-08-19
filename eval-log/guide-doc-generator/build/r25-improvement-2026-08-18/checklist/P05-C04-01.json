@@ -1,0 +1,79 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-C04-01",
+ "covered_task_ids": [
+  "P05-C04-01"
+ ],
+ "status": "failure",
+ "write_scope": "plugins/guide-doc-generator/skills/ref-handout-design-system/",
+ "verified_by": [
+  {
+   "claim": "route-C04.json は status=success を名乗るが、独立 content-review は両 verdict とも FAIL",
+   "method": "dispatcher が独立 SubAgent へ focused combined review (4条件+rubric・1 context・incremental) を dispatch し、elegance-verdict.json / rubric-verdict.json を受領",
+   "result": "fail(=route の success を採用しない): route report の success は『brief が要求した 2 点を追記した』という生成の完了を指しており、追記が機能するかを測っていない。builder 自身が test_evidence の note に『編集前も 37/37 緑だった。この suite は今回埋めた差分を 1 件も検査していない』と書いており、success の根拠にテストが含まれていないことを自ら開示している。よって success と FAIL は矛盾ではなく、route-build-report の status enum が『生成完了』と『契約充足』を区別できない構造の帰結である。dispatcher は契約充足側を採り本ノードを done にしない"
+  },
+  {
+   "claim": "builder 自己申告 (1) 『編集前も 37/37 緑』は事実で、原因も特定された",
+   "method": "独立 review が contract_lib.py を直読み",
+   "result": "pass(=事実・原因まで到達): contract_lib.py:57 に `# skill-brief-C04.json output_contract の 4 面` というコメント付きで REQUIRED_FACES が 4 面ハードコードされている。brief が 5 面へ動いても追随しない第 2 正本。tests 配下に R25 / hero-card / visual-policy / nav_item の文字列が 1 件もヒットせず、AC-C04-1〜23 のいずれも面 5 を測っていない。本 cycle の『正本リテラルの写し』族だが、害の出方が新しい — 値が古くなるのでも空振りするのでもなく、正本が増えたのにテストが気づかない片方向関係。P05-x-109"
+  },
+  {
+   "claim": "builder 自己申告 (2) 『brief が名指す config キーが実在しない』は事実",
+   "method": "独立 review が config/handout-visual-policy.json のキーを直接列挙",
+   "result": "pass(=実測で確定): opening の直下キーは note / why / hero_fields / hero_total / section_opening の 5 つのみで、hero_card_fields / list_headings / connector_card は 3 つとも不在。micro_copy.roles は存在し role=\"label\" (max_chars 14) もあるが、その fields は label, term, plain, header, columns, tag, kind で nav_item を含まない。SKILL.md 面 5 は dangling pointer を指している。P05-x-110"
+  },
+  {
+   "claim": "builder 自己申告 (3) 『面 5 は現 repo で必ず未確定へ落ちる』は事実",
+   "method": "(2) の帰結として review が確認",
+   "result": "pass: 面 5 の第 1・第 2 箇条は現 repo で 100% 未確定。builder が『正しく落ちる設計にはしたが有効に機能する状態ではない』と述べたとおり"
+  },
+  {
+   "claim": "FAIL の決め手は builder が自己申告していない別の欠陥である",
+   "method": "独立 review が references/answer-patterns.md を直読み",
+   "result": "fail(=本ノード最大の発見): SKILL.md は面を 5 へ増やし『回答の組み立て方は references/answer-patterns.md に置く』と本文で宣言しているが、当の answer-patterns.md は『問い合わせを 4 面のどれかへ割り当て』のまま未更新。手順 1 は部品/トークン/アイコン/文章の 4 分類しか列挙せず『どれにも当たらないなら担当外と答え』で閉じる。よってカード・ナビの問い合わせは面 5 へ届かず担当外へ差し戻される。手順 2 の正本ファイル列挙にも handout-visual-policy.json が無い。fail-closed 規則の当否と無関係に、追加した面が構造的に到達不能である。P05-x-108"
+  },
+  {
+   "claim": "B\\d{2} 回避は規約と brief の衝突ではない",
+   "method": "独立 review が面 1 の述語宣言と config/handout-parts.json を突合",
+   "result": "pass(=builder の判断を一部否定): 面 1 が自ら『判定する述語は section_scope であり id の範囲指定で判定しない』と宣言しており、config/handout-parts.json は当該 2 部品に section_scope: document を持つ。よって『section_scope=document のエントリ』と書けば AC-C04-10 に触れず面 1 の述語規範とも整合した。回避の方向は正しいが、衝突を起こさない解が自 skill 内に既にあった。medium finding"
+  },
+  {
+   "claim": "ref- prefix 規約への適合",
+   "method": "独立 review が frontmatter と面 5 の記述内容を確認",
+   "result": "partial: allowed-tools: [Read] / cli_tools・deterministic_checks なし / 面 5 が引用の範囲に収まり手順や判断ロジックを持ち込んでいない点は適合。ただし disable-model-invocation が false で ref- 規約 (true 必須) に違反する。今回の差分由来ではない既存欠陥だが、AC-C04-7 が『ref 規約 緑』を出しているため、規約検査が本項目を見ていないことも同時に示している。P05-x-111"
+  },
+  {
+   "claim": "評価者が write_scope 外へ書いていない",
+   "method": "dispatcher が review の自主開示と sha 不変を確認",
+   "result": "pass: SKILL.md の sha256 は評価前後とも 7c69ed2b469a4dfd2b05bc2c133130abfdc0ead0ef751fac44378a86c4a3ffd5 で不変。評価者の書込みは eval-log/guide-doc-generator/ref-handout-design-system/content-review/ 配下の 2 ファイルのみで、いずれも jsonschema.validate を通過している"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05C04-01",
+   "level": "blocking-for-release",
+   "summary": "追加した面が構造的に到達不能だった。SKILL.md 側で面 5 を宣言しても、問い合わせを面へ割り当てる answer-patterns.md が 4 分類のままでは、カード・ナビの問い合わせは面 5 へ届かず『担当外』へ差し戻される。本 cycle が繰り返し見つけてきた『検査が空振りする』の生成側の対応物 — 生成物が増えたのに、それを呼び出す経路が増えていない。しかも builder はこれを自己申告しておらず、37/37 緑のテストも検出しない。独立 context のレビューでしか出なかった型として記録に値する。P05-x-108"
+  },
+  {
+   "id": "F-P05C04-02",
+   "level": "blocking-for-release",
+   "summary": "route-build-report の status enum が『生成完了』と『契約充足』を区別できない。C04 は success を名乗りながら契約 FAIL、C10 は failure を名乗りながら実装は brief 準拠 (ゲートが外部依存で赤) で、同じ 3 値 enum が両方向へ誤差を持っている。C10 builder も『skipped は虚偽なので failure を選んだ』と enum の不足を明示している。生成の完了とゲートの充足を別軸で記録する必要がある。P05-x-91 と同根だが、両方向の実例が同一 cycle で揃ったのは本件が初"
+  },
+  {
+   "id": "F-P05C04-03",
+   "level": "blocking-for-release",
+   "summary": "面 2 が自ら『実値を焼かない』と宣言しながら既定 400 を本文へ焼き、その値が C11 brief の R25 改定値 100 と食い違う。assets/tokens も 400 のままで正本が 2 つに割れている (P05-x-83 と同根)。利用者要件 R7 (長文を絶対に防ぐ) の直接の実装点であり、参照専用 skill が旧値を教える状態は誤答を生む。参照 skill における正本写しは、実行系の写しより害が大きい — 誤った値が『規範として』配られるため。P05-x-112"
+  },
+  {
+   "id": "F-P05C04-04",
+   "level": "carry-forward",
+   "summary": "面 5 の fail-closed 設計そのものの当否は両論併記のまま残した。擁護論は『実値複製より厳密で、誤答経路を先に閉じている』、反対論は『参照専用 skill にとって参照先の実在は機能そのもので、正味の追加内容は未確定と答えることだけ』。評価者の判定は反対論寄りだが、これは FAIL の決め手ではない。config へキーを足すか面 5 を撤回するかは C12 (visual-policy owner) と C11 (block_body_max_chars の値) の判断を要し C04 単独では閉じられないため、rubric verdict は human_review_required: true / next_action: human_review としている"
+  },
+  {
+   "id": "F-P05C04-05",
+   "level": "carry-forward",
+   "summary": "criteria_evaluated の突合先正本が存在しない。ref- skill の frontmatter は feedback_contract.criteria を持たないため、lint-content-review.py の突合先が無い状態でレビューを書くことになる。評価者は AC-C04-8/10/16 のみ repo 実在 id を引き、残りは自分が定めた id である旨を両ファイルの notes に明記した。この開示自体は正しい対応だが、構造としては『評価者が評価基準の正本になる』一歩手前であり、本 cycle が繰り返し畳んできた第 2 正本の型と同じ。ref- skill に対する content-review の突合先を規約側で定める裁定が要る"
+  }
+ ]
+}

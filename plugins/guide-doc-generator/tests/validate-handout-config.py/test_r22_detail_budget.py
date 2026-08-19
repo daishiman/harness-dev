@@ -6,12 +6,20 @@ RESOLUTION-R22.md の責務表で C63 は「C11 (数値の正本) / C12 (適用)
 tests/render-handout.py/test_r22_detail_attributes.py)。
 
 規則 (script-brief-C12.json r22_granularity_constraints.detail_text_budget):
-- CR-TEXT-FOLD の折り畳み上限を detail_level ごとにテーマトークン
+- CR-TEXT-FOLD の上限を detail_level ごとにテーマトークン
   text_limits.block_body_max_chars_by_detail_level から引く。
 - この script は上限の数値リテラルを 1 つも持たない。
 - 該当キーが無いテーマでは block_body_max_chars を全水準へ適用する (fail-soft)。
-- 折り畳み自体は全水準で行い、detailed のみ生成する B10 を open=true にする
-  (script-brief-C11.json added_block_r22_values.fold_behavior_at_detailed)。
+- R25/REQ-7 (goal-spec C73 / script-brief-C12.json:120,:869) により、折り畳みの
+  実行回数上限は第1稿を含む全経路で 0 になった。どの水準でも超過は畳まず
+  E-TEXT-OVERFLOW (level=error) で exit 1。旧仕様 (全水準で畳み detailed だけ
+  open=true にする) は撤回済みで、script-brief-C11.json の
+  added_block_r22_values.why_no_longer_open_true がその撤回を記録している。
+  超過を実際に止めるのは E-TEXT-OVERFLOW (水準別上限で判定・level=error) で
+  あり、E-TEXT-FOLDED は「折り畳みへ退避した回数 > 0」を禁じる二重化として
+  残るだけで到達しない (validate-handout-config.py の fold_section 直前の
+  注記が正本)。
+
 
 上限の数値はテーマトークン (無ければ C11 のブリーフ) から読み、テストソースへ
 書かない。
@@ -44,11 +52,29 @@ def long_body(total_chars, sentence_len=40):
 def text_config(body, detail_level):
     cfg = H.valid_config(detail_level=detail_level)
     cfg["sections"] = [H.section("intro", parts=[H.text_part("intro-t1", body)])]
-    return cfg
+    return H.with_visual_floor(cfg)
 
 
 class DetailBudgetTestCase(H.C12TestCase):
     """テーマトークンを水準別上限つきで用意する足場。"""
+
+    def relax_sentence_gates(self):
+        """文の長さ・本数の上限だけを外す (字数予算を測るための足場)。
+
+        字数予算と文の作り方は別の軸で、config/handout-visual-policy.json#sentence
+        が後者の正本である。字数予算を上げた検査に固定長の文を並べると、上げた
+        のは字数なのに文数・文長で落ちてしまい、何を測っているのか分からなくなる。
+        ここでは前者だけを見たいので後者を無効化する (後者そのものは
+        test_sentence_gate 系が固定する)。
+        """
+        path = self.root / "config/handout-visual-policy.json"
+        policy = json.loads(path.read_text(encoding="utf-8"))
+        sentence = policy.setdefault("sentence", {})
+        sentence.setdefault("sentence_gate", {})["max_chars"] = 10000
+        per_body = sentence.setdefault("sentences_per_body", {})
+        per_body["max_sentences"] = 10000
+        per_body.pop("max_sentences_by_detail_level", None)
+        path.write_text(json.dumps(policy, ensure_ascii=False, indent=2), encoding="utf-8")
 
     def brief_limits(self):
         if not C11_BRIEF.is_file():
@@ -98,6 +124,14 @@ class DetailBudgetTestCase(H.C12TestCase):
         self.assert_exit(res, 0)
         return self.read_out(out)
 
+    def normalize_result(self, body, detail_level, theme, name):
+        """exit code を前提にしない正規化実行 (fail-closed 側の検査用)。"""
+        cfg = text_config(body, detail_level)
+        cfg["theme"] = theme
+        out = self.tmp / name
+        res, _, out = self.normalize(cfg, out=out)
+        return res, out
+
 
 class LimitSourceIsTheThemeToken(DetailBudgetTestCase):
 
@@ -135,39 +169,49 @@ class LimitSourceIsTheThemeToken(DetailBudgetTestCase):
 
 
 class FoldThresholdFollowsDetailLevel(DetailBudgetTestCase):
+    """R25/REQ-7: 超過は水準ごとの上限で判定し、どの水準でも畳まずに落とす。"""
 
-    def test_same_body_folds_at_overview_but_not_at_detailed(self):
-        """上限を跨ぐ 1 本の本文が、水準によって畳まれたり畳まれなかったりする。"""
+    def test_same_body_is_rejected_at_overview_but_accepted_at_detailed(self):
+        """上限を跨ぐ 1 本の本文が、水準によって落ちたり通ったりする。"""
+        self.relax_sentence_gates()
         theme = self.theme_name()
         limits = self.token_limits(theme)
-        length = (limits["overview"] + limits["standard"]) // 2
-        body = long_body(length)
+        body = long_body((limits["overview"] + limits["standard"]) // 2)
 
-        overview = self.normalized_parts(body, "overview", theme, "budget-ov.json")
-        self.assertEqual(
-            2,
-            len(overview["sections"][0]["parts"]),
-            "overview では上限を超えるので B10 へ畳まれるはず",
-        )
-        self.assertEqual(1, overview["provenance"]["text_fold_count"])
+        res, out = self.normalize_result(body, "overview", theme, "budget-ov.json")
+        self.assert_fails_with(res, "E-TEXT-OVERFLOW", "/sections/0/parts/0")
+        self.assertFalse(out.exists(), "超過したのに正規化済み構成が書き出されている: %s" % out)
 
-        detailed = self.normalized_parts(body, "detailed", theme, "budget-dt.json")
-        self.assertEqual(
-            1,
-            len(detailed["sections"][0]["parts"]),
-            "detailed では上限内なので畳まれないはず",
-        )
-        self.assertEqual(0, detailed["provenance"]["text_fold_count"])
+        data = self.normalized_parts(body, "detailed", theme, "budget-dt.json")
+        # 視覚部品の下限を満たすために足した DIAGRAM/IMG は数えない (見るのは
+        # 本文が分割されていないこと)。
+        parts = [p for p in data["sections"][0]["parts"] if p["part"] == "TEXT"]
+        self.assertEqual(1, len(parts), "detailed では上限内なので部品は増えないはず")
+        self.assertEqual(body, parts[0]["data"]["body"])
 
-    def test_head_length_is_within_the_level_limit(self):
+    def test_over_limit_is_rejected_at_every_level(self):
+        """どの水準にも「畳んで通す」逃げ道が無い。"""
         theme = self.theme_name()
         limits = self.token_limits(theme)
         body = long_body(limits["detailed"] * 2)
         for level in DETAIL_LEVELS:
             with self.subTest(detail_level=level):
-                data = self.normalized_parts(body, level, theme, "head-%s.json" % level)
-                head = data["sections"][0]["parts"][0]["data"]["body"]
-                self.assertLessEqual(len(head), limits[level])
+                res, out = self.normalize_result(body, level, theme, "over-%s.json" % level)
+                self.assert_fails_with(res, "E-TEXT-OVERFLOW")
+                self.assertFalse(out.exists(), "%s で書き出されている: %s" % (level, out))
+
+    def test_within_limit_body_is_preserved_at_every_level(self):
+        """上限内なら水準を問わず原文のまま (分割も切り詰めもしない)。"""
+        self.relax_sentence_gates()
+        theme = self.theme_name()
+        limits = self.token_limits(theme)
+        body = long_body(max(1, limits["overview"] // 2))
+        for level in DETAIL_LEVELS:
+            with self.subTest(detail_level=level):
+                data = self.normalized_parts(body, level, theme, "keep-%s.json" % level)
+                parts = [p for p in data["sections"][0]["parts"] if p["part"] == "TEXT"]
+                self.assertEqual(1, len(parts), "本文が分割されている: %r" % [p["id"] for p in parts])
+                self.assertEqual(body, parts[0]["data"]["body"])
 
     def test_overflow_diagnostic_follows_the_level(self):
         """--normalize なしの検証も水準別の上限で判定する。"""
@@ -186,62 +230,40 @@ class FoldThresholdFollowsDetailLevel(DetailBudgetTestCase):
         self.assert_exit(res, 0)
         self.assert_no_diag(res, "E-TEXT-OVERFLOW")
 
-    def test_no_content_is_lost_at_any_level(self):
+
+class NoAccordionIsGenerated(DetailBudgetTestCase):
+    """B10 への退避そのものが起きない (旧 FoldBehaviourAtDetailed の撤回)。
+
+    旧クラスは「折り畳みは全水準で行い detailed の B10 だけ open=true」を期待値に
+    していた。script-brief-C11.json の added_block_r22_values.why_no_longer_open_true
+    が『R25 は折り畳みそのものを長文の逃げ道として塞ぐため、この妥協は不要に
+    なった』と撤回を記録している。
+    """
+
+    def test_no_generated_part_at_any_level(self):
         theme = self.theme_name()
         limits = self.token_limits(theme)
         body = long_body(limits["detailed"] * 2)
         for level in DETAIL_LEVELS:
             with self.subTest(detail_level=level):
-                data = self.normalized_parts(body, level, theme, "lossless-%s.json" % level)
-                joined = "".join(
-                    [data["sections"][0]["parts"][0]["data"]["body"]]
-                    + [
-                        item["body"]
-                        for part in data["sections"][0]["parts"][1:]
-                        for item in part["data"]["items"]
-                    ]
-                )
-                self.assertEqual(body, joined)
+                res, out = self.normalize_result(body, level, theme, "gen-%s.json" % level)
+                self.assert_exit(res, 1)
+                if out.exists():
+                    parts = json.loads(out.read_text(encoding="utf-8"))["sections"][0]["parts"]
+                    self.assertEqual(
+                        ["TEXT"], [p["part"] for p in parts],
+                        "折り畳み先が生成されている: %r" % [p["id"] for p in parts],
+                    )
 
-
-class FoldBehaviourAtDetailed(DetailBudgetTestCase):
-    """折り畳みは全水準で行い、detailed が生成する B10 だけ open=true。"""
-
-    def _generated_items(self, level):
+    def test_fold_count_is_zero_at_every_level(self):
+        """provenance.text_fold_count が非 0 になる経路は残っていない。"""
         theme = self.theme_name()
         limits = self.token_limits(theme)
-        body = long_body(limits["detailed"] * 2)
-        data = self.normalized_parts(body, level, theme, "open-%s.json" % level)
-        parts = data["sections"][0]["parts"]
-        self.assertGreater(len(parts), 1, "どの水準でも折り畳み自体は行う")
-        return [item for part in parts[1:] for item in part["data"]["items"]]
-
-    def test_detailed_generates_open_accordion(self):
-        items = self._generated_items("detailed")
-        for item in items:
-            self.assertIs(True, item["open"], "detailed の B10 は open=true")
-
-    def test_overview_generates_closed_accordion(self):
-        for item in self._generated_items("overview"):
-            self.assertIs(False, item["open"])
-
-    def test_standard_generates_closed_accordion(self):
-        for item in self._generated_items("standard"):
-            self.assertIs(False, item["open"])
-
-    def test_structure_is_identical_across_levels(self):
-        """open 属性以外は水準で変わらない (構造の同一性を保つ理由)。"""
-        theme = self.theme_name()
-        limits = self.token_limits(theme)
-        body = long_body(limits["detailed"] * 2)
-        shapes = {}
+        body = long_body(max(1, limits["overview"] // 2))
         for level in DETAIL_LEVELS:
-            data = self.normalized_parts(body, level, theme, "shape-%s.json" % level)
-            shapes[level] = [
-                (part["part"], part["id"]) for part in data["sections"][0]["parts"]
-            ]
-        self.assertEqual(shapes["overview"], shapes["standard"])
-        self.assertEqual(shapes["overview"], shapes["detailed"])
+            with self.subTest(detail_level=level):
+                data = self.normalized_parts(body, level, theme, "count-%s.json" % level)
+                self.assertEqual(0, data["provenance"]["text_fold_count"])
 
 
 class FailSoftWhenKeyAbsent(DetailBudgetTestCase):
@@ -261,12 +283,11 @@ class FailSoftWhenKeyAbsent(DetailBudgetTestCase):
         body = long_body(fallback * 2)
         for level in DETAIL_LEVELS:
             with self.subTest(detail_level=level):
-                data = self.normalized_parts(body, level, theme, "soft-%s.json" % level)
-                head = data["sections"][0]["parts"][0]["data"]["body"]
-                self.assertLessEqual(len(head), fallback)
+                res, _ = self.normalize_result(body, level, theme, "soft-%s.json" % level)
+                self.assert_fails_with(res, "E-TEXT-OVERFLOW")
 
     def test_existing_themes_are_not_broken(self):
-        """水準別キーが無くても exit 0 で通る (既存テーマを壊さない)。"""
+        """水準別キーが無くても上限内なら exit 0 で通る (既存テーマを壊さない)。"""
         theme = self.theme_name()
         limits = self.token_limits(theme)
 
@@ -274,7 +295,7 @@ class FailSoftWhenKeyAbsent(DetailBudgetTestCase):
             tokens.setdefault("text_limits", {}).pop(BY_DETAIL_KEY, None)
 
         self.write_tokens(theme, mutate)
-        cfg = text_config(long_body(limits["overview"] // 2), "detailed")
+        cfg = text_config(long_body(max(1, limits["overview"] // 2)), "detailed")
         cfg["theme"] = theme
         res, _ = self.validate(cfg)
         self.assert_exit(res, 0)

@@ -74,7 +74,7 @@ R21 C52 が既に `text_limits.block_body_max_chars` (既定 400) をテーマ�
 | `script-brief-C22.json` | 検出 `NAR-09` / `NAR-10` を追加 (8 → 10 件)。`canonical_rules.granularity_declared_vs_actual`。`checklist_covered` (C66) |
 | `skill-brief-C01.json` | `responsibilities[R1-elicit].hearing_required_items_r22` (2 項目・required:false・1 問へまとめる)。`checklist` へ 1 行 |
 
-## 確定した数値 (C63)
+## 確定した数値 (C63) — **2026-08-18 に R25 (REQ-7・goal-spec C73・最優先) が superseded にした。現在の正本は `improvement/text-length-gate-decision.json` (+ `briefs/RESOLUTION-R25-improvement-2026-08-18.md` D8)。下表は R22 時点の当初値として経緯のみ残す**
 
 `assets/tokens/<theme>.json` の `text_limits.block_body_max_chars_by_detail_level`:
 

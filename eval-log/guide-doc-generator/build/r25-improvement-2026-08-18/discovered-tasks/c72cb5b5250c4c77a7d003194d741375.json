@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "P05-x-90 事前実測の F-AUDIT-06 が両論併記で提出された裁定事項。dispatcher の裁定は『test_scan_scope.py:200 は番人であり型Aではない。切り分けは両辺の所在でなく assert が実装の契約を測ると名乗っているかで行う』。ただしこの区別は現在 docstring の文章だけが担っており機械では識別できない。監査担当が『私では決められません』と述べたのは判定規則が存在しないためで、規則の明文化が要る",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json",
+  "proposed_node": {
+    "id": "P05-x-103",
+    "title": "自己言及テストと番人テストを構造で識別できるようにする",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "assert の両辺がテストディレクトリ内で閉じる検査について、実装の契約を測るつもりのもの (型A=欠陥) と裁定済みの方針を意図的に固定する番人 (正当) が命名規約など構造で識別でき、docstring の読解に依存せず機械で仕分けできること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

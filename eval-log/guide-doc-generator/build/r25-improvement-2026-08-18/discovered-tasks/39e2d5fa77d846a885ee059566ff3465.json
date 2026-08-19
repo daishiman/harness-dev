@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "C16/C18 の open_questions 3 件が P03 design-gate を名指しで待っていたが、書込権が P03-x-02 側にあり P03-x-01 には無いという配線ミスで裁定が evidence にしか残らなかった。うち C18 の glossary LLM 工程は採用すると決定論ゲートの内側に LLM が入り D1 acceptance を事後的に壊す唯一の経路",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-01.json",
+  "proposed_node": {
+    "id": "P05-x-50",
+    "title": "P03 裁定 3 件を C16 / C18 の open_questions へ書き戻す (P05-C18 build より前)",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "(1) glossary 網羅性の LLM 工程は採らない (2) LANG-05 は存在と形式のみ検査する現案で可 (3) SC-08 の data-hb-nav=exclude は導入せず C11 側の不変条件で閉じる の 3 裁定が C16/C18 の brief 本体へ決定として書かれ、open_questions から外れていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C18"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

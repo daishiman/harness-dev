@@ -89,7 +89,6 @@ ICON_STYLE = (
 PURPOSE_VOCAB = ("guide", "report", "lecture", "onboarding", "agenda")
 SECTION_KIND_VOCAB = (
     "standard",
-    "agenda-timebox",
     "decisions",
     "action-items",
     "sources",

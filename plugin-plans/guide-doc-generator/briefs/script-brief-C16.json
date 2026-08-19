@@ -9,10 +9,10 @@
     "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す。未指定時は一切ファイルを書かない"
   ],
   "stdin": "使用しない。stdin から HTML を読む経路は設けない (--json-report の相対解決や違反行番号の再現に入力ファイルパスが要るため、パス指定を必須とする)",
-  "stdout": "人間可読の検査サマリ。1 行目に `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (SC-01..SC-10) で 1 行ずつ出力する。PASS/FAIL いずれでも同じ行構成を出す (差分比較を容易にするため)",
+  "stdout": "人間可読の検査サマリ。1 行目に `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (SC-01..SC-11) で 1 行ずつ出力する。PASS/FAIL いずれでも同じ行構成を出す (差分比較を容易にするため)",
   "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB>line:col<TAB><message><TAB><evidence>`。evidence は該当箇所を最大 120 文字へ切り詰めた抜粋 (絵文字違反は `U+XXXX` のコードポイント列も併記)。使用法エラー・入出力エラーは `ERROR<TAB><reason>` の 1 行で出す。stdout は判定サマリ、stderr は個別違反という分担を守り、両者を混ぜない",
   "exit_codes": {
-    "0": "全 detection が違反 0 件。自己完結性・絵文字ゼロ・アイコン様式・symbol 整合・アンカー整合のすべてを満たす",
+    "0": "全 detection (SC-01..SC-11) が違反 0 件。自己完結性 (SC-01..SC-04)・絵文字ゼロ (SC-05)・アイコン様式 (SC-06)・symbol 整合 (SC-07)・アンカー整合 (SC-08)・図表の中身 (SC-09)・同梱閉包 (SC-10)・main セクションの画像実体 (SC-11) のすべてを満たす",
     "1": "1 件以上の違反を検出した (品質判定としての FAIL)。加えて SC-06 で様式検査の対象分類が確定できない `<svg>` を見つけた場合もここに落とす (分類不能を pass へ畳まない)",
     "2": "検査そのものが成立しなかった。引数不正、--html の不在・読み取り不可、UTF-8 としてデコード不能、HTML パーサが回復不能な例外を出した、--json-report の書き込み失敗。1 (品質 FAIL) と 2 (検査不能) を混同させない"
   },
@@ -28,7 +28,9 @@
     "invoked_by": [
       "C01 run-handout-build (生成後の品質ゲート段)",
       "C09 verify-handout (手動ゲート実行。4 面ゲートの 1 面として起動され、判定は C09 が集約する)",
-      "C10 handout-emoji-and-external-ref-guard (PostToolUse フック経路。Write|Edit の直後に、資料出力ディレクトリ配下の *.html と同ディレクトリの handout-config.json に対してのみ発火する。C10 は本 script の判定規則 (canonical_rules) を再実行して結果を受け取る側であり、独自の判定規則を持たない。pre-write hook 経路ではない)",
+      "C10 guard-handout-external-ref (PostToolUse フック経路。Write|Edit の直後に、資料出力ディレクトリ配下の *.html と同ディレクトリの handout-config.json に対してのみ発火する。C10 は本 script の判定規則 (canonical_rules) を再実行して結果を受け取る側であり、独自の判定規則を持たない。pre-write hook 経路ではない)",
+      "C11 render-handout.py (module import 経由。algorithm 23 の出力直前の自己検査で scan_external_references(html) を呼ぶ)",
+      "C15 build-icon-sprite.py (module import 経由。アイコン名と title の絵文字判定を scan_emoji(text) へ委譲する。P04-x-05 の G-03 により C15 は独自の Unicode 範囲を一切持たず、本 script が解決できない場合は自前判定へ退避せず exit 2 とする契約。inventory C16 の couples_with: [C15] はこの関係を指す)",
       "P06 のテスト実行"
     ],
     "invokes": []
@@ -75,17 +77,26 @@
         "SC-05"
       ],
       "delegated_consumers": [
-        "C10 detection_rules D2-emoji (同一規則を PostToolUse で再実行する。独自の denylist を持たない)"
+        "C10 detection_rules D2-emoji (同一規則を PostToolUse で再実行する。独自の denylist を持たない)",
+        "C15 build-icon-sprite.py (module import 経由で scan_emoji(text) を呼ぶ。P04-x-05 の G-03 による裁定で、C15 が持っていた U+1F300-1FAFF / U+2600-27BF / U+2190-21FF / U+FE0F の denylist は撤去された。撤去前は層 2 の ✔ U+2714 を VS16 なしでも弾いており、本規則と判定が実際に食い違っていた)",
+        "P05-x-02 が実体化する assets/icons/icon-set.json (task-specs/P05-x-02.md の『絵文字を 1 文字も含めない』の判定は本規則へ委ねる。判定の実行点は C15 であり、資産側に独自の denylist を置かない)"
+      ],
+      "not_delegated_consumers": [
+        "C14 render-diagram-svg.py — AC-C14-4 が持つコードポイント列挙は『本 script が自ら絵文字を書き出さないこと』を自出力に対して確かめる test 用の走査であり、判定規則ではない。入力 label 由来の絵文字は C14 では判定せず素通しし、最終 HTML に対する本規則が単一の判定点になる (AC-C14-4 の本文がそう明記している)",
+        "C04 handout-design-consultant — skill-brief-C04.json の key_constraints が CR-EXT を参照するのは設計回答の制約としてであり、実行時に判定を再実行する consumer ではない"
       ]
     },
-    "invariant": "C10 と C16 は同一入力に対し必ず同一判定を返す。両者は同じ判定モジュール (verify-handout-selfcontained.py が公開する判定関数) を用い、片方だけが FAIL/PASS になる状態を設計上作らない。差異が出たらそれは実装バグであり、P06 のテストで両者を同一 fixture に掛けて突き合わせる (AC-C16-11)"
+    "invariant": "C10 が検査を完走した入力に対し、C10 と C16 は必ず同一判定を返す。両者は同じ判定モジュール (verify-handout-selfcontained.py が公開する判定関数) を用い、片方だけが FAIL/PASS になる状態を設計上作らない。差異が出たらそれは実装バグであり、P06 のテストで両者を同一 fixture に掛けて突き合わせる (AC-C16-11)",
+    "invariant_scope": "『完走した入力に対し』の限定は必須である。C10 は hook-brief-C10.json の fail_closed_scope (c) により『自前予算 3 秒またはファイルサイズ 8 MiB を超えて検査を完走できないとき は打ち切って exit0』とする。本 script はサイズ・時間の打ち切りを持たないため、8 MiB を超える資料では C10 が exit0・C16 が exit1 になり得る。これは判定規則の乖離ではなく C10 側の予算による意図的な二重防御 (同 fail_closed_scope が『見逃しは C16 の完成物ゲートで必ず捕まる』と明記) であり、打ち切りは stdout の systemMessage で必ず可視化される。したがって AC-C16-11 の突合 fixture は C10 の予算内 (8 MiB 未満・3 秒以内) のものに限る"
   },
   "requirements_covered": [
     "R01 (C60 の拡張を含む。判定は許可列挙 = data: 以外は一律違反)",
     "R02",
     "R08",
-    "R21 (図表・グラフの欠落検査 C55 のみ。他の R21 項目は C12 / C22 / C23 / C01 が持つ)"
+    "R21 (図表・グラフの欠落検査 C55 のみ。他の R21 項目は C12 / C22 / C23 / C01 が持つ)",
+    "R25 (CR-IMG-REALIZED / goal-spec C69。main セクションの画像実体検査 SC-11 のみ。宣言側の件数 E-IMAGE-ABSENT は C12 が持つ)"
   ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C55 (SC-09)。criterion 文の残余は ledger 側にのみ書き、ここへ写さない",
   "checklist_covered": [
     "C2",
     "C3",
@@ -173,13 +184,26 @@
       "violation_example": "<script src=\"./app.js\"></script> (相対パスでも違反) / <iframe src=\"data:text/html,...\"></iframe> (data: でも要素の存在自体が違反) / <iframe srcdoc=\"<p>x</p>\"></iframe> / <link rel=\"icon\" href=\"./favicon.png\"> (rel が stylesheet でなくても違反) / .hero{background:url(./bg.png)}",
       "pass_example": "<script>document.addEventListener(...)</script> (インライン本文のみ) / <link rel=\"icon\" href=\"data:image/png;base64,iVBOR...\"> / .hero{background:url(data:image/png;base64,iVBOR...)} / <p>詳しくは https://example.com/docs を参照してください</p> (text node なので pass)",
       "false_positive_risk": "低。本 plugin の生成物は設計上あらゆる資産を data URI で内包するため、data: 以外の値が正当になる経路が存在しない。誤検出が起きるとすれば手書きで生成物を編集した場合だが、その場合こそ検出されるべきである"
+    },
+    {
+      "id": "SC-11",
+      "since": "R25 (改善 2026-08-18・裁定正本 improvement/visual-per-section-decision.json#decision.img_realization_gate = CR-IMG-REALIZED)",
+      "code": "E-IMG-UNREALIZED",
+      "rule": "main セクションが画像の実体を持つこと。main セクション = data-hb-part=\"SECTION\" を持つ <section> のうち、data-hb-section-role の値が \"main\" であるか、値が空文字であるか、属性が無いもの (空/不在を main に含めるのは構成データ側の role が任意項目で既定 main であり、C12 も section.get(\"role\") in (None, \"main\") で数えているため。空を外すと role を書かなかった節が HTML 側だけ検査対象から消える)。各 main セクションについて、配下に data-hb-part=\"IMG\" 要素が 1 件以上存在し、かつその少なくとも 1 件が SC-09 (a) の実体条件 (配下の <img> が存在し src が data: で base64 部の実体長 64 バイト以上) を満たすこと。0 件の節、または IMG 要素はあるが全て SC-09 (a) を満たさない節が 1 つでもあれば違反",
+      "why_independent_from_sc09": "SC-09 は『存在する枠が空でないか』を枠単位で見る。C21 srg-image-bridge.py が status=skipped を返し、レンダラが IMG 要素ごと出さなかった節では SC-09 の走査対象が 1 件も無いため緑になる — 検査対象が消えると検査も消える経路であり、件数を節側から数える SC-11 でしか塞げない。両者は包含関係になく、片方だけでは gap が残る",
+      "why_independent_from_c12": "C12 の E-IMAGE-ABSENT は構成データ段で『宣言された IMG 部品の件数』だけを数える (CR-IMG-SKIP-COUNT)。C12 はレンダリングと C21 生成より前に走るため実体を観測できない。宣言側 (C12) と実体側 (C16) を別 component に置くのは冗長ではなく時系列上の必然であり、E-IMAGE-ABSENT の緑と E-IMG-UNREALIZED の緑が揃って初めて『各セクションに画像がある』が言える",
+      "violation_example": "<section data-hb-part=\"SECTION\" data-hb-section-role=\"main\"><h2>導入手順</h2><figure data-hb-part=\"DIAGRAM\"><svg><rect/></svg></figure></section> (図解はあるが IMG 部品が 1 件も無い) / <section data-hb-part=\"SECTION\" data-hb-section-role=\"\"><div data-hb-part=\"IMG\"><img src=\"data:,\" alt=\"管理画面\"></div></section> (role 未指定 = main、IMG はあるが実体が空)",
+      "pass_example": "<section data-hb-part=\"SECTION\" data-hb-section-role=\"main\"><div data-hb-part=\"IMG\"><img src=\"data:image/png;base64,iVBORw0…(64 バイト超)\" alt=\"管理画面の初期状態\"></div></section>",
+      "false_positive_risk": "低〜中。appendix 節 (data-hb-section-role=\"appendix\") は対象外であり、R25 の per-section 必須も main セクションのみを対象とするため宣言側と数える母集合が一致する。誤検出が起き得るのは『role の既定値解釈が C11 側で変わった場合』のみで、その場合は SC-11 でなく既定値の二重定義 (P05-x-126) の側を直す",
+      "why_not_config_input": "節ごとの宣言件数を構成データから読み込んで突合する設計も採り得るが、C16 の argv を --html 1 点に閉じる契約を崩す。『節には画像の実体がある』は HTML 単体で判定できる述語なので、突合ではなく直接判定にする",
+      "delegated_to": "本 detection の判定は C11 (レンダラ) にも C21 (生成委譲) にも委譲しない。作った本人・埋められなかった本人に欠落判定を任せると skip がそのまま緑になる"
     }
   ],
   "acceptance_checks": [
     {
       "id": "AC-C16-01",
       "how": "参照 v2 相当の自己完結 HTML (外部参照 0・絵文字 0・data-hb-kind 付き symbol・nav 7 項目と section 7 個) を渡す",
-      "expected": "exit 0、stdout に `RESULT: PASS` と SC-01..SC-09 の 9 行、stderr は空 (fixture には描画要素を持つ図表を 1 件含め SC-09 も実際に評価させる)"
+      "expected": "exit 0、stdout に `RESULT: PASS` と SC-01..SC-10 の 10 行 (stdout 契約の固定順と件数が一致すること)、stderr は空 (fixture には描画要素を持つ図表を 1 件と data URI の <link rel=\"icon\"> を 1 件含め、SC-09 と SC-10 も実際に評価させる)"
     },
     {
       "id": "AC-C16-02",
@@ -233,8 +257,8 @@
     },
     {
       "id": "AC-C16-12",
-      "how": "C10 hook と C11 render-handout.py を grep する",
-      "expected": "外部参照スキームの列挙と絵文字コードポイントの列挙が両者のソースに 0 件で、判定は module_api の関数呼び出しに一本化されている (規則本文の複製が無い)"
+      "how": "C10 hook と C11 render-handout.py と C15 build-icon-sprite.py の 3 者を grep する (Unicode コードポイント表記 U+XXXX / \\u / \\U / re のコードポイント範囲クラス、および http:// https:// // ftp:// ws:// wss:// のスキーム列挙)",
+      "expected": "外部参照スキームの列挙と絵文字コードポイントの列挙が 3 者のソースに 0 件で、判定は module_api の関数呼び出しに一本化されている (規則本文の複製が無い)。C15 は絵文字判定のみを委譲するため、C15 に対する検査対象はコードポイント列挙側 (AC-C15-11 と同一の検査を C16 側からも掛ける)"
     },
     {
       "id": "AC-C16-R21-55a",
@@ -275,6 +299,26 @@
       "id": "AC-C16-C60-10e",
       "how": "C10 hook と C11 render-handout.py へ AC-C16-C60-10a..10d と同一の fixture を掛ける",
       "expected": "SC-10 の判定が C16 と完全一致する。SC-10 は scan_external_references の返り値に含まれ、module_api 経由で C10 / C11 へ届く (AC-C16-11 / AC-C16-12 の適用範囲が SC-10 を含む)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-a",
+      "how": "main セクション 3 個のうち 1 個だけ data-hb-part=\"IMG\" 要素を持たない HTML を渡す (他の全 detection は充足させる)",
+      "expected": "exit 1、stderr に SC-11 の違反行が当該 section の id と行番号付きで出る。SC-09 は checked/violations とも 0 でない PASS のまま (枠単位の検査は無傷であること = 2 つの検査が別物であることの対照)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-b",
+      "how": "main セクションに data-hb-part=\"IMG\" があるが <img src=\"data:,\"> で実体が空の HTML を渡す",
+      "expected": "exit 1、SC-09 と SC-11 の両方が FAIL。同一の欠陥が両検査で捕まることは重複ではなく、枠単位と節単位のどちらから見ても不合格であることの確認"
+    },
+    {
+      "id": "AC-C16-R25-IMG-c",
+      "how": "data-hb-section-role 属性を持たない (または空文字の) main セクションに IMG を置かない HTML を渡す",
+      "expected": "exit 1、SC-11 が FAIL。role 未指定の節を main とみなす既定値が実装されていること (未実装だと素通りする最も危険な fail-open)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-d",
+      "how": "data-hb-section-role=\"appendix\" の節に IMG を 1 件も置かず、全 main 節には実体つき IMG を置いた HTML を渡す",
+      "expected": "exit 0。appendix は R25 の per-section 必須の対象外であり、C12 の E-IMAGE-ABSENT が数える母集合と一致すること"
     }
   ],
   "module_api": {
@@ -294,8 +338,9 @@
     },
     {
       "case": "巨大な data URI (参照 v1 は 5 MiB 中 99% が data URI) で走査が重い",
-      "behavior": "属性値が `data:` で始まる場合、SC-01/SC-03 の判定に必要な先頭 64 文字だけを見て残りは走査対象から除外する。SC-05 の絵文字走査からも base64 本体を除外する",
-      "rationale": "base64 は ASCII 部分集合であり絵文字を含み得ない。除外は検出漏れを生まないうえ、実行時間を本文サイズに比例させられる"
+      "behavior": "属性値が `data:` で始まる場合、SC-01/SC-03/SC-10 の判定に必要な先頭 64 文字だけを見て残りは走査対象から除外する。SC-05 の絵文字走査からも base64 本体を除外する。SC-09 の実体長判定は base64 部の長さのみを数え、復号もデコードもしない",
+      "rationale": "base64 は ASCII 部分集合であり絵文字を含み得ない。除外は検出漏れを生まないうえ、実行時間を本文サイズに比例させられる",
+      "r25_scale_note": "R25 (改善 2026-08-18・goal-spec C69 / 正本 improvement/visual-per-section-decision.json#decision.image_per_main_section) により IMG は main セクション 1 個あたり 1 件以上が必須になり、素材の無い節は role=illustration として C21 srg-image-bridge.py の生成画像で埋められる。生成画像も C13 embed-assets.py が data URI 化して同梱するため、埋め込み data URI の件数は main セクション数に比例して増える。増えるのは同種の対象の件数であって検出対象のクラスではない (SC-09 は data-hb-part=IMG を件数に依らず走査し、SC-10 は data: 以外を一律違反とする allowlist であるため、件数の増加で規則を書き換える必要はない)。ただし本 behavior の base64 除外は R25 以降『あれば速い最適化』ではなく実行時間を線形に保つための前提条件になる"
     },
     {
       "case": "--json-report の親ディレクトリが存在しない",
@@ -306,12 +351,18 @@
       "case": "検査対象が資料 HTML ではない任意の HTML",
       "behavior": "nav も section も存在しなければ SC-08 の checked=0 として PASS 扱いにせず、「資料 HTML の構造要件を満たさない」として exit 1",
       "rationale": "対象外ファイルの選別は呼び出し側 (hook は資料出力ディレクトリ配下の *.html のみ発火) の責務。本 script に届いた時点で資料 HTML とみなすのが分界として一貫する"
+    },
+    {
+      "case": "main セクションが 1 個も存在しない HTML が届く",
+      "behavior": "SC-11 を checked=0 の PASS にせず、SC-08 の『資料 HTML の構造要件を満たさない』と同じ扱いで exit 1",
+      "rationale": "検査対象が 0 件であることを合格の根拠にしない。本 script に届いた時点で資料 HTML とみなす分界 (SC-08 の failure_mode と同一) を SC-11 でも守る。母集合が空になる経路を緑にすると、レンダラが節を出さなくなった事故がそのまま通る"
     }
   ],
   "open_questions": [
     "【X-03 決着済み・記録】SC-06 が依存する `data-hb-kind=\"icon|mascot|decor|figure\"` 属性の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定し、C11 の algorithm 手順 22b と AC-C11-18 で全 svg/symbol への付与が担保される。本 script は参照するだけで再定義しない (旧称 data-kind から改称)",
     "SC-05 層 2 のコードポイントが VS16 なしで出現した場合、機種によっては絵文字表示になるが本ゲートは通す。この残余リスクを C06 handout-readability-reviewer が拾う設計でよいか、層 2 を warn 出力として json-report にのみ残す現案で足りるかは P03 design-gate の判断に委ねる",
     "SC-08 の逃げ道 `data-hb-nav=\"exclude\"` を導入するか否か。導入しない場合は「id を持つ section は必ず nav に載せる」をレンダラ側の不変条件として C11 へ移す",
+    "R25 (2026-08-18) の per-section IMG 必須化により、生成 HTML のサイズは main セクション数に比例して伸びる。C10 の打ち切り閾値 8 MiB (hook-brief-C10.json の open_questions が『実測に基づく値ではない』と自認している仮置き) を超える資料が現実的になるため、閾値を config/handout-output.json#size_limits と揃えるかは C12 / config 側の確定待ちのまま残る。本 script 側は打ち切りを持たない設計 (完成物ゲートとして必ず完走する) を変えないので、決着がどちらに転んでも本 script の契約は変わらない",
     "goal-spec C4 (sticky オフセット補正が CSS scroll-margin-top と JS getBoundingClientRect の両方に存在すること) は本 script の担当外とした。自己完結性ではなくレイアウト規則の検査であり、CSS を読む機構を持つ C17 側へ寄せている (C17 brief の STICKY-01 を参照)"
   ]
 }

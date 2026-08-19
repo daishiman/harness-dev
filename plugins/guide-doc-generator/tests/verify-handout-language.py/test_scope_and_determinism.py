@@ -144,14 +144,6 @@ class TestR21NonOwnedItemsAreOutOfScope(LanguageGateTestCase):
         res = self.run_gate(html=self.write_html(html), config=self.write_config(cfg))
         self.assert_gate_pass(res)
 
-    def test_c59_duration_share_is_not_checked(self):
-        """C59 の所要時間・対話枠割合の owner は C12。"""
-        cfg = base_config()
-        for sec in cfg["sections"]:
-            sec["duration"] = None
-        res = self.run_default(cfg)
-        self.assert_gate_pass(res)
-
 
 class TestSingleDateSource(LanguageGateTestCase):
     """AC-C18-12: 日付の単一ソース原則を実装レベルで固定する。"""

@@ -141,6 +141,7 @@ E_DENSITY = "E-IMG-DENSITY"
 E_MOTIF_ROLE = "E-IMG-MOTIF-ROLE"
 E_TRACE = "E-IMG-TRACE"
 E_UNIFORM = "E-IMG-UNIFORM-COMPOSITION"
+E_GRANULARITY = "E-IMG-GRANULARITY-DRIFT"
 
 # --- algorithm 8 の下限と曖昧語 --------------------------------------------
 
@@ -209,13 +210,25 @@ INTENDED_USE = "explanatory illustration for a printable single-file handout sec
 GENERATION_QUALITY = "hi" "gh"
 GENERATION_SIZE = "2560x1440"
 
+# 委譲先 (build-image-prompts.js validateLayout) の入力契約に合わせた形。
+# zones は {area, content} の object 配列であり、area は LAYOUT_AREAS、
+# emphasis は 6 字以上の具体文でなければ exit 1 で弾かれる。
+# 節ごとの構図は image-plan の section.layout が持つべきで、ここは
+# layout 未記入時に「委譲が通る」ことだけを保証する最小の既定値。
 DEFAULT_LAYOUT = {
     "grid": "left-right",
-    "zones": ["left", "right"],
+    "zones": [
+        {"area": "left", "content": "the main subject of this section"},
+        {"area": "right", "content": "supporting props that explain the subject"},
+    ],
     "readingOrder": ["left", "right"],
     "focalPoint": "left",
-    "emphasis": "left",
+    "emphasis": "the left area carries the subject and is read first",
 }
+
+# 委譲先が必須にする値。'structural' は節が構造図を主役にする場合に
+# image-plan の section.camera が明示する。
+DEFAULT_CAMERA = "default"
 
 
 # --- 小さな道具 -----------------------------------------------------------
@@ -812,6 +825,9 @@ def build_slide(item: dict, plan: dict, genome: dict) -> dict:
             fail_check(E_OVERLAY_MISSING, section_id, "overlay_text に空の要素がある")
 
     slide = {
+        # 委譲先は 'slide' を必須の連番として読む。'slideNumber' は handout 側の
+        # 呼び名であり、両方を出す (片方だけにすると委譲先か既存参照のどちらかが壊れる)。
+        "slide": item["index"],
         "slug": item["slug"],
         "slideNumber": item["index"],
         "purpose": text_of(section.get("goal")),
@@ -842,12 +858,11 @@ def build_slide(item: dict, plan: dict, genome: dict) -> dict:
     template = layout_template_for(genome, section.get("diagram_pattern"))
     if template:
         slide["layoutTemplate"] = template
-    camera = section.get("camera")
-    if camera:
-        slide["camera"] = camera
-        negative = section.get("negative_specific")
-        if negative:
-            slide["negativeSpecific"] = negative
+    # camera は委譲先の必須フィールド。未記入を欠落のまま渡すと undefined で弾かれる。
+    slide["camera"] = section.get("camera") or DEFAULT_CAMERA
+    negative = section.get("negative_specific")
+    if negative:
+        slide["negativeSpecific"] = negative
     return slide
 
 
@@ -891,6 +906,36 @@ def check_uniform_composition(items) -> None:
             "{}: 全セクションで (図解型, motifs.primary) が同一である "
             "(セクションごとに画像を持つ意味が無い)".format(E_UNIFORM)
         )
+
+
+def check_consistent_granularity(items) -> None:
+    """1 冊の絵は同じ粒度で描く (利用者指定 2026-08-19)。
+
+    check_uniform_composition が見るのは逆側 — 全部が同じ図では節ごとに絵を
+    持つ意味が無い。こちらは『構図は節ごとに違ってよいが、画風・密度・視点は
+    冊子を通して同じ』を見る。1 枚だけ密度や視点が違うと、その絵が別の資料から
+    貼られたように見え、読み手は絵の違いを内容の違いだと受け取る。
+    """
+    if len(items) < 2:
+        return
+    axes = (
+        ("style_family", "画風系統", lambda item: item.get("family")),
+        ("density_level", "描き込みの密度",
+         lambda item: item["section"].get("density_level")),
+        ("camera", "視点", lambda item: item["section"].get("camera") or DEFAULT_CAMERA),
+    )
+    for field, label, read in axes:
+        seen = {}
+        for item in items:
+            seen.setdefault(read(item), []).append(item["section_id"])
+        if len(seen) > 1:
+            detail = " / ".join(
+                "{}={}".format(value, ",".join(str(sid) for sid in sids))
+                for value, sids in sorted(seen.items(), key=lambda pair: str(pair[0])))
+            fail_contract(
+                "{}: {} ({}) がセクション間で揃っていない: {} "
+                "(構図は節ごとに変え、粒度は冊子で 1 つに揃える)".format(
+                    E_GRANULARITY, label, field, detail))
 
 
 # --- 委譲 -----------------------------------------------------------------
@@ -1012,6 +1057,7 @@ def main(argv) -> int:
 
     # algorithm 6-8b: 変換と事前検査。違反は差し戻し先が計画側だと分かる位置で止める。
     check_uniform_composition(items)
+    check_consistent_granularity(items)
     for item in items:
         slide = build_slide(item, plan, genomes[item["family"]])
         validate_slide_against_srg(slide, item["section_id"])

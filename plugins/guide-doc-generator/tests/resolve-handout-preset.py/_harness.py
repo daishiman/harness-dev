@@ -28,6 +28,8 @@ CATALOG_RELPATH = "config/handout-purposes.json"
 CATALOG = PLUGIN_ROOT / CATALOG_RELPATH
 SECTIONS_FILE = PLUGIN_ROOT / "config" / "handout-sections.json"
 PARTS_FILE = PLUGIN_ROOT / "config" / "handout-parts.json"
+# IMG の役の値域の正本 (thresholds.min_images_per_main_section.role_split.roles)。
+VISUAL_POLICY_FILE = PLUGIN_ROOT / "config" / "handout-visual-policy.json"
 SCHEMA_FILE = PLUGIN_ROOT / "schemas" / "handout-config.schema.json"
 MANIFEST_FILE = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 
@@ -149,10 +151,15 @@ def slug_without_variants(tc: unittest.TestCase) -> str:
     tc.fail("presentation_order_variants を持たない preset が 1 件も無い (50c を検査できない)")
 
 
-def make_fixture_root(tc: unittest.TestCase, tmp: Path, mutate=None) -> Path:
+def make_fixture_root(
+    tc: unittest.TestCase, tmp: Path, mutate=None, mutate_policy=None, omit_policy=False
+) -> Path:
     """実 plugin root の宣言データを一時 root へ複製する。
 
     mutate(catalog_dict) が与えられればカタログへ適用してから書き出す。
+    mutate_policy(policy_dict) は視覚方針正本へ同じことをする (IMG の役の値域を
+    動かして『値の出所が正本であること』を対照で確かめるため)。omit_policy=True は
+    正本を置かない (fail-soft で控えへ落ちることの対照)。
     HB_ROOT にこの root を渡せば 4 段の実体解決の 1 段目で拾われる。
     """
     catalog = load_catalog(tc)
@@ -175,6 +182,14 @@ def make_fixture_root(tc: unittest.TestCase, tmp: Path, mutate=None) -> Path:
     if SCHEMA_FILE.is_file():
         (root / "schemas").mkdir(parents=True, exist_ok=True)
         shutil.copy2(SCHEMA_FILE, root / "schemas" / SCHEMA_FILE.name)
+
+    if not omit_policy and VISUAL_POLICY_FILE.is_file():
+        policy = json.loads(VISUAL_POLICY_FILE.read_text(encoding="utf-8"))
+        if mutate_policy is not None:
+            mutate_policy(policy)
+        (root / "config" / VISUAL_POLICY_FILE.name).write_text(
+            json.dumps(policy, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
 
     if mutate is not None:
         mutate(catalog)

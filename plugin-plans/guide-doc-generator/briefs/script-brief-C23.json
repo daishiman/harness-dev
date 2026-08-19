@@ -58,10 +58,10 @@
   ],
   "stdin": "読まない。stdin が接続されていても無視する (対話プロンプトを一切持たない非対話 script)",
   "stdout": "モードに応じた 1 種類のみ。--purpose: {\"purpose\":slug,\"label_ja\":...,\"dir_token\":...,\"section_order\":[...],\"recommended_parts\":[...],\"notes\":...,\"granularity_defaults\":{\"detail_level\":...,\"evidence_depth\":...},\"catalog_sha256\":...} / --list: 語彙エントリ配列 (catalog 記載順) / --audit-duplication: {\"scanned\":N,\"violations\":[]} 。JSON は ensure_ascii=false, indent=2, sort_keys=true, 末尾改行 1 個, LF 固定",
-  "stderr": "違反と診断のみ。未定義語彙 (E-VOCAB-UNKNOWN + 最も近い候補と全語彙一覧) / 混成用途指定 (E-VOCAB-COMPOSITE) / プリセット未被覆 (E-PRESET-UNCOVERED + 欠落 slug) / 語彙に無い preset キー (E-PRESET-ORPHAN) / preset の禁止キー (E-PRESET-FORBIDDEN-KEY) / 粒度既定の欠落 (E-PRESET-GRANULARITY-MISSING + 当該 slug) / 粒度既定のキー面違反 (E-PRESET-GRANULARITY-KEYS) / 粒度既定の値域外 (E-PRESET-GRANULARITY-VALUE) / 語彙ハードコード重複 (E-VOCAB-DUPLICATED + file:line) / catalog 不整合 (E-CATALOG-MALFORMED)。1 行 1 診断で先頭に上記コードを置く",
+  "stderr": "違反と診断のみ。未定義語彙 (E-VOCAB-UNKNOWN + 最も近い候補と全語彙一覧) / 混成用途指定 (E-VOCAB-COMPOSITE) / プリセット未被覆 (E-PRESET-UNCOVERED + 欠落 slug) / 語彙に無い preset キー (E-PRESET-ORPHAN) / preset の禁止キー (E-PRESET-FORBIDDEN-KEY) / 粒度既定の欠落 (E-PRESET-GRANULARITY-MISSING + 当該 slug) / 粒度既定のキー面違反 (E-PRESET-GRANULARITY-KEYS) / 粒度既定の値域外 (E-PRESET-GRANULARITY-VALUE) / 節の役宣言の欠落 (E-PRESET-IMAGE-ROLE-MISSING + 当該 preset:section id) / 節の役宣言が列挙外 (E-PRESET-IMAGE-ROLE-UNKNOWN + 当該値) / 語彙ハードコード重複 (E-VOCAB-DUPLICATED + file:line) / catalog 不整合 (E-CATALOG-MALFORMED)。1 行 1 診断で先頭に上記コードを置く",
   "exit_codes": {
     "0": "要求したモードが成立した。--purpose なら当該プリセットを解決できた / --list なら語彙を列挙できた / --audit-duplication なら語彙ハードコード重複が 0 件だった。いずれの場合も事前の catalog 自己整合検査 (被覆・orphan・禁止キー) を通過している",
-    "1": "データ側の違反。未定義語彙 / 混成用途の指定 / catalog の schema 違反 / 語彙に対するプリセット未被覆 / 語彙に無い preset キー / preset の禁止キー混入 / 語彙ハードコード重複の検出。fail-closed で stdout へは何も出さない",
+    "1": "データ側の違反。未定義語彙 / 混成用途の指定 / catalog の schema 違反 / 語彙に対するプリセット未被覆 / 語彙に無い preset キー / preset の禁止キー混入 / 節の役宣言 (section_order[].image_role) の欠落または列挙外 / 語彙ハードコード重複の検出。fail-closed で stdout へは何も出さない",
     "2": "起動側の不正。モード指定が 0 個または 2 個以上 / --catalog のパスが存在しないか読めない / catalog が JSON として parse できない / plugin root を 4 段の解決で特定できない / --format の値が enum 外"
   },
   "write_scope": [],
@@ -75,7 +75,7 @@
     ],
     "invoked_by": [
       "C12 validate-handout-config.py (doc_type が語彙に含まれるかの照合。モジュール import 経由)",
-      "C19 route-handout-output.py (ディレクトリ名の <種別> に使う dir_token の解決。モジュール import 経由)",
+      "C19 route-handout-output.py (R25/REQ-6 C72 により dir_token はディレクトリ名から外れ、.handout-route.json の来歴メタデータへ記録する値としてのみ解決する。モジュール import 経由)",
       "C01 run-handout-build (ヒアリング時の用途候補提示。subprocess CLI 経由。skill 名の正本は skill-brief-C01.json の skill_name)",
       "P09 品質ゲート (--audit-duplication を C42 のゲートとして起動)"
     ],
@@ -86,7 +86,7 @@
     "1. argv を解析する。--purpose / --list / --audit-duplication のうち厳密に 1 つが与えられていることを確認し、0 個または 2 個以上なら exit 2",
     "2. catalog パスを決める。--catalog があればそれを使い、無ければ実体解決 4 段 (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → 各候補 root の .claude-plugin/plugin.json の name が 'guide-doc-generator' であることの照合 → __file__ の親の親) を順に試し、最初に config/handout-purposes.json が実在した root を採る。どれも成立しなければ exit 2",
     "3. catalog を json.load する。parse 失敗は exit 2 (ファイルとしての読み込み不能と同列)、構造違反は exit 1",
-    "4. catalog 自己整合検査を全モード共通の前段として必ず走らせる (fail-closed)。(a) schema_version が既知であること (b) vocabulary が 1 件以上の配列で各要素が slug / label_ja / dir_token / aliases を持つこと (c) slug が ^[a-z][a-z0-9-]*$ かつ全体で一意 (d) dir_token が ^[a-z][a-z0-9-]*$ かつ全体で一意 (e) aliases が全 slug 横断で一意 (曖昧解決を発生させない) (f) presets のキー集合と vocabulary の slug 集合が完全一致 (欠けは E-PRESET-UNCOVERED / 余りは E-PRESET-ORPHAN) (g) 各 preset の keys が許可集合 {section_order, recommended_parts, notes, presentation_order_variants, required_document_fields, granularity_defaults} の部分集合であること (許可集合の外は E-PRESET-FORBIDDEN-KEY。件数ではなく集合が契約であり、要素数は導出値) (h) section_order の各要素が id / heading / section_kind / recommended_parts / required を持ち、id が preset 内で一意、section_kind が config/handout-sections.json の section_kinds[].slug に存在する値であり (C12 を import せずこのデータファイルを直接読んで照合する)、recommended_parts が config/handout-parts.json に存在し section_scope=in-section である part id であること (id 範囲を本 script へ列挙しない)。いずれか違反で exit 1",
+    "4. catalog 自己整合検査を全モード共通の前段として必ず走らせる (fail-closed)。(a) schema_version が既知であること (b) vocabulary が 1 件以上の配列で各要素が slug / label_ja / dir_token / aliases を持つこと (c) slug が ^[a-z][a-z0-9-]*$ かつ全体で一意 (d) dir_token が ^[a-z][a-z0-9-]*$ かつ全体で一意 (e) aliases が全 slug 横断で一意 (曖昧解決を発生させない) (f) presets のキー集合と vocabulary の slug 集合が完全一致 (欠けは E-PRESET-UNCOVERED / 余りは E-PRESET-ORPHAN) (g) 各 preset の keys が許可集合 {section_order, recommended_parts, notes, presentation_order_variants, required_document_fields, granularity_defaults} の部分集合であること (許可集合の外は E-PRESET-FORBIDDEN-KEY。件数ではなく集合が契約であり、要素数は導出値) (h) section_order の各要素が id / heading / section_kind / image_role / recommended_parts / required を持ち、id が preset 内で一意、image_role が {screenshot, illustration} のいずれか (欠落は E-PRESET-IMAGE-ROLE-MISSING、列挙外は E-PRESET-IMAGE-ROLE-UNKNOWN。正本 improvement/visual-per-section-decision.json#decision.role_split『節ごとにどちらを取るかをプリセットが宣言する』。全 main セクションが IMG を必須で持つ以上、役の宣言が欠けた節は調達経路が決まらないため任意キーにしない。素材欠落時の screenshot → illustration への降格は C01 R3-render の責務であり本 script は降格しない)、section_kind が config/handout-sections.json の section_kinds[].slug に存在する値であり (C12 を import せずこのデータファイルを直接読んで照合する)、recommended_parts が config/handout-parts.json に存在し section_scope=in-section である part id であること (id 範囲を本 script へ列挙しない)。いずれか違反で exit 1",
     "4i. (R21) presentation_order_variants を持つ preset について、キー集合が厳密に {demo_first, explain_first} であり (E-PRESET-ORDER-KEYS)、各値が section_order の id 集合の順列であること — 重複なし・欠落なし・未知 id なし — を検査する (E-PRESET-ORDER-NOT-PERMUTATION)。順列に限定することで、提示順の切り替えがセクションの削除や追加へ化けることを構造的に不可能にする (C44 / C50)。required_document_fields を持つ preset については、各要素が C12 の document レベルフィールド名として実在する文字列であること (E-PRESET-REQFIELD-UNKNOWN。照合表は schemas/handout-config.schema.json の properties キーで、C12 を import せずファイルを読む) と、要素が一意であることを検査する",
     "4j. (R22 / P04-x-05 裁定 A・C) granularity_defaults を全 preset の必須キーとして検査する。欠落は E-PRESET-GRANULARITY-MISSING で exit 1 (任意キーにしない — 任意にすると語彙が増えたときに既定を持たない doc_type が生まれ、C64 の『無回答でも停止しない』が特定の用途でだけ崩れる)。値はキー集合が厳密に {detail_level, evidence_depth} であること (E-PRESET-GRANULARITY-KEYS) と、各値が C12 の enum に実在する値であること (E-PRESET-GRANULARITY-VALUE。値域の正本は C12 の CR-GRANULARITY-ORTHOGONAL であり、本 script は schemas/handout-config.schema.json を読んで照合し、enum を自前で列挙しない) を検査する。手順 4(f) が presets のキー集合と vocabulary の slug 集合の完全一致を既に強制しているため、本検査と併せて『全語彙 slug が必ず既定値を持つ』が catalog 検査の段で構造的に保証される (実行時の fallback を不要にする)",
     "5. --list のとき: vocabulary を catalog 記載順のまま (再ソートしない) 出力する。preset_defined は手順 4 で常に true になるが、契約として明示的に出す",
@@ -184,7 +184,7 @@
         "resolve(catalog: dict, token: str) -> dict — slug/alias から vocabulary エントリを返す。未定義は UnknownPurposeError",
         "preset(catalog: dict, slug: str) -> dict — section_order / recommended_parts / notes",
         "granularity_defaults(catalog: dict, purpose: str) -> dict — {detail_level, evidence_depth}。purpose は slug でも alias でもよく、内部で resolve を通す。全語彙で必ず値が返る (手順 4(j) と 4(f) の帰結) ため None を返す経路も fallback 既定も持たない。未定義語彙のみ UnknownPurposeError。返り値は copy であり、呼び出し側の変更が catalog へ波及しない",
-        "dir_token(catalog: dict, slug: str) -> str — C19 がディレクトリ名の <種別> に使う値",
+        "dir_token(catalog: dict, slug: str) -> str — C19 が .handout-route.json の来歴メタデータへ記録する値 (R25/REQ-6 C72 によりディレクトリ名そのものには使わない)",
         "catalog_sha256(path: pathlib.Path) -> str — provenance 用"
       ],
       "forbidden": "consumer 側での語彙リテラルの列挙・enum 定義・正規表現への埋め込み・docstring での全語彙列挙 (手順 8 の監査が 3 種類以上の同時出現で検出する)"
@@ -202,7 +202,8 @@
       "メモ機構と localStorage 永続化、@media print 規則、a11y 属性一式"
     ],
     "variant_per_preset": [
-      "section_order — セクションの並びと各セクションの id / heading / section_kind / required",
+      "section_order — セクションの並びと各セクションの id / heading / section_kind / image_role / required",
+      "section_order[].image_role — 必須。preset のトップレベルキーではなく section_order 要素の内側のキーであり、許可キー allowlist (6 キー) は変わらない。値は {screenshot | illustration} の宣言。IMG の調達経路 (screenshot=利用者素材または C13 が埋め込む既存画像 / illustration=C21 srg-image-bridge.py への生成委譲) を節単位で確定させる唯一の初期値であり、C05 はこの宣言をそのまま assets[].role へ写し、宣言が無い節についてだけ自分で選ぶ (agent-brief-C05.json の視覚判定節)。値そのものは役の宣言であって不変項 (C44) へ到達しない",
       "recommended_parts — そのセクションで推奨する部品 id (値域の正本は config/handout-parts.json の section_scope=in-section な id)",
       "notes — 用途固有の書き方の注意 (人間 / agent 向けの文章。描画には影響しない)",
       "presentation_order_variants — 任意。{demo_first: [section id...], explain_first: [section id...]} の 2 キーだけを持ち、各値は section_order の id 集合の順列でなければならない (追加も削除も表現できない)。R21 C50 の『提示順による並びの差分』はこのキーだけで表現し、キーが無いプリセットでは両モードとも section_order をそのまま使う",
@@ -224,9 +225,12 @@
         {
           "id": "flow",
           "heading": "今日の流れ",
-          "section_kind": "flow-overview",
+          "section_kind": "timeline",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B03"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -234,8 +238,11 @@
           "id": "context",
           "heading": "なぜこれをやるのか",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B07",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -243,9 +250,11 @@
           "id": "demo",
           "heading": "まず動くところを見る",
           "section_kind": "standard",
+          "image_role": "screenshot",
           "recommended_parts": [
             "IMG",
-            "B14"
+            "B14",
+            "DIAGRAM"
           ],
           "required": true
         },
@@ -253,10 +262,13 @@
           "id": "capability",
           "heading": "できることと、その分解",
           "section_kind": "capability-explainer",
+          "image_role": "illustration",
           "recommended_parts": [
             "B07",
             "B14",
-            "B05"
+            "B05",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -264,9 +276,12 @@
           "id": "compare",
           "heading": "使い分けの軸",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B05",
-            "B06"
+            "B06",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         },
@@ -274,10 +289,13 @@
           "id": "handson",
           "heading": "手を動かす",
           "section_kind": "handson",
+          "image_role": "screenshot",
           "recommended_parts": [
             "B17",
             "B11",
-            "B13"
+            "B13",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -285,8 +303,11 @@
           "id": "qa",
           "heading": "先回りの Q&A",
           "section_kind": "anticipated-qa",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B10"
+            "B10",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -294,9 +315,12 @@
           "id": "voices",
           "heading": "困っていること・やりたいことを聞く",
           "section_kind": "dialogue",
+          "image_role": "illustration",
           "recommended_parts": [
             "B09",
-            "B15"
+            "B15",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -304,9 +328,12 @@
           "id": "next",
           "heading": "持ち帰りと次の一歩",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B09",
-            "B15"
+            "B15",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         }
@@ -320,6 +347,7 @@
         "B11",
         "B14",
         "B17",
+        "DIAGRAM",
         "IMG"
       ],
       "presentation_order_variants": {
@@ -350,7 +378,7 @@
         "must_remember",
         "no_need_to_remember"
       ],
-      "notes": "参照 v1 の骨格に R21 (実施済み研修のフィードバック) を反映した骨格。冒頭は flow-overview で大きな流れだけを 5 件以内に抑え、demo は実際の画面 (assets.role=screenshot の IMG) から入る。capability は機能名からではなく成果から書く型 (parts[].slot が outcome → breakdown → feature)。handson は B17 を器に読み手がその場で操作し、qa は畳んだ B10 で先回りの疑問に答える。voices は受講者の具体業務と困りごとを聞く対話枠で、全体所要時間の 15% 以上を確保する (下限は config/handout-sections.json の dialogue.min_duration_share)"
+      "notes": "参照 v1 の骨格に R21 (実施済み研修のフィードバック) を反映した骨格。冒頭は R25/REQ-4 (C70) により section_kind=timeline (器 B03 + DIAGRAM(pattern=flow)) で大きな流れだけを 5 件以内に抑える (旧 flow-overview は deprecated だが enum からは削除せず、新規プリセットの冒頭には割り当てない。config/handout-sections.json#flow_overview_relation 参照)。demo は実際の画面 (assets.role=screenshot の IMG) から入り、操作から結果までの流れを DIAGRAM(pattern=flow) で示す。capability は機能名からではなく成果から書く型 (parts[].slot が outcome → breakdown → feature) で、成果の内訳を DIAGRAM(pattern=hierarchy) で示す。compare は使い分けの軸を DIAGRAM(pattern=compare) で示す (任意セクション)。handson は B17 を器に読み手がその場で操作しつつ手順の流れを DIAGRAM(pattern=flow) で示し、実際の操作画面 (assets.role=screenshot の IMG) を添える。qa は畳んだ B10 で先回りの疑問に答えつつ、疑問のカテゴリ分けを DIAGRAM(pattern=hierarchy) で示す。next は持ち帰り事項を DIAGRAM(pattern=flow) の次アクション列で示す。voices は受講者の具体業務と困りごとを聞く対話枠で、全体所要時間の 15% 以上を確保し (下限は config/handout-sections.json の dialogue.min_duration_share)、困りごととやりたいことの 2 系統を DIAGRAM(pattern=cycle) の対話の反復として示す。flow/context/capability/compare/qa/voices/next は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 9 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 required=max(floor, ceil(main_count*value)) (improvement/diagram-gate-decision.json、superseded) は使わない。分量の上限も外れており (improvement/visual-per-section-decision.json#decision.no_quantity_cap)、これらの件数は下限の目安であり多く配線してよい。ただし同 no_quantity_cap.keep により、本文の文字数・文数 (REQ-7) と micro_copy の 1 要素文字数は緩和の対象外で、節が増えても 1 節の中身は短いままにする (これらの正本は C11 / C12 側にあり本 script は持たない)"
     },
     {
       "purpose": "agenda",
@@ -362,9 +390,12 @@
         {
           "id": "timebox",
           "heading": "本日の議題と時間配分",
-          "section_kind": "agenda-timebox",
+          "section_kind": "timeline",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B03"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -372,9 +403,12 @@
           "id": "topics",
           "heading": "議題ごとの論点",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B07",
-            "B05"
+            "B05",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -382,8 +416,11 @@
           "id": "decisions",
           "heading": "決定事項",
           "section_kind": "decisions",
+          "image_role": "screenshot",
           "recommended_parts": [
-            "B09"
+            "B09",
+            "IMG",
+            "DIAGRAM"
           ],
           "required": true
         },
@@ -391,8 +428,11 @@
           "id": "actions",
           "heading": "アクションアイテム",
           "section_kind": "action-items",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B16"
+            "B16",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -400,8 +440,11 @@
           "id": "parking",
           "heading": "持ち越し",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B10"
+            "B10",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         }
@@ -410,9 +453,11 @@
         "B03",
         "B09",
         "B16",
-        "B10"
+        "B10",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "時間配分は B03 の右列 (data.time) に割り当てる。決定事項は B09 のチェック行で二値表現し、アクションアイテムは担当と期限を必須メタに持つ B16 行部品を使う"
+      "notes": "時間配分は B03 の右列 (data.time) に割り当てる。決定事項は B09 のチェック行で二値表現し、意思決定の場面を写した実画面 (assets.role=screenshot の IMG) を添え、検討した案どうしの対比を DIAGRAM(pattern=versus) で示す。アクションアイテムは担当と期限を必須メタに持つ B16 行部品を使い、担当から期限・完了までの流れを DIAGRAM(pattern=flow) で示す。持ち越し (parking) は積み残し項目の分類を DIAGRAM(pattern=hierarchy) で示す。R25/REQ-4 (C70) により冒頭 (id=timebox) は section_kind を agenda-timebox から timeline (器 B03 + DIAGRAM(pattern=flow)) へ変更した — agenda-timebox 自体は enum から削除せず、本 doc_type の非冒頭セクションでは使わないが proposal (id=plan) / study-plan (id=plan) の非冒頭『進め方』セクションでは引き続き使用する (config/handout-sections.json#flow_overview_relation と同型の『冒頭だけ upgrade』の扱い)。議題ごとの論点 (id=topics) は各議題の内訳を DIAGRAM(pattern=hierarchy) で示す。timebox/topics/actions/parking は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "guide",
@@ -424,9 +469,12 @@
         {
           "id": "overview",
           "heading": "この資料でわかること",
-          "section_kind": "standard",
+          "section_kind": "map",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B08",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -434,9 +482,12 @@
           "id": "steps",
           "heading": "手順",
           "section_kind": "standard",
+          "image_role": "screenshot",
           "recommended_parts": [
             "B03",
-            "B14"
+            "B14",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -444,9 +495,12 @@
           "id": "choices",
           "heading": "迷ったときの判断",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B06",
-            "B08"
+            "B08",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         },
@@ -454,8 +508,11 @@
           "id": "faq",
           "heading": "よくあるつまずき",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B10"
+            "B10",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -463,8 +520,11 @@
           "id": "files",
           "heading": "配布ファイル",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B12"
+            "B12",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         }
@@ -473,10 +533,13 @@
         "B03",
         "B06",
         "B07",
+        "B08",
         "B10",
-        "B12"
+        "B12",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "配布して独り歩きする資料。前提を書き切り、添付は B12 の data URI ダウンロードで同梱する"
+      "notes": "配布して独り歩きする資料。前提を書き切り、添付は B12 の data URI ダウンロードで同梱する。R25/REQ-4 (C70) により冒頭 (id=overview) は section_kind=map (器 B08 + DIAGRAM(pattern=hierarchy)) へ変更し、資料全体の章立てを地図として見せる。手順 (id=steps) は流れを DIAGRAM(pattern=flow) で示し、実際の操作画面 (assets.role=screenshot の IMG) を添える。choices (迷ったときの判断) は判断の位置づけを 2 軸で DIAGRAM(pattern=matrix) に示す。faq (よくあるつまずき) はつまずきの分類を DIAGRAM(pattern=hierarchy) で示す。files (配布ファイル) はファイルの内訳を DIAGRAM(pattern=hierarchy) で示す。overview/choices/faq/files は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "onboarding",
@@ -486,21 +549,27 @@
       },
       "section_order": [
         {
-          "id": "welcome",
-          "heading": "はじめに",
-          "section_kind": "standard",
+          "id": "map",
+          "heading": "全体マップ",
+          "section_kind": "map",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B08",
+            "B14",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
         {
-          "id": "map",
-          "heading": "全体マップ",
+          "id": "welcome",
+          "heading": "はじめに",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B08",
-            "B14"
+            "B07",
+            "IMG",
+            "DIAGRAM"
           ],
           "required": true
         },
@@ -508,8 +577,11 @@
           "id": "roles",
           "heading": "登場人物と役割",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B04"
+            "B04",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -517,9 +589,12 @@
           "id": "day1",
           "heading": "初日にやること",
           "section_kind": "standard",
+          "image_role": "screenshot",
           "recommended_parts": [
             "B03",
-            "B09"
+            "B09",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -527,8 +602,11 @@
           "id": "week1",
           "heading": "最初の 1 週間",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B09"
+            "B09",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         },
@@ -536,8 +614,11 @@
           "id": "who",
           "heading": "困ったときの相談先",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B07",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         }
@@ -547,9 +628,12 @@
         "B04",
         "B07",
         "B08",
-        "B09"
+        "B09",
+        "B14",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "読み手の前提知識が最も低い用途。専門用語の言い換え宣言 (glossary) を厚くすることを notes で促す"
+      "notes": "読み手の前提知識が最も低い用途。専門用語の言い換え宣言 (glossary) を厚くすることを notes で促す。R25/REQ-4 (C70) により冒頭は section_order[0]=map (id=map。既存の『全体マップ』セクションをそのまま section_kind=map、器 B08 + DIAGRAM(pattern=hierarchy) の冒頭概観として採用し、welcome を 2 番目へ繰り下げた) とする。welcome (はじめに) は入社前後の変化を DIAGRAM(pattern=versus) で示す。roles (登場人物と役割) は役割間の関係を DIAGRAM(pattern=hierarchy) で示し、day1 (初日にやること) は当日の流れを DIAGRAM(pattern=flow) で示し実際の初日の様子 (assets.role=screenshot の IMG。素材が無ければ illustration へ落とす) を添える。week1 (最初の 1 週間) は 1 週間の流れを DIAGRAM(pattern=flow) で示す。who (相談先) は相談先の体系を DIAGRAM(pattern=hierarchy) で示す。welcome には概念導入の挿絵 (assets.role=illustration の IMG) を添える (R25/REQ-3(b) C69)。map/roles/week1/who も同様に概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 6 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "report",
@@ -561,9 +645,12 @@
         {
           "id": "summary",
           "heading": "要点",
-          "section_kind": "standard",
+          "section_kind": "thesis",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B07",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -571,9 +658,12 @@
           "id": "facts",
           "heading": "何が起きたか",
           "section_kind": "standard",
+          "image_role": "screenshot",
           "recommended_parts": [
             "B05",
-            "B03"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -581,9 +671,12 @@
           "id": "analysis",
           "heading": "評価",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B05",
-            "B04"
+            "B04",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -591,8 +684,11 @@
           "id": "next",
           "heading": "次にやること",
           "section_kind": "action-items",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B16"
+            "B16",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -600,9 +696,12 @@
           "id": "appendix",
           "heading": "補足",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B10",
-            "B12"
+            "B12",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         }
@@ -611,9 +710,11 @@
         "B05",
         "B07",
         "B10",
-        "B16"
+        "B16",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "要点を先頭に置く。数値は .num (tabular-nums) を持つ部品側の表記規約に従う"
+      "notes": "要点を先頭に置く。数値は .num (tabular-nums) を持つ部品側の表記規約に従う。R25/REQ-4 (C70) により冒頭 (id=summary) は section_kind=thesis (器 B07 + DIAGRAM(pattern=compare)) とし、要点 3 件を対比で先出しする。facts (何が起きたか) は事象の推移を DIAGRAM(pattern=flow) で示し、根拠となる実画面 (assets.role=screenshot の IMG) を添える。analysis (評価) は評価の位置づけを影響度×緊急度の 2 軸で DIAGRAM(pattern=matrix) に示す。next (次にやること) はアクションの流れを DIAGRAM(pattern=flow) で示す。appendix (補足) は補足資料の分類を DIAGRAM(pattern=hierarchy) で示す。summary/analysis/next/appendix は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "proposal",
@@ -625,9 +726,12 @@
         {
           "id": "problem",
           "heading": "解きたい課題",
-          "section_kind": "standard",
+          "section_kind": "thesis",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B07",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -635,9 +739,12 @@
           "id": "proposal",
           "heading": "提案",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B14",
-            "B07"
+            "B07",
+            "IMG",
+            "DIAGRAM"
           ],
           "required": true
         },
@@ -645,9 +752,12 @@
           "id": "options",
           "heading": "選択肢の比較",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B05",
-            "B06"
+            "B06",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -655,8 +765,11 @@
           "id": "plan",
           "heading": "進め方",
           "section_kind": "agenda-timebox",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B03"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -664,8 +777,11 @@
           "id": "ask",
           "heading": "お願いしたいこと",
           "section_kind": "action-items",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B16"
+            "B16",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         }
@@ -675,9 +791,11 @@
         "B05",
         "B06",
         "B14",
-        "B16"
+        "B16",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "判断軸 (judgment_axis) が最も効く用途。比較部品の直後に必ず 1 文の判断軸を置く"
+      "notes": "判断軸 (judgment_axis) が最も効く用途。比較部品の直後に必ず 1 文の判断軸を置く。R25/REQ-4 (C70) により冒頭 (id=problem) は section_kind=thesis (器 B07 + DIAGRAM(pattern=compare)) とし、課題の要点を先出しする。proposal (提案) は提案実現までの流れを DIAGRAM(pattern=flow) で示し、提案物の実画面・完成イメージ (assets.role=illustration の IMG) を添える。options (選択肢の比較) は選択肢の対比を DIAGRAM(pattern=compare) で示す。plan (進め方) は工程の流れを DIAGRAM(pattern=flow) で示す。ask (お願いしたいこと) はお願い事項の分類を DIAGRAM(pattern=hierarchy) で示す。problem/options/plan/ask は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "study-notes",
@@ -689,9 +807,12 @@
         {
           "id": "topic",
           "heading": "学んだこと",
-          "section_kind": "standard",
+          "section_kind": "map",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B08",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -699,9 +820,12 @@
           "id": "keypoints",
           "heading": "要点の整理",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B04",
-            "B05"
+            "B05",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -709,9 +833,12 @@
           "id": "examples",
           "heading": "具体例",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
             "B11",
-            "B10"
+            "B10",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": false
         },
@@ -719,8 +846,11 @@
           "id": "sources",
           "heading": "出典・参考",
           "section_kind": "sources",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B07",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         }
@@ -729,9 +859,12 @@
         "B04",
         "B05",
         "B07",
-        "B10"
+        "B08",
+        "B10",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "出典は B07 特徴カードの脚注領域 (data.footnote) に置く。外部参照ゼロの制約があるためリンクは資料内アンカーか出典表記のテキストに留め、外部 URL は素材の出所表示としてのみ書く (この制約の担保は C16 自己完結検査)"
+      "notes": "出典は B07 特徴カードの脚注領域 (data.footnote) に置く。外部参照ゼロの制約があるためリンクは資料内アンカーか出典表記のテキストに留め、外部 URL は素材の出所表示としてのみ書く (この制約の担保は C16 自己完結検査)。R25/REQ-4 (C70) により冒頭 (id=topic) は section_kind=map (器 B08 + DIAGRAM(pattern=hierarchy)) とし、学んだ内容の全体像を章立て地図として示す (概念導入の挿絵として assets.role=illustration の IMG も添える。R25/REQ-3(b) C69)。keypoints (要点の整理) は要点の内訳を DIAGRAM(pattern=hierarchy) で示す。examples (具体例) は具体例どうしの対比を DIAGRAM(pattern=compare) で示す。sources (出典・参考) は出典の分類を DIAGRAM(pattern=hierarchy) で示す。keypoints/examples/sources も概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 4 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
     {
       "purpose": "study-plan",
@@ -743,9 +876,12 @@
         {
           "id": "goal",
           "heading": "何ができるようになりたいか",
-          "section_kind": "standard",
+          "section_kind": "timeline",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B07"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -753,8 +889,11 @@
           "id": "triage",
           "heading": "分かっていること / 分からないこと / 次に調べること",
           "section_kind": "known-unknown-next",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B04"
+            "B04",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -762,8 +901,11 @@
           "id": "plan",
           "heading": "進め方と時間の見積もり",
           "section_kind": "agenda-timebox",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B03"
+            "B03",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         },
@@ -771,8 +913,11 @@
           "id": "check",
           "heading": "到達チェック",
           "section_kind": "standard",
+          "image_role": "illustration",
           "recommended_parts": [
-            "B09"
+            "B09",
+            "DIAGRAM",
+            "IMG"
           ],
           "required": true
         }
@@ -780,12 +925,19 @@
       "recommended_parts": [
         "B03",
         "B04",
-        "B07",
-        "B09"
+        "B09",
+        "DIAGRAM",
+        "IMG"
       ],
-      "notes": "3 分割は B04 トリオカードを器として使い、更新され続ける内容は C11 が出力するメモ機構 (localStorage 保持) を各枠へ結線して受ける。新規部品も新規機構も不要"
+      "notes": "3 分割は B04 トリオカードを器として使い、更新され続ける内容は C11 が出力するメモ機構 (localStorage 保持) を各枠へ結線して受ける。新規部品も新規機構も不要。R25/REQ-4 (C70) により冒頭 (id=goal) は section_kind=timeline (器 B03 + DIAGRAM(pattern=flow)) へ変更し、到達までの道のりを時系列で示す (ゴール像の挿絵として assets.role=illustration の IMG も添える。R25/REQ-3(b) C69)。triage (分かっている/分からない/次に調べる) は 3 分割の位置づけを DIAGRAM(pattern=matrix) で示す。plan (進め方と時間の見積もり。section_kind=agenda-timebox のまま — 冒頭ではないため timeline へは変更しない) は工程の流れを DIAGRAM(pattern=flow) で示す。check (到達チェック) はチェック項目の分類を DIAGRAM(pattern=hierarchy) で示す。triage/plan/check も概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 4 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     }
   ],
+  "physical_data_dependency": {
+    "owner_of_physical_write": "P05-x-03 (write_scope: plugins/guide-doc-generator/config/)。本 brief の preset_definitions は plan 側の正本であり、実行時データ config/handout-purposes.json への反映は P05-x-03 が唯一の producer である (briefs/RESOLUTION-R25-improvement-2026-08-18.md#D3)",
+    "measured_gap_2026_08_18": "実行時データの実測値: DIAGRAM は 8 プリセットの全セクションで 0 件、IMG は lecture の demo 節 1 件のみで他 7 プリセットは 0 件、section_order[].image_role は全節で未定義。improvement/visual-per-section-decision.json#cost_and_risk.preset_impact は『IMG を各プリセット 1 件しか持たない』と書いているが、実測はそれより不足が大きい (IMG を 1 件でも持つプリセットが 8 件中 1 件)。DIAGRAM については同正本に言及が無い",
+    "why_this_blocks_first_draft": "W-DIAGRAM-FEW と E-IMAGE-ABSENT は config/handout-visual-policy.json#thresholds で level=error であり、第1稿でも skip されない (同ファイル draft_first.skipped_in_draft は決定論ゲートを外さない)。ゲートの検査対象は構成データであってプリセットそのものではないため、プリセットが空でも C05 が節ごとに DIAGRAM/IMG を足せば形式上は通り得る。しかしプリセットの section_order[].recommended_parts は、その充足を C05 の判断に依存させずに与える唯一の決定論的な供給源であり、ここが空のまま build を進めると『検査だけが error で入り、供給源が空』という順序で第1稿が fail-closed で止まる確率が最大化する。したがって P05-x-03 は本 script の実装より前か同時に完了している必要がある",
+    "acceptance_hook": "P05-x-03 の完了判定には『全 8 preset の section_order 全要素が DIAGRAM と IMG を持ち image_role を宣言していること』を含める必要がある (現行の task-graph 側 acceptance_criterion はキー名の列挙に留まりこの条件を持たない)。本 script 側の対応する検査は AC-C23-R25-68 / 69 / 69b"
+  },
   "addon_requirements_as_common_schema": {
     "principle": "用途固有の追加要求はプリセットごとの別スキーマにしない。共通スキーマの section に置いた任意フィールド section_kind (enum) の値として表現し、レンダラ側の描画分岐と検証側の追加検査だけがその値を見る。これによりどのプリセットの構成データも同一 schema で validate でき、C12 / C20 / C22 が単一スキーマを共有し続けられる",
     "section_kind_enum": "値の一覧は本ブリーフに置かない。config/handout-sections.json の section_kinds[] が唯一の正本であり、本 script は手順 4(h) でそのファイルを読んで照合する。値ごとの追加検査規則 (agenda-timebox の time 非空 / decisions の decided / action-items の owner と due / sources の footnote / known-unknown-next の 3 枚と note_key) の定義は C12 の config_schema.part_data_schema と normalize_algorithm N8 にあり、そちらが唯一の正本である",
@@ -796,8 +948,12 @@
     "R17 (dir_token の提供のみ。ディレクトリ生成は C19)",
     "R13 (既定セクション構成の供給)",
     "R21 (提示順の並べ替え変種 C50 と、講義プリセットの必須セクション追加 C53)",
-    "R22 (doc_type ごとの粒度既定値を持つ。固定はしない)"
+    "R22 (doc_type ごとの粒度既定値を持つ。固定はしない)",
+    "R25-REQ-2(a) (C68。利用者指定 2026-08-18 追補『図解と画像は毎回セクションごとに必ず追加する』により判定単位を資料全体の総量比から main セクション単位へ変更し、全 8 プリセットの全 main セクション (= preset_definitions[].section_order の全要素。required の真偽を問わない) へ DIAGRAM を 1 件以上配線する。旧: main セクション数に対する下限式 required=max(2, ceil(main_count*0.4)) (improvement/diagram-gate-decision.json、superseded) は使わない。正本は improvement/visual-per-section-decision.json。preset_definitions が実データそのものであり、実行時 config/handout-purposes.json への物理反映のみが P05-x-03 の残作業)",
+    "R25-REQ-3(b) (C69。全 8 プリセットの全 main セクションへ IMG (role=screenshot は実画面のあるセクション、role=illustration は概念・人物のセクション。素材が無い screenshot 節は illustration へ落とす) を 1 件以上配線する。正本は improvement/visual-per-section-decision.json。preset_definitions が実データそのものであり、実行時 config/handout-purposes.json への物理反映のみが P05-x-03 の残作業)",
+    "R25-REQ-4 (C70。各 doc_type の preset_definitions[].section_order[0] を section_kind={timeline|map|thesis} のいずれかへ実際に差し替えた (lecture/agenda/study-plan=timeline・guide/onboarding/study-notes=map・report/proposal=thesis)。3 型の定義と器 (timeline=B03+DIAGRAM(flow) / map=B08+DIAGRAM(hierarchy) / thesis=B07+DIAGRAM(compare)) は config/handout-sections.json (owner C12。briefs/config/handout-sections.json に既定義済み) が正本。preset_definitions が実データそのものであり、実行時 config/handout-purposes.json への物理反映のみが P05-x-03 の残作業)"
   ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C50 (提示順プリセット) と C53 (レクチャー用途での必須セクション)、および C59 の対話枠を必須にする側。criterion 文の残余は ledger 側にのみ書き、ここへ写さない",
   "checklist_covered": [
     "C41",
     "C42",
@@ -808,7 +964,10 @@
     "C27",
     "C50",
     "C53",
-    "C61"
+    "C61",
+    "C68",
+    "C69",
+    "C70"
   ],
   "acceptance_checks": [
     {
@@ -904,7 +1063,7 @@
     {
       "id": "AC-C23-R21-53",
       "how": "--purpose lecture の出力 section_order の section_kind を検査する (C53 の test)",
-      "expected": "handson と anticipated-qa と dialogue と flow-overview と capability-explainer の 5 種別が全て 1 件以上含まれる。handson セクションの recommended_parts に B17 が、anticipated-qa に B10 が入っている。この 5 件のいずれかを catalog から削ると本 test が落ちる"
+      "expected": "handson と anticipated-qa と dialogue と timeline と capability-explainer の 5 種別が全て 1 件以上含まれる (R25/REQ-4 C70 により冒頭セクションの種別が flow-overview から timeline へ変更された。flow-overview は enum に残るが本 preset では使わない)。handson セクションの recommended_parts に B17 が、anticipated-qa に B10 が入っている。この 5 件のいずれかを catalog から削ると本 test が落ちる"
     },
     {
       "id": "AC-C23-R21-57",
@@ -930,6 +1089,26 @@
       "id": "AC-C23-R22-61d",
       "how": "script 本文と module を 'standard' / 'overview' / 'detailed' / 'none' / 'cited' / 'sourced' で grep する",
       "expected": "fallback 既定としての値リテラルが 0 件。値域の正本は C12、既定値の正本は catalog データであり、本 script には既定値も enum も無い"
+    },
+    {
+      "id": "AC-C23-R25-68",
+      "how": "8 語それぞれについて --purpose <slug> を実行し、返った section_order の全 main セクション (required の真偽を問わない全要素) の recommended_parts を走査する (正本は improvement/visual-per-section-decision.json。C12 が最終検査する判定単位は main セクション単位の下限 1 件、総量比の下限式は使わない)",
+      "expected": "全 8 プリセットで、section_order の全要素が recommended_parts に \"DIAGRAM\" を含む (実測は本 brief の preset_definitions で main_count = DIAGRAM 配線数: lecture 9/9・agenda 5/5・guide 5/5・onboarding 6/6・report 5/5・proposal 5/5・study-notes 4/4・study-plan 4/4)。DIAGRAM を持たない main セクションが 1 件でもあれば FAIL (preset_definitions が実データそのものであり、config/handout-purposes.json への物理反映のみが P05-x-03 の残作業)"
+    },
+    {
+      "id": "AC-C23-R25-69",
+      "how": "8 語それぞれについて --purpose <slug> を実行し、section_order の全 main セクションの recommended_parts を走査する",
+      "expected": "全 8 プリセットで、section_order の全要素が recommended_parts に \"IMG\" を含む (role=screenshot は実画面を持つセクション、role=illustration は概念・人物のセクションへ紐づく。節ごとの役の初期値は preset の section_order[].image_role が宣言し (正本 improvement/visual-per-section-decision.json#decision.role_split)、C05 がそれを assets[].role へ写す。本検査は IMG の配線有無と image_role の充足を見る。実測は本 brief の preset_definitions で main_count = IMG 配線数: lecture 9/9・agenda 5/5・guide 5/5・onboarding 6/6・report 5/5・proposal 5/5・study-notes 4/4・study-plan 4/4)。IMG を持たない main セクションが 1 件でもあれば FAIL"
+    },
+    {
+      "id": "AC-C23-R25-69b",
+      "how": "8 語それぞれについて --purpose <slug> を実行し、section_order の全要素の image_role を読む / 任意の 1 節から image_role を削った catalog と、image_role: 'photo' のような列挙外の値を書いた catalog で --purpose を実行する",
+      "expected": "前者は全 8 プリセットの全節が {screenshot, illustration} のいずれかを宣言している (実測: screenshot は lecture.demo / lecture.handson / agenda.decisions / guide.steps / onboarding.day1 / report.facts の 6 節、残り全節は illustration)。後者は順に E-PRESET-IMAGE-ROLE-MISSING / E-PRESET-IMAGE-ROLE-UNKNOWN で exit 1。役の宣言をプリセットが持つ (role_split) ことにより、C05 が節ごとに役を発明する必要がなくなり、生成待ちが illustration 節数に比例することも catalog から事前に読める"
+    },
+    {
+      "id": "AC-C23-R25-70",
+      "how": "8 語それぞれについて --purpose <slug> を実行し、section_order[0].section_kind を読む",
+      "expected": "全プリセットで section_order[0].section_kind が {timeline, map, thesis} のいずれかである (config/handout-sections.json の 3 型定義が正本)。lecture/agenda/study-plan は timeline、guide/onboarding/study-notes は map、report/proposal は thesis を想定 (RESOLUTION-R25-improvement-2026-08-18.md#D5 の対応表)。想定外の section_kind が 1 件でもあれば FAIL。C12 の E-OVERVIEW-SECTION-MISSING / E-OVERVIEW-SECTION-ORDER と対で検証する"
     }
   ],
   "failure_modes": [

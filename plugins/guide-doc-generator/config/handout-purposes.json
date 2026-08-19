@@ -10,7 +10,8 @@
       "C19 (dir_token)",
       "C05 (C01 経由)"
     ],
-    "rule": "用途語彙を他のいかなる component・prompt・テストへも列挙しない。preset のキーは閉じた allowlist {section_order, recommended_parts, notes, presentation_order_variants, required_document_fields, granularity_defaults} のみで、granularity_defaults は全 preset の必須キー (P04-x-05 裁定 A・C)"
+    "rule": "用途語彙を他のいかなる component・prompt・テストへも列挙しない。preset のキーは閉じた allowlist {section_order, recommended_parts, notes, presentation_order_variants, required_document_fields, granularity_defaults} のみで、granularity_defaults は全 preset の必須キー (P04-x-05 裁定 A・C)",
+    "dir_token_policy": "dir_token は正本 (script-brief-C23.json#vocabulary_ssot.entries) の写しであり、本ファイル側で書き換えない。R25 で出力ディレクトリ名が {date}_{slug} になり (config/handout-output.json#dir_name_format_policy)、種別トークンは命名へ出ず 来歴マーカー .handout-route.json にだけ残る。命名を日本語にする目的で一時的に dir_token を日本語へ書き換えたが、命名から外れた今は正本を割るだけなので ASCII の 写しへ戻した。利用者が見る日本語は slug (主題) が運ぶ"
   },
   "schema_version": 1,
   "vocabulary": [
@@ -97,89 +98,115 @@
           "heading": "今日の流れ",
           "section_kind": "flow-overview",
           "recommended_parts": [
-            "B03"
+            "DIAGRAM",
+            "B03",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "context",
           "heading": "なぜこれをやるのか",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "demo",
           "heading": "まず動くところを見る",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "IMG",
             "B14"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         },
         {
           "id": "capability",
           "heading": "できることと、その分解",
           "section_kind": "capability-explainer",
           "recommended_parts": [
+            "DIAGRAM",
             "B07",
             "B14",
-            "B05"
+            "B05",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "compare",
           "heading": "使い分けの軸",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B05",
-            "B06"
+            "B06",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "illustration"
         },
         {
           "id": "handson",
           "heading": "手を動かす",
           "section_kind": "handson",
           "recommended_parts": [
+            "DIAGRAM",
             "B17",
             "B11",
-            "B13"
+            "B13",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         },
         {
           "id": "qa",
           "heading": "先回りの Q&A",
           "section_kind": "anticipated-qa",
           "recommended_parts": [
-            "B10"
+            "DIAGRAM",
+            "B10",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "voices",
           "heading": "困っていること・やりたいことを聞く",
           "section_kind": "dialogue",
           "recommended_parts": [
+            "DIAGRAM",
             "B09",
-            "B15"
+            "B15",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "next",
           "heading": "持ち帰りと次の一歩",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B09",
-            "B15"
+            "B15",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         }
       ],
       "recommended_parts": [
@@ -193,7 +220,7 @@
         "B17",
         "IMG"
       ],
-      "notes": "参照 v1 の骨格に R21 (実施済み研修のフィードバック) を反映した骨格。冒頭は flow-overview で大きな流れだけを 5 件以内に抑え、demo は実際の画面 (assets.role=screenshot の IMG) から入る。capability は機能名からではなく成果から書く型 (parts[].slot が outcome → breakdown → feature)。handson は B17 を器に読み手がその場で操作し、qa は畳んだ B10 で先回りの疑問に答える。voices は受講者の具体業務と困りごとを聞く対話枠で、全体所要時間の 15% 以上を確保する (下限は config/handout-sections.json の dialogue.min_duration_share)",
+      "notes": "参照 v1 の骨格に R21 (実施済み研修のフィードバック) を反映した骨格。冒頭は flow-overview で大きな流れだけを 5 件以内に抑え、demo は実際の画面 (assets.role=screenshot の IMG) から入る。capability は機能名からではなく成果から書く型 (parts[].slot が outcome → breakdown → feature)。handson は B17 を器に読み手がその場で操作し、qa は畳んだ B10 で先回りの疑問に答える。voices は受講者の具体業務と困りごとを聞く対話枠として独立させる",
       "presentation_order_variants": {
         "demo_first": [
           "flow",
@@ -231,49 +258,64 @@
       "section_order": [
         {
           "id": "timebox",
-          "heading": "本日の議題と時間配分",
-          "section_kind": "agenda-timebox",
+          "heading": "本日の議題",
+          "section_kind": "standard",
           "recommended_parts": [
-            "B03"
+            "DIAGRAM",
+            "B03",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "topics",
           "heading": "議題ごとの論点",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B07",
-            "B05"
+            "B05",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "decisions",
           "heading": "決定事項",
           "section_kind": "decisions",
           "recommended_parts": [
-            "B09"
+            "DIAGRAM",
+            "B09",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "actions",
           "heading": "アクションアイテム",
           "section_kind": "action-items",
           "recommended_parts": [
-            "B16"
+            "DIAGRAM",
+            "B16",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "parking",
           "heading": "持ち越し",
           "section_kind": "standard",
           "recommended_parts": [
-            "B10"
+            "DIAGRAM",
+            "B10",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "illustration"
         }
       ],
       "recommended_parts": [
@@ -282,7 +324,7 @@
         "B16",
         "B10"
       ],
-      "notes": "時間配分は B03 の右列 (data.time) に割り当てる。決定事項は B09 のチェック行で二値表現し、アクションアイテムは担当と期限を必須メタに持つ B16 行部品を使う",
+      "notes": "決定事項は B09 のチェック行で二値表現し、アクションアイテムは担当と期限を必須メタに持つ B16 行部品を使う",
       "granularity_defaults": {
         "detail_level": "overview",
         "evidence_depth": "none"
@@ -295,47 +337,62 @@
           "heading": "この資料でわかること",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "steps",
           "heading": "手順",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B03",
-            "B14"
+            "B14",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         },
         {
           "id": "choices",
           "heading": "迷ったときの判断",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B06",
-            "B08"
+            "B08",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "illustration"
         },
         {
           "id": "faq",
           "heading": "よくあるつまずき",
           "section_kind": "standard",
           "recommended_parts": [
-            "B10"
+            "DIAGRAM",
+            "B10",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "files",
           "heading": "配布ファイル",
           "section_kind": "standard",
           "recommended_parts": [
-            "B12"
+            "DIAGRAM",
+            "B12",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "screenshot"
         }
       ],
       "recommended_parts": [
@@ -358,56 +415,74 @@
           "heading": "はじめに",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "map",
           "heading": "全体マップ",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B08",
-            "B14"
+            "B14",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "roles",
           "heading": "登場人物と役割",
           "section_kind": "standard",
           "recommended_parts": [
-            "B04"
+            "DIAGRAM",
+            "B04",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "day1",
           "heading": "初日にやること",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B03",
-            "B09"
+            "B09",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         },
         {
           "id": "week1",
           "heading": "最初の 1 週間",
           "section_kind": "standard",
           "recommended_parts": [
-            "B09"
+            "DIAGRAM",
+            "B09",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "illustration"
         },
         {
           "id": "who",
           "heading": "困ったときの相談先",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         }
       ],
       "recommended_parts": [
@@ -430,48 +505,63 @@
           "heading": "要点",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "facts",
           "heading": "何が起きたか",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B05",
-            "B03"
+            "B03",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         },
         {
           "id": "analysis",
           "heading": "評価",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B05",
-            "B04"
+            "B04",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "next",
           "heading": "次にやること",
           "section_kind": "action-items",
           "recommended_parts": [
-            "B16"
+            "DIAGRAM",
+            "B16",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "appendix",
           "heading": "補足",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B10",
-            "B12"
+            "B12",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "screenshot"
         }
       ],
       "recommended_parts": [
@@ -493,47 +583,62 @@
           "heading": "解きたい課題",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "proposal",
           "heading": "提案",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B14",
-            "B07"
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "options",
           "heading": "選択肢の比較",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B05",
-            "B06"
+            "B06",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "plan",
           "heading": "進め方",
-          "section_kind": "agenda-timebox",
+          "section_kind": "standard",
           "recommended_parts": [
-            "B03"
+            "DIAGRAM",
+            "B03",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "ask",
           "heading": "お願いしたいこと",
           "section_kind": "action-items",
           "recommended_parts": [
-            "B16"
+            "DIAGRAM",
+            "B16",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         }
       ],
       "recommended_parts": [
@@ -556,38 +661,50 @@
           "heading": "学んだこと",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "keypoints",
           "heading": "要点の整理",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B04",
-            "B05"
+            "B05",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "examples",
           "heading": "具体例",
           "section_kind": "standard",
           "recommended_parts": [
+            "DIAGRAM",
             "B11",
-            "B10"
+            "B10",
+            "IMG"
           ],
-          "required": false
+          "required": false,
+          "image_role": "screenshot"
         },
         {
           "id": "sources",
           "heading": "出典・参考",
           "section_kind": "sources",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "screenshot"
         }
       ],
       "recommended_parts": [
@@ -609,36 +726,48 @@
           "heading": "何ができるようになりたいか",
           "section_kind": "standard",
           "recommended_parts": [
-            "B07"
+            "DIAGRAM",
+            "B07",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "triage",
           "heading": "分かっていること / 分からないこと / 次に調べること",
           "section_kind": "known-unknown-next",
           "recommended_parts": [
-            "B04"
+            "DIAGRAM",
+            "B04",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "plan",
-          "heading": "進め方と時間の見積もり",
-          "section_kind": "agenda-timebox",
+          "heading": "進め方",
+          "section_kind": "standard",
           "recommended_parts": [
-            "B03"
+            "DIAGRAM",
+            "B03",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         },
         {
           "id": "check",
           "heading": "到達チェック",
           "section_kind": "standard",
           "recommended_parts": [
-            "B09"
+            "DIAGRAM",
+            "B09",
+            "IMG"
           ],
-          "required": true
+          "required": true,
+          "image_role": "illustration"
         }
       ],
       "recommended_parts": [

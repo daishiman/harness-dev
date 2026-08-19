@@ -4,8 +4,8 @@
 - 6 語の図解型に対する写像は全域であり、fallback を持たない。
 - 図解型を持たないセクションは style_family の明示が必須 (既定へ落とさない)。
 - 明示上書きが勝つ。allowlist は 2 語で閉じている。
-- 2 family が混在する資料は family ごとに `--genome` を分けて委譲する
-  (1 回の起動が受け取れる --genome は 1 つ)。
+- 2 family の混在は E-IMG-GRANULARITY-DRIFT で停止する (利用者指定 2026-08-19:
+  1 冊の絵は同じ粒度で描く)。よって 1 冊の委譲は常に 1 family = 1 起動。
 - handout 側 genome (`P05-x-04` の産出物) の欠落は skip ではなく exit2。
 
 genome の**内容**はここに写さない。family → genome パスの対応は brief の
@@ -184,8 +184,12 @@ class DeterministicSelectionTest(R.R23TestCase):
             self.assertExit2(ctx, "定義域外の図解型が通っている")
 
 
-class MixedFamilyDelegationTest(R.R23TestCase):
-    """2 family 混在は family ごとに build-image-prompts.js を起動する。"""
+class MixedFamilyIsGranularityDriftTest(R.R23TestCase):
+    """family 混在は「節ごとの工夫」ではなく粒度の乱れとして止める。
+
+    構図 (図解型) は節ごとに変えてよいが、画風系統は冊子で 1 つ。混在を
+    family ごとの委譲で救うと、読み手には絵の違いが内容の違いに見える。
+    """
 
     def _sections(self):
         return [
@@ -193,13 +197,46 @@ class MixedFamilyDelegationTest(R.R23TestCase):
             _flat_section(self, "compare", R.flat_patterns()[0], index=1),
         ]
 
-    def test_prompt_builder_runs_once_per_family(self):
+    def test_mixed_families_are_exit2(self):
+        with self.temp() as tmp:
+            ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
+            self.assertExit2(ctx, "画風系統の混在が通っている")
+
+    def test_violation_names_the_granularity_contract(self):
+        with self.temp() as tmp:
+            ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
+            self.assertIn("E-IMG-GRANULARITY-DRIFT", H.err_text(ctx["proc"]))
+
+    def test_violation_names_both_families_and_sections(self):
+        with self.temp() as tmp:
+            ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
+            err = H.err_text(ctx["proc"])
+            for token in (R.iso_family(), R.flat_family(), "intro", "compare"):
+                self.assertIn(token, err, "揃っていない側を特定できない:\n" + err)
+
+    def test_mixed_families_stop_before_delegating(self):
+        with self.temp() as tmp:
+            ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
+            self.assertStoppedBeforeDelegating(ctx)
+
+
+class SingleFamilyDelegationTest(R.R23TestCase):
+    """1 family に揃った資料は 1 回の委譲で全セクションを運ぶ。"""
+
+    def _sections(self):
+        patterns = R.flat_patterns()
+        return [
+            _flat_section(self, "intro", patterns[0], index=0),
+            _flat_section(self, "compare", patterns[1 % len(patterns)], index=1),
+        ]
+
+    def test_prompt_builder_runs_once(self):
         with self.temp() as tmp:
             ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
             builds = [s for s in H.invoked_scripts(ctx["log"]) if s == "build-image-prompts.js"]
-            self.assertEqual(2, len(builds), "family ごとの起動になっていない:\n" + H.describe(ctx["proc"]))
+            self.assertEqual(1, len(builds), "1 family なのに起動が 1 回でない:\n" + H.describe(ctx["proc"]))
 
-    def test_each_invocation_uses_its_own_genome(self):
+    def test_invocation_uses_the_family_genome(self):
         with self.temp() as tmp:
             ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
             passed = {
@@ -209,13 +246,13 @@ class MixedFamilyDelegationTest(R.R23TestCase):
             }
             expected = {
                 os.path.realpath(
-                    str(H.resolve_family_genome(f, srg_root=ctx["srg"], hb_root=ctx["hb_root"]))
+                    str(H.resolve_family_genome(
+                        R.flat_family(), srg_root=ctx["srg"], hb_root=ctx["hb_root"]))
                 )
-                for f in (R.iso_family(), R.flat_family())
             }
             self.assertEqual(expected, passed, H.describe(ctx["proc"]))
 
-    def test_slugs_are_unchanged_by_the_family_split(self):
+    def test_slugs_follow_the_section_order(self):
         with self.temp() as tmp:
             ctx = self.dry_run_plan(tmp, self._sections(), with_handout_genome=True)
             slugs = sorted(slide.get("slug") for _, slide in self.slides(ctx))

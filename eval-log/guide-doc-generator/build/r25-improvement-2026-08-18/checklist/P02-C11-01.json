@@ -1,0 +1,64 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C11-01",
+ "covered_task_ids": [
+  "P02-C11-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+ "verified_by": [
+  {
+   "claim": "REQ-1 goal chips の描画責務が brief にある",
+   "method": "script-brief-C11.json の goal_chips / goal-chip を grep (dispatcher 実測 7 件)",
+   "result": "pass: block_to_component_map B02 の data・notes・algorithm 手順 16 の 3 箇所に記述。判定 (max_count 4 / max_chars_each 14) は C12/C18 が持つ分界も明示"
+  },
+  {
+   "claim": "goal_chips への data-hb-field 付与単位が定義されている",
+   "method": "編集前は prerequisite_connectors にだけ『配列要素ごとに出す』があり goal_chips には該当記述なし。実装 render-handout.py:1953-1958 は data-hb-field を付けずに出力しており round-trip (AC-C11-R25-74) が成立しない状態だった",
+   "result": "pass (修正後): 各 .goal-chip 要素 1 個ずつへ付与すること、囲む要素へ 1 個だけ付けると C20 が要素境界を復元できないことを追記"
+  },
+  {
+   "claim": "文字数上限を script へハードコードしない分界を守っている",
+   "method": "theme_token_schema_ownership 配下の 60/100/160 が assets/tokens スキーマ正本の宣言であること、algorithm 手順に数値リテラルが無いことを確認。旧値 180/400/900 は経緯としてのみ言及",
+   "result": "pass: task-specs/P05-x-02.md:21 および :39 と矛盾なし"
+  },
+  {
+   "claim": "hero カード化 (REQ-9) の描画責務が存在する",
+   "method": "brief の hero-card 記述を dispatcher が実測 (30 件)。purpose / background / goal を独立カードにする記述、prerequisite_connectors 宣言時のみ『前提』カードを追加する記述を確認",
+   "result": "pass: 閾値側は C12 が opening.hero_fields を直接読む分界。『閾値だけあって描画経路が無い』状態ではない"
+  },
+  {
+   "claim": "dependencies.reads が algorithm の実際の読み取りを網羅している",
+   "method": "編集前は reads が handout-parts / handout-purposes の 2 本のみで、手順 14/16 が必須で読む handout-visual-policy.json と handout-vocabulary.json が reads 配列に 0 件だった",
+   "result": "pass (修正後): 両ファイルを reads へ追加し、config_read_style を新設して直接 json.load で読むことを明示 (C12 経由にすると相互 import になるため)"
+  },
+  {
+   "claim": "argv/stdout/stderr/exit code が inventory C11 と一致",
+   "method": "brief :7-44 と component-inventory.json:872-877 の逐語照合",
+   "result": "pass: inputs / outputs / exit_codes / write_scope / stdlib_only が全一致"
+  },
+  {
+   "claim": "exit code のクラス定義と failure_modes 13 件の割り当てが一致",
+   "method": "クラス定義と failure_modes を 1 件ずつ突合",
+   "result": "pass: 構成データ側 7 件が exit 1、起動/環境側 4 件が exit 2、肥大は warning で exit 0。差し戻し先の逆転なし"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C11-01",
+   "level": "carry-forward",
+   "summary": "briefs/config/handout-visual-policy.json の _meta.readers が [C12, C01, C05] のままで C11 が入っていない。R25/REQ-8 で C11 が reader になった"
+  },
+  {
+   "id": "F-C11-02",
+   "level": "carry-forward",
+   "summary": "micro_copy.roles は配列だが C11 brief は micro_copy.roles.label.fields のドット記法で参照。表記ゆれ (nav item / nav_item) も含め要解消"
+  },
+  {
+   "id": "F-C11-03",
+   "level": "carry-forward",
+   "summary": "plugins/guide-doc-generator/config/handout-vocabulary.json が未生成 (plan 側 briefs/config/ にのみ存在)。producer である P05-x-03 の acceptance に含まれているか要確認"
+  }
+ ]
+}

@@ -10,8 +10,10 @@
     "Bash"
   ],
   "allowed_tools_rationale": "component-inventory.json#C09 の allowed-tools と一致させる。Bash=検証 script 4 本 (verify-handout-selfcontained.py / verify-handout-a11y-print.py / verify-handout-language.py / verify-handout-narrative.py) の直接実行、Read=入力 HTML と構成データの存在確認および script が出す JSON レポートの読み取り。Skill を持たないのは意図的で、この command は skill を経由せず script を直叩きする集約入口である (inventory の depends_on も C16/C17/C18/C22 の script 4 本を直接指しており、skill を挟まない)。Write を持たないのも意図的で、検証は read-only であり構成データの正規化 (書き込みを伴う) をこの command の責務にしない",
+  "disable_model_invocation": false,
+  "disable_model_invocation_rationale": "component-inventory.json#C09 の disable-model-invocation と一致させる (AC-C09-1 がこの 1 値も照合対象にしているが、ブリーフ側に値が無いと builder が frontmatter の値を推測することになるため明示する。C07 が同じ理由で明示しているのと同型)。false = モデル側から起動できる。利用者が『この資料を検証して』と自然文で頼む経路を塞がないため",
   "delegates_to": "検証 script 直叩き (skill 委譲なし): verify-handout-selfcontained.py (C16) / verify-handout-a11y-print.py (C17) / verify-handout-language.py (C18) / verify-handout-narrative.py (C22)",
-  "delegation_form": "Bash で ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/<script>.py を順に実行し、exit code と --json-report を集約する",
+  "delegation_form": "Bash で <解決済み plugin root>/scripts/<script>.py を順に実行し、exit code と --json-report を集約する。root の求め方は plugin 実体解決 4 段に従い、手順文の正本は component-inventory.json#envelope_design.env_resolution と script-brief-C15.json#algorithm 手順 2 (4 段の順序と exit 規約の規範記述) の 2 箇所で、本ブリーフは段の内容を複製しない。**旧記述 (${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} の 1 段展開のみ) は P03-x-02 で撤回した** — 候補直下の .claude-plugin/plugin.json の name==\"guide-doc-generator\" 照合を欠くため、.claude/ 平置き projection では CLAUDE_PLUGIN_ROOT が別 plugin を指し、存在しない scripts/ を掴んで 4 ゲート全部が not-run (script-absent) に落ちる。この誤りは『検査が 1 本も走らないのに利用者には環境問題として見えない』形で現れるため、4 段目まで試したうえで解決不能なら behavior 側の script-absent ではなく起動側の失敗として扱う",
   "gates": [
     {
       "gate_id": "selfcontained",
@@ -20,7 +22,7 @@
       "requires": [
         "html"
       ],
-      "checks": "外部 CDN/フォント/img src/http(s) 参照 0 件・絵文字 0 件・アイコン様式・未使用 symbol 0 件・ナビ href と section id のアンカー整合"
+      "checks": "外部 CDN/フォント/img src/http(s) 参照 0 件・絵文字 0 件・アイコン様式・symbol 定義と use 参照の 1:1 対応・ナビ href と section id のアンカー整合・図表/グラフの枠が中身を持つこと・取得を発生させ得る全参照が data: に閉じる同梱閉包"
     },
     {
       "gate_id": "a11y-print",
@@ -29,7 +31,7 @@
       "requires": [
         "html"
       ],
-      "checks": "aria-pressed/aria-selected/aria-label/scope/:focus-visible/prefers-reduced-motion の必須適用と、@media print で sticky/lightbox/メモ UI が A4 版面を崩さないこと"
+      "checks": "aria-pressed/aria-selected/アクセシブル名/表の scope/装飾 SVG と意味を持つ SVG の扱い/:focus-visible/prefers-reduced-motion の必須適用、@media print で A4 版面が成立し sticky/fixed・lightbox・メモ UI が版面を崩さず改ページの意図が宣言されていること、および sticky ヘッダー分のアンカーオフセット補正が CSS と JS の両方に存在すること"
     },
     {
       "gate_id": "language",
@@ -42,7 +44,7 @@
       "optional": [
         "out-dir"
       ],
-      "checks": "初出専門用語の言い換え併記・lead-line と判断軸の存在・冒頭 date-pill の yyyy/mm/dd 一致・出力ディレクトリ名の日付と構成データ日付フィールドの同一値"
+      "checks": "初出専門用語の言い換え併記・lead-line と判断軸の存在・R11 の順序 (lead-line → 具体部品 → 判断軸)・できること起点セクションが機能名から始まらないこと・冒頭 date-pill の yyyy/mm/dd 書式と構成データとの一致・日付表記の文書内一貫性・出力ディレクトリ名の日付と構成データ日付フィールドの同一値・読者に見える列挙フィールドが生の enum 値のまま出ていないこと"
     },
     {
       "gate_id": "narrative",
@@ -52,7 +54,7 @@
         "html",
         "config"
       ],
-      "checks": "冒頭の目的・背景・ゴールの 3 要素・全セクションの goal 常時表示・目次各項目からのセクション goal 参照"
+      "checks": "冒頭の目的・背景・ゴールの 3 要素とその文言が構成データと一致すること・全セクションの goal 常時表示・目次各項目からのセクション goal 参照・全体ゴールからセクションゴールへの連鎖・demo_first のときに抽象物を先行提示していないこと・appendix が本編へ混ざっていないこと・宣言した detail_level と evidence_depth が実態と一致すること"
     }
   ],
   "arguments": [
@@ -98,12 +100,12 @@
     "2. 実行するゲート集合を決める。--only 未指定なら 4 ゲート全部、指定ありなら該当ゲートのみ。--config が無い場合、language と narrative は『required な入力が無い』ため実行対象から外し、not-run (理由: config-missing) として記録する。--config が正規化済みでないと検出された場合も同様に not-run (理由: config-not-normalized) とする",
     "3. 実行対象の各ゲートを Bash で順に起動する。あるゲートが exit≠0 でも後続ゲートを止めずに全部走らせ、落ちた箇所を一度に把握できるようにする (fail-fast にしない)",
     "4. 各ゲートの結果を pass (exit 0) / fail (exit 1) / error (exit 2 = 検査器自体の異常、例: HTML が読めない) / not-run (実行しなかった・できなかった) の 4 状態で記録する。not-run には必ず理由 (config-missing / config-not-normalized / excluded-by-only / script-absent) を添える",
-    "5. 集約規則: (a) 1 本でも fail または error があれば全体は fail。(b) fail も error も無く、4 ゲート全部が pass なら全体は pass。(c) fail も error も無いが not-run が 1 つ以上あるなら全体は incomplete であり、pass ではない。--only を使った実行は成功時でも partial とする。not-run を pass 側へ畳む経路は存在させない",
+    "5. 集約規則 (この順に評価し、最初に成立した 1 つを全体 verdict とする。複数状態が同時に成立し得る入力でも名乗りが一意に決まるよう、優先順位を規則の一部として固定する): (a) 1 本でも fail または error があれば全体は fail。--only 指定の有無に依らず fail が partial や incomplete へ弱まることはない。(b) 実行できたゲートが 0 本なら全体は incomplete (pass でも partial でもない)。(c) fail も error も無く 4 ゲート全部が pass なら全体は pass。(d) fail も error も無く not-run がある場合、not-run の理由が excluded-by-only だけなら partial、config-missing / config-not-normalized / script-absent が 1 件でも混ざれば incomplete。両方混在するとき (例: --only language を指定しつつ --config 未指定) は incomplete を採る — excluded-by-only は利用者が意図して外したものだが、それ以外は意図せず走らなかったものであり、後者の方が重い事実だからである。not-run を pass 側へ畳む経路は存在させない",
     "6. 報告は必ず 4 ゲート全部を行として出す。実行しなかったゲートを表から省かない (省くと読み手が『全部通った』と誤読する)。各行に gate_id / 状態 / 理由または違反件数 / 該当箇所 (行番号・section id・キーパス) を出す",
     "7. --json-report 指定時は各ゲートの JSON と、全体 verdict・4 ゲートの状態一覧を含む集約サマリを同ディレクトリへ出す",
-    "8. 全体が pass でない場合、次の一手を案内する。fail は該当箇所の修正、config-missing による not-run は /handout-build が出力ディレクトリへ同梱した構成データを --config に渡す、を示す。検証 command 自身は生成も修正もしない"
+    "8. 全体が pass でない場合、次の一手を案内する。fail は該当箇所の修正、config-missing による not-run は /handout-build が出力ディレクトリへ同梱した構成データを --config に渡す、を示す。あわせて、全体が pass のときでも報告の末尾へ『本 command は完成 HTML に対する 4 面の検査であり、構成データ側のゲート (節ごとの図解・画像の必須要件を含む) は対象外である』ことを 1 行で明示する (scope_boundary_vs_config_gates 参照)。検証 command 自身は生成も修正もしない"
   ],
-  "boundary": "command が持つ責務 = 引数のパース、実行可能なゲート集合の決定、4 script の起動、結果の 4 状態分類と集約、not-run を含む全ゲートの報告。script へ渡す責務 = 各検査の判定ロジックと違反箇所の同定。この command は HTML も構成データも書き換えず、正規化もせず、資料生成 (C07) も逆抽出 (C08) も行わない。read-only な集約入口に閉じる",
+  "boundary": "command が持つ責務 = 引数のパース、実行可能なゲート集合の決定、4 script の起動、結果の 4 状態分類と集約、not-run を含む全ゲートの報告。script へ渡す責務 = 各検査の判定ロジックと違反箇所の同定。この command は HTML も構成データも書き換えず、正規化もせず、資料生成 (C07) も逆抽出 (C08) も行わない。read-only な集約入口に閉じる。構成データを入力とするゲート (C12 validate-handout-config.py) は本 command のゲート集合に含まれない (scope_boundary_vs_config_gates 参照)",
   "failure_modes": [
     {
       "case": "html-path 未指定 / 不在 / ディレクトリ指定",
@@ -122,7 +124,7 @@
     },
     {
       "case": "検証 script が見つからない (plugin 実体解決に失敗)",
-      "behavior": "当該ゲートを not-run (script-absent) とし、解決を試みたパス (HB_ROOT / CLAUDE_PLUGIN_ROOT / __file__ 相対) を提示する。全体 verdict は incomplete 以上 (他に fail があれば fail)",
+      "behavior": "実体解決 4 段 (正本: component-inventory.json#envelope_design.env_resolution) をすべて試したうえで、root は解決できたが当該 script だけが不在という場合に限り not-run (script-absent) とし、解決を試みた 4 経路と各々の不成立理由を提示する。4 段すべてが外れて root 自体が解決できない場合はゲート単位の not-run ではなく起動側の失敗であり、全体を incomplete として『4 本とも走っていない』ことを明示する (root 不在を script 不在として報告すると、利用者は 4 本ぶんの script を探しに行くことになる)。全体 verdict は incomplete 以上 (他に fail があれば fail)",
       "rationale": "script 不在は環境の問題であって資料の合格を意味しない。skip を pass に読み替えないための最重要ケース"
     },
     {
@@ -196,16 +198,50 @@
       "expected": "責務の重複 0 件"
     },
     {
+      "id": "AC-C09-7",
+      "how": "生成された handout-verify.md を SC- / A11Y- / PRINT- / STICKY- / LANG- / DATE- / ENUM- / NAR- のコード ID 表記と、detection 件数を表す数値リテラル (『10 件の検査』等) で grep する。あわせて gates[].checks の各面が対応 script brief の detections に実在することを 1 面ずつ確認する",
+      "expected": "コード ID 0 件・件数リテラル 0 件 (正本は script 側 detections)。かつ checks の全面が script 側に実在し、script 側の面で checks に現れないものが 0 件 (双方向被覆)"
+    },
+    {
+      "id": "AC-C09-8",
+      "how": "--only language を指定しつつ --config を渡さない (excluded-by-only と config-missing が同時に発生し、実行できるゲートが 0 本になる) 入力で実行する",
+      "expected": "全体 verdict = incomplete で一意に決まる。partial にも pass にもならず、4 行すべてが理由つき not-run として報告に出る"
+    },
+    {
+      "id": "AC-C09-9",
+      "how": "4 ゲートの exit code 契約 (script-brief-C16/C17/C18/C22 の exit_codes) と behavior 4 の状態写像を突合する",
+      "expected": "4 本とも 0=違反0件 / 1=品質 FAIL / 2=検査不成立 (引数不正を含む) で揃っており、script ごとの分岐が 0 件。2 を error として fail 側へ倒す写像が 4 本すべてに適用可能"
+    },
+    {
+      "id": "AC-C09-10",
+      "how": "全体 verdict = pass のシナリオで報告末尾を確認する",
+      "expected": "構成データ側ゲート (節ごとの図解・画像の必須要件) が本 command の対象外である旨の 1 行が出る (scope_boundary_vs_config_gates)"
+    },
+    {
       "id": "AC-C09-AGG-1",
       "how": "4 ゲートのうち 1 本だけ not-run になる入力 (--config 未指定) を、本 command 直叩きと C01 R4-verify の両経路へ掛ける",
       "expected": "どちらも全体 verdict = incomplete で一致し、pass にならない"
     }
   ],
   "open_questions": [
-    "検証 script 4 本の exit code 規約は inventory 上いずれも 0/1/2 だが、2 が『検査器の異常』を指すのか『引数エラー』も含むのかは script 側 brief (C16/C17/C18/C22) で確定させる必要がある。この brief は 2 を error として fail 側へ倒す前提で書いており、引数エラーも同じ扱いになる",
+    "【P02-C09-01 で決着】検証 script 4 本の exit code 規約は 4 本とも同一で、2 は『検査そのものが成立しなかった』であり引数不正を含む (script-brief-C16.json exit_codes.2『引数不正、--html の不在…1 (品質 FAIL) と 2 (検査不能) を混同させない』/ C17 exit_codes.2『引数不正…部品カタログ正本を解決できない場合。カタログ失敗は既存の 2 と別番号を割かない』/ C18 exit_codes.2『引数不正、--html / --config の不在…』/ C22 exit_codes.2『引数不正…同梱データ失敗に別番号を割かない』)。よって本 command が 2 を一律 error として fail 側へ倒す扱いは 4 本の契約と一致しており、引数エラーだけを別扱いにする必要はない。4 本とも 1 は品質 FAIL・0 は違反 0 件で揃っているため、状態写像は script ごとに分岐しない",
     "【P03 Y-07 で決着】本 command は C22 を含む 4 ゲート (C16 / C17 / C18 / C22) を集約する。inventory の C09 description が 3 面しか列挙していなかったのは誤りで、depends_on の 4 件が正。component-inventory.json の description を 4 面へ揃えた",
     "【P03 Y-07 で決着】ゲート結果の 4 状態分類と集約規則の単一正本は本 command (canonical_aggregation CR-GATE-AGG) に確定した。C01 run-handout-build R4-verify は自前集約をやめ、本 command を起動してその集約結果を受け取る。両側に同じ規則を書かない"
   ],
+  "gate_detection_canonicality": {
+    "statement": "各ゲートが発する診断コードの語彙と件数の正本は、対応する script 側 brief の detections 1 箇所だけである。本 command は診断コード ID (SC-xx / A11Y-xx / PRINT-xx / STICKY-xx / LANG-xx / DATE-xx / ENUM-xx / NAR-xx) のリテラルも件数の数値も持たない",
+    "why": "集約入口が個別コードを列挙すると、script 側が detection を 1 件足した瞬間に command 側が黙って古くなる。実際 C16 は SC-09 (図表の中身) / SC-10 (同梱閉包) が後から加わっており、コードや件数を焼いていれば追従漏れになっていた。command が持つのは『どの面を見るゲートか』の要約だけにし、件数と ID の同期問題を構造的に発生させない",
+    "gates_checks_contract": "gates[].checks は面の要約であり、対応 script の detections が見る面を漏れなく含むこと (被覆関係) だけを満たせばよい。逆に script が見ない面を書いてはならない。2026-08-18 時点の被覆: selfcontained = SC-01..SC-10 の 10 面 / a11y-print = A11Y-01..07 + PRINT-01..04 + STICKY-01 の 12 面 / language = LANG-01,04,05,06,07 + DATE-01..04 + ENUM-01 の 10 面 (LANG-02 / LANG-03 は欠番) / narrative = NAR-01..NAR-10 の 10 面",
+    "measured_gap_2026_08_18": "本ノードの突合時点で checks の散文が面を取りこぼしていた: selfcontained は SC-09 / SC-10、a11y-print は PRINT-04 (改ページの意図) / STICKY-01 (アンカーオフセット補正の両系)、language は LANG-06 (R11 の順序) / LANG-07 / DATE-04 (日付の文書内一貫性) / ENUM-01 (生 enum の露出)、narrative は NAR-06..NAR-10。いずれも script 側は検査するのに command のヘルプには現れない状態で、利用者が『この面は検査されない』と誤読する。4 ゲートとも checks を面の被覆へ揃えた"
+  },
+  "scope_boundary_vs_config_gates": {
+    "question": "R25 で追加された節ごとの図解/画像の必須ゲート (W-DIAGRAM-FEW / E-IMAGE-ABSENT) を、/handout-verify を叩いた利用者は受け取れるか",
+    "answer": "受け取れない。本 command の 4 ゲートは全て完成 HTML を入力とするのに対し、この 2 コードは C12 validate-handout-config.py が構成データの main セクションを数えて判定するものであり、判定対象そのものが違う",
+    "decision": "C09 の depends_on へ C12 を足さない。生成経路 (C01 run-handout-build の R2 検証ステップ) が構成データ側ゲートの唯一の判定点である",
+    "why_not_add_c12": "(a) 本 command の設計は『HTML 1 本だけ渡せば selfcontained と a11y-print の 2 面は必ず走る』であり、構成データ必須のゲートを主軸に加えるとこの性質が崩れる。(b) より本質的な理由として、C12 は HTML を一切見ないため、渡された --config が当の HTML の生成元である保証が無い。別の構成データを渡せば図解要件を満たす判定が出てしまい、『この HTML は図解が足りている』という誤った合格を出せる経路が生まれる。HTML と構成データの対応を検証するには逆抽出 (C20) が要り、それは本 command の read-only 集約という責務を超える",
+    "what_does_reach_the_user": "HTML 側からも部分的には届く。C16 の SC-09 が data-hb-part が IMG / DIAGRAM である要素と <figure> について『枠が中身を持つこと』を検査するため、図解や画像が空枠のまま出力された場合は selfcontained ゲートで fail になる。届かないのは『節に図解や画像がそもそも配線されていない』という不足側であり、これは構成データ段階でしか判定できない",
+    "user_facing_requirement": "この分界を利用者が知らないまま『/handout-verify が pass したから図解要件も満たした』と読むのが最悪の誤読であるため、behavior 8 で全体 verdict に依らず 1 行で明示する"
+  },
   "canonical_aggregation": {
     "id": "CR-GATE-AGG",
     "owner": "C09 /handout-verify",

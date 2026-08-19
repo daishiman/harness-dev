@@ -96,13 +96,15 @@ class SharedTypeAcrossLevelsTest(unittest.TestCase):
                 for sid in section_ids:
                     self.assertIn("#" + sid, hrefs, "nav に %s へのアンカーが無い" % sid)
 
-    def test_date_is_rendered_in_yyyy_mm_dd_at_every_level(self):
+    def test_date_is_carried_in_yyyy_mm_dd_at_every_level(self):
+        """日付は紙面に出さないが、どの詳細度でも root 属性としては残る。"""
         for level in DETAIL_LEVELS:
             with self.subTest(detail_level=level):
-                texts = H.field_texts(self._html(level), "date")
-                self.assertTrue(texts, "日付が描画されていない")
-                for text in texts:
-                    self.assertRegex(text, DATE_PATTERN)
+                html_text = self._html(level)
+                self.assertEqual([], H.field_elements(html_text, "date"))
+                text = H.doc_date(html_text)
+                self.assertIsNotNone(text, "日付の運び手が無い")
+                self.assertRegex(text, DATE_PATTERN)
 
     def test_purpose_background_goal_are_rendered_at_every_level(self):
         for level in DETAIL_LEVELS:

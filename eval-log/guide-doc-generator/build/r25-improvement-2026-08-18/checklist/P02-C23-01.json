@@ -1,0 +1,99 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C23-01",
+ "covered_task_ids": [
+  "P02-C23-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C23.json",
+ "verified_by": [
+  {
+   "claim": "brief が全 8 preset の全 main セクションへ DIAGRAM と IMG を配線している (R25 重点 1a)",
+   "method": "dispatcher が script-brief-C23.json の preset_definitions を機械集計 (8 preset / 全 section_order 要素の recommended_parts を走査)",
+   "result": "pass: 総 43 節すべてが DIAGRAM と IMG を保持。不備 0 件"
+  },
+  {
+   "claim": "実データ側の配線状況 (R25 重点 1b)",
+   "method": "dispatcher と SubAgent が独立に plugins/guide-doc-generator/config/handout-purposes.json を実測 (結果一致)",
+   "result": "未着手を確定。DIAGRAM は 8 preset 全てで 0 件、IMG は lecture の demo 節 1 件のみ。正本 preset_impact の記述 (IMG 各 preset 1 件) より実態は悪く、DIAGRAM は言及すらされていなかった。writer は C23 ではなく P05-x-03 (state=pending) のため C23 brief の defect ではない"
+  },
+  {
+   "claim": "IMG role の宣言者が機械可読に一意化されている (R25 重点 2)",
+   "method": "修正前は section_order のキーが 5 つのみで role は notes の散文にしか存在せず、AC-C23-R25-69 の expected は『role の正本は assets[].role』と正本 visual-per-section-decision.json:40 に矛盾していた。修正後を dispatcher が集計",
+   "result": "pass (修正後): section_order[].image_role を必須キーとして新設。43 節すべてが値を持ち、illustration 37 / screenshot 6。43 節のキー集合が完全に均一 (heading/id/image_role/recommended_parts/required/section_kind) であることも確認"
+  },
+  {
+   "claim": "role の producer / consumer 分界が 3 者で閉じている",
+   "method": "C23 (初期値の宣言) / C05 (採用と assets[].role への書き出し) / C01 R3-render (素材欠如時の降格) を各 brief の原文で突合",
+   "result": "pass: C05 側は『preset が宣言した role をそのまま採用し、宣言が無い節についてだけ選ぶ』と既に consumer として書かれており変更不要。C23 は降格しない"
+  },
+  {
+   "claim": "診断コードの追加が契約面まで閉じている",
+   "method": "E-PRESET-IMAGE-ROLE-MISSING の出現箇所を dispatcher が実測 (3 件: algorithm 手順 4h / stderr 契約 / exit 1 定義)",
+   "result": "pass: キー追加と同時に stderr 契約と exit 1 クラス定義へ反映済み"
+  },
+  {
+   "claim": "C44 の閉じた allowlist (structural_guarantee) を壊していない",
+   "method": "image_role は preset トップレベルではなく section_order 要素内のキーであることを variant_per_preset に明記。dispatcher が 43 節のキー集合の均一性で裏取り",
+   "result": "pass: preset トップレベルの許可キー 6 件は不変"
+  },
+  {
+   "claim": "数の上限撤廃 (R25 重点 3)",
+   "method": "granularity_anchor / main_sections / parts_per_section / diagram_parts / [4,6] / [1,2] / [2,3] を grep",
+   "result": "pass: 全て 0 件。C23 は件数の上限を一切持たない (正本は C12 側)"
+  },
+  {
+   "claim": "件数の緩和が本文分量へ波及しない (R25 重点 4)",
+   "method": "修正前の :381 は『分量の上限も外れており』が無限定に読めた。no_quantity_cap.keep を引いて明示化",
+   "result": "pass (修正後): REQ-7 の本文文字数・文数と micro_copy が緩和対象外であることを明記"
+  },
+  {
+   "claim": "superseded な diagram-gate-decision.json の閾値を現行として参照していない",
+   "method": "言及 9 箇所を文脈確認",
+   "result": "pass: すべて『旧: …は使わない』『superseded』の否定文脈。max(2, ceil(main_count*0.4)) も明示的な否定形"
+  },
+  {
+   "claim": "argv/stdout/stderr/exit code と exit クラス割当が inventory C23 および failure_modes と整合",
+   "method": "component-inventory.json:817-822 と brief :8-68 の項目突合、3 クラス定義と failure_modes 8 件 + AC 25 件の期待 exit 全件突合",
+   "result": "pass: データ違反=1 / 起動側=2 で漏れ・重複なし。新設 2 コードは catalog 自己整合検査由来のため exit 1 クラスへ割当"
+  },
+  {
+   "claim": "physical_data_dependency (追記分) の記述が実測と整合し、C44 allowlist を壊していない",
+   "method": "dispatcher が top-level キーの存在と 4 サブキーを実測。preset 許可キー 6 件が不変であることは 43 節のキー集合均一性で確認済み",
+   "result": "pass: owner_of_physical_write / measured_gap_2026_08_18 / why_this_blocks_first_draft / acceptance_hook の 4 キー。実測値の記載は dispatcher の独立測定と一致"
+  },
+  {
+   "claim": "preset の recommended_parts を構成データへ転記する経路が存在するか",
+   "method": "SubAgent は literal キー名 'recommended_parts' の grep で agent-brief-C05.json に 0 件を得て『転記処理の宣言は 0 件』と報告した。dispatcher が日本語表記で再検索",
+   "result": "SubAgent の判定は誤り (literal grep の偽陰性)。agent-brief-C05.json の procedure に『渡された preset JSON を読み、セクションの順序と推奨部品を採用する。プリセットの合成はしない』が実在し、転記経路は宣言済み。加えて同 brief:46 が閾値ファイルを直接読む経路も持つため供給は二重。ただし『唯一の決定論的供給源はプリセット』という危険度評価そのものは有効"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C23-01",
+   "level": "blocking-for-release",
+   "summary": "実データ config/handout-purposes.json が DIAGRAM 0 件 / IMG 1 件のまま。producer は P05-x-03 (pending)。なお W-DIAGRAM-FEW / E-IMAGE-ABSENT の検査対象は構成データでありプリセットそのものではないため『8 preset が必ず落ちる』ではないが、プリセットは充足を LLM 判断に依存させない唯一の決定論的供給源であり、空のまま進めると第 1 稿が fail-closed で止まる確率が最大化する"
+  },
+  {
+   "id": "F-C23-02",
+   "level": "blocking-for-release",
+   "summary": "P05-x-03 の acceptance_criterion が handout-purposes.json について『section_order / recommended_parts / notes / ...』としか書いておらず、DIAGRAM/IMG の per-section 配線と image_role に言及がない。このままだと『ファイルが存在する』だけで通過してしまう。task-graph.json への追記が必要"
+  },
+  {
+   "id": "F-C23-03",
+   "level": "resolved",
+   "summary": "script-brief-C11.json の assets[].role enum が screenshot|figure|photo のままで illustration を欠いていた。C01 の fallback で illustration が到達するため未知値になる。dispatcher が C12 の値域へ合わせて修正済み"
+  },
+  {
+   "id": "F-C23-04",
+   "level": "carry-forward",
+   "summary": "agent-brief-C05.json:46 の role 読み先が handout-visual-policy.json#role_split のままだが、初期値の物理正本は C23 の section_order[].image_role になった。読み先を C23 出力へ寄せるべき"
+  },
+  {
+   "id": "F-C23-05",
+   "level": "carry-forward",
+   "summary": "component-inventory.json:818 の inputs 略記に --presentation-order / --format / --root が無い"
+  }
+ ]
+}

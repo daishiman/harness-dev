@@ -156,6 +156,51 @@ class TestNar07Allowed(NarrativeGateTestCase):
         self.assert_gate_pass(res)
 
 
+class TestNar07ScopeIsOneItemDocumentWide(NarrativeGateTestCase):
+    """NAR-07 が実際に見ている射程を固定する (P05-x-71 の測定面)。
+
+    実装 (verify-handout-narrative.py の _first_presentation_item) は
+    最初の role=main セクションの seq 以降を **文書全体にわたって** 走査し、
+    最初に見つかった部品ノードか単一行上限超えの段落 1 つだけを判定する。
+    セクション境界で打ち切らないため『最初の本編セクションの中だけを見る』
+    のではなく『最初の 1 つを見たら以降は一切見ない』が正しい射程である。
+
+    ここを固定しておかないと、射程を広げたときに何が変わるのかが
+    report 上で PASS と見分けられない (未評価と合格の区別)。
+    実装の是非は P05-x-71 の裁定に委ね、本クラスは事実のみを述べる。
+    """
+
+    def _strip_first_screenshot(self, html):
+        import re
+
+        stripped = re.sub(
+            r'\n *<div data-hb-part="IMG".*?</div>', "", html, count=1, flags=re.S
+        )
+        self.assertNotEqual(html, stripped, "fixture から IMG 部品を落とせていない")
+        return stripped
+
+    def test_scope_crosses_section_boundary_when_first_section_has_no_item(self):
+        # s1 から提示物を落とすと、判定対象は s1 の中で止まらず後続セクションへ移る。
+        cfg = demo_first_config()
+        html = self._strip_first_screenshot(build_html(cfg, first_item="screenshot"))
+        res = self.run_gate(self.write_html(html), self.write_config(cfg))
+        self.assert_gate_fail(res, "NAR-07", count=1)
+
+    def test_only_one_item_is_ever_checked(self):
+        # 対照 (合格) と違反の双方で checked=1。射程は常に 1 件で、
+        # 後続セクションの提示順は評価対象に入らない。
+        cfg = demo_first_config()
+        good = build_html(cfg, first_item="screenshot")
+        bad = self._strip_first_screenshot(good)
+        for label, html in (("pass", good), ("fail", bad)):
+            res = self.run_gate(self.write_html(html), self.write_config(cfg))
+            self.assertEqual(
+                1,
+                int(self.summary(res)["NAR-07"]["checked"]),
+                "%s 側で checked が 1 でない (射程が変わったなら P05-x-71 の裁定が要る)" % label,
+            )
+
+
 class TestNar07Skip(NarrativeGateTestCase):
     """AC-C22-R21-56c 後半: explain_first では PASS ではなく SKIP。"""
 
@@ -217,8 +262,75 @@ class TestNar07SourceOfTruth(NarrativeGateTestCase):
         html = self.write_html(build_html(cfg, first_item="screenshot"))
         cfg.pop("presentation_order")
         res = self.run_gate(html, self.write_config(cfg))
-        self.assertIn(res.returncode, (1, 2), "必須フィールド欠落を PASS にしない")
-        self.assertNotEqual(0, res.returncode)
+        # exit 2 は『検査が成立しなかった』の意 (script-brief-C22.json の exit_codes)。
+        # 1 (品質 FAIL) を許すと、入力契約違反と品質違反が report 上で区別できない。
+        self.assertEqual(2, res.returncode, "必須フィールド欠落は入力契約違反であって品質 FAIL ではない")
+
+    def test_presentation_order_missing_emits_no_nar07_line(self):
+        # 検査が成立していない以上、NAR-07 の判定結果を名乗ってはならない。
+        cfg = demo_first_config()
+        html = self.write_html(build_html(cfg, first_item="screenshot"))
+        cfg.pop("presentation_order")
+        res = self.run_gate(html, self.write_config(cfg))
+        self.assertFalse(
+            [ln for ln in res.stdout.splitlines() if ln.startswith("NAR-07 ")],
+            "入力契約違反のときに NAR-07 の行を出さない",
+        )
+
+
+class TestNar07CannotBeDisabledByNulling(NarrativeGateTestCase):
+    """presentation_order を null にするだけで C56 の検査を無効化できないこと。
+
+    キー削除は必須フィールド検査 (verify-handout-narrative.py の
+    REQUIRED_CONFIG_KEYS) が捕らえるが、その検査は `key not in config` であり
+    null は素通りする。素通りした null は NAR-07 の判定で demo_first と
+    一致せず SKIP へ落ちるため、値を null にするだけで違反のある HTML を
+    exit 0 にできる。C22 は正規化済み構成データしか受け取らない契約なので
+    (provenance を持つ = C12 の normalize を通っている)、null は
+    『explain_first だった』ではなく『入力が正規化済みでない』を意味する。
+
+    正本は script-brief-C22.json の exit_codes と NAR-07 の
+    not_evaluated_when。C12 側の必須性の実行点は A5c。
+    """
+
+    def _null_order_pair(self):
+        # HTML は demo_first のまま生成する。値を後から落とすことで
+        # 『正規化後に値だけ消した構成データ』を再現する。
+        cfg = demo_first_config()
+        html = self.write_html(build_html(cfg, first_item="diagram"))
+        cfg["presentation_order"] = None
+        return html, self.write_config(cfg)
+
+    def test_null_presentation_order_is_not_reported_as_skip(self):
+        html, config = self._null_order_pair()
+        res = self.run_gate(html, config)
+        skip = [
+            ln
+            for ln in res.stdout.splitlines()
+            if ln.startswith("NAR-07 ") and "SKIP" in ln
+        ]
+        self.assertFalse(
+            skip,
+            "null を SKIP へ倒すと、値を消すだけで C56 の検査を無効化できる: %r" % skip,
+        )
+
+    def test_null_presentation_order_does_not_exit_zero(self):
+        # この HTML は demo_first なら NAR-07 違反 (実画面より前に DIAGRAM)。
+        # null にした結果 exit 0 になるなら、違反が緑へ化けている。
+        html, config = self._null_order_pair()
+        res = self.run_gate(html, config)
+        self.assertNotEqual(
+            0, res.returncode, "違反のある HTML が presentation_order=null で緑になっている"
+        )
+
+    def test_null_presentation_order_is_exit2(self):
+        html, config = self._null_order_pair()
+        res = self.run_gate(html, config)
+        self.assertEqual(
+            2,
+            res.returncode,
+            "正規化済み構成データの null は入力契約違反 (キー削除と同じ扱い) であるべき",
+        )
 
     def test_appendix_only_before_main_does_not_shift_target(self):
         # 判定は role=main の最初のセクションから始める

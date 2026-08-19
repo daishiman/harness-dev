@@ -33,8 +33,8 @@
     "invokes": [],
     "runtime_catalog": {
       "path": "<plugin root>/config/handout-parts.json",
-      "root_resolution": "環境変数 HB_ROOT → CLAUDE_PLUGIN_ROOT の順に見て、いずれも未設定なら本 script の 2 階層上 (scripts/ の親) を root とする。カタログのパスは root からの固定相対であり argv で差し替えられない",
-      "why_runtime": "P03 Y-05 / AC-C11-19。部品 id の名簿を本 script に literal で持つと、カタログ (C23 が owner) と script の二名簿になり、カタログが動いても script が追従しない。検査対象は id の列挙ではなく data_block_type 述語でカタログから実行時に引く",
+      "root_resolution": "plugin 実体解決 4 段に従う。手順文の正本は component-inventory.json#envelope_design.env_resolution (plan レベルの設計判断) と script-brief-C15.json#algorithm 手順 2 (4 段の順序と exit 規約の規範記述) の 2 箇所であり、本ブリーフは段の内容を複製しない。本 script 固有の帰結だけを書く: (a) 4 段すべて成立しなければ exit 2 とし、試した 4 経路と各々の不成立理由を stderr へ列挙する (C15 の failure_modes と同型)、(b) カタログのパスは解決した root からの固定相対であり argv で差し替えられない。**旧記述 (HB_ROOT → CLAUDE_PLUGIN_ROOT → 2 階層上 の 3 段) は P03-x-02 で撤回した** — 候補直下の .claude-plugin/plugin.json を読み name==\"guide-doc-generator\" を照合する段を欠いていたため、.claude/ 平置き projection のように CLAUDE_PLUGIN_ROOT が別 plugin (ubm-goal-setting) を指す環境で他 plugin の root を掴み、そこからの固定相対でカタログを読もうとして誤った不在判定を出す経路が残っていた",
+      "why_runtime": "P03 Y-05 / AC-C11-19。部品 id の名簿を本 script に literal で持つと、カタログ (owner / 唯一の writer は C11。RESOLUTION-P03.md:102 で確定。C23 は用途種別語彙 config/handout-purposes.json の owner であって部品カタログの owner ではない — 本 brief の open_questions の X-03 記録と同じ分界) と script の二名簿になり、カタログが動いても script が追従しない。検査対象は id の列挙ではなく data_block_type 述語でカタログから実行時に引く",
       "predicate": "検査対象の器は data_block_type の値で指定する。A11Y-01 (aria-pressed) の対象はトグル UI を持つ block type、A11Y-02 (aria-selected) の対象はタブの block type。どの block type がどの部品 id に対応するかは本 brief にも script にも書かず、カタログの parts[].data_block_type → parts[].id の対応から導出する",
       "catalog_invariants_required": [
         "parts[].data_block_type が非 null の範囲で一意であること (同じ block type に 2 部品が対応してはならない)",
@@ -70,10 +70,10 @@
   "detections": [
     {
       "id": "A11Y-01",
-      "rule": "aria-pressed が『トグル要素』に付いていること。対象は「トグル UI を持つ block type (選択マップ / 選択チップ) に対応する部品 id」を dependencies.runtime_catalog の述語でカタログから引き、その data-hb-part 値を持つ部品 root 配下にある <button> と [role=\"button\"] のすべて (対象部品 id をこの規則本文へ literal で書き下さない — 名簿はカタログが唯一の正本)。各要素に aria-pressed が存在し値が \"true\"|\"false\" のいずれかであること。data-hb-single を持つチップ群 (単一選択) では aria-pressed=\"true\" が高々 1 個であること。文書のどこかに aria-pressed という文字列があるだけでは PASS にしない",
+      "rule": "aria-pressed が『トグル要素』に付いていること。対象は「トグル UI を持つ block type (選択マップ / 選択チップ) に対応する部品 id」を dependencies.runtime_catalog の述語でカタログから引き、その data-hb-part 値を持つ部品 root 配下にある <button> と [role=\"button\"] のすべて (対象部品 id をこの規則本文へ literal で書き下さない — 名簿はカタログが唯一の正本)。各要素に aria-pressed が存在し値が \"true\"|\"false\" のいずれかであること。data-hb-single を持つチップ群 (単一選択) では aria-pressed=\"true\" が高々 1 個であること。文書のどこかに aria-pressed という文字列があるだけでは PASS にしない。**除外口**: 対象要素のうち data-hb-part-role=\"aux\" を持つものは本検査の対象から外す (トグルでない補助ボタン)。この属性は C11 html_attribute_contract が『aux (a11y 検査の対象から外す唯一の除外口。C17 A11Y-01 が参照する)』と宣言しており、参照する側の規則本文がそれを読む唯一の箇所である。除外は本検査に限り、他の detection へ一般化しない。除外した要素は件数を json-report へ列挙して可視化する (暗黙除外を作らない)",
       "violation_example": "<div data-hb-part=\"B08\"><button class=\"map-item\" data-hb-title=\"…\">Claude Code</button></div> (aria-pressed 欠落) / <button aria-pressed=\"on\"> (値が不正)",
       "pass_example": "<div data-hb-part=\"B08\"><button class=\"map-item\" aria-pressed=\"false\" data-hb-title=\"…\" data-hb-detail=\"…\">Claude Code</button>…</div>",
-      "false_positive_risk": "中。data-hb-part の付与が C11 render-handout.py の出力契約に依存する。契約未実装なら『検査不能』で FAIL する (fail-closed として正しい向き)。逆に data-hb-part 配下にトグルでない補助ボタンを置くと誤検出するため、レンダラ側で補助ボタンには data-hb-part-role=\"aux\" を付ける除外口を 1 つだけ設ける"
+      "false_positive_risk": "中。data-hb-part の付与が C11 render-handout.py の出力契約に依存する。契約未実装なら『検査不能』で FAIL する (fail-closed として正しい向き)。逆に data-hb-part 配下にトグルでない補助ボタンを置くと誤検出するが、これは rule 側の『除外口』条項 (data-hb-part-role=\"aux\") で解消済み。レンダラ側が補助ボタンへ当該属性を付けることが前提であり、付いていなければ違反として正しい"
     },
     {
       "id": "A11Y-02",
@@ -98,10 +98,10 @@
     },
     {
       "id": "A11Y-05",
-      "rule": "装飾 SVG と意味を持つ SVG の扱いが整合していること。(a) data-hb-kind=\"decor\" または data-hb-kind=\"icon\" の <svg> が、テキストを持つ親要素の子である場合 aria-hidden=\"true\" 必須 (b) aria-hidden=\"true\" の svg が <title> 子を持つのは矛盾なので違反 (c) A11Y-03 でアクセシブル名の供給源になっている svg (親にテキストが無く親に aria-label も無い) が aria-hidden=\"true\" であれば違反 (名前が消えるため)",
+      "rule": "装飾 SVG と意味を持つ SVG の扱いが整合していること。(a) data-hb-kind=\"decor\" または data-hb-kind=\"icon\" の <svg> が、テキストを持つ親要素の子である場合 aria-hidden=\"true\" 必須 (b) aria-hidden=\"true\" の svg が <title> 子を持つのは矛盾なので違反 (c) A11Y-03 でアクセシブル名の供給源になっている svg (親にテキストが無く親に aria-label も無い) が aria-hidden=\"true\" であれば違反 (名前が消えるため) (d) data-hb-kind=\"figure\" の <svg> (意味を持つ図版) は (a) の対象外とする代わりに、非空の <title> 子または非空の aria-label のいずれかを持つこと、かつ aria-hidden=\"true\" を持たないこと。欠けていれば違反。(d) を規則本文に置くのは、(a) の除外だけを実装すると『figure を付ければ名前なしで通る』抜け道になり、R25 (improvement/visual-per-section-decision.json#decision.diagram_per_main_section) で全 main セクションに DIAGRAM が必須化された結果、その抜け道が節の数だけ生じるため",
       "violation_example": "<button aria-label=\"コピー\"><svg data-hb-kind=\"icon\"><title>コピー</title>…</svg></button> に aria-hidden が無く title と aria-label が二重になる / <svg data-hb-kind=\"decor\" aria-hidden=\"true\"><title>波</title></svg>",
       "pass_example": "<button aria-label=\"コピー\"><svg data-hb-kind=\"icon\" aria-hidden=\"true\">…</svg>コピー</button>",
-      "false_positive_risk": "中。単独で意味を持つ図版 (概念図解 SVG) を装飾扱いしてしまう可能性があるため、概念図解には data-hb-kind=\"figure\" を付け A11Y-05 の対象から外し、代わりに <title> または aria-label を必須とする"
+      "false_positive_risk": "中。単独で意味を持つ図版 (概念図解 SVG) を装飾扱いしてしまう可能性があるため、概念図解には data-hb-kind=\"figure\" を付けて (a) の対象から外す。その代償要件 (<title> または aria-label の必須) は rule の (d) 条項として本文に置いてあり、この risk 欄には要件を持たない"
     },
     {
       "id": "A11Y-06",
@@ -224,6 +224,16 @@
       "id": "AC-C17-12",
       "how": "同一 HTML に対して 2 回実行し stdout / --json-report を比較",
       "expected": "バイト一致"
+    },
+    {
+      "id": "AC-C17-15",
+      "how": "トグル部品の root 配下に aria-pressed を持たない <button data-hb-part-role=\"aux\"> を 1 個だけ置いた HTML を渡す",
+      "expected": "exit 0、A11Y-01 は PASS。かつ json-report に除外した要素が 1 件列挙される。除外口が規則本文に実装されていること (属性を無視して FAIL にしない) と、除外が不可視にならないことの同時確認"
+    },
+    {
+      "id": "AC-C17-16",
+      "how": "<svg data-hb-kind=\"figure\"> を <title> も aria-label も持たない形で 1 個置いた HTML を渡す",
+      "expected": "exit 1、A11Y-05 に違反 1 件。figure が (a) の対象外であることが『名前なしで通る抜け道』にならないことの回帰テスト (R25 の per-section DIAGRAM 必須化で節数ぶん再現しうる)"
     }
   ],
   "failure_modes": [
@@ -254,9 +264,10 @@
     }
   ],
   "open_questions": [
-    "【X-03 決着済み・記録】data-hb-part の語彙 (B01..B16 / IMG / DIAGRAM / TEXT / section / lightbox / memo / memo-global / toolbar)、data-hb-part-role、data-hb-kind の語彙 (icon / mascot / decor / figure) の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定した。本 script と C15 は参照するだけで再定義しない (C23 の宣言データへ寄せる案は採らない — C23 は用途種別語彙の owner であり、HTML 属性語彙は生成側 C11 が持つのが単独 writer 原則に沿う)。旧称 data-part / data-part-role / data-kind は data-hb-* 系統へ統合済み",
+    "【X-03 決着済み・記録】data-hb-part の語彙 (部品 id は config/handout-parts.json の parts[]、部品ではない構造・UI 枠の値は同ファイルの non_part_structure_markers。id をここへ列挙しない — P03-x-03 で範囲表記の写しを撤回した)、data-hb-part-role、data-hb-kind の語彙 (icon / mascot / decor / figure) の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定した。本 script と C15 は参照するだけで再定義しない (C23 の宣言データへ寄せる案は採らない — C23 は用途種別語彙の owner であり、HTML 属性語彙は生成側 C11 が持つのが単独 writer 原則に沿う)。旧称 data-part / data-part-role / data-kind は data-hb-* 系統へ統合済み",
     "PRINT-02/03 のセレクタ突合を文字列一致に留めるか、`[data-hb-part=\"…\"]` 属性セレクタでの指定をレンダラ側の必須形にして突合を厳密一致にできるか。後者にできれば false positive が消えるので、C11 側の合意が取れるなら後者を採る",
     "A4 実版面への収まり (テキストのはみ出し・図版の分断) は静的には検査できない。実描画による検証を P06 のテストで別途持つか、ゲートとしては宣言検査に留めるかは P04 test-design の判断。本 script では OUT-OF-SCOPE として毎回 stdout に明示する",
+    "【R25 由来・本 script の分界外】生成 HTML の <img> に非空の alt が付いているかを HTML 段で見る検査が、どの gate にも無い。本 script の detections は svg (A11Y-05) と対話要素 (A11Y-03) までで <img> を対象にせず、C16 SC-09 は IMG/DIAGRAM の『中身があること』を見るだけで alt を見ない。alt の担保は C12 の config_schema (assets[].alt を非空必須) による構成データ段のみであり、script-brief-C12.json:482 はその理由を『a11y ゲート (C22) を構成データ段階で満たすため』と書いているが C22 は筋道ゲートであって a11y ゲートではない (a11y ゲートは本 script)。R25 で全 main セクションに IMG が必須化されたことで露出面が節数に比例するため記録する。inventory C17 の purpose は a11y 検査項目を aria-pressed/aria-selected/aria-label/scope/:focus-visible/prefers-reduced-motion と列挙しており img alt を含まないため、本 brief 側で detection を新設せず (detection 数 12 と stdout 固定順を動かさず) 分界の確認へ回す",
     "goal-spec C4 (sticky オフセット補正) を本 script が担当する分界でよいか。C16 は自己完結性、C18 は言語、C22 は筋道であり、CSS 規則を読む機構を持つのは本 script だけなので暫定で引き受けている。P03 design-gate で確認が要る"
   ]
 }

@@ -1,0 +1,31 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C15-01",
+ "covered_task_ids": ["P04-C15-01"],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/build-icon-sprite.py/",
+ "verified_by": [
+  {"claim": "3 面がすべて充足しており面が関数名で名指しされた",
+   "method": "dispatcher が報告の名指し先を確認し suite を独立実行",
+   "result": "pass: 違反系 exit1 は test_input_violations.py (ヘルパ H.expect_exit(self, proc, 1, ...) が :24) / test_symbol_use_sc07.py / test_emoji_policy_sc05.py / test_icon_style_sc06.py の 12 関数。argv/exit code 契約は test_argv_and_exit_codes.py の 11 関数 + test_plugin_resolution.py::test_unresolvable_is_exit2 + test_emoji_policy_sc05.py::test_missing_c16_is_exit2_fail_closed。再現性は test_determinism.py の 7 関数"},
+  {"claim": "再現性の面が C29 の要求より強い形になっている",
+   "method": "dispatcher が test_determinism.py の関数名を確認",
+   "result": "pass: 2 回実行のバイト一致 (test_two_runs_are_byte_identical) に加え、PYTHONHASHSEED (test_hash_seed_does_not_change_output) と cwd (test_cwd_does_not_change_output) という非決定論の入口を個別に潰し、さらに timestamp フィールド不在・絶対パス不在まで検査している。決定論を結果だけでなく入口で担保する形"},
+  {"claim": "suite が緑であり追加不要という判断が妥当",
+   "method": "dispatcher が対象ディレクトリで python3 -m unittest discover を独立実行",
+   "result": "pass: Ran 128 tests / OK。報告の 128 と完全一致 (C23 側で生じた 2 件の差はここでは生じていない)"},
+  {"claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): pass と書かず、require_script が『ファイルが無い』だけを落とし『空ファイル』『別物』を測っていない点まで明示。P05-x-77 として起票"},
+  {"claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来の書込 0 件 (追加不要と判断したため)。scripts/build-icon-sprite.py 未変更"}
+ ],
+ "findings": [
+  {"id": "F-P04C15-01", "level": "resolved",
+   "summary": "3 面とも充足しており本ノードでの追加は不要。『追加不要』を本数 (10 本) ではなく 3 面それぞれの担当関数の名指しで根拠づけている点で、dispatch 時に指定した判定形式を満たす"},
+  {"id": "F-P04C15-02", "level": "carry-forward",
+   "summary": "本ディレクトリの決定論テストは非決定論の入口 (PYTHONHASHSEED / cwd / timestamp / 絶対パス) を個別に潰す形で、他 component の再現性テスト (多くは 2 回実行のバイト一致のみ) より厳しい。この形を他へ横展開するかは未検討"}
+ ]
+}

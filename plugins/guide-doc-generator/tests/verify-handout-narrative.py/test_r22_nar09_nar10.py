@@ -6,15 +6,15 @@ canonical_rules.granularity_declared_vs_actual、および briefs/RESOLUTION-R22
 
 - NAR-09: root の data-hb-detail-level を読み、role=='main' の全 section の
   可視本文量を section 数で割った 1 セクション平均を実測値とする。
-  detailed 宣言で実測平均が overview 水準の上限以下なら違反、
-  overview 宣言で実測平均が detailed 水準の上限を超えていれば違反。
-  standard は両側に挟まれた帯として通す。
+  実測平均が宣言した水準の予算帯 (min/max) から外れていれば違反で、上振れ
+  (宣言より詳しく書いた) も下振れ (宣言より薄い) も同じ扱い。3 水準すべてが
+  自分の帯で検査される — standard を素通りさせると、既定値を宣言するだけで
+  文章量の検査を外せてしまう (利用者指定 2026-08-19 の調整軸)。
 - NAR-10: root の data-hb-evidence-depth が cited 以上なら role=='main' の
   各 claim ブロックが根拠参照を 1 つ以上内包すること。sourced ではさらに
   各根拠参照が非空の出典表記を持つこと。none は根拠の有無を問わない。
 
-水準の境界値はテーマトークン (無ければ C11 のブリーフ) から読み、テストソースへ
-数値を書かない。
+水準の境界値はテーマトークンから読み、テストソースへ数値を書かない。
 """
 
 from __future__ import annotations
@@ -35,35 +35,39 @@ APPENDIX_ID = "s7"
 
 PLUGIN_ROOT = REPO_ROOT / "plugins" / "guide-doc-generator"
 TOKENS_DIR = PLUGIN_ROOT / "assets" / "tokens"
-BY_DETAIL_KEY = "block_body_max_chars_by_detail_level"
+BY_DETAIL_KEY = "section_body_chars_by_detail_level"
 C11_BRIEF = REPO_ROOT / "plugin-plans" / "guide-doc-generator" / "briefs" / "script-brief-C11.json"
 
 
 def level_limits(tc):
-    """水準別の上限。テーマトークンを優先し、無ければ C11 のブリーフから読む。"""
+    """水準別の節あたり予算 (min/max)。テーマトークンだけを正本とする。
+
+    C11 ブリーフへの代替経路は持たない。ブリーフが持つのは 1 ブロックの上限で
+    単位が違い、そこへ落ちると『通ったが別の値で検査した』状態になる。
+    """
     if TOKENS_DIR.is_dir():
         for path in sorted(TOKENS_DIR.glob("*.json")):
             data = json.loads(path.read_text(encoding="utf-8"))
             limits = (data.get("text_limits") or {}).get(BY_DETAIL_KEY)
             if isinstance(limits, dict) and all(
-                isinstance(limits.get(lv), int) for lv in DETAIL_LEVELS
+                isinstance(limits.get(lv), dict)
+                and isinstance(limits[lv].get("min"), int)
+                and isinstance(limits[lv].get("max"), int)
+                for lv in DETAIL_LEVELS
             ):
-                return {lv: limits[lv] for lv in DETAIL_LEVELS}
-    if not C11_BRIEF.is_file():
-        tc.fail("水準の境界値が読める正本が無い: %s" % C11_BRIEF)
-    values = (
-        json.loads(C11_BRIEF.read_text(encoding="utf-8")).get("theme_token_schema_ownership")
-        or {}
-    ).get("added_block_r22_values")
-    if not isinstance(values, dict):
-        tc.fail("script-brief-C11.json に added_block_r22_values が無い")
-    limits = {}
-    for level in DETAIL_LEVELS:
-        value = values.get(level)
-        if not isinstance(value, int):
-            tc.fail("added_block_r22_values.%s が整数でない: %r" % (level, value))
-        limits[level] = value
-    return limits
+                return {lv: dict(limits[lv]) for lv in DETAIL_LEVELS}
+    tc.fail("テーマトークンに %s (min/max) が無い: %s" % (BY_DETAIL_KEY, TOKENS_DIR))
+
+
+def in_band_chars(limits, level, baseline):
+    """その水準の帯の真ん中へ収まる filler 字数。
+
+    見出し・lead-line など HTML の定型文 (baseline) は filler と別に数えられる。
+    帯の狭い overview では baseline だけで上限へ届くため、テスト側で引いておく
+    (数値の正本はトークン、baseline は実測。どちらもテストに直書きしない)。
+    """
+    band = limits[level]
+    return max(0, (band["min"] + band["max"]) // 2 - baseline)
 
 
 def filler(chars):
@@ -192,6 +196,16 @@ class R22GateTestCase(NarrativeGateTestCase):
             "%s の違反行が stderr に無い\nstderr=%r" % (detection_id, res.stderr),
         )
 
+    def baseline_chars(self):
+        """filler 0 のときの 1 セクション平均。detailed 宣言の違反行から実測する。"""
+        res = self.run_granular("detailed", "none", main_body_chars=0)
+        rows = self.stderr_rows(res, "NAR-09")
+        for row in rows:
+            found = re.search(r"measured_avg_chars=(\d+)", "\t".join(row))
+            if found:
+                return int(found.group(1))
+        self.fail("baseline を実測できない (stderr=%r)" % res.stderr)
+
     def run_granular(self, detail_level, evidence_depth, **kwargs):
         cfg = granular_config(detail_level, evidence_depth)
         html = granular_html(cfg, detail_level, evidence_depth, **kwargs)
@@ -238,24 +252,32 @@ class Nar09DeclaredDetailLevelTest(R22GateTestCase):
 
     def test_detailed_declared_with_detailed_sized_body_passes(self):
         limits = level_limits(self)
-        res = self.run_granular("detailed", "none", main_body_chars=limits["detailed"])
+        res = self.run_granular(
+            "detailed", "none", main_body_chars=in_band_chars(limits, "detailed", self.baseline_chars()))
         self.assert_detection_pass(res, "NAR-09")
 
     def test_overview_declared_with_detailed_sized_body_is_violation(self):
         limits = level_limits(self)
-        res = self.run_granular("overview", "none", main_body_chars=limits["detailed"] * 2)
+        res = self.run_granular("overview", "none", main_body_chars=limits["detailed"]["max"] * 2)
         self.assert_detection_fail(res, "NAR-09")
 
     def test_overview_declared_with_small_body_passes(self):
         res = self.run_granular("overview", "none", main_body_chars=0)
         self.assert_detection_pass(res, "NAR-09")
 
-    def test_standard_is_a_wide_band_on_both_sides(self):
+    def test_standard_is_checked_on_both_sides(self):
+        """既定値の宣言で検査を外せない (両側とも自分の帯で見る)。"""
         limits = level_limits(self)
-        for chars in (0, limits["detailed"] * 2):
+        for chars in (0, limits["detailed"]["max"] * 2):
             with self.subTest(main_body_chars=chars):
                 res = self.run_granular("standard", "none", main_body_chars=chars)
-                self.assert_detection_pass(res, "NAR-09")
+                self.assert_detection_fail(res, "NAR-09")
+
+    def test_standard_declared_with_standard_sized_body_passes(self):
+        limits = level_limits(self)
+        res = self.run_granular(
+            "standard", "none", main_body_chars=in_band_chars(limits, "standard", self.baseline_chars()))
+        self.assert_detection_pass(res, "NAR-09")
 
     def test_average_not_total(self):
         """セクション数が多いだけで detailed 判定にならない。"""
@@ -268,7 +290,7 @@ class Nar09DeclaredDetailLevelTest(R22GateTestCase):
         """実測は role=='main' の平均。付録を膨らませても detailed にならない。"""
         limits = level_limits(self)
         res = self.run_granular(
-            "detailed", "none", main_body_chars=0, appendix_body_chars=limits["detailed"] * 10
+            "detailed", "none", main_body_chars=0, appendix_body_chars=limits["detailed"]["max"] * 10
         )
         self.assert_detection_fail(res, "NAR-09")
 
@@ -300,7 +322,7 @@ class Nar09NumbersLiveInTheThemeTokenTest(R22GateTestCase):
         for level in ("overview", "detailed"):
             with self.subTest(level=level):
                 self.assertIsNone(
-                    re.search(r"(?<![\w.])%d(?![\w.])" % limits[level], src),
+                    re.search(r"(?<![\w.])%d(?![\w.])" % limits[level]["max"], src),
                     "水準の境界値 %s が script へ埋め込まれている" % level,
                 )
 
@@ -405,7 +427,7 @@ class GranularityAxesAreIndependentAtTheGateTest(R22GateTestCase):
         res = self.run_granular(
             "detailed",
             "cited",
-            main_body_chars=limits["detailed"],
+            main_body_chars=in_band_chars(limits, "detailed", self.baseline_chars()),
             claims_per_main=1,
             claim_options=options,
         )
@@ -415,9 +437,9 @@ class GranularityAxesAreIndependentAtTheGateTest(R22GateTestCase):
     def test_all_nine_declarations_are_accepted_by_the_gate(self):
         """9 通りの宣言そのものを不正扱いしない (禁止の対は無い)。"""
         limits = level_limits(self)
+        baseline = self.baseline_chars()
         for level in DETAIL_LEVELS:
-            chars = {"overview": 0, "standard": limits["standard"],
-                     "detailed": limits["detailed"]}[level]
+            chars = in_band_chars(limits, level, baseline)
             for depth in EVIDENCE_DEPTHS:
                 with self.subTest(detail_level=level, evidence_depth=depth):
                     res = self.run_granular(

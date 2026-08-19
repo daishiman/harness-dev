@@ -49,7 +49,7 @@ errors 0 / failures 26。import 例外や `setUpClass` の例外で落ちる構�
 | `AC-C07-2` | 用途種別の語彙 8 語が command 定義に 1 件も現れない。`resolve-handout-preset.py --list` を候補提示の手段として案内する | B `acceptance_checks[AC-C07-2]`, B `arguments[--doc-type]`, C42 |
 | `AC-C07-3` | --theme の 3 点 (構成データにテーマ欄が無い場合のみ有効 / 採用値は同梱構成データへ書き戻される / 再現の単位は同梱構成データ) + 書き戻しの実行者が `render-handout.py` (C11) であることの名指し | B `acceptance_checks[AC-C07-3]`, B `arguments[--theme]` |
 | `AC-C07-DATE` | 正本書式 yyyy/mm/dd + 寛容書式 3 種の素通し / command は書式判定しない / command も skill も自前で現在日を取得しない / 単一 writer は `validate-handout-config.py --normalize` | B `arguments[--date]`, B `open_questions[1]` (X-01 決着) |
-| `AC-C07-OUTDIR` | 親ディレクトリだけを上書き / `<YYYY-MM-DD>-<種別>-<主題slug>/` の命名規則は上書き不可 / 導出は `route-handout-output.py` (C19) | B `arguments[--out-dir]`, R17 |
+| `AC-C07-OUTDIR` | 親ディレクトリだけを上書き / `dir_name_format` (C19 正本) 由来の命名規則は上書き不可 / 導出は `route-handout-output.py` (C19) | B `arguments[--out-dir]`, R17 |
 | `AC-C07-CONFIG` | 存在と JSON 可読性だけを Read で確認 / 内容の妥当性は判定しない (C12 の責務) / 構成データが常に CLI フラグより強い正本 | B `arguments[--config]`, B `behavior[3]` |
 | `AC-C07-4` | `Skill(run-handout-build, args="$ARGUMENTS")` の形で委譲 / 委譲先 build_target の明記 / C01 が skill として実在し build_target が一致 | B `delegates_to`, B `delegation_form`, B `acceptance_checks[AC-C07-4]`, I#C01 |
 | `AC-C07-5` | --config あり = 非対話経路 (ヒアリング省略で R2-design へ)、--config なし = ヒアリング駆動。「対話は既定経路であって唯一経路ではない」の明記 | B `acceptance_checks[AC-C07-5]`, B `behavior[2]`, S `boundary` |
@@ -61,7 +61,8 @@ errors 0 / failures 26。import 例外や `setUpClass` の例外で落ちる構�
 | `AC-C07-FM-3` | 語彙外 --doc-type は C23 の exit≠0 を受けて停止し候補提示を案内する | B `failure_modes[2]` |
 | `AC-C07-FM-4` | 衝突はキーパスと両方の値を示して停止。黙って無視も上書きもしない | B `failure_modes[3]` |
 | `AC-C07-FM-5` | ゲート exit≠0 は生成物を残したまま FAIL を明示し、成功と読める要約を書かない | B `failure_modes[4]`, S `feedback_contract[OUT1]` |
-| `AC-C07-FM-6` | slide-report-generator 不在は skip 理由つき報告 + 他ステップ完走 (fail-soft) | B `failure_modes[5]`, C18 |
+| `AC-C07-FM-6` | 出力先 4 段が解決できないときは C19 exit 2 で停止し、試した 3 段と `--out-dir` / `HB_OUT_DIR` を案内 (既定を推測しない) | B `failure_modes[5]`, C19 |
+| `AC-C07-FM-7` | slide-report-generator 不在は skip 理由つき報告 + 他ステップ完走 (fail-soft) | B `failure_modes[6]`, C18 |
 | `AC-C07-REPORT` | 生成レポートの 5 要素 (出力ディレクトリ / 同梱 4 点 / 適用部品 / 埋め込みサイズと warning / 各ゲートの結果) を加工せずそのまま提示 | B `behavior[6]` |
 | `AC-C07-THEME-NOTICE` | --theme 採用時に「以後の再現は同梱構成データ 1 点で足り、--theme の再指定は不要」と伝える | B `behavior[7]` |
 
@@ -69,7 +70,7 @@ errors 0 / failures 26。import 例外や `setUpClass` の例外で落ちる構�
 
 - **引数既定値と上書きの解決結果** → `AC-C07-ARGS` (6 引数の表) + 個別の
   `AC-C07-CONFIG` / `AC-C07-OUTDIR` / `AC-C07-3` / `AC-C07-DATE`。
-- **委譲先不在時の縮退** → `AC-C07-FM-6` (任意依存 slide-report-generator の
+- **委譲先不在時の縮退** → `AC-C07-FM-7` (任意依存 slide-report-generator の
   fail-soft skip) と `AC-C07-4` / `BuildTargetLayoutTest.test_delegate_skill_exists`
   (必須依存 C01 skill の不在は縮退させず未達として落とす)。任意依存と必須依存で
   縮退の可否が逆であることを 2 つの契約に分けて固定した。

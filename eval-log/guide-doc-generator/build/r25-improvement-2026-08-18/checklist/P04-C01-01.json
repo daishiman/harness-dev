@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C01-01",
+ "covered_task_ids": [
+  "P04-C01-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/run-handout-build/",
+ "verified_by": [
+  {
+   "claim": "task-graph の acceptance_criterion が dispatch 本文と食い違っており、報告が合わせに行かず両方測った",
+   "method": "dispatcher が task-graph.json:398-407 を直読みし報告と突合",
+   "result": "pass(=最も重要な報告): graph の AC は『受入例と非受入例を判定できる固定入力 / 出力契約の項目欠落を落とす検査』であり、dispatch 本文が渡した 3 面 (違反系 exit1 / argv と exit code 契約 / 再現性) の語は graph に存在しない。報告はこの差分を冒頭に置き、graph の 2 面 (既に充足) と dispatch の 3 面の両方を測った。指示に合わせて事後正当化せず食い違いごと報告する形が守られている"
+  },
+  {
+   "claim": "3 面のうち argv と再現性が実際に空だった",
+   "method": "dispatcher が報告の事前実測 (grep) と、既存 53 本が収束する判定器の性質を突合",
+   "result": "pass: 事前実測で argv / exit_code / subprocess が 0 件、再現 / twice / idempot / reproduc / stable / seed / random / hash も 0 件。determin / 決定 のヒットは全て『決定論 script 委譲』(AC-C01-10 / AC-C01-20) で再現性ではなかった。これは本 cycle で反復している『語の一致を面の充足と読む』型の実例で、報告がそれを自ら名指ししている。既存 53 本は全て contract_lib.check_skill(skill_dir) へ収束する in-process の Markdown 宣言検査で、プロセスを起動しない。よって 0 件はイディオムの見落としでなく構造的な事実"
+  },
+  {
+   "claim": "skill kind における argv / exit code の対応物の定義が妥当",
+   "method": "dispatcher が 3 択 (a)/(b)/(c) の回答と、その根拠となる他 component の tests/ 実測を確認",
+   "result": "pass(=面を argv と exit code に割った判断を受理): argv は (a) 対応物あり。skill 自身は argv を受けないが『SKILL.md が script 名と同じ行に書いたフラグがその script の argparse に実在すること』は機械検査でき、SKILL.md:188 / :200 の 3 フラグで実在を確認、変異注入 (--nope) で赤になることも確認済み。exit code は (b) 過剰一般化と判定。理由が『Markdown だから測れない』でなく『C01 の tests/ で測ると verify-handout-language.py の exit 契約の owner が C18 と C01 の 2 つになる』という第 2 正本回避であり、本 cycle が F-P03-03 / RG-04 / F-C06-04 で畳んできた型と整合する。(b) で終わらせず『C01 が exit code の意味を再定義していないこと』を残余として検査した点も妥当"
+  },
+  {
+   "claim": "正本リテラルの写しが実在し、しかも危険な形だった",
+   "method": "dispatcher が報告の摘発内容を確認",
+   "result": "pass(=罠 4 の実害が具体化した): max_loops: 5 が 3 ファイル 4 箇所に写っていた (contract_lib.py:56 / reject_cases.py:75-76 / test_predicate_scope.py:125,:130)。単なる重複でなく、正本が 4 に変わると 1 点変異注入の『注入前』と『注入後』が両方とも誤った値になり、AC-C01-6 の検査が『注入前も落ちる』状態で黙って空振りする。fail-open 族の変種であり、component-inventory.json#C01 goal_seek からの導出 + NoLiteralCopyOfCanonTest による退行検出への置換は正しい"
+  },
+  {
+   "claim": "追加テストが空ゲートでないことを変異で実測している",
+   "method": "dispatcher が報告の変異検証と、対象ディレクトリでの独立実行を確認",
+   "result": "pass: Ran 64 tests / OK (53 → +11)。報告の件数と完全一致。単点変異 4 件 (--bogus を GATE_ARGV へ / SKILL.md の R5-refine 禁止条項を削る / exit code の意味づけ文を足す / 存在しないフラグを script 名の隣へ書く) がすべて期待どおり赤になることを確認済み。『緑のテストが何も測っていない』を排除する手順が実行されている"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): pass と書かず再現不能と記録し、代理として空 tmpdir を build_target と見立てた UnimplementedBuildTargetSurrogateTest を置き、代理であることを docstring と README に明記している。既存の assertContract() (test_run_handout_build_skill.py:32-42) が build_target 不在時に明示 fail する機構の実在も併記されており、必要条件と十分条件を混ぜていない"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/run-handout-build/ 配下の 4 パス (contract_lib.py / reject_cases.py / test_predicate_scope.py / README.md の変更 + test_argv_and_reproducibility.py の新規)。scripts/ には 1 バイトも書いていない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C01-01",
+   "level": "blocking-for-release",
+   "summary": "task-graph の acceptance_criterion と dispatch 本文で測るべき面が食い違っている。graph は component_kind ごとに別の 2 面しか名指ししておらず (C01=受入例/非受入例・出力契約の項目欠落、C09=引数既定値と上書き・委譲先不在時の縮退、C10=発火/素通し)、『argv と exit code 契約』『再現性』は graph 上に存在しない。本ノードは両方測ったので実害は出なかったが、graph だけを読む後続ノードは 3 面を測らない。graph 側へ 3 面を書くか dispatch 側を graph へ揃えるかの裁定が要る。P05-x-87"
+  },
+  {
+   "id": "F-P04C01-02",
+   "level": "carry-forward",
+   "summary": "『決定論 script 委譲』という語のヒットを再現性の面の充足と読める構造がある。本ノードでは C01 / C09 とも再現性が空だったが、事前 grep では determin / 決定 が多数ヒットしていた。他の P04 ノードが同じ読み違いをしている可能性が高い。P04 全体での横断確認が要る。P05-x-88"
+  },
+  {
+   "id": "F-P04C01-04",
+   "level": "blocking-for-release",
+   "summary": "【本エントリの訂正】上記 verified_by の『追加テストが空ゲートでないことを変異で実測している』は、再現性面については成立しない。orange の独立 spike (audit/P05-x-100-portability-spike.json) が実リポジトリで測ったところ、C01 の CheckerReproducibilityTest が比較しているのは build_target・accept fixture とも violations=0 すなわち [] == [] であり、複製ツリーで check_skill へ random.shuffle(v) を注入しても Ran 11 tests / OK のままだった。判定器が実際に非決定化していること (同一入力で violation count=26 / all identical? False) は別途裏取り済みなので、変異が死んでいるのではなくテストが捕まえていない。dispatcher が pass と記録した根拠は argv 3 件 + SKILL.md 禁止条項 1 件の 4 変異で、これらは実際に赤になるため誤りではないが、再現性面だけは変異検証の対象外だった。すなわち『変異で実測した』が面ごとに成立したりしなかったりする状態を、面を区別せず 1 つの pass に畳んでいた。本 cycle の測定失敗族に『検証の粒度が主張の粒度より粗い』という型を追加する。P05-x-123 / P05-x-124"
+  },
+  {
+   "id": "F-P04C01-03",
+   "level": "resolved",
+   "summary": "罠 4 (正本リテラルの写し) が本 cycle で初めて『空ゲート化する具体的経路』として実証された。max_loops の写しは、正本が変わると 1 点変異検査の注入前後が両方誤りになり検査が黙って空振りする。写しの害を『値が古くなる』でなく『検査が成立しなくなる』として記述できたのは本ノードが初めてで、他の写しの棚卸し優先度を上げる根拠になる"
+  }
+ ]
+}

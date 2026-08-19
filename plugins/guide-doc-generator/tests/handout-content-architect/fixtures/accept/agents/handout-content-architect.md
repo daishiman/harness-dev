@@ -33,7 +33,7 @@ last-audited: 2026-08-17
 
 | 入力 | 内容 |
 | --- | --- |
-| hearing_result | reader / prior_knowledge_level / usage_scene / essential_problem / background / overall_goal / duration_or_volume / section_outline の 8 項目に、focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / presentation_order を加えた 14 項目 |
+| hearing_result | reader / prior_knowledge_level / usage_scene / essential_problem / background / overall_goal / section_outline の 7 項目に、focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / presentation_order を加えた 13 項目 |
 | preset | 親が解決済みの用途別プリセット JSON |
 | materials | 素材の論理名と用途メモ |
 | theme / date | 任意。渡されたときだけ写す |
@@ -97,8 +97,7 @@ section_summary は要約であって正本ではない。
 - 機能解説は capability-explainer とし、parts[].slot を outcome → breakdown → feature の
   順に与える。lead_line を機能名から始めない。
 - attainment_level を超える内容のセクションを作らない。
-- dialogue 枠と handson (config/handout-parts.json で data_block_type=handson を持つ部品) と anticipated-qa を preset の required に従って置き、
-  各セクションへ duration を書く。
+- dialogue 枠と handson (config/handout-parts.json で data_block_type=handson を持つ部品) と anticipated-qa を preset の required に従って置く。
 - presentation_order は自分で導出しない。null なら構成データにも書かず、規則 CR-PRESENTATION-ORDER
   を持つ C12 の導出に委ねる。明示上書きが渡ったときだけそのまま写す。
 - date が入力に無ければ日付フィールドを出力しない。既定充填は C12 の --normalize に委ねる。

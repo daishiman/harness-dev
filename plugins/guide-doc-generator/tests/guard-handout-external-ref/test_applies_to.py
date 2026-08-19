@@ -5,7 +5,7 @@
   (2) tool_input から書込先パスが取れる
   (3) 拡張子が .html (大小文字無視)
   (4) 同ディレクトリに handout-config.json がある
-  (5) ディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}- に一致する
+  (5) ディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}(?!\\d) に一致する (区切り文字は問わない)
 外れた時点で exit0 (素通し)。
 
 各テストは「その条件だけを外した違反入り HTML」を渡す。
@@ -183,7 +183,7 @@ class TestCondition4ConfigMarker(C10TestCase):
 
 
 class TestCondition5DirectoryName(C10TestCase):
-    """(5) ディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}- に一致する。"""
+    """(5) ディレクトリ名が ^\\d{4}-\\d{2}-\\d{2}(?!\\d) に一致する。"""
 
     def _run_in(self, dirname):
         return self.run_on(external_html(), dirname=dirname)
@@ -209,12 +209,42 @@ class TestCondition5DirectoryName(C10TestCase):
     def test_date_not_at_prefix_passes_through(self):
         self.assertPassSilently(self._run_in("lecture-2026-08-17-x"))
 
-    def test_date_without_trailing_hyphen_passes_through(self):
-        """正規表現は末尾のハイフンまでを要求する。"""
-        self.assertPassSilently(self._run_in("2026-08-17"))
+    def test_date_only_directory_is_in_scope(self):
+        """日付だけのディレクトリ名も対象。
+
+        旧規則 ^\\d{4}-\\d{2}-\\d{2}- は末尾ハイフンを必須にしていたため、
+        ここは以前『素通し』を期待していた。R25 (applies_to.rule /
+        separator_agnostic_rationale) がその要求を撤回し、日付の直後の
+        区切り文字は問わない ^\\d{4}-\\d{2}-\\d{2}(?!\\d) になったので、
+        旧期待値は撤回済み契約を守る fail-open だった。
+        """
+        self.assertBlocked(self._run_in("2026-08-17"), D1)
 
     def test_date_only_with_hyphen_is_in_scope(self):
         self.assertBlocked(self._run_in("2026-08-17-"), D1)
+
+    def test_r25_underscore_separator_is_in_scope(self):
+        """acceptance_checks[13]: R25 の新書式 {date}_{slug} が対象であること。
+
+        applies_to.in_scope_examples の 1 件目そのもの。旧規則ではここが
+        素通しになり、資料出力ディレクトリ全体が恒久的に無音になっていた。
+        """
+        self.assertBlocked(self._run_in("2026-08-18_KPI進捗管理の業務フロー"), D1)
+
+    def test_r25_old_format_is_still_in_scope(self):
+        """acceptance_checks[14]: 旧書式も対象であり続ける (両立すること)。"""
+        self.assertBlocked(self._run_in("2026-08-17-lecture-xxx"), D1)
+
+    def test_serial_digits_after_date_pass_through(self):
+        """(?!\\d) の境界: 2026-08-180... は日付ではないので対象外。
+
+        acceptance_checks[15] の『先頭が日付でないディレクトリ』側。
+        """
+        self.assertPassSilently(self._run_in("2026-08-180-serial"))
+
+    def test_draft_prefix_passes_through(self):
+        """acceptance_checks[15]: 日付が先頭でなければ対象外 (draft-2026-08-18_x)。"""
+        self.assertPassSilently(self._run_in("draft-2026-08-18_x"))
 
 
 class TestOutOfScopeExamples(C10TestCase):

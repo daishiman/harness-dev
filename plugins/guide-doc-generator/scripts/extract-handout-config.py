@@ -138,7 +138,6 @@ ATTR_ATTAINMENT_STEP = "data-hb-attainment-step"
 ATTR_KEY = "data-hb-key"
 ATTR_OWNER = "data-hb-owner"
 ATTR_DUE = "data-hb-due"
-ATTR_TIME = "data-hb-time"
 ATTR_SRC = "data-hb-src"
 ATTR_ASSET_ID = "data-hb-asset-id"
 ATTR_ASSET_ALT = "data-hb-asset-alt"
@@ -167,6 +166,8 @@ DOC_META_ATTRS = (
     # 経た実効テーマなので、著者が theme 欄を書かなかった資料でも値が入り、
     # 読み戻すと「書いていない」が「書いた」に化ける。
     ("theme", "data-hb-config-theme", False),
+    # 日付は紙面に出さない (C11 build_doc_head)。可視要素ではなく root 属性で運ぶ。
+    ("date", "data-hb-date", True),
     ("reader", "data-hb-meta-reader", True),
     ("prior_knowledge_level", "data-hb-meta-knowledge", True),
     ("essential_problem", "data-hb-meta-problem", True),
@@ -186,29 +187,42 @@ DOC_TYPED_ATTRS = (
 # data-hb-field の値 → 構成データのフィールド名 (文書スコープ / セクションスコープ)
 DOC_FIELDS = (
     ("title", "title", True),
-    ("date", "date", True),
     ("purpose", "purpose", True),
     ("background", "background", True),
     ("goal", "goal", True),
-    ("duration", "duration", True),
+    ("lead", "lead", False),
     ("attainment_level", "attainment_level", True),
 )
 # 同じ data-hb-field 値が複数回現れ、文書順の配列として復元する項目 (R21)。
 DOC_LIST_FIELDS = (
+    # 達成目標チップ。1 チップ 1 マーカーで刻まれるため文書順の配列として戻る。
+    ("goal_chips", "goal_chips", False),
     ("focus_theme", "focus_theme", True),
     ("must_remember", "must_remember", True),
     ("no_need_to_remember", "no_need_to_remember", True),
 )
+# 上 2 表のうち、著者が書かなければ C11 が要素そのものを描かない項目。
+# マーカーが無いのは「復元できなかった」ではなく「その資料には無かった」であり、
+# gap として数えない。数えると、完全に復元できた資料が毎回 W-EXTRACT-OPTIONAL を
+# 吐き、警告が『見なくてよいもの』へ退化する (schema でも required に無い)。
+# required=False との違いは、False が「常に刻まれるはずの任意項目」を指すこと。
+ABSENCE_IS_NOT_A_GAP = frozenset({"lead", "goal_chips"})
 # 反復要素の配列。id は data-hb-key が、表示文言は要素本文が運ぶ。
 DOC_ENTRY_FIELDS = (
     ("target_task", "target_tasks", "label", True),
+)
+# 反復要素のうち、復元するのが key だけの配列。表示されている文言は別の正本
+# (config/handout-vocabulary.json) が持っており、読み戻すと構成データ側に
+# 同じ表記の第 2 の出所ができる。note だけは語彙に無い著者記述なので本文から拾う。
+DOC_KEY_ONLY_ENTRY_FIELDS = (
+    ("prerequisite_connector", "prerequisite_connectors", "connector",
+     "prerequisite_connector_note", "note", False),
 )
 SECTION_FIELDS = (
     ("heading", "heading", True),
     ("section_goal", "goal", True),
     ("lead_line", "lead_line", True),
     ("judgment_axis", "judgment_axis", True),
-    ("section_duration", "duration", False),
 )
 
 GLOSSARY_SCOPE_SECTION = "section"
@@ -756,6 +770,10 @@ class Extractor(object):
             nodes = found_nodes.get(marker)
             if nodes:
                 config[field] = text_value(nodes[0])
+            elif field in ABSENCE_IS_NOT_A_GAP:
+                # キー自体を置かない。null を置くと「書いていない」が「null と
+                # 書いた」になり、schema の型検査 (string) が読み戻し側だけで落ちる。
+                pass
             else:
                 config[field] = None
                 self.gap("/" + field, "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker),
@@ -764,9 +782,11 @@ class Extractor(object):
         for marker, field, required in DOC_LIST_FIELDS:
             nodes = found_nodes.get(marker)
             if nodes is None:
-                config[field] = None
-                self.gap("/" + field, "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker),
-                         required)
+                if field not in ABSENCE_IS_NOT_A_GAP:
+                    config[field] = None
+                    self.gap("/" + field,
+                             "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker),
+                             required)
             else:
                 config[field] = [text_value(n) for n in nodes]
 
@@ -784,6 +804,33 @@ class Extractor(object):
                     self.gap("/" + field, "%s の id を運ぶ %s が無い" % (field, ATTR_KEY), required)
                     continue
                 entries.append({"id": nfc(key), text_field: text_value(entry_node)})
+            config[field] = entries
+
+        for (marker, field, key_field, note_marker, note_field,
+             required) in DOC_KEY_ONLY_ENTRY_FIELDS:
+            nodes = found_nodes.get(marker)
+            if nodes is None:
+                # 任意配列は assets 等と同じ扱いにする。無いときに null を置くと
+                # 「キーごと書かなかった構成データ」と差が出て round-trip が
+                # DIFFERENT になる。穴としても数えない — 著者が 1 件も書かなかった
+                # 資料と、印が落ちた資料を、この位置では区別できないうえ、前者が
+                # 通常であり後者は round-trip 比較が差分として捕らえる。
+                if required:
+                    config[field] = None
+                    self.gap("/" + field,
+                             "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker), True)
+                continue
+            entries = []
+            for entry_node in nodes:
+                key = entry_node.attr(ATTR_KEY)
+                if key is None or key == "":
+                    self.gap("/" + field, "%s の id を運ぶ %s が無い" % (field, ATTR_KEY), required)
+                    continue
+                entry = {key_field: nfc(key)}
+                note_node = self.first_descendant_field(entry_node, note_marker)
+                if note_node is not None:
+                    entry[note_field] = text_value(note_node)
+                entries.append(entry)
             config[field] = entries
 
         for key in UNMARKED_DOCUMENT_KEYS:
@@ -845,6 +892,20 @@ class Extractor(object):
             if marker is not None:
                 found.setdefault(marker, []).append(child)
             self.collect_field_nodes(child, found, stop_at_section)
+
+    def first_descendant_field(self, node, marker):
+        """要素の内側から data-hb-field=marker を 1 件だけ引く。
+
+        but 書きは項目の内側に置かれるため、文書全体を走査すると別の項目の
+        but 書きを拾う。親を限定した探索が要る。
+        """
+        for child in node.elements():
+            if child.attr(ATTR_FIELD) == marker:
+                return child
+            found = self.first_descendant_field(child, marker)
+            if found is not None:
+                return found
+        return None
 
     def collect_fields(self, node, found, stop_at_section):
         for child in node.elements():

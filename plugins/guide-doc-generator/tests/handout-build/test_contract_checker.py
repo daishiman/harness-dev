@@ -85,6 +85,7 @@ class TestRejectFixtures(unittest.TestCase):
             "AC-C07-FM-4",
             "AC-C07-FM-5",
             "AC-C07-FM-6",
+            "AC-C07-FM-7",
             "AC-C07-REPORT",
             "AC-C07-THEME-NOTICE",
         }

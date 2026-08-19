@@ -178,8 +178,15 @@ plugin_meta:
 | C57 | 覚えていただきたいこと と 覚えなくてよいこと を対で明示する | C12 (E-REMEMBER-PAIR / E-REMEMBER-MAX) / C01 ヒアリング / C11 両方描画 / P04・P05 |
 | C58 | 達成したい具体業務をヒアリング必須項目とし各セクションの紐づけを検査する | C01 R1-elicit (項目正本) / C12 (E-TARGET-TASKS-EMPTY / E-SECTION-UNTIED-TASK) / P04・P05 |
 | C59 | 悩み・やりたいことを聞く対話枠を必須化し所要時間の下限割合を確保する | C12 (E-SECTIONKIND-DURATION-SHARE。時間の正本は section.duration 1 点) / `config/handout-sections.json` dialogue / P04・P05 |
+| C60 | JS・CSS・画像・フォント・添付ファイルの全参照を許可列挙 (allowlist) 方式で検査し data: 以外を一律違反とする単一 HTML 完結の拡張検査 | C16 自己完結検査 (allowlist 方式へ拡張) / P04・P05・P09 |
+| C61 | detail_level (overview/standard/detailed) を必須フィールドとして持ち、用途プリセットは既定値のみを与え provenance を記録する | C12 (`document_level_fields` / `CR-GRANULARITY-PRESET-DEFAULT-ONLY`) / C23 (`granularity_defaults`) / P04・P05 |
+| C62 | evidence_depth (none/cited/sourced) を detail_level と直交する独立軸として必須フィールドに持つ | C12 (`CR-GRANULARITY-ORTHOGONAL`) / P04・P05 |
+| C63 | detail_level が C52 のブロック本文文字数上限を決定論的に modulate し、正本はテーマトークン 1 箇所に留める | C11 (テーマトークン `text_limits.block_body_max_chars_by_detail_level` が数値の正本) / C12 (`CR-DETAIL-TEXT-BUDGET` で適用) / P04・P05 |
+| C64 | ヒアリングで detail_level / evidence_depth を確定し、既定値を提示したうえで上書きの要否のみを聞き無回答でも停止しない | C01 (`responsibilities[R1-elicit].hearing_required_items_r22`、required:false) / P04・P05 |
+| C65 | detail_level を変えて生成しても C44 の共有の型が全水準で保持され、差分が記述量と展開/畳み込みに限定される | C11 (既存 C44 不変条件を水準横断で固定) / P04・P07 |
+| C66 | 宣言した detail_level / evidence_depth と生成物の実態が一致することを機械検査し、宣言だけで実態が伴わない資料を通さない | C22 (`NAR-09` / `NAR-10` / `granularity_declared_vs_actual`) / P04・P09 |
 
-> R21 (C46-C59) の 14 項目については、担い手 component と検証手段の一覧・判断根拠を `briefs/RESOLUTION-R21.md` に置く。23 component の数は変えていない (全て既存 component への責務追加として解決した)。
+> R21 (C46-C59) の 14 項目については、担い手 component と検証手段の一覧・判断根拠を `briefs/RESOLUTION-R21.md` に置く。C60 ([R01拡張] 単一 HTML 完結検査の allowlist 化) は C16 の既存責務の拡張として解決した。R22 (C61-C66) の 6 項目については `briefs/RESOLUTION-R22.md` に置く。23 component の数は変えていない (全て既存 component への責務追加として解決した)。
 
 ## 受入確認
 
@@ -198,5 +205,16 @@ plugin_meta:
 | 用途に合った型で始められる | 6 用途のいずれを選んでも既定のセクション構成が用意され、共有の型は保たれる (要件 C36, C41, C43, C44) | プリセット解決 (C23) + 構成データ検証 (C12) |
 | 語彙が 1 箇所で管理される | 用途種別を 1 つ追加したとき、命名と プリセットの双方が正本の変更だけで追従する (要件 C42, C45) | 語彙正本 (C23) + 目録の追加要求判定 |
 | 委譲先が無くても止まらない | 画像生成の委譲先が不在の環境で、画像ステップのみ skip して資料が完成する (要件 C17, C18) | 委譲アダプタ (C21) の縮退動作 |
+| 冒頭で全体像と達成目標を 1 行で掴める | 資料冒頭に lead (1 行宣言) と goal_chips (達成目標の札) が描画され、E-KEY-UNKNOWN が出ない (要件 C67) | レンダラ (C11) 既描画 + schema 受理 (C12) |
+| 図解が実際に配線され散文へ逃げない | 8 プリセット全ての main セクション 1 件ずつに DIAGRAM が最低 1 件配線され、密度不足は error で止まる (要件 C68) | プリセット (C23) + 密度ゲート error 化 (C12・`visual-per-section-decision.json`) |
+| 実画面・概念図の挿絵が第1稿から入る | draft_first でも挿絵生成委譲 (C21) が起動し、全 8 プリセットの全 main セクションで role=screenshot/illustration の IMG が配線される (要件 C69) | 委譲アダプタ (C21) + プリセット (C23) + 生成 skill (C01) R3-render |
+| どの用途で始めても最初に全体像がある | 全 8 doc_type の最初の main セクションが timeline/map/thesis のいずれかで、抜けは error で止まる (要件 C70) | プリセット (C23) + 構成データ検証 (C12) |
+| 1 セクション = 1 カードで構造が崩れない | 各セクションに番号・見出し・所要時間または件数のラベルがあり、list/table 系部品を最低 1 件持つ (要件 C71) | レンダラ (C11) 既描画 + 構造化検査 (C12) + 往復契約維持 (C20) |
+| 出力ディレクトリが読める日本語名になる | `{date}_{日本語命名}` 形式でディレクトリが作られ、大文字小文字と非日本語タイトルがそのまま保たれる (要件 C72) | 出力ルーティング (C19) の slug 正本一本化 |
+| 文章が長ったらしく何行も続かない | 1 文 60 字・1 本文 3 文・折り畳み逃避 0 件を全て error で検査し、exit 0 で通る経路が無い (要件 C73) | 構成データ検証 (C12) の長文ゲート error 化 (`text-length-gate-decision.json`) |
+| 冒頭の資料レベル記述がカードとして構造化され読み取りやすい | 目的/背景/ゴールが hero-card 要素へ変わり、箇条書きに見出しが付き、hero の文字数/文数上限が error で検査され (既存値 60/80/50/40・合計 400、+ 文数上限 1/1/1/2)、列挙値の生表示が E-ENUM-RAW で検出され表示語彙へ変換される (要件 C74) | レンダラ (C11) の hero-card 描画 + 構成データ検証 (C12) の長文ゲート拡張 (`hero-card-decision.json`) + 言語検査 (C18) の E-ENUM-RAW |
+| 外部コネクタの利用前提が資料冒頭で分かる | prerequisite_connectors を宣言すると『前提』カードが描かれ、語彙正本 (Google Drive / OneDrive / kintone の 3 種、拡張可能) に無いコネクタ名は E-CONNECTOR-UNKNOWN で検証ゲートが止まる (要件 C75) | レンダラ (C11) の前提カード描画 + 構成データ検証 (C12) の E-CONNECTOR-UNKNOWN |
 
 build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たすプラグインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。
+
+> R25 (改善 2026-08-18・goal-spec C67-C73) の 7 項目については、担い手 component と確定値の正本 (`improvement/diagram-gate-decision.json` / `improvement/output-naming-decision.json` / `improvement/text-length-gate-decision.json`) の一覧・判断根拠を `briefs/RESOLUTION-R25-improvement-2026-08-18.md` に置く。23 component の数は変えていない (全て既存 component への責務追加として解決した)。最優先は C73 (長文の完全排除) であり、長文系検査は全て error 化し exit 0 で通る経路を残さない。REQ-8/REQ-9 (goal-spec C74/C75、2026-08-18 追補) の 2 項目については、確定値の正本 `improvement/hero-card-decision.json` に一覧・判断根拠を置く。

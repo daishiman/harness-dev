@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C10-01",
+  "reason": "F-P04C12-01 (test_r21_text_fold.py) と同型の『検査が誤った契約を能動的に守る』2 例目。しかも当該 suite には _ 区切り (R25 書式) の fixture が 1 件も存在しない (grep 済み)。撤回済み挙動を守るテストはあるのに新契約の回帰テストが無い、という非対称",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-C10.json",
+  "proposed_node": {
+    "id": "P05-x-106",
+    "title": "撤回済み契約を守るテスト test_date_without_trailing_hyphen_passes_through を撤回する",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": "C10",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+    "acceptance_criterion": "『日付の直後がハイフンでなければ素通し』を期待値として固定するテストが存在しないこと。R25 書式 2026-08-18_日本語名 が適用対象になることを固定する回帰テストが同 suite に存在すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C10"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

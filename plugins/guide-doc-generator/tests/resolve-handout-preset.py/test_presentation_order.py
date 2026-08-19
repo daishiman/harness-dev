@@ -163,5 +163,56 @@ class VariantValidationTest(unittest.TestCase):
         self.assertIn("E-PRESET-ORDER-KEYS", H.err_text(proc), H.describe(proc))
 
 
+class VariantCoverageTest(unittest.TestCase):
+    """VariantShapeTest が空振りしていないことを固定する。
+
+    VariantShapeTest の 2 本は `variants is None` の preset を continue で飛ばす。
+    variants を持つ preset は測定時点で 8 件中 1 件しかないため、その 1 件から
+    variants が消えると 2 本とも「0 件を検査して緑」になる。検出コードが実在する
+    ことと、その検出が実際に何かを見ていることは別である
+    (C59 の share 検査が対象節 0 件のとき素通りしていたのと同じ形)。
+
+    どの preset が variants を持つべきかの正本は brief の preset_definitions で、
+    出荷 catalog はその写しである。ここでは件数のリテラルを書かず、
+    正本から実測して突き合わせる。
+    """
+
+    C23_BRIEF = H.REPO_ROOT / "plugin-plans" / "guide-doc-generator" / "briefs" / "script-brief-C23.json"
+
+    def canon_carriers(self):
+        if not self.C23_BRIEF.is_file():
+            self.fail("正本が読めない: {}".format(self.C23_BRIEF))
+        data = json.loads(self.C23_BRIEF.read_text(encoding="utf-8"))
+        presets = data.get("preset_definitions")
+        if not isinstance(presets, list) or not presets:
+            self.fail("script-brief-C23.json に preset_definitions が無い")
+        return {
+            entry.get("purpose") for entry in presets
+            if isinstance(entry.get("presentation_order_variants"), dict)
+        }
+
+    def shipped_carriers(self):
+        return {
+            slug for slug, preset in H.presets(self).items()
+            if isinstance(preset.get("presentation_order_variants"), dict)
+        }
+
+    def test_shape_checks_are_not_vacuous(self):
+        """variants を持つ preset が 1 件以上あること (0 件なら shape 検査は無検査)。"""
+        self.assertTrue(
+            self.shipped_carriers(),
+            "presentation_order_variants を持つ preset が 0 件。"
+            "VariantShapeTest の 2 本が 1 件も検査せずに緑になる状態である",
+        )
+
+    def test_carriers_match_the_canon(self):
+        """どの preset が variants を持つかが正本と一致すること。
+
+        C50 の『2 モードで順序が入れ替わる』要求が及ぶ範囲そのものであり、
+        出荷側で黙って増減すると shape 検査の射程が変わる。
+        """
+        self.assertEqual(self.canon_carriers(), self.shipped_carriers())
+
+
 if __name__ == "__main__":
     unittest.main()

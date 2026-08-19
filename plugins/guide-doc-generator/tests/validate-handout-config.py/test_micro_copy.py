@@ -10,12 +10,15 @@
 import json
 import unittest
 
-from _harness import section, text_part, valid_config
+from _harness import image_part, section, text_part, valid_config
 from test_visual_density import VisualDensityTestBase, diagram, diagram_part
 
 VISUAL_POLICY_RELPATH = "config/handout-visual-policy.json"
 
-LONG = "この行は図解の補足として置くには長すぎる説明であり、要素そのものが段落になってしまっている状態を表す"
+# 上限の正本 (micro_copy.roles) は 2026-08-19 に label 16 / title 28 / caption 52
+# へ広げた。LONG は最も緩い caption (52) をも超える長さでなければ陰性側へ
+# 落ちるので、上限を上げたらここも上げる。
+LONG = "この行は図解の補足として置くには長すぎる説明であり、要素そのものが段落になってしまい、読み手が図の意味を掴めなくなる状態を表す"
 SHORT = "受注は前日までに確定する"
 
 
@@ -47,8 +50,17 @@ class MicroCopyTestBase(VisualDensityTestBase):
             item, {"key": "b", "title": "加工予定を立てる", "detail": "当日の朝に確定する"}]}}
 
     def config_with(self, part):
+        """検査したい部品 1 件だけを差し替えた構成データ。
+
+        図解と画像を残すのは micro copy とは無関係な理由による。R25 で両者は
+        main セクション 1 個あたりの error 下限になったため、外すと
+        W-DIAGRAM-FEW / E-IMAGE-ABSENT が exit=1 を作り、micro copy の
+        陰性対照 (exit=0) が別の理由で赤くなる。
+        """
         cfg = self.visual_ok_config()
-        cfg["sections"][0]["parts"] = [diagram_part("intro-d1"), part]
+        cfg["sections"][0]["parts"] = [diagram_part("intro-d1"),
+                                       part,
+                                       image_part("intro-i1", "intro-shot")]
         return cfg
 
 
@@ -82,8 +94,8 @@ class TestMicroCopyRoles(MicroCopyTestBase):
         self.assert_diag(res, "W-COPY-LONG", "/sections/0/parts/1/data/items/0/title")
 
     def test_title_limit_is_stricter_than_caption(self):
-        """26 文字は補足 (40) には収まるが要点 (24) には収まらない。"""
-        mid = "受注から加工予定を立てるまでの一連の流れを示す図です"
+        """31 文字は補足 (52) には収まるが要点 (28) には収まらない。"""
+        mid = "受注から加工予定を立てるまでの一連の流れを図の形で示しています"
         cfg = self.config_with(self.map_part("intro-m1", title=mid, detail=mid))
         res, _ = self.validate(cfg)
         lines = self.assert_diag(res, "W-COPY-LONG")
@@ -92,16 +104,16 @@ class TestMicroCopyRoles(MicroCopyTestBase):
 
     def test_label_field_in_table_warns(self):
         cfg = self.visual_ok_config()
-        cfg["sections"][1]["parts"][1]["data"]["rows"][0]["header"] = "受注から加工予定までの流れ全体"
+        cfg["sections"][1]["parts"][2]["data"]["rows"][0]["header"] = "受注から加工予定までの一連の流れ全体像"
         res, _ = self.validate(cfg)
-        self.assert_diag(res, "W-COPY-LONG", "/sections/1/parts/1/data/rows/0/header")
+        self.assert_diag(res, "W-COPY-LONG", "/sections/1/parts/2/data/rows/0/header")
 
     def test_array_element_inherits_field_role(self):
         """cells[] のように名前が複数形の配列も、要素ごとに上限が当たる。"""
         cfg = self.visual_ok_config()
-        cfg["sections"][1]["parts"][1]["data"]["rows"][0]["cells"][1] = LONG
+        cfg["sections"][1]["parts"][2]["data"]["rows"][0]["cells"][1] = LONG
         res, _ = self.validate(cfg)
-        self.assert_diag(res, "W-COPY-LONG", "/sections/1/parts/1/data/rows/0/cells/1")
+        self.assert_diag(res, "W-COPY-LONG", "/sections/1/parts/2/data/rows/0/cells/1")
 
 
 class TestMicroCopyScope(MicroCopyTestBase):

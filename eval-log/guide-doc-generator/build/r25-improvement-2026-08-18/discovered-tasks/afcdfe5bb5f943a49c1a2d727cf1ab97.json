@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "handout-output/2026-08-18-report-kpi-flow-and-processing-app-2 は .handout-route.json と空の assets/ だけを持ち handout.html が無い。その config_path は隣の app ディレクトリの config を指す。route-handout-output.py:329 resolve_collision が連番ディレクトリを先に作り、描画到達前に失敗しても後始末しないため残骸が蓄積する。利用者から見ると成果物が 5 件あるように見えて実体は 4 件",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-42-collision-empty-dir-residue",
+    "title": "衝突回避で描画未到達の空ディレクトリが残る問題を直す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "描画未到達のディレクトリが残らない、または残骸が識別可能に印付けされる",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

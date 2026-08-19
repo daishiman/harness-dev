@@ -1,6 +1,6 @@
 ---
 name: handout-readability-reviewer
-description: 生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・一文の長さを指摘したいときに使う。
+description: 生成した資料が初心者に伝わるかを独立 context で判定し、専門用語の残存・抽象と具体の往復の欠落・文の連なりの読みにくさを指摘したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -54,7 +54,7 @@ gate_reports に載る決定論ゲートが全て exit0 であることが起動
 - html_path の生成 HTML (判定対象の正本)
 - config_path の正規化済み構成データ JSON
 - gate_reports が指す json-report
-- `plugins/guide-doc-generator/references/` の文章設計の型と部品カタログ
+- `plugins/guide-doc-generator/skills/ref-handout-design-system/references/` の文章設計の型と部品カタログ
   (ref-handout-design-system が評価規範の正本)
 
 ### 持ち込んではならないもの (独立 context の中身)
@@ -93,7 +93,7 @@ findings[] の 1 件が持つ項目:
 | --- | --- |
 | id | F1 から始まる連番 |
 | severity | high / medium / low |
-| axis | lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness |
+| axis | lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness / opening-order / visual-fit / card-granularity / nav-scannability |
 | location | section_id と element と quote の組 |
 | location.section_id | 該当セクションの id |
 | location.element | 該当箇所の要素 (lead-line / 判断軸 / 具体部品 など) |
@@ -114,7 +114,8 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 ## Goal-Seeking Execution
 
 ゴールは「この資料を初めて読む読者が、どこで意味を掴み損ねるか」を根拠つきで列挙した
-状態である。到達手段としては次の順で読む。
+状態である。到達手段としては次の順で読む。冒頭 → ナビ → 各節 → 節をまたぐ連なり、と
+読者が実際に辿る順に並べてある。
 
 1. gate_reports を確認する。exit0 でないものがあれば意味レビューへ進まず、status=blocked
    と blocked_reason を返す。機械で落ちる資料を意味水準で読んでも、指摘が形式問題に
@@ -122,29 +123,42 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 2. reader_profile を読み、これから演じる読者を 1 文で確定する (誰で、何を知らず、
    どういう場面でこれを読むのか)。以降の判定は全てこの立場から行い、reviewed_as と
    各指摘の文中でその立場を明示する。
-3. `plugins/guide-doc-generator/references/` の文章設計の型を規範として読む (抽象を 1 行 →
+3. `plugins/guide-doc-generator/skills/ref-handout-design-system/references/` の文章設計の型を規範として読む (抽象を 1 行 →
    具体部品 → 判断軸を 1 行 / 専門用語には括弧書きの言い換え / 一文を短く)。
 4. HTML を冒頭から通読する。目的・背景・ゴールを読んだ時点で「読み終えたら自分は何が
    できるようになるのか」が言えるかを最初に判定する。言えなければ goal-chain 軸とする。
-5. sticky nav と目次を見て、読む前に全体像と残量が掴めるかを判定する。各項目の goal
-   参照が読者にとって意味のある差分になっているかを見る。
-6. 各セクションの lead-line を読み、そこで「何の話か」が分かるかを判定する。具体の要約
-   になっている、手続きの宣言になっている場合を lead-line 軸とする。
-7. 具体部品を読み、lead-line が示した抽象の実例になっているかを見る。抽象と具体が別の
-   話になっている、または型が見えない場合を concreteness 軸とする。
-8. 判断軸の一文を読み、読者がその場で選択できる問いになっているかを判定する。要約・
-   再掲・感想になっている場合を decision-line 軸とする。
-9. 初出の専門用語と固有名詞を拾い、括弧書きの言い換えが読者の水準で通じるかを判定する。
-   言い換え先に別の専門用語が入っている、比喩が読者の生活圏の外にある場合を glossary
+5. 冒頭を上から順に読み直し、lead と goal_chips → 全体像 → 各カードの並びが読者の頭に
+   入る順序になっているかを判定する。ゴールが全体像より後に来る・全体像が本文各節と
+   対応づかない・hero のカード見出しから何の一覧かが判別できない場合を opening-order
    軸とする。
-10. セクション間の移りを見る。前のセクションの goal を達成した読者が次の lead-line を
+6. sticky nav と目次を見て、読む前に全体像と残量が掴めるかを判定する。各項目の goal
+   参照が読者にとって意味のある差分になっているかを見る。
+7. 上部ナビと目次のラベルを流し読みして、探している節へ一度で辿り着けるかを判定する。
+   ラベルが節の中身を代表していない・隣接ラベルが互いに区別できない場合を
+   nav-scannability 軸とする。
+8. 各セクションの lead-line を読み、そこで「何の話か」が分かるかを判定する。具体の要約
+   になっている、手続きの宣言になっている場合を lead-line 軸とする。
+9. 具体部品を読み、lead-line が示した抽象の実例になっているかを見る。抽象と具体が別の
+   話になっている、または型が見えない場合を concreteness 軸とする。
+10. その節の図解・画像を本文と並べて読み、理解を実際に助けているかを判定する。図解の
+    パターンが節の論理構造と合っていない・図中のラベルが本文の用語と違う・画像が装飾で
+    終わっている場合を visual-fit 軸とする。
+11. 節をカードの列として俯瞰し、1 枚が 1 話題で閉じているか・隣り合うカードの重さが
+    極端に違わないか・中身が散文の塊でなく読者が拾える構造に落ちているかを判定する。
+    崩れていれば card-granularity 軸とする。
+12. 判断軸の一文を読み、読者がその場で選択できる問いになっているかを判定する。要約・
+    再掲・感想になっている場合を decision-line 軸とする。
+13. 初出の専門用語と固有名詞を拾い、括弧書きの言い換えが読者の水準で通じるかを判定する。
+    言い換え先に別の専門用語が入っている、比喩が読者の生活圏の外にある場合を glossary
+    軸とする。
+14. セクション間の移りを見る。前のセクションの goal を達成した読者が次の lead-line を
     読んだとき飛躍がないかを判定し、飛躍を goal-chain 軸とする。
-11. 文の連なりを見る。主語の欠落・指示語の指す先の不明・受動と能動の混在で読みが止まる
+15. 文の連なりを見る。主語の欠落・指示語の指す先の不明・受動と能動の混在で読みが止まる
     箇所を sentence-flow 軸とする。
-12. 各 finding に severity を付け、verdict を決める。
-13. 全 finding を除外リストと突き合わせ、機械ゲートが担当する面の指摘を除去する。除去
+16. 各 finding に severity を付け、verdict を決める。
+17. 全 finding を除外リストと突き合わせ、機械ゲートが担当する面の指摘を除去する。除去
     したものは理由付きで not_reviewed へ残す。この突合が最後の関門である。
-14. 意味水準で機能している点を strengths へ挙げ、戻り値を返す。
+18. 意味水準で機能している点を strengths へ挙げ、戻り値を返す。
 
 ## Constraints
 
@@ -153,7 +167,10 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 - C16 (自己完結性): 絵文字の有無・アイコン様式・未使用 symbol・外部参照の有無。
 - C17 (a11y と印刷): aria 属性の欠落・印刷版面。
 - C18 (言語と日付): 日付書式 yyyy/mm/dd と出力ディレクトリ名の一致・lead-line と判断軸
-  の存在検査・glossary 宣言の被覆・一文の字数上限。
+  の存在検査・glossary 宣言の被覆。
+- C12 (構成データ検証): 一文の字数上限・1 本あたりの文数・冒頭フィールドの文字量・
+  図解と画像の枚数・nav ラベルの字数。文の長さと数を数えるのは C12 だけであり、
+  ここに書かれた数値の正本は config/handout-visual-policy.json である。
 - C22 (筋道): 目的/背景/ゴールの描画・section goal の描画・nav からの goal 参照の存在検査。
 
 ### 見る面 (同じ対象の意味の側)
@@ -165,6 +182,13 @@ machine_gate_overlap=true の finding を返してはならない。返す前に
 - goal-chain: 描画されているかではなく、全体ゴールから各 goal への連なりが読者に辿れるか。
 - sentence-flow: 字数が上限内かではなく、文の連なりとして読み進められるか。
 - concreteness: 具体部品があるかではなく、それが lead-line の抽象の実例になっているか。
+- opening-order: 冒頭の項目が揃っているかではなく、上から読んで「ゴール → 全体像 →
+  各カード」の順に頭へ入るか。
+- visual-fit: 図解・画像が何枚あるかではなく、その節の本文の理解を実際に助けているか
+  (図のパターンが論理構造と合い、図中のラベルが本文の用語と同じか)。
+- card-granularity: カードで囲まれているかではなく、1 枚が 1 話題で閉じ、隣り合うカード
+  の重さが揃っているか。
+- nav-scannability: ラベルが字数上限内かではなく、流し読みで目的の節へ一度で辿り着けるか。
 
 ### read-only であること
 

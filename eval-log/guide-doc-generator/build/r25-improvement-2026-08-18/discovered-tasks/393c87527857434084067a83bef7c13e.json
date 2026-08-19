@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-40-opening-goal-first-cards",
+  "reason": "briefs/script-brief-C22.json#detections[NAR-01] の条項本文が『文書順は purpose → background → goal であること』と旧順序を literal で綴っている。利用者要求 R3 (ゴールを最初に置く) により、順序の正本は config/handout-visual-policy.json#opening.hero_card_fields.order へ移し、C11 描画 (render-handout.py:hero_card_order) と C22 検査 (verify-handout-narrative.py:hero_field_order) の双方がそこから引くようにした。構造規則 (『順序が正本どおりであること』) は保存しているが、brief 側の条項が旧順序の値を literal で持ち続けると、正本と条項という 2 つ目の出所が生まれる。条項本文を『順序は config/handout-visual-policy.json#opening.hero_card_fields.order に従うこと』へ改める必要がある。plan 側 (plugin-plans/) は本 node の write_scope 外なので build では触れていない",
+  "discovered_at_artifact": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+  "proposed_node": {
+    "id": "P05-x-121-nar01-order-canon-ref",
+    "title": "C22 NAR-01 の条項本文を旧順序 literal から順序正本への参照へ改める",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "script-brief-C22.json#detections[NAR-01] の rule/violation_example が具体的な並び (purpose → background → goal) を綴らず、config/handout-visual-policy.json#opening.hero_card_fields.order を参照する形になっていること。順序の値を持つ場所が正本 1 か所であること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  }
+}

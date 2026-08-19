@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c03-c12-report-routing",
+  "covered_task_ids": ["P02-c03-c12-report-routing"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+  "verified_by": [
+    {
+      "claim": "C12 の json-report を gate_reports に含めるかの裁定が 1 箇所 (C12 側) に置かれている",
+      "method": "script-brief-C12.json#text_length_verdict_delivery (CR-TEXT-LENGTH-DELIVERY) の owner 宣言を読解",
+      "result": "pass: owner に『C12 (この配達経路の主張の単一正本。C03 / C06 / C09 は本項を参照し、経路の説明を複製しない)』と明記されている"
+    },
+    {
+      "claim": "C03 が裁定の根拠を複製していない",
+      "method": "編集後の skill-brief-C03.json 全文を grep count: '--catalog' '--today' '7 本' 'exit 1' 'level=error'",
+      "result": "pass: 全て 0 件。編集前は open_questions[3] に argv 7 本の列挙・level=error・exit 1 という C12 側の実測がそのまま書き写されていた"
+    },
+    {
+      "claim": "C03 が正本を参照している",
+      "method": "grep count 'CR-TEXT-LENGTH-DELIVERY'",
+      "result": "pass: 1 件。script-brief-C12.json#text_length_verdict_delivery を名指しで参照する形に置換済み"
+    },
+    {
+      "claim": "C03 の deterministic_checks と C06 の input_contract.receives が同じ結論を持つ",
+      "method": "C03 の deterministic_checks 配列と、agent-brief-C06.json#input_contract.receives の gate_reports 記述を突合",
+      "result": "pass: C03 = [verify-handout-selfcontained.py, verify-handout-a11y-print.py, verify-handout-language.py, verify-handout-narrative.py] の 4 本 (C16/C17/C18/C22)。C06 = 『決定論ゲート (C16/C17/C18/C22) の json-report のパス一覧と各 exit code』。両者とも C12 を第 5 のゲートとして含まない"
+    },
+    {
+      "claim": "C09 側の起動口の裁定とも割れていない",
+      "method": "command-brief-C09.json#scope_boundary_vs_config_gates の参照 (C09 は構成データ側ゲートを起動口に持たない)",
+      "result": "pass: 3 者 (C03/C06/C09) が『決定論ゲートは 4 本』で一致"
+    },
+    {
+      "claim": "編集後も JSON として妥当",
+      "method": "python3 json.load による再読込",
+      "result": "pass: parse 成功"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c03-01",
+      "level": "blocking-for-release",
+      "summary": "同一裁定の三重焼きが 1 箇所残存: agent-brief-C06.json#text_length_ownership.why_c12_report_is_not_an_input が C12 の argv 7 本・level=error・exit 1 を今も書き写している。C12 側 owner 宣言 (C03/C06/C09 は参照し複製しない) の違反であり、C12 が --json-report を得た日に C06 の記述だけが古びる。本ノードの write_scope は C03 のみのため未修正。さらに C06 の acceptance_criteria AC10 は『C12 への言及は非担当宣言の文脈に限る』を検査するだけで複製の有無を見ないため、この重複は現行ゲートでは緑のまま通る"
+    },
+    {
+      "id": "F-P02c03-02",
+      "level": "carry-forward",
+      "summary": "『決定論ゲートは 4 本』という同一事実が C03 (script 名 4 件)・C06 (C16/C17/C18/C22)・C09 (起動口) の 3 箇所に別表記で存在する。結論の一致は AC が要求するものだが、正本キーが無いため 5 本目を足す改訂時に 3 箇所の同時更新が必要。release で gate 集合の canon キー化を検討"
+    }
+  ]
+}

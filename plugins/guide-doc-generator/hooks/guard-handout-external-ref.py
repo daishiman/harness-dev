@@ -58,8 +58,17 @@ TARGET_SUFFIX = ".html"
 #: applies_to (4) 同階層マーカー
 MARKER_FILENAME = "handout-config.json"
 
-#: applies_to (5) C19 の命名規則 (日付接頭)。種別語彙は一切参照しない
-DATED_DIR_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-")
+#: applies_to (5) C19 の命名規則 (日付接頭)。種別語彙は一切参照しない。
+#: 日付の直後の区切り文字は問わない (applies_to.separator_agnostic_rationale)。
+#: R25 でディレクトリ名が種別トークンを挟む 3 要素形から日付と slug の 2 要素形へ
+#: 変わったため、末尾ハイフンを必須にした旧規則 ^\d{4}-\d{2}-\d{2}- は新書式の
+#: 2026-08-18_KPI進捗管理の業務フロー に一致せず、資料出力ディレクトリ全体が
+#: 適用範囲から外れて hook が恒久的に無音になる。区切り文字の正本は
+#: config/handout-output.json#dir_name_format だが、本 hook はそれを読まないし
+#: 複製もしない — 書式の変化に影響されない最小の条件 (先頭の ISO 日付) だけを見る。
+#: (?!\d) は 2026-08-180... のような日付でない連番を拾わないための境界であり、
+#: 区切り文字の種類を列挙するものではない。
+DATED_DIR_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(?!\d)")
 
 #: output_contract.block
 LABEL = "guard-handout-external-ref"
@@ -67,9 +76,18 @@ BLOCK_PREFIX = "[guard-handout-external-ref] BLOCKED:"
 D1 = "D1-external-url-attr"
 D2 = "D2-emoji"
 
-#: fail_closed_scope (c)
-SIZE_LIMIT_BYTES = 8 * 1024 * 1024
-TIME_BUDGET_SECONDS = 3.0
+#: fail_closed_scope (c) / budget_thresholds。走査予算の数値はここに持たない。
+#: 正本は config/handout-output.json#size_limits.hook_scan_budget であり、
+#: ソース側の既定値を置くとそれが config と乖離した第 2 の正本になり、config を
+#: 直しても効かなくなる (budget_thresholds.if_key_missing)。したがって本 hook は
+#: キーの所在と単位・意味だけを持ち、解決できなければ未検査で打ち切る。
+BUDGET_CONFIG_RELPATH = "config/handout-output.json"
+BUDGET_SECTION_KEY = "size_limits"
+BUDGET_KEY = "hook_scan_budget"
+BUDGET_MAX_BYTES_KEY = "max_bytes"
+BUDGET_MAX_SECONDS_KEY = "max_seconds"
+#: systemMessage へ出す欠落キー名 (config 内のパス表記)
+BUDGET_KEY_PATH = "{}.{}".format(BUDGET_SECTION_KEY, BUDGET_KEY)
 
 # --------------------------------------------------------------------------
 # 実体解決 (index.md の実行時可搬性方針。絶対パスを直書きしない)
@@ -147,6 +165,58 @@ def resolve_canonical_module_path():
         except OSError:
             continue
     return None
+
+
+def resolve_budget_config_path():
+    """走査予算の正本 (config/handout-output.json) の実体を求める。"""
+    for root in candidate_roots():
+        candidate = Path(root) / BUDGET_CONFIG_RELPATH
+        try:
+            if candidate.is_file():
+                return candidate
+        except OSError:
+            continue
+    return None
+
+
+def _positive_number(value):
+    """予算値として使える正の数だけを返す (bool は数値として扱わない)。"""
+    if isinstance(value, bool):
+        return None
+    if not isinstance(value, (int, float)):
+        return None
+    if value <= 0:
+        return None
+    return value
+
+
+def resolve_scan_budget():
+    """(max_bytes, max_seconds) を config から解決する。解決できなければ None。
+
+    budget_thresholds.if_key_missing のとおり、ソース側の既定値へは倒さない。
+    片方でも欠ける / 数値でない / 非正のときは「予算宣言が解決できない」として
+    扱い、呼び出し側が exit 0 + systemMessage へ落とす。
+    """
+    path = resolve_budget_config_path()
+    if path is None:
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    section = data.get(BUDGET_SECTION_KEY)
+    if not isinstance(section, dict):
+        return None
+    budget = section.get(BUDGET_KEY)
+    if not isinstance(budget, dict):
+        return None
+    max_bytes = _positive_number(budget.get(BUDGET_MAX_BYTES_KEY))
+    max_seconds = _positive_number(budget.get(BUDGET_MAX_SECONDS_KEY))
+    if max_bytes is None or max_seconds is None:
+        return None
+    return max_bytes, max_seconds
 
 
 def load_canonical_scanners():
@@ -273,7 +343,7 @@ def emit_block(target: Path, rows) -> int:
 # --------------------------------------------------------------------------
 
 
-def inspect(target: Path, deadline: float) -> int:
+def inspect(target: Path) -> int:
     """適用対象と同定済みのファイルを C16 の判定へ掛けて exit code を返す。"""
     try:
         if not target.is_file():
@@ -281,11 +351,25 @@ def inspect(target: Path, deadline: float) -> int:
         size = target.stat().st_size
     except OSError:
         return 0
-    if size > SIZE_LIMIT_BYTES:
+
+    budget = resolve_scan_budget()
+    if budget is None:
+        # budget_thresholds.if_key_missing: ソース側の既定値へ倒さず未検査で打ち切る。
+        # 黙って合格に見せないため欠落キー名を systemMessage に明示する。
         return emit_abort(
-            "{}: {} はサイズ上限を超えるため未検査で打ち切った "
+            "{}: 予算宣言 ({}#{}) が解決できないため未検査 "
             "(完成物の検査は C16 {} に委ねる)".format(
-                LABEL, target, CANONICAL_MODULE_RELPATH))
+                LABEL, BUDGET_CONFIG_RELPATH, BUDGET_KEY_PATH,
+                CANONICAL_MODULE_RELPATH))
+    max_bytes, max_seconds = budget
+    deadline = time.monotonic() + max_seconds
+
+    if size > max_bytes:
+        return emit_abort(
+            "{}: {} はサイズ上限 ({}#{}.{}) を超えるため未検査で打ち切った "
+            "(完成物の検査は C16 {} に委ねる)".format(
+                LABEL, target, BUDGET_CONFIG_RELPATH, BUDGET_KEY_PATH,
+                BUDGET_MAX_BYTES_KEY, CANONICAL_MODULE_RELPATH))
     try:
         text = target.read_text(encoding="utf-8")
     except (OSError, ValueError, UnicodeDecodeError):
@@ -306,8 +390,11 @@ def inspect(target: Path, deadline: float) -> int:
     try:
         for violation in scan_external_references(text):
             rows.append(format_line(D1, violation))
-    except Exception:
-        return 0
+    except Exception as exc:
+        # 判定を完走できなかった。exit0 だが無出力にはしない (合格と区別できなくなる)。
+        return emit_abort(
+            "{}: 外部参照の判定を完走できなかったため未検査 ({}: {})".format(
+                LABEL, type(exc).__name__, exc))
 
     if time.monotonic() > deadline:
         return emit_abort(
@@ -316,8 +403,10 @@ def inspect(target: Path, deadline: float) -> int:
     try:
         for violation in scan_emoji(html.unescape(text)):
             rows.append(format_line(D2, violation))
-    except Exception:
-        return 0
+    except Exception as exc:
+        return emit_abort(
+            "{}: 絵文字の判定を完走できなかったため未検査 ({}: {})".format(
+                LABEL, type(exc).__name__, exc))
 
     if not rows:
         return 0
@@ -325,7 +414,6 @@ def inspect(target: Path, deadline: float) -> int:
 
 
 def run() -> int:
-    deadline = time.monotonic() + TIME_BUDGET_SECONDS
     payload = read_payload()
     if payload is None:
         return 0
@@ -335,7 +423,7 @@ def run() -> int:
     target = resolve_target(payload, raw_path)
     if not is_in_scope(payload, target):
         return 0
-    return inspect(target, deadline)
+    return inspect(target)
 
 
 def main() -> int:

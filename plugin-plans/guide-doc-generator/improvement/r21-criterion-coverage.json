@@ -1,0 +1,196 @@
+{
+  "_meta": {
+    "role": "R21 (goal-spec C46-C59) の 14 件について、責務 component・検証手段・criterion 文との一致度を 1 行 1 件で確定させる単一正本。P03-x-04 の裁定記録",
+    "why_here": "C46-C59 は C12 / C16 / C18 / C22 / C23 の 5 component へ分かれて実装される。どの component の brief に置いても『自分の担当分だけを見た表』になり、被覆の穴が component 境界に落ちる。improvement/ 配下の他の決定ファイル (text-length-gate-decision.json 等) と同じく、build の入力側にある中立な位置へ置く",
+    "how_to_read": "verification_means は『検査の実体が在るか』、criterion_match は『その検査が criterion 文の要求と同じものを見ているか』。両者は別の問いであり、実体が在っても一致しないことがある (P03-x-04 の実質はこの差の判定だった)",
+    "no_threshold_literals": "閾値の値そのものをこのファイルへ写さない。値域の正本は config/handout-sections.json の section_kind 属性・assets/tokens/<theme>.json の text_limits・schemas/handout-config.schema.json の enum であり、ここは所在だけを指す",
+    "owner_components": {
+      "C12": "validate-handout-config.py — 構成データ層の型と検査",
+      "C16": "verify-handout-selfcontained.py — 生成物の自己完結性",
+      "C18": "verify-handout-language.py — 描画テキストの言い回し",
+      "C22": "verify-handout-narrative.py — 生成物の語り順",
+      "C23": "resolve-handout-preset.py — 用途プリセットの構成"
+    },
+    "status_vs_release_readiness": "status は設計側 (brief・schema・plan config) が確定しているかだけを言う。出荷実体 (plugins/ 配下) が追随しているかは release_readiness に分けて書く。同じフィールドで表すと『設計を直せば緑になる』という誤った治療方針を示すことになる (evidence/P02.json / P03.json と同型)"
+  },
+  "schema_version": "1.0.0",
+  "status": "design-fixed",
+  "release_readiness": {
+    "state": "blocked",
+    "blocked_by": [
+      "C52: 出荷 validate-handout-config.py が fold_section による B10 退避を現役で持ち、E-TEXT-FOLDED を 1 件も持たない。さらに check_text_bodies の報告条件が --normalize の否定であるため、本番ビルド経路では超過が一度も検出されない (goal-spec C73 の (2)(3) が未反映)",
+      "C46: 出荷 config/handout-sections.json に timeline / map / thesis が不在で flow-overview が現役 (P05-x-62)。判定そのものは変わらないが、上限属性の載る section_kind が plan と出荷で別名になっている",
+      "C51: schemas/handout-config.schema.json の slot 記述が『required_slot を持つ section_kind では必須』と属性駆動を宣言しているのに、required_slot 属性は出荷・plan いずれの handout-sections.json にも 0 件で、実装は section_kind の slug 直書きで分岐している"
+    ],
+    "why_separate_from_status": "設計側の 14 件は owner も検証手段も確定済みで、残る差は出荷実体の追随と criterion 文の残余だけである。設計側を fail にすると P05 の build 対象が何も変わらないのに red が立つ"
+  },
+  "criteria": [
+    {
+      "id": "C46",
+      "face": "冒頭主題枠 / 流れ項目数上限",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "E-SECTIONKIND-MAXITEMS / E-SECTIONKIND-ROWDETAIL (check_kind_constraints)。上限値は config/handout-sections.json の該当 section_kind の max_items 属性、詳細禁止は forbid_row_detail 属性",
+      "criterion_match": "partial",
+      "residual": "criterion は (a) 項目数上限 と (b)『個々の手順・操作の詳細を冒頭の流れに含めない』の 2 つを要求する。(a) は属性駆動で成立するが、(b) の検査は行の子要素 (row.sub) の有無だけを見ており、行の本文へ手順が書かれていても通る。文面側の判定手段が無い",
+      "disposition": "carry-forward。文面側の判定は C18 の担当領域 (LANG-07 と同型の検査) であり、C12 の構造検査では原理的に到達できない"
+    },
+    {
+      "id": "C47",
+      "face": "冒頭主題枠",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "schemas/handout-config.schema.json の document.focus_theme (top-level required・件数域・x_non_blank) と E-FOCUS-THEME",
+      "criterion_match": "full",
+      "residual": "なし。必須フィールド性・件数域・空文字排除の 3 つが criterion 文の 3 要求と 1:1",
+      "disposition": "resolved"
+    },
+    {
+      "id": "C48",
+      "face": "目的紐づけ必須",
+      "owner": "C12",
+      "secondary_owner": "C22 (NAR-08 が描画面を併せて検査)",
+      "verify_by": "script",
+      "verification_means": "section.ties_to の参照実在検査 (E-TIES-DANGLING) と本編セクションの紐づけ必須 (E-SECTION-UNTIED-GOAL)、運営連絡の隔離は section_kind 属性 required_role と E-SECTION-ROLE-CONFLICT / E-APPENDIX-ORDER",
+      "criterion_match": "partial",
+      "residual": "隔離の起点が『著者がその節に運営連絡用の section_kind を選ぶこと』である。運営連絡を標準の section_kind で書けば required_role の分岐に入らず、本編に残ったまま goal へ紐づけて通せる。criterion の『排除される』を強制するには内容から種別を判定する必要がある",
+      "disposition": "carry-forward。C51 と同型の『種別選択が著者判断である』という構造上の限界"
+    },
+    {
+      "id": "C49",
+      "face": "presentation_order の必須フィールド化と決定論導出",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "schema の presentation_order (top-level required・enum) と E-PRESENTATION-ORDER、および正規化時の prior_knowledge_level からの導出と provenance.presentation_order_source",
+      "criterion_match": "full",
+      "residual": "写像の表現が正本と実装で食い違う。正本 (script-brief-C12.json#r21_type_constraints.presentation_order_derivation) は値の名前による写像表を持つが、実装は prior 側の enum 末尾要素との一致と presentation_order 側 enum の添字で分岐している。どちらかの enum の並び順を変えると写像が黙って反転し、検査で落ちない",
+      "disposition": "carry-forward。導出の名前写像表を config データへ持たせ script 側の添字依存を外すのが筋"
+    },
+    {
+      "id": "C50",
+      "face": "実画面先行 (提示順の型)",
+      "owner": "C23",
+      "verify_by": "test",
+      "verification_means": "tests/resolve-handout-preset.py/test_presentation_order.py。2 モードで section の多重集合が一致し順序だけが入れ替わること、および共有の型に当たるプリセット項目が両モードで同一であることを確認する",
+      "criterion_match": "partial",
+      "residual": "criterion は部品順序が 4 段 (できること・成果物 → 分解 → 使う機能の組み合わせ → 操作) になることを要求するが、test が見ているのはセクション順序であって部品順序ではない。さらに部品順序を表す slot の値域は 3 区画しか持たず、4 段目の『操作』に対応する区画が存在しない。したがって criterion の 4 段目は型としても未表現",
+      "disposition": "blocking-for-release。slot 値域の 3 区画は C51 の『成果 → 分解 → 用いる機能』と 1:1 であり、C50 の 4 段と一致していない。どちらの段数を採るかの裁定が先に要る"
+    },
+    {
+      "id": "C51",
+      "face": "実画面先行 (機能名から始めない)",
+      "owner": "C12",
+      "secondary_owner": "C18 (LANG-07 が描画テキスト面を併せて検査)",
+      "verify_by": "script",
+      "verification_means": "part.slot の 3 区画と E-CAPABILITY-SLOT-MISSING / E-CAPABILITY-SLOT-ORDER、文面側は LANG-07",
+      "criterion_match": "partial",
+      "residual": "(a) 検査対象が機能解説用の section_kind を持つ節に限られ、同じ内容を標準の section_kind で書けば構造検査にも LANG-07 にも入らない。(b) schema の slot 記述は『required_slot を持つ section_kind では必須』と属性駆動を宣言するが、required_slot 属性は出荷・plan いずれの handout-sections.json にも 0 件で、実装は slug を直書きして分岐している。記述と実装が不一致であり、新しい section_kind を足しても記述どおりには検査対象へ入らない",
+      "disposition": "blocking-for-release ((b) の記述と実装の不一致)。(a) は C48 と同型の carry-forward"
+    },
+    {
+      "id": "C52",
+      "face": "説明文字数上限",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "E-TEXT-OVERFLOW と E-TEXT-FOLDED。上限値は assets/tokens/<theme>.json の text_limits (詳しさ水準別の値も同キー配下) から読み、script へ数値を焼かない",
+      "criterion_match": "superseded",
+      "residual": "criterion 文の後半『超過分は既定で畳んだアコーディオンへ格納される』は goal-spec C73 (REQ-7) の (3) が撤回している。C73 は畳み込みの実行回数上限を 0 とし超過を error で落とすと決めており、同じ goal-spec の中で C52 と C73 が逆を要求している。設計側は撤回を反映済み (script-brief-C12.json#r21_type_constraints.text_length_fold)。前半の『上限を持つ』と『上限値はテーマ設定で変更できる』は成立している",
+      "disposition": "blocking-for-release。goal-spec の C52 文面を C73 準拠へ改める必要がある。本ノードは goal-spec を書き換えず、矛盾の所在の記録に留めた (criterion の書き換えは plan 全体の受入基準の変更であり、単一ノードの裁量を超える)"
+    },
+    {
+      "id": "C53",
+      "face": "ハンズオン部品 / 先回り Q&A 枠",
+      "owner": "C23",
+      "secondary_owner": "C12 (section_kind 制約 E-SECTIONKIND-HANDSON ほか)",
+      "verify_by": "test",
+      "verification_means": "tests/validate-handout-config.py/test_section_kind_constraints.py。型としての存在は handson / anticipated-qa の section_kind、レクチャー用途での必須は該当プリセットの section_order で当該 2 節が required になっていること",
+      "criterion_match": "full",
+      "residual": "なし。plan 側 briefs/config/handout-purposes.json と出荷 config/handout-purposes.json の双方で、レクチャー用途の当該 2 節が required になっていることを実測で確認した",
+      "disposition": "resolved"
+    },
+    {
+      "id": "C54",
+      "face": "到達レベル宣言",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "順序つき enum attainment_level と E-ATTAINMENT-LEVEL / E-ATTAINMENT-OVERRUN / E-ATTAINMENT-UNREACHED。『Skill 化まで』に当たる段は同 enum の最終要素として実在する",
+      "criterion_match": "partial",
+      "residual": "criterion の『宣言した到達レベルと各セクションの内容範囲の整合』のうち、検査されているのは各セクションが自己申告した到達段と文書の宣言値との大小関係であり、申告値と実際の内容範囲との整合は見ていない。全セクションが自己申告を浅い側へ書けば無条件に通る",
+      "disposition": "carry-forward。内容範囲からの推定は決定論経路では扱えないため、C06 の読みやすさレビュー側の観点として運ぶのが筋"
+    },
+    {
+      "id": "C55",
+      "face": "図表欠落検査",
+      "owner": "C16",
+      "verify_by": "test",
+      "verification_means": "SC-09。図表部品の id 集合を config/handout-parts.json から読み (部品 id をこのファイル以外へ列挙しない規約に従う)、tests/verify-handout-selfcontained.py/test_figures_sc09.py が確認する",
+      "criterion_match": "full",
+      "residual": "なし。criterion の 3 要求 (SVG が描画要素を持つ / 画像 data URI が空でない / 未解決 placeholder が残らない) がいずれも SC-09 の違反として計上される",
+      "disposition": "resolved"
+    },
+    {
+      "id": "C56",
+      "face": "実画面先行",
+      "owner": "C22",
+      "verify_by": "test",
+      "verification_means": "NAR-07。presentation_order がデモ先行のときだけ働き、本編先頭セクションの最初の提示物が実画面 (スクリーンショット役割の画像かハンズオン部品) であることを確認する。tests/verify-handout-narrative.py/test_nar07_demo_first.py",
+      "criterion_match": "partial",
+      "residual": "criterion は『最初に提示されるのは実画面である』に加えて『機能説明が必ずその後に置かれる』も要求するが、NAR-07 が見るのは本編先頭セクションの最初の 1 要素だけで、その後に機能説明が置かれているかは検査していない。実画面 1 枚だけ置いて以降を概念説明で埋めても通る",
+      "disposition": "carry-forward"
+    },
+    {
+      "id": "C57",
+      "face": "覚えること / 覚えなくてよいことの対",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "must_remember / no_need_to_remember がいずれも top-level required で、件数上限は must_remember_max (既定値も schema 側が持つ) から引く。対の破れは E-REMEMBER-PAIR、上限超過は E-REMEMBER-MAX",
+      "criterion_match": "full",
+      "residual": "criterion の『レクチャー用途プリセットでは両方を必須にする』は、当該プリセットの required_document_fields に 2 フィールドが載ることで表現されているが、この語彙を読む consumer が存在しない (C12 側に参照 0 件)。両フィールドは全用途で top-level required であるため結果として必須は成立しており、プリセット側の宣言だけが不活性になっている",
+      "disposition": "carry-forward。不活性な宣言は『用途別に必須フィールドを増やす』将来要求が来たときに 2 つ目の正本になる"
+    },
+    {
+      "id": "C58",
+      "face": "具体業務への紐づけ必須",
+      "owner": "C12",
+      "verify_by": "script",
+      "verification_means": "target_tasks が top-level required で件数下限を持ち (E-TARGET-TASKS-EMPTY)、各本編セクションが ties_to から id で紐づく (E-SECTION-UNTIED-TASK / E-TIES-DANGLING)",
+      "criterion_match": "full",
+      "residual": "なし。『一般論だけで構成された資料を不合格にする』は本編セクション全件への紐づけ必須で担保される",
+      "disposition": "resolved",
+      "note": "owner 宣言の欠落は実在しない。script-brief-C12.json は checklist_covered と r21_type_constraints.checks の双方で C58 を宣言している"
+    },
+    {
+      "id": "C59",
+      "face": "対話枠の時間確保",
+      "owner": "C12",
+      "secondary_owner": "C23 (対話枠をレクチャー用途の必須セクションにするのはプリセット側)",
+      "verify_by": "script",
+      "verification_means": "section.duration の書式検査 (E-SECTION-DURATION-FORMAT) と全件充足 (E-DURATION-INCOMPLETE)、下限割合は該当 section_kind の min_duration_share 属性と E-SECTIONKIND-DURATION-SHARE",
+      "criterion_match": "full",
+      "residual": "なし。所要時間の保持・必須セクション化・下限割合の 3 要求がそれぞれ別の検出コードへ割り当たっている",
+      "disposition": "resolved"
+    }
+  ],
+  "acceptance_faces": {
+    "_note": "task-graph node P03-x-04 の acceptance が列挙する 12 面と、上の 14 件との写像。面と件は 1:1 ではない",
+    "冒頭主題枠": ["C47"],
+    "流れ項目数上限": ["C46"],
+    "目的紐づけ必須": ["C48"],
+    "説明文字数上限": ["C52"],
+    "ハンズオン部品": ["C53"],
+    "先回り Q&A 枠": ["C53"],
+    "到達レベル宣言": ["C54"],
+    "図表欠落検査": ["C55"],
+    "実画面先行": ["C50", "C51", "C56"],
+    "覚えること / 覚えなくてよいことの対": ["C57"],
+    "具体業務への紐づけ必須": ["C58"],
+    "対話枠の時間確保": ["C59"],
+    "面へ写像されない件": {
+      "C49": "presentation_order の必須フィールド化と prior_knowledge からの決定論導出。acceptance では 12 面の列挙ではなく前置きの条件節として書かれている"
+    },
+    "preamble_conditions": {
+      "責務 component の一意特定": "14/14 で成立。checklist_covered による宣言が C12 / C16 / C22 / C23 に分かれ、副担当を持つ 4 件 (C48 / C51 / C53 / C59) はいずれも主担当を brief 内で明示している",
+      "presentation_order の必須フィールド化と決定論導出": "成立 (C49 参照)。残余は写像表現が正本と実装で食い違う点のみ"
+    }
+  }
+}

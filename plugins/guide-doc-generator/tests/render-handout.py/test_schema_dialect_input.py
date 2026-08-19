@@ -29,8 +29,8 @@ NORMALIZED_BY_POINTER = ("$defs", "provenance", "properties", "normalized_by", "
 # 鍵は部品カタログの data_block_type であり part id をここへ列挙しない。
 PART_DATA_FIXTURES = {
     "steps": {"rows": [
-        {"key": "st1", "text": "資料を開く", "time": "5分", "sub": "手元で開く"},
-        {"key": "st2", "text": "設定を確認する", "time": "5分"},
+        {"key": "st1", "text": "資料を開く", "sub": "手元で開く"},
+        {"key": "st2", "text": "設定を確認する"},
     ]},
     "trio": {"cards": [
         {"label": "分かっている", "body": "既知の範囲", "tone": "today", "note_key": "tr1"},
@@ -130,7 +130,6 @@ def schema_config(parts=None):
         "goal": "このセクションのゴールをここに書く",
         "lead_line": "このセクションで押さえる 1 行の抽象",
         "judgment_axis": "迷ったら手戻りの少ない方を選ぶ",
-        "duration": "60分",
         "role": "main",
         "ties_to": ["goal", "target_task:tt1"],
         "attainment_step": "operable",
@@ -152,7 +151,6 @@ def schema_config(parts=None):
         "detail_level": "standard",
         "evidence_depth": "cited",
         "essential_problem": "手順が人によって違い、結果がそろわない",
-        "duration": "60分",
         "focus_theme": ["手順をそろえて同じ結果に届く"],
         "target_tasks": [{"id": "tt1", "label": "週次レポートを自分で作る"}],
         "presentation_order": "demo_first",

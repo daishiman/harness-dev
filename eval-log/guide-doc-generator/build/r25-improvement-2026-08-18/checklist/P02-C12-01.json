@@ -1,0 +1,70 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C12-01",
+ "covered_task_ids": [
+  "P02-C12-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+ "verified_by": [
+  {
+   "claim": "argv が inventory C12 の inputs を包含",
+   "method": "brief argv と component-inventory.json#C12.inputs の集合突合",
+   "result": "pass: 主要 5 flag に加え --today/--catalog を brief が追加定義 (上位互換)"
+  },
+  {
+   "claim": "stdout=1行サマリ / stderr=診断コード+JSON Pointer の役割分担",
+   "method": "script-brief-C12.json:60-61 と inventory outputs を突合",
+   "result": "pass"
+  },
+  {
+   "claim": "exit 0|1|2 のクラス定義と個別検査の割り当てが一致",
+   "method": "script-brief-C12.json:62-66 / :80 / :833 / :1156 の相互突合",
+   "result": "fail→修正済み: E-ENUM-VOCAB-INCOMPLETE (構成データ非依存の自己整合検査) が exit1 クラス定義から外れていた点と、語彙ファイル読取失敗が exit2 列挙から欠落していた点を補正"
+  },
+  {
+   "claim": "write_scope は --out の 1 ファイルのみ",
+   "method": "script-brief-C12.json:67-69 と inventory write_scope=out-file",
+   "result": "pass"
+  },
+  {
+   "claim": "標準ライブラリのみで閉じる",
+   "method": "brief と inventory の stdlib_only を突合",
+   "result": "pass: 双方 true"
+  },
+  {
+   "claim": "R25 A8f: check_text_bodies の走査対象へ hero フィールドを加え既存 W-HERO-LONG を使う (新コード無し)",
+   "method": "script-brief-C12.json:841 と handout-visual-policy.json:205/207/217/253 の数値突合",
+   "result": "pass: purpose60/background80/goal50/lead40, max_sentences 1/1/1/2, hero_total 400 が実ファイルと完全一致。新コード 0 件"
+  },
+  {
+   "claim": "R25 A6b: E-CONNECTOR-UNKNOWN が語彙リテラルを焼かずファイル照合",
+   "method": "script-brief-C12.json:832 と :80 dependencies",
+   "result": "pass: 単独 reader・読めなければ fail-soft でなく exit2 と規定"
+  },
+  {
+   "claim": "R25 A6c: E-ENUM-VOCAB-INCOMPLETE の自己整合検査 (双方向の扱いを含む)",
+   "method": "script-brief-C12.json:833 / :1154-1156",
+   "result": "pass: 被覆漏れ=exit1, 余剰ラベル=warning のみ (E-ENUM-VOCAB-STALE 新設せず)"
+  },
+  {
+   "claim": "brief の参照キー名が語彙実ファイルと一致 (最重点)",
+   "method": "handout-vocabulary.json:16-28 (attainment_level_labels.entries[].enum) と :31-42 (connectors.entries[].id) を brief:832/833/437 と突合",
+   "result": "pass: enum/id の非対称を brief が正しく書き分け。enum 集合も 4 件で完全一致 (現状 E-ENUM-VOCAB-INCOMPLETE 不発火が正)"
+  },
+  {
+   "claim": "inventory の regression_scope が新コード・受入確認を宣言",
+   "method": "component-inventory.json#C12.harness_coverage.regression_scope と brief acceptance_checks(47件) の集合差分",
+   "result": "pass: new_codes 2 件, AC-C12-R25-76 実在, missing=[], must_flip_to_error の W-HERO-LONG/W-HERO-HEAVY が policy の level=error と一致"
+  }
+ ],
+ "evidence": [
+  "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json"
+ ],
+ "changes": [
+  "script-brief-C12.json exit_codes['1']: クラス名を『構成データ側の違反、および plugin 同梱の正本どうしの不整合 (A6c の自己整合検査)』へ拡張し E-CONNECTOR-UNKNOWN / W-HERO-LONG / W-HERO-HEAVY を列挙へ追加",
+  "script-brief-C12.json exit_codes['2']: config/handout-vocabulary.json の解決・読取失敗を LaunchError として列挙へ追加 (照合スキップの fail-soft にしない理由を併記)"
+ ],
+ "open_followup": "handout-vocabulary.json:17 の attainment_level_labels.note が E-ENUM-VOCAB-INCOMPLETE を『構成データに現れたら』と狭く書いており A6c (構成データ非依存の起動時自己診断) より狭い。検査の正本は brief 側のため実装への影響は無いが、語彙ファイルを write_scope に持つノード (P05-x-03) で note を揃えると誤読が減る"
+}

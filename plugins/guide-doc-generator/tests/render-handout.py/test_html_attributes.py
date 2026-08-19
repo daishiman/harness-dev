@@ -127,7 +127,7 @@ class FieldAttributeTest(AttributeContractTestBase):
     def test_document_fields_are_rendered_with_field_attribute(self):
         """data-hb-field の値は C12 config_schema のキー名に一致する。"""
         cfg = full_config()
-        for field in ("title", "date", "purpose", "background", "goal", "duration"):
+        for field in ("title", "purpose", "background", "goal"):
             with self.subTest(field=field):
                 texts = H.field_texts(self.html, field)
                 self.assertTrue(texts, "data-hb-field=%s が描画されていない" % field)
@@ -141,27 +141,33 @@ class FieldAttributeTest(AttributeContractTestBase):
         )
 
     def test_section_fields_are_rendered(self):
-        for field in ("section_goal", "section_duration", "lead_line", "judgment_axis"):
+        for field in ("section_goal", "lead_line", "judgment_axis"):
             with self.subTest(field=field):
                 self.assertTrue(H.field_elements(self.html, field), "data-hb-field=%s が無い" % field)
 
 
-class DatePillTest(AttributeContractTestBase):
-    def test_date_pill_matches_normalized_date_verbatim(self):
-        """AC-C11-6 / checklist C33,C34: date-pill は構成データの date と同値・無変換。"""
-        pills = H.field_elements(self.html, "date")
-        self.assertEqual(1, len(pills), "date-pill は 1 個だけ")
-        text = pills[0].text.strip()
+class DateCarrierTest(AttributeContractTestBase):
+    """日付の運び方 (利用者指定 2026-08-19)。
+
+    紙面には出さない。C20 の読み戻しと C18 DATE-02 が読めるよう root の
+    data-hb-date だけが値を運ぶ。書式変換もゼロ埋め補正も行わない (正本は C12)。
+    """
+
+    def test_date_is_not_rendered_as_a_visible_field(self):
+        self.assertEqual([], H.field_elements(self.html, "date"), "date-pill が残っている")
+
+    def test_root_attribute_carries_the_normalized_date_verbatim(self):
+        text = H.doc_date(self.html)
+        self.assertIsNotNone(text, "data-hb-date が無い (日付の運び手が消えている)")
         self.assertRegex(text, r"^\d{4}/\d{2}/\d{2}$")
         self.assertEqual(H.DEFAULT_DATE, text)
-        self.assertIn("date-pill", " ".join(pills[0].classes()))
 
     def test_date_is_not_reformatted(self):
         """ゼロ埋め補正も書式変換も行わない (正本は C12)。"""
         with tempfile.TemporaryDirectory() as td:
             res, html_text, _ = H.render_html(td, H.base_config(date="2026/12/31"))
         self.assertEqual(0, res.returncode, res.stderr)
-        self.assertEqual(["2026/12/31"], H.field_texts(html_text, "date"))
+        self.assertEqual("2026/12/31", H.doc_date(html_text))
 
 
 class NavGoalReferenceTest(AttributeContractTestBase):
@@ -214,9 +220,6 @@ class RepeatingElementAttributeTest(AttributeContractTestBase):
         self.assertTrue(rows, "B16 の各行に data-hb-owner が無い")
         for el in rows:
             self.assertTrue(el.get("data-hb-due"))
-
-    def test_step_rows_carry_time(self):
-        self.assertTrue(H.elements_with(self.html, "data-hb-time"), "B03 の行に data-hb-time が無い")
 
     def test_map_items_carry_title_and_detail(self):
         items = H.elements_with(self.html, "data-hb-title")
@@ -281,7 +284,7 @@ class AttributeContractCoverageTest(AttributeContractTestBase):
             "data-hb-meta-reader", "data-hb-meta-knowledge", "data-hb-meta-problem",
             "data-hb-field", "data-hb-part", "data-hb-part-id", "data-hb-part-role",
             "data-hb-kind", "data-hb-nav-goal", "data-hb-section-kind", "data-hb-key",
-            "data-hb-owner", "data-hb-due", "data-hb-time", "data-hb-title", "data-hb-detail",
+            "data-hb-owner", "data-hb-due", "data-hb-title", "data-hb-detail",
             "data-hb-single", "data-hb-glossary-term", "data-hb-glossary-plain",
             "data-hb-glossary-scope", "data-hb-asset-id", "data-hb-asset-alt",
             "data-hb-asset-caption", "data-hb-src", "data-hb-attachment-id", "data-hb-filename",

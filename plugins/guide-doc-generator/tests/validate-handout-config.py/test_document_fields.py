@@ -15,7 +15,7 @@ class DocumentFields(H.C12TestCase):
     def test_required_document_field_missing(self):
         """必須 document フィールドの欠落は E-FIELD-MISSING (A5)。"""
         for key in ("title", "doc_type", "purpose", "background", "goal", "reader",
-                    "prior_knowledge_level", "essential_problem", "duration"):
+                    "prior_knowledge_level", "essential_problem"):
             with self.subTest(key=key):
                 cfg = H.valid_config()
                 del cfg[key]
@@ -84,28 +84,32 @@ class DocumentFields(H.C12TestCase):
         res, _ = self.validate(cfg)
         self.assert_exit(res, 1)
 
-    def test_document_duration_format(self):
-        """document.duration は既定の 3 書式のみ。"""
+    def test_duration_key_is_rejected(self):
+        """時間は資料の語彙から外したので、書いても未知キーとして落ちる。"""
         cfg = H.valid_config()
-        cfg["duration"] = "だいたい 1 時間くらい"
+        cfg["duration"] = "60分"
         res, _ = self.validate(cfg)
         self.assert_exit(res, 1)
-
-    def test_document_duration_accepts_range_and_page_count(self):
-        """範囲表記と 'A4 n 枚相当' は document レベルでは受理される。"""
-        for value in ("30〜45分", "A4 3 枚相当", "2時間"):
-            with self.subTest(value=value):
-                cfg = H.valid_config()
-                cfg["duration"] = value
-                res, _ = self.validate(cfg)
-                self.assert_exit(res, 0)
 
     def test_subject_slug_format(self):
-        """subject_slug は ^[a-z0-9][a-z0-9-]{0,39}$。"""
-        cfg = H.valid_config()
-        cfg["subject_slug"] = "AI_Handout"
-        res, _ = self.validate(cfg)
-        self.assert_exit(res, 1)
+        """subject_slug の値域は「ディレクトリ名にできない文字を弾く」だけ。
+
+        R25 で ASCII 小文字限定から広げた (成果物ディレクトリを日本語で命名する
+        要求)。正本は route-handout-output.py#check_explicit_slug なので、
+        大文字・下線・日本語は通り、パス区切りや先頭ドットだけが落ちる。
+        """
+        for value in ("AI_Handout", "KPI進捗管理と加工アプリの流れ"):
+            with self.subTest(value=value):
+                cfg = H.valid_config()
+                cfg["subject_slug"] = value
+                res, _ = self.validate(cfg)
+                self.assert_exit(res, 0)
+        for value in ("ai/handout", ".hidden", "ai handout"):
+            with self.subTest(value=value):
+                cfg = H.valid_config()
+                cfg["subject_slug"] = value
+                res, _ = self.validate(cfg)
+                self.assert_exit(res, 1)
 
     def test_schema_version_unknown(self):
         """既知バージョンとの完全一致。未知は E-SCHEMA-VERSION。"""
@@ -118,6 +122,7 @@ class DocumentFields(H.C12TestCase):
         """failure_modes: 12 件超は W-SECTIONS-MANY で通す (分量は正しさの問題ではない)。"""
         cfg = H.valid_config()
         cfg["sections"] = [H.section("s%02d" % i) for i in range(13)]
+        H.with_visual_floor(cfg)
         res, _ = self.validate(cfg)
         self.assert_exit(res, 0)
         self.assert_diag(res, "W-SECTIONS-MANY")
@@ -358,13 +363,15 @@ class ReferencesAndGlossary(H.C12TestCase):
     def test_unused_asset_is_warning(self):
         """N9: 参照されない assets は W-REF-UNUSED (違反ではない)。"""
         cfg = H.valid_config()
-        cfg["assets"] = [{
+        # 差し替えでなく追加。既存の assets は各セクションの IMG から参照されて
+        # おり、消すと E-REF-DANGLING が出て「未参照は warning」の検査にならない。
+        cfg["assets"].append({
             "id": "shot1", "kind": "image", "src": "img/a.png",
             "alt": "集計画面のスクリーンショット", "caption": None, "role": "screenshot",
-        }]
+        })
         res, _ = self.validate(cfg)
         self.assert_exit(res, 0)
-        self.assert_diag(res, "W-REF-UNUSED", "/assets/0")
+        self.assert_diag(res, "W-REF-UNUSED", "/assets/2")
 
     def test_asset_role_is_required(self):
         """assets[].role は必須で既定値を充填しない (E-ASSET-ROLE-MISSING / C56 の前提)。"""

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "validate-handout-config.py:1729-1731 の index = 1 if prior == ctx.prior_levels[-1] else 0 / ctx.presentation_orders[index] は両 enum の並び順に依存する。正本 presentation_order_derivation.rule は値の名前による写像表を持つため、どちらかの enum を並べ替えると写像が黙って反転し検査で落ちない。cyan が検出",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-73-presentation-order-derivation-enum-index-coupling",
+    "title": "C49 の presentation_order 導出が enum の並び順に依存している件を外す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "導出が値の名前による写像で表現され、prior_knowledge_level か presentation_order の enum を並べ替えても写像が変わらないこと。並べ替えを入れた回帰テストが落ちること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

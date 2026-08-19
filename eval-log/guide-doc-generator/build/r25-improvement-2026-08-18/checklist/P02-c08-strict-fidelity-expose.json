@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c08-strict-fidelity-expose",
+  "covered_task_ids": [
+    "P02-c08-strict-fidelity-expose"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+  "acceptance_criterion_restated": "inventory C08 の argument-hint と command-brief-C08.json の arguments が同一のフラグ集合を持ち、--strict-fidelity の採否理由が 1 箇所に記録されていること",
+  "verified_by": [
+    {
+      "claim": "フラグ集合の一致を実測した (編集は不要だった)",
+      "method": "inventory C08 の argument-hint 文字列と command-brief-C08.json#arguments の name を突合",
+      "result": "argument-hint は '<html-path> [--out <config.json>]'、brief の arguments は html-path (positional 必須) と --out の 2 件。フラグ集合は既に同一で差分 0 件。実測結果を argument_surface.parity_measured へ記録し、次に触る人が片方だけ増やさないよう『argument-hint は出荷 frontmatter へ焼かれ AC-C08-1 で inventory と照合される』という壊れ方も併記した"
+    },
+    {
+      "claim": "--strict-fidelity の実体を C20 側で確認した",
+      "method": "script-brief-C20.json と extract-handout-config.py:1571,1745 を読む",
+      "result": "W-EXTRACT-OPTIONAL (任意フィールドの復元不能) と W-EXTRACT-HEURISTIC (根拠クラス名による推定同定) を exit 1 へ格上げする決定論の合格バー。既定では両者は exit 0 のまま続行する警告"
+    },
+    {
+      "claim": "露出しないと裁定し、理由を 3 点で記録した",
+      "method": "C08 の behavior / boundary / failure_modes と C20 の fail_semantics を突合",
+      "result": "(1) C08 の経路は対話であり『どこまでの復元不足を許すか』は C02 の R2-complete が利用者へ確認して決める。フラグを足すと同じ決定に 2 つの機構が並ぶ。(2) C20 の fail_semantics は穴つき部分成果物を書くのを E-EXTRACT-UNRECOVERABLE のときだけと定めており、W- 系の格上げで --out が書かれるかは規定が無い。C08 の failure_modes は『書き出しの有無を言い換えず存在しないパスを案内しない』ことを求めるため、規定の無い経路を露出させるとこの要求を満たせない。(3) 厳格バーの受け手はゲートとして測る利用者で、その面は C09 が持つ。この区別は checklist_coverage_note が被覆件数の差の説明として既に置いている"
+    },
+    {
+      "claim": "採否理由を 1 箇所に閉じた",
+      "method": "inventory C08 へ argument_surface.strict_fidelity を新設し、canonical_location で『brief 側へ写さない』を明示",
+      "result": "brief 側 (command-brief-C08.json) には一切書いていない。同一 plugin で繰り返し裁定してきた『裁定文を複製しない』形 (軸語彙の C06 集約・属性名の単一 owner) に揃えた"
+    },
+    {
+      "claim": "フラグが到達不能である事実を隠さず外へ出した",
+      "method": "plugins/guide-doc-generator/ 全体を --strict-fidelity で grep",
+      "result": "出現は tests/extract-handout-config.py/test_heuristic_and_fidelity.py と同ディレクトリ README のみ。commands/ 3 本と skills/run-handout-extract のいずれにも無く、SKILL.md:103 の起動形は --html/--out/--report 固定。argument_surface.known_gap へ『本裁定は C08 へは出さないであって、どこにも要らないではない』と書き、P05-x-140-c09-strict-fidelity-gate を emit した"
+    },
+    {
+      "claim": "inventory の決定論ゲートを通した",
+      "method": "check-surface-inventory.py と check-spec-gates.py を実行。編集前に JSON の round-trip (ensure_ascii=False / indent=2 / 末尾改行) が保存されることを assert",
+      "result": "いずれも exit0。round-trip 一致も編集前に確認済み"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C08SF-UNREACHABLE-01",
+      "level": "warn",
+      "summary": "--strict-fidelity は実装 (extract-handout-config.py:1571,1745) とテスト (test_heuristic_and_fidelity.py 3 ケース) を持ちながら、起動する出荷面が 1 つも無い。テストだけがフラグを立てるため、テストは緑でも利用者にはその厳格判定が一度も適用されない。『到達不能な検査』の典型で、テストの緑がフラグの有用性の証拠に見えてしまう点が悪質。P05-x-140 として emit した"
+    },
+    {
+      "id": "F-P02C08SF-FAILSEM-01",
+      "level": "warn",
+      "summary": "C20 の fail_semantics に穴がある。--strict-fidelity 下の exit 1 (W-EXTRACT-OPTIONAL / W-EXTRACT-HEURISTIC の格上げ) で --out へ成果物が書かれるかが規定されていない。exit_codes['1'] は格上げを exit 1 の事由として列挙する一方、部分成果物を書く条件は E-EXTRACT-UNRECOVERABLE に限ると但し書きしており、格上げ経路の書き出し有無はどちらとも読める。この曖昧さが今回『露出しない』の根拠の 1 つになったが、曖昧さ自体は C20 側に残る"
+    },
+    {
+      "id": "F-P02C08SF-SCOPE-01",
+      "level": "info",
+      "summary": "受入条件は command-brief-C08.json の arguments に言及するが、write_scope は component-inventory.json のみ。今回はフラグ集合が既に一致していたため brief を編集せずに満たせたが、不一致だったら write_scope 内で達成できなかった。受入条件が write_scope 外のファイルを条件節に含める構造は本 build で 4 例目 (F-P02C11HM-SCOPE-01 と同型)"
+    },
+    {
+      "id": "F-P02C08SF-NEWKEY-01",
+      "level": "info",
+      "summary": "argument_surface は本ノードで新設したキーで、他 component には存在しない。slash-command は C07/C08/C09 の 3 件だが C07/C09 には同種の記録が無く、フラグ集合の parity が保たれているかは C08 でしか記録されていない。regression_scope (F-P02C07REG-NOSCHEMA-01) と同じく schema で規定されておらず、キーが無くてもゲートは緑になる"
+    }
+  ]
+}

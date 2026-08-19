@@ -34,7 +34,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py"
+        "script_path": "scripts/resolve-handout-preset.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/resolve-handout-preset.py",
       "status": "planned"
@@ -71,7 +71,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/validate-handout-config.py"
+        "script_path": "scripts/validate-handout-config.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
       "status": "planned"
@@ -88,7 +88,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/embed-assets.py"
+        "script_path": "scripts/embed-assets.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
       "status": "planned"
@@ -105,7 +105,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/render-diagram-svg.py"
+        "script_path": "scripts/render-diagram-svg.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
       "status": "planned"
@@ -122,7 +122,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/build-icon-sprite.py"
+        "script_path": "scripts/build-icon-sprite.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/build-icon-sprite.py",
       "status": "planned"
@@ -145,7 +145,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/render-handout.py"
+        "script_path": "scripts/render-handout.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/render-handout.py",
       "status": "planned"
@@ -162,7 +162,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py"
+        "script_path": "scripts/verify-handout-selfcontained.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
       "status": "planned"
@@ -179,7 +179,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py"
+        "script_path": "scripts/verify-handout-a11y-print.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py",
       "status": "planned"
@@ -198,7 +198,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/verify-handout-language.py"
+        "script_path": "scripts/verify-handout-language.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
       "status": "planned"
@@ -218,7 +218,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/route-handout-output.py"
+        "script_path": "scripts/route-handout-output.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/route-handout-output.py",
       "status": "planned"
@@ -235,7 +235,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/srg-image-bridge.py"
+        "script_path": "scripts/srg-image-bridge.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
       "status": "planned"
@@ -254,9 +254,27 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py"
+        "script_path": "scripts/verify-handout-narrative.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+      "status": "planned"
+    },
+    {
+      "id": "C03",
+      "component_kind": "skill",
+      "name": "assign-handout-readability-evaluator",
+      "spec": "phase-05-implementation.md",
+      "depends_on": [
+        "C18",
+        "C04"
+      ],
+      "builder": "run-skill-create",
+      "build_kind": "skill",
+      "build_args": {
+        "skill_name": "assign-handout-readability-evaluator",
+        "brief_path": "briefs/skill-brief-C03.json"
+      },
+      "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
       "status": "planned"
     },
     {
@@ -265,6 +283,7 @@
       "name": "run-handout-build",
       "spec": "phase-05-implementation.md",
       "depends_on": [
+        "C03",
         "C04",
         "C05",
         "C11",
@@ -303,7 +322,7 @@
       "gap_ref": "GAP-SCRIPT-BUILDER",
       "build_kind": "script",
       "build_args": {
-        "script_path": "plugins/guide-doc-generator/scripts/extract-handout-config.py"
+        "script_path": "scripts/extract-handout-config.py"
       },
       "build_target": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
       "status": "planned"
@@ -326,24 +345,6 @@
         "brief_path": "briefs/skill-brief-C02.json"
       },
       "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
-      "status": "planned"
-    },
-    {
-      "id": "C03",
-      "component_kind": "skill",
-      "name": "assign-handout-readability-evaluator",
-      "spec": "phase-05-implementation.md",
-      "depends_on": [
-        "C18",
-        "C04"
-      ],
-      "builder": "run-skill-create",
-      "build_kind": "skill",
-      "build_args": {
-        "skill_name": "assign-handout-readability-evaluator",
-        "brief_path": "briefs/skill-brief-C03.json"
-      },
-      "build_target": "plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/",
       "status": "planned"
     },
     {
