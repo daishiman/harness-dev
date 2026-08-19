@@ -124,8 +124,15 @@ def _script_files() -> list[Path]:
         out += [f for f in sd.glob("*.py") if not f.is_symlink()]
     for plugin in _real_dirs(PLUGINS_DIR):
         for f in plugin.rglob("scripts/*.py"):
-            if not f.is_symlink() and "__pycache__" not in f.parts:
-                out.append(f)
+            if f.is_symlink() or "__pycache__" in f.parts:
+                continue
+            # tests/**/fixtures/ 配下の scripts はテストの入力データであって harness の
+            # 実体ではない。受入例が実体の写しを持つ設計だと、1 本のスクリプトが
+            # fixture の数だけ分母へ重複計上され、レビュー済み率を実態より低く見せる。
+            # これらは自身を消費するテストで既に被覆されている。
+            if "fixtures" in f.parts and "tests" in f.parts:
+                continue
+            out.append(f)
     return out
 
 

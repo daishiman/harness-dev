@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/guide-doc-generator/commands/handout-verify.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 77,
+    "notes": "C09 検証ゲートの集約入口。この plugin で最も Goodhart 耐性を意識した設計で、強い点が多い: (a) 状態分類と全体 verdict の規則を CR-GATE-AGG という単一正本の機械可読宣言として持ち、C01 の R4-verify に自前集約をさせず必ずこの command を起動させる — 同じゲート結果に 2 つの verdict が生まれる経路を構造的に消している。(b) exit 2 (検査器自体の異常) を error として fail 側へ倒す判断と『資料の合格の証拠にはならない』という根拠。(c) not-run を pass へ畳む経路を存在させないと明言し、not_run_reasons を 4 種の閉じた語彙にして理由必須にしている。(d) --only 使用時は全ゲート成功でも verdict を partial に固定する — 検査範囲を絞って緑にする経路を塞ぐ、この種の gate で最も踏まれやすい抜け穴への正しい対処。(e) 報告は必ず 4 ゲート全部を行として出し、省略が『全部通った』と誤読される害を明記。(f) 1 ゲート落ちても後続を止めない (fail-fast にしない)。減点: (1) **正規化済み判定の手段が誤っている** — 縮退節は『--config が未正規化: validate-handout-config.py --strict で検出』とするが、--strict は『警告も違反として扱う』フラグであって正規化済みかどうかの検査ではない。正規化済みの実際の判定基準は provenance.normalized_by (C11/C12 の裁定) であり、--strict では正規化済みの構成データでも警告 1 件で exit 1 になるため config-not-normalized と誤分類され、language/narrative の 2 ゲートが不当に not-run へ落ちる。not-run は pass へ畳まれないので緑化にはならないが、正しい構成データで incomplete が出続ける偽陰性経路になる。(2) **summary.json の書き手が定義されていない** — 手順 7 と報告節は集約サマリを summary.json として置くと定めるが、allowed-tools は [Read, Bash] で command 自身は書けず、各 script が受ける --json-report は自分のゲート JSON しか知らない。集約サマリを誰が書くかがどこにも書かれていない。(3) verdict_table は first-match なので、--only 指定 かつ --config 欠落 の同時成立時に partial が先に当たり、config-missing による不完全性が verdict から消える (行としては報告されるが、機械可読な verdict は partial 一語になる)。(4) --out-dir 既定を『html-path の親』とするが、C19 の命名規則 (<YYYY-MM-DD>_<slug>) との整合検査を language ゲートへ丸投げしており、親ディレクトリが命名規則外の場合の期待挙動が未定義。"
+  },
+  "reviewed_by": "claude-code-review",
+  "checked": [
+    "frontmatter",
+    "responsibility",
+    "reference-existence",
+    "error-handling",
+    "side-effect-safety"
+  ]
+}

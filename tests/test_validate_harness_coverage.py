@@ -45,6 +45,25 @@ def _setup(tmp_path, *, code_pct=None, llm_avg=None, skill_pass=True):
     return m
 
 
+def test_script_files_skips_test_fixtures(tmp_path):
+    """受入 fixture の中の scripts は harness の実体でなくテストの入力データ。
+
+    fixture が実体の写しを持つ設計だと、1 本のスクリプトが fixture の数だけ
+    分母へ重複計上され、レビュー済み率を実態より低く見せる。
+    """
+    m = _load()
+    m.ROOT = tmp_path
+    m.PLUGINS_DIR = tmp_path / "plugins"
+    real = m.PLUGINS_DIR / "p" / "scripts"
+    real.mkdir(parents=True)
+    (real / "render.py").write_text("x", encoding="utf-8")
+    fixture = m.PLUGINS_DIR / "p" / "tests" / "run-x" / "fixtures" / "accept" / "scripts"
+    fixture.mkdir(parents=True)
+    (fixture / "render.py").write_text("x", encoding="utf-8")
+    found = [str(f.relative_to(tmp_path)) for f in m._script_files()]
+    assert found == ["plugins/p/scripts/render.py"]
+
+
 def test_pct_helper():
     m = _load()
     assert m._pct(2, 4) == 50.0

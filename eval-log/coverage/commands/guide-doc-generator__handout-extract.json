@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/guide-doc-generator/commands/handout-extract.md",
+  "type": "commands",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 79,
+    "notes": "C08 逆抽出の起動入口。強い点: (a) 引数解決を CR-EXTRACT-ARGS の preconditions (first-match) として宣言し、『散文と食い違った場合はこの宣言が正しい』と優先順位まで明記している。(b) round-trip の粒度の限界を、結果を出す前に (手順 3) 宣言させる — 事後の言い訳でなく事前の期待値設定になっている。等価判定を正規化後の構成データ等価に限り、HTML バイト一致を課さない理由 (空白と属性順) も具体的。(c) 復元される範囲と復元されない範囲を項目単位で列挙し、後者について『復元しても元の意図と一致する保証がない』と正直に書いている。復元不能箇所は黙って欠落させず、キーパス/理由/補完方針を組で出させ、推測値と読み取り値をレポート上で必ず区別させる — 捏造で通す経路を明示的に塞いでいる。(d) 部分成功を部分成功として提示、exit≠0 でも既に書けた成果物を捨てない、W- 診断を fail に数えない、といった判定規則が具体的。(e) 上書き確認の根拠が『手で補完した意味情報は再逆抽出では戻らない』という不可逆性で、儀式でなく理由がある。減点: (1) **散文と宣言が矛盾している** — 散文は『--out を指定しても変わるのは構成データ JSON の書き出し先だけであり、逆抽出レポートは --out と同じディレクトリへ併置する』と述べるが、これは『レポートの置き場所も --out で変わる』という意味であり前半と後半が自己矛盾する。宣言側の report_placement: '{out_dir}' が正しく、散文の『書き出し先だけ』が誤り。宣言を正本と自ら定めているので実害は限定的だが、読み手が最初に読むのは散文。(2) **レポートには上書き確認が無い** — preconditions の out_exists → confirm-overwrite は --out (構成データ JSON) にしか掛からず、同じディレクトリへ併置される逆抽出レポートは黙って上書きされる。上書きを不可逆な損失として扱う本 command の根拠は、人が読んだ補完方針の記録であるレポートにも同じだけ当てはまる。(3) **受理宣言が実装能力を超えている** — 『guide-doc-generator が生成した HTML でも手書き HTML でも受け付ける』と宣言するが、委譲チェーンの extract-handout-config.py (C20) の TreeBuilder は終了タグ省略 (</li>, </p>) を MalformedHtml として exit 1 で落とすため、一般的な手書き HTML は抽出前に停止する。入口の受理宣言と下流の受理能力が食い違っている。(4) allowed-tools に Write があるが、command 自身の手順に書き込みは無い (書き出しは委譲先 skill と script)。不要な権限宣言。"
+  },
+  "reviewed_by": "claude-code-review",
+  "checked": [
+    "frontmatter",
+    "responsibility",
+    "reference-existence",
+    "error-handling",
+    "side-effect-safety"
+  ]
+}
