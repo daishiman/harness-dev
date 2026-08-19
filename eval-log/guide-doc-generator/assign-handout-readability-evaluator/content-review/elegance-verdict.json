@@ -1,0 +1,41 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "assign-handout-readability-evaluator",
+    "skill_md_sha256": "22ebe01a80a50eeb2ff842a9b55d3c7d676958e2927996d9c5509c488a2dfe20"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-19T00:00:00Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": [
+      "no-contradiction",
+      "no-omission",
+      "convention-consistency",
+      "dependency-consistency",
+      "rubric-high-severity-zero"
+    ],
+    "positive_feedback": [
+      "委譲理由を『品質の上乗せ』ではなく proposer≠approver の構造欠陥封じとして明記し、独立 context の価値を『親会話に載っている情報が載っていないこと』と操作可能な形で定義している。Gotchas の『前回ここを直したと伝えると Goodhart 化する』は横展開価値のある反パターン記述。",
+      "assign kind の境界 (判定しない・書き換えない・再判定しない・ループしない) を SKILL.md Key Rules と prompt Layer2 2.1 の非担当で二重に固定し、C09 の CR-GATE-AGG を集約規則の正本として委譲することで規則の二重実装を避けている。"
+    ],
+    "negative_feedback": [
+      "smell(low): gate_reports について『本 skill が収集する』と『C09 の結果を運ぶだけ』が併記され、C18 (verify-handout-language.py) だけ本 skill が --json-report つきで再実行する一方、C16/C17/C22 の report 取得元が明示されていない。inventory の deterministic_checks が verify-handout-language.py 単独である点とは整合しており契約違反ではないが、収集と運搬の役割境界を 1 文で補うと曖昧さが消える。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "focused combined review (incremental profile) の単一評価を elegance へ分離投影。C1-C4 相当 (矛盾なし/漏れなし/規約整合/依存関係整合) を確認。frontmatter feedback_contract は skip_reason のみで criteria[] を持たないため、criteria_evaluated には本 batch の判定軸 (a)-(e) を記録した。委譲先 agents/handout-readability-reviewer.md 本体は本 batch の context_paths 外につき未読 (agent 側 verdict 規則との突合は未評価)。"
+}

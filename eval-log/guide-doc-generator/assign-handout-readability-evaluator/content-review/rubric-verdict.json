@@ -1,0 +1,41 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "assign-handout-readability-evaluator",
+    "skill_md_sha256": "22ebe01a80a50eeb2ff842a9b55d3c7d676958e2927996d9c5509c488a2dfe20"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-19T00:00:00Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": [
+      "no-contradiction",
+      "no-omission",
+      "convention-consistency",
+      "dependency-consistency",
+      "rubric-high-severity-zero"
+    ],
+    "positive_feedback": [
+      "inventory C03 の goal / boundary / output_contract / checklist / responsibilities(R1-assign) / rubric_refs / feedback_contract.skip_reason が SKILL.md と prompt に欠落なく写像され、prompt は 7layer (L1-L7) と 5.3 完了チェックリストを備え、prompt_layer=7layer 契約を満たす。",
+      "allowed-tools が [Read, Bash(python3 *), Task] に限定され書き込み系を持たず、prompt Layer3 3.2 と Layer4 4.3 の read-only 宣言と一致している (boundary の機械的裏づけ)。"
+    ],
+    "negative_feedback": [
+      "smell(low, severity=low): gate_reports の収集主体が二重に読める (本 skill が収集 / C09 の結果を運ぶだけ)。C18 のみ本 skill が再実行し C16/C17/C22 の report 取得元が未明示。high ではないため PASS を妨げない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "rubric = ref-handout-design-system / ref-skill-design-rubric 規範に照らした採点。high severity 0。命名 (assign prefix, name=dir 一致, hierarchy L2, user-invocable false, output_language ja) と P0 lint 群 (lint-skill-name / description / tree / validate-frontmatter / lint-dependency-direction / lint-forbidden-deps) は violation 0 を実行確認。参照解決も確認済み: ../../agents/handout-readability-reviewer.md, ../../scripts/verify-handout-language.py, prompts/R-review-readability.md, plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json いずれも実在。frontmatter feedback_contract は skip_reason のみで criteria[] を持たないため criteria_evaluated は本 batch の判定軸を記録。"
+}
