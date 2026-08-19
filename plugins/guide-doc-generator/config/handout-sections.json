@@ -52,7 +52,9 @@
       "label_ja": "冒頭の大きな流れ",
       "description": "冒頭に置く『今日の流れ』枠。大きな流れだけを列挙し、個々の手順・操作の詳細は書かない (R21 C46)。B03 を器として使う",
       "max_items": 5,
-      "forbid_row_detail": true
+      "forbid_row_detail": true,
+      "row_detail_max_chars": 20,
+      "row_detail_max_chars_why": "『大きな流れ』の 1 項目が名詞句・短い動詞句で収まる上限。criterion (description) が禁じているのは詳細を書くことであって、sub というフィールドを使うことではない。行本文・カード本文がこの長さを超えたら、それは流れの見出しではなく手順の説明である。20 字は冒頭の枠が 5 項目 (max_items) 並んでも一望できる長さから決めた"
     },
     {
       "slug": "capability-explainer",

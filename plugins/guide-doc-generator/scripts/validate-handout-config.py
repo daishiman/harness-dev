@@ -164,6 +164,7 @@ KIND_CAPABILITY_EXPLAINER = "capability-explainer"
 
 ATTR_MAX_ITEMS = "max_items"
 ATTR_FORBID_ROW_DETAIL = "forbid_row_detail"
+ATTR_ROW_DETAIL_MAX_CHARS = "row_detail_max_chars"
 ATTR_REQUIRED_ROLE = "required_role"
 ATTR_PLACEMENT = "placement"
 PLACEMENT_LAST_MAIN = "last-main"
@@ -1167,6 +1168,22 @@ class Checker(object):
 
     # ---- section_kind 追加検査 --------------------------------------------
 
+    def check_row_detail_length(self, text, max_chars, pointer):
+        """項目本文が『大きな流れの見出し』の長さに収まっているか見る。
+
+        禁じられているのは詳細を書くことであって、sub というフィールドを使う
+        ことではない。sub を空にして本文へ手順を書けば同じことが起きる。
+        上限は section カタログ側にあり、この script は値を持たない
+        (無いカタログでは長さを見ない = 従来どおり sub だけを見る)。
+        """
+        if not isinstance(max_chars, int) or not isinstance(text, str):
+            return
+        if len(text.strip()) > max_chars:
+            self.add("E-SECTIONKIND-ROWDETAIL", pointer,
+                     "この section_kind の項目は %d 字以内で書く (実際 %d 字)。"
+                     "大きな流れだけを並べる枠であり、個々の手順・操作の説明は"
+                     "後続のセクションへ置く" % (max_chars, len(text.strip())))
+
     def check_kind_constraints(self, section, parts, pointer, kind, attrs):
         max_items = attrs.get(ATTR_MAX_ITEMS)
         if isinstance(max_items, int):
@@ -1183,14 +1200,26 @@ class Checker(object):
                                  "この section_kind の列挙上限 %d 件を超える (実際 %d 件)"
                                  % (max_items, len(items)))
         if attrs.get(ATTR_FORBID_ROW_DETAIL):
-            rows_part = self.ctx.part_of_block(BLOCK_ROWS)
+            # 器は max_items と同じ引き方をする (部品 id で絞らず rows / cards を
+            # そのまま見る)。片方だけを見る検査が隣にあると、行をカードに
+            # 置き換えるだけで規則が消える。
+            max_chars = attrs.get(ATTR_ROW_DETAIL_MAX_CHARS)
             for part in parts:
-                if not isinstance(part, dict) or part.get("part") != rows_part:
+                if not isinstance(part, dict):
                     continue
-                for row in (part.get("data") or {}).get("rows") or []:
-                    if isinstance(row, dict) and row.get("sub") is not None:
+                data = part.get("data")
+                if not isinstance(data, dict):
+                    continue
+                for row in data.get("rows") or []:
+                    if not isinstance(row, dict):
+                        continue
+                    if row.get("sub") is not None:
                         self.add("E-SECTIONKIND-ROWDETAIL", pointer,
                                  "この section_kind では行の詳細 (sub) を書けない")
+                    self.check_row_detail_length(row.get("text"), max_chars, pointer)
+                for card in data.get("cards") or []:
+                    if isinstance(card, dict):
+                        self.check_row_detail_length(card.get("body"), max_chars, pointer)
         if kind == KIND_ACTION_ITEMS:
             actions_part = self.ctx.part_of_block(BLOCK_ACTIONS)
             for part in parts:
