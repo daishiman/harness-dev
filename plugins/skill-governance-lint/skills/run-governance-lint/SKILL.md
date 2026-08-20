@@ -1,7 +1,29 @@
 ---
 name: run-governance-lint
-description: skill、agent、plugin、rubricのgovernance lintを選択しfail-closedで実行したいときに使う。
+description: skill・agent・pluginのgovernance lintを選択したいとき、rubricを含む検査をfail-closedで実行したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
+user-invocable: true
+disable-model-invocation: false
 allowed-tools: Bash, Read, Glob
+effect: conversation-output
+owner: team-platform
+since: 2026-08-20
+last-audited: 2026-08-20
+source: plugins/skill-governance-lint
+source-tier: internal
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: artifact kindに適用可能なlintとvalidatorを実在entrypointから選び各helpとexit codeを独立に確認している
+      verify_by: script
+    - id: OUT1
+      loop_scope: outer
+      text: 必要lintの未実行を理由付きで残し非0findingを自動修正または成功へ畳まず表形式で報告している
+      verify_by: evaluator
 ---
 
 # run-governance-lint

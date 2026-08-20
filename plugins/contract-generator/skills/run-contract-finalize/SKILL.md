@@ -1,6 +1,6 @@
 ---
 name: run-contract-finalize
-description: 業務委託契約書をSlack承認後にPDF発行・確定したいとき、承認(✅/OK)をポーリング検知してPDF生成・共有したいときに使う。
+description: 業務委託契約書の下書きを確認後にPDF発行・確定したいとき、ユーザーの明示指示でdraftをcompletedへ遷移したいときに使う。
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: [Read, Bash(python3 *)]
@@ -59,7 +59,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 - **発火条件は Claude Code 実行のみ**: `finalize` は `draft`(および後方互換の `approved`)行を対象に直接PDF化する。ユーザーが内容確認のうえ実行する行為が人間のゲート(誤確定はこの明示実行で防ぐ)。Slack承認は必須ではない。
 - 任意の poll を使う場合の承認検知は台帳 `Slack_メッセージTS` を突合キーに `reactions.get`/`conversations.replies` を読む。
 - PDFは法務承認済書式を維持(黄色除去のみ)。条文は改変しない。
-- 認証: Service Account(Drive/Sheets) + Slack Bot Token は Keychain のみ(plugin直下 `README.md` Task 4/8)。
+- 認証: Service Account(Drive/Sheets) + Slack Bot Token は Keychain のみ(plugin直下 `README.md` のセットアップ節)。
 - 状態は台帳(単一真実源)で引き継ぐ。スキル間結合は台帳ステータス列のみ。
 
 ## ゴールシーク実行
@@ -124,7 +124,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-co
 `slack_channel`/`slack_keychain_*`/出力フォルダID/`spreadsheet_id` は `google-config.json` と Keychain から注入。具体値は本文に直書きしない。
 
 ## 追加リソース
-- plugin直下 `README.md` — Slack/Keychain/SA セットアップ(Task 1-14)
+- plugin直下 `README.md` — Slack/Keychain/Service Account のセットアップ正本
 - `output/contract-generator-v2/slack-2phase-design.md` — 2フェーズ承認の設計
 - `prompts/R1-approve-and-finalize.md` — 承認検知・PDF確定・台帳completedの責務単位7層プロンプト(SSOT正本)。`../../agents/contract-finalize-agent.md` は本プロンプトを参照する薄い実行アダプタ(本文を持たない)。
 - 追加リソースは plugin 直下 `lib/` ディレクトリ全体を参照。各ファイルは PEP723 風メタブロックで purpose を記載。
@@ -134,13 +134,13 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-co
 ## 運用(既定=明示指示駆動 / 常駐デプロイ不要)
 ```bash
 # 既定: ユーザーが Claude Code で確定を指示したときに 1 回実行(承認済み行のみPDF化)
-python3 scripts/finalize.py --type all          # finalize 単独(draft→completed 直接確定・poll は回さない・費用¥0)
-python3 scripts/finalize.py --type all --dry-run # 副作用なしで承認状態を確認
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py" --type all          # finalize 単独(draft→completed 直接確定・poll は回さない・費用¥0)
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py" --type all --dry-run # 副作用なしで対象状態を確認
 
 # 任意の自動化(費用に注意): 自動ポーリングは純Pythonをcronで。LLMを回す/loopは非推奨
 # 導入後の plugin 実体は固定文字列で書かず自動検出した絶対パスを使う(<plugin> をそのまま貼らない):
 #   CG=$(find "$HOME/.claude" -type d -path '*/contract-generator' -print -quit)
-#   */5 * * * * cd "$CG" && python3 scripts/finalize.py --type all   # 例: 5分ごと・トークン費用ゼロ
+#   */5 * * * * python3 "$CG/skills/run-contract-finalize/scripts/finalize.py" --type all   # 例: 5分ごと・トークン費用ゼロ
 ```
 
 ## セキュリティと権限

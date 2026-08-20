@@ -143,12 +143,11 @@ runtime_root_policy: host-skill-path
 ## 検証コマンド
 
 ```bash
-PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"   # plugins/system-spec-harness を指す
 # R3 決定論組み立て (全件対応も同時検査)
-python3 skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py" \
   assemble --records records.json --targets targets.json --out fetched-references.json
 # IN1 ゲート (共有 script)
-python3 scripts/validate-source-citation.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py" \
   --targets targets.json --references fetched-references.json
 ```
 

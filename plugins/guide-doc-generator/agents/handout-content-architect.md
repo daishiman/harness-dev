@@ -39,7 +39,7 @@ last-audited: 2026-08-17
 | --- | --- |
 | hearing_result | reader / prior_knowledge_level / usage_scene / essential_problem / background / overall_goal / section_outline / focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / presentation_order の 13 項目 |
 | preset | 親が解決済みの用途別プリセット JSON |
-| materials | 素材の論理名と用途メモ |
+| materials | 素材の論理名と用途メモ。画風の参照画像がある場合は、その論理名と「内容ではなく画風・構図の参照」である旨を含む |
 | theme / date | 任意。渡されたときだけ写す |
 | out_config_path | 構成データ JSON の書き出し先 1 パス |
 
@@ -174,7 +174,10 @@ contentAdaptationRules.notACopyTemplate)。
    primary はそのセクションの主題を担う具体物、props は 1 件以上の小物。3 役とも選んだ family の
    genome の motifs[].name にある名前で書く。3 役構造は genome の richnessFloor をデータ形にした
    ものであり、空の枠と文字だけの平坦な図を書けなくするためにある。subject と diagram_structure は
-   英文で 4 段の結果を具体的に記述し、曖昧な褒め言葉を書かない。
+   英文で 4 段の結果を具体的に記述し、曖昧な褒め言葉を書かない。両フィールドを合わせて
+   **人物または役割主体・その行為・場面の場所・意味を運ぶ主役の具体物・視線の読み順**を必ず
+   記述する。抽象アイコン、ロゴ風の記号、UI カードを並べただけの図を主役にしない。漫画調の
+   解説図は、登場人物が小物を使って何かを行う一場面として読めて初めて内容へ適応したとみなす。
 
 禁止 2 件。
 
@@ -199,11 +202,15 @@ overlay_text は text_policy に関わらず必ず非空で書く。焼いた文
 印刷 (R15) の安全弁である。text_policy を overlay-only にするのは正確な表・料金・頻繁に変わる文言を
 扱うときだけで、そのときは text_policy_reason を対で書く。理由なしに焼き込みを外さない。
 
-style_family は 2 系統のいずれかで、奥行き・順序・連結を読む図は isometric-diorama、
-面積・格子・二項対比を読む図は flat-infographic-jp を選ぶ。図解型から画風系統への写像は
-全域写像であり、その正本は C21 の image_style_families である。既定と異なる系統を選ぶときだけ
-style_family を明示する。図解型を持たないセクションの画像は style_family の明示が必須で、
-既定へ落とさない。family を決めたら、その family の genome を読んで具体物名を引く。
+style_family は 2 系統のいずれかである。**配布ガイドの illustration の既定は
+isometric-diorama** とし、全節で明示する。白い紙面上の俯瞰ジオラマ、漫画的に簡略化した人物、
+意味を持つ机・書類・機械・矢印などの小物で、節ごとに異なる一場面を作る。比較や二項対比でも、
+左右 2 場面のジオラマとして表せる限りは同じ family を保つ。flat-infographic-jp を選ぶのは、
+利用者が正面図・面積比較・格子表現を明示指定し、人物を含む場面化では意味が崩れる場合だけである。
+図解型から画風系統への写像の正本は C21 の image_style_families だが、資料単位の明示指定が写像に
+優先する。参照画像が渡された場合は、その配色・線・俯瞰角度・人物の簡略度・小物密度を
+style reference として固定し、参照画像の題材や配置そのものは複製しない。family を決めたら、
+その family の genome を読んで具体物名を引く。
 
 ## Constraints
 
@@ -214,6 +221,9 @@ style_family を明示する。図解型を持たないセクションの画像�
 - 素材は論理名の参照までで、data URI 化は C13 が行う。
 - 挿絵は計画までで、画像生成そのものと生成後の評価は C21 の先へ委ねる。画像生成プロンプトの
   本文を書かない。genome ファイルを書かない・複製しない・値を構成データへ写さない。
+- 画風の参照画像が渡された場合、そのファイルパスを構成データへ焼き込まない。親が画像計画の
+  `style_reference_paths` として C21 へ渡す。ここでは参照から読み取った画風要件だけを subject /
+  diagram_structure に反映する。
 - lead_line と goal は別フィールドであり、一方が他方を代替しない (C40)。lead_line は扱う抽象の宣言、
   decision_line は選ぶための問い、goal は読後の到達状態である。
 - glossary で宣言した用語は本文フィールドの初出で括弧書き併記する。別の専門用語で言い換えない。
@@ -236,5 +246,6 @@ style_family を明示する。図解型を持たないセクションの画像�
 - 完全性: 入力 13 項目と schema の必須フィールドが埋まり、全セクションに goal / lead_line /
   decision_line / ties_to がある。
 - 一貫性: 全体ゴールと各セクション goal の連なりが辿れ、glossary の宣言と本文の併記が一致する。
-- 深度: 各セクションで抽象と具体の往復が成立し、挿絵計画の 4 段が全セクションで踏まれている。
+- 深度: 各セクションで抽象と具体の往復が成立し、挿絵計画の 4 段が全セクションで踏まれ、
+  subject / diagram_structure から人物・行為・場所・主役の具体物・読み順を辿れる。
 - 検証可能性: config_path が実在し、戻り値の要約が構成データと矛盾しない。

@@ -83,3 +83,27 @@ class TestProcedureOrder(H.AgentContractTestCase):
             self._pos(("除外リスト", "突合", "突き合わせ")),
             "除外リストとの突合が severity 付与より後に来ていない",
         )
+
+
+class TestVisualPixelReview(H.AgentContractTestCase):
+    """visual-fit が alt 文だけの机上判定へ退化しないこと。"""
+
+    def test_every_illustration_is_opened_as_pixels(self):
+        for token in ("実画素", "1 枚ずつ開いて", "alt"):
+            self.assert_mentions(token, "画像を実際に開く契約 {} が無い".format(token))
+
+    def test_visual_fit_checks_scene_and_style(self):
+        for token in (
+            "人物または役割主体",
+            "行為",
+            "場所",
+            "主役の具体物",
+            "配色",
+            "俯瞰角度",
+            "小物密度",
+        ):
+            self.assert_mentions(token, "visual-fit の判定軸 {} が無い".format(token))
+
+    def test_generic_icon_only_image_is_rejected(self):
+        for token in ("抽象アイコン", "UI カード", "羅列"):
+            self.assert_mentions(token, "汎用図への退化を拒否する語 {} が無い".format(token))

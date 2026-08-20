@@ -1,6 +1,6 @@
 ---
 name: run-codex-plugin-install
-description: Claude Code/Codexへlocal repositoryの全pluginをcwd非依存でuser installしたいとき、またはCodexへmerge済みGit refから単独installしたいときに、marketplace登録・install・receipt検証を行う。
+description: Claude Code/Codexへlocal repositoryの全pluginをcwd非依存でuser installしたいとき、またはCodexへmerge済みGit refから単独installしたいときに、marketplace登録・install・receipt検証へ使う。
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<plugin-name> --source <local-root|owner/repo> [--ref <git-ref>]"

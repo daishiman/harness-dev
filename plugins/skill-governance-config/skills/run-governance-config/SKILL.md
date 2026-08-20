@@ -1,7 +1,29 @@
 ---
 name: run-governance-config
-description: governance config一式の用途、必須key、projectへの導入差分をread-onlyで確認したいときに使う。
+description: governance config一式の用途と必須keyを確認したいとき、projectへの導入差分をread-onlyで把握したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
+user-invocable: true
+disable-model-invocation: false
 allowed-tools: Read, Glob
+effect: conversation-output
+owner: team-platform
+since: 2026-08-20
+last-audited: 2026-08-20
+source: plugins/skill-governance-config
+source-tier: internal
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: config registry policy exampleの参照を辿りrequired present unresolved ownerを実ファイルから分類している
+      verify_by: lint
+    - id: OUT1
+      loop_scope: outer
+      text: secret値を表示または生成せずdangling参照 parse不能 未解決placeholderをread-only結果として報告している
+      verify_by: evaluator
 ---
 
 # run-governance-config

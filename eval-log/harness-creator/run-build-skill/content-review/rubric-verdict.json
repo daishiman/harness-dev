@@ -2,40 +2,42 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "70f8b6764da5a7ff7bfc90ba626660a7fc9e1b1ccb12ec4b54fb3656d057cbcf"
+    "skill_md_sha256": "ad969893665db23610db3cb8c160693322e2147262ed033ea53375f245114407"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
+    "omission": 0,
     "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T05:35:20Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "L0 rubric (ref-skill-design-rubric/references/rubric.json v1.3.0) の high 規則を差分後の本文で再確認し全て充足: FM-001 (name=run-build-skill が ^(run|ref|assign|wrap|delegate)- に一致・60 字以内)、BD-001 (## Purpose & Output Contract が L129 に存在)、BD-003 (frontmatter 除く本文 259 行 ≦ 300 — 差分は既存行の置換のみで増減なし)、NM-001 (ディレクトリ basename == frontmatter.name)。medium も FM-003 (description の発動条件は『〜とき』2 個)・BD-002 (## Gotchas)・PD-001 (references/ 実在) を満たす。",
-      "L2 override (assign-skill-design-evaluator/references/rubric.json) の high も充足: REG-001 (validate-plugin-completeness.py / validate-build-trace.py が共に exit 0 を実行確認)、PG-001 (kind=run かつ責務あり → prompts/R1-scaffold.md, R2-responsibility-emit.md, R3-template-select.md, R4-trace-write.md が実在し frontmatter responsibility_refs と 1:1)。",
-      "4 条件のうち『SSOT 非重複』を差分が強化している: repo-root スクリプト起動形が本文 (SKILL.md) と詳細手順 (references/build-steps.md) で 2 種類存在した状態を ${HARNESS_ROOT:-.} 一形へ統合し、起動表記の二重定義を 1 つ減らした。『決定論ゲート』も無傷で、Step 4 の lint 集合は lint-matrix.json の射影のまま (lint-matrix-sync.py exit 0)、fail-closed 条件 (L291『全て exit 0 でなければ Step 2 / 3.5 へ戻る』) は改変されていない。",
-      "『単一責務』『fail-closed』の観点で差分の副作用がない: 変更 4 行はいずれもコマンドのパス解決形のみで、フラグ・引数・判定条件・戻り先を変えていない (git diff で語句レベルに確認)。評価分離 (生成本体は自己採点せず fork 評価) の構造も無改変。"
+      "Capability 7 kind の統一抽象・必須項目集合の schema 単一正本化・lint 集合の lint-matrix.json 正本化が徹底され、『本文に再掲しない=SSOT』が複数箇所で明文の規律として機能している。",
+      "CL-1..CL-12 と feedback_contract criteria の derived_from が全件対応し、IN3 (route build report) を含め出所チェックリストが宣言されている。",
+      "Step 4 の lint 群は Step 1 の resolve-skill-dirs.py で確定した `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を経由し、sibling plugin も `$(dirname \"$PLUGIN_ROOT\")` で相対導出しているため cwd 推測に依存しない。"
     ],
     "negative_feedback": [
-      "低 severity (非ブロッキング・規約整合): Key Rule 6 (marketplace install 配置非依存) の観点で、同じ正規化が Step 1 の bash フェンス L235-237 (`python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py --dir plugins/harness-creator/knowledge/`) に未適用。scripts/lint-readme-plugin-root-portability.py は SKILL.md を走査対象外と明記しているため機械検出されず (同 lint exit 0)、rubric 上も high 規則の対象外だが、Key Rule 6 の趣旨に照らせば $SKILL_DIR 起点へ寄せるべき残件。",
-      "低 severity (非ブロッキング): 冒頭 L127 の『Step 4 等の lint コマンドは repo-root cwd 前提で実行する』注記が HARNESS_ROOT 導入後も更新されておらず、根拠として挙げる『repo-root 相対パスに依存』も実際の L274 GOV_LINT_DIR=$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint と表現がずれている。挙動は既定 . で不変のため high ではない。",
-      "smell (非退行): 新規 4 行の ${HARNESS_ROOT:-.} が無引用で、同ブロック内の \"$SKILL_DIR/...\" / \"$GOV_LINT_DIR/...\" と引用有無が不揃い (空白入りパスで語分割)。repo 既存の同形も全て無引用のため規約準拠であり本差分固有の減点にはしない。",
-      "検証できなかった点: (IN2) 本差分は手編集コミット 830ef76 由来で対応する build trace が生成されておらず、checked-in の eval-log/skill-build-trace.json は別 skill (run-slide-report-generate) のもの。したがって本編集について source_docs/doc_coverage/layer_decisions/reproducibility_gates の記録充足は突合できていない (既存 trace 自体は validate-build-trace.py exit 0)。(BND-001) harness-creator は .claude-plugin/bundles.json のいずれの bundle にも含まれないが、本差分で新規追加された plugin ではないため BND-001 は適用外と判断した。"
+      "L245 の蓄積知見検索は skill 自身の同梱資産 (`templates/knowledge-skeleton/scripts/search_knowledge.py`) を repo 相対パスで起動しており、冒頭 blockquote の『skill 自身の資産は `$SKILL_DIR` 経由の self-relative 参照』という自己宣言と表記が食い違う。当該コマンドは『検索 0 件・スクリプト不在でも build を止めない』と明記された fail-open の best-effort であり build を破綻させないため low severity として記録する。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "incremental の focused combined review。ref-skill-design-rubric v1.3.0 (L0) + assign-skill-design-evaluator rubric.json (L2 delta) を規範に、origin/main..HEAD の SKILL.md 差分 (repo-root スクリプト 4 起動の ${HARNESS_ROOT:-.} 化) と全文を読んで採点した。high severity 0 件 (FM-001/BD-001/BD-003/NM-001/REG-001/PG-001 を実測で充足確認、AG-*/HK-*/CM-*/PC-*/PR-*/WF-* は kind=skill(run) に非適用、KL-* は本 skill に knowledge/ がないため非適用)。残る指摘は低 severity 3 件 (Step 1 bash の repo 相対直書き未回収 / L127 注記の陳腐化 / 無引用変数) でいずれも fail-closed ゲートと決定論射影を毀損しない。criteria 全 5 件を評価: IN1 は lint-skill-name・lint-skill-description・lint-skill-tree・validate-frontmatter・lint-skill-completeness・lint-goal-seek・lint-ssot-duplication・lint-matrix-sync・lint-readme-plugin-root-portability・validate-plugin-completeness・validate-build-trace の実行が全て exit 0、lint-feedback-contract.py --changed-only も exit 0 (WARN 3 件は live-trial ratchet の baseline 免除で非 fail) で充足。IN2 は本編集に対応する trace 不在のため未突合 (limitation 明示)。IN3 は本ブランチで eval-log/harness-creator/build/route-*.json に変更がなく handoff routes 消費 build ではないため N/A。OUT1 は未解決 high 0 で本 verdict を current sha へ束縛。OUT2 は本差分が plugin release / marketplace 自動化ブランチの可搬性ゴールに整合し、incremental 方針どおり未解決 claim のみを対象とした (30 思考法は使用していない)。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 同梱資産の repo 相対起動 1 件 (fail-open 宣言済み) を low severity として記録。rubric 規則には該当しない。"
 }

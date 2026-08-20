@@ -2,26 +2,37 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-visualize",
-    "skill_md_sha256": "a047d2a0f0687a43742b3102af135e19ec572297d444fe675a1f16838872081a"
+    "skill_md_sha256": "4c4c5daff11db1f5d67341636b0b5f9be7fee9541ea70532ea6a211b200abe1f"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-subagent",
-  "reviewed_at": "2026-07-03T22:14:27Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "完全性 3/3: FM に name/description(トリガ2件)/kind/feedback_contract、本文に Purpose & Output Contract・6 Key Rules・8項目 checklist・5段ゴールシークループ・Gotchas を網羅。深度 3/3: 目的・背景 が『図解創作=誤情報注入リスク』『Notion は SVG 非対応で PNG 化必須』を根拠に責務境界を説明",
-      "一貫性 3/3: 今回追加の verify-visuals.py 引数 (SKILL.md:81) が script 必須シグネチャと一致しコピペ実行可能に。検証可能性 3/3: schema validate+verify-visuals.py exit 0+2回連続 determinism が機械判定可能。簡潔性 3/3: 本文 117 行で 300 行上限を大きく下回り高密度。合計 15/15"
+      "実行行 (verify-visuals.py) は dual-root fallback 形で、repo 相対の `plugins/skill-intake/scripts/render_to_image.py` 言及は『正本は aggregator 共有・本スキル scripts/ 配下ではない』という所在の説明であり実行指示ではないため、両者の役割が混同されていない。",
+      "visuals.json と visuals/ の対応検証を script ゲートに委ね、生成物の存在確認を LLM 判断で代替しない設計になっている。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "現 SHA (a047d2a0...) の SKILL.md を実読した 5次元 genuine 採点。完全性3/一貫性3/深度3/検証可能性3/簡潔性3=15/15。変更点=checklist の verify-visuals.py 呼び出しに必須2引数を明記した点のみで、一貫性次元を微増(doc コマンド↔script シグネチャ一致でコピペ実行可能化)。name=dirname 一致・run- prefix・description のカタログ実数(Mermaid12+SVG8)整合・render_to_image.py 正本パス註記(Gotcha5)は健全。high-tier blocking 指摘なし。verdict=PASS。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
 }

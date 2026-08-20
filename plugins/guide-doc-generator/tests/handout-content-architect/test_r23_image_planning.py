@@ -226,6 +226,27 @@ class OutputFieldContractTest(_AgentTextTest):
             "(図解型, motifs.primary) の全件同一を自己確認する旨が書かれていない (R23 (e))",
         )
 
+    def test_isometric_comic_scene_is_the_handout_default(self):
+        self.assertTrue(
+            re.search(r"配布ガイド[\s\S]{0,120}既定[\s\S]{0,120}isometric-diorama", self.text),
+            "配布ガイドの illustration が漫画調ジオラマを既定にしていない",
+        )
+
+    def test_subject_contract_requires_a_concrete_scene(self):
+        for token in ("人物または役割主体", "行為", "場所", "主役の具体物", "読み順"):
+            self.assertIn(token, self.text, "subject / diagram_structure の場面要件 {} が無い".format(token))
+
+    def test_generic_icon_grid_is_forbidden(self):
+        for token in ("抽象アイコン", "UI カード", "主役にしない"):
+            self.assertIn(token, self.text, "汎用インフォグラフィック退化の禁止 {} が無い".format(token))
+
+    def test_style_reference_is_forwarded_by_the_parent(self):
+        self.assertIn("style_reference_paths", self.text)
+        self.assertTrue(
+            re.search(r"ファイルパス[^\n]*構成データへ焼き込まない", self.text),
+            "参照画像のパスを portability を壊す形で構成データへ書く余地がある",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

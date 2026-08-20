@@ -1,7 +1,29 @@
 ---
 name: run-governance-migration
-description: governance artifactのmigration候補、dry-run差分、rollback条件を確認したいときに使う。
+description: governance artifactのmigration候補とdry-run差分を確認したいとき、rollback条件を保った移行を実行したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
+user-invocable: true
+disable-model-invocation: false
 allowed-tools: Bash, Read, Glob
+effect: local-artifact
+owner: team-platform
+since: 2026-08-20
+last-audited: 2026-08-20
+source: plugins/skill-governance-migration
+source-tier: internal
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: source target versionに対応する実在migrationを順序どおり選びhelp dry-run checkとbefore after digestを検証している
+      verify_by: script
+    - id: OUT1
+      loop_scope: outer
+      text: backupとrollbackが確定しユーザー承認された場合だけapplyし部分適用を成功へ畳まずchanged pathsと残件を報告している
+      verify_by: evaluator
 ---
 
 # run-governance-migration

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-package",
-    "skill_md_sha256": "d481884dee91e14540ddd5886eb7f207e694740621e5497ab08189bfcabbc487"
+    "skill_md_sha256": "543f6a86c4efe478a2326d1b5bae1f044ecebd27ac1edf0b3ce3e1ed2cc32daf"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,22 +13,26 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "phase2-logical-structural-reviewer",
-  "reviewed_at": "2026-08-20T11:45:00+09:00",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "発火条件、effect、入出力、非対象、失敗時停止条件が明示され、新規作成と既存改善を同一generatorで扱う。",
-      "単一pluginとfleet処理、古いentryのprune、plugin外symlink禁止、hook trust手動gateが手順と完了条件に反映されている。"
+      "前回 FAIL とした dangling variable が解消された。step 3 のローカル変数 `plugin_root` 定義は撤去され、step 3 (L70) / step 6 (L90, L92) / install 境界 (L106, L113) の全 fence が独立に `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` を解決する形へ統一され、『各 shell invocation 内で解決済み absolute path を `PLUGIN_ROOT` に設定する』という自己宣言と一致した。",
+      "IN1 (単一と全 plugin の apply→check が同じ入力で収束・失敗時に部分書きしない) が実行手順 3-4・6 と失敗時節の『Claude manifest 無し/name 不一致/plugins 外なら書き込まず停止』『--check は常に無書込』へ対応する。",
+      "OUT1 の install 可能性について、package 生成が user-global 状態を変更しない境界を宣言したうえで install を `run-codex-plugin-install` へ委譲し、hook trust は installer も代行しないと明記して責務越境を残していない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:frontmatter-and-contract-gate",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "Agent Teamの論理・構造分析、最終承認、generator fixed-point test、隔離Codex実install 20/20を統合した規範評価。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (step 6 と install 境界での未定義 `$plugin_root` 再利用) の解消を確認して PASS へ転じた。 出力契約は `## 入力と出力` と `## 失敗時` に分かれるが、目的・入力・出力・非対象・失敗時挙動が漏れなく明文化されているため BD-001 は意味充足と判定した。"
 }

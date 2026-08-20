@@ -2,21 +2,21 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092"
+    "skill_md_sha256": "2cfe022a87f9775348838f07366311ec86fdf102a6caacbcbf9f002b02157cbd"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-08-19",
-  "iterations": 3,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 4
+    "smell": 0
   },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -26,21 +26,15 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "FM 次元は全て充足を維持: FM-001 (name=run-handout-build / run prefix / 60 字以内)、FM-002・FM-003 (description の trigger 2 個で 2..3 帯・句点終わり)、FM-004 (内部動作語なし)、NM-001 (ディレクトリ名一致)。",
-      "BD 次元も充足: L165 '## Purpose & Output Contract' 厳格一致 (BD-001)、'## Gotchas' (BD-002)、body 155 行で 300 行上限内 (BD-003)、description の 2 trigger が本文の手順節へ 1:1 対応 (BD-004)。3 周の修正を通じて行数がほぼ増えておらず Less is More を維持している。",
-      "SSOT 次元の減点要因が解消した。iteration 2 で計上した『draft で C21 を回さない』という記述と config#thresholds.min_images_per_main_section (E-IMAGE-ABSENT / level=error) / R25 (goal-spec C69) の食い違いが、config#draft_first.skipped_in_draft からの srg_images 削除と SKILL.md 6 箇所の反転で消えた。完了条件 D3 と受入基準 OUT3 が同時に満たせるようになり、正本 (config) と参照側 (SKILL.md / prompts / fixture) が同じ向きを指している。",
-      "検証可能性が 3 周で単調に改善した: D10 の 2 符号 (validate-handout-config.py:858 / :1563) は実装実在、OUT3 は『C03 は draft で起動しない / C21 は draft でも起動する』という観測可能な二条件へ具体化され、L188(b) も W-THUMBNAIL-ABSENT の実際の発火条件 (assets があるのに未指定) と一致する表現になった。受入 fixture の argument-hint と OUT3 も本体へ追随済み。"
+      "R2-design / R2a-design-config / R3-render / R5-refine の prompt 分割が SKILL.md の phase 表と 1:1 で、criteria IN1/OUT1/OUT2/OUT3 の各々に対応する検証手段 (script / test / 独立 reviewer) が欠けなく割り当たっている。",
+      "唯一の bash fence は eval-log 配下へ書く repo 相対 heredoc であり、plugin 同梱資産の shell 実行を持たないため runtime_root_policy を要求しない構成として一貫している。",
+      "本文 158 行で BD-003 (本文 300 行以下) に十分な余裕があり、`## Purpose & Output Contract` / `## Gotchas` を備える。"
     ],
-    "negative_feedback": [
-      "[low/smell] PD-001 の字義未達 (据え置き)。body 155 行 > 100 行に対し skill 直下は prompts/ のみで references/ を持たない。実質の分割は責務プロンプト 6 本と plugin 直下 config/*.json・assets/tokens/*.json へ向いており原則の意図は満たす。",
-      "[low/smell] PD-002 の literal トークン欠落 (据え置き)。body 冒頭 30 行の禁則は『LLM で書かない』『HTML の断片を自分で書かない』という否定形のみで、MUST / NEVER / 禁止 / 必ず は L314 まで現れない (BD-001 経由の包含 PASS)。",
-      "[low/smell] FM-005 の字義 (据え置き)。description が『レクチャー資料や導入ガイドの handout を…』と名詞句始まりで、動詞ベース冒頭という literal 条件から外れる。リポジトリ内の他 skill と同一の日本語 trigger 形式であり規約整合上は許容範囲。",
-      "[low/smell] 完了経路の記述に 1 点未整理が残る。L200 の fail-soft (`srg-absent` / `runtime-absent` のとき画像なしで先へ進む) と、per-section IMG 必須ゲート (E-IMAGE-ABSENT / level=error) の関係が定義されていないため、node / codex 不在環境では L200 が約束する完了経路が実在しない。詳細と対処案は elegance-verdict.json に記載 (今回の修正が壊したのではなく、挿絵が第1稿の主経路になったことで露出した既存の穴)。"
-    ],
-    "iteration": 3,
+    "negative_feedback": [],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=0c964493e451ea38236c52a670c5522426c1e62b3251e9b319ff00b13736a092) を ref-skill-design-rubric/references/rubric.json (rubric_version 1.3.0・threshold 80) の kind=skill 適用 rule で最終採点 (iteration 3)。FM-001..004 PASS / FM-005 は字義 low、BD-001..004 PASS (body 155 行)、NM-001 PASS、PD-001・PD-002 は literal 条件で low、KL-001..005 は knowledge/ 不在のため存在ゲートで skip、AG/HK/CM/PC/PR/WF は applies_to_kinds 外。iteration 2 で計上した SSOT 次元の medium (draft での C21 skip と E-IMAGE-ABSENT / R25 の食い違い) は解消を実ファイルで確認したため取り下げ、残る指摘は low 4 件 (PD-001 / PD-002 / FM-005 / L200 の degrade 規則未定義) のみ。severity_weights により 100 - 3×4 = 88 で閾値 80 を上回るため PASS。 / 2026-08-19 再束縛: 責務 prompt のリネーム (prompts/R-design-config.md → prompts/R2a-design-config.md) に伴い SKILL.md の sha が変わったため verdict を現本文へ再束縛した。差分は responsibility_refs (と Additional Resources) のパス名のみで、判定材料となる契約・境界・規則は 1 文も変わっていない。claude-code-review が現 SKILL.md を全行読み切り、上記 findings と verdict が現本文でもそのまま成立することを確認した (機械的な sha 差し替えではない)。リネームは lint-prompt-placement.py の skill-local-v1 regex (R<数字>[a-z]?-<slug>) 適合のためで、責務 id と本文アンカーは据え置き。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
 }

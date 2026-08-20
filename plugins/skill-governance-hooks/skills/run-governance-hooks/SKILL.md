@@ -1,7 +1,29 @@
 ---
 name: run-governance-hooks
-description: governance hookのevent、matcher、command、対象file ownershipを監査したいときに使う。
+description: governance hookのevent・matcher・commandを監査したいとき、対象file ownershipと配線漏れを確認したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
+user-invocable: true
+disable-model-invocation: false
 allowed-tools: Bash, Read, Glob
+effect: conversation-output
+owner: team-platform
+since: 2026-08-20
+last-audited: 2026-08-20
+source: plugins/skill-governance-hooks
+source-tier: internal
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: hook実体ごとにevent matcher command path stdin payloadとexit契約をfixtureで検証し配線済みと推測していない
+      verify_by: script
+    - id: OUT1
+      loop_scope: outer
+      text: plugin root外commandを許さず実projectを変更しない検証結果と未配線理由を報告している
+      verify_by: evaluator
 ---
 
 # run-governance-hooks

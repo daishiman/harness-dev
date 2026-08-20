@@ -1,8 +1,30 @@
 ---
 name: run-governance-adapters
-description: governance出力adapterを選択し、利用可能性と入出力契約を安全に確認したいときに使う。
+description: governance出力adapterの利用可能性を確認したいとき、入出力契約と代替経路を安全に特定したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
+user-invocable: true
+disable-model-invocation: false
 allowed-tools: Bash, Read, Glob
+effect: conversation-output
+owner: team-platform
+since: 2026-08-20
+last-audited: 2026-08-20
+source: plugins/skill-governance-adapters
+source-tier: internal
 runtime_root_policy: host-skill-path
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: 実在adapterだけを列挙しpath traversalを拒否したうえで選択adapterのhelpと入出力契約を実行前に確認している
+      verify_by: script
+    - id: OUT1
+      loop_scope: outer
+      text: credentialや送信先を推測せず実行結果または未対応理由をexit codeとreceipt付きで報告している
+      verify_by: evaluator
 ---
 
 # run-governance-adapters

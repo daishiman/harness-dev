@@ -67,8 +67,7 @@ plugin manifest と repository marketplace を決定論的に upsert する。�
    Claude Code 互換環境は `CLAUDE_PLUGIN_ROOT` から解決する。
 
    ```bash
-   plugin_root="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}}"
-     python3 "$plugin_root/scripts/sync-plugin-platforms.py" \
+   python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/sync-plugin-platforms.py" \
        --repo-root . \
        --plugin "plugins/<plugin-name>" \
        --check
@@ -88,9 +87,9 @@ plugin manifest と repository marketplace を決定論的に upsert する。�
 6. 複数pluginを量産した後は、Claude manifestを持つ全pluginを一括生成・検査する。
 
    ```bash
-   python3 "$plugin_root/scripts/sync-plugin-platforms.py" \
+   python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/sync-plugin-platforms.py" \
      --repo-root . --all --apply
-   python3 "$plugin_root/scripts/sync-plugin-platforms.py" \
+   python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/sync-plugin-platforms.py" \
      --repo-root . --all --check
    ```
 
@@ -104,14 +103,14 @@ package生成は user-global 状態を変更しない。ユーザーが install 
 install、`codex plugin list --json` によるreceipt確認を一操作で行う。
 
 ```bash
-python3 "$plugin_root/scripts/install-codex-plugin.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/install-codex-plugin.py" \
   --source /absolute/path/to/repository --plugin <plugin-name>
 ```
 
 GitHub では marketplace 定義が merge された ref を指定する。
 
 ```bash
-python3 "$plugin_root/scripts/install-codex-plugin.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/install-codex-plugin.py" \
   --source owner/repo --ref main --plugin <plugin-name>
 ```
 

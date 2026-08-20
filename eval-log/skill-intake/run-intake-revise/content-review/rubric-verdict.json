@@ -1,7 +1,38 @@
 {
-  "target": {"plugin": "skill-intake", "skill": "run-intake-revise", "skill_md_sha256": "fcbca1c2331137a09f0a8f9c30ee68d7d36b705915eb240f92828d40c1e97451"},
-  "review_kind": "rubric", "verdict": "PASS", "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "independent-group-b/assign-skill-design-evaluator", "reviewed_at": "2026-07-12T00:28:08Z", "iterations": 1, "human_review_required": false,
-  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "IN2", "OUT1"], "positive_feedback": ["ref-skill-design-rubric 6e1843e5…のFM/NM/BD/PD採点94/100、high severity 0。", "Purpose/Output、Key Rules、Goal/Checklist、Gotchas、exit tableが明確で、manifest/schema/prompt参照はmissing=[]。", "focused skill-intake Notion contract testsとfrontmatter/name/feedback-contract lint PASS。"], "negative_feedback": [], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual", "next_action": "none"},
-  "notes": "rubric hash=6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。3 criteria全件PASS。"
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-intake-revise",
+    "skill_md_sha256": "4f90d11118206121d53fdf4a8e228e9cf26308ecd38e0f3d75d35023a02db183"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "新規ページ非作成 (PATCH 固定) の理由が『URL 変更とリンク断絶』として Why に接地し、All-or-Nothing・rollback JSON・回数上限 5 が exit code 表と 1:1 対応している。",
+      "Keychain 検証を『1 度だけ実行し exit 0 なら再質問しない』と規定し、exit 44 のみ停止案内へ倒す fail-closed 境界が明確。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:pr-ci-stale-review",
+    "next_action": "none"
+  },
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
 }

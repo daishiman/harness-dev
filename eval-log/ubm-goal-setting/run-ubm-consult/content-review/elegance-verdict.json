@@ -1,25 +1,39 @@
 {
-  "target": {"plugin": "ubm-goal-setting", "skill": "run-ubm-consult", "skill_md_sha256": "1fe3b6f824c870efbbb953f44d7f1da75c736097dd2f1cd195fa6595d6bac8e4"},
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-consult",
+    "skill_md_sha256": "aa6d191944860b19d8e066682b81441ffcc1dbe673690b6ac76bb78afe4e7db1"
+  },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "review-group-c-independent-elegance",
-  "reviewed_at": "2026-07-12T00:22:24Z",
-  "iterations": 2,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "IN1: four stance invariants, mode selection and R3 frame options make non-prescription observable; test_ubm_consult_contract detects prescription stance and required frame/transcript elements.",
-      "OUT1/OUT2: R1→R4 manifest and prompts preserve user-owned wording, role=user provenance and action/reflection closure. validate-consult-session --ephemeral relaxes only persistence consent, not the stance/transcript checks; the reference example was corrected to show this branch explicitly.",
-      "C1-C4: graph/router consult is read-only with documented zero-hit fallback, persistence is consent-gated and kept outside the vault, goal creation delegates to run-ubm-goal-setting. UBM plugin 199 tests PASS."
+      "非処方スタンス不変条件 5 項が全ターン適用の形で明文化され、inner ループ (IN1) で毎周回自己検証する配線まで降りている。",
+      "graph consult の fallback が『knowledge graph があれば consult / harness graph は存在時のみ併用 / 不在なら knowledge 単独 / exit2 破損は WARN skip』と AND 前提にせず段階分解され、正本 reference へ委譲されている。",
+      "保存同意制と vault 書込禁止 (eval-log 配下へ退避) の境界が ubm-write-path-guard の許可パスと突き合わせて説明されている。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
-    "iteration_limit": 5,
-    "hook_trigger": "manual",
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "The only review finding was an ambiguous validator example for persistence_consent=false; iteration 2 added the explicit --ephemeral branch. All four elegance conditions PASS."
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
 }

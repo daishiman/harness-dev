@@ -47,6 +47,11 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       text: 各ゲート通過時の handoff JSON と build-trace JSON が schemas 配下の正本スキーマに準拠し章 coverage を空欄なく記録している
       verify_by: script
       derived_from: [CL-3, CL-12]
+    - id: IN3
+      loop_scope: inner
+      text: create/update 共通の capability parity と dual-root runtime root 契約が audit-capability-parity.py で検証され、foreign cwd と env 未設定でも owner SKILL.md から plugin root を解決できる
+      verify_by: lint
+      derived_from: [CL-14]
     - id: OUT1
       loop_scope: outer
       text: 全ゲートでユーザー承認前に自動前進せず evaluator と governance reviewer を必ず context fork で起動している
@@ -101,7 +106,7 @@ runtime_root_policy: host-skill-path
 - **Notion 指定あり**: topic / 引数に `--page-url` または `--page-id` が含まれる場合、Step 1 は `skill-intake` の publish 完了証跡を必須入力とする。`output/<hint>/notion-log.json.status=="published"`、`notion-publish-result.json.page_id`、`notion-url.txt` が揃い、指定 page と一致するまで Step 2 build へ進まない。
 - **`--fast`**: 1ファイル変更/<=30行/kind ∈ {ref,wrap}/evaluator pair 不要を全て満たす場合のみ軽量フロー (Step 4b/5 skip)。判定は機械決定:
   ```bash
-  python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py \
+  python3 "${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-skill-create/scripts/evaluate-create-gates.py" \
     --skill-name "$SKILL_NAME" --kind "$KIND" --brief eval-log/skill-brief.json --fast
   ```
   条件不一致時は黙って通常フローに戻す。
@@ -154,7 +159,7 @@ runtime_root_policy: host-skill-path
 ### 完了チェックリスト (Checklist)
 
 - [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み <!-- CL-1 -->
-- [ ] Notion 指定ありの場合、`python3 plugins/harness-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
+- [ ] Notion 指定ありの場合、`python3 "${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-skill-create/scripts/validate-intake-publish-ready.py" --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
 - [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き <!-- CL-3 -->
 - [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている <!-- CL-4 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] **Claude plugin envelope を持つ場合** 同一upsertを実行し、`sync-plugin-platforms.py --all --check` が exit 0。`.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` の両方が差分に含まれる <!-- CL-4d exempt: Codex 配布 projection を generator と回帰テストが機械検査 -->
@@ -163,7 +168,7 @@ runtime_root_policy: host-skill-path
 - [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` の現行 bundle (`skills-full` / `skills-intake`) のうち `plugin.json.bundle_targets` で宣言した対象へ登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反) <!-- CL-5 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`) <!-- CL-6 exempt: legacy 経路の条件付き運用項目 -->
 - [ ] `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
-- [ ] create/update 共通で `audit-capability-parity.py --plugin plugins/<plugin> --json` が PASS。Claude 固有 command/agent/hook は Codex skill 代替または理由・replacement 付き omission contract を持つ。SKILL/promptのplugin-root付き実行行はowner SKILLに `runtime_root_policy: host-skill-path` とRuntime root本文契約を必須とし、bare `CLAUDE_PLUGIN_ROOT`、cwd推測、literal placeholderを残さない。env unset + foreign cwdでもabsolute owner `SKILL.md` pathからmanifest祖先を解決できる <!-- CL-7 -->
+- [ ] create/update 共通で `audit-capability-parity.py --plugin plugins/<plugin> --json` が PASS。Claude 固有 command/agent/hook は Codex skill 代替または理由・replacement 付き omission contract を持つ。SKILL/promptのplugin-root付き実行行はowner SKILLに `runtime_root_policy: host-skill-path` とRuntime root本文契約を必須とし、bare `CLAUDE_PLUGIN_ROOT`、cwd推測、literal placeholderを残さない。env unset + foreign cwdでもabsolute owner `SKILL.md` pathからmanifest祖先を解決できる <!-- CL-14 -->
 - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み <!-- CL-8 -->
 - [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし <!-- CL-9 -->
 - [ ] 新規 or >30 行変更時、`run-elegant-review` (context:fork) で C1-C4 全 PASS。PASS 時 `eval-log/pattern-feedback.json` に pattern_ref_candidates/new_patterns/mass_production_risk を提案保存 <!-- CL-10 -->

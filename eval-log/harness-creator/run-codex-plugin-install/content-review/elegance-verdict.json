@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-install",
-    "skill_md_sha256": "174410a97d915a4e92aa9bf2019136884ef3dc7d4a4e9825169aabc432b27c28"
+    "skill_md_sha256": "f1c5003a00e689f47be6d739cbd8d41e69729de531cfac68eccf1d24351c3a66"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,22 +13,25 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "elegant-review-agent-team",
-  "reviewed_at": "2026-08-20T11:45:00+09:00",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "package生成とuser-global installを別skillに分離し、ユーザーの明示依頼だけを外部状態変更の許可境界にしている。",
-      "localとmerge済みGit refの両経路を同じreceipt検証へ収束させ、hook trustを自動承認しない。"
+      "Claude Code / Codex 双方への local 一括 install と Codex 単独の local / Git 実行という 2 経路が、それぞれの前提と失敗時挙動つきで分離記述されている。",
+      "同梱 script の起動は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}}` の 3 段 fallback 形で統一され、意図的に絶対パスを要求する箇所 (install-local-plugins.py) はその理由が本文に明示されている。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:user-requested-30-method-review",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "30思考法Agent Team reviewの承認証拠 eval-log/harness-creator/run-codex-plugin-package/elegant-review/20260820-codex-plugin-install-review/approval.json と最終四条件PASSを、最終frontmatterの決定論lint結果と統合した互換projection。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 出力契約は `## 入力` と `## 完了条件` に分散しているが、目的・入力・完了条件・失敗時挙動が漏れなく明文化されているため BD-001 は意味充足と判定した。"
 }

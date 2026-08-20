@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-extract-blueprint",
-    "skill_md_sha256": "8cbd0f7a33a8a4c8d8304f2a766385341a74a0b84bc2347734851e433996cb5e"
+    "skill_md_sha256": "570fb1f48099ac6d608b40fdd73eb23c967c4d8ff27a3493adaca64e8eff401e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "run-elegant-review-independent-extract-contract",
-  "reviewed_at": "2026-07-12T01:02:38Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:19:34Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,15 +24,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: allowed-tools の WebFetch が R1-fetch Layer 3.2/出力指示の静的取得契約と一致し、C08 matcher=Bash|WebFetch が認可・残予算を fail-closed 検査する。authz/fetch/guard/doc の決定論ゲート、対象 origin 並列1、budget/Retry-After、fact/inference/observation_gap 三値契約への退行はない。",
-      "OUT1: C03 の provenance 付き fact から C04/C05/C13 の evidence_refs+confidence 付き inference を直交レーンで導出し、C06 が essence と自社版スカフォールド着手に必要な粒度へ統合する。C02 の独立 verdict と draft_hash 束縛により proposer≠approver を維持する。",
-      "30思考法で WebFetch を除く案、agent のみに委譲する案、Bash を広く許可する案を含む代替を検討し、宣言済み取得経路だけを追加する現設計が最小権限と実行可能性を両立すると確認した。"
+      "前回 low severity として記録した L68 の役割 blockquote が『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ是正され、散文層と実行層の root 表記が一致した。同行の成果物置き場も `$CLAUDE_PROJECT_DIR`/cwd という host 依存表現から『明示した project root 配下』へ改められ、`## Runtime root contract` の『cwd から plugin root を推測しない』と齟齬がなくなった。本文全体を走査した結果、dual-root fallback 形でない `CLAUDE_PLUGIN_ROOT` 参照は契約宣言そのものである L63 のみで、実行行・散文・Additional Resources のすべてが正準形に揃っている。",
+      "IN1 の決定論チェック 4 種 (authz/fetch/mermaid/doc) が局面カタログの実行行・完了チェックリスト CL-1/CL-5/CL-6/CL-9・ゴールシークループの『検証は機械層を先に通す』へ一貫して接地し、request budget と対象 origin 並列 1 が Key Rules 3 の『single/full_site 両モードで不変』と禁則節で二重固定されている。",
+      "OUT1 の fact/inference/observation_gap 三値排他が Purpose・データ契約・Key Rules 1・CL-2/CL-3 で反復され、C15 browser-render 不在時を exit 3=browser-unavailable の observation_gap としてのみ記録し inference へ昇格させない規定が R1/R2 委譲節・CL-2・Gotchas の 3 箇所で同一に述べられている (取得手段の劣化を無言欠落へ倒さない)。",
+      "proposer≠approver が Key Rules 2 とハンドオフ節で固定され、共有決定論ゲート (C10/C11) を C01 自己検証と C02 独立評価が同一ロジックで共有する設計意図が Key Rules 5 に明示されている。C02 側が非共有の再計数経路を別途持つため、共有による common-mode 誤りは評価器側で破られる配線になっている。",
+      "verdict receipt が `${ESB_VERDICT_DIR:-.esb-verdict}` の cwd 起点であることを Gotchas が隠さず明記し、C01/C02 を同一 cwd で回す前提と cwd 変更時の fail-closed 挙動まで述べている。成果物 root と verdict receipt root が別軸であることが読み取れ、L68 の記述と矛盾しない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-low-fix-rereview",
     "next_action": "none"
   },
-  "notes": "Phase 1 思考リセット後、SKILL.md、R1-R3、workflow manifest、C08 hook、frontend analyzer、関連 test を fresh 再読。批判・演繹・帰納・アブダクション・垂直・要素分解・MECE・2軸・プロセス・why、メタ・抽象化・ダブルループ・ブレインストーミング・水平・逆説・類推・if・素人、システム・因果関係・因果ループ・トレードオン・プラスサム・価値提案・戦略・改善・仮説・論点・KJ法の全30種を使用し skip 0。C1-C4 は全 PASS。"
+  "notes": "focused combined review (incremental / low severity 指摘の修正後 再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。前回 low として残していた L68 散文の root 表記 drift の解消を確認し、negative_feedback 0 件で PASS。sha256/criteria は再評価時点の現行値。"
 }

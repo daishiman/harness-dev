@@ -65,7 +65,7 @@ runtime_root_policy: host-skill-path
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 
-> extract-system-blueprint plugin の抽出本体 (L1 skill)。plugin-root 共有 script (`scripts/authz-classify.py`=C12 / `fetch-snapshot.py`=C09 / `browser-render.py`=C15 / `doc-emit.py`=C11 / `mermaid-validate.py`=C10)・analyzer sub-agent 5 体 (C03/C04/C05/C13/C06)・fail-closed hook (`hooks/pre-fetch-authz-guard.py`=C08) を配線する。パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下。
+> extract-system-blueprint plugin の抽出本体 (L1 skill)。plugin-root 共有 script (`scripts/authz-classify.py`=C12 / `fetch-snapshot.py`=C09 / `browser-render.py`=C15 / `doc-emit.py`=C11 / `mermaid-validate.py`=C10)・analyzer sub-agent 5 体 (C03/C04/C05/C13/C06)・fail-closed hook (`hooks/pre-fetch-authz-guard.py`=C08) を配線する。パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点、成果物は明示した project root 配下。
 
 ## Purpose & Output Contract
 
@@ -143,7 +143,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-anchor
 
 ### 局面: 認可 preflight と取得 (R1-fetch)
 
-run 開始時の bootstrap は**単一 Bash 呼び**が正本: `mkdir -p "${CLAUDE_PROJECT_DIR:-$PWD}/.esb-authz" && python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls ... --coverage-manifest-in ...]` で状態置場作成と C12 authz 発行を同一呼び内で完結させ、allow/deny/unknown と budget/crawl_profile を確定する (unknown は deny)。C08 hook は tool call 時点で dir 不在なら非アクティブで素通すため、この呼び完了時には dir+evidence が揃い、以後の全 tool call が enforce される (evidence 不在窓なし)。**分割禁止**: `mkdir` 単独を先行させると hook が即アクティブ化し、evidence の唯一の producer である C12 呼び自身が evidence 不在=fail-closed deny (exit2) で遮断され bootstrap deadlock になる。`ESB_RUN=1` は hook が別プロセスで spawn されるため Bash セッション内 export では継承されず、セッション起動時 env としてのみ有効な補助上書き。allow のとき `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out ...]` で snapshot + discovery。evidence/budget は C08 が参照する `ESB_AUTHZ_DIR` (既定 `.esb-authz`) へ配置する。全 fetch は C08 hook の fail-closed 境界内で走る。
+run 開始時の bootstrap は `Bash(python3 *)` で許可された**単一 Python 呼び**が正本: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls ... --coverage-manifest-in ...]`。`authz-classify.py` 自身が出力親dirを作成して C12 authz とbudgetを同一処理で発行し、allow/deny/unknown と budget/crawl_profile を確定する (unknown は deny)。C08 hook は tool call 開始時にdir不在ならこのbootstrapだけを素通しし、完了時にはdir+evidenceが揃うため、以後の全tool callがenforceされる (evidence不在窓なし)。`ESB_RUN=1` は hook が別プロセスでspawnされるため Bashセッション内exportでは継承されず、セッション起動時envとしてのみ有効な補助上書き。allow のとき `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out ...]` で snapshot + discovery。evidence/budget は C08 が参照する `ESB_AUTHZ_DIR` (既定 `.esb-authz`) へ配置する。全 fetch は C08 hook の fail-closed 境界内で走る。
 
 ### 局面: 分析への fan-out (R2-analyze)
 
@@ -170,7 +170,7 @@ Task で `frontend-surface-analyzer` を先行起動し fact records を得て�
 ## Gotchas
 
 - **`export ESB_RUN=1` は hook に届かない**: PreToolUse hook はハーネスが別プロセスで spawn するため Bash セッション内 export を継承しない。C08 run-scoping のアクティブ化は `.esb-authz` / `.esb-verdict` ディレクトリ検出が正 (R1 冒頭の combined call で作成)。`ESB_RUN=1` はセッション起動時 env としてのみ有効。
-- **`mkdir -p .esb-authz` 単独先行は bootstrap deadlock**: dir 発見で hook が即アクティブ化し、evidence の唯一の producer である C12 (`authz-classify.py`) の Bash 呼び自身が evidence 不在=fail-closed deny (exit2) で遮断される。bootstrap は `mkdir -p ... && authz-classify` の**単一 Bash 呼び** (R1 冒頭) で行う (呼び時点は dir 不在=非アクティブで素通り、完了時に dir+evidence が揃う)。
+- **`.esb-authz` を手作業で先行作成しない**: 空dirだけがあるとhookがアクティブ化し、evidence producerであるC12をevidence不在として遮断しうる。bootstrapは親dirを原子的に用意する `authz-classify.py` の単一Python呼びで行う。
 - **MCP を使わない (browser 観測は progressive enhancement)**: 本 skill は外部 MCP 接続を持たず、WebFetch + C09 静的 HTTP snapshot を baseline 観測とする。JS 実行後 DOM・画面遷移・screenshot・computed style は C15 `browser-render.py` (MCP 非依存のローカル headless Chrome via Bash) で取得を試み、ブラウザ不在 (exit 3=browser-unavailable) 時のみこれらを `observation_gap` (blocked) として記録する (無言欠落禁止・inference へ昇格させない)。
 - **per-run 予算は out-dir 単位**: 別 out-dir で再実行すると request budget は新規に始まる。ただし瞬間負荷レバー (並列 1・最小間隔・Retry-After・停止条件) は out-dir 非依存で常に不変。
 - **verdict receipt は cwd 相対既定**: `${ESB_VERDICT_DIR:-.esb-verdict}` は cwd 起点なので、C02 の品質評価 verdict 発行と C01 の品質判定参照は同一 cwd で回す (cwd が変わると receipt 不在=fail-closed で品質判定が読めない)。

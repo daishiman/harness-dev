@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "931308c553056d081c50100d042bbe8ca07ac7a2f2063e2f660961a81a0d65c9"
+    "skill_md_sha256": "b479c25fdb70887c8b09de6b2a49a47661540f6f06124ce39cb2417220555dcb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
-  "iterations": 2,
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:02:08Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,14 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "skill-design 1.3.0を改善後に再採点し100/100・required_fixes 0。descriptionは2 triggerで動詞的、Purpose/Gotchas、name/dirname、本文長、referencesの全規範を満たす。",
-      "descriptionの変更同期と影響行再生成対象化はscan/apply/checklistへ1:1対応し、sync.pyとscan_template.pyの責務説明も一貫した。"
+      "IN1(scan_templateの exit 0/5とMISSING/UNMAPPED判定)はlib/scan_template.pyのmain()実装(missing/unmapped/missing_ledgerがあればreturn 5、無ければreturn 0)と一字一句一致し、SKILL.mdの検証節・prompts/R1のLayer3.2記述とも整合している。",
+      "IN2(--apply時のみledger書込、--dry-run/未指定は診断のみ)はscripts/sync.pyのmain()で`if a.apply:`ブロック内でのみ`ledger.writeback`が呼ばれ、かつ`_flag_regen`はステータス=='completed'行のみを対象にしていることを確認した(draft/approved行は巻き戻されない、prompts/R1 5.3の一貫性条件とも一致)。",
+      "SKILL.mdの`検証`節にある「sync.pyはscan_templateの等価shimではなくdrift時もexit 0」という記述は、sync.py main()末尾の`return 0`が常時実行される実装と一致し、旧content-review-verdict(eval-log)が過去に指摘した用語矛盾は現行版で解消済みであることを独立に再確認した。加えて、run-template-syncが立てる「未作成」ステータスはrun-contract-generate/SKILL.mdの`_PHASE_STATUS_FILTER['draft']={'','未作成'}`(lib/ledger.py)によって次回draft phaseで正しく拾われることを下流skillまで追跡して確認した。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "30思考法を全件使用（skip 0）。初回の用語不整合とFM-005 smellを内容修正し2回目でPASS。単なるSHA更新ではなくscripts/sync.pyとlib/scan_template.py/ledger.pyを再照合した。 rubric=skill-design 1.3.0、rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9、score=100/100、threshold=80。"
+  "notes": "focused combined review。incremental semantic batch評価 ((a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0) をSKILL.md/scripts/sync.py/lib/scan_template.py/lib/ledger.py/prompts/R1で独立に再確認しPASS。"
 }

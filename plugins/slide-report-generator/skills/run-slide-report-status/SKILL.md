@@ -1,8 +1,30 @@
 ---
 name: run-slide-report-status
-description: 生成中のslide deckまたはreportの現在phaseと次アクションをread-onlyで確認したいときに使う。
+description: 生成中のslide deckまたはreportの現在phaseを確認したいとき、中断後の次アクションをread-onlyで特定したいときに使う。
+kind: run
+prefix: run
+version: 0.1.0
 allowed-tools: Bash, Read
+user-invocable: true
+disable-model-invocation: false
+argument-hint: "[output-dir?]"
+effect: conversation-output
+owner: harness maintainers
+since: 2026-08-20
+last-audited: 2026-08-20
+output_language: ja
 runtime_root_policy: host-skill-path
+feedback_contract:
+  max_iterations: 3
+  criteria:
+    - id: IN1
+      loop_scope: inner
+      text: 明示されたproject directoryへworkflow managerのcheck nextとoutput mode preflightをread-onlyで実行し全exit codeを保持している
+      verify_by: script
+    - id: OUT1
+      loop_scope: outer
+      text: deck report両modeの現在phase 欠落artifact 次actionを推測せず報告しplugin runtime欠落を自動復元していない
+      verify_by: evaluator
 ---
 
 # run-slide-report-status

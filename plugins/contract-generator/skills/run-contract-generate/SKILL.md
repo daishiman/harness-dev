@@ -3,7 +3,7 @@ name: run-contract-generate
 description: tenantの業務委託契約書の下書きを作成・量産したいとき、管理台帳から個人/法人のひな形に差込みDocs生成してSlack通知したいときに使う。
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: [Read, Write, Edit, Bash(python3 *), AskUserQuestion]
+allowed-tools: [Read, Bash(python3 *)]
 kind: run
 version: 0.3.0
 owner: harness maintainers
@@ -82,7 +82,7 @@ runtime_root_policy: host-skill-path
 - [ ] 標準ライブラリ実装(docx_lib)で黄色run置換・条件分岐(業務内容方式/料金方式/個人情報処分・個人のみ成果物有無)・AI記入の黄色維持ができる
 - [ ] 黄色維持版を Google Docs 化し該当フォルダへ保存できる
 - [ ] ファイル名 `{No}_{乙名}_業務委託契約書_{YYYYMMDD}` で生成される
-- [ ] 欠損必須列は AskUserQuestion で補完してから生成する
+- [ ] 欠損必須列は `needs-input` として行番号・列名を報告し、ユーザーが管理台帳SSOTを修正した後に再実行する
 - [ ] 生成後に未置換プレースホルダ(`●`/`XXXX`)が残っていない
 - [ ] Slack 通知のうえ 台帳へ ファイル名/契約書URL/Slack_メッセージTS/ステータス=`draft`/作成・更新日時 を書き戻せる(draft の停止条件はここまで)
 - [ ] (legacy 1パスモード専用) 黄色除去版を PDF 化し該当フォルダへ保存・台帳へ PDF_URL/ステータス=`completed` を書き戻せる ※既定の draft 経路では `run-contract-finalize` の責務であり本チェックは対象外
@@ -127,7 +127,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-co
 `契約タイプ(個人/法人)` / `ひな形DocID(個人②/法人①)` / `台帳シート名` / `出力フォルダID` を `google-config.json` と台帳から注入。具体値は本文に直書きせず config と台帳に置く。
 
 ## 追加リソース
-- `references/README-setup.md` — スキル内部参照用の技術要約(CI/pre-commit配線・template-mapping二重定義注意)。**セットアップ手順の正本は plugin直下 `README.md`(Task 0-14)**
+- `references/README-setup.md` — スキル内部参照用の技術要約(CI/pre-commit配線・template-mapping二重定義注意)。**セットアップ手順の正本は plugin直下 `README.md` のセットアップ節**
 - `lib/setup_doctor.py` — セットアップ総合診断(cwd/Python/gcloud/env/Keychain/config/Drive/Sheets/Slack を横断点検し未完了 Task を名指し)
 - `references/concept.md` — 概念設計(参考スキル継承/転換・概念図)
 - `references/injection-mapping.md` — 個人/法人の台帳列⇄ひな形プレースホルダ差込マッピング
