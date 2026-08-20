@@ -44,6 +44,15 @@ PENDING_RENAME_PATTERNS = [
 # 暫定例外: 個別パス (初回投入時の既存スクリプト群、33章 Change Governance 管理下)
 # リネーム計画は .claude/changelog/governance-log.jsonl 参照
 PENDING_RENAME_PATHS = {
+    # PR #41: Claude/Codex fleet の公開 CLI 名と、既存 Python import/module 名。
+    # 利用者向け command・文書・hook・contract が参照するため、この PR では個別 path を
+    # Change Governance 管理下へ置く。ALLOWED_VERBS/underscore 規則自体は緩和しない。
+    "plugins/harness-creator/scripts/audit-capability-parity.py",
+    "plugins/harness-creator/scripts/install-codex-plugin.py",
+    "plugins/harness-creator/scripts/install-local-plugins.py",
+    "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+    "plugins/skill-intake/scripts/post_publish_notify.py",
+    "plugins/slide-report-generator/scripts/mention_mask.py",
     # Multi-tenant public CLI names are fixed by doc/マルチ企業展開. Python module
     # helpers retain underscores because they are imported by standalone plugins.
     "scripts/tenant-init.py",
