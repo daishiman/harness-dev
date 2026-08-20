@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.1 / skills 31 + agents 6 + commands 5）
+> 対象: `plugins/harness-creator/`（version 1.4.9 / skills 32 + agents 6 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -229,7 +229,7 @@ fresh agent 1 体が `original_goal` に対し **PASS | FAIL + blocker 列挙の
 | `wrap-*` | 安全ラッパ | — |
 | `lookup-*` / `dispatch-*` | 将来予約 | — |
 
-**依存方向は `run-* → assign-* → ref-*` の一方向のみ**。逆流は lint が検出する。31 個の skill 名を見るだけで責務が判別できるのはこの規約の効果。
+**依存方向は `run-* → assign-* → ref-*` の一方向のみ**。逆流は lint が検出する。32 個の skill 名を見るだけで責務が判別できるのはこの規約の効果。
 
 正本: `plugins/harness-creator/references/di-quartet.md`
 
@@ -287,7 +287,7 @@ Loop B が dogfooding の実体。過去 build で得た知見が次の build �
 |---|---|---|
 | **skill** | `skills/<name>/SKILL.md` + 付帯資産 | （commonCore のみ） |
 | **agent** | `agents/<name>.md` | `tools`, `isolation`（fork / worktree / inherit。`assign-*` は必ず fork） |
-| **hook** | `.claude-plugin/plugin.json` の hooks 配線 + script | `event`（8 種）, `command`（+ `exit_code_policy`, `side_effect_scope`） |
+| **hook** | `hooks/hooks.json` の共有定義 + script（Claude=標準自動検出 / Codex=manifest 明示参照） | `event`（8 種）, `command`（+ `exit_code_policy`, `side_effect_scope`） |
 | **command** | `commands/<name>.md` | `argument-hint`, `allowed-tools`（entrypoint は薄いラッパであること） |
 | **plugin-composition** | `plugin-composition.yaml` | `capabilities` |
 | **prompt** | `prompts/R<n>-<role>.md` | `layers`（minItems=maxItems=7 の 7 層構造） |
@@ -428,7 +428,7 @@ contract:
       enforcement: <機械執行する script 名> または manual + 意図的残置理由
 
 capabilities:   # {kind, ref, tier} の列挙
-  # harness-creator 実測: skill 33 / agent 6 / command 5 / script 6 / hook 12
+  # harness-creator 実測: skill 32 / agent 6 / command 6 / script 6 / hook 1
   # tier: core | ref | extension
 
 dependencies:   # {from, to, type} の DAG
@@ -448,22 +448,16 @@ observability:
 
 正本: `plugins/harness-creator/plugin-composition.yaml`（リファレンス実装）
 
-## 3.10 hook 配線（.claude-plugin/plugin.json）
+## 3.10 hook 配線（共有 hooks/hooks.json）
 
-harness-creator 自身の実測配線（8 イベント / 11 コマンド）。
+harness-creator の現行の plugin hook は **SessionStart 1 イベント / 1 コマンド**。共有正本
+`hooks/hooks.json` から `auto-sync-on-session-start.py` を起動する。コマンドは dual-root 形
+`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で、どちらの product でも install 先に依存しない。
 
-| event | matcher | command |
-|---|---|---|
-| UserPromptSubmit | — | `hook-cache-refresh.py`, `preload-context-map.py` |
-| PreToolUse | Bash | `preflight-git-commit.py` |
-| PostToolUse | Skill | `hook-notify-skill-end.py`, `auto-record-lesson.py`, `check-review-trigger.py` |
-| PostToolUse | Edit\|Write | `lint-capability-manifest.py`, `check-review-trigger.py` |
-| PostToolUse | Edit | `diff-rubric-impact.py` |
-| Stop | — | `check-review-trigger.py` |
-| SessionStart | — | `auto-sync-on-session-start.py` |
-| SessionEnd | — | `aggregate-evals.py` |
-
-`hooks/hooks.json` は SessionStart のみを持ち、dual-root 形 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で Claude / Codex 両対応。
+- Claude は標準自動検出で `hooks/hooks.json` を読むため、`.claude-plugin/plugin.json` に
+  `hooks` pointer を重ねない（二重発火防止）。
+- Codex manifest は `./hooks/hooks.json` を明示参照し、同じ正本を読む。
+- project 設定へ plugin hook を再投影しない。配信カーディナリティは plugin ごとに 1 とする。
 
 ## 3.11 eval-log 証跡群（作られたものの「証明書」）
 

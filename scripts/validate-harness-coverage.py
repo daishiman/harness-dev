@@ -33,6 +33,7 @@ honest 原則: まだ計測機構が無い種別×軸は instrumented=false と�
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -66,6 +67,58 @@ def _skills() -> list[tuple[str, str, Path]]:
             if (s / "SKILL.md").is_file():
                 out.append((plugin.name, s.name, s))
     return out
+
+
+def _skill_tree_digest(skill_dir: Path) -> str | None:
+    """Skill ツリーのパス+バイト列 digest。symlink は配布コピーと見なさない。"""
+    files = [p for p in skill_dir.rglob("*") if p.is_file()]
+    if any(p.is_symlink() for p in files):
+        return None
+    h = hashlib.sha256()
+    for path in sorted(files, key=lambda p: p.relative_to(skill_dir).as_posix()):
+        if "__pycache__" in path.parts or path.suffix in {".pyc", ".pyo"}:
+            continue
+        rel = path.relative_to(skill_dir).as_posix().encode("utf-8")
+        h.update(len(rel).to_bytes(8, "big"))
+        h.update(rel)
+        data = path.read_bytes()
+        h.update(len(data).to_bytes(8, "big"))
+        h.update(data)
+    return h.hexdigest()
+
+
+def _is_owned_vendored_copy(plugin: str, skill: str, skill_dir: Path) -> bool:
+    """Contract上 owner を持ち、owner tree と完全一致する配布コピーか。"""
+    contract = _load_json(PLUGINS_DIR / plugin / "references" / "package-contract.json")
+    if not isinstance(contract, dict):
+        return False
+    local_path = skill_dir.relative_to(PLUGINS_DIR / plugin).as_posix()
+    for dep in contract.get("runtime_dependencies", []):
+        if not isinstance(dep, dict):
+            continue
+        if dep.get("classification") != "owned-vendored":
+            continue
+        if dep.get("capability") != skill or dep.get("local_path") != local_path:
+            continue
+        owner = dep.get("owner")
+        owner_route = dep.get("owner_route")
+        if not isinstance(owner, str) or not isinstance(owner_route, str) or owner == plugin:
+            continue
+        owner_dir = PLUGINS_DIR / owner / owner_route
+        if not (owner_dir / "SKILL.md").is_file():
+            continue
+        copy_digest = _skill_tree_digest(skill_dir)
+        owner_digest = _skill_tree_digest(owner_dir)
+        if copy_digest is not None and copy_digest == owner_digest:
+            return True
+    return False
+
+
+def _logical_skills() -> tuple[list[tuple[str, str, Path]], int]:
+    """評価対象の論理 skill と、除外した owned-vendored 実体コピー数。"""
+    physical = _skills()
+    logical = [item for item in physical if not _is_owned_vendored_copy(*item)]
+    return logical, len(physical) - len(logical)
 
 
 def _md_artifacts(subdir: str) -> list[Path]:
@@ -195,7 +248,8 @@ def _skill_ref_review_ok(plugin: str, skill: str, threshold: float) -> bool:
 
 def measure_skills(threshold: float) -> dict:
     llm = _load_json(EVAL_LOG / "llm-coverage.json")
-    skills = _skills()
+    physical = _skills()
+    skills, vendored_copies = _logical_skills()
     # 機械的軸 = criteria 被覆 (validate-llm-coverage の平均。loop-kind のみ対象)
     mech = llm.get("average_coverage_pct") if isinstance(llm, dict) else None
     # LLM性能評価軸 = kind 別の品質 verdict が PASS の skill 割合 (ref も除外せず計測)。
@@ -212,12 +266,15 @@ def measure_skills(threshold: float) -> dict:
     return {
         "type": "skills",
         "count": len(skills),
+        "physical_count": len(physical),
+        "owned_vendored_copies": vendored_copies,
         "mechanical": {"instrumented": mech is not None, "coverage_pct": mech,
                        "met": (mech is not None and mech >= threshold),
                        "note": "criteria+checklist 被覆 (validate-llm-coverage, loop-kind)"},
         "llm_eval": {"instrumented": True, "coverage_pct": le,
                      "met": (le is not None and le >= threshold),
-                     "note": "非ref=content-review verdict / ref=ref-review verdict(source-traceability) PASS 率"},
+                     "note": "非ref=content-review verdict / ref=ref-review verdict(source-traceability) PASS 率"
+                             " (owned-vendored byte 一致コピーは owner で 1 回だけ評価)"},
     }
 
 

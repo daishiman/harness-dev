@@ -92,6 +92,63 @@ def test_skill_failing_verdict_not_counted(tmp_path):
     assert skills["llm_eval"]["coverage_pct"] == 0.0
 
 
+def test_owned_vendored_skill_is_counted_once_at_its_owner(tmp_path):
+    """Byte-identical 配布コピーは別の論理 skill として重複評価しない。"""
+    m = _setup(tmp_path, code_pct=95.0, llm_avg=95.0, skill_pass=True)
+    owner = m.PLUGINS_DIR / "p" / "skills" / "run-x"
+    consumer = m.PLUGINS_DIR / "consumer"
+    vendored = consumer / "skills" / "run-x"
+    vendored.mkdir(parents=True)
+    (vendored / "SKILL.md").write_bytes((owner / "SKILL.md").read_bytes())
+    refs = consumer / "references"
+    refs.mkdir()
+    (refs / "package-contract.json").write_text(json.dumps({
+        "runtime_dependencies": [{
+            "capability": "run-x",
+            "owner": "p",
+            "classification": "owned-vendored",
+            "local_path": "skills/run-x",
+            "owner_route": "skills/run-x",
+        }]
+    }), encoding="utf-8")
+
+    skills = m.measure_skills(80.0)
+
+    assert skills["count"] == 1
+    assert skills["physical_count"] == 2
+    assert skills["owned_vendored_copies"] == 1
+    assert skills["llm_eval"]["coverage_pct"] == 100.0
+
+
+def test_owned_vendored_skill_with_divergent_bytes_remains_in_denominator(tmp_path):
+    """Contract だけでなく owner との byte 一致がなければ fail-closed で別物として数える。"""
+    m = _setup(tmp_path, code_pct=95.0, llm_avg=95.0, skill_pass=True)
+    consumer = m.PLUGINS_DIR / "consumer"
+    vendored = consumer / "skills" / "run-x"
+    vendored.mkdir(parents=True)
+    (vendored / "SKILL.md").write_text(
+        "---\nname: run-x\nkind: run\n---\n# divergent\n", encoding="utf-8"
+    )
+    refs = consumer / "references"
+    refs.mkdir()
+    (refs / "package-contract.json").write_text(json.dumps({
+        "runtime_dependencies": [{
+            "capability": "run-x",
+            "owner": "p",
+            "classification": "owned-vendored",
+            "local_path": "skills/run-x",
+            "owner_route": "skills/run-x",
+        }]
+    }), encoding="utf-8")
+
+    skills = m.measure_skills(80.0)
+
+    assert skills["count"] == 2
+    assert skills["physical_count"] == 2
+    assert skills["owned_vendored_copies"] == 0
+    assert skills["llm_eval"]["coverage_pct"] == 50.0
+
+
 def test_missing_coverage_json_marks_uninstrumented(tmp_path):
     m = _setup(tmp_path, code_pct=None, llm_avg=None, skill_pass=True)
     rep = m.build_report(80.0)
@@ -221,3 +278,15 @@ def test_main_ratchet_detects_regression(tmp_path, monkeypatch):
     monkeypatch.setattr("sys.argv", ["x", "--ratchet", "--json", str(tmp_path / "h.json"),
                                      "--floor", str(floor)])
     assert m.main() == 1
+
+
+def test_local_ci_aggregator_runs_same_blocking_ratchet_as_github() -> None:
+    """push 後に初めて ratchet 失敗を知る経路を再発させない。"""
+    local_ci = (ROOT / "scripts" / "run-ci-checks.sh").read_text(encoding="utf-8")
+    github_ci = (ROOT / ".github" / "workflows" / "harness-creator-kit-ci.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'run "harness-coverage-ratchet"' in local_ci
+    assert "scripts/validate-harness-coverage.py --ratchet" in local_ci
+    assert "make harness-ratchet" in github_ci

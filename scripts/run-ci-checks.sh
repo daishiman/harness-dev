@@ -140,6 +140,11 @@ run "build-plugin-release --check"         python3 scripts/build-plugin-release.
 # 実 test 集合 ⊆ CI 到達集合 を fail-closed 検査し silent-skip を loud failure 化する。
 run "lint-test-discovery-coverage"         python3 scripts/lint-test-discovery-coverage.py
 
+# ── coverage ratchet (GitHub governance job と同じ blocking gate) ──
+# 従来は remote workflow にだけあり、pre-push の一括検査が緑でも push 後に
+# 初めて新規 artifact の test/verdict 漏れが露見した。floor を下げず同一コマンドで先行検出する。
+run "harness-coverage-ratchet"            python3 scripts/validate-harness-coverage.py --ratchet
+
 # ── サマリ ──
 echo
 echo "========================================"
