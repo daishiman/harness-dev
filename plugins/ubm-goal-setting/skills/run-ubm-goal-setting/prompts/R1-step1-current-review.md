@@ -77,7 +77,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| data-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
 | info-collector 出力 | past_summary (coordinator 経由で受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
 
 ### 3.2 外部ツール / API

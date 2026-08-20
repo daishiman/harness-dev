@@ -61,7 +61,7 @@ reproducible: true (同一台帳行・同一ひな形→同一Docs。日付の�
 | scan | `../../../lib/scan_template.py` | drift 診断(run-template-sync が使用) |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase draft --type <t> [--row N] [--dry-run]`(エントリ。実体は `lib/engine.py`、等価 shim: `scripts/draft.py`)。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase draft --type <t> [--row N] [--dry-run]`(エントリ。実体は `lib/engine.py`、等価 shim: `scripts/draft.py`)。
 - `AskUserQuestion`(欠損必須列の補完のみ、機微情報は復唱禁止)。
 
 ## Layer 4: 共通ポリシー層
@@ -149,6 +149,6 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 
 入力 `--type {{type}}`(任意 `--row {{row}}`)で draft フェーズを実行する。Layer 5 の達成ゴール(対象行が黄色維持 Docs として生成・Slack通知・台帳 draft 化された状態)と完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する(固定手順なし、上限: L4 最大反復回数=3)。
 
-利用可能な手段: `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase draft --type {{type}} [--row N] [--dry-run]`(等価 shim: `scripts/draft.py`。対象行抽出・差込・Docs生成・Slack通知・台帳書戻し) / `AskUserQuestion`(欠損必須列の補完、機微情報は復唱禁止)。drift(未置換`●`/`XXXX`)検出時は停止し run-template-sync と `template-change-runbook.md` へ誘導(条文改変禁止)。
+利用可能な手段: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase draft --type {{type}} [--row N] [--dry-run]`(等価 shim: `scripts/draft.py`。対象行抽出・差込・Docs生成・Slack通知・台帳書戻し) / `AskUserQuestion`(欠損必須列の補完、機微情報は復唱禁止)。drift(未置換`●`/`XXXX`)検出時は停止し run-template-sync と `template-change-runbook.md` へ誘導(条文改変禁止)。
 
 出力は完了レポート(Markdown)のみ。各行 `row{N}: {status} {ファイル名}` と Docs URL を列挙。前置き・思考過程の出力は禁止。

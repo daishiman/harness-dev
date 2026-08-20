@@ -2,6 +2,7 @@
 """Build .claude symlinks from plugin-owned source trees."""
 
 import argparse
+import hashlib
 import json
 import os
 import secrets
@@ -108,6 +109,37 @@ def read_skill_frontmatter_name(skill_dir):
     return None
 
 
+def tree_fingerprint(root):
+    """Directory内容を相対path込みでhashし、vendored copyの同一性を判定する。"""
+    digest = hashlib.sha256()
+    for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
+        relative = path.relative_to(root).as_posix()
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def is_shared_feedback_skill(sources):
+    """自己完結配布された同一run-skill-feedbackだけを共有SSOTとして扱う。"""
+    sources = list(sources)
+    return (
+        len(sources) > 1
+        and all(Path(source).name == "run-skill-feedback" for source in sources)
+        and len({tree_fingerprint(Path(source)) for source in sources}) == 1
+    )
+
+
+def canonical_feedback_source(sources):
+    """harness-creatorの実体を優先し、それ以外もpath順で決定論的に選ぶ。"""
+    ordered = sorted((Path(source) for source in sources), key=lambda path: str(path))
+    return next(
+        (source for source in ordered if source.parent.parent.name == "harness-creator"),
+        ordered[0],
+    )
+
+
 def desired_entries(plugins_dir, target_dir, kinds, exclude_plugins=None):
     raw_entries = []
     identifiers = {}
@@ -152,6 +184,9 @@ def desired_entries(plugins_dir, target_dir, kinds, exclude_plugins=None):
             if canonical is None:
                 canonical = next((e for e in group if e["src"] == canonical_real), group[0])
             entries.append(canonical)
+        elif is_shared_feedback_skill(e["src"] for e in group):
+            canonical_source = canonical_feedback_source(e["src"] for e in group)
+            entries.append(next(e for e in group if e["src"] == canonical_source))
         else:
             for e in group:
                 entries.append(e)
@@ -160,7 +195,7 @@ def desired_entries(plugins_dir, target_dir, kinds, exclude_plugins=None):
     for sources in identifiers.values():
         if len(sources) > 1:
             realpaths = {Path(s).resolve(strict=False) for s in sources}
-            if len(realpaths) > 1:
+            if len(realpaths) > 1 and not is_shared_feedback_skill(sources):
                 conflicts.update(sources)
 
     return entries, conflicts

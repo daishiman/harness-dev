@@ -89,16 +89,23 @@ race / timeout は report の原因を直してから再試行する。`skipped_
 
 ### 3. Claude Code lifecycle
 
-この repo の `harness-creator` は `distributable:false` の repo-local plugin である。
-public marketplace install は行わず、clone 内の source を使う。
+Claude Code 面の `harness-creator` はpublic marketplaceでは`distributable:false`だが、
+cloneから生成するlocal marketplace `harness-local`をuser scopeへ登録してinstallできる。
+標準path `hooks/hooks.json` は製品が自動検出するため、Claude manifestへ同じpathを再宣言しない。
 
-1. **install 相当**: repo に `plugins/harness-creator/` が存在し、manifest を review する。
-2. **enable**: `.claude/settings.json` の project-local `enabledPlugins` で
-   repo 正本 `.claude-plugin/marketplace.json.name` と一致する exact identity
-   `harness-creator@skills` を有効にする。旧 marketplace identity は削除する。
+1. **install / update**: repo外cwdからも絶対pathで共通helperを実行する。
+
+   ```bash
+   python3 /absolute/path/to/harness/plugins/harness-creator/scripts/install-local-plugins.py \
+     --platform claude --plugin harness-creator
+   ```
+
+2. **enable**: `harness-creator@harness-local`のuser scope entryがenabledで、receiptの
+   `runtime_path`が実在することを確認する。同名の旧`@skills`やproject scope activationが
+   併存する場合、helperは自動disableせず`pending_user_gate`で停止する。
 3. **trust**: Claude Code が hook trust review を提示したら、現在の hook command と path を
    review してユーザー自身が承認する。自動承認は禁止。
-4. `make native-surfaces` を実行し、新しい session で SessionStart の structured result を
+4. repo-owned projectionも使う場合は`make native-surfaces`を実行し、新しいsessionでSessionStartのstructured resultを
    確認する。
 5. hook 定義・command・manifest digest が変わった upgrade では、旧 trust を流用せず製品の
    review 画面で current definition を **re-trust** してから新 session を開始する。
@@ -110,32 +117,49 @@ trust / re-trust / disable が未承認なら evidence state は `pending_user_g
 
 ### 4. Codex lifecycle
 
-Codex の repo-local discovery は `.agents/plugins/marketplace.json` から
-`./plugins/harness-creator` を指す。公式手順では plugin browser から install し、新 session
-で bundled capability を読み込む。hook は install/enable だけでは実行されず、current hook
-definition の user trust が必要である。
+Codex の discovery は `.agents/plugins/marketplace.json` から
+`./plugins/harness-creator` を指す。marketplace 名は `harness-dev`。source はローカル
+path と GitHub ref のどちらでも登録できる。
 
-1. `plugins/harness-creator/.codex-plugin/plugin.json` と `hooks/hooks.json`、repo marketplace
-   entry を review する。
-2. ChatGPT desktop / Codex の Plugins 画面、または Codex CLI の `/plugins` で repo
-   marketplace の `harness-creator` を install する。
-3. plugin を enable する。
-4. hook trust review で command、event、plugin root を確認し、ユーザー自身が trust する。
-5. 新しい chat/session を開始し、SessionStart が一度だけ C01 を呼ぶことを確認する。
-6. upgrade で hook definition が変わった場合は current definition を re-trust し、新 session
-   で再確認する。trust を自動移行しない。
-7. uninstall は plugin browser の **Uninstall plugin** を使う。bundled connector は plugin
-   uninstall 後も接続済みの場合があるため、該当する場合は ChatGPT 側で別途管理する。
-   その後 C01 dry-run → apply → check で repo-owned managed projection の prune を確認する。
+1. `plugins/harness-creator/.codex-plugin/plugin.json` と `hooks/hooks.json`、
+   `.agents/plugins/marketplace.json` を review する。
+2. ローカルの未 merge 差分を試す場合:
 
-Codex が local plugin を cache から読むため、source 更新後は製品の refresh/reinstall 手順と
-新 session が必要になる場合がある。install/enable/trust/re-trust/uninstall の実操作と
+   ```bash
+   python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+     --source /absolute/path/to/harness --plugin harness-creator
+   ```
+
+3. PR merge 後の GitHub `main` から入れる場合:
+
+   ```bash
+   python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+     --source daishiman/harness-dev --ref main --plugin harness-creator
+   ```
+
+4. Plugins 画面で plugin を enable する。hook trust review で command、event、
+   plugin root を確認し、ユーザー自身が trust する。
+5. 新しい chat/session を開始し、skill が discover されることを確認する。
+6. merge 後の更新は同じhelperを再実行する。Git marketplaceが既登録ならhelperが
+   snapshot upgrade → install → list receipt確認を行う。hook definition が変わったときは
+   current definition を re-trust し、trust を自動移行しない。
+7. uninstall は plugin browser の **Uninstall plugin** または `codex plugin remove
+   harness-creator` を使う。その後 C01 dry-run → apply → check で repo-owned
+   managed projection の prune を確認する。
+
+Codex local sourceは`live-source`、Git refは`git-snapshot`としてreceiptに記録する。
+source更新後はmanifest version更新、marketplace refresh/reinstall、新sessionが必要になる。
+install/enable/trust/re-trust/uninstall の実操作と
 runtime smoke はすべて `pending_user_gate` であり、build completion から分離する。
+`codex plugin add`を持たないhostではmarketplaceだけを登録し、ChatGPT desktopの
+Plugins Directoryからinstallする。
 
 公式導線:
 
 - [Plugins: install / permissions / uninstall](https://learn.chatgpt.com/docs/plugins)
-- [Build plugins: repo marketplace / manifest / hooks / trust](https://learn.chatgpt.com/docs/build-plugins)
+- [Build plugins: repo marketplace / manifest / hooks / trust](https://developers.openai.com/plugins/build/plugins)
+- [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference)
+- [Claude Code hooks reference](https://code.claude.com/docs/en/hooks)
 
 ### 5. State transition と current output 例
 

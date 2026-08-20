@@ -12,6 +12,11 @@ SPEC = importlib.util.spec_from_file_location("sync_codex_project_settings", SCR
 mod = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mod)
 
+PROJECTOR_SCRIPT = SCRIPT.with_name("sync-plugin-platforms.py")
+PROJECTOR_SPEC = importlib.util.spec_from_file_location("sync_plugin_platforms", PROJECTOR_SCRIPT)
+projector = importlib.util.module_from_spec(PROJECTOR_SPEC)
+PROJECTOR_SPEC.loader.exec_module(projector)
+
 
 def fixture(tmp_path, *, delivery="plugin"):
     repo = tmp_path / "repo"
@@ -95,27 +100,46 @@ def test_discovery_requires_corresponding_codex_manifest(tmp_path):
         raise AssertionError("missing manifest accepted")
 
 
-def test_missing_discovery_is_recreated_from_common_contract(tmp_path):
+def test_missing_discovery_is_left_for_platform_projector(tmp_path):
     repo, contract = fixture(tmp_path)
     discovery = repo / ".agents" / "plugins" / "marketplace.json"
     discovery.unlink()
     report, code = mod.run(repo, contract, "apply")
     assert code == 0
-    assert ".agents/plugins/marketplace.json" in report["paths"]
-    data = json.loads(discovery.read_text())
-    assert data["name"] == "fixture-marketplace"
-    assert data["plugins"] == [{
-        "name": "harness-creator",
-        "source": {"source": "local", "path": "./plugins/harness-creator"},
-        "policy": {"installation": "AVAILABLE", "authentication": "ON_INSTALL"},
-        "category": "Internal-Tooling",
-        "x_harness": {
-            "distributable": False,
-            "scope": "repo-internal",
-            "activation_requires": ["user-install", "user-enable", "user-hook-trust"],
-        },
-    }]
+    assert ".agents/plugins/marketplace.json" not in report["paths"]
+    assert not discovery.exists()
     assert mod.run(repo, contract, "check")[1] == 0
+
+
+def test_platform_projector_remains_only_marketplace_writer(tmp_path):
+    repo, contract = fixture(tmp_path)
+    for name in ("harness-creator", "zeta-plugin"):
+        manifest = repo / "plugins" / name / ".claude-plugin" / "plugin.json"
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        manifest.write_text(
+            json.dumps({
+                "name": name,
+                "version": "1.0.0",
+                "description": f"{name} fixture",
+                "author": {"name": "fixture"},
+            }) + "\n",
+            encoding="utf-8",
+        )
+
+    assert projector.run_all(
+        repo=repo, mode="apply", marketplace_name="fixture-marketplace"
+    )[1] == 0
+    discovery = repo / ".agents" / "plugins" / "marketplace.json"
+    projector_bytes = discovery.read_bytes()
+
+    report, code = mod.run(repo, contract, "apply")
+
+    assert code == 0
+    assert ".agents/plugins/marketplace.json" not in report["paths"]
+    assert discovery.read_bytes() == projector_bytes
+    assert projector.run_all(
+        repo=repo, mode="check", marketplace_name="fixture-marketplace"
+    )[1] == 0
 
 
 def test_project_delivery_update_replaces_prior_managed_generation(tmp_path):
@@ -144,11 +168,10 @@ def test_malformed_existing_hooks_fail_closed(tmp_path):
 
 
 def test_multi_file_apply_failure_restores_every_preimage(tmp_path, monkeypatch):
-    repo, contract = fixture(tmp_path)
+    repo, contract = fixture(tmp_path, delivery="project")
     paths = [
         repo / ".codex" / "hooks.json",
         repo / ".codex" / "config.toml",
-        repo / ".agents" / "plugins" / "marketplace.json",
     ]
     before = {path: path.read_bytes() for path in paths}
     original = mod.atomic_write

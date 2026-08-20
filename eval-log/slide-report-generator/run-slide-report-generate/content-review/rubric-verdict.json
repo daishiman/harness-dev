@@ -2,40 +2,29 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-generate",
-    "skill_md_sha256": "574ecb45f6fa52dfb3151a5422597a60c4ee160835517fc80c08b3ea65a3c4a5"
+    "skill_md_sha256": "c1c38d96cc95152daffdde745af5d7a0b58229bf09b5951168cfefab46d85c0b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
-  },
   "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-14T01:02:45Z",
+  "reviewed_at": "2026-08-14T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1"],
     "positive_feedback": [
-      "機械採点は score 100 / threshold 80 / findings 0 (rubric_hash sha256:6e1843e5… / composition_hash sha256:964f754f… / L0+L2, DOMAIN_RUBRIC_REFS 未設定のため L1 無し)。SKILL.md は 231 行で max_skill_md_lines 300 の内側。",
-      "機械採点が触れなかった rule のうち適用対象を手で確認した。PD-002 / WF-001 / WF-002 / WF-003 (max_iterations 3周) / PG-002 (17/17 agents が対応する <!-- responsibility: R… --> アンカーを持つ) / AG-001 (17/17 agents が明示 tools allowlist を持つ) / AG-004 は通る。KL-* / PR-* / CM-* / HK-* は適用外。",
-      "今回の差分が持ち込んだ規範違反は 0 件。変更は起動条件の明示・検査コード範囲の同期・reference 説明の拡張の 3 点で、いずれも既存 rule の縛りを緩めていない。"
+      "検証可能性 3/3: ゲートの範囲指定が検査器側の集合名 (V_DEFINITIONS) を指すようになり、SKILL.md を読み替えずに実行体の定義が唯一の正本になった。ID 追加時に本文が陳腐化する経路が閉じている。",
+      "一貫性 3/3 (是正後): L103 と L134 が同一語彙で揃った。是正前は同じゲートを 2 通りの範囲で述べており、この次元は 2/3 相当だった。",
+      "完全性 3/3・簡潔性 3/3: 機械採点 21 rule 全通過 (score 100 / findings 0)。本文 233 行で、手続きの詳細は prompts/R*.md と workflow-manifest.json へ委譲されている。"
     ],
     "negative_feedback": [
-      "この PASS の被覆は 45 rule 中 14 である。render-findings-score.py の check_rule() は FM-001..005 / BD-001..004 / NM-001..003 / PD-001 / RG-001 の if/elif 連鎖で、id が一致しない rule は末尾の `return None` へ落ちる。返り値が『合格』と区別できないため、AG-001/002・HK-001/002・CM-002/003・PC-001/002・PR-001/003・WF-001/002・KL-001・PG-001・BND-001・REG-001 を含む high severity 31 件は採点されないまま score 100 になる。TODO(human) rule は pending_human へ正しく退避するのに未実装 rule は退避しない非対称があり、閾値 80 を『未実装なら満たされる』へ変えている。したがって score 100 はこの verdict の根拠ではない。根拠は positive_feedback に列挙した手作業確認の範囲だけである。既定分岐を pending_human (または unscored 配列) へ倒し、出力が自分の被覆率を申告するようにするまで、この数値を再利用してはならない。",
-      "AG-002 (high・plugin scope・未解決): slide-report-generator の 17/17 agent に `## Isolation` / `## Context Boundary` 節が無い (実測)。frontmatter の isolation: fork で部分的に緩和されるが、rule が求める『この agent が触らないもの』の本文記述は全 agent で不在。この verdict の target は skill なので PASS を妨げないと判定したが、plugin scope では未解決 high のままである。",
-      "BND-001 (high・plugin scope・未解決): slide-report-generator が .claude-plugin/bundles.json のどのバンドルにも登録されていない (実測)。rule は新規追加 plugin を対象とするため適用外の可能性があるが、配布経路の実在ギャップである。",
-      "PG-001 は rubric 側が陳腐化している。prompts/<R-id>.yaml を要求するが、repo 内の prompts/*.yaml は 0 件で prompts/*.md が 185 件。実装すれば全 skill が落ちるため、rule の側を実態へ追従させる必要がある。",
-      "REG-001 は記述どおりには実行できない。validate-plugin-completeness.py は exit 0 (22 plugins complete) だが、validate-build-trace.py は build-trace.json を引数に要求し repo 全体へは掛けられない。rule の半分が判定不能のまま。",
-      "eval-log の振り分けが壊れている。write-eval-log.py の resolve_log_path は record['plugin'] を読むが render-findings-score.py はそのキーを出さず、既定値 'core' に落ちる。今回の評価も eval-log/slide-report-generator/... が既に在るのに eval-log/core/2026-08-14-score.jsonl へ書かれた。SKILL.md が約束する eval-log/<plugin>/ 契約が守られておらず、自己進化ループの集計入力が汚染される。"
+      "本 skill 外の未決事項を明示しておく: (1) PG-001 / REG-001 は rubric 文言が実行不能なため pending_human (blocked_on: rubric-text) で、proposals/2026-08-14-pg001-reg001-text-fix.md が third_party / approver 未の状態。proposer != approver 制約により本 session では承認できない。(2) AG-002 (agent 本文への Isolation 記述) は plugins/slide-report-generator/agents/ui-quality-reviewer.md に雛形の TODO(human) を置いた段階で、残り 16 agent への展開は未着手。いずれも本 skill の score には影響しない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "improve"
-  }
+    "next_action": "none"
+  },
+  "notes": "render-findings-score.py --kind skill で機械採点: score 100 / passed true / findings 0 / coverage {applicable_rules:24, scored:21, pending_human:3, unscored:0, not_applicable:21, scored_ratio:0.875}。unscored=0 のため blocking_reason なし。L103 の移行漏れは rubric 21 rule のいずれにも該当せず機械採点では検出できなかった項目で、elegance 側 (C3 整合性) が拾った。機械層と意味層の分担が意図どおり働いた事例として記録する。"
 }

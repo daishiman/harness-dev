@@ -17,25 +17,25 @@
    fallback を手書きしないので、パレットを変えれば --check が不一致を出す。 */
 :root {
   /* 面の地色 */
-  --srg-surface: var(--bg-dark, #fafafa);
+  --srg-surface: var(--paper, #F7F6F3);
   /* 本文色 */
-  --srg-fg: var(--fg, #43436c);
+  --srg-fg: var(--ink, #141412);
   /* 注記・出典 */
-  --srg-fg-muted: var(--fg-dim, #727169);
-  /* 焦点色。図解の accent ロール (svg-kit TOKENS.accent) と同じ色にする */
-  --srg-focal: var(--sakura-pink, #D27E99);
+  --srg-fg-muted: var(--fg-muted, #6A6A68);
+  /* 焦点色。色相ではなく濃度と反転で作るので本文色と同じインクになる */
+  --srg-focal: var(--ink, #141412);
   /* ナビ・リンク */
-  --srg-link: var(--wave-blue, #7E9CD8);
-  /* 自動縮小が下限に達した面の警告枠 */
-  --srg-warn: var(--autumn-yellow, #DCA561);
-  /* カードの地色 (本文色 4% を地色へ重ねた solid) */
-  --srg-surface-2: #F3F3F4;
-  /* 罫線 (本文色 20%) */
-  --srg-hairline: #D5D5DE;
+  --srg-link: var(--ink, #141412);
+  /* 自動縮小が下限に達した面の警告枠。破線という形で区別し、色は足さない */
+  --srg-warn: var(--fg-muted, #6A6A68);
+  /* カードの地色 (面と同じ紙) */
+  --srg-surface-2: var(--paper, #F7F6F3);
+  /* 罫線 (本文色 15%) */
+  --srg-hairline: var(--hairline, #D5D4D1);
   /* 面の外側 (本文色 8%) */
-  --srg-letterbox: #EBEBEF;
+  --srg-letterbox: #E5E4E1;
   /* 全面画像の上に題を置くときの下敷き */
-  --srg-scrim: rgba(250, 250, 250, .88);
+  --srg-scrim: rgba(247, 246, 243, .88);
 
   /* ---- 幾何 (frame-contract.json 由来) ---- */
   --srg-canvas-w: 1280px;

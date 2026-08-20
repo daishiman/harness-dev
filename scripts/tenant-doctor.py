@@ -17,9 +17,6 @@ ROOT = Path(__file__).resolve().parent.parent
 TENANTS = ROOT / "tenants"
 
 PLUGIN_DOCTORS = {
-    "company-master": ["plugins/company-master/scripts/company_master.py", "doctor"],
-    "mf-kessai-invoice-check": ["plugins/mf-kessai-invoice-check/lib/mfk_doctor.py", "--json"],
-    "notion-gmail-send": ["plugins/notion-gmail-send/lib/setup_doctor.py"],
     "contract-generator": ["plugins/contract-generator/lib/setup_doctor.py"],
 }
 
@@ -119,15 +116,6 @@ def _run_plugin_doctors(
             check=False,
         )
         status: dict[str, Any] = {"exit_code": result.returncode}
-        if plugin == "mf-kessai-invoice-check" and result.returncode == 0:
-            try:
-                items = json.loads(result.stdout).get("items") or []
-            except json.JSONDecodeError:
-                failures.append(f"plugin doctor returned invalid JSON: {plugin}")
-            else:
-                warn_labels = [item.get("label") for item in items if item.get("status") == "WARN"]
-                status["warnings"] = warn_labels
-                warnings.extend(f"plugin doctor {plugin}: {label}" for label in warn_labels)
         if result.returncode != 0:
             tail = next((line.strip() for line in reversed(result.stdout.splitlines()) if line.strip()), "")
             failures.append(

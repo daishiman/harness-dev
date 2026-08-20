@@ -37,9 +37,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: draft の停止条件が「Docs黄色版生成+Slack通知+台帳draft化」までに限定され、PDF確定/completed書戻し(run-contract-finalize)・ひな形追従(run-template-sync)へ責務分離されている設計が、契約書作成負荷削減という目的を最適に反映していること。
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-contract-generate
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 管理台帳(Google Sheets)の「作成指示◯ かつ 未作成」行ごとに、契約タイプ(個人/法人)に応じた Drive 上の `.docx` ひな形を差込・条項分岐し、**AI記入箇所を黄色化した Google Docs 版(下書き・要確認)** を個人/法人フォルダへ保存→**Slackに通知**→台帳を `draft` 化(ファイル名/契約書URL/Slack TS/日時)。承認後の提出用PDFは `run-contract-finalize` が担う(責務分離)。実体は共有エンジン `../../lib/engine.py --phase draft`。法務承認済の条文は改変しない。概念は `references/concept.md`、差込仕様は `references/injection-mapping.md`、設定は plugin直下 `README.md`。
@@ -66,7 +75,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 1人事業の契約書作成負荷を機構に肩代わりさせ本業(AIコンサル)へ時間を再配分する。法務承認済 `.docx` ひな形と都度変わりうる台帳を単一の照合エンジンで結び、二重管理とレイアウト崩れを排除する。
 
 ### 完了チェックリスト (Checklist)
-- [ ] `google-config.json` と Keychain 鍵を読み込み Service Account で認証できる(`python3 $CLAUDE_PLUGIN_ROOT/lib/config_auth.py --check`。セットアップ全体は `python3 $CLAUDE_PLUGIN_ROOT/lib/setup_doctor.py` で横断診断)
+- [ ] `google-config.json` と Keychain 鍵を読み込み Service Account で認証できる(`python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/config_auth.py --check`。セットアップ全体は `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/setup_doctor.py` で横断診断)
 - [ ] 管理台帳に `個人`/`法人` 2シートが存在し各スキーマのヘッダを持つ(無ければ整備・既存サンプル行は保持)
 - [ ] 作成指示◯かつステータス∈{空,未作成} の行を冪等キー付きで抽出できる(既定の draft phase の `_PHASE_STATUS_FILTER`。後方互換の legacy 1パスのみ ステータス≠completed)
 - [ ] 契約タイプに応じ法人①/個人②の `.docx` を名前パターンで取得できる
@@ -85,7 +94,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 量産案件(複数行)を多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-contract-generate-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-contract-generate-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回の手順生成は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI 単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲する。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-generate
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-contract-generate
 # → eval-log/run-contract-generate-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -106,10 +115,10 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-generate
 - `金額`=半角整数(差込時 `100,000円` へ整形)
 - 必須非空: 乙名称 / 乙住所(法人は代表者役職・氏名も)
 - 生成後に未置換プレースホルダ(`●`/`XXXX`)残存なし
-- 実装は `$CLAUDE_PLUGIN_ROOT/lib/validate.py`(差込前)+ `$CLAUDE_PLUGIN_ROOT/lib/docx_fill.py` 末尾の残存チェック(差込後)
+- 実装は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/validate.py`(差込前)+ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/docx_fill.py` 末尾の残存チェック(差込後)
 
 ## Gotchas
-- `read_file_content` 系ではハイライト属性を取得できない。差込アンカーは `$CLAUDE_PLUGIN_ROOT/lib/docx_fill.py` が `run.font.highlight_color==WD_COLOR_INDEX.YELLOW` を機械抽出して特定する。
+- `read_file_content` 系ではハイライト属性を取得できない。差込アンカーは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/docx_fill.py` が `run.font.highlight_color==WD_COLOR_INDEX.YELLOW` を機械抽出して特定する。
 - PDF は Drive 上で Google Docs 変換→`export(application/pdf)` で生成する(LibreOffice 不要)。
 - 機微情報(住所/代表者/口座)を扱うため、台帳・出力フォルダの共有範囲を最小化する。
 - 副作用(外部書込)を伴う。`--dry-run` で台帳書込・Drive保存を抑止して検証可能。

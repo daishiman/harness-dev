@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build .claude/settings.json from plugin-owned settings fragments."""
+"""Build project-owned .claude/settings.json values without duplicating plugin hooks."""
 
 import argparse
 import hashlib
@@ -188,6 +188,22 @@ def read_skill_frontmatter_name(skill_dir):
     return None
 
 
+def content_sha256(path):
+    """Hash one bundled namespace item, including relative paths and symlinks."""
+    path = Path(path)
+    digest = hashlib.sha256()
+    candidates = [path] if path.is_file() else sorted(path.rglob("*"))
+    for candidate in candidates:
+        relative = candidate.relative_to(path).as_posix() if candidate != path else path.name
+        if candidate.is_symlink():
+            digest.update(f"L:{relative}:{os.readlink(candidate)}\n".encode())
+        elif candidate.is_file():
+            digest.update(f"F:{relative}:".encode())
+            digest.update(hashlib.sha256(candidate.read_bytes()).digest())
+            digest.update(b"\n")
+    return digest.hexdigest()
+
+
 def namespace_items(plugin_dir, plugin_name):
     items = {"skills": [], "agents": [], "commands": []}
     skills_dir = plugin_dir / "skills"
@@ -209,6 +225,7 @@ def namespace_items(plugin_dir, plugin_name):
                         "from_plugin": plugin_name,
                         "verdict": "ok",
                         "real_path": real_path,
+                        "content_sha256": content_sha256(skill_dir),
                     }
                 )
 
@@ -227,6 +244,7 @@ def namespace_items(plugin_dir, plugin_name):
                     "from_plugin": plugin_name,
                     "verdict": "ok",
                     "real_path": str(item.resolve()),
+                    "content_sha256": content_sha256(item),
                 }
             )
     return items
@@ -251,19 +269,29 @@ def plugin_permissions_from_file(path, from_plugin):
 
 
 PLUGIN_ROOT_VAR = "CLAUDE_PLUGIN_ROOT"
+CODEX_PLUGIN_ROOT_VAR = "PLUGIN_ROOT"
 PROJECT_DIR_VAR = "CLAUDE_PROJECT_DIR"
 
 
 def expand_plugin_root(command, plugin_path):
-    """plugin hook の $CLAUDE_PLUGIN_ROOT を project 文脈で解決可能な形へ展開する。
+    """plugin hook rootをproject文脈で解決可能な単一形へ展開する。
 
-    plugin manifest の hook command は plugin-manifest 文脈の $CLAUDE_PLUGIN_ROOT を
-    使うが、flat な project .claude/settings.json へ反映すると同変数は未定義で hook が
-    走らない。反映時に ${CLAUDE_PROJECT_DIR}/<plugin path> へ展開することで
+    plugin manifestのhook commandはClaude単独rootまたはCodex/Claude dual-rootを
+    使うが、flatなproject .claude/settings.jsonではplugin root変数を前提にできない。
+    反映時に${CLAUDE_PROJECT_DIR}/<plugin path>へ正規化することで
     (a) project settings でも実際に解決でき、(b) plugin ごとに別パスへ解決されるため
-    同名別実体の hook が偽の name/command 衝突 (INV-5) を起こさない。
+    同名別実体のhookが偽のname/command衝突(INV-5)を起こさず、同じpluginが
+    Claude manifestと共有hooks.jsonに同一hookを宣言しても1 invocationへdedupeできる。
     """
     replacement = "${%s}/%s" % (PROJECT_DIR_VAR, plugin_path)
+    for dual_root in (
+        "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}",
+        "${PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT}",
+    ):
+        command = command.replace(dual_root, replacement)
+    command = command.replace(
+        "${%s}" % CODEX_PLUGIN_ROOT_VAR, replacement
+    ).replace("$%s" % CODEX_PLUGIN_ROOT_VAR, replacement)
     return command.replace(
         "${%s}" % PLUGIN_ROOT_VAR, replacement
     ).replace("$%s" % PLUGIN_ROOT_VAR, replacement)
@@ -343,9 +371,9 @@ def discover_plugins(plugins_dir, exclude_plugins=(), *, project_root=None):
         if permissions_path.exists():
             plugin["permissions"].extend(plugin_permissions_from_file(permissions_path, name))
 
-        # project settings へ反映するため、この plugin の hook command 内の
-        # $CLAUDE_PLUGIN_ROOT を当該 plugin の実パスへ展開する (同名別実体の
-        # 偽 INV-5 衝突解消 + project 文脈での hook 実行可能化)。
+        # Hook delivery は plugin root hooks/hooks.json の責務であり、project
+        # settings へは投影しない。ここでの正規化は配布定義の
+        # 検証/診断を決定論的に保つためだけに使う。
         try:
             plugin_rel = plugin_dir.resolve().relative_to(project_root).as_posix()
         except ValueError as exc:
@@ -479,9 +507,13 @@ def namespace_preflight(plugins):
                     seen[kind][item["name"]] = item
                     namespace[kind].append(item)
                     continue
-                if existing["real_path"] == item["real_path"]:
-                    # 同名かつ同一実体 (symlink で共通コンテンツを共有) = 衝突でなく共有。
-                    # 複数 plugin が意図的に 1 実体を symlink 参照する設計を尊重し dedupe する。
+                if (
+                    existing["real_path"] == item["real_path"]
+                    or existing["content_sha256"] == item["content_sha256"]
+                ):
+                    # Marketplace cache を自己完結させるため共通 skill を実体コピー
+                    # した場合も、同一実体 symlink と同じ shared として dedupe する。
+                    # パスとバイトの両方を hash するので、同名で内容が異なる場合は引き続き衝突する。
                     item = dict(item)
                     item["verdict"] = "shared"
                     namespace[kind].append(item)
@@ -707,7 +739,13 @@ def build(target_path, plugins_dir, exclude_plugins=()):
     project_root = Path(target_path).resolve().parent.parent
     plugins = discover_plugins(plugins_dir, exclude_plugins, project_root=project_root)
     namespace = namespace_preflight(plugins)
-    generated_hooks, hook_conflicts, hook_dedupe_count = merge_hooks(target, plugins)
+    # Claude/Codex の plugin loader が plugin root hooks/hooks.json から1回配布する。
+    # 過去の managed_hooks は build_desired_settings -> remove_managed_values で除去し、
+    # project-owned hook だけを保存する。plugin hook 間の runtime ownership は
+    # project settings builder の衝突判定対象ではない。
+    generated_hooks = []
+    hook_conflicts = []
+    hook_dedupe_count = 0
     generated_permissions, permission_conflicts, permission_dedupe_count = merge_permissions(plugins)
     dedupe_count = hook_dedupe_count + permission_dedupe_count
     conflicts = namespace["conflicts"] + hook_conflicts + permission_conflicts

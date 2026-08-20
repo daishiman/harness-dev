@@ -1,0 +1,205 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "extract-system-blueprint",
+  "entry_points": {
+    "skills": [
+      "assign-blueprint-fidelity-evaluator",
+      "run-blueprint-apply",
+      "run-extract-blueprint",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "architecture-essence-synthesizer",
+      "backend-inference-analyzer",
+      "content-intent-analyzer",
+      "frontend-surface-analyzer",
+      "uiux-rationale-analyzer"
+    ],
+    "commands": [
+      "extract-blueprint"
+    ],
+    "hooks": [
+      "pre-fetch-authz-guard.py"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "Productivity",
+    "tags": [
+      "extraction",
+      "blueprint",
+      "mermaid",
+      "documentation"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "extract-blueprint": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command extract-blueprint through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "architecture-essence-synthesizer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent architecture-essence-synthesizer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      },
+      "backend-inference-analyzer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent backend-inference-analyzer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      },
+      "content-intent-analyzer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent content-intent-analyzer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      },
+      "frontend-surface-analyzer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent frontend-surface-analyzer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      },
+      "uiux-rationale-analyzer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent uiux-rationale-analyzer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        },
+        "owner_route": {
+          "plugin": "extract-system-blueprint",
+          "entry_points": [
+            "run-extract-blueprint"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

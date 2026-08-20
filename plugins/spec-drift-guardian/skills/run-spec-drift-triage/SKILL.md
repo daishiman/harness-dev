@@ -59,9 +59,18 @@ feedback_contract:
       loop_scope: outer
       verify_by: test
       text: Issue #17完全commit pairとsource-category fixture matrixに対し4軸+semanticsの誤検出/見逃しがthreshold内で、truncated preview入力はfail-closedになる。
+runtime_root_policy: host-skill-path
 ---
 
 # run-spec-drift-triage
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > 検知済み spec-drift issue の**影響トリアージ**を行う run skill。C11 (`aggregate-issue-diffs.py`) がローカル git から再構成した issue 単位の**全未triage完全 diff** を、C08 (`parse-spec-diff.py`) で hunk 化し C09 (`map-field-impact.py`) で影響候補へ写像したうえで、name/type/required/enum/semantics 各軸の影響を before/after/evidence 付きで判定し、`triage-report` schema 準拠の JSON を emit する。**提案・適用 (C02)・独立判定 (C03) はやらない**。
 
@@ -94,9 +103,9 @@ feedback_contract:
 
 | 段 | 実体 | 役割 | fail-closed 条件 |
 |---|---|---|---|
-| C11 集約 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/aggregate-issue-diffs.py --issue N --events FILE` | issue 単位の未triage全 diff を完全 commit diff として時系列集約 | 欠落 / 曖昧照合 / shallow clone / digest 不一致 (exit≠0) |
-| C08 hunk化 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/parse-spec-diff.py --stdin` | C11 stdout を verbatim で受け `untriaged_entries` を選別し unified hunk 単位へ構造化 (commit pair / digest 継承) | `complete=false` / digest 不一致 / commit pair 混在 (exit2)、入力形状不正・JSON parse 失敗 (exit1) |
-| C09 写像 | `python3 $CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py --stdin` | hunk から artifact kind/path と 4 軸+semantics の before/after/evidence 候補へ写像 | 必須キー欠落 / 写像表不備 (exit≠0) |
+| C11 集約 | `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/aggregate-issue-diffs.py --issue N --events FILE` | issue 単位の未triage全 diff を完全 commit diff として時系列集約 | 欠落 / 曖昧照合 / shallow clone / digest 不一致 (exit≠0) |
+| C08 hunk化 | `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/parse-spec-diff.py --stdin` | C11 stdout を verbatim で受け `untriaged_entries` を選別し unified hunk 単位へ構造化 (commit pair / digest 継承) | `complete=false` / digest 不一致 / commit pair 混在 (exit2)、入力形状不正・JSON parse 失敗 (exit1) |
+| C09 写像 | `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/map-field-impact.py --stdin` | hunk から artifact kind/path と 4 軸+semantics の before/after/evidence 候補へ写像 | 必須キー欠落 / 写像表不備 (exit≠0) |
 
 LLM が担うのは、C09 の影響候補が実 hunk 証拠と整合するかの**軸判定の妥当性確認**と、schema 準拠の triage-report への**組み立て**のみ。`base_commit` / `source_commit` / `diff_sha256` / `complete` は C11 が算出した provenance を**そのまま転記**し、LLM が再計算しない (C03 verdict と一致必須のため)。
 

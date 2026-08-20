@@ -36,9 +36,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 「発火条件は Claude Code 実行のみ・Slack✅/OK は発火条件でない(pull型)」という中核ゲート設計が SKILL.md/prompt SSOT/agent アダプタ/scripts まで一貫し、確認と確定のライフサイクル分離というユーザ目的を常駐デプロイ不要・再入可能な形で最適反映している。
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-contract-finalize
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 `run-contract-generate` が作った下書き(台帳 `draft`)を、**黄色除去PDF(提出用)** として個人/法人フォルダへ保存→Slackスレッドに**再共有**→台帳を `completed` 化する。**発火条件はただ一つ「Claude Code 上で finalize を実行(=ユーザーが確定を指示)」**(pull 型)。実体は共有エンジン `../../lib/engine.py --phase finalize`(`draft` 行を直接PDF化→completed)を `scripts/finalize.py` が呼ぶ。**Slack の ✅/OK は発火条件ではない**(Slack通知は単なるお知らせで承認ゲートとして要求しない)。ユーザーが内容を確認して Claude Code で実行する行為そのものが人間のゲート。常駐サーバー不要。自動ポーリング(/loop・cron)は **任意**(LLM を回す /loop はトークン費用が嵩むため、自動化する場合も純 Python の `scripts/finalize.py` を cron で回す。詳細は「運用」)。
@@ -63,7 +72,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 下書き内容の確認とPDF確定は別ライフサイクル(確認に分〜日かかりうる)。確定をユーザーの明示実行(pull型)に委ねることで、承認ゲートを Claude Code 実行という単一の人間行為に集約し、デプロイ不要・誤確定なしで再入可能にする。
 
 ### 完了チェックリスト (Checklist)
-- [ ] `python3 $CLAUDE_PLUGIN_ROOT/lib/config_auth.py check` で Drive/Sheets 認証が通る
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/config_auth.py check` で Drive/Sheets 認証が通る
 - [ ] `draft` 行を finalize 対象として抽出できる(Claude Code 実行が発火条件)
 - [ ] `draft`(または任意で `approved`)行の黄色除去PDFを生成し個人/法人フォルダへ保存できる
 - [ ] Slackスレッドに PDF URL を再共有できる(通知のみ・任意)
@@ -77,7 +86,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 承認ポーリングを多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-contract-finalize-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-contract-finalize-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-contract-finalize
 # → eval-log/run-contract-finalize-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -103,7 +112,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
 - PDF生成後に台帳 PDF_URL/ステータス=completed が書かれている
 - 未実行の行は `draft` のまま保持(誤確定なし)
 - `--dry-run` で Drive/Sheets/Slack 副作用を抑止可能
-- 実装: `scripts/finalize.py`(薄い shim, finalize 単独)/ `$CLAUDE_PLUGIN_ROOT/lib/engine.py`(process_row phase分岐)
+- 実装: `scripts/finalize.py`(薄い shim, finalize 単独)/ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py`(process_row phase分岐)
 
 ## Gotchas
 - **発火条件は Claude Code 実行のみ(pull型)**: PDF確定はユーザーが Claude Code で「確定して/PDF発行して」と指示し finalize を実行したときに 1 回だけ走る。**Slackの ✅/OK は発火条件ではない**(Slack通知は単なるお知らせ)。内容確認のうえ実行する行為そのものが人間のゲート。

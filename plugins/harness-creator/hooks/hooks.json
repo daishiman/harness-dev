@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\"",
+            "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py\"",
             "timeout": 60,
             "statusMessage": "Checking repository-native capability projections"
           }

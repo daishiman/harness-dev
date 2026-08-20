@@ -4,7 +4,16 @@
   "title": "Plugin Package Harness Contract",
   "description": "36章 Plugin Package Harness Contract の正本 schema。各 plugin の references/package-contract.json はこの schema に準拠する。",
   "type": "object",
-  "required": ["package_mode", "pkg_checks"],
+  "required": [
+    "package_mode",
+    "plugin_name",
+    "entry_points",
+    "distribution",
+    "depends_on",
+    "runtime_dependencies",
+    "codex_alternatives",
+    "pkg_checks"
+  ],
   "properties": {
     "package_mode": {
       "description": "配布形態の閉列挙。新規 plugin は bundle 必須。skill-only は legacy/dev-only/migration の 3 例外限定。",
@@ -22,22 +31,27 @@
     "entry_points": {
       "description": "公式 plugin manifest に混在させない harness 用 entrypoint 台帳。",
       "type": "object",
+      "required": ["skills", "agents", "commands", "hooks"],
       "properties": {
         "skills": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+          "uniqueItems": true
         },
         "agents": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+          "uniqueItems": true
         },
         "commands": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+          "uniqueItems": true
         },
         "hooks": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*\\.(py|sh)$" },
+          "uniqueItems": true
         }
       },
       "additionalProperties": false
@@ -60,6 +74,25 @@
       },
       "additionalProperties": false
     },
+    "codex_distribution": {
+      "description": "Codex marketplace 専用の配布契約。Claude marketplace の distribution.distributable と独立に判定する。",
+      "type": "object",
+      "required": ["distributable", "marketplace", "source"],
+      "properties": {
+        "distributable": { "type": "boolean" },
+        "marketplace": { "const": ".agents/plugins/marketplace.json" },
+        "source": {
+          "type": "string",
+          "pattern": "^\\./plugins/[a-z][a-z0-9-]*[a-z0-9]$"
+        },
+        "supports": {
+          "type": "array",
+          "items": { "enum": ["local-path", "github-ref"] },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
     "depends_on": {
       "description": "harness 用の plugin 間依存台帳。公式 plugin manifest には混在させない。",
       "type": "array",
@@ -68,6 +101,66 @@
         "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$"
       },
       "uniqueItems": true
+    },
+    "runtime_dependencies": {
+      "description": "Plugin-local capability that is owned elsewhere or needs another installed plugin at runtime. owned-vendored records copied bytes without pretending the package is standalone.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "capability",
+          "owner",
+          "classification",
+          "local_path",
+          "owner_route",
+          "required_entry_point",
+          "purpose"
+        ],
+        "properties": {
+          "capability": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+          "classification": { "enum": ["owned-vendored", "runtime"] },
+          "local_path": { "type": "string", "pattern": "^skills/[a-z][a-z0-9-]+$" },
+          "owner_route": { "type": "string", "pattern": "^skills/[a-z][a-z0-9-]+$" },
+          "required_entry_point": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+          "purpose": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "codex_alternatives": {
+      "description": "Claude-only command/agent surfaces and their semantic Codex routes. A skill name alone is insufficient.",
+      "type": "object",
+      "required": ["commands", "agents", "hook_omissions"],
+      "properties": {
+        "commands": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/semanticRoute" }
+        },
+        "agents": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/semanticRoute" }
+        },
+        "library_entry": { "$ref": "#/$defs/semanticRoute" },
+        "hook_omissions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["reason", "replacement_events", "replacement_skill"],
+            "properties": {
+              "reason": { "type": "string", "minLength": 1 },
+              "replacement_events": {
+                "type": "array",
+                "items": { "type": "string", "minLength": 1 },
+                "uniqueItems": true
+              },
+              "replacement_skill": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "pkg_checks": {
       "description": "PKG ID 別の実行結果。閉列挙の PKG ID のみ受理。",
@@ -111,6 +204,65 @@
               }
             }
           ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "semanticRoute": {
+      "type": "object",
+      "required": ["relation", "purpose", "arguments", "effect", "discovery", "owner_route"],
+      "properties": {
+        "relation": {
+          "enum": ["semantic-equivalent", "orchestrated-by", "delegated-to", "read-only-alternative"]
+        },
+        "purpose": { "type": "string", "minLength": 1 },
+        "arguments": {
+          "type": "object",
+          "required": ["policy", "notes"],
+          "properties": {
+            "policy": { "enum": ["preserve", "translate", "fixed", "none"] },
+            "notes": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "effect": {
+          "type": "object",
+          "required": ["policy", "notes"],
+          "properties": {
+            "policy": { "enum": ["equivalent", "orchestrated", "subset", "read-only"] },
+            "notes": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "discovery": {
+          "type": "object",
+          "required": ["kind", "entry_points"],
+          "properties": {
+            "kind": { "const": "skill" },
+            "entry_points": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "owner_route": {
+          "type": "object",
+          "required": ["plugin", "entry_points"],
+          "properties": {
+            "plugin": { "type": "string", "pattern": "^[a-z][a-z0-9-]*[a-z0-9]$" },
+            "entry_points": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string", "minLength": 1 },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

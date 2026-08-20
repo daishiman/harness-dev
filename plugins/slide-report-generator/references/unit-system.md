@@ -1,5 +1,8 @@
 # 単位システム（画面↔印刷 差分ゼロ化）
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **目的**: 画面プレビューと印刷PDFの見た目を完全に一致させる（差分ゼロ化）。
 > 既存 `references/print-layout.md` の「印刷時に font-size / padding / gap を別途縮小」する方式を撤廃し、
 > 画面と印刷の双方を「viewport正規化座標系」上で同一スケールに統一する。
@@ -154,7 +157,10 @@ viewBox がスライド領域に伸縮するため、画面・印刷で完全に
 
 ## §4 印刷時の viewport 固定
 
-### §4.1 必須 CSS（`assets/print-styles.css` 末尾に追記する想定）
+### §4.1 必須 CSS（ひな形を使わない手書き経路の `@media print` に置く）
+
+> 置き場所は経路で変わる。出所の一覧は [print-layout.md §印刷 CSS の出所（経路別）](print-layout.md) が正本。
+> 本節の CSS を書き足すのは、ひな形を使わない手書き経路（`vendor/assets/print-styles.css`）だけである。
 
 > **ひな形 (`.srg-*`) を使う deck ではこの `@page` を書かない** (SR-7-11)。
 > `slide-skeleton.css` が `@page { margin: 21.47mm 0 }` を持っており、`@page` はカスケードで
@@ -238,24 +244,24 @@ viewBox がスライド領域に伸縮するため、画面・印刷で完全に
 ## §5 段階移行プラン
 
 ### Phase A: 新規スライドは vw ベースで生成（即時開始）
-- `scripts/html-scaffold.js` のテンプレート生成箇所で `rem` を出さず `vw` を出力
+- `vendor/scripts/html-scaffold.js` のテンプレート生成箇所で `rem` を出さず `vw` を出力
 - 新規 `slide-types-*.md` のサンプルコードは `vw` で記述
 - `references/diagram-*.md` の追記分は `vw` 基準
 
 ### Phase B: 既存 styles.css の段階置換
 対象:
-1. `assets/src/styles/variables.css` … `--fs-*` トークン定義を vw 化
-2. `assets/src/styles/base.css` … 外周 padding / gap を vw 化
-3. `assets/src/styles/slide-types.css` … 各 `.slide-*` の rem を §3 の表に従って置換
-4. `assets/src/styles/print.css` … `@page` と viewport 固定のみ残し、印刷専用 font-size 上書きを全削除
-5. `assets/print-styles.css` … 同上
-6. `assets/slide-template.html` / `slide-template-single.html` / `d3-slide-template.html` … インラインスタイル除去
-7. `assets/structure-template.md` … サンプル値更新
+1. `vendor/assets/src/styles/variables.css` … `--fs-*` トークン定義を vw 化
+2. `vendor/assets/src/styles/base.css` … 外周 padding / gap を vw 化
+3. `vendor/assets/src/styles/slide-types.css` … 各 `.slide-*` の rem を §3 の表に従って置換
+4. `vendor/assets/src/styles/print.css` … `@page` と viewport 固定のみ残し、印刷専用 font-size 上書きを全削除
+5. `vendor/assets/print-styles.css` … 同上
+6. `vendor/assets/slide-template.html` / `slide-template-single.html` / `d3-slide-template.html` … インラインスタイル除去
+7. `vendor/assets/structure-template.md` … サンプル値更新
 8. `references/theme-style.md` … トークン定義表を vw に更新
 9. `references/print-layout.md` … §フォント縮小ルール（l.222-358）を全削除し、本ファイルへのリンクに置換
-10. `scripts/validate-print.js` … 印刷専用 font-size 上書きを「警告」から「禁止」へ
-11. `scripts/cross-deck-consistency.js` … rem 検出を追加
-12. `scripts/html-scaffold.js` … テンプレート出力を vw に変更
+10. `vendor/scripts/validate-print.js` … 印刷専用 font-size 上書きを「警告」から「禁止」へ
+11. `vendor/scripts/cross-deck-consistency.js` … rem 検出を追加
+12. `vendor/scripts/html-scaffold.js` … テンプレート出力を vw に変更
 
 ### Phase C: クリーンアップ
 - `print-layout.md` の§フォント縮小ルール削除
@@ -266,7 +272,9 @@ viewBox がスライド領域に伸縮するため、画面・印刷で完全に
 
 ## §6 検証スクリプト要件
 
-新規: `scripts/validate-units.js`
+新規: `scripts/validate-units.js`（未作成。以下は要件であって実装の記述ではない）
+
+置き場所は plugin 直下の `scripts/`。`vendor/scripts/` は upstream をバイト単位で固定した複製で、ここに新規ファイルを置くと `scripts/lint-vendor-parity.py` が差分として検出する。
 
 ### §6.1 検出ルール
 
@@ -328,8 +336,8 @@ process.exit(errors.length ? 1 : 0);
 
 ### §6.3 CI/プリコミット連携
 
-- `package.json` の `scripts.validate` に `node scripts/validate-units.js` を追加
-- `scripts/check-consistency.js` の最後に呼び出してチェーン実行
+- `package.json` の `scripts.validate` に `node scripts/validate-units.js`（未作成）を追加
+- `vendor/scripts/check-consistency.js` の最後に呼び出してチェーン実行
 - Phase C 移行時に `warn → error` を切替
 
 ---
@@ -373,9 +381,9 @@ process.exit(errors.length ? 1 : 0);
 
 - `references/print-layout.md` — Phase C で§フォント縮小ルール（l.222-358）を削除し、本ファイルへのリンクに置換
 - `references/theme-style.md` — `--fs-*` 定義を §3.1 の vw 値で更新
-- `assets/print-styles.css` — §4.1 の @page 定義のみに簡素化
-- `scripts/validate-units.js` — §6 で新設
-- `scripts/validate-print.js` — R4（@media print 内 font-size）違反検出を追加
+- `vendor/assets/print-styles.css` — §4.1 の @page 定義のみに簡素化
+- `scripts/validate-units.js` — §6 で新設（未作成）
+- `vendor/scripts/validate-print.js` — R4（@media print 内 font-size）違反検出を追加
 
 ---
 

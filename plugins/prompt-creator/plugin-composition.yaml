@@ -27,16 +27,18 @@ contract:
     - cross-plugin 参照は harness-creator (run-build-skill / run-elegant-review / run-skill-rubric-governance) と skill-governance-lint (lint scripts 直呼び) への一方向のみ
 
 capabilities:
-  # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-prompt-create,              tier: core }
-  - { kind: skill, ref: skills/run-prompt-elicit,              tier: core }
-  - { kind: skill, ref: skills/run-prompt-creator-7layer,      tier: core }
   - { kind: skill, ref: skills/assign-prompt-design-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-prompt-create, tier: core }
+  - { kind: skill, ref: skills/run-prompt-creator-7layer, tier: core }
+  - { kind: skill, ref: skills/run-prompt-elicit, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-generate-prompt, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-interview-user, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-review-prompt, tier: core }
+
+  # === Skills (kind=skill) ===
 
   # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
-  - { kind: agent, ref: agents/prompt-creator-interview-user,  tier: core }
-  - { kind: agent, ref: agents/prompt-creator-generate-prompt, tier: core }
-  - { kind: agent, ref: agents/prompt-creator-review-prompt,   tier: core }
 
 dependencies:
   # 主要 DAG。lint-dependency-direction.py で循環検出。
@@ -50,11 +52,12 @@ dependencies:
   # cross-plugin (out-going, harness-creator / skill-governance-lint への一方向のみ — invariant で許可済み)
   - { from: skills/run-prompt-create, to: ../harness-creator/skills/run-elegant-review,          type: calls,    note: "Step 4 elegant-review (条件: new or >30 行)" }
   - { from: skills/run-prompt-create, to: ../harness-creator/skills/run-skill-rubric-governance, type: calls,    note: "Step 5 governance (auto_approve 不充足時)" }
-  - { from: skills/run-prompt-create,         to: ../skill-governance-lint,                    type: calls,    note: "p0-lint (workflow-manifest phases) で lint scripts 直呼び (plugin.json depends_on と対応)" }
-  - { from: skills/run-prompt-creator-7layer, to: ../skill-governance-lint,                    type: calls,    note: "Phase 5 で lint-agent-prompt-section.py 直呼び (plugin.json depends_on と対応)" }
+  - { from: skills/run-prompt-create,         to: ../skill-governance-lint/skills/run-governance-lint, type: calls, note: "p0-lint を公開 owner entrypoint 経由で起動" }
+  - { from: skills/run-prompt-creator-7layer, to: ../skill-governance-lint/skills/run-governance-lint, type: calls, note: "Phase 5 lint を公開 owner entrypoint 経由で起動" }
   # cross-plugin (in-coming, called-by — 情報的記述、DAG 逆方向ではない)
   - { from: ../harness-creator/skills/run-build-skill, to: skills/run-prompt-creator-7layer,    type: called-by, note: "Step 7.5 で prompt 生成委譲を受ける (informational)" }
 
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
 eval_sinks:
   - EVALS.json
   - eval-log/

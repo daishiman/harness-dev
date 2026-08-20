@@ -59,7 +59,7 @@
 | # | 検証項目 | 基準（合否判定可能な客観条件） | 検出方法 |
 |---|---------|------|----------|
 | C1 | shared-spec完全一致 | 全structure.mdの共通仕様セクション（A4印刷/コードブロック/GSAP/フォント）が機械一致（SVG設計/スライドタイプ定義は Agent A 目視） | `cross-deck-consistency.js --check shared-spec` |
-| C2 | rem残存なし | 全 styles.css で数値付き rem 単位が 0 件（unit-system.md §3 に従い vw へ移行済み） | `cross-deck-consistency.js --check rem-units` |
+| C2 | rem残存なし | **各デッキで実際に適用される CSS 全体**（index.html の inline `<style>` と `<link>` 先を合わせたもの）で数値付き rem 単位が 0 件（unit-system.md §3 に従い vw へ移行済み） | `cross-deck-consistency.js --check rem-units` |
 | C3 | スライドタイプ定義一致 | CSSクラス対応表がシリーズ全体で統一 | Agent A: 各 structure.md のスライドタイプ定義/CSSクラス対応表を横断比較 |
 | C4 | セクション構成の段階的積み上げ | 第N回の前提が第N-1回までに提示済み | Agent A: 各回のスライド内容を読み依存関係を検証 |
 | C5 | 用語の統一 | 同一概念に異なる用語を使っていない | Agent A: 全デッキのテキストを横断検索 |
@@ -76,9 +76,9 @@
 ### カテゴリ3: 技術的品質（Agent C + スクリプト）
 | # | 検証項目 | 基準（合否判定可能な客観条件） | 検出方法 |
 |---|---------|------|----------|
-| C11 | CSS変数の統一 | 全デッキで同一のCSS変数セットを使用 | styles.css間の差分比較 |
-| C12 | GSAPパターンの一貫性 | アニメーション設定が全デッキで統一 | scripts.js間のGSAP設定比較 |
-| C13 | 印刷品質の統一 | A4印刷時のレイアウトが全デッキで同じ品質 | @media print CSSの比較 |
+| C11 | CSS変数の統一 | 全デッキで同一のCSS変数セットを使用 | 各デッキで実際に適用される CSS 間の差分比較 |
+| C12 | GSAPパターンの一貫性 | アニメーション設定が全デッキで統一 | 各デッキで実際に実行される JS 間のGSAP設定比較 |
+| C13 | 印刷品質の統一 | A4印刷時のレイアウトが全デッキで同じ品質 | 実際に適用される CSS 中の @media print 比較 |
 | C14 | アクセシビリティ | 全デッキでWCAG 2.1 AA準拠 | focus-visible/reduced-motion/aria の存在確認 |
 | C15 | 外部参照の健全性 | 不要なURL/外部リンクが混入していない | URL正規表現でスキャン |
 
@@ -156,7 +156,9 @@ cross-deck-reviewer が単一 fork context 内で Agent A/B/C の3レンズと�
 ```
 以下のスライドシリーズを技術的品質の観点で横断検証してください。
 
-検証対象: {series-dir} 内の全structure.md + styles.css + scripts.js + index.html
+検証対象: {series-dir} 内の全 structure.md + 各デッキの index.html と、そこから実際に読み込まれる CSS/JS
+（インライン化された自己完結デッキでは styles.css / scripts.js は存在しない。
+　ディスク上に残っている styles.css は旧版のことがあるため、それ単体を根拠にしない）
 検証項目: C11-C15
 
 分析手法:

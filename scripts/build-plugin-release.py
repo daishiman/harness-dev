@@ -10,7 +10,9 @@
 #   - stdout: 変更検出 / bump / install の要約
 # contexts: [A]
 # network: false  (--install 時のみ claude CLI がローカル marketplace を読む。外部通信はしない)
-# write-scope: plugins/*/.claude-plugin/plugin.json, marketplaces/local, --lock で指定した lock file
+# write-scope: plugins/*/.claude-plugin/plugin.json, plugins/*/.codex-plugin/plugin.json,
+#              .agents/plugins/marketplace.json, .claude-plugin/marketplace.json,
+#              marketplaces/local, config-version-lock.json, --lock で指定した lock file
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -150,21 +152,37 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
 
 
 def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
-    """Codex 側 manifest の version を追従させる。
+    """Codex manifest/versionを専用projector経由で追従させる。
 
-    .codex-plugin/plugin.json を持つ plugin は check-native-surface-parity が
-    .claude-plugin/plugin.json との一致を要求する。持たない plugin (大多数) は
-    何もしない。
+    release scriptが生成済みCodex manifestを直接編集するとwriterが二重化するため、
+    `.codex-plugin/plugin.json` を持つpluginだけ `sync-plugin-platforms.py` へ委譲する。
     """
     path = plugin_dir / ".codex-plugin" / "plugin.json"
     if not path.exists():
         return
-    text = path.read_text(encoding="utf-8")
-    pattern = re.compile(r'("version"\s*:\s*)"[^"]*"')
-    replaced, count = pattern.subn(lambda m: f'{m.group(1)}{json.dumps(version)}', text, count=1)
-    if count != 1:
-        raise SystemExit(f"[build-plugin-release] {path} の version 行を一意に特定できない")
-    path.write_text(replaced, encoding="utf-8")
+    source_version = read_version(plugin_dir)
+    if source_version != version:
+        raise SystemExit(
+            f"[build-plugin-release] projector source version mismatch: {source_version} != {version}"
+        )
+    projector = ROOT / "plugins" / "harness-creator" / "scripts" / "sync-plugin-platforms.py"
+    repo_root = plugin_dir.parents[1]
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(projector),
+            "--repo-root", str(repo_root),
+            "--plugin", str(plugin_dir),
+            "--apply",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            "[build-plugin-release] Codex projection failed\n"
+            f"{result.stdout}{result.stderr}"
+        )
 
 
 def sync_public_marketplace_version(name: str, version: str) -> None:
@@ -553,6 +571,12 @@ def _run(args) -> int:
     only = set(args.only) or None
     rows = survey(only)
     pending = [r for r in rows if r["status"] in ("changed", "new", "released")]
+    recorded = load_fingerprints()
+    retired = (
+        sorted(set(recorded) - {row["name"] for row in rows})
+        if only is None
+        else []
+    )
 
     if args.quiet_period > 0:
         threshold = args.quiet_period * 60
@@ -565,6 +589,8 @@ def _run(args) -> int:
         stale = [r for r in pending if r["status"] == "changed"]
         for row in pending:
             print(f"[{row['status']:8}] {row['name']} {row['version']}")
+        for name in retired:
+            print(f"[retired ] {name}")
         if stale:
             print(
                 f"\n[build-plugin-release] version 上げ忘れ {len(stale)} 件。"
@@ -572,9 +598,10 @@ def _run(args) -> int:
                 file=sys.stderr,
             )
             return 1
-        if pending:
+        if pending or retired:
             print(
-                f"\n[build-plugin-release] 対応表が未更新 {len(pending)} 件。"
+                f"\n[build-plugin-release] 対応表が未更新 "
+                f"{len(pending) + len(retired)} 件。"
                 "python3 scripts/build-plugin-release.py で解消する",
                 file=sys.stderr,
             )
@@ -582,7 +609,7 @@ def _run(args) -> int:
         print(f"[build-plugin-release] OK ({len(rows)} plugins)")
         return 0
 
-    if not pending:
+    if not pending and not retired:
         print(f"[build-plugin-release] 変更なし ({len(rows)} plugins)")
         if args.install:
             return (
@@ -594,7 +621,10 @@ def _run(args) -> int:
             )
         return 0
 
-    state = load_fingerprints()
+    state = recorded
+    for name in retired:
+        state.pop(name, None)
+        print(f"  prune  {name}: plugin directory retired")
     bumped = []
     for row in pending:
         version = row["version"]

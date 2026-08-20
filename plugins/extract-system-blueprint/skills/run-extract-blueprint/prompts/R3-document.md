@@ -49,13 +49,13 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| doc emitter | `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py` | draft/manifest 生成 + completeness 検査 |
-| mermaid gate | `$CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py` | 5 種図種網羅 + 構文検証 |
-| blueprint schema | `$CLAUDE_PLUGIN_ROOT/schemas/system-blueprint.schema.json` | top-level shape 正本 |
+| doc emitter | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py` | draft/manifest 生成 + completeness 検査 |
+| mermaid gate | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/mermaid-validate.py` | 5 種図種網羅 + 構文検証 |
+| blueprint schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-blueprint.schema.json` | top-level shape 正本 |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]`
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py" --docs-dir <dir>`
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]`
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/mermaid-validate.py" --docs-dir <dir>`
 - network なし (C11 は書き込みのみ)。
 
 ## Layer 4: 共通ポリシー層

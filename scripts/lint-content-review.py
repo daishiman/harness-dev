@@ -65,8 +65,8 @@ def _all_skills():
             continue
         for s in sk_dir.iterdir():
             if (s / "SKILL.md").is_file():
-                # symlink は対象外 (実体側で評価される)
-                if s.is_symlink():
+                # symlink / Codex 配布用の同一コピーは正本側で評価
+                if s.is_symlink() or FC.is_vendored_feedback_skill(s, plugins_dir=PLUGINS_DIR):
                     continue
                 skills.add((plugin_dir.name, s.name))
     return skills
@@ -208,6 +208,13 @@ def main():
     args = ap.parse_args()
 
     targets = _git_changed_skills(args.base) if args.changed_only else _all_skills()
+    targets = {
+        (plugin, skill)
+        for plugin, skill in targets
+        if not FC.is_vendored_feedback_skill(
+            PLUGINS_DIR / plugin / "skills" / skill, plugins_dir=PLUGINS_DIR
+        )
+    }
     # filter
     filtered = []
     for plugin, skill in sorted(targets):

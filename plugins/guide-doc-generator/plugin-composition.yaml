@@ -31,11 +31,19 @@ contract:
     - "画像生成の委譲先 (slide-report-generator) が不在でも画像ステップのみ skip して生成を完走すること。skip を黙って落とさない (enforcement: scripts/srg-image-bridge.py の fail-soft 経路)"
 
 capabilities:
+  - { kind: skill, ref: skills/assign-handout-readability-evaluator, tier: core }
+  - { kind: skill, ref: skills/ref-handout-design-system, tier: core }
+  - { kind: skill, ref: skills/run-handout-build, tier: core }
+  - { kind: skill, ref: skills/run-handout-extract, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/handout-content-architect, tier: core }
+  - { kind: agent, ref: agents/handout-readability-reviewer, tier: core }
+  - { kind: command, ref: commands/handout-build, tier: core }
+  - { kind: command, ref: commands/handout-extract, tier: core }
+  - { kind: command, ref: commands/handout-verify, tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-WriteEdit/guard-handout-external-ref", tier: core }
+
   # === Skills (kind=skill) — plugin.json entry_points.skills と一致 ===
-  - { kind: skill, ref: skills/run-handout-build,                 tier: core }  # C01 生成の統括
-  - { kind: skill, ref: skills/run-handout-extract,               tier: core }  # C02 逆抽出の統括
-  - { kind: skill, ref: skills/assign-handout-readability-evaluator, tier: core }  # C03 読みやすさレビューの委譲
-  - { kind: skill, ref: skills/ref-handout-design-system,         tier: ref }   # C04 デザイン言語の参照
 
   # === SubAgents (kind=sub-agent) — 独立 context を要する判断 ===
   - { kind: sub-agent, ref: agents/handout-content-architect.md,    tier: core }  # C05 構成データ設計
@@ -47,7 +55,6 @@ capabilities:
   - { kind: slash-command, ref: commands/handout-verify.md,  tier: core }  # C09
 
   # === Hooks (kind=hook) — 書込時の水際ガード ===
-  - { kind: hook, ref: hooks/guard-handout-external-ref.py, tier: core }  # C10 PostToolUse:Write|Edit
 
   # === Scripts (kind=script) — 決定論パイプライン (LLM を挟まない) ===
   - { kind: script, ref: scripts/render-handout.py,               tier: core }  # C11 構成データ→単一 HTML
@@ -65,21 +72,30 @@ capabilities:
   - { kind: script, ref: scripts/resolve-handout-preset.py,       tier: core }  # C23 用途プリセット解決
 
 dependencies:
-  internal:
-    # 決定論パイプラインの依存順。C12 で正規化した構成データだけが C11 の入力になる。
-    - { from: skills/run-handout-build, to: scripts/resolve-handout-preset.py }
-    - { from: skills/run-handout-build, to: scripts/validate-handout-config.py }
-    - { from: skills/run-handout-build, to: scripts/embed-assets.py }
-    - { from: skills/run-handout-build, to: scripts/render-handout.py }
-    - { from: skills/run-handout-build, to: scripts/route-handout-output.py }
-    - { from: scripts/render-handout.py, to: scripts/render-diagram-svg.py }   # module import (subprocess でない)
-    - { from: scripts/render-handout.py, to: scripts/build-icon-sprite.py }    # module import
-    - { from: hooks/guard-handout-external-ref.py, to: scripts/verify-handout-selfcontained.py }  # 判定規則の委譲
-    - { from: skills/run-handout-extract, to: scripts/extract-handout-config.py }
-  external:
-    # 任意依存。不在でも画像ステップのみ skip して生成を完走する (fail-soft)。
-    - { plugin: slide-report-generator, via: scripts/srg-image-bridge.py, required: false }
-
+  # 決定論パイプラインの依存順。C12 で正規化した構成データだけが C11 の入力になる。
+  - { from: skills/run-handout-build, to: scripts/resolve-handout-preset.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/validate-handout-config.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/embed-assets.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/render-handout.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/route-handout-output.py, type: calls }
+  - { from: scripts/render-handout.py, to: scripts/render-diagram-svg.py, type: calls }
+  - { from: scripts/render-handout.py, to: scripts/build-icon-sprite.py, type: calls }
+  - { from: hooks/guard-handout-external-ref.py, to: scripts/verify-handout-selfcontained.py, type: calls }
+  - { from: skills/run-handout-extract, to: scripts/extract-handout-config.py, type: calls }
+  - { from: skills/assign-handout-readability-evaluator, to: scripts/verify-handout-language.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/render-diagram-svg.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/build-icon-sprite.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/srg-image-bridge.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/verify-handout-selfcontained.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/verify-handout-a11y-print.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/verify-handout-language.py, type: calls }
+  - { from: skills/run-handout-build, to: scripts/verify-handout-narrative.py, type: calls }
+  - { from: skills/run-handout-extract, to: scripts/validate-handout-config.py, type: calls }
+  - { from: skills/run-handout-extract, to: scripts/render-handout.py, type: calls }
+  - { from: skills/run-handout-extract, to: scripts/verify-handout-selfcontained.py, type: calls }
+  # SRG の私有 vendor scripts ではなく公開 owner entrypoint へ構造化して路由する。
+  - { from: scripts/srg-image-bridge.py, to: ../slide-report-generator/skills/run-slide-report-generate, type: delegates }
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
 governance:
   runbook: required
   proposer_not_approver: true   # 生成した本人が読みやすさを採点しない (C06 は独立 context)

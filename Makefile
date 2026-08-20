@@ -2,7 +2,7 @@
 # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
 # CI では --check gate (harness-creator-kit-ci.yml) が走るため二重防護となる。
 
-.PHONY: sync sync-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
+.PHONY: sync sync-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
 
 # LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
 # coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
@@ -42,14 +42,11 @@ native-surfaces-pr-ready:
 	git status --short -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
-## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + company-master vendored + ローカル marketplace drift 検証を実行する
-lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored local-marketplace install-docs distributable-ssot
+## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + ローカル marketplace drift 検証を実行する
+lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift local-marketplace install-docs distributable-ssot
 	python3 scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
-	python3 scripts/lint-skill-name.py --skills-dir plugins/company-master/skills
-	python3 scripts/lint-skill-description.py --skills-dir plugins/company-master/skills
-	python3 scripts/validate-frontmatter.py --skills-dir plugins/company-master/skills
 	python3 scripts/lint-skill-name.py --skills-dir plugins/contract-generator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/contract-generator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/contract-generator/skills
@@ -57,12 +54,6 @@ lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-
 	python3 scripts/lint-skill-description.py --skills-dir plugins/skill-intake/skills
 	# skill-intake の validate-frontmatter は effect enum 違反で FAIL するため
 	# lint-plugin-lint-coverage.py の ALLOWLIST に理由付きで宣言済み (後日是正)
-	python3 scripts/lint-skill-name.py --skills-dir plugins/mf-kessai-invoice-check/skills
-	python3 scripts/lint-skill-description.py --skills-dir plugins/mf-kessai-invoice-check/skills
-	python3 scripts/validate-frontmatter.py --skills-dir plugins/mf-kessai-invoice-check/skills
-	python3 scripts/lint-skill-name.py --skills-dir plugins/notion-gmail-send/skills
-	python3 scripts/lint-skill-description.py --skills-dir plugins/notion-gmail-send/skills
-	python3 scripts/validate-frontmatter.py --skills-dir plugins/notion-gmail-send/skills
 	python3 scripts/lint-skill-name.py --skills-dir plugins/system-spec-harness/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/system-spec-harness/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/system-spec-harness/skills
@@ -117,7 +108,7 @@ runtime-portability:
 
 ## readme-portability: marketplace 配布 plugin の README bash/sh フェンスが install 位置に依存しないか静的検査
 ##   裸 $CLAUDE_PLUGIN_ROOT 一次手順 / repo 相対 python3 plugins/<name>/... / os.environ 添字を fail-closed 検出し、
-##   生ターミナル空展開事故の恒久再発を防ぐ (company-master deferred の文書層 lint 回収)。
+##   生ターミナル空展開事故の恒久再発を防ぐ (deferred plugin の文書層 lint 回収)。
 readme-portability:
 	python3 scripts/lint-readme-plugin-root-portability.py
 
@@ -127,10 +118,6 @@ readme-portability:
 ##   content-review の LLM 監査に頼らず、schema 移動/削除時に即赤化して再発を封じる。
 prompt-contract-drift:
 	python3 scripts/lint-prompt-contract-drift.py --all
-
-## company-master-vendored: company-master の scripts が外部依存ゼロ(空 vendor が正常)か機械検証
-company-master-vendored:
-	python3 scripts/lint-company-master-vendored-deps.py
 
 ## local-marketplace: marketplaces/local/ が plugins/ の現状と一致するか fail-closed 検査
 ##   公開 marketplace は distributable:false を載せられない (MK-004) ため、非配布 plugin を

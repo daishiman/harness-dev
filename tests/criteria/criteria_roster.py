@@ -11,8 +11,6 @@ discovery との乖離は test_roster_matches_discovery が検出し再生成を
 """
 
 ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
-    ("company-master", "run-company-master-backfill", ("IN1", "IN2", "IN3", "OUT1")),
-    ("company-master", "run-company-master-build", ("IN1", "IN2", "OUT1", "OUT2")),
     ("contract-generator", "run-contract-finalize", ("IN1", "IN2", "OUT1")),
     ("contract-generator", "run-contract-generate", ("IN1", "IN2", "OUT1")),
     ("contract-generator", "run-template-sync", ("IN1", "IN2", "OUT1")),
@@ -32,6 +30,8 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("guide-doc-generator", "run-handout-extract", ("IN1", "OUT1", "OUT2")),
     ("harness-creator", "delegate-codex-skill-review", ("IN1", "IN2", "OUT1", "OUT2")),
     ("harness-creator", "run-build-skill", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
+    ("harness-creator", "run-codex-plugin-install", ("IN1", "OUT1")),
+    ("harness-creator", "run-codex-plugin-package", ("IN1", "OUT1")),
     ("harness-creator", "run-elegant-review", ("IN1", "IN2", "OUT1", "OUT2")),
     ("harness-creator", "run-goal-elicit", ("IN1", "OUT1", "OUT2")),
     ("harness-creator", "run-goal-seek", ("IN1", "IN2", "OUT1", "OUT2")),
@@ -46,15 +46,6 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("harness-creator", "run-skill-rubric-governance", ("IN1", "IN2", "OUT1", "OUT2")),
     ("harness-creator", "run-skill-update-notifier", ("IN1", "IN2", "IN3", "OUT1")),
     ("harness-creator", "wrap-git-commit-safe", ("IN1", "IN2", "OUT1")),
-    ("mf-kessai-invoice-check", "run-mf-initial-month-enrich", ("IN1", "IN2", "OUT1")),
-    ("mf-kessai-invoice-check", "run-mf-invoice-check", ("IN1", "IN2", "OUT1")),
-    ("mf-kessai-invoice-check", "run-mf-invoice-db-setup", ("IN1", "IN2", "OUT1")),
-    ("mf-kessai-invoice-check", "run-mf-invoice-reconcile", ("IN1", "IN2", "OUT1")),
-    ("mf-kessai-invoice-check", "run-mf-invoice-report", ("IN1", "OUT1")),
-    ("notion-gmail-send", "run-notion-gmail-dry-run", ("IN1", "IN2", "OUT1")),
-    ("notion-gmail-send", "run-notion-gmail-send", ("IN1", "IN2", "IN3", "OUT1")),
-    ("notion-gmail-send", "run-notion-gmail-sendlog-setup", ("IN1", "OUT1")),
-    ("notion-gmail-send", "run-notion-gmail-source-audit", ("IN1", "OUT1")),
     ("plugin-dev-planner", "run-plugin-dev-plan", ("IN1", "IN2", "OUT1", "OUT2")),
     ("prompt-creator", "run-prompt-create", ("IN1", "IN2", "OUT1")),
     ("prompt-creator", "run-prompt-creator-7layer", ("IN1", "IN2", "OUT1")),

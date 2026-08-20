@@ -36,8 +36,8 @@
 ## Layer 3: インフラ層
 - **決定論ヘルパ**: `scripts/build-fetched-references.py`
   - `assemble --records <素材JSON> [--targets <targets.json>] [--out fetched-references.json]` で record 素材を正規化・全件突合して出力する。必須欠落/host 不一致/重複/全件欠落は exit1 で弾く。
-- **検証ゲート (IN1)**: plugin-root の `scripts/validate-source-citation.py`
-  - `python3 <plugin-root>/scripts/validate-source-citation.py --targets <targets.json> --references fetched-references.json` が exit0 になるまで反復する。
+- **検証ゲート (IN1)**: owner SkillのRuntime root contractで解決したplugin rootの `scripts/validate-source-citation.py`
+  - 同じshell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定し、`python3 "$PLUGIN_ROOT/scripts/validate-source-citation.py" --targets <targets.json> --references fetched-references.json` が exit0 になるまで反復する。
 - **ツール**: `Read` (素材/spec-state 参照)、`Bash` (ヘルパ/検証 script 実行)。書込先は `fetched-references.json` のみ。
 
 ## Layer 4: 共通ポリシー層

@@ -13,6 +13,13 @@ import pytest
 HOOK = Path(__file__).resolve().parents[1] / "hooks" / "reconcile-task-lifecycle.py"
 
 
+@pytest.fixture(autouse=True)
+def managed_repo_marker(tmp_path):
+    marker = tmp_path / ".dev-graph" / "config.json"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("{}\n", encoding="utf-8")
+
+
 def load(name: str):
     spec = importlib.util.spec_from_file_location(name, HOOK)
     assert spec and spec.loader
@@ -57,6 +64,34 @@ def official(event: str, root: Path, **extra) -> dict:
     value = {"hook_event_name": event, "cwd": str(root), "session_id": "session-1"}
     value.update(extra)
     return value
+
+
+@pytest.mark.parametrize("make_git_dir", [False, True])
+def test_all_events_noop_before_dependencies_when_repo_is_unmanaged(
+    tmp_path, monkeypatch, capsys, make_git_dir,
+):
+    module = load(f"c25_unmanaged_{make_git_dir}")
+    (tmp_path / ".dev-graph" / "config.json").unlink()
+    if make_git_dir:
+        (tmp_path / ".git").mkdir()
+    monkeypatch.setattr(module, "invoke", lambda *a, **k: pytest.fail("unmanaged hook called a dependency"))
+    for event, official_name in (
+        ("session-start", "SessionStart"),
+        ("post-tool-use", "PostToolUse"),
+        ("task-completed", "TaskCompleted"),
+    ):
+        payload = official(
+            official_name,
+            tmp_path,
+            tool_name="Bash",
+            tool_use_id="tool-1",
+            tool_input={"command": "git push"},
+            tool_response={"exit_code": 0},
+            task_subject="done [DG:G1]",
+        )
+        code, receipt = call_main(module, monkeypatch, capsys, tmp_path, event, payload)
+        assert code == 0
+        assert receipt["actions"] == [{"noop": "unmanaged repository: ownership marker missing"}]
 
 
 def test_session_start_owns_interval_and_persists_last_success(tmp_path, monkeypatch, capsys):

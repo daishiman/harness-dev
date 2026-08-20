@@ -98,9 +98,8 @@ def load_package_contract(plugin_dir: pathlib.Path) -> tuple[dict | None, str | 
     """Harness-only package metadata sidecar を読む。
 
     公式 Claude plugin manifest の schema には entry_points / distribution /
-    depends_on を混在させない。sidecar が無い既存 plugin は後方互換の
-    manifest fallback を使うが、sidecar が存在するのに壊れている場合は
-    fail-closed でエラーを返す。
+    depends_on を混在させない。全 fleet で sidecar は必須であり、
+    欠落・破損は validate() が fail-closed で報告する。
     """
     path = plugin_dir / "references" / "package-contract.json"
     if not path.exists():
@@ -145,6 +144,7 @@ def collect(plugin_dir: pathlib.Path) -> dict:
     manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
     out["manifest"] = json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     out["package_contract"], out["package_contract_error"] = load_package_contract(plugin_dir)
+    out["composition_exists"] = (plugin_dir / "plugin-composition.yaml").is_file()
     out["manifest_hook_error"] = None
     # Claude Code plugin manifests may keep hook wiring in a plugin-relative
     # hooks.json and reference it with ``"hooks": "./hooks/hooks.json"``.
@@ -193,7 +193,9 @@ def validate(
         )
 
     contract = data.get("package_contract")
-    if isinstance(contract, dict):
+    if not isinstance(contract, dict):
+        errs.append(f"{plugin_name}: references/package-contract.json missing")
+    else:
         contract_name = contract.get("plugin_name")
         if contract_name is not None and contract_name != plugin_name:
             errs.append(
@@ -201,16 +203,21 @@ def validate(
                 f"'{contract_name}' != directory name"
             )
 
-        entry_points = contract.get("entry_points", {})
-        if isinstance(entry_points, dict):
+        entry_points = contract.get("entry_points")
+        if not isinstance(entry_points, dict):
+            errs.append(f"{plugin_name}: package-contract entry_points object missing")
+        else:
             actual_entry_points = {
                 "skills": set(data["skills"]),
                 "agents": {pathlib.Path(name).stem for name in data["agents"]},
                 "commands": {pathlib.Path(name).stem for name in data["commands"]},
-                "hooks": {pathlib.Path(name).stem for name in data["hooks"]},
+                # Hook language/loader is part of its package identity.  Keeping
+                # the suffix also prevents guard.py and guard.sh from collapsing
+                # into one apparently-valid declaration.
+                "hooks": set(data["hooks"]),
             }
             for kind, actual in actual_entry_points.items():
-                declared_raw = entry_points.get(kind, [])
+                declared_raw = entry_points.get(kind)
                 if not isinstance(declared_raw, list) or not all(
                     isinstance(name, str) for name in declared_raw
                 ):
@@ -219,16 +226,27 @@ def validate(
                         "must be string[]"
                     )
                     continue
-                declared = {
-                    pathlib.Path(name).stem if kind != "skills" else name
-                    for name in declared_raw
-                }
+                if len(declared_raw) != len(set(declared_raw)):
+                    errs.append(
+                        f"{plugin_name}: package-contract entry_points.{kind} "
+                        "contains duplicates"
+                    )
+                declared = set(declared_raw)
                 missing_entry_points = declared - actual
                 if missing_entry_points:
                     errs.append(
                         f"{plugin_name}: package-contract declares {kind} not on disk: "
                         f"{sorted(missing_entry_points)}"
                     )
+                undeclared_entry_points = actual - declared
+                if undeclared_entry_points:
+                    errs.append(
+                        f"{plugin_name}: package-contract omits {kind} on disk: "
+                        f"{sorted(undeclared_entry_points)}"
+                    )
+
+    if not data.get("composition_exists", False):
+        errs.append(f"{plugin_name}: plugin-composition.yaml missing")
 
     for required in ("name", "version", "description"):
         if required not in m:
@@ -436,15 +454,27 @@ def run_check() -> tuple[list[str], list[str]]:
     marketplace_entries = load_marketplace_entries()
     all_errs: list[str] = []
     summary: list[str] = []
+    actual_plugins: set[str] = set()
     for plugin_dir in sorted(PLUGINS_DIR.iterdir()):
         if not plugin_dir.is_dir() or plugin_dir.name.startswith("."):
             continue
+        if not (plugin_dir / ".claude-plugin" / "plugin.json").is_file():
+            continue
+        actual_plugins.add(plugin_dir.name)
         data = collect(plugin_dir)
         all_errs.extend(validate(plugin_dir.name, data, bundle_members, marketplace_entries))
         summary.append(
             f"{plugin_dir.name}: skills={len(data['skills'])} "
             f"agents={len(data['agents'])} commands={len(data['commands'])} "
             f"hooks={len(data['hooks'])} scripts={len(data['scripts'])} config={len(data['config'])}"
+        )
+    for name in sorted(set(marketplace_entries) - actual_plugins):
+        all_errs.append(
+            f"{name}: marketplace entry has no plugin directory (MK-005)"
+        )
+    for name in sorted(bundle_members - actual_plugins):
+        all_errs.append(
+            f"{name}: bundle entry has no plugin directory (BD-003)"
         )
     return summary, all_errs
 

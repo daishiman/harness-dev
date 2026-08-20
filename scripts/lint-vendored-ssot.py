@@ -31,10 +31,7 @@ VENDORED_PAIRS = [
         for target in (
             ROOT / "plugins" / "harness-creator" / "scripts" / "tenant_runtime.py",
             ROOT / "plugins" / "skill-intake" / "scripts" / "tenant_runtime.py",
-            ROOT / "plugins" / "company-master" / "scripts" / "tenant_runtime.py",
-            ROOT / "plugins" / "mf-kessai-invoice-check" / "lib" / "tenant_runtime.py",
             ROOT / "plugins" / "contract-generator" / "lib" / "tenant_runtime.py",
-            ROOT / "plugins" / "notion-gmail-send" / "lib" / "tenant_runtime.py",
             ROOT / "plugins" / "skill-governance-automation" / "scripts" / "tenant_runtime.py",
         )
     ],

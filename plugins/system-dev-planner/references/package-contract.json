@@ -4,12 +4,13 @@
   "plugin_name": "system-dev-planner",
   "entry_points": {
     "skills": [
-      "run-system-dev-plan",
-      "assign-system-dev-plan-evaluator"
+      "assign-system-dev-plan-evaluator",
+      "run-skill-feedback",
+      "run-system-dev-plan"
     ],
     "agents": [
-      "system-dev-plan-elicitor",
       "system-dev-plan-architect",
+      "system-dev-plan-elicitor",
       "system-dev-plan-evaluator"
     ],
     "commands": [
@@ -33,7 +34,122 @@
   },
   "depends_on": [
     "dev-graph",
+    "harness-creator",
     "system-spec-harness"
   ],
-  "pkg_checks": {}
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "system-dev-plan": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command system-dev-plan through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-dev-planner",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "system-dev-plan-architect": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent system-dev-plan-architect through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-dev-planner",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        }
+      },
+      "system-dev-plan-elicitor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent system-dev-plan-elicitor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-dev-planner",
+          "entry_points": [
+            "run-system-dev-plan"
+          ]
+        }
+      },
+      "system-dev-plan-evaluator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent system-dev-plan-evaluator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-system-dev-plan-evaluator"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-dev-planner",
+          "entry_points": [
+            "assign-system-dev-plan-evaluator"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
 }

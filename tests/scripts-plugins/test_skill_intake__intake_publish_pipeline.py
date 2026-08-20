@@ -327,6 +327,14 @@ def _stub_stages(monkeypatch, *, assets_rc=0, render_rc=0, fidelity_rc=0, gate_r
         return _Proc()
 
     monkeypatch.setattr(IPP.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(
+        IPP,
+        "invoke_notification",
+        lambda receipt, hint: rec.append(("notification", [str(receipt), str(hint)])) or {
+            "status": "notified"
+        },
+        raising=False,
+    )
     return rec
 
 
@@ -386,6 +394,9 @@ def test_main_publish_success_writes_log_and_url(monkeypatch, capsys, tmp_path):
     assert log["status"] == "published"
     assert log["page_id"] == "pid-9"
     assert log["mode"] == "create"
+    assert log["publish_event_id"]
+    notifications = [row for row in rec if row[0] == "notification"]
+    assert notifications == [("notification", [str(tmp_path / "notion-log.json"), tmp_path.name])]
     # database-id が render と publish の両方へ伝搬している (publish cmd を確認)
     pub_cmd = [r for r in rec if r[0] == "publish_proc"][0][1]
     assert "db-abc" in pub_cmd
@@ -401,6 +412,17 @@ def test_main_publish_failure_returns_code(monkeypatch, capsys, tmp_path):
     assert "publish failed" in err
     log = json.loads((tmp_path / "notion-log.json").read_text(encoding="utf-8"))
     assert log["status"] == "failed"
+    assert not any(row[0] == "notification" for row in rec)
+
+
+def test_main_publish_success_does_not_notify_without_persisted_receipt(monkeypatch, tmp_path):
+    intake = _intake(tmp_path)
+    pub_out = json.dumps({"id": "pid-9", "url": "https://notion/p9", "mode": "create"}).encode()
+    rec = _stub_stages(monkeypatch, publish_rc=0, publish_stdout=pub_out)
+    monkeypatch.setattr(IPP, "_write_log", lambda *_a, **_k: False)
+    _set_argv(monkeypatch, "--intake", str(intake), "--allow-create")
+    assert IPP.main() == 0
+    assert not any(row[0] == "notification" for row in rec)
 
 
 def test_main_dry_run_skips_log(monkeypatch, capsys, tmp_path):
@@ -413,6 +435,7 @@ def test_main_dry_run_skips_log(monkeypatch, capsys, tmp_path):
     assert not (tmp_path / "notion-log.json").exists()
     pub_cmd = [r for r in rec if r[0] == "publish_proc"][0][1]
     assert "--dry-run" in pub_cmd
+    assert not any(row[0] == "notification" for row in rec)
 
 
 def test_main_revise_consistent_page_id_passes_result_to_gate(monkeypatch, capsys, tmp_path):

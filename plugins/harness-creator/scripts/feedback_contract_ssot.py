@@ -25,7 +25,10 @@ JSON schema 側は cross-file $ref をハンドロール validator が解決で�
 """
 from __future__ import annotations
 
+import hashlib
+import os
 import re
+from pathlib import Path
 
 # --- criteria 単一正本 (この4定数が唯一の真実) ---
 CRITERIA_ID_RE = re.compile(r"^(IN|OUT|C)[0-9]+$")
@@ -155,6 +158,65 @@ SELF_DOGFOODING_PLUGIN = "harness-creator"
 ENGINE_SKILLS = frozenset(
     {"run-elegant-review", "run-skill-iter-improve", "run-skill-live-trial"}
 )
+
+# Codex はプラグイン単体を cache へコピーするため、他プラグインから
+# harness-creator 配下へ向く symlink は配布後に解決できない。そのため
+# run-skill-feedback は各プラグインへ byte-identical な物理コピーとして配備する。
+# ただし repo 全体の lint/eval では正本を1回だけ評価しないと、配布コピーが
+# 独立 skill として重複計上される。下記の content-addressed 判定をその境界の
+# SSOT とし、名前だけでは除外せず「正本とツリーが完全一致」の場合のみ除外する。
+VENDORED_FEEDBACK_SKILL = "run-skill-feedback"
+
+
+def directory_content_sha256(root: Path) -> str | None:
+    """Return a deterministic digest of a directory tree, or None if absent.
+
+    Relative paths, entry kinds, file bytes, and symlink targets all participate
+    in the digest.  This intentionally does not follow symlinks.
+    """
+    root = Path(root)
+    if not root.is_dir():
+        return None
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        if path.is_symlink():
+            kind = b"L"
+            payload = os.readlink(path).encode("utf-8")
+        elif path.is_file():
+            kind = b"F"
+            try:
+                payload = path.read_bytes()
+            except OSError:
+                return None
+        elif path.is_dir():
+            kind = b"D"
+            payload = b""
+        else:
+            kind = b"O"
+            payload = b""
+        digest.update(kind + b"\0" + relative + b"\0" + payload + b"\0")
+    return digest.hexdigest()
+
+
+def is_vendored_feedback_skill(skill_dir: Path, *, plugins_dir: Path) -> bool:
+    """Whether skill_dir is an exact distribution copy of the canonical skill.
+
+    The canonical harness-creator skill itself and same-named but modified copies
+    remain evaluation targets.  Only byte-identical non-canonical copies are
+    de-duplicated from repository-wide quality measurements.
+    """
+    skill_dir = Path(skill_dir)
+    if skill_dir.name != VENDORED_FEEDBACK_SKILL:
+        return False
+    canonical = Path(plugins_dir) / SELF_DOGFOODING_PLUGIN / "skills" / VENDORED_FEEDBACK_SKILL
+    try:
+        if skill_dir.resolve() == canonical.resolve():
+            return False
+    except OSError:
+        return False
+    canonical_digest = directory_content_sha256(canonical)
+    return canonical_digest is not None and directory_content_sha256(skill_dir) == canonical_digest
 
 
 def is_stop_block_exempt(plugin: str) -> bool:

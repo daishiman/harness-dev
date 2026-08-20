@@ -55,9 +55,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 『解決したい課題・問題』『現状の流れ・仕組み』『実行したいこと』が固有名詞・実例・頻度・関与者などの相手固有の具体性で記録され、一般論・平均的回答への置換や to-be 提案の混入が無いことを独立レビューが確認する (goal-spec C8)。
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-intake-interview
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -117,13 +126,13 @@ intake セッションの Phase 4 担当。最優先で「何を入力し、何�
 - [ ] 5 軸すべて非空となり `five_axes_complete=true`、未解消があれば `unresolved[]` に列挙
 - [ ] `output/<hint>/sheet.json` を `build-sheet-json.py` で生成済み
 - [ ] `output/<hint>/interview.json` が `schemas/output.schema.json` 準拠 (`filled_ratio` / `five_axes_complete` / `unresolved` / `needs_excavation` / `abstract_answers` / `five_axes` / `intent_contract` / `pending_probes` / `qa_log` 全充足)
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/run-intake-interview/scripts/validate-interview-json.py output/<hint>/interview.json` exit 0
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/run-intake-interview/scripts/check-five-axes-coverage.py output/<hint>/sheet.md` exit 0
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-interview/scripts/validate-interview-json.py output/<hint>/interview.json` exit 0
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-interview/scripts/check-five-axes-coverage.py output/<hint>/sheet.md` exit 0
 - [ ] 個人情報を `interview.json` 本文に直書きせず変数化済み
 - [ ] 5 軸完了後に現状手順(procedure)を抽出済み: mode=detailed は `steps[]` 各要素の action/input/output/tool/frequency 非空、mode=overview_fallback は difficulty_flag=true + overview(step_count_estimate/participants/frequency)非空
 - [ ] procedure 軸で 2 連続の抽象/未回答 (`validate-answer-abstraction.py --axis procedure` exit3) を検出したら overview_fallback へ切り替え、停止せず継続した
 - [ ] handoff 対象 as-is フィールド (`procedure.*` / 真の課題 content) に to-be 語彙 (べきである/理想は/最適化 等) を混入させていない
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/validate-procedure-completeness.py --interview output/<hint>/interview.json` exit 0 (完全性 + 非混入)
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/validate-procedure-completeness.py --interview output/<hint>/interview.json` exit 0 (完全性 + 非混入)
 - [ ] 責務外 (深掘り再質問・仮説検証・要約・3 軸確定・to-be 設計/手順最適化) に踏み込んでいない
 
 ### ゴールシークループ

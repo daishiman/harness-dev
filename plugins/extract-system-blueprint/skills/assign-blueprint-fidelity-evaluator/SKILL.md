@@ -44,9 +44,18 @@ source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-07-11
 audit-trigger: quarterly
+runtime_root_policy: host-skill-path
 ---
 
 # assign-blueprint-fidelity-evaluator
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > extract-system-blueprint plugin の忠実性評価器 (L1 assign skill)。`run-extract-blueprint` (C01) が生成した章別ブループリント draft を **proposer と異なる独立 context (`context: fork`)** で評価し、`draft_hash` に束縛した verdict (PASS/FAIL) を `ESB_VERDICT_DIR` (既定 `.esb-verdict`) へ発行する。この verdict を C01 (run-extract-blueprint) が周回内の品質ゲート/差し戻し判定に消費し、PASS 以外の draft をローカル成果物として受理しない。verdict はローカル成果物の品質判定 (受入基準の充足確認) を意味する。パス解決は `$CLAUDE_PLUGIN_ROOT` 起点。
 
@@ -107,8 +116,8 @@ C01 draft の章別ドキュメント群が、事実と根拠つき推測を相�
 C01 draft へ共有ゲートを**再実行**して基準統一を確認する。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py" --docs-dir <draft-dir>
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --check-screens --extraction <draft-dir>/blueprint.json --out-dir <draft-dir>
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/mermaid-validate.py" --docs-dir <draft-dir>
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --check-screens --extraction <draft-dir>/blueprint.json --out-dir <draft-dir>
 ```
 
 ### 局面: 非共有の再計数 (common-mode 破り)
@@ -157,5 +166,5 @@ python3 "$CLAUDE_SKILL_DIR/scripts/emit-verdict.py" --assessment <assessment.jso
 - `scripts/emit-verdict.py` — gate 結果 + findings へ決定論規則を適用し draft_hash 束縛 verdict を ESB_VERDICT_DIR へ発行。
 - `references/evaluation-rubric.md` — 三値排他・evidence 接地・anti-overfit・被覆・ペルソナの採点観点。
 - `references/resource-map.yaml` — Progressive Disclosure 読み順。
-- `$CLAUDE_PLUGIN_ROOT/scripts/` — 共有ゲート `mermaid-validate.py` (C10) / `doc-emit.py` (C11)。
-- `$CLAUDE_PLUGIN_ROOT/skills/run-extract-blueprint/` (C01) — verdict receipt を周回内の品質ゲート/差し戻し判定で読む消費側。
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` — 共有ゲート `mermaid-validate.py` (C10) / `doc-emit.py` (C11)。
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-extract-blueprint/` (C01) — verdict receipt を周回内の品質ゲート/差し戻し判定で読む消費側。

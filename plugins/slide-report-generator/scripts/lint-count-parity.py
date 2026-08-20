@@ -50,15 +50,20 @@
   - `svgBuilder`     : `決定論ビルダー 38 種` / `実在ビルダー 38 種`
   - `diagramGolden`  : `ゴールデン 63 組` (助数詞は「組」限定)
   - `svgVariant`     : `variant … 32 種`
+  - `specRegistryRule` : `SR-ID 62` / `SR-ID 62 件`
+  - `validationRule` : `V-ID 40 件` / `V_DEFINITIONS 40 件`
 
 除外規則 (誤検出を出さないための意図的な非対象):
   1. **助数詞だけの一致は採らない。** `ゴールデンは 5 件`(chart-types.md の
      図ごとの要素数) のような文書固有の値は「ゴールデン」+ 数字で当たるが、
      助数詞を「組」に限定することで外れる。同様に `階層 2-4 層` 等も対象外。
-  2. **`D0-D13` 形式の検査コード範囲は un-annotated 走査の対象にしない。**
+  2. **`D0-D13` `V-001〜V-030` 形式の ID 範囲は un-annotated 走査の対象にしない。**
      `references/diagram-layout-contract.md` は SVG 断片側の部分集合を
      正当に `D0-D13` と呼ぶ。範囲名は「個数の主張」と「部分集合の名前」を
      文面から区別できないため、アノテーション経由 (`diagramCheckMax`) でのみ縛る。
+     加えて `validationRule` は欠番を含み末尾が連番の続きでもないので、
+     そもそも範囲式では総数を表せない。**範囲式で書けないと判った箇所を
+     範囲式へ書き直して辻褄を合わせないこと** (書けないことが実態)。
   3. **コードブロック(``` 囲み)内は走査しない。** 実装例の数値は散文の主張ではない。
   4. **`<!-- count-exempt: 理由 -->` を同一行に持つ行は走査しない。**
      文書が自分自身の記載量を述べる自己記述的な表 (例: 決定木の分類カバー数表は
@@ -97,6 +102,7 @@
 | svgBuilderOwn        | vendor/scripts/render-report.js | ローカル `function build*` かつ `render: (...) => buildX(` から呼ばれるもの |
 | slideTypeDecision    | references/slide-type-decision-tree.md | `DT-<n>` の distinct 件数 |
 | specRegistryRule     | references/spec-registry.md | 行頭 `| SR-...` の distinct 行 ID 件数 |
+| validationRule       | vendor/scripts/validate-structure.js | `V_DEFINITIONS = {...}` の distinct `V-NNN` キー数 |
 
 exit: 0=PASS / 1=drift 検出 / 2=usage・対象不在・self-test 失敗。
 pytest からは run_checks(root) を import して findings[] を得る。
@@ -142,6 +148,14 @@ _RENDER_REPORT = "vendor/scripts/render-report.js"
 _VALIDATE_DIAGRAM = "scripts/validate-svg-diagram.py"
 _DECISION_TREE = "references/slide-type-decision-tree.md"
 _SPEC_REGISTRY = "references/spec-registry.md"
+_VALIDATE_STRUCTURE = "vendor/scripts/validate-structure.js"
+_SVG_KIT = "vendor/scripts/svg-kit.cjs"
+
+# STROKE のうち「太さの段」に数えない役割名。band は線でなく面として読ませる値
+# (24) で、段に混ぜると段数が 1 つ増えて散文の「3 段」と食い違う。除外の根拠は
+# svg-kit.cjs の band 自身のコメントにある。名前が消えたら段数が黙って変わるので、
+# self-test 側で「この名前が STROKE に実在すること」を固定する。
+_STROKE_NON_TIER = ("band",)
 
 _SECTION_11_RE = re.compile(r"^#{2,4}\s+§?(11\.\d+)", re.M)
 _BUILD_FN_RE = re.compile(r"^function (build[A-Z]\w*)", re.M)
@@ -237,9 +251,13 @@ def _m_diagram_golden_production(root: Path) -> int | None:
     return n or None
 
 
-def _m_d3_component(root: Path) -> int | None:
-    src = _read(root, _RENDER_SLIDE)
-    i = src.find("D3_COMPONENTS")
+def _brace_block(src: str, anchor: str) -> str | None:
+    """`anchor` の直後に開く `{...}` の中身を返す。見つからなければ None。
+
+    JS のオブジェクトリテラルを正規表現で 1 発で取ると、中の `}` で早く閉じる。
+    深さを数えて取る。
+    """
+    i = src.find(anchor)
     if i < 0:
         return None
     j = src.find("{", i)
@@ -252,10 +270,29 @@ def _m_d3_component(root: Path) -> int | None:
         elif src[k] == "}":
             depth -= 1
             if depth == 0:
-                break
+                return src[j + 1:k]
         k += 1
-    keys = set(re.findall(r"'([A-Za-z0-9_-]+)'\s*:", src[j + 1:k]))
+    return None
+
+
+def _m_d3_component(root: Path) -> int | None:
+    body = _brace_block(_read(root, _RENDER_SLIDE), "D3_COMPONENTS")
+    if body is None:
+        return None
+    keys = set(re.findall(r"'([A-Za-z0-9_-]+)'\s*:", body))
     return len(keys) or None
+
+
+def _m_validation_rule(root: Path) -> int | None:
+    """機械検証項目 V-ID の総数。正本は validate-structure.js の `V_DEFINITIONS`。
+
+    連番ではないので「V-001〜V-0NN」の形の範囲では表せない (欠番があり、末尾は
+    連番の続きでもない)。総数だけが主張できる値なので、総数だけを数える。
+    """
+    body = _brace_block(_read(root, _VALIDATE_STRUCTURE), "V_DEFINITIONS")
+    if body is None:
+        return None
+    return len(set(re.findall(r'"(V-\d+)"\s*:', body))) or None
 
 
 def _m_svg_builder_core(root: Path) -> int | None:
@@ -301,6 +338,116 @@ def _m_spec_registry_rule(root: Path) -> int | None:
     return len(ids) or None
 
 
+_COMMENT_RE = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+_STROKE_ENTRY_RE = re.compile(r"^\s*([A-Za-z_]\w*)\s*:\s*([0-9]*\.?[0-9]+)\s*,", re.M)
+
+
+def _stroke_entries(root: Path) -> dict[str, str] | None:
+    """svg-kit.cjs の `STROKE` を {役割名: 値の文字列} で返す。
+
+    値は文字列のまま持つ。float へ寄せると 1.25 と 1.250 が同じになる一方で
+    表記のぶれが見えなくなるため、散文と突き合わせる「値の見た目」を保つ。
+    """
+    body = _brace_block(_read(root, _SVG_KIT), "STROKE")
+    if body is None:
+        return None
+    entries = _STROKE_ENTRY_RE.findall(_COMMENT_RE.sub("", body))
+    return dict(entries) or None
+
+
+def _m_stroke_role(root: Path) -> int | None:
+    """線幅の役割名の数。正本は svg-kit.cjs の `STROKE` のキー。
+
+    次の `_m_stroke_tier` と対で数える。**片方だけでは足りない**。役割名は
+    呼ぶ側が意図を書くためのもので、実際の太さはそれより少ない段へ落ちる。
+    名前だけ数えると「6 段ある」と読め、段だけ数えると「名前は 3 つ」と読める。
+    """
+    entries = _stroke_entries(root)
+    return len(entries) if entries else None
+
+
+def _m_stroke_tier(root: Path) -> int | None:
+    """線幅の段の数 (distinct な値の数)。正本は同じく `STROKE`。
+
+    `_STROKE_NON_TIER` の役割は面として読ませる値なので段に数えない。
+    名前数と段数が一致しないのは欠落ではなく、一致させようとして段を増やすと
+    比 1.33 のような「目には分かれていない段」が戻る。
+    """
+    entries = _stroke_entries(root)
+    if not entries:
+        return None
+    tiers = {v for k, v in entries.items() if k not in _STROKE_NON_TIER}
+    return len(tiers) or None
+
+
+_SERIES_ANCHOR = "const SERIES = ["
+_SERIES_ITEM_RE = re.compile(r"'([^']*)'|\"([^\"]*)\"")
+_SERIES_HEX_RE = re.compile(r"#[0-9A-Fa-f]{3,8}")
+
+
+def _series_literals(root: Path) -> list[str] | None:
+    """svg-kit.cjs の `SERIES` を、配列リテラルに書かれた順で返す。
+
+    ブロックを取ってから、その中だけコメントを落とす (`_stroke_entries` と同じ流儀)。
+    ファイル全文へ `_COMMENT_RE` を当ててはいけない。svg-kit.cjs には
+    `xmlns="http://...` のように `://` を含む行があり、`//` 以降を落とすと
+    文字列そのものが壊れて、数える前に対象が消える。
+    """
+    src = _read(root, _SVG_KIT)
+    i = src.find(_SERIES_ANCHOR)
+    if i < 0:
+        return None
+    j = src.find("[", i)
+    if j < 0:
+        return None
+    depth, k, body = 0, j, None
+    while k < len(src):
+        if src[k] == "[":
+            depth += 1
+        elif src[k] == "]":
+            depth -= 1
+            if depth == 0:
+                body = src[j + 1:k]
+                break
+        k += 1
+    if body is None:
+        return None
+    items = [a or b for a, b in _SERIES_ITEM_RE.findall(_COMMENT_RE.sub("", body))]
+    return items or None
+
+
+def _m_series(root: Path) -> int | None:
+    """系列色の枠の数。正本は svg-kit.cjs の `SERIES` の要素数。
+
+    散文にある「5 色」はこの枠数ではない。`SERIES` の直後には別名が 5 つ並ぶが、
+    そのうち 1 つは `VAR_VIOLET = SERIES[0]` で先頭の枠を指し直しているだけで、
+    枠は増えていない。名前の数を枠の数として読むと、呼ぶ側は「2 通りある」と
+    信じて 2 枠を同時に取り、区別できない 2 系列が出る。
+    次の `_m_series_distinct` と対で数える。**片方だけでは足りない**。
+    """
+    items = _series_literals(root)
+    return len(items) if items else None
+
+
+def _m_series_distinct(root: Path) -> int | None:
+    """区別できる系列の数。正本は同じく `SERIES`。
+
+    各要素の CSS 変数フォールバック (`var(--x, #RRGGBB)` の HEX) で数える。
+    HEX が無い要素はリテラル全体を鍵にする。
+    限界を書いておく: 変数側が同じ値へ解決されれば画面では同色になるが、ここは
+    別物として数える。CSS 変数の実値との突合は drift 側の管轄で、ここへ持ち込むと
+    同じ事項の正本が 2 つになる。
+    """
+    items = _series_literals(root)
+    if not items:
+        return None
+    keys = set()
+    for it in items:
+        m = _SERIES_HEX_RE.search(it)
+        keys.add(m.group(0).lower() if m else it.strip())
+    return len(keys) or None
+
+
 MEASURERS = {
     "slideType": _m_slide_type,
     "slideTypeNonD3": _m_slide_type_non_d3,
@@ -322,6 +469,11 @@ MEASURERS = {
     "svgBuilderOwn": _m_svg_builder_own,
     "slideTypeDecision": _m_slide_type_decision,
     "specRegistryRule": _m_spec_registry_rule,
+    "validationRule": _m_validation_rule,
+    "strokeRole": _m_stroke_role,
+    "strokeTier": _m_stroke_tier,
+    "series": _m_series,
+    "seriesDistinct": _m_series_distinct,
 }
 
 # ---------------------------------------------------------------------------
@@ -374,6 +526,19 @@ _CONTEXT_PATTERNS: dict[str, list[str]] = {
     ],
     "svgVariant": [
         r"variant\s*(?:enum)?\s*(\d+)\s*種",
+    ],
+    # SR-ID / V-ID は名前空間の識別子そのものが `SR-4-03` `V-001` の形なので、
+    # 「識別子トークン + 空白 + 裸の整数」は個数の主張以外に読みようがない。
+    # 逆に `V-001〜V-030` のような範囲式には当たらない (当てない)。範囲式は
+    # 部分集合の名前かもしれず、また V-ID は欠番があって範囲では総数を表せない。
+    "specRegistryRule": [
+        r"SR-ID\s*(?:全|計)?\s*(\d+)\s*[件本個]",
+        r"SR-ID\s+(\d+)(?![-\d])",
+    ],
+    "validationRule": [
+        r"V-ID\s*(?:全|計)?\s*(\d+)\s*[件本個]",
+        r"V-ID\s+(\d+)(?![-\d])",
+        r"V_DEFINITIONS\s*(?:全|計)?\s*(\d+)\s*[件本個種]",
     ],
 }
 _COMPILED_CONTEXT = {k: [re.compile(p) for p in v] for k, v in _CONTEXT_PATTERNS.items()}
@@ -545,6 +710,25 @@ def _self_test(root: Path) -> tuple[bool, list[str]]:
           live["diagramCheckMax"] == live["diagramCheck"] - 1)
     check("T2 svgBuilder = Core + Struct + Own (3 経路の合算が総数と整合)",
           live["svgBuilder"] == live["svgBuilderCore"] + live["svgBuilderStruct"] + live["svgBuilderOwn"])
+    # 役割名は段より多い。等しくなったら「名前と段を一致させる」方向へ動いた合図で、
+    # 目には分かれない段が戻っている可能性がある。少ないのは数え落とし。
+    check("T2 strokeRole > strokeTier (役割名は段へ落ちる。名前数と段数は一致しない)",
+          live["strokeRole"] > live["strokeTier"])
+    _stroke = _stroke_entries(root) or {}
+    check(f"T2 _STROKE_NON_TIER の役割が STROKE に実在する (除外={', '.join(_STROKE_NON_TIER)})",
+          all(name in _stroke for name in _STROKE_NON_TIER))
+    # 枠数と区別できる数は一致していなければならない。`series >= seriesDistinct` は
+    # 実測器の性質から常に真で何も主張しないので、等号を取る。ここが割れた状態
+    # (枠は 4 だが区別できるのは 3) は、2 枠が同じ色を指したということで、過去に
+    # 実際に起きて D29 が鳴った形。減った側が枠の数へ吸われて見えなくなる。
+    check(f"T2 series = seriesDistinct (区別できない 2 系列が無い。枠={live['series']} "
+          f"区別={live['seriesDistinct']})",
+          live["series"] == live["seriesDistinct"])
+    _series = _series_literals(root) or []
+    check("T2 SERIES の全要素が var(--名前, #HEX) の形 (フォールバック無しは変数未定義で無色になる)",
+          bool(_series) and all(
+              re.fullmatch(r"var\(--[A-Za-z0-9-]+,\s*#[0-9A-Fa-f]{3,8}\)", s.strip())
+              for s in _series))
 
     # T3/T4/T5/T6: 合成 root を作り、正しい状態 / 壊れた状態の双方を判定できるか。
     with tempfile.TemporaryDirectory() as td:
@@ -602,6 +786,19 @@ def _self_test(root: Path) -> tuple[bool, list[str]]:
         f_jbad = scan_only(j_bad, ".claude-plugin/probe.json")
         check("T11 JSON の数字を 1 ずらすと count-parity を出す",
               any(f["check"] == "count-parity" for f in f_jbad))
+
+        # T12/T13: ID 名前空間 (SR-ID / V-ID) の個数主張は捕まえ、ID 範囲式は捕まえない。
+        # 実際に起きた事故が両方向にあるのでどちらも固定する。散文の `SR-ID 62` は
+        # 実測 (当時 124) から静かにずれていた。逆に `V-001〜V-030` のような範囲式を
+        # 個数の主張と読む抽出は、欠番のある集合へ存在しない穴を報告する。
+        for label, text in (
+            ("SR-ID", f"spec-registry SR-ID {live['specRegistryRule'] + 1} を参照\n"),
+            ("V-ID", f"V-ID {live['validationRule'] + 1} 件を検証\n"),
+        ):
+            check(f"T12 {label} の裸の個数主張は count-unannotated を出す",
+                  any(f["check"] == "count-unannotated" for f in scan_only(text)))
+        check("T13 ID 範囲式は個数の主張として扱わない",
+              scan_only("V-001〜V-043 と D0-D13 と SR-4-03 / V-001 を見る\n") == [])
 
     return ok, log
 

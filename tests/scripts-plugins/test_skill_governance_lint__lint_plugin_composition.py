@@ -77,10 +77,21 @@ VALID_PLUGIN_JSON = {
 def build_plugin(root: Path, composition: str, plugin_json: dict | None) -> Path:
     (root / "skills" / "run-alpha").mkdir(parents=True)
     (root / "skills" / "run-alpha" / "SKILL.md").write_text("# alpha\n", encoding="utf-8")
-    (root / "agents").mkdir()
-    (root / "agents" / "beta-agent.md").write_text("# beta\n", encoding="utf-8")
-    (root / "commands").mkdir()
-    (root / "commands" / "do-thing.md").write_text("# cmd\n", encoding="utf-8")
+    if "agents/beta-agent" in composition:
+        (root / "agents").mkdir()
+        (root / "agents" / "beta-agent.md").write_text("# beta\n", encoding="utf-8")
+    if "commands/do-thing" in composition:
+        (root / "commands").mkdir()
+        (root / "commands" / "do-thing.md").write_text("# cmd\n", encoding="utf-8")
+    hook_refs = {
+        "gamma-trigger": "gamma-trigger.py",
+        "delta-lint": "delta-lint.py",
+    }
+    for marker, filename in hook_refs.items():
+        if marker not in composition:
+            continue
+        (root / "hooks").mkdir(exist_ok=True)
+        (root / "hooks" / filename).write_text("# hook\n", encoding="utf-8")
     (root / "EVALS.json").write_text("{}\n", encoding="utf-8")
     if plugin_json is not None:
         (root / ".claude-plugin").mkdir()
@@ -323,7 +334,7 @@ def test_lint_composition_broken_plugin_json_is_error(tmp_path):
 def test_lint_composition_external_hooks_manifest(tmp_path):
     plugin_json = {"name": "fixture-plugin", "hooks": "./hooks/hooks.json"}
     comp = build_plugin(tmp_path, VALID_COMPOSITION, plugin_json)
-    (tmp_path / "hooks").mkdir()
+    (tmp_path / "hooks").mkdir(exist_ok=True)
     (tmp_path / "hooks/hooks.json").write_text(
         json.dumps({"hooks": VALID_PLUGIN_JSON["hooks"]}), encoding="utf-8"
     )
@@ -414,6 +425,115 @@ def test_dependency_parity_rejects_missing_command_dispatch_edges(tmp_path):
     )
 
 
+def test_public_surface_inventory_is_bidirectional(tmp_path):
+    comp = build_plugin(tmp_path, VALID_COMPOSITION, VALID_PLUGIN_JSON)
+    (tmp_path / "skills" / "run-extra").mkdir()
+    (tmp_path / "skills" / "run-extra" / "SKILL.md").write_text(
+        "---\nname: run-extra\n---\n", encoding="utf-8"
+    )
+
+    findings, _, err = MOD.lint_composition(comp)
+
+    assert err is None
+    assert any("composition omits skill surface: skills/run-extra" in f for f in findings)
+
+
+def test_cross_plugin_route_requires_owner_entrypoint_and_package_dependency(tmp_path):
+    repo = tmp_path
+    plugin = repo / "plugins" / "caller"
+    owner = repo / "plugins" / "owner"
+    comp = build_plugin(
+        plugin,
+        VALID_COMPOSITION
+        + "\ndependencies:\n"
+        + "  - { from: skills/run-alpha, to: ../owner/skills/run-owned, type: calls }\n",
+        VALID_PLUGIN_JSON,
+    )
+    (plugin / "references").mkdir()
+    (plugin / "references/package-contract.json").write_text(
+        json.dumps({"plugin_name": "caller", "depends_on": [], "entry_points": {}}),
+        encoding="utf-8",
+    )
+    (owner / "skills/run-owned").mkdir(parents=True)
+    (owner / "skills/run-owned/SKILL.md").write_text("# owned\n", encoding="utf-8")
+    (owner / "references").mkdir()
+    (owner / "references/package-contract.json").write_text(
+        json.dumps(
+            {
+                "plugin_name": "owner",
+                "depends_on": [],
+                "entry_points": {
+                    "skills": ["run-owned"], "agents": [], "commands": [], "hooks": []
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("cross-plugin dependency edge missing from package contract: owner" in f for f in findings)
+
+    caller_contract = json.loads((plugin / "references/package-contract.json").read_text())
+    caller_contract["depends_on"] = ["owner"]
+    (plugin / "references/package-contract.json").write_text(
+        json.dumps(caller_contract), encoding="utf-8"
+    )
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert not any("cross-plugin" in f for f in findings)
+
+
+def test_external_dependency_requires_declared_entrypoint_and_package_edge(tmp_path):
+    repo = tmp_path
+    plugin = repo / "plugins" / "caller"
+    owner = repo / "plugins" / "owner"
+    composition = (
+        "name: caller\nkind: plugin-composition\ncapabilities:\n"
+        "  - { kind: skill, ref: skills/run-alpha, tier: core }\n"
+        "external_dependencies:\n"
+        "  owner:\n"
+        "    required_entry_points: [run-owned, run-missing]\n"
+    )
+    comp = build_plugin(plugin, composition, None)
+    (plugin / "references").mkdir()
+    (plugin / "references/package-contract.json").write_text(
+        json.dumps({"plugin_name": "caller", "depends_on": [], "entry_points": {}}),
+        encoding="utf-8",
+    )
+    (owner / "skills/run-owned").mkdir(parents=True)
+    (owner / "skills/run-owned/SKILL.md").write_text("# owned\n", encoding="utf-8")
+    (owner / "references").mkdir()
+    (owner / "references/package-contract.json").write_text(
+        json.dumps(
+            {
+                "plugin_name": "owner",
+                "depends_on": [],
+                "entry_points": {
+                    "skills": ["run-owned"], "agents": [], "commands": [], "hooks": []
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    findings, _, err = MOD.lint_composition(comp)
+
+    assert err is None
+    assert any("external dependency edge missing from package contract: owner" in f for f in findings)
+    assert any("external required entry point is unresolved: owner.run-missing" in f for f in findings)
+
+
+def test_repo_all_twenty_compositions_pass_as_one_fleet():
+    compositions = sorted((ROOT / "plugins").glob("*/plugin-composition.yaml"))
+    assert len(compositions) == 20
+
+    proc = run_cli(*(str(path) for path in compositions))
+
+    assert proc.returncode == 0, proc.stderr
+    assert "OK: 20 composition file(s) passed" in proc.stdout
+
+
 # --------------------------------------------------------------------------
 # main CLI (subprocess)
 # --------------------------------------------------------------------------
@@ -447,6 +567,21 @@ def test_main_no_args_usage_exit2():
     proc = run_cli()
     assert proc.returncode == 2
     assert "usage" in proc.stderr
+
+
+def test_main_aggregates_parse_errors_across_fleet(tmp_path):
+    first = tmp_path / "first" / "plugin-composition.yaml"
+    second = tmp_path / "second" / "plugin-composition.yaml"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_text("name: first\ncapabilities:\n", encoding="utf-8")
+    second.write_text("name: second\ncapabilities:\n", encoding="utf-8")
+
+    proc = run_cli(str(first), str(second))
+
+    assert proc.returncode == 2
+    assert str(first) in proc.stderr
+    assert str(second) in proc.stderr
 
 
 def test_main_self_test():

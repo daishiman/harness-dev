@@ -1,5 +1,10 @@
 # テーマ・スタイルガイドライン
 
+<!-- css-route: hand-slide -->
+<!-- この文書は手書き経路の :root の実体を兼ねるので、自身も手書き経路として
+     照合される (lint-contract-drift.py check G)。ここで未定義の変数を引いていれば、
+     それは成果物の styles.css でも解決できないということ -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは CSS 実装テンプレート・カスタマイズ例の参照集。規則の正本は SR-ID で参照すること
 
 **責務**: カラーパレット・CSS変数・共通スタイル・アニメーション速度の**実装リファレンス**（CSS コード集）。
@@ -28,13 +33,12 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 | **ナビゲーション余白** | `--nav-arrow-padding` | 左右矢印用のパディング | 3rem |
 | **ナビゲーション余白** | `--nav-top-padding` | 上部プログレスバー用 | 1rem |
 | **ナビゲーション余白** | `--nav-bottom-padding` | 下部ドット用 | 2rem |
-| **アクセントカラー** | `--wave-blue` | メインアクセント色 | #7E9CD8 |
-| **課題カラー** | `--sakura-pink` | Before/課題の色 | #D27E99 |
-| **解決カラー** | `--wave-aqua` | After/解決の色 | #7FB4CA |
+
+色はここでカスタマイズしない。面の色は 3 色しかなく、そのうち 1 つを差し替えると
+配色ではなく意匠が変わる。値は §4 の生成区間が持ち、変えるときは
+`vendor/scripts/style-builder.cjs` の `SPEC.colors` を変えて再生成する。
 
 ### カスタマイズ例
-
-<!-- palette-variant: 上書き例。正本の値ではなく「上書きするとこう書く」の見本 -->
 
 ```css
 /* プロジェクトごとの設定を上書き */
@@ -45,9 +49,6 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
   /* ナビゲーション余白をタイトに */
   --nav-arrow-padding: 2rem;
   --nav-bottom-padding: 1.5rem;
-
-  /* アクセントカラーを変更 */
-  --wave-blue: #5E9CD8;
 }
 ```
 
@@ -151,12 +152,14 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 
 ---
 
-## 2. Kanagawaカラーパレット
+## 2. カラーパレット
 
 > **配色の正本は `vendor/scripts/style-builder.cjs` の `SPEC.colors`**。
-> 成果物の `:root` はそこから生成されるので、この節の表は**正本の写し**であり、
-> ここを書き換えても出力の色は変わらない。値を変えるときは正本を変え、
-> `python3 scripts/lint-contract-drift.py` で写しの追従を確認する。
+> この文書は手書き経路の実装そのもの（LLM がここの `:root` を読んで成果物の
+> `styles.css` へ書き出す）なので、色の実値は §4 の生成区間だけが持ち、
+> そこは `python3 scripts/build-slide-skeleton-css.py` が正本から機械的に作る。
+> この節の表は名前と用途だけを持ち、値は持たない。
+> 値を変えるときは正本を変えて再生成し、`--check` で一致を確認する。
 
 ### 出荷されるパレットは 1 種類
 
@@ -166,27 +169,49 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 どれも「デフォルト」と名乗り、しかもどれも実際の出力と違う値だったため、
 読んだ側が誤った配色を正解として複製していた。ここでは実際に出る 1 種類だけを載せる。
 
-| 変数名 | カラーコード | 用途 |
-|--------|-------------|------|
-| `--bg-dark` | #fafafa | 背景（黄色みのないニュートラル白） |
-| `--fg` | #43436c | テキスト（メイン） |
-| `--fg-dim` | #727169 | テキスト（サブ） |
-| `--wave-blue` | #7E9CD8 | メインアクセント・リンク |
-| `--spring-violet` | #957FB8 | アクセント（紫） |
-| `--sakura-pink` | #D27E99 | 警告・課題・Before |
-| `--wave-aqua` | #7FB4CA | 成功・解決策・After |
-| `--autumn-yellow` | #DCA561 | 強調・数字 |
-| `--fuji-gray` | #727169 | 補助色・ホバー |
+| 変数名 | 用途 |
+|--------|------|
+| `--bg-dark` | 面の地 |
+| `--fg` | テキスト（メイン） |
+| `--fg-dim` | テキスト（サブ）・注記 |
+| `--bg-dim` | 沈めた地 |
+| `--bg-card` | カードの地 |
+| `--sumi-ink` | 面の地の最下段。**名前はパレットのスロット名であり、暗いという意味ではない**（実値は §4 の生成区間が持つ） |
 
-ビビッドアクセント 5 色（SR-2-04）は §4 の完全版に載せる。
+実値はこの表に書かない。書けば正本と写しの 2 か所になり、必ず片方が取り残される。
+値は §4 の生成区間だけが持ち、そこは `SPEC.colors` から機械的に作られる。
 
-### 定義されていない変数を使わない
+アクセントは専用の色変数ではなく反転面（地色と文字色の入れ替え）で作る（[SR-2-04](spec-registry.md#sr-2-04)）。
 
-`--bg-dim` / `--bg-card` / `--bg-highlight` / `--sumi-ink` / `--fg-muted` は
-**`:root` に存在しない**。`var(--fg-muted, #54546d)` のように書くと、
-フォールバックの `#54546d` が上書き不能な定数として常に効く。
-「既定値」のつもりで書いた値が「唯一の値」になる書き方なので、
-新しい面ではこれらを使わず、上の 9 変数とビビッド 5 変数の中から選ぶ。
+### 色相名の 4 変数は一時定義であり、新しい面では使わない
+
+`--sakura-pink` / `--wave-blue` / `--wave-aqua` / `--autumn-yellow` は
+§4 の生成区間が一時的に定義している。値は `vendor/scripts/svg-kit.cjs` が
+実際に出している fallback から生成していて、書き写していない。定義を入れる
+前は、参照の多くがフォールバック無しで、未定義参照は宣言ごと無効になるため
+その色指定は落ちていた。旧パレットの hex をフォールバックに持つ参照もあった。
+
+一時定義なので、新しい面では使わない。理由はこれらが**名前の数だけの区別を
+運んでいない**こと。紙の上で塗りとして見分けられるのは 3 値しかない。
+
+| 名前 | 出る値 | 塗りとして |
+|------|--------|-----------|
+| `--sakura-pink` | インク | 成立 |
+| `--wave-blue` | `--tone-3` | 成立 |
+| `--wave-aqua` | `--tone-2` | 成立 |
+| `--autumn-yellow` | `--tone-1` | 紙とコントラスト比 1.16・区別なし |
+
+`--autumn-yellow` の区別は既に失われた状態で出荷されている。色を足して直すの
+ではなく、区別を **(濃度 × 形) の系列**へ移す。1 名を 1 つの色値ではなく
+`(fill, stroke, dash)` の組へ写す形で、印刷と白黒複写でも区別が残る。
+
+当初この節は 6 名を扱っていた。`--spring-violet` は `--wave-blue` と、
+`--fuji-gray` は `--fg-dim` と**同じ値を指す別名**で、名前が 2 つあること自体が
+「区別がある」という誤った主張になっていたため、参照側を寄せたうえで名前ごと
+落とした。**同値の別名を消したのであって、区別を 1 つ減らしたのではない。**
+
+参照側が系列 API を呼ぶようになった時点でこの 4 名も消える。消し忘れは
+`tests/test_legacy_hue_aliases.py` が落として知らせる。
 
 ### 暗色が要るとき
 
@@ -199,32 +224,31 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 
 ### 意味に応じた色選択
 
-| 意味 | 推奨カラー | CSS変数 |
-|------|-----------|---------|
-| 重要・メイン | 青 | `--wave-blue` |
-| 課題・問題・Before | ピンク | `--sakura-pink` |
-| 解決・成功・After | 青緑 | `--wave-aqua` |
-| 強調・数字・警告 | 黄 | `--autumn-yellow` |
-| 補足・サブ | 紫 | `--spring-violet` |
-| 背景・カード | 暗灰 | `--bg-dim` |
+意味は色相ではなく濃度と反転で作る。使えるのは生成区間が定義している変数だけ。
+
+| 意味 | 手段 | CSS変数 |
+|------|------|---------|
+| 重要・メイン | 本文と同じインク＋太さ | `--fg` |
+| 最重要（面に 1 つ） | 反転面（地と字を入れ替える） | 地 `--fg` / 字 `--bg-dark` |
+| 補足・サブ | 濃度を落とす | `--fg-dim` |
+| 区切り・囲い | 罫 1 本 | `--hairline` |
+| 図版の段 | 淡→濃の 3 段 | `--tone-1` / `--tone-2` / `--tone-3` |
 
 ### 比較スライドの色
 
+Before / After は色相で塗り分けない。**位置（左右）とラベルが既に区別を担っている**ので、
+色を足すと同じ情報を二重に持つことになる。差を見せたい側だけを反転面にする。
+
 ```css
-/* Before側（左） */
+/* Before側（左）: 地は紙のまま、罫だけ */
 .compare-item.left {
-  border-top: 4px solid var(--sakura-pink);
-}
-.compare-item.left .value {
-  color: var(--sakura-pink);
+  border-top: 1px solid var(--hairline);
 }
 
-/* After側（右） */
+/* After側（右）: 面に 1 つだけの反転で「こちらへ動く」を示す */
 .compare-item.right {
-  border-top: 4px solid var(--wave-aqua);
-}
-.compare-item.right .value {
-  color: var(--wave-aqua);
+  background: var(--fg);
+  color: var(--bg-dark);
 }
 ```
 
@@ -234,52 +258,56 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 
 ### 全変数リスト
 
+色は下の生成区間が唯一の定義場所で、この節の残りは幾何と書体だけを持つ。
+
+<!-- BEGIN GENERATED: palette (scripts/build-slide-skeleton-css.py) -->
+```css
+/* 生成物。手で編集しない。編集しても再生成で消える。
+ * 値の正本: vendor/scripts/style-builder.cjs の SPEC.colors
+ * 再生成:   python3 scripts/build-slide-skeleton-css.py
+ * 検証:     python3 scripts/build-slide-skeleton-css.py --check
+ *
+ * 手書き経路はこのブロックを成果物の styles.css へそのまま貼る。
+ * 外部 CSS への link にはしない (出荷 deck の styles.css は index.html へ
+ * インライン展開された写しで、外部 CSS はブラウザに読まれていない)。
+ */
+:root {
+  /* ---- パレット (色数 3: 紙・インク・反転面) ---- */
+  --paper: #F7F6F3;  /* 紙 */
+  --ink: #141412;  /* インク */
+  --fg-muted: #6A6A68;  /* 注記 (インク 62%) */
+  --hairline: #D5D4D1;  /* 罫 (インク 15%) */
+  --tone-1: #E1E6EA;  /* 図版の淡い段 */
+  --tone-2: #9BADBF;  /* 図版の中間段 */
+  --tone-3: #4B6681;  /* 図版の濃い段 */
+
+  /* ---- 手書き経路の名前。値はパレットを指すだけで実体を持たない ---- */
+  --bg-dark: var(--paper);  /* 面の地 */
+  --fg: var(--ink);  /* 本文 */
+  --fg-dim: var(--fg-muted);  /* 注記・補助 */
+  --bg-dim: var(--paper);  /* 沈めた地。面の色数は 3 なので地は紙のまま */
+  --bg-card: var(--paper);  /* カードの地。囲いは罫だけで作るので地は紙のまま */
+  --sumi-ink: var(--paper);  /* 面の地の最下段。名前は本家パレットのスロット名で、暗いという意味ではない */
+
+  /* ---- 色相名 (一時定義)。値の出所は vendor/scripts/svg-kit.cjs の fallback ----
+   * 定義が無いせいで 265 箇所が宣言ごと無効になっていたので、今出ているのと
+   * 同じ値で名前だけを与える。見た目は 1 ドットも変わらない。
+   * 色相を戻したのではない。区別は色でなく (濃度 x 形) の系列へ移す設計で、
+   * 参照側が seriesStyle() を呼ぶようになった時点でこの節ごと消える。
+   * 消し忘れは tests/test_legacy_hue_aliases.py が落として知らせる。
+   */
+  --sakura-pink: var(--ink);  /* #141412 */
+  --wave-blue: var(--tone-3);  /* #4B6681 */
+  --wave-aqua: var(--tone-2);  /* #9BADBF */
+  --autumn-yellow: var(--tone-1);  /* #E1E6EA */
+}
+```
+<!-- END GENERATED: palette -->
+
+### 色以外の変数
+
 ```css
 :root {
-  /* ========================================
-     カラーパレット (SR-2-01..03)
-     正本 = vendor/scripts/style-builder.cjs の SPEC.colors。
-     ここは写しであって、書き換えても出力の色は変わらない。
-     ======================================== */
-  --bg-dark: #fafafa;
-  --fg: #43436c;
-  --fg-dim: #727169;
-  --wave-blue: #7E9CD8;
-  --spring-violet: #957FB8;
-  --sakura-pink: #D27E99;
-  --wave-aqua: #7FB4CA;
-  --autumn-yellow: #DCA561;
-  --fuji-gray: #727169;
-
-  /* ========================================
-     ビビッドアクセントカラー（彩度強化版・SR-2-04）
-     既存Lotus変数はそのまま維持
-     ======================================== */
-  --accent-blue-vivid: #3B7DD8;    /* 彩度 34%→60% */
-  --accent-pink-vivid: #D94B6E;    /* 彩度 32%→60% */
-  --accent-aqua-vivid: #2EA88F;    /* 彩度 16%→57% */
-  --accent-violet-vivid: #7B4FBA;  /* 彩度深化 */
-  --accent-yellow-vivid: #F5A623;  /* 高彩度維持 */
-
-  /* ========================================
-     シャドウシステム（4段階 + グロウ3種）
-     ======================================== */
-  --shadow-subtle:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-medium:    0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-prominent: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
-  --shadow-elevated:  0 16px 48px rgba(0,0,0,0.16), 0 8px 16px rgba(0,0,0,0.08);
-  --glow-blue:  0 0 20px rgba(59,125,216,0.3);
-  --glow-pink:  0 0 20px rgba(217,75,110,0.3);
-  --glow-aqua:  0 0 20px rgba(46,168,143,0.3);
-
-  /* ========================================
-     グラデーション
-     ======================================== */
-  --gradient-blue-pink:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-pink-vivid));
-  --gradient-blue-aqua:   linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-aqua-vivid));
-  --gradient-violet-pink: linear-gradient(135deg, var(--accent-violet-vivid), var(--accent-pink-vivid));
-  --gradient-subtle:      linear-gradient(135deg, var(--bg-dim, #f0f0f2), var(--bg-card, #e8e8ec));
-
   /* ========================================
      スペーシングスケール（8pxベース）
      ======================================== */
@@ -295,6 +323,8 @@ CSS変数を活用することで、カラー・フォント・余白を一箇�
 
   /* ========================================
      フォントウェイト
+     使うのは 3 段のみ（SR-3-10）。--fw-light / --fw-semibold は
+     CSS トークン実体の差し替えが済むまで残る過渡的定義
      ======================================== */
   --fw-light: 300;
   --fw-regular: 400;
@@ -425,7 +455,7 @@ body, html {
 .icon-wrapper.accent-pink i { color: var(--sakura-pink); }
 .icon-wrapper.accent-aqua i { color: var(--wave-aqua); }
 .icon-wrapper.accent-yellow i { color: var(--autumn-yellow); }
-.icon-wrapper.accent-violet i { color: var(--spring-violet); }
+.icon-wrapper.accent-violet i { color: var(--wave-blue); }
 ```
 
 ---
@@ -439,13 +469,13 @@ body, html {
   left: 0;
   width: 100%;
   height: 4px;
-  background: var(--sumi-ink, #e0e0e4);
+  background: var(--hairline);
   z-index: 100;
 }
 
 .progress {
   height: 100%;
-  background: linear-gradient(90deg, var(--wave-blue), var(--sakura-pink));
+  background: var(--fg);
   transition: width 0.5s ease;
 }
 ```
@@ -515,9 +545,10 @@ body, html {
   transform: scale(1.4);
 }
 
-/* 5個区切りマイルストーン: 5番目ごとにアクセント色で視覚的に区切る */
+/* 5個区切りマイルストーン: 5番目ごとに大きさと間隔で区切る。
+   色を足さずに形で区別するので、面の色数 3 を消費しない。 */
 .pagination .dot:nth-child(5n) {
-  background: var(--accent-aqua-vivid);
+  background: var(--fg);
   opacity: 0.5;
   width: 0.7rem;
   height: 0.7rem;
@@ -525,7 +556,7 @@ body, html {
 }
 
 .pagination .dot:nth-child(5n).active {
-  background: var(--accent-aqua-vivid);
+  background: var(--fg);
   opacity: 1;
   transform: scale(1.3);
 }
@@ -536,24 +567,17 @@ body, html {
 - ページネーションは「全体の中のどこか」を示す位置インジケーター
 - 5個区切りで数えやすく、25枚超のスライドでも現在位置が明確
 
-### 9.3 代替方式: セクション別色分け（オプション）
+### 9.3 代替方式: セクション別の区切り（オプション）
 
 セクションナビがない場合や、ドットでもセクション構造を示したい場合に使用。
+セクションごとに色を割り当てない。5 セクションには色相が 5 本要るが、
+区別の付く濃度段がそれだけ無いので、隣り合うセクションが同じ色に見える。
+区切りは間隔で示す。
 
 ```css
-/* セクション別ドット色: 非アクティブ = 30% opacity、アクティブ = フルカラー */
-.pagination .dot[data-section="opening"] { background: rgba(59, 125, 216, 0.3); }
-.pagination .dot[data-section="opening"].active { background: var(--accent-blue-vivid); }
-/* ... 各セクション分定義 */
+/* セクションの先頭ドットの前だけ間隔を空ける。色は増やさない */
+.pagination .dot[data-section-start="true"] { margin-left: 1.2rem; }
 ```
-
-| セクション | data-section | 非アクティブ色（30%） | アクティブ色 |
-|-----------|-------------|---------------------|------------|
-| オープニング | opening | rgba(59,125,216,0.3) | --accent-blue-vivid |
-| 講義 | lecture | rgba(46,168,143,0.3) | --accent-aqua-vivid |
-| デモ | demo | rgba(245,166,35,0.3) | --accent-yellow-vivid |
-| ワークショップ | ws | rgba(123,79,186,0.3) | --accent-violet-vivid |
-| まとめ | summary | rgba(217,75,110,0.3) | --accent-pink-vivid |
 
 ---
 
@@ -900,27 +924,20 @@ A4横向き印刷に最適化されたスタイル。ページ番号自動追加
 
 ---
 
-## 16. グラスモーフィズムユーティリティクラス
+## 16. 階層の作り方
+
+ぼかしも影も意匠手段として使わない（SR-2-09）。階層は 1px の下罫と反転面で作る。
 
 ```css
-/* 標準グラス */
-.glass-card {
-  background: rgba(250, 250, 250, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 16px;
-  box-shadow: var(--shadow-medium);
+/* 面の中の区切り: 囲わず、下罫 1 本だけ引く */
+.section-divider {
+  border-bottom: 1px solid var(--hairline);
 }
 
-/* 強調グラス */
-.glass-card-strong {
-  background: rgba(250, 250, 250, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 16px;
-  box-shadow: var(--shadow-prominent);
+/* 手前に出したい塊: 面に 1 つだけ反転させる */
+.section-emphasis {
+  background: var(--fg);
+  color: var(--bg-dark);
 }
 ```
 
@@ -932,14 +949,14 @@ A4横向き印刷に最適化されたスタイル。ページ番号自動追加
 
 ```css
 :focus-visible {
-  outline: 3px solid var(--accent-blue-vivid);
+  outline: 3px solid var(--fg);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 button:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--accent-blue-vivid);
+  outline: 3px solid var(--fg);
   outline-offset: 2px;
 }
 ```
@@ -992,8 +1009,8 @@ GSAPアニメーションでは**3種類以上のイージング**を使用す�
 
 ### デザイン品質（v5.1.0追加）
 
-- [ ] **ビビッドアクセント（--accent-*-vivid）が各スライドに1つ以上使用されているか**
-- [ ] **シャドウ変数（--shadow-*）が適切なレベルで使用されているか**
+- [ ] **各面の強調が反転面 1 個で作られ、色を足していないか（SR-2-04 / SR-2-05）**
+- [ ] **影・グロウを使わず罫で階層を作り、角丸が 0px か（SR-2-09）**
 - [ ] **イージングが3種類以上使われているか（power2.out, back.out, power1.inOut等）**
 - [ ] **prefers-reduced-motionが定義されているか**
 - [ ] **focus-visibleがボタン・リンクに適用されているか**

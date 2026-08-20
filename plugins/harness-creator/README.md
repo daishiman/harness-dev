@@ -1,6 +1,128 @@
 # harness-creator
 
-Claude Code の**ハーネス** — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と、その評価・統治機構 (rubric / verdict / lint / feedback loop) を束ねた**構築物の総体** — を構築・評価・統治するメタプラグイン。
+Codex / Claude Code の**ハーネス** — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と、その評価・統治機構 (rubric / verdict / lint / feedback loop) を束ねた**構築物の総体** — を構築・評価・統治するメタプラグイン。
+
+Codex package / marketplace / hook契約はOpenAI公式の
+[Package your plugin](https://developers.openai.com/plugins/build/plugins)、Claude Code側は
+[Plugins reference](https://code.claude.com/docs/en/plugins-reference)と
+[Hooks reference](https://code.claude.com/docs/en/hooks)を正本とし、2026-08-20時点の
+Codex / Claude Code CLIで実機確認している。
+
+## Claude Code / Codex への user-global install
+
+local cloneの全pluginを両製品へ入れる標準入口は`install-local-plugins.py`である。
+scriptの配置からrepo rootを導出し、cwd相対pathを使わないため、別repositoryや`/tmp`からも
+同じpluginを呼び出せる。
+
+```bash
+python3 /absolute/path/to/harness/plugins/harness-creator/scripts/install-local-plugins.py --all
+```
+
+| 差分 | Claude Code | Codex |
+|---|---|---|
+| marketplace root | `<repo>/marketplaces/local` | `<repo>` |
+| marketplace name | `harness-local` | `harness-dev` |
+| install範囲 | `--scope user` | user-global |
+| runtime artifact | cacheへの`copy` | local=`live-source` / Git=`git-snapshot` |
+| plugin hook root | `${CLAUDE_PLUGIN_ROOT}` | `${PLUGIN_ROOT}`（hookでは`${CLAUDE_PLUGIN_ROOT}`互換も提供） |
+
+helperは2つのmarketplaceに掲載されたplugin集合が一致すること、sourceが各marketplace root
+基準の`./plugins/<name>`でrepo内に閉じること、全pluginがenabledであることをfail-closedで
+検証する。receiptには実行CLIの絶対path/version、`source_path`、実在する絶対`runtime_path`、
+version、source/runtime digest、取得可能なGit commit、依存closure/SCCを記録する。さらに
+installed / enabled / trust / new-session / runtimeを別statusにし、同名pluginのscope・marketplace・
+runtime・hook digestを列挙する。`claude plugin list --json`の`errors`が非空、または同一hookの
+多重activationがある場合は自動disableせず`pending_user_gate`（非verified、exit 1）にする。
+対象は暗黙選択せず、全件は`--all`、1件は`--plugin <name>`を必ず明示する。read-only検証は
+`--check`、片方だけは`--platform claude|codex`を使う。
+
+### Codex単独のlocal / Git install
+
+Codex は repository root の `.agents/plugins/marketplace.json` と、各
+`plugins/<plugin-name>/.codex-plugin/plugin.json` を読む。marketplace 名は
+`harness-dev`。残る20 pluginすべてを `<plugin-name>@harness-dev`（例:
+`harness-creator@harness-dev`）としてinstallできる。
+
+#### ローカル clone から
+
+```bash
+HARNESS_REPO_ROOT="/absolute/path/to/harness"
+python3 "$HARNESS_REPO_ROOT/plugins/harness-creator/scripts/install-codex-plugin.py" \
+  --source "$HARNESS_REPO_ROOT" \
+  --plugin harness-creator
+```
+
+この明示コマンドがmarketplace登録、install、installed/enabled receipt確認まで行う。
+作業中の差分を確認するときはsource更新後にmanifest versionを更新し、同じコマンドを
+再実行して新規threadで読み直す。
+
+#### GitHub の merge 済み ref から
+
+```bash
+HARNESS_REPO_ROOT="/absolute/path/to/harness"
+python3 "$HARNESS_REPO_ROOT/plugins/harness-creator/scripts/install-codex-plugin.py" \
+  --source daishiman/harness-dev \
+  --ref main \
+  --plugin harness-creator
+```
+
+PR が `main` へmergeされた後も同じコマンドを再実行する。既登録のGit marketplaceは
+snapshotをupgradeしてからinstallする。
+
+Codex CLIに`codex plugin add`が無い場合は、`codex plugin marketplace add ...`で
+sourceだけ登録し、ChatGPT desktopのPlugins Directoryからinstallする。
+
+hookはinstallとは別のtrust gateを持つ。`/hooks`またはPlugins画面で現在のcommand /
+event / plugin rootを確認し、ユーザー自身がtrustした後に新規threadで確認する。
+
+### pathの書き分け
+
+marketplace JSON内の`source`は機械間で共有するため相対pathのまま保つ。ただしCLIへ
+marketplaceを登録する瞬間は、Claude Codeでは`<repo>/marketplaces/local`、Codexでは
+`<repo>`という異なるrootをそれぞれ絶対pathで渡す。plugin hookはsession cwdで走るため
+`python3 scripts/x.py`のようなcwd相対実行は禁止し、共通hook commandは
+`"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/x.py"`を使う。Codex用hook生成時は既存の
+`$CLAUDE_PLUGIN_ROOT`表記をこのdual-root形へ決定論的に正規化する。
+
+通常Skillのshell実行はhookと異なりroot環境変数の注入を前提にしない。ホストが提示した
+absolute `SKILL.md` pathからplugin manifestを持つ祖先を探索し、manifest nameを確認したrootを
+各shell invocationへ渡す。これによりinstall先とcwdの双方から独立する。
+
+### 生成した plugin も Codex 対応する
+
+`run-codex-plugin-package` は新規作成と既存改善を同じ冪等upsertで扱う。
+
+```bash
+HARNESS_REPO_ROOT="/absolute/path/to/harness"
+python3 "$HARNESS_REPO_ROOT/plugins/harness-creator/scripts/sync-plugin-platforms.py" \
+  --repo-root "$HARNESS_REPO_ROOT" \
+  --plugin "$HARNESS_REPO_ROOT/plugins/<plugin-name>" --apply
+python3 "$HARNESS_REPO_ROOT/plugins/harness-creator/scripts/sync-plugin-platforms.py" \
+  --repo-root "$HARNESS_REPO_ROOT" \
+  --plugin "$HARNESS_REPO_ROOT/plugins/<plugin-name>" --check
+```
+
+新規ならmanifest/entryを追加し、既存なら同じ位置で置換する。Codex固有のinterfaceや
+hook subsetは`.codex-plugin-overrides.json`へ宣言し、生成済みmanifestを入力へ戻さない。
+量産後は`--all --apply` でClaude manifestを持つ全pluginを調停し、
+`--all --check`がexit 0であることを出荷条件にする。削除済みpluginの
+repo-local marketplace entryはこの一括調停で自動削除される。
+
+全pluginの機能対称性は、単なるmanifest存在ではなく、Skill / Agent / Command / Hook / Script /
+Prompt / Workflow / MCP / Appを利用者到達可能性で監査する。実体、package contract、
+`plugin-composition.yaml`の公開面は双方向完全一致を必須とする。Claude Code固有surfaceには、
+単なる同名Skillではなく、責務・引数・作用・発見経路を保つCodex代替契約を必須化する。
+意図的省略には理由と代替経路を必須化する。この静的契約PASSはinstall / enable / trust /
+new-session runtimeの実証とは別の状態である。
+
+```bash
+HARNESS_REPO_ROOT="/absolute/path/to/harness"
+python3 "$HARNESS_REPO_ROOT/plugins/harness-creator/scripts/audit-capability-parity.py" \
+  --repo-root "$HARNESS_REPO_ROOT" --all --json
+```
+
+package依存は選択pluginだけでなく推移閉包を導入する。実在する`dev-graph`と
+`system-dev-planner`の相互依存は同一SCCとして共同導入し、receiptにも記録する。
 
 ## ハーネスとは / なぜ skill-creator から改名したか
 
@@ -29,13 +151,19 @@ plugin 名には aliases 機構が無いため、改名前から使っている�
 
 ## 入口の使い分け (何を作るかで入口が変わる)
 
-`harness-creator` は plugin 化済みだが `distributable:false` の clone 専用開発基盤であり、**Claude Code でこの repo 内から使うために public marketplace の `/plugin install harness-creator@skills` は実行しない**。C01 (`scripts/sync-native-surfaces.py`) が `plugin@marketplace` 完全 identity の activation scope から単一 desired-set を導出し、`make native-surfaces` が repo-owned projection を apply → check する。Codex では repo marketplace から install/enable/trust する別経路を使う。
+`harness-creator` は製品別の配布契約を持つ。**Claude Code では従来どおり
+`distributable:false` のためpublic marketplace `skills`へは載せない**が、clone内の
+local marketplace `harness-local`からuser scopeへinstallできる。**Codex では
+`.agents/plugins/marketplace.json` からローカルまたは GitHub 経由で単独 install できる。**
+C01 (`scripts/sync-native-surfaces.py`) は source checkout 内の repo-owned projection を
+apply → check するもので、Codex marketplace install とは責務を分ける。
 
-Native hook/settings の共通意味論は `native-surfaces.toml` が正本。Claude
-`.claude/settings.json` と Codex `.codex/hooks.json` / `.codex/config.toml`
-(`features.hooks=true`) を product-specific adapter が反映する。Codex は同一 layer で
-`hooks.json` と inline `[hooks]` を併用せず、plugin-delivered hook を project hook に
-重複配線しない。Beads など既存 project hook は保存する。ローカル出荷前は
+Native hook/settings の共通意味論は `native-surfaces.toml` が正本。plugin-delivered
+hook の実体は共通してplugin root `hooks/hooks.json`に置く。Claude Codeは標準pathを
+自動検出するためClaude manifestでは再宣言せず、Codex manifestだけが明示参照する。
+project の`.claude/settings.json` / `.codex/hooks.json`には重複配線しない。Codex は同一
+project layer で `hooks.json` と inline `[hooks]` も併用しない。Beads など既存の
+project-owned hook は保存する。ローカル出荷前は
 `make native-surfaces-pr-ready` で apply → check → schema検査 → diff表示まで行う
 (この target は PR を作成しない)。
 
@@ -114,14 +242,16 @@ Step4 だけ入口の命名が他と異なる: command ラッパを持たない 
 
 ## 構成
 
-- `skills/` — 30 skill 実体 + 共有 symlink 3 本 (contract-generator 系) (生成: run-* / 評価: assign-* / 参照知識: ref-* / 委譲: delegate-* / 安全ラッパ: wrap-*)
+- `skills/` — 32 skill 実体。Codex 単独 install で壊れる plugin 境界外 symlink は持たない (生成: run-* / 評価: assign-* / 参照知識: ref-* / 委譲: delegate-* / 安全ラッパ: wrap-*)
 - `agents/` — elegant-review 系 5 体 + run-build-skill-subagent
-- `commands/` — /capability-build, /capability-review, /skill-improve, /plugin-compose, /install-bundle
+- `commands/` — /capability-build, /capability-review, /skill-improve, /plugin-compose, /install-bundle, /marketplace-register
 - `scripts/` — feedback_contract_ssot.py (dogfooding 境界 SSOT・vendored byte 一致 lint 対象) ほか
-- `hooks/` — Codex/Claude 両 manifest から配線される repo-local hook。`auto-sync-on-session-start.py` は install/enable/trust 後の SessionStart で C01 を薄く呼ぶ。既存の capability 所有 hook は引き続き所有 skill の `scripts/` へ co-locate する。
+- `hooks/` — Claude Codeの標準path自動検出とCodex manifestの明示参照から配信されるrepo-local hook。`auto-sync-on-session-start.py` は install/enable/trust 後の SessionStart で C01 を薄く呼ぶ。既存の capability 所有 hook は引き続き所有 skill の `scripts/` へ co-locate する。
 - `plugin-composition.yaml` — CapabilityBundle 宣言 (リファレンス実装)
 
-単独配布非対応 (`distributable: false`, NEVER_DISTRIBUTE denylist 登録済み)。repo を clone した開発環境で、Claude Code は `.claude/` projection、Codex は repo marketplace + native plugin manifest 経由で利用する。
+Claude 公開 marketplace では非配布 (`distribution.distributable:false`)。Codex では
+本pluginを含む残存20 pluginが、ローカル clone / GitHub ref から repo marketplace +
+native plugin manifest 経由で個別に install できる。
 
 ## Claude Code / Codex native surface 運用
 

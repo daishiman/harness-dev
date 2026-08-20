@@ -150,9 +150,20 @@ def test_mapped_body_key_actually_renders(tmp_path):
 # --- (2) 回帰: 旧キーだけの slide-message は検証で落ちる -------------------------
 
 def _validate(path: Path) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["node", str(VALIDATE), str(path)], capture_output=True, text=True
+    # 終了コードは「落ちたか」を表さない。FAIL が 0 でも、判定する実行体が無い規則
+    # (未検査) が 1 つでもあれば exit 2 になる。ここが見たいのは本文キーの受理可否
+    # だけなので、合否は report の counts.failed で見る。exit code を代理に使うと、
+    # 陽性側は未検査が出た瞬間に全部赤くなり、陰性側 (!= 0) は未検査だけで通って
+    # しまい、どちらも判定力を失う。未検査の件数そのものは
+    # tests/test_validate_structure_unchecked.py が別に固定している。
+    report = path.with_name(path.name + ".report.json")
+    proc = subprocess.run(
+        ["node", str(VALIDATE), str(path), "--report", str(report)],
+        capture_output=True, text=True, check=False,
     )
+    assert report.exists(), "--report が出力されなかった\n" + proc.stdout + proc.stderr
+    proc.failed = json.loads(report.read_text(encoding="utf-8"))["counts"]["failed"]
+    return proc
 
 
 def test_slide_message_with_legacy_key_only_is_rejected(tmp_path):
@@ -163,7 +174,7 @@ def test_slide_message_with_legacy_key_only_is_rejected(tmp_path):
          "content": {"message": "旧キーだけの本文"}},
     ]))
     proc = _validate(src)
-    assert proc.returncode != 0
+    assert proc.failed > 0
     assert "content.main" in proc.stdout
     assert "V-044 / SR-16-01" in proc.stdout
 
@@ -176,7 +187,7 @@ def test_slide_message_with_template_key_is_accepted(tmp_path):
          "content": {"main": "正しいキーの本文"}},
     ]))
     proc = _validate(src)
-    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert proc.failed == 0, proc.stdout + proc.stderr
 
 
 # --- (3) 短縮名テンプレートは対で残す (削除でなく分離) ---------------------------
@@ -216,7 +227,7 @@ def test_body_key_only_slide_is_accepted(slide_type, tmp_path):
          "content": _body_only_content(slide_type, "Mxxz")},
     ]))
     proc = _validate(src)
-    assert proc.returncode == 0, (
+    assert proc.failed == 0, (
         f"{slide_type}: テンプレートが読む本文キーだけを持つ面が落ちた\n"
         + proc.stdout + proc.stderr
     )
@@ -236,7 +247,7 @@ def test_empty_body_slide_is_still_rejected(slide_type, empty, tmp_path):
         {"slideType": slide_type, "section": "main", "content": empty},
     ]))
     proc = _validate(src)
-    assert proc.returncode != 0, f"{slide_type}: 本文が空の面が受理された\n{proc.stdout}"
+    assert proc.failed > 0, f"{slide_type}: 本文が空の面が受理された\n{proc.stdout}"
 
 
 def test_generic_body_keys_are_derived_from_the_map():

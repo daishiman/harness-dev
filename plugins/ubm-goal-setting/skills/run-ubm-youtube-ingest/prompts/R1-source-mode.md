@@ -56,7 +56,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| registry-schema | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md` | source registry の形と初期化手順を確認するとき |
+| registry-schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md` | source registry の形と初期化手順を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし (引数解釈と registry 読取のみ。取得は R2)。

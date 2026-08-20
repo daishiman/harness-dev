@@ -2,33 +2,36 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-generate",
-    "skill_md_sha256": "574ecb45f6fa52dfb3151a5422597a60c4ee160835517fc80c08b3ea65a3c4a5"
+    "skill_md_sha256": "c1c38d96cc95152daffdde745af5d7a0b58229bf09b5951168cfefab46d85c0b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
   "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-14T01:02:45Z",
+  "reviewed_at": "2026-08-14T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1"],
     "positive_feedback": [
-      "slide 経路の品質補正が『必要に応じ』から起動条件の明示へ変わった。ui-quality-reviewer は無条件必須、layout-optimizer は validate-slide-layout.js の error か ui-quality-reviewer の崩れ検出がある場合に必須。理由も SKILL.md 本文に書かれている — 呼ばれない agent の完了チェックリストは発火しないので、縦方向の停止条件 (充填率・外側余白率・残余の置き場所) を持つのが両 agent だけである以上、起動が任意だと停止条件そのものが消える。『任意の呼び出しに乗せた停止条件は停止条件ではない』という一般則で、他 skill の agent 起動条件へ横展開できる。",
-      "D0-D21 → D0-D23 の表記更新が SKILL.md :146 と references/spec-registry.md §15-a の両方で揃っており、片方だけ増えて範囲が食い違う形になっていない。新設した D22/D23 が spec-registry の SR-15-20 へ紐付き、SR-ID → 検査コード → 実装の 3 点が閉じている。",
-      "references/layout-optimization-rules.md の説明を『横=文字数・カード/フォント・印刷 pt 換算 / 縦=内容高ブロック・残余の外側余白・高さ牽引・読み取り用画像・浮遊UI』へ広げたのは、上の layout-optimizer 必須化と対になっている。owner を変えずに責務の記述だけを実態へ合わせており、owner 表と実体のずれを作っていない。"
+      "C4 依存整合が向上: 検査範囲の記述が『V-001〜V-043』『D0-D23』という固定 ID 範囲から『V_DEFINITIONS 全件』『D 系全件』へ移った。ID 範囲を散文に写す設計では、検査器へ ID を 1 本足すたびに本文が黙って古くなる。参照先の集合名で言うことで、二重管理が構造的に消えた。",
+      "C4: validate-compare-ratio.mjs のコマンド行追加と information-design.md のパス訂正を実測確認。参照先はいずれも実在し、解決可能。",
+      "C3: 『Kanagawa 配色』→『配色トークン』の一般化が run-slide-report-modify と同じ語彙で行われ、姉妹 skill 間で用語が揃った。両ファイルとも Kanagawa 残存 0 件。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "inconsistency (medium, 本レビューで是正済): SKILL.md:103 の仕様確定ゲート説明が『(V-001〜V-043・spec-registry SR-ID 連動)』のまま取り残され、同一ファイル 134 行目の『V_DEFINITIONS 全件』と、同じゲートの範囲を 2 通りに述べていた。移行が片側にしか及んでいない状態。加えて vendor/scripts/validate-structure.js には V-044 が実在する (ユニーク ID 40 件、最大 V-044) ため、旧表記は移行漏れであると同時に事実として過少でもあった。103 行目を『V_DEFINITIONS 全件・spec-registry SR-ID 連動』へ揃えて解消。なお references/bp-classification.md:106 の『A合計: 32項目 (V-001〜V-030 + V-043 + V-044…)』は範囲の要約ではなく個別 ID の台帳であり V-044 を含むため、対象外として据え置いた。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
-  }
+  },
+  "notes": "現 SHA (c1c38d96...) の SKILL.md 233 行を read-only で逐一照合。差分は並行 session による記述の脱・固定 ID 化で、方向は妥当。ただし同一ファイル内に 1 件の移行漏れがあり、本レビュー内で是正 (sha は是正後の値)。D0-D23 の残存は repo 全体で 0 件を確認。verdict は PASS だが findings_summary.inconsistency=1 を偽らず記録する。"
 }

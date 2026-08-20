@@ -3,28 +3,29 @@
   "plugin_name": "ubm-goal-setting",
   "entry_points": {
     "skills": [
-      "run-ubm-goal-setting",
-      "run-ubm-knowledge-sync",
-      "run-ubm-youtube-ingest",
+      "run-skill-feedback",
       "run-ubm-consult",
-      "run-ubm-journal"
+      "run-ubm-goal-setting",
+      "run-ubm-journal",
+      "run-ubm-knowledge-sync",
+      "run-ubm-youtube-ingest"
     ],
     "agents": [
+      "goal-reviewer",
       "info-collector",
       "journal-composer",
-      "output-formatter",
-      "goal-reviewer",
-      "phase3-coordinator",
       "knowledge-extractor",
       "knowledge-relation-extractor",
+      "output-formatter",
+      "phase3-coordinator",
       "youtube-transcript-normalizer"
     ],
     "commands": [
-      "ubm-goal-setting",
-      "ubm-knowledge-sync",
-      "ubm-youtube-ingest",
       "ubm-consult",
-      "ubm-journal"
+      "ubm-goal-setting",
+      "ubm-journal",
+      "ubm-knowledge-sync",
+      "ubm-youtube-ingest"
     ],
     "hooks": [
       "ubm-write-path-guard.py"
@@ -44,6 +45,9 @@
     ],
     "vault_root_env": "UBM_VAULT_ROOT"
   },
+  "depends_on": [
+    "harness-creator"
+  ],
   "pkg_checks": {
     "PKG-001": {
       "status": "skip",
@@ -141,5 +145,335 @@
       "skip_reason": "distributable:false・個人利用で release rubric 違反ログ未蓄積",
       "findings_count": 0
     }
+  },
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "ubm-consult": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command ubm-consult through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-consult"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-consult"
+          ]
+        }
+      },
+      "ubm-goal-setting": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command ubm-goal-setting through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        }
+      },
+      "ubm-journal": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command ubm-journal through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-journal"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-journal"
+          ]
+        }
+      },
+      "ubm-knowledge-sync": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command ubm-knowledge-sync through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        }
+      },
+      "ubm-youtube-ingest": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command ubm-youtube-ingest through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-youtube-ingest"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-youtube-ingest"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "goal-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent goal-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        }
+      },
+      "info-collector": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent info-collector through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-consult"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-consult"
+          ]
+        }
+      },
+      "journal-composer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent journal-composer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-journal"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-journal"
+          ]
+        }
+      },
+      "knowledge-extractor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent knowledge-extractor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        }
+      },
+      "knowledge-relation-extractor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent knowledge-relation-extractor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-knowledge-sync"
+          ]
+        }
+      },
+      "output-formatter": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent output-formatter through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        }
+      },
+      "phase3-coordinator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent phase3-coordinator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-goal-setting"
+          ]
+        }
+      },
+      "youtube-transcript-normalizer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent youtube-transcript-normalizer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-ubm-youtube-ingest"
+          ]
+        },
+        "owner_route": {
+          "plugin": "ubm-goal-setting",
+          "entry_points": [
+            "run-ubm-youtube-ingest"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
   }
 }

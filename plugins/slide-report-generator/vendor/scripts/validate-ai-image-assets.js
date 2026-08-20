@@ -21,10 +21,10 @@
  *       Background / Layout / generation を prompt と meta の両方で検査する。
  *       画像生成プロンプトを artifact spec として扱い、目的・背景・構図が空の生成を防ぐ。
  *   v4 (elegant-review 第2弾・D10):
- *     - 支配色(60-30-10の主役色)の prompt 反映を契約化。meta.dominantAccentHex があるスライドは、
- *       対応 prompt 本文に「Dominant accent for this slide ... <hex>」行が無ければ intentIssue。
+ *     - accent の prompt 反映を契約化。meta.dominantAccentHex があるスライドは、
+ *       対応 prompt 本文に「Accent on this slide ... <hex>」行が無ければ intentIssue。
  *       従来の accent HEX 照合(--check-genome-content)は palette 全色羅列に偶発一致すれば PASS したため、
- *       支配色を意味照合に格上げする(--strict-intent / --full-image-deck で error)。
+ *       accent を意味照合に格上げする(--strict-intent / --full-image-deck で error)。
  *   v5 (baked-table・D12):
  *     - tableMode=illustrated-full-table の検査を追加。textPolicy=baked-with-overlay 固定、
  *       meta.tableContent 必須、各セルが prompt 本文へ verbatim 展開されているかを意味照合(--strict-intent /
@@ -46,6 +46,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { basename, dirname, extname, join, normalize } from 'path';
 import { fileURLToPath } from 'url';
+import { resolveDeckAssetsFromDir } from './deck-assets-resolver.js';
 
 const skillDir = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -450,24 +451,16 @@ function runGenomeContentChecks() {
 function readCss(slideRoot) {
   // index.html が link する styles.css(相対)を取り込み、@media print 内外を結合した
   // 全CSS文字列を返す。複数 stylesheet を許容。
-  const indexPath = join(slideRoot, 'index.html');
-  if (!existsSync(indexPath)) return { html: '', css: '' };
-  const html = readFileSync(indexPath, 'utf8');
-  let css = '';
-  const linkRe = /<link\s+[^>]*rel\s*=\s*["']stylesheet["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/gi;
-  let lm;
-  while ((lm = linkRe.exec(html)) !== null) {
-    const href = lm[1];
-    if (/^https?:/i.test(href) || /^\/\//.test(href)) continue;
-    try {
-      css += '\n' + readFileSync(join(slideRoot, href), 'utf8');
-    } catch { /* missing stylesheet ignored */ }
+  // link 解決と inline 収集の実体は deck-assets-resolver.js が SSOT（別実装を持たない）。
+  const assets = resolveDeckAssetsFromDir(slideRoot);
+  if (!assets.exists) return { html: '', css: '' };
+  // 解決できないローカル stylesheet は fail-closed。
+  // 握り潰すと CSS 不在のまま object-fit 検査が素通りし偽緑になる。
+  for (const u of assets.css.unresolved) {
+    errors.push(`D5: unresolved local stylesheet "${u.href}" referenced by index.html (${u.reason}). CSS層(object-fit/print)を検証できない`);
   }
-  // <style> インライン分も結合
-  const styleRe = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-  let sm;
-  while ((sm = styleRe.exec(html)) !== null) css += '\n' + sm[1];
-  return { html, css };
+  // link 解決分 + <style> インライン分を結合したものが実際に適用される CSS
+  return { html: assets.html, css: `${assets.css.linked}\n${assets.css.inline}` };
 }
 
 function extractPrintCss(css) {
@@ -759,9 +752,10 @@ function runReproducibilityChecks() {
       if (sr.inheritMode && !allowedInherit.has(sr.inheritMode)) intentIssue(metaFile + ': styleReference.inheritMode "' + sr.inheritMode + '" invalid (expected style-only|style-and-layout|full)');
       if (Array.isArray(sr.refSlugs) && sr.refSlugs.length > 15) intentIssue(metaFile + ': styleReference.refSlugs has ' + sr.refSlugs.length + ' (max 15)');
     }
-    // D10: 支配色(60-30-10の主役色)の prompt 反映を契約化する。builder が meta.dominantAccentHex を
-    // 出したスライドは、対応 prompt 本文に「Dominant accent for this slide ... <hex>」行が無ければ
-    // 再現性が崩れる(palette 全色羅列への偶発一致ではなく意味照合)。multi/未知色は hex 無しで対象外。
+    // D10: accent の prompt 反映を契約化する。builder が meta.dominantAccentHex を出した
+    // スライドは、対応 prompt 本文に「Accent on this slide ... <hex>」行が無ければ再現性が
+    // 崩れる(palette 全色羅列への偶発一致ではなく意味照合)。multi/未知色は hex 無しで対象外。
+    // accent は色相ではなく地とインクの反転 1 個で、hex はその反転面のインク色を指す。
     if (requireIntentContract && typeof meta.dominantAccentHex === 'string' && meta.dominantAccentHex.trim()) {
       const stem = basename(metaFile, '.meta.json');
       const promptPath = join(generatedDir, stem + '.prompt.md');
@@ -769,8 +763,8 @@ function runReproducibilityChecks() {
         let promptBody = '';
         try { promptBody = readFileSync(promptPath, 'utf8'); } catch (e) { promptBody = ''; }
         const hex = meta.dominantAccentHex.trim().toLowerCase();
-        if (!/dominant accent for this slide/i.test(promptBody) || !promptBody.toLowerCase().includes(hex)) {
-          intentIssue(metaFile + ': meta.dominantAccentHex ' + meta.dominantAccentHex + ' is not declared as a "Dominant accent for this slide" line in the prompt body (the 60-30-10 lead color must be explicit for reproducibility)');
+        if (!/accent on this slide/i.test(promptBody) || !promptBody.toLowerCase().includes(hex)) {
+          intentIssue(metaFile + ': meta.dominantAccentHex ' + meta.dominantAccentHex + ' is not declared as an "Accent on this slide" line in the prompt body (the ink of the inverted block must be explicit for reproducibility)');
         }
       }
     }

@@ -3,14 +3,14 @@
 # 用途: harness-creator 自身の dogfooding 兼、CapabilityBundle のリファレンス実装。
 
 name: harness-creator
-description: Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
+description: Codex / Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.3.0+codex.20260713-1
+version: 1.4.0
 owner: team-platform
 since: 2026-05-17
 last-audited: 2026-07-13
-# 単独配布非対応: marketplace / bundle には含めず、repo を clone した開発環境でのみ .claude/ symlink 経由で利用する。
-distribution: repo-bundled
+# Claude 公開 bundle は従来どおり非対象。Codex は root .agents marketplace から単独 install できる。
+distribution: codex-marketplace
 
 contract:
   intent: Claude Code 拡張資産(Capability)を一貫した品質で生成・改良するため、共通核 + kind 固有スキーマで統一抽象を提供する。
@@ -23,93 +23,87 @@ contract:
     - "rubric_refs は L0→L1→L2 deep-merge 順を保つこと (enforcement: manual。skill-governance-lint/scripts/lint-rubric-refs-exist.py は存在のみ検証し順序は未検証。manual 維持の理由: rubric.json 側に layer 宣言フィールドが無く順序の機械突合はスキーマ拡張コスト過大、意図的残置)"
     - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order。run dir の Phase1-3 成果物の存在+mtime 順序を機械検査)"
     - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual。manual 維持の理由: script ヘッダ規約 write-scope は存在するが宣言との自動突合は費用対効果で見送り、意図的残置)"
-    - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。harness-creator / prompt-creator は marketplace / bundle 配布対象ではない (allowed_cross_plugins: skill-intake, skill-governance-lint, skill-governance-automation, skill-governance-config, skill-governance-migration, prompt-creator) (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
+    - "Codex marketplace 単独 install で壊れる plugin 境界外 symlink を禁止する。外部 plugin は任意の開発時依存として明示し、harness-creator の配布必須資産にしない (enforcement: standalone package test + skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
     - "knowledge-loop は単一機構(ref-knowledge-loop 正本)を生成物(Loop A)と harness-creator 自身(Loop B)で自己適用し、並行ストアを作らないこと(SSOT) (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py)"
     - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(必須共有モジュールは plugin 内へ vendoring し byte 一致 lint で正本と同期/ローダは fail-soft で raise しない)。単独 install でも全フックが exit 0 を維持する。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層1 (enforcement: scripts/lint-runtime-portability.py + scripts/lint-vendored-ssot.py)"
-    - "配布 plugin (kind=plugin) を生成し外部依存(API/DB/秘密)の疎通確認手順が要るなら、install 位置を __file__ 相対で自己解決する doctor スクリプトを同梱し README の疎通確認はチャット委譲(/<name>-doctor or 自然文)を一次導線とすること。README bash/sh フェンスに一次手順の裸 $CLAUDE_PLUGIN_ROOT/... / repo 相対 python3 plugins/<name>/... / os.environ 添字を書かず、生パスは開発者補足へ降格し fallback 形 ${CLAUDE_PLUGIN_ROOT:-plugins/<name>} で書く(導入者の生ターミナル空展開事故を防ぐ)。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層2 (enforcement: scripts/lint-readme-plugin-root-portability.py)"
+    - "配布 plugin (kind=plugin) を生成し外部依存(API/DB/秘密)の疎通確認手順が要るなら、install 位置を __file__ 相対で自己解決する doctor スクリプトを同梱し README の疎通確認はチャット委譲(/<name>-doctor or 自然文)を一次導線とすること。README bash/sh フェンスに一次手順の裸root変数 / repo 相対 python3 plugins/<name>/... / os.environ 添字を書かず、生パスは開発者補足へ降格し fallback 形 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}} で書く(導入者の生ターミナル空展開事故を防ぐ)。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層2 (enforcement: scripts/lint-readme-plugin-root-portability.py)"
     - "全宣言面(lint 集合/完了条件/ゲート/評価 sink)は機械可読正本と対向突合 lint を持つこと。新しい宣言面を追加する際は突合 lint を同時に配線し、突合を持たない manual 宣言は理由注記付きの意図的残置のみ許容する。manual 宣言の残存数は ratchet 監視され増加は CI FAIL (enforcement: skill-governance-lint/scripts/lint-declaration-coverage.py)"
-    - "run-skill-live-trial / run-skill-iter-improve (実行 acceptance 系) はローカル開発環境限定であり、量産先 plugin へ配備せず (feedback-deploy の配備対象は run-skill-feedback のみ) リモート CI でも実走しない (D14)。plugin 全体の非配布は distributable:false + NEVER_DISTRIBUTE denylist の二重閉路が保証する (enforcement: scripts/validate-plugin-completeness.py NEVER_DISTRIBUTE + run-build-skill workflow-manifest feedback-deploy 配備対象限定)"
+    - "run-skill-live-trial / run-skill-iter-improve (実行 acceptance 系) は量産先 plugin へ配備せず (feedback-deploy の配備対象は run-skill-feedback のみ) リモート CI でも実走しない (D14)。harness-creator 自身の Codex 配布可否と、量産先に含める capability の範囲は分離する (enforcement: run-build-skill workflow-manifest feedback-deploy 配備対象限定 + Codex standalone package test)"
     - "behavioral claim (自走/入れ子 Skill/対話 gate/goal 適合) の受け入れ証拠は live-trial verdict (schema 適合 + skill_dir_tree_sha 一致 + overall.verdict=PASS + tier=live 非降格) + transcript のみとし、静的レビュー成果物を Gate D の収束根拠に混ぜないこと (enforcement: scripts/lint-live-trial-verdict.py — D13 パイロットゲート中は record-only WARN、P3 常設化 go/no-go で --enforce 昇格)"
-    - "native surface projection の desired-set owner は scripts/sync-native-surfaces.py (C01) だけとし、ローカル修復は C01 apply→C01 check、CI は C01 check-only とする。user global config / trust store / beads-owned state は書かず、install/enable/trust/re-trust/uninstall は pending_user_gate とする (enforcement: tests/test_native_surface_repo_integration.py)"
-    - "native-surfaces.toml は共通 hook delivery と Codex discovery entry の意味論SSOT、plugin manifests/root marketplace は capability/activation identity の正本とし、C01 が結合して `.claude/settings.json`・`.codex/hooks.json`・`.codex/config.toml`・`.agents/plugins/marketplace.json`へ product-specific adapter で投影する。plugin/project delivery owner を1つに限定し、非公式 `.agents/settings.json`・`.agents/{agents,commands,hooks}`・hooks.json+inline [hooks] 重複を禁止する (enforcement: scripts/check-native-surface-parity.py + tests/test_sync_codex_project_settings.py)"
+    - "project native surface projection の owner は scripts/sync-native-surfaces.py (C01)、plugin manifest/repo marketplace projection の owner は scripts/sync-plugin-platforms.py とする。Claude/Codex共通local user installは scripts/install-local-plugins.py、Codex local/Git単独installは scripts/install-codex-plugin.py へ明示分離し、hook trustは pending_user_gate のまま保持する (enforcement: tests/test_native_surface_repo_integration.py + tests/test_sync_plugin_platforms.py + tests/test_install_local_plugins.py + tests/test_install_codex_plugin.py)"
+    - "native-surfaces.toml は共通 hook delivery と Codex discovery の期待意味論、`.claude-plugin/plugin.json` + `.codex-plugin-overrides.json` はCodex package入力、`.codex-plugin/plugin.json` + root marketplaceはsync-plugin-platforms.pyの生成物とする。生成物を次回desired入力へ戻さず、非公式 `.agents/settings.json`・`.agents/{agents,commands,hooks}`・plugin/project hook重複を禁止する (enforcement: scripts/check-native-surface-parity.py + scripts/sync-plugin-platforms.py --all --check)"
 
 capabilities:
-  # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-skill-create,            tier: core }
-  - { kind: skill, ref: skills/run-skill-elicit,            tier: core }
-  - { kind: skill, ref: skills/run-goal-elicit,             tier: core }
-  - { kind: skill, ref: skills/run-goal-seek,               tier: core }
-  - { kind: skill, ref: skills/run-build-skill,             tier: core }
-  - { kind: skill, ref: skills/run-elegant-review,          tier: core }
-  - { kind: skill, ref: skills/run-plugin-package-check,    tier: core }
-  - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
-  - { kind: skill, ref: skills/run-skill-feedback,          tier: core }
-  - { kind: skill, ref: skills/run-skill-rename,            tier: extension }
-  - { kind: skill, ref: skills/run-skill-update-notifier,   tier: extension }
-  - { kind: skill, ref: skills/run-migrate-audit,           tier: extension }
-  # 実行 acceptance 系 (Gate D / anti-goodhart)。交換可能な葉 (D12)、ローカル開発環境限定 (D14)
-  - { kind: skill, ref: skills/run-skill-live-trial,        tier: extension }
-  - { kind: skill, ref: skills/run-skill-iter-improve,      tier: extension }
-  # contract-generator 由来の symlink skill は marketplace 単独 install で dangling するため
-  # harness-creator の公開 capabilities には含めない。必要な場合は contract-generator plugin を
-  # 別 dependency として install する。
-  - { kind: skill, ref: skills/assign-skill-design-evaluator, tier: core }
   - { kind: skill, ref: skills/assign-plugin-package-evaluator, tier: core }
-  - { kind: skill, ref: skills/delegate-codex-skill-review, tier: extension }
-  - { kind: skill, ref: skills/wrap-git-commit-safe,        tier: extension }
-  - { kind: skill, ref: skills/ref-pkg-contract,            tier: ref }
-  - { kind: skill, ref: skills/ref-skill-design-rubric,     tier: ref }
-  - { kind: skill, ref: skills/ref-domain-rubric-template,  tier: ref }
-  - { kind: skill, ref: skills/ref-domain-task-spec-rubric, tier: ref }
-  - { kind: skill, ref: skills/ref-skill-glossary,          tier: ref }
-  - { kind: skill, ref: skills/ref-skill-naming-convention, tier: ref }
-  - { kind: skill, ref: skills/ref-claude-code-skill-spec,  tier: ref }
-  - { kind: skill, ref: skills/ref-cross-platform-runtime,  tier: ref }
-  - { kind: skill, ref: skills/ref-output-routing,          tier: ref }
-  - { kind: skill, ref: skills/ref-task-context-map,        tier: ref }
-  - { kind: skill, ref: skills/ref-yaml-spec-fetcher,       tier: ref }
-  - { kind: skill, ref: skills/ref-knowledge-loop,          tier: ref }
+  - { kind: skill, ref: skills/assign-skill-design-evaluator, tier: core }
+  - { kind: skill, ref: skills/delegate-codex-skill-review, tier: core }
+  - { kind: skill, ref: skills/ref-claude-code-skill-spec, tier: core }
+  - { kind: skill, ref: skills/ref-cross-platform-runtime, tier: core }
+  - { kind: skill, ref: skills/ref-domain-rubric-template, tier: core }
+  - { kind: skill, ref: skills/ref-domain-task-spec-rubric, tier: core }
+  - { kind: skill, ref: skills/ref-knowledge-loop, tier: core }
+  - { kind: skill, ref: skills/ref-output-routing, tier: core }
+  - { kind: skill, ref: skills/ref-pkg-contract, tier: core }
+  - { kind: skill, ref: skills/ref-skill-design-rubric, tier: core }
+  - { kind: skill, ref: skills/ref-skill-glossary, tier: core }
+  - { kind: skill, ref: skills/ref-skill-naming-convention, tier: core }
+  - { kind: skill, ref: skills/ref-task-context-map, tier: core }
+  - { kind: skill, ref: skills/ref-yaml-spec-fetcher, tier: core }
+  - { kind: skill, ref: skills/run-build-skill, tier: core }
+  - { kind: skill, ref: skills/run-codex-plugin-install, tier: core }
+  - { kind: skill, ref: skills/run-codex-plugin-package, tier: core }
+  - { kind: skill, ref: skills/run-elegant-review, tier: core }
+  - { kind: skill, ref: skills/run-goal-elicit, tier: core }
+  - { kind: skill, ref: skills/run-goal-seek, tier: core }
+  - { kind: skill, ref: skills/run-migrate-audit, tier: core }
+  - { kind: skill, ref: skills/run-plugin-package-check, tier: core }
+  - { kind: skill, ref: skills/run-skill-create, tier: core }
+  - { kind: skill, ref: skills/run-skill-elicit, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-skill-iter-improve, tier: core }
+  - { kind: skill, ref: skills/run-skill-live-trial, tier: core }
+  - { kind: skill, ref: skills/run-skill-rename, tier: core }
+  - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
+  - { kind: skill, ref: skills/run-skill-update-notifier, tier: core }
+  - { kind: skill, ref: skills/wrap-git-commit-safe, tier: core }
+  - { kind: agent, ref: agents/elegant-improvement-executor, tier: core }
+  - { kind: agent, ref: agents/elegant-logical-structural-analyst, tier: core }
+  - { kind: agent, ref: agents/elegant-meta-divergent-analyst, tier: core }
+  - { kind: agent, ref: agents/elegant-reset-observer, tier: core }
+  - { kind: agent, ref: agents/elegant-system-strategic-analyst, tier: core }
+  - { kind: agent, ref: agents/run-build-skill-subagent, tier: core }
+  - { kind: command, ref: commands/capability-build, tier: core }
+  - { kind: command, ref: commands/capability-review, tier: core }
+  - { kind: command, ref: commands/install-bundle, tier: core }
+  - { kind: command, ref: commands/marketplace-register, tier: core }
+  - { kind: command, ref: commands/plugin-compose, tier: core }
+  - { kind: command, ref: commands/skill-improve, tier: core }
+  - { kind: hook, ref: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", tier: core }
+
+  # === Skills (kind=skill) ===
+  # 実行 acceptance 系 (Gate D / anti-goodhart)。交換可能な葉 (D12)、ローカル開発環境限定 (D14)
+  # contract-generator 由来の cross-plugin symlink skill は Codex 単独 install に含めない。
 
   # === Agents (kind=agent) ===
-  - { kind: agent, ref: agents/run-build-skill-subagent,          tier: core }
-  - { kind: agent, ref: agents/elegant-reset-observer,            tier: core }
-  - { kind: agent, ref: agents/elegant-logical-structural-analyst, tier: core }
-  - { kind: agent, ref: agents/elegant-meta-divergent-analyst,    tier: core }
-  - { kind: agent, ref: agents/elegant-system-strategic-analyst,  tier: core }
-  - { kind: agent, ref: agents/elegant-improvement-executor,      tier: core }
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/install-bundle,    tier: extension }
-  - { kind: command, ref: commands/capability-build,  tier: core }
-  - { kind: command, ref: commands/capability-review, tier: core }
-  - { kind: command, ref: commands/plugin-compose,    tier: core }
-  - { kind: command, ref: commands/skill-improve,     tier: core }
 
   # === Native surface orchestration (kind=script) ===
   - { kind: script, ref: scripts/check-native-surface-parity.py, tier: core }
   - { kind: script, ref: scripts/sync-codex-project-settings.py, tier: core }
+  - { kind: script, ref: scripts/sync-plugin-platforms.py, tier: core }
+  - { kind: script, ref: scripts/install-codex-plugin.py, tier: core }
   - { kind: script, ref: scripts/sync-native-surfaces.py,        tier: core }
   - { kind: script, ref: scripts/record-task-graph-knowledge.py, tier: core }
 
   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
-  - { kind: hook, ref: "hook:SessionStart/auto-sync-on-session-start", tier: core }
-  - { kind: hook, ref: "hook:UserPromptSubmit/cache-refresh",         tier: extension }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/auto-record-lesson",   tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/content-review-queue", tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-EditWrite/lint-capability-manifest", tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-EditWrite/content-review-queue", tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-Edit-rubric/diff-rubric-impact", tier: core }
-  - { kind: hook, ref: "hook:PreToolUse-Bash/wrap-git-commit-safe",   tier: extension }
-  - { kind: hook, ref: "hook:Stop/elegant-review-trigger",            tier: extension }
-  - { kind: hook, ref: "hook:UserPromptSubmit/ref-task-context-map-preload", tier: extension }
-  - { kind: hook, ref: "hook:SessionEnd/aggregate-evals",             tier: core }
 
 dependencies:
   # 主要 DAG。lint で循環検出。
   - { from: skills/run-skill-create,        to: skills/run-skill-elicit,            type: calls }
   - { from: skills/run-goal-seek,           to: skills/run-goal-elicit,             type: calls }
   - { from: skills/run-skill-create,        to: skills/run-build-skill,             type: calls }
+  - { from: skills/run-skill-create,        to: skills/run-codex-plugin-package,    type: calls }
   - { from: skills/run-skill-create,        to: skills/run-elegant-review,          type: calls }
   - { from: skills/run-build-skill,         to: agents/run-build-skill-subagent,    type: calls }
   - { from: skills/run-build-skill,         to: skills/ref-skill-design-rubric,     type: reads }
@@ -146,8 +140,10 @@ dependencies:
   - { from: skills/run-skill-iter-improve,  to: skills/run-build-skill,             type: reads }
   - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
   - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
-  - { from: "hook:SessionStart/auto-sync-on-session-start",        to: scripts/sync-native-surfaces.py, type: calls }
+  - { from: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", to: scripts/sync-native-surfaces.py, type: calls }
   - { from: scripts/sync-native-surfaces.py, to: scripts/sync-codex-project-settings.py, type: calls }
+  - { from: skills/run-codex-plugin-package, to: scripts/sync-plugin-platforms.py, type: calls }
+  - { from: skills/run-codex-plugin-install, to: scripts/install-codex-plugin.py, type: calls }
   - { from: scripts/sync-native-surfaces.py, to: scripts/check-native-surface-parity.py, type: calls }
 
 eval_sinks:

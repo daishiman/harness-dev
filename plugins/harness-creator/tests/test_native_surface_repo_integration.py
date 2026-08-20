@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -19,6 +21,42 @@ def _json(path: Path) -> dict:
 def _session_start_handler(doc: dict) -> tuple[dict, dict]:
     group = doc["hooks"]["SessionStart"][0]
     return group, group["hooks"][0]
+
+
+def _hook_commands(settings: dict) -> list[str]:
+    return [
+        hook["command"]
+        for groups in settings.get("hooks", {}).values()
+        for group in groups
+        for hook in group.get("hooks", [])
+        if isinstance(hook, dict) and isinstance(hook.get("command"), str)
+    ]
+
+
+def test_all_twenty_plugins_have_one_product_native_hook_delivery_surface():
+    plugins = sorted(
+        path for path in (ROOT / "plugins").iterdir()
+        if (path / ".claude-plugin" / "plugin.json").is_file()
+    )
+    assert len(plugins) == 20
+    for plugin in plugins:
+        claude = _json(plugin / ".claude-plugin" / "plugin.json")
+        codex = _json(plugin / ".codex-plugin" / "plugin.json")
+        shared_hooks = plugin / "hooks" / "hooks.json"
+        if not shared_hooks.is_file():
+            assert "hooks" not in claude, plugin.name
+            assert "hooks" not in codex, plugin.name
+            continue
+
+        # Claude auto-loads the standard hooks/hooks.json path.  Repeating the
+        # pointer in its manifest risks double activation; Codex needs it.
+        assert "hooks" not in claude, plugin.name
+        if plugin.name == "dev-graph":
+            assert codex.get("hooks") == "./codex/hooks.json"
+            assert "TaskCompleted" in _json(shared_hooks)["hooks"]
+            assert "TaskCompleted" not in _json(plugin / "codex" / "hooks.json")["hooks"]
+        else:
+            assert codex.get("hooks") == "./hooks/hooks.json", plugin.name
 
 
 def test_codex_manifest_uses_plugin_root_hooks_contract():
@@ -41,18 +79,29 @@ def test_dual_manifest_identity_version_and_session_start_match():
     # 衝突していた。ここで守るべきは「両 manifest が同一の semver core を名乗る」こと。
     assert re.fullmatch(r"\d+\.\d+\.\d+(?:[-+].+)?", codex["version"]), codex["version"]
 
-    codex_group, codex_hook = _session_start_handler(_json(PLUGIN / "hooks" / "hooks.json"))
-    claude_group, claude_hook = _session_start_handler({"hooks": claude["hooks"]})
+    shared_hooks = _json(PLUGIN / "hooks" / "hooks.json")
+    codex_group, codex_hook = _session_start_handler(shared_hooks)
+    assert "hooks" not in claude
+    assert codex["hooks"] == "./hooks/hooks.json"
+    claude_group, claude_hook = _session_start_handler(shared_hooks)
     assert codex_group["matcher"] == claude_group["matcher"] == "startup|resume|clear"
     assert codex_hook["type"] == claude_hook["type"] == "command"
+    assert (
+        "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py"
+        in codex_hook["command"]
+    )
+    assert (
+        "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py"
+        in claude_hook["command"]
+    )
     for handler in (codex_hook, claude_hook):
-        assert "$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py" in handler["command"]
         assert handler["timeout"] > 45
         assert "dangerously-bypass-hook-trust" not in handler["command"]
 
 
 def test_repo_marketplace_uses_official_local_plugin_root_source():
     marketplace = _json(ROOT / ".agents" / "plugins" / "marketplace.json")
+    assert marketplace["name"] == "harness-dev"
     entry = next(p for p in marketplace["plugins"] if p["name"] == "harness-creator")
     assert entry["source"] == {
         "source": "local",
@@ -62,17 +111,71 @@ def test_repo_marketplace_uses_official_local_plugin_root_source():
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL",
     }
-    assert entry["x_harness"]["distributable"] is False
-    assert entry["x_harness"]["activation_requires"] == [
-        "user-install", "user-enable", "user-hook-trust"
-    ]
+    assert entry["category"] == "Development Tools"
+    assert set(entry) == {"name", "source", "policy", "category"}
+
+
+def test_codex_distribution_is_standalone_and_has_no_cross_plugin_symlinks():
+    links = [path for path in PLUGIN.rglob("*") if path.is_symlink()]
+    assert links == []
+    readme = (PLUGIN / "README.md").read_text(encoding="utf-8")
+    assert "install-codex-plugin.py" in readme
+    assert "--source daishiman/harness-dev" in readme
+    assert "--plugin harness-creator" in readme
+    contract = _json(PLUGIN / "references" / "package-contract.json")
+    assert contract["distribution"]["distributable"] is False
+    assert contract["codex_distribution"] == {
+        "distributable": True,
+        "marketplace": ".agents/plugins/marketplace.json",
+        "source": "./plugins/harness-creator",
+        "supports": ["local-path", "github-ref"],
+    }
+
+
+def test_harness_creator_dogfoods_codex_projection_without_drift():
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(PLUGIN / "scripts" / "sync-plugin-platforms.py"),
+            "--repo-root", str(ROOT),
+            "--plugin", str(PLUGIN),
+            "--marketplace-name", "harness-dev",
+            "--check",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout)["status"] == "noop"
+
+
+def test_create_workflow_and_update_skill_both_route_to_codex_generator():
+    workflow = _json(PLUGIN / "skills" / "run-skill-create" / "workflow-manifest.json")
+    phase = next(item for item in workflow["phases"] if item["id"] == "codex-platform-sync")
+    check = next(item for item in workflow["phases"] if item["id"] == "codex-platform-check")
+    assert phase["dependsOn"] == ["bundle-register"]
+    assert phase["delegateSkill"] == "run-codex-plugin-package"
+    assert phase["condition"] == "plugin_manifest.exists == true"
+    assert "--apply" in phase["command"]
+    assert "--intent" not in phase["command"]
+    assert check["dependsOn"] == ["codex-platform-sync"]
+    assert "--check" in check["command"]
+    improve = (PLUGIN / "skills" / "run-skill-iter-improve" / "SKILL.md").read_text(
+        encoding="utf-8"
+    )
+    assert "run-codex-plugin-package <plugin>" in improve
+    assert "--intent update" not in improve
 
 
 def test_composition_declares_c05_and_native_surface_scripts_once():
     text = (PLUGIN / "plugin-composition.yaml").read_text(encoding="utf-8")
-    assert text.count('ref: "hook:SessionStart/auto-sync-on-session-start"') == 1
+    assert text.count(
+        'kind: hook, ref: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start"'
+    ) == 1
     for ref in (
         "scripts/check-native-surface-parity.py",
+        "scripts/install-codex-plugin.py",
+        "scripts/sync-plugin-platforms.py",
         "scripts/sync-native-surfaces.py",
         "scripts/record-task-graph-knowledge.py",
     ):
@@ -130,31 +233,14 @@ def test_readme_marketplace_identity_matches_repository_ssot():
     marketplace_name = _json(ROOT / ".claude-plugin" / "marketplace.json")["name"]
     identity = f"harness-creator@{marketplace_name}"
     assert identity in readme
-    assert "harness-creator@harness" not in readme
+    assert "harness-creator@harness-dev" in readme
 
 
 def test_committed_claude_hook_projection_is_relocatable_and_deduped():
     settings = _json(ROOT / ".claude" / "settings.json")
     managed = settings["_build_claude_settings"]["managed_hooks"]
-    for hook in managed:
-        command = hook["command"]
-        assert str(ROOT) not in command
-        assert "${CLAUDE_PROJECT_DIR}//" not in command
-        if "${CLAUDE_PROJECT_DIR}" in command:
-            assert "${CLAUDE_PROJECT_DIR}/plugins/" in command
-
-    managed_session = [
-        hook for hook in managed
-        if "auto-sync-on-session-start.py" in hook["command"]
-    ]
-    runtime_session = [
-        command
-        for group in settings["hooks"]["SessionStart"]
-        for command in group["hooks"]
-        if "auto-sync-on-session-start.py" in command["command"]
-    ]
-    assert len(managed_session) == 1
-    assert len(runtime_session) == 1
+    assert managed == []
+    assert all("/plugins/" not in command for command in _hook_commands(settings))
 
 
 def test_default_make_test_pipeline_does_not_mix_legacy_sync_desired_set():

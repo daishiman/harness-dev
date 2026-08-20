@@ -127,6 +127,19 @@ def test_manual_version_bump_is_respected(mod, tmp_path, monkeypatch):
     assert mod.read_version(plugin) == "1.0.0"
 
 
+def test_removed_plugin_is_pruned_from_fingerprint_state(mod, tmp_path, monkeypatch):
+    plugin = _fake_plugin(tmp_path, "retired", "0.1.0")
+    keep = _fake_plugin(tmp_path, "keep", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    plugin.rename(tmp_path / "retired-outside-plugins")
+
+    assert mod.main(["--check"]) == 1
+    assert mod.main([]) == 0
+    recorded = json.loads((tmp_path / "fingerprints.json").read_text())["plugins"]
+    assert set(recorded) == {keep.name}
+
+
 def test_bump_touches_only_the_version_line(mod, tmp_path, monkeypatch):
     """json 往復での再整形を禁じる。整形差分は内容 hash を動かし bump を自己増殖させる。"""
     plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
@@ -298,7 +311,8 @@ def _fake_plugin(tmp_path: pathlib.Path, name: str, version: str) -> pathlib.Pat
     plugin = tmp_path / "plugins" / name
     (plugin / ".claude-plugin").mkdir(parents=True)
     (plugin / ".claude-plugin" / "plugin.json").write_text(
-        json.dumps({"name": name, "version": version}, indent=2) + "\n", encoding="utf-8"
+        json.dumps({"name": name, "version": version, "description": "Fixture plugin"}, indent=2) + "\n",
+        encoding="utf-8",
     )
     (plugin / "SKILL.md").write_text("original", encoding="utf-8")
     return plugin

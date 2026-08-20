@@ -47,6 +47,9 @@ def git_context(monkeypatch, module, root: Path, common: Path) -> None:
 
 def test_c25_passes_complete_context_to_async_dispatch_without_blocking(tmp_path, monkeypatch, capsys):
     module = load(HOOKS / "reconcile-task-lifecycle.py", "semantic_c25")
+    marker = tmp_path / ".dev-graph" / "config.json"
+    marker.parent.mkdir(parents=True)
+    marker.write_text("{}\n", encoding="utf-8")
     calls = []
 
     def invoke(path, *args):

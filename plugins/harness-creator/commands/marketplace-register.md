@@ -1,5 +1,5 @@
 ---
-description: harness の plugin を Claude Code の /plugins → Add Marketplace へ登録する手順を、ローカル clone 指定と GitHub 指定の 2 パターンで案内する。非配布 (distributable:false) plugin はローカル経路でのみ install できる。
+description: harness の plugin を Claude Code または Codex へ登録する手順を、ローカル clone 指定と GitHub ref 指定の 2 パターンで案内する。
 argument-hint: "[local|github]  省略時は両方を提示"
 allowed-tools: Read, Bash
 name: marketplace-register
@@ -14,7 +14,27 @@ since: 2026-08-11
 `$ARGUMENTS` (`local` / `github` / 空) に応じて、harness の plugin を Claude Code へ
 marketplace 登録する手順を提示する。
 
-## 前提: marketplace は 2 枚ある
+## Codex: harness-creator の登録
+
+Codex では Claude marketplace と独立した root
+`.agents/plugins/marketplace.json` (name: `harness-dev`) を使う。
+
+```bash
+# ローカル clone
+python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+  --source /absolute/path/to/harness --plugin harness-creator
+
+# GitHub の merge 済み main
+python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+  --source daishiman/harness-dev --ref main --plugin harness-creator
+```
+
+更新時も同じhelperを再実行し、新規threadで確認する。helperはGit sourceが既登録なら
+marketplace snapshotをupgradeし、install後にlist receiptを検証する。hook trustは
+`/hooks`またはPlugins画面でユーザーが確認する。生成した他pluginをCodex対応する場合は
+`run-codex-plugin-package`、明示installは`run-codex-plugin-install`を使う。
+
+## 前提: Claude marketplace は 2 枚ある
 
 | | ファイル | 載る plugin | 登録の入力値 |
 |---|---|---|---|
@@ -45,7 +65,7 @@ symlink は生成物と一組で、`--check` が両方を検査する。
 置かれ symlink は 0 件、`installed_plugins.json` に `gitCommitSha` が固定される。
 したがって **harness 側の編集は再取得するまで反映されない**。更新手順は後述。
 
-## パターン A: ローカル clone を登録する (非配布 plugin を使う場合)
+## Claude パターン A: ローカル clone を登録する (非配布 plugin を使う場合)
 
 1. 生成物が最新か確認し、古ければ再生成する。
 
@@ -133,7 +153,7 @@ install 経路なら Claude Code が plugin ごとに `CLAUDE_PLUGIN_ROOT` を�
 登録状態は `~/.claude/plugins/known_marketplaces.json`、パース結果は
 `~/.claude/plugins/plugin-catalog-cache.json` で確認できる。
 
-## パターン B: GitHub から登録する (配布可 plugin のみ)
+## Claude パターン B: GitHub から登録する (配布可 plugin のみ)
 
 1. 公開 marketplace が最新か確認する。
 
@@ -161,7 +181,8 @@ distributable=True (NEVER-DISTRIBUTE)
 ```
 
 で hard error になる。フラグが true へ漂流しても再配布を止めるための多層防御なので、
-この 3 つは**ローカル経路 (パターン A) でのみ使う**。
+この 3 つは **Claude ではローカル経路 (パターン A) でのみ使う**。
+`harness-creator` の Codex 配布は冒頭の `.agents` marketplace 経路で独立して行う。
 
 残る 5 つを公開したい場合は `references/package-contract.json` の
 `distribution.distributable` を true にしたうえで、README の絶対パス依存

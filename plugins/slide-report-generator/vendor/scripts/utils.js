@@ -212,6 +212,25 @@ export const VIEWPORT = {
   ASPECT_RATIO: 16 / 9
 };
 
+/**
+ * SR-3-09 の改行位置。句読点・文末表現・助詞・中黒の直後で切る。
+ *
+ * ここに置いてあるのは、挿入する側（auto-linebreak.js）と検査する側
+ * （scripts/validate-linebreak-position.mjs）が同じ集合を見るため。別々に
+ * 持つと、挿入器が入れた <br> を検査器が落とすという最悪の形になる。
+ * 語彙を足すときはこの 1 箇所だけを直すこと。
+ *
+ * priority は挿入側だけが使う（候補が競合したときどれを選ぶか）。検査側は
+ * どの群に当たったかだけを見るので priority を読まない。
+ */
+export const LINEBREAK_RULES = [
+  { name: "句点", chars: ["。", "！", "？"], priority: 100 },
+  { name: "読点", chars: ["、"], priority: 80 },
+  { name: "文末表現", chars: ["ます", "です", "した", "ない"], priority: 70 },
+  { name: "助詞", chars: ["は", "が", "を", "に", "で", "と", "も", "の"], priority: 50 },
+  { name: "中黒", chars: ["、", "・"], priority: 40 }
+];
+
 export const EXIT_CODES = {
   SUCCESS: 0,
   ERROR: 1,

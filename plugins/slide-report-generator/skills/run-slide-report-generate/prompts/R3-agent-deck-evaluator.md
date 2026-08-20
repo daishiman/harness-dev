@@ -77,8 +77,8 @@ last-audited: 2026-07-05
 エラーハンドリング: plugin-local Chromium 未導入なら `setup-playwright.py --install` を実行し1回再評価する。復元不能時のみ静的評価へ縮退する。`evaluation-report.json` 不在なら Step 0 で生成。`evaluate-deck.js` 実行失敗時はエラー内容を提示し deck-dir の中核ファイル存在を確認。詳細は Layer 4 参照。
 
 ```bash
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js" "<deck-dir>"
-# chromium未導入なら: python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install 後に再実行
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/evaluate-deck.js" "<deck-dir>"
+# chromium未導入なら: python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/setup-playwright.py" --install 後に再実行
 # （broken img/はみ出し/computedフォントが有効化される）
 ```
 
@@ -159,7 +159,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js" "<deck-d
 ## 5.5 知識ベース (適用リソース)
 | 参考文献 | 適用方法（このエージェントがどう使うか） |
 |---------|------|
-| 30種思考法（[references/post-generation-evaluation.md](../references/post-generation-evaluation.md) §30種思考法マッピング が正本） | 多角検証時に各思考法を評価次元 D1〜D5 に結びつけて全件適用。findings に寄与した思考法を併記し、カバレッジ表で省略を防ぐ |
+| 30種思考法（[references/post-generation-evaluation.md](../../../references/post-generation-evaluation.md) §30種思考法マッピング が正本） | 多角検証時に各思考法を評価次元 D1〜D5 に結びつけて全件適用。findings に寄与した思考法を併記し、カバレッジ表で省略を防ぐ |
 | elegant-review 方法論（思考リセット＋30種＋4条件） | 全体フローの骨格。前提を保留した白紙5疑問 → 30種思考法の多角検証 → 4条件の最終判定へ落とす |
 | The Checklist Manifesto（チェックリスト思考） | 4条件と機械レポート読込を「漏れなく検証可能な合否項目」に落とす。各基準を第三者が判定できる客観条件にする |
 | [agents/ui-quality-reviewer.md](ui-quality-reviewer.md)（S1〜S26 視覚チェック） | 視覚崩れの詳細基準は本エージェントで重複実装せず参照。本エージェントは「要望適合・仕様適合・矛盾検出・エレガンス」を統合判定 |

@@ -5,28 +5,17 @@ purpose: >
   プラグイン構想を、skill/sub-agent/slash-command/hook/script/harness/manifest を含む
   index + 13 フェーズファイル + component-inventory.json の plan へ分解する前段 planning plugin。
 capabilities:
-  - kind: skill
-    path: skills/run-plugin-dev-plan/SKILL.md
-    responsibility: goal-seek で R1→R2/R3→R4 を fork オーケストレーションし 13 phase ファイル + index + component-inventory.json を生成する
-  - kind: skill
-    path: skills/assign-plugin-plan-evaluator/SKILL.md
-    responsibility: R4 を独立 skill へ昇格。生成 plan を4条件+決定論ゲートで context:fork 独立評価し plan-findings を返す (proposer≠approver)
-  # === Agents (自己完結型 7 層 SubAgent。source を authoring 正本とし R1→R2/R3→R4 を 1:1 写像。plugin.json entry_points と対応) ===
-  - kind: agent
-    path: agents/plugin-dev-plan-elicitor.md
-    responsibility: R1 目的ドリブン goal-spec 確定 (isolation:inherit / 会話履歴を保持)
-  - kind: agent
-    path: agents/plugin-dev-plan-architect.md
-    responsibility: R2/R3 component 分解 + envelope 設計 + 13 phase ファイル + inventory 生成 (isolation:fork)
-  - kind: agent
-    path: agents/plugin-dev-plan-evaluator.md
-    responsibility: R4 4条件と決定論ゲートの独立評価 (isolation:fork / read-only)
-  - kind: command
-    path: commands/plugin-dev-plan.md
-    responsibility: 手動起動入口
-  - kind: hook
-    path: hooks/hook-validate-plugin-plan.py
-    responsibility: plugin-dev-planner 編集時の sample-plan drift 検出
+  - { kind: skill, ref: skills/assign-plugin-plan-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-plugin-dev-plan, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-architect, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-elicitor, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-evaluator, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-improvement-reviewer, tier: core }
+  - { kind: command, ref: commands/plugin-dev-plan, tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-EditWrite/hook-validate-plugin-plan", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-BashTask/enforce-provenance-chain", tier: core }
+
   - kind: harness
     path: EVALS.json
     responsibility: mechanical / llm_eval の評価導線
@@ -43,6 +32,7 @@ dependencies:
   - { from: skills/run-plugin-dev-plan, to: ../harness-creator/skills/run-build-skill,    type: routes_to, note: "非 skill capability の kind dispatch route を handoff に記録 (本 plugin は投入しない)" }
   - { from: skills/run-plugin-dev-plan, to: ../harness-creator/skills/run-elegant-review, type: calls, note: "昇格前 C1-C4 検証" }
   - { from: skills/run-plugin-dev-plan, to: ../harness-creator/skills/run-goal-elicit,    type: calls, note: "R1 が goal-spec 生成本体を委譲" }
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
 quality_gates:
   - python3 scripts/validate-plugin-completeness.py
   - python3 -m pytest plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests -q

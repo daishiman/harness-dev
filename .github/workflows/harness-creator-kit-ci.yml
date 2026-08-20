@@ -148,6 +148,11 @@ jobs:
           python3 scripts/lint-vendored-ssot.py
           python3 scripts/validate-plugin-packages.py
 
+      - name: Verify all Claude/Codex plugin capability and composition contracts
+        run: |
+          python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all
+          python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml
+
       # 単独 install ポータビリティ不変条件: runtime hook script が import-time に自 plugin
       # 外を fail-closed 依存 (失敗時 raise) しないことを静的検査する。plugin だけを
       # marketplace から install しても全フックが exit 0 を維持する保証を CI でガードする。
@@ -162,11 +167,6 @@ jobs:
       # コマンド検出 lint) の回収。ローカル make lint (readme-portability) と整合。
       - name: Verify README plugin-root portability (no raw-terminal empty-expansion)
         run: python3 scripts/lint-readme-plugin-root-portability.py
-
-      # company-master の scripts が外部依存ゼロ (空 vendor が正常) であることを機械検証する。
-      # ローカル make lint (company-master-vendored) と整合。CI 未配線だと保証が無言で腐る。
-      - name: Verify company-master vendored deps (zero external deps)
-        run: python3 scripts/lint-company-master-vendored-deps.py
 
       # knowledge/ (JSON/JSONL 蒸留ストア) と lessons-learned/ (散文失敗ログ) の SSOT 役割分担を
       # fail-closed 検査する。散文レッスンを knowledge/ 直下へ .md で直接置いた混在事故

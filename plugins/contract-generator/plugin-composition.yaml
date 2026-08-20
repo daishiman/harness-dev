@@ -1,0 +1,17 @@
+name: contract-generator
+kind: plugin-composition
+version: 0.1.0
+purpose: Public capability inventory and dependency boundary for contract-generator.
+
+capabilities:
+  - { kind: skill, ref: skills/run-contract-finalize, tier: core }
+  - { kind: skill, ref: skills/run-contract-generate, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-template-sync, tier: core }
+  - { kind: agent, ref: agents/contract-draft-agent, tier: core }
+  - { kind: agent, ref: agents/contract-finalize-agent, tier: core }
+  - { kind: agent, ref: agents/template-sync-agent, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/hook-guard-secret", tier: core }
+
+dependencies:
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }

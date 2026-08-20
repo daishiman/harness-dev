@@ -1,5 +1,8 @@
 # Spec Registry (SSoT) — presentation-slide-generator
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **目的**: 30以上の references / SKILL.md ベストプラクティス表 / agents / assets に散在する制約を**1ファイルに集約**し、LLMが暗記不要で参照可能な Single Source of Truth として機能させる。
 
 **運用原則**:
@@ -7,12 +10,15 @@
 - 各ルールは **Why（理由）** と **実装値/コード** を併記する。
 - 矛盾するルールは「現状」「将来形」を明示し、どちらを優先するかを SR-ID 単位で確定させる。
 - 本ファイルが既存 references と矛盾する場合、**本ファイルが正**。既存 references は段階的に本ファイルへの参照リンク化する。
+- **検査器の名前は書かないが、検査の不在は書く。**「どの実行体がその項目を見ているか」は実行体の側が変わっても文書が変わらないため、事実でない記述になって残る。一方「**その項目を判定して合否へ反映する実行体が現時点で無い**」は、書かなければ読み手が緑を合格と読む。**規則表に載っていることと、判定していることは別**であり、前者だけを見て後者と読むと緑が意味を失う。不在は SR-ID の側に明記し、参照する文書もそれを写す（明記できている例: SR-3-09）。
 
 **索引**:
 - §1 寸法・単位 / §2 カラー / §3 フォント / §4 レイアウト / §5 SVG設計 / §6 GSAP
 - §7 印刷 / §8 ナビゲーション / §9 アクセシビリティ / §10 コードブロック
-- §11 検証ID対応表 / §12 逆引き（agent/script → SR-ID） / §13 逐語コンテンツの非画像化
-- §14 記事/レポートの読書レイアウト（R1-R8）/ §15 図解の幾何・素材トークン（D0-D23・R9 溶け込み）
+- §11 検証ID対応表 / §12 逆引き（提供していない・理由） / §13 逐語コンテンツの非画像化
+- §14 記事/レポートの読書レイアウト（R1-R8）/ §15 図解の幾何・素材トークン（D0-D28・R9 溶け込み）
+- §16 本文キーの整合（slideType ごと）/ §18 出力ファイルの構成
+- §17 仕様本文がまだ無い SR の一覧（欠落台帳・規則は定めない。§17 は規則を定める節ではないため、規則節の後ろに置く。**編集上の約束であり、検査器はこの順序に依存していない**）
 
 **媒体の別**: §1-§13 は原則 **slide** の契約（16:9 固定枠・ページネーション・GSAP）。**report** は連続スクロールの読み物であり、固定枠前提のルールを持ち込まない。report 固有の契約は §14 に集約する（色・フォント・図解の語彙は両媒体で共有）。
 
@@ -32,20 +38,22 @@
 
 ---
 
-## §2 カラー（Kanagawa テーマ）
+## §2 カラー
+
+> 面に置いてよい色数・地/文字・アクセントの作り方の正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` §1（VGCONST_001 / VGCONST_002）。本節の SR-ID は CSS 変数の定義方法と実装契約を持ち、色の値は style genome の palette 定義に従う。
 
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
-| SR-2-01 | デフォルトテーマは **Lotus White**（ライトモード） | `--bg-dark: #fafafa; --fg: #43436c;` | 印刷配布・明るい環境で最大の可読性 |
+| SR-2-01 | デフォルトテーマは **インク・オン・ペーパー**（紙地にインク文字のライトモード）。1 面に置く色は 地 / 文字 / 反転面 の 3 つに限る | 地色・文字色は CSS 変数で定義し、値は style genome の `palette` 定義に従う（本表に hex を書かない）。色数の逐語正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_001 | 印刷配布・明るい環境で最大の可読性。色数を固定すると面をまたいでも見え方が揃う |
 | SR-2-02 | 基本カラー変数は CSS 変数で定義し、**カラーコード直書き禁止** | `var(--wave-blue)` 等を使用 | テーマ切替・量産時の一括変更を可能に |
-| SR-2-03 | 主要アクセント変数 6種 | `--wave-blue`, `--spring-violet`, `--sakura-pink`, `--wave-aqua`, `--autumn-yellow`, `--fuji-gray` | Kanagawa Lotus 公式パレット準拠 |
-| SR-2-04 | ビビッドアクセント変数 5種を別途定義 | `--accent-blue-vivid: #3B7DD8`, `--accent-pink-vivid: #D94B6E`, `--accent-aqua-vivid: #2EA88F`, `--accent-violet-vivid: #7B4FBA`, `--accent-yellow-vivid: #F5A623` | Lotus 原色だけでは彩度不足。フォーカルポイントに使用 |
-| SR-2-04-alt | **Apple トーン代替セット（議論中・SR-07 提案）**: より落ち着いた配色を指定したい場合の代替 | `--accent-blue-apple: #007AFF`, `--accent-pink-apple: #FF3B30`, `--accent-green-apple: #34C759`, `--accent-orange-apple: #FF9500`, `--accent-purple-apple: #AF52DE` を `theme.accentSet: "apple"` で切替可能化（**未実装**: validator V-018' で「同一スライド内で vivid と apple セットを混在禁止」を検査することを将来検討） | クライアント案件で Apple 製品トーンが要求された場合の選択肢確保。デフォルトは vivid のまま |
-| SR-2-05 | **各スライドにビビッドアクセントを 1 色以上**使用 | スライドごとに `--accent-*-vivid` のいずれか1つ以上 | 視覚階層の確立、Apple品質感 |
-| SR-2-06 | **1 スライドあたりビビッドアクセントは最大 2 色まで**（10% 以内の面積） | 60-30-10 配色ルール | 焦点散漫の防止・WCAG コントラスト維持 |
-| SR-2-07 | 意味と色の対応 | 重要=`--wave-blue` / 課題・Before=`--sakura-pink` / 解決・After=`--wave-aqua` / 強調=`--autumn-yellow` / 補足=`--spring-violet` | 全スライドで色の意味を統一 |
-| SR-2-08 | SVG の `fill` / `stroke` も **CSS 変数を使用** | `<rect fill="var(--wave-blue, #7E9CD8)" />` | SVG 属性にカラーコード直書き禁止。CSS 変数フォールバック付き |
-| SR-2-09 | シャドウは 4 段階＋グロウ 3 種で統一 | `--shadow-subtle/medium/prominent/elevated`, `--glow-blue/pink/aqua` | 視覚階層の段階表現 |
+| SR-2-03 | **アクセント変数の名前と数は css-route ごとに違う。本表に一覧を持たない** | 名前の正本はその経路の生成器（report / hand-slide 系は `vendor/scripts/html-scaffold.js` と `render-report.js`、det-slide 系は `vendor/scripts/style-builder.cjs`）。経路と産出元の対応は `scripts/lint-contract-drift.py` の `_VAR_ROUTE_SOURCES` | 経路が 6 つあるのに 1 つの一覧を本表へ写経すると、どの経路にも当てはまらない名前が残る。**実際に残っていた**: 旧記述は 6 種を列挙していたが、実測（2026-08-14）で `--spring-violet` と `--fuji-gray` は**どの経路の生成器も定義しておらず**、`vendor/assets/` の経路外ファイル 2 つにしか無かった（`lint-contract-drift.py` が `orphan-var-definer` で挙げている 2 ファイル）。残る 4 種も det-slide 系には無い。名前を数えたい人は経路を先に決める必要がある。**加えて旧 SR-2-03 の 6 色は SR-2-04（高彩度アクセントを定義しない）と矛盾していた。配色 D の確定により SR-2-04 を正とする**（矛盾が在ったこと自体を残す。消すと、旧 Lotus のファイルを見た人が「規則にあるから復活させよう」となる） |
+| SR-2-04 | **高彩度のアクセント色を定義しない**。アクセントは色ではなく**反転面**（インク地に紙色文字）で作る | 反転面の CSS 変数は地色・文字色の入れ替えで定義する。図解の内部に限り単一色相の濃度段を使ってよい（段数・彩度・面積の上限は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本。本表へ写経しない） | 色を足して焦点を作ると面ごとに色相が増え、デッキ全体の統一が崩れる。反転は色数を増やさずに最大のコントラストを作れる |
+| SR-2-04-alt | **アクセント色セットの切替という選択肢を持たない**。クライアント指定のトーンがある場合も色相を増やさず、style genome の `palette` 定義そのものを差し替えて対応する | `theme.accentSet` によるセット切替は行わない | 色相セットを増やすと 1 面の色数上限（SR-2-01 / VGCONST_001）を面ごとに超える |
+| SR-2-05 | **1 面の強調は 1 箇所**。強調手段は反転面であって色ではない | 反転面は 1 面につき 1 個。面積の上限は VGCONST_002 が正本 | 焦点が複数あると視線の優先順位が消える |
+| SR-2-06 | 面積配分は **60-30-10**。60=地、30=文字とパネル、10=反転面 | 反転面は 1 面に 1 個。面積の上限は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本（本表へ写経しない） | 強調が面積を超えると「強調」が「主色」に変わり、地が背景に見えなくなる |
+| SR-2-07 | **意味を色で区別しない**。対比・前後・可否・重要度は 位置 / 順序 / ラベル / 罫 で示し、図解の内部では単一色相の濃度段で示す | 「課題は赤、解決は緑」のような色相の割り当てを持たない。濃度段の使い方は VGCONST_002 が正本 | 色相を意味に割り当てると面ごとに色数が増え、色覚特性による差でも意味が伝わらなくなる |
+| SR-2-08 | SVG の `fill` / `stroke` も **CSS 変数を使用** | `<rect fill="var(--wave-blue)" />` | SVG 属性にカラーコード直書き禁止。**fallback の hex は書かない**（書くと色の定義点が 2 つになり、変数側を替えても fallback だけ旧色のまま残る。実際にこの行の fallback は `#7E9CD8` で、実装 `vendor/scripts/svg-kit.cjs` が出す `#4B6681` と食い違っていた） |
+| SR-2-09 | **影とグロウを意匠手段として使わない**。深度・階層は**罫**で作る | 角丸は 0px（写真・図のみ例外）。囲みの既定は 1px の下罫。線の太さ・hairline の値は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_003 / VGCONST_004 が正本（本表へ写経しない） | 影は紙に出ないうえ、Chrome 印刷では薄いグレーの塗りになる。罫なら画面と紙で同じ階層が出る |
 
 ---
 
@@ -54,13 +62,15 @@
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-3-01 | 本文フォントは **Noto Sans JP**、コードは **SF Mono / Fira Code** | `font-family: 'Noto Sans JP', sans-serif;` / `font-family: 'SF Mono', 'Fira Code', monospace;` | 日本語可読性とコード等幅性の両立 |
-| SR-3-02 | フォントスケールは `--font-scale` で一括制御（既定 1.3） | `--fs-body: calc(1.5rem * var(--font-scale))` | 量産時にスライドごとサイズ調整可能 |
-| SR-3-03 | フォントサイズ変数 7 種 | `--fs-title` (5rem×scale) / `--fs-subtitle` (2.5rem) / `--fs-heading` (3rem) / `--fs-subheading` (2rem) / `--fs-body` (1.5rem) / `--fs-body-lg` (1.8rem) / `--fs-small` (1.4rem) | 視覚階層の機械的担保 |
+| SR-3-02 | フォントサイズは**基準 1 つからの等比派生**で作り、段ごとの実値を持たない。決定論 slide 経路の一括制御は `--font-scale` | 起点（`leadRem`）と比（`stepMajor` / `stepMinor`）は `vendor/scripts/style-builder.cjs` の `spec.typeScale` が正本。本表へ値を写経しない | 量産時にスライドごとサイズ調整可能。段ごとに実値を置くと 1 つ動かすたび全段を直すことになる |
+| SR-3-03 | **型階層は天井 1 本と段差 2 種だけの単一系列で作る**。段の実体（変数名・段数・値）は生成器が持ち、本表は持たない。**個数が合っていることを適合の根拠にしない**。さらに**段の集合は経路ごとに別物**なので、自分が乗っている経路の段だけを使い、他経路の名前を借りない | 段の正本は経路ごとに、決定論 slide ＝ `vendor/scripts/style-builder.cjs`、ひな形 slide（`.srg-*`）＝ `assets/slide-templates/frame-contract.json`（`scripts/build-slide-skeleton-css.py` が生成する）、手書き slide ＝ [theme-style.md](theme-style.md) の `:root` ブロック、report ＝ `vendor/scripts/render-report.js`。**変数名も実値も本表へ写経しない**（写経すると生成器が動いたとき本表だけが古くなる） | 未定義の変数を `font-size` に指定すると宣言ごと無効になり、**指定したつもりで既定サイズのまま出る**。名前を借りた側は画面を見ても気づけない。個数で照合すると、集合が入れ替わっても数が同じなら気づけない |
 | SR-3-04 | **画面表示の最小フォントは 1.4rem**（`--fs-small`）。それ以下は禁止 | UI テキスト・補足・キャプション含む | 50名規模プレゼン・スマホ視聴で可読性確保 |
 | SR-3-05 | **SVG `<text>` は原則 14px 以上・下限 12px** | `svg-kit.cjs` の `MIN_FONT = 14`（原則）/ `MIN_FONT_SMALL = 12`（小バッジ・軸ラベルの例外）/ `validate-svg-diagram.py` の `MIN_FONT_PX = 12`（これ未満は D4 error）。3 つの数はそれぞれ原則・例外・禁止ラインで、同じものの重複定義ではない | 50名対面×プロジェクタで判読不能（約2-3mm相当）になるため |
 | SR-3-06 | SVG `<text>` 内で **Font Awesome unicode（`&#xf...;`）使用禁止** | アイコンが必要なら `<foreignObject>` 内に `<i class="fa-solid ..."></i>` を置き、その div に `class="fo-card"` を付与（SR-6-04参照）。または Unicode emoji を直書き | CDN 未ロード時に PUA コードが全スライドで消失するリスク |
 | SR-3-07 | 質問スライドの本文は **`--fs-subheading`** を使用（`--fs-heading` は大きすぎる） | `.question-badge ~ .main-message { font-size: var(--fs-subheading); }` | 質問の威圧感を抑え、思考誘導に適切 |
 | SR-3-08 | **全スライドタイプの `h2` に CSS 定義必須**（特に `.slide-quote`, `.slide-message`, `.slide-list`, `.slide-cycle`, `.slide-flow`） | `.slide-TYPE h2 { font-size: var(--fs-heading); }` | 定義漏れがあると見出しが極小表示になる |
+| SR-3-09 | **1 行が長いテキストは文節の切れ目で改行する**。改行位置は文字数ではなく、句読点・助詞など**文節の切れ目**で決める | 検査 ID は V-021（WARN）。**この規則を判定して合否へ反映している実行体は現時点で無い。**位置だけなら文字数を使わずに機械で見られるため試作を `scripts/validate-linebreak-position.mjs` に置いてあるが、受理集合が未確定なので**どの gate からも呼んでいない**（`--self-test` のみ動く）。折り返しそのものの破綻（切れ・最終行 1-2 文字）は描画後の `ui-quality-checklist.md` が見る。`validate-structure.js` は構成段階に `<br>` が現れないため skip する。実挿入は `auto-linebreak.js`（句読点 → 助詞 → 上限超過の優先順。`--max-chars` 既定 35 は道具の既定値であって仕様の数字ではない）で、挿入に使う語彙は `vendor/scripts/utils.js` の `LINEBREAK_RULES` | 単語・文節の途中で折り返すと読点のない位置で視線が切れ、1 行の意味が取れなくなる。位置は文字数を使わずに機械で見られるが、**長さ**が破綻かどうかは「その文字列がその書体でその箱の幅に入るか」で決まり、箱の幅は描画後にしか分からない。だから位置は静的に、長さは描画後に、と持ち場を分ける。受理集合が未確定なのは、挿入用の `LINEBREAK_RULES` が「どこに入れると良いか」の優先順位表であって「どこなら切ってよいか」の定義ではなく、受理基準へ転用すると母集合が足りないため。2026-08-14 に試作を既存 51 deck へ当てた実測では `<br>` 862 件中 471 件（54.6%）が違反判定になり、中身は体言止め・連用中止・連体形・閉じ括弧と、文節の切れ目として正しいものが大半だった。過半に出る警告は読まれなくなるので、受理集合（どの語尾を文節末と認めるか）が決まるまで配線しない。形態素解析を入れれば語彙も数値も発明せずに解けるが、依存を増やす判断は別途 |
+| SR-3-10 | **書体ウェイトは 3 段のみ**。最も太い段はその面に 1 箇所だけ置く | 段の値・段数・出現回数の逐語正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_005（本表へ写経しない）。決定論経路の実装は `--fw-body` / `--fw-label` / `--fw-lead` の 3 変数 | 段が 4 つ以上あると隣り合う段の差が判別できず、階層が増えたのに読み取れる順位は減る。最も太い段が複数あると面の第 1 位が同点になる |
 
 ---
 
@@ -70,12 +80,12 @@
 |-------|--------|-----------|-----|
 | SR-4-01 | 3層構造を厳守: `.slider` > `.slide-area` > `.slider__container` > `.slider__item` | HTML 構造の必須形 | 16:9 強制とアニメーション制御の前提 |
 | SR-4-02 | スライド本体パディングは CSS 変数で制御 | `padding: var(--nav-top-padding) var(--nav-arrow-padding) var(--nav-bottom-padding);` | ナビ余白の一括カスタマイズ |
-| SR-4-03 | **Before/After（比較）レイアウトは 48% / 4% / 48%** | `.compare-container { display: flex; gap: 4%; } .compare-panel { width: 48%; }` | 視覚的バランス、比率変更禁止 |
-| SR-4-04 | Before=ピンク／After=アクア の色対応 | 左パネル: `--accent-pink-vivid`、右パネル: `--accent-aqua-vivid` | 直感的な意味付け（SR-2-07 と整合） |
+| SR-4-03 | **Before/After（比較）レイアウトは 2 パネル等幅 + 間隔は版面比。中央要素が無いときは 48% / 4% / 48%** | `.compare-container { display: flex; gap: 4%; } .compare-panel { width: 48%; }`。パネルの class は経路で 2 つあり、決定論経路が `.compare-panel`、骨格経路が `.compare-item`。**規則が定めているのは 2 パネルが等幅であることと間隔が版面比であることで、class 名でも特定の数値でもない**（html-scaffold.js の `COMPARE` 直前のコメントが同じことを書いている）。2 パネルだけなら等幅・版面比を満たす配分は 48/4/48 に定まるので、その場合は数値どおりを求める。**中央に第 3 要素（`.compare-vs`）を置く形も認める**。48+4+48 = 100 には第 3 要素の居場所が無く、中央要素を持つ deck は実在するので、誤りは規則の側だった。中央要素があるときに求めるのは、等幅であること・間隔が版面比であること・2 パネル幅と間隔の合計が 100% を超えないことの 3 つ。パネル幅を `max-width` や `flex` で決めるのは**どちらの場合も不可**（版面比でないので画面幅で比率が変わる）。コード比較（`.code-compare` / `.code-panel`）は同じ比率だが SR-10-05 の側で、この規則の対象ではない。検査 ID は V-001（FAIL）で、実行体は `scripts/validate-compare-ratio.mjs`（生成された deck の CSS を読む）。**比較レイアウトの面を持たない構成では V-001 は非該当**として skip する（対象が無いことと、対象があるのに誰も見ていないことを同じ扱いにすると、未検査の一覧がどの構成でも同じ 1 行になって読まれなくなる） | 視覚的バランス。**既知の未修正違反**（2026-08-14 実測 / 母集団 `05_Project/{スライド,レポート}/*/{index,report}.html` の 28 本）: 比較レイアウトを使う 16 本のうち **15 本が違反・計 32 件**。内訳は gap が版面比でない 13 本（2rem / 3rem / 8mm 等）・gap 宣言なし 2 本・パネル幅の `width` 宣言なし 15 本（うち 12 本は `max-width` の px 固定で幅が決まっている。実値は 400/420/480/500/550/600px と `max-width: 45%` / `none`、2 本は幅を決める宣言が皆無、1 本は `flex` / `min-width` のみ）。中央要素は 11 本が持ち、等幅違反と居場所なしは 0 本。通ったのは決定論エンジンの `slide-2026-08-15-AI質問会` 1 本のみ。**この 15 本は直さないと決めた**（8/15 本番デッキが凍結中で残りも出荷済みのため。見落としではない）。次に各 deck を触るときに直す |
+| SR-4-04 | Before / After の区別は**色ではなく位置とラベル**で示す。強調したい側だけを反転面にする | 左＝Before、右＝After の位置固定 + 見出しラベル。反転にするのは片側のみ | 色相の割り当てを持たない（SR-2-07 と整合）。位置とラベルなら色覚特性や白黒印刷でも区別が残る |
 | SR-4-05 | カードリスト（`.list-item`, `.ig-item`）は **`width: 100%; box-sizing: border-box;`** を必ず指定 | コンテナにも `width: 100%` | 指定漏れで左寄り半幅表示になるバグの防止 |
 | SR-4-06 | 補足テキストは **最大 3 行 / `--fs-small` / opacity 0.7** | `.text-note { font-size: var(--fs-small); opacity: 0.7; -webkit-line-clamp: 3; }` | 主情報を阻害しない補助情報の規律 |
 | SR-4-07 | 質問スライドは「**背景情報 → 質問**」の順で配置 | structure.md でこの順序を強制 | 文脈なしの質問は思考が起動しない |
-| SR-4-08 | 図解はインライン SVG2 で描画。`position: absolute` で配置するレイアウト図解は禁止 | `<svg viewBox="...">` を使用 | SVG 座標系の精密制御・印刷品質 |
+| SR-4-08 | **図解の実装形式は問わない**（インライン `<svg>` / CSS・div で組む図解 / D3 mount のいずれでもよい）。ただし **`position: absolute` で配置するレイアウト図解は禁止**。形式によらず、図解は図解ブロックとして識別できる形で出す（`slide-diagram` 系 class・`data-v8-diagram` 属性・`data-d3-mount`） | 第 1 文は形式に要件を課さないので検査しない（許可の明示であって、判定する対象が無い）。第 2 文の検査 ID は V-029（WARN）だが、**これを判定して合否へ反映している実行体は現時点で無い。**「図解として使われている absolute」の識別は `scripts/validate-svg-diagram.py` の図解ブロック抽出を使えば発明せずに書けるが未実装。**V-029 を「実装済み」と書かないこと** | 形式を問わないのは、体系がすでに 3 形式を出して 3 形式とも検査しているため。(1) 決定論エンジンの `slide-timeline` 等は div で組む CSS 図解を出す。(2) `scripts/validate-svg-diagram.py:2664` は CSS/HTML 構成の図解へ D14-D16 を当て、コメントで「`<svg>` を 1 つも持たない図解はここでしか見られない」と明示している。SR-15-15 も `accent` 上限を SVG（D7）と CSS 図解（D16）の両方で見る。(3) D3 経路は `<script type="application/json" data-d3-mount>` を出す。2026-08-14 の実測でも既存 51 deck の図解の面 125 のうち 54（43%）がインライン `<svg>` を持たない CSS 図解だった。生成器が出していて検査器が見ているものを規則が禁じているなら、直すのは規則の側。**SVG の版番号は書かない。**版に固有の機能を要求も検査もしておらず、版を書くと判定する実行体の無い規則が 1 つ増えるうえ、版番号は写しの過程で数量と誤読された実績がある（実例は `vendor/scripts/validate-structure.js` の `V_DEFINITIONS` 直前の desc 規則と `tests/test_v_definitions_desc.py` の陽性対照に残してある） |
 | SR-4-09 | **スライド ID 命名規約**: 物理順 ID は `slide-NNN`（schema 準拠）、論理順別名は `N` 接頭辞（NarrativeOrder）または `S` 接頭辞（SectionOrder）で別名指定可。`data-slide-id="N06"` のように HTML 属性へ二重持ちすることで、構成案の差し替えで物理順が変わっても論理参照が壊れない | `id="slide-006" data-narrative-id="N06"` 等。`N` = 全体ナラティブ通し、`S` = セクション内通し | 章再分割やスライド追加で物理順 ID 採番が再配布された際、references / structure.md / レビュー文書の相互リンクが破綻するのを防ぐ。SR-12-07 同期検証はこの両 ID を区別する |
 
 ---
@@ -88,7 +98,7 @@
 | SR-5-02 | viewBox 算出式: `幅 = カード幅×N + gap×(N-1) + 左右マージン×2` | structure.md の SVG 設計メモに必須記載 | 100人中100人が同じ図解を再現できる精度 |
 | SR-5-03 | **テキスト 1 行最大文字数 = floor(カード有効幅 / font-size px) × 0.75**（安全マージン） | 例: 有効幅 200px / 14px → 14文字 × 0.75 ≒ 10文字 | 自動折返し不可な SVG `<text>` での溢れ防止 |
 | SR-5-04 | SVG `<text>` の改行は `<tspan>` で明示。`dy = font-size × 1.5` | `<tspan x="100" dy="20">…</tspan>` | SVG は自動改行しないため |
-| SR-5-05 | 矢印マーカーは `<defs>` に色別 5種（blue/aqua/pink/yellow/violet = `svg-kit.cjs` `SERIES` の順）を定義 | `<marker id="arrow-blue" ...>` | 一貫性のあるフロー表現 |
+| SR-5-05 | 矢印マーカーは `<defs>` に定義し id で参照する。**系列色を矢印へ割り当てない**（`references/diagram-style-tokens.md` §2 使用制限 4 と同じ規則）。**名前と数の一覧を本表に持たない** | 正本は `vendor/scripts/svg-kit.cjs` の `arrowMarkers()`。base は役割名と色名が混在したキー群で、さらに `extraColors` を受けるので**数は固定でない**。id はスライド合成時に `render-slide.cjs` が面ごとの接尾辞を付ける。同名 id の衝突は SR-15-20 / D23 の担当 | 旧記述は「色別 5 種（blue/aqua/pink/yellow/violet = `SERIES` の順）」だったが、実測（2026-08-14）で**一覧としても規則としても成立していなかった**。(1) `arrowMarkers()` の base は 9 キー（muted / accent / link / ink / blue / aqua / pink / yellow / violet）で、5 つはその一部でしかない。(2) `extraColors` があるので数は固定されない。(3) `violet` は `VAR_VIOLET` = `SERIES[0]` を指し `blue` と同じ値なので、**id が 2 つあっても見分けは 1 つ**。(4) 系列色の矢印は使用制限 4 が禁じており、**定義が在ることと使ってよいことは別**である。`SERIES` は同日 5 枠から 4 枠になったが、**5 を 4 に直してもこの 4 点はどれも直らず**、「合っているように見える」分だけ悪くなる。矢印が系列の意味を運ぶと凡例が矢印にも必要になり凡例が膨らむ |
 | SR-5-06 | グラデーション・フィルターは `<defs>` 内で定義し ID 参照 | `<linearGradient id="grad-blue-pink">` 等 | 再利用性とパフォーマンス |
 | SR-5-07 | SVG 設計メモには 12 項目（viewBox / 各座標 / カードサイズ / フォント / 最大文字数 / 最大行数 / 改行位置 / padding / gap / 接続線 / アクセント / 文字数検証）を **すべて** 明記 | structure.md テンプレ準拠 | 実装ブレを排除 |
 
@@ -123,7 +133,7 @@
 
 **structure.md 出力後の自己検証**: SR-5-07 の 12 項目が全 SVG スライドに揃っているかを見る。
 不足の典型は ⑦改行位置と ⑫文字数検証で、この 2 つが無いと実装時に溢れる。
-形状ごとのチェックは §15-a の D0-D23（機械検査）が正本で、目視チェックリストを別に持たない。
+形状ごとのチェックは §15-a の D0-D28（機械検査）が正本で、目視チェックリストを別に持たない。
 
 ---
 
@@ -178,10 +188,10 @@
 
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
-| SR-9-01 | **WCAG 2.1 AA 準拠**（コントラスト比 4.5:1 以上） | `--accent-blue-vivid: #3B7DD8` on `#fafafa` = 4.5:1 等を確認 | 視覚障害含む全ユーザー可読性 |
+| SR-9-01 | **WCAG 2.1 AA 準拠**（コントラスト比 4.5:1 以上） | 本文前景で最小になるのは `--fg-muted` on 地（`paper`）= **5.02:1**。この値は `paper` に連動するので、`paper` を動かしたら引き直す。色の正本は `style-builder.cjs SPEC.colors` | 視覚障害含む全ユーザー可読性 |
 | SR-9-02 | `:focus-visible` を全インタラクティブ要素に適用 | `:focus-visible { outline: 3px solid var(--accent-blue-vivid); outline-offset: 2px; }` | キーボード操作可視性 |
 | SR-9-03 | `prefers-reduced-motion` 対応必須 | CSS: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` ＋ JS は SR-6-08 | 前庭障害・乗り物酔い配慮 |
-| SR-9-04 | **UI テキスト（ナビ・ラベル・キャプション）の opacity は 0.6 以上** | `.text-note { opacity: 0.7; }` 等 | 0.3 等は読めない |
+| SR-9-04 | **UI テキスト（ナビ・ラベル・キャプション）の opacity は 0.6 以上**。ただし **`--fg-muted` に opacity を掛けない**。薄くするなら `--ink` から下げる | `.text-note { opacity: 0.7; }` 等 | 0.3 等は読めない。`--fg-muted` を除外するのは、SR-9-01 の下限に対する余裕が **0.5 しかない**ため。0.6 を掛けると AA を割る。**別々に読めば両方正しく、組み合わせたときだけ壊れる**ので、どちらの検査器も鳴らない |
 | SR-9-05 | `aria-label` を SVG 図解に必須 | `<svg role="img" aria-label="図解の説明">` | スクリーンリーダー対応 |
 | SR-9-06 | `sr-only` クラスと `aria-live` を適切に使用 | スライド遷移通知等 | 動的コンテンツのアクセシビリティ |
 
@@ -192,7 +202,7 @@
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-10-01 | **コードブロックの縦上限は面の高さの 60%（全回統一・px 直書き禁止）** | `.code-block { max-height: calc(60 * var(--sv)); overflow-y: auto; }`。`--sv` は面の高さの 1%（`style-builder.cjs`）。`--sv` を持たない LLM 経路は面の高さ（`--slide-max-height`）の 60% を書く（同じ寸法） | 視覚的一貫性。px 固定にすると画面比率で面に対する占有率が変わる。旧値 420px は 1920x1080 で内容枠の 54% しか使わず、コード面の充填率が 10 行で 0.548 に頭打ちして `fill_policy.exceptions.code` の下限へ何行書いても届かなかった |
-| SR-10-02 | フォントは SF Mono / Fira Code（Noto Sans JP は禁止） | `font-family: var(--font-mono)`（実値 `'SF Mono', 'Fira Code', monospace`） | 等幅表示 |
+| SR-10-02 | フォントは SF Mono / Fira Code（Noto Sans JP は禁止） | `font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace)` | 等幅表示 |
 | SR-10-03 | 共通スタイル: `font-size: 1.5625rem; line-height: 1.7; padding: calc(1.8519 * var(--sv)) calc(1.25 * var(--su)); border-radius: calc(0.625 * var(--su));` | `style-builder.cjs` の `.code-block` | 可読性。`1.5625rem` は `typography.min` の 18px を面座標で表した値（18 / 11.52）。旧値 `1.4rem` は最小の観測点 1280x1024 で 16.1px となり `typography.min` を割っていた。余白も px でなく面単位で書く |
 | SR-10-04 | ヘッダー行（`#`）はアクセントブルー太字、変数（`{変数}`）はアクセントイエローハイライト | 色は `--accent-blue-vivid` / `--accent-yellow-vivid` | 構文ハイライトの簡易版 |
 | SR-10-05 | Before/After コードブロックは横並び 48% / 4% / 48%（SR-4-03 と整合）。縦上限は SR-10-01 と同じ | `.code-compare { display: flex; gap: 4%; } .code-panel { width: 48%; max-height: calc(60 * var(--sv)); }` | 比較しやすさ。左右に並ぶぶん横は 48% だが、縦は片側と同じだけ与えてよい。旧値 280px は使える縦の 36% しか使わず、比較したい 2 つのコードがどちらも数行で切れていた |
@@ -217,7 +227,7 @@ UI 品質レビュー（`agents/ui-quality-reviewer.md`）の検証項目 S1-S26
 | S7 | 印刷カード比率（画面同等）。**面の体系を先に判別する** | SR-7-08 / **体系の分岐: SR-1-07, SR-7-11, SR-7-12** |
 | S8 | 印刷 A4 フルサイズ（枠なし）。**`margin: 0` は `slider-*` 面の合格条件であって全体の合格条件ではない** — `.srg-*` 面は `margin: 21.47mm 0` が正しい | SR-7-01, SR-7-03 / **体系の分岐: SR-7-11, SR-7-12** |
 | S9 | ページネーション 5個区切り | SR-8-01 |
-| S10 | ビビッドアクセント各スライド1色以上 | SR-2-05 |
+| S10 | 各面の強調は反転面 1 個 | SR-2-05 |
 | S11 | イージング3種以上 | SR-6-05 |
 | S12 | アクセシビリティ基本（focus/reduced/sr-only/aria） | SR-9-02, SR-9-03, SR-9-05, SR-9-06 |
 | S13 | UI テキスト opacity 0.6 以上 | SR-9-04 |
@@ -237,33 +247,24 @@ UI 品質レビュー（`agents/ui-quality-reviewer.md`）の検証項目 S1-S26
 
 ---
 
-## §12 逆引き（agent / script / asset → 参照すべき SR-ID）
+## §12 逆引き（提供していない）
 
-| エージェント / スクリプト / アセット | 参照すべき主な SR-ID |
-|------------------------------------|----------------------|
-| `agents/structure-designer.md` | §1 全件、§2 全件、§3 全件、§4 全件、§5 全件、§7-08 |
-| `agents/html-generator.md` | **全件**（特に SR-1-04, SR-2-08, SR-3-05/06/08, SR-4-03/05, SR-6-01〜04, SR-7-04, SR-8-04, SR-10-01） |
-| `agents/ui-quality-reviewer.md` | §11 表で S1-S26 から各 SR-ID を逆引き |
-| `agents/slide-report-modifier.md` | 改修対象セクションの SR-ID。最低限 SR-4-01, SR-6-02, SR-7-04 を保持 |
-| `agents/d3-diagram-designer.md` | §5 全件、SR-3-05, SR-3-06, SR-9-05 |
-| `agents/data-visualizer.md` | §2 全件、SR-3-05, SR-9-01 |
-| `agents/cross-deck-reviewer.md` | SR-2-04, SR-3-03, SR-8-04, SR-10-01（横断統一の核） |
-| `agents/layout-optimizer.md` | §4 全件、SR-1-04, SR-1-06 |
-| `agents/hearing-facilitator.md` | （直接適用なし。Phase1 は要件収集のみ） |
-| `assets/structure-template.md` | **全件**（structure.md は本 SSoT の値を埋め込む） |
-| `assets/slide-template.html`, `assets/slide-template-single.html` | SR-1-01, SR-2-01, SR-4-01, SR-7-* |
-| `assets/print-styles.css` | §7 全件 |
-| `scripts/verify-slides.js` | SR-1-01, SR-7-02 |
-| `scripts/check-consistency.js` | SR-2-04, SR-3-03, SR-10-01 |
-| `scripts/validate-structure.js` | §5 全件、SR-4-01 |
-| `scripts/validate-d3.js` | §5、SR-3-05 |
-| `scripts/sync-checker.js` | structure.md ⇔ index.html の SR-ID 単位での同期確認 |
-| `scripts/build-single-html.js` | SR-1-01, §7 全件（GAS デプロイ後も印刷可能性維持） |
-| `scripts/cross-deck-consistency.js` | SR-2-04, SR-3-03, SR-8-04, SR-10-01 |
+**実行体 → 参照すべき SR-ID の逆引き表は、ここには置かない。**
 
-> **追加の SR-12-XX**: agent / script 固有の運用制約は将来ここに追記する余地として確保（例: SR-12-08 = 「CSS/JS は分離出力。インライン `<style>` / `<script>...</script>` 禁止。`<link rel="stylesheet">` と `<script src>` で外部参照」）。
+手で書いた逆引き表は実行体と同期しない。以前ここにあった表は、名前の挙がったファイルこそ全て実在したが、実行体が実際に持つ SR-ID と一致する行が 1 つも残っていなかった。大半のファイルは SR-ID を 1 つも含まず、含む数本も宣言と実測が重ならなかった。表が古いのではなく、手書きの表という形式が保てないことの結果なので、書き直しても同じところへ戻る。
+
+逆引きの元データは各実行体が機械可読な形で自分の中に持っている。必要になったらそこから生成する:
+
+- `vendor/scripts/validate-structure.js` — `V_DEFINITIONS`（V-ID と対応する SR-ID）
+- `scripts/validate-compare-ratio.mjs` — ファイル冒頭の宣言と `--json` 出力の `rule` / `vid`
+- `vendor/scripts/check-consistency.js` — 各 suggestion 文字列の先頭に付く SR-ID
+- `vendor/scripts/style-builder.cjs` — CSS ブロックごとの SR-ID コメント
+
+生成器はまだ無い。**無い間は「逆引きは提供していない」が正しい状態であって、表が欠けているのではない。**手で表を書き足して埋めないこと。
 
 ### SR-12-XX（agent/script 由来の運用制約）
+
+以下は逆引きではなく、agent / script 固有の運用制約そのものの定義。
 
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
@@ -272,9 +273,9 @@ UI 品質レビュー（`agents/ui-quality-reviewer.md`）の検証項目 S1-S26
 | SR-12-03 | バッチ並列生成時、`.slider__content *` が `@media print` 内に存在 | SR-7-04 の機械検証 | GSAP リセット保証 |
 | SR-12-04 | バッチ並列生成時、`scale: 0` が scripts.js に存在しない | SR-6-01 の機械検証 | 残留 transform 防止 |
 | SR-12-05 | CDN は GSAP 3.12.2 / FontAwesome 6.5.1 / Noto Sans JP のみ使用可（任意で Bootstrap Icons / Material Symbols） | 他 CDN は許可しない | セキュリティと一貫性 |
-| SR-12-06 | 写真・画像素材は **WebP 形式推奨**。PNG/JPG は変換してから使用 | `scripts/convert-to-webp.js` 利用 | ファイルサイズ削減 |
-| SR-12-07 | index.html ⇔ structure.md は**常に同期**。HTML 修正時は必ず structure.md も更新 | `scripts/sync-checker.js` で検証 | 二重管理の破綻防止 |
-| SR-12-08 | **CSS / JS はインライン禁止・外部ファイル分離**（`<link>` / `<script src>`） | GAS デプロイ用 1 ファイル化は `scripts/build-single-html.js` で生成 | 保守性・差分レビュー容易性 |
+| SR-12-06 | 写真・画像素材は **WebP 形式推奨**。PNG/JPG は変換してから使用 | `vendor/scripts/convert-to-webp.js` 利用 | ファイルサイズ削減 |
+| SR-12-07 | index.html ⇔ structure.md は**常に同期**。HTML 修正時は必ず structure.md も更新 | `vendor/scripts/sync-checker.js` で検証 | 二重管理の破綻防止 |
+| SR-12-08 | **CSS / JS はインライン禁止・外部ファイル分離**（`<link>` / `<script src>`） | GAS デプロイ用 1 ファイル化は `vendor/scripts/build-single-html.js` で生成 | 保守性・差分レビュー容易性 |
 
 ---
 
@@ -282,7 +283,7 @@ UI 品質レビュー（`agents/ui-quality-reviewer.md`）の検証項目 S1-S26
 
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
-| SR-13-01 | **正確性必須・逐語コンテンツ（コード・数式・精密数値表）は画像化しない。コード系 slideType（`slide-code` / `slide-code-compare`）は aiVisual で image-only / baked-with-overlay 不可** | image-only デッキ・全面AI画像化デッキを含むどの場合でも、コードは実HTMLコードブロック（`.code-block` / `.code-compare-body`）で描画する「コード専用ページ」とする。`aiVisual` を持たない純HTMLコードページが正規デフォルト。世界観背景が必要な場合のみ `aiVisual` は `pattern: html-composite` / `backgroundSource: svg`（推奨）または `raster` / `textPolicy: overlay-only` に限定。機械検証は V-043（`scripts/validate-structure.js`）と `schemas/structure.schema.json` の slide allOf if/then。 | AI画像はコードを正確に再現できず（誤字・崩れ・コピー不可・印刷で判読不能）、逐語の正確性が損なわれる。実HTMLなら構文ハイライト・選択コピー・印刷品質を保てる |
+| SR-13-01 | **正確性必須・逐語コンテンツ（コード・数式・精密数値表）は画像化しない。コード系 slideType（`slide-code` / `slide-code-compare`）は aiVisual で image-only / baked-with-overlay 不可** | image-only デッキ・全面AI画像化デッキを含むどの場合でも、コードは実HTMLコードブロック（`.code-block` / `.code-compare-body`）で描画する「コード専用ページ」とする。`aiVisual` を持たない純HTMLコードページが正規デフォルト。世界観背景が必要な場合のみ `aiVisual` は `pattern: html-composite` / `backgroundSource: svg`（推奨）または `raster` / `textPolicy: overlay-only` に限定。機械検証は V-043（`vendor/scripts/validate-structure.js`）と `schemas/structure.schema.json` の slide allOf if/then。 | AI画像はコードを正確に再現できず（誤字・崩れ・コピー不可・印刷で判読不能）、逐語の正確性が損なわれる。実HTMLなら構文ハイライト・選択コピー・印刷品質を保てる |
 
 ---
 
@@ -335,7 +336,7 @@ SR-15-01〜04 は線幅、SR-15-05〜08 は幾何（矢じり・入射・canvas�
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-15-01 | 全ビルダーは線幅を `kit.STROKE` トークンから取る。数値直書き禁止 | `vendor/scripts/svg-kit.cjs` の `STROKE`。`svg-builder.cjs` / `svg-structures.cjs` から `kit.STROKE.*` で参照 | 太さが 1 種類だと全部が同じ強さで主張し、視線の順序が生まれない。**太さ = 情報の重要度**として読ませる |
-| SR-15-02 | 線幅の階層は 6 段 | `primary: 2.5`（主コネクタ）/ `secondary: 2`（副コネクタ）/ `node: 1.5`（ノード輪郭）/ `axis: 2`（軸・基準線）/ `hairline: 1.25`（補助罫・グリッド）/ `band: 24`（ゲージの帯） | 役割ごとに固定することで、別々のビルダーが作った図解でも太さの意味が一貫する |
+| SR-15-02 | 線幅は**役割名 <!-- count: strokeRole -->6 つが <!-- count: strokeTier -->3 段（1.25 / 2 / 3）へ落ちる**。名前の数と段の数は一致しない | `primary: 3`（主コネクタ）/ `secondary: 2`（副コネクタ）/ `node: 2`（ノード輪郭）/ `axis: 2`（軸・基準線）/ `hairline: 1.25`（補助罫・グリッド）/ `band: 24`（ゲージの帯。面として読ませる値なので太さの段には数えない） | 役割ごとに名前を固定することで、別々のビルダーが作った図解でも太さの意味が一貫する。段を 3 に閉じたのは、かつて `node` に当てていた 1.5 が `secondary` の 2 と比 1.33 しかなく、**名前の上では別でも目には分かれていなかった**ため。名前が 6 で段が 3 なのは欠落ではない。一致させようとして段を増やすと、また見分けの付かない段が生まれる |
 | SR-15-03 | **最も細い線でも 1.25 を下回らない** | `STROKE.hairline = 1.25`。検査は D9（`validate-svg-diagram.py` の `MIN_STROKE_WIDTH`、同値を両方で保つ） | SVG は必ず縮小表示される（viewBox 1080 の図が記事本文幅 804px なら約 0.75 倍）。`stroke-width: 1` は実効 0.7px となり、非 Retina で 1 デバイスピクセルを割ってアンチエイリアスで灰色に溶ける。印刷（A4 実本文幅 174mm）でも同様に潰れる。**「細ければ上品」ではない** |
 | SR-15-04 | `stroke-width: 0` は「線を引かない」の表明として D9 の対象外 | `if (sw is not None and 0 < sw < MIN_STROKE_WIDTH)` | 塗りだけの図形（filledStyle 等）に太さの下限を課しても意味がない |
 | SR-15-05 | **矢じり（marker）の形状は 1 箇所が正本**。`markerUnits="strokeWidth"` 固定 | `vendor/scripts/svg-kit.cjs` の `MARKER = { w: 8, h: 6, refX: 7, refY: 3 }`。経路方向への張り出し `overhang = w - refX`、実 px は `kit.markerOverhangPx(線幅) = overhang × stroke-width`。`<defs>` は必ず `kit.markerDefs` / `kit.arrowMarkers` を通す | 以前は svg-kit（8×6 / refX=7）と svg-builder（10×8 / refX=9）が別々に marker を定義しており、同じレポートの中でも経路によって矢じりの大きさと「先端がどこか」が変わっていた。さらに `ringArcPath` の端点補正は `refX` に依存するため、形状が二重定義だと補正量が必ずどちらか片方で間違う。値は `_CONSTANT_PAIRS` が本表と実装で突合する |
@@ -345,10 +346,10 @@ SR-15-01〜04 は線幅、SR-15-05〜08 は幾何（矢じり・入射・canvas�
 | SR-15-09 | 成果物側の**複雑度上限 = `max(CAPACITY) × COMPLEXITY_FACTOR`**。密度が語彙である型は `COMPLEXITY_RELAX` 倍まで緩める | `scripts/validate-svg-diagram.py` の `COMPLEXITY_FACTOR = 4` / `COMPLEXITY_RELAX = 1.5`。`max(CAPACITY)` は `svg-builder.cjs` から実行時抽出。検査は D11 | `CAPACITY` はビルダー関数の入口に効く上限で、agent が SVG を直接書く LLM 経路には一切効かない。同じ上限を成果物側でも見て両経路の採点を揃える。係数 4 は「ノード本体／付属図形／コネクタ／付随ラベル・凡例」の 4 群に由来し、決定論経路で描ける最も密な図は必ず通る。**`CAPACITY` に 1 つ大きな値を置くと全図の上限が緩む** |
 | SR-15-10 | **容量上限の宣言が無い variant は採用しない（fail-closed）** | `vendor/scripts/render-report.js` の `fitsCapacity`。上限は `CAPACITY` と決定表 `rows[].result.capacity` の**厳しい方**を採り、どちらにも無ければ不採用。ビルダー直呼び側の `guard()` は従来どおり超過分を「ほか N 件」と注記する | 以前は `cap === 0` を無制限と読んでいたため、`CAPACITY` への登録漏れが静かに通り、超過分が注記なしで消えた図が出ていた。**登録漏れは黙って通るのでなく、その variant が選ばれなくなる**のが正しい帰結 |
 | SR-15-11 | **D10 / D13 の許可集合と D11 の上限を検査器へ写経しない**（実装から実行時抽出する） | `scripts/validate-svg-diagram.py` の `_allowed_palette()`（`svg-kit.cjs` の `TOKENS` / `SERIES`）、`_allowed_families()`（同 `textBlock` の既定スタック）、`_capacity_max()`（`svg-builder.cjs` の `CAPACITY`）。抽出に失敗したら「検査できない」と 1 度だけ warning を出す | 許可集合を検査器へ写すと、パレットや書体スタックを差し替えた日に**検査器だけが古い値を許し続ける**。値の正本を 1 つに保つのが唯一の防ぎ方。抽出失敗を黙って素通りさせないのは、検査が沈黙するより vendor が壊れている事実を出した方がよいため |
-| SR-15-12 | **CSS/HTML で組んだ図解も同じ契約で採点する**。検出標識は `data-v8-diagram` 属性か `diagram-` / `slide-diagram-` / `chart-` / `d3-` で始まる class トークン | `scripts/validate-svg-diagram.py` の `extract_diagram_blocks()`。入れ子は外側 1 件へ畳み、`<svg>` しか中身が無いブロックは D0-D23 の担当として返さない。検出規約の説明は `references/diagram-layout-contract.md` §D-7 | D0-D18 は `<svg>` 断片しか抽出しないため、div と span で組んだ図解は 1 件も検査に掛からず素通りしていた。決定論経路は `render-slide.cjs` のテンプレートに守られるが、agent が HTML を直接書く経路には防具が無い。**検査対象を見つけられない検査は、存在しないのと同じ**である |
+| SR-15-12 | **CSS/HTML で組んだ図解も同じ契約で採点する**。検出標識は `data-v8-diagram` 属性か `diagram-` / `slide-diagram-` / `chart-` / `d3-` で始まる class トークン | `scripts/validate-svg-diagram.py` の `extract_diagram_blocks()`。入れ子は外側 1 件へ畳み、`<svg>` しか中身が無いブロックは D0-D28 の担当として返さない。検出規約の説明は `references/diagram-layout-contract.md` §D-7 | D0-D18 は `<svg>` 断片しか抽出しないため、div と span で組んだ図解は 1 件も検査に掛からず素通りしていた。決定論経路は `render-slide.cjs` のテンプレートに守られるが、agent が HTML を直接書く経路には防具が無い。**検査対象を見つけられない検査は、存在しないのと同じ**である |
 | SR-15-13 | **CSS 図解の「4px グリッド」は「`--space-*` 以外の間隔値を書かない」と読み替える** | 検査は D14。刻みの正本は `svg-kit.cjs` の `GRID`、間隔スケールの正本は `style-builder.cjs` の `SPEC.spacing` 9 段。どちらも検査器が実行時抽出する（SR-15-11 と同じ作法） | slide の `html` は `font-size: 1vw` なので rem は画面幅に比例し、**px グリッドという概念自体が成立しない**。px 直書きの寸法にだけ `GRID` の倍数を課し、間隔は段の集合で縛る。線幅・不透明度・フォントは `diagram-layout-contract.md` §D-1「グリッドの適用外」により対象外 |
 | SR-15-14 | **複雑度予算 21 項目の値は `diagram-layout-contract.md` §D-2 の表が正本**。検査器へ写経しない | 検査は D15（`_complexity_budget()` が §D-2 の 4 列表を実行時パース）。CSS 図解では #1 ノード / #2 コネクタ / #4 注釈 / #20 凡例 / #21 フォント階層、SVG では #4（`font-style="italic"` の `<text>` 数）/ #21 を数える | これらは既存実装のどこにも定義が無い新規の値なので、契約文書が正本になる（`_CONSTANT_PAIRS` へ登録できる相手の実装が存在しない）。表を検査器へ写せば、上限を直した日に検査器だけが古い値で採点し続ける。表の 4 列構造を壊すと抽出が空になり「検査できない」warning が出るので、沈黙ではなく気付ける形で失敗する |
-| SR-15-15 | **`accent` の個数上限は SVG（D7）と CSS 図解（D16）の両方で見る** | D16 は `svg-kit.cjs` の `TOKENS.accent` / `accentTint` から「その色を名指す綴り」（CSS 変数名・hex・rgb 三つ組）を抽出し、要素の `style` / `fill` / `stroke` / `class` に現れる件数を数える。上限は §D-2 #3 | CSS 図解の accent は `border-color: var(--sakura-pink, #D27E99)` のように書かれ、D7 の `ACCENT_TOKENS` 名寄せでは 1 件も当たらない。**焦点が複数ある図は、経路が違っても等しく読めない** |
+| SR-15-15 | **`accent` の個数上限は SVG（D7）と CSS 図解（D16）の両方で見る** | D16 は `svg-kit.cjs` の `TOKENS.accent` / `accentTint` から「その色を名指す綴り」（CSS 変数名・hex・rgb 三つ組）を抽出し、要素の `style` / `fill` / `stroke` / `class` に現れる件数を数える。上限は §D-2 #3 | CSS 図解の accent は `border-color` などへ accent 系の CSS 変数名で書かれ、D7 の `ACCENT_TOKENS` 名寄せでは 1 件も当たらない。**焦点が複数ある図は、経路が違っても等しく読めない** |
 | SR-15-16 | **コネクタ `<path>` の斜め直線セグメントを禁じる**（`<line>` を見る D5 の path 版） | 検査は D17。`C` / `S` / `Q` / `A` は `diagram-layout-contract.md` §D-3 原則 1・原則 3 が語彙として認めている（bridge 弧・昇格弧・放射状）ので見ない。放射状型・チャート型は D5 と同じく型申告で例外＝**無出力**（warning へ降格ではない）。D5 側は `<line>` に加え矢じり付き `<polyline>` / `<polygon>` も見る（矢じりの無いデータ線・レーダー多角形・矢羽根の輪郭はコネクタではないため対象外。`polygon` の閉じ辺は見ない） | 決定論経路の `kit.safeElbow()` を通れば斜めは出ないが、LLM 手書き経路は `M x1 y1 L x2 y2` を直接書ける。斜め線が要ると感じたときに直すべきは線の形ではなく**ノードの配置**であり、D5 が `<line>` だけを見ていた間、`<path>` で書かれた斜めコネクタは全て素通りしていた |
 | SR-15-17 | **図解が成果物の中で浮かないこと（R9 溶け込み）も機械で見る** | `scripts/validate-report-visual.py` の `_check_r9_blend()`（検査 ID `figure-text-duplication` = C25 の (p)）と `_check_r9_occupancy()`（`visual-occupancy` = (q)）。数値は `references/diagram-layout-contract.md` §D-4-1 / §D-4-2 の R9-* 表から実行時に読む。severity は warn（`--strict` で fail 昇格） | 単体で完璧に美しい図が、成果物の中では「貼り付けられた別物」に見えることがある。日本語は分かち書きが無いので、重複は形態素でなくラベルの完全一致件数と文字 n-gram の重なり率で近似する。**面積比 R9-1 の実測は静的解析では測れない**ので `validate-report-layout.js` の責務として残し、ここは figure に*宣言された*寸法（R9-3 / R9-5）だけを見る。宣言が無ければ何も言わない |
 | SR-15-18 | **文字はそれを包む箱と canvas に収まる（文字量と図解サイズの依存関係）** | 検査は D18。文字幅は `vendor/scripts/svg-kit.cjs` の `charWidth()` を実行時に構文解析して取り込む（係数を本 registry へ転記しない。作法は SR-15-11 / SR-15-13 と同じ）。canvas は viewBox ± 4px 超過で error、箱は `幅 − 16px`（左右 8px）超過で warning。背景板（viewBox の 80% 以上）・不透明マスク矩形・`transform` 配下は箱として見ない。人間向けの目安式と解決優先順は `diagram-layout-contract.md` §D-8 | 文字が図解に収まらなければ UI/UX が崩れ、図解の意味が無くなる。決定論経路の `kit.fitText` は内寸を `幅 − 24px` で見積もるため D18（`幅 − 16px`）より常に厳しく、構造上 D18 を通る。D18 が鳴るのは手書き経路か `fitText` を通さず直に `<text>` を置いた箇所だけである |
@@ -357,7 +358,19 @@ SR-15-01〜04 は線幅、SR-15-05〜08 は幾何（矢じり・入射・canvas�
 
 | SR-15-20 | **文書内参照は 1 文書の中で正しい相手へ届く**。同名 `id` が 2 箇所以上で定義されていない（D22）／参照先が自分の SVG か共有 defs にある（D23） | 検査は D22 / D23。D23 が見る参照は `url(#id)` と、id をそのまま書く形の `aria-labelledby` / `aria-describedby` / `href="#id"`。後者は SVG の外の見出しを指す正当な用途があり `check_document()` からは見えないので、**別の SVG にしかない時だけ出し、どこにも無い時は黙る**（`url(#...)` は SVG 外を指す用途が無いので両方出す）。どちらも 1 ファイルを丸ごと見る `check_document()` の担当で、SVG を 1 つずつ見る `check_svg()` では原理的に捕まらない。対象は `arrow-*` に限らず **`id` 全般**（`marker` / `clipPath` / `linearGradient` / `filter` / `pattern` / `mask` は同じ罠を踏む）。`marker-start` / `marker-mid` / `marker-end` の参照は D3 の担当なので D23 では重ねて見ない。`<svg width="0" height="0">` のように**描画要素を持たない共有 defs 置き場**（`defs` / `style` / `title` / `desc` / `metadata` 以外の子を持たない SVG）への参照は正当として黙る（この SVG は何も描かないので面の切替に影響されない）。深刻度は error | スライド HTML は全面の SVG を 1 文書へ同居させるが、各面のビルダーは自分の defs を「その図の中で一意」な名前（`arrow-blue` 等）で書く。個々の SVG としては正しく D3 も通る。それでもブラウザは `url(#arrow-blue)` を**文書内で最初に現れる定義**へ解決するため、2 面目以降の参照は 1 面目の marker を指す。面の切替は `visibility:hidden` なので、その marker は隠れており、**線は引かれているのに矢じりだけが描かれない**（2026/8 に実在。1 面目以外の全面で発生していたが D0-D21 は 1 件も鳴らなかった）。壊れているのは SVG どうしの**名前空間という関係**であり、要素や図を 1 つずつ見る検査では捕まらない |
 
-### §15-a 図解の機械検証（D0-D23）
+| SR-15-21 | **別の呼び名で呼び分けた 2 つの系列が、同じ（塗り, 線色, 線幅, 線種）の組へ落ちてはならない**。呼び名の数と、図の上で見分けが付く見た目の数は一致していること | 検査コードは D24。比較する組は 4 要素。正本は `scripts/validate-svg-diagram.py` の `_sign_tuple()`。呼び名の取り出しは同 `_paint_tokens()`（`var(--wave-blue, #4B6681)` なら `--wave-blue`、変数名が無ければ生の値）。同値の判定は CIEDE2000 < 5.0（`DE_EQUIVALENT`）で、半透明は紙へ合成してから比べる | 区別を運ぶのは色 1 つではなく組である。CSS 変数は値を 1 つしか運べないので、色だけを見る検査は「濃度を使い回して 2 系列に同じ見た目を配る」を緑のまま通す。役割（塗り / 線）を鍵に含めるのは、1 つの図形が持つ塗りの名前と線の名前を 2 系列と数えないため。含めないと、塗りと線を別名で書くすべての図形が自分自身と衝突する。同じ呼び名が複数の見た目で使われている図は系列の器ではないので、単射性の対象から外す。`fill` 属性が無いことは「解決できない」ではなく「その channel を名指していない」なので `none` として比較に載せる。ここを外すと `fill` を書かない `<line>`/`<path>`、つまりコネクタのほぼ全部が符号系の検査を素通りする。**凡例の見本を対象から外す理由**: 凡例の見本 (`data-legend`) は単射性の対象から外す。見本は系列そのものではなく系列の見本で、意味を運ぶのは隣の文字である。外さないと、見本を系列と別の綴りで書いた図が「2 系列が衝突している」と読まれる。綴りが違うだけで同じ色であることは正常で、D28 が濃度で照合して許している側なので、D24 だけが咎めると 2 つの規則が食い違う |
+
+| SR-15-22 | **`stroke-dasharray` は実線 / `4 3` / `12 4` の 3 語彙の中にあること**。それ以外の破線を新しく作らない | 検査コードは D25。`DASH_VOCAB = frozenset({"4 3", "12 4"})`（`scripts/validate-svg-diagram.py`）。実装側の対応物は `vendor/scripts/svg-kit.cjs` の `DASH = {fine: "4,3", long: "12,4"}`。**正本は検査側の `DASH_VOCAB`** | 周期は実線 / 7 / 16 で、比が 1 : 2.29 になる組しか残していない。`4 4`（周期 8）を残すと `4 3`（周期 7）と周期差が 1 しかなく、並べても区別が成立しない。語彙を閉じるのは選択肢を減らすためではなく、増やすと必ず「別の名前だが見分けの付かない線種」が生まれるためである |
+
+| SR-15-23 | **破線を付けた図形は、その破線が走る最短の辺に 3 周期分の長さを持つこと**。持てない寸法の図形は線種でなく塗りの濃度で区別する | 検査コードは D26。`DASH_MIN_PERIODS = 3` / `DASH_MIN_EDGE = 21`（`scripts/validate-svg-diagram.py`）。必要長は周期 × 3 で、`4 3` は 21px、`12 4` は 48px。svg-kit 側の `DASH_MIN_SIDE = {fine: 21, long: 48}` は同じ導出の写しで、**正本は検査側の 2 定数**（`DASH_MIN_EDGE` は最も細かい `4 3` が 3 周期入る辺長として置いた下限） | **なぜ 3 周期か**: 2 周期では「破線」ではなく「線が 1 回切れた」に見える。切れ目が 1 つの線は、欠けた実線とも、別の図形に隠された実線とも読める。破線であることが**線そのものの性質として**読み取れる最小が 3 周期。ここを 2 に下げると、細いバーの短辺に付いた破線が実線と混ざり、符号としては消えているのに検査は緑になる。数字を動かす人はこの「1 回切れただけの線」を先に見てほしい。**最短辺で測る理由**: 破線は図形の輪郭を一周する。長辺で 3 周期入っていても短辺が 4px なら、その 2 辺は実線に見える。読者は輪郭のどこを見るか選べないので、成立の判定は最短辺で行う |
+
+| SR-15-24 | **線種を運べない寸法の図形だけで構成された図は、塗りの系列を 5 つ以上要求しないこと** | 検査コードは D27。`SERIES_SUPPLY_NO_DASH = 4`（`scripts/validate-svg-diagram.py`）。供給の 4 段は paper `#F7F6F3` / tone-2 `#9BADBF` / fg-muted `#6A6A68` / ink `#141412`。細いかどうかの判定は `DASH_MIN_EDGE`（SR-15-23 と同じ定数）。供給の数え上げも CIEDE2000 < 5.0 で行うため、綴りが 5 通りでも読者に 4 段としか見えないなら供給を超えていないと判定する | **なぜ 5 で鳴るのか**: 符号の語彙は 形・線・濃淡 の 3 つ。短辺が 21px 未満の図形は線種を運べないので、そこで使えるのは濃淡だけになる。濃淡の段は今日測った 4 段で尽きている。**測定値**: 隣り合う段の ΔE2000 は 21.09 / 25.25 / 28.28 で、これ以上の段を挟むと隣接差が今の 1/2 以下になり、面として並べたときに読み分けられない。つまり 4 は「4 つ用意した」ではなく「4 つしか作れない」。5 つ目の塗りを要求した時点で、どう配っても 2 つが同じ濃度帯へ入る。**D24 との違い**: D24 は配った結果の衝突を見る。D27 は配る前に供給が尽きていることを言う。D27 が鳴っている図は、色を選び直しても直らない（図形の寸法か図解の型を変えるしかない）ので、別コードで分けている。**供給を塗りだけで数える理由**: 線しか持たない細い図形は罫であって系列の器ではなく、濃度 4 段を食い合う相手にならないためである。**凡例の見本を数えない理由**: 凡例の見本は供給の数え上げからも外す。見本の帯は短辺 21px 未満なので細い図形として計上され、凡例を持つ図ほど供給が食われて枯渇しやすくなる |
+
+| SR-15-25 | **凡例の見本が語る符号は、その図の中に実在すること**。図に無い区別を凡例が説明していてはならない | 比較する組は（塗り, 線色, 線種）の **3 つ**で、線幅は比較に含めない。色は綴りでなく濃度で照合する（`_same_density()` = CIEDE2000 < `DE_EQUIVALENT` 5.0）。正本は `scripts/validate-svg-diagram.py` の `_check_legend_truth()`。凡例の識別は `data-legend` 属性。凡例が無い図と、凡例しか無い断片は対象外。検査コードは D28 | 凡例は「この見た目はこの意味だ」という主張であって、図そのものではない。見本と系列は別々に組み立てられるので、片方だけ直した日に静かにずれる。ずれた凡例は読者に「無い区別を探せ」と指示することになり、色を見比べる時間をまるごと無駄にさせる。図が正しくても説明が嘘なら図は読めない。D24 が図の内部の単射性を見るのに対し、D28 はその逆向き（説明 → 図）を見る。**線幅を比較から外した理由**: 凡例の見本は帯や短い線という決まった寸法で描かれ、その線幅は寸法に合わせた表示上の値になる。図の中の主コネクタが 3 でも、凡例の見本が 1.5 で描かれるのは体裁として正しい。ここで幅の一致まで求めると、検査は凡例の**主張**ではなく凡例の**体裁**を測ることになり、正しい凡例が赤くなる。線幅は符号の材料ではあるが、凡例が運ぶ主張の一部ではない。**したがって D24 が 4 要素・D28 が 3 要素であることは意図であり、揃えるべき不整合ではない**。**対象外を 2 つ持つ理由**: 凡例が無い図と、凡例しか無い断片は対象にしない。後者を鳴らすと、凡例だけを単体で描き出したテスト用の SVG が全部赤くなる。**綴りでなく濃度で照合する理由**: 色を綴りで照合すると、見本が `rgba(20,20,18,0.98)`・系列が `#141412` のように書き方だけ違う図が「凡例が図に無い符号を語っている」と鳴る。実際には同じ色が図にあり、読者は何も探していない。しかも偽の赤が出る先は凡例なので、見本を別の書き方で組んだ**正しく作られた凡例ほど鳴りやすい** |
+
+**D24 から D28 の 5 件は、いずれも severity が warning である。**既存資産にどれだけ違反が眠っているか読めない側の検査で、error にすると出荷経路が今日止まる。ただしゴールデンは `--strict` で回すため、そこでは warning も落ちる。**新しい図が穴を持ったまま入ることはなく、既存の図を今日中に直すことも強制されない**、という非対称を意図して選んでいる。上の 5 行には severity を書かない（同じ文が 5 箇所にあると、後で 1 つだけ直されて残り 4 つが古くなる）。なお 5 件の中で error へ昇格する候補が近い順は **D26 → D24** である。D26 は「破線が走る辺に 3 周期入るか」という幾何の判定で、人が見て解釈する余地がない。入らなければ実線に見えるという事実は図の意図と無関係に成立する。D24 がそれに次ぐのは、衝突そのものは事実でも、`fallback` の無い `var()` を解決できず比較から外した図形が残るため、検出が漏れる側に倒れているからである。D25・D27・D28 は語彙や供給の設計判断を含むので、この 2 つより後になる。
+
+### §15-a 図解の機械検証（D0-D28）
 
 人間向けの入口は `references/diagram-layout-contract.md`（語彙 3 表・容量・ラベル方針・
 D1 の意図的な検出漏れの理由をまとめてある）。値の正本は本ファイル。
@@ -392,6 +405,11 @@ D1 の意図的な検出漏れの理由をまとめてある）。値の正本�
 | D21 | コネクタの直線区間が箱（帯・枠を除く）の内側を 12px 以上貫いていない | warning | SR-15-19 |
 | D22 | 1 ファイル内で SVG の `id` が重複していない（`arrow-*` に限らず `id` 全般） | error | SR-15-20 |
 | D23 | 文書内参照（`url(#id)` / `aria-labelledby` / `aria-describedby` / `href="#id"`）の参照先が自分の SVG か共有 defs 置き場にある（`marker-*` は D3 の担当） | error | SR-15-20 |
+| D24 | 呼び分けた 2 系列が同じ（塗り, 線色, 線幅, 線種）の組へ落ちていない（符号の単射性） | warning | SR-15-21 |
+| D25 | `stroke-dasharray` が実線 / `4 3` / `12 4` の語彙内にある | warning | SR-15-22 |
+| D26 | 破線を付けた図形が、破線の走る最短辺に 3 周期分の長さを持つ | warning | SR-15-23 |
+| D27 | 線種を運べない細い図形だけの図が、塗りの系列を供給の 4 段より多く要求していない | warning | SR-15-24 |
+| D28 | 凡例の見本が語る符号（塗り, 線色, 線種）が図の中に実在する | warning | SR-15-25 |
 
 D0-D9 が**幾何と可読性**を見るのに対し、D10-D13 は**素材**（色・密度・外部依存・書体）を見る。素材の検査が別に要るのは、ビルダー関数の入口にある上限やトークン表が決定論経路にしか効かず、agent が SVG を直接書く LLM 経路を素通りするため。D10-D13 の判定値は検査器へ写経せず実装から実行時抽出する（SR-15-11）。走査範囲も D1 と異なり、`<defs>` / `<marker>` 等のローカル座標系の中身も含めて SVG 全体を見る（座標系の別は素材の除外理由にならない）。
 
@@ -406,6 +424,35 @@ D0-D9 が**幾何と可読性**を見るのに対し、D10-D13 は**素材**（�
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-16-01 | **各 slideType は、そのテンプレートが読む `content` の本文キーを持つ**（例: `slide-message` は `content.main`。`content.message` では本文が出ない） | 表は `vendor/scripts/validate-structure.js` の `TEMPLATE_BODY_KEYS`（長い名 17 型）。機械検証は V-044。表の値は「テンプレートのプレースホルダ名」ではなく「`render-slide.cjs` が読む源のキー」で、派生キー（`svg` / `headers` / `gridRows` 等）は render 側が計算するため両者は一致しない。表とテンプレートのずれは `tests/test_template_body_keys.py` が render して検出する | `vendor/scripts/templates/` には短縮名（`message.html.tpl`）と長い名（`slide-message.html.tpl`）が対で置かれ、`loadTemplate` は slideType そのままの名前を先に引くので旧世代の deck は短縮名テンプレートへ落ちる（どちらも現役）。ところが対の間で本文キーの名前が違うものがあり（`message` は `{{message}}` / `slide-message` は `{{main}}`）、短縮名の書き方のまま slideType だけ長い名にすると、汎用のテキスト有無検査は通るのに本文が空の `<p class="main-message"></p>` が出る。描画してからでないと気付けず、充填率の統計も 0.000 の面で汚れる |
+
+---
+
+## §18 出力ファイルの構成
+
+| SR-ID | ルール | 値 / 実装 | Why |
+|-------|--------|-----------|-----|
+| SR-0-01 | **生成した deck は CSS と JS を HTML から分離して出力する**（`index.html` にインライン `<style>` を置かない。インライン `<script>` も置かない。ただし `src=` を持つもの と `type="application/json"` は分離済み／データとして許す） | 判定は `vendor/scripts/phase-gate.js:162-171`（Gate 2 = `P3->P3_5`）。構成段階の `validate-structure.js` V-020 はこの Gate へ委ねる。**ただし既定経路ではこの Gate は選ばれない**（下記） | インライン化すると 1 ファイルに 3 言語が混ざり、CSS 側の検査器（`validate-visual-generation.py` / `lint-contract-drift.py` の css-route）が読む対象を失う。分離は見た目の作法ではなく、**後段の検査が届く前提** |
+
+> **この規則は既定の経路では判定されていない**（実測 2026-08-14）。`vendor/scripts/workflow-manager.js` の `detectPhase()` は**ファイルの存在**で phase を決めるため、`index.html` があれば P3_5 と判定され、`P3->P3_5` の Gate 2 は選ばれない。逆に `index.html` が無ければ Gate 2 の検査対象そのものが無い。**規則を評価できる状態と、Gate が選ばれる状態が排他になっている。**唯一の抜け道である `.workflow-state.json` は、このプラグイン内に**書く箇所が無く**、出荷済みの実 deck にも 1 件も存在しない。実行体は在るので `no-checker` ではないが、**在ることと通ることは別**である。配線の修正は 8/15 の凍結明けまで見送り（`references/known-unfixed.md` K-005）。
+
+---
+
+## §17 仕様本文がまだ無い SR の一覧（欠落台帳）
+
+**ここは規則を定める節ではない。**`vendor/scripts/validate-structure.js` の `V_DEFINITIONS` が `sr:` で名指ししているのに、この spec-registry のどこにも規則行が無い SR-ID を並べる。検査 ID の側には名前があるが、その名前が指す規則本文が存在しない状態で、V-001 と同じ形（規則はあるが誰も見ていない）の裏返しにあたる。
+
+2026-08-14 時点で **6 種 / 参照している V-ID は 9 件**（SR-0-01 は §18 へ規則行として出たので、この表から消えた）。本文が書かれた SR はこの表から消え、該当する節へ規則行として移る。**この表の行数が減らないなら、台帳が増えているだけである。**
+
+| SR-ID | 参照している V-ID | 本文をどこに書けば消えるか |
+|-------|------------------|--------------------------|
+| SR-0-02 | V-025（FAIL / 構成の基本的な妥当性） | 行き先未定。**規則名と実装の食い違いは名前を実装へ寄せて決着済み**。`V-025` の desc は「標準 CSS クラス名のみ使用」から、実装が実際に見ている 3 つ（slideType が有効・JSON schema 適合・基本構造エラーなし）の受け皿を兼ねる説明へ変更した（`vendor/scripts/validate-structure.js`。旧 desc の行き先と分割候補は同ファイルのコメントに残っている）。残るのは本文をどの節へ置くか |
+| SR-V8-COVER | V-031 / V-032（FAIL） | v8 拡張フィールドのデータ整合を扱う節が要る。候補は §16（本文キーの整合）で、「データが自分自身と食い違わない」という主題が近い。寄せるか新節を立てるかは未決 |
+| SR-V8-INDEX | V-033 / V-034（FAIL） | 同上 |
+| SR-V8-DIAGRAM | V-035 / V-036（FAIL） | 同上 |
+| SR-V8-PAGE | V-037（FAIL） | 同上 |
+| SR-V8-COLOR | V-038（WARN） | 同上 |
+
+各 V-ID が実際に何を見ているかは `V_DEFINITIONS` の `desc` にある。**それを規則本文の代わりに読まないこと。**desc は検査の説明であって、なぜその規則があるかを持たない。加えて desc は実装とずれることがある（SR-0-02 は実際にずれていて、名前を実装へ寄せて直した）。
 
 ---
 

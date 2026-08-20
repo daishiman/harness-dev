@@ -49,9 +49,18 @@ agent_refs:
   - ../../agents/system-spec-doc-freshness-auditor.md
 feedback_contract:
   skip_reason: "assign kind は loop criteria 対象外。合否基準は checklist の 6 評価観点 (foundation_trace/decision_guidance/prompt_quality=C05 自前評価 / matrix_coverage=C07 監査 + C06 ヒアリング品質 sub-input / design_knowledge_reflection=C05 自前評価 / doc_freshness=C08 監査) の evaluator ゲート、および validate-coverage-matrix.py の決定論ゲートで担保する。"
+runtime_root_policy: host-skill-path
 ---
 
 # assign-system-spec-completeness-evaluator
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > 生成された仕様書ドキュメントセットを、上位概念trace / 意思決定根拠 / マトリクス網羅性 / deep knowledge目的適合 / 最新出典 / prompt品質の観点で評価し、観点別スコア + 総合判定 (PASS/FAIL) + 不足事項一覧を返す independent evaluator。`context:fork` で生成者と評価者を分離する。
 

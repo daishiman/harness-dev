@@ -224,8 +224,9 @@ plugins/prompt-creator/
 手動実行例:
 
 ```bash
-python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/generate-sheet.py --help
-python3 plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/log-usage.py --result success --phase manual
+PROMPT_CREATOR_ROOT="/absolute/path/to/harness/plugins/prompt-creator"
+python3 "$PROMPT_CREATOR_ROOT/skills/run-prompt-creator-7layer/scripts/generate-sheet.py" --help
+python3 "$PROMPT_CREATOR_ROOT/skills/run-prompt-creator-7layer/scripts/log-usage.py" --result success --phase manual
 ```
 
 ---
