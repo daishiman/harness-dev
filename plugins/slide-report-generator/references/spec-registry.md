@@ -189,7 +189,7 @@
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-9-01 | **WCAG 2.1 AA 準拠**（コントラスト比 4.5:1 以上） | 本文前景で最小になるのは `--fg-muted` on 地（`paper`）= **5.02:1**。この値は `paper` に連動するので、`paper` を動かしたら引き直す。色の正本は `style-builder.cjs SPEC.colors` | 視覚障害含む全ユーザー可読性 |
-| SR-9-02 | `:focus-visible` を全インタラクティブ要素に適用 | `:focus-visible { outline: 3px solid var(--accent-blue-vivid); outline-offset: 2px; }` | キーボード操作可視性 |
+| SR-9-02 | `:focus-visible` を全インタラクティブ要素に適用 | `:focus-visible { outline: 3px solid var(--accent-blue-vivid, #3B7DD8); outline-offset: 2px; }` | キーボード操作可視性 |
 | SR-9-03 | `prefers-reduced-motion` 対応必須 | CSS: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` ＋ JS は SR-6-08 | 前庭障害・乗り物酔い配慮 |
 | SR-9-04 | **UI テキスト（ナビ・ラベル・キャプション）の opacity は 0.6 以上**。ただし **`--fg-muted` に opacity を掛けない**。薄くするなら `--ink` から下げる | `.text-note { opacity: 0.7; }` 等 | 0.3 等は読めない。`--fg-muted` を除外するのは、SR-9-01 の下限に対する余裕が **0.5 しかない**ため。0.6 を掛けると AA を割る。**別々に読めば両方正しく、組み合わせたときだけ壊れる**ので、どちらの検査器も鳴らない |
 | SR-9-05 | `aria-label` を SVG 図解に必須 | `<svg role="img" aria-label="図解の説明">` | スクリーンリーダー対応 |
