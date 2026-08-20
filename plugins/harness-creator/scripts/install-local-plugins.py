@@ -2,6 +2,12 @@
 # /// script
 # name: install-local-plugins
 # purpose: harness の全 plugin を Claude Code/Codex の user 領域へ cwd 非依存で導入・検証する。
+# inputs:
+#   - argv: (--plugin NAME ...|--all) [--platform claude|codex|both] [--check]
+# outputs:
+#   - stdout: product別install/verification receipt JSON
+#   - exit: 0=verified / 1=pending user gate / 3=catalog・CLI・artifact契約違反
+# contexts: [C, E]
 # network: false
 # write-scope: ${CLAUDE_CONFIG_DIR:-~/.claude}, ${CODEX_HOME:-~/.codex} (明示実行時のみ)
 # dependencies: [claude, codex]

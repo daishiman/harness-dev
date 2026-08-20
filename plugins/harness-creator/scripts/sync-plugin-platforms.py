@@ -2,6 +2,12 @@
 # /// script
 # name: sync-plugin-platforms
 # purpose: 新規/既存 Claude plugin から Codex manifest と repo marketplace を決定論生成する。
+# inputs:
+#   - argv: --repo-root PATH (--plugin PLUGIN_DIR|--all) [--apply|--check]
+# outputs:
+#   - stdout: plugin別upsert/check receipt JSON
+#   - exit: 0=整合 / 1=drift・検証違反 / 2=引数不正 / 3=入力・契約を読めない
+# contexts: [C, E]
 # network: false
 # write-scope: <plugin>/.codex-plugin, <plugin>/hooks/hooks.json (inline hooks の初回正規化),
 #              <repo>/.agents/plugins/marketplace.json

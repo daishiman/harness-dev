@@ -2,6 +2,12 @@
 # /// script
 # name: install-codex-plugin
 # purpose: 明示依頼された local/Git marketplace plugin を Codex CLI へ登録・install・検証する。
+# inputs:
+#   - argv: --source SOURCE --plugin NAME [--ref REF] [--codex-home PATH]
+# outputs:
+#   - stdout: install/verification receipt JSON
+#   - exit: 0=verified / 1=verification未達 / 3=source・CLI・artifact契約違反
+# contexts: [C, E]
 # network: conditional (Git source のみ)
 # write-scope: ${CODEX_HOME:-~/.codex} (明示実行時のみ)
 # dependencies: [codex]
