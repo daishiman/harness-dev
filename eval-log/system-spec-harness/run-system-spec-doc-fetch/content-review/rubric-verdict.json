@@ -2,12 +2,12 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4"
+    "skill_md_sha256": "3c406370e38c55783272130e89317babc552dd8bea266c1597f199bdca343a86"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -19,19 +19,23 @@
   },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "単一責務が明確 (公式ドキュメント出典記録 fetched-references.json の組み立て) で境界が rubric 通り: 鮮度の意味判定を C08 へ委譲し取得は WebSearch/WebFetch に限定。allowed-tools は WebSearch/WebFetch/Read/Bash の目的整合 allowlist。",
-      "出力契約が schema (fetched-references.schema.json) と JSON 例に接地し、IN1 が validate-source-citation.py exit0 という検証可能述語で担保。SSOT: 記録は build-fetched-references.py で正規化し手書き JSON で緑化しない旨を Key Rule4 で明示。",
-      "深度が高い: 公式一次情報限定・捏造禁止 (fail-visible)・恒久キャッシュ禁止・実取得時刻厳守・doctrine anchor 準拠まで、なぜその制約かが評価可能な粒度で記述され、knowledge qualification の単一 writer (C01 set-knowledge-candidate) 経由も担保。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low/smell] 簡潔性: doctrine anchor 段落が単一パラグラフに C13/C14/C01/C03 と 4 authority を高密度に詰め、また検証コマンド節の PLUGIN_ROOT が未使用。事実は正確で閾値は満たすが密度はやや高い。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4) を ref-skill-design-rubric 規範で採点。FM: name=kebab+run prefix・description=Use when 形・kind/effect 整合。BD: Purpose & Output Contract 節・Gotchas 節・出力契約 (JSON 例) あり (162 行、resource-map で Progressive Disclosure)。NM: ディレクトリ名一致。境界: 鮮度判定を C08 委譲・MCP 対象外を明示。SSOT: build-fetched-references.py が決定論 assembler、validate-source-citation.py が IN1 ゲート。全参照実在。high severity 0・低 smell 1 (密度/PLUGIN_ROOT 未使用) のみで全次元閾値クリアのため PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
 }

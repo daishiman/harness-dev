@@ -2,26 +2,43 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9"
+    "skill_md_sha256": "c6dcb9af06c078888d7ffc77d4f2067f029951a6eaef0792997ea435e5cc4135"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
-    "positive_feedback": [
-      "FM/BD/PD 準拠: name=run-skill-live-trial (kebab + run prefix・ディレクトリ名一致)、description は Use-when 形、argument-hint に --proof/--model を宣言。Purpose (Output Contract 相当) + Gotchas 節があり本文 300 行以内。completeness_exempt で prompts/manifest の免除理由を具体的に明記し PD を満たす。",
-      "単一責務・境界・検証可能性: acceptance 専用 (selection を扱わない・1 実走=1 skill) に責務を絞り、ローカル開発環境限定 / 量産先配備対象外 / denylist の配備境界を明示。poll exit code 表・STALL 分岐表・self-test/pytest コマンド・actual_model 機械 gate で検証可能性が高く、数値上限を convergence-policy.json 正本へ委譲する SSOT も守られている。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "ref-skill-design-rubric の規範 (FM/BD/PD・単一責務・境界・出力契約・SSOT) で現 SKILL.md (sha256 a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9) を genuine 採点。FM (name kebab+prefix / description=Use-when / argument-hint)、BD (Purpose+Gotchas+300 行以内)、PD (completeness_exempt で prompts/manifest 免除理由を明記)、単一責務 (acceptance 専用・selection 非対象)、境界 (ローカル限定・配備対象外・denylist)、SSOT (数値上限を convergence-policy.json へ委譲)、出力契約 (verdict.json の schema 自己検証) を確認。high severity 0 件。閾値超過で PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

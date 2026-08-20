@@ -42,6 +42,14 @@
       "applies_to": ["配布pluginのREADMEセットアップ手順", "外部依存(API/DB/秘密)の疎通確認", "install位置非依存の資産解決"],
       "transferred_to": ["plugins/mf-kessai-invoice-check/lib/mfk_doctor.py", "plugins/mf-kessai-invoice-check/README.md Step3+故障モード警告", "scripts/lint-readme-plugin-root-portability.py", "plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md 層2"],
       "principle": "導入者がコピペするREADMEに生 $CLAUDE_PLUGIN_ROOT/repo相対を書かず、疎通確認は __file__ 相対で自己解決する doctor へチャット委譲し、生パスは fallback 形 ${CLAUDE_PLUGIN_ROOT:-plugins/<name>} で開発者補足へ降格する。doctorは秘密マスク・WARN-not-FAIL・GET専用・既存lib再利用。再現性はREADME portability lintで機械担保する(re_audit_trigger: 新規配布plugin生成 / README bash編集)"
+    },
+    {
+      "id": "P006",
+      "name": "証拠IDと証拠出典を分離し、独立性は出典で数える",
+      "origin": "external-intelligence 30思考法 elegant-review 2026-08-20",
+      "applies_to": ["external memory", "evidence-gated lifecycle", "agent telemetry", "promotion governance"],
+      "transferred_to": ["plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py", "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py", "plugins/harness-creator/skills/ref-knowledge-loop/references/external-intelligence.md"],
+      "principle": "turn/tool-use/UUIDなど毎回変わる識別子は冪等・追跡に使い、独立証拠の件数には使わない。成熟度は issue、別テスト系、別調査元など安定した意味出典でゲートし、legacy 証拠は出典不明の1系統として fail-closed に扱う (re_audit_trigger: evidence/promotion schema 変更時)"
     }
   ],
   "update_rule": "elegant-review が新しいパターンを抽出したら、原則1周あたり1パターン追加。同種パターンは統合する。"

@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/artifact-presentation-receipt.schema.json",
+  "title": "Actual Artifact Presentation Receipt",
+  "description": "usable-draft proof後にhostが実artifactのpath/digest/smokeと提示時刻を記録するreceipt。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "event_type", "source", "run_id", "subject",
+    "artifact_path", "artifact_sha256", "target_manifest_sha256",
+    "contract_binding_sha256", "usable_draft_proof_sha256", "artifact_created_at",
+    "smoke", "occurred_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "event_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"},
+    "event_type": {"type": "string", "const": "artifact-presented"},
+    "source": {"type": "string", "const": "host"},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "artifact_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "artifact_sha256": {"$ref": "#/definitions/sha256"},
+    "target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+    "contract_binding_sha256": {"$ref": "#/definitions/sha256"},
+    "usable_draft_proof_sha256": {"$ref": "#/definitions/sha256"},
+    "artifact_created_at": {"type": "string", "format": "date-time"},
+    "smoke": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "mode", "exit_code"],
+      "properties": {
+        "status": {"type": "string", "const": "PASS"},
+        "mode": {"type": "string", "const": "parse-or-open"},
+        "exit_code": {"type": "integer", "const": 0}
+      }
+    },
+    "occurred_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -348,6 +348,26 @@ class BuildClaudeSettingsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 3)
         self.assertIn("unknown hook event", result.stderr)
 
+    def test_managed_post_tool_failure_hook_is_supported(self):
+        self.write_target({"permissions": {"deny": [], "ask": []}, "hooks": {}})
+        self.plugin(
+            "alpha",
+            hooks=self.hook(
+                "python3 record-failure.py",
+                matcher="Bash|Write",
+                event="PostToolUseFailure",
+            ),
+        )
+
+        result = self.run_cli()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        data = MODULE.load_target(self.target)
+        self.assertEqual(
+            data["hooks"]["PostToolUseFailure"][0]["hooks"][0]["command"],
+            "python3 record-failure.py",
+        )
+
     def test_symlink_shared_skill_is_not_conflict(self):
         # 複数 plugin が同名 skill を symlink で 1 実体から共有する場合は、
         # 名前衝突ではなく共有 (shared) として dedupe し exit2 にしない。

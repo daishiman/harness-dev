@@ -1,27 +1,41 @@
 {
-  "target": {"plugin": "slide-report-generator", "skill": "run-slide-report-modify", "skill_md_sha256": "f9dd56217a4096a25e4c63c786f7666cc62860accbe162a66f26787fafb48dc0"},
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-modify",
+    "skill_md_sha256": "d7db8384c04d51131893566fe4046ecda1fb8f9065858b9b57a68230a14c7d04"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "assign-skill-design-evaluator-focused-combined",
-  "reviewed_at": "2026-07-24T00:00:00Z",
-  "iterations": 2,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "SKILL.md 構造次元は満充足: BD-001『## Purpose & Output Contract』、BD-002『## Gotchas』、BD-003 body 行数(<=300)、FM-003 trigger(description は状況『既存デッキ/レポートを output_mode 保ったまま指定箇所だけ部分修正したいとき』を保持)いずれも維持。frontmatter feedback_contract.criteria(IN1/OUT1)は purpose-acceptance で汎用ゲート言い換えでなく、mode 判定→validate-output-mode→局所修正→mode 別 R3 再評価の責務連鎖と一貫。今回追加(013 帯・report 不変条件へ RCONST_013 の入口ホリゾンタル追記)は SKILL.md 内で自己整合。",
-      "additive 整合: SKILL.md L87 の RCONST_013 追記(入口ホリゾンタル=タイトル/リード/summary の読者価値)は既存の RCONST_007(読み物文体)/RCONST_008(1項目1ビジュアル)/RCONST_005(骨格順序)と非重複の新規次元で、意匠/技術 SSOT 不変(RCONST_010)や最小変更(RCONST_006)・承認必須(RCONST_003)を侵さない。生成側 CONST_008/RCONST_007(設計)・RQ31-34/D5(評価)が守る入口設計を修正経路にも保持ガードとして張る補完で、責務境界の逸脱なし。",
-      "cross-file 整合の解消(iter2): iter1 で context 記録した『SKILL.md が正本と参照する R1-orchestrate.md との帯不一致』は R1-orchestrate.md L67/98/99/211 の 013 帯更新により解消。SKILL.md とその参照先 orchestration SSOT が同一帯で整合し、変更伝播不足の減点要因が消失。IN1(script)/OUT1(test)は purpose-acceptance を維持し、frontmatter・schema_refs・combinators・境界は不変で rubric 採点次元への波及なし。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[open-item・意図的・非 FAIL] SKILL.md L87 が参照する RCONST_013 の規則本文は report-modification-rules.md L90 で TODO(human)。SKILL.md 側は完成文言だが指す先の規則本文が未充填という『不完全規則への参照』は SKILL.md 品質上の軽微な残存減点要因。Learning ワークフローの人間入力待ちの既知 open-item で、人間入力後に解消。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review(4条件+rubric を 1 context 統合)の rubric 側・再評価(iter2)。score=94/threshold=80/passed=true(構造次元 SKILL.md は全 rubric 項目=Purpose&Output Contract/Gotchas/body length/trigger を満充足し内部整合。iter1 の減点 -12 のうち (b)R1-orchestrate.md との帯不一致=変更伝播不足 は 013 帯更新で解消し +6 回復。残存 -6 は (a)SKILL.md L87 が指す RCONST_013 本文が TODO(human) の『不完全規則への参照』のみで、これは意図的 open-item)。cross-file の帯 self-inconsistency は elegance-verdict.json iter2 で解消・PASS 判定済み(統合 verdict=PASS、RCONST_013 TODO(human) を意図的 open-item として残置)。deterministic score 機構(render-findings-score.py の rubric_hash/composition_hash)は本 focused 手評価では未起動ゆえ score は定性判定であり、build harness exhaustive 経路で再採点する場合は当該機構の数値を正本とする。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+34 行) には共通 injection 以外の残差 13 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
 }

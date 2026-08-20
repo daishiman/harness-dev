@@ -2,26 +2,43 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9"
+    "skill_md_sha256": "c6dcb9af06c078888d7ffc77d4f2067f029951a6eaef0792997ea435e5cc4135"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
-    "positive_feedback": [
-      "fork acceptance と live-trial の観測対象 (Stop hook 自走 / 入れ子 Skill / 対話 gate 越え / 本番 plugin・hook ロード) を表で直交させ、どの段まで要るかを derive_acceptance_tier() の決定論導出に委ねているため適用境界が主観判断なく確定する。goal を proxy にしない絶対ルールと DEGRADED 降格 (nudge/gate 応答 >0) が判定ロジック表と一貫。",
-      "proof trial の実走 model 証明を transcript 抽出の actual_model 機械 gate のみに限定し boot READY 行の MODEL: は requested の echo と明記 (OUT2)、denylist を boot/verdict の二重機械 gate で拒否 (OUT3)、数値上限を convergence-policy.json 正本に委ねて本文へ生値を書かない (二重宣言禁止) など、証拠と正本の分離が徹底されている。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 判定ロジック表 (起動/完走/goal 適合→総合)・proof trial の扱い (DEGRADED→FAIL・actual_model 不一致→FAIL)・数値上限の本文非記載が一貫。②漏れなし: 適用境界表、スコープと配備境界、絶対ルール 1〜4、goal-seek、局面カタログ (事前計画/準備/boot/send/poll/STALL 分岐表/回収/goal verification/verdict+掃除)、判定ロジック、検証、Gotchas、関連を網羅。completeness_exempt で prompts/manifest の免除理由を明記し acceptance harness として妥当。③整合性: feedback_contract 5 criteria (IN1 test / IN2 script / OUT1 evaluator / OUT2 live-trial / OUT3 script) が本文主張と一致。④依存整合: schema_refs (live-trial-verdict.schema.json)、reference_refs (task-template.md/transcript-jsonl.md/../run-elegant-review/references/convergence-policy.json/../run-build-skill/references/goal-seek-paradigm.md/../../references/orchestrate-gate-pattern.md)、script_refs (plan-live-trials/live-trial-backend/boot/send/status/poll/verdict) を実ディスクで確認し全て resolve。検証節が参照する tests/test_live_trial_harness.py は repo-root 相対で実在 (harness cwd 規約に整合) し dependency break なし。重大問題なし PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

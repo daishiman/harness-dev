@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/review-launch-request.schema.json",
+  "title": "Initial Review Runtime Launch Request",
+  "description": "durable leaseのatomic consume後だけ発行され、stale時は同一idempotency identityで再配送できるread-only launch契約。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "authorized", "request_id", "idempotency_key", "launch_count", "runtime_neutral_request", "runtime_adapter"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "authorized": {"type": "boolean", "const": true},
+    "request_id": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
+    "idempotency_key": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
+    "launch_count": {"type": "integer", "const": 1},
+    "runtime_neutral_request": {"$ref": "#/definitions/common_request"},
+    "runtime_adapter": {
+      "oneOf": [
+        {"$ref": "#/definitions/claude_adapter"},
+        {"$ref": "#/definitions/codex_adapter"}
+      ]
+    }
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "contract_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_manifest_sha256", "method_catalog_sha256", "method_catalog_version", "prompt_sha256", "review_schema_sha256", "review_schema_version"],
+      "properties": {
+        "target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+        "method_catalog_sha256": {"$ref": "#/definitions/sha256"},
+        "method_catalog_version": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"$ref": "#/definitions/sha256"},
+        "review_schema_sha256": {"$ref": "#/definitions/sha256"},
+        "review_schema_version": {"type": "integer", "const": 1}
+      }
+    },
+    "target_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "size": {"type": "integer", "minimum": 0}
+      }
+    },
+    "common_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["launch_request_id", "idempotency_key", "run_id", "subject", "artifact_fingerprint_sha256", "review_claim_id", "evaluator_id", "prompt_ref", "output_schema_ref", "contract_binding", "target_manifest", "required_method_ids", "pre_diagnostic_authorization", "context_policy", "tool_policy", "thought_reset"],
+      "properties": {
+        "launch_request_id": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
+        "idempotency_key": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
+        "run_id": {"type": "string", "minLength": 1},
+        "subject": {"type": "string", "minLength": 1},
+        "artifact_fingerprint_sha256": {"$ref": "#/definitions/sha256"},
+        "review_claim_id": {"type": "string", "pattern": "^IRC-[0-9a-f]{32}$"},
+        "evaluator_id": {"type": "string", "const": "elegant-initial-draft-evaluator"},
+        "prompt_ref": {"type": "string", "const": "prompts/R5-initial-draft-evaluate.md"},
+        "output_schema_ref": {"type": "string", "const": "schemas/initial-draft-review.schema.json"},
+        "contract_binding": {"$ref": "#/definitions/contract_binding"},
+        "target_manifest": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/target_file"}},
+        "required_method_ids": {"type": "array", "minItems": 30, "maxItems": 30, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "pre_diagnostic_authorization": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["selected_level", "presentation_receipt_sha256", "choice_event_sha256", "presentation_event_id", "choice_event_id", "choice_occurred_at"],
+          "properties": {
+            "selected_level": {"type": "string", "enum": ["light", "standard", "detailed"]},
+            "presentation_receipt_sha256": {"$ref": "#/definitions/sha256"},
+            "choice_event_sha256": {"$ref": "#/definitions/sha256"},
+            "presentation_event_id": {"type": "string", "minLength": 3},
+            "choice_event_id": {"type": "string", "minLength": 3},
+            "choice_occurred_at": {"type": "string", "format": "date-time"}
+          }
+        },
+        "context_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["context_count", "fresh_context", "parent_history_used"],
+          "properties": {
+            "context_count": {"type": "integer", "const": 1},
+            "fresh_context": {"type": "boolean", "const": true},
+            "parent_history_used": {"type": "boolean", "const": false}
+          }
+        },
+        "tool_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "allowed_tools", "forbidden_capabilities"],
+          "properties": {
+            "mode": {"type": "string", "const": "read-only"},
+            "allowed_tools": {"type": "array", "const": ["Read", "Glob", "Grep"]},
+            "forbidden_capabilities": {"type": "array", "const": ["write", "edit", "shell", "agent-spawn"]}
+          }
+        },
+        "thought_reset": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["required", "physical_deletion_allowed", "fresh_target_read_required"],
+          "properties": {
+            "required": {"type": "boolean", "const": true},
+            "physical_deletion_allowed": {"type": "boolean", "const": false},
+            "fresh_target_read_required": {"type": "boolean", "const": true}
+          }
+        }
+      }
+    },
+    "claude_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "invocation_kind", "entrypoint"],
+      "properties": {
+        "runtime": {"type": "string", "const": "claude-code"},
+        "invocation_kind": {"type": "string", "const": "task"},
+        "entrypoint": {"type": "string", "const": "elegant-initial-draft-evaluator"}
+      }
+    },
+    "codex_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "invocation_kind", "entrypoint"],
+      "properties": {
+        "runtime": {"type": "string", "const": "codex"},
+        "invocation_kind": {"type": "string", "const": "subagent"},
+        "entrypoint": {"type": "string", "const": "prompts/R5-initial-draft-evaluate.md"}
+      }
+    }
+  }
+}

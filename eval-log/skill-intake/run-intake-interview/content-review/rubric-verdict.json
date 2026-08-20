@@ -1,1 +1,46 @@
-{"target":{"plugin":"skill-intake","skill":"run-intake-interview","skill_md_sha256":"cf860f3e06d78449da4ee2162d82a191dbef4ff365b26580da284d6dcc6f7e13"},"review_kind":"rubric","reviewer":"independent-procedure-review-subagent-interview","verdict":"PASS","reviewed_at":"2026-07-05T05:50:29Z","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","IN2","OUT1","IN3","IN4","OUT2","OUT3"],"positive_feedback":["FM (frontmatter) 充足: name=run-intake-interview / kind=run / user-invocable=true / version=0.1.1 / description は trigger 表現を含み lint 規約適合。feedback_contract.criteria が旧3本→7本(IN1,IN2,OUT1,IN3,IN4,OUT2,OUT3)へ拡張され各 id/loop_scope(inner:IN1,IN2,IN3,IN4 / outer:OUT1,OUT2,OUT3)/text/verify_by(lint/script/elegant-review/test)が構造健全。","BD (本文) 充足: ## Purpose & Output Contract / ## Key Rules / ## ゴールシーク実行 / ## 現状手順(procedure)軸の抽出 / ## Gotchas / ## Additional Resources が揃い、入力/出力/完了条件を明示。procedure 追加後も全170行で <=300 行制約内。進行的開示は skill ローカル references/(five-axes-priority/abstract-answer-patterns/question-bank-pointer/resource-map/question-plan/to-be-vocabulary-patterns)+ prompts/R1-main.md + schemas/output.schema.json + workflow-manifest.json + plugin 共有 ../../references//../../scripts/ で成立。","NM (命名) 適合: dirname==name==run-intake-interview で一致、run- prefix / kebab-case / <=60字。scripts/ 配下は .py のみ(build-questions/build-sheet-json/check-five-axes-coverage/validate-answer-abstraction/validate-interview-json)。procedure 完全性ゲートは plugin-root ../../scripts/validate-procedure-completeness.py として共有配置され skill 内へ重複実装しない責務境界(SKILL procedure節step5 で明記)を保つ。","PD (宣言 refs) 実在: responsibility_refs=prompts/R1-main.md 実在、schema_refs=schemas/output.schema.json 実在、manifest=workflow-manifest.json 実在。procedure 追加で新規参照された references/question-plan.json(procedure_axis 定義)・references/to-be-vocabulary-patterns.md(contamination 正本)・../../scripts/validate-procedure-completeness.py も全て実在解決(MISS 0)。","5次元 各>=2 で genuine PASS: 完全性(purpose を procedure 含め過不足なく被覆) / 一貫性(2連続 exit3 閾値・contamination スクリプト参照が Key Rules(8,9)/procedure節/Checklist/question-plan.json/output.schema.json で相互整合) / 深度(detailed↔overview_fallback 決定論分岐・3線 to-be 防御・ゴールシーク Checklist) / 検証可能性(全完了条件が exit0 スクリプト+受入テスト 68 passed に対応) / 簡潔性(170<=300 行)。IN3/IN4 は共有スクリプト実行で、OUT2 は受入テストで機械裏付けを確認済。"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual","next_action":"none"},"notes":"rubric 観点(FM/BD/NM/PD + 5次元)で現 SKILL.md(sha256 cf860f3e..., 170行)を実読照合。procedure 軸追加後の frontmatter criteria 7本(IN1/IN2/OUT1/IN3/IN4/OUT2/OUT3)を網羅。構造・命名(dirname==name)・宣言 refs(responsibility_refs=prompts/R1-main.md / schema_refs=schemas/output.schema.json / manifest=workflow-manifest.json)と新規 refs(question-plan.json / to-be-vocabulary-patterns.md / ../../scripts/validate-procedure-completeness.py)が全て実在。5次元各>=2、BLOCKER なしのため PASS。"}
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-intake-interview",
+    "skill_md_sha256": "032f15c32141c7bf7f5a61f9687e053feedfbde9c07e1a66f6c3b78161bd01da"
+  },
+  "review_kind": "rubric",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "verdict": "PASS",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "IN3",
+      "IN4",
+      "OUT2",
+      "OUT3"
+    ],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
+}

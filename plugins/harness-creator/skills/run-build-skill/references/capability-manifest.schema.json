@@ -51,14 +51,22 @@
         "knowledge_loop": {
           "type": "object",
           "description": "任意。with-knowledge combinator を適用したスキルが宣言する横断 capability 記述子。knowledge/ 蓄積・3段階検索・§12フィードバックループの実体を指す。正本仕様は ref-knowledge-loop。commonCore.required には含めない(全 kind 共通の必須ではないため)。",
-          "required": ["pattern"],
           "additionalProperties": false,
+          "allOf": [
+            {
+              "if": { "required": ["contract_version"] },
+              "then": { "required": ["contract_version", "pattern", "consult_at", "runtime_store", "runtime_scope"] }
+            }
+          ],
           "properties": {
+            "contract_version": { "type": "integer", "const": 1, "description": "runtime knowledge-loop 契約の生成マーカー。1 を宣言した新規生成物は必須キーと共通 engine 同一性を fail-closed で検査する。" },
             "pattern": { "enum": ["index-search", "router-registry"], "description": "index-search型=固定/ペルソナ。router-registry型=外部素材から継続同期。" },
             "index": { "type": "string", "description": "索引ファイルへの相対パス。index-search型は knowledge/knowledge-index.json、router-registry型は knowledge/router.json。" },
             "scoring_weights": { "type": "object", "description": "フィールド重み付きスコアリングの重み (title/keywords/quote/voice/fulltext)。省略時は既定値。" },
-            "usage_log": { "type": "string", "description": "§12 活用ログ (jsonl) への相対パス。matched_ids/used_ids/satisfaction を追記。" },
-            "consult_at": { "type": "array", "items": { "type": "string" }, "description": "蓄積知識を参照する局面 (例: runtime, build-time)。Loop B (harness-creator 自己適用) では build-time を含む。" }
+            "usage_log": { "type": "string", "description": "curated seed の検索品質ログ (jsonl) への相対パス。runtime 観測の正本ではない。" },
+            "consult_at": { "type": "array", "items": { "type": "string" }, "description": "蓄積知識を参照する局面 (例: runtime, build-time)。Loop B (harness-creator 自己適用) では build-time を含む。" },
+            "runtime_store": { "enum": ["external-intelligence-v1"], "description": "未検証の runtime 観測を package 外へ保存する共通 engine 契約。" },
+            "runtime_scope": { "enum": ["project", "user"], "description": "既定 project。project は Git common dir、user は plugin data/XDG state へ解決する。" }
           }
         },
         "feedback_contract": {
@@ -101,7 +109,7 @@
         "disable-model-invocation": { "type": "boolean" },
         "user-invocable": { "type": "boolean" },
         "pair": { "type": "string", "description": "Generator/Evaluator 双方向リンク先 skill name。" },
-        "effect": { "type": "string", "enum": ["none", "read", "write", "external"] },
+        "effect": { "type": "string", "enum": ["none", "conversation-output", "local-artifact", "external-mutation"], "$comment": "正本: skill-governance-lint/scripts/validate-frontmatter.py EFFECT_VALUES。現行 SKILL.md の副作用分類と同期する。" },
         "source": { "type": "string" },
         "source-tier": { "type": "string", "enum": ["external-official", "internal", "experimental"] }
       }
@@ -127,7 +135,7 @@
         "kind": { "const": "hook" },
         "event": {
           "type": "string",
-          "enum": ["PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop", "SessionEnd", "SubagentStop", "PreCompact", "Notification"],
+          "enum": ["PreToolUse", "PostToolUse", "PostToolUseFailure", "UserPromptSubmit", "Stop", "SessionEnd", "SubagentStop", "PreCompact", "Notification"],
           "description": "Claude Code が発火するライフサイクルイベント。"
         },
         "matcher": {

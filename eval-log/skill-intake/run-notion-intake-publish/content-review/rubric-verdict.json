@@ -1,1 +1,42 @@
-{"target":{"plugin":"skill-intake","skill":"run-notion-intake-publish","skill_md_sha256":"79b662088d20a27a057b26eb625a885fc2bad0fa827bfec1e7d8ac42fe7ce2c6"},"review_kind":"rubric","verdict":"PASS","reviewer":"assign-skill-design-evaluator","reviewed_at":"2026-07-02T00:00:00Z","iterations":2,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","IN2","OUT1"],"positive_feedback":["前回 FAIL 軸 1 (frontmatter⇔本文不整合) 是正: description が「intake 成果物を Notion へ公開 / 再公開したいときに使う。初回 publish (workflow-manifest P10 委譲) と…再公開の両方に対応する」へ更新され、本文 Purpose L50-52 / 責務境界表 / Gotcha 1 の両対応契約と一致。catalog 上の初回 publish 導線が可視化","前回 FAIL 軸 2 (責務正本の機能不全) 是正: responsibility_refs/rubric_refs 正本の republish-contract.md が P10 委譲 + update 専用再公開の責務配置へ全面追従し、aggregator phase11 / notion-manifest.json.page_id の取り残しが消滅。workflow-manifest.json P10-notion (delegateSkill=run-notion-intake-publish, P11 dependsOn=[P10-notion]) と機械突合一致","構造必須は充足を維持: dir 名 == frontmatter name、'## Purpose & Output Contract' / '## Gotchas' 見出し実在、本文 199 行 ≤ 300、rubric_refs / responsibility_refs / manifest / Additional Resources の参照ファイル全実在 (dangling 0 を実測)","IN2 の機械検証点は実装と一致: pipeline L174-186 と publish --require-update の exit 51 二重防御、quality_gate.check_page_id_consistency (--result-path/--prev-page-id) 実在、初回翻訳ゲートの内容ベース化 (_has_publish_artifact) と retry 回復・legacy 空 url 耐性の regression 49 件 pass を実行確認。加えて create 経路の POST 直後即時 _write_result で partial-create 重複窓も封鎖済み"],"negative_feedback":["残存 (既存負債): Checklist #6 が「機械判定可能な完了条件」と称して委譲する拒否条件のうち 2 件 (intake.json.updated_at 逆転 → exit 2 / 60 秒未満連続起動 → exit 1) は intake_publish_pipeline.py / quality_gate.py に実装が見当たらない文書のみ契約のままで、republish-contract.md に未実装/manual 注記が無い断定宣言が残置。実装か注記付与で整合させるべき","残存 (既存負債): IN1 verify_by:lint に対応する単一発火点検証 lint (本 skill Steps が intake_publish_pipeline.py のみを起動し render/publish を直呼びしないことの機械検査) は今回も未配線 (plugins/skill-intake/scripts・repo scripts/ を走査し該当無し。tests/test_skill_intake_notion_contract.py は --check-api 文言検査のみ)。verify_by 宣言と検証手段の紐付け欠落が継続"],"iteration":2,"iteration_limit":3,"hook_trigger":"manual","next_action":"none"},"notes":"iteration 2 genuine 再評価 (sha f2b756d9)。前回 FAIL を駆動した整合軸 2 件 (description 旧契約 / 責務正本 republish-contract.md の正反対記述) は完全是正を実測確認し、依存実在・責務単一 (R1 pure script orchestration 1 責務・重複実装なし)・IN2 機械検証点の実装一致も維持。残存 negative 2 件は iteration 1 でも FAIL driver でなかった既存負債であり今回変更で悪化しておらず、frontmatter⇔本文⇔委譲先文書⇔実装の全体整合が成立するため PASS。負債 2 件は negative_feedback に明記し次改訂で解消を求める。 次改訂推奨(旧 next_action フィールドより移設・FAIL 非駆動): PASS。次改訂での推奨: 拒否条件 2 件の実装 or 未実装注記による整合、IN1 単一発火点 lint の新設配線 (SKILL.md Steps の起動 script 検査)"}
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-notion-intake-publish",
+    "skill_md_sha256": "d6dbba7f5953968f84ad301305bc5edb00a25d7b7e7ea49fefac8a66603bfec8"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+49 行) には共通 injection 以外の残差 6 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
+}

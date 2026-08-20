@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "48e3692b64868fe0aff718d0d0b4eb315349391a39f4866be50807a36485db7d"
+    "skill_md_sha256": "a91b456fb9f033bc9f59021c505caca1d80bc3968d7945bac2130714a47ec844"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-ubm-journal-4 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-18T09:40:00Z",
-  "iterations": 2,
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,28 +26,18 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "cr-ubm-journal-3 が挙げた 4 findings は全て実測で解消を確認した。finding1/2 (`### 1年目標（2025年度の振り返り）` の黙った入替): section_body に notes 引数が入り、`section_body(\"### 1年目標（2025年度の振り返り）\\n- 期間：2020-01-01〜2020-12-31\\n- 目標：古い内容\\n\", \"1年目標\", level=\"###\", notes=n)` は本文を返しつつ n に「完全一致する見出しが無いため、部分一致した「1年目標（2025年度の振り返り）」を採用しました。別の期の内容を読んでいないか確認してください。」を積む。build_context が prev_notes / wk_notes をソース名を前置して warnings へ合流させるため、この note は context JSON の warnings に実際に出る (合成 vault で確認)。",
-      "finding1/2 に対して採られた解が、除外語をさらに細くする 4 周目ではなく『採用結果を warnings へ出す』構造修正だった点を評価する。これは extract_day_tasks が ambiguous な日付見出しを差し戻す既存の作法と同型で、除外語の当て方に依存せずこのクラスを閉じる。見つからなかった場合 (`「今週の判断基準」の見出しが見つかりませんでした`) と、部分一致候補を全て振り返り節として除外した場合 (`…は振り返り節と判定して除外しました`) の 3 分岐が全て可視化されており、黙る経路が残っていない。",
-      "finding3 (build 側 load_daily_habits の非対称) 解消を実測。daily-habits.json への 10 種の変異 (target_section 欠落 / label 欠落 / id 欠落 / keywords が文字列 / search_scopes[].heading 欠落 / level が文字列 / level が bool / search_scopes 空配列 / habits が文字列 / top-level が配列) を copytree 済み skill ツリーへ与え、build-journal-context.py は 10/10 で exit 2、validate-journal-output.py は id 欠落を除く 9/10 で exit 2。traceback 付き exit 1 は 1 件も再現しない。id のみ build 側が厳しいが、厳しい側が先に立つ配置なので Phase0 を通った JSON が Phase5 で落ちることはなく、fail-open ではない (docstring の「同一の契約」という不正確な記述はこのレビューで実態へ修正した)。",
-      "finding4 (search_scopes[].level の型検査) 解消を実測。`\"level\": \"2\"` および `\"level\": true` のいずれも validate-journal-output.py が exit 2 + 「search_scopes[0] の level が 1-6 の整数ではありません」で止まる。以前は section_lines の `lv == level` が常に偽になり、記録が正しく書かれた golden-sample が H01 で FAIL していた (= 利用者が本文を直し続けても直らない)。bool を int から除外している点も正しい。",
-      "H01 が生きている検査であることを再確認した。golden-sample.md の【行動のジャーナル】の箇条書きを習慣キーワードを含まない文へ一括置換すると grid-note / journal / sns-post の 3 件が H01 で発火する。無傷の golden-sample は違反 0 件で PASS する。",
-      "最も帰結の重い write_mode 判定を実測で確認した。対象日ファイルに別日見出し (`# No.999 - ジャーナル（2026-08-11）`) がある場合は write_mode=blocked + 「Write すると失われるため、上書きせず停止して利用者へ確認してください」、見出しの無い手書きメモの場合も blocked + 「日付を判別できない内容」と、事実に即した文言を出し分ける。blocked 時に既存番号を再利用せず max+1 (No.1000) を採るため、停止指示と番号維持が同時に出る矛盾も無い。",
-      "IN2 を実測。golden-sample に対し --expected-number 999 で F04、--expected-date 2026-08-19 で F05 が発火し、正しい期待値では違反 0 件で exit 0。決定論スクリプトの採番を LLM が上書きする経路が機械的に塞がれている。",
-      "X01 の SSOT 破れ (`{名前}` の登録漏れ) が、登録の追加だけでなく機械的な固定で閉じられた点を評価する。実測: output-format.md の `{...}` 集合は {N, YYYY-MM-DD, journal_number, 何をしてもらったか, 分類, 名前, 番号, 終了日} の 8 件で、BRACE_PLACEHOLDERS との差集合は空。`- {名前}: 手伝ってくれた` は X01 で捕まり、`GET /invoice/{id}` と `- 田中さん: 手伝ってくれた` は通る。コメントが宣言していた『output-format.md と対で管理する』という人手の約束を test_brace_placeholders_cover_output_format が引き取っており、同じ登録漏れが黙って再発しない。片方向 (テンプレ側の新規プレースホルダ) だけを固定し、タプル側の過剰登録を無害として許す非対称も正しい。",
-      "Y02 のコードフェンス穴を実測で確認した。修正後は ```` ```\\n![[人生の究極の目的]]\\n``` ```` と `~~~` 版のいずれも Y02 で FAIL し、素の `![[人生の究極の目的#🎯 究極の人生の目的]]` は PASS する。フェンスが閉じていない場合も CommonMark どおり文書末まで飲む挙動で一貫している。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[本レビューで検出し、同一 context 内で修正済み — dependency_break/medium] finding1/2 の warnings 化が、正常系で必ず立つ 2 種の偽陽性を生んでいた。(a) 週報の正式名 `## 【習慣目標（仕組みで動く土台）】` は wanted=「習慣目標」と完全一致しないため部分一致 fallback を通り、毎回「別の期の内容を読んでいないか確認してください」が出た。この正式名は姉妹 skill run-ubm-goal-setting が週報の必須セクションとして検査している表記 (references/data-contract.md:344) なので、実 vault では 100% 発火する。(b) GOAL_KEYS が 3ヶ月目標/2ヶ月目標 の 2 表記を持つ一方、正本テンプレ (output-format.md:34) は `### 3ヶ月目標` のみなので、「2ヶ月目標」の見出しが見つかりませんでした が毎回出た。合成 vault (golden-sample を前回ジャーナル、正式名の週報) で両方を再現済み。帰結は silent なデータ誤りではなく warnings チャネルの希釈だが、SKILL.md が warnings を『対話の切り口として使う』と規定している以上、常時鳴る警報は本当に確認が要る warning を埋もれさせる。修正: section_body の heading にタプル (表記ゆれの完全一致候補) を許し extract_habit_goals が正式名を別名として渡す / extract_journal_goals が見出し単位の note を階層単位で保留し、どの表記でも解決しなかったときだけ出す。修正後の同 vault の warnings は期間ズレ・1年目標満了・当日タスク不在の 3 本 (いずれも真) のみ。回帰テスト 4 件を追加 (test_build_journal_context.py の test_canonical_habit_goal_heading_is_not_a_partial_match / test_alternate_goal_spelling_does_not_warn / test_unresolved_goal_layer_still_warns / test_retrospective_only_heading_still_reports_after_buffering)。pytest 305 passed。",
-      "[本レビューで検出し、コメントとテストで固定 — smell/low] visible_text() のコードフェンス除外は、Y02 と H01 で根拠が違うのに同じ理由づけで書かれていた。Y02 の『Obsidian が埋め込まない』はフェンスにも当てはまるが、H01 の判定根拠は『本文に痕跡が残るはず』であり、フェンスの中身は読者に見えるので『表示されない』では説明できない。実測: check_daily_habits へ `## 【行動のジャーナル】` + ```` ```\\n- 22:10 に Gridノートを書いた。\\n``` ```` を与えると H01『記録がありません』が出る一方、素の箇条書きと引用ブロック (`> …`) は通る。挙動自体は fail-closed 側 (見落としではなく過剰報告) で、フェンスに入るのが貼り付けたテンプレ・例・コマンドである以上妥当な判断だが、根拠が書かれていないと次の編集者が Y02 の理屈で読み替えて逆向きに直しうる。H01 側のコメントへ本当の根拠 (フェンスは記録ではなくテンプレ置き場であり、数えると v1 の死んだ検査へ戻る) と副作用を明記し、test_h01_treats_a_fenced_block_as_not_a_record で 4 分岐を固定した。",
-      "[本レビューで検出・未修正 — smell/low] 同クラスの残穴として、インラインコードスパン `` `![[人生の究極の目的#🎯]]` `` は Y02 を通る (実測)。Obsidian はこれも埋め込まず literal 表示するため、判定根拠としてはフェンスと同じ。修正しなかったのは、この穴の現実的な到達経路が『テンプレや例を貼る』であり、それはフェンス側で起きるため。X01 の BRACE_PLACEHOLDERS のような機械固定が効く対象でもないので、規則を足すより穴を明示して残す方を選んだ。",
-      "[本レビューで検証 — 欠陥ではない] team-lead が既知の未修正として挙げた『Y01 の `^tags\\s*:` がゼロインデント固定でネストした mapping 配下の tags を偽陽性にする』は、実測すると `meta:\\n  tags:\\n    - review` で has_review_tag=False → Y01 発火、`tags:\\n- review` で True。Obsidian の frontmatter プロパティは top-level キーのみを解釈し、ネストした mapping 配下の `tags` はタグとして認識されないため、これを Y01 で FAIL にするのは正しい挙動であって偽陽性ではない。修正不要と判断した。",
-      "[検証範囲の明示 — 未検証] OUT2 は verify_by: live-trial だが、本 verdict に live-trial の実走証跡は存在しない。本レビューは静的読解と、scratchpad 上へ copytree した skill ツリーに対する変異 daily-habits.json / 合成 vault / golden-sample への script 実行のみで構成されており、Phase0 の文脈解決から Phase1-3 のヒアリング、Phase4 整形、Phase5 検証 PASS までの自走完遂も、Daily 配下へのジャーナル実生成も観測していない。content-review-protocol §位置づけ が『behavioral claim の受け入れ収束は Gate D (run-skill-live-trial) の実走証拠のみを根拠とする』と定めるとおり、本 verdict を OUT2 の充足証拠に流用してはならない。OUT2 は未検証である。",
-      "[検証範囲の明示] IN1 / IN2 は script 単体の実行契約として実測したが、skill 実行中に実際に当該コマンドが呼ばれることの確認は SKILL.md / journal-composer.md の静的読解に留まる。OUT1 は plugin 内テスト 305 件が緑であることまでを確認した (受入テストが対話の実出力を評価するわけではない)。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "incremental profile の focused combined review。cr-ubm-journal-3 が FAIL とした 4 findings は全て実測で解消を確認した (変異 daily-habits.json 10 種への 2 script 実行、section_body の直接呼び出し、合成 vault 2 種への build-journal-context.py 実行、golden-sample への validate-journal-output.py 実行)。上流入力が変わっている (SKILL.md version 0.4.0→0.5.0、2 script 0.4.0→0.5.0) ため obligation fingerprint は更新済みで、前サイクルの iteration ceiling は引き継がない。iteration 1 で正常系に必ず立つ偽陽性 warning 2 種を実測で検出し、incremental が許す 1 回の再評価 (iteration 2) の中で構造修正 + 回帰テストを入れて解消を確認した。レビュー中に team-lead が validate-journal-output.py へ 2 件の修正 (BRACE_PLACEHOLDERS への `名前` 追加と機械固定テスト、visible_text() によるコードフェンス除外) を並行投入したため、これらも同 iteration 内で実測して評価に含めた。未解決の medium 以上は 0 件、残る low 2 件はいずれも fail-closed 側の過剰報告か到達経路の乏しい残穴で、根拠と副作用をコメント・テストで固定済みのため verdict は PASS。ただし PASS の射程は design claim (静的設計 adequacy) に限る: OUT2 (live-trial) は未検証であり、実行挙動の受け入れは Gate D (run-skill-live-trial) の実走証拠を別途要する。version は SKILL.md / build-journal-context.py / validate-journal-output.py の 3 者とも 0.5.0 で揃っている。本 verdict は 1 context 内の focused combined review の結果を content-review-protocol §incremental の規定どおり elegance / rubric の 2 verdict へ分離投影したものであり、30 思考法の実施は申告しない。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+48 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

@@ -45,6 +45,12 @@
       },
       {
         "event": "PostToolUse",
+        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\"",
+        "from_plugin": "harness-creator"
+      },
+      {
+        "event": "PostToolUse",
         "matcher": "Edit",
         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py",
         "from_plugin": "harness-creator"
@@ -64,12 +70,6 @@
       {
         "event": "PostToolUse",
         "matcher": "Skill",
-        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
-        "from_plugin": "harness-creator"
-      },
-      {
-        "event": "PostToolUse",
-        "matcher": "Skill",
         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py",
         "from_plugin": "harness-creator"
       },
@@ -77,6 +77,12 @@
         "event": "PostToolUse",
         "matcher": "Skill",
         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py",
+        "from_plugin": "harness-creator"
+      },
+      {
+        "event": "PostToolUseFailure",
+        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\"",
         "from_plugin": "harness-creator"
       },
       {
@@ -150,6 +156,24 @@
         "matcher": "Bash|Task",
         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/plugin-dev-planner/hooks/enforce-provenance-chain.py",
         "from_plugin": "plugin-dev-planner"
+      },
+      {
+        "event": "PreToolUse",
+        "matcher": "Bash",
+        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py\" pretool",
+        "from_plugin": "skill-governance-adapters"
+      },
+      {
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/hooks/build-external-intelligence-context.py\"",
+        "from_plugin": "skill-governance-adapters"
+      },
+      {
+        "event": "UserPromptSubmit",
+        "matcher": null,
+        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py\" hook-confirm",
+        "from_plugin": "skill-governance-adapters"
       },
       {
         "event": "PostToolUse",
@@ -287,6 +311,15 @@
         ]
       },
       {
+        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\""
+          }
+        ]
+      },
+      {
         "matcher": "Edit",
         "hooks": [
           {
@@ -310,15 +343,6 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py"
           }
         ]
       },
@@ -492,6 +516,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py\" pretool"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PROJECT_DIR}/plugins/skill-intake/hooks/pre-publish-secret-scrub.sh\""
           }
         ]
@@ -618,6 +651,17 @@
         ]
       }
     ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\""
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "matcher": ".*",
@@ -674,6 +718,22 @@
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/hooks/build-external-intelligence-context.py\""
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py\" hook-confirm"
           }
         ]
       }

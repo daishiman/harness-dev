@@ -1,9 +1,9 @@
 ---
 name: run-notion-gmail-send
-description: Notionメール本文DBの内容を送信先DBへGmailで一斉個別送信したいとき（既定はNotionチェックを承認とみなす最小確認1回=preview→単一確認、無人cronは--auto-approveで確認0も可）、差し込み置換して送りたいときに使う。
+description: Notionメール本文DBの内容を送信先DBへGmailで一斉個別送信したいとき（既定はNotionチェックを承認とみなす最小確認1回=preview→単一確認、無人cronは無人自動承認モードで確認0も可）、差し込み置換して送りたいときに使う。
 disable-model-invocation: true
 user-invocable: true
-argument-hint: "(既定:最小確認1回) 引数なしでpreview→ --confirm-token <plan_hash>  |  [--canary <N>] [--db1 <id>] [--db2 <id>] [--config <path>] [--allow-resend]  |  (無人cron) --auto-approve  |  (厳格対話) --plan <plan.json> --approved-nonce <確認語>"
+argument-hint: "(既定:最小確認1回) 引数なしでpreview→ --confirm-token <plan_hash>  |  [--canary <N>] [--db1 <id>] [--db2 <id>] [--config <path>] [--allow-resend]  |  (無人cron) 無人自動承認モード  |  (厳格対話) --plan <plan.json> --approved-nonce <確認語>"
 arguments: [plan]
 allowed-tools:
   - Read
@@ -13,6 +13,7 @@ allowed-tools:
 kind: run
 prefix: run
 effect: external-mutation
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: team-platform
 since: 2026-06-24
 version: 0.1.0
@@ -26,6 +27,7 @@ responsibility_refs:
 schema_refs:
   - schemas/send-verdict.schema.json
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -38,13 +40,59 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: test
     - id: IN3
       loop_scope: inner
-      text: 既定の最小確認1回モードが (a)引数なしで preview(exit 10)し送信せず要約+CONFIRM_TOKEN を出力、(b)--confirm-token 一致時のみ全 ✅ 宛先へ送信し不一致で exit 11、(c)source-audit high を全停止せず ⚠️ 警告として要約へ出し人間判断に委ねる(該当 unit は送信時 per-unit skip)こと、および無人 cron(--auto-approve/--yes)が (d)送信前に source-audit 集約ゲート(run_full_audit)を実行し high 残存で1通も送らず fail-closed(無人ゆえの原則的非対称)、(e)端末確認なしで 送信対象=✅ の全宛先へ送信、(f)opt-in --canary N で先頭 N 件のみ送信し再実行で content dedup により既送を skip、(g)dry-run と同一の plan_compose ロジックで決定論的に同じ plan を生成、(h)recipient_db 未解決時に C-1 再検証不能で fail-closed することを test_auto_send / test_plan_compose で機械検証できる。
+      text: 既定の最小確認1回モードが (a)引数なしで preview(exit 10)し送信せず要約+CONFIRM_TOKEN を出力、(b)--confirm-token 一致時のみ全 ✅ 宛先へ送信し不一致で exit 11、(c)source-audit high を全停止せず ⚠️ 警告として要約へ出し人間判断に委ねる(該当 unit は送信時 per-unit skip)こと、および無人 cron(無人自動承認モード)が (d)送信前に source-audit 集約ゲート(run_full_audit)を実行し high 残存で1通も送らず fail-closed(無人ゆえの原則的非対称)、(e)端末確認なしで 送信対象=✅ の全宛先へ送信、(f)opt-in --canary N で先頭 N 件のみ送信し再実行で content dedup により既送を skip、(g)dry-run と同一の plan_compose ロジックで決定論的に同じ plan を生成、(h)recipient_db 未解決時に C-1 再検証不能で fail-closed することを test_auto_send / test_plan_compose で機械検証できる。
       verify_by: test
     - id: OUT1
       loop_scope: outer
       text: 確認既定1回(最小=コンパクト要約[件数/先頭To/本文先頭/抑制skip/⚠️警告]+単一確認・CONFIRM_TOKEN で preview 内容へ束縛・最悪0=無人 cron)で承認の所在を Notion データ層(送信対象=✅)へ移し、重い APPROVE文字列/nonce 読解強制を軽量な単一確認へ圧縮し、plan改竄照合の過大表現を是正して実効安全層(source-audit/fresh rebuild/C-1 送信時 suppress 再検証/From 検証/content dedup)へ正直に再配置し、source-audit gate の全停止を「人間がループに居る既定=警告/無人 cron=fail-closed」の原則的非対称へ階層化することで、誤送信・二重送信リスクを許容範囲へ吸収する設計がユーザー目的(送信の手間を最小化・最小確認1回)を最適に反映し過不足ないことを run-elegant-review の4条件で確認する。
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-notion-gmail-send
 
@@ -54,7 +102,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 **3つのモード**（確認の重さで直交）:
 - **既定: 最小確認1回**: 引数なしで preview（送信せず要約[件数/先頭To/本文先頭/抑制·skip/⚠️警告]+CONFIRM_TOKEN を出力・exit 10）→ 人間が要約を見て**単一の送信可否確認** → `--confirm-token <plan_hash>` で再実行し、新鮮 plan の plan_hash が一致する時だけ送信（preview 後に Notion が変われば exit 11 で再 preview）。`--canary N` で先頭 N 件のみ送信（残りは再実行で content dedup が既送を skip）。
-- **無人確認0: `--auto-approve` / `--yes`**: cron 等。端末確認なしで送信。人間の目視がないため source-audit high 残存で fail-closed（0 送信）。
+- **無人確認0: 無人自動承認モード**: cron 等。端末確認なしで送信。人間の目視がないため source-audit high 残存で fail-closed（0 送信）。
 - **厳格対話: `--plan ... --approved-*`（後方互換）**: dry-run プレビュー目視 → `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致入力 → 送信。読解強制で慎重に送りたいとき用。
 
 **出力**: Gmail 送信 + 送信ログDB の reserved→sent/unknown 記録 + 日本語送信レポート（送信/スキップ/失敗/要照合の件数・内訳・次アクション）。preview は要約+CONFIRM_TOKEN のみ（送信しない）。
@@ -79,7 +127,6 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 **無人確認0（cron・端末入力ゼロ）**
 ```
-/run-notion-gmail-send --auto-approve   (preview/確認なし。source-audit high 残存で fail-closed)
 ```
 
 **厳格対話モード（後方互換・慎重運用）**
@@ -102,14 +149,14 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 ### 責務サマリと完了条件の正本
 各責務の停止条件詳細は `prompts/Rn` を正本 (SSOT) とし、本節は俯瞰のみ示す (片側更新ドリフト回避)。
-- **R1 orchestrate** (`prompts/R1-orchestrate.md`): モード判定（既定 confirm=最小確認1回 / 無人 cron / 厳格対話）・confirm は preview→要約提示→単一確認→`--confirm-token` 送信・cron は `--auto-approve`・厳格対話は dry-run 委譲＋`APPROVE <plan_hash> <count> <first_to> <確認語>` 受領＋二段確認・送信可否判断・最終レポート生成。
+- **R1 orchestrate** (`prompts/R1-orchestrate.md`): モード判定（既定 confirm=最小確認1回 / 無人 cron / 厳格対話）・confirm は preview→要約提示→単一確認→`--confirm-token` 送信・cron は 無人自動承認モード・厳格対話は dry-run 委譲＋`APPROVE <plan_hash> <count> <first_to> <確認語>` 受領＋二段確認・送信可否判断・最終レポート生成。
 - **R2 presend-verify** (`prompts/R2-presend-verify.md` / agent `gmail-send-presend-verifier`): **厳格対話モード限定**で context:fork で plan を独立再検査 (plan_hash/件数/先頭To/未置換トークン/宛先形式)。非対話は source-audit/C-1/fresh rebuild の独立 fetch が代替。
 - 決定論本体: `scripts/send-campaign.py`(非対話は compose→audit警告/gate→self-derive→(confirm は token 照合)→reserve→send_guard→Gmail→log) / `lib/plan_compose.py`(新鮮 plan) / `lib/mail_db_audit.py run_full_audit`(cron gate / 既定 preview 警告) / `scripts/verify-plan.py`(対話二段確認) / `../../lib/`。
 
 ### 完了チェックリスト (Checklist)
 - [ ] モードを判定した（既定 confirm=最小確認1回 / 無人 cron=確認0 / 厳格対話=APPROVE）
 - [ ] (confirm) `send-campaign.py` を引数なしで preview(exit 10)し、要約+CONFIRM_TOKEN を人間へ提示し単一の送信可否確認を取り、承認時のみ `--confirm-token <plan_hash>` で送信した（plan_hash 不一致は exit 11 で再 preview）
-- [ ] (cron) `送信対象=✅` を整備し `--auto-approve`/`--yes` で起動した（source-audit high で fail-closed・最新 Notion から新鮮 plan を self-derive で送信）
+- [ ] (cron) `送信対象=✅` を整備し 無人自動承認モード で起動した（source-audit high で fail-closed・最新 Notion から新鮮 plan を self-derive で送信）
 - [ ] (厳格対話) 人間が差し込み後フル本文を目視し `APPROVE <plan_hash> <count> <first_to> <確認語>` を完全一致で入力し、`Task(gmail-send-presend-verifier)` の verdict が pass
 - [ ] `send-campaign.py` の preflight G1(認証)/G2(送信ログDB・本文true≥1)/G3(整合) が全 PASS
 - [ ] 各送信単位を送信ログDBへ reserved 事前予約し、既存 sent/reserved/unknown は自動再送しなかった
@@ -119,7 +166,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 ### ゴールシークループ
 正本 `../run-notion-gmail-dry-run/SKILL.md` 同様、未達チェックリスト項目を埋める手順を都度生成する。
-1. **既定（最小確認1回）**: `python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py"`（引数なし）で preview(exit 10) → 要約+CONFIRM_TOKEN を人間へ提示し単一確認 → `… --confirm-token <plan_hash>` で送信（少数検品は `--canary N`・意図的再送のみ `--allow-resend`・無人 cron は `--auto-approve`/`--yes`）。内部で source-audit(既定は警告整形/cron は gate)→最新 Notion から新鮮 plan 構築→(confirm は token 照合)→self-derive→guard→送信。high 残存(cron)/preflight 未充足なら誘導 (source-audit/GCP手順/db-setup/本文記入) し1通も送らず中断。
+1. **既定（最小確認1回）**: `<MUTATION_ARGV_JSON>` (the exact resolved send-campaign argv for the canonical receipt flow)（引数なし）で preview(exit 10) → 要約+CONFIRM_TOKEN を人間へ提示し単一確認 → `… --confirm-token <plan_hash>` で送信（少数検品は `--canary N`・意図的再送のみ `--allow-resend`・無人 cron は 無人自動承認モード）。内部で source-audit(既定は警告整形/cron は gate)→最新 Notion から新鮮 plan 構築→(confirm は token 照合)→self-derive→guard→送信。high 残存(cron)/preflight 未充足なら誘導 (source-audit/GCP手順/db-setup/本文記入) し1通も送らず中断。
 2. **対話（慎重運用）**: plan.json が無ければ `run-notion-gmail-dry-run` を起動し plan と APPROVE文字列を得る → 人間に全件プレビューを目視させ `APPROVE <plan_hash> <count> <first_to> <確認語>` を受領 → `Task(gmail-send-presend-verifier)` を context:fork で独立再検査(fail なら差し戻し) → `send-campaign.py --plan <plan.json> --approved-plan-hash <h> --approved-count <n> --approved-first-to <to> --approved-nonce <確認語>` を実行。
 3. 全 checklist 充足で完了。quota 停止 (exit 3) なら再実行で残件継続。
 
@@ -128,7 +175,7 @@ quota 安全停止後の再開や verify FAIL 後の再試行で多周回する�
 
 ## Key Rules
 
-1. **承認は Notion のチェック（データ層）が担う**: 既定の最小確認1回は `送信対象=✅` を承認シグナルとし、preview の要約に対する**人間の単一確認**で送る（重い APPROVE文字列/nonce 読解強制は厳格対話モードに温存）。無人 cron は `--auto-approve`/`--yes`。どのモードでも下記の機械的安全層は確認の重さと独立に常時オン。
+1. **承認は Notion のチェック（データ層）が担う**: 既定の最小確認1回は `送信対象=✅` を承認シグナルとし、preview の要約に対する**人間の単一確認**で送る（重い APPROVE文字列/nonce 読解強制は厳格対話モードに温存）。無人 cron は 無人自動承認モード。どのモードでも下記の機械的安全層は確認の重さと独立に常時オン。
 2. **send_guard が正本防御（確認非依存）**: `lib/gmail_client.py` が `lib/send_guard.py` を内部で必ず呼び、plan_hash/件数/先頭To/reservedログ行/未置換トークン/From検証が揃わない限り Gmail API へ到達しない。非対話(preview/confirm/cron)でも承認 tuple を新鮮 plan から self-derive した上でこの per-unit guard loop を必ず通す（人間入力のみ bypass）。ただし非対話では plan_hash/件数/content_hash 照合は self-derive ゆえ恒真（defense-in-depth=compose バグ検出）で、plan 改竄を実効検出するのは plan.json が非信頼アーティファクトとなる厳格対話モード。PreToolUse hook (`guard-gmail-send.py`) は補助。
 3. **非対話は fresh rebuild + confirm-token 束縛 / source-audit**: 古い plan.json を使い回さず、送信直前に最新 Notion から `plan_compose` で新鮮 plan を構築する。confirm モードは新鮮 plan の plan_hash が `--confirm-token` と一致する時だけ送る（preview 内容への束縛・不一致は exit 11）。無人 cron は送信前に `run_full_audit` を実行し high が残れば1通も送らず fail-closed。既定 (最小確認1回) の preview は high を ⚠️ 警告として要約へ出し全停止しない（該当 unit は送信時 per-unit skip・人間が要約を見て判断）。
 4. **reserved 事前予約なしに送信しない**: 送信前に Notion ログへ reserved を作り、同一冪等キー（content ベース・campaign 非依存）が sent/reserved/unknown なら自動再送しない。2行以上は `duplicate_log_key` で fail-closed。`--canary N` の段階送信も既送は dedup で skip。
@@ -147,7 +194,7 @@ quota 安全停止後の再開や verify FAIL 後の再試行で多周回する�
 5. 同一内容を**意図的に**再送する場合のみ `--allow-resend`（既定はクロス実行の二重送信を機構で防止）。
 6. (厳格対話モードのみ) 承認には dry-run がプレビュー該当単位の行末にのみ表示する `<確認語>` が必要（`APPROVE <plan_hash> <count> <first_to> <確認語>` 完全一致・blind approve 防止）。非対話モードは確認語不要で、既定(最小確認1回)は preview 要約への単一確認＋Notion チェック整備＋source-audit 警告で代替する。
 7. `multi_to_visible` の送信単位は To 受信者が互いのアドレスを見られる。厳格対話モードは承認 echo、既定(最小確認1回)は preview 要約、無人 cron は dry-run/plan.json のプレビューで事前に点検する。
-8. **無人 cron(--auto-approve) は source-audit high 残存で1通も送らず停止する**（空本文/未知トークン/不正アドレス/空差し込み値）。既定(最小確認1回)の preview は同じ high を ⚠️ 警告として要約へ出し、該当 unit は送信時に per-unit skip する（全停止しない・人間が要約を見て判断する）。`/run-notion-gmail-source-audit` で内訳を確認し Notion 上で直すと skip を減らせる。送信可能 0 通なら送信せず `送信対象=✅`/本文記入を案内して終了する。
+8. **無人 cron(無人自動承認モード) は source-audit high 残存で1通も送らず停止する**（空本文/未知トークン/不正アドレス/空差し込み値）。既定(最小確認1回)の preview は同じ high を ⚠️ 警告として要約へ出し、該当 unit は送信時に per-unit skip する（全停止しない・人間が要約を見て判断する）。`/run-notion-gmail-source-audit` で内訳を確認し Notion 上で直すと skip を減らせる。送信可能 0 通なら送信せず `送信対象=✅`/本文記入を案内して終了する。
 9. 送信ログDBへの書き込み（1単位ごと reserve→sending→sent の複数回）は `lib/notion_client.py` が**一定間隔でプッシュ**する（公称 3 req/sec を守る最小呼び出し間隔スロットル＋429 は `Retry-After` 尊重で自動再試行）。大量件数を一度に投げて Notion に弾かれるのを予防する。間隔/再試行回数の正本は `DEFAULT_MIN_INTERVAL_SEC`/`DEFAULT_MAX_RETRIES`（コード側 SSOT）。
 
 ## Additional Resources

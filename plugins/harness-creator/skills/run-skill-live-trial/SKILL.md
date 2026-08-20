@@ -45,6 +45,7 @@ completeness_exempt:
   - "prompts: 責務単位プロンプトを持たない実走 acceptance harness。手順は固定 Phase でなくゴールシークループで都度生成するため R-id 単位 7 層プロンプトは適用外。trial セッションへ渡す文面は references/task-template.md が正本。"
   - "manifest: ゴールシークループで手順を都度生成するため phase/gate 固定の workflow-manifest は適用外。発火条件は workflow-manifest の live-acceptance phase (plugin 側) が持つ。"
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -67,7 +68,32 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 全終了経路で tmux セッションが reaper により回収され denylist 被験 skill の起動が boot と verdict の機械 gate で拒否される
       verify_by: script
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-skill-live-trial
 

@@ -5,7 +5,7 @@
 name: system-spec-harness
 description: システム構築 (Web/モバイル/タブレット/デスクトップ横断) の仕様情報を往復ヒアリングでカテゴリ×プラットフォーム網羅マトリクスとして収集し、設計知識参照と最新公式ドキュメント出典を添えて章立て複数 Markdown + index の仕様書ドキュメントセットへまとめるハーネス plugin。
 kind: plugin-composition
-version: 0.1.0
+version: 0.1.10
 owner: team-platform
 since: 2026-07-11
 last-audited: 2026-07-11
@@ -43,9 +43,32 @@ capabilities:
   - { kind: command, ref: commands/spec-compile,       tier: core }
 
   # === Hooks (kind=hook) ===
-  - { kind: hook, ref: hooks/guard-confirmed-chapter-overwrite.py, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
 
   # === Scripts (kind=script・plugin-root 共有決定論ゲート) ===
   - { kind: script, ref: scripts/validate-coverage-matrix.py,  tier: core }
   - { kind: script, ref: scripts/validate-source-citation.py,  tier: core }
   - { kind: script, ref: scripts/validate-knowledge-graph.py,   tier: core }
+  - { kind: script, ref: scripts/validate-information-priority.py, tier: ref }
+
+dependencies:
+  - {from: commands/spec-hearing-start, to: skills/run-system-spec-elicit, type: calls}
+  - {from: commands/spec-hearing-start, to: scripts/validate-coverage-matrix.py, type: calls}
+  - {from: commands/spec-compile, to: skills/run-system-spec-doc-fetch, type: calls}
+  - {from: commands/spec-compile, to: skills/run-system-spec-compile, type: calls}
+  - {from: commands/spec-compile, to: skills/assign-system-spec-completeness-evaluator, type: evaluates}
+  - {from: commands/spec-compile, to: scripts/validate-coverage-matrix.py, type: calls}
+  - {from: commands/spec-compile, to: scripts/validate-source-citation.py, type: calls}
+  - {from: skills/run-system-spec-elicit, to: scripts/validate-knowledge-graph.py, type: calls}
+  - {from: skills/run-system-spec-compile, to: scripts/validate-coverage-matrix.py, type: calls}
+  - {from: skills/run-system-spec-compile, to: scripts/validate-source-citation.py, type: calls}
+  - {from: skills/ref-system-design-knowledge, to: scripts/validate-knowledge-graph.py, type: calls}
+  - {from: skills/ref-system-design-knowledge, to: scripts/validate-information-priority.py, type: calls}
+  - {from: skills/assign-system-spec-completeness-evaluator, to: scripts/validate-coverage-matrix.py, type: calls}
+  - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-matrix-auditor, type: calls}
+  - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-hearing-auditor, type: calls}
+  - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-doc-freshness-auditor, type: calls}
+
+eval_sinks: [EVALS.json]
+observability:
+  hooks: [PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite]

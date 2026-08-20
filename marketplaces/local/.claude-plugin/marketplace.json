@@ -20,7 +20,7 @@
       "name": "company-master",
       "source": "./plugins/company-master",
       "description": "会社名/住所/法人番号の断片から信頼できる企業マスタ行を同定・補完したいとき、Notion企業マスタDBの空欄を確度付きで一括補完したいときに使う (resolve→enrich→upsert→backfill)。改善要望は harness-creator 側の feedback 導線で扱う。",
-      "version": "0.1.1",
+      "version": "0.1.9",
       "category": "productivity",
       "tags": [
         "notion",
@@ -34,7 +34,7 @@
       "name": "contract-generator",
       "source": "./plugins/contract-generator",
       "description": "tenant業務委託契約書を台帳×Driveひな形から黄色維持で半自動量産 (draft/finalize/sync の3 skill構成)。改善要望は `/run-skill-feedback contract-generator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.1",
+      "version": "0.1.9",
       "category": "productivity",
       "tags": [
         "contract",
@@ -49,7 +49,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.3",
+      "version": "0.1.11",
       "category": "development-planning",
       "tags": [
         "task-graph",
@@ -61,7 +61,7 @@
       "name": "extract-system-blueprint",
       "source": "./plugins/extract-system-blueprint",
       "description": "参考システムの公開URLを認可・低負荷budget内で調査し、静的HTTP(WebFetch/stdlib静的DOM観測)+browser-render(MCP非依存のローカルheadless Chrome via Bash)の観測fact、根拠つきinference、欠測(observation_gap)を明示区別したmd+json+Mermaidのローカル章別ブループリントを生成するplugin。外部サービス連携(MCP/Notion)なしで自己完結する。",
-      "version": "0.2.1",
+      "version": "0.2.9",
       "category": "Productivity",
       "tags": [
         "extraction",
@@ -74,7 +74,7 @@
       "name": "guide-doc-generator",
       "source": "./plugins/guide-doc-generator",
       "description": "初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成するプラグイン。ヒアリング→構成データ設計→レンダリング→4 ゲート検証→出力先ルーティングを分界し、レンダリング経路に LLM を挟まないことで同一構成データからのバイト一致再現を保証する。素材は data URI で内包し、絵文字を使わずインライン SVG アイコンで表す。既存 HTML からの逆抽出 (round-trip) と A4 印刷・a11y にも対応する。",
-      "version": "0.1.3",
+      "version": "0.1.11",
       "category": "Productivity",
       "tags": [
         "handout",
@@ -89,7 +89,7 @@
       "name": "harness-creator",
       "source": "./plugins/harness-creator",
       "description": "Claude Code のハーネス — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と評価・統治機構の総体 — を構築・評価・統治するメタプラグイン。単体スキル生成は部品単位の能力として内包する。run-build-skill は with-goal-seek の engine:task-graph 変種 (brief.goal_seek.engine=task-graph 指定時に checklist の depends_on 依存充足順で実行し self-reflect で発見タスクを単一 truth の checklist へ追記する) を、既定装備の with-goal-seek 内部の opt-in engine 選択として焼き込む",
-      "version": "1.3.21",
+      "version": "1.3.44",
       "category": "development-tools",
       "tags": [
         "capability-build",
@@ -101,7 +101,7 @@
       "name": "mf-kessai-invoice-check",
       "source": "./plugins/mf-kessai-invoice-check",
       "description": "マネーフォワード掛け払いの請求書発行漏れを月次でチェックしNotionで管理する。本体スキルに前月↔今月比較レポート (run-mf-invoice-report) を追加: 2営業日目以降に何度でも冪等再実行し、年契約/年→月切替/トライアル完了/契約終了のイレギュラーをコメント説明した漏れレポートを月次レポートDBへ上書き生成する。0.4.0でMF実績を第一級の真実に切替 (amount-gate 根治): 契約期待額でなくMF実発行額 (mfk_actuals) を金額列・漏れ判定の駆動源にし、fetch fidelity 監査 (mfk_fetch_audit・pagination/件数/issue_date/stale を fail-closed 検証) と D1 (新規は12ヶ月ルックバック裏取り) を追加。0.5.0で照合層 (matching layer) の根本原因を根治 (確定6要因): R1収集を決定論 producer (mfk_collect_status) 化し「今月なし」取引先が構造的に脱落する主因を解消、顧客ID解決 (mfk_customer_id_resolve)・verdict export (mfk_verdict_export) を追加、severity 混在時の collapse 過少報告を対称 fold 化で修正。対症療法 (会社名ハードコード名寄せ) を撤去し fixture 過学習を排除。0.6.0で前月↔今月レポートの同定・分類を実運用フィードバックで是正: 月跨ぎ突合を MF顧客ID 第一キー化 (取引先名 drift による先月/今月の分裂=「前回取れたのに今回取れない」を根治)、新規の年契約開始は支払サイクルで正常☑ (12ヶ月履歴なしでも要確認へ誤爆しない)、先月も今月も未発行の月払いアクティブ契約 (契約完了未確認) を継続発行漏れとして要対応 surface。0.7.0で出力先 report DB を明示 pin する report_database_id (step0) を第一級解決経路として追加し、report_toggle_block の構造同定ズレで別 DB (phantom) へ書き込みチェックが本来 DB に反映されない症状を根治 (明示 pin なし かつ 既存 DB 未発見時は既定 fail-closed・新規作成は --allow-create の明示 opt-in 時のみ)。あわせて請求書確認シートの月次アーカイブ&ロールオーバー (R5-archive) を追加: レポート確定 (R4 --apply --verified) 後に自動連鎖し、対象月シート行を同じ親ページ配下の月別 DB『請求書確認シートYYMM』へ全プロパティ写像 (API 非対応型は rich_text 降格で値温存・長文は chunk 全文保持・冪等キー 元ページID) して移行、写像先を読み戻し全列 plain-text 一致を検証した行だけ正本シートから archive (in_trash・可逆) し、検証不一致/lossy(files)/例外行は温存する (--verified 必須の二段確認ゲートで正本からの誤削除を fail-closed 防止)。0.8.0で実運用フィードバック (今月金額があるのに漏れチェック☐) を根治し、3体並列エレガント検証で漏れ隠蔽の再オープンを封鎖: 「今月に権威ある実発行がある行は定義上発行漏れでない (漏れチェック✓)」不変則を要件1の STATE_CONTINUED から STATE_NEW (今月実発行の新規は年契約裏付け不在でも✓・未確認はコメント開示) と collapse 経路へ一般化し、金額列を実発行月のみ表示 (未発行月の期待額を出さず列とチェックの物語を一致)。sink collapse は契約 identity (契約ID+エンドクライアント) で phantom (同一契約の ID↔名前 split=正常化) と真の別契約 (エンドクライアント違い=要対応保持で漏れを隠さない) に二分し、cross-run guard の NEW 盲点 (新規/年→月切替 marker 追加) と別契約 collapse のゼロテレメトリを解消。category-agnostic fallback 由来の reliable_issued 誤陽性を非権威化する安全弁 (category_confirmed carrier) を追加し、誤陽性が真の月次漏れを正常✓へ上書きするのを防ぐ。参照専用hook・二段確認subagent・冪等Notion upsert付き。改善要望は `/run-skill-feedback mf-kessai-invoice-check` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.8.3",
+      "version": "0.8.11",
       "category": "productivity",
       "tags": [
         "money-forward",
@@ -115,7 +115,7 @@
       "name": "notion-gmail-send",
       "source": "./plugins/notion-gmail-send",
       "description": "Notion 2DB(メール本文_DB/メール送信先_DB)から本文×宛先を {{}} 差し込み置換し、To=プロ人材/CC=秘書 で Gmail 一斉個別送信する。既定はNotionの送信対象チェックを承認とみなす最小確認1回(preview→要約+CONFIRM_TOKEN→単一確認→送信)で、fresh rebuild + source-audit + send_guard + 事前予約つき冪等ログにより不可逆送信を安全化。無人cronは確認0(--auto-approve)、慎重運用は厳格対話(dry-run承認+二段確認subagent)も利用可。改善要望は `/run-skill-feedback notion-gmail-send`。",
-      "version": "0.1.1",
+      "version": "0.1.10",
       "category": "productivity",
       "tags": [
         "notion",
@@ -129,7 +129,7 @@
       "name": "plugin-dev-planner",
       "source": "./plugins/plugin-dev-planner",
       "description": "プラグイン構想を index + 13 フェーズファイル(phase-01〜phase-13) + component-inventory.json へ目的ドリブンで分解し、skill/sub-agent/slash-command/hook/script/harness/manifest を漏れなく評価する前段の計画プラグイン。ライフサイクル軸=13 フェーズ / 成果物実体軸=N component の 2 軸直交に加え、タスク粒度の型付き依存グラフ (task-graph) を第 3 の射影として保持し、依存駆動の並列実行・成果物連結・discovered-task 還流を機械保証する。orchestrator skill (run-plugin-dev-plan) + prompt-creator 仕様準拠の agents (elicitor=R1 / architect=R2,R3 / evaluator=R4 / improvement-reviewer) + command + hook + harness で構成。実ビルドは harness-creator へ委譲し、本プラグインは計画生成までを担う。改善要望は `/run-skill-feedback plugin-dev-planner` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.4",
+      "version": "0.1.12",
       "category": "development-tools",
       "tags": []
     },
@@ -137,7 +137,7 @@
       "name": "prompt-creator",
       "source": "./plugins/prompt-creator",
       "description": "7 層プロンプトアーキテクチャ (Role/Context/Principles/Workflow/Constraints/Output/Evaluation) で SubAgent 向けプロンプトを生成・更新する skill 群。harness-creator 仕様準拠の orchestrator (run-prompt-create) と elicit / evaluator / 7layer worker / 3 agents で構成。harness-creator (run-build-skill Step 7.5) からも呼び出される。改善要望は `/run-skill-feedback prompt-creator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "2.1.0",
+      "version": "2.1.8",
       "category": "development-tools",
       "tags": []
     },
@@ -145,7 +145,7 @@
       "name": "skill-governance-adapters",
       "source": "./plugins/skill-governance-adapters",
       "description": "外部 CI/IDE 連携アダプタを提供する governance プラグイン。Notion・GitHub Actions・VS Code との橋渡しスクリプトを束ね、skill governance の通知・公開・診断を一元化する。改善要望は `/run-skill-feedback skill-governance-adapters` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -159,7 +159,7 @@
       "name": "skill-governance-automation",
       "source": "./plugins/skill-governance-automation",
       "description": "skill governance の定期実行・自動化スクリプト群。スキル一覧の rollup 更新、未対応要望の集計、cron トリガで走る監査ジョブをまとめる。改善要望は `/run-skill-feedback skill-governance-automation` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -173,7 +173,7 @@
       "name": "skill-governance-config",
       "source": "./plugins/skill-governance-config",
       "description": "skill governance 全体の共有設定 (rubric weights / lint 閾値 / governance-params) を SSOT として保持する config プラグイン。各 lint/automation/adapter が参照する単一の真実源。改善要望は `/run-skill-feedback skill-governance-config` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -186,7 +186,7 @@
       "name": "skill-governance-hooks",
       "source": "./plugins/skill-governance-hooks",
       "description": "Claude Code の hook event (PreToolUse / PostToolUse / Stop など) に紐付ける governance hook スクリプト集。スキル品質ゲートを実行前後で機械的に発火させる。改善要望は `/run-skill-feedback skill-governance-hooks` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -198,7 +198,7 @@
       "name": "skill-governance-lint",
       "source": "./plugins/skill-governance-lint",
       "description": "skill / frontmatter / SSOT 重複 / goal-seek / completeness など P0 lint 群を提供する検査プラグイン。CI の merge gate と build-skill Step 4 の preflight 両方で実行される。改善要望は `/run-skill-feedback skill-governance-lint` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.1",
+      "version": "0.1.10",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -211,7 +211,7 @@
       "name": "skill-governance-migration",
       "source": "./plugins/skill-governance-migration",
       "description": "旧スキル構造から最新 Capability 7 kind 仕様への migration helper 群。frontmatter 自動移行・symlink 切替・archive 操作を冪等に行う。改善要望は `/run-skill-feedback skill-governance-migration` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -223,7 +223,7 @@
       "name": "skill-governance-secrets",
       "source": "./plugins/skill-governance-secrets",
       "description": "Notion PAT / API token 等の secret を macOS Keychain と env から安全に取得する helper プラグイン。token を context に露出させないアクセス層を提供する。改善要望は `/run-skill-feedback skill-governance-secrets` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.0",
+      "version": "0.1.8",
       "category": "governance",
       "tags": [
         "skill-governance",
@@ -235,7 +235,7 @@
       "name": "skill-intake",
       "source": "./plugins/skill-intake",
       "description": "harness-creator の前段ヒアリングを非技術者にも開く plugin。Markdown 正本+JSON 副本+Notion ページを生成し、macOS Keychain 経由の Notion PAT/Internal Integration で公開する。図解マスト要件と 5 軸ヒアリング (出力先/情報源/共有相手/真の課題/ナレッジ資産) を機械検証する。本 plugin は単独インストールで intake→Notion publish のコアフローが自己完結動作する (notion_config.py を同梱)。改善要望投入 (`/run-skill-feedback`) は harness-creator 併用時のみ利用可能。",
-      "version": "0.1.4",
+      "version": "0.1.12",
       "category": "productivity",
       "tags": [
         "skills",
@@ -249,7 +249,7 @@
       "name": "slide-report-generator",
       "source": "./plugins/slide-report-generator",
       "description": "presentation-slide-generator v8.4.2 の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa/16:9/GSAP/インライン SVG2/Codex Image2/決定論レンダラ/A4 印刷/style genome) を単一 SSOT で共有し、コンテンツ意図層のみ mode 別に分岐する。slide=1スライド1メッセージ/107 slideType、report=読み物/4 reportType/1項目1ビジュアル最適化/Mermaid 統合。Node 製レンダリング/画像/印刷/検証エンジンは vendor として携行し、OS/CPU別Playwright Chromiumはinstall先のplugin-local cacheへ決定論的に復元して起動する。",
-      "version": "0.1.15",
+      "version": "0.1.23",
       "category": "Productivity",
       "tags": [
         "slides",
@@ -264,7 +264,7 @@
       "name": "spec-drift-guardian",
       "source": "./plugins/spec-drift-guardian",
       "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
-      "version": "0.1.1",
+      "version": "0.1.9",
       "category": "developer-tools",
       "tags": [
         "spec-drift",
@@ -276,7 +276,7 @@
       "name": "system-dev-planner",
       "source": "./plugins/system-dev-planner",
       "description": "確定したdev-graph featureを、同一digestで昇格可能なexact 13実行タスクへ分解するシステム開発planner。",
-      "version": "0.1.3",
+      "version": "0.1.11",
       "category": "development-planning",
       "tags": [
         "system-design",
@@ -288,7 +288,7 @@
       "name": "system-spec-harness",
       "source": "./plugins/system-spec-harness",
       "description": "カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。",
-      "version": "0.1.2",
+      "version": "0.1.10",
       "category": "productivity",
       "tags": [
         "spec",
@@ -300,7 +300,7 @@
       "name": "ubm-goal-setting",
       "source": "./plugins/ubm-goal-setting",
       "description": "北原さん式ゴールセッティング、会話型の日次ジャーナル作成、2-source YouTube全量/自動同期、根拠付きknowledge/harness artifact graph consultを提供する個人利用向けplugin。",
-      "version": "0.3.13",
+      "version": "0.3.21",
       "category": "productivity",
       "tags": [
         "goal-setting",

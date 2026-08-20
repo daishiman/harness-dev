@@ -73,8 +73,9 @@ task-graph は planner が作る計画構造であり、harness-creator は buil
 | discovered-task inbox | harness-creator `emit-discovered-task.py` | planner `accept-discovered-task.py` | 未処理 status があれば TG-C08 が completed 拒否 | status は `accepted` / `rejected` / `superseded` で解決済み |
 | build 成果物の周回 scope | harness-creator `resolve_build_dir(target_plugin_slug, cycle_id)` | TG-C02/TG-C05/TG-C07/TG-C08 | `cycle_id` は handoff top-level だけを消費 | `plan_dir` のパス解析は禁止 |
 | blocked 起点/伝播 | harness-creator `sync-task-state.py` | progress summary / knowledge distill | `blocked_reason` 必須 | `origin-failure` と `propagated` を state enum ではなく第一級 field で区別 |
-| knowledge Loop A | generated harness の `knowledge/` | 生成後 harness の build/runtime | add_entry.py schema | 生ログ全文ではなく source_ref 付き要約のみ |
-| knowledge Loop B | `plugins/harness-creator/knowledge/` | harness-creator の次回 build-time search | add_entry.py schema | 依存詰まり・成果物欠落・解決判断を再利用 |
+| knowledge Loop A curated seed | generated harness の `knowledge/` | 生成後 harness の runtime search | add_entry.py schema + owner review | promoted 知見だけ。未検証観測を書かない |
+| knowledge Loop B curated seed | `plugins/harness-creator/knowledge/` | harness-creator の次回 build-time search | add_entry.py schema + owner review | promoted された build 知見だけを配布 |
+| external intelligence runtime | Git common dir / project `.harness` / user state | Codex / Claude Code | build-external-intelligence.py hash chain + verify | plugin package 外。観測・類似統合・再利用検証の唯一の writer |
 | `.build.lock` (build 排他 lock) | harness-creator `manage-build-lease.py` (TG-C07) | TG-C07 自身 (steal/renew/release 判定) | owner token + lock TTL + pid 生存判定 | 中身は `{started_at, pid, host, owner_token}` JSON。acquire 出力 token をメモリ保持し renew/release で一致必須。runtime 生成物で git 追跡外 |
 | `runtime-evidence-ledger.json` | dispatcher (TG-C06) | TG-C08 completion gate | `runtime-evidence-ledger.schema.json` + artifact SHA-256 + task-state graph_hash pin + UTC timestamp + gate/task mapping | ledger 所在 build dir 相対 artifact path のみ。local build/native parity/rollback 証跡必須。`not_applicable` は user が不要と明示した PR gate のみ |
 | `route-*.json` (route-build-report) | route builder (`build-script-route.py` / `run-build-skill`) | `validate-route-build-reports.py` / TG-C02 (done 照合) / TG-C05 / TG-C08 | route-build-report 契約 (PR#70・additive のみ) | `covered_task_ids` は dispatcher (TG-C06) が node→route join から決定論導出して追記する |

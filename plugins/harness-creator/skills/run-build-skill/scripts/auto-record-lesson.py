@@ -1,447 +1,299 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""auto-record-lesson.py
+# /// script
+# name: auto-record-lesson
+# purpose: Claude Code / Codex PostToolUse ペイロードから再現可能な失敗観測だけを抽出し、build-external-intelligence.py の共通 project store へ非ブロックで渡す薄い hook adapter
+# inputs:
+#   - stdin: Claude Code / Codex hook JSON
+#   - env: HARNESS_AGENT(optional), HARNESS_INTELLIGENCE_HOME(optional), plugin/runtime env
+# outputs:
+#   - stderr: 記録結果の有界診断
+#   - write: build-external-intelligence.py が解決する plugin package 外 state のみ
+#   - exit: 常に 0 (hook をブロックしない)
+# contexts: [C, E]
+# network: false
+# write-scope: resolved external-intelligence state root only
+# dependencies: [build-external-intelligence.py]
+# requires-python: ">=3.10"
+# ///
+"""Fail-soft hook adapter for the shared external-intelligence engine.
 
-Claude Code Hook input (JSON via stdin) を解釈し、失敗パターンが検出された場合に
-plugins/harness-creator/lessons-learned/ 配下へ構造化 lesson を追記する。
-新規 lesson の追記と同時に knowledge/knowledge-lessons-index.json へ最小索引
-エントリを append する (Loop B: 索引の description 宣言と実装の真実合わせ)。
-
-記録条件 (genuine 文脈最少条件):
-    tool 名 + 対象ヒント (command / file_path / path / skill) + tool_response 内の
-    失敗シグネチャが揃った入力のみ記録する。無関係キーに失敗語が紛れただけの
-    断片 (テスト副産物・引用の混入) は記録しない。
-
-副作用境界:
-    - lessons-learned ディレクトリと、その sibling knowledge/ 索引への書き込みのみ。
-    - git・他ディレクトリには触れない。
-
-exit_code 仕様 (Claude Code Hooks 準拠):
-    0  非ブロック (正常 / 失敗未検出 / 書き込み成功)
-    2  明示拒否 (本 hook は使用しない)
-    その他 非ブロック警告
-
-想定発火イベント:
-    - PostToolUse:Skill
-    - PostToolUse:Edit (rubric.json 等)
-    - Stop
+This file deliberately contains no store implementation. The former behavior
+that appended Markdown and indexes inside the installed plugin was removed:
+marketplace upgrades can replace that directory, and two stores made promotion
+and deduplication ambiguous.
 """
-
 from __future__ import annotations
 
-import datetime as _dt
+import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
-# --- 失敗検出パターン ---------------------------------------------------------
-# tool_response / stderr / messages 内に現れる代表的な失敗シグネチャ。
-_FAILURE_PATTERNS = [
-    re.compile(r"\bFAIL(ED|URE)?\b", re.IGNORECASE),
+
+_FAILURE_PATTERNS = (
+    re.compile(r"\bFAIL(?:ED|URE)?\b", re.IGNORECASE),
     re.compile(r"\bERROR\b", re.IGNORECASE),
     re.compile(r"\bTraceback\b"),
-    re.compile(r"\bvalidator\b.*\bFAIL", re.IGNORECASE),
     re.compile(r"\bnon-?zero exit\b", re.IGNORECASE),
     re.compile(r"\bexit (?:code|status)\s*[:=]?\s*[1-9]\d*", re.IGNORECASE),
-]
-
-# severity 推定: 強いキーワードがあれば high、それ以外は medium。
-_HIGH_SEVERITY_HINTS = re.compile(
-    r"\b(FATAL|CRITICAL|Traceback|validator FAIL)\b", re.IGNORECASE
 )
+_SECRET_NAME = r"(?:token|secret|password|passwd|api[_-]?key|authorization)"
+_JSON_SECRET = re.compile(
+    rf"(?i)(?P<prefix>[\"']{_SECRET_NAME}[\"']\s*:\s*)"
+    r"(?P<quote>[\"'])(?P<value>.*?)(?P=quote)"
+)
+_AUTHORIZATION_HEADER = re.compile(
+    r"(?im)(\bauthorization\s*:\s*)(bearer|basic)\s+[^\s,;]+"
+)
+_CLI_SECRET = re.compile(
+    rf"(?i)(--{_SECRET_NAME}(?:\s*=\s*|\s+))"
+    r'(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)'
+)
+_SENSITIVE = re.compile(
+    rf"(?i)(\b{_SECRET_NAME}\b\s*[:=]\s*)"
+    r'(?:"[^"]*"|\'[^\']*\'|[^\s,;&]+)'
+)
+_BEARER = re.compile(r"(?i)\bbearer\s+[^\s,;]+")
+_ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+_WINDOWS_PATH = re.compile(r"(?i)\b[A-Z]:\\(?:[^\s:]+\\)*[^\s:]+")
+_UNIX_PATH = re.compile(r"(?<![\w.-])/(?:[^\s/:]+/)*[^\s/:]+")
+_LOCATION = re.compile(r"(?<=\w):\d+(?::\d+)?\b")
+_UUID = re.compile(
+    r"(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b"
+)
+_LONG_HEX = re.compile(r"(?i)\b(?:0x)?[0-9a-f]{12,}\b")
+_LABELED_ID = re.compile(
+    r"(?i)\b((?:request|trace|run|job|task|session|turn|tool(?:_use)?)\s*[-_ ]?id\s*[:=]\s*)"
+    r"[^\s,;]+"
+)
+_TIMESTAMP = re.compile(
+    r"\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?\b"
+)
+_STABLE_CODE = re.compile(
+    r"(?i)\b((?:exit\s+(?:code|status)|status\s+code|http(?:\s+status)?|errno)\s*[:=]?\s*)(\d+)\b"
+)
+_NUMBER = re.compile(r"\b\d+\b")
+_MAX_OBSERVATION = 240
+_MAX_SIGNATURE = 160
 
-# capability 推定 (tool 名から大雑把に分類)。
-_CAPABILITY_MAP = {
-    "Edit": "edit",
-    "Write": "write",
-    "Bash": "shell",
-    "Skill": "skill-invoke",
-    "Read": "read",
-}
 
-
-def _manifest_name(root: Path) -> str | None:
-    """<root>/.claude-plugin/plugin.json の name。読めなければ None。"""
+def _read_input() -> dict[str, Any]:
     try:
-        manifest = json.loads(
-            (root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
-        )
-    except (OSError, ValueError):
-        return None
-    return manifest.get("name") if isinstance(manifest, dict) else None
-
-
-def _self_plugin_name() -> str | None:
-    """このファイル自身が属する plugin の manifest name。
-
-    なぜ定数リテラルでも SSOT 定数でもなく __file__ 由来なのか:
-      - リテラルの直書きは制御リテラル散在として禁止
-        (tests/test_dogfooding_boundary.py)。plugin 改名時に無音で失効する。
-      - SSOT (feedback_contract_ssot.SELF_DOGFOODING_PLUGIN) は使えない。SSOT を
-        探すのに plugin root が要り、plugin root の検証に SSOT が要る = 循環。
-      - __file__ は循環せず、改名時も自動追従する第三の出所。
-
-    parents[N] 固定ではなく上向き探索なのは、この関数を各 script へ複製する際に
-    深さ差 (parents[1] / parents[3]) を持ち込まないため。plugin は入れ子にならない
-    ので、最初に見つかる manifest が自 plugin のもので確定する。
-    """
-    for parent in Path(__file__).resolve().parents:
-        name = _manifest_name(parent)
-        if name:
-            return name
-    return None
-
-
-def _hc_env_root() -> Path | None:
-    """env から自 plugin root を得る。他 plugin を指す値は拒否する。
-
-    他 repo が .claude 平置き projection で本 plugin を借用している場合、
-    env CLAUDE_PLUGIN_ROOT は **別 plugin** を指していることがある
-    (ObsidianMemo では ubm-goal-setting)。空ではなく「存在するが別物」なので
-    `if env:` や isdir 判定では弾けない。manifest の name で自 plugin か検証する。
-    借用側は HC_ROOT を設定すれば明示指定できる。
-    拒否するのは manifest が読めて **別 plugin と確認できた** 場合だけにする。
-    判定材料が無い (manifest 不在) env は従来どおり採用し、既存挙動を後退
-    させない。vendored コピー先 (company-master / skill-intake) でも同様。
-    """
-    expected = _self_plugin_name()
-    if not expected:
-        return None
-    for _var in ("HC_ROOT", "CLAUDE_PLUGIN_ROOT"):
-        raw = os.environ.get(_var)
-        if not raw:
-            continue
-        root = Path(raw).expanduser()
-        _name = _manifest_name(root)
-        if _name is None or _name == expected:
-            return root.resolve()
-    return None
-
-
-def _plugin_root() -> Path:
-    # このスクリプトは plugins/harness-creator/skills/run-build-skill/scripts/ 配下。
-    # 4 つ上って plugins/harness-creator (= plugin-root)。
-    return _hc_env_root() or Path(__file__).resolve().parents[3]
-
-
-def _state_fallback_root() -> Path:
-    """plugin-root が書込不能な install (read-only / 次回 update で消失) 用の退避先。
-
-    手本: notifier-check.py の `Path.home()/.cache/harness` (user 領域退避)。
-    優先順: $CLAUDE_PROJECT_DIR → $XDG_STATE_HOME → ~/.claude/state。
-    いずれも harness-creator/ サブディレクトリに隔離する。
-    """
-    project = os.environ.get("CLAUDE_PROJECT_DIR")
-    if project:
-        return Path(project) / ".claude" / "state" / "harness-creator"
-    xdg = os.environ.get("XDG_STATE_HOME")
-    base = Path(xdg) if xdg else Path.home() / ".claude" / "state"
-    return base / "harness-creator"
-
-
-def _lessons_dir() -> Path:
-    """lessons-learned の書込先。env override > plugin-root (既定・dogfooding 互換)。
-
-    plugin-root を既定に保つことで maintainer の読取フロー (lessons-learned/ 直読み)
-    を壊さない。read-only install での fallback は呼び出し側 (_write_lesson) が担う。
-    """
-    override = os.environ.get("HARNESS_CREATOR_LESSONS_DIR")
-    if override:
-        return Path(override).resolve()
-    return _plugin_root() / "lessons-learned"
-
-
-def _dir_is_writable(d: Path) -> bool:
-    """d (存在しなければ最寄りの既存祖先) が書込可能かを実 mkdir/touch せず判定。"""
-    probe = d
-    while not probe.exists():
-        if probe.parent == probe:
-            return False
-        probe = probe.parent
-    return os.access(probe, os.W_OK)
-
-
-def _read_hook_input() -> dict[str, Any]:
-    raw = sys.stdin.read()
-    if not raw.strip():
+        value = json.load(sys.stdin)
+    except (json.JSONDecodeError, OSError, TypeError):
         return {}
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        # 不正入力も非ブロックで握りつぶす (hook の sla)。
-        return {}
+    return value if isinstance(value, dict) else {}
 
 
-def _flatten_text(payload: Any) -> str:
-    """payload 内の文字列を再帰的に抽出して結合 (失敗パターン走査用)。"""
-    bucket: list[str] = []
+def _flatten(value: Any) -> str:
+    parts: list[str] = []
 
-    def _walk(node: Any) -> None:
+    def walk(node: Any) -> None:
         if isinstance(node, str):
-            bucket.append(node)
+            parts.append(node)
+        elif isinstance(node, (int, float)) and not isinstance(node, bool):
+            parts.append(str(node))
         elif isinstance(node, dict):
-            for v in node.values():
-                _walk(v)
+            for key, item in node.items():
+                if key in {"exit_code", "exitCode", "status_code"} and isinstance(item, int) and item:
+                    parts.append(f"exit code {item}")
+                walk(item)
         elif isinstance(node, list):
-            for v in node:
-                _walk(v)
+            for item in node:
+                walk(item)
 
-    _walk(payload)
-    return "\n".join(bucket)
-
-
-def _detect_failure(text: str) -> bool:
-    return any(p.search(text) for p in _FAILURE_PATTERNS)
+    walk(value)
+    return "\n".join(parts)
 
 
-def _has_genuine_context(hook: Any) -> bool:
-    """genuine 文脈最少条件: 何がどう失敗したか追跡できる入力のみ記録を許可する。
-
-    条件 = tool 名 + 対象ヒント (command / file_path / path / skill) +
-    tool_response 内の失敗シグネチャ。失敗語が tool_response 以外の無関係キーに
-    紛れただけの断片 ("ERROR boom" 型ノイズ) は human triage 不能なため封鎖する。
-    """
-    if not isinstance(hook, dict):
-        return False
-    tool = hook.get("tool_name") or hook.get("tool")
-    if not isinstance(tool, str) or not tool.strip():
-        return False
-    ti = hook.get("tool_input")
-    if not isinstance(ti, dict):
-        return False
-    if not any(
-        isinstance(ti.get(k), str) and ti.get(k).strip()
-        for k in ("file_path", "path", "skill", "command")
-    ):
-        return False
-    return _detect_failure(_flatten_text(hook.get("tool_response")))
-
-
-def _estimate_severity(text: str) -> str:
-    return "high" if _HIGH_SEVERITY_HINTS.search(text) else "medium"
-
-
-def _slugify(value: str) -> str:
-    value = value.lower().strip()
-    value = re.sub(r"[^a-z0-9]+", "-", value)
-    value = re.sub(r"-+", "-", value).strip("-")
-    return value or "lesson"
+def _failure_text(payload: dict[str, Any]) -> str:
+    event = str(payload.get("hook_event_name") or "")
+    candidates = [payload.get("tool_response"), payload.get("error"), payload.get("tool_error")]
+    text = _flatten(candidates)
+    if event == "PostToolUseFailure" and text.strip():
+        return text
+    response = payload.get("tool_response")
+    explicit_failure = False
+    if isinstance(response, dict):
+        exit_code = response.get("exit_code", response.get("exitCode"))
+        explicit_failure = (
+            isinstance(exit_code, int) and not isinstance(exit_code, bool) and exit_code != 0
+        ) or response.get("success") is False or response.get("is_error") is True
+        status = str(response.get("status") or "").lower()
+        explicit_failure = explicit_failure or status in {"error", "failed", "failure"}
+    if explicit_failure:
+        return text
+    # A Skill can report semantic validation failure while the outer tool call
+    # itself succeeded. Other successful tools may merely read/write the word
+    # "ERROR", so pattern-only detection there would create false memories.
+    tool = str(payload.get("tool_name") or payload.get("tool") or "")
+    if tool == "Skill" and any(pattern.search(text) for pattern in _FAILURE_PATTERNS):
+        return text
+    return ""
 
 
-def _extract_slug(hook: dict[str, Any], text: str) -> str:
-    tool = hook.get("tool_name") or hook.get("tool") or "event"
-    event = hook.get("hook_event_name") or hook.get("event") or "post"
-    # tool_input から file_path 等のヒントを拾う。
-    ti = hook.get("tool_input") or {}
-    hint = ""
-    if isinstance(ti, dict):
-        for k in ("file_path", "path", "skill", "command"):
-            v = ti.get(k)
-            if isinstance(v, str) and v:
-                hint = Path(v).name if k.endswith("path") else v
-                break
-    base = f"{event}-{tool}-{hint}" if hint else f"{event}-{tool}"
-    return _slugify(base)[:60]
+def _redact(value: str) -> str:
+    text = _JSON_SECRET.sub(
+        lambda match: f'{match.group("prefix")}{match.group("quote")}<redacted>{match.group("quote")}',
+        value,
+    )
+    text = _AUTHORIZATION_HEADER.sub(
+        lambda match: f"{match.group(1)}{match.group(2)} <redacted>", text
+    )
+    text = _CLI_SECRET.sub(lambda match: f"{match.group(1)}<redacted>", text)
+    text = _SENSITIVE.sub(lambda match: f"{match.group(1)}<redacted>", text)
+    text = _BEARER.sub("Bearer <redacted>", text)
+    home = str(Path.home())
+    if home and home != "/":
+        text = text.replace(home, "~")
+    return text
 
 
-def _build_entry(hook: dict[str, Any], text: str, severity: str) -> dict[str, str]:
-    tool = str(hook.get("tool_name") or hook.get("tool") or "unknown")
-    event = str(hook.get("hook_event_name") or hook.get("event") or "unknown")
-    capability = _CAPABILITY_MAP.get(tool, "unknown")
-    # 観測サマリ: 先頭の失敗一致行を 240 文字以内で。
-    observation = ""
+def _failure_line(text: str) -> str:
     for line in text.splitlines():
-        if _detect_failure(line):
-            observation = line.strip()[:240]
-            break
-    if not observation:
-        observation = "(失敗シグネチャは検出されたが該当行抽出に失敗)"
-    return {
-        "date": _dt.date.today().isoformat(),
-        "trigger_event": event,
-        "tool": tool,
-        "severity": severity,
-        "capability": capability,
-        "observation": observation,
-    }
+        if any(pattern.search(line) for pattern in _FAILURE_PATTERNS):
+            return line.strip()
+    fallback = next((line.strip() for line in text.splitlines() if line.strip()), "tool failure")
+    return fallback
 
 
-def _render_markdown(entry: dict[str, str]) -> str:
-    fm_lines = [
-        "---",
-        f"date: {entry['date']}",
-        f"trigger_event: {entry['trigger_event']}",
-        f"tool: {entry['tool']}",
-        f"severity: {entry['severity']}",
-        f"capability: {entry['capability']}",
-        "---",
-        "",
-        "## observation",
-        "",
-        entry["observation"],
-        "",
-        "## hypothesis",
-        "",
-        "(自動記録: 失敗パターンを検出。根本原因は要 human triage)",
-        "",
-        "## proposed_action",
-        "",
-        "- 当該 capability に対する rubric 強化 / validator 追加を検討",
-        "- 再現条件を別 issue に起票",
-        "",
-    ]
-    return "\n".join(fm_lines)
+def _first_failure_line(text: str) -> str:
+    return _redact(_failure_line(text))[:_MAX_OBSERVATION]
 
 
-def _upsert_lesson(path: Path, entry: dict[str, str]) -> None:
-    """同日同 slug は新規 observation を追記 (upsert)。"""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not path.exists():
-        path.write_text(_render_markdown(entry), encoding="utf-8")
-        return
-    # 追記モード: 既存ファイル末尾に observation セクションを足す。
-    appended = [
-        "",
-        f"## observation ({_dt.datetime.now().isoformat(timespec='seconds')})",
-        "",
-        entry["observation"],
-        "",
-    ]
-    with path.open("a", encoding="utf-8") as f:
-        f.write("\n".join(appended))
+def _failure_signature(text: str) -> str:
+    """Return a stable, non-secret failure class for cross-run identity.
 
-
-_INDEX_ID_RE = re.compile(r"lessons-index_(\d+)$")
-
-
-def _lessons_index_path(lessons_dir: Path) -> Path:
-    """lessons 書込先の sibling knowledge/ 配下の索引パス。
-
-    既定 (lessons_dir = plugin-root/lessons-learned) では
-    plugin-root/knowledge/knowledge-lessons-index.json (正本) を指す。
-    fallback/override 時は同じ相対関係で書込先ローカルの索引になる。
+    Instance-only details (paths, locations, IDs, timestamps and numbers) are
+    placeholders. Error/exception names and surrounding words remain, so two
+    distinct failure classes do not collapse merely because they used one tool.
     """
-    return lessons_dir.parent / "knowledge" / "knowledge-lessons-index.json"
+    signature = _ANSI_ESCAPE.sub("", _redact(_failure_line(text)))
+    signature = _WINDOWS_PATH.sub("<path>", signature)
+    signature = _UNIX_PATH.sub("<path>", signature)
+    signature = _LOCATION.sub(":<line>", signature)
+    signature = _UUID.sub("<id>", signature)
+    signature = _LONG_HEX.sub("<id>", signature)
+    signature = _LABELED_ID.sub(lambda match: f"{match.group(1)}<id>", signature)
+    signature = _TIMESTAMP.sub("<time>", signature)
+    stable_codes: list[tuple[str, str]] = []
+
+    def preserve_code(match: re.Match[str]) -> str:
+        marker = chr(0xE000 + len(stable_codes))
+        stable_codes.append((marker, match.group(2)))
+        return f"{match.group(1)}{marker}"
+
+    signature = _STABLE_CODE.sub(preserve_code, signature)
+    signature = _NUMBER.sub("<n>", signature)
+    for marker, code in stable_codes:
+        signature = signature.replace(marker, code)
+    signature = re.sub(r"\s+", " ", signature).strip().casefold()
+    return signature[:_MAX_SIGNATURE] or "tool failure"
 
 
-def _index_source_file(lesson_path: Path) -> str:
-    """索引 source.file は repo 相対 (既存エントリと同形)。相対化不能なら絶対のまま。"""
-    try:
-        repo_root = _plugin_root().parent.parent
-        return lesson_path.resolve().relative_to(repo_root.resolve()).as_posix()
-    except (ValueError, OSError):
-        return lesson_path.as_posix()
+def _evidence_source(tool: str, signature: str) -> str:
+    digest = hashlib.sha256(signature.encode("utf-8")).hexdigest()[:16]
+    normalized_tool = re.sub(r"[^a-z0-9_-]+", "-", tool.casefold()).strip("-") or "unknown"
+    return f"hook-failure:{normalized_tool}:{digest}"
 
 
-def _append_index_entry(index_path: Path, lesson_path: Path, entry: dict[str, str]) -> bool:
-    """lesson md 追記と同時に索引へ最小エントリを決定論 append する (冪等)。
-
-    knowledge-lessons-index.json:description の宣言「auto-record-lesson.py が
-    新規 lesson を追記したら本索引にもエントリを追加する」の実装。
-    同一 source.file は再登録しない (md 側は observation 追記で対応済)。
-    索引書込失敗は lesson 記録を巻き込まない (best-effort, False で握る)。
-    """
-    source_file = _index_source_file(lesson_path)
-    try:
-        if index_path.exists():
-            data = json.loads(index_path.read_text(encoding="utf-8"))
-            if not isinstance(data, dict):
-                return False
-        else:
-            data = {
-                "category": "lessons-index",
-                "label": "lessons-learned 索引 (失敗ログへのポインタ)",
-                "source_note": "本文は lessons-learned/*.md が正本。本索引は検索ヒット用の最小要約のみ持つ。",
-                "items": [],
-            }
-        items = data.setdefault("items", [])
-        if not isinstance(items, list):
-            return False
-        max_seq = 0
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            if (item.get("source") or {}).get("file") == source_file:
-                return False
-            m = _INDEX_ID_RE.match(str(item.get("id", "")))
-            if m:
-                max_seq = max(max_seq, int(m.group(1)))
-        items.append(
-            {
-                "id": f"lessons-index_{max_seq + 1:03d}",
-                "title": (
-                    f"[auto] {entry['trigger_event']}:{entry['tool']} 失敗 — "
-                    f"{entry['observation'][:80]}"
-                ),
-                "keywords": [
-                    entry["trigger_event"],
-                    entry["tool"],
-                    entry["capability"],
-                    entry["severity"],
-                ],
-                "message": "自動記録。根本原因の human triage 後に title/message を書き直す。",
-                "source": {"file": source_file, "type": "lesson", "date": entry["date"]},
-            }
-        )
-        index_path.parent.mkdir(parents=True, exist_ok=True)
-        index_path.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
-        return True
-    except Exception:
-        return False
+def _hint(payload: dict[str, Any]) -> str:
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return "unknown-target"
+    for key in ("skill", "file_path", "path", "command", "description"):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value.strip():
+            if key in {"file_path", "path"}:
+                return Path(value).name[:80] or "path"
+            return _redact(value.strip())[:80]
+    return "unknown-target"
 
 
-def _candidate_dirs() -> list[Path]:
-    """書込先候補を優先順で返す (3 段 fallback)。
+def _agent() -> str:
+    explicit = os.environ.get("HARNESS_AGENT", "").strip().lower()
+    if explicit in {"codex", "claude", "other"}:
+        return explicit
+    # Codex plugin hooks define PLUGIN_ROOT/PLUGIN_DATA and also compatibility
+    # CLAUDE_* variables. Claude defines CLAUDE_* only.
+    return "codex" if os.environ.get("PLUGIN_ROOT") or os.environ.get("PLUGIN_DATA") else "claude"
 
-    (a) 既定 = plugin-root 配下 lessons-learned/ (dev 既存挙動・dogfooding 読取互換)
-    (b) plugin-root が書込不能なら user state 領域 (~/.claude/state or $CLAUDE_PROJECT_DIR)
-    env `HARNESS_CREATOR_LESSONS_DIR` が明示されればそれを単独で使う (override)。
-    """
-    if os.environ.get("HARNESS_CREATOR_LESSONS_DIR"):
-        return [_lessons_dir()]
-    return [_lessons_dir(), _state_fallback_root() / "lessons-learned"]
+
+def _context_id(payload: dict[str, Any]) -> str:
+    session = str(payload.get("session_id") or "unknown-session")
+    return f"session:{session}"
+
+
+def _evidence_ref(payload: dict[str, Any]) -> str:
+    turn = str(payload.get("turn_id") or "unknown-turn")
+    tool_use = str(payload.get("tool_use_id") or "unknown-tool")
+    return f"hook:{turn}:{tool_use}"
+
+
+def build_command(payload: dict[str, Any], failure: str) -> list[str]:
+    engine = Path(__file__).resolve().with_name("build-external-intelligence.py")
+    tool = str(payload.get("tool_name") or payload.get("tool") or "unknown")
+    hint = _hint(payload)
+    observation = _first_failure_line(failure)
+    signature = _failure_signature(failure)
+    command = [sys.executable, str(engine), "--agent", _agent()]
+    cwd = payload.get("cwd")
+    if isinstance(cwd, str) and cwd.strip():
+        command.extend(["--project-root", cwd])
+    command.extend(
+        [
+            "capture",
+            "--title",
+            f"Failure signature: {tool}:{signature}",
+            "--summary",
+            f"{observation} [target: {hint}]",
+            "--rule",
+            f"Prevent repeated {tool} failure matching '{signature}'; verify root cause before promotion.",
+            "--context-id",
+            _context_id(payload),
+            "--evidence-ref",
+            _evidence_ref(payload),
+            "--evidence-source",
+            _evidence_source(tool, signature),
+            "--ambiguous-action",
+            "quarantine",
+            "--tags",
+            f"failure,{tool},auto-observation",
+            "--countercondition",
+            "A different root cause produces the same surface error signature.",
+        ]
+    )
+    return command
 
 
 def main() -> int:
-    hook = _read_hook_input()
-    text = _flatten_text(hook)
-    if not text or not _detect_failure(text):
-        # サイレント正常終了。
+    payload = _read_input()
+    failure = _failure_text(payload)
+    tool = payload.get("tool_name") or payload.get("tool")
+    if not failure or not isinstance(tool, str) or not tool.strip():
         return 0
-    if not _has_genuine_context(hook):
-        # 文脈不足の断片ノイズは記録しない (genuine 文脈最少条件)。
+    try:
+        proc = subprocess.run(
+            build_command(payload, failure),
+            text=True,
+            capture_output=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        sys.stderr.write(f"[auto-record-lesson] skipped: {str(exc)[:240]}\n")
         return 0
-    severity = _estimate_severity(text)
-    slug = _extract_slug(hook, text)
-    today = _dt.date.today().isoformat()
-    entry = _build_entry(hook, text, severity)
-    filename = f"{today}-{slug}.md"
-
-    # 3 段 fallback: 書込可能な最初の候補へ。全滅なら (c) silent no-op exit 0。
-    last_exc: OSError | None = None
-    for base in _candidate_dirs():
-        if not _dir_is_writable(base):
-            continue
-        try:
-            _upsert_lesson(base / filename, entry)
-            sys.stderr.write(f"[auto-record-lesson] recorded -> {base / filename}\n")
-            index_path = _lessons_index_path(base)
-            if _append_index_entry(index_path, base / filename, entry):
-                sys.stderr.write(f"[auto-record-lesson] indexed -> {index_path}\n")
-            return 0
-        except OSError as exc:
-            last_exc = exc
-            continue
-    # どこにも書けない (read-only install 等): クラッシュさせず no-op で握る。
-    if last_exc is not None:
-        sys.stderr.write(f"[auto-record-lesson] no writable sink, skipped: {last_exc}\n")
-    else:
-        sys.stderr.write("[auto-record-lesson] no writable sink, skipped\n")
+    try:
+        result = json.loads(proc.stdout)
+    except (json.JSONDecodeError, TypeError):
+        result = {}
+    status = result.get("action") or result.get("status") or f"exit-{proc.returncode}"
+    state_dir = result.get("state_dir", "unresolved")
+    sys.stderr.write(f"[auto-record-lesson] {status} -> {state_dir}\n")
     return 0
 
 

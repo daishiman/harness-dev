@@ -197,9 +197,10 @@ def test_cli_mode_prompt_own_content_passes():
 
 
 def test_cli_mode_agent_scans_own_dir(content_lint):
-    # 既定 plugins-dir が所有プラグインを指し、agents をちょうど 6 本走査する
+    # 既定 plugins-dir が所有プラグインを指し、現在の agents を全件走査する
     targets = content_lint.collect_targets(content_lint._PLUGIN_ROOT, "agent")
-    assert len(targets) == 6
+    expected = len(list((content_lint._PLUGIN_ROOT / "agents").glob("*.md")))
+    assert len(targets) == expected
 
 
 def test_cli_bad_plugins_dir_is_usage_error(tmp_path):

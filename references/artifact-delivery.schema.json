@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/schemas/artifact-delivery.schema.json",
+  "title": "Artifact delivery policy and package-local projection",
+  "oneOf": [
+    {"$ref": "#/$defs/policy"},
+    {"$ref": "#/$defs/projection"}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "effect": {
+      "enum": ["conversation-output", "external-mutation", "local-artifact", "none"]
+    },
+    "guard": {
+      "enum": [
+        "declared-target-scope-only",
+        "no-target-mutation",
+        "preview-and-explicit-confirmation",
+        "read-only"
+      ]
+    },
+    "externalMutationGuard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_ref", "flow"],
+      "properties": {
+        "runtime_ref": {"const": "#/external_mutation_runtime"},
+        "flow": {"const": "preview-confirm-authorize-execute-v1"}
+      }
+    },
+    "externalMutationRuntimePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id", "runner_ref", "schema_ref", "contract_ref", "hook_manifest_ref",
+        "confirmation_event", "enforcement_event", "enforcement_scope", "flow"
+      ],
+      "properties": {
+        "contract_id": {"const": "external-mutation-guard-v1"},
+        "runner_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py"},
+        "schema_ref": {"const": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json"},
+        "contract_ref": {"const": "plugin:skill-governance-adapters/references/external-mutation-guard-contract.md"},
+        "hook_manifest_ref": {"const": "plugin:skill-governance-adapters/.claude-plugin/plugin.json"},
+        "confirmation_event": {"const": "UserPromptSubmit"},
+        "enforcement_event": {"const": "PreToolUse"},
+        "enforcement_scope": {"const": "recognized-bash-remote-mutations-and-all-bash-during-pending-guard-context"},
+        "flow": {"const": "preview-confirm-authorize-execute-v1"}
+      }
+    },
+    "externalMutationRuntimeProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id", "runner_ref", "runner_sha256", "schema_ref", "schema_sha256",
+        "contract_ref", "hook_manifest_ref", "hook_manifest_sha256", "confirmation_event",
+        "enforcement_event", "enforcement_scope", "flow", "preview_action", "confirmation_action",
+        "authorize_action", "execute_action", "enforcer_action"
+      ],
+      "properties": {
+        "contract_id": {"const": "external-mutation-guard-v1"},
+        "runner_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py"},
+        "runner_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_ref": {"const": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "contract_ref": {"const": "plugin:skill-governance-adapters/references/external-mutation-guard-contract.md"},
+        "hook_manifest_ref": {"const": "plugin:skill-governance-adapters/.claude-plugin/plugin.json"},
+        "hook_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "confirmation_event": {"const": "UserPromptSubmit"},
+        "enforcement_event": {"const": "PreToolUse"},
+        "enforcement_scope": {"const": "recognized-bash-remote-mutations-and-all-bash-during-pending-guard-context"},
+        "flow": {"const": "preview-confirm-authorize-execute-v1"},
+        "preview_action": {"const": "preview"},
+        "confirmation_action": {"const": "hook-confirm"},
+        "authorize_action": {"const": "authorize"},
+        "execute_action": {"const": "execute"},
+        "enforcer_action": {"const": "pretool"}
+      }
+    },
+    "draftHandoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actual_artifact_required", "minimum_state", "present_before_user_choice"],
+      "properties": {
+        "actual_artifact_required": {"const": true},
+        "minimum_state": {"const": "usable-draft"},
+        "present_before_user_choice": {"const": true}
+      }
+    },
+    "autoPromotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["exhaustive", "release"],
+      "properties": {
+        "exhaustive": {"const": false},
+        "release": {"const": false}
+      }
+    },
+    "minimumSafeGuard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fail_closed_on_unknown_effect", "target_scope_required"],
+      "properties": {
+        "fail_closed_on_unknown_effect": {"const": true},
+        "target_scope_required": {"const": true}
+      }
+    },
+    "externalRuntimePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id", "adapter_ref", "engine_ref", "schema_ref", "contract_ref",
+        "caller_ref", "caller_manifest_ref", "caller_event", "default_scope", "standalone_behavior"
+      ],
+      "properties": {
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "adapter_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-intelligence-runtime.py"},
+        "engine_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-intelligence.py"},
+        "schema_ref": {"const": "plugin:skill-governance-adapters/schemas/external-intelligence-runtime.schema.json"},
+        "contract_ref": {"const": "plugin:skill-governance-adapters/references/external-intelligence-runtime-contract.md"},
+        "caller_ref": {"const": "plugin:skill-governance-adapters/hooks/build-external-intelligence-context.py"},
+        "caller_manifest_ref": {"const": "plugin:skill-governance-adapters/.claude-plugin/plugin.json"},
+        "caller_event": {"const": "UserPromptSubmit"},
+        "default_scope": {"const": "project"},
+        "standalone_behavior": {"const": "warning-continue"}
+      }
+    },
+    "externalRuntimeProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id", "adapter_ref", "adapter_sha256", "engine_ref", "engine_sha256",
+        "schema_ref", "contract_ref", "policy_sha256", "caller_ref", "caller_sha256",
+        "caller_manifest_ref", "caller_event", "default_scope", "standalone_behavior"
+      ],
+      "properties": {
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "adapter_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-intelligence-runtime.py"},
+        "adapter_sha256": {"$ref": "#/$defs/sha256"},
+        "engine_ref": {"const": "plugin:skill-governance-adapters/scripts/build-external-intelligence.py"},
+        "engine_sha256": {"$ref": "#/$defs/sha256"},
+        "schema_ref": {"const": "plugin:skill-governance-adapters/schemas/external-intelligence-runtime.schema.json"},
+        "contract_ref": {"const": "plugin:skill-governance-adapters/references/external-intelligence-runtime-contract.md"},
+        "policy_sha256": {"$ref": "#/$defs/sha256"},
+        "caller_ref": {"const": "plugin:skill-governance-adapters/hooks/build-external-intelligence-context.py"},
+        "caller_sha256": {"$ref": "#/$defs/sha256"},
+        "caller_manifest_ref": {"const": "plugin:skill-governance-adapters/.claude-plugin/plugin.json"},
+        "caller_event": {"const": "UserPromptSubmit"},
+        "default_scope": {"const": "project"},
+        "standalone_behavior": {"const": "warning-continue"}
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "schema_id", "schema_sha256", "policy_id", "effect_values_ref",
+        "effect_values", "artifact_first", "draft_handoff", "before_user_choice", "user_choice",
+        "auto_promotion", "minimum_safe_guard", "effect_guards", "external_intelligence_runtime",
+        "effect_overrides"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "schema_id": {"const": "https://harness.local/schemas/artifact-delivery.schema.json"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "policy_id": {"const": "artifact-delivery-v1"},
+        "effect_values_ref": {"const": "plugins/skill-governance-lint/scripts/validate-frontmatter.py#EFFECT_VALUES"},
+        "effect_values": {
+          "type": "array", "uniqueItems": true, "minItems": 4, "maxItems": 4,
+          "items": {"$ref": "#/$defs/effect"}
+        },
+        "artifact_first": {"const": true},
+        "draft_handoff": {"$ref": "#/$defs/draftHandoff"},
+        "before_user_choice": {
+          "type": "object", "additionalProperties": false, "required": ["forbidden_operations"],
+          "properties": {
+            "forbidden_operations": {
+              "type": "array", "uniqueItems": true, "minItems": 4, "maxItems": 4,
+              "items": {"enum": [
+                "semantic-evaluation", "30-thinking-method-diagnosis",
+                "multi-agent-review", "improvement-execution"
+              ]}
+            }
+          }
+        },
+        "user_choice": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "improvement_levels", "release_event", "exhaustive_event",
+            "exhaustive_requires_separate_event"
+          ],
+          "properties": {
+            "improvement_levels": {"const": ["accept-as-is", "light", "standard", "detailed"]},
+            "release_event": {"const": "release"},
+            "exhaustive_event": {"const": "exhaustive"},
+            "exhaustive_requires_separate_event": {"const": true}
+          }
+        },
+        "auto_promotion": {"$ref": "#/$defs/autoPromotion"},
+        "minimum_safe_guard": {"$ref": "#/$defs/minimumSafeGuard"},
+        "effect_guards": {
+          "type": "object", "additionalProperties": false,
+          "required": ["conversation-output", "external-mutation", "local-artifact", "none"],
+          "properties": {
+            "conversation-output": {"const": {"minimum_guard": "no-target-mutation"}},
+            "external-mutation": {"const": {
+              "minimum_guard": "preview-and-explicit-confirmation",
+              "preview_required": true,
+              "runtime": {
+                "contract_id": "external-mutation-guard-v1",
+                "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
+                "schema_ref": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json",
+                "contract_ref": "plugin:skill-governance-adapters/references/external-mutation-guard-contract.md",
+                "hook_manifest_ref": "plugin:skill-governance-adapters/.claude-plugin/plugin.json",
+                "confirmation_event": "UserPromptSubmit",
+                "enforcement_event": "PreToolUse",
+                "enforcement_scope": "recognized-bash-remote-mutations-and-all-bash-during-pending-guard-context",
+                "flow": "preview-confirm-authorize-execute-v1"
+              }
+            }},
+            "local-artifact": {"const": {"minimum_guard": "declared-target-scope-only"}},
+            "none": {"const": {"minimum_guard": "read-only"}}
+          }
+        },
+        "external_intelligence_runtime": {"$ref": "#/$defs/externalRuntimePolicy"},
+        "effect_overrides": {"type": "object", "const": {}, "maxProperties": 0}
+      }
+    },
+    "entrypoint": {
+      "type": "object", "additionalProperties": false, "required": ["path", "effect", "guard"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^skills/[^/]+/SKILL\\.md$"},
+        "effect": {"$ref": "#/$defs/effect"},
+        "guard": {"$ref": "#/$defs/guard"},
+        "guard_contract": {"$ref": "#/$defs/externalMutationGuard"}
+      },
+      "allOf": [
+        {"if": {"properties": {"effect": {"const": "conversation-output"}}},
+         "then": {
+           "properties": {"guard": {"const": "no-target-mutation"}},
+           "not": {"required": ["guard_contract"]}
+         }},
+        {"if": {"properties": {"effect": {"const": "external-mutation"}}},
+         "then": {
+           "required": ["guard_contract"],
+           "properties": {"guard": {"const": "preview-and-explicit-confirmation"}}
+         }},
+        {"if": {"properties": {"effect": {"const": "local-artifact"}}},
+         "then": {
+           "properties": {"guard": {"const": "declared-target-scope-only"}},
+           "not": {"required": ["guard_contract"]}
+         }},
+        {"if": {"properties": {"effect": {"const": "none"}}},
+         "then": {
+           "properties": {"guard": {"const": "read-only"}},
+           "not": {"required": ["guard_contract"]}
+         }}
+      ]
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "schema_id", "schema_sha256", "policy_id", "policy_sha256",
+        "plugin", "manifest_ref", "artifact_first", "draft_handoff", "auto_promotion",
+        "minimum_safe_guard", "entrypoints", "external_mutation_runtime",
+        "external_intelligence_runtime"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "schema_id": {"const": "https://harness.local/schemas/artifact-delivery.schema.json"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "policy_id": {"const": "artifact-delivery-v1"},
+        "policy_sha256": {"$ref": "#/$defs/sha256"},
+        "plugin": {"type": "string", "minLength": 1},
+        "manifest_ref": {"const": ".claude-plugin/plugin.json"},
+        "artifact_first": {"const": true},
+        "draft_handoff": {"$ref": "#/$defs/draftHandoff"},
+        "auto_promotion": {"$ref": "#/$defs/autoPromotion"},
+        "minimum_safe_guard": {"$ref": "#/$defs/minimumSafeGuard"},
+        "entrypoints": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/entrypoint"}},
+        "external_mutation_runtime": {"$ref": "#/$defs/externalMutationRuntimeProjection"},
+        "external_intelligence_runtime": {"$ref": "#/$defs/externalRuntimeProjection"}
+      }
+    }
+  }
+}

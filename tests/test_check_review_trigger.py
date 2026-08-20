@@ -1,13 +1,12 @@
 """check-review-trigger.py (Stop hook) の確実起動ロジックと安全弁を実証する。
 
 ユーザー要望「Claude Code 実行完了をフックで捉え評価を確実に起動」の核は
-decision:block。ただし無限ループ防止/自己ブロック回避/opt-out の三安全弁が
+queue + advisory notice。review pending だけで Stop を妨げないことを
 正しく効くことが同じくらい重要。本テストはその両面を固める:
   - _unevaluated_or_stale: verdict 欠落 or SHA 不一致 (stale) を pending に挙げ、
     harness-creator 自身は Stop block 対象から除外する。
   - _enqueue: 同一 changed_skills セットは冪等スキップ (queue 肥大防止)。
-  - main(): pending があれば decision:block を出すが、stop_hook_active 継続中 /
-    env opt-out 時は block しない。
+  - main(): pending があれば queue + notice を出し、decision:block は出さない。
 """
 import hashlib
 import importlib.util
@@ -134,7 +133,7 @@ def test_pending_review_targets_exempt_true_empty_when_verdict_fresh(tmp_path):
     assert MOD._pending_review_targets(str(tmp_path), [self_rel], exempt=True) == []
 
 
-# --- main(): decision:block と安全弁 ---
+# --- main(): pending review の非ブロッキング通知 ---
 
 def _run_main(monkeypatch, root: Path, changed_rel: list[str], stdin_obj: dict):
     monkeypatch.setattr(MOD, "_git_repo_root", lambda: str(root))
@@ -146,14 +145,16 @@ def _run_main(monkeypatch, root: Path, changed_rel: list[str], stdin_obj: dict):
     return rc, buf.getvalue()
 
 
-def test_main_blocks_when_pending(monkeypatch, tmp_path):
+def test_main_notifies_without_block_when_pending(monkeypatch, tmp_path):
     rel = _make_skill(tmp_path, "demo", "run-x")
     monkeypatch.delenv("HARNESS_CREATOR_NO_REVIEW_BLOCK", raising=False)
     rc, out = _run_main(monkeypatch, tmp_path, [rel], {"hook_event_name": "Stop"})
     assert rc == 0
     payload = json.loads(out)
-    assert payload["decision"] == "block"
-    assert "run-elegant-review" in payload["reason"]
+    assert "decision" not in payload
+    assert payload["notice"] == "content-review pending (advisory)"
+    assert payload["pending_skills"] == ["demo/run-x"]
+    assert (tmp_path / "eval-log" / "review-queue.jsonl").exists()
 
 
 def test_main_does_not_block_when_stop_hook_active(monkeypatch, tmp_path):
@@ -184,22 +185,24 @@ def test_main_notifies_self_pending_without_block(monkeypatch, tmp_path):
     assert rc == 0
     payload = json.loads(out)
     assert "decision" not in payload  # block はしない
-    assert payload["notice"] == "self-plugin content-review pending"
+    assert payload["notice"] == "content-review pending (advisory)"
     assert f"{MOD.SELF_EXCLUDED_PLUGIN}/run-build-skill" in payload["pending_skills"]
     assert "lint-content-review" in payload["reason"]
 
 
-def test_main_block_takes_precedence_over_self_notice(monkeypatch, tmp_path):
-    # 他プラグイン pending が残る場合は decision:block を単独 JSON で出す
-    # (self 通知が混ざると decision JSON の parse を壊すため、block が先に return)。
+def test_main_combines_external_and_self_pending_into_one_notice(monkeypatch, tmp_path):
     self_rel = _make_skill(tmp_path, MOD.SELF_EXCLUDED_PLUGIN, "run-build-skill")
     other_rel = _make_skill(tmp_path, "demo", "run-x")
     monkeypatch.delenv("HARNESS_CREATOR_NO_REVIEW_BLOCK", raising=False)
     rc, out = _run_main(monkeypatch, tmp_path, [self_rel, other_rel], {"hook_event_name": "Stop"})
     assert rc == 0
-    payload = json.loads(out)  # 単独で parse 可能な decision JSON
-    assert payload["decision"] == "block"
-    assert "notice" not in payload
+    payload = json.loads(out)
+    assert "decision" not in payload
+    assert payload["notice"] == "content-review pending (advisory)"
+    assert set(payload["pending_skills"]) == {
+        f"{MOD.SELF_EXCLUDED_PLUGIN}/run-build-skill",
+        "demo/run-x",
+    }
 
 
 def test_main_self_notice_not_emitted_on_non_stop_event(monkeypatch, tmp_path):

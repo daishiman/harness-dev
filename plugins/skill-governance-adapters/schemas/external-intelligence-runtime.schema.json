@@ -1,0 +1,278 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://skill-governance-adapters.local/schemas/external-intelligence-runtime.schema.json",
+  "title": "External Intelligence Normal Runtime Contract",
+  "description": "Claude Code/Codex共通の通常runtime request/state/output。memoryはfail-soft sidecar、artifact生成はwarning付きで継続する。",
+  "oneOf": [
+    {"$ref": "#/definitions/request"},
+    {"$ref": "#/definitions/state"},
+    {"$ref": "#/definitions/output"}
+  ],
+  "definitions": {
+    "entryId": {
+      "type": "string",
+      "pattern": "^ei-[0-9a-f]{12}(?:-(?:[2-9]|[1-9][0-9]+))?$"
+    },
+    "runtime": {"type": "string", "enum": ["codex", "claude-code"]},
+    "searchRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "contract_id", "operation", "runtime", "run_id",
+        "project_root", "context_id", "query", "limit"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "operation": {"const": "search"},
+        "runtime": {"$ref": "#/definitions/runtime"},
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "project_root": {"type": "string", "minLength": 1},
+        "context_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "query": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "limit": {"type": "integer", "minimum": 1, "maximum": 5}
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "outcome"],
+      "properties": {
+        "id": {"$ref": "#/definitions/entryId"},
+        "outcome": {"type": "string", "enum": ["helpful", "neutral", "unhelpful"]}
+      }
+    },
+    "adoptRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "contract_id", "operation", "runtime", "run_id",
+        "project_root", "context_id", "state", "selection", "evidence_ref",
+        "evidence_source"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "operation": {"const": "adopt"},
+        "runtime": {"$ref": "#/definitions/runtime"},
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "project_root": {"type": "string", "minLength": 1},
+        "context_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "state": {"$ref": "#/definitions/state"},
+        "selection": {
+          "type": "array", "minItems": 1, "maxItems": 5,
+          "items": {"$ref": "#/definitions/selection"}
+        },
+        "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "evidence_source": {"type": "string", "minLength": 1, "maxLength": 8000}
+      }
+    },
+    "captureInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title", "summary", "rule", "evidence_ref", "evidence_source", "tags",
+        "countercondition"
+      ],
+      "properties": {
+        "title": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "summary": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "rule": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "evidence_source": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "tags": {
+          "type": "array", "maxItems": 20,
+          "items": {"type": "string", "minLength": 1, "maxLength": 100}
+        },
+        "countercondition": {"type": "string", "minLength": 1, "maxLength": 8000}
+      }
+    },
+    "finishRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "contract_id", "operation", "runtime", "run_id",
+        "project_root", "context_id", "state", "capture"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "operation": {"const": "finish"},
+        "runtime": {"$ref": "#/definitions/runtime"},
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "project_root": {"type": "string", "minLength": 1},
+        "context_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "state": {"$ref": "#/definitions/state"},
+        "capture": {"oneOf": [{"type": "null"}, {"$ref": "#/definitions/captureInput"}]}
+      }
+    },
+    "request": {
+      "oneOf": [
+        {"$ref": "#/definitions/searchRequest"},
+        {"$ref": "#/definitions/adoptRequest"},
+        {"$ref": "#/definitions/finishRequest"}
+      ]
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "contract_id", "run_id", "project_root", "query",
+        "candidate_ids", "selected_ids", "phase", "memory_status"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "run_id": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "project_root": {"type": "string", "minLength": 1},
+        "query": {"type": "string", "minLength": 1, "maxLength": 8000},
+        "candidate_ids": {
+          "type": "array", "maxItems": 5, "uniqueItems": true,
+          "items": {"$ref": "#/definitions/entryId"}
+        },
+        "selected_ids": {
+          "type": "array", "maxItems": 5, "uniqueItems": true,
+          "items": {"$ref": "#/definitions/entryId"}
+        },
+        "phase": {"type": "string", "enum": ["searched", "adopted", "finished"]},
+        "memory_status": {"type": "string", "enum": ["available", "unavailable"]}
+      }
+    },
+    "warning": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": ["memory_absent", "memory_unavailable", "memory_corrupt", "memory_timeout", "detail_budget_exhausted"]
+        },
+        "message": {"type": "string", "maxLength": 512}
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "id", "status", "title", "summary", "score", "resolution_status",
+        "observation_count", "context_count", "evidence_count", "helpful_reuse_count"
+      ],
+      "properties": {
+        "id": {"$ref": "#/definitions/entryId"},
+        "status": {"type": "string"},
+        "title": {"type": "string"},
+        "summary": {"type": "string"},
+        "score": {"type": "number", "minimum": 1.0},
+        "resolution_status": {"type": ["string", "null"]},
+        "observation_count": {"type": "integer", "minimum": 0},
+        "context_count": {"type": "integer", "minimum": 0},
+        "evidence_count": {"type": "integer", "minimum": 0},
+        "helpful_reuse_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "detail": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "id", "status", "title", "summary", "rule", "countercondition", "tags",
+        "resolution_status", "observation_count", "context_count", "evidence_count",
+        "helpful_reuse_count"
+      ],
+      "properties": {
+        "id": {"$ref": "#/definitions/entryId"},
+        "status": {"type": "string"},
+        "title": {"type": "string"},
+        "summary": {"type": "string"},
+        "rule": {"type": "string"},
+        "countercondition": {"type": "string"},
+        "tags": {"type": "array", "maxItems": 10, "items": {"type": "string"}},
+        "resolution_status": {"type": ["string", "null"]},
+        "observation_count": {"type": "integer", "minimum": 0},
+        "context_count": {"type": "integer", "minimum": 0},
+        "evidence_count": {"type": "integer", "minimum": 0},
+        "helpful_reuse_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "reuseResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "outcome", "recorded"],
+      "properties": {
+        "id": {"$ref": "#/definitions/entryId"},
+        "outcome": {"type": "string", "enum": ["helpful", "neutral", "unhelpful"]},
+        "recorded": {"type": "boolean"}
+      }
+    },
+    "captureResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action", "id", "resolution_status"],
+      "properties": {
+        "action": {"type": "string", "enum": ["created", "merged", "duplicate_observation"]},
+        "id": {"$ref": "#/definitions/entryId"},
+        "resolution_status": {"type": ["string", "null"]}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "contract_id", "operation", "runtime", "status", "warnings",
+        "policy", "memory", "token_telemetry", "state", "candidates", "details",
+        "reuses", "capture"
+      ],
+      "properties": {
+        "schema_version": {"const": 1},
+        "contract_id": {"const": "external-intelligence-runtime-v1"},
+        "operation": {"type": "string", "enum": ["search", "adopt", "finish"]},
+        "runtime": {"$ref": "#/definitions/runtime"},
+        "status": {"const": "continue"},
+        "warnings": {"type": "array", "items": {"$ref": "#/definitions/warning"}},
+        "policy": {
+          "type": "object", "additionalProperties": false,
+          "required": [
+            "search_limit_max", "score_threshold", "summary_max_bytes",
+            "search_results_max_bytes", "detail_max_bytes", "details_total_max_bytes"
+          ],
+          "properties": {
+            "search_limit_max": {"const": 5},
+            "score_threshold": {"const": 1.0},
+            "summary_max_bytes": {"const": 512},
+            "search_results_max_bytes": {"const": 4096},
+            "detail_max_bytes": {"const": 4096},
+            "details_total_max_bytes": {"const": 16384}
+          }
+        },
+        "memory": {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope", "user_scope_used", "status", "engine"],
+          "properties": {
+            "scope": {"const": "project"},
+            "user_scope_used": {"const": false},
+            "status": {"type": "string", "enum": ["available", "unavailable"]},
+            "engine": {"const": "central:skill-governance-adapters/build-external-intelligence.py"}
+          }
+        },
+        "token_telemetry": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "estimated", "input_tokens", "reused_input_tokens"],
+          "properties": {
+            "status": {"const": "unavailable"},
+            "estimated": {"const": false},
+            "input_tokens": {"type": "null"},
+            "reused_input_tokens": {"type": "null"}
+          }
+        },
+        "state": {"$ref": "#/definitions/state"},
+        "candidates": {
+          "type": "array", "maxItems": 5,
+          "items": {"$ref": "#/definitions/candidate"}
+        },
+        "details": {
+          "type": "array", "maxItems": 5,
+          "items": {"$ref": "#/definitions/detail"}
+        },
+        "reuses": {
+          "type": "array", "maxItems": 5,
+          "items": {"$ref": "#/definitions/reuseResult"}
+        },
+        "capture": {"oneOf": [{"type": "null"}, {"$ref": "#/definitions/captureResult"}]}
+      }
+    }
+  }
+}

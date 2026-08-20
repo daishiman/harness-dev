@@ -2,12 +2,12 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-goal-seek",
-    "skill_md_sha256": "cb2a849d07810475594105e2ae2c6a0578747565fb7886114f812aac86b22394"
+    "skill_md_sha256": "1a060cbdeea41acc1f94b471887be59fea406f7bfb79f81498d05577ddacafcb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-06-25",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -19,18 +19,29 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "決定論層(IN1/IN2): 中間成果物アンカーの存在/行数(progress.iteration+1)/6必須キー/original_goal 不変/SHA-256 hash 一致/drift_signal enum を検証ブロック inline Python が機械判定(L125-146)し、完了判定が goal-spec.checklist 全 done または max_loops 到達時 open_issues 記録の二経路で明示的に閉じる(L68/L97/L148-152)。verify_by=lint/script の判定可能性を満たす",
-      "質的層(OUT1/OUT2): frontmatter allowed-tools の Agent 搭載と主要ルール6のコンテキスト分離(SubAgent/Agent Team fork・親返却は成果物パスと handoff 要約のみ)が構造整合、completeness_exempt の prompts/manifest 免除が汎用オーケストレーター責務と整合、固定手順非ハードコード原則と paradigm.md 共有正本参照で重複定義を回避(SSOT)"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "dev同期merge後の現 SKILL.md(sha256 cb2a849d...)を ref-skill-design-rubric/rubric.json(rubric_version 1.3.0)で genuine 採点。FM-001 name=run-goal-seek は prefix(run)+kebab・60字以下で PASS。FM-002/003 description は『〜とき』trigger 2個+末尾『。』で 2-3個レンジ PASS。FM-004 内部動作詞(採点する/sha256/exit code 等)を description に含まず PASS。FM-005 description 冒頭が名詞句で日本語動詞許容 PASS。BD-003 本文168行 ≤300(max_skill_md_lines)PASS。PD-001 references_refs 参照あり PASS。PD-002 冒頭30行に『## 目的と出力契約』(BD-001 の Purpose/Output Contract 日本語版)+禁則語『必須』『禁止』『不変』を含み日本語許容で PASS。BD-001『## Purpose & Output Contract』/BD-002『## Gotchas』は本文が日本語見出し『## 目的と出力契約』『## 注意点』のため厳格英語一致では非一致だが、リポジトリ確立キャリブレーション(日本語見出し許容=localization gap low smell)に従い減点せず。KL-001..005 は knowledge/ ディレクトリ不在・frontmatter.knowledge_loop 不在のため存在ゲートで無条件 PASS(skip)。AG/HK/CM/PC/PR/WF 系は applies_to_kinds が agent/hook/command/plugin-composition/prompt/workflow で本 kind=skill には非適用。high severity 0件=PASS。導出 IN1/IN2/OUT1/OUT2 は本スキル固有目的(アンカー不変機構/checklist完了判定/コンテキスト分離fork/都度生成原則)を反映し adequacy 確認。",
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+37 行) には共通 injection 以外の残差 7 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
   "retargeted_from": {
     "eval_log_path": "eval-log/skill-creator/run-goal-seek/content-review/",
     "retargeted_at": "2026-07-02"
+  },
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
   }
 }

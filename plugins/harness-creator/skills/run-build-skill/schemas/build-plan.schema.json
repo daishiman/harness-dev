@@ -37,7 +37,7 @@
       "required": [
         "with_prompts", "with_evaluator", "with_hooks", "with_subagent",
         "with_knowledge", "with_goal_seek", "feedback_contract_required",
-        "feedback_loop_deploy", "content_review", "verification_profile"
+        "feedback_loop_deploy", "content_review", "verification_profile", "build_stage"
       ],
       "properties": {
         "with_prompts": { "type": "boolean", "description": "brief.responsibilities 非空 かつ prompt_creator_policy != skip" },
@@ -53,6 +53,11 @@
           "type": "string",
           "enum": ["incremental", "exhaustive", "build-only"],
           "description": "Step 12/13の検証量。無指定はincremental。"
+        },
+        "build_stage": {
+          "type": "string",
+          "enum": ["draft", "release"],
+          "description": "構築範囲。無指定はdraft。releaseは第1稿確認後の明示昇格。"
         }
       }
     },

@@ -1,6 +1,6 @@
 {
   "$schema": "./bundles-schema.json",
-  "description": "Named plugin bundles for /plugin install. Resolves the lack of native cross-plugin dependency declaration in Claude Code by letting the install-bundle slash command install a curated set in one shot.",
+  "description": "Named plugin lists expanded by scripts/install-bundle.sh or the clone-local install-bundle command. Individual consumers use official plugin.json dependencies to auto-install the shared runtime provider.",
   "bundles": [
     {
       "name": "skills-full",
@@ -30,9 +30,10 @@
     },
     {
       "name": "skills-intake",
-      "description": "Non-engineer elicitation flow that turns plain-language requests into Notion-published briefs, backed by Keychain secrets management.",
+      "description": "Non-engineer elicitation flow that turns plain-language requests into Notion-published briefs, backed by Keychain secrets management and the shared project-scoped external-intelligence runtime.",
       "plugins": [
         "skill-intake",
+        "skill-governance-adapters",
         "skill-governance-secrets"
       ]
     }

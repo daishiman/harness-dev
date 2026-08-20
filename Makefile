@@ -2,7 +2,7 @@
 # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
 # CI では --check gate (harness-creator-kit-ci.yml) が走るため二重防護となる。
 
-.PHONY: sync sync-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
+.PHONY: sync sync-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready artifact-delivery entrypoint-artifact-first lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
 
 # LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
 # coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
@@ -43,7 +43,7 @@ native-surfaces-pr-ready:
 	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
 ## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + company-master vendored + ローカル marketplace drift 検証を実行する
-lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored local-marketplace install-docs distributable-ssot
+lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift company-master-vendored local-marketplace install-docs distributable-ssot
 	python3 scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
@@ -97,6 +97,14 @@ lint: contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-
 	# knowledge/ (JSON ストア) ↔ lessons-learned/ (散文ログ) の役割分担を fail-closed 検査
 	#   (散文 .md の knowledge/ 直下混入・lessons-index の dangling source.file・lesson 形式。2026-07-11)
 	python3 scripts/lint-knowledge-layout.py
+
+## artifact-delivery: 全 plugin の artifact-first policy projection と effect 被覆を read-only 検査
+artifact-delivery:
+	python3 scripts/lint-artifact-delivery.py --repo-root .
+
+## entrypoint-artifact-first: manifest起点の全entrypointで成果物提示前のheavy loopをfail-closed検査
+entrypoint-artifact-first:
+	python3 scripts/lint-entrypoint-artifact-first.py --repo-root .
 
 ## vendored-ssot: plugin 同梱 SSOT (notion_config.py / feedback_contract_ssot.py) が正本と byte 一致か検証
 vendored-ssot:

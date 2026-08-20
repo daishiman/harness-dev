@@ -91,10 +91,15 @@ jobs:
           ' plugins/harness-creator/.codex-plugin/plugin.json
           jq -e '
             (.hooks.SessionStart) as $s |
+            (.hooks.PostToolUse) as $p |
             ($s | type == "array" and length == 1) and
             ($s[0].hooks | type == "array" and length == 1) and
             ($s[0].hooks[0].type == "command") and
-            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py"))
+            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py")) and
+            ($p | type == "array" and length == 1) and
+            ($p[0].matcher | contains("Bash") and contains("apply_patch")) and
+            ($p[0].hooks | type == "array" and length == 1) and
+            ($p[0].hooks[0].command | contains("auto-record-lesson.py"))
           ' plugins/harness-creator/hooks/hooks.json
           python3 -c 'import tomllib; c=tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb")); assert c["schema_version"] == 1; p=tomllib.load(open(".codex/config.toml","rb")); assert p["features"]["hooks"] is True and "hooks" not in p'
           python3 plugins/harness-creator/scripts/sync-codex-project-settings.py --repo-root . --contract plugins/harness-creator/native-surfaces.toml --check --json
@@ -104,6 +109,12 @@ jobs:
       # (notion-gmail-send 未表示) が自己強化ループで永久に見逃される事故を機械遮断する。
       - name: validate plugin completeness (marketplace + bundles registration)
         run: python3 scripts/validate-plugin-completeness.py
+        continue-on-error: false
+      - name: validate artifact delivery policy projections
+        run: python3 scripts/lint-artifact-delivery.py --repo-root .
+        continue-on-error: false
+      - name: reject pre-choice heavy work in every plugin entrypoint
+        run: python3 scripts/lint-entrypoint-artifact-first.py --repo-root .
         continue-on-error: false
       # version bump 忘れの fail-closed 検査。install はコピーで version がキャッシュキーに
       # なるため、plugin の中身を変えても version を据え置くと install 側は永久に古いまま。
@@ -180,8 +191,15 @@ jobs:
       - name: lint plugin composition self-test (fixture drift 検出)
         run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py --self-test
         continue-on-error: false
-      - name: lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml
+      - name: lint and validate every plugin composition (dynamic discovery)
+        run: |
+          set -euo pipefail
+          mapfile -d '' compositions < <(find plugins -mindepth 2 -maxdepth 2 -name plugin-composition.yaml -print0 | sort -z)
+          test "${#compositions[@]}" -gt 0
+          for composition in "${compositions[@]}"; do
+            python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py "$composition"
+            python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py --bundle "$composition"
+          done
         continue-on-error: false
       - name: lint declaration coverage self-test (ratchet 分岐検査)
         run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py --self-test
@@ -313,9 +331,6 @@ jobs:
       - name: ubm-goal-setting lint skill description (03章 R1-R5)
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/ubm-goal-setting/skills
         continue-on-error: false
-      - name: ubm-goal-setting lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml
-        continue-on-error: false
       # ── extract-system-blueprint conformance (harness-creator 仕様準拠) ──
       # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) で
       #   .claude-plugin/marketplace.json に登録済みのため lint-plugin-lint-coverage.py の
@@ -333,9 +348,6 @@ jobs:
         continue-on-error: false
       - name: extract-system-blueprint lint skill description (03章 R1-R5)
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/extract-system-blueprint/skills
-        continue-on-error: false
-      - name: extract-system-blueprint lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/extract-system-blueprint/plugin-composition.yaml
         continue-on-error: false
       # ── plugin lint 被覆メタ検査 (新 plugin 追加時の配線忘れを fail-closed 検出) ──
       - name: lint plugin lint coverage (marketplace 全 plugin の lint 被覆保証)

@@ -1,0 +1,55 @@
+{
+  "changed_paths": [
+    "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+    "plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json",
+    "plugins/harness-creator/skills/run-build-skill/templates/combinators/with-knowledge.patch",
+    "plugins/harness-creator/skills/ref-knowledge-loop/references/external-intelligence.md",
+    "plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md",
+    "plugins/harness-creator/skills/run-build-skill/SKILL.md",
+    "plugins/harness-creator/skills/run-elegant-review/references/amplified-patterns.json",
+    "plugins/harness-creator/hooks/hooks.json",
+    "plugins/harness-creator/native-surfaces.toml",
+    "plugins/harness-creator/.claude-plugin/plugin.json",
+    "plugins/harness-creator/.codex-plugin/plugin.json",
+    "plugins/harness-creator/README.md",
+    "plugins/harness-creator/CHANGELOG.md",
+    "marketplaces/local/.claude-plugin/marketplace.json",
+    "marketplaces/local/plugin-fingerprints.json",
+    ".claude/settings.json",
+    "tests/scripts-plugins/test_harness_creator__external_intelligence.py",
+    "tests/scripts-plugins/test_harness_creator__auto_record_lesson.py",
+    "tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py",
+    "tests/scripts-plugins/test_harness_creator__lint_capability_manifest_r4.py",
+    "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+    "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py"
+  ],
+  "validation_commands": [
+    "python3 -m pytest -q tests/scripts-plugins/test_harness_creator__external_intelligence.py tests/scripts-plugins/test_harness_creator__auto_record_lesson.py tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py tests/scripts-plugins/test_harness_creator__lint_capability_manifest_r4.py tests/scripts-plugins/test_harness_creator__render_combinators.py tests/scripts-plugins/test_harness_creator__render_combinators_r4.py tests/scripts-plugins/test_harness_creator__validate_build_plan.py tests/test_build_claude_settings.py  # 307 passed",
+    "pytest -q tests  # 7175 passed, 4 skipped",
+    "pytest -q tests/scripts-root/test_root__build_plugin_release.py  # 29 passed",
+    "python3 scripts/build-plugin-release.py --check --only harness-creator",
+    "make native-surfaces-check",
+    "python3 scripts/build-local-marketplace.py --check",
+    "python3 scripts/validate-plugin-completeness.py",
+    "python3 scripts/validate-plugin-packages.py",
+    "python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/harness-creator --strict",
+    "python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py --self-test"
+  ],
+  "residual_risks": [
+    "イベント全量リプレイとスナップショットは O(n) のため、10,000 events または 64 MiB 到達時に保存方式を再監査する。",
+    "ロックは単一ホストの PID 生存確認であり、分散 lease と PID 再利用対策は持たない。",
+    "フックは作業継続優先の fail-soft で、失敗時の耐久 spool と health counter は未実装。",
+    "unhelpful reuse と supersede は手動判断を残し、metrics は時間窓ベースラインを持たない。"
+  ],
+  "convergence_status": "complete",
+  "iteration_count": 1,
+  "four_conditions": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS"
+  }
+}

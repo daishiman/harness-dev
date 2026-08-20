@@ -21,10 +21,10 @@
 
 | 入口 | 入る plugin | clone | 手順 |
 |---|---|---|---|
-| **公開 marketplace** (`skills`) | 配布可の 14 個 | 不要 | Step 1〜3 |
-| **ローカル marketplace** (`harness-local`) | **全 22 個**（非配布を含む） | 必要 | Step 4 |
+| **公開 marketplace** (`skills`) | 配布可の 20 個 | 不要 | Step 1〜3 |
+| **ローカル marketplace** (`harness-local`) | **全 23 個**（非配布を含む） | 必要 | Step 4 |
 
-`harness-creator` / `prompt-creator` / `ubm-goal-setting` / `slide-report-generator` などの
+`harness-creator` / `prompt-creator` / `plugin-dev-planner` の
 **開発・個人利用向け plugin は公開 marketplace に載りません**。これは事故防止の意図的な設計で、
 `.claude-plugin/marketplace.json` に `distributable: false` の plugin を書くと
 `validate-plugin-completeness.py` が fail-closed で拒否します。これらを使うには Step 4 へ進んでください。
@@ -74,6 +74,11 @@ Claude Code セッションを起動し、以下を打ちます。
 /plugin install skill-intake@skills
 ```
 
+`skill-intake` は公式 `plugin.json.dependencies` で共通runtimeの
+`skill-governance-adapters` を宣言しています。Claude Code は同じ
+marketplace から依存pluginを自動導入・有効化するため、個別installでも
+project-scopeの外部知能hookが欠落しません。
+
 > ⚠️ Skill 本体を作る `harness-creator`、プロンプトを作る `prompt-creator` は**非配布**のため
 > ここでは入りません。**Step 4** のローカル marketplace 経由で入れてください。
 
@@ -89,14 +94,20 @@ Claude Code セッションを起動し、以下を打ちます。
 
 ### 2c. フル構成 (全部入り)
 
-すべての plugin をまとめて入れる場合は **bundle (束)** を使います。
+Claude Code の marketplace でinstallできる名前は `marketplace.json` の
+pluginだけです。`skills-full` はplugin名ではなく、このリポジトリの
+決定論的な一括installリストです。次の実在するインストーラーを使います。
 
-```text
-/plugin install skills-full@skills
+```bash
+git clone https://github.com/daishiman/harness-dev.git
+cd harness-dev
+bash scripts/install-bundle.sh skills-full
 ```
 
-> **bundle (バンドル)**: 複数の plugin を 1 行でまとめて入れるためのセット。現在あるのは
-> `skills-full` (配布可能な全 plugin) と `skills-intake` (skill 作成の入口だけ) の 2 つです。
+`skills-intake` も同じscriptの引数として選べます。scriptは
+`.claude-plugin/bundles.json` の各pluginを実在する `name@marketplace` へ展開します。
+各consumerも公式dependenciesを持つため、一括・個別のどちらでも共通runtimeは
+依存閉包に含まれます。
 
 ✅ **確認**:
 
@@ -118,8 +129,7 @@ Claude Code セッション内で以下を打ち、補完候補に出ること�
 
 ## Step 4: 全 plugin を入れる (ローカル marketplace)
 
-非配布 plugin (`harness-creator` `prompt-creator` `plugin-dev-planner` `system-dev-planner`
-`dev-graph` `slide-report-generator` `spec-drift-guardian` `ubm-goal-setting`) は
+非配布 plugin (`harness-creator` `prompt-creator` `plugin-dev-planner`) は
 公開 marketplace に載らないため、**手元の clone を 2 枚目の marketplace として登録**します。
 配布ではなく、自分の clone を Claude Code へ束ねて見せるだけです。
 
@@ -135,7 +145,7 @@ git clone <this-repo> harness && cd harness
 python3 scripts/build-local-marketplace.py
 ```
 
-`marketplaces/local/.claude-plugin/marketplace.json` に**全 22 plugin** が書き出されます。
+`marketplaces/local/.claude-plugin/marketplace.json` に**全 23 plugin** が書き出されます。
 
 ### 4-2. 絶対パスで登録する
 

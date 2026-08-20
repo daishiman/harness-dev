@@ -6,7 +6,7 @@
 name: ubm-goal-setting
 description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。
 kind: plugin-composition
-version: 0.2.0
+version: 0.3.21
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
@@ -76,6 +76,7 @@ capabilities:
   - { kind: script,  ref: scripts/validate-knowledge-graph.py,       tier: core }  # imp-C06 (knowledge graph 決定論再生成+DAG非循環検証)
   - { kind: script,  ref: scripts/index-harness-artifact-graph.py,   tier: core }  # imp-C05 (harness artifact graph 突合生成+provenance)
   - { kind: script,  ref: scripts/consult-harness-artifact-graph.py, tier: core }  # imp-C07 (knowledge/harness graph read-only consult)
+  - { kind: script,  ref: scripts/validate-consult-session.py,       tier: core }  # imp-C09 consultation completion gate
   # -- Scripts (run-ubm-youtube-ingest skill 配下 · single-consumer helper を skill 内へ畳込) --
   - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py, tier: core }  # imp-C03 (全量 completeness 検査)
   - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py,            tier: core }  # imp-C02-internal (scheduler one-shot・folded)

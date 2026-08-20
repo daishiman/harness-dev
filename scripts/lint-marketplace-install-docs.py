@@ -5,7 +5,6 @@
 # inputs:
 #   - fs: README.md (必須)
 #   - fs: .claude-plugin/marketplace.json (必須)
-#   - fs: .claude-plugin/bundles.json (必須)
 #   - fs: plugins/*/ (必須)
 #   - fs: marketplaces/local/.claude-plugin/marketplace.json (任意・存在時のみ)
 #   - git: remote origin URL (WARN 判定にのみ使用)
@@ -44,7 +43,7 @@ remote との不一致は WARN に留め、exit code には影響させない。
       (絶対パス・`<...>` プレースホルダはローカル marketplace 手順なので対象外)。
 - M2: README の `/plugin install|update|uninstall <name>@<mk>` の `<mk>` が実在する
       marketplace 名 (公開 `skills` / ローカル `harness-local`) である。
-- M3: `<name>` がその marketplace の `plugins[].name` か `bundles.json` の bundle 名として実在する。
+- M3: `<name>` がその marketplace の `plugins[].name` として実在する。`bundles.json` はinstall scriptの入力でありnative plugin catalogではない。
 - M4: README 本文が `/plugin` コマンド以外の文脈で参照する `<plugin>:<skill>` 形式の
       スラッシュコマンドについて、`<plugin>` が `plugins/` に実在する。
 - M5: 同じスラッシュコマンドの `<skill>` が、その plugin の `skills/<skill>/SKILL.md`
@@ -82,7 +81,6 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 PUBLIC_MK = ROOT / ".claude-plugin" / "marketplace.json"
 LOCAL_MK = ROOT / "marketplaces" / "local" / ".claude-plugin" / "marketplace.json"
-BUNDLES = ROOT / ".claude-plugin" / "bundles.json"
 PLUGINS_DIR = ROOT / "plugins"
 
 # `(\S+)` にすると和文の句読点や括弧まで引数に飲み込み、正しいリポジトリ名を書いていても
@@ -125,7 +123,7 @@ def load_json(path: pathlib.Path) -> dict:
 
 
 def catalog_names(entries: object, source: str) -> set[str]:
-    """`plugins[]` / `bundles[]` から name を集める。形が違えば入力不備 (exit 2)。
+    """Marketplace `plugins[]` から name を集める。形が違えば入力不備 (exit 2)。
 
     `e["name"]` を直接引くと、name 欠落という「JSON としては妥当だが契約違反」の
     入力で KeyError の traceback → exit 1 (=違反あり) になり、宣言した exit 2 と食い違う。
@@ -295,7 +293,6 @@ def main() -> int:
 
     text = README.read_text(encoding="utf-8")
     public = load_json(PUBLIC_MK)
-    bundles = load_json(BUNDLES)
 
     repository = (public.get("metadata") or {}).get("repository")
     if not repository:
@@ -317,7 +314,7 @@ def main() -> int:
     if public_name:
         catalogs[public_name] = catalog_names(
             public.get("plugins", []), ".claude-plugin/marketplace.json の plugins"
-        ) | catalog_names(bundles.get("bundles", []), ".claude-plugin/bundles.json の bundles")
+        )
     if LOCAL_MK.exists():
         local = load_json(LOCAL_MK)
         local_name = local.get("name")

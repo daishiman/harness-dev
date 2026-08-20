@@ -12,6 +12,19 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\"",
+            "timeout": 10,
+            "statusMessage": "Recording reusable failure evidence"
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,7 +1,7 @@
 name: system-dev-planner
 description: 明示された1 featureをexact-13 execution packageへ変換するときに使うmicro-planning plugin bundle。
 kind: plugin-composition
-version: 0.1.0
+version: 0.1.11
 owner: team-platform
 
 contract:
@@ -47,6 +47,8 @@ dependencies:
   - {from: skills/run-system-dev-plan, to: scripts/manage-system-plan-lock.py, type: calls}
   - {from: skills/run-system-dev-plan, to: scripts/build-system-handoff.py, type: calls}
   - {from: skills/assign-system-dev-plan-evaluator, to: agents/system-dev-plan-evaluator.md, type: calls}
+  - {from: skills/assign-system-dev-plan-evaluator, to: scripts/resolve-project-context.py, type: calls}
+  - {from: skills/assign-system-dev-plan-evaluator, to: scripts/validate-system-plan.py, type: calls}
   - {from: "hook:PreToolUse/guard-implementation-readiness", to: scripts/check-implementation-readiness.py, type: calls}
   - {from: "hook:PreToolUse/guard-implementation-readiness", to: scripts/manage-system-plan-lock.py, type: calls}
   - {from: scripts/validate-system-plan.py, to: scripts/build-system-handoff.py, type: reads}

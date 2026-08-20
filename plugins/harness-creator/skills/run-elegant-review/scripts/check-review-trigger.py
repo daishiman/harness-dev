@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
 # 発火: Stop hook (Claude Code, plugin.json の Stop matcher 経由)
 # 副作用境界: git は read-only (status/diff の参照のみ)。queue は append-only。exit は常に 0
-#            (Stop の継続/停止判断は stdout の {"decision":"block"} JSON で行い exit code では行わない)。
+#            (review pending は queue/notice のみ。exit は常に 0 で Stop を妨げない)。
 # 想定 input: {"session_id": ..., "stop_hook_active": bool, ...} 形式 JSON(stdin 空でも落ちない)。
 # 出力1 (推奨): 変更ファイル合計が 20 件以上なら run-elegant-review 起動を stdout 推奨。
 # 出力2 (queue): 評価要求を eval-log/review-queue.jsonl へ 1 行 append
 #         (content-review-protocol.md「hook 発火と queue」の queue を実体化。診断ログであり自動 consumer は無い)。
-# 出力3 (確実起動 / decision:block): 他プラグインに未評価 or stale な変更 skill が残る場合、
-#         Stop を block し Claude 本体へ「既定は focused combined review 1 context、
-#         exhaustive 明示時だけ run-elegant-review + rubric evaluator」と差し戻す。
-#         フック自身は重い LLM を実行しない(=protocol の原則を維持)。トリガのみ行い、実行は Claude 本体。
-# 出力4 (self 通知): 自プラグイン (dogfooding) の pending は block 除外のため完全無音だった。
-#         Stop 時に stdout 通知のみ出す (block はしない)。強制は CI/pre-push の lint-content-review.py。
+# 出力3 (通知): 自/他プラグインの未評価 or stale skill を stdout notice に出す。
+#         評価は成果物提示後の利用者選択時だけ起動し、この Stop hook から自動起動しない。
 #
-# 三層防御 (確実性の担保):
+# 三層分離:
 #   1) 通知層: 変更件数に応じ run-elegant-review を stdout 推奨 (情報提供)。
-#   2) トリガ層 (このフックの出力3): 未評価/stale が残る Stop を decision:block で差し戻し評価を実起動。
-#      安全弁=stop_hook_active ガード(無限ループ防止)/ harness-creator 自身は除外 / env HARNESS_CREATOR_NO_REVIEW_BLOCK=1 で opt-out。
+#   2) 選択層: 未評価/stale は notice に留め、利用者が選択した後だけ evaluator を起動。
 #   3) 強制層 (最終担保): lint-content-review.py が pre-push / CI gate で verdict の
 #      存在・PASS・SHA 一致を強制する。フックを抜けても CI が block するため確実性が最終保証される。
-"""Stop hook。変更量から run-elegant-review を推奨・queue 化し、未評価が残れば decision:block で評価を実起動する."""
+"""Stop hook。review pending を queue/notice 化するが、それだけで Stop しない。"""
 from __future__ import annotations
 
 import hashlib
@@ -155,7 +150,7 @@ THRESHOLD = 20
 SEMANTIC_BASENAMES = ("rubric.json", "workflow-manifest.json")
 QUEUE_RELPATH = os.path.join("eval-log", "review-queue.jsonl")
 
-# 自己ブロック除外: 生成器自身の変更は Stop decision:block の対象にしない。
+# 自己分類: 生成器自身の変更も他pluginと同じ非ブロッキングnoticeに合流させる。
 # CI/pre-push の content-review lint では dogfooding 対象にするが、編集中セッションを
 # 自己ブロックすると改善不能になるため Stop hook だけ安全弁として除外する。
 # 除外判定は SSOT 述語 _FC.is_stop_block_exempt() に委譲 (リテラル散在を排除)。
@@ -404,65 +399,34 @@ def main() -> int:
             queue_path = os.path.join(root, QUEUE_RELPATH)
             _enqueue(queue_path, reason, semantic)
 
-        # --- 出力3: 評価の確実起動 (decision:block で Claude 本体に評価を実行させる) ---
-        # 安全弁: (1) stop_hook_active 継続中は再 block しない (無限ループ防止)、
-        #         (2) env HARNESS_CREATOR_NO_REVIEW_BLOCK=1 で opt-out、
-        #         (3) harness-creator 自身の変更は対象外 (_unevaluated_or_stale 内で除外)。
-        # 重い LLM はここでは実行しない。未評価/stale が残るなら Stop を差し戻し評価を促す (トリガのみ)。
-        if (
-            root
-            and is_stop_event
-            and not inp.get("stop_hook_active")
-            and os.environ.get("HARNESS_CREATOR_NO_REVIEW_BLOCK") != "1"
-        ):
-            pending = _unevaluated_or_stale(root, semantic)
-            if pending:
-                shown = ", ".join(pending[:8]) + (" …" if len(pending) > 8 else "")
-                sys.stdout.write(
-                    json.dumps(
-                        {
-                            "decision": "block",
-                            "reason": (
-                                f"未評価 or stale な変更 skill が {len(pending)} 件あります: {shown}。"
-                                "停止前に各対象へ assign-skill-design-evaluator の focused combined review "
-                                "(4条件+rubric、1 context・再評価1回まで) を実行し、"
-                                "eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json を保存してください "
-                                "(skill_md_sha256 を現在の SKILL.md と一致させる)。"
-                                "30思考法の run-elegant-review + 独立rubric evaluator は "
-                                "verification_profile=exhaustive を明示した場合だけ実行します。"
-                                "意図的にスキップする場合のみ環境変数 HARNESS_CREATOR_NO_REVIEW_BLOCK=1 を設定。"
-                            ),
-                        },
-                        ensure_ascii=False,
-                    )
-                )
-                return 0
-
-        # --- 出力4: self-plugin 通知 (block はしない・1 分岐) ---
-        # 自プラグイン (dogfooding) の pending は Stop block から除外され (自己ブロック回避)、
-        # 従来はセッション内で完全無音のまま pre-push/CI で一括顕在化していた。
-        # block 分岐が return した後にのみ到達するため decision JSON と混ざらない。
+        # --- 出力3: pending review の非ブロッキング通知 ---
+        # queue は追跡用であり自動 consumer ではない。不可逆操作・秘密等の
+        # safety block は所有hookに残し、ここではreview pendingだけをStop理由にしない。
         if root and is_stop_event:
+            pending = _unevaluated_or_stale(root, semantic)
             self_pending = _pending_review_targets(root, semantic, exempt=True)
-            if self_pending:
-                shown = ", ".join(self_pending[:8]) + (" …" if len(self_pending) > 8 else "")
+            all_pending = pending + [item for item in self_pending if item not in pending]
+            if all_pending:
+                shown = ", ".join(all_pending[:8]) + (" …" if len(all_pending) > 8 else "")
                 sys.stdout.write(
                     json.dumps(
                         {
                             "hook": "check-review-trigger",
-                            "notice": "self-plugin content-review pending",
-                            "pending_skills": self_pending,
+                            "notice": "content-review pending (advisory)",
+                            "pending_skills": all_pending,
+                            "queue": QUEUE_RELPATH,
                             "reason": (
-                                f"{_FC.SELF_DOGFOODING_PLUGIN} 自身の変更 skill が未評価 or stale です"
-                                f" ({len(self_pending)} 件): {shown}。Stop は妨げませんが、push 前に"
-                                " content-review verdict を再生成してください"
-                                " (pre-push/CI の lint-content-review.py が強制します)。"
+                                f"未評価 or stale な変更 skill が {len(all_pending)} 件あります: {shown}。"
+                                "Stop は妨げず queue/notice だけを残します。"
+                                "成果物提示後に利用者が診断を選んだ場合のみevaluatorを起動します。"
+                                "明示releaseのpre-push/CIでは lint-content-review.py が別境界として検査します。"
                             ),
                         },
                         ensure_ascii=False,
                     )
                     + "\n"
                 )
+                return 0
 
         # --- 出力1: stdout 推奨 (block しない場合のみ・既存挙動を維持) ---
         if count >= THRESHOLD:

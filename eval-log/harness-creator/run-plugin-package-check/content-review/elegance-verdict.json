@@ -2,28 +2,41 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-plugin-package-check",
-    "skill_md_sha256": "89ca764291ad7373690c963e46394943c41bea4606bfc687df12f893a1002090"
+    "skill_md_sha256": "dda5c7c7e96c5fbf33c70377f23ac2c060a35eb0c64c4e7b4cb1f1c12ea8a625"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "phase 意味論 (Phase0=PKG-001〜009 / Phase1=+010 / Phase2=+011〜015) が入力・完了条件・局面カタログ・Gotchas で一貫し、既定 phase=0 が『出荷前検査』用途に対し subset PASS=false green になるトラップを ⚠️ 明示 + 『必ず --phase all を明示』で顕在化する自己整合した設計になっている。",
-      "PKG-002〜008/014 を assign-plugin-package-evaluator へ context:fork 委譲し、PKG 定義を ref-pkg-contract に委ねる責務直交 (OUT1) が Key Rules・局面カタログ・役割直交テーブル (Step5=契約適合 / 5.5=elegance / 6=rubric) で崩れず維持されている。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "低 severity (非阻害 smell): 局面カタログ ASCII 図 Step8 の説明文に『開each 時は fail』という文字化け断片 (line 157・恐らく breach 意図) があり、ASCII 図のインデントも一部ずれる。意味は文脈から判読でき構造の矛盾ではないが表記修正が望ましい。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 89ca764291ad7373690c963e46394943c41bea4606bfc687df12f893a1002090) を全文 read し 4 条件で genuine 再評価。①矛盾なし: phase 被覆範囲・fail 時 exit1・observable 1run1line が入力/完了条件/Gotchas で一貫。②漏れなし: 入力/出力/完了条件、Key Rules 1〜8、goal-seek (Goal/Why/Checklist/loop)、局面カタログ Step0〜10、役割直交テーブル、Gotchas、Additional Resources を網羅。③整合性: feedback_contract IN1/IN2/OUT1、pair=assign-plugin-package-evaluator が双方向一致、rubric_refs=ref-pkg-contract。④依存整合: prompts (R1-orchestrate/R2-gate-decide)、schema_refs (run-report.schema.json・ref-pkg-contract package-contract)、workflow-manifest.json、scripts (run-plugin-validate-strict.sh/smoke-plugin-install|uninstall|upgrade.sh/sandbox-plugin-lifecycle.py/validate-plugin-permissions.py/run-pkg-015.py/aggregate-pkg-findings.py) を実ディスクで確認し全て resolve。line 157 の『開each』文字化けを低 severity smell として記録するが構造矛盾ではなく PASS を阻害しない。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

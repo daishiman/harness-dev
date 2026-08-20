@@ -11,6 +11,7 @@ allowed-tools:
 kind: run
 user-invocable: true
 effect: external-mutation  # Notion ページ PATCH = 外部変更 (run-notion-intake-publish と同値)
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: plugins/skill-intake
 source-tier: internal
 last-audited: 2026-05-24
@@ -27,6 +28,7 @@ schema_refs:
   - schemas/output.schema.json
 manifest: workflow-manifest.json
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -41,7 +43,53 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 本スキルが同一 Notion ページへの PATCH 上書き(新規ページ非作成=URL/リンク保全)に責務を絞り、PNG/mermaid 全揃いの All-or-Nothing と internal-analysis.json 非開示を守りつつ、新規 intake 生成・publish へ逸脱しない設計になっている
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-intake-revise
 
@@ -98,12 +146,7 @@ python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/analyze_user_intent.
 # 正本再生成
 python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/render-intake-final.py output/<hint>
 
-# Notion PATCH 更新 (同一ページ ID)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/intake_publish_pipeline.py \
-  --intake   output/<hint>/intake.json \
-  --manifest output/<hint>/notion-manifest.json \
-  --revise \
-  --page-id  <既存ページ ID>
+# Notion PATCH mutation: construct <MUTATION_ARGV_JSON> with the resolved intake_publish_pipeline.py path and --intake/--manifest/--revise/--page-id argv; pass it only to the canonical receipt flow above.
 
 # --dry-run 指定時は Notion API 呼び出しを行わず差分のみ表示
 ```

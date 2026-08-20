@@ -28,3 +28,12 @@ matcher = "startup|resume|clear"
 command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\""
 delivery = "plugin"
 products = ["claude", "codex"]
+
+[[hooks]]
+id = "harness-creator-external-intelligence-observe"
+owner = "harness-creator"
+event = "PostToolUse"
+matcher = "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write"
+command = "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\""
+delivery = "plugin"
+products = ["claude", "codex"]

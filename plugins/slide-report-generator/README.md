@@ -14,7 +14,7 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 | skills | `run-slide-report-generate` (主オーケストレータ) / `run-slide-report-modify` / `run-cross-deck-review` |
 | agents | 17 thin Task adapters (詳細 7 層 prompt は各 owner skill の `prompts/R*.md`) |
 | commands | `/slide-report-generate` / `/slide-report-status` |
-| hooks | `hook-postgen-eval.py` (PostToolUse・生成後評価の自動起動・fail-soft) |
+| hooks | `hook-postgen-eval.py` (PostToolUse・最小guard・成果物提示・利用者選択を促すadvisory・fail-soft) |
 | scripts | 主要な plugin-root scripts: `validate-output-mode.py` / `lint-vendor-parity.py` / `validate-plugin-completeness.py` / `lint-reference-attribution.py` / `validate-report-visual.py` / `lint-contract-drift.py` / `lint-count-parity.py` (散文の数詞 ↔ 正本の実測値。件数は `ls scripts/` が正本なのでここに書かない) |
 | schemas | `structure.schema.json` (slide) / `report-structure.schema.json` (report・共通コア共有) ほか |
 | references | 42 upstream + report 新規 5 (report-types / report-writing-rules / report-visual-strategy / mermaid-integration / report-narrative-logic) |
@@ -28,7 +28,7 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 /slide-report-status <project-dir>               # 進行状況/フェーズ確認
 ```
 
-`run-slide-report-generate` skill が hearing → 構成設計 → 仕様確定ゲート → 生成 (HTML / 決定論 render-slide.cjs / Codex 画像 / report render-report.js) → 生成後評価 (deck-evaluator・30種思考法・mode-aware) を駆動する。
+`run-slide-report-generate` skill がまず生成 (HTML / 決定論 render-slide.cjs / Codex 画像 / report render-report.js) → 最小guard → 現物提示 → 利用者選択を完了する。`light / standard / detailed` が選ばれた場合だけ、hearing・構成設計・仕様確定ゲート・生成後評価 (deck-evaluator・30種思考法・mode-aware) を選択範囲で駆動する。`accept-as-is` は evaluator 0 / improver 0 でhandoffを終え、release/exhaustiveは別の明示eventを必要とする。
 
 ## 初回セットアップ
 
@@ -59,7 +59,7 @@ Mermaid は runtime 依存を増やさず、`mermaid-render.js` が CDN 初期�
 - **vendor integrity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` と照合する。upstream 非改変ファイルは sha256 pin、明示local overlayは owner付き semantic contract + tests/goldens で検証する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にする。
 - **plugin completeness**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-plugin-completeness.py"` が manifest 名・entry_points・hook 実体・必須 surface を検証する。
 - **mode 検証**: `validate-output-mode.py` が `output_mode`/`reportType` の値域を fail-closed 検証。
-- **生成後評価**: `hook-postgen-eval.py` が deck/report 中核ファイル書込を検知し deck-evaluator を mode 判定つきで起動を促す。
+- **生成後advisory**: `hook-postgen-eval.py` は deck/report 中核ファイル書込を検知し、実HTMLの UTF-8 open / HTML parse / 空・NUL破損 / secret だけを検査する。子プロセスや deck-evaluator は起動せず、成果物の提示と `accept-as-is / light / standard / detailed` の選択を促す。semantic evaluatorは改善レベル選択後だけ起動する。
 - **改善要望ループ**: `run-skill-feedback`（`skills/run-skill-feedback` は harness-creator の SSOT へ向く任意 symlink adapter）で本プラグインの skill への改善要望を起票・集約できる。これは本プラグイン所有の entry point ではないため、handoff routes / `plugin-composition.yaml` / `.claude-plugin/plugin.json` には含めない。
 
 `distributable: false` (社内専用・marketplace/bundle 非登録)。

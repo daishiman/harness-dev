@@ -6,7 +6,7 @@
 name: spec-drift-guardian
 description: 検知済み spec-drift issue の影響を 4 軸+semantics でトリアージし、rubric/schema/template への更新提案を独立監査+明示承認+allowlist 限定で適用し、post-image 検証を通した applied_verified / verified-no-change のみ close 可とするゲート型 plugin。
 kind: plugin-composition
-version: 0.1.0
+version: 0.1.9
 owner: harness maintainers
 since: 2026-07-13
 last-audited: 2026-07-13
@@ -58,10 +58,11 @@ dependencies:
   - { from: skills/run-spec-drift-triage,      to: scripts/map-field-impact.py,      type: calls }
   - { from: skills/run-rubric-sync,            to: skills/run-spec-drift-triage,     type: reads }
   - { from: skills/run-rubric-sync,            to: scripts/map-field-impact.py,      type: calls }
-  - { from: agents/spec-impact-verifier,       to: skills/run-spec-drift-triage,     type: evaluates }
+  - { from: skills/run-rubric-sync,            to: scripts/check-triage-complete.py, type: calls }
+  - { from: skills/run-spec-drift-triage,      to: agents/spec-impact-verifier,      type: evaluates }
   - { from: agents/spec-impact-verifier,       to: scripts/parse-spec-diff.py,       type: calls }
   - { from: agents/spec-impact-verifier,       to: scripts/map-field-impact.py,      type: calls }
-  - { from: agents/rubric-sync-auditor,        to: skills/run-rubric-sync,           type: evaluates }
+  - { from: skills/run-rubric-sync,            to: agents/rubric-sync-auditor,       type: evaluates }
   - { from: scripts/check-triage-complete.py,  to: agents/spec-impact-verifier,      type: reads }
   - { from: scripts/check-triage-complete.py,  to: agents/rubric-sync-auditor,       type: reads }
   - { from: scripts/check-triage-complete.py,  to: scripts/aggregate-issue-diffs.py, type: reads }

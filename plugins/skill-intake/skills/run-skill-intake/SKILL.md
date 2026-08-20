@@ -13,6 +13,7 @@ prefix: run
 user-invocable: true
 disable-model-invocation: true
 effect: external-mutation
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: plugins/skill-intake
 source-tier: internal
 last-audited: 2026-05-24
@@ -36,6 +37,7 @@ reference_refs:
   - ref-workflow-sequence
   - ref-handoff-contract
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -50,13 +52,59 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 業務ロジック(質問雛形・採点基準・Notion blocks 生成)を持たず 11 phase を Skill/SubAgent へ委譲し handoff JSON 契約のみで橋渡しする薄い orchestrator 設計が、非エンジニアの曖昧要望から実装可能な intake 仕様まで橋渡しする目的を最適に反映している。
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-skill-intake
 
 ## Purpose & Output Contract
 
-intake plugin の中核 orchestrator。`workflow-manifest.json` の `phases[]` を SSOT として 11 phase を子 Skill / SubAgent に順次委譲し、最終成果物 `intake.md` / `intake.json` / Notion URL を生成する**薄い orchestrator**。各 phase の業務ロジック (質問雛形・採点基準・図解生成) は持たない。
+intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文だけから最小の `intake.md` / `intake.json` を作成・schema guard・提示する。`workflow-manifest.json` の11 phaseを子Skill/SubAgentへ委譲する処理とNotion公開はlight/standard/detailed選択後だけ実行する。accept-as-isではSubAgent/公開とも0回でローカルhandoffを完了する。
 
 **入力**: ユーザーの「スキルを作りたい」要望 (topic 引数任意) + 任意の Notion 明示指定 (`--page-url` / `--page-id` / `--database-id`)。Notion 明示指定は `notion_target` として intake.json に保持し、Phase 10 publish まで落とさない。
 
@@ -77,14 +125,14 @@ intake plugin の中核 orchestrator。`workflow-manifest.json` の `phases[]` �
 | next-action.json | `output/<hint>/next-action.json` | P11 |
 | intake-trace.json | `eval-log/intake-trace.json` | 全 phase 共通 |
 
-**完了条件**: `workflow-manifest.json` の全 phase が success + `quality_gate.py` PASS + `cross_check.py` PASS + Notion 公開成功 + 完了レポート (日本語本文、パラメーター名のみ英語) 提示。
+**usable handoff条件**: 最小 `intake.md` / `intake.json` がschema guardを通りpath/digest付きで提示済み。**選択後の改善完了条件**: 11 phase success + quality/cross-check PASS。Notion公開はさらにexplicit confirmation receiptがある場合だけ行う。
 
 ## Key Rules
 
 1. **manifest を SSOT とする**: 固定 Steps を本文に書かず `workflow-manifest.json` の `phases[]` (id / dependsOn / delegateType / delegateName / fatal_exit_codes) を読み実行順を決める。
 2. **業務ロジックを持たない**: 質問雛形 / 技法選択 / 採点基準 / Notion blocks 生成は子 Skill / SubAgent / references に閉じる。本スキルは起動順序と handoff JSON の受け渡しのみ。
 3. **handoff JSON 必須**: 各 phase 完了時に対応 JSON ファイルが存在し、`workflow-manifest.json` と各 skill / SubAgent の `schemas/` 契約に通ること。違反時はその phase に戻す。
-4. **SubAgent fresh context (context:fork)**: Phase 2 / 3 / 5 / 8 はバイアス回避・同意ループ防止のため Task tool で SubAgent 起動し主スレッド context を渡さない。Phase 1 / 4 / 6 / 7 / 9 / 10 / 11 は Skill tool で主スレッド起動。
+4. **SubAgent fresh context (context:fork)**: light/standard/detailed選択後のみ、Phase 2 / 3 / 5 / 8をTask toolでSubAgent起動する。accept-as-isと提示前は起動しない。
 5. **失敗で停止**: phase が exit != 0 / handoff JSON 検証 fail / fatal_exit_codes hit なら停止し `intake-trace.json` に再開ポイントを記録、ユーザーへ提示。
 6. **Secret-Out-of-Repo**: Notion トークンは Keychain から都度取得 (`scripts/keychain_get_secret.py`)。リポジトリへ書き込まない。
 7. **Gate A (Phase 8) で停止可能**: summary 否認時は Phase 4 へ戻り再ヒアリング (最大 2 周)。

@@ -1,32 +1,43 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-create", "skill_md_sha256": "dc4e848d0e26b5ab0b39afd58f8693025cb9066ee6da5689a7441f77cfc8aebb"},
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-create",
+    "skill_md_sha256": "cefd4bbcf9e749fe7ba0d299c3c52334da721e625684e6205d7cd306a17ea93f"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 0},
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T11:44:50Z",
-  "iterations": 3,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "ref-skill-design-rubric (rubric_version 1.3.0, threshold 80, hash 6e1843e5… を実計算で再確認) の kind=skill 適用 rule を再採点し high severity 0 を維持: FM-001 (name=run-skill-create が prefix 規約に一致) / BD-001 (## Purpose & Output Contract が SKILL.md:71 に厳格一致) / BD-003 (frontmatter を除く body 132 行 ≤ 300。Key Rule 6 の書き換えは同段落内で完結し行数増なし) / NM-001 (ディレクトリ basename == frontmatter.name) がいずれも PASS。frontmatter は今回の差分で未変更のため FM-002/003/004・BD-002・PD-001/002 も iter2 の判定をそのまま維持。",
-      "[iter2 残存 low #1 (claim-implementation parity) が解消] Key Rule 6 (SKILL.md:108) が主語を分け、『write_version() が plugin.json → 公開 marketplace.json (sync_public_marketplace_version()) / .codex-plugin/plugin.json (sync_codex_manifest_version())』と『_run() が bumped 非空のとき regenerate_config_version_lock() で config-version-lock.json』の 2 経路になった。実装 (build-plugin-release.py L128-149 の呼び先 2 つ / L622-623 の `if bumped:` → L428-446) と関数名・呼び出し元・条件が逐語一致し、規範文から実装へ grep で辿れる状態になった。",
-      "[iter2 残存 low #2 (用語一致) が解消] Key Rule 6 が『Gate 2.5 承認後』へ番号を特定し、Step 3.7 (SKILL.md:121) / CL-4c (SKILL.md:149) / workflow-manifest.json plugin-release-record.comment と 4 者が逐語で揃った。同段落に併記される『人間が PR diff で最終承認する』との指示先の取り違えが構造的に不可能になった。",
-      "[SSOT 非重複を維持] 4 者は『書込は Gate 2.5 承認後』『--only <plugin> 必須』『生成フロー内の自動実行は --check のみ』で一致し、後 3 者は Key Rule 6 を明示参照して正本を 1 つに指す。command 文字列も SKILL.md 側 `${HARNESS_ROOT:-.}/scripts/build-plugin-release.py --only <plugin>` / manifest 側 `python3 scripts/build-plugin-release.py --only <plugin>` と各登録簿内の既存綴りに揃っており、今回の書き換えで新語彙は入っていない。",
-      "[機械検査を実走し全通過] lint-prompt-contract-drift.py --all = prompts_scanned=187 fatal=0 warn=0 / validate-frontmatter.py (単体・SKILL.md 指定) = ok: run-skill-create / p0-lint の governance lint 8 件 (lint-skill-name, lint-skill-description, lint-skill-tree, validate-frontmatter, lint-dependency-direction, lint-skill-dep-step7, lint-forbidden-deps, lint-manifest-contents) が全て exit 0。lint-manifest-contents は step 3.6/3.7 を含む manifest を通過。",
-      "[単一責務の維持] 今回の書き換えも判断規範 (どの実行が承認の内側/外側か) の精度向上に留まり、version 採番・同期ロジックは SKILL.md へ複製されていない。実装知識は『なぜその境界か』の根拠引用に限られ、判定は repo-root スクリプトと CI (scripts/run-ci-checks.sh:135 の unscoped --check) に委譲されたまま。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[観測・非 FAIL] 規範として残る唯一の精度上の細部は、Key Rule 6 括弧書きが --dry-run 時の早期 return (L618-620) を明示しない点。ただし括弧が修飾する主節の write_version() 自体が L604-605 の `if not args.dry_run:` 配下であり dry-run は文脈上除外されるため、減点なし (finding 非計上)。",
-      "[観測・非 FAIL] `python3 scripts/build-plugin-release.py --check` は現時点で exit 1 (`[changed] harness-creator`)。SKILL.md を編集した以上の正常な fail-closed 検出で、CL-4c の運用 (Gate 2.5 承認後 `--only harness-creator`) で解消する。",
-      "[検証できなかった点] RG-001 (出力 JSON への rubric_hash 同梱) は content-review-verdict.schema.json が additionalProperties:false でトップレベル追加キーを禁じるため、本 verdict でも notes 内に hash を記載する代替を継続 (schema 準拠を優先)。IN1 の p0-lint 9 コマンド目 validate-build-plan.py は入力 eval-log/skill-brief.json が別 skill (run-slide-report-generate) の残置 brief であるため run-skill-create に対して意味のある実行にならず、iter1/iter2 と同じく評価対象外 (create 実行中にしか成立しない run-scoped 入力に起因する既存事情で、本差分の退行ではない)。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 3,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric hash=6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d (rubric_version 1.3.0, threshold 80。plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json を実計算し iter2 から不変を確認)。iteration 2 PASS 後に『低優先・非 FAIL』として記録した 2 件 (write_version() への config-version-lock 帰属ずれ / Key Rule 6 のみ Gate 番号なし) を Key Rule 6 の 1 段落で修正したことに伴い SKILL.md の sha が変わったため、verdict の sha 整合を回復する再検証パス。SKILL.md sha256=dc4e848d0e26b5ab0b39afd58f8693025cb9066ee6da5689a7441f77cfc8aebb (実計算、旧 da11bd76… から更新)。high severity 0 を維持し、iter2 の残存 low 2 件がいずれも解消したため未解決 findings なしで PASS。criteria 全件評価: IN1 = p0-lint の 9 コマンド中 8 件を実走し全て exit 0、TODO / 未展開 {{...}} / 英語仮文の残存なし (run-skill-create 配下の TODO 出現は prompts/R1-elicit.md の『TODO(human) ラベル禁止』規約文 4 箇所と gate-templates.md:52 の反例引用のみ。SKILL.md の {{ は CL-7 と feedback_contract IN1 の説明文)。9 件目 validate-build-plan.py は入力 brief が別 skill の残置で評価不能 (既存事情)。IN2 = 本差分は handoff / build-trace の生成経路に触れておらず退行なし。OUT1 = Gate 停止と context:fork 要求は無傷。書込を Gate 2.5 承認後 + --only 必須へ限定する規範は 4 者一致で維持され、今回の Gate 番号明示でむしろ強化された。OUT2 = CL-9/CL-10 の FAIL 残存禁止・C1-C4 契約は本差分で不変。退行確認 (機械): Flow↔manifest の両方向差集合が空 (12 件)、SKILL.md:91 と prompts/R1-elicit.md:172 の ${HC_ROOT:-$CLAUDE_PLUGIN_ROOT} 一致、参照スクリプト 7 件の実在、CL-4b の限定条件が _run() の pending 分岐 (L585-595 / L621) と一致。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
 }

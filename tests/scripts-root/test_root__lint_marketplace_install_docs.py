@@ -32,7 +32,7 @@ SPEC.loader.exec_module(MOD)
 
 REPO = "owner/repo"
 CATALOGS = {
-    "skills": {"alpha", "beta", "skills-full"},
+    "skills": {"alpha", "beta"},
     "harness-local": {"alpha", "beta", "internal-only"},
 }
 ON_DISK = {"alpha", "beta", "internal-only"}
@@ -100,8 +100,8 @@ def test_m3_hints_local_route_for_non_distributable_plugin():
     assert "ローカル marketplace 経由" in errs[0]
 
 
-def test_m3_allows_bundle_name():
-    assert check("/plugin install skills-full@skills") == []
+def test_m3_rejects_bundle_name_that_is_not_a_marketplace_plugin():
+    assert codes("/plugin install skills-full@skills") == ["M3"]
 
 
 def test_m3_allows_plugin_from_local_marketplace():
@@ -247,11 +247,9 @@ def test_real_readme_passes():
 def _real_inputs() -> tuple[str, str, dict, set, dict]:
     """実 repo の marketplace / plugins を読み、check_install_docs の引数一式を返す。"""
     public = MOD.load_json(MOD.PUBLIC_MK)
-    bundles = MOD.load_json(MOD.BUNDLES)
     local = MOD.load_json(MOD.LOCAL_MK)
     catalogs = {
-        public["name"]: MOD.catalog_names(public["plugins"], "p")
-        | MOD.catalog_names(bundles["bundles"], "b"),
+        public["name"]: MOD.catalog_names(public["plugins"], "p"),
         local["name"]: MOD.catalog_names(local["plugins"], "l"),
     }
     on_disk = {d.name for d in MOD.PLUGINS_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")}

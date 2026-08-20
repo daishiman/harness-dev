@@ -5,6 +5,7 @@ version: 0.1.0
 owner: harness maintainers
 source: plugin-plans/guide-doc-generator/component-inventory.json#C03
 kind: assign
+effect: conversation-output
 prefix: assign
 # 読みやすさを採点する相手は run-handout-build が生成した資料である
 # (proposer ≠ approver: 生成した本人が採点しない)

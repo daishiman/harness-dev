@@ -1,9 +1,29 @@
 {
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
+      "transitions": [
+        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
+        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
+        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
+        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
+        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
+        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      ],
+      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
+      "accept_contexts": {"evaluator": 0, "improver": 0}
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "schemaVersion": 1,
   "workflowId": "run-slide-report-modify",
   "skill": "run-slide-report-modify",
-  "description": "既存成果物 (slide deck / report) の output_mode を保ったまま指定箇所だけを局所修正する。R1 でplugin-local Chromiumを復元・検査し、修正対象と output_mode を特定して validate-output-mode.py で値域整合を検証、R2 で slide-report-modifier を name 起動し mode 分岐で規範 (slide=modification-rules.md / report=report-modification-rules.md) に従い局所差分修正 (report は render-report.js で report.html を再レンダ)、R3 で mode 別に再評価する (slide=verify-slides.js ＋意匠/印刷影響時 evaluate-deck.js / validate-print.js で視覚崩れ 0、report=render-report.js 再レンダ整合 ＋ validate-report-visual.py ＋ mode-aware deck-evaluator)。",
+  "description": "Main contextが既存成果物を最小局所修正してactual artifactを先に提示する。R1/R2/R3（Task fork、mode別再評価、有界修正）はlight/standard/detailed選択後だけ起動し、accept-as-isではphase実行0でhandoff完了する。",
   "phases": [
     {
       "id": "R1-identify-target",

@@ -2,27 +2,42 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "assign-system-dev-plan-evaluator",
-    "skill_md_sha256": "3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d"
+    "skill_md_sha256": "71beaae3ac6d51d80d7e93c3d06eb4add8f123e9f02d23de218362091387359d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
-    "positive_feedback": [
-      "単一責務が明確: 「独立した system plan 評価」に限定し build/生成を持たず対象成果物を改変しない (FM の kind=assign/allowed-tools=[Read,Write,Bash,Task] と本文が整合)",
-      "出力契約が SSOT で pin: plan-findings.schema.json を出力正本、feature-execution-package-contract.md を評価対象契約の正本として $CLAUDE_PLUGIN_ROOT で明示 (本文42)",
-      "命名規約準拠: ディレクトリ名 assign-system-dev-plan-evaluator と name/prefix:assign が一致し L1/role_suffix:evaluator も整合"
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点。FM: name は kebab + assign- prefix (prefix:assign と一致)、description は日本語 Use-when 形式、allowed-tools が明示 allowlist。BD: 出力契約 (plan-findings.json + 評価対象契約) を明示、失敗/境界注記あり、本文 43 行で ≤300 行、references 委譲済みで PD 満たす。NM: ディレクトリ名一致・role_suffix:evaluator と responsibility 整合。境界: plugin の道具・契約は $CLAUDE_PLUGIN_ROOT、評価対象と出力状態は caller repository 内に限定と明記され越境がない。SSOT: schema/contract の正本を単一に pin。high severity 該当 (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は本 skill の主要品質次元 (4 評価条件 C1-C4) を非空 id 配列で被覆 (frontmatter feedback_contract 不在のため品質次元 id を採用)。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+1 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

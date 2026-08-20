@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/schemas/external-mutation-guard.schema.json",
+  "title": "External mutation guard receipts",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version", "contract_id", "kind", "receipt_id",
+    "issued_at", "expires_at", "seal"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "external-mutation-guard-v1"},
+    "kind": {"enum": ["preview", "confirmation", "authorization", "completion"]},
+    "receipt_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+    "issued_at": {"type": "integer", "minimum": 0},
+    "expires_at": {"type": "integer", "minimum": 0},
+    "seal": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "target_scope": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "command_argv": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "diff_summary": {"type": "string", "minLength": 1, "maxLength": 2048},
+    "side_effect_summary": {"type": "string", "minLength": 1, "maxLength": 2048}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"kind": {"const": "preview"}}},
+      "then": {
+        "required": [
+          "entrypoint_ref", "target_scope", "command_argv", "command_sha256",
+          "diff_summary", "side_effect_summary",
+          "challenge_sha256", "status"
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "confirmation"}}},
+      "then": {
+        "required": [
+          "preview_receipt_id", "preview_receipt_sha256", "producer",
+          "user_event_id", "decision"
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "authorization"}}},
+      "then": {
+        "required": [
+          "preview_receipt_id", "preview_receipt_sha256",
+          "confirmation_receipt_id", "confirmation_receipt_sha256",
+          "entrypoint_ref", "target_scope", "command_sha256", "status"
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "completion"}}},
+      "then": {
+        "required": [
+          "preview_receipt_id", "authorization_receipt_id",
+          "authorization_receipt_sha256", "status"
+        ]
+      }
+    }
+  ]
+}

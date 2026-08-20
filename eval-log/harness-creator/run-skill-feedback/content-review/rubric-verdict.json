@@ -1,31 +1,44 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "7c7b7dbb3d643509036a7d2a132f448790048cc5ebcba29400563b331f756cd9"},
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "26457d35fa10f6cba676526a8e0adcddda7d701bcfbd49ff0aaa9141997b7c53"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 1, "dependency_break": 0, "smell": 1},
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T09:07:03Z",
-  "iterations": 5,
-  "human_review_required": true,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "[criterion IN2 / 前周 high の解消] 宣言 (token を context/log に載せない) と実挙動の衝突が、宣言側を弱める方向でなく実装の根治で解けた。curl() は Authorization を argv から降ろし `--config -` の stdin で渡す。canary token + argv/stdin 記録型の fake curl で 4 経路を実走し (curl exit 6 / HTTP 401 / results:[] / create 側 exit 7)、全経路で stdout+stderr の canary 出現数 0・argv 出現数 0、canary は stdin にのみ存在することを確認した。例外整形は `{e}` のまま残っているのに漏れない — 値を経路に載せない設計なので出力側の列挙漏れという再発源が構造的に消えている。rubric が要求する『主張が第三者に再現可能』を、最も破れやすい秘密情報の項目で満たした",
-      "[criterion IN2 / 検証可能性] IN2 が名指しする R8 の 5 点と実装が 1:1 で、検出力を injection で数値化できた。tmp コピーへ 11 種注入 (baseline 0 violation、元ファイルは control で未改変を照合): 必須 9 種 ((a) 秘密を受ける CLI 引数 / (b) NOTION_* env 直読み / (c) 単行 print / (d) 複数行 print / (e) sys.stderr.write / (f) logging.error / (g) argv への Authorization 復活 / (h)(h2) notion_config 迂回) が **9/9 CAUGHT**、(i) 散文で token に言及するだけの print / stderr.write は誤検出なし。前周 MISSED だった (d) は行単位 regex → AST 走査 (出力呼び出しの引数部分木の Name('token')) への置換で捕まる。過大申告 (lint を通すためだけの検査) でも過小申告でもないことを、緩さと厳しさの両側から測れている",
-      "[criterion IN2 / SSOT 非重複] R8 (5) が解決順を散文でなく挙動で pin し、検査自身の副作用も封じている。tmp コピーの notion_config.py へ (j) INTAKE_ALLOW_ENV_TOKEN gate 削除 / (k) get_db_id の key 別 env 優先削除 / (k2) escape hatch 殺しを注入して 3/3 CAUGHT。env は finally で復元され (既存 NOTION_TOKEN を置いてから走らせても値が保たれ canary が残らない)、Keychain は存在しない service/account を渡すので実 token を掴まない (subprocess.check_output トレースで `security find-generic-password -a lint-canary-absent-account -s lint-canary-absent-service -w` の 1 回のみ確認)。同じ解決順が SKILL.md L108 / L133 / L234 と references §1 の 4 箇所へ展開されている以上、upstream の notion_config.py 側を実行で縛る形が SSOT 二重化への正しい対処になっている",
-      "[criterion IN3 / exit code 規約] 決定論ゲートの分岐が reference の表と実走で 1:1。fake curl 実走の exit code は curl 失敗 → 3、HTTP 401 → 3、未登録 (results:[]) → 2、create 側 curl 失敗 → 3 で、references §4 の 8 行の表および Key Rule 3 の切り分け規則 (query か create かではなく『原因が誰の手元にあるか』) と一致した。未登録経路では POST /v1/pages に到達せず孤児レコードが出ないことも同実走で確認済み",
-      "[構造 rule / PD-001] ref-skill-design-rubric (kind=skill 適用分) は今周も全件充足で構造 rule の high 違反 0 件。FM-001..005 (name=^run-... / description の『〜したいとき』2 件が trigger_count 2..3 / 内部動作語なし)、BD-001 (## Purpose & Output Contract)、BD-002 (## Gotchas)、BD-003 (frontmatter 69 行を除く body 192 行 <= 300 を実測)、BD-004 (2 trigger が本文 Step へ写像)、NM-001..003、PD-001 (references/ 2 件が tracked + workflow-manifest.json resources[] に reference 宣言済み)、PD-002、KL-001..005 (knowledge/ 不在で skip PASS)。python3 scripts/validate-plugin-completeness.py = OK: 22 plugin(s) complete",
-      "[criterion IN1 / 非破壊性] 今周の差分は firing_conditions / triggers / identification_step に非接触で、R1-R7 は非破壊のまま R8 だけが強化された。python3 scripts/lint-feedback-protocol.py = exit 0、関連 test 55 件 (tests/scripts-root/test_scripts__lint_feedback_protocol.py ほか) も全て pass。L168 の数値主張 229 / 116 / 94 も再照合して全一致で、前周の裏取り結果が現時点でも有効"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[criterion IN2 / inconsistency-low] 規則の射程 (token / DB ID) と保証の射程 (token のみ) がずれている。Key Rule 4 (L108) 末尾と Gotcha 3 (L246) 見出しは『token / DB ID をコンテキストに乗せない』と 2 つを同一文で括るが、exit 3 の経路で印字される CalledProcessError.__str__() は cmd 全体を含み、query 側 URL `https://api.notion.com/v1/databases/<skill-list の db_id>/query` の形で db_id が stdout へ出る (fake curl exit 6 の実走で確認。同実走の token canary は 0 件)。R8 (4) は Name('token') のみを見るため db_id は対象外で、追加 injection (`print(f\"using db {skill_list_db}\")`) も MISSED。`.notion-config.json` が .gitignore:36 で除外されている以上 DB ID を環境ローカル扱いする方針自体は一貫しているので、規則文を消すのでなく射程の書き分けが要る: (i) 例外整形から cmd を落とす (`type(e).__name__` + returncode)、または (ii) 『DB ID は exit 3 の診断メッセージに現れうる。credential ではないので許容する』を明記する。DB ID は単体では認可に使えず config も同一 session の Read で到達可能なため実害は小さく、前周 high とは severity の階が異なる — low として計上し PASS を阻害しない",
-      "[criterion IN2 / smell-low] IN2 の『token の値を渡さない』が R8 (4) の実力より半歩強い。実装は出力呼び出しの引数部分木に識別子 `token` が現れるかを見るので、`t2 = token` → `print(f\"{t2}\")` のように別名を一段挟むと MISSED になる (tmp コピーで実測)。現ソースに live な該当箇所は無く (`esc = token.replace(...)` L57 は curl の stdin へ渡るだけで出力経路に無い)、Gotcha 3 が『lint が守るのはソース側の 5 点だけ』『lint 緑=秘密が漏れていない、と読み替えない』と射程を明示しているため、iteration=4 で指摘した偽の緑 (Goodhart 的緑化) には該当しない。宣言側を実力へ合わせる (IN2 を『token 識別子を出力呼び出しへ直接渡さない』と言い換える) のが最小の閉じ方で、taint 追跡への拡張は等価な言い換えを追い続けるコストに見合わない"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 5,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "human_review"
+    "next_action": "none"
   },
-  "notes": "iteration_limit (3) 到達後、被験 SKILL.md および参照実装 (scripts/notion-submit-improvement.py / scripts/lint-feedback-protocol.py) が変更されたため実施した再検証パスである (iteration=5 > iteration_limit=3 の超過を隠さず記録する)。前 verdict の skill_md_sha256=4226a8d1... が現 SKILL.md の実測値 7c7b7dbb... と不一致 (stale) だったため、sha のみの書き換えを行わず全文と周辺 (references/notion-submit-contract.md / workflow-manifest.json / lint-feedback-protocol.py / notion-submit-improvement.py / notion_config.py) を再読し実走を伴って再採点した。構造採点: rubric.json の kind=skill 適用 rule (FM/BD/NM/PD + 横断 KL) は high・medium・low 全件充足、構造 rule の high 違反 0 件で閾値 80 を超える。rubric.json に秘密情報の取り扱いを対象とする構造 rule は存在しないため、本件の評価は feedback_contract criteria (IN2) 側で行っている (iteration=4 と同じ扱い)。criteria 全件評価: IN1 = 達成 (lint-feedback-protocol exit 0、R1-R7 非破壊、関連 test 55 passed)。IN2 = 達成 (前周 high の実漏洩は canary + fake curl 4 経路で 0 件を実測、loopback HTTP サーバで Authorization ヘッダの実送信と escape の正しさを確認。R8 は injection 9/9 CAUGHT + 偽陽性 0 + 解決順 3/3 CAUGHT で criterion と 1:1。残る低位のずれ 2 件は negative_feedback に計上)。IN3 = 達成 (未登録 exit 2 / ページ作成未到達 / 401 exit 3 / create 失敗 exit 3 を実走確認し references §4 の表と 1:1)。OUT1 = 非破壊 (identification_step の Step 1-4 と Key Rule 2 / Gotcha 1 は今周不変)。OUT2 = 達成 (収集 7 項目と improvement-request schema の managed_properties の 1:1、people 型 2 件の UI 委譲、時系列ログ性質の維持を再確認)。iteration=4 の 3 finding は全件解消。据え置き 1 件 (live-trial criterion) の妥当性判定は前周から不変: lint-feedback-contract.py --all の 19 警告は live 導出 skill 全件が同一 baseline 免除下にあることを示し本 skill 固有の問題ではなく、実走証拠を伴わない criterion 追記は missing 一覧を 1 件減らすだけで検証実体を増やさない Goodhart 操作にあたるため据え置きを妥当とする (正しい解消手段は criterion 追記でなく live-trial の実走)。RG-001 (verdict JSON に rubric_hash を含む) は content-review-verdict.schema.json が additionalProperties:false でトップレベル追加キーを許さないため本 projection では構造的に充足不能であり、違反として計上せず notes に記録する (iteration=1/2/3/4 と同じ扱い)。未解決 high 0 のため schema の『未解決 high は PASS 不可』に抵触せず verdict=PASS。ただし iteration_limit 超過のため human_review_required=true / next_action=human_review を維持し、残 low 2 件の採否は人間判断に委ねる。実測ログ: lint-feedback-protocol.py exit 0 / lint-feedback-contract.py --all exit 0 (19 warning, 非 fail) / validate-plugin-completeness.py OK 22 plugin(s) / pytest 55 passed / lint-content-review.py --all は本 2 verdict の PASS 化により 6 → 4 violation (残りは run-skill-create 2 件と slide-report-generate 2 件で本 skill 外)。injection 実験は全て tmp コピーに対して実施し、scripts/ 配下および plugins/harness-creator/scripts/ 配下の元ファイルが未改変であることを control で照合した。検証できなかった点: 実 Notion API への投入 ([CREATED] 経路・rollup 増分は Keychain token / DB 未設定のため未実走。exit code 実走は fake curl、header 受信確認は 127.0.0.1 loopback による経路検査)、L85 が対象外と宣言する対話文面の逐語一致。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+73 行) には共通 injection 以外の残差 8 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
 }

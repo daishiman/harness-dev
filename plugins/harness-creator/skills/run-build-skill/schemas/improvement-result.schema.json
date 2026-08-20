@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/improvement-result.schema.json",
+  "title": "Bounded Improvement Result",
+  "description": "User decisionで認可されたfindingだけを改善したpost-improvement receipt。authoritative gate state・実FS閉包包・target manifest差分・C1-C4機械証拠をvalidatorで照合する。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "subject",
+    "review_sha256",
+    "decision_sha256",
+    "baseline_target_manifest_sha256",
+    "post_target_manifest_sha256",
+    "selected_level",
+    "rounds_used",
+    "changed_paths",
+    "change_trace",
+    "finding_outcomes",
+    "four_conditions",
+    "completion_status",
+    "next_stage",
+    "next_profile",
+    "auto_promote_release",
+    "auto_promote_exhaustive",
+    "produced_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "review_sha256": {"$ref": "#/definitions/sha256"},
+    "decision_sha256": {"$ref": "#/definitions/sha256"},
+    "baseline_target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+    "post_target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+    "selected_level": {
+      "type": "string",
+      "enum": ["light", "standard", "detailed", "release", "exhaustive"]
+    },
+    "rounds_used": {"type": "integer", "minimum": 1, "maximum": 3},
+    "changed_paths": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/relative_path"}
+    },
+    "change_trace": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "finding_ids", "summary", "validation_refs"],
+        "properties": {
+          "path": {"$ref": "#/definitions/relative_path"},
+          "finding_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"$ref": "#/definitions/finding_id"}
+          },
+          "summary": {"type": "string", "minLength": 1},
+          "validation_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "finding_outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["resolved", "residual", "regressed"],
+      "properties": {
+        "resolved": {"$ref": "#/definitions/finding_ids"},
+        "residual": {"$ref": "#/definitions/finding_ids"},
+        "regressed": {"$ref": "#/definitions/finding_ids"}
+      }
+    },
+    "four_conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"$ref": "#/definitions/condition"},
+        "C2": {"$ref": "#/definitions/condition"},
+        "C3": {"$ref": "#/definitions/condition"},
+        "C4": {"$ref": "#/definitions/condition"}
+      }
+    },
+    "completion_status": {
+      "type": "string",
+      "enum": ["complete", "incomplete", "blocked"]
+    },
+    "next_stage": {"type": "string", "enum": ["draft", "release"]},
+    "next_profile": {"type": "string", "enum": ["incremental", "exhaustive"]},
+    "auto_promote_release": {"type": "boolean", "const": false},
+    "auto_promote_exhaustive": {"type": "boolean", "const": false},
+    "produced_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "finding_id": {"type": "string", "pattern": "^IDR-[0-9]{3}$"},
+    "finding_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/definitions/finding_id"}
+    },
+    "relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "summary", "evidence_refs"],
+      "properties": {
+        "verdict": {"type": "string", "enum": ["PASS", "FAIL", "PARTIAL"]},
+        "summary": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/definitions/evidence_ref"}
+        }
+      }
+    },
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "line", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relative_path"},
+        "line": {"type": "integer", "minimum": 1},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    }
+  }
+}

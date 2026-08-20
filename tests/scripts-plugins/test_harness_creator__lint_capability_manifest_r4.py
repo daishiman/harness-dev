@@ -22,6 +22,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import jsonschema
+
 SCRIPT = (
     Path(__file__).resolve().parents[2]
     / "plugins"
@@ -35,6 +37,8 @@ SCRIPT = (
 _SPEC = importlib.util.spec_from_file_location("lint_cap_manifest_uut_r4", SCRIPT)
 MOD = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(MOD)
+
+CAPABILITY_SCHEMA = SCRIPT.parent.parent / "references" / "capability-manifest.schema.json"
 
 
 VALID_SKILL_FM = (
@@ -156,6 +160,56 @@ def test_load_schema_corrupt_none(monkeypatch, tmp_path):
     bad.write_text("{bad", encoding="utf-8")
     monkeypatch.setattr(MOD, "SCHEMA_PATH", bad)
     assert MOD._load_schema() is None
+
+
+# ── CapabilityManifest の versioned knowledge-loop / Hook 契約 ──────────────────
+def _schema_errors(extra):
+    schema = json.loads(CAPABILITY_SCHEMA.read_text(encoding="utf-8"))
+    document = {
+        "name": "run-schema-check",
+        "description": "発動条件を十分な長さで宣言する説明文",
+        "kind": "run",
+        "version": "1.0.0",
+        "owner": "team-skills",
+        **extra,
+    }
+    return list(jsonschema.Draft7Validator(schema).iter_errors(document))
+
+
+def test_schema_versioned_knowledge_loop_requires_runtime_contract_fields():
+    errors = _schema_errors({"knowledge_loop": {"contract_version": 1}})
+    messages = {error.message for error in errors}
+    assert "'pattern' is a required property" in messages
+    assert "'consult_at' is a required property" in messages
+    assert "'runtime_store' is a required property" in messages
+    assert "'runtime_scope' is a required property" in messages
+
+
+def test_schema_accepts_complete_versioned_and_legacy_unmarked_knowledge_loop():
+    assert _schema_errors({"knowledge_loop": {}}) == []
+    assert _schema_errors({
+        "knowledge_loop": {
+            "contract_version": 1,
+            "pattern": "index-search",
+            "consult_at": ["runtime"],
+            "runtime_store": "external-intelligence-v1",
+            "runtime_scope": "project",
+        }
+    }) == []
+
+
+def test_schema_accepts_post_tool_use_failure_hook_event():
+    schema = json.loads(CAPABILITY_SCHEMA.read_text(encoding="utf-8"))
+    document = {
+        "name": "runtime-failure-hook",
+        "description": "失敗後の観測を記録するフックの発動条件",
+        "kind": "hook",
+        "version": "1.0.0",
+        "owner": "team-skills",
+        "event": "PostToolUseFailure",
+        "command": "python3 adapter.py",
+    }
+    assert list(jsonschema.Draft7Validator(schema).iter_errors(document)) == []
 
 
 # ── _fallback_check ──────────────────────────────────────────────────────────

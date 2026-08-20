@@ -2,27 +2,41 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "b08fdc5849642d80f8cad7e1bb5bde3a0dcbef25ce687409a7a428088464c024"
+    "skill_md_sha256": "740de5aac564da7564a289fbc8dd4faa9dd2118e8eaf57f108b56c6b7c480f94"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "independent-rename-review-subagent-g",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
-    "positive_feedback": [
-      "改名の意味論境界が正しく適用されている (C1/C3) — Phase 11 の引き渡し先呼称は harness-creator へ更新 (L119 『harness-creator 引き渡しモード判定済み』・Gotcha 8 L152 『harness-creator 引き渡し』) される一方、単一 skill 生成を指す run-skill-create / run-build-skill / capability-build は skill 表現を維持。ハーネス総体への引き渡し=harness、単一 skill 生成=skill の二分が一貫し、旧名 skill-creator/skill_creator/スキルクリエイター の残存 0 件を実測。",
-      "IN1 (manifest SSOT) — Key Rule 1/2・Gotcha 2/7・ゴールシークループが workflow-manifest.json phases[] を唯一の SSOT とし固定 Steps を本文へ複製しない設計を全文で一貫維持。改名は handoff 先の語のみに閉じ、この二重管理 drift 回避構造に影響を与えていない。",
-      "IN2 (hook 機械強制) / OUT1 (薄い orchestrator) — Key Rule 9 と Gotcha 8 がスキル生成 hard stop を『プロンプト層=意図説明 / hook-guard-skillgen.py (PreToolUse: exit 2)=機械強制』の二層に明確分離し保証主体を hook 層へ委ねる。業務ロジック非保持の委譲制御に限定する薄い orchestrator 設計が改名後も維持され、委譲先 7 Skill + 4 SubAgent が全実在 (dependency break 0)。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "harness-creator 改名 (skill-creator → harness-creator) に伴う SKILL.md 変更への独立 genuine 再評価。現 sha256=b08fdc5 を shasum -a 256 で実測 (旧 verdict sha=b2365dc は改名前で stale)。4条件検証: C1 矛盾0 (Key Rule 9 スキル生成禁止 / Gotcha 8 next-action は推奨 / チェックリスト末尾 生成非起動 が相互整合・引き渡し先=harness-creator と単一 skill 生成=run-skill-create の語の割当てが意味論境界に適合)。C2 漏れ0 (Purpose & Output Contract・Key Rules 9件・ゴールシーク・Gotchas 8件・Additional Resources 揃う)。C3 整合0 (harness-creator 呼称が L119/L152 で統一・旧名 grep 0・run-skill-create 等の単一 skill 概念は skill 維持)。C4 依存0 (委譲先 7 Skill+4 SubAgent・responsibility_refs/schema_refs 5件/references/workflow-manifest.json 全実在)。criteria IN1/IN2/OUT1 充足。重大問題なし PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+51 行) には共通 injection 以外の残差 6 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

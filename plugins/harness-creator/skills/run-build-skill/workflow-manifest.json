@@ -3,16 +3,48 @@
   "schemaVersion": 1,
   "workflowId": "run-build-skill",
   "skill": "run-build-skill",
-  "description": "新規/更新 Capability 構築のフェーズ定義。各 phase は SKILL.md 本文の Step に対応し、kind_filter で適用対象 kind を限定する。kind_filter の語彙は二層: init-pre のみ Capability 7 kind (skill/agent/hook/command/plugin-composition/prompt/workflow)、init 以降は kind=skill のサブ種別 (run/ref/assign/delegate/wrap) を指す。",
+  "description": "新規/更新 Capability 構築のフェーズ定義。kind_filter はskill内部のサブ種別、capability_kind_filterはCapability 7 kind共通phaseに使う。全kindで現物の最小guardと提示を先に完了し、利用者が選ぶまでsemantic evaluatorを起動しない。",
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
+      "transitions": [
+        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
+        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
+        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
+        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
+        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
+        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      ],
+      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
+      "accept_contexts": {"evaluator": 0, "improver": 0}
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "phases": [
     {
       "id": "init-pre",
       "step": 0,
       "title": "kind 分岐ナビゲーション (Capability 7 kind → 適用フロー確定)",
-      "kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
       "resourceIds": ["schema-template-selection"],
       "output_artifact": "(kind / skeleton / kind別lint 選択の決定のみ。ファイル成果物なし)",
-      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skill の場合のみ init 以降のフェーズ (kind_filter = サブ種別 5 値) へ進む。非 skill kind は kind 語彙 (schemas/build-flags.schema.json#/properties/capability_kind) と対応表 (references/build-steps.md §I.1) で skeleton/出力先/lint を確定し、scaffold 相当の生成と Step 4 の kind 別 lint で完結する。"
+      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skillはinit以降のskill固有phaseへ、非skill kindは対応表のskeleton/出力先/lintへ進む。どちらもusable-draft proof後はCapability共通のinitial-draft-reviewへ合流する。"
+    },
+    {
+      "id": "non-skill-build-lint",
+      "step": 1,
+      "title": "非skill Capabilityのkind別生成と決定論lint",
+      "dependsOn": ["init-pre"],
+      "capability_kind_filter": ["agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "execution": "deterministic-capability-kind-router",
+      "resourceIds": ["ref-build-steps"],
+      "output_artifact": "kind別生成物 + eval-log/<plugin>/build/{generation-receipt.json,kind-lint-receipt.json,verification-plan.json}",
+      "completion_gate": "generation-receipt.status=PASS AND kind-lint-receipt.status=PASS",
+      "note": "kindごとのskeleton/出力先/lintは references/build-steps.md §I.1 を正本とする。本phaseはskill専用phaseの代替であり、kind=skillには適用しない。"
     },
     {
       "id": "init",
@@ -22,7 +54,7 @@
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["ref-resource-map", "ref-build-steps", "schema-build-flags", "schema-build-plan"],
       "output_artifact": "eval-log/skill-brief.json + eval-log/build-plan.json",
-      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。"
+      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。build_stage は無指定で draft、release は第1稿確認後の明示昇格のみ。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。"
     },
     {
       "id": "scaffold",
@@ -138,7 +170,117 @@
       "output_artifact": "eval-log/<plugin>/build/{verification-contract.json,verification-plan.json,obligation-evidence/*.json} + legacy content-review projections",
       "verifier": "scripts/lint-content-review.py --changed-only --base origin/main",
       "execution": "deterministic-resolver-then-local-llm-exception",
-      "note": "derive-verification-contract.py でgraph全体をclaim DAG化し、plan-verification-obligations.py がexact proof reuse→deterministic check→未解決semantic batchの順に解決する。LLM起動はllm_batches[]だけ。4条件/rubricは同じsemantic obligationで判定し、legacy 2 verdictへprojectionしてreceiptにも束縛する。30思考法3並列はexhaustive audit obligationのみ。反復findingはautomation_candidatesからlint/schema/testへ昇格する。"
+      "note": "derive-verification-contract.py でgraph全体をclaim DAG化し、plan-verification-obligations.py がexact proof reuse→deterministic check→未解決semantic batchの順に解決する。draft は generation/check だけを解決し usable-draft proof をartifact提示phaseへ渡す。LLM起動は release の llm_batches[]、または提示後の利用者診断choiceだけ。4条件/rubricは同じsemantic obligationで判定し、legacy 2 verdictへprojectionしてreceiptにも束縛する。30思考法3並列はexhaustive audit obligationのみ。"
+    },
+    {
+      "id": "usable-draft-proof",
+      "step": 12.4,
+      "title": "全Capability共通usable-draft proof生成",
+      "dependsOn": ["content-review", "non-skill-build-lint"],
+      "dependency_mode": "applicable-capability-route",
+      "upstream_by_capability_kind": {
+        "skill": "content-review",
+        "agent": "non-skill-build-lint",
+        "hook": "non-skill-build-lint",
+        "command": "non-skill-build-lint",
+        "plugin-composition": "non-skill-build-lint",
+        "prompt": "non-skill-build-lint",
+        "workflow": "non-skill-build-lint"
+      },
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "execution": "deterministic-applicable-route-proof",
+      "producer": "scripts/build-usable-draft-proof.py --verification-plan <verification-plan.json> --capability-kind <kind> --capability-artifact <repo-relative-capability-artifact> --upstream-receipt <receipt.json> [--upstream-receipt <receipt.json>] --repo-root <root> --out <usable-draft-proof.json>",
+      "resourceIds": ["ref-verification-obligation-protocol", "schema-usable-draft-proof", "script-build-usable-draft-proof", "script-validate-build-trace"],
+      "output_artifact": "eval-log/<plugin>/build/usable-draft-proof.json (status=PASS, capability_kind, capability artifact path/sha256, public validator identity/mode/sha256/exit/stdout digest, upstream provenance)",
+      "completion_gate": "producer.exit_code=0 AND usable-draft-proof.status=PASS AND artifact-validation.exit_code=0 AND artifact-validation.valid=true AND artifact-validation.reported_kind=capability_kind",
+      "note": "dependsOnのうちcurrent capability kindに適用されるupstreamを1つだけprovenanceとして要求する。truth sourceはtarget manifestに含まれる実capability artifactと正本validate-build-trace.pyの実行結果である。plugin-compositionは--bundle、他の6 kindは--manifestで検証し、skillのrun/ref/assign/wrap/delegate subtypeはreported_kind=skillへ正規化する。"
+    },
+    {
+      "id": "artifact-present-handoff",
+      "step": 12.45,
+      "title": "実Capability artifactの最小guardと利用者への提示",
+      "dependsOn": ["usable-draft-proof"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "execution": "class-specific-minimal-guard-then-present",
+      "guard_order": ["parse-or-open", "secret-scan", "irreversible-operation-gate", "corruption-check"],
+      "events": ["artifact_created", "minimal_guard_passed", "artifact_presented"],
+      "resourceIds": ["schema-artifact-presentation-receipt"],
+      "output_artifact": "eval-log/<plugin>/build/artifact-handoff.json (actual artifact path/hash, guard receipts, presentation timestamp)",
+      "completion_gate": "actual artifact exists AND minimal guards PASS AND artifact_presented_at > artifact_created_at",
+      "note": "利用可能な現物と開き方/試し方をここで先に渡す。意味評価・30思考法・改善は本phaseの完了条件ではない。"
+    },
+    {
+      "id": "diagnostic-choice",
+      "step": 12.5,
+      "title": "提示後の利用者診断深度選択",
+      "dependsOn": ["artifact-present-handoff"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "execution": "user-choice-after-presentation",
+      "choices": ["accept-as-is", "light", "standard", "detailed"],
+      "accept_as_is_evaluator_contexts": 0,
+      "accept_as_is_improver_contexts": 0,
+      "resourceIds": ["schema-pre-diagnostic-choice-event"],
+      "output_artifact": "eval-log/<plugin>/build/diagnostic-choice.json",
+      "completion_gate": "artifact_presented event exists before host-recorded user_choice_recorded event",
+      "note": "通常は現物提示後に深度を聞く。今回依頼のように30思考法監査が明示済みの場合は、その現在turn限定選択をreceipt化するが、将来draftへ自動継承しない。"
+    },
+    {
+      "id": "initial-draft-review",
+      "step": 12.6,
+      "title": "選択時のみ全Capability共通semantic診断",
+      "dependsOn": ["diagnostic-choice"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "default_on": false,
+      "trigger": "explicit current-request audit OR pre-diagnostic choice in light|standard|detailed",
+      "execution": "post-choice-single-read-only-evaluator",
+      "single_active_delivery_lease_per_artifact_contract": true,
+      "stale_lease_redelivery": "same-idempotency-identity",
+      "completed_receipt_reuse": true,
+      "delivery_semantics": "lease-with-idempotent-redelivery",
+      "exactly_once_result_guaranteed": false,
+      "entry_gate": "usable-draft-proof.status=PASS AND artifact_presented=true AND user_choice_recorded=true AND diagnostic_authorized=true",
+      "launcher": "scripts/build-review-launch.py",
+      "max_active_launch_leases_per_harness": 1,
+      "resourceIds": ["schema-usable-draft-proof", "schema-artifact-presentation-receipt", "schema-pre-diagnostic-choice-event", "schema-review-launch-request", "schema-initial-draft-review", "schema-improvement-user-event", "schema-improvement-decision", "ref-improvement-levels", "prompt-initial-draft-evaluate", "script-build-review-launch", "agent-initial-draft-evaluator"],
+      "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{launch-request.json,review.json,improvement-decision.json,gate-plan.json} + <state_ref>.launch.json",
+      "verifier": "scripts/build-improvement-gate.py --verification-plan <verification-plan.json> --usable-draft-proof <usable-draft-proof.json> --artifact-presentation-receipt <artifact-presentation.json> --pre-diagnostic-choice-event <pre-diagnostic-choice.json> [...required gate arguments]",
+      "note": "skill subtypeに限定しない。artifact created < presented < evaluator eventをlauncher入力で検査し、accept-as-isはevaluator 0 contextのまま完了する。複数componentのharness全体を1つのtarget manifestとして束ね、artifact+contract fingerprintごとに同時active delivery leaseは1つだけ。現在turnの明示30監査は起動できるが、そのreceiptから将来draftの自動診断を導出しない。release/exhaustive自動昇格はfalse固定。"
+    },
+    {
+      "id": "bounded-improvement",
+      "step": 12.7,
+      "title": "ユーザー選択範囲だけの有界改善",
+      "dependsOn": ["initial-draft-review"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "execution": "single-bounded-improvement-executor",
+      "executor": "elegant-bounded-improvement-executor",
+      "trigger": "improvement-decision.improvement_authorized=true AND selected_finding_ids is non-empty",
+      "accept_draft_executor_contexts": 0,
+      "max_executor_contexts": 1,
+      "resourceIds": ["prompt-bounded-improve", "schema-improvement-result", "agent-bounded-improvement-executor"],
+      "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{post-target-manifest.json,improvement-result.json}",
+      "note": "accept-draftはexecutorを起動せずusable draftで停止。他levelもdecisionのselected_finding_ids/max_roundsだけを1 workerが処理する。release/exhaustiveはuser eventへ束縛された明示decisionにnext_stage/next_profileがある場合だけ後続候補になる。"
+    },
+    {
+      "id": "post-improvement-verification",
+      "step": 12.8,
+      "title": "bounded improvementの閉集合・diff・C1-C4再検証",
+      "dependsOn": ["bounded-improvement"],
+      "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
+      "stage_filter": ["draft"],
+      "execution": "deterministic-post-improvement-verifier",
+      "verifier": "scripts/validate-improvement-result.py --gate-state <state_ref> --target-root <target_root> [...required receipt arguments]",
+      "promotion_source": "improvement-decision.json",
+      "auto_promote_release": false,
+      "auto_promote_exhaustive": false,
+      "resourceIds": ["schema-improvement-result", "script-validate-improvement-result"],
+      "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/improvement-validation.json",
+      "note": "resultがselected setの閉集合、round上限、manifest diff、source trace、C1-C4を満たした場合だけcomplete。incomplete/blockedでは追加Agentやstage昇格を起動しない。release/exhaustiveへ進める値はdecision receiptからのみ投影する。"
     },
     {
       "id": "live-acceptance",
@@ -157,12 +299,12 @@
       "resourceIds": [],
       "output_artifact": "eval-log/<plugin>/<skill>/live-trial/<run-id>/{verdict.json, transcript.jsonl}",
       "verifier": "scripts/lint-live-trial-verdict.py --plugin <plugin> (D13 record-only WARN。P3 常設化 go/no-go で --enforce へ昇格)",
-      "note": "Step12 resolverのobservational_queue[]に入ったobligationだけを実走する。plan-live-trials.py はlive executor adapterとして対象skill内で挙動closure/transcript proofを再確認するが、plugin全skillを独自にfan-outしない。incremental既定のtrial/同時実行上限は暴走安全弁。exhaustive明示時のみ全candidate再実走。非発火はdeferred記録。リモートCIは実走せず証跡を機械検査する。"
+      "note": "draft では起動せず release へ繰り越す。release で Step12 resolverのobservational_queue[]に入ったobligationだけを実走する。plan-live-trials.py はlive executor adapterとして対象skill内で挙動closure/transcript proofを再確認するが、plugin全skillを独自にfan-outしない。incremental既定のtrial/同時実行上限は暴走安全弁。exhaustive明示時のみ全candidate再実走。非発火はdeferred記録。リモートCIは実走せず証跡を機械検査する。"
     }
   ],
   "resources": [
     {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["init"]},
-    {"id": "ref-build-steps", "kind": "reference", "path": "./references/build-steps.md", "phaseIds": ["init", "references"]},
+    {"id": "ref-build-steps", "kind": "reference", "path": "./references/build-steps.md", "phaseIds": ["non-skill-build-lint", "init", "references"]},
     {"id": "schema-template-selection", "kind": "schema", "path": "./schemas/template-selection.schema.json", "phaseIds": ["init-pre", "scaffold", "templates"]},
     {"id": "schema-skill-build-trace", "kind": "schema", "path": "./schemas/skill-build-trace.schema.json", "phaseIds": ["scripts", "trace-write"]},
     {"id": "schema-responsibility-slot", "kind": "schema", "path": "./schemas/responsibility-slot.schema.json", "phaseIds": ["prompts-emit"]},
@@ -174,10 +316,25 @@
     {"id": "schema-route-build-report", "kind": "schema", "path": "./schemas/route-build-report.schema.json", "phaseIds": ["trace-write"]},
     {"id": "ref-route-build-report", "kind": "reference", "path": "./references/route-build-report.md", "phaseIds": ["trace-write"]},
     {"id": "ref-content-review-protocol", "kind": "reference", "path": "./references/content-review-protocol.md", "phaseIds": ["content-review"]},
-    {"id": "ref-verification-obligation-protocol", "kind": "reference", "path": "./references/verification-obligation-protocol.md", "phaseIds": ["content-review"]},
+    {"id": "ref-verification-obligation-protocol", "kind": "reference", "path": "./references/verification-obligation-protocol.md", "phaseIds": ["content-review", "usable-draft-proof"]},
+    {"id": "ref-improvement-levels", "kind": "reference", "path": "./references/improvement-levels.json", "phaseIds": ["initial-draft-review"]},
+    {"id": "schema-review-launch-request", "kind": "schema", "path": "./schemas/review-launch-request.schema.json", "phaseIds": ["initial-draft-review"]},
+    {"id": "schema-initial-draft-review", "kind": "schema", "path": "./schemas/initial-draft-review.schema.json", "phaseIds": ["initial-draft-review"]},
+    {"id": "schema-improvement-user-event", "kind": "schema", "path": "./schemas/improvement-user-event.schema.json", "phaseIds": ["initial-draft-review"]},
+    {"id": "schema-improvement-decision", "kind": "schema", "path": "./schemas/improvement-decision.schema.json", "phaseIds": ["initial-draft-review"]},
+    {"id": "schema-improvement-result", "kind": "schema", "path": "./schemas/improvement-result.schema.json", "phaseIds": ["bounded-improvement", "post-improvement-verification"]},
+    {"id": "schema-usable-draft-proof", "kind": "schema", "path": "./schemas/usable-draft-proof.schema.json", "phaseIds": ["usable-draft-proof", "initial-draft-review"]},
+    {"id": "script-build-usable-draft-proof", "kind": "script", "path": "./scripts/build-usable-draft-proof.py", "phaseIds": ["usable-draft-proof"]},
+    {"id": "script-validate-build-trace", "kind": "script", "path": "./scripts/validate-build-trace.py", "phaseIds": ["usable-draft-proof"]},
+    {"id": "script-build-review-launch", "kind": "script", "path": "./scripts/build-review-launch.py", "phaseIds": ["initial-draft-review"]},
+    {"id": "script-validate-improvement-result", "kind": "script", "path": "./scripts/validate-improvement-result.py", "phaseIds": ["post-improvement-verification"]},
+    {"id": "agent-initial-draft-evaluator", "kind": "agent", "path": "../../agents/elegant-initial-draft-evaluator.md", "phaseIds": ["initial-draft-review"]},
+    {"id": "agent-bounded-improvement-executor", "kind": "agent", "path": "../../agents/elegant-bounded-improvement-executor.md", "phaseIds": ["bounded-improvement"]},
     {"id": "prompt-scaffold", "kind": "prompt", "path": "./prompts/R1-scaffold.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-template-select", "kind": "prompt", "path": "./prompts/R3-template-select.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-responsibility-emit", "kind": "prompt", "path": "./prompts/R2-responsibility-emit.md", "phaseIds": ["prompts-emit"]},
-    {"id": "prompt-trace-write", "kind": "prompt", "path": "./prompts/R4-trace-write.md", "phaseIds": ["trace-write"]}
+    {"id": "prompt-trace-write", "kind": "prompt", "path": "./prompts/R4-trace-write.md", "phaseIds": ["trace-write"]},
+    {"id": "prompt-initial-draft-evaluate", "kind": "prompt", "path": "./prompts/R5-initial-draft-evaluate.md", "phaseIds": ["initial-draft-review"]},
+    {"id": "prompt-bounded-improve", "kind": "prompt", "path": "./prompts/R6-bounded-improve.md", "phaseIds": ["bounded-improvement"]}
   ]
 }

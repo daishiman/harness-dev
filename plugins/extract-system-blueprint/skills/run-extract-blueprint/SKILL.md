@@ -14,6 +14,7 @@ allowed-tools:
 kind: run
 prefix: run
 effect: external-mutation
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: harness maintainers
 since: 2026-07-11
 version: 0.2.0
@@ -30,12 +31,14 @@ schema_refs:
   - ../../schemas/system-blueprint.schema.json
 manifest: workflow-manifest.json
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   spec: eval-log/goal-spec.json
   progress: eval-log/run-extract-blueprint-progress.json
   max_loops: 5
 feedback_contract: # per-skill 評価基準。content-review verdict の criteria_evaluated と突合
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -52,7 +55,53 @@ source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-07-11
 audit-trigger: quarterly
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-extract-blueprint
 
@@ -60,14 +109,14 @@ audit-trigger: quarterly
 
 ## Purpose & Output Contract
 
-対象システムの公開 URL 1 件から、フロント表層の**事実 (fact)** とバックエンド/UIUX/コンテンツ伝達意図の**根拠+確度つき推測 (inference)** を明示区別した章別ブループリント (md + json + Mermaid5種) を**ローカルへ生成して完結**する (外部公開はしない)。
+対象URL 1件から、pre-choiceではmain contextが認可済み最小snapshotを根拠にfact/inferenceを分けた開けるblueprint draft (md+json) を生成・決定論guard・提示する。Task analyzer、Mermaid拡充、semantic fidelity評価、有界修正はlight/standard/detailed選択後だけ実行する。外部公開はしない。
 
 **入力**: `url` (対象 URL 1 件), `--crawl-mode single|full_site` (既定 single), `--resume` (前 run の site coverage manifest から継続)
 **出力**:
 - ローカル章別 blueprint (`system-blueprint.schema.json` 準拠の md + json)・5 種 Mermaid 図・画面別 layout.json / layout-overlay.svg・合成 design-tokens.json・site coverage manifest・request ledger
 - 完了レポート (日本語本文、パラメーター名・JSON キー・enum は原文)
 
-**完了条件**: 決定論チェック (authz/fetch/mermaid/doc) 全 exit0 + fact/inference/observation_gap 相互排他 + 5 種 Mermaid 網羅。生成物はローカル draft として完結し、C02 (独立 context) がローカル品質評価の verdict (PASS/FAIL) を発行する。
+**usable handoff条件**: 認可・最小fetch/doc guardがexit0でactual md/jsonのpath/digestを提示済み。accept-as-isならC02/Task/反復0回で完了。**選択後の改善完了条件**: Mermaid5種とfact/inference分離を拡充し、C02が同digestのverdictを発行する。
 
 **禁則**: 認証必須領域への無断到達・実侵入・認可外スクレイピングをしない。全 origin 並列 1・最小間隔・request budget・Retry-After・停止条件を緩めない (引上げはユーザー承認対象)。
 
@@ -76,7 +125,7 @@ audit-trigger: quarterly
 - **fact / inference / observation_gap 三値分離** (`$CLAUDE_PLUGIN_ROOT/schemas/fact-inference-confidence.schema.json`): fact は provenance (source_url/locator/captured_at/method/snapshot_id) 必須・レンズ解釈を含めない。inference は claim + evidence_refs(≥1) + confidence{level,rationale} 必須。observation_gap は not_observed|blocked + reason + budget_state で inference に昇格させない。top-level blueprint shape は `system-blueprint.schema.json` (screens[]/design_tokens/tech_stack/essence 等) を正本とする。
 - **責務 (詳細は `prompts/R1-R3`)**:
   - **R1-fetch** (`prompts/R1-fetch.md`): C12 で AuthzEvidence/request budget/crawl_profile を確定し、C09 の URL discovery → C12 の scope 分類 (in_scope/excluded+reason) で system 関連 URL 台帳を作り、C08 の fail-closed 境界内で C09 静的 HTTP snapshot を全 in-scope 画面へ取得し、加えて C15 (`browser-render.py`・MCP 非依存 headless Chrome via Bash) で rendered DOM/screenshot の取得を試みる (ブラウザ不在=exit 3 時のみ gap)。`--resume` は前 run の site coverage manifest を C12 `--coverage-manifest-in` へ再投入する。
-  - **R2-analyze** (`prompts/R2-analyze.md`): C03 (視覚/content/tech_signals/機能/CWV/security/compliance/site_inventory fact) → C04 (バックエンド/named 同定/security_design(OWASP)/delivery_topology) / C05 (UIUX/user_journeys) / C13 (content-intent) → C06 (essence + feature_map + user_journeys + security/topology 統合) の順に **Task で独立 context へ委譲**し、fact と inference を明示区別して収集する。C03 の観測は **静的 HTTP (WebFetch + C09 snapshot) と C15 browser-render (MCP 非依存 headless Chrome via Bash) の rendered DOM/screenshot** を根拠とし、JS 実行後 DOM・screenshot・computed style は browser-render で取得を試み、ブラウザ不在 (exit 3=browser-unavailable) 時のみ `observation_gap` (blocked) として記録する。
+  - **R2-analyze (post-choice only)**: light/standard/detailed選択後だけC03→C04/C05/C13→C06をTaskの独立contextへ委譲する。提示前とaccept-as-isでは起動しない。各analyzerは提示済みdraft digestを入力にfact/inferenceを分離して拡充する。
   - **R3-document** (`prompts/R3-document.md`): C11 (`doc-emit.py`) で章別ローカル draft (md/json) と 5 種 Mermaid・画面別 layout.json/overlay を確定し、`doc-emit.py --check-screens` で layout completeness を、`mermaid-validate.py` (C10) で図種網羅を自己検証する。`python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で起動する。screenshot / annotated は browser-render (C15) 取得時に extraction の screens[] へ populate され、ブラウザ不在時のみ `observation_gap` として記録する。
 
 ## ゴールシーク実行
@@ -108,7 +157,7 @@ URL をブラウザ目視 + F12 確認する手作業 3 ステップ (週 2.5 �
 - **現状評価**の単位は上記チェックリスト。未達項目を `## 局面カタログ (順序は都度判断)` から選んで埋める (順序固定禁止)。
 - **検証**は決定論チェック (authz/fetch/mermaid/doc の exit0) を優先し、LLM 判断より機械層を先に通す。
 - **差し戻し**: 決定論チェック fail または C02 FAIL なら R1-R3 の該当局面へ戻す (最大 5 周)。超過・drift 停滞は `open_issues` へ残し上位 orchestrator へ差し戻す。
-- **重い周回は分離 context**: analyzer への fan-out は Task で独立 context に fork し、親へは最終成果物パスと要約のみ返す。
+- **重い周回は選択後だけ分離 context**: light/standard/detailed選択後のみanalyzerをTaskでforkする。accept-as-isでは0回。親へは最終成果物pathと要約だけを返す。
 
 ### ゴールシーク配線
 

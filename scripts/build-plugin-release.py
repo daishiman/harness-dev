@@ -147,6 +147,7 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
     path.write_text(replaced, encoding="utf-8")
     sync_public_marketplace_version(plugin_dir.name, version)
     sync_codex_manifest_version(plugin_dir, version)
+    sync_plugin_composition_version(plugin_dir, version)
 
 
 def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
@@ -164,6 +165,28 @@ def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
     replaced, count = pattern.subn(lambda m: f'{m.group(1)}{json.dumps(version)}', text, count=1)
     if count != 1:
         raise SystemExit(f"[build-plugin-release] {path} の version 行を一意に特定できない")
+    path.write_text(replaced, encoding="utf-8")
+
+
+def sync_plugin_composition_version(plugin_dir: pathlib.Path, version: str) -> None:
+    """自己記述 CapabilityBundle の version を plugin manifest へ追従させる。
+
+    bundle を持たない plugin は何もしない。version を別操作で更新すると、その更新自体が
+    plugin fingerprint を変えて次回 bump を誘発するため、manifest と同じ採番操作の中で
+    原文の top-level version 行だけを同期する。
+    """
+    path = plugin_dir / "plugin-composition.yaml"
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    pattern = re.compile(r"(?m)^(version\s*:\s*)[^\s#]+(\s*(?:#.*)?)$")
+    replaced, count = pattern.subn(
+        lambda match: f"{match.group(1)}{version}{match.group(2)}", text, count=1
+    )
+    if count != 1:
+        raise SystemExit(
+            f"[build-plugin-release] {path} の top-level version 行を一意に特定できない"
+        )
     path.write_text(replaced, encoding="utf-8")
 
 

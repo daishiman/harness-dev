@@ -2,6 +2,7 @@
 name: assign-system-dev-plan-evaluator
 description: exact-13 staging planを独立評価したいとき、4条件とdigestに束縛したplan-findings.jsonを生成したいときに使う。
 kind: assign
+effect: local-artifact
 prefix: assign
 hierarchy: L1
 version: 0.1.0

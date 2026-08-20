@@ -504,7 +504,7 @@ TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公�
 | hook | `templates/hook-skeleton.md` | `plugins/<plugin>/hooks/<name>.{py,md}` | `lint-script-frontmatter.py` / `validate-frontmatter.py` |
 | hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
 | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
-| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` (整備済・CI 配線済) |
+| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` + `validate-build-trace.py --bundle <plugin-composition.yaml>` (SemVer / 実在ref / endpoint / exact重複 / DAGをfail-closed) |
 | prompt | `templates/prompt-skeleton.md` | `plugins/<plugin>/prompts/<name>.md` | `lint-prompt-md.py` (未実装・実体なしのため起動しない) |
 | workflow | `templates/workflow-skeleton.md` | `plugins/<plugin>/workflows/<name>.md` | `lint-workflow-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 
@@ -515,11 +515,13 @@ TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公�
 ```bash
 GOV_LINT_DIR="$(dirname "$PLUGIN_ROOT")/skill-governance-lint"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/<kind-relative-path>"
-python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json \
-  --capability-schema "$SKILL_DIR/references/capability-manifest.schema.json"
+python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
+
+# kind=plugin-composition では上記に加え、公開bundle validatorを必須実行
+python3 "$SKILL_DIR/scripts/validate-build-trace.py" --bundle "$OUT_BASE/plugin-composition.yaml"
 ```
 
-`validate-build-trace.py --capability-schema` 引数が未実装なら warn を出してフォールバック、`capability_kind` 欄が空でないことだけ最低限確認する。
+`plugin-composition` は当該kind lintと `--bundle` の両方がexit 0になるまで次phaseへ進まない。実在しないCLI引数へのフォールバックは行わない。
 
 ### I.3 既存 skill 手順との関係
 

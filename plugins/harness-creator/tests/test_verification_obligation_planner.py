@@ -134,7 +134,7 @@ def test_machine_first_then_semantic_claims_share_one_context(tmp_path: Path) ->
     (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
     evidence_dir = tmp_path / "evidence"
 
-    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     assert _actions(first) == {
         "machine:a": "check",
         "semantic:a": "blocked",
@@ -146,7 +146,7 @@ def test_machine_first_then_semantic_claims_share_one_context(tmp_path: Path) ->
 
     _write_receipt(evidence_dir, tmp_path, first, "machine:a")
     _write_receipt(evidence_dir, tmp_path, first, "machine:b")
-    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     assert _actions(second)["semantic:a"] == "adjudicate"
     assert _actions(second)["semantic:b"] == "adjudicate"
     assert second["llm_batch_count"] == 1
@@ -160,14 +160,14 @@ def test_exact_evidence_reuse_and_local_dependency_invalidation(tmp_path: Path) 
     (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
     (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
     evidence_dir = tmp_path / "evidence"
-    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     for oid in ("machine:a", "machine:b"):
         _write_receipt(evidence_dir, tmp_path, first, oid)
-    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     for oid in ("semantic:a", "semantic:b"):
         _write_receipt(evidence_dir, tmp_path, second, oid)
 
-    current = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    current = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     assert _actions(current)["machine:a"] == "reuse"
     assert _actions(current)["semantic:a"] == "reuse"
     assert _actions(current)["machine:b"] == "reuse"
@@ -175,7 +175,7 @@ def test_exact_evidence_reuse_and_local_dependency_invalidation(tmp_path: Path) 
     assert current["llm_batch_count"] == 0
 
     (tmp_path / "a.txt").write_text("alpha changed", encoding="utf-8")
-    changed = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    changed = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     assert _actions(changed)["machine:a"] == "check"
     assert _actions(changed)["semantic:a"] == "blocked"
     assert _actions(changed)["machine:b"] == "reuse"
@@ -186,13 +186,13 @@ def test_low_confidence_escalates_without_agent_fanout(tmp_path: Path) -> None:
     (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
     (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
     evidence_dir = tmp_path / "evidence"
-    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     _write_receipt(evidence_dir, tmp_path, first, "machine:a")
     _write_receipt(evidence_dir, tmp_path, first, "machine:b")
-    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    second = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     _write_receipt(evidence_dir, tmp_path, second, "semantic:a", confidence=0.4)
 
-    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     assert _actions(plan)["semantic:a"] == "escalate"
     assert plan["llm_batch_count"] == 1  # only still-missing semantic:b
 
@@ -201,11 +201,13 @@ def test_context_budget_blocks_model_launch_instead_of_silently_spending(tmp_pat
     (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
     (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
     evidence_dir = tmp_path / "evidence"
-    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir)
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
     _write_receipt(evidence_dir, tmp_path, first, "machine:a")
     _write_receipt(evidence_dir, tmp_path, first, "machine:b")
 
-    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, max_context_bytes=1)
+    plan = PLANNER.build_plan(
+        _contract(), tmp_path, evidence_dir, max_context_bytes=1, stage="release"
+    )
     assert plan["llm_batch_count"] == 2
     assert plan["budget_gate"]["status"] == "blocked"
     assert "semantic-context-batch-exceeds-byte-budget" in plan["budget_gate"]["reasons"]
@@ -344,7 +346,7 @@ def test_route_build_proofs_skip_unchanged_agents_and_invalidate_one_route(tmp_p
     contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
     evidence_dir = tmp_path / "evidence"
 
-    first = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+    first = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
     assert _actions(first)["build:A"] == "generate"
     assert _actions(first)["build:B"] == "blocked"
     assert first["generation_queue"] == ["build:A"]
@@ -359,7 +361,7 @@ def test_route_build_proofs_skip_unchanged_agents_and_invalidate_one_route(tmp_p
         "build:A",
         evidence_path="plugins/demo/scripts/a.py",
     )
-    second = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+    second = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
     assert _actions(second)["build:A"] == "reuse"
     assert _actions(second)["build:B"] == "generate"
 
@@ -434,7 +436,7 @@ def test_direct_tasks_join_route_proofs_and_phase_gates_do_not_spawn_agents(tmp_
     assert ids == {"build:A", "task:D1"}
 
     evidence_dir = tmp_path / "evidence"
-    first = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+    first = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
     assert first["generation_queue"] == ["build:A"]
     target = tmp_path / "plugins" / "demo" / "scripts" / "a.py"
     target.parent.mkdir(parents=True)
@@ -446,7 +448,7 @@ def test_direct_tasks_join_route_proofs_and_phase_gates_do_not_spawn_agents(tmp_
         "build:A",
         evidence_path="plugins/demo/scripts/a.py",
     )
-    second = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+    second = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
     assert second["generation_queue"] == ["task:D1"]
 
 
@@ -609,19 +611,100 @@ def test_draft_stage_produces_the_artifact_without_paying_for_release_work(tmp_p
     assert set(release["generation_queue"]) == {"build:A", "task:P04-A-01"}
 
 
-def test_draft_cannot_claim_completion(tmp_path: Path) -> None:
-    """draft は『速い完了』ではなく『未完了だが動く』状態である。
-
-    ここが ok を返すと後段の完了ゲートが第1稿を成果物として受理し、回収されない
-    release 工程が黙って積み上がる。繰り越しは必ず名前つきで開示する。
-    """
+def test_draft_building_is_not_mistaken_for_a_ready_handoff(tmp_path: Path) -> None:
+    """draft は実体の proof が付くまで引き渡し可能と偽装しない。"""
     handoff, handoff_path = _staged_handoff(tmp_path)
     contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
     draft = PLANNER.build_plan(contract, tmp_path, (tmp_path / "evidence"), stage="draft")
-    assert draft["stage_gate"]["status"] == "draft-incomplete"
+    assert draft["stage_gate"]["status"] == "draft-building"
+    assert draft["stage_gate"]["handoff_ready"] is False
+    assert draft["stage_gate"]["pending_draft"] == ["build:A"]
     assert draft["stage_gate"]["deferred_to_release"] == [
         "task:P04-A-01", "task:P05-x-01", "task:P09-x-01",
     ]
+
+
+def test_default_stage_stops_at_a_usable_draft_handoff(tmp_path: Path) -> None:
+    """無指定 build は完成版へ走らず、使える第1稿を見せる地点で停止する。"""
+    handoff, handoff_path = _staged_handoff(tmp_path)
+    contract = ROUTE_DERIVER.derive_contract(handoff, tmp_path, handoff_path)
+
+    evidence_dir = tmp_path / "evidence"
+    building = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+
+    assert building["stage"] == "draft"
+    assert building["generation_queue"] == ["build:A"]
+    assert building["stage_gate"]["status"] == "draft-building"
+    assert building["stage_gate"]["handoff_ready"] is False
+
+    target = tmp_path / "plugins" / "staged" / "scripts" / "a.py"
+    target.parent.mkdir(parents=True)
+    target.write_text("print('a')", encoding="utf-8")
+    _write_receipt(
+        evidence_dir,
+        tmp_path,
+        building,
+        "build:A",
+        evidence_path="plugins/staged/scripts/a.py",
+    )
+    plan = PLANNER.build_plan(contract, tmp_path, evidence_dir)
+
+    assert plan["stage_gate"]["status"] == "usable-draft"
+    assert plan["stage_gate"]["handoff_ready"] is True
+    assert plan["stage_gate"]["next_gate"] == "build-improvement-gate.py"
+    assert plan["stage_gate"]["pending_draft"] == []
+    assert plan["stage_gate"]["auto_promote"] is False
+    assert plan["stage_gate"]["max_repair_rounds"] == 1
+
+
+def test_draft_proof_cannot_be_profile_deferred_and_zero_deferred_is_usable(
+    tmp_path: Path,
+) -> None:
+    """draftの実体proofはactivation/profileで逃がさず、proof後だけ引き渡す。"""
+    (tmp_path / "spec.txt").write_text("build one artifact", encoding="utf-8")
+    contract = {
+        "schema_version": 1,
+        "subject": "draft-only-fixture",
+        "obligations": [
+            {
+                "id": "build:only",
+                "claim": "a usable artifact exists",
+                "kind": "generative",
+                "stage": "draft",
+                "risk": "high",
+                "activation": "exhaustive",
+                "depends_on": [],
+                "inputs": [_input("spec.txt")],
+                "model_required": True,
+                "minimum_confidence": 1.0,
+                "reuse": True,
+            }
+        ],
+    }
+    evidence_dir = tmp_path / "evidence"
+
+    building = PLANNER.build_plan(contract, tmp_path, evidence_dir, profile="incremental")
+    assert _actions(building)["build:only"] == "generate"
+    assert building["stage_gate"]["status"] == "draft-building"
+    assert building["stage_gate"]["handoff_ready"] is False
+    assert building["stage_gate"]["pending_draft"] == ["build:only"]
+
+    artifact = tmp_path / "artifact.txt"
+    artifact.write_text("usable", encoding="utf-8")
+    _write_receipt(
+        evidence_dir,
+        tmp_path,
+        building,
+        "build:only",
+        evidence_path="artifact.txt",
+    )
+    ready = PLANNER.build_plan(contract, tmp_path, evidence_dir, profile="incremental")
+
+    assert _actions(ready)["build:only"] == "reuse"
+    assert ready["stage_gate"]["deferred_to_release"] == []
+    assert ready["stage_gate"]["status"] == "usable-draft"
+    assert ready["stage_gate"]["handoff_ready"] is True
+    assert ready["stage_gate"]["next_gate"] == "build-improvement-gate.py"
 
 
 def test_promotion_to_release_reuses_draft_proofs_instead_of_rebuilding(tmp_path: Path) -> None:
