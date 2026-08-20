@@ -11,8 +11,10 @@
       "title": "kind 分岐ナビゲーション (Capability 7 kind → 適用フロー確定)",
       "kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
       "resourceIds": ["schema-template-selection"],
-      "output_artifact": "(kind / skeleton / kind別lint 選択の決定のみ。ファイル成果物なし)",
-      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skill の場合のみ init 以降のフェーズ (kind_filter = サブ種別 5 値) へ進む。非 skill kind は kind 語彙 (schemas/build-flags.schema.json#/properties/capability_kind) と対応表 (references/build-steps.md §I.1) で skeleton/出力先/lint を確定し、scaffold 相当の生成と Step 4 の kind 別 lint で完結する。"
+      "output_artifact": "kind=skill: kind/subtype/build flow decision; non-skill: 対応表のkind別出力先に生成したartifact + kind別lint receipt",
+      "terminal_condition": "kind != skill AND skeleton/output destinationが対応表に一致 AND kind別lintがexit 0",
+      "note": "全 Capability 7 kind の入口 (SKILL.md Step 0)。kind=skill はsubtypeを確定してinitへ進む。非 skill kind はkind語彙と対応表に従うscaffold生成・kind別lintをこのphase内で完結し、terminal_condition充足時に終了する。",
+      "transition": {"gate": "kind=skill AND subtypeがrun/ref/assign/delegate/wrapのいずれか AND build flowが一意", "on_pass": "init", "on_fail": "abort"}
     },
     {
       "id": "init",
@@ -22,7 +24,8 @@
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["ref-resource-map", "ref-build-steps", "schema-build-flags", "schema-build-plan"],
       "output_artifact": "eval-log/skill-brief.json + eval-log/build-plan.json",
-      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。"
+      "note": "brief 確定直後に scripts/validate-build-plan.py --brief eval-log/skill-brief.json --out eval-log/build-plan.json で必須成果物集合 (flags/セクション/資産) を決定論導出する。以降の flag_required 付き phase の要否はこの plan.flags が正本 (モデル判断でフラグを省略しない)。充足は Step 4 の --check と p0-gate が機械検査する。",
+      "transition": {"gate": "briefとbuild-planがschema検証済み", "on_pass": "scaffold", "on_fail": "abort"}
     },
     {
       "id": "scaffold",
@@ -31,7 +34,8 @@
       "dependsOn": ["init"],
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["schema-template-selection", "prompt-template-select", "prompt-scaffold"],
-      "output_artifact": "plugins/<plugin>/skills/<skill>/SKILL.md"
+      "output_artifact": "plugins/<plugin>/skills/<skill>/SKILL.md",
+      "transition": {"gate": "選択templateと生成SKILLがkind契約に一致", "on_pass": "references", "on_fail": "abort"}
     },
     {
       "id": "references",
@@ -40,7 +44,8 @@
       "dependsOn": ["scaffold"],
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["ref-build-steps"],
-      "output_artifact": "plugins/<plugin>/skills/<skill>/references/"
+      "output_artifact": "plugins/<plugin>/skills/<skill>/references/",
+      "transition": {"gate": "必須referenceがbuild-planどおり存在", "on_pass": "scripts", "on_fail": "abort"}
     },
     {
       "id": "scripts",
@@ -50,7 +55,8 @@
       "kind_filter": ["run", "assign", "wrap", "delegate"],
       "resourceIds": ["schema-skill-build-trace"],
       "output_artifact": "eval-log/skill-build-trace.json",
-      "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only"
+      "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only",
+      "transition": {"gate": "決定論scriptとlintがexit 0", "on_pass": "templates", "on_fail": "abort"}
     },
     {
       "id": "templates",
@@ -59,7 +65,8 @@
       "dependsOn": ["scaffold"],
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["schema-template-selection"],
-      "output_artifact": "templates/"
+      "output_artifact": "templates/",
+      "transition": {"gate": "template要否と展開結果がbuild-planに一致", "on_pass": "assets", "on_fail": "abort"}
     },
     {
       "id": "assets",
@@ -68,7 +75,8 @@
       "dependsOn": ["references"],
       "kind_filter": ["run", "ref", "assign", "wrap"],
       "resourceIds": [],
-      "output_artifact": "examples/"
+      "output_artifact": "examples/",
+      "transition": {"gate": "asset要否と生成結果がbuild-planに一致", "on_pass": "prompts-emit", "on_fail": "abort"}
     },
     {
       "id": "prompts-emit",
@@ -79,7 +87,8 @@
       "flag_required": "--with-prompts",
       "flag_source": "eval-log/build-plan.json#/flags/with_prompts (brief.responsibilities から決定論導出)",
       "resourceIds": ["schema-responsibility-slot", "prompt-responsibility-emit"],
-      "output_artifact": "prompts/<R-id>.md"
+      "output_artifact": "prompts/<R-id>.md",
+      "transition": {"gate": "with_prompts=falseまたは責務promptが全て生成・lint済み", "on_pass": "evaluator-emit", "on_fail": "abort"}
     },
     {
       "id": "evaluator-emit",
@@ -90,7 +99,8 @@
       "flag_required": "--with-evaluator",
       "flag_source": "eval-log/build-plan.json#/flags/with_evaluator (brief.generate_pair_evaluator から決定論導出)",
       "resourceIds": ["schema-build-flags"],
-      "output_artifact": "plugins/<plugin>/skills/<pair>/"
+      "output_artifact": "plugins/<plugin>/skills/<pair>/",
+      "transition": {"gate": "with_evaluator=falseまたはpair evaluatorが生成・検証済み", "on_pass": "trace-write", "on_fail": "abort"}
     },
     {
       "id": "trace-write",
@@ -100,7 +110,8 @@
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["schema-skill-build-trace", "prompt-trace-write"],
       "output_artifact": "eval-log/skill-build-trace.json",
-      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。"
+      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。",
+      "transition": {"gate": "traceがschema準拠かつ必須章coverageを満たす", "on_pass": "notion-register", "on_fail": "abort"}
     },
     {
       "id": "notion-register",
@@ -111,7 +122,8 @@
       "flag_required": "--notion-register",
       "resourceIds": [],
       "output_artifact": "scripts/notion-upsert-plugin.py --plugin <plugin> [--hearing-sheet-id <id>]",
-      "note": "実体は top-level scripts/notion-upsert-plugin.py。冪等。token は .notion-config.json の keychain_service/keychain_account から取得し、CI では INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ $NOTION_TOKEN を許可。"
+      "note": "実体は top-level scripts/notion-upsert-plugin.py。冪等。token は .notion-config.json の keychain_service/keychain_account から取得し、CI では INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ $NOTION_TOKEN を許可。",
+      "transition": {"gate": "notion-register=falseまたはupsert receiptが検証済み", "on_pass": "feedback-deploy", "on_fail": "abort"}
     },
     {
       "id": "feedback-deploy",
@@ -124,7 +136,8 @@
       "resourceIds": [],
       "output_artifact": "<target-plugin>/skills/run-skill-feedback (self-contained copy)",
       "verifier": "scripts/lint-feedback-protocol.py --strict (R7)",
-      "note": "build 完了時に必ず実行。harness-creator 自身は対象外。冪等 (既存実体は再コピーしない、既存 symlink は実体へ置換)。これは SKILL.md patch combinator ではなく、scripts/render-combinators.py apply_feedback_loop() の副作用付き deployment action。"
+      "note": "build 完了時に必ず実行。harness-creator 自身は対象外。冪等 (既存実体は再コピーしない、既存 symlink は実体へ置換)。これは SKILL.md patch combinator ではなく、scripts/render-combinators.py apply_feedback_loop() の副作用付き deployment action。",
+      "transition": {"gate": "opt-out明示またはfeedback protocol strict検証済み", "on_pass": "content-review", "on_fail": "abort"}
     },
     {
       "id": "content-review",
@@ -138,7 +151,8 @@
       "output_artifact": "eval-log/<plugin>/build/{verification-contract.json,verification-plan.json,obligation-evidence/*.json} + legacy content-review projections",
       "verifier": "scripts/lint-content-review.py --changed-only --base origin/main",
       "execution": "deterministic-resolver-then-local-llm-exception",
-      "note": "derive-verification-contract.py でgraph全体をclaim DAG化し、plan-verification-obligations.py がexact proof reuse→deterministic check→未解決semantic batchの順に解決する。LLM起動はllm_batches[]だけ。4条件/rubricは同じsemantic obligationで判定し、legacy 2 verdictへprojectionしてreceiptにも束縛する。30思考法3並列はexhaustive audit obligationのみ。反復findingはautomation_candidatesからlint/schema/testへ昇格する。"
+      "note": "derive-verification-contract.py でgraph全体をclaim DAG化し、plan-verification-obligations.py がexact proof reuse→deterministic check→未解決semantic batchの順に解決する。LLM起動はllm_batches[]だけ。4条件/rubricは同じsemantic obligationで判定し、legacy 2 verdictへprojectionしてreceiptにも束縛する。30思考法3並列はexhaustive audit obligationのみ。反復findingはautomation_candidatesからlint/schema/testへ昇格する。",
+      "transition": {"gate": "content review obligationが全てPASSまたは明示opt-out", "on_pass": "live-acceptance", "on_fail": "abort"}
     },
     {
       "id": "live-acceptance",
@@ -157,7 +171,8 @@
       "resourceIds": [],
       "output_artifact": "eval-log/<plugin>/<skill>/live-trial/<run-id>/{verdict.json, transcript.jsonl}",
       "verifier": "scripts/lint-live-trial-verdict.py --plugin <plugin> (D13 record-only WARN。P3 常設化 go/no-go で --enforce へ昇格)",
-      "note": "Step12 resolverのobservational_queue[]に入ったobligationだけを実走する。plan-live-trials.py はlive executor adapterとして対象skill内で挙動closure/transcript proofを再確認するが、plugin全skillを独自にfan-outしない。incremental既定のtrial/同時実行上限は暴走安全弁。exhaustive明示時のみ全candidate再実走。非発火はdeferred記録。リモートCIは実走せず証跡を機械検査する。"
+      "note": "Step12 resolverのobservational_queue[]に入ったobligationだけを実走する。plan-live-trials.py はlive executor adapterとして対象skill内で挙動closure/transcript proofを再確認するが、plugin全skillを独自にfan-outしない。incremental既定のtrial/同時実行上限は暴走安全弁。exhaustive明示時のみ全candidate再実走。非発火はdeferred記録。リモートCIは実走せず証跡を機械検査する。",
+      "transition": {"gate": "非発火理由またはlive trial verdictが証跡化済み", "on_pass": "complete", "on_fail": "abort"}
     }
   ],
   "resources": [

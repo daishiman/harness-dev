@@ -54,7 +54,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       derived_from: [CL-14]
     - id: OUT1
       loop_scope: outer
-      text: 全ゲートでユーザー承認前に自動前進せず evaluator と governance reviewer を必ず context fork で起動している
+      text: 全遷移が明示的gate decisionなしに前進せず、人間承認gateはユーザー承認を必須とし、solo governance自動承認は全条件充足時だけ許可され、evaluatorとgovernance reviewerを必ずcontext forkで起動している
       verify_by: elegant-review
       derived_from: [CL-1, CL-2, CL-8, CL-11]
     - id: OUT2
@@ -74,11 +74,9 @@ runtime_root_policy: host-skill-path
 
 ## Runtime root contract
 
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+`runtime_root_policy: host-skill-path` の製品別root解決、cwd推測禁止、prompt継承は
+[ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約)
+をそのまま適用する。
 
 > Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱schema/prompt/scriptは上記Runtime root contractで解決したabsolute `PLUGIN_ROOT` から参照し、repo-root cwdや `plugins/harness-creator/...` からplugin rootを推測しない。生成対象repoを操作するroot-level gateだけは、明示したproject root/cwdを別入力として使う。
 
@@ -95,25 +93,25 @@ runtime_root_policy: host-skill-path
 - `eval-log/handoff-<step>.json` (`schemas/handoff.schema.json` 準拠)
 - 完了レポート (日本語本文、パラメーター名のみ英語)
 
-**完了条件**: P0 lint pass + evaluator JSON pass (`--fast` 低リスク ref/wrap は `evaluator: N/A` 理由必須) + (solo_operator_mode 下) LLM-reviewer pass。
+**完了条件**: P0 lint pass + evaluator JSON pass (`--fast` 低リスク ref/wrap は `evaluator: N/A` 理由必須) + (solo_operator_mode 下) LLM-reviewer pass + 各遷移の明示的gate decision。
 
-**禁則**: ゲート前で必ず止まりユーザー承認なしに次フェーズへ進まない。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。evaluator/governance reviewer は同一 context 評価禁止 (必ず context:fork)。詳細は `## Key Rules`。
+**禁則**: ゲート判定なしに次フェーズへ進まない。人間承認gateはユーザー承認を必須とし、solo自動承認はmanifestの全条件を機械評価して得た明示的gate decisionだけを許す。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。evaluator/governance reviewer は同一 context 評価禁止 (必ず context:fork)。詳細は `## Key Rules`。
 
 ### 起動モード
 
 - **引数なし**: Step 1 (run-skill-elicit) が起動、対話で topic を確定。フィールド意味は `schemas/skill-brief.schema.json` (詳細は `references/skill-brief-schema.json`)。
-- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。
+- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "$PLUGIN_ROOT/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。`PLUGIN_ROOT` は共有Runtime root contractで解決済みのabsolute rootとする。
 - **Notion 指定あり**: topic / 引数に `--page-url` または `--page-id` が含まれる場合、Step 1 は `skill-intake` の publish 完了証跡を必須入力とする。`output/<hint>/notion-log.json.status=="published"`、`notion-publish-result.json.page_id`、`notion-url.txt` が揃い、指定 page と一致するまで Step 2 build へ進まない。
 - **`--fast`**: 1ファイル変更/<=30行/kind ∈ {ref,wrap}/evaluator pair 不要を全て満たす場合のみ軽量フロー (Step 4b/5 skip)。判定は機械決定:
   ```bash
-  python3 "${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-skill-create/scripts/evaluate-create-gates.py" \
+  python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/evaluate-create-gates.py" \
     --skill-name "$SKILL_NAME" --kind "$KIND" --brief eval-log/skill-brief.json --fast
   ```
   条件不一致時は黙って通常フローに戻す。
 
 ## Key Rules
 
-1. **ゲート前で必ず止まる**: ユーザー承認なしに次フェーズへ進まない。全ゲートは AskUserQuestion 経由 (`prompts/R2-gate-review.md`)。
+1. **ゲート前で必ず判定する**: 人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) でユーザー承認を得る。solo自動承認はmanifestの全条件が機械的にtrueになった場合だけ明示的PASS decisionとして記録し、条件未充足なら停止する。
 2. **子スキルへの委譲**: 各フェーズは独立 Skill を Skill tool で起動 (`workflow-manifest.json` の `delegateSkill`)。本スキルは制御のみ。
 3. **失敗時の停止**: P0 lint fail または evaluator FAIL なら停止し findings 提示。
 4. **context:fork**: evaluator/governance reviewer は必ず context:fork で起動 (Sycophancy 防止)。
@@ -159,7 +157,7 @@ runtime_root_policy: host-skill-path
 ### 完了チェックリスト (Checklist)
 
 - [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み <!-- CL-1 -->
-- [ ] Notion 指定ありの場合、`python3 "${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-skill-create/scripts/validate-intake-publish-ready.py" --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
+- [ ] Notion 指定ありの場合、`python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/validate-intake-publish-ready.py" --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
 - [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き <!-- CL-3 -->
 - [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている <!-- CL-4 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] **Claude plugin envelope を持つ場合** 同一upsertを実行し、`sync-plugin-platforms.py --all --check` が exit 0。`.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` の両方が差分に含まれる <!-- CL-4d exempt: Codex 配布 projection を generator と回帰テストが機械検査 -->
@@ -180,7 +178,7 @@ runtime_root_policy: host-skill-path
 
 正本 `../run-build-skill/references/goal-seek-paradigm.md` の 6 ステップ (現状評価/手順生成/実行/検証/Anchor Step/反復) に従う。本スキル固有の差分:
 
-- **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。ゲート前で必ず止まりユーザー承認を取る (自動推測禁止、AskUserQuestion 経由 `prompts/R2-gate-review.md`)。
+- **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) で承認を取り、solo governanceだけは全 `auto_approve_conditions` の機械評価PASSを明示decisionとして記録する。
 - **委譲先 (子 Skill)**: `run-skill-elicit` / `run-build-skill` / `assign-skill-design-evaluator` / `run-elegant-review` / `run-skill-rubric-governance`。Notion 指定ありの非技術者 intake は `skill-intake` 完了証跡を先に検証する。本スキルは制御のみ、各子が自設計書を参照。
 - **context:fork 必須**: evaluator / elegant-review / governance reviewer は必ず fork で起動 (Sycophancy 防止)。
 - **差し戻し**: P0 lint fail または evaluator/elegant FAIL なら `run-build-skill` 再実行へ戻す (最大 3 周)。`--fast` 判定・elegant 起動判定は `scripts/evaluate-create-gates.py` で機械決定 (条件不一致は黙って通常フロー)。
@@ -189,7 +187,7 @@ runtime_root_policy: host-skill-path
 
 ## Gotchas
 
-1. **Gate skip 禁止**: 「次へ」を自動推測しない。明示確認必須。
+1. **Gate skip 禁止**: 「次へ」を自動推測しない。人間承認gateは明示確認、solo governanceは全自動承認条件の機械評価PASSが必須。
 2. **同一 context 評価禁止**: evaluator/governance reviewer は必ず context:fork (Sycophancy 防止)。
 3. **lint 失敗時の自動修正禁止**: 根本原因をユーザー提示。LLM 判断で勝手に直さない。
 4. **mode=update 時の改名**: `run-skill-rename` に委譲。本スキル対象外。

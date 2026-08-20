@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-codex-plugin-install",
+  "skill": "run-codex-plugin-install",
+  "description": "明示されたpluginをlocalまたはGit sourceからinstallし、CLI receiptとruntime identityをfail-closedで検証する。",
+  "goal_seek": {
+    "engine": "inline",
+    "spec": "eval-log/goal-spec.json",
+    "progress": "eval-log/run-codex-plugin-install-progress.json",
+    "intermediate": "eval-log/run-codex-plugin-install-intermediate.jsonl",
+    "max_loops": 3,
+    "fork": "subagent"
+  },
+  "phases": [
+    {
+      "id": "preflight",
+      "step": 1,
+      "title": "source・plugin identity・対象scopeを確定",
+      "prompt": "./prompts/R1-install.md",
+      "output_artifact": "eval-log/codex-plugin-install-preflight.json",
+      "transition": {
+        "gate": "source種別・plugin scope・refの組合せが入力契約に一致",
+        "on_pass": "install",
+        "on_fail": "abort"
+      },
+      "failure_action": "abort"
+    },
+    {
+      "id": "install",
+      "step": 2,
+      "title": "明示scopeのmarketplace登録とinstallを実行",
+      "dependsOn": ["preflight"],
+      "prompt": "./prompts/R1-install.md",
+      "output_artifact": "eval-log/codex-plugin-install-receipt.json",
+      "transition": {
+        "gate": "receipt.status=installed and receipt.verified=true",
+        "on_pass": "verify",
+        "on_fail": "abort"
+      },
+      "failure_action": "abort"
+    },
+    {
+      "id": "verify",
+      "step": 3,
+      "title": "installed・enabled・runtime identityとhook trust境界を検証",
+      "dependsOn": ["install"],
+      "prompt": "./prompts/R1-install.md",
+      "validation_by_route": {
+        "local-all": [
+          "python3 ${PLUGIN_ROOT}/scripts/install-local-plugins.py --all --check"
+        ],
+        "single-local-or-git": [
+          "codex plugin list --json",
+          "assert receipt.status=installed and receipt.verified=true and receipt identity matches the selected plugin"
+        ]
+      },
+      "output_artifact": "eval-log/codex-plugin-install-verify.json",
+      "transition": {
+        "gate": "選択routeの検証がexit 0かつreceipt identityがCLI listと一致",
+        "on_pass": "handoff",
+        "on_fail": "abort"
+      },
+      "failure_action": "abort"
+    },
+    {
+      "id": "handoff",
+      "step": 4,
+      "title": "検証済みreceiptとユーザー判断が必要なhook trustを引き渡す",
+      "dependsOn": ["verify"],
+      "output_artifact": "eval-log/handoff-run-codex-plugin-install.json",
+      "transition": {
+        "gate": "required_receipt_fieldsが全て存在しhook_trust=user-review-required",
+        "on_pass": "complete",
+        "on_fail": "abort"
+      },
+      "failure_action": "abort"
+    }
+  ],
+  "completion_signals": {
+    "required_phases": ["preflight", "install", "verify", "handoff"],
+    "required_receipt_fields": ["status", "plugin_id", "verified", "enabled", "runtime_path"],
+    "status": "installed",
+    "hook_trust": "user-review-required"
+  },
+  "fatal_exit_codes": [2, 3]
+}

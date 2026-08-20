@@ -228,6 +228,12 @@ def test_all_active_workflows_forbid_legacy_unfiltered_projection_checks():
             assert command not in workflow, f"{workflow_path}: legacy command {command}"
 
 
+def test_local_ci_uses_scoped_native_surface_gate_not_unfiltered_builder():
+    local_ci = (ROOT / "scripts" / "run-ci-checks.sh").read_text(encoding="utf-8")
+    assert "sync-native-surfaces.py --repo-root . --check" in local_ci
+    assert "python3 scripts/build-claude-symlinks.py --check" not in local_ci
+
+
 def test_readme_marketplace_identity_matches_repository_ssot():
     readme = (PLUGIN / "README.md").read_text(encoding="utf-8")
     marketplace_name = _json(ROOT / ".claude-plugin" / "marketplace.json")["name"]

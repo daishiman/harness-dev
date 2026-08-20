@@ -55,7 +55,7 @@ run "lint-vendored-ssot"                   python3 scripts/lint-vendored-ssot.py
 run "lint-legacy-plugin-name"              python3 scripts/lint-legacy-plugin-name.py
 run "lint-runtime-portability"             python3 scripts/lint-runtime-portability.py
 run "check-scripts-drift"                  bash scripts/check-scripts-drift.sh
-run "build-claude-symlinks --check"        python3 scripts/build-claude-symlinks.py --check
+run "native-surfaces --check"              python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --check
 # ── discovery 派生台帳 parity (roster / llm-coverage が discovery と一致するか) ──
 # governance-check.yml と対称。この2つが run-ci-checks 非包含だと改名/skill 変更時に
 # pre-push を素通りして CI で初めて露見する (2026-07-02 harness-creator 改名で criteria

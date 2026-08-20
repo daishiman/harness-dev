@@ -127,13 +127,11 @@ runtime_root_policy: host-skill-path
 
 ## Runtime root contract
 
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+`runtime_root_policy: host-skill-path` の製品別root解決、cwd推測禁止、prompt継承は
+[ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約)
+をそのまま適用する。
 
-> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。ただし Step 4 等の lint コマンドは **repo-root cwd 前提**で実行する (bundles.json full bundle 同梱の `plugins/skill-governance-lint/` への repo-root 相対パスに依存)。skill 自身の資産は `$SKILL_DIR` 経由の self-relative 参照。
+> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱資産は解決済みabsolute `$PLUGIN_ROOT` / `$SKILL_DIR` で参照する。生成対象repositoryのroot-level gateだけは、明示したproject rootを別入力として使う。
 
 ## Purpose & Output Contract
 
@@ -206,7 +204,7 @@ runtime_root_policy: host-skill-path
   - assign: evaluator verdict、その他 kind: content-review verdict を `eval-log/coverage/` に記録
 - [ ] `eval-log/build-plan.json` (`validate-build-plan.py --brief ... --out eval-log/build-plan.json` で brief から決定論導出) の `flags` が true の subagent/prompt/evaluator/hook/knowledge を全て生成し、`--check` が exit 0 (フラグの要否をモデル判断で省略しない) <!-- CL-9 -->
 - [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) knowledge/ 雛形展開 + 4スクリプト同梱 + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`) + `lint-knowledge-loop.py` exit0 (KL-001..007) <!-- CL-10 -->
-- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生のplugin root変数非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash に裸変数/repo相対を書かず fallback 形 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}}` へ降格。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
+- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生のplugin root変数非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash はdoctor entry pointだけを案内し、env/cwd/repo相対によるplugin root推測を載せない。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
 - [ ] (plugin 一括 build=handoff routes 消費時のみ) route 完了ごとに `eval-log/<slug>/build/route-<id>.json` を記録し `validate-route-build-reports.py --route <id>` exit0、全 route 終端で `--complete` exit0 (契約正本 `references/route-build-report.md`) <!-- CL-12 -->
 
 ### ゴールシークループ
@@ -241,9 +239,9 @@ runtime_root_policy: host-skill-path
 **蓄積知見の参照 (Loop B / build-time)**: `brief.consult_build_knowledge` が true (既定) のとき、harness-creator 自身の蓄積知見を検索し、過去の設計判断・落とし穴回避を初期設計に反映する (`knowledge/knowledge-index.json` の consult 宣言と対。`run-skill-elicit` の同名節と同形):
 
 ```bash
-# パスはプロジェクトルート基準 (eval-log/ 出力と同じ規約)
-python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py \
-  --dir plugins/harness-creator/knowledge/ --query "<brief.goal と kind の要約>" --limit 5
+# Runtime root contractで解決済みのabsolute self assetを使用する
+python3 "$SKILL_DIR/templates/knowledge-skeleton/scripts/search_knowledge.py" \
+  --dir "$PLUGIN_ROOT/knowledge/" --query "<brief.goal と kind の要約>" --limit 5
 ```
 
 検索 0 件・スクリプト不在でも build を止めない。採否は trace の `layer_decisions` に記録する。loop 実行系 (run/wrap/delegate) はこの時点で `brief.goal` と完了チェックリストから per-skill 評価基準 (`feedback_contract.criteria`) を test-first で導出し、Step 3.5 で trace に固定する (criteria は goal-seek checklist と同源)。

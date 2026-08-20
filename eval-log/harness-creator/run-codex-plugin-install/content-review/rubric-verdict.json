@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-install",
-    "skill_md_sha256": "f1c5003a00e689f47be6d739cbd8d41e69729de531cfac68eccf1d24351c3a66"
+    "skill_md_sha256": "2e38635e21f35815f3eb688af887ec9c2cd4ae1435f0eb7bec97ea81a70fadcb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
-  "iterations": 1,
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T12:12:17Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,14 +24,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "Claude Code / Codex 双方への local 一括 install と Codex 単独の local / Git 実行という 2 経路が、それぞれの前提と失敗時挙動つきで分離記述されている。",
-      "同梱 script の起動は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}}` の 3 段 fallback 形で統一され、意図的に絶対パスを要求する箇所 (install-local-plugins.py) はその理由が本文に明示されている。"
+      "local-allとsingle-local-or-gitの検証routeを分離し、top-level `verified` receiptとCLI実測が一致する。",
+      "同梱installerは共有Runtime root正本で解決したabsolute `$PLUGIN_ROOT` を使い、hook trustをユーザー判断として保持する。",
+      "Purpose/Output、prompt Output Contract、全phase gateが明示されている。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual:focused-combined-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 出力契約は `## 入力` と `## 完了条件` に分散しているが、目的・入力・完了条件・失敗時挙動が漏れなく明文化されているため BD-001 は意味充足と判定した。"
+  "notes": "focused combined reviewを独立reviewerが最新SKILL/workflow/promptと実script契約に対して再実施。C1-C4、IN1/OUT1、rubric high severity 0を全PASS。receipt required fieldsとroute別validationはfocused contract testでも確認。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
 }

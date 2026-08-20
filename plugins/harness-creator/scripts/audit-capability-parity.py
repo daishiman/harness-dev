@@ -56,6 +56,20 @@ RUNTIME_ROOT_CONTRACT_TOKENS = (
     "各shell invocation",
     "`prompts/` 配下はこのowner Skill契約を継承する",
 )
+RUNTIME_ROOT_CANONICAL_REF = (
+    "../ref-cross-platform-runtime/references/runtime-portability.md"
+)
+RUNTIME_ROOT_CANONICAL_TOKENS = (
+    "## product別 plugin root 契約",
+    "${CLAUDE_PLUGIN_ROOT}",
+    "absolute `SKILL.md` path",
+    ".codex-plugin/plugin.json",
+    ".claude-plugin/plugin.json",
+    "cwd推測",
+    "literal placeholder",
+    "各shell invocation",
+    "promptはowner Skill契約を継承",
+)
 SKILL_REF_RE = re.compile(
     r"(?<![A-Za-z0-9_-])(?:run|assign|ref|wrap|delegate)-[a-z0-9][a-z0-9-]*"
 )
@@ -286,6 +300,37 @@ def _owner_skill(path: Path, skills_root: Path) -> Path | None:
     return None
 
 
+def _runtime_root_contract_missing(plugin: Path, owner_body: str) -> list[str]:
+    """Accept a complete inline contract or the complete shared canonical contract."""
+
+    inline_missing = [
+        token for token in RUNTIME_ROOT_CONTRACT_TOKENS if token not in owner_body
+    ]
+    if not inline_missing:
+        return []
+    if "## Runtime root contract" not in owner_body:
+        return inline_missing
+    if RUNTIME_ROOT_CANONICAL_REF not in owner_body:
+        return inline_missing
+
+    canonical_path = (
+        plugin
+        / "skills"
+        / "ref-cross-platform-runtime"
+        / "references"
+        / "runtime-portability.md"
+    )
+    try:
+        canonical_body = canonical_path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return [f"canonical contract unreadable: {canonical_path.relative_to(plugin)}"]
+    return [
+        f"canonical:{token}"
+        for token in RUNTIME_ROOT_CANONICAL_TOKENS
+        if token not in canonical_body
+    ]
+
+
 def _portable_root_violations(plugin: Path) -> list[dict]:
     violations: list[dict] = []
     runtime_owners: set[Path] = set()
@@ -348,7 +393,7 @@ def _portable_root_violations(plugin: Path) -> list[dict]:
             body = owner.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             body = ""
-        missing = [token for token in RUNTIME_ROOT_CONTRACT_TOKENS if token not in body]
+        missing = _runtime_root_contract_missing(plugin, body)
         if missing:
             violations.append(
                 _violation(

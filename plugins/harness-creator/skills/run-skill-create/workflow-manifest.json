@@ -4,6 +4,7 @@
   "workflowId": "run-skill-create",
   "skill": "run-skill-create",
   "description": "run-skill-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。",
+  "max_iterations": 3,
   "gate_order": ["G1", "G2.5", "G2", "G3", "G4"],
   "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a→5→6 に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
   "phases": [
@@ -23,7 +24,8 @@
       ],
       "delegateSkill": "run-skill-elicit",
       "fatal_exit_codes": [2],
-      "handoff": "eval-log/handoff-after_elicit.json"
+      "handoff": "eval-log/handoff-after_elicit.json",
+      "transition": {"gate": "brief schema PASSかつGate 1の明示decisionがPASS", "on_pass": "build", "on_fail": "abort"}
     },
     {
       "id": "build",
@@ -39,7 +41,8 @@
       ],
       "delegateSkill": "run-build-skill",
       "fatal_exit_codes": [1, 2],
-      "handoff": "eval-log/handoff-after_build.json"
+      "handoff": "eval-log/handoff-after_build.json",
+      "transition": {"gate": "build traceがschema準拠かつfatal exitなし", "on_pass": "manifest-register", "on_fail": "abort"}
     },
     {
       "id": "manifest-register",
@@ -53,8 +56,9 @@
         "prompts/R2-gate-review.md"
       ],
       "delegateSkill": null,
-      "command": "python3 plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py",
-      "fatal_exit_codes": [1]
+      "command": "python3 ${PLUGIN_ROOT}/../skill-governance-automation/scripts/build-manifest-registration-plan.py",
+      "fatal_exit_codes": [1],
+      "transition": {"gate": "登録plan検証PASSかつGate 2.5の明示decisionがPASS", "on_pass": "bundle-register", "on_fail": "abort"}
     },
     {
       "id": "bundle-register",
@@ -69,7 +73,8 @@
       "command": "python3 scripts/validate-plugin-completeness.py --fix",
       "artifact": [".claude-plugin/marketplace.json", ".claude-plugin/bundles.json"],
       "comment": "新規 plugin を実体ディレクトリ起点で marketplace.json + bundles.json へ append-only 自動登録し書込後自己再検証。既登録は no-op。最終承認は人間が PR diff で。検出層 (validate-plugin-completeness.py 引数なし) が CI/pre-push の最後の砦。",
-      "fatal_exit_codes": [1]
+      "fatal_exit_codes": [1],
+      "transition": {"gate": "marketplaceとbundleの登録検証がPASS", "on_pass": "codex-platform-sync", "on_fail": "abort"}
     },
     {
       "id": "codex-platform-sync",
@@ -82,10 +87,11 @@
       "condition": "plugin_manifest.exists == true",
       "resourceIds": ["../run-codex-plugin-package/SKILL.md"],
       "delegateSkill": "run-codex-plugin-package",
-      "command": "python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/<plugin> --apply",
+      "command": "python3 ${PLUGIN_ROOT}/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/<plugin> --apply",
       "artifact": ["plugins/<plugin>/.codex-plugin/plugin.json", ".agents/plugins/marketplace.json"],
       "comment": "Claude plugin envelope を正本に Codex manifest と official repo marketplace entry を決定論生成する。--check 再実行で drift 0 を要求。",
-      "fatal_exit_codes": [1, 3]
+      "fatal_exit_codes": [1, 3],
+      "transition": {"gate": "plugin manifest非該当またはCodex projection apply成功", "on_pass": "codex-platform-check", "on_fail": "abort"}
     },
     {
       "id": "codex-platform-check",
@@ -98,10 +104,11 @@
       "condition": "plugin_manifest.exists == true",
       "resourceIds": ["../run-codex-plugin-package/SKILL.md"],
       "delegateSkill": "run-codex-plugin-package",
-      "command": "python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/<plugin> --check",
+      "command": "python3 ${PLUGIN_ROOT}/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/<plugin> --check",
       "artifact": ["plugins/<plugin>/.codex-plugin/plugin.json", ".agents/plugins/marketplace.json"],
       "comment": "applyと独立したcheckを機械実行し、生成直後のdriftをfail-closedで拒否する。create/updateは同一upsert。",
-      "fatal_exit_codes": [1, 3]
+      "fatal_exit_codes": [1, 3],
+      "transition": {"gate": "plugin manifest非該当またはCodex projection checkがexit 0", "on_pass": "local-marketplace-register", "on_fail": "abort"}
     },
     {
       "id": "local-marketplace-register",
@@ -116,7 +123,8 @@
       "command": "python3 scripts/build-local-marketplace.py",
       "artifact": ["marketplaces/local/.claude-plugin/marketplace.json"],
       "comment": "公開 marketplace は distributable:false を載せられない (MK-004 逆ガード + NEVER_DISTRIBUTE denylist) ため、非配布 plugin は手元でも install できない。ローカル clone 用 marketplace を再生成して新 plugin を載せる。検出層は build-local-marketplace.py --check (CI)。",
-      "fatal_exit_codes": [1]
+      "fatal_exit_codes": [1],
+      "transition": {"gate": "local marketplace再生成と自己検証がPASS", "on_pass": "plugin-release-record", "on_fail": "abort"}
     },
     {
       "id": "plugin-release-record",
@@ -131,7 +139,8 @@
       "command": "python3 scripts/build-plugin-release.py --only <plugin>",
       "artifact": ["marketplaces/local/plugin-fingerprints.json"],
       "comment": "marketplace install は version 単位の copy であり、version を据え置くと install 済み copy へ変更が届かない。新 plugin を内容 hash 対応表へ記録し、既存 plugin の内容変更には patch を採番する。検出層は build-plugin-release.py --check (CI)。install 済み copy への反映は --install。書き込みを伴う実行は Gate 2.5 承認後に限り、--only <plugin> を必須とする (SKILL.md Key Rule 6): write_version() は既存 version 行の in-place 置換で append-only ではなく、--only 無指定は _run() の only=None により全 plugin 走査となって無関係な変更済み plugin まで patch bump するため。",
-      "fatal_exit_codes": [1]
+      "fatal_exit_codes": [1],
+      "transition": {"gate": "Gate 2.5承認済みかつ--only対象のrelease記録が検証済み", "on_pass": "p0-lint", "on_fail": "abort"}
     },
     {
       "id": "p0-lint",
@@ -146,20 +155,21 @@
       ],
       "delegateSkill": null,
       "commands": [
-        "python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-forbidden-deps.py --skills-dir ${SKILLS_DIR}",
-        "python3 plugins/skill-governance-lint/scripts/lint-manifest-contents.py",
-        "python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json",
-        "python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-skill-name.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-skill-description.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-skill-tree.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/validate-frontmatter.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-dependency-direction.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-forbidden-deps.py --skills-dir ${SKILLS_DIR}",
+        "python3 ${PLUGIN_ROOT}/../skill-governance-lint/scripts/lint-manifest-contents.py",
+        "python3 ${PLUGIN_ROOT}/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json",
+        "python3 ${PLUGIN_ROOT}/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
       ],
       "max_retry": 3,
       "fatal_exit_codes": [1],
-      "handoff": "eval-log/handoff-after_lint.json"
+      "handoff": "eval-log/handoff-after_lint.json",
+      "transition": {"gate": "全P0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "build"}
     },
     {
       "id": "pkg-check",
@@ -173,7 +183,8 @@
       "resourceIds": [],
       "delegateSkill": "run-plugin-package-check",
       "fatal_exit_codes": [1],
-      "handoff": "eval-log/handoff-after_pkg_check.json"
+      "handoff": "eval-log/handoff-after_pkg_check.json",
+      "transition": {"gate": "条件非該当またはPKG completenessがPASS", "on_pass": "design-evaluate", "on_fail": "abort"}
     },
     {
       "id": "design-evaluate",
@@ -190,7 +201,8 @@
       "delegateSkill": "assign-skill-design-evaluator",
       "context": "fork",
       "fatal_exit_codes": [],
-      "handoff": "eval-log/handoff-after_evaluator.json"
+      "handoff": "eval-log/handoff-after_evaluator.json",
+      "transition": {"gate": "fork reviewerのrubric verdictがPASSまたは許可されたN/A", "on_pass": "elegant-review", "on_fail": "build"}
     },
     {
       "id": "elegant-review",
@@ -207,9 +219,10 @@
       ],
       "delegateSkill": "run-elegant-review",
       "context": "fork",
-      "decision_command": "python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json",
+      "decision_command": "python3 ${PLUGIN_ROOT}/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json",
       "fatal_exit_codes": [1],
-      "handoff": "eval-log/handoff-after_elegant.json"
+      "handoff": "eval-log/handoff-after_elegant.json",
+      "transition": {"gate": "条件非該当またはfork review C1-C4 PASSかつGate 3の明示decisionがPASS", "on_pass": "governance", "on_fail": "build"}
     },
     {
       "id": "governance",
@@ -225,6 +238,7 @@
         "schemas/handoff.schema.json"
       ],
       "delegateSkill": "run-skill-rubric-governance",
+      "context": "fork",
       "auto_approve_conditions": [
         "solo_operator_mode == true",
         "stable_frozen == true",
@@ -232,7 +246,8 @@
         "llm_reviewer == PASS"
       ],
       "fatal_exit_codes": [],
-      "handoff": "eval-log/handoff-after_governance.json"
+      "handoff": "eval-log/handoff-after_governance.json",
+      "transition": {"gate": "fork governanceが人間承認または全auto_approve_conditionsを満たす明示PASS decisionを記録", "on_pass": "report", "on_fail": "abort"}
     },
     {
       "id": "report",
@@ -247,12 +262,13 @@
       ],
       "delegateSkill": null,
       "fatal_exit_codes": [],
-      "handoff": "eval-log/handoff-done.json"
+      "handoff": "eval-log/handoff-done.json",
+      "transition": {"gate": "完了reportと全handoffがschema検証済み", "on_pass": "complete", "on_fail": "abort"}
     }
   ],
   "fast_mode": {
     "description": "低リスク変更 (1ファイル, <=30行, kind ∈ {ref,wrap}, evaluator pair 不要) のみ。Step 4b/5 を skip。",
     "skip_phases": ["design-evaluate", "elegant-review"],
-    "decision_command": "python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json --fast"
+    "decision_command": "python3 ${PLUGIN_ROOT}/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json --fast"
   }
 }

@@ -121,6 +121,36 @@ def test_local_install_registers_installs_and_verifies(monkeypatch, tmp_path):
     assert report["install_order"] == ["sample"]
     assert all("upgrade" not in command for command in calls)
 
+    workflow = json.loads(
+        (SCRIPT.parents[1] / "skills" / "run-codex-plugin-install" / "workflow-manifest.json")
+        .read_text(encoding="utf-8")
+    )
+    required_fields = set(workflow["completion_signals"]["required_receipt_fields"])
+    assert required_fields <= report.keys()
+    assert "verified" in required_fields
+    assert "installed" not in required_fields
+
+    verify_phase = next(phase for phase in workflow["phases"] if phase["id"] == "verify")
+    routes = verify_phase["validation_by_route"]
+    assert set(routes) == {"local-all", "single-local-or-git"}
+    assert any("install-local-plugins.py --all --check" in item for item in routes["local-all"])
+    assert all("install-local-plugins.py --all --check" not in item for item in routes["single-local-or-git"])
+    assert any("codex plugin list --json" in item for item in routes["single-local-or-git"])
+
+
+def test_codex_plugin_workflows_declare_transition_gates():
+    skills_root = SCRIPT.parents[1] / "skills"
+    for skill in ("run-codex-plugin-install", "run-codex-plugin-package"):
+        manifest = json.loads(
+            (skills_root / skill / "workflow-manifest.json").read_text(encoding="utf-8")
+        )
+        for phase in manifest["phases"]:
+            transition = phase.get("transition")
+            assert isinstance(transition, dict), f"{skill}/{phase['id']}: transition missing"
+            assert transition.get("gate"), f"{skill}/{phase['id']}: gate missing"
+            assert transition.get("on_pass"), f"{skill}/{phase['id']}: PASS target missing"
+            assert transition.get("on_fail"), f"{skill}/{phase['id']}: FAIL target missing"
+
 
 def test_git_install_upgrades_snapshot_before_install(monkeypatch, tmp_path):
     snapshot = tmp_path / "git-snapshot"

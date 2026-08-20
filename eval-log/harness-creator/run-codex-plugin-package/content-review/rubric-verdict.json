@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-package",
-    "skill_md_sha256": "543f6a86c4efe478a2326d1b5bae1f044ecebd27ac1edf0b3ce3e1ed2cc32daf"
+    "skill_md_sha256": "ae82e651f4357aa71100667a6a2a5efb01a79df505bff84c4b48b0e0207c8add"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:16:43Z",
-  "iterations": 1,
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T12:18:22Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,15 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "前回 FAIL とした dangling variable が解消された。step 3 のローカル変数 `plugin_root` 定義は撤去され、step 3 (L70) / step 6 (L90, L92) / install 境界 (L106, L113) の全 fence が独立に `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` を解決する形へ統一され、『各 shell invocation 内で解決済み absolute path を `PLUGIN_ROOT` に設定する』という自己宣言と一致した。",
-      "IN1 (単一と全 plugin の apply→check が同じ入力で収束・失敗時に部分書きしない) が実行手順 3-4・6 と失敗時節の『Claude manifest 無し/name 不一致/plugins 外なら書き込まず停止』『--check は常に無書込』へ対応する。",
-      "OUT1 の install 可能性について、package 生成が user-global 状態を変更しない境界を宣言したうえで install を `run-codex-plugin-install` へ委譲し、hook trust は installer も代行しないと明記して責務越境を残していない。"
+      "検証済み候補のatomic upsertと失敗時の部分書き禁止がprompt・apply gate・失敗契約で一致する。",
+      "再check、capability parity、plugin境界の検証からrun-codex-plugin-installへのstructured handoffまで依存edgeが閉じている。",
+      "同梱scriptは共有Runtime root正本で解決したabsolute `$PLUGIN_ROOT` を使用し、packageとlive installの副作用境界が明確である。",
+      "R1の `skills`・`hooks`・`mcpServers`・`apps` 列挙はSKILLと同一の4 surface集合であり、slash疑似pathを解消しても双方向一致契約の意味を変えない。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-fix-rereview",
+    "hook_trigger": "manual:prompt-contract-drift-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (step 6 と install 境界での未定義 `$plugin_root` 再利用) の解消を確認して PASS へ転じた。 出力契約は `## 入力と出力` と `## 失敗時` に分かれるが、目的・入力・出力・非対象・失敗時挙動が漏れなく明文化されているため BD-001 は意味充足と判定した。"
+  "notes": "prompt-contract-drift修正後のfocused combined reviewを独立reviewerが最新SKILL/workflow/R1 promptに対して再実施。C1-C4、IN1/OUT1、rubric high severity 0を全PASS。R1のslash連結を4 surfaceの列挙へ変えた差分は、SKILLと同じ集合およびactual↔package entry points↔compositionの双方向一致を保持し、契約意味を変更しない。SKILL.md自体は不変のためtarget SHAも不変。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
 }

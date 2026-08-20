@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-create",
-    "skill_md_sha256": "24925b636b4a7b8ca17fc75764443b69a050cb96aafdccc39db69be77b1a4fa8"
+    "skill_md_sha256": "dbee20c007c13d575907d5e13d59fe06ce70dcae7d61b23bb0aee8220d6d45fe"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:16:43Z",
-  "iterations": 1,
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T12:12:17Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,16 +27,15 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "前回 FAIL とした L109 `evaluate-create-gates.py` と L162 `validate-intake-publish-ready.py` が `${HC_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-skill-create/scripts/...` へ是正され、skill 自身の同梱ゲート script を repo 相対で起動する経路が消えた。L105 の `check-route-component-parity.py` も同形。IN3/CL-14 の『foreign cwd と env 未設定でも owner SKILL.md から plugin root を解決できる』と本文が一致した。",
-      "同時に、生成対象 repo を操作する root-level gate (L164/166/167 の `validate-plugin-completeness.py` / `build-local-marketplace.py` / `build-plugin-release.py`) は `${HARNESS_ROOT:-.}` 起点で書き分けられており、L83 の『root-level gate だけは明示した project root/cwd を別入力として使う』という自己宣言どおりの二系統になっている。同梱資産と repo 資産の区別が表記レベルで判別可能。",
-      "OUT1/OUT2 のゲート不変条件 (承認前に自動前進しない・evaluator と governance reviewer は必ず context:fork) が禁則・Key Rules 1/4・Gotchas 1/2・ゴールシークループの 4 層で反復固定されている。",
-      "Key Rule 6 が `validate-plugin-completeness.py --fix` (append-only ゆえ自動実行可) と `build-plugin-release.py` (既存行 in-place 書換ゆえ承認後・`--only` 必須) を、`_run()` の `only = set(args.only) or None` という実装根拠まで示して区別しており、承認境界の位置に理由が接地している。"
+      "plugin同梱資産はowner Skill pathから解決したabsolute `$PLUGIN_ROOT` を使用し、生成対象repositoryのroot-level gateと分離されている。",
+      "OUT1、禁則、Key Rule、goal-seek loop、Gotchaが明示gate decision・人間承認・条件付きsolo governanceの同一契約に統一されている。",
+      "evaluator/elegant/governance reviewerのcontext forkと全phase transition gateがworkflowで機械可読である。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-fix-rereview",
+    "hook_trigger": "manual:focused-combined-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (同梱ゲート script 2 件の repo 相対起動) の解消を確認して PASS へ転じた。"
+  "notes": "focused combined reviewを独立reviewerが最新SKILL/workflow/promptsに対して再実施。C1-C4、IN1/IN2/IN3/OUT1/OUT2、rubric high severity 0を全PASS。runtime root、明示gate decision、solo governance条件、context forkを証拠として評価。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
 }

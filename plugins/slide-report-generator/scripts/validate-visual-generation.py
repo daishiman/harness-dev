@@ -32,9 +32,14 @@ from pathlib import Path
 try:
     from bs4 import BeautifulSoup
     import tinycss2
-except ImportError as exc:  # pragma: no cover - 環境依存
-    print(f"依存ライブラリが読めない: {exc} (bs4 / tinycss2 が要る)", file=sys.stderr)
-    raise SystemExit(3)
+except ImportError as exc:  # pragma: no cover - 依存なしCIは別processで検証
+    # module import は introspection / smoke test が安全に行えるよう無副作用にする。
+    # 実際の検査は main() / check_deck() で必ずfail-closedにする。
+    BeautifulSoup = None  # type: ignore[assignment,misc]
+    tinycss2 = None  # type: ignore[assignment]
+    _DEPENDENCY_IMPORT_ERROR: ImportError | None = exc
+else:
+    _DEPENDENCY_IMPORT_ERROR = None
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +55,15 @@ RULES_RELATIVE = Path("skills/run-slide-report-generate/references/visual-genera
 
 class RuleLoadError(Exception):
     """規約から閾値を抽出できなかった。既定値で補わずに落とすための例外。"""
+
+
+def require_visual_dependencies() -> None:
+    """HTML/CSS検査依存を実行境界でfail-closedにする。"""
+    if _DEPENDENCY_IMPORT_ERROR is not None:
+        raise RuleLoadError(
+            f"依存ライブラリが読めない: {_DEPENDENCY_IMPORT_ERROR} "
+            "(bs4 / tinycss2 が要る)"
+        )
 
 
 @dataclass
@@ -635,6 +649,7 @@ def is_inverted(el, cascade: Cascade, rules: RuleSet) -> bool:
 
 
 def check_deck(deck_dir: Path, rules: RuleSet) -> DeckResult:
+    require_visual_dependencies()
     index = deck_dir / "index.html" if deck_dir.is_dir() else deck_dir
     try:
         html = index.read_text(encoding="utf-8")
@@ -1109,6 +1124,7 @@ def main(argv: list[str]) -> int:
     paths = [a for a in args if not a.startswith("-")]
 
     try:
+        require_visual_dependencies()
         rules = load_rules(find_rules_file(rules_path))
     except RuleLoadError as exc:
         print(f"規約を読めない (fail-closed): {exc}", file=sys.stderr)

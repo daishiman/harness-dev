@@ -2,20 +2,20 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "ad969893665db23610db3cb8c160693322e2147262ed033ea53375f245114407"
+    "skill_md_sha256": "149dad9ce7b3dd92a162354dd61eb2dce503d35c7e998abc53781671ed805607"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
+    "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
-  "iterations": 1,
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T12:12:17Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,17 +27,15 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Capability 7 kind の統一抽象・必須項目集合の schema 単一正本化・lint 集合の lint-matrix.json 正本化が徹底され、『本文に再掲しない=SSOT』が複数箇所で明文の規律として機能している。",
-      "CL-1..CL-12 と feedback_contract criteria の derived_from が全件対応し、IN3 (route build report) を含め出所チェックリストが宣言されている。",
-      "Step 4 の lint 群は Step 1 の resolve-skill-dirs.py で確定した `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を経由し、sibling plugin も `$(dirname \"$PLUGIN_ROOT\")` で相対導出しているため cwd 推測に依存しない。"
+      "同梱資産は解決済みabsolute `$PLUGIN_ROOT` / `$SKILL_DIR` を使い、共有Runtime root正本と一致する。",
+      "非skill kindはinit-pre内のartifact・scaffold/lint・terminal_conditionで完結し、skill subtypeだけが単一transitionでinitへ進む。",
+      "全phaseの明示gateとprompt Output Contractがrubric high契約を満たす。"
     ],
-    "negative_feedback": [
-      "L245 の蓄積知見検索は skill 自身の同梱資産 (`templates/knowledge-skeleton/scripts/search_knowledge.py`) を repo 相対パスで起動しており、冒頭 blockquote の『skill 自身の資産は `$SKILL_DIR` 経由の self-relative 参照』という自己宣言と表記が食い違う。当該コマンドは『検索 0 件・スクリプト不在でも build を止めない』と明記された fail-open の best-effort であり build を破綻させないため low severity として記録する。"
-    ],
-    "iteration": 1,
+    "negative_feedback": [],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual:focused-combined-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 同梱資産の repo 相対起動 1 件 (fail-open 宣言済み) を low severity として記録。rubric 規則には該当しない。"
+  "notes": "focused combined reviewを独立reviewerが最新SKILL/workflow/promptsに対して再実施。C1矛盾なし、C2漏れなし、C3規約整合、C4依存関係整合、rubric high severity 0、IN1/IN2/IN3/OUT1/OUT2全PASS。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
 }

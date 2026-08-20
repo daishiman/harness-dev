@@ -21,6 +21,18 @@ RUNTIME_ROOT_CONTRACT = """\
 - `prompts/` 配下はこのowner Skill契約を継承する。
 """
 
+RUNTIME_ROOT_CANONICAL_CONTRACT = """\
+# Runtime portability
+
+## product別 plugin root 契約
+
+- Claude Code側は `${CLAUDE_PLUGIN_ROOT}` を使う。
+- Codex側はabsolute `SKILL.md` pathから `.codex-plugin/plugin.json` または
+  `.claude-plugin/plugin.json` を持つ祖先を解決する。
+- cwd推測とliteral placeholderを禁止し、各shell invocationでrootを決定する。
+- promptはowner Skill契約を継承する。
+"""
+
 
 def load_module():
     spec = importlib.util.spec_from_file_location("audit_capability_parity", SCRIPT)
@@ -120,6 +132,31 @@ def add_runtime_root_contract(plugin: Path) -> Path:
     text = skill.read_text(encoding="utf-8")
     text = text.replace("\n---\n", "\nruntime_root_policy: host-skill-path\n---\n", 1)
     skill.write_text(text + "\n" + RUNTIME_ROOT_CONTRACT, encoding="utf-8")
+    return skill
+
+
+def add_runtime_root_contract_redirect(plugin: Path, *, write_canonical: bool = True) -> Path:
+    skill = plugin / "skills" / "run-sample" / "SKILL.md"
+    text = skill.read_text(encoding="utf-8")
+    text = text.replace("\n---\n", "\nruntime_root_policy: host-skill-path\n---\n", 1)
+    skill.write_text(
+        text
+        + "\n## Runtime root contract\n\n"
+        + "[ref-cross-platform-runtime の共有正本]"
+        + "(../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約)"
+        + " をそのまま適用する。\n",
+        encoding="utf-8",
+    )
+    if write_canonical:
+        canonical = (
+            plugin
+            / "skills"
+            / "ref-cross-platform-runtime"
+            / "references"
+            / "runtime-portability.md"
+        )
+        canonical.parent.mkdir(parents=True)
+        canonical.write_text(RUNTIME_ROOT_CANONICAL_CONTRACT, encoding="utf-8")
     return skill
 
 
@@ -285,6 +322,39 @@ def test_dual_root_executable_with_owner_host_skill_path_policy_passes(tmp_path)
     report = mod.audit_plugin(tmp_path, plugin)
 
     assert report["verdict"] == "PASS", report
+
+
+def test_dual_root_owner_can_reference_complete_canonical_runtime_contract(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    add_runtime_root_contract_redirect(plugin)
+    prompt = plugin / "skills" / "run-sample" / "prompts" / "R1-run.md"
+    prompt.parent.mkdir()
+    prompt.write_text(
+        "```bash\npython3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/sample-plugin}}/scripts/run.py\"\n```\n",
+        encoding="utf-8",
+    )
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "PASS", report
+
+
+def test_runtime_contract_redirect_fails_when_canonical_file_is_missing(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    add_runtime_root_contract_redirect(plugin, write_canonical=False)
+    prompt = plugin / "skills" / "run-sample" / "prompts" / "R1-run.md"
+    prompt.parent.mkdir()
+    prompt.write_text(
+        "```bash\npython3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/sample-plugin}}/scripts/run.py\"\n```\n",
+        encoding="utf-8",
+    )
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "FAIL"
+    assert "runtime_root_contract_missing" in codes(report)
 
 
 def test_host_skill_root_resolver_ignores_unset_env_and_foreign_cwd(

@@ -73,7 +73,8 @@ class TestSingleRegistrationSurface(unittest.TestCase):
     """failure_modes[2]: plugin hooks.json 以外に C10 を重複登録しない。
 
     Claude/Codex 共通の配布正本は plugin root ``hooks/hooks.json``。
-    manifest はそのファイルを参照し、project settings には投影しない。
+    Claude Code は標準配置を自動検出するため manifest で再指定せず、Codex
+    manifest だけが同じファイルを明示参照する。project settings には投影しない。
     """
 
     HOOK_NAME = "guard-handout-external-ref"
@@ -91,8 +92,12 @@ class TestSingleRegistrationSurface(unittest.TestCase):
             "C10 の配布登録は hooks/hooks.json の1回だけ",
         )
 
-    def test_manifests_reference_the_shared_hook_file(self):
+    def test_manifests_use_each_runtime_canonical_hook_registration(self):
         p = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
         codex = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
-        self.assertEqual(json.loads(p.read_text(encoding="utf-8"))["hooks"], "./hooks/hooks.json")
+        self.assertNotIn(
+            "hooks",
+            json.loads(p.read_text(encoding="utf-8")),
+            "Claude Code は標準 hooks/hooks.json を自動検出するため二重指定しない",
+        )
         self.assertEqual(json.loads(codex.read_text(encoding="utf-8"))["hooks"], "./hooks/hooks.json")

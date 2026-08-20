@@ -20,7 +20,9 @@ def test_run_build_skill_requires_doctor_and_readme_portability_lint():
     assert "__file__" in text
     assert "doctor" in text
     assert "scripts/lint-readme-plugin-root-portability.py" in text
-    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}}" in text
+    # Runtime root契約はownerごとに複製せず、共有正本を参照する。
+    assert "../ref-cross-platform-runtime/references/runtime-portability.md" in text
+    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}}" not in text
     # setup 手順 (references/*-setup.md) も裸変数/repo相対禁止の射程に入ること
     # (README だけの被覆では company-master 型の setup docs が抜ける穴を塞いだ)。
     assert "references/*-setup.md" in text
