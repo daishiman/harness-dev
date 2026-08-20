@@ -6,6 +6,7 @@ import 自体が失敗するスクリプトは「壊れている」という本�
 スクリプト(repo-root を sys.path 前提にした相対 import 等)は SKIP_REASON に理由付きで除外する。
 """
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -64,3 +65,36 @@ def test_script_imports_without_error(script):
 def test_smoke_covers_scripts():
     """少なくとも 30 本以上のスクリプトを smoke 対象にしている(計測の網羅性自体を固定)。"""
     assert len(_SCRIPTS) >= 30
+
+
+def test_visual_generation_validator_imports_without_optional_dependencies() -> None:
+    """CI 最小環境で bs4/tinycss2 が無くても module import は無副作用。"""
+    script = ROOT / "plugins/slide-report-generator/scripts/validate-visual-generation.py"
+    code = """
+import importlib.util
+import sys
+spec = importlib.util.spec_from_file_location("visual_validator_without_site", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+"""
+    got = subprocess.run(
+        [sys.executable, "-S", "-c", code, str(script)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert got.returncode == 0, got.stdout + got.stderr
+
+
+def test_visual_generation_validator_fails_closed_when_executed_without_dependencies() -> None:
+    """import-safe化しても、実検査を依存不足のまま通さない。"""
+    script = ROOT / "plugins/slide-report-generator/scripts/validate-visual-generation.py"
+    got = subprocess.run(
+        [sys.executable, "-S", str(script), "--self-test"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert got.returncode == 3
+    assert "bs4 / tinycss2" in got.stderr

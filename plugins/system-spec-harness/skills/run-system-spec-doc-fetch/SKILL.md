@@ -54,9 +54,18 @@ feedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)
       loop_scope: outer
       text: 対象ツール/インフラ/フレームワークごとに C08 が公式サイト上の現行版を再確認し version/更新日・確認時刻・参照元が記録されていることを受入テストが確認する。
       verify_by: test
+runtime_root_policy: host-skill-path
 ---
 
 # run-system-spec-doc-fetch
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > システム仕様ヒアリングで使う予定の外部技術について、**最新公式ドキュメントの出典記録** `fetched-references.json` を都度取得して組み立てる run skill。起動経路は (a) `spec-compile` (C10) 前の未取得参照検出、(b) `run-system-spec-elicit` (C01) R2 ヒアリング中の裏取り要求の 2 系統。責務の正本は `prompts/R1-identify.md` / `R2-fetch.md` / `R3-record.md`。
 
@@ -134,12 +143,11 @@ feedback_contract: # per-skill 評価基準 (component-inventory.json C02 SSOT)
 ## 検証コマンド
 
 ```bash
-PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"   # plugins/system-spec-harness を指す
 # R3 決定論組み立て (全件対応も同時検査)
-python3 skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py" \
   assemble --records records.json --targets targets.json --out fetched-references.json
 # IN1 ゲート (共有 script)
-python3 scripts/validate-source-citation.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py" \
   --targets targets.json --references fetched-references.json
 ```
 

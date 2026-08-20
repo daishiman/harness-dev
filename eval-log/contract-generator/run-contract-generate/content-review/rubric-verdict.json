@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-generate",
-    "skill_md_sha256": "36e53a5a01a0de3f1f1a1fffe12b3680ac235f99a2066f8bbe323be6bb8ed2e3"
+    "skill_md_sha256": "bf7eeb85ff1ae89ca17a7cedd53bd6b4b7430d2c05c8427e795055bfa0a57251"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,14 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "skill-design 1.3.0の機械採点100/100。2 trigger、name/dirname一致、Purpose & Output Contract/Gotchas、本文300行以内、references有り、required_fixes 0。",
-      "BD-004では下書き量産と台帳差込+通知が本文のdraft phaseに対応し、responsibility_refsのprompt/agent/script/mappingは全て実在する。tenant一般化後も動作詳細は本文へ留まりdescriptionは発火条件として成立する。"
+      "OUT1 の責務分離 (draft 停止条件は Docs 黄色版+Slack 通知+台帳 draft 化まで) が Purpose・境界・ゴール・チェックリストで一貫し、legacy 1 パス経路のみ PDF/completed まで及ぶという例外がチェックリスト L88 に『本チェックは対象外』と明示されている。",
+      "IN1 (未置換プレースホルダ残存 0) と IN2 (黄色 run のみ差込・条文非改変) がそれぞれ `docx_fill.py` 末尾の残存チェックと `validate.py` 差込前検証へ 1:1 で接地し、検証節・Gotchas と重複なく対応する。",
+      "実行行および実装参照 (L78 / L97 / L118 / L121) がすべて dual-root 形で `## Runtime root contract` と一致する。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "Phase 1リセット後、SKILL/prompt/agent/docx_fill/validate/engine/config_auth/tenant_runtimeを独立に確認し30思考法を全件使用（skip 0）。SHAだけの更新ではなくtenant化された資格情報経路まで実読した。 rubric=skill-design 1.3.0、rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9、score=100/100、threshold=80。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。"
 }

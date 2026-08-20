@@ -72,7 +72,7 @@ def _all_skills(plugin_filter=None):
         if not sk_dir.is_dir():
             continue
         for s in sk_dir.iterdir():
-            if s.is_symlink():
+            if s.is_symlink() or FC.is_vendored_feedback_skill(s, plugins_dir=PLUGINS_DIR):
                 continue
             if (s / "SKILL.md").is_file():
                 skills.add((plugin_dir.name, s.name))

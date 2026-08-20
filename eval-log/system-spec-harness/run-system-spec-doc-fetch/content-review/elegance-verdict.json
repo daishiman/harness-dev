@@ -2,37 +2,38 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4"
+    "skill_md_sha256": "d494c448a5afb6ad5a2aca634fc4987d180c315fd3d989e4f1a97d320be8adbc"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "責務境界が矛盾なく分離されている: 本 skill は形式・全件・host 一致まで (IN1 = validate-source-citation.py exit0) を担い、現行最新版かの鮮度判定は C08 (doc-freshness-auditor, OUT1) へ明確に委譲 (Key Rule6)。取得は WebSearch/WebFetch のみで MCP 連携は GAP-MCP-DOCFETCH として保留する旨も正直開示。",
-      "fetched-references.json の出力契約が具体的で漏れがない: 必須フィールド (target_id/retrieved_at/source_url/official_publisher/official_host/latest_checked_at/summary + version|last_updated)・全件対応 (欠落0/重複0)・host 一致を JSON 例と Key Rules と完了チェックリストで一致記述。捏造禁止 (fail-visible)・恒久キャッシュ禁止・実取得時刻厳守も一貫。",
-      "doctrine anchor 段落が上流工程を導くのみで具体技術直書きを避け、取得対象 target_id の正本は spec-state.json という責務分離を維持。concern authority 4 種 (Apple HIG/Clean Arch/OWASP/SRE) が doctrine-anchor-registry.json と整合し、C14 knowledge graph 位相順で後続へ供給する結線も破壊なし。"
+      "前回 FAIL とした L146 の `$0`/`dirname` 由来 `PLUGIN_ROOT` 導出 (Skill の bash では `$0` が SKILL.md を指さない) と、算出値を使わない cwd 相対起動が両方とも撤去された。現行 L147 は同梱 `build-fetched-references.py` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-doc-fetch/scripts/...`、L150 は共有 `validate-source-citation.py` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/...` で起動し、同梱と共有の所在差が表記に現れている。",
+      "IN1 の必須フィールド・全件対応・host 一致という 3 条件が、出力契約の箇条書き・完了チェックリスト・Gotchas 2-4 で同一内容として反復され、`validate-source-citation.py` の機械検証へ接地している (手書き JSON での緑化を Key Rule 4 が禁止)。",
+      "OUT1 の鮮度判定を本 skill から明示的に切り離し (Key Rule 6)、現行最新版かの意味判定は C08 `system-spec-doc-freshness-auditor` の担当と宣言していて、C02 の停止条件が形式・全件・host 一致までに限定されている。",
+      "Key Rule 9 が『C01 の単一 writer `set-knowledge-candidate` を通してのみ qualified へ進める』と上流の状態遷移権限を C01 に一元化し、C02 が deep card 作成や curated 昇格を代行しないと越境を禁じている。"
     ],
-    "negative_feedback": [
-      "[low/smell] 『検証コマンド』節 (L137) で PLUGIN_ROOT を算出しているが、後続コマンドは相対パス (skills/... や scripts/...) で PLUGIN_ROOT を参照せず、算出値が実質未使用のデッド変数。cwd=plugin-root 前提なら動くが導線としては不揃い (PASS 非阻害)。",
-      "[low/smell] 本文他所が compile 消費者を 'spec-compile (C10)' と表記する一方、doctrine anchor 段落と consumer 行では 'C03' (compile skill) 表記も混在。README 上は双方正当 (C10=slash command / C03=skill) だが C 番号が高密度で読者が混同しやすい (一語補足で解消可・PASS 非阻害)。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 2 起動経路 (spec-compile 前 / elicit R2 裏取り)・公式一次情報限定・鮮度判定 C08 委譲が節間で一致。②漏れなし: Purpose/Output Contract・JSON 形状・Key Rules(9)・ゴールシーク (Goal/Why/完了チェックリスト/ループ)・局面カタログ・検証コマンド・Gotchas・Additional Resources を被覆。③整合性: IN1=validate-source-citation.py exit0 が frontmatter/チェックリスト/検証コマンドで一致、max_iterations 5=goal_seek max_loops 5。④依存整合: prompts (R1/R2/R3)・reference (official-source-catalog.md/resource-map.yaml)・script (build-fetched-references.py, ../../scripts/validate-source-citation.py)・schema (fetched-references)・doctrine-anchor-registry.json を test -e で全件実在確認 (dependency_break=0)。残りは cosmetic smell 2 のみのため PASS。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (`$0` 由来の誤った root 導出と未使用変数・cwd 相対起動) の解消を確認して PASS へ転じた。"
 }

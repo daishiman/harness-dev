@@ -68,24 +68,11 @@ python3 scripts/build-local-marketplace.py
 
 生成された `marketplaces/local` を `/plugin marketplace add ./marketplaces/local` で追加します。
 
-### C. 書込ガードを有効にする (任意・手作業)
+### C. 書込ガード
 
-生成した資料を後から手で編集したとき、うっかり外部 URL や絵文字が混ざるのを書込直後に知らせる hook があります。**この登録だけは自動では入りません。** 導入環境の `.claude/settings.json` (プロジェクト単位) か `~/.claude/settings.json` (利用者単位) の `hooks.PostToolUse` へ次を足してください。
+生成した資料を後から手で編集したとき、うっかり外部 URL や絵文字が混ざるのを書込直後に知らせる hook があります。plugin を install・enable し hook trust を承認すると、Claude/Codex の両方が共通の `hooks/hooks.json` から登録します。
 
-```json
-{
-  "matcher": "Write|Edit",
-  "hooks": [
-    {
-      "type": "command",
-      "command": "python3 \"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\"",
-      "timeout": 10
-    }
-  ]
-}
-```
-
-plugin 側の manifest には意図的に書いていません。manifest と settings.json の両方に置くと 1 回の書込で 2 回発火するためで、登録面を settings.json の 1 か所に寄せています。
+project や user の `settings.json` への手動追記は不要です。plugin delivery と settings の両方に置くと 1 回の書込で 2 回発火するため、配布登録面を `hooks/hooks.json` の 1 か所に寄せています。
 
 なお登録しなくても資料の正しさは守られます。この hook は水際の早期通知であって、最終的な判定は生成時の 4 つのゲート (後述) が持つ二重防御の外側です。発火するのは「`YYYY-MM-DD-` で始まるフォルダの中にあり、同じ階層に `handout-config.json` がある `.html`」だけで、それ以外のファイルには何もしません。
 

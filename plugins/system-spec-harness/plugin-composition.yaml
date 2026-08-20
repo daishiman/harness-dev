@@ -26,26 +26,36 @@ contract:
     - 成果物本文・レビュー・レポートは日本語、JSON キー・CLI 引数は英語
 
 capabilities:
-  # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-system-spec-elicit,                    tier: core }
-  - { kind: skill, ref: skills/run-system-spec-doc-fetch,                 tier: core }
-  - { kind: skill, ref: skills/run-system-spec-compile,                   tier: core }
-  - { kind: skill, ref: skills/ref-system-design-knowledge,              tier: core }
   - { kind: skill, ref: skills/assign-system-spec-completeness-evaluator, tier: core }
+  - { kind: skill, ref: skills/ref-system-design-knowledge, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-compile, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-doc-fetch, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-elicit, tier: core }
+  - { kind: agent, ref: agents/system-spec-doc-freshness-auditor, tier: core }
+  - { kind: agent, ref: agents/system-spec-hearing-auditor, tier: core }
+  - { kind: agent, ref: agents/system-spec-matrix-auditor, tier: core }
+  - { kind: command, ref: commands/spec-compile, tier: core }
+  - { kind: command, ref: commands/spec-hearing-start, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
+
+  # === Skills (kind=skill) ===
 
   # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
-  - { kind: agent, ref: agents/system-spec-hearing-auditor,       tier: core }
-  - { kind: agent, ref: agents/system-spec-matrix-auditor,        tier: core }
-  - { kind: agent, ref: agents/system-spec-doc-freshness-auditor, tier: core }
 
   # === Commands (kind=slash-command) ===
-  - { kind: command, ref: commands/spec-hearing-start, tier: core }
-  - { kind: command, ref: commands/spec-compile,       tier: core }
 
   # === Hooks (kind=hook) ===
-  - { kind: hook, ref: hooks/guard-confirmed-chapter-overwrite.py, tier: core }
 
   # === Scripts (kind=script・plugin-root 共有決定論ゲート) ===
   - { kind: script, ref: scripts/validate-coverage-matrix.py,  tier: core }
   - { kind: script, ref: scripts/validate-source-citation.py,  tier: core }
   - { kind: script, ref: scripts/validate-knowledge-graph.py,   tier: core }
+
+dependencies:
+  - { from: skills/assign-system-spec-completeness-evaluator, to: scripts/validate-coverage-matrix.py, type: calls }
+  - { from: skills/ref-system-design-knowledge, to: scripts/validate-knowledge-graph.py, type: calls }
+  - { from: skills/run-system-spec-compile, to: scripts/validate-coverage-matrix.py, type: calls }
+  - { from: skills/run-system-spec-compile, to: scripts/validate-source-citation.py, type: calls }
+  - { from: skills/run-system-spec-elicit, to: scripts/validate-knowledge-graph.py, type: calls }
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }

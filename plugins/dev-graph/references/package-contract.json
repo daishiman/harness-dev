@@ -4,29 +4,29 @@
   "plugin_name": "dev-graph",
   "entry_points": {
     "skills": [
+      "run-dev-graph-decompose",
       "run-dev-graph-init",
       "run-dev-graph-node",
-      "run-dev-graph-sync",
-      "run-dev-graph-requirements",
       "run-dev-graph-render",
-      "run-dev-graph-decompose",
+      "run-dev-graph-requirements",
       "run-dev-graph-schedule",
       "run-dev-graph-status",
+      "run-dev-graph-sync",
       "run-dev-graph-system-spec",
       "run-skill-feedback"
     ],
     "agents": [
       "dev-graph-integrity-auditor",
-      "dev-graph-sync-conflict-verifier",
+      "dev-graph-parallel-safety-verifier",
       "dev-graph-requirements-verifier",
-      "dev-graph-parallel-safety-verifier"
+      "dev-graph-sync-conflict-verifier"
     ],
     "commands": [
       "dev-graph"
     ],
     "hooks": [
-      "guard-graph-schema",
-      "reconcile-task-lifecycle"
+      "guard-graph-schema.py",
+      "reconcile-task-lifecycle.py"
     ]
   },
   "distribution": {
@@ -42,10 +42,14 @@
     ]
   },
   "depends_on": [
-    "system-spec-harness",
-    "system-dev-planner"
+    "harness-creator",
+    "system-dev-planner",
+    "system-spec-harness"
   ],
   "skill_dependencies": {
+    "run-skill-feedback": [
+      "harness-creator"
+    ],
     "run-dev-graph-decompose": [
       "system-dev-planner"
     ],
@@ -59,5 +63,168 @@
       "system-spec-harness"
     ]
   },
-  "pkg_checks": {}
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "dev-graph": {
+        "relation": "orchestrated-by",
+        "purpose": "Expose Claude command dev-graph through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "orchestrated",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-dev-graph-init",
+            "run-dev-graph-node",
+            "run-dev-graph-sync",
+            "run-dev-graph-requirements",
+            "run-dev-graph-render",
+            "run-dev-graph-decompose",
+            "run-dev-graph-schedule",
+            "run-dev-graph-status",
+            "run-dev-graph-system-spec"
+          ]
+        },
+        "owner_route": {
+          "plugin": "dev-graph",
+          "entry_points": [
+            "run-dev-graph-init",
+            "run-dev-graph-node",
+            "run-dev-graph-sync",
+            "run-dev-graph-requirements",
+            "run-dev-graph-render",
+            "run-dev-graph-decompose",
+            "run-dev-graph-schedule",
+            "run-dev-graph-status",
+            "run-dev-graph-system-spec"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "dev-graph-integrity-auditor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent dev-graph-integrity-auditor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-dev-graph-node"
+          ]
+        },
+        "owner_route": {
+          "plugin": "dev-graph",
+          "entry_points": [
+            "run-dev-graph-node"
+          ]
+        }
+      },
+      "dev-graph-parallel-safety-verifier": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent dev-graph-parallel-safety-verifier through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-dev-graph-schedule"
+          ]
+        },
+        "owner_route": {
+          "plugin": "dev-graph",
+          "entry_points": [
+            "run-dev-graph-schedule"
+          ]
+        }
+      },
+      "dev-graph-requirements-verifier": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent dev-graph-requirements-verifier through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-dev-graph-requirements"
+          ]
+        },
+        "owner_route": {
+          "plugin": "dev-graph",
+          "entry_points": [
+            "run-dev-graph-requirements"
+          ]
+        }
+      },
+      "dev-graph-sync-conflict-verifier": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent dev-graph-sync-conflict-verifier through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-dev-graph-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "dev-graph",
+          "entry_points": [
+            "run-dev-graph-sync"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {
+      "TaskCompleted": {
+        "reason": "Codex does not expose TaskCompleted; lifecycle reconciliation is covered by the same handler after shell mutations and when a session starts or resumes.",
+        "replacement_events": [
+          "PostToolUse",
+          "SessionStart"
+        ],
+        "replacement_skill": "run-dev-graph-sync"
+      }
+    }
+  }
 }

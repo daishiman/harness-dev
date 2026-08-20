@@ -251,6 +251,62 @@ class MetaDriftDisclosureTest(R.R23TestCase):
             self.assertTrue(drifted, "meta の欠落が開示されていない:\n" + H.describe(ctx["proc"]))
 
 
+class ExternalStyleReferenceTest(R.R23TestCase):
+    """利用者が示した参照画像を実画素の style anchor として委譲先へ渡す。"""
+
+    def _reference(self, tmp, name="reference.webp"):
+        path = Path(tmp) / name
+        path.write_bytes(b"RIFF-style-reference")
+        return path
+
+    def test_reference_is_staged_without_reencoding(self):
+        with self.temp() as tmp:
+            source = self._reference(tmp)
+            ctx = self.dry_run_plan(
+                tmp,
+                [H.section("intro"), H.section("build")],
+                plan_extra={"style_reference_paths": [str(source)]},
+            )
+            generated = Path(ctx["assets"]) / "srg-work" / "assets" / "generated"
+            staged = list(generated.glob("hb-style-reference-*.webp"))
+            self.assertEqual(1, len(staged), H.describe(ctx["proc"]))
+            self.assertEqual(source.read_bytes(), staged[0].read_bytes())
+
+    def test_reference_slug_reaches_every_slide(self):
+        with self.temp() as tmp:
+            source = self._reference(tmp)
+            ctx = self.dry_run_plan(
+                tmp,
+                [H.section("intro"), H.section("build")],
+                plan_extra={"style_reference_paths": [str(source)]},
+            )
+            references = [slide.get("styleReference") for _, slide in self.slides(ctx)]
+            self.assertTrue(references)
+            self.assertTrue(all(ref and ref.get("anchorSlug") for ref in references), references)
+            self.assertEqual(1, len({ref["anchorSlug"] for ref in references}))
+            self.assertTrue(all(ref.get("inheritMode") == "style-only" for ref in references))
+
+    def test_relative_reference_is_resolved_from_plan_directory(self):
+        with self.temp() as tmp:
+            source = self._reference(tmp)
+            ctx = self.dry_run_plan(
+                tmp,
+                [H.section("intro"), H.section("build")],
+                plan_extra={"style_reference_paths": [source.name]},
+            )
+            self.assertNotExit2(ctx, "image-plan 基点の相対参照が解決できない")
+
+    def test_missing_reference_is_exit2_before_delegation(self):
+        with self.temp() as tmp:
+            ctx = self.dry_run_plan(
+                tmp,
+                [H.section("intro"), H.section("build")],
+                plan_extra={"style_reference_paths": ["missing-reference.webp"]},
+            )
+            self.assertExit2(ctx, "指定済み参照の欠落が genome-only へ黙って落ちている")
+            self.assertStoppedBeforeDelegating(ctx)
+
+
 class RejectedChecksStayRejectedTest(H.BridgeTestCase):
     """裁定が退けた検査を後から足し戻していないこと (AC-C21-17)。"""
 

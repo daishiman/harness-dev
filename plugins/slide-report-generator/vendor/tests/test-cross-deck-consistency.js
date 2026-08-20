@@ -61,17 +61,44 @@ function structureMd(gsapBody) {
 const CLEAN_CSS = '@page { margin: 0; }\n.slide { padding: 2vw; }\n@media print { .slider__item { width: 297mm; height: 210mm; } }\n';
 // 汚染 styles.css: rem 単位を混入 (checkRemUnits がフラグ)
 const DIRTY_CSS = '@page { margin: 0; }\n.slide { padding: 2rem; }\n@media print { .slider__item { width: 297mm; height: 210mm; } }\n';
-const CLEAN_HTML = '<!DOCTYPE html><html><head><link href="https://fonts.googleapis.com/x" rel="stylesheet"></head><body></body></html>\n';
+// index.html は styles.css / scripts.js を実際に <link> / <script src> で参照する。
+// 参照が無いと、書いた styles.css をブラウザは決して適用しないため、
+// 「ディスク上のファイルの中身」を検査する形の fixture になってしまう。
+// 検査器が見るのは index.html が実際に読み込む CSS/JS であり、ここを合わせないと
+// 実物には存在しない状態を検査することになる。
+const LOCAL_REFS = '<link rel="stylesheet" href="styles.css"><script src="scripts.js"></script>';
+const CLEAN_HTML = `<!DOCTYPE html><html><head><link href="https://fonts.googleapis.com/x" rel="stylesheet">${LOCAL_REFS}</head><body></body></html>\n`;
 // 汚染 index.html: 非許可ドメインの外部 URL を混入 (checkUrls がフラグ)
-const DIRTY_HTML = '<!DOCTYPE html><html><head><script src="https://tracker.example.com/x.js"></script></head><body></body></html>\n';
+const DIRTY_HTML = `<!DOCTYPE html><html><head><script src="https://tracker.example.com/x.js"></script>${LOCAL_REFS}</head><body></body></html>\n`;
+
+const INLINE_JS = "gsap.to('.a', {ease:'power1.out'}); gsap.to('.b', {ease:'power2.out'}); gsap.to('.c', {ease:'power3.out'});\n";
 
 function writeDeck(seriesDir, name, { gsap, css, html }) {
   const d = join(seriesDir, name);
   mkdirSync(d, { recursive: true });
   writeFileSync(join(d, 'structure.md'), structureMd(gsap), 'utf8');
   writeFileSync(join(d, 'styles.css'), css, 'utf8');
-  writeFileSync(join(d, 'scripts.js'), "gsap.to('.a', {ease:'power1.out'}); gsap.to('.b', {ease:'power2.out'}); gsap.to('.c', {ease:'power3.out'});\n", 'utf8');
+  writeFileSync(join(d, 'scripts.js'), INLINE_JS, 'utf8');
   writeFileSync(join(d, 'index.html'), html, 'utf8');
+}
+
+// 自己完結デッキ (CONST_006 / full-image-deck-method §6.9.1): CSS/JS を index.html へ
+// インライン化し、styles.css / scripts.js をディスクに持たない形。出荷デッキの実体は
+// こちらで、しかも「インライン化した後も旧版の styles.css がディスクに残る」ことがある。
+// join(deckDir, 'styles.css') を読む検査はこの形で必ず間違える (必須入力欠落の偽赤、
+// または旧版を読んだ結果の偽緑)。link 形式の fixture だけではこの経路を通らない。
+function writeSelfContainedDeck(seriesDir, name, { gsap, css }) {
+  const d = join(seriesDir, name);
+  mkdirSync(d, { recursive: true });
+  writeFileSync(join(d, 'structure.md'), structureMd(gsap), 'utf8');
+  // styles.css / scripts.js は「書かない」。これが自己完結デッキの定義。
+  writeFileSync(
+    join(d, 'index.html'),
+    '<!DOCTYPE html><html><head><link href="https://fonts.googleapis.com/x" rel="stylesheet">'
+      + `<style>${css}</style></head><body>`
+      + `<script>${INLINE_JS}</script></body></html>\n`,
+    'utf8',
+  );
 }
 
 function runJson(seriesDir) {
@@ -122,9 +149,13 @@ try {
   const missing = join(root, 'missing-inputs');
   writeDeck(missing, 'slide-2026-01-10-a', { gsap: gsapSame, css: CLEAN_CSS, html: CLEAN_HTML });
   writeDeck(missing, 'slide-2026-01-17-b', { gsap: gsapSame, css: CLEAN_CSS, html: CLEAN_HTML });
+  // deck-b: index.html そのものが無い
   rmSync(join(missing, 'slide-2026-01-17-b', 'index.html'));
-  rmSync(join(missing, 'slide-2026-01-17-b', 'styles.css'));
-  rmSync(join(missing, 'slide-2026-01-17-b', 'scripts.js'));
+  // deck-a: index.html は残し、参照先の styles.css / scripts.js だけを消す。
+  // 「参照は在るのに参照先が無い」がこの検査の捕まえたい壊れ方であって、
+  // 「その名前のファイルが無い」ではない (自己完結 HTML は styles.css を持たないが正しい)。
+  rmSync(join(missing, 'slide-2026-01-10-a', 'styles.css'));
+  rmSync(join(missing, 'slide-2026-01-10-a', 'scripts.js'));
   const missingReport = runJson(missing);
   const missingFiles = new Set(
     (missingReport.issues || []).filter(i => i.category === 'inputs').map(i => i.file),
@@ -133,6 +164,34 @@ try {
   check('(c) index.html 欠落を検出', missingFiles.has('index.html'));
   check('(c) styles.css 欠落を検出', missingFiles.has('styles.css'));
   check('(c) scripts.js 欠落を検出', missingFiles.has('scripts.js'));
+
+  // (e) 自己完結デッキ (inline <style> / <script> のみ・<link> 0 件・styles.css 不在)
+  //     ディスクのファイル名ではなく index.html が実際に読み込むものを見ているかを確認する。
+  const inlineClean = join(root, 'self-contained-clean');
+  writeSelfContainedDeck(inlineClean, 'slide-2026-01-10-a', { gsap: gsapSame, css: CLEAN_CSS });
+  writeSelfContainedDeck(inlineClean, 'slide-2026-01-17-b', { gsap: gsapSame, css: CLEAN_CSS });
+  const inlineCleanReport = runJson(inlineClean);
+  const inlineCleanInputs = (inlineCleanReport.issues || []).filter(i => i.category === 'inputs');
+  check('(e) 自己完結デッキ 2 件を検出', inlineCleanReport.deckCount === 2);
+  // styles.css / scripts.js がディスクに無いことは欠陥ではない。要件は解決可否であって
+  // ファイル名の存在ではない。ここが赤くなる実装は自己完結デッキを一律に落とす。
+  check('(e) styles.css / scripts.js 不在を inputs error にしない', inlineCleanInputs.length === 0);
+  check('(e) 自己完結 clean series 全体が PASS', inlineCleanReport.verdict === 'PASS' && inlineCleanReport.totalIssues === 0);
+
+  // 同じ自己完結形で、inline <style> の中身だけを汚す。ディスクには styles.css が
+  // 一切無いので、検出できるのは index.html を読んだ場合に限られる。
+  const inlineDirty = join(root, 'self-contained-dirty');
+  // rem 混入 + @page margin:0 を落とす (印刷契約違反)
+  const INLINE_DIRTY_CSS = '.slide { padding: 2rem; }\n@media print { .slider__item { width: 297mm; height: 210mm; } }\n';
+  writeSelfContainedDeck(inlineDirty, 'slide-2026-01-10-a', { gsap: gsapSame, css: CLEAN_CSS });
+  writeSelfContainedDeck(inlineDirty, 'slide-2026-01-17-b', { gsap: gsapSame, css: INLINE_DIRTY_CSS });
+  const inlineDirtyReport = runJson(inlineDirty);
+  const inlineDirtyCats = categories(inlineDirtyReport);
+  const inlineDirtyPrint = (inlineDirtyReport.issues || [])
+    .filter(i => i.category === 'print' && i.deck === 'slide-2026-01-17-b');
+  check('(e) inline <style> 内の rem を検出', inlineDirtyCats.has('rem-units'));
+  check('(e) inline <style> の印刷契約違反を検出', inlineDirtyPrint.length > 0);
+  check('(e) 汚染した自己完結 series が PASS にならない', inlineDirtyReport.verdict !== 'PASS');
 
   // (d) 未実装カテゴリはfail-openでPASSを返さない
   const unknown = spawnSync('node', [SCRIPT, clean, '--check', 'px-rule', '--json'], { encoding: 'utf8' });

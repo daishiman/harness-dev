@@ -70,10 +70,11 @@ class TestIdempotent(C10TestCase):
 
 
 class TestSingleRegistrationSurface(unittest.TestCase):
-    """failure_modes[2]: settings.json と plugin 同梱 hooks の二重登録を作らない。
+    """failure_modes[2]: plugin hooks.json 以外に C10 を重複登録しない。
 
-    登録面は settings.json 側を正本とし、plugin 同梱側 (hooks/hooks.json 方式・
-    .claude-plugin/plugin.json の hooks キー方式) には C10 の登録を置かない。
+    Claude/Codex 共通の配布正本は plugin root ``hooks/hooks.json``。
+    Claude Code は標準配置を自動検出するため manifest で再指定せず、Codex
+    manifest だけが同じファイルを明示参照する。project settings には投影しない。
     """
 
     HOOK_NAME = "guard-handout-external-ref"
@@ -82,21 +83,21 @@ class TestSingleRegistrationSurface(unittest.TestCase):
         # 実装が現れて初めて意味を持つ契約なので、未実装のあいだは赤にする
         require_hook()
 
-    def test_no_bundled_hooks_json(self):
+    def test_bundled_hooks_json_registers_c10_once(self):
         p = PLUGIN_ROOT / "hooks" / "hooks.json"
-        if not p.exists():
-            return
-        self.assertNotIn(self.HOOK_NAME, p.read_text(encoding="utf-8"),
-                         "同梱 hooks.json に C10 を登録すると 1 回の書込で 2 回発火する")
+        self.assertTrue(p.is_file(), "Claude/Codex 共通の hooks/hooks.json が必要")
+        self.assertEqual(
+            p.read_text(encoding="utf-8").count(self.HOOK_NAME),
+            1,
+            "C10 の配布登録は hooks/hooks.json の1回だけ",
+        )
 
-    def test_plugin_manifest_does_not_register_hook(self):
+    def test_manifests_use_each_runtime_canonical_hook_registration(self):
         p = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
-        if not p.exists():
-            return
-        text = p.read_text(encoding="utf-8")
-        if "hooks" not in text:
-            return
-        data = json.loads(text)
-        blob = json.dumps(data.get("hooks", ""), ensure_ascii=False)
-        self.assertNotIn(self.HOOK_NAME, blob,
-                         "plugin.json の hooks キーに C10 を登録しない (settings.json が正本)")
+        codex = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
+        self.assertNotIn(
+            "hooks",
+            json.loads(p.read_text(encoding="utf-8")),
+            "Claude Code は標準 hooks/hooks.json を自動検出するため二重指定しない",
+        )
+        self.assertEqual(json.loads(codex.read_text(encoding="utf-8"))["hooks"], "./hooks/hooks.json")

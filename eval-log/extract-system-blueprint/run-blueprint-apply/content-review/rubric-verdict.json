@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "67da2f89abfdc95f8d95b4383c2229b11e2f58952238ef442c461a49c3e8cbe0"
+    "skill_md_sha256": "358c6293a12619a3d6c1ad963da26111e365d45a082881b286bc44742157e701"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
-  "iterations": 2,
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:02:08Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,14 +24,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "skill-design 1.3.0を再採点し100/100・required_fixes 0。Purpose/Gotchas、name/dirname、2 trigger、本文長、references/resource-map、prompt3件、manifestを確認。",
-      "descriptionのPASS済blueprint適用と自社制約への接地はR1/R2/R3へ対応し、fail-closed入力、local-only出力、network 0、検証SSOTの境界が一貫する。"
+      "SKILL.md の anchor 解決規則と分類 `adopt|avoid|differentiate` / confidence `high|medium|low` の記述は `scripts/doc-emit.py` の実装と完全一致しており、機械 SSOT と本文記述に乖離がない。",
+      "完了チェックリスト CL-1〜CL-6 は feedback_contract.criteria の IN1/OUT1 で過不足なく分割され、両 criteria の verify_by=test は実在する `tests/test_blueprint_apply_criteria_coverage.py` に対応する genuine な検証である。",
+      "SKILL.md・workflow-manifest.json・references/resource-map.yaml が参照する相対パスは全て実在し、壊れた参照は無い。C02 verdict receipt の shape も assign-blueprint-fidelity-evaluator/SKILL.md の記述と整合する。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "30思考法を全件使用（skip 0）。初回rubric 87/100とeleganceのverify_by不整合を内容・テスト・resource mapで改善し、再評価100/100。SHAは改善後本文を再計算した。 rubric=skill-design 1.3.0、rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9、score=100/100、threshold=80。"
+  "notes": "focused combined review。incremental semantic batch評価 ((a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0) をSKILL.md/scripts/doc-emit.py/tests/resource-map.yaml/workflow-manifest.jsonで独立に再確認しPASS。"
 }

@@ -1,5 +1,8 @@
 # アジェンダナビゲーション
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは設計の文脈・例・適用ガイドのみ。規則の正本は SR-ID で参照すること
 
 **責務**: セクション目次ナビゲーションの実装テンプレート（HTML/CSS/JS、GSAP連携、ホバー・クリック）。
@@ -10,43 +13,41 @@
 ## 17-A. セクション目次ナビ（横並びタブ型 — Lotus White推奨）
 
 画面上部に固定表示される横並びタブ。現在セクションをハイライトし、クリックでジャンプ可能。
-Kanagawa Lotus White（ライトテーマ）用。
+ライトテーマ（既定）用。
 
 ### 17-A.1 HTML構造
 
 ```html
 <nav class="section-nav" aria-label="セクション目次">
-  <button class="section-nav__item active" data-section="opening" data-first-slide="0">
-    <span class="section-nav__dot" style="background: var(--accent-blue-vivid);"></span>
+  <button class="section-nav__item active" data-section="opening" data-first-slide="0" aria-current="true">
     <span class="section-nav__label">オープニング</span>
-    <span class="section-nav__bar"></span>
   </button>
   <button class="section-nav__item" data-section="lecture" data-first-slide="3">
-    <span class="section-nav__dot" style="background: var(--accent-aqua-vivid);"></span>
     <span class="section-nav__label">講義</span>
-    <span class="section-nav__bar"></span>
   </button>
   <button class="section-nav__item" data-section="demo" data-first-slide="12">
-    <span class="section-nav__dot" style="background: var(--accent-yellow-vivid);"></span>
     <span class="section-nav__label">デモ</span>
-    <span class="section-nav__bar"></span>
   </button>
   <button class="section-nav__item" data-section="ws" data-first-slide="17">
-    <span class="section-nav__dot" style="background: var(--accent-violet-vivid);"></span>
     <span class="section-nav__label">ワークショップ</span>
-    <span class="section-nav__bar"></span>
   </button>
   <button class="section-nav__item" data-section="summary" data-first-slide="23">
-    <span class="section-nav__dot" style="background: var(--accent-pink-vivid);"></span>
     <span class="section-nav__label">まとめ</span>
-    <span class="section-nav__bar"></span>
   </button>
 </nav>
 ```
 
 **data-first-slide**: 各セクション先頭スライドの0始まりインデックス。structure.mdのスライド一覧から算出。
 
+**セクションを色相で区別しない**（SR-2-07）。5 つを見分ける手がかりは既に 3 つある——**並び順**（ナビ内の位置がそのままセクションの順序）・**セクション名のテキスト**・**現在地の反転**（active だけ地と字を入れ替える）。色相は 4 つ目の手がかりとして乗っていただけで、無くても区別は落ちない。
+
+逆に色相を使うと**畳まれた瞬間に区別が消える**。`--accent-*-vivid` は 5 つの名前として実在するが、report 経路（`vendor/scripts/render-report.js` の `:root`）では 5 つとも `--ink` へ倒してあり、hand-slide 経路の `:root` にはそもそも定義が無い（フォールバック無しの `var()` は宣言ごと無効になる）。**どちらの経路でも 5 色には成らない。**色が赤くなって気付ける類ではなく、静かに見分けが付かなくなる形なので、色相に分類を負わせないこと。
+
+`.section-nav__dot` と `.section-nav__bar` は色相を載せるためだけの器だったので置かない。**空の器を残すと、次に色を戻す場所として使われる。**
+
 ### 17-A.2 CSS
+
+以下は CSS トークン実体の差し替えが済むまで残る過渡的定義。`backdrop-filter` は使わず地色で塗る（SR-2-09）、ウェイトは 3 段のみ（SR-3-10）が確定方針で、**この 2 つはまだ下の定義に残っている**。色相で分類を示さない（SR-2-07）は上記のとおり解消済み。
 
 ```css
 .section-nav {
@@ -85,26 +86,17 @@ Kanagawa Lotus White（ライトテーマ）用。
 }
 
 .section-nav__item:hover { opacity: 0.8; background: var(--bg-dim, #F5F5F5); }
-.section-nav__item:focus-visible { outline: 2px solid var(--accent-blue-vivid); outline-offset: -2px; }
-.section-nav__item.active { opacity: 1; }
-
-.section-nav__dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; flex-shrink: 0; }
+.section-nav__item:focus-visible { outline: 2px solid var(--fg); outline-offset: -2px; }
 .section-nav__label { pointer-events: none; }
 
-.section-nav__bar {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: transparent;
-  transition: background 0.3s ease;
+/* 現在地は反転（地と字を入れ替える）。濃度差だけに頼らないのは、
+   opacity 0.5 → 1 の差が投影で潰れて「どれが現在地か」が消えるため */
+.section-nav__item.active {
+  opacity: 1;
+  background: var(--fg);
+  color: var(--bg-dark, var(--paper));
 }
-
-/* セクション別アクティブバー色 */
-.section-nav__item.active[data-section="opening"] .section-nav__bar { background: var(--accent-blue-vivid); }
-.section-nav__item.active[data-section="lecture"] .section-nav__bar { background: var(--accent-aqua-vivid); }
-.section-nav__item.active[data-section="demo"] .section-nav__bar { background: var(--accent-yellow-vivid); }
-.section-nav__item.active[data-section="ws"] .section-nav__bar { background: var(--accent-violet-vivid); }
-.section-nav__item.active[data-section="summary"] .section-nav__bar { background: var(--accent-pink-vivid); }
+.section-nav__item.active:hover { background: var(--fg); }
 ```
 
 ### 17-A.3 JavaScript（TweenSlider連携）
@@ -123,7 +115,11 @@ updateSectionNav() {
   const section = currentSlide ? currentSlide.dataset.section : '';
   const navItems = document.querySelectorAll('.section-nav__item');
   navItems.forEach((item) => {
-    item.classList.toggle('active', item.dataset.section === section);
+    const isCurrent = item.dataset.section === section;
+    item.classList.toggle('active', isCurrent);
+    // 反転は見た目の手がかりなので、読み上げ側の現在地も同じ 1 箇所で切り替える
+    if (isCurrent) { item.setAttribute('aria-current', 'true'); }
+    else { item.removeAttribute('aria-current'); }
   });
 }
 
@@ -151,7 +147,7 @@ bindSectionNav() {
 ## 17-B. アジェンダインジケーター（縦型サイドバー — ダークテーマ用）
 
 左上のアジェンダインジケーターをクリックして、該当セクションのトップページに移動する機能。
-Kanagawa Wave（ダークテーマ）用。
+ダークテーマ用。
 
 ### 17.1 HTML構造
 
@@ -180,6 +176,19 @@ Kanagawa Wave（ダークテーマ）用。
 
 ### 17.2 CSS（ホバー・クリック状態）
 
+状態は **通常 / 現在地 / hover の 3 つに閉じる**。以前はここに 4 つ目（現在地に hover）が
+独立した見た目で存在したが、現在地の手がかりを hover が上書きするので、指を置いた瞬間に
+「どれが現在地か」が消えていた。現在地に hover したときは反転のままにする。
+
+分類を色相で示さない（SR-2-07）。左端の帯で色を切り替える作りは、帯が細いので
+**投影では色そのものが判別できず、状態の差が消える**。行全体の反転へ置き換えた。
+帯やドットだけを反転させないのは、細い面の反転が投影で「汚れ」に見えるため。
+反転が効くのは面積があるときだけ。
+
+なお、ここにあった 3 つの旧値は `rgba()` の生値で書かれていたため、
+**`css-var-fallback` の網に掛からなかった**（あの検査が見るのは `var()` の中身だけで、
+生の色は素通りする）。同じ形の値は他にも残っている想定で扱うこと。
+
 ```css
 /* アジェンダインジケーター ベーススタイル */
 .agenda-indicator {
@@ -193,61 +202,63 @@ Kanagawa Wave（ダークテーマ）用。
   pointer-events: auto;
 }
 
-/* 各アジェンダ項目（リンク） */
+/* 各アジェンダ項目（リンク）。状態は 3 つに閉じる:
+   通常 / 現在地（行全体の反転）/ hover（`--tone-2` の地）。
+   反転は行全体に掛ける。帯やドットだけを反転させると、細い面の反転は
+   投影で「汚れ」に見えて、状態ではなく印刷の事故として読まれる */
 .agenda-indicator-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
-  background: rgba(31, 31, 40, 0.8);
+  background: var(--ink, #141412);
   border-radius: 8px;
-  border-left: 3px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  color: var(--fg-dim);
+  color: var(--fg-muted);
   transition: all 0.3s ease;
 }
 
-/* ホバー状態 */
+/* ホバー状態。現在地とは別の面（濃度段の中位）を当てる */
 .agenda-indicator-item:hover {
-  background: rgba(31, 31, 40, 0.95);
-  color: var(--fg-light, var(--fg-dim, #54546d));
-  border-left-color: var(--wave-aqua);
+  background: var(--tone-2, #9BADBF);
+  color: var(--ink, #141412);
   transform: translateX(5px);
 }
 
-/* アクティブ状態（現在のセクション） */
+/* 現在地（現在のセクション）。地と字を入れ替える。
+   §17-A と同じ反転の作りで、色相は使わない */
 .agenda-indicator-item.active {
-  background: rgba(126, 156, 216, 0.2);
-  color: var(--wave-blue);
-  border-left-color: var(--wave-blue);
+  background: var(--fg);
+  color: var(--bg-dark, var(--paper));
 }
 
+/* 現在地に hover しても反転のまま。ここで hover 側の面へ移ると
+   「現在地がどれか」が指の下で消える */
 .agenda-indicator-item.active:hover {
-  border-left-color: var(--sakura-pink);
+  background: var(--fg);
+  color: var(--bg-dark, var(--paper));
 }
 
-/* 番号バッジ */
+.agenda-indicator-item:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
+}
+
+/* 番号バッジ。地を持たず輪郭だけにして `currentColor` に追随させる。
+   こうすると行が反転したときバッジも一緒に反転し、状態ごとの指定が要らない。
+   状態ごとの器を残すと、次に色を戻す場所として使われる */
 .agenda-number {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: var(--fuji-gray);
+  background: transparent;
+  border: 1.25px solid currentColor;
   border-radius: 50%;
   font-size: var(--fs-small);
   font-weight: 700;
-}
-
-.agenda-indicator-item.active .agenda-number {
-  background: var(--wave-blue);
-  color: var(--bg-dark);
-}
-
-.agenda-indicator-item:hover .agenda-number {
-  background: var(--wave-aqua);
-  color: var(--bg-dark);
 }
 
 /* ラベル */

@@ -182,6 +182,44 @@ def parse_dependencies(text: str) -> tuple[list[dict], list[str]]:
     return entries, errors
 
 
+def parse_external_dependencies(text: str) -> tuple[dict[str, dict], list[str]]:
+    """Parse the supported external_dependencies owner/required-entrypoint subset."""
+
+    result: dict[str, dict] = {}
+    errors: list[str] = []
+    section = False
+    current: str | None = None
+    for lineno, raw in enumerate(text.splitlines(), 1):
+        if re.match(r"^external_dependencies:\s*(?:#.*)?$", raw):
+            section = True
+            current = None
+            continue
+        if section and re.match(r"^[A-Za-z_][\w-]*:", raw):
+            break
+        if not section or not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        owner = re.match(r"^\s{2}([a-z][a-z0-9-]*):\s*(?:#.*)?$", raw)
+        if owner:
+            current = owner.group(1)
+            result[current] = {}
+            continue
+        required = re.match(r"^\s{4}required_entry_points:\s*\[(.*)\]\s*(?:#.*)?$", raw)
+        if required and current:
+            entries = [_unquote(item) for item in required.group(1).split(",") if item.strip()]
+            if not entries or len(entries) != len(set(entries)):
+                errors.append(
+                    f"line {lineno}: external dependency {current} requires a unique non-empty required_entry_points list"
+                )
+            result[current]["required_entry_points"] = entries
+            continue
+    for owner, spec in result.items():
+        if "required_entry_points" not in spec:
+            errors.append(
+                f"external dependency {owner} must declare required_entry_points"
+            )
+    return result, errors
+
+
 def _cap_ref(cap: dict) -> str | None:
     return cap.get("ref") or cap.get("path")
 
@@ -199,6 +237,61 @@ def check_duplicate_refs(caps: list[dict]) -> list[str]:
     ]
 
 
+def _actual_public_surfaces(plugin_dir: Path) -> dict[str, set[str]]:
+    return {
+        "skill": {
+            f"skills/{path.parent.name}"
+            for path in plugin_dir.glob("skills/*/SKILL.md")
+        },
+        "agent": {
+            f"agents/{path.stem}" for path in plugin_dir.glob("agents/*.md")
+        },
+        "command": {
+            f"commands/{path.stem}" for path in plugin_dir.glob("commands/*.md")
+        },
+        "hook": {
+            f"hooks/{path.name}"
+            for path in plugin_dir.glob("hooks/*")
+            if path.is_file() and path.suffix in {".py", ".sh"}
+        },
+    }
+
+
+def _declared_public_surfaces(caps: list[dict], plugin_dir: Path) -> dict[str, set[str]]:
+    actual_hooks = _actual_public_surfaces(plugin_dir)["hook"]
+    hook_by_stem = {Path(ref).stem: ref for ref in actual_hooks}
+    declared = {kind: set() for kind in ("skill", "agent", "command", "hook")}
+    for cap in caps:
+        kind = str(cap.get("kind", ""))
+        if kind not in declared:
+            continue
+        ref = _canonical_cap_ref(cap)
+        if kind == "skill":
+            declared[kind].add(f"skills/{Path(ref).name}")
+        elif kind in {"agent", "command"}:
+            declared[kind].add(f"{kind}s/{Path(ref).stem}")
+        elif ref.startswith("hook:"):
+            stem = Path(ref.split("/", 1)[-1]).stem
+            declared[kind].add(hook_by_stem.get(stem, f"hooks/{stem}"))
+        else:
+            declared[kind].add(f"hooks/{Path(ref).name}")
+    return declared
+
+
+def check_public_surface_parity(caps: list[dict], plugin_dir: Path) -> list[str]:
+    """Composition is the exact public S/A/C/H inventory, not a sample."""
+
+    findings: list[str] = []
+    actual = _actual_public_surfaces(plugin_dir)
+    declared = _declared_public_surfaces(caps, plugin_dir)
+    for kind in ("skill", "agent", "command", "hook"):
+        for ref in sorted(actual[kind] - declared[kind]):
+            findings.append(f"composition omits {kind} surface: {ref}")
+        for ref in sorted(declared[kind] - actual[kind]):
+            findings.append(f"composition declares non-public {kind} surface: {ref}")
+    return findings
+
+
 def check_ref_exists(caps: list[dict], plugin_dir: Path) -> list[str]:
     findings: list[str] = []
     for cap in caps:
@@ -206,7 +299,7 @@ def check_ref_exists(caps: list[dict], plugin_dir: Path) -> list[str]:
         ref = _cap_ref(cap)
         if not ref:
             continue
-        if kind == "hook" or ref.startswith("hook:"):
+        if ref.startswith("hook:"):
             if not HOOK_REF_RE.match(ref):
                 findings.append(
                     f"malformed hook ref: {ref} (expected hook:<Event>[-<hint>]/<name>)"
@@ -368,6 +461,144 @@ def check_command_dispatch_dependencies(
     return findings
 
 
+def _load_package_contract(plugin_dir: Path) -> tuple[dict, str | None]:
+    path = plugin_dir / "references" / "package-contract.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {}, f"package contract cannot be read: {path}: {exc}"
+    if not isinstance(payload, dict):
+        return {}, f"package contract must be an object: {path}"
+    return payload, None
+
+
+def _repo_and_slug(plugin_dir: Path) -> tuple[Path, str] | None:
+    if plugin_dir.parent.name != "plugins":
+        return None
+    return plugin_dir.parent.parent, plugin_dir.name
+
+
+def _cross_endpoint(endpoint: str, plugin_dir: Path) -> tuple[str, str, str] | None:
+    """Return (owner, kind plural, entrypoint) for a structured plugin endpoint."""
+
+    normalized = endpoint.strip().strip("\"'")
+    match = re.match(
+        r"^\.\./(?P<owner>[a-z][a-z0-9-]*)/(?P<kind>skills|agents|commands|hooks)/(?P<entry>[^/]+)",
+        normalized,
+    )
+    if match is None:
+        match = re.match(
+            r"^plugins/(?P<owner>[a-z][a-z0-9-]*)/(?P<kind>skills|agents|commands|hooks)/(?P<entry>[^/]+)",
+            normalized,
+        )
+    if match is None:
+        return None
+    kind = match.group("kind")
+    entry = match.group("entry")
+    if kind == "skills":
+        entry = entry.removesuffix("/SKILL.md")
+    elif kind in {"agents", "commands"}:
+        entry = Path(entry).stem
+    return match.group("owner"), kind, entry
+
+
+def check_cross_plugin_dependencies(
+    dependencies: list[dict], plugin_dir: Path
+) -> list[str]:
+    """Cross-plugin routes must resolve to a public entry point and package edge."""
+
+    context = _repo_and_slug(plugin_dir)
+    if context is None:
+        return []
+    repo, slug = context
+    caller_contract, error = _load_package_contract(plugin_dir)
+    findings = [error] if error else []
+    package_edges = caller_contract.get("depends_on", [])
+    if not isinstance(package_edges, list):
+        package_edges = []
+    for dep in dependencies:
+        dep_type = str(dep.get("type", ""))
+        for side in ("from", "to"):
+            endpoint = str(dep.get(side, ""))
+            cross = _cross_endpoint(endpoint, plugin_dir)
+            if cross is None:
+                if endpoint.startswith("../") or endpoint.startswith("plugins/"):
+                    findings.append(
+                        f"cross-plugin endpoint must name a public skills/agents/commands/hooks entry point: {endpoint}"
+                    )
+                continue
+            owner, kind, entry = cross
+            owner_dir = repo / "plugins" / owner
+            owner_contract, owner_error = _load_package_contract(owner_dir)
+            if owner_error:
+                findings.append(owner_error)
+                continue
+            declared = owner_contract.get("entry_points", {}).get(kind, [])
+            expected = entry
+            if kind == "hooks":
+                # Hook package identities retain their language suffix.
+                expected = Path(endpoint).name
+            if not isinstance(declared, list) or expected not in declared:
+                findings.append(
+                    f"cross-plugin required entry point is not declared by {owner}: {kind}.{expected}"
+                )
+            # called-by is descriptive incoming provenance.  All executable
+            # outgoing relations require the package installation edge.
+            outgoing = side == "to" and dep_type != "called-by"
+            if outgoing and owner != slug and owner not in package_edges:
+                findings.append(
+                    f"cross-plugin dependency edge missing from package contract: {owner}"
+                )
+    return findings
+
+
+def check_external_dependencies(
+    external: dict[str, dict], plugin_dir: Path
+) -> list[str]:
+    context = _repo_and_slug(plugin_dir)
+    if context is None:
+        return []
+    repo, _ = context
+    caller_contract, error = _load_package_contract(plugin_dir)
+    findings = [error] if error else []
+    package_edges = caller_contract.get("depends_on", [])
+    if not isinstance(package_edges, list):
+        package_edges = []
+    for owner, spec in sorted(external.items()):
+        if owner not in package_edges:
+            findings.append(
+                f"external dependency edge missing from package contract: {owner}"
+            )
+        owner_dir = repo / "plugins" / owner
+        owner_contract, owner_error = _load_package_contract(owner_dir)
+        if owner_error:
+            findings.append(owner_error)
+            continue
+        entry_points = owner_contract.get("entry_points", {})
+        declared = {
+            entry
+            for values in entry_points.values()
+            if isinstance(values, list)
+            for entry in values
+        }
+        actual = {
+            path.parent.name for path in owner_dir.glob("skills/*/SKILL.md")
+        } | {
+            path.stem for path in owner_dir.glob("agents/*.md")
+        } | {
+            path.stem for path in owner_dir.glob("commands/*.md")
+        } | {
+            path.name for path in owner_dir.glob("hooks/*")
+            if path.is_file() and path.suffix in {".py", ".sh"}
+        }
+        for required in spec.get("required_entry_points", []):
+            if required not in declared or required not in actual:
+                findings.append(
+                    f"external required entry point is unresolved: {owner}.{required}"
+                )
+    return findings
+
+
 def _wired_hook_counts(plugin_json: dict) -> dict[str, int]:
     counts: dict[str, int] = {}
     for event, groups in (plugin_json.get("hooks") or {}).items():
@@ -381,6 +612,8 @@ def _wired_hook_counts(plugin_json: dict) -> dict[str, int]:
 def _resolve_hook_manifest(plugin_json: dict, plugin_dir: Path) -> dict:
     """Normalize inline hooks and Claude's supported external hooks manifest form."""
     raw = plugin_json.get("hooks")
+    if raw is None and (plugin_dir / "hooks" / "hooks.json").is_file():
+        raw = "./hooks/hooks.json"
     if not isinstance(raw, str):
         return plugin_json
     rel = Path(raw)
@@ -456,7 +689,9 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
     plugin_dir = path.parent
     caps, outputs, parse_errors = parse_composition(text)
     dependencies, dependency_parse_errors = parse_dependencies(text)
+    external_dependencies, external_parse_errors = parse_external_dependencies(text)
     parse_errors.extend(dependency_parse_errors)
+    parse_errors.extend(external_parse_errors)
     if parse_errors:
         return [f"{path}: {e}" for e in parse_errors], [], 2
     if not caps:
@@ -474,9 +709,12 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
     findings: list[str] = []
     findings += check_duplicate_refs(caps)
     findings += check_ref_exists(caps, plugin_dir)
+    findings += check_public_surface_parity(caps, plugin_dir)
     findings += check_hook_wiring(caps, plugin_json)
     findings += check_skill_script_dependencies(caps, dependencies, plugin_dir)
     findings += check_command_dispatch_dependencies(caps, dependencies, plugin_dir)
+    findings += check_cross_plugin_dependencies(dependencies, plugin_dir)
+    findings += check_external_dependencies(external_dependencies, plugin_dir)
     warnings = check_outputs(outputs, plugin_dir)
     return (
         [f"{path}: {f}" for f in findings],
@@ -515,8 +753,12 @@ _FIXTURE_PLUGIN_JSON = {
 def _build_fixture(root: Path, composition: str, plugin_json: dict | None) -> Path:
     (root / "skills" / "run-alpha").mkdir(parents=True)
     (root / "skills" / "run-alpha" / "SKILL.md").write_text("# alpha\n", encoding="utf-8")
-    (root / "agents").mkdir()
-    (root / "agents" / "beta-agent.md").write_text("# beta\n", encoding="utf-8")
+    if "agents/beta-agent" in composition:
+        (root / "agents").mkdir()
+        (root / "agents" / "beta-agent.md").write_text("# beta\n", encoding="utf-8")
+    if "gamma-trigger" in composition:
+        (root / "hooks").mkdir()
+        (root / "hooks" / "gamma-trigger.py").write_text("# hook\n", encoding="utf-8")
     (root / "EVALS.json").write_text("{}\n", encoding="utf-8")
     if plugin_json is not None:
         (root / ".claude-plugin").mkdir()
@@ -592,12 +834,14 @@ def main(argv: list[str]) -> int:
         return 2
     all_findings: list[str] = []
     all_warnings: list[str] = []
+    parse_error_seen = False
     for path in targets:
         findings, warnings, err = lint_composition(path)
         if err is not None:
-            for f in findings:
-                sys.stderr.write(f + "\n")
-            return err
+            parse_error_seen = True
+            all_findings.extend(findings)
+            all_warnings.extend(warnings)
+            continue
         all_findings.extend(findings)
         all_warnings.extend(warnings)
     for w in all_warnings:
@@ -605,7 +849,7 @@ def main(argv: list[str]) -> int:
     if all_findings:
         for f in all_findings:
             sys.stderr.write(f + "\n")
-        return 1
+        return 2 if parse_error_seen else 1
     sys.stdout.write(
         f"OK: {len(targets)} composition file(s) passed"
         f" ({len(all_warnings)} warning(s))\n"

@@ -1,0 +1,39 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-codex-plugin-package",
+    "skill_md_sha256": "ae82e651f4357aa71100667a6a2a5efb01a79df505bff84c4b48b0e0207c8add"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T12:18:22Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "検証済み候補のatomic upsertと失敗時の部分書き禁止がprompt・apply gate・失敗契約で一致する。",
+      "再check、capability parity、plugin境界の検証からrun-codex-plugin-installへのstructured handoffまで依存edgeが閉じている。",
+      "同梱scriptは共有Runtime root正本で解決したabsolute `$PLUGIN_ROOT` を使用し、packageとlive installの副作用境界が明確である。",
+      "R1の `skills`・`hooks`・`mcpServers`・`apps` 列挙はSKILLと同一の4 surface集合であり、slash疑似pathを解消しても双方向一致契約の意味を変えない。"
+    ],
+    "negative_feedback": [],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:prompt-contract-drift-rereview",
+    "next_action": "none"
+  },
+  "notes": "prompt-contract-drift修正後のfocused combined reviewを独立reviewerが最新SKILL/workflow/R1 promptに対して再実施。C1-C4、IN1/OUT1、rubric high severity 0を全PASS。R1のslash連結を4 surfaceの列挙へ変えた差分は、SKILLと同じ集合およびactual↔package entry points↔compositionの双方向一致を保持し、契約意味を変更しない。SKILL.md自体は不変のためtarget SHAも不変。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
+}

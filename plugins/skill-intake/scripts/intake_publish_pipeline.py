@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -40,7 +41,10 @@ def _write_repaired_result(result_path, page_id, page_url):
         f.write('\n')
 
 
-def _write_log(log_path, url_path, status, exit_code, stage, page_id='', url='', mode=''):
+def _write_log(
+    log_path, url_path, status, exit_code, stage, page_id='', url='', mode='',
+    publish_event_id='',
+):
     try:
         Path(log_path).parent.mkdir(parents=True, exist_ok=True)
         # notion-url.txt は成功 URL 確定時のみ書く。失敗時に空ファイルを残すと
@@ -57,11 +61,14 @@ def _write_log(log_path, url_path, status, exit_code, stage, page_id='', url='',
                 'page_id': page_id,
                 'url': url,
                 'mode': mode,
+                'publish_event_id': publish_event_id,
                 'logged_at': time.strftime('%Y-%m-%dT%H:%M:%S%z'),
             }, f, ensure_ascii=False, indent=2)
             f.write('\n')
+        return True
     except Exception as e:
         sys.stderr.write(f'[pipeline] notion-url/log write error: {e}\n')
+        return False
 
 
 def _has_publish_artifact(result_path, url_path):
@@ -105,6 +112,28 @@ def run(label, script, args, capture_stdout_to=None):
         return r.returncode
     r = subprocess.run(cmd)
     return r.returncode if r.returncode is not None else 1
+
+
+def invoke_notification(receipt_path, hint):
+    """Call the receipt-gated notifier once; notification is non-fatal to publish."""
+    notifier = SCRIPT_DIR / 'post_publish_notify.py'
+    if not notifier.is_file():
+        return {'status': 'skipped_not_installed'}
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(notifier), '--receipt', str(receipt_path), '--hint', str(hint)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        sys.stderr.write(f'[pipeline] publish notification warning: {type(exc).__name__}\n')
+        return {'status': 'delivery_failed'}
+    diagnostic = (proc.stderr or '').strip()
+    if diagnostic:
+        sys.stderr.write(f'[pipeline] publish notification: {diagnostic[:1000]}\n')
+    return {'status': 'completed' if proc.returncode == 0 else 'delivery_failed'}
 
 
 def main():
@@ -304,15 +333,23 @@ def main():
         result = {}
     page_url = result.get('url') or ''
     status = 'published' if (pub_status == 0 and page_url) else 'failed'
+    publish_event_id = uuid.uuid4().hex if (status == 'published' and not args.dry_run) else ''
+    receipt_written = False
     if not args.dry_run:
-        _write_log(log_path, url_path, status, pub_status, 'publish',
-                   page_id=result.get('id') or result.get('page_id') or '',
-                   url=page_url,
-                   mode=result.get('mode') or '')
+        receipt_written = _write_log(
+            log_path, url_path, status, pub_status, 'publish',
+            page_id=result.get('id') or result.get('page_id') or '',
+            url=page_url,
+            mode=result.get('mode') or '',
+            publish_event_id=publish_event_id,
+        )
 
     if pub_status != 0:
         sys.stderr.write(f'[pipeline] publish failed (exit {pub_status})\n')
         return pub_status
+
+    if status == 'published' and receipt_written:
+        invoke_notification(log_path, Path(out_dir).name)
 
     sys.stderr.write('[pipeline] success\n')
     return 0

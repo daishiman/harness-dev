@@ -1,9 +1,13 @@
 # dev 依存の SSOT (CI の全 pytest step と per-plugin step が本ファイル一枚を install する)。
 # 参照元: .github/workflows/harness-creator-kit-ci.yml / governance-check.yml
 # PyYAML / jsonschema はテストが frontmatter / schema を読むために必須
-# (pytest 単体だと ImportError で criteria / company-master / mf-kessai 等が落ちる)。
+# (pytest 単体だと frontmatter / schema 検証が ImportError で落ちる)。
 pytest>=7.4
-# mf-kessai-invoice-check の pytest.ini が --cov / --cov-fail-under=80 を addopts に持つ
+# Makefile の coverage target が --cov / --cov-report=json で行カバレッジ証跡を生成する
 pytest-cov>=4.0
 PyYAML>=6.0
 jsonschema>=4.17
+# slide-report-generator の visual validator は HTML/CSS の機能検査で両方を必須とし、
+# 不在時は fail-closed (exit 3) にする。CI と手元の解析差を防ぐため固定する。
+beautifulsoup4==4.15.0
+tinycss2==1.5.1

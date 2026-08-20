@@ -58,6 +58,11 @@ AGENT_REQUIRED_SECTIONS = (
 COMPOSITION_SCRIPT_RE = re.compile(
     r"\{\s*kind:\s*script,\s*ref:\s*(scripts/[A-Za-z0-9_.-]+)\s*,"
 )
+# scripts/ 直下で「実体」として数える拡張子。宣言側 (COMPOSITION_SCRIPT_RE) は拡張子を
+# 問わないので、集合一致の網の広さはこの集合だけで決まる。ここに無い拡張子で検査器を
+# 書くと、plugin-composition.yaml へ配線しないまま素通りする。実際 .mjs が抜けており、
+# .mjs の検査器 2 本が未宣言のまま通っていた。実行系を増やしたらここへ足すこと。
+SCRIPT_SUFFIXES = frozenset({".py", ".js", ".cjs", ".mjs"})
 
 
 def fail(errors: list[str], message: str) -> None:
@@ -127,7 +132,19 @@ def parse_frontmatter(path: Path, errors: list[str]) -> dict[str, str]:
 def check_thin_agent_adapters(errors: list[str]) -> None:
     """Enforce harness-creator style: agents are Task adapters, prompts live in skills."""
     agents_dir = PLUGIN_ROOT / "agents"
-    nested_prompt_dirs = sorted((PLUGIN_ROOT / "skills").glob("*/prompts/*/"))
+    # 禁止したいのは「prompt をディレクトリで階層化すること」。prompt_ref は
+    # PROMPT_REF_RE で flat な skills/<skill>/prompts/R*.md に限っており、階層を作ると
+    # 参照できない prompt が prompts/ の下に溜まる。それを防ぐのがこの検査の目的。
+    #
+    # 旧実装は glob("*/prompts/*/") で、末尾スラッシュの解釈が python の版で違った
+    # (3.9 は無視してファイルも一致し 20 件 FAIL / 3.11+ は 0 件)。同じ木で結論が割れる
+    # ので、どちらが元の意図だったかは書いてある情報からは決まらない。決められないため
+    # 推測で確定させず、上の目的を新しい正として is_dir() で明示する。
+    # (script header は requires-python >=3.10 だが shebang は env python3 で、3.9 でも
+    #  起動できてしまう。is_dir() なら起動した版に関係なく同じものを返す)
+    nested_prompt_dirs = sorted(
+        path for path in (PLUGIN_ROOT / "skills").glob("*/prompts/*") if path.is_dir()
+    )
     for nested in nested_prompt_dirs:
         if nested.name != "__pycache__":
             fail(
@@ -143,7 +160,8 @@ def check_thin_agent_adapters(errors: list[str]) -> None:
             fail(
                 errors,
                 f"agent adapter too large: {rel} has {len(lines)} lines "
-                f"(max {MAX_AGENT_ADAPTER_LINES}); move detail to skills/*/prompts/agents/",
+                f"(max {MAX_AGENT_ADAPTER_LINES}); move detail into the flat prompt this "
+                f"agent already points at (skills/<owner_skill>/prompts/R*.md)",
             )
         fm = parse_frontmatter(path, errors)
         owner_skill = fm.get("owner_skill", "")
@@ -214,7 +232,7 @@ def check_script_inventory(errors: list[str]) -> None:
     actual = sorted(
         str(path.relative_to(PLUGIN_ROOT))
         for path in (PLUGIN_ROOT / "scripts").iterdir()
-        if path.is_file() and path.suffix in {".py", ".js", ".cjs"}
+        if path.is_file() and path.suffix in SCRIPT_SUFFIXES
     )
     if declared != actual:
         missing = sorted(set(actual) - set(declared))

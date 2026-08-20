@@ -49,11 +49,11 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| frontend agent | `$CLAUDE_PLUGIN_ROOT/agents/frontend-surface-analyzer.md` | fact 抽出 |
-| backend agent | `$CLAUDE_PLUGIN_ROOT/agents/backend-inference-analyzer.md` | バックエンド/named/security/topology 推測 |
-| uiux agent | `$CLAUDE_PLUGIN_ROOT/agents/uiux-rationale-analyzer.md` | UIUX/journeys 推測 |
-| content agent | `$CLAUDE_PLUGIN_ROOT/agents/content-intent-analyzer.md` | 伝達意図/JTBD 推測 |
-| synthesizer | `$CLAUDE_PLUGIN_ROOT/agents/architecture-essence-synthesizer.md` | essence 統合 + Mermaid |
+| frontend agent | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/frontend-surface-analyzer.md` | fact 抽出 |
+| backend agent | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/backend-inference-analyzer.md` | バックエンド/named/security/topology 推測 |
+| uiux agent | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/uiux-rationale-analyzer.md` | UIUX/journeys 推測 |
+| content agent | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/content-intent-analyzer.md` | 伝達意図/JTBD 推測 |
+| synthesizer | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/architecture-essence-synthesizer.md` | essence 統合 + Mermaid |
 
 ### 3.2 外部ツール / API
 - Task ツールで各 analyzer を独立 context (fork) 起動する。C06 は `mermaid-validate.py`/`doc-emit.py` を Bash で参照する。

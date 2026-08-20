@@ -28,20 +28,22 @@ contract:
     - 実 commit/PR/issue close は人間の責務。hook が捕捉するのは PreToolUse/Bash 経路の gh issue close のみ (Web UI/API/Actions は非カバー)
 
 capabilities:
-  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/run-rubric-sync, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
   - { kind: skill, ref: skills/run-spec-drift-triage, tier: core }
-  - { kind: skill, ref: skills/run-rubric-sync,       tier: core }
+  - { kind: agent, ref: agents/rubric-sync-auditor, tier: core }
+  - { kind: agent, ref: agents/spec-impact-verifier, tier: core }
+  - { kind: command, ref: commands/rubric-sync, tier: core }
+  - { kind: command, ref: commands/spec-drift-triage, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/guard-spec-drift-close", tier: core }
+
+  # === Skills (kind=skill) ===
 
   # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
-  - { kind: agent, ref: agents/spec-impact-verifier,  tier: core }
-  - { kind: agent, ref: agents/rubric-sync-auditor,   tier: core }
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/spec-drift-triage, tier: core }
-  - { kind: command, ref: commands/rubric-sync,       tier: core }
 
   # === Hook (kind=hook) — plugin.json hooks 配線と1対1対応 ===
-  - { kind: hook, ref: "hook:PreToolUse-Bash/guard-spec-drift-close", tier: core }
 
   # === Scripts (kind=script) — plugin-root hoist の共有決定論段 ===
   - { kind: script, ref: scripts/aggregate-issue-diffs.py, tier: core }
@@ -58,6 +60,7 @@ dependencies:
   - { from: skills/run-spec-drift-triage,      to: scripts/map-field-impact.py,      type: calls }
   - { from: skills/run-rubric-sync,            to: skills/run-spec-drift-triage,     type: reads }
   - { from: skills/run-rubric-sync,            to: scripts/map-field-impact.py,      type: calls }
+  - { from: skills/run-rubric-sync,            to: scripts/check-triage-complete.py, type: calls }
   - { from: agents/spec-impact-verifier,       to: skills/run-spec-drift-triage,     type: evaluates }
   - { from: agents/spec-impact-verifier,       to: scripts/parse-spec-diff.py,       type: calls }
   - { from: agents/spec-impact-verifier,       to: scripts/map-field-impact.py,      type: calls }
@@ -74,6 +77,7 @@ dependencies:
   - { from: "hook:PreToolUse-Bash/guard-spec-drift-close", to: skills/run-rubric-sync,           type: reads }
   - { from: "hook:PreToolUse-Bash/guard-spec-drift-close", to: scripts/check-triage-complete.py, type: calls }
 
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
 eval_sinks:
   - EVALS.json
   - eval-log/

@@ -37,15 +37,24 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。横断分析�
   criteria:
     - id: IN1
       loop_scope: inner
-      text: cross-deck-consistency.js が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合、機械チェック入力(各デッキの structure.md/index.html/styles.css/scripts.js)の欠落が0件
+      text: cross-deck-consistency.js が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合、機械チェック入力(各デッキの structure.md/index.html と、index.html が実際に読み込む CSS/JS)が全て解決でき未解決参照が0件
       verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: 既知の機械検出可能な不整合(shared-spec差分/rem単位/外部URL/必須入力欠落)を注入したシリーズで cross-deck-consistency.js が全件検出し、クリーンseriesをPASSとすることを受入テストが確認する
+      text: 既知の機械検出可能な不整合(shared-spec差分/rem単位/外部URL/index.html欠落/未解決のローカル参照)を注入したシリーズで cross-deck-consistency.js が全件検出し、クリーンseriesをPASSとすることを受入テストが確認する
       verify_by: test
+runtime_root_policy: host-skill-path
 ---
 
 # run-cross-deck-review
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > **役割**: 複数の slide deck を**シリーズ横断**で整合検証する独立起動 skill (移植元 P5 = cross-deck-reviewer 相当)。単一成果物では見えない**シリーズ全体の整合崩れ** (用語ゆれ・意匠差・構成不整合) を、Agent A/B/C の 3 レンズ分析 × 4 条件で網羅検出する (read-only 検出専任)。plugin root = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}`、実行パスは全てここ起点 (repo-root ハードコード禁止)。個別成果物の修正は `run-slide-report-modify` の責務。
 
@@ -68,7 +77,7 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。横断分析�
 まず機械的チェックで shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合する:
 
 ```bash
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
 ```
 
 FAIL／WARN 項目について `Task` で **cross-deck-reviewer** を起動 (`isolation: fork`)。cross-deck-reviewer は**単一 fork context 内で Agent A/B/C の 3 レンズ**(論理・構造 / メタ・発想 / システム・戦略) として用語／意匠／構成の観点を多角分析し (再 fork＝SubAgent 起動はしない)、**4 条件** (矛盾なし／漏れなし／整合性／依存関係整合) で判定する。用語ゆれ (メタファー・専門語の不一致)・意匠差 (配色・レイアウト・shared-spec の乖離)・構成不整合 (章立て・粒度・難易度段階の崩れ) を洗い出す。
@@ -81,17 +90,20 @@ FAIL／WARN 項目について `Task` で **cross-deck-reviewer** を起動 (`is
 
 ```bash
 # シリーズ横断整合性の機械チェック (shared-spec/URL/CSS変数/GSAP/印刷)
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
 # 個別成果物の統一感検証 (テーマ・スタイル整合)
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" <deck-dir>
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" <deck-dir>
 ```
 
 ## ゴールシークと受入基準 (combinators)
 
 `with-goal-seek`(max_loops 5) + `with-feedback-contract`。ループ本体は `Task` で cross-deck-reviewer worker (単一 fork) へ委譲し、親へは横断レポートのみ返す。受入基準は当該 skill の goal／checklist 由来の受入条件 (purpose-acceptance):
 
-- **IN1 (inner・script)**: `cross-deck-consistency.js` が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合し、機械チェック入力 (各デッキの structure.md / index.html / styles.css / scripts.js) の欠落が 0 件。
-- **OUT1 (outer・test)**: 既知の機械検出可能な不整合 (shared-spec差分／rem単位／外部URL／必須入力欠落) を注入したシリーズで `cross-deck-consistency.js` が全件検出し、クリーンseriesをPASSとすることを受入テストが確認する。用語ゆれ・構成不整合の意味評価は3レンズ分析とelegant-reviewが担う。
+- **IN1 (inner・script)**: `cross-deck-consistency.js` が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合し、機械チェック入力 (各デッキの structure.md / index.html と、index.html が実際に読み込む CSS/JS) が全て解決でき、未解決参照が 0 件。
+  - **要件は「CSS/JS が解決できること」であって「`styles.css` / `scripts.js` というファイルが在ること」ではない。** CSS/JS を index.html へインライン化した自己完結デッキは `styles.css` を持たないが正しい。逆に、`<link href="styles.css">` があるのに参照先が無いデッキは未解決参照 1 件として error になる。
+  - 検査対象は inline `<style>` / `<script>` と `<link>` / `<script src>` の**両方を合わせたもの**。片方だけではブラウザが実際に適用するものにならない (出荷デッキにはインライン化後もディスク上に旧版の `styles.css` が残っている例があり、そちらを読むと実物と違うものを見て合否を出すことになる)。
+- **OUT1 (outer・test)**: 既知の機械検出可能な不整合 (shared-spec差分／rem単位／外部URL／index.html 欠落／未解決のローカル参照) を注入したシリーズで `cross-deck-consistency.js` が全件検出し、クリーンseriesをPASSとすることを受入テストが確認する。用語ゆれ・構成不整合の意味評価は3レンズ分析とelegant-reviewが担う。
+  - fixture の `index.html` は `styles.css` / `scripts.js` を実際に `<link>` / `<script src>` で参照する。参照の無い fixture は「ブラウザが決して適用しないファイルの中身」を検査する形になり、実物のデッキを再現しない。
 
 未達は最大 3 周 (inner) / 5 loops (goal-seek) で findings を反映し再実行する。網羅率が閾値未満なら分析観点を追加して再走する。
 

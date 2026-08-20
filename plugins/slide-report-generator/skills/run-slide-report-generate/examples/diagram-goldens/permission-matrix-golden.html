@@ -28,13 +28,13 @@
 
     <defs>
       <marker id="d-permission-matrix-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="d-permission-matrix-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="d-permission-matrix-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
@@ -44,90 +44,90 @@
          ここに 4 つ目を足したら別の型 (§11.7 か §11.9) を選び直す -->
     <defs>
       <g id="d-permission-matrix-pm-yes">
-        <circle cx="8" cy="8" r="6" fill="var(--wave-blue, #7E9CD8)"/>
+        <circle cx="8" cy="8" r="6" fill="var(--wave-blue, #4B6681)"/>
       </g>
       <g id="d-permission-matrix-pm-cond">
-        <circle cx="8" cy="8" r="6" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.25"/>
-        <path d="M 8 2 A 6 6 0 0 1 8 14 Z" fill="var(--fg, #43436c)"/>
+        <circle cx="8" cy="8" r="6" fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.25"/>
+        <path d="M 8 2 A 6 6 0 0 1 8 14 Z" fill="var(--fg, #141412)"/>
       </g>
       <g id="d-permission-matrix-pm-no">
-        <circle cx="8" cy="8" r="6" fill="none" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+        <circle cx="8" cy="8" r="6" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
       </g>
     </defs>
 
     <!-- 表の地と 2 つの見出し帯 (面の階層は 2 段まで) -->
-    <rect x="32" y="88" width="576" height="272" rx="6"
-          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-    <rect x="32" y="88" width="576" height="48" fill="#F8F7F0"/>
-    <rect x="32" y="136" width="160" height="224" fill="#F8F7F0"/>
+    <rect x="32" y="88" width="576" height="272"
+          fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+    <rect x="32" y="88" width="576" height="48" fill="#E1E6EA"/>
+    <rect x="32" y="136" width="160" height="224" fill="#E1E6EA"/>
 
     <!-- 焦点は 1 行だけ。accent-tint の塗りと accent の枠はセットで使う -->
     <rect x="32" y="248" width="576" height="56"
-          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+          fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
 
     <!-- 罫 -->
-    <line x1="32" y1="136" x2="608" y2="136" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <line x1="192" y1="88" x2="192" y2="360" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <line x1="296" y1="88" x2="296" y2="360" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="400" y1="88" x2="400" y2="360" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="504" y1="88" x2="504" y2="360" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="192" x2="608" y2="192" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="304" x2="608" y2="304" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="136" x2="608" y2="136" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <line x1="192" y1="88" x2="192" y2="360" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <line x1="296" y1="88" x2="296" y2="360" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="400" y1="88" x2="400" y2="360" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="504" y1="88" x2="504" y2="360" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="192" x2="608" y2="192" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="304" x2="608" y2="304" stroke="#D5D4D1" stroke-width="1.25"/>
 
     <!-- 隅の見出しと列見出し -->
-    <text x="48" y="116" font-size="12" fill="var(--fuji-gray, #8a8980)">役割＼操作</text>
-    <text x="244" y="116" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">起票</text>
-    <text x="348" y="116" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">承認</text>
-    <text x="452" y="116" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">支払</text>
-    <text x="556" y="116" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">参照</text>
+    <text x="48" y="116" font-size="12" fill="var(--fg-muted, #6A6A68)">役割＼操作</text>
+    <text x="244" y="116" text-anchor="middle" font-size="14" fill="var(--fg-muted, #6A6A68)">起票</text>
+    <text x="348" y="116" text-anchor="middle" font-size="14" fill="var(--fg-muted, #6A6A68)">承認</text>
+    <text x="452" y="116" text-anchor="middle" font-size="14" fill="var(--fg-muted, #6A6A68)">支払</text>
+    <text x="556" y="116" text-anchor="middle" font-size="14" fill="var(--fg-muted, #6A6A68)">参照</text>
 
     <!-- 行 1: 申請者 -->
-    <text x="48" y="168" font-size="14" fill="var(--fg, #43436c)">申請者</text>
+    <text x="48" y="168" font-size="14" fill="var(--fg, #141412)">申請者</text>
     <use href="#d-permission-matrix-pm-yes" x="236" y="156"/>
     <use href="#d-permission-matrix-pm-no" x="340" y="156"/>
     <use href="#d-permission-matrix-pm-no" x="444" y="156"/>
     <use href="#d-permission-matrix-pm-yes" x="548" y="156"/>
 
     <!-- 行 2: 承認者 -->
-    <text x="48" y="224" font-size="14" fill="var(--fg, #43436c)">承認者</text>
+    <text x="48" y="224" font-size="14" fill="var(--fg, #141412)">承認者</text>
     <use href="#d-permission-matrix-pm-yes" x="236" y="212"/>
     <use href="#d-permission-matrix-pm-yes" x="340" y="212"/>
     <use href="#d-permission-matrix-pm-cond" x="444" y="212"/>
     <use href="#d-permission-matrix-pm-yes" x="548" y="212"/>
 
     <!-- 行 3: 経理 (焦点) -->
-    <text x="48" y="280" font-size="14" fill="var(--fg, #43436c)">経理</text>
+    <text x="48" y="280" font-size="14" fill="var(--fg, #141412)">経理</text>
     <use href="#d-permission-matrix-pm-no" x="236" y="268"/>
     <use href="#d-permission-matrix-pm-cond" x="340" y="268"/>
     <use href="#d-permission-matrix-pm-yes" x="444" y="268"/>
     <use href="#d-permission-matrix-pm-yes" x="548" y="268"/>
 
     <!-- 行 4: 監査 -->
-    <text x="48" y="336" font-size="14" fill="var(--fg, #43436c)">監査</text>
+    <text x="48" y="336" font-size="14" fill="var(--fg, #141412)">監査</text>
     <use href="#d-permission-matrix-pm-no" x="236" y="324"/>
     <use href="#d-permission-matrix-pm-no" x="340" y="324"/>
     <use href="#d-permission-matrix-pm-no" x="444" y="324"/>
     <use href="#d-permission-matrix-pm-yes" x="548" y="324"/>
 
     <!-- 凡例 3 項目固定。「条件付き」には条件の中身を書く -->
-    <text x="32" y="409" font-size="12" fill="var(--fuji-gray, #8a8980)">凡例</text>
+    <text x="32" y="409" font-size="12" fill="var(--fg-muted, #6A6A68)">凡例</text>
     <use href="#d-permission-matrix-pm-yes" x="64" y="396"/>
-    <text x="84" y="409" font-size="12" fill="var(--fg-dim, #54546d)">可</text>
+    <text x="84" y="409" font-size="12" fill="var(--fg-muted, #6A6A68)">可</text>
     <use href="#d-permission-matrix-pm-cond" x="112" y="396"/>
-    <text x="132" y="409" font-size="12" fill="var(--fg-dim, #54546d)">条件付き（1 件 5 万円以下・超過は承認者へ）</text>
+    <text x="132" y="409" font-size="12" fill="var(--fg-muted, #6A6A68)">条件付き（1 件 5 万円以下・超過は承認者へ）</text>
     <use href="#d-permission-matrix-pm-no" x="408" y="396"/>
-    <text x="428" y="409" font-size="12" fill="var(--fg-dim, #54546d)">不可</text>
+    <text x="428" y="409" font-size="12" fill="var(--fg-muted, #6A6A68)">不可</text>
 
     <!-- 軸の断り・既定値と例外・出所 (I4 / I1 / 2.9。figcaption へ逃がさない) -->
-    <text x="32" y="432" font-size="12" fill="var(--fuji-gray, #8a8980)">行の並びは順不同 (権限の強弱ではない)・列の軸は伝票処理の順</text>
-    <text x="32" y="450" font-size="12" fill="var(--fuji-gray, #8a8980)">表に無い役割 (派遣・委託) の既定は全操作 不可。承認者の不在時は代理 1 名を指名し 3 営業日まで有効</text>
-    <text x="32" y="468" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 職務権限規程 2026/4 改訂・4 役割 × 4 操作 = 16 セル (うち条件付き 2 件)</text>
+    <text x="32" y="432" font-size="12" fill="var(--fg-muted, #6A6A68)">行の並びは順不同 (権限の強弱ではない)・列の軸は伝票処理の順</text>
+    <text x="32" y="450" font-size="12" fill="var(--fg-muted, #6A6A68)">表に無い役割 (派遣・委託) の既定は全操作 不可。承認者の不在時は代理 1 名を指名し 3 営業日まで有効</text>
+    <text x="32" y="468" font-size="12" fill="var(--fg-muted, #6A6A68)">出所: 職務権限規程 2026/4 改訂・4 役割 × 4 操作 = 16 セル (うち条件付き 2 件)</text>
 
     <!-- 注釈 1 件 (表の上の余白のみ・矢じりは付けない) -->
-    <text x="608" y="48" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">支払の列だけが役割を分ける</text>
+    <text x="608" y="48" text-anchor="end" font-size="12" font-style="italic" fill="var(--fg-muted, #6A6A68)">支払の列だけが役割を分ける</text>
     <path d="M 596 60 Q 520 64 452 80" fill="none"
-          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
-    <circle cx="452" cy="80" r="2" fill="var(--fuji-gray, #8a8980)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="452" cy="80" r="2" fill="var(--fg-muted, #6A6A68)"/>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

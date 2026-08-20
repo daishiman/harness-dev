@@ -2,20 +2,34 @@
    pagination.css — 不変共通テンプレート
 
    責務: pagination.html のスタイル定義。
-   不変ルール: クラス名・寸法ロジック・nth-child(5n) 配色は変更禁止。
+
+   不変ルール: クラス名と寸法ロジックは変更禁止。
+   不変ルールをやめたもの: 配色。もとは「nth-child(5n) 配色は変更禁止」だったが、
+   その規約は旧ダークテーマ（暗い地に明るい文字）を前提に書かれていた。面が白紙へ
+   移った経路では暗い地に暗い文字が乗って読めなくなるので、守ると読めない配色を
+   守ることになる。読めない状態を保存する規約は規約として働かないため、配色は
+   不変の対象から外した。
+
+   配色の決めかた: 区別は色相ではなく (濃度, 寸法) の組で作る。濃度は tone-2 と
+   ink の 2 段だけを使い、段の数を増やさずに寸法で残りを分ける。
    ================================================================= */
 
 :root {
-  --pg-accent: var(--wave-blue, #7E9CD8);
-  --pg-accent-strong: var(--sakura-pink, #D27E99);
-  --pg-milestone-5: var(--wave-aqua, #7FB4CA);
-  --pg-milestone-10: var(--autumn-yellow, #DCA561);
-  --pg-bg: rgba(31, 31, 40, 0.85);
-  --pg-bg-strong: rgba(31, 31, 40, 0.95);
-  --pg-fg: var(--fg, #DCD7BA);
-  --pg-fg-dim: var(--fg-dim, #A6A69C);
-  --pg-border: rgba(255, 255, 255, 0.15);
-  --pg-shadow: 0 0.4vh 1.6vh rgba(0, 0, 0, 0.35);
+  /* chrome は面と同じ紙とインクで作る。地を暗く沈めて浮かせる作りだったが、
+     面が白紙になった経路では --fg が暗インクへ解決されるため、暗い地に暗い
+     文字が乗って読めなくなっていた。地と文字は面の既定をそのまま借りる。
+
+     fallback は落とさないこと。--pg-accent が未定義になると、それを使う
+     background の宣言ごと無効になり、進捗バーが赤も警告も出さずに消える。
+     「旧色の fallback は一律に落とせる」は、この変数については成り立たない。 */
+  --pg-accent: var(--ink, #141412);
+  --pg-bg: var(--paper, #F7F6F3);
+  --pg-bg-strong: var(--paper, #F7F6F3);
+  --pg-fg: var(--ink, #141412);
+  --pg-fg-dim: var(--fg-muted, #6A6A68);
+  --pg-border: var(--hairline, #D5D4D1);
+  /* 影は使わない。面から浮いていることは罫 1 本で表す。 */
+  --pg-shadow: none;
   --pg-z: 200;
   --pg-easing: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -27,7 +41,7 @@
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 0.4vh;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hairline, #D5D4D1);
   z-index: var(--pg-z);
   pointer-events: none;
 }
@@ -35,7 +49,9 @@
 .pg-progress__bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--pg-accent), var(--pg-accent-strong));
+  /* 進捗は長さで表す。2 色のグラデーションは進み具合と無関係な色差を足すだけで、
+     どこまで進んだかの読み取りには寄与しない。 */
+  background: var(--pg-accent);
   transition: width 0.4s var(--pg-easing);
   will-change: width;
 }
@@ -102,12 +118,12 @@
 
 .pg-controls__btn:hover {
   background: var(--pg-accent);
-  color: #1F1F28;
+  color: var(--paper-on-ink, #F7F6F3);
   transform: scale(1.08);
 }
 
 .pg-controls__btn:focus-visible {
-  outline: 2px solid var(--pg-accent-strong);
+  outline: 2px solid var(--pg-accent);
   outline-offset: 2px;
 }
 
@@ -150,7 +166,7 @@
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--tone-2, #9BADBF);
   cursor: pointer;
   flex-shrink: 0;
   transition: transform 0.25s var(--pg-easing),
@@ -174,24 +190,23 @@
   border-radius: 0.5vh;
 }
 
-/* マイルストーン: 5 個ごと（nth-child(5n)） — アクア色 + やや大きい */
+/* マイルストーン: 5 個ごと（nth-child(5n)） — 濃度は据え置き、寸法だけ上げる */
 .pg-dots__item:nth-child(5n) {
-  background: rgba(127, 180, 202, 0.5);
   width: 1.2vh;
   height: 1.2vh;
 }
-.pg-dots__item:nth-child(5n):hover {
-  background: var(--pg-milestone-5);
-}
 
-/* マイルストーン: 10 個ごと（nth-child(10n)） — オレンジ + さらに大きい */
+/* マイルストーン: 10 個ごと（nth-child(10n)） — 濃度を ink へ上げ、さらに大きい。
+   通常 (tone-2, 0.9) / 5n (tone-2, 1.2) / 10n (ink, 1.4) / active (ink, 2.4 の帯)
+   の 4 通りが (濃度, 寸法) の組として重複しない。 */
 .pg-dots__item:nth-child(10n) {
-  background: rgba(220, 165, 97, 0.55);
+  background: var(--pg-accent);
   width: 1.4vh;
   height: 1.4vh;
 }
+/* 10n は既に最濃なので、hover では濃度を動かさず拡大だけで応答する。 */
 .pg-dots__item:nth-child(10n):hover {
-  background: var(--pg-milestone-10);
+  background: var(--pg-accent);
 }
 
 /* アクティブ時はマイルストーン色を上書き */
@@ -214,7 +229,7 @@
   align-items: stretch;
   justify-content: center;
   gap: 0;
-  background: rgba(31, 31, 40, 0.92);
+  background: var(--paper, #F7F6F3);
   border-bottom: 1px solid var(--pg-border);
   padding: 0 1.6vw;
   backdrop-filter: blur(0.5vh);
@@ -242,7 +257,7 @@
 
 .pg-section-nav__item:hover {
   opacity: 0.9;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hairline, #D5D4D1);
 }
 .pg-section-nav__item:focus-visible {
   outline: 2px solid var(--pg-accent);

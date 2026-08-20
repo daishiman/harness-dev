@@ -1,0 +1,39 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-codex-plugin-install",
+    "skill_md_sha256": "5f1a1f00267cc5e465ccf15d2e962f10998cd58e727bcb163fb5863e09912f54"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "focused-combined-review-independent",
+  "reviewed_at": "2026-08-20T13:47:08Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "local-allとsingle-local-or-gitの検証routeを分離し、top-level `verified` receiptとCLI実測が一致する。",
+      "同梱installerは共有Runtime root正本で解決したabsolute `$PLUGIN_ROOT` を使い、hook trustをユーザー判断として保持する。",
+      "Purpose/Output、prompt Output Contract、全phase gateが明示されている。",
+      "external-mutationを伴うrun skillはdisable-model-invocation=trueとし、明示的なユーザー呼び出しだけに制限している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:focused-combined-rereview",
+    "next_action": "none"
+  },
+  "notes": "focused combined reviewのC1-C4、IN1/OUT1、rubric high severity 0は維持。追加レビューでexternal-mutation skillの自動呼び出しを無効化し、doc/20 Step 7契約がPASSすることを確認。receipt required fieldsとroute別validationは不変。rubric hash sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
+}

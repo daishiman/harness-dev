@@ -10,7 +10,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  verify:
+  # 全 plugin test-root は governance 検査と独立なため、別 job で同時実行する。
+  # 検査範囲は削らず、待ち時間だけを max(governance, plugin-tests) にする。
+  plugin-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # changed-path priority が shallow-root で全fileを変更扱いしないよう
+          # HEAD と first parent の tree を取得する。優先度取得失敗時も全testは走る。
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run plugin behavior tests (pytest, all test roots)
+        run: |
+          python3 -m pip install --quiet -r requirements-dev.txt
+          python3 scripts/validate-plugin-test-roots.py --workers 4
+
+  governance:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +49,7 @@ jobs:
       # これが無いと tests/ のテストは一度も実行されず保証が無言で腐る (F-HYP-01)。
       # 依存は requirements-dev.txt 一枚を SSOT に install する (per-plugin step と同一)。
       # `pip install pytest` 単体だと PyYAML / jsonschema 不在で frontmatter / schema を
-      # 読むテストが ImportError 相当で落ちる (criteria / company-master / mf-kessai 等)。
+      # 読むテストが ImportError 相当で落ちる (criteria / plugin-dev-planner 等)。
       # repo-root の tests/ は全 plugin を単一プロセスで回すため、同名 bare-import モジュール
       # (notion_config 等) の sys.modules 衝突を tests/conftest.py の pytest_collectstart で
       # 退避して順序非依存にしてある (本番は各 plugin 単独実行なので無害な harness 限定の分離)。
@@ -49,69 +68,6 @@ jobs:
       # LS-215: governance lint scripts 自身の削除済み root (creator-kit) 残存参照を fail-closed 検出
       - name: Lint stale root refs in governance scripts
         run: python3 plugins/skill-governance-lint/scripts/lint-path-canonical.py --scripts-dir plugins/skill-governance-lint/scripts
-
-      # plugin 配下のテストを CI で実行する。repo-root の `pytest tests/` は plugin
-      # 配下を収集しないため、これが無いと plugin の回帰テスト (例: mf-kessai-invoice-check
-      # の 41 件) が一度も走らず無言で腐る。収集対象は固定 glob ではなく
-      # `plugins/**/test_*.py` / `plugins/**/*_test.py` の全ファイル:
-      #   - plugins/<plugin>/tests
-      #   - plugins/<plugin>/skills/<skill>/tests
-      #   - plugins/<plugin>/scripts/tests
-      #   - plugins/<plugin>/hooks/tests
-      #   - plugins/<plugin>/scripts/test_*.py
-      #   - plugins/<plugin>/hooks/*_test.py
-      #   - その他、plugin 配下に co-locate されたテストファイル
-      # tests/ 配下のファイルは tests/ の親ディレクトリへ cd して `pytest tests/...`。
-      # tests/ 外に co-locate されたファイルはそのファイルの親ディレクトリへ cd して
-      # `pytest <file>`。これにより plugin/skill/script/hook それぞれの pytest.ini /
-      # conftest / 相対 import を拾える。dev 依存は requirements-dev.txt 一枚を SSOT に install。
-      - name: Run plugin behavior tests (pytest, per-plugin)
-        run: |
-          python3 -m pip install --quiet -r requirements-dev.txt
-          set -euo pipefail
-          python3 - <<'PY'
-          from __future__ import annotations
-
-          import fnmatch
-          import os
-          import subprocess
-          import sys
-          from collections import defaultdict
-          from pathlib import Path
-
-          root = Path("plugins")
-          groups: dict[Path, list[str]] = defaultdict(list)
-          skip_dirs = {".pytest_cache", "__pycache__", ".git"}
-
-          for dirpath, dirnames, filenames in os.walk(root):
-              dirnames[:] = [d for d in dirnames if d not in skip_dirs]
-              base = Path(dirpath)
-              for filename in filenames:
-                  if not (fnmatch.fnmatch(filename, "test_*.py") or fnmatch.fnmatch(filename, "*_test.py")):
-                      continue
-                  path = base / filename
-                  parts = path.parts
-                  if "tests" in parts:
-                      idx = parts.index("tests")
-                      test_root = Path(*parts[:idx])
-                      test_arg = Path(*parts[idx:]).as_posix()
-                  else:
-                      test_root = path.parent
-                      test_arg = path.name
-                  groups[test_root].append(test_arg)
-
-          if not groups:
-              print("ERROR: no plugin test files discovered under plugins/**/{test_*.py,*_test.py}", file=sys.stderr)
-              raise SystemExit(1)
-
-          for test_root in sorted(groups):
-              args = sorted(set(groups[test_root]))
-              print(f"::group::pytest {test_root}")
-              result = subprocess.run([sys.executable, "-m", "pytest", *args, "-q"], cwd=test_root)
-              print("::endgroup::")
-              if result.returncode != 0:
-                  raise SystemExit(result.returncode)
-          PY
 
       # elegant-review 2026-06-30 (LS-F1 / SS-02 / SS-05 が独立収束): repo 全域の全
       # test_*.py / *_test.py が CI のテスト実行 (上の機構A `pytest tests/` + 機構B plugins/ walk)
@@ -148,6 +104,11 @@ jobs:
           python3 scripts/lint-vendored-ssot.py
           python3 scripts/validate-plugin-packages.py
 
+      - name: Verify all Claude/Codex plugin capability and composition contracts
+        run: |
+          python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all
+          python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml
+
       # 単独 install ポータビリティ不変条件: runtime hook script が import-time に自 plugin
       # 外を fail-closed 依存 (失敗時 raise) しないことを静的検査する。plugin だけを
       # marketplace から install しても全フックが exit 0 を維持する保証を CI でガードする。
@@ -157,16 +118,10 @@ jobs:
       # 文書層ポータビリティ不変条件: marketplace 配布 plugin の README の bash/sh コード
       # フェンス (導入者が素のターミナルへコピペしうるコマンド) に、install 位置依存で壊れる
       # 記法 (裸 $CLAUDE_PLUGIN_ROOT の一次手順 / repo 相対 python3 plugins/<name>/... /
-      # os.environ["CLAUDE_PLUGIN_ROOT"] 添字) が無いことを静的検査する。生ターミナル空展開
-      # 事故 (mf-kessai で発生) の恒久再発防止 + company-master deferred (文書層 repo 相対
-      # コマンド検出 lint) の回収。ローカル make lint (readme-portability) と整合。
+      # os.environ["CLAUDE_PLUGIN_ROOT"] 添字) が無いことを静的検査する。生ターミナル空展開事故と
+      # 文書層 repo 相コマンドの恒久再発防止。ローカル make lint (readme-portability) と整合。
       - name: Verify README plugin-root portability (no raw-terminal empty-expansion)
         run: python3 scripts/lint-readme-plugin-root-portability.py
-
-      # company-master の scripts が外部依存ゼロ (空 vendor が正常) であることを機械検証する。
-      # ローカル make lint (company-master-vendored) と整合。CI 未配線だと保証が無言で腐る。
-      - name: Verify company-master vendored deps (zero external deps)
-        run: python3 scripts/lint-company-master-vendored-deps.py
 
       # knowledge/ (JSON/JSONL 蒸留ストア) と lessons-learned/ (散文失敗ログ) の SSOT 役割分担を
       # fail-closed 検査する。散文レッスンを knowledge/ 直下へ .md で直接置いた混在事故
@@ -307,3 +262,21 @@ jobs:
           python3 plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py \
             --skills-dir plugins/harness-creator/skills 2>&1 || true
           echo "re-evaluate-on-rubric-bump completed (non-blocking)"
+
+  # Branch protection が参照する従来の check 名 `verify` は維持し、
+  # 並列な2 jobのどちらかが失敗・cancelなら fail-closed で赤にする。
+  verify:
+    if: always()
+    needs:
+      - governance
+      - plugin-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require governance and plugin test success
+        env:
+          GOVERNANCE_RESULT: ${{ needs.governance.result }}
+          PLUGIN_TESTS_RESULT: ${{ needs.plugin-tests.result }}
+        run: |
+          echo "governance=$GOVERNANCE_RESULT plugin-tests=$PLUGIN_TESTS_RESULT"
+          test "$GOVERNANCE_RESULT" = success
+          test "$PLUGIN_TESTS_RESULT" = success

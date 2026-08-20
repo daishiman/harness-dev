@@ -490,7 +490,7 @@ plugins/skill-intake/
 │   ├── hook-guard-skillgen.py         # intake 実行中の skill 生成を exit 2 で 100% ブロック
 │   ├── pre-publish-secret-scrub.sh    # 公開前 secret 走査 (exit 2 でブロック)
 │   ├── pre-publish-schema-validate.py # 公開前スキーマ検証
-│   ├── post-publish-notify.sh         # Slack 通知 (任意, silent skip)
+│   ├── post-publish-notify.sh         # scripts/post_publish_notify.py 互換 entry
 │   ├── post-keychain-add.sh           # Keychain 登録直後の検証 (手動)
 │   └── README.md
 ├── scripts/                           # 共有スクリプト (Python 3.9+、vendor/python を自動使用)
@@ -546,7 +546,7 @@ plugins/skill-intake/
 | PreToolUse (Skill\|Task\|Bash) / PostToolUse (Skill) / Stop / SessionEnd | `hook-guard-skillgen.py` | intake 実行中の skill 生成 (`run-skill-create` / `run-build-skill` 等) を exit 2 で 100% ブロック。lock は `run-skill-intake` 開始で作成し、正常終了 / SessionEnd / TTL で解除 |
 | PreToolUse (Bash) | `pre-publish-secret-scrub.sh` | `output/` 配下を走査し Notion PAT / Bearer / 汎用キー混入を検知 (exit 2 でブロック) |
 | PreToolUse (Bash) | `pre-publish-schema-validate.py` | intake/notion-blocks の JSON Schema 検証 |
-| PostToolUse (Bash) | `post-publish-notify.sh` | Notion 公開成功後に Slack webhook 送信（opt-in） |
+| publish pipeline success post-step | `scripts/post_publish_notify.py` | Notion 公開成功 receipt/hint を入力に Slack webhook を1 event 1回だけ送信（opt-in、汎用 Bash hook ではない） |
 
 ### 既存スキルとの差分
 

@@ -1,5 +1,8 @@
 # レイアウト最適化規約（layout-optimizer 手続き知識 SSOT）
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: このファイルは layout-optimizer から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/layout-optimizer.md）の双方がこれを参照する。規則の上位正本 (SR-ID) は spec-registry.md を辿る。
 
 **責務**: スライド内レイアウト最適化のドメイン定義（用語集・評価基準・制約カタログ CONST_001-011）とレイアウト計算規約（横方向のレイアウト計算式・縦方向の残余配分・読み取り用画像の寸法・浮遊UIの置き方・意図的改行の仕様・印刷時の最適化換算表・全コード例）の逐語正本。横方向（文字数→幅→フォントサイズ）と縦方向（面の高さ→ブロック配分）は別系統として両方を規定する。layout-optimizer（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。5.4 実行方式が参照する決定論的計算規約であり、感覚値による直接指定を禁じ（CONST_001）、数式・係数・換算値を SSOT として保持する。
@@ -76,11 +79,14 @@
   - 適用系統: エンジン経路（`slider-*`）。
   - 目的: 高さが揃った群の中でも視線の当たる位置を揃え、空洞と欠落を作らない。
   - 背景: 高さは行で揃うため、中身を上端に寄せるとカード下半分が空洞になる。またレンダラは `image` があると `icon` を省略することがあり、画像付きカードだけ先頭要素が欠けて横並びの律動が崩れる。
-- **CONST_010 (読み取り用画像の寸法と図解面積の除外)**: QR 等の読み取り用画像は面高に対する比で上限寸法を決め（基準は `frame-contract.json` の `stage.height`。`vh` は使わない）、図解面積規約 (`validate-slide-layout.js` の L4) の対象外として扱う。下限値そのものは L4 が持つので、ここには書き写さない。
+- **CONST_010 (読み取り用画像の寸法と図解面積の除外)**: QR 等の読み取り用画像は面高に対する比で上限寸法を決め（基準は `style-builder.cjs` が :root へ出す `--stage-h`。`vh` は使わない）、図解面積規約 (`validate-slide-layout.js` の L4) の対象外として扱う。下限値そのものは L4 が持つので、ここには書き写さない。
   - やさしい要約: QR コードは大きすぎても小さすぎても困るので、面の高さに対する割合で上限を決めます。読み取り用なので「図解の面積が足りない」という指摘の対象からは外します。
   - 適用系統: エンジン経路（`slider-*`）。
   - 目的: 端末で読み取れる下限を満たしつつ、面を占有する過大な QR を避ける。
-  - 背景: QR は読ませる図解ではなく読み取り対象であり、L4 の下限を満たすには面を支配する寸法が必要になる。L4 warning は本規約に従う限り受容し、逸脱理由を評価レポートへ明示する。`vh` を上限に使うと `@media print` で基準が用紙高へ変わり、画面と印刷で寸法が食い違う（CONST_006 違反）。
+  - 背景: QR は読ませる図解ではなく読み取り対象であり、L4 の下限を満たすには面を支配する寸法が必要になる。L4 warning は本規約に従う限り受容し、逸脱理由を評価レポートへ明示する。`vh` を上限に使うと `@media print` で基準が用紙高へ変わり、画面と印刷で寸法が食い違う（CONST_006 違反）。`--stage-h` は画面と印刷の両方で面高に解決する（印刷側は `style-builder.cjs` の `@media print` が 210mm へ入れ直す）ので、媒体ごとの別名トークンは要らない。
+  - 上限比の正本: `frame-contract.json` の `read_image.max_height_ratio`（現在 0.26）。CSS 例に書く `var(--qr-max-ratio, 0.26)` の `0.26` はその写しで、離れたら `lint-contract-drift.py` の `contract-qr-ratio` が落とす。値を変えるときは契約側を先に直す。`--qr-max-ratio` を `:root` へ出す経路は無い（フォールバックで解決させる方式を採ったため、新設しない）。
+  - 検査の範囲: `contract-qr-ratio` はコードフェンス内の CSS だけを見る。フェンス外で `vh` に言及する散文（下の残件記述など）は違反ではない。
+  - 残件: 出荷済み deck で `.qr-img` を持つ 2 本は、本規定が禁じている `vh`（`18vh` / `26vh`）で書かれたまま。deck 側の HTML/CSS は本文書の検査対象外で、2026-08-15 の本番 deck は凍結中のため直さないと判断した（見落としではない）。
 - **CONST_011 (浮遊UIの配置はエンジン既定に従う・動かすなら予約帯を先に広げる)**: ページ送り等の浮遊UIは**エンジンが既に `position: fixed` で右下へ集約している**（`vendor/assets/pagination.css`）。この配置は変更しない。配置変更が必要な場合に限り、先に `style-builder.cjs` の `--pg-reserve-side` / `--pg-reserve-bottom` を移動先の辺（左へ出すなら左右両側）へ拡張し、予約帯を確保してから動かす。
   - やさしい要約: ページ送りボタンの位置は、すでにエンジン側で本文と重ならないよう右下に決まっています。勝手に動かすと本文に重なる事故が起きます。どうしても動かすときは、先に「ここは空けておく」という余白の予約を広げてから動かします。
   - 適用系統: エンジン経路（`slider-*`）。予約帯変数は `style-builder.cjs` が出力する。
@@ -228,7 +234,7 @@ gap     = frame-contract.json の spacing.gap から導出したトークン（-
 充填率  = frame-contract.json の fill_policy（面種別の例外を含む）
 ```
 
-gap に `vh` を使わない。`@media print` で `vh` の基準が用紙高へ変わり、画面と印刷で間隔が食い違う（CONST_006 違反）。印刷を伴う面では `spacing.gap` 由来のトークンを mm / rem / vw へ換算して用いる（換算率は `frame-contract.json` の `print.mm_per_px` / `print.zoom_factor`）。
+gap に `vh` を使わない。`@media print` で `vh` の基準が用紙高へ変わり、画面と印刷で間隔が食い違う（CONST_006 違反）。印刷を伴う面では `spacing.gap` 由来のトークンを mm / rem / vw へ換算して用いる（換算率は `frame-contract.json` の `print_skeleton.mm_per_px` / `print_skeleton.zoom_factor`。節名のとおりひな形経路の版面で、決定論エンジンの印刷は 297x210mm full-bleed の別系統）。
 
 参考実装（エンジン経路）:
 
@@ -307,17 +313,25 @@ row 系（`.slide-compare .compare-container` / `.slide-flow .flow-container`）
 
 内部順序は `icon → title → media → desc` に固定する。レンダラが `image` 指定時に `icon` を落とす場合は、生成後に icon 要素を補って先頭要素を揃える（構造は保つ・CONST_007）。カード見出しと説明は**折り返さない字数**へ収める（折り返すと媒体の縦位置が隣接カードとずれる）。収まらなければ文言を短くするか、当該群のみ `--fs-subheading × 0.94` まで下げる（下限は CONST_003）。
 
-参考実装（CONST_010・上限は面高 `frame-contract.json` の `stage.height` に対する比で置く。`vh` は `@media print` で基準が用紙高へ変わるため使わない）:
+参考実装（CONST_010・上限は面高 `--stage-h` に対する比で置く。`vh` は `@media print` で基準が用紙高へ変わるため使わない）:
+
+<!-- css-route: det-slide -->
+<!-- 直上の CONST_009 と同じくエンジン経路（slider-*）の面に効く。--stage-h は
+     style-builder.cjs が :root へ流すトークンで、手書き経路の :root には無い -->
 
 ```css
-/* 画面用: 面高に対する比。--stage-h は stage.height を持つトークン */
-.grid-cell .qr-img { width: min(100%, calc(var(--stage-h) * var(--qr-max-ratio))); margin: 0.2rem auto; }
-
-@media print {
-  /* 印刷用: 同じ比を mm へ換算して置く（換算率は print.mm_per_px / print.zoom_factor）*/
-  .grid-cell .qr-img { width: min(100%, calc(var(--stage-h-mm) * var(--qr-max-ratio))); }
-}
+/* 画面用・印刷用で同じ 1 行。--stage-h は画面では calc(var(--stage-w) * 9/16)
+   (= 16:9 レターボックス後の面の全高) に、印刷では style-builder.cjs の
+   @media print が入れ直す 210mm に解決するので、媒体ごとに書き分けない。
+   --qr-max-ratio は現状どの経路の :root にも出ていないので、フォールバックで
+   解決させる。この 0.26 は frame-contract.json の read_image.max_height_ratio
+   の写しであり、離れたら lint-contract-drift.py の contract-qr-ratio が落とす
+   (値の正本は契約側 1 箇所のまま)。 */
+.grid-cell .qr-img { width: min(100%, calc(var(--stage-h) * var(--qr-max-ratio, 0.26))); margin: 0.2rem auto; }
 ```
+
+<!-- css-route: hand-slide -->
+<!-- 上の 1 ブロックだけがエンジン経路。ここから先は文書既定の手書き経路へ戻す -->
 
 読み取り用画像を含む面は L4（図解面積の下限割れ）warning が残るが、CONST_010 に従う限り受容し、逸脱理由を評価レポートへ残す（面を支配する QR は不可）。
 
@@ -330,7 +344,6 @@ row 系（`.slide-compare .compare-container` / `.slide-flow .flow-container`）
 .slide-timeline .timeline-item {
   background: rgba(59,125,216,0.06);
   border-radius: 0.6vw;
-  box-shadow: var(--shadow-subtle);
   padding: var(--space-2) var(--space-4);
 }
 ```
@@ -360,12 +373,11 @@ row 系（`.slide-compare .compare-container` / `.slide-flow .flow-container`）
 
 ### 本文フォントの底上げ（縦に余裕が出た面）
 
-内容高ブロック化で余白が増えた面は、本文が相対的に小さく見える。カード説明・リスト説明は**既存トークン `--fs-body-lg`**（`style-builder.cjs` の既定スケール）へ上げてよい（上げても 1 行に収まる範囲・CONST_002 の同一スライド統一を保つ）。新しい倍率を発明しない（`--fs-body` へ任意の係数を掛けると、根拠の無い値が deck ごとに散る）。
+内容高ブロック化で余白が増えた面は、本文が相対的に小さく見える。ここで**新しい倍率を発明しない**（`--fs-body` へ任意の係数を掛けると、根拠の無い値が deck ごとに散る）。
 
-```css
-.slide-grid .grid-cell-desc,
-.slide-list .list-desc { font-size: var(--fs-body-lg); line-height: 1.5; }
-```
+使えるのは**自分が乗っている経路の段だけ**で、段の集合も正本も経路ごとに違う（`references/spec-registry.md` SR-3-03）。ここで挙げた `.grid-cell-desc` / `.list-desc` は `style-builder.cjs` が定義するセレクタなので、対象は決定論 slide 経路になる。その経路の型階層は**天井 1 本と段差 2 種だけの単一系列**で、本文の 1 段上より細かい中間段は持たない。中間段があるつもりで変数名を書くと解決されず、宣言ごと無効になって**上げたつもりで元のサイズのまま**出る。使える段名は正本（`style-builder.cjs`）で確かめる。ここには書かない。
+
+したがって既定は**上げない**。余った縦は余白のまま残す（空白率の正本は `assets/slide-templates/frame-contract.json`）。上げるのは 1 段上までで、それも (a) 1 行に収まり (b) 見出しと同格に見えず階層が保て (c) CONST_002 の同一スライド統一を崩さない、の 3 つを描画で確認できた面に限る。
 
 ## 意図的改行の仕様
 

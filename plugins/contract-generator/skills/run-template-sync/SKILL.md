@@ -36,9 +36,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 「ひな形が変わった」等の明示意図でのみ発火し、作成意図(「契約書を作って」)では発火しない誤発火防止設計が description に純化されていること。
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-template-sync
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 ユーザーが「ひな形が変わった/テンプレートが更新された」と**明示した時のみ**発火する独立スキル。自社のひな形フォルダに置き換えられた `.docx` を `scan_template` で診断し、黄色run/プレースホルダの差分(MISSING=差込位置消失/UNMAPPED=新規プレースホルダ)を検知。`--apply` で `template-mapping.json`・台帳列の更新を促し、`completed` 行に**再生成フラグ**を立てて `未作成` へ差し戻す→次回 `run-contract-generate(--phase draft)` で作り直される。実体は `scripts/sync.py`(共有 `../../lib/scan_template.py` を使用)。
@@ -76,7 +85,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 ひな形差分解消を多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-template-sync-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-template-sync-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-template-sync
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-template-sync
 # → eval-log/run-template-sync-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -91,7 +100,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-template-sync
 - `scan_template --type {individual,corporate}` が exit 0(整合)/5(drift)
 - `--apply` 後、対象 `completed` 行が `未作成`+再生成フラグ◯ になっている
 - `--dry-run` で台帳書込を抑止可能
-- 実装: `scripts/sync.py`(集約診断 + `--apply` 時の台帳差し戻し entrypoint) / `$CLAUDE_PLUGIN_ROOT/lib/scan_template.py`(個別ひな形の drift 判定)
+- 実装: `scripts/sync.py`(集約診断 + `--apply` 時の台帳差し戻し entrypoint) / `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/scan_template.py`(個別ひな形の drift 判定)
 
 ## Gotchas
 - `read_file_content`(MCP)ではハイライト属性が取れない。黄色run確認は `scan_template`(標準ライブラリ `docx_lib`)で行う。

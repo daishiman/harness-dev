@@ -81,7 +81,7 @@
     ],
     "what_actually_changed": "クラスではなく発火率が変わった。per-section IMG 必須化で HTML が節数に比例して伸びるため、fail_closed_scope (c) の打ち切り (exit0 + systemMessage) が例外から常態へ動く。R25 が本 hook に与えた実質的な影響はこの 1 点に集約され、対処は budget_thresholds で予算の正本を config へ置くことに尽きる"
   },
-  "settings_registration":"inventory の settings_wiring: settings.json に従い、導入環境の settings.json (project の .claude/settings.json または user の ~/.claude/settings.json) の hooks.PostToolUse へ登録する。エントリは {\"matcher\": \"Write|Edit\", \"hooks\": [{\"type\": \"command\", \"command\": \"python3 \\\"${HB_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\\\"\", \"timeout\": 10}]}。パスは index.md の実行時可搬性方針 (HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest name 照合 / __file__ 相対の自己解決フォールバック) に従い、どちらの env も効かない .claude/ 平置き projection では hook 本体が Path(__file__).resolve().parent.parent で自己解決する。repo 内には他に 2 つの登録面が実在する (plugins/dev-graph/hooks/hooks.json 方式と、plugins/slide-report-generator/.claude-plugin/plugin.json の hooks キー方式)。dev-graph の hooks.json が冒頭 description で『project settings fallback を同時に有効化してはならない』と明示しているとおり、settings.json 登録と plugin 同梱登録を同時に有効化すると 1 回の書込で 2 回発火するため、本 component はどちらか一方のみとし、settings.json 側を正本とする",
+  "settings_registration": "Claude/Codex 共通の配布正本を plugin root hooks/hooks.json とし、両 product manifest の hooks から ./hooks/hooks.json を参照する。PostToolUse の matcher は Write|Edit、command は dual-root の PLUGIN_ROOT / CLAUDE_PLUGIN_ROOT から guard-handout-external-ref.py を解決し、timeout は10秒とする。hook 本体は root env がない単体起動でも Path(__file__).resolve().parent.parent で自己解決する。plugin delivery と project/user settings の両方に登録すると1回の書込で2回発火するため、.claude/settings.json へは投影せず hooks/hooks.json の1登録に一本化する",
   "requirements_covered": [
     "R01 (外部依存ゼロの単一 HTML) の運用時防御",
     "R08 (絵文字ゼロ・アイコン規約) のうち絵文字混入の水際検出"
@@ -119,7 +119,7 @@
   "failure_modes": [
     "適用範囲を宣言せず導入環境の全 .html を検査してしまい、外部 URL を含む無関係な文書で作業が止まる → マーカー 2 条件 (日付接頭ディレクトリ + 同階層 handout-config.json) の同時成立を必須にする",
     "hook 内で重い解析 (DOM 構築・全 SVG 集計・chromium 起動) を行い、書込のたびに待ちが発生する → 検出規則を行単位 1 パスの D1 / D2 に限定し、それ以外は C16 へ委ねる",
-    "settings.json と plugin 同梱 hooks の二重登録で 1 回の書込に 2 回発火する → 登録面を settings.json に一本化し、同梱側には登録を置かない",
+    "plugin delivery と settings.json の二重登録で1回の書込に2回発火する → 配布正本を plugin root hooks/hooks.json に一本化し、project settings には投影しない",
     "PostToolUse の exit2 を『書込を取り消せる』と誤解した設計にする → 取り消しは起きない。fail-closed は違反の可視化と後段停止の担保であることを実装コメントにも残す",
     "ペイロード形式の差異 (filePath / path) を吸収せず一部の書込を取りこぼす → 3 キーのフォールバックを実装する",
     "検査の打ち切りを exit0 かつ無出力で行い、合格と区別できなくなる → 打ち切り時は必ず systemMessage を出す"

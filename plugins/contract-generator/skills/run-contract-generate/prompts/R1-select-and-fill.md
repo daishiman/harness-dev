@@ -5,7 +5,7 @@ kind: prompt
 layers_covered: [L1, L2, L3, L4, L5, L6, L7]
 source: self (SSOT)
 output_schema: N/A (完了レポートは Markdown。差込結果は engine が台帳へ書込)
-context_fork: true (理由: 量産時に案件単位で親contextを汚さず並列実行。ただし欠損補完のAskUserQuestionは親へ委譲)
+context_fork: true (理由: 量産時に案件単位で親contextを汚さず並列実行。欠損は needs-input として親へ返す)
 reproducible: true (同一台帳行・同一ひな形→同一Docs。日付のみ実行日)
 ---
 
@@ -61,8 +61,8 @@ reproducible: true (同一台帳行・同一ひな形→同一Docs。日付の�
 | scan | `../../../lib/scan_template.py` | drift 診断(run-template-sync が使用) |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase draft --type <t> [--row N] [--dry-run]`(エントリ。実体は `lib/engine.py`、等価 shim: `scripts/draft.py`)。
-- `AskUserQuestion`(欠損必須列の補完のみ、機微情報は復唱禁止)。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase draft --type <t> [--row N] [--dry-run]`(エントリ。実体は `lib/engine.py`、等価 shim: `scripts/draft.py`)。
+- 欠損必須列は `needs-input` として行番号・列名だけを返し、管理台帳SSOTの修正後に再実行する。機微情報を応答へ複製しない。
 
 ## Layer 4: 共通ポリシー層
 
@@ -141,7 +141,7 @@ reproducible: true (同一台帳行・同一ひな形→同一Docs。日付の�
 
 ## 起動テンプレ
 
-> 「`--type {individual|corporate|all}` で draft フェーズを実行。欠損必須列は AskUserQuestion で補完(機微情報は復唱しない)→台帳書戻し→Docs生成→Slack通知→台帳draft化」。
+> 「`--type {individual|corporate|all}` で draft フェーズを実行。欠損必須列は needs-input で停止し、管理台帳SSOTの修正後に再実行→Docs生成→Slack通知→台帳draft化」。
 
 ## 出力指示 (LLM 実行時に読む箇所)
 
@@ -149,6 +149,6 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 
 入力 `--type {{type}}`(任意 `--row {{row}}`)で draft フェーズを実行する。Layer 5 の達成ゴール(対象行が黄色維持 Docs として生成・Slack通知・台帳 draft 化された状態)と完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する(固定手順なし、上限: L4 最大反復回数=3)。
 
-利用可能な手段: `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase draft --type {{type}} [--row N] [--dry-run]`(等価 shim: `scripts/draft.py`。対象行抽出・差込・Docs生成・Slack通知・台帳書戻し) / `AskUserQuestion`(欠損必須列の補完、機微情報は復唱禁止)。drift(未置換`●`/`XXXX`)検出時は停止し run-template-sync と `template-change-runbook.md` へ誘導(条文改変禁止)。
+利用可能な手段: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase draft --type {{type}} [--row N] [--dry-run]`(等価 shim: `scripts/draft.py`。対象行抽出・差込・Docs生成・Slack通知・台帳書戻し)。欠損は `needs-input` で停止し、ユーザーによる管理台帳SSOT修正後に再実行する。drift(未置換`●`/`XXXX`)検出時は停止し run-template-sync と `template-change-runbook.md` へ誘導(条文改変禁止)。
 
 出力は完了レポート(Markdown)のみ。各行 `row{N}: {status} {ファイル名}` と Docs URL を列挙。前置き・思考過程の出力は禁止。

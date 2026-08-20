@@ -23,6 +23,47 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { dirname, join, basename } from 'path';
 import { parseArgs, hasFlag, EXIT_CODES, VALID_SLIDE_TYPES, isValidSlideType } from './utils.js';
+// 配色の正本は style-builder の SPEC.colors だけにする。ここに色値を書くと、
+// render-slide 経路と scaffold 経路で別々の配色が育ち、どちらも「動く」ので気付けない。
+import styleBuilder from './style-builder.cjs';
+
+const { SPEC } = styleBuilder;
+
+/**
+ * 角丸 (VGCONST_003: 面は 0px・図版のみ 2px) を style-builder が実際に出す CSS から
+ * 実行時に採る。ここへ値を書き写すと正本が 2 つになり、片方だけ直しても骨格は
+ * 出力できてしまう。採れないときは即座に落とす。
+ */
+const RADIUS = (() => {
+  const css = styleBuilder.buildStyles();
+  const pick = (name) => {
+    const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+    if (!m) throw new Error(`style-builder の出力に --${name} が無い (角丸の正本が動いた)`);
+    return m[1].trim();
+  };
+  return { surface: pick('radius'), figure: pick('radius-figure') };
+})();
+
+/**
+ * Before/After の比率 (SR-4-03: 48% / 4% / 48%) を style-builder が実際に出す CSS
+ * から実行時に採る。RADIUS と同じ理由で、ここへ 48% / 4% を書き写すと同じ規則に
+ * 対する定義点が 2 つできる。決定論経路だけ直しても骨格経路は古い比率で出力できて
+ * しまい、しかも見た目にしか出ないので誰も気付けない。採れないときは即座に落とす。
+ *
+ * 決定論経路の class 名は .compare-panel、骨格経路は .compare-item で異なるが、
+ * 規則が定めているのは比率であって class 名ではないので値だけを借りる。
+ */
+const COMPARE = (() => {
+  const css = styleBuilder.buildStyles();
+  const pick = (selector, prop) => {
+    const block = css.match(new RegExp('\\' + selector + '\\s*\\{[^}]*\\}'));
+    if (!block) throw new Error(`style-builder の出力に ${selector} が無い (Before/After 比率の正本が動いた)`);
+    const m = block[0].match(new RegExp(prop + ':\\s*([^;}]+)'));
+    if (!m) throw new Error(`style-builder の ${selector} に ${prop} が無い (Before/After 比率の正本が動いた)`);
+    return m[1].trim();
+  };
+  return { gap: pick('.compare-container', 'gap'), panel: pick('.compare-panel', 'width') };
+})();
 
 // コマンドライン引数
 const { flags, positional } = parseArgs();
@@ -282,24 +323,42 @@ function generateFullHtml(data) {
   <!-- GSAP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"><\/script>
   <style>
-    /* ===== Kanagawa CSS Variables ===== */
+    /* ===== CSS Variables (値の出どころは style-builder の SPEC.colors) ===== */
     :root {
-      /* Light Theme */
-      --bg-dark: #FFFFFF;
-      --bg-dim: #F5F5F5;
-      --bg-highlight: #EBEBEB;
-      --bg-card: #F0F0F0;
-      --sumi-ink: #FAFAFA;
-      --fg: #2D2D2D;
-      --fg-dim: #555555;
-      --fg-muted: #888888;
-      /* Accent Colors */
-      --wave-blue: #7E9CD8;
-      --spring-violet: #9CABCA;
-      --sakura-pink: #D27E99;
-      --wave-aqua: #7AA89F;
-      --autumn-yellow: #DCA561;
-      --fuji-gray: #54546D;
+      /* §2 インク・オン・ペーパー (VGCONST_001)。面に出る色はこの 3 値だけ */
+      --paper: ${SPEC.colors.paper};
+      --ink: ${SPEC.colors.ink};
+      --paper-on-ink: ${SPEC.colors.paper};
+      --fg-muted: ${SPEC.colors.inkMuted};
+      --hairline: ${SPEC.colors.hairline};
+      /* 地・面・文字の別名。render-slide の styles.css と同じ名前で同じ値を指す */
+      --bg-dark: var(--paper);
+      --bg-dim: var(--paper);
+      --bg-highlight: var(--paper);
+      --bg-card: var(--paper);
+      --sumi-ink: var(--paper);
+      --fg: var(--ink);
+      /* --fg-dim は値を持たない後方互換の別名。この濃度に値を代入しているのは
+         上の --fg-muted 1 行だけで、本ファイルの CSS 規則はそちらを直接参照する。
+         生成済み HTML が古い名前を持つ可能性のためだけに残してある。
+         新しい記述でこの名前を使わないこと。増える区別は 1 つも無い。 */
+      --fg-dim: var(--fg-muted);
+      /* §2 濃度段 (VGCONST_002)。図解の内部でだけ使う単一色相 3 段 */
+      --tone-1: ${SPEC.colors.tone1};
+      --tone-2: ${SPEC.colors.tone2};
+      --tone-3: ${SPEC.colors.tone3};
+      /* 角丸 (VGCONST_003)。面は 0、図版のみ 2px。値は style-builder の出力から採る */
+      --radius: ${RADIUS.surface};
+      --radius-figure: ${RADIUS.figure};
+      /* 旧色相名の別名。生成済み HTML がこの名前で参照しているので名前は残すが、
+         色相へ意味を割り当てる運用は廃した (強調は地の反転で作る)。
+         --spring-violet と --fuji-gray はここから落とした。前者は --wave-blue と、
+         後者は --fg-dim と同じ値を指す別名で、名前が 2 つある状態そのものが
+         「区別がある」という誤った主張になっていた。参照側も同じ便で寄せてある。 */
+      --wave-blue: var(--tone-3);
+      --sakura-pink: var(--ink);
+      --wave-aqua: var(--tone-2);
+      --autumn-yellow: var(--tone-1);
       /* Layout */
       --slide-max-width: 1920px;
       --slide-max-height: 1080px;
@@ -408,20 +467,22 @@ function generateFullHtml(data) {
     .slide-title { text-align: center; }
     .slide-icon { font-size: 4rem; color: var(--wave-blue); margin-bottom: 1rem; display: block; }
 
-    .compare-container { display: flex; gap: 2rem; justify-content: center; }
-    .compare-item { flex: 1; padding: 2rem; background: var(--bg-dim); border-radius: 1rem; }
+    /* SR-4-03 の 48%/4%/48%。gap を絶対長 (2rem) にすると比率が画面幅で変わる。
+       justify-content:center は幅を持つ子には効かないので置かない。 */
+    .compare-container { display: flex; gap: ${COMPARE.gap}; width: 100%; }
+    .compare-item { width: ${COMPARE.panel}; flex: none; padding: 2rem; background: var(--bg-dim); border-radius: var(--radius); }
 
     .flow-container { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-    .flow-step { padding: 1.5rem 2rem; background: var(--bg-dim); border-radius: 0.5rem; text-align: center; }
+    .flow-step { padding: 1.5rem 2rem; background: var(--bg-dim); border-radius: var(--radius); text-align: center; }
     .flow-arrow { font-size: 2rem; color: var(--wave-blue); }
 
     .stats-container { display: flex; gap: 3rem; justify-content: center; }
     .stat-item { text-align: center; }
     .stat-value { display: block; font-size: 4rem; font-weight: bold; color: var(--wave-blue); }
-    .stat-label { font-size: var(--fs-body); color: var(--fg-dim); }
+    .stat-label { font-size: var(--fs-body); color: var(--fg-muted); }
 
     .point-cards-container { display: flex; gap: 2rem; justify-content: center; }
-    .point-card { flex: 1; padding: 2rem; background: var(--bg-dim); border-radius: 1rem; text-align: center; }
+    .point-card { flex: 1; padding: 2rem; background: var(--bg-dim); border-radius: var(--radius); text-align: center; }
     .card-icon { font-size: 2.5rem; color: var(--wave-blue); margin-bottom: 1rem; }
 
     /* ===== Print Styles ===== */

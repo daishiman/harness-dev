@@ -347,19 +347,19 @@ def test_specfm_evaluator_high_max_upstream_prose_only():
 def test_completeness_proof_parser_excludes_header():
     """表ヘッダ 'skill' / 区切り '---' を除外し、注記サフィックス付き名は先頭 token を抽出する回帰固定。"""
     sample = (
-        "### skills/ 全 31 本\n"
+        "### skills/ 全 4 本\n"
         "| skill | ラベル | 根拠 |\n"
         "|---|---|---|\n"
         "| run-build-skill | 反映済 C4 | build |\n"
         "| ref-pkg-contract | 反映済 F5 | PKG |\n"
         "| ref-output-routing (31章) | 意図的除外 | routing |\n"  # 注記サフィックス
-        "| run-contract-finalize (symlink→contract-generator) | 意図的除外 | x |\n"
+        "| run-codex-plugin-package | 含意済 F3/F5/F8 | Codex package |\n"
         "### 設計書 関連章\n"
         "| run-should-not-appear | x | y |\n"  # 次セクションは対象外
     )
     names = _completeness_proof_skill_names(sample)
     assert names == {
-        "run-build-skill", "ref-pkg-contract", "ref-output-routing", "run-contract-finalize",
+        "run-build-skill", "ref-pkg-contract", "ref-output-routing", "run-codex-plugin-package",
     }
 
 

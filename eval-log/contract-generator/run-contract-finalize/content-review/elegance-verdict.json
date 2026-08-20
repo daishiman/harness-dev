@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "536193fded4d18440c7f2d525a2ce3a0ef00565933d559075150f28ba9c8fbc8"
+    "skill_md_sha256": "412aee32c20dda651a4855f9c93e1a37a841de1e23bcb66238496ccc2f81e0bd"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "run-elegant-review-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,15 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1/OUT1 は ledger._PHASE_STATUS_FILTER(finalize={draft,approved}) と engine._handle_finalize を確認し、Claude Codeで明示実行した行だけをpull型でcompleted化し、Slack反応は任意pollであって発火条件ではない契約がSKILL/prompt/agent/scriptで一致する。",
-      "IN2 は clean docxからPDF生成、PDF_URL+completed書戻し、completed行の再選択防止をengine/ledgerで確認した。contract-generator 6段チェックは全通過し、外部設定不在時のtemplate scan skipは明示された環境依存で設計欠陥ではない。",
-      "owner一般化は実行契約を変えず、Slack/Drive資格情報は関連promptとtenant_runtime経由のtenant別service解決に統一されている。4条件に未解決findingはない。"
+      "IN1/OUT1 の中核である『発火条件は Claude Code 実行のみ・Slack ✅/OK は発火条件でない (pull 型)』が description・Purpose & Output Contract・境界・主要ルール・検証・Gotchas の 6 箇所で同一に述べられ、任意経路 `--phase poll` は常に『後方互換・既定経路ではない』と併記されていて矛盾がない。",
+      "IN2 の冪等性と黄色除去のみ (条文非改変) が主要ルールと検証節に対応し、`--dry-run` による副作用抑止が完了チェックリストと運用節の双方から到達できる。",
+      "実行行 (L75 checklist / L89 fence / L115 実装参照 / L137-138 運用) がすべて `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の dual-root 形で、`## Runtime root contract` の宣言と乖離がない。cron 例だけは host env が無い文脈のため `find` による自動検出を指示しており、『literal placeholder を shell へ渡さない』契約と整合する。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "既存結論を参照せずSKILL、R1 prompt、agent、finalize.py、engine.py、ledger.pyを再読し、30思考法を全件使用（skip 0）。一般化差分を含む現SHAで独立評価した。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。"
 }

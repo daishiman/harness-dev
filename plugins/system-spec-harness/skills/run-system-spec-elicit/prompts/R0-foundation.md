@@ -80,7 +80,7 @@
 - 上位概念が確定 (U1-U3 非空 + ユーザー合意) するまで往復。各周回で未確定要素を最小化する。
 
 ### 4.3 観測
-- 確定後に `$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py --matrix spec-state.json --require-foundation` で U1-U5 非空・serves_goals トレースを検証 (anti-drift)。
+- 確定後に `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py --matrix spec-state.json --require-foundation` で U1-U5 非空・serves_goals トレースを検証 (anti-drift)。
 
 ### 4.4 セキュリティ
 - 秘匿情報を requirements_foundation に格納しない。

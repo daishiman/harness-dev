@@ -25,9 +25,9 @@
 - **CONST_001 (D3 v7 使用)**: D3.js は CDN 経由で v7 を使用する。独自バンドルや他バージョンは指定しない。
   - 目的: html-generator の `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/d3-integration.md` 実装と API シグネチャを一致させ、描画エラーを防ぐ。
   - 背景: コンポーネント API は D3 メジャーバージョン間で非互換があり、バージョン混在は実行時失敗を招くため。
-- **CONST_002 (Kanagawa 配色)**: 配色は Kanagawa テーマカラー定義に準拠する。任意の色指定をしない。
+- **CONST_002 (配色は共有定義準拠)**: 配色は style genome の palette 定義と一致させる。任意の色指定をせず、系列ごとに色相を配って区別しない（区別は線幅と、図解内に限り許される濃度段で作る）。
   - 目的: デッキ全体の視覚的統一を保ち、図解だけが浮く事態を防ぐ。
-  - 背景: `validate-d3.js` がテーマ色の一貫性を検証し、`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/d3-integration.md` がテーマ配色を正本として定義しているため。
+  - 背景: `validate-d3.js` がテーマ色の一貫性を検証する。色数・アクセントの正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` §1（VGCONST_001 / VGCONST_002）、線幅は VGCONST_004。
 - **CONST_003 (レスポンシブ)**: SVG は `viewBox` と `preserveAspectRatio` を指定し、固定 px 寸法に依存しない。
   - 目的: 16:9 厳守のスライド枠内で図解が崩れず拡縮することを保証する。
   - 背景: スライドは画面・印刷の双方で表示され、固定寸法ははみ出し・余白を生むため。

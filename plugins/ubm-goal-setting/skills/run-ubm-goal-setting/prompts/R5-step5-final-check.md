@@ -74,7 +74,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| data-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data 全フィールドの充足を確認するとき |
+| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data 全フィールドの充足を確認するとき |
 | 合宿データ | past_summary 内 (info-collector 生成・coordinator 経由で受領) | 合宿整合性チェックを行うとき |
 
 ### 3.2 外部ツール / API

@@ -85,10 +85,10 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| output-formats | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/output-formats.md` | チェックリスト形式の徹底ルールを確認するとき |
-| action-goals-best-practices | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md` | 行動目標の品質基準を照合するとき |
-| data-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| selection-focus-goal-frame | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 支出を伴う行動にポジティブ事故ゲート (§4) を適用するとき / 運用カレンダー (§6・4月10月総会=東京固定、組織勉強会=東京固定、1日かけて決める日、2027年1月 大阪アカデミー開校) で期日を設計するとき |
+| output-formats | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/output-formats.md` | チェックリスト形式の徹底ルールを確認するとき |
+| action-goals-best-practices | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md` | 行動目標の品質基準を照合するとき |
+| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| selection-focus-goal-frame | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 支出を伴う行動にポジティブ事故ゲート (§4) を適用するとき / 運用カレンダー (§6・4月10月総会=東京固定、組織勉強会=東京固定、1日かけて決める日、2027年1月 大阪アカデミー開校) で期日を設計するとき |
 
 ### 3.2 外部ツール / API
 - なし (対話と受領済みデータのみ)。

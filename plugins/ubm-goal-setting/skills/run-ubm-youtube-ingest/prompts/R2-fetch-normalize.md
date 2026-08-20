@@ -56,8 +56,8 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| provider-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-youtube-ingest/references/provider-adapter-contract.md` | 取得 I/F と typed error を確認するとき |
-| normalizer | `$CLAUDE_PLUGIN_ROOT/agents/youtube-transcript-normalizer.md` | 正規化ソースの provenance 契約を確認するとき |
+| provider-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-youtube-ingest/references/provider-adapter-contract.md` | 取得 I/F と typed error を確認するとき |
+| normalizer | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/youtube-transcript-normalizer.md` | 正規化ソースの provenance 契約を確認するとき |
 
 ### 3.2 外部ツール / API
 - `scripts/youtube_provider.py` (provider 中立 adapter・実 provider は late-bind)。

@@ -46,7 +46,7 @@
 - **RQCONST_005 (reportType 骨格順守)**: 確定 reportType の必須 role を sections[] に網羅し、論理順序（背景→結論 / 前提→手順 / 問い→まとめ）を崩さない。骨格節を省く場合は省略理由を明示する（無言の省略はしない）。
   - 目的: 読者が文脈（背景・前提）を得た上で結論・手順へ到達できるようにする。
   - 背景: report-types §5「順序保持は絶対」。骨格欠落は上流起因として report-structure-designer へ差し戻す。
-- **RQCONST_006 (意匠維持ライン)**: 本文最小 1.4rem・Kanagawa 配色（純黒/純白回避）・印刷 CSS・退化耐性（逐語を画像に焼かない）を維持する。配色・フォント・印刷 CSS は共有 SSOT から適用し report 独自に発明しない。
+- **RQCONST_006 (意匠維持ライン)**: 本文最小 1.4rem・style genome の palette 定義と一致する配色（純黒/純白回避）・印刷 CSS・退化耐性（逐語を画像に焼かない）を維持する。配色・フォント・印刷 CSS は共有 SSOT から適用し report 独自に発明しない。
   - 目的: slide/report の意匠を単一 SSOT に保ち、可読性下限と退化耐性を両モードで共通化する。
   - 背景: report-writing-rules §3 維持ライン。緩和するのはコンテンツ意図層のみ、意匠/技術層は共有（build-contract §D）。
 - **RQCONST_007 (構造同期)**: report.html は report-structure.json の忠実な射影で過不足ゼロにする。勝手に節を増減しない。
@@ -70,7 +70,7 @@
 
 - [ ] 本文最小 1.4rem 以上（read-through でも割らない・RQCONST_006）
 - [ ] WCAG AA（コントラスト比 4.5:1 以上）を満たす
-- [ ] Kanagawa 配色で純黒（#000000）・純白（#FFFFFF）を本文に使っていない
+- [ ] 配色が style genome の palette 定義と一致し、純黒（#000000）・純白（#FFFFFF）を本文に使っていない
 - [ ] 配色・フォント・印刷 CSS を共有 SSOT から適用し report 独自発明がない（RQCONST_006）
 - [ ] コード・数値・料金・精密表を画像に焼かず本文（markdown 表/コードブロック）で持つ（退化耐性）
 
@@ -145,7 +145,7 @@
 | # | 検証項目 | 基準（検証可能条件） | 検出方法 |
 |---|---------|------|----------|
 | RQ17 | 最小フォント | 本文相当テキストが 1.4rem 以上（read-through でも割らない） | `grep "font-size:[0-9.]*rem"` で 1.4rem 未満を検出（機械） |
-| RQ18 | コントラスト | WCAG AA（4.5:1）以上、Kanagawa 配色で純黒/純白を本文に使わない | 前景背景の色差を確認、`#000000`/`#FFFFFF` の本文使用を検出（機械＋意味） |
+| RQ18 | コントラスト | WCAG AA（4.5:1）以上、配色は style genome の palette 定義と一致し純黒/純白を本文に使わない | 前景背景の色差を確認、`#000000`/`#FFFFFF` の本文使用を検出（機械＋意味） |
 | RQ19 | 意匠共有 | 配色・フォント・印刷 CSS を共有 SSOT から適用し report 独自発明がない | 意匠トークンが共有 SSOT 由来か確認（意味） |
 | RQ20 | 構造同期 | report.html が report-structure.json の忠実な射影で過不足ゼロ（勝手な節の増減なし） | sections 数と各 section 内容を report.html と照合（機械） |
 
@@ -270,6 +270,6 @@
 | 問題 | 原因 | 対処法 |
 |------|------|--------|
 | 本文が 1.4rem 未満 | 直書き小サイズ | CSS 変数で 1.4rem 以上へ |
-| 純白テキストが眩しい | #FFFFFF 使用 | --fg（Kanagawa 淡色）へ |
+| 純白テキストが眩しい | #FFFFFF 使用 | --fg（style genome palette の前景トークン）へ |
 | 独自配色を発明 | 意匠 SSOT 非共有 | 共有トークンへ差し替え（RQCONST_006） |
 | report.html が構造と不一致 | 勝手な節の増減 | report-structure.json を正に是正（差し戻し） |

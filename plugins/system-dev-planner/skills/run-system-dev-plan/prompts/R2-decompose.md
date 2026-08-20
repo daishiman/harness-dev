@@ -53,9 +53,9 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| workstream schema | `$CLAUDE_PLUGIN_ROOT/schemas/workstream-inventory.schema.json` | `workstream_kind`/`build_target_kind` enum 正本 |
-| schema design | `$CLAUDE_PLUGIN_ROOT/references/workstream-inventory-schema-design.md` | 2軸設計・分岐ルール・component_kind 混同防止規約 |
-| package contract | `$CLAUDE_PLUGIN_ROOT/references/feature-execution-package-contract.md` | 1 feature 粒度・13 phase 写像・follow-up feature 規約 |
+| workstream schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/workstream-inventory.schema.json` | `workstream_kind`/`build_target_kind` enum 正本 |
+| schema design | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/workstream-inventory-schema-design.md` | 2軸設計・分岐ルール・component_kind 混同防止規約 |
+| package contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/feature-execution-package-contract.md` | 1 feature 粒度・13 phase 写像・follow-up feature 規約 |
 
 ### 3.2 外部ツール / API
 - R2 は成果ファイルを emit せず script を起動しない (emit と決定論検証は R3 / C12 の責務)。

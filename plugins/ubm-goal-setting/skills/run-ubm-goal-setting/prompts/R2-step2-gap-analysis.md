@@ -62,7 +62,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | ナレッジサマリー | past_summary 内 (info-collector 生成・coordinator 経由で受領) | 原因パターン照合・深掘りの引用に使うとき |
-| data-contract | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
 
 ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):
 - **上位概念 (翻訳済み)**: ユーザーのフェーズ・業種に翻訳済みの原則 → 原因パターンとの照合に使用。

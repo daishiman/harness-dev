@@ -18,6 +18,9 @@ since: 2026-07-05
 last-audited: 2026-07-05
 ---
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 | responsibility | R3-agent-layout-optimizer |
 | owner_agent | layout-optimizer |
 
@@ -181,9 +184,9 @@ last-audited: 2026-07-05
 ## 5.5 知識ベース (適用リソースとレイアウト計算規約)
 | 参考文献 | 適用方法 |
 |---------|---------|
-| [references/layout-visual.md](../references/layout-visual.md)（Section 10-12） | カード幅・余白・図解比率のガイドラインを計算式の係数・上下限値の根拠として参照する |
-| [references/slide-components.md](../references/slide-components.md) | スライドタイプ別のセレクタ構造（`.list-item` / `.flow-step` / `.compare-item`）とデフォルト CSS を最適化対象の特定に使う |
-| [references/print-layout.md](../references/print-layout.md) | 画面用 rem から印刷用 pt への換算と `@media print` の指定方針に使う |
+| [references/layout-visual.md](../../../references/layout-visual.md)（Section 10-12） | カード幅・余白・図解比率のガイドラインを計算式の係数・上下限値の根拠として参照する |
+| [references/slide-components.md](../../../references/slide-components.md) | スライドタイプ別のセレクタ構造（`.list-item` / `.flow-step` / `.compare-item`）とデフォルト CSS を最適化対象の特定に使う |
+| [references/print-layout.md](../../../references/print-layout.md) | 画面用 rem から印刷用 pt への換算と `@media print` の指定方針に使う |
 | assets/slide-templates/frame-contract.json（使い方は同ディレクトリ README.md） | 面の余白率・充填率の唯一の正本。**まず面がどちらの系統か（決定論経路の `slider-*` / ページひな形の `data-slide-skeleton`）を判別する**のが実行手順の第一手。`fill_policy`（`target_stage_fill_ratio` / `min_stage_fill_ratio` / `max_stage_fill_ratio` / 面種別 `exceptions`）と `vertical_margin_policy`（`min_outer_margin_ratio` / `max_outer_margin_ratio` / `max_symmetry_delta` / `max_proximity_gap_ratio`）は**両系統に共通の契約**として適用する。canvas・chrome・stage・間隔・書体の寸法値は `data-slide-skeleton` 系の面に適用する。補正値はこの契約の値域（`typography.min` を下限、`fill_policy` のレンジ、4px グリッド）内で提案し、独自値を作らない。下限でなお収まらないときは縮小でなく面を割る／項目を減らすを指針にする |
 | タイポグラフィの全角/半角字幅特性 | 全角0.9・半角0.5 の字幅係数を文字数→必要幅の換算に使う |
 

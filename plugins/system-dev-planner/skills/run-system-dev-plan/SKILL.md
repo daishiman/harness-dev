@@ -62,21 +62,30 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       loop_scope: outer
       text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion され二回目実行で構造が変化しないことを受入テストが確認する"
       verify_by: live-trial
+runtime_root_policy: host-skill-path
 ---
 
 # System development planning
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
 ## Invariants
 
-- caller repository の解決と全 path 検査は `$CLAUDE_PLUGIN_ROOT/scripts/resolve-project-context.py` に一元化する。`$CLAUDE_PLUGIN_ROOT` は code/assets の位置決めだけに使い、caller の文書・状態の authority にはしない。
+- caller repository の解決と全 path 検査は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` に一元化する。`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` は code/assets の位置決めだけに使い、caller の文書・状態の authority にはしない。
 - 1 run は1 `parent_feature` のみを扱い、P01..P13 各1件の exact 13 executable tasks を生成する。別の13 phase 文書と14件目は生成しない。
 - C08 readiness、C14 handoff producer、C12 deterministic validation、fork evaluator C1..C4、canonical digest が全て一致するまで publish しない。
-- staging lock は C13 `$CLAUDE_PLUGIN_ROOT/scripts/manage-system-plan-lock.py` だけが生成・更新・解放する。`repository_id/run_id/session_owner/feature_id/feature_digest/acquired_at/heartbeat_at/expires_at` を束縛し、開始時に `acquire`、各動的計画反復に `renew`、成否にかかわらず終了処理で `release` を実行する。他 component は lock JSON を直接作成・書換・削除しない。
-- `$CLAUDE_PLUGIN_ROOT/hooks/guard-implementation-readiness.py` は run 識別 env に依存せず repository-local canonical lock を自己発見し、malformed same-repository lock を fail-closed 拒否し、`expires_at` 超過 lock は C13 と同じ audit receipt 規則で cleanup する。
+- staging lock は C13 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/manage-system-plan-lock.py` だけが生成・更新・解放する。`repository_id/run_id/session_owner/feature_id/feature_digest/acquired_at/heartbeat_at/expires_at` を束縛し、開始時に `acquire`、各動的計画反復に `renew`、成否にかかわらず終了処理で `release` を実行する。他 component は lock JSON を直接作成・書換・削除しない。
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-implementation-readiness.py` は run 識別 env に依存せず repository-local canonical lock を自己発見し、malformed same-repository lock を fail-closed 拒否し、`expires_at` 超過 lock は C13 と同じ audit receipt 規則で cleanup する。
 
 ## `init`
 
-`python3 "$CLAUDE_PLUGIN_ROOT/scripts/init-project-layout.py" --repo-root "$CLAUDE_PROJECT_DIR"`
+`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/init-project-layout.py" --repo-root "$CLAUDE_PROJECT_DIR"`
 
 missing config keys/directories だけを作成し、既存値・docs/specs/tasks/issues を上書きしない。receipt と repository_id 導出元を保存する。
 

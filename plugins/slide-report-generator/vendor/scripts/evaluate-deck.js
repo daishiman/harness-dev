@@ -613,13 +613,26 @@ function checkSpecConformance() {
         const vr = JSON.parse(readFileSync(reportPath, 'utf-8'));
         const failed = vr.failed || [];
         const warned = vr.warned || [];
+        // 未検査（kind: "no-checker"）＝ その規則を判定する実行体がどの工程にも無い。
+        // failed / warned だけを読むと、これが 1 件も現れないまま「PASS」と出る。
+        // 「見て問題が無かった」と「誰も見ていない」が同じ緑になるので、別に拾う。
+        // 非該当（kind: "not-applicable"）と後段送り（kind: "deferred"）は混ざらない。
+        // どちらもこの deck では違反になりえないので、ここで拾うのは "no-checker" だけ。
+        const unchecked = (vr.skipped || []).filter((c) => c.kind === 'no-checker');
         failed.forEach((c) => add('D4', 'error', `仕様違反 ${c.vid || ''}`,
           `${c.desc || ''}: ${c.detail || ''}`, { check: 'spec.validate', source: 'validate-structure' }));
         warned.forEach((c) => add('D4', 'warn', `仕様要確認 ${c.vid || ''}`,
           `${c.desc || ''}: ${c.detail || ''}`, { check: 'spec.validate', source: 'validate-structure' }));
-        if (failed.length === 0 && warned.length === 0) {
+        unchecked.forEach((c) => add('D4', 'warn', `仕様未検査 ${c.vid || ''}`,
+          `${c.desc || ''}: ${c.reason || ''}（この規則を判定する実行体が無い。違反していないことの確認ではない）`,
+          { check: 'spec.unchecked', source: 'validate-structure' }));
+        if (failed.length === 0 && warned.length === 0 && unchecked.length === 0) {
           add('D4', 'info', '構造仕様 PASS',
             `validate-structure: FAIL/WARN なし（passed ${(vr.passed || []).length}件）`, { check: 'spec.validate' });
+        } else if (failed.length === 0 && warned.length === 0) {
+          add('D4', 'info', '構造仕様 FAIL なし（ただし未検査あり）',
+            `validate-structure: FAIL/WARN なし（passed ${(vr.passed || []).length}件）だが未検査 ${unchecked.length}件。PASS とは名乗らない`,
+            { check: 'spec.validate' });
         }
       }
     } catch (e) {

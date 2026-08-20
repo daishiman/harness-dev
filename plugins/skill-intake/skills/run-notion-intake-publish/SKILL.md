@@ -41,9 +41,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: スキル全体がユーザ目的(ヒアリングをやり直さず Notion 側だけを安全に再公開し、canonical=output/<hint> 修正→派生 view 更新のループを page_id 破壊なく回す)を最適に反映し、wrapper としての責務(precheck 4 種→単一発火点起動→exit code 伝搬、aggregator/fidelity-guard との境界、All-or-Nothing/Keychain/読み取り専用の各契約)が目的に対し過不足ないこと。
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-notion-intake-publish
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -126,7 +135,7 @@ test -f "output/$HINT/notion-manifest.json" || { echo "notion-manifest.json not 
 ### Step 2: 副作用前検査 (Keychain / Schema / Assets)
 
 ```bash
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}"
 python3 "$PLUGIN_ROOT/scripts/validate-notion-ready.py" --check-api
 python3 "$PLUGIN_ROOT/scripts/verify_notion_schema.py" --on-conflict skip-warn ${DATABASE_ID:+--database-id "$DATABASE_ID"}
 python3 "$PLUGIN_ROOT/scripts/verify_notion_assets.py" "output/$HINT/notion-manifest.json"

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-cross-deck-review",
-    "skill_md_sha256": "3f24f600d61ac7e06796de44561b090fd37e1d67996d12fada34812cc7184fbd"
+    "skill_md_sha256": "1f40dddb66d64e9af5fe5e8e57f4fb93b103e2c6a09f9b2103554ee23d5f6c5e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "review-group-c-independent-elegance",
-  "reviewed_at": "2026-07-22T00:00:00Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,17 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "矛盾なし: SKILL.md は全編で『単一 fork context 内 3 レンズ・再 fork(SubAgent 起動)しない』を一貫主張し、workflow-manifest / R1-orchestrate / reference / agent adapter と齟齬なし。read-only(effect=conversation-output・allowed-tools に Write/Edit なし)も一貫。",
-      "漏れなし: IN1(機械チェック入力欠落 0 件・script 検証)と OUT1(注入不整合の全件検出+クリーン series の PASS・test 検証)が purpose-acceptance として具体化され、C1-C15 の機械層/意味層分担が reference 対応表で橋渡し。修正適用は run-slide-report-modify へ委譲し責務分離が明確。",
-      "依存関係整合: SRG_ROOT 起点の全パス(vendor/scripts/cross-deck-consistency.js・check-consistency.js、skills/run-cross-deck-review/references/cross-deck-consistency-rules.md・prompts/R2-agent-cross-deck-reviewer.md、references/spec-registry.md)および skill-relative の prompts/R1-orchestrate.md・schema・agents/cross-deck-reviewer.md・委譲先 run-slide-report-modify が全て実在。dependency_break なし。"
+      "シリーズ横断整合性の検証を 3 並列分析 × 4 条件へ分解し、判定を cross-deck-reviewer の独立 context へ委譲する proposer≠approver 構造を保っている。",
+      "全 executable path が `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` の 3 段 fallback へ移行済みで、plugin 専用 env escape hatch と dual-root 契約が両立している。"
     ],
     "negative_feedback": [
-      "整合性(inconsistency x1・非ブロッキング・pre-existing): prompts/R2-agent-cross-deck-reviewer.md 5.5 知識ベース表(L151-153)が spec-registry.md / post-generation-evaluation.md / svg-design-spec.md / theme-style.md を相対 `../references/*.md` で参照するが、これは prompt 位置から skills/run-cross-deck-review/references/ を指し当該ファイルは不在(実体は plugin 直下 references/)。同一資源 spec-registry.md を reference 本体(cross-deck-consistency-rules.md L13)は正規形 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md で参照しており、パス規約のドリフト。今回の SRG_ROOT リネームが生んだものではなく既存。R2 prompt 側を ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/ 形へ揃えるのが望ましい。"
+      "L59 の役割 blockquote と L118 の Gotchas 規範箇条 (『全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…` 起点』) が 2 段 fallback の旧表記のまま残り、同一ファイルの実行行 (3 段) と一致しない。実行系は正しいため機能破綻はないが、Gotchas は規範文であるため doc 層 drift として記録する (low)。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "stop-hook",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "4条件判定: contradiction=PASS / omission=PASS / consistency=WARN(下記) / dependency=PASS / smell=なし。パス変数リネーム検証: $CLAUDE_PLUGIN_ROOT -> ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT} は SKILL.md・R1/R2 prompt・reference・agent adapter で全て正規の POSIX default-value 展開 ${VAR:-default}(閉じ } 欠落/二重展開/ネスト崩れなし)。SRG_ROOT 未設定時は $CLAUDE_PLUGIN_ROOT へフォールバックし ObsidianMemo への symlink 移植時に SRG_ROOT を差し替えられる可搬性を確保。リネームは設計・責務・4条件次元を変えず参照切れも新規に生んでいない。唯一の指摘(inconsistency x1)は R2 prompt の pre-existing な `../references/*.md` 相対参照のパス規約ドリフトで、資源自体は plugin 直下に実在し正規形も併存するため hard break ではなく非ブロッキング。SKILL.md 本体とその直接依存グラフは健全なため verdict=PASS。Goodhart 緑化回避のため本 inconsistency を明示計上した。補足(advisory・別 target のため未計上): agent cross-deck-reviewer.md の description 文言『3並列分析』は本文・設計の『単一 fork context 内・再 fork しない』の short-hand であり SKILL.md L124 が明示的に再フレームしている。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 散文/Gotchas 層の root 表記 drift 2 件を low severity として記録。criteria は現行 frontmatter に合わせ IN2 を除いた 2 件で評価した。"
 }

@@ -41,7 +41,7 @@
 - 非担当: マトリクス遷移の実行 (R2-interview)、未確定セルの再質問 (R3-reask)、確定セルの再オープン (R4-reopen)、`spec-state.json` 書込 (C01 transition writer)、最終ドキュメントへの compile (C03)。監査は read-only で、遷移や書込に踏み込まない。
 
 ### 2.2 ドメインルール (決定論ゲート + 意味層の二層監査)
-- **決定論ゲートの回収**: まず `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py" --matrix <spec-state.json>` を loop モードで実行し exit code と `VIOLATION:` 行を回収する。次に同コマンドに `--require-complete` を付けて実行し、最終準備 (未収集 0) を判定する。exit 0/1/2 の意味 (0=OK, 1=violation, 2=usage/parse error) を verdict へ反映する。
+- **決定論ゲートの回収**: まず `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json>` を loop モードで実行し exit code と `VIOLATION:` 行を回収する。次に同コマンドに `--require-complete` を付けて実行し、最終準備 (未収集 0) を判定する。exit 0/1/2 の意味 (0=OK, 1=violation, 2=usage/parse error) を verdict へ反映する。
 - **未収集放置 (state=未収集)**: loop モードは未収集を許容するが、監査は「未収集セルが再質問対象 (R3-reask の next_question) に紐づき追跡されているか」対「最終局面なのに未収集が残る放置か」を区別して報告する。`--require-complete` で未収集 > 0 なら最終不可 (final_ready=FAIL)。
 - **対象外理由の妥当性 (state=対象外・script を超える意味層)**: script は `reason` 非空 または `approval_ref` の存在のみを検証する。監査はさらに `reason` が具体的 (当該プラットフォームで非該当とする根拠が読める) か、placeholder (`-` / `n/a` / `対象外` の同語反復 / 空白のみ / 記号のみ) でないかを判定する。非空だが中身のない理由は「理由要改善」として flag する (script は通すが監査は落とす二層の狙い)。
 - **確定 qa_ref トレーサビリティ (state=確定)**: script は `qa_ref` が `qa_log`/`approval_log` に存在するかまでを検証する。監査は参照先 entry が当該セルの確定を実際に裏付ける質疑か (dangling 参照 / 別セルの取り違え参照でないか) を確認する。一括承認 (`approval_ref`) は承認ログ 1 件参照で可だが、その承認の射程が当該セル (カテゴリ×プラットフォーム) を含むかを確認する。裏付けの薄い確定は「qa_ref 要確認」として flag する。
@@ -54,7 +54,7 @@
 | field | type | required | 説明 |
 |---|---|---|---|
 | spec_state | path | yes | C01 (`run-system-spec-elicit`) が出力/更新した `spec-state.json`。`categories` / `platforms` / `matrix` / `qa_log` / `approval_log` / `category_aggregate` / (任意) `excluded_categories` を含む |
-| validator | path | yes | C12 (`validate-coverage-matrix.py`。`$CLAUDE_PLUGIN_ROOT/scripts/` 配下)。決定論ゲート |
+| validator | path | yes | C12 (`validate-coverage-matrix.py`。`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` 配下)。決定論ゲート |
 | ssot_prompt | path | yes | R7-audit-matrix 詳細契約の正本 (本ファイル) |
 
 ### 2.4 出力契約
@@ -68,14 +68,14 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| R-audit SSOT | 本ファイル (`$CLAUDE_PLUGIN_ROOT/skills/run-system-spec-elicit/prompts/R7-audit-matrix.md`) | 実行開始時・判断に迷った時 |
+| R-audit SSOT | 本ファイル (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/prompts/R7-audit-matrix.md`) | 実行開始時・判断に迷った時 |
 | spec_state | C01 出力 `spec-state.json` | 監査対象の読み込み時 |
-| validator (C12) | `$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py` | 決定論ゲート実行時 (loop / --require-complete) |
-| taxonomy (C04) | `$CLAUDE_PLUGIN_ROOT/skills/ref-system-design-knowledge/references/` | カテゴリ軸床・カテゴリ初期集合の正本を確認する時 |
+| validator (C12) | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py` | 決定論ゲート実行時 (loop / --require-complete) |
+| taxonomy (C04) | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/ref-system-design-knowledge/references/` | カテゴリ軸床・カテゴリ初期集合の正本を確認する時 |
 
 ### 3.2 外部ツール / API
 - `Read`: R-audit SSOT、`spec-state.json`、カテゴリ taxonomy の参照。
-- `Bash`: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> [--require-complete]` の実行 (network なし・書込なし)。
+- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> [--require-complete]` の実行 (network なし・書込なし)。
 - 外部 API・ネットワークアクセスは行わない。
 
 ## Layer 4: 共通ポリシー層
@@ -149,7 +149,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 
 C01 (`run-system-spec-elicit`) が出力/更新した `spec-state.json` のカテゴリ×canonical platform id 収集マトリクスを、独立 context で **read-only 監査**する。
 
-1. **決定論ゲートを回収する**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py" --matrix <spec-state.json>` を loop モードで実行し exit code (0=OK / 1=violation / 2=usage/parse error) と `VIOLATION:` 行を回収する。続けて同コマンドに `--require-complete` を付けて実行し、未収集 0 (最終準備) を判定する。
+1. **決定論ゲートを回収する**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json>` を loop モードで実行し exit code (0=OK / 1=violation / 2=usage/parse error) と `VIOLATION:` 行を回収する。続けて同コマンドに `--require-complete` を付けて実行し、未収集 0 (最終準備) を判定する。
 2. **意味層を重ねる** (script を超える監査。詳細は Layer 2.2):
    - **未収集放置**: 未収集セルが再質問 (R3-reask) 対象として追跡されているか対、最終局面での放置かを区別する。`--require-complete` で未収集 > 0 なら `final_ready=FAIL`。
    - **対象外理由の妥当性**: 対象外セルの `reason` が非空かつ具体的か、placeholder (`-`/`n/a`/`対象外` 同語反復/空白・記号のみ) でないかを判定し、非空だが中身のない理由を「理由要改善」に分類する。

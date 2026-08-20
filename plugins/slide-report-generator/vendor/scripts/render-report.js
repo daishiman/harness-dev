@@ -39,6 +39,22 @@ const struct = require('./svg-structures.cjs');
 // (buildNeutralComparison) も同じ語彙を使わないと、節ごとに図の grammar が変わる。
 const kit = require('./svg-kit.cjs');
 
+/**
+ * 角丸 (VGCONST_003: 面は 0px・図版のみ 2px) の値を style-builder が実際に出す
+ * CSS から実行時に採る。ここへ 0 / 2px を書き写すと正本が 2 つになり、slide 側だけ
+ * 直した後も report は古い値で描けてしまう (見た目が変わるだけなので誰も気付けない)。
+ * 採れない場合は黙って既定値へ落とさず即座に落とす。
+ */
+const RADIUS = (() => {
+  const css = require('./style-builder.cjs').buildStyles();
+  const pick = (name) => {
+    const m = css.match(new RegExp('--' + name + ':\\s*([^;]+);'));
+    if (!m) throw new Error(`style-builder の出力に --${name} が無い (角丸の正本が動いた)`);
+    return m[1].trim();
+  };
+  return { surface: pick('radius'), figure: pick('radius-figure') };
+})();
+
 // reportType (§D の 4 enum) → アクセント色。読み物の視覚的アイデンティティ付与。
 const REPORT_TYPE_ACCENT = {
   'internal-analysis': 'accent-blue-vivid',
@@ -137,24 +153,54 @@ function buildReportCss(spec = SPEC) {
   const fs = spec.fontScale;
   const spacingVars = spec.spacing.map((v, i) => `  --space-${i + 1}: ${v};`).join('\n');
   return `:root {
-  /* §2 Kanagawa Lotus パレット (style-builder SPEC を流用 = 共有意匠 SSOT) */
-  --bg-dark: ${c.bgDark};
-  --fg: ${c.fg};
-  --fg-dim: ${c.fgDim};
-  --fg-muted: #54546d;
-  --wave-blue: ${c.waveBlue};
-  --spring-violet: ${c.springViolet};
-  --sakura-pink: ${c.sakuraPink};
-  --wave-aqua: ${c.waveAqua};
-  --autumn-yellow: ${c.autumnYellow};
-  --fuji-gray: ${c.fujiGray};
-  --accent-blue-vivid: ${c.accentBlueVivid};
-  --accent-pink-vivid: ${c.accentPinkVivid};
-  --accent-aqua-vivid: ${c.accentAquaVivid};
-  --accent-violet-vivid: ${c.accentVioletVivid};
-  --accent-yellow-vivid: ${c.accentYellowVivid};
-  --shadow-subtle: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-medium: 0 3px 10px rgba(0,0,0,0.10);
+  /* §2 インク・オン・ペーパー (VGCONST_001)。色値は style-builder の SPEC.colors だけを
+     出どころにする。SPEC が持たないキーを読むと値が空のまま CSS へ出て、
+     宣言ごと無効になったことに実行時も検査も気付けない。 */
+  --paper: ${c.paper};
+  --ink: ${c.ink};
+  --paper-on-ink: ${c.paper};
+  --fg-muted: ${c.inkMuted};
+  --hairline: ${c.hairline};
+  /* 地・文字・罫の別名。slide 側 (style-builder) と同じ名前で同じ値を指す。 */
+  --bg-dark: var(--paper);
+  /* --fg-dim は **値を持たない後方互換の別名**である。この濃度に値を代入して
+     いるのは上の --fg-muted 1 行だけで、report 経路の CSS 規則はすべてそちらを
+     直接参照するよう寄せた (本ファイル内 19 箇所)。
+     以前ここには「d3-components/base.js の TOKEN_CHAINS はこの名前で解決する」と
+     書いてあったが、**実際の base.js は --fg-muted を先に引き、--fg-dim は
+     チェーンの後段の控えでしかない** (base.js:20 / :378 / :383)。
+     つまり repo 内にこの別名を必要とする参照はもう無い。
+     残してあるのは既に出力済みの report HTML が古い名前を持つ可能性のためだけで、
+     base.js のチェーンから控えが落ちた時点でこの 1 行も落とせる。
+     **新しい記述でこの名前を使わないこと。増える区別は 1 つも無い。** */
+  --fg-dim: var(--fg-muted);
+  --border: var(--hairline);
+  /* §2 濃度段 (VGCONST_002)。図解の内部でだけ使う単一色相 3 段 */
+  --tone-1: ${c.tone1};
+  --tone-2: ${c.tone2};
+  --tone-3: ${c.tone3};
+  /* 旧色相名の別名。本文 CSS と生成済み report がこの名前で参照しているので名前は
+     残すが、色相へ意味を割り当てる運用は廃した (強調は反転ブロックで作る)。
+     --spring-violet と --fuji-gray はここから落とした。前者は --wave-blue と、
+     後者は --fg-dim と**同じ値を指す別名**で、名前が 2 つある状態そのものが
+     「区別がある」という誤った主張になっていた。参照側も同じ便で寄せてある。 */
+  --wave-blue: var(--tone-3);
+  --sakura-pink: var(--ink);
+  --wave-aqua: var(--tone-2);
+  --autumn-yellow: var(--tone-1);
+  --accent-blue-vivid: var(--ink);
+  --accent-pink-vivid: var(--ink);
+  --accent-aqua-vivid: var(--ink);
+  --accent-violet-vivid: var(--ink);
+  --accent-yellow-vivid: var(--ink);
+  /* §2 角丸 (VGCONST_003)。面は 0、図版だけ 2px。値は style-builder の出力から採る */
+  --radius: ${RADIUS.surface};
+  --radius-figure: ${RADIUS.figure};
+  /* §2 影ゼロ (VGCONST_003)。浮きは影でなく hairline の輪郭 1 本で表す。
+     --shadow-subtle はここで打ち消すのをやめ、定義と参照の両方を落とした。
+     値を与えてから同じ経路で none に上書きする形は、どちらが正なのか読んで
+     判定できず、意匠方針の抜け穴が 1 つ残る。 */
+  --shadow-medium: none;
   /* §3 フォント (SPEC 流用) */
   --font-scale: ${fs};
   --font-base: ${spec.fonts.base};
@@ -204,17 +250,16 @@ html { scroll-behavior: smooth; }
   height: var(--report-topbar-h);
   display: flex; align-items: center; gap: var(--space-3, 0.75rem);
   padding: 0 var(--space-6, 2rem);
-  background: color-mix(in srgb, var(--bg-dark) 92%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.12));
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
 }
 .report-topbar__title {
   font-size: var(--fs-small); font-weight: 700; color: var(--fg);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%;
 }
-.report-topbar__sep { color: var(--fg-dim); flex: none; }
+.report-topbar__sep { color: var(--fg-muted); flex: none; }
 .report-topbar__here {
-  font-size: var(--fs-small); color: var(--fg-dim); font-weight: 500;
+  font-size: var(--fs-small); color: var(--fg-muted); font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
 /* 読了進捗。位置の手掛かりを 1px の帯で与える (面積を食わずに全体の何割かが分かる) */
@@ -259,12 +304,12 @@ html { scroll-behavior: smooth; }
 .report-section[id] { scroll-margin-top: calc(var(--report-topbar-h) + var(--space-4, 1rem)); }
 .report-header { margin-bottom: var(--space-7, 3rem); border-bottom: 3px solid var(--report-accent, var(--accent-blue-vivid)); padding-bottom: var(--space-4, 1rem); }
 .report-title { font-size: var(--fs-title); font-weight: 800; line-height: 1.25; color: var(--fg); }
-.report-subtitle { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-subheading); color: var(--fg-dim); font-weight: 500; }
+.report-subtitle { margin-top: var(--space-2, 0.5rem); font-size: var(--fs-subheading); color: var(--fg-muted); font-weight: 500; }
 .report-keymessage { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-body); color: var(--fg); font-weight: 500; border-left: 0.3rem solid var(--report-accent, var(--accent-blue-vivid)); padding-left: var(--space-3, 0.75rem); }
-.report-meta { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-dim); display: flex; flex-wrap: wrap; gap: var(--space-4, 1rem); align-items: center; }
+.report-meta { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-muted); display: flex; flex-wrap: wrap; gap: var(--space-4, 1rem); align-items: center; }
 .report-meta .report-type-badge {
-  display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px;
-  background: var(--report-accent, var(--accent-blue-vivid)); color: #fff; font-weight: 700;
+  display: inline-block; padding: 0.2rem 0.7rem; border-radius: var(--radius);
+  background: var(--report-accent, var(--accent-blue-vivid)); color: var(--paper-on-ink); font-weight: 700;
 }
 
 /* ===== section ===== */
@@ -278,14 +323,14 @@ html { scroll-behavior: smooth; }
 }
 .report-section p { font-size: var(--fs-body); margin-bottom: var(--space-4, 1rem); }
 .report-section strong { color: var(--section-accent, var(--accent-blue-vivid)); font-weight: 700; }
-.report-section code { font-family: var(--font-mono); font-size: 0.92em; background: rgba(59,125,216,0.10); padding: 0.1em 0.35em; border-radius: 0.25rem; }
+.report-section code { font-family: var(--font-mono); font-size: 0.92em; background: var(--hairline); padding: 0.1em 0.35em; border-radius: var(--radius); }
 .report-section a { color: var(--accent-blue-vivid); }
 .report-section ul { margin: 0 0 var(--space-4, 1rem) var(--space-5, 1.5rem); }
 .report-section li { font-size: var(--fs-body); margin-bottom: var(--space-2, 0.5rem); }
 
 /* ===== callouts (注記/警告/ヒント) ===== */
 /* 吹き出し(左バー+ベタ塗り)を廃し、余白リッチのフラットカードへ。トーンは上端の細アクセント線で示す。 */
-.report-callout { display: block; margin: var(--space-5, 1.5rem) 0; padding: var(--space-4, 1rem) var(--space-5, 1.5rem); border-radius: 0.85rem; font-size: var(--fs-small); background: #fff; border: 1px solid rgba(67,67,108,0.12); border-top: 3px solid var(--accent-blue-vivid); box-shadow: var(--shadow-subtle); }
+.report-callout { display: block; margin: var(--space-5, 1.5rem) 0; padding: var(--space-4, 1rem) var(--space-5, 1.5rem); border-radius: var(--radius); font-size: var(--fs-small); background: var(--paper); border: 1px solid var(--hairline); border-top: 3px solid var(--accent-blue-vivid); }
 .report-callout--warning, .report-callout--caution { border-top-color: var(--accent-pink-vivid); }
 .report-callout--tip { border-top-color: var(--accent-yellow-vivid); }
 
@@ -296,28 +341,28 @@ html { scroll-behavior: smooth; }
   margin: var(--space-7, 3rem) 0;
   padding: var(--space-6, 2rem);
   text-align: center;
-  background: #fff;
-  border: 1px solid rgba(67,67,108,0.10);
-  border-radius: 0.9rem;
-  box-shadow: var(--shadow-subtle);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  /* 図版の枠。VGCONST_003 の 2px 例外に当たる (面でなく図版の輪郭) */
+  border-radius: var(--radius-figure);
 }
 .report-visual svg { width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto; }
-.report-visual img { max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: var(--shadow-medium); object-position: var(--focal, 50% 50%); }
-.report-visual figcaption { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-dim); text-align: center; }
+.report-visual img { max-width: 100%; height: auto; border-radius: var(--radius-figure); box-shadow: var(--shadow-medium); object-position: var(--focal, 50% 50%); }
+.report-visual figcaption { margin-top: var(--space-3, 0.75rem); font-size: var(--fs-small); color: var(--fg-muted); text-align: center; }
 .report-visual--mermaid pre.mermaid {
   display: block; text-align: left; font-family: var(--font-mono); font-size: var(--fs-small);
-  background: rgba(59,125,216,0.06); border: 1px solid rgba(67,67,108,0.14);
-  border-radius: 0.5rem; padding: var(--space-3, 0.75rem); overflow-x: auto; white-space: pre;
+  background: var(--paper); border: 1px solid var(--hairline);
+  border-radius: var(--radius-figure); padding: var(--space-3, 0.75rem); overflow-x: auto; white-space: pre;
 }
-.report-visual--image .composite-overlay { list-style: none; margin: var(--space-2, 0.5rem) 0 0; padding: 0; font-size: var(--fs-small); color: var(--fg-dim); }
+.report-visual--image .composite-overlay { list-style: none; margin: var(--space-2, 0.5rem) 0 0; padding: 0; font-size: var(--fs-small); color: var(--fg-muted); }
 
-.report-footer { margin-top: var(--space-8, 4rem); padding-top: var(--space-3, 0.75rem); border-top: 1px solid rgba(67,67,108,0.15); font-size: var(--fs-small); color: var(--fg-dim); text-align: center; }
+.report-footer { margin-top: var(--space-8, 4rem); padding-top: var(--space-3, 0.75rem); border-top: 1px solid var(--hairline); font-size: var(--fs-small); color: var(--fg-muted); text-align: center; }
 
 /* ===== 印刷 (A4 縦・読み物・screen 二層の print 側 = 従来 190mm 契約温存) ===== */
 @page { size: A4 portrait; margin: 18mm; }
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  body { background: #fff; }
+  body { background: var(--paper); }
   /* sidebar grid を解除し従来の一段組へ (sticky TOC 非適用・.report は A4 幅) */
   .report-layout { display: block; max-width: none; padding: 0; }
   .report-sidebar { display: none !important; }
@@ -341,7 +386,7 @@ html { scroll-behavior: smooth; }
   .report-toc--sidebar {
     position: sticky; top: var(--report-topbar-h); z-index: 20;
     max-height: 45vh; overflow-y: auto; margin: 0 0 var(--space-5, 1.5rem);
-    background: var(--bg-dark); border-color: var(--border, rgba(255,255,255,0.16));
+    background: var(--bg-dark); border-color: var(--hairline);
   }
   .report-toc--sidebar ol { columns: 2; }
   .report { max-width: none; margin: 0 auto; padding-top: var(--space-6, 2rem); }
@@ -363,9 +408,9 @@ html { scroll-behavior: smooth; }
 }
 .report-narrative__cell {
   display: flex; flex-direction: column; gap: 0.6rem;
-  background: #fff; border: 1px solid rgba(67,67,108,0.12); border-radius: 0.85rem;
+  background: var(--paper); border: 1px solid var(--hairline); border-radius: var(--radius);
   border-top: 3px solid var(--section-accent, var(--accent-blue-vivid));
-  padding: var(--space-5,1.5rem); box-shadow: var(--shadow-subtle);
+  padding: var(--space-5,1.5rem);
 }
 .report-narrative__label {
   font-size: var(--fs-small); font-weight: 800; letter-spacing: 0.03em;
@@ -384,46 +429,46 @@ h4.report-subheading { font-size: calc(1.12rem * var(--font-scale)); }
 .report-list li { font-size: var(--fs-body); margin-bottom: var(--space-2,0.5rem); }
 /* 要点の色付きハイライト (inline ==...==) — 1.2.0: 色に依存しない第2チャネル (font-weight + underline) を必須併存し色覚非依存 */
 mark.report-hl {
-  background: color-mix(in srgb, var(--accent-yellow-vivid) 34%, transparent);
-  color: var(--fg); padding: 0.05em 0.28em; border-radius: 0.25rem; font-weight: 700;
+  background: var(--ink);
+  color: var(--paper-on-ink); padding: 0.05em 0.28em; border-radius: var(--radius); font-weight: 700;
   text-decoration: underline; text-decoration-thickness: 0.11em; text-underline-offset: 0.18em;
-  text-decoration-color: var(--accent-yellow-vivid);
+  text-decoration-color: var(--paper-on-ink);
   box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
 /* markdown 表 (<br> で潰さない) */
 .report-table-wrap { margin: var(--space-5,1.5rem) 0; overflow-x: auto; }
-.report-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); background: rgba(255,255,255,0.5); border-radius: 0.5rem; overflow: hidden; box-shadow: var(--shadow-subtle); }
-.report-table th, .report-table td { padding: 0.55rem 0.8rem; text-align: left; border-bottom: 1px solid rgba(67,67,108,0.14); vertical-align: top; }
-.report-table thead th { background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 14%, transparent); color: var(--fg); font-weight: 700; }
-.report-table tbody tr:nth-child(even) { background: rgba(67,67,108,0.035); }
-.report-table-wrap figcaption, .report-code-wrap figcaption { margin-top: 0.4rem; font-size: var(--fs-small); color: var(--fg-dim); font-weight: 500; }
+.report-table { width: 100%; border-collapse: collapse; font-size: var(--fs-small); background: var(--paper); border-radius: var(--radius); overflow: hidden; }
+.report-table th, .report-table td { padding: 0.55rem 0.8rem; text-align: left; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+.report-table thead th { background: var(--ink); color: var(--paper-on-ink); font-weight: 700; }
+.report-table tbody tr:nth-child(even) { background: transparent; }
+.report-table-wrap figcaption, .report-code-wrap figcaption { margin-top: 0.4rem; font-size: var(--fs-small); color: var(--fg-muted); font-weight: 500; }
 /* コードブロック (ダーク・ターミナル風) */
 .report-code-wrap { position: relative; margin: var(--space-5,1.5rem) 0; }
-.report-code__lang { position: absolute; top: 0.5rem; right: 0.7rem; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: #c8c093; font-family: var(--font-mono); z-index: 1; }
-pre.report-code { background: #1f1f28; color: #dcd7ba; font-family: var(--font-mono); font-size: 0.86rem; line-height: 1.6; padding: var(--space-4,1rem); border-radius: 0.55rem; overflow-x: auto; box-shadow: var(--shadow-medium); }
+.report-code__lang { position: absolute; top: 0.5rem; right: 0.7rem; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hairline); font-family: var(--font-mono); z-index: 1; }
+pre.report-code { background: var(--ink); color: var(--paper-on-ink); font-family: var(--font-mono); font-size: 0.86rem; line-height: 1.6; padding: var(--space-4,1rem); border-radius: var(--radius-figure); overflow-x: auto; box-shadow: var(--shadow-medium); }
 pre.report-code code { background: none; padding: 0; color: inherit; font-size: inherit; white-space: pre; }
 /* キーポイント強調ボックス (色付き・トーン別) */
 /* キーポイント: 吹き出しをやめ、余白の大きい白カード + 上端アクセント + タイトル前の色ドット。 */
-.report-keypoint { margin: var(--space-5,1.5rem) 0; padding: var(--space-5,1.5rem); border-radius: 0.85rem; background: #fff; border: 1px solid rgba(67,67,108,0.12); border-top: 3px solid var(--accent-pink-vivid); box-shadow: var(--shadow-subtle); --kp-accent: var(--accent-pink-vivid); }
+.report-keypoint { margin: var(--space-5,1.5rem) 0; padding: var(--space-5,1.5rem); border-radius: var(--radius); background: var(--paper); border: 1px solid var(--hairline); border-top: 3px solid var(--accent-pink-vivid); --kp-accent: var(--accent-pink-vivid); }
 .report-keypoint--accent   { border-top-color: var(--accent-blue-vivid);   --kp-accent: var(--accent-blue-vivid); }
 .report-keypoint--positive { border-top-color: var(--accent-aqua-vivid);   --kp-accent: var(--accent-aqua-vivid); }
 .report-keypoint--caution  { border-top-color: var(--accent-yellow-vivid); --kp-accent: var(--accent-yellow-vivid); }
-.report-keypoint--neutral  { border-top-color: var(--fuji-gray);           --kp-accent: var(--fuji-gray); }
+.report-keypoint--neutral  { border-top-color: var(--fg-muted);           --kp-accent: var(--fg-muted); }
 .report-keypoint__title { font-weight: 800; margin-bottom: 0.5rem; color: var(--fg); display: flex; align-items: center; gap: 0.5rem; }
-.report-keypoint__title::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: 0.2rem; background: var(--kp-accent, var(--accent-pink-vivid)); flex: none; }
+.report-keypoint__title::before { content: ""; width: 0.6rem; height: 0.6rem; border-radius: var(--radius); background: var(--kp-accent, var(--accent-pink-vivid)); flex: none; }
 .report-keypoint__body { font-size: var(--fs-body); line-height: 1.75; }
 /* 統計タイル */
 .report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: var(--space-3,0.75rem); margin: var(--space-5,1.5rem) 0; }
-.report-stat { display: flex; flex-direction: column; gap: 0.2rem; padding: var(--space-3,0.75rem) var(--space-4,1rem); border-radius: 0.5rem; background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 7%, transparent); border: 1px solid color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 18%, transparent); }
-.report-stat__label { font-size: var(--fs-small); color: var(--fg-dim); font-weight: 600; }
+.report-stat { display: flex; flex-direction: column; gap: 0.2rem; padding: var(--space-3,0.75rem) var(--space-4,1rem); border-radius: var(--radius); background: var(--paper); border: 1px solid var(--hairline); }
+.report-stat__label { font-size: var(--fs-small); color: var(--fg-muted); font-weight: 600; }
 .report-stat__value { font-size: calc(1.9rem * var(--font-scale)); font-weight: 800; line-height: 1.1; color: var(--section-accent, var(--accent-blue-vivid)); font-variant-numeric: tabular-nums; }
-.report-stat__note { font-size: 0.78rem; color: var(--fg-dim); }
+.report-stat__note { font-size: 0.78rem; color: var(--fg-muted); }
 .report-stat__trend { font-size: 0.9rem; margin-left: 0.2rem; }
 .report-stat__trend--up { color: var(--accent-aqua-vivid); }
 .report-stat__trend--down { color: var(--accent-pink-vivid); }
-.report-stat__trend--flat { color: var(--fuji-gray); }
+.report-stat__trend--flat { color: var(--fg-muted); }
 /* 引用ブロック */
-.report-quote { margin: var(--space-4,1rem) 0; padding: var(--space-3,0.75rem) var(--space-5,1.5rem); border-left: 0.3rem solid var(--fuji-gray); color: var(--fg-dim); font-style: italic; background: rgba(103,103,108,0.05); border-radius: 0 0.4rem 0.4rem 0; }
+.report-quote { margin: var(--space-4,1rem) 0; padding: var(--space-3,0.75rem) var(--space-5,1.5rem); border-left: 0.3rem solid var(--fg-muted); color: var(--fg-muted); font-style: italic; background: var(--paper); border-radius: var(--radius); }
 /* callout に title を許容 */
 .report-callout__title { color: var(--fg); }
 /* 意味的配置: 本文と図の 2 カラム分割 */
@@ -439,11 +484,11 @@ pre.report-code code { background: none; padding: 0; color: inherit; font-size: 
 .report-grid__visual .report-visual { margin: 0; }
 @media (max-width: 720px) { .report-grid--2col { grid-template-columns: 1fr; } }
 /* section 強調度 (placement.emphasis) */
-.report-section[data-emphasis="highlight"] { padding: var(--space-4,1rem) var(--space-4,1rem); border-radius: 0.6rem; background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 5%, transparent); }
+.report-section[data-emphasis="highlight"] { padding: var(--space-4,1rem) var(--space-4,1rem); border-radius: var(--radius); background: var(--paper); }
 .report-section[data-emphasis="muted"] { opacity: 0.82; }
 /* 目次 (TOC) */
-.report-toc { margin: 0 0 var(--space-7,3rem); padding: var(--space-4,1rem) var(--space-5,1.5rem); border-radius: 0.6rem; background: rgba(67,67,108,0.045); border: 1px solid rgba(67,67,108,0.12); }
-.report-toc__title { font-weight: 800; font-size: var(--fs-small); letter-spacing: 0.08em; color: var(--fg-dim); margin-bottom: 0.5rem; cursor: pointer; list-style: none; }
+.report-toc { margin: 0 0 var(--space-7,3rem); padding: var(--space-4,1rem) var(--space-5,1.5rem); border-radius: var(--radius); background: var(--paper); border: 1px solid var(--hairline); }
+.report-toc__title { font-weight: 800; font-size: var(--fs-small); letter-spacing: 0.08em; color: var(--fg-muted); margin-bottom: 0.5rem; cursor: pointer; list-style: none; }
 .report-toc__title::-webkit-details-marker { display: none; }
 /* 開閉の向きを ▾/▸ で示す。summary の既定マーカーを消しているので、
    代わりの手掛かりがないと畳めることに気付けない。 */
@@ -473,24 +518,23 @@ pre.report-code code { background: none; padding: 0; color: inherit; font-size: 
 /* 文書全体の通し筋 (throughLine) — 導入部のアーク帯 */
 .report-throughline {
   margin: var(--space-5,1.5rem) 0 var(--space-7, 3rem); padding: var(--space-5, 1.5rem) var(--space-6, 2rem);
-  border-radius: 0.85rem; font-size: var(--fs-body); line-height: 1.8; color: var(--fg);
-  background: #fff; border: 1px solid rgba(67,67,108,0.12);
+  border-radius: var(--radius); font-size: var(--fs-body); line-height: 1.8; color: var(--fg);
+  background: var(--paper); border: 1px solid var(--hairline);
   border-top: 3px solid var(--report-accent, var(--accent-blue-vivid));
-  box-shadow: var(--shadow-subtle);
   display: flex; gap: var(--space-4,1rem); align-items: baseline; flex-wrap: wrap;
 }
 .report-throughline__label { font-size: var(--fs-small); font-weight: 800; letter-spacing: 0.05em; color: var(--report-accent, var(--accent-blue-vivid)); white-space: nowrap; }
 /* part 単位 sub-arc (大規模文書の道標) */
 .report-throughline-parts { list-style: none; margin: 0 0 var(--space-6, 2rem); padding: 0; display: grid; gap: 0.4rem; counter-reset: tlpart; }
-.report-throughline__part { display: flex; gap: 0.7rem; align-items: baseline; padding: 0.4rem 0.7rem; border-left: 0.2rem solid color-mix(in srgb, var(--report-accent, var(--accent-blue-vivid)) 35%, transparent); background: color-mix(in srgb, var(--report-accent, var(--accent-blue-vivid)) 4%, transparent); border-radius: 0 0.4rem 0.4rem 0; }
+.report-throughline__part { display: flex; gap: 0.7rem; align-items: baseline; padding: 0.4rem 0.7rem; border-left: 0.2rem solid var(--ink); background: var(--paper); border-radius: var(--radius); }
 .report-throughline__part-title { font-size: var(--fs-small); font-weight: 800; color: var(--report-accent, var(--accent-blue-vivid)); white-space: nowrap; }
 .report-throughline__part-arc { font-size: var(--fs-small); line-height: 1.6; color: var(--fg); }
 /* 文書メタ (version/updatedDate/readingTime) は report-meta の span を流用 */
 /* 節末の次節への橋渡し (transition) */
 .report-transition {
   margin: var(--space-4, 1rem) 0 0; padding: 0.5rem 0 0 var(--space-4, 1rem);
-  font-size: var(--fs-small); color: var(--fg-dim); font-style: italic;
-  border-left: 0.2rem solid color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 40%, transparent);
+  font-size: var(--fs-small); color: var(--fg-muted); font-style: italic;
+  border-left: 0.2rem solid var(--hairline);
 }
 .report-transition::before { content: "→ "; font-weight: 700; font-style: normal; color: var(--section-accent, var(--accent-blue-vivid)); }
 /* 定義リスト (term ↔ definition) */
@@ -499,10 +543,10 @@ pre.report-code code { background: none; padding: 0; color: inherit; font-size: 
 .report-deflist dd { margin: 0; font-size: var(--fs-body); line-height: 1.75; }
 @media (max-width: 720px) { .report-deflist { grid-template-columns: 1fr; } .report-deflist dd { margin-bottom: 0.5rem; } }
 /* 脚注引用 (footnote + citation)。marker が採番を担うため ol の decimal は出さない (二重採番回避) */
-.report-footnotes { margin: var(--space-5,1.5rem) 0 0; padding-top: var(--space-3,0.75rem); border-top: 1px solid rgba(67,67,108,0.18); font-size: var(--fs-small); color: var(--fg-dim); }
+.report-footnotes { margin: var(--space-5,1.5rem) 0 0; padding-top: var(--space-3,0.75rem); border-top: 1px solid var(--hairline); font-size: var(--fs-small); color: var(--fg-muted); }
 .report-footnotes ol { list-style: none; margin: 0; padding: 0; }
 .report-footnotes li { margin-bottom: 0.35rem; line-height: 1.6; }
-.report-footnotes li:target { background: color-mix(in srgb, var(--section-accent, var(--accent-blue-vivid)) 10%, transparent); border-radius: 0.3rem; }
+.report-footnotes li:target { background: var(--hairline); border-radius: var(--radius); }
 .report-footnotes__marker { font-weight: 700; color: var(--section-accent, var(--accent-blue-vivid)); font-variant-numeric: tabular-nums; }
 .report-footnotes__back { margin-left: 0.4rem; text-decoration: none; color: var(--section-accent, var(--accent-blue-vivid)); }
 .report-footnotes cite { display: block; font-style: normal; font-size: 0.8rem; color: var(--fg-muted); margin-top: 0.1rem; }
@@ -515,7 +559,7 @@ sup.report-fnref a:hover { text-decoration: underline; }
 .report-tasklist li { display: flex; gap: 0.55rem; align-items: baseline; font-size: var(--fs-body); margin-bottom: 0.5rem; }
 .report-tasklist__box { font-family: var(--font-mono); font-weight: 800; color: var(--section-accent, var(--accent-blue-vivid)); white-space: nowrap; }
 .report-tasklist__box--done { color: var(--accent-aqua-vivid); }
-.report-tasklist li.is-done .report-tasklist__text { color: var(--fg-dim); text-decoration: line-through; }
+.report-tasklist li.is-done .report-tasklist__text { color: var(--fg-muted); text-decoration: line-through; }
 .report-tasklist__owner { font-size: var(--fs-small); color: var(--fg-muted); margin-left: 0.3rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
@@ -771,8 +815,11 @@ function projectLanes(spec) {
   // 受け渡しは edges[] に宣言されている。これを渡さないと buildSwimlane は
   // 順序の手がかりを持てず、同じレーンの中しか結べない (レーンをまたぐ線が
   // 消える)。svgSpec は id で辺を書くので id のまま渡す。
+  // kind:'dashed' は projectSequence と同じ語彙で「同じ向きの受け渡しではない辺」
+  // (差戻し・再送) を指す。落とすと buildSwimlane は全部の辺を実線で引くので、
+  // 凡例が破線を語っている図で**凡例だけが嘘をつく**状態になる。
   const links = (Array.isArray(spec.edges) ? spec.edges.filter(Boolean) : [])
-    .map((e) => ({ from: e.from, to: e.to, label: e.label || '' }));
+    .map((e) => ({ from: e.from, to: e.to, label: e.label || '', dashed: e.kind === 'dashed' }));
   return { args: [lanes], opts: links.length ? { links } : {} };
 }
 
@@ -999,19 +1046,21 @@ function buildNeutralComparison(leftItems, rightItems, opts = {}) {
   const maxItems = Math.max(L.length, R.length, 1);
   const cardH = headerH + 18 + maxItems * itemH + Math.max(0, maxItems - 1) * itemGap + bottomPad;
   const W = 1200, H = topY + cardH + 28;
-  const BLUE = "var(--wave-blue, #7E9CD8)";
-  const AQUA = "var(--wave-aqua, #7FB4CA)";
+  // 左右 2 列は対等なので色相では区別しない。濃度段 2 段の差だけで書き分ける
+  // (VGCONST_002)。どちらもヘッダに paper 文字を載せるため濃い側 2 段から採る。
+  const BLUE = kit.TOKENS.ink;
+  const AQUA = kit.TOKENS.link;
 
   function column(x, items, color, title) {
     const b = [];
-    b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${cardH}" rx="16" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.5"/>`);
-    b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${headerH}" rx="16" fill="${color}" opacity="0.92"/>`);
+    b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${cardH}" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}" stroke-width="1.5"/>`);
+    b.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${headerH}" fill="${color}" opacity="0.92"/>`);
     b.push(`<rect x="${x}" y="${topY + headerH - 16}" width="${colW}" height="16" fill="${color}" opacity="0.92"/>`);
     b.push(`<text x="${x + 24}" y="${topY + 38}" text-anchor="start" fill="${kit.TOKENS.white}" font-size="22" font-weight="800" font-family="'Noto Sans JP', sans-serif">${escapeHtml(title)}</text>`);
     items.forEach((it, i) => {
       const y = topY + headerH + 16 + i * (itemH + itemGap);
       const text = textOf(it);
-      b.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" rx="10" fill="${kit.TOKENS.paper2}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
+      b.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" fill="${kit.TOKENS.paper2}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
       b.push(`<rect x="${x + padX}" y="${y}" width="6" height="${itemH}" fill="${color}"/>`);
       b.push(`<circle cx="${x + padX + 30}" cy="${y + itemH / 2}" r="6" fill="${color}"/>`);
       b.push(`<text x="${x + padX + 50}" y="${y + itemH / 2 + 6}" text-anchor="start" fill="${kit.TOKENS.ink}" font-size="17" font-weight="600" font-family="'Noto Sans JP', sans-serif">${escapeHtml(text)}</text>`);
@@ -1598,7 +1647,7 @@ function renderCodexImage(spec, meta) {
   const overlays = Array.isArray(spec.overlayText) ? spec.overlayText : [];
   const overlayHtml = overlays.map((t) => `    <li>${escapeHtml(t)}</li>`).join('\n');
   return `<figure class="report-visual report-visual--image" aria-label="${alt}">
-  <svg viewBox="0 0 960 320" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="960" height="320" fill="rgba(46,168,143,0.08)" rx="10"/><text x="480" y="60" text-anchor="middle" fill="var(--accent-aqua-vivid, #2EA88F)" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif">Codex Image (${escapeHtml(spec.pattern || 'image')})</text><text x="480" y="170" text-anchor="middle" fill="var(--fg-dim, #727169)" font-size="16" font-family="'Noto Sans JP', sans-serif">${alt}</text></svg>
+  <svg viewBox="0 0 960 320" role="img" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="960" height="320" fill="${SPEC.colors.paper}"/><text x="480" y="60" text-anchor="middle" fill="${SPEC.colors.ink}" font-size="20" font-weight="700" font-family="'Noto Sans JP', sans-serif">Codex Image (${escapeHtml(spec.pattern || 'image')})</text><text x="480" y="170" text-anchor="middle" fill="${SPEC.colors.inkMuted}" font-size="16" font-family="'Noto Sans JP', sans-serif">${alt}</text></svg>
   <ul class="composite-overlay">
 ${overlayHtml}
   </ul>${caption}
@@ -1608,7 +1657,7 @@ ${overlayHtml}
 /** 決定論フォールバック (render を落とさない) */
 function fallbackVisual(msg, caption) {
   const cap = caption ? `\n  <figcaption>${escapeHtml(caption)}</figcaption>` : '';
-  return `<figure class="report-visual report-visual--fallback">\n  <svg viewBox="0 0 960 200" role="img" aria-label="placeholder" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="960" height="200" fill="rgba(59,125,216,0.06)" rx="8"/><text x="480" y="105" text-anchor="middle" fill="var(--fg-dim, #727169)" font-size="18" font-family="'Noto Sans JP', sans-serif">${escapeHtml(msg)}</text></svg>${cap}\n</figure>`;
+  return `<figure class="report-visual report-visual--fallback">\n  <svg viewBox="0 0 960 200" role="img" aria-label="placeholder" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="960" height="200" fill="${SPEC.colors.paper}"/><text x="480" y="105" text-anchor="middle" fill="${SPEC.colors.inkMuted}" font-size="18" font-family="'Noto Sans JP', sans-serif">${escapeHtml(msg)}</text></svg>${cap}\n</figure>`;
 }
 
 /** callouts[] → HTML (任意) */

@@ -88,9 +88,18 @@ feedback_contract:
       loop_scope: outer
       text: 実対話のlive trialで、U1-U9確定、needs_guidance時の最新根拠付き2〜3案、free/low-cost候補、AI推奨保留、ユーザー確認、最終未収集0までを機密情報なしのsandbox stateで完走できる。
       verify_by: live-trial
+runtime_root_policy: host-skill-path
 ---
 
 # run-system-spec-elicit
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > システム構築の仕様を、まず **上位概念 (本質的目的/背景/ゴール/目標/成功基準/具体的やりたいこと U1-U9)** を深掘りヒアリングで確定し (R0-foundation)、その上で **カテゴリ×canonical platform id** の収集マトリクスを往復ヒアリングで終端化する L1 skill。ユーザーが決めきれない項目は R5 が最新公式根拠付き2〜3案（無料/低コスト案を含む）を目的適合で比較し、AI推奨・理由・注意点を示してユーザー確認へ導く。foundation / decisions / matrix の書込は本 skill 所有の**単一 transition writer**のみ。
 

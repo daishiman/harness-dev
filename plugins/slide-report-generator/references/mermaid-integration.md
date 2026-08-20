@@ -1,7 +1,7 @@
 # Mermaid 統合ガイド（report モード）
 
 > 責務: output_mode=report のビジュアル三択（SVG図解 / Mermaid / Codex画像）のうち **Mermaid** 経路の統合仕様。対応図種・記法・`render-report.js` / `mermaid-render.js` との連携・フォールバックを定義する。
-> 正本の役割分担: 意匠トークン（Kanagawa 配色・フォント）は vendor 共有 SSOT、三択の選択規準は [report-visual-strategy.md](report-visual-strategy.md)、Mermaid の schema 契約は `schemas/report-structure.schema.json` の `mermaidSpec`。本書は Mermaid 固有の記法と連携を担う。
+> 正本の役割分担: 意匠トークン（配色・フォント）は vendor 共有 SSOT、三択の選択規準は [report-visual-strategy.md](report-visual-strategy.md)、Mermaid の schema 契約は `schemas/report-structure.schema.json` の `mermaidSpec`。本書は Mermaid 固有の記法と連携を担う。
 
 ---
 
@@ -92,7 +92,7 @@ gantt
 
 ## 4. 配色・意匠の注入（テーマは render 側で）
 
-**definition に配色を直書きしない。** Kanagawa（`kanagawa-lotus`）のアクセント色・背景・フォントは `render-report.js` / `mermaid-render.js` が Mermaid の `themeVariables`（init ディレクティブ）として注入する。これにより：
+**definition に配色を直書きしない。** テーマ（`theme.name`・schema 固定値）のアクセント色・背景・フォントは `render-report.js` / `mermaid-render.js` が Mermaid の `themeVariables`（init ディレクティブ）として注入する。これにより：
 
 - 意匠トークンが slide/report で単一 SSOT に保たれる（build-contract §D 共有層）。
 - 図種をまたいで配色が一貫する。

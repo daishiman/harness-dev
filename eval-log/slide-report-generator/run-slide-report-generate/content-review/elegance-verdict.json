@@ -2,33 +2,39 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-generate",
-    "skill_md_sha256": "574ecb45f6fa52dfb3151a5422597a60c4ee160835517fc80c08b3ea65a3c4a5"
+    "skill_md_sha256": "6cf846680db761778725a20f71eb9469cd0586ef0a3e384cbe5ab038d243437d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-14T01:02:45Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
-    "positive_feedback": [
-      "slide 経路の品質補正が『必要に応じ』から起動条件の明示へ変わった。ui-quality-reviewer は無条件必須、layout-optimizer は validate-slide-layout.js の error か ui-quality-reviewer の崩れ検出がある場合に必須。理由も SKILL.md 本文に書かれている — 呼ばれない agent の完了チェックリストは発火しないので、縦方向の停止条件 (充填率・外側余白率・残余の置き場所) を持つのが両 agent だけである以上、起動が任意だと停止条件そのものが消える。『任意の呼び出しに乗せた停止条件は停止条件ではない』という一般則で、他 skill の agent 起動条件へ横展開できる。",
-      "D0-D21 → D0-D23 の表記更新が SKILL.md :146 と references/spec-registry.md §15-a の両方で揃っており、片方だけ増えて範囲が食い違う形になっていない。新設した D22/D23 が spec-registry の SR-15-20 へ紐付き、SR-ID → 検査コード → 実装の 3 点が閉じている。",
-      "references/layout-optimization-rules.md の説明を『横=文字数・カード/フォント・印刷 pt 換算 / 縦=内容高ブロック・残余の外側余白・高さ牽引・読み取り用画像・浮遊UI』へ広げたのは、上の layout-optimizer 必須化と対になっている。owner を変えずに責務の記述だけを実態へ合わせており、owner 表と実体のずれを作っていない。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "slide/report 両モードの構成設計→生成→UI 品質→評価の各段を独立 sub-agent へ分離し、構成確定ゲート (validate-structure) を通さない限り生成へ進めない fail-closed 順序を保っている。",
+      "実行コマンドはすべて 3 段 fallback 形で、vendor script / plugin-root glue / assets の 3 種の起点が本文で区別されている。"
+    ],
+    "negative_feedback": [
+      "L68 / L100 / L108 / L207 (Gotchas) / L214 / L216 に 2 段 fallback `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` の旧表記が散文・Gotchas 層に残り、実行行の 3 段形および runtime-portability.md の doc 層正準形と一致しない (low・機能破綻なし)。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
-  }
+  },
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 散文/Gotchas 層の root 表記 drift 6 件を low severity として記録。"
 }

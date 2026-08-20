@@ -50,11 +50,11 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| apply 検査 | `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py` (--check-apply) | schema/anchor/fact/分類の決定論自己検証 |
+| apply 検査 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py` (--check-apply) | schema/anchor/fact/分類の決定論自己検証 |
 | blueprint 正本 | `<blueprint_dir>/blueprint.json` | evidence anchor 解決の参照元 |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --check-apply <out_dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json`
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --check-apply <out_dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json`
 - Write (apply-recommendations.md/json のローカル出力) のみ。network なし・blueprint 非書込。
 
 ## Layer 4: 共通ポリシー層
@@ -113,4 +113,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-R2 が導出した recommendations を `<out_dir>/apply-recommendations.json` (`{"recommendations":[...]}`) と `<out_dir>/apply-recommendations.md` (3 分類ごとに claim/根拠 anchor/確度/自社接地先を提示する読み物・冒頭へ参考/学習目的限定注記) へ emit する。`python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --check-apply <out_dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json` を exit0 (`status:pass`) まで通す。exit1 の violations は該当項目 (無効 anchor/kind=fact 混入/分類逸脱/confidence・own_context_ref 欠落) を R2 へ差し戻して再導出する。blueprint 本体へ書き込まず対象 origin へアクセスしない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は生成パス・3 分類件数・check-apply サマリのみ、前置き禁止。
+R2 が導出した recommendations を `<out_dir>/apply-recommendations.json` (`{"recommendations":[...]}`) と `<out_dir>/apply-recommendations.md` (3 分類ごとに claim/根拠 anchor/確度/自社接地先を提示する読み物・冒頭へ参考/学習目的限定注記) へ emit する。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --check-apply <out_dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json` を exit0 (`status:pass`) まで通す。exit1 の violations は該当項目 (無効 anchor/kind=fact 混入/分類逸脱/confidence・own_context_ref 欠落) を R2 へ差し戻して再導出する。blueprint 本体へ書き込まず対象 origin へアクセスしない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は生成パス・3 分類件数・check-apply サマリのみ、前置き禁止。

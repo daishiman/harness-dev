@@ -1,38 +1,31 @@
 # デザイン品質ガイド
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは設計の文脈・例・適用ガイドのみ。規則の正本は SR-ID で参照すること
 
 **責務**: Apple品質のビジュアルデザインを実現するための文脈・適用例・アンチパターン。
-**規則の正本**: ビビッドアクセント定義 → [SR-2-04](spec-registry.md#sr-2-04)、各スライド1色以上 → [SR-2-05](spec-registry.md#sr-2-05)、60-30-10 → [SR-2-06](spec-registry.md#sr-2-06)、シャドウ/グロウ → [SR-2-09](spec-registry.md#sr-2-09)、a11y全般 → §9（[SR-9-01](spec-registry.md#sr-9-01)〜[SR-9-06](spec-registry.md#sr-9-06)）、reduced-motion → [SR-6-08](spec-registry.md#sr-6-08)
+**規則の正本**: アクセントの作り方（色ではなく反転面） → [SR-2-04](spec-registry.md#sr-2-04)、強調は1面1箇所 → [SR-2-05](spec-registry.md#sr-2-05)、面積配分 60-30-10 → [SR-2-06](spec-registry.md#sr-2-06)、意味を色で区別しない → [SR-2-07](spec-registry.md#sr-2-07)、階層は罫で作る（影・グロウ不使用） → [SR-2-09](spec-registry.md#sr-2-09)、a11y全般 → §9（[SR-9-01](spec-registry.md#sr-9-01)〜[SR-9-06](spec-registry.md#sr-9-06)）、reduced-motion → [SR-6-08](spec-registry.md#sr-6-08)
 
 ---
 
-## 1. ビビッドカラーパレット
+## 1. アクセントの作り方
 
-**値の正本は [SR-2-04](spec-registry.md#sr-2-04)** で、本ファイルは hex を再掲しない（2 箇所に書くと片方だけ古くなる）。
-本節が持つのは「なぜその彩度にしたか」＝ Lotus 原色からの変化と用途の対応だけ:
+**規則の正本は [SR-2-04](spec-registry.md#sr-2-04)** で、本ファイルは hex を再掲しない（2 箇所に書くと片方だけ古くなる）。
+本節が持つのは「なぜ色でなく反転で強調するか」＝手段と用途の対応だけ:
 
-<!-- palette-variant: 「元カラー」列は Kanagawa Lotus 公式の原色（導出の出発点）で、変数の現在値ではない -->
+| 手段 | 作り方 | 用途 |
+|------|--------|------|
+| 反転面 | 地色と文字色を入れ替える | 面内で最も伝えたい 1 ブロック |
+| 濃度段 | 図解の内部に限り、単一色相の濃度を変える | 図解内の系列・階層の区別 |
+| 罫 | 1px の下罫を引く | 領域の区切り（囲み・影の代わり） |
 
-| 変数名 | 元カラー（Lotus 原色） | 彩度変化 | 用途 |
-|--------|---------|---------|------|
-| `--accent-blue-vivid` | #4d699b | 34%→60% | 主アクセント強調 |
-| `--accent-pink-vivid` | #b35b79 | 32%→60% | 課題・警告強調 |
-| `--accent-aqua-vivid` | #597b75 | 16%→57% | 成功・解決強調 |
-| `--accent-violet-vivid` | #624c83 | 彩度深化 | サブアクセント強調 |
-| `--accent-yellow-vivid` | #de9800 | 高彩度維持 | CTA・重要数値 |
+段数・彩度・面積の上限は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本。本ファイルへ値を写経しない。
 
-### WCAG AA コントラスト比（背景 = SR-2-01 の Lotus White 地）
+### WCAG AA コントラスト比
 
-各行は SR-2-04 の現在値に対する実測値。SR-2-04 の値を変えたら再測定が要る。
-
-| カラー | コントラスト比 | AA判定 |
-|--------|--------------|--------|
-| `--accent-blue-vivid` | 4.5:1 | PASS |
-| `--accent-pink-vivid` | 4.6:1 | PASS |
-| `--accent-aqua-vivid` | 4.5:1 | PASS |
-| `--accent-violet-vivid` | 5.2:1 | PASS |
-| `--accent-yellow-vivid` | (装飾用) | 大テキストのみ |
+反転面は地色と文字色の入れ替えなので、通常面と同じ組み合わせのコントラスト比がそのまま効く。地色・文字色の実測は [SR-9-01](spec-registry.md#sr-9-01) を参照。濃度段を使う場合は、その段が文字を載せる面かどうかで判定を分ける（文字を載せるなら 4.5:1 以上、図解の面塗りのみなら隣接段との差が判別できること）。
 
 ### グラデーション定義
 
@@ -59,69 +52,37 @@
 
 ---
 
-## 2. シャドウシステム
+## 2. 階層システム（罫）
 
-4段階のシャドウ + グロウ3種。カードやパネルの深度を表現する。
-
-### シャドウ変数
-
-```css
-:root {
-  /* 4段階シャドウ */
-  --shadow-subtle:    0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-medium:    0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-  --shadow-prominent: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
-  --shadow-elevated:  0 16px 48px rgba(0, 0, 0, 0.16), 0 8px 16px rgba(0, 0, 0, 0.08);
-
-  /* グロウ（アクセント光彩） */
-  --glow-blue:   0 0 20px rgba(59, 125, 216, 0.3);
-  --glow-pink:   0 0 20px rgba(217, 75, 110, 0.3);
-  --glow-aqua:   0 0 20px rgba(46, 168, 143, 0.3);
-}
-```
+深度は影ではなく**罫**で作る（[SR-2-09](spec-registry.md#sr-2-09)）。角丸は 0px（写真・図のみ例外）。線の太さと hairline の値は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_003 / VGCONST_004 が正本で、本ファイルは値を再掲しない。
 
 ### 使い分け
 
-| シャドウ | 用途 | 適用例 |
-|---------|------|--------|
-| subtle | 静的要素 | カード、パネルのデフォルト |
-| medium | ホバー状態 | カードホバー、ボタン |
-| prominent | 浮上要素 | モーダル、ツールチップ |
-| elevated | 最前面 | ドロップダウン、オーバーレイ |
-| glow-* | アクセント強調 | CTA、アクティブ状態 |
+| 手段 | 用途 | 適用例 |
+|------|------|--------|
+| 1px の下罫 | 区切りの既定 | カード、パネル、リスト項目の境界 |
+| hairline（最も細い罫） | 従属的な区切り | 表の行間、図解内の補助線 |
+| 2px の罫 | その面で 1 本だけの主線 | 図解の主フロー、セクションの区切り |
+| 反転面 | 最前面・最重要 | モーダル、面内で最も伝えたい 1 ブロック |
+
+`:root` に定義されている `--shadow-*` / `--glow-*` は、CSS トークン実体の差し替えが済むまで残る過渡的定義（定義本体は [theme-style.md](theme-style.md) §4）であり、新しい面では選ばない。
 
 ---
 
-## 3. グラスモーフィズム・深度エフェクト
+## 3. 深度レイヤー
 
-### グラスカードクラス
+**ぼかし（`backdrop-filter`）を意匠手段として使わない。** 深度は §2 と同じく罫と反転で作る（SR-2-09）。ぼかしは背面の絵柄を透かすことでしか階層を示せず、地が単色の面では何も見えないうえ、印刷では無効化されて階層が消える。
 
-グラスカードの CSS 正本は [theme-style.md](theme-style.md) §16。ここでは品質判断だけを扱い、クラス定義は再掲しない。
-
-### 深度レイヤー
-
-| レイヤー | z-index | backdrop-filter | 用途 |
-|---------|---------|----------------|------|
+| レイヤー | z-index | 階層の示し方 | 用途 |
+|---------|---------|-------------|------|
 | 背景 (L0) | 0 | なし | スライド背景 |
-| コンテンツ (L1) | 1 | blur(8px) | カード、パネル |
-| フロート (L2) | 10 | blur(16px) | ツールチップ、ポップオーバー |
-| ナビ (L3) | 100 | blur(20px) | ナビゲーション、コントロール |
+| コンテンツ (L1) | 1 | 1px の下罫 | カード、パネル |
+| フロート (L2) | 10 | 地色の塗り + 全周 1px の罫 | ツールチップ、ポップオーバー |
+| ナビ (L3) | 100 | 地色の塗り + 境界側 1px の罫 | ナビゲーション、コントロール |
 
-### 印刷安全代替
+前面のレイヤーは背面を透かさず、地色で塗りつぶす。画面と紙で同じ階層が出る。
 
-`backdrop-filter` は印刷時に無効になるため、`@media print` では代替スタイルを適用する。
-
-```css
-@media print {
-  .glass-card,
-  .glass-card-strong {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--bg-card, #F0F0F0);
-    border: 1px solid var(--sumi-ink, #FAFAFA);
-  }
-}
-```
+`.glass-card` / `.glass-card-strong`（定義本体は [theme-style.md](theme-style.md) §16）は CSS トークン実体の差し替えが済むまで残る過渡的定義であり、新しい面では選ばない。
 
 ---
 
@@ -142,28 +103,20 @@ Perfect Fourth (1.333) ベースのスケール。既存の `--fs-*` 変数を�
 | `--fs-small` | 1.4rem (min) | キャプション |
 | `--fs-caption` | 1.2rem (min) | 注釈 |
 
-### フォントウェイト変数
+### フォントウェイト
 
-```css
-:root {
-  --fw-light: 300;
-  --fw-regular: 400;
-  --fw-medium: 500;
-  --fw-semibold: 600;
-  --fw-bold: 700;
-}
-```
+**ウェイトは 3 段のみ**（標準 / 中間 / 最も太い段）。段の値・段数・最も太い段の出現回数は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_005 が正本で、ここに値を書かない（SR-3-10）。`:root` の `--fw-light` / `--fw-semibold` は CSS トークン実体の差し替えが済むまで残る過渡的定義（定義本体は [theme-style.md](theme-style.md) §4）であり、新しい面では選ばない。
 
 ### 使い分け
 
-| 要素 | ウェイト | サイズ |
-|------|---------|--------|
-| タイトル | bold | --fs-title |
-| 見出し | semibold | --fs-heading |
-| 本文 | regular | --fs-body |
-| 強調テキスト | semibold | --fs-body |
-| キャプション | regular | --fs-small |
-| 数値ハイライト | bold | --fs-heading 以上 |
+| 要素 | ウェイト段 | サイズ |
+|------|-----------|--------|
+| タイトル | 最も太い段（面に 1 箇所） | --fs-title |
+| 見出し | 中間の段 | --fs-heading |
+| 本文 | 標準の段 | --fs-body |
+| 強調テキスト | 中間の段 | --fs-body |
+| キャプション | 標準の段 | --fs-small |
+| 数値ハイライト | 最も太い段（タイトルと排他） | --fs-heading 以上 |
 
 ---
 
@@ -247,30 +200,27 @@ gsap.timeline()
 
 ### ホバーパターン
 
-#### lift & glow（持ち上げ＋光彩）
+#### lift（持ち上げ）
 
 ```css
 .card-hover-lift {
-  transition: transform 0.2s var(--ease-standard),
-              box-shadow 0.2s var(--ease-standard);
+  transition: transform 0.2s var(--ease-standard);
 }
 .card-hover-lift:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-prominent);
 }
 ```
 
-#### border-glow（ボーダー光彩）
+#### border-emphasis（罫の強調）
 
 ```css
 .card-hover-border {
-  transition: border-color 0.2s var(--ease-standard),
-              box-shadow 0.2s var(--ease-standard);
-  border: 2px solid transparent;
+  transition: border-color 0.2s var(--ease-standard);
+  border-bottom: 1px solid currentColor;
+  opacity: 0.7;
 }
 .card-hover-border:hover {
-  border-color: var(--accent-blue-vivid);
-  box-shadow: var(--glow-blue);
+  opacity: 1;
 }
 ```
 
@@ -437,9 +387,11 @@ HTML生成時の最終確認15項目。
 
 ### カラー・ビジュアル
 
-- [ ] ビビッドアクセント（`--accent-*-vivid`）が各スライドに1つ以上使用されているか
-- [ ] グラデーションがタイトルスライドまたはCTA要素に適用されているか
-- [ ] シャドウが4段階のうち適切なレベルで使用されているか
+- [ ] 面に置いた色が 地 / 文字 / 反転面 の 3 つ以内におさまっているか（[SR-2-01](spec-registry.md#sr-2-01)）
+- [ ] 強調を色で作らず反転面 1 個で作っているか（[SR-2-04](spec-registry.md#sr-2-04) / [SR-2-05](spec-registry.md#sr-2-05)）
+- [ ] 面積配分が 地 60 / 文字とパネル 30 / 反転面 10 におさまっているか（[SR-2-06](spec-registry.md#sr-2-06)）
+- [ ] 対比・前後・可否を色相で区別せず 位置 / 順序 / ラベル / 罫 で示しているか（[SR-2-07](spec-registry.md#sr-2-07)）
+- [ ] 影・グロウを使わず罫で階層を作り、角丸が 0px か（[SR-2-09](spec-registry.md#sr-2-09)）
 - [ ] カラーコード直書きではなくCSS変数を使用しているか
 
 ### アニメーション
@@ -459,5 +411,6 @@ HTML生成時の最終確認15項目。
 
 ### 品質
 
-- [ ] フォントウェイト変数（--fw-*）を使用しているか
+- [ ] ウェイトが 3 段に収まり、最も太い段が 1 面 1 箇所か（SR-3-10）
+- [ ] ぼかしで階層を作っていないか（罫と反転で作る・SR-2-09）
 - [ ] スペーシング変数（--space-*）で余白を管理しているか

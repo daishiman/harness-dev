@@ -141,6 +141,27 @@ class BuildClaudeSymlinksTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("conflict", result.stdout)
 
+    def test_identical_vendored_feedback_skill_uses_harness_creator_ssot(self):
+        canonical = self.skill("harness-creator", "run-skill-feedback")
+        self.skill("consumer", "run-skill-feedback")
+
+        result = self.run_cli("--kinds", "skills")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        dst = self.target / "skills" / "run-skill-feedback"
+        self.assertTrue(dst.is_symlink())
+        self.assertEqual(os.readlink(dst), os.path.relpath(canonical, dst.parent))
+
+    def test_drifted_vendored_feedback_skill_is_a_conflict(self):
+        self.skill("harness-creator", "run-skill-feedback")
+        drifted = self.skill("consumer", "run-skill-feedback")
+        (drifted / "SKILL.md").write_text("---\n---\n# Drifted\n", encoding="utf-8")
+
+        result = self.run_cli("--kinds", "skills")
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("conflict", result.stdout)
+
     def test_exclude_plugin_avoids_duplicate_skill_conflict(self):
         src = self.skill("slide-report-generator", "run-slide-report-generate")
         self.skill("slide-report-generator-v2", "run-slide-report-generate")

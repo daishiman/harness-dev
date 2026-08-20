@@ -2,40 +2,38 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "b92879f4ed939201542e5be67697a593c2d49e3c9a005ddeabc04954231ca7d3"
+    "skill_md_sha256": "f4c7fb36dca7d490c7186a7ad529c9f1f28ea15c05fcbb152acb2855c245afa4"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 1,
+    "omission": 0,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T07:21:32Z",
-  "iterations": 3,
-  "human_review_required": true,
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "SSOT 非重複条件 (iteration2 で唯一後退していた条件) の回復を実測確認した。required-info-catalog.json の information-priority.required_reason から SKILL.md L151 との同文重複が除かれ、理由 1 文 + 『責務境界は SKILL.md feedback-contract の《情報優先度の責務境界》が正本 (ここには再掲しない)』という pointer に縮んだ。他 11 item の required_reason が『なぜ必須か』1 文で閉じている形へ揃い、境界を動かすときの 2 ファイル同期が不要になった。機構側の非重複も維持されている: validate-information-priority.py / information-priority-map.schema.json は system-spec-harness の scripts/ と schemas/ に 1 つずつしか無く、SRG は相対パスで同一実体を起動し、C01 はコピーを持たず C04 information-design.md を原理の正本として指すだけ。",
-      "依存関係整合 (iteration2 の唯一の medium) の解消を実装で確認した。L151 は C03 の受け持ちを『原理カードの注入まで』へ限定し、その根拠として compile-spec-doc.py の category_design_refs() を名指す。実測で category_design_refs('ui-ux') == ['information-design.md']、category_design_refs('frontend') == ['clean-architecture.md', 'information-design.md'] を返し、render_design_refs() (L431) がこれを章の card として描画する (無マッチは resource-map への汎用ポインタ = 空落ち防止)。C04 resource-map.yaml L35 の read_when が『ui-ux / frontend カテゴリで…人が読む表現物の情報構成を章へ反映するとき』であることが導出根拠で、iteration2 の grep 0 hit は写像がハードコードでなく read_when 由来であることの帰結だった。",
-      "fail-closed 条件: 施行主体の限定が過大主張になっていない。L150 の『R5 が prose ゲートとして施行し、決定論 writer=apply-spec-transition への block 検査組込は follow-up』は block item を 6 件に増やした後も維持され、prompts/R5-decision-guide.md L30 の同旨記述とも一致する。今回追加された L151 も『map ゲートの C03 への組込は follow-up』と同じ語法で未実装を明示ラベルし、実装済み (SRG 構成設計の exit 0 要求) と未実装を無標で混ぜていない。実装されていない強制を PASS 証跡にしていない。",
-      "決定論ゲート条件: 述語が実行可能なまま保たれている。skill dir から validate-knowledge-graph.py --profile required-info を実走すると exit 0 / status=ok / total_items=12 を返し、coverage_certificate.blocking_items 6 件が SKILL.md L150 の手書き列挙と集合一致、in_scope_domains 9 = domains_covered_by_item 9、collection_order も新規 2 辺で循環しない。validate-information-priority.py は引数なし・不在ファイルとも exit 2 を実測で返し header の宣言 (0/1/2) と一致。回帰も無い (pytest 102 passed、lint-feedback-contract 違反 0、lint-skill-tree ok)。",
-      "rubric high severity 0 を SKILL.md 変更後に再測定した (rubric.json rubric_version 1.3.0 / threshold 80、applies_to_kinds が skill または * の rule で採点)。FM-001 = name 'run-system-spec-elicit' が ^(run|ref|assign|wrap|delegate)- に一致し 60 字以内、BD-001 = '## Purpose & Output Contract' が厳格一致で存在 (L106)、BD-003 = frontmatter 除く本文 90 行 <= 300 (前回から +0 行・L151 は 1 行の書換)、NM-001 = ディレクトリ basename と frontmatter.name が一致、KL-001 = knowledge/ ディレクトリ (実 ls で不在) も frontmatter.knowledge_loop も無く存在ゲートが無条件成立。AG/HK/CM/PC/PR/WF 系 high rule は applies_to_kinds が skill 以外のため非適用。"
+      "`spec-state.json` への書込を apply-spec-transition.py の単一 transition writer に限定し、確定巻き戻しの拒否・reopen 経由のみ変更可・付帯必須・集約は導出のみ、の 4 点を writer 側で機械強制している。",
+      "上位概念 (U1-U9) を技術マトリクスの手前に置き、各確定セルを serves_goals でトレースする anchor 設計が drift 検出まで含めて一貫している。",
+      "C16 収集ゲートについて『R5 が prose ゲートとして施行し、決定論 writer への組込は follow-up』と現状の施行境界を誇張せず明記している。"
     ],
-    "negative_feedback": [
-      "[low・iteration1 から 3 周連続で未解消・範囲拡大] 索引の不整合: references/resource-map.yaml の 6 resource に required-info-catalog.json と validate-knowledge-graph.py が依然含まれず、本差分で L151 が新たに引いた ../../ref-system-design-knowledge/references/information-design.md と ../run-system-spec-compile/scripts/compile-spec-doc.py も未列挙。同 map は他の C04 資産 (system-category-taxonomy.json) を列挙しているため、索引化の慣行に対する例外が 2 件増えた。rubric PD-001/002 は references/ の実在と冒頭 30 行の Output Contract を見る rule で本件を捕捉しないため rubric スコアには影響しないが、Progressive Disclosure の設計意図には反する。iteration_limit 到達により改善周回を回せず human triage へ送る。",
-      "[low・本差分で新規] test coverage の欠落: L151 が C03 側の接地根拠として名指す ui-ux / frontend → information-design.md の写像を pin する test が無い。test_compile_spec_doc.py の test_category_design_refs_derived_from_resource_map は database / backend / security / maintenance-ops と非正準カテゴリのみ assert し、test_category_design_refs_map_matches_matcher は materialized view と matcher の自己参照比較に留まる。導出が `cat_id in read_when` の部分文字列一致である以上、C04 resource-map.yaml L35 の read_when 文の言い換えだけで写像が [] に落ち、SKILL.md L151 の記述が黙って偽になる。今日時点の写像は成立しているため low。",
-      "[low・既存] lint-skill-tree.py の Warn 4 件 (LS-203: 規約外 top-level dir 'tests' / 'fixtures'、MED-4: prompts/R6-audit-hearing.md・R7-audit-matrix.md が responsibility_refs 未列挙) が本差分以前から未解消。rubric NM-003 は low severity で lint 自体も ok 終了のため閾値には影響しないが、prompts/ の実体 8 本に対し frontmatter の宣言は 6 本のままである。"
-    ],
-    "iteration": 3,
+    "negative_feedback": [],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
-    "next_action": "human_review"
+    "hook_trigger": "manual:pr-ci-stale-review",
+    "next_action": "none"
   },
-  "notes": "ref-skill-design-rubric/references/rubric.json (rubric_version 1.3.0, threshold 80) の applies_to_kinds に skill または * を含む rule で採点 (iteration 3)。high severity は全て充足し『rubric high severity 0』が成立する (根拠は positive_feedback 5)。medium 以下: FM-002/003 = description の trigger は『開始するとき』『確定させたいときに使う』の 2 個で範囲内、FM-004 = sha256/exit code 等の内部動作語なし、BD-002 = '## Gotchas' あり (L164)、NM-002/003 = lint-skill-tree.py は Warn 4 件付きで ok 終了、PD-001/002 = references/ 実在かつ冒頭 30 行内に Output Contract 相当と『禁止』が存在。lint-feedback-contract.py も本 skill に対する違反を出さない。4 条件: 単一責務 (information-priority の completion_rule は spec-state セルへの記録で閉じ、成果物生成を要件工程へ持ち込まない) / 決定論ゲート (C16 ゲート実走 exit 0・列挙一致) / SSOT 非重複 (iteration2 の後退を回復) / fail-closed (block 段の禁止と follow-up ラベルを維持) をすべて充足。iteration2 の medium 1 件 (C03 が責務を受けていない) と low 1 件 (required_reason 重複) はいずれも実装・実測で解消を確認したため再掲していない。残る 3 件はすべて low で、SKILL.md の記述を偽にするものは無く、protocol の改善ループが対象とする class (C1-C4 違反 / high severity / rubric 低スコア) にも該当しない。したがって verdict=PASS とし、iteration_limit 到達により自動周回で消化できない low 3 件を human_review_required=true + next_action=human_review で人へ引き渡す (INCOMPLETE は改善ループ対象の未解決が残る場合の終端形であり、本 iteration には該当しないと判断した)。criteria_evaluated は frontmatter feedback_contract.criteria の全 id (IN1/OUT1/OUT2) を被覆し、3 件とも validate-coverage-matrix.py と spec-state.json 形状に束縛されるため本差分による直接の退行は認めなかった (pytest 102 passed が裏付け)。未検証: OUT2 の live-trial は未実走 (Gate D 管轄で静的 verdict を流用しない)、--require-complete --require-foundation は実 fixture 不在のため未実行、rubric の重み付き合計スコア数値は本 verdict schema が weighted_score キーを許さないため記録せず rule 単位の充足で判断した。"
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
 }

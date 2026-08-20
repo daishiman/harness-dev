@@ -2,40 +2,39 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-generate",
-    "skill_md_sha256": "574ecb45f6fa52dfb3151a5422597a60c4ee160835517fc80c08b3ea65a3c4a5"
+    "skill_md_sha256": "6cf846680db761778725a20f71eb9469cd0586ef0a3e384cbe5ab038d243437d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-14T01:02:45Z",
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:05:55Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "機械採点は score 100 / threshold 80 / findings 0 (rubric_hash sha256:6e1843e5… / composition_hash sha256:964f754f… / L0+L2, DOMAIN_RUBRIC_REFS 未設定のため L1 無し)。SKILL.md は 231 行で max_skill_md_lines 300 の内側。",
-      "機械採点が触れなかった rule のうち適用対象を手で確認した。PD-002 / WF-001 / WF-002 / WF-003 (max_iterations 3周) / PG-002 (17/17 agents が対応する <!-- responsibility: R… --> アンカーを持つ) / AG-001 (17/17 agents が明示 tools allowlist を持つ) / AG-004 は通る。KL-* / PR-* / CM-* / HK-* は適用外。",
-      "今回の差分が持ち込んだ規範違反は 0 件。変更は起動条件の明示・検査コード範囲の同期・reference 説明の拡張の 3 点で、いずれも既存 rule の縛りを緩めていない。"
+      "slide/report 両モードの構成設計→生成→UI 品質→評価の各段を独立 sub-agent へ分離し、構成確定ゲート (validate-structure) を通さない限り生成へ進めない fail-closed 順序を保っている。",
+      "実行コマンドはすべて 3 段 fallback 形で、vendor script / plugin-root glue / assets の 3 種の起点が本文で区別されている。"
     ],
     "negative_feedback": [
-      "この PASS の被覆は 45 rule 中 14 である。render-findings-score.py の check_rule() は FM-001..005 / BD-001..004 / NM-001..003 / PD-001 / RG-001 の if/elif 連鎖で、id が一致しない rule は末尾の `return None` へ落ちる。返り値が『合格』と区別できないため、AG-001/002・HK-001/002・CM-002/003・PC-001/002・PR-001/003・WF-001/002・KL-001・PG-001・BND-001・REG-001 を含む high severity 31 件は採点されないまま score 100 になる。TODO(human) rule は pending_human へ正しく退避するのに未実装 rule は退避しない非対称があり、閾値 80 を『未実装なら満たされる』へ変えている。したがって score 100 はこの verdict の根拠ではない。根拠は positive_feedback に列挙した手作業確認の範囲だけである。既定分岐を pending_human (または unscored 配列) へ倒し、出力が自分の被覆率を申告するようにするまで、この数値を再利用してはならない。",
-      "AG-002 (high・plugin scope・未解決): slide-report-generator の 17/17 agent に `## Isolation` / `## Context Boundary` 節が無い (実測)。frontmatter の isolation: fork で部分的に緩和されるが、rule が求める『この agent が触らないもの』の本文記述は全 agent で不在。この verdict の target は skill なので PASS を妨げないと判定したが、plugin scope では未解決 high のままである。",
-      "BND-001 (high・plugin scope・未解決): slide-report-generator が .claude-plugin/bundles.json のどのバンドルにも登録されていない (実測)。rule は新規追加 plugin を対象とするため適用外の可能性があるが、配布経路の実在ギャップである。",
-      "PG-001 は rubric 側が陳腐化している。prompts/<R-id>.yaml を要求するが、repo 内の prompts/*.yaml は 0 件で prompts/*.md が 185 件。実装すれば全 skill が落ちるため、rule の側を実態へ追従させる必要がある。",
-      "REG-001 は記述どおりには実行できない。validate-plugin-completeness.py は exit 0 (22 plugins complete) だが、validate-build-trace.py は build-trace.json を引数に要求し repo 全体へは掛けられない。rule の半分が判定不能のまま。",
-      "eval-log の振り分けが壊れている。write-eval-log.py の resolve_log_path は record['plugin'] を読むが render-findings-score.py はそのキーを出さず、既定値 'core' に落ちる。今回の評価も eval-log/slide-report-generator/... が既に在るのに eval-log/core/2026-08-14-score.jsonl へ書かれた。SKILL.md が約束する eval-log/<plugin>/ 契約が守られておらず、自己進化ループの集計入力が汚染される。"
+      "L68 / L100 / L108 / L207 (Gotchas) / L214 / L216 に 2 段 fallback `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` の旧表記が散文・Gotchas 層に残り、実行行の 3 段形および runtime-portability.md の doc 層正準形と一致しない (low・機能破綻なし)。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
-    "next_action": "improve"
-  }
+    "hook_trigger": "manual:pr-ci-stale-review",
+    "next_action": "none"
+  },
+  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。 散文/Gotchas 層の root 表記 drift 6 件を low severity として記録。"
 }

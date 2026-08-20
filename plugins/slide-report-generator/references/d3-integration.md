@@ -22,7 +22,7 @@
 
 | 関数 | 説明 | 戻り値 |
 |------|------|--------|
-| `D3Base.getTheme()` | 現在のKanagawaテーマ色を取得 | Object |
+| `D3Base.getTheme()` | 現在のテーマ色を取得 | Object |
 | `D3Base.createSVG(container, width, height, margin)` | SVG要素を生成 | {svg, g, innerWidth, innerHeight} |
 | `D3Base.createTooltip(container)` | ツールチップ要素を生成 | D3 Selection |
 | `D3Base.defaultTransition()` | 標準トランジションを生成 | D3 Transition |
@@ -160,54 +160,11 @@
 
 ---
 
-## Kanagawa テーマカラー
+## テーマカラー
 
-### CSS変数
+色の値は本書に写経しない。面に置いてよい色数・地と文字・アクセントの作り方の正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` §1（VGCONST_001 / VGCONST_002）、CSS 変数の実体は vendor の共有意匠 SSOT が持つ。
 
-<!-- palette-variant: d3 コンポーネント固有の light/dark 2 面パレット。deck 全体のテーマ切替ではない (切替機構は存在しない・theme-style.md §2) -->
-
-```css
-:root {
-  /* Light Theme */
-  --bg-light: #FFFFFF;
-  --fg-light: #2D2D2D;
-  --accent1-light: #7E9CD8;  /* Blue */
-  --accent2-light: #E46876;  /* Pink */
-  --accent3-light: #98BB6C;  /* Green */
-  --accent4-light: #DCA561;  /* Yellow */
-  --accent5-light: #7AA89F;  /* Aqua */
-  --accent6-light: #957FB8;  /* Violet */
-
-  /* Dark Theme */
-  --bg-dark: #1F1F28;
-  --fg-dark: #DCD7BA;
-  --accent1-dark: #7E9CD8;
-  --accent2-dark: #E46876;
-  --accent3-dark: #98BB6C;
-  --accent4-dark: #DCA561;
-  --accent5-dark: #7AA89F;
-  --accent6-dark: #957FB8;
-}
-```
-
-### アクセントパレット（12色）
-
-```javascript
-const accentPalette = [
-  '#7E9CD8', // Blue
-  '#E46876', // Pink
-  '#98BB6C', // Green
-  '#DCA561', // Yellow
-  '#7AA89F', // Aqua
-  '#957FB8', // Violet
-  '#FF9E3B', // Orange
-  '#C34043', // Red
-  '#76946A', // Dark Green
-  '#938AA9', // Light Violet
-  '#7FB4CA', // Light Blue
-  '#E82424'  // Bright Red
-];
-```
+D3 図解では、系列ごとに色相を配って区別しない。区別は線幅（VGCONST_004 の 3 段）と、図解内に限り許される単一色相の濃度段（VGCONST_002・彩度 S15-30%・3 段まで）で作る。
 
 ---
 
@@ -371,7 +328,7 @@ svg.attr('role', 'img')
 
 ### 4. 一貫性
 
-- Kanagawaカラーパレットを使用
+- 配色は style genome の palette 定義と一致させる（値は写経しない）
 - 標準トランジションを使用
 - ツールチップスタイルを統一
 
@@ -381,14 +338,14 @@ svg.attr('role', 'img')
 
 | ファイル | 説明 |
 |---------|------|
-| `assets/d3-components/base.js` | 基盤コンポーネント |
-| `assets/d3-components/cycle.js` | 循環系コンポーネント |
-| `assets/d3-components/hierarchy.js` | 階層系コンポーネント |
-| `assets/d3-components/flow.js` | フロー系コンポーネント |
-| `assets/d3-components/charts.js` | グラフ系コンポーネント |
-| `assets/d3-components/advanced.js` | 高度な可視化コンポーネント |
-| `assets/d3-components/extended.js` | 拡張図解コンポーネント（10種） |
-| `assets/d3-slide-template.html` | D3対応HTMLテンプレート |
+| `vendor/assets/d3-components/base.js` | 基盤コンポーネント |
+| `vendor/assets/d3-components/cycle.js` | 循環系コンポーネント |
+| `vendor/assets/d3-components/hierarchy.js` | 階層系コンポーネント |
+| `vendor/assets/d3-components/flow.js` | フロー系コンポーネント |
+| `vendor/assets/d3-components/charts.js` | グラフ系コンポーネント |
+| `vendor/assets/d3-components/advanced.js` | 高度な可視化コンポーネント |
+| `vendor/assets/d3-components/extended.js` | 拡張図解コンポーネント（10種） |
+| `vendor/assets/d3-slide-template.html` | D3対応HTMLテンプレート |
 | `agents/d3-diagram-designer.md` | D3図解設計エージェント |
 | `agents/data-visualizer.md` | データ可視化エージェント |
-| `scripts/validate-d3.js` | D3検証スクリプト |
+| `vendor/scripts/validate-d3.js` | D3検証スクリプト |

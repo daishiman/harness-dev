@@ -224,6 +224,17 @@ def _data(manifest, **assets):
             "hooks": [], "scripts": [], "config": []}
     base.update(assets)
     base["manifest"] = manifest
+    plugin_name = manifest.get("name", "p") if isinstance(manifest, dict) else "p"
+    base["package_contract"] = {
+        "plugin_name": plugin_name,
+        "entry_points": {
+            "skills": list(base["skills"]),
+            "agents": [Path(item).stem for item in base["agents"]],
+            "commands": [Path(item).stem for item in base["commands"]],
+            "hooks": list(base["hooks"]),
+        },
+    }
+    base["composition_exists"] = True
     return base
 
 
@@ -398,7 +409,7 @@ def test_validate_uses_sidecar_distribution_and_entry_points():
             "skills": ["run-a"],
             "agents": ["audit"],
             "commands": ["go"],
-            "hooks": ["guard"],
+            "hooks": ["guard.py"],
         },
         "distribution": {"distributable": False},
     }
@@ -422,6 +433,64 @@ def test_validate_sidecar_declared_entry_point_must_exist():
     assert any("declares skills not on disk" in err and "run-missing" in err for err in errs)
 
 
+def test_validate_sidecar_rejects_undeclared_actual_entry_point():
+    data = _data(
+        {"name": "p", "version": "1", "description": "d"},
+        skills=["run-a", "run-extra"],
+    )
+    data["package_contract"] = {
+        "plugin_name": "p",
+        "entry_points": {
+            "skills": ["run-a"],
+            "agents": [],
+            "commands": [],
+            "hooks": [],
+        },
+        "distribution": {"distributable": False},
+    }
+
+    errs = MOD.validate("p", data, set(), {})
+
+    assert any(
+        "package-contract omits skills on disk" in err and "run-extra" in err
+        for err in errs
+    )
+
+
+def test_validate_sidecar_rejects_duplicate_and_noncanonical_hook_entry_points():
+    data = _data(
+        {"name": "p", "version": "1", "description": "d"},
+        skills=["run-a"], hooks=["guard.py"],
+    )
+    data["package_contract"] = {
+        "plugin_name": "p",
+        "entry_points": {
+            "skills": ["run-a", "run-a"],
+            "agents": [],
+            "commands": [],
+            "hooks": ["guard"],
+        },
+        "distribution": {"distributable": False},
+    }
+
+    errs = MOD.validate("p", data, set(), {})
+
+    assert any("entry_points.skills contains duplicates" in err for err in errs)
+    assert any("declares hooks not on disk" in err and "guard" in err for err in errs)
+    assert any("omits hooks on disk" in err and "guard.py" in err for err in errs)
+
+
+def test_validate_requires_package_contract_and_composition_for_every_plugin():
+    data = _data({"name": "p", "version": "1", "description": "d"}, skills=["run-a"])
+    data["package_contract"] = None
+    data["composition_exists"] = False
+
+    errs = MOD.validate("p", data, set(), {})
+
+    assert any("references/package-contract.json missing" in err for err in errs)
+    assert any("plugin-composition.yaml missing" in err for err in errs)
+
+
 # --- register_missing: 予防層 (--fix のコア) ---------------------------------
 
 def _setup_repo(tmp_path, monkeypatch, *, plugins, marketplace, bundles):
@@ -429,7 +498,26 @@ def _setup_repo(tmp_path, monkeypatch, *, plugins, marketplace, bundles):
     pdir = tmp_path / "plugins"
     pdir.mkdir(exist_ok=True)
     for name, manifest in plugins.items():
-        _make_plugin(pdir, name, manifest=manifest, skills=["run-a"])
+        plugin = _make_plugin(pdir, name, manifest=manifest, skills=["run-a"])
+        (plugin / "references").mkdir()
+        (plugin / "references/package-contract.json").write_text(
+            json.dumps(
+                {
+                    "package_mode": "bundle",
+                    "plugin_name": name,
+                    "entry_points": {
+                        "skills": ["run-a"], "agents": [], "commands": [], "hooks": []
+                    },
+                    "pkg_checks": {},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (plugin / "plugin-composition.yaml").write_text(
+            f"name: {name}\nkind: plugin-composition\ncapabilities:\n"
+            "  - { kind: skill, ref: skills/run-a, tier: core }\n",
+            encoding="utf-8",
+        )
     mj = tmp_path / ".claude-plugin" / "marketplace.json"
     mj.parent.mkdir(parents=True, exist_ok=True)
     mj.write_text(json.dumps(marketplace, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -565,7 +653,7 @@ def test_register_missing_skips_sidecar_non_distributable(tmp_path, monkeypatch)
         bundles={"bundles": [{"name": "full", "plugins": []}]},
     )
     plugin_dir = MOD.PLUGINS_DIR / "internal"
-    (plugin_dir / "references").mkdir()
+    (plugin_dir / "references").mkdir(exist_ok=True)
     (plugin_dir / "references" / "package-contract.json").write_text(json.dumps({
         "package_mode": "bundle",
         "plugin_name": "internal",
@@ -595,7 +683,9 @@ def test_dev_graph_native_manifest_and_sidecar_are_separated():
     # distributable の真偽そのものは公開方針の変数で、2026-08-17 に公開 marketplace へ
     # 載せる決定をして True へ移した (旧: False)。分離が保たれていることが要点。
     assert contract["distribution"]["distributable"] is True
-    assert contract["depends_on"] == ["system-spec-harness", "system-dev-planner"]
+    assert contract["depends_on"] == [
+        "harness-creator", "system-dev-planner", "system-spec-harness"
+    ]
     actual = {
         "skills": sorted(path.parent.name for path in plugin_dir.glob("skills/*/SKILL.md")),
         "agents": sorted(path.stem for path in plugin_dir.glob("agents/*.md")),
@@ -678,6 +768,26 @@ def test_main_violation_returns_1(tmp_path, monkeypatch, capsys):
     assert rc == 1
     assert "VIOLATION" in captured.err
     assert "summary: VIOLATION=" in captured.err
+
+
+def test_run_check_rejects_catalog_entries_for_deleted_plugins(tmp_path, monkeypatch):
+    _setup_repo(
+        tmp_path,
+        monkeypatch,
+        plugins={"good": {"name": "good", "version": "1", "description": "d"}},
+        marketplace={
+            "plugins": [
+                {"name": "good", "source": "./plugins/good"},
+                {"name": "deleted", "source": "./plugins/deleted"},
+            ]
+        },
+        bundles={"bundles": [{"plugins": ["good", "deleted"]}]},
+    )
+
+    _, errors = MOD.run_check()
+
+    assert "deleted: marketplace entry has no plugin directory (MK-005)" in errors
+    assert "deleted: bundle entry has no plugin directory (BD-003)" in errors
 
 
 def test_main_skips_dotdir_entries(tmp_path, monkeypatch, capsys):

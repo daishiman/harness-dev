@@ -55,9 +55,18 @@ feedback_contract:
       loop_scope: outer
       text: run-skill-live-trial で対話を実走し、Phase0 の文脈解決から Phase1-3 のヒアリング、Phase4 整形、Phase5 検証 PASS までを自走完遂して Daily 配下にジャーナルが実生成されることを実行証拠で確認する。
       verify_by: live-trial
+runtime_root_policy: host-skill-path
 ---
 
 # run-ubm-journal
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 その日の振り返りを会話で行い、`$UBM_VAULT_ROOT/02_Configs/Daily/{YYYY-MM-DD}.md` へ構造化された
 日次ジャーナルを生成する。チェックリストを読み上げるのではなく、「今日は何をやりましたか」から
@@ -89,7 +98,7 @@ feedback_contract:
 ## Phase0: 文脈解決（必ず最初に実行する）
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-context.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/build-journal-context.py" \
   --vault-root "$UBM_VAULT_ROOT" --date "{YYYY-MM-DD}"
 ```
 
@@ -128,7 +137,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-contex
 - 保存後に必ず検証する:
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-output.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/validate-journal-output.py" \
   --file "$UBM_VAULT_ROOT/02_Configs/Daily/{YYYY-MM-DD}.md" \
   --expected-number {journal_number} --expected-date {YYYY-MM-DD}
 ```

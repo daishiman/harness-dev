@@ -29,16 +29,30 @@ contract:
     - 配布は個人利用前提で distributable:false (marketplace 非掲載)
 
 capabilities:
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-ubm-consult, tier: core }
+  - { kind: skill, ref: skills/run-ubm-goal-setting, tier: core }
+  - { kind: skill, ref: skills/run-ubm-journal, tier: core }
+  - { kind: skill, ref: skills/run-ubm-knowledge-sync, tier: core }
+  - { kind: skill, ref: skills/run-ubm-youtube-ingest, tier: core }
+  - { kind: agent, ref: agents/goal-reviewer, tier: core }
+  - { kind: agent, ref: agents/info-collector, tier: core }
+  - { kind: agent, ref: agents/journal-composer, tier: core }
+  - { kind: agent, ref: agents/knowledge-extractor, tier: core }
+  - { kind: agent, ref: agents/knowledge-relation-extractor, tier: core }
+  - { kind: agent, ref: agents/output-formatter, tier: core }
+  - { kind: agent, ref: agents/phase3-coordinator, tier: core }
+  - { kind: agent, ref: agents/youtube-transcript-normalizer, tier: core }
+  - { kind: command, ref: commands/ubm-consult, tier: core }
+  - { kind: command, ref: commands/ubm-goal-setting, tier: core }
+  - { kind: command, ref: commands/ubm-journal, tier: core }
+  - { kind: command, ref: commands/ubm-knowledge-sync, tier: core }
+  - { kind: command, ref: commands/ubm-youtube-ingest, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-WriteEditMultiEdit/ubm-write-path-guard", tier: core }
+
   # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-ubm-goal-setting,   tier: core }   # C16
-  - { kind: skill, ref: skills/run-ubm-knowledge-sync, tier: core }   # C17
 
   # === Agents (kind=agent) — references/package-contract.json entry_points.agents と1対1対応 ===
-  - { kind: agent, ref: agents/info-collector,               tier: core }        # C05
-  - { kind: agent, ref: agents/output-formatter,             tier: core }        # C06
-  - { kind: agent, ref: agents/goal-reviewer,                tier: core }        # C07
-  - { kind: agent, ref: agents/phase3-coordinator,           tier: core }        # C13
-  - { kind: agent, ref: agents/knowledge-extractor,          tier: core }        # C15
 
   # === Prompts (kind=prompt) — 責務単位 7 層プロンプト正本 (prompt-placement-convention 準拠。SubAgent ではない) ===
   - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md, tier: ref }  # C08 (coordinator が Read)
@@ -48,11 +62,8 @@ capabilities:
   - { kind: prompt, ref: skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md,    tier: ref }  # C12
 
   # === Commands (kind=command) — references/package-contract.json entry_points.commands と1対1対応 ===
-  - { kind: command, ref: commands/ubm-goal-setting,   tier: core }   # C18
-  - { kind: command, ref: commands/ubm-knowledge-sync, tier: core }   # C19
 
   # === Hooks (kind=hook) — plugin.json PreToolUse と references/package-contract.json entry_points.hooks の両方に対応 (実体: hooks/ubm-write-path-guard.py) ===
-  - { kind: hook, ref: "hook:PreToolUse-WriteEdit/ubm-write-path-guard", tier: core }  # C04
 
   # === Scripts (kind=script) — 親 skill scripts/ 配下 (二相 skill build で充填) ===
   - { kind: script, ref: skills/run-ubm-goal-setting/scripts/validate-goal-output.py,      tier: core }  # C01
@@ -64,14 +75,8 @@ capabilities:
   # 既存 capability A(goal-setting 21項目)/B(knowledge-sync 6カテゴリ) は無改変。imp-Cnn は
   # plugin-plans/ubm-goal-setting/component-inventory.json 由来で、上の C01/C02/C03… 注記(旧 iteration)とは別系統。
   # -- Skills --
-  - { kind: skill,   ref: skills/run-ubm-youtube-ingest, tier: core }  # imp-C02 (2-source YouTube 全量/自動同期 orchestrator)
-  - { kind: skill,   ref: skills/run-ubm-consult,        tier: core }  # imp-C09 (非処方コーチング型 相談 orchestrator)
   # -- Agents (references/package-contract.json entry_points.agents と1対1対応) --
-  - { kind: agent,   ref: agents/youtube-transcript-normalizer, tier: core }  # imp-C01 (untrusted transcript 正規化)
-  - { kind: agent,   ref: agents/knowledge-relation-extractor,  tier: core }  # imp-C08 (根拠付き依存辺 抽出)
   # -- Commands (references/package-contract.json entry_points.commands と1対1対応) --
-  - { kind: command, ref: commands/ubm-youtube-ingest, tier: core }  # imp-C04 (取込 URL/backfill/sync 手動起動)
-  - { kind: command, ref: commands/ubm-consult,        tier: core }  # imp-C09-cmd (相談 手動起動・run-ubm-consult の薄いアダプタ)
   # -- Scripts (plugin-root · 決定論 graph build/validate/consult。共有ゲートのため plugin-root へ hoist) --
   - { kind: script,  ref: scripts/validate-knowledge-graph.py,       tier: core }  # imp-C06 (knowledge graph 決定論再生成+DAG非循環検証)
   - { kind: script,  ref: scripts/index-harness-artifact-graph.py,   tier: core }  # imp-C05 (harness artifact graph 突合生成+provenance)
@@ -124,6 +129,7 @@ dependencies:
   - { from: skills/run-ubm-consult, to: scripts/validate-consult-session.py,       type: calls }
   - { from: commands/ubm-consult,   to: skills/run-ubm-consult, type: calls }
 
+  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
 eval_sinks:
   - EVALS.json
 

@@ -63,17 +63,17 @@
 
     "theme": {
       "type": "object",
-      "description": "Kanagawa テーマ固定。structure.schema.json の theme と同一構造キーを共有する（意匠/技術コアの単一 SSOT）。report は A4/レター読み物レイアウト（縦スクロール HTML）だが配色・フォント・最小サイズの意匠トークンは slide と共有する。",
-      "required": ["name", "accentColors"],
+      "description": "意匠テーマ。structure.schema.json の theme と同一構造キーを共有する（意匠/技術コアの単一 SSOT）。report は A4/レター読み物レイアウト（縦スクロール HTML）だが配色・フォント・最小サイズの意匠トークンは slide と共有する。配色の正本は visual-generation-rules.md の VGCONST_001 / VGCONST_002。",
+      "required": ["name"],
       "additionalProperties": false,
       "properties": {
         "name":   { "const": "kanagawa-lotus" },
         "mode":   { "type": "string", "enum": ["light", "dark"], "default": "light" },
         "accentColors": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "maxItems": 8,
-          "description": "各セクションにビビッドアクセント1色以上。最大8色（セクション別配色用）。",
+          "description": "任意。色でアクセントを作ることを要求しない（アクセントは反転面で作る: VGCONST_002）。省略が既定。",
           "items": { "$ref": "#/$defs/accentColorEnum" }
         },
         "fontScale": {
@@ -576,7 +576,7 @@
 
     "accentColorEnum": {
       "type": "string",
-      "description": "structure.schema.json と同一（共通コア）。",
+      "description": "structure.schema.json と同一（共通コア）。過渡的な色名の値域で、新しい面ではここから選ばない。意味を色相で区別してはならない（SR-2-07 / VGCONST_002）。",
       "enum": [
         "blue", "pink", "green", "yellow", "aqua", "violet",
         "wave-blue", "spring-violet", "sakura-pink", "wave-aqua",

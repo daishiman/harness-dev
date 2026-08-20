@@ -78,7 +78,7 @@ GASは単一HTMLファイルしか配信できず、`<img src="assets/generated/
 まず画像マニフェストを生成し、サイズレポートで方式を判定する。
 
 ```bash
-node scripts/build-image-manifest.js <slide-dir>
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-image-manifest.js" <slide-dir>
 ```
 
 - 画像合計が約340KB以下（おおむね2〜3枚）→ **方式A（base64自己完結）が利用可能**
@@ -91,7 +91,7 @@ base64は実バイトの約1.37倍に膨張する。WebP1枚平均約184KBはbas
 画像をbase64でHTMLに埋め込み、外部依存ゼロの単一HTMLを生成する。
 
 ```bash
-node scripts/build-single-html.js <slide-dir> --inline-images --full-image-deck --output=index.deploy.html
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js" <slide-dir> --inline-images --full-image-deck --output=index.deploy.html
 ```
 
 - 生成された `index.deploy.html` を `index` としてGASに貼る（§2.2の手順）。
@@ -110,7 +110,7 @@ node scripts/build-single-html.js <slide-dir> --inline-images --full-image-deck 
 4. 相対パスを絶対URLに差し替えたHTMLを生成する。
 
 ```bash
-node scripts/build-deck-html.js <slide-dir> --manifest=assets/generated/image-asset-manifest.json --output=index.deploy.html
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-deck-html.js" <slide-dir> --manifest=assets/generated/image-asset-manifest.json --output=index.deploy.html
 ```
 
 **GitHub Pages / CDNの場合：**
@@ -118,7 +118,7 @@ node scripts/build-deck-html.js <slide-dir> --manifest=assets/generated/image-as
 URLが「ベースURL＋ファイル名」で導出できるため、マニフェストの `assetBaseUrl` にベースURLをまとめて記入するか、コマンドで直接指定する。
 
 ```bash
-node scripts/build-deck-html.js <slide-dir> --asset-base-url=<ベースURL> --output=index.deploy.html
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-deck-html.js" <slide-dir> --asset-base-url=<ベースURL> --output=index.deploy.html
 ```
 
 - 生成された `index.deploy.html` を `index` としてGASに貼る。
@@ -129,7 +129,7 @@ node scripts/build-deck-html.js <slide-dir> --asset-base-url=<ベースURL> --ou
 GASに貼る前に、相対パス画像が残っていないか（brokenにならないか）を確認する。
 
 ```bash
-node scripts/validate-ai-image-assets.js <slide-dir> --gas-check
+node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js" <slide-dir> --gas-check
 ```
 
 ### 4.6 画像が変更される場合の運用

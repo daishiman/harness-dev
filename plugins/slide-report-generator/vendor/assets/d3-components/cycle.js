@@ -120,7 +120,7 @@ const D3Cycle = {
     nodes.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(accentPalette[i % accentPalette.length]))
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .text(d => d.label);
@@ -228,7 +228,7 @@ const D3Cycle = {
       .attr('y', -quadrantSize / 2 + 10)
       .attr('width', quadrantSize - 20)
       .attr('height', quadrantSize - 20)
-      .attr('rx', 12)
+      // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
       .attr('fill', d => d.color)
       .attr('opacity', 0.15);
 
@@ -389,7 +389,7 @@ const D3Cycle = {
     nodes.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(accentPalette[i]))
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .each(function(d) {

@@ -76,6 +76,7 @@ score を上げる方法は 2 つある — generator (成果物を作る側) �
   - 同 run dir の `<date>-score.jsonl` — 既存の `**/*-score.jsonl` 合流規約 (run-skill-rubric-governance の aggregate-evals.py が収集)。**独自 sink 新設禁止**
   - GOAL VERIFICATION 判定 (PASS|FAIL + blocker 列挙) + iter summary (score 推移 / goal 達成度推移 / 破棄した改善案 / 最終 score がどの mode・rubric・前提で出たかの明記)
 - **起動導線 (正規経路)**: `run-skill-live-trial` の受け入れ verdict FAIL、または goal 達成度と score の乖離 ⚠️ からの handoff を受けて起動する。plateau 突破を狙う単独起動も可。issue 更新 / close / push は呼び元責務
+- **Codex 配布の再同期**: 改善対象がClaude plugin envelope配下なら、収束後に `run-codex-plugin-package <plugin>` の冪等upsertを実行し `--all --check` exit 0 を完了条件に追加する。
 
 ## 境界 (どの改善はどの機構か)
 
@@ -109,6 +110,8 @@ artifact 単体の改善は LLM 主観評価 ±3-5pt のブレに律速され pl
 - [ ] commit は全て eval 集計後・1 commit 1 ロジック (`wrap-git-commit-safe` 経由)
 - [ ] 収束宣言前に GOAL VERIFICATION を実施し PASS、または max_iter 到達時に「score X / goal FAIL / 残 blocker」を隠さず報告した
 - [ ] 全 artifact が `eval-log/<plugin>/<skill>/iter-improve/<run-id>/` に保存済 (score は `*-score.jsonl` 合流規約)
+- [ ] Claude plugin envelope配下なら `sync-plugin-platforms.py --all --check` が exit 0
+- [ ] plugin公開面・Codex代替・依存を変更した場合、repo rootで `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all` と `python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml` がともに exit 0。静的契約PASSをinstall/enabled/trust/new-session/runtime実証と混同しない
 
 ### ゴールシークループ
 

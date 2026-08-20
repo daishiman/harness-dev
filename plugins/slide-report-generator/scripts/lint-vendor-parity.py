@@ -236,8 +236,80 @@ ADDITIVE_LOCAL_FORK = {
         "clearProps: 'opacity,transform'",
         "(el) => !el.classList.contains('fo-card')",
     ),
+    # link された stylesheet が読めなかったときに握り潰さない fail-closed。
+    # upstream は catch を空にしていたため、参照先 CSS が消えた deck でも
+    # 「@media print が 0 件」のまま全 check を通って PASS になる。実際に
+    # 1 本 (10_日工株式会社/slide-2026-00-00-事業資料) がこの偽緑で出ていた。
+    # 検査器が「見なかった」と「問題なかった」を区別できるかの分かれ目なので、
+    # CRITICAL であることまで縛る (WARNING へ落とすと偽緑へ戻る)。
+    "scripts/validate-print.js": (
+        "id: 'P00',",
+        "severity: 'CRITICAL',",
+        "unresolvedStylesheets.length === 0",
+    ),
+    # 配色の正本を script 内の写経 (KANAGAWA_COLORS) から style genome の
+    # palette へ移した上書き。ハードコードへ戻ると、genome を差し替えても
+    # 検査器だけが旧配色を正解と言い続け、意匠の変更が「違反」として報告される。
+    # 併せて検査対象をディレクトリ全件走査にした。REQUIRED_COMPONENTS は
+    # 必須ファイルの定義であって被覆の定義ではなく、d3-components/ の 7 本に
+    # 対して 6 本しか列挙しておらず extended.js が検査から漏れていた。
+    # 列挙 0 件は被覆ゼロなので fail-closed。
+    "scripts/validate-d3.js": (
+        "function loadGenomePalette",
+        "function listComponentFiles",
+        "GENOME_PALETTE.failure",
+        "style-genome-",
+        "パレット検査対象の .js が 0 件",
+    ),
+    # 同上の fail-closed。CSS を読めないまま object-fit / print 層の検査を
+    # 素通りさせない。全面画像 deck は CSS 側でしか letterbox を保証できない
+    # ため、CSS 不在の PASS は「印刷で絵が切れる deck」を緑で出荷させる。
+    "scripts/validate-ai-image-assets.js": (
+        "D5: unresolved local stylesheet",
+    ),
+    # ディスク上の styles.css / scripts.js ではなく index.html が実際に読むものを
+    # 見るようにした上書き。upstream は join(deckDir, 'styles.css') を読み、
+    # 存在しなければ黙って continue していた。出荷デッキは CSS を index.html へ
+    # インライン化しており、残ったディスク側の styles.css は旧版だったため、
+    # 偽緑 (実物が壊れているのに緑) と偽赤 (実物は正しいのに赤) の両方が実測で
+    # 再現した。トークンは「消えても動くが静かに退行する」ものだけを縛る。
+    "scripts/cross-deck-consistency.js": (
+        # 解決処理を自前で持ち直さない (別実装が 2 本あると片方だけ直る日が来る)。
+        "resolveDeckAssetsFromDir",
+        # 「ファイル名が在ること」ではなく「解決できること」を要件にした判定。
+        # existsSync(deck.stylesCss) へ戻ると自己完結デッキが一斉に赤へ戻る。
+        "cssIsUsable",
+        "jsIsUsable",
+        # 黙った素通りを作らない共通前処理。これを外して if (!exists) continue へ
+        # 戻すと、印刷契約が未検査のまま何も言わずに緑が出る。
+        "function withDeckCss(deck, category, fn)",
+        "function withDeckJs(deck, category, fn)",
+        # 未検査であることを error として出す分岐。inputs が同 run で報告済みの
+        # ときだけ抑制する。この三項を落として常に [] を返す形へ変えると
+        # 「検査した結果 OK」と「検査していない」が再び同じ緑になる。
+        "inputsCoveredByRun",
+        "setInputsCoveredByRun(categoriesToRun.includes('inputs'))",
+    ),
 }
+# この辞書は manifest の additive_managed と local_fork_managed の両方に対する
+# トークン契約を持つ。名前が runtime なのは経緯であって範囲の宣言ではない。
+# 辞書を 2 つに割ると「どちらに入れるか」が毎回判断事項になり、入れ忘れた分が
+# 静かに無検査になるため、追加先はここ 1 箇所に寄せる。
 ADDITIVE_RUNTIME_CONTRACT = {
+    # 「ブラウザが実際に読むもの」を解決する共有 SSOT。upstream に無い新規ファイル。
+    # validate-print.js / validate-ai-image-assets.js / cross-deck-consistency.js の
+    # 3 本が同じ経路をここへ寄せている。fail-closed を返す分岐が消えると、
+    # 参照先が消えていても「CSS 0 件」のまま 3 本すべてが緑を出す。
+    "scripts/deck-assets-resolver.js": (
+        "export function resolveDeckAssets",
+        "export function resolveDeckAssetsFromDir",
+        "export function cssIsUsable",
+        "export function jsIsUsable",
+        # 握り潰さずに理由を積む分岐そのもの。ここが要点。
+        "unresolved.push({ href, resolved: resolvedPath, reason: error.code || error.message });",
+        # inline と link の両方を 1 つとして返す契約。片方だけでは実物にならない。
+        "text: `${cssInline}\\n${cssLinked.linked}`,",
+    ),
     "scripts/playwright-runtime.js": (
         "pluginLocalBrowsersPath",
         "PLAYWRIGHT_BROWSERS_PATH",

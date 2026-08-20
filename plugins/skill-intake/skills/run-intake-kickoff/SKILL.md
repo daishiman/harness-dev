@@ -39,9 +39,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 本スキルが「セッション起動・3軸(pattern/depth/pain)確定・kickoff.json emit」に責務を絞り、5軸シート充足・深掘り(Phase5)・可視化・mode判定へ逸脱せず、AskUserQuestion を完全直列で発行する設計になっている
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # run-intake-kickoff
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -93,7 +102,7 @@ intake セッションの最初の phase。ユーザー初期発話から **3 �
 - [ ] `skill_name_hint` を pain 動詞 + 目的語から kebab-case で決定論的に生成 (固有名詞混入なし、同 qa_log なら sha256 一致)
 - [ ] AskUserQuestion を並列発行していない (完全直列)
 - [ ] `output/<hint>/kickoff.json` が `schemas/output.schema.json` 準拠
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/run-intake-kickoff/scripts/validate-kickoff-json.py output/<hint>/kickoff.json` exit 0
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-kickoff/scripts/validate-kickoff-json.py output/<hint>/kickoff.json` exit 0
 - [ ] `qa_log[]` に質問・回答ペアが時系列で保存され、ユーザー回答は生のまま
 - [ ] 本スキルの責務外 (5 軸シート充足・深掘り・mode 判定) に踏み込んでいない
 

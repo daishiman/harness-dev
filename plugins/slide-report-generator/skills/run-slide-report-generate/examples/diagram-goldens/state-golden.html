@@ -19,67 +19,67 @@
 
     <defs>
       <marker id="d-state-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="d-state-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="d-state-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
     <!-- ===== EDIT: 図解本体 ここから ===== -->
 
     <!-- 開始記号 (塗りつぶしの円。状態ではないので枠を持たせない) -->
-    <circle cx="96" cy="240" r="12" fill="var(--fg, #43436c)"/>
-    <text x="96" y="220" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">開始</text>
+    <circle cx="96" cy="240" r="12" fill="var(--fg, #141412)"/>
+    <text x="96" y="220" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">開始</text>
 
     <!-- 遷移 (すべて軸に平行。戻りだけが下を回る) -->
     <line x1="108" y1="240" x2="156" y2="240"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
     <line x1="336" y1="240" x2="412" y2="240"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
-    <text x="376" y="228" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">申請する</text>
-    <text x="376" y="264" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">[記入済]</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
+    <text x="376" y="228" text-anchor="middle" font-size="14" fill="var(--fg, #141412)">申請する</text>
+    <text x="376" y="264" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">[記入済]</text>
     <line x1="592" y1="240" x2="668" y2="240"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
-    <text x="632" y="228" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">承認する</text>
-    <text x="632" y="264" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">[権限あり]</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
+    <text x="632" y="228" text-anchor="middle" font-size="14" fill="var(--fg, #141412)">承認する</text>
+    <text x="632" y="264" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">[権限あり]</text>
     <line x1="848" y1="240" x2="872" y2="240"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
 
     <!-- 戻りの遷移 (直交エルボー。斜めのセグメントを 1 本も作らない) -->
     <path d="M 504 288 V 368 H 248 V 292" fill="none"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-state-arrow)"/>
 
     <!-- 状態 1 -->
-    <rect x="160" y="192" width="176" height="96" rx="8"
-          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <text x="248" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">下書き</text>
-    <text x="248" y="264" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">本人だけが編集できる</text>
+    <rect x="160" y="192" width="176" height="96"
+          fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <text x="248" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">下書き</text>
+    <text x="248" y="264" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">本人だけが編集できる</text>
 
     <!-- 状態 2 (焦点。accent は 1 状態のみ) -->
-    <rect x="416" y="192" width="176" height="96" rx="8"
-          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-    <text x="504" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">申請中</text>
-    <text x="504" y="264" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">誰も編集できない</text>
+    <rect x="416" y="192" width="176" height="96"
+          fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
+    <text x="504" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">申請中</text>
+    <text x="504" y="264" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">誰も編集できない</text>
 
     <!-- 状態 3 -->
-    <rect x="672" y="192" width="176" height="96" rx="8"
-          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <text x="760" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">承認済み</text>
-    <text x="760" y="264" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">取り消しは別手続き</text>
+    <rect x="672" y="192" width="176" height="96"
+          fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <text x="760" y="236" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">承認済み</text>
+    <text x="760" y="264" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">取り消しは別手続き</text>
 
     <!-- 戻りの契機ラベル (線を跨ぐのでマスクを先に敷く) -->
-    <rect x="344" y="356" width="64" height="20" fill="#FFFFFF"/>
-    <text x="376" y="372" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">差し戻す</text>
-    <text x="376" y="396" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">[不備あり]</text>
+    <rect x="344" y="356" width="64" height="20" fill="#F7F6F3"/>
+    <text x="376" y="372" text-anchor="middle" font-size="14" fill="var(--fg, #141412)">差し戻す</text>
+    <text x="376" y="396" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">[不備あり]</text>
 
     <!-- 終了記号 (二重丸。ここから出る遷移は無い) -->
-    <circle cx="896" cy="240" r="16" fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <circle cx="896" cy="240" r="8" fill="var(--fg, #43436c)"/>
-    <text x="896" y="212" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">終了</text>
+    <circle cx="896" cy="240" r="16" fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <circle cx="896" cy="240" r="8" fill="var(--fg, #141412)"/>
+    <text x="896" y="212" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">終了</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

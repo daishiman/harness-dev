@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "931308c553056d081c50100d042bbe8ca07ac7a2f2063e2f660961a81a0d65c9"
+    "skill_md_sha256": "b479c25fdb70887c8b09de6b2a49a47661540f6f06124ce39cb2417220555dcb"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "run-elegant-review-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
-  "iterations": 2,
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:02:08Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,15 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1はscan_templateの整合exit0/drift exit5とMISSING/UNMAPPED分類、IN2はsync.pyの--apply時だけledger差し戻し、診断時は書込なしの境界を実装と照合した。contract-generator 6段チェックは全通過。",
-      "OUT1はdescriptionを『ひな形の変更・更新』の明示意図に限定し、契約書作成意図はrun-contract-generateへ分離するため誤発火を抑止する。",
-      "初回評価で検証節の『sync.py=薄いshim』と追加リソース節の『集約診断+台帳書込entrypoint』が矛盾していたため、前者を実装実態へ修正した。再評価で4条件すべて0。"
+      "IN1(scan_templateの exit 0/5とMISSING/UNMAPPED判定)はlib/scan_template.pyのmain()実装(missing/unmapped/missing_ledgerがあればreturn 5、無ければreturn 0)と一字一句一致し、SKILL.mdの検証節・prompts/R1のLayer3.2記述とも整合している。",
+      "IN2(--apply時のみledger書込、--dry-run/未指定は診断のみ)はscripts/sync.pyのmain()で`if a.apply:`ブロック内でのみ`ledger.writeback`が呼ばれ、かつ`_flag_regen`はステータス=='completed'行のみを対象にしていることを確認した(draft/approved行は巻き戻されない、prompts/R1 5.3の一貫性条件とも一致)。",
+      "SKILL.mdの`検証`節にある「sync.pyはscan_templateの等価shimではなくdrift時もexit 0」という記述は、sync.py main()末尾の`return 0`が常時実行される実装と一致し、旧content-review-verdict(eval-log)が過去に指摘した用語矛盾は現行版で解消済みであることを独立に再確認した。加えて、run-template-syncが立てる「未作成」ステータスはrun-contract-generate/SKILL.mdの`_PHASE_STATUS_FILTER['draft']={'','未作成'}`(lib/ledger.py)によって次回draft phaseで正しく拾われることを下流skillまで追跡して確認した。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-stale-review",
     "next_action": "none"
   },
-  "notes": "30思考法を全件使用（skip 0）。初回の用語不整合とFM-005 smellを内容修正し2回目でPASS。単なるSHA更新ではなくscripts/sync.pyとlib/scan_template.py/ledger.pyを再照合した。"
+  "notes": "focused combined review。incremental semantic batch評価 ((a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0) をSKILL.md/scripts/sync.py/lib/scan_template.py/lib/ledger.py/prompts/R1で独立に再確認しPASS。"
 }
