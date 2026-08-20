@@ -73,6 +73,7 @@ run "lint-skill-tree (prompt-creator)"     python3 plugins/skill-governance-lint
 run "lint-skill-completeness (harness-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/harness-creator/skills
 run "validate-frontmatter --self-test"     python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --self-test
 run "validate-frontmatter (harness-creator)" python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
+run "lint-doc20-dependency-contract (harness-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/harness-creator/skills
 run "validate-frontmatter (prompt-creator)" python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/prompt-creator/skills
 run "lint-skill-name (prompt-creator)"     python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/prompt-creator/skills
 run "lint-skill-description (prompt-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/prompt-creator/skills

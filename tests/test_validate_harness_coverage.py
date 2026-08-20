@@ -281,7 +281,7 @@ def test_main_ratchet_detects_regression(tmp_path, monkeypatch):
 
 
 def test_local_ci_aggregator_runs_same_blocking_ratchet_as_github() -> None:
-    """push 後に初めて ratchet 失敗を知る経路を再発させない。"""
+    """push 後に初めて remote blocking gate 失敗を知る経路を再発させない。"""
     local_ci = (ROOT / "scripts" / "run-ci-checks.sh").read_text(encoding="utf-8")
     github_ci = (ROOT / ".github" / "workflows" / "harness-creator-kit-ci.yml").read_text(
         encoding="utf-8"
@@ -289,4 +289,6 @@ def test_local_ci_aggregator_runs_same_blocking_ratchet_as_github() -> None:
 
     assert 'run "harness-coverage-ratchet"' in local_ci
     assert "scripts/validate-harness-coverage.py --ratchet" in local_ci
+    assert 'run "lint-doc20-dependency-contract (harness-creator)"' in local_ci
+    assert "scripts/lint-skill-dep-step7.py --skills-dir plugins/harness-creator/skills" in local_ci
     assert "make harness-ratchet" in github_ci
