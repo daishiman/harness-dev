@@ -110,11 +110,17 @@ jobs:
             ($s[0].hooks | type == "array" and length == 1) and
             ($s[0].hooks[0].type == "command") and
             ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py")) and
-            ($p | type == "array" and length == 1) and
-            ($p[0].matcher | contains("Bash") and contains("apply_patch")) and
-            ($p[0].hooks | type == "array" and length == 1) and
-            ($p[0].hooks[0].command | contains("auto-record-lesson.py"))
+            ($p | type == "array" and length >= 1) and
+            ([$p[] | select(.matcher | contains("Bash") and contains("apply_patch"))]) as $obs |
+            ($obs | length == 1) and
+            ($obs[0].hooks | type == "array" and length == 1) and
+            ($obs[0].hooks[0].type == "command") and
+            ($obs[0].hooks[0].command | contains("external-intelligence-observe.py"))
           ' plugins/harness-creator/hooks/hooks.json
+          # 記録器は observe hook からの間接呼出しなので、配線だけでなく到達先の実在も縛る。
+          # command 文字列だけを見ていると、observer が記録器を呼ばなくなっても気付けない。
+          test -f plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+          grep -q 'auto-record-lesson\.py' plugins/harness-creator/hooks/external-intelligence-observe.py
           python3 -c 'import tomllib; c=tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb")); assert c["schema_version"] == 1; p=tomllib.load(open(".codex/config.toml","rb")); assert p["features"]["hooks"] is True and "hooks" not in p'
           python3 plugins/harness-creator/scripts/sync-codex-project-settings.py --repo-root . --contract plugins/harness-creator/native-surfaces.toml --check --json
           python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check
