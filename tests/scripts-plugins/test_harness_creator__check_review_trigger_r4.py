@@ -3,7 +3,7 @@
 このスクリプトは git を read-only で参照し、変更量/評価対象 artifact から
   - 出力1: 変更件数 >= THRESHOLD なら run-elegant-review を stdout 推奨
   - 出力2: queue (eval-log/review-queue.jsonl) へ append-only で評価要求を記録
-  - 出力3: 未評価 or stale な変更 skill が残れば decision:block で Stop を差し戻す
+  - 出力3: 未評価 or stale な変更 skill は queue + advisory notice。Stop は通す
 を行う。exit code は常に 0(継続/停止は stdout JSON の decision で表現)。
 
 network/keychain は無いが subprocess(git) と stdin を叩くため、本テストは:
@@ -12,8 +12,8 @@ network/keychain は無いが subprocess(git) と stdin を叩くため、本テ
     _enqueue / _unevaluated_or_stale) を実ファイル import で直接検証。
   - git 依存 (_git_repo_root / _changed_paths) は monkeypatch で subprocess.run を
     stub し、正常 (porcelain/rename/diff)・非ゼロ・例外・タイムアウト経路を網羅。
-  - main() は stdin / _changed_paths / _git_repo_root を差し替え、decision:block と
-    三安全弁 (stop_hook_active / opt-out env / harness-creator 自己除外) を in-process で確認。
+  - main() は stdin / _changed_paths / _git_repo_root を差し替え、pending noticeが
+    decision:block を出さないことを in-process で確認。
 
 tests/test_check_review_trigger.py と衝突しないモジュール名 (_r4) を使う。
 """
@@ -367,13 +367,14 @@ def _run_main(monkeypatch, root, changed_rel, stdin_obj, env=None):
     return rc, buf.getvalue()
 
 
-def test_main_blocks_when_pending(monkeypatch, tmp_path):
+def test_main_notifies_without_block_when_pending(monkeypatch, tmp_path):
     rel = _make_skill(tmp_path, "demo", "run-x")
     rc, out = _run_main(monkeypatch, tmp_path, [rel], {"hook_event_name": "Stop"})
     assert rc == 0
     payload = json.loads(out)
-    assert payload["decision"] == "block"
-    assert "run-elegant-review" in payload["reason"]
+    assert "decision" not in payload
+    assert payload["notice"] == "content-review pending (advisory)"
+    assert payload["pending_skills"] == ["demo/run-x"]
     # queue にも記録されている (semantic を含むため)。
     q = tmp_path / "eval-log" / "review-queue.jsonl"
     assert q.exists()
@@ -434,8 +435,8 @@ def test_main_semantic_under_threshold_enqueues_only(monkeypatch, tmp_path):
     assert "評価対象 artifact" in rec["reason"]
 
 
-def test_main_empty_stdin_treated_as_stop(monkeypatch, tmp_path):
-    # 空 stdin (inp == {}) は is_stop_event=True 扱いで block 判定が走る。
+def test_main_empty_stdin_treated_as_stop_notice(monkeypatch, tmp_path):
+    # 空 stdin (inp == {}) も Stop 扱いだが notice のみ。
     rel = _make_skill(tmp_path, "demo", "run-x")
     monkeypatch.setattr(MOD, "_git_repo_root", lambda: str(tmp_path))
     monkeypatch.setattr(MOD, "_changed_paths", lambda: [rel])
@@ -445,7 +446,9 @@ def test_main_empty_stdin_treated_as_stop(monkeypatch, tmp_path):
     with redirect_stdout(buf):
         rc = MOD.main()
     assert rc == 0
-    assert json.loads(buf.getvalue())["decision"] == "block"
+    payload = json.loads(buf.getvalue())
+    assert "decision" not in payload
+    assert payload["notice"] == "content-review pending (advisory)"
 
 
 def test_main_non_stop_event_skips_block(monkeypatch, tmp_path):
@@ -456,14 +459,15 @@ def test_main_non_stop_event_skips_block(monkeypatch, tmp_path):
     assert "block" not in out
 
 
-def test_main_many_pending_truncates_list(monkeypatch, tmp_path):
+def test_main_many_pending_notice_truncates_list(monkeypatch, tmp_path):
     # pending が 8 件超なら reason に省略記号 (" …") が付く。
     rels = []
     for i in range(10):
         rels.append(_make_skill(tmp_path, "demo", f"run-{i}"))
     rc, out = _run_main(monkeypatch, tmp_path, rels, {"hook_event_name": "Stop"})
     payload = json.loads(out)
-    assert payload["decision"] == "block"
+    assert "decision" not in payload
+    assert payload["notice"] == "content-review pending (advisory)"
     assert "10 件" in payload["reason"]
     assert "…" in payload["reason"]
 

@@ -272,6 +272,26 @@ def test_validate_name_mismatch():
     assert any("!= directory name" in e for e in errs)
 
 
+def test_runtime_provider_dependency_is_future_plugin_fail_closed():
+    missing = MOD.validate_runtime_provider_dependency(
+        "future-plugin", {"name": "future-plugin", "version": "1.0.0"}
+    )
+    assert missing == [
+        "future-plugin: manifest.dependencies must include "
+        "skill-governance-adapters (DEP-001)"
+    ]
+    assert MOD.validate_runtime_provider_dependency(
+        "future-plugin",
+        {
+            "name": "future-plugin",
+            "dependencies": [{"name": "skill-governance-adapters", "version": "^0.1.0"}],
+        },
+    ) == []
+    assert MOD.validate_runtime_provider_dependency(
+        "skill-governance-adapters", {"name": "skill-governance-adapters"}
+    ) == []
+
+
 def test_validate_declared_hook_not_on_disk():
     manifest = {
         "name": "p", "version": "1", "description": "d",
@@ -498,6 +518,9 @@ def _setup_repo(tmp_path, monkeypatch, *, plugins, marketplace, bundles):
     pdir = tmp_path / "plugins"
     pdir.mkdir(exist_ok=True)
     for name, manifest in plugins.items():
+        manifest = dict(manifest)
+        if name != MOD.RUNTIME_PROVIDER:
+            manifest.setdefault("dependencies", [MOD.RUNTIME_PROVIDER])
         plugin = _make_plugin(pdir, name, manifest=manifest, skills=["run-a"])
         (plugin / "references").mkdir()
         (plugin / "references/package-contract.json").write_text(

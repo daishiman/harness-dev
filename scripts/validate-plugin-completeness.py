@@ -9,6 +9,8 @@ skills/ agents/ commands/ hooks/ をまとめて配布する。本スクリプ�
   2. .claude-plugin/plugin.json の hooks 宣言と実体ファイルの整合
   3. ルート .claude-plugin/marketplace.json plugins[] への登録 (MK-001..003) と
      .claude-plugin/bundles.json への登録 (BD-001) を「実体ディレクトリ起点」で検査
+  4. 全consumer pluginが公式 manifest dependencies で共通
+     external-intelligence runtime providerを解決できること (DEP-001)
 
 を行い、配布時に欠落するアセットがないこと・マーケットプレイス/バンドル登録漏れが
 ないことを保証する。
@@ -63,6 +65,7 @@ MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 # 削除されても (= フラグ駆動の MK-004 逆ガードが無効化されても) この固有名検査が
 # fail-closed で再配布を阻止する多層防御。配布化する正当な決定が出た場合のみ本集合から外す。
 NEVER_DISTRIBUTE = frozenset({"harness-creator", "prompt-creator", "plugin-dev-planner"})
+RUNTIME_PROVIDER = "skill-governance-adapters"
 
 
 def load_bundle_members() -> set[str]:
@@ -130,6 +133,33 @@ def harness_metadata(manifest: dict, contract: dict | None) -> dict:
             "tags", manifest.get("tags") or manifest.get("keywords") or []
         ),
     }
+
+
+def validate_runtime_provider_dependency(plugin_name: str, manifest: object) -> list[str]:
+    """Require every installable package to resolve the shared runtime natively.
+
+    Claude Code copies each marketplace plugin into an isolated cache directory,
+    so sibling paths are not a dependency mechanism.  Official
+    ``plugin.json.dependencies`` is: installing any consumer auto-installs and
+    enables the provider from the same marketplace.  Both bare names and the
+    official version-constrained object form are accepted.
+    """
+    if plugin_name == RUNTIME_PROVIDER:
+        return []
+    dependencies = manifest.get("dependencies") if isinstance(manifest, dict) else None
+    names: set[str] = set()
+    if isinstance(dependencies, list):
+        for dependency in dependencies:
+            if isinstance(dependency, str):
+                names.add(dependency)
+            elif isinstance(dependency, dict) and isinstance(dependency.get("name"), str):
+                names.add(dependency["name"])
+    if RUNTIME_PROVIDER in names:
+        return []
+    return [
+        f"{plugin_name}: manifest.dependencies must include "
+        f"{RUNTIME_PROVIDER} (DEP-001)"
+    ]
 
 
 def collect(plugin_dir: pathlib.Path) -> dict:
@@ -463,6 +493,9 @@ def run_check() -> tuple[list[str], list[str]]:
         actual_plugins.add(plugin_dir.name)
         data = collect(plugin_dir)
         all_errs.extend(validate(plugin_dir.name, data, bundle_members, marketplace_entries))
+        all_errs.extend(
+            validate_runtime_provider_dependency(plugin_dir.name, data.get("manifest"))
+        )
         summary.append(
             f"{plugin_dir.name}: skills={len(data['skills'])} "
             f"agents={len(data['agents'])} commands={len(data['commands'])} "

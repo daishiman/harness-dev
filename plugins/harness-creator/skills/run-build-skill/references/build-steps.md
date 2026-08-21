@@ -499,6 +499,18 @@ fi
 TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公式ドキュメントの
 機械取得方法が確定した後に実施する。`llms.txt` または公式 API 経由の可否を確認すること。
 
+### H.7 ナレッジループ注入の詳細手順
+
+SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順。正本仕様は `Skill(ref-knowledge-loop)` (構築編+運用編)。
+
+1. `ref-knowledge-loop` を Read し、`brief.knowledge_loop.pattern`(`index-search` | `router-registry`)を確定(未指定なら §パターン選択フローで決定)。
+2. `templates/knowledge-skeleton/<pattern>/` を `$OUT_BASE/$SKILL_NAME/knowledge/` へ curated seed として展開し、`scripts/{search_knowledge,build_index,record_usage,add_entry}.py` と正本 `scripts/build-external-intelligence.py` を生成先 `scripts/` へコピーする。前4本は seed の検索・整合性・検索品質、後者だけが runtime 観測の正本である。
+3. `render-combinators.py --with-knowledge` で SKILL.md に `## ナレッジループ` 節と frontmatter `knowledge_loop` ブロックを決定論注入する。`contract_version: 1` / `runtime_store: external-intelligence-v1` / `runtime_scope: project` を固定し、installed plugin/skill package 内へ runtime データを書かない。
+4. frontmatter `knowledge_loop` 記述子に `consult_at: ["runtime"]` が入る。project scope は Git worktree 間で共有する Git common dir、非 Git は `<project>/.harness/`、user scope は plugin data / XDG state に解決する。Codex/Claude は同じ event log/index を読む。
+5. Step 4 の `lint-knowledge-loop.py` で KL-001..008 を検査する。KL-008 は新世代 contract の必須キーと、生成先 `build-external-intelligence.py` が正本 engine と byte/SHA-256 同一であることを fail-closed で照合する。
+
+> **Loop B (harness-creator 自己適用)**: `plugins/harness-creator/knowledge/` と `lessons-learned/` はレビュー済み seed/昇格先であり runtime sink ではない。未検証の観測は external-intelligence state だけに置き、同一/高類似は統合、曖昧類似は明示解決、2つの独立 evidence source+別文脈での helpful reuse+承認者/承認証跡を満たしたものだけを curated seed/rule へ昇格する。
+
 ---
 
 ## Phase I: Capability 7 kind 分岐手順
@@ -521,7 +533,7 @@ TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公�
 | hook | `templates/hook-skeleton.md` | `plugins/<plugin>/hooks/<name>.{py,md}` | `lint-script-frontmatter.py` / `validate-frontmatter.py` |
 | hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
 | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
-| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` (整備済・CI 配線済) |
+| plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` + `validate-build-trace.py --bundle <plugin-composition.yaml>` (SemVer / 実在ref / endpoint / exact重複 / DAGをfail-closed) |
 | prompt | `templates/prompt-skeleton.md` | `plugins/<plugin>/prompts/<name>.md` | `lint-prompt-md.py` (未実装・実体なしのため起動しない) |
 | workflow | `templates/workflow-skeleton.md` | `plugins/<plugin>/workflows/<name>.md` | `lint-workflow-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 
@@ -532,11 +544,13 @@ TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公�
 ```bash
 GOV_LINT_DIR="$(dirname "$PLUGIN_ROOT")/skill-governance-lint"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/<kind-relative-path>"
-python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json \
-  --capability-schema "$SKILL_DIR/references/capability-manifest.schema.json"
+python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
+
+# kind=plugin-composition では上記に加え、公開bundle validatorを必須実行
+python3 "$SKILL_DIR/scripts/validate-build-trace.py" --bundle "$OUT_BASE/plugin-composition.yaml"
 ```
 
-`validate-build-trace.py --capability-schema` 引数が未実装なら warn を出してフォールバック、`capability_kind` 欄が空でないことだけ最低限確認する。
+`plugin-composition` は当該kind lintと `--bundle` の両方がexit 0になるまで次phaseへ進まない。実在しないCLI引数へのフォールバックは行わない。
 
 ### I.3 既存 skill 手順との関係
 

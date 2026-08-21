@@ -2,27 +2,42 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69"
+    "skill_md_sha256": "133f8af8edb196d7bb19ceaf306baabea350b4cf1742b6f791b440ceba8a45ce"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "単一責務が明確: 出力は計画 (index + 13 phase files + component-inventory.json) のみで実 build を持たず run-skill-create/run-build-skill へ委譲すると境界章で明示",
-      "出力契約が SSOT で pin: 6 deliverables を §目的と出力契約に列挙し references/io-contract.md §9/§11 を正本、specfm.py を形状 SSOT として一元化",
-      "評価基準を inventory component へ operationalize (quality_gates + harness_coverage(block)) し feedback_contract.criteria を purpose-acceptance 由来に縛り緑のパラドクスを回避"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点 (旧 verdict は stale SHA 62ff263… のため再固定)。FM: name は kebab + run- prefix、description は日本語 Use-when (トリガー凝縮・末尾『使う。』)、argument-hint/arguments 明示、effect:local-artifact、allowed-tools は allowlist。BD: §目的と出力契約で 6 deliverables と完了条件を明示、Gotchas 節あり、境界章で実 build 非生成を宣言、references/ 群への progressive disclosure が厚く PD を満たす。NM: ディレクトリ名 run-plugin-dev-plan と name 一致。境界: 具体値直書き禁止で {{PROJECT_ROOT}}/$CLAUDE_PLUGIN_ROOT/self-relative 変数化、cross-plugin SSOT は vendoring/self-derive、配布登録動作を一切しないと明記。SSOT: io-contract §11 表 + specfm.GATE_SCRIPTS + harness-creator-spec-reflection.md 46 行を単一正本に集約し二重保持は台帳+parity test で強制。所見(重大でない): 全体 377 行で rubric BD の ≤300行 目安を超過するが references 委譲が厚く計画メタ skill の契約密度に起因、high severity ではない。high severity (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は feedback_contract.criteria の全 id (IN1/IN2/OUT1/OUT2) を被覆。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

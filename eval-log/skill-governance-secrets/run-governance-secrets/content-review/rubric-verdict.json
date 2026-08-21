@@ -1,1 +1,41 @@
-{"target":{"plugin":"skill-governance-secrets","skill":"run-governance-secrets","skill_md_sha256":"60bcb32163867d6cccb10a47e931ec533e2fee71eaad98dc85a0a58b737aa2f8"},"review_kind":"rubric","verdict":"PASS","reviewer":"skill-design-evaluator","reviewed_at":"2026-08-20T16:23:00+09:00","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","OUT1"],"positive_feedback":["2トリガーがhelper確認と値非露出監査へ明確に対応する。","返却列を限定した出力契約が単一責務と安全境界を強める。"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual:rubric-review","next_action":"none"},"notes":"命名、単一責務、allowed-tools、出力最小性を全文確認した。"}
+{
+  "target": {
+    "plugin": "skill-governance-secrets",
+    "skill": "run-governance-secrets",
+    "skill_md_sha256": "24b908c9bd3de55a21f36914f7fbbe5a7ce2ca28b31f4c979ce2826d268fbc4d"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "命名が run- prefix / kind: run / plugin 名 skill-governance-secrets と整合し、run-governance-* 6 兄弟と同一の命名空間規約に載っている。単一責務 (secret の存在・backend・remediation の報告) が description・Purpose & Output Contract・検証で同一に述べられている。",
+      "allowed-tools: Bash, Read, Glob は責務に対して最小で、Write / Edit を持たないことが effect: conversation-output と読み取り専用契約を工具レベルでも裏打ちしている。",
+      "feedback_contract の IN1 (verify_by: script) / OUT1 (verify_by: evaluator) が本文の 2 つの実質要求 (値非露出での存在確認、報告列の限定と mutation の承認境界) へ 1 対 1 で対応し、検証手段の割り当ても script/evaluator で妥当に分かれている。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Key Rules の「登録・更新・削除はユーザー承認後のみ行う」が、禁止境界の宣言なのか本 skill の実行能力なのか本文だけからは一意に読めない。Purpose & Output Contract とゴールシーク実行 (「安全な登録手順を提示する」) が read-only 側を支持するため effect: conversation-output と guard 不在は妥当と判定したが、rubric の単一責務・境界明示の観点では記述精度が不足している。",
+      "[low / smell] plugin root 解決規約 (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`) を Key Rules に持ちながら `runtime_root_policy: host-skill-path` frontmatter と `## Runtime root contract` 節を持たない。同型の run-governance-adapters は両方を備える。audit-capability-parity は違反を出さない (散文行が executable line に当たらないため) が、兄弟 skill 間の規約適用が非対称。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "main マージ + external-mutation guard block 機械 migration による skill_md_sha256 乖離の再束縛。elegance verdict と同一 context の focused combined review を rubric 側 (命名・単一責務・allowed-tools 最小性・出力契約の限定・feedback_contract 対応・kind 規約) へ投影した。30 思考法は実施しておらず、実施も申告しない。 根拠: SKILL.md 全 73 行 (git diff HEAD 上は新規追加として全文が差分)、比較基準としての plugins/skill-governance-adapters/skills/run-governance-adapters/SKILL.md 全文、skill-governance-* 7 plugin の frontmatter 機械抽出、plugins/harness-creator/scripts/audit-capability-parity.py の _portable_root_violations 実装。 実行したコマンド: `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin skill-governance-secrets` → violations 0 / verdict PASS。sha256 は python3 hashlib で再計算した。 criteria_evaluated は対象 frontmatter の feedback_contract.criteria 全件 (IN1, OUT1) と一致する。high severity finding は 0 件、検出した 2 件はいずれも low (記述精度・兄弟間規約の非対称) で機械 gate も通過するため verdict は PASS。PASS の射程は design claim に限り、実行挙動 (helper の実 --help 応答や値非露出の実走証拠) は別途 live-trial を要する。plugins/skill-governance-secrets/scripts/secrets/ は本 context の権限設定で読み取り拒否されたため、helper 実体の検証は行っていない。"
+}

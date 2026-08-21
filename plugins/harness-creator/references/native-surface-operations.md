@@ -161,6 +161,58 @@ Plugins Directoryからinstallする。
 - [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference)
 - [Claude Code hooks reference](https://code.claude.com/docs/en/hooks)
 
+### 4.5. Codex の hook 配達経路 (plugin 層は届かない)
+
+Codex 0.148.0 の feature 状態は `hooks = stable/true` だが **`plugin_hooks = removed/false`**
+(`codex features list` で確認できる)。つまり Codex は **plugin 配下の `hooks/hooks.json` を
+一切読まない**。plugin manifest に hook を宣言しても Codex 側では沈黙する。
+
+このため Codex への hook 配達は project 層の単一 entry point に集約する。
+
+```
+plugins/*/hooks/hooks.json          ← 正本 (Claude はこれを直接読む)
+        │  build-hook-registry.py --apply
+        ▼
+.codex/hooks/registry.json          ← 生成物 (event / matcher / scope / products)
+.codex/hooks.json                   ← 生成物 (event ごとに hook-router を 1 本だけ登録)
+        │  Codex が発火
+        ▼
+plugins/harness-creator/scripts/hook-router.py
+        │  payload を見て 4 粒度で絞り込み
+        ▼
+各 plugin の hook script (PLUGIN_ROOT / CLAUDE_PLUGIN_ROOT / CLAUDE_PROJECT_DIR を router が復元)
+```
+
+- **正本は plugins 側**。`.codex/` 配下の 2 ファイルは生成物で、直接編集しない。
+  再生成は `make hook-registry`、drift 検査は `make hook-registry-check`
+  (`make native-surfaces-check` が前提として呼ぶ)。
+- **`native-surfaces.toml` の `delivery = "plugin"` と `products` に `codex` を
+  同時に書くことは契約違反**として `sync-codex-project-settings.py` が拒否する。
+  plugin 層は Codex に届かないため、両立させると到達不能な主張になる。
+- **foreign handler (`bd codex-hook` 等) は投影で温存**する。router entry だけが
+  `# harness-managed:hook-router:<Event>` marker で識別・再生成される。
+
+#### ホスト差の正本
+
+| 軸 | Claude Code | Codex 0.148.0 |
+|----|-------------|---------------|
+| plugin 配下 hooks.json | 読む | **読まない** (`plugin_hooks` removed) |
+| shell tool 名 | `Bash` | `shell_command` / `exec_command` |
+| 編集 tool 名 | `Edit` / `Write` / `MultiEdit` | `apply_patch` |
+| skill 起動 | `Skill` tool | プロンプト内の `$skill-name` (tool ではない) |
+| hook payload | `hook_event_name` / `tool_name` / `tool_input` / `session_id` / `cwd` / `prompt` … | **同一** |
+| PreToolUse ブロック | 可 (exit 2) | 可 (exit 2) |
+| Claude 専用 event | `TaskCompleted` / `PostToolUseFailure` / `FileChanged` | 無し |
+| Codex 専用 event | 無し | `PermissionRequest` / `SubagentStart` |
+
+tool 名の対応表の正本は `build-hook-registry.py` の `TOOL_MAP`。
+対応 tool が無い hook は**黙って落とさず** `codex_unreachable` として毎回報告する。
+
+skill 起動 guard (`PreToolUse` + `Skill`/`Task` matcher) だけは、Codex 側で
+`UserPromptSubmit` + `scope.skills` の companion entry へ変換して事前判定の意味を保つ。
+実行後 hook (`PostToolUse` + `Skill` 等) は Codex に相当機構が無いため companion を作らない
+(発火時点が変わり、宣言が嘘になるため)。
+
 ### 5. State transition と current output 例
 
 local source の実在、product での enable、hook trust、new-session runtime は別の事実である。

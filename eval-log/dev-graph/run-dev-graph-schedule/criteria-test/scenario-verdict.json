@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-schedule",
     "component_id": "C15",
-    "skill_md_sha256": "563212e822853591b1db0358af61490216864d23fdc6caf312c5d1047668414b"
+    "skill_md_sha256": "844131da027663f76446297e4907a3e4f74546436127c0bfcc86f8adb526ca06"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-r1",
+  "reviewer": "dev-graph-criteria-scenario-r2",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -17,22 +17,23 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
-        "independent: schedule-graph.py on eval-log/dev-graph/live-trial-fixtures/r3-schedule graph"
+        "independent: python3 plugins/dev-graph/scripts/schedule-graph.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-schedule/.dev-graph/graph.json"
       ],
-      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready passed (exit 0), confirming blocked/draft/unconfirmed/evaluation!=pass/readiness!=complete are 0 in ready_set for both self and bd-ready sources. Independently ran schedule-graph.py on the r3-schedule fixture → ready_set.tasks=[LT-TASK-001], unmapped=0; only the eligible confirmed/pass/readiness-complete active task was admitted."
+      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready passed (exit 0), confirming blocked/draft/unconfirmed/evaluation!=pass/readiness!=complete are 0 in ready_set for both self and bd-ready sources. Independently ran schedule-graph.py on the r8-schedule fixture graph (16 nodes, exit 0) and recomputed the gate predicate myself over status/confirmation_status/evaluation_status/implementation_readiness.status: every one of the 7 reported ready members (2 features + 5 tasks) satisfies status=active & confirmed & pass & readiness complete, i.e. 0 gate violations; the 9 excluded nodes break down as 3 done, 3 unmet-dependency, 2 blocked (T-VENDOR-SLA-ALIGNMENT evaluation=pending/readiness=incomplete, T-DLQ-REPLAY-TOOL evaluation=fail) and 1 draft, all contributing 0 members to the ready-set. unmapped=0."
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "schedule-positive-ready-set",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260820T162826-ci41/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260821T030000-tk2/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260820T162826-ci41/verdict.json",
-        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260820T162826-ci41/transcript.jsonl",
-        "independent: live-trial-verdict.py replay of recorded r3 transcript + out/status.json"
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260821T030000-tk2/verdict.json",
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260821T030000-tk2/transcript.jsonl",
+        "eval-log/dev-graph/run-dev-graph-schedule/live-trial/20260821T030000-tk2/out/status.json",
+        "independent: python3 plugins/dev-graph/scripts/schedule-graph.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-schedule/.dev-graph/graph.json (depends_on/done recomputation)"
       ],
-      "observed": "Re-ran live (run 20260818T004500-r12, 934s wall clock, nudge 0 / gate responses 0) from a fixture reset to its seed commit (git reset --hard HEAD && git clean -fdx, git status --porcelain empty). The re-run was forced a second consecutive time because behavior_closure_files() hashes the native plugin manifest whole, so the distribution-metadata-only edit to plugins/dev-graph/.claude-plugin/plugin.json invalidated the r11 behavior-closure digest. An independent fresh evaluator, instructed to reject the subject session's self-report as evidence, verified the artefacts itself. It recomputed the ready-set from scratch out of status / confirmation / evaluation / implementation_readiness / depends_on / resource_scope across all 15 nodes and got an exact match with the report (features=[LT-FEAT-001], tasks=[LT-TASK-001..006]); it also checked the excluded side, confirming that 2 done, 1 blocked, 1 draft, 1 evaluation=fail, 1 stale and 2 with unmet dependencies contributed 0 members to the ready-set. To rule out a fabricated report it ran plugins/dev-graph/scripts/schedule-graph.py directly and found its output byte-equivalent to the report's uncapped_batches_from_schedule_graph. It cross-checked the 15 markdown frontmatters against 6 fields each in graph.json with 0 mismatches, verified that after the max_parallel=4 cap every pair inside the 2 batches has 0 overlap in resource_scope.touches, and that the 6 assignment_hints carry distinct devgraph/<id> branches and distinct claim-command ids. git branch showed only main and the worktree list only 1 entry, so no double claim. The evaluator stated the ready-set, batches and conflicts were all derived by its own recomputation and by running the canonical script, with out/status.json and the pane's DONE line unused. Not verified: no pre-run snapshot was captured by the evaluator, so digests_before came from the subject's report and the invariance check is not fully independent; no worktree claim was actually executed, so mutual exclusion was checked statically (command-string uniqueness plus the existing worktree count) rather than dynamically; the exit codes of the goal-seek snippet and the direct schedule-graph.py run were not recorded, only the agreement of results. Non-blocking: the C17 independent verifier ran as an in-session script rather than as the dev-graph-parallel-safety-verifier sub-agent (its conclusion matched the evaluator's own recomputation), and because schedule-graph.py has no max_parallel argument the cap is applied by a skill-layer first-fit repack, recorded as a delta in intermediate.jsonl. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
+      "observed": "Live run 20260821T030000-tk2 (scenario schedule-positive-ready-set, tier=live, downgrade_reason null, args '--repo-root .../live-trial-fixtures/r8-schedule --max-parallel 4', claude-opus-5, claude 2.1.237, tmux + jsonl transcript, 255s wall clock, nudge 0 / gate responses 0, poll_exit DONE, scenario_origin replay). verdict.json records launch/completion/goal_fit all PASS and goal_verdict PASS with 0 blockers; out/status.json holds the single marker {\"status\":\"PASS\",\"scenario\":\"schedule-positive-ready-set\"} and the pane reported one line 'DONE: PASS'. I recomputed transcript.jsonl's sha256 as 3f06d305fb4bf710bb9208b77ad2dd036844c114d3dea4d54eac7bd5ebb08125, matching verdict.transcript_sha256, so the recorded evidence is the transcript I read. In the transcript the subject invoked Skill dev-graph:run-dev-graph-schedule, resolved the repo context via resolve-repo-context.py --mode read, read the C27 lease snapshot (only lease present is T-PAYMENT-SANDBOX-HARNESS in state 'expired', so active lease ids = []), and ran schedule-graph.py on the fixture graph, reporting ready features [FEAT-CHECKOUT-RESILIENCE, FEAT-OPS-OBSERVABILITY] and ready tasks [T-CHECKOUT-ASYNC-ACCEPT, T-INVENTORY-ALLOCATION-WORKER, T-OPS-RUNBOOK-ASYNC, T-ORDER-FLOW-METRICS, T-PAYMENT-SANDBOX-HARNESS] with excluded active-but-not-ready [FEAT-FULFILLMENT-DISPATCH, FEAT-PAYMENT-SETTLEMENT, T-CHECKOUT-UI-REFRESH, T-COMPENSATION-SAGA, T-DLQ-REPLAY-TOOL, T-VENDOR-SLA-ALIGNMENT] and 'FAILS: NONE', plus a DIGEST_UNCHANGED read-only check on .dev-graph/state/graph.json and .git/dev-graph/leases.json. Rather than accept that self-report I re-derived the ready-set myself from the fixture graph: for every reported member all depends_on are status=done (T-CHECKOUT-ASYNC-ACCEPT ← T-BASE-EVENT-BUS + T-BASE-ORDER-EVENT-SCHEMA, T-INVENTORY-ALLOCATION-WORKER and T-PAYMENT-SANDBOX-HARNESS ← T-BASE-EVENT-BUS, T-ORDER-FLOW-METRICS ← T-BASE-ORDER-EVENT-SCHEMA, T-OPS-RUNBOOK-ASYNC and both features ← no deps), giving 0 members with an unmet dependency; conversely the 3 unmet-dependency exclusions are exactly FEAT-PAYMENT-SETTLEMENT, FEAT-FULFILLMENT-DISPATCH and T-COMPENSATION-SAGA, each waiting on a still-active predecessor. My own run of schedule-graph.py produced a ready_set byte-identical to the one in the transcript, so the reported set is not fabricated. Not verified in this run: the C17 dev-graph-parallel-safety-verifier sub-agent was not launched (the subject did the conflict check inline), no worktree claim was actually executed so mutual exclusion stayed static, and the digest invariance rests on the subject's own before/after comparison since no external pre-run snapshot was taken. Non-blocking: the run's two closing calls to build-external-intelligence-runtime.py returned argument/schema errors after status.json was already written, which did not affect the scheduling result."
     },
     "OUT2": {
       "status": "PASS",
@@ -40,9 +41,9 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_render_and_schedule",
-        "independent: schedule-graph.py on eval-log/dev-graph/live-trial-fixtures/r3-schedule graph (conflict/batch inspection)"
+        "independent: python3 plugins/dev-graph/scripts/schedule-graph.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-schedule/.dev-graph/graph.json (batch resource_scope pairwise inspection)"
       ],
-      "observed": "pytest test_runtime_coverage.py::test_render_and_schedule passed (exit 0). Independently ran schedule-graph.py on the r3-schedule fixture → conflicts=0 and batches.tasks=[[LT-TASK-001]], confirming no resource_scope.touches-overlapping node pair shares a parallel batch and lease-conflicting candidates are not recommended."
+      "observed": "pytest test_runtime_coverage.py::test_render_and_schedule passed (exit 0). Independently ran schedule-graph.py on the r8-schedule fixture → conflicts=0, batches.features=[[FEAT-CHECKOUT-RESILIENCE, FEAT-OPS-OBSERVABILITY]] and batches.tasks=[[T-CHECKOUT-ASYNC-ACCEPT, T-INVENTORY-ALLOCATION-WORKER, T-OPS-RUNBOOK-ASYNC, T-PAYMENT-SANDBOX-HARNESS], [T-ORDER-FLOW-METRICS]]. I enumerated every pair inside each batch and intersected their resource_scope sets myself: 0 overlapping pairs. T-ORDER-FLOW-METRICS (services/checkout-api + ops/dashboards) is correctly split into a second batch because it collides with T-CHECKOUT-ASYNC-ACCEPT (services/checkout-api). Feature batches contain only artifact_kind=feature and task batches only artifact_kind=task, so planning candidates and execution candidates are not mixed. The only lease in the fixture is expired, so no active-lease-conflicting candidate was recommended."
     },
     "OUT3": {
       "status": "PASS",
@@ -51,9 +52,9 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready",
         "plugins/dev-graph/tests/test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation",
-        "independent: schedule-graph.py assignment_hints inspection on r3-schedule graph"
+        "independent: python3 plugins/dev-graph/scripts/schedule-graph.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r8-schedule/.dev-graph/graph.json (assignment_hints inspection)"
       ],
-      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready and test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation both passed (exit 0). Independently ran schedule-graph.py on the r3-schedule fixture → 1 assignment_hint returning a unique devgraph/<graph_node_id> branch + public worktree claim command; the C27 saga test confirmed a duplicate same-graph_node_id claim is suppressed to a single external bridge claim (0 double claims)."
+      "observed": "pytest test_semantic_contract_cli_scheduler_20260713.py::test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready and test_semantic_c25_c28.py::test_c27_beads_claim_saga_and_compensation both passed (exit 0). Independently ran schedule-graph.py on the r8-schedule fixture → 5 assignment_hints, one per ready task and covering the ready task set exactly; all 5 suggested_branch values are distinct and equal devgraph/<graph_node_id>, and all 5 claim_command values are distinct public-CLI form '/dev-graph worktree claim <id> --branch devgraph/<id> --session-id <session>'. manage-worktree-lease.py raises ContractError on 'canonical claim branch already exists in another context' and on 'graph node already has an active lease', and the C27 saga test confirms a duplicate same-graph_node_id claim is suppressed to a single external bridge claim (0 double claims)."
     }
   }
 }

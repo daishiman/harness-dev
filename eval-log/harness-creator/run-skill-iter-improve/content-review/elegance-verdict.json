@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-iter-improve",
-    "skill_md_sha256": "2cad858d8113c97a40e57f14dcf450b606f337cfacc3bfead9df1e17f77552f1"
+    "skill_md_sha256": "352043a57d62aa6d01a72f70e3d4cc4e8597dbbfb1479ac547649aadad307d1c"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,15 +26,18 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "8 INVARIANTS が『evaluator を緩めて score を通す』という Goodhart 経路を構造防御として名指しし、うち 2/3/6/7 は正本への 1 行相互参照のみで再実装を禁じている (SSOT 規律)。",
-      "審問独立判定 agent と GOAL VERIFICATION agent の別個体・履歴非共有が criteria OUT2 と『判定者独立性』表の双方で二重に固定され、収束根拠から静的レビューを 0% に落とす規定 (INVARIANT 8) と整合する。",
-      "L114 の repo 相対 lint 起動は『repo rootで』と明示され、対象が repo 全体の governance script であるため plugin root 解決とは別軸で正しい。"
+      "改善収束後の Codex 配布再同期が「起動導線」節の 1 行と完了チェックリストの 2 項目で対になり、宣言だけで終わらず機械検査 (`sync-plugin-platforms.py --all --check` / `audit-capability-parity.py` / `lint-plugin-composition.py`) の exit 0 を完了条件へ落としている。",
+      "追加チェック項目が「静的契約 PASS を install/enabled/trust/new-session/runtime 実証と混同しない」と明記しており、本 plugin が繰り返し警戒している Goodhart 緑化 (静的 green を実行証拠と偽る) を項目文自身が封じている。この一文は他 skill の checklist へも横展開価値がある。",
+      "追加コマンドは全て `repo rootで` と基点を明示した上での repo 相対表記で、本 skill が `runtime_root_policy: host-skill-path` を宣言していない (= plugin root 変数を使う実行行を持たない) ことと矛盾しない。audit-capability-parity.py の `--repo-root` / `--all` および lint-plugin-composition.py の位置引数も実在を確認した。",
+      "差分は 3 行の追記のみで、既存の Purpose & Output Contract・境界節・ゴールシークループ・feedback_contract.criteria (IN1/IN2/OUT1/OUT2) に一切触れていない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] 追加チェック項目の `sync-plugin-platforms.py --all --check` が script path と必須 `--repo-root` を欠く短縮表記 (run-skill-create CL-4d と同型)。同じ項目群の次行が `python3 plugins/harness-creator/scripts/... --repo-root .` の完全形なので、隣接 2 行で表記粒度が揃っていない。完全形は run-codex-plugin-package 側に存在するため解決可能。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration + runtime_root_policy: host-skill-path 導入によって SKILL.md sha が既存 verdict と乖離したことに対する再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 本 verdict は elegance 面 (30思考法の代替としての focused combined review による設計 adequacy) への投影である。 共通の機械検査として次を実走した: (1) `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` = verdict PASS / violations 空。(2) frontmatter が宣言した responsibility_refs / manifest / schemas と本文が起動する script の実在をファイル存在確認で全件突合 (audit-capability-parity.py, sync-plugin-platforms.py, check-route-component-parity.py, install-codex-plugin.py, install-local-plugins.py, evaluate-create-gates.py, validate-intake-publish-ready.py, lint-plugin-composition.py, search_knowledge.py, build-external-intelligence.py, lint-readme-plugin-root-portability.py, ref-cross-platform-runtime/references/runtime-portability.md) — 欠損 0 件。(3) 本文が引用する CLI flag を各 script の argparse 定義と突合。(4) 参照 anchor `#product別-plugin-root-契約` (runtime-portability.md L41) と `#h7-ナレッジループ注入の詳細手順` (build-steps.md L502) の実在を確認。 評価方法: 差分は 3 行の追記のみのため全て読み、追記が参照する `plugins/harness-creator/scripts/audit-capability-parity.py` (--repo-root/--all/--plugin/--json)、`plugins/skill-governance-lint/scripts/lint-plugin-composition.py`、`plugins/harness-creator/scripts/sync-plugin-platforms.py` の実在と argparse 定義を確認した。委譲先 `run-codex-plugin-package` の実在と、その SKILL.md が同じ upsert 冪等性を宣言していることも突合済み。既存の Purpose & Output Contract・境界節・ゴールシークループ・feedback_contract.criteria は不変。未解決 medium 以上は 0 件、low 1 件はコマンド表記の短縮で完全形が委譲先に存在するため実行不能にならない。よって verdict は PASS。PASS の射程は静的設計 adequacy に限る。"
 }

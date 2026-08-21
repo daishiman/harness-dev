@@ -1,7 +1,41 @@
 {
-  "target": {"plugin": "mf-kessai-invoice-check", "skill": "run-mf-invoice-report", "skill_md_sha256": "fdf3d70b07c9c7c12b9b44cafb97bb7caf03f5988dd3337c21791adfc4cf7414"},
-  "review_kind": "elegance", "verdict": "PASS", "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
-  "reviewer": "independent-group-b/run-elegant-review", "reviewed_at": "2026-07-12T00:28:08Z", "iterations": 2, "human_review_required": false,
-  "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1"], "positive_feedback": ["30思考法で前月/今月状態遷移、12ヶ月lookback、8列SSOT、非破壊merge、phantom DB fail-closed、verify-then-archiveを検査しC1-C4全PASS。", "test_mfk_period_report/notion_report_sink/archiveが、発行漏れ非隠蔽・行収束・旧行保持・別月共存を機械検証。", "初回に検出した『tenant本番IDがdefaultに焼き込み済み』の古い記述を、tenant overlay/local config供給+空default fail-closedへ修正。"], "negative_feedback": ["非阻害smell: 例外設計とAPI能力境界の記述は長いが、false-negative防止の根拠として必要で、実装SSOTは分離済み。"], "iteration": 2, "iteration_limit": 3, "hook_trigger": "manual", "next_action": "none"},
-  "notes": "IN1はperiod report回帰、OUT1はreport sink受入・非破壊merge・アーカイブ回帰で確認。"
+  "target": {
+    "plugin": "mf-kessai-invoice-check",
+    "skill": "run-mf-invoice-report",
+    "skill_md_sha256": "c18f360cc1619e169ebbf8349eebfb826275782904c473a096078ab25bd967ef"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+48 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

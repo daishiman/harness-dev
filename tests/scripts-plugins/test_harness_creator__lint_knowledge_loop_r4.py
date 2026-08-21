@@ -371,6 +371,81 @@ def test_kl007_decl_json_error(tmp_path):
     assert out and "JSON 解析に失敗" in out[0]["message"]
 
 
+# ── KL-008 ───────────────────────────────────────────────────────────────
+def test_kl008_legacy_output_is_additively_compatible(tmp_path):
+    skill = tmp_path / "skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text("# legacy", encoding="utf-8")
+    assert MOD.check_kl008(skill, store_only=False) == []
+
+
+def test_kl008_runtime_store_requires_shared_engine(tmp_path):
+    skill = tmp_path / "skill"
+    scripts = skill / "scripts"
+    scripts.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        "knowledge_loop:\n"
+        "  contract_version: 1\n"
+        "  pattern: index-search\n"
+        "  consult_at: [runtime]\n"
+        "  runtime_store: external-intelligence-v1\n"
+        "  runtime_scope: project\n",
+        encoding="utf-8",
+    )
+    missing = MOD.check_kl008(skill, store_only=False)
+    assert missing and missing[0]["rule"] == "KL-008"
+
+    (scripts / "build-external-intelligence.py").write_text("# engine", encoding="utf-8")
+    mismatch = MOD.check_kl008(skill, store_only=False)
+    assert mismatch and "正本と不一致" in mismatch[0]["message"]
+
+    canonical = MOD.canonical_external_intelligence_engine()
+    (scripts / "build-external-intelligence.py").write_bytes(canonical.read_bytes())
+    assert MOD.check_kl008(skill, store_only=False) == []
+
+
+def test_kl008_marked_contract_requires_all_fields(tmp_path):
+    skill = tmp_path / "skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text(
+        "knowledge_loop:\n  contract_version: 1\n  pattern: index-search\n",
+        encoding="utf-8",
+    )
+    findings = MOD.check_kl008(skill, store_only=False)
+    assert findings and "必須キーが不足" in findings[0]["message"]
+    assert "runtime_store" in findings[0]["message"]
+
+
+def test_kl008_marked_contract_fails_clearly_without_canonical(monkeypatch, tmp_path):
+    skill = tmp_path / "skill"
+    scripts = skill / "scripts"
+    scripts.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        "knowledge_loop:\n"
+        "  contract_version: 1\n"
+        "  pattern: index-search\n"
+        "  consult_at: [runtime]\n"
+        "  runtime_store: external-intelligence-v1\n"
+        "  runtime_scope: project\n",
+        encoding="utf-8",
+    )
+    (scripts / "build-external-intelligence.py").write_text("generated", encoding="utf-8")
+    fake_linter = tmp_path / "isolated" / "lint-knowledge-loop.py"
+    fake_linter.parent.mkdir()
+    monkeypatch.setattr(MOD, "__file__", str(fake_linter))
+    findings = MOD.check_kl008(skill, store_only=False)
+    assert findings and "正本 engine が見つからない" in findings[0]["message"]
+
+
+def test_kl008_rejects_unknown_runtime_store_but_skips_store_only(tmp_path):
+    skill = tmp_path / "skill"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text("runtime_store: other\n", encoding="utf-8")
+    invalid = MOD.check_kl008(skill, store_only=False)
+    assert invalid and "external-intelligence-v1" in invalid[0]["message"]
+    assert MOD.check_kl008(skill, store_only=True) == []
+
+
 # ── run_lint orchestration ───────────────────────────────────────────────
 def test_run_lint_skip_when_no_knowledge(tmp_path):
     skill = tmp_path / "s"

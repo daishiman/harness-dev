@@ -6,7 +6,7 @@
 name: skill-intake
 description: harness-creator の前段ヒアリングを非エンジニアに開く plugin。曖昧要望から intake 仕様(Markdown 正本 + JSON 副本 + Notion ページ)を 11 phase で生成し、macOS Keychain 経由の Notion PAT で公開する。
 kind: plugin-composition
-version: 0.1.2
+version: 0.1.15
 owner: team-platform
 since: 2026-05-22
 last-audited: 2026-07-01
@@ -58,6 +58,7 @@ capabilities:
   - { kind: hook, ref: "hook:Stop/hook-guard-skillgen", tier: core }
   - { kind: hook, ref: "hook:SessionEnd/hook-guard-skillgen", tier: core }
   - { kind: hook, ref: hooks/post-keychain-add.sh, tier: core }
+  # receipt-gated 起動のみで、hook event への常時配線は持たない公開面。
   - { kind: hook, ref: hooks/post-publish-notify.sh, tier: core }
 
   # === Skills (kind=skill) — .claude-plugin/plugin.json entry_points.skills と一致 ===
@@ -92,10 +93,20 @@ dependencies:
   - { from: skills/run-intake-interview,      to: references/intent-contract.schema.json,       type: reads }   # 入力→出力インテント正本
   - { from: skills/run-intake-interview,      to: references/probe-pattern-table.json,          type: reads }   # 未充足時の引き出しの型
   - { from: skills/run-intake-finalize,       to: references/intent-contract.schema.json,       type: reads }   # build-intent.py が参照
-  # cross-plugin 依存 (G4 配線): P11 mode=P のとき intake.json を plugin-dev-planner R1 の構想材料として推奨引き渡し (emits=成果物の受け手宣言。起動はしない。併用 install 時のみ有効)
-  - { from: skills/run-intake-next-action,    to: plugins/plugin-dev-planner/skills/run-plugin-dev-plan, type: emits }
 
-  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
+# P11 mode=P のとき intake.json を構想材料として推奨引き渡しする任意の cross-plugin 契約。
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
+  plugin-dev-planner:
+    version: ">=0.1.5 <1.0.0"
+    required: false
+    required_entry_points: [run-plugin-dev-plan]
+    edges:
+      - {from: skills/run-intake-next-action, to: skills/run-plugin-dev-plan, type: emits}
+
 eval_sinks:
   - EVALS.json
   - eval-log/

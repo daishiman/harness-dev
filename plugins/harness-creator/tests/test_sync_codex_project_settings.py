@@ -18,7 +18,14 @@ projector = importlib.util.module_from_spec(PROJECTOR_SPEC)
 PROJECTOR_SPEC.loader.exec_module(projector)
 
 
-def fixture(tmp_path, *, delivery="plugin"):
+def fixture(tmp_path, *, delivery="plugin", products=None):
+    # delivery=plugin の hook は Codex に届かない (plugin_hooks が removed)。
+    # 既定の products を delivery から導き、fixture 自体が到達不能な主張を
+    # 持たないようにする。契約違反そのものを試す test だけが products を明示する。
+    products = products if products is not None else (
+        ["claude"] if delivery == "plugin" else ["codex"]
+    )
+    products = json.dumps(products)
     repo = tmp_path / "repo"
     (repo / ".codex").mkdir(parents=True)
     beads = {"hooks": {"SessionStart": [{"matcher": "startup|resume|clear", "hooks": [
@@ -59,7 +66,7 @@ event = "SessionStart"
 matcher = "startup|resume|clear"
 command = "python3 $CLAUDE_PLUGIN_ROOT/hooks/auto-sync.py"
 delivery = "{delivery}"
-products = ["codex"]
+products = {products}
 ''')
     return repo, contract
 
@@ -214,3 +221,15 @@ def test_contract_cannot_redirect_child_writes_outside_exact_managed_paths(tmp_p
     else:
         raise AssertionError("redirected child write accepted")
     assert not (repo / "outside.json").exists()
+
+
+def test_plugin_delivery_cannot_claim_codex_reach(tmp_path):
+    """delivery=plugin + products=codex は到達不能な主張なので契約段階で落ちること。
+
+    projector は plugin delivery の handler を .codex/hooks.json から除去するため、
+    この組合せを許すと「Codex でも動く」と宣言しながら実体は Codex を外れる。
+    Codex への配達は build-hook-registry.py が生成する project 層 router が担う。
+    """
+    repo, contract = fixture(tmp_path, delivery="plugin", products=["claude", "codex"])
+    with pytest.raises(mod.ContractError, match="cannot reach Codex"):
+        mod.run(repo, contract, "check")

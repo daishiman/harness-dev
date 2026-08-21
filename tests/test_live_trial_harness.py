@@ -228,17 +228,21 @@ def test_poll_corrupt_state_file_recovers(monkeypatch, tmp_path):
 
 # ---- live-trial-verdict: schema / tree sha / gate ----------------------------
 
-def _fake_skill_dir(tmp_path: Path) -> Path:
+def _fake_skill_dir(tmp_path: Path, *, gate_declared: bool = False) -> Path:
     d = tmp_path / "fake-skill"
     (d / "scripts").mkdir(parents=True, exist_ok=True)
-    (d / "SKILL.md").write_text("---\nname: fake\n---\nbody\n", encoding="utf-8")
+    # gate_declared=True は「契約上の確認 gate を持つ skill」を表す。contractual 免除は
+    # この宣言に接地していなければ受理されない (自己申告での降格回避の遮断)。
+    gate = "allowed-tools: [Read, AskUserQuestion]\n" if gate_declared else ""
+    (d / "SKILL.md").write_text(f"---\nname: fake\n{gate}---\nbody\n", encoding="utf-8")
     (d / "scripts" / "a.py").write_text("print('a')\n", encoding="utf-8")
     return d
 
 
-def _run_verdict(tmp_path, transcript: Path, extra: list[str]) -> tuple[int, Path]:
+def _run_verdict(tmp_path, transcript: Path, extra: list[str],
+                 *, gate_declared: bool = False) -> tuple[int, Path]:
     workdir = tmp_path / "workdir"
-    skill_dir = _fake_skill_dir(tmp_path)
+    skill_dir = _fake_skill_dir(tmp_path, gate_declared=gate_declared)
     argv = [
         "--workdir", str(workdir),
         "--target-skill", "some-plugin:run-something",
@@ -288,6 +292,97 @@ def test_verdict_nudge_degrades(tmp_path, transcript):
     doc = json.loads(out.read_text())
     assert doc["overall"]["verdict"] == "DEGRADED"
     assert "自走未達" in doc["downgrade_reason"]
+
+
+def test_verdict_gate_rescue_degrades_by_default(tmp_path, transcript):
+    """--gate-kind 未指定は rescue (fail-closed) — 既存の呼び出しが黙って緩まないこと。"""
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--gate-response-count", "1"])
+    doc = json.loads(out.read_text())
+    assert doc["gate_kind"] == "rescue"
+    assert doc["overall"]["verdict"] == "DEGRADED"
+    assert "自走未達" in doc["downgrade_reason"]
+
+
+def test_verdict_gate_contractual_does_not_degrade(tmp_path, transcript):
+    """契約上 gate を要求する skill は gate 応答があっても PASS を取れること。"""
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--gate-response-count", "1",
+                            "--gate-kind", "contractual"], gate_declared=True)
+    doc = json.loads(out.read_text())
+    assert doc["gate_kind"] == "contractual"
+    assert doc["gate_response_count"] == 1  # 免除しても回数は消えない
+    assert doc["gate_contract_evidence"] == ["frontmatter.allowed-tools:AskUserQuestion"]
+    assert doc["overall"]["verdict"] == "PASS"
+    assert doc["downgrade_reason"] is None
+
+
+def test_verdict_contractual_without_declaration_is_rejected(tmp_path, transcript):
+    """gate 宣言の無い skill の contractual 申告は fail-closed で拒否されること。
+
+    無検証で受理すると、stall 救済を contractual と言い換えるだけで
+    DEGRADED を PASS へ反転できる (受け入れ基準の自己申告による緩和)。
+    """
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--gate-response-count", "1",
+                            "--gate-kind", "contractual"])
+    assert rc == 2
+    assert not out.exists()  # 拒否した実行は verdict を残さない
+
+
+def test_verdict_contractual_grounds_on_external_mutation_guard(tmp_path, transcript):
+    """external_mutation_guard 宣言も契約 gate の接地根拠として認めること。"""
+    skill_dir = tmp_path / "fake-skill"
+    (skill_dir / "scripts").mkdir(parents=True, exist_ok=True)
+    (skill_dir / "SKILL.md").write_text(
+        '---\nname: fake\nexternal_mutation_guard: {flow: "preview-confirm-authorize-execute-v1"}\n---\nbody\n',
+        encoding="utf-8",
+    )
+    (skill_dir / "scripts" / "a.py").write_text("print('a')\n", encoding="utf-8")
+    rc = verdict_mod.main([
+        "--workdir", str(tmp_path / "workdir"),
+        "--target-skill", "some-plugin:run-something",
+        "--skill-dir", str(skill_dir),
+        "--transcript", str(transcript),
+        "--launch", "PASS", "--completion", "PASS", "--poll-exit", "DONE",
+        "--goal-result", "PASS", "--gate-response-count", "1",
+        "--gate-kind", "contractual",
+    ])
+    assert rc == 0
+    doc = json.loads((tmp_path / "workdir" / "verdict.json").read_text())
+    assert doc["gate_contract_evidence"] == ["frontmatter.external_mutation_guard"]
+    assert doc["overall"]["verdict"] == "PASS"
+
+
+def test_verdict_gate_kind_normalized_to_rescue_without_gate_response(tmp_path, transcript):
+    """gate 応答 0 のとき kind は意味を持たないので rescue へ正規化されること。"""
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--gate-kind", "contractual"])
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["gate_kind"] == "rescue"
+    assert "gate_contract_evidence" not in doc
+
+
+def test_verdict_proof_rejects_contractual_gate(tmp_path, transcript):
+    """proof trial の受け入れ条件は「人手介入なし」— 契約 gate も介入として FAIL。"""
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--gate-response-count", "1",
+                            "--gate-kind", "contractual", "--proof",
+                            "--requested-model", "claude-opus-4-8"], gate_declared=True)
+    doc = json.loads(out.read_text())
+    assert doc["overall"]["verdict"] == "FAIL"
+    assert "proof trial" in doc["downgrade_reason"]
+
+
+def test_verdict_nudge_degrades_even_with_contractual_gate(tmp_path, transcript):
+    """契約 gate の免除は gate 応答だけに効き、nudge (救済介入) は免除しないこと。"""
+    rc, out = _run_verdict(tmp_path, transcript,
+                           ["--goal-result", "PASS", "--nudge-count", "1",
+                            "--gate-kind", "contractual"])
+    doc = json.loads(out.read_text())
+    assert doc["overall"]["verdict"] == "DEGRADED"
+    assert "nudge=1" in doc["downgrade_reason"]
 
 
 def test_verdict_proof_model_gate(tmp_path, transcript):
@@ -431,6 +526,29 @@ def test_tree_sha_binds_declared_dependency_skill_behavior(tmp_path):
     assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
 
 
+def test_tree_sha_ignores_ephemeral_tool_caches(tmp_path):
+    """ツールが残す一時 cache で digest が動くと stale 判定が実行履歴に依存する。
+
+    CI は clone 直後なので cache が無く、ローカルで pytest を回した後だけ落ちる
+    という非対称を生むため、closure は出荷バイト列だけを見る。
+    """
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    dependency = tmp_path / "plugins" / "system-spec-harness" / "skills" / "run-delegate"
+    for relative in (
+        ".pytest_cache/v/cache/nodeids",
+        ".ruff_cache/content",
+        "__pycache__/mod.cpython-313.pyc",
+    ):
+        noise = dependency / relative
+        noise.parent.mkdir(parents=True, exist_ok=True)
+        noise.write_text("noise\n", encoding="utf-8")
+    (dependency / ".DS_Store").write_text("noise\n", encoding="utf-8")
+    (skill_dir / "scripts" / "local.pyc").write_text("noise\n", encoding="utf-8")
+
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
 def test_tree_sha_ignores_dependency_outside_skill_scope(tmp_path):
     plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
     _write_package_contract(
@@ -566,6 +684,7 @@ def _write_reusable_verdict(eval_root: Path, plugin_dir: Path, skill: str) -> Pa
         "actual_model": ["claude-test"],
         "nudge_count": 0,
         "gate_response_count": 0,
+        "gate_kind": "rescue",
         "goal_verdict": {"result": "PASS", "blockers": []},
         "overall": {
             "launch": "PASS", "completion": "PASS", "goal_fit": "PASS",

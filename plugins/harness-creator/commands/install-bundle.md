@@ -1,5 +1,5 @@
 ---
-description: harness の plugin bundle を 1 コマンドで一括 install する。Claude Code 公式に依存解決機構がないため、bundles.json の定義に従って関連 plugin を順次 install する。
+description: harness の plugin bundle を 1 コマンドで一括 install する。bundles.json の定義を実在する plugin identity 群へ展開し、各pluginの公式 dependencies と併せて依存閉包を保証する。
 argument-hint: "<bundle-name>  例: skills-full / skills-intake"
 allowed-tools: Read, Bash
 name: install-bundle
@@ -26,7 +26,7 @@ since: 2026-05-24
 | 引数 | 説明 |
 |---|---|
 | `skills-full` | `bundles.json` に列挙された全配布対象 plugin (推奨) |
-| `skills-intake` | 非エンジニア向け intake パイプライン (skill-intake + skill-governance-secrets) |
+| `skills-intake` | 非エンジニア向け intake パイプライン (skill-intake + skill-governance-secrets + 共通runtimeのskill-governance-adapters) |
 
 ## 失敗時
 
@@ -37,8 +37,9 @@ since: 2026-05-24
 
 ## 注意
 
-- Claude Code 公式 plugin manifest には依存宣言フィールドがないため、本コマンドが「依存解決」の代替を担う。
+- Claude Code 公式 `plugin.json.dependencies` が同一marketplaceの依存を自動install・有効化する。本コマンドは依存解決の再実装ではなく、複数の利用目的pluginを一度に選ぶためのbundle展開層である。
 - 新規 plugin を追加する際は `bundles.json` の該当 bundle に必ず登録する。これは `assign-skill-design-evaluator` の rubric で評価される。
 - **本コマンドは harness-creator に同梱**されており、harness-creator は配布対象外 (`distributable: false`)。そのため `/plugin install` だけで使う配布ユーザは本コマンドを持たない。bundle の一括導入は **repo を clone した開発環境** (本スラッシュコマンド) または `scripts/install-bundle.sh <bundle>` (CLI フォールバック) を使う。配布ユーザは各 plugin を marketplace 正本から解決した `/plugin install <name>@<marketplace>` で個別に導入する。
 - bundles.json に登録されるのは配布対象 plugin のみ。harness-creator / prompt-creator 自体は非配布のため、どの bundle にも含まれない (clone 環境では `.claude/` symlink 経由で利用)。
+- 通常の外部知能runtimeは `skill-governance-adapters` が単一の `UserPromptSubmit` callerとengine/adapterを配布する。全consumer pluginが公式dependenciesで同providerを宣言し、全標準bundleも同pluginを含むため、個別・bundleの両経路でcallerが有効になる。
 - PR 準備では install をやり直さず `make native-surfaces-pr-ready` を使い、repo-owned 設定を apply→check した差分を review 対象に含める。このコマンド自体は commit/push/PR を行わない。

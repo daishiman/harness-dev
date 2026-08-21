@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-option-catalog",
-    "skill_md_sha256": "38bed3551dff6de496a04f52ed033cd4ac50fe091a1b7ea749a640822ebecd66"
+    "skill_md_sha256": "2c4cd7e114f13fba1e6cb0ac66d41d38613081c3a45ff5f2de7163cc144aa9da"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "codex-independent-option-catalog-elegance",
-  "reviewed_at": "2026-07-12T00:59:04Z",
-  "iterations": 2,
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,17 +26,18 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "AskUserQuestion is now an explicit least-privilege capability alongside Read and Write, matching the Purpose contract, goal-seek checklist, and R1 prompt rather than relying on an undeclared interactive tool.",
-      "IN1 and IN2 retain a narrow, auditable artifact boundary: options.json has selected_integrations/rejected arrays, selected entries carry id/name/tier, rejected entries require a non-empty reason, and selected IDs are constrained to the read-only shared integration catalog.",
-      "OUT1 remains a design claim: catalog lookup and options.json generation are the only responsibilities, while integration execution, authentication, publication, and catalog extension stay delegated to other phases.",
-      "OUT2 now records the behavioral consequence of adding AskUserQuestion as a separate live-trial criterion: candidates must be presented one question at a time, real selected/rejected answers and rejection reasons must be captured, and the result must be reflected in options.json. This preserves the protocol boundary between static design adequacy and Gate D execution evidence.",
-      "The R1 prompt bounds the interactive loop to five questions, prohibits parallel questions, and hands only options.json plus the exit status back to the parent, preventing unbounded dialogue and orchestration leakage."
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual-allowed-tools-change",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Genuine two-pass review. Pass 1 found that adding AskUserQuestion raised the skill to live acceptance tier while feedback_contract had no live-trial criterion; lint-feedback-contract failed specifically for run-intake-option-catalog. The minimal correction added purpose-specific OUT2 without replacing the static OUT1 design claim. Pass 2 verified target frontmatter/tree/prompt drift and feedback-contract lints, rubric score 100, current SHA, and all four criteria. This static PASS does not claim that a Gate D live trial has already run."
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

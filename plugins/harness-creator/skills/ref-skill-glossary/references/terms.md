@@ -84,7 +84,7 @@ Capability の種別を表す列挙。値: `skill | agent | hook | command | plu
 CapabilityBundle の宣言ファイル。plugin 直下に配置し、capabilities/dependencies/eval-sinks/governance/observability を宣言。`render-dependency-graph.py` で Mermaid 図に変換可能。
 
 ## reflective loop
-intake → build → review → lessons-learned → rubric-governance → 次回 build 品質向上、の閉ループ。35章 meta-harness の中核。auto-record-lesson hook と EVALS→rubric 自動 PR 経路で実体化。
+intake → build → review → external observation → independent reuse verification → 承認者・承認証跡付き curated lesson/rubric → 次回 build 品質向上、の閉ループ。35章 meta-harness の中核。auto-record-lesson hook は package 外 state への観測だけを行い、自動 promotion はしない。
 
 ## composition lint
 plugin-composition.yaml の依存 DAG・rubric_refs・hooks 配線整合を検証する PostToolUse hook。CapabilityBundle 単位の machine-checkable governance。

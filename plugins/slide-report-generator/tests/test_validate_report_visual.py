@@ -1016,7 +1016,7 @@ def test_cli_require_structure_without_structure_exit_2(tmp_path):
     assert proc.returncode == 2, proc.stdout + proc.stderr
 
 
-def test_canonical_generate_consumers_enable_required_structure_mode():
+def test_canonical_generate_consumers_enable_required_structure_mode(tmp_path):
     """C01 の実行導線は structure 正本と required mode を常にペアで渡す。"""
     required_args = "--structure <report-structure.json> --require-structure --json"
     skill = (_PLUGIN_ROOT / "skills" / "run-slide-report-generate" / "SKILL.md").read_text(encoding="utf-8")
@@ -1027,31 +1027,14 @@ def test_canonical_generate_consumers_enable_required_structure_mode():
     assert required_args in orchestrator
 
     hook = _load_postgen_hook()
-    # build_context は (評価文, 幾何契約, 情報契約, 実描画レイアウト契約, 生成則, 改行位置,
-    # 図解被覆) の判定を返す。どの判定も no-target/unknown を PASS と言わないために text から
-    # 分離されている。情報契約は warn を持つ 5 値 — warning を合否へ入れると、
-    # 検査を通すためだけに語を足す圧力が生まれるので、pass とは別の値にする。
-    # 実描画レイアウト (L1-L9) は slide 専用で、report では "n/a" になる
-    # (report 側は validate-report-layout.js の R1-R8 が担当する)。
-    # 生成則 (E1-E6 / VGCONST) も slide 専用。report.html で面を同定できるかを
-    # 測れていないため、測れるまで配線しない (偽の赤を出さない)。
-    # 改行位置 (SR-3-09) は**両 mode で走る**ので "n/a" にならない。生成則と違い、
-    # 対象が無いときに error ではなく no-target へ落ちるため、測れていない入力に
-    # 当てても偽の赤を作らない。ここを "n/a" へ変えるのは配線を外すのと同義。
-    # 図解被覆 (DC1-DC4) も**両 mode で走る**。幾何契約・情報契約はどちらも「見つけた図」
-    # を見る検査で、図が 0 個の面には検査対象が無いので緑を返す (分母 0 の緑)。面が図を
-    # 持っているかを数えるのはここだけなので、report 側でも "n/a" にしない。対象 0 件は
-    # exit 2 -> no-target へ落ちるため、面を同定できない入力に当てても偽の赤を作らない。
-    (context, lint_status, info_status, layout_status, visual_status, break_status,
-     cover_status) = hook.build_context("report", "/tmp/report-output")
-    assert lint_status in {"pass", "fail", "no-target", "unknown"}, lint_status
-    assert info_status in {"pass", "warn", "fail", "no-target", "unknown"}, info_status
-    assert layout_status == "n/a", layout_status
-    assert visual_status == "n/a", visual_status
-    assert break_status in {"pass", "fail", "no-target", "unknown"}, break_status
-    assert cover_status in {"pass", "fail", "no-target", "unknown"}, cover_status
-    assert "1d) 図解の情報契約" in context
-    assert "1f) 改行位置" in context
-    assert "1g) 図解被覆" in context
-    assert '--structure "/tmp/report-output/report-structure.json"' in context
-    assert "--require-structure --json" in context
+    # PostToolUse は生成直後に意味評価を強制せず、実HTMLの最小guardと
+    # 成果物提示→利用者選択までを返す。詳細のreport visual gateは利用者が
+    # 診断/releaseを選んだ後に上記canonical commandで実行する。
+    (tmp_path / "report.html").write_text(
+        "<!doctype html><html><body>usable report</body></html>", encoding="utf-8"
+    )
+    context, guard_status = hook.build_context("report", str(tmp_path))
+    assert guard_status == "pass"
+    assert "artifact_presented" in context
+    assert "user_choice_recorded" in context
+    assert "deck-evaluator" not in context

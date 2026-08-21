@@ -62,12 +62,12 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| framework | $CLAUDE_PLUGIN_ROOT/docs/requirements-foundation-framework.md | 上位概念フレームワーク (U1-U9・anchor 機構) の正本を確認するとき |
+| framework | ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/docs/requirements-foundation-framework.md | 上位概念フレームワーク (U1-U9・anchor 機構) の正本を確認するとき |
 | contract | references/spec-state-contract.md | requirements_foundation 形状・set-foundation 契約の確認時 |
 
 ### 3.2 外部ツール
 - `AskUserQuestion` / `Task`: 深掘りヒアリング + U1-U9 要約提示による承認取得。
-- `Bash`: 承認記録 `python3 scripts/apply-spec-transition.py chunk --state spec-state.json --turns <approval-turn.json>` (turn に `approval_id` を持たせ `approval_log` へ承認を記録) → 確定 `python3 scripts/apply-spec-transition.py set-foundation --state spec-state.json --foundation <foundation.json>` (foundation に承認 id を `approval_ref` として付与し `confirmed: true`)。
+- `Bash`: 承認記録 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <approval-turn.json>` (turn に `approval_id` を持たせ `approval_log` へ承認を記録) → 確定 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-foundation --state spec-state.json --foundation <foundation.json>` (foundation に承認 id を `approval_ref` として付与し `confirmed: true`)。
 
 ## Layer 4: 共通ポリシー
 
@@ -127,4 +127,4 @@
 
 ## 出力指示
 
-技術マトリクス収集 (R1-init) の手前で、5 Whys で U1 本質的目的を最優先に掘り、JTBD で U6 を掴み、U2-U9 を深掘りヒアリングで抽出する。U1-U9 の要約をユーザーへ提示して承認を得、その承認を `chunk` (turn の `approval_id`) で `approval_log` へ記録する。埋めた上位概念を `python3 scripts/apply-spec-transition.py set-foundation --state spec-state.json --foundation <foundation.json>` で確定する (U1/U2/U3 は値必須・U4-U9 は値または明示 N/A+理由・foundation に承認 id を `approval_ref` として付け `confirmed: true`)。`validate-coverage-matrix.py --require-foundation` の exit0 を確認する。承認未取得または U1/U2/U3 未確定なら再質問して埋め、放置して完了扱いしない。余計な前置き・思考過程出力は禁止。
+技術マトリクス収集 (R1-init) の手前で、5 Whys で U1 本質的目的を最優先に掘り、JTBD で U6 を掴み、U2-U9 を深掘りヒアリングで抽出する。U1-U9 の要約をユーザーへ提示して承認を得、その承認を `chunk` (turn の `approval_id`) で `approval_log` へ記録する。埋めた上位概念を `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-foundation --state spec-state.json --foundation <foundation.json>` で確定する (U1/U2/U3 は値必須・U4-U9 は値または明示 N/A+理由・foundation に承認 id を `approval_ref` として付け `confirmed: true`)。`validate-coverage-matrix.py --require-foundation` の exit0 を確認する。承認未取得または U1/U2/U3 未確定なら再質問して埋め、放置して完了扱いしない。余計な前置き・思考過程出力は禁止。

@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-requirements",
     "component_id": "C04",
-    "skill_md_sha256": "3ce641ca34a5ef58c69014b8d5942f0490b116f95ff44ebd7e9b0f5c0e8d164c"
+    "skill_md_sha256": "be5fee70d41caf04035292045e7f280454fe22c002ab57514f042e7b05ed8e12"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-r1",
+  "reviewer": "dev-graph-criteria-scenario-r2",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -18,21 +18,22 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_domain_dag_exact13_evidence_and_readiness_boundaries",
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_gh_bridge_helpers_and_operations",
-        "independent: scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-requirements/.dev-graph/state/graph.json"
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph <r5-requirements fixture>/.dev-graph/state/graph.json"
       ],
-      "observed": "test_domain_dag_exact13_evidence_and_readiness_boundaries PASSED: a 12-member package raises feature_package_not_exact_13 while a valid P01..P13 13-node DAG with shared parent_feature/feature_package_id and forward depends_on raises none of {feature_package_not_exact_13, non_forward_phase_dependency, premature_feature_done, feature_evidence_missing}. test_gh_bridge_helpers_and_operations PASSED (issue context stays auxiliary). Independent validate-graph-schema.py on the r3-requirements fixture (16 nodes) returned exit0 with valid=true, violations=[], implementation_readiness=complete, missing_sections=[] (no required-key gaps, no stale digest)."
+      "observed": "再束縛時に再実行: test_domain_dag_exact13_evidence_and_readiness_boundaries と test_gh_bridge_helpers_and_operations の 2 件が PASSED (exit 0)。12 メンバの package は feature_package_not_exact_13 を上げ、共通 parent_feature/feature_package_id と前方 depends_on を持つ P01..P13 の 13 node DAG は {feature_package_not_exact_13, non_forward_phase_dependency, premature_feature_done, feature_evidence_missing} をいずれも上げない。gh-bridge の issue context は補助入力に留まる。独立確認として validate-graph-schema.py を live-trial fixture r5-requirements の graph.json (17 node) に対して直接実行し exit 0 / valid=true / violations=[] / implementation_readiness=complete / missing_sections=[] を得た (必須キー欠落 0、stale digest 0)。旧 receipt が挙げていた r3-requirements fixture は現在どのワークツリーにも存在しないため、実在する r5-requirements fixture へ独立実行の対象を差し替えた。SKILL.md への artifact-delivery-v1 追加差分は frontmatter の effect/activation_state/artifact_delivery と 2 本の起動条件 section のみで、feedback_contract.criteria の id/text/verify_by/loop_scope は IN1/OUT1/OUT2 とも無変更 (git diff HEAD~2 HEAD で確認)。受入条件そのものは変わっていない。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C04-OUT1-positive-ready-handoff",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260820T162826-ci41/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260821T030000-tk2/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260820T162826-ci41/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260820T162826-ci41/out/status.json"
+        "eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260821T030000-tk2/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260821T030000-tk2/transcript.jsonl",
+        "independent: eval-log/dev-graph/run-dev-graph-requirements/live-trial/20260821T030000-tk2/out/status.json"
       ],
-      "observed": "Re-ran live (run 20260818T004500-r12, 530s wall clock, nudge 0 / gate responses 0) from a fixture reset to its seed commit (git reset --hard HEAD && git clean -fdx, git status --porcelain empty). The re-run was forced a second consecutive time because behavior_closure_files() hashes the native plugin manifest whole, so the distribution-metadata-only edit to plugins/dev-graph/.claude-plugin/plugin.json invalidated the r11 behavior-closure digest. An independent fresh evaluator, instructed to reject the subject session's self-report as evidence, ran the validators itself rather than reading the subject's claim of success: validate-system-plan.py --repo-root . --staging system-plan/LT-FEATURE-001 exit 0 (validated_digest=sha256:c36c4e33...), check-implementation-readiness.py --repo-root . exit 0 (status=complete), and validate-graph-schema.py --graph .dev-graph/state/graph.json (the C11 read path) exit 0. Lineage was checked against the filesystem, not against the handoff's own assertion: each source_digest was recomputed from the real file and matched (system-spec/index.md=6c0d27d6..., 00-requirements-definition.md=903fe7d4..., 20-architecture-overview.md=882f1ee5...), the single validated_digest was cross-matched across handoff / readiness-matrix / requirements.md / the 4 files C02 saved, and all 13 task_spec_path entries were resolved as existing files. The \"no implementation code\" boundary was established by git status --porcelain --ignored showing only two new entries (.dev-graph/state/requirements/ and eval-log/) and zero tracked modifications. Honestly recorded non-blocking gaps: the snapshot_digest recipe is not written down anywhere, so a third party cannot recompute it; build_target_kind is uniformly application-code across all 13 including P01; and capability-build's input schema lives outside this repo, so contract conformance is structurally unverifiable here. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
+      "observed": "新 run 20260821T030000-tk2 (fixture r5-requirements, wall clock 345s, nudge 0 / gate response 0, poll_exit DONE, tier=live, downgrade_reason=null, scenario_id=C04-OUT1-positive-ready-handoff, goal_verdict PASS blockers=[], overall launch/completion/goal_fit すべて PASS, actual_model claude-opus-5, permissions_mode bypassPermissions, scenario_origin=replay) を verdict.json と 200 行の transcript.jsonl から検証した。out/ には status.json 1 件のみ ({\"status\":\"PASS\",\"scenario\":\"requirements-positive-handoff\"}) で task.md の書込み制約を守っている。transcript 上で被験 session は Skill(dev-graph:run-dev-graph-requirements) を起動し、Pre-choice usable artifact execution section を先に受け取ったうえで C24 resolve-repo-context.py --mode read から開始している。三 gate はいずれも被験自身が実行し exit 0: check-implementation-readiness.py (C11) が status=complete / missing_sections=[] / source_pin=system-spec-harness 0.1.11 sha256:791d0e12... と 5 probe すべて verified、validate-system-plan.py --staging system-plan/LT-FEATURE-001 が status=pass / validated_digest=sha256:eb6a6bd8... / phase_refs=P01..P13、validate-graph-schema.py が valid=true / violations=[] / implementation_readiness=complete。emit された成果物は .dev-graph/requirements/LT-FEATURE-001/ の capability-build-handoff.json (sha256:8c9cca22...)、readiness-matrix.json (sha256:32b9cab6...)、requirements.md (sha256:504838f7...) の 3 件で、いずれも parse OK・非空・placeholder なし・secret なしの guard を通過している。handoff の内容は handoff_target=capability-build/task-graph、execution_tasks=13 で dependency は forward-only、requirements 14 件が全件 traced、package_digest と snapshot_digest (sha256:b54a82c6...) が readiness-matrix と一致、missing_sections=[]、gate verdict PASS / matrix verdict ready、scope node 17/17 ready。実装コード非生成は 'code generated: 0' と emit 拡張子が json/md のみであること、および git status --porcelain --untracked-files=all が新規 3 件 (上記 requirements 成果物) しか示さないことで確認した。非阻害の留保として本 run 特有の事実を 2 点記録する: (1) 被験は gate 実行前に .dev-graph/state/lt-feature-001-readiness.json (C02 保存状態) を C11 の出力そのもので上書きして source_pin を揃えており、そのため git status に tracked 変更 1 件 (M .dev-graph/state/lt-feature-001-readiness.json) が残っている。C11 と C02 の digest 一致はこの整合操作の後に成立したものであって、fixture が初めから一致していたことの証拠ではない。ただしこれは fixture 側の状態調整であり OUT1 の受入条件 (handoff 実在と実装コード 0 生成) には影響しない。(2) snapshot_digest の算出手順は成果物にも script にも書かれておらず、第三者が独立に再計算する経路は本 run でも確認できなかった。"
     },
     "OUT2": {
       "status": "PASS",
@@ -40,9 +41,9 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_domain_dag_exact13_evidence_and_readiness_boundaries",
-        "independent: scripts/validate-graph-schema.py readiness/missing_sections observation on r3-requirements"
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph <r5-requirements fixture>/.dev-graph/state/graph.json (readiness/missing_sections 観測)"
       ],
-      "observed": "test_domain_dag_exact13_evidence_and_readiness_boundaries PASSED: injecting a member with implementation_readiness={status:incomplete}, confirmation_status=draft, evaluation_status=pending makes domain_findings surface {active_not_ready, premature_feature_done, feature_evidence_missing}, so the incomplete node is flagged and the package is not clean for handoff. Independently, validate-graph-schema.py reports the readiness/missing_sections fields directly (missing_sections=[] on the all-complete r3-requirements fixture), confirming the surfaced-vs-clean distinction that gates handoff."
+      "observed": "再束縛時に再実行: test_domain_dag_exact13_evidence_and_readiness_boundaries PASSED。implementation_readiness={status:incomplete}・confirmation_status=draft・evaluation_status=pending のメンバを注入すると domain_findings に {active_not_ready, premature_feature_done, feature_evidence_missing} が現れ、当該 node が surface されて package が handoff 向けに clean にならない。独立確認として validate-graph-schema.py を r5-requirements fixture に実行し、readiness/missing_sections が出力フィールドとして直接返ること (all-complete 状態で implementation_readiness=complete / missing_sections=[]) を確認した。surfaced 側と clean 側の対比が handoff を gate している構造は現行 SKILL.md でも維持されており、artifact-delivery-v1 差分は OUT2 の受入条件を変更していない。"
     }
   }
 }

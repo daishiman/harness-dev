@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "2cfe022a87f9775348838f07366311ec86fdf102a6caacbcbf9f002b02157cbd"
+    "skill_md_sha256": "a7b093ef33daddb657692f652e82c8d0998e712fec438a6fbd310cfcb7b31f34"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,15 +26,18 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "R2-design / R2a-design-config / R3-render / R5-refine の prompt 分割が SKILL.md の phase 表と 1:1 で、criteria IN1/OUT1/OUT2/OUT3 の各々に対応する検証手段 (script / test / 独立 reviewer) が欠けなく割り当たっている。",
-      "唯一の bash fence は eval-log 配下へ書く repo 相対 heredoc であり、plugin 同梱資産の shell 実行を持たないため runtime_root_policy を要求しない構成として一貫している。",
-      "本文 158 行で BD-003 (本文 300 行以下) に十分な余裕があり、`## Purpose & Output Contract` / `## Gotchas` を備える。"
+      "今回の差分 3 箇所 (Purpose & Output Contract の visual-fit 一文 / 単一 HTML 生成節の style_reference_paths 段落 / F3 の visual-fit 判定軸) が、いずれも既に実装側に存在する契約の言語化であり、SKILL.md が先走った宣言をしていない。style_reference_paths は scripts/srg-image-bridge.py:411 resolve_style_reference_sources / :464 stage_style_references / :942 styleReference 結線 / :1082 全 item への同一 slug 付与として実在し、E-IMG-STYLE-REFERENCE の fail-closed も本文の記述どおりである。",
+      "『説明文へ「漫画調」「青基調」と書くだけで代替しない』という否定形の禁止が、参照画素を渡さずに形容詞へ言い換える退化 (画風が指定と別物でも生成成功になる Goodhart) を名指しで塞いでいる。同じ禁止が prompts/R3-render.md:48-51 と prompts/R2-design.md:182-189 にも一致した文言で置かれており、責務 prompt と SKILL.md が同一の境界を語っている。",
+      "F3 の visual-fit 判定軸 (a)(b)(c)(d) が agents/handout-readability-reviewer.md:143-150,192-194,230 の実手順と 1 対 1 で対応する。C01 側は『verdict がその手順で作られたことを完了条件に含める』だけで、判定基準そのものを再実装しておらず、既存の『C03 の verdict を本 skill で再判定しない』(本文 ## 読みやすさレビューの委譲) と衝突していない。",
+      "参照画像の記述が draft ではなく release / R3-render の面へ置かれ、build_stage の 2 段構造 (draft = 決定論ゲート + 挿絵生成、release = 意味レビュー) を崩していない。visual-fit の実画素確認を F3 (release) に置いたことで、D1-D10 の第1稿所要時間へ人手の画素確認が混入していない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] frontmatter build_stage.stages[].criteria_scope が draft / release とも [IN1, OUT1, OUT2] であり、feedback_contract.criteria に宣言された OUT3 (live-trial) がどちらの段の scope にも現れない。OUT3 は『実走の痕跡で確認する』criterion であり段の周回で検証する種類ではない、と読むのが整合的だが、その読み分けは本文にも frontmatter にも明示されていない。今回の差分で新たに入った欠落ではなく (差分 3 箇所はいずれも criteria_scope に触れていない)、実行不能にもならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "本 verdict は main のマージと guard block 機械 migration により skill_md_sha256 が既存 verdict と乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 読んだもの: git diff HEAD で本 SKILL.md の差分全 3 hunk (L200 の visual-fit 一文追記 / L230 の style_reference_paths 段落新設 / L282 の F3 拡張)、SKILL.md 全 347 行、plugins/guide-doc-generator/scripts/srg-image-bridge.py の style reference 実装 (L148, L411-478, L930-950, L1078-1085)、agents/handout-readability-reviewer.md の visual-fit 手順 (L96, L143-150, L192-194, L230)、skills/assign-handout-readability-evaluator/SKILL.md の frontmatter と Purpose & Output Contract、prompts/R2-design.md L170-195、prompts/R3-render.md L40-55, L83、prompts/R5-refine.md L73, L85, L165、config/handout-visual-policy.json の draft_first 全体。 機械確認したこと: frontmatter が宣言した script_refs 12 件・schema_refs 1 件・command_refs 1 件・agent_refs 1 件・skill_refs 1 件・responsibility_refs 6 件・visual_policy_ref 1 件の計 23 参照を全件 stat し、欠損 0 件。prompts/ ディレクトリの実ファイル 6 件と responsibility_refs 6 件が過不足なく一致。effect は local-artifact であり external-mutation ではないため external_mutation_guard frontmatter と canonical receipt flow block はいずれも不要かつ不在で、双方向の対応が崩れていない。runtime_root_policy は宣言されていないため Runtime root contract 節と ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}} 起動行の要求は適用外。artifact_delivery は 6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only を備え、Pre-choice / Post-choice section が本文冒頭に存在する。 (d) の実体検証: 新設段落が主張する『C21 は参照画素を SRG 作業域へ無加工で配置し、全節の styleReference へ同じ anchor として結線する』は srg-image-bridge.py:1082-1084 が全 item へ同一 reference_slugs を配り :944-948 が anchorSlug=slugs[0] を全 slide へ与える実装と一致。『指定済み参照が欠落していれば fail-closed』は resolve_style_reference_sources の is_file() 不成立時 fail_contract(E_STYLE_REFERENCE) と一致。『参照フォルダを示した場合は選んだ実在画像を渡す』は script が PNG/WebP の実ファイルのみ受理する制約と整合 (フォルダのまま渡す経路は本文が禁じている)。 差分が既存契約を壊していないこと: Purpose & Output Contract の入出力 4 項目・build_mode / build_stage・D1-D10・feedback_contract.criteria (IN1/OUT1/OUT2/OUT3) はいずれも差分の対象外で、変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は criteria_scope の読み分けが暗黙という既存の記述上 smell であるため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1/OUT2/OUT3 の実行挙動の受け入れは受入テストと live-trial の実走証拠を別途要する。"
 }

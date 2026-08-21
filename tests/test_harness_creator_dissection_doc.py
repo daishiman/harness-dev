@@ -41,4 +41,11 @@ def test_dissection_describes_single_shared_hook_without_claude_double_load() ->
     assert shared.is_file()
     assert "Claude は標準自動検出" in text
     assert "Codex manifest は `./hooks/hooks.json` を明示参照" in text
-    assert "SessionStart 1 イベント / 1 コマンド" in text
+    # 配線規模は共有正本から導出する。文字列を直書きすると hooks.json を増減しても
+    # doc が古いまま緑になり、解説が実装から静かに乖離する。
+    wired = json.loads(shared.read_text(encoding="utf-8"))
+    events = wired.get("hooks", wired)
+    command_count = sum(
+        len(entry["hooks"]) for entries in events.values() for entry in entries
+    )
+    assert f"**{len(events)} イベント / {command_count} コマンド**" in text

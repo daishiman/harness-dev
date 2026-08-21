@@ -81,7 +81,7 @@
 
 ```bash
 # JSON 配列文字列 or ファイルパス ([...] / {"targets": [...]}) を受け付ける
-python3 scripts/apply-spec-transition.py set-targets --state spec-state.json \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-targets --state spec-state.json \
   --targets '[{"target_id": "react", "category": "frontend"}, {"target_id": "postgres", "category": "database"}]'
 ```
 
@@ -98,10 +98,10 @@ python3 scripts/apply-spec-transition.py set-targets --state spec-state.json \
 
 ```bash
 # 上位概念 U1-U9 を確定 (JSON 文字列 or ファイルパス)
-python3 scripts/apply-spec-transition.py set-foundation --state spec-state.json \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-foundation --state spec-state.json \
   --foundation '{"essential_purpose":"...","background":"...","goals":[{"id":"G1","text":"..."}],"confirmed":true}'
 # 確定セルへ serves_goals を付与 (トレース)
-python3 scripts/apply-spec-transition.py apply --state spec-state.json \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json \
   --op '{"action":"set-serves","category":"database","platform":"web","serves_goals":["G1"]}'
 ```
 
@@ -110,9 +110,9 @@ python3 scripts/apply-spec-transition.py apply --state spec-state.json \
 上位概念をマトリクスより先に確定できるよう、最初に state envelope を生成する。`init --state` は bootstrap 済みの `requirements_foundation` / `decisions` / `targets` / logs を保持して taxonomy の matrix だけを初期化する。
 
 ```bash
-python3 scripts/apply-spec-transition.py bootstrap --out spec-state.json
-python3 scripts/apply-spec-transition.py set-foundation --state spec-state.json --foundation foundation.json
-python3 scripts/apply-spec-transition.py init --taxonomy taxonomy.json --state spec-state.json --out spec-state.json
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" bootstrap --out spec-state.json
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-foundation --state spec-state.json --foundation foundation.json
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" init --taxonomy taxonomy.json --state spec-state.json --out spec-state.json
 ```
 
 ## decisions (意思決定支援) と set-decision op
@@ -160,7 +160,7 @@ python3 scripts/apply-spec-transition.py init --taxonomy taxonomy.json --state s
 ```
 
 ```bash
-python3 scripts/apply-spec-transition.py set-decision --state spec-state.json --decision decision.json
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-decision --state spec-state.json --decision decision.json
 ```
 
 ## KNOWLEDGE_CANDIDATES_EXTENSION_C — seed 外 knowledge lifecycle
@@ -191,7 +191,7 @@ python3 scripts/apply-spec-transition.py set-decision --state spec-state.json --
 ```
 
 ```bash
-python3 scripts/apply-spec-transition.py set-knowledge-candidate \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-knowledge-candidate \
   --state spec-state.json --candidate knowledge-candidate.json
 ```
 
@@ -207,5 +207,5 @@ python3 scripts/apply-spec-transition.py set-knowledge-candidate \
 
 ## 検証 (deterministic gate)
 
-- loop 中: `python3 $CLAUDE_PLUGIN_ROOT/scripts/validate-coverage-matrix.py --matrix spec-state.json` (exit0)。
+- loop 中: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json` (exit0)。
 - 最終: 同コマンド `--require-complete` (未収集0 必須, exit0)。

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "2cfe022a87f9775348838f07366311ec86fdf102a6caacbcbf9f002b02157cbd"
+    "skill_md_sha256": "a7b093ef33daddb657692f652e82c8d0998e712fec438a6fbd310cfcb7b31f34"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,15 +26,18 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "R2-design / R2a-design-config / R3-render / R5-refine の prompt 分割が SKILL.md の phase 表と 1:1 で、criteria IN1/OUT1/OUT2/OUT3 の各々に対応する検証手段 (script / test / 独立 reviewer) が欠けなく割り当たっている。",
-      "唯一の bash fence は eval-log 配下へ書く repo 相対 heredoc であり、plugin 同梱資産の shell 実行を持たないため runtime_root_policy を要求しない構成として一貫している。",
-      "本文 158 行で BD-003 (本文 300 行以下) に十分な余裕があり、`## Purpose & Output Contract` / `## Gotchas` を備える。"
+      "frontmatter の構造規範が完備している: name / description / version / owner / source / kind=run / effect=local-artifact / prefix / hierarchy=L1 / user-invocable / output_language / argument-hint / allowed-tools / depends_on が揃い、prefix=run と kind=run と name の run- 接頭辞が一致する。skill_refs の assign-handout-readability-evaluator は L2 assign kind であり、L1 run から L2 assign への委譲という階層方向を逆行していない。",
+      "proposer≠approver が構造で保たれている。読みやすさの判定基準を本 skill が一切持たず (## 読みやすさレビューの委譲 の 4 箇条)、今回追加された F3 の visual-fit 判定軸も『C03 が何を見た verdict か』の受け入れ条件であって本 skill 側の再判定規則になっていない。委譲先 SKILL.md も『本 skill は判定基準を持たない』と宣言しており、両側から同じ境界を守っている。",
+      "単一正本の原則が新設段落でも守られている。style_reference_paths の値域・ファイル形式・欠落時の停止コードを SKILL.md 本文へ書き写さず、C21 (srg-image-bridge.py) の責務として名指すに留めている。既存の Gotchas『部品 id と用途語彙と粒度の値域を本文へ書き写さない』と同じ規律である。",
+      "宣言した参照の実在が 23/23 件。script_refs 12・schema_refs 1・command_refs 1・agent_refs 1・skill_refs 1・responsibility_refs 6・visual_policy_ref 1 を全件 stat して欠損 0 件で、responsibilities の R1-R5 と responsibility_refs の prompts/ 実ファイルも過不足なく対応する。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] build_stage.stages[].criteria_scope が draft / release とも [IN1, OUT1, OUT2] で、feedback_contract.criteria の OUT3 (verify_by: live-trial) がどちらの段にも現れない。OUT3 は実走痕跡で確認する criterion であって段の周回対象ではない、と読むのが整合的だが明示がない。今回の差分で入った欠落ではなく実行不能にもならないため low。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "本 verdict は main のマージと guard block 機械 migration による skill_md_sha256 乖離を受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)-(e) を同時判定した結果の rubric 側投影である。30 思考法は実施しておらず、実施も申告しない。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはいない。機械的に確認したのは FM/BD/PD/NM に相当する構造規範に限る — frontmatter 必須キーの完備、宣言参照 23 件の実在 stat、responsibility_refs 6 件と prompts/ 実ファイル 6 件の一致、effect=local-artifact に対して external_mutation_guard frontmatter と receipt flow block が双方とも不在であること (片方だけの不整合なし)、runtime_root_policy 未宣言により Runtime root contract 節要求が適用外であること、artifact_delivery の 6 state / 6 transition / pre_choice_forbidden / accept_contexts の完備と Pre-choice・Post-choice section の存在。よって数値 score は算出せず、verdict は combined review の単一判断に従う。 内容側は git diff HEAD の全 3 hunk を読み、主張の裏付けを実装で照合した: style_reference_paths は scripts/srg-image-bridge.py の resolve_style_reference_sources (fail-closed) / stage_style_references (無加工配置) / 全 item への同一 slug 付与 / slide への anchorSlug 結線として実在し、E-IMG-STYLE-REFERENCE も実装済み。F3 の visual-fit 判定軸 (a)(b)(c)(d) は agents/handout-readability-reviewer.md L143-150,192-194,230 の実手順と対応し、tests/handout-readability-reviewer/test_procedure_coverage.py が alt 文だけの机上判定への退化を検査している (テスト実行はしていない。ファイル内容の確認のみ)。差分は Purpose & Output Contract・build_mode・build_stage・D1-D10・feedback_contract.criteria のいずれも変更していない。 high severity 0 件、medium 以上の未解決 finding 0 件のため PASS。射程は静的設計 adequacy に限る。"
 }

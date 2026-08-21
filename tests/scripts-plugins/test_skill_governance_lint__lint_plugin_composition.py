@@ -26,9 +26,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-plugin-composition.py"
+)
+BUILD_TRACE_VALIDATOR = (
+    ROOT
+    / "plugins"
+    / "harness-creator"
+    / "skills"
+    / "run-build-skill"
+    / "scripts"
+    / "validate-build-trace.py"
 )
 
 _SPEC = importlib.util.spec_from_file_location("lint_plugin_composition_under_test", SCRIPT)
@@ -42,7 +53,10 @@ _SPEC.loader.exec_module(MOD)
 
 VALID_COMPOSITION = """\
 name: fixture-plugin
+description: fixture plugin composition used by deterministic lint tests.
 kind: plugin-composition
+version: 1.2.3
+owner: team-test
 
 contract:
   interface:
@@ -174,6 +188,45 @@ def test_parse_dependencies_fails_closed_on_missing_type():
     assert dependencies == []
     assert len(errors) == 1
     assert "missing type" in errors[0]
+
+
+def test_parse_external_dependencies_with_cross_plugin_edges():
+    external, errors = MOD.parse_external_dependencies(
+        "external_dependencies:\n"
+        "  shared-plugin:\n"
+        "    version: \">=1.0.0 <2.0.0\"\n"
+        "    relation: shared-runtime\n"
+        "    required_entry_points: [run-shared]\n"
+        "    edges:\n"
+        "      - {from: skills/run-alpha, to: references/contract.md, type: reads}\n"
+    )
+    assert errors == []
+    assert external == {
+        "shared-plugin": {
+            "version": ">=1.0.0 <2.0.0",
+            "relation": "shared-runtime",
+            "required_entry_points": ["run-shared"],
+            "edges": [
+                {
+                    "from": "skills/run-alpha",
+                    "to": "references/contract.md",
+                    "type": "reads",
+                }
+            ],
+        }
+    }
+
+
+def test_parse_external_dependencies_fails_closed_on_malformed_edge():
+    external, errors = MOD.parse_external_dependencies(
+        "external_dependencies:\n"
+        "  shared-plugin:\n"
+        "    version: 1.0.0\n"
+        "    edges:\n"
+        "      - {from: skills/run-alpha, to: references/contract.md}\n"
+    )
+    assert external["shared-plugin"]["edges"] == []
+    assert any("missing type" in error for error in errors)
 
 
 # --------------------------------------------------------------------------
@@ -353,7 +406,10 @@ def test_lint_composition_external_hooks_manifest_escape_is_error(tmp_path):
 
 PARITY_COMPOSITION = """\
 name: fixture-plugin
+description: fixture plugin composition used by dependency parity tests.
 kind: plugin-composition
+version: 1.2.3
+owner: team-test
 
 capabilities:
   - {kind: skill, ref: skills/run-alpha, tier: core}
@@ -423,6 +479,201 @@ def test_dependency_parity_rejects_missing_command_dispatch_edges(tmp_path):
         in finding
         for finding in findings
     )
+
+
+def _graph_composition(*dependency_lines: str, version: str = "1.2.3") -> str:
+    return (
+        "name: fixture-plugin\n"
+        "description: fixture plugin composition used by graph validation tests.\n"
+        "kind: plugin-composition\n"
+        f"version: {version}\n"
+        "owner: team-test\n\n"
+        "capabilities:\n"
+        "  - {kind: skill, ref: skills/run-alpha, tier: core}\n"
+        "  - {kind: command, ref: commands/do-thing, tier: core}\n\n"
+        "dependencies:\n"
+        + "".join(f"  - {line}\n" for line in dependency_lines)
+    )
+
+
+def test_lint_rejects_non_semver_version(tmp_path):
+    comp = build_plugin(tmp_path, _graph_composition(version="release-1"), None)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("version='release-1' must be SemVer X.Y.Z" in finding for finding in findings)
+
+
+def test_lint_rejects_dangling_dependency_endpoint(tmp_path):
+    comp = build_plugin(
+        tmp_path,
+        _graph_composition(
+            "{from: skills/run-alpha, to: scripts/ghost.py, type: calls}"
+        ),
+        None,
+    )
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("dangling dependency endpoint: scripts/ghost.py" in finding for finding in findings)
+
+
+def test_lint_rejects_dependency_cycle(tmp_path):
+    comp = build_plugin(
+        tmp_path,
+        _graph_composition(
+            "{from: skills/run-alpha, to: commands/do-thing, type: calls}",
+            "{from: commands/do-thing, to: skills/run-alpha, type: calls}",
+        ),
+        None,
+    )
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("dependencies contains cycle" in finding for finding in findings)
+
+
+def test_lint_rejects_exact_duplicate_dependency_edge(tmp_path):
+    edge = "{from: skills/run-alpha, to: commands/do-thing, type: calls}"
+    comp = build_plugin(tmp_path, _graph_composition(edge, edge), None)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("duplicate dependency edge" in finding for finding in findings)
+
+
+def test_lint_allows_existing_plugin_local_resource_endpoint(tmp_path):
+    (tmp_path / "references").mkdir()
+    (tmp_path / "references" / "contract.md").write_text("contract\n", encoding="utf-8")
+    composition = _graph_composition(
+        "{from: skills/run-alpha, to: references/contract.md, type: reads}"
+    )
+    comp = build_plugin(tmp_path, composition, None)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert findings == []
+
+
+def test_lint_rejects_existing_but_undeclared_local_capability_endpoint(tmp_path):
+    (tmp_path / "skills" / "run-hidden").mkdir(parents=True)
+    (tmp_path / "skills" / "run-hidden" / "SKILL.md").write_text(
+        "# hidden\n", encoding="utf-8"
+    )
+    composition = _graph_composition(
+        "{from: skills/run-alpha, to: skills/run-hidden, type: calls}"
+    )
+    comp = build_plugin(tmp_path, composition, None)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("dangling dependency endpoint: skills/run-hidden" in finding for finding in findings)
+
+
+def test_lint_rejects_cross_plugin_endpoint_hidden_in_local_dependencies(tmp_path):
+    (tmp_path / ".git").mkdir()
+    plugin = tmp_path / "plugins" / "fixture-plugin"
+    sibling = tmp_path / "plugins" / "shared-plugin" / "references"
+    sibling.mkdir(parents=True)
+    (sibling / "contract.md").write_text("contract\n", encoding="utf-8")
+    composition = _graph_composition(
+        "{from: skills/run-alpha, to: ../shared-plugin/references/contract.md, type: reads}"
+    )
+    comp = build_plugin(plugin, composition, None)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("dangling dependency endpoint" in finding for finding in findings)
+
+
+def _build_external_dependency_fixture(tmp_path: Path, *, edge_type: str = "reads") -> Path:
+    (tmp_path / ".git").mkdir()
+    local = tmp_path / "plugins" / "fixture-plugin"
+    external = tmp_path / "plugins" / "shared-plugin"
+    (external / "references").mkdir(parents=True)
+    (external / "references" / "contract.md").write_text("contract\n", encoding="utf-8")
+    # external_dependencies は「graph の edge」と「package 契約の entry point」の
+    # 二面を同時に宣言する。edge だけでは owner の公開面が保証されないので、
+    # required_entry_points と、それを裏づける実体・package-contract も揃える。
+    (external / "skills" / "run-shared").mkdir(parents=True)
+    (external / "skills" / "run-shared" / "SKILL.md").write_text("# shared\n", encoding="utf-8")
+    (external / "references" / "package-contract.json").write_text(
+        json.dumps(
+            {
+                "plugin_name": "shared-plugin",
+                "depends_on": [],
+                "entry_points": {
+                    "skills": ["run-shared"], "agents": [], "commands": [], "hooks": []
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (local / "references").mkdir(parents=True)
+    (local / "references" / "package-contract.json").write_text(
+        json.dumps(
+            {
+                "plugin_name": "fixture-plugin",
+                "depends_on": ["shared-plugin"],
+                "entry_points": {
+                    "skills": ["run-alpha"], "agents": [], "commands": ["do-thing"], "hooks": []
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (external / "plugin-composition.yaml").write_text(
+        "name: shared-plugin\n"
+        "description: external dependency target fixture plugin.\n"
+        "kind: plugin-composition\nversion: 1.4.0\nowner: team-test\n"
+        "capabilities:\n  - {kind: script, ref: references/contract.md}\n",
+        encoding="utf-8",
+    )
+    composition = _graph_composition(
+        "{from: skills/run-alpha, to: commands/do-thing, type: calls}"
+    ) + (
+        "\nexternal_dependencies:\n"
+        "  shared-plugin:\n"
+        "    version: \">=1.0.0 <2.0.0\"\n"
+        "    required_entry_points: [run-shared]\n"
+        "    edges:\n"
+        f"      - {{from: skills/run-alpha, to: references/contract.md, type: {edge_type}}}\n"
+    )
+    return build_plugin(local, composition, None)
+
+
+def test_lint_allows_cross_plugin_edge_only_in_explicit_external_contract(tmp_path):
+    comp = _build_external_dependency_fixture(tmp_path)
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert findings == []
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected"),
+    [
+        # 行頭の indent ごと落とす。indent を残すと次行が edge kv として吸われ、
+        # 「version 欠落」ではなく別の parse error を測ってしまう。
+        (lambda text: text.replace("    version: \">=1.0.0 <2.0.0\"\n", ""), "version is required"),
+        (lambda text: text.replace("references/contract.md", "references/missing.md"), "dangling external dependency endpoint"),
+        (lambda text: text.replace("type: reads", "type: invents"), "type invalid"),
+    ],
+)
+def test_lint_external_dependency_contract_fails_closed(tmp_path, mutation, expected):
+    comp = _build_external_dependency_fixture(tmp_path)
+    comp.write_text(mutation(comp.read_text(encoding="utf-8")), encoding="utf-8")
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any(expected in finding for finding in findings)
+
+
+def test_lint_rejects_duplicate_external_dependency_edge(tmp_path):
+    comp = _build_external_dependency_fixture(tmp_path)
+    text = comp.read_text(encoding="utf-8")
+    edge = "      - {from: skills/run-alpha, to: references/contract.md, type: reads}\n"
+    comp.write_text(text + edge, encoding="utf-8")
+    findings, _, err = MOD.lint_composition(comp)
+    assert err is None
+    assert any("duplicate external dependency edge" in finding for finding in findings)
+
+
+def test_dependency_type_enum_is_loaded_from_capability_schema_ssot():
+    assert MOD.ALLOWED_DEPENDENCY_TYPES == {
+        "calls", "reads", "extends", "evaluates", "emits", "writes", "delegates", "deploys"
+    }
 
 
 def test_public_surface_inventory_is_bidirectional(tmp_path):
@@ -563,6 +814,39 @@ def test_main_violation_exit1(tmp_path):
     assert "duplicate capability ref" in proc.stderr
 
 
+@pytest.mark.parametrize(
+    ("composition", "expected"),
+    [
+        (_graph_composition(version="release-1"), "must be SemVer X.Y.Z"),
+        (
+            _graph_composition(
+                "{from: skills/run-alpha, to: scripts/ghost.py, type: calls}"
+            ),
+            "dangling dependency endpoint",
+        ),
+        (
+            _graph_composition(
+                "{from: skills/run-alpha, to: commands/do-thing, type: calls}",
+                "{from: commands/do-thing, to: skills/run-alpha, type: calls}",
+            ),
+            "dependencies contains cycle",
+        ),
+        (
+            _graph_composition(
+                "{from: skills/run-alpha, to: commands/do-thing, type: calls}",
+                "{from: skills/run-alpha, to: commands/do-thing, type: calls}",
+            ),
+            "duplicate dependency edge",
+        ),
+    ],
+)
+def test_main_public_cli_rejects_graph_counterexamples(tmp_path, composition, expected):
+    comp = build_plugin(tmp_path, composition, None)
+    proc = run_cli(str(comp))
+    assert proc.returncode == 1
+    assert expected in proc.stderr
+
+
 def test_main_no_args_usage_exit2():
     proc = run_cli()
     assert proc.returncode == 2
@@ -590,7 +874,42 @@ def test_main_self_test():
     assert "self-test ok" in proc.stdout
 
 
-def test_repo_harness_creator_composition_passes():
-    comp = ROOT / "plugins" / "harness-creator" / "plugin-composition.yaml"
-    proc = run_cli(str(comp))
-    assert proc.returncode == 0, proc.stderr
+def test_all_repo_plugin_compositions_pass_both_public_validators():
+    """Discovery is dynamic so a newly added composition cannot evade CI."""
+    compositions = sorted((ROOT / "plugins").glob("*/plugin-composition.yaml"))
+    assert compositions, "repo must contain at least one plugin composition"
+
+    failures = []
+    for composition in compositions:
+        lint = run_cli(str(composition))
+        build_trace = subprocess.run(
+            [
+                sys.executable,
+                str(BUILD_TRACE_VALIDATOR),
+                "--bundle",
+                str(composition),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if lint.returncode != 0:
+            failures.append(f"{composition}: public lint:\n{lint.stderr}")
+        if build_trace.returncode != 0:
+            failures.append(
+                f"{composition}: build trace:\n{build_trace.stdout}{build_trace.stderr}"
+            )
+
+    assert failures == []
+
+
+def test_governance_ci_discovers_all_plugin_compositions_dynamically():
+    workflow = (ROOT / ".github" / "workflows" / "governance-check.yml").read_text(
+        encoding="utf-8"
+    )
+    assert (
+        "find plugins -mindepth 2 -maxdepth 2 -name plugin-composition.yaml -print0"
+        in workflow
+    )
+    assert "lint-plugin-composition.py \"$composition\"" in workflow
+    assert "validate-build-trace.py --bundle \"$composition\"" in workflow

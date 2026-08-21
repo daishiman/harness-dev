@@ -279,6 +279,44 @@ def test_inline_claude_session_end_timeout_must_fit_codex_seconds_limit(tmp_path
         )
 
 
+def test_claude_only_event_survives_projection_but_typos_still_fail(tmp_path):
+    # 共有 hooks/hooks.json は Claude と Codex の union。Claude 専用イベントを未知扱いで
+    # reject すると Claude 固有の配線を 1 本も持てなくなるため通す。一方で綴り間違いは
+    # 素通りさせると hook が黙って死ぬので、allowlist 外は従来どおり落とす。
+    repo = tmp_path / "repo"
+    plugin = make_plugin(repo, "sample-plugin", existing_codex=False)
+    hooks_path = plugin / "hooks" / "hooks.json"
+
+    def write(event: str) -> None:
+        hooks_path.write_text(
+            json.dumps({
+                "hooks": {
+                    event: [{
+                        "matcher": "Bash",
+                        "hooks": [{"type": "command", "command": "true"}],
+                    }]
+                }
+            }),
+            encoding="utf-8",
+        )
+
+    def sync() -> None:
+        mod.run(
+            repo=repo,
+            plugin=plugin,
+            intent="update",
+            mode="apply",
+            marketplace_name="fixture-marketplace",
+        )
+
+    write("PostToolUseFailure")
+    sync()
+
+    write("PostToolUseFailrue")
+    with pytest.raises(mod.PlatformSyncError, match="unsupported Codex hook event"):
+        sync()
+
+
 def test_codex_hook_path_rejects_handlers_codex_parses_but_does_not_run(tmp_path):
     repo = tmp_path / "repo"
     plugin = make_plugin(repo, "sample-plugin", existing_codex=False)
@@ -573,7 +611,24 @@ def test_repository_fleet_is_complete_self_contained_and_excludes_retired_plugin
         mod._assert_plugin_symlinks_confined(plugin)
 
 
-def test_standard_hooks_autoload_is_claude_implicit_and_codex_explicit_for_all_twelve():
+HOOKED_PLUGINS = {
+    "contract-generator",
+    "dev-graph",
+    "extract-system-blueprint",
+    "guide-doc-generator",
+    "harness-creator",
+    "plugin-dev-planner",
+    "skill-governance-adapters",
+    "skill-intake",
+    "slide-report-generator",
+    "spec-drift-guardian",
+    "system-dev-planner",
+    "system-spec-harness",
+    "ubm-goal-setting",
+}
+
+
+def test_standard_hooks_autoload_is_claude_implicit_and_codex_explicit_for_all_hooked():
     repo = Path(__file__).resolve().parents[3]
     hooked = sorted(
         plugin
@@ -581,7 +636,9 @@ def test_standard_hooks_autoload_is_claude_implicit_and_codex_explicit_for_all_t
         if (plugin / "hooks" / "hooks.json").is_file()
     )
 
-    assert len(hooked) == 12
+    # 数だけでなく名前で固定する。数値だけだと 1 つ失って 1 つ増えた場合に緑のまま
+    # 配線が消え、hook が黙って無効化されたことに気付けない。
+    assert {plugin.name for plugin in hooked} == HOOKED_PLUGINS
     for plugin in hooked:
         claude = json.loads(
             (plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")

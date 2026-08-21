@@ -158,6 +158,23 @@ def test_bump_touches_only_the_version_line(mod, tmp_path, monkeypatch):
     assert '"author": {"name": "someone"}' in after[3]
 
 
+def test_bump_keeps_plugin_composition_version_in_the_same_atomic_release(mod, tmp_path, monkeypatch):
+    """自己記述 bundle のversion同期が次回bumpを自己誘発しない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    composition = plugin / "plugin-composition.yaml"
+    composition.write_text(
+        "name: probe\nkind: plugin-composition\nversion: 0.1.0\n",
+        encoding="utf-8",
+    )
+    _isolate(mod, monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    (plugin / "SKILL.md").write_text("changed", encoding="utf-8")
+    assert mod.main([]) == 0
+    assert mod.read_version(plugin) == "0.1.1"
+    assert "version: 0.1.1" in composition.read_text(encoding="utf-8")
+    assert mod.main(["--check"]) == 0
+
+
 def test_build_artifacts_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
     """__pycache__ 等の副産物は fingerprint に入れない (pytest を回すだけで
     version が上がるノイズを防ぐ)。"""

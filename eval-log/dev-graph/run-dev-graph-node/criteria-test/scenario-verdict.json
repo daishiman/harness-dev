@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-node",
     "component_id": "C02",
-    "skill_md_sha256": "ec6f3f06fe128192819c23d4ef4f8a4379519386c3058ed1d1cfcec0e86f5289"
+    "skill_md_sha256": "7d7994981d4966a89c8ef308af398dfe355d1d00ddeffa08e6b3e0fae2180c22"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-r1",
+  "reviewer": "dev-graph-criteria-scenario-r2",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -18,21 +18,21 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
         "plugins/dev-graph/tests/test_register_package.py::RegisterPackageInProcessCoverageTest::test_schema_engine_covers_ref_condition_arrays_and_objects",
-        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/state/graph.json"
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-node/.dev-graph/graph.json --repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-node"
       ],
-      "observed": "validate-graph-schema.py returned exit 0 with valid=true, violations=[] on a schema-complete graph store (0 missing required keys). The C02 single-writer write path runs the same graph-node schema engine before atomic replace; the register-package schema-engine and runtime schema pytest nodes passed."
+      "observed": "validate-graph-schema.py returned exit 0 with valid=true, violations=[], implementation_readiness=complete, missing_sections=[] on the graph store written by the C02 write path (0 missing required keys). The C02 single-writer write path runs the same graph-node schema engine before atomic replace; the register-package schema-engine and runtime schema pytest nodes passed. The SKILL.md activation_state addition gates when the goal-seek / feedback loop runs, not what IN1 accepts: the pre-choice section still requires the minimal real artifact to be produced by the main context, so the schema validation that IN1 asserts remains on the unconditional write path."
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C02-OUT1-positive-mixed-artifacts",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-node/live-trial/20260820T164948-ci41r2/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-node/live-trial/20260821T030000-tk2/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-node/live-trial/20260820T164948-ci41r2/verdict.json",
-        "independent: eval-log/dev-graph/live-trial-fixtures/r3-node registered-artifact routing inspection"
+        "eval-log/dev-graph/run-dev-graph-node/live-trial/20260821T030000-tk2/verdict.json",
+        "independent: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-node registered-artifact and graph-state inspection"
       ],
-      "observed": "Re-ran live (run 20260818T004500-r12, 945s wall clock, nudge 0 / gate responses 0) from a fixture reset to its seed commit (git reset --hard HEAD && git clean -fdx, git status --porcelain empty). The re-run was forced a second consecutive time because behavior_closure_files() hashes the native plugin manifest whole, so the distribution-metadata-only edit to plugins/dev-graph/.claude-plugin/plugin.json invalidated the r11 behavior-closure digest. An independent fresh evaluator, instructed to reject the subject session's self-report as evidence, verified the artefacts itself. It extracted the headings of each of the 5 generated artefacts itself and matched them mechanically against template-contract.json's required_sections (issue 10 / task 13 / document 8 / specification 17 / architecture 10) and the 46 required keys of common_frontmatter, finding 0 placeholder tokens (TBD/TODO/未定). It ran validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root . itself, getting exit 0 with implementation_readiness complete, missing_sections [], valid true, violations [], and the goal-seek verification script returned OK rows=3. Rather than reading the subject's claim that the C14 gate fired, it re-executed the subject's gate implementation c02_feature_gate.py on two inputs: feature-like-input.json returned status rejected / reason_code feature_requires_c14_macro_contract / applied_count 0 / local_writes 0, while mixed-artifacts.json yielded 0 feature candidates -- proving the gate branches on input rather than rejecting unconditionally. The fail-closed conclusion was drawn from state, not wording: features/ holds 0 .md files, the graph has 0 nodes with artifact_kind == \"feature\", and graph_revision stayed at 2 instead of incrementing to 3 as a feature add would. The successive issue update was confirmed to be an append (the 3 original acceptance criteria survive alongside 2 added ones), not a wholesale replacement. git status on the fixture bounded the side effects to the 5 artefacts + graph.json + the input JSON + eval-log/. The evaluator stated it did not use status.json's PASS or the pane's DONE line as evidence. Non-blocking: the add verb has no CLI entry point and exists only as the R0-R4 contract in SKILL.md. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
+      "observed": "New live run 20260821T030000-tk2 on fixture r5-node (verdict.json: scenario_id C02-OUT1-positive-mixed-artifacts, tier live, downgrade_reason null, goal_verdict PASS with blockers [], overall launch/completion/goal_fit/verdict all PASS, nudge_count 0, gate_response_count 0, poll_exit DONE, wall_clock 1050s, permissions bypassPermissions, transcript layer jsonl). This run's evidence was taken from fixture state rather than from the subject's self-report. The declared input mixed-artifacts.json carries 6 artifacts, the 6th (\"課金基盤の刷新\") being macro-feature grade, so the C14 gate had to branch on input inside the same batch rather than being exercised by a separate negative call: after the run the fixture holds exactly the 5 non-feature artefacts (issues/, tasks/, specs/, architecture/, docs/), features/ contains only .gitkeep, and .dev-graph/graph.json holds 5 nodes with 0 nodes of artifact_kind \"feature\" -- accepting 5 while rejecting 1 from one input proves the gate is conditional, not unconditional. Headings were extracted from each artefact and matched mechanically against template-contract.json required_sections (issue 10 / task 13 / document 8 / specification 17 / architecture 10) for a total of 0 missing sections, and all 46 common_frontmatter required keys are present in all 5 files with 0 placeholder tokens (TBD/TODO/未定). frontmatter/path consistency holds: each file's file_path equals its actual repo-relative path and each graph_node_id equals its filename stem, matching the graph node entries. The successive update is a differential append, not a rewrite: the issue node's updated_at (2026-08-20T17:34:51Z) is later than its created_at (2026-08-20T17:31:20Z) while its graph_node_id and file_path are unchanged, the pre-existing 受入条件 3 items and 検証証跡 survive verbatim, and only two sections (## 追加調査 (2026-08-21), ## 暫定回避策) were added. The final graph passed validate-graph-schema.py with exit 0, valid true, violations [], implementation_readiness complete. Side effects are bounded: git status in the fixture (its own git repo) shows only the modified graph.json and mixed-artifacts.json, the 5 new artefacts, and .dev-graph/locks/. Non-blocking, unchanged from the previous revision: the add verb has no CLI entry point and exists only as the R0-R4 contract in SKILL.md. The SKILL.md artifact_delivery addition does not weaken OUT1: routing, the C14 fail-closed gate and the atomic write are all pre-choice main-context work, and this run reached the full accepted outcome with gate_response_count 0."
     },
     "OUT2": {
       "status": "PASS",
@@ -40,9 +40,9 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
-        "independent: eval-log/dev-graph/live-trial-fixtures/r3-node/architecture/R3-ARCH-001.md + specs/R3-SPEC-001.md heading inspection"
+        "independent: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-node/architecture/architecture-billing-d8a8159b.md + specs/specification-billing-4e7498a8.md heading inspection"
       ],
-      "observed": "R3-ARCH-001 (artifact_subtypes [backend, security]) contains both required subtype section trees '### Backend architecture' and '### Security architecture' with 0 missing headings; R3-SPEC-001 (subtype api) applied the '## API契約' api-contract overlay with per-endpoint Request/Response/Error contract/Contract tests sections. The OUT2 acceptance-clause contract test passed."
+      "observed": "architecture-billing-d8a8159b.md (artifact_subtypes [backend, data, security]) contains all 10 base required_sections plus every heading of the three subtype templates architecture-backend.md (8), architecture-data.md (7) and architecture-security.md (7), with 0 missing headings. specification-billing-4e7498a8.md (subtype api) applied the '## API契約' api-contract overlay for 3 endpoints, each carrying Request / Response / Error contract / Contract tests plus 認証・認可 and 可観測性と監査 subsections, and all 17 specification required_sections are present. The OUT2 acceptance-clause contract test passed."
     },
     "OUT3": {
       "status": "PASS",
@@ -54,7 +54,7 @@
         "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_non_forward_dependency",
         "plugins/dev-graph/tests/test_register_package.py::RegisterPackageTest::test_rejects_conflicting_duplicate_registration"
       ],
-      "observed": "test_register_package.py passed in full (34 tests across both suites). The exact-13 happy path commits expected_count=applied_count=13 with a P01..P13 node exact-set and a graph_revision receipt; partial batches, non-forward/cross-feature or phase-omitting dependencies, and conflicting duplicate registrations each commit applied_count=0 (all-or-none), and --dry-run writes nothing."
+      "observed": "test_register_package.py passed in full (29 tests, exit 0). The exact-13 happy path commits expected_count=applied_count=13 with a P01..P13 node exact-set and a graph_revision receipt; partial batches, non-forward/cross-feature or phase-omitting dependencies, and conflicting duplicate registrations each commit applied_count=0 (all-or-none), and --dry-run writes nothing. register-package is a script path unaffected by the artifact_delivery activation gating."
     }
   }
 }

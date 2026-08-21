@@ -3,13 +3,33 @@
   "schemaVersion": 1,
   "workflowId": "run-prompt-create",
   "skill": "run-prompt-create",
-  "description": "run-prompt-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。run-skill-create と対称構造。",
+  "description": "run-prompt-create の usable-first フロー定義。実promptを生成し最小P0 guard後に提示し、利用者が選んだ場合のみdesign/elegant/governanceをpost-choiceで行う。",
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
+      "transitions": [
+        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
+        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
+        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
+        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
+        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
+        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      ],
+      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
+      "accept_contexts": {"evaluator": 0, "improver": 0}
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "phases": [
     {
       "id": "elicit",
       "step": 1,
-      "gate": 1,
-      "title": "プロンプト要求ヒアリング",
+      "gate": null,
+      "title": "既存依頼からの最尤brief導出（成果物前の追加質問なし）",
       "dependsOn": [],
       "entryHook": null,
       "exitHook": "validate-prompt-brief",
@@ -64,11 +84,47 @@
       "handoff": "eval-log/handoff-after_prompt_lint.json"
     },
     {
-      "id": "design-evaluate",
+      "id": "artifact-present-handoff",
       "step": "3b",
-      "gate": null,
-      "title": "設計評価 (C1-C4)",
+      "gate": "delivery",
+      "title": "実promptの提示と試し方のhandoff",
       "dependsOn": ["p0-lint"],
+      "events": ["artifact_created", "minimal_guard_passed", "artifact_presented"],
+      "completion_gate": "prompt file exists AND parse/open/secret/corrupt guards PASS AND artifact_presented_at > artifact_created_at",
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": ["schemas/handoff.schema.json"],
+      "delegateSkill": null,
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-prompt_usable.json"
+    },
+    {
+      "id": "diagnostic-choice",
+      "step": "3c",
+      "gate": "user-choice",
+      "title": "提示後の診断・改善深度選択",
+      "dependsOn": ["artifact-present-handoff"],
+      "choices": ["accept-as-is", "light", "standard", "detailed"],
+      "release_event": "explicit-only",
+      "exhaustive_event": "explicit-only",
+      "accept_as_is_evaluator_contexts": 0,
+      "accept_as_is_improver_contexts": 0,
+      "auto_release": false,
+      "auto_exhaustive": false,
+      "resourceIds": ["schemas/handoff.schema.json"],
+      "delegateSkill": null,
+      "fatal_exit_codes": [],
+      "handoff": "eval-log/handoff-after_prompt_choice.json"
+    },
+    {
+      "id": "design-evaluate",
+      "step": 4,
+      "gate": null,
+      "title": "選択後の設計評価 (C1-C4)",
+      "dependsOn": ["diagnostic-choice"],
+      "default_on": false,
+      "condition": "user_choice_recorded in [light,standard,detailed]",
+      "entry_gate": "artifact_created_at < artifact_presented_at < semantic_evaluator_started_at",
       "entryHook": null,
       "exitHook": null,
       "resourceIds": ["schemas/findings.schema.json"],
@@ -79,10 +135,11 @@
     },
     {
       "id": "elegant-review",
-      "step": 4,
-      "gate": 3,
-      "title": "パラダイム評価 (C1-C4)",
+      "step": 5,
+      "gate": null,
+      "title": "選択後のパラダイム評価 (C1-C4)",
       "dependsOn": ["design-evaluate"],
+      "post_choice_only": true,
       "entryHook": "evaluate-create-gates",
       "exitHook": null,
       "condition": "new_prompt OR diff_lines > 30",
@@ -98,10 +155,12 @@
     },
     {
       "id": "governance",
-      "step": 5,
-      "gate": 4,
-      "title": "governance 承認",
+      "step": 6,
+      "gate": null,
+      "title": "明示release選択後のgovernance 承認",
       "dependsOn": ["elegant-review"],
+      "post_choice_only": true,
+      "condition": "explicit_release_event_recorded == true",
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [
@@ -157,17 +216,17 @@
           "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py --input ${PROMPT_OUTPUT} --phase prompt exit 0 (未展開 {{...}} / TODO 残存検出) + prompt-rubric C4-003 regex_absent"
         }
       ],
-      "user_question_budget": 1,
-      "user_question_budget_scope": "Gate 1 (brief 確定) のみ。Gate 2-4 は自動承認既定。",
+      "user_question_budget": 0,
+      "user_question_budget_scope": "governanceは利用者のrelease選択receiptを消費するだけで、自動昇格や追加選択を行わない。",
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-after_prompt_governance.json"
     },
     {
       "id": "report",
-      "step": 6,
+      "step": "3d",
       "gate": null,
-      "title": "完了レポート",
-      "dependsOn": ["governance"],
+      "title": "usable artifact提示レポート（semantic/governance非依存）",
+      "dependsOn": ["artifact-present-handoff"],
       "entryHook": null,
       "exitHook": null,
       "resourceIds": ["schemas/handoff.schema.json"],
@@ -177,10 +236,10 @@
     }
   ],
   "fast_mode": {
-    "description": "軽微更新 (1 prompt, <=30 行, inject_sections のみ) は design-evaluate / elegant-review を skip し、p0-lint から governance へ進む。",
-    "skip_phases": ["design-evaluate", "elegant-review"],
+    "description": "後方互換の --fast もusable artifactを先に提示する。accept-as-is時はdesign/elegant/governanceをすべてskipし、evaluator/improverは0。",
+    "skip_phases": ["design-evaluate", "elegant-review", "governance"],
     "dependency_override": {
-      "governance.dependsOn": ["p0-lint"]
+      "report.dependsOn": ["artifact-present-handoff"]
     },
     "required_evidence": [
       "p0-lint PASS",

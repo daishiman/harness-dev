@@ -2,27 +2,42 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-migrate-audit",
-    "skill_md_sha256": "44a9c2402cfdae14948996462b6b2d4b83ba469df0a46d7ac958ddba088a901d"
+    "skill_md_sha256": "312ca507c2dc0d8ee9464b98a78a48278dd90b621c76e5185d39d1eac00e2fad"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-subagent",
-  "reviewed_at": "2026-07-03T22:14:02Z",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "5 次元採点: 完全性 3/3(出力 contract JSON・Boundary・Key Rules・Goal/Why/Checklist/ループ/局面カタログ・Gotchas・Additional Resources を網羅), 一貫性 3/3(責務境界『brief 確定で完了・設計評価は下流ゲート』が frontmatter OUT1 から本文全節まで統一)",
-      "深度 3/3: 8区分分類・step7 5条件(wrap に base/evaluator に pair/pair 相手存在/dangerous run DMI=true/ref 到達可能)・{{var}} 抽象化・昇格パス(frontmatter lint→Hook→CI→CLI)・open_issues 差し戻しまで掘り下げ。検証可能性 3/3: audit.py/to-brief.py/lint-dependency-direction.py/lint-skill-dep-step7.py で機械検証",
-      "簡潔性 2/3: 実行契約は prompts/R1-audit.md と ../run-build-skill/references/goal-seek-paradigm.md の 6 ステップ正本へ委譲。責務境界の説明が Goal/ループ/局面カタログで反復し密だが、各節の自己完結性を担保する意図的冗長。合計 14/15"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SHA (44a9c240...) の SKILL.md を 5 次元(完全性/一貫性/深度/検証可能性/簡潔性)で genuine 採点した再評価。変更点=責務境界の下流ゲート委譲リファクタ(+10/-10)と allowed-tools からの Skill 除去。記述品質は劣化せず、責務単一化(SRP)により一貫性はむしろ向上。合計 14/15 で PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

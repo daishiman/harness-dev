@@ -47,6 +47,11 @@ CODEX_HOOK_EVENTS = {
     "PostCompact", "UserPromptSubmit", "SubagentStop", "Stop",
     "SessionStart", "SubagentStart", "SessionEnd",
 }
+# Claude だけが発火するイベント。共有 hooks/hooks.json は両 product の union なので、
+# ここに載っているイベントは「Codex では単に発火しない」だけで不正ではない。
+# 未知イベントとして reject すると Claude 固有の配線を持てなくなり、逆に無条件で
+# 通すと綴り間違いを見逃すため、明示 allowlist で区別する。
+CLAUDE_ONLY_HOOK_EVENTS = {"PostToolUseFailure"}
 
 
 def _load_json(path: Path, *, missing=None) -> dict:
@@ -227,7 +232,7 @@ def _validate_codex_hook_document(document: dict, *, source: str) -> None:
     if not isinstance(events, dict):
         raise PlatformSyncError(f"{source}: hooks must be an object")
     for event, groups in events.items():
-        if event not in CODEX_HOOK_EVENTS:
+        if event not in CODEX_HOOK_EVENTS and event not in CLAUDE_ONLY_HOOK_EVENTS:
             raise PlatformSyncError(f"{source}: unsupported Codex hook event {event}")
         if not isinstance(groups, list):
             raise PlatformSyncError(f"{source}: {event} hook groups must be an array")

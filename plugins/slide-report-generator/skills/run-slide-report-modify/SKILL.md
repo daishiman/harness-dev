@@ -27,6 +27,7 @@ combinators:
   - with-goal-seek
   - with-feedback-contract
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   max_loops: 5
@@ -38,6 +39,7 @@ schema_refs:
   - ../../schemas/report-structure.schema.json
   - schemas/modification-report.schema.json
 feedback_contract: # per-skill 受入基準(purpose-acceptance)。修正後の生成後評価 verdict と突合し汎用ゲート言い換えへ退化させない
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -48,8 +50,33 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。修正後の�
       loop_scope: outer
       text: 指定箇所のみが修正され意匠/技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ0で PASS することを受入テストが確認する
       verify_by: test
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 runtime_root_policy: host-skill-path
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-slide-report-modify
 
@@ -69,7 +96,8 @@ runtime_root_policy: host-skill-path
 
 - **入力**: 既存成果物 (slide deck ディレクトリ ／ report HTML) と修正指示。任意 `--mode slide|report` (省略時は成果物から自動判定)。
 - **出力**: **修正レポート** (修正箇所一覧 ＋ 変更差分 ＋ 再評価スコア)。
-- **完了条件**: (1) 修正対象と `output_mode` を特定し `validate-output-mode.py` で値域整合を検証、(2) 指定箇所のみを部分修正 (非対象・意匠コア不変)、(3) 修正後の生成後評価が視覚崩れ 0 で PASS。
+- **usable handoff条件**: main contextが (1) 修正対象と `output_mode` を特定して `validate-output-mode.py` を通し、(2) 指定箇所だけの最小修正版を実ファイルとして作成し、(3) path/digest/開き方を提示する。accept-as-isならここで完了し、Task/evaluatorは0回。
+- **選択後の改善完了条件**: light/standard/detailed選択時だけ、修正後評価が視覚崩れ0でPASSするまで下記R1→R3を有界実行する。
 
 ## mode 判定 (slide / report)
 
@@ -79,9 +107,9 @@ runtime_root_policy: host-skill-path
 - `report.html` (＋ `report-structure.*`) を持つ → **report**。
 - 曖昧な場合は `--mode` 引数を優先し、`validate-output-mode.py` で値域整合を検証する (IN1)。判定した mode を修正 worker へ伝播する。
 
-## ワークフロー (R1 → R2 → R3・worker は Task で name 起動)
+## 選択後ワークフロー (R1 → R2 → R3・worker は Task で name 起動)
 
-> 各ラウンドの 7 層実行契約 (agent dispatch・script/schema/reference 実体参照・deterministic ゲート・差し戻し条件) の詳細は `prompts/R1-orchestrate.md` を正本とする。`workflow-manifest.json` が phase (R1/R2/R3)・resource・gate・fatal_exit_codes を機械可読に宣言する。以下は router として読める粒度の要約。
+> pre-choiceでmain contextが最小修正版を作成・提示済みであることが前提。以下はlight/standard/detailed選択後だけ起動する。各ラウンドの7層実行契約は `prompts/R1-orchestrate.md`、phase activationは `workflow-manifest.json.artifact_delivery_contract` を正本とする。
 
 ### R1: 修正対象と指示の確定
 
@@ -89,7 +117,7 @@ runtime_root_policy: host-skill-path
 
 ### R2: 局所修正
 
-`Task` で **slide-report-modifier** を起動 (`isolation: fork`)。判定した mode (slide ／ report) に応じ、**指定箇所のみ**を部分修正する。worker の tools は `Read, Write, Bash` のみで Task を持たず、下流 agent (`html-generator`／`structure-designer`／`report-structure-designer`／`ai-image-diagram-producer`) が要る場合は修正案に明記して返し**本 skill が dispatch** する。
+利用者が改善を選んだ場合だけ `Task` で **slide-report-modifier** を起動 (`isolation: fork`)。提示済み最小修正版を入力に、判定したmodeに応じて指定箇所のみを改善する。workerのtoolsは `Read, Write, Bash` のみでTaskを持たず、下流agentが要る場合は修正案に明記して返し本skillがpost-choiceでdispatchする。
 
 - 意匠 SSOT (配色トークン・16:9・最小 1.4rem・印刷 CSS・letterbox 等) と非対象セクションは**不変**に保つ (両モード共有)。
 - **slide**: `index.html`／`styles.css`／`scripts.js` と `structure.*` の同期を維持 (`./references/modification-rules.md` の CONST_001-013)。
@@ -124,12 +152,12 @@ mode を先に確定し (`validate-output-mode.py`)、R3 は mode 分岐で実�
 
 ## ゴールシークと受入基準 (combinators)
 
-`with-goal-seek`(max_loops 5) + `with-feedback-contract`。ループ本体は `Task` で SubAgent へ fork し、親へは修正レポートのみ返す。受入基準は当該 skill の goal／checklist 由来の受入条件 (purpose-acceptance):
+light/standard/detailed選択後だけ `with-goal-seek`(max_loops 5) + `with-feedback-contract` を有効化する。ループ本体は `Task` でSubAgentへforkし、親へは修正レポートのみ返す。accept-as-isでは両loopを0回のまま完了する。受入基準は当該skillのgoal/checklist由来:
 
 - **IN1 (inner・script)**: `validate-output-mode` で既存成果物の `output_mode` を判定し修正対象の mode と `reportType` の値域整合を送信前検証し欠落が 0 件。
 - **OUT1 (outer・test)**: 指定箇所のみが修正され意匠／技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ 0 で PASS することを受入テストが確認する。
 
-未達は最大 3 周 (inner) / 5 loops (goal-seek) で findings を反映し再実行する。
+選択後の未達だけ最大3周(inner)/5 loops(goal-seek)でfindingsを反映し再実行する。提示前またはaccept-as-is後に自動起動しない。
 
 ## 境界
 

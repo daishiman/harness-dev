@@ -4,6 +4,66 @@
   "workflowId": "run-codex-plugin-package",
   "skill": "run-codex-plugin-package",
   "description": "Claude pluginの実体からCodex manifestとrepository marketplaceを決定論的に同期し、単独配布可能性を検証する。",
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "goal_seek": {
     "engine": "inline",
     "spec": "eval-log/goal-spec.json",
@@ -30,7 +90,9 @@
       "id": "check-drift",
       "step": 2,
       "title": "書込み前のplatform driftをread-only検査",
-      "dependsOn": ["preflight"],
+      "dependsOn": [
+        "preflight"
+      ],
       "prompt": "./prompts/R1-package.md",
       "validation": [
         "python3 ${PLUGIN_ROOT}/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/${plugin} --check"
@@ -47,7 +109,9 @@
       "id": "apply",
       "step": 3,
       "title": "generatorでmanifestとmarketplace entryを不可分にupsert",
-      "dependsOn": ["check-drift"],
+      "dependsOn": [
+        "check-drift"
+      ],
       "prompt": "./prompts/R1-package.md",
       "output_artifact": "eval-log/codex-plugin-package-apply.json",
       "transition": {
@@ -61,7 +125,9 @@
       "id": "verify",
       "step": 4,
       "title": "再check・資産参照・plugin境界を検証",
-      "dependsOn": ["apply"],
+      "dependsOn": [
+        "apply"
+      ],
       "prompt": "./prompts/R1-package.md",
       "validation": [
         "python3 ${PLUGIN_ROOT}/scripts/sync-plugin-platforms.py --repo-root . --plugin plugins/${plugin} --check",
@@ -79,19 +145,21 @@
       "id": "handoff",
       "step": 5,
       "title": "検証済み生成物とinstall境界を引き渡す",
-      "dependsOn": ["verify"],
-    "output_artifact": "eval-log/handoff-run-codex-plugin-package.json",
-    "handoff_to": {
-      "skill": "run-codex-plugin-install",
-      "required_inputs": [
-        "source",
-        "plugin",
-        "ref (Git source only)"
+      "dependsOn": [
+        "verify"
       ],
-      "behavioral_verification": "downstream install skill owns live install and CLI receipt verification"
-    },
-    "transition": {
-      "gate": "検証証拠、install未実行境界、run-codex-plugin-installへのsource/plugin/ref入力契約が引渡しに明示",
+      "output_artifact": "eval-log/handoff-run-codex-plugin-package.json",
+      "handoff_to": {
+        "skill": "run-codex-plugin-install",
+        "required_inputs": [
+          "source",
+          "plugin",
+          "ref (Git source only)"
+        ],
+        "behavioral_verification": "downstream install skill owns live install and CLI receipt verification"
+      },
+      "transition": {
+        "gate": "検証証拠、install未実行境界、run-codex-plugin-installへのsource/plugin/ref入力契約が引渡しに明示",
         "on_pass": "complete",
         "on_fail": "abort"
       },
@@ -99,11 +167,20 @@
     }
   ],
   "completion_signals": {
-    "required_phases": ["preflight", "check-drift", "apply", "verify", "handoff"],
+    "required_phases": [
+      "preflight",
+      "check-drift",
+      "apply",
+      "verify",
+      "handoff"
+    ],
     "platform_check_exit": 0,
     "capability_parity": "PASS",
     "outside_root_symlinks": 0,
     "user_global_mutations": 0
   },
-  "fatal_exit_codes": [2, 3]
+  "fatal_exit_codes": [
+    2,
+    3
+  ]
 }

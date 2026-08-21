@@ -1,1 +1,37 @@
-{"target":{"plugin":"skill-governance-config","skill":"run-governance-config","skill_md_sha256":"e9fd1690423187f56fc3a1db995eda456060308ac696b9c23eb09f0e3e7b4dbb"},"review_kind":"rubric","verdict":"PASS","reviewer":"skill-design-evaluator","reviewed_at":"2026-08-20T16:15:00+09:00","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","OUT1"],"positive_feedback":["read-onlyのallowed-toolsと本文の非変更契約が一致する。","用途確認と導入差分確認という2トリガーが単一のconfig監査責務に収束する。"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual:rubric-review","next_action":"none"},"notes":"命名、ツール最小性、Purpose、検証節を全文確認した。"}
+{
+  "target": {
+    "plugin": "skill-governance-config",
+    "skill": "run-governance-config",
+    "skill_md_sha256": "76305fb1df2807f37ef692214bd06625e2f78936d510a950076b577a8fb55b12"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "kind: run / prefix: run / name: run-governance-config が naming convention に整合し、description が 2 トリガー (用途と必須key の確認 / 導入差分の read-only 把握) を単一の config 棚卸し責務へ収束させている。",
+      "allowed-tools が Read, Glob の最小集合で、effect: conversation-output と『read-only分析を既定とし、設定反映は別のowner workflowへ渡す』という本文の非変更契約が三重に一致している。",
+      "feedback_contract の IN1 (verify_by: lint) / OUT1 (verify_by: evaluator) が inner/outer に振り分けられ、ゴールシーク実行節と検証節にそれぞれ検証可能な出力形 (4分類表 / dangling・parse不能・未解決placeholder) が対応している。"
+    ],
+    "negative_feedback": [
+      "smell(low): Key Rules の plugin root 解決規則が、shell 起動行を一切持たない本 skill では適用先を欠く。sibling の run-governance-* 5 skill と共通の記述であり rubric 上の high/medium 相当ではない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "next_action": "none"
+  },
+  "notes": "SKILL.md 全文 (73 行) と frontmatter、plugins/skill-governance-config/config/ のファイル一覧、plugin-composition.yaml、references/package-contract.json、および sibling skill (run-governance-adapters / secrets / hooks / lint / migration) の frontmatter・見出し構成を読んで採点した。命名・ツール最小性・Purpose & Output Contract の一意性・Key Rules の実行可能性・検証節の観測可能性・feedback_contract criteria (IN1/OUT1) の verify_by 妥当性を確認。frontmatter が宣言する参照は無く dangling なし。effect: conversation-output のため external_mutation_guard は不要で、guard frontmatter と receipt flow block が双方とも不在という整合状態 (片側のみの不整合は無い)。runtime_root_policy 未宣言のため Runtime root contract 節の必須要件は発火しない。high severity finding は 0、未解決は low の smell 1 件のみのため PASS。30 思考法は実施していない (focused combined review プロファイル)。"
+}

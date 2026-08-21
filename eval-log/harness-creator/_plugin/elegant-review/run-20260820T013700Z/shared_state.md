@@ -1,0 +1,1 @@
+共通engineはplugin外のproject/user stateへhash-chain event log、thin index、detailを保存し、capture/search/show/reuse/promote/supersede/verifyを提供。adapterは失敗payloadをredact後captureへ渡し常時exit0。hook面と関連テストも観察済み。

@@ -2,37 +2,37 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "358c6293a12619a3d6c1ad963da26111e365d45a082881b286bc44742157e701"
+    "skill_md_sha256": "e20ede1f6d21860a595291e205e9742f47bcd581162e49dcaec9d023119008f0"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:02:08Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "SKILL.md の anchor 解決規則と分類 `adopt|avoid|differentiate` / confidence `high|medium|low` の記述は `scripts/doc-emit.py` の実装と完全一致しており、機械 SSOT と本文記述に乖離がない。",
-      "完了チェックリスト CL-1〜CL-6 は feedback_contract.criteria の IN1/OUT1 で過不足なく分割され、両 criteria の verify_by=test は実在する `tests/test_blueprint_apply_criteria_coverage.py` に対応する genuine な検証である。",
-      "SKILL.md・workflow-manifest.json・references/resource-map.yaml が参照する相対パスは全て実在し、壊れた参照は無い。C02 verdict receipt の shape も assign-blueprint-fidelity-evaluator/SKILL.md の記述と整合する。"
+      "IN1 の判定資産が差分後も無傷。`doc-emit.py --check-apply` を apply shape の唯一の機械 SSOT とする宣言 (L111 / Key Rules 4) と、R1 の C02 verdict=PASS + draft_hash 一致 fail-closed 受理 (L114 / L121-122 / CL-1)、network 0 境界 (frontmatter external_systems: [] / Key Rules 5 / CL-6) の三点が独立に固定されている。",
+      "proposer≠approver が Key Rules 2 と Gotchas 1 (『決定論ゲートだけで未評価 blueprint を受理しない』) で二重に固定され、`--check-apply` の緑だけで受理する Goodhart 経路を名指しで塞いでいる。OUT1 の追跡可能性 (evidence_refs + confidence + own_context_ref 必須) は L111 の shape 定義・CL-4・Key Rules 1/3 で反復固定。",
+      "規約整合: kind: run / prefix: run / effect: local-artifact / user-invocable + disable-model-invocation の組、artifact_delivery-v1 state machine の pre_choice_forbidden と accept_contexts {evaluator: 0, improver: 0}、Pre-choice/Post-choice 節の対応が崩れていない。runtime_root_policy 追加は allowed-tools (`Bash(python3 *)`) の範囲を広げていない。",
+      "依存関係整合: 上流 (run-extract-blueprint=C01 → assign-blueprint-fidelity-evaluator=C02) と共有ゲート (doc-emit.py --check-apply) の配線がハンドオフ節に明記され、参照先 script/schema/prompt が実在することを実測で確認した。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "low: L93 役割 blockquote のパス解決表記が `$CLAUDE_PLUGIN_ROOT` / `$CLAUDE_PROJECT_DIR` のまま。rubric 上は high/medium いずれにも当たらない散文層の取り残しだが、sibling の run-extract-blueprint が同 batch で更新済みのため表記統一時に併せて直すのが望ましい。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual:merge-guard-migration-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review。incremental semantic batch評価 ((a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0) をSKILL.md/scripts/doc-emit.py/tests/resource-map.yaml/workflow-manifest.jsonで独立に再確認しPASS。"
+  "notes": "rubric 観点 (single responsibility / fail-closed / SSOT 一元化 / proposer≠approver / 完了条件の機械検証可能性 / 規約整合) で SKILL.md 全文と今回の差分を照合した。差分は path 表記の runtime-root migration と Runtime root contract 節の追加のみで、feedback_contract の IN1・OUT1 が参照する CL-1〜CL-6 の内容・検証手段 (verify_by: test) を一切変更していない。frontmatter 宣言参照 (schema_refs / responsibility_refs / manifest / deterministic_checks) の実在をファイルシステムで確認済み。effect: local-artifact なので external_mutation_guard 不在が正、runtime_root_policy: host-skill-path に対する `## Runtime root contract` 節は存在し shell 起動行も規定形。high severity 0、未解決 medium 0 のため PASS。"
 }

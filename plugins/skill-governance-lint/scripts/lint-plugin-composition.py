@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-plugin-composition
-# purpose: plugin-composition.yaml の capability 実在・hook配線・skill/command dispatch dependency parityを検査する。
+# purpose: plugin-composition.yaml の SemVer・capability 実在・hook配線・dependency DAG/parityを検査する。
 # inputs:
 #   - argv: plugin-composition.yaml path(s) or --self-test
 # outputs:
@@ -30,6 +30,8 @@
       (オオカミ少年回避)。パス形でない概念名 (CapabilityManifest 等) は skip。
   (e) skill frontmatter script_refs ↔ dependencies(type=calls)      → FAIL
   (f) command 本文の同 bundle Skill/script dispatch ↔ dependencies      → FAIL
+  (g) top-level version の SemVer X.Y.Z                              → FAIL
+  (h) dependency endpoint 実在 / DAG 循環 / exact edge 重複      → FAIL
 
 YAML パーサ非依存 (stdlib only): CI は pip install を行わないため、
 flow-mapping 行 `- { kind: x, ref: y, tier: z }` と block 形
@@ -47,7 +49,7 @@ import json
 import re
 import sys
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 FLOW_ENTRY_RE = re.compile(r"^\s*-\s*\{(.*)\}\s*(?:#.*)?$")
 BLOCK_ENTRY_RE = re.compile(r"^(\s*)-\s+([A-Za-z_][\w-]*)\s*:\s*(.*?)\s*(?:#.*)?$")
@@ -59,6 +61,40 @@ GLOB_CHARS = ("*", "?", "[")
 FRONTMATTER_BOUNDARY_RE = re.compile(r"^---\s*$", re.MULTILINE)
 BACKTICK_SCRIPT_RE = re.compile(r"`(scripts/[A-Za-z0-9_.\-/]+\.py)`")
 SKILL_DISPATCH_RE = re.compile(r"\bSkill\s+`([A-Za-z0-9_.\-/]+)`", re.IGNORECASE)
+SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+VERSION_REQUIREMENT_RE = re.compile(
+    r"^(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+)"
+    r"(?:\s+(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+))*$"
+)
+CAPABILITY_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "harness-creator"
+    / "skills"
+    / "run-build-skill"
+    / "references"
+    / "capability-manifest.schema.json"
+)
+_DEPENDENCY_TYPE_FALLBACK = {
+    "calls", "reads", "extends", "evaluates", "emits", "writes", "delegates", "deploys"
+}
+
+
+def _load_dependency_types() -> set[str]:
+    """Load the legal edge enum from the CapabilityManifest schema SSOT."""
+    try:
+        schema = json.loads(CAPABILITY_SCHEMA_PATH.read_text(encoding="utf-8"))
+        values = (
+            schema["definitions"]["kindPluginComposition"]["properties"]
+            ["dependencies"]["items"]["properties"]["type"]["enum"]
+        )
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
+        return set(_DEPENDENCY_TYPE_FALLBACK)
+    if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+        return set(_DEPENDENCY_TYPE_FALLBACK)
+    return set(values)
+
+
+ALLOWED_DEPENDENCY_TYPES = _load_dependency_types()
 
 
 def _unquote(v: str) -> str:
@@ -183,41 +219,355 @@ def parse_dependencies(text: str) -> tuple[list[dict], list[str]]:
 
 
 def parse_external_dependencies(text: str) -> tuple[dict[str, dict], list[str]]:
-    """Parse the supported external_dependencies owner/required-entrypoint subset."""
+    """Parse external_dependencies.<plugin> without a YAML dependency.
 
-    result: dict[str, dict] = {}
+    One section feeds two independent gates, so both shapes are parsed here:
+    ``version`` + ``edges`` for the cross-plugin graph validator, and
+    ``required_entry_points`` for the package-contract owner validator.  Edges
+    have the same flow/block mapping shape as dependencies[]; inline ``[a, b]``
+    lists are materialised so the owner validator sees a real list.
+    """
+    external: dict[str, dict] = {}
     errors: list[str] = []
-    section = False
-    current: str | None = None
-    for lineno, raw in enumerate(text.splitlines(), 1):
-        if re.match(r"^external_dependencies:\s*(?:#.*)?$", raw):
-            section = True
-            current = None
+    in_section = False
+    current_plugin: str | None = None
+    in_edges = False
+    current_edge: dict | None = None
+
+    def flush_edge(lineno: int) -> None:
+        nonlocal current_edge
+        if current_edge is None or current_plugin is None:
+            return
+        missing = [key for key in ("from", "to", "type") if not current_edge.get(key)]
+        if missing:
+            errors.append(
+                f"line {lineno}: external dependency edge missing "
+                f"{','.join(missing)}: {current_edge}"
+            )
+        else:
+            external[current_plugin].setdefault("edges", []).append(current_edge)
+        current_edge = None
+
+    lines = text.splitlines()
+    for lineno, raw in enumerate(lines, start=1):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
             continue
-        if section and re.match(r"^[A-Za-z_][\w-]*:", raw):
-            break
-        if not section or not raw.strip() or raw.lstrip().startswith("#"):
+        indent = len(raw) - len(raw.lstrip())
+        if indent == 0:
+            flush_edge(lineno)
+            in_section = stripped == "external_dependencies:"
+            current_plugin = None
+            in_edges = False
             continue
-        owner = re.match(r"^\s{2}([a-z][a-z0-9-]*):\s*(?:#.*)?$", raw)
-        if owner:
-            current = owner.group(1)
-            result[current] = {}
+        if not in_section:
             continue
-        required = re.match(r"^\s{4}required_entry_points:\s*\[(.*)\]\s*(?:#.*)?$", raw)
-        if required and current:
-            entries = [_unquote(item) for item in required.group(1).split(",") if item.strip()]
-            if not entries or len(entries) != len(set(entries)):
+        plugin_match = re.match(r"^\s{2}([a-z][a-z0-9-]*)\s*:\s*(?:#.*)?$", raw)
+        if plugin_match:
+            flush_edge(lineno)
+            current_plugin = plugin_match.group(1)
+            external[current_plugin] = {"edges": []}
+            in_edges = False
+            continue
+        if current_plugin is None:
+            errors.append(f"line {lineno}: external dependency entry has no plugin key")
+            continue
+        key_match = re.match(
+            r"^\s{4}([A-Za-z_][\w-]*)\s*:\s*(.*?)\s*(?:#.*)?$", raw
+        )
+        if key_match:
+            flush_edge(lineno)
+            key, raw_value = key_match.groups()
+            in_edges = key == "edges"
+            if in_edges or not raw_value:
+                continue
+            inline = re.fullmatch(r"\[(.*)\]", raw_value)
+            if inline is None:
+                external[current_plugin][key] = _unquote(raw_value)
+                continue
+            entries = [
+                _unquote(item.strip())
+                for item in inline.group(1).split(",")
+                if item.strip()
+            ]
+            if key == "required_entry_points" and (
+                not entries or len(entries) != len(set(entries))
+            ):
                 errors.append(
-                    f"line {lineno}: external dependency {current} requires a unique non-empty required_entry_points list"
+                    f"line {lineno}: external dependency {current_plugin} requires "
+                    "a unique non-empty required_entry_points list"
                 )
-            result[current]["required_entry_points"] = entries
+            external[current_plugin][key] = entries
             continue
-    for owner, spec in result.items():
+        if not in_edges:
+            continue  # list-valued non-edge contract metadata
+        flow = FLOW_ENTRY_RE.match(raw)
+        if flow and indent >= 6:
+            flush_edge(lineno)
+            entry = {k: _unquote(v) for k, v in KV_RE.findall(flow.group(1))}
+            missing = [key for key in ("from", "to", "type") if not entry.get(key)]
+            if missing:
+                errors.append(
+                    f"line {lineno}: external dependency edge missing "
+                    f"{','.join(missing)}: {stripped}"
+                )
+            else:
+                external[current_plugin]["edges"].append(entry)
+            continue
+        block = BLOCK_ENTRY_RE.match(raw)
+        if block and indent >= 6:
+            flush_edge(lineno)
+            current_edge = {block.group(2): _unquote(block.group(3))}
+            continue
+        if current_edge is not None:
+            kv = re.match(r"^\s{8}([A-Za-z_][\w-]*)\s*:\s*(.*?)\s*(?:#.*)?$", raw)
+            if kv:
+                current_edge[kv.group(1)] = _unquote(kv.group(2))
+                continue
+        errors.append(
+            f"line {lineno}: external dependency edge is not a supported mapping: {stripped}"
+        )
+    flush_edge(len(lines) + 1)
+    for plugin_name, spec in external.items():
         if "required_entry_points" not in spec:
             errors.append(
-                f"external dependency {owner} must declare required_entry_points"
+                f"external dependency {plugin_name} must declare required_entry_points"
             )
-    return result, errors
+    return external, errors
+
+
+def _top_level_scalar(text: str, key: str) -> str | None:
+    """Read one unindented scalar without accepting nested lookalikes."""
+    pattern = re.compile(rf"^{re.escape(key)}\s*:\s*(.*?)\s*$")
+    for raw in text.splitlines():
+        if not raw or raw[0].isspace() or raw.startswith("#"):
+            continue
+        match = pattern.match(raw)
+        if not match:
+            continue
+        value = match.group(1).split("#", 1)[0].strip()
+        return _unquote(value)
+    return None
+
+
+def check_semver(text: str) -> list[str]:
+    version = _top_level_scalar(text, "version")
+    if not version:
+        return ["top-level version is required"]
+    if not SEMVER_RE.fullmatch(version):
+        return [f"version={version!r} must be SemVer X.Y.Z"]
+    return []
+
+
+def _dependency_endpoint_aliases(caps: list[dict]) -> dict[str, str]:
+    """Map accepted dependency spellings to one declared capability ref."""
+    aliases: dict[str, str] = {}
+    for cap in caps:
+        ref = _canonical_cap_ref(cap)
+        if not ref:
+            continue
+        aliases[ref] = ref
+        if cap.get("kind") in {"agent", "command"}:
+            aliases[f"{ref}.md"] = ref
+    return aliases
+
+
+def _resolve_dependency_endpoint(
+    endpoint: str,
+    *,
+    aliases: dict[str, str],
+    plugin_dir: Path,
+    allow_external_capability_path: bool = False,
+) -> str | None:
+    declared = aliases.get(endpoint)
+    if declared is not None:
+        return declared
+    normalized = endpoint.removesuffix(".md").removesuffix("/SKILL.md")
+    parts = PurePosixPath(normalized.replace("\\", "/")).parts
+    is_bare_capability_path = (
+        len(parts) == 2 and parts[0] in {"skills", "agents", "commands"}
+    ) or endpoint.startswith("hook:")
+    if is_bare_capability_path and not allow_external_capability_path:
+        return None
+    relative = Path(endpoint)
+    if relative.is_absolute():
+        return None
+    if ".." in PurePosixPath(endpoint.replace("\\", "/")).parts:
+        return None
+    validation_root = plugin_dir.resolve()
+    candidate = plugin_dir / relative
+    try:
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(validation_root)
+    except (OSError, ValueError):
+        return None
+    return resolved.as_posix()
+
+
+def _has_cycle(graph: dict[str, list[str]]) -> bool:
+    white, gray, black = 0, 1, 2
+    color: dict[str, int] = {node: white for node in graph}
+    for node in list(graph):
+        if color.get(node, white) != white:
+            continue
+        color[node] = gray
+        stack = [(node, iter(graph.get(node, [])))]
+        while stack:
+            current, children = stack[-1]
+            try:
+                child = next(children)
+            except StopIteration:
+                color[current] = black
+                stack.pop()
+                continue
+            state = color.get(child, white)
+            if state == gray:
+                return True
+            if state == white:
+                color[child] = gray
+                stack.append((child, iter(graph.get(child, []))))
+    return False
+
+
+def check_dependency_graph(
+    caps: list[dict], dependencies: list[dict], plugin_dir: Path
+) -> list[str]:
+    findings: list[str] = []
+    aliases = _dependency_endpoint_aliases(caps)
+    graph: dict[str, list[str]] = {}
+    seen_edges: set[tuple[str, str, str]] = set()
+    for index, dependency in enumerate(dependencies):
+        source = str(dependency.get("from", "")).strip()
+        target = str(dependency.get("to", "")).strip()
+        dep_type = str(dependency.get("type", "")).strip()
+        if dep_type not in ALLOWED_DEPENDENCY_TYPES:
+            findings.append(
+                f"dependencies[{index}].type invalid: {dep_type!r}; "
+                f"expected one of {sorted(ALLOWED_DEPENDENCY_TYPES)}"
+            )
+        edge = (source, target, dep_type)
+        if edge in seen_edges:
+            findings.append(
+                f"duplicate dependency edge: {source} -> {target} ({dep_type})"
+            )
+        seen_edges.add(edge)
+        source_ref = _resolve_dependency_endpoint(
+            source, aliases=aliases, plugin_dir=plugin_dir
+        )
+        target_ref = _resolve_dependency_endpoint(
+            target, aliases=aliases, plugin_dir=plugin_dir
+        )
+        if source_ref is None:
+            findings.append(
+                f"dependencies[{index}].from is a dangling dependency endpoint: {source}"
+            )
+        if target_ref is None:
+            findings.append(
+                f"dependencies[{index}].to is a dangling dependency endpoint: {target}"
+            )
+        if source_ref is not None and target_ref is not None:
+            graph.setdefault(source_ref, []).append(target_ref)
+    if _has_cycle(graph):
+        findings.append("dependencies contains cycle")
+    return findings
+
+
+def _external_plugins_root(plugin_dir: Path) -> Path | None:
+    if plugin_dir.parent.name == "plugins":
+        return plugin_dir.parent
+    for ancestor in plugin_dir.parents:
+        candidate = ancestor / "plugins"
+        try:
+            plugin_dir.resolve().relative_to(candidate.resolve())
+        except ValueError:
+            continue
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+def check_external_dependency_graph(
+    caps: list[dict], external_dependencies: dict[str, dict], plugin_dir: Path
+) -> list[str]:
+    findings: list[str] = []
+    local_aliases = _dependency_endpoint_aliases(caps)
+    plugins_root = _external_plugins_root(plugin_dir)
+    seen_edges: set[tuple[str, str, str, str]] = set()
+    for plugin_name, spec in external_dependencies.items():
+        prefix = f"external_dependencies.{plugin_name}"
+        version = spec.get("version")
+        if not isinstance(version, str) or not version.strip():
+            findings.append(f"{prefix}.version is required")
+        elif not VERSION_REQUIREMENT_RE.fullmatch(version.strip()):
+            findings.append(f"{prefix}.version requirement invalid: {version!r}")
+        external_dir = plugins_root / plugin_name if plugins_root is not None else None
+        if external_dir is None or not external_dir.is_dir():
+            findings.append(f"{prefix} plugin not found: {plugin_name}")
+            external_dir = None
+        edges = spec.get("edges", [])
+        if not isinstance(edges, list):
+            findings.append(f"{prefix}.edges must be array")
+            continue
+        for index, edge in enumerate(edges):
+            edge_prefix = f"{prefix}.edges[{index}]"
+            if not isinstance(edge, dict):
+                findings.append(f"{edge_prefix} must be object")
+                continue
+            source = str(edge.get("from", "")).strip()
+            target = str(edge.get("to", "")).strip()
+            dep_type = str(edge.get("type", "")).strip()
+            if dep_type not in ALLOWED_DEPENDENCY_TYPES:
+                findings.append(f"{edge_prefix}.type invalid: {dep_type!r}")
+            duplicate_key = (plugin_name, source, target, dep_type)
+            if duplicate_key in seen_edges:
+                findings.append(
+                    f"duplicate external dependency edge: {plugin_name}: "
+                    f"{source} -> {target} ({dep_type})"
+                )
+            seen_edges.add(duplicate_key)
+            local_source = _resolve_dependency_endpoint(
+                source, aliases=local_aliases, plugin_dir=plugin_dir
+            )
+            local_target = _resolve_dependency_endpoint(
+                target, aliases=local_aliases, plugin_dir=plugin_dir
+            )
+            external_source = (
+                _resolve_dependency_endpoint(
+                    source,
+                    aliases={},
+                    plugin_dir=external_dir,
+                    allow_external_capability_path=True,
+                )
+                if external_dir is not None
+                else None
+            )
+            external_target = (
+                _resolve_dependency_endpoint(
+                    target,
+                    aliases={},
+                    plugin_dir=external_dir,
+                    allow_external_capability_path=True,
+                )
+                if external_dir is not None
+                else None
+            )
+            valid_direction = (
+                local_source is not None
+                and external_target is not None
+                and external_source is None
+                and local_target is None
+            ) or (
+                external_source is not None
+                and local_target is not None
+                and local_source is None
+                and external_target is None
+            )
+            if not valid_direction:
+                findings.append(
+                    f"{edge_prefix} has dangling external dependency endpoint or "
+                    "must connect exactly one local endpoint to one declared external plugin endpoint"
+                )
+    return findings
 
 
 def _cap_ref(cap: dict) -> str | None:
@@ -707,10 +1057,13 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
             return [f"{pj_path}: read/parse error: {e}"], [], 2
 
     findings: list[str] = []
+    findings += check_semver(text)
     findings += check_duplicate_refs(caps)
     findings += check_ref_exists(caps, plugin_dir)
     findings += check_public_surface_parity(caps, plugin_dir)
     findings += check_hook_wiring(caps, plugin_json)
+    findings += check_dependency_graph(caps, dependencies, plugin_dir)
+    findings += check_external_dependency_graph(caps, external_dependencies, plugin_dir)
     findings += check_skill_script_dependencies(caps, dependencies, plugin_dir)
     findings += check_command_dispatch_dependencies(caps, dependencies, plugin_dir)
     findings += check_cross_plugin_dependencies(dependencies, plugin_dir)
@@ -727,7 +1080,10 @@ def lint_composition(path: Path) -> tuple[list[str], list[str], int | None]:
 
 _FIXTURE_PASS = """\
 name: fixture-plugin
+description: fixture plugin composition for the built-in self-test.
 kind: plugin-composition
+version: 1.0.0
+owner: team-test
 
 contract:
   interface:
@@ -807,7 +1163,10 @@ def self_test() -> int:
 
         # 5. block 形 entry (path キー) も読める
         block = (
-            "name: fixture-plugin\ncapabilities:\n"
+            "name: fixture-plugin\n"
+            "description: fixture plugin composition for block syntax self-test.\n"
+            "kind: plugin-composition\nversion: 1.0.0\nowner: team-test\n"
+            "capabilities:\n"
             "  - kind: skill\n    path: skills/run-alpha/SKILL.md\n"
         )
         comp = _build_fixture(base / "block", block, None)

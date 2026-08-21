@@ -2,36 +2,40 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-compile",
-    "skill_md_sha256": "8c791dc0156cdf3ffb6fcf60eb2b523f8e83813d3031d510fca7391c587a08da"
+    "skill_md_sha256": "4f03a9ba2459c922cb05dbe3bd0fd0dc2e7a74a8036c5ed0b05e824480f3de21"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "境界が矛盾なく明示されている: 『やらないこと』としてヒアリング継続 (C01)・ドキュメント再取得 (C02)・spec-state.json 書換えを列挙し、本 skill は入力を章へ組み立てるのみと責務を単一化。二輪の単一 writer (C01=spec-state transition / C03=system-spec compile) の対称性も一貫。",
-      "確定性優先が貫通: status/aggregate/確定マーカーを宣言値 category_aggregate ではなくセル状態から真理値表で再導出する旨を frontmatter マーカー仕様・Key Rules1・手順 R1 で一致記述し、C11 hook を正本防御 (writer) の二重化補助と正しく位置付ける。",
-      "要件 C9 の上位概念 anchor が完結: requirements_foundation (U1-U9) を 00-requirements-definition.md=憲法として先頭章に生成し serves_goals で各技術章を上位概念へトレース、foundation 不在でも空落ちさせず draft を出す fail-open 回避を明記。IN1 (2 決定論ゲート exit0) / OUT1 (受入テスト) が frontmatter と本文 Feedback Contract で一致。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low/inconsistency] references/chapter-template.md の frontmatter 例が status/category/aggregate/spec_cells のみで serves_goals を欠く一方、SKILL.md 本体 (L94) の確定マーカー仕様は serves_goals を必須項目として明記。実生成 (compile-spec-doc.py の render_frontmatter) が機械的に付与するため機能影響はないが、テンプレート記述だけが SKILL.md 本体に追随していない微ドリフト (test -e + grep で確認)。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=8c791dc0156cdf3ffb6fcf60eb2b523f8e83813d3031d510fca7391c587a08da) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 入力境界・単一 writer・真理値表再導出・serves_goals anchor の記述が節間で矛盾なし。②漏れなし: Purpose/Output Contract・確定マーカー仕様・単一 writer・手順 R1-R3・Key Rules・ゴールシーク・Feedback Contract・Additional Resources を被覆。③整合性: frontmatter の IN1/OUT1・goal_seek max_loops=5 と本文が一致。ただし chapter-template.md が serves_goals を欠く低影響ドリフト 1 件 (grep で実確認)。④依存整合: prompts (R1/R2/R3)・reference (resource-map.yaml/chapter-template.md)・script (compile-spec-doc.py, ../../scripts/validate-coverage-matrix.py, ../../scripts/validate-source-citation.py)・schema (spec-state/fetched-references) を test -e で全件実在確認 (dependency_break=0)。残る 1 件は low で機械層が正しさを保証するため PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

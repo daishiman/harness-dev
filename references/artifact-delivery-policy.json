@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "schema_id": "https://harness.local/schemas/artifact-delivery.schema.json",
+  "schema_sha256": "5d9c851d3642618d3966525c71c93b7a8fdaf6a79921830bcf3e44af97c96a37",
+  "policy_id": "artifact-delivery-v1",
+  "effect_values_ref": "plugins/skill-governance-lint/scripts/validate-frontmatter.py#EFFECT_VALUES",
+  "effect_values": [
+    "conversation-output",
+    "external-mutation",
+    "local-artifact",
+    "none"
+  ],
+  "artifact_first": true,
+  "draft_handoff": {
+    "actual_artifact_required": true,
+    "minimum_state": "usable-draft",
+    "present_before_user_choice": true
+  },
+  "before_user_choice": {
+    "forbidden_operations": [
+      "semantic-evaluation",
+      "30-thinking-method-diagnosis",
+      "multi-agent-review",
+      "improvement-execution"
+    ]
+  },
+  "user_choice": {
+    "improvement_levels": [
+      "accept-as-is",
+      "light",
+      "standard",
+      "detailed"
+    ],
+    "release_event": "release",
+    "exhaustive_event": "exhaustive",
+    "exhaustive_requires_separate_event": true
+  },
+  "auto_promotion": {
+    "exhaustive": false,
+    "release": false
+  },
+  "minimum_safe_guard": {
+    "fail_closed_on_unknown_effect": true,
+    "target_scope_required": true
+  },
+  "effect_guards": {
+    "conversation-output": {
+      "minimum_guard": "no-target-mutation"
+    },
+    "external-mutation": {
+      "minimum_guard": "preview-and-explicit-confirmation",
+      "preview_required": true,
+      "runtime": {
+        "contract_id": "external-mutation-guard-v1",
+        "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
+        "schema_ref": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json",
+        "contract_ref": "plugin:skill-governance-adapters/references/external-mutation-guard-contract.md",
+        "hook_manifest_ref": "plugin:skill-governance-adapters/.claude-plugin/plugin.json",
+        "confirmation_event": "UserPromptSubmit",
+        "enforcement_event": "PreToolUse",
+        "enforcement_scope": "recognized-bash-remote-mutations-and-all-bash-during-pending-guard-context",
+        "flow": "preview-confirm-authorize-execute-v1"
+      }
+    },
+    "local-artifact": {
+      "minimum_guard": "declared-target-scope-only"
+    },
+    "none": {
+      "minimum_guard": "read-only"
+    }
+  },
+  "external_intelligence_runtime": {
+    "contract_id": "external-intelligence-runtime-v1",
+    "adapter_ref": "plugin:skill-governance-adapters/scripts/build-external-intelligence-runtime.py",
+    "engine_ref": "plugin:skill-governance-adapters/scripts/build-external-intelligence.py",
+    "schema_ref": "plugin:skill-governance-adapters/schemas/external-intelligence-runtime.schema.json",
+    "contract_ref": "plugin:skill-governance-adapters/references/external-intelligence-runtime-contract.md",
+    "caller_ref": "plugin:skill-governance-adapters/hooks/build-external-intelligence-context.py",
+    "caller_manifest_ref": "plugin:skill-governance-adapters/.claude-plugin/plugin.json",
+    "caller_event": "UserPromptSubmit",
+    "default_scope": "project",
+    "standalone_behavior": "warning-continue"
+  },
+  "effect_overrides": {}
+}

@@ -4,6 +4,66 @@
   "workflowId": "run-codex-plugin-install",
   "skill": "run-codex-plugin-install",
   "description": "明示されたpluginをlocalまたはGit sourceからinstallし、CLI receiptとruntime identityをfail-closedで検証する。",
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "goal_seek": {
     "engine": "inline",
     "spec": "eval-log/goal-spec.json",
@@ -30,7 +90,9 @@
       "id": "install",
       "step": 2,
       "title": "明示scopeのmarketplace登録とinstallを実行",
-      "dependsOn": ["preflight"],
+      "dependsOn": [
+        "preflight"
+      ],
       "prompt": "./prompts/R1-install.md",
       "output_artifact": "eval-log/codex-plugin-install-receipt.json",
       "transition": {
@@ -44,7 +106,9 @@
       "id": "verify",
       "step": 3,
       "title": "installed・enabled・runtime identityとhook trust境界を検証",
-      "dependsOn": ["install"],
+      "dependsOn": [
+        "install"
+      ],
       "prompt": "./prompts/R1-install.md",
       "validation_by_route": {
         "local-all": [
@@ -67,7 +131,9 @@
       "id": "handoff",
       "step": 4,
       "title": "検証済みreceiptとユーザー判断が必要なhook trustを引き渡す",
-      "dependsOn": ["verify"],
+      "dependsOn": [
+        "verify"
+      ],
       "output_artifact": "eval-log/handoff-run-codex-plugin-install.json",
       "transition": {
         "gate": "required_receipt_fieldsが全て存在しhook_trust=user-review-required",
@@ -78,10 +144,24 @@
     }
   ],
   "completion_signals": {
-    "required_phases": ["preflight", "install", "verify", "handoff"],
-    "required_receipt_fields": ["status", "plugin_id", "verified", "enabled", "runtime_path"],
+    "required_phases": [
+      "preflight",
+      "install",
+      "verify",
+      "handoff"
+    ],
+    "required_receipt_fields": [
+      "status",
+      "plugin_id",
+      "verified",
+      "enabled",
+      "runtime_path"
+    ],
     "status": "installed",
     "hook_trust": "user-review-required"
   },
-  "fatal_exit_codes": [2, 3]
+  "fatal_exit_codes": [
+    2,
+    3
+  ]
 }

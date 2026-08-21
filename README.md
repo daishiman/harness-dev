@@ -131,14 +131,21 @@ Claude Code セッションを起動し、以下を打ちます。
 
 ### 2c. フル構成 (全部入り)
 
-すべての plugin をまとめて入れる場合は **bundle (束)** を使います。
+Claude Code の marketplace で install できる名前は `marketplace.json` の plugin だけです。
+`skills-full` は plugin 名ではなく、このリポジトリの決定論的な一括 install リスト
+(**bundle**) なので、`/plugin install` ではなく次の実在するインストーラーを使います。
 
-```text
-/plugin install skills-full@skills
+```bash
+git clone https://github.com/daishiman/harness-dev.git
+cd harness-dev
+bash scripts/install-bundle.sh skills-full
 ```
 
-> **bundle (バンドル)**: 複数の plugin を 1 行でまとめて入れるためのセット。現在あるのは
-> `skills-full` (配布可能な全 plugin) と `skills-intake` (skill 作成の入口だけ) の 2 つです。
+> **bundle (バンドル)**: 複数の plugin を 1 コマンドでまとめて入れるためのリスト。現在あるのは
+> `skills-full` (配布可能な全 plugin) と `skills-intake` (skill 作成の入口だけ) の 2 つで、
+> どちらも同じ script の引数に指定できます。script は `.claude-plugin/bundles.json` の各 plugin を
+> 実在する `name@marketplace` へ展開します。各 consumer は公式 dependencies を持つため、
+> 一括・個別のどちらでも共通 runtime は依存閉包に含まれます。
 
 ✅ **確認**:
 

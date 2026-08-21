@@ -5,7 +5,7 @@
 name: harness-creator
 description: Codex / Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.4.0
+version: 1.4.20
 owner: team-platform
 since: 2026-05-17
 last-audited: 2026-07-13
@@ -16,15 +16,16 @@ contract:
   intent: Claude Code 拡張資産(Capability)を一貫した品質で生成・改良するため、共通核 + kind 固有スキーマで統一抽象を提供する。
   interface:
     inputs: [user-request, plugin-composition.yaml, rubric.json]
-    outputs: [CapabilityManifest, EVALS.json, lessons-learned/*.md, proposals/*.md]
+    outputs: [CapabilityManifest, EVALS.json, curated-lessons, proposals/*.md, external-intelligence-state]
   invariant:
     # enforcement 注記: 機械執行(lint/hook)がある項目はその名前を、無い項目は manual を併記する。
     - "全 Capability は CapabilityManifest を持ち kind を宣言すること (enforcement: hook:PostToolUse-EditWrite/lint-capability-manifest)"
     - "rubric_refs は L0→L1→L2 deep-merge 順を保つこと (enforcement: manual。skill-governance-lint/scripts/lint-rubric-refs-exist.py は存在のみ検証し順序は未検証。manual 維持の理由: rubric.json 側に layer 宣言フィールドが無く順序の機械突合はスキーマ拡張コスト過大、意図的残置)"
     - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order。run dir の Phase1-3 成果物の存在+mtime 順序を機械検査)"
     - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual。manual 維持の理由: script ヘッダ規約 write-scope は存在するが宣言との自動突合は費用対効果で見送り、意図的残置)"
+    - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。harness-creator / prompt-creator は marketplace / bundle 配布対象ではない (allowed_cross_plugins: skill-intake, skill-governance-adapters, skill-governance-lint, skill-governance-automation, skill-governance-config, skill-governance-migration, prompt-creator) (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
     - "Codex marketplace 単独 install で壊れる plugin 境界外 symlink を禁止する。外部 plugin は任意の開発時依存として明示し、harness-creator の配布必須資産にしない (enforcement: standalone package test + skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
-    - "knowledge-loop は単一機構(ref-knowledge-loop 正本)を生成物(Loop A)と harness-creator 自身(Loop B)で自己適用し、並行ストアを作らないこと(SSOT) (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py)"
+    - "knowledge-loop は immutable な curated seed と plugin package 外の external-intelligence runtime state に責務分離する。runtime の観測/重複統合/再利用/昇格の長い実装正本は配布可能な skill-governance-adapters の engine/adapter/caller/schema/contract 各1件だけとし、Harness Creator は engine/adapter の薄い互換転送と contract pointer だけを持つ。lessons-learned/ や knowledge/ へ hook が直接追記しない (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py + external-intelligence anti-duplication tests)"
     - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(必須共有モジュールは plugin 内へ vendoring し byte 一致 lint で正本と同期/ローダは fail-soft で raise しない)。単独 install でも全フックが exit 0 を維持する。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層1 (enforcement: scripts/lint-runtime-portability.py + scripts/lint-vendored-ssot.py)"
     - "配布 plugin (kind=plugin) を生成し外部依存(API/DB/秘密)の疎通確認手順が要るなら、install 位置を __file__ 相対で自己解決する doctor スクリプトを同梱し README の疎通確認はチャット委譲(/<name>-doctor or 自然文)を一次導線とすること。README bash/sh フェンスに一次手順の裸root変数 / repo 相対 python3 plugins/<name>/... / os.environ 添字を書かず、生パスは開発者補足へ降格し fallback 形 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}} で書く(導入者の生ターミナル空展開事故を防ぐ)。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層2 (enforcement: scripts/lint-readme-plugin-root-portability.py)"
     - "全宣言面(lint 集合/完了条件/ゲート/評価 sink)は機械可読正本と対向突合 lint を持つこと。新しい宣言面を追加する際は突合 lint を同時に配線し、突合を持たない manual 宣言は理由注記付きの意図的残置のみ許容する。manual 宣言の残存数は ratchet 監視され増加は CI FAIL (enforcement: skill-governance-lint/scripts/lint-declaration-coverage.py)"
@@ -66,7 +67,9 @@ capabilities:
   - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
   - { kind: skill, ref: skills/run-skill-update-notifier, tier: core }
   - { kind: skill, ref: skills/wrap-git-commit-safe, tier: core }
+  - { kind: agent, ref: agents/elegant-bounded-improvement-executor, tier: core }
   - { kind: agent, ref: agents/elegant-improvement-executor, tier: core }
+  - { kind: agent, ref: agents/elegant-initial-draft-evaluator, tier: core }
   - { kind: agent, ref: agents/elegant-logical-structural-analyst, tier: core }
   - { kind: agent, ref: agents/elegant-meta-divergent-analyst, tier: core }
   - { kind: agent, ref: agents/elegant-reset-observer, tier: core }
@@ -79,6 +82,18 @@ capabilities:
   - { kind: command, ref: commands/plugin-compose, tier: core }
   - { kind: command, ref: commands/skill-improve, tier: core }
   - { kind: hook, ref: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", tier: core }
+  - { kind: hook, ref: "hook:UserPromptSubmit/cache-refresh",         tier: extension }
+  - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
+  - { kind: hook, ref: "hook:PostToolUse/external-intelligence-observe", tier: core }
+  - { kind: hook, ref: "hook:PostToolUseFailure/external-intelligence-observe", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-Skill/content-review-queue", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-EditWrite/lint-capability-manifest", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-EditWrite/content-review-queue", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-Edit-rubric/diff-rubric-impact", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/wrap-git-commit-safe",   tier: extension }
+  - { kind: hook, ref: "hook:Stop/elegant-review-trigger",            tier: extension }
+  - { kind: hook, ref: "hook:UserPromptSubmit/ref-task-context-map-preload", tier: extension }
+  - { kind: hook, ref: "hook:SessionEnd/aggregate-evals",             tier: core }
 
   # === Skills (kind=skill) ===
   # 実行 acceptance 系 (Gate D / anti-goodhart)。交換可能な葉 (D12)、ローカル開発環境限定 (D14)
@@ -91,26 +106,48 @@ capabilities:
   # === Native surface orchestration (kind=script) ===
   - { kind: script, ref: scripts/check-native-surface-parity.py, tier: core }
   - { kind: script, ref: scripts/sync-codex-project-settings.py, tier: core }
+  # Codex は plugin_hooks が removed で plugin 配下 hooks.json を読まない。この 2 本が
+  # Codex 側の唯一の hook 配達経路 (registry 生成 + 単一 entry point の dispatch)。
+  - { kind: script, ref: scripts/build-hook-registry.py, tier: core }
+  - { kind: script, ref: scripts/hook-router.py, tier: core }
   - { kind: script, ref: scripts/sync-plugin-platforms.py, tier: core }
   - { kind: script, ref: scripts/install-codex-plugin.py, tier: core }
   - { kind: script, ref: scripts/sync-native-surfaces.py,        tier: core }
   - { kind: script, ref: scripts/record-task-graph-knowledge.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/build-external-intelligence.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/build-external-intelligence-runtime.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/auto-record-lesson.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/build-improvement-gate.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/build-usable-draft-proof.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/build-review-launch.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/validate-improvement-result.py, tier: core }
 
   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
 
 dependencies:
-  # 主要 DAG。lint で循環検出。
+  # 主要 DAG。lint で循環検出。実行引き渡しは build → live-trial → iter-improve の単方向。
+  # iter-improve が build の説明を参照することは実行依存ではないため、逆向き edge として宣言しない。
   - { from: skills/run-skill-create,        to: skills/run-skill-elicit,            type: calls }
   - { from: skills/run-goal-seek,           to: skills/run-goal-elicit,             type: calls }
   - { from: skills/run-skill-create,        to: skills/run-build-skill,             type: calls }
   - { from: skills/run-skill-create,        to: skills/run-codex-plugin-package,    type: calls }
   - { from: skills/run-skill-create,        to: skills/run-elegant-review,          type: calls }
   - { from: skills/run-build-skill,         to: agents/run-build-skill-subagent,    type: calls }
+  - { from: skills/run-build-skill,         to: agents/elegant-initial-draft-evaluator, type: calls }
+  - { from: skills/run-build-skill,         to: agents/elegant-bounded-improvement-executor, type: calls }
   - { from: skills/run-build-skill,         to: skills/ref-skill-design-rubric,     type: reads }
   - { from: skills/run-build-skill,         to: skills/ref-claude-code-skill-spec,  type: reads }
   - { from: skills/run-build-skill,         to: skills/ref-skill-naming-convention, type: reads }
   - { from: skills/run-build-skill,         to: skills/run-goal-seek,               type: emits }
   - { from: skills/run-build-skill,         to: skills/ref-knowledge-loop,          type: reads }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-external-intelligence.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-external-intelligence-runtime.py, type: calls }
+  - { from: skills/run-build-skill/scripts/build-external-intelligence-runtime.py, to: skills/ref-knowledge-loop, type: reads }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-improvement-gate.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-usable-draft-proof.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-review-launch.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/validate-improvement-result.py, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-skill-feedback,          type: emits }
   - { from: skills/run-build-skill,         to: skills/assign-skill-design-evaluator, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-elegant-review,          type: calls }
@@ -137,14 +174,33 @@ dependencies:
   - { from: skills/run-skill-live-trial,    to: skills/run-elegant-review,          type: reads }
   - { from: skills/run-skill-live-trial,    to: skills/run-skill-iter-improve,      type: emits }
   - { from: skills/run-skill-iter-improve,  to: skills/run-elegant-review,          type: reads }
-  - { from: skills/run-skill-iter-improve,  to: skills/run-build-skill,             type: reads }
   - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
   - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
+  - { from: "hook:PostToolUse/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
+  - { from: "hook:PostToolUseFailure/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
+  - { from: skills/run-build-skill/scripts/auto-record-lesson.py, to: skills/run-build-skill/scripts/build-external-intelligence.py, type: calls }
   - { from: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", to: scripts/sync-native-surfaces.py, type: calls }
   - { from: scripts/sync-native-surfaces.py, to: scripts/sync-codex-project-settings.py, type: calls }
   - { from: skills/run-codex-plugin-package, to: scripts/sync-plugin-platforms.py, type: calls }
   - { from: skills/run-codex-plugin-install, to: scripts/install-codex-plugin.py, type: calls }
   - { from: scripts/sync-native-surfaces.py, to: scripts/check-native-surface-parity.py, type: calls }
+
+# dependencies[] is the DAG of capabilities declared by this composition only.
+# The two HC compatibility forwarders resolve the distributable provider through
+# this explicit cross-plugin contract instead of pretending its files are HC
+# capabilities.
+external_dependencies:
+  skill-governance-adapters:
+    version: ">=0.1.1 <1.0.0"
+    relation: external-intelligence-runtime-provider
+    required_entry_points: [run-governance-adapters]
+    required_runtime_scripts:
+      - hooks/build-external-intelligence-context.py
+      - scripts/build-external-intelligence-runtime.py
+      - scripts/build-external-intelligence.py
+    required_runtime_resources:
+      - schemas/external-intelligence-runtime.schema.json
+      - references/external-intelligence-runtime-contract.md
 
 eval_sinks:
   - EVALS.json
@@ -163,7 +219,8 @@ governance:
 observability:
   hooks:
     - SessionStart/auto-sync-on-session-start
-    - PostToolUse-Skill/auto-record-lesson
+    - PostToolUse/external-intelligence-observe
+    - PostToolUseFailure/external-intelligence-observe
     - PostToolUse-Skill/content-review-queue
     - PostToolUse-EditWrite/lint-capability-manifest
     - PostToolUse-EditWrite/content-review-queue
@@ -171,8 +228,11 @@ observability:
     - SessionEnd/aggregate-evals
     - Stop/elegant-review-trigger
   metrics:
-    - lessons_per_pr
+    - lessons_per_pr # curated lessons only
+    - duplicate_observation_rate
+    - helpful_reuse_count
+    - promotion_evidence_count
     - review_cycle_time_ms
     - rubric_bump_frequency
     - capability_count_by_kind
-  lessons_path: lessons-learned/
+  lessons_path: lessons-learned/ # reviewed promotion surface only; runtime state is outside the plugin package

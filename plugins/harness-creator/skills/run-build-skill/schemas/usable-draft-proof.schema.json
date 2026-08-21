@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/usable-draft-proof.schema.json",
+  "title": "Usable Draft Proof",
+  "description": "kind別upstream receiptをDAG provenanceとして保持しつつ、公開validatorが実capability artifactを検証した事実を正本とするusable-draft proof。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "capability_kind", "upstream_phase",
+    "run_id", "subject", "verification_plan_ref", "verification_plan_sha256",
+    "capability_artifact", "artifact_validation", "stage_gate", "upstream_receipts",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 2},
+    "status": {"type": "string", "const": "PASS"},
+    "capability_kind": {"$ref": "#/definitions/capabilityKind"},
+    "upstream_phase": {
+      "type": "string",
+      "enum": ["content-review", "non-skill-build-lint"]
+    },
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "verification_plan_ref": {"$ref": "#/definitions/relativePath"},
+    "verification_plan_sha256": {"$ref": "#/definitions/sha256"},
+    "capability_artifact": {"$ref": "#/definitions/capabilityArtifact"},
+    "artifact_validation": {"$ref": "#/definitions/artifactValidation"},
+    "stage_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "handoff_ready", "auto_promote"],
+      "properties": {
+        "status": {"type": "string", "const": "usable-draft"},
+        "handoff_ready": {"type": "boolean", "const": true},
+        "auto_promote": {"type": "boolean", "const": false}
+      }
+    },
+    "upstream_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["receipt_type", "path", "sha256"],
+        "properties": {
+          "receipt_type": {
+            "type": "string",
+            "enum": ["content-review", "generation", "kind-lint"]
+          },
+          "path": {"$ref": "#/definitions/relativePath"},
+          "sha256": {"$ref": "#/definitions/sha256"}
+        }
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"capability_kind": {"const": "skill"}}},
+      "then": {
+        "properties": {
+          "upstream_phase": {"const": "content-review"},
+          "artifact_validation": {"properties": {"mode": {"const": "manifest"}, "reported_kind": {"const": "skill"}}},
+          "upstream_receipts": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {"properties": {"receipt_type": {"const": "content-review"}}}
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "upstream_phase": {"const": "non-skill-build-lint"},
+          "upstream_receipts": {"minItems": 2, "maxItems": 2}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "plugin-composition"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"mode": {"const": "bundle"}, "reported_kind": {"const": "plugin-composition"}}}}},
+      "else": {"properties": {"artifact_validation": {"properties": {"mode": {"const": "manifest"}}}}}
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "agent"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"reported_kind": {"const": "agent"}}}}}
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "hook"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"reported_kind": {"const": "hook"}}}}}
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "command"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"reported_kind": {"const": "command"}}}}}
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "prompt"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"reported_kind": {"const": "prompt"}}}}}
+    },
+    {
+      "if": {"properties": {"capability_kind": {"const": "workflow"}}},
+      "then": {"properties": {"artifact_validation": {"properties": {"reported_kind": {"const": "workflow"}}}}}
+    }
+  ],
+  "definitions": {
+    "capabilityKind": {
+      "type": "string",
+      "enum": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"]
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capabilityArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/definitions/relativePath"},
+        "sha256": {"$ref": "#/definitions/sha256"}
+      }
+    },
+    "artifactValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id", "validator_path", "validator_sha256", "mode", "exit_code",
+        "stdout_sha256", "reported_kind", "valid"
+      ],
+      "properties": {
+        "validator_id": {"type": "string", "const": "validate-build-trace"},
+        "validator_path": {"type": "string", "const": "scripts/validate-build-trace.py"},
+        "validator_sha256": {"$ref": "#/definitions/sha256"},
+        "mode": {"type": "string", "enum": ["manifest", "bundle"]},
+        "exit_code": {"type": "integer", "const": 0},
+        "stdout_sha256": {"$ref": "#/definitions/sha256"},
+        "reported_kind": {"$ref": "#/definitions/capabilityKind"},
+        "valid": {"type": "boolean", "const": true}
+      }
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    }
+  }
+}

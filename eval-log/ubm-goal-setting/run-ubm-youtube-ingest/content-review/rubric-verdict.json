@@ -1,25 +1,41 @@
 {
-  "target": {"plugin": "ubm-goal-setting", "skill": "run-ubm-youtube-ingest", "skill_md_sha256": "f624257c51fa10417a20ed6d014783a4341f78dd6fe03d6385176446547707d9"},
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-youtube-ingest",
+    "skill_md_sha256": "8ff122b52c1f73070320d767fe622ae3a4b0e17f6a6ac21024a57725882574d1"
+  },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0, "smell": 1},
-  "reviewer": "review-group-c-independent-rubric",
-  "reviewed_at": "2026-07-12T00:22:24Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
-    "positive_feedback": [
-      "rubric 1.3.0 score=97/threshold=80. Exact contract/Gotchas sections, naming, line cap, explicit tools, prompt set, scripts, schemas and references pass.",
-      "Single responsibility covers YouTube ingestion through normalized source and evidence graph; provider/scheduler products are late-bound behind explicit adapter/one-shot contracts. Progressive disclosure routes into four prompts and four focused references.",
-      "IN1/OUT1 are precise and machine-verifiable through backfill and one-shot tests; UBM plugin 199 tests pass."
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
     ],
-    "negative_feedback": ["FM-005 low: description begins with a noun phrase outside the evaluator's verb heuristic."],
+    "positive_feedback": [
+      "`effect: external-mutation` の 4 skill (run-ubm-goal-setting / run-ubm-journal / run-ubm-knowledge-sync / run-ubm-youtube-ingest) は `external_mutation_guard` frontmatter と canonical receipt flow block の双方を保持したまま、guard block 内の 3 本の shell 起動行 (preview / authorize / execute) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃った。`effect: local-artifact` の run-ubm-consult には frontmatter・block いずれも無く、双方向の対応が崩れていない。",
+      "`runtime_root_policy: host-skill-path` を宣言した 5 skill 全てが `## Runtime root contract` 本文を持ち、SKILL.md 内の shell 起動行に裸の `${CLAUDE_PLUGIN_ROOT}` が 0 件であることを grep で確認した。`audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` が exit 0 / verdict PASS / violations 空で機械確認している。",
+      "frontmatter が宣言した `responsibility_refs` / `subagent_refs` / `schema_refs` / `script_refs` / `reference_refs` / `manifest` を 5 skill 分 (計 62 参照) 機械照合し、欠損 0 件。`../../` を跨ぐ plugin 直下参照 (`knowledge/schema.json`・`agents/*.md`・`scripts/validate-knowledge-graph.py` 等) も含めて実在する。",
+      "差分は runtime root 移行に限定されており、Purpose & Output Contract・End-to-End Flow・Phase 構成・`feedback_contract.criteria` の text/verify_by は一行も書き換わっていない。既存契約への非後退 (additive) が保たれている。"
+    ],
+    "negative_feedback": [
+      "[low / smell] 同一参照テーブル内で表記が混在した。{where} は Read 対象 (`knowledge/router.json` / `knowledge/schema.json`) を指す行だけ裸の `$CLAUDE_PLUGIN_ROOT` のまま残り、隣接行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ移行済み。audit-capability-parity.py の `_portable_root_violations` は bash/sh fence または EXECUTABLE_RE 一致行だけを対象にする設計で、shell 起動行ではないこれらは意図的に scope 外。機械的破綻は無いため low。"
+    ],
     "iteration": 1,
     "iteration_limit": 5,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d。"
+  "notes": "本 verdict は `main` マージ + external-mutation guard block の機械 migration により `skill_md_sha256` が乖離したことを受けた再束縛であり、content-review-protocol §incremental (unresolved semantic batch) の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff HEAD -- plugins/ubm-goal-setting/skills/<skill>/SKILL.md` で 対象 5 skill の差分を全行読了、加えて同 diff に含まれる `prompts/` 配下 11 ファイルの差分も読了。(2) `grep -rn 'CLAUDE_PLUGIN_ROOT'` を skill ディレクトリ全体へ掛け、移行済み行と未移行行を全件列挙。(3) frontmatter 宣言 refs の実在を Python で機械照合 (5 skill / 62 参照 / 欠損 0)。(4) `plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` = exit 0 / verdict PASS / violations 空。(5) 規約正本 `plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md` の product別 plugin root 契約 (L41-52) と audit の `_portable_root_violations` 実装を読み、host-skill-path 契約の射程が `SKILL.md` + `prompts/**` の shell 実行行であることを確認。(6) 補助 lint: `lint-artifact-delivery` / `lint-entrypoint-artifact-first` / `lint-prompt-contract-drift` / `lint-runtime-portability` / `lint-external-refs` = exit 0、`lint-feedback-contract --all` = exit 0、`lint-skill-tree` = 5 skill とも ok (LS-203 `assets` 警告は本 diff 以前からの既存事項)。 差分は runtime root 移行に閉じており、既存の Purpose & Output Contract / workflow / criteria への書き換えは無い。未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 本 skill 固有: `script_refs` 4 本のうち `run-youtube-sync-oneshot.py` は scheduler 無人経路のため SKILL.md の shell 起動行を持たず、移行対象は guard block 3 行に閉じている。IN1 の content 層 (full_backfill_pass) と accountability 層の分離文言も無変更。"
 }

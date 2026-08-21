@@ -33,7 +33,7 @@ KINDS = {"generative", "deterministic", "semantic", "observational", "audit"}
 # 時間を決めているのは検証の深さではなく生成の集合なので、軸を分ける。
 STAGES = {"draft", "release"}
 
-# stage 未宣言の obligation の既定。
+# stage 未指定 build と、stage 未宣言 obligation の共通既定。
 #
 # release ではなく draft を既定にする。未分類のものを release 扱いにすると、
 # stage を知らない旧 contract を draft で回した瞬間に全 obligation が黙って defer され、
@@ -271,7 +271,7 @@ def build_plan(
     max_llm_batches: int | None = None,
     run_id: str | None = None,
     max_model_actions: int | None = None,
-    stage: str = "release",
+    stage: str = DEFAULT_STAGE,
 ) -> dict:
     if profile not in PROFILES:
         raise ContractError(f"unsupported profile: {profile}")
@@ -376,7 +376,13 @@ def build_plan(
             stage_deferred.add(oid)
         elif item["kind"] == "audit" and profile != "exhaustive":
             record.update(action="defer", reason="audit-catalog-is-not-a-runtime-fanout")
-        elif item.get("activation") == "exhaustive" and profile != "exhaustive":
+        elif (
+            item.get("activation") == "exhaustive"
+            and profile != "exhaustive"
+            # draft の generative/deterministic proof は引き渡しの実在条件。
+            # profile で defer すると成果物なしの false-ready になる。
+            and not (stage == "draft" and item["kind"] in DRAFT_KINDS)
+        ):
             record.update(action="defer", reason="activation-requires-exhaustive")
         elif profile == "build-only" and item["kind"] not in {"generative", "deterministic"}:
             record.update(action="defer", reason="not-run(profile=build-only)")
@@ -457,6 +463,38 @@ def build_plan(
         and consumed_model_actions + planned_model_actions > effective_max_model_actions
     ):
         budget_reasons.append("cumulative-model-actions-exceed-run-budget")
+    pending_draft = sorted(
+        record["id"]
+        for record in records
+        if stage == "draft"
+        and record["action"] != "reuse"
+        # stage cut 由来の defer だけが意図的繰越し。profile/activation 等の
+        # defer は実体proofの代わりにならず、引き渡しを fail-closed で止める。
+        and not (record["action"] == "defer" and record["id"] in stage_deferred)
+    )
+    handoff_ready = stage == "draft" and not pending_draft
+    stage_status = (
+        "draft-building"
+        if stage == "draft" and pending_draft
+        else "usable-draft"
+        if stage == "draft"
+        else "ok"
+    )
+    if pending_draft:
+        stage_instruction = (
+            "draft 対象の generation/check が残っている。pending_draft だけを実行し、"
+            "決定論ゲート修復は1周までとする。現物の proof が付くまで引き渡しを宣言しない。"
+        )
+    elif stage_deferred:
+        stage_instruction = (
+            "第1稿は使える実体まで。release completed を宣言せず、"
+            "build-improvement-gate.py へ渡す。単一評価contextの初回30思考法診断を1回だけ行い、"
+            "所見を提示して改善levelを聞く。回答前に改善せず、自動で release/exhaustive へ進まない。"
+            "draft の PASS receipt は fingerprint に stage を含めないため release でそのまま再利用される "
+            "(昇格は繰越し分の追加実行だけで済み、作り直しにならない)。"
+        )
+    else:
+        stage_instruction = "繰越した obligation は無い。"
     return {
         "schema_version": 1,
         "subject": subject,
@@ -464,21 +502,22 @@ def build_plan(
         "profile": profile,
         "stage": stage,
         "stage_gate": {
-            # draft は「速い完了」ではなく「未完了だが動く」状態である。
-            # ここを ok にすると、後段の完了ゲートが第1稿を成果物として受理してしまい、
-            # 回収されない release 工程が黙って積み上がる。
-            "status": "draft-incomplete" if stage_deferred else "ok",
+            # draft-building は生成中、usable-draft は proof 付きの正常引き渡し点。
+            # failure/incomplete と同じ状態へ畳むと dispatcher が完成版を目指して
+            # 自動周回する一方、proof 前から usable とすると空の引き渡しになる。
+            "status": stage_status,
+            "handoff_ready": handoff_ready,
+            "pending_draft": pending_draft,
+            "auto_promote": False,
+            "max_repair_rounds": 1 if stage == "draft" else 3,
             "deferred_to_release": sorted(stage_deferred),
             "deferred_count": len(stage_deferred),
-            "instruction": (
-                "第1稿は使える実体まで。completed を宣言せず、利用者へ現物と "
-                "deferred_to_release を提示する。改善点を反映したら --stage release で "
-                "再実行し、繰り越した obligation を回収する。draft の PASS receipt は "
-                "fingerprint に stage を含めないため release でそのまま再利用される "
-                "(昇格は繰り越し分の追加実行だけで済み、作り直しにならない)。"
-                if stage_deferred
-                else "繰り越した obligation は無い。"
+            "next_gate": (
+                "build-improvement-gate.py"
+                if stage == "draft" and not pending_draft
+                else None
             ),
+            "instruction": stage_instruction,
         },
         "cost_model": "changed-obligations-plus-unresolved-uncertainty",
         "counts": counts,
@@ -519,10 +558,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evidence-dir", required=True)
     parser.add_argument("--profile", choices=sorted(PROFILES), default="incremental")
     parser.add_argument(
-        "--stage", choices=sorted(STAGES), default="release",
+        "--stage", choices=sorted(STAGES), default=DEFAULT_STAGE,
         help=("build stage。draft は使える実体 (generative) と決定論ゲートだけを回し、"
-              "受入テスト設計・意味レビュー・監査を release へ繰り越す。既定が release なのは "
-              "後方互換のため (既存の呼出しは従来どおり全 obligation を解決する)。"),
+              "受入テスト設計・意味レビュー・監査を release へ繰り越す。無指定は draft。"
+              "release は利用者が第1稿を確認した後に明示する。"),
     )
     parser.add_argument("--max-context-bytes", type=int, default=DEFAULT_MAX_CONTEXT_BYTES)
     parser.add_argument("--max-llm-batches", type=int)

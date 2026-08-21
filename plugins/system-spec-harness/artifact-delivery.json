@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "schema_id": "https://harness.local/schemas/artifact-delivery.schema.json",
+  "schema_sha256": "5d9c851d3642618d3966525c71c93b7a8fdaf6a79921830bcf3e44af97c96a37",
+  "policy_id": "artifact-delivery-v1",
+  "policy_sha256": "e4b3aa9b5591f8d363ad4820ae259a339db34946a0ee829b0ef7d3da1ba637c2",
+  "plugin": "system-spec-harness",
+  "manifest_ref": ".claude-plugin/plugin.json",
+  "artifact_first": true,
+  "draft_handoff": {
+    "actual_artifact_required": true,
+    "minimum_state": "usable-draft",
+    "present_before_user_choice": true
+  },
+  "auto_promotion": {
+    "exhaustive": false,
+    "release": false
+  },
+  "minimum_safe_guard": {
+    "fail_closed_on_unknown_effect": true,
+    "target_scope_required": true
+  },
+  "entrypoints": [
+    {
+      "path": "skills/assign-system-spec-completeness-evaluator/SKILL.md",
+      "effect": "local-artifact",
+      "guard": "declared-target-scope-only"
+    },
+    {
+      "path": "skills/ref-system-design-knowledge/SKILL.md",
+      "effect": "none",
+      "guard": "read-only"
+    },
+    {
+      "path": "skills/run-skill-feedback/SKILL.md",
+      "effect": "external-mutation",
+      "guard": "preview-and-explicit-confirmation",
+      "guard_contract": {
+        "runtime_ref": "#/external_mutation_runtime",
+        "flow": "preview-confirm-authorize-execute-v1"
+      }
+    },
+    {
+      "path": "skills/run-system-spec-compile/SKILL.md",
+      "effect": "local-artifact",
+      "guard": "declared-target-scope-only"
+    },
+    {
+      "path": "skills/run-system-spec-doc-fetch/SKILL.md",
+      "effect": "local-artifact",
+      "guard": "declared-target-scope-only"
+    },
+    {
+      "path": "skills/run-system-spec-elicit/SKILL.md",
+      "effect": "local-artifact",
+      "guard": "declared-target-scope-only"
+    }
+  ],
+  "external_mutation_runtime": {
+    "contract_id": "external-mutation-guard-v1",
+    "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
+    "schema_ref": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json",
+    "contract_ref": "plugin:skill-governance-adapters/references/external-mutation-guard-contract.md",
+    "hook_manifest_ref": "plugin:skill-governance-adapters/.claude-plugin/plugin.json",
+    "confirmation_event": "UserPromptSubmit",
+    "enforcement_event": "PreToolUse",
+    "enforcement_scope": "recognized-bash-remote-mutations-and-all-bash-during-pending-guard-context",
+    "flow": "preview-confirm-authorize-execute-v1",
+    "runner_sha256": "11a3fb0d22067cde99fc01bca8972ee75091b41743ae99d2d68f09f2d3f58676",
+    "schema_sha256": "32938bf5793b0c564bcd1ea2cf829cabdde3973e29512cae5fe0fe647195258a",
+    "hook_manifest_sha256": "5625a7bbb183179a64b3f5ba905fff1bd3490f30dc5db388f3a9c7560706e2d7",
+    "preview_action": "preview",
+    "confirmation_action": "hook-confirm",
+    "authorize_action": "authorize",
+    "execute_action": "execute",
+    "enforcer_action": "pretool"
+  },
+  "external_intelligence_runtime": {
+    "contract_id": "external-intelligence-runtime-v1",
+    "adapter_ref": "plugin:skill-governance-adapters/scripts/build-external-intelligence-runtime.py",
+    "engine_ref": "plugin:skill-governance-adapters/scripts/build-external-intelligence.py",
+    "schema_ref": "plugin:skill-governance-adapters/schemas/external-intelligence-runtime.schema.json",
+    "contract_ref": "plugin:skill-governance-adapters/references/external-intelligence-runtime-contract.md",
+    "caller_ref": "plugin:skill-governance-adapters/hooks/build-external-intelligence-context.py",
+    "caller_manifest_ref": "plugin:skill-governance-adapters/.claude-plugin/plugin.json",
+    "caller_event": "UserPromptSubmit",
+    "default_scope": "project",
+    "standalone_behavior": "warning-continue",
+    "adapter_sha256": "4492af47bd1284764973bab0f2bcec39c91247d0b7d77ba42f65413e5aef429e",
+    "engine_sha256": "46c27ad1040b997d388026c7cef95bd3fea20f4fefa8f560ee5a8fc9a18b6698",
+    "policy_sha256": "0d8ff9c4845be8ec735bc65a3ea92fb510352900a501937ebb100f4aef5ee2d3",
+    "caller_sha256": "6f729da471aaed84129933155c68d07591d55b261baccf315662de5b0cf33ac1"
+  }
+}

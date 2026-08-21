@@ -22,6 +22,7 @@ source-tier: external-spec
 last-audited: 2026-08-20
 audit-trigger: on-doc-change
 feedback_contract:
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -36,6 +37,7 @@ responsibility_refs:
   - prompts/R1-package.md
 manifest: workflow-manifest.json
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   spec: eval-log/goal-spec.json
   progress: eval-log/run-codex-plugin-package-progress.json
@@ -43,7 +45,31 @@ goal_seek:
   max_loops: 3
   fork: subagent
 runtime_root_policy: host-skill-path
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-codex-plugin-package
 

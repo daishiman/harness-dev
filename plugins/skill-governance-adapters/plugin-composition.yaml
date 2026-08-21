@@ -1,11 +1,22 @@
 name: skill-governance-adapters
 kind: plugin-composition
-version: 0.1.0
+version: 0.1.9
 purpose: Public capability inventory and dependency boundary for skill-governance-adapters.
+description: Public capability inventory and dependency boundary for skill-governance-adapters.
+owner: harness-dev
 
 capabilities:
   - { kind: skill, ref: skills/run-governance-adapters, tier: core }
   - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: hook, ref: "hook:UserPromptSubmit/build-external-intelligence-context", tier: core }
+  # external mutation guard は confirmation producer と PreToolUse enforcer の 2 面で
+  # 配線される。1 実装 2 endpoint なので hint 違いの ref を 2 本立てる。
+  - { kind: hook, ref: "hook:UserPromptSubmit-confirm/build-external-mutation-guard", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/build-external-mutation-guard", tier: core }
 
-dependencies:
-  - { from: skills/run-skill-feedback, to: ../harness-creator/skills/run-skill-feedback, type: runtime }
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
+

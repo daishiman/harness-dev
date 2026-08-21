@@ -24,6 +24,7 @@ schema_refs:
   - schemas/output.schema.json
 manifest: workflow-manifest.json
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -38,8 +39,33 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 本スキルが「カタログ既存図の決定論的配置と PNG 配置 (SVG は同梱 PNG、Mermaid は mmdc)」に責務を絞り、カタログ外の図種創作・sheet.md にない事実の図注入(誤情報生成)を行わず、新規図種が必要な場合は創作せず差し戻す設計になっている
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 runtime_root_policy: host-skill-path
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-intake-visualize
 

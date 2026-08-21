@@ -1,0 +1,97 @@
+{
+  "purpose": "Codex / Claude Code の実行で得た失敗観測と再利用可能な知見を plugin package 外の project/user state に保存し、重複統合、検索、詳細取得、再利用記録、状態遷移、明示昇格、監査検証を共通 CLI と hook adapter で扱う。",
+  "scope": {
+    "in_scope": [
+      "skills/run-build-skill/scripts/build-external-intelligence.py",
+      "skills/run-build-skill/scripts/auto-record-lesson.py",
+      "skills/ref-knowledge-loop/references/external-intelligence.md",
+      "skills/run-build-skill/SKILL.md",
+      "hooks/hooks.json",
+      ".claude-plugin/plugin.json",
+      ".codex-plugin/plugin.json",
+      "native-surfaces.toml",
+      "plugin-composition.yaml",
+      "ref-knowledge-loop の SKILL.md・resource-map・構築/検索ライフサイクル文書",
+      "knowledge-loop の schema・renderer・lint・build-plan 検査・template",
+      "関連する external-intelligence、auto-record、KL-008、build-plan テスト",
+      "native surface が参照する .claude/settings.json、.codex/hooks.json、governance-check.yml"
+    ],
+    "out_of_scope": [
+      "外部知能変更と無関係な既存 plugin 機能",
+      "採点、改善提案、判定",
+      "ファイル編集、成果物削除、commit、push",
+      "plugin package 外に生成される実 runtime state の内容",
+      "文書に列挙された外部 URL の取得・内容検証"
+    ]
+  },
+  "stakeholders": [
+    "Codex 利用者",
+    "Claude Code 利用者",
+    "harness maintainers",
+    "run-build-skill の保守者",
+    "knowledge-loop を同梱する生成 Skill の利用者",
+    "curated seed の昇格を承認する owner"
+  ],
+  "first_impressions": [
+    "共通 engine が状態の書込み口として置かれ、hook adapter は payload の判別・マスク・capture 呼出しを担当する構成になっている。",
+    "curated seed、runtime observations、thin index、entry detail が別の保存面として記述されている。",
+    "状態操作は CLI subcommand、単一 JSON stdout、event log、materialized files の組合せで表現されている。",
+    "Codex と Claude Code の共用が、agent 属性、共通 state、複数 hook 宣言面、関連テストに現れている。",
+    "hook イベントと timeout は plugin manifest、hooks.json、native-surfaces、project projection に個別記述されている。"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "確認した: plugin 対象パスでは tracked 26ファイルが変更され、build-external-intelligence.py と external-intelligence.md の2ファイルが未追跡である。",
+      "確認した: build-external-intelligence.py は init、capture、search、show、reuse、promote、supersede、verify の8 subcommandを定義する。",
+      "確認した: project scope は Git common dir、非Git project は <project>/.harness、user scope は明示 override、plugin data、OS state の順で保存先を解決する。",
+      "確認した: state は events.jsonl、index.json、entries/<id>.json、書込み時の .write.lock から構成される。",
+      "確認した: events.jsonl は sequence、previous_hash、SHA-256 hash を持ち、index と entry detail は event 列から再構成される。",
+      "確認した: title と rule の正規化 fingerprint が一致する観測を統合し、類似度0.88以上を自動統合、0.62以上を明示解決対象として扱う。",
+      "確認した: context と evidence が各2件になると candidate、観測とは別の context/evidence を持つ helpful reuse があると verified へ導出する。",
+      "確認した: promote は独立観測条件、helpful reuse、owner-approved flag、target、falsifier、rollback を入力として記録する。",
+      "確認した: auto-record-lesson.py は明示失敗 payload と Skill の semantic failure pattern を抽出し、credential語と home path をマスクして engine の capture を subprocess で呼ぶ。",
+      "確認した: auto-record-lesson.py は engine 呼出しを8秒で打ち切り、入力不正、engine例外、engine終了状態にかかわらず自身は0を返す。",
+      "確認した: .claude-plugin/plugin.json は PostToolUse と PostToolUseFailure の双方を宣言し、hooks/hooks.json と native-surfaces.toml は PostToolUse を宣言する。",
+      "確認した: native-surfaces.toml は対象 hook の products に claude と codex を列挙し、Codex側の hooks_file を .codex/hooks.json と記述する。",
+      "確認した: 現在の .claude/settings.json には対象の PostToolUse と PostToolUseFailure があり、現在の .codex/hooks.json には対象 hook の記述がない。",
+      "確認した: run-build-skill は knowledge-loop 生成時に engine を生成先 scripts へコピーし、runtime_store と runtime_scope を注入し、KL-008 で宣言と engine 存在を照合する。",
+      "確認した: 新規 external-intelligence テストは12件、変更された adapter テストは7件を定義し、共有 entry、類似統合、昇格条件、保存先、hash chain、repair、supersede、redaction、fail-soft 呼出しを扱う。",
+      "確認した: 今回は関連テストファイルを読んだが、テストコマンドは実行していない。",
+      "確認した: runtime 契約文書は prompt cache と quota 表示を外部知能の直接指標から分離し、外部資料と分析時 commit を出典欄に列挙する。"
+    ],
+    "assumptions": [
+      "推定する: 実際の観測保存頻度は host が配備した hook 面と受信 payload の形に依存する。",
+      "推定する: generated Skill へコピーされた engine は、その Skill の curated seed と別の runtime state を扱う用途を想定している。",
+      "推定する: tests に記述された期待値は実装契約を表すが、現在の実行結果は今回の観察からは確定しない。"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "harness-creator", "kind": "proper-noun"},
+    {"value": "Codex", "kind": "proper-noun"},
+    {"value": "Claude Code", "kind": "proper-noun"},
+    {"value": "OpenAI", "kind": "proper-noun"},
+    {"value": "Anthropic", "kind": "proper-noun"},
+    {"value": "decision-os-v13-loopkit", "kind": "proper-noun"},
+    {"value": "harness maintainers", "kind": "fixed-owner"},
+    {"value": "harness-creator/external-intelligence/v1", "kind": "fixed-path"},
+    {"value": "<project>/.harness/external-intelligence/v1", "kind": "fixed-path"},
+    {"value": ".codex/hooks.json", "kind": "fixed-path"},
+    {"value": ".codex/config.toml", "kind": "fixed-path"},
+    {"value": "external-intelligence-v1", "kind": "other"},
+    {"value": "HARNESS_INTELLIGENCE_HOME", "kind": "other"},
+    {"value": "AUTO_MERGE_THRESHOLD = 0.88", "kind": "other"},
+    {"value": "REVIEW_THRESHOLD = 0.62", "kind": "other"},
+    {"value": "MAX_TEXT = 8_000", "kind": "other"},
+    {"value": "--limit 5", "kind": "other"},
+    {"value": "timeout=8", "kind": "other"},
+    {"value": "\"timeout\": 10", "kind": "other"},
+    {"value": "\"timeout\": 10000", "kind": "other"},
+    {"value": "1.3.23", "kind": "other"},
+    {"value": "https://developers.openai.com/api/docs/guides/prompt-caching", "kind": "fixed-url"},
+    {"value": "https://developers.openai.com/codex/hooks.md", "kind": "fixed-url"},
+    {"value": "https://code.claude.com/docs/en/memory", "kind": "fixed-url"},
+    {"value": "https://code.claude.com/docs/en/prompt-caching", "kind": "fixed-url"},
+    {"value": "https://github.com/shin4141/decision-os-v13-loopkit", "kind": "fixed-url"},
+    {"value": "be5286b332c37182d686bcc2dc9068fd22f902ed", "kind": "other"}
+  ]
+}

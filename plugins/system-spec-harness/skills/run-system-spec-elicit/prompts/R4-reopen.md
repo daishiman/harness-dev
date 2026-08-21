@@ -52,7 +52,7 @@
 | question_bank | references/elicit-question-bank.md | 追加質問設計時 |
 
 ### 3.2 外部ツール
-- `Bash`: `python3 scripts/apply-spec-transition.py apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>"}'`
+- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>"}'`
 
 ## Layer 4: 共通ポリシー
 
@@ -109,4 +109,4 @@
 
 ## 出力指示
 
-再検討の根拠を確認し、`python3 scripts/apply-spec-transition.py apply --state spec-state.json --op '{"action":"reopen",...,"reason":"..."}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。余計な前置き・思考過程出力は禁止。
+再検討の根拠を確認し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen",...,"reason":"..."}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。余計な前置き・思考過程出力は禁止。

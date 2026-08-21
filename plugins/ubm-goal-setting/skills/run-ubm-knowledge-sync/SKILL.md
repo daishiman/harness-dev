@@ -16,11 +16,14 @@ allowed-tools:
 kind: run
 prefix: run
 effect: external-mutation
+runtime_root_policy: host-skill-path
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: harness-maintainers
 since: 2026-07-04
 version: 0.1.0
 manifest: workflow-manifest.json
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   progress: eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json
@@ -54,6 +57,7 @@ audit-trigger: quarterly
 completeness_exempt:
   - "prompts: 抽出・6カテゴリ分類という唯一の LLM 責務は plugin 直下 SubAgent knowledge-extractor.md (7層プロンプトを本文に内包・43KB) が単独所有し、他 Phase は決定論スクリプト (detect-knowledge-updates.py / check-knowledge-split.py) が担う。skill ローカルの R-id 単位 prompts は SubAgent 本文との二重定義になるため置かない (二重定義禁止 [[project_ssot_dedup_mechanism]])。責務→実行体の対応は本文 End-to-End Flow 表が正本。(prompts/ ディレクトリは配置しない=本 exempt の宣言と実体が一致)"
 feedback_contract:
+  activation_state: semantic_evaluator_started
   max_iterations: 5
   criteria:
     - id: IN1
@@ -64,7 +68,61 @@ feedback_contract:
       loop_scope: outer
       text: 既知の更新済みソースを投入し knowledge-extractor が6カテゴリへ正しく分類し router.json/registry.json が同期完了することを受入テストが確認する。
       verify_by: test
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-ubm-knowledge-sync
 

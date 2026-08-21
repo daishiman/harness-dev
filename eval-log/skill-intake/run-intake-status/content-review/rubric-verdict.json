@@ -1,1 +1,42 @@
-{"target":{"plugin":"skill-intake","skill":"run-intake-status","skill_md_sha256":"bac82488d95ae626036e653e26446729d1a73bd0218fb62bd049543c09f1d73d"},"review_kind":"rubric","verdict":"PASS","reviewer":"skill-design-evaluator","reviewed_at":"2026-08-20T16:25:00+09:00","iterations":1,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","OUT1"],"positive_feedback":["進行phase確認と公開状態確認の2トリガーが同じread-only status責務に収束する。","allowed-toolsと非生成・非修復の本文契約が一致する。"],"negative_feedback":[],"iteration":1,"iteration_limit":3,"hook_trigger":"manual:rubric-review","next_action":"none"},"notes":"命名、2トリガー、read-only境界、表形式出力を全文採点した。"}
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-intake-status",
+    "skill_md_sha256": "e98f3fd74da5383d8bd6c3c74182c24340af332718e3198dc90fdf77d356cb02"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v3 (focused combined content review, incremental profile, round 3)",
+  "reviewed_at": "2026-08-21T03:00:00Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "round 2 指摘 (1) [medium / inconsistency + dependency_break] profile.json の生成主体の誤記は解消した。現 SKILL.md 66 行は `` `profile`=`output/<hint>/profile.json` (Phase 3 の SubAgent `skill-intake-user-profiler` が出力。`run-intake-interview` は Phase 4 で読むだけ) `` と書き換わり、正本 `plugins/skill-intake/skills/run-skill-intake/references/workflow-sequence.md:9` (`| 3 | SubAgent | skill-intake-user-profiler | kickoff.json, assumption.json | profile.json | Phase 2 |`) および同 10 行 (`| 4 | Skill | run-intake-interview | profile.json | sheet.md, interview.json | Phase 3 |`) と、生成主体・種別 (SubAgent)・phase 番号 (3 / 4)・依存方向 (生成 → 消費) の 4 点すべてで一致する。round 2 で指摘した「依存方向が逆・phase 取り違え」は現物行から消えている。`kickoff`=`run-intake-kickoff` が生成、という側も workflow-sequence.md:7 (`| 1 | Skill | run-intake-kickoff | initial utterance | kickoff.json |`) と整合したまま維持されている。",
+      "round 2 指摘 (2) [medium / omission] 正本 prompt の Layer 2 入力契約と SKILL.md 証拠宣言の食い違いは解消した。`plugins/skill-intake/skills/run-intake-status/prompts/R1-status.md:15` は `- 実在証拠 (出力表6列と1:1): `kickoff.json`、`profile.json`、`intake.json` (5軸)、`visuals/*.{svg,png}`、`notion-url.txt`、`notion-log.json`。` へ更新され、round 2 時点で欠けていた kickoff.json / profile.json を含む。これにより (i) SKILL.md 66 行の証拠集合と正本 prompt の入力契約が同一集合になり、(ii) 同 prompt 内部の Layer 5 完了チェックリスト 43 行 (`kickoff/profile/5軸/visual/Notionの証拠を対象ごとに再集計した`) が要求する証拠が Layer 2 入力契約で宣言済みとなり、round 2 が指摘した Layer 2 / Layer 5 の内部不整合も同時に消えた。IN1 (`対象outputごとにkickoff profile 5軸 visuals notionの実在証拠を再集計し必ず一行ずつ報告している`) は、実行経路である正本 prompt の入力契約だけで充足可能になった。",
+      "宣言された 6 種の証拠がすべて repo 内に実在の生成元を持つことを裏取りした。kickoff.json=workflow-sequence.md:7 (P1)、profile.json=同 9 (P3)、intake.json=同 15 (P9 `run-intake-finalize` → intake.{md,json})、visuals=`plugins/skill-intake/skills/run-intake-visualize/SKILL.md:87` (`output/<hint>/visuals/*.png` PNG 群) と `plugins/skill-intake/references/handoff-contract.md:141` (`visuals.json + visuals/*.svg`)、notion-url.txt=workflow-sequence.md:16 (P10)、notion-log.json=`plugins/skill-intake/skills/run-notion-intake-publish/SKILL.md:122,244,263` (`status == \"published\"` を書き出す本体)。`visuals/*.{svg,png}` という glob 形も sibling の `plugins/skill-intake/commands/intake-status.md:15` (`visuals/*.svg` + `visuals/*.png` 枚数`) と一致しており、証拠の捏造・幻の path は 0 件である。",
+      "修正が既存の規約整合を壊していない。`python3 scripts/lint-skill-tree.py plugins/skill-intake/skills/run-intake-status` は `ok: run-intake-status` (exit 0)、`python3 scripts/lint-feedback-contract.py --all` は exit 0 で本 skill への指摘 0 件 (grep で run-intake-status の出現なし) を実測した。frontmatter は `runtime_root_policy` を宣言せず、SKILL.md / prompts/R1-status.md の両方に shell 起動行 (`python3 ` / `bash ` / `node ` / `PLUGIN_ROOT`) が grep で 0 件のため `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形の検査対象が存在せず、非宣言の判断は依然正しい。`effect: conversation-output` / `allowed-tools: Read, Glob` は不変で、prompt Layer 3 (`使用は`Read`と`Glob`に限定する` / `外部API、network、shell、write toolを使用しない`) と矛盾しない。artifact_delivery の 6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only も無変更。",
+      "OUT1 (`ファイルを生成または修復せず欠落 parse不能 状態不明を成功記号へ推測変換しないread-only結果になっている`) は多層で担保されたまま維持されている。SKILL.md 67-68 行 (欠落は未完了表示・生成/修復しない、parse 不能は対象名と原因を表示し成功へ畳まない)、78 行 (`状態不明を`✓`へ推測変換しない`)、prompt Layer 1:8 (`生成・修復・公開を行わない`)、Layer 2 出力契約 19 行、Layer 5 チェックリスト 44・46 行、Layer 7:61 (`成功は実在証拠がある場合だけ`✓`と表示する`) が同一方向で重複しており、今回の修正で緩められた箇所はない。"
+    ],
+    "negative_feedback": [
+      "[low / smell] 「6列と1:1」という数え方だけが厳密でない。出力表の 6 列は `hint | kickoff | profile | 5 axes | visuals | notion` だが、SKILL.md 66 行が列挙する証拠マッピングは kickoff / profile / 5 axes / visuals / notion の 5 件で、`hint` 列は `output/<hint>/` の dir 名そのものに対応するため file 証拠を持たない。逆に `notion` 列は notion-url.txt と notion-log.json の 2 file に対応する。prompts/R1-status.md:15 も同じ表現 (`出力表6列と1:1`) で 6 file を列挙しており、file 数 6 と列数 6 がたまたま一致しているだけで真の 1:1 ではない。SKILL.md と prompt で言い回しが揃っている以上、どの列がどの証拠を読むかの実行時の曖昧さは生じず (両者の対応表は一意)、挙動には影響しない。将来 notion 列の証拠が増減したときに 6:6 の見かけの一致が崩れる点だけが残る smell であり、PASS を妨げる欠陥ではない。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "round 3 再判定。読んだファイル: plugins/skill-intake/skills/run-intake-status/SKILL.md (全 78 行)、同 prompts/R1-status.md (全 65 行)、plugins/skill-intake/skills/run-skill-intake/references/workflow-sequence.md (全 30 行、正本として phase 番号と依存方向を再照合)、plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json、および証拠裏取りのため grep 経由で plugins/skill-intake/skills/run-intake-visualize/SKILL.md、plugins/skill-intake/skills/run-notion-intake-publish/SKILL.md、plugins/skill-intake/references/handoff-contract.md、plugins/skill-intake/commands/intake-status.md の該当行。 実行したコマンド (すべて実測): `git status --porcelain -- plugins/skill-intake/skills/run-intake-status` (→ `AM` 2 件。SKILL.md と prompts/R1-status.md がいずれも add 後に modify されており今回の修正が両方に入っていることを確認)、`python3 scripts/lint-skill-tree.py plugins/skill-intake/skills/run-intake-status` (→ `ok: run-intake-status`、exit 0)、`python3 scripts/lint-feedback-contract.py --all` (exit 0、出力を run-intake-status で grep して該当 0 件)、`grep -rn 'notion-log.json' plugins/skill-intake --include=*.md` と `grep -rn 'visuals/' plugins/skill-intake --include=*.md` (証拠 file の生成元同定)、`grep -n 'PLUGIN_ROOT|python3 |bash |node ' SKILL.md prompts/R1-status.md` (→ ヒット 0、shell 起動行なし)、`find plugins/skill-intake/skills/run-intake-status -type f` (→ 実ファイルは SKILL.md と prompts/R1-status.md の 2 件のみ)、SKILL.md の sha256 再計算 (`e98f3fd7...` = round 2 の `d34b1876...` から変化しており修正が実在することの裏付け)。 判定: round 2 の medium 2 件はいずれも現物行で解消を確認した。(1) SKILL.md:66 の profile 生成主体は workflow-sequence.md:9-10 と生成主体・phase 番号・依存方向のすべてで一致。(2) prompts/R1-status.md:15 の Layer 2 入力契約が 6 種へ拡張され、SKILL.md の 6 列証拠宣言と一致し、同 prompt の Layer 5 チェックリスト 43 行との内部整合も回復した。5 点再判定: (a) 矛盾なし=成立、(b) 漏れなし=成立 (IN1 の証拠 5 種が正本 prompt の入力契約で網羅)、(c) 規約整合=成立 (lint 2 本 exit 0、allowed-tools と Layer 3 が一致、runtime_root_policy 非宣言は shell 起動行 0 件により正当)、(d) 依存関係整合=成立 (workflow-sequence.md との phase/依存方向一致、宣言 6 証拠すべてに実在の生成元)、(e) rubric high severity=0。残件は low/smell 1 件 (「6列と1:1」の数え方が厳密でないが SKILL.md と prompt で表現が揃い挙動に影響しない) のみで、high/medium の未解決は 0 のため verdict を PASS、human_review_required=false、next_action=none とする。30 思考法は実施しておらず、実施も申告しない。content-review-protocol §incremental の focused combined review を 1 context で実行し (a)〜(e) を同時判定した結果の分離投影である。"
+}

@@ -5,6 +5,7 @@ version: 0.1.0
 owner: harness maintainers
 source: plugin-plans/guide-doc-generator/component-inventory.json#C01
 kind: run
+effect: local-artifact
 prefix: run
 hierarchy: L1
 user-invocable: true
@@ -134,12 +135,14 @@ combinators:
   - with-goal-seek
   - with-feedback-contract
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   max_loops: 5
 completeness_exempt:
   - "manifest: goal_seek.engine=inline が未達 checklist から実行局面を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行 を正本とする。"
 feedback_contract:
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -158,7 +161,32 @@ feedback_contract:
       loop_scope: outer
       text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D10 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する"
       verify_by: live-trial
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-handout-build
 

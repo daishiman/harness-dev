@@ -84,6 +84,17 @@ def load_contract(path: Path) -> dict:
             raise ContractError("hook.products must contain non-empty strings")
         if hook.get("delivery") not in {"plugin", "project"}:
             raise ContractError("hook delivery must be exactly plugin or project")
+        # Codex 0.148.0 は plugin_hooks が removed で、plugin 配下 hooks.json を
+        # 読まない。delivery=plugin のまま products に codex を書くと「Codex でも
+        # 動く」という到達不能な主張になる (projector は plugin-delivered handler を
+        # .codex/hooks.json から除去するため、宣言と実体が両方 Codex を外す)。
+        # Codex への配達は build-hook-registry.py が生成する project 層 router が担う。
+        if hook["delivery"] == "plugin" and "codex" in hook["products"]:
+            raise ContractError(
+                f"hook {hook['id']}: delivery=plugin cannot reach Codex "
+                "(plugin_hooks is removed). Codex delivery goes through "
+                ".codex/hooks.json の hook-router (build-hook-registry.py)"
+            )
     return data
 
 

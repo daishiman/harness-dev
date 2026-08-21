@@ -2,39 +2,39 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-extract-blueprint",
-    "skill_md_sha256": "570fb1f48099ac6d608b40fdd73eb23c967c4d8ff27a3493adaca64e8eff401e"
+    "skill_md_sha256": "fde574f003e055cfff63fcc946e51b034b2ed19674b47ba01a6e5cb8f91dd600"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:19:34Z",
-  "iterations": 1,
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "前回 low severity として記録した L68 の役割 blockquote が『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ是正され、散文層と実行層の root 表記が一致した。同行の成果物置き場も `$CLAUDE_PROJECT_DIR`/cwd という host 依存表現から『明示した project root 配下』へ改められ、`## Runtime root contract` の『cwd から plugin root を推測しない』と齟齬がなくなった。本文全体を走査した結果、dual-root fallback 形でない `CLAUDE_PLUGIN_ROOT` 参照は契約宣言そのものである L63 のみで、実行行・散文・Additional Resources のすべてが正準形に揃っている。",
-      "IN1 の決定論チェック 4 種 (authz/fetch/mermaid/doc) が局面カタログの実行行・完了チェックリスト CL-1/CL-5/CL-6/CL-9・ゴールシークループの『検証は機械層を先に通す』へ一貫して接地し、request budget と対象 origin 並列 1 が Key Rules 3 の『single/full_site 両モードで不変』と禁則節で二重固定されている。",
-      "OUT1 の fact/inference/observation_gap 三値排他が Purpose・データ契約・Key Rules 1・CL-2/CL-3 で反復され、C15 browser-render 不在時を exit 3=browser-unavailable の observation_gap としてのみ記録し inference へ昇格させない規定が R1/R2 委譲節・CL-2・Gotchas の 3 箇所で同一に述べられている (取得手段の劣化を無言欠落へ倒さない)。",
-      "proposer≠approver が Key Rules 2 とハンドオフ節で固定され、共有決定論ゲート (C10/C11) を C01 自己検証と C02 独立評価が同一ロジックで共有する設計意図が Key Rules 5 に明示されている。C02 側が非共有の再計数経路を別途持つため、共有による common-mode 誤りは評価器側で破られる配線になっている。",
-      "verdict receipt が `${ESB_VERDICT_DIR:-.esb-verdict}` の cwd 起点であることを Gotchas が隠さず明記し、C01/C02 を同一 cwd で回す前提と cwd 変更時の fail-closed 挙動まで述べている。成果物 root と verdict receipt root が別軸であることが読み取れ、L68 の記述と矛盾しない。"
+      "round 1 medium (依存関係整合: bootstrap 正本の二重化) は解消。SSOT が entrypoint 層まで一元化された: SKILL.md:195 (『`Bash(python3 *)` で許可された**単一 Python 呼び**が正本』) / references/runbook.md:108 (『C08 hook の bootstrap は**単一 Python 呼び**…が正本』) / commands/extract-blueprint.md:23 (『C01 の R1 冒頭の単一 Python 呼び…が正本』) の 3 層が同一定義。commands は本 skill の起動 entrypoint、runbook はオペレータ手順書であり、両者とも SKILL.md へ追従した。",
+      "権限最小化と allowed-tools の整合が文書側にも内在化した。runbook.md:108 は『C01 の allowed-tools は `Bash(python3 *)` のみで compound Bash は許可されない』と理由を明記しており、正本定義が単なる表記統一ではなく権限契約から導出されていることが読者に追える。",
+      "fail-closed 契約は修正で毀損していない。単独 `mkdir` 先行禁止 (bootstrap deadlock 回避) は runbook.md:108 と commands/extract-blueprint.md:23 に残り、SKILL.md 側も Gotchas 222 行『`.esb-authz` を手作業で先行作成しない』として保持。C12 unknown=deny・C08 evidence 不在=deny (exit2)・observation_gap を inference へ昇格させない禁則 (Key Rules 1) は差分の対象外で無傷。",
+      "規約整合を機械検証した: `python3 scripts/lint-skill-tree.py plugins/extract-system-blueprint/skills/run-extract-blueprint` は `ok: run-extract-blueprint` (exit 0)。既存 Warn は LS-203 (規約外 top-level dir `tests`) のみで今回差分と無関係。runtime_root_policy: host-skill-path に対し shell 起動行の bare `${CLAUDE_PLUGIN_ROOT}` は 0 件 (残る 1 件 L112 は Runtime root contract 節の説明文)。frontmatter 宣言と本文の対 (external_mutation_guard ↔ canonical receipt flow block、runtime_root_policy ↔ Runtime root contract 節) はいずれも片肺でない。",
+      "feedback_contract.criteria は IN1・OUT1 の 2 件 (SKILL.md frontmatter L43-53) で、本 verdict の criteria_evaluated と一致。high severity finding は 0。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "low (inconsistency): 旧 compound Bash 表現が非正本ファイルに 2 箇所残存。CHANGELOG.md:37 は既リリース [0.1.0] の確定履歴 (Keep a Changelog 準拠で遡及書き換え対象外)、tests/test_guard.py:7,143-157 は hook の非アクティブ素通しを compound Bash 形で回帰固定するもので挙動としては今も真。いずれも『正本』を規定する層ではないため SSOT 一元化の失格要因とはしないが、本 migration を記す CHANGELOG エントリは未追加 (本差分では repo 内のどの plugin の CHANGELOG も未更新で、この skill 固有ではない)。",
+      "low (smell): `## Runtime root contract` 節が skill 見出しと役割 blockquote の間にある配置は round 1 から不変。plugin 内では run-blueprint-apply と一貫しているため規約違反ではない。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-low-fix-rereview",
+    "hook_trigger": "manual:merge-guard-migration-rereview",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / low severity 指摘の修正後 再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。前回 low として残していた L68 散文の root 表記 drift の解消を確認し、negative_feedback 0 件で PASS。sha256/criteria は再評価時点の現行値。"
+  "notes": "rubric 観点 (fail-closed / SSOT 一元化 / proposer≠approver / 権限最小化と allowed-tools 整合 / 完了条件の機械検証可能性 / 規約整合 / 依存関係整合) で round 1 の未解決 medium を再判定した。読んだファイル: skills/run-extract-blueprint/SKILL.md (frontmatter feedback_contract L40-53・L105-124・L195・L221-222)、prompts/R1-fetch.md L35-65、references/runbook.md:108、commands/extract-blueprint.md:23、CHANGELOG.md L1-40、tests/test_guard.py (grep 経由)。実行したコマンド: `git diff HEAD -- plugins/extract-system-blueprint/references/runbook.md plugins/extract-system-blueprint/commands/extract-blueprint.md`、`git diff HEAD -- .../SKILL.md`、`git diff HEAD --stat -- plugins/extract-system-blueprint/`、`git diff HEAD --name-only | grep -i changelog`、plugin 全体 grep 3 本、`python3 scripts/lint-skill-tree.py plugins/extract-system-blueprint/skills/run-extract-blueprint` (exit 0)、SKILL.md sha256 再計算。残 finding は low 2 件のみで high 0・medium 0 のため PASS・human_review_required=false。30 思考法は実施していない。"
 }

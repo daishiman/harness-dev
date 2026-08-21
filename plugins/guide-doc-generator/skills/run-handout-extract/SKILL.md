@@ -2,6 +2,7 @@
 name: run-handout-extract
 prefix: run
 kind: run
+effect: local-artifact
 hierarchy: L1
 description: 既存の単一 HTML から構成データを逆抽出したいとき、手書き HTML を再利用可能な構成データへ戻してテンプレート化したいときに使う。
 version: 0.1.0
@@ -16,6 +17,7 @@ combinators:
   - with-goal-seek
   - with-feedback-contract
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   max_loops: 5
@@ -43,6 +45,7 @@ script_refs:
 schema_refs:
   - ../../schemas/handout-config.schema.json
 feedback_contract:
+  activation_state: semantic_evaluator_started
   criteria:
     - id: IN1
       loop_scope: inner
@@ -56,7 +59,32 @@ feedback_contract:
       loop_scope: outer
       text: "実在の手書き HTML 1 本を与えた実起動で、元 HTML を 1 バイトも書き換えず、復元不能箇所が補完方針つきでレポートへ列挙され、資料内容の書き換えや部品構成の改善提案を出力に含めないことを実走の痕跡で確認する"
       verify_by: live-trial
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-handout-extract
 

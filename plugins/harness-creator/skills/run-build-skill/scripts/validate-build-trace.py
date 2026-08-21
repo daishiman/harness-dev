@@ -812,17 +812,66 @@ def _validate_requirement_coverage(data: dict, trace_path: Path) -> list[str]:
 # CapabilityManifest 検証 (kind 別 dispatch)
 # =============================================================
 
+_CAPABILITY_SCHEMA_PATH = (
+    Path(__file__).resolve().parent.parent / "references" / "capability-manifest.schema.json"
+)
+
+
+def _load_schema() -> dict | None:
+    if not _CAPABILITY_SCHEMA_PATH.exists():
+        return None
+    try:
+        return json.loads(_CAPABILITY_SCHEMA_PATH.read_text(encoding="utf-8"))
+    except Exception:  # pragma: no cover
+        return None
+
+
+def _schema_property_enum(schema: dict | None, definition: str, field: str) -> set[str]:
+    if not isinstance(schema, dict):
+        return set()
+    values = (
+        schema.get("definitions", {})
+        .get(definition, {})
+        .get("properties", {})
+        .get(field, {})
+        .get("enum", [])
+    )
+    if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+        return set()
+    return set(values)
+
+
 # 共通核 (commonCore.required)
 _COMMON_CORE_REQUIRED = ("name", "description", "kind", "version", "owner")
-_VALID_KINDS = {
-    "skill", "agent", "hook", "command",
-    "plugin-composition", "prompt", "workflow",
-}
+_CAPABILITY_SCHEMA = _load_schema()
+_VALID_KINDS = _schema_property_enum(_CAPABILITY_SCHEMA, "commonCore", "kind")
+_SKILL_DECLARED_KINDS = _schema_property_enum(_CAPABILITY_SCHEMA, "kindSkill", "kind")
+_SKILL_SUBKINDS = _SKILL_DECLARED_KINDS - {"skill"}
+_SKILL_EFFECT_VALUES = _schema_property_enum(_CAPABILITY_SCHEMA, "kindSkill", "effect")
 
-_HOOK_EVENT_ENUM = {
-    "PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop",
-    "SessionEnd", "SubagentStop", "PreCompact", "Notification",
-}
+
+def _schema_dependency_types(schema: dict | None) -> set[str]:
+    """Read dependency edge types from the CapabilityManifest schema SSOT."""
+    if not isinstance(schema, dict):
+        return set()
+    values = (
+        schema.get("definitions", {})
+        .get("kindPluginComposition", {})
+        .get("properties", {})
+        .get("dependencies", {})
+        .get("items", {})
+        .get("properties", {})
+        .get("type", {})
+        .get("enum", [])
+    )
+    if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+        return set()
+    return set(values)
+
+
+_DEPENDENCY_TYPES = _schema_dependency_types(_CAPABILITY_SCHEMA)
+
+_HOOK_EVENT_ENUM = _schema_property_enum(_CAPABILITY_SCHEMA, "kindHook", "event")
 
 _NAME_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 _SEMVER_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
@@ -944,8 +993,14 @@ def _check_common_core(data: dict) -> list[str]:
 def _check_kind_skill(data: dict) -> list[str]:
     f: list[str] = []
     triggers = data.get("triggers")
-    if not isinstance(triggers, list) or not triggers:
+    # Explicit kind=skill keeps the legacy trigger-array contract.  Schema-native
+    # skill subkinds use their description as the trigger declaration and do not
+    # require a duplicate triggers array.
+    if data.get("kind") == "skill" and (not isinstance(triggers, list) or not triggers):
         f.append("skill.triggers must be non-empty array")
+    effect = data.get("effect")
+    if effect is not None and effect not in _SKILL_EFFECT_VALUES:
+        f.append(f"skill.effect={effect!r} not in schema enum {sorted(_SKILL_EFFECT_VALUES)}")
     return f
 
 
@@ -982,13 +1037,34 @@ def _check_kind_hook(data: dict) -> list[str]:
     return f
 
 
+def _normalize_command_allowed_tools(value: Any) -> list[str] | None:
+    """Normalize the schema's comma-separated string or string-array forms."""
+    if isinstance(value, str):
+        raw_items: list[Any] = value.split(",")
+    elif isinstance(value, list):
+        raw_items = value
+    else:
+        return None
+    if not raw_items:
+        return None
+    normalized: list[str] = []
+    for item in raw_items:
+        if not isinstance(item, str) or not item.strip():
+            return None
+        normalized.append(item.strip())
+    return normalized
+
+
 def _check_kind_command(data: dict, manifest_path: Path | None) -> list[str]:
     f: list[str] = []
     if not data.get("argument-hint"):
         f.append("command.argument-hint missing")
     allowed = data.get("allowed-tools")
-    if not isinstance(allowed, list) or not allowed:
-        f.append("command.allowed-tools must be non-empty array")
+    if _normalize_command_allowed_tools(allowed) is None:
+        f.append(
+            "command.allowed-tools must be a non-empty comma-separated string "
+            "or a non-empty string array"
+        )
     entry = data.get("entrypoint")
     if entry and manifest_path is not None:
         # entrypoint が Skill 参照を指す場合、リポジトリ上に SKILL.md が存在するか確認
@@ -1065,6 +1141,176 @@ def _plugin_relative_ref_findings(ref: str, field: str, plugin_name: str | None)
     return f
 
 
+_VERSION_REQUIREMENT_RE = re.compile(
+    r"^(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+)"
+    r"(?:\s+(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+))*$"
+)
+
+
+def _composition_capability_aliases(caps: list[object]) -> dict[str, str]:
+    aliases: dict[str, str] = {}
+    for cap in caps:
+        if not isinstance(cap, dict):
+            continue
+        raw = cap.get("ref")
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        ref = raw.strip().rstrip("/")
+        canonical = ref
+        if cap.get("kind") == "skill" and ref.endswith("/SKILL.md"):
+            canonical = ref[: -len("/SKILL.md")]
+        elif cap.get("kind") in {"agent", "command"} and ref.endswith(".md"):
+            canonical = ref[:-3]
+        aliases[ref] = canonical
+        aliases[canonical] = canonical
+        if cap.get("kind") in {"agent", "command"}:
+            aliases[f"{canonical}.md"] = canonical
+    return aliases
+
+
+def _resolve_local_composition_endpoint(
+    endpoint: object,
+    *,
+    aliases: dict[str, str],
+    plugin_root: Path | None,
+    allow_external_capability_path: bool = False,
+) -> str | None:
+    """Resolve a declared capability or a real resource inside one plugin root."""
+    if not isinstance(endpoint, str) or not endpoint.strip():
+        return None
+    value = endpoint.strip()
+    declared = aliases.get(value)
+    if declared is not None:
+        return f"cap:{declared}"
+    normalized = value.removesuffix(".md").removesuffix("/SKILL.md")
+    parts = PurePosixPath(normalized.replace("\\", "/")).parts
+    is_bare_capability_path = (
+        len(parts) == 2 and parts[0] in {"skills", "agents", "commands"}
+    ) or value.startswith("hook:")
+    if is_bare_capability_path and not allow_external_capability_path:
+        return None
+    if plugin_root is None or value.startswith("hook:"):
+        return None
+    relative = Path(value)
+    if relative.is_absolute() or ".." in PurePosixPath(value.replace("\\", "/")).parts:
+        return None
+    try:
+        root = plugin_root.resolve()
+        candidate = (root / relative).resolve(strict=True)
+        candidate.relative_to(root)
+    except (OSError, ValueError):
+        return None
+    return f"resource:{candidate.relative_to(root).as_posix()}"
+
+
+def _external_plugins_root(plugin_root: Path | None) -> Path | None:
+    if plugin_root is None:
+        return None
+    if plugin_root.parent.name == "plugins":
+        return plugin_root.parent
+    for ancestor in plugin_root.parents:
+        candidate = ancestor / "plugins"
+        if candidate.is_dir() and plugin_root.is_relative_to(candidate):
+            return candidate
+    return None
+
+
+def _check_external_dependencies(
+    value: object,
+    *,
+    local_aliases: dict[str, str],
+    plugin_root: Path | None,
+) -> list[str]:
+    findings: list[str] = []
+    if value is None:
+        return findings
+    if not isinstance(value, dict):
+        return ["plugin-composition.external_dependencies must be object"]
+    plugins_root = _external_plugins_root(plugin_root)
+    seen_edges: set[tuple[str, str, str, str]] = set()
+    for plugin_name, spec in value.items():
+        prefix = f"external_dependencies.{plugin_name}"
+        if not isinstance(plugin_name, str) or not _NAME_RE.fullmatch(plugin_name):
+            findings.append(f"external dependency plugin name invalid: {plugin_name!r}")
+            continue
+        if not isinstance(spec, dict):
+            findings.append(f"{prefix} must be object")
+            continue
+        version = spec.get("version")
+        if not isinstance(version, str) or not version.strip():
+            findings.append(f"{prefix}.version is required")
+        elif not _VERSION_REQUIREMENT_RE.fullmatch(version.strip()):
+            findings.append(f"{prefix}.version requirement invalid: {version!r}")
+
+        external_root = plugins_root / plugin_name if plugins_root is not None else None
+        if external_root is None or not external_root.is_dir():
+            findings.append(f"{prefix} plugin not found: {plugin_name}")
+            external_root = None
+
+        edges = spec.get("edges", [])
+        if not isinstance(edges, list):
+            findings.append(f"{prefix}.edges must be array")
+            continue
+        for index, edge in enumerate(edges):
+            edge_prefix = f"{prefix}.edges[{index}]"
+            if not isinstance(edge, dict):
+                findings.append(f"{edge_prefix} must be object")
+                continue
+            source = edge.get("from")
+            target = edge.get("to")
+            dep_type = edge.get("type")
+            if not isinstance(source, str) or not source.strip():
+                findings.append(f"{edge_prefix}.from missing")
+            if not isinstance(target, str) or not target.strip():
+                findings.append(f"{edge_prefix}.to missing")
+            if dep_type not in _DEPENDENCY_TYPES:
+                findings.append(f"{edge_prefix}.type invalid: {dep_type!r}")
+            if not isinstance(source, str) or not isinstance(target, str):
+                continue
+            duplicate_key = (plugin_name, source, target, str(dep_type))
+            if duplicate_key in seen_edges:
+                findings.append(
+                    f"duplicate external dependency edge: {plugin_name}: "
+                    f"{source} -> {target} ({dep_type})"
+                )
+            seen_edges.add(duplicate_key)
+            local_source = _resolve_local_composition_endpoint(
+                source, aliases=local_aliases, plugin_root=plugin_root
+            )
+            local_target = _resolve_local_composition_endpoint(
+                target, aliases=local_aliases, plugin_root=plugin_root
+            )
+            external_source = _resolve_local_composition_endpoint(
+                source,
+                aliases={},
+                plugin_root=external_root,
+                allow_external_capability_path=True,
+            )
+            external_target = _resolve_local_composition_endpoint(
+                target,
+                aliases={},
+                plugin_root=external_root,
+                allow_external_capability_path=True,
+            )
+            valid_direction = (
+                local_source is not None
+                and external_target is not None
+                and external_source is None
+                and local_target is None
+            ) or (
+                external_source is not None
+                and local_target is not None
+                and local_source is None
+                and external_target is None
+            )
+            if not valid_direction:
+                findings.append(
+                    f"{edge_prefix} has dangling external dependency endpoint or "
+                    "must connect exactly one local endpoint to one declared external plugin endpoint"
+                )
+    return findings
+
+
 def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> list[str]:
     f: list[str] = []
     caps = data.get("capabilities")
@@ -1089,8 +1335,12 @@ def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> li
         if not ref:
             f.append(f"capabilities[{i}].ref missing")
         elif isinstance(ref, str):
+            if ref in cap_refs:
+                f.append(f"duplicate capability ref: {ref}")
             cap_refs.add(ref)
             f.extend(_plugin_relative_ref_findings(ref, f"capabilities[{i}].ref", plugin_name))
+    aliases = _composition_capability_aliases(caps)
+    plugin_root = manifest_path.parent if manifest_path is not None else None
     deps = data.get("dependencies", [])
     if deps and not isinstance(deps, list):
         f.append("plugin-composition.dependencies must be array")
@@ -1098,22 +1348,54 @@ def _check_kind_plugin_composition(data: dict, manifest_path: Path | None) -> li
     # DAG 循環検出
     if isinstance(deps, list) and deps:
         graph: dict[str, list[str]] = {}
-        dep_types = {"calls", "reads", "extends", "evaluates", "emits", "writes", "delegates", "deploys"}
+        seen_edges: set[tuple[str, str, Any]] = set()
         for i, d in enumerate(deps):
-            if isinstance(d, dict) and d.get("from") and d.get("to"):
-                dep_type = d.get("type")
-                if dep_type is not None and dep_type not in dep_types:
-                    f.append(f"dependencies[{i}].type invalid: {dep_type!r}")
-                if cap_refs:
-                    for key in ("from", "to"):
-                        endpoint = d[key]
-                        if endpoint not in cap_refs:
-                            f.append(
-                                f"dependencies[{i}].{key} references undeclared capability: {endpoint}"
-                            )
-                graph.setdefault(d["from"], []).append(d["to"])
+            if not isinstance(d, dict):
+                f.append(f"dependencies[{i}] must be object")
+                continue
+            source = d.get("from")
+            target = d.get("to")
+            dep_type = d.get("type")
+            if not isinstance(source, str) or not source.strip():
+                f.append(f"dependencies[{i}].from missing")
+            if not isinstance(target, str) or not target.strip():
+                f.append(f"dependencies[{i}].to missing")
+            if dep_type not in _DEPENDENCY_TYPES:
+                f.append(f"dependencies[{i}].type invalid: {dep_type!r}")
+            if not isinstance(source, str) or not isinstance(target, str):
+                continue
+            edge = (source, target, dep_type)
+            if edge in seen_edges:
+                f.append(
+                    "duplicate dependency edge: "
+                    f"{source} -> {target} ({dep_type})"
+                )
+            seen_edges.add(edge)
+            source_ref = _resolve_local_composition_endpoint(
+                source, aliases=aliases, plugin_root=plugin_root
+            )
+            target_ref = _resolve_local_composition_endpoint(
+                target, aliases=aliases, plugin_root=plugin_root
+            )
+            if source_ref is None:
+                f.append(
+                    f"dependencies[{i}].from references undeclared or dangling local endpoint: {source}"
+                )
+            if target_ref is None:
+                f.append(
+                    f"dependencies[{i}].to references undeclared or dangling local endpoint: {target}"
+                )
+            if source_ref is not None and target_ref is not None:
+                graph.setdefault(source_ref, []).append(target_ref)
         if _has_cycle(graph):
             f.append("plugin-composition.dependencies contains cycle")
+    f.extend(
+        _check_external_dependencies(
+            data.get("external_dependencies"),
+            local_aliases=aliases,
+            plugin_root=plugin_root,
+        )
+    )
     return f
 
 
@@ -1162,27 +1444,16 @@ _KIND_DISPATCH = {
 }
 
 
-def _load_schema() -> dict | None:
-    schema_path = (
-        Path(__file__).resolve().parent.parent / "references" / "capability-manifest.schema.json"
-    )
-    if not schema_path.exists():
-        return None
-    try:
-        return json.loads(schema_path.read_text(encoding="utf-8"))
-    except Exception:  # pragma: no cover
-        return None
-
-
 def validate_manifest(data: dict, manifest_path: Path | None = None) -> tuple[bool, str | None, list[str]]:
     """CapabilityManifest を共通核 + kind 固有で検証する純関数。"""
     findings: list[str] = []
     findings.extend(_check_common_core(data))
-    kind = data.get("kind") if isinstance(data.get("kind"), str) else None
-    if kind in _KIND_DISPATCH:
-        findings.extend(_KIND_DISPATCH[kind](data, manifest_path))
-    elif kind is not None:
-        findings.append(f"unknown kind dispatch: {kind!r}")
+    declared_kind = data.get("kind") if isinstance(data.get("kind"), str) else None
+    reported_kind = "skill" if declared_kind in _SKILL_SUBKINDS else declared_kind
+    if reported_kind in _KIND_DISPATCH:
+        findings.extend(_KIND_DISPATCH[reported_kind](data, manifest_path))
+    elif declared_kind is not None:
+        findings.append(f"unknown kind dispatch: {declared_kind!r}")
 
     # jsonschema があれば追加で形式検証 (manual check の補強)
     if _HAS_JSONSCHEMA:
@@ -1192,7 +1463,7 @@ def validate_manifest(data: dict, manifest_path: Path | None = None) -> tuple[bo
                 jsonschema.validate(data, schema)
             except jsonschema.ValidationError as exc:
                 findings.append(f"jsonschema: {exc.message} at {list(exc.path)}")
-    return (not findings), kind, findings
+    return (not findings), reported_kind, findings
 
 
 def _handle_manifest_mode(path: Path) -> int:
@@ -1277,8 +1548,8 @@ def _self_test() -> int:
                     {"kind": "skill", "ref": "skills/b"},
                 ],
                 "dependencies": [
-                    {"from": "a", "to": "b"},
-                    {"from": "b", "to": "a"},
+                    {"from": "skills/a", "to": "skills/b", "type": "calls"},
+                    {"from": "skills/b", "to": "skills/a", "type": "calls"},
                 ],
             },
             False,

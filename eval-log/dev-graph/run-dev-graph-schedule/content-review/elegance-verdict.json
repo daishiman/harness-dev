@@ -2,27 +2,42 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-schedule",
-    "skill_md_sha256": "563212e822853591b1db0358af61490216864d23fdc6caf312c5d1047668414b"
+    "skill_md_sha256": "844131da027663f76446297e4907a3e4f74546436127c0bfcc86f8adb526ca06"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3"],
-    "positive_feedback": [
-      "feature ready と task ready の二層分離 (MM-10) が frontmatter R3 / Purpose step4 / 完了チェックリスト / Gotchas の全層で一貫し、両者を同一 batch に混ぜない禁則が矛盾なく反映されている",
-      "read-only 契約 (graph/tracker/lease を変更しない) が Purpose 末尾・goal-seek 配線 --mode read・digest 不変チェックと整合し、claim command は文字列返却に留めるという副作用境界が明確",
-      "binding 別の ready 算出 (beads=C28 bd ready かつ status/depends_on edge parity=confirmed の積集合、github/none=C16 自前算出) が R3・Why・step2/3 で一貫記述され、依存先 C-code の役割分担が漏れなく配線されている"
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 563212e822853591b1db0358af61490216864d23fdc6caf312c5d1047668414b) を frontmatter から Gotchas まで全文 read し 4 条件で genuine 再評価した。①矛盾なし: read-only 宣言と OUT3 の claim command 返却は『command を返すだけで実行しない』ため非矛盾、conflict-free batch 条件 (resource_scope.touches 重複0 + active lease 非衝突) が criteria/checklist/Gotchas で一致。②漏れなし: feedback_contract の IN1/OUT1/OUT2/OUT3 全てに Criteria acceptance 節と対応 Gotchas があり、goal-seek 配線 (goal-spec/progress/intermediate.jsonl の記録先と hash 検証スクリプト) も明記。③整合性: description の 2 trigger と本文 Purpose/step の対応、script_refs (schedule-graph.py/manage-worktree-lease.py/bd-bridge.py/resolve-repo-context.py) が Protocol 記述と一致。④依存整合: C24/C11/C27/C28/C16/C17/C09 の参照が Why と step に配線され、goal_seek fork=subagent に対し allowed-tools へ Agent が含まれる。重大な矛盾・欠落・依存断絶は検出されず PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

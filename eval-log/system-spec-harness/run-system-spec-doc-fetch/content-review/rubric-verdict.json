@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "d494c448a5afb6ad5a2aca634fc4987d180c315fd3d989e4f1a97d320be8adbc"
+    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:16:43Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,16 +24,18 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "前回 FAIL とした L146 の `$0`/`dirname` 由来 `PLUGIN_ROOT` 導出 (Skill の bash では `$0` が SKILL.md を指さない) と、算出値を使わない cwd 相対起動が両方とも撤去された。現行 L147 は同梱 `build-fetched-references.py` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-doc-fetch/scripts/...`、L150 は共有 `validate-source-citation.py` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/...` で起動し、同梱と共有の所在差が表記に現れている。",
-      "IN1 の必須フィールド・全件対応・host 一致という 3 条件が、出力契約の箇条書き・完了チェックリスト・Gotchas 2-4 で同一内容として反復され、`validate-source-citation.py` の機械検証へ接地している (手書き JSON での緑化を Key Rule 4 が禁止)。",
-      "OUT1 の鮮度判定を本 skill から明示的に切り離し (Key Rule 6)、現行最新版かの意味判定は C08 `system-spec-doc-freshness-auditor` の担当と宣言していて、C02 の停止条件が形式・全件・host 一致までに限定されている。",
-      "Key Rule 9 が『C01 の単一 writer `set-knowledge-candidate` を通してのみ qualified へ進める』と上流の状態遷移権限を C01 に一元化し、C02 が deep card 作成や curated 昇格を代行しないと越境を禁じている。"
+      "構造規範 (frontmatter 完備) を満たす: name/description/kind/prefix/effect/owner/version/allowed-tools/responsibilities/combinators/feedback_contract/artifact_delivery が揃い、responsibilities 3 件と responsibility_refs 3 件が id 単位で 1:1 対応する。",
+      "IN1 (verify_by: script) は `validate-source-citation.py` という実在する決定論 script に接地しており、その実行行が今回 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行されたことで、宣言 (runtime_root_policy) と検証手段の起動形が両立している。",
+      "Key Rules 4 (決定論組み立て) と 6 (鮮度判定は C08 へ分離) が、本 skill の責務境界を形式検証 (形式・全件・host 一致) までに限定しており、OUT1 を別 component (C08) の受入テストへ委譲する構造が criteria と本文で一致している。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] 局面カタログ R3 行のコマンド表記が path 無しで、`## 検証コマンド` block の PLUGIN_ROOT 形と粒度が揃っていない。",
+      "[low / smell] prompts/R4-audit-doc-freshness.md が responsibility_refs にも Additional Resources にも現れず、C08 側 SSOT であることは SKILL.md 本文の consumer 行から間接的にしか読めない。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-fix-rereview",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (`$0` 由来の誤った root 導出と未使用変数・cwd 相対起動) の解消を確認して PASS へ転じた。"
+  "notes": "採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはおらず、数値 score は算出していない。機械的に確認したのは構造規範に相当する項目に限る — frontmatter 必須キーの充足、responsibilities と responsibility_refs の 1:1 対応、宣言 path (responsibility_refs 3 / schema_refs 1 / Additional Resources 記載の script・reference) 23 件の実在 (test -e で全件 OK)、effect: local-artifact に対して external_mutation_guard を持たないことの正しい対応、artifact_delivery の 6 state / 6 transition 完備、runtime_root_policy 宣言と `## Runtime root contract` 節の対存在、shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形であること (bare `$CLAUDE_PLUGIN_ROOT` の実行行は grep で 0 件)。加えて `python3 scripts/lint-runtime-portability.py` を実行し exit 0 を確認した。 30 思考法は実施しておらず、実施も申告しない。verdict は focused combined review の単一判断に従い、high severity 相当の未解決 finding 0 件・medium 以上 0 件であるため PASS。残る 2 件は low の表記 smell。PASS の射程は静的設計 adequacy に限り、OUT1 (verify_by: test) の実走証拠は本 review では取得していない。"
 }

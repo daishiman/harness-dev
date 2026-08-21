@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-consult",
-    "skill_md_sha256": "aa6d191944860b19d8e066682b81441ffcc1dbe673690b6ac76bb78afe4e7db1"
+    "skill_md_sha256": "110599800db5e3d8a0c9c5543cc3cd9fbea47ec5a9e3ad9a41b86a8a978d3dac"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,15 +25,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "非処方スタンス不変条件 5 項が全ターン適用の形で明文化され、inner ループ (IN1) で毎周回自己検証する配線まで降りている。",
-      "graph consult の fallback が『knowledge graph があれば consult / harness graph は存在時のみ併用 / 不在なら knowledge 単独 / exit2 破損は WARN skip』と AND 前提にせず段階分解され、正本 reference へ委譲されている。",
-      "保存同意制と vault 書込禁止 (eval-log 配下へ退避) の境界が ubm-write-path-guard の許可パスと突き合わせて説明されている。"
+      "`effect: external-mutation` の 4 skill (run-ubm-goal-setting / run-ubm-journal / run-ubm-knowledge-sync / run-ubm-youtube-ingest) は `external_mutation_guard` frontmatter と canonical receipt flow block の双方を保持したまま、guard block 内の 3 本の shell 起動行 (preview / authorize / execute) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃った。`effect: local-artifact` の run-ubm-consult には frontmatter・block いずれも無く、双方向の対応が崩れていない。",
+      "`runtime_root_policy: host-skill-path` を宣言した 5 skill 全てが `## Runtime root contract` 本文を持ち、SKILL.md 内の shell 起動行に裸の `${CLAUDE_PLUGIN_ROOT}` が 0 件であることを grep で確認した。`audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` が exit 0 / verdict PASS / violations 空で機械確認している。",
+      "frontmatter が宣言した `responsibility_refs` / `subagent_refs` / `schema_refs` / `script_refs` / `reference_refs` / `manifest` を 5 skill 分 (計 62 参照) 機械照合し、欠損 0 件。`../../` を跨ぐ plugin 直下参照 (`knowledge/schema.json`・`agents/*.md`・`scripts/validate-knowledge-graph.py` 等) も含めて実在する。",
+      "差分は runtime root 移行に限定されており、Purpose & Output Contract・End-to-End Flow・Phase 構成・`feedback_contract.criteria` の text/verify_by は一行も書き換わっていない。既存契約への非後退 (additive) が保たれている。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell] `## Runtime root contract` が `# run-ubm-consult` H1 の直後へ挿入されたため、skill の overview 段落が runtime 機構の見出し配下へぶら下がる形になった。`## Purpose & Output Contract` 以降は独立見出しを保っており契約本体は無傷で、実行不能にはならないため low に留める。",
+      "[low / smell] 同一参照テーブル内で表記が混在した。{where} は Read 対象 (`knowledge/router.json` / `knowledge/schema.json`) を指す行だけ裸の `$CLAUDE_PLUGIN_ROOT` のまま残り、隣接行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ移行済み。audit-capability-parity.py の `_portable_root_violations` は bash/sh fence または EXECUTABLE_RE 一致行だけを対象にする設計で、shell 起動行ではないこれらは意図的に scope 外。機械的破綻は無いため low。"
+    ],
     "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "iteration_limit": 5,
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "本 verdict は `main` マージ + external-mutation guard block の機械 migration により `skill_md_sha256` が乖離したことを受けた再束縛であり、content-review-protocol §incremental (unresolved semantic batch) の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff HEAD -- plugins/ubm-goal-setting/skills/<skill>/SKILL.md` で 対象 5 skill の差分を全行読了、加えて同 diff に含まれる `prompts/` 配下 11 ファイルの差分も読了。(2) `grep -rn 'CLAUDE_PLUGIN_ROOT'` を skill ディレクトリ全体へ掛け、移行済み行と未移行行を全件列挙。(3) frontmatter 宣言 refs の実在を Python で機械照合 (5 skill / 62 参照 / 欠損 0)。(4) `plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` = exit 0 / verdict PASS / violations 空。(5) 規約正本 `plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md` の product別 plugin root 契約 (L41-52) と audit の `_portable_root_violations` 実装を読み、host-skill-path 契約の射程が `SKILL.md` + `prompts/**` の shell 実行行であることを確認。(6) 補助 lint: `lint-artifact-delivery` / `lint-entrypoint-artifact-first` / `lint-prompt-contract-drift` / `lint-runtime-portability` / `lint-external-refs` = exit 0、`lint-feedback-contract --all` = exit 0、`lint-skill-tree` = 5 skill とも ok (LS-203 `assets` 警告は本 diff 以前からの既存事項)。 差分は runtime root 移行に閉じており、既存の Purpose & Output Contract / workflow / criteria への書き換えは無い。未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 本 skill 固有: `effect: local-artifact` のため guard block を持たず、`runtime_root_policy` 宣言の根拠は `prompts/R3-frame-consult.md` の `consult-harness-artifact-graph.py` 起動行 (移行済み) である。owner 宣言は必要かつ妥当。"
 }

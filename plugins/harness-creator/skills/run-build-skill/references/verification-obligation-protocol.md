@@ -17,14 +17,14 @@ profile が「作った物にどれだけ証明を要求するか」であるの
 
 | stage | 実行する obligation | 繰り越すもの |
 |---|---|---|
-| `draft` | `stage=draft` かつ kind が `generative` / `deterministic` のもの。実体 (route build) と、それを立ち上げるのに要る phase (P01 goal-spec / P02 設計ブリーフ / P05 実装) | 受入テスト設計 (P04)、設計レビュー (P03)、P06 以降の検証・文書・リリース、および全ての `semantic` / `observational` / `audit` |
-| `release` (既定) | 全 obligation | なし |
+| `draft` (既定) | `stage=draft` かつ kind が `generative` / `deterministic` のもの。実体 (route build) と、それを立ち上げるのに要る phase (P01 goal-spec / P02 設計ブリーフ / P05 実装) | 受入テスト設計 (P04)、設計レビュー (P03)、P06 以降の検証・文書・リリース、および全ての `semantic` / `observational` / `audit` |
+| `release` (明示) | 利用者が第1稿を試した後、全 obligation を回収 | なし |
 
 stage は `derive-route-build-obligations.py` が `phase_ref` から決定論導出する (`DRAFT_PHASES`)。title の自然文や entity_ref の有無で判断しない。**stage 未宣言の obligation は `draft` 扱い**とする — 未分類を release へ倒すと、stage を知らない旧 contract を draft で回した瞬間に全件 defer され「何も作られていないのに何も落ちていない」計画が成立するためである。分類漏れは遅くなる側へ倒す。
 
 **畳み込みの単位は component ではなく「component × stage」である。** task-graph の `P02-Cxx-01` / `P04-Cxx-01` はどちらも `entity_ref` に component を持つため、component 単位で route obligation へ畳むと、第1稿の route build 指示に「受入テストを赤で固定する」が同梱され、stage を分けても待ち時間が縮まらない状態が黙って成立する。`_folds_into_route()` は `component-build` (route build 本体・`phase_ref` を持たない node がある) と draft 段の node だけを畳み、release 段の node は独立した `task:<node-id>` obligation として第1稿の外へ出す。
 
-draft は**速い完了ではなく、未完了だが動く状態**である。繰り越しは `stage_gate.deferred_to_release[]` に名前つきで残り、`stage_gate.status` は `draft-incomplete` を返す。この状態で completed を宣言しない。draft 側の obligation がその繰り越し先に依存する場合 (実グラフの `P05-x-01 → P04-x-01` がこれにあたる)、`blocked` ではなく `defer` + `dependency-deferred` として理由を残す。両者を混ぜると「証拠が足りない」と「意図的に後ろへ回した」の区別が計画から引けなくなり、昇格時に何を回収すべきか読めない。
+draft は**release 完了ではないが、利用者が試せる正常な引き渡し点**である。生成/checkが残る間は `stage_gate.status=draft-building`、`handoff_ready=false`。現物のproofが揃った後だけ `status=usable-draft`、`handoff_ready=true` とする。繰越しは `deferred_to_release[]` に名前つきで残し、`auto_promote=false`、`max_repair_rounds=1` は両状態で不変。usable draft proof後は `next_gate=build-improvement-gate.py` へ渡し、初回診断と改善深度選択を経由する。完全化用のTask/Agentは追加せず、選択前の編集やrelease/exhaustive自動昇格をしない。release completed とは宣言しないが、失敗/stallとして自動修復ループへ戻してもならない。draft 側の obligation がその繰越し先に依存する場合 (実グラフの `P05-x-01 → P04-x-01` がこれにあたる)、`blocked` ではなく `defer` + `dependency-deferred` として理由を残す。両者を混ぜると「証拠が足りない」と「意図的に後ろへ回した」の区別が計画から引けなくなり、昇格時に何を回収すべきか読めない。
 
 **stage は fingerprint に含めない。** draft で得た PASS receipt は release でそのまま再利用され、昇格は繰り越し分の追加実行だけで済む。含めてしまうと昇格のたびに全 route を作り直すことになり、二段階にした意味 (待ち時間の短縮) がそっくり失われる。
 
@@ -66,7 +66,14 @@ receiptは実行器が取得できる場合に `usage.input_tokens` / `output_to
 
 ## 30思考法の位置づけ
 
-30思考法は設計時に obligation の漏れを発見するcatalog、および明示的な adversarial audit として保持する。全methodを毎buildで別々に文章化することは品質要件ではない。通常buildでは4条件を個別Agentへ割り当てず、deterministic proofで未解決の意味claimだけを共同裁定する。
+30思考法は二つの実行形態に分け、proofを混ぜない。
+
+| 形態 | 実行者 | 発火 | 効果 |
+|---|---|---|---|
+| 初回usable-draft診断 | `elegant-initial-draft-evaluator` 1context | usable draft完成後にartifact+contract fingerprintあたり起動認可は最大1回（別runは完了receiptを再利用） | 30レンズの簡潔な所見を先に提示し、改善深度をユーザーに聞く。release/audit proofは閉じない |
+| adversarial audit | reset + 3独立analyst | 利用者が `release + exhaustive` を別途明示 | 完全監査obligationを閉じる |
+
+初回診断は `initial-draft-review.schema.json` と `build-improvement-gate.py` で制御する。canonical method IDは `run-elegant-review/references/thought-methods.yaml` を再利用し、別の30件リストを持たない。所見提示後に `references/improvement-levels.json` の `accept-draft/light/standard/detailed/release` を質問し、回答前は `improvement.authorized=false`。`exhaustive` は既定表示せず、二重確認と `confirm_exhaustive=true` でのみ許可する。
 
 ## 安全弁との違い
 

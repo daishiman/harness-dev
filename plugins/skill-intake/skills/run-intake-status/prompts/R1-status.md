@@ -12,7 +12,7 @@
 ### 入力契約
 
 - `hint` (任意): 対象output名。
-- 実在証拠: `intake.json`、`visuals/*.{svg,png}`、`notion-url.txt`、`notion-log.json`。
+- 実在証拠 (出力表6列と1:1): `kickoff.json`、`profile.json`、`intake.json` (5軸)、`visuals/*.{svg,png}`、`notion-url.txt`、`notion-log.json`。
 
 ### 出力契約
 

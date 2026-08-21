@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.10 / skills 32 + agents 6 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.20 / skills 32 + agents 8 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -450,8 +450,11 @@ observability:
 
 ## 3.10 hook 配線（共有 hooks/hooks.json）
 
-harness-creator の現行の plugin hook は **SessionStart 1 イベント / 1 コマンド**。共有正本
-`hooks/hooks.json` から `auto-sync-on-session-start.py` を起動する。コマンドは dual-root 形
+harness-creator の現行の plugin hook は **7 イベント / 13 コマンド**（SessionStart / PostToolUse /
+UserPromptSubmit / PreToolUse / PostToolUseFailure / Stop / SessionEnd）。共有正本
+`hooks/hooks.json` が唯一の配線元で、各コマンドは公開面 `hooks/<capability>.py` を起動し、
+実体は対応する `skills/*/scripts/` の実装へ委譲する（`plugin-composition.yaml` の
+`hook:` capability と 1 対 1）。コマンドは dual-root 形
 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で、どちらの product でも install 先に依存しない。
 
 - Claude は標準自動検出で `hooks/hooks.json` を読むため、`.claude-plugin/plugin.json` に

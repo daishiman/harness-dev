@@ -2,27 +2,42 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69"
+    "skill_md_sha256": "133f8af8edb196d7bb19ceaf306baabea350b4cf1742b6f791b440ceba8a45ce"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "2 軸直交 (13 phase 固定のライフサイクル軸 / N 個 buildable component の成果物実体軸) を正規化し build_target/depends_on を inventory のみが持つと明記 (主要ルール3・境界) して『kind ごと1本』退化と本数論争を同時に解消しており矛盾がない",
-      "proposer≠approver を skill 分離で構造保証: R4 を独立 skill assign-plugin-plan-evaluator (kind=assign/context:fork/read-only) へ委譲し hook へ製品検証を背負わせない (Gotchas hook 責務境界) と一貫",
-      "非配布を distributable:false + NEVER_DISTRIBUTE denylist の二重ロックで固定し、cross-plugin reference_refs を repo-bundled 前提 + parity test skip 明示 (配布注記) して依存の越境を honest に扱っている"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 347f76b45660b22ea3ffd7bffc58a0dab694b9a54f1254e55ad78693e3530c69) を全文 read し 4 条件で genuine 再評価した (旧 verdict は stale SHA 62ff263… のため再固定)。C1 矛盾なし: 13 はフェーズ数として固定・出力本数の設計判断ではない (line161) と buildable 実体数 N の独立性を明示し、2 軸正規化 (build_target/depends_on は inventory のみ) と併せて『固定形状と固定手順の直交』を成立させ矛盾がない。E3(改善還流)/E4(build 中 discovered-task)を別境界としつつ --mode update 同一周回で併走しうると明記し衝突を回避。C2 漏れなし: 目的/出力契約 (6 deliverables)・13 phase 写像・境界(4層 L0-L4)・主要ルール11・ゴールシーク(goal/why/checklist/loop/配線/検証)・局面カタログ R1-R4・handoff routing(component_kind 別 + envelope owner + MCP gap + capability-gap 起票)・Gotchas・配置先・追加リソースを網羅し、唯一 builder を持たない envelope/MCP の生成器未整備は open_issues への gap 記録を必須化して漏れを塞いでいる。C3 整合性: feedback_contract IN1/IN2(inner)↔同梱 core scripts (verify-index-topsort/detect-unassigned/check-spec-frontmatter/check-spec-gates/check-spec-matrix-coverage)、OUT1/OUT2(outer)↔elegant-review/fork evaluator、完了チェックリストとゴールシーク検証 bash ブロックが相互整合。C4 依存整合: script_refs/reference_refs/agent_refs/command_refs/hook_refs/schema_refs が本文参照と一致、cross-plugin harness-creator 参照 (goal-seek-paradigm.md/pipeline-boundary-contract.md/project-task-status.py/render-spec-browser.py) は repo-bundled 前提として依存整合。所見(重大でない): 本文が 377 行 (body 約248行) と rubric の ≤300行 目安を全体行では超過するが、references/ への progressive disclosure 委譲が厚く計画メタ skill 固有の契約密度に起因する冗長で、矛盾/整合性の欠陥ではない。重大問題 (矛盾/漏れ/不整合/依存欠落) は検出されず PASS。criteria_evaluated は feedback_contract.criteria の全 id (IN1/IN2/OUT1/OUT2) を被覆。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

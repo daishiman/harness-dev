@@ -13,7 +13,7 @@ owner: team-platform
 ## 評価対象と機械根拠
 
 - 対象: staging 配下の `feature-package.json` / `workstream-inventory.json` / `task-specs/phase-01..13-*.md` / `task-graph.json` / `system-build-handoff.json` / `staging-manifest.json`。
-- 機械根拠 (先行): `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-system-plan.py" --repo-root <root> --staging <relative>` の `status`(pass/fail) / `validated_digest` / `violations[]`。
+- 機械根拠 (先行): `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --repo-root <root> --staging <relative>` の `status`(pass/fail) / `validated_digest` / `violations[]`。
 - 出力: `plan-findings.json` (schema=`schemas/plan-findings.schema.json`)。`evaluated_digest` に validator の `validated_digest` をそのまま pin し、`evaluator.context=fork` を記録。
 
 ## 4 条件 (C1..C4) の判定基準

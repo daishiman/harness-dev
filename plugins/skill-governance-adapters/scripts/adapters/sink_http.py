@@ -23,8 +23,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "secrets"))
-from keychain_helper import get_secret, sanitize_error, SecretError  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from secret_helper import get_secret, sanitize_error, SecretError  # noqa: E402
 
 
 def main():
@@ -44,26 +44,30 @@ def main():
         headers = dict(params.get("headers", {}))
 
         auth = params.get("auth")
-        if auth:
-            scheme = auth.get("scheme", "bearer")
-            token_ref = auth.get("token_ref")
-            if token_ref:
-                try:
-                    secret = get_secret(token_ref)
-                except SecretError as se:
-                    print(json.dumps({"status": "failure", "adapter": "http", "errors": [str(se)]}))
-                    sys.exit(2)
-                if scheme == "bearer":
-                    headers["Authorization"] = f"Bearer {secret}"
-                elif scheme == "header":
-                    headers[auth.get("header", "X-API-Key")] = secret
+        scheme = auth.get("scheme", "bearer") if auth else None
+        token_ref = auth.get("token_ref") if auth else None
+        auth_header = (
+            "Authorization" if scheme == "bearer"
+            else auth.get("header", "X-API-Key") if scheme == "header"
+            else None
+        )
 
+        # dry-run は credential を参照しない。secret を取得しないため keychain
+        # provider 非配備でも成立し、同時にどの scheme でも実値が stdout へ出ない。
         if args.dry_run:
             safe = {**headers}
-            if "Authorization" in safe:
-                safe["Authorization"] = "Bearer [REDACTED]"
+            if token_ref and auth_header:
+                safe[auth_header] = "Bearer [REDACTED]" if scheme == "bearer" else "[REDACTED]"
             print(json.dumps({"status": "success", "adapter": "http", "location": url, "external_id": "", "dry_run": True, "headers": safe}))
             return
+
+        if token_ref and auth_header:
+            try:
+                secret = get_secret(token_ref)
+            except SecretError as se:
+                print(json.dumps({"status": "failure", "adapter": "http", "errors": [str(se)]}))
+                sys.exit(2)
+            headers[auth_header] = f"Bearer {secret}" if scheme == "bearer" else secret
 
         body = json.dumps(payload).encode()
         headers.setdefault("Content-Type", "application/json")

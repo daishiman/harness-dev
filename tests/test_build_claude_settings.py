@@ -381,6 +381,33 @@ class BuildClaudeSettingsTest(unittest.TestCase):
         self.assertEqual(result.returncode, 3)
         self.assertIn("unknown hook event", result.stderr)
 
+    def test_managed_post_tool_failure_hook_is_supported(self):
+        # harness-creator の external-intelligence-observe が PostToolUseFailure を
+        # 配線する。HOOK_EVENTS allowlist から漏れると normalize_hook_entries が
+        # 「unknown hook event」で exit3 になり builder ごと壊れるため、その回帰を守る。
+        # 注: hook は project settings へ投影されない (plugin loader が hooks/hooks.json
+        # から1回配布する設計) ので、投影結果ではなく「解釈できること」を検証する。
+        self.write_target({"permissions": {"deny": [], "ask": []}, "hooks": {}})
+        plugin_dir = self.plugin(
+            "alpha",
+            hooks=self.hook(
+                "python3 record-failure.py",
+                matcher="Bash|Write",
+                event="PostToolUseFailure",
+            ),
+        )
+
+        result = self.run_cli()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("unknown hook event", result.stderr)
+        plugins = MODULE.discover_plugins(self.plugins, project_root=plugin_dir.parent.parent)
+        hooks = [hook for hook in plugins[0]["hooks"] if hook["event"] == "PostToolUseFailure"]
+        self.assertEqual(
+            [(hook["matcher"], hook["command"]) for hook in hooks],
+            [("Bash|Write", "python3 record-failure.py")],
+        )
+
     def test_symlink_shared_skill_is_not_conflict(self):
         # 複数 plugin が同名 skill を symlink で 1 実体から共有する場合は、
         # 名前衝突ではなく共有 (shared) として dedupe し exit2 にしない。

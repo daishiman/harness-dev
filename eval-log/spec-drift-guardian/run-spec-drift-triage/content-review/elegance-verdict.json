@@ -2,7 +2,7 @@
   "target": {
     "plugin": "spec-drift-guardian",
     "skill": "run-spec-drift-triage",
-    "skill_md_sha256": "7f45c47d6c176e2a6528eb9d107021e518842bcdb965bfb64f39fd0b413937d4"
+    "skill_md_sha256": "c607c2e36a0e78d6cf18d317cf725ce793dc54c4b898025dcc241a50e6844f43"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,14 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "C11/C08/C09 の 3 コマンドセルすべてが `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/*.py` の dual-root 形で統一され、`## Runtime root contract` の宣言と本文に乖離がない (本群では例外的に散文層まで drift ゼロ)。",
-      "生 diff からの独立再導出 (spec-impact-verifier) を triage の見逃し/誤検出判定に据え、triage-report 自身を根拠にしない構造を保っている。"
+      "runtime_root_policy: host-skill-path の frontmatter 宣言と `## Runtime root contract` 節が対で入り、片側だけの宣言になっていない。契約節は Claude Code 経路と Codex 経路 (SKILL.md absolute path から plugin manifest を持つ祖先を上方探索) の双方、cwd 推測禁止、literal placeholder 禁止、prompts/ への契約継承までを本文だけで閉じている。",
+      "shell 起動行の migration が決定論段テーブルの 3 行 (C11 aggregate-issue-diffs.py / C08 parse-spec-diff.py / C09 map-field-impact.py) すべてに適用され、SKILL.md 内に bare `${CLAUDE_PLUGIN_ROOT}` の起動行は残っていない。本 skill が所有する prompts/ と references/resource-map.yaml にも bare 参照は 0 件で、companion asset まで含めて一貫している。",
+      "差分が決定論段と LLM 意味判断の二層分離を壊していない。fail-closed 条件 (C11 exit≠0 / C08 exit2 = complete=false・digest 不一致・commit pair 混在 / C09 exit≠0)、provenance の verbatim 転記規則 (base_commit / source_commit / diff_sha256 / complete を LLM が再計算しない)、写像非 hardcode、単一 writer 契約はいずれも差分前と同一。",
+      "effect: local-artifact に対し external_mutation_guard frontmatter も canonical receipt flow block も 0 件で、双方向の対応が崩れていない。allowed-tools も Read/Write/Bash に限られ、Edit を持たないことが「triage まで、提案・適用は C02」という boundary 宣言と整合する。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "本 verdict は main のマージと external-mutation guard block の機械 migration により skill_md_sha256 が既存 verdict (c71d3109...) と乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行して (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定し、elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施内容: git diff HEAD で本 skill の差分全 3 hunk (frontmatter への runtime_root_policy: host-skill-path 追加 / `## Runtime root contract` 節 7 行の新設 / 決定論段テーブル 3 行の PLUGIN_ROOT 形への置換) を読み、SKILL.md 全 193 行を通読した。 (c) 規約整合: runtime_root_policy 宣言と Runtime root contract 節の対応を確認、SKILL.md 内の bare `${CLAUDE_PLUGIN_ROOT}` shell 起動行を grep で 0 件確認、本 skill 配下 (prompts/・references/) にも bare `$CLAUDE_PLUGIN_ROOT` が 0 件であることを grep で確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに 0 件であることを grep -c で確認した。 (d) 依存関係整合: frontmatter が宣言した responsibility_refs 3 件 (prompts/R1-elicit.md, R2-parse.md, R3-triage.md)・reference_refs 1 件 (references/resource-map.yaml)・script_refs 3 件 (aggregate-issue-diffs.py, parse-spec-diff.py, map-field-impact.py)・schema_refs 1 件 (triage-report.schema.json) の実在をファイル存在検査で確認し、欠損 0 件であった。responsibilities 宣言 R1/R2/R3 と responsibility_refs・End-to-End Flow・Additional Resources の 3 箇所の記述も一対一で対応している。 (a)(b): 差分は宣言追加と placeholder 置換に閉じており、Purpose & Output Contract・二層分離テーブル・End-to-End Flow・Key Rules 7 項・Gotchas 6 項・feedback_contract criteria (IN1/OUT1) はいずれも改変されていない。前回 verdict が挙げていた Pre-choice section の low smell は、現行 Pre-choice 本文が「effect別のparse/open・secret・irreversible・corrupt guardだけを実行し」へ書き換わったことで解消しており、再掲しない。 未解決 finding は 0 件で verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1 の test (fixture matrix に対する 4 軸+semantics の誤検出/見逃し threshold、truncated preview の fail-closed) を含む実行挙動の受け入れは別途実走証拠を要する。"
 }

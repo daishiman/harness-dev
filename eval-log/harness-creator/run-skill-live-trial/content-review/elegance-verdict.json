@@ -2,26 +2,45 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9"
+    "skill_md_sha256": "e746dda3f6ea44dec91932c3adaff705bea28b426838a05bf9e197f209eddee6"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
+  "reviewer": "cr-live-trial2 (focused combined content review, incremental profile, round 4)",
+  "reviewed_at": "2026-08-21T06:30:00Z",
+  "iterations": 4,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
-    "positive_feedback": [
-      "fork acceptance と live-trial の観測対象 (Stop hook 自走 / 入れ子 Skill / 対話 gate 越え / 本番 plugin・hook ロード) を表で直交させ、どの段まで要るかを derive_acceptance_tier() の決定論導出に委ねているため適用境界が主観判断なく確定する。goal を proxy にしない絶対ルールと DEGRADED 降格 (nudge/gate 応答 >0) が判定ロジック表と一貫。",
-      "proof trial の実走 model 証明を transcript 抽出の actual_model 機械 gate のみに限定し boot READY 行の MODEL: は requested の echo と明記 (OUT2)、denylist を boot/verdict の二重機械 gate で拒否 (OUT3)、数値上限を convergence-policy.json 正本に委ねて本文へ生値を書かない (二重宣言禁止) など、証拠と正本の分離が徹底されている。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
-    "iteration_limit": 3,
+    "positive_feedback": [
+      "round 3 で FAIL とした medium 3 件が全て設計側の修正で解消している (verdict の書き換えによる緑化ではない)。",
+      "[dependency_break 解消] behavior_closure_files が .claude-plugin/plugin.json#dependencies と references/package-contract.json#depends_on の union を取るようになり、live-trial-boot._merge_dependency_slugs が load する集合と digest する集合が一致した。実測: 20 plugin 中 18 が manifest のみで skill-governance-adapters を宣言しており、同 plugin は hooks/hooks.json と hook script 2 本を出荷する。修正後は adapter 由来 21 ファイルが closure に入るため、load されて挙動に効く plugin の変更が PASS を stale にしないという素通りが塞がった。",
+      "[contradiction 解消] SKILL.md 絶対規則 3 が 2 本の依存軸 (host 登録前提の manifest dependencies / harness sidecar allow-list の package-contract depends_on) を明示し、load 集合 == digest 集合という不変条件を live-trial-boot.py#_merge_dependency_slugs と live-trial-verdict.py#behavior_closure_files を名指しで記述するようになった。skill_dir_tree_sha の説明文も union を反映した表現へ同期している。",
+      "[Goodhart smell 解消] gate_kind=contractual の免除が被験 skill 側の frontmatter 宣言 (external_mutation_guard / allowed-tools の AskUserQuestion|ExitPlanMode) へ接地し、根拠 0 件の contractual は live-trial-verdict.py が exit 2 で拒否する。接地根拠は gate_contract_evidence として verdict へ焼き込まれ、schema にも optional field として追加済み。gate_response_count=0 のときは区分に意味が無いため rescue へ正規化される。",
+      "手書き verdict による CLI 迂回も塞がっている。scripts/lint-live-trial-verdict.py の check_verdict が gate_response_count>0 かつ gate_kind=contractual で gate_contract_evidence が空の verdict を violation として exit 1 にし、contractual_exemption の [NOTE] 出力にも接地根拠を併記する。CLI 側 (exit 2) と lint 側 (exit 1) の 2 点で独立に強制される。",
+      "評価者が明示的に反対した『lint の [NOTE] を一律 exit 1 にする』素朴修正は採用していない。一律 exit 1 は『契約上 gate を要求する skill は永久に PASS を得られない』という元の欠陥を復活させるため、新たな exit 1 経路は根拠欠落時のみに限定されている。"
+    ],
+    "negative_feedback": [
+      "[low / smell] contract_gate_evidence は SKILL.md frontmatter のみを根拠に取り、本文の散文は根拠にしない。これは自己申告での降格回避を塞ぐ意図的な設計だが、frontmatter に現れない形で契約 gate を持つ skill (例: 呼び出し先 subagent 側にのみ gate がある構成) は contractual を主張できない。現時点で該当例は無く、必要になったら宣言軸を増やす方向で対処する。"
+    ],
+    "iteration": 4,
+    "iteration_limit": 4,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 a6a3a22555ab52ccc33d61d8cae6f71078e6fb20080b6dc053c7490275f73af9) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 判定ロジック表 (起動/完走/goal 適合→総合)・proof trial の扱い (DEGRADED→FAIL・actual_model 不一致→FAIL)・数値上限の本文非記載が一貫。②漏れなし: 適用境界表、スコープと配備境界、絶対ルール 1〜4、goal-seek、局面カタログ (事前計画/準備/boot/send/poll/STALL 分岐表/回収/goal verification/verdict+掃除)、判定ロジック、検証、Gotchas、関連を網羅。completeness_exempt で prompts/manifest の免除理由を明記し acceptance harness として妥当。③整合性: feedback_contract 5 criteria (IN1 test / IN2 script / OUT1 evaluator / OUT2 live-trial / OUT3 script) が本文主張と一致。④依存整合: schema_refs (live-trial-verdict.schema.json)、reference_refs (task-template.md/transcript-jsonl.md/../run-elegant-review/references/convergence-policy.json/../run-build-skill/references/goal-seek-paradigm.md/../../references/orchestrate-gate-pattern.md)、script_refs (plan-live-trials/live-trial-backend/boot/send/status/poll/verdict) を実ディスクで確認し全て resolve。検証節が参照する tests/test_live_trial_harness.py は repo-root 相対で実在 (harness cwd 規約に整合) し dependency break なし。重大問題なし PASS。"
+  "notes": "round 4 incremental content review。round 3 の FAIL verdict (medium 3 件: dependency_break / contradiction / Goodhart smell) に対する修正の再評価。 読んだファイル: plugins/harness-creator/skills/run-skill-live-trial/{SKILL.md, scripts/live-trial-verdict.py, scripts/live-trial-boot.py, scripts/live-trial-status.py, schemas/live-trial-verdict.schema.json}、scripts/lint-live-trial-verdict.py、tests/test_live_trial_harness.py、tests/test_lint_live_trial_verdict.py、全 20 plugin の .claude-plugin/plugin.json と references/package-contract.json。 実行コマンドと実測 exit code: python3 -m pytest -q tests/test_live_trial_harness.py tests/test_lint_live_trial_verdict.py = 0 (100 passed)、python3 scripts/lint-live-trial-verdict.py = 0、python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . = 0、lint-skill-tree.py / validate-frontmatter.py / lint-skill-completeness.py = 全て 0。 M1 の検証は報告を鵜呑みにせず経験的に確認した: 20 plugin の manifest dependencies と package-contract depends_on の集合差を列挙し、18 plugin で manifest のみに skill-governance-adapters があること、同 plugin が hooks/hooks.json + hook script 2 本を出荷すること、修正後に adapter 由来 21 ファイルが closure へ入ることを実測した。 新規 test で固定した挙動: test_verdict_contractual_without_declaration_is_rejected (rc==2 かつ verdict 未出力)、test_verdict_contractual_grounds_on_external_mutation_guard、test_verdict_gate_kind_normalized_to_rescue_without_gate_response、test_contractual_without_evidence_is_a_violation (lint 側 exit 1)。 既知の対象外事実: plugins/skill-intake/skills/run-skill-intake の frontmatter が実在しない ref-workflow-sequence を参照するため behavior_closure_files が解決不能になる。本 diff 起因ではない既存欠陥で、本 round では修正していない。 criteria 全 5 件の評価: IN1 = live-trial harness の lint/test 群を実測し違反 0。IN2 = schema と verdict 生成 CLI と lint の 3 者が gate_contract_evidence について同一契約を持つことを test で固定。OUT1 = high severity 0 件、round 3 の medium 3 件は全て設計側修正で解消。OUT2 = 受け入れ基準の緩和は導入しておらず、contractual 免除はむしろ接地要件の追加で狭まった。OUT3 = tier 降格・denylist・stale-sha の fail-closed 経路に変更なし。 30 思考法は実施しておらず、実施したとも申告しない (incremental profile の焦点再判定のみ)。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

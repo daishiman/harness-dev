@@ -15,6 +15,7 @@ from pathlib import Path
 HOOK_EVENTS = (
     "PreToolUse",
     "PostToolUse",
+    "PostToolUseFailure",
     "UserPromptSubmit",
     "UserPromptExpansion",
     "Stop",
