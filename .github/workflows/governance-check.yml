@@ -16,6 +16,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      # このジョブは長く stdlib だけで足りていたが、artifact-delivery の
+      # generator/lint が YAML frontmatter を読むため PyYAML を必要とする。
+      # 依存は requirements-dev.txt を正本にし、job 側で個別 pin しない。
+      - name: install python dependencies
+        run: python3 -m pip install --quiet -r requirements-dev.txt
       - name: guard change category (P0/P1 proposal gate)
         run: python3 scripts/guard-change-category.py --base origin/main --bypass-cooldown
       - name: lint script naming (28章 §4)
