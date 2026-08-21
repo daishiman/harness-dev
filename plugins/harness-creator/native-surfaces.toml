@@ -10,14 +10,14 @@ config_file = ".codex/config.toml"
 features_hooks = true
 
 [discovery]
-marketplace_name = "harness-repo-internal"
+marketplace_name = "harness-dev"
 plugin_name = "harness-creator"
 source_path = "./plugins/harness-creator"
 installation = "AVAILABLE"
 authentication = "ON_INSTALL"
-category = "Internal-Tooling"
-distributable = false
-scope = "repo-internal"
+category = "Development Tools"
+distributable = true
+scope = "repo-and-git"
 activation_requires = ["user-install", "user-enable", "user-hook-trust"]
 
 [[hooks]]
@@ -27,13 +27,30 @@ event = "SessionStart"
 matcher = "startup|resume|clear"
 command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\""
 delivery = "plugin"
-products = ["claude", "codex"]
+# Codex は plugin_hooks が removed で plugin 配下 hooks.json を読まない。
+# Codex への配達は build-hook-registry.py が生成する project 層 hook-router が担うため、
+# plugin delivery の products は claude のみが真。
+products = ["claude"]
 
 [[hooks]]
 id = "harness-creator-external-intelligence-observe"
 owner = "harness-creator"
 event = "PostToolUse"
 matcher = "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write"
-command = "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\""
+command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/external-intelligence-observe.py\""
 delivery = "plugin"
-products = ["claude", "codex"]
+# Codex は plugin_hooks が removed で plugin 配下 hooks.json を読まない。
+# Codex への配達は build-hook-registry.py が生成する project 層 hook-router が担うため、
+# plugin delivery の products は claude のみが真。
+products = ["claude"]
+
+# 失敗した tool 呼び出しからも lesson を回収する。PostToolUseFailure は Claude 専用
+# イベントなので products から codex を外す (Codex では発火せず、宣言すると虚偽になる)。
+[[hooks]]
+id = "harness-creator-external-intelligence-observe-failure"
+owner = "harness-creator"
+event = "PostToolUseFailure"
+matcher = "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write"
+command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/external-intelligence-observe.py\""
+delivery = "plugin"
+products = ["claude"]

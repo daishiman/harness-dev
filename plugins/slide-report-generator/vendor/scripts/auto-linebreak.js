@@ -3,9 +3,13 @@
  * 自動改行挿入スクリプト
  *
  * テキスト要素に<br>タグを自動挿入して可読性を向上:
- * - 1行30-40文字を目安に改行
  * - 句読点・助詞を考慮した自然な改行位置
  * - スライドタイプ別の最適化
+ *
+ * --max-chars（既定 35）は この道具の既定値であって仕様の数字ではない。
+ * SR-3-09 は改行位置を文字数ではなく句読点・助詞の切れ目で決めると定めており、
+ * 35 は句読点・助詞のどちらも当たらなかったときにだけ効く最終手段である。
+ * この値を仕様として引用したり、検査の閾値に流用したりしないこと。
  *
  * 使用方法:
  *   node scripts/auto-linebreak.js <html-file-path> [options]
@@ -23,7 +27,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { parseArgs, hasFlag, EXIT_CODES } from './utils.js';
+import { parseArgs, hasFlag, EXIT_CODES, LINEBREAK_RULES } from './utils.js';
 
 // コマンドライン引数
 const { flags, positional, options } = parseArgs();
@@ -81,14 +85,14 @@ if (!existsSync(htmlPath)) {
   process.exit(EXIT_CODES.FILE_NOT_FOUND);
 }
 
-// 改行候補の優先度（高い順）
-const BREAK_PRIORITIES = [
-  { pattern: /([。！？])(?!<br>)/g, priority: 100, after: true },      // 句点の後
-  { pattern: /([、])(?!<br>)/g, priority: 80, after: true },           // 読点の後
-  { pattern: /(ます|です|した|ない)(?!<br>)/g, priority: 70, after: true }, // 文末表現の後
-  { pattern: /(は|が|を|に|で|と|も|の)(?!<br>)/g, priority: 50, after: true }, // 助詞の後
-  { pattern: /(、|・)(?!<br>)/g, priority: 40, after: true },          // 中黒の後
-];
+// 改行候補の優先度（高い順）。語彙の正本は utils.js の LINEBREAK_RULES で、
+// ここではそれを正規表現へ組み立てるだけ。検査側（validate-linebreak-position）
+// と同じ集合を見るためにこの形にしてある。ここに語を直接足さないこと。
+const BREAK_PRIORITIES = LINEBREAK_RULES.map(rule => ({
+  pattern: new RegExp(`(${rule.chars.join("|")})(?!<br>)`, "g"),
+  priority: rule.priority,
+  after: true
+}));
 
 /**
  * テキストに改行を挿入

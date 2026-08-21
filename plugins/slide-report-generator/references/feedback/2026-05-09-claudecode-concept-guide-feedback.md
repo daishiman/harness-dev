@@ -58,9 +58,9 @@ L-01〜L-10 (10 件) は `specs/04-09-skill-reflection-classification.md` §2 �
 
 | ID | 反映先ファイル | 追加箇所 |
 |---|---|---|
-| SR-02 | `scripts/check-consistency.js` | スライド抽出ループ修正（depth 計算ロジック差替）|
-| SR-03 | `scripts/check-consistency.js` | viewBox 16:9 逸脱検査ブロック追加（type: viewbox-aspect-mismatch）|
-| SR-04 | `scripts/check-consistency.js` | SVG `<text font-size>` 13px 最小値検査追加（type: svg-fontsize-too-small）|
+| SR-02 | `vendor/scripts/check-consistency.js` | スライド抽出ループ修正（depth 計算ロジック差替）|
+| SR-03 | `vendor/scripts/check-consistency.js` | viewBox 16:9 逸脱検査ブロック追加（type: viewbox-aspect-mismatch）|
+| SR-04 | `vendor/scripts/check-consistency.js` | SVG `<text font-size>` 13px 最小値検査追加（type: svg-fontsize-too-small）|
 | SR-08 | `references/print-layout.md` | 「必須事項チェックリスト §1: print-color-adjust 強制」追加 |
 | SR-09 | `references/print-layout.md` | 「必須事項チェックリスト §2: box-shadow 除去」追加 |
 | SR-15 | `feedback/_template.md` | 新規作成（frontmatter + §1-§6 ひな形）|
@@ -69,7 +69,7 @@ L-01〜L-10 (10 件) は `specs/04-09-skill-reflection-classification.md` §2 �
 
 | ID | 反映先ファイル | 追加箇所 |
 |---|---|---|
-| SR-01 | `scripts/sync-checker.js` | parseStructureMd で frontmatter / JSON meta から total_slides 抽出、verifySynchronization で HTML 実装枚数と突合（type: meta-total-slides-drift）|
+| SR-01 | `vendor/scripts/sync-checker.js` | parseStructureMd で frontmatter / JSON meta から total_slides 抽出、verifySynchronization で HTML 実装枚数と突合（type: meta-total-slides-drift）|
 | SR-05 | `references/spec-registry.md` | §4 末尾に SR-4-09（N/S 接頭 ID 命名規約）追加 |
 | SR-06 | `schemas/structure.schema.json` | meta.narrative_pattern (optional, enum 8 値) 追加、meta.total_slides (optional) 追加 |
 | SR-06 | `references/composition-patterns.md` | §9 ナラティブ構造パターン 8 種を追記 |
@@ -89,8 +89,8 @@ L-01〜L-10 (10 件) は `specs/04-09-skill-reflection-classification.md` §2 �
 
 | ファイル | 種別 | 概要 |
 |---|---|---|
-| `scripts/check-consistency.js` | 修正 + 追加 | 約 +50 行: スライド抽出 depth 計算修正 / viewBox 16:9 検査 / SVG font-size 13px 検査 / typeCounts ラベル 2 件 |
-| `scripts/sync-checker.js` | 追加 | 約 +20 行: parseStructureMd で frontmatter total_slides 抽出 / verifySynchronization で drift 検査 |
+| `vendor/scripts/check-consistency.js` | 修正 + 追加 | 約 +50 行: スライド抽出 depth 計算修正 / viewBox 16:9 検査 / SVG font-size 13px 検査 / typeCounts ラベル 2 件 |
+| `vendor/scripts/sync-checker.js` | 追加 | 約 +20 行: parseStructureMd で frontmatter total_slides 抽出 / verifySynchronization で drift 検査 |
 | `schemas/structure.schema.json` | 追加 | meta に narrative_pattern (enum 8) と total_slides (integer) を optional で追加。backwards-compatible |
 | `references/print-layout.md` | 追加 | 約 +50 行: 必須事項チェックリスト 3 項目 / 変更履歴 3.1.0 |
 | `references/spec-registry.md` | 追加 | 2 行: SR-4-09 / SR-2-04-alt |
@@ -103,8 +103,8 @@ L-01〜L-10 (10 件) は `specs/04-09-skill-reflection-classification.md` §2 �
 
 ### 構文チェック結果
 
-- `node --check scripts/check-consistency.js` → OK
-- `node --check scripts/sync-checker.js` → OK
+- `node --check vendor/scripts/check-consistency.js` → OK
+- `node --check vendor/scripts/sync-checker.js` → OK
 - `JSON.parse(schemas/structure.schema.json)` → OK
 - 既存 spec への影響: backwards-compatible（meta 追加プロパティはすべて optional、required 変更なし）
 

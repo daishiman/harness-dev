@@ -25,8 +25,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "secrets"))
-from keychain_helper import get_secret, sanitize_error, SecretError  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from secret_helper import get_secret, sanitize_error, SecretError  # noqa: E402
 
 
 SHEETS_API = "https://sheets.googleapis.com/v4/spreadsheets"
@@ -48,12 +48,6 @@ def main():
         sheet = params.get("sheet", "Sheet1")
         token_ref = params["token_ref"]
 
-        try:
-            secret = get_secret(token_ref)
-        except SecretError as se:
-            print(json.dumps({"status": "failure", "adapter": "sheets", "errors": [str(se)]}))
-            sys.exit(2)
-
         # 行データ: [timestamp, kind, title, body, tags]
         metadata = payload.get("metadata", {})
         row = [
@@ -67,9 +61,17 @@ def main():
         url = f"{SHEETS_API}/{spreadsheet_id}/values/{sheet}:append?valueInputOption=USER_ENTERED"
         body = json.dumps({"values": [row]}).encode()
 
+        # dry-run は credential を参照しない。secret 取得より前に返すことで、
+        # keychain provider 非配備でも副作用なしの契約確認が成立する。
         if args.dry_run:
             print(json.dumps({"status": "success", "adapter": "sheets", "location": f"sheets://{spreadsheet_id}/{sheet}", "external_id": "", "dry_run": True}))
             return
+
+        try:
+            secret = get_secret(token_ref)
+        except SecretError as se:
+            print(json.dumps({"status": "failure", "adapter": "sheets", "errors": [str(se)]}))
+            sys.exit(2)
 
         req = urllib.request.Request(
             url,

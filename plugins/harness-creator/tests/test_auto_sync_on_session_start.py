@@ -538,6 +538,14 @@ def test_resolve_repo_root_payload_cwd(tmp_path):
     assert got == tmp_path.resolve()
 
 
+def test_resolve_repo_root_ascends_from_harness_subdirectory(tmp_path):
+    repo = mk_repo(tmp_path)
+    nested = repo / "plugins" / "harness-creator" / "hooks"
+    nested.mkdir(parents=True, exist_ok=True)
+    got = mod.resolve_repo_root({"cwd": str(nested)}, None, env={})
+    assert got == repo.resolve()
+
+
 def test_resolve_repo_root_payload_project_dir(tmp_path):
     got = mod.resolve_repo_root({"project_dir": str(tmp_path)}, None, env={})
     assert got == tmp_path.resolve()
@@ -656,14 +664,17 @@ def test_classify_exit0_all_skipped():
     assert mod.classify_c01(r) == "skipped_not_installed"
 
 
-def test_classify_exit0_unparseable_noop():
+def test_classify_exit0_unparseable_invalid():
     r = {"present": True, "timed_out": False, "returncode": 0, "stdout": "not json"}
-    assert mod.classify_c01(r) == "noop"
+    assert mod.classify_c01(r) == "warning_invalid"
 
 
-def test_classify_exit0_empty_adapters_noop():
+def test_classify_exit0_missing_or_empty_adapters_invalid():
+    missing = {"present": True, "timed_out": False, "returncode": 0,
+               "stdout": json.dumps({"verdict": "success"})}
+    assert mod.classify_c01(missing) == "warning_invalid"
     r = {"present": True, "timed_out": False, "returncode": 0, "stdout": _c01_report([])}
-    assert mod.classify_c01(r) == "noop"
+    assert mod.classify_c01(r) == "warning_invalid"
 
 
 def test_classify_exit0_changed_field_success():
@@ -792,6 +803,29 @@ def test_run_hook_reentrancy_expired_reruns(tmp_path):
     assert r2["status"] == "success" and len(runner.calls) == 2  # 窓超過で再実行
 
 
+@pytest.mark.parametrize(
+    ("runner_factory", "expected"),
+    [
+        (lambda: FakeRunner(rc=1, stdout=_report_noop()), "warning_drift"),
+        (lambda: FakeRunner(rc=2, stdout=""), "warning_conflict"),
+        (lambda: FakeRunner(rc=3, stdout=""), "warning_invalid"),
+        (lambda: FakeRunner(timeout_exc=True), "warning_timeout"),
+    ],
+)
+def test_run_hook_warning_does_not_debounce_retry(tmp_path, runner_factory, expected):
+    repo = mk_repo(tmp_path)
+    c01 = dummy_c01(tmp_path)
+    first_runner = runner_factory()
+    second_runner = runner_factory()
+    payload = {"session_id": "retryable", "source": "startup"}
+    first = run(repo, c01, first_runner, payload=payload, now=T0)
+    second = run(repo, c01, second_runner, payload=payload, now=T0 + timedelta(seconds=5))
+    assert first["status"] == second["status"] == expected
+    assert len(first_runner.calls) == len(second_runner.calls) == 1
+    guard = repo.joinpath(*mod.GUARD_REL)
+    assert not guard.exists() or "retryable" not in json.loads(guard.read_text())
+
+
 def test_run_hook_reentrancy_lock_held_noop(tmp_path):
     repo = mk_repo(tmp_path)
     lock = repo / ".build" / "locks" / "l"
@@ -873,6 +907,21 @@ def test_run_hook_log_has_remediation_on_warning(tmp_path):
     run(repo, dummy_c01(tmp_path), FakeRunner(rc=1, stdout=_report_noop()), now=T0, log_path=log)
     rec = [json.loads(x) for x in log.read_text().splitlines() if x.strip()][-1]
     assert rec["status"] == "warning_drift" and rec["remediation"] and "--apply" in rec["remediation"]
+
+
+def test_run_hook_log_has_plugin_runtime_hook_digest_and_host(tmp_path):
+    repo = mk_repo(tmp_path)
+    manifest = repo.joinpath(*mod.HARNESS_MANIFEST_REL)
+    manifest.write_text(json.dumps({"name": "harness-creator", "version": "9.8.7"}), encoding="utf-8")
+    log = repo / ".build" / "logs" / "l.jsonl"
+    run(repo, dummy_c01(tmp_path), FakeRunner(rc=0, stdout=_report_synced()), now=T0, log_path=log)
+    record = json.loads(log.read_text(encoding="utf-8").splitlines()[-1])
+    provenance = record["provenance"]
+    assert provenance["plugin"] == {"name": "harness-creator", "version": "9.8.7"}
+    assert provenance["runtime"]["implementation"]
+    assert provenance["runtime"]["python"]
+    assert provenance["hook"]["sha256"] and len(provenance["hook"]["sha256"]) == 64
+    assert provenance["host"]["hostname"] == HOST
 
 
 def test_run_hook_log_preserves_bounded_child_stderr(tmp_path):

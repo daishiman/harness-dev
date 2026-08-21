@@ -89,16 +89,23 @@ race / timeout は report の原因を直してから再試行する。`skipped_
 
 ### 3. Claude Code lifecycle
 
-この repo の `harness-creator` は `distributable:false` の repo-local plugin である。
-public marketplace install は行わず、clone 内の source を使う。
+Claude Code 面の `harness-creator` はpublic marketplaceでは`distributable:false`だが、
+cloneから生成するlocal marketplace `harness-local`をuser scopeへ登録してinstallできる。
+標準path `hooks/hooks.json` は製品が自動検出するため、Claude manifestへ同じpathを再宣言しない。
 
-1. **install 相当**: repo に `plugins/harness-creator/` が存在し、manifest を review する。
-2. **enable**: `.claude/settings.json` の project-local `enabledPlugins` で
-   repo 正本 `.claude-plugin/marketplace.json.name` と一致する exact identity
-   `harness-creator@skills` を有効にする。旧 marketplace identity は削除する。
+1. **install / update**: repo外cwdからも絶対pathで共通helperを実行する。
+
+   ```bash
+   python3 /absolute/path/to/harness/plugins/harness-creator/scripts/install-local-plugins.py \
+     --platform claude --plugin harness-creator
+   ```
+
+2. **enable**: `harness-creator@harness-local`のuser scope entryがenabledで、receiptの
+   `runtime_path`が実在することを確認する。同名の旧`@skills`やproject scope activationが
+   併存する場合、helperは自動disableせず`pending_user_gate`で停止する。
 3. **trust**: Claude Code が hook trust review を提示したら、現在の hook command と path を
    review してユーザー自身が承認する。自動承認は禁止。
-4. `make native-surfaces` を実行し、新しい session で SessionStart の structured result を
+4. repo-owned projectionも使う場合は`make native-surfaces`を実行し、新しいsessionでSessionStartのstructured resultを
    確認する。
 5. hook 定義・command・manifest digest が変わった upgrade では、旧 trust を流用せず製品の
    review 画面で current definition を **re-trust** してから新 session を開始する。
@@ -110,32 +117,101 @@ trust / re-trust / disable が未承認なら evidence state は `pending_user_g
 
 ### 4. Codex lifecycle
 
-Codex の repo-local discovery は `.agents/plugins/marketplace.json` から
-`./plugins/harness-creator` を指す。公式手順では plugin browser から install し、新 session
-で bundled capability を読み込む。hook は install/enable だけでは実行されず、current hook
-definition の user trust が必要である。
+Codex の discovery は `.agents/plugins/marketplace.json` から
+`./plugins/harness-creator` を指す。marketplace 名は `harness-dev`。source はローカル
+path と GitHub ref のどちらでも登録できる。
 
-1. `plugins/harness-creator/.codex-plugin/plugin.json` と `hooks/hooks.json`、repo marketplace
-   entry を review する。
-2. ChatGPT desktop / Codex の Plugins 画面、または Codex CLI の `/plugins` で repo
-   marketplace の `harness-creator` を install する。
-3. plugin を enable する。
-4. hook trust review で command、event、plugin root を確認し、ユーザー自身が trust する。
-5. 新しい chat/session を開始し、SessionStart が一度だけ C01 を呼ぶことを確認する。
-6. upgrade で hook definition が変わった場合は current definition を re-trust し、新 session
-   で再確認する。trust を自動移行しない。
-7. uninstall は plugin browser の **Uninstall plugin** を使う。bundled connector は plugin
-   uninstall 後も接続済みの場合があるため、該当する場合は ChatGPT 側で別途管理する。
-   その後 C01 dry-run → apply → check で repo-owned managed projection の prune を確認する。
+1. `plugins/harness-creator/.codex-plugin/plugin.json` と `hooks/hooks.json`、
+   `.agents/plugins/marketplace.json` を review する。
+2. ローカルの未 merge 差分を試す場合:
 
-Codex が local plugin を cache から読むため、source 更新後は製品の refresh/reinstall 手順と
-新 session が必要になる場合がある。install/enable/trust/re-trust/uninstall の実操作と
+   ```bash
+   python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+     --source /absolute/path/to/harness --plugin harness-creator
+   ```
+
+3. PR merge 後の GitHub `main` から入れる場合:
+
+   ```bash
+   python3 plugins/harness-creator/scripts/install-codex-plugin.py \
+     --source daishiman/harness-dev --ref main --plugin harness-creator
+   ```
+
+4. Plugins 画面で plugin を enable する。hook trust review で command、event、
+   plugin root を確認し、ユーザー自身が trust する。
+5. 新しい chat/session を開始し、skill が discover されることを確認する。
+6. merge 後の更新は同じhelperを再実行する。Git marketplaceが既登録ならhelperが
+   snapshot upgrade → install → list receipt確認を行う。hook definition が変わったときは
+   current definition を re-trust し、trust を自動移行しない。
+7. uninstall は plugin browser の **Uninstall plugin** または `codex plugin remove
+   harness-creator` を使う。その後 C01 dry-run → apply → check で repo-owned
+   managed projection の prune を確認する。
+
+Codex local sourceは`live-source`、Git refは`git-snapshot`としてreceiptに記録する。
+source更新後はmanifest version更新、marketplace refresh/reinstall、新sessionが必要になる。
+install/enable/trust/re-trust/uninstall の実操作と
 runtime smoke はすべて `pending_user_gate` であり、build completion から分離する。
+`codex plugin add`を持たないhostではmarketplaceだけを登録し、ChatGPT desktopの
+Plugins Directoryからinstallする。
 
 公式導線:
 
 - [Plugins: install / permissions / uninstall](https://learn.chatgpt.com/docs/plugins)
-- [Build plugins: repo marketplace / manifest / hooks / trust](https://learn.chatgpt.com/docs/build-plugins)
+- [Build plugins: repo marketplace / manifest / hooks / trust](https://developers.openai.com/plugins/build/plugins)
+- [Claude Code plugins reference](https://code.claude.com/docs/en/plugins-reference)
+- [Claude Code hooks reference](https://code.claude.com/docs/en/hooks)
+
+### 4.5. Codex の hook 配達経路 (plugin 層は届かない)
+
+Codex 0.148.0 の feature 状態は `hooks = stable/true` だが **`plugin_hooks = removed/false`**
+(`codex features list` で確認できる)。つまり Codex は **plugin 配下の `hooks/hooks.json` を
+一切読まない**。plugin manifest に hook を宣言しても Codex 側では沈黙する。
+
+このため Codex への hook 配達は project 層の単一 entry point に集約する。
+
+```
+plugins/*/hooks/hooks.json          ← 正本 (Claude はこれを直接読む)
+        │  build-hook-registry.py --apply
+        ▼
+.codex/hooks/registry.json          ← 生成物 (event / matcher / scope / products)
+.codex/hooks.json                   ← 生成物 (event ごとに hook-router を 1 本だけ登録)
+        │  Codex が発火
+        ▼
+plugins/harness-creator/scripts/hook-router.py
+        │  payload を見て 4 粒度で絞り込み
+        ▼
+各 plugin の hook script (PLUGIN_ROOT / CLAUDE_PLUGIN_ROOT / CLAUDE_PROJECT_DIR を router が復元)
+```
+
+- **正本は plugins 側**。`.codex/` 配下の 2 ファイルは生成物で、直接編集しない。
+  再生成は `make hook-registry`、drift 検査は `make hook-registry-check`
+  (`make native-surfaces-check` が前提として呼ぶ)。
+- **`native-surfaces.toml` の `delivery = "plugin"` と `products` に `codex` を
+  同時に書くことは契約違反**として `sync-codex-project-settings.py` が拒否する。
+  plugin 層は Codex に届かないため、両立させると到達不能な主張になる。
+- **foreign handler (`bd codex-hook` 等) は投影で温存**する。router entry だけが
+  `# harness-managed:hook-router:<Event>` marker で識別・再生成される。
+
+#### ホスト差の正本
+
+| 軸 | Claude Code | Codex 0.148.0 |
+|----|-------------|---------------|
+| plugin 配下 hooks.json | 読む | **読まない** (`plugin_hooks` removed) |
+| shell tool 名 | `Bash` | `shell_command` / `exec_command` |
+| 編集 tool 名 | `Edit` / `Write` / `MultiEdit` | `apply_patch` |
+| skill 起動 | `Skill` tool | プロンプト内の `$skill-name` (tool ではない) |
+| hook payload | `hook_event_name` / `tool_name` / `tool_input` / `session_id` / `cwd` / `prompt` … | **同一** |
+| PreToolUse ブロック | 可 (exit 2) | 可 (exit 2) |
+| Claude 専用 event | `TaskCompleted` / `PostToolUseFailure` / `FileChanged` | 無し |
+| Codex 専用 event | 無し | `PermissionRequest` / `SubagentStart` |
+
+tool 名の対応表の正本は `build-hook-registry.py` の `TOOL_MAP`。
+対応 tool が無い hook は**黙って落とさず** `codex_unreachable` として毎回報告する。
+
+skill 起動 guard (`PreToolUse` + `Skill`/`Task` matcher) だけは、Codex 側で
+`UserPromptSubmit` + `scope.skills` の companion entry へ変換して事前判定の意味を保つ。
+実行後 hook (`PostToolUse` + `Skill` 等) は Codex に相当機構が無いため companion を作らない
+(発火時点が変わり、宣言が嘘になるため)。
 
 ### 5. State transition と current output 例
 

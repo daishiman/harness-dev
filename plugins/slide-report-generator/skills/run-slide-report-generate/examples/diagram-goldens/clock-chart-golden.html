@@ -12,15 +12,32 @@
   hover 時の scale、そして凡例の Font Awesome アイコン (D8: SVG 内に PUA を置かない)。
 
   §13.6 は「朝活」に bg-dim (#F5F5F5) を当てているが、これはパレット外の色であり
-  白地の上ではほぼ見えない。5 区分は色でしか区別できない型なので、
-  ここは系列色 5 色を使い切る形へ寄せた (style-tokens §2 の 1 条が許す型である)。
+  白地の上ではほぼ見えない。
 
-  焦点は 6 色目を足さずに作る。series-3 は accent と同値なので、
-  焦点の区分へ series-3 を割り当てれば系列色と焦点色が同じ 1 色で両立する
-  (style-tokens §2 の 4 条「系列色と焦点色を同一図で混ぜない」の満たし方)。
-  凡例の焦点だけは NODE_STYLES.focal (accent-tint の塗り + accent の枠) にしてある。
-  D7 は defs の accent マーカーも面塗り 1 件として数えるので、
-  骨格を保ったまま本体で使える accent の塗りは 1 件だけである。
+  扇には**塗りしか符号が無い**。線幅も線種も、隣の扇と接している弧の上では
+  区切り線と見分けが付かないので符号にならない。したがって符号の供給は
+  濃度段 3 段 (VGCONST_002) + 反転 1 個 (VGCONST_002 / E4) = **4 通りで尽きる**。
+
+  以前はここに 5 区分あり、5 通り目をハッチング (45 度縞) で作っていた。撤去した。
+  網掛けは濃度段でも反転でもない**別軸の符号**で、これを足すと「符号は濃度と反転の
+  2 軸」という規約が図の中で破れる。供給が足りないときに増やすのは符号ではなく、
+  減らすのは区分のほうである。
+
+  そこで隣り合う 0-7時 (睡眠) と 7-9時 (朝の準備) を 0-9時 へ畳んで 4 区分にした。
+  **畳んだのは弧が連続していて合算しても時刻の意味が壊れない組だけ**で、扇の合計は
+  24 時間のまま、焦点の 9-17時 8 時間にも触れていない。
+
+  凡例の見本は扇と**同じ組 (塗り・輪郭・線幅) をそのまま**再現する。焦点だけ
+  半透明の塗り + 枠という別の絵にしていたが、図の焦点は単色のインク面なので、
+  凡例が図に無い符号を説明していた。半透明は印刷経路と画像化経路で合成結果が
+  環境依存になるため、値は solid で持つ。
+
+  見本を 24px 角にしてあるのは、濃度段の最も淡い段 (#E1E6EA) と地 (#F7F6F3) の差が
+  小さく、面が小さいほど読み取れなくなるため。扇と同じ組を再現する以上、見本の輪郭は
+  扇と同じ #F7F6F3 の 2px であって hairline ではない。境を線で出せないので、
+  **大きさで読ませている**。16px へ戻すとこの 1 段が地に沈む。
+  (stacked-bar-golden は最上層に hairline を敷いてあるため 16px のままでよい。
+   同じ淡さでも、境を線で出しているか大きさで出しているかで扱いが変わる。)
 -->
 <figure class="srg-diagram srg-diagram--slide" data-diagram-id="d-clock-chart">
 
@@ -31,69 +48,63 @@
 
     <defs>
       <marker id="d-clock-chart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="d-clock-chart-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="d-clock-chart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
     <!-- ===== EDIT: 図解本体 ここから ===== -->
 
-    <!-- 0-7時 -->
-    <path d="M 400 112 A 160 160 0 0 1 556 312 L 484 296 A 88 88 0 0 0 400 184 Z"
-          fill="var(--wave-blue, #7E9CD8)" stroke="#FFFFFF" stroke-width="2"/>
-    <!-- 7-9時 -->
-    <path d="M 556 312 A 160 160 0 0 1 512 384 L 464 336 A 88 88 0 0 0 484 296 Z"
-          fill="var(--spring-violet, #957FB8)" stroke="#FFFFFF" stroke-width="2"/>
+    <!-- 0-9時 (旧 0-7時 + 7-9時。弧が連続しているので 1 枚に畳んだ) -->
+    <path d="M 400 112 A 160 160 0 0 1 512 384 L 464 336 A 88 88 0 0 0 400 184 Z"
+          fill="var(--wave-blue, #4B6681)" stroke="#F7F6F3" stroke-width="2"/>
     <!-- 9-17時 (焦点) -->
     <path d="M 512 384 A 160 160 0 0 1 244 312 L 316 296 A 88 88 0 0 0 464 336 Z"
-          fill="var(--sakura-pink, #D27E99)" stroke="#FFFFFF" stroke-width="2"/>
+          fill="var(--sakura-pink, #141412)" stroke="#F7F6F3" stroke-width="2"/>
     <!-- 17-20時 -->
     <path d="M 244 312 A 160 160 0 0 1 260 192 L 324 228 A 88 88 0 0 0 316 296 Z"
-          fill="var(--wave-aqua, #7FB4CA)" stroke="#FFFFFF" stroke-width="2"/>
+          fill="var(--wave-aqua, #9BADBF)" stroke="#F7F6F3" stroke-width="2"/>
     <!-- 20-24時 -->
     <path d="M 260 192 A 160 160 0 0 1 400 112 L 400 184 A 88 88 0 0 0 324 228 Z"
-          fill="var(--autumn-yellow, #DCA561)" stroke="#FFFFFF" stroke-width="2"/>
+          fill="var(--autumn-yellow, #E1E6EA)" stroke="#F7F6F3" stroke-width="2"/>
 
     <!-- 中心穴の中身 (周期。区分の名前は繰り返さない) -->
-    <text x="400" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">24時間</text>
-    <text x="400" y="292" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">1日の配分</text>
+    <text x="400" y="268" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">24時間</text>
+    <text x="400" y="292" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">1日の配分</text>
 
     <!-- 時刻マーカー (円の外・4 点のみ) -->
-    <text x="400" y="88" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">0時</text>
-    <text x="584" y="276" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">6時</text>
-    <text x="400" y="456" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">12時</text>
-    <text x="216" y="276" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">18時</text>
+    <text x="400" y="88" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">0時</text>
+    <text x="584" y="276" text-anchor="start" font-size="12" fill="var(--fg-muted, #6A6A68)">6時</text>
+    <text x="400" y="456" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">12時</text>
+    <text x="216" y="276" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">18時</text>
 
-    <!-- 凡例 (図の外・右の縦ストリップ。5 件で上限ちょうど) -->
-    <rect x="656" y="136" width="16" height="16" rx="4" fill="var(--wave-blue, #7E9CD8)"/>
-    <text x="688" y="148" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">睡眠</text>
-    <text x="928" y="148" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">7時間</text>
+    <!-- 凡例 (図の外・右の縦ストリップ。4 件 = 符号の供給ちょうど)。
+         見本は扇と同じ 塗り + #F7F6F3 の 2px 輪郭。24px 角。
+         円の中心 y=272 を軸に上下対称へ置く (4 x 24 + 3 x 32 = 192 -> 176 から)。 -->
+    <rect x="656" y="176" width="24" height="24" fill="var(--wave-blue, #4B6681)" stroke="#F7F6F3" stroke-width="2"/>
+    <text x="688" y="196" text-anchor="start" font-size="14" fill="var(--fg-muted, #6A6A68)">睡眠・朝の準備</text>
+    <text x="928" y="196" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">9時間</text>
 
-    <rect x="656" y="192" width="16" height="16" rx="4" fill="var(--spring-violet, #957FB8)"/>
-    <text x="688" y="204" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">朝の準備</text>
-    <text x="928" y="204" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">2時間</text>
+    <rect x="656" y="232" width="24" height="24" fill="var(--sakura-pink, #141412)" stroke="#F7F6F3" stroke-width="2"/>
+    <text x="688" y="252" text-anchor="start" font-size="14" fill="var(--fg, #141412)">商談・実務</text>
+    <text x="928" y="252" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">8時間</text>
 
-    <rect x="656" y="248" width="16" height="16" rx="4"
-          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="1.5"/>
-    <text x="688" y="260" text-anchor="start" font-size="14" fill="var(--fg, #43436c)">商談・実務</text>
-    <text x="928" y="260" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">8時間</text>
+    <rect x="656" y="288" width="24" height="24" fill="var(--wave-aqua, #9BADBF)" stroke="#F7F6F3" stroke-width="2"/>
+    <text x="688" y="308" text-anchor="start" font-size="14" fill="var(--fg-muted, #6A6A68)">移動・報告</text>
+    <text x="928" y="308" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">3時間</text>
 
-    <rect x="656" y="304" width="16" height="16" rx="4" fill="var(--wave-aqua, #7FB4CA)"/>
-    <text x="688" y="316" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">移動・報告</text>
-    <text x="928" y="316" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">3時間</text>
-
-    <rect x="656" y="360" width="16" height="16" rx="4" fill="var(--autumn-yellow, #DCA561)"/>
-    <text x="688" y="372" text-anchor="start" font-size="14" fill="var(--fg-dim, #54546d)">学習</text>
-    <text x="928" y="372" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">4時間</text>
+    <rect x="656" y="344" width="24" height="24" fill="var(--autumn-yellow, #E1E6EA)" stroke="#F7F6F3" stroke-width="2"/>
+    <text x="688" y="364" text-anchor="start" font-size="14" fill="var(--fg-muted, #6A6A68)">学習</text>
+    <text x="928" y="364" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">4時間</text>
 
     <!-- 尺度の宣言 (I4 / §2.8) と出所・母数 (I1) -->
-    <text x="40" y="490" font-size="12" fill="var(--fg-dim, #54546d)">上が起点の 0 時。時計回りに一周して 24 時間、扇の大きさは時間の長さ (1 時間 = 15 度)。</text>
-    <text x="40" y="512" font-size="12" fill="var(--fuji-gray, #8a8980)">出所: 営業部 12 名の業務日誌 実測・2026/4-6 の稼働日平均 (n=744 人日・重複計上なし)。</text>
+    <text x="40" y="490" font-size="12" fill="var(--fg-muted, #6A6A68)">上が起点の 0 時。時計回りに一周して 24 時間、扇の大きさは時間の長さ (1 時間 = 15 度)。</text>
+    <text x="40" y="512" font-size="12" fill="var(--fg-muted, #6A6A68)">出所: 営業部 12 名の業務日誌 実測・2026/4-6 の稼働日平均 (n=744 人日・重複計上なし)。</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

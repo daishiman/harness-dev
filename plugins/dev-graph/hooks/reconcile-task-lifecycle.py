@@ -31,6 +31,18 @@ MAX_COMMAND_LENGTH = 32_768
 MAX_ID_LENGTH = 512
 SCHEDULE_STATE = "lifecycle-schedule.json"
 HOOK_EVENTS = "hook-events.json"
+OWNERSHIP_MARKER = Path(".dev-graph") / "config.json"
+
+
+def is_managed_repository(root: Path) -> bool:
+    """Enable lifecycle side effects only for an explicitly owned dev-graph repo."""
+    try:
+        resolved_root = Path(root).resolve(strict=True)
+        marker = (resolved_root / OWNERSHIP_MARKER).resolve(strict=True)
+        marker.relative_to(resolved_root)
+    except (FileNotFoundError, OSError, ValueError):
+        return False
+    return marker.is_file()
 
 
 def read_payload() -> dict[str, Any]:
@@ -337,9 +349,14 @@ def main() -> int:
     parser.add_argument("--tracker-binding", choices=("beads", "github", "none"), default="beads")
     args = parser.parse_args()
     root = Path(args.repo_root).resolve()
+    receipt: dict[str, Any] = {"event": args.event, "repo_root": str(root), "actions": []}
+    if not is_managed_repository(root):
+        receipt["actions"].append({"noop": "unmanaged repository: ownership marker missing"})
+        print(json.dumps(receipt, ensure_ascii=False))
+        return 0
+
     scripts = Path(__file__).resolve().parents[1] / "scripts"
     payload = read_payload()
-    receipt: dict[str, Any] = {"event": args.event, "repo_root": str(root), "actions": []}
 
     context = invoke(scripts / "resolve-repo-context.py", "--repo-root", str(root), "--mode", "read")
     receipt["actions"].append({"context": _child_summary(context, "repository_id", "worktree_id", "branch", "head_sha", "default_branch", "diagnostics")})

@@ -3,7 +3,7 @@
  * スライド統一感検証スクリプト
  *
  * 各スライド内の視覚的統一感を検証:
- * - カラーコード直書きの検出（CSS変数推奨）
+ * - カラーコード直書きの検出（CSS変数推奨。正本は vendor/assets/style-genome-*.json の palette）
  * - フォントサイズ直書きの検出
  * - 統一されていないスタイルの検出
  *
@@ -20,8 +20,12 @@
  *   node scripts/check-consistency.js ./index.html --json
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { parseArgs, hasFlag, EXIT_CODES } from './utils.js';
+import { existsSync, readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
+import { parseArgs, hasFlag, EXIT_CODES, getDirname } from './utils.js';
+
+const __dirname = getDirname(import.meta.url);
+const ASSETS_DIR = join(__dirname, '../assets');
 
 // コマンドライン引数
 const { flags, positional } = parseArgs();
@@ -47,7 +51,7 @@ if (showHelp) {
 検証項目:
   1. カラーコード直書き（#XXXXXX）の検出
   2. インラインfont-size指定の検出
-  3. 1スライド内の複数アクセントカラー検出
+  3. 1スライド内で色相を持つ色の数（濃度3段まで）
   4. CSS変数未使用の検出
 
 例:
@@ -69,33 +73,94 @@ if (!existsSync(htmlPath)) {
   process.exit(EXIT_CODES.FILE_NOT_FOUND);
 }
 
-// CSS変数マッピング（カラー）
-const colorVariables = {
-  '#FFFFFF': '--bg-dark (light)',
-  '#F5F5F5': '--bg-dim (light)',
-  '#EBEBEB': '--bg-highlight (light)',
-  '#F0F0F0': '--bg-card (light)',
-  '#FAFAFA': '--sumi-ink (light)',
-  '#2D2D2D': '--fg (light)',
-  '#555555': '--fg-dim (light)',
-  '#888888': '--fg-muted (light)',
-  '#1F1F28': '--bg-dark (dark)',
-  '#2A2A37': '--bg-dim (dark)',
-  '#363646': '--bg-highlight (dark)',
-  '#16161D': '--sumi-ink (dark)',
-  '#DCD7BA': '--fg (dark)',
-  '#C8C093': '--fg-dim (dark)',
-  '#727169': '--fg-muted (dark)',
-  '#7E9CD8': '--wave-blue',
-  '#9CABCA': '--spring-violet',
-  '#D27E99': '--sakura-pink',
-  '#7AA89F': '--wave-aqua',
-  '#DCA561': '--autumn-yellow',
-  '#54546D': '--fuji-gray',
-};
+// 配色の正本は vendor/assets/style-genome-*.json の palette。
+// この検査器に色値を写経しない（写経すると genome を替えても検査器だけが旧配色を
+// 正解と言い続け、意匠の変更が「違反」として報告される）。
+// 取得方式は validate-d3.js の loadGenomePalette と同じで、読めなければ fail-closed。
+function normalizeHex(hex) {
+  const body = hex.slice(1).toLowerCase();
+  if (body.length === 3 || body.length === 4) {
+    return '#' + body.slice(0, 3).split('').map(c => c + c).join('');
+  }
+  return '#' + body.slice(0, 6);
+}
 
-// アクセントカラー一覧
-const accentColors = ['#7E9CD8', '#9CABCA', '#D27E99', '#7AA89F', '#DCA561'];
+/**
+ * palette を再帰的に歩いて { hex, cssVar, name, hsl } を持つ葉を集める。
+ * 戻り値: { variables: Map<正規化hex, 提案文字列>, hued: Set<正規化hex>, sources, failure }
+ * hued は hsl を持つ葉（= 色相を持つ色）。無彩の紙・墨・罫と区別する軸を
+ * genome 側の項目の有無から取り、検査器で色を分類し直さない。
+ */
+function loadGenomePalette() {
+  let files = [];
+  try {
+    files = readdirSync(ASSETS_DIR).filter(f => /^style-genome-.*\.json$/.test(f));
+  } catch (e) {
+    return { variables: new Map(), hued: new Set(), sources: [], failure: `style genome ディレクトリを読めません: ${ASSETS_DIR} (${e.message})` };
+  }
+  if (files.length === 0) {
+    return { variables: new Map(), hued: new Set(), sources: [], failure: `style genome が見つかりません: ${ASSETS_DIR}/style-genome-*.json` };
+  }
+
+  const variables = new Map();
+  const hued = new Set();
+  const sources = [];
+  const problems = [];
+
+  const walk = node => {
+    if (!node || typeof node !== 'object') return;
+    if (typeof node.hex === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(node.hex)) {
+      const key = normalizeHex(node.hex);
+      if (!variables.has(key)) {
+        const label = node.cssVar
+          ? `CSS変数 ${node.cssVar}`
+          : `style genome の ${node.name || 'palette 項目'}（CSS変数は未発行）`;
+        variables.set(key, label);
+      }
+      if (typeof node.hsl === 'string') hued.add(key);
+      return;
+    }
+    Object.values(node).forEach(walk);
+  };
+
+  for (const file of files) {
+    const path = join(ASSETS_DIR, file);
+    try {
+      const genome = JSON.parse(readFileSync(path, 'utf-8'));
+      if (!genome.palette) {
+        problems.push(`${file}: palette 定義がありません`);
+        continue;
+      }
+      walk(genome.palette);
+      sources.push(file);
+    } catch (e) {
+      problems.push(`${file}: パースに失敗 (${e.message})`);
+    }
+  }
+  if (variables.size === 0) {
+    return { variables, hued, sources, failure: `style genome の palette から色トークンを取得できません: ${problems.join(' / ') || 'palette が空'}` };
+  }
+  return { variables, hued, sources, failure: null };
+}
+
+const GENOME_PALETTE = loadGenomePalette();
+
+// 読めなかったときに「問題なし」で通さない（fail-closed）。
+// 通してしまうと、配色検査を素通りした deck が緑で出荷される。
+if (GENOME_PALETTE.failure) {
+  console.error(`❌ 配色の正本を読めません: ${GENOME_PALETTE.failure}`);
+  console.error('   配色検査を実施できないため、PASS を返さずに終了します。');
+  process.exit(EXIT_CODES.VALIDATION_FAILED);
+}
+
+const colorVariables = GENOME_PALETTE.variables;
+
+// 色相を持つ色（genome の palette 項目のうち hsl を持つもの = 図解内の濃度段）。
+// 面に出る色は紙・墨・その濃度だけで、強調は色ではなく反転で作る。
+const huedPaletteColors = GENOME_PALETTE.hued;
+
+// 1 面で許す色相段の数。VGCONST_002 の「単一色相の濃度 3 段まで」に対応する。
+const MAX_HUED_COLORS_PER_SLIDE = 3;
 
 // 検証結果
 const results = {
@@ -172,13 +237,14 @@ slides.forEach((slide, idx) => {
   styleMatches.forEach(styleAttr => {
     const inlineColors = styleAttr.match(colorCodeRegex) || [];
     inlineColors.forEach(color => {
-      const colorUpper = color.toUpperCase();
-      if (colorVariables[colorUpper]) {
+      const key = normalizeHex(color);
+      const suggestion = colorVariables.get(key);
+      if (suggestion) {
         slideIssues.push({
           type: 'hardcoded-color',
           severity: 'warning',
           message: `カラーコード直書き: ${color}`,
-          suggestion: `CSS変数 ${colorVariables[colorUpper]} を使用してください`,
+          suggestion: `${suggestion} を使用してください`,
           location: styleAttr.substring(0, 50) + '...',
         });
       } else {
@@ -186,7 +252,7 @@ slides.forEach((slide, idx) => {
           type: 'unknown-color',
           severity: 'info',
           message: `未定義のカラーコード: ${color}`,
-          suggestion: 'Kanagawaテーマのカラーパレットを確認してください',
+          suggestion: `配色の正本は style genome の palette（${GENOME_PALETTE.sources.join(', ')}）。そこに無い色は書けません`,
           location: styleAttr.substring(0, 50) + '...',
         });
       }
@@ -221,18 +287,25 @@ slides.forEach((slide, idx) => {
     }
   }
 
-  // 3. 1スライド内の複数アクセントカラー検出
-  const foundAccents = accentColors.filter(color =>
-    slide.content.toUpperCase().includes(color)
-  );
+  // 3. 1スライド内で色相を持つ色の数を検出
+  // 旧実装は「アクセント色 5 種のうち何種使ったか」を数えていたが、強調を色相で
+  // 作る運用そのものを廃した（強調 = 反転）ため、数える対象を
+  // 「genome で色相を持つと宣言された濃度段 + genome に無い色」へ移した。
+  // genome 外の色も同じ枠で数えないと、旧配色を書いた面が「アクセント 0 種」で
+  // 素通りする（色を減らしたのではなく、検査の語彙から外れただけ）。
+  const usedHues = new Set();
+  colorMatches.forEach(color => {
+    const key = normalizeHex(color);
+    if (huedPaletteColors.has(key) || !colorVariables.has(key)) usedHues.add(key);
+  });
 
-  if (foundAccents.length > 2) {
+  if (usedHues.size > MAX_HUED_COLORS_PER_SLIDE) {
     slideIssues.push({
       type: 'too-many-accents',
       severity: 'warning',
-      message: `アクセントカラーが多すぎます: ${foundAccents.length}色`,
-      suggestion: '1スライド内は2色以内に抑えてください',
-      colors: foundAccents,
+      message: `色相を持つ色が多すぎます: ${usedHues.size}色`,
+      suggestion: `1スライドは単一色相の濃度 ${MAX_HUED_COLORS_PER_SLIDE} 段まで。強調は色ではなく反転（ink 地 + paper 文字）で作ってください`,
+      colors: [...usedHues],
     });
   }
 
@@ -364,7 +437,7 @@ if (jsonOutput) {
         'unknown-color': '未定義カラー',
         'hardcoded-fontsize': 'フォントサイズ直書き',
         'fontsize-too-small': 'フォントサイズ違反',
-        'too-many-accents': 'アクセント過多',
+        'too-many-accents': '色相過多',
         'inconsistent-border-radius': 'border-radius不統一',
         'viewbox-aspect-mismatch': 'SVG viewBox 16:9逸脱',
         'svg-fontsize-too-small': 'SVG font-size 13px未満',
@@ -377,7 +450,7 @@ if (jsonOutput) {
     console.log('💡 推奨アクション:');
     console.log('   1. カラーコードはCSS変数に置き換え');
     console.log('   2. フォントサイズは--fs-*変数を使用');
-    console.log('   3. 1スライド内のアクセントカラーは2色まで');
+    console.log(`   3. 色相を持つ色は1スライド ${MAX_HUED_COLORS_PER_SLIDE} 段まで（強調は色ではなく反転で作る）`);
   }
 
   console.log('');

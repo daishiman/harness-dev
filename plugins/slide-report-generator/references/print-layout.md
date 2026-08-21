@@ -1,10 +1,13 @@
 # 印刷用レイアウト仕様
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは印刷 CSS の実装テンプレート集。規則の正本は SR-ID で参照すること
 
 **規則の正本**: §7 印刷（[SR-7-01](spec-registry.md#sr-7-01)〜[SR-7-10](spec-registry.md#sr-7-10)）。特に物理サイズ → [SR-7-02](spec-registry.md#sr-7-02)、GSAP リセット → [SR-7-04](spec-registry.md#sr-7-04)、ナビ非表示 → [SR-7-05](spec-registry.md#sr-7-05)、色再現 → [SR-7-06](spec-registry.md#sr-7-06)。
 
-> **印刷ビューポート契約の一本化（DRY）**: 印刷の物理サイズ契約は**デッキ種別で2系統**ある。本ファイルは **(1) 通常 HTML デッキ＝full-bleed**（A4横 297mm/210mm・コンテンツ実体を 1 ページ 1 スライドで敷く）の実装テンプレート集を正本とする。**(2) 全面 AI 画像デッキ＝16:9 letterbox**（297mm→高さ167mm・上下 off-white 余白・主キャンバスを `object-fit:contain`）の契約は [full-image-deck-method.md §0.3](full-image-deck-method.md) を**唯一の正本**とし、本ファイルでは再定義しない（§全面画像デッキ印刷で参照のみ）。実装 CSS の正本は `assets/print-styles.css`、画面側 CSS・主キャンバス実体マークアップの正本は `assets/slide-template-single.html`。
+> **印刷ビューポート契約の一本化（DRY）**: 印刷の物理サイズ契約は**デッキ種別で2系統**ある。本ファイルは **(1) 通常 HTML デッキ＝full-bleed**（A4横 297mm/210mm・コンテンツ実体を 1 ページ 1 スライドで敷く）の実装テンプレート集を正本とする。**(2) 全面 AI 画像デッキ＝16:9 letterbox**（297mm→高さ167mm・上下 off-white 余白・主キャンバスを `object-fit:contain`）の契約は [full-image-deck-method.md §0.3](full-image-deck-method.md) を**唯一の正本**とし、本ファイルでは再定義しない（§全面画像デッキ印刷で参照のみ）。**印刷 CSS を実際に出しているファイルは経路ごとに違う**ので、出所は §印刷 CSS の出所（経路別）を見る。本ファイルは特定の 1 ファイルを「印刷 CSS の正本」として指名しない。
 
 > **既知の矛盾（SR-7-09）**: 本ファイルは `@media print` 内でフォントサイズ縮小を多用するレガシー互換実装を含む。SSoT としては「印刷=画面の同一比率」（[SR-7-08](spec-registry.md#sr-7-08)）が将来形。新規スライドは vw + `--font-scale` 統一を目指し、レガシー互換が必要な場合のみ本ファイルの縮小ルールを使用する。
 
@@ -36,7 +39,7 @@
 │  │              スライドコンテンツ                       │    │
 │  │                                                     │    │
 │  │   ・ダーク背景維持 (var(--bg-dark))                   │    │
-│  │   ・テキスト色維持 (Kanagawaテーマ)                   │    │
+│  │   ・テキスト色維持 (共有テーマトークン)               │    │
 │  │   ・フォントサイズ縮小で1ページに収める               │    │
 │  │   ・overflow: hidden で内容切り取り                  │    │
 │  │                                                     │    │
@@ -234,12 +237,12 @@
 
 ### フォントサイズ縮小（印刷用・レガシー互換のみ）
 
-> **将来形は vw + `--font-scale` 統一（[SR-7-08](spec-registry.md#sr-7-08)）**。実装の正本 `assets/print-styles.css` は vw 統一で `@media print` 内のフォントサイズ上書きを**削除済み**（画面値がそのまま印刷値になり差分ゼロ）。本セクションは固定 rem の旧テンプレートを使うレガシー互換が必要な場合のみ参照する代表例である（全要素の網羅リストは再掲しない・DRY）。
+> **将来形は vw + `--font-scale` 統一（[SR-7-08](spec-registry.md#sr-7-08)）**。手書き経路が埋め込む `vendor/assets/print-styles.css` は vw 統一で `@media print` 内のフォントサイズ上書きを**削除済み**（画面値がそのまま印刷値になり差分ゼロ）。本セクションは固定 rem の旧テンプレートを使うレガシー互換が必要な場合のみ参照する代表例である（全要素の網羅リストは再掲しない・DRY）。
 
 ```css
 @media print {
   /* レガシー互換例: 1ページに収める固定 rem 縮小。
-     新規スライドは使わず vw 統一（assets/print-styles.css）に従う。 */
+     新規スライドは使わず vw 統一（§印刷 CSS の出所）に従う。 */
   .slide-title .title-main {
     font-size: 3rem;
     background: none !important;
@@ -325,17 +328,22 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 
 ---
 
-## 完全な印刷CSS（コピー用）
+## 印刷 CSS の出所（経路別）
 
-通常 HTML デッキ（full-bleed）の完全な `@media print` ブロックは、上記「印刷用CSS」各セクション（基本設定 → スライダーコンテナ → スライドアイテム → 非表示スライド → コンテンツエリア → フォントサイズ縮小 → GSAP リセット → インタラクティブ無効化）の連結である。**コピー用の完全 CSS を二重掲載すると本ファイルと実装が乖離するため再掲しない（DRY）**。コピーして使う実体 CSS の正本は次のとおり。
+**印刷 CSS は 1 つのファイルから来ない。経路ごとに別のものが出している。**
+「印刷 CSS の正本」を 1 ファイルに指名すると、その経路以外では誰も読まないファイルを直すことになる。
+規則の正本は SR-7-*（[spec-registry.md](spec-registry.md)）で、以下は**その規則を誰が実装しているか**の対応表。
 
-| 用途 | 正本ファイル |
-|------|-------------|
-| 通常 HTML デッキ印刷 CSS（full-bleed・vw 統一版） | `assets/print-styles.css` |
-| 画面 CSS・主キャンバス実体マークアップ | `assets/slide-template-single.html` |
-| 決定論レンダラ出力の印刷 CSS | `scripts/style-builder.cjs` |
+| 経路 | 印刷 CSS を出しているもの | 成果物へ届く道 |
+|------|--------------------------|---------------|
+| 決定論経路（slide） | `vendor/scripts/style-builder.cjs` の `buildStyles()` | `vendor/scripts/render-slide.cjs` が require して出力に含める |
+| 手書き経路・ひな形を使う面 | `assets/slide-templates/slide-skeleton.css`（`@page` はここの 1 つだけ） | html-generator が成果物の `styles.css` 先頭へ連結する |
+| 手書き経路・ひな形を使わない面 | `vendor/assets/print-styles.css` | html-generator が本文へ埋め込む（[html-generation-rules.md](../skills/run-slide-report-generate/references/html-generation-rules.md)。**この経路以外に読み手はいない**） |
+| report 経路 | `vendor/scripts/render-report.js` が自前で出力する | 同ファイルの出力に含まれる |
 
-新規スライドは `assets/print-styles.css` を起点にし、本ファイルの各セクションは「なぜその指定が要るか」の根拠説明として参照する。
+本ファイルの各セクションの CSS は、上のどれかへ写して使うための断片ではなく、
+**「なぜその指定が要るか」の根拠説明**である。完全な `@media print` ブロックを本ファイルへ再掲すると
+実装 4 系統のどれとも一致しない 5 本目ができるので再掲しない（DRY）。
 
 ---
 
@@ -346,10 +354,10 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 要点（正本の要約・詳細は §0.3 参照）:
 
 - 主キャンバスは規定クラス `.ai-slide-canvas`（後方互換エイリアス `.slide-fullbg` / `.slide-bg` / `[data-role="main-canvas"]`）を `:where()` で同一 `object-fit:contain` 契約に束ねる。
-- 印刷は `@media print` で `object-fit: contain !important` を強制し `cover` を禁止（`scripts/validate-print.js` が `@media print` 内 `cover` を CRITICAL 検出）。
+- 印刷は `@media print` で `object-fit: contain !important` を強制し `cover` を禁止（`vendor/scripts/validate-print.js` が `@media print` 内 `cover` を CRITICAL 検出）。
 - `data-deck-mode="full-image"` 限定適用で、通常デッキの full-bleed（本ファイル）ルールには干渉しない（後方互換）。
-- 実装 CSS の正本は `assets/print-styles.css`（全面画像デッキ印刷契約ブロック）と `assets/slide-template-single.html`（画面側）。
-- 検証は `node scripts/validate-print.js <index.html>`（P06 を 167mm letterbox 許容に拡張）＋ `node scripts/evaluate-deck.js <slide-dir>`（full-image-deck 検出時に validate-print / validate-ai-image-assets を spawn し FAIL 連動）。
+- letterbox ブロックを持つ実装は `vendor/assets/print-styles.css`（手書き経路が埋め込む印刷 CSS）。他経路の出所は §印刷 CSS の出所（経路別）を見る。
+- 検証は `node vendor/scripts/validate-print.js <index.html>`（P06 を 167mm letterbox 許容に拡張）＋ `node vendor/scripts/evaluate-deck.js <slide-dir>`（full-image-deck 検出時に validate-print / validate-ai-image-assets を spawn し FAIL 連動）。
 
 ---
 
@@ -450,9 +458,9 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 }
 ```
 
-- **理由**: ブラウザは印刷時に背景色・アクセント色をデフォルトで除去する。`exact !important` を全要素に適用しないと Kanagawa パレットが消失し、配布資料が白黒に近くなる。
-- **必須化レベル**: 全スライド・全テンプレートで必須。`assets/print-styles.css` および `style-builder.cjs` 出力 CSS の両方に組み込むこと。
-- **検証**: `scripts/validate-print.js` で `print-color-adjust:\s*exact` の存在を確認する。
+- **理由**: ブラウザは印刷時に背景色・アクセント色をデフォルトで除去する。`exact !important` を全要素に適用しないとパレットが消失し、配布資料が白黒に近くなる。
+- **必須化レベル**: 全スライド・全テンプレートで必須。§印刷 CSS の出所（経路別）に挙げた**どの経路の `@media print` にも**入っていること（特定ファイル名をここへ列挙しない。列挙すると経路が増えたときにこの行だけが古くなる）。
+- **検証**: `vendor/scripts/validate-print.js` で `print-color-adjust:\s*exact` の存在を確認する。
 
 ### 必須 2: 印刷時 box-shadow 除去（SR-7-10 / 全要素強制）
 
@@ -466,7 +474,7 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 ```
 
 - **理由**: box-shadow は印刷時に**インクコスト増大**＋**にじみ**を生む。さらに Chrome 印刷では `print-color-adjust: exact` と組み合わさると、影がカード周囲の**薄いグレーの色塗り（塗りつぶし）**として出てしまう。スクリーンでは奥行き表現として有効でも、紙では視認性を下げる。
-- **必須化レベル**: 個別クラスを列挙する運用は廃止。`@media print` 内で `* { box-shadow: none !important; }` の**全要素一括強制**を必須とする。これによりカード・ボックス系クラスを新設しても追記不要・追記漏れゼロを構造的に担保する。`assets/print-styles.css` / `assets/slide-template-single.html` / `scripts/style-builder.cjs` の各 `@media print` 先頭に組み込み済み。
+- **必須化レベル**: 個別クラスを列挙する運用は廃止。`@media print` 内で `* { box-shadow: none !important; }` の**全要素一括強制**を必須とする。これによりカード・ボックス系クラスを新設しても追記不要・追記漏れゼロを構造的に担保する。§印刷 CSS の出所（経路別）の**全経路**で `@media print` の先頭に置く。
 - **検証**: 新規 CSS ファイル生成時、`@media print` 内に `* { box-shadow: none !important; }` が存在することを必須。
 
 ### 必須 3: グラデ文字(background-clip:text)を印刷で通常色に戻す
@@ -484,7 +492,7 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 ```
 
 - **理由**: タイトル等で `background: <gradient>; -webkit-background-clip: text; -webkit-text-fill-color: transparent;` を使い、グラデを文字型に切り抜いて表示している場合、印刷では `background-clip: text` が効かず、背景グラデが矩形で塗られ＋`text-fill-color: transparent` で文字が透明になり、「青紫の塗りつぶし矩形」となって文字が読めなくなる。`@media print` で `background-clip` を `border-box` に戻し `-webkit-text-fill-color` / `color` を単色に戻すことで可読化する。
-- **必須化レベル**: 全 `@media print` ブロックで必須。インライン `style` 属性で切り抜いた要素も `[style*="background-clip: text"]` 属性セレクタで捕捉する（クラス追記漏れを構造的に防止）。`stat-value` のような既存のクラス別グラデ→単色変換は温存する（別セレクタ・上書きしない）。`assets/print-styles.css` / `assets/slide-template-single.html` / `assets/src/styles/print.css` / `scripts/style-builder.cjs` の各 `@media print` 先頭に組み込み済み。
+- **必須化レベル**: 全 `@media print` ブロックで必須。インライン `style` 属性で切り抜いた要素も `[style*="background-clip: text"]` 属性セレクタで捕捉する（クラス追記漏れを構造的に防止）。`stat-value` のような既存のクラス別グラデ→単色変換は温存する（別セレクタ・上書きしない）。§印刷 CSS の出所（経路別）の**全経路**で `@media print` の先頭に置く。
 - **検証**: `@media print` 内に `background-clip: border-box` を含むグラデ復元ルールが存在することを確認する。
 
 ### 必須 4 (推奨): GSAP インラインスタイルリセット（SR-7-04）
@@ -498,8 +506,8 @@ GSAPアニメーションは要素に `style="opacity: 0; transform: ..."` 等�
 | Version | Date | Changes |
 |---------|------|---------|
 | 3.4.0 | 2026-06-28 | 印刷時のグラデ文字を通常色へ戻す対策を追加（塗りつぶし矩形で読めなくなる現象の恒久対策） |
-| 3.3.0 | 2026-06-28 | box-shadow:none を `* {}` 全要素強制に変更（新クラス追記漏れ防止）。`@media print` 内の影除去を個別クラス列挙から `* { box-shadow: none !important; }` の一括強制へ統一。Chrome 印刷＋`print-color-adjust: exact` で影がカード周囲のグレー塗りつぶしになる現象の恒久対策。実体 CSS（`print-styles.css` / `slide-template-single.html` / `style-builder.cjs`）と必須事項チェックリスト（必須2）を更新 |
-| 3.2.0 | 2026-06-24 | 印刷ビューポート契約の一本化＋行数削減（elegant-review・D1/D10）。冒頭に「印刷=full-bleed（通常デッキ・本ファイル正本）／16:9 letterbox（全面画像デッキ・`full-image-deck-method.md §0.3` が正本）」の2系統を明記。「完全な印刷CSS（コピー用）」の全文再掲（前段セクションの完全重複・約290行）を削除し、実体 CSS の正本（`assets/print-styles.css` / `assets/slide-template-single.html` / `scripts/style-builder.cjs`）への参照表に置換（DRY）。「全面画像デッキの印刷（16:9 letterbox）」参照セクションを追加（`.ai-slide-canvas`＋エイリアス・contain強制・cover禁止・letterbox 167mm・検証ゲート接続は §0.3 を正本に参照のみ）。861行→約530行へ削減 |
+| 3.3.0 | 2026-06-28 | box-shadow:none を `* {}` 全要素強制に変更（新クラス追記漏れ防止）。`@media print` 内の影除去を個別クラス列挙から `* { box-shadow: none !important; }` の一括強制へ統一。Chrome 印刷＋`print-color-adjust: exact` で影がカード周囲のグレー塗りつぶしになる現象の恒久対策。実体 CSS（`vendor/assets/print-styles.css` / `vendor/assets/slide-template-single.html` / `vendor/scripts/style-builder.cjs`）と必須事項チェックリスト（必須2）を更新 |
+| 3.2.0 | 2026-06-24 | 印刷ビューポート契約の一本化＋行数削減（elegant-review・D1/D10）。冒頭に「印刷=full-bleed（通常デッキ・本ファイル正本）／16:9 letterbox（全面画像デッキ・`full-image-deck-method.md §0.3` が正本）」の2系統を明記。「完全な印刷CSS（コピー用）」の全文再掲（前段セクションの完全重複・約290行）を削除し、実体 CSS（`vendor/assets/print-styles.css` / `vendor/assets/slide-template-single.html` / `vendor/scripts/style-builder.cjs`）への参照表に置換（DRY）。「全面画像デッキの印刷（16:9 letterbox）」参照セクションを追加（`.ai-slide-canvas`＋エイリアス・contain強制・cover禁止・letterbox 167mm・検証ゲート接続は §0.3 を正本に参照のみ）。861行→約530行へ削減 |
 | 3.1.0 | 2026-05-09 | SR-08 / SR-09 反映: 必須事項チェックリスト追加（print-color-adjust: exact 強制、box-shadow: none 強制）。新クラスにも box-shadow: none を追記する運用を明文化 |
 | 3.0.0 | 2026-01-12 | 固定サイズ方式に全面変更：A4横(297mm×210mm)固定、ダークモード維持、overflow:hidden採用、非表示スライド対応 |
 | 2.1.0 | 2026-01-04 | Flexbox/Grid維持方式に変更：`.slider__item`をflex表示に、コンテナごとの明示的display設定、全子要素のvisibility保証追加 |

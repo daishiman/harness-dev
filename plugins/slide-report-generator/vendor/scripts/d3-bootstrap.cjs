@@ -14,6 +14,9 @@
 
 const fs = require('fs');
 const path = require('path');
+// 配色は svg-kit の TOKENS / SERIES を唯一の出どころにする。
+// ここに色値を書くと、genome と svg-kit を直しても fallback 経路だけが旧配色で描く。
+const kit = require('./svg-kit.cjs');
 
 const D3_VERSION = '7.9.0';
 const D3_CDN = `https://cdnjs.cloudflare.com/ajax/libs/d3/${D3_VERSION}/d3.min.js`;
@@ -62,7 +65,7 @@ function renderD3BootstrapJs() {
     div.setAttribute('data-d3-fallback', m.component || 'unknown');
     div.setAttribute('role', 'img');
     div.setAttribute('aria-label', m.component + ' chart');
-    div.style.cssText = 'padding:1rem;border:2px dashed var(--wave-blue,#7E9CD8);color:var(--fg,#43436c);text-align:center;font-weight:700;';
+    div.style.cssText = 'padding:1rem;border:2px dashed ${kit.SERIES[0]};color:${kit.TOKENS.ink};text-align:center;font-weight:700;';
     div.textContent = '[D3:' + m.component + ']';
     el.appendChild(div);
   }
@@ -79,7 +82,7 @@ function renderD3BootstrapJs() {
       .attr('role', 'img')
       .attr('aria-label', cfg.title || m.component);
 
-    var palette = ['var(--wave-blue,#7E9CD8)', 'var(--wave-aqua,#7FB4CA)', 'var(--sakura-pink,#D27E99)', 'var(--autumn-yellow,#DCA561)', 'var(--spring-violet,#957FB8)'];
+    var palette = ${JSON.stringify(kit.SERIES)};
 
     try {
       switch (m.component) {
@@ -166,7 +169,7 @@ function renderD3BootstrapJs() {
             var h = (d.value / bMax) * (H - 80);
             var x = 40 + i * bg + (bg - bw) / 2;
             svg.append('rect').attr('x', x).attr('y', H - 40 - h).attr('width', bw).attr('height', h).attr('rx', 4).attr('fill', palette[i % palette.length]);
-            svg.append('text').attr('x', x + bw / 2).attr('y', H - 18).attr('text-anchor', 'middle').attr('font-size', 13).attr('fill', 'var(--fg,#43436c)').text(d.label);
+            svg.append('text').attr('x', x + bw / 2).attr('y', H - 18).attr('text-anchor', 'middle').attr('font-size', 13).attr('fill', '${kit.TOKENS.ink}').text(d.label);
           });
           break;
         }
@@ -209,7 +212,7 @@ function renderD3BootstrapJs() {
           svg.append('path').attr('d', 'M' + (gcx - gr) + ',' + gcy + ' A' + gr + ',' + gr + ' 0 0 1 ' + (gcx + gr) + ',' + gcy).attr('fill', 'none').attr('stroke', palette[1]).attr('stroke-width', 24).attr('opacity', 0.3);
           var gx = gcx + gr * Math.cos(gang), gy = gcy - gr * Math.sin(gang);
           svg.append('path').attr('d', 'M' + (gcx - gr) + ',' + gcy + ' A' + gr + ',' + gr + ' 0 ' + (v > 50 ? 1 : 0) + ' 1 ' + gx + ',' + gy).attr('fill', 'none').attr('stroke', palette[0]).attr('stroke-width', 24);
-          svg.append('text').attr('x', gcx).attr('y', gcy - 30).attr('text-anchor', 'middle').attr('font-size', 36).attr('font-weight', 800).attr('fill', 'var(--fg,#43436c)').text(v + '%');
+          svg.append('text').attr('x', gcx).attr('y', gcy - 30).attr('text-anchor', 'middle').attr('font-size', 36).attr('font-weight', 800).attr('fill', '${kit.TOKENS.ink}').text(v + '%');
           break;
         }
         case 'bubble': {
@@ -299,7 +302,7 @@ function renderD3BootstrapJs() {
             var x = 48 + i*rstep;
             svg.append('circle').attr('cx', x).attr('cy', H/2).attr('r', 14).attr('fill', palette[i%palette.length]);
             svg.append('text').attr('x', x).attr('y', H/2 + (i%2 ? 52 : -36)).attr('text-anchor', 'middle')
-              .attr('fill', 'var(--fg,#43436c)').attr('font-weight', 700).text(d.label || d.name || ('M' + (i+1)));
+              .attr('fill', '${kit.TOKENS.ink}').attr('font-weight', 700).text(d.label || d.name || ('M' + (i+1)));
           });
           break;
         }
@@ -311,7 +314,7 @@ function renderD3BootstrapJs() {
             var y = 32 + i*vstep, side = i%2 ? 1 : -1;
             svg.append('circle').attr('cx', vx).attr('cy', y).attr('r', 10).attr('fill', palette[i%palette.length]);
             svg.append('text').attr('x', vx + side*32).attr('y', y+5).attr('text-anchor', side>0?'start':'end')
-              .attr('fill', 'var(--fg,#43436c)').attr('font-weight', 700).text(d.label || d.name || ('Event ' + (i+1)));
+              .attr('fill', '${kit.TOKENS.ink}').attr('font-weight', 700).text(d.label || d.name || ('Event ' + (i+1)));
           });
           break;
         }

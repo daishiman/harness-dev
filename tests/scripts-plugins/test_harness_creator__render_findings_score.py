@@ -576,3 +576,335 @@ def test_main_missing_target_argparse_error():
     )
     assert r.returncode == 2
     assert "--target" in r.stderr or "required" in r.stderr
+
+
+# ============================================================================
+# 被覆率の申告と fail-closed
+#
+# 「検査していない」が「合格」へ吸い込まれる経路が塞がっているかを見る。
+# ここが緩むと threshold 80 が「未実装なら満たされる」へ静かに反転する。
+# ============================================================================
+
+def test_rule_applies_wildcard_and_explicit():
+    assert RFS.rule_applies({"id": "X"}, "skill") is True          # 既定は '*'
+    assert RFS.rule_applies({"applies_to_kinds": ["*"]}, "hook") is True
+    assert RFS.rule_applies({"applies_to_kinds": ["agent"]}, "skill") is False
+    assert RFS.rule_applies({"applies_to_kinds": ["agent"]}, "agent") is True
+
+
+def test_main_not_applicable_rule_excluded_from_coverage(monkeypatch, tmp_path, capsys):
+    """対象種別が違う rule は減点もせず、被覆率の分母にも入らない。"""
+    rp = tmp_path / "rubric.json"
+    rule = {"id": "AG-002", "severity": "high", "area": "agent", "check": "",
+            "applies_to_kinds": ["agent"]}
+    rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([rule]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert out["passed"] is True
+    assert out["coverage"]["applicable_rules"] == 0
+    assert out["coverage"]["not_applicable"] == 1
+    assert out["not_applicable"][0]["id"] == "AG-002"
+
+
+def test_main_unscored_high_rule_blocks_pass(monkeypatch, tmp_path, capsys):
+    """適用対象なのに判定実装が無い high rule は、満点でも合格にしない。"""
+    rp = tmp_path / "rubric.json"
+    rule = {"id": "ZZ-999", "severity": "high", "area": "future", "check": "",
+            "applies_to_kinds": ["skill"]}
+    rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([rule]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert out["score"] == 100          # 減点は発生しない (違反を捏造しない)
+    assert out["passed"] is False       # が、合格とも言わない
+    assert out["unscored"][0]["id"] == "ZZ-999"
+    assert "ZZ-999" in out["blocking_reason"]
+
+
+def test_main_unscored_low_rule_does_not_block_but_is_declared(monkeypatch, tmp_path, capsys):
+    rp = tmp_path / "rubric.json"
+    rule = {"id": "ZZ-001", "severity": "low", "area": "future", "check": ""}
+    rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([rule]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert out["passed"] is True
+    assert out["coverage"]["unscored"] == 1
+    assert "blocking_reason" not in out
+
+
+def test_main_llm_judge_rule_goes_to_pending_not_scored(monkeypatch, tmp_path, capsys):
+    rp = tmp_path / "rubric.json"
+    rule = {"id": "BD-004", "severity": "high", "area": "body", "check": ""}
+    rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([rule]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert [p["id"] for p in out["pending_human"]] == ["BD-004"]
+    assert out["coverage"]["scored"] == 0
+    assert out["passed"] is True
+
+
+def test_main_rubric_blocked_rule_declares_blocked_on(monkeypatch, tmp_path, capsys):
+    """rule 文が実態と食い違う PG-001/REG-001 は silent pass にしない。"""
+    rp = tmp_path / "rubric.json"
+    rule = {"id": "PG-001", "severity": "high", "area": "prompt", "check": ""}
+    rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
+    d, _ = _write_skill_dir(tmp_path)
+    _stub_compose(monkeypatch, _rubric([rule]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert out["pending_human"][0]["blocked_on"] == "rubric-text"
+
+
+def test_main_emits_plugin_and_skill_for_eval_log_routing(monkeypatch, tmp_path, capsys):
+    """eval-log/<plugin>/ の振り分けキーを出す (出さないと全件 core/ に落ちる)。"""
+    plugin = tmp_path / "plugins" / "demo-plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps({"name": "demo-plugin"}), encoding="utf-8")
+    (plugin / "skills").mkdir()
+    d, _ = _write_skill_dir(plugin / "skills")
+    rp = tmp_path / "rubric.json"
+    rp.write_text(json.dumps(_rubric([])), encoding="utf-8")
+    _stub_compose(monkeypatch, _rubric([]))
+    _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
+    out = json.loads(capsys.readouterr().out)
+    assert out["plugin"] == "demo-plugin"
+    assert out["skill"] == "run-do-thing"
+    assert out["target_kind"] == "skill"
+
+
+# ============================================================================
+# 新規実装 rule
+# ============================================================================
+
+def test_pd002_pass_with_key_rules_heading():
+    body = "\n# t\n\n## Purpose & Output Contract\nx\n\n## Key Rules\n1. a\n"
+    assert RFS.check_rule(_rule("PD-002"), {}, body, Path(".")) is None
+
+
+def test_pd002_fail_missing_heading():
+    body = "\n# t\n\n## 概要\nMUST do x\n"
+    f = RFS.check_rule(_rule("PD-002"), {}, body, Path("."))
+    assert f is not None and "## Purpose" in f["message"]
+
+
+def test_pd002_fail_missing_prohibition():
+    body = "\n# t\n\n## Purpose & Output Contract\nただの説明。\n"
+    f = RFS.check_rule(_rule("PD-002"), {}, body, Path("."))
+    assert f is not None and "Key Rule" in f["message"]
+
+
+def test_pd002_ignores_content_past_line_30():
+    body = "\n## Purpose\n" + "\n".join(f"line {i}" for i in range(40)) + "\nMUST x\n"
+    f = RFS.check_rule(_rule("PD-002"), {}, body, Path("."))
+    assert f is not None  # 30 行より後の禁則では救済しない
+
+
+def _knowledge_skill(tmp_path, entries, *, plugin_scope=False, declare=True):
+    """knowledge loop を持つ skill を組み立てる。"""
+    plugin = tmp_path / "plugins" / "kb-plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps({"name": "kb-plugin"}), encoding="utf-8")
+    (plugin / "skills").mkdir()
+    d, _ = _write_skill_dir(plugin / "skills", name="run-kb")
+    kdir = (plugin if plugin_scope else d) / "knowledge"
+    kdir.mkdir()
+    (kdir / "router.json").write_text(json.dumps({"categories": {}}), encoding="utf-8")
+    (kdir / "cat.json").write_text(json.dumps(entries), encoding="utf-8")
+    return d, kdir
+
+
+FULL_ENTRY = {"id": "K-1", "title": "t", "intent": "x すること",
+              "background": "b", "keywords": ["a"], "source": "s.md"}
+
+
+def test_kl001_skips_when_no_knowledge_loop(tmp_path):
+    d, _ = _write_skill_dir(tmp_path)
+    assert RFS.check_rule(_rule("KL-001", "high"), {}, "", d) is None
+
+
+def test_kl001_pass_with_router_and_three_entries(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    assert RFS.check_rule(_rule("KL-001", "high"), {}, "", d) is None
+
+
+def test_kl001_fail_too_few_entries(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 2)
+    f = RFS.check_rule(_rule("KL-001", "high"), {}, "", d)
+    assert f is not None and "< 3" in f["message"]
+
+
+def test_kl001_declared_but_missing_dir_fails(tmp_path):
+    d, _ = _write_skill_dir(tmp_path)
+    f = RFS.check_rule(_rule("KL-001", "high"), {"knowledge_loop": "true"}, "", d)
+    assert f is not None and "knowledge/ が無い" in f["message"]
+
+
+def test_kl_others_silent_when_dir_missing(tmp_path):
+    """同じ 1 つの欠落で KL-002..005 まで重ねて減点しない。"""
+    d, _ = _write_skill_dir(tmp_path)
+    for rid in ("KL-002", "KL-003", "KL-004", "KL-005"):
+        assert RFS.check_rule(_rule(rid), {"knowledge_loop": "true"}, "", d) is None
+
+
+def test_kl002_reports_scale_not_just_first_violation(tmp_path):
+    bad = {"id": "K-9", "intent": "x すること", "background": "b",
+           "keywords": ["a"], "source": "s.md"}   # title/content 欠落
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY, bad, dict(bad, id="K-10")])
+    f = RFS.check_rule(_rule("KL-002"), {}, "", d)
+    assert f is not None
+    assert "2/3 entry" in f["message"] and "title|content" in f["message"]
+
+
+def test_kl003_fail_without_deterministic_search(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    f = RFS.check_rule(_rule("KL-003"), {}, "", d)
+    assert f is not None and "AI 意味検索のみは FAIL" in f["message"]
+
+
+def test_kl003_pass_with_weighted_search_script(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "search_knowledge.py").write_text(
+        "FIELD_WEIGHTS = {'title': 3}\n", encoding="utf-8")
+    assert RFS.check_rule(_rule("KL-003"), {}, "", d) is None
+
+
+def test_kl003_fail_when_search_script_has_no_weighting(tmp_path):
+    """ファイル名を合わせただけでは通さない (全文一致のみは FAIL)。"""
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "search_knowledge.py").write_text(
+        "def search(q, items):\n    return [i for i in items if q in i]\n", encoding="utf-8")
+    f = RFS.check_rule(_rule("KL-003"), {}, "", d)
+    assert f is not None and "weight" in f["message"]
+
+
+def test_kl004_fail_without_usage_recording(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    f = RFS.check_rule(_rule("KL-004"), {}, "", d)
+    assert f is not None and "feedback loop 未配線" in f["message"]
+
+
+def test_kl004_fail_when_recorder_omits_fields(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "record_usage.py").write_text(
+        "LOG = 'usage-log.jsonl'\nmatched_ids = []\n", encoding="utf-8")
+    f = RFS.check_rule(_rule("KL-004"), {}, "", d)
+    assert f is not None and "used_ids" in f["message"]
+
+
+def test_kl004_pass_with_full_recorder(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    (d / "scripts").mkdir()
+    (d / "scripts" / "record_usage.py").write_text(
+        "LOG='usage-log.jsonl'\nmatched_ids=[]\nused_ids=[]\nsatisfaction=0\n",
+        encoding="utf-8")
+    assert RFS.check_rule(_rule("KL-004"), {}, "", d) is None
+
+
+def test_kl_plugin_scope_requires_declaration(tmp_path):
+    """plugin 直下の knowledge/ を、宣言していない sibling skill へ波及させない。"""
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3, plugin_scope=True)
+    assert RFS.check_rule(_rule("KL-001", "high"), {}, "", d) is None   # 宣言なし → skip
+    assert RFS.check_rule(_rule("KL-001", "high"), {"knowledge_loop": "y"}, "", d) is None
+
+
+def test_kl005_fail_without_documented_thresholds(tmp_path):
+    d, _ = _knowledge_skill(tmp_path, [FULL_ENTRY] * 3)
+    f = RFS.check_rule(_rule("KL-005", "low"), {}, "", d)
+    assert f is not None and "分割閾値" in f["message"]
+
+
+def _bundle_repo(tmp_path, *, distributable=None, sidecar=None, bundled=False):
+    root = tmp_path / "repo"
+    (root / ".git").mkdir(parents=True)
+    (root / ".claude-plugin").mkdir()
+    (root / ".claude-plugin" / "bundles.json").write_text(
+        json.dumps({"bundles": [{"name": "b", "plugins": ["p1"] if bundled else []}]}),
+        encoding="utf-8")
+    plugin = root / "plugins" / "p1"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    manifest = {"name": "p1"}
+    if distributable is not None:
+        manifest["distributable"] = distributable
+    (plugin / ".claude-plugin" / "plugin.json").write_text(
+        json.dumps(manifest), encoding="utf-8")
+    if sidecar is not None:
+        (plugin / "references").mkdir()
+        (plugin / "references" / "package-contract.json").write_text(
+            json.dumps({"distribution": {"distributable": sidecar}}), encoding="utf-8")
+    (plugin / "skills").mkdir()
+    d, _ = _write_skill_dir(plugin / "skills")
+    return d
+
+
+def test_bnd001_fail_when_distributable_plugin_unbundled(tmp_path):
+    d = _bundle_repo(tmp_path, bundled=False)
+    f = RFS.check_rule(_rule("BND-001", "high"), {}, "", d)
+    assert f is not None and "bundles.json" in f["message"]
+
+
+def test_bnd001_pass_when_bundled(tmp_path):
+    d = _bundle_repo(tmp_path, bundled=True)
+    assert RFS.check_rule(_rule("BND-001", "high"), {}, "", d) is None
+
+
+def test_bnd001_skips_non_distributable_manifest(tmp_path):
+    d = _bundle_repo(tmp_path, distributable=False, bundled=False)
+    assert RFS.check_rule(_rule("BND-001", "high"), {}, "", d) is None
+
+
+def test_bnd001_sidecar_overrides_manifest(tmp_path):
+    """配布可否の SSOT は sidecar package-contract.json が優先 (dev-graph の形)。"""
+    d = _bundle_repo(tmp_path, distributable=None, sidecar=False, bundled=False)
+    assert RFS.check_rule(_rule("BND-001", "high"), {}, "", d) is None
+
+
+def _prompt_repo(tmp_path, anchor):
+    plugin = tmp_path / "plugins" / "p1"
+    (plugin / "agents").mkdir(parents=True)
+    (plugin / "agents" / "worker.md").write_text(
+        f"---\nname: worker\n---\n{anchor}\nbody\n", encoding="utf-8")
+    (plugin / "skills").mkdir()
+    d, _ = _write_skill_dir(plugin / "skills")
+    (d / "prompts").mkdir()
+    (d / "prompts" / "R1-agent-worker.md").write_text("x", encoding="utf-8")
+    return d
+
+
+def test_pg002_pass_with_bare_r_id_anchor(tmp_path):
+    d = _prompt_repo(tmp_path, "<!-- responsibility: R1 -->")
+    assert RFS.check_rule(_rule("PG-002"), {}, "", d) is None
+
+
+def test_pg002_pass_with_full_stem_anchor(tmp_path):
+    d = _prompt_repo(tmp_path, "<!-- responsibility: R1-agent-worker -->")
+    assert RFS.check_rule(_rule("PG-002"), {}, "", d) is None
+
+
+def test_pg002_fail_on_cross_wired_stem(tmp_path):
+    """R 番号が合っていても別 agent の stem なら交差配線として落とす。"""
+    d = _prompt_repo(tmp_path, "<!-- responsibility: R1-agent-other -->")
+    f = RFS.check_rule(_rule("PG-002"), {}, "", d)
+    assert f is not None and "一致しない" in f["message"]
+
+
+def test_pg002_fail_when_anchor_absent(tmp_path):
+    d = _prompt_repo(tmp_path, "no anchor here")
+    f = RFS.check_rule(_rule("PG-002"), {}, "", d)
+    assert f is not None and "アンカーが無い" in f["message"]
+
+
+def test_pg002_skips_skill_without_prompts(tmp_path):
+    d, _ = _write_skill_dir(tmp_path)
+    assert RFS.check_rule(_rule("PG-002"), {}, "", d) is None

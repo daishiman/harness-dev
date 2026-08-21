@@ -54,8 +54,8 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| extractor | `$CLAUDE_PLUGIN_ROOT/agents/knowledge-extractor.md` | 6カテゴリ分類 Rule A-F を確認するとき |
-| relation-extractor | `$CLAUDE_PLUGIN_ROOT/agents/knowledge-relation-extractor.md` | 辺の evidence/confidence/review_status 契約を確認するとき |
+| extractor | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/knowledge-extractor.md` | 6カテゴリ分類 Rule A-F を確認するとき |
+| relation-extractor | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/knowledge-relation-extractor.md` | 辺の evidence/confidence/review_status 契約を確認するとき |
 | schema | `$CLAUDE_PLUGIN_ROOT/knowledge/schema.json` | entry 必須フィールドを確認するとき |
 
 ### 3.2 外部ツール / API

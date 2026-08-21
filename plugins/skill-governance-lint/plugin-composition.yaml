@@ -1,0 +1,17 @@
+name: skill-governance-lint
+kind: plugin-composition
+version: 0.1.10
+purpose: Public capability inventory and dependency boundary for skill-governance-lint.
+description: Public capability inventory and dependency boundary for skill-governance-lint.
+owner: harness-dev
+
+capabilities:
+  - { kind: skill, ref: skills/run-governance-lint, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
+

@@ -31,24 +31,26 @@ contract:
     - "sub-agent/skill 本文は prompt-creator 7 層構造(L1 基本定義 → L7 ユーザーインタラクション)で記述し、実行パスは全て $CLAUDE_PLUGIN_ROOT 起点とすること (enforcement: validate-frontmatter + lint-agent-prompt-section + manual)"
 
 capabilities:
+  - { kind: skill, ref: skills/assign-blueprint-fidelity-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-blueprint-apply, tier: core }
+  - { kind: skill, ref: skills/run-extract-blueprint, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/architecture-essence-synthesizer, tier: core }
+  - { kind: agent, ref: agents/backend-inference-analyzer, tier: core }
+  - { kind: agent, ref: agents/content-intent-analyzer, tier: core }
+  - { kind: agent, ref: agents/frontend-surface-analyzer, tier: core }
+  - { kind: agent, ref: agents/uiux-rationale-analyzer, tier: core }
+  - { kind: command, ref: commands/extract-blueprint, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-BashWebFetch/pre-fetch-authz-guard", tier: core }
+
   # === Skills (kind=skill) — .claude-plugin/plugin.json entry_points.skills と一致 ===
-  - { kind: skill, ref: skills/run-extract-blueprint,             tier: core }       # C01 抽出本体 orchestrator
-  - { kind: skill, ref: skills/assign-blueprint-fidelity-evaluator, tier: core }     # C02 proposer≠approver 独立忠実性評価
-  - { kind: skill, ref: skills/run-blueprint-apply,              tier: core }        # C14 自社適用 recommendations 導出 (下流 run)
 
   # === Agents (kind=agent) — context:fork の SubAgent・plugin.json agents 配線と 1 対 1 ===
-  - { kind: agent, ref: agents/frontend-surface-analyzer,        tier: core }        # C03 fact (visual/content/tech/CWV/security/compliance/site)
-  - { kind: agent, ref: agents/backend-inference-analyzer,       tier: core }        # C04 backend/named 同定/security_design/delivery_topology 推測
-  - { kind: agent, ref: agents/uiux-rationale-analyzer,          tier: core }        # C05 UIUX 根拠 + user_journeys 推測
-  - { kind: agent, ref: agents/content-intent-analyzer,          tier: core }        # C13 コンテンツ/伝達意図 (JTBD) 推測
-  - { kind: agent, ref: agents/architecture-essence-synthesizer, tier: core }        # C06 本質統合 + 5 種 Mermaid + 合成 design-token
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/extract-blueprint,            tier: core }        # C07
 
   # === Hooks (kind=hook) — plugin.json PreToolUse 配線と 1 対 1 対応 ===
   # 単一 hook が単一述語 (fetch-authz) を担い、matcher=Bash|WebFetch で取得経路を被覆する。
-  - { kind: hook, ref: "hook:PreToolUse/pre-fetch-authz-guard",  tier: core }        # C08 fail-closed-exit2
 
   # === Scripts (kind=script) — plugin-root scripts/ 実体 7 本と集合一致 (共有決定論 C09-C12 の 4 本 + MCP 非依存 browser 取得 1 本 + layout dedup 1 本 + goal-seek 共有 validator 1 本) ===
   - { kind: script, ref: scripts/authz-classify.py,             tier: core }         # C12 AuthzEvidence + budget/crawl_profile SSOT
@@ -84,7 +86,7 @@ dependencies:
   - { from: scripts/fetch-snapshot.py,  to: scripts/authz-classify.py,                 type: reads }   # C09→C12 AuthzEvidence/budget 消費
   - { from: scripts/browser-render.py,  to: scripts/authz-classify.py,                 type: reads }   # C15→C12 evidence/budget を import 共有し fail-closed
   - { from: agents/frontend-surface-analyzer, to: scripts/browser-render.py,           type: calls }   # C03→C15 Bash 経由で headless Chrome 起動 (MCP 非接続)
-  - { from: "hook:PreToolUse/pre-fetch-authz-guard", to: scripts/authz-classify.py,    type: reads }   # C08→C12 evidence/残予算検査
+  - { from: "hook:PreToolUse-BashWebFetch/pre-fetch-authz-guard", to: scripts/authz-classify.py,    type: reads }   # C08→C12 evidence/残予算検査
   # --- 文書化・自己検証 (C01 R3) ---
   - { from: skills/run-extract-blueprint, to: scripts/doc-emit.py,                      type: calls }   # C01→C11 章別 draft emit
   - { from: skills/run-extract-blueprint, to: scripts/mermaid-validate.py,              type: calls }   # C01→C10 5 種図自己検証
@@ -105,6 +107,12 @@ dependencies:
   - { from: skills/run-extract-blueprint, to: schemas/system-blueprint.schema.json,      type: reads }
   - { from: skills/run-extract-blueprint, to: schemas/fact-inference-confidence.schema.json, type: reads }
   - { from: agents/frontend-surface-analyzer, to: references/expert-lens-roster.md,       type: reads }
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
 
 eval_sinks:
   - EVALS.json

@@ -353,7 +353,15 @@ def test_pretool_blocks_known_entrypoint_mutation_clis_without_central_execute()
 
 def test_manifest_connects_confirmation_producer_and_pretool_enforcer():
     manifest = json.loads(MANIFEST.read_text())
-    hooks = manifest["hooks"]
+    # 配線の実体は ./hooks/hooks.json にある。manifest が参照を書く形と、
+    # 何も書かず loader の標準自動検出に任せる形の両方を辿って実体を読む。
+    wiring = manifest.get("hooks")
+    if wiring is None:
+        wiring = json.loads((MANIFEST.parents[1] / "hooks" / "hooks.json").read_text())["hooks"]
+    if isinstance(wiring, str):
+        external = MANIFEST.parents[1] / wiring.lstrip("./")
+        wiring = json.loads(external.read_text())["hooks"]
+    hooks = wiring
     prompt_commands = [
         hook["command"]
         for group in hooks["UserPromptSubmit"]
@@ -372,7 +380,7 @@ def test_all_projections_pin_the_executable_guard_runtime():
     runner_sha = hashlib.sha256(RUNNER.read_bytes()).hexdigest()
     schema_sha = hashlib.sha256(SCHEMA.read_bytes()).hexdigest()
     projections = sorted(ROOT.glob("plugins/*/artifact-delivery.json"))
-    assert len(projections) == 23
+    assert len(projections) == 20
     external = 0
     for path in projections:
         projection = json.loads(path.read_text())
@@ -387,4 +395,4 @@ def test_all_projections_pin_the_executable_guard_runtime():
                     "runtime_ref": "#/external_mutation_runtime",
                     "flow": "preview-confirm-authorize-execute-v1",
                 }
-    assert external == 47
+    assert external == 33

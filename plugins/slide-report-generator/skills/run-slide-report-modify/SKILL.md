@@ -66,6 +66,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -78,6 +79,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-slide-report-modify
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > **役割**: 既存の slide deck ／ report の**局所修正**を独立起動で行う skill (移植元 P4 = slide-modifier 相当)。生成し直さず、`output_mode` を保ったまま**指定箇所だけ**を部分修正し、意匠／技術コアと非対象箇所を壊さない。plugin root = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}`、実行パスは全てここ起点 (repo-root ハードコード禁止)。新規生成は `run-slide-report-generate`、シリーズ横断検証は `run-cross-deck-review` の責務。
 
@@ -110,7 +119,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 利用者が改善を選んだ場合だけ `Task` で **slide-report-modifier** を起動 (`isolation: fork`)。提示済み最小修正版を入力に、判定したmodeに応じて指定箇所のみを改善する。workerのtoolsは `Read, Write, Bash` のみでTaskを持たず、下流agentが要る場合は修正案に明記して返し本skillがpost-choiceでdispatchする。
 
-- 意匠 SSOT (Kanagawa 配色・16:9・最小 1.4rem・印刷 CSS・letterbox 等) と非対象セクションは**不変**に保つ (両モード共有)。
+- 意匠 SSOT (配色トークン・16:9・最小 1.4rem・印刷 CSS・letterbox 等) と非対象セクションは**不変**に保つ (両モード共有)。
 - **slide**: `index.html`／`styles.css`／`scripts.js` と `structure.*` の同期を維持 (`./references/modification-rules.md` の CONST_001-013)。
 - **report**: `report-structure.json` を正本に編集し `render-report.js` (Bash) で `report.html` を再レンダして整合を維持 (`./references/report-modification-rules.md` の RCONST_001-013)。読み物文体・1項目1ビジュアル・reportType 骨格順序・入口ホリゾンタル（タイトル/リード/summary の読者価値・RCONST_013）を崩さず、履歴は `meta.version` bump ＋ sidecar `report-structure.history.json` (schema 外フィールドのインライン禁止)。
 - 全書き換え禁止 (局所差分のみ)。修正箇所と変更差分を記録する。
@@ -123,19 +132,19 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ```bash
 # 【共通】初回/更新後にplugin-local Chromiumを復元
-python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/setup-playwright.py" --install
+python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/setup-playwright.py" --install
 # 【共通】既存成果物の output_mode 判定と値域整合 (送信前・fail-closed)
-python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]
+python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]
 
 # 【slide R3】修正後の UI 品質検証 (テキスト切れ・改行・16:9 比率・非対象箇所の崩れ検出)
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html --check-ratio
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-slides.js" ./index.html --check-ratio
 # 意匠コア・印刷レイアウトに及ぶ場合は evaluate-deck.js / validate-print.js も併用
 
 # 【report R3】report-structure.json → report.html 再レンダ整合 (正本の忠実な射影を確認)
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <report.html>
 # 修正後 report.html の読み物視覚検証 (section 構造欠落 / 1項目1ビジュアル逸脱 / 段落過密 / 意匠逸脱・fail-closed)
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>
-python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>
+python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json
 # さらに mode-aware deck-evaluator (report rubric: 可読性/図解適合/情報密度/セクション論理構造) を Task 起動して再評価
 ```
 

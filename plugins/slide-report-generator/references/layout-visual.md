@@ -1,5 +1,8 @@
 # レイアウト・ビジュアルガイドライン
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: レイアウト法則・分割パターン・図形・矢印・余白・統一感
 
 ---

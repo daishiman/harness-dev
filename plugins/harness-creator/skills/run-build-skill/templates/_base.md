@@ -21,6 +21,7 @@ kind: {{kind}}                              # ref | run | wrap | assign | delega
 hierarchy_level: {{hierarchy_level}}        # L0 | L1 | L2
 owner: {{owner}}
 since: {{date}}
+runtime_root_policy: host-skill-path
 rubric_refs: {{rubric_refs | default([])}}
 # doc/21 source-traceability
 source: {{source_url_or_path}}
@@ -41,6 +42,14 @@ audit-trigger: {{audit_trigger | default("quarterly")}}
 
 ## 主要ルール
 {{key_constraints}}
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## ゴールシーク実行
 > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。

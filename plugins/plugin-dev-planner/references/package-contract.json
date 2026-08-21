@@ -1,0 +1,173 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "plugin-dev-planner",
+  "entry_points": {
+    "skills": [
+      "assign-plugin-plan-evaluator",
+      "run-plugin-dev-plan",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "plugin-dev-plan-architect",
+      "plugin-dev-plan-elicitor",
+      "plugin-dev-plan-evaluator",
+      "plugin-dev-plan-improvement-reviewer"
+    ],
+    "commands": [
+      "plugin-dev-plan"
+    ],
+    "hooks": [
+      "enforce-provenance-chain.py",
+      "hook-validate-plugin-plan.py"
+    ]
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "development-tools",
+    "tags": []
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "plugin-dev-plan": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command plugin-dev-plan through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "plugin-dev-planner",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "plugin-dev-plan-architect": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent plugin-dev-plan-architect through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "plugin-dev-planner",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        }
+      },
+      "plugin-dev-plan-elicitor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent plugin-dev-plan-elicitor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "plugin-dev-planner",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        }
+      },
+      "plugin-dev-plan-evaluator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent plugin-dev-plan-evaluator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-plugin-plan-evaluator"
+          ]
+        },
+        "owner_route": {
+          "plugin": "plugin-dev-planner",
+          "entry_points": [
+            "assign-plugin-plan-evaluator"
+          ]
+        }
+      },
+      "plugin-dev-plan-improvement-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent plugin-dev-plan-improvement-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        },
+        "owner_route": {
+          "plugin": "plugin-dev-planner",
+          "entry_points": [
+            "run-plugin-dev-plan"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

@@ -76,7 +76,7 @@
   - 目的: 更新時に誤りが画像として固定化する事態を防ぐ。
   - 背景: full-image-deck-method / slide CONST_007 と同一方針（report-writing-rules.md §3・report-visual-strategy.md §5）。退化耐性は両モード共通であるため。
 
-- **RCONST_010 (意匠 SSOT 共有維持)**: 最小フォント 1.4rem・Kanagawa 配色・フォント・印刷 CSS・`theme`（kanagawa-lotus 固定）を report 独自に発明しない。意匠/技術層は slide と共有 SSOT のまま維持する。
+- **RCONST_010 (意匠 SSOT 共有維持)**: 最小フォント 1.4rem・配色トークン・フォント・印刷 CSS・`theme`（schema 固定値）を report 独自に発明しない。配色は style genome の palette 定義と一致させる。意匠/技術層は slide と共有 SSOT のまま維持する。
   - 目的: 意匠 SSOT の分岐（report 独自意匠の発明）による一貫性崩壊・可読性下限割れを防ぐ。
   - 背景: 緩和対象はコンテンツ意図層（1メッセージ性・文量・chip 強制）だけで、意匠/技術層は共有維持（report-writing-rules.md §0・§3・build-contract §D）であるため。
 

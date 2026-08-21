@@ -12,6 +12,9 @@
 
 import { readFileSync, writeFileSync } from 'fs';
 import { pathToFileURL } from 'url';
+// 配色は svg-kit の TOKENS を唯一の出どころにする。ここに色値 (var() の第 2 引数を
+// 含む) を書くと、CSS 変数が届かない単体 SVG のときだけ旧配色で描かれる。
+import kit from './svg-kit.cjs';
 
 const MERMAID_BUNDLE_URL = new URL('../node_modules/mermaid/dist/mermaid.min.js', import.meta.url);
 let cachedMermaidBundle = null;
@@ -84,10 +87,10 @@ export function renderMermaidSvg(definition, opts = {}) {
     .map((ln, i) => `<tspan x="40" dy="${i === 0 ? 0 : lineH}">${escape(ln)}</tspan>`)
     .join('');
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mermaid 図 (静的プレースホルダ)" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="${W}" height="${H}" fill="var(--bg-dark, #fafafa)"/>
-  <rect x="20" y="20" width="${W - 40}" height="${H - 40}" rx="12" fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="1.5"/>
-  <text x="40" y="45" fill="var(--accent-blue-vivid, #3B7DD8)" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif">Mermaid</text>
-  <text x="40" y="${startY}" fill="var(--fg, #43436c)" font-size="15" font-family="'SF Mono', 'Fira Code', monospace">${tspans}</text>
+  <rect x="0" y="0" width="${W}" height="${H}" fill="${kit.TOKENS.paper}"/>
+  <rect x="20" y="20" width="${W - 40}" height="${H - 40}" fill="none" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.hairline}"/>
+  <text x="40" y="45" fill="${kit.TOKENS.ink}" font-size="18" font-weight="700" font-family="'Noto Sans JP', sans-serif">Mermaid</text>
+  <text x="40" y="${startY}" fill="${kit.TOKENS.ink}" font-size="15" font-family="'SF Mono', 'Fira Code', monospace">${tspans}</text>
 </svg>`;
 }
 

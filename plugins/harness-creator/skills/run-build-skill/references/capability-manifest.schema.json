@@ -108,6 +108,11 @@
         "anchors": { "type": "array", "items": { "type": "string" }, "description": "設計原則アンカー (例: Clean Code / SRP)。" },
         "disable-model-invocation": { "type": "boolean" },
         "user-invocable": { "type": "boolean" },
+        "runtime_root_policy": {
+          "type": "string",
+          "enum": ["host-skill-path"],
+          "description": "SKILL.mdまたは配下promptがplugin同梱資産をshell実行する場合に必須。Codexはホスト提示のabsolute SKILL.md pathからmanifest祖先を解決し、Claude CodeはCLAUDE_PLUGIN_ROOTを使う。cwd推測・literal placeholderは禁止。"
+        },
         "pair": { "type": "string", "description": "Generator/Evaluator 双方向リンク先 skill name。" },
         "effect": { "type": "string", "enum": ["none", "conversation-output", "local-artifact", "external-mutation"], "$comment": "正本: skill-governance-lint/scripts/validate-frontmatter.py EFFECT_VALUES。現行 SKILL.md の副作用分類と同期する。" },
         "source": { "type": "string" },
@@ -157,7 +162,7 @@
 
     "kindCommand": {
       "type": "object",
-      "description": "SlashCommand (commands/*.md) frontmatter スキーマ。通常は entrypoint skill へ委譲する薄いラッパ。例外として、セットアップ doctor など同梱 script を直接叩く direct-script command は entrypoint を省略できるが、実行例は `${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}` fallback 形にし、script 本体は `__file__` 相対で自己解決すること。",
+      "description": "SlashCommand (commands/*.md) frontmatter スキーマ。通常は entrypoint skill へ委譲する薄いラッパ。例外として、セットアップ doctor など同梱 script を直接叩く direct-script command は entrypoint を省略できるが、実行例は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}}` fallback 形にし、script 本体は `__file__` 相対で自己解決すること。",
       "properties": {
         "kind": { "const": "command" },
         "argument-hint": { "type": "string", "description": "/command <hint> の <hint> 部分。" },
@@ -178,7 +183,7 @@
             "type": "object",
             "required": ["kind", "ref"],
             "properties": {
-              "kind": { "type": "string", "enum": ["skill", "agent", "hook", "command", "prompt", "workflow", "script"], "$comment": "script は composition が同梱スクリプト実体を capability として列挙する場合の参照専用 kind (ubm-goal-setting/company-master が採用する確立パターン。scripts は自己 manifest を持たないため commonCore.kind には含めない)。値は compute-dogfooding-metrics.py KNOWN_KINDS と同期すること。" },
+              "kind": { "type": "string", "enum": ["skill", "agent", "hook", "command", "prompt", "workflow", "script"], "$comment": "script は composition が同梱スクリプト実体を capability として列挙する場合の参照専用 kind (ubm-goal-setting が採用する確立パターン。scripts は自己 manifest を持たないため commonCore.kind には含めない)。値は compute-dogfooding-metrics.py KNOWN_KINDS と同期すること。" },
               "ref": { "type": "string", "description": "Capability への相対パス。" },
               "tier": { "type": "string", "enum": ["core", "ref", "extension"] }
             }

@@ -48,11 +48,11 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| taxonomy | $CLAUDE_PLUGIN_ROOT/skills/ref-system-design-knowledge/references/system-category-taxonomy.json | カテゴリ/platform 初期集合の取得時 |
+| taxonomy | ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/ref-system-design-knowledge/references/system-category-taxonomy.json | カテゴリ/platform 初期集合の取得時 |
 | contract | references/spec-state-contract.md | 形状/真理値表の確認時 |
 
 ### 3.2 外部ツール
-- `Bash`: `python3 scripts/apply-spec-transition.py init --taxonomy <taxonomy_path> --out spec-state.json`
+- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" init --taxonomy <taxonomy_path> --out spec-state.json`
 
 ## Layer 4: 共通ポリシー
 
@@ -107,4 +107,4 @@
 
 ## 出力指示
 
-C04 taxonomy を Read し、`python3 scripts/apply-spec-transition.py init --taxonomy <path> --out spec-state.json` を実行して初期マトリクスを生成する。`validate-coverage-matrix.py` (loop) が exit0 になることを確認する。余計な前置き・思考過程出力は禁止。
+C04 taxonomy を Read し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" init --taxonomy <path> --out spec-state.json` を実行して初期マトリクスを生成する。`validate-coverage-matrix.py` (loop) が exit0 になることを確認する。余計な前置き・思考過程出力は禁止。

@@ -44,7 +44,7 @@
 
 image-only デッキで表を見せる場合は `illustrated-full-table`（見出し＋全セルを画像内に verbatim 焼き込む方式）を既定とする。HTML を画像上のピンポイント位置へ重ねる `html-overlay-table` は位置ズレが起きるため image-only では使わず、精密な数値・料金・頻繁更新・長文・複数行コードのみ `html-composite`（`html-overlay-table`）/ `html-primary` へ回す。焼き込み表の構造（`tableContent` / 各セル14字以内・最大5列×6行 / `monospaceColumns` / `camera=structural` 推奨）は `style-genome-packaging.md` §4.1・`ai-image-diagram-workflow.md` §4.1 を正本とする。
 
-パターン/値域（`pattern` / `textPolicy` / `backgroundSource` / `tableMode` の許容値）の定義は `references/style-genome-packaging.md` §4 を正本とする（本表は再定義せず参照に寄せる。DRY）。機械的な許容値は `scripts/validate-ai-image-assets.js` を正本とする。
+パターン/値域（`pattern` / `textPolicy` / `backgroundSource` / `tableMode` の許容値）の定義は `references/style-genome-packaging.md` §4 を正本とする（本表は再定義せず参照に寄せる。DRY）。機械的な許容値は `vendor/scripts/validate-ai-image-assets.js` を正本とする。
 
 `pattern` と `textPolicy` は `{slug}.meta.json`、`structure.md`、prompt の3箇所に同じ値で記録する。混在は許可するが、1スライド内で画像内テキストとHTML正本の責務が曖昧になってはいけない。
 
@@ -54,33 +54,33 @@ image-only デッキで表を見せる場合は `illustrated-full-table`（見�
 
 ### 0.3 HTML表示サイズと生成画像サイズの契約（印刷ビューポート契約の正本）
 
-> **印刷ビューポート契約の正本はこの節**。全面画像デッキの「16:9 letterbox（297mm→167mm）+ contain + 主キャンバスクラス規定」をここで一本化し、`references/print-layout.md`・`references/image-format-guide.md`・`SKILL.md` は本節を参照する（DRY）。実装の正本は `assets/print-styles.css`（印刷 CSS）と `assets/slide-template-single.html`（画面 CSS・主キャンバス実体マークアップ）。
+> **印刷ビューポート契約の正本はこの節**。全面画像デッキの「16:9 letterbox（297mm→167mm）+ contain + 主キャンバスクラス規定」をここで一本化し、`references/print-layout.md`・`references/image-format-guide.md`・`SKILL.md` は本節を参照する（DRY）。ここが正本なのは**契約**であって実装ではない。印刷 CSS を実際に出しているファイルは経路ごとに違うので、出所は [print-layout.md §印刷 CSS の出所（経路別）](print-layout.md) を見る。
 
 全面画像生成モードでは、生成画像は 2560×1440 / 16:9 を基準にし、HTML では主キャンバスとして規定クラス **`.ai-slide-canvas`** に配置する。既定の表示契約は `imageFit: contain` であり、CSS background や `object-fit: cover` で主画像を切ってはいけない。
 
 #### 主キャンバスクラス規定（`.ai-slide-canvas` 実体 + エイリアス）
 
 - 規定クラスは **`.ai-slide-canvas`** を正本（実体）とする。後方互換で慣用クラス `.slide-fullbg` / `.slide-bg`、意味属性 `[data-role="main-canvas"]` を**同一の `object-fit: contain` 契約のエイリアス**として受容する。
-- CSS は `:where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"])` で詳細度ゼロに束ね、クラス名密結合を避ける（実装: `assets/slide-template-single.html` 画面 CSS / `assets/print-styles.css` 印刷 CSS）。
+- CSS は `:where(.ai-slide-canvas, .slide-fullbg, .slide-bg, [data-role="main-canvas"])` で詳細度ゼロに束ね、クラス名密結合を避ける（実装: `vendor/assets/slide-template-single.html` 画面 CSS / `vendor/assets/print-styles.css` 印刷 CSS）。
 
 #### 表示・印刷フィット契約
 
 - `image-only` は `<picture class="ai-slide-canvas">` に置き、`img { width:100%; height:100%; object-fit:contain; }` とする。意味テキスト・コード・QR・ページ UI は `.visual-overlay`（前面 `z-index:1`）に置き、画像へ焼き込まない。
 - `html-composite` でも、生成画像が意味を持つ主ビジュアルなら `.ai-slide-canvas`（またはエイリアス）の `contain` を使う。装飾だけの背景に限り `.slide-bg--cover-safe`（`imageFit: cover-safe`）を許可する。
 - `imageFit: cover-safe` は、主要被写体・人物・AIロボット・吹き出し・表・フロー矢印が safe area 内にあり、目視で端欠けがない場合だけ使う。
-- 画面・印刷とも `object-fit: contain`（矛盾なし）。印刷は `@media print` で `object-fit: contain !important` を強制し、`cover` による端切れを禁止する（焼込テキスト入り `baked-with-overlay` 画像が印刷で欠けないことを優先）。`cover` の `@media print` 混入は `scripts/validate-print.js` が CRITICAL 検出する。
+- 画面・印刷とも `object-fit: contain`（矛盾なし）。印刷は `@media print` で `object-fit: contain !important` を強制し、`cover` による端切れを禁止する（焼込テキスト入り `baked-with-overlay` 画像が印刷で欠けないことを優先）。`cover` の `@media print` 混入は `vendor/scripts/validate-print.js` が CRITICAL 検出する。
 
 #### 印刷 A4横 16:9 letterbox（端欠けなし担保）
 
 - 全面画像デッキは `<div class="slider" data-deck-mode="full-image">`（または `body[data-deck-mode="full-image"]`）を立て、印刷を A4横 16:9 letterbox へ切り替える。
 - A4横 297mm × 210mm を基準に 16:9 を幅 297mm へ合わせると高さ **167mm**（167.06mm）。上下に `(210 − 167) / 2 ≈ 21mm` の off-white（#FAFAFA）余白（letterbox）が出て、`contain` の中央配置で全ページ端欠けゼロになる。
 - `data-deck-mode="full-image"` を持つデッキのみに限定適用し、通常 HTML デッキ（属性なし）の full-bleed 印刷ルール（`.slider__item` 210mm 系・281mm/170mm）は温存する（後方互換）。
-- `scripts/validate-print.js` は P06 を 16:9 letterbox（167mm）許容に拡張し、全ページ印刷対象・`data-hidden` 除外漏れも検査する。
+- `vendor/scripts/validate-print.js` は P06 を 16:9 letterbox（167mm）許容に拡張し、全ページ印刷対象・`data-hidden` 除外漏れも検査する。
 
 #### safeArea の px 自動計算
 
 - 生成画像プロンプトには「HTML slide with object-fit: contain」「top/bottom 8%, left/right 6% safe margins」「no important subjects at outer edges」を入れる。
-- safeArea の % 表記（genome `compositionRules.safeArea` = "top/bottom 8%, left/right 6%"）は、`scripts/build-image-prompts.js` が 2560×1440 基準で **px へ自動計算**（上下 8% ≈ 115px・左右 6% ≈ 154px）し、各 `prompt.md` へセーフエリア指示文を機械挿入、各 `meta.json` に `safeAreaPx` を記録する。手計算で px を直書きしない（D7）。
+- safeArea の % 表記（genome `compositionRules.safeArea` = "top/bottom 8%, left/right 6%"）は、`vendor/scripts/build-image-prompts.js` が 2560×1440 基準で **px へ自動計算**（上下 8% ≈ 115px・左右 6% ≈ 154px）し、各 `prompt.md` へセーフエリア指示文を機械挿入、各 `meta.json` に `safeAreaPx` を記録する。手計算で px を直書きしない（D7）。
 
 ### 上書きしても保持する不変制約
 
@@ -101,16 +101,16 @@ image-only デッキで表を見せる場合は `illustrated-full-table`（見�
 
 デッキの「第1部」として STYLE BIBLE を 1 つ置き、全スライドのプロンプトはこれを `{{STYLE_BIBLE}}` として**先頭で参照**する。各スライドのプロンプト本文には差分（被写体・色・配置・画像内テキスト）だけを書き、STYLE BIBLE の値を直書きしない（DRY）。STYLE BIBLE は次の 10 節で構成する。
 
-全面画像生成モードでは、STYLE BIBLE を書く前に必ず同梱プリセット `assets/style-genome-kanagawa-comic-diagram.json` を project-local `assets/generated/style-genome.json` にコピーし、必要な差分だけ `assets/generated/style-genome.json` と structure.md に保存する。この作業は任意ではなく、全面画像生成モードの最初の成果物である。ユーザーが `slide-2026-06-13-skill-mass-production/assets/generated/` の画風を明示した場合は、その参照デッキの project-local genome / prompt / meta を優先して差分を整理する。
+全面画像生成モードでは、STYLE BIBLE を書く前に必ず同梱プリセット `vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `assets/generated/style-genome.json` にコピーし、必要な差分だけ `assets/generated/style-genome.json` と structure.md に保存する。この作業は任意ではなく、全面画像生成モードの最初の成果物である。ユーザーが `slide-2026-06-13-skill-mass-production/assets/generated/` の画風を明示した場合は、その参照デッキの project-local genome / prompt / meta を優先して差分を整理する。
 
 実行順:
 
 1. `assets/generated/` を作成する。
-2. 同梱プリセット `assets/style-genome-kanagawa-comic-diagram.json` を `assets/generated/style-genome.json` にコピーする。
+2. 同梱プリセット `vendor/assets/style-genome-kanagawa-comic-diagram.json` を `assets/generated/style-genome.json` にコピーする。
 3. 参照元 `05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/` に project-local の `style-genome.json` があり、ユーザーがその画風を指定している場合は、その内容を優先しつつ差分を整理する。
 4. `structure.md` 先頭に STYLE BIBLE 10節を置く。
 5. per-slide 差分を `assets/generated/image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json` 準拠）にまとめる。1デッキ = 1 plan.json で、全スライドを `slides[]` 配列に持つ。
-6. `node scripts/build-image-prompts.js <slide-dir>` で plan.json と `assets/generated/style-genome.json` を合成し、各 `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。STYLE BIBLE preamble は手動展開せず、ビルダーが決定論で展開する（各 prompt 先頭に `Use STYLE GENOME: assets/generated/style-genome.json` または展開済み STYLE BIBLE が入り、各 meta に `styleGenome: "assets/generated/style-genome.json"` が必ず入る）。`--check` で既存との差分のみ確認、`--only slide-06,...` で部分再生成できる。ビルダーを使わない単発手動時のみ、各 `{slug}.prompt.md` 先頭に STYLE BIBLE preamble を手で置く。
+6. `node vendor/scripts/build-image-prompts.js <slide-dir>` で plan.json と `assets/generated/style-genome.json` を合成し、各 `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。STYLE BIBLE preamble は手動展開せず、ビルダーが決定論で展開する（各 prompt 先頭に `Use STYLE GENOME: assets/generated/style-genome.json` または展開済み STYLE BIBLE が入り、各 meta に `styleGenome: "assets/generated/style-genome.json"` が必ず入る）。`--check` で既存との差分のみ確認、`--only slide-06,...` で部分再生成できる。ビルダーを使わない単発手動時のみ、各 `{slug}.prompt.md` 先頭に STYLE BIBLE preamble を手で置く。
 
 ### 1.1 アートスタイル定義
 基本様式・視点（例: アイソメトリック俯瞰 30度に固定）・線・角丸・影・質感・光源・全体トーンを固定値の表で定義する。全枚で同一に保つ。
@@ -123,20 +123,20 @@ image-only デッキで表を見せる場合は `illustrated-full-table`（見�
 - テキスト（見出し・ラベル・補足）は、リッチなシーンの**中のラベルや吹き出し**として添える。テキストを主役の四角ブロックにしない。
 - **再生成時の鉄則**: 内容（文言）だけを差し替える時も、イラストの描き込み密度を必ず維持する。テキスト指定を強めるとモデルは平坦なボックス図に退化しやすいため、プロンプトに「リッチなアイソメ・イラスト粒度を維持／平坦なテキストボックス図は禁止」を必ず明記し、可能なら**既存の良質スライドを画風リファレンス（参照画像）として渡す**。
 - 粒度の基準は、デッキ内で最も描き込まれた数枚（人物・情景・道具入り）に合わせ、最も簡素な数枚をそこへ引き上げる（粗密の混在禁止）。
-- **退化の具体的機序（codex 等コーディングエージェント経由時・必須／パイロット実証）**: codex のようなコーディングエージェント経由で生成する場合、生成器に **imagegen（text-to-image 拡散モデル）の使用を明示強制**する。指示が弱い（「PNG を作って」程度）と、codex は拡散モデルを使わず **コード（PIL / matplotlib / SVG 等）でプログラム描画**してしまい、単色角丸ボックス＋テキストの平坦な情報図（本節が禁止する退化パターンそのもの）になる。プロンプトに「imagegen を使う・PIL/matplotlib/SVG 等のコード描画は禁止・リッチなアイソメ・イラスト粒度を維持」を必ず含めて初めて参考画風が再現できる。`scripts/generate-images-codex.js` はこの強制文言を実装済みである。
+- **退化の具体的機序（codex 等コーディングエージェント経由時・必須／パイロット実証）**: codex のようなコーディングエージェント経由で生成する場合、生成器に **imagegen（text-to-image 拡散モデル）の使用を明示強制**する。指示が弱い（「PNG を作って」程度）と、codex は拡散モデルを使わず **コード（PIL / matplotlib / SVG 等）でプログラム描画**してしまい、単色角丸ボックス＋テキストの平坦な情報図（本節が禁止する退化パターンそのもの）になる。プロンプトに「imagegen を使う・PIL/matplotlib/SVG 等のコード描画は禁止・リッチなアイソメ・イラスト粒度を維持」を必ず含めて初めて参考画風が再現できる。`vendor/scripts/generate-images-codex.js` はこの強制文言を実装済みである。
 
-#### 1.1.2 全面画像の上のテキスト配置と可読性（中央配置＋半透明パネル・必須）
+#### 1.1.2 全面画像の上のテキスト配置と可読性（中央配置＋不透明パネル・必須）
 
 全面画像（背景フル）の上に HTML テキストを乗せる場合、次を既定とする。実運用で「文字が上に寄って見にくい」「背景画像と干渉して読めない」という不具合が出やすいため明文化する。
 
 - **縦配置は中央寄せ（`justify-content: center`）を既定**にする。コンテンツ（見出し＋本文＋note）をまとめて画面の縦中央に置き、上下に背景イラストを覗かせる。**上揃え（`flex-start`）にしてコンテンツを上半分に固めない**（下半分が画像だけになり間延びして見える）。見出しだけを上端固定する手法は、背景が白/淡で上部が空く版（画像なし版）では見出しが宙に浮くので避ける。
-- **カード地を持たないバラ文字には半透明パネルを敷く**（透過 div 相当）。対象＝見出し（slide-heading）・大ステートメント（statement-big）・注記（note）・タイトル（h1/lead）・クロージング（close-msg）。chip や各種カードは元々地があるので対象外。
-  - 明るい背景＝`background: rgba(255,255,255,0.56〜0.70)` ＋ `backdrop-filter: blur(3〜4px)` ＋ `padding` ＋ `border-radius`。背景イラストが薄っすら透けつつ文字が干渉しない透過率に調整する（濃いほど可読・薄いほど画像が映える。見出し0.70 / ステートメント0.66 / 注記0.64 目安）。
-  - 暗背景（closing 等）＝`background: rgba(20,28,66,0.30〜0.40)` の暗パネル＋白文字。
-  - 見出しパネルは `width: fit-content` で内容幅にフィットさせ、`align-self` は指定せず親の `align-items`（通常スライド＝左、中央寄せメッセージ系＝中央）に追従させる。
-- **数値精度が要る表・料金は半透明白パネル＋影付きカードで前面化**（`rgba(255,255,255,0.78〜0.85)`）。背景画像は淡め（スクリム 0.4 前後）にして数字を最優先で読ませる。
+- **カード地を持たないバラ文字には不透明パネルを敷く**。対象＝見出し（slide-heading）・大ステートメント（statement-big）・注記（note）・タイトル（h1/lead）・クロージング（close-msg）。chip や各種カードは元々地があるので対象外。
+  - パネルは**透過させない**。紙色の面（地色そのもの）か、反転面（インク地に紙色文字）のどちらかを使う。**すりガラス（`backdrop-filter`）と半透明は使わない**（SR-2-09）。背景を透かしたまま読ませるのではなく、読ませる場所からは背景を退ける。
+  - パネルの下の画像は見えなくなる。これは意図した結果なので、**見せたい画像領域とパネルを重ねない構図**にする（パネル位置は画像生成時点で余白として確保しておく）。
+  - 見出しパネルは `width: fit-content` で内容幅にフィットさせ、`align-self` は指定せず親の `align-items`（通常スライド＝左、中央寄せメッセージ系＝中央）に追従させる。角丸は 0px（VGCONST_003）。
+- **数値精度が要る表・料金は不透明な紙色パネルで前面化**する。影を付けない（境界は 1px の下罫・SR-2-09）。背景画像とは重ねず、数字を最優先で読ませる。
 - 画像版のみの措置であり、画像なし版（html-primary）はパネル不要（白地で可読）。ただし**縦中央配置は両版で揃える**と比較時に一貫する。
-- 印刷時は `@media print` で `backdrop-filter` とパネル影をリセットしてよい（GSAP インラインと同様）。
+- パネルは画面と紙で同じ見え方になる（透過・ぼかしを使わないため、印刷時のリセットが不要）。
 
 ### 1.2 配色パレット（プロンプト用に1系統へ確定）
 画像生成プロンプトに渡す支配色を **1 系統に確定**する（HEX を表で固定）。役割（背景基調・面/カード・アクセント各色・課題/Before 色）ごとに名称・HEX・プロンプト記述語を定義する。HTML オーバーレイ側の CSS 変数は別途推奨値を持ってよいが、画像生成プロンプトの HEX はこの表に統一する。
@@ -216,7 +216,7 @@ gpt-image-2 はページごとに独立生成すると、同じ STYLE BIBLE を�
 
 STYLE BIBLE と各スライド差分から、1 スライド = 1 プロンプトのファイル群を `assets/generated/` 配下に作る。どの画像生成バックエンドでも即実行できる形にする。
 
-v8.2.0 以降、このファイル群は手作業ではなく `scripts/build-image-prompts.js` が `assets/generated/image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json` 準拠）と `assets/generated/style-genome.json` を合成して機械生成する。STYLE BIBLE preamble は手動展開せずビルダーが決定論で展開するため、`{slug}.prompt.md` / `{slug}.meta.json` の整合（STYLE GENOME 参照・`styleGenome` フィールド・pattern×textPolicy 整合）が崩れない。手作業はビルダーを使わない単発差し替え時に限る。
+v8.2.0 以降、このファイル群は手作業ではなく `vendor/scripts/build-image-prompts.js` が `assets/generated/image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json` 準拠）と `assets/generated/style-genome.json` を合成して機械生成する。STYLE BIBLE preamble は手動展開せずビルダーが決定論で展開するため、`{slug}.prompt.md` / `{slug}.meta.json` の整合（STYLE GENOME 参照・`styleGenome` フィールド・pattern×textPolicy 整合）が崩れない。手作業はビルダーを使わない単発差し替え時に限る。
 
 ### 2.1 `{slug}.prompt.md`（1スライド1プロンプト）
 - 先頭に **STYLE BIBLE プリアンブルの実体**（`{{STYLE_BIBLE}}` を展開した文面）を置く（`build-image-prompts.js` がこの展開を機械的に行う。手動展開は不要）。
@@ -298,23 +298,23 @@ QR コード・ロゴなど、**読み取り精度・正確性が必要な実画
 - `baked-with-overlay` はユーザーが画像内説明文を明示した場合だけ使う。
 - 各スライドに **HTML オーバーレイ fallback（正テキスト）を必ず併記**する（`overlayText` 配列が正本）。
 - 崩れ判定時はオーバーレイを表示し、画像内文字は装飾扱いに切り替える。
-- オーバーレイ部のテキストは skill のテキスト規律を守る（`<ul><li>` 文字列リスト禁止 → chip / カード / アイコン+ラベル、本文・見出し・chip の最小サイズ、20文字超見出しの `<br>`）。
+- オーバーレイ部のテキストは skill のテキスト規律を守る（`<ul><li>` 文字列リスト禁止。置換先は名指しせず `skills/run-slide-report-generate/references/visual-generation-rules.md` §4 の分岐条件で決める。本文・見出し・chip の最小サイズ、20文字超見出しの `<br>`）。
 - 印刷時も意味テキストは HTML オーバーレイで常に鮮明にする（画像内文字が崩れても可読）。
 
 ---
 
 ## 6. 検証フロー
 
-1. `node scripts/convert-to-webp.js <slide-dir> --quality 90` … PNG → WebP（品質90）
-2. `node scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome --check-genome-content` … prompt / meta / WebP / style-genome 契約の整合検証（各 prompt の STYLE GENOME / STYLE BIBLE 参照に加え、promptSuffix 主要語・motif 名・accent HEX などスタイル仕様の prompt 反映まで検証）。**PNG/WebP 署名検査**：各 `.png` の先頭バイトが PNG 署名（`89 50 4E 47 0D 0A 1A 0A`・最低でも先頭4バイト `89 50 4E 47`）であること、各 `.webp` が RIFF/WEBP 署名であることを検証し、中身がテキスト/壊れ（例: 先頭が `# Image Generation Skill`）の場合は FAIL（`--full-image-deck` では `image-deck-plan.json` の全スライドについて png/webp 双方を検査）。`index.html` を読み主キャンバス class（`.ai-slide-canvas` ＋エイリアス）＋`object-fit:contain`＋`imageFit` meta の cross-check、`image-deck-plan.json` 不在の FAIL 昇格、`meta.builtBy` マーカー無し（手書き meta）の警告まで含む
-3. `node scripts/validate-print.js <slide-dir>/index.html` … 印刷契約検証。P06 を 16:9 letterbox（167mm）許容に拡張し、`@media print` 内 `object-fit: cover` を CRITICAL 検出、全ページ印刷対象・`data-hidden` 除外漏れを検査
-4. `node scripts/verify-slides.js ./index.html --check-ratio` … 16:9 比率検証
-5. `node scripts/evaluate-deck.js <slide-dir>` … 生成後評価ゲート（D1〜D4）。**full-image-deck を検出すると `validate-print.js` と `validate-ai-image-assets.js --full-image-deck --strict-style-genome --check-genome-content` を spawn し、CRITICAL / exit 1 で総合 verdict を FAIL にする**。手動で 2/3 を飛ばしてもこのゲートで再検出される（検証ゲート接続）
+1. `node vendor/scripts/convert-to-webp.js <slide-dir> --quality 90` … PNG → WebP（品質90）
+2. `node vendor/scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome --check-genome-content` … prompt / meta / WebP / style-genome 契約の整合検証（各 prompt の STYLE GENOME / STYLE BIBLE 参照に加え、promptSuffix 主要語・motif 名・accent HEX などスタイル仕様の prompt 反映まで検証）。**PNG/WebP 署名検査**：各 `.png` の先頭バイトが PNG 署名（`89 50 4E 47 0D 0A 1A 0A`・最低でも先頭4バイト `89 50 4E 47`）であること、各 `.webp` が RIFF/WEBP 署名であることを検証し、中身がテキスト/壊れ（例: 先頭が `# Image Generation Skill`）の場合は FAIL（`--full-image-deck` では `image-deck-plan.json` の全スライドについて png/webp 双方を検査）。`index.html` を読み主キャンバス class（`.ai-slide-canvas` ＋エイリアス）＋`object-fit:contain`＋`imageFit` meta の cross-check、`image-deck-plan.json` 不在の FAIL 昇格、`meta.builtBy` マーカー無し（手書き meta）の警告まで含む
+3. `node vendor/scripts/validate-print.js <slide-dir>/index.html` … 印刷契約検証。P06 を 16:9 letterbox（167mm）許容に拡張し、`@media print` 内 `object-fit: cover` を CRITICAL 検出、全ページ印刷対象・`data-hidden` 除外漏れを検査
+4. `node vendor/scripts/verify-slides.js ./index.html --check-ratio` … 16:9 比率検証
+5. `node vendor/scripts/evaluate-deck.js <slide-dir>` … 生成後評価ゲート（D1〜D4）。**full-image-deck を検出すると `validate-print.js` と `validate-ai-image-assets.js --full-image-deck --strict-style-genome --check-genome-content` を spawn し、CRITICAL / exit 1 で総合 verdict を FAIL にする**。手動で 2/3 を飛ばしてもこのゲートで再検出される（検証ゲート接続）
 6. 目視 … 被写体切れ・文字崩れ・コントラストを確認。画像は Read ツールまたは PNG/WEBP 署名で実体検証する（§6.9.2 / §6.9.3）
 7. A4 印刷 … PNG 欠落なし・端欠けなしを確認（印刷は PNG 300dpi 保持・意味テキストは HTML オーバーレイで鮮明、主画像は 16:9 letterbox の contain）
 8. `structure.md` 同期 … 画像パス・alt・prompt/meta パス・差し替え理由・オーバーレイテキスト・修正履歴を同期
 9. 動作確認（必須・完成条件）… 自己完結HTML（§6.9.1）を playwright で開き、全枚が画像として表示され（broken 無し）左右ページ送りが実際に動くことをスクショで目視する。Bash 出力・サイズ・"PASS" を完成判定に使わない（§6.9.3 / §6.9.4）
-10. GAS デプロイ前のみ … `node scripts/validate-ai-image-assets.js <slide-dir> --gas-check` で相対パス画像残存を確認する（相対パス画像は GAS で broken になるため、マニフェスト＋外部URL／軽量 base64 への切替を確認。§6.9.1）
+10. GAS デプロイ前のみ … `node vendor/scripts/validate-ai-image-assets.js <slide-dir> --gas-check` で相対パス画像残存を確認する（相対パス画像は GAS で broken になるため、マニフェスト＋外部URL／軽量 base64 への切替を確認。§6.9.1）
 
 ---
 
@@ -330,11 +330,11 @@ styles.css / scripts.js が別ファイルだと、環境によって消失し�
 - 別ファイル版（`styles.css` / `scripts.js` 分離）は**任意・後方互換**として残してよいが、その場合も配布・検証は3ファイル一式が揃っていることを前提にする。GAS デプロイ用1ファイル化（`build-single-html.js`）とは別概念で、全面画像デッキは**生成時点から自己完結**を既定にする。
 - ここでの「自己完結HTML」は **CSS と JS を index.html へインライン化したもの**を指し、**画像までは含まない**（用語の過大評価をしない）。インライン化対象は CSS と JS のみで、画像（`.webp` / `.png`）の既定は外部ファイル参照（相対パス）である。
 - **ローカル動作・印刷・別ファイル配布**では、画像は相対パスのままでよい（インライン data URI 化は不要）。
-- **GAS デプロイ時のみ別契約**: 相対パス画像は GAS から配信されず broken になる。GAS で画像を表示するには (a) **マニフェスト＋外部URL参照**（既定。`assets/generated/image-asset-manifest.json` 駆動・`build-deck-html.js --manifest`／`--asset-base-url`）、または (b) **軽量デッキのみ base64 自己完結**（`build-single-html.js --inline-images --full-image-deck`）が要る。base64 は実バイト×約1.37に膨張するため、合計が GAS 500KB 上限を超える全面画像デッキでは (a) を使う。詳細は [../assets/gas-deploy-guide.md](../assets/gas-deploy-guide.md) / [image-format-guide.md](image-format-guide.md)。
+- **GAS デプロイ時のみ別契約**: 相対パス画像は GAS から配信されず broken になる。GAS で画像を表示するには (a) **マニフェスト＋外部URL参照**（既定。`assets/generated/image-asset-manifest.json` 駆動・`build-deck-html.js --manifest`／`--asset-base-url`）、または (b) **軽量デッキのみ base64 自己完結**（`build-single-html.js --inline-images --full-image-deck`）が要る。base64 は実バイト×約1.37に膨張するため、合計が GAS 500KB 上限を超える全面画像デッキでは (a) を使う。詳細は [vendor/assets/gas-deploy-guide.md](../vendor/assets/gas-deploy-guide.md) / [image-format-guide.md](image-format-guide.md)。
 
 #### 自己完結HTMLは `build-deck-html.js` で決定論生成する（手作業禁止）
 
-自己完結 index.html は手作業で `<style>` / `<script>` を書き起こさず、**`scripts/build-deck-html.js` で `image-deck-plan.json` と各 `slide-NN-{slug}.meta.json`（alt）から決定論生成**する。CSS / JS はスクリプト内の固定テンプレート（LLM 非依存）であり、同じ plan からは常に同じ HTML が出力される（手書きによる `<style>`/`<script>` 消失・記述ぶれの再発を断つ）。
+自己完結 index.html は手作業で `<style>` / `<script>` を書き起こさず、**`vendor/scripts/build-deck-html.js` で `image-deck-plan.json` と各 `slide-NN-{slug}.meta.json`（alt）から決定論生成**する。CSS / JS はスクリプト内の固定テンプレート（LLM 非依存）であり、同じ plan からは常に同じ HTML が出力される（手書きによる `<style>`/`<script>` 消失・記述ぶれの再発を断つ）。
 
 - **入力**: `assets/generated/image-deck-plan.json`（slides[] の slide / slug / pattern 等）＋ 各 `slide-NN-{slug}.meta.json` の `alt`。
 - **出力**: `<slide-dir>/index.html`（CSS を `<style>`・JS を `<script>` でインライン化した自己完結 HTML）。
@@ -344,9 +344,9 @@ styles.css / scripts.js が別ファイルだと、環境によって消失し�
 
 ```bash
 # 1) plan.json + meta から自己完結 index.html を決定論生成
-node scripts/build-deck-html.js <slide-dir>
+node vendor/scripts/build-deck-html.js <slide-dir>
 # 2) 動作可能性ゲート（Dx）が PASS することを確認（CSS/JS 実在・表示切替CSS・ページ送り制御JS）
-node scripts/evaluate-deck.js <slide-dir>
+node vendor/scripts/evaluate-deck.js <slide-dir>
 # 3) playwright（実 Chrome）で全枚表示・broken 無し・左右ページ送りをスクショ目視（§6.9.4）
 ```
 
@@ -371,7 +371,7 @@ xxd -p -l 4 assets/generated/slide-01-cover.webp        # => 52494646 (RIFF)
 xxd -p -s 8 -l 4 assets/generated/slide-01-cover.webp   # => 57454250 (WEBP)
 ```
 
-> 実装状態: `scripts/generate-images-codex.js` は §6.9.2 の回収契約を**実装済み**である。codex に保存を任せず、ログから `session id:` を grep 抽出して `$CODEX_HOME/generated_images/<session-id>/` を特定し（`extractSessionId` / 並列でもログ単位で確実に取得）、その session dir から **PNG署名（`PNG_SIGNATURE = [0x89,0x50,0x4e,0x47]`）を持つファイルだけ**を新しい順で1件回収する（`findFreshPngInSession` / `isPngFile` でテキスト .png を除外）。失敗時は `MAX_RETRIES`（最大3回）で再実行し、webp 化は cwebp →（無ければ macOS の sips）へ自動フォールバックする。`scripts/validate-ai-image-assets.js` も `--full-image-deck` で各 `.png` の PNG署名（`89 50 4E 47 0D 0A 1A 0A`）・各 `.webp` の WebP 署名を検査し、テキスト/壊れを FAIL にする。実装に加え、最終確認として生成後に上記 `xxd` 署名検査を手動実施しておくと安心である（自動検証とは独立した出荷前の目視確認として有用）。
+> 実装状態: `vendor/scripts/generate-images-codex.js` は §6.9.2 の回収契約を**実装済み**である。codex に保存を任せず、ログから `session id:` を grep 抽出して `$CODEX_HOME/generated_images/<session-id>/` を特定し（`extractSessionId` / 並列でもログ単位で確実に取得）、その session dir から **PNG署名（`PNG_SIGNATURE = [0x89,0x50,0x4e,0x47]`）を持つファイルだけ**を新しい順で1件回収する（`findFreshPngInSession` / `isPngFile` でテキスト .png を除外）。失敗時は `MAX_RETRIES`（最大3回）で再実行し、webp 化は cwebp →（無ければ macOS の sips）へ自動フォールバックする。`vendor/scripts/validate-ai-image-assets.js` も `--full-image-deck` で各 `.png` の PNG署名（`89 50 4E 47 0D 0A 1A 0A`）・各 `.webp` の WebP 署名を検査し、テキスト/壊れを FAIL にする。実装に加え、最終確認として生成後に上記 `xxd` 署名検査を手動実施しておくと安心である（自動検証とは独立した出荷前の目視確認として有用）。
 
 ### 6.9.3 検証は実体で行う（Bash出力・md5・"PASS" を信じない）
 
@@ -386,10 +386,10 @@ xxd -p -s 8 -l 4 assets/generated/slide-01-cover.webp   # => 57454250 (WEBP)
 
 「ブラウザ / playwright で開いてページ送りが実際に動く」「全枚が画像として表示される（broken 無し）」をスクショで確認するまで**完成と呼ばない**。grep / 評価 PASS だけで完成判断しない（MEMORY: スライド生成後はスクショで目視確認してから完了報告）。
 
-- **動作可能性ゲート（Dx）**: CSS / JS が（インラインまたは実在ファイルとして）実体を持つこと、スライド切替CSSが機能すること、ページ送り制御JSが存在することを `scripts/evaluate-deck.js` の **Dx「動作可能性／自己完結性」**（static・CRITICAL）で検査する。Dx error は verdict を FAIL にする。あわせて D3（左右ページ送り・ページネーション検出）・D1（broken img / 画像欠落）も使う。
+- **動作可能性ゲート（Dx）**: CSS / JS が（インラインまたは実在ファイルとして）実体を持つこと、スライド切替CSSが機能すること、ページ送り制御JSが存在することを `vendor/scripts/evaluate-deck.js` の **Dx「動作可能性／自己完結性」**（static・CRITICAL）で検査する。Dx error は verdict を FAIL にする。あわせて D3（左右ページ送り・ページネーション検出）・D1（broken img / 画像欠落）も使う。
 - **playwright 全スライド撮影**: chromium で各スライドを撮り、画像が全枚表示され（broken 無し）、ページ送りで実際に次/前へ動くことをスクショで目視する。playwright 実行には `dangerouslyDisableSandbox` が必要（MEMORY: スライド生成後はスクショで目視確認）。
 
-> 実装状態: `scripts/evaluate-deck.js` v3（2026-06-26）で §6.9.1 の **「CSS/JS が自己完結HTMLとして実在（インライン or 実体ファイル）し、スライド切替CSS＋ページ送り制御JSが成立するか」を1つの動作可能性チェック（Dx）として束ねる機能を実装済み**。(1) 参照CSSの実在＋非空 or `<style>` (2) 参照JSの実在＋非空 or `<script>` (3) `.slider__item` の表示切替CSS（opacity/visibility/display × `.is-active`|`.active`）(4) ページ送り制御JS（`querySelectorAll('.slider__item')`＋active付替 / 矢印キー / prevBtn-nextBtn-dots-counter または arrowLeft-arrowRight-slideCounter-pageNav）を CRITICAL で検査し、いずれか欠落で FAIL。chromium 非依存。**ただし「実際に描画されページ送りが動く」最終確認は依然 playwright スクショ目視を必須**とする（静的解析は実描画を保証しない）。
+> 実装状態: `vendor/scripts/evaluate-deck.js` v3（2026-06-26）で §6.9.1 の **「CSS/JS が自己完結HTMLとして実在（インライン or 実体ファイル）し、スライド切替CSS＋ページ送り制御JSが成立するか」を1つの動作可能性チェック（Dx）として束ねる機能を実装済み**。(1) 参照CSSの実在＋非空 or `<style>` (2) 参照JSの実在＋非空 or `<script>` (3) `.slider__item` の表示切替CSS（opacity/visibility/display × `.is-active`|`.active`）(4) ページ送り制御JS（`querySelectorAll('.slider__item')`＋active付替 / 矢印キー / prevBtn-nextBtn-dots-counter または arrowLeft-arrowRight-slideCounter-pageNav）を CRITICAL で検査し、いずれか欠落で FAIL。chromium 非依存。**ただし「実際に描画されページ送りが動く」最終確認は依然 playwright スクショ目視を必須**とする（静的解析は実描画を保証しない）。
 
 ### 6.9.5 順序: 動く骨格を先に、画像は後で流し込む
 
@@ -465,7 +465,7 @@ xxd -p -s 8 -l 4 assets/generated/slide-01-cover.webp   # => 57454250 (WEBP)
 - **再現性**: 文言変更のたびの画像再生成が不要になる。
 - **印刷品質**: 密なコードはラスターで潰れる。
 
-`overlayText` の崩れ時フォールバックはコードでは原理的に機能しない（コードは一部を装飾扱いにできず全体が正本のため）。機械契約として、コード系 slideType は `aiVisual.pattern` を `image-only` にできず、`aiVisual.textPolicy` を `baked-with-overlay` にできない（`scripts/validate-structure.js` V-043 と `schemas/structure.schema.json` が正本）。世界観背景が要る場合のみ `html-composite` + `backgroundSource: svg`（推奨）/ `raster` + `overlay-only` に限定する（背景は装飾・コードは常にHTML前面）。
+`overlayText` の崩れ時フォールバックはコードでは原理的に機能しない（コードは一部を装飾扱いにできず全体が正本のため）。機械契約として、コード系 slideType は `aiVisual.pattern` を `image-only` にできず、`aiVisual.textPolicy` を `baked-with-overlay` にできない（`vendor/scripts/validate-structure.js` V-043 と `schemas/structure.schema.json` が正本）。世界観背景が要る場合のみ `html-composite` + `backgroundSource: svg`（推奨）/ `raster` + `overlay-only` に限定する（背景は装飾・コードは常にHTML前面）。
 
 このコード非画像化原則は、§4 の QR・ロゴ等のハイブリッド例外（実画像が必要なスライド）と同格の例外として扱う。より一般に、正確性必須・逐語コンテンツ（コード・数式・精密数値表・コマンド列／APIレスポンス例）は画像化しない。コード2タイプ（slide-code / slide-code-compare）は機械検証で固定し、数式・精密数値表はLLM判断＋ルブリックで実HTML側へ振り分ける。
 
@@ -486,13 +486,13 @@ xxd -p -s 8 -l 4 assets/generated/slide-01-cover.webp   # => 57454250 (WEBP)
 | 1.1.0 | 2026-06-03 | §1.1.1「イラスト粒度の統一（重要・再発防止）」追加。全スライドをリッチなアイソメ・イラスト粒度で統一し、単色角丸ボックス＋テキストだけの平坦図（SVGはめ込み風）を禁止。再生成時に粒度が退化する事象への対策（プロンプト明記＋既存良質スライドを画風リファレンスに）を規約化 |
 | 1.2.0 | 2026-06-23 | §7「部分AI画像化プリセット（バランス型・HTMLシャーシ併存）」追加。部分AI画像化プリセット（人物なし×非焼き込み×アイコン風×HTMLシャーシ併存）追加。形式振り分けルブリック・4レイヤモデル・共通ネガティブ強化・退化耐性・Codex Image2 生成器（source: codex-image2 / role 拡張キー）を規約化 |
 | 1.3.0 | 2026-06-23 | `style-genome-packaging.md` 連携、Pattern A/B、`pattern`/`textPolicy`/`styleGenome` メタデータを追加。漫画チックな説明文入り図解は `image-only + baked-with-overlay`、HTML合成は `html-composite + overlay-only` として責務分離 |
-| 1.4.0 | 2026-06-24 | 正準モデル整合（elegant-review）。`textPolicy` から `html-primary` を廃止し `none` を追加。`backgroundSource`(raster/svg/none) を追加し SVG/CSS背景型に対応。§2.2 meta フィールド表に `decision`=`generate-image`（必須）を明記。パターン/値域の定義を `style-genome-packaging.md` §4（人間可読 正本）と `scripts/validate-ai-image-assets.js`（機械 正本）に一本化 |
-| 1.5.0 | 2026-06-24 | ビルダー連携（SKILL.md v8.2.0）。§1 実行順を `image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json`）→ `scripts/build-image-prompts.js` による prompt.md/meta.json 機械生成へ更新。§2 生成プロンプトキット規約・§2.1 に STYLE BIBLE preamble の自動展開（手動展開不要）を明記。§3 再現性運用に「目的はスタイル仕様の一貫適用であり、ピクセル単位の完全コピーではない」を明記。§6 検証に `--check-genome-content` を追加 |
-| 1.5.1 | 2026-06-24 | パイロット実証の知見反映。§1.1.1 に「退化の具体的機序（codex 等コーディングエージェント経由時）」を追加。codex は imagegen（text-to-image 拡散モデル）の使用を明示強制しないとコード（PIL/matplotlib/SVG）でプログラム描画して平坦なボックス図に退化するため、「imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持」をプロンプトへ必須化（`scripts/generate-images-codex.js` が実装済み） |
+| 1.4.0 | 2026-06-24 | 正準モデル整合（elegant-review）。`textPolicy` から `html-primary` を廃止し `none` を追加。`backgroundSource`(raster/svg/none) を追加し SVG/CSS背景型に対応。§2.2 meta フィールド表に `decision`=`generate-image`（必須）を明記。パターン/値域の定義を `style-genome-packaging.md` §4（人間可読 正本）と `vendor/scripts/validate-ai-image-assets.js`（機械 正本）に一本化 |
+| 1.5.0 | 2026-06-24 | ビルダー連携（SKILL.md v8.2.0）。§1 実行順を `image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json`）→ `vendor/scripts/build-image-prompts.js` による prompt.md/meta.json 機械生成へ更新。§2 生成プロンプトキット規約・§2.1 に STYLE BIBLE preamble の自動展開（手動展開不要）を明記。§3 再現性運用に「目的はスタイル仕様の一貫適用であり、ピクセル単位の完全コピーではない」を明記。§6 検証に `--check-genome-content` を追加 |
+| 1.5.1 | 2026-06-24 | パイロット実証の知見反映。§1.1.1 に「退化の具体的機序（codex 等コーディングエージェント経由時）」を追加。codex は imagegen（text-to-image 拡散モデル）の使用を明示強制しないとコード（PIL/matplotlib/SVG）でプログラム描画して平坦なボックス図に退化するため、「imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持」をプロンプトへ必須化（`vendor/scripts/generate-images-codex.js` が実装済み） |
 | 1.7.0 | 2026-06-25 | gpt-image-2 一貫性指針。§1.11「デッキ全体の構図・画風一貫性（gpt-image-2 ドリフト対策）」追加: readingOrder（left to right 統一）・focalPoint 高さ・densityLevel をデッキ全体で固定し、style-genome の consistencyAnchors（固定6〜9アンカー）と GEOMETRY LOCK を全ページへ同一展開。一貫性の二系統手段（(A) スタイル契約テキストのバイト同一逐語再利用 / (B) image-to-image 基準ページ参照を identity/style 役割ラベルで分離）を明記。再生成は1度に1変数・最重要ディテール毎回再記述でドリフト防止。gpt-image-2 生成設定（両辺16px倍数・長辺3840px未満・アスペクト最大3:1・透過はバックエンド対応確認・全面画像デッキは不透明背景既定・密テキストは quality:high・基本 2560×1440/16:9）を表で固定。§0.0 本文に「Codex Image 2 / image2 / Image 3 トリガー語の実体は最新 gpt-image-2（Codex CLI 内部）」の後方互換注記を追加 |
-| 1.6.0 | 2026-06-24 | 実装整合（elegant-review・D1/D2/D3/D7/D10）。§0.3 を「印刷ビューポート契約の正本」と位置づけ一本化。主キャンバスクラス規定を実装に一致（規定 `.ai-slide-canvas` 実体＋後方互換エイリアス `.slide-fullbg`/`.slide-bg`/`[data-role="main-canvas"]` を `:where()` で同一 contain 契約に束ねる）。印刷は A4横 16:9 letterbox（297mm→167mm・上下21mm off-white 余白）＋`object-fit:contain` 強制・`cover` 禁止、`data-deck-mode="full-image"` 限定適用で通常デッキ full-bleed 温存を明記。safeArea の px は `build-image-prompts.js` が 2560×1440 基準で自動計算（上下8%≈115px・左右6%≈154px）し手計算しないことを明記。§6 検証フローに `validate-print.js`（letterbox 許容・cover CRITICAL・全ページ印刷検査）と `evaluate-deck.js` の検証ゲート接続（full-image-deck 検出時に validate-print / validate-ai-image-assets を spawn し FAIL 連動）を追加。実装の正本は `assets/print-styles.css` / `assets/slide-template-single.html` と明記 |
+| 1.6.0 | 2026-06-24 | 実装整合（elegant-review・D1/D2/D3/D7/D10）。§0.3 を「印刷ビューポート契約の正本」と位置づけ一本化。主キャンバスクラス規定を実装に一致（規定 `.ai-slide-canvas` 実体＋後方互換エイリアス `.slide-fullbg`/`.slide-bg`/`[data-role="main-canvas"]` を `:where()` で同一 contain 契約に束ねる）。印刷は A4横 16:9 letterbox（297mm→167mm・上下21mm off-white 余白）＋`object-fit:contain` 強制・`cover` 禁止、`data-deck-mode="full-image"` 限定適用で通常デッキ full-bleed 温存を明記。safeArea の px は `build-image-prompts.js` が 2560×1440 基準で自動計算（上下8%≈115px・左右6%≈154px）し手計算しないことを明記。§6 検証フローに `validate-print.js`（letterbox 許容・cover CRITICAL・全ページ印刷検査）と `evaluate-deck.js` の検証ゲート接続（full-image-deck 検出時に validate-print / validate-ai-image-assets を spawn し FAIL 連動）を追加。実装の正本は `vendor/assets/print-styles.css` / `vendor/assets/slide-template-single.html` と明記 |
 | 1.8.0 | 2026-06-25 | 焼き込み表モード（D12）の反映漏れ修正（elegant-review 再検証）。§0.1 量産モードの分岐表に `image-only` + `tableMode: illustrated-full-table`（見出し＋全セルを画像内に焼き込む・`baked-with-overlay` 固定・`overlayText` に表全文保持）の行を追加し、image-only デッキで表を見せる場合は焼き込みを既定とすることを明記。§0 許可記述の旧方針（「表や比較の正確性が主目的なら html-composite」）を「精密な数値・料金・頻繁更新・長文・複数行コードのみ html-composite/html-primary、それ以外の対照表・5層表は illustrated-full-table で画像内に焼き込む」へ更新。焼き込み表構造の正本は `style-genome-packaging.md` §4.1・`ai-image-diagram-workflow.md` §4.1 と明記 |
 | 1.9.0 | 2026-06-26 | 実運用の事故反映（再現性・堅牢性の鉄則）。§6.9「再現性・堅牢性の鉄則（実運用反映）」を新設。(1) 自己完結HTML（CSS/JS を index.html に `<style>`/`<script>` インライン化）を既定化し別ファイル版は任意・後方互換に降格（環境による styles.css/scripts.js 消失でページ送り不可になる事故対策）。(2) 画像回収は session-id 特定＋PNG署名（hex `89504e47`）確認＋最大3回リトライを必須化（codex image_gen のコピー不安定・テキストを .png 名で保存する失敗対策、`xxd` 署名検査コマンド例つき）。(3) 検証は実体で行う＝Bash 標準出力・サイズ・"PASS" を完成判定に使わず Read/署名/playwright で確認、md5「固有」は画像妥当性を保証しないため PNG/WEBP 署名で検証。(4) 完成条件に動作確認（playwright で全枚表示・broken無し・ページ送りが実際に動くスクショ目視）を必須化。(5) 順序＝重く不確実な画像生成より先に動く骨格（自己完結HTML）を作って動作確認してから画像を流し込む。§6 検証フローに手順9（動作確認）と署名検証の参照を追加 |
 | 1.9.1 | 2026-06-26 | スクリプト実装完了に伴う実装状態の正確化。`generate-images-codex.js` の署名確認回収（session-id 特定＋PNG署名 `89504e47` 確認＋テキスト .png 除外＋最大3回リトライ＋cwebp/sips webp化）、`evaluate-deck.js` v3 の動作可能性チェック（Dx＝CSS/JS の実在/インライン・`.slider__item` 表示切替CSS・ページ送り制御JS を CRITICAL で静的検査し verdict FAIL 連動）、`validate-ai-image-assets.js` の PNG/WebP 署名検査をいずれも**実装済み**に確定。§6.9.2 / §6.9.4 の「未実装・実装目標・手動が当面必須」記述を実装済みに修正。実装に加え、出荷前の最終確認として playwright スクショ目視と手動 PNG/WEBP 署名検査を推奨する運用ガイドは維持 |
-| 1.9.2 | 2026-06-26 | 自己完結HTMLの決定論生成を正規スクリプト化。§6.9.1 に「自己完結HTMLは `scripts/build-deck-html.js` で決定論生成する（手作業禁止）」を追記。`image-deck-plan.json` ＋ 各 `slide-NN-{slug}.meta.json`(alt) を入力に、CSS/JS をスクリプト固定テンプレート（LLM 非依存）として `<style>`/`<script>` にインライン化した `<slide-dir>/index.html` を生成する。各 `<section>` の `data-type` は slug 接頭辞 `slide-NN-` を除いた残り・`alt` は meta の `alt`。手順: `node scripts/build-deck-html.js <slide-dir>` → `node scripts/evaluate-deck.js <slide-dir>` で Dx 動作可能性 PASS 確認 → playwright スクショ目視（§6.9.4）。手書きによる `<style>`/`<script>` 消失・記述ぶれの再発を断つ |
+| 1.9.2 | 2026-06-26 | 自己完結HTMLの決定論生成を正規スクリプト化。§6.9.1 に「自己完結HTMLは `vendor/scripts/build-deck-html.js` で決定論生成する（手作業禁止）」を追記。`image-deck-plan.json` ＋ 各 `slide-NN-{slug}.meta.json`(alt) を入力に、CSS/JS をスクリプト固定テンプレート（LLM 非依存）として `<style>`/`<script>` にインライン化した `<slide-dir>/index.html` を生成する。各 `<section>` の `data-type` は slug 接頭辞 `slide-NN-` を除いた残り・`alt` は meta の `alt`。手順: `node vendor/scripts/build-deck-html.js <slide-dir>` → `node vendor/scripts/evaluate-deck.js <slide-dir>` で Dx 動作可能性 PASS 確認 → playwright スクショ目視（§6.9.4）。手書きによる `<style>`/`<script>` 消失・記述ぶれの再発を断つ |
 | 8.4.0 | 2026-06-26 | GAS 画像表示対応（v8.4.0 連動）。§6.9.1 の「自己完結HTML」を CSS/JS 限定（画像は含まない）と明示し、用語の過大評価を打ち消し。ローカル動作・印刷・別ファイル配布は相対パス画像のままでよいが、GAS デプロイ時は相対パス画像が broken になるためマニフェスト＋外部URL参照（既定・`build-deck-html.js --manifest`／`--asset-base-url`・`image-asset-manifest.json` 駆動）または軽量デッキのみ base64 自己完結（`build-single-html.js --inline-images --full-image-deck`）が必要、と GAS 文脈を分離して明記（base64 は実バイト×約1.37膨張・500KB上限超過デッキは外部URL）。§6 検証フローに手順10「GAS デプロイ前は `validate-ai-image-assets.js --gas-check` で相対パス画像残存を確認」を追加 |

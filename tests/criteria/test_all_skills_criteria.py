@@ -145,10 +145,10 @@ def test_discovery_includes_previously_escaped_skills():
     """探索ロジック退行の番犬: 旧ハードコード表の死角だった skill 群を必ず含む。"""
     got = set(SKILLS)
     sentinels = {
-        ("company-master", "run-company-master-build"),
-        ("notion-gmail-send", "run-notion-gmail-send"),
+        ("dev-graph", "run-dev-graph-decompose"),
+        ("guide-doc-generator", "run-handout-build"),
         ("plugin-dev-planner", "run-plugin-dev-plan"),
-        ("mf-kessai-invoice-check", "run-mf-invoice-reconcile"),
+        ("system-spec-harness", "run-system-spec-elicit"),
         ("harness-creator", "run-build-skill"),
         ("skill-intake", "assign-notion-fidelity-evaluator"),
     }

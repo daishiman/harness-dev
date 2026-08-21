@@ -37,13 +37,16 @@ SKILL.md 本文 300行制約により分離した詳細。
 ### 配置非依存の前提
 
 - plugin 資産の場所と生成物の出力先を分離する。`$SKILL_DIR` は marketplace で任意位置に install された harness-creator plugin 内の `skills/run-build-skill`、`$OUT_BASE` は利用者プロジェクト側の生成先である。
-- 位置解決は `resolve-skill-dirs.py` の JSON を正とする。`CLAUDE_PLUGIN_ROOT` があれば plugin 資産の探索に使い、`CLAUDE_PROJECT_DIR` / cwd / `CLAUDE_SKILL_OUT_BASE` が生成先を決める。
+- owner Skillはfrontmatter `runtime_root_policy: host-skill-path` と本文 `Runtime root contract` を持つ。Claude Codeでは `CLAUDE_PLUGIN_ROOT`、Codexではホスト提示のabsolute `SKILL.md` pathからmanifestを持つ祖先を解決し、各shell invocation内の論理 `PLUGIN_ROOT` に設定する。plugin rootをcwdから推測しない。
+- 位置解決は、上記で解決済みの `PLUGIN_ROOT` を入力した `resolve-skill-dirs.py` の JSON を正とする。`CLAUDE_PROJECT_DIR` / cwd / `CLAUDE_SKILL_OUT_BASE` は生成先だけを決め、plugin資産の探索には使わない。
 - 手順や trace に固定絶対パスを保存しない。必要な場合は `{{PROJECT_ROOT}}` / `{{PLUGIN_ROOT}}` / `{{SKILL_DIR}}` / `{{OUT_BASE}}` の変数で表す。
 
 ```bash
 SKILL_NAME=run-my-thing
 KIND=run
-DIRS_JSON="$(python3 "${CLAUDE_PLUGIN_ROOT:-plugins/harness-creator}/skills/run-build-skill/scripts/resolve-skill-dirs.py" --skill-name "$SKILL_NAME")"
+PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
+: "${PLUGIN_ROOT:?owner SkillのRuntime root contractでabsolute plugin rootを解決する}"
+DIRS_JSON="$(python3 "$PLUGIN_ROOT/skills/run-build-skill/scripts/resolve-skill-dirs.py" --skill-name "$SKILL_NAME")"
 SKILL_DIR="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["skill_dir"])' <<< "$DIRS_JSON")"
 PLUGIN_ROOT="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["plugin_root"])' <<< "$DIRS_JSON")"
 OUT_BASE="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["out_base"])' <<< "$DIRS_JSON")"
@@ -97,9 +100,23 @@ score >= 80 かつ high=0 で完了。
      **非配布 plugin を手元の Claude Code へ install する経路はこちらだけ**。再生成を忘れると
      Add Marketplace 済みの環境で新 plugin が無音で欠落する。`source` は marketplace ルートからの
      相対パスなので生成物は machine 非依存で、そのまま commit する。
-  4. 人間が PR diff で最終承認する（機械は登録漏れを必ず塞ぎ、表示文言の磨き込みは人間が担う二層分離）。
+  4. `.claude-plugin/plugin.json` を持つpluginはすべて、同梱
+     `scripts/sync-plugin-platforms.py` の同一upsertを新規/既存の両方で実行する。
+     `.claude-plugin/plugin.json` を正本に `.codex-plugin/plugin.json` と
+     `.agents/plugins/marketplace.json` を同期し、直後の `--check` が exit 0 になること。
+     ```bash
+     plugin_root="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}"
+     : "${plugin_root:?owner SkillのRuntime root contractでabsolute plugin rootを解決する}"
+     python3 "$plugin_root/scripts/sync-plugin-platforms.py" \
+       --repo-root . --plugin "plugins/<name>" --apply
+     python3 "$plugin_root/scripts/sync-plugin-platforms.py" \
+       --repo-root . --plugin "plugins/<name>" --check
+     ```
+  5. 人間が PR diff で最終承認する（機械は登録漏れを必ず塞ぎ、表示文言の磨き込みは人間が担う二層分離）。
   - 検出層: CI/pre-push の `validate-plugin-completeness.py`（MK-001/002/003・BD-001）が公開側の、
-    `build-local-marketplace.py --check` がローカル側の登録漏れを fail-closed で止める最後の砦。
+    `build-local-marketplace.py --check` が Claude ローカル側、
+    `sync-plugin-platforms.py --all --check` が Codex 側の全plugin登録漏れと
+    削除済みentryを fail-closed で止める最後の砦。
     `--fix` / 再生成を忘れても CI で必ず検出される。
 - **plugin 全体 plan / 複数 surface を扱う場合**は、`plugin-dev-planner` の現物 surface 監査を
   Python gate として実行する。これは `skills/` だけでなく `agents/` / `commands/` /
@@ -481,6 +498,18 @@ fi
 
 TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公式ドキュメントの
 機械取得方法が確定した後に実施する。`llms.txt` または公式 API 経由の可否を確認すること。
+
+### H.7 ナレッジループ注入の詳細手順
+
+SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順。正本仕様は `Skill(ref-knowledge-loop)` (構築編+運用編)。
+
+1. `ref-knowledge-loop` を Read し、`brief.knowledge_loop.pattern`(`index-search` | `router-registry`)を確定(未指定なら §パターン選択フローで決定)。
+2. `templates/knowledge-skeleton/<pattern>/` を `$OUT_BASE/$SKILL_NAME/knowledge/` へ curated seed として展開し、`scripts/{search_knowledge,build_index,record_usage,add_entry}.py` と正本 `scripts/build-external-intelligence.py` を生成先 `scripts/` へコピーする。前4本は seed の検索・整合性・検索品質、後者だけが runtime 観測の正本である。
+3. `render-combinators.py --with-knowledge` で SKILL.md に `## ナレッジループ` 節と frontmatter `knowledge_loop` ブロックを決定論注入する。`contract_version: 1` / `runtime_store: external-intelligence-v1` / `runtime_scope: project` を固定し、installed plugin/skill package 内へ runtime データを書かない。
+4. frontmatter `knowledge_loop` 記述子に `consult_at: ["runtime"]` が入る。project scope は Git worktree 間で共有する Git common dir、非 Git は `<project>/.harness/`、user scope は plugin data / XDG state に解決する。Codex/Claude は同じ event log/index を読む。
+5. Step 4 の `lint-knowledge-loop.py` で KL-001..008 を検査する。KL-008 は新世代 contract の必須キーと、生成先 `build-external-intelligence.py` が正本 engine と byte/SHA-256 同一であることを fail-closed で照合する。
+
+> **Loop B (harness-creator 自己適用)**: `plugins/harness-creator/knowledge/` と `lessons-learned/` はレビュー済み seed/昇格先であり runtime sink ではない。未検証の観測は external-intelligence state だけに置き、同一/高類似は統合、曖昧類似は明示解決、2つの独立 evidence source+別文脈での helpful reuse+承認者/承認証跡を満たしたものだけを curated seed/rule へ昇格する。
 
 ---
 

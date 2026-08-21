@@ -1,5 +1,8 @@
 # 図解スタイルトークン（セマンティックロール索引）
 
+<!-- css-route: diagram -->
+<!-- この宣言より後ろの var() は diagram 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **この文書は値の正本ではない。** 値の正本は
 > `vendor/scripts/svg-kit.cjs` の `TOKENS` / `SERIES` / `STROKE` / `NODE_STYLES` と
 > `vendor/scripts/style-builder.cjs` の `SPEC.colors` の 2 ファイルだけである。
@@ -49,22 +52,67 @@
 CSS 変数は slide/report の `:root` で
 `vendor/scripts/style-builder.cjs` の `SPEC.colors` から生成される。
 
+> **この表の対応は、現在の生成器とほぼ一致していない。**
+> 下表の「正本キー」列が指す `SPEC.colors` のキーは、**`--fg-muted` の行を除き、どれも現在の
+> `SPEC.colors` に存在しない**（件数は書かない。行を増減させたときに数だけ古くなるため、
+> 数えたい場合は `SPEC.colors` を直接読む）。
+> したがって残りの変数は `:root` へ出力されず、`svg-kit.cjs` の `var(--名前, #hex)` は
+> 常に第 2 引数の hex へ落ちる。**色は出るが、変数経由では制御できない状態にある。**
+> 意匠刷新にともなう対応表（ロール → 現行トークン）は設計中で、確定するまでこの表の値は書き換えない。
+> 値を先に書き換えると、対応が決まったときに 2 度目の書き換えが要るうえ、
+> 途中の版が「一致している表」に見えてしまう。
+> 現在の実値は `SPEC.colors`（正本）を直接読む。
+
 | CSS 変数 | 正本キー | 図解側で参照しているロール |
 |---|---|---|
 | `--fg` | `style-builder.cjs SPEC.colors.fg` | `ink` |
-| `--fg-dim` | `style-builder.cjs SPEC.colors.fgDim` | `muted` |
-| `--fuji-gray` | `style-builder.cjs SPEC.colors.fujiGray` | `soft` / `rule-solid` |
+| `--fg-muted` | `style-builder.cjs SPEC.colors.inkMuted` | `muted` |
 | `--sakura-pink` | `style-builder.cjs SPEC.colors.sakuraPink` | `accent` / `series-3` |
 | `--wave-blue` | `style-builder.cjs SPEC.colors.waveBlue` | `link` / `series-1` |
 | `--wave-aqua` | `style-builder.cjs SPEC.colors.waveAqua` | `series-2` |
 | `--autumn-yellow` | `style-builder.cjs SPEC.colors.autumnYellow` | `series-4` |
-| `--spring-violet` | `style-builder.cjs SPEC.colors.springViolet` | `series-5` |
+
+> `--fuji-gray` の行は 2026-08-14 に落とした。第 3 列の 2 語がどちらも偽だったうえ、
+> **綴りを直しても行として成立しない**ことが分かったため。`soft` は `TOKENS` の 9 キー
+> （`paper` `paper2` `tone2` `ink` `muted` `rule` `accent` `link` `white`）に無く、当たっていたのは
+> 「`arrow-soft` は…**置いていない**」というコメント 1 行だった（**同じ 1 行が別々の担当を 2 回
+> 引っかけている**。不在の記録が存在の証拠として読まれる形）。`rule-solid` は
+> `style-builder.cjs:222` の `--rule-solid: 1px` で**線幅**であり、色ではない（使用箇所 6 件は
+> すべて `border-top: var(--rule-solid) solid var(--hairline)` の形で、色は `--hairline` が担う）。
+> そして主語の `--fuji-gray` は**どの経路の生成器も定義していない**（実在は経路外の
+> `vendor/assets/src/styles/variables.css` と `vendor/assets/slide-template-single.html` の 2 件で、
+> これは drift の `orphan-var-definer` に出ている 2 件そのもの）。
+> 綴りだけ直すと「**どの経路にも属していない変数について、経路を書いていない行**」が延命する。
+> 色ロールの一覧はこの表に持てない（経路ごとに名前も数も違う）。SR-5-05 と同じ扱いにした。
+>
+> `--fg-dim` の行は 2026-08-14 に `--fg-muted` へ寄せた。旧行は正本キーを
+> `SPEC.colors.fgDim` としていたが、**その綴りは `style-builder.cjs` に 1 か所も無い**。
+> 値を代入しているのは `--fg-muted: <inkMuted>` の行だけで、`--fg-dim: var(--fg-muted)` は
+> そこから派生した別名である。別名のほうを表が例示していると、そこから写した記述が
+> 別名を増やし続ける（実際に文書側の参照は別名が多数派だった）。`svg-kit.cjs` の
+> `muted` トークンも `--fg-muted` を指しているので、寄せ先はこちらで一致する。
+>
+> `--spring-violet` の行は 2026-08-14 に落とした。`SERIES` が 5 枠から 4 枠になり
+> `series-5` が消えたので、この変数を参照している図解ロールが 1 つも無くなったため。
+> 名前だけは `VAR_VIOLET` として互換で残っているが、指す先は `SERIES[0]` で、
+> **増える区別は 1 つも無い**（復活させると同じ色に 2 つ目の名前が付く）。
 
 ---
 
-## 2. 系列色（SERIES・5 色）
+## 2. 系列色（SERIES・4 色）
 
 正本: `vendor/scripts/svg-kit.cjs` の `SERIES`（順序も正本。並べ替えると既存成果物の色が変わる）
+
+> **枠は 2026-08-14 に 5 から 4 へ減った。**それ以前は 5 要素あったが、いずれも §1.1 の
+> 「存在しないキー」に紐づく変数を参照して第 2 引数の hex へ落ちるため、
+> **`series-1` と `series-5` が同一の値**になっていた。5 枠目は一度も別の見た目を
+> 出していない（builder golden 11 本の再生成が全件 SAME）ので、枠ごと落とした。
+> 見出しの数を戻す前に、`SERIES` が実際に何要素あるかを読むこと。
+>
+> **`series-3` は `accent` と同一の値である**（どちらも `var(--sakura-pink, #141412)`）。
+> 下表の使用制限が言うとおりだが、現在は「同じ役割の色だから」ではなく
+> 「両方が同じ値へ落ちているから」同値になっている。
+> 何段の符号系が要るかは対応表の設計事項なので、ここでは食い違いの記録に留める。
 
 | 系列 | 正本キー | 使用制限 |
 |---|---|---|
@@ -72,15 +120,15 @@ CSS 変数は slide/report の `:root` で
 | `series-2` | `SERIES[1]` / `VAR_AQUA` | — |
 | `series-3` | `SERIES[2]` / `VAR_PINK` | `accent` と同値。焦点表現と競合するので系列図では `accent` を別途使わない |
 | `series-4` | `SERIES[3]` / `VAR_YELLOW` | — |
-| `series-5` | `SERIES[4]` / `VAR_VIOLET` | — |
 
 ### 系列色の使用制限（4 条）
 
 1. **色でしか区別できない図に限る。** レーダー・折れ線・円/ドーナツ・積上棒・散布図など、
    重なり合う複数実体を判別する必要がある型だけ。アーキテクチャ図・スイムレーン・
    フローチャートへ後付けしてはならない（そこでは形と配置が既に区別を担っている）。
-2. **6 系列目を作らない。** 5 色で足りないなら、それは系列が多すぎる（→ 複雑度予算）。
-   統合するか、図を分割する。
+2. **5 系列目を作らない。** 4 色で足りないなら、それは系列が多すぎる（→ 複雑度予算）。
+   統合するか、図を分割する。塗りで区別する図では、この 4 は
+   `SERIES_SUPPLY_NO_DASH`（D27 / SR-15-24）が言う供給の 4 段と同じ限界を指している。
 3. **`series-3` は `accent` と同じ色である。** 系列図で焦点を作りたいときは、
    `accent` を重ねるのではなく **`resolvePalette({ paletteMode: 'focal' })`**
    （焦点のみ `accent`・他は全て `muted`）へ切り替える。系列色と焦点色を同一図で混ぜない。

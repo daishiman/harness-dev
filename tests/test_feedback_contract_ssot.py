@@ -83,6 +83,23 @@ def test_is_loop_kind():
     assert not FC.is_loop_kind(None)
 
 
+def test_vendored_feedback_skill_requires_exact_noncanonical_copy(tmp_path):
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    canonical.mkdir(parents=True)
+    copied.mkdir(parents=True)
+    (canonical / "SKILL.md").write_text("same\n", encoding="utf-8")
+    (copied / "SKILL.md").write_text("same\n", encoding="utf-8")
+
+    assert not FC.is_vendored_feedback_skill(canonical, plugins_dir=plugins)
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+    (copied / "SKILL.md").write_text("changed\n", encoding="utf-8")
+    assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+    assert not FC.is_vendored_feedback_skill(copied.parent / "other", plugins_dir=plugins)
+
+
 FRONTMATTER_SAMPLE = """---
 name: run-x
 kind: run

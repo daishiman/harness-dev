@@ -2,20 +2,13 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "2777ddff4ff6efd605f60cce6dd3ad28295a30e640f425638f209a6a3018ecff"
+    "skill_md_sha256": "514898808f9a2884a488770c77c41cf30a90b57e6e5312ae6c4c7c6ab1dd9f04"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 1
-  },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "cr-build-skill (focused combined content review, incremental profile, round 4)",
+  "reviewed_at": "2026-08-21T06:30:00Z",
+  "iterations": 4,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,18 +20,29 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "重点論点(1)(3) 解決。SKILL.md:341 の lint 起動行コメント `# kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出` が scripts/lint-readme-plugin-root-portability.py の docstring『禁止 (fragile)』3 項目 (一次手順の裸 plugin root 変数 / repo 相対直書き / os.environ 添字) と一対一で対応し、実装側 BARE_ROOT_RE が fallback 形に一致しないことと『裸の』という限定詞の意味が一致する。runtime-portability.md 層2 の不変条件 3 項目とも整合。",
+      "2 gate 衝突 (content-review が要求する具体性 vs audit-capability-parity の bare_claude_plugin_root) をどちらも曲げずに解いている。変数リテラルを書かない一般化により、意味 (裸=違反 / fallback=許可) を保存したまま audit の literal token 規則にも触れない。実測: lint-readme-plugin-root-portability.py exit 0 (ユーザー向け文書 17 件 OK)、audit-capability-parity.py --repo-root . exit 0 / verdict=PASS / violations 空。",
+      "Step 10 の SSOT 移設は redirect 先が実在し情報欠落なし。SKILL.md:372 の references/build-steps.md#h7-ナレッジループ注入の詳細手順 に対し build-steps.md:502 に `### H.7 ナレッジループ注入の詳細手順` が実在 (GitHub slug 規則で一致)、5 段手順と Loop B blockquote が逐語で移設済み、SKILL.md 側に再掲なし。lint-ssot-duplication.py --plugin-dir plugins/harness-creator exit 0。",
+      "依存関係も切れていない。Step 10 は phase: references であり workflow-manifest.json:322 の ref-build-steps (path ./references/build-steps.md) が phaseIds に references を含んで登録済みのため redirect 先が当該 phase の宣言リソースとして解決可能。lint-skill-tree.py は SS-203 で本文 296 行 (上限 300) を報告し、この移設が行数予算の実需に基づく圧縮であることを裏づける。",
+      "Runtime root contract 節の 1 行化と Step 4 直前の空行追加はいずれも意味中立。前者のリンク先 slug は runtime-portability.md:41 の `## product別 plugin root 契約` と一致し audit の runtime_root_contract 検査も PASS。Step 4 fence 内の他の起動行は $PLUGIN_ROOT / $SKILL_DIR へ統一され、repo-level gate 2 本だけが ${HARNESS_ROOT:-.} を使う形が SKILL.md:172 の carve-out と整合する。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[medium / inconsistency — 本 round で修正済み] CL-11 (SKILL.md:247) が正本として挙げる runtime-portability.md 層2 機構2 と食い違っていた。CL-11 は setup 手順の bash から生パス例を無条件に排除する書き方だったが、正本は生パス直叩き例を『開発者向け補足へ降格した上で fallback 形で書く』ことを明示的に許可する。評価者の修正案どおり『**一次手順としては** doctor entry point だけを案内し、生パス例は開発者補足へ降格した fallback 形に限る』へ改め、変数リテラルを書かないことで capability audit にも触れない形にした。修正後に lint-readme-plugin-root-portability.py = exit 0、audit-capability-parity.py = exit 0、lint-skill-tree.py = ok (296 行) を再実測済み。",
+      "[low / smell] 『裸のplugin root変数』はカバレッジをわずかに広く読ませる。lint の BARE_ROOT_RE / BARE_ASSIGN_RE / OSENV_SUBSCRIPT_RE はいずれも CLAUDE_PLUGIN_ROOT のみに一致し、README 内の裸 $PLUGIN_ROOT は検出しない。実害は安全側 (読者が余分に避けるだけ) で、変数名を書けない audit 制約下では妥当な妥協。未修正。",
+      "[low / smell] Step 4 の repo-level gate 2 本は ${HARNESS_ROOT:-.} で未定義時 cwd へ落ちる。SKILL.md:172 の carve-out は『明示した project root を別入力として使う』と書いており、暗黙の cwd fallback は『明示』と語義がずれる。plugin root ではないため contract 違反ではない。未修正 (別 issue)。",
+      "[info / 対象外] lint-skill-description.py の repo 全走査は .claude/agents/elegant-initial-draft-evaluator.md の R2 違反 1 件で exit 1 になるが、本 slice 外の既存違反であり run-build-skill 配下には違反なし。"
     ],
-    "iteration": 1,
-    "iteration_limit": 3,
+    "iteration": 4,
+    "iteration_limit": 4,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+105 行) には共通 injection 以外の残差 97 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "round 4 incremental content review (焦点: (1) 『裸 $CLAUDE_PLUGIN_ROOT』→『裸のplugin root変数』の書き換えが Goodhart 緑化でないか (2) lint 検出仕様との一致 (3) 2 gate 衝突をどちらも曲げずに解けているか (4) Runtime root contract 節の 1 行化 (5) Step 10 の SSOT 移設 (6) Step 4 直前の空行)。 読んだファイル: plugins/harness-creator/skills/run-build-skill/{SKILL.md, references/build-steps.md, references/content-review-protocol.md, workflow-manifest.json}、scripts/lint-readme-plugin-root-portability.py (docstring と regex 定義)、plugins/harness-creator/scripts/audit-capability-parity.py (_runtime_root_contract_missing / _portable_root_violations / bare_claude_plugin_root / literal_runtime_root_placeholder / runtime_root_policy_missing)、plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md、eval-log/harness-creator/run-build-skill/content-review/{elegance,rubric}-verdict.json (round 3)。 実行コマンドと実測 exit code: lint-readme-plugin-root-portability.py = 0 (17 件 OK)、audit-capability-parity.py --repo-root . = 0 (verdict=PASS / violations を持つ plugin 0 件)、lint-ssot-duplication.py --plugin-dir plugins/harness-creator = 0、lint-skill-tree.py = 0 (Warn SS-203: 296 行)、lint-skill-name / validate-frontmatter / lint-criteria-provenance / lint-declaration-coverage / lint-skill-completeness / lint-path-canonical = 全て 0、lint-goal-seek.py = 0 (WARN 3 既存)、validate-build-trace.py eval-log/skill-build-trace.json = 0、lint-skill-description.py (repo 全走査) = 1 (違反は .claude/agents/elegant-initial-draft-evaluator.md で本 slice 外)。 Goodhart 判定: lint 起動行コメントの書き換えは緑化に当たらない。(a) 削除されたのは変数リテラルだけで、許可/禁止を分ける実質的述語 (『裸の』= fallback 無し) と検出 3 項目の列挙は残り lint docstring と一対一対応を保つ。(b) 書き換え前の index blob は audit を dual-root 形として通過しつつ『正しい形を違反形として教える』意味反転を含んでおり、今回の変更は『機械緑・意味誤り』→『機械緑・意味正』への移動で、緑化の逆向きである。(c) 変更されたのは実行行でなくコメントのみで lint 自身の検出集合・fail-closed 性は不変 (exit 0 実測)。 sha 系譜: 評価は sha 76fb7c4225cffaa0fb66c82a735dedbffb3347031c1000083070c82c7d9c238f 時点で実施。その後の唯一の変更は上記 medium (CL-11) を評価者の提案文言どおり修正した 1 行のみで、現 sha 514898808f9a2884a488770c77c41cf30a90b57e6e5312ae6c4c7c6ab1dd9f04 になった。修正後に上記 lint 群を再実測して exit code が変わらないことを確認済み。findings_summary の inconsistency: 1 は評価時点の検出数であり、現 sha では解消している。 criteria 全 5 件の評価: IN1 = 上記 lint 群を実測し run-build-skill 由来の違反 0。IN2 = validate-build-trace.py が exit 0、本 diff は trace 生成ロジック未変更。IN3 = 本変更は route 消費 build ではなく単発の文書修正のため N/A、route-build-report 契約段落 (SKILL.md:320) は空行追加以外無傷。OUT1 = high severity 0 件、重点論点は実ファイル・実 exit code の複数独立証拠で裏づけ済み。OUT2 = draft 提示/lease/有界改善の記述 (CL-13 / artifact_delivery frontmatter) に変更なく release/exhaustive への自動昇格を導入していない。 30 思考法は実施しておらず、実施したとも申告しない (incremental profile の焦点再判定のみ)。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 3
+  }
 }

@@ -6,7 +6,7 @@
 name: slide-report-generator
 description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは upstream byte-pin + 明示local overlay で携行。
 kind: plugin-composition
-version: 0.1.23
+version: 0.1.26
 owner: harness maintainers
 since: 2026-07-05
 last-audited: 2026-07-05
@@ -28,38 +28,41 @@ contract:
     - 実行パスは全て $CLAUDE_PLUGIN_ROOT 起点 (repo-root ハードコード禁止)
 
 capabilities:
-  # === Skills (kind=skill) ===
+  - { kind: skill, ref: skills/ref-diagram-system, tier: core }
+  - { kind: skill, ref: skills/run-cross-deck-review, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
   - { kind: skill, ref: skills/run-slide-report-generate, tier: core }
-  - { kind: skill, ref: skills/run-slide-report-modify,   tier: core }
-  - { kind: skill, ref: skills/run-cross-deck-review,     tier: core }
+  - { kind: skill, ref: skills/run-slide-report-modify, tier: core }
+  - { kind: skill, ref: skills/run-slide-report-status, tier: core }
+  - { kind: agent, ref: agents/ai-image-diagram-producer, tier: core }
+  - { kind: agent, ref: agents/cross-deck-reviewer, tier: core }
+  - { kind: agent, ref: agents/d3-diagram-designer, tier: core }
+  - { kind: agent, ref: agents/data-visualizer, tier: core }
+  - { kind: agent, ref: agents/deck-evaluator, tier: core }
+  - { kind: agent, ref: agents/hearing-facilitator, tier: core }
+  - { kind: agent, ref: agents/html-generator, tier: core }
+  - { kind: agent, ref: agents/layout-optimizer, tier: core }
+  - { kind: agent, ref: agents/report-composer, tier: core }
+  - { kind: agent, ref: agents/report-quality-reviewer, tier: core }
+  - { kind: agent, ref: agents/report-structure-designer, tier: core }
+  - { kind: agent, ref: agents/slide-renderer, tier: core }
+  - { kind: agent, ref: agents/slide-report-modifier, tier: core }
+  - { kind: agent, ref: agents/structure-designer, tier: core }
+  - { kind: agent, ref: agents/structure-validator, tier: core }
+  - { kind: agent, ref: agents/ui-quality-reviewer, tier: core }
+  - { kind: agent, ref: agents/visual-strategist, tier: core }
+  - { kind: command, ref: commands/slide-report-generate, tier: core }
+  - { kind: command, ref: commands/slide-report-status, tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-WriteEditMultiEdit/hook-postgen-eval", tier: core }
+
+  # === Skills (kind=skill) ===
   # 参照専用 (kind=ref / effect=none)。図解 1 枚を描くときの手続き知識の索引。
-  - { kind: skill, ref: skills/ref-diagram-system,        tier: ref }
 
   # === Agents (kind=agent) — plugin.json agents 配線と 1 対 1 対応 ===
-  - { kind: agent, ref: agents/hearing-facilitator,        tier: core }
-  - { kind: agent, ref: agents/structure-designer,         tier: core }
-  - { kind: agent, ref: agents/structure-validator,        tier: core }
-  - { kind: agent, ref: agents/d3-diagram-designer,        tier: core }
-  - { kind: agent, ref: agents/data-visualizer,            tier: core }
-  - { kind: agent, ref: agents/html-generator,             tier: core }
-  - { kind: agent, ref: agents/slide-renderer,             tier: core }
-  - { kind: agent, ref: agents/layout-optimizer,           tier: core }
-  - { kind: agent, ref: agents/ui-quality-reviewer,        tier: core }
-  - { kind: agent, ref: agents/deck-evaluator,             tier: core }
-  - { kind: agent, ref: agents/ai-image-diagram-producer,  tier: core }
-  - { kind: agent, ref: agents/slide-report-modifier,      tier: core }
-  - { kind: agent, ref: agents/cross-deck-reviewer,        tier: core }
-  - { kind: agent, ref: agents/report-structure-designer,  tier: core }
-  - { kind: agent, ref: agents/visual-strategist,          tier: core }
-  - { kind: agent, ref: agents/report-composer,            tier: core }
-  - { kind: agent, ref: agents/report-quality-reviewer,    tier: core }  # report 版品質補正 (slide の ui-quality-reviewer/layout-optimizer に対称)
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/slide-report-generate.md, tier: core }
-  - { kind: command, ref: commands/slide-report-status.md,   tier: core }
 
   # === Hooks (kind=hook) ===
-  - { kind: hook, ref: "hook:PostToolUse/hook-postgen-eval", tier: core }
 
   # === Scripts (kind=script) === scripts/ 直下の実体と集合一致
   - { kind: script, ref: scripts/build-slide-skeleton-css.py,        tier: core }
@@ -81,10 +84,66 @@ capabilities:
   # schema enum / ファイル群 / 見出し群から実測した値と突合し、未宣言の数詞も検出する。
   # lint-contract-drift の検査 B は `key=N` 形式しか見ないため、自然文中の数詞は本 lint が担う。
   - { kind: script, ref: scripts/lint-count-parity.py,             tier: core }
+  # 上 2 本 (lint-contract-drift / lint-count-parity) の起動口について。hook にも SKILL.md にも
+  # 載っていないが、tests/test_lint_contract_drift.py と tests/test_lint_count_parity.py が
+  # プラグイン実体 (_PLUGIN_ROOT) を対象に走るので、**合成 fixture ではなく実ツリーに届いている**。
+  # 「テストからしか呼ばれていない = 合成入力しか見ていない」ではない。
+  # なお EVALS.json の harness.mechanical[] を読む runner は存在しないので、そこへ行を足しても
+  # 実行は 1 つも増えない。届くのは誰かが `pytest tests/` を叩いたときであって、EVALS 経由ではない。
+  # ここを読まずに「配線されていない」と判断して hook へ足すと、同じ検査が 1 回の生成で 2 回走る。
+  # 既知未修正・検査の届き方の台帳: references/known-unfixed.md (K-002)
+  # 検査 ID が `sr:` で名指しする SR と、spec-registry.md の規則行との突合ゲート。
+  # あわせて spec-registry.md §17 の欠落台帳の件数を実測し、散文の主張と突き合わせる
+  # （exec-docs が `<!-- count: -->` 注釈で縛る予定。実測器は本 lint 側にある）。
+  # 件数を lint-count-parity.py の MEASURERS へ寄せていないのは、あちらが「実測器は 0 を
+  # 返さない」（0 は空集合という別の主張）を self-test で縛っているのに対し、この台帳の
+  # 0 は**目標状態**だから。寄せると全部書き終えた日に self-test が倒れ、緑を保つために
+  # 「まだ書き終えていないことにする」動機が生まれる。本 lint の実測器は 0 種のとき None を返す。
+  # 節を分けて数えるのが要点。§17 の台帳行そのものを規則行として数えると、**台帳へ書く行為が
+  # 台帳の対象を消す**（実測 2026-08-14: 欠落 7 種が 0 種に見えた）。
+  - { kind: script, ref: scripts/lint-sr-ledger-parity.py,          tier: core }
   - { kind: script, ref: scripts/render-diagram-golden.cjs,         tier: core }
   - { kind: script, ref: scripts/render-production-golden.cjs,      tier: core }
   - { kind: script, ref: scripts/setup-playwright.py,               tier: core }
+  # SR-4-03（比較レイアウトの比率）を判定する実行体。構成段階では CSS が無く判定
+  # できないため、生成後の deck の CSS を見る。validate-structure.js の V-001 は
+  # この検査器へ委ねる（deferred）。
+  - { kind: script, ref: scripts/validate-compare-ratio.mjs,        tier: core }
   - { kind: script, ref: scripts/validate-diagram-information.py,   tier: core }
+  # SR-3-09（<br> の位置が文節の切れ目か）を判定する実行体。語彙の正本は
+  # vendor/scripts/utils.js の LINEBREAK_RULES で、挿入器 auto-linebreak.js と同じ集合を読む。
+  # hook-postgen-eval の 1f として**両 mode で**実行する。対象が無いときに error ではなく
+  # verdict=not-checked へ落ちるので、report.html のように未測定の入力へ当てても偽の赤を作らない。
+  # **exit code だけで判定しないこと** — 対象 0 件と違反 0 件はどちらも exit 0 で、
+  # 区別できるのは --json の verdict (not-checked / pass / fail) だけ。
+  - { kind: script, ref: scripts/validate-linebreak-position.mjs,   tier: core }
+  # 実体と言及を構造で分ける共通型（ライブラリ。単体で走る検査器ではない）。
+  # html の script / style / HTML コメントを**同長の空白へ潰す**。同長なのは、位置で効く
+  # 仕組み（lint-contract-drift の `<!-- css-route: -->` マーカー等）の照合先をずらさないため。
+  # **現時点でどの検査器からも呼ばれていない。** lint-contract-drift.py が読むのは .md だけで、
+  # markdown では言及かどうかを構造で判定できないため（実測 2026-08-14: インラインコードを
+  # 剥がすと var() 参照が 393->329 へ減り、その中に spec-registry.md:177 の**標準実装の指示**が
+  # 入っていた。同じ書き方で known-unfixed.md は**違反の記録**を書いており、構造が同一で
+  # 意味が正反対）。呼び手が無いことを隠さずここに書くのは、次に剥がし処理が要る人が
+  # これを見つけられず 3 つ目の実装を作るのを防ぐため。
+  # 今の役割は上の validate-linebreak-position.mjs の maskNonProse と**同じ結果を出すことを
+  # 機械で縛る契約**で、tests/test_mention_mask.py が node を実際に走らせて checked と突合する。
+  - { kind: script, ref: scripts/mention_mask.py,                   tier: core }
+  # 視覚生成規約 E1-E6（VGCONST）の静的検査。既存検査器はいずれも上限を見る禁止則で、
+  # 面の上に階層を「作れているか」を見る検査が無かった。閾値は写経せず
+  # references/visual-generation-rules.md から実行時に抽出する（抽出できなければ fail-closed）。
+  - { kind: script, ref: scripts/validate-visual-generation.py,     tier: core }
+  # 「面が視覚構造を持っているか」を面ごとに数える被覆検査（DC1-DC6）。既存の
+  # validate-svg-diagram.py（上限）も validate-diagram-information.py（下限）も、
+  # 図が 0 個の面には**検査対象が存在しない**ので緑を返す。文字リストだけの deck が
+  # 全部緑で通っていた死角がここ。
+  # ただし SVG の数では数えない。実測した反例（2026-08-14 20:04 JST・実運用 deck）:
+  # slide-timeline の面は SVG を 1 つも持たないが CSS の軸＋節点で図が成立していた。
+  # よって主判定は「文字リストであること」（li・カード 3 件以上）の側に置き、
+  # 視覚構造（SVG/canvas/D3/図 img/CSS の軸）を免責側に置く。判定できない面は
+  # DC5 判定保留として分母から外し名指しする。分母は 3 つとも出力し、
+  # 判定できた面 0 件は exit 2 で緑にしない。除外は面番号でなく**面の型**で決める。
+  - { kind: script, ref: scripts/validate-diagram-coverage.py,      tier: core }
   - { kind: script, ref: scripts/validate-report-layout.js,         tier: core }
   - { kind: script, ref: scripts/validate-slide-layout.js,          tier: core }
   - { kind: script, ref: scripts/validate-slide-skeleton.py,        tier: core }
@@ -118,6 +177,12 @@ dependencies:
   - { from: skills/run-cross-deck-review,     to: agents/cross-deck-reviewer,       type: calls }
   # PostToolUse hook は最小 guard と利用者選択の additionalContext だけを返し、
   # semantic evaluator を自動起動しないため、hook→agent の架空 edge は宣言しない。
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
 
 eval_sinks:
   - EVALS.json

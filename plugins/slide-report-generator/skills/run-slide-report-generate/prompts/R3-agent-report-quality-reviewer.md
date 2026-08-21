@@ -74,8 +74,8 @@ last-audited: 2026-07-05
 
 | ツール / スクリプト | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------------------|------|--------------|--------------|----------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>` | 899/900/901/1024/1366/1600px、print、initial hash、TOC click、scroll、font-ready、history、before/afterprintを実ブラウザで採取 | 検証着手時（**最初に必ず実行**）/ 再検証時 | なし | report/structure/output bundle path |
-| `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure` | 構造同期と静的shapeの決定論ゲート | runtime bundle生成直後 / 再検証時 | なし | report/structure path |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>` | 899/900/901/1024/1366/1600px、print、initial hash、TOC click、scroll、font-ready、history、before/afterprintを実ブラウザで採取 | 検証着手時（**最初に必ず実行**）/ 再検証時 | なし | report/structure/output bundle path |
+| `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure` | 構造同期と静的shapeの決定論ゲート | runtime bundle生成直後 / 再検証時 | なし | report/structure path |
 | Read（report.html / report-structure.json / runtime-bundle.json） | RQ1〜RQ37 と read-through 多面検証の意味判定・構造同期照合 | 機械検証後の意味検証時 | なし | 対象ファイルパス |
 | Read（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/ref-diagram-system/references/material-lint.md`） | 素材レイヤ検査 D10-D13 の設計意図。判定値そのものは検査器が正本なので、ここでは**どちら向きに直させるか**（補正指針の方向）だけを引く | `validate-svg-diagram.py` の D10-D13 で落ちた図があり補正指針を書くとき | D10-D13 に指摘がないとき | 当該 reference のパス |
 | grep（`font-size:[0-9.]*rem` / `<h[1-6]` / `aspect-ratio` / `@media print` 等）| 最小フォント・見出し階層・letterbox・印刷 CSS の客観検出（機械層の裏取り） | 意味検証・裏取り時 | 決定論ゲートで既に確定済みの項目 | 検索パターン |
@@ -107,7 +107,7 @@ last-audited: 2026-07-05
 | 段落密度 | length 相応の段落密度か | length（brief/standard/deep）相応・1段落1論点・過密/過疎なし | 補正指針: 論点で分割 or 加筆・章立て見直し |
 | 1項目1ビジュアル | 節あたり非 none visual 数 | 各 section の非 none visual が最大 1・図解過多なし | 補正指針: 図解を1点へ・不要図は none 化 or 節分割 |
 | reportType 骨格順守 | 必須 role 網羅・論理順序 | 確定 reportType の必須 role が順序通り網羅 | 差し戻し: 骨格欠落は report-structure-designer へ |
-| 可読性・意匠維持 | 最小1.4rem・Kanagawa・退化耐性 | 本文最小1.4rem・WCAG AA 4.5:1・逐語を画像に焼いていない | 補正指針: 意匠 SSOT へ整合・逐語は本文へ |
+| 可読性・意匠維持 | 最小1.4rem・共有意匠トークン・退化耐性 | 本文最小1.4rem・WCAG AA 4.5:1・逐語を画像に焼いていない | 補正指針: 意匠 SSOT へ整合・逐語は本文へ |
 | through-line（節間論理・弧・1.2.0） | 節間の論理接続・文書全体の弧 | meta.throughLine→本論→結の弧が成立し節が飛び石でなく transition が節間を橋渡し（RQ27・意味層） | 補正指針: throughLine/transition を補い節順を弧に沿わせる（report-structure-designer へ） |
 | 色覚非依存の強調（1.2.0） | 要点強調の非色第2チャネル併存 | ==highlight== が色単一でなく font-weight/underline 等を併存し色覚非依存（RQ28・機械 C25＋意味） | 補正指針: 非色チャネル（weight/underline）を併存させる（report-composer / render へ） |
 | reportType 横断要素の意味的充足（1.2.0） | 型別本質要素が意味的に機能 | 要約/次アクション/根拠/リスク/文書メタ 等が role 存在でなく内容が役割を果たす（RQ29・意味層） | 補正指針: 欠落横断要素を意味的に補う（report-structure-designer へ） |
@@ -154,7 +154,7 @@ last-audited: 2026-07-05
 - [ ] section 構造を検証した: 各読み単位が「見出し＋段落＋最大1ビジュアル＋callouts」の構造を保ち、注意点/警告が callouts で適切に表現されている
 - [ ] 見出し階層を検証した: h1（タイトル）→ h2（section 見出し）→ h3（下位）の階層がスキップなしで整合し、見出しが内容を表す自然な長さである
 - [ ] 印刷/letterbox を検証した: A4/レター読み物レイアウト（縦スクロール）で report を 16:9 letterbox に強制しておらず、印刷 CSS が共有 SSOT トークン（mm/rem・px 依存なし）で適用され印刷時に本文・図が欠落しない
-- [ ] 可読性・意匠維持を検証した: 本文最小 1.4rem・WCAG AA 4.5:1・Kanagawa 配色（純黒/純白回避）を守り、配色・フォント・印刷 CSS を共有 SSOT から適用し report 独自発明がない（RQCONST_006）
+- [ ] 可読性・意匠維持を検証した: 本文最小 1.4rem・WCAG AA 4.5:1・style genome の palette 定義と一致する配色（純黒/純白回避）を守り、配色・フォント・印刷 CSS を共有 SSOT から適用し report 独自発明がない（RQCONST_006）
 - [ ] 構造同期を検証した: report.html が report-structure.json の忠実な射影で過不足ゼロ（勝手な節の増減なし・RQCONST_007）
 - [ ] 検出した全問題に「問題・箇所・補正指針」が対応づき、品質レポート必須フィールド（runtime bundle / 静的ゲート / 問題・補正指針 / RQ1〜RQ37 合否 / 差し戻し判定）を出力に含めた
 - [ ] 事実確認: 決定論ゲート・多面検証を 1 件でも飛ばして「確認済み」と述べていない
@@ -271,8 +271,8 @@ Layer 3 で定義したツールを、5.4 実行方式のゴールシークル�
 
 | ツール / スクリプト | 使用目的 | 使用タイミング |
 |--------------------|---------|---------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>` | 実描画入力bundle生成 | 検証着手時（最初に必ず実行）/ 再検証時 |
-| `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure` | 静的shape・構造同期の決定論検証 | bundle生成直後 / 再検証時 |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>` | 実描画入力bundle生成 | 検証着手時（最初に必ず実行）/ 再検証時 |
+| `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure` | 静的shape・構造同期の決定論検証 | bundle生成直後 / 再検証時 |
 | Read（report.html / report-structure.json / runtime-bundle.json）| RQ1〜RQ37 と read-through 多面検証の意味判定・構造同期照合 | 機械検証後の意味検証時 |
 | grep（`font-size:[0-9.]*rem` / `<h[1-6]` / `aspect-ratio` / `@media print` 等）| 最小フォント・見出し階層・letterbox・印刷 CSS の客観検出（機械層の裏取り） | 意味検証・裏取り時 |
 

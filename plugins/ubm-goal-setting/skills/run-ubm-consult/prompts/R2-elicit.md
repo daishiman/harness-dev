@@ -56,8 +56,8 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| coordinator | `$CLAUDE_PLUGIN_ROOT/agents/phase3-coordinator.md` | 回答パターン別対応ルール（感情的/曖昧/質問返し/沈黙）を確認するとき |
-| session-format | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-consult/references/session-record-format.md` | 同意済み最小要約の記録欄を確認するとき |
+| coordinator | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/phase3-coordinator.md` | 回答パターン別対応ルール（感情的/曖昧/質問返し/沈黙）を確認するとき |
+| session-format | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-consult/references/session-record-format.md` | 同意済み最小要約の記録欄を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし（対話による引き出しのみ）。

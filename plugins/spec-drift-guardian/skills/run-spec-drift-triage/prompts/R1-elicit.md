@@ -25,7 +25,7 @@
 ## Layer 3: インフラ層
 - **入力**: `--issue NUMBER` / `--events FILE` (任意で `--since TIMESTAMP` / `--repo-root DIR`)。events FILE は `gh issue view <N>` の metadata / comment timestamps と `spec-diff-history.md` 見出しから組み立てる。
 - **events FILE の契約 (各要素)**: `event_at` (ISO8601・必須) / `history_heading` (`spec-diff-history.md` の見出し・必須) / **`triaged` (bool・既定 false)** / `expected_diff_sha256` (任意・照合用)。**`triaged` は `untriaged_entries` 選別の唯一の機構**で、C11 は未指定を `false`(=未triage) として扱う。既に triage 済みの変更へ `triaged: true` を付け忘れると、その entry が未triage として再集約され、別 commit pair と混在して C08 が exit2 で停止する (回復手順は下記 `--since`)。
-- **決定論段**: `python3 $CLAUDE_PLUGIN_ROOT/scripts/aggregate-issue-diffs.py --issue N --events FILE`。stdout に `entries[{event_at, history_heading, base_commit, source_commit, diff_sha256, complete:true, diff}]` + `latest_entry` + `untriaged_entries` + `source_provenance`。exit 0 のみ成功、1/2 は fail-closed。
+- **決定論段**: `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/aggregate-issue-diffs.py --issue N --events FILE`。stdout に `entries[{event_at, history_heading, base_commit, source_commit, diff_sha256, complete:true, diff}]` + `latest_entry` + `untriaged_entries` + `source_provenance`。exit 0 のみ成功、1/2 は fail-closed。
 - **ツール**: Bash (`gh` で issue metadata 取得 / `python3` で C11 実行 / `git` は C11 内部が使用) / Read (events FILE / 既存 `.spec-drift/<issue>/` 確認)。ネットワークは gh の issue 読取に限り、diff 復元はローカル git のみ。
 
 ## Layer 4: 共通ポリシー層

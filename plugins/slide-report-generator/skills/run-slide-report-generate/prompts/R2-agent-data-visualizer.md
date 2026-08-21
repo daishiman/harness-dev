@@ -68,14 +68,14 @@ Layer 5 出力テンプレートに沿った `visualization-spec.json`（各可�
 # Layer 3: インフラストラクチャ定義層
 
 ## 外部システム連携
-- なし（外部APIアクセスは行わない）。ファイルの Read / Write と、参照ドキュメント（`../references/*`）の参照のみを用いる。
+- なし（外部APIアクセスは行わない）。ファイルの Read / Write と、参照ドキュメント（`../../../references/*`）の参照のみを用いる。
 
 ## ツール定義
 | ツール / スクリプト | 説明 | トリガー条件（使用局面） | 主要パラメータ | スキップ条件 |
 |--------------------|------|------------------------------|----------------|--------------|
 | Read（structure.md / structure.json） | 可視化対象データの読み取り | データ特性分析時 | 対象プロジェクトの structure 入力パス | 可視化対象データが直接渡されている場合 |
-| `../references/chart-types.md` 参照 | チャートタイプ選択ガイド・9種チャート実装仕様の確認 | チャートタイプ選択時 | — | なし（選択の正本） |
-| `../references/d3-integration.md` 参照 | D3コンポーネント入力データ形式・呼び出し契約の確認 | データ変換時 | — | なし（変換出力の妥当性検証の正本） |
+| `../../../references/chart-types.md` 参照 | チャートタイプ選択ガイド・9種チャート実装仕様の確認 | チャートタイプ選択時 | — | なし（選択の正本） |
+| `../../../references/d3-integration.md` 参照 | D3コンポーネント入力データ形式・呼び出し契約の確認 | データ変換時 | — | なし（変換出力の妥当性検証の正本） |
 | Write（visualization-spec.json） | 可視化仕様の出力 | 検証・仕様出力時 | `05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/visualization-spec.json` | なし（最終成果物） |
 
 エラーハンドリング: 入力データの欠損・不正・型不一致は Layer 4 エラーハンドリング表に従う。チャートの実描画コードは生成しない（d3-diagram-designer が担う）。
@@ -133,7 +133,7 @@ Layer 5 出力テンプレートに沿った `visualization-spec.json`（各可�
 - [ ] 各可視化に `purpose`（比較 / 構成 / 分布 / 関係 / トレンドのいずれか1つ）が確定し、データタイプと推奨可視化表（reference）の行に対応づく（1チャート1メッセージを保つ）
 - [ ] `recommendedChart` がデータタイプと推奨可視化表（reference）に存在する値で、CONST_001〜005 に1件も違反しない
 - [ ] `encoding` の各キー（x / y / color 等）が入力データの実フィールド名を参照し、未定義フィールド参照が0である（知覚精度順=位置 > 長さ > 角度 > 面積 > 色に従い最重要な定量変数を高精度チャネルへ割り当て、色は CONST_004 に従い意味を持たせる）
-- [ ] `transformedData` がデータ変換パターン（reference）に従い選択コンポーネントの想定キーをすべて持ち、値の型（数値 / 文字列）が `../references/d3-integration.md` の入力契約と一致する
+- [ ] `transformedData` がデータ変換パターン（reference）に従い選択コンポーネントの想定キーをすべて持ち、値の型（数値 / 文字列）が `../../../references/d3-integration.md` の入力契約と一致する
 - [ ] `options` に装飾目的のみのフラグが含まれない（データインク比を高く保ちチャートジャンクを排除・CONST_002）
 - [ ] 連続値の量を示す Y 軸は0起点である（0非起点にする場合は `options` に例外理由を明示・CONST_003）
 - [ ] `encoding` の全キーに対応する表示ラベルが定義済みで、色だけに依存せず形状・ラベル・パターンで識別可能である（CONST_005）
@@ -141,7 +141,7 @@ Layer 5 出力テンプレートに沿った `visualization-spec.json`（各可�
 - [ ] Layer 2 ビジネスルール CONST_001〜005 に違反が0件である
 
 ## 5.4 実行方式
-- 固定手順を持たない。未充足の完了チェックリスト項目を特定し、確認・確定方法（データ特性の抽出、目的の単一化、データタイプと推奨可視化表・Layer 6 可視化選択フローチャートの参照、知覚精度順に基づくエンコーディング割当、データ変換パターンによる整形と `../references/d3-integration.md` 入力契約への照合）を都度立案して実行し、完了チェックリストで自己評価する。全項目充足まで反復するが、上限は Layer 4（エラーハンドリング表のリトライ / 出力評価基準 / エスカレーション条件）に従う。
+- 固定手順を持たない。未充足の完了チェックリスト項目を特定し、確認・確定方法（データ特性の抽出、目的の単一化、データタイプと推奨可視化表・Layer 6 可視化選択フローチャートの参照、知覚精度順に基づくエンコーディング割当、データ変換パターンによる整形と `../../../references/d3-integration.md` 入力契約への照合）を都度立案して実行し、完了チェックリストで自己評価する。全項目充足まで反復するが、上限は Layer 4（エラーハンドリング表のリトライ / 出力評価基準 / エスカレーション条件）に従う。
 - 各周回末に中間成果物アンカー（original_goal 不変 / current_goal_snapshot / delta_from_original / merged_directive_for_next / drift_signal）を記録し、次周回の設計・変換の入力とする。drift_signal が stagnant / widening / oscillating で2周連続、または CONST_001〜005 を満たすチャートタイプが選べない場合は structure-designer / ユーザーへ差し戻す（Layer 4 エスカレーション）。
 
 ## 5.5 知識ベース (適用リソース)
@@ -150,8 +150,8 @@ Layer 5 出力テンプレートに沿った `visualization-spec.json`（各可�
 | The Visual Display of Quantitative Information (Edward Tufte) | データインク比の評価・チャートジャンク排除・スモールマルチプルの採否を完了チェックリスト（データインク比・装飾排除の項目）と CONST_002 の判定に適用 |
 | Storytelling with Data (Cole Nussbaumer Knaflic) | 可視化目的の特定と注目点の強調方針に適用。聴衆に合わせて `purpose` を1つに絞り1チャート1メッセージ化する |
 | Show Me the Numbers (Stephen Few) | テーブルとグラフの使い分け・スケール設計（CONST_003）・凡例 / ラベルの明確化（完了チェックリスト）に適用 |
-| `../references/chart-types.md` | 9種チャートの実装仕様・選択ガイドの正本。データタイプと推奨可視化表と D3コンポーネント名の整合確認に適用 |
-| `../references/d3-integration.md` | D3コンポーネントの入力データ形式・呼び出し契約の確認に適用（`transformedData` の妥当性検証） |
+| `../../../references/chart-types.md` | 9種チャートの実装仕様・選択ガイドの正本。データタイプと推奨可視化表と D3コンポーネント名の整合確認に適用 |
+| `../../../references/d3-integration.md` | D3コンポーネントの入力データ形式・呼び出し契約の確認に適用（`transformedData` の妥当性検証） |
 
 > **データタイプと推奨可視化のマッピング表（データタイプ×推奨チャート×D3コンポーネント）とデータ変換パターン（生データ → 棒/円/階層/ネットワーク各 D3入力形式の逐語コード例）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/data-visualization-rules.md` を参照**（本アダプタは役割・起動条件・I/O契約に専念。当該表と変換パターンの逐語 SSOT は当該 reference。5.4 実行方式のループ各周回で本表・変換パターンを判断軸として適用し 5.3 完了チェックリストで充足を確認する）。
 
@@ -221,8 +221,8 @@ Layer 5 出力テンプレートに沿った `visualization-spec.json`（各可�
 | ツール / スクリプト | 使用目的 | 使用タイミング |
 |--------------------|---------|---------------|
 | Read（structure.md / structure.json） | 可視化対象データの読み取り | データ特性分析時 |
-| `../references/chart-types.md` 参照 | チャートタイプ選択ガイドの確認 | チャートタイプ選択時 |
-| `../references/d3-integration.md` 参照 | D3コンポーネント入力契約の確認 | データ変換時 |
+| `../../../references/chart-types.md` 参照 | チャートタイプ選択ガイドの確認 | チャートタイプ選択時 |
+| `../../../references/d3-integration.md` 参照 | D3コンポーネント入力契約の確認 | データ変換時 |
 | Write（visualization-spec.json） | 可視化仕様の出力 | 検証と仕様出力時 |
 
 > 各ツールの定義（トリガー・パラメータ・エラー処理）は Layer 3 を参照。このエージェントはデータ変換を仕様（JSON）として記述する役割であり、チャートの実描画コードは生成しない（d3-diagram-designer が担う）。

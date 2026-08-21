@@ -2,13 +2,20 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "assign-system-dev-plan-evaluator",
-    "skill_md_sha256": "71beaae3ac6d51d80d7e93c3d06eb4add8f123e9f02d23de218362091387359d"
+    "skill_md_sha256": "523d6e2ffd01300d662ec2ad506e7d42bbae254b16c45411fdce4c54b490d2c7"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -19,25 +26,18 @@
       "C4"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "round 1 medium#1 (contradiction) は解消した。`references/evaluation-rubric.md:16` は現在 ``- 機械根拠 (先行): `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py\" --repo-root <root> --staging <relative>` の `status`(pass/fail) / `validated_digest` / `violations[]`。`` であり、bare `$CLAUDE_PLUGIN_ROOT` は消えている。SKILL.md:45 および prompts/R4-evaluate.md:67,142 の同一起動行と表記が完全一致し、「同じ shell 起動行の写しが 2 形式で併存する」状態は skill 配下から消滅した。Codex 側で `/scripts/validate-system-plan.py` へ誤解決する経路が閉じている。",
+      "round 1 medium#2 (inconsistency) も解消した。round 1 が提示した 2 択のうち「evaluation-rubric.md:16 の 1 行置換」が採られ、skill 資産ツリー全体 (SKILL.md / prompts/ / references/) の実行行 8 箇所すべてが dual-root 形へ揃った結果、frontmatter `runtime_root_policy: host-skill-path` (SKILL.md:30) の宣言に反する実行可能行は skill 配下に 0 件である。Runtime root contract 節 (SKILL.md:35-41) の継承範囲記述を変更しなかった判断は妥当で、同節は run-build-skill 正本テンプレート `plugins/harness-creator/skills/run-build-skill/templates/_base.md:46-52` と 5 行逐語一致を保っており、`references/` を追記していれば正本テンプレートからの skill 固有 drift を新設することになっていた。宣言と実態の一致を、正本一致を壊さない側で達成している。",
+      "修正が新たな矛盾を持ち込んでいない。SKILL.md sha は round 1 と同値 (523d6e2f...) で本体は無改変、evaluation-rubric.md の変更は 16 行目 1 行のみに閉じており、同 rubric の frontmatter (name/type/version/owner)、評価対象と機械根拠の節、C1..C4 判定表、Goodhart 対策の不変ルール (proposer≠approver / evaluated_digest 固定) は無改変。評価契約・workflow・goal_seek.max_loops=5 の記述に退行はない。",
+      "(a) 矛盾なし: 同一 validator 起動行の 3 箇所 (SKILL.md:45 / references/evaluation-rubric.md:16 / prompts/R4-evaluate.md:67,142) が単一形式に収束し、round 1 で唯一残っていた矛盾が消えた。(b) 漏れなし: declared refs 9 件の実在を確認、欠損 0。step 1-6 の評価手順・出力契約に欠落なし。(c) 規約整合: Runtime root contract 節が正本テンプレートと逐語一致、`runtime_root_policy: host-skill-path` 宣言 skill の shell 起動行が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。(d) 依存関係整合: `scripts/validate-system-plan.py` / `schemas/plan-findings.schema.json` / `references/feature-execution-package-contract.md` への参照が全て実在資産へ解決し、参照側の path 表記も統一。(e) high severity finding 0 件。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / out-of-scope observation] 本 skill ツリー外だが、同 plugin 配下には bare `$CLAUDE_PLUGIN_ROOT` の実行行が残存する: `plugins/system-dev-planner/setup.md:27,28,49,60,63,67,79` (7 行) と `plugins/system-dev-planner/commands/system-dev-plan.md:16`。これらは assign-system-dev-plan-evaluator の declared 資産ではなく、`runtime_root_policy` を宣言するのは SKILL.md 単位であるため本 verdict の PASS 条件には影響しない。ただし plugin 全体を Codex で実行する場合は同種の解決失敗を起こすため、plugin-level 資産 (setup.md / commands/) を担当する別 review で処理されるべき残件として記録する。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+1 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 1
-  }
+  "notes": "読んだファイル: plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator/{SKILL.md, references/evaluation-rubric.md, prompts/R4-evaluate.md, workflow-manifest.json}, plugins/harness-creator/skills/run-build-skill/templates/_base.md, eval-log/system-dev-planner/assign-system-dev-plan-evaluator/content-review/{elegance,rubric}-verdict.json (round 1 の negative_feedback)。 実行したコマンド: (1) `grep -rn 'CLAUDE_PLUGIN_ROOT' plugins/system-dev-planner/ | grep -v 'PLUGIN_ROOT:-'` = 18 hit、うち本 skill 配下は SKILL.md:38 (Runtime root contract の散文行、実行行ではない) のみで実行可能な bare 行は 0 件。 (2) `grep -rn 'PLUGIN_ROOT' <skill dir>` で skill 内の全 8 実行/参照行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形であることを確認 (SKILL.md:45,52 / references/evaluation-rubric.md:16 / prompts/R4-evaluate.md:67,68,69,71,72,142)。 (3) `python3 scripts/lint-skill-tree.py plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator` = `ok: assign-system-dev-plan-evaluator` (exit 0)。 (4) declared refs 9 件 (responsibility 2 / rubric 1 / schema 2 / reference 1 / script 2 / manifest 1) の実在を個別 test で確認、欠損 0。 (5) `python3 -c \"import hashlib,pathlib;...\"` で SKILL.md sha256 を再計算 = 523d6e2f... (round 1 と同値。SKILL.md 本体は今回未変更という申告と一致)。 criteria_evaluated: 対象 SKILL.md frontmatter に `feedback_contract` ブロックは存在しないため、SKILL.md step 4 が定義する評価契約 C1..C4 を criteria id として round 1 と同一集合で束縛した。 本 review は 30 思考法を実施していない (focused combined content review, incremental profile)。SKILL.md 本体は編集していない。"
 }

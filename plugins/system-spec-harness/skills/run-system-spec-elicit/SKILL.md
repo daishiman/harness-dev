@@ -106,6 +106,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -119,6 +120,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-system-spec-elicit
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
 > システム構築の仕様を、まず **上位概念 (本質的目的/背景/ゴール/目標/成功基準/具体的やりたいこと U1-U9)** を深掘りヒアリングで確定し (R0-foundation)、その上で **カテゴリ×canonical platform id** の収集マトリクスを往復ヒアリングで終端化する L1 skill。ユーザーが決めきれない項目は R5 が最新公式根拠付き2〜3案（無料/低コスト案を含む）を目的適合で比較し、AI推奨・理由・注意点を示してユーザー確認へ導く。foundation / decisions / matrix の書込は本 skill 所有の**単一 transition writer**のみ。
 
 ## 上位概念 anchor (要件 C9・spec drift 防止)
@@ -128,13 +137,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **bootstrap** サブコマンドが空のstate envelope (`$CLAUDE_PROJECT_DIR/system-spec/spec-state.json`) を作り、**R0-foundation** が `set-foundation` op で `requirements_foundation` (U1-U9) を確定してから **R1-init** (`init` サブコマンド) がtaxonomyをpopulateする。R1は既存foundation/decisionsを保持し、上位概念が曖昧なまま技術ヒアリングへ進まない。
 - 各 `確定` セルに `serves_goals: [<goal_id>, ...]` を付与 (confirm 同時付与 or `set-serves` op) し、どの上位概念に資するかを明示する。
 - C03 (`run-system-spec-compile`) は `requirements_foundation` を `system-spec/00-requirements-definition.md` (要件定義書=憲法) として先頭章に生成し、各技術章 frontmatter に `serves_goals` を持たせて全章を貫通させる。
-- 検証: `../../scripts/validate-coverage-matrix.py --require-foundation` が U1-U5 非空・各確定セルの serves_goals トレース・drift 候補を機械検証する (opt-in)。
+- 検証: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --require-foundation` が U1-U5 非空・各確定セルの serves_goals トレース・drift 候補を機械検証する (opt-in)。
 
 ## Purpose & Output Contract
 
 **入力**: ヒアリング応答 (対話) / 既存 `spec-state.json` (resume 時) / C04 taxonomy。
 **出力**: `spec-state.json` (`references/spec-state-contract.md` の形状。plugin 共有データ契約。上位概念 `requirements_foundation` を含む)。
-**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-foundation` が exit0。加えて `../../scripts/validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json` の `coverage_certificate.blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
+**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-foundation` が exit0。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` の `coverage_certificate.blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
 
 - **platforms (6)**: `web` / `mobile` / `tablet` / `desktop-windows` / `desktop-linux` / `desktop-macos`。
 - **cell states (3値, loop 中)**: `未収集` / `対象外` / `確定`。最終時は `未収集` を0にする。
@@ -161,7 +170,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 | R2-interview | `prompts/R2-interview.md` | 未収集セルを対象に 質問→回答→仕様反映 の往復で各セルを `確定` か `対象外+理由` へ遷移。 |
 | R3-reask | `prompts/R3-reask.md` | 未確定セルを再質問。1 invocation の 5 loop 到達時は未完了状態と next_question を保存し resumable な結果を返す。未収集を完了扱いしない。 |
 | R4-reopen | `prompts/R4-reopen.md` | 確定済みセルを根拠付きで再オープンし追加質問サイクルへ戻す。reopen 非経由の確定直接変更は writer が遮断する。 |
-| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `../../scripts/validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json` の `coverage_certificate.blocking_items` (`missing_effect=block` の未充足 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
+| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` の `coverage_certificate.blocking_items` (`missing_effect=block` の未充足 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
 
 ## ゴールシーク実行
 
@@ -172,16 +181,16 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## feedback-contract (with-feedback-contract)
 
-- **IN1 (inner / script)**: `python3 ../../scripts/validate-coverage-matrix.py --matrix spec-state.json` が exit0 (loop 中の網羅性)。R0-foundation 完了後は `--require-foundation` を付けて `python3 ../../scripts/validate-coverage-matrix.py --matrix spec-state.json --require-foundation` も exit0 とし、上位概念 U1-U9・decisions 契約・serves_goals トレースを段階的に課す (foundation 未確定の R0 完了前には課さない)。
+- **IN1 (inner / script)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json` が exit0 (loop 中の網羅性)。R0-foundation 完了後は `--require-foundation` を付けて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json --require-foundation` も exit0 とし、上位概念 U1-U9・decisions 契約・serves_goals トレースを段階的に課す (foundation 未確定の R0 完了前には課さない)。
 - **OUT1 (outer / test)**: 最終 `spec-state.json` を `--require-complete` が exit0 で受理し、受入テスト (`tests/`) が resume 保存を含めて再現する。
-- **収集ゲート (C16 / IN1 補完)**: `../../scripts/validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json` が exit0 かつ `coverage_certificate.blocking_items` が空。`missing_effect=block` の必須情報 (product-goal / context-of-use / target-platforms / domain-model / auth-model / security-posture) が確定に接地するまで当該 domain の確定セルの `confirmed` を許さない (R5 が prose ゲートとして施行し、決定論 writer=apply-spec-transition への block 検査組込は follow-up)。
+- **収集ゲート (C16 / IN1 補完)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` が exit0 かつ `coverage_certificate.blocking_items` が空。`missing_effect=block` の必須情報 (product-goal / context-of-use / target-platforms / domain-model / auth-model / security-posture) が確定に接地するまで当該 domain の確定セルの `confirmed` を許さない (R5 が prose ゲートとして施行し、決定論 writer=apply-spec-transition への block 検査組込は follow-up)。
 - **情報優先度の責務境界 (ui-ux / `information-priority` item)**: 本 skill が確定させるのは**方針まで** — 表現物ごとに何を残し・落とし・加工するか、束の順位とその根拠 (task 頻度 × 失敗コスト) — であり、`spec-state.json` の該当セルへ qa_ref 付きで記録する (`missing_effect=degrade`。非適用なら理由を記録する)。この方針を `information-priority-map.json` として具体化し `validate-information-priority.py` で機械検証するのは**下流の生成工程**の責務であり、要件段階で成果物の生成は求めない。下流の現状は 2 系統に分かれる — **map ゲートまで実装済み**なのは slide-report-generator の構成設計 (`structure-designer` / `report-structure-designer` が構成着手前に exit 0 を要求) のみ。**C03 仕様書生成は原理カードの注入まで**で、`../run-system-spec-compile/scripts/compile-spec-doc.py` の `category_design_refs()` が C04 `resource-map.yaml` の `read_when` から ui-ux / frontend 章へ `information-design.md` を自動で引く (map ゲートの C03 への組込は follow-up)。原理の正本は C04 `../ref-system-design-knowledge/references/information-design.md`。
 
 ## 使い方 (ゴールへ向けた反復)
 
 > `spec-state.json` の正本位置は `$CLAUDE_PROJECT_DIR/system-spec/spec-state.json`。以下のパス例はこの正本を指す (別ディレクトリに二重生成しない)。
 
-1. **bootstrap**: `apply-spec-transition.py bootstrap --out $CLAUDE_PROJECT_DIR/system-spec/spec-state.json` で空foundation/decisions/targets/logsを持つstate envelopeを用意する (`init` は taxonomy から matrix を初期化する別subコマンドで、envelope 生成は `bootstrap`)。
+1. **bootstrap**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" bootstrap --out $CLAUDE_PROJECT_DIR/system-spec/spec-state.json` で空foundation/decisions/targets/logsを持つstate envelopeを用意する (`init` は taxonomy から matrix を初期化する別subコマンドで、envelope 生成は `bootstrap`)。
 2. **R0-foundation**: 技術ヒアリングの手前で上位概念 U1-U9 を深掘りし、U1/U2/U3 は値必須・U4-U9 は値または明示N/A理由で埋め、U1-U9 要約をユーザーへ提示して承認 `approval_ref` を得て確定する。
 3. **R1-init**: taxonomy を Readしてmatrixをpopulateする。既存foundation/decisionsを保持する。
 4. **R2/R3/R5**: 未収集セルをヒアリングし、不明・未決定ならR5で根拠付き候補と推奨を提示する。確定セル/decisionはgoalへトレースし、5 loop超でresume保存。

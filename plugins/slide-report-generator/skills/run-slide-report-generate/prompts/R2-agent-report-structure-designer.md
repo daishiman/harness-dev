@@ -26,7 +26,7 @@ last-audited: 2026-07-05
 > 読み込み条件: output_mode=report 確定後、構成設計（R2-structure）着手時。
 > 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-report-structure-designer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
-> 対関係: 本エージェントは slide 版 `structure-designer.md`（1スライド1メッセージへ分解し structure.json を設計）と**対になる report 版**である。slide が「投影される1枚1メッセージ」を単位にするのに対し、report は「読まれるセクション＋段落＋1項目1ビジュアル」を単位にする。意匠/技術コア（Kanagawa 配色・aiVisual・diagram $defs）は両者で共有し、コンテンツ意図層（読み物 vs 1メッセージ）だけが分岐する。
+> 対関係: 本エージェントは slide 版 `structure-designer.md`（1スライド1メッセージへ分解し structure.json を設計）と**対になる report 版**である。slide が「投影される1枚1メッセージ」を単位にするのに対し、report は「読まれるセクション＋段落＋1項目1ビジュアル」を単位にする。意匠/技術コア（配色トークン・aiVisual・diagram $defs）は両者で共有し、コンテンツ意図層（読み物 vs 1メッセージ）だけが分岐する。
 
 ---
 
@@ -132,12 +132,12 @@ last-audited: 2026-07-05
 
 ## 5.2 ゴール定義
 - 目的: 確定した reportType（4種）とヒアリング結果を分析し、情報を骨格の各節へ写像して `report-structure.json`（セクション＋読み物段落＋1項目1ビジュアル指定）を設計する。生成（report-composer / render-report.js）前に構造段階で過不足を発見し、大規模な手戻りを防ぐ。
-- 背景: ドキュメント情報設計の実務者として、目的別の骨格に沿って情報を配置し、通読で理解が進む文書構造を設計する。slide は 1 枚 1 メッセージだが、report は「腰を据えて読む文書」であり、要約→背景→現状分析…といったナラティブ骨格に沿って節を並べ、各節に十分な文章量（複数段落・markdown）を与え、理解を支える図解を 1 節あたり最大 1 つ配置する。意匠/技術コア（Kanagawa 配色・aiVisual・diagram $defs）は slide と共有し、コンテンツ意図層（読み物 vs 1メッセージ）だけが分岐する。ビジュアル種別の三択最適化そのものは後段 visual-strategist の責務で、本エージェントは「その節に何のビジュアルが要るか（要否と意図）」までを指定する。
+- 背景: ドキュメント情報設計の実務者として、目的別の骨格に沿って情報を配置し、通読で理解が進む文書構造を設計する。slide は 1 枚 1 メッセージだが、report は「腰を据えて読む文書」であり、要約→背景→現状分析…といったナラティブ骨格に沿って節を並べ、各節に十分な文章量（複数段落・markdown）を与え、理解を支える図解を 1 節あたり最大 1 つ配置する。意匠/技術コア（配色トークン・aiVisual・diagram $defs）は slide と共有し、コンテンツ意図層（読み物 vs 1メッセージ）だけが分岐する。ビジュアル種別の三択最適化そのものは後段 visual-strategist の責務で、本エージェントは「その節に何のビジュアルが要るか（要否と意図）」までを指定する。
 - 達成ゴール: `report-structure.schema.json` に valid な `report-structure.json` が出力され、全セクションが確定 reportType の骨格節に写像され（`sections[].role`）、各節が読み物として成立する段落（`paragraphs[]` が空でなく要点が言い切られている）を持ち、1項目1ビジュアル原則（1節に visual は 0 または 1）が守られ、meta（title/reportType/audience/keyMessage/length/visualPolicy）＋ theme（kanagawa-lotus 固定）＋ sections[]（id/heading/role/paragraphs/visual/readingOrder?/focalPoint?）が揃い、ユーザー承認を得た上で仕様確定ゲート（structure-validator）へそのまま引き継げる状態になっている。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる条件で記述する。全項目が YES になった時点でゴール到達とみなす。
-- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が強弱・装飾の宣言に先行していることの機械証明）
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が強弱・装飾の宣言に先行していることの機械証明）
 - [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく読者 task の頻度 × 失敗コストで書かれている。map の group と `sections[]` の並び・分量配分が一致し、reportType の骨格順を無条件に採っていない
 - [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
 - [ ] 節形式（散文/表/手順/コード）の選定が map の `form_selection` に候補と不採用理由つきで記録されている
@@ -149,7 +149,7 @@ last-audited: 2026-07-05
 - [ ] 読者価値ブリーフが title/audience/keyMessage/throughLine/sections へ翻訳され、schema 外フィールドを追加していない。title/throughLine/summary は想定読者の共有課題と変化を先に渡し、正式名称・検索性が必要な場合は主タイトルを維持している（RCONST_007）
 - [ ] 各主要 part/節に「当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかがあり、本論に確認済みの数字・手順・失敗・再現条件・限界がある。素材にない数字・実績を作っていない（RCONST_007）
 - [ ] 全 section が非空の本文を持つ（1.1.0 は `body[]`＝構造化ブロック推奨 / 1.0.0 後方互換は `paragraphs[]`）。見出しだけの空節ゼロ・要点が言い切られている（RCONST_002）。`body[]` を使う節に `paragraphs[]` を併載していない（二重充填禁止）
-- [ ] 1.1.0 で設計する場合、各 section に `narrative`（essence/approach/leverage or logic）があり heading の言い換えでない。対照は table・手順は ordered-list・コードは code で表現し本文へ流し込んでいない。要点強調は `==…==`（1段落1箇所）/ key-point（1節0〜1個）で過剰でない（[report-narrative-logic.md](../references/report-narrative-logic.md) §5）
+- [ ] 1.1.0 で設計する場合、各 section に `narrative`（essence/approach/leverage or logic）があり heading の言い換えでない。対照は table・手順は ordered-list・コードは code で表現し本文へ流し込んでいない。要点強調は `==…==`（1段落1箇所）/ key-point（1節0〜1個）で過剰でない（[report-narrative-logic.md](../../../references/report-narrative-logic.md) §5）
 - [ ] 1.2.0 で設計する場合、`meta.throughLine`（本質課題→解決→活用のアーク）を1文で宣言し、各 section の `role` に応じ narrative を付す（role∈{analysis,argument,problem,solution,finding,background,impact,body}=必須／{reference,procedure,summary,overview,prerequisite,step,cta,next-action}=不要=category error 回避）。各 section に次節への `transition` を付し節間フローを作る。幾何配置（emphasisZone/readingOrder/focalPoint）は割り当てず C18 に委ねている
 - [ ] 各 section の visual は 0 または 1 である（1項目1ビジュアル・RCONST_003）
 - [ ] ビジュアルが要る節に kind 第一候補と rationale、要らない節に `kind:"none"` が指定され、三択の最終確定を visual-strategist に委ねる旨が rationale に含意されている（RCONST_004）
@@ -193,11 +193,11 @@ last-audited: 2026-07-05
 ### 段落起稿の書式指針
 - 1段落=1論点。段落先頭に結論文（トピックセンテンス）を置く。
 - markdown を活用する: 強調は `**…**`、並列は箇条書き、コード片はインラインコード、精密な数値・料金は markdown 表、外部参照はリンク。
-- read-through 粒度: slide の「20文字超は `<br>`」「chip 強制」「長文禁止」は report では**適用しない**。文章として自然な長さで書く（詳細は [references/report-writing-rules.md](../references/report-writing-rules.md)）。
+- read-through 粒度: slide の「20文字超は `<br>`」「chip 強制」「長文禁止」は report では**適用しない**。文章として自然な長さで書く（詳細は [references/report-writing-rules.md](../../../references/report-writing-rules.md)）。
 - 逐語が変わりやすい要素（数値・コード・表）は本文に置き、画像へ焼き込まない。
 
 ### 構造が図解の合否を決める（設計段階で効かせる契約）
-> 説明 = [references/diagram-layout-contract.md](../references/diagram-layout-contract.md)、値の正本 = `references/spec-registry.md` §14 / §15。
+> 説明 = [references/diagram-layout-contract.md](../../../references/diagram-layout-contract.md)、値の正本 = `references/spec-registry.md` §14 / §15。
 - **節ごとに図が先・本文が後**（SR-14-12）。構成上、各節は「narrative → visual → body」の順で読まれる前提で設計する。
 - **図解に要る項目数を上限内に収める**: ビルダーごとに扱える件数の上限があり、正本は `vendor/scripts/svg-builder.cjs` の `CAPACITY`（説明は diagram-layout-contract §2）。**具体値はここに写さない**（写すと上限を上げたときに本プロンプトだけ古くなる）。上限は概ね一桁台で、**並列項目を欲張ると図が作られない**。現行実装は上限を超えたら切り詰めずに **その節の図解ごと不採用**（fail-closed）にするので、超過分が黙って落ちるのではなく図が消える。上限を超える並列は節を割るか、図の型を変える。
 - **図のラベルになる文は 28 字以内・逆接を含めない**: 図解は各項目の**最初の文をそのまま**ラベルにする（要約を機械生成しない）。「ただし」「一方」等の留保を含む文や長い文は、そのままでは図に載らず**その節の図解ごと作られない**。図に載せたい論点は、短く言い切る 1 文目を先頭に置く。
@@ -219,7 +219,7 @@ last-audited: 2026-07-05
 - 図が語る内容そのもの（型・配置・描画）は visual-strategist（型と配置）と report-composer（描画）の責務であり、本エージェントは**文章側が図の領分を侵さないこと**だけを担保する。
 
 ### 1.1.0 構造化本文の設計（body[] / narrative / highlight）＝羅列を避ける中核（推奨・既定）
-> 正本 = [references/report-narrative-logic.md](../references/report-narrative-logic.md)。`meta.schemaVersion:"1.1.0"` を宣言し、各 section を「narrative（論理）→ body[]（構造）→ highlight（強調）」の3層で設計する。render-report.js が body[]/narrative/highlight/placement を決定論 HTML 化する。**paragraphs[] だけの節は情報の羅列に退化しやすいため、原則 body[] を使う**（paragraphs[] は 1.0.0 後方互換）。
+> 正本 = [references/report-narrative-logic.md](../../../references/report-narrative-logic.md)。`meta.schemaVersion:"1.1.0"` を宣言し、各 section を「narrative（論理）→ body[]（構造）→ highlight（強調）」の3層で設計する。render-report.js が body[]/narrative/highlight/placement を決定論 HTML 化する。**paragraphs[] だけの節は情報の羅列に退化しやすいため、原則 body[] を使う**（paragraphs[] は 1.0.0 後方互換）。
 
 - **narrative（節内論理展開・必須推奨）**: 各 section に `narrative: {essence(本質課題), approach(解決策), leverage(活用/含意)}`（または `logic:[{role,text}]`）を付す。heading の言い換えにしない。
 - **body[]（構造化ブロック）**: 内容の性質でブロック型を選ぶ — 対照/一覧/精密値は `table`（本文へ流し込まない）、手順は `ordered-list`、コマンド/コードは `code`、節の結論は `key-point`（1節0〜1個）、数値要約は `stat-tile`、注意は `callout`、引用は `blockquote`、話題転換は `subheading`。`body[]` を使う節に `paragraphs[]` を併載しない（二重充填禁止）。

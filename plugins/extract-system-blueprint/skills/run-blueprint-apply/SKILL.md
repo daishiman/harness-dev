@@ -68,6 +68,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -80,6 +81,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-blueprint-apply
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > extract-system-blueprint plugin の下流適用 skill (L1)。C02 (`assign-blueprint-fidelity-evaluator`) が PASS した blueprint 一式と自社コンテキストを入力に、採用/回避/差別化機会の 3 分類 apply-recommendations をローカルへ導出する。共有決定論ゲートは plugin-root の `scripts/doc-emit.py --check-apply` (C11) を配線。パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下。**出力はローカル apply-recommendations のみ・対象 origin 非アクセス (network 0)・blueprint 本体非書換**。
 
@@ -99,7 +108,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## データ契約と責務分割
 
-- **apply-recommendation shape** (SSOT = `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py --check-apply`): 各項目は `kind:"inference"` / `category ∈ {adopt, avoid, differentiate}` / `claim` (非空) / `own_context_ref` (自社コンテキスト接地キー・非空) / `evidence_refs:[...]` (≥1・全て blueprint 実在 anchor へ解決) / `confidence:{level ∈ {high,medium,low}, rationale}` を必須とする。ルート形状は `{"recommendations": [...]}`。この契約は独立 schema を持たず `--check-apply` を唯一の機械 SSOT とし、生成側 (本 skill 自己検証) が C01/C02 と同一決定論ロジックを共有する (基準乖離防止)。
+- **apply-recommendation shape** (SSOT = `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py --check-apply`): 各項目は `kind:"inference"` / `category ∈ {adopt, avoid, differentiate}` / `claim` (非空) / `own_context_ref` (自社コンテキスト接地キー・非空) / `evidence_refs:[...]` (≥1・全て blueprint 実在 anchor へ解決) / `confidence:{level ∈ {high,medium,low}, rationale}` を必須とする。ルート形状は `{"recommendations": [...]}`。この契約は独立 schema を持たず `--check-apply` を唯一の機械 SSOT とし、生成側 (本 skill 自己検証) が C01/C02 と同一決定論ロジックを共有する (基準乖離防止)。
 - **blueprint anchor**: evidence_refs は blueprint.json の `anchor|id|screen_id|element_id|record_id|ref` 値・top-level `anchors[]`・top-level 章キー (`screens`/`design_tokens`/`tech_stack`/`essence`/`nonfunctional_baseline` 等) のいずれかへ解決する。解決できない ref は無根拠主張として `--check-apply` が exit1 で遮断する。
 - **責務 (詳細は `prompts/R1-R3`)**:
   - **R1-ground** (`prompts/R1-ground.md`): `blueprint_dir` の `blueprint.json` を読み、C02 verdict receipt (`--verdict-dir` 既定 `.esb-verdict`) が `verdict=PASS` かつ draft_hash 一致であることを fail-closed に検証する (不在/FAIL/hash 不一致は拒否)。自社コンテキストを技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化して取り込む。対象 origin へアクセスしない。
@@ -159,7 +168,7 @@ blueprint は対象の忠実記述で完結し「自社ならどれを採用/回
 各周回末に中間成果物 JSONL の整合を機械検証する。`required_keys` (= `original_goal`, `merged_directive_for_next`, `delta_from_original`) が全て存在し、`original_goal_hash` が初回の `hashlib.sha256(original_goal)` と一致することを確認する (ゴール改竄検出)。不一致なら周回を停止し差し戻す。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-goal-seek-anchor.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-anchor.py" \
   --intermediate eval-log/run-blueprint-apply-intermediate.jsonl
 ```
 
@@ -179,7 +188,7 @@ blueprint の fact/inference (essence 章・design tokens・tech_stack・nonfunc
 
 ### 局面: emit と自己検証 (R3-emit)
 
-`apply-recommendations.json` (`{"recommendations":[...]}`) と `.md` を `--out-dir` へ書き、`python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --check-apply <out-dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json` で自己検証する (exit0)。fail は該当項目を R2 へ差し戻す。blueprint 本体へは書き込まない。
+`apply-recommendations.json` (`{"recommendations":[...]}`) と `.md` を `--out-dir` へ書き、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --check-apply <out-dir>/apply-recommendations.json --blueprint <blueprint_dir>/blueprint.json` で自己検証する (exit0)。fail は該当項目を R2 へ差し戻す。blueprint 本体へは書き込まない。
 
 ## Key Rules
 
@@ -204,6 +213,6 @@ blueprint の fact/inference (essence 章・design tokens・tech_stack・nonfunc
 
 ## Additional Resources
 
-- `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py` (C11) — `--check-apply <recommendations.json> --blueprint <blueprint.json>` の共有決定論検査 entrypoint
-- `$CLAUDE_PLUGIN_ROOT/schemas/system-blueprint.schema.json` — 入力 blueprint の top-level shape 正本 (anchor 解決の参照元)
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py` (C11) — `--check-apply <recommendations.json> --blueprint <blueprint.json>` の共有決定論検査 entrypoint
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-blueprint.schema.json` — 入力 blueprint の top-level shape 正本 (anchor 解決の参照元)
 - `prompts/R1-ground.md`〜`R3-emit.md` — 責務プロンプト (7 層)

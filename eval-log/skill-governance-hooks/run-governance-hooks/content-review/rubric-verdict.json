@@ -1,0 +1,40 @@
+{
+  "target": {
+    "plugin": "skill-governance-hooks",
+    "skill": "run-governance-hooks",
+    "skill_md_sha256": "1f6e4912e8213684a864a98b28bc69473531166449261b95cca8d6dbc25addcb"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "round 1 medium (検証可能性: OUT1 の「実projectを変更しない」を担保する手順が無い) は解消。Key Rules L64 が env 退避を必須要求として明記し、env 名・既定値が実装と一致することを確認した (hook-handoff.py:26 / hook-post-compact.py:26 が `CLAUDE_HANDOFF_DIR` 既定 `.claude/handoff`、hook-check-file-ownership.py:28 が `CLAUDE_TASK_OWNERSHIP_STATE` 既定 `.claude/logs/task-ownership.json`)。env が使えない場合は隔離cwd、どちらも取れなければ実行せず未検証理由を報告、というフォールバックまで規定されているため OUT1 は fail-closed で満たせる。",
+      "OUT1 の「未配線理由を報告」側も検証節 L73 で「command path confinement、exit code、stdout JSON、退避先へ書かれた成果物、未配線理由を報告する」と報告項目に含まれ、Key Rules L63 の「hookを配線済みと推測せず、manifest/settingsの参照を別途確認する」と対応している。実際 .claude/settings.json:32/62/114 は `${CLAUDE_PROJECT_DIR}/scripts/hook-*.py` を指しており plugin scripts/ とは別実体であるため、この「推測せず参照確認」の要求は空文ではない。",
+      "round 1 low (出力契約: Purpose & Output Contract が 1 行で項目未列挙) は解消。L58 が「hook実体ごとに **event / matcher / command path / 配線状態 (配線済みか未配線か + 参照元) / fixture実行のexit codeとstdout JSON** を列挙して返す。未配線のものは理由を添える」と成果物の形を一意化し、Pre-choice で提示すべき現物が rubric 上判定可能になった。",
+      "round 1 low (IN1 の verify_by: script に対応する script 未同定) は解消。L73 が hook script 自身の fixture 起動 exit code を機械根拠と同定し、別途の検証 script を持たない旨を明示した。IN1 の「fixtureで検証し配線済みと推測していない」は exit code という観測値へ接地している。",
+      "`python3 scripts/lint-skill-tree.py plugins/skill-governance-hooks/skills/run-governance-hooks` は `ok: run-governance-hooks` (exit 0)。frontmatter の `effect: conversation-output` は、退避先が一時ディレクトリに限定される L64 の要求と整合しており、修正による新たな宣言矛盾は無い。plugin root 解決行 L62 も `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。",
+      "rubric high severity 0。hook 6 本すべての write scope を確認し、project-local へ実書込するのは hook-handoff.py と hook-check-file-ownership.py の 2 本のみで L64 が網羅済み。他に既定で project へ書く hook は無い。"
+    ],
+    "negative_feedback": [
+      "[low / smell] L64 の分類語が不正確: hook-post-compact.py は `write-scope: none` (:12) で CLAUDE_HANDOFF_DIR を読み取り側 glob (:36) にしか使わないが、本文では「書込を持つhook」の列に置かれている。退避指定自体は隔離として妥当で OUT1 を破らないため、severity は low に留める。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "読んだファイル: plugins/skill-governance-hooks/skills/run-governance-hooks/SKILL.md (全文), plugins/skill-governance-hooks/scripts/ の hook 6 本, round 1 の elegance/rubric verdict, .claude/settings.json の hook 配線行, content-review-verdict.schema.json。実行したコマンド: `git diff HEAD --stat -- plugins/skill-governance-hooks/`, scripts への環境変数/書込 grep, `grep -n write-scope *.py`, `python3 scripts/lint-skill-tree.py plugins/skill-governance-hooks/skills/run-governance-hooks` (ok, exit 0), env 退避つき hook fixture 実行で project 無変更を実測, sha256 算出。30 思考法は実施していない。"
+}

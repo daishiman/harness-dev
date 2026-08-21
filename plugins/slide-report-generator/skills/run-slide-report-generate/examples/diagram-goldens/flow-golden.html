@@ -21,13 +21,13 @@
 
     <defs>
       <marker id="d-flow-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="d-flow-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="d-flow-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
@@ -35,67 +35,67 @@
 
     <!-- コネクタ (本線 3 本・水平・宛先の左辺へ右向きに入射) -->
     <line x1="244" y1="244" x2="280" y2="244"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2.5" marker-end="url(#d-flow-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="3" marker-end="url(#d-flow-arrow)"/>
     <line x1="460" y1="244" x2="496" y2="244"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2.5" marker-end="url(#d-flow-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="3" marker-end="url(#d-flow-arrow)"/>
     <line x1="676" y1="244" x2="712" y2="244"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2.5" marker-end="url(#d-flow-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="3" marker-end="url(#d-flow-arrow)"/>
 
     <!-- 受け渡す成果物 (帯ではなく工程をまたぐので、間隙の真上に置く) -->
-    <text x="262" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">受付票</text>
-    <text x="478" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">判定結果</text>
-    <text x="694" y="192" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">回答案</text>
+    <text x="262" y="192" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">受付票</text>
+    <text x="478" y="192" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">判定結果</text>
+    <text x="694" y="192" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">回答案</text>
 
     <!-- 戻り線 (直交エルボのみ・宛先の下辺へ上向きに入射) -->
     <path d="M 804 288 V 356 H 372 V 292" fill="none"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#d-flow-arrow)"/>
-    <rect x="468" y="344" width="240" height="24" fill="#FFFFFF"/>
-    <text x="588" y="360" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">不備あり → 差し戻し・2 回目で上長判断</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#d-flow-arrow)"/>
+    <rect x="468" y="344" width="240" height="24" fill="#F7F6F3"/>
+    <text x="588" y="360" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">不備あり → 差し戻し・2 回目で上長判断</text>
 
     <!-- ノード 1 -->
     <g>
-      <rect x="68" y="200" width="176" height="88" rx="6"
-            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-      <text x="156" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">受付</text>
-      <text x="156" y="268" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">メール・フォーム</text>
+      <rect x="68" y="200" width="176" height="88"
+            fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+      <text x="156" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">受付</text>
+      <text x="156" y="268" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">メール・フォーム</text>
     </g>
 
     <!-- ノード 2 (焦点・1 図 1 件) -->
     <g>
-      <rect x="284" y="200" width="176" height="88" rx="6"
-            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-      <text x="372" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">一次判定</text>
-      <text x="372" y="268" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">定型か個別か</text>
+      <rect x="284" y="200" width="176" height="88"
+            fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
+      <text x="372" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">一次判定</text>
+      <text x="372" y="268" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">定型か個別か</text>
     </g>
 
     <!-- ノード 3 -->
     <g>
-      <rect x="500" y="200" width="176" height="88" rx="6"
-            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-      <text x="588" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">担当割当</text>
-      <text x="588" y="268" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">見積 30 分超は専任へ</text>
+      <rect x="500" y="200" width="176" height="88"
+            fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+      <text x="588" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">担当割当</text>
+      <text x="588" y="268" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">見積 30 分超は専任へ</text>
     </g>
 
     <!-- ノード 4 -->
     <g>
-      <rect x="716" y="200" width="176" height="88" rx="6"
-            fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-      <text x="804" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">回答</text>
-      <text x="804" y="268" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">受付から 3 営業日以内</text>
+      <rect x="716" y="200" width="176" height="88"
+            fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+      <text x="804" y="240" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">回答</text>
+      <text x="804" y="268" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">受付から 3 営業日以内</text>
     </g>
 
     <!-- 主張を支える量 (caption の「所要時間が伸びる」を図の中で検証できるようにする) -->
-    <text x="68" y="140" font-size="14" fill="var(--fg, #43436c)">所要日数の平均 — 差し戻しなし 2.1 日 / あり 5.4 日</text>
+    <text x="68" y="140" font-size="14" fill="var(--fg, #141412)">所要日数の平均 — 差し戻しなし 2.1 日 / あり 5.4 日</text>
 
     <!-- 注釈 1 件 (イタリック + 破線リーダー + 半径 2 のドット・矢じりは付けない) -->
-    <text x="68" y="452" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">ここで止まる月 38 件が律速</text>
+    <text x="68" y="452" font-size="12" font-style="italic" fill="var(--fg-muted, #6A6A68)">ここで止まる月 38 件が律速</text>
     <path d="M 240 448 Q 300 400 332 292" fill="none"
-          stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25" stroke-dasharray="4 3"/>
-    <circle cx="332" cy="292" r="2" fill="var(--fuji-gray, #8a8980)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4 3"/>
+    <circle cx="332" cy="292" r="2" fill="var(--fg-muted, #6A6A68)"/>
 
     <!-- 出所・時点・母数 / 記号の凡例 (下端 1 行。figcaption へ逃がさない) -->
-    <text x="68" y="488" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/4-6 実績・一次受付ベース・重複除外後 (n=312)</text>
-    <text x="892" y="488" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">枠の色は焦点・破線は注記の引き出し</text>
+    <text x="68" y="488" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/4-6 実績・一次受付ベース・重複除外後 (n=312)</text>
+    <text x="892" y="488" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">枠の色は焦点・破線は注記の引き出し</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

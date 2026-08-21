@@ -48,9 +48,14 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       text: 各ゲート通過時の handoff JSON と build-trace JSON が schemas 配下の正本スキーマに準拠し章 coverage を空欄なく記録している
       verify_by: script
       derived_from: [CL-3, CL-12]
+    - id: IN3
+      loop_scope: inner
+      text: create/update 共通の capability parity と dual-root runtime root 契約が audit-capability-parity.py で検証され、foreign cwd と env 未設定でも owner SKILL.md から plugin root を解決できる
+      verify_by: lint
+      derived_from: [CL-14]
     - id: OUT1
       loop_scope: outer
-      text: 全ゲートでユーザー承認前に自動前進せず evaluator と governance reviewer を必ず context fork で起動している
+      text: 全遷移が明示的gate decisionなしに前進せず、人間承認gateはユーザー承認を必須とし、solo governance自動承認は全条件充足時だけ許可され、evaluatorとgovernance reviewerを必ずcontext forkで起動している
       verify_by: elegant-review
       derived_from: [CL-1, CL-2, CL-8, CL-11]
     - id: OUT2
@@ -79,6 +84,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -92,7 +98,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-skill-create
 
-> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。schema/prompt 参照は self-relative パスだが、本SKILL.md 内の lint / スクリプト起動コマンドは 2 綴りが併存する: repo 直下のものは `${HARNESS_ROOT:-.}/scripts/...` (未設定なら `.` = repo-root cwd 前提)、plugin 配下のものは `python3 plugins/...` の repo-root 相対または `${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/...`。前者 2 つはいずれも repo-root cwd を要求する。
+## Runtime root contract
+
+`runtime_root_policy: host-skill-path` の製品別root解決、cwd推測禁止、prompt継承は
+[ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約)
+をそのまま適用する。
+
+> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱schema/prompt/scriptは上記Runtime root contractで解決したabsolute `PLUGIN_ROOT` から参照し、repo-root cwdや `plugins/harness-creator/...` からplugin rootを推測しない。生成対象repoを操作するroot-level gateだけは、明示したproject root/cwdを別入力として使う。
 
 ## Purpose & Output Contract
 
@@ -107,30 +119,31 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `eval-log/handoff-<step>.json` (`schemas/handoff.schema.json` 準拠)
 - 完了レポート (日本語本文、パラメーター名のみ英語)
 
-**完了条件**: P0 lint pass + evaluator JSON pass (`--fast` 低リスク ref/wrap は `evaluator: N/A` 理由必須) + (solo_operator_mode 下) LLM-reviewer pass。
+**完了条件**: P0 lint pass + evaluator JSON pass (`--fast` 低リスク ref/wrap は `evaluator: N/A` 理由必須) + (solo_operator_mode 下) LLM-reviewer pass + 各遷移の明示的gate decision。
 
-**禁則**: ゲート前で必ず止まりユーザー承認なしに次フェーズへ進まない。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。evaluator/governance reviewer は同一 context 評価禁止 (必ず context:fork)。詳細は `## Key Rules`。
+**禁則**: ゲート判定なしに次フェーズへ進まない。人間承認gateはユーザー承認を必須とし、solo自動承認はmanifestの全条件を機械評価して得た明示的gate decisionだけを許す。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。evaluator/governance reviewer は同一 context 評価禁止 (必ず context:fork)。詳細は `## Key Rules`。
 
 ### 起動モード
 
 - **引数なし**: Step 1 (run-skill-elicit) が起動、対話で topic を確定。フィールド意味は `schemas/skill-brief.schema.json` (詳細は `references/skill-brief-schema.json`)。
-- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "${HC_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。
+- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "$PLUGIN_ROOT/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。`PLUGIN_ROOT` は共有Runtime root contractで解決済みのabsolute rootとする。
 - **Notion 指定あり**: topic / 引数に `--page-url` または `--page-id` が含まれる場合、Step 1 は `skill-intake` の publish 完了証跡を必須入力とする。`output/<hint>/notion-log.json.status=="published"`、`notion-publish-result.json.page_id`、`notion-url.txt` が揃い、指定 page と一致するまで Step 2 build へ進まない。
 - **`--fast`**: 1ファイル変更/<=30行/kind ∈ {ref,wrap}/evaluator pair 不要を全て満たす場合のみ軽量フロー (Step 4b/5 skip)。判定は機械決定:
   ```bash
-  python3 plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py \
+  python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/evaluate-create-gates.py" \
     --skill-name "$SKILL_NAME" --kind "$KIND" --brief eval-log/skill-brief.json --fast
   ```
   条件不一致時は黙って通常フローに戻す。
 
 ## Key Rules
 
-1. **ゲート前で必ず止まる**: ユーザー承認なしに次フェーズへ進まない。全ゲートは AskUserQuestion 経由 (`prompts/R2-gate-review.md`)。
+1. **ゲート前で必ず判定する**: 人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) でユーザー承認を得る。solo自動承認はmanifestの全条件が機械的にtrueになった場合だけ明示的PASS decisionとして記録し、条件未充足なら停止する。
 2. **子スキルへの委譲**: 各フェーズは独立 Skill を Skill tool で起動 (`workflow-manifest.json` の `delegateSkill`)。本スキルは制御のみ。
 3. **失敗時の停止**: P0 lint fail または evaluator FAIL なら停止し findings 提示。
 4. **context:fork**: evaluator/governance reviewer は必ず context:fork で起動 (Sycophancy 防止)。
 5. **handoff 保存**: 各ゲート通過時に `eval-log/handoff-<step>.json` を `schemas/handoff.schema.json` 準拠で残す。PostCompact hook で復元。
 6. **plugin/marketplace 登録は確認後**: legacy manifest.json は `build-manifest-registration-plan.py` の提案 → Gate 2.5 承認 → `--apply` の順。新形式 plugin.json plugin のルート `marketplace.json` / `bundles.json` 登録は `scripts/validate-plugin-completeness.py --fix`（append-only・冪等・書込後自己再検証）が担い、人間が PR diff で最終承認する（破壊的変更を含まない append-only ゆえ生成フロー内で自動実行可）。
+   Codex 面は `run-codex-plugin-package` に委譲する。Claude plugin envelopeを持つ全pluginを対象に、新規/既存を状態から判定する同一upsertが `.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` を同期し、手書きの二重管理はしない。Codex固有値は `.codex-plugin-overrides.json` へ明示する。
    これに対し **CL-4c の `build-plugin-release.py` は承認境界の外側 (＝承認後) に置く**。理由は `validate-plugin-completeness.py --fix` と性質が違うため: `write_version()` は `plugin.json` の version 行を原文 in-place 置換し、そこから公開 `marketplace.json` (`sync_public_marketplace_version()`) と `.codex-plugin/plugin.json` (`sync_codex_manifest_version()`) を追従させる **既存行の書き換え**であり (さらに `_run()` が `bumped` 非空のとき `regenerate_config_version_lock()` で `config-version-lock.json` も再生成する)、append-only の安全性論拠がそのまま使えない。よって生成フロー内で自動実行してよいのは**読み取りのみの `--check`** に限る。version を実際に上げる実行は **Gate 2.5 承認後に、`--only <plugin>` を必ず付けて**行う — `_run()` は `only = set(args.only) or None` なので無指定は全 plugin 走査となり、本フローと無関係な変更済み plugin まで同じ実行で patch bump されるため、`--only` は範囲を宣言する必須引数として扱う。
 
 7. **resource-map 先読み**: `references/resource-map.yaml` を最初に読み、必要ファイルのみ open。
@@ -143,6 +156,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 [Step 1 elicit] run-skill-elicit ─→ skill-brief.json ─[Gate 1]─▶
 [Step 2 build]  run-build-skill  ─→ skill-build-trace.json
 [Step 3 manifest-register] [Gate 2.5] [Step 3.5 bundle-register]
+[Step 3.55 codex-platform-sync] run-codex-plugin-package (Codex manifest + repo marketplace upsert)
+[Step 3.56 codex-platform-check] 同じ入力をcheck-onlyで再検査
 [Step 3.6 local-marketplace-register] build-local-marketplace.py (非配布 plugin の install 経路)
 [Step 3.7 plugin-release-record] build-plugin-release.py --only <plugin> (内容 hash 記録 / patch 採番。Gate 2.5 承認後・--only 必須。Key Rule 6)
 [Step 4a p0-lint] (fail→Step 2、最大3周) ─[Gate 2 diff]─▶
@@ -168,14 +183,16 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ### 完了チェックリスト (Checklist)
 
 - [ ] `eval-log/skill-brief.json` が `schemas/skill-brief.schema.json` 準拠で生成され、Gate 1 承認済み <!-- CL-1 -->
-- [ ] Notion 指定ありの場合、`python3 plugins/harness-creator/skills/run-skill-create/scripts/validate-intake-publish-ready.py --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
+- [ ] Notion 指定ありの場合、`python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/validate-intake-publish-ready.py" --dir output/<hint> --page-url <url>` が exit 0。未公開・page_id 不一致・URL 欠落なら Gate 1 で停止し、skill 本体生成へ進んでいない <!-- CL-2 -->
 - [ ] `<skill_name>/` 一式 (SKILL.md + references/ + scripts/) が `Skill(run-build-skill, args=[skill_name, kind, --mode={mode}])` で生成され、`eval-log/skill-build-trace.json` が `schemas/build-trace.schema.json` 準拠・章 coverage 全 PASS/N/A/skip 理由付き <!-- CL-3 -->
 - [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/validate-plugin-completeness.py --fix` 実行済みで、`marketplace.json` plugins[] + `bundles.json` (`bundle_targets`) へ append-only 登録され、検出モード (`validate-plugin-completeness.py`) が exit 0。プロジェクト固有 (横展開しない) は未登録理由がレポートに記録されている <!-- CL-4 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
+- [ ] **Claude plugin envelope を持つ場合** 同一upsertを実行し、`sync-plugin-platforms.py --all --check` が exit 0。`.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` の両方が差分に含まれる <!-- CL-4d exempt: Codex 配布 projection を generator と回帰テストが機械検査 -->
 - [ ] **新規 plugin の場合** `python3 ${HARNESS_ROOT:-.}/scripts/build-local-marketplace.py` 実行済みで、`marketplaces/local/.claude-plugin/marketplace.json` が再生成され `--check` が exit 0。公開 marketplace は `distributable:false` を載せられない (MK-004) ため、非配布 plugin を手元の Claude Code へ install する経路はこれだけ。**CL-4c を実行するなら本項は不要** (`build-plugin-release.py` は pending が 1 件でもあれば local marketplace を再生成する)。単独で要るのは pending が空で local marketplace 側だけ drift しているときに限る <!-- CL-4b exempt: 登録の運用操作項目。build-local-marketplace.py --check が機械検査し評価 criteria の対象外 -->
 - [ ] `python3 ${HARNESS_ROOT:-.}/scripts/build-plugin-release.py --only <plugin>` 実行済みで `--check` が exit 0 (書き込みを伴う実行は Gate 2.5 承認後・`--only` 必須。Key Rule 6)。marketplace install は version 単位の copy なので、version を据え置いたまま内容を直すと install 済み plugin へ届かない。内容 hash 対応表への記録 (新 plugin) と patch 採番 (既存 plugin の変更) がここで済む <!-- CL-4c exempt: 登録の運用操作項目。build-plugin-release.py --check が機械検査し評価 criteria の対象外 -->
 - [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` の現行 bundle (`skills-full` / `skills-intake`) のうち `plugin.json.bundle_targets` で宣言した対象へ登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反) <!-- CL-5 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`) <!-- CL-6 exempt: legacy 経路の条件付き運用項目 -->
 - [ ] `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
+- [ ] create/update 共通で `audit-capability-parity.py --plugin plugins/<plugin> --json` が PASS。Claude 固有 command/agent/hook は Codex skill 代替または理由・replacement 付き omission contract を持つ。SKILL/promptのplugin-root付き実行行はowner SKILLに `runtime_root_policy: host-skill-path` とRuntime root本文契約を必須とし、bare `CLAUDE_PLUGIN_ROOT`、cwd推測、literal placeholderを残さない。env unset + foreign cwdでもabsolute owner `SKILL.md` pathからmanifest祖先を解決できる <!-- CL-14 -->
 - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み <!-- CL-8 -->
 - [ ] `assign-skill-design-evaluator` (context:fork) の `eval-log/docs/<NN>-<timestamp>.json` (`schemas/findings.schema.json` 準拠) が FAIL 残存なし <!-- CL-9 -->
 - [ ] 新規 or >30 行変更時、`run-elegant-review` (context:fork) で C1-C4 全 PASS。PASS 時 `eval-log/pattern-feedback.json` に pattern_ref_candidates/new_patterns/mass_production_risk を提案保存 <!-- CL-10 -->
@@ -187,7 +204,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 正本 `../run-build-skill/references/goal-seek-paradigm.md` の 6 ステップ (現状評価/手順生成/実行/検証/Anchor Step/反復) に従う。本スキル固有の差分:
 
-- **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。ゲート前で必ず止まりユーザー承認を取る (自動推測禁止、AskUserQuestion 経由 `prompts/R2-gate-review.md`)。
+- **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) で承認を取り、solo governanceだけは全 `auto_approve_conditions` の機械評価PASSを明示decisionとして記録する。
 - **委譲先 (子 Skill)**: `run-skill-elicit` / `run-build-skill` / `assign-skill-design-evaluator` / `run-elegant-review` / `run-skill-rubric-governance`。Notion 指定ありの非技術者 intake は `skill-intake` 完了証跡を先に検証する。本スキルは制御のみ、各子が自設計書を参照。
 - **context:fork 必須**: evaluator / elegant-review / governance reviewer は必ず fork で起動 (Sycophancy 防止)。
 - **差し戻し**: P0 lint fail または evaluator/elegant FAIL なら `run-build-skill` 再実行へ戻す (最大 3 周)。`--fast` 判定・elegant 起動判定は `scripts/evaluate-create-gates.py` で機械決定 (条件不一致は黙って通常フロー)。
@@ -196,7 +213,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Gotchas
 
-1. **Gate skip 禁止**: 「次へ」を自動推測しない。明示確認必須。
+1. **Gate skip 禁止**: 「次へ」を自動推測しない。人間承認gateは明示確認、solo governanceは全自動承認条件の機械評価PASSが必須。
 2. **同一 context 評価禁止**: evaluator/governance reviewer は必ず context:fork (Sycophancy 防止)。
 3. **lint 失敗時の自動修正禁止**: 根本原因をユーザー提示。LLM 判断で勝手に直さない。
 4. **mode=update 時の改名**: `run-skill-rename` に委譲。本スキル対象外。

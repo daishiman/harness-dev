@@ -1,6 +1,6 @@
 ---
 name: run-contract-finalize
-description: 業務委託契約書をSlack承認後にPDF発行・確定したいとき、承認(✅/OK)をポーリング検知してPDF生成・共有したいときに使う。
+description: 業務委託契約書の下書きを確認後にPDF発行・確定したいとき、ユーザーの明示指示でdraftをcompletedへ遷移したいときに使う。
 disable-model-invocation: true
 user-invocable: true
 allowed-tools: [Read, Bash(python3 *)]
@@ -17,7 +17,6 @@ rubric_refs:
 responsibility_refs: [prompts/R1-approve-and-finalize.md, ../../agents/contract-finalize-agent.md, scripts/finalize.py]
 prompt_ssot: prompts/R1-approve-and-finalize.md
 effect: external-mutation
-external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: output/contract-generator-v2/(slack-2phase-design.md, refactor-plan.md)
 source-tier: internal
@@ -55,6 +54,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -72,15 +72,15 @@ Never execute the external mutation argv directly. Replace every angle-bracket p
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Present that official preview output to the user. Only the exact user reply printed by `preview`
 may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
@@ -88,6 +88,14 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 
 # run-contract-finalize
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 `run-contract-generate` が作った下書き(台帳 `draft`)を、**黄色除去PDF(提出用)** として個人/法人フォルダへ保存→Slackスレッドに**再共有**→台帳を `completed` 化する。**発火条件はただ一つ「Claude Code 上で finalize を実行(=ユーザーが確定を指示)」**(pull 型)。実体は共有エンジン `../../lib/engine.py --phase finalize`(`draft` 行を直接PDF化→completed)を `scripts/finalize.py` が呼ぶ。**Slack の ✅/OK は発火条件ではない**(Slack通知は単なるお知らせで承認ゲートとして要求しない)。ユーザーが内容を確認して Claude Code で実行する行為そのものが人間のゲート。常駐サーバー不要。自動ポーリング(/loop・cron)は **任意**(LLM を回す /loop はトークン費用が嵩むため、自動化する場合も純 Python の `scripts/finalize.py` を cron で回す。詳細は「運用」)。
@@ -99,7 +107,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 - **発火条件は Claude Code 実行のみ**: `finalize` は `draft`(および後方互換の `approved`)行を対象に直接PDF化する。ユーザーが内容確認のうえ実行する行為が人間のゲート(誤確定はこの明示実行で防ぐ)。Slack承認は必須ではない。
 - 任意の poll を使う場合の承認検知は台帳 `Slack_メッセージTS` を突合キーに `reactions.get`/`conversations.replies` を読む。
 - PDFは法務承認済書式を維持(黄色除去のみ)。条文は改変しない。
-- 認証: Service Account(Drive/Sheets) + Slack Bot Token は Keychain のみ(plugin直下 `README.md` Task 4/8)。
+- 認証: Service Account(Drive/Sheets) + Slack Bot Token は Keychain のみ(plugin直下 `README.md` のセットアップ節)。
 - 状態は台帳(単一真実源)で引き継ぐ。スキル間結合は台帳ステータス列のみ。
 
 ## ゴールシーク実行
@@ -112,7 +120,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 下書き内容の確認とPDF確定は別ライフサイクル(確認に分〜日かかりうる)。確定をユーザーの明示実行(pull型)に委ねることで、承認ゲートを Claude Code 実行という単一の人間行為に集約し、デプロイ不要・誤確定なしで再入可能にする。
 
 ### 完了チェックリスト (Checklist)
-- [ ] `python3 $CLAUDE_PLUGIN_ROOT/lib/config_auth.py check` で Drive/Sheets 認証が通る
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/config_auth.py check` で Drive/Sheets 認証が通る
 - [ ] `draft` 行を finalize 対象として抽出できる(Claude Code 実行が発火条件)
 - [ ] `draft`(または任意で `approved`)行の黄色除去PDFを生成し個人/法人フォルダへ保存できる
 - [ ] Slackスレッドに PDF URL を再共有できる(通知のみ・任意)
@@ -126,7 +134,7 @@ PDF確定・共有(`draft`→`completed`)まで。下書き生成は `run-contra
 承認ポーリングを多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-contract-finalize-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-contract-finalize-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-contract-finalize
 # → eval-log/run-contract-finalize-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -152,7 +160,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
 - PDF生成後に台帳 PDF_URL/ステータス=completed が書かれている
 - 未実行の行は `draft` のまま保持(誤確定なし)
 - `--dry-run` で Drive/Sheets/Slack 副作用を抑止可能
-- 実装: `scripts/finalize.py`(薄い shim, finalize 単独)/ `$CLAUDE_PLUGIN_ROOT/lib/engine.py`(process_row phase分岐)
+- 実装: `scripts/finalize.py`(薄い shim, finalize 単独)/ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py`(process_row phase分岐)
 
 ## Gotchas
 - **発火条件は Claude Code 実行のみ(pull型)**: PDF確定はユーザーが Claude Code で「確定して/PDF発行して」と指示し finalize を実行したときに 1 回だけ走る。**Slackの ✅/OK は発火条件ではない**(Slack通知は単なるお知らせ)。内容確認のうえ実行する行為そのものが人間のゲート。
@@ -164,7 +172,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
 `slack_channel`/`slack_keychain_*`/出力フォルダID/`spreadsheet_id` は `google-config.json` と Keychain から注入。具体値は本文に直書きしない。
 
 ## 追加リソース
-- plugin直下 `README.md` — Slack/Keychain/SA セットアップ(Task 1-14)
+- plugin直下 `README.md` — Slack/Keychain/Service Account のセットアップ正本
 - `output/contract-generator-v2/slack-2phase-design.md` — 2フェーズ承認の設計
 - `prompts/R1-approve-and-finalize.md` — 承認検知・PDF確定・台帳completedの責務単位7層プロンプト(SSOT正本)。`../../agents/contract-finalize-agent.md` は本プロンプトを参照する薄い実行アダプタ(本文を持たない)。
 - 追加リソースは plugin 直下 `lib/` ディレクトリ全体を参照。各ファイルは PEP723 風メタブロックで purpose を記載。
@@ -174,13 +182,13 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-finalize
 ## 運用(既定=明示指示駆動 / 常駐デプロイ不要)
 ```bash
 # 既定: ユーザーが Claude Code で確定を指示したときに 1 回実行(承認済み行のみPDF化)
-python3 scripts/finalize.py --type all          # finalize 単独(draft→completed 直接確定・poll は回さない・費用¥0)
-python3 scripts/finalize.py --type all --dry-run # 副作用なしで承認状態を確認
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py" --type all          # finalize 単独(draft→completed 直接確定・poll は回さない・費用¥0)
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py" --type all --dry-run # 副作用なしで対象状態を確認
 
 # 任意の自動化(費用に注意): 自動ポーリングは純Pythonをcronで。LLMを回す/loopは非推奨
 # 導入後の plugin 実体は固定文字列で書かず自動検出した絶対パスを使う(<plugin> をそのまま貼らない):
 #   CG=$(find "$HOME/.claude" -type d -path '*/contract-generator' -print -quit)
-#   */5 * * * * cd "$CG" && python3 scripts/finalize.py --type all   # 例: 5分ごと・トークン費用ゼロ
+#   */5 * * * * python3 "$CG/skills/run-contract-finalize/scripts/finalize.py" --type all   # 例: 5分ごと・トークン費用ゼロ
 ```
 
 ## セキュリティと権限

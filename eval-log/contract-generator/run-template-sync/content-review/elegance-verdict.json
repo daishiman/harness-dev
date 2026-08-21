@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "a22f991d22aa17937ea0b7cbc4766fc57dd57f3fd5c87697c7d183bb603f244e"
+    "skill_md_sha256": "b2a9716e95e5d96c300af8216ce7f93a8f0e680a43753640d22bd53b6063fefc"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,18 +25,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "round 1 の唯一の medium 指摘 (「## 使い方」の cwd 相対起動 2 行) は解消した。現行 SKILL.md:170-171 は `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py\" --type all` / 同 `--apply` となっており、`## Runtime root contract` (SKILL.md:93-99) の「`cwd` からplugin rootを推測せず…各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する」と整合する。姉妹 skill run-contract-finalize との非対称も解消した。",
+      "SKILL.md / prompts/ を全走査した結果、shell 起動行に cwd 相対パスも bare `$CLAUDE_PLUGIN_ROOT` も残存しない。起動行は SKILL.md:75,82,83 (external mutation guard 3 行)・SKILL.md:136 (check_intermediate.py)・SKILL.md:151 (scan_template.py 実装参照)・SKILL.md:170-171 (使い方)・prompts/R1-diagnose-and-resync.md:65,66,145 の全件が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。bare `CLAUDE_PLUGIN_ROOT` の残存は SKILL.md:95 の Runtime root contract 説明文のみで、これは shell 起動行ではなく policy 記述であり矛盾しない。skill-local `references/` は存在しない (skill 直下は SKILL.md / prompts / scripts のみ)。",
+      "修正が新たな矛盾を持ち込んでいない。frontmatter は `runtime_root_policy: host-skill-path` を 1 回だけ宣言 (SKILL.md:55)、`external_mutation_guard` も 1 回だけ (SKILL.md:20) で round 1 の重複除去は維持されている。feedback_contract.criteria は IN1/IN2/OUT1 で変更なし、Purpose & Output Contract・発火条件 (明示意図のみ) も不変。参照先も全件実在 (plugins/contract-generator/lib/ に scan_template.py・ledger.py・docx_lib.py・check_intermediate.py、skills/run-template-sync/scripts/sync.py)。`python3 scripts/lint-skill-tree.py plugins/contract-generator/skills/run-template-sync` は `ok: run-template-sync` / exit 0。"
     ],
-    "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
-    ],
-    "iteration": 1,
+    "negative_feedback": [],
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+49 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "round 2 再判定。30 思考法は実施しておらず、実施も申告しない。 読んだファイル: eval-log/contract-generator/run-template-sync/content-review/{elegance,rubric}-verdict.json (round 1 の negative_feedback 抽出)、plugins/contract-generator/skills/run-template-sync/SKILL.md (frontmatter 全体および全本文)、plugins/contract-generator/skills/run-template-sync/prompts/R1-diagnose-and-resync.md。 実行したコマンド: (1) `git diff HEAD -- plugins/contract-generator/skills/run-template-sync/` で今回の差分全行を読み、「## 使い方」2 行が `python3 scripts/sync.py` から `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py\"` へ置換されたことを確認、(2) skill tree 配下の *.md に対する grep で `python3` / `CLAUDE_PLUGIN_ROOT` / `PLUGIN_ROOT` / `.py` を含む全行を列挙し、cwd 相対起動行 0 件・bare `$CLAUDE_PLUGIN_ROOT` 起動行 0 件を確認、(3) `python3 scripts/lint-skill-tree.py plugins/contract-generator/skills/run-template-sync` → `ok: run-template-sync` (exit 0)、(4) `ls plugins/contract-generator/lib/` で frontmatter 宣言参照の実在を確認、(5) SKILL.md の sha256 を再計算し target.skill_md_sha256 に反映。 5 点判定: (a) 矛盾なし=充足 (Runtime root contract と全起動行が一致)、(b) 漏れなし=充足、(c) 規約整合=充足 (round 1 の唯一の未達点が解消)、(d) 依存関係整合=充足 (参照先欠損 0 件)、(e) rubric high severity 0=充足。よって INCOMPLETE から PASS へ変更する。 本ファイルは elegance 射影 (4 条件 = 矛盾なし/漏れなし/規約整合/依存関係整合 の観点) である。"
 }

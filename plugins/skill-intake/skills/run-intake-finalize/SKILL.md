@@ -63,6 +63,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -75,6 +76,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-intake-finalize
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -124,23 +133,23 @@ LLM 推論を混入させると同入力で差分が出て、後段 (`run-notion
 ```bash
 # render: output/<hint>/ 直下の per-phase JSON (無ければ context.json) を集約し
 # Jinja2 で intake-final.md を生成する (引数は output_dir 1 つ)。
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/render-intake-final.py output/<hint>/
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/render-intake-final.py output/<hint>/
 cp output/<hint>/intake-final.md output/<hint>/intake.md
 
 # intake.md → intake.json (front-matter + sections を JSON 化)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/convert_md_to_json.py \
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/convert_md_to_json.py \
   output/<hint>/intake.md output/<hint>/intake.json
 
 # procedure dual-gate (intake.json 格納前): 完全性 + as-is フィールドへの to-be 非混入を
 # 確認し、その stdout を validation.procedure_completeness へ格納する (C04 が再利用)。
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/validate-procedure-completeness.py \
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/validate-procedure-completeness.py \
   --interview output/<hint>/interview.json
 
 # 検証 2 段 (順序固定): quality_gate → cross_check
 # cross_check の引数順は <intake.md> <intake.json> (md が先)。
 # procedure 拡張 intake は --require-procedure で purpose+procedure 両立を強制する。
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/quality_gate.py --require-procedure output/<hint>/intake.json
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/cross_check.py  output/<hint>/intake.md output/<hint>/intake.json
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/quality_gate.py --require-procedure output/<hint>/intake.json
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/cross_check.py  output/<hint>/intake.md output/<hint>/intake.json
 ```
 
 Step/Gate の機械可読定義は `workflow-manifest.json` (P1-collect / P2-render / P3-quality-gate / P4-cross-check) を参照。

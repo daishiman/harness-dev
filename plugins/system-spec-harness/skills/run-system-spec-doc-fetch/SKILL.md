@@ -72,6 +72,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -84,6 +85,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-system-spec-doc-fetch
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > システム仕様ヒアリングで使う予定の外部技術について、**最新公式ドキュメントの出典記録** `fetched-references.json` を都度取得して組み立てる run skill。起動経路は (a) `spec-compile` (C10) 前の未取得参照検出、(b) `run-system-spec-elicit` (C01) R2 ヒアリング中の裏取り要求の 2 系統。責務の正本は `prompts/R1-identify.md` / `R2-fetch.md` / `R3-record.md`。
 
@@ -161,12 +170,11 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## 検証コマンド
 
 ```bash
-PLUGIN_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"   # plugins/system-spec-harness を指す
 # R3 決定論組み立て (全件対応も同時検査)
-python3 skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-doc-fetch/scripts/build-fetched-references.py" \
   assemble --records records.json --targets targets.json --out fetched-references.json
 # IN1 ゲート (共有 script)
-python3 scripts/validate-source-citation.py \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py" \
   --targets targets.json --references fetched-references.json
 ```
 

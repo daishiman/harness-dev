@@ -148,7 +148,7 @@ def test_single_at_page_declaration():
 
 
 def test_print_geometry_fits_a4():
-    pr = CONTRACT["print"]
+    pr = CONTRACT["print_skeleton"]
     assert pr["stage_width_mm"] <= pr["page_width_mm"]
     assert pr["stage_height_mm"] <= pr["page_height_mm"]
     # 帯は上下対称。非対称だと面が紙の中央から外れる。
@@ -200,6 +200,8 @@ def test_colors_are_defined_not_only_fallbacks():
                   "--srg-link", "--srg-hairline"):
         assert re.search(rf"^\s*{token}:", css, re.M), f"{token} が定義されていない"
     # 定義はパレット (vendor の SPEC.colors) を参照する形であること。
-    assert f"var(--sakura-pink, {PALETTE['sakuraPink']})" in css
+    # 参照するトークン名は _PALETTE_VARS が正本で、ここに書き写さない。
+    for key, var in css_builder._PALETTE_VARS.items():
+        assert f"var({var}, {PALETTE[key]})" in css, f"{var} をパレット参照の形で使っていない"
     for stem, body in _all_bodies().items():
         assert not re.search(r"#[0-9A-Fa-f]{6}\b", body), f"{stem} が色を直書きしている"

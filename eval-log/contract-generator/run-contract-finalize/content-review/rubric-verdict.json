@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "ca8a2eb5a3f8c69fc78f14dfe086ac1128ed5a9a37d3a7080b454681c89caf7d"
+    "skill_md_sha256": "2b824c7b695e4b23d34d972b9b2693081b4b3e03032d271e2048c14aaa07d4ca"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,18 +25,18 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "description の書き換え (Slack 承認ポーリング前提 → 「ユーザーの明示指示で draft を completed へ遷移」) が、本文 Purpose & Output Contract・Gotchas・prompt SSOT `prompts/R1-approve-and-finalize.md` (L19/L30/L99/L123/L127) ・実行アダプタ `agents/contract-finalize-agent.md` の description まで一貫している。pull 型ゲート設計が 4 層で同一に読める。",
+      "重複していた `external_mutation_guard` frontmatter キー 2 行のうち 1 行が除去され、canonical receipt flow block との 1:1 対応が回復した。YAML の重複キーという静かな不整合が解消されている。",
+      "`runtime_root_policy: host-skill-path` の宣言と `## Runtime root contract` 節の追加が対になっており、guard 3 行・config_auth.py・check_intermediate.py・運用 cron 例まで shell 起動行が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行済み。bare `${CLAUDE_PLUGIN_ROOT}` は契約説明文 (L95) の 1 箇所のみで、起動行には残っていない。",
+      "運用節の起動行が cwd 依存の `python3 scripts/finalize.py` から `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py` へ、cron 例も `cd \"$CG\" && python3 scripts/...` から `$CG/skills/.../finalize.py` へ変わり、Runtime root contract の「cwd から plugin root を推測しない」規約と実際の起動行が一致している。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] plugin 直下 README.md の Step 8 は依然「Slack の通知スレッドで承認の意思表示をしてください」を手順として提示しており、SKILL.md の「Slack ✅/OK は発火条件ではない (任意)」より強い義務として読める。同 Step が「承認しただけでは PDF は自動生成されません」と明記しているため pull 型ゲートの実質は破れておらず、実行不能にもならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+49 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 評価方法: `git diff HEAD -- plugins/contract-generator/skills/<skill>/SKILL.md` の差分を全行読み、現行 SKILL.md frontmatter 全体、prompts/ の prompt SSOT、../../agents/ の実行アダプタ、plugin 直下 README.md の該当節を読んだ。機械検査として (1) frontmatter が宣言した rubric_refs / responsibility_refs / prompt_ssot / external_mutation_guard.runtime_ref の実在を `ls`/存在判定で全件確認 (欠損 0 件)、(2) effect=external-mutation と external_mutation_guard frontmatter・canonical receipt flow block の双方向対応を確認、(3) SKILL.md 内の `CLAUDE_PLUGIN_ROOT` 出現箇所を grep し bare 参照が Runtime root contract の説明文 1 行のみで shell 起動行には残っていないことを確認、(4) `python3` / `scripts/` を含む全行を列挙して起動形式を点検した。 frontmatter が宣言した参照 (rubric_refs の thought-methods.yaml・run-contract-finalize 固有 lib、responsibility_refs の prompts/prompt SSOT・../../agents/*.md・scripts/*.py、external_mutation_guard.runtime_ref の build-external-mutation-guard.py) は全件実在を確認した。欠損 0 件。 差分の実体は 4 つ: (1) description の pull 型への書き換え、(2) 重複 external_mutation_guard キーの除去、(3) runtime_root_policy + Runtime root contract 節の追加と全 shell 起動行の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 化、(4) README の Task 番号参照を「セットアップ節」へ改めた追随。Purpose & Output Contract・ゴールシーク実行 Checklist・feedback_contract.criteria (IN1/IN2/OUT1) の意味は変更前後で同一で、責務境界 (draft→completed のみ、下書き生成は run-contract-generate) も壊れていない。rubric_refs に残る `../../lib/slack_poll.py` は本文・prompt が任意 poll 経路 (`--phase poll`) を保持しているため依存として整合しており dangling ではない。未解決の medium 以上は 0 件、残る low 1 件は plugin README 側の記述トーンの smell で本 skill の実行を妨げないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは Gate D の実走証拠を別途要する。 本ファイルは rubric 射影 (ref-skill-design-rubric の規範採点観点、high severity finding の有無) である。"
 }

@@ -111,9 +111,26 @@ def _search_output(project: Path) -> dict:
     }
 
 
+def _hook_wiring(plugin_dir: Path) -> dict:
+    """hook 配線を、plugin.json inline / 参照形 / 標準自動検出のどれでも読む。
+
+    宣言の置き場が変わっても配線の実体は一つ。検査側が置き場を知らずに済むよう正規化する。
+    manifest が hooks を書かない形は「宣言なし」ではなく、loader が hooks/hooks.json を
+    自動検出して1回だけ配布する現行契約。
+    """
+    manifest = json.loads((plugin_dir / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    wiring = manifest.get("hooks")
+    if wiring is None:
+        document = json.loads((plugin_dir / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+        wiring = document.get("hooks", document)
+    if isinstance(wiring, str):
+        external = json.loads((plugin_dir / wiring.lstrip("./")).read_text(encoding="utf-8"))
+        wiring = external.get("hooks", external)
+    return wiring
+
+
 def test_hook_is_registered_on_confirmed_claude_user_prompt_surface() -> None:
-    manifest = json.loads((RUNTIME_PLUGIN / ".claude-plugin" / "plugin.json").read_text())
-    groups = manifest["hooks"]["UserPromptSubmit"]
+    groups = _hook_wiring(RUNTIME_PLUGIN)["UserPromptSubmit"]
     commands = [hook["command"] for group in groups for hook in group["hooks"]]
     assert any("hooks/build-external-intelligence-context.py" in item for item in commands)
 
@@ -371,10 +388,7 @@ def test_isolated_individual_install_resolves_and_activates_runtime_provider(
     provider_cache = next(
         (config_dir / "plugins/cache/isolated-runtime/skill-governance-adapters").glob("*/")
     )
-    manifest = json.loads(
-        (provider_cache / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
-    )
-    assert "UserPromptSubmit" in manifest["hooks"]
+    assert "UserPromptSubmit" in _hook_wiring(provider_cache)
     assert (provider_cache / "hooks/build-external-intelligence-context.py").is_file()
     assert (
         provider_cache / "scripts/build-external-intelligence.py"

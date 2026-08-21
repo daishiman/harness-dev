@@ -14,11 +14,11 @@ Product 間の実行可能な共通意味論は `plugins/harness-creator/native-
 - **source of truth**: 本文の surface/ownership/failure taxonomy は
   `plugin-plans/harness-creator-hook-agents-sync/` の P01 要件・index・goal-spec で
   vetted 済みの事実を写像したもの。推測は載せない (native-first)。
-- **checked_at**: 2026-07-13 / **Codex CLI 実測 version**: 0.144.1
+- **checked_at**: 2026-08-20 / **Codex CLI 実測 version**: 0.144.0
 - **公式参照**:
-  - https://learn.chatgpt.com/docs/build-plugins#plugin-structure
-  - https://learn.chatgpt.com/docs/build-plugins#marketplace-metadata
-  - https://learn.chatgpt.com/docs/hooks#where-codex-looks-for-hooks
+  - https://developers.openai.com/plugins/build/plugins
+  - https://code.claude.com/docs/en/plugins-reference
+  - https://code.claude.com/docs/en/hooks
 
 ## Native surface 対照表
 
@@ -26,7 +26,7 @@ Product 間の実行可能な共通意味論は `plugins/harness-creator/native-
 |---|---|---|---|
 | repo skill | `.claude/skills` projection | `.agents/skills` または plugin `skills/` | confirmed |
 | project hook | `.claude/settings.json` | `.codex/hooks.json` / `.codex/config.toml` | confirmed (project owner) |
-| plugin hook | `.claude-plugin/plugin.json` inline | `.codex-plugin/plugin.json` + `hooks/hooks.json` | confirmed (install/enable/trust 必須) |
+| plugin hook | 標準path `hooks/hooks.json` を自動検出（manifestはcustom pathのみ） | `.codex-plugin/plugin.json` → `hooks/hooks.json` | confirmed (install/enable/trust 必須) |
 | plugin discovery | Claude plugin manifest | `.agents/plugins/marketplace.json` の `source.path=./plugins/<slug>` → plugin install | confirmed |
 | Claude-style agent | `.claude/agents` | 公式 plugin file mapping 未確認 | unsupported/deferred |
 | Claude-style command | `.claude/commands` | 公式 plugin file mapping 未確認 | unsupported/deferred |
@@ -34,9 +34,13 @@ Product 間の実行可能な共通意味論は `plugins/harness-creator/native-
 推測 `.agents/{agents,commands,hooks}` symlink と推測 TOML hook merge は surface に含めない。
 検出したら fail-closed (exit 3)。
 
-Codex plugin の hook 正本は plugin root の `hooks/hooks.json`。manifest の
-`hooks` を省略しても Codex がこの default path を検出する。明示する場合は
-`./hooks/hooks.json` とし、plugin root 外への path escape は invalid layout とする。
+Claude/Codex plugin の hook 正本は plugin root の `hooks/hooks.json`。Claude Codeは
+この標準pathを自動検出するため、Claude manifestの`hooks`で同じfileを再宣言してはならない
+（二重loadになる）。Codex manifestは`./hooks/hooks.json`を明示参照する。いずれもplugin root
+外へのpath escapeはinvalid layoutとし、このplugin deliveryをproject settingsにも投影しない。例外は
+dev-graph のみで、Codex が提供しない `TaskCompleted` を Claude 共通ファイルから落とさず、
+Codex manifest は `./codex/hooks.json` を明示する。その omission は capability parity
+contract に理由と `PostToolUse` / `SessionStart` の代替経路を持つ場合に限り PASS とする。
 Codex manifest の `skills` は実在する `./skills/` だけを許可する。
 `hooks/hooks.json` は `hooks.SessionStart[].hooks[]` の command schema を満たし、
 `auto-sync-on-session-start.py` の実行 path は plugin root 内に限る。
@@ -91,12 +95,12 @@ C02 は以下の fenced JSON block のみを決定論 parse する (prose は人
 ```json
 {
   "schema_version": "1.0",
-  "checked_at": "2026-07-13",
-  "codex_cli_version": "0.144.1",
+  "checked_at": "2026-08-20",
+  "codex_cli_version": "0.144.0",
   "sources": [
-    "https://learn.chatgpt.com/docs/build-plugins#plugin-structure",
-    "https://learn.chatgpt.com/docs/build-plugins#marketplace-metadata",
-    "https://learn.chatgpt.com/docs/hooks#where-codex-looks-for-hooks"
+    "https://developers.openai.com/plugins/build/plugins",
+    "https://code.claude.com/docs/en/plugins-reference",
+    "https://code.claude.com/docs/en/hooks"
   ],
   "activation_semantics": {
     "claude_projection_selection": "repo_present_exact_project_identity_enabled",
@@ -127,12 +131,12 @@ C02 は以下の fenced JSON block のみを決定論 parse する (prose は人
     {
       "key": "plugin_hook",
       "classification": "confirmed",
-      "claude": ".claude-plugin/plugin.json",
+      "claude": "hooks/hooks.json(product-default-autodiscovery)",
       "codex": ".codex-plugin/plugin.json+hooks/hooks.json",
       "owner": "plugin-source",
       "write_policy": "build-or-update-only",
       "trust_required": true,
-      "verification": "install/enable/trust 済みのみ発火・未trustで非実行"
+      "verification": "Claude manifestは標準pathを再宣言せず、Codex manifestは明示参照。install/enable/trust 済みのみ発火・未trustで非実行"
     },
     {
       "key": "plugin_discovery",

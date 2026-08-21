@@ -544,10 +544,23 @@ def test_user_section_sha256_ignores_managed_values():
 def test_namespace_preflight_conflict_marks_verdict(tmp_path):
     _plugin(tmp_path, "alpha", skills=["shared"])
     _plugin(tmp_path, "beta", skills=["shared"])
+    (tmp_path / "beta" / "skills" / "shared" / "SKILL.md").write_text(
+        "---\nname: shared\ndescription: Different.\n---\n",
+        encoding="utf-8",
+    )
     plugins = MOD.discover_plugins(tmp_path)
     ns = MOD.namespace_preflight(plugins)
     assert any(c["type"] == "skill" and c["name"] == "shared" for c in ns["conflicts"])
     assert any(s.get("verdict") == "conflict" for s in ns["skills"])
+
+
+def test_namespace_preflight_shares_byte_identical_physical_copies(tmp_path):
+    _plugin(tmp_path, "alpha", skills=["shared"])
+    _plugin(tmp_path, "beta", skills=["shared"])
+    plugins = MOD.discover_plugins(tmp_path)
+    ns = MOD.namespace_preflight(plugins)
+    assert ns["conflicts"] == []
+    assert any(s.get("verdict") == "shared" for s in ns["skills"])
 
 
 def test_namespace_preflight_no_conflict_for_distinct(tmp_path):
@@ -674,7 +687,8 @@ def test_build_user_preserved_true(tmp_path):
     target.write_text(MOD.serialize({"permissions": {"deny": ["U"], "ask": []}}), encoding="utf-8")
     _, desired, plan = MOD.build(target, plugins)
     assert plan["user_values_preserved"] is True
-    assert plan["summary"]["add"] == 1
+    assert plan["summary"]["add"] == 0
+    assert desired["_build_claude_settings"]["managed_hooks"] == []
 
 
 # --- main() in-process: 各 exit path -----------------------------------------
@@ -725,7 +739,10 @@ def test_main_check_clean_returns_0(tmp_path, monkeypatch):
 def test_main_conflict_returns_2(tmp_path, monkeypatch, capsys):
     plugins, target = _setup_tree(tmp_path, {})
     _plugin(plugins, "alpha", skills=["shared"])
-    _plugin(plugins, "beta", skills=["shared"])
+    beta = _plugin(plugins, "beta", skills=["shared"])
+    (beta / "skills" / "shared" / "SKILL.md").write_text(
+        "---\nname: shared\n---\n# Different skill\n", encoding="utf-8"
+    )
     rc = _run_main(monkeypatch, tmp_path, "--json")
     assert rc == 2
     assert '"conflict"' in capsys.readouterr().out

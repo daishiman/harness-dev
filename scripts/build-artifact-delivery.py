@@ -24,10 +24,23 @@ SCHEMA_ID = "https://harness.local/schemas/artifact-delivery.schema.json"
 EXTERNAL_MUTATION_FLOW = "preview-confirm-authorize-execute-v1"
 EXTERNAL_GUARD_BLOCK_BEGIN = "<!-- external-mutation-guard-cli:v1 -->"
 EXTERNAL_GUARD_BLOCK_END = "<!-- /external-mutation-guard-cli:v1 -->"
+# dual-root 形。Codex には CLAUDE_PLUGIN_ROOT が無いので、bare の
+# ${CLAUDE_PLUGIN_ROOT} を撒くと Codex 側で空文字に展開され、guard CLI が
+# 見つからないまま「実行できなかった」ではなく別 path を叩きに行く。
 EXTERNAL_GUARD_SHELL_RUNNER = (
-    "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/"
+    "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/"
     "build-external-mutation-guard.py"
 )
+RUNTIME_ROOT_POLICY = "host-skill-path"
+RUNTIME_ROOT_CONTRACT_HEADING = "## Runtime root contract"
+RUNTIME_ROOT_CONTRACT_SECTION = f"""{RUNTIME_ROOT_CONTRACT_HEADING}
+
+- `runtime_root_policy: {RUNTIME_ROOT_POLICY}` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+"""
 EXPECTED_EXTERNAL_MUTATION_RUNTIME = {
     "contract_id": "external-mutation-guard-v1",
     "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
@@ -157,6 +170,34 @@ def _load_json(path: pathlib.Path) -> dict[str, Any]:
     return data
 
 
+def _hook_wiring(manifest_path: pathlib.Path) -> dict[str, Any]:
+    """plugin.json の hooks 宣言を、外出し形 (./hooks/hooks.json) も含めて読む。
+
+    宣言の置き場が inline から参照形へ移っても、配線の実体は一つしかない。
+    ここで正規化して、読む側が置き場の違いを知らずに済むようにする。
+
+    manifest が `hooks` を一切書かない形もある: plugin loader が `hooks/hooks.json`
+    を標準自動検出して1回だけ配布する現行契約で、manifest へ再掲すると二重読込に
+    なるため意図的に空にしてある。この形を「宣言なし」と誤読すると guard の配線
+    検査そのものが落ちるので、自動検出先を同じ正規化の中で解決する。
+    """
+    hooks = _load_json(manifest_path).get("hooks")
+    if hooks is None:
+        autoloaded = manifest_path.parent.parent / "hooks" / "hooks.json"
+        if autoloaded.is_file():
+            document = _load_json(autoloaded)
+            hooks = document.get("hooks", document)
+    if isinstance(hooks, str):
+        rel = pathlib.PurePosixPath(hooks.lstrip("./"))
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ContractError(f"external hooks path must stay inside plugin: {hooks}")
+        external = _load_json(manifest_path.parent.parent / pathlib.Path(rel))
+        hooks = external.get("hooks", external)
+    if not isinstance(hooks, dict):
+        raise ContractError(f"hook manifest hooks missing: {manifest_path}")
+    return hooks
+
+
 def _canonical_sha256(data: dict[str, Any]) -> str:
     encoded = json.dumps(
         data,
@@ -175,16 +216,19 @@ def _raw_sha256(path: pathlib.Path) -> str:
 
 
 def _manifest_sha256(path: pathlib.Path) -> str:
-    """plugin manifest の hook 宣言だけを固定する (version は除く)。
+    """plugin の hook 配線だけを固定する (manifest の他 field と version は除く)。
 
     生 hash を投影へ焼くと循環する。artifact-delivery.json は plugin の内容として
     build-plugin-release の fingerprint に数えられ、その fingerprint で version が
     上がり、version が動けば manifest の生 hash が変わって投影がまた drift する。
     不動点が存在しない。ここで固定したいのは「guard が宣言した hook がその manifest
     から外されていない」ことだけで、採番は無関係なので version を落として比較する。
+
+    hash 対象は解決後の配線そのもの。manifest 本体を hash すると、宣言が
+    `hooks/hooks.json` へ外出しされた瞬間に「hook が消えても sha が動かない」
+    無害な定数になり、guard が守っているつもりで何も守らなくなる。
     """
-    manifest = _load_json(path)
-    return _canonical_sha256({k: v for k, v in manifest.items() if k != "version"})
+    return _canonical_sha256(_hook_wiring(path))
 
 
 def _plugin_ref_path(root: pathlib.Path, ref: str) -> pathlib.Path:
@@ -474,10 +518,7 @@ def _external_mutation_runtime_projection(
     if not actions <= literals:
         raise ContractError("external mutation runner CLI actions are not connected")
 
-    manifest = _load_json(paths["hook_manifest_ref"])
-    hooks = manifest.get("hooks")
-    if not isinstance(hooks, dict):
-        raise ContractError("external mutation hook manifest hooks missing")
+    hooks = _hook_wiring(paths["hook_manifest_ref"])
 
     def registered(event: str, action: str, *, matcher: str | None = None) -> bool:
         groups = hooks.get(event)
@@ -560,8 +601,8 @@ def _external_runtime_projection(root: pathlib.Path, policy: dict[str, Any]) -> 
     ):
         raise ContractError("external intelligence caller does not invoke adapter with a request argument")
 
-    manifest = _load_json(_plugin_ref_path(root, pointer["caller_manifest_ref"]))
-    event_groups = manifest.get("hooks", {}).get(pointer["caller_event"], [])
+    manifest_path = _plugin_ref_path(root, pointer["caller_manifest_ref"])
+    event_groups = _hook_wiring(manifest_path).get(pointer["caller_event"], [])
     caller_suffix = "/".join(pathlib.PurePosixPath(pointer["caller_ref"].split(":", 1)[1]).parts[1:])
     registered = any(
         isinstance(group, dict)
@@ -700,6 +741,37 @@ def _migrate_external_direct_examples(text: str) -> str:
     return text
 
 
+def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
+    """Declare the host-skill-path policy the injected dual-root runner depends on.
+
+    guard block を撒くと owner skill は「plugin root を shell で解決する skill」に
+    なる。宣言と本文契約を同じ migration で置かないと、注入だけが進んで policy が
+    無いという drift を毎回手作業で追いかけることになる。
+    """
+    if not text.startswith("---"):
+        raise ContractError(f"{path}: SKILL.md frontmatter missing")
+    _, front, body = text.split("---", 2)
+    if f"runtime_root_policy: {RUNTIME_ROOT_POLICY}" not in front:
+        lines = front.rstrip("\n").split("\n")
+        anchor = next(
+            (i for i, line in enumerate(lines) if line.startswith("effect:")),
+            len(lines) - 1,
+        )
+        lines.insert(anchor + 1, f"runtime_root_policy: {RUNTIME_ROOT_POLICY}")
+        front = "\n".join(lines) + "\n"
+    if RUNTIME_ROOT_CONTRACT_HEADING not in body:
+        match = re.search(r"^## ", body, re.MULTILINE)
+        if match is None:
+            raise ContractError(f"{path}: no section to anchor the runtime root contract")
+        body = (
+            body[: match.start()]
+            + RUNTIME_ROOT_CONTRACT_SECTION
+            + "\n"
+            + body[match.start() :]
+        )
+    return "---" + front + "---" + body
+
+
 def migrate_external_guard_blocks(root: pathlib.Path) -> int:
     """Mechanically place the canonical CLI contract in every external entrypoint."""
     logical_entrypoints = 0
@@ -720,6 +792,7 @@ def migrate_external_guard_blocks(root: pathlib.Path) -> int:
             seen_inodes.add(identity)
             text = block_pattern.sub("\n", path.read_text(encoding="utf-8"))
             text = _migrate_external_direct_examples(text)
+            text = _ensure_runtime_root_contract(text, path)
             heading = "## Post-choice selected improvement execution"
             heading_at = text.find(heading)
             if heading_at < 0:

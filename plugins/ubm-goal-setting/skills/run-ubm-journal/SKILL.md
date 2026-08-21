@@ -73,6 +73,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -90,15 +91,15 @@ Never execute the external mutation argv directly. Replace every angle-bracket p
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Present that official preview output to the user. Only the exact user reply printed by `preview`
 may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
@@ -106,6 +107,14 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 
 # run-ubm-journal
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 その日の振り返りを会話で行い、`$UBM_VAULT_ROOT/02_Configs/Daily/{YYYY-MM-DD}.md` へ構造化された
 日次ジャーナルを生成する。チェックリストを読み上げるのではなく、「今日は何をやりましたか」から
@@ -137,7 +146,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 ## Phase0: 文脈解決（必ず最初に実行する）
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-context.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/build-journal-context.py" \
   --vault-root "$UBM_VAULT_ROOT" --date "{YYYY-MM-DD}"
 ```
 
@@ -176,7 +185,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/build-journal-contex
 - 保存後に必ず検証する:
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-output.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/validate-journal-output.py" \
   --file "$UBM_VAULT_ROOT/02_Configs/Daily/{YYYY-MM-DD}.md" \
   --expected-number {journal_number} --expected-date {YYYY-MM-DD}
 ```

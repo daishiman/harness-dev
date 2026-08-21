@@ -33,11 +33,11 @@
 
 | 既存 | 役割 | 本サブシステムでの扱い |
 |------|------|----------------------|
-| `scripts/verify-slides.js` | スクショ/16:9/型崩れ | 視覚裏取りに利用。evaluate-deck.js の動的検証は同手法を内蔵 |
-| `scripts/evaluate-image-consistency.js` | 全面画像デッキの画風一貫性（lockTiers.tier1+consistencyAnchors） | gpt-image-2 生成画像群を LLM-judge で 0-1 採点し閾値割れページの再生成推奨を出す（破壊操作なし）。evaluate-deck.js(HTML崩れ/ナビ) とは別系統で画像内容の一貫性を見る。目視の前段ゲート |
-| `scripts/sync-checker.js` | structure.md⇔HTML 同期 | evaluate-deck.js が D4 で呼出・集約 |
-| `scripts/validate-structure.js` | 構造仕様 V-001〜V-043 | evaluate-deck.js が D4 で集約（structure.json がある時のみ） |
-| `scripts/check-consistency.js` | 色/フォント統一 | 任意で併用（deck-evaluator 視覚評価の補助） |
+| `vendor/scripts/verify-slides.js` | スクショ/16:9/型崩れ | 視覚裏取りに利用。evaluate-deck.js の動的検証は同手法を内蔵 |
+| `vendor/scripts/evaluate-image-consistency.js` | 全面画像デッキの画風一貫性（lockTiers.tier1+consistencyAnchors） | gpt-image-2 生成画像群を LLM-judge で 0-1 採点し閾値割れページの再生成推奨を出す（破壊操作なし）。evaluate-deck.js(HTML崩れ/ナビ) とは別系統で画像内容の一貫性を見る。目視の前段ゲート |
+| `vendor/scripts/sync-checker.js` | structure.md⇔HTML 同期 | evaluate-deck.js が D4 で呼出・集約 |
+| `vendor/scripts/validate-structure.js` | 構造仕様 V_DEFINITIONS 全件 | evaluate-deck.js が D4 で集約（structure.json がある時のみ） |
+| `vendor/scripts/check-consistency.js` | 色/フォント統一 | 任意で併用（deck-evaluator 視覚評価の補助） |
 | `agents/ui-quality-reviewer.md` | S1〜S26 UIレビュー(Phase 3.5) | deck-evaluator の視覚チェックリスト参照元。**置換せず上位ゲート** |
 | `agents/cross-deck-reviewer.md` | シリーズ横断(Phase 5) | 単一デッキ評価は本サブシステム、横断はP5 と役割分担 |
 
@@ -128,19 +128,19 @@ deck-evaluator は下表の30種すべてを必ず適用し、評価レポート
 
 ```bash
 # 機械評価（完全：chromium があれば動的検証も実行）
-node scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/"
+node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/"
 
 # 利用者が改善レベルを選択した後の高速静的評価
-node scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/" --static-only
+node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/" --static-only
 
 # JSON出力 / 厳格(WARNも失敗) / レポート先指定
-node scripts/evaluate-deck.js "<deck>" --json
-node scripts/evaluate-deck.js "<deck>" --strict
-node scripts/evaluate-deck.js "<deck>" --report ./report.json
+node vendor/scripts/evaluate-deck.js "<deck>" --json
+node vendor/scripts/evaluate-deck.js "<deck>" --strict
+node vendor/scripts/evaluate-deck.js "<deck>" --report ./report.json
 
 # 画像一貫性採点（全面画像デッキ・lockTiers.tier1+consistencyAnchors rubric / 破壊操作なし）
-node scripts/evaluate-image-consistency.js "<deck>" --threshold 0.8
-node scripts/evaluate-image-consistency.js "<deck>" --dry-run   # 評価プロンプトのみ（codex呼ばない・コスト無し）
+node vendor/scripts/evaluate-image-consistency.js "<deck>" --threshold 0.8
+node vendor/scripts/evaluate-image-consistency.js "<deck>" --dry-run   # 評価プロンプトのみ（codex呼ばない・コスト無し）
 ```
 
 終了コード: `0=PASS` / `4=FAIL` / `2=引数` / `3=不在`。

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "83da2fceb25e162a30b31c6499b712f676e5d4a47f1ca2945a2c8e2d1c0c5271"
+    "skill_md_sha256": "7dd7709ed486f5d4b8fd7582ed603786dcfe780e59285f947c5c2b0c48f42b05"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "cr-merge-guard-migration-v3 (focused combined content review, incremental profile, round 3)",
+  "reviewed_at": "2026-08-21T03:00:00Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,18 +25,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "round 2 medium (contradiction) 「契約が継承範囲と名指しした prompts/ に cwd 相対起動行 12 本」は解消した。名指しされた 12 本を現物で追跡し、すべて `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py\"` 形になっている: R0-foundation.md:70 (chunk / set-foundation の 2 本)・:130、R1-init.md:55・:110、R2-interview.md:58 (chunk)・:59 (set-targets)・:60 (set-knowledge-candidate)・:118、R3-reask.md:54・:110、R4-reopen.md:55・:112。skill 配下 *.md 全体への `grep -rnE 'python3 +\"?(\\.\\./|scripts/|[a-z0-9-]+\\.py)'` は無出力 (exit 1) で cwd 相対起動行 0 件を実測した。",
+      "round 2 medium (inconsistency) 「SKILL.md:186 の収集ゲートなど同一節内の 2 形式混在と references/ の 8 本」も解消した。SKILL.md:186 は `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py\" --profile required-info --input \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json\"` となり、直上の IN1 (SKILL.md:184) と同形式に揃った。同時に指摘した SKILL.md:140・:146・:173 も同形へ移行。references/spec-state-contract.md の 8 本 (84/101/104/113/114/115/163/194) はすべて dual-root 絶対 path 形へ置換済みで、同ファイル 210 行の検証行も同形。prompts/R5-decision-guide.md:29-30 の 2 本と R6-audit-hearing.md:4・R7-audit-matrix.md の agent/script 参照も bare `$CLAUDE_PLUGIN_ROOT` から dual-root 形へ揃えられた。skill 配下に残る bare `CLAUDE_PLUGIN_ROOT` は SKILL.md:126 の契約説明文 1 件のみで、これは起動行ではない。",
+      "置換後の path が実在物を指すことを path 種別ごとに現物確認した。plugin root 直下 scripts/ を指す 2 本 (validate-coverage-matrix.py / validate-knowledge-graph.py) は `ls plugins/system-spec-harness/scripts/` に実在。skill 配下 scripts/ を指す apply-spec-transition.py は `ls plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/` に実在。`--input` のカタログ path は `plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json` (9886 bytes) として実在。R5 が参照する `skills/ref-system-design-knowledge/references/knowledge-catalog.json`、R6/R7 が参照する `agents/system-spec-hearing-auditor.md` / `agents/system-spec-matrix-auditor.md` もすべて実在。plugin 直下 scripts/ と skill 配下 scripts/ の使い分けが実配置と一致しており、存在しない path へ書き換えて緑化した形跡はない。",
+      "置換形が実際に解決することを実行で確かめた。`PLUGIN_ROOT=\"$PWD/plugins/system-spec-harness\"` を設定して SKILL.md:186 の行をそのまま実行 → exit 0 かつ `coverage_certificate` を含む JSON を出力。SKILL.md:193 の bootstrap 行をそのまま実行 → exit 0 で state envelope を生成。同 envelope に対し SKILL.md:184 の IN1 行を実行 → exit 1 (契約上 1=violation。空 matrix に対する期待どおりの結果で、path 解決失敗の 2=usage/parse error ではない)。3 本とも placeholder が literal のまま shell へ渡る失敗をしていない。",
+      "plugin 内の適用非対称も解消した。兄弟 skill run-system-spec-doc-fetch / run-system-spec-compile の *.md に対する同 grep も 0 件で、round 2 で指摘した「doc-fetch は 0 件なのに elicit だけ残る」状態は消えた。",
+      "設計骨格は round 3 の差分でも壊れていない: 上位概念 anchor 節・単一 transition writer 防御 4 条・責務表 R0-R5・feedback-contract の IN1/OUT1/OUT2・artifact_delivery・Gotchas は無変更。frontmatter の criteria id (IN1/OUT1/OUT2) と responsibility_refs 6 件は責務表 6 行と 1:1 のまま。SKILL.md:186 の doc 相互参照 (`../run-system-spec-compile/scripts/compile-spec-doc.py`、`../ref-system-design-knowledge/references/information-design.md`) は shell 起動行ではない skill 相対の文書参照で、指す実体は両方とも実在する。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] prompts/R6-audit-hearing.md / R7-audit-matrix.md が SKILL.md frontmatter responsibility_refs にも責務表にも現れない件は round 1 から不変。`python3 scripts/lint-skill-tree.py plugins/system-spec-harness/skills/run-system-spec-elicit` は exit 0 / `ok` だが MED-4 で 2 件、LS-203 で tests/ と fixtures/ の規約外 top-level dir を Warn する。いずれも plugin 既存慣行に由来し今回の migration が持ち込んだものではないため PASS を妨げないが、未処理の残件として記録する。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "round 2 INCOMPLETE の再判定。30 思考法は実施しておらず、実施も申告しない。 読んだもの: eval-log の既存 elegance/rubric verdict 2 本の negative_feedback、`git status --porcelain` (対象 skill に untracked 新規ファイルなし)、`git diff HEAD --stat` と `git diff HEAD` の全差分 (SKILL.md / prompts R0,R1,R2,R3,R4,R5,R6,R7 / references/spec-state-contract.md の 10 ファイル)、SKILL.md frontmatter (responsibility_refs 29-35 行・responsibilities 47-62 行・feedback_contract criteria 80-89 行)。 実行したコマンド: 現 SKILL.md の sha256 (python3 hashlib → 7dd7709e...)、`grep -rnE 'python3 +\"?(\\.\\./|scripts/|[a-z0-9-]+\\.py)' <skill>/ --include=*.md` (無出力 / exit 1)、`grep -rn 'CLAUDE_PLUGIN_ROOT' <skill>/ --include=*.md | grep -v 'PLUGIN_ROOT:-'` (残 1 件 = 契約本文 SKILL.md:126)、`grep -rn 'python3' <skill>/ --include=*.md` による起動行 27 本の全数目視、`ls` による script/カタログ/agent/knowledge-catalog の実在確認 6 経路、`PLUGIN_ROOT` を設定した状態での実行 3 本 (validate-knowledge-graph exit 0 / apply-spec-transition bootstrap exit 0 / validate-coverage-matrix exit 1=violation)、兄弟 skill 2 本への同 grep (ともに 0 件)、`python3 scripts/lint-skill-tree.py plugins/system-spec-harness/skills/run-system-spec-elicit` (exit 0 / `ok`、Warn 4 件)。 判定: (a) 矛盾なし — 契約が継承範囲と明記した prompts/ の 12 本が解消し、runtime_root_policy 宣言と本文の矛盾は消えた。(b) 漏れなし — 既存章の削除・意味変更 0。(c) 規約整合 — cwd 相対起動行 0 件を grep 実測、置換形は実行で解決を確認。(d) 依存関係整合 — 移行先 path 6 経路すべて実在確認済み、spec-state.json 契約と C03 consumer 形状は不変。(e) 未解決 medium 0 / high 0。残るのは既存慣行由来の low 1 件 (R6/R7 の responsibility_refs 未列挙、lint は Warn 止まり) のみ。"
 }

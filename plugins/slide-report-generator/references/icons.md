@@ -1,5 +1,8 @@
 # アイコンガイドライン
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: アイコンライブラリ・マッピングテーブル・使用方法
 
 ---
@@ -50,18 +53,18 @@
 
 ### 最重要アイコン
 
-| 用途 | アイコン | クラス |
-|------|---------|--------|
-| AI・テクノロジー | 🤖 | `fa-robot` |
-| アイデア・発想 | 💡 | `fa-lightbulb` |
-| 成長・向上 | 📈 | `fa-arrow-trend-up` |
-| 効率・スピード | 🚀 | `fa-rocket` |
-| 目標・ターゲット | 🎯 | `fa-bullseye` |
-| チーム・組織 | 👥 | `fa-users` |
-| チェック・完了 | ✅ | `fa-circle-check` |
-| 警告・注意 | ⚠️ | `fa-triangle-exclamation` |
-| セキュリティ | 🛡️ | `fa-shield-halved` |
-| データ・分析 | 📊 | `fa-chart-bar` |
+| 用途 | クラス |
+|------|--------|
+| AI・テクノロジー | `fa-robot` |
+| アイデア・発想 | `fa-lightbulb` |
+| 成長・向上 | `fa-arrow-trend-up` |
+| 効率・スピード | `fa-rocket` |
+| 目標・ターゲット | `fa-bullseye` |
+| チーム・組織 | `fa-users` |
+| チェック・完了 | `fa-circle-check` |
+| 警告・注意 | `fa-triangle-exclamation` |
+| セキュリティ | `fa-shield-halved` |
+| データ・分析 | `fa-chart-bar` |
 
 ---
 
@@ -445,7 +448,7 @@
 | 用途 | CSS変数 |
 |------|---------|
 | 大きいアイコン | `var(--fs-icon-lg, var(--fs-heading))` |
-| 中サイズアイコン | `var(--fs-icon-md, var(--fs-body-lg))` |
+| 中サイズアイコン | `var(--fs-icon-md, var(--fs-subheading))` |
 | 小さいアイコン | `var(--fs-icon-sm, var(--fs-small))` |
 
 ---
@@ -464,7 +467,7 @@
 }
 
 .icon-wrapper i {
-  font-size: var(--fs-icon-md, var(--fs-body-lg));
+  font-size: var(--fs-icon-md, var(--fs-subheading));
   color: var(--wave-blue);
 }
 
@@ -472,7 +475,7 @@
 .icon-wrapper.accent-pink i { color: var(--sakura-pink); }
 .icon-wrapper.accent-aqua i { color: var(--wave-aqua); }
 .icon-wrapper.accent-yellow i { color: var(--autumn-yellow); }
-.icon-wrapper.accent-violet i { color: var(--spring-violet); }
+.icon-wrapper.accent-violet i { color: var(--wave-blue); }
 ```
 
 ---

@@ -55,6 +55,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -67,6 +68,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-intake-visualize
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -104,7 +113,7 @@ intake aggregator は最終 Notion 公開前に「全セクション 1 図以上
 - [ ] 全 12 セクション (§0〜§11) に 1〜3 図が配置 (4 図以上ゼロ、ゼロ図ゼロ)
 - [ ] `visuals.json` の全 `figure_id` が Mermaid 12 + SVG 8 カタログ id 集合に包含 (カタログ外創作ゼロ)
 - [ ] `type=svg` の全エントリが対応 PNG (`output/<hint>/visuals/*.png`) を保有し、`png_path` は workspace 相対
-- [ ] `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/run-intake-visualize/scripts/verify-visuals.py output/<hint>/visuals.json output/<hint>/visuals/` が exit 0 (網羅性・整合性 PASS。第 1 引数=visuals.json、第 2 引数=PNG 出力 dir、両方必須)
+- [ ] `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-visualize/scripts/verify-visuals.py output/<hint>/visuals.json output/<hint>/visuals/` が exit 0 (網羅性・整合性 PASS。第 1 引数=visuals.json、第 2 引数=PNG 出力 dir、両方必須)
 - [ ] 同 `sheet.md` + `purpose.json` で 2 回連続実行し `(section → figure_id)` が完全一致 (determinism)
 - [ ] `sheet.md` にない事実が図へ注入されていない (倫理ガード、Layer 1.2)
 - [ ] `references/section-figure-mapping.md` の §×図種対応表に基づく配置で、逸脱は理由付き

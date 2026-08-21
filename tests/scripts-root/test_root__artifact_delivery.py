@@ -67,6 +67,10 @@ def _copy_contract_repo(tmp_path: pathlib.Path) -> pathlib.Path:
         "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
         "plugins/skill-governance-adapters/schemas/external-mutation-guard.schema.json",
         "plugins/skill-governance-adapters/references/external-mutation-guard-contract.md",
+        # hook 配線は plugin.json から ./hooks/hooks.json へ外出しされた。実体をコピーしないと
+        # fixture repo は「宣言だけあって配線が無い」状態になり、検査対象そのものが欠ける。
+        "plugins/skill-governance-adapters/hooks/hooks.json",
+        "plugins/harness-creator/hooks/hooks.json",
     }
     for rel in external:
         source = ROOT / rel
@@ -78,6 +82,15 @@ def _copy_contract_repo(tmp_path: pathlib.Path) -> pathlib.Path:
 
 def _projection(repo: pathlib.Path, plugin: str) -> pathlib.Path:
     return repo / "plugins" / plugin / "artifact-delivery.json"
+
+
+def _hook_manifest(repo: pathlib.Path, plugin: str) -> pathlib.Path:
+    """hook 配線の実体は plugin.json ではなく ./hooks/hooks.json 側にある。
+
+    宣言 (plugin.json の "hooks": "./hooks/hooks.json") を壊しても「宣言が無い」
+    という別の失敗になるだけで、配線欠落そのものを試験できない。実体を触る。
+    """
+    return repo / "plugins" / plugin / "hooks" / "hooks.json"
 
 
 def _rewrite_json(path: pathlib.Path, mutate) -> None:
@@ -145,7 +158,7 @@ def test_policy_and_every_projection_validate_against_central_schema():
 
 def test_projection_is_package_local_and_pins_schema_and_policy_identity():
     projection = json.loads(
-        (ROOT / "plugins/company-master/artifact-delivery.json").read_text(encoding="utf-8")
+        (ROOT / "plugins/contract-generator/artifact-delivery.json").read_text(encoding="utf-8")
     )
     assert "schema_ref" not in projection and "policy_ref" not in projection
     assert projection["schema_id"] == "https://harness.local/schemas/artifact-delivery.schema.json"
@@ -170,7 +183,7 @@ def test_central_schema_semantic_weakening_fails_even_when_policy_sha_is_refresh
         projection["required"].remove("manifest_ref")
     elif mutation == "manifest-path":
         projection["properties"]["manifest_ref"] = {
-            "const": "plugins/company-master/.claude-plugin/plugin.json"
+            "const": "plugins/contract-generator/.claude-plugin/plugin.json"
         }
     elif mutation == "schema-id":
         projection["properties"]["schema_id"]["const"] = "https://example.invalid/weakened"
@@ -195,7 +208,7 @@ def test_draft202012_projection_validation_rejects_missing_required_field():
     mod = _load_generator()
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     projection = json.loads(
-        (ROOT / "plugins/company-master/artifact-delivery.json").read_text(encoding="utf-8")
+        (ROOT / "plugins/contract-generator/artifact-delivery.json").read_text(encoding="utf-8")
     )
     projection.pop("manifest_ref")
     with pytest.raises(mod.ContractError, match="manifest_ref"):
@@ -205,7 +218,7 @@ def test_draft202012_projection_validation_rejects_missing_required_field():
 def test_real_repository_all_manifest_plugins_are_green_and_dynamic():
     mod = _load_generator()
     manifests = _manifest_plugins(ROOT)
-    assert len(manifests) == 23  # current fact, not a generator allowlist
+    assert len(manifests) == 20  # current fact, not a generator allowlist
     assert [p.name for p in mod.discover_plugin_dirs(ROOT)] == [
         p.parents[1].name for p in manifests
     ]
@@ -216,23 +229,23 @@ def test_real_repository_all_manifest_plugins_are_green_and_dynamic():
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "23 plugins" in result.stdout
+    assert "20 plugins" in result.stdout
 
 
-def test_temp_twenty_fourth_manifest_without_projection_fails_closed(tmp_path):
+def test_temp_twenty_first_manifest_without_projection_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    plugin = repo / "plugins/temp-24"
+    plugin = repo / "plugins/temp-21"
     (plugin / ".claude-plugin").mkdir(parents=True)
     (plugin / ".claude-plugin/plugin.json").write_text(
-        json.dumps({"name": "temp-24", "version": "0.1.0", "description": "fixture"}),
+        json.dumps({"name": "temp-21", "version": "0.1.0", "description": "fixture"}),
         encoding="utf-8",
     )
     skill = plugin / "skills/run-temp/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text("---\nname: run-temp\neffect: local-artifact\n---\n", encoding="utf-8")
     errors = mod.lint_repository(repo)
-    assert any("temp-24" in error and "projection missing" in error for error in errors)
+    assert any("temp-21" in error and "projection missing" in error for error in errors)
     result = subprocess.run(
         [sys.executable, str(LINTER), "--repo-root", str(repo)],
         text=True,
@@ -240,13 +253,13 @@ def test_temp_twenty_fourth_manifest_without_projection_fails_closed(tmp_path):
         check=False,
     )
     assert result.returncode == 1
-    assert "temp-24: projection missing" in result.stderr
+    assert "temp-21: projection missing" in result.stderr
 
 
 def test_policy_sha_drift_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    projection = _projection(repo, "company-master")
+    projection = _projection(repo, "contract-generator")
     _rewrite_json(projection, lambda data: data.__setitem__("policy_sha256", "0" * 64))
     assert any("policy_sha256" in error for error in mod.lint_repository(repo))
 
@@ -262,7 +275,7 @@ def test_entrypoint_effect_coverage_drift_fails_closed(tmp_path):
 def test_effect_guard_mapping_drift_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    projection = _projection(repo, "company-master")
+    projection = _projection(repo, "contract-generator")
     _rewrite_json(
         projection,
         lambda data: data["entrypoints"][0].__setitem__("guard", "read-only"),
@@ -273,7 +286,7 @@ def test_effect_guard_mapping_drift_fails_closed(tmp_path):
 def test_future_external_mutation_without_preview_contract_cannot_be_generated(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\nname: run-future-external\neffect: external-mutation\n---\n"
@@ -296,7 +309,7 @@ def test_future_external_mutation_without_preview_contract_cannot_be_generated(t
 def test_future_external_mutation_prose_cannot_forge_structured_guard(tmp_path, body):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\nname: run-future-external\neffect: external-mutation\n---\n" + body,
@@ -309,7 +322,7 @@ def test_future_external_mutation_prose_cannot_forge_structured_guard(tmp_path, 
 def test_future_external_mutation_unknown_guard_ref_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\n"
@@ -328,7 +341,7 @@ def test_future_external_mutation_unknown_guard_ref_fails_closed(tmp_path):
 def test_structured_guard_cannot_override_explicitly_contradictory_instructions(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\n"
@@ -348,7 +361,7 @@ def test_structured_guard_cannot_override_explicitly_contradictory_instructions(
 def test_exact_marker_cannot_authorize_immediate_remote_mutation(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\n"
@@ -368,7 +381,7 @@ def test_exact_marker_cannot_authorize_immediate_remote_mutation(tmp_path):
 def test_external_mutation_guard_receipts_are_connected_to_real_entrypoint(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    projection = _projection(repo, "company-master")
+    projection = _projection(repo, "contract-generator")
     data = json.loads(projection.read_text(encoding="utf-8"))
     external = next(item for item in data["entrypoints"] if item["effect"] == "external-mutation")
     contract = external["guard_contract"]
@@ -418,13 +431,13 @@ def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
             for action in ("preview", "hook-confirm", "authorize", "execute"):
                 assert action in text, (skill, action)
             assert text.count("build-external-mutation-guard.py") >= 3, skill
-    assert count == 47
+    assert count == 33
 
 
 def test_structured_marker_without_canonical_cli_wiring_fails_closed(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = repo / "plugins/company-master/skills/run-future-external/SKILL.md"
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text(
         "---\n"
@@ -489,7 +502,7 @@ def test_canonical_block_cannot_authorize_direct_mutation_imperative(tmp_path, c
 def test_external_entrypoint_requires_distributed_guard_dependency(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    manifest = repo / "plugins/company-master/.claude-plugin/plugin.json"
+    manifest = repo / "plugins/contract-generator/.claude-plugin/plugin.json"
     _rewrite_json(manifest, lambda data: data.__setitem__("dependencies", []))
     with pytest.raises(mod.ContractError, match="requires skill-governance-adapters dependency"):
         mod.write_projections(repo)
@@ -498,7 +511,7 @@ def test_external_entrypoint_requires_distributed_guard_dependency(tmp_path):
 def test_unknown_effect_is_rejected_before_projection_comparison(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    skill = next((repo / "plugins/company-master/skills").glob("*/SKILL.md"))
+    skill = next((repo / "plugins/contract-generator/skills").glob("*/SKILL.md"))
     text = skill.read_text(encoding="utf-8")
     text = text.replace("effect: external-mutation", "effect: time-travel", 1)
     skill.write_text(text, encoding="utf-8")
@@ -524,7 +537,7 @@ def test_new_missing_effect_without_explicit_override_is_rejected(tmp_path):
 def test_external_intelligence_pointer_exact_keys_and_schema_hash(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    projection = json.loads(_projection(repo, "company-master").read_text(encoding="utf-8"))
+    projection = json.loads(_projection(repo, "contract-generator").read_text(encoding="utf-8"))
     pointer = projection["external_intelligence_runtime"]
     assert set(pointer) == {
         "contract_id",
@@ -548,7 +561,7 @@ def test_external_intelligence_pointer_exact_keys_and_schema_hash(tmp_path):
     assert pointer["caller_event"] == "UserPromptSubmit"
 
     _rewrite_json(
-        _projection(repo, "company-master"),
+        _projection(repo, "contract-generator"),
         lambda data: data["external_intelligence_runtime"].__setitem__(
             "policy_sha256", "f" * 64
         ),
@@ -559,7 +572,7 @@ def test_external_intelligence_pointer_exact_keys_and_schema_hash(tmp_path):
 def test_external_intelligence_caller_must_be_manifest_registered_and_call_adapter(tmp_path):
     mod = _load_generator()
     repo = _copy_contract_repo(tmp_path)
-    manifest = repo / "plugins/skill-governance-adapters/.claude-plugin/plugin.json"
+    manifest = _hook_manifest(repo, "skill-governance-adapters")
     _rewrite_json(manifest, lambda data: data["hooks"].pop("UserPromptSubmit"))
     assert any("caller manifest registration" in error for error in mod.lint_repository(repo))
 
@@ -591,7 +604,7 @@ def test_external_mutation_runtime_missing_tampered_or_uninvoked_fails_closed(tm
     )
 
     uninvoked = _copy_contract_repo(tmp_path / "uninvoked")
-    manifest = uninvoked / "plugins/skill-governance-adapters/.claude-plugin/plugin.json"
+    manifest = _hook_manifest(uninvoked, "skill-governance-adapters")
     _rewrite_json(manifest, lambda data: data["hooks"].pop("PreToolUse"))
     assert any(
         "consumer/enforcer hook is uninvoked" in error
@@ -599,7 +612,7 @@ def test_external_mutation_runtime_missing_tampered_or_uninvoked_fails_closed(tm
     )
 
     no_confirmation = _copy_contract_repo(tmp_path / "no-confirmation")
-    manifest = no_confirmation / "plugins/skill-governance-adapters/.claude-plugin/plugin.json"
+    manifest = _hook_manifest(no_confirmation, "skill-governance-adapters")
     _rewrite_json(
         manifest,
         lambda data: data["hooks"]["UserPromptSubmit"][0]["hooks"].__setitem__(

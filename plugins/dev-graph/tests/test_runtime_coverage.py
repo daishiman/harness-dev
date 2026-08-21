@@ -397,6 +397,9 @@ def test_reconcile_lifecycle_modes(common, tmp_path, monkeypatch, capsys):
 
 def test_guard_hook_branches(tmp_path, monkeypatch, capsys):
     mod = load(HOOKS / "guard-graph-schema.py", "guard_hook_cov")
+    marker = tmp_path / ".dev-graph" / "config.json"
+    marker.parent.mkdir(parents=True)
+    marker.write_text("{}\n", encoding="utf-8")
     original_context_ok = mod.context_ok
     monkeypatch.setattr(mod, "context_ok", lambda root: (True, "ok"))
     for command, expected in (
@@ -424,6 +427,9 @@ def test_guard_hook_branches(tmp_path, monkeypatch, capsys):
 
 def test_lifecycle_hook_helpers_and_events(tmp_path, monkeypatch, capsys):
     mod = load(HOOKS / "reconcile-task-lifecycle.py", "lifecycle_hook_cov")
+    marker = tmp_path / ".dev-graph" / "config.json"
+    marker.parent.mkdir(parents=True)
+    marker.write_text("{}\n", encoding="utf-8")
     missing = tmp_path / "missing.py"
     assert mod.invoke(missing)["ok"] is False
     script = tmp_path / "script.py"; script.write_text("print('{\"x\":1}')")

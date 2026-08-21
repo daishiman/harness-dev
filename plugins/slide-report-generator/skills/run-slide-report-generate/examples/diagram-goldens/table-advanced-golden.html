@@ -35,98 +35,98 @@
 
     <defs>
       <marker id="f-table-advanced-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="f-table-advanced-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="f-table-advanced-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
     <!-- ===== EDIT: 図解本体 ここから ===== -->
 
     <!-- 表の地と見出し帯 (面の階層は 2 段まで・行を交互に塗り分けない) -->
-    <rect x="32" y="64" width="896" height="368" rx="6"
-          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-    <rect x="32" y="64" width="896" height="48" fill="#F8F7F0"/>
+    <rect x="32" y="64" width="896" height="368"
+          fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+    <rect x="32" y="64" width="896" height="48" fill="#E1E6EA"/>
 
     <!-- 罫。見出しを分ける 1 本だけ rule-solid -->
-    <line x1="32" y1="112" x2="928" y2="112" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <line x1="280" y1="64" x2="280" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="440" y1="64" x2="440" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="720" y1="64" x2="720" y2="432" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="176" x2="928" y2="176" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="240" x2="928" y2="240" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="304" x2="928" y2="304" stroke="#DCD7BA" stroke-width="1.25"/>
-    <line x1="32" y1="368" x2="928" y2="368" stroke="#DCD7BA" stroke-width="1.25"/>
+    <line x1="32" y1="112" x2="928" y2="112" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <line x1="280" y1="64" x2="280" y2="432" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="440" y1="64" x2="440" y2="432" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="720" y1="64" x2="720" y2="432" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="176" x2="928" y2="176" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="240" x2="928" y2="240" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="304" x2="928" y2="304" stroke="#D5D4D1" stroke-width="1.25"/>
+    <line x1="32" y1="368" x2="928" y2="368" stroke="#D5D4D1" stroke-width="1.25"/>
 
     <!-- 焦点は 1 行だけ。accent-tint の塗りと accent の枠はセットで使う -->
     <rect x="32" y="176" width="896" height="64"
-          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+          fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
 
     <!-- 見出し行 -->
-    <text x="48" y="92" font-size="14" fill="var(--fg-dim, #54546d)">システム</text>
-    <text x="424" y="92" text-anchor="end" font-size="14" fill="var(--fg-dim, #54546d)">停止許容（時間）</text>
-    <text x="456" y="92" font-size="14" fill="var(--fg-dim, #54546d)">移行進捗（全工程数比 %）</text>
-    <text x="800" y="92" text-anchor="middle" font-size="14" fill="var(--fg-dim, #54546d)">状態</text>
+    <text x="48" y="92" font-size="14" fill="var(--fg-muted, #6A6A68)">システム</text>
+    <text x="424" y="92" text-anchor="end" font-size="14" fill="var(--fg-muted, #6A6A68)">停止許容（時間）</text>
+    <text x="456" y="92" font-size="14" fill="var(--fg-muted, #6A6A68)">移行進捗（全工程数比 %）</text>
+    <text x="800" y="92" text-anchor="middle" font-size="14" fill="var(--fg-muted, #6A6A68)">状態</text>
 
     <!-- 進捗バー。溝は rule、埋まりは muted。焦点の行だけ accent で塗る -->
-    <rect x="456" y="140" width="200" height="8" rx="4" fill="#DCD7BA"/>
-    <rect x="456" y="140" width="160" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
-    <rect x="456" y="204" width="200" height="8" rx="4" fill="#DCD7BA"/>
-    <rect x="456" y="204" width="80" height="8" rx="4" fill="var(--sakura-pink, #D27E99)"/>
-    <rect x="456" y="268" width="200" height="8" rx="4" fill="#DCD7BA"/>
-    <rect x="456" y="268" width="200" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
-    <rect x="456" y="332" width="200" height="8" rx="4" fill="#DCD7BA"/>
-    <rect x="456" y="332" width="40" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
-    <rect x="456" y="396" width="200" height="8" rx="4" fill="#DCD7BA"/>
-    <rect x="456" y="396" width="120" height="8" rx="4" fill="var(--fg-dim, #54546d)"/>
+    <rect x="456" y="140" width="200" height="8" fill="#D5D4D1"/>
+    <rect x="456" y="140" width="160" height="8" fill="var(--fg-muted, #6A6A68)"/>
+    <rect x="456" y="204" width="200" height="8" fill="#D5D4D1"/>
+    <rect x="456" y="204" width="80" height="8" fill="var(--sakura-pink, #141412)"/>
+    <rect x="456" y="268" width="200" height="8" fill="#D5D4D1"/>
+    <rect x="456" y="268" width="200" height="8" fill="var(--fg-muted, #6A6A68)"/>
+    <rect x="456" y="332" width="200" height="8" fill="#D5D4D1"/>
+    <rect x="456" y="332" width="40" height="8" fill="var(--fg-muted, #6A6A68)"/>
+    <rect x="456" y="396" width="200" height="8" fill="#D5D4D1"/>
+    <rect x="456" y="396" width="120" height="8" fill="var(--fg-muted, #6A6A68)"/>
 
     <!-- 状態バッジ。面は 1 種類に統一し、区別は文字が担う (色で区別しない) -->
-    <rect x="744" y="128" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <rect x="744" y="192" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <rect x="744" y="256" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <rect x="744" y="320" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
-    <rect x="744" y="384" width="112" height="32" rx="6" fill="#F8F7F0" stroke="var(--fuji-gray, #8a8980)" stroke-width="1.25"/>
+    <rect x="744" y="128" width="112" height="32" fill="#E1E6EA" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <rect x="744" y="192" width="112" height="32" fill="#E1E6EA" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <rect x="744" y="256" width="112" height="32" fill="#E1E6EA" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <rect x="744" y="320" width="112" height="32" fill="#E1E6EA" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
+    <rect x="744" y="384" width="112" height="32" fill="#E1E6EA" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25"/>
 
     <!-- 第 1 行 -->
-    <text x="48" y="148" font-size="14" fill="var(--fg, #43436c)">受注管理</text>
-    <text x="424" y="148" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">4時間</text>
-    <text x="712" y="148" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">80%</text>
-    <text x="800" y="148" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">検証中</text>
+    <text x="48" y="148" font-size="14" fill="var(--fg, #141412)">受注管理</text>
+    <text x="424" y="148" text-anchor="end" font-size="14" fill="var(--fg, #141412)">4時間</text>
+    <text x="712" y="148" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">80%</text>
+    <text x="800" y="148" text-anchor="middle" font-size="12" fill="var(--fg, #141412)">検証中</text>
 
     <!-- 第 2 行 (焦点) -->
-    <text x="48" y="212" font-size="14" fill="var(--fg, #43436c)">在庫連携</text>
-    <text x="424" y="212" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">1時間</text>
-    <text x="712" y="212" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">40%</text>
-    <text x="800" y="212" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">遅延</text>
+    <text x="48" y="212" font-size="14" fill="var(--fg, #141412)">在庫連携</text>
+    <text x="424" y="212" text-anchor="end" font-size="14" fill="var(--fg, #141412)">1時間</text>
+    <text x="712" y="212" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">40%</text>
+    <text x="800" y="212" text-anchor="middle" font-size="12" fill="var(--fg, #141412)">遅延</text>
 
     <!-- 第 3 行 -->
-    <text x="48" y="276" font-size="14" fill="var(--fg, #43436c)">会計連携</text>
-    <text x="424" y="276" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">8時間</text>
-    <text x="712" y="276" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">100%</text>
-    <text x="800" y="276" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">完了</text>
+    <text x="48" y="276" font-size="14" fill="var(--fg, #141412)">会計連携</text>
+    <text x="424" y="276" text-anchor="end" font-size="14" fill="var(--fg, #141412)">8時間</text>
+    <text x="712" y="276" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">100%</text>
+    <text x="800" y="276" text-anchor="middle" font-size="12" fill="var(--fg, #141412)">完了</text>
 
     <!-- 第 4 行 -->
-    <text x="48" y="340" font-size="14" fill="var(--fg, #43436c)">顧客ポータル</text>
-    <text x="424" y="340" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">0時間</text>
-    <text x="712" y="340" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">20%</text>
-    <text x="800" y="340" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">未着手</text>
+    <text x="48" y="340" font-size="14" fill="var(--fg, #141412)">顧客ポータル</text>
+    <text x="424" y="340" text-anchor="end" font-size="14" fill="var(--fg, #141412)">0時間</text>
+    <text x="712" y="340" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">20%</text>
+    <text x="800" y="340" text-anchor="middle" font-size="12" fill="var(--fg, #141412)">未着手</text>
 
     <!-- 第 5 行 -->
-    <text x="48" y="404" font-size="14" fill="var(--fg, #43436c)">社内ワークフロー</text>
-    <text x="424" y="404" text-anchor="end" font-size="14" fill="var(--fg, #43436c)">24時間</text>
-    <text x="712" y="404" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">60%</text>
-    <text x="800" y="404" text-anchor="middle" font-size="12" fill="var(--fg, #43436c)">検証中</text>
+    <text x="48" y="404" font-size="14" fill="var(--fg, #141412)">社内ワークフロー</text>
+    <text x="424" y="404" text-anchor="end" font-size="14" fill="var(--fg, #141412)">24時間</text>
+    <text x="712" y="404" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">60%</text>
+    <text x="800" y="404" text-anchor="middle" font-size="12" fill="var(--fg, #141412)">検証中</text>
 
     <!-- バッジの判定条件・列の定義・時点 (I1 / I3 / I4 / I-CMP)。
          引き出し線の注釈は矢じりを外した 1 行として最下段へ残してある。 -->
-    <text x="32" y="460" font-size="12" fill="var(--fuji-gray, #8a8980)">行の並びは順不同。凡例  完了 = 本番移行済 ／ 検証中 = 計画どおり ／ 遅延 = 計画比 2 週超 ／ 未着手 = 着手日が未定</text>
-    <text x="32" y="484" font-size="12" fill="var(--fuji-gray, #8a8980)">停止許容 = 業務が止まるまでの猶予（0 時間は無停止でしか移行できない）。移行進捗 = 全工程数に対する完了工程の割合</text>
-    <text x="32" y="508" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/7/31 時点・対象 5 システム</text>
-    <text x="928" y="508" text-anchor="end" font-size="12" font-style="italic" fill="var(--fuji-gray, #8a8980)">停止許容が短い行ほど遅れが効く</text>
+    <text x="32" y="460" font-size="12" fill="var(--fg-muted, #6A6A68)">行の並びは順不同。凡例  完了 = 本番移行済 ／ 検証中 = 計画どおり ／ 遅延 = 計画比 2 週超 ／ 未着手 = 着手日が未定</text>
+    <text x="32" y="484" font-size="12" fill="var(--fg-muted, #6A6A68)">停止許容 = 業務が止まるまでの猶予（0 時間は無停止でしか移行できない）。移行進捗 = 全工程数に対する完了工程の割合</text>
+    <text x="32" y="508" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/7/31 時点・対象 5 システム</text>
+    <text x="928" y="508" text-anchor="end" font-size="12" font-style="italic" fill="var(--fg-muted, #6A6A68)">停止許容が短い行ほど遅れが効く</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

@@ -45,6 +45,7 @@ import fcntl
 import hashlib
 import json
 import os
+import platform
 import re
 import secrets
 import socket
@@ -521,20 +522,34 @@ def session_source(payload: dict) -> str:
     return "unknown"
 
 
+def _harness_root_from(candidate: Path) -> Path | None:
+    """candidate 自身から親へ辿り harness source root を見つける。"""
+    candidate = Path(candidate).resolve()
+    for current in (candidate, *candidate.parents):
+        if is_harness_repository(current):
+            return current
+    return None
+
+
 def resolve_repo_root(payload: dict, argv_root: str | None = None, env: dict | None = None) -> Path:
-    """repo root を argv > env CLAUDE_PROJECT_DIR > payload cwd > 現在 cwd の順で解決する。"""
+    """repo root を優先順で解決し、harness 配下なら source root へ昇る。"""
     env = env if env is not None else os.environ
     if argv_root:
-        return Path(argv_root).resolve()
-    cpd = env.get("CLAUDE_PROJECT_DIR")
-    if cpd:
-        return Path(cpd).resolve()
-    if isinstance(payload, dict):
-        for key in ("cwd", "project_dir", "projectDir", "workspace_root", "workspaceRoot"):
-            v = payload.get(key)
-            if isinstance(v, str) and v:
-                return Path(v).resolve()
-    return Path.cwd()
+        candidate = Path(argv_root).resolve()
+    else:
+        candidate = None
+        cpd = env.get("CLAUDE_PROJECT_DIR")
+        if cpd:
+            candidate = Path(cpd).resolve()
+        elif isinstance(payload, dict):
+            for key in ("cwd", "project_dir", "projectDir", "workspace_root", "workspaceRoot"):
+                value = payload.get(key)
+                if isinstance(value, str) and value:
+                    candidate = Path(value).resolve()
+                    break
+        if candidate is None:
+            candidate = Path.cwd().resolve()
+    return _harness_root_from(candidate) or candidate
 
 
 # ─────────────────── C01 subprocess 委譲 (monkeypatch 点) ───────────────────
@@ -576,12 +591,15 @@ def invoke_c01(repo_root: Path, c01_script: Path, *, timeout: float, runner=None
 
 # ─────────────────── C01 exit → 内部 status 写像 ───────────────────
 def _classify_exit0(stdout: str) -> str:
-    """C01 exit 0 を verdict/adapters に応じ success/noop/skipped_not_installed へ分ける。"""
+    """C01 exit 0 を構造検証して success/noop/skipped へ分ける。"""
     report = _safe_json(stdout)
     adapters = report.get("adapters") if isinstance(report, dict) else None
     if not isinstance(adapters, list) or not adapters:
-        return STATUS_NOOP  # 判別材料なし → 無害な noop へ倒す
-    dicts = [a for a in adapters if isinstance(a, dict)]
+        return STATUS_INVALID
+    if not all(isinstance(adapter, dict) and isinstance(adapter.get("status"), str)
+               for adapter in adapters):
+        return STATUS_INVALID
+    dicts = adapters
     statuses = [a.get("status") for a in dicts]
     if statuses and all(s == "skipped_not_installed" for s in statuses):
         return STATUS_SKIPPED
@@ -636,6 +654,34 @@ def status_warning_remediation(status: str, repo_root: Path) -> tuple[str | None
         return ("C01 sync が timeout した (未完了)",
                 "lock 競合や重い I/O を確認し手動再実行する: " + _apply_cmd(repo_root))
     return (None, None)
+
+
+def runtime_provenance(repo_root: Path) -> dict:
+    """Local structured log 用の再現性情報。取得不能値は空に留める。"""
+    plugin: dict[str, str] = {"name": "harness-creator", "version": ""}
+    manifest = Path(repo_root).joinpath(*HARNESS_MANIFEST_REL)
+    try:
+        manifest_value = json.loads(manifest.read_text(encoding="utf-8"))
+        if isinstance(manifest_value, dict):
+            plugin["name"] = str(manifest_value.get("name") or plugin["name"])
+            plugin["version"] = str(manifest_value.get("version") or "")
+    except (OSError, json.JSONDecodeError):
+        pass
+    try:
+        hook_digest = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    except OSError:
+        hook_digest = ""
+    return {
+        "plugin": plugin,
+        "runtime": {
+            "implementation": platform.python_implementation(),
+            "python": platform.python_version(),
+            "executable": sys.executable,
+            "platform": sys.platform,
+        },
+        "hook": {"name": HOOK_NAME, "sha256": hook_digest},
+        "host": {"hostname": socket.gethostname(), "platform": platform.platform()},
+    }
 
 
 # ─────────────────── run_hook (core・全 injectable) ───────────────────
@@ -712,6 +758,7 @@ def run_hook(
             "lock": None,
             "timestamp": _iso(now),
             "log_path": safe_log_path.as_posix(),
+            "provenance": runtime_provenance(repo_root),
         }
         append_log(safe_log_path, result, now=now)
         return result
@@ -732,6 +779,7 @@ def run_hook(
             "lock": lock,
             "timestamp": _iso(now),
             "log_path": log_path.as_posix(),
+            "provenance": runtime_provenance(repo_root),
         }
         append_log(log_path, result, now=now)
         return result
@@ -765,8 +813,9 @@ def run_hook(
             "stdout": _bounded_diagnostic(c01_result.get("stdout", "")),
             "stderr": _bounded_diagnostic(c01_result.get("stderr", "")),
         }
-        # C01 が実際に呼べた場合のみ debounce guard を記録 (未 install は次回 retry を許す)。
-        if status != STATUS_SKIPPED:
+        # 成功/noop だけを session success guard へ記録。warning は同一
+        # session でも再試行できるよう記録しない。
+        if status in {STATUS_SUCCESS, STATUS_NOOP}:
             write_guard(guard_path, guard, sid, now, retention=retention)
         return _finish(status, reason=STATUS_REASON.get(status, status), lock=lock_lease.state, c01=c01_meta)
     except Exception as exc:  # noqa: BLE001 — fail-soft: 例外を session へ伝播しない

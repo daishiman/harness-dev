@@ -197,7 +197,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 生成レポート: 適用部品・埋め込みサイズ・warning・ゲート結果を返す。ゲート結果は `/handout-verify` が返した summary.json の verdict と gates をそのまま載せる。
 - 完了条件: 2 段ある (frontmatter `build_stage`)。**第1稿 (draft)** = ゲート集約の verdict が pass で、同梱物が既定の命名規則の出力ディレクトリに揃った状態。ここで利用者へ現物を渡して止まる。**仕上げ (release)** = 利用者の指摘を反映し、意味レビューと挿絵まで回した状態。
 
-HTML の組み立て自体は決定論 script へ委譲し LLM で書かない。読みやすさの最終判定は assign-handout-readability-evaluator (C03) へ委譲し、本 skill は返った verdict を受けて資料を直す側に回る。
+HTML の組み立て自体は決定論 script へ委譲し LLM で書かない。読みやすさの最終判定は assign-handout-readability-evaluator (C03) へ委譲し、本 skill は返った verdict を受けて資料を直す側に回る。release の visual-fit は alt 文ではなく埋め込み画像の実画素を全件開き、節内容と画像計画への一致を確認して初めて PASS にできる。
 
 ## ヒアリングと非対話経路
 
@@ -226,6 +226,8 @@ C05 が書いた構成データは validate-handout-config.py で検証し、`--
 共有時のサムネイル (OGP)・帯の一番上の題・紙面に出さない日付 (root 属性 data-hb-date が唯一の運び手)・節番号と題の区切り・2 行まで折り返す常時表示の目次・常駐する操作帯 (メモを埋め込んだ HTML の保存) は、すべて C11 が構成データから決定論に組み立てる面である。指摘を受けても HTML を手で足さず、出ていなければ C11 か構成データ側の欠落として扱う。
 
 挿絵の委譲は exit 0 が「生成した」と「skip した」の両方を含むため、exit code でなく stdout の `status` を読む。`status=skipped` のときは `skip_reason` (`srg-absent` = 委譲先の SRG 実体が解決できない / `runtime-absent` = node か codex が無い) をそのまま生成レポートの warning へ転記し、画像なしで先へ進む。skip を黙って成功へ畳まない — 挿絵が無いまま出来上がったことが読み手に見えなくなるためである。
+
+利用者が画風の参照画像または参照フォルダを示した場合は、選んだ実在画像を画像計画トップレベルの `style_reference_paths` として C21 へ渡す。説明文へ「漫画調」「青基調」と書くだけで代替しない。C21 は参照画素を SRG 作業域へ無加工で配置し、全節の `styleReference` へ同じ anchor として結線する。指定済み参照が欠落していれば fail-closed とし、参照なしの生成を成功扱いしない。
 
 ## ゲート集約と出力配置
 
@@ -277,7 +279,7 @@ D4-D6 と D10 を第1稿に残すのは速さと衝突しないためである�
 
 - [ ] F1: 生成レポートで開示した仮置き項目を利用者が確認し、覆った項目を R5-refine で反映した
 - [ ] F2: `draft_first.skipped_in_draft` の工程 (C03 への可読性レビュー委譲) を回した
-- [ ] F3: C03 から回収した verdict が PASS で、指摘に対する修正が資料へ反映されている
+- [ ] F3: C03 から回収した verdict が PASS で、指摘に対する修正が資料へ反映されている。visual-fit は全 illustration の実画素を開き、(a) 節の人物/役割主体・行為・場所・主役の具体物、(b) 読み順、(c) 指定された画風・配色・俯瞰角度、(d) 冊子内の統一と節ごとの場面差、を確認済みである
 - [ ] F4: 粒度を上げたのは利用者が指した箇所だけで、他は `first_draft_detail_level` のままである
 
 ### ゴールシークループ

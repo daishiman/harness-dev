@@ -1,0 +1,724 @@
+{
+  "schema_version": 1,
+  "generated_by": "plugins/harness-creator/scripts/build-hook-registry.py",
+  "note": "生成物。編集は plugins/*/hooks/hooks.json 側で行い make hook-registry で再生成する。",
+  "entries": [
+    {
+      "id": "contract-generator:PreToolUse:0:0",
+      "plugin": "contract-generator",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-secret.py",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "dev-graph:PostToolUse:0:0",
+      "plugin": "dev-graph",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "timeout": 10,
+      "async": true,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "dev-graph:PreToolUse:0:0",
+      "plugin": "dev-graph",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard-graph-schema.py\" --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "dev-graph:SessionStart:0:0",
+      "plugin": "dev-graph",
+      "event": "SessionStart",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": "startup|resume",
+        "codex": "startup|resume"
+      },
+      "scope": {},
+      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "dev-graph:TaskCompleted:0:0",
+      "plugin": "dev-graph",
+      "event": "TaskCompleted",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event task-completed --repo-root \"${CLAUDE_PROJECT_DIR}\"",
+      "timeout": 20,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "extract-system-blueprint:PreToolUse:0:0",
+      "plugin": "extract-system-blueprint",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash|WebFetch",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/pre-fetch-authz-guard.py",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "guide-doc-generator:PostToolUse:0:0",
+      "plugin": "guide-doc-generator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Write|Edit",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-handout-external-ref.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:0:0",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "codex": "shell_command|exec_command|apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/external-intelligence-observe.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:1:0",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Skill",
+        "codex": ""
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/notify-skill-end.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:1:1",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Skill",
+        "codex": ""
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/content-review-queue.py\"",
+      "timeout": 3,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:2:0",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Edit|Write",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/lint-capability-manifest.py\"",
+      "timeout": 5,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:2:1",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Edit|Write",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/content-review-queue.py\"",
+      "timeout": 3,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:3:0",
+      "plugin": "harness-creator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Edit",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/diff-rubric-impact.py\"",
+      "timeout": 5,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUseFailure:0:0",
+      "plugin": "harness-creator",
+      "event": "PostToolUseFailure",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+        "codex": "shell_command|exec_command|apply_patch"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/external-intelligence-observe.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "harness-creator:PreToolUse:0:0",
+      "plugin": "harness-creator",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/wrap-git-commit-safe.py\"",
+      "timeout": 4,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:SessionEnd:0:0",
+      "plugin": "harness-creator",
+      "event": "SessionEnd",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/aggregate-evals.py\"",
+      "timeout": 3,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:SessionStart:0:0",
+      "plugin": "harness-creator",
+      "event": "SessionStart",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": "startup|resume|clear",
+        "codex": "startup|resume|clear"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py\"",
+      "timeout": 60,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:Stop:0:0",
+      "plugin": "harness-creator",
+      "event": "Stop",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/elegant-review-trigger.py\"",
+      "timeout": 3,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:UserPromptSubmit:0:0",
+      "plugin": "harness-creator",
+      "event": "UserPromptSubmit",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/cache-refresh.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "harness-creator:UserPromptSubmit:0:1",
+      "plugin": "harness-creator",
+      "event": "UserPromptSubmit",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/ref-task-context-map-preload.py\"",
+      "timeout": 3,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "plugin-dev-planner:PostToolUse:0:0",
+      "plugin": "plugin-dev-planner",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Edit|Write",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-validate-plugin-plan.py",
+      "timeout": 10000,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "plugin-dev-planner:PreToolUse:0:0",
+      "plugin": "plugin-dev-planner",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash|Task",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/enforce-provenance-chain.py",
+      "timeout": 10000,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-governance-adapters:PreToolUse:0:0",
+      "plugin": "skill-governance-adapters",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/build-external-mutation-guard.py\" pretool",
+      "timeout": 8,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-governance-adapters:UserPromptSubmit:0:0",
+      "plugin": "skill-governance-adapters",
+      "event": "UserPromptSubmit",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/build-external-intelligence-context.py\"",
+      "timeout": 8,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-governance-adapters:UserPromptSubmit:0:1",
+      "plugin": "skill-governance-adapters",
+      "event": "UserPromptSubmit",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/build-external-mutation-guard.py\" hook-confirm",
+      "timeout": 8,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-intake:PostToolUse:0:0",
+      "plugin": "skill-intake",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Skill",
+        "codex": ""
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "skill-intake:PreToolUse:0:0",
+      "plugin": "skill-intake",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-intake:PreToolUse:0:1",
+      "plugin": "skill-intake",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/pre-publish-secret-scrub.sh\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-intake:PreToolUse:0:2",
+      "plugin": "skill-intake",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/pre-publish-schema-validate.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-intake:PreToolUse:1:0",
+      "plugin": "skill-intake",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Skill|Task",
+        "codex": ""
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude"
+      ]
+    },
+    {
+      "id": "skill-intake:PreToolUse:1:0:codex-skill-invocation",
+      "plugin": "skill-intake",
+      "event": "UserPromptSubmit",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": "",
+        "codex": ".*"
+      },
+      "scope": {
+        "skills": [
+          "*"
+        ]
+      },
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "codex"
+      ],
+      "derived_from": "skill-intake:PreToolUse:1:0"
+    },
+    {
+      "id": "skill-intake:SessionEnd:0:0",
+      "plugin": "skill-intake",
+      "event": "SessionEnd",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "skill-intake:Stop:0:0",
+      "plugin": "skill-intake",
+      "event": "Stop",
+      "tool_scoped": false,
+      "matcher": {
+        "claude": ".*",
+        "codex": ".*"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-guard-skillgen.py\"",
+      "timeout": null,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "slide-report-generator:PostToolUse:0:0",
+      "plugin": "slide-report-generator",
+      "event": "PostToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Write|Edit|MultiEdit",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-postgen-eval.py",
+      "timeout": 45,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "spec-drift-guardian:PreToolUse:0:0",
+      "plugin": "spec-drift-guardian",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-spec-drift-close.py",
+      "timeout": 10000,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "system-dev-planner:PreToolUse:0:0",
+      "plugin": "system-dev-planner",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Bash|Task",
+        "codex": "shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-implementation-readiness.py",
+      "timeout": 10000,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "system-spec-harness:PreToolUse:0:0",
+      "plugin": "system-spec-harness",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Write|Edit|Bash",
+        "codex": "apply_patch|shell_command|exec_command"
+      },
+      "scope": {},
+      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-confirmed-chapter-overwrite.py\"",
+      "timeout": 10,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    },
+    {
+      "id": "ubm-goal-setting:PreToolUse:0:0",
+      "plugin": "ubm-goal-setting",
+      "event": "PreToolUse",
+      "tool_scoped": true,
+      "matcher": {
+        "claude": "Write|Edit|MultiEdit",
+        "codex": "apply_patch"
+      },
+      "scope": {},
+      "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/ubm-write-path-guard.py",
+      "timeout": 10000,
+      "async": false,
+      "products": [
+        "claude",
+        "codex"
+      ]
+    }
+  ],
+  "codex_unreachable": [
+    {
+      "id": "dev-graph:TaskCompleted:0:0",
+      "reason": "event-unsupported-on-codex",
+      "tools": []
+    },
+    {
+      "id": "harness-creator:PostToolUse:1:0",
+      "reason": "no-codex-tool-equivalent",
+      "tools": [
+        "Skill"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUse:1:1",
+      "reason": "no-codex-tool-equivalent",
+      "tools": [
+        "Skill"
+      ]
+    },
+    {
+      "id": "harness-creator:PostToolUseFailure:0:0",
+      "reason": "event-unsupported-on-codex",
+      "tools": [
+        "Skill"
+      ]
+    },
+    {
+      "id": "skill-intake:PostToolUse:0:0",
+      "reason": "no-codex-tool-equivalent",
+      "tools": [
+        "Skill"
+      ]
+    }
+  ]
+}

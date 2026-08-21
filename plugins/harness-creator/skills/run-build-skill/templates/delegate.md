@@ -30,9 +30,18 @@ last-audited: {{last_audited_date}}
 audit-trigger: {{audit_trigger | default("quarterly")}}
 # permissions: 副作用ありスキルは settings.json の permissions.deny に明示禁止を書くこと（設計書04章）
 # PreToolUse hook: 文脈次第の危険検査を hook で追加（二段防御）。例: plugins/skill-governance-config/config/claude-settings-hooks.json.example 参照
+runtime_root_policy: host-skill-path
 ---
 
 # {{name}}
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## 目的と出力契約
 {{output_contract}}

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "assign-blueprint-fidelity-evaluator",
-    "skill_md_sha256": "eac4061b71d1ed9229c7182d15efb546a3c9c86f6c95a2d4a3959aaf2d321f0a"
+    "skill_md_sha256": "b0c2b513de43880c984d05c4fbbff06687d4dce2f80007d5f08d8e8b0363c132"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "assign-skill-design-evaluator-independent-group-a",
-  "reviewed_at": "2026-07-12T00:16:37Z",
-  "iterations": 2,
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,14 +24,16 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "skill-design 1.3.0の機械採点100/100。assign prefix/name、2 trigger、Purpose/Gotchas、本文300行以内、references/scripts/schema/manifest、required_fixes 0を確認。",
-      "evaluatorの単一責務、fork境界、read-only被評価物、deterministic emit、handoffが明確で、関連manifestのresourceIdsも実ファイルとphase責務へ一致する。"
+      "前回 FAIL とした L128 `recount-palette-orphans.py` と L140 `emit-verdict.py` が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-blueprint-fidelity-evaluator/scripts/...` へ是正され、bare `$CLAUDE_SKILL_DIR` は本文から消滅した。共有ゲート側 (L119/L120) と同一の解決形になり、CL-9 (IN1) と CL-10 の実行経路が両ホストで解決可能になっている。",
+      "L60 の役割 blockquote も『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ更新され、散文層と実行層の表記が一致した (本群では珍しく doc 層 drift ゼロ)。",
+      "IN1 の存在理由である『共有ゲートだけに依存せず非共有の再計数を 1 本通す (common-mode 破り)』が Key Rules 3・Gotchas 2・完了条件・CL-9 で反復固定され、OUT1 の三値排他/ペルソナ偽装/anti-overfit が Key Rules 4-6 と CL-7/CL-8 へ漏れなく対応する。",
+      "proposer≠approver が `context: fork` + Write/Edit 非保持 + 禁則節の三重で担保され、Gotchas 7 が『recount のゼロ件は被覆の証明ではない』と Goodhart 経路を名指しで塞いでいる。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "Phase 1リセット後30思考法を全件使用（skip 0）。初回findingをSKILLだけで隠さずprompt/schema/script doc/manifestまで一貫修正し再評価した。verdict approverは生成側と分離した独立group-A evaluator。 rubric=skill-design 1.3.0、rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:964f754f53128715cc6da07f933f12e466d5fe943dad21929bc9b83adf7bcef9、score=100/100、threshold=80。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (bare `$CLAUDE_SKILL_DIR` による同梱 script 起動 2 件) の解消を確認して PASS へ転じた。"
 }

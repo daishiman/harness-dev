@@ -6,7 +6,7 @@
 name: skill-intake
 description: harness-creator の前段ヒアリングを非エンジニアに開く plugin。曖昧要望から intake 仕様(Markdown 正本 + JSON 副本 + Notion ページ)を 11 phase で生成し、macOS Keychain 経由の Notion PAT で公開する。
 kind: plugin-composition
-version: 0.1.12
+version: 0.1.15
 owner: team-platform
 since: 2026-05-22
 last-audited: 2026-07-01
@@ -30,41 +30,46 @@ contract:
     - "cross-boundary (他 plugin 契約 / 環境前提 / 観測宣言) の写しはインライン複製禁止。参照一本化 (正本ポインタ) または parity lint による byte/値一致検証を必須とする (enforcement: manual + references/handoff-contract.md の正本参照規約)"
 
 capabilities:
+  - { kind: skill, ref: skills/assign-notion-fidelity-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-intake-finalize, tier: core }
+  - { kind: skill, ref: skills/run-intake-interview, tier: core }
+  - { kind: skill, ref: skills/run-intake-kickoff, tier: core }
+  - { kind: skill, ref: skills/run-intake-next-action, tier: core }
+  - { kind: skill, ref: skills/run-intake-option-catalog, tier: core }
+  - { kind: skill, ref: skills/run-intake-revise, tier: core }
+  - { kind: skill, ref: skills/run-intake-status, tier: core }
+  - { kind: skill, ref: skills/run-intake-visualize, tier: core }
+  - { kind: skill, ref: skills/run-notion-intake-publish, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-skill-intake, tier: core }
+  - { kind: agent, ref: agents/skill-intake-assumption-challenger, tier: core }
+  - { kind: agent, ref: agents/skill-intake-purpose-excavator, tier: core }
+  - { kind: agent, ref: agents/skill-intake-summarizer, tier: core }
+  - { kind: agent, ref: agents/skill-intake-user-profiler, tier: core }
+  - { kind: command, ref: commands/intake-publish, tier: core }
+  - { kind: command, ref: commands/intake-revise, tier: core }
+  - { kind: command, ref: commands/intake-status, tier: core }
+  - { kind: command, ref: commands/intake, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/hook-guard-skillgen", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-secret-scrub", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-schema-validate", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-SkillTask/hook-guard-skillgen", tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-Skill/hook-guard-skillgen", tier: core }
+  - { kind: hook, ref: "hook:Stop/hook-guard-skillgen", tier: core }
+  - { kind: hook, ref: "hook:SessionEnd/hook-guard-skillgen", tier: core }
+  - { kind: hook, ref: hooks/post-keychain-add.sh, tier: core }
+  # receipt-gated 起動のみで、hook event への常時配線は持たない公開面。
+  - { kind: hook, ref: hooks/post-publish-notify.sh, tier: core }
+
   # === Skills (kind=skill) — .claude-plugin/plugin.json entry_points.skills と一致 ===
-  - { kind: skill, ref: skills/run-skill-intake,          tier: core }       # 11 phase orchestrator
-  - { kind: skill, ref: skills/run-intake-kickoff,        tier: core }       # P1
-  - { kind: skill, ref: skills/run-intake-interview,      tier: core }       # P4
-  - { kind: skill, ref: skills/run-intake-option-catalog, tier: core }       # P6
-  - { kind: skill, ref: skills/run-intake-visualize,      tier: core }       # P7
-  - { kind: skill, ref: skills/run-intake-finalize,       tier: core }       # P9
-  - { kind: skill, ref: skills/run-notion-intake-publish, tier: core }       # P10
-  - { kind: skill, ref: skills/assign-notion-fidelity-evaluator, tier: core }       # P10 内部
-  - { kind: skill, ref: skills/run-intake-next-action,    tier: core }       # P11
-  - { kind: skill, ref: skills/run-intake-revise,         tier: extension }  # /intake-revise
   # run-skill-feedback は harness-creator/skills への symlink であり package exclude 対象。
   # harness-creator 併用時のみ有効なため skill-intake の公開 capabilities には含めない。
 
   # === Agents (kind=agent) — context:fork の SubAgent ===
-  - { kind: agent, ref: agents/skill-intake-assumption-challenger, tier: core }  # P2
-  - { kind: agent, ref: agents/skill-intake-user-profiler,         tier: core }  # P3
-  - { kind: agent, ref: agents/skill-intake-purpose-excavator,     tier: core }  # P5
-  - { kind: agent, ref: agents/skill-intake-summarizer,            tier: core }  # P8 (Gate A)
 
   # === Commands (kind=command) ===
-  - { kind: command, ref: commands/intake,         tier: core }
-  - { kind: command, ref: commands/intake-publish, tier: extension }
-  - { kind: command, ref: commands/intake-revise,  tier: extension }
-  - { kind: command, ref: commands/intake-status,  tier: extension }
 
   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
-  - { kind: hook, ref: "hook:PreToolUse-Bash/hook-guard-skillgen",       tier: core }
-  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-secret-scrub",  tier: core }
-  - { kind: hook, ref: "hook:PreToolUse-Bash/pre-publish-schema-validate", tier: core }
-  - { kind: hook, ref: "hook:PreToolUse-SkillTask/hook-guard-skillgen",  tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-Bash/post-publish-notify",      tier: extension }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/hook-guard-skillgen",     tier: core }
-  - { kind: hook, ref: "hook:Stop/hook-guard-skillgen",                  tier: core }
-  - { kind: hook, ref: "hook:SessionEnd/hook-guard-skillgen",            tier: core }
 
 dependencies:
   # 主要 DAG(循環なし)。run-skill-intake が workflow-manifest.json 順に 11 phase を委譲する。
@@ -91,9 +96,14 @@ dependencies:
 
 # P11 mode=P のとき intake.json を構想材料として推奨引き渡しする任意の cross-plugin 契約。
 external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
   plugin-dev-planner:
     version: ">=0.1.5 <1.0.0"
     required: false
+    required_entry_points: [run-plugin-dev-plan]
     edges:
       - {from: skills/run-intake-next-action, to: skills/run-plugin-dev-plan, type: emits}
 
@@ -116,7 +126,8 @@ observability:
     - PostToolUse-Skill/hook-guard-skillgen
     - Stop/hook-guard-skillgen
     - SessionEnd/hook-guard-skillgen
-    - PostToolUse-Bash/post-publish-notify
+    # Slack 通知は汎用 PostToolUse hook ではなく publish pipeline の
+    # success receipt 経由で exactly-once dispatch する。
   # metrics は宣言のみで集計 producer script は未実装 (ROADMAP 中期の compute-intake-metrics 前倒し対象)。
   # 素材は scripts/append_eval_log.py の eval-log/skill-intake/<date>.jsonl と eval-log/intake-trace.json。
   metrics:

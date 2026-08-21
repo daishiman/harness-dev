@@ -5,7 +5,7 @@
 name: system-spec-harness
 description: システム構築 (Web/モバイル/タブレット/デスクトップ横断) の仕様情報を往復ヒアリングでカテゴリ×プラットフォーム網羅マトリクスとして収集し、設計知識参照と最新公式ドキュメント出典を添えて章立て複数 Markdown + index の仕様書ドキュメントセットへまとめるハーネス plugin。
 kind: plugin-composition
-version: 0.1.10
+version: 0.1.11
 owner: team-platform
 since: 2026-07-11
 last-audited: 2026-07-11
@@ -26,24 +26,26 @@ contract:
     - 成果物本文・レビュー・レポートは日本語、JSON キー・CLI 引数は英語
 
 capabilities:
-  # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-system-spec-elicit,                    tier: core }
-  - { kind: skill, ref: skills/run-system-spec-doc-fetch,                 tier: core }
-  - { kind: skill, ref: skills/run-system-spec-compile,                   tier: core }
-  - { kind: skill, ref: skills/ref-system-design-knowledge,              tier: core }
   - { kind: skill, ref: skills/assign-system-spec-completeness-evaluator, tier: core }
+  - { kind: skill, ref: skills/ref-system-design-knowledge, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-compile, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-doc-fetch, tier: core }
+  - { kind: skill, ref: skills/run-system-spec-elicit, tier: core }
+  - { kind: agent, ref: agents/system-spec-doc-freshness-auditor, tier: core }
+  - { kind: agent, ref: agents/system-spec-hearing-auditor, tier: core }
+  - { kind: agent, ref: agents/system-spec-matrix-auditor, tier: core }
+  - { kind: command, ref: commands/spec-compile, tier: core }
+  - { kind: command, ref: commands/spec-hearing-start, tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
+
+  # === Skills (kind=skill) ===
 
   # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
-  - { kind: agent, ref: agents/system-spec-hearing-auditor,       tier: core }
-  - { kind: agent, ref: agents/system-spec-matrix-auditor,        tier: core }
-  - { kind: agent, ref: agents/system-spec-doc-freshness-auditor, tier: core }
 
   # === Commands (kind=slash-command) ===
-  - { kind: command, ref: commands/spec-hearing-start, tier: core }
-  - { kind: command, ref: commands/spec-compile,       tier: core }
 
   # === Hooks (kind=hook) ===
-  - { kind: hook, ref: "hook:PreToolUse-WriteEditBash/guard-confirmed-chapter-overwrite", tier: core }
 
   # === Scripts (kind=script・plugin-root 共有決定論ゲート) ===
   - { kind: script, ref: scripts/validate-coverage-matrix.py,  tier: core }
@@ -68,6 +70,12 @@ dependencies:
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-matrix-auditor, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-hearing-auditor, type: calls}
   - {from: skills/assign-system-spec-completeness-evaluator, to: agents/system-spec-doc-freshness-auditor, type: calls}
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
 
 eval_sinks: [EVALS.json]
 observability:

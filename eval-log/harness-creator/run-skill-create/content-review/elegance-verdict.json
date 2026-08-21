@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-create",
-    "skill_md_sha256": "cefd4bbcf9e749fe7ba0d299c3c52334da721e625684e6205d7cd306a17ea93f"
+    "skill_md_sha256": "5d61dfb147c6611baca57f75722ce44a9f4efbbeb709494699da895f280d9e74"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -22,22 +22,24 @@
     "criteria_evaluated": [
       "IN1",
       "IN2",
+      "IN3",
       "OUT1",
       "OUT2"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "OUT1 の緩和 (「ユーザー承認前に自動前進せず」→「全遷移が明示的 gate decision なしに前進せず、人間承認 gate はユーザー承認必須、solo governance 自動承認は全条件充足時だけ」) が空文化ではないことを確認した。workflow-manifest.json 側で全 phase に `transition: {gate, on_pass, on_fail}` が新設され、governance phase の `auto_approve_conditions` 4 件が従来から存在し、さらに `context: fork` が追加されている。本文の緩和と manifest の締め付けが同じ方向を向いており、Key Rules 1・Gotchas 1・ゴールシーク節の 3 箇所も同一表現へ揃っている。",
+      "新設 IN3 (`derived_from: [CL-14]`) と新設 CL-14 チェック項目が 1:1 で対応し、verify_by: lint が指す `audit-capability-parity.py` が p0-lint phase の commands へ実際に追加されている (宣言・checklist・機械実行の三点が閉じている)。同スクリプトを実走して harness-creator が verdict PASS であることも確認した。",
+      "Step 3.55 / 3.56 (codex-platform-sync / codex-platform-check) が SKILL.md のフロー図と workflow-manifest.json の phase 定義・dependsOn 連鎖 (bundle-register→codex-platform-sync→codex-platform-check→local-marketplace-register) の双方に入り、`local-marketplace-register.dependsOn` も追従して更新されている。挿入時の DAG 断裂が無い。",
+      "manifest の script 起動行が `python3 plugins/...` の repo 相対から `${PLUGIN_ROOT}/...` / `${PLUGIN_ROOT}/../<other-plugin>/...` へ一括で揃い、SKILL.md 側でも `$PLUGIN_ROOT` 表記と一致した。生成対象 repo を操作する root-level gate (`${HARNESS_ROOT:-.}/scripts/...`) だけを別入力として残す方針が Runtime root contract 節で明文化されている。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] CL-4d の `sync-plugin-platforms.py --all --check` は script path も必須の `--repo-root` も欠く短縮表記。実 argparse では `--repo-root` が required=True なので、この行をそのまま貼ると exit 2 になる。同一 checklist の他項目 (CL-4/CL-4b/CL-4c) が `python3 ${HARNESS_ROOT:-.}/scripts/...` の完全形なので表記が不揃い。完全形は委譲先 run-codex-plugin-package と workflow-manifest の codex-platform-check phase に存在するため解決可能。",
+      "[low / smell] CL-4d は `--all --check` を要求するが、workflow-manifest の codex-platform-sync/check phase は `--plugin plugins/<plugin>` scope で実行する。checklist の方が広い scope を要求しており、どちらが完了条件かは本文だけからは一意でない (broader を満たせば narrower も満たすため実害は無い)。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration + runtime_root_policy: host-skill-path 導入によって SKILL.md sha が既存 verdict と乖離したことに対する再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 本 verdict は elegance 面 (30思考法の代替としての focused combined review による設計 adequacy) への投影である。 共通の機械検査として次を実走した: (1) `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` = verdict PASS / violations 空。(2) frontmatter が宣言した responsibility_refs / manifest / schemas と本文が起動する script の実在をファイル存在確認で全件突合 (audit-capability-parity.py, sync-plugin-platforms.py, check-route-component-parity.py, install-codex-plugin.py, install-local-plugins.py, evaluate-create-gates.py, validate-intake-publish-ready.py, lint-plugin-composition.py, search_knowledge.py, build-external-intelligence.py, lint-readme-plugin-root-portability.py, ref-cross-platform-runtime/references/runtime-portability.md) — 欠損 0 件。(3) 本文が引用する CLI flag を各 script の argparse 定義と突合。(4) 参照 anchor `#product別-plugin-root-契約` (runtime-portability.md L41) と `#h7-ナレッジループ注入の詳細手順` (build-steps.md L502) の実在を確認。 評価方法: SKILL.md 差分の全 hunk に加え、判定に必要な `workflow-manifest.json` の差分 (99 行) と `prompts/R1-elicit.md` / `R2-gate-review.md` / `R3-governance-decide.md` の差分を読んだ。OUT1 の緩和が gate の空文化でないことを manifest 側の transition 新設・auto_approve_conditions・governance phase の context:fork 追加で裏取りし、新設 IN3↔CL-14↔p0-lint commands の三点閉包を確認した上で `audit-capability-parity.py` を実走 (verdict PASS) した。Step 3.55/3.56 挿入時の dependsOn 連鎖と `local-marketplace-register` の依存更新も確認し DAG 断裂なし。未解決 medium 以上は 0 件、low 2 件はいずれも checklist 内コマンド表記の粒度不揃いで、完全形が委譲先と manifest に存在するため実行不能にならない。よって verdict は PASS。PASS の射程は静的設計 adequacy に限る。"
 }

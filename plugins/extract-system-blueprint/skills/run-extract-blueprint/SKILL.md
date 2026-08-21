@@ -71,6 +71,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -88,15 +89,15 @@ Never execute the external mutation argv directly. Replace every angle-bracket p
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Present that official preview output to the user. Only the exact user reply printed by `preview`
 may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
-python3 "${CLAUDE_PLUGIN_ROOT}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
@@ -105,7 +106,15 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 # run-extract-blueprint
 
-> extract-system-blueprint plugin の抽出本体 (L1 skill)。plugin-root 共有 script (`scripts/authz-classify.py`=C12 / `fetch-snapshot.py`=C09 / `browser-render.py`=C15 / `doc-emit.py`=C11 / `mermaid-validate.py`=C10)・analyzer sub-agent 5 体 (C03/C04/C05/C13/C06)・fail-closed hook (`hooks/pre-fetch-authz-guard.py`=C08) を配線する。パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下。
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
+> extract-system-blueprint plugin の抽出本体 (L1 skill)。plugin-root 共有 script (`scripts/authz-classify.py`=C12 / `fetch-snapshot.py`=C09 / `browser-render.py`=C15 / `doc-emit.py`=C11 / `mermaid-validate.py`=C10)・analyzer sub-agent 5 体 (C03/C04/C05/C13/C06)・fail-closed hook (`hooks/pre-fetch-authz-guard.py`=C08) を配線する。パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点、成果物は明示した project root 配下。
 
 ## Purpose & Output Contract
 
@@ -122,11 +131,11 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ## データ契約と責務分割
 
-- **fact / inference / observation_gap 三値分離** (`$CLAUDE_PLUGIN_ROOT/schemas/fact-inference-confidence.schema.json`): fact は provenance (source_url/locator/captured_at/method/snapshot_id) 必須・レンズ解釈を含めない。inference は claim + evidence_refs(≥1) + confidence{level,rationale} 必須。observation_gap は not_observed|blocked + reason + budget_state で inference に昇格させない。top-level blueprint shape は `system-blueprint.schema.json` (screens[]/design_tokens/tech_stack/essence 等) を正本とする。
+- **fact / inference / observation_gap 三値分離** (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/fact-inference-confidence.schema.json`): fact は provenance (source_url/locator/captured_at/method/snapshot_id) 必須・レンズ解釈を含めない。inference は claim + evidence_refs(≥1) + confidence{level,rationale} 必須。observation_gap は not_observed|blocked + reason + budget_state で inference に昇格させない。top-level blueprint shape は `system-blueprint.schema.json` (screens[]/design_tokens/tech_stack/essence 等) を正本とする。
 - **責務 (詳細は `prompts/R1-R3`)**:
   - **R1-fetch** (`prompts/R1-fetch.md`): C12 で AuthzEvidence/request budget/crawl_profile を確定し、C09 の URL discovery → C12 の scope 分類 (in_scope/excluded+reason) で system 関連 URL 台帳を作り、C08 の fail-closed 境界内で C09 静的 HTTP snapshot を全 in-scope 画面へ取得し、加えて C15 (`browser-render.py`・MCP 非依存 headless Chrome via Bash) で rendered DOM/screenshot の取得を試みる (ブラウザ不在=exit 3 時のみ gap)。`--resume` は前 run の site coverage manifest を C12 `--coverage-manifest-in` へ再投入する。
   - **R2-analyze (post-choice only)**: light/standard/detailed選択後だけC03→C04/C05/C13→C06をTaskの独立contextへ委譲する。提示前とaccept-as-isでは起動しない。各analyzerは提示済みdraft digestを入力にfact/inferenceを分離して拡充する。
-  - **R3-document** (`prompts/R3-document.md`): C11 (`doc-emit.py`) で章別ローカル draft (md/json) と 5 種 Mermaid・画面別 layout.json/overlay を確定し、`doc-emit.py --check-screens` で layout completeness を、`mermaid-validate.py` (C10) で図種網羅を自己検証する。`python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で起動する。screenshot / annotated は browser-render (C15) 取得時に extraction の screens[] へ populate され、ブラウザ不在時のみ `observation_gap` として記録する。
+  - **R3-document** (`prompts/R3-document.md`): C11 (`doc-emit.py`) で章別ローカル draft (md/json) と 5 種 Mermaid・画面別 layout.json/overlay を確定し、`doc-emit.py --check-screens` で layout completeness を、`mermaid-validate.py` (C10) で図種網羅を自己検証する。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で起動する。screenshot / annotated は browser-render (C15) 取得時に extraction の screens[] へ populate され、ブラウザ不在時のみ `observation_gap` として記録する。
 
 ## ゴールシーク実行
 
@@ -171,7 +180,7 @@ URL をブラウザ目視 + F12 確認する手作業 3 ステップ (週 2.5 �
 各周回末に中間成果物 JSONL の整合を機械検証する。`required_keys` (= `original_goal`, `merged_directive_for_next`, `delta_from_original`) が全て存在し、`original_goal_hash` が初回の `hashlib.sha256(original_goal)` と一致することを確認する (ゴール改竄検出)。不一致なら周回を停止し差し戻す。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-goal-seek-anchor.py" \
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-anchor.py" \
   --intermediate eval-log/run-extract-blueprint-intermediate.jsonl
 ```
 
@@ -183,7 +192,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-goal-seek-anchor.py" \
 
 ### 局面: 認可 preflight と取得 (R1-fetch)
 
-run 開始時の bootstrap は**単一 Bash 呼び**が正本: `mkdir -p "${CLAUDE_PROJECT_DIR:-$PWD}/.esb-authz" && python3 "$CLAUDE_PLUGIN_ROOT/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls ... --coverage-manifest-in ...]` で状態置場作成と C12 authz 発行を同一呼び内で完結させ、allow/deny/unknown と budget/crawl_profile を確定する (unknown は deny)。C08 hook は tool call 時点で dir 不在なら非アクティブで素通すため、この呼び完了時には dir+evidence が揃い、以後の全 tool call が enforce される (evidence 不在窓なし)。**分割禁止**: `mkdir` 単独を先行させると hook が即アクティブ化し、evidence の唯一の producer である C12 呼び自身が evidence 不在=fail-closed deny (exit2) で遮断され bootstrap deadlock になる。`ESB_RUN=1` は hook が別プロセスで spawn されるため Bash セッション内 export では継承されず、セッション起動時 env としてのみ有効な補助上書き。allow のとき `python3 "$CLAUDE_PLUGIN_ROOT/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out ...]` で snapshot + discovery。evidence/budget は C08 が参照する `ESB_AUTHZ_DIR` (既定 `.esb-authz`) へ配置する。全 fetch は C08 hook の fail-closed 境界内で走る。
+run 開始時の bootstrap は `Bash(python3 *)` で許可された**単一 Python 呼び**が正本: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls ... --coverage-manifest-in ...]`。`authz-classify.py` 自身が出力親dirを作成して C12 authz とbudgetを同一処理で発行し、allow/deny/unknown と budget/crawl_profile を確定する (unknown は deny)。C08 hook は tool call 開始時にdir不在ならこのbootstrapだけを素通しし、完了時にはdir+evidenceが揃うため、以後の全tool callがenforceされる (evidence不在窓なし)。`ESB_RUN=1` は hook が別プロセスでspawnされるため Bashセッション内exportでは継承されず、セッション起動時envとしてのみ有効な補助上書き。allow のとき `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out ...]` で snapshot + discovery。evidence/budget は C08 が参照する `ESB_AUTHZ_DIR` (既定 `.esb-authz`) へ配置する。全 fetch は C08 hook の fail-closed 境界内で走る。
 
 ### 局面: 分析への fan-out (R2-analyze)
 
@@ -191,7 +200,7 @@ Task で `frontend-surface-analyzer` を先行起動し fact records を得て�
 
 ### 局面: 文書化と自己検証 (R3-document)
 
-`python3 "$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で章別 draft + Mermaid + layout を生成し、`doc-emit.py --check-screens` と `python3 "$CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py" --docs-dir <dir>` で自己検証。draft_hash を固定する。
+`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で章別 draft + Mermaid + layout を生成し、`doc-emit.py --check-screens` と `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/mermaid-validate.py" --docs-dir <dir>` で自己検証。draft_hash を固定する。
 
 ## Key Rules
 
@@ -209,16 +218,16 @@ Task で `frontend-surface-analyzer` を先行起動し fact records を得て�
 
 ## Gotchas
 
-- **`export ESB_RUN=1` は hook に届かない**: PreToolUse hook はハーネスが別プロセスで spawn するため Bash セッション内 export を継承しない。C08 run-scoping のアクティブ化は `.esb-authz` / `.esb-verdict` ディレクトリ検出が正 (R1 冒頭の combined call で作成)。`ESB_RUN=1` はセッション起動時 env としてのみ有効。
-- **`mkdir -p .esb-authz` 単独先行は bootstrap deadlock**: dir 発見で hook が即アクティブ化し、evidence の唯一の producer である C12 (`authz-classify.py`) の Bash 呼び自身が evidence 不在=fail-closed deny (exit2) で遮断される。bootstrap は `mkdir -p ... && authz-classify` の**単一 Bash 呼び** (R1 冒頭) で行う (呼び時点は dir 不在=非アクティブで素通り、完了時に dir+evidence が揃う)。
+- **`export ESB_RUN=1` は hook に届かない**: PreToolUse hook はハーネスが別プロセスで spawn するため Bash セッション内 export を継承しない。C08 run-scoping のアクティブ化は `.esb-authz` / `.esb-verdict` ディレクトリ検出が正 (R1 冒頭の `authz-classify.py` 単一 Python 呼びが親dirごと作成する)。`ESB_RUN=1` はセッション起動時 env としてのみ有効。
+- **`.esb-authz` を手作業で先行作成しない**: 空dirだけがあるとhookがアクティブ化し、evidence producerであるC12をevidence不在として遮断しうる。bootstrapは親dirを原子的に用意する `authz-classify.py` の単一Python呼びで行う。
 - **MCP を使わない (browser 観測は progressive enhancement)**: 本 skill は外部 MCP 接続を持たず、WebFetch + C09 静的 HTTP snapshot を baseline 観測とする。JS 実行後 DOM・画面遷移・screenshot・computed style は C15 `browser-render.py` (MCP 非依存のローカル headless Chrome via Bash) で取得を試み、ブラウザ不在 (exit 3=browser-unavailable) 時のみこれらを `observation_gap` (blocked) として記録する (無言欠落禁止・inference へ昇格させない)。
 - **per-run 予算は out-dir 単位**: 別 out-dir で再実行すると request budget は新規に始まる。ただし瞬間負荷レバー (並列 1・最小間隔・Retry-After・停止条件) は out-dir 非依存で常に不変。
 - **verdict receipt は cwd 相対既定**: `${ESB_VERDICT_DIR:-.esb-verdict}` は cwd 起点なので、C02 の品質評価 verdict 発行と C01 の品質判定参照は同一 cwd で回す (cwd が変わると receipt 不在=fail-closed で品質判定が読めない)。
 
 ## Additional Resources
 
-- `$CLAUDE_PLUGIN_ROOT/scripts/` — `authz-classify.py` (C12) / `fetch-snapshot.py` (C09) / `doc-emit.py` (C11) / `mermaid-validate.py` (C10)
-- `$CLAUDE_PLUGIN_ROOT/agents/` — `frontend-surface-analyzer` (C03) / `backend-inference-analyzer` (C04) / `uiux-rationale-analyzer` (C05) / `content-intent-analyzer` (C13) / `architecture-essence-synthesizer` (C06)
-- `$CLAUDE_PLUGIN_ROOT/hooks/pre-fetch-authz-guard.py` (C08) — fetch-authz 単一述語の fail-closed hook (matcher=`Bash|WebFetch`)
-- `$CLAUDE_PLUGIN_ROOT/schemas/` — `fact-inference-confidence.schema.json` / `system-blueprint.schema.json` (横断データ契約)
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` — `authz-classify.py` (C12) / `fetch-snapshot.py` (C09) / `doc-emit.py` (C11) / `mermaid-validate.py` (C10)
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/` — `frontend-surface-analyzer` (C03) / `backend-inference-analyzer` (C04) / `uiux-rationale-analyzer` (C05) / `content-intent-analyzer` (C13) / `architecture-essence-synthesizer` (C06)
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/pre-fetch-authz-guard.py` (C08) — fetch-authz 単一述語の fail-closed hook (matcher=`Bash|WebFetch`)
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/` — `fact-inference-confidence.schema.json` / `system-blueprint.schema.json` (横断データ契約)
 - `prompts/R1-fetch.md`〜`R3-document.md` — 責務プロンプト (7 層)

@@ -1,0 +1,46 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "skill-governance-migration",
+  "entry_points": {
+    "skills": [
+      "run-governance-migration",
+      "run-skill-feedback"
+    ],
+    "agents": [],
+    "commands": [],
+    "hooks": []
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "development-tools",
+    "tags": [
+      "skill-governance",
+      "migration",
+      "audit"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {},
+    "hook_omissions": {}
+  }
+}

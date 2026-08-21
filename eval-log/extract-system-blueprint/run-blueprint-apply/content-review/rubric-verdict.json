@@ -2,40 +2,37 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "91d84a9b5db9fe27bd626c979deedd56269ef6605be512f710ec8c510d3c90d4"
+    "skill_md_sha256": "e20ede1f6d21860a595291e205e9742f47bcd581162e49dcaec9d023119008f0"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "IN1 の判定資産が差分後も無傷。`doc-emit.py --check-apply` を apply shape の唯一の機械 SSOT とする宣言 (L111 / Key Rules 4) と、R1 の C02 verdict=PASS + draft_hash 一致 fail-closed 受理 (L114 / L121-122 / CL-1)、network 0 境界 (frontmatter external_systems: [] / Key Rules 5 / CL-6) の三点が独立に固定されている。",
+      "proposer≠approver が Key Rules 2 と Gotchas 1 (『決定論ゲートだけで未評価 blueprint を受理しない』) で二重に固定され、`--check-apply` の緑だけで受理する Goodhart 経路を名指しで塞いでいる。OUT1 の追跡可能性 (evidence_refs + confidence + own_context_ref 必須) は L111 の shape 定義・CL-4・Key Rules 1/3 で反復固定。",
+      "規約整合: kind: run / prefix: run / effect: local-artifact / user-invocable + disable-model-invocation の組、artifact_delivery-v1 state machine の pre_choice_forbidden と accept_contexts {evaluator: 0, improver: 0}、Pre-choice/Post-choice 節の対応が崩れていない。runtime_root_policy 追加は allowed-tools (`Bash(python3 *)`) の範囲を広げていない。",
+      "依存関係整合: 上流 (run-extract-blueprint=C01 → assign-blueprint-fidelity-evaluator=C02) と共有ゲート (doc-emit.py --check-apply) の配線がハンドオフ節に明記され、参照先 script/schema/prompt が実在することを実測で確認した。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "low: L93 役割 blockquote のパス解決表記が `$CLAUDE_PLUGIN_ROOT` / `$CLAUDE_PROJECT_DIR` のまま。rubric 上は high/medium いずれにも当たらない散文層の取り残しだが、sibling の run-extract-blueprint が同 batch で更新済みのため表記統一時に併せて直すのが望ましい。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:merge-guard-migration-rereview",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
+  "notes": "rubric 観点 (single responsibility / fail-closed / SSOT 一元化 / proposer≠approver / 完了条件の機械検証可能性 / 規約整合) で SKILL.md 全文と今回の差分を照合した。差分は path 表記の runtime-root migration と Runtime root contract 節の追加のみで、feedback_contract の IN1・OUT1 が参照する CL-1〜CL-6 の内容・検証手段 (verify_by: test) を一切変更していない。frontmatter 宣言参照 (schema_refs / responsibility_refs / manifest / deterministic_checks) の実在をファイルシステムで確認済み。effect: local-artifact なので external_mutation_guard 不在が正、runtime_root_policy: host-skill-path に対する `## Runtime root contract` 節は存在し shell 起動行も規定形。high severity 0、未解決 medium 0 のため PASS。"
 }

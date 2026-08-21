@@ -703,8 +703,8 @@ def render(spec: dict, c: dict) -> str:
   ■ 幾何 (すべて {_CONTRACT} 由来)
   canvas {c["canvas"]["width"]}x{c["canvas"]["height"]}px / chrome top {ch["top"]} bottom {ch["bottom"]} side {ch["side"]}
   stage ({st["x"]}, {st["y"]}) {st["width"]}x{st["height"]}px — 本文はこの矩形の外へ出さない
-  印刷は A4 横。zoom {c["print"]["zoom_factor"]} で {c["print"]["stage_width_mm"]}x{c["print"]["stage_height_mm"]}mm、
-  上下 {c["print"]["letterbox_band_mm"]}mm がレターボックス帯。画面と PDF は同一物。
+  印刷は A4 横。zoom {c["print_skeleton"]["zoom_factor"]} で {c["print_skeleton"]["stage_width_mm"]}x{c["print_skeleton"]["stage_height_mm"]}mm、
+  上下 {c["print_skeleton"]["letterbox_band_mm"]}mm がレターボックス帯。画面と PDF は同一物。
 -->
 <section class="srg-slide {spec["extra_class"]}"
          data-slide-skeleton="{spec["id"]}"

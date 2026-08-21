@@ -154,6 +154,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -163,7 +164,12 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-build-skill
-> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。ただし Step 4 等の lint コマンドは **repo-root cwd 前提**で実行する (bundles.json full bundle 同梱の `plugins/skill-governance-lint/` への repo-root 相対パスに依存)。skill 自身の資産は `$SKILL_DIR` 経由の self-relative 参照。
+
+## Runtime root contract
+
+`runtime_root_policy: host-skill-path` の製品別root解決・cwd推測禁止・prompt継承は [ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約) をそのまま適用する。
+
+> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱資産は解決済みabsolute `$PLUGIN_ROOT` / `$SKILL_DIR` で参照する。生成対象repositoryのroot-level gateだけは、明示したproject rootを別入力として使う。
 
 ## Purpose & Output Contract
 ユーザー要求から Claude Code Skill を 1 本構築するワークフロー。
@@ -185,7 +191,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. Python 標準ライブラリ正本。`.sh` / `.js` 新規禁止、scripts 内 yaml import 禁止 (22/28章)。
 4. `--mode update` は Edit 差分のみ。全書き換え禁止 (CD-002)。
 5. 具体値直書き禁止。`{{PROJECT_ROOT}}` 等の変数で表現し source_trace に残す。
-6. **marketplace install 配置非依存**: plugin 資産の読込は `$CLAUDE_PLUGIN_ROOT` または `__file__` 起点の self-relative 探索で行い、生成物の出力先は `$CLAUDE_PROJECT_DIR` / cwd / `$CLAUDE_SKILL_OUT_BASE` で解決する。`plugins/harness-creator/...` や `.claude/skills/...` は dev / fallback 表現に限定し、配布スキルの必須前提にしない。
+6. **marketplace install 配置非依存**: plugin 資産の読込は `runtime_root_policy: host-skill-path` に従う。Claude Codeでは `CLAUDE_PLUGIN_ROOT`、Codexではホストが提示したabsolute `SKILL.md` pathからmanifestを持つ祖先を解決し、各shell invocation内の論理 `PLUGIN_ROOT` とする。plugin rootをcwd・repo相対位置から推測せず、literal placeholderをshellへ渡さない。生成物の出力先だけを `$CLAUDE_PROJECT_DIR` / cwd / `$CLAUDE_SKILL_OUT_BASE` で解決する。
 
 ### 責務系 (responsibility)
 7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` 9 セクション固定構造。
@@ -238,7 +244,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
   - assign: evaluator verdict、その他 kind: content-review verdict を `eval-log/coverage/` に記録
 - [ ] `eval-log/build-plan.json` (`validate-build-plan.py --brief ... --out eval-log/build-plan.json` で brief から決定論導出) の `flags` が true の subagent/prompt/evaluator/hook/knowledge を全て生成し、`--check` が exit 0 (フラグの要否をモデル判断で省略しない) <!-- CL-9 -->
 - [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) curated seed の knowledge/ 雛形展開 + 5スクリプト同梱 + plugin package 外の external-intelligence state + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`contract_version: 1`, `consult_at: ["runtime"]`, `runtime_store: external-intelligence-v1`) + `lint-knowledge-loop.py` exit0 (KL-001..008) <!-- CL-10 -->
-- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生 `$CLAUDE_PLUGIN_ROOT` 非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash に裸変数/repo相対を書かず fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<name>}` へ降格。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
+- [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生のplugin root変数非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash は**一次手順としては**doctor entry pointだけを案内し、生パス例は開発者補足へ降格したfallback形に限る(env/cwd/repo相対によるplugin root推測は不可)。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
 - [ ] (plugin 一括 build=handoff routes 消費時のみ) 実行済みrouteごとに `eval-log/<slug>/build/route-<id>.json` を記録し `validate-route-build-reports.py --route <id>` exit0。全 route 終端の `--complete` はreleaseのみ (契約正本 `references/route-build-report.md`) <!-- CL-12 -->
 - [ ] (`build_stage=draft`) 実artifactの最小guard後にpath/試し方を提示し、その後に診断深度を質問する。accept-as-isはevaluator/improver 0、選択時だけ`elegant-initial-draft-evaluator`をread-only起動し、release/exhaustive自動昇格0件 <!-- CL-13 -->
 
@@ -274,9 +280,9 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 **蓄積知見の参照 (Loop B / build-time)**: `brief.consult_build_knowledge` が true (既定) のとき、harness-creator 自身の蓄積知見を検索し、過去の設計判断・落とし穴回避を初期設計に反映する (`knowledge/knowledge-index.json` の consult 宣言と対。`run-skill-elicit` の同名節と同形):
 
 ```bash
-# パスはプロジェクトルート基準 (eval-log/ 出力と同じ規約)
-python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py \
-  --dir plugins/harness-creator/knowledge/ --query "<brief.goal と kind の要約>" --limit 5
+# Runtime root contractで解決済みのabsolute self assetを使用する
+python3 "$SKILL_DIR/templates/knowledge-skeleton/scripts/search_knowledge.py" \
+  --dir "$PLUGIN_ROOT/knowledge/" --query "<brief.goal と kind の要約>" --limit 5
 
 # 運用中に得た外部知能は薄い index だけを検索し、候補の詳細は必要時だけ show する
 python3 "$SKILL_DIR/scripts/build-external-intelligence.py" --agent <codex|claude|other> \
@@ -312,6 +318,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 **agent/prompt 生成の provenance (route C09)**: agents/*.md・skills/*/prompts/*.md を生成/更新した build は `prompt_provenance` を trace に記録する。`prompt_creator_invocation`=true (prompt-creator 経由で本文7層を生成)・`source_contract_ref` (準拠契約: agent=`subagent-hybrid-format.md` / prompt=`seven-layer-format.md`)・`content_lint`={mode, status:PASS} (route C02 `lint-agent-prompt-content.py` の結果) の3点を持つ。`run` / `assign` が **prompt を生成する** build (`per_responsibility` 非空) では `resolved_policy=optional/skip` を禁止し `required`+provenance を強制する (生成物があるのに optional へ降格する迂回=バイパスを封鎖)。本 build が prompt を生成しない場合 (共有 prompt を消費する等、`per_responsibility` 空) は `optional` で宣言してよい (`skip` は不可)。`required` の build ではこのブロックが必須で、`validate-build-trace.py` が invocation=false・契約参照欠落・content_lint≠PASS・ブロック欠落のいずれも exit1 で止める (バイパス不能性)。実際の本文7層準拠は route C02 の CI repo 全走査が trace 非依存で独立強制する。
 
 **route 実行レポート (plugin 一括 build のみ)**: `handoff-run-plugin-dev-plan.json` の routes を消費する build では、route 1 本の完了ごとに `eval-log/<target_plugin_slug>/build/route-<id>.json` (`schemas/route-build-report.schema.json`) へ実行レポートを書き、後続 route は依存 route のレポート (`handover`/`deviations`) を読んでから着手する。契約正本は `references/route-build-report.md`、機械検証は `scripts/validate-route-build-reports.py` (route 毎 `--route <id>` / 終端 `--complete`)。単発 build (route 外) は対象外。
+
 ### Step 4: 命名・構造 Lint (phase: scripts)
 
 > lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
@@ -331,7 +338,7 @@ python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # k
 python3 "$SKILL_DIR/scripts/lint-capability-graph-knowledge.py" "$OUT_BASE/$SKILL_NAME"  # brief.goal_seek.engine=task-graph の生成 harness のみ ENG-C06/ENG-C07 同梱・consult token・source_ref を検査(非 task-graph は not-applicable exit0・ENG-C08)
 python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
 python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
-python3 ${HARNESS_ROOT:-.}/scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸 $CLAUDE_PLUGIN_ROOT・repo相対直書き・os.environ添字を検出
+python3 ${HARNESS_ROOT:-.}/scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出
 ```
 
 全て exit 0 でなければ Step 2 / 3.5 へ戻る。
@@ -362,15 +369,7 @@ draft は決定論ゲートが通ったら Step 12.4 で `usable-draft` proofを
 
 ### Step 10: ナレッジループ注入 (phase: references, `--with-knowledge` or `brief.knowledge_loop`)
 
-生成スキルに「知識を更新・蓄積し、検索して活用し、使うほど良くなる」ループを組み込む横断 combinator。正本仕様は `Skill(ref-knowledge-loop)`(構築編+運用編)。手順:
-
-1. `ref-knowledge-loop` を Read し、`brief.knowledge_loop.pattern`(`index-search` | `router-registry`)を確定(未指定なら §パターン選択フローで決定)。
-2. `templates/knowledge-skeleton/<pattern>/` を `$OUT_BASE/$SKILL_NAME/knowledge/` へ curated seed として展開し、`scripts/{search_knowledge,build_index,record_usage,add_entry}.py` と正本 `scripts/build-external-intelligence.py` を生成先 `scripts/` へコピーする。前4本は seed の検索・整合性・検索品質、後者だけが runtime 観測の正本である。
-3. `render-combinators.py --with-knowledge` で SKILL.md に `## ナレッジループ` 節と frontmatter `knowledge_loop` ブロックを決定論注入する。`contract_version: 1` / `runtime_store: external-intelligence-v1` / `runtime_scope: project` を固定し、installed plugin/skill package 内へ runtime データを書かない。
-4. frontmatter `knowledge_loop` 記述子に `consult_at: ["runtime"]` が入る。project scope は Git worktree 間で共有する Git common dir、非 Git は `<project>/.harness/`、user scope は plugin data / XDG state に解決する。Codex/Claude は同じ event log/index を読む。
-5. Step 4 の `lint-knowledge-loop.py` で KL-001..008 を検査する。KL-008 は新世代 contract の必須キーと、生成先 `build-external-intelligence.py` が正本 engine と byte/SHA-256 同一であることを fail-closed で照合する。
-
-> **Loop B (harness-creator 自己適用)**: `plugins/harness-creator/knowledge/` と `lessons-learned/` はレビュー済み seed/昇格先であり runtime sink ではない。未検証の観測は external-intelligence state だけに置き、同一/高類似は統合、曖昧類似は明示解決、2つの独立 evidence source+別文脈での helpful reuse+承認者/承認証跡を満たしたものだけを curated seed/rule へ昇格する。
+生成スキルに「知識を更新・蓄積し、検索して活用し、使うほど良くなる」ループを組み込む横断 combinator。正本仕様は `Skill(ref-knowledge-loop)`(構築編+運用編)、5 段の実行手順と Loop B (harness-creator 自己適用) の昇格条件は `references/build-steps.md#h7-ナレッジループ注入の詳細手順` (本文に再掲しない=SSOT)。
 
 ### Step 10.6: task-graph engine 同梱 (phase: references, engine 既定=task-graph)
 

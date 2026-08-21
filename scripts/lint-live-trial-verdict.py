@@ -72,7 +72,7 @@ def _all_skills(plugin_filter=None):
         if not sk_dir.is_dir():
             continue
         for s in sk_dir.iterdir():
-            if s.is_symlink():
+            if s.is_symlink() or FC.is_vendored_feedback_skill(s, plugins_dir=PLUGINS_DIR):
                 continue
             if (s / "SKILL.md").is_file():
                 skills.add((plugin_dir.name, s.name))
@@ -144,7 +144,32 @@ def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
     v = (data.get("overall") or {}).get("verdict")
     if v != "PASS":
         errs.append(f"verdict={v} (PASS のみ受理。DEGRADED/FAIL/BLOCKED は再 trial 要)")
+    # 免除の接地を verdict 単体で検査する。live-trial-verdict.py は根拠なき
+    # contractual を exit 2 で拒否するが、lint 側でも見ないと手書き verdict が
+    # CLI を迂回して免除を主張できてしまう (自己申告での降格回避)。
+    if (data.get("gate_response_count") or 0) > 0 and data.get("gate_kind") == "contractual":
+        if not data.get("gate_contract_evidence"):
+            errs.append(
+                "gate_kind=contractual だが gate_contract_evidence が空 — 免除が被験 skill の"
+                " 宣言 (external_mutation_guard / allowed-tools の AskUserQuestion|ExitPlanMode)"
+                " へ接地していない。live-trial-verdict.py 経由で再生成すること"
+            )
     return errs
+
+
+def contractual_exemption(path):
+    """契約 gate で自走未達降格を免除された verdict の注記。免除がなければ None。"""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    gate = data.get("gate_response_count") or 0
+    if gate > 0 and data.get("gate_kind") == "contractual":
+        evidence = data.get("gate_contract_evidence") or []
+        return (f"gate_kind=contractual により gate 応答 {gate} 回が自走未達降格から免除された"
+                f" (接地根拠: {', '.join(evidence) or 'なし'})"
+                " — 被験 skill が契約上その gate を要求することを人間が確認すること")
+    return None
 
 
 def run_lint(plugin_filter=None, enforce=False):
@@ -153,6 +178,7 @@ def run_lint(plugin_filter=None, enforce=False):
 
     violations = []  # 存在する verdict の違反 (常に exit 1)
     missing = []  # verdict 不在 (D13 パイロットゲート: record-only WARN、--enforce で FAIL)
+    exempted = []  # 契約 gate による自走未達免除 (合格だが黙って通さない)
     checked = 0
     for plugin, skill in skills:
         required = (
@@ -170,6 +196,11 @@ def run_lint(plugin_filter=None, enforce=False):
         checked += 1
         for err in check_verdict(latest, plugin, skill, verdict_mod, backend_mod, schema):
             violations.append(f"{plugin}/{skill}: {latest.parent.name}/verdict.json {err}")
+        # 契約 gate 免除は「降格しない」だけで「無かったこと」ではない。
+        # 免除が黙って通ると、rescue を contractual と申告するだけで自走未達を消せる。
+        note = contractual_exemption(latest)
+        if note:
+            exempted.append(f"{plugin}/{skill}: {latest.parent.name}/verdict.json {note}")
 
     if missing:
         level = "FAIL" if enforce else "WARN"
@@ -177,6 +208,10 @@ def run_lint(plugin_filter=None, enforce=False):
               + ("" if enforce else " (D13 パイロットゲート中 record-only。P3 常設化で --enforce に昇格)"))
         for m in missing:
             print(f"  - {m}")
+    if exempted:
+        print(f"[NOTE] 契約 gate による自走未達免除: {len(exempted)} verdict(s)")
+        for e in exempted:
+            print(f"  - {e}")
     if violations:
         print(f"[FAIL] live-trial verdict lint: {len(violations)} violation(s)")
         for v in violations:
@@ -213,6 +248,7 @@ def self_test():
             "actual_model": ["claude-sonnet-5"],
             "nudge_count": 0,
             "gate_response_count": 0,
+            "gate_kind": "rescue",
             "goal_verdict": {"result": "PASS", "blockers": []},
             "overall": {"launch": "PASS", "completion": "PASS", "goal_fit": "PASS", "verdict": "PASS"},
             "skill_dir_tree_sha": verdict_mod.skill_dir_tree_sha(skill_dir),

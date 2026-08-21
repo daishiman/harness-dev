@@ -55,9 +55,9 @@
 
 ### 3.2 外部ツール
 - `AskUserQuestion` / `Task`: 対話ヒアリング。
-- `Bash`: セル反映 `python3 scripts/apply-spec-transition.py chunk --state spec-state.json --turns <turns.json> --max-loops 5`
-- `Bash`: 出典対象反映 `python3 scripts/apply-spec-transition.py set-targets --state spec-state.json --targets '[{"target_id":"<id>","category":"<category_id>"}]'`
-- `Bash`: 未知知識記録 `python3 scripts/apply-spec-transition.py set-knowledge-candidate --state spec-state.json --candidate <candidate.json>` (`status=discovered`)
+- `Bash`: セル反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5`
+- `Bash`: 出典対象反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-targets --state spec-state.json --targets '[{"target_id":"<id>","category":"<category_id>"}]'`
+- `Bash`: 未知知識記録 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-knowledge-candidate --state spec-state.json --candidate <candidate.json>` (`status=discovered`)
 
 ## Layer 4: 共通ポリシー
 
@@ -115,4 +115,4 @@
 
 ## 出力指示
 
-references/elicit-question-bank.md に沿って未収集セルへ質問し、回答を turn 列にまとめて `python3 scripts/apply-spec-transition.py chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。
+references/elicit-question-bank.md に沿って未収集セルへ質問し、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。

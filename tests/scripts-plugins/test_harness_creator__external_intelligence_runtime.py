@@ -153,6 +153,9 @@ def test_central_adapter_schema_and_contract_are_registered_without_engine_copie
     assert provider == {
         "version": ">=0.1.1 <1.0.0",
         "relation": "external-intelligence-runtime-provider",
+        # external_dependencies は owner の公開 entry point 要求も併せて宣言する。
+        # runtime script/resource だけでは「どの入口経由で使うか」が残らない。
+        "required_entry_points": ["run-governance-adapters"],
         "required_runtime_scripts": [
             "hooks/build-external-intelligence-context.py",
             "scripts/build-external-intelligence-runtime.py",

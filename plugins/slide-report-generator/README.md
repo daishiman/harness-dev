@@ -1,6 +1,6 @@
 # slide-report-generator
 
-presentation-slide-generator v8.4.2 の全機能を移植した共通コア + `output_mode = slide | report` の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa 配色 / 16:9 / GSAP / インライン SVG2 / Codex Image2 / 決定論レンダラ / A4 印刷 / style genome) を**単一 SSOT で共有**し、コンテンツ意図層のみ mode 別に分岐する。
+presentation-slide-generator v8.4.2 の全機能を移植した共通コア + `output_mode = slide | report` の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (style genome の palette 定義に従う配色 / 16:9 / GSAP / インライン SVG2 / Codex Image2 / 決定論レンダラ / A4 印刷 / style genome) を**単一 SSOT で共有**し、コンテンツ意図層のみ mode 別に分岐する。
 
 - **slide モード**: 1スライド1メッセージ / chip 強制 / 長文禁止 (BP11-13) / 16:9 / <!-- count: slideType -->107 slideType。
 - **report モード**: 読み物 (文章多め可) / セクション+段落 / 1項目1ビジュアル最適化 / 4 reportType / Mermaid 統合。**report-structure 1.2.0 で「情報の羅列」→「構造化された読み物」へ**: 節内論理展開 (`section.narrative` = 本質課題→解決→活用) / 文書アーク (`meta.throughLine`) / 構造化本文ブロック (`section.body[]` = 表・コードブロック・番号リスト・小見出し・キーポイント強調ボックス・統計タイル・callout・引用・定義リスト・脚注引用・タスクリスト) / 色覚非依存の要点強調 / 図解の意味的配置 (`placement.grid` / `emphasisZone` / `readingOrder`) / 図表番号・目次 (`meta.toc`) を `render-report.js` が決定論 HTML 化する。既存 `paragraphs[]` は後方互換で温存 (body[] 優先)。設計指針の正本は [`references/report-narrative-logic.md`](references/report-narrative-logic.md)、golden 例は [`skills/run-slide-report-generate/examples/report-structured-120-example.json`](skills/run-slide-report-generate/examples/report-structured-120-example.json)。品質は `validate-report-visual.py` と report-quality-checklist RQ21-34 (積極評価。reader-entry 読者中心の入口設計=入口ホリゾンタル・中身バーティカルを含む) が担う。

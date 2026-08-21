@@ -5,6 +5,7 @@
 # purpose: handout の画像計画を slide-report-generator (SRG) の 2 段パイプラインへ委譲し生成 PNG を素材ディレクトリへ回収するアダプタ。あわせて焼き込み規律・画風系統の決定論選択・平坦化退化の代理指標を起動前に検査する (C21 / RESOLUTION-R23)
 # inputs:
 #   - argv: --image-plan <path> --assets-dir <dir> [--srg-root <dir>] [--dry-run]
+#   - image-plan.style_reference_paths: 任意。参照画風を固定する PNG / WebP のパス配列
 #   - file: <SRG_ROOT>/vendor/scripts/build-image-prompts.js
 #   - file: <SRG_ROOT>/vendor/scripts/generate-images-codex.js
 #   - file: <SRG_ROOT>/vendor/assets/style-genome-kanagawa-comic-diagram.json
@@ -142,6 +143,11 @@ E_MOTIF_ROLE = "E-IMG-MOTIF-ROLE"
 E_TRACE = "E-IMG-TRACE"
 E_UNIFORM = "E-IMG-UNIFORM-COMPOSITION"
 E_GRANULARITY = "E-IMG-GRANULARITY-DRIFT"
+E_STYLE_REFERENCE = "E-IMG-STYLE-REFERENCE"
+
+STYLE_REFERENCE_KEY = "style_reference_paths"
+STYLE_REFERENCE_SLUG_PREFIX = "hb-style-reference-"
+STYLE_REFERENCE_SUFFIXES = (".png", ".webp")
 
 # --- algorithm 8 の下限と曖昧語 --------------------------------------------
 
@@ -400,6 +406,76 @@ def load_plan(path: Path) -> dict:
                     )
                 )
     return data
+
+
+def resolve_style_reference_sources(plan: dict, plan_path: Path) -> list[Path]:
+    """利用者が示した参照画像を、生成時の image-to-image style anchor として解決する。
+
+    参照が指定されたのに欠落している状態を黙って genome だけの生成へ落とすと、利用者が
+    指した画風と別物でも生成済みになってしまう。したがって指定時だけ fail-closed にする。
+    相対パスは image-plan 自身の隣を基点とし、cwd には依存させない。
+    """
+    raw = plan.get(STYLE_REFERENCE_KEY)
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or not raw:
+        fail_contract(
+            "{}: {} は 1 件以上のパス配列である必要がある".format(
+                E_STYLE_REFERENCE, STYLE_REFERENCE_KEY
+            )
+        )
+    sources = []
+    seen = set()
+    for position, value in enumerate(raw, 1):
+        if not isinstance(value, str) or not value.strip():
+            fail_contract(
+                "{}: {}[{}] が非空文字列でない".format(
+                    E_STYLE_REFERENCE, STYLE_REFERENCE_KEY, position
+                )
+            )
+        candidate = Path(value)
+        if not candidate.is_absolute():
+            candidate = plan_path.parent / candidate
+        candidate = abspath(candidate)
+        if candidate.suffix.lower() not in STYLE_REFERENCE_SUFFIXES:
+            fail_contract(
+                "{}: 参照画像は PNG / WebP に限る: {}".format(
+                    E_STYLE_REFERENCE, candidate
+                )
+            )
+        if not candidate.is_file():
+            fail_contract(
+                "{}: 参照画像が実在しない: {}".format(E_STYLE_REFERENCE, candidate)
+            )
+        key = str(candidate)
+        if key in seen:
+            continue
+        seen.add(key)
+        sources.append(candidate)
+    return sources
+
+
+def style_reference_slugs(sources: list[Path]) -> list[str]:
+    return [
+        "{}{:02d}".format(STYLE_REFERENCE_SLUG_PREFIX, index)
+        for index, _ in enumerate(sources, 1)
+    ]
+
+
+def stage_style_references(sources: list[Path], generated_dir: Path) -> list[str]:
+    """SRG が slug で解決できる位置へ参照画素を無加工で配置する。"""
+    slugs = style_reference_slugs(sources)
+    for slug, source in zip(slugs, sources):
+        target = generated_dir / (slug + source.suffix.lower())
+        try:
+            shutil.copy2(str(source), str(target))
+        except OSError as exc:
+            fail_contract(
+                "{}: 参照画像を生成作業域へ配置できない: {} ({})".format(
+                    E_STYLE_REFERENCE, source, exc
+                )
+            )
+    return slugs
 
 
 # --- SRG 実体の解決 (algorithm 3) -----------------------------------------
@@ -863,6 +939,13 @@ def build_slide(item: dict, plan: dict, genome: dict) -> dict:
     negative = section.get("negative_specific")
     if negative:
         slide["negativeSpecific"] = negative
+    reference_slugs = item.get("style_reference_slugs") or []
+    if reference_slugs:
+        slide["styleReference"] = {
+            "anchorSlug": reference_slugs[0],
+            "refSlugs": reference_slugs[1:],
+            "inheritMode": "style-only",
+        }
     return slide
 
 
@@ -995,6 +1078,10 @@ def main(argv) -> int:
     plan_path = abspath(args.image_plan)
     plan = load_plan(plan_path)
     items = build_items(plan)
+    style_reference_sources = resolve_style_reference_sources(plan, plan_path)
+    reference_slugs = style_reference_slugs(style_reference_sources)
+    for item in items:
+        item["style_reference_slugs"] = reference_slugs
 
     srg_root = resolve_srg(args.srg_root)
 
@@ -1093,6 +1180,8 @@ def main(argv) -> int:
         emit(verdict("generated", runtime=runtime, images=images), EXIT_OK)
 
     generated_dir.mkdir(parents=True, exist_ok=True)
+    if style_reference_sources:
+        stage_style_references(style_reference_sources, generated_dir)
 
     # algorithm 9: 1 回の起動が受け取れる --genome は 1 つなので family ごとに分けて委譲する。
     families = sorted({item["family"] for item in pending})

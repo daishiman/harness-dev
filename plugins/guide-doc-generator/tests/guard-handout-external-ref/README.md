@@ -109,7 +109,7 @@ Unicode ブロックの denylist を持ってしまったということであ�
 | --- | --- | --- |
 | write-scope: none | exit2 でもファイルを消さず書き換えず、新規ファイルも作らない | `TestWriteScopeNone` |
 | 決定論 | 同一入力を 2 回実行して (rc, stdout, stderr) がバイト一致 | `TestIdempotent` |
-| 登録面の一本化 | 同梱 `hooks/hooks.json` と `.claude-plugin/plugin.json#hooks` に C10 の登録が無い (二重発火の防止) | `TestSingleRegistrationSurface` |
+| 登録面の一本化 | C10 は `hooks/hooks.json` に1回だけ定義し、Claude/Codex manifest が同じファイルを参照する | `TestSingleRegistrationSurface` |
 
 ## 意図的に検査していないこと
 

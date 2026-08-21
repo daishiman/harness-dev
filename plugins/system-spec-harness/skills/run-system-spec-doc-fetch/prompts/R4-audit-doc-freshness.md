@@ -38,7 +38,7 @@
 ## Layer 3: インフラ層
 - **参照ファイル**: C02 出力の `fetched-references.json` (監査対象)、取得対象一覧 `targets` (`spec-state.json` の `targets[]` 等)。本 SSOT。
 - **ツール**: `Read` (SSOT: references と targets)、`Bash` (C13 `validate-source-citation.py` の実行と JSON 検査のみ・read-only/network:false)、`WebSearch` (公式ホストの裏取り・現行版の所在特定)、`WebFetch` (公式現行ページを GET し version/更新日を照合)。書込・POST・mutation は行わない。
-- **C13 実行形**: `python3 $CLAUDE_PLUGIN_ROOT/scripts/validate-source-citation.py --targets <取得対象一覧> --references <fetched-references.json>`。
+- **C13 実行形**: `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py --targets <取得対象一覧> --references <fetched-references.json>`。
 - **fetched-references.json 形状 (共有データ契約)**:
   - `references[]` = `{target_id, retrieved_at, source_url, official_publisher, official_host, version または last_updated, latest_checked_at, summary}`。
   - `targets[]` = `[{target_id, ...}, ...]` または `["react", ...]` (文字列 id 配列も可)。

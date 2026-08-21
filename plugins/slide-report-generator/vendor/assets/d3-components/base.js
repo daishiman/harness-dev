@@ -1,49 +1,105 @@
 /**
  * D3.js Base Components for Presentation Slide Generator
  *
- * Kanagawa Theme統合、共通ユーティリティ、アニメーション定義
+ * 配色はこのファイルに持たない。CSS カスタムプロパティを実行時に解決して使う。
+ * 色の正本は vendor/assets/style-genome-*.json の palette と、
+ * それを写した CSS 変数（--paper / --ink / --hairline / --tint-*）。
  * CDN: https://cdn.jsdelivr.net/npm/d3@7
  */
 
 // ============================================================
-// Kanagawa Theme Colors（CSS変数と同期）
+// Color Tokens（CSS 変数名のみ。色値は持たない）
 // ============================================================
-const KanagawaColors = {
-  // Light Theme (default)
-  light: {
-    bg: '#FFFFFF',
-    fg: '#2D2D2D',
-    fgDim: '#717171',
-    accent1: '#7E9CD8',   // wave-blue
-    accent2: '#E46876',   // sakura-pink
-    accent3: '#98BB6C',   // spring-green
-    accent4: '#DCA561',   // autumn-yellow
-    accent5: '#7AA89F',   // wave-aqua
-    accent6: '#957FB8',   // oni-violet
-    border: '#E0E0E0',
-    surface: '#F5F5F5'
-  },
-  // Dark Theme
-  dark: {
-    bg: '#1F1F28',
-    fg: '#DCD7BA',
-    fgDim: '#727169',
-    accent1: '#7E9CD8',
-    accent2: '#E46876',
-    accent3: '#98BB6C',
-    accent4: '#DCA561',
-    accent5: '#7AA89F',
-    accent6: '#957FB8',
-    border: '#363646',
-    surface: '#2A2A37'
-  }
+
+// 各役割について、先に見つかった CSS 変数を採用する解決順。
+// 変数名は vendor/scripts/style-builder.cjs が発行するものに合わせる
+// (--paper / --ink / --fg-muted / --hairline / --tone-1..3)。末尾は旧名の保険。
+const TOKEN_CHAINS = {
+  bg:      ['--paper', '--bg'],
+  fg:      ['--ink', '--fg'],
+  fgDim:   ['--fg-muted', '--fg-dim'],
+  border:  ['--hairline', '--border'],
+  surface: ['--paper', '--surface', '--bg'],
+  // アクセントは色相ではなく「地の反転」と単一色相の濃度3段で作る。
+  accent1: ['--ink', '--fg'],
+  accent2: ['--tone-3', '--ink', '--fg'],
+  accent3: ['--tone-2', '--ink', '--fg'],
+  accent4: ['--tone-1', '--hairline', '--border'],
+  accent5: ['--tone-3', '--ink', '--fg'],
+  accent6: ['--tone-2', '--ink', '--fg']
 };
 
-// アクセントカラー配列（グラフ用）
-const accentPalette = [
-  '#7E9CD8', '#E46876', '#98BB6C', '#DCA561', '#7AA89F', '#957FB8',
-  '#D27E99', '#C0A36E', '#6A9589', '#9CABCA'
-];
+// 系列色の並び（濃い順）。色数ではなく濃度段で系列を分ける。
+const ACCENT_RAMP = ['accent1', 'accent2', 'accent3', 'accent4'];
+
+function readCssVar(name) {
+  if (typeof document === 'undefined' || !document.documentElement) return '';
+  try {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+// CSS 変数が解決できない環境では var() 式をそのまま返す（色値を埋め込まない）。
+function resolveToken(key) {
+  const chain = TOKEN_CHAINS[key] || [];
+  for (let i = 0; i < chain.length; i++) {
+    const value = readCssVar(chain[i]);
+    if (value) return value;
+  }
+  return chain.length ? 'var(' + chain[0] + ')' : 'currentColor';
+}
+
+function buildTheme() {
+  const theme = {};
+  Object.keys(TOKEN_CHAINS).forEach(key => { theme[key] = resolveToken(key); });
+  return theme;
+}
+
+// 既存 API 互換。値は参照時に CSS 変数から解決する。
+const KanagawaColors = {
+  get light() { return buildTheme(); },
+  get dark() { return buildTheme(); }
+};
+
+// アクセントカラー配列（グラフ用）。参照時に解決する読み取り専用ビュー。
+const accentPalette = new Proxy(ACCENT_RAMP.slice(), {
+  get(target, prop, receiver) {
+    if (typeof prop === 'string' && /^\d+$/.test(prop)) {
+      const idx = Number(prop) % ACCENT_RAMP.length;
+      return resolveToken(ACCENT_RAMP[idx]);
+    }
+    return Reflect.get(target, prop, receiver);
+  }
+});
+
+// 色文字列の相対輝度。解決できない場合は null。
+function relativeLuminance(color) {
+  if (typeof color !== 'string') return null;
+  const value = color.trim();
+  let r, g, b;
+  const hex = value.match(/^#([0-9a-f]{3,8})$/i);
+  if (hex) {
+    let h = hex[1];
+    if (h.length === 3 || h.length === 4) h = h.slice(0, 3).split('').map(c => c + c).join('');
+    if (h.length < 6) return null;
+    r = parseInt(h.slice(0, 2), 16);
+    g = parseInt(h.slice(2, 4), 16);
+    b = parseInt(h.slice(4, 6), 16);
+  } else {
+    const rgb = value.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+    if (!rgb) return null;
+    r = parseFloat(rgb[1]);
+    g = parseFloat(rgb[2]);
+    b = parseFloat(rgb[3]);
+  }
+  const lin = c => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
 
 // ============================================================
 // D3 Base Utilities
@@ -53,8 +109,25 @@ const D3Base = {
    * テーマ取得
    */
   getTheme() {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return isDark ? KanagawaColors.dark : KanagawaColors.light;
+    return buildTheme();
+  },
+
+  /**
+   * 単一トークンの解決（bg / fg / fgDim / border / surface / accent1-6）
+   */
+  token(key) {
+    return resolveToken(key);
+  },
+
+  /**
+   * 塗りの上に置く文字色。地が暗ければ紙色、明るければインク色を返す。
+   * @param {string} fill - 下地の塗り
+   */
+  onFill(fill) {
+    const theme = this.getTheme();
+    const luminance = relativeLuminance(fill);
+    if (luminance === null) return theme.bg;
+    return luminance < 0.5 ? theme.bg : theme.fg;
   },
 
   /**
@@ -96,14 +169,15 @@ const D3Base = {
   createTooltip() {
     let tooltip = d3.select('body').select('.d3-tooltip');
     if (tooltip.empty()) {
+      const theme = this.getTheme();
       tooltip = d3.select('body')
         .append('div')
         .attr('class', 'd3-tooltip')
         .style('position', 'absolute')
         .style('padding', '8px 12px')
-        .style('background', 'rgba(0,0,0,0.8)')
-        .style('color', '#fff')
-        .style('border-radius', '4px')
+        .style('background', theme.fg)
+        .style('color', theme.bg)
+        .style('border-radius', '0')
         .style('font-size', '14px')
         .style('pointer-events', 'none')
         .style('opacity', 0)
@@ -167,24 +241,20 @@ const D3Base = {
    * ホバーエフェクト追加
    */
   addHoverEffect(selection, options = {}) {
+    // 影は使わない。強調軸は拡大の1つだけ。
     const {
       scale = 1.05,
-      shadow = true,
       cursor = 'pointer'
     } = options;
 
     selection
       .style('cursor', cursor)
-      .style('transition', 'transform 0.2s, filter 0.2s')
+      .style('transition', 'transform 0.2s')
       .on('mouseenter', function() {
-        d3.select(this)
-          .style('transform', `scale(${scale})`)
-          .style('filter', shadow ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))' : null);
+        d3.select(this).style('transform', `scale(${scale})`);
       })
       .on('mouseleave', function() {
-        d3.select(this)
-          .style('transform', 'scale(1)')
-          .style('filter', null);
+        d3.select(this).style('transform', 'scale(1)');
       });
   },
 
@@ -224,8 +294,7 @@ const D3Base = {
       itemG.append('rect')
         .attr('width', 16)
         .attr('height', 16)
-        .attr('fill', item.color || accentPalette[i % accentPalette.length])
-        .attr('rx', 2);
+        .attr('fill', item.color || accentPalette[i % accentPalette.length]);
 
       itemG.append('text')
         .attr('x', 22)
@@ -306,17 +375,17 @@ const D3Styles = `
 
 .d3-chart .axis path,
 .d3-chart .axis line {
-  stroke: var(--fg-dim, #717171);
+  stroke: var(--fg-muted, var(--fg-dim));
   stroke-width: 1;
 }
 
 .d3-chart .axis text {
-  fill: var(--fg-dim, #717171);
+  fill: var(--fg-muted, var(--fg-dim));
   font-size: 12px;
 }
 
 .d3-chart .grid line {
-  stroke: var(--border, #E0E0E0);
+  stroke: var(--hairline, var(--border));
   stroke-dasharray: 3,3;
 }
 

@@ -2,40 +2,37 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "91d84a9b5db9fe27bd626c979deedd56269ef6605be512f710ec8c510d3c90d4"
+    "skill_md_sha256": "e20ede1f6d21860a595291e205e9742f47bcd581162e49dcaec9d023119008f0"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "runtime-root migration が実行層で完全に一貫している。SKILL.md 内の python3 起動行 3 箇所 (L171 validate-goal-seek-anchor.py / L191 doc-emit.py --check-apply / L216 Additional Resources) と L111 の SSOT 表記が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃い、`grep -rn 'CLAUDE_PLUGIN_ROOT' skills/run-blueprint-apply | grep -v 'PLUGIN_ROOT:-'` で残る bare 参照は Runtime root contract 節の説明文 (L88) と役割 blockquote (L93) だけで、shell 起動行の bare 参照は 0 件。",
+      "`runtime_root_policy: host-skill-path` の frontmatter 宣言 (L71) と `## Runtime root contract` 節 (L85-91) が対で入っており、片側だけの migration になっていない。prompts/ 継承も節内で明示され、実際 prompts/R1-R3 側にも bare 参照は無い (grep 確認済み)。",
+      "effect: local-artifact / external_systems: [] / mcp_tools: [] という宣言と、Key Rules 5 の network 0・Gotchas 2 の『Bash から対象 origin を再取得しない』が整合しており、external-mutation guard block を持たないことが正しい (guard block は external-mutation skill 側の要件)。今回の差分はこの境界を一切動かしていない。",
+      "差分は path 表記の置換のみで、Purpose & Output Contract・fail-closed 受理順序 (L118-129)・完了チェックリスト CL-1〜CL-6・Key Rules 1-6 の意味は不変。IN1 (`--check-apply` exit0 + verdict PASS/draft_hash 一致 + network 0) と OUT1 (自社接地・無根拠主張 0・追跡可能性) の判定根拠が壊れていない。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "low: L93 の役割 blockquote だけが『パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下』という migration 前の表記のまま残る。同一 batch の run-extract-blueprint では対応する行が『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点、成果物は明示した project root 配下』へ更新されており、散文層の表記が sibling skill と非対称。実行行ではないため実害はなく、severity は low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:merge-guard-migration-rereview",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "`git diff HEAD -- plugins/extract-system-blueprint/skills/run-blueprint-apply/SKILL.md` の全 hunk (frontmatter への runtime_root_policy 追加 / Runtime root contract 節追加 / L111・L171・L191・L216-217 の path 置換) を読み、SKILL.md 全文 (219 行) を再読した上で (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)high severity 0 を同時判定した。frontmatter が宣言する参照の実在を実測: schema_refs の `../../schemas/system-blueprint.schema.json`、responsibility_refs の prompts/R1-ground.md・R2-recommend.md・R3-emit.md、manifest の workflow-manifest.json、deterministic_checks の scripts/doc-emit.py、本文が参照する scripts/validate-goal-seek-anchor.py と schemas/goal-seek-loop.schema.json は全て存在。effect: local-artifact のため external_mutation_guard / receipt flow block を持たないのが正で、片側だけの不整合は無い。runtime_root_policy: host-skill-path に対し `## Runtime root contract` 節が存在し、shell 起動行は全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形 (bare 形 0 件) であることを grep で確認した。唯一の finding は L93 blockquote の散文表記の取り残し (low) で、未解決 medium 以上は無いため PASS とする。"
 }

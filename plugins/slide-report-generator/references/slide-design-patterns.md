@@ -1,5 +1,8 @@
 # スライドデザインパターン集
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: 「デザインセンスが良い」スライドを実現するための具体的なビジュアルパターンと判断基準。Apple Keynote水準のデザインTips
 
 ---
@@ -85,14 +88,14 @@ gsap.from('.item', {
 │           └─────────┘               │
 │        生産性向上率                   │  ← L2: --fs-subheading, --fg
 │                                     │
-│  AI導入企業 n=500 の平均値            │  ← L3: --fs-small, --fg-dim
+│  AI導入企業 n=500 の平均値            │  ← L3: --fs-small, --fg-muted
 │                                     │
 └─────────────────────────────────────┘
 ```
 
 **デザインTips**:
 - 数値の周囲に --space-8 以上の余白
-- 数値に box-shadow: var(--glow-blue) を微量適用でさりげない光彩
+- 数値ブロックを反転面にする（1 面 1 個。光彩・影は使わない・SR-2-09）
 - 単位（x, %, 円）は数値より1段階小さいフォント
 
 ### 2.2 Before → After パターン
@@ -106,19 +109,19 @@ gsap.from('.item', {
 │  ┌──────────┐    ┌──────────┐       │
 │  │  Before  │ →  │  After   │       │
 │  │          │    │          │       │
-│  │ --bg-dim │    │ glass-   │       │
-│  │ グレー調  │    │ card     │       │
-│  │ pink注意 │    │ aqua成功 │       │
+│  │ 濃度を   │    │ 反転面   │       │
+│  │ 落とす   │    │ (片側のみ)│       │
+│  │          │    │          │       │
 │  └──────────┘    └──────────┘       │
 │                                     │
 └─────────────────────────────────────┘
 ```
 
 **デザインTips**:
-- Before=ミュートトーン（--bg-dim + --accent-pink-vivid）
-- After=ブライトトーン（.glass-card + --accent-aqua-vivid）
+- Before / After の区別は位置（左＝Before、右＝After）と見出しラベルで示す（SR-4-04）
+- Before は文字色の濃度を落とし、After は通常の濃度にする
 - 矢印は --fg-muted で控えめに
-- After パネルに box-shadow: var(--shadow-medium) で浮遊感
+- 強調したい側（通常は After）だけを反転面にする。影は使わない（SR-2-09）
 
 ### 2.3 3ステッププロセスパターン
 
@@ -139,10 +142,10 @@ gsap.from('.item', {
 ```
 
 **デザインTips**:
-- ステップ番号はビビッドカラー + --fw-bold
+- ステップ番号は最も太いウェイト段（面に 1 箇所・SR-3-10）
 - コネクタ矢印は --fg-muted で細く
 - stagger 0.08s で左→右に順次表示
-- 現在ステップがあれば border: 2px solid var(--accent-blue-vivid)
+- 現在ステップがあれば 2px の罫（その面の主線 1 本・SR-2-09）
 
 ### 2.4 引用・証言パターン
 
@@ -151,15 +154,15 @@ gsap.from('.item', {
 ```
 ┌─────────────────────────────────────┐
 │                                     │
-│      "                              │  ← 大きな引用符: --accent-*-vivid, --fs-display
+│      "                              │  ← 大きな引用符: --fg-muted, --fs-display
 │                                     │
-│     この製品を導入してから、          │  ← --fs-body-lg, --fw-medium, --fg
+│     この製品を導入してから、          │  ← --fs-body-lg, 中間のウェイト段, --fg
 │     チームの生産性が劇的に            │
 │     向上しました。                   │
 │                                     │
 │              "                      │
 │                                     │
-│     — 山田太郎, CTO, Example社       │  ← --fs-small, --fg-dim
+│     — 山田太郎, CTO, Example社       │  ← --fs-small, --fg-muted
 │                                     │
 └─────────────────────────────────────┘
 ```
@@ -167,8 +170,8 @@ gsap.from('.item', {
 **デザインTips**:
 - 引用符は装飾的に大きく（--fs-display相当）
 - 引用文は --fs-body-lg で読みやすく
-- 発言者情報は --fg-dim で控えめに
-- 背景に .glass-card を敷くとリッチ感UP
+- 発言者情報は --fg-muted で控えめに
+- 引用ブロックを目立たせるなら反転面にする（ぼかしは使わない・SR-2-09）
 
 ### 2.5 データストーリーテリングパターン
 
@@ -216,8 +219,8 @@ gsap.from('.item', {
 
 **デザインTips**:
 - アイコンはFontAwesome 6 Free、--fs-icon-lg サイズ
-- 各カードのアイコン色を変えて分類を視覚化（同色なら統一感）
-- カードは .glass-card + hover:lift で立体感
+- アイコンは色ではなく形で分類を示す（色相を意味に割り当てない・SR-2-07）
+- カードの境界は 1px の下罫。ぼかし・影で立体感を作らない（SR-2-09）
 - stagger 0.05s で左→右に表示
 
 ### 2.7 タイムラインパターン
@@ -267,8 +270,8 @@ gsap.from('.item', {
 ```
 
 **デザインTips**:
-- 課題パネル: --accent-pink-vivid ボーダー or 背景ティント
-- 解決パネル: --accent-aqua-vivid ボーダー or .glass-card
+- 課題パネル: 1px の下罫のみ。文字色の濃度を落とす
+- 解決パネル: 反転面（この面の反転は 1 個だけ・SR-2-05）
 - 矢印は --fg-muted で控えめに
 - enterアニメーション: 課題→矢印→解決の順で stagger 表示
 
@@ -433,8 +436,8 @@ gsap.from('.item', {
 
 ### 配色
 
-- 失敗側: `--accent-pink-vivid`（SR-2-07 「課題・Before=ピンク」と整合）
-- 正解側: `--accent-aqua-vivid`（同「解決・After=アクア」）
+- 失敗側と正解側は色で区別せず、位置（左＝失敗、右＝正解）と見出しラベルで示す（SR-2-07）
+- 正解側だけを反転面にする（1 面 1 個）
 - アイコン: `fa-triangle-exclamation` / `fa-check`（絵文字禁止 — feedback_slides_no_emoji_use_fontawesome 準拠）
 
 ### スキーマ参照

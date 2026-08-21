@@ -93,6 +93,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -105,6 +106,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-ubm-consult
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 月間目標・目標設定以外も含む相談に、**具体解を処方せず「考え方（思考フレーム）」を提示するコーチング型 orchestrator**。引き出し質問でユーザーの文脈・制約・価値観を外在化し、解決策の言語化はユーザー主導とし、AI は構造化と検証を担う。目標設定以外の相談にもゴール指向（現状→ゴール→ギャップ→次の一歩）を適用する。既存 capability A（`run-ubm-goal-setting` Phase3 対話原則「愛情ある厳しさ」・引き出し型）と knowledge 基盤（原則/マインドセット/事例）、C06/C07 の read-only グラフ consult を非後退（additive）で再利用する。
 

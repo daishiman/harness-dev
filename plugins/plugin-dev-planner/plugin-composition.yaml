@@ -1,7 +1,7 @@
 name: plugin-dev-planner
 description: プラグイン構想を index、13 フェーズファイル、component inventory、型付き task graph の実行可能な計画へ分解する非配布 planning plugin。
 kind: plugin-composition
-version: 0.1.12
+version: 0.1.13
 owner: team-platform
 distributable: false
 
@@ -16,34 +16,36 @@ contract:
     - 後段 build route は harness-creator の公開 capability への外部契約として明示すること
 
 capabilities:
-  - {kind: skill, ref: skills/run-plugin-dev-plan, tier: core}
-  - {kind: skill, ref: skills/assign-plugin-plan-evaluator, tier: core}
-  - {kind: agent, ref: agents/plugin-dev-plan-elicitor, tier: core}
-  - {kind: agent, ref: agents/plugin-dev-plan-architect, tier: core}
-  - {kind: agent, ref: agents/plugin-dev-plan-evaluator, tier: core}
-  - {kind: agent, ref: agents/plugin-dev-plan-improvement-reviewer, tier: extension}
-  - {kind: command, ref: commands/plugin-dev-plan, tier: core}
-  - {kind: hook, ref: "hook:PostToolUse-EditWrite/hook-validate-plugin-plan", tier: core}
-  - {kind: hook, ref: "hook:PreToolUse-BashTask/enforce-provenance-chain", tier: core}
+  - { kind: skill, ref: skills/assign-plugin-plan-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-plugin-dev-plan, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-architect, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-elicitor, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-evaluator, tier: core }
+  - { kind: agent, ref: agents/plugin-dev-plan-improvement-reviewer, tier: core }
+  - { kind: command, ref: commands/plugin-dev-plan, tier: core }
+  - { kind: hook, ref: "hook:PostToolUse-EditWrite/hook-validate-plugin-plan", tier: core }
+  - { kind: hook, ref: "hook:PreToolUse-BashTask/enforce-provenance-chain", tier: core }
 
 dependencies:
-  - {from: commands/plugin-dev-plan, to: skills/run-plugin-dev-plan, type: calls}
-  - {from: skills/run-plugin-dev-plan, to: agents/plugin-dev-plan-elicitor, type: calls}
-  - {from: skills/run-plugin-dev-plan, to: agents/plugin-dev-plan-architect, type: calls}
-  - {from: skills/run-plugin-dev-plan, to: skills/assign-plugin-plan-evaluator, type: evaluates}
-  - {from: skills/run-plugin-dev-plan, to: agents/plugin-dev-plan-improvement-reviewer, type: evaluates}
-  - {from: skills/assign-plugin-plan-evaluator, to: agents/plugin-dev-plan-evaluator, type: calls}
-  - {from: agents/plugin-dev-plan-elicitor, to: agents/plugin-dev-plan-architect, type: emits}
-  - {from: agents/plugin-dev-plan-architect, to: agents/plugin-dev-plan-evaluator, type: emits}
-
+  # 内部 DAG: orchestrator skill が各 R 責務 agent を fork。pipeline は elicitor→architect→evaluator の単方向。
+  - { from: skills/run-plugin-dev-plan, to: agents/plugin-dev-plan-elicitor,  type: calls,    note: "R1 goal-spec 確定" }
+  - { from: skills/run-plugin-dev-plan, to: agents/plugin-dev-plan-architect, type: calls,    note: "R2/R3 分解 + 生成" }
+  - { from: skills/run-plugin-dev-plan, to: skills/assign-plugin-plan-evaluator, type: evaluates, note: "R4 独立評価を assign skill へ委譲 (proposer≠approver)" }
+  - { from: skills/assign-plugin-plan-evaluator, to: agents/plugin-dev-plan-evaluator, type: calls, note: "R1(evaluate) を fork 実行" }
+  - { from: agents/plugin-dev-plan-elicitor,  to: agents/plugin-dev-plan-architect,  type: emits,   note: "goal-spec.json" }
+  - { from: agents/plugin-dev-plan-architect, to: agents/plugin-dev-plan-evaluator, type: emits,   note: "plan ディレクトリ (13 phase files + inventory + index)" }
 external_dependencies:
   harness-creator:
-    version: ">=1.3.37 <2.0.0"
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback, run-skill-create, run-build-skill, run-elegant-review, run-goal-elicit]
     edges:
+      # routes_to は enum 外。実 build を投入せず handoff に route を記録するので delegates。
       - {from: skills/run-plugin-dev-plan, to: skills/run-skill-create, type: delegates}
       - {from: skills/run-plugin-dev-plan, to: skills/run-build-skill, type: delegates}
       - {from: skills/run-plugin-dev-plan, to: skills/run-elegant-review, type: calls}
-      - {from: skills/run-plugin-dev-plan, to: skills/run-goal-elicit, type: delegates}
+      - {from: skills/run-plugin-dev-plan, to: skills/run-goal-elicit, type: calls}
 
 eval_sinks: [EVALS.json]
 observability:

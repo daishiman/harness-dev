@@ -122,7 +122,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 1. **goal を proxy にしない**: 「起動した / 完走した」で合格にしない。fresh evaluator が「skill の目的 (description が約束する成果) を成果物が満たすか」を判定する。
 2. **送信は必ずファイル経由 + session 固有 named buffer** (`live-trial-send.py` → `live-trial-backend.py paste-file`): タスク本文を send-keys で生送信しない。改行/括弧で TUI のペースト検知が誤動作する。tmux default buffer は server 全体で共有され、並列 trial の `load-buffer` → `paste-buffer` 間で別 route の本文へ上書きされるため使用禁止。backend が session + file path から injection-safe・固定長・決定論的な buffer 名を生成し、`load-buffer -b <name>` → `paste-buffer -b <name>` → `finally: delete-buffer -b <name>` を一送信単位で保証する。例外は gate 応答 (短い固定キー) のみで、それも `live-trial-backend.py send-keys` を通す。
-3. **boot は direct process + declared plugin pinning**: 検証済み `claude` argv を `tmux new-session` の pane shell-command として直接起動する。ユーザーの対話 zsh 起動完了や startup file に依存しない。`--setting-sources local` を固定し、auth/sessionは維持しつつ無関係なuser/project settings driftをacceptance環境から除外する。`--target-skill plugin:skill` は caller cwd 内の target と `references/package-contract.json#depends_on` の direct dependency だけを候補にし、任意の `skill_dependencies.<skill>` があればその部分集合だけを `--plugin-dir` へ固定する (map省略は後方互換で全depends_on、map内の未列挙skillは依存0)。キーは `entry_points.skills`、値は `depends_on` の部分集合でなければ boot/package check がfail-closed。これにより無関係な依存pluginをload/hashせず全件trial invalidationを防ぐ。未宣言plugin、missing/malformed manifest、symlink escape は起動前にfail-closed。installed/global版への偶然依存は禁止。plain skill nameは後方互換のためplugin pinningなし。
+3. **boot は direct process + declared plugin pinning**: 検証済み `claude` argv を `tmux new-session` の pane shell-command として直接起動する。ユーザーの対話 zsh 起動完了や startup file に依存しない。`--setting-sources local` を固定し、auth/sessionは維持しつつ無関係なuser/project settings driftをacceptance環境から除外する。`--target-skill plugin:skill` は caller cwd 内の target と、**2 系統の direct dependency の union** を `--plugin-dir` へ固定する: (a) `.claude-plugin/plugin.json#dependencies` — ホストが plugin 登録の前提として要求する必須集合で、欠けると target plugin ごと未登録になるため skill 単位へ narrowing できない、(b) `references/package-contract.json#depends_on` — harness sidecar の package-level allow-list で、任意の `skill_dependencies.<skill>` があればその部分集合だけへ絞る (map省略は後方互換で全depends_on、map内の未列挙skillは依存0)。キーは `entry_points.skills`、値は `depends_on` の部分集合でなければ boot/package check がfail-closed。(b) の narrowing により無関係な依存pluginをload/hashせず全件trial invalidationを防ぐ。**この union は `skill_dir_tree_sha` の閉包と同一でなければならない** — load される集合が digest される集合より広いと、trial に実在して挙動へ効く plugin (hooks を出荷する dependency 等) の変更が verdict を stale にせず、古い PASS が再利用される。実装は `live-trial-boot.py#_merge_dependency_slugs` と `live-trial-verdict.py#behavior_closure_files` の両方。未宣言plugin、missing/malformed manifest、symlink escape は起動前にfail-closed。installed/global版への偶然依存は禁止。plain skill nameは後方互換のためplugin pinningなし。
 4. **完了 = 「成果物の出現 + busy 不在」の二層判定** (`live-trial-poll.py`): 目視やアドホック grep でアイドル判定しない。一次 = transcript JSONL (`live-trial-status.py` が 4 状態分類。スキーマは `references/transcript-jsonl.md`)、fallback = TUI capture。busy 不在だけだと未着手 / tool 境界 / 質問返し停止を完走と誤判定する。
 
 ## ゴールシーク実行
@@ -214,7 +214,7 @@ SESSION_ID="$SESSION_ID" python3 $SCRIPTS/live-trial-poll.py --state-file "$WORK
 | exit | 意味 | 次の行動 |
 |---|---|---|
 | 0 DONE | 成果物出現 + busy 不在安定 | 回収へ |
-| 4 GATE | 対話入力待ち (jsonl 判定時のみ) | `python3 $SCRIPTS/live-trial-backend.py send-line "$SESSION" '<応答>'` → 再 poll。**gate 応答回数を記録** |
+| 4 GATE | 対話入力待ち (jsonl 判定時のみ) | `python3 $SCRIPTS/live-trial-backend.py send-line "$SESSION" '<応答>'` → 再 poll。**gate 応答回数と種別 (rescue / contractual) を記録** |
 | 2 STALL | 進捗停止 | 下の STALL 分岐表を上から順に |
 | 1 HARD_CAP | 絶対打切り (安全弁) | 記録 → kill-session → verdict `--blocked` |
 | 5 TICK_BUDGET | tick 予算消化 | 同一 state-file で再呼び (エラーではない) |
@@ -244,12 +244,12 @@ SESSION_ID="$SESSION_ID" python3 $SCRIPTS/live-trial-poll.py --state-file "$WORK
 python3 $SCRIPTS/live-trial-verdict.py --workdir "$WORKDIR" --target-skill "<plugin:skill>" \
   --skill-dir "<被験skillディレクトリ>" --session-id "$SESSION_ID" --requested-model "$MODEL" \
   --launch PASS --completion PASS --goal-result PASS --nudge-count 0 --gate-response-count 0 \
-  --poll-exit DONE [--proof] [--blocked]
+  --poll-exit DONE [--gate-kind contractual] [--proof] [--blocked]
 python3 $SCRIPTS/live-trial-backend.py kill-session "$SESSION"
 python3 $SCRIPTS/live-trial-backend.py reap   # 取りこぼした lt-* 残骸の一括回収
 ```
 
-verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、direct dependency manifest/hooksを含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。**DONE / STALL / HARD_CAP / 中断のどの経路でも kill-session + reap を必ず実行** (残すと claude プロセスがリークする)。
+verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから書き出される (`skill_dir_tree_sha` = 互換field名を維持した宣言済み挙動閉包 digest。SKILL.md、local scripts/prompts、`script_refs`/`reference_refs`/`responsibility_refs`/`schema_refs`、native manifest/hooks/package-contract、**boot が load するのと同じ union の** direct dependency (manifest `dependencies` ∪ package-contract `depends_on` の skill 単位射影) の manifest/hooks/entry point/scripts/schemas を含み、missing/escape/undeclared cross-plugin refはfail-closed / `transcript_sha256` / `scenario_origin` / `environment` / `tier` + `downgrade_reason` を含む)。**DONE / STALL / HARD_CAP / 中断のどの経路でも kill-session + reap を必ず実行** (残すと claude プロセスがリークする)。
 
 ## 判定ロジック
 
@@ -260,8 +260,14 @@ verdict は `schemas/live-trial-verdict.schema.json` を自己検証してから
 | ✅ | ❌ (hang / gate 抜け失敗) | — | `FAIL` (❌ + どこで止まったか) |
 | ❌ | — | — | `FAIL` (❌ 起動 / install / 引数仕様) |
 
-- **nudge_count > 0 または gate 応答 > 0 の完走は `DEGRADED` (自走未達) に降格** (自動送信でも介入)。
-- **proof trial** は「人手介入なし PASS」が受け入れ条件 — DEGRADED 相当は `FAIL`、さらに actual_model ≠ requested_model で `FAIL` (機械 gate)。
+- **nudge_count > 0 の完走は `DEGRADED` (自走未達) に降格** (自動送信でも介入)。
+- **gate 応答は種別で分ける** (`--gate-kind`、verdict の `gate_kind` に焼き付ける)。
+  - `rescue` (**既定**): stall を解くための救済介入。gate 応答 > 0 で `DEGRADED` に降格 (自動送信でも介入)。
+  - `contractual`: 被験 skill が**契約上要求する**確認 gate への正規応答 (external mutation の人間確認等)。降格しない。gate を通ること自体が受け入れ条件であり、gate 応答 0 での完走は guard が破れていることを意味するため、rescue と同じ規則で裁くとその skill は永久に PASS を取れない。
+  - 既定を `rescue` に置くのは fail-closed のため — `--gate-kind` を渡さない既存の呼び出しが黙って緩まない。gate 応答 0 のときは区分に意味が無いので `rescue` へ正規化する。
+  - **`contractual` の主張は被験 skill 側の宣言へ接地させる**。免除を申告するのは trial を回す当人なので、無検証で信じると「実際は stall 救済だった介入を contractual と言い換えるだけで `DEGRADED` を `PASS` へ反転できる」= 受け入れ基準の自己申告による緩和になる。gate 応答 > 0 かつ `contractual` のとき、`live-trial-verdict.py` は被験 skill の frontmatter に `external_mutation_guard` か `allowed-tools` の `AskUserQuestion` / `ExitPlanMode` (= `live-trial-status.py` の `GATE_TOOLS`) があることを確認し、**根拠 0 件なら exit 2 で拒否して verdict を書かない**。認めた根拠は verdict の `gate_contract_evidence` へ焼き付ける。本文の散文は根拠にしない (書き足すだけで主張が通るなら接地にならない)。
+  - 回数上限は置かない。gate は transcript の pending `AskUserQuestion` / `ExitPlanMode` が無ければ発生せず捏造できないので、上限そのものより「その gate が契約上必須か」の接地が本質であり、根拠のない閾値は緩められる。
+- **proof trial** は「人手介入なし PASS」が受け入れ条件 — 種別を問わず gate 応答 > 0 は `FAIL`、DEGRADED 相当も `FAIL`、さらに actual_model ≠ requested_model で `FAIL` (機械 gate)。
 - tmux 不在 / HARD_CAP 超過は `BLOCKED` (fail-closed)。
 - この表の機械実装は `live-trial-verdict.py` の `derive_overall()`。
 

@@ -13,7 +13,7 @@
 | skill | run-slide-report-modify |
 | responsibility | R1-orchestrate (1 prompt = 1 責務 = 既存成果物の局所修正オーケストレーション) |
 | layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | ../../schemas/structure.schema.json (slide) / ../../schemas/report-structure.schema.json (report) — 修正後の structure.* が保つべき構造正本 |
+| output_schema | ../../../schemas/structure.schema.json (slide) / ../../../schemas/report-structure.schema.json (report) — 修正後の structure.* が保つべき構造正本 |
 | reproducible | true (mode 判定・値域整合・視覚崩れ 0 の合否は決定論ゲートで機械判定) |
 
 ## Layer 1: 基本定義層 (不変原則)
@@ -42,9 +42,9 @@
 
 ### 2.2 mode 判定 (slide / report・決定論)
 独立起動のため、まず修正対象成果物の `output_mode` を判定する。
-- `index.html` (＋ `styles.css` / `scripts.js` / `structure.*`) を持つ → **slide** (deck 成果物)。構造正本は `../../schemas/structure.schema.json`。
-- `report.html` (＋ `report-structure.*`) を持つ → **report**。構造正本は `../../schemas/report-structure.schema.json`。
-- 曖昧な場合は `--mode` 引数を優先し、`../../scripts/validate-output-mode.py` で値域整合を検証する (IN1)。判定した mode を worker へ伝播する。
+- `index.html` (＋ `styles.css` / `scripts.js` / `structure.*`) を持つ → **slide** (deck 成果物)。構造正本は `../../../schemas/structure.schema.json`。
+- `report.html` (＋ `report-structure.*`) を持つ → **report**。構造正本は `../../../schemas/report-structure.schema.json`。
+- 曖昧な場合は `--mode` 引数を優先し、`../../../scripts/validate-output-mode.py` で値域整合を検証する (IN1)。判定した mode を worker へ伝播する。
 
 ### 2.3 reportType の値域 (report 時のみ)
 - report 修正時は `reportType` を 4 enum (`internal-analysis` / `client-proposal` / `tech-doc` / `learning`) 内で維持する。slide 修正時に `reportType` を指定するのは矛盾 (`validate-output-mode.py` が exit 2)。
@@ -55,8 +55,8 @@
 - 影響範囲は修正タイプから導く。
 
 ### 2.5 出力契約 (構造正本の不変維持)
-- slide: `index.html` ⇔ `structure.*` の同期を維持し、`structure.*` は `../../schemas/structure.schema.json` に対し valid を保つ。
-- report: `report.html` ⇔ `report-structure.*` の整合を維持し、`report-structure.*` は `../../schemas/report-structure.schema.json` に対し valid を保つ。
+- slide: `index.html` ⇔ `structure.*` の同期を維持し、`structure.*` は `../../../schemas/structure.schema.json` に対し valid を保つ。
+- report: `report.html` ⇔ `report-structure.*` の整合を維持し、`report-structure.*` は `../../../schemas/report-structure.schema.json` に対し valid を保つ。
 
 ## Layer 3: インフラ層 (外部依存)
 
@@ -88,8 +88,8 @@
 
 | schema | 用途 |
 |---|---|
-| `../../schemas/structure.schema.json` | slide 修正対象の構造正本。修正後 `structure.*` が valid を保つ判定に使用 |
-| `../../schemas/report-structure.schema.json` | report 修正対象の構造正本。修正後 `report-structure.*` が valid を保つ判定に使用 |
+| `../../../schemas/structure.schema.json` | slide 修正対象の構造正本。修正後 `structure.*` が valid を保つ判定に使用 |
+| `../../../schemas/report-structure.schema.json` | report 修正対象の構造正本。修正後 `report-structure.*` が valid を保つ判定に使用 |
 
 ### 3.5 skill 私有 reference (`./references/`)
 
@@ -104,7 +104,7 @@
 - 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点 (`vendor/scripts/…` ／ `scripts/…`)。repo-root 直書き禁止。宣言参照は skill dir 相対 (`../../` = plugin root、`./references/` = skill 私有)。
 
 ### 4.2 局所性・意匠共有 (Gotcha)
-- 指定箇所以外・意匠 SSOT (Kanagawa 配色・16:9・最小 1.4rem・印刷 CSS・letterbox 等)・非対象セクションは**不変**。全書き換え禁止、Edit 差分のみ。
+- 指定箇所以外・意匠 SSOT (配色トークン・16:9・最小 1.4rem・印刷 CSS・letterbox 等)・非対象セクションは**不変**。全書き換え禁止、Edit 差分のみ。
 - slide は `index.html`⇔`structure.*`、report は `report.html`⇔`report-structure.*` の整合を崩さない (CONST_002)。
 
 ### 4.3 承認・最小変更 (Gotcha)
@@ -141,7 +141,7 @@
 - [ ] `slide-report-modifier` を Task (name 起動・isolation: fork) で起動し指定箇所のみを局所修正した
 - [ ] 意匠 SSOT・非対象セクション・印刷 CSS が不変で、全書き換えでなく局所差分である (report は読み物文体・1項目1ビジュアルを維持・骨格順序を保持)
 - [ ] slide は `index.html`⇔`structure.*`、report は `report.html`⇔`report-structure.*` の同期が保たれている (report は `render-report.js` の再レンダ結果が `report.html` と一致)
-- [ ] 修正後 `structure.*`／`report-structure.*` が対応 schema (`../../schemas/structure.schema.json`／`report-structure.schema.json`) に対し valid (report 履歴は sidecar・インライン禁止)
+- [ ] 修正後 `structure.*`／`report-structure.*` が対応 schema (`../../../schemas/structure.schema.json`／`report-structure.schema.json`) に対し valid (report 履歴は sidecar・インライン禁止)
 - [ ] **slide**: `verify-slides.js ./index.html --check-ratio` が視覚崩れ 0 で PASS。意匠コア／印刷レイアウトに及ぶ修正では `evaluate-deck.js`／`validate-print.js` も PASS
 - [ ] **report**: `render-report.js` 再レンダ整合 ＋ `verify-report-runtime.js ... --out <runtime-bundle.json>` exit 0 ＋ `validate-report-visual.py <report.html> --structure <report-structure.json> --require-structure --json` exit 0 ＋ mode-aware `deck-evaluator` PASS = **OUT1**
 - [ ] 修正レポート (修正箇所一覧 ＋ 変更差分 ＋ 再評価スコア) を生成した
@@ -149,7 +149,7 @@
 
 ### 5.4 実行方式 (決定論)
 - 固定手順を持たず、5.3 完了チェックリストを唯一の停止条件とする。未充足項目を特定して解消する。
-- **mode を先に確定する**: 成果物ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定し、曖昧なら `--mode` を優先。`../../scripts/validate-output-mode.py --mode <mode> [--report-type <enum>]` を送信前に実行し exit 0 を確認する (IN1)。exit 2 なら修正を送信せず mode/reportType を再確定。
+- **mode を先に確定する**: 成果物ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定し、曖昧なら `--mode` を優先。`../../../scripts/validate-output-mode.py --mode <mode> [--report-type <enum>]` を送信前に実行し exit 0 を確認する (IN1)。exit 2 なら修正を送信せず mode/reportType を再確定。
 - **worker は name 起動で dispatch する**: R2 で `Task` により `slide-report-modifier` を `isolation: fork` で起動し、判定 mode・修正対象パス・修正指示・影響範囲を渡す。worker は mode 分岐で SSOT を適用 (slide=`./references/modification-rules.md` / report=`./references/report-modification-rules.md`) し指定箇所のみを局所修正、正本 ⇔ 描画物 同期と履歴を維持する (slide=`structure.md`⇔`index.html` / report=`report-structure.json`⇔`report.html`・worker が `render-report.js` で再レンダ)。下流 agent が必要な場合は worker が修正案に明記し、**本オーケストレータが dispatch** する (worker は Task を持たない)。
 - **再評価は mode 別に機械実行する**: R3 で mode に応じて機械ゲートを実行し、全ゲート exit 0 を確認。非 0 なら検出箇所を worker へ差し戻す (R2)。LLM の定性判断で PASS を決めない。
   - **slide**: `verify-slides.js --check-ratio` を実行、意匠コア／印刷影響時は `evaluate-deck.js`／`validate-print.js` も実行 (視覚崩れ 0)。
@@ -206,12 +206,12 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-**R1**: 修正対象の既存成果物パスと修正指示を受け取り、ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定せよ (曖昧なら `--mode` を優先)。既存成果物を Read し、修正が及ぶ範囲と**触れてはならない意匠／技術コア・非対象箇所**を明示、修正指示を `./references/modification-rules.md` の 6 区分に分類し影響範囲を導け。送信前に `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <internal-analysis|client-proposal|tech-doc|learning>]` を実行し exit 0 (IN1) を確認する。exit 2 なら修正を送信せず mode/reportType を再確定せよ。
+**R1**: 修正対象の既存成果物パスと修正指示を受け取り、ファイル構成 (`index.html`＋`structure.*` → slide / `report.html`＋`report-structure.*` → report) から `output_mode` を判定せよ (曖昧なら `--mode` を優先)。既存成果物を Read し、修正が及ぶ範囲と**触れてはならない意匠／技術コア・非対象箇所**を明示、修正指示を `./references/modification-rules.md` の 6 区分に分類し影響範囲を導け。送信前に `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <internal-analysis|client-proposal|tech-doc|learning>]` を実行し exit 0 (IN1) を確認する。exit 2 なら修正を送信せず mode/reportType を再確定せよ。
 
-**R2**: `Task` で `slide-report-modifier` を **name 起動** (`isolation: fork`) し、判定 mode・修正対象パス・修正指示・影響範囲を渡せ。worker は mode 分岐で規範を適用し**指定箇所のみ**を局所差分修正する: **slide**=`./references/modification-rules.md` の CONST_001-013・修正フローパターンに従い `index.html`／`styles.css`／`scripts.js`⇔`structure.*` 同期と履歴を維持 (HTML 再生成が要れば修正案に明記→オーケストレータが `html-generator` 委譲)。**report**=`./references/report-modification-rules.md` の RCONST_001-013 に従い `report-structure.json` を正として編集し `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を再レンダ、読み物文体・1項目1ビジュアル・reportType 骨格順序を維持し、履歴は `meta.version` bump ＋ sidecar `report-structure.history.json` に追記 (schema 外フィールドのインライン禁止)。いずれも意匠 SSOT・非対象箇所を不変に保ち、修正後 `structure.*`／`report-structure.json` が対応 schema (`../../schemas/structure.schema.json`／`report-structure.schema.json`) に valid であることを保つ。
+**R2**: `Task` で `slide-report-modifier` を **name 起動** (`isolation: fork`) し、判定 mode・修正対象パス・修正指示・影響範囲を渡せ。worker は mode 分岐で規範を適用し**指定箇所のみ**を局所差分修正する: **slide**=`./references/modification-rules.md` の CONST_001-013・修正フローパターンに従い `index.html`／`styles.css`／`scripts.js`⇔`structure.*` 同期と履歴を維持 (HTML 再生成が要れば修正案に明記→オーケストレータが `html-generator` 委譲)。**report**=`./references/report-modification-rules.md` の RCONST_001-013 に従い `report-structure.json` を正として編集し `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を再レンダ、読み物文体・1項目1ビジュアル・reportType 骨格順序を維持し、履歴は `meta.version` bump ＋ sidecar `report-structure.history.json` に追記 (schema 外フィールドのインライン禁止)。いずれも意匠 SSOT・非対象箇所を不変に保ち、修正後 `structure.*`／`report-structure.json` が対応 schema (`../../../schemas/structure.schema.json`／`report-structure.schema.json`) に valid であることを保つ。
 
 **R3 (mode 分岐)**: 修正後、mode 別に機械ゲートを実行せよ。
-- **slide**: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html --check-ratio` で視覚崩れ 0 を確認。意匠コア・印刷レイアウトに及ぶ場合は `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/evaluate-deck.js"` ／ `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-print.js"` も併用。
-- **report**: `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で再レンダ整合を確認し、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>`、`python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json`、bundle入力の mode-aware `deck-evaluator` の順に再評価。
+- **slide**: `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-slides.js" ./index.html --check-ratio` で視覚崩れ 0 を確認。意匠コア・印刷レイアウトに及ぶ場合は `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/evaluate-deck.js"` ／ `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/validate-print.js"` も併用。
+- **report**: `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で再レンダ整合を確認し、`node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-report-runtime.js" <report.html> --structure <report-structure.json> --out <runtime-bundle.json>`、`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-report-visual.py" <report.html> --structure <report-structure.json> --require-structure --json`、bundle入力の mode-aware `deck-evaluator` の順に再評価。
 
 いずれかが非 0 (崩れ／乖離／FAIL) なら検出箇所を R2 へ差し戻し (feedback-contract 最大 3 周 / goal-seek max_loops 5)、全 exit 0 (OUT1) で完了とする。最終的に**修正レポート** (修正箇所一覧 ＋ 変更差分 ＋ 再評価スコア) を返し、`"PASS"` 文字列でなくゲートの exit code を完成根拠とせよ。前置き禁止。

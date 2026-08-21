@@ -21,8 +21,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "secrets"))
-from keychain_helper import get_secret, sanitize_error, SecretError  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from secret_helper import get_secret, sanitize_error, SecretError  # noqa: E402
 
 
 def main():
@@ -38,20 +38,22 @@ def main():
         params = json.loads(Path(args.params).read_text())
         webhook_ref = params["webhook_ref"]
 
-        try:
-            webhook = get_secret(webhook_ref)
-        except SecretError as se:
-            print(json.dumps({"status": "failure", "adapter": "slack", "errors": [str(se)]}))
-            sys.exit(2)
-
         text = f"*{payload.get('title','')}*\n{payload.get('body','')[:2000]}"
         body_obj = {"text": text}
         if params.get("channel"):
             body_obj["channel"] = params["channel"]
 
+        # dry-run は credential を参照しない。secret 取得より前に返すことで、
+        # keychain provider 非配備でも副作用なしの契約確認が成立する。
         if args.dry_run:
             print(json.dumps({"status": "success", "adapter": "slack", "location": "slack://webhook", "external_id": "", "dry_run": True}))
             return
+
+        try:
+            webhook = get_secret(webhook_ref)
+        except SecretError as se:
+            print(json.dumps({"status": "failure", "adapter": "slack", "errors": [str(se)]}))
+            sys.exit(2)
 
         req = urllib.request.Request(
             webhook,

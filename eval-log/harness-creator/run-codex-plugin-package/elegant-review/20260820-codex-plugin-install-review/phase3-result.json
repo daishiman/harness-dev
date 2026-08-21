@@ -1,0 +1,47 @@
+{
+  "changed_paths": [
+    ".agents/plugins/marketplace.json",
+    ".github/workflows/governance-check.yml",
+    "README.md",
+    "plugins/harness-creator/.codex-plugin-overrides.json",
+    "plugins/harness-creator/README.md",
+    "plugins/harness-creator/commands/marketplace-register.md",
+    "plugins/harness-creator/plugin-composition.yaml",
+    "plugins/harness-creator/references/native-surface-operations.md",
+    "plugins/harness-creator/references/package-contract.json",
+    "plugins/harness-creator/scripts/install-codex-plugin.py",
+    "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+    "plugins/harness-creator/skills/run-build-skill/references/build-steps.md",
+    "plugins/harness-creator/skills/run-codex-plugin-install/SKILL.md",
+    "plugins/harness-creator/skills/run-codex-plugin-package/SKILL.md",
+    "plugins/harness-creator/skills/run-skill-create/SKILL.md",
+    "plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+    "plugins/harness-creator/skills/run-skill-iter-improve/SKILL.md",
+    "plugins/harness-creator/tests/test_install_codex_plugin.py",
+    "plugins/harness-creator/tests/test_native_surface_repo_integration.py",
+    "plugins/harness-creator/tests/test_sync_plugin_platforms.py",
+    "scripts/build-plugin-release.py",
+    "tests/scripts-root/test_root__build_plugin_release.py"
+  ],
+  "validation_commands": [
+    "pytest -q plugins/harness-creator/tests (999 passed)",
+    "python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check (ok/noop)",
+    "python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml (pass; one pre-existing proposals glob warning)",
+    "pytest -q tests/scripts-root/test_root__build_plugin_release.py::test_bump_syncs_codex_manifest_version (1 passed)",
+    "python3 plugins/harness-creator/scripts/install-codex-plugin.py --source . --plugin harness-creator --codex-home <isolated-home> (two consecutive installs verified)",
+    "git diff --check -- <Codex packaging scope> (pass)"
+  ],
+  "residual_risks": [
+    "Plugin hook trust and re-trust intentionally remain an explicit user review gate; installation does not auto-trust executable hooks.",
+    "The merged GitHub ref cannot contain this unmerged workspace change yet; Git source/ref behavior is covered by subprocess tests, while the real CLI install was validated from the local marketplace.",
+    "The unrelated pre-existing merge conflict in marketplaces/local/plugin-fingerprints.json makes one repository-wide release test unable to parse its fixture source; the focused Codex release test passes."
+  ],
+  "convergence_status": "complete",
+  "iteration_count": 1,
+  "four_conditions": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS"
+  }
+}

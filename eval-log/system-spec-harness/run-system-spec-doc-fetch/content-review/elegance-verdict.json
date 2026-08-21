@@ -2,21 +2,21 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "3c406370e38c55783272130e89317babc552dd8bea266c1597f199bdca343a86"
+    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -24,18 +24,19 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "runtime_root_policy: host-skill-path の宣言と本文 `## Runtime root contract` 節の追加が対で入っており、片側だけの宣言になっていない。契約本文は build-steps.md:40 の正本文言 (Claude Code=CLAUDE_PLUGIN_ROOT / Codex=SKILL.md absolute path から manifest 祖先を上方探索 / cwd 推測禁止 / prompts 継承) と一致する。",
+      "`## 検証コマンド` block の 2 行が `PLUGIN_ROOT=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"` という script 相対の cwd 推測から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` 形へ置換されており、契約が禁じた cwd 起点解決が本文の実行行から実際に消えている。宣言と実装が同じ差分内で閉じている。",
+      "prompts 側も同時移行されている: R3-record.md の IN1 実行行は `<plugin-root>` literal から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py\"` へ、R4-audit-doc-freshness.md の C13 実行形は bare `$CLAUDE_PLUGIN_ROOT` から同形へ移行済みで、本 skill 配下に bare `$CLAUDE_PLUGIN_ROOT` の実行行は残っていない (grep で確認)。",
+      "frontmatter が宣言した参照は全件実在を確認した: responsibility_refs 3 件 (prompts/R1-identify.md, R2-fetch.md, R3-record.md)、schema_refs 1 件 (../../schemas/fetched-references.schema.json)、Additional Resources が挙げる scripts/build-fetched-references.py・references/official-source-catalog.md・references/resource-map.yaml・../../scripts/validate-source-citation.py。欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] 局面カタログの記録・検証 (R3) 行は `build-fetched-references.py assemble --records <素材> ...` と path 無しのコマンド名で書かれており、`## 検証コマンド` block だけが PLUGIN_ROOT 形に移行された。実行の正本は検証コマンド block 側であり詳細 pointer も付いているため実行不能にはならないが、同一 skill 内でコマンド表記の粒度が 2 種混在する。",
+      "[low / smell] prompts/ には responsibility_refs に載らない R4-audit-doc-freshness.md が同居する (C08 system-spec-doc-freshness-auditor 側の SSOT)。Additional Resources も R1-R3 のみを挙げるため、prompts ディレクトリの全体像は SKILL.md からは読み取れない。plugin 全体で audit prompt を agent 所有とする既存慣行に沿っており、今回の差分が持ち込んだものではない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "main マージ + external-mutation guard block の機械 migration により旧 verdict の skill_md_sha256 (3c406370...) が stale になったための再束縛。content-review-protocol §incremental の focused combined review を 1 context で実行した。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md` (+14/-6 行) の全差分、SKILL.md 全文 197 行、同 skill の prompts/ 差分 (R3-record.md, R4-audit-doc-freshness.md)、正本文言として plugins/harness-creator/skills/run-build-skill/references/build-steps.md:40。 実行したコマンド: sha256 算出 (python3 hashlib)、frontmatter 参照 23 path の実在検査 (test -e)、`grep -rn 'CLAUDE_PLUGIN_ROOT' <skill>/ | grep -v 'PLUGIN_ROOT:-'` による bare 参照検出 (本 skill 配下は契約 prose の 1 行のみ = 変数名への言及であり実行行ではない)、`python3 scripts/lint-runtime-portability.py` (exit 0)。 判定: (a) 矛盾なし — 新設 Runtime root contract が禁じる cwd 推測は同差分で本文から除去済み。(b) 漏れなし — Purpose & Output Contract・Key Rules 9 項・ゴールシーク・完了チェックリスト・Gotchas は差分前と同一で、削られた記述は cwd 推測行だけ。(c) 規約整合 — runtime_root_policy 宣言と Runtime root contract 節が対で存在し、shell 起動行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。effect: local-artifact のため external_mutation_guard は不要側で、宣言も guard block も持たないのが正しい。(d) 依存関係整合 — 宣言参照は全件実在、consumer (C10/C01/C08) との受け渡し形状 fetched-references.json は不変。(e) 未解決 medium 以上 0 件。残る 2 件は表記の smell (low) で実行不能にならないため PASS。 PASS の射程は静的設計 adequacy に限り、OUT1 (受入テスト) の実走証拠は本 review では取得していない。"
 }

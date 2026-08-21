@@ -226,6 +226,7 @@ _INFO_SKIP_ALLOWLIST = {
     "stacked-bar-input.json", "waterfall-input.json",
     # 階層・帯・時系列 (節点 id を持たない構造)
     "architecture-layers-input.json", "architecture-spec.json",
+    "boundary-spec.json",
     "data-flow-spec.json", "dp-integration-spec.json", "high-level-spec.json",
     "it-state-spec.json", "journey-map-input.json", "medallion-spec.json",
     "sequence-spec.json", "state-spec.json", "swimlane-process-input.json",

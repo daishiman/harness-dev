@@ -15,7 +15,7 @@
 """repo 全域のテスト探索 SSOT (single source of truth)。
 
 背景 (elegant-review 2026-06-30):
-  CI のテスト探索は harness-creator-kit-ci.yml の 2 機構に分裂している —
+  CI のテスト実行は harness-creator-kit-ci.yml の 2 機構に分かれる —
     機構A: `pytest tests/`(repo-root tests/ を再帰) + plugins/skill-governance-lint/tests/
     機構B: root=Path("plugins") の os.walk で test_*.py / *_test.py を収集
   両者の和集合 = 「repo-relative パスの先頭成分が tests/ または plugins/」。
@@ -32,7 +32,7 @@
 CLI:
   discover_repo_tests.py --list      # 全 test ファイル (repo-relative posix, 1 行 1 件)
   discover_repo_tests.py --orphans   # CI 到達集合の外にある test (空が正常)
-  discover_repo_tests.py --ci-plan   # 機構B の per-plugin グルーピング (JSON)
+  discover_repo_tests.py --ci-plan   # 機構B runner と同じ per-plugin グルーピング (JSON)
   discover_repo_tests.py --json      # {tests, orphans, reachable_top_level} を JSON で
   オプション --repo-root /path で起点を上書き (既定 = この script の親の親)。
 
@@ -123,10 +123,9 @@ def orphan_test_files(root: Path) -> list[PurePosixPath]:
 def group_plugin_tests(root: Path) -> dict[str, list[str]]:
     """機構B (plugins/ walk) のグルーピングを再現する SSOT 実装。
 
-    harness-creator-kit-ci.yml の per-plugin pytest と同一の規約で
+    validate-plugin-test-roots.py の per-plugin pytest が消費する同一の規約で
     {test_root(repo-relative posix): [pytest 引数(test_root 相対 posix)]} を返す。
-    将来 CI heredoc と test_ci_integration.py がこの関数を import して
-    探索ロジックの二重定義を解消するための土台 (現時点では未配線)。
+    CI runner はこの関数を import し、探索ロジックを二重定義しない。
     """
     plugins_root = (root / "plugins").resolve()
     groups: dict[str, list[str]] = {}
