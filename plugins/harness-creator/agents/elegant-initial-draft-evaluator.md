@@ -1,6 +1,6 @@
 ---
 name: elegant-initial-draft-evaluator
-description: usable artifact提示後に利用者が30思考法診断を明示選択したときだけ1context起動する。
+description: usable artifact提示後に利用者が診断深度を明示選択したときだけ1context起動する。
 tools: Read, Glob, Grep
 model: inherit
 isolation: fork

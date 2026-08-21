@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
     "component_id": "C01",
-    "skill_md_sha256": "1db7dd6c2cde83fc50e02704fb3e3b725f66dd2209b08521c88a5fc52fc535f0"
+    "skill_md_sha256": "936d7ad778d4aade1428c8eef59e8c588e05841bce3dff73353e7fde78544806"
   },
   "verdict": "PASS",
-  "reviewer": "dev-graph-criteria-scenario-r1",
+  "reviewer": "dev-graph-criteria-scenario-r2",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -18,21 +18,22 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_validate_graph_schema_and_main",
         "plugins/dev-graph/tests/test_validate_graph_schema_c11_coverage.py::test_frontmatter_repo_root_and_artifact_failure_classification",
-        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/state/graph.json"
+        "independent: python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/state/graph.json"
       ],
-      "observed": "Running validate-graph-schema.py directly on the real initialized r3-init graph store returned exit 0 with valid=true, violations=[], missing_sections=[] (0 missing required keys); a graph placed outside the authority root was rejected exit 2 (fail-closed). The two pytest schema-gate nodes passed, covering required-key and invalid-authority rejection paths."
+      "observed": "Ran validate-graph-schema.py directly on the graph store produced by the 20260821T030000-tk2 run (r5-init fixture): exit 0 with valid=true, violations=[], missing_sections=[] (0 missing required keys), implementation_readiness=complete. Copying that same byte-identical graph.json outside the canonical .dev-graph tree and validating it was rejected exit 2 with '--repo-root is required when --graph is outside the canonical .dev-graph tree' (fail-closed on authority, not on file absence). Both pytest schema-gate nodes passed."
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "scenario_id": "C01-OUT1-positive-idempotence",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20260820T162826-ci41/verdict.json",
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20260821T030000-tk2/verdict.json",
       "test_refs": [
-        "eval-log/dev-graph/run-dev-graph-init/live-trial/20260820T162826-ci41/verdict.json",
-        "independent: eval-log/dev-graph/run-dev-graph-init/live-trial/20260820T162826-ci41/out/status.json + poll-state.json"
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20260821T030000-tk2/verdict.json",
+        "independent: eval-log/dev-graph/run-dev-graph-init/live-trial/20260821T030000-tk2/transcript.jsonl tool_result inspection (rows 112/116/120/129/133)",
+        "independent: find /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph -type f -exec stat -f '%Sm %N' -t '%H:%M:%S' {} \\; | sort"
       ],
-      "observed": "Re-ran live (run 20260818T004500-r12, 450s wall clock, nudge 0 / gate responses 0) from a fixture reset to its seed commit (git reset --hard HEAD && git clean -fdx, git status --porcelain empty). The re-run was forced a second consecutive time because behavior_closure_files() hashes the native plugin manifest whole, so the distribution-metadata-only edit to plugins/dev-graph/.claude-plugin/plugin.json invalidated the r11 behavior-closure digest. An independent fresh evaluator, instructed to reject the subject session's self-report as evidence, verified the artefacts itself. It recomputed the sha256 of .dev-graph/config.json, state/graph.json and templates/task.md itself rather than accepting the receipt's values, and judged idempotence from the mtime timeline (run1 apply 00:50:05 -> a user-edit probe 00:50:42 -> run2 00:50:50, with zero mtime updates on the fixture), so the second run provably wrote nothing. diff -rq against the plugin's bundled templates showed the only difference is the task.md the probe deliberately edited, and none of the 15 markdown files listed in template-contract.json is missing. It ran the gates itself: validate-graph-schema.py --graph .../state/graph.json exit 0 (valid true, violations [], missing_sections []), resolve-repo-context.py --mode write exit 0 with repository_id matching config and all 3 root_trust_evidence items verified, and the SKILL.md goal-seek verification script exit 0 (intermediate.jsonl 2 rows, original_goal_hash matching). Leakage was checked by grepping the whole .dev-graph/ tree for absolute host paths (/Users/, /private/, /opt/, /home/) and for credential shapes (ghp_, github_pat, token, PVT_, PVTI_, PVTF_, node_id): 0 hits each. The evaluator stated explicitly that out/status.json's \"status\":\"PASS\" and pane.txt line 191's DONE: PASS were not used as evidence, and that it did not take planned_changes:0 on trust. Not verified by the evaluator: it ran no git status/git diff on the fixture, substituting sha256 + mtime; the orchestrator ran git status separately and saw only 9 untracked directories. Non-blocking: SKILL.md L95/L123 still describe the graph store as .dev-graph/graph.json and L87/L112 list 6 content roots, while the schema and scripts (the authority) use .dev-graph/state/graph.json and 7 roots; the artefacts follow the authority. verdict.json records launch/completion/goal_fit PASS, tier=live, downgrade_reason null, poll exit DONE."
+      "observed": "New run 20260821T030000-tk2 on the r5-init fixture (args --repo-root .../live-trial-fixtures/r5-init --hook-source plugin), 330s wall clock, nudge 0 / gate responses 0, tier=live, downgrade_reason=null, poll_exit=DONE, scenario_id C01-OUT1-positive-idempotence, overall launch/completion/goal_fit PASS. I inspected the fixture and the transcript myself rather than accepting out/status.json's \"status\":\"PASS\" or the final 'DONE: PASS' line, neither of which I used as evidence. Present in the fixture now: the 6 content roots issues/ tasks/ specs/ architecture/ features/ docs/, .dev-graph/{config.json,state/graph.json,state/init-receipt.json,cache,locks,templates}, and the routing policy in config (hybrid_layout_policy: mode=flat, physical_partition_by=artifact_kind, cross_cutting_classification=metadata, split_threshold_nodes_per_root=200). Idempotence is provable from mtimes I stat'ed myself: every one of the 21 templates plus config.json and state/graph.json is frozen at 02:32:13 (run 1), while run 2 at ~02:32:5x updated only state/init-receipt.json. The transcript's own run-2 output agrees: planned 0, created [], preserved_count 34, migration [], schema exit 0; the run-1 vs run-2 digest diff over the tree differs on init-receipt.json alone. A user-edit probe appended a comment to .dev-graph/templates/task.md and re-ran init: planned 0 and migration_preview recorded {path: .dev-graph/templates/task.md, reason: user_modified, action: preserved} with the repository digest unchanged before/after, i.e. the edit was not overwritten; the probe then restored the original, which is why task.md alone carries a 02:32:56 mtime while being byte-identical to the plugin source. git -C r5-init status --porcelain shows a single untracked '.dev-graph/' against seed commit fb0e581. Grepping the whole .dev-graph tree for absolute host paths (/Users/, /private/, /home/, /opt/) returned 0 files, and for credential shapes (ghp_, github_pat, \"token\", PVT_, PVTI_, PVTF_, node_id, item_id) the only hit is init-receipt.json's literal counter \"stored_node_ids\": 0. Behavior under the new artifact_delivery contract: the session invoked Skill dev-graph:run-dev-graph-init and used no Agent/subagent tool call at all, and no goal-seek artifacts (goal-spec.json / intermediate.jsonl) were written anywhere under the fixture — consistent with goal_seek.activation_state=semantic_evaluator_started and pre_choice_forbidden, and OUT1's acceptance does not depend on the goal-seek loop. Caveats I did not resolve: the session performed the init by writing its own helper script (scratchpad dev_graph_init.py) and running it, since the skill bundles no init script and its Execution contract is agent-executed prose — the artefacts, not the route, are what I verified; its first attempt exited 1 on a bug in the session's own forbidden-key checker before being patched. Non-blocking pre-existing gaps, unchanged by this run: SKILL.md L123/L149 still name the graph store .dev-graph/graph.json while config and scripts (the authority) use .dev-graph/state/graph.json, and repo-config.schema.json marks 7 content_roots required including system_spec while the generated config carries only the 6 that OUT1 names — the C11 graph gate does not check the config, so this passes silently."
     },
     "OUT2": {
       "status": "PASS",
@@ -40,9 +41,10 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
-        "independent: diff <(ls plugins/dev-graph/templates) <(ls eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/templates)"
+        "independent: diff <(ls plugins/dev-graph/templates) <(ls /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/templates)",
+        "independent: diff -rq plugins/dev-graph/templates /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/templates"
       ],
-      "observed": "The scaffolded .dev-graph/templates set is name-identical (21 entries: template-contract.json, common-frontmatter, issue/task/specification/document/feature kinds, architecture + 5 subtypes, api-contract, system-phase/task specs, example configs, README) to the plugin templates source; the OUT2 acceptance-clause contract test passed."
+      "observed": "The scaffolded .dev-graph/templates set in r5-init is name-identical to the plugin templates source (21 entries: template-contract.json, common-frontmatter, issue/task/specification/document/feature kinds, architecture + 5 subtypes, api-contract, system-phase/system-task specs, system-plan-contract, task-graph-node, example configs, README) — both the name diff and the recursive content diff -rq returned exit 0 with no differences, so no template listed in template-contract.json is missing. The user-edit probe in the same run (see OUT1) showed a modified task.md is preserved rather than overwritten on re-init. The OUT2 acceptance-clause contract test passed."
     },
     "OUT3": {
       "status": "PASS",
@@ -51,9 +53,9 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_semantic_contract_boundaries_c10_c11_c24.py::test_c24_enforces_symlink_containment_and_common_repository_ownership",
         "plugins/dev-graph/tests/test_runtime_coverage.py::test_resolve_discover_and_main",
-        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json absolute-path scan"
+        "independent: grep -cE '/Users/|/private/|/home/|/opt/' /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/config.json"
       ],
-      "observed": "r3-init config.json stores only repository-relative content_roots/local_state paths (grep for /Users/ returned 0), with path_policy.allow_outside_repository=false and follow_content_symlinks_outside_repository=false. The C24 containment and resolve pytest nodes passed, confirming cross-repo read/write, project-root mismatch and broken/escaping content symlinks are fail-closed."
+      "observed": "r5-init config.json stores only repository-relative content_roots (issues/tasks/specs/architecture/features/docs) and local_state (.dev-graph/cache, .dev-graph/state/graph.json, .dev-graph/locks); the absolute-path grep over config.json returned 0 matches and over the whole .dev-graph tree 0 files. path_policy.authority=caller-repository with allow_outside_repository=false and follow_content_symlinks_outside_repository=false, and the receipt's root_trust_evidence records git_toplevel/git_common_dir_ownership/claude_project_dir all verified with selected_by='explicit --repo-root'. The C24 containment and resolve pytest nodes passed, covering cross-repo read/write, project-root mismatch and broken/escaping content symlinks as fail-closed."
     },
     "OUT4": {
       "status": "PASS",
@@ -61,9 +63,9 @@
       "evidence_kind": "hybrid",
       "test_refs": [
         "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
-        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json github block inspection"
+        "independent: grep -rniE 'ghp_|github_pat|\"token\"|PVT_|PVTI_|PVTF_|node_id|item_id' on /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/config.json and state/"
       ],
-      "observed": "config.github.enabled=false while retaining owner_login=example, project_number=1, alias/auto_add and field_mappings (Status/Priority single_select option maps). A grep for token/node_id/item_id/project node IDs returned no matches; the OUT4 acceptance-clause contract test passed."
+      "observed": "config.github.enabled=false, generated idempotently (run 2 planned 0 changes). The projects[] template retains all mapping keys — alias=delivery, default=true, owner_type=user, owner_login, project_number, auto_add (artifact_kinds/confirmation_status/evaluation_status/implementation_readiness) and two field_mappings with full single_select option maps for Status and Priority — plus a completion_policy block. No token, project/item/field node ID is stored: the credential-shape grep over config.json and state/ returns only init-receipt.json's literal counter \"stored_node_ids\": 0 (and \"stored_secrets\": 0). Limitation of this run: it supplied no GitHub owner or project number, so owner_login and project_number are present as null slots rather than filled values — retention of supplied values is not exercised here; retention of the field_mapping structure is. The OUT4 acceptance-clause contract test passed."
     },
     "OUT5": {
       "status": "PASS",
@@ -72,9 +74,9 @@
       "test_refs": [
         "plugins/dev-graph/tests/test_skill_criteria_contracts.py::test_skill_criterion_has_dedicated_acceptance_clause",
         "plugins/dev-graph/tests/test_c25_lifecycle_hook_contract.py::test_session_start_owns_interval_and_persists_last_success",
-        "independent: eval-log/dev-graph/live-trial-fixtures/r3-init/.dev-graph/config.json claude_hooks inspection"
+        "independent: ls /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.claude (absent) + config.claude_hooks inspection"
       ],
-      "observed": "r3-init ran with --hook-source plugin: config.claude_hooks.source=plugin with project_plugin_link=.claude/dev-graph-plugin and no project-fallback .claude/settings.json was written (effective plugin hook present suppresses fallback, 0 double registration). The OUT5 acceptance clause (project-fallback / 二重登録0件 / rollback markers) and the C25 lifecycle-hook contract pytest passed."
+      "observed": "The run used --hook-source plugin: config.claude_hooks.source=plugin with project_plugin_link='.claude/dev-graph-plugin', session_start/post_tool_reconcile/task_completed_gate all true. No project fallback was written — the fixture has no .claude directory at all (ls returns No such file or directory), and the init receipt records project_settings_written=false, project_fallback_events=[], project_plugin_link_present=false, rollback_manifest=null, effective_paths=1 over the 4 events SessionStart/PreToolUse/PostToolUse/TaskCompleted with diagnostics=['plugin_managed'], i.e. 0 double registration. The OUT5 acceptance clause (project-fallback / 二重登録0件 / rollback markers) and the C25 lifecycle-hook contract pytest passed."
     }
   }
 }

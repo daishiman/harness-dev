@@ -367,6 +367,30 @@ def _dependency_behavior_contract(plugin_root: Path, expected: str) -> tuple[Pat
     return path.resolve(), entry_points
 
 
+# closure は「host が load する出荷バイト列」を digest する。ローカルのツール実行が
+# 残す一時 cache は load されず出荷もされないが、tree 走査には引っかかる。除外しないと
+# 依存 plugin で一度 pytest を回すだけで digest が動き、stale 判定が「テストを実行したか」
+# に依存してしまう (CI は clone 直後なので再現せず、ローカルだけ落ちる非対称になる)。
+# 除外は deny-list 方式にする。git 問い合わせに落とすと git 非在の runtime で digest が
+# 変わり、決定性という closure の存在意義そのものを崩すため。
+_EPHEMERAL_DIR_NAMES = frozenset({
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    ".benchmarks",
+})
+_EPHEMERAL_SUFFIXES = frozenset({".pyc", ".pyo"})
+_EPHEMERAL_FILE_NAMES = frozenset({".DS_Store"})
+
+
+def _is_ephemeral_artifact(path: Path) -> bool:
+    """True for tool-generated files that are neither loaded nor shipped."""
+    if _EPHEMERAL_DIR_NAMES & set(path.parts):
+        return True
+    return path.suffix in _EPHEMERAL_SUFFIXES or path.name in _EPHEMERAL_FILE_NAMES
+
+
 def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
     """Resolve the declared behavior closure, fail-closed on missing/unsafe refs."""
     skill_dir = Path(skill_dir).resolve()
@@ -401,7 +425,7 @@ def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
                         f"{source}: {child} -> {child_resolved}"
                     )
                 continue
-            if "__pycache__" in child.parts or child.suffix == ".pyc":
+            if _is_ephemeral_artifact(child):
                 continue
             add_file(child, source)
 

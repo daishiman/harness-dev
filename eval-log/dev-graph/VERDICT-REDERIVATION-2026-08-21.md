@@ -55,6 +55,40 @@ python3 plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-v
 `overall` / `environment.claude_version` / `args` / `scenario_origin` は
 1 件も変化しなかった。
 
+## 2 回目の再導出 (CI 追跡中に判明した 2 件の digest 汚染)
+
+CI の `plugins/dev-graph` 失敗を追う過程で、closure digest が
+「ローカルで何を実行したか」に依存する経路が 2 本見つかり、いずれも塞いだ。
+そのため上記 9 verdict をもう一度同じ手順で再導出した (全件 exit 0、
+変化は `skill_dir_tree_sha` と `timeline` のみ、判定入力に drift 0)。
+
+1. **一時 cache の混入**: `add_tree` が `__pycache__` / `.pyc` しか除外しておらず、
+   依存 plugin 配下で pytest を回すと `.pytest_cache/` が digest へ入っていた。
+   `run-dev-graph-system-spec` だけ closure が古く見えたのはこれが原因
+   (この skill だけが `system-spec-harness` を依存に持つ)。
+   出荷もされず load もされないファイルなので deny-list で除外し、
+   `tests/test_live_trial_harness.py::test_tree_sha_ignores_ephemeral_tool_caches`
+   で回帰を止めた。同型の誤検出が `lint-skill-tree.py` の第13条にもあったため同時に修正。
+
+2. **plugin manifest の version**: closure は manifest を丸ごと digest するので、
+   `build-plugin-release.py` の version bump だけで plugin 内の全 verdict が stale になる。
+   今回は bump → 再導出の順で解消したが、配布メタデータが挙動 digest に混じる構造自体は
+   残っている (既知の摩擦源として PR に記載)。
+
+## criteria-test receipt 9 件の再評価
+
+`artifact-delivery-v1` の追加で被験 SKILL.md が変わったため、
+`criteria-test/scenario-verdict.json` 9 件の `target.skill_md_sha256` も stale になった。
+これは CLI 導出物ではなく人手の独立評価 receipt なので、**sha だけの書き換えはしていない**。
+skill ごとに独立評価者を立て、差分が各 criterion の受入条件を変えるかを判定させ、
+`test_refs` の pytest node を実際に再実行させたうえで receipt を書き直した
+(`reviewer` は `-r1` → `-r2`)。live-trial criterion の参照は現行 closure と一致する
+新しい run へ張り替えている。
+
+副産物として、`run-dev-graph-system-spec` IN1 の旧 `independent:` 参照が
+実在しない path (`.../r3-system-spec/.dev-graph/state/graph.json`) を指していたことが判明し、
+実際に検証した r7-spec-lineage graph へ差し替えた。
+
 ## 副次的に判明したこと
 
 `run-dev-graph-sync` の `gate_kind: contractual` は正当だった。

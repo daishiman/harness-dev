@@ -526,6 +526,29 @@ def test_tree_sha_binds_declared_dependency_skill_behavior(tmp_path):
     assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
 
 
+def test_tree_sha_ignores_ephemeral_tool_caches(tmp_path):
+    """ツールが残す一時 cache で digest が動くと stale 判定が実行履歴に依存する。
+
+    CI は clone 直後なので cache が無く、ローカルで pytest を回した後だけ落ちる
+    という非対称を生むため、closure は出荷バイト列だけを見る。
+    """
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    dependency = tmp_path / "plugins" / "system-spec-harness" / "skills" / "run-delegate"
+    for relative in (
+        ".pytest_cache/v/cache/nodeids",
+        ".ruff_cache/content",
+        "__pycache__/mod.cpython-313.pyc",
+    ):
+        noise = dependency / relative
+        noise.parent.mkdir(parents=True, exist_ok=True)
+        noise.write_text("noise\n", encoding="utf-8")
+    (dependency / ".DS_Store").write_text("noise\n", encoding="utf-8")
+    (skill_dir / "scripts" / "local.pyc").write_text("noise\n", encoding="utf-8")
+
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
 def test_tree_sha_ignores_dependency_outside_skill_scope(tmp_path):
     plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
     _write_package_contract(
