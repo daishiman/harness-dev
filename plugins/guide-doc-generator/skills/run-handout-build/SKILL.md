@@ -28,6 +28,7 @@ script_refs:
   - ../../scripts/route-handout-output.py
 schema_refs:
   - ../../schemas/handout-config.schema.json
+  - plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
 command_refs:
   - ../../commands/handout-verify.md
 agent_refs:
@@ -334,7 +335,9 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` を実行契約と
 
 - 元のゴールを `eval-log/guide-doc-generator/run-handout-build-goal-spec.json` へ、各 checklist の status と evidence を `eval-log/guide-doc-generator/run-handout-build-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
-- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ 1 行 append-only で記録する。正本 `plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json` の `intermediate_artifacts[]` が必須とするのは `iteration`、`original_goal`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` の 6 キーであり、本文はこの 6 キーの意味を再定義しない。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 上の 6 キーに加えて本 skill は `original_goal_hash` を各行へ足す。**これは正本には無い local 拡張である。** 正本では `original_goal_hash` は progress.json のトップレベルに 1 つ置かれ、照合相手は `intermediate_artifacts[0].original_goal` である。本 skill は照合相手を第三のファイル `run-handout-build-goal-spec.json` の `original_goal` に取るので、行ごとに持たせている。正本由来と local 拡張の境界はここにあり、後者を正本準拠と呼ばない。
+- `drift_signal` には正本の値域外を書かない。差分ゼロは `aligned`、前周回が無い初回は `initial` である。この 1 語だけが周回ごとに変わり次の周回の判断に使われるので、`none` のような値域外の語を置くと「差が出ていない」のか「判定していない」のかが区別できなくなる。下の検証はこの値域だけを正本から写して実行時に照合する — 意味は正本にあり、写しているのは 6 語の集合だけである。正本の enum が将来変わっても写しは自動追随しないが、劣化方向は「通すべき新値を止める」側なので fail-closed を崩さない。
 - 上限周回に到達しても未達が残れば完了扱いにせず、progress と blocker を親へ handoff する。completed を宣言できるのは **release 段で G1-G3 の draft 行と release 行、および `feedback_contract.criteria` が全て PASS のとき**だけである。draft 段の停止は完了ではなく引き渡しであり、progress には未達として各判定の release 行を残す。
 - progress には各 checklist の status と併せて現在の `build_stage` を記録する。draft の停止を「全項目 PASS」と書かない — 記録が完了に見えると、繰り越した release 行が回収されないまま積み上がる。
 
@@ -347,13 +350,17 @@ python3 - "eval-log/guide-doc-generator/run-handout-build-goal-spec.json" "eval-
 import hashlib, json, sys
 goal = json.load(open(sys.argv[1], encoding='utf-8'))
 rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
-required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+canon_keys = {'iteration','original_goal','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+required_keys = canon_keys | {'original_goal_hash'}
+drift_values = {'initial','aligned','compressing','stagnant','widening','oscillating'}
 expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
 assert rows, 'intermediate.jsonl is empty'
 for row in rows:
     assert required_keys <= row.keys(), required_keys - row.keys()
     assert row['original_goal'] == goal['original_goal']
     assert row['original_goal_hash'] == expected
+    assert row['drift_signal'] in drift_values, row['drift_signal']
+assert len(rows) == rows[-1]['iteration'] + 1, (len(rows), rows[-1]['iteration'])
 PY
 ```
 
