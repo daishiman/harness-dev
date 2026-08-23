@@ -120,7 +120,7 @@ BRACE_PLACEHOLDERS = (
     "分類", "日数", "days_remaining",
 )
 PLACEHOLDER_RE = re.compile(
-    r"\[(?:数字|名前|日数|感謝の内容|分類|3ヶ月目標|1ヶ月目標|1週間目標|yyyy/mm/dd)\]"
+    r"\[(?:数字|名前|日数|感謝の内容|分類|2ヶ月目標|3ヶ月目標|1ヶ月目標|1週間目標|yyyy/mm/dd)\]"
     r"|\{(?:" + "|".join(re.escape(p) for p in BRACE_PLACEHOLDERS) + r")\}"
 )
 HRULE_RE = re.compile(r"^\s*(?:-{3,}|\*{3,}|_{3,})\s*$")
@@ -150,14 +150,19 @@ TRANSCLUSION_RE = re.compile(r"!\[\[[^\]]*人生の究極の目的[^\]]*\]\]")
 # 部分一致を許すのは、日付や番号が可変で完全一致できない見出しだけに限る。
 EXACT, CONTAINS = "exact", "contains"
 
-# (見出しレベル, 照合する文字列, 照合モード) を出現順で並べた骨格の正本
+# 2ヶ月階層の見出しは正本が `2ヶ月目標`。`3ヶ月目標` は旧表記で、既存ジャーナルを
+# 再検証したときに骨格違反にしないため受理だけ続ける。タプルの先頭が正本。
+QUARTERLY_HEADING = ("2ヶ月目標", "3ヶ月目標")
+
+# (見出しレベル, 照合する文字列, 照合モード) を出現順で並べた骨格の正本。
+# 照合する文字列はタプルにでき、その場合は「どれか 1 つに一致すれば可」を意味する。
 REQUIRED_OUTLINE = [
     (1, "人生の究極の目標", EXACT),
     (1, "ジャーナル", CONTAINS),  # `# No.388 - ジャーナル（2026-08-16）` は可変部を含む
     (2, "人生の究極目的", EXACT),
     (2, "目標", EXACT),
     (3, "1年目標", EXACT),
-    (3, "3ヶ月目標", EXACT),
+    (3, QUARTERLY_HEADING, EXACT),
     (3, "1ヶ月目標", EXACT),
     (3, "1週間目標", EXACT),
     (2, "感謝", EXACT),
@@ -171,7 +176,7 @@ REQUIRED_OUTLINE = [
 
 JOURNAL_SECTIONS = ["【行動のジャーナル】", "【時間のジャーナル】", "【お金のジャーナル】"]
 JOURNAL_SUBSECTIONS = ["現状を確認する", "効果性を評価する", "更に良くする方法はないか"]
-GOAL_SECTIONS = ["1年目標", "3ヶ月目標", "1ヶ月目標", "1週間目標"]
+GOAL_SECTIONS = ["1年目標", QUARTERLY_HEADING, "1ヶ月目標", "1週間目標"]
 PHASE_SECTIONS = ["【0→1】", "【1→10】", "【10→100】"]
 
 
@@ -233,15 +238,25 @@ def has_review_tag(fm: str) -> bool:
     return False
 
 
-def heading_matches(text: str, needle: str, mode: str) -> bool:
-    """見出しテキストの照合。exact は装飾記号 (`◇` や末尾コロン) だけ落として完全一致。"""
+def needle_label(needle: str | tuple[str, ...]) -> str:
+    """違反メッセージに出す見出し名。別表記候補は「または」で並べる。"""
+    return needle if isinstance(needle, str) else " または ".join(needle)
+
+
+def heading_matches(text: str, needle: str | tuple[str, ...], mode: str) -> bool:
+    """見出しテキストの照合。exact は装飾記号 (`◇` や末尾コロン) だけ落として完全一致。
+
+    needle がタプルのときは別表記の候補列で、どれか 1 つに一致すれば可とする。
+    """
+    candidates = (needle,) if isinstance(needle, str) else needle
     if mode == CONTAINS:
-        return needle in text
-    return text.strip().strip("◇◆・:：").strip() == needle
+        return any(c in text for c in candidates)
+    stripped = text.strip().strip("◇◆・:：").strip()
+    return any(stripped == c for c in candidates)
 
 
 def section_lines(
-    lines: list[str], level: int, needle: str, mode: str = EXACT
+    lines: list[str], level: int, needle: str | tuple[str, ...], mode: str = EXACT
 ) -> list[str] | None:
     """指定見出し直下の本文行 (同レベル以上の次見出しまで) を返す。見出しが無ければ None。"""
     start = None
@@ -342,7 +357,9 @@ def validate(
                 found = idx
                 break
         if found is None:
-            violations.append(f"S01: 必須見出しが見つからないか順序が不正です: {'#' * level} {needle}")
+            violations.append(
+                f"S01: 必須見出しが見つからないか順序が不正です: {'#' * level} {needle_label(needle)}"
+            )
         else:
             cursor = found + 1
 
@@ -351,6 +368,12 @@ def validate(
         body = section_lines(lines, 3, goal)
         if body is None:
             continue  # S01 で既に報告済み
+        # 違反メッセージには別表記候補の列ではなく、実際に書かれていた見出しを出す。
+        candidates = (goal,) if isinstance(goal, str) else goal
+        goal = next(
+            (c for c in candidates if section_lines(lines, 3, c) is not None),
+            needle_label(goal),
+        )
         joined = "\n".join(body)
         values: dict[str, str] = {}
         for field in ("期間", "残り", "目標"):
