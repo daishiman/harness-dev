@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AC-C14-1 の golden SVG を 6 パターン分だけ記録する補助 script。
+"""AC-C14-1 の golden SVG を 9 パターン分だけ記録する補助 script。
 
 テストではない (discover の pattern test_*.py に一致しない)。
 

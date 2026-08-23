@@ -1,4 +1,4 @@
-"""6 パターンの描画責務と版組規則 (手順 5-8) / module API / C55 SC-09 との接続。
+"""9 パターンの描画責務と版組規則 (手順 5-8) / module API / C55 SC-09 との接続。
 
 C14 の責務 (R07) は「装飾でなく理解を助ける図解」であること。
 ここでは意味フィールドが必ず描画へ現れることと、パターンごとの構造要素が
@@ -19,6 +19,9 @@ EXPECTED_TEXTS = {
     "cycle": ["計画する", "実行する", "見直す"],
     "matrix": ["低い", "高い", "小さい", "大きい", "施策A", "施策B"],
     "versus": ["自前で作る", "既製品を使う", "自由度が高い", "早く始められる"],
+    "before_after": ["変更前", "毎回手入力", "変更後", "自動で反映", "切り替える"],
+    "analogy": ["倉庫", "品物をしまう", "データベース", "情報をしまう", "棚", "テーブル"],
+    "bignumber": ["3", "営業日", "回答まで", "最短の場合"],
 }
 
 
@@ -32,7 +35,7 @@ def _visible_text(svg_text):
 
 
 class PatternRenderingTest(unittest.TestCase):
-    """6 パターンすべてが exit 0 で描画要素を持つ SVG を返す。"""
+    """9 パターンすべてが exit 0 で描画要素を持つ SVG を返す。"""
 
     def test_every_pattern_exits_zero(self):
         for pattern in H.PATTERNS:
@@ -343,6 +346,33 @@ class AssetRoleBoundaryTest(unittest.TestCase):
             res = H.render(td, H.flow_spec())
         self.assertEqual(res.returncode, 0, res)
         self.assertNotIn("screenshot", res.stdout)
+
+
+class BeginnerVisualPriorityTest(unittest.TestCase):
+    """文字の存在だけでなく、絵としての主従と読み順を SVG 属性で評価する。"""
+
+    def test_before_after_has_a_left_to_right_transition(self):
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, H.before_after_spec())
+        self.assertEqual(res.returncode, 0, res)
+        self.assertTrue(any(" L " in (el.get("d") or "") for el in H.parse(res.stdout)
+                            if el.tag == "path"), "左右を結ぶ変化の矢印が要る")
+
+    def test_analogy_has_two_columns_and_a_bridge(self):
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, H.analogy_spec())
+        self.assertEqual(res.returncode, 0, res)
+        rect_x = sorted({int(el.get("x")) for el in H.parse(res.stdout) if el.tag == "rect"})
+        self.assertGreaterEqual(len(rect_x), 2)
+        self.assertIn("≒", _visible_text(res.stdout))
+
+    def test_bignumber_value_is_the_visual_focus(self):
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, H.bignumber_spec())
+        self.assertEqual(res.returncode, 0, res)
+        sizes = [float(el.get("font-size")) for el in H.parse(res.stdout)
+                 if el.tag == "text" and el.get("font-size")]
+        self.assertGreater(max(sizes), 3 * min(sizes), "数値が説明文より十分大きいこと")
 
 
 if __name__ == "__main__":  # pragma: no cover

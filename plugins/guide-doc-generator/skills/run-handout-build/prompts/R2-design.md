@@ -100,20 +100,9 @@
 話題の提示にしない。見出しが場所を示し、`lead_line` が結論を示す。全節の
 `lead_line` だけを拾い読みして資料の結論が通るかを確かめる。
 
-**そこから段階的に厚くする。** 正本は
-`config/handout-visual-policy.json#opening.section_opening.progression`。
-
-| step | 置くもの | 答えるもの |
-|---|---|---|
-| 1 | `goal` / `lead_line` | 何が言えるか |
-| 2 | 要点を並べる部品 (カード・表・チェックリスト) | その主張の中身は何か |
-| 3 | 2 枚目以降の `IMG` / `DIAGRAM` | なぜそう言えるか・どうつながっているか |
-| 4 | `TEXT` (任意・1 本まで) | 形にしても残る補足 |
-
-step は飛ばしてよいが、順番は入れ替えない。**節の顔として先頭へ出した 1 枚を除き、
-図を要点より前へ置かない。** 何の主張を支える図なのか分からないまま図を読ませる
-ことになる。読み手はどこで読むのをやめても、そこまでで筋が通っている必要がある。
-step 4 が要るなら、それは step 2-3 の形が足りていない合図である。
+**そこから段階的に厚くする。** 並びと各段が答える問いの単一正本は
+`config/handout-visual-policy.json#opening.section_opening.progression`。段は飛ばしてよいが
+順番は入れ替えず、各段の `carries` / `answers` をここへ書き写さない。
 
 ### 2.2.0.2 要点層と詳細層を分ける
 
@@ -141,6 +130,12 @@ step 4 が要るなら、それは step 2-3 の形が足りていない合図で
 `config/handout-visual-policy.json#thresholds.min_diagrams_per_main_section` (=0)。
 挿絵では表せない形 (厳密な分岐・2 軸の位置づけなど) を利用者が個別に指定した節にだけ
 `DIAGRAM` を足す。逆に `IMG` の下限は 1 のまま (`E-IMAGE-ABSENT`) — 節の顔は挿絵が持つ。
+
+**節の中の重要な情報も既存媒体で絵にする。** `DIAGRAM` の `title` または `IMG` の
+`caption` を、絵が言っていることが一読で分かる短い 1 行の主張にする。何も知らない
+読み手向けには `config/handout-visual-policy.json#diagram_patterns_by_intent` の
+`beginner=yes` の entry を先に検討する。部品を増やさず、
+情報単位から既存の図解・画像への対応は `decision_log` に記録する。
 
 **冒頭に 1 枚の顔を置く。** 資料直下の `thumbnail_asset_id` に `assets[].id` を指す。
 一覧やリンク先で最初に目に入る 1 枚であり、節の挿絵と兼用してよい。どれを顔にするかは

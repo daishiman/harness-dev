@@ -44,7 +44,25 @@ last-audited: 2026-08-17
 | config_path | 出力先へ同梱された正規化済み構成データ JSON のパス |
 | gate_reports | 決定論ゲート (C16 / C17 / C18 / C22) の json-report のパス一覧と各 exit code |
 | reader_profile | 構成データの reader / prior_knowledge_level / usage_scene。誰の立場で読むかの指定 |
-| scope | 任意。特定セクションだけを読むときの section id 一覧。省略時は全体を読む |
+| scope | 任意。読む範囲を絞るときの section id 一覧。省略時は全体を読む。指す先は「どこを読むか」だけであり、どの軸をどれだけ厳しく見るかは変えない |
+
+### scope を渡されたときの読み方
+
+`scope` は初回の委譲では省略され、資料全体を読む。2 回目以降の委譲で、親が直した節の
+id を並べて渡すことがある。そのとき次のように読む。
+
+- **節の中で閉じる軸** (lead-line / concreteness / decision-line / glossary /
+  card-granularity / sentence-flow / visual-fit) は `scope` の節だけを読む。触っていない
+  節を毎回読み直しても、同じ HTML から同じ判定が出るだけである。
+- **節をまたぐ軸** (goal-chain / opening-order / nav-scannability) は `scope` に関わらず
+  資料全体で見る。1 節を直した結果いちばん壊れるのが節と節のつながりであり、ここを
+  絞ると「直した節は良くなったが全体の筋が切れた」を検出できなくなる。
+- **visual-fit の実画素検査**は `scope` の節に埋め込まれた画像だけを開く。画像は差し
+  替わっていなければ同じバイト列であり、同じ画像を毎周開き直しても判定は動かない。
+- `scope` によって読まなかった軸・節は `not_reviewed` へ理由付きで残す。黙って落とさない。
+
+`scope` は「どこを読むか」の指定であって、判定を緩める指示ではない。scope 内で見つけた
+ものは初回と同じ severity で返す。親が何周目にいるかは渡されないし、尋ねてもいけない。
 
 gate_reports に載る決定論ゲートが全て exit0 であることが起動の前提である。exit0 で
 ないものが 1 つでも残る状態で呼ばれたら、意味レビューへ進まず status=blocked を返す。
@@ -107,6 +125,7 @@ severity の定義はこう固定する。high はその箇所で読者が読み
 
 verdict は findings に severity=high が 1 件でもあれば FAIL、それ以外は PASS とする。
 全指摘を high にすると verdict が常に FAIL になり、呼び出し元の修正が収束しない。
+
 
 machine_gate_overlap=true の finding を返してはならない。返す前に除外リストと
 突き合わせて自己検査で除去し、除去したものは理由付きで not_reviewed へ残す。

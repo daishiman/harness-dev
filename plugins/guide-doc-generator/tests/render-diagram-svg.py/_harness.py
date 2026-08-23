@@ -26,7 +26,8 @@ SCRIPT = PLUGIN_ROOT / "scripts" / "render-diagram-svg.py"
 GOLDEN_DIR = TESTS_DIR / "golden"
 
 # script-brief-C14.json argv[--pattern]
-PATTERNS = ("flow", "compare", "hierarchy", "cycle", "matrix", "versus")
+PATTERNS = ("flow", "compare", "hierarchy", "cycle", "matrix", "versus",
+            "before_after", "analogy", "bignumber")
 
 # script-brief-C14.json argv[--width].default
 DEFAULT_WIDTH = 860
@@ -242,6 +243,32 @@ def versus_spec(**over):
     return spec
 
 
+def before_after_spec(**over):
+    spec = {"id": "dg-before-after", "title": "手作業から自動化へ",
+            "pattern": "before_after",
+            "before": {"label": "変更前", "bullets": ["毎回手入力"]},
+            "after": {"label": "変更後", "bullets": ["自動で反映"]},
+            "arrow_label": "切り替える"}
+    spec.update(over)
+    return spec
+
+
+def analogy_spec(**over):
+    spec = {"id": "dg-analogy", "title": "倉庫にたとえる", "pattern": "analogy",
+            "known": {"label": "倉庫", "note": "品物をしまう"},
+            "target": {"label": "データベース", "note": "情報をしまう"},
+            "pairs": [{"from": "棚", "to": "テーブル"}]}
+    spec.update(over)
+    return spec
+
+
+def bignumber_spec(**over):
+    spec = {"id": "dg-bignumber", "title": "回答までの時間", "pattern": "bignumber",
+            "value": "3", "unit": "営業日", "caption": "回答まで", "sub": "最短の場合"}
+    spec.update(over)
+    return spec
+
+
 SPEC_BUILDERS = {
     "flow": flow_spec,
     "compare": compare_spec,
@@ -249,6 +276,9 @@ SPEC_BUILDERS = {
     "cycle": cycle_spec,
     "matrix": matrix_spec,
     "versus": versus_spec,
+    "before_after": before_after_spec,
+    "analogy": analogy_spec,
+    "bignumber": bignumber_spec,
 }
 
 

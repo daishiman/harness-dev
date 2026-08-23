@@ -1,7 +1,8 @@
 """RESOLUTION-R23 (c) — style family 2 系統と図解型からの全域写像。
 
 固定する性質:
-- 6 語の図解型に対する写像は全域であり、fallback を持たない。
+- C14 が持つ図解型の全語に対して写像は全域であり、fallback を持たない
+  (語数そのものは test_pattern_vocabulary_parity.py が正本と照合する)。
 - 図解型を持たないセクションは style_family の明示が必須 (既定へ落とさない)。
 - 明示上書きが勝つ。allowlist は 2 語で閉じている。
 - 2 family の混在は E-IMG-GRANULARITY-DRIFT で停止する (利用者指定 2026-08-19:
@@ -178,7 +179,7 @@ class DeterministicSelectionTest(R.R23TestCase):
             self.assertNotExit2(ctx, "family を明示したセクションが拒否されている")
 
     def test_unknown_diagram_pattern_is_exit2(self):
-        """写像が全域なのは 6 語に対してであり、7 語目は入力として存在しない。"""
+        """写像が全域なのは C14 の語彙に対してであり、語彙外は入力として存在しない。"""
         with self.temp() as tmp:
             ctx = self.run_plan(tmp, [H.section("intro", diagram_pattern="no-such-pattern")])
             self.assertExit2(ctx, "定義域外の図解型が通っている")
