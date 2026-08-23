@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "690446a55cfad551e5c6d6224eb627f05b01d8cf124e8655151f03ee37c3c6e0"
+    "skill_md_sha256": "3b18d9dc94efc27405dabc2b3b20b28979d88a53b2c71a9a8f54a58ef7fa8478"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "cr-quarterly-heading-rename-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-23T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,18 +26,19 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "`effect: external-mutation` の 4 skill (run-ubm-goal-setting / run-ubm-journal / run-ubm-knowledge-sync / run-ubm-youtube-ingest) は `external_mutation_guard` frontmatter と canonical receipt flow block の双方を保持したまま、guard block 内の 3 本の shell 起動行 (preview / authorize / execute) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃った。`effect: local-artifact` の run-ubm-consult には frontmatter・block いずれも無く、双方向の対応が崩れていない。",
-      "`runtime_root_policy: host-skill-path` を宣言した 5 skill 全てが `## Runtime root contract` 本文を持ち、SKILL.md 内の shell 起動行に裸の `${CLAUDE_PLUGIN_ROOT}` が 0 件であることを grep で確認した。`audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` が exit 0 / verdict PASS / violations 空で機械確認している。",
-      "frontmatter が宣言した `responsibility_refs` / `subagent_refs` / `schema_refs` / `script_refs` / `reference_refs` / `manifest` を 5 skill 分 (計 62 参照) 機械照合し、欠損 0 件。`../../` を跨ぐ plugin 直下参照 (`knowledge/schema.json`・`agents/*.md`・`scripts/validate-knowledge-graph.py` 等) も含めて実在する。",
-      "差分は runtime root 移行に限定されており、Purpose & Output Contract・End-to-End Flow・Phase 構成・`feedback_contract.criteria` の text/verify_by は一行も書き換わっていない。既存契約への非後退 (additive) が保たれている。"
+      "正本表記の切り替えを『追加』ではなく『候補列』としてモデル化している。`REQUIRED_OUTLINE` / `GOAL_SECTIONS` の要素を str | tuple[str, ...] へ拡張し、`heading_matches` / `section_lines` の両方が候補列を受けるよう揃えたため、後方互換の受理点が 1 箇所の定数 (`QUARTERLY_HEADING`) に集約された。将来 3ヶ月表記を落とすときはこの定数を削るだけで済む。",
+      "後方互換が実挙動として成立していることを機械確認した。golden-sample.md を `2026-08-18.md` として validator に通すと `PASS: 違反 0 件` (exit 0)、`### 2ヶ月目標` を `### 3ヶ月目標` へ置換した版でも骨格違反 (S01/G01) は 0 件で、検出されたのはファイル名日付の不一致 (F03) のみだった。旧表記のジャーナルを再検証しても骨格違反にしない、という変更意図が実際に満たされている。",
+      "違反メッセージの可読性を落としていない。`needle_label()` を導入し、見出しが完全に欠落したケース (`### 4ヶ月目標` へ差し替え) で `S01: 必須見出しが見つからないか順序が不正です: ### 2ヶ月目標 または 3ヶ月目標` と両候補を提示することを実行で確認した。G01 側は逆に候補列ではなく実際に書かれていた見出しへ解決してから出す、と方向を使い分けている。",
+      "`GOAL_KEYS` の優先順位が dict の宣言順で決まることを踏まえ、2ヶ月側を先頭へ移して正本優先に変えている。`extract_journal_goals` を直接呼び、本文の出現順が 3ヶ月→2ヶ月 / 2ヶ月→3ヶ月 のどちらでも `quarterly.goal` が 2ヶ月側になることを実測した。コメントの『先に出た方 (= 正本表記の 2ヶ月側)』は実装と一致している。",
+      "ドキュメント側の追従に漏れがない。`grep -rn '3ヶ月' plugins/ubm-goal-setting/` の残存は (a) 後方互換を検証するテスト、(b) 合宿データの鮮度判定や knowledge 本文中の期間表現、のみで、ジャーナル見出しの追従漏れは 0 件だった。"
     ],
     "negative_feedback": [
-      "[low / smell] `## Runtime root contract` が `# run-ubm-journal` H1 の直後へ挿入されたため、skill の overview 段落が runtime 機構の見出し配下へぶら下がる形になった。`## Purpose & Output Contract` 以降は独立見出しを保っており契約本体は無傷で、実行不能にはならないため low に留める。"
+      "[low / smell] `validate()` の目標4階層ループは `body = section_lines(lines, 3, goal)` を候補列のまま先に引き、その後 `goal` を候補の先頭一致へ再解決する。同一ジャーナルに 2ヶ月目標と 3ヶ月目標が併存し、かつ本文で 3ヶ月側が先に現れる異常系では、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。正常系 (片方だけ存在) では起きず、for ループ変数の再束縛は次周回に影響しないため実害は限定的で low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は `main` マージ + external-mutation guard block の機械 migration により `skill_md_sha256` が乖離したことを受けた再束縛であり、content-review-protocol §incremental (unresolved semantic batch) の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff HEAD -- plugins/ubm-goal-setting/skills/<skill>/SKILL.md` で 対象 5 skill の差分を全行読了、加えて同 diff に含まれる `prompts/` 配下 11 ファイルの差分も読了。(2) `grep -rn 'CLAUDE_PLUGIN_ROOT'` を skill ディレクトリ全体へ掛け、移行済み行と未移行行を全件列挙。(3) frontmatter 宣言 refs の実在を Python で機械照合 (5 skill / 62 参照 / 欠損 0)。(4) `plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` = exit 0 / verdict PASS / violations 空。(5) 規約正本 `plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md` の product別 plugin root 契約 (L41-52) と audit の `_portable_root_violations` 実装を読み、host-skill-path 契約の射程が `SKILL.md` + `prompts/**` の shell 実行行であることを確認。(6) 補助 lint: `lint-artifact-delivery` / `lint-entrypoint-artifact-first` / `lint-prompt-contract-drift` / `lint-runtime-portability` / `lint-external-refs` = exit 0、`lint-feedback-contract --all` = exit 0、`lint-skill-tree` = 5 skill とも ok (LS-203 `assets` 警告は本 diff 以前からの既存事項)。 差分は runtime root 移行に閉じており、既存の Purpose & Output Contract / workflow / criteria への書き換えは無い。未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 本 skill 固有: guard block 3 行に加え Phase0 の `build-journal-context.py` と Phase5 の `validate-journal-output.py` の起動行も移行済み。`--expected-number` 照合を含む IN2 の機械検証手順は文言が変わっておらず、通し番号契約は無傷。"
+  "notes": "2026-08-21 付の verdict は external-mutation guard 移行時のもので、本 PR で `### 3ヶ月目標` → `### 2ヶ月目標` の正本表記変更を入れたため skill_md_sha256 が乖離した。content-review-protocol §incremental の focused combined review を 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影している。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff origin/main...HEAD` で対象 6 ファイル (SKILL.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py / agents/journal-composer.md) の差分を全行読了。 (2) `grep -rn '3ヶ月' plugins/ubm-goal-setting/` を全件列挙し、残存が後方互換テストと期間表現のみで 見出し追従漏れ 0 件であることを確認。 (3) validator を 3 パターン実走: 新表記 golden-sample = exit 0 / 違反 0、旧表記 3ヶ月目標 = 骨格違反 0 (F03 は検証手順側のファイル名都合)、`### 4ヶ月目標` = `S01 ... ### 2ヶ月目標 または 3ヶ月目標` を確認。 (4) `extract_journal_goals` を直接呼び、両表記併存時の優先順位が本文出現順によらず 2ヶ月側になることを実測。 (5) frontmatter `feedback_contract.criteria[].id` を実ファイルから読み取り IN1/IN2/OUT1/OUT2 の 4 件を確認。 (6) `python3 scripts/validate-plugin-test-roots.py --workers 4` = roots=19 pass=19 fail=0 (3510 passed, 13 skipped)、`python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q` = 7486 passed, 4 skipped、`build-plugin-release.py --check` = OK (20 plugins)、`lint-vendored-ssot.py` = OK。 未確認: 実際の Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 評価体制の但し書き: 独立 context の subagent へ委譲したが応答が返らず打ち切ったため、本 verdict は主 context の評価者が read-only の grep / 実走のみで判定した。被採点物への改変は行っていない。"
 }

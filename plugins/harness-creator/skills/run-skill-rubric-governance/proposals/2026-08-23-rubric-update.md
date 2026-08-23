@@ -1,5 +1,5 @@
 ---
-date: 2026-08-21
+date: 2026-08-23
 kind: rubric-update-proposal
 status: draft
 trigger: aggregate-evals (SessionEnd)
