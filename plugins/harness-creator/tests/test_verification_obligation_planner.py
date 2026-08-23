@@ -29,6 +29,14 @@ ROUTE_DERIVER = _load(
     "route_build_obligation_deriver_test",
     BUILD_SKILL / "scripts" / "derive-route-build-obligations.py",
 )
+TASK_GRAPH_DERIVER = _load(
+    "real_plan_task_graph_deriver_test",
+    ROOT.parent / "plugin-dev-planner" / "skills" / "run-plugin-dev-plan" / "scripts" / "derive-task-graph.py",
+)
+INPUT_INJECTOR = _load(
+    "execution_unit_input_injector_test",
+    ROOT / "scripts" / "inject-task-inputs.py",
+)
 RECORDER = _load(
     "verification_evidence_recorder_test",
     BUILD_SKILL / "scripts" / "record-verification-evidence.py",
@@ -450,6 +458,143 @@ def test_direct_tasks_join_route_proofs_and_phase_gates_do_not_spawn_agents(tmp_
     )
     second = PLANNER.build_plan(contract, tmp_path, evidence_dir, stage="release")
     assert second["generation_queue"] == ["task:D1"]
+
+
+def test_real_harness_plan_claims_compile_to_order_preserving_execution_units(tmp_path: Path) -> None:
+    """synthetic でなく実 handoff/13-phase plan で coverage と draft scheduler を固定する。"""
+    repo_root = ROOT.parents[1]
+    plan_dir = repo_root / "plugin-plans" / "harness-creator"
+    handoff_path = plan_dir / "handoff-run-plugin-dev-plan.json"
+    handoff = json.loads(handoff_path.read_text(encoding="utf-8"))
+    inventory = json.loads((plan_dir / "component-inventory.json").read_text(encoding="utf-8"))
+    graph = TASK_GRAPH_DERIVER.canonicalize(TASK_GRAPH_DERIVER.derive(plan_dir))
+    contract = ROUTE_DERIVER.compile_execution_units(
+        handoff,
+        graph,
+        inventory,
+        plan_dir=plan_dir,
+        plan_dir_rel="plugin-plans/harness-creator",
+        repo_root=repo_root,
+    )
+    # committed real graph は migration 前タグ無しでも、実 handoff 経由で同じ coverage へ射影。
+    committed_contract = ROUTE_DERIVER.derive_contract(handoff, repo_root, handoff_path)
+    assert committed_contract["claim_coverage"] == contract["claim_coverage"]
+    import jsonschema
+    graph_schema = json.loads((
+        ROOT.parent / "plugin-dev-planner" / "skills" / "run-plugin-dev-plan" / "schemas" / "task-graph.schema.json"
+    ).read_text(encoding="utf-8"))
+    contract_schema = json.loads((BUILD_SKILL / "schemas" / "verification-contract.schema.json").read_text(encoding="utf-8"))
+    jsonschema.validate(graph, graph_schema)
+    jsonschema.validate(contract, contract_schema)
+
+    coverage = contract["claim_coverage"]
+    assert coverage | {"assignment_sha256": "ignored"} == {
+        "executable_claim_count": 304,
+        "assigned_claim_count": 304,
+        "execution_unit_count": 48,
+        "phase_gate_count": 13,
+        "unassigned_task_ids": [],
+        "duplicate_task_ids": [],
+        "assignment_sha256": "ignored",
+    }
+    units = [item["parameters"]["execution_unit"] for item in contract["obligations"]]
+    assert sum(unit["grouping"] == "route-phase" for unit in units) == 40
+    assert sum(unit["grouping"] == "global-phase" for unit in units) == 8
+    covered = [task_id for unit in units for task_id in unit["covered_task_ids"]]
+    assert len(covered) == len(set(covered)) == 304
+    assert all(item["id"] not in item["depends_on"] for item in contract["obligations"])
+    assert len(contract["proof_projections"]) == 13
+    assert all(item["dispatch"] == "none" for item in contract["proof_projections"])
+
+    # P05 draft が P04 release に dependency-deferred にならないことを実 planner で検査。
+    release_ids = {item["id"] for item in contract["obligations"] if item["stage"] == "release"}
+    assert all(not (set(item["depends_on"]) & release_ids)
+               for item in contract["obligations"] if item["stage"] == "draft")
+    plan = PLANNER.build_plan(contract, repo_root, tmp_path / "evidence", stage="draft")
+    assert plan["generation_queue"] == ["unit:global:P01"]
+    assert plan["stage_gate"]["status"] == "draft-building"
+    assert len(plan["stage_gate"]["pending_draft"]) == 17
+    assert len(plan["stage_gate"]["deferred_to_release"]) == 31
+
+
+def test_execution_unit_compiler_fails_closed_on_untyped_or_duplicate_real_claim(tmp_path: Path) -> None:
+    repo_root = ROOT.parents[1]
+    plan_dir = repo_root / "plugin-plans" / "harness-creator"
+    handoff = json.loads((plan_dir / "handoff-run-plugin-dev-plan.json").read_text(encoding="utf-8"))
+    inventory = json.loads((plan_dir / "component-inventory.json").read_text(encoding="utf-8"))
+    graph = TASK_GRAPH_DERIVER.canonicalize(TASK_GRAPH_DERIVER.derive(plan_dir))
+    broken = json.loads(json.dumps(graph))
+    claim = next(node for node in broken["nodes"] if node.get("execution_kind") == "verification-claim")
+    claim["execution_kind"] = "direct-task"
+    import pytest
+    with pytest.raises(ValueError, match="未対応 execution kind"):
+        ROUTE_DERIVER.compile_execution_units(
+            handoff, broken, inventory, plan_dir=plan_dir,
+            plan_dir_rel="plugin-plans/harness-creator", repo_root=repo_root,
+        )
+    duplicate = json.loads(json.dumps(graph))
+    duplicate["nodes"].append(dict(duplicate["nodes"][0]))
+    with pytest.raises(ValueError, match="node ids"):
+        ROUTE_DERIVER.compile_execution_units(
+            handoff, duplicate, inventory, plan_dir=plan_dir,
+            plan_dir_rel="plugin-plans/harness-creator", repo_root=repo_root,
+        )
+
+
+def test_real_p05_draft_unit_inputs_follow_scheduler_not_raw_p04_gate(tmp_path: Path) -> None:
+    """draft reorder 後の入力解決が raw P04 gate を再適用せず、P02 proof で閉じる。"""
+    repo_root = ROOT.parents[1]
+    plan_dir = repo_root / "plugin-plans" / "harness-creator"
+    handoff = json.loads((plan_dir / "handoff-run-plugin-dev-plan.json").read_text(encoding="utf-8"))
+    inventory = json.loads((plan_dir / "component-inventory.json").read_text(encoding="utf-8"))
+    graph = TASK_GRAPH_DERIVER.canonicalize(TASK_GRAPH_DERIVER.derive(plan_dir))
+    contract = ROUTE_DERIVER.compile_execution_units(
+        handoff, graph, inventory, plan_dir=plan_dir,
+        plan_dir_rel="plugin-plans/harness-creator", repo_root=repo_root,
+    )
+    unit_id = "unit:route:C01:P05"
+    obligation = next(item for item in contract["obligations"] if item["id"] == unit_id)
+    assert obligation["parameters"]["execution_unit"]["raw_dependency_unit_ids"]
+    assert all(dep.endswith(":P02") for dep in obligation["depends_on"])
+    dependency_claims = [
+        task_id
+        for dep_id in obligation["depends_on"]
+        for task_id in next(item for item in contract["obligations"] if item["id"] == dep_id)
+        ["parameters"]["covered_task_ids"]
+    ]
+    report = tmp_path / "p02-proof.json"
+    report.write_text(json.dumps({"covered_task_ids": dependency_claims}), encoding="utf-8")
+    state = {task_id: {"state": "done", "route_report": str(report)} for task_id in dependency_claims}
+    out = INPUT_INJECTOR.resolve_execution_unit_inputs(graph, state, contract, unit_id)
+    assert "rejected" not in out
+    assert out["dependency_unit_ids"] == obligation["depends_on"]
+    assert out["covered_task_ids"] == obligation["parameters"]["covered_task_ids"]
+
+    # 実plan最大の P05/C06 入力も claimごと310 entryではなく unique path 9件。
+    largest = next(item for item in contract["obligations"] if item["id"] == "unit:route:C06:P05")
+    largest_dependencies = [
+        task_id
+        for dep_id in largest["depends_on"]
+        for task_id in next(item for item in contract["obligations"] if item["id"] == dep_id)
+        ["parameters"]["covered_task_ids"]
+    ]
+    largest_report = tmp_path / "largest-proof.json"
+    largest_report.write_text(json.dumps({"covered_task_ids": largest_dependencies}), encoding="utf-8")
+    largest_state = {
+        task_id: {"state": "done", "route_report": str(largest_report)}
+        for task_id in largest_dependencies
+    }
+    nodes_by_id = {node["id"]: node for node in graph["nodes"]}
+    raw_entries = sum(
+        1 + len(INPUT_INJECTOR._producer_artifacts(nodes_by_id[task_id], graph, task_id))
+        for task_id in largest_dependencies
+    )
+    largest_out = INPUT_INJECTOR.resolve_execution_unit_inputs(
+        graph, largest_state, contract, "unit:route:C06:P05",
+    )
+    assert raw_entries == 310
+    assert len(largest_out["injected_inputs"]) == 9
+    assert all(item["producer_task_ids"] for item in largest_out["injected_inputs"])
 
 
 def test_recorder_binds_default_expected_artifact_and_enables_reuse(tmp_path: Path) -> None:

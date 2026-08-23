@@ -28,13 +28,18 @@
           "acceptance_criterion": {"type": "string", "minLength": 1, "description": "1 検証可能成果物に対応する受入基準 (C14 携帯率計測対象・fixed shape では optional、task-graph-derived の実行可能 leaf では validator が必須化)"},
           "execution_kind": {
             "type": "string",
-            "enum": ["direct-task", "component-build", "phase-gate"],
-            "description": "task node の実行分類 (C17・optional additive)。component-build だけが明示 route_ref を持ち dispatch 対象、direct-task は route_ref を持たない実行タスク、phase-gate は非 dispatch の phase 完了集約点。未携帯 (fixed-13-phase bootstrap) は legacy 直列解釈へ後方互換 fallback"
+            "enum": ["direct-task", "component-build", "verification-claim", "phase-gate"],
+            "description": "task node の実行分類。verification-claim は fixed plan の検証条件であり、個別 dispatch せず execution-unit contract へ射影する。phase-gate は子 claim 証拠から機械投影する非 Agent ノード。"
+          },
+          "execution_stage": {
+            "type": "string",
+            "enum": ["draft", "release"],
+            "description": "verification-claim の生成 stage。phase 順序の飛び越しには使わない。"
           },
           "route_ref": {
             "type": ["string", "null"],
             "minLength": 1,
-            "description": "execution_kind==component-build のとき必須の明示 route id (C17)。entity_ref を builder 選択へ流用する暗黙 route は fail-closed 拒否 (render-task-execution-envelope.py)。direct-task/phase-gate は null"
+            "description": "component-build は builder 選択用の明示 route id 必須。verification-claim は execution-unit 射影用に route id または null。direct-task/phase-gate は null。"
           },
           "task_spec_ref": {
             "type": ["string", "null"],
@@ -55,6 +60,13 @@
             "then": {
               "required": ["route_ref", "task_spec_ref"],
               "properties": {"route_ref": {"type": "null"}, "task_spec_ref": {"type": "string"}}
+            }
+          },
+          {
+            "if": {"required": ["execution_kind"], "properties": {"execution_kind": {"const": "verification-claim"}}},
+            "then": {
+              "required": ["acceptance_criterion", "execution_stage", "route_ref", "task_spec_ref"],
+              "properties": {"task_spec_ref": {"type": "null"}}
             }
           },
           {

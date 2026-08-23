@@ -1,0 +1,1 @@
+対象はplannerのtask-graphをHarness CreatorがL4で消費する既存更新計画。13 phaseは全未実施、8 component/8 route。dirty差分は再実行範囲の扱いと依存edge表現が中心。評価内容は参照せず、編集なし。

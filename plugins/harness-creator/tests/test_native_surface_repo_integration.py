@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[3]
 PLUGIN = ROOT / "plugins" / "harness-creator"
 OPERATIONS = PLUGIN / "references" / "native-surface-operations.md"
 CAPABILITY_BUILD = PLUGIN / "commands" / "capability-build.md"
+CAPABILITY_BUILD_RUNTIME = PLUGIN / "references" / "capability-build-runtime-contract.md"
 
 
 def _json(path: Path) -> dict:
@@ -257,7 +258,9 @@ def test_default_make_test_pipeline_does_not_mix_legacy_sync_desired_set():
 
 
 def test_capability_build_uses_one_c01_desired_set_for_local_repair():
-    text = CAPABILITY_BUILD.read_text(encoding="utf-8")
+    command = CAPABILITY_BUILD.read_text(encoding="utf-8")
+    assert "references/capability-build-runtime-contract.md" in command
+    text = CAPABILITY_BUILD_RUNTIME.read_text(encoding="utf-8")
     start = text.index("単一 desired-set の native surface deploy-sync")
     end = text.index("- **stall の外ループ合流", start)
     gate = text[start:end]

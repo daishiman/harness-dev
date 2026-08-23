@@ -30,11 +30,11 @@ handoff を使わない明示モード(単発生成/更新)の場合:
 - **中身**: `routes[]` 配列。1 route = 1 component の生成指示で、`build_kind` (種別) / `build_args` (name 等) / `build_target` (配置先) を持つ。
 - **消費**: 既定は `--handoff <path>` だけで task-graph 全体を消費し、各 route の 3 値 (`build_kind`/`build_args`/`build_target`) は自動抽出される (skill route は内部で `run-skill-create` へ、`build_kind=script` は `build-script-route.py` へ dispatch)。単一 route だけ取り出すのは `--route-id <Cxx>` 明示時のみ (escape hatch)。
 - **位置**: `/plugin-dev-plan` → `handoff-…json` (`routes[]`) → `/capability-build --handoff`。実サンプルは `plugin-dev-planner` の `examples/sample-plan/`。
-- **task-graph モード (既定)**: planner 生成 handoff は `task_graph_ref` を常時携帯するため、`--route-id` を付けない起動は**既定でこのモード**になり、単一 route 消費でなく依存グラフ全体を並列 dispatch + 2 ループ (build-execution / spec-improvement) で駆動する。外ループが問題点/改善点 (stall spec-gap・discovered-task) を planner drain 経由で task-graph へ反映し再駆動する (additive=自動反映 / structural=`--approved` 人間承認ゲート)。後方互換: `task_graph_ref` 不在 handoff・または `--route-id` 明示時は従来の単一 route 消費。詳細契約の正本は `commands/capability-build.md` の「task-graph route モード」節。
+- **task-graph モード (既定)**: planner 生成 handoff は `task_graph_ref` を常時携帯するため、`--route-id` を付けない起動は**既定でこのモード**になり、単一 route 消費でなく依存グラフ全体を並列 dispatch + 2 ループ (build-execution / spec-improvement) で駆動する。外ループが問題点/改善点 (stall spec-gap・discovered-task) を planner drain 経由で task-graph へ反映し再駆動する (additive=自動反映 / structural=`--approved` 人間承認ゲート)。後方互換: `task_graph_ref` 不在 handoff・または `--route-id` 明示時は従来の単一 route 消費。詳細契約の正本は `references/capability-build-runtime-contract.md` の「task-graph route モード」節で、command は選択後に同節だけを読む。
 
 ### オプション
 
-`/capability-build` の全オプション（正本 = `commands/capability-build.md`）。route モード（`--handoff`）と明示モード（`<kind> <name>`）の 2 系統:
+`/capability-build` の全オプションと分岐（正本 = `commands/capability-build.md`）、分岐後の詳細運用（正本 = `references/capability-build-runtime-contract.md`）。route モード（`--handoff`）と明示モード（`<kind> <name>`）の 2 系統:
 
 | オプション | 何を入れるか | 用途 |
 |---|---|---|

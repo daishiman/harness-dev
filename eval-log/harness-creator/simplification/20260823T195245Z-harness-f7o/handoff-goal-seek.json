@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "timestamp": "2026-08-23T20:32:18Z",
+  "status": "completed",
+  "goal_spec": "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/goal-spec.json",
+  "original_goal_hash": "8d154c426c1fcf3d66f016d1acb01df486173cabb5f3b20ea1fe0b37fc5ef3cf",
+  "artifacts": [
+    "plugin-plans/harness-creator/task-graph.json",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/task-graph.schema.json",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_examples_golden.py",
+    "plugins/harness-creator/skills/run-build-skill/scripts/derive-route-build-obligations.py",
+    "plugins/harness-creator/skills/run-build-skill/schemas/verification-contract.schema.json",
+    "plugins/harness-creator/scripts/plan-dispatch-batch.py",
+    "plugins/harness-creator/scripts/inject-task-inputs.py",
+    "plugins/harness-creator/scripts/sync-task-state.py",
+    "plugins/harness-creator/references/capability-build-runtime-contract.md",
+    "plugins/harness-creator/references/pipeline-boundary-contract.md",
+    "plugins/harness-creator/tests/test_verification_obligation_planner.py",
+    "plugins/harness-creator/tests/test_plan_dispatch_batch.py",
+    "plugins/harness-creator/tests/test_inject_task_inputs.py",
+    "plugins/harness-creator/tests/test_sync_task_state.py",
+    "plugins/harness-creator/tests/test_capability_build_runtime_contract.py",
+    "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/execution-unit-contract.json",
+    "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/execution-unit-simplification-measurement.json",
+    "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/goal-seek-progress.json",
+    "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/run-goal-seek-intermediate.jsonl"
+  ],
+  "checklist": [
+    {
+      "id": "C1",
+      "done": true,
+      "evidence": ["execution-unit-simplification-measurement.json#baseline", "execution-unit-simplification-measurement.json#after"]
+    },
+    {
+      "id": "C2",
+      "done": true,
+      "evidence": ["production task-graph: 13 phase-gate + 304 verification-claim", "proof projections: 13; phase-gate dispatch: none"]
+    },
+    {
+      "id": "C3",
+      "done": true,
+      "evidence": ["execution-unit-contract.json#claim_coverage: 304/304, unassigned=[], duplicate=[]", "assignment sha256:5bdd6b6d99ca13e37e868f1cb29a2719af2808c689cbdd96ab54663a9b667fc0"]
+    },
+    {
+      "id": "C4",
+      "done": true,
+      "evidence": ["real CLI contract: 48 units = 40 route-phase + 8 global-phase", "304 claim-level candidates to 48 execution units: 84.21% reduction"]
+    },
+    {
+      "id": "C5",
+      "done": true,
+      "evidence": ["repeatable task-id input/state/heartbeat paths with single-task compatibility", "largest real unit input: 310 raw entries to 9 unique artifact paths"]
+    },
+    {
+      "id": "C6",
+      "done": true,
+      "evidence": ["focused: 160 passed", "Plugin Dev Planner: 900 passed, 2 skipped", "Harness Creator: 1140 passed"]
+    },
+    {
+      "id": "C7",
+      "done": true,
+      "evidence": [
+        "fresh goal verifier: PASS; blockers: none"
+      ]
+    }
+  ],
+  "measurement": {
+    "nodes": {"before": 317, "after": 317},
+    "verification_claims": {"before_candidates": 304, "after_typed_and_assigned": 304},
+    "compiled_obligations_or_units": {"before_incomplete": 8, "after_exhaustive": 48},
+    "execution_unit_reduction_from_claim_level_percent": 84.21,
+    "phase_gates": {"typed": 13, "agent_dispatches": 0},
+    "claim_coverage": {"assigned": 304, "unassigned": 0, "duplicate": 0},
+    "control_plane": {"largest_unit_atomic_writes": "13 to 1", "largest_real_input_entries": "310 to 9"}
+  },
+  "ordering_contract": {
+    "unit_granularity": "route-phase/global-phase",
+    "reason": "48 units are the minimum grouping that preserves usable-draft and phase quality ordering; the approximate 24-unit target would merge quality-distinct phases.",
+    "draft": ["P01", "P02", "P05"],
+    "release": ["P03", "P04", "P06", "P07", "P08", "P09", "P10", "P11", "P12", "P13"],
+    "raw_edges": "retained as provenance",
+    "scheduler_edges": "separate contracted DAG; no self-dependencies"
+  },
+  "verification": [
+    {
+      "scope": "focused execution-unit/control-plane/runtime-contract tests",
+      "command": "pytest -q plugins/harness-creator/tests/test_plan_dispatch_batch.py plugins/harness-creator/tests/test_capability_build_runtime_contract.py plugins/harness-creator/tests/test_verification_obligation_planner.py plugins/harness-creator/tests/test_inject_task_inputs.py plugins/harness-creator/tests/test_sync_task_state.py",
+      "status": "pass",
+      "summary": "160 passed in 1.41s"
+    },
+    {
+      "scope": "Plugin Dev Planner full suite",
+      "command": "pytest -q plugins/plugin-dev-planner",
+      "status": "pass",
+      "summary": "900 passed, 2 skipped in 14.53s"
+    },
+    {
+      "scope": "Harness Creator full suite",
+      "command": "pytest -q plugins/harness-creator",
+      "status": "pass",
+      "summary": "1140 passed in 26.71s"
+    },
+    {
+      "scope": "fresh goal verification",
+      "command": "fresh verifier against original goal and target artifacts",
+      "status": "pass",
+      "summary": "PASS; blockers: none"
+    }
+  ],
+  "open_issues": [],
+  "pending_actions": []
+}

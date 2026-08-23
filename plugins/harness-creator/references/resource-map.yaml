@@ -76,6 +76,19 @@ references:
       - run-plugin-package-check
     relates_to: [feedback-to-improvement-runbook, orchestrate-gate-pattern]
 
+  - id: capability-build-runtime-contract
+    path: references/capability-build-runtime-contract.md
+    kind: reference
+    read_when:
+      - "/capability-build が入力を明示・単一 route・task-graph route のいずれかへ分岐した後"
+      - "選択した stage/profile の実コマンド、証跡 shape、停止・完了順序を確認する時"
+      - "TG-C01〜TG-C09 の内外ループ、stall handback、native repair を実行する時"
+    produced_by: team-platform
+    consumed_by:
+      - capability-build
+      - run-build-skill
+    relates_to: [pipeline-boundary-contract]
+
   - id: feedback-to-improvement-runbook
     path: references/feedback-to-improvement-runbook.md
     kind: reference

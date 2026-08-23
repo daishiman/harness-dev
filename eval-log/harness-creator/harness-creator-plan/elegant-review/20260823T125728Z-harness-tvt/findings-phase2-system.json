@@ -1,0 +1,718 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "システム思考",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "producer と consumer、graph writer と runtime-state writer の一方向境界は明確。一方、edge 圧縮は実行到達性だけを保存し、consumer が直接 depends_on から解決する成果物・handoff notes の因果関係を保存していない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:24",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-02-design.md:75"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-04-test-design.md:30"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "同一 phase 外の component 依存 edge を phase barrier へ畳み込む変更は順序 reachability を保つが、直接先行タスクだけを注入対象とする C3 契約から component 間の直接因果を消す。現物では削除対象 edge は推移到達可能なままだが、直接依存としては失われる。",
+          "recommended_intervention": "Cartesian edge を戻さず、component-phase 集約 node、依存 provenance、または consumes edge により「順序」と「直接データフロー」を別々に圧縮保存する。reachability 同値に加え injected_inputs/injected_notes と blocked 伝播対象の同値テストを追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+            "line": 491,
+            "section": "_derive_fixed_13_phase"
+          },
+          "root_cause": "depends_on を scheduling reachability と直接データフローの二用途に使いながら、圧縮時には前者しか保存していない。"
+        }
+      ],
+      "score": 0.56
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "因果関係分析",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "producer→plan→task-graph→ready-set/runtime→state/evidence の鎖は記述されているが、cross-phase edge 削減後は task-graph→inject-task-inputs の直接依存入力が phase marker に置換され、成果物・notes の注入原因が追跡不能になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:49"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-04-test-design.md:91"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:504"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "edge 削減の検証対象が DAG と到達性に偏り、後段が必要とする直接 producer 集合の保存を検証していない。",
+          "recommended_intervention": "変更前後について、各 task の scheduling ancestors、direct data producers、notes producers、blocked-propagation successors の4集合を比較し、意図した集合だけが縮約される gate を追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+            "line": 504,
+            "section": "same_phase_pairs"
+          },
+          "root_cause": "圧縮の正しさを reachability 一軸で定義し、edge を消費する後段別の意味保存条件を列挙していない。"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "因果ループ",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "discovered-task→planner update→graph_hash 再 pin→runtime 再始動は有効な改善ループ。一方、再評価削減ループは changed file しか出力せず、意味観点との束縛が自由記述 evidence に依存するため、unsafe reuse と full fallback の振り子になりうる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:40"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:352"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/SKILL.md:97"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:371"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "reeval_scope は changed/added/removed のファイル名だけを返し、C1/C2-004/C8/C12/S5-S9 のどの observation が失効したかを機械導出しない。stale 検出も evidence 内の相対ファイル名文字列に依存する。",
+          "recommended_intervention": "finding ごとに observation_id と bound_inputs[] を schema 必須化し、reeval_scope に invalidated_observations[] と required_semantic_checks[] を出す。絶対パス・行番号表記を正規化して digest 台帳の相対 path へ解決する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 371,
+            "section": "_stale_reuse_findings"
+          },
+          "root_cause": "再利用単位が型付き observation ではなく自由記述 finding/evidence である。"
+        }
+      ],
+      "score": 0.53
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "トレードオン思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "15,552 本級の直積 edge 維持と直接依存全削除の二択ではない。phase barrier で順序を圧縮しつつ、component-phase 単位の直接依存だけを保持すれば、サイズ削減と入力注入精度を両立できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:508"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "現行4 edge 型には「順序は推移圧縮できるが、直接成果物・notes の provenance として残す依存」を表現する面がない。",
+          "recommended_intervention": "既存 edge 型を増やさない場合は component-phase 集約 node と consumes を用いて直接データフローを O(component×phase) で表現する。schema 拡張可能なら dependency_role=scheduling|dataflow を追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+            "line": 508,
+            "section": "component depends_on expansion"
+          },
+          "root_cause": "edge の量と意味を同じ設計軸で扱い、圧縮可能な順序情報と圧縮不能な provenance を分離していない。"
+        }
+      ],
+      "score": 0.61
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "プラスサム思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "digest receipt は evaluator のトークン削減と approver の監査性を同時に改善できる。ただし plan 全成果物と評価契約の入力 closure を pin し、再利用根拠を型付きにした場合に限る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:62"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/envelope-draft/plugin.json"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/schemas/plan-findings.schema.json:62"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:322"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "evaluated_inputs は固定5ファイルと phase 文書だけで、plan の直接成果物である envelope-draft/plugin.json、および再利用判断を変える evaluator prompt/rubric/verification protocol を鮮度 closure に含めない。",
+          "recommended_intervention": "evaluated_inputs を plan artifact manifest から導出し、envelope と必要な参照成果物を含める。別に evaluator_contract_digest を持ち、prompt/rubric/semantic-check mapping が変わった場合は full mode にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 53,
+            "section": "EVALUATED_INPUT_NAMES"
+          },
+          "root_cause": "再評価対象集合を成果物 manifest ではなく手書きファイル名列挙で定義している。"
+        }
+      ],
+      "score": 0.58
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "価値提案思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "利用者価値は「短い graph」や「少ない再評価」自体ではなく、追加質問・再実行・誤注入を減らしながら同じ品質証明を得ること。現差分は量削減を実現するが、直接依存情報と reuse proof の保存が未完成。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:89"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:55"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:485"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "other",
+          "description": "consumer 設計は「実 producer は produces edge を生成しない」として write_scope を主経路にするが、現 producer は entity 最初の node から produces edge を生成している。producer 現物と consumer 前提が矛盾する。",
+          "recommended_intervention": "producer graph shape を fixture として consumer 統合テストへ直接供給し、produces edge と write_scope の優先順位・重複・不一致時挙動を一つの境界契約で確定する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md",
+            "line": 38,
+            "section": "C03 実装設計"
+          },
+          "root_cause": "producer 実装を snapshot 契約で参照せず、consumer plan 内の自然言語要約を第二正本にしている。"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "戦略的思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "保留3案のうち state 配置は既に cycle_id 対応まで確定済みで open question に残す価値がない。同時実行数は runtime 可変が妥当だが安全な既定・上限が必要。retry は自動化せず manual default が妥当だが、明示的な policy と試行履歴が必要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:108",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-02-design.md:43"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:109",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:110"
+          ],
+          "violation_count": 2
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:72"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:32"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "goal-spec.open_questions は3件とも文字列で状態を持たず、state path は後続文書で確定済みなのに未解決のまま。同時実行数と retry は runtime 契約に既定値・上限・authority が落ちていない。",
+          "recommended_intervention": "open_questions を id/status/decision/owner/decision_basis/revisit_trigger を持つ decision record にする。state path は resolved、parallelism は runtime parameter + conservative default + environment cap、retry は manual default + explicit retry_policy/attempt_count として確定する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json",
+            "line": 108,
+            "section": "open_questions"
+          },
+          "root_cause": "保留事項に lifecycle と機械可読な決定状態がないため、解消済み判断と真の未決定が混在している。"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "改善思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "max loop を規定回数でなく上限と明示し、差分再評価を導入した方向は妥当。改善を閉じるには、変更ファイル検出だけでなく失効した semantic check を機械化し、偽 reuse の再発テストを増やす必要がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:250"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:64"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:40"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:111"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "追加テストは単一ファイル変更と正規化済み相対 evidence の stale reuse だけを扱い、envelope 変更、絶対パス evidence、複数ファイル束縛、evaluator 契約変更、removed file の observation 失効を覆っていない。",
+          "recommended_intervention": "上記5ケースを fixture 化し、各ケースで reeval_scope.required_semantic_checks が非空になり stale verdict が fail-closed になることを固定する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py",
+            "line": 64,
+            "section": "differential evaluation tests"
+          },
+          "root_cause": "テストが digest 差分計算の正常系を中心にし、再利用の意味的 soundness を破る入力表現を網羅していない。"
+        }
+      ],
+      "score": 0.57
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "仮説思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説「phase 順序 edge があるため cross-phase component edge は冗長」は scheduling reachability について成立する。しかし直接先行分だけを注入する consumer 契約まで含めると棄却される。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-04-test-design.md:91"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:511"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "edge 圧縮の仮説検証に、direct producer notes/artifacts の保存、blocked 伝播粒度、stall diagnosis の同値性が含まれていない。",
+          "recommended_intervention": "仮説を「reachability 不変」「direct-dataflow 不変」「diagnostic provenance 不変」の3つへ分解し、別々の acceptance test を置く。順序だけ不変なら圧縮を部分採用と判定する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+            "line": 492,
+            "section": "edge reduction rationale"
+          },
+          "root_cause": "「依存保証」を推移到達性だけに狭く定義したため、後段が edge に載せているデータフロー意味を仮説から落とした。"
+        }
+      ],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "論点思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "最重要論点は depends_on が「実行順序」だけか「直接成果物・notes・失敗伝播」も意味するかである。ここを決めれば edge 圧縮方式、consumer 注入、stall diagnosis、テスト範囲が連鎖的に決まる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-02-design.md:41"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:32"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "depends_on の意味が graph producer では phase scheduling、Harness Creator では直接入力注入と下流 blocked 伝播にも使われ、単一の明文化された意味契約になっていない。",
+          "recommended_intervention": "pipeline-boundary-contract に edge type ごとの scheduling/readiness/input-injection/failure-propagation/diagnostics の意味表を追加し、producer と consumer が同じ表を機械参照する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json",
+            "line": 25,
+            "section": "checklist C3"
+          },
+          "root_cause": "edge 語彙の所有は producer に置いたが、consumer 操作別の意味論を境界契約へ昇格していない。"
+        }
+      ],
+      "score": 0.52
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "KJ法",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "観測は4島に集約できる: writer/feedback 境界は良好、graph 圧縮は意味保存不足、再評価 reuse は鮮度 closure 不足、保留判断は lifecycle 不足。さらに同一責務が goal/index/phase/inventory/handoff/task-graph に反復され、差分判定を粗い whole-file digest にしている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:108",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:72"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/eval-log/harness-creator/harness-creator-plan/elegant-review/20260823T125728Z-harness-tvt/raw_observations.json"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:49",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-01-requirements.md:19"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/task-graph.json"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "同一責務が複数の人間向け文書と機械 artifact に再記述され、どれが導出 view かが一貫しない。結果として情報過多だけでなく、state path のような解消済み判断が goal-spec に残る drift を生む。",
+          "recommended_intervention": "goal/checklist、component contract、decision records を型付き SSOT に集約し、index・phase の横断説明・handoff・task graph は決定論生成 view として provenance/digest を持たせる。人間向け view は必要局面だけ lazy render する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md",
+            "line": 49,
+            "section": "plan overview"
+          },
+          "root_cause": "正規化の対象が build_target/depends_on に限られ、判断・意味契約・レビュー証拠の重複は正規化されていない。"
+        }
+      ],
+      "score": 0.6
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:108",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-02-design.md:43",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:485"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/envelope-draft/plugin.json",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:64"
+      ],
+      "violation_count": 2
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:25",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491"
+      ],
+      "violation_count": 2
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:352",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:371"
+      ],
+      "violation_count": 2
+    }
+  },
+  "variable_abstraction": [
+    {
+      "concrete_value": "並列 dispatch の同時実行数上限",
+      "variable_name": "{{MAX_PARALLELISM}}",
+      "default_value": "1",
+      "source_trace": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:109"
+    },
+    {
+      "concrete_value": "自動 N 回 vs 人間判断",
+      "variable_name": "{{RETRY_POLICY}}",
+      "default_value": "manual",
+      "source_trace": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:110"
+    },
+    {
+      "concrete_value": "eval-log/<slug>/build/task-state.json",
+      "variable_name": "{{TASK_STATE_PATH}}",
+      "default_value": "{{BUILD_DIR}}/task-state.json",
+      "source_trace": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-02-design.md:43"
+    },
+    {
+      "concrete_value": "固定5ファイル + phase-*.md",
+      "variable_name": "{{REVIEW_INPUT_MANIFEST}}",
+      "default_value": "plan artifact manifest から導出",
+      "source_trace": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53"
+    },
+    {
+      "concrete_value": "同一 phase ペアのみ depends_on 展開",
+      "variable_name": "{{DEPENDENCY_COMPRESSION_MODE}}",
+      "default_value": "phase-barrier-plus-direct-dataflow",
+      "source_trace": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  }
+}

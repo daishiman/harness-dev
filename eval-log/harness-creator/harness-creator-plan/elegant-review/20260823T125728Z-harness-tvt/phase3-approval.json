@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "approver": "elegant-approver-independent-fresh-context",
+  "reviewed_at": "2026-08-23T13:46:01Z",
+  "verdict": "PASS",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61 derives component count N from component-inventory.json instead of retaining the contradictory N=7 literal; lines 62 and 75 consistently describe the current 7 scripts + 1 command = 8 buildable components.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80, /Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/envelope-draft/plugin.json:9, and /Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-12-documentation.md:31 agree that the existing capability-build command is newly declared in manifest entry_points.commands while hooks and user setup remain unchanged.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/goal-spec.json:108 and /Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-01-requirements.md:32 consistently retain exactly two operational open questions; the resolved task-state path is removed from open_questions and recorded as resolved at phase-01-requirements.md:52 and phase-02-design.md:43.",
+        "Independent rerun: assign-plugin-plan-evaluator returned C1 PASS with check-build-handoff exit=0."
+      ],
+      "remaining_issues": []
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:324 recursively collects every stable file below plan_dir, including nested envelope-draft/** and task-specs/**, and lines 333-340 exclude only the output and declared transient/editor artifacts.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:61 exercises recursive nested collection; the focused rerun emitted 19 stable inputs and all 11 evaluator gates exited 0.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:19 explicitly includes all 13 phases, inventory, index, envelope draft, handoff, and task graph in final review scope.",
+        "Independent rerun: focused evaluator/deriver tests reported 50 passed; assign-plugin-plan-evaluator returned C2 PASS and evaluated_inputs=19."
+      ],
+      "remaining_issues": []
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:64 defines evaluated_inputs strictly as a freshness ledger and explicitly denies semantic-scope inference or evidence-reuse authorization.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43 and /Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:253 make the existing verification-obligation resolver's exact fingerprint + current PASS receipt DAG the sole semantic reuse authority; absence, mismatch, or uncertainty forces genuine reevaluation.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md:45 binds fingerprints to claim, input digests, checker contract, and upstream fingerprints; lines 49-55 define reuse/generate/check/adjudicate/observe execution from that evidence DAG.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29 applies the same exact-receipt rule to P03-to-P10 reuse and rejects file-delta-based semantic carry-forward.",
+        "A scoped search found no production reeval_scope field or prose contract; remaining occurrences are negative regression assertions in tests only."
+      ],
+      "remaining_issues": []
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491 states and implements that depends_on is a direct producer relation for ordering, input/notes injection, failure propagation, and diagnostic provenance; lines 496-507 expand every same-or-past-phase upstream task and exclude future-phase producers.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py:157 rejects future-phase producer edges, while lines 188-228 require every direct producer across same and prior phases rather than accepting phase-barrier reachability as a substitute.",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:38 matches the real producer shape: one produces edge per entity plus write_scope on every direct producer task, with produces used as provenance cross-check rather than an invented absence assumption.",
+        "Independent graph audit on the current 317-node/10876-edge graph reported direct_producer_mismatches=[], future_component_edges=[], produces_count=8, and produces_unique_artifacts=8. Re-derivation in a temporary copy was byte-identical, and validate-task-graph exited 0.",
+        "The dangerous Phase-2 same-phase/phase-barrier compression is not present: direct producer edges were restored even though that retains more edges, demonstrating semantic preservation was prioritized over raw graph-size reduction."
+      ],
+      "remaining_issues": []
+    }
+  },
+  "simplicity_assessment": {
+    "verdict": "PASS",
+    "summary": "The change is a reduction in duplicated decisions and invalid reuse paths, not a cosmetic line-count reduction. It removes the evaluator-local semantic scope mechanism, retains a complete recursive freshness ledger for stale detection, and delegates semantic reuse to the existing claim-level proof DAG. In the task graph it deliberately restores direct edges where compression would lose meaning, so quality and diagnostic fidelity take precedence over smaller JSON.",
+    "quality_preserving_improvements": [
+      "One semantic reuse SSOT: exact verification-obligation fingerprint + current PASS receipt DAG.",
+      "One non-authoritative freshness mechanism: recursive evaluated_inputs path/digest ledger.",
+      "Deterministic gates still run in full; file deltas never suppress semantic checks.",
+      "Direct producer, blocked propagation, notes/input injection, and diagnostics keep their existing dependency meaning.",
+      "Plan prose now derives variable component count from inventory and records current count/manifest delta only where the current plan needs a readable view."
+    ],
+    "accepted_deferred_decisions": [
+      "Parallel dispatch concurrency remains an L4 runtime parameter because the execution environment owns its cap.",
+      "Automatic retry remains unselected; current authority is explicit human/upstream-harness judgment after propagated blocking."
+    ]
+  },
+  "dependency_semantics": {
+    "verdict": "PASS",
+    "direct_producer_meaning_preserved": true,
+    "ordering_preserved": true,
+    "input_and_notes_provenance_preserved": true,
+    "failure_propagation_preserved": true,
+    "diagnostic_provenance_preserved": true,
+    "future_phase_producers_excluded": true,
+    "dangerous_same_phase_compression_remaining": false,
+    "current_graph": {
+      "nodes": 317,
+      "edges": 10876,
+      "produces_edges": 8,
+      "unique_produced_artifacts": 8,
+      "direct_producer_mismatches": 0,
+      "future_component_edges": 0,
+      "byte_matches_fresh_derivation": true
+    }
+  },
+  "verification_evidence": {
+    "independent_minimal_rerun": [
+      "Focused assign-plugin-plan-evaluator and derive-task-graph tests: 50 passed in 6.47s.",
+      "assign-plugin-plan-evaluator against plugin-plans/harness-creator with temporary output: PASS, 19 stable evaluated inputs, 11/11 gates exit 0, C1-C4 PASS.",
+      "validate-task-graph.py plugin-plans/harness-creator: exit 0.",
+      "Temporary-copy task-graph re-derivation: byte-identical to checked artifact.",
+      "Semantic graph audit: no direct producer mismatch, no future component edge, 8 unique produced artifacts."
+    ],
+    "previously_recorded_full_validation": [
+      "plugin-dev-planner suite: 899 passed, 2 skipped.",
+      "harness-creator suite: 1095 passed.",
+      "plan evaluator: PASS with 19 inputs.",
+      "all plan gates: exit 0."
+    ],
+    "review_inputs": [
+      "git diff for plugin-plans/harness-creator and the two changed plugin-dev-planner skills",
+      "Phase-2 logical/meta/system findings and aggregated findings.json",
+      "pre-phase3.patch",
+      "current source, tests, schemas, prompt contracts, plan documents, inventory, handoff, envelope draft, and generated task graph"
+    ]
+  },
+  "unresolved": []
+}

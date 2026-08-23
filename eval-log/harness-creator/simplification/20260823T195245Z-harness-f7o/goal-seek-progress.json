@@ -1,0 +1,58 @@
+{
+  "skill": "run-goal-seek",
+  "goal": "実Harness Creator planの全検証claimが欠落なく追跡されながらroute・stage・global gate単位の少数execution unitへ決定論的に射影され、phase markerと制御系往復で不要なSubAgentを起動せず、既存の品質・安全ゲートを維持している。",
+  "spec_ref": "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/goal-spec.json",
+  "iteration": 2,
+  "max_loops": 3,
+  "engine": "run-goal-seek",
+  "fork_context": "subagent",
+  "checklist": [
+    {
+      "id": "C1",
+      "text": "実planのbaseline node数・route数・depends_on数・obligation数と、改善後のexecution unit数・claim coverage・control-plane呼出単位を比較するmeasurement JSONが存在する。",
+      "status": "done",
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "text": "production task-graphがphase-gateとexecutable claimを機械識別でき、phase-gateはSubAgent実行対象にならない。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "text": "実planの全executable claimがちょうど1つのexecution unitかproof projectionで被覆され、未割当・重複割当はfail-closedに検出される。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "text": "execution unitがroute×stageと必要最小のglobal gateに束ねられ、検証claim数より実行unit数が少ないことを実plan統合検査が証明する。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "text": "同一execution unit内の入力解決・state write-back・heartbeatのうち決定論的に一括化できる経路がbatch APIになり、単位taskごとの無条件subprocess反復が減っている。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "text": "Harness CreatorとPlugin Dev Plannerの関連test suiteがgreenで、fail-closed・単一writer・承認境界・証拠鮮度が緩和されていない。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "text": "fresh verifierがoriginal goalにPASSを返し、成果物・検証・未解決事項がhandoff-goal-seek.jsonに記録されている。",
+      "status": "done",
+      "verify_by": "reasoning"
+    }
+  ],
+  "status": "completed",
+  "open_issues": [],
+  "original_goal_hash": "8d154c426c1fcf3d66f016d1acb01df486173cabb5f3b20ea1fe0b37fc5ef3cf",
+  "last_consumed_intermediate_iteration": 1,
+  "handoff": "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/handoff-goal-seek.json"
+}

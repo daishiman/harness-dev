@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "plugin-plans/harness-creator execution scheduling",
+  "captured_at": "2026-08-23T20:24:37Z",
+  "measurement_method": {
+    "baseline_source": "working tree captured before this goal-seek implementation; git HEAD was not used",
+    "after_source": "production plugin-plans/harness-creator/task-graph.json and execution-unit-contract.json emitted by their CLIs",
+    "counts": "JSON object and array lengths; depends_on is the edge.type count",
+    "reduction_percent": "round((baseline - after) / baseline * 100, 2)"
+  },
+  "baseline": {
+    "task_graph": {
+      "nodes": 317,
+      "phase_root_nodes": 13,
+      "machine_typed_phase_gates": 0,
+      "machine_typed_verification_claims": 0,
+      "executable_claim_candidates": 304,
+      "routes": 8,
+      "edges": 10876,
+      "depends_on_edges": 10564,
+      "bytes": 1134705
+    },
+    "compiled_obligations": 8,
+    "compiled_obligation_scope": "draft build:C01 through build:C08 only; release/global claims were not exhaustively assigned",
+    "effective_claim_level_ai_execution_candidates": 304,
+    "phase_gate_projections": 0,
+    "control_plane": {
+      "input_resolution": "single-task API only; raw claim dependencies were resolved for each task",
+      "state_writeback": "one task transition per process invocation and atomic state write",
+      "heartbeat": "one task renewal per process invocation and atomic state write",
+      "dispatch": "raw pending task IDs could cause an unconditional resolver/dispatch subprocess per claim",
+      "phase_roots": "not mechanically typed and had no proof-driven no-Agent projection"
+    }
+  },
+  "after": {
+    "task_graph": {
+      "path": "plugin-plans/harness-creator/task-graph.json",
+      "sha256": "821cfd3804a22efb87fb5b4f8de8628f13ee032a4d9fb7ed4c3203494b5e4a31",
+      "nodes": 317,
+      "phase_gates": 13,
+      "verification_claims": 304,
+      "routes": 8,
+      "edges": 10876,
+      "depends_on_edges": 10564,
+      "bytes": 1239331
+    },
+    "execution_contract": {
+      "path": "eval-log/harness-creator/simplification/20260823T195245Z-harness-f7o/execution-unit-contract.json",
+      "sha256": "1c3810a0b5d578f24e001a2f4b938bf6800301604e27d36986378cd1a08f024d",
+      "execution_units": 48,
+      "route_phase_units": 40,
+      "global_phase_units": 8,
+      "draft_units": 17,
+      "release_units": 31,
+      "minimum_claims_per_unit": 1,
+      "maximum_claims_per_unit": 13,
+      "phase_gate_projections": 13,
+      "bytes": 568959
+    },
+    "claim_coverage": {
+      "executable_claims": 304,
+      "assigned_claims": 304,
+      "unassigned_task_ids": [],
+      "duplicate_task_ids": [],
+      "assignment_sha256": "sha256:5bdd6b6d99ca13e37e868f1cb29a2719af2808c689cbdd96ab54663a9b667fc0"
+    },
+    "dependency_projection": {
+      "raw_dependency_unit_references_retained_as_provenance": 336,
+      "scheduler_dependency_references_after_contraction": 240,
+      "self_dependencies": 0,
+      "scheduler_policy": "draft P01 -> P02 -> P05, then release P03 -> P04 -> P06 -> P07 -> P08 -> P09 -> P10 -> P11 -> P12 -> P13; each phase preserves route/coupling prerequisites"
+    },
+    "control_plane": {
+      "input_resolution": "one execution-unit resolver invocation; artifact_path values are deduplicated and producer_task_ids retain claim coverage",
+      "state_writeback": "repeatable task IDs validate as one batch and commit through one atomic fsync+replace write; single-task CLI remains compatible",
+      "heartbeat": "repeatable task IDs renew as one batch and commit through one atomic fsync+replace write; single-task CLI remains compatible",
+      "dispatch": "one dispatch subprocess per ready execution unit; raw claim dependencies remain provenance and are not re-applied over the stage scheduler",
+      "phase_gates": "zero-Agent projection only after all exact child claims are done and have existing, covering, unique evidence refs"
+    },
+    "largest_real_unit_input": {
+      "unit_id": "unit:route:C06:P05",
+      "raw_claim_derived_entries": 310,
+      "unique_artifact_paths_after_deduplication": 9,
+      "producer_coverage_field": "producer_task_ids"
+    }
+  },
+  "reduction": {
+    "claim_level_ai_execution_candidates_before": 304,
+    "execution_units_after": 48,
+    "absolute_ai_execution_unit_reduction": 256,
+    "ai_execution_unit_reduction_percent": 84.21,
+    "phase_gate_agent_executions_after": 0,
+    "largest_unit_state_or_heartbeat_writes_before": 13,
+    "largest_unit_state_or_heartbeat_writes_after": 1,
+    "largest_unit_state_or_heartbeat_write_reduction_percent": 92.31,
+    "largest_real_unit_input_entries_before": 310,
+    "largest_real_unit_input_entries_after": 9,
+    "largest_real_unit_input_entry_reduction_percent": 97.1
+  },
+  "grouping_decision": {
+    "target_interpretation": "route×stage was refined to the minimum quality-preserving route×phase stage unit",
+    "why_not_24_units": "A simple draft/release merge would put P02 and P05 in one route unit while the raw 13-phase graph places release P03/P04 between them. Conversely, blindly contracting the raw phase barriers would defer P05 behind P04 and break the usable-draft contract. Forty-eight units preserve each quality phase while the scheduler explicitly implements the established draft order P01/P02/P05 before release.",
+    "invariant_priority": "phase and usable-draft quality ordering takes precedence over the approximate 24-unit target"
+  },
+  "verification": [
+    {
+      "scope": "focused execution-unit/control-plane/runtime-contract tests",
+      "command": "pytest -q plugins/harness-creator/tests/test_plan_dispatch_batch.py plugins/harness-creator/tests/test_capability_build_runtime_contract.py plugins/harness-creator/tests/test_verification_obligation_planner.py plugins/harness-creator/tests/test_inject_task_inputs.py plugins/harness-creator/tests/test_sync_task_state.py",
+      "result": "160 passed in 1.41s"
+    },
+    {
+      "scope": "Plugin Dev Planner full suite",
+      "command": "pytest -q plugins/plugin-dev-planner",
+      "result": "900 passed, 2 skipped in 14.53s"
+    },
+    {
+      "scope": "Harness Creator full suite",
+      "command": "pytest -q plugins/harness-creator",
+      "result": "1140 passed in 26.71s"
+    }
+  ]
+}

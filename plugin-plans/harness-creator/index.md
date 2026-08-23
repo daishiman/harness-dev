@@ -58,9 +58,9 @@ plugin_meta:
 - **スコープ (含まない)**: 実 `plugins/harness-creator/` への script/command 実装反映 (L4・後段 run-skill-create/run-build-skill/capability-build の新規ファイル追加/Edit build へ委譲)。境界契約と harness-creator 自身の knowledge 正本は、計画と実 harness knowledge を接続するため本改善で同期する。
 
 ## ドメイン知識
-- **2 軸直交 + 第 3 の射影の消費**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (N=7 component・機械 SSOT) を二重に持たない設計へ、producer 側が追加する task-graph (第 3 の射影) を読み取り専用で消費する。task-graph は component-inventory.json の component 粒度 depends_on を再記述せず包含参照する。
+- **2 軸直交 + 第 3 の射影の消費**: ライフサイクル軸 (13 phase・人間可読) と成果物実体軸 (component 数 N・機械 SSOT=`component-inventory.json` の `components[]`) を二重に持たない設計へ、producer 側が追加する task-graph (第 3 の射影) を読み取り専用で消費する。task-graph は component-inventory.json の component 粒度 depends_on を再記述せず包含参照する。
 - **component_kind (5 種)**: skill / sub-agent / slash-command / hook / script。本計画は 5 種を全検討したうえで script 7 件 (C01-C05, C07, C08, いずれも plugin-root 配置) + slash-command 1 件 (C06=capability-build の UPDATE) の計 8 件へ収束した (derivation 参照・skill/sub-agent/hook いずれも新規の独立能力面/文脈判断面/強制面を必要としないと判断した根拠を明示)。C07=manage-build-lease.py は追加差分指示 C10(b/c/d) (孤児 lease 回収判断・build lock 排他・graph_hash pin 検証) を「build 開始前に一度だけ実行される安全性検査」という共通タイミング・共通不変条件で束ねた新設 component であり、C08=record-task-graph-knowledge.py は C13 (未処理 discovered-task 完了ブロック + Loop A/B knowledge 化) を独立検証可能な完了判定/知見化 component として持つ。C10(a) は C01 の既存アルゴリズムへの折込み、C11/C12 は C02/C05 それぞれの拡張として新規 component 化を見送った (根拠は component-inventory.json `derivation` および phase-02 参照)。
-- **phase ≠ component**: 13 はフェーズ数の固定値、N=7 は buildable 実体数で独立に決まる。**entities_covered 付与規則**: component の build_target の生成/検証を primary deliverable とする phase のみが `entities_covered` に id を持つ。P01 (要件定義)・P03/P07/P10 (判定ゲート系)・P08 (component 非依存の横断観点)・P11/P12/P13 (完了プロセス系) は `entities_covered=[]` が正常である (空は orphan ではなく非依存の明示)。
+- **phase ≠ component**: 13 はフェーズ数の固定値、N は `component-inventory.json` の `components[]` から導出する buildable 実体数で独立に決まる。**entities_covered 付与規則**: component の build_target の生成/検証を primary deliverable とする phase のみが `entities_covered` に id を持つ。P01 (要件定義)・P03/P07/P10 (判定ゲート系)・P08 (component 非依存の横断観点)・P11/P12/P13 (完了プロセス系) は `entities_covered=[]` が正常である (空は orphan ではなく非依存の明示)。
 - **task-graph.json (producer SSOT・読み取り専用) と task-state.json (consumer SSOT・単一 writer) の分離**: 前者は宣言的構造 (node/edge)、後者は runtime state (pending/running/done/blocked の永続 4 値)。`ready` は compute-ready-set.py が算出する一時ビューであり task-state.json へ永続化しない。C01 は両者をマージした一時ビューを producer 側 compute-ready-set.py へ subprocess 経由で渡す。C02 のみが task-state.json を書く (単一 writer・goal-spec constraints #2)。実行イベントログ (C11・task-events.jsonl) も同一 writer=C02 が state 遷移と同一呼び出しタイミングで append-only 追記する (別 writer に分離すると state 更新とイベント記録がトランザクション不整合を起こすリスクがあるため)。
 - **discovered-task の E4 境界**: build 進行中 (in-flight) の単一 route から生じる plan 未網羅タスクの発見 (C04) は、build 完了後の全体的改善還流 (E3=emit-improvement-handoff.py) とは時間軸・スキーマ (discovered-task.schema.json vs improvement-handoff.schema.json)・受理機構 (producer 側二段受理 vs evaluator 後の findings 集約) のいずれも異なる新設境界であり、相乗りは SRP 違反と判断し独立境界 (E4) とする。
 - **依存方向と knowledge 化**: 日々の build で新しい課題が出た場合、harness は discovered-task proposal を inbox に emit し、planner が次の `--mode update` で task-graph/plan を更新する。harness は task-graph 本体を直接 mutate しない。代わりに C08 が task-events/stall/discovered-task/handoff_notes から蒸留済み knowledge entry を生成し、生成対象 harness の `knowledge/` (Loop A) と harness-creator 自身の `plugins/harness-creator/knowledge/` (Loop B) に add_entry.py 経由で記録する。未処理 discovered-task が残る場合は completed にせず、全 accepted/rejected/superseded になってから完了扱いにする。
@@ -77,7 +77,7 @@ plugin_meta:
 
   | surface | 判定 | 記録先 |
   |---|---|---|
-  | manifest | required (description のみ更新・entry_points/hooks 変更なし) | `plugin_meta.manifest` |
+  | manifest | required (description を更新し `entry_points.commands=["capability-build"]` を新設。hooks は変更なし) | `plugin_meta.manifest` + `envelope-draft/plugin.json` |
   | plugin-composition | omitted (commands/capability-build は既に登録済み・Edit 差分のみ) | inventory `plugin_level_surfaces.composition.omitted_reason` |
   | harness/eval | required (現状維持・C01-C08 の対象追加を build 後に反映) | `EVALS.json` + `plugin_meta.harness_eval` |
   | references/config/assets | required (`pipeline-boundary-contract.md` へ C7 追記) | `plugin_meta.ssot_dedup` |
@@ -87,10 +87,10 @@ plugin_meta:
   | notion_config | omitted | inventory `plugin_level_surfaces.notion_config.omitted_reason` |
 
 ## 環境ポリシー
-- **品質基準**: C01-C08 各々が quality_gates (p0_lint(kind別)/build_trace/elegant_review C1-C4/content_review verdict/evaluator≥80,high0) + harness_coverage(min≥80/kind_pass) を携帯する。全 component が非 skill kind (script/slash-command) のため feedback_contract/goal_seek/prompt_layer の要求対象外 (specfm の対象判定通り)。
+- **品質基準**: C01-C08 各々が quality_gates (p0_lint(kind別)/build_trace/elegant_review C1-C4/content_review verdict/evaluator≥80,high0) + harness_coverage(min≥80/kind_pass) を携帯する。全 component が非 skill kind (script/slash-command) のため feedback_contract/goal_seek/prompt_layer の要求対象外 (specfm の対象判定通り)。**quality_gates は claim 集合 (何を証明するか) であり実行頻度の指示ではない** (正本: `verification-obligation-protocol.md` の fingerprint 再利用。未変更 component の PASS receipt 再利用・semantic batch 集約・30思考法監査は `exhaustive` 明示時のみ)。
 - **proposer≠approver**: 設計/最終レビューは提案者と別 context の approver が承認する (design-gate/final-gate)。
 - **現状値非焼込**: 「≥80% を満たす設計」を要件化し、harness 現状未達数値は component エントリへ焼かない (goal-spec constraints #8・Goodhart 回避)。
-- **エスカレーション**: ゲート未達は最大 5 周 (max_loops) で findings を反映し再実行、超過時は `open_issues` に残し差し戻す。
+- **エスカレーション**: ゲート未達は最大 5 周 (max_loops。上限であって規定回数ではない) で findings を反映し再実行、超過時は `open_issues` に残し差し戻す。実行対象の最小化と PASS 証拠の再利用は `verification-obligation-protocol.md` の exact obligation fingerprint + current PASS receipt DAG だけを正本とし、file delta から semantic scope を推論しない。
 - **単一 writer の構造的保証**: SubAgent 並列 dispatch 時も task-state.json への書き込みは親 (dispatcher=capability-build) が C02 を直列呼び出しすることでのみ行い、並列 SubAgent 自身には書かせない (write_scope 衝突タスクは ready_batch から除外し直列化・非決定的タイブレーク禁止)。
 - **discovered-task の還流規約**: emit (C04) は追補提案のみで、受理判断は producer 側の二段受理 (追加ノードのみ自動反映・構造変更級はユーザー承認) に従う。emit 側で plan を直接編集しない (constraints #5)。
 - **完了ブロック規約**: C08 が discovered-task inbox を確認し、未処理 proposal が 1 件でも残る場合は build を completed にしない。accepted/rejected/superseded のいずれかに分類済みになって初めて completion gate を PASS させる。
