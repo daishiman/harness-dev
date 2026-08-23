@@ -33,7 +33,7 @@ isolation: fork
 ### 2. 目標4階層を context から埋める
 
 - `goals.yearly / quarterly / monthly / weekly` の `period_start`〜`period_end`・`days_remaining`・`goal`。
-- 見出しは `### 1年目標` `### 3ヶ月目標` `### 1ヶ月目標` `### 1週間目標`。
+- 見出しは `### 1年目標` `### 2ヶ月目標` `### 1ヶ月目標` `### 1週間目標`。
 - `expired: true` は `残り：0日（期間終了）` を基本形とし、`days_overdue` があれば
   `残り：0日（{終了日}で満了・超過{N}日／新サイクルの1年目標は要設定）` のように補足する。
 - **番号と日数は自分で計算しない。** context の値をそのまま使う。

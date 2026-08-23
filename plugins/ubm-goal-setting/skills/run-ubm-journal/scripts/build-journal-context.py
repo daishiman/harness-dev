@@ -100,10 +100,12 @@ FILE_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 GOAL_LABEL_RE = re.compile(r"^目標\s*[：:]\s*")
 
 # ジャーナル側の目標見出し → context キー
+# 正本表記は `2ヶ月目標`。`3ヶ月目標` は旧表記で、過去ジャーナルがこの見出しで
+# 書かれているため読み取りだけ残す (両方ある場合は先に書いた 2ヶ月側が優先される)。
 GOAL_KEYS = {
     "1年目標": "yearly",
-    "3ヶ月目標": "quarterly",
     "2ヶ月目標": "quarterly",
+    "3ヶ月目標": "quarterly",
     "1ヶ月目標": "monthly",
     "1週間目標": "weekly",
 }
@@ -320,8 +322,8 @@ def scan_journals(daily_dir: Path) -> list[dict[str, Any]]:
 def extract_journal_goals(text: str, notes: list[str] | None = None) -> dict[str, dict[str, Any]]:
     """前回ジャーナルの目標4階層 (期間・目標本文) を取り出す。
 
-    GOAL_KEYS は 3ヶ月/2ヶ月 のように 1 つの階層に複数の表記を持つ。実在するのは
-    片方だけが正常 (正本テンプレは `### 3ヶ月目標`) なので、見出しごとの notes を
+    GOAL_KEYS は 2ヶ月/3ヶ月 のように 1 つの階層に複数の表記を持つ。実在するのは
+    片方だけが正常 (正本テンプレは `### 2ヶ月目標`) なので、見出しごとの notes を
     そのまま外へ出すと「2ヶ月目標が見つかりません」が毎回出る。階層単位で保留し、
     どの表記でも解決しなかったときだけ出す。
     """
@@ -352,7 +354,7 @@ def extract_journal_goals(text: str, notes: list[str] | None = None) -> dict[str
             "period_end": period_end.isoformat() if period_end else None,
             "goal": goal_text,
         }
-        # 3ヶ月/2ヶ月が両方ある場合は先に出た方 (= ジャーナルの実表記) を優先
+        # 2ヶ月/3ヶ月が両方ある場合は先に出た方 (= 正本表記の 2ヶ月側) を優先
         goals.setdefault(key, entry)
         pending.pop(key, None)
     if notes is not None:

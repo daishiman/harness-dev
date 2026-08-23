@@ -64,7 +64,15 @@ CANONICAL_ACTION_FLAGS = {
 DIRECT_MUTATION_PATTERNS = (
     re.compile(r"\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:--data(?:-raw|-binary)?|-d)\s", re.I),
-    re.compile(r"\bgh\s+(?:issue|pr)\s+(?:create|edit|close|reopen|merge|comment)\b", re.I),
+    # `pr` を対象から外してある（2026-08-21、利用者の判断）。
+    # PR は「提案」であって、それ自体は誰の状態も変えない。実際に効くのは
+    # レビューとマージで、そこには GitHub 側の保護設定という別の関門がある。
+    # 一方 `issue` はここを通さないと記録が残らないので、対象のまま残す。
+    #
+    # 対象から外した副作用として `gh pr merge` も素通りになる。
+    # main への書き込みまで確認なしにしたくない場合は、この行を
+    # `\bgh\s+(?:issue\s+(?:create|edit|close|reopen|comment)|pr\s+merge)\b` に戻す。
+    re.compile(r"\bgh\s+issue\s+(?:create|edit|close|reopen|merge|comment)\b", re.I),
     re.compile(r"\bgh\s+api\b[^\n]*(?:-X|--method)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bbd\s+(?:create|update|close|reopen|delete|dep\s+add)\b", re.I),
     re.compile(r"\b(?:send-campaign|publish-notion-page|notion-submit-improvement)\.py\b", re.I),
