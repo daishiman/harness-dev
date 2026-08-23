@@ -2,7 +2,7 @@
 # /// script
 # name: render-diagram-svg
 # version: 0.1.0
-# purpose: C14 図解 1 個分の宣言データから flow / compare / hierarchy / cycle / matrix / versus の 6 パターンを inline SVG 断片として決定論生成する
+# purpose: C14 図解 1 個分の宣言データから flow / compare / hierarchy / cycle / matrix / versus / before_after / analogy / bignumber の 9 パターンを inline SVG 断片として決定論生成する
 # inputs:
 #   - argv: --diagram <path> [--pattern <name>] [--width <px>]
 # outputs:
@@ -16,9 +16,16 @@
 # ///
 """C14 render-diagram-svg.py
 
-構造データ (図解 1 個分の宣言 JSON) から
-flow / compare / hierarchy / cycle / matrix / versus の 6 パターンの概念図解を
+構造データ (図解 1 個分の宣言 JSON) から 9 パターンの概念図解を
 inline SVG 断片として決定論生成する。
+
+パターンは狙いで 2 群に分かれる。
+
+- 関係を示す 6 パターン (flow / compare / hierarchy / cycle / matrix / versus)
+  … 既に語彙を持っている読み手が、要素どうしの繋がりを掴むための図。
+- 未知を既知へ橋渡しする 3 パターン (before_after / analogy / bignumber)
+  … 前提知識が無い読み手が、そもそも何の話かを掴むための図。文字を減らし、
+  1 枚で 1 つのことだけを言う。
 
 契約の正本: plugin-plans/guide-doc-generator/briefs/script-brief-C14.json
 
@@ -41,7 +48,11 @@ from collections import OrderedDict
 # 定数 (brief argv / algorithm 手順 5-9)
 # --------------------------------------------------------------------------
 
-PATTERNS = ("flow", "compare", "hierarchy", "cycle", "matrix", "versus")
+# 前半 6 語は「関係を示す」図解 (何かと何かがどう繋がるか)。後半 3 語は
+# 「未知を既知へ橋渡しする」図解であり、前提知識が無い読み手を対象にする。
+# 語の追加はこのタプルと BUILDERS の 2 か所で閉じる (id の第 2 の名簿を作らない)。
+PATTERNS = ("flow", "compare", "hierarchy", "cycle", "matrix", "versus",
+            "before_after", "analogy", "bignumber")
 
 DEFAULT_WIDTH = 860
 
@@ -53,6 +64,17 @@ FS_TITLE = 15
 FS_LABEL = 15
 FS_NOTE = 12.5
 FS_AXIS = 12.5
+# 初心者向け 3 パターン専用の字送り。既存 6 パターンの FS_LABEL より大きいのは、
+# これらの図が「節の中の 1 情報単位を絵として置き換える」用途だからである。
+# 既存 6 パターンは節の中の 1 部品であり、隣の本文と釣り合う大きさで正しい。
+FS_STATE = 17
+FS_UNIT = 20
+FS_BIG = 64
+
+# 中央の矢印帯と、たとえ話の橋の帯。左右の箱幅を出すのに使う。
+ARROW_ZONE_W = 88
+BRIDGE_ZONE_W = 56
+MIN_STATE_BOX_H = 96
 
 MAX_LINES_TITLE = 2
 MAX_LINES_LABEL = 3
@@ -67,6 +89,7 @@ INK = "var(--ink, #16191d)"
 MUTED = "var(--ink-muted, #5b6470)"
 PRIMARY = "var(--pop-primary, #43a4f5)"
 PRIMARY_SOFT = "var(--pop-primary-soft, #d9edfe)"
+PRIMARY_DEEP = "var(--pop-primary-deep, #2273b8)"
 ACCENT = "var(--pop-accent, #f2994a)"
 ACCENT_SOFT = "var(--pop-accent-soft, #fdeadb)"
 SURFACE = "var(--surface, #ffffff)"
@@ -706,9 +729,13 @@ def build_matrix(spec, width, body_y, out):
 # パターン: versus
 # --------------------------------------------------------------------------
 
+def two_column_geometry(width, middle_width):
+    """左右二列の共通版組。差分は中央帯の意味と各列の描画だけに閉じる。"""
+    col_w = max(ifloor((width - 2 * MARGIN - middle_width) / 2.0), 2 * PAD + 2)
+    return col_w, MARGIN, MARGIN + col_w + middle_width
+
 def build_versus(spec, width, body_y, out):
-    col_w = ifloor((width - 2 * MARGIN - GAP) / 2.0)
-    col_w = max(col_w, 2 * PAD + 2)
+    col_w, left_x, right_x = two_column_geometry(width, GAP)
     inner = max(1, col_w - 2 * PAD)
     bullet_inner = max(1, inner - 18)
 
@@ -743,7 +770,7 @@ def build_versus(spec, width, body_y, out):
     col_h = max(columns[0][2], columns[1][2])
 
     for index, (head, rendered, _) in enumerate(columns):
-        x = MARGIN + index * (col_w + GAP)
+        x = left_x if index == 0 else right_x
         fill = PRIMARY_SOFT if index == 0 else ACCENT_SOFT
         stroke = PRIMARY if index == 0 else ACCENT
         rect(out, 1, x, body_y, col_w, col_h, fill, stroke)
@@ -762,6 +789,248 @@ def build_versus(spec, width, body_y, out):
     return body_y + col_h + MARGIN
 
 
+# --------------------------------------------------------------------------
+# パターン: before_after (初心者向け / 変化を 1 目で見せる)
+# --------------------------------------------------------------------------
+
+def build_before_after(spec, width, body_y, out):
+    """左「今」→ 右「こうなる」を大きな矢印で結ぶ。
+
+    既存の versus / compare とは狙いが違う。versus は「2 つの選択肢を突き合わせて
+    どちらかを選ぶ」ための図であり、左右が対等である。ここは対等ではない — 左は
+    読み手が今いる場所、右は読み終えたときに立っている場所であり、矢印はその間に
+    起きる変化そのものを指す。対等でない 2 つを versus で描くと、読み手は「どちらを
+    選ぶ話か」と誤読する。
+    """
+    middle_width = ARROW_ZONE_W + 2 * GAP
+    col_w, left_x, right_x = two_column_geometry(width, middle_width)
+    inner = max(1, col_w - 2 * PAD)
+    bullet_inner = max(1, inner - 18)
+
+    label_lh = line_height(FS_STATE)
+    note_lh = line_height(FS_NOTE)
+
+    columns = []
+    for side in ("before", "after"):
+        block = need_dict(spec, side)
+        label = need_text(block, "label", "%s.label" % side)
+        head = fit(label, FS_STATE, inner, MAX_LINES_LABEL, "%s.label" % side)
+        bullets = block.get("bullets")
+        if bullets is None or bullets == []:
+            rendered = []
+        elif not isinstance(bullets, list):
+            raise DiagramError("%s.bullets: 配列である必要があります" % side)
+        elif len(bullets) > 4:
+            raise DiagramError(
+                "%s.bullets: 件数 %d は許容範囲 0-4 の外です。"
+                "変化の絵に 5 件以上を積むと、変化ではなく一覧になります"
+                % (side, len(bullets)))
+        else:
+            rendered = []
+            for index, bullet in enumerate(bullets):
+                where = "%s.bullets[%d]" % (side, index)
+                if not isinstance(bullet, str) or bullet.strip() == "":
+                    raise DiagramError("%s: 空でない文字列が要ります" % where)
+                rendered.append(
+                    fit(bullet, FS_NOTE, bullet_inner, MAX_LINES_BULLET, where))
+        height = PAD + len(head) * label_lh + PAD
+        if rendered:
+            height += 4
+            for item in rendered:
+                height += len(item) * note_lh + 8
+        columns.append((head, rendered, height))
+
+    col_h = max(columns[0][2], columns[1][2], MIN_STATE_BOX_H)
+
+    # 左は「今」なので面を持たせない (通り過ぎる場所)。右は着地点なので塗る。
+    palette = ((SURFACE, RULE, MUTED), (PRIMARY_SOFT, PRIMARY, INK))
+    for index, (head, rendered, _) in enumerate(columns):
+        x = left_x if index == 0 else right_x
+        fill, stroke, head_ink = palette[index]
+        rect(out, 1, x, body_y, col_w, col_h, fill, stroke)
+        text_block(out, 1, head, x + col_w // 2, body_y + PAD + FS_STATE,
+                   FS_STATE, head_ink, "middle", "700")
+        y = body_y + PAD + len(head) * label_lh + 4
+        for item in rendered:
+            circle(out, 1, x + PAD + 4, y + 5, 3, stroke, None, True)
+            text_block(out, 1, item, x + PAD + 18, y + ifloor(FS_NOTE),
+                       FS_NOTE, INK, "start")
+            y += len(item) * note_lh + 8
+
+    # 矢印は左箱の右端から右箱の左端までを一息で渡す。帯 (ARROW_ZONE_W) の中だけ
+    # に収めると両側に隙間が空き、「繋がっていない 2 つの箱」に見える。
+    arrow_from = MARGIN + col_w + 6
+    arrow_to = MARGIN + col_w + ARROW_ZONE_W + 2 * GAP - 2
+    mid_y = body_y + col_h // 2
+    label = spec.get("arrow_label")
+    if label is not None and label != "":
+        if not isinstance(label, str):
+            raise DiagramError("arrow_label: 文字列である必要があります")
+        lines = fit(label, FS_NOTE, arrow_to - arrow_from, 1, "arrow_label")
+        text_block(out, 1, lines, (arrow_from + arrow_to) // 2,
+                   mid_y - 18, FS_NOTE, MUTED, "middle", "600")
+    path(out, 1, "M %d %d L %d %d" % (arrow_from, mid_y, arrow_to - 16, mid_y),
+         fill="none", stroke=PRIMARY, width="6")
+    arrow_head(out, 1, arrow_to, mid_y, 1.0, 0.0, PRIMARY, size=18, half=13)
+
+    return body_y + col_h + MARGIN
+
+
+# --------------------------------------------------------------------------
+# パターン: analogy (初心者向け / 既知のものへ引き寄せる)
+# --------------------------------------------------------------------------
+
+def build_analogy(spec, width, body_y, out):
+    """左「もう知っているもの」と右「これから覚えるもの」を行ごとに対応させる。
+
+    何も知らない読み手にとって、新しい言葉は互いに区別が付かない記号の列である。
+    区別が付くのは、既に持っている概念へ 1 対 1 で結び付いたときだけである。
+    hierarchy や compare は「新しい言葉どうしの関係」しか描けないため、この
+    橋渡しは既存の 6 パターンでは表せない。
+    """
+    middle_width = BRIDGE_ZONE_W + 2 * GAP
+    col_w, left_x, right_x = two_column_geometry(width, middle_width)
+    inner = max(1, col_w - 2 * PAD)
+
+    heads = []
+    for side in ("known", "target"):
+        block = need_dict(spec, side)
+        label = need_text(block, "label", "%s.label" % side)
+        head = fit(label, FS_LABEL, inner, 1, "%s.label" % side)
+        note = block.get("note")
+        if note is None or note == "":
+            note_lines = []
+        elif not isinstance(note, str):
+            raise DiagramError("%s.note: 文字列である必要があります" % side)
+        else:
+            note_lines = fit(note, FS_NOTE, inner, 1, "%s.note" % side)
+        heads.append((head, note_lines))
+
+    pairs = need_list(spec, "pairs", 1, 4)
+    rows = []
+    for index, pair in enumerate(pairs):
+        if not isinstance(pair, dict):
+            raise DiagramError("pairs[%d]: オブジェクトである必要があります" % index)
+        left = need_text(pair, "from", "pairs[%d].from" % index)
+        right = need_text(pair, "to", "pairs[%d].to" % index)
+        rows.append((
+            fit(left, FS_STATE, inner, MAX_LINES_NOTE, "pairs[%d].from" % index),
+            fit(right, FS_STATE, inner, MAX_LINES_NOTE, "pairs[%d].to" % index),
+        ))
+
+    state_lh = line_height(FS_STATE)
+    row_heights = [
+        max(len(left), len(right)) * state_lh + 2 * PAD for left, right in rows]
+
+    head_lh = line_height(FS_LABEL)
+    head_h = len(heads[0][0]) * head_lh
+    if heads[0][1] or heads[1][1]:
+        head_h += 4 + line_height(FS_NOTE)
+
+    for index, (head, note_lines) in enumerate(heads):
+        x = left_x if index == 0 else right_x
+        ink = MUTED if index == 0 else INK
+        text_block(out, 1, head, x + col_w // 2, body_y + FS_LABEL,
+                   FS_LABEL, ink, "middle", "700")
+        if note_lines:
+            text_block(out, 1, note_lines, x + col_w // 2,
+                       body_y + len(head) * head_lh + 4 + ifloor(FS_NOTE),
+                       FS_NOTE, MUTED, "middle")
+
+    y = body_y + head_h + 10
+    for index, (left, right) in enumerate(rows):
+        row_h = row_heights[index]
+        rect(out, 1, MARGIN, y, col_w, row_h, SURFACE, RULE)
+        rect(out, 1, right_x, y, col_w, row_h, PRIMARY_SOFT, PRIMARY)
+        base = y + PAD + FS_STATE
+        text_block(out, 1, left, MARGIN + col_w // 2, base, FS_STATE, MUTED,
+                   "middle", "600")
+        text_block(out, 1, right, right_x + col_w // 2, base, FS_STATE, INK,
+                   "middle", "700")
+        # 橋。点線ではなく「≒」の記号を置く。等号だと「同じもの」と読まれるが、
+        # たとえ話は同じではない — 似ているだけである、が伝わる形にする。
+        bridge_x = MARGIN + col_w + GAP + BRIDGE_ZONE_W // 2
+        bridge_y = y + row_h // 2
+        line(out, 1, MARGIN + col_w + 4, bridge_y,
+             bridge_x - 14, bridge_y, RULE, "2")
+        line(out, 1, bridge_x + 14, bridge_y,
+             right_x - 4, bridge_y, PRIMARY, "2")
+        text_block(out, 1, ["≒"], bridge_x, bridge_y + 7, FS_LABEL,
+                   PRIMARY, "middle", "700")
+        y += row_h + 10
+
+    return y - 10 + MARGIN
+
+
+# --------------------------------------------------------------------------
+# パターン: bignumber (初心者向け / 1 個の数を絵として置く)
+# --------------------------------------------------------------------------
+
+def build_bignumber(spec, width, body_y, out):
+    """1 個の数を、文の中ではなく絵として大きく置く。
+
+    「3 営業日以内」を文中に書くと、読み手はその数を他の語と同じ重みで読み流す。
+    覚えてほしい数が 1 個だけあるとき、その数を図そのものにすると記憶に残る。
+    複数の数を比べたいなら compare / matrix が正しく、ここは 1 個専用である。
+    """
+    value = need_text(spec, "value", "value")
+    caption = need_text(spec, "caption", "caption")
+
+    inner = max(1, width - 2 * MARGIN - 2 * PAD)
+    value_lines = fit(value, FS_BIG, inner, 1, "value")
+
+    unit = spec.get("unit")
+    if unit is None or unit == "":
+        unit_text = ""
+    elif not isinstance(unit, str):
+        raise DiagramError("unit: 文字列である必要があります")
+    else:
+        unit_text = unit
+        fit(unit_text, FS_UNIT, inner, 1, "unit")
+
+    caption_lines = fit(caption, FS_LABEL, inner, MAX_LINES_LABEL, "caption")
+    sub = spec.get("sub")
+    if sub is None or sub == "":
+        sub_lines = []
+    elif not isinstance(sub, str):
+        raise DiagramError("sub: 文字列である必要があります")
+    else:
+        sub_lines = fit(sub, FS_NOTE, inner, MAX_LINES_NOTE, "sub")
+
+    label_lh = line_height(FS_LABEL)
+    note_lh = line_height(FS_NOTE)
+    box_h = PAD + FS_BIG + 14 + len(caption_lines) * label_lh
+    if sub_lines:
+        box_h += 6 + len(sub_lines) * note_lh
+    box_h += PAD
+
+    rect(out, 1, MARGIN, body_y, width - 2 * MARGIN, box_h,
+         PRIMARY_SOFT, PRIMARY, radius=16)
+
+    # 数と単位を横に並べる。text-anchor=middle を 2 本置くと単位の分だけ数が
+    # 左へずれて見えるため、合計幅から始点を出して start 揃えで置く。
+    value_w = text_width(value_lines[0], FS_BIG)
+    unit_w = text_width(unit_text, FS_UNIT) if unit_text else 0.0
+    gap = 8 if unit_text else 0
+    start_x = (width - (value_w + gap + unit_w)) / 2.0
+    base_y = body_y + PAD + FS_BIG
+    text_block(out, 1, value_lines, ifloor(start_x), base_y, FS_BIG, PRIMARY_DEEP,
+               "start", "800")
+    if unit_text:
+        text_block(out, 1, [unit_text], ifloor(start_x + value_w + gap),
+                   base_y, FS_UNIT, MUTED, "start", "600")
+
+    center = width // 2
+    y = base_y + 14 + ifloor(FS_LABEL)
+    text_block(out, 1, caption_lines, center, y, FS_LABEL, INK, "middle", "700")
+    if sub_lines:
+        text_block(out, 1, sub_lines, center,
+                   y + (len(caption_lines) - 1) * label_lh + 6 + ifloor(FS_NOTE),
+                   FS_NOTE, MUTED, "middle")
+
+    return body_y + box_h + MARGIN
+
+
 BUILDERS = OrderedDict((
     ("flow", build_flow),
     ("compare", build_compare),
@@ -769,6 +1038,9 @@ BUILDERS = OrderedDict((
     ("cycle", build_cycle),
     ("matrix", build_matrix),
     ("versus", build_versus),
+    ("before_after", build_before_after),
+    ("analogy", build_analogy),
+    ("bignumber", build_bignumber),
 ))
 
 
@@ -785,7 +1057,7 @@ def render_diagram(spec, pattern, width=DEFAULT_WIDTH):
 
     if pattern not in PATTERNS:
         raise DiagramError(
-            "--pattern が未知の語です: %r / 受理する 6 語: %s"
+            "--pattern が未知の語です: %r / 受理する 9 語: %s"
             % (pattern, " ".join(PATTERNS)))
 
     declared = spec.get("pattern")
@@ -838,7 +1110,7 @@ def build_parser():
     parser.add_argument("--diagram", required=True,
                         help="図解 1 個分の宣言 JSON のパス")
     parser.add_argument("--pattern", required=True,
-                        help="flow | compare | hierarchy | cycle | matrix | versus")
+                        help=" | ".join(PATTERNS))
     parser.add_argument("--width", default=str(DEFAULT_WIDTH),
                         help="SVG の viewBox 幅 (正整数・既定 %d)" % DEFAULT_WIDTH)
     return parser

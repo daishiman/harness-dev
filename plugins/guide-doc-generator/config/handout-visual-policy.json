@@ -33,7 +33,7 @@
     ]
   },
   "diagram_patterns_by_intent": {
-    "note": "『何を伝えたいか』から図解パターンを引くための対応表。C14 render-diagram-svg.py が受け付ける 6 パターンが値域であり、ここは意図から値への写像だけを持つ",
+    "note": "『何を伝えたいか』から図解パターンを引くための対応表。C14 render-diagram-svg.py が受け付ける 9 パターンが値域であり、ここは意図から値への写像だけを持つ。前半 6 種は要素どうしの関係、後半 3 種は前提知識が無い読み手へ未知を既知へ橋渡しする",
     "map": [
       {
         "intent": "順番に進む手順・処理の流れ",
@@ -64,6 +64,27 @@
         "intent": "2 つの選択肢を突き合わせる",
         "pattern": "versus",
         "shape": "left/right の {label, bullets 1-5 件}"
+      },
+      {
+        "intent": "変わる前と変わった後を見せる",
+        "pattern": "before_after",
+        "shape": "before/after の {label, bullets 0-4 件} と arrow_label?",
+        "beginner": "yes",
+        "why": "versus は対等な 2 択の突き合わせで、左右が入れ替わっても意味が変わらない。『今こうなっている → こうなる』は非対称で、入れ替えると逆の主張になる"
+      },
+      {
+        "intent": "知っている物にたとえて未知を説明する",
+        "pattern": "analogy",
+        "shape": "known/target の {label, note?} と pairs 1-4 件 {from, to}",
+        "beginner": "yes",
+        "why": "前提知識が無い読み手には、新しい語をいくら並べても手がかりが無い。既に知っている物と 1 対 1 で並べると、既知の側の理解がそのまま移る"
+      },
+      {
+        "intent": "数字 1 つを言い切る",
+        "pattern": "bignumber",
+        "shape": "{value, unit?, caption, sub?}",
+        "beginner": "yes",
+        "why": "文中の数字は読み飛ばされる。1 画面に 1 つだけ大きく置くと、文を読まない読み手にも要点が残る"
       }
     ]
   },

@@ -124,35 +124,36 @@ text_policy_reason / motifs / adaptation_trace である。
     切った文、具体部品は config/handout-parts.json から選んだ部品とその中身、decision_line は 具
     体を見た読者が次に何を選べばよいかを示す判断軸の一文にする。判断軸は要約や再掲ではなく 「選
     ぶための問い」の形にする。
-14. 節の中の部品を「宣言 → 内訳 → 関係 → 補足」の順に並べる。正本は
-    config/handout-visual-policy.json#opening.section_opening。lead_line は主張を言い切り、「〜
-    について」「〜の整理」で終える話題の提示にしない。その後に要点を並べる部品でその内訳を見せ、
-    DIAGRAM でなぜそう言えるかを見せ、残った補足だけを TEXT 1 本として最後に置く。step を飛ばす
-    のは可、順番を入れ替えるのは不可。図解を節の先頭へ置いて要点を後から足す形にしない (何の主張
-    を支える図なのか分からないまま図を読ませることになる)。読み手はどこで読むのをやめても、そこ
-    までで筋が通っている必要がある。
-15. 冒頭 (hero) に描画される文を総量で抑える。上限の正本は
+14. 節の部品順は config/handout-visual-policy.json#opening.section_opening.progression を
+    単一正本として使う。step は飛ばしてよいが順番は入れ替えず、各段の carries / answers を
+    ここへ書き写さない。
+15. 節の重要な情報は既存の DIAGRAM / IMG で視覚化し、diagram.title / asset.caption を
+    絵が言っていることが一読で分かる短い 1 行の主張にする。何も知らない読み手向けには
+    config/handout-visual-policy.json#diagram_patterns_by_intent の beginner=yes の entry を
+    先に検討し、情報単位から媒体への対応を既存の
+    decision_log に記録する。専用の部品や閾値は増やさない。
+16. 冒頭 (hero) に描画される文を総量で抑える。上限の正本は
     config/handout-visual-policy.json#opening.hero_total。目的・背景・ゴールをそれぞれ 1 行に収
     めても、focus_theme・target_tasks・must_remember・no_need_to_remember の 4 リストが縦に積み
     上がると冒頭だけで 1 画面を超える。溢れたときに削るのは 「読み終えたときの持ち帰り」 (覚え
     ておくこと・覚えなくてよいこと) である。これは読み手が読む前の判断に使う材料ではない。ただ
     し schema が最低 1 件を課すため冒頭から消すことはできないので、件数を絞って残りを
     role=appendix の節へ移す。移したことは設計要約に書き、黙って落とさない。
-16. 各セクションに R19 の goal を与える。goal は非空であり、lead_line とは別のフィールドとして
+17. 各セクションに R19 の goal を与える。goal は非空であり、lead_line とは別のフィールドとして
     両方を書く (C40)。全体ゴールから各セクション goal への連なりが辿れることを自分で確認する。
-17. attainment_level を超える範囲の内容を持つセクションを作らない。dialogue 枠と handson
+18. attainment_level を超える範囲の内容を持つセクションを作らない。dialogue 枠と handson
     (config/handout-parts.json で data_block_type=handson を持つ部品。id はカタログが正本) と
     anticipated-qa は preset の required に従って置く。
-18. 初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の対を宣言する。言い換えは
+19. 初出の専門用語・固有名詞を洗い出し、glossary[] へ {term, plain} の対を宣言する。言い換えは
     前提知識レベルに合わせ、別の専門用語で言い換えない。宣言した用語は本文フィールドの初出で 括
     弧書き併記される形にする (C16)。
-19. 図解が要るセクションは、schema と C11 / C14 が持つ図解型の閉じた列挙から 1 つを選び、構造デ
+20. 図解が要るセクションは、schema と C11 / C14 が持つ図解型の閉じた列挙から 1 つを選び、構造デ
     ータを宣言する。図解型で表せない内容は図解にせず部品で表す。
-20. 素材を論理名で結線し、使わなかった素材は理由付きで materials_unused に残す。
-21. 日付を扱う。入力に date があればそのまま写す。無ければ日付フィールドを出力しない。既定充填は
+21. 素材を論理名で結線し、使わなかった素材は理由付きで materials_unused に残す。
+22. 日付を扱う。入力に date があればそのまま写す。無ければ日付フィールドを出力しない。既定充填は
     C12 の --normalize に委ねる。テーマも同様に、指定があるときだけテーマ欄を出す。
-22. 挿絵を持つセクションについて、後述の「セクション別内容適応」の 4 段を必ずこの順で踏む。
-23. out_config_path へ構成データ JSON を書き出し、戻り値を返す。合否判定は自分で行わない。
+23. 挿絵を持つセクションについて、後述の「セクション別内容適応」の 4 段を必ずこの順で踏む。
+24. out_config_path へ構成データ JSON を書き出し、戻り値を返す。合否判定は自分で行わない。
 
 ### セクション別内容適応 (R23 / 4 段はすべて required)
 
@@ -168,7 +169,7 @@ contentAdaptationRules.notACopyTemplate)。
    選び方は genome の biasPrevention.deterministicSelection に従い、候補の先頭からこの資料でまだ
    未使用のものを 1 つ選ぶ。同一概念が複数セクションに再出現するときだけ意図的に再利用してよい。
 3. 図解型と密度 — 内容の論理構造から図解型を選ぶ (genome の layoutSelectionByStructure が目安。
-   前段 19 で選んだ図解型と一致させる)。情報量から density_level を選ぶ。値域は genome の
+   Goal-Seeking Execution で選んだ図解型と一致させる)。情報量から density_level を選ぶ。値域は genome の
    densityPreservation.densityLevels のキーであり、ここに書き写さない。
 4. 3 役の motifs — motifs を {platform, primary, props} の 3 役で書く。platform は場面の土台、
    primary はそのセクションの主題を担う具体物、props は 1 件以上の小物。3 役とも選んだ family の
@@ -208,7 +209,8 @@ isometric-diorama** とし、全節で明示する。白い紙面上の俯瞰ジ
 左右 2 場面のジオラマとして表せる限りは同じ family を保つ。flat-infographic-jp を選ぶのは、
 利用者が正面図・面積比較・格子表現を明示指定し、人物を含む場面化では意味が崩れる場合だけである。
 図解型から画風系統への写像の正本は C21 の image_style_families だが、資料単位の明示指定が写像に
-優先する。参照画像が渡された場合は、その配色・線・俯瞰角度・人物の簡略度・小物密度を
+優先する。画像計画の `diagram_pattern` は節に置いた図解部品の `pattern` と同一の語彙であり、
+C21 の写像はその全域写像である。別名へ言い換えず、選んだ図解型をそのまま写す。参照画像が渡された場合は、その配色・線・俯瞰角度・人物の簡略度・小物密度を
 style reference として固定し、参照画像の題材や配置そのものは複製しない。family を決めたら、
 その family の genome を読んで具体物名を引く。
 

@@ -33,19 +33,19 @@ python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-diagram
 
 | ファイル | 固定した内容 |
 | --- | --- |
-| `_harness.py` | 共通土台 (実体解決・subprocess 起動・6 パターン fixture・SVG 走査)。テストは持たない |
+| `_harness.py` | 共通土台 (実体解決・subprocess 起動・9 パターン fixture・SVG 走査)。テストは持たない |
 | `test_argv_and_exit_codes.py` | argv と exit code の契約、stdout の断片としての形、write_scope=none |
 | `test_input_violations.py` | 違反系入力で exit 1 になる系 (パターン語彙・必須フィールド・件数・座標範囲・折返し超過) |
 | `test_determinism.py` | 同一入力の再現性、golden 比較、標準ライブラリのみ、id 採番、座標の整数化 |
 | `test_svg_contract.py` | 外部参照ゼロ・絵文字ゼロ・色トークン間接化・a11y 属性・エスケープ |
-| `test_patterns.py` | 6 パターンの描画責務、テキスト幅見積りと折返し、module API、C56 境界 |
+| `test_patterns.py` | 9 パターンの描画責務、テキスト幅見積りと折返し、module API、C56 境界 |
 | `record_goldens.py` | golden 記録用の補助 (テストではない)。実装後に 1 回だけ実行する |
 
 ## 契約 id ↔ テストの対応表
 
 | 契約 id | 出所 | テスト |
 | --- | --- | --- |
-| AC-C14-1 | 6 パターンの最小 fixture が golden とバイト一致 | `test_determinism.GoldenSvgTest` 2 件 (+ `record_goldens.py`) |
+| AC-C14-1 | 9 パターンの最小 fixture が golden とバイト一致 | `test_determinism.GoldenSvgTest` 2 件 (+ `record_goldens.py`) |
 | AC-C14-2 | 2 回実行の sha256 一致 (乱数・時刻・辞書順依存が無い) | `test_determinism.ByteReproducibilityTest` 6 件 + `NonDeterminismSourceTest.test_source_has_no_nondeterministic_calls` |
 | AC-C14-3 | `http://` `https://` `//` `xlink:href` の外部参照 0 件 | `test_svg_contract.ExternalReferenceTest` 8 件 |
 | AC-C14-4 | 絵文字レンジ (U+1F300-1FAFF / U+2600-27BF / U+FE0F) 0 件 | `test_svg_contract.EmojiTest` 2 件 |

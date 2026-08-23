@@ -23,7 +23,7 @@ class PatternVocabularyTest(unittest.TestCase):
             res = H.render(td, H.flow_spec(pattern="timeline"), pattern="timeline")
         self.assertEqual(res.returncode, 1, res)
         missing = [p for p in H.PATTERNS if p not in res.stderr]
-        self.assertEqual(missing, [], "stderr へ受理する 6 語を列挙する: %r" % res.stderr)
+        self.assertEqual(missing, [], "stderr へ受理する 9 語を列挙する: %r" % res.stderr)
 
     def test_empty_pattern_is_exit1_or_exit2(self):
         with tempfile.TemporaryDirectory() as td:
@@ -33,7 +33,7 @@ class PatternVocabularyTest(unittest.TestCase):
     def test_pattern_is_case_sensitive(self):
         with tempfile.TemporaryDirectory() as td:
             res = H.render(td, H.flow_spec(), pattern="FLOW")
-        self.assertEqual(res.returncode, 1, "語彙は 6 語のリテラル: %r" % (res,))
+        self.assertEqual(res.returncode, 1, "語彙は 9 語のリテラル: %r" % (res,))
 
     def test_pattern_mismatch_is_exit1(self):
         with tempfile.TemporaryDirectory() as td:
@@ -442,6 +442,29 @@ class TextOverflowTest(unittest.TestCase):
             narrow = H.render(td, spec, width=120)
         self.assertEqual(wide.returncode, 0, wide)
         self.assertEqual(narrow.returncode, 1, narrow)
+
+
+class BeginnerPatternFieldTest(unittest.TestCase):
+    """追加 3 pattern も必須形を fail-closed で検査する。"""
+
+    def test_before_after_rejects_more_than_four_bullets(self):
+        spec = H.before_after_spec(before={"label": "前", "bullets": ["項目"] * 5})
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, spec)
+        self.assertEqual(res.returncode, 1, res)
+        self.assertIn("before.bullets", res.stderr)
+
+    def test_analogy_rejects_empty_pairs(self):
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, H.analogy_spec(pairs=[]))
+        self.assertEqual(res.returncode, 1, res)
+        self.assertIn("pairs", res.stderr)
+
+    def test_bignumber_requires_caption(self):
+        with tempfile.TemporaryDirectory() as td:
+            res = H.render(td, H.without(H.bignumber_spec(), "caption"))
+        self.assertEqual(res.returncode, 1, res)
+        self.assertIn("caption", res.stderr)
 
 
 if __name__ == "__main__":  # pragma: no cover

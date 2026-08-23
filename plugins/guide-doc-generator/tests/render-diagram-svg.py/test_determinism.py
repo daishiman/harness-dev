@@ -100,7 +100,7 @@ class ByteReproducibilityTest(unittest.TestCase):
 
 
 class GoldenSvgTest(unittest.TestCase):
-    """AC-C14-1: 6 パターンの最小 fixture が golden とバイト一致する。
+    """AC-C14-1: 9 パターンの最小 fixture が golden とバイト一致する。
 
     golden は実装後に `python3 record_goldens.py` で一度だけ記録する。
     記録前は「golden 未記録」として赤のままにする — 実装が golden を後から
