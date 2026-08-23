@@ -53,7 +53,7 @@
 | config_path | yes | 出力先へ同梱された正規化済み構成データ JSON |
 | gate_reports | yes | 決定論ゲートの json-report のパス一覧と各 exit code |
 | reader_profile | yes | 構成データの reader / prior_knowledge_level / usage_scene |
-| scope | no | 特定セクションのみを読ませる section id 一覧。省略時は全体 |
+| scope | no | 読む範囲を絞るときの section id 一覧。省略時は全体。「どこを読むか」だけを指し、判定を緩める指示ではない。節をまたぐ軸は C06 が `scope` に関わらず全体で見る |
 
 ### 2.4 出力契約
 

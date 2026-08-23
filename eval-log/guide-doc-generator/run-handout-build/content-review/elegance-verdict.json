@@ -2,7 +2,7 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "a7b093ef33daddb657692f652e82c8d0998e712fec438a6fbd310cfcb7b31f34"
+    "skill_md_sha256": "d549b27cc6d89d08344dd181b30add1fa35436536d86adb23191dc68be3a8979"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "cr-simplify-loop-ceiling-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-23T00:00:00Z",
+  "iterations": 4,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,18 +26,23 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "今回の差分 3 箇所 (Purpose & Output Contract の visual-fit 一文 / 単一 HTML 生成節の style_reference_paths 段落 / F3 の visual-fit 判定軸) が、いずれも既に実装側に存在する契約の言語化であり、SKILL.md が先走った宣言をしていない。style_reference_paths は scripts/srg-image-bridge.py:411 resolve_style_reference_sources / :464 stage_style_references / :942 styleReference 結線 / :1082 全 item への同一 slug 付与として実在し、E-IMG-STYLE-REFERENCE の fail-closed も本文の記述どおりである。",
-      "『説明文へ「漫画調」「青基調」と書くだけで代替しない』という否定形の禁止が、参照画素を渡さずに形容詞へ言い換える退化 (画風が指定と別物でも生成成功になる Goodhart) を名指しで塞いでいる。同じ禁止が prompts/R3-render.md:48-51 と prompts/R2-design.md:182-189 にも一致した文言で置かれており、責務 prompt と SKILL.md が同一の境界を語っている。",
-      "F3 の visual-fit 判定軸 (a)(b)(c)(d) が agents/handout-readability-reviewer.md:143-150,192-194,230 の実手順と 1 対 1 で対応する。C01 側は『verdict がその手順で作られたことを完了条件に含める』だけで、判定基準そのものを再実装しておらず、既存の『C03 の verdict を本 skill で再判定しない』(本文 ## 読みやすさレビューの委譲) と衝突していない。",
-      "参照画像の記述が draft ではなく release / R3-render の面へ置かれ、build_stage の 2 段構造 (draft = 決定論ゲート + 挿絵生成、release = 意味レビュー) を崩していない。visual-fit の実画素確認を F3 (release) に置いたことで、D1-D10 の第1稿所要時間へ人手の画素確認が混入していない。"
+      "周回列を実際に辿って release が到達可能になったことを確認した。[列 A] round1 = scope なしの全件レビューで節 X に high。round2 = X を直して scope=[X]。X は読まれ findings から消える -> 未解消 high 0 件。無改修の節は最後に手を入れたのが生成時であり round1 で読まれているので『最後に手を入れて以降まだ一度も読まれていない』に該当せず 0 件。よって :292 の 3 連言が全て真になり release へ到達する。iteration 3 で指摘した永久ループは解けている。draft 段で第1稿に手を入れた分も round1 の全件レビューより前なので同じく既読として消える (:239 が review を release 段だけに限るため、draft 中の改修が未読として溜まることはない)。",
+      "Goodhart 経路が塞がったままであることを 2 条件の役割分担で確認した。[列 B] 節 X に high が出たが直さず scope=[Y] (または空) で回す場合、X は手を入れていないので新条件には該当しない — しかし :247 の解消定義が『資料を直したうえで、その節を次の scope に載せて再度レビューを受け、その周の findings に現れないこと』であるため、X の high は台帳に残り第 2 連言が偽になる。すなわち『直さず外す』は high 台帳が、『直したのに読ませない』は未読条件が受け持ち、2 つの穴が 1 つずつ別の条件で塞がれている。役割分担は重複も隙間もない。",
+      "[列 C] 直した節を scope へ載せ忘れた場合 (:245 違反) も捕まる。手を入れた節が読まれないまま残るため新条件が非 0 になり release が止まる。iteration 2 の版ではこの経路は台帳にも未読条件にも掛からなかったので、判定能力は落ちるどころか上がっている。",
+      "『節・軸』を『節』へ縮めたことで検査は落ちていない。not_reviewed (a) は節と軸の両方を運ぶが、C06 の読み分け (agents/handout-readability-reviewer.md:55-57 節の中で閉じる 7 軸は scope の節だけ / 節をまたぐ 3 軸は scope に関わらず全体 / :60 visual-fit の実画素は scope 節の画像だけ) により、scope 内の節では全軸が読まれ、未読の軸は必ず未読の節に付随する。よって『未読の節が 0 件』は『未読の軸が 0 件』を含意し、軸を落としたことによる漏れは無い。",
+      "12 -> 13 の数え直しは完了している。grep 上『12 コード』『12 項目』は 0 件で、:279 の冒頭・末尾と :281 が全て 13 で揃った。列挙も 13 個で一致する。iteration 3 の [low/inconsistency] は閉じた。",
+      "iteration 1-3 で閉じた内容に退行が無い。:249 の not_reviewed 2 群分離は残り末尾が新定義へ接続され (『(a) についても上のとおり「未読のまま残っているか」で見る』)、:279 の W-GLOSSARY-EMPTY と criteria:IN1 の対応、:243/:245/:251/:256 の委譲境界と持ち込み禁止、C01/C03/C06 三層の scope 語義一致はいずれも無傷。python3 -m pytest ... -q が 98 passed。"
     ],
     "negative_feedback": [
-      "[low / smell] frontmatter build_stage.stages[].criteria_scope が draft / release とも [IN1, OUT1, OUT2] であり、feedback_contract.criteria に宣言された OUT3 (live-trial) がどちらの段の scope にも現れない。OUT3 は『実走の痕跡で確認する』criterion であり段の周回で検証する種類ではない、と読むのが整合的だが、その読み分けは本文にも frontmatter にも明示されていない。今回の差分で新たに入った欠落ではなく (差分 3 箇所はいずれも criteria_scope に触れていない)、実行不能にもならないため low に留める。"
+      "[low / smell] `scope` に空リストを渡したときの意味 (省略と同義で全体か、1 節も読まないか) は C01 / C03 / C06 のどこにも定義が無い。ただし iteration 3 で medium 級の懸念だったのは、release が到達不能なために『何も直していない周回』へ追い込まれ空 scope が実際に発生する経路があったからで、今回その経路が消えたため実害の見込みが下がった。現在この状態へ入るのは『high が残っているのに何も直さずもう一周する』という、そもそも収束しない選択をしたときだけである。C03 SKILL.md:60 / R1:56 が『省略時は資料全体』とだけ書いている以上、空リストは省略ではないので全体にはならないと読むのが自然だが、明示されていない。remedy は :245 か C03 の入力表に『載せる節が無い周回では `scope` を渡さない (空リストにしない)』の 1 句を足すこと。",
+      "[low / smell] tests/run-handout-build/fixtures/accept/skills/run-handout-build/SKILL.md が旧世界のまま (:82 max_iterations: 3 / :98 :164 D1-D10 / :147 max_loops: 5 リテラル)。contract_lib.py が heading しか pin していないため 98 tests は pass し機能破綻は無いが、受理例が廃止済みの形を示し続けている (iteration 1 からの持ち越し)。",
+      "[low / smell] build_stage.stages[].criteria_scope に OUT3 が無い持ち越し。G1/G2/G3 が criteria:IN1 / OUT1 / OUT2 の別名であることを本文へ書き込んだ (:287 :298 および G3) 分、OUT3 だけ未接続である非対称が目立つ。",
+      "[観察 / finding ではない] 新条件も high 台帳も、どの節に手を入れたかという本 skill 自身の記録に依存する。記録が実態とずれれば両方すり抜けるが、これは今回の変更が持ち込んだものではなく、ゴールシークが自己申告で回ることに由来する既存の性質である。構造側の防御 (C06 が独立 context で読む・proposer≠approver・:245 が scope へ節 id 以外を載せることを禁じる) は無傷であり、severity は付けない。"
     ],
-    "iteration": 1,
-    "iteration_limit": 3,
+    "iteration": 4,
+    "iteration_limit": 4,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は main のマージと guard block 機械 migration により skill_md_sha256 が既存 verdict と乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 読んだもの: git diff HEAD で本 SKILL.md の差分全 3 hunk (L200 の visual-fit 一文追記 / L230 の style_reference_paths 段落新設 / L282 の F3 拡張)、SKILL.md 全 347 行、plugins/guide-doc-generator/scripts/srg-image-bridge.py の style reference 実装 (L148, L411-478, L930-950, L1078-1085)、agents/handout-readability-reviewer.md の visual-fit 手順 (L96, L143-150, L192-194, L230)、skills/assign-handout-readability-evaluator/SKILL.md の frontmatter と Purpose & Output Contract、prompts/R2-design.md L170-195、prompts/R3-render.md L40-55, L83、prompts/R5-refine.md L73, L85, L165、config/handout-visual-policy.json の draft_first 全体。 機械確認したこと: frontmatter が宣言した script_refs 12 件・schema_refs 1 件・command_refs 1 件・agent_refs 1 件・skill_refs 1 件・responsibility_refs 6 件・visual_policy_ref 1 件の計 23 参照を全件 stat し、欠損 0 件。prompts/ ディレクトリの実ファイル 6 件と responsibility_refs 6 件が過不足なく一致。effect は local-artifact であり external-mutation ではないため external_mutation_guard frontmatter と canonical receipt flow block はいずれも不要かつ不在で、双方向の対応が崩れていない。runtime_root_policy は宣言されていないため Runtime root contract 節と ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}} 起動行の要求は適用外。artifact_delivery は 6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only を備え、Pre-choice / Post-choice section が本文冒頭に存在する。 (d) の実体検証: 新設段落が主張する『C21 は参照画素を SRG 作業域へ無加工で配置し、全節の styleReference へ同じ anchor として結線する』は srg-image-bridge.py:1082-1084 が全 item へ同一 reference_slugs を配り :944-948 が anchorSlug=slugs[0] を全 slide へ与える実装と一致。『指定済み参照が欠落していれば fail-closed』は resolve_style_reference_sources の is_file() 不成立時 fail_contract(E_STYLE_REFERENCE) と一致。『参照フォルダを示した場合は選んだ実在画像を渡す』は script が PNG/WebP の実ファイルのみ受理する制約と整合 (フォルダのまま渡す経路は本文が禁じている)。 差分が既存契約を壊していないこと: Purpose & Output Contract の入出力 4 項目・build_mode / build_stage・D1-D10・feedback_contract.criteria (IN1/OUT1/OUT2/OUT3) はいずれも差分の対象外で、変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は criteria_scope の読み分けが暗黙という既存の記述上 smell であるため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1/OUT2/OUT3 の実行挙動の受け入れは受入テストと live-trial の実走証拠を別途要する。"
+  "notes": "content-review-protocol.md §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施したとも申告しない。 本 iteration は protocol の incremental (1 回再評価で収束しなければ escalate) を超える 4 周目であり、iteration 2 と 3 の escalate を利用者が受け取ったうえで明示的に承認した追加周回である。 経緯: iteration 1 = [medium/contradiction] G1 の warning 全件 0 が :281 の『節を増やしてよい』と W-SECTIONS-MANY で衝突 / [medium/omission] high を持つ節を scope から外すと PASS へ到達できる leak / [low x3]。 iteration 2 = 前者 2 件は閉じたが、修正自体が [medium/contradiction] G2 の『not_reviewed が 0 件』(machine_gate_overlap 由来の残置と衝突し到達不能) と [medium/omission] W-GLOSSARY-EMPTY 除外による criteria:IN1 の検査落ちを持ち込んだ。 iteration 3 = その 2 件は remedy どおり閉じたが、絞り込み後の release 行が :243 と C06:51 の『2 周目以降は scope を絞る』と噛み合わず、修正周回を経た資料で release が到達不能になる同型の contradiction が残った。加えて 12->13 の数え直し残り [low/inconsistency]。 iteration 4 = 未解消の定義を『最後に手を入れて以降まだ一度も読まれていない節』へ変更 (:247 :249 :292) し、12->13 を 2 箇所置換。今回は『書いてあるか』ではなく周回列 A/B/C を辿って到達可能性と Goodhart 耐性を検証し、3 周続いた到達不能の再生産が止まったことを確認した。 3 claim の検証結果は iteration 1 から不変: (1) loop 上限の単一化は component-inventory.json:1334 -> frontmatter -> contract_lib.py:83 / AC-C01-6 の三重束縛で実体があり残渣なし、(2) D1-D10 / F1-F4 の 14 項目は G1/G2/G3 の対応表で全件が行き先を持ち contract_lib.py:103-115 が heading しか pin しないため改名で壊れる契約は無い、(3) scope 配管は C01/C03/C06 の 3 層に実在し独立 context 原則も無傷。 未解決の medium 以上は 0 件、残る low 3 件はいずれも実行不能にならないため verdict は PASS。next_action は none とする。 判定の射程は静的な設計 adequacy に限る。実際に release へ到達すること・Goodhart 経路が実行時にも塞がっていることの受け入れは Gate D の実走証拠に属し、本 verdict はそれを代替しない。 評価方法: SKILL.md は :236-300 の全行と差分周辺を読み、C06 agents/handout-readability-reviewer.md の scope 節 (:47-64)、C03 SKILL.md:60 と prompts/R1-review-readability.md:56 を突き合わせ、周回列 A (直して scope に載せる) / B (直さず外す) / C (直したのに scope へ載せ忘れる) の 3 経路を条件式へ当てて到達可能性を確かめた。数値 score は算出していない。"
 }
