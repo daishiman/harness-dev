@@ -278,6 +278,31 @@ def section_body(
     return "\n".join(out).strip("\n")
 
 
+def principle_checklist_body(text: str, notes: list[str] | None = None) -> str:
+    """前回ジャーナルの `# 原理原則 チェックシート` 本文。ブロックが無ければ "" を返す。
+
+    section_body に任せず完全一致の有無を先に確かめるのは、本ブロックを持たない移行期の
+    ジャーナル (導入前に書かれた過去分) を黙って "" で通さず、テンプレから初期化せよという
+    note を残すため。section_body は不在をただの空文字として返すので、区別が付かない。
+
+    見出しに「原理原則」を冠したことで `# フェーズ別 課題チェックシート` との部分一致衝突は
+    起きないが、両者とも `- [ ]` 行の塊で取り違えても目視では気づけない以上、照合は完全一致に
+    寄せておく。
+    """
+    for line in text.splitlines():
+        s = line.strip()
+        if not s.startswith("# "):
+            continue
+        if s[1:].strip().strip(TITLE_DECOR).strip() == "原理原則 チェックシート":
+            return section_body(text, "原理原則 チェックシート", level="#", notes=notes)
+    if notes is not None:
+        notes.append(
+            "前回ジャーナルに「# 原理原則 チェックシート」がありません。"
+            "references/principle-checklist.md のテンプレートを未チェック状態で書き出してください。"
+        )
+    return ""
+
+
 def bullets(body: str) -> list[str]:
     """`- ` / `- [ ] ` 行を本文だけのリストにして返す (ネストは維持せず平坦化)。"""
     items = []
@@ -705,6 +730,7 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             "goals": extract_journal_goals(prev_text, notes=prev_notes),
             "prohibitions": bullets(section_body(prev_text, "【禁止事項】", notes=prev_notes)),
             "phase_checklist": section_body(prev_text, "フェーズ別 課題チェックシート", level="#", notes=prev_notes),
+            "principle_checklist": principle_checklist_body(prev_text, notes=prev_notes),
         }
         if prev["number"] is not None and number != prev["number"] + 1 and not is_regeneration:
             warnings.append(
@@ -712,7 +738,8 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             )
     else:
         warnings.append(
-            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
+            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェック・"
+            "原理原則チェックシート (references/principle-checklist.md のテンプレート) は対話で確定し、"
             "あわせてジャーナル習慣が途切れていないかも確認してください。"
         )
 

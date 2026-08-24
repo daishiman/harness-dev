@@ -246,6 +246,17 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 21 項目（出力構造）の定義正本は `skills/run-ubm-goal-setting/references/output-formats.md` + `data-contract.md`、15 項目（保存前コンテンツ検証）は `output-formatter` prompt の品質チェックリスト節です。
 
+### 日次ジャーナルの末尾ブロック（`/ubm-journal`）
+
+`run-ubm-journal` skill は対話で集めた内容を `02_Configs/Daily/{YYYY-MM-DD}.md` へ整形しますが、本文の後ろに**対話では聞かない固定ブロックを 2 つ**置きます（正本: skill の `references/output-format.md`）。
+
+| ブロック | 設問の正本 | 生成時の扱い |
+|---|---|---|
+| `# フェーズ別 課題チェックシート` | 前回ジャーナル | 対話で読み上げない。チェック状態を継承 |
+| `# 原理原則 チェックシート` | `skills/run-ubm-journal/references/principle-checklist.md` | 対話で読み上げない。チェック状態を継承 |
+
+`# 原理原則 チェックシート`（原理原則の設問 11 件）は**ジャーナル生成のたびに必ず末尾へ出力**されます。ヒアリング項目ではないので設問を 1 件ずつ確認することはせず、器として出すだけです。**チェック状態は前回ジャーナルから引き継がれ、対話の中で変わったと分かった項目だけが更新されます**（毎日ゼロに戻るわけではありません）。前回ジャーナルが無い初回だけ、正本のテンプレを全て未チェックで出します。設問の文言・順序・階層は生成側で書き換えません。`validate-journal-output.py` が `K01`（設問見出しの欠落）/ `K02`（チェックボックス行なし）で保存前に検査します。
+
 ### デュアルパス検索（ナレッジ参照）
 
 `info-collector` は `knowledge/router.json` を索引に、3 レイヤーを**並列**で検索します: Path A=具体キーワード（`quick_lookup.by_issue` の tags）/ Path B=課題キー・フェーズキー / Path C=メタテーマ（`abstraction_layers`）。全パスのヒットを重複除去して該当 `knowledge/*.json` だけを Read し、複数パスに同時ヒットしたエントリを高優先でマージします（全 28 JSON の総当たり読み込みをしない）。
