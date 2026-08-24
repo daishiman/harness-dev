@@ -469,4 +469,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 386 -> 390: AG-048 / MS-080 / MS-081 / PR-143 の 4 件を追加、削除 0 件。
     # 390 -> 420: 北原さんコメント (2026-08-12) + YouTube 3本から 30 件を追加、削除 0 件。
     # 420 -> 434: YouTube「顧客をお客様扱いしない〜」(NH1W-BKfPUI) から 14 件を追加、削除 0 件。
-    assert graph["node_count"] == 434
+    # 434 -> 450: YouTube「人を育てる前に、今の仕事を分解する」(7I6dPQTCnuw) から 16 件を追加、削除 0 件。
+    assert graph["node_count"] == 450
