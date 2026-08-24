@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   },
   "reviewer": "cr-quarterly-heading-rename-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-23T00:00:00Z",
-  "iterations": 1,
+  "reviewed_at": "2026-08-24T00:00:00Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -30,15 +30,21 @@
       "後方互換が実挙動として成立していることを機械確認した。golden-sample.md を `2026-08-18.md` として validator に通すと `PASS: 違反 0 件` (exit 0)、`### 2ヶ月目標` を `### 3ヶ月目標` へ置換した版でも骨格違反 (S01/G01) は 0 件で、検出されたのはファイル名日付の不一致 (F03) のみだった。旧表記のジャーナルを再検証しても骨格違反にしない、という変更意図が実際に満たされている。",
       "違反メッセージの可読性を落としていない。`needle_label()` を導入し、見出しが完全に欠落したケース (`### 4ヶ月目標` へ差し替え) で `S01: 必須見出しが見つからないか順序が不正です: ### 2ヶ月目標 または 3ヶ月目標` と両候補を提示することを実行で確認した。G01 側は逆に候補列ではなく実際に書かれていた見出しへ解決してから出す、と方向を使い分けている。",
       "`GOAL_KEYS` の優先順位が dict の宣言順で決まることを踏まえ、2ヶ月側を先頭へ移して正本優先に変えている。`extract_journal_goals` を直接呼び、本文の出現順が 3ヶ月→2ヶ月 / 2ヶ月→3ヶ月 のどちらでも `quarterly.goal` が 2ヶ月側になることを実測した。コメントの『先に出た方 (= 正本表記の 2ヶ月側)』は実装と一致している。",
-      "ドキュメント側の追従に漏れがない。`grep -rn '3ヶ月' plugins/ubm-goal-setting/` の残存は (a) 後方互換を検証するテスト、(b) 合宿データの鮮度判定や knowledge 本文中の期間表現、のみで、ジャーナル見出しの追従漏れは 0 件だった。"
+      "ドキュメント側の追従に漏れがない。`grep -rn '3ヶ月' plugins/ubm-goal-setting/` の残存は (a) 後方互換を検証するテスト、(b) 合宿データの鮮度判定や knowledge 本文中の期間表現、のみで、ジャーナル見出しの追従漏れは 0 件だった。",
+      "後方互換の受理点がテストで固定された。回帰テストは golden-sample.md を `.replace()` で旧表記へ倒す形を取っており、旧表記専用の fixture を増やしていない。正本が変わったときに旧表記側だけ更新漏れして緑のまま腐る、という二重 fixture の典型的な劣化を避けている。"
     ],
     "negative_feedback": [
-      "[low / smell] `validate()` の目標4階層ループは `body = section_lines(lines, 3, goal)` を候補列のまま先に引き、その後 `goal` を候補の先頭一致へ再解決する。同一ジャーナルに 2ヶ月目標と 3ヶ月目標が併存し、かつ本文で 3ヶ月側が先に現れる異常系では、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。正常系 (片方だけ存在) では起きず、for ループ変数の再束縛は次周回に影響しないため実害は限定的で low に留める。"
+      "[medium / omission → 解消済み] 変更の主目的である旧表記 `3ヶ月目標` の後方互換受理に回帰テストが 1 件も無かった。`grep -n 'ヶ月' plugins/ubm-goal-setting/tests/test_validate_journal_output.py` がヒット 0 件で、既存 98 passed は全件 golden-sample.md (正本 `2ヶ月目標`) 由来のため、`heading_matches` のタプル経路 / `needle_label` / validate() 367-376 のラベル解決という新設分岐を 1 行も通っていなかった。IN1 は verify_by: script なので、評価者の手動実走は PASS 根拠にならない。対応: `test_legacy_quarterly_heading_still_passes` (旧表記へ倒した golden が exit 0) と `test_legacy_quarterly_heading_violation_names_the_written_heading` (旧表記節の G01 ラベルが `3ヶ月目標` になり、タプルの内部表現 `('2ヶ月目標'` が漏れない) の 2 本を追加し、後者が実際にラベル解決分岐を通ることを実行で確認した。",
+      "[low / inconsistency → 解消済み] `tests/test_build_journal_context.py` の `test_alternate_goal_spelling_does_not_warn` の docstring が正本と別表記を反転して記述していた (`2ヶ月目標` を別表記と説明)。fixture は旧表記 `3ヶ月目標` を使うため、読者が正本を取り違える。docstring を「正本は 2ヶ月目標、fixture の 3ヶ月目標は旧表記で読み取りだけ通る」へ修正した。",
+      "[low / inconsistency → 解消済み] `references/output-format.md` は schema_ref かつ骨格の正本でありながら、後方互換受理の記載が無く、骨格ブロックにも表にも `3ヶ月目標` が現れなかった。バリデータが受理する入力集合と正本文書の宣言が食い違う。各ブロックの記述規則の 2ヶ月目標行へ「旧表記 `### 3ヶ月目標` は過去ジャーナルの再検証を骨格違反にしないため受理だけ続ける (新規出力は必ず 2ヶ月目標)」を追記した。",
+      "[low / smell / 残存] `validate()` の目標4階層ループは `body = section_lines(lines, 3, goal)` を候補列のまま先に引き、その後 `goal` を候補の先頭一致へ再解決する。2ヶ月目標と 3ヶ月目標が併存し本文で 3ヶ月側が先に現れる異常系では、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。正常系 (片方だけ存在) では起きない。",
+      "[low / smell / 残存] 併存時の fail-open。正本 `### 2ヶ月目標` 節を空にし、その手前に完全な `### 3ヶ月目標` 節を置いたジャーナルを validator に通すと exit 0 / 違反 0 件になる (実測で再現)。`section_lines` が候補のいずれかで解決した時点で打ち切るため、正本節が空でも旧節が埋まっていれば G01/G03 が発火しない。両表記併存は本来 想定外入力なので、そもそも違反として弾く設計もありうる。",
+      "[low / smell / 残存] 旧表記に deprecation の通知経路が無い。`build-journal-context.py` は旧表記を黙って読み取り、前回ジャーナル継承で次のジャーナルへ引き継ぐため、旧表記が自己複製し続ける。移行を終わらせるには warning か、生成側で正本表記へ書き換える経路が要る。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "2026-08-21 付の verdict は external-mutation guard 移行時のもので、本 PR で `### 3ヶ月目標` → `### 2ヶ月目標` の正本表記変更を入れたため skill_md_sha256 が乖離した。content-review-protocol §incremental の focused combined review を 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影している。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff origin/main...HEAD` で対象 6 ファイル (SKILL.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py / agents/journal-composer.md) の差分を全行読了。 (2) `grep -rn '3ヶ月' plugins/ubm-goal-setting/` を全件列挙し、残存が後方互換テストと期間表現のみで 見出し追従漏れ 0 件であることを確認。 (3) validator を 3 パターン実走: 新表記 golden-sample = exit 0 / 違反 0、旧表記 3ヶ月目標 = 骨格違反 0 (F03 は検証手順側のファイル名都合)、`### 4ヶ月目標` = `S01 ... ### 2ヶ月目標 または 3ヶ月目標` を確認。 (4) `extract_journal_goals` を直接呼び、両表記併存時の優先順位が本文出現順によらず 2ヶ月側になることを実測。 (5) frontmatter `feedback_contract.criteria[].id` を実ファイルから読み取り IN1/IN2/OUT1/OUT2 の 4 件を確認。 (6) `python3 scripts/validate-plugin-test-roots.py --workers 4` = roots=19 pass=19 fail=0 (3510 passed, 13 skipped)、`python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q` = 7486 passed, 4 skipped、`build-plugin-release.py --check` = OK (20 plugins)、`lint-vendored-ssot.py` = OK。 未確認: 実際の Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 評価体制の但し書き: 独立 context の subagent へ委譲したが応答が返らず打ち切ったため、本 verdict は主 context の評価者が read-only の grep / 実走のみで判定した。被採点物への改変は行っていない。"
+  "notes": "【本 verdict は 2026-08-23 付 iteration 1 の訂正である】iteration 1 は verdict: PASS / findings_summary.smell 1 を報告したが、これは誤りだった。評価を独立 context の subagent へ委譲したものの応答が返らず打ち切り、主 context の評価者が read-only の grep と validator 実走で判定した結果である旨を当時の notes に記録していた。その後 subagent のレビューが遅延して到着し、verdict: FAIL / medium 1 件を主張した。主 context 側で `grep -n 'ヶ月' plugins/ubm-goal-setting/tests/test_validate_journal_output.py` (ヒット 0 件)、docstring 実物の確認、併存 fail-open の validator 実走 (exit 0 を再現) の 3 点を独立に実測し、指摘がいずれも事実であることを確認した。iteration 1 の誤りの構造は、評価者が『validator を手で実走して通ること』を確認して IN1 を PASS としたことにある。IN1 は verify_by: script であり、根拠は CI が回すテスト集合の中に無ければならない。実装の振る舞いが正しいことと、テストがその振る舞いを固定していることは別の主張である。 iteration 2 で medium 1 件と low/inconsistency 2 件を修正し、残るのは low/smell 3 件 (併存時のラベル錯誤・併存時 fail-open・deprecation 経路なし) のみとなった。いずれも両表記併存という想定外入力でのみ顕在化し、正常系の挙動は変えない。未解決の medium 以上が 0 件のため PASS とする。 実施した検証 (iteration 2): (1) 追加した回帰テスト 2 本の実行 = 2 passed。(2) 旧表記節から期間行を落として validator を実走し `G01: 3ヶ月目標 に「- 期間：」の行がありません` を確認 = ラベル解決分岐を実際に通っていること、タプルの内部表現が stdout へ漏れないことを確認。(3) `pytest plugins/ubm-goal-setting/tests/test_validate_journal_output.py test_build_journal_context.py -q` = 100 passed。 SKILL.md は iteration 2 で変更していないため skill_md_sha256 は iteration 1 と同一。 30 思考法は実施しておらず、実施も申告しない。被採点物への改変は評価としては行っていない (修正は pair 側の作業として実施し、その結果を本 verdict が再評価している)。 未確認: 実際の Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

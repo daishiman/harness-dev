@@ -512,3 +512,36 @@ def test_h01_treats_a_fenced_block_as_not_a_record():
     assert h01("> 22:10 に Gridノートを書いた。") == []  # 引用は記録として数える
     assert h01("```\n- 22:10 に Gridノートを書いた。\n```")
     assert h01("<!-- Gridノートを書いた -->")
+
+
+def test_legacy_quarterly_heading_still_passes(tmp_path: Path, golden: str):
+    """旧表記 `### 3ヶ月目標` だけで書かれた既存ジャーナルを骨格違反にしない。
+
+    正本は `2ヶ月目標` だが、過去分を再検証したときに S01 で落ちると
+    「書き換えないと検証できない」記録が生まれる。後方互換の受理はこの改名の
+    主目的なので、golden 全体を旧表記へ倒した状態を PASS として固定する。
+    """
+    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標")
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "PASS" in proc.stdout
+
+
+def test_legacy_quarterly_heading_violation_names_the_written_heading(
+    tmp_path: Path, golden: str
+):
+    """旧表記で書かれた節の違反メッセージは、実際に書かれていた見出し名で出す。
+
+    `GOAL_SECTIONS` の要素はタプル (正本, 旧表記) なので、素朴に f-string へ
+    埋めると「('2ヶ月目標', '3ヶ月目標') に…」という内部表現が利用者に漏れる。
+    validate() の 367-376 がここを解決している。その分岐を固定する。
+    """
+    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標").replace(
+        "- 期間：2026-06-29〜2026-08-30\n", ""
+    )
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "G01: 3ヶ月目標 に「- 期間：」の行がありません" in proc.stdout
+    # タプルを素朴に f-string へ埋める退行はここで落とす。
+    assert "('2ヶ月目標'" not in proc.stdout
+

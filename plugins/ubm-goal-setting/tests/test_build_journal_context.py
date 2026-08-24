@@ -727,7 +727,10 @@ def test_canonical_habit_goal_heading_is_not_a_partial_match(vault: Path):
 
 
 def test_alternate_goal_spelling_does_not_warn(vault: Path):
-    """`### 2ヶ月目標` は `### 3ヶ月目標` の別表記。片方だけ在るのが正常。"""
+    """正本は `### 2ヶ月目標`。fixture の `### 3ヶ月目標` は旧表記で、読み取りだけ通る。
+
+    片方だけ在るのが正常なので、解決できた側について warning を立ててはいけない。
+    """
     ctx = run(vault, "2026-08-18")
     assert ctx["goals"]["quarterly"]["goal"], ctx["goals"]["quarterly"]
     assert not [w for w in ctx["warnings"] if "2ヶ月目標" in w], ctx["warnings"]
