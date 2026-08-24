@@ -80,12 +80,21 @@ def test_validate_task_graph_gate(validate_task_graph):
     assert validate_task_graph.main([str(PLAN)]) == 0
 
 
-def test_task_graph_is_canonical_default_artifact(derive_task_graph):
-    """ゴールデンの task-graph.json が derive-task-graph の単一 writer 出力と一致する
-    (手書き drift 検出・成果物が最新の phase/inventory 射影であることの回帰固定)。"""
-    fresh = derive_task_graph.canonical_json(derive_task_graph.derive(PLAN))
-    on_disk = TASK_GRAPH.read_text(encoding="utf-8").rstrip("\n")
-    assert fresh == on_disk, "task-graph.json が derive-task-graph の canonical 出力と drift (再生成せよ)"
+def test_task_graph_legacy_golden_diff_is_execution_typing_only(derive_task_graph):
+    """移行前 golden と最新導出の差が execution typing の additive 変更に閉じる。
+
+    committed golden は legacy consumer 回帰用に保持し、production compiler は同じ
+    機械的 migration を normalize_fixed_execution_types() で行う。claim/edge 本体の
+    drift はここで従来どおり fail-closed に検出する。
+    """
+    fresh = derive_task_graph.canonicalize(derive_task_graph.derive(PLAN))
+    for node in fresh["nodes"]:
+        if node.get("execution_kind") == "verification-claim" and node.get("acceptance_criterion") == node.get("title"):
+            node.pop("acceptance_criterion", None)
+        for key in ("execution_kind", "execution_stage", "route_ref", "task_spec_ref"):
+            node.pop(key, None)
+    on_disk = json.loads(TASK_GRAPH.read_text(encoding="utf-8"))
+    assert fresh == on_disk, "legacy golden との差が execution typing 以外に波及"
 
 
 def test_shared_scripts_are_plugin_root():

@@ -1,0 +1,52 @@
+{
+  "skill": "run-goal-seek",
+  "goal": "capability-buildの高頻度入口が判断に必要な最小契約だけを常時保持し、詳細運用は必要時にだけ参照しながら、既存の目的・品質ゲート・安全境界を同じテスト結果で満たしている。",
+  "spec_ref": "eval-log/harness-creator/simplification/20260823T135725Z-harness-lvy/goal-spec.json",
+  "iteration": 2,
+  "max_loops": 3,
+  "engine": "run-goal-seek",
+  "fork_context": "subagent",
+  "checklist": [
+    {
+      "id": "C1",
+      "text": "capability-buildの現行command本文について、行数・bytes・概算token・常時記載責務・参照先が機械集計されたbaseline JSONが存在する。",
+      "status": "done",
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "text": "command本文から詳細運用設計を遅延参照へ移し、入口には目的・分岐・安全境界・完了条件・参照導線だけが残っている。",
+      "status": "done",
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C3",
+      "text": "移動した契約の必須アンカーと参照解決をfocused testまたはlintが検査し、本文短縮による契約欠落をfail-closedで検出できる。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "text": "既存Harness Creatorテストとcapability-build関連検証が変更後もgreenで、品質ゲート・承認・単一writer・fail-closed境界が削除されていない。",
+      "status": "done",
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "text": "before/afterの常時読込bytes・概算tokenと変更された責務境界を比較するmeasurement JSONが存在し、改善後の常時読込量が減少している。",
+      "status": "done",
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "text": "fresh verifierがoriginal goalに対してPASSを返し、成果物・検証・未解決事項をhandoff JSONへ記録している。",
+      "status": "done",
+      "verify_by": "reasoning"
+    }
+  ],
+  "status": "completed",
+  "open_issues": [],
+  "original_goal_hash": "5059e744fc9c7a320b002244af6bc4878f0dced2b3224b805449011f347dcec2",
+  "last_consumed_intermediate_iteration": 1,
+  "handoff": "eval-log/harness-creator/simplification/20260823T135725Z-harness-lvy/handoff-goal-seek.json"
+}

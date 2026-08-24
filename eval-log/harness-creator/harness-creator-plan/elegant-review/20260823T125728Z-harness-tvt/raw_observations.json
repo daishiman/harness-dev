@@ -1,0 +1,66 @@
+{
+  "purpose": "plugin-dev-planner が生成する型付き task-graph を Harness Creator の L4 build が消費し、依存充足タスクの dispatch、状態更新、成果物注入、発見タスク還流を一続きの契約として扱う既存プラグイン更新計画。dirty 差分は、未変更入力の再利用範囲と graph の冗長 edge 表現に触れている。",
+  "scope": {
+    "in_scope": [
+      "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator の計画成果物一式",
+      "run-plugin-dev-plan の現行実行契約",
+      "task-graph 導出器と生成例",
+      "指定2領域の現在の dirty file 一覧"
+    ],
+    "out_of_scope": [
+      "plugins/harness-creator への新機能実装",
+      "既存評価の結論を観察根拠にすること",
+      "Phase 1 でのテスト実行",
+      "Phase 1 での対象ファイル編集"
+    ]
+  },
+  "stakeholders": [
+    "plugin-dev-planner: graph・plan の producer",
+    "harness-creator: L4 build と runtime state の consumer",
+    "run-skill-create / run-build-skill / capability-build: 後段 executor",
+    "生成対象プラグインの作者・利用者",
+    "独立 approver と機械検査の運用者"
+  ],
+  "first_impressions": [
+    "producer と consumer、宣言 graph と runtime state、graph writer と state writer の境界が明示されている。",
+    "同じ責務が goal-spec、index、phase 文書、inventory、handoff、task-graph の複数ビューへ現れる。",
+    "task-graph と discovered-task は、graph/findings を除く代表文書18件中14件、単一 writer は11件に登場する。",
+    "現在の task-graph は317 node・5,284 edge・約609KBで、人間向け13 phaseと機械向けgraphが併存する。",
+    "dirty 差分では node 数を変えず、depends_on が15,552件から4,972件へ変化している。parent_of 304件、produces 8件は不変。",
+    "導出器の差分は component 依存の展開を同一phaseペア中心にし、共有phaseがない場合だけ過去phaseへ展開する。",
+    "13 phase は全て status=未実施。inventory は8 component、handoff は8 routeである。"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "artifact_class は existing-plugin-update。",
+      "plan の直接成果物は index、13 phase、inventory、envelope、handoff、task-graphであり、実コードは後段へ委譲される。",
+      "inventory は script 7件と slash-command 1件。",
+      "planner が graph の導出・検証を所有し、Harness Creator は graph を直接変更しない契約。",
+      "runtime state、events、discovered-task inbox、knowledge の書込は consumer 側責務。",
+      "goal-spec に checklist 13件、constraints 10件、open_questions 3件、max_loops 5がある。",
+      "planner skill 側の周回上限表記は3で、plan側の5とは別値。",
+      "dirty diff は11ファイル。うち実行契約面は run skill、derive-task-graph、2つの生成graph、index。"
+    ],
+    "assumptions": [
+      "同時実行数の上限は plan で固定せず、L4 runtime parameter とする。",
+      "blocked 後の再試行判断は人間または上位ハーネスへ委ねる。",
+      "後段 executor が handoff と component 契約を実装へ忠実に写すことを前提とする。",
+      "edge 削減後も実行順序上の到達関係が保たれるという説明はコード内にあるが、Phase 1 では独立検証していない。"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "13 phase", "kind": "other"},
+    {"value": "5 component kinds", "kind": "other"},
+    {"value": "8 components・8 routes", "kind": "other"},
+    {"value": "max_loops=5 と planner側上限3", "kind": "other"},
+    {"value": "317 nodes・5,284 edges", "kind": "other"},
+    {"value": "pending/running/done/blocked", "kind": "other"},
+    {"value": "eval-log/<slug>/build、task-state.json、task-events.jsonl、discovered-tasks/", "kind": "fixed-path"},
+    {"value": "同時実行数・retry回数", "kind": "other"}
+  ],
+  "related_files": [
+    "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator",
+    "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+    "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py"
+  ]
+}

@@ -39,10 +39,12 @@ import specfm  # noqa: E402
 
 CHECKLIST_SECTION = "## 完了チェックリスト"
 # task node の固定 key 順 (canonical serialization 用)。required は全 node が携帯し、optional は
-# node に present のときだけ出力する。C17 の execution_kind/route_ref/task_spec_ref は target shape
-# だけが携帯するため present-gated 出力にして fixed-13-phase の従来出力を byte 不変に保つ。
+# node に present のときだけ出力する。型付きキーは target/fixed 両 shape で
+# 明示的に携帯し、canonical key 順を固定する。
 _NODE_REQUIRED_KEYS = ("id", "title", "phase_ref", "entity_ref", "state", "write_scope")
-_NODE_OPTIONAL_KEYS = ("acceptance_criterion", "execution_kind", "route_ref", "task_spec_ref")
+_NODE_OPTIONAL_KEYS = (
+    "acceptance_criterion", "execution_kind", "execution_stage", "route_ref", "task_spec_ref",
+)
 _NODE_KEYS = _NODE_REQUIRED_KEYS + _NODE_OPTIONAL_KEYS
 _EDGE_KEYS = ("type", "from", "to")
 # チェックボックス付き行のみを task 候補にする (## 完了チェックリスト 節に内包される ### 受入例 の `- ` を除外)。
@@ -50,6 +52,10 @@ _CHECKBOX_RE = re.compile(r"^-\s+\[[ xX]\]\s+(.+)$")
 _PHASE_REF_RE = re.compile(r"^P(0[1-9]|1[0-3])$")
 _TARGET_SHAPE = "task-graph-derived"
 _FIXED_SHAPE = "fixed-13-phase"
+# fixed plan の claim を「何を検証するか」と「何回 Agent を起動するか」に分離する。
+# stage は後段 compiler が title を再解釈しないための機械タグ。品質順序は phase edge が正本で、
+# stage の違いを phase 順序の飛び越しには使わない。
+_DRAFT_PHASES = frozenset({"P01", "P02", "P05"})
 
 
 def _parse_checklist_items(section_body: str) -> list[str]:
@@ -405,6 +411,10 @@ def _project_surface_nodes(decl: dict, surfaces: dict[str, dict],
             "state": "pending",
             "write_scope": sf["write_scope"],
             "acceptance_criterion": criterion,
+            "execution_kind": "verification-claim",
+            "execution_stage": "release",
+            "route_ref": None,
+            "task_spec_ref": None,
         })
         edges.append({"type": "produces", "from": node_id, "to": sf["build_target"]})
         if final_phase_root is not None:
@@ -460,6 +470,9 @@ def _derive_fixed_13_phase(plan_dir: Path) -> dict:
             "entity_ref": None,
             "state": "pending",
             "write_scope": root_id,
+            "execution_kind": "phase-gate",
+            "route_ref": None,
+            "task_spec_ref": None,
         })
         phase_roots.append(root_id)
         leaves_by_root.setdefault(root_id, [])
@@ -477,6 +490,13 @@ def _derive_fixed_13_phase(plan_dir: Path) -> dict:
                     "entity_ref": entity if isinstance(entity, str) else None,
                     "state": "pending",
                     "write_scope": write_scope,
+                    "acceptance_criterion": title,
+                    "execution_kind": "verification-claim",
+                    "execution_stage": (
+                        "draft" if phase_ref in _DRAFT_PHASES else "release"
+                    ),
+                    "route_ref": entity if isinstance(entity, str) else None,
+                    "task_spec_ref": None,
                 })
                 phase_by_node[node_id] = _phase_order(phase_ref)
                 raw_phase_by_node[node_id] = phase_ref
@@ -489,6 +509,10 @@ def _derive_fixed_13_phase(plan_dir: Path) -> dict:
                     nodes_by_entity.setdefault(entity, []).append(node_id)
 
     # component 粒度 depends_on を entity_ref 一致 node 集合間の task depends_on へ反映。
+    # depends_on は順序だけでなく、consumer の direct input/notes 注入、failure
+    # propagation、diagnostic provenance の直接 producer 集合でもある。そのため
+    # phase barrier で到達可能でも直接 edge を縮約せず、各 downstream node から
+    # 同一または過去 phase の upstream node 全件へ決定論的に展開する。
     for cid, deps in comp_depends.items():
         downstream = nodes_by_entity.get(cid, [])
         for dep in deps:
@@ -575,7 +599,7 @@ def _derive_fixed_13_phase(plan_dir: Path) -> dict:
     # --- required plugin_level_surfaces の build node 射影 (surface_build_projection 宣言時のみ) ---
     # components[] だけが build/gate を駆動し required surface (manifest/schemas/composition 等) が
     # builder 未割当で構造的に射影対象外になる片翼を封じる (lesson-surfaces-must-be-builder-assigned)。
-    # 宣言不在の旧 inventory では本ブロックは no-op で従来出力と byte 同一 (graph_hash 不変)。
+    # 宣言不在の inventory では本ブロックは no-op (追加 surface node なし)。
     surface_proj = _inventory_surface_projection(plan_dir)
     if surface_proj is not None:
         decl, surfaces = surface_proj
@@ -588,7 +612,7 @@ def _derive_fixed_13_phase(plan_dir: Path) -> dict:
 
 
 def derive(plan_dir: Path) -> dict:
-    """shape marker で producer を分岐する。未指定=fixed は既存 bytes/behavior を維持。"""
+    """shape marker で producer を分岐し、両 shape に明示的な execution type を与える。"""
     plan_dir = Path(plan_dir)
     marker = shape_marker(plan_dir)
     if marker == _TARGET_SHAPE:
@@ -601,9 +625,9 @@ def _canon_node(n: dict) -> dict:
     for k in _NODE_REQUIRED_KEYS:
         out[k] = n.get(k)
     for k in _NODE_OPTIONAL_KEYS:
-        # acceptance_criterion は歴史的に None を省く (既存出力不変)。C17 の 3 キーは present なら
+        # acceptance_criterion は歴史的に None を省く。その他の型付きキーは present なら
         # null も出力する (direct-task の route_ref=null は「明示的に route を持たない」意味を担い
-        # 省略と区別するため)。fixed-13-phase の node はどの optional キーも持たず出力が byte 不変。
+        # 省略と区別するため)。
         if k == "acceptance_criterion":
             if k in n and n[k] is not None:
                 out[k] = n[k]

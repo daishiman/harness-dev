@@ -1,0 +1,634 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "依存 edge 最適化単体では、旧導出器→新導出器の depends_on 推移閉包が harness-creator と sample-plan の双方で一致した。一方、reeval_scope は変更ファイル集合しか出さず、意味観点への安全な束縛を機械化していない。",
+        "plan は component 数と manifest 変更内容について内部矛盾を含む。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/envelope-draft/plugin.json:9"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:57"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:352"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py:188"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "index は N=7 と計8を併記し、manifest は description のみ更新・entry_points変更なしとしながら draft は entry_points.commands を新設する。",
+          "recommended_intervention": "component 数と manifest delta を inventory/envelope から導出し、index の手書き派生値を除去する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md",
+            "line": 61
+          },
+          "root_cause": "同一事実を複数 prose view に手書きし、機械SSOTから再生成していない。"
+        },
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "reeval_scope は file-level changed/added/removed のみだが、prompt は関与する意味観点と前回 high/medium 観点を安全に選べると主張する。",
+          "recommended_intervention": "semantic check ID→入力path依存を機械可読化し、前回 semantic findings を保持した上で invalidated check IDs を出力する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 352
+          },
+          "root_cause": "ファイル差分検出を意味判定scope導出と同一視している。"
+        }
+      ],
+      "score": 0.33
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "一般則「再利用可能な verdict は全入力と証拠依存に束縛される」から演繹すると、直接成果物 envelope-draft/plugin.json を digest 台帳から除外する現実装は不十分。",
+        "一般則「最終レビュー差分は基準点を固定する」から演繹すると、直前 findings 比較は P03 基準比較の代替にならない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/handoff-run-plugin-dev-plan.json:160"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:55",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:57"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:334"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "evaluated_inputs は plan の直接成果物 envelope-draft/plugin.json を除外するため、その意味変更時にも differential reuse が成立しうる。",
+          "recommended_intervention": "宣言された全直接成果物を台帳へ含めるか、派生物なら source digest から再生成・一致検証する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 53
+          },
+          "root_cause": "評価入力集合が plan の成果物契約から導出されず固定ファイル名で管理されている。"
+        },
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "dependency-loop",
+          "description": "P10 は P03 verdict/digest を再利用すると定義するが、evaluate-plan.py は直前の plan-findings.json しか読まず P03 baseline を識別しない。",
+          "recommended_intervention": "baseline id・stage・digest snapshot を findings に持たせ、P10 は明示した P03 snapshot と比較する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md",
+            "line": 29
+          },
+          "root_cause": "差分比較の基準点が契約上の工程ではなく可変な直前ファイルに暗黙依存している。"
+        }
+      ],
+      "score": 0.41
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "harness-creator と sample-plan の2例では旧導出器→新導出器の推移閉包が一致し、edge はそれぞれ10876→5284、2365→1116へ減少した。",
+        "一方で変更テストは evaluator の file digest ケースだけで、導出器の推移閉包非劣化を固定する回帰テストがない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:62"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py:188",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:64"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:254"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:504",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_examples_golden.py:83"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "今回の2実例では reachability 非劣化を確認できたが、その不変条件を固定する専用テストがなく、golden再生成だけでは意味退行を検出できない。",
+          "recommended_intervention": "共有phaseあり・なしのfixtureで、最適化前後の depends_on 推移閉包一致を直接assertする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py",
+            "line": 188
+          },
+          "root_cause": "出力byte/gate PASSは検査しているが、最適化が守るべき意味不変条件をテスト契約にしていない。"
+        }
+      ],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "複数の不整合の最尤根本原因は、verification obligation 単位の無効化を目指しながら、実装が file digest 差分で止まっていること。",
+        "前回 semantic findings は evaluate() が新 findings で上書きし、scope出力にも prior high/medium check ID が残らない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:417"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:360"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/schemas/plan-findings.schema.json:99",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:362"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "eval-log",
+          "description": "schema/prompt は prior high/medium 観点を再評価し不変PASSを引き継ぐとするが、script は prior semantic findings を出力へ保持せず新しい機械 findings で上書きする。",
+          "recommended_intervention": "previous_semantic_findings と invalidated_check_ids を出力し、LLM更新後に原子的に置換する二段artifactへ分離する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 417
+          },
+          "root_cause": "scope計算・機械評価・semantic finding永続化を単一上書きファイルに混在させている。"
+        }
+      ],
+      "score": 0.34
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "差分再評価を深掘りすると、path digest→changed files→人間が関与観点を推定→前回証拠を手動復元、という未機械化区間が残る。",
+        "stale detector は evidence の相対path完全一致だけを束縛として扱い、added input を dirty に含めない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/SKILL.md:97",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:371"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:380",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/tests/test_evaluate_plan.py:111"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:571"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "fail-closed を称する stale reuse 検出は changed/removed のみを対象とし、追加ファイルによる矛盾や、absolute path・証拠path欠落を検出できない。",
+          "recommended_intervention": "findingごとに structured input_refs を必須化し、changed/added/removed の全てとの交差で無効化する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py",
+            "line": 380
+          },
+          "root_cause": "証拠依存を自由文 evidence から推測しており、完全な依存集合を表現できない。"
+        }
+      ],
+      "score": 0.38
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "対象をgraph最適化、digest台帳、semantic scope、証拠再利用、P03→P10基準、outer review起動規則に分解した。",
+        "graph最適化は現物2例で成立するが、semantic scope・基準点・証拠再利用の3要素は契約未充足。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:322",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:371"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:254"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:500"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "reeval_scope の構造はファイル集合だけで、semantic check ID、baseline、prior finding、input dependencyを表現しない。",
+          "recommended_intervention": "scope schemaを invalidated_checks/reused_checks/baseline_id/input_refs/prior_finding_refs へ分解する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/schemas/plan-findings.schema.json",
+            "line": 81
+          },
+          "root_cause": "差分検出データと意味評価実行計画を一つの粗い構造へ畳んでいる。"
+        }
+      ],
+      "score": 0.44
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "評価対象集合は index、goal、inventory、handoff、task-graph、phase群だけで、indexが直接成果物と宣言する envelope-draft を欠く。",
+        "同時に再評価規約が run skill、evaluator skill、prompt、plan index、P10へ重複し、欠落と重複が併存する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:57",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:55"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:253",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/SKILL.md:97",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:496"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "doc",
+          "description": "同じ差分再評価規則が複数層に再記述される一方、各層は scope、baseline、outer reviewの意味を異なる粒度で定義している。",
+          "recommended_intervention": "機械正本を semantic-obligation map 1件へ集約し、各文書は参照と層固有差分だけにする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+            "line": 253
+          },
+          "root_cause": "goalを各読者向けに重複説明したが、共通機構の単一正本を設けていない。"
+        }
+      ],
+      "score": 0.36
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×自動化度では、edge削減は高重要・機械検証可能で現物推移閉包一致、semantic scopeは高重要・現状LLM裁量依存。",
+        "コスト削減×品質保全では、prose-only一律reuseは低コストだが高リスクである。phase proseがAPI・writer・acceptance契約を保持するため。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:254"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-05-implementation.md:30",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:254"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:492"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "outer elegant-reviewを「prose文言のみ」なら再利用する規則は、実行APIやwriter境界をproseで定義するplanに対して意味変更を見逃す。",
+          "recommended_intervention": "prose/non-proseでなく obligation dependency と semantic diff classifier で再起動を決め、判断不能はfullへ倒す。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+            "line": 254
+          },
+          "root_cause": "ファイル形式を変更の意味的重要度の代理指標にしている。"
+        }
+      ],
+      "score": 0.42
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "P03→実装・試験→P10 の時系列に対し、reeval_scope は各起動直前の plan-findings を読むだけでP03 anchorを保持しない。",
+        "evaluate-plan.py実行時に前回findingsを読み込むが、その後semantic findingsを保持せず出力を上書きするため、引継ぎ工程が欠落する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:417"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:406"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:334",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "P10が依存するP03証拠の識別・保存・参照工程がなく、直前findingsへの依存へ置換されている。",
+          "recommended_intervention": "P03完了時にimmutable baseline receiptを生成し、P10入力としてbaseline_refを必須化する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md",
+            "line": 29
+          },
+          "root_cause": "工程間handoff artifactを定義せず、同名ファイルの最新状態に依存している。"
+        }
+      ],
+      "score": 0.32
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考",
+      "category": "G-problem",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "なぜ再評価を減らすのかは、品質claimが不変なら証拠を再利用するため。なぜ現実装が危険かは、claim依存でなくfile digestだけを比較するため。",
+        "なぜ重複が残るかは、run skill・evaluator・plan phaseが各自で頻度規則を持ち、verification obligationを共通SSOTにしていないため。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:371"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:253",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491",
+            "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "最終目的はclaim単位の証拠再利用だが、追加実装はfile単位差分と散文頻度規則に留まり、目的を満たす中心機構が欠ける。",
+          "recommended_intervention": "verification obligation ID、入力依存、upstream claim、receipt fingerprintをplanner評価にも共通導入し、頻度規則の重複記述を削除する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+            "line": 253
+          },
+          "root_cause": "コスト削減の抽象原理を、評価器の実行可能な依存モデルまで落とし込んでいない。"
+        }
+      ],
+      "score": 0.3
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:61",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/index.md:80",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/envelope-draft/plugin.json:9"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:53",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:380",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py:188"
+      ],
+      "violation_count": 3
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/prompts/R1-evaluate.md:43",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/assign-plugin-plan-evaluator/scripts/evaluate-plan.py:352",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:254",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+      ],
+      "violation_count": 4
+    },
+    "C4": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:491",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_derive_task_graph.py:188",
+        "/Users/dm/orca/workspaces/harness/ハーネスクリエイターのシンプル化/plugin-plans/harness-creator/phase-10-final-review.md:29"
+      ],
+      "violation_count": 2
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "why"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  }
+}

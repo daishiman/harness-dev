@@ -71,12 +71,12 @@
           "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
         }
       },
-      "description": "評価時点の被評価ファイル digest pin。現物 sha256 と不一致の verdict は stale として扱う (鮮度の機械判定アンカー)。任意フィールド (後方互換)"
+      "description": "plan 配下の安定 artifact (直下 + nested) を path 昇順で固定した鮮度台帳。現物と path 集合または sha256 が不一致の verdict は stale。ファイル差分から semantic 再評価範囲や証拠再利用を推論するフィールドではない。任意フィールド (後方互換)"
     },
     "staleness_rule": {
       "type": "string",
       "minLength": 1,
-      "description": "digest 不一致時の verdict 失効規則の宣言 (人間可読 1 行)"
+      "description": "evaluated_inputs と現物が不一致の場合に findings を stale とする鮮度規則 (人間可読 1 行)"
     }
   },
   "definitions": {

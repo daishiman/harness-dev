@@ -62,7 +62,7 @@ receiptは実行器が取得できる場合に `usage.input_tokens` / `output_to
 
 ## 学習ラチェット
 
-同じ `finding_code` が同一 obligation で2回以上 `FAIL/INCONCLUSIVE` になった場合、plannerは `automation_candidates[]` に `promote-to-deterministic-checker` を出す。繰り返し発見される規則はpromptへ追記せずschema/lint/testへ昇格させる。これにより運用を重ねるほど意味判定が機械判定へ移り、LLMコストが下がる。
+同じ `finding_code` が同一 obligation で2回以上 `FAIL/INCONCLUSIVE` になった場合、plannerは `automation_candidates[]` に `promote-to-deterministic-checker` を出す。繰り返し発見される規則はpromptへ追記せずschema/lint/testへ昇格させる。これにより運用を重ねるほど意味判定が機械判定へ移り、LLMコストが下がる。反復の検知は `scripts/extract-recurring-findings.py` が eval-log と plan-findings を横断して機械集計し (`status: unreviewed` の台帳を出力)、昇格の判断と実施は人間/AI が行う。
 
 ## 30思考法の位置づけ
 

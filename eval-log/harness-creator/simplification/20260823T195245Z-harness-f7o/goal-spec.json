@@ -1,0 +1,66 @@
+{
+  "purpose": "Harness Creatorが検証条件の網羅性を保ったまま、個々の条件を別々のAI実行として扱う過剰と制御系の往復を減らす。",
+  "background": "実planは317 checklist nodeと8 routeを10564 depends_on edgeへ展開している。一方でproduction graphにexecution_kindが無く、obligation compilerが8 buildだけをemitするため、単なる省力化ではなくrelease claim欠落の可能性がある。検証claimと実行unitを分離する必要がある。",
+  "goal": "実Harness Creator planの全検証claimが欠落なく追跡されながらroute・stage・global gate単位の少数execution unitへ決定論的に射影され、phase markerと制御系往復で不要なSubAgentを起動せず、既存の品質・安全ゲートを維持している。",
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "実planのbaseline node数・route数・depends_on数・obligation数と、改善後のexecution unit数・claim coverage・control-plane呼出単位を比較するmeasurement JSONが存在する。",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "production task-graphがphase-gateとexecutable claimを機械識別でき、phase-gateはSubAgent実行対象にならない。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "実planの全executable claimがちょうど1つのexecution unitかproof projectionで被覆され、未割当・重複割当はfail-closedに検出される。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "execution unitがroute×stageと必要最小のglobal gateに束ねられ、検証claim数より実行unit数が少ないことを実plan統合検査が証明する。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "同一execution unit内の入力解決・state write-back・heartbeatのうち決定論的に一括化できる経路がbatch APIになり、単位taskごとの無条件subprocess反復が減っている。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "Harness CreatorとPlugin Dev Plannerの関連test suiteがgreenで、fail-closed・単一writer・承認境界・証拠鮮度が緩和されていない。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "fresh verifierがoriginal goalにPASSを返し、成果物・検証・未解決事項がhandoff-goal-seek.jsonに記録されている。",
+      "done": true,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "317件の検証claimを数の削減目的で削除しない",
+    "phase-gate自動化を品質gateのスキップにしない",
+    "task-graphとtask-stateの単一writer所有境界を保持する",
+    "既存の未commit差分と他agentの作業を戻さず、現行worktreeをbaselineにする",
+    "束ねるのは同一の成果物・stage・証拠で閉じるclaimだけとする",
+    "git commit・git push・Dolt remote syncは行わない"
+  ],
+  "handoff_targets": [],
+  "max_loops": 3,
+  "open_questions": [],
+  "forbidden_loosening": [
+    "claimをobligationから落として実行unit数を減らす",
+    "phase markerをdoneにする際に子claimのproofを検査しない",
+    "batch state更新を非原子的な複数writerへ分散する",
+    "実planではなくsynthetic fixtureだけをgreenにする"
+  ]
+}
