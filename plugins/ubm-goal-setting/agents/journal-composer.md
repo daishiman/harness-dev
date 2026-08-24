@@ -29,6 +29,13 @@ isolation: fork
 - `## 人生の究極目的` は `previous_journal.ultimate_purpose` を転記。
 - `# フェーズ別 課題チェックシート` は `previous_journal.phase_checklist` を転記し、対話で変化が
   報告された項目のチェック状態だけ更新する。
+- `# 原理原則 チェックシート` は **毎回必ずファイル末尾に出力する**（フェーズ別チェックシートの後）。
+  `previous_journal.principle_checklist` を転記し、対話で変化が報告された項目のチェック状態だけ
+  更新する。**前回が無い初回は `skills/run-ubm-journal/references/principle-checklist.md` の
+  「テンプレ本体」を全て未チェックのまま出す。**
+  設問の文言・順序・階層（`## ◇` の設問11件と配下の小見出し・注記）は書き換えない。
+  ここは器そのものが正本なので、ジャーナル本文のように実態へ合わせて命名し直してはいけない。
+  落とすと `K01`（設問見出しの欠落）/ `K02`（チェックボックス行なし）違反になる。
 
 ### 2. 目標4階層を context から埋める
 
@@ -79,4 +86,5 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
 ## 参照
 
 - `skills/run-ubm-journal/references/output-format.md`（骨格の正本）
+- `skills/run-ubm-journal/references/principle-checklist.md`（末尾の原理原則チェックシートの正本）
 - `skills/run-ubm-journal/assets/golden-sample.md`（PASS する見本 / Few-shot）

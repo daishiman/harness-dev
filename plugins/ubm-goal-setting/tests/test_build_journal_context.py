@@ -125,6 +125,16 @@ tags:
 ## ◇【10→100】
 
 - [ ] フロント活動を活性化させ集客人数を増やせていますか？
+
+# 原理原則 チェックシート
+
+## ◇ 毎月の利益と口座残高の状況がわかるようになっていますか？
+
+- [x] 月末締め翌月15日までに集計が上がる状態ですか？
+
+## ◇ 右肩上がりになっていますか？
+
+- [ ] 会社（事業）の口座残高
 """
 
 WEEKLY_REPORT = """## 【1週間の目標】2026-08-17〜2026-08-23
@@ -232,6 +242,35 @@ def test_previous_journal_inherits_purpose_and_checklist(vault: Path):
     ]
     assert len(prev["prohibitions"]) == 2
     assert "◇【0→1】" in prev["phase_checklist"]
+    # フェーズ別の抽出はレベル1見出しで終端する。原理原則ブロックを取り込むと
+    # 「前回のフェーズ別チェックを引き継ぐ」の中身が別物になる。
+    assert "原理原則" not in prev["phase_checklist"]
+
+
+def test_previous_journal_inherits_principle_checklist(vault: Path):
+    """原理原則チェックシートも前回の状態をそのまま引き継ぐ。"""
+    prev = run(vault, "2026-08-18")["previous_journal"]
+    body = prev["principle_checklist"]
+    assert "◇ 毎月の利益と口座残高の状況がわかるようになっていますか？" in body
+    # チェック済みの状態が保たれること (器だけ引き継いで状態を落とさない)
+    assert "- [x] 月末締め翌月15日までに集計が上がる状態ですか？" in body
+
+
+def test_principle_checklist_is_empty_when_previous_journal_lacks_it(vault: Path):
+    """前回ジャーナルに未導入なら "" を返し、テンプレは埋め込まない。
+
+    テンプレ充当は SKILL 側の責務。ここで正本テンプレを既定値として返すと、
+    前回不在 (previous_journal=null) の初回経路と併せて充当先が二重になる。
+    黙って空にはせず、section_body の notes 経由で warnings に出す。
+    """
+    daily = vault / "02_Configs" / "Daily"
+    for name in ("2026-08-16.md", "2026-08-17.md"):
+        path = daily / name
+        text = path.read_text(encoding="utf-8")
+        path.write_text(text.split("# 原理原則 チェックシート")[0], encoding="utf-8")
+    ctx = run(vault, "2026-08-18")
+    assert ctx["previous_journal"]["principle_checklist"] == ""
+    assert any("原理原則 チェックシート" in w for w in ctx["warnings"]), ctx["warnings"]
 
 
 def test_days_remaining_uses_report_period(vault: Path):

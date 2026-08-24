@@ -19,7 +19,7 @@ prefix: run
 effect: external-mutation
 owner: harness-maintainers
 since: 2026-08-17
-version: 0.5.0
+version: 0.6.0
 subagent_refs:
   - journal-composer
 schema_refs:
@@ -32,6 +32,7 @@ reference_refs:
   - references/output-format.md
   - references/interview-map.md
   - references/daily-habits.json
+  - references/principle-checklist.md
 source: ユーザーの既存 Obsidian Daily 運用 (02_Configs/Daily/) の仕組み化
 source-tier: internal
 last-audited: 2026-08-17
@@ -145,8 +146,11 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
 - **要約しすぎない**: ユーザーが出した固有名詞・数値・時刻・相手の発言はそのまま残す。
   1項目1事実に分解し、冗長な言い回しだけを削る。
 - **3小節を混ぜない**: 「現状を確認する」に評価や改善案を書かない。事実／解釈／打ち手を分離する。
-- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシートは前回から引き継ぎ、
-  ユーザーが変更を申し出た項目だけ更新する。
+- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシート・原理原則チェックシートは
+  前回から引き継ぎ、ユーザーが変更を申し出た項目だけ更新する。
+- **原理原則チェックシートは毎回必ず末尾に出力する**: `references/principle-checklist.md` が正本。
+  設問の文言・順序・階層は書き換えない。**対話中に読み上げない**（生成時に器として出すだけ）。
+  チェック状態は前回ジャーナルから継承し、初回はテンプレを全て未チェックで出す。
 
 ## Gotchas
 
@@ -159,6 +163,10 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
   1週間目標の残日数は `0日（期間終了・次週分の週報は未作成）` と書く。
 - **1年目標の対応レポートは存在しない**: 前回ジャーナルからの継承のみ。満了していたら対話で確認する。
 - **フェーズ別課題チェックシートは本文の外**: `## 【お金のジャーナル】` の後、レベル1見出しとして置く。
+- **原理原則チェックシートはさらにその後（ファイル末尾）**: `# フェーズ別 課題チェックシート` の後に
+  レベル1見出し `# 原理原則 チェックシート` として置く。ここを落とすと Phase5 で `K01`（設問見出しの
+  欠落）／`K02`（チェックボックス行なし）違反になる。設問11件は対話で聞き出す対象ではないので、
+  ヒアリングを増やさず器だけを出力する。
 
 ## Additional Resources
 
@@ -166,6 +174,8 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
   `scripts/validate-journal-output.py`（保存前バリデーション）。
 - **references**: `references/resource-map.yaml`（どの Phase でどれを開くかの索引。迷ったら最初に見る）/
   `references/output-format.md`（骨格の正本）/ `references/interview-map.md`（問い→セクション対応）/
+  `references/principle-checklist.md`（末尾に毎回出力する原理原則チェックシートの正本。設問11件の
+  文言・順序と `K01`/`K02` の検査対象はここが定義する）/
   `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集し、
   `keywords` と `search_scopes`（H01 が検査するセクション）を必ず併記する。`search_scopes` を
   書き忘れた習慣は検査不能として H02 違反になる）。

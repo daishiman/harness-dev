@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-journal-output
-# version: 0.5.0
-# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・骨格15ブロック・
+# version: 0.6.0
+# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・骨格16ブロック・
 #          目標4階層の期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート・
-#          毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。習慣の件数と
-#          検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。
+#          原理原則チェックシート・毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。
+#          習慣の件数と検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。
+#          原理原則チェックシートの設問 11 件は references/principle-checklist.md が正本で、
+#          本 script の PRINCIPLE_SECTIONS と対で管理する (tests が一致を機械的に固定する)。
 #          未置換プレースホルダと空セクションを FAIL にする。
 # inputs:
 #   - argv: --file <path> [--expected-number N] [--expected-date YYYY-MM-DD]
@@ -167,12 +169,37 @@ REQUIRED_OUTLINE = [
     (2, "【時間のジャーナル】", EXACT),
     (2, "【お金のジャーナル】", EXACT),
     (1, "フェーズ別 課題チェックシート", EXACT),
+    (1, "原理原則 チェックシート", EXACT),
 ]
 
 JOURNAL_SECTIONS = ["【行動のジャーナル】", "【時間のジャーナル】", "【お金のジャーナル】"]
 JOURNAL_SUBSECTIONS = ["現状を確認する", "効果性を評価する", "更に良くする方法はないか"]
 GOAL_SECTIONS = ["1年目標", "3ヶ月目標", "1ヶ月目標", "1週間目標"]
 PHASE_SECTIONS = ["【0→1】", "【1→10】", "【10→100】"]
+
+# 原理原則チェックシート (K01) が要求する `## ◇ ...` 設問 11 件。
+# 正本は references/principle-checklist.md の「必須の設問見出し」表で、ここはその写し。
+# 正本 md をパースしない理由は PHASE_SECTIONS と同じ (検査器が可変の文書に依存しない)。
+# 対で管理する約束を人手の注意力へ預けないため、tests 側で表との一致を機械的に固定してある
+# (test_principle_sections_match_reference)。設問を増減するときは両方を同時に直す。
+#
+# 照合は P01 の部分一致ではなく完全一致 (normalize_heading で装飾記号だけ落とす)。
+# 設問 4 と 5 は「（1）」「（2）」しか違わないので、部分一致だと片方しか無い本文でも
+# 「もう片方の見出しの一部」として当たる余地が残る。互いに誤マッチしないことは
+# tests (test_principle_sections_do_not_cross_match) で固定する。
+PRINCIPLE_SECTIONS = [
+    "◇ 毎月の利益と口座残高の状況がわかるようになっていますか？",
+    "◇ 右肩上がりになっていますか？",
+    "◇ 原理原則を学び見直す状態は作れていますか？",
+    "◇ 決めた括りの人が増え、歴史の共有ができていますか？（1）",
+    "◇ 決めた括りの人が増え、歴史の共有ができていますか？（2）",
+    "◇ 支出は前回から下げられましたか or 利益率は上げられましたか？",
+    "◇ 今の行動を積み上げた先に上記のチェックが全て埋まる行動になっていますか？",
+    "◇ 川上に繋がる描きができスケジュールが配置されていますか？",
+    "◇ 次回、UBMで原理原則を学び確認する日は入っていますか？",
+    "◇ あなたと共に同じ学びを共有するメンバーは増えていますか？",
+    "◇ あなたの教え子からリーダーが生まれていますか？",
+]
 
 
 def headings(lines: list[str]) -> list[tuple[int, str, int]]:
@@ -233,11 +260,20 @@ def has_review_tag(fm: str) -> bool:
     return False
 
 
+def normalize_heading(text: str) -> str:
+    """見出しから装飾記号 (`◇` や末尾コロン) を落とす。完全一致照合の前処理。
+
+    左右どちらにも掛けられるようにしてある。PRINCIPLE_SECTIONS は正本 md の表記
+    (`◇ ` 付き) をそのまま写しているため、needle 側にも同じ正規化が要る。
+    """
+    return text.strip().strip("◇◆・:：").strip()
+
+
 def heading_matches(text: str, needle: str, mode: str) -> bool:
     """見出しテキストの照合。exact は装飾記号 (`◇` や末尾コロン) だけ落として完全一致。"""
     if mode == CONTAINS:
         return needle in text
-    return text.strip().strip("◇◆・:：").strip() == needle
+    return normalize_heading(text) == needle
 
 
 def section_lines(
@@ -414,6 +450,8 @@ def validate(
         if not checks:
             violations.append("P02: フェーズ別課題チェックシートにチェックボックス行がありません")
 
+    violations.extend(check_principle_checklist(lines))
+
     # --- 未置換プレースホルダ ---
     for i, line in enumerate(lines, start=1):
         m = PLACEHOLDER_RE.search(line)
@@ -431,6 +469,31 @@ def validate(
     violations.extend(check_daily_habits(lines, habits))
 
     return violations
+
+
+def check_principle_checklist(lines: list[str]) -> list[str]:
+    """原理原則チェックシート (K01/K02) を検査する。
+
+    K01 は設問 11 件が揃っているか、K02 はチェックボックス行が 1 件以上あるか。
+    P01/P02 と同じ構造だが、照合だけ完全一致にしてある (PRINCIPLE_SECTIONS のコメント参照)。
+    見出しごと欠落しているときは S01 が報告済みなので、ここでは何も言わない。
+    """
+    body = section_lines(lines, 1, "原理原則 チェックシート")
+    if body is None:
+        return []
+    out: list[str] = []
+    found = {
+        normalize_heading(l.strip()[2:]) for l in body if l.strip().startswith("## ")
+    }
+    missing = [s for s in PRINCIPLE_SECTIONS if normalize_heading(s) not in found]
+    if missing:
+        out.append(
+            "K01: 原理原則チェックシートに設問見出しがありません: "
+            + " / ".join(f"## {s}" for s in missing)
+        )
+    if not any(re.match(r"^\s*-\s*\[[ xX]\]", l) for l in body):
+        out.append("K02: 原理原則チェックシートにチェックボックス行がありません")
+    return out
 
 
 def check_daily_habits(lines: list[str], habits: list[dict]) -> list[str]:

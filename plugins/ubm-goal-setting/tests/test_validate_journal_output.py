@@ -486,6 +486,132 @@ def test_y02_is_not_satisfied_by_a_fenced_code_block():
     assert mod.TRANSCLUSION_RE.search(mod.visible_text("![[人生の究極の目的]]\n"))
 
 
+# --- K01/K02: 原理原則チェックシート -------------------------------------
+
+PRINCIPLE_REF = PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
+
+
+def _reference_rows() -> list[str]:
+    """正本 md の「必須の設問見出し」表を番号順に読む。"""
+    rows: list[tuple[int, str]] = []
+    for line in PRINCIPLE_REF.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\|\s*(\d+)\s*\|\s*(.+?)\s*\|$", line.strip())
+        if m:
+            rows.append((int(m.group(1)), m.group(2)))
+    rows.sort()
+    return [text for _, text in rows]
+
+
+def _reference_template() -> str:
+    """正本 md の ```markdown フェンス (テンプレ本体) を取り出す。"""
+    m = re.search(r"```markdown\n(.*?)\n```", PRINCIPLE_REF.read_text(encoding="utf-8"), re.S)
+    assert m, "principle-checklist.md からテンプレ本体のフェンスが消えた"
+    return m.group(1)
+
+
+def test_principle_sections_match_reference():
+    """PRINCIPLE_SECTIONS が正本 md の表と一字一句一致すること。
+
+    スクリプト側のコメントは「正本と対で管理する」と宣言しているが、
+    BRACE_PLACEHOLDERS が実際にその約束を破った前例がある (`{名前}` の登録漏れ)。
+    人手の注意力に預けず、ここで機械的に固定する。順序も含めて一致させる。
+    """
+    mod = _load_validator()
+    assert list(mod.PRINCIPLE_SECTIONS) == _reference_rows()
+
+
+def test_reference_template_matches_its_table():
+    """正本 md の中でも、テンプレ本体の `## ` 見出しと表が食い違わないこと。
+
+    バリデータが見るのは表だが、ジャーナルへ実際に貼られるのはテンプレ本体なので、
+    この 2 つがズレると「正本どおりに貼ったのに K01 で落ちる」が起きる。
+    """
+    headings = [
+        l.strip()[3:].strip()
+        for l in _reference_template().splitlines()
+        if l.strip().startswith("## ")
+    ]
+    assert headings == _reference_rows()
+
+
+def test_golden_sample_has_the_principle_checklist(golden: str):
+    """見本が K01/K02 の基準線を実際に満たしていること (PASS の根拠が実在する担保)。"""
+    mod = _load_validator()
+    assert mod.check_principle_checklist(golden.splitlines()) == []
+
+
+def test_missing_principle_block_fails(tmp_path: Path, golden: str):
+    text = golden.replace("# 原理原則 チェックシート", "# 原理原則メモ", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "S01" in proc.stdout, proc.stdout
+
+
+def test_missing_principle_section_fails(tmp_path: Path, golden: str):
+    mod = _load_validator()
+    dropped = mod.PRINCIPLE_SECTIONS[0]
+    text = golden.replace(f"## {dropped}", "## ◇ 別の設問", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "K01" in proc.stdout, proc.stdout
+    assert dropped in proc.stdout, proc.stdout
+
+
+def test_principle_checklist_without_checkbox_fails():
+    """設問見出しだけ並べて中身を消すと K02 で落ちる。"""
+    mod = _load_validator()
+    lines = ["# 原理原則 チェックシート"] + [f"## {s}" for s in mod.PRINCIPLE_SECTIONS]
+    out = mod.check_principle_checklist(lines)
+    assert [v for v in out if v.startswith("K02:")], out
+    assert not [v for v in out if v.startswith("K01:")], out
+
+
+def test_principle_sections_do_not_cross_match():
+    """11 件が互いに誤マッチしないこと。
+
+    設問 4 と 5 は「（1）」「（2）」しか違わないので、P01 と同じ部分一致で照合すると
+    片方しか無い本文が「もう片方もある」と読める余地が残る。完全一致を選んだ理由が
+    実際に効いていることを、1 件ずつ落として確かめる。
+    """
+    mod = _load_validator()
+    template = _reference_template()
+    for dropped in mod.PRINCIPLE_SECTIONS:
+        text = template.replace(f"## {dropped}", "## ◇ 差し替えた別の設問", 1)
+        assert f"## {dropped}" not in text, f"落とせていない: {dropped}"
+        out = [v for v in mod.check_principle_checklist(text.splitlines()) if v.startswith("K01:")]
+        assert len(out) == 1, f"{dropped}: {out}"
+        named = [s for s in mod.PRINCIPLE_SECTIONS if s in out[0]]
+        assert named == [dropped], f"{dropped} を落としたのに名指しされたのは {named}"
+
+
+def test_principle_block_does_not_pollute_the_habit_scopes(golden: str):
+    """H01 の検査範囲に原理原則ブロックが混入しないこと。
+
+    このブロックには「発信」「投稿」「勉強会」等が常在するので、search_scopes の
+    対象セクション本文に混ざると H01 が常時 PASS する死んだ検査になる。
+    レベル1見出しなので section_lines が level 2 の scope を終端する、という
+    理屈が実際に成り立っているかを本文で確かめる。
+    """
+    mod = _load_validator()
+    lines = golden.splitlines()
+    assert "# 原理原則 チェックシート" in lines, "golden にブロックが無い"
+    for scope in {"【行動のジャーナル】", "【時間のジャーナル】"}:
+        body = mod.section_lines(lines, 2, scope)
+        assert body is not None, scope
+        assert not any(l.strip() == "# 原理原則 チェックシート" for l in body), scope
+        for section in mod.PRINCIPLE_SECTIONS:
+            assert section not in "\n".join(body), f"{scope} に {section} が混入"
+
+
+def test_h01_still_fires_with_the_principle_block_present(tmp_path: Path, golden: str):
+    """混入していないことの帰結: ブロックがあっても H01 は発火する (死んでいない)。"""
+    text = _strip_section(golden, "## 【行動のジャーナル】", "## 【時間のジャーナル】")
+    assert "# 原理原則 チェックシート" in text
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "H01: 毎日の習慣「SNSに投稿した」" in proc.stdout, proc.stdout
+
+
 def test_h01_treats_a_fenced_block_as_not_a_record():
     """フェンス内だけの記録は H01 で「ありません」と言う (意図した fail-closed 側の誤り)。
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-journal-context
-# version: 0.5.0
+# version: 0.6.0
 # purpose: 日次ジャーナル作成の決定論的な前提 (通し番号・出力パス・目標4階層の期間と残日数・
 #          最新週報から引き継ぐ習慣目標/判断基準/当日タスク・前回ジャーナルの継承値) を
 #          1 回の実行で JSON 化する。番号採番と日数計算を LLM に推測させないための決定論ゲート。
@@ -48,7 +48,9 @@ stdout は以下の形の JSON オブジェクト 1 個。キーは常に全て�
       "previous_journal": null | {
         "path": str, "file_date": "YYYY-MM-DD", "number": int,
         "heading_date": "YYYY-MM-DD"|null,
-        "ultimate_purpose": [str], "prohibitions": [str], "phase_checklist": str,
+        "ultimate_purpose": [str], "prohibitions": [str],
+        "phase_checklist": str,     # 見つからなければ "" (テンプレは埋め込まない)
+        "principle_checklist": str, # 同上。初回・未導入時は "" で、テンプレ充当は SKILL 側
         "goals": { <key>: {"period_start":…, "period_end":…, "goal": str} }
       },
       "goals": {                            # key = yearly|quarterly|monthly|weekly (4 件固定)
@@ -703,6 +705,17 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             "goals": extract_journal_goals(prev_text, notes=prev_notes),
             "prohibitions": bullets(section_body(prev_text, "【禁止事項】", notes=prev_notes)),
             "phase_checklist": section_body(prev_text, "フェーズ別 課題チェックシート", level="#", notes=prev_notes),
+            # 原理原則チェックシートも「前回の状態をそのまま引き継ぐ器」なので
+            # phase_checklist と同じ抽出・同じ既定値 ("") に揃える。正本テンプレ
+            # (references/principle-checklist.md) をここで埋め込まないのは、
+            # (1) 本 script は「決定論で確定できる前提」を出す担当で、テンプレ本文の
+            #     供給元ではない (他のどのキーもテンプレを載せていない)、
+            # (2) 前回ジャーナルが無い初回は previous_journal 自体が null になるため、
+            #     SKILL 側にはどのみちテンプレ充当の経路が要る。ここで "" と null の
+            #     2 経路を作ると充当先が二重になる、の 2 点による。
+            # なお前回ジャーナルにこのブロックが無い場合 (導入直後) は section_body の
+            # notes が warnings へ 1 行出すので、黙って空になることはない。
+            "principle_checklist": section_body(prev_text, "原理原則 チェックシート", level="#", notes=prev_notes),
         }
         if prev["number"] is not None and number != prev["number"] + 1 and not is_regeneration:
             warnings.append(
