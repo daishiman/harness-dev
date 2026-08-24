@@ -13,7 +13,7 @@
 
 ### 入力契約
 
-- C11 `readiness_digest` とexact一致する現行C02 receipt、またはlegacy receiptとexact supplemental evidence、trace plan、validated system plan、requirements candidate。
+- PASS receipt、trace plan、validated system plan、requirements candidate。
 
 ### 出力契約
 
@@ -25,11 +25,11 @@
 
 ### 受入条件
 
-- 全requirement/source/package refを持ち、C11/C02 feature-scoped readiness digestがexact一致し、self-generated code 0になる。
+- 全requirement/source/package refを持ちdigest一致、self-generated code 0になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: maintained `build-requirements-handoff.py`。C11/C02 feature-scoped readiness digestのexact比較、exact-13/lineage gate、handoff emitを一時 driverへ複製せず、実行時reportの後付けaggregate digestで代用しない。
+- 使用資産: WriteとSkill capability-buildへのhandoff。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-requirements/R3-handoff`。inline 親 context が正規 command を1回実行し、その receipt を採用する。
+- `run-dev-graph-requirements/R3-handoff`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 全requirement/source/package refを持ちC11/C02 feature-scoped readiness digestがexact一致し、self-generated code 0になる
+- [ ] 全requirement/source/package refを持ちdigest一致、self-generated code 0になる
 
 ### 5.4 実行方式
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

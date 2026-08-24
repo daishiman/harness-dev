@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-requirements",
-    "skill_md_sha256": "41924f613e43c7e3dbc1a9414a5fb9d8b5df0e6dd1e65726f79b6c893f5f4525"
+    "skill_md_sha256": "be5fee70d41caf04035292045e7f280454fe22c002ab57514f042e7b05ed8e12"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "evaluate_init_fresh (requirements focused combined content review, incremental profile) rubric projection",
-  "reviewed_at": "2026-08-24T05:40:58Z",
-  "iterations": 2,
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -18,20 +18,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "FM/NM/BD high規範を満たし、descriptionの2 trigger、Purpose & Output Contract、300行上限、directory/name、body execution contractが一致する。",
-      "PG-001はR1/R2/R2b/R3の全prompt_required responsibilityがexact prompts/<id>.mdへ1対1対応し、dev-graph全41 promptの7層content lintがPASSする。",
-      "REG-001はplugin completenessと存在するrequirements skill-build-traceのcanonical validatorがPASSし、script/schema/reference/responsibility refsも実在する。",
-      "C02/C11/C12/C13/C24のdependencyはC24 graph authority、C11 feature digest、C02 immutable receipt/evidence、system-dev-planner validators、exact-13 handoffへ一方向に接続され、通常実行でvalidatorを差し替えられない。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low / PD-001] SKILL.md本文は100行を超え、skill-local references/ではなくprompts/とdeterministic scriptへ詳細を分離しているため、厳密なPD-001物理条件は満たさない。実行契約とcriteriaを本文に携帯する設計でhigh/mediumの実行可能性には影響しない。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "ref-skill-design-rubric 1.3.0とassign-skill-design-evaluator overlay 1.3.1を現在targetへ適用したfocused rubric projection。30思考法は実施していない。high severityはFM-001/BD-001/BD-003/NM-001/PG-001/BND-001/REG-001を含め0件、medium blockerも0件。allowed-toolsは明示allowlist、inline runtimeとprompt本文からAgent依存は除去済み。PD-001のみlowとして記録する。過去のDEGRADED/FAIL/未完了liveや529はrubric PASS根拠に使用せず、live/criteria scenario verdictは変更していない。",
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,

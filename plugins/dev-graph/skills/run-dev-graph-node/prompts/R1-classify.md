@@ -1,12 +1,12 @@
 # Prompt: R1-classify
 
-> 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、正規root候補を推定する。物理pathを決めず保存先を質問しない
+> 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R1-classify`
 - `skill`: `run-dev-graph-node`
-- 不変目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、正規root候補を推定する。物理pathを決めず保存先を質問しない
+- 不変目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -17,7 +17,7 @@
 
 ### 出力契約
 
-- `register-package.py artifacts --plan` に渡す kind/domain/project/confidence/reason/第二候補の semantic decision。path/node ID/frontmatter/graphは含めない。
+- kind/domain/project/path/confidence/reasonと第二候補を持つclassification preview。
 
 ### 責務境界
 
@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- 通常5 artifactのconfidence/top-two marginと正規root候補が再現可能で、物理pathの決定は正規C02 CLIだけが行う。
+- 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる。
 
 ## Layer 3: インフラ層
 
@@ -42,20 +42,20 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R1-classify`。`goal_seek.fork=inline` に従いmain contextで実行する。
+- `run-dev-graph-node/R1-classify`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
-- 目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、正規root候補を推定する。物理pathを決めず保存先を質問しない
+- 目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: kind/domain/project/confidence/reason、第二候補、正規root候補を持つclassification previewが生成され、物理pathを含まず受入条件を満たした状態になっている。
+- 達成ゴール: kind/domain/project/path/confidence/reasonと第二候補を持つclassification previewが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 通常5 artifactの正規root候補とconfidence/top-two marginが再現可能で、物理pathがdecisionに含まれない
+- [ ] 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる
 
 ### 5.4 実行方式
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

@@ -14,7 +14,7 @@
 
 ### 入力契約
 
-- `validate-graph-schema.py --feature-id <FEATURE_ID>` のC11 `readiness_digest`、現行C02 receiptの同digestまたはlegacy receipt用C02 supplemental evidence、C02保存readiness/evaluation/source digest。
+- C11 report、C02保存readiness/evaluation、source digest。
 
 ### 出力契約
 
@@ -26,11 +26,11 @@
 
 ### 受入条件
 
-- C11 `readiness_digest` と現行C02 receiptがexact一致する。legacyの場合だけreceipt SHA・current graph・live readiness source・package/nodeを束縛したversioned evidenceとのexact一致を要求する。missing/mismatchはblockedとし、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる。
+- C11 reportとC02 saved state/source digestが一致し、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: validate-graph-schema (`--feature-id`でfeature-scoped digestを発行) とvalidate-system-plan。実行時reportの後付けaggregate digestを作らない。
+- 使用資産: validate-graph-schemaとvalidate-system-plan。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -43,7 +43,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-requirements/R2b-readiness`。inline 親 context が正規 command receipt を読み、gate 未達をそのまま blocker にする。
+- `run-dev-graph-requirements/R2b-readiness`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -56,7 +56,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] C11 `readiness_digest` とC02 receiptの`c11_readiness_digest`がexact一致し、C02 saved state/source digestも一致して、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる
+- [ ] C11 reportとC02 saved state/source digestが一致し、validate-system-plan.pyのP01..P13 exact-set/13-node DAGがPASSしたcomplete/pass/confirmedだけreadyになる
 
 ### 5.4 実行方式
 

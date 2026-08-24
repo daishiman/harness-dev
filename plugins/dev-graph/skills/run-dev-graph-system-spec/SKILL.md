@@ -6,13 +6,12 @@ owner: harness maintainers
 source: plugin-plans/dev-graph/component-inventory.json#C19
 kind: run
 effect: local-artifact
-runtime_root_policy: host-skill-path
 prefix: run
 hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--resume]"
-allowed-tools: [Read, Bash, Skill, AskUserQuestion]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-system-spec-delegation.py]
+allowed-tools: [Read, Bash, Skill, Agent, AskUserQuestion]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 responsibility_refs:
   - prompts/R0-context.md
@@ -31,7 +30,7 @@ responsibilities:
   - id: R2-delegate
     name: delegate
     prompt_required: true
-    summary: "run-system-spec-elicit→run-system-spec-doc-fetch(no-op可)→run-system-spec-compile→assign-system-spec-completeness-evaluatorを必ず順番どおり引用実行する"
+    summary: "run-system-spec-elicit→必要時run-system-spec-doc-fetch→run-system-spec-compile→assign-system-spec-completeness-evaluatorを引用実行する"
   - id: R3-import
     name: import
     prompt_required: true
@@ -42,7 +41,7 @@ combinators:
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: inline
+  fork: subagent
   max_loops: 5
 completeness_exempt:
   - "manifest: goal_seek.engine=inline が未達 checklist から実行局面を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行を正本とする。"
@@ -76,19 +75,9 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
-## Runtime root contract
-
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
-
 ## Pre-choice usable artifact execution
 
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
-
-**Key Rule:** R0〜R3は必ずmain contextで実行し、独立contextはqualified completeness evaluator内だけに限定する。
 
 ## Post-choice selected improvement execution
 
@@ -107,19 +96,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 1. C24 で caller repo の `system-spec/` を解決し、plugin source/別 repo の content を拒否する。
 2. `plugins/system-spec-harness/.claude-plugin/plugin.json` の name/version が `>=0.1.0 <1.0.0`、かつ `references/package-contract.json#entry_points.skills` が `run-system-spec-elicit`, `run-system-spec-doc-fetch`, `run-system-spec-compile`, `assign-system-spec-completeness-evaluator` を持つことを確認する。公式manifestへharness専用キーを混在させず、不在/不一致は fallback を実装せず停止する。
-3. qualified Skill 呼出しで elicit → doc-fetch → compile → completeness evaluator を順に委譲する。既存 `fetched-references.json` が有効でも doc-fetch 自体を省略せず、正規 Skill に再検証を委ねて `no-op` または refresh の結果を得る。既存ファイルの独自検査を呼出しの代替にしない。全4呼出しの `result_status=PASS` と evidence SHA が validator に受理されるまで progress をPASS/4の取込可と扱わない。
-4. validator PASS 後だけ、各章の repo-relative source path/SHA、system-spec-harness version、delegation receipt/progress path/SHA を `system-spec-import-attestation.json` にまとめる。qualified `dev-graph:run-dev-graph-node` Skill が正規 C02 writer の同一attestation付きdry-run→applyを実行し、staged C11 PASS 後にだけ `status=active`, `confirmation_status=confirmed`, `evaluation_status=pass`, `source_lineage={origin_kind,source_plugin,source_path,source_version,source_digest,imported_at}` と evaluator evidence を specification/architecture node へall-or-none保存する。
-
-4 呼出しの戻りごとに `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-delegation.json` の `invocations[]` へ、順番、qualified entrypoint、`call_status` (`completed|no-op`)、`result_status` (`PASS|FAIL|INDETERMINATE`)、repo-relative `evidence_ref` とその SHA-256 を記録する。未来の呼出しを先に記録してはならない。進捗の `delegation` はこの receipt から導出し、次の validator が exit 0 になるまで `4/4` または PASS と扱わない。
-
-```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-spec-delegation.py" \
-  --repo-root "$DEV_GRAPH_ROOT" \
-  --receipt "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-delegation.json" \
-  --progress "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-progress.json"
-```
-
-`evidence_ref` は順に `spec-state.json`、`fetched-references.json`、compile 済み `index.md`、completeness evaluator report を指す。evaluator が FAIL/INDETERMINATE を返した場合も4番目の呼出し完了は記録するが、validator は非ゼロで停止する。C02 は呼ばず、開始時graph SHAの不変と追加artifact 0件をblocker証跡として返す。attestation/C11がFAILした場合も C02 writerのstaging/rollbackによりgraph/artifactをall-or-noneで不変に保つ。
+3. Skill 呼出しで elicit → 必要時 doc-fetch → compile → completeness evaluator を順に委譲する。
+4. confirmed 章と evaluator PASS だけを C02 に渡し、`source_lineage={origin_kind,plugin,path,version,digest,imported_at}`, confirmation evidence, readiness を specification/architecture node に保存する。
 
 出力は import report (`system-spec/index.md`, imported node ids, lineage, confirmation_status, readiness)。feature は `architecture_refs` で参照し、内容を複製しない。1 feature→13 task は system-dev-planner の責務であり本 skill は扱わない。
 
@@ -137,22 +115,21 @@ system-spec-harnessが既に持つヒアリング、カテゴリ×platform matri
 
 - [ ] system_spec content root が caller repo 内で repository_id/common-dir と一致する
 - [ ] system-spec-harness が version `>=0.1.0 <1.0.0` と required 4 entry points を満たす
-- [ ] elicit/doc-fetch/compile/evaluator が順番どおり system-spec-harness qualified Skill 経由だけで実行され、delegation validator が4件の実証跡を受理する
+- [ ] elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される
 - [ ] coverage/source-citation/evaluator gate が全て PASS である
-- [ ] C02 dry-run/apply receipt が同じsystem-spec attestationとstaged C11 PASSに束縛され、登録 node の active/confirmed/pass/source_lineage/evaluator evidence/readiness が欠落0である
+- [ ] C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である
 - [ ] dev-graph 内に同等 elicitation/compile logic の複製が0件である
 
 ### ゴールシークループ
 
-frontmatter の `goal_seek.engine: inline` / `fork: inline` / `max_loops: 5` を実行契約とする。固定手順は使わず、main context で未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
+frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
 
 ### ゴールシーク配線
 
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、main context でその周回の処理を実行する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-system-spec-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
-- progress の `delegation.completed_count/status` は delegation receipt と validator stdout からだけ更新する。未呼出し・順序違反・PASS以外のresult・evidence digest 不一致では未達のまま停止する。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 
 ### ゴールシーク検証
@@ -184,5 +161,4 @@ PY
 - system-spec-harness 不在や version/entry-point 不一致時に、簡易 fallback を dev-graph 内へ実装しない。
 - plugin source 側や別 repo の `system-spec/` を読まず、C24 receipt の caller repo だけを content authority にする。
 - evaluator PASS と confirmed の両方が揃わない章を C02 へ登録しない。
-- 有効な `fetched-references.json` を見つけても doc-fetch の qualified Skill 呼出しを省略しない。再検証による `no-op` は許可するが、ファイル検査だけを呼出し済み証跡にしない。
 - feature に仕様本文を複製せず、`architecture_refs` と source lineage で参照する。

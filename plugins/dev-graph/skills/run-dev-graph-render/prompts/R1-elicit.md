@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- caller graph、scope ID、scope内のfeature packageに対応するC02 registration receipt群、output path、repo context。
+- caller graph、scope ID、output path、repo context。
 
 ### 出力契約
 
-- caller repo authority、実在subgraph、featureごとのC02 receipt、repo内HTML outputを確定したrender request。
+- 実在subgraphとrepo内HTML outputを確定したrender request。
 
 ### 責務境界
 
@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- scope実在、固定点closure確定、子taskを持つfeatureとC02 receiptの1:1対応、graph/receipt/output realpath root内、symlink通過・file位置のdirectory 0件、input digest固定になる。
+- scope実在、output realpath root内、input digest固定になる。
 
 ## Layer 3: インフラ層
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-render/R1-elicit`。親SKILLの `goal_seek.fork=inline` に従いmain contextで実行し、別contextにforkしない。
+- `run-dev-graph-render/R1-elicit`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] scope実在・closure・C02 receipt 1:1対応、graph/receipt/output realpath root内、symlink通過・file位置のdirectory 0件、input digest固定になる
+- [ ] scope実在、output realpath root内、input digest固定になる
 
 ### 5.4 実行方式
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

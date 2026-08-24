@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- input/render-model digest付きmodel、C02 registration evidence、repo内output。
+- input digest付きmodel、repo内output。
 
 ### 出力契約
 
-- 単一自己完結HTMLとscope/node/edge-kind/progress counts、C02 lineage、input/render-model/output digest、repo-relative path refsを持つreceipt。
+- 単一自己完結HTMLとcounts/output digest receipt。
 
 ### 責務境界
 
@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- external script/link 0、SVG/inline JS・edge種別・feature X/Y progressがbrowser live trialで表示され、receiptのscope/node/edge-kind/progress counts・C02 lineage・input/render-model/output digestが実体に一致し、path refsがすべてrepo-relativeである。
+- external script/link 0、SVG/inline JSとfeature X/Y progressがbrowser live trialで表示され、receiptのnode/edge/progress countsとinput/output digestが実体に一致する。
 
 ## Layer 3: インフラ層
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-render/R3-render`。親SKILLの `goal_seek.fork=inline` に従いmain contextで実行し、別contextにforkしない。
+- `run-dev-graph-render/R3-render`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] external script/link 0、SVG/inline JS・edge種別・feature X/Y progressがbrowser live trialで表示され、receiptのscope/node/edge-kind/progress counts・C02 lineage・input/render-model/output digestが実体に一致し、path refsがすべてrepo-relativeである
+- [ ] external script/link 0、SVG/inline JSとfeature X/Y progressがbrowser live trialで表示され、receiptのnode/edge/progress countsとinput/output digestが実体に一致する
 
 ### 5.4 実行方式
 

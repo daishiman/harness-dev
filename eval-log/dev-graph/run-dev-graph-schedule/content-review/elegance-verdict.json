@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-schedule",
-    "skill_md_sha256": "49dd62c50dfaa92c1b3a9ab0bdce2a609592421adc7841732a7ae1ad318afa51"
+    "skill_md_sha256": "844131da027663f76446297e4907a3e4f74546436127c0bfcc86f8adb526ca06"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "review_content_status (focused incremental review; run-dev-graph-schedule only)",
-  "reviewed_at": "2026-08-24T05:51:05Z",
-  "iterations": 2,
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -19,29 +19,25 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "scope node・parent feature・子task・depends_onを変化が止まるまで追跡する固定点closureが、unrelated nodeをready candidateから決定論的に除外する。",
-      "both modeはbeads候補をC28 exact parity、github/none候補をlocal graphからbinding別に作り、統合後にfeature/task別resource-safe batchを再構成する。",
-      "C17は別Task contextでmaintained validatorを実行し、scope/ready/lease/schedule digest、authority、batch overlapを再計算したPASS receiptがなければ推薦しない契約である。",
-      "active leaseのgraph_node_id/resource_scope衝突を除外し、同一batchのoverlapを0にしつつ、分離したresource conflict pairもreceiptへ明示する。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[resolved high] C28のedge_parity.confirmed=trueだけを受理し、statusまたはdepends_on edgeが不一致な証拠でも推薦できた。expected/actual status、depends_on exact-set、missing/unexpected edge空集合をschedulerとC17の両方で必須化した。",
-      "[resolved high] 明示したlease snapshotの欠落をleases 0件と扱う経路と、schedule/goal anchor/C17 verdictがgraph・C28 ready・lease・schedule inputを上書きできる経路があった。全書込pathをwrite前に相互・inputと照合し、欠落snapshotとaliasをfail-closed拒否した。",
-      "[resolved high] output contractのconflict pairsに対し、receiptはlease衝突node IDのみでresource overlap pairを返していなかった。種別・node pair・共有resourceを持つconflict_pairsを追加し、C17再計算対象に含めた。",
-      "[low / smell] rubricのFM-005はdescription先頭のfeatureを動詞でないと機械判定する。ただし「feature readyとtask readyを分離したいとき」は日本語のtriggerとして意味が一意で、実行不能を生まない。",
-      "[low / smell] rubricのPD-001はbody>100行に対しreferences/が空である。一方、3 responsibilityは既にprompts/へ分離され、本文は安全gate・C17配線・停止条件の正本なので今回のhigh blockerではない。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "content-review-protocolのincremental profileに従い、1 context / 1 targetでrun-dev-graph-scheduleのみをfresh reviewした。30思考法は実施せず、実施したとも申告しない。対象はSKILL.md、3 prompt、inventory C15、EVALS C15、plugin-composition、C17 agent、schedule-graph.py、validate-schedule-receipt.py、focused tests、build trace、rubric。第1反復で3 highを検出・最小修正し、第2反復で(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合とrubric high 0を再確認した。現在SHAはSKILL=49dd62c50dfaa92c1b3a9ab0bdce2a609592421adc7841732a7ae1ad318afa51、scheduler=c4b7072c3401cb0c1298f7f89b409f30e1375e951a43f364d9bd92ad41629c28、C17 validator=85521f18f7c7b925fadb36d288752f49d9ebf924bdeed25930067706dd14b620。fresh focused pytest 23 PASSでscope fixed-point、IN1/OUT1 eligibility・dependency、C28 exact parity/conflict除外、both binding partition/merge、C17 tamper/stale detection、lease/resource conflict、branch/claim hints、input digest不変、再実行semantic digest一致、input overwrite write 0を確認した。C15 criteria contractは4 PASS、build trace、prompt placement、runtime profile inline/subagent、plugin completenessもPASS。古いPASS/529は現在sourceの根拠に使用せず、live-trialとcriteria scenario verdictは読み書きしていない。このPASSは静的design claimに限定され、Gate D実走acceptanceの代替ではない。",
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 1
   }
 }

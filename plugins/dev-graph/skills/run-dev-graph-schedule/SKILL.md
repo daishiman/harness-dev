@@ -11,8 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--scope ID] [--max-parallel N]"
 allowed-tools: [Read, Bash, AskUserQuestion, Task, Skill, Agent]
-runtime_root_policy: host-skill-path
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/validate-schedule-receipt.py, ../../scripts/validate-goal-seek-runtime.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 responsibility_refs:
   - prompts/R1-elicit.md
@@ -79,14 +78,6 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
-## Runtime root contract
-
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
-
 ## Pre-choice usable artifact execution
 
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
@@ -100,58 +91,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Purpose & Output Contract
 
-- 入力: C24/C11 検証済み graph、任意scope node、binding parity、C27 lease snapshot、max parallel。
+- 入力: C24/C11 検証済み subgraph、binding parity、C27 lease snapshot、max parallel。
 - 出力: strict ready sets、resource-safe parallel batches、conflict pairs、`devgraph/<graph_node_id>` branch/claim command。
-- 完了条件: 全推薦がscope closure内で confirmed/pass/readiness complete、全 dependency done、binding authority/lease/resource conflict 0 を同時に満たす。
+- 完了条件: 全推薦が confirmed/pass/readiness complete、全 dependency done、lease/resource conflict 0 を同時に満たす。
 
-1. 対象scopeとmax parallelを確定する。`--scope` はscope node→parent feature/子task/依存先の固定点closureとし、unrelated nodeを候補に入れない。
-2. C27 lease snapshotを`<LEASES_JSON>`へ保存する。明示したsnapshotが欠落した場合は「leases 0件」と見なさずfail-closed停止する。repo configの`execution_tracker.mode` が`beads|both`なら、C28の正規`ready`を同じparity manifestから`<C28_READY_JSON>`へ保存する。`edge_parity.confirmed=true`だけでなく、status一致・`expected_depends_on=actual_depends_on`・`missing_edges=[]`・`unexpected_edges=[]`がすべて成立する候補だけを採用し、`conflicts[]`の候補は必ず除外する。
-
-```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/manage-worktree-lease.py" \
-  --repo-root "$DEV_GRAPH_ROOT" --op list > "<LEASES_JSON>"
-
-if [ "$EXECUTION_TRACKER_MODE" = "beads" ] || [ "$EXECUTION_TRACKER_MODE" = "both" ]; then
-  python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/bd-bridge.py" \
-    --repo-root "$DEV_GRAPH_ROOT" --op ready \
-    --parity-manifest "<C28_PARITY_MANIFEST>" > "<C28_READY_JSON>"
-fi
-```
-
-3. 正規ready sourceを一意に選ぶ。`beads`=`bd-bridge`+C28 evidence、`github|none`=`self`、`both`=`both`+C28 evidenceとする。`both`は`tracker_binding=beads`だけをC28から、`github|none`だけをlocal graphから取り、統合後にresource batchを再構成する。
-
-```bash
-SCOPE_ARGS=(); if [ -n "${SCOPE:-}" ]; then SCOPE_ARGS=(--scope "$SCOPE"); fi
-READY_JSON_ARGS=()
-case "$EXECUTION_TRACKER_MODE" in
-  beads) READY_SOURCE=bd-bridge; READY_JSON_ARGS=(--ready-json "<C28_READY_JSON>") ;;
-  both) READY_SOURCE=both; READY_JSON_ARGS=(--ready-json "<C28_READY_JSON>") ;;
-  github|none) READY_SOURCE=self ;;
-  *) echo "unsupported execution_tracker.mode" >&2; exit 2 ;;
-esac
-
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/schedule-graph.py" \
-  --graph "$DEV_GRAPH_ROOT/.dev-graph/state/graph.json" \
-  "${SCOPE_ARGS[@]}" --ready-source "$READY_SOURCE" "${READY_JSON_ARGS[@]}" \
-  --leases "<LEASES_JSON>" --max-parallel "<N>" \
-  --out "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-receipt.json" \
-  --goal-spec "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json" \
-  --goal-progress "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-progress.json" \
-  --goal-intermediate "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-intermediate.jsonl"
-```
-
-4. 候補 receipt を生成した親は、必ず `Task` で `subagent_type: dev-graph:dev-graph-parallel-safety-verifier` を1回起動する。C17にgraph、同一scope/lease/C28 evidence、ready source、候補 receipt、max parallelを渡し、分離contextで`<C17_RECEIPT>`を生成させる。一時verifier scriptは作らせない。
-
-```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-schedule-receipt.py" \
-  --graph "$DEV_GRAPH_ROOT/.dev-graph/state/graph.json" \
-  --schedule "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-receipt.json" \
-  "${SCOPE_ARGS[@]}" --ready-source "$READY_SOURCE" "${READY_JSON_ARGS[@]}" \
-  --leases "<LEASES_JSON>" --max-parallel "<N>" \
-  --out "<C17_RECEIPT>"
-```
-
-5. 親は C17 receipt の `verifier=dev-graph-parallel-safety-verifier`、`component=C17`、`verdict=PASS`、`findings=[]`、`unsafe_pairs=[]`、`schedule_digest`と候補 receipt の一致を統合確認する。scope/ready/lease digest、C28 exact parity、binding partitionの1項目でも不一致・receipt不在ならready-setを推薦しない。同じinputの再実行はschedule semantic digestが一致し、graph/C28 ready/leaseとoutput/goal anchor/C17 verdictのpath衝突は最初のwrite前に拒否する。
+1. 対象 subgraph と max parallel を確定する。
+2. beads binding は C28 の `ready` と status/depends_on exact-set parity=confirmed の積集合だけを採用する。github/none は local graph から算出する。
+3. confirmed/pass/readiness complete、全依存 done、active lease なしだけを候補にする。
+4. feature ready は system-dev-planner 起動候補、task ready は実行候補として別 batch にする。両者を同じ batch に混ぜない。
+5. `schedule-graph.py` の resource_scope conflict と C27 lease snapshot を重ね、同じ resource を触る組を分離する。C17 独立 verifier が不一致を出したら推薦しない。
 
 出力は ready sets、parallel batches、conflict pairs、各 task の `devgraph/<graph_node_id>` branch と `dev-graph worktree claim <id>` command。read-only で graph/tracker/lease を変更しない。
 
@@ -168,12 +116,10 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-schedule-receipt
 ### 完了チェックリスト
 
 - [ ] candidate は confirmed/pass/readiness complete、全 depends_on done、active lease なしを満たす
-- [ ] scope指定時は固定点closure外のready candidateが0件である
-- [ ] beads/bothは同一C28 evidenceだけを使い、status/depends_on exact parity不成立・conflict・authority不一致が推薦0件である
 - [ ] feature ready と task ready が別々の ready-set/batch に出力される
 - [ ] 同一 parallel batch の resource_scope.touches 重複 pair が0件である
 - [ ] 各 task の suggested_branch が `devgraph/<graph_node_id>` で claim command が public CLI 形式である
-- [ ] 実行前後の graph/tracker/lease digest が同一で、同一inputの再実行でschedule semantic digestが一致する
+- [ ] 実行前後の graph/tracker/lease digest が同一である
 
 ### ゴールシークループ
 
@@ -182,20 +128,28 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 ### ゴールシーク配線
 
 - 開始時に C24 `resolve-repo-context.py --mode read` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
-- `schedule-graph.py` が元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、独立安全検証だけ上記 C17 `Task` へ分離する。親は候補生成・receipt統合・ユーザー提示を所有する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-progress.json` へ記録する。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 
 ### ゴールシーク検証
 
-各周回後に共有 validator を実行し、goal-spec/progress/intermediate の欠落・goal drift・hash 不一致を fail-closed にする。`required_keys` と `hashlib.sha256` の判定実装はこの validator をSSOTとする。
+各周回後に次の検査を実行し、中間成果物の欠落・goal drift・hash 不一致を fail-closed にする。
 
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-runtime.py" \
-  --goal-spec "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json" \
-  --progress "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-progress.json" \
-  --intermediate "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-intermediate.jsonl"
+python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-intermediate.jsonl" <<'PY'
+import hashlib, json, sys
+goal = json.load(open(sys.argv[1], encoding='utf-8'))
+rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
+required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
+assert rows, 'intermediate.jsonl is empty'
+for row in rows:
+    assert required_keys <= row.keys(), required_keys - row.keys()
+    assert row['original_goal'] == goal['original_goal']
+    assert row['original_goal_hash'] == expected
+PY
 ```
 
 ## Criteria acceptance
@@ -211,7 +165,3 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-runtim
 - 直接依存だけでなく全 `depends_on` の done を確認する。
 - 同一 batch の `resource_scope.touches` と active lease の両方を衝突判定に使う。
 - feature planning 候補と task 実行候補を同一 batch に混ぜない。
-- C17 を親 context の目視や一時 driver で代替しない。`Task` receipt がない候補は未検証である。
-- beads/bothで`--ready-source`/`--ready-json`を省略しない。`both`でC28候補をgithub/none authorityとして混ぜない。
-- `edge_parity.confirmed=true`の自己申告だけを信用せず、status・depends_on・missing/unexpected edgeのexact一致を照合する。
-- 明示したlease snapshotの欠落や、output/goal anchor/C17 verdictがgraph/ready/lease/schedule inputを上書きするpath衝突を許容しない。

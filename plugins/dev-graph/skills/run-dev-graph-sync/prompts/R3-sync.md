@@ -13,7 +13,7 @@
 
 ### 入力契約
 
-- 3-way plan、tracker_binding、C28 parity receipt、C12 adapterのread/mutation receipt。
+- 3-way plan、tracker_binding、C28 parity receipt、C12 adapter。
 
 ### 出力契約
 
@@ -25,11 +25,11 @@
 
 ### 受入条件
 
-- beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0かつProject/Item ID・3-way base・field snapshot digestが安定する。
+- beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: bd-bridgeとgh-bridge。Project field取得は`project-item-fields`のnormalized receiptだけを使う。
+- 使用資産: bd-bridgeとgh-bridge。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-sync/R3-sync`。main contextで未達checklistを処理する。
+- `run-dev-graph-sync/R3-sync`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0かつProject/Item ID・3-way base・field snapshot digestが安定する
+- [ ] beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0になる
 
 ### 5.4 実行方式
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

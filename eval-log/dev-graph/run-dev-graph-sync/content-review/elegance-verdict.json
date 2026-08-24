@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
-    "skill_md_sha256": "2f560362c618abb84e7c69a343ce2504dd911b26c2c4ce2187af396b3f13f966"
+    "skill_md_sha256": "68450bb8e1f10d52749417ddd0c26eb0c77f26ee300c64d3e4aab53cbb87d79a"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "sync-focused-review-v2 (fresh focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T05:53:58Z",
-  "iterations": 3,
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,30 +25,25 @@
       "OUT9"
     ],
     "positive_feedback": [
-      "preview → hook-confirm → authorize → execute の official receipt flow が frontmatter と canonical block の両方に存在し、完全一致する command argv だけが実行される。guard 自体の focused 10 tests も PASS した。",
-      "tracker_binding ごとの writer は github=C12/gh-bridge、beads=C28/bd-bridge、none=write 0 に分離され、Beads GitHub mirror は push-only viewer に限定されている。",
-      "Project field read は project/item/content identity、field value updatedAt、canonical snapshot_sha256 を1 receipt に束縛し、offline fixture も network=disabled/repo一致/read-only op 限定で同一 shape を返す。",
-      "repo-config が許可する single_select/text/number/date/iteration と clear が typed project-item-edit に1:1対応し、dry-run と apply が同一検証関数を使う。",
-      "OUT1の二回目 changes=0、OUT2/OUT5/OUT7の3-way/manual confirmation、OUT3のtombstone、OUT8のpending_retry、OUT9のdefault-branch merge authorityが Purpose/Protocol/checklist/responsibility prompt に分断なく対応する。"
+      "runtime_root_policy: host-skill-path の宣言・`## Runtime root contract` 節・shell 起動行の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 化が三点セットで同時に入っており、宣言だけ / 本文だけの片肺移行になっていない。guard block 内の 3 本 (preview / authorize / execute) すべてが同一形式へ揃っている。",
+      "`## Runtime root contract` 節が frontmatter 直後という配置で、既に移行済みの他 skill (contract-generator 4 件・extract-system-blueprint 3 件で確認) と同じ位置規約に従っている。節の位置が skill ごとに揺れていない。",
+      "差分は runtime root 由来の 1 節追加と 3 行のパス置換だけで、Purpose & Output Contract / Protocol / ゴールシーク配線 / Criteria acceptance / Gotchas には一切触れていない。tracker_binding 別 authority 一意性 (beads=C28 / github=C12 / none) や dry-run write 0 といった既存契約が保存されている。",
+      "guard の相対参照 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py` は plugin root 基準の兄弟 plugin 参照であり、PLUGIN_ROOT へ切り替えても解決先の意味 (plugins/skill-governance-adapters/...) が変わらない。実ファイルの存在も確認済み。"
     ],
     "negative_feedback": [
-      "[resolved high / omission] repo-config は5種の Project field value_type を許可するのに project-item-edit が single-select 専用だった。typed update/clear、iteration metadata read、preview前検証を追加した。",
-      "[resolved high / dependency] parent Skill が Agent を allowlist から除外し fork:inline へ移行した後も R4-R8 が Agent fork を要求していた。全8 prompt を main-context 実行に統一した。",
-      "[resolved high / authority] Project item が --repo と異なる repository の Issue を指しても受理できた。content.repository.nameWithOwner を同じ GraphQL snapshot で検査し、不一致を fail-closed にした。",
-      "[remaining medium / rubric PD-002] 共通 runtime/artifact-delivery wrapper が本文先頭に置かれるため Purpose & Output Contract が body 先頭30行外にある。同一生成規約の横断課題で、本 skill の実行不能や authority 欠落ではない。",
-      "[remaining low / rubric FM-005, PD-001] description 先頭が動詞ではなく、body>100行で skill-local references/ がない。宣言 reference_refs は全て実在し、rubric score は84/100で閾値80を満たす。"
+      "[low / smell] `## Runtime root contract` は「各 shell invocation 内で解決済み absolute path を `PLUGIN_ROOT` に設定する」と要求するが、Codex 側でその解決を行う具体的な shell 手順 (manifest 祖先探索の実コマンド) は本文に置かれていない。実務上は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の fallback により Claude Code では確実に解決し、Codex では手順文の指示に従って agent が設定するため実行不能にはならない。移行テンプレート全体に共通する記述上の smell であり low に留める。"
     ],
-    "iteration": 3,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "content-review-protocol の incremental focused review を1 context / 1 target で実行。30思考法は実施しておらず、実施も申告しない。最終状態の4条件は矛盾なし PASS、漏れなし PASS、整合性あり PASS、依存関係整合 PASS。IN1/OUT1-OUT9は静的設計と実行経路の対応を評価した。根拠は current SKILL.md/prompts R1-R8、gh-bridge/bd-bridge/reconcile-github-lifecycle、execution-tracker/github-lifecycle contracts、宣言 refs 18件の実在、focused 49 tests PASS、frontmatter/name/tree/prompt/build-trace lint PASS。最新 live trial 20260824T170000-fix3 は Not logged in で BLOCKED、その前の 20260824T124500-simp4 は正規 field read 欠落で DEGRADED であり、いずれも本 PASS の根拠に使っていない。PASS の射程は current SHA の content/design adequacy に限り、現在 SHA の live behavioral acceptance は認証回復後の別 trial が必要。criteria-test/live verdict は変更していない。",
+  "notes": "main マージ + external-mutation guard block の機械 migration による sha 乖離を受けた再束縛。content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した。30 思考法は実施しておらず、実施も申告しない。根拠: (1) `git diff HEAD -- plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md` の全差分 (+9 行 / 3 行置換) を読んだ。内容は frontmatter への `runtime_root_policy: host-skill-path` 追加、`## Runtime root contract` 節 5 項目の新設、guard block 3 行の `${CLAUDE_PLUGIN_ROOT}` → `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 置換のみ。(2) SKILL.md 本文 262 行を全て読み、差分が Purpose & Output Contract・Protocol・ゴールシーク配線・Criteria acceptance・Gotchas を壊していないことを確認した。(3) frontmatter 宣言参照の実在を全件 file test で確認: script_refs 6 件、schema_refs 2 件、reference_refs 2 件、responsibility_refs (prompts/R1-R8) 8 件、すべて存在。(4) effect: external-mutation に対し `external_mutation_guard` frontmatter と `<!-- external-mutation-guard-cli:v1 -->` canonical receipt flow block の双方が存在し片肺でないことを確認。参照先 plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py の実在も確認。(5) skill ディレクトリ全体を `grep -rn 'CLAUDE_PLUGIN_ROOT'` し、shell 起動行に bare `${CLAUDE_PLUGIN_ROOT}` が残っていないこと (hit は fallback 形 3 行と散文 1 行のみ、prompts/ 配下は hit 0) を確認。(6) 節の配置規約を他の移行済み skill 7 件と突合し frontmatter 直後で一致することを確認。未解決の medium 以上は 0 件、残る low 1 件は解決手順が散文どまりという記述上の smell で実行不能にはならないため PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT1-OUT9 の実行挙動受け入れには live-trial/test の実走証拠を別途要する。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 1
   }
 }

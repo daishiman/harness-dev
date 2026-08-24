@@ -13,7 +13,7 @@
 
 ### 入力契約
 
-- local graph、C12 normalized remote receipts、last-synced base、field value updatedAt、snapshot_sha256。
+- local graph、remote snapshots、last-synced base、field value updatedAt。
 
 ### 出力契約
 
@@ -21,7 +21,7 @@
 
 ### 責務境界
 
-- 書込まずremote Project Statusをcompletion authorityにせず削除/renameを落とさない。GraphQLやfixture JSONを直読みしない。
+- 書込まずremote Project Statusをcompletion authorityにせず削除/renameを落とさない。
 
 ### 受入条件
 
@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: Readとgh-bridge `project-item-fields` / dry-run。
+- 使用資産: Readとgh-bridge dry-run。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-sync/R2-plan`。main contextで未達checklistを処理する。
+- `run-dev-graph-sync/R2-plan`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

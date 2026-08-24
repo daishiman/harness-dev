@@ -41,9 +41,7 @@
     "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R0-context.md",
     "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R1-preflight.md",
     "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
-    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
-    "plugins/dev-graph/scripts/validate-system-spec-delegation.py",
-    "plugins/dev-graph/scripts/register-package.py"
+    "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md"
   ],
   "context_map_decision": {
     "map": "run-build-skill/references/resource-map.yaml categories selected by strict mass-production build",
@@ -86,9 +84,7 @@
       "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R0-context.md",
       "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R1-preflight.md",
       "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
-      "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md",
-      "plugins/dev-graph/scripts/validate-system-spec-delegation.py",
-      "plugins/dev-graph/scripts/register-package.py"
+      "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md"
     ]
   },
   "design_model": {
@@ -286,9 +282,9 @@
     {
       "layer": "Subagent",
       "decision": "use",
-      "reason": "R0〜R3とgoal-seekはmain contextで実行し、生成側から独立させる必要があるqualified completeness evaluatorだけが自身のcontext:fork契約を所有する。",
-      "placement_evidence": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
-      "fallback": "qualified evaluatorが利用できなければmain contextで代行評価せずfail-closedで停止する。",
+      "reason": "goal-seekの重い判断をforkし、責務promptを独立contextで実行する。",
+      "placement_evidence": "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md#ゴールシーク実行",
+      "fallback": "親contextで有界反復し結果だけ統合する。",
       "dependency_direction_ok": true,
       "macos_stdlib_ok": true,
       "deterministic": false
@@ -337,7 +333,7 @@
   "variant_support": {
     "prefix": "run",
     "role_suffix": "executor",
-    "subagent": "R0-R3=inline; qualified completeness evaluator=context:fork",
+    "subagent": "goal_seek.fork=subagent",
     "hook": "plugin hooks with manual/scheduled fallback"
   },
   "pattern_decisions": [
@@ -399,26 +395,6 @@
           "E"
         ],
         "frontmatter_status": "PASS"
-      },
-      {
-        "path": "plugins/dev-graph/scripts/validate-system-spec-delegation.py",
-        "type": "python-stdlib-script",
-        "allowed_contexts": [
-          "C",
-          "E"
-        ],
-        "frontmatter_status": "PASS"
-      },
-      {
-        "path": "plugins/dev-graph/scripts/register-package.py",
-        "type": "python-stdlib-script",
-        "allowed_contexts": [
-          "A",
-          "B",
-          "C",
-          "E"
-        ],
-        "frontmatter_status": "PASS"
       }
     ]
   },
@@ -441,7 +417,7 @@
     "forked_evaluator": "assign-skill-design-evaluator independent context",
     "eval_log_path": "eval-log/dev-graph/run-dev-graph-system-spec",
     "recursive_checks": [
-      "focused incremental static adequacy (30-method exhaustive not run)",
+      "30-method elegance",
       "rubric 1.3.0",
       "criteria evidence",
       "trace validator"
@@ -494,7 +470,7 @@
           "L6",
           "L7"
         ],
-        "sha256": "d526efbbc4287bc2f3a031b36f82059cec002427a69479cb763ffdedcc5432a9",
+        "sha256": "f34221443e17557323651d90b6854e387890b2be1db5cd383c50c1aeeccffc39",
         "lint_status": "PASS",
         "iteration_count": 1,
         "escalation": "none"
@@ -514,14 +490,14 @@
           "L6",
           "L7"
         ],
-        "sha256": "31810280a14885c44254999cb8307f493cd6c6458ec64d1fa194c1b231efbaf3",
+        "sha256": "6ae3400e73f14c0f88c05a8092e6dc23f9d0d1ed82dce4e3cc78e4e98b7298f9",
         "lint_status": "PASS",
         "iteration_count": 1,
         "escalation": "none"
       },
       {
         "id": "R2-delegate",
-        "name": "run-system-spec-elicit→run-system-spec-doc-fetch(no-op可)→run-system-spec-compile→assign-system-spec-completeness-evaluatorを必ず順番どおり引用実行する",
+        "name": "run-system-spec-elicit→必要時run-system-spec-doc-fetch→run-system-spec-compile→assign-system-spec-completeness-evaluatorを引用実行する",
         "owner_agent": null,
         "layer_yaml_path": "plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R2-delegate.md",
         "path_convention": "skill-local-v1",
@@ -534,7 +510,7 @@
           "L6",
           "L7"
         ],
-        "sha256": "415e57ceda9cf86ee9b1ddc890f28ca695b655cf7d4d1b60b76c62d1c543145c",
+        "sha256": "cfb30fdb90dbc696f453fe380f0d7c1c71de1398f05b0863e94b67fb242f5ec4",
         "lint_status": "PASS",
         "iteration_count": 1,
         "escalation": "none"
@@ -554,7 +530,7 @@
           "L6",
           "L7"
         ],
-        "sha256": "3ec7f669ca5c33f5570b7a15f3221cf01aa5825f15379a158cdc067d0a56eae7",
+        "sha256": "284da5a708e0aa2851ca2a10d69d0c644055ef25bd88750f4b3cda4cf675f02c",
         "lint_status": "PASS",
         "iteration_count": 1,
         "escalation": "none"

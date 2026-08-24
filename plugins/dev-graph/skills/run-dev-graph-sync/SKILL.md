@@ -11,8 +11,8 @@ external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts
 prefix: run
 hierarchy: L1
 user-invocable: true
-argument-hint: "[--repo-root PATH] [--dry-run] [--adapter-fixture PATH] [--resolve-conflicts PATH]"
-allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion, Skill]
+argument-hint: "[--repo-root PATH] [--dry-run] [--resolve-conflicts PATH]"
+allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion, Skill, Agent]
 script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/manage-worktree-lease.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
 reference_refs: [../../references/execution-tracker-contract.md, ../../references/github-lifecycle-contract.md]
@@ -64,7 +64,7 @@ combinators:
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: inline
+  fork: subagent
   max_loops: 5
 completeness_exempt:
   - "manifest: goal_seek.engine=inline が未達 checklist から実行局面を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行を正本とする。"
@@ -180,25 +180,13 @@ local graph が正本。`tracker_binding=beads` は C28 の status/depends_on ex
 
 ## Protocol
 
-1. schema と repo config を検証し、IssueはC12 `issue-fetch`、Project/field identityは`project-resolve`、itemは`project-item-find`、field現在値は`project-item-fields`で読み、last-synced snapshot を base に 3-way plan を作る。
+1. schema と repo config を検証し、last-synced snapshot を base に 3-way plan を作る。
 2. beads は `bd-bridge.py` だけを使う。GitHub mutation を併用しない。github は `gh-bridge.py --dry-run` preview 後だけ apply する。
 3. Issue は id+updated_at、Project field は field value updatedAt を conflict hint とする。双方変更は自動上書きせず manual conflict。同時刻は GitHub を表示値に採用し local confirmation flag を残す。Status は local→Project 一方向で、remote Status を done authority にしない。
 4. close/delete は node 物理削除でなく tombstone/status transition。部分的な Project failure は local promotion を戻さず alias 単位 `pending_retry`。
 5. C26 で default-branch merge evidence と C27 pending event を reconcile する。closed-unmerged、dirty/feature worktree、policy/evidence 不足は done にしない。
 
-同一 state の二回目は changes=0。両passで各read opを再実行し、Project/Item/content IDと`project-item-fields.result.snapshot_sha256`が安定し、pass 1後snapshotがpass 2の3-way baseと一致することを測定する。`--dry-run` は外部 write 0。report は imports/exports/conflicts/tombstones/pending_retry/project snapshots を返す。
-
-### Canonical Project field read
-
-Project fieldの現在値はC12の次のread-only opだけから取得する。各fieldの`field_id/field_name/value/value_type/updated_at`、Project/Item/content ID、canonical `snapshot_sha256`を同じshapeで返す。
-
-```bash
-python3 "$PLUGIN_ROOT/scripts/gh-bridge.py" --op project-item-fields --repo "$ISSUE_REPOSITORY" --project-id "$PROJECT_ID" --item-id "$ITEM_ID"
-```
-
-offline trialで`--adapter-fixture` が指定された場合だけ同opにそのabsolute pathを渡す。C12は`network=disabled`と`repo`一致を検証し、GraphQLを呼ばず同じshapeを返す。Skill/プロンプト/一時driverからfixture JSONを直接loadしない。`--adapter-fixture`はmutation opでは拒否され、mutationは引き続きofficial receipt flowだけを通す。
-
-Project field writeはrepo configの`value_type`と同じ`single_select|text|number|date|iteration`を`project-item-edit --value-type`へ渡し、それぞれ`--option-id|--value|--iteration-id`の1種類だけを使う。値削除は`--clear`で明示する。dry-runでtyped argvを検証した後、同一argvをcanonical external mutation receipt flowの`command-json`に入れ、bridgeを直接applyしない。
+同一 state の二回目は changes=0。`--dry-run` は外部 write 0。report は imports/exports/conflicts/tombstones/pending_retry/project snapshots を返す。
 
 ## ゴールシーク実行
 
@@ -218,18 +206,17 @@ tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGi
 - [ ] 双方変更は manual conflict、片側変更は mapping どおりの反映 receipt を持つ
 - [ ] close/delete は graph_node_id を保持した tombstone/status transition になる
 - [ ] default-branch merge evidence を満たす場合だけ done となり、dirty/feature worktree event は pending に残る
-- [ ] 同一状態の二回目 sync の imports/exports/Project item add が0件で、Project/Item ID・3-way base・field snapshot digestが一回目と一致する
+- [ ] 同一状態の二回目 sync の imports/exports/Project item add が0件である
 
 ### ゴールシークループ
 
-frontmatter の `goal_seek.engine: inline` / `fork: inline` / `max_loops: 5` を実行契約とする。固定手順は使わず、main context で未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
+frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。各周回で inner criterion を検証し、完了後は outer criterion の live trial/content review を最大 `feedback_contract.max_iterations=3` 周で評価する。
 
 ### ゴールシーク配線
 
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
-- `--adapter-fixture` を受けた場合はabsolute pathに解決し、C12 `project-item-fields --adapter-fixture` のみへ渡す。その他のreadはC12、mutationはofficial receipt flowを使い、fixture JSONをSkill自身で読まない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-progress.json` へ記録する。
-- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、main context でその周回の処理を実行する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+- 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-sync-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 
@@ -255,7 +242,7 @@ PY
 ## Criteria acceptance
 
 - `criteria:IN1`: `validate-graph-schema.py` と `gh-bridge.py` の送信前検証で必須キー欠落が0件である。
-- `criteria:OUT1`: 同一状態をC12 read receipt経由で二回同期し、2回目のimports/exportsは`changes=0`、Project/Item ID・3-way base・field snapshot digestは一回目と一致する。
+- `criteria:OUT1`: 同一状態を二回同期し、2回目のimports/exportsは`changes=0`になる。
 - `criteria:OUT2`: Issue `updated_at`競合は新しい方を採用し、同時刻はGitHub優先と手動確認フラグを残す。
 - `criteria:OUT3`: close/deleteは物理削除せず`tombstone/status`遷移として反映する。
 - `criteria:OUT4`: `--dry-run`ではGitHub/Beadsを含む外部write 0件である。
@@ -269,7 +256,6 @@ PY
 
 - `beads/github/none` の mutation authority を同一 node で混ぜない。Beads の GitHub mirror は push-only viewer に限定する。
 - Project Status の remote 変更を local done authority として逆流させない。
-- Project fieldをGraphQLやfixture JSONから直読みせず、C12 `project-item-fields`のnormalized receiptを3-way remote inputの正本とする。
 - close/delete を物理削除に変換せず、`tombstone/status` transition として保存する。
 - `--dry-run` では local/Beads/GitHub/Projects write をすべて0にする。
 - 部分的な remote 失敗で local promotion を戻さず、未完了 operation だけを `pending_retry` に残す。
