@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "run-system-dev-plan",
-    "skill_md_sha256": "552ffa7caa1ee19eefefed562ad03e19971a105e6471105c65c64aebcd64b2b4"
+    "skill_md_sha256": "559085a00c2d1085ecc7a210d4712860fe083dcda668a2af75f08a57cdc75eb4"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 1
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-24T01:04:16Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,19 +27,17 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "構造規範 (FM 相当) 完備。frontmatter は name/kind=run/effect=local-artifact/prefix/hierarchy/version/owner/source/user-invocable/disable-model-invocation/argument-hint/allowed-tools/context=inherit/manifest を持ち、combinators: with-feedback-contract と feedback_contract (activation_state=semantic_evaluator_started, max_iterations=3, criteria 5 件) が対で揃う。",
-      "参照規範 (PD 相当) は欠損 0 件。responsibility_refs 6 / schema_refs 4 / reference_refs 3 / script_refs 7 と本文参照の hooks・共有 reporter 2 件を含め全 path の実在を機械確認した。",
-      "artifact_delivery が共通契約どおり (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive=explicit-only) で、Pre-choice section・Post-choice section・Failure handling の accept-as-is=0 周回記述と矛盾しない。",
-      "新設の Runtime root contract 節が run-build-skill 正本テンプレートと逐語一致し、frontmatter `runtime_root_policy: host-skill-path` と対で宣言されている。Invariants 内の plugin root 参照も同節の記法へ全て追従済み。"
+      "新設 Purpose & Output Contract がfeature-context入力、exact-13 package/handoff/receipt出力、完了条件、非目標を明示し、Gotchasがlock/promotion/14件目の事故を防ぐ。全199行で上限内。",
+      "IN1/IN2/OUT1/OUT2/OUT3を全件照合し、C09/C08/C13/C12/C11のgateと独立evaluatorの同一digest条件が本文に接地する。",
+      "system-dev-planner tests 58 passed。runtime profile inline/inline、goal-seek lint、declared refs実在はいずれもfinding/warning 0。"
     ],
     "negative_feedback": [
-      "[low / smell] `prompts/R3-emit.md:24` の authority 境界を述べる散文が bare `$CLAUDE_PLUGIN_ROOT` のまま残り、SKILL.md:107 の同趣旨の一文と表記が食い違う。shell 起動行ではなく、同ファイルの実行行はすべて新形式のため実行不能にはならない。",
-      "[low / smell] `plan` 完了条件の共有 reporter 2 行が cwd 相対 `plugins/harness-creator/scripts/...` を指し、Runtime root contract の cwd 推測禁止と方向が揃わない。本文が best-effort・非ゲート・未配備時 skip と明記しており fail-soft 済みだが、marketplace install 環境では常に沈黙 skip する。本差分で導入された行ではない。"
+      "[low / smell] best-effort の plan-structure/report browser 起動例は `plugins/harness-creator/scripts/...` という caller cwd 相対表記を残す。非ゲート・未配備時skipであり、Gotchasが別repositoryを読まないよう明示するため実行不能の必須経路ではない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージと runtime-root guard の機械 migration による skill_md_sha256 乖離を受けた再束縛であり、content-review-protocol §incremental の focused combined review 1 回の結果を rubric 側へ投影したものである。30 思考法は実施しておらず、実施も申告しない。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行していない。機械的に確認したのは FM/PD に相当する構造規範 (frontmatter 必須キー完備、宣言 refs の実在、artifact_delivery の 6 state 完備、effect と external_mutation_guard の双方向対応、feedback_contract criteria の保存) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。 実際に読んだもの: SKILL.md 全文 142 行と `git diff HEAD` の全差分、run-build-skill `templates/_base.md` の Runtime root contract 正本ブロック、prompts/R3-emit.md の該当行。実行したコマンドは declared refs と本文参照 path の存在確認、skill directory への `grep -rn CLAUDE_PLUGIN_ROOT`、SKILL.md の sha256 算出の 3 種。 判定: 差分は共通 migration だけで説明でき、feedback_contract の IN1/IN2/OUT1/OUT2/OUT3 と workflow・完了条件は差分前と同一で規範の退行が無い。high severity 0 件、未解決の medium 以上も 0 件であるため PASS とする。残る low 2 件は記述上の smell で、実行可能性を損なわない。"
+  "notes": "Focused rubric projection。41規則の全数scoreは未算出、30思考法も未実施。Purpose/Gotchas/199行、refs、criteria exact-set、Task gateway、caller-root/anchor、tests/lintsを確認。BD-001/002欠落は修正済み。残るcwd相対best-effort reporterはlowで必須gate外。未解決medium/high 0のためPASS。"
 }

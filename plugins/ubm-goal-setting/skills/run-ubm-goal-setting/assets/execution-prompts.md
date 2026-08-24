@@ -34,7 +34,7 @@ Phase 1-2: 情報収集 → agents/info-collector.md
     ├── Step 3.7: ジャーナル収集 ──┘
     └── Step 4: サマリー生成（↑全完了後）
     ↓  ※ 待機中に Phase 3 参照ファイルを並列事前読み込み可
-Phase 3: 高速対話ヒアリング → agents/phase3-coordinator.md + skills/run-ubm-goal-setting/prompts/R1-R5
+Phase 3: 親contextの高速対話ヒアリング → skills/run-ubm-goal-setting/prompts/R1-R5（必要時のみ agents/phase3-coordinator.md の読取専用助言）
     ├── [並列Read] thinking-guide + principles + templates + best-practices
     ├── Step 1: 現状確認+前回振り返り（要素分解×MECE×経験学習×改善思考）
     ├── Step 2: 差分分析+原因深掘り（Why思考×ボトルネック×仮説×論点）
@@ -86,7 +86,7 @@ Agent ツールで SubAgent を起動する際の設定:
 
 ## Phase 3: 高速対話ヒアリング
 
-**エージェント**: `agents/phase3-coordinator.md` を Task（isolation:fork）で起動し、その中で各 `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト正本）を Read して順次実行する（step は独立 SubAgent 化しない）。
+**実行主体**: owner skill の親contextが各 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト正本）を Read して順次対話する。次問の判断が難しい場合だけ `agents/phase3-coordinator.md` を読取専用 advisor Task として起動し、親が回答の受領と状態更新を続ける（step は独立 SubAgent 化しない）。
 
 **開始時の並列Read（4本）**:
 - `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/thinking-guide.md`

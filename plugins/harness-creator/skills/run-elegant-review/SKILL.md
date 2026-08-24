@@ -18,6 +18,15 @@ allowed-tools:
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: task-graph
+  engine_profile: checklist-graph
+  full_task_spec_graph: false
+  progress: eval-log/run-elegant-review-progress.json
+  intermediate: eval-log/run-elegant-review-intermediate.jsonl
+  max_loops: 12
+  fork: agent-team
 owner: team-platform
 since: 2026-05-18
 version: 0.1.0  # version=配布 semver / spec_version=仕様世代タグ (定義は workflow-manifest.json _comment 参照)
@@ -50,10 +59,15 @@ reference_refs:
   - references/amplified-patterns.json
   - references/variable-template-contract.md
   - references/observable-emit-examples.md
+  - ../run-build-skill/references/verification-obligation-protocol.md
 script_refs:
   - scripts/build-paradigm-scorecard.py
   - scripts/validate-paradigm-coverage.py
   - scripts/emit-observable.py
+  - scripts/extract-ready-set-from-checklist.py
+  - scripts/build-self-reflection-entry.py
+  - scripts/extract-capability-dependency-graph.py
+  - scripts/build-capability-graph-knowledge-entry.py
 merge_strategy: deep-merge
 conflict_policy: most-specific-wins
 source: doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md
@@ -151,6 +165,25 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 正本 6 ステップ（現状評価→手順生成→実行→検証→Anchor Step→反復、既定 5 周 / max_iter=3）に従う。固有差分: ループ本体は Phase 1→2→3 を SubAgent へ context fork して回し（親へは最終成果物 + handoff のみ返す）、Phase 1/2 は read-only、write は Phase 3 限定。判定は `scripts/validate-paradigm-coverage.py` で機械実行。下記 Phase 群は順序固定の手順ではなく、未達条件を埋める局面カタログとして都度選ぶ。
 
+### ゴールシーク配線（task-graph 変種）
+
+`semantic_evaluator_started` 後だけ task-graph を使う。`workflow-manifest.json` の `phase1-reset → phase2-parallel → phase3-execute` と最終検証を `eval-log/run-elegant-review-progress.json` の checklist へ射影し、`dependsOn` を `depends_on` として保つ。別の task-graph 状態は作らない。
+
+`goal_seek.max_loops=12` は 1 周回 1 checklist item の消費上限であり、実行回数の規定値ではない。4 条件の改善→再評価は `references/convergence-policy.json` の `content_review_outer_reeval.max_iterations=3` を正本とし、PASS 時は残りの task-graph 予算を消費せず終了する。
+
+- 各周回冒頭で `scripts/extract-ready-set-from-checklist.py eval-log/run-elegant-review-progress.json` を実行し、ready 集合の最小 id だけを選ぶ。Phase 2 選択後に 3 分析者を Agent Team へ read-only で fan-out し、3 成果の fan-in 後に done にする。Phase 3 のみ write ownership を持つ。
+- 4 条件 FAIL で反復できる場合だけ `scripts/build-self-reflection-entry.py` で次反復の分析 / 改善 / 検証を直前検証依存の sink として追記する。未知 `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
+- 各周回の `eval-log/run-elegant-review-intermediate.jsonl` に `ready_set` / `selected_item` / `original_goal` / `merged_directive_for_next` を追記する。`selected_item` は `ready_set` の最小 id と一致し、全依存が過去周回で done であることを検証する。トレース不在は依存順消費違反として fail-closed にする。
+- アンカー検証は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で不変を確認する。着手前に `scripts/extract-capability-dependency-graph.py` で参照切れを検査し、再利用価値のある依存判断だけを `scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
+
+各周回の記録後と完了宣言前に次を実行する。この mode が progress / intermediate 不在、ready 集合の再計算不一致、最小 id 以外の選択、未 done 依存の先行、dangling / cycle、done 証跡漏れ、completed 時の未完了残存、`max_loops` bound 不足を exit 1 にする。
+
+```bash
+python3 scripts/validate-paradigm-coverage.py --task-graph-trace \
+  eval-log/run-elegant-review-progress.json \
+  eval-log/run-elegant-review-intermediate.jsonl
+```
+
 ---
 
 ## Purpose & Output Contract
@@ -192,7 +225,7 @@ options:
 - `verdict` — `{矛盾なし: PASS|FAIL, 漏れなし: PASS|FAIL, 整合性あり: PASS|FAIL, 依存関係整合: PASS|FAIL}`
 - `review-<scope_mode>.md` — 人間可読レポート
 - `eval-log/<plugin>/<skill>/elegant-review/<run-id>/` — 27 章 §3.1 規約準拠の保存先
-- 改善 PR ブランチ — `auto_fixable=true` の finding を自動 commit、`auto_fixable=false` は人間判断
+- 改善結果 — `auto_fixable=true` は選択済み改善として最小パッチを適用し、`auto_fixable=false` は提案に留める。commit / PR はユーザーが明示依頼した場合だけ後続工程で行う
 
 ### 完了条件（4 条件 → 観測 signal）
 
@@ -262,12 +295,12 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
 
 - **担当**: `elegant-improvement-executor`（必要時 `delegate-codex-skill-review` へ委譲、B5）
 - **入力**: Phase 2 全 SubAgent の findings 集約
-- **操作**: 依存 DAG 生成（B3, `findings[].location` または `paradigm_findings[].issues[].location` から自動構築）→ 優先順位決定（`issues[].severity`: critical > high > medium > low）→ 独立対象は並列・依存ありは直列で改善 → `auto_fixable=true` は自動 commit / `false` は提案のみ → 4 条件再検証（max_iter=3）
-- **出力**: `schemas/findings.schema.json` 準拠の `findings.json` 最終版 + 改善 PR ブランチ
+- **操作**: 依存 DAG 生成（B3, `findings[].location` または `paradigm_findings[].issues[].location` から自動構築）→ 優先順位決定（`issues[].severity`: critical > high > medium > low）→ 独立対象は並列・依存ありは直列で改善 → `dry_run=false` かつ `auto_fixable=true` のみ最小パッチ適用 / それ以外は提案のみ → 4 条件再検証（max_iter=3）
+- **出力**: `schemas/findings.schema.json` 準拠の `findings.json` 最終版 + `review-<scope_mode>.md`
 - **完了判定 signal**: 4 条件 PASS（contradiction/omission/inconsistency/dependency_break 全て 0 件）
 - **失敗時アクション**:
   - max_iter 到達 → `status: incomplete`、`human_review` 必須、force_pass 禁止
-  - 改善後に 4 条件悪化 → 自動改善コミットのみ revert（B7）
+  - 改善後に 4 条件悪化 → 当該反復で適用した hunk だけを戻し、先行するユーザー差分には触れない（B7）
 
 ### Codex 委譲判定基準（B5）
 
@@ -278,9 +311,9 @@ CONST_002（30 種全使用）は **「全種が finding を出す or `skip_reas
 ## 副作用境界 / ロールバック（B7）
 
 - **Phase 1 / Phase 2 は read-only**: 対象を編集しない
-- **Phase 3 のみ write 可**: 改善は集約済み findings に紐づく最小パッチに限定。改善前に必ず `git diff --binary > eval-log/<plugin>/<skill>/elegant-review/<run-id>/pre-phase3.patch` を取得
-- **改善後に 4 条件悪化を検出**: 自動改善コミットだけを revert（既存ユーザー dirty state は stash/pop で触らない）
-- **`dry_run=true`** は全フェーズで write 禁止。findings 出力のみ
+- **Phase 3 のみ対象 write 可**: `dry_run=false` の場合に限り、集約済み findings に紐づく最小パッチを適用する。改善前に `git diff --binary` の出力を `eval-log/<plugin>/<skill>/elegant-review/<run-id>/pre-phase3.patch` として記録する
+- **改善後に 4 条件悪化を検出**: 当該反復の changed hunk だけを戻す。git revert / stash / reset は使わず、既存ユーザー dirty state を不変に保つ
+- **`dry_run=true`**: 対象ファイルの Edit / Write と commit / PR を禁止し、評価成果の eval-log への保存だけを許可する
 
 ## proposer ≠ approver（C4、23 章準拠）
 

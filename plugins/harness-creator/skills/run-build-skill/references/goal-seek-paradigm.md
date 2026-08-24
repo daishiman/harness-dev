@@ -58,30 +58,30 @@ source-tier: internal
 
 > ループ自体は固定で良い（これは「どう反復するか」の枠であり、「何をするか」の手順ではない）。固定してはいけないのは Step 2 の**中身**。
 
-## コンテキスト分離（必須）
+## コンテキスト配置（必要性で選択）
 
-ゴールシークループの**実行は親セッションから切り離す**。ループは「手順生成→実行→検証」を複数周回するため、中間生成物・試行錯誤・周回ログが親セッションのコンテキストを肥大化・汚染する。これを防ぐため、起動側は次のいずれかで**fork されたコンテキスト**にループを閉じ込める:
+既定は `inline`。ゴールシークの契約と周回上限は保ちつつ、軽い実行では不要な委譲往復を作らない。`needs_independent_context: true` 、複数の独立ゴール、またはユーザーの明示指定がある場合だけ fork する:
 
-- **SubAgent**（既定）: `Agent` ツールで goal-seek 実行を専用 SubAgent に委譲する。親には**最終成果物パスとハンドオフ要約だけ**を返す（周回の途中経過は SubAgent 内に留める）。
+- **SubAgent**: 独立 context が必要な 1 ゴールだけを委譲し、親には最終成果物パスとハンドオフ要約だけを返す。
 - **Agent Team**: 並列度が要る／複数の独立ゴールを同時に回す場合は Team に分離する。各 teammate が 1 ゴールを担当し、親は集約結果のみ受け取る。
 
 | 守ること | 理由 |
 |---|---|
-| ループ本体を親セッションで直接回さない | 周回ごとの中間情報が親 context を汚染する |
-| 親へ返すのは最終成果物 + `handoff-*.json` 要約のみ | context 肥大を防ぎ、親は結論だけ保持 |
-| 周回ログ (`*-progress.json`) は fork 内で完結させ eval-log にだけ残す | 観察可能性は保ちつつ context は汚さない |
+| 軽い単一ゴールは inline | 委譲の制御往復と重複 context を増やさない |
+| 独立 context が必要な場合だけ fork | 重い中間試行による親 context 汚染を防ぐ |
+| fork 時は最終成果物 + `handoff-*.json` 要約のみ返す | 親は結論だけ保持する |
 
-> `run-goal-seek` はこの分離を内蔵する（ループを SubAgent に fork して起動）。生成される実行系スキルがゴールシークを内部で回す場合も、同様に SubAgent / Agent Team へ切り離して起動すること。
+> `run-goal-seek` は分離が明示的に必要な重い周回のための選択肢であり、通常の生成スキルの必須依存ではない。
 
 ## 実行可能機構としての配線（with-goal-seek combinator）
 
 ゴールシークは「散文で書く」だけでなく、生成スキルに**実行可能な機構として配線**される。これにより、配布先のどの環境でも「ユーザーの悩み（要望）をゴールに変換し、達成まで自律ループを回す」挙動が同じ仕組みで再現される。
 
 - **default-ON の対象**: loop 実行系 kind（`run` / `wrap` / `delegate`）は `render-combinators.py` が `with-goal-seek.patch` を**既定で自動適用**する（`--no-goal-seek` で opt-out）。`assign-*`（一発採点でループしない評価系）と `ref-*`（read-only）は対象外。
-- **frontmatter `goal_seek:`**: 2 つの独立軸を宣言する。**(1) 外部依存軸 `engine`**（既定 `inline`＝本 Skill 内の AI 推論で自己完結・外部スキル不要／`run-goal-seek` は同梱時のみ任意で使う重量オーケストレータで必須ではない）。**(2) context 衛生軸 `fork`**（既定 `subagent`＝反復を分離 context で実行し親へ最終差分のみ返す。Claude Code 組込みの Agent/Task であり外部スキル依存ではない／`agent-team`／`inline` は軽量単発の opt-down）。加えて `spec: eval-log/goal-spec.json`（あればロード、無ければ AI が推定）/ `progress: eval-log/<skill>-progress.json` / `max_loops`（既定5）。**engine の自己完結性は with-knowledge の「外部依存ゼロ・同梱完結」原則と対称**であり、fork の分離既定は [[feedback-goalseek-session-separation]]（反復は分離 context で実行し親へ最終差分のみ）に従う。
+- **frontmatter `goal_seek:`**: `engine` と `fork` の 2 軸はどちらも既定 `inline`。Goal・Checklist・周回上限は維持し、task-graph / run-goal-seek / subagent / agent-team は brief で必要性が明示された場合だけ選ぶ。`needs_independent_context: true` の無指定 fork は `subagent` へ決定論導出する。加えて `spec` / `progress` / `max_loops`（既定5）を持つ。
 - **`### ゴールシーク配線` サブセクション**: goal-spec のロード、周回 progress JSON 記録、コンテキスト分離、打ち切り規約を本文に明記する。
 - **周回状態の契約**: 各周回の状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json`（`iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` / `status`）に記録する。観測可能性をこの JSON で担保する。
-- **lint 強制**: `lint-goal-seek.py` が loop 実行系に対し、(1) 二値チェックリスト項目（`- [ ]`/`- [x]`）の存在、(2) 曖昧語（「丁寧」「品質を高める」等）の不在を **violation (exit 1)** で検査し、(3) `### ゴールシーク配線` の不在を **warning** で助言する（既存スキルは次回更新時に combinator で注入）。CI は `governance-check.yml` が全生成スキルへ実行する。
+- **lint 強制**: `lint-goal-seek.py` が Goal/Checklist と配線を、repo 横断の `plugins/harness-creator/scripts/lint-skill-runtime-profiles.py` が全 loop Skill の engine/fork、workflow 依存、委譲先、Task Graph 資産を検査する。後者は「対象データがDAG」と「Skill自身がruntime DAG」を分け、後者に実在する `depends_on` と消費証跡がある場合だけ Task Graph を認める。両方とも CI で fail-closed 実行する。
 
 > この二層（散文で意図を示し、combinator + schema + lint で機構を強制する）により、再現性は仕組みで担保しつつ、ループ Step 2 の「何をするか」は AI の自由度に委ねる。
 
@@ -167,22 +167,22 @@ evaluator は一度の採点で完結する read-only 工程。ループは回�
 
 ## engine 変種 (task-graph): 依存順駆動 + self-reflect
 
-`goal_seek.engine` の値 `task-graph`（**loop kind の既定**: brief が engine を明示しない場合に defaulting される。opt-out は `engine: inline`/`run-goal-seek` の明示。独立 combinator flag は新設しない＝H5）。checklist の `depends_on`（additive・`goal-seek-loop.schema.json`）を依存充足順に消費し、実行中に発見した新規タスクを self-reflect で checklist 末尾へ追記する engine 変種。
+`goal_seek.engine: task-graph` を brief で明示したときだけ使う engine 変種。checklist の `depends_on`（additive・`goal-seek-loop.schema.json`）を依存充足順に消費し、実行中に発見した新規タスクを self-reflect で checklist 末尾へ追記する。無指定の生成物へは同梱しない。
 
 ### 単一truth設計（別状態ファイルを新設しない・H3）
 task-graph 変種は **別状態ファイル（task-graph.json 相当）を一切新設せず**、既存の `eval-log/<skill>-progress.json` の checklist と `intermediate.jsonl` のみを唯一の真実源とする。
 
-- **ready 集合の算出**: 各周回冒頭で `scripts/ready-set-from-checklist.py <progress.json>` が `depends_on` 全充足かつ `status==pending` の item を id 昇順（`^C[0-9]+$` は数値昇順）で `{"ready":[...]}` として返す。base ループ Step1「未達 `[ ]` を任意特定」を **task-graph 変種に限り**「ready 集合の**最小 id item のみ**を拘束的に選択・実行」へ上書き置換する（`inline` は従来どおり任意選択）。これにより依存順序保証が「助言」でなく「拘束」になる。
-- **self-reflect 追記**: 発見した新規タスクは `scripts/self-reflect-append.py <progress.json> --id <新id> --text <達成条件> --depends-on <...>` で checklist 末尾へ追記する。追記 item は done-judge が毎回スキャンする**同じ checklist 配列**の一部になるため「発見したが完了判定に反映されない」非統合が構造的に発生しない。追記は既存 item を一切書き換えず（新規シンク）、id 重複・未知 depends_on・追記後サイクルを fail-closed 検査する。
+- **ready 集合の算出**: 各周回冒頭で `scripts/extract-ready-set-from-checklist.py <progress.json>` が `depends_on` 全充足かつ `status==pending` の item を id 昇順（`^C[0-9]+$` は数値昇順）で `{"ready":[...]}` として返す。base ループ Step1「未達 `[ ]` を任意特定」を **task-graph 変種に限り**「ready 集合の**最小 id item のみ**を拘束的に選択・実行」へ上書き置換する（`inline` は従来どおり任意選択）。これにより依存順序保証が「助言」でなく「拘束」になる。
+- **self-reflect 追記**: 発見した新規タスクは `scripts/build-self-reflection-entry.py <progress.json> --id <新id> --text <達成条件> --depends-on <...>` で checklist 末尾へ追記する。追記 item は done-judge が毎回スキャンする**同じ checklist 配列**の一部になるため「発見したが完了判定に反映されない」非統合が構造的に発生しない。追記は既存 item を一切書き換えず（新規シンク）、id 重複・未知 depends_on・追記後サイクルを fail-closed 検査する。
 - **consumption verifier**: 各周回末に `intermediate.jsonl` へ `ready_set`（算出時点の ready）と `selected_item`（実際に選択した id）を additive 追記し、ループ完了時に「毎周回 `selected_item` が `ready_set` の最小 id と一致＝依存順消費」と「self-reflect 追記 item が `status==done` まで全体 done 判定を gate」を機械検査する（`references/goal-seek-paradigm.md` 中間成果物アンカー検査と同型）。
 - **done 記述＝発火条件**: item 完了は progress.json の該当 item への `status: done` 記述で確定し、その記述自体が次周回 ready 再計算の入力＝次 item の発火条件になる（完了記述→ready 再計算→次 item 発火の連鎖）。
 - **max_loops の bound 連動**: 1 周回 1 item 消費×消費完全性の拘束下では done 化 item 数 ≤ max_loops。よって `goal_seek.max_loops` は checklist item 数＋self-reflect 追記余裕以上（目安: item 数×1.5）に設定する。不足は completed を構造的に不能にするため、consumption verifier が bound 不足を早期診断し、max_loops 到達時は handed_off で上位が bound を引き上げて再入する。
 
 ### write_scope 並列衝突機構は不要（H1）
-本 engine 変種は生成ハーネス内の**単一 self-writer プロセスが逐次一つずつ** checklist を処理するため、同時に複数 writer が同一資源を奪い合う状況が構造的に発生しない。ゆえに `ready-set-from-checklist.py` は write_scope フィールド・tie-break・conflicts 機構を**持たない**。
+本 engine 変種は生成ハーネス内の**単一 self-writer プロセスが逐次一つずつ** checklist を処理するため、同時に複数 writer が同一資源を奪い合う状況が構造的に発生しない。ゆえに `extract-ready-set-from-checklist.py` は write_scope フィールド・tie-break・conflicts 機構を**持たない**。
 
 ### 既存 compute-ready-set.py の正しい再framing（H2・バグではない）
 `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/compute-ready-set.py` の write_scope tie-break（同一 write_scope の ready 候補を id 昇順で 1 件のみ許可し残りを deferred/conflicts へ回す・docstring L16-27、実装 L90-109）は「全除外バグ」ではなく、**複数 candidate が同時に ready になり得る並列/多ノード dispatch モデルを前提とした意図的な fail-closed 回避設計**である。build-pipeline task-graph（producer/consumer 分離・並列 dispatch）ではこの tie-break が正しく機能する。本 engine:task-graph 変種は逐次単一 self-writer ゆえこの前提が構造的に成立せず、同型 tie-break を**複製しない**（H1 と同根）。両者は別概念であり本変種は build-pipeline task-graph を一切改変しない。
 
 ### cross-surface dependency graph knowledge（H6）
-実行順序の状態源（checklist）とは別レイヤの派生 knowledge として、`scripts/extract-capability-dependency-graph.py` が生成 harness の skill/command/agent/hook/script surface 間依存を抽出（nodes/edges/gaps・未知参照/循環/空 graph は fail-closed）し、`scripts/record-capability-graph-knowledge.py` が Loop A（生成 harness）/Loop B（harness-creator）へ `source_ref` 付き entry を append/merge 記録する。各 surface は着手前にこの knowledge を consult し、依存先が未完成/dangling の surface を先に着手しない。この graph は「どの surface がどの前提知識・成果物に依存するか」の派生情報であり、別 `task-graph.json` 状態を新設しないため単一truth原則と矛盾しない。
+実行順序の状態源（checklist）とは別レイヤの派生 knowledge として、`scripts/extract-capability-dependency-graph.py` が生成 harness の skill/command/agent/hook/script surface 間依存を抽出（nodes/edges/gaps・未知参照/循環/空 graph は fail-closed）し、`scripts/build-capability-graph-knowledge-entry.py` が Loop A（生成 harness）/Loop B（harness-creator）へ `source_ref` 付き entry を append/merge 記録する。各 surface は着手前にこの knowledge を consult し、依存先が未完成/dangling の surface を先に着手しない。この graph は「どの surface がどの前提知識・成果物に依存するか」の派生情報であり、別 `task-graph.json` 状態を新設しないため単一truth原則と矛盾しない。

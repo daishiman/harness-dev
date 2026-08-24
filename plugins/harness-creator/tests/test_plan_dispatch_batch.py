@@ -1,4 +1,4 @@
-"""plan-dispatch-batch.py (TG-C10) の機能テスト — dispatch batch 機械導出器。
+"""build-dispatch-batch.py (TG-C10) の機能テスト — dispatch batch 機械導出器。
 
 conftest 非依存で module-level に importlib ロードする自己完結テスト。束ね規則
 (route 束ね / 決定論 validator 直実行判別 / conflict・file_ownership・max-workers 選抜 /
@@ -24,7 +24,7 @@ def _load(stem: str):
     return m
 
 
-pdb = _load("plan-dispatch-batch")
+pdb = _load("build-dispatch-batch")
 
 
 # ─────────────────────────── fixtures / helpers ───────────────────────────

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "eb20ced67dc2b0bdee38fcb53a34fb2c49fc801385e9cce6369823f5e50131e1"
+    "skill_md_sha256": "0cd9b79147ef19686206aef3c82dcd87a1b02aa10f32cbc0b71bfc6c61e1a1f8"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-review-skill-intake-description-v5 (focused combined fresh review)",
+  "reviewed_at": "2026-08-24T07:43:09Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,19 +25,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "runtime_root_policy: host-skill-path を宣言した7 skill 全件が `## Runtime root contract` 節を持ち、SKILL.md 内の全 shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT...}}` の入れ子形へ移行済み。bare `${CLAUDE_PLUGIN_ROOT}` の残存は SKILL.md 本文に 0 件 (grep で全件確認)。",
-      "external_mutation_guard を持つ 3 skill (run-skill-intake / run-intake-revise / run-notion-intake-publish) は canonical receipt flow block も併せ持ち、guard block 内の 3 行 (preview/authorize/execute) も同一の入れ子形へ移行されている。片側だけの移行は 0 件。",
-      "effect が external-mutation でない skill (finalize / interview / kickoff / visualize / status) には external_mutation_guard も receipt flow block も焼かれておらず、双方向の対応が保たれている。",
-      "frontmatter が宣言した responsibility_refs / schema_refs / rubric_refs は run-intake-status を除く全件で実在を確認した (prompts/R1-main.md, schemas/output.schema.json, references/republish-contract.md, ../../references/quality-rubric.md 等)。参照先の `../skill-governance-adapters/scripts/build-external-mutation-guard.py` も実在する。"
+      "The revised description removes the prohibited action-detail phrase while retaining exactly two accurate invocation triggers: eliciting requirements from a non-engineer and generating the intake/Notion artifacts through the manifest-driven workflow.",
+      "IN1 passed: workflow-manifest.json remains the executable SSOT for all eleven phases, dependencies, delegates, conditional skip/retry rules, resources, and exit hooks; the SKILL body describes control invariants without reproducing the manifest phase table.",
+      "IN2 passed: the PreToolUse guard remains wired and regression-tested across Skill, Task, and Bash entry paths, so the recommendation-only handoff cannot silently become a skill-generation invocation while the intake lock is active.",
+      "OUT1 passed: pre-choice remains a lossless request snapshot plus read-only preview, and post-choice business logic stays in the owning skills, agents, and scripts while the orchestrator selects, validates, records, and stops.",
+      "The current target, prompt, manifest, schemas, direct references, task-graph validator, hook guard, and downstream handoff boundary agree on the same pre-choice, external-mutation, task-graph, and recommendation-only contracts."
     ],
-    "negative_feedback": [
-      "[low / smell] `## Runtime root contract` の挿入位置が skill 間で揃っていない。run-skill-intake だけ Pre-choice section より前 (L74)、他 6 skill は `# <skill>` H1 の直後 (Post-choice section より後) に置かれている。Post-choice の gating 文が列挙するのは workflow・goal-seek・評価・修正 section であり Runtime root contract はそのいずれでもない (直後の Purpose & Output Contract も同様に非 gating) ため実行意味は変わらないが、位置規約が本文に明文化されていない。",
-      "[low / smell] `references/keychain-setup.md` の 3 行 (L118 / L173 / L199) が bare `${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}` のまま残る。Runtime root contract の継承宣言は `prompts/` 配下に限定されており references/ は宣言 scope 外、かつ本差分は当該ファイルを変更していないため契約違反ではないが、Codex host で CLAUDE_PLUGIN_ROOT が未設定のとき cwd 相対 fallback へ落ちる点は policy の意図 (`cwd からplugin rootを推測しない`) と方向が逆である。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/skill-intake/skills/<skill>/SKILL.md` の全差分 (8 skill 分)、対象 SKILL.md 本文、plugin-composition.yaml と .claude-plugin/plugin.json の差分、references/package-contract.json の該当節。 実行したコマンド: `python3 scripts/lint-content-review.py --all` (現行 sha の取得)、`python3 scripts/lint-feedback-contract.py --all` (skill-intake の指摘は既存 baseline 免除の live-trial WARN のみで本差分由来の新規指摘なし)、`python3 scripts/lint-feedback-protocol.py` (skill-intake 該当 0 件)、`python3 scripts/lint-skill-tree.py <skill-dir>`、frontmatter *_refs の実在の機械走査、SKILL.md 全 shell 行の bare `${CLAUDE_PLUGIN_ROOT}` 残存 grep。 本 skill の差分は runtime_root_policy frontmatter 1 行の追加、`## Runtime root contract` 節の追加、および shell 起動行の `${PLUGIN_ROOT:-...}` 入れ子化に限られ、Purpose & Output Contract / Key Rules / ゴールシーク実行 / 完了チェックリスト / feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "Focused combined incremental review in one independent context for the current SKILL.md bytes. The full 251-line target and its directly referenced manifest, R1 prompt, request/trace and phase schemas, resource map, workflow/handoff/keychain references, runtime scripts, generator guard, and plugin dependency surface were read. Contradiction, omission, terminology/format consistency, and dependency integrity all pass; IN1/IN2/OUT1 were each checked rather than inferred from the prior verdict. Focused tests: 114 passed. Targeted description lint reports 12 skills OK/0 violations, runtime-profile reports task-graph/inline with zero findings, goal-seek lint passes, repository manifest gate passes, and the rubric composition passes at 97/100 with no high or medium finding. This is a static focused review; live-trial and criteria-scenario verdict files were not modified, and no exhaustive 30-method review is claimed."
 }

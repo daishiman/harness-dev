@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-skill-intake/intake-request.schema.json",
+  "title": "intake request snapshot",
+  "description": "pre-choice でユーザー入力を推測補完せず保存し、正式 intake と区別する read-only preview 入力。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "initial_utterance", "notion_target", "workflow_manifest_sha256"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "status": {"const": "request-snapshot"},
+    "initial_utterance": {"type": "string", "minLength": 1},
+    "notion_target": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "page_url": {"type": "string"},
+        "page_id": {"type": "string"},
+        "database_id": {"type": "string"}
+      },
+      "minProperties": 1
+    },
+    "workflow_manifest_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

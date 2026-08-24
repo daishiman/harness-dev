@@ -46,7 +46,14 @@
     "phase3_input": {
       "allOf": [
         {"$ref": "#/definitions/phase2_output"},
-        {"type": "object", "properties": {"iteration_count": {"type": "integer", "minimum": 0, "maximum": 3}}}
+        {
+          "type": "object",
+          "required": ["dry_run"],
+          "properties": {
+            "dry_run": {"type": "boolean"},
+            "iteration_count": {"type": "integer", "minimum": 0, "maximum": 3}
+          }
+        }
       ]
     },
     "phase3_output": {

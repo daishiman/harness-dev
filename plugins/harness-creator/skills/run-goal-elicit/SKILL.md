@@ -11,6 +11,9 @@ allowed-tools:
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-24
 version: 0.1.0
@@ -70,7 +73,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-goal-elicit
 
-## 目的と出力契約
+## Purpose & Output Contract
 
 ユーザーの曖昧な要求と既存コンテキストから **目的・背景・ゴール** をAIが推定し、ゴール達成の **完了チェックリスト** を作って `goal-spec.json` に固める。`run-goal-seek` の入力になる。
 

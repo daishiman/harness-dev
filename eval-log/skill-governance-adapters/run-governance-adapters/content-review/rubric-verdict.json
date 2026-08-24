@@ -2,40 +2,35 @@
   "target": {
     "plugin": "skill-governance-adapters",
     "skill": "run-governance-adapters",
-    "skill_md_sha256": "50e7696e497acc4a85357deff35502f5e121253ec3f196171e2b697e0c6824d0"
+    "skill_md_sha256": "0ec5748c9e1eae3d7a8b64d1a5f08614ed1bd3a0e1dccfe4d50fc1e24f7b20c1"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
+    "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v3 (focused combined content review, incremental profile, round 3)",
-  "reviewed_at": "2026-08-21T03:00:00Z",
-  "iterations": 3,
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "IN1 (『実在adapterだけを列挙しpath traversalを拒否したうえで選択adapterのhelpと入出力契約を実行前に確認している』/ verify_by: script) は 7/7 で観測点が green になった。round 2 で red だった 4 本の原因 (module 読込時の keychain_helper import) が、新規 scripts/secret_helper.py への遅延 bridge 差し替え (sink_http.py:26-27 / sink_notion.py:31-32 / sink_sheets.py:28-29 / sink_slack.py:24-25、解決本体は secret_helper.py:35-48 の関数内 import) で除去された。実測: dispatch.py / resolve_route.py / sink_local.py / sink_http.py / sink_notion.py / sink_sheets.py / sink_slack.py すべて `--help` が rc=0 で argparse usage を返す。verify_by: script の観測点が実際にスクリプトで検査可能な状態になった。",
-      "OUT1 (『credentialや送信先を推測せず実行結果または未対応理由をexit codeとreceipt付きで報告している』/ verify_by: evaluator) も 7/7 で成立を実測した。payload/params を与えた `--dry-run` は sink_http (header / bearer 両 scheme)・sink_notion・sink_sheets・sink_slack・sink_local すべて rc=0 で Sink Contract v1.0 JSON (`status` / `adapter` / `location` / `external_id` / `dry_run`) を返し、dispatch.py も `--kind test` / `--kind notification` で rc=0 かつ子結果を `results` に載せる。L84 が定義する receipt (Sink Contract JSON result) と exit code の両方が実際に得られるため、OUT1 の判定基準と観測実体が一致した。",
-      "『credentialを推測しない』が dry-run 出力レベルでも守られている。sink_http.py:57 の dry-run 分岐は get_secret (L66) と urlopen (L76) の手前にあり、scheme に関係なく header 値を定数へ潰す。実測で scheme=\"header\" のとき `\"X-API-Key\": \"[REDACTED]\"`、scheme=\"bearer\" のとき `\"Authorization\": \"Bearer [REDACTED]\"` となり、実 secret も token_ref 文字列も stdout に現れない。そもそも get_secret が呼ばれないため keychain へのアクセス自体が発生しない。sink_slack.py:48<53 / sink_sheets.py:66<71 / sink_notion.py:83<88 も同じ順序。",
-      "未対応理由の報告経路が規範どおりに動く。provider 未配備での実送信起動 (`sink_slack.py` を `--dry-run` 無しで実行) は rc=2 かつ `{\"status\": \"failure\", \"adapter\": \"slack\", \"errors\": [\"keychain_helper unavailable: secret 参照には skill-governance-secrets の secrets/keychain_helper.py が .../scripts/secrets へ配備されている必要がある (No module named 'keychain_helper')\"]}` を返し、urlopen へ到達しない。SKILL.md L76 の『実送信時のみ未配備が status: failure / exit 2 として現れる』という記述と実測が一致し、OUT1 の『未対応理由を exit code と receipt 付きで報告』が failure 側でも満たされる。",
-      "round 2 の low (description の『代替経路を安全に特定』に対し resolve_route.py が字面上締め出される) は L75 の 1 段落追加で解消した。許可の真の基準 (credential を参照しない呼び出し)・resolve_route.py の `network: false` / `write-scope: none` を根拠とする通常起動許可・代替経路確認の正規手段 (`dispatch.py --dry-run`) が明記され、description の宣言と本文の許可範囲が接続された。実測で `resolve_route.py --kind test --registry .claude/config/adapter-registry.json` は rc=0、config 欠落時も traceback ではなく JSON failure。",
-      "round 3 追加変更の `adapter_secrets.py` → `secret_helper.py` リネームは命名規約適合を暫定例外ではなく恒久例外で獲得しており、IN1/OUT1 の成立も壊していない。`scripts/lint-script-naming.py` の `classify()` を直接呼んだ実測で旧名 `('VIOLATION', 'underscore not allowed (§4.3)')` / 新名 `('EXCEPTION', 'secret helper (§4.4)')`、lint 全体は rc=0 / VIOLATION=0 (OK=178 EXCEPTION=19 PENDING=246)。`find_scripts` は rglob 走査で untracked の secret_helper.py も対象に含む。リネーム後に 7 adapter の `--help` を再実行して全件 rc=0、`--dry-run` 6 本も全件 rc=0 + Sink Contract JSON + secret 非出力を再確認しており、IN1 の verify_by: script も OUT1 の receipt も維持されている。追随漏れも無い (`grep -rn 'adapter_secrets'` の残存は本 verdict JSON のみ、実コードと SKILL.md は 0 件)。",
-      "規約面の退行なし。frontmatter 必須項目・命名規約 (prefix: run / name: run-governance-adapters)・allowed-tools (Bash, Read, Glob、Write 無し)・`effect: conversation-output`・`runtime_root_policy: host-skill-path`・artifact_delivery state machine (6 state / 6 transition / pre_choice_forbidden 5種 / accept_contexts evaluator=0, improver=0 / release・exhaustive=explicit-only) はいずれも round 2 から不変で、兄弟 skill-governance-* と同型。shell 起動行 (L71 / L80) は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形を維持。secret_helper.py も `/// script` header に `name: secret-helper` / purpose / inputs / outputs / contexts: [E] / network: false / write-scope: none / dependencies: [] を備え、兄弟 script と同型。`python3 scripts/lint-skill-tree.py plugins/skill-governance-adapters/skills/run-governance-adapters` は ok (rc=0)。rubric high severity は 0 件。"
+      "rubric観点でも確認: `goal_seek.engine/fork` がともに inline と明示され、Read/Glob/Bash だけで adapter の help・dry-run・Sink Contract を同一文脈で確認する既存の副作用なし責務と一致する。manifest の core entry と scripts/adapters の実在も維持されている。"
     ],
-    "negative_feedback": [
-      "[low / inconsistency / 非ブロッキング] L67 の『**副作用を持たない範囲** (`--help` と `--dry-run`) だけを実行して』と L75 の『実行許可は「credentialを参照しない呼び出し」であり、`--dry-run`はその十分条件にすぎない』のあいだに字面の段差が残る。L67 の括弧を例示、頭語を基準と読めば整合し、L75 が正確な基準を明示しているため IN1/OUT1 の判定には影響しない。将来 L67 の括弧を例示表記へ揃えると、許可基準の正本が 1 箇所に定まる。"
-    ],
-    "iteration": 3,
+    "negative_feedback": [],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "elegance verdict と同一 context の focused combined review (round 3) を rubric 観点へ投影したもの。30 思考法は実施しておらず、実施も申告しない。 [round 3 追記 / リネーム再判定] 初回判定後に `scripts/adapter_secrets.py` → `scripts/secret_helper.py` のリネームが入り SKILL.md sha256 が変わったため、差分を自分で確認して verdict を書き直した。SKILL.md の差分は L76 の path 表記 1 箇所のみで、frontmatter と L67 / L71 / L74 / L75 / L80 / L84 は前回読んだ内容と同一であることを再読で確認した。追加で実行したコマンドと実測値: `git status --porcelain plugins/skill-governance-adapters/` (`?? .../scripts/secret_helper.py`、旧名は消滅)、`find plugins/skill-governance-adapters/scripts -maxdepth 1 -name '*.py'`、`grep -rn 'adapter_secrets'` repo 全体 (実コード・SKILL.md に残存 0 件)、`grep -rn 'secret_helper'` (sink_http.py:27 / sink_notion.py:32 / sink_sheets.py:29 / sink_slack.py:25 / SKILL.md:76)、secret_helper.py の PEP723 header (`name: secret-helper`) 確認、7 adapter への `--help` (全件 rc=0)、`--dry-run` 6 本 (sink_http は header / bearer の 2 scheme、全件 rc=0 + Sink Contract JSON、header 値は `[REDACTED]` / `Bearer [REDACTED]`)、provider 未配備での `sink_slack.py` 実送信起動 (rc=2, status: failure)、`python3 scripts/lint-script-naming.py` (rc=0, VIOLATION=0)、同 module の `classify()` 直接呼び出し (旧名 VIOLATION §4.3 / 新名 EXCEPTION §4.4) と `find_scripts` の走査対象確認、`import adapter_secrets` が ImportError・`import secret_helper` が実 source path を返すこと (stale pyc 非依存) の確認、lint-skill-tree.py (ok, rc=0)、現行 SKILL.md の sha256 算出 (50e7696e...)。 [round 3 初回に読んだもの] 現行 SKILL.md 全文、secret_helper.py 全文、scripts/adapters/sink_http.py 全文、sink_notion.py / sink_sheets.py / sink_slack.py / sink_local.py / dispatch.py の import 行・dry_run 分岐・params キー、resolve_route.py の header と config 解決部、references/package-contract.json、.claude-plugin/plugin.json、round 2 の elegance / rubric verdict。 [round 3 初回に実行] `dispatch.py --kind test|notification --dry-run` (rc=0)、`resolve_route.py --kind test --registry .claude/config/adapter-registry.json` (rc=0) と config 無し (rc=1, JSON failure)、`find plugins -name keychain_helper.py` (1件、secrets plugin のみ)。 判定: round 2 の medium (IN1/OUT1 の観測点が 4/7 で実行不能) は実測で解消、low (resolve_route.py の締め出し) も本文追記で解消。リネームは前 round の PASS 根拠を一つも壊しておらず、むしろ lint-script-naming の恒久例外へ適合した。rubric high severity 0、規約整合・依存関係整合とも green のため PASS、human_review_required は false。 付記 (finding ではない): secret_helper.py が untracked のままである点は commit 衛生の課題として残る (package-contract.json は scripts/ を個別列挙しないため manifest 追記は不要、git add のみ)。__pycache__ の旧 adapter_secrets.cpython-311.pyc は gitignore 対象かつ import 経路に乗らないため無害。"
+  "notes": "現行 SKILL.md 全文、git diff、plugin-composition、adapter 参照、frontmatter criteria を再読した。runtime-profile/frontmatter/tree lint は exit 0。legacy lint-goal-seek は full combinator wiring を推奨する3 warningを出すが exit 0で、最小 runtime profile の engine/fork 契約には適合する。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

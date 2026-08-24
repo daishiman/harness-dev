@@ -1,4 +1,4 @@
-"""ENG-C02 self-reflect-append.py の genuine 機能テスト。
+"""ENG-C02 build-self-reflection-entry.py の genuine 機能テスト。
 
 with-goal-seek engine:task-graph 変種の discovered task 単一truち追記 (H3 実装)。
 追記のみ (既存 item 不変)・id 重複/未知 depends_on/追記後サイクルを fail-closed 検査する。
@@ -24,7 +24,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "plugins/harness-creator/skills/run-build-skill"
-    / "templates/task-graph-engine/scripts/self-reflect-append.py"
+    / "templates/task-graph-engine/scripts/build-self-reflection-entry.py"
 )
 
 
@@ -54,14 +54,25 @@ def _run(path, *args):
 def test_append_item_ok():
     cl = [{"id": "C1", "text": "a", "status": "done"}]
     item = mod.append_item(cl, "C2", "new", ["C1"], "script")
-    assert item == {"id": "C2", "text": "new", "status": "pending",
-                    "depends_on": ["C1"], "verify_by": "script"}
+    assert item == {
+        "id": "C2", "text": "new", "status": "pending",
+        "created_iteration": 0, "available_from_iteration": 1,
+        "depends_on": ["C1"], "verify_by": "script",
+    }
     assert cl == [{"id": "C1", "text": "a", "status": "done"}]  # 引数 checklist は不変
 
 
 def test_append_item_minimal_shape():
     item = mod.append_item([{"id": "C1", "status": "done"}], "C2", "t", [], None)
-    assert item == {"id": "C2", "text": "t", "status": "pending"}  # depends_on/verify_by 省略
+    assert item == {
+        "id": "C2", "text": "t", "status": "pending",
+        "created_iteration": 0, "available_from_iteration": 1,
+    }  # depends_on/verify_by 省略
+
+
+def test_append_item_rejects_availability_not_after_creation():
+    with pytest.raises(ValueError, match="available_from_iteration"):
+        mod.append_item([], "C1", "t", [], None, 2, 2)
 
 
 def test_append_item_bad_id_pattern():
@@ -124,6 +135,8 @@ def test_main_ok_appends_and_preserves(tmp_path):
     assert r.returncode == 0
     d = json.loads(p.read_text())
     assert d["checklist"][-1]["id"] == "C2"
+    assert d["checklist"][-1]["created_iteration"] == 0
+    assert d["checklist"][-1]["available_from_iteration"] == 1
     assert d["checklist"][0] == {"id": "C1", "text": "a", "status": "done"}  # 既存不変
 
 

@@ -124,14 +124,15 @@
       "parallel": false,
       "prompt": "./prompts/R3-phase3-execute.md",
       "input": {
-        "source": "aggregated findings.json",
-        "schema": "./schemas/findings.schema.json"
+        "source": "aggregated findings.json + input_contract.options.dry_run",
+        "schema": "./schemas/phase-output.schema.json#/definitions/phase3_input",
+        "precondition": "aggregated findings.json は ./schemas/findings.schema.json にも準拠"
       },
       "steps": [
         "step0: DAG 生成 (findings[].location + depends_on または paradigm_findings[].issues[].location + depends_on から依存グラフ構築、B3)",
         "step1: issues[].severity 優先順位 (critical > high > medium > low)。4条件 signal は condition_signal/fail_counts で別管理",
         "step2: 独立対象 parallel / 依存あり serial",
-        "step3: auto_fixable=true は pre-phase3.patch 記録後に自動 commit / false は提案のみ",
+        "step3: dry_run=false かつ auto_fixable=true のみ pre-phase3.patch 記録後に最小パッチ適用 / それ以外は提案のみ。commit / PR は明示依頼時だけ後続で実行",
         "step4: 4 条件再検証 (max_iter=options.max_iterations, default 3)",
         "step5: verdict.json を schemas/verdict.schema.json 準拠で生成",
         "step6: emit_observable (always実行) - python3 scripts/emit-observable.py --verdict <log_dir>/verdict.json (PASS/FAIL 双方で観測完全性を確保、safety_valve_fired は verdict 独立で emit を強制)"
@@ -156,6 +157,8 @@
       "completion_signal": {
         "type": "four-conditions",
         "rule": "fail_counts.contradiction == 0 AND .omission == 0 AND .inconsistency == 0 AND .dependency_break == 0",
+        "task_graph_trace_command": "python3 scripts/validate-paradigm-coverage.py --task-graph-trace eval-log/run-elegant-review-progress.json eval-log/run-elegant-review-intermediate.jsonl",
+        "task_graph_trace_rule": "exit 0 required before completed",
         "max_iterations": 3,
         "convergence_policy": "./references/convergence-policy.json"
       },
@@ -163,7 +166,7 @@
         "policy": "rollback-and-escalate",
         "operations": [
           "max_iter 到達 → status=incomplete, force_pass 禁止, human_review",
-          "4 条件悪化検出 → 自動改善コミットのみ revert (ユーザー dirty state は触らない)"
+          "4 条件悪化検出 → 当該反復で適用した hunk だけを戻す (ユーザー dirty state は触らない)"
         ],
         "_note_emit_observable": "emit は steps.step6 (always 実行) で一本化。failure_action から削除し append-only jsonl の重複行を防止 (G3)"
       },
@@ -174,7 +177,7 @@
   "side_effect_boundaries": {
     "phase1": "read-only",
     "phase2": "read-only",
-    "phase3": "write-allowed (改善 PR ブランチ作成、observable emit)"
+    "phase3": "dry_run=false のみ target write-allowed。dry_run=true は eval-log/observable 出力のみ"
   },
   "approval_policy": {
     "rule": "proposer != approver (C4, 23 章)",
@@ -208,6 +211,7 @@
     {"id": "ref-agent-roles", "kind": "reference", "path": "./references/agent-roles.md", "phaseIds": ["phase1-reset", "phase2-parallel", "phase3-execute"]},
     {"id": "ref-variable-template", "kind": "reference", "path": "./references/variable-template-contract.md", "phaseIds": ["phase1-reset", "phase2-parallel", "phase3-execute"]},
     {"id": "ref-amplified-patterns", "kind": "reference", "path": "./references/amplified-patterns.json", "phaseIds": ["phase3-execute"]},
+    {"id": "ref-verification-obligation", "kind": "reference", "path": "../run-build-skill/references/verification-obligation-protocol.md", "phaseIds": ["phase3-execute"]},
     {"id": "script-validate-coverage", "kind": "script", "path": "./scripts/validate-paradigm-coverage.py", "phaseIds": ["phase2-parallel"]},
     {"id": "script-build-scorecard", "kind": "script", "path": "./scripts/build-paradigm-scorecard.py", "phaseIds": ["phase2-parallel"]},
     {"id": "script-emit-observable", "kind": "script", "path": "./scripts/emit-observable.py", "phaseIds": ["phase3-execute"]}
@@ -220,7 +224,7 @@
   "exit": [
     {"id": "phase1-exit", "command": "handoff shared_state.md"},
     {"id": "phase2-exit", "command": "run validate-paradigm-coverage.py; build-paradigm-scorecard.py; aggregate findings.json"},
-    {"id": "phase3-exit", "command": "verify 4 conditions; on FAIL/safety_valve emit observable; on max_iter human_review"}
+    {"id": "phase3-exit", "command": "run --task-graph-trace validator; verify 4 conditions; on FAIL/safety_valve emit observable; on max_iter human_review"}
   ],
   "design_chapters": ["09", "17", "25 §runbook Step 5.5", "26 §dogfooding", "30", "35 §observables", "36"]
 }

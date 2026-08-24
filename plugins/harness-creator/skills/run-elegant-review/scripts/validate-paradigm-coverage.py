@@ -3,7 +3,7 @@
 # name: validate-paradigm-coverage
 # purpose: Validate that elegant-review outputs cover all 30 paradigms with structured findings, and that run dirs follow Phase1->2->3 order.
 # inputs:
-#   - argv: review.md or findings.json, or --phase-order <run-dir-or-tree>
+#   - argv: review.md or findings.json, --phase-order <run-dir-or-tree>, or --task-graph-trace <progress.json> <intermediate.jsonl>
 # outputs:
 #   - stdout: OK message
 #   - stderr: missing paradigm / schema / phase-order errors
@@ -18,6 +18,7 @@
 Usage:
   validate-paradigm-coverage.py <review.md | findings.json>
   validate-paradigm-coverage.py --phase-order <run-dir | tree-root>
+  validate-paradigm-coverage.py --task-graph-trace <progress.json> <intermediate.jsonl>
 
 --phase-order は elegant-review run ディレクトリ
 (eval-log/**/elegant-review/<run-id>/) の Phase1→2→3 成果物の存在+順序を検査する
@@ -33,6 +34,7 @@ Exit codes:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -316,10 +318,231 @@ def check_phase_order_tree(base: Path) -> int:
     return 0
 
 
+_TRACE_REQUIRED_KEYS = {
+    "iteration",
+    "original_goal",
+    "current_goal_snapshot",
+    "delta_from_original",
+    "merged_directive_for_next",
+    "drift_signal",
+    "ready_set",
+    "selected_item",
+}
+_TRACE_STATUSES = {"pending", "done", "blocked"}
+_TRACE_ID = re.compile(r"^C[0-9]+$")
+
+
+def _trace_id_sort_key(item_id: str) -> tuple[int, int, str]:
+    match = re.fullmatch(r"C([0-9]+)", item_id)
+    return (0, int(match.group(1)), item_id) if match else (1, 0, item_id)
+
+
+def _load_trace_inputs(progress_path: Path, intermediate_path: Path) -> tuple[dict, list[dict]]:
+    if not progress_path.is_file():
+        raise ValueError(f"progress.json 不在: {progress_path}")
+    if not intermediate_path.is_file():
+        raise ValueError(f"intermediate.jsonl 不在: {intermediate_path}")
+    try:
+        progress = json.loads(progress_path.read_text(encoding="utf-8"))
+        rows = [
+            json.loads(line)
+            for line in intermediate_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"task-graph trace 読込/parse 失敗: {exc}") from exc
+    if not isinstance(progress, dict):
+        raise ValueError("progress.json が object でない")
+    if not rows:
+        raise ValueError("intermediate.jsonl が空")
+    if not all(isinstance(row, dict) for row in rows):
+        raise ValueError("intermediate.jsonl に object 以外の行がある")
+    return progress, rows
+
+
+def _check_trace_graph(checklist: object) -> tuple[list[dict], dict[str, list[str]], dict[str, str], dict[str, int]]:
+    if not isinstance(checklist, list) or not checklist:
+        raise ValueError("task-graph checklist が非空配列でない")
+    ids: list[str] = []
+    deps_of: dict[str, list[str]] = {}
+    status_of: dict[str, str] = {}
+    available_from: dict[str, int] = {}
+    for index, item in enumerate(checklist):
+        if not isinstance(item, dict):
+            raise ValueError(f"checklist[{index}] が object でない")
+        item_id = item.get("id")
+        if not isinstance(item_id, str) or not _TRACE_ID.fullmatch(item_id):
+            raise ValueError(f"checklist[{index}].id が ^C[0-9]+$ に非準拠")
+        if item_id in deps_of:
+            raise ValueError(f"checklist id 重複: {item_id}")
+        deps = item.get("depends_on", []) or []
+        if not isinstance(deps, list) or not all(isinstance(dep, str) for dep in deps):
+            raise ValueError(f"{item_id}: depends_on が string[] でない")
+        status = item.get("status")
+        if status not in _TRACE_STATUSES:
+            raise ValueError(f"{item_id}: status 不正: {status!r}")
+        created = item.get("created_iteration", 0)
+        available = item.get("available_from_iteration", created)
+        if isinstance(created, bool) or not isinstance(created, int) or created < 0:
+            raise ValueError(f"{item_id}: created_iteration が非負整数でない")
+        if isinstance(available, bool) or not isinstance(available, int) or available < created:
+            raise ValueError(f"{item_id}: available_from_iteration が created_iteration 以上でない")
+        ids.append(item_id)
+        deps_of[item_id] = deps
+        status_of[item_id] = status
+        available_from[item_id] = available
+
+    known = set(ids)
+    for item_id, dependencies in deps_of.items():
+        unknown = sorted(set(dependencies) - known, key=_trace_id_sort_key)
+        if unknown:
+            raise ValueError(f"{item_id}: depends_on が dangling: {unknown}")
+
+    white, grey, black = 0, 1, 2
+    color = {item_id: white for item_id in ids}
+    for start in ids:
+        if color[start] != white:
+            continue
+        color[start] = grey
+        stack = [(start, list(deps_of[start]))]
+        while stack:
+            node, pending = stack[-1]
+            if pending:
+                dependency = pending.pop()
+                if color[dependency] == grey:
+                    raise ValueError(f"depends_on cycle: {node} -> {dependency}")
+                if color[dependency] == white:
+                    color[dependency] = grey
+                    stack.append((dependency, list(deps_of[dependency])))
+            else:
+                color[node] = black
+                stack.pop()
+    return checklist, deps_of, status_of, available_from
+
+
+def validate_task_graph_trace(progress_path: Path, intermediate_path: Path) -> tuple[bool, list[str]]:
+    """task-graph の履歴から依存順消費を再計算し、自己申告に依存せず検査する。"""
+
+    try:
+        progress, rows = _load_trace_inputs(progress_path, intermediate_path)
+        if progress.get("engine") != "task-graph":
+            raise ValueError("progress.engine が task-graph でない")
+        checklist, deps_of, status_of, available_from = _check_trace_graph(
+            progress.get("checklist")
+        )
+        iteration = progress.get("iteration")
+        max_loops = progress.get("max_loops")
+        if isinstance(iteration, bool) or not isinstance(iteration, int) or iteration < 0:
+            raise ValueError("progress.iteration が非負整数でない")
+        if isinstance(max_loops, bool) or not isinstance(max_loops, int) or max_loops < 1:
+            raise ValueError("progress.max_loops が正整数でない")
+        if progress.get("status") not in {"in_progress", "completed", "handed_off"}:
+            raise ValueError(f"progress.status 不正: {progress.get('status')!r}")
+        if len(checklist) > max_loops:
+            raise ValueError(
+                f"bound 不足: checklist={len(checklist)} > max_loops={max_loops}"
+            )
+        if len(rows) > max_loops:
+            raise ValueError(f"bound 超過: trace rows={len(rows)} > max_loops={max_loops}")
+        if iteration != len(rows) - 1:
+            raise ValueError(
+                f"progress.iteration={iteration} != trace 最終周回={len(rows) - 1}"
+            )
+
+        anchor: str | None = None
+        selected_sequence: list[str] = []
+        for index, row in enumerate(rows):
+            missing = sorted(_TRACE_REQUIRED_KEYS - row.keys())
+            if missing:
+                raise ValueError(f"intermediate[{index}] required keys 不足: {missing}")
+            if row.get("iteration") != index:
+                raise ValueError(f"intermediate[{index}].iteration が {index} でない")
+            row_anchor = row.get("original_goal")
+            if not isinstance(row_anchor, str) or not row_anchor.strip():
+                raise ValueError(f"intermediate[{index}].original_goal が空")
+            if anchor is None:
+                anchor = row_anchor
+            elif row_anchor != anchor:
+                raise ValueError(f"intermediate[{index}].original_goal が drift")
+
+            declared_ready = row.get("ready_set")
+            selected = row.get("selected_item")
+            if not isinstance(declared_ready, list) or not all(
+                isinstance(item_id, str) for item_id in declared_ready
+            ):
+                raise ValueError(f"intermediate[{index}].ready_set が string[] でない")
+            if len(set(declared_ready)) != len(declared_ready):
+                raise ValueError(f"intermediate[{index}].ready_set が重複")
+            consumed = set(selected_sequence)
+            computed_ready = sorted(
+                (
+                    item_id
+                    for item_id, dependencies in deps_of.items()
+                    if item_id not in consumed
+                    and index >= available_from[item_id]
+                    and status_of[item_id] != "blocked"
+                    and all(dependency in consumed for dependency in dependencies)
+                ),
+                key=_trace_id_sort_key,
+            )
+            if declared_ready != computed_ready:
+                raise ValueError(
+                    f"intermediate[{index}].ready_set 不整合: "
+                    f"declared={declared_ready}, computed={computed_ready}"
+                )
+            if computed_ready:
+                if not isinstance(selected, str) or not selected:
+                    raise ValueError(f"intermediate[{index}] ready 非空だが selected_item 不在")
+                if selected != computed_ready[0]:
+                    raise ValueError(
+                        f"intermediate[{index}].selected_item={selected} != ready 最小 id {computed_ready[0]}"
+                    )
+                if selected in consumed:
+                    raise ValueError(f"intermediate[{index}].selected_item 重複: {selected}")
+                for dependency in deps_of[selected]:
+                    if dependency not in consumed or status_of[dependency] != "done":
+                        raise ValueError(
+                            f"intermediate[{index}] {selected} の依存 {dependency} が過去周回で done でない"
+                        )
+                selected_sequence.append(selected)
+            elif selected not in (None, ""):
+                raise ValueError(
+                    f"intermediate[{index}] ready 空だが selected_item={selected!r}"
+                )
+
+        assert anchor is not None  # rows 非空は _load_trace_inputs で保証
+        expected_hash = hashlib.sha256(anchor.encode("utf-8")).hexdigest()
+        if progress.get("original_goal_hash") != expected_hash:
+            raise ValueError("progress.original_goal_hash missing/drift")
+
+        selected_set = set(selected_sequence)
+        missing_done_trace = sorted(
+            (
+                item_id
+                for item_id, status in status_of.items()
+                if status == "done" and item_id not in selected_set
+            ),
+            key=_trace_id_sort_key,
+        )
+        if missing_done_trace:
+            raise ValueError(f"done だが selected_item 証跡なし: {missing_done_trace}")
+        if progress.get("status") == "completed":
+            unfinished = sorted(
+                (item_id for item_id, status in status_of.items() if status != "done"),
+                key=_trace_id_sort_key,
+            )
+            if unfinished:
+                raise ValueError(f"completed だが pending/blocked 残: {unfinished}")
+    except ValueError as exc:
+        return False, [str(exc)]
+    return True, []
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
         print(
-            "usage: validate-paradigm-coverage.py <file> | --phase-order <dir>",
+            "usage: validate-paradigm-coverage.py <file> | --phase-order <dir> | "
+            "--task-graph-trace <progress.json> <intermediate.jsonl>",
             file=sys.stderr,
         )
         return 2
@@ -332,6 +555,24 @@ def main(argv: list[str]) -> int:
             print(f"not a directory: {base}", file=sys.stderr)
             return 2
         return check_phase_order_tree(base)
+    if argv[1] == "--task-graph-trace":
+        if len(argv) != 4:
+            print(
+                "usage: validate-paradigm-coverage.py --task-graph-trace "
+                "<progress.json> <intermediate.jsonl>",
+                file=sys.stderr,
+            )
+            return 2
+        ok, errors = validate_task_graph_trace(Path(argv[2]), Path(argv[3]))
+        if not ok:
+            for error in errors:
+                print(f"task-graph trace violation: {error}", file=sys.stderr)
+            return 1
+        print(
+            "OK: task-graph trace verified "
+            "(ready exact/min, dependency history, closure/cycle, completeness, bound)"
+        )
+        return 0
     path = Path(argv[1])
     if path.suffix == ".json":
         ok, errors = validate_structured_json(path)

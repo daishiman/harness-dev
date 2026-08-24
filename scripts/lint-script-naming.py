@@ -171,14 +171,6 @@ PENDING_RENAME_PATHS = {
     "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/build_index.py",
     "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/record_usage.py",
     "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py",
-    # run-build-skill task-graph-engine template payload scripts (engine:task-graph 変種で生成
-    # harness に焼き込まれる engine 実体・生成後 rename)。§4.3 (kebab-case) は満たすが verb
-    # (self/ready/record) が ALLOWED_VERBS 外。knowledge-skeleton template と同種で repo tooling
-    # でなく生成物 payload ゆえ後続 Change Governance PR まで PENDING
-    # (extract-capability-dependency-graph.py は verb 'extract' が ALLOWED_VERBS 内ゆえ非対象)。
-    "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py",
-    "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py",
-    "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py",
     # prompt-creator js→py 移行 (PR: spec-reflection): 旧 JS 名 (merge/verify/scaffold/generate/convert/log)
     # を踏襲。許可動詞へのリネームは後続 Change Governance PR で SKILL.md/agent/manifest 参照と同時実施。
     "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/merge-layers.py",

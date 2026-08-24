@@ -364,16 +364,16 @@ def validate(
             cursor = found + 1
 
     # --- 目標4階層: 期間・残り・目標が揃っているか ---
-    for goal in GOAL_SECTIONS:
-        body = section_lines(lines, 3, goal)
-        if body is None:
+    for goal_spec in GOAL_SECTIONS:
+        # 別表記が併存する異常系でも、候補列の先頭に置いた正本を決定論的に優先する。
+        # tuple のまま section_lines() へ渡すと本文中で先に現れた旧表記を拾う一方、
+        # 違反ラベルだけ正本名になるため、検査対象と報告対象がずれる。
+        candidates = (goal_spec,) if isinstance(goal_spec, str) else goal_spec
+        goal = next((c for c in candidates if section_lines(lines, 3, c) is not None), None)
+        if goal is None:
             continue  # S01 で既に報告済み
-        # 違反メッセージには別表記候補の列ではなく、実際に書かれていた見出しを出す。
-        candidates = (goal,) if isinstance(goal, str) else goal
-        goal = next(
-            (c for c in candidates if section_lines(lines, 3, c) is not None),
-            needle_label(goal),
-        )
+        body = section_lines(lines, 3, goal)
+        assert body is not None
         joined = "\n".join(body)
         values: dict[str, str] = {}
         for field in ("期間", "残り", "目標"):

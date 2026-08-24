@@ -273,6 +273,7 @@ def test_common_core_keys_present():
         assert fm.get(key), f"commonCore 必須キー欠落: {key}"
     assert fm["kind"] == "run"
     assert fm["name"] == "run-skill-iter-improve"
+    assert (ROOT / fm["source"]).is_file()
 
 
 # --- SSOT parity (dangling 参照防止) -----------------------------------------
@@ -291,6 +292,42 @@ def test_loop_bounds_iter_improve_params_exist():
     # 本文はパラメータ名参照のみ (生値の二重宣言禁止) — 参照文字列の実在を固定
     body = SKILL_MD.read_text(encoding="utf-8")
     assert "loop_bounds.iter_improve" in body
+
+
+def test_incremental_re_evaluation_uses_exact_receipts_and_machine_planners():
+    fm = _frontmatter()
+    body = SKILL_MD.read_text(encoding="utf-8")
+    assert (
+        "../run-build-skill/references/verification-obligation-protocol.md"
+        in fm["reference_refs"]
+    )
+    assert "plan-verification-obligations.py" in body
+    assert "record-verification-evidence.py" in body
+    assert "plan-live-trials.py" in body
+    assert "exact fingerprint" in body
+    assert "Agent 0 体" in body
+    assert "Agent fork へ格下げしない" in body
+    assert "SHA 一致だけは高速 pre-filter" in body
+    criteria = {item["id"]: item for item in fm["feedback_contract"]["criteria"]}
+    assert criteria["IN3"]["verify_by"] == "verification-obligation"
+
+
+def test_goal_pass_is_the_only_success_stop_and_score_remains_diagnostic():
+    body = SKILL_MD.read_text(encoding="utf-8")
+    policy = json.loads(CONVERGENCE_POLICY.read_text(encoding="utf-8"))
+    scope = policy["loop_bounds"]["iter_improve"]["scope"]
+    assert "score は診断信号" in body
+    assert "score にかかわらず目的達成として即停止" in body
+    assert "INCOMPLETE" in body
+    assert "成功停止の正本は current observational GOAL PASS" in scope
+
+
+def test_task_graph_state_is_isolated_per_target_run():
+    goal_seek = _frontmatter()["goal_seek"]
+    for key in ("progress", "intermediate"):
+        assert "{{plugin}}" in goal_seek[key]
+        assert "{{skill}}" in goal_seek[key]
+        assert "{{run_id}}" in goal_seek[key]
 
 
 def test_engine_closure_includes_self():

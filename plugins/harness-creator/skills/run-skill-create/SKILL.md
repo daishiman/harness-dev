@@ -18,6 +18,9 @@ model: opus
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-18
 version: 0.1.0

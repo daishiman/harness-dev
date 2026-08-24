@@ -6,6 +6,7 @@ user-invocable: true
 kind: run
 prefix: run
 effect: local-artifact
+runtime_root_policy: host-skill-path
 owner: team-platform
 since: 2026-07-11
 version: 0.1.0
@@ -23,6 +24,7 @@ script_refs:
   - scripts/compile-spec-doc.py
   - ../../scripts/validate-coverage-matrix.py
   - ../../scripts/validate-source-citation.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 schema_refs:
   - ../../schemas/spec-state.schema.json
   - ../../schemas/fetched-references.schema.json
@@ -46,7 +48,9 @@ combinators:
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: subagent
+  fork: inline
+  spec: eval-log/run-system-spec-compile-goal-spec.json
+  progress: eval-log/run-system-spec-compile-progress.json
   max_loops: 5
 completeness_exempt:
   - "manifest: compile retries select the failed deterministic/content gate dynamically; the SKILL body is the runtime SSOT."
@@ -79,6 +83,14 @@ artifact_delivery:
   release: explicit-only
   exhaustive: explicit-only
 ---
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Pre-choice usable artifact execution
 
@@ -151,11 +163,31 @@ serves_goals: [G1, G2]    # 章が資する上位概念ゴール id (セル serv
 
 IN1/OUT1 の未達ゲートを起点に assemble/render/crosslink の該当責務だけを再実行する。各反復で決定論ゲートを先に通し、最大5周で未達なら成果物を確定せず呼出元へ blocker を返す。全ゲートPASS時だけ完了する。
 
+### ゴールシーク配線
+
+`original_goal` と入力2ファイルの digest を progress に固定し、各周回を `run-system-spec-compile-intermediate.jsonl` へ append する。各行は `iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を持ち、次周回は直前の `merged_directive_for_next` を必須入力とする。
+
+### ゴールシーク検証
+
+共通 validator で intermediate.jsonl の `required_keys`、非空・全行不変 `original_goal`、`original_goal_hash == hashlib.sha256(original_goal)` を検証した後、入力 digest 一致と IN1/OUT1 を確認する。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/run-system-spec-compile-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/run-system-spec-compile-intermediate.jsonl"
+```
+
 ## Feedback Contract (with-feedback-contract / with-goal-seek)
 
 - **IN1** (inner, script): 生成直前の spec-state.json / fetched-references.json に対し `../../scripts/validate-coverage-matrix.py --matrix <spec>` と `../../scripts/validate-source-citation.py --targets <spec> --references <refs>` が exit0。
 - **OUT1** (outer, test): 生成ドキュメントセットがカテゴリ×プラットフォームの確定/対象外理由と最新ドキュメント出典を含むことを `tests/test_compile_spec_doc.py` が確認。
-- goal-seek (engine=inline, fork=subagent, max_loops=5): IN1/OUT1 を満たすまで章構成・レンダリングを反復改善する。
+- goal-seek (engine=inline, fork=inline, max_loops=5): IN1/OUT1 を満たすまで、単一writerである main context が章構成・レンダリングを反復改善する。
+
+## Gotchas
+
+- `spec-state.json` / `fetched-references.json` は read-only 入力。compile 中の便宜的な補完や書換えはしない。
+- 確定済み章を draft に戻すのは、C01 の R4-reopen 証跡がある場合だけ。
+- U1-U9 が未確定のときは draft foundation を出せるが、confirmed として扱わない。
 
 ## Additional Resources
 

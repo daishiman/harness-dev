@@ -25,6 +25,7 @@ script_refs:
   - ../../scripts/aggregate-issue-diffs.py
   - ../../scripts/parse-spec-diff.py
   - ../../scripts/map-field-impact.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 schema_refs:
   - ../../schemas/triage-report.schema.json
 allowed-tools:
@@ -47,7 +48,9 @@ combinators:
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: subagent
+  fork: inline
+  spec: eval-log/run-spec-drift-triage-goal-spec.json
+  progress: eval-log/run-spec-drift-triage-progress.json
   max_loops: 5
 feedback_contract:
   activation_state: semantic_evaluator_started
@@ -168,7 +171,40 @@ LLM が担うのは、C09 の影響候補が実 hunk 証拠と整合するかの
 
 - **IN1** (inner, script): C11 出力が `complete=true` で commit pair / digest を持ち、C08/C09 出力の `name` / `type` / `required` / `enum` / `semantics`・`before` / `after` / `evidence` 必須キー欠落が 0 件。検証は 3 決定論 script の exit code (C11≠0 / C08 exit2 / C09≠0 で不成立) で機械判定する。
 - **OUT1** (outer, test): Issue #17 完全 commit pair と source-category fixture matrix に対し 4 軸 + semantics の誤検出 / 見逃しが threshold 内で、truncated preview 入力は fail-closed になる。
-- **goal-seek** (engine=inline, fork=subagent, max_loops=5): IN1 / OUT1 を満たすまで、events 再構成・軸判定の妥当性確認・レポート組み立てを反復改善する。fork=subagent で独立 context で評価し Sycophancy を避ける。max_loops=5 で未収束なら residual findings 付きで停止し fail-closed 状態を報告する。
+- **goal-seek** (engine=inline, fork=inline, max_loops=5): IN1 / OUT1 を満たすまで、events 再構成・軸判定の妥当性確認・レポート組み立てを main context で反復改善する。決定論 script の fail-closed gate と下流の独立 C03 verdict が自己肯定バイアスを抑える。max_loops=5 で未収束なら residual findings 付きで停止する。
+
+## ゴールシーク実行
+
+### ゴール (Goal)
+
+IN1/OUT1 を満たす schema 準拠 triage-report が、完全 diff と provenance を保ったまま生成された状態。
+
+### 目的・背景 (Why)
+
+意味判断を反復しても、対象 diff と当初ゴールがすり替わらないように、決定論 gate と不変アンカーで周回を拘束する。
+
+### 完了チェックリスト
+
+- [ ] C11/C08/C09 が完全性・digest・必須キーを exit0 で検証した
+- [ ] triage-report が 5 軸と evidence を網羅し IN1/OUT1 が PASS した
+
+### ゴールシークループ
+
+post-choice のみ main context で未達項目を1つ選び、決定論検査→必要最小限の意味判断→再検査を行う。同じ blocker が残る場合だけ次周回へ進み、5周で停止する。
+
+### ゴールシーク配線
+
+`goal-spec.json` の `original_goal` を初回に SHA-256 化し progress の `original_goal_hash` へ固定する。各周回は intermediate JSONL へ `original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を append し、次周回は直前の `merged_directive_for_next` を必須入力とする。
+
+### ゴールシーク検証
+
+post-choice 周回の各回末に、次の共通 validator で intermediate.jsonl の `required_keys`、非空 `original_goal`、全行不変性、`original_goal_hash == hashlib.sha256(original_goal)` を fail-closed 検証する。accept-as-is では周回しない。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/run-spec-drift-triage-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/run-spec-drift-triage-intermediate.jsonl"
+```
 
 ## Gotchas
 

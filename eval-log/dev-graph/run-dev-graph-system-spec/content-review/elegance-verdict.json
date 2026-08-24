@@ -2,40 +2,39 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
-    "skill_md_sha256": "7a391dc16e2e8522884670d15f87345054d9e2417ecff875d600c6d6b67911a9"
+    "skill_md_sha256": "5e373f874d588536f36906f5651da403bb13d54c6b66372671c3f4403ab9286b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "Codex focused combined content review (incremental, one context)",
+  "reviewed_at": "2026-08-24T07:22:38Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "R0〜R3とgoal-seekはmain contextに固定し、生成側と分離すべき完成度判定だけをqualified system-spec-harness evaluatorのcontext:fork契約に委ねている。",
+      "elicit→doc-fetch(no-op可)→compile→completeness evaluatorの4呼出しをexact order、repo containment、各evidence SHA、receipt/progress SHAに束縛し、PASS以外でprogress PASS/4の取込可を拒否する。",
+      "confirmed importは新しいwriterを複製せず、C02 single-writerのattested dry-run→apply、staged C11、lock、rollbackを再利用してactive/confirmed/pass/lineage/evaluator evidenceをall-or-noneで保存する。",
+      "evaluator FAIL、stale evidence、順序違反、C11 FAILのfocused testsがgraph digest不変・追加artifact 0件を再現し、同一attestationの再実行はwrite_count=0に収束する。"
+      ,"runtime_root_policy、標準Runtime root contract、prompt継承、delegation validator実行行はhost-skill-path契約で一致し、plugin codeのPLUGIN_ROOTとC24 receipt由来caller contentのDEV_GRAPH_ROOTを分離する。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / FM-005] descriptionの先頭句は動詞ではないが、triggerと出力対象は明確で実行不能を生まない。",
+      "[low / PD-001] SKILL bodyは100行を超えるが、4 responsibilityはprompts/へ分離済みで、今回の契約をさらにreferences/へ分断するとruntime gateの発見性を下げるためlowに留める。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "notes": "incremental content-reviewを1 context/1 targetでfresh focused実施。初回に (1) evaluator FAIL/INDETERMINATEでもdelegation progress PASSを受理できること、(2) C02 normal artifact writerがsystem-spec由来nodeをdraft/pending/manualでしか作れずC19のconfirmed/pass/lineage完了契約へ到達不能であることをhigh blockerとして検出。正規delegation validatorのPASS-only化と、既存C02 writerへのcontained system-spec attestation入力追加で解消した。今回のportable root差分ではruntime_root_policy: host-skill-path、標準本文、prompt継承、validator実行行の一貫性とPLUGIN_ROOT/DEV_GRAPH_ROOTのauthority分離を確認した。直接参照8件は全て解決。IN1/OUT1のacceptance clauseとsource/prompt/inventory/composition/build-traceを再照合し、矛盾なし・漏れなし・整合性あり・依存関係整合、high 0。current SHAに対しcapability parity PASS、runtime profile findings 0、goal-seek lint PASS、focused pytest 82 passed。指示に従いlive/criteria scenario verdictは書き換えず、古いPASS/529を現在sourceの根拠に使わない。本PASSはstatic design claimに限定し、Gate D/live trialの代替にしない。30思考法は実施しておらず、実施も申告しない。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   }
 }

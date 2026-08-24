@@ -6,6 +6,9 @@ user-invocable: true
 allowed-tools: [Read, Write, Edit, Bash(python3 *), Bash(git *)]
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-17
 version: 0.1.0

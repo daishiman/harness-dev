@@ -463,9 +463,9 @@ _GOOD_RENDER = (
     "required_keys original_goal_hash hashlib.sha256\n"
     # engine:task-graph 変種 (C04 check_task_graph_variant) の consumption verifier /
     # dependency graph knowledge consult トークン。整合 fixture は task-graph 配線も携帯する。
-    "task-graph ready-set-from-checklist.py self-reflect-append.py ready_set selected_item "
+    "task-graph extract-ready-set-from-checklist.py build-self-reflection-entry.py ready_set selected_item "
     "依存順消費 self-reflect 完了 gate extract-capability-dependency-graph.py "
-    "record-capability-graph-knowledge.py dependency graph knowledge\n"
+    "build-capability-graph-knowledge-entry.py dependency graph knowledge\n"
 )
 _GOOD_PATCH = _GOOD_RENDER  # patch 側も同型で逐語一致させる
 _GOOD_RGS = "required_keys original_goal_hash hashlib.sha256\n"

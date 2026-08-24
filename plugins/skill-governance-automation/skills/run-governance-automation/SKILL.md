@@ -3,6 +3,9 @@ name: run-governance-automation
 description: governanceの登録・rubric合成を実行したいとき、再評価・rollback automationを安全に選択したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

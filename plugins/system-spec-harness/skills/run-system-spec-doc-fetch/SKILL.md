@@ -18,10 +18,13 @@ allowed-tools:
   - WebFetch
   - Read
   - Bash
+  - Task
 responsibility_refs:
   - prompts/R1-identify.md
   - prompts/R2-fetch.md
   - prompts/R3-record.md
+script_refs:
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 schema_refs:
   - ../../schemas/fetched-references.schema.json
 responsibilities:
@@ -41,6 +44,8 @@ goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
+  spec: eval-log/run-system-spec-doc-fetch-goal-spec.json
+  progress: eval-log/run-system-spec-doc-fetch-progress.json
   max_loops: 5
 completeness_exempt:
   - "manifest: official-source discovery is an inline goal-seek loop selected from unmet targets; the SKILL body is the runtime SSOT."
@@ -158,6 +163,22 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ### ゴールシークループ
 
 正本 goal-seek-paradigm.md の 6 ステップ (現状評価→手順生成→実行→検証→Anchor Step→反復/差し戻し) に従う。IN1 違反は該当対象を R2 へ差し戻して取り直す。5 反復で埋まらない対象は理由を明示して呼出元 (C10 / C01 / ユーザー) へ差し戻す。
+
+R1〜R3 の公式情報調査は `Task` で1つの隔離contextへ fork し、対象一覧・取得根拠・検証結果だけを親へ返す。親contextは target scope と採否を所有し、subagent内から追加の再forkはしない。
+
+### ゴールシーク配線
+
+`goal-spec.json` の `original_goal` と target digest を progress に固定する。各周回は intermediate JSONL へ `original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal`、対象一覧 digest、IN1 receipt を append し、次周回は直前の `merged_directive_for_next` を必須入力とする。
+
+### ゴールシーク検証
+
+各回末に共通 validator を実行し、intermediate.jsonl の `required_keys`、非空 `original_goal`、全行不変性、`original_goal_hash == hashlib.sha256(original_goal)` を fail-closed 検証する。その後に target/IN1 digest 一致を検査する。accept-as-is では周回しない。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/run-system-spec-doc-fetch-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/run-system-spec-doc-fetch-intermediate.jsonl"
+```
 
 ## 局面カタログ (順序は都度判断)
 

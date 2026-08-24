@@ -3,6 +3,9 @@ name: run-governance-adapters
 description: governance出力adapterの利用可能性を確認したいとき、入出力契約と代替経路を安全に特定したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

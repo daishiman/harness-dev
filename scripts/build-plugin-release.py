@@ -663,6 +663,14 @@ def _run(args) -> int:
             bumped.append(row["name"])
             print(f"  bump  {row['name']}: {row['version']} -> {version}")
         else:
+            if not args.dry_run:
+                # `released` / `new` は manifest の version が先に進み、fingerprint
+                # 台帳だけが未登録の状態。merge 後などに公開 marketplace や Codex
+                # manifest が古いままでも、従来は record だけして不整合を固定して
+                # いた。採番を変えず全派生面を正本 version へ同期してから、その
+                # 実内容を fingerprint として記録する。
+                write_version(row["dir"], version)
+                digest = fingerprint(row["dir"])
             print(f"  record {row['name']}: {version} ({row['status']})")
         state[row["name"]] = {"version": version, "fingerprint": digest}
 

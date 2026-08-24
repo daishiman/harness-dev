@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-governance-migration",
     "skill": "run-governance-migration",
-    "skill_md_sha256": "eacbeb41d71890c338c146b6a8be839883aa13115102f35b4d3920ef646336d1"
+    "skill_md_sha256": "5405e885fd9142a1f11a11d83158e645bfedfb447dcb3d4489e1ac6bbad9c066"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,27 +11,26 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "version確定→migration選択→help/dry-run/check→承認後applyという依存順が Key Rules と ゴールシーク実行 で二重に固定され、承認境界が本文の1箇所に閉じている。",
-      "「非0や部分適用を成功へ畳まない」を Key Rules に置き、検証節で before/after digest・changed paths・rollback command・残件の4点を返す契約にしているため、部分適用の隠蔽が成果物形状の側からも検出可能になっている。",
-      "artifact_delivery の pre_choice_forbidden に semantic-evaluator/subagent 系を列挙し accept_contexts を 0/0 に固定しており、accept-as-is 経路で評価 context が増えない設計が同族 6 skill と一致している。"
+      "version確認→help/dry-run/check→別承認後applyの直列migrationを inline で実行する宣言は責務と一致する。backup/rollback・部分適用を成功へ畳まない境界と scripts/migrate の参照も維持される。"
     ],
-    "negative_feedback": [
-      "low(smell): 本文とIN1が選択キーとして使う「source/target version」に対応する明示的な version 値は scripts/migrate/ の3スクリプト側に存在せず、doc/21 governance schema の世代を指す暗黙語彙になっている。実行は可能で契約は壊れていないが語彙の接地は弱い。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "git diff HEAD 上で本 SKILL.md は全文 new file として現れたため 73 行全体を差分として読んだ。(a)矛盾: pre-choice節/post-choice節/Purpose & Output Contract/Key Rules/ゴールシーク実行/検証 の間に相反する指示なし。pre-choice節が後続の Purpose & Output Contract を参照する順序上の自己参照は scripts/build-artifact-delivery.py が生成する同族共通 boilerplate であり、run-governance-adapters/automation/config/hooks/lint/secrets の 6 skill と同一形状であることを確認したので本 skill 固有の欠陥としない。(b)漏れ: 承認境界・rollback・部分適用の扱い・返却物がいずれも本文に存在。ゴールシーク Checklist の `- [ ]` 行が無い点は同族 7 skill 全てで 0 件であり family 単位の課題として本 review の範囲外とした。(c)規約整合: effect は local-artifact であり external_mutation_guard frontmatter も canonical receipt flow block も宣言されておらず、片側だけの不整合は無い(grep で _refs / external_mutation_guard / prompts/ の宣言がゼロであることを確認)。runtime_root_policy は宣言されていないため `## Runtime root contract` 節は要求されない。scripts/build-artifact-delivery.py:754-766 が policy 宣言と契約節を同一 migration で対に注入する実装であることを読み、両方欠落は drift ではなく未適用対象であると判定した。shell 参照形は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で bare 参照は無い。(d)依存整合: 本文が指す plugins/skill-governance-migration/scripts/migrate/ は実在し audit.py / backfill-source-tier.py / to-brief.py を保持する。3本とも --help が応答すること、to-brief.py が --audit-json で audit.py 出力を要求するため「順序を飛ばさない」に実referentがあること、mutating なのは backfill-source-tier.py のみでこれが --dry-run を持つことを実行して確認した。plugin-composition.yaml と references/package-contract.json の entry_points も run-governance-migration を含む。medium 以上の未解決 finding は無いため PASS とした。30思考法は実施していない (incremental profile の focused combined review)。"
+  "notes": "現行全文、diff、composition、migrate scripts、criteriaをfresh review。runtime-profile/frontmatter/tree lintはexit 0。full combinator wiringの推奨warning 3件はexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

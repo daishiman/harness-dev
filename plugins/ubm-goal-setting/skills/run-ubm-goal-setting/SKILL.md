@@ -26,7 +26,7 @@ manifest: workflow-manifest.json
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: subagent
+  fork: inline
   progress: eval-log/ubm-goal-setting/run-ubm-goal-setting/goal-seek-progress.json
   intermediate: eval-log/ubm-goal-setting/run-ubm-goal-setting/run-ubm-goal-setting-intermediate.jsonl
   handoff: eval-log/ubm-goal-setting/run-ubm-goal-setting/handoff-run-ubm-goal-setting.json
@@ -51,6 +51,7 @@ knowledge_loop:
   consult_at: [runtime]
 script_refs:
   - scripts/validate-goal-output.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 reference_refs:
   - references/resource-map.yaml
   - references/selection-focus-goal-frame.md
@@ -103,6 +104,7 @@ artifact_delivery:
 - Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
+- `Task` を起動するときは解決済みabsolute `plugin_root` を入力に含め、Task 内で `PLUGIN_ROOT` と旧agent本文互換用 `CLAUDE_PLUGIN_ROOT` の両方へ同じ値を設定する。未指定・非absolute・不一致なら外部Read/Write前にfail-closedで停止する。
 
 ## Pre-choice usable artifact execution
 
@@ -154,7 +156,7 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 | Phase0-init | 対象種別（週報/月報/期報）と実行日を確定。引数指定時はスキップ。オプション4は既存目標見直しモード（goal-reviewer） | AskUserQuestion / 本 skill |
 | Phase1-2-collect | 過去目標・合宿情報・ナレッジ（デュアルパス検索）・journal を並列収集し構造化サマリー生成 | `info-collector`（Task） |
 | Phase2b-review | 振り返り対話時に既存目標設定を8項目で見直し・再評価 | `goal-reviewer`（Task） |
-| Phase3-dialogue | steps1-5 を参照しながら step1-5 対話（現状振り返り〜最終確認）を進行 | `phase3-coordinator`（Task） |
+| Phase3-dialogue | 親が steps1-5 を参照し、現状振り返り〜最終確認の対話を進行。必要な場合だけ coordinator から読取専用の次問案を受ける | 本 skill（親対話）+ `phase3-coordinator`（任意の助言Task） |
 | Phase4-format | 目標設定テンプレートへ整形し15項目品質チェック | `output-formatter`（Task） |
 | Phase5-validate | `validate-goal-output.py` で21項目を検証、最大3回まで改善してファイル保存 | `output-formatter` + script |
 | Phase6-daily-update | 保存後、`02_Configs/Templates/Daily.md` の Obsidian embed 参照を最新目標へ更新（種別該当箇所のみ） | 本 skill |
@@ -163,19 +165,27 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 ## ゴールシーク実行
 
-固定手順を消化するのでなく、上記ゴールと `feedback_contract` を満たすまで反復する（engine=inline / fork=subagent / max_loops=5）。
+固定手順を消化するのでなく、上記ゴールと `feedback_contract` を満たすまで親の対話contextで反復する（engine=inline / fork=inline / max_loops=5）。
 
 ### ゴールシーク配線
 
 - `goal_seek.progress`: `eval-log/ubm-goal-setting/run-ubm-goal-setting/goal-seek-progress.json` に checklist 状態、iteration、`open_issues`、`status` を記録する。
 - `goal_seek.intermediate`: 各周回末の Anchor Step で `run-ubm-goal-setting-intermediate.jsonl` に `original_goal` / `current_goal_snapshot` / `delta_from_original` / `merged_directive_for_next` / `drift_signal` を append-only で残す。
 - `goal_seek.handoff`: 完了時に validated goal file path、Daily.md 更新有無、検証結果を `handoff-run-ubm-goal-setting.json` へ書く。
-- ループ本体は SubAgent context で実行し、親へ返すのは最終成果物パス、handoff 要約、未解決 `open_issues` のみにする。
+- ループ本体とユーザー対話は親contextが所有する。`Task` は表の専門責務へ限定し、各結果を親へ戻して同じ goal/checklist に統合する。
 - `max_loops` 到達時は PASS 扱いせず、残チェック項目を `open_issues` に残して human review へ差し戻す。
 
 ### ゴールシーク検証
 
 Anchor Step の検証は `required_keys = {"iteration","original_goal","current_goal_snapshot","delta_from_original","merged_directive_for_next","drift_signal"}` を満たす全 JSONL 行を対象にする。初回に `hashlib.sha256(original_goal)` を `original_goal_hash` として progress へ固定し、以後の周回で `original_goal` が変化していないことを照合する。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/ubm-goal-setting/run-ubm-goal-setting/goal-seek-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/ubm-goal-setting/run-ubm-goal-setting/run-ubm-goal-setting-intermediate.jsonl"
+```
+
+progress/intermediate の不在、必須キー欠落、空または途中変更された `original_goal`、SHA-256 不一致は exit 非0で完了を阻止する。
 
 - **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|bimonthly>` を実行。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
@@ -203,7 +213,7 @@ Anchor Step の検証は `required_keys = {"iteration","original_goal","current_
 
 ## Additional Resources
 
-- **agents**: `info-collector` / `goal-reviewer` / `phase3-coordinator` / `output-formatter`（plugin 直下 `agents/`。coordinator は `prompts/R1-R5` を Read でインライン参照）。
+- **agents**: `info-collector` / `goal-reviewer` / `phase3-coordinator` / `output-formatter`（plugin 直下 `agents/`。coordinator は必要時に `prompts/R1-R5` を Read して次問案だけを返し、ユーザー対話と状態更新は親が行う）。
 - **prompts**: `prompts/R{1..5}-<slug>.md` — Phase3 対話 Step1-5 の責務単位 7 層プロンプト正本（prompt-placement-convention 準拠、verify-completeness.py で 7 層+l5-contract 検証）。
 - **scripts**: `scripts/validate-goal-output.py`（出力バリデーション・決定論ゲート）。
 - **references**: `references/selection-focus-goal-frame.md`（北原さん 2026-08-12 コメント由来の選択と集中フレーム・期間別検査・運用カレンダー）/ `references/thinking-guide.md`（思考法）/ `references/output-formats.md`（テンプレート21項目正本）/ `references/data-contract.md`（Phase 間 I/O）/ `references/thinking-methods-toolkit.md` / `references/thinking-process.md` / `references/version-history.md`。

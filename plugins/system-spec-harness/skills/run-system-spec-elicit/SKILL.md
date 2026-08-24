@@ -41,6 +41,7 @@ reference_refs:
 script_refs:
   - scripts/apply-spec-transition.py
   - ../../scripts/validate-knowledge-graph.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 schema_refs:
   - ../../schemas/spec-state.schema.json
 responsibilities:
@@ -68,7 +69,9 @@ combinators:
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  fork: subagent
+  fork: inline
+  spec: eval-log/run-system-spec-elicit-goal-spec.json
+  progress: eval-log/run-system-spec-elicit-progress.json
   max_loops: 5
 completeness_exempt:
   - "manifest: inline goal-seek selects the next unmet interview/checklist responsibility dynamically; the SKILL body is the runtime SSOT."
@@ -174,10 +177,24 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## ゴールシーク実行
 
-- engine=inline / fork=subagent / max_loops=5 / loop_semantics = **per-invocation chunk limit**。
+- engine=inline / fork=inline / max_loops=5 / loop_semantics = **per-invocation chunk limit**。ユーザーとの質問・回答・state更新は main context が所有し、`Task` は独立した公式情報調査に限る。
 - 1 invocation で最大 5 loop (質問→回答→反映) を回す。5 loop 到達で未収集が残れば `hearing_progress.complete=false` と `next_question` を保存し、resumable に返す (`--resume` で続行)。
 - 未収集0を満たしたときだけ `complete=true`・`next_question=null`。未収集セルを完了扱いしない。
 - ループの各周回は「未達 = 未収集セル」を最小化する手順を都度立案→ writer で適用→ `validate-coverage-matrix.py` で検証、を繰り返す (固定手順を持たない)。
+
+### ゴールシーク配線
+
+`goal-spec.json` の `original_goal` と上位概念 U1-U9 の確定 digest を progress へ固定する。各質問周回は intermediate JSONL へ `original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal`、次の未収集セル、validator receipt を append する。`--resume` 時も直前の `merged_directive_for_next` と `next_question` を必須入力とし、ユーザー対話と state write は main context が所有する。
+
+### ゴールシーク検証
+
+各回末に共通 validator を実行し、intermediate.jsonl の `required_keys`、非空 `original_goal`、全行不変性、`original_goal_hash == hashlib.sha256(original_goal)` を fail-closed 検証する。その後に U1-U9/validator digest 一致を検査する。5周上限の resumable 停止は失敗ではないが、未収集を完了扱いしない。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/run-system-spec-elicit-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/run-system-spec-elicit-intermediate.jsonl"
+```
 
 ## feedback-contract (with-feedback-contract)
 

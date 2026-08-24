@@ -650,8 +650,8 @@ def test_main_llm_judge_rule_goes_to_pending_not_scored(monkeypatch, tmp_path, c
     assert out["passed"] is True
 
 
-def test_main_rubric_blocked_rule_declares_blocked_on(monkeypatch, tmp_path, capsys):
-    """rule 文が実態と食い違う PG-001/REG-001 は silent pass にしない。"""
+def test_main_pg001_is_scored_after_rubric_ssot_sync(monkeypatch, tmp_path, capsys):
+    """PG-001 は rubric-text pending ではなく実 checker で採点する。"""
     rp = tmp_path / "rubric.json"
     rule = {"id": "PG-001", "severity": "high", "area": "prompt", "check": ""}
     rp.write_text(json.dumps(_rubric([rule])), encoding="utf-8")
@@ -659,7 +659,9 @@ def test_main_rubric_blocked_rule_declares_blocked_on(monkeypatch, tmp_path, cap
     _stub_compose(monkeypatch, _rubric([rule]))
     _run_main(monkeypatch, ["--rubric", str(rp), "--target", str(d)])
     out = json.loads(capsys.readouterr().out)
-    assert out["pending_human"][0]["blocked_on"] == "rubric-text"
+    assert out["pending_human"] == []
+    assert out["coverage"]["scored"] == 1
+    assert out["passed"] is True
 
 
 def test_main_emits_plugin_and_skill_for_eval_log_routing(monkeypatch, tmp_path, capsys):
@@ -908,3 +910,198 @@ def test_pg002_fail_when_anchor_absent(tmp_path):
 def test_pg002_skips_skill_without_prompts(tmp_path):
     d, _ = _write_skill_dir(tmp_path)
     assert RFS.check_rule(_rule("PG-002"), {}, "", d) is None
+
+
+# ============================================================================
+# PG-001: prompt_required -> canonical Markdown prompt
+# ============================================================================
+
+def _write_responsibility_skill(
+    tmp_path, rows, prompt_names=(), kind="run", responsibility_refs=(), prompt_bodies=None,
+):
+    d = tmp_path / "plugins" / "demo" / "skills" / "run-demo"
+    d.mkdir(parents=True)
+    lines = ["---", "name: run-demo", f"kind: {kind}", "responsibilities:"]
+    for rid, name, required in rows:
+        lines.extend([
+            f"  - id: {rid}",
+            f"    name: {name}",
+            f"    prompt_required: {'true' if required else 'false'}",
+        ])
+    if responsibility_refs:
+        lines.append("responsibility_refs:")
+        lines.extend(f"  - prompts/{name}" for name in responsibility_refs)
+    lines.extend(["---", "", "## Purpose & Output Contract", "x", "", "## Gotchas", "x"])
+    (d / "SKILL.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (d / "prompts").mkdir()
+    for name in prompt_names:
+        body = (prompt_bodies or {}).get(name, "# Prompt\n")
+        (d / "prompts" / name).write_text(body, encoding="utf-8")
+    return d
+
+
+def test_pg001_passes_exact_composite_id_markdown(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path, [("R1-elicit", "elicit", True)], ["R1-elicit.md"],
+    )
+    assert RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d) is None
+
+
+def test_pg001_passes_bare_id_name_projection(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path, [("R1", "gate-review", True)], ["R1-gate-review.md"],
+    )
+    assert RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d) is None
+
+
+def test_pg001_ignores_prompt_required_false(tmp_path):
+    d = _write_responsibility_skill(tmp_path, [("R9", "retry", False)], [])
+    assert RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d) is None
+
+
+def test_pg001_fails_missing_or_yaml_only_required_prompt(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path, [("R1", "elicit", True)], ["R1-elicit.yaml"],
+    )
+    finding = RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d)
+    assert finding is not None
+    assert finding["severity"] == "high"
+    assert "Markdown prompt" in finding["message"]
+
+
+def test_pg001_passes_explicit_ref_bound_to_same_responsibility(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path,
+        [("R1-assign", "assign", True)],
+        ["R1-review-readability.md"],
+        responsibility_refs=["R1-review-readability.md"],
+        prompt_bodies={
+            "R1-review-readability.md":
+                "# Prompt\n\n| responsibility | R1-assign (review) |\n",
+        },
+    )
+    assert RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d) is None
+
+
+def test_pg001_rejects_explicit_ref_without_matching_body_binding(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path,
+        [("R1-assign", "assign", True)],
+        ["R1-review-readability.md"],
+        responsibility_refs=["R1-review-readability.md"],
+        prompt_bodies={"R1-review-readability.md": "# Prompt\n\n| responsibility | R2 |\n"},
+    )
+    finding = RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d)
+    assert finding is not None and "Markdown prompt" in finding["message"]
+
+
+def test_pg001_rejects_unlisted_alias_even_if_body_declares_id(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path,
+        [("R1-assign", "assign", True)],
+        ["R1-review-readability.md"],
+        prompt_bodies={
+            "R1-review-readability.md": "# Prompt\n\n| responsibility | R1-assign |\n",
+        },
+    )
+    finding = RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d)
+    assert finding is not None and "Markdown prompt" in finding["message"]
+
+
+def test_pg001_rejects_responsibility_ref_outside_local_prompts(tmp_path):
+    d = _write_responsibility_skill(
+        tmp_path,
+        [("R1", "elicit", True)],
+        ["R1-elicit.md"],
+        responsibility_refs=["../outside.md"],
+    )
+    finding = RFS.check_rule(_rule("PG-001", "high"), {"kind": "run"}, "", d)
+    assert finding is not None and "skill-local prompts/*.md 外" in finding["message"]
+
+
+# ============================================================================
+# REG-001: completeness + canonical per-skill trace validator
+# ============================================================================
+
+def _registration_fixture(tmp_path, with_trace):
+    root = tmp_path / "repo"
+    (root / ".git").mkdir(parents=True)
+    skill = root / "plugins" / "demo" / "skills" / "run-demo"
+    skill.mkdir(parents=True)
+    (root / "scripts").mkdir()
+    (root / "scripts" / "validate-plugin-completeness.py").write_text("", encoding="utf-8")
+    validator = (
+        root / "plugins" / "harness-creator" / "skills" / "run-build-skill"
+        / "scripts" / "validate-build-trace.py"
+    )
+    validator.parent.mkdir(parents=True)
+    validator.write_text("", encoding="utf-8")
+    if with_trace:
+        trace = root / "eval-log" / "demo" / "run-demo" / "skill-build-trace.json"
+        trace.parent.mkdir(parents=True)
+        trace.write_text("{}\n", encoding="utf-8")
+    return root, skill, validator
+
+
+def test_reg001_legacy_without_per_skill_trace_checks_completeness_only(
+    monkeypatch, tmp_path,
+):
+    root, skill, _ = _registration_fixture(tmp_path, with_trace=False)
+    calls = []
+
+    class Result:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    monkeypatch.setattr(
+        RFS.subprocess, "run",
+        lambda command, **kwargs: calls.append((command, kwargs)) or Result(),
+    )
+    assert RFS.check_rule(_rule("REG-001", "high"), {}, "", skill) is None
+    assert len(calls) == 1
+    assert calls[0][0][1] == str(root / "scripts" / "validate-plugin-completeness.py")
+
+
+def test_reg001_existing_trace_uses_canonical_validator(monkeypatch, tmp_path):
+    root, skill, validator = _registration_fixture(tmp_path, with_trace=True)
+    calls = []
+
+    class Result:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    monkeypatch.setattr(
+        RFS.subprocess, "run",
+        lambda command, **kwargs: calls.append((command, kwargs)) or Result(),
+    )
+    assert RFS.check_rule(_rule("REG-001", "high"), {}, "", skill) is None
+    assert len(calls) == 2
+    assert calls[1][0][1] == str(validator)
+    assert calls[1][0][2] == str(
+        root / "eval-log" / "demo" / "run-demo" / "skill-build-trace.json"
+    )
+
+
+def test_reg001_existing_invalid_trace_is_high_finding(monkeypatch, tmp_path):
+    _, skill, _ = _registration_fixture(tmp_path, with_trace=True)
+    calls = 0
+
+    class Result:
+        stdout = ""
+
+        def __init__(self, code):
+            self.returncode = code
+            self.stderr = "bad trace" if code else ""
+
+    def run(command, **kwargs):
+        nonlocal calls
+        calls += 1
+        return Result(0 if calls == 1 else 1)
+
+    monkeypatch.setattr(RFS.subprocess, "run", run)
+    finding = RFS.check_rule(_rule("REG-001", "high"), {}, "", skill)
+    assert finding is not None
+    assert finding["severity"] == "high"
+    assert "canonical validate-build-trace.py exit=1" in finding["message"]

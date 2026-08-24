@@ -220,7 +220,7 @@ def _base_fm(spec_id: str, ck: str, skill_kind: str) -> dict:
                 {"id": "OUT1", "loop_scope": "outer",
                  "text": "観測可能な完了状態をテストで検証し受入が PASS", "verify_by": "test"},
             ]}
-            fm["goal_seek"] = {"engine": "inline", "fork": "subagent", "max_loops": 5}
+            fm["goal_seek"] = {"engine": "inline", "fork": "inline", "max_loops": 5}
         if skill_kind in ("run", "assign"):
             fm["prompt_layer"] = "7layer"
         fm["combinators"] = ["with-goal-seek"]

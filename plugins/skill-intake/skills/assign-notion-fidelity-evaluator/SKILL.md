@@ -7,6 +7,7 @@ allowed-tools:
   - Grep
   - Glob
 kind: assign
+pair: run-notion-intake-publish
 user-invocable: false
 context: fork
 effect: conversation-output

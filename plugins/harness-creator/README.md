@@ -187,6 +187,10 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
 
 **注意**: `run-skill-create` は名前どおり**単体スキル 1 個**を作る (内部で評価・統治をオーケストレーションするが産物は単体)。「ハーネス (総体)」を組むのは `plugin-compose` / `capability-build plugin-composition <name>` であり、`run-skill-create` ではない。`plugin-compose` は既存 Capability を束ねるための `plugin-composition.yaml` を編集する入口で、個別 Capability 本体は作らない。
 
+**生成物の最小十分 runtime**: 生成する loop 実行系スキルは Goal・Checklist・検証契約を常に持つが、`goal_seek.engine` / `goal_seek.fork` の既定はどちらも `inline`。実在する依存グラフがある場合だけ `task-graph`、`needs_independent_context=true` の場合だけ SubAgent、独立した並列所有権がある場合だけ Agent Team を明示する。品質契約を削らず、必要のない制御往復と engine 資産の同梱だけを避ける。
+
+依存は二層に分ける。Harness Creator が plugin を組み立てる順序（component DAG）と、完成後の各 Skill が実行中に消費する順序（runtime profile）は別契約である。出力として `task-graph.json` を作るだけの Skill は `engine:inline` のままでよい。`python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --repo-root .` が `plugins/*/skills/*/SKILL.md` 全件の profile、workflow 依存、委譲先実在、Task Graph 資産の正本一致を fail-closed で検査する。
+
 標準フローは **第1稿の現物 → class別最小guard(parse/open・secret・不可逆・破損) → path/試し方を提示 → 利用者が診断深度を選択 → 選択時だけsemantic評価・有界改善**。`現状で試す`はevaluator 0 / improver 0。今回のように30思考法監査が明示済みな場合は、現物提示後に現在turn限定choiceとして実行できるが、将来の毎draft自動診断へ流用しない。release / exhaustiveは明示選択なしに自動昇格しない。
 
 **前提**（満たさないと再実行が非決定に落ちる）: cwd = clone した repo root ／ `make native-surfaces` 済（C01 apply→check が PASS）／ `harness-creator` と `plugin-dev-planner` の両方が有効化・信頼済 ／ python3。全コマンドは project-local（unprefixed）で起動する（`<plugin>:` 形式の namespaced prefix は付けない — Claude 経路では本 plugin は `distributable:false` で public marketplace 経由の呼称は存在しない）。

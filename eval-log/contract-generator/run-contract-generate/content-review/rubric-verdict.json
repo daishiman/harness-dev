@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-generate",
-    "skill_md_sha256": "8e224996360961ed89126ffdee08866731c87e61f2ccd4cc28b03a4bd9509291"
+    "skill_md_sha256": "fcd6ed558032ca4a85325eea5ccc6bc40e0fb67f2bac38c9266c6649298e48af"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "runtime-profile-core-focused-review",
+  "reviewed_at": "2026-08-24T00:45:09Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,18 +25,13 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "allowed-tools の絞り込み ([Read, Write, Edit, Bash(python3 *), AskUserQuestion] → [Read, Bash(python3 *)]) と Checklist の書き換え (「欠損必須列は AskUserQuestion で補完」→「needs-input として行番号・列名を報告し、ユーザーが管理台帳SSOTを修正した後に再実行」) が同一差分内で対になっている。prompt SSOT `prompts/R1-select-and-fill.md` (L8/L65/L70/L137/L144/L152) と `agents/contract-draft-agent.md` (tools: Read, Bash / L20) も既に needs-input 型で、3 層に AskUserQuestion 依存が残っていないことを grep で確認した (SKILL.md 本文・prompt・agent いずれもヒット 0)。権限縮小と手順記述が乖離していない。",
-      "台帳を単一真実源に据える設計と needs-input の相性が良い。AI が対話で欠損を埋めると台帳 SSOT と生成物が乖離しうるが、行番号・列名だけ返して SSOT 修正→再実行に倒すことで、機微情報 (乙住所・代表者・口座) を応答へ複製しない方針 (prompt L65) とも同じ方向に揃っている。",
-      "重複 external_mutation_guard キーの除去と runtime_root_policy + Runtime root contract 節の追加が finalize / template-sync と同一形で適用され、plugin 内 3 skill の規約表現が揃っている。config_auth.py / setup_doctor.py / check_intermediate.py / validate.py / docx_fill.py の各参照行も `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行済みで、bare 参照は契約説明文 (L96) の 1 箇所のみ。"
+      "inline/inline が入力正規化からドラフト生成までの単一所有処理と一致し、署名・確定責務との境界も維持している。"
     ],
-    "negative_feedback": [
-      "[low / smell] 追加リソース節の `lib/setup_doctor.py` 説明が「未完了 Task を名指し」のままで、同差分が他 2 箇所の「Task 0-14 / Task 4/8」を「セットアップ節」へ改めた方針から取り残されている。実際に `lib/setup_doctor.py` を grep しても `Task` 文字列は 0 件、README.md の見出しも Step 0-8 番号制であり、Task 番号体系はもう存在しない。診断出力の読み方を誤らせうるが実行不能にはならないため low。",
-      "[low / smell] 本 SKILL.md には finalize の「運用」/ template-sync の「使い方」に相当する起動コマンド節が無く、`scripts/draft.py` は追加リソース節で「薄い shim」と紹介されるだけで invocation が示されない。実際の起動形は prompt SSOT (`python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py\" --phase draft ...`) にあり参照可能なため実害は小さいが、姉妹 skill との非対称は残る。今回の差分が持ち込んだものではなく既存構造。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:runtime-profile-migration",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 評価方法: `git diff HEAD -- plugins/contract-generator/skills/<skill>/SKILL.md` の差分を全行読み、現行 SKILL.md frontmatter 全体、prompts/ の prompt SSOT、../../agents/ の実行アダプタ、plugin 直下 README.md の該当節を読んだ。機械検査として (1) frontmatter が宣言した rubric_refs / responsibility_refs / prompt_ssot / external_mutation_guard.runtime_ref の実在を `ls`/存在判定で全件確認 (欠損 0 件)、(2) effect=external-mutation と external_mutation_guard frontmatter・canonical receipt flow block の双方向対応を確認、(3) SKILL.md 内の `CLAUDE_PLUGIN_ROOT` 出現箇所を grep し bare 参照が Runtime root contract の説明文 1 行のみで shell 起動行には残っていないことを確認、(4) `python3` / `scripts/` を含む全行を列挙して起動形式を点検した。 frontmatter が宣言した参照 (rubric_refs の thought-methods.yaml・run-contract-generate 固有 lib、responsibility_refs の prompts/prompt SSOT・../../agents/*.md・scripts/*.py、external_mutation_guard.runtime_ref の build-external-mutation-guard.py) は全件実在を確認した。欠損 0 件。 差分の実体は 4 つ: (1) allowed-tools の縮小、(2) 欠損補完手順の AskUserQuestion → needs-input への転換、(3) 重複 external_mutation_guard キーの除去、(4) runtime_root_policy + Runtime root contract 節の追加と参照パスの `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 化 (加えて README の Task 番号参照の追随)。(2) は挙動を変える意味的変更のため prompt SSOT と agent アダプタを実際に読んで整合を確認した (両者とも既に needs-input 型・agent の tools も Read, Bash に縮小済み)。Purpose & Output Contract の停止条件 (Docs 黄色版生成 + Slack 通知 + 台帳 draft 化まで) と feedback_contract.criteria (IN1/IN2/OUT1) は変更前後で同一であり、責務分離 (PDF 確定は run-contract-finalize、ひな形追従は run-template-sync) も壊れていない。未解決の medium 以上は 0 件、残る low 2 件はいずれも記述上の smell で verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは Gate D の実走証拠を別途要する。 本ファイルは rubric 射影 (ref-skill-design-rubric の規範採点観点、high severity finding の有無) である。"
+  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
 }

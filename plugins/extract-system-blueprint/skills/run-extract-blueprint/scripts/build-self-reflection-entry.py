@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # /// script
-# name: self-reflect-append
+# name: build-self-reflection-entry
 # purpose: self-reflect で実行中に発見した新規タスクを、別状態ファイル (task-graph.json 相当) を新設せず checklist (progress.json) の末尾へ新しい item として追記する決定論ゲート。追記のみ (既存 item は不変) で追記ノードは常に DAG 上の新規シンクになるが、id 重複・未知 depends_on 参照・追記後サイクルを fail-closed 検査する (単一truth設計=H3 解消の実装物)。
 # inputs:
-#   - argv: <progress_json_path> --id <新規id> --text <達成条件文> [--depends-on <id[,id...]>] [--verify-by reasoning|script|lint|test|human]
+#   - argv: <progress_json_path> --id <新規id> --text <達成条件文> [--depends-on <id[,id...]>] [--verify-by reasoning|script|lint|test|human] [--available-from-iteration <n>]
 # outputs:
 #   - stdout: 追記後の progress.json 全体 (checklist へ status=pending の新 item 追記済み)
 #   - stderr: violation 理由 (id 重複 / 未知 depends_on / サイクル / schema 違反)
@@ -25,6 +25,8 @@ done-judge (周回終了判定) が毎回スキャンする**その同じ checkl
   1. id が schema pattern (^C[0-9]+$) に準拠し、既存 item と重複しない。
   2. depends_on の各先が既存 checklist に実在する (dangling 参照拒否)。
   3. 追記後の depends_on グラフが非循環である (新規シンクゆえ構造的に安全だが念のため検査)。
+  4. created_iteration を progress.iteration から記録し、available_from_iteration は既定で次周回。
+     明示値は created_iteration より大きい非負整数だけ受理する。
 既存 item の id/text/status/depends_on は一切書き換えない (単一 self-writer 追記のみ)。
 
 Exit 0 = OK, 1 = violation, 2 = usage/IO error。
@@ -51,6 +53,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         choices=["reasoning", "script", "lint", "test", "human"],
         default=None,
         help="判定手段 (任意)",
+    )
+    p.add_argument(
+        "--available-from-iteration",
+        type=int,
+        default=None,
+        help="新 item が ready 候補になれる最初の周回 (既定: progress.iteration + 1)",
     )
     return p.parse_args(argv)
 
@@ -98,6 +106,8 @@ def append_item(
     text: str,
     depends_on: list[str],
     verify_by: str | None,
+    created_iteration: int = 0,
+    available_from_iteration: int | None = None,
 ) -> dict:
     """fail-closed 検査を通したうえで新 item を組み立てて返す (checklist は破壊しない)。"""
     if not _ID_RE.match(new_id):
@@ -111,7 +121,22 @@ def append_item(
     if unknown:
         raise ValueError(f"未知の depends_on 参照 (checklist に不在): {unknown}")
 
-    new_item: dict = {"id": new_id, "text": text, "status": "pending"}
+    if isinstance(created_iteration, bool) or not isinstance(created_iteration, int) or created_iteration < 0:
+        raise ValueError(f"created_iteration が非負整数でない: {created_iteration}")
+    available = created_iteration + 1 if available_from_iteration is None else available_from_iteration
+    if isinstance(available, bool) or not isinstance(available, int) or available <= created_iteration:
+        raise ValueError(
+            "available_from_iteration は created_iteration より大きい非負整数が必要: "
+            f"created={created_iteration}, available={available}"
+        )
+
+    new_item: dict = {
+        "id": new_id,
+        "text": text,
+        "status": "pending",
+        "created_iteration": created_iteration,
+        "available_from_iteration": available,
+    }
     if depends_on:
         new_item["depends_on"] = depends_on
     if verify_by:
@@ -146,9 +171,20 @@ def main(argv: list[str]) -> int:
         sys.stderr.write("progress.json の checklist が配列でない\n")
         return 2
 
+    current_iteration = data.get("iteration")
+    if isinstance(current_iteration, bool) or not isinstance(current_iteration, int) or current_iteration < 0:
+        sys.stderr.write("progress.json の iteration が非負整数でない\n")
+        return 2
+
     try:
         new_item = append_item(
-            checklist, args.id, args.text, _parse_depends(args.depends_on), args.verify_by
+            checklist,
+            args.id,
+            args.text,
+            _parse_depends(args.depends_on),
+            args.verify_by,
+            current_iteration,
+            args.available_from_iteration,
         )
     except ValueError as exc:
         sys.stderr.write(f"self-reflect append violation: {exc}\n")

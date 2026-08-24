@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- scope closure解決、max_parallel/candidate kind一意になる。
+- scope node→parent feature/子task/依存先の固定点closureが機械解決され、max_parallel/candidate kindが一意になる。
 
 ## Layer 3: インフラ層
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-schedule/R1-elicit`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-schedule/R1-elicit`。親 context が scope と max parallel を確定する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] scope closure解決、max_parallel/candidate kind一意になる
+- [ ] scope固定点closure解決、max_parallel/candidate kindが一意になる
 
 ### 5.4 実行方式
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

@@ -3,6 +3,9 @@ name: run-governance-hooks
 description: governance hookのevent・matcher・commandを監査したいとき、対象file ownershipと配線漏れを確認したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

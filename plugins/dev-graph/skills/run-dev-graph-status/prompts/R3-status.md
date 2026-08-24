@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: Readとvalidate-graph-schema。
+- 使用資産: maintained read-only `extract-graph-status.py`。この runtime が C24、C11、検索、graph/config/content の前後 digest 比較を一括実行する。インライン検索 script は作らない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-status/R3-status`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-status/R3-status`。本 skill の `fork: inline` 契約に従い main context で実行する。独立評価が必要な場合は未宣言の Agent を作らず上位 skill へ blocker を返す。
 
 ### 5.2 ゴール定義
 
@@ -63,7 +63,7 @@
 
 ## Layer 6: オーケストレーション層
 
-- read-only reportを返す。
+- `extract-graph-status.py` の `owner=C18/run-dev-graph-status` / `operation=status_search` / `read_only=true` / `digests_unchanged=true` / `write_count=0` の reportを返す。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

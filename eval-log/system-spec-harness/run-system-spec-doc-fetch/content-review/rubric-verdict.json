@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
+    "skill_md_sha256": "07782f20e1b76171199ca646b5a70ad8549fa379b696b4cb96d609eedfc53375"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 1
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-24T01:04:16Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,18 +24,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "構造規範 (frontmatter 完備) を満たす: name/description/kind/prefix/effect/owner/version/allowed-tools/responsibilities/combinators/feedback_contract/artifact_delivery が揃い、responsibilities 3 件と responsibility_refs 3 件が id 単位で 1:1 対応する。",
-      "IN1 (verify_by: script) は `validate-source-citation.py` という実在する決定論 script に接地しており、その実行行が今回 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行されたことで、宣言 (runtime_root_policy) と検証手段の起動形が両立している。",
-      "Key Rules 4 (決定論組み立て) と 6 (鮮度判定は C08 へ分離) が、本 skill の責務境界を形式検証 (形式・全件・host 一致) までに限定しており、OUT1 を別 component (C08) の受入テストへ委譲する構造が criteria と本文で一致している。"
+      "Purpose & Output Contract、Gotchas、局面カタログが217行内に収まり、取得対象・fetched-references形状・完了条件を明示する。",
+      "allowed Task、fork:subagent、本文Task経路の3点が揃い、responsibility_refs R1-R3とscripts/schema/referenceは実在する。",
+      "IN1/OUT1を全件評価し、system-spec-harness対象tests 334 passed、runtime/goal-seek lint 0。"
     ],
     "negative_feedback": [
-      "[low / smell] 局面カタログ R3 行のコマンド表記が path 無しで、`## 検証コマンド` block の PLUGIN_ROOT 形と粒度が揃っていない。",
-      "[low / smell] prompts/R4-audit-doc-freshness.md が responsibility_refs にも Additional Resources にも現れず、C08 側 SSOT であることは SKILL.md 本文の consumer 行から間接的にしか読めない。"
+      "[low / tree] prompts/R4-audit-doc-freshness.md はC08側監査promptとして同居し responsibility_refs R1-R3に未列挙、tests/もtree Warnになる。ownerのR1-R3実経路と参照実在は崩れていない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはおらず、数値 score は算出していない。機械的に確認したのは構造規範に相当する項目に限る — frontmatter 必須キーの充足、responsibilities と responsibility_refs の 1:1 対応、宣言 path (responsibility_refs 3 / schema_refs 1 / Additional Resources 記載の script・reference) 23 件の実在 (test -e で全件 OK)、effect: local-artifact に対して external_mutation_guard を持たないことの正しい対応、artifact_delivery の 6 state / 6 transition 完備、runtime_root_policy 宣言と `## Runtime root contract` 節の対存在、shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形であること (bare `$CLAUDE_PLUGIN_ROOT` の実行行は grep で 0 件)。加えて `python3 scripts/lint-runtime-portability.py` を実行し exit 0 を確認した。 30 思考法は実施しておらず、実施も申告しない。verdict は focused combined review の単一判断に従い、high severity 相当の未解決 finding 0 件・medium 以上 0 件であるため PASS。残る 2 件は low の表記 smell。PASS の射程は静的設計 adequacy に限り、OUT1 (verify_by: test) の実走証拠は本 review では取得していない。"
+  "notes": "Focused rubric projection。41規則のscoreは未算出、30思考法は未実施。Purpose/Gotchas/行数、Task gateway、refs、criteria exact-set、tests/lintsを確認。R4同居prompt/tree warningはlow。未解決medium/high 0のためPASS。"
 }

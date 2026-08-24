@@ -2,13 +2,20 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "514898808f9a2884a488770c77c41cf30a90b57e6e5312ae6c4c7c6ab1dd9f04"
+    "skill_md_sha256": "1003b4e176c0e836774cede583107722118a996a4ea0358dc0320eea5449f8c6"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-build-skill (focused combined content review, incremental profile, round 4)",
-  "reviewed_at": "2026-08-21T06:30:00Z",
-  "iterations": 4,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "run-build-skill-focused-content-review",
+  "reviewed_at": "2026-08-24T06:03:30Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -20,29 +27,14 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "重点論点(1)(3) 解決。SKILL.md:341 の lint 起動行コメント `# kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出` が scripts/lint-readme-plugin-root-portability.py の docstring『禁止 (fragile)』3 項目 (一次手順の裸 plugin root 変数 / repo 相対直書き / os.environ 添字) と一対一で対応し、実装側 BARE_ROOT_RE が fallback 形に一致しないことと『裸の』という限定詞の意味が一致する。runtime-portability.md 層2 の不変条件 3 項目とも整合。",
-      "2 gate 衝突 (content-review が要求する具体性 vs audit-capability-parity の bare_claude_plugin_root) をどちらも曲げずに解いている。変数リテラルを書かない一般化により、意味 (裸=違反 / fallback=許可) を保存したまま audit の literal token 規則にも触れない。実測: lint-readme-plugin-root-portability.py exit 0 (ユーザー向け文書 17 件 OK)、audit-capability-parity.py --repo-root . exit 0 / verdict=PASS / violations 空。",
-      "Step 10 の SSOT 移設は redirect 先が実在し情報欠落なし。SKILL.md:372 の references/build-steps.md#h7-ナレッジループ注入の詳細手順 に対し build-steps.md:502 に `### H.7 ナレッジループ注入の詳細手順` が実在 (GitHub slug 規則で一致)、5 段手順と Loop B blockquote が逐語で移設済み、SKILL.md 側に再掲なし。lint-ssot-duplication.py --plugin-dir plugins/harness-creator exit 0。",
-      "依存関係も切れていない。Step 10 は phase: references であり workflow-manifest.json:322 の ref-build-steps (path ./references/build-steps.md) が phaseIds に references を含んで登録済みのため redirect 先が当該 phase の宣言リソースとして解決可能。lint-skill-tree.py は SS-203 で本文 296 行 (上限 300) を報告し、この移設が行数予算の実需に基づく圧縮であることを裏づける。",
-      "Runtime root contract 節の 1 行化と Step 4 直前の空行追加はいずれも意味中立。前者のリンク先 slug は runtime-portability.md:41 の `## product別 plugin root 契約` と一致し audit の runtime_root_contract 検査も PASS。Step 4 fence 内の他の起動行は $PLUGIN_ROOT / $SKILL_DIR へ統一され、repo-level gate 2 本だけが ${HARNESS_ROOT:-.} を使う形が SKILL.md:172 の carve-out と整合する。"
+      "新規はinline/inlineを最小既定としながら、updateは現行engine/fork/max_loopsを保存して目的を黙示変更せず、明示task-graph時だけ4資産を同梱する。",
+      "goal-seekの実行契約はsemantic rendererをSSOTとし、trace不在・bound不足・ready省略・動的item早期選択・symlink占有をfail-closedで検出する。"
     ],
-    "negative_feedback": [
-      "[medium / inconsistency — 本 round で修正済み] CL-11 (SKILL.md:247) が正本として挙げる runtime-portability.md 層2 機構2 と食い違っていた。CL-11 は setup 手順の bash から生パス例を無条件に排除する書き方だったが、正本は生パス直叩き例を『開発者向け補足へ降格した上で fallback 形で書く』ことを明示的に許可する。評価者の修正案どおり『**一次手順としては** doctor entry point だけを案内し、生パス例は開発者補足へ降格した fallback 形に限る』へ改め、変数リテラルを書かないことで capability audit にも触れない形にした。修正後に lint-readme-plugin-root-portability.py = exit 0、audit-capability-parity.py = exit 0、lint-skill-tree.py = ok (296 行) を再実測済み。",
-      "[low / smell] 『裸のplugin root変数』はカバレッジをわずかに広く読ませる。lint の BARE_ROOT_RE / BARE_ASSIGN_RE / OSENV_SUBSCRIPT_RE はいずれも CLAUDE_PLUGIN_ROOT のみに一致し、README 内の裸 $PLUGIN_ROOT は検出しない。実害は安全側 (読者が余分に避けるだけ) で、変数名を書けない audit 制約下では妥当な妥協。未修正。",
-      "[low / smell] Step 4 の repo-level gate 2 本は ${HARNESS_ROOT:-.} で未定義時 cwd へ落ちる。SKILL.md:172 の carve-out は『明示した project root を別入力として使う』と書いており、暗黙の cwd fallback は『明示』と語義がずれる。plugin root ではないため contract 違反ではない。未修正 (別 issue)。",
-      "[info / 対象外] lint-skill-description.py の repo 全走査は .claude/agents/elegant-initial-draft-evaluator.md の R2 違反 1 件で exit 1 になるが、本 slice 外の既存違反であり run-build-skill 配下には違反なし。"
-    ],
-    "iteration": 4,
-    "iteration_limit": 4,
-    "hook_trigger": "manual",
+    "negative_feedback": [],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:run-build-skill-focused-content-review",
     "next_action": "none"
   },
-  "notes": "round 4 incremental content review (焦点: (1) 『裸 $CLAUDE_PLUGIN_ROOT』→『裸のplugin root変数』の書き換えが Goodhart 緑化でないか (2) lint 検出仕様との一致 (3) 2 gate 衝突をどちらも曲げずに解けているか (4) Runtime root contract 節の 1 行化 (5) Step 10 の SSOT 移設 (6) Step 4 直前の空行)。 読んだファイル: plugins/harness-creator/skills/run-build-skill/{SKILL.md, references/build-steps.md, references/content-review-protocol.md, workflow-manifest.json}、scripts/lint-readme-plugin-root-portability.py (docstring と regex 定義)、plugins/harness-creator/scripts/audit-capability-parity.py (_runtime_root_contract_missing / _portable_root_violations / bare_claude_plugin_root / literal_runtime_root_placeholder / runtime_root_policy_missing)、plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md、eval-log/harness-creator/run-build-skill/content-review/{elegance,rubric}-verdict.json (round 3)。 実行コマンドと実測 exit code: lint-readme-plugin-root-portability.py = 0 (17 件 OK)、audit-capability-parity.py --repo-root . = 0 (verdict=PASS / violations を持つ plugin 0 件)、lint-ssot-duplication.py --plugin-dir plugins/harness-creator = 0、lint-skill-tree.py = 0 (Warn SS-203: 296 行)、lint-skill-name / validate-frontmatter / lint-criteria-provenance / lint-declaration-coverage / lint-skill-completeness / lint-path-canonical = 全て 0、lint-goal-seek.py = 0 (WARN 3 既存)、validate-build-trace.py eval-log/skill-build-trace.json = 0、lint-skill-description.py (repo 全走査) = 1 (違反は .claude/agents/elegant-initial-draft-evaluator.md で本 slice 外)。 Goodhart 判定: lint 起動行コメントの書き換えは緑化に当たらない。(a) 削除されたのは変数リテラルだけで、許可/禁止を分ける実質的述語 (『裸の』= fallback 無し) と検出 3 項目の列挙は残り lint docstring と一対一対応を保つ。(b) 書き換え前の index blob は audit を dual-root 形として通過しつつ『正しい形を違反形として教える』意味反転を含んでおり、今回の変更は『機械緑・意味誤り』→『機械緑・意味正』への移動で、緑化の逆向きである。(c) 変更されたのは実行行でなくコメントのみで lint 自身の検出集合・fail-closed 性は不変 (exit 0 実測)。 sha 系譜: 評価は sha 76fb7c4225cffaa0fb66c82a735dedbffb3347031c1000083070c82c7d9c238f 時点で実施。その後の唯一の変更は上記 medium (CL-11) を評価者の提案文言どおり修正した 1 行のみで、現 sha 514898808f9a2884a488770c77c41cf30a90b57e6e5312ae6c4c7c6ab1dd9f04 になった。修正後に上記 lint 群を再実測して exit code が変わらないことを確認済み。findings_summary の inconsistency: 1 は評価時点の検出数であり、現 sha では解消している。 criteria 全 5 件の評価: IN1 = 上記 lint 群を実測し run-build-skill 由来の違反 0。IN2 = validate-build-trace.py が exit 0、本 diff は trace 生成ロジック未変更。IN3 = 本変更は route 消費 build ではなく単発の文書修正のため N/A、route-build-report 契約段落 (SKILL.md:320) は空行追加以外無傷。OUT1 = high severity 0 件、重点論点は実ファイル・実 exit code の複数独立証拠で裏づけ済み。OUT2 = draft 提示/lease/有界改善の記述 (CL-13 / artifact_delivery frontmatter) に変更なく release/exhaustive への自動昇格を導入していない。 30 思考法は実施しておらず、実施したとも申告しない (incremental profile の焦点再判定のみ)。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 1,
-    "dependency_break": 0,
-    "smell": 3
-  }
+  "notes": "1 context/1 targetのincremental focused review。1周目でupdate profile保存・旧script移行・verifier・materializer preflightのhigh blockerを検出し最小修正、2周目で矛盾なし/漏れなし/整合性あり/依存関係整合、IN1/IN2/IN3/OUT1/OUT2、未解決high 0を確認した。根拠は現在sourceの静的reviewとfocused testsであり、未実行live trialをPASS根拠にしていない。"
 }

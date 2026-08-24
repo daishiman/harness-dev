@@ -8,7 +8,7 @@ hierarchy_level: L1        # L0 | L1 | L2
 owner: team-skills
 since: 2026-07-11
 rubric_refs: []
-# goal-seek: 固定手順を持たず Goal+Checklist へ向けて反復する。engine 既定は task-graph (依存順駆動)。反復ループは fork で分離 context に切り出し親へ最終差分のみ返す(2軸は独立)。
+# task-graph と subagent が必要なケースの明示的な実例。通常の生成物は engine/fork とも inline。
 goal_seek:
   engine: task-graph
   engine_profile: checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)
@@ -17,7 +17,7 @@ goal_seek:
   progress: eval-log/run-task-graph-demo-progress.json     # schemas/goal-seek-loop.schema.json 準拠
   intermediate: eval-log/run-task-graph-demo-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)
   max_loops: 5
-  fork: subagent        # subagent(既定/反復を分離contextで実行し親へ最終差分のみ) | agent-team | inline(軽量単発のみ opt-down)
+  fork: subagent        # 本例は独立 context が必要なため明示。無指定の既定は inline
 # doc/21 source-traceability
 source: run-build-skill/references/goal-seek-paradigm.md
 source-tier: internal
@@ -54,7 +54,7 @@ checklist-graph profile が planner (plugin-dev-planner) の task-graph 機構�
 
 ### 完了チェックリスト (Checklist)
 - [ ] C1: `eval-log/run-task-graph-demo-progress.json` を `goal-seek-loop.schema.json` 準拠で読み込み `engine: task-graph` を記録している
-- [ ] C2: `ready-set-from-checklist.py` の返す ready 集合の最小 id item のみを選択している (依存順消費・C1 完了が前提)
+- [ ] C2: `extract-ready-set-from-checklist.py` の返す ready 集合の最小 id item のみを選択している (依存順消費・C1 完了が前提)
 - [ ] C3: 選択 item 実行後に progress.json の該当 item を `status: done` へ記述している (C2 完了が前提)
 - [ ] C4: 全 checklist item が done で `status: completed` を宣言し pending/blocked を残さない (C3 完了が前提)
 
@@ -66,7 +66,7 @@ checklist-graph profile が planner (plugin-dev-planner) の task-graph 機構�
 
 - **goal-spec**: `eval-log/goal-spec.json` があればロードして利用する（spec schema が同梱されていれば検証、無ければそのまま利用）。無ければ既存コンテキスト（直近依頼・制約・対象ファイル）から AI が最適ゴール+完了チェックリストを推定生成する（ユーザーへの追加質問は原則しない）。
 - **周回状態**: 各周回で `eval-log/run-task-graph-demo-progress.json`（`run-build-skill/schemas/goal-seek-loop.schema.json` 準拠）に `iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` を記録する。
-- **コンテキスト分離（fork 軸）**: 反復ループは既定で SubAgent（`Agent`）に分離して実行し、親には最終成果物と `handoff-*.json` 要約のみ返す（中間試行で親 context を汚さない）。`fork: inline` は軽量単発時の opt-down。なお重い周回で `engine: run-goal-seek`（同梱時のみ）を使うのは外部依存軸の任意最適化で、fork 分離とは独立（`references/goal-seek-paradigm.md`「コンテキスト分離」）。
+- **コンテキスト配置（fork 軸）**: 本例は独立 context が必要なため SubAgent を明示し、親には最終成果物と `handoff-*.json` 要約のみ返す。
 - **中間成果物アンカー (ドリフト圧縮)**: 各周回末に `eval-log/run-task-graph-demo-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を 1 行追記する。`original_goal` は全周回で**不変**。次周回 Step2 (手順生成) は直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み込み、AI が単独で再導出しない。これにより固定手順なしの自由度を保ちつつ、AI が確率的最尤の抽象解へ集約化していくドリフトをアンカーで毎周回押し戻す (`references/goal-seek-paradigm.md`「中間成果物」)。
 - **drift_signal** (enum 6 値、schema 必須): `initial` (iteration=0 のみ・前周回無し) / `aligned` (差分ゼロ) / `compressing` (縮んでいる・継続) / `stagnant` (2 周連続変化なし・アプローチ転換) / `widening` (広がっている・差し戻し検討) / `oscillating` (正負反転・打ち切り検討)。判定主体はループ実行 SubAgent (fork 内自己評価)、判定タイミングは Step4 検証後・Step5 反復判定前。
 - **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達、または `drift_signal: stagnant`/`widening`/`oscillating` が 2 周連続なら、残項目と差分を `open_issues` に記録し人間 or 上位 orchestrator へ差し戻す。
@@ -89,11 +89,12 @@ if not os.path.exists(inter_path):
 rows = [json.loads(x) for x in open(inter_path, encoding="utf-8").read().splitlines() if x.strip()]
 assert rows, "intermediate.jsonl が空"
 anchor = rows[0]["original_goal"]  # 不変アンカー (周回で変わらない)
+assert isinstance(anchor, str) and anchor.strip(), "original_goal が空"
 for idx, row in enumerate(rows):
     assert not (required_keys - row.keys()), f"intermediate[{idx}] 必須キー不足"
     assert row["original_goal"] == anchor, f"intermediate[{idx}] anchor 不変性違反"
 expected_hash = hashlib.sha256(anchor.encode()).hexdigest()
-assert prog.get("original_goal_hash") in (None, expected_hash), "original_goal_hash drift"
+assert prog.get("original_goal_hash") == expected_hash, "original_goal_hash missing/drift"
 print(f"intermediate 検査 OK: {len(rows)} 行 / anchor 不変 / hash 一致")
 PY
 ```
@@ -101,10 +102,10 @@ PY
 ### ゴールシーク配線（task-graph 変種）
 `goal_seek.engine: task-graph` の場合のみ、上記 base ループの Step1「未達 `[ ]` を任意特定」を次の拘束的 Step へ**上書き置換**する（`engine: inline` は従来どおり任意選択のまま）:
 
-- 各周回の冒頭で同梱スクリプト `scripts/ready-set-from-checklist.py eval-log/run-task-graph-demo-progress.json` を実行し `{"ready":[...]}` を得る。
+- 各周回の冒頭で同梱スクリプト `scripts/extract-ready-set-from-checklist.py eval-log/run-task-graph-demo-progress.json` を実行し `{"ready":[...]}` を得る。
 - 返った ready 集合の**最小 id item のみ**を次の実行対象として選ぶ（依存充足順が「助言」でなく「拘束」になる）。ready が空なら全 done か blocked のみ＝ループ終了判定へ。
-- 実行中に新たな未網羅タスクを発見したら `scripts/self-reflect-append.py eval-log/run-task-graph-demo-progress.json --id <新id> --text <達成条件> --depends-on <...>` で checklist 末尾へ追記する（別状態ファイルを新設せず progress.json を唯一の truth に保つ）。追記 item は done-judge が毎回スキャンする同一配列に入るため反映漏れが構造的に発生しない。
-- item 完了時は必ず progress.json の該当 item を `status: done` へ**その場で記述**してから次周回へ進む。この done 記述そのものが次周回 `ready-set-from-checklist.py` 再計算の入力＝**次 item の発火条件**である（完了記述→ready 再計算→次 item 発火の連鎖で依存グラフを進行させる）。記述漏れは後続 item が永遠に ready にならない形で顕在化する。
+- 実行中に新たな未網羅タスクを発見したら `scripts/build-self-reflection-entry.py eval-log/run-task-graph-demo-progress.json --id <新id> --text <達成条件> --depends-on <...>` で checklist 末尾へ追記する（別状態ファイルを新設せず progress.json を唯一の truth に保つ）。追記 item は done-judge が毎回スキャンする同一配列に入るため反映漏れが構造的に発生しない。
+- item 完了時は必ず progress.json の該当 item を `status: done` へ**その場で記述**してから次周回へ進む。この done 記述そのものが次周回 `extract-ready-set-from-checklist.py` 再計算の入力＝**次 item の発火条件**である（完了記述→ready 再計算→次 item 発火の連鎖で依存グラフを進行させる）。記述漏れは後続 item が永遠に ready にならない形で顕在化する。
 - `goal_seek.max_loops` は **checklist item 数＋self-reflect 追記余裕以上**（目安: item 数×1.5）に設定する。1 周回 1 item 消費と消費完全性の拘束下では done 化できる item 数 ≤ 周回数 ≤ max_loops のため、bound 不足は completed を構造的に不能にする。不足のまま max_loops へ到達したら handed_off で差し戻し、上位が max_loops を引き上げて再入する。
 - progress.json に `engine: task-graph` を**必ず記録**する（runtime 検査が engine 値で task-graph 変種を判別し、トレース不在を『拘束違反』として絶対検査するため）。
 - 各周回末に `eval-log/run-task-graph-demo-intermediate.jsonl` の周回エントリへ `ready_set`（算出時点の ready 集合）と `selected_item`（実際に選択・実行した id）を**必須で追記**する（依存順消費の唯一の証跡・別状態ファイルを新設しない）。engine:task-graph でこのトレースを書かない harness は下記機械検査が exit1 で落とす（沈黙による回避を封鎖）。
@@ -183,9 +184,9 @@ PY
 ### dependency graph knowledge consult
 `engine: task-graph` 指定時、生成先 `scripts/` に依存グラフ抽出・記録の 2 スクリプトを同梱し、各 surface（skill / slash-command / sub-agent / script）の実行前判断で dependency graph knowledge を consult する（checklist の実行順とは別レイヤの派生判断・単一truth状態と分離）:
 
-- **同梱**: `templates/task-graph-engine/scripts/extract-capability-dependency-graph.py`（C06）と `record-capability-graph-knowledge.py`（C07）を生成先 `scripts/` へコピーする。
+- **同梱**: `templates/task-graph-engine/scripts/extract-capability-dependency-graph.py`（C06）と `build-capability-graph-knowledge-entry.py`（C07）を生成先 `scripts/` へコピーする。
 - **抽出**: `scripts/extract-capability-dependency-graph.py <harness_dir>` で surface 横断の dependency graph JSON（nodes/edges/gaps・未知参照は fail-closed）を得る。
-- **記録**: `scripts/record-capability-graph-knowledge.py <graph.json> --target-knowledge-dir knowledge/` で Loop A（生成 harness）へ、`--harness-knowledge-dir` 指定時は Loop B（harness-creator）へ `source_ref` 付き entry を append/merge する（既存 entry 不変）。
+- **記録**: `scripts/build-capability-graph-knowledge-entry.py <graph.json> --target-knowledge-dir knowledge/` で Loop A（生成 harness）へ、`--harness-knowledge-dir` 指定時は Loop B（harness-creator）へ `source_ref` 付き entry を append/merge する（既存 entry 不変）。
 - **consult**: 各 surface は着手前に dependency graph knowledge を参照し、依存先が未完成 / dangling の surface を先に着手しない。
 
 > engine:task-graph 変種は progress.json checklist を唯一の truth とし、ready 算出・self-reflect 追記・依存グラフ knowledge のいずれも別状態ファイルを新設しない（単一truth原則）。

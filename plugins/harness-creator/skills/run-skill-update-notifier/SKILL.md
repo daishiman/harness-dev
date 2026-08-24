@@ -7,6 +7,9 @@ allowed-tools: [Read, Bash(python3 *)]
 kind: run
 prefix: run
 effect: conversation-output
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-21
 version: 0.2.0

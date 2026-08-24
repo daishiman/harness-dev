@@ -13,9 +13,13 @@ allowed-tools:
   - Grep
   - Bash(python3 *)
   - AskUserQuestion
+  - Agent
 kind: run
 version: 2.1.0
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: subagent
 owner: team-platform
 contract:
   intent: ユーザー要求またはヒアリング結果から、エンドユーザー向け成果物としての 7 層構造プロンプトを生成するため、Layer 単位生成 worker を提供する。

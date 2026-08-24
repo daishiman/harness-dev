@@ -114,6 +114,37 @@ def test_goal_bad_period_format_fails(tmp_path: Path, golden: str):
     assert "G02" in proc.stdout
 
 
+def test_legacy_three_month_heading_remains_valid(tmp_path: Path, golden: str):
+    """既存ジャーナルの旧見出しは再検証で骨格違反にしない。"""
+    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標", 1)
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+
+
+def test_canonical_two_month_goal_wins_when_legacy_heading_also_exists(
+    tmp_path: Path, golden: str
+):
+    """併存時に旧見出しの本文を検査して正本側の空値を見逃してはならない。"""
+    canonical = "### 2ヶ月目標\n"
+    legacy = """### 3ヶ月目標
+
+- 期間：2026-06-29〜2026-08-30
+- 残り：12日
+- 目標：旧表記側には値がある。
+
+"""
+    text = golden.replace(canonical, legacy + canonical, 1)
+    canonical_body = (
+        "次回壁打ち（9/9・北原さん）までに、ティアマインドの支援が期待値6項目の合意文書の上で回り、"
+        "青木さんの週1支援と合わせて毎月の固定費300,000に届く売上の形が見えている状態を作った。"
+    )
+    assert canonical_body in text
+    text = text.replace(f"- 目標：{canonical_body}", "- 目標：", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1, proc.stdout
+    assert "G03: 2ヶ月目標" in proc.stdout, proc.stdout
+
+
 def test_empty_gratitude_fails(tmp_path: Path, golden: str):
     start = golden.index("## 感謝")
     end = golden.index("## 【禁止事項】")

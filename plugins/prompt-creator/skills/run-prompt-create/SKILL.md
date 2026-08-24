@@ -18,6 +18,9 @@ allowed-tools:
 kind: run
 version: 2.1.0
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 contract:
   intent: 7 層プロンプトの実物を最小guard後に先に提示し、利用者選択時だけevaluate→governanceをpost-choiceで連鎖させる orchestrator を提供する。

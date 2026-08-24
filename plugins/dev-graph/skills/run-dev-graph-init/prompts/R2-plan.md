@@ -1,12 +1,12 @@
 # Prompt: R2-plan
 
-> 6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない
+> 欠落時は6 content rootの既定値を組み立て、既存時は検証済みeffective configを保持し、routing/GitHub/worktree/hook policyと実行後readiness gateをdry-run receiptへ決定論的に出力する
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R2-plan`
 - `skill`: `run-dev-graph-init`
-- 不変目的: 6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない
+- 不変目的: 欠落時は6 content rootの既定値を組み立て、既存時は検証済みeffective configを保持し、routing/GitHub/worktree/hook policyと実行後readiness gateをdry-run receiptへ決定論的に出力する
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -17,19 +17,19 @@
 
 ### 出力契約
 
-- 作成/保持対象、routing policy、`enabled:false`のIssue/複数Projects/field mapping/auto-add雛形を列挙したinit plan。
+- 正本`../scripts/build-dev-graph.py --dry-run`が返す、検証済みeffective config/digest、作成/保持対象、routing/GitHub/execution tracker/worktree/hook policy、apply後のreadiness gateを列挙したinit plan。未実行gateのPASSは予測しない。
 
 ### 責務境界
 
-- ファイルを作成せず、token/node IDを含めず、保存先をユーザーへ委ねない。
+- 正本initializer以外でconfig/receipt/runnerを組み立てず、token/node IDを含めず、保存先をユーザーへ委ねない。
 
 ### 受入条件
 
-- 6 root、state/cache/locks、templates、GitHub/worktree/hook policyが重複なくplanに現れる。
+- 既存configがあればそのcustom root/graphを保持し、なければ6 root既定値を使い、state/cache/locks/templates、GitHub/worktree/hook policyと実測予定gateが重複なくplanに現れる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: Read、repo-config schema、template contract。
+- 使用資産: 正本`../scripts/build-dev-graph.py --dry-run`、repo-config schema、template contract。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,20 +42,20 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-init/R2-plan`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-init/R2-plan`。frontmatterの`fork:inline`に従いmain contextで処理する。
 
 ### 5.2 ゴール定義
 
-- 目的: 6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない
+- 目的: 欠落時は6 content rootの既定値を組み立て、既存時は検証済みeffective configを保持し、routing/GitHub/worktree/hook policyと実行後readiness gateをdry-run receiptへ決定論的に出力する
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: 作成/保持対象、routing policy、`enabled:false`のIssue/複数Projects/field mapping/auto-add雛形を列挙したinit planが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: effective config/digest、作成/保持対象、routing policy、GitHub/worktree/hook policy、apply後のreadiness gateを列挙したinit planが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 6 root、state/cache/locks、templates、GitHub/worktree/hook policyが重複なくplanに現れる
+- [ ] effective configのcustom root/graphまたは欠落時既定値、state/cache/locks、templates、GitHub/worktree/hook policy、apply後gateが重複なくplanに現れる
 
 ### 5.4 実行方式
 

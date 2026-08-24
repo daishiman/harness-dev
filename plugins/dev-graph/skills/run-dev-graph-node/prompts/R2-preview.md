@@ -1,12 +1,12 @@
 # Prompt: R2-preview
 
-> 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+> 分類previewを提示し、閾値未達時だけsemantic decisionを確認する。物理pathはC02 CLI receiptでのみ確定する
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R2-preview`
 - `skill`: `run-dev-graph-node`
-- 不変目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+- 不変目的: 分類previewを提示し、閾値未達時だけsemantic decisionを確認する。物理pathはC02 CLI receiptでのみ確定する
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -17,7 +17,7 @@
 
 ### 出力契約
 
-- 自動確定または明示確認済みkind/domain/project/path decision receipt。
+- 自動確定または明示確認済みkind/domain/project decision receipt。正規pathは C02 CLI receipt でのみ確定する。
 
 ### 責務境界
 
@@ -42,13 +42,13 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R2-preview`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-node/R2-preview`。`goal_seek.fork=inline` に従いmain contextで実行する。
 
 ### 5.2 ゴール定義
 
-- 目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+- 目的: 分類previewを提示し、閾値未達時だけsemantic decisionを確認する。物理pathはC02 CLI receiptでのみ確定する
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receiptが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: 自動確定または明示確認済みkind/domain/project decision receiptが生成され、物理pathを含まず受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
@@ -63,7 +63,7 @@
 
 ## Layer 6: オーケストレーション層
 
-- decisionをR3/R4へ渡す。
+- decisionをR3/R4へ渡し、R4のrendered_bodyと合わせたcontained planとしてR3が正規CLIへ渡す。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

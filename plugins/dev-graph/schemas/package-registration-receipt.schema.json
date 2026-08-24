@@ -22,6 +22,11 @@
     "graph_revision_before": {"type": "integer", "minimum": 0},
     "graph_revision_after": {"type": "integer", "minimum": 1},
     "graph_digest_after": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "c11_readiness_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "C02 registration時のfeature-scoped C11 readiness evidence digest。legacy receipt互換のためoptionalだが、新規receiptは必ず発行する。"
+    },
     "output_path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"}
   }
 }

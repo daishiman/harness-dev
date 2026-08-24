@@ -7,6 +7,7 @@ argument-hint: "<plugin-name> --source <local-root|owner/repo> [--ref <git-ref>]
 allowed-tools:
   - Read
   - Bash(python3 *)
+  - Agent
 kind: run
 prefix: run
 effect: external-mutation
@@ -30,6 +31,10 @@ feedback_contract:
       loop_scope: outer
       text: 明示的に指定されたpluginだけがCodexでinstalledかつenabledと確認され、hook trustはユーザー判断のまま保持されること
       verify_by: test
+    - id: OUT2
+      loop_scope: outer
+      text: 実セッションで親contextと分離したSubAgentがpreview・ユーザー確認・authorize・executeの順序を保ち、指定pluginのinstall結果だけをhandoffで返すこと
+      verify_by: live-trial
 responsibility_refs:
   - prompts/R1-install.md
 manifest: workflow-manifest.json

@@ -13,23 +13,23 @@
 
 ### 入力契約
 
-- macro DAG、validated packages、tracker config、linkages。
+- macro intentとpreview receipt、validated packages、tracker config、linkages。
 
 ### 出力契約
 
-- C02 commit receiptとbinding別publication report。
+- C02 immutable macro/package commit receiptとbinding別publication report。
 
 ### 責務境界
 
-- C02を迂回せずauthority衝突を拒否し外部失敗でlocalをrollbackしない。
+- C02を迂回せずauthority衝突を拒否し外部失敗でlocalをrollbackしない。dry-runは`register-package.py preview-macro --dry-run` stdout receiptだけを受理する。通常実行は同じintentとpreviewの`candidate_graph_digest`を`apply-macro --expected-candidate-digest ... --receipt ...`へ渡す。candidate/receiptを手書き・copyしない。
 
 ### 受入条件
 
-- local all-or-none、二重起票0、単一authority、失敗operationだけpending_retryになる。
+- macro preview/apply digest一致、C11 PASS、local all-or-none、二重起票0、単一authority、失敗operationだけpending_retryになる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: run-dev-graph-node、bd-bridge、gh-bridge。
+- 使用資産: run-dev-graph-nodeのpreview-macro/apply-macro/register-package、bd-bridge、gh-bridge。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] local all-or-none、二重起票0、単一authority、失敗operationだけpending_retryになる
+- [ ] macro digest一致・C11 PASS、local all-or-none、二重起票0、単一authority、失敗operationだけpending_retryになる
 
 ### 5.4 実行方式
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

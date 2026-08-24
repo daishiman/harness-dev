@@ -3,6 +3,9 @@ name: run-governance-config
 description: governance config一式の用途と必須keyを確認したいとき、projectへの導入差分をread-onlyで把握したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

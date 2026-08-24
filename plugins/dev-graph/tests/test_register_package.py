@@ -4,7 +4,6 @@ import hashlib
 import json
 import importlib.util
 import io
-import os
 import subprocess
 import sys
 import tempfile
@@ -26,6 +25,48 @@ PHASES = [f"P{i:02d}" for i in range(1, 14)]
 DIGEST = "sha256:" + "a" * 64
 HEX_DIGEST = "a" * 64
 NOW = "2026-07-13T00:00:00Z"
+
+
+def macro_request() -> dict:
+    return {
+        "schema_version": "1.0.0",
+        "observed_at": NOW,
+        "project_id": "todo-api",
+        "source_digest": HEX_DIGEST,
+        "architecture": {
+            "graph_node_id": "architecture-todo-api",
+            "title": "TODO API architecture",
+            "artifact_subtypes": ["backend", "security"],
+            "domain": "api",
+            "resource_scope": ["architecture"],
+        },
+        "features": [
+            {
+                "graph_node_id": "feature-auth",
+                "title": "Authentication",
+                "domain": "auth",
+                "purpose": "Protect API access",
+                "goal": "Only authenticated callers access the API",
+                "scope_in": ["authentication"],
+                "scope_out": ["todo storage"],
+                "acceptance": ["unauthenticated requests are rejected"],
+                "depends_on": [],
+                "resource_scope": ["features"],
+            },
+            {
+                "graph_node_id": "feature-todo",
+                "title": "TODO management",
+                "domain": "todo",
+                "purpose": "Manage TODO items",
+                "goal": "Authenticated callers manage their TODO items",
+                "scope_in": ["TODO CRUD"],
+                "scope_out": ["authentication mechanism"],
+                "acceptance": ["TODO CRUD works for authenticated callers"],
+                "depends_on": ["feature-auth"],
+                "resource_scope": ["features"],
+            },
+        ],
+    }
 
 
 def feature_node() -> dict:
@@ -137,6 +178,238 @@ class RegisterPackageTest(unittest.TestCase):
             "--receipt", self.receipt.name, *extra,
         ])
 
+    def preview_macro(self, request: dict, *extra: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([
+            sys.executable, str(SCRIPT), "preview-macro", "--repo-root", str(self.root),
+            "--graph", self.output.name, "--request-json", json.dumps(request), *extra,
+        ], text=True, capture_output=True, check=False)
+
+    def reset_macro_graph(self) -> None:
+        self.write(self.output, {"schema_version": "1.0.0", "graph_revision": 0, "nodes": []})
+        (self.root / "architecture").mkdir(exist_ok=True)
+        (self.root / "features").mkdir(exist_ok=True)
+
+    def apply_macro(self, request: dict, digest: str, *extra: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run([
+            sys.executable, str(SCRIPT), "apply-macro", "--repo-root", str(self.root),
+            "--graph", self.output.name, "--request-json", json.dumps(request),
+            "--expected-candidate-digest", digest, "--receipt", "macro-receipt.json", *extra,
+        ], text=True, capture_output=True, check=False)
+
+    def test_macro_preview_is_c02_generated_and_write_free(self) -> None:
+        self.reset_macro_graph()
+        before = self.output.read_bytes()
+        before_names = sorted(path.relative_to(self.root).as_posix() for path in self.root.rglob("*"))
+        result = self.preview_macro(macro_request(), "--dry-run")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        receipt = json.loads(result.stdout)
+        self.assertEqual(receipt["owner"], "C02/run-dev-graph-node")
+        self.assertEqual(receipt["operation"], "preview_macro_decomposition")
+        self.assertEqual(receipt["status"], "preview")
+        self.assertTrue(receipt["dry_run"])
+        self.assertEqual(receipt["write_count"], 0)
+        self.assertEqual(receipt["validation"]["violations"], [])
+        self.assertEqual(receipt["validation"]["authority"], "C11/validate-graph-schema.py")
+        self.assertEqual([node["artifact_kind"] for node in receipt["candidate_nodes"]], ["architecture", "feature", "feature"])
+        self.assertEqual({node["status"] for node in receipt["candidate_nodes"]}, {"draft"})
+        self.assertEqual(receipt["candidate_nodes"][2]["depends_on"], ["feature-auth"])
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertEqual(sorted(path.relative_to(self.root).as_posix() for path in self.root.rglob("*")), before_names)
+
+    def test_macro_preview_requires_dry_run_and_never_falls_back_to_apply(self) -> None:
+        self.reset_macro_graph()
+        before = self.output.read_bytes()
+        result = self.preview_macro(macro_request())
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--dry-run is required", result.stdout)
+        self.assertEqual(self.output.read_bytes(), before)
+
+    def test_macro_preview_rejects_cycles_without_materializing_a_candidate(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        request["features"][0]["depends_on"] = ["feature-todo"]
+        before = self.output.read_bytes()
+        result = self.preview_macro(request, "--dry-run")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("dependency cycle", result.stdout)
+        self.assertEqual(self.output.read_bytes(), before)
+
+    def test_macro_intent_derives_architecture_refs_and_rejects_caller_override(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        request["features"][0]["architecture_refs"] = ["caller-supplied"]
+        rejected = self.preview_macro(request, "--dry-run")
+        self.assertEqual(rejected.returncode, 2)
+        self.assertIn("unknown properties ['architecture_refs']", rejected.stdout)
+
+        accepted = self.preview_macro(macro_request(), "--dry-run")
+        receipt = json.loads(accepted.stdout)
+        expected = [macro_request()["architecture"]["graph_node_id"]]
+        self.assertEqual({tuple(node["architecture_refs"]) for node in receipt["candidate_nodes"][1:]}, {tuple(expected)})
+
+    def test_macro_preview_apply_share_digest_and_apply_is_idempotent(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        preview = self.preview_macro(request, "--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stdout + preview.stderr)
+        preview_receipt = json.loads(preview.stdout)
+
+        applied = self.apply_macro(request, preview_receipt["candidate_graph_digest"])
+        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+        receipt = json.loads(applied.stdout)
+        self.assertEqual(receipt["candidate_graph_digest"], preview_receipt["candidate_graph_digest"])
+        self.assertEqual(receipt["candidate_nodes_digest"], preview_receipt["candidate_nodes_digest"])
+        self.assertEqual(receipt["validation"]["authority"], "C11/validate-graph-schema.py")
+        self.assertEqual(receipt["validation"]["violations"], [])
+        self.assertEqual(receipt["candidate_node_ids"], preview_receipt["candidate_node_ids"])
+        self.assertEqual(json.loads(self.output.read_text())["nodes"], preview_receipt["candidate_nodes"])
+        self.assertTrue((self.root / "architecture/architecture-todo-api.md").is_file())
+        self.assertTrue((self.root / "features/feature-auth.md").is_file())
+        self.assertTrue((self.root / "features/feature-todo.md").is_file())
+        immutable = (self.root / "macro-receipt.json").read_bytes()
+
+        repeated = self.apply_macro(request, preview_receipt["candidate_graph_digest"])
+        self.assertEqual(repeated.returncode, 0, repeated.stdout + repeated.stderr)
+        repeated_receipt = json.loads(repeated.stdout)
+        self.assertTrue(repeated_receipt["idempotent"])
+        self.assertEqual(repeated_receipt["write_count"], 0)
+        self.assertEqual((self.root / "macro-receipt.json").read_bytes(), immutable)
+
+    def test_macro_is_idempotent_after_unrelated_graph_growth(self) -> None:
+        self.reset_macro_graph()
+        first_request = macro_request()
+        first_preview = self.preview_macro(first_request, "--dry-run")
+        self.assertEqual(first_preview.returncode, 0, first_preview.stdout + first_preview.stderr)
+        first_digest = json.loads(first_preview.stdout)["candidate_graph_digest"]
+        first_apply = self.apply_macro(first_request, first_digest)
+        self.assertEqual(first_apply.returncode, 0, first_apply.stdout + first_apply.stderr)
+        immutable = (self.root / "macro-receipt.json").read_bytes()
+
+        second_request = json.loads(json.dumps(first_request))
+        second_request["project_id"] = "other"
+        second_request["architecture"]["graph_node_id"] = "architecture-other"
+        second_request["features"][0]["graph_node_id"] = "feature-other-auth"
+        second_request["features"][1]["graph_node_id"] = "feature-other-todo"
+        second_request["features"][1]["depends_on"] = ["feature-other-auth"]
+        second_preview = self.preview_macro(second_request, "--dry-run")
+        self.assertEqual(second_preview.returncode, 0, second_preview.stdout + second_preview.stderr)
+        second_apply = subprocess.run([
+            sys.executable, str(SCRIPT), "apply-macro", "--repo-root", str(self.root),
+            "--graph", self.output.name, "--request-json", json.dumps(second_request),
+            "--expected-candidate-digest", json.loads(second_preview.stdout)["candidate_graph_digest"],
+            "--receipt", "macro-receipt-other.json",
+        ], text=True, capture_output=True, check=False)
+        self.assertEqual(second_apply.returncode, 0, second_apply.stdout + second_apply.stderr)
+
+        repeated_preview = self.preview_macro(first_request, "--dry-run")
+        self.assertEqual(repeated_preview.returncode, 0, repeated_preview.stdout + repeated_preview.stderr)
+        repeated_preview_receipt = json.loads(repeated_preview.stdout)
+        repeated = self.apply_macro(
+            first_request, repeated_preview_receipt["candidate_graph_digest"],
+        )
+        self.assertEqual(repeated.returncode, 0, repeated.stdout + repeated.stderr)
+        repeated_receipt = json.loads(repeated.stdout)
+        self.assertTrue(repeated_receipt["idempotent"])
+        self.assertEqual(repeated_receipt["write_count"], 0)
+        self.assertEqual(
+            repeated_receipt["candidate_graph_digest"],
+            repeated_preview_receipt["candidate_graph_digest"],
+        )
+        self.assertEqual(
+            repeated_receipt["graph_revision_after"],
+            repeated_preview_receipt["graph_revision_after_preview"],
+        )
+        self.assertEqual((self.root / "macro-receipt.json").read_bytes(), immutable)
+
+    def test_macro_idempotency_rejects_missing_or_tampered_intent_nodes(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        preview = self.preview_macro(request, "--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stdout + preview.stderr)
+        applied = self.apply_macro(request, json.loads(preview.stdout)["candidate_graph_digest"])
+        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+        durable = json.loads(self.output.read_text(encoding="utf-8"))
+        immutable = (self.root / "macro-receipt.json").read_bytes()
+
+        tampered = json.loads(json.dumps(durable))
+        tampered["nodes"][1]["title"] = "tampered"
+        self.write(self.output, tampered)
+        rejected_tamper = self.preview_macro(request, "--dry-run")
+        self.assertEqual(rejected_tamper.returncode, 2)
+        self.assertIn("different content", rejected_tamper.stdout)
+
+        missing = json.loads(json.dumps(durable))
+        missing["nodes"].pop()
+        self.write(self.output, missing)
+        rejected_missing = self.preview_macro(request, "--dry-run")
+        self.assertEqual(rejected_missing.returncode, 2)
+        self.assertIn("partial macro registration", rejected_missing.stdout)
+        self.assertEqual((self.root / "macro-receipt.json").read_bytes(), immutable)
+
+    def test_macro_idempotency_rejects_symlinked_durable_artifact_without_writes(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        preview = self.preview_macro(request, "--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stdout + preview.stderr)
+        digest = json.loads(preview.stdout)["candidate_graph_digest"]
+        applied = self.apply_macro(request, digest)
+        self.assertEqual(applied.returncode, 0, applied.stdout + applied.stderr)
+
+        target = self.root / "features/feature-auth.md"
+        user_owned = self.root / "features/user-owned-feature-auth.md"
+        target.replace(user_owned)
+        target.symlink_to(user_owned.name)
+        graph_before = self.output.read_bytes()
+        receipt_before = (self.root / "macro-receipt.json").read_bytes()
+        user_owned_before = user_owned.read_bytes()
+
+        rejected_preview = self.preview_macro(request, "--dry-run")
+        self.assertEqual(rejected_preview.returncode, 2, rejected_preview.stdout + rejected_preview.stderr)
+        self.assertIn("must not be a symlink", rejected_preview.stdout)
+        rejected_apply = self.apply_macro(request, digest)
+        self.assertEqual(rejected_apply.returncode, 2, rejected_apply.stdout + rejected_apply.stderr)
+        self.assertIn("must not be a symlink", rejected_apply.stdout)
+        self.assertEqual(self.output.read_bytes(), graph_before)
+        self.assertEqual((self.root / "macro-receipt.json").read_bytes(), receipt_before)
+        self.assertTrue(target.is_symlink())
+        self.assertEqual(user_owned.read_bytes(), user_owned_before)
+
+    def test_macro_rejects_untracked_artifact_path_without_writes(self) -> None:
+        self.reset_macro_graph()
+        collision = self.root / "features/feature-auth.md"
+        collision.write_text("user-owned\n", encoding="utf-8")
+        graph_before = self.output.read_bytes()
+        result = self.preview_macro(macro_request(), "--dry-run")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("artifact path already exists without durable graph node", result.stdout)
+        self.assertEqual(collision.read_text(encoding="utf-8"), "user-owned\n")
+        self.assertEqual(self.output.read_bytes(), graph_before)
+        self.assertFalse((self.root / "macro-receipt.json").exists())
+
+    def test_macro_apply_rejects_stale_digest_without_partial_writes(self) -> None:
+        self.reset_macro_graph()
+        before = self.output.read_bytes()
+        result = self.apply_macro(macro_request(), "sha256:" + "0" * 64)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("candidate digest mismatch", result.stdout)
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertFalse((self.root / "macro-receipt.json").exists())
+        self.assertEqual(list((self.root / "architecture").iterdir()), [])
+        self.assertEqual(list((self.root / "features").iterdir()), [])
+
+    def test_macro_apply_rejects_partial_durable_nodes_without_more_writes(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        architecture = RP._macro_node_base(request, request["architecture"], "architecture")
+        self.write(self.output, {"schema_version": "1.0.0", "graph_revision": 1, "nodes": [architecture]})
+        before = self.output.read_bytes()
+        result = self.apply_macro(request, "sha256:" + "0" * 64)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("partial macro registration", result.stdout)
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertFalse((self.root / "macro-receipt.json").exists())
+        self.assertEqual(list((self.root / "features").iterdir()), [])
+
     def test_registers_exact_13_atomically_and_is_idempotent(self) -> None:
         first = self.invoke()
         self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
@@ -149,6 +422,55 @@ class RegisterPackageTest(unittest.TestCase):
         self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
         self.assertTrue(json.loads(second.stdout)["idempotent"])
         self.assertEqual(self.receipt.read_bytes(), receipt_before)
+
+    def test_legacy_receipt_gets_content_addressed_revalidation_evidence(self) -> None:
+        first = self.invoke()
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        legacy = json.loads(self.receipt.read_text(encoding="utf-8"))
+        legacy.pop("c11_readiness_digest")
+        self.write(self.receipt, legacy)
+        immutable = self.receipt.read_bytes()
+        expected_c11 = RP.c11_readiness_digest(
+            json.loads(self.output.read_text(encoding="utf-8"))["nodes"], "feature-1",
+        )
+        c11 = {
+            "valid": True,
+            "violations": [],
+            "implementation_readiness": "complete",
+            "readiness_digest": expected_c11,
+        }
+        readiness = {
+            "status": "complete",
+            "missing_sections": [],
+            "source_pin": {"source_digest": "sha256:" + "d" * 64},
+        }
+        with mock.patch.object(RP, "_run_c11", return_value=c11), mock.patch.object(
+            RP, "_current_readiness", return_value=readiness,
+        ):
+            preview = RP._register(self.args("--dry-run"))
+            self.assertEqual(preview["write_count"], 0)
+            self.assertFalse((self.root / preview["supplemental_evidence"]).exists())
+            applied = RP._register(self.args())
+            evidence_path = self.root / applied["supplemental_evidence"]
+            self.assertEqual(applied["write_count"], 1)
+            self.assertTrue(evidence_path.is_file())
+            self.assertEqual(self.receipt.read_bytes(), immutable)
+            evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+            self.assertEqual(evidence["c11_readiness_digest"], expected_c11)
+            self.assertEqual(evidence["immutable_receipt_sha256"], "sha256:" + hashlib.sha256(immutable).hexdigest())
+            self.assertEqual(evidence["graph_sha256"], "sha256:" + hashlib.sha256(self.output.read_bytes()).hexdigest())
+            repeated = RP._register(self.args())
+            self.assertEqual(repeated["write_count"], 0)
+            self.assertEqual(repeated["supplemental_evidence"], applied["supplemental_evidence"])
+            self.assertEqual(self.receipt.read_bytes(), immutable)
+
+            evidence["graph_sha256"] = "sha256:" + "e" * 64
+            self.write(evidence_path, evidence)
+            graph_before = self.output.read_bytes()
+            with self.assertRaisesRegex(RP.ContractError, "evidence conflicts"):
+                RP._register(self.args())
+            self.assertEqual(self.output.read_bytes(), graph_before)
+            self.assertEqual(self.receipt.read_bytes(), immutable)
 
     def test_projects_execution_context_through_c02_consumer(self) -> None:
         context = {
@@ -256,6 +578,10 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         first = RP._register(self.args())
         self.assertEqual(first["applied_count"], 13)
         self.assertEqual(first["graph_digest_after"], RP._canonical_digest(json.loads(self.output.read_text())))
+        self.assertEqual(
+            first["c11_readiness_digest"],
+            RP.c11_readiness_digest(json.loads(self.output.read_text())["nodes"], "feature-1"),
+        )
         second = RP._register(self.args())
         self.assertTrue(second["idempotent"])
 
@@ -272,6 +598,13 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         return RP._parser().parse_args([
             "execution-context", "--repo-root", str(self.root), "--graph", self.output.name,
             "--graph-node-id", "feature-1", "--context-json", raw, *extra,
+        ])
+
+    def macro_apply_args(self, request: dict, digest: str):
+        return RP._parser().parse_args([
+            "apply-macro", "--repo-root", str(self.root), "--graph", self.output.name,
+            "--request-json", json.dumps(request), "--expected-candidate-digest", digest,
+            "--receipt", "macro-receipt.json",
         ])
 
     def test_execution_context_preview_apply_replace_and_idempotent_noop(self) -> None:
@@ -340,6 +673,22 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
                 RP._register(self.args())
         self.assertEqual(json.loads(self.output.read_text()), before)
         self.assertFalse(self.receipt.exists())
+
+    def test_macro_receipt_failure_rolls_back_graph_and_documents(self) -> None:
+        self.reset_macro_graph()
+        request = macro_request()
+        preview = RP._preview_macro(RP._parser().parse_args([
+            "preview-macro", "--repo-root", str(self.root), "--graph", self.output.name,
+            "--request-json", json.dumps(request), "--dry-run",
+        ]))
+        before = self.output.read_bytes()
+        with mock.patch.object(RP, "_atomic_create_json", side_effect=OSError("receipt disk failure")):
+            with self.assertRaisesRegex(OSError, "receipt disk failure"):
+                RP._apply_macro(self.macro_apply_args(request, preview["candidate_graph_digest"]))
+        self.assertEqual(self.output.read_bytes(), before)
+        self.assertFalse((self.root / "macro-receipt.json").exists())
+        self.assertEqual(list((self.root / "architecture").iterdir()), [])
+        self.assertEqual(list((self.root / "features").iterdir()), [])
 
     def test_in_process_lock_contention_is_fail_closed(self) -> None:
         lock_path = self.output.with_name(f".{self.output.name}.register.lock")

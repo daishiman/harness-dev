@@ -1,4 +1,4 @@
-"""ENG-C07 record-capability-graph-knowledge.py の genuine 機能テスト (H6 実装)。
+"""ENG-C07 build-capability-graph-knowledge-entry.py の genuine 機能テスト (H6 実装)。
 
 ENG-C06 graph + discovered task を Loop A/B knowledge へ source_ref 付きで append/merge (既存不変)。
 
@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "plugins/harness-creator/skills/run-build-skill"
-    / "templates/task-graph-engine/scripts/record-capability-graph-knowledge.py"
+    / "templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py"
 )
 
 

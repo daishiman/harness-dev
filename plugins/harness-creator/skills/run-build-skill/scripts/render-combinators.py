@@ -26,6 +26,7 @@ kind combinator plus optional flag combinators in the documented order.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shutil
 import re
@@ -166,11 +167,20 @@ FLAG_PATCHES = {
 GOAL_SEEK_KINDS = ("run", "wrap", "delegate")
 
 TASK_GRAPH_ENGINE_SCRIPTS = (
-    "ready-set-from-checklist.py",
-    "self-reflect-append.py",
+    "extract-ready-set-from-checklist.py",
+    "build-self-reflection-entry.py",
     "extract-capability-dependency-graph.py",
-    "record-capability-graph-knowledge.py",
+    "build-capability-graph-knowledge-entry.py",
 )
+
+# 2026-08 の script naming 正規化前に生成した task-graph engine 資産。
+# update では新名資産と並存させず、旧 canonical bytes と一致する場合だけ除去する。
+# 利用者が編集した同名 file や symlink/directory は自動削除せず fail-closed で止める。
+LEGACY_TASK_GRAPH_ENGINE_SHA256 = {
+    "ready-set-from-checklist.py": "bf3f65d197acc5043415acda4d078dbbd1bd7219499735274efa2e4a05f2b5fb",
+    "self-reflect-append.py": "cf9c405abe3de42dec56412e82f55f87c2132bfd4e61d44ecce0e5d41a5d91dd",
+    "record-capability-graph-knowledge.py": "65fdcc9f87095014b5a843b28d4fc221ae3d6f5377e1b42c80c947ead0edc862",
+}
 
 
 FEEDBACK_CONTRACT_KINDS = ("run", "wrap", "delegate")
@@ -253,17 +263,17 @@ KNOWLEDGE_SECTION = (
 # 重要 (self-contained): ループ本体は本 Skill 内の AI 推論で自己完結し、外部スキルへの依存を持たない。
 # run-goal-seek は「重い周回時の任意の最適化手段」であり必須ではない (with-knowledge と同じ自己完結原則)。
 GOAL_SEEK_FM_BLOCK = (
-    "# goal-seek: 固定手順を持たず Goal+Checklist へ向けて反復する。engine 既定は task-graph (依存順駆動)。"
-    "反復ループは fork で分離 context に切り出し親へ最終差分のみ返す(2軸は独立)。\n"
+    "# goal-seek: Goal+Checklist は維持し、実行方式は最小で十分な profile を使う。"
+    "task-graph / fork は brief で必要性が明示された場合だけ起動する。\n"
     "goal_seek:\n"
-    "  engine: {{goal_seek.engine | default(\"task-graph\")}}      # task-graph(既定/依存順駆動+self-reflect・生成harnessに task-graph-engine 同梱) | inline(opt-down/自己完結・外部スキル不要) | run-goal-seek(同梱時のみ任意で使う重量オーケストレータ)\n"
-    "  engine_profile: {{goal_seek.engine_profile | default(\"checklist-graph\")}}  # task-graph(既定)=checklist-graph 固定 (planner full task-spec graph と同等ではない) / inline・run-goal-seek=goal-loop\n"
+    "  engine: {{goal_seek.engine | default(\"inline\")}}      # inline(既定/自己完結) | task-graph(明示された依存グラフ用) | run-goal-seek(明示された重い周回用)\n"
+    "  engine_profile: {{goal_seek.engine_profile | default(\"goal-loop\")}}  # inline・run-goal-seek=goal-loop / task-graph=checklist-graph\n"
     "  full_task_spec_graph: false                         # 現 profile の fail-closed capability claim\n"
     "  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定\n"
     "  progress: eval-log/{{skill_name}}-progress.json     # schemas/goal-seek-loop.schema.json 準拠\n"
     "  intermediate: eval-log/{{skill_name}}-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)\n"
     "  max_loops: {{goal_seek.max_loops | default(5)}}\n"
-    "  fork: {{goal_seek.fork | default(\"subagent\")}}        # subagent(既定/反復を分離contextで実行し親へ最終差分のみ) | agent-team | inline(軽量単発のみ opt-down)"
+    "  fork: {{goal_seek.fork | default(\"inline\")}}        # inline(既定) | subagent(needs_independent_context時) | agent-team(明示された独立並列作業時)"
 )
 
 # _base.md の `### ゴールシークループ` 直後に挿入する実行配線サブセクション。
@@ -282,16 +292,16 @@ GOAL_SEEK_TASK_GRAPH_SECTION = (
     "### ゴールシーク配線（task-graph 変種）\n"
     "`goal_seek.engine: task-graph` の場合のみ、上記 base ループの Step1「未達 `[ ]` を任意特定」を"
     "次の拘束的 Step へ**上書き置換**する（`engine: inline` は従来どおり任意選択のまま）:\n\n"
-    "- 各周回の冒頭で同梱スクリプト `scripts/ready-set-from-checklist.py "
+    "- 各周回の冒頭で同梱スクリプト `scripts/extract-ready-set-from-checklist.py "
     "eval-log/{{skill_name}}-progress.json` を実行し `{\"ready\":[...]}` を得る。\n"
     "- 返った ready 集合の**最小 id item のみ**を次の実行対象として選ぶ（依存充足順が「助言」でなく"
     "「拘束」になる）。ready が空なら全 done か blocked のみ＝ループ終了判定へ。\n"
-    "- 実行中に新たな未網羅タスクを発見したら `scripts/self-reflect-append.py "
+    "- 実行中に新たな未網羅タスクを発見したら `scripts/build-self-reflection-entry.py "
     "eval-log/{{skill_name}}-progress.json --id <新id> --text <達成条件> --depends-on <...>` で "
     "checklist 末尾へ追記する（別状態ファイルを新設せず progress.json を唯一の truth に保つ）。追記 "
     "item は done-judge が毎回スキャンする同一配列に入るため反映漏れが構造的に発生しない。\n"
     "- item 完了時は必ず progress.json の該当 item を `status: done` へ**その場で記述**してから次周回へ"
-    "進む。この done 記述そのものが次周回 `ready-set-from-checklist.py` 再計算の入力＝**次 item の"
+    "進む。この done 記述そのものが次周回 `extract-ready-set-from-checklist.py` 再計算の入力＝**次 item の"
     "発火条件**である（完了記述→ready 再計算→次 item 発火の連鎖で依存グラフを進行させる）。記述漏れは"
     "後続 item が永遠に ready にならない形で顕在化する。\n"
     "- `goal_seek.max_loops` は **checklist item 数＋self-reflect 追記余裕以上**（目安: item 数×1.5）に"
@@ -332,8 +342,8 @@ GOAL_SEEK_TASK_GRAPH_SECTION = (
     "    print(\"engine!=task-graph: task-graph 消費検査は非適用 (inline/run-goal-seek)\"); sys.exit(0)\n"
     "# bound 不足診断: 1周回1item消費では done 化 item 数 ≤ max_loops。checklist が超過すると completed 構造的不能。\n"
     "max_loops = prog.get(\"max_loops\")\n"
-    "if isinstance(max_loops, int) and len(checklist) > max_loops and prog.get(\"status\") != \"completed\":\n"
-    "    print(f\"WARN: checklist {len(checklist)} item > max_loops {max_loops} — 1周回1item消費では completed 構造的不能 (bound 不足)。max_loops を item 数×1.5 目安へ引き上げ再入すること\", file=sys.stderr)\n"
+    "if isinstance(max_loops, int) and len(checklist) > max_loops:\n"
+    "    raise AssertionError(f\"bound 不足: checklist {len(checklist)} item > max_loops {max_loops} — 1周回1item消費では completed 構造的不能。max_loops を item 数×1.5 目安へ引き上げ再入すること\")\n"
     "# 非循環検査 (iterative DFS・深い鎖でも recursion 上限非依存): cycle は永久に ready にならず沈黙 stall を招くため fail-closed。\n"
     "WHITE, GREY, BLACK = 0, 1, 2\n"
     "color = {i: WHITE for i in ids}\n"
@@ -362,14 +372,31 @@ GOAL_SEEK_TASK_GRAPH_SECTION = (
     "selected_seq = []\n"
     "for idx, e in enumerate(traced):\n"
     "    ready = e[\"ready_set\"]; sel = e[\"selected_item\"]\n"
+    "    iteration = e.get(\"iteration\")\n"
+    "    assert isinstance(iteration, int) and iteration >= 0, f\"周回{idx}: iteration が非負整数でない: {iteration!r}\"\n"
+    "    assert isinstance(ready, list) and all(isinstance(i, str) for i in ready), f\"周回{idx}: ready_set が string id 配列でない\"\n"
+    "    assert len(ready) == len(set(ready)), f\"周回{idx}: ready_set に重複 id: {ready}\"\n"
     "    if sel:\n"
     "        # 空 ready_set 申告での検査回避を封鎖 (selected があるなら ready は非空でなければならない)\n"
     "        assert ready, f\"周回{idx}: selected_item={sel} だが ready_set が空 (依存順消費違反=検査回避)\"\n"
     "        min_id = sorted(ready, key=key)[0]\n"
     "        assert sel == min_id, f\"周回{idx}: selected_item={sel} != ready 最小 id {min_id} (依存順消費違反)\"\n"
+    "        item = next((it for it in checklist if it.get(\"id\") == sel), None)\n"
+    "        assert item is not None, f\"周回{idx}: selected_item={sel} が checklist に不在\"\n"
+    "        available = item.get(\"available_from_iteration\", 0)\n"
+    "        assert isinstance(available, int) and available >= 0, f\"周回{idx}: {sel}.available_from_iteration が非負整数でない\"\n"
+    "        assert iteration >= available, f\"周回{idx}: selected_item={sel} は iteration {iteration} では未利用 (available_from_iteration={available})\"\n"
     "        # 選択列で依存順を実証: 選択 item の depends_on は全てより前の周回で選択済 (自己申告 ready に依存しない拘束)\n"
     "        for d in deps_of.get(sel, []):\n"
     "            assert d in selected_seq, f\"周回{idx}: selected_item={sel} の depends_on '{d}' が未選択のまま選択された (依存順消費違反)\"\n"
+    "        expected_ready = sorted([\n"
+    "            it[\"id\"] for it in checklist\n"
+    "            if it[\"id\"] not in selected_seq\n"
+    "            and it.get(\"status\") != \"blocked\"\n"
+    "            and iteration >= it.get(\"available_from_iteration\", 0)\n"
+    "            and all(dep in selected_seq for dep in deps_of.get(it[\"id\"], []))\n"
+    "        ], key=key)\n"
+    "        assert sorted(ready, key=key) == expected_ready, f\"周回{idx}: ready_set={sorted(ready, key=key)} != checklistから再計算した ready={expected_ready} (依存順消費違反)\"\n"
     "        selected_seq.append(sel)\n"
     "# 消費完全性: status==done の全 item が最低 1 周回で selected_item として現れる (選択証跡なき done を封鎖)\n"
     "sel_set = set(selected_seq)\n"
@@ -387,10 +414,10 @@ GOAL_SEEK_TASK_GRAPH_SECTION = (
     "各 surface（skill / slash-command / sub-agent / script）の実行前判断で dependency graph knowledge を"
     " consult する（checklist の実行順とは別レイヤの派生判断・単一truth状態と分離）:\n\n"
     "- **同梱**: `templates/task-graph-engine/scripts/extract-capability-dependency-graph.py`（C06）と "
-    "`record-capability-graph-knowledge.py`（C07）を生成先 `scripts/` へコピーする。\n"
+    "`build-capability-graph-knowledge-entry.py`（C07）を生成先 `scripts/` へコピーする。\n"
     "- **抽出**: `scripts/extract-capability-dependency-graph.py <harness_dir>` で surface 横断の "
     "dependency graph JSON（nodes/edges/gaps・未知参照は fail-closed）を得る。\n"
-    "- **記録**: `scripts/record-capability-graph-knowledge.py <graph.json> --target-knowledge-dir "
+    "- **記録**: `scripts/build-capability-graph-knowledge-entry.py <graph.json> --target-knowledge-dir "
     "knowledge/` で Loop A（生成 harness）へ、`--harness-knowledge-dir` 指定時は Loop B"
     "（harness-creator）へ `source_ref` 付き entry を append/merge する（既存 entry 不変）。\n"
     "- **consult**: 各 surface は着手前に dependency graph knowledge を参照し、依存先が未完成 / "
@@ -417,10 +444,10 @@ GOAL_SEEK_WIRING_SECTION = (
     "- **周回状態**: 各周回で `eval-log/{{skill_name}}-progress.json`"
     "（`run-build-skill/schemas/goal-seek-loop.schema.json` 準拠）に "
     "`iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` を記録する。\n"
-    "- **コンテキスト分離（fork 軸）**: 反復ループは既定で SubAgent（`Agent`）に分離して実行し、"
-    "親には最終成果物と `handoff-*.json` 要約のみ返す（中間試行で親 context を汚さない）。"
-    "`fork: inline` は軽量単発時の opt-down。なお重い周回で `engine: run-goal-seek`（同梱時のみ）を"
-    "使うのは外部依存軸の任意最適化で、fork 分離とは独立（`references/goal-seek-paradigm.md`「コンテキスト分離」）。\n"
+    "- **コンテキスト配置（fork 軸）**: 既定は `inline`。"
+    "`needs_independent_context: true` またはユーザーの明示指定がある場合だけ "
+    "SubAgent / Agent Team に分離し、親には最終成果物と `handoff-*.json` 要約のみ返す。"
+    "これにより軽い実行の制御往復は増やさず、重い反復の context 汚染は必要時だけ分離する。\n"
     "- **中間成果物アンカー (ドリフト圧縮)**: 各周回末に "
     "`eval-log/{{skill_name}}-intermediate.jsonl` へ "
     "`{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を "
@@ -444,10 +471,10 @@ GOAL_SEEK_WIRING_SECTION = (
     "python3 - \"$PWD/eval-log/{{skill_name}}-progress.json\" \"$PWD/eval-log/{{skill_name}}-intermediate.jsonl\" <<'PY'\n"
     "import json, sys, os, hashlib\n"
     "prog_path, inter_path = sys.argv[1], sys.argv[2]\n"
-    "prog = json.load(open(prog_path, encoding=\"utf-8\")) if os.path.exists(prog_path) else {}\n"
+    "assert os.path.exists(prog_path), \"progress.json 未生成 (周回証跡の absence-as-violation)\"\n"
+    "assert os.path.exists(inter_path), \"intermediate.jsonl 未生成 (周回証跡の absence-as-violation)\"\n"
+    "prog = json.load(open(prog_path, encoding=\"utf-8\"))\n"
     "required_keys = {\"iteration\",\"original_goal\",\"current_goal_snapshot\",\"delta_from_original\",\"merged_directive_for_next\",\"drift_signal\"}\n"
-    "if not os.path.exists(inter_path):\n"
-    "    print(\"intermediate.jsonl 未生成 (ループ未実行)\"); sys.exit(0)\n"
     "lines = [l for l in open(inter_path, encoding=\"utf-8\").read().splitlines() if l.strip()]\n"
     "assert lines, \"intermediate.jsonl が空\"\n"
     "iters = prog.get(\"iteration\", len(lines) - 1)\n"
@@ -457,11 +484,13 @@ GOAL_SEEK_WIRING_SECTION = (
     "    entry = json.loads(line)\n"
     "    missing = required_keys - entry.keys()\n"
     "    assert not missing, f\"intermediate[{i}] 必須キー不足: {missing}\"\n"
+    "    assert entry[\"iteration\"] == i, f\"intermediate[{i}].iteration={entry['iteration']} (連続周回番号でない)\"\n"
     "    if i == 0:\n"
     "        first_anchor = entry[\"original_goal\"]\n"
+    "        assert isinstance(first_anchor, str) and first_anchor.strip(), \"original_goal が空\"\n"
     "        expected_hash = hashlib.sha256(first_anchor.encode()).hexdigest()\n"
     "        actual_hash = prog.get(\"original_goal_hash\")\n"
-    "        assert actual_hash is None or actual_hash == expected_hash, f\"original_goal_hash drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}\"\n"
+    "        assert actual_hash == expected_hash, f\"original_goal_hash missing/drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}\"\n"
     "    assert entry[\"original_goal\"] == first_anchor, f\"intermediate[{i}] anchor 不変性違反\"\n"
     "print(f\"intermediate 検査 OK: {len(lines)} 行 / anchor 不変 / hash 一致\")\n"
     "PY\n"
@@ -530,13 +559,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return args
 
 
-def _brief_requests_task_graph(brief: dict) -> bool:
-    """brief が task-graph engine を要求するか (明示値優先・無指定 loop kind は既定 ON)。
+def _brief_requests_task_graph(brief: dict, skill_dir: Path | None = None) -> bool:
+    """brief が task-graph engine を明示要求するか。
 
-    validate-build-plan.derive_plan の defaulting と同一規則: goal_seek.engine の明示値が
-    あればそれに従い (inline/run-goal-seek は opt-out)、無指定なら loop kind (GOAL_SEEK_KINDS)
-    に対して task-graph を既定とする。--no-goal-seek opt-out 経路は build-plan が materializer
-    指示自体を出さないため本判定へ到達しない。
+    validate-build-plan.derive_plan と同一規則: 無指定は inline。
+    実在する依存グラフを扱う設計が `goal_seek.engine: task-graph`
+    を指定した場合だけ engine 資産を同梱する。
     """
     goal_seek = brief.get("goal_seek")
     explicit = (
@@ -544,7 +572,19 @@ def _brief_requests_task_graph(brief: dict) -> bool:
     )
     if explicit:
         return explicit == "task-graph"
-    return str(brief.get("kind", "")).strip() in GOAL_SEEK_KINDS
+    if skill_dir is None:
+        return False
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.is_symlink() or not skill_md.is_file():
+        return False
+    text = skill_md.read_text(encoding="utf-8")
+    parts = text.split("---", 2)
+    if not text.startswith("---") or len(parts) < 3:
+        return False
+    match = re.search(
+        r"(?ms)^goal_seek\s*:\s*(?:#.*)?$.*?^\s+engine\s*:\s*([^\s#]+)", parts[1]
+    )
+    return bool(match and match.group(1).strip("'\"") == "task-graph")
 
 
 def _set_goal_seek_scalar(text: str, key: str, value: str) -> str:
@@ -588,45 +628,83 @@ def materialize_task_graph_engine(
     同一 brief + template bytes なら何度実行しても生成 bytes は同一。既に一致する
     ファイルは書き直さず、欠落または drift だけを canonical bytes へ戻す。
     """
-    if not _brief_requests_task_graph(brief):
+    if not _brief_requests_task_graph(brief, skill_dir):
         return []
     source_dir = templates_dir / "task-graph-engine" / "scripts"
     dest_dir = skill_dir / "scripts"
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = []
+    skill_md = skill_dir / "SKILL.md"
+
+    # 全競合を write/unlink より前に検査する。途中で別 path の競合を発見して
+    # legacy だけ消えた／一部 asset だけ更新された状態を残さない。
+    if dest_dir.is_symlink():
+        raise ComposeError(f"task-graph engine destination directory is a symlink: {dest_dir}")
+    if dest_dir.exists() and not dest_dir.is_dir():
+        raise ComposeError(f"task-graph engine destination is not a directory: {dest_dir}")
+    if skill_md.is_symlink():
+        raise ComposeError(f"generated SKILL.md is a symlink: {skill_md}")
+    if not skill_md.is_file():
+        raise ComposeError(f"generated SKILL.md is missing or not a file: {skill_md}")
+
+    source_bytes: dict[str, bytes] = {}
     for name in TASK_GRAPH_ENGINE_SCRIPTS:
         source = source_dir / name
-        if not source.is_file():
-            raise ComposeError(f"missing task-graph engine template: {source}")
+        if source.is_symlink() or not source.is_file():
+            raise ComposeError(f"missing or unsafe task-graph engine template: {source}")
+        source_bytes[name] = source.read_bytes()
         dest = dest_dir / name
-        expected = source.read_bytes()
+        if dest.is_symlink():
+            raise ComposeError(f"task-graph engine destination is a symlink: {dest}")
+        if dest.exists() and not dest.is_file():
+            raise ComposeError(f"task-graph engine destination is not a file: {dest}")
+
+    legacy_to_remove: list[Path] = []
+    for name, expected_sha in LEGACY_TASK_GRAPH_ENGINE_SHA256.items():
+        legacy = dest_dir / name
+        if legacy.is_symlink():
+            raise ComposeError(f"legacy task-graph engine destination is a symlink: {legacy}")
+        if not legacy.exists():
+            continue
+        if not legacy.is_file():
+            raise ComposeError(f"legacy task-graph engine destination is not a file: {legacy}")
+        actual_sha = hashlib.sha256(legacy.read_bytes()).hexdigest()
+        if actual_sha != expected_sha:
+            raise ComposeError(
+                f"legacy task-graph engine asset was modified; migrate manually: {legacy}"
+            )
+        legacy_to_remove.append(legacy)
+
+    content = skill_md.read_text(encoding="utf-8")
+    content = _set_goal_seek_scalar(content, "engine", "task-graph")
+    content = _set_goal_seek_scalar(
+        content,
+        "engine_profile",
+        "checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)",
+    )
+    content = _set_goal_seek_scalar(
+        content,
+        "full_task_spec_graph",
+        "false  # fail-closed capability claim。gap 一覧は build-plan.capability_gaps 参照",
+    )
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    for legacy in legacy_to_remove:
+        legacy.unlink()
+
+    written: list[Path] = []
+    for name in TASK_GRAPH_ENGINE_SCRIPTS:
+        dest = dest_dir / name
+        expected = source_bytes[name]
         if not dest.is_file() or dest.read_bytes() != expected:
-            if dest.exists() and not dest.is_file():
-                raise ComposeError(f"task-graph engine destination is not a file: {dest}")
             dest.write_bytes(expected)
         written.append(dest)
 
-    skill_md = skill_dir / "SKILL.md"
-    if skill_md.is_file():
-        content = skill_md.read_text(encoding="utf-8")
-        # 値だけでなく説明コメントも 1 定数として upsert し、量産物単体で claim の
-        # 意味 (checklist-graph≠planner full graph / gap の所在) が読めるようにする。
-        # 検査側 (_frontmatter_nested_value / lint check_engine_profile) は末尾
-        # コメントを除去して照合するため byte 冪等・parity とも両立する。
-        content = _set_goal_seek_scalar(content, "engine", "task-graph")
-        content = _set_goal_seek_scalar(
-            content,
-            "engine_profile",
-            "checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)",
-        )
-        content = _set_goal_seek_scalar(
-            content,
-            "full_task_spec_graph",
-            "false  # fail-closed capability claim。gap 一覧は build-plan.capability_gaps 参照",
-        )
-        if skill_md.read_text(encoding="utf-8") != content:
-            skill_md.write_text(content, encoding="utf-8")
-        written.append(skill_md)
+    # 値だけでなく説明コメントも 1 定数として upsert し、量産物単体で claim の
+    # 意味 (checklist-graph≠planner full graph / gap の所在) が読めるようにする。
+    # 検査側 (_frontmatter_nested_value / lint check_engine_profile) は末尾
+    # コメントを除去して照合するため byte 冪等・parity とも両立する。
+    if skill_md.read_text(encoding="utf-8") != content:
+        skill_md.write_text(content, encoding="utf-8")
+    written.append(skill_md)
     return written
 
 
@@ -882,6 +960,11 @@ def apply_semantic_patch(text: str, patch_name: str) -> str:
 
 
 def apply_patch_file(content: str, patch_path: Path) -> str:
+    # goal-seek の実行契約は GOAL_SEEK_* 定数が単一正本。
+    # review 用 diff snapshot の hunk が偶然再適合しても、古い verifier や
+    # task-graph 変種欠落へ切り替わらないよう常に semantic renderer を使う。
+    if patch_path.name == "with-goal-seek.patch":
+        return apply_semantic_patch(content, patch_path.name)
     diff_text = patch_path.read_text(encoding="utf-8")
     try:
         return apply_unified_diff(content, diff_text)

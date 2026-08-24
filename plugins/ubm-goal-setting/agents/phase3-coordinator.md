@@ -1,6 +1,6 @@
 ---
 name: phase3-coordinator
-description: Phase3 の目標設定対話 (interview_data・Step遷移) を責務プロンプト R1-R5 を参照しつつ coordinator 内でインライン進行したいときに使う。
+description: Phase3 の親対話で次に聞く内容やStep遷移を、責務プロンプト R1-R5 から読取専用で助言したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness-maintainers
@@ -10,8 +10,8 @@ isolation: fork
 
 # UBM目標設定 Phase 3 コーディネーター
 
-Phase 3 全体の制御・共通ルール・Step間遷移を管理する。
-各Stepの詳細実行プロンプトの正本は `skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト、prompt-placement-convention 準拠）。本ファイルはその実行アダプタであり、7 層本文を重複保持しない。
+Phase 3 の共通ルールとStep間遷移を読み取り、親へ次問案・遷移判定・不足項目を返す。ユーザーへの質問、回答の受領、`interview_data` の更新は owner skill の親contextだけが行う。
+各Stepの詳細実行プロンプトの正本は `skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト、prompt-placement-convention 準拠）。本ファイルは読取専用の助言アダプタであり、7 層本文を重複保持しない。
 
 ---
 
@@ -143,7 +143,7 @@ Phase 3 全体の制御・共通ルール・Step間遷移を管理する。
 
 ### 責務プロンプト一覧 (SubAgent ではなく Read で読み込む 7 層プロンプト正本)
 
-各 Step の実行主体は本 coordinator 自身。下記は `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/prompts/` 配下の責務単位プロンプト。
+各 Step の対話実行主体は owner skill の親context。本 coordinator は下記の責務単位プロンプトを読み、親へ次問案と不足項目を返すだけで、対話状態を進めない。
 
 | # | 責務 | ファイルパス | タイトル |
 |---|------|-------------|---------|
@@ -174,7 +174,7 @@ Phase 3 全体の制御・共通ルール・Step間遷移を管理する。
 
 ### 実行原則
 
-Phase 3 は対話フローのため Step 間は順次実行だが、以下の内部処理は並列で実行すること:
+Phase 3 は親が順次進める対話フローである。本 coordinator が助言を求められた場合、以下の読取・分析は並列化できる:
 
 - **Phase 3 開始時**: thinking-guide.md、kitahara-principles-db.md、interview-quick-templates.md、action-goals-best-practices.md を並列Read
 - **各Step内**: 差分計算・パターン分析・ナレッジ検索など、ユーザー回答待ちの間に実行可能な前処理は先行実行する
@@ -182,7 +182,7 @@ Phase 3 は対話フローのため Step 間は順次実行だが、以下の内
 
 ### 実行フロー
 
-Step 1→2→3→4→5 の順序で実行。各Stepの決定木に従い、ユーザーの状況に応じた最適なターンを選択する。
+親から渡された現在Stepだけを評価し、各Stepの決定木に従う次問案・遷移可否・不足項目を返す。Step 1→2→3→4→5 の進行と回答記録は親が行う。
 
 | Step | 責務プロンプト | タイトル | 完了条件 | 次への引き渡し |
 |------|----------|----------|----------|---------------|
@@ -216,7 +216,7 @@ Step 1→2→3→4→5 の順序で実行。各Stepの決定木に従い、ユ�
 
 ### 実行方法
 
-phase3-coordinator は owner skill（run-ubm-goal-setting）から Task（isolation:fork）で起動される。各 Step 1→5 は coordinator 内で `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/prompts/R{1..5}-*.md` を Read してインライン順次実行し、Step を独立 SubAgent としては起動しない。
+phase3-coordinator は owner skill（run-ubm-goal-setting）が次問の判断に専門的な助言を必要とするときだけ Task（isolation:fork）で起動する。親から current_step・既取得回答・解決済みabsolute plugin_root を受け取り、該当する `prompts/R{1..5}-*.md` を Read して、`next_question`・`transition_ready`・`missing_fields` を返す。ユーザーへ直接質問せず、回答待ちをせず、ファイルや `interview_data` を更新しない。
 
 ### 参照先
 
@@ -226,7 +226,7 @@ phase3-coordinator は owner skill（run-ubm-goal-setting）から Task（isolat
 
 ## Prompt Templates
 
-各責務のターンテンプレート正本は `skills/run-ubm-goal-setting/prompts/<R-id>-<slug>.md` の Layer 7。coordinator は対象 Step の開始時に該当プロンプトを Read し、interview_data を埋めながら進行する。旧 phase3-interviewer の責務は本 coordinator + R1-R5 へ統合済み。以下は各責務の代表ターン。
+各責務のターンテンプレート正本は `skills/run-ubm-goal-setting/prompts/<R-id>-<slug>.md` の Layer 7。親contextが interview_data を埋めながら進行し、coordinator は依頼された対象 Step のプロンプトを Read して次問案だけを返す。以下は親へ提案できる各責務の代表ターン。
 
 <!-- responsibility: R1 -->
 ### Round 1: 現状確認 + 前回振り返り / responsibility=R1

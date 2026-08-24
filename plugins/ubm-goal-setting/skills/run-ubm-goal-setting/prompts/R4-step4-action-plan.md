@@ -2,7 +2,7 @@
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
 > seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> phase3-coordinator が対話 Step 4 の実行時に Read するインタビュープロンプト正本
+> owner skill の親contextが対話 Step 4 で Read するインタビュープロンプト正本
 > (Task tool による独立 SubAgent 起動は行わない)。
 
 ## メタ
@@ -112,7 +112,7 @@
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
 ### 5.1 担当 agent
-- `phase3-coordinator` (isolation: fork)。coordinator が本プロンプトを Read しインライン進行する。独立 SubAgent 起動はしない。
+- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 成果目標を支える、迷いなく実行できる行動計画を完成させる。
@@ -133,7 +133,7 @@
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
 ### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 → `phase3-coordinator` (Step 4)。
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 4)。
 - 前提 Step: R3-step3-goal-setting — 売上目標・成果目標が確定していなければ、それを達成するための行動計画を設計できない。
 - 後続 Step: R5-step5-final-check — 受け渡し: 行動目標 (action_daily, action_period)、やらないこと (not_doing)、判断基準 (decision_criteria)、プロジェクト別タスク (projects)、習慣目標 (habit_check, 週報のみ)。
 

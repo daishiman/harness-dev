@@ -3,6 +3,9 @@ name: run-governance-lint
 description: skill・agent・pluginのgovernance lintを選択したいとき、rubricを含む検査をfail-closedで実行したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

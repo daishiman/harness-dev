@@ -6,7 +6,7 @@ type: reference
 
 # 質問銀行（40 問以上）
 
-`scripts/update_question_bank.py`（`skill-intake-self-updater` SubAgent）が反復毎に追記する自己進化辞書。深度（quick／standard／deep）× 5 軸（出力先／情報源／共有相手／真の課題／**ナレッジ資産**）の格子で参照する。ナレッジ資産軸は **MUST**: 思考プロセス・考え方・外部情報をナレッジ化してスキルに注入する流れの有無を必ず確認する。
+`scripts/update_question_bank.py` が重複排除・差分 preview・適用を担う自己進化辞書。初回 intake は `run-skill-intake`、改訂 intake は `run-intake-revise` が inline で起動する。必ず dry-run を提示し、別ターンの明示承認後にだけ `--apply` する。深度（quick／standard／deep）× 5 軸（出力先／情報源／共有相手／真の課題／**ナレッジ資産**）の格子で参照する。ナレッジ資産軸は **MUST**: 思考プロセス・考え方・外部情報をナレッジ化してスキルに注入する流れの有無を必ず確認する。
 
 ## 索引
 
@@ -130,7 +130,7 @@ type: reference
 ## 自己進化ルール
 
 - 1 回のヒアリングで「ユーザー回答が想定パターンに当てはまらなかった質問」を抽出
-- `skill-intake-self-updater` が **新質問の候補** として末尾に追加（草稿状態）
+- owner Skill (`run-skill-intake` / `run-intake-revise`) が **新質問の候補** を記録し、`update_question_bank.py` が重複除外後の差分を dry-run で提示（承認後だけ追加）
 - 月次レビューで採用判断（人間レビュー必須）
 - 最大エントリ数 200 を超えたら最低使用頻度から削除
 

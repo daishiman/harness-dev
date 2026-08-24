@@ -36,4 +36,4 @@ entrypoint: run-elegant-review
 
 ## 注意
 
-- 改善実行は行わない (analyse only)。`run-elegant-review` を `--dry-run` で起動するため Phase 3 でも write/auto-commit されない。改善を適用したい場合は `/skill-improve` を使う。
+- 改善実行は行わない (analyse only)。`run-elegant-review` を `--dry-run` で起動するため Phase 3 でも対象は Edit / Write されず、eval-log の評価成果だけを保存する。改善を適用したい場合は `/skill-improve` を使う。

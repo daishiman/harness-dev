@@ -2,41 +2,36 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-install",
-    "skill_md_sha256": "cc9ff8ca753df490f90de7c92813c304f7f3a3c94f8fe5a9a28f3c91cbbd50b4"
+    "skill_md_sha256": "ef1705c7654e3aba83ae4d99a5127238f57789b93144073ea996a6ab74ba8e7b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "runtime-profile-core-focused-review",
+  "reviewed_at": "2026-08-24T00:45:09Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
       "IN1",
-      "OUT1"
+      "OUT1",
+      "OUT2"
     ],
     "positive_feedback": [
-      "install (user-global 状態変更) と package 生成の副作用境界が Purpose & Output Contract・`## install 境界`・Layer 1 スコープ外・`## 失敗時` の 4 箇所で一貫して分離され、hook trust は全箇所で `user-review-required` 保持と明記されている。`effect: external-mutation` + `external_mutation_guard` frontmatter + canonical receipt flow block (dual-root 形) の 3 点が揃い、片側だけの不整合が無い。",
-      "完了条件が「CLI exit 0」ではなく `codex plugin list --json` の installed/enabled 実測と runtime path の実在・absolute 性で定義され、`### 目的・背景 (Why)` がその理由 (exit 0 は identity を証明しない) を明示している。Goodhart 化しやすい成功判定を実測へ接地させる設計判断として横展開価値がある。",
-      "SKILL.md 完了チェックリスト 6 項目・workflow-manifest.json `completion_signals.required_receipt_fields` (status/plugin_id/verified/enabled/runtime_path)・R1-install.md Layer 5.3 の 3 者が同じ受け入れ集合を指しており、三重定義の乖離が無い。",
-      "workflow-manifest.json の phase 連鎖 (preflight→install→verify→handoff) が R1-install.md Layer 6 の記述と一致し、`disable-model-invocation: true` により user-global を変える install が model 自発起動しない導線になっている。"
+      "inline/subagent がuser-global mutationのpreview→confirm→authorize→execute境界と親context分離に一致し、OUT2は実セッション受入をlive-trialへ明示的に委ねている。"
     ],
-    "negative_feedback": [
-      "[low / inconsistency] frontmatter が `goal_seek.fork: subagent` を宣言し本文でも「親 context から分離する」と書くが、`allowed-tools` は Read と Bash(python3 *) だけで Agent/Task/Skill を含まないため、宣言どおりの fork ができない。repo 全体では fork=subagent 27 件中 21 件が Agent 系を許可しており本件は少数側 (他 5 件は本レビュー範囲外の既存 skill)。goal_seek は post-choice でのみ起動する opt-in section で、install の安全性は guard CLI 側が担保するため実行不能にはならず low に留める。",
-      "[low / smell] R1-install.md Layer 5.2 達成ゴールの `recieptを得た状態` が receipt の綴り誤り。意味は文脈から一意。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:runtime-profile-migration",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration + runtime_root_policy: host-skill-path 導入によって SKILL.md sha が既存 verdict と乖離したことに対する再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 本 verdict は rubric 面 (assign-skill-design-evaluator 規範採点相当の high severity 0 判定) への投影である。 共通の機械検査として次を実走した: (1) `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` = verdict PASS / violations 空。(2) frontmatter が宣言した responsibility_refs / manifest / schemas と本文が起動する script の実在をファイル存在確認で全件突合 (audit-capability-parity.py, sync-plugin-platforms.py, check-route-component-parity.py, install-codex-plugin.py, install-local-plugins.py, evaluate-create-gates.py, validate-intake-publish-ready.py, lint-plugin-composition.py, search_knowledge.py, build-external-intelligence.py, lint-readme-plugin-root-portability.py, ref-cross-platform-runtime/references/runtime-portability.md) — 欠損 0 件。(3) 本文が引用する CLI flag を各 script の argparse 定義と突合。(4) 参照 anchor `#product別-plugin-root-契約` (runtime-portability.md L41) と `#h7-ナレッジループ注入の詳細手順` (build-steps.md L502) の実在を確認。 評価方法: 本 skill は本ブランチ新規追加 (SKILL.md 207 行 + prompts/R1-install.md + workflow-manifest.json) のため 3 ファイルを全文読了した。workflow-manifest.json の phases/completion_signals を JSON パースして SKILL.md 完了条件・R1-install.md Layer 5.3/Layer 6 と突合し、`install-local-plugins.py` (--repo-root/--platform/--plugin/--all/--check) と `install-codex-plugin.py` (--source/--ref/--plugin) の argparse 定義を実読して 本文の全 flag が実在することを確認した。plugin-composition.yaml L54/L181 と references/package-contract.json への 登録も確認済み。未解決 medium 以上は 0 件、low 2 件は fork 宣言と allowed-tools の粒度不一致 (repo 既存パターン) と 綴り誤りで実行不能にならないため verdict は PASS。PASS の射程は静的設計 adequacy に限り、実 install の受け入れ (installed/enabled/runtime path 実測) は live-trial の実走証拠を別途要する。"
+  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
 }

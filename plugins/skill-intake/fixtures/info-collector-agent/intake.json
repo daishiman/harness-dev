@@ -1,6 +1,7 @@
 {
   "schema_version": "2.0.0",
   "source_of_truth": "plugins/skill-intake/references/section_canonical_map.json",
+  "notion_target": {"mode": "create-explicit", "allow_create": true},
   "skill_name_hint": "info-collector-agent",
   "_baseline_note": "dogfooding_regression.py の baseline fixture。ユーザー提示『info-collector-agent ヒアリング正本完全版』から intake.json 2.0.0 形式へ転記した最小骨格。lexical fingerprint(section_keys / axes_ids / figures.kind+index) と semantic(true_purpose) の回帰検証に使用。本文全文の再現は範囲外で、Notion ペイロード生成と一致させる責務は render_notion_page.py。",
   "sections": {
@@ -119,6 +120,32 @@
         {"axis_id": "real_problem", "answer": "収集→要約→アウトプット化を一気通貫で代行し思考に時間を再配分", "depth": "deep", "evidence": "assumption D2"},
         {"axis_id": "knowledge_asset", "answer": "Obsidian+過去X投稿+講座資料を参照、暗黙知抽出ハイブリッド、週次更新", "depth": "deep", "evidence": "tacit_locus + T3 採択"}
       ],
+      "intent_contract": {
+        "input_spec": {
+          "sources": ["既存3スキル(arxiv/x-post/ai-release)", "会話URL貼り付け"],
+          "trigger": "fixture 検証時の手動起動",
+          "frequency": "ondemand",
+          "raw_materials": ["ヒアリング回答"]
+        },
+        "output_spec": {
+          "sink": "Obsidian Vault(本体)+Discord/Slack(サマリ通知)",
+          "format": "document",
+          "granularity": "5軸の検証済み intake 仕様",
+          "audience": "自分(最優先)/X/クライアント/チーム(4方向)",
+          "cadence": "ondemand"
+        },
+        "slot_status": {
+          "input_spec.sources": {"filled": true, "source": "inferred"},
+          "input_spec.trigger": {"filled": true, "source": "inferred"},
+          "input_spec.frequency": {"filled": true, "source": "inferred"},
+          "input_spec.raw_materials": {"filled": true, "source": "inferred"},
+          "output_spec.sink": {"filled": true, "source": "inferred"},
+          "output_spec.format": {"filled": true, "source": "inferred"},
+          "output_spec.granularity": {"filled": true, "source": "inferred"},
+          "output_spec.audience": {"filled": true, "source": "inferred"},
+          "output_spec.cadence": {"filled": true, "source": "inferred"}
+        }
+      },
       "knowledge_pipeline": {
         "ingest": ["Markdown", "X投稿", "URL", "PDF"],
         "analysis": ["LLM要約", "Embeddings テーマクラスタリング", "静的シード統合"],
@@ -187,8 +214,8 @@
         {"path": "intake.md", "role_one_liner": "Gate A 通過版(人間可読)", "generator_subagent": "skill-intake-handoff"},
         {"path": "intake.json", "role_one_liner": "Gate A 通過版(機械可読/schema検証PASS)", "generator_subagent": "skill-intake-handoff"},
         {"path": "notion-payload.md", "role_one_liner": "Notion投稿用本体", "generator_subagent": "skill-intake-notion-publisher"},
-        {"path": "qb-candidates.json", "role_one_liner": "質問銀行追加候補3件", "generator_subagent": "skill-intake-self-updater"},
-        {"path": "self-update.json", "role_one_liner": "value_realized_score=88", "generator_subagent": "skill-intake-self-updater"}
+        {"path": "qb-candidates.json", "role_one_liner": "質問銀行追加候補3件", "generator_component": "skill:run-skill-intake", "runtime_ref": "script:plugins/skill-intake/scripts/update_question_bank.py"},
+        {"path": "self-update.json", "role_one_liner": "value_realized_score=88", "generator_component": "skill:run-skill-intake", "runtime_ref": "script:plugins/skill-intake/scripts/measure_value_realized.py"}
       ]
     }
   }

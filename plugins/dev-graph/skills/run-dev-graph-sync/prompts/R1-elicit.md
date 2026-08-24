@@ -13,23 +13,23 @@
 
 ### 入力契約
 
-- repo-local GitHub config、issue repo、Project aliases/owner/number、field mapping。
+- repo-local GitHub config、issue repo、Project aliases/owner/number、field mapping、任意のoffline adapter fixture path。
 
 ### 出力契約
 
-- runtime IDsとcanonical aliasesを分離したsync context。
+- runtime IDs/canonical aliasesとC12 `project-item-fields` normalized receiptを分離したsync context。
 
 ### 責務境界
 
-- tokenを扱わずnode IDを正本configに保存せず保存先を質問しない。
+- tokenを扱わずnode IDを正本configに保存せず保存先を質問しない。fixture JSONを直接loadせずC12だけに渡す。
 
 ### 受入条件
 
-- enabled targetのowner/number/field mapping欠落0、runtime cacheは正本外になる。
+- enabled targetのowner/number/field mapping欠落0、field値がC12 receiptに由来し、runtime cacheは正本外になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: Readとgh-bridge read。
+- 使用資産: Readとgh-bridge `project-resolve` / `project-item-find` / `project-item-fields` read。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,20 +42,20 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-sync/R1-elicit`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-sync/R1-elicit`。main contextで未達checklistを処理する。
 
 ### 5.2 ゴール定義
 
 - 目的: repo-local configのissue repository、複数Projects target alias/owner/project number、default/auto-add policy、field name/type/option mappingを読み、GitHub node IDは実行時解決する
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: runtime IDsとcanonical aliasesを分離したsync contextが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: runtime IDs/canonical aliasesとC12 `project-item-fields` normalized receiptを分離したsync contextが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] enabled targetのowner/number/field mapping欠落0、runtime cacheは正本外になる
+- [ ] enabled targetのowner/number/field mapping欠落0、field値がC12 receiptに由来し、runtime cacheは正本外になる
 
 ### 5.4 実行方式
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

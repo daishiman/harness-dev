@@ -6,6 +6,9 @@ allowed-tools:
   - Write
   - Bash
 kind: run
+goal_seek:
+  engine: inline
+  fork: inline
 user-invocable: true
 effect: local-artifact
 source: plugins/skill-intake

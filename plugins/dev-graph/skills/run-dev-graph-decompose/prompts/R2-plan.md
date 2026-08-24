@@ -17,19 +17,19 @@
 
 ### 出力契約
 
-- feature nodes、architecture refs、機能間depends_onのacyclic DAG preview。
+- C02へ渡す `macro-intent.schema.json` 準拠intent (`schema_version/observed_at/project_id/source_digest/architecture/features`)。graph nodeとreceiptは出力しない。
 
 ### 責務境界
 
-- 13 phase taskを生成せずarchitectureを複製せずdraftを投影しない。
+- 13 phase task、candidate graph、receiptを手書きせずarchitectureを複製せずdraftを投影しない。feature intentは `graph_node_id/title/domain/purpose/goal/scope_in/scope_out/acceptance/depends_on/resource_scope` だけを持ち、`architecture_refs` はC02がtop-level architectureから導出する。macro intentからgraphへの正規化はC02 `preview-macro|apply-macro`だけが行う。
 
 ### 受入条件
 
-- 循環0、task粒度混入0、feature必須field欠落0になる。
+- macro intentにarchitecture 1件、feature 1件以上、feature間だけを参照するdepends_on、feature必須意味fieldが揃い、C02 schema検証へ入力可能になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: ReadとAgent macro verifier。
+- 使用資産: Read。意味分解をmacro intentへ限定し、schema/DAG検証は後段C02とAgent macro verifierへ委譲する。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -48,7 +48,7 @@
 
 - 目的: 自然文のwantからfeatureノード群+architectureノード+機能間depends_onへのマクロ分解案を組み立てる (1機能=13タスク仕様書への細分解はsystem-dev-plannerへ委譲しここでは行わない)
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: feature nodes、architecture refs、機能間depends_onのacyclic DAG previewが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: top-level architecture 1件とfeature intent群、機能間depends_onだけを持つmacro intentが生成され、graph node共通fieldと`architecture_refs`の導出はC02に委譲された状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
@@ -63,7 +63,7 @@
 
 ## Layer 6: オーケストレーション層
 
-- macro candidateをR3、ready featureをR2bへ渡す。
+- macro intentをR3のC02 `preview-macro`→`apply-macro`、ready featureをR2bへ渡す。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

@@ -66,6 +66,7 @@ run "llm-coverage-parity"                  python3 scripts/validate-llm-coverage
 run "lint-ssot-duplication --strict"       python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/harness-creator --strict
 run "lint-goal-seek --self-test"           python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --self-test
 run "lint-goal-seek conformance"           python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py --skills-dir plugins/harness-creator/skills
+run "lint-skill-runtime-profiles (all)"     python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --repo-root .
 
 # ── completeness / frontmatter (harness-creator + prompt-creator) ──
 run "lint-skill-tree (harness-creator)"      python3 plugins/skill-governance-lint/scripts/lint-skill-tree.py --skills-dir plugins/harness-creator/skills

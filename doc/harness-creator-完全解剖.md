@@ -204,17 +204,17 @@ harness-creator は生成物に **固定手順を書かせない**。代わり�
 
 fresh agent 1 体が `original_goal` に対し **PASS | FAIL + blocker 列挙のみ**を返す。**点数の出力は禁止**（点数を出すと点数を最適化する Goodhart 化が起きるため）。
 
-### コンテキスト分離（必須）
+### コンテキスト配置（必要時のみ分離）
 
-ループ本体を親セッションで回さない。SubAgent 既定 / Agent Team。理由は sycophancy（自分の生成物を自分で甘く評価する）の防止。
+既定は親セッション内の `inline`。独立 context が必要な場合だけ SubAgent、独立した並列所有権がある場合だけ Agent Team を明示する。意味評価は生成 context から分離し sycophancy（自分の生成物を自分で甘く評価する）を防ぐが、軽い決定論ループまで常時 fork しない。
 
 ### goal_seek.engine 3 変種
 
 | engine | 用途 |
 |---|---|
-| `inline` | 小規模 |
+| `inline` | loop kind の既定。Goal・Checklist・検証契約を自己完結実行 |
 | `run-goal-seek` | 汎用 |
-| `task-graph` | loop kind の既定。ready 集合は最小 id を拘束選択、self-reflect 追記、consumption verifier、`max_loops` は item 数 × 1.5 が目安 |
+| `task-graph` | 実在する依存グラフがある場合の明示 profile。ready 集合は最小 id を拘束選択、self-reflect 追記、consumption verifier、`max_loops` は item 数 × 1.5 が目安 |
 
 正本: `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md`
 

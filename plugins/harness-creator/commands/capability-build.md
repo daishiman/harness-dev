@@ -36,6 +36,7 @@ Capability の生成・更新を、入力形態に応じた 1 経路へ正規化
 - **fail-closed**: handoff/schema/parity、graph hash pin、lock/lease、route report、artifact/validator SHA、evidence freshness、budget gate のどれかが不正・欠落・stale なら起動または completed 宣言を止める。未実測を PASS と推定しない。
 - **単一 writer**: `task-graph.json` は planner 所有で build 中に直接編集しない。runtime state は dispatcher が TG-C02 を直列呼出ししてだけ更新し、SubAgent は state を書かない。build lease の `owner_token` はメモリだけに保持し、所有者一致で renew/release する。
 - **承認境界**: structural discovered-task の受理、初回診断後の改善、`release`、`exhaustive`、install/enable/hook trust/re-trust/uninstall は人間の明示承認なしに進めない。`pending_user_gate` を成功へ畳まない。
+- **初回診断**: 現物と試し方の提示後に `AskUserQuestion` で深度を選び、選択時だけ `elegant-initial-draft-evaluator` を生成 context と分離して起動する。`accept-draft` は evaluator/improver 0 のまま引き渡す。3独立分析 Agent の30思考法監査は別の明示確認を要する `exhaustive` に限る。
 - **証拠鮮度**: proof/receipt は current target・route-local入力・checker契約・上流fingerprint・evidence SHA に束縛する。`completion-evidence.json.evidence[]` は注釈なしの実在パスだけを列挙し、実測不能は `blocked` にする。
 - **実行量**: `generation_queue` / `llm_batches` / `observational_queue` に列挙された claim だけを起動する。`budget_gate=blocked` は開始前に停止し、上限を黙って緩めない。
 - **native surface**: release 完了ゲートでは C01 `sync-native-surfaces.py` の apply→同一 desired-set の check だけを順に使う。legacy generator を連続実行せず、C01/TG-C08 がともに成功するまで completed にしない。
@@ -43,7 +44,7 @@ Capability の生成・更新を、入力形態に応じた 1 経路へ正規化
 ## 完了条件
 
 - **明示 / 単一 route**: kind別の生成物と current proof が存在し、`validate-build-trace.py` または `validate-route-build-reports.py`、route モードの parity が exit 0。
-- **task-graph draft**: 実体生成に必要な `generation_queue` と未解決 draft check が空、in-flight 0、`stage_gate.status=usable-draft`、`handoff_ready=true`、artifact SHA に束縛された `usable-draft-proof.json` が valid。release completion を偽装せず、利用者へ現物・試し方・未回収工程を提示する。
+- **task-graph draft**: 実体生成に必要な `generation_queue` と未解決 draft check が空、in-flight 0、`stage_gate.status=usable-draft`、`handoff_ready=true`、artifact SHA に束縛された `usable-draft-proof.json` が valid。release へ自動昇格せず completion を偽装せず、利用者へ現物・試し方・未回収工程を提示する。
 - **task-graph release**: task/state/report/evidence の全必須ゲート、C01 apply→check、TG-C08 `completion_gate:ok` が成立し、`build-summary.json` と TG-C09 の `task-execution-report.html` を保存してから自分の lock を release する。
 - **全終了経路**: 完了・停滞・中断・異常のいずれでも、書込を伴う証跡保存と TG-C09 投影を lock release 前に行う。失敗/stall は completed にせず、構造化 blocker と TG-C08 の handback/next step をそのまま提示する。
 

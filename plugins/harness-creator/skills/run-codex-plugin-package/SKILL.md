@@ -11,6 +11,7 @@ allowed-tools:
   - Bash(python3 *)
   - Bash(git diff *)
   - Bash(git status *)
+  - Agent
 kind: run
 prefix: run
 effect: local-artifact
@@ -33,6 +34,10 @@ feedback_contract:
       loop_scope: outer
       text: 全Claude pluginが自己完結したCodex manifestと正確なmarketplace entryを持ち、localまたはmerge済みGit refからinstall可能なこと
       verify_by: test
+    - id: OUT2
+      loop_scope: outer
+      text: 実セッションで親contextと分離したSubAgentがplatform同期・parity検査・必要時のinstallを承認境界に従って完了し、成果物と検証receiptだけをhandoffで返すこと
+      verify_by: live-trial
 responsibility_refs:
   - prompts/R1-package.md
 manifest: workflow-manifest.json

@@ -126,7 +126,29 @@ def test_scheduler_rejects_each_incomplete_gate_for_self_and_bd_ready(tmp_path, 
     )
 
     ready = tmp_path / "ready.json"
-    ready.write_text(json.dumps({"ready_set": [{"external_ref": node["id"]} for node in nodes]}), encoding="utf-8")
+    ready.write_text(
+        json.dumps(
+            {
+                "ready_set": [
+                    {
+                        "external_ref": node["id"],
+                        "edge_parity": {
+                            "confirmed": True,
+                            "expected_status": "open",
+                            "actual_status": "open",
+                            "expected_depends_on": [],
+                            "actual_depends_on": [],
+                            "missing_edges": [],
+                            "unexpected_edges": [],
+                        },
+                    }
+                    for node in nodes
+                ],
+                "conflicts": [],
+            }
+        ),
+        encoding="utf-8",
+    )
     code, bd_plan = call_main(
         module, monkeypatch, capsys,
         "--graph", graph, "--ready-source", "bd-bridge", "--ready-json", ready,

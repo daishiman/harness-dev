@@ -178,11 +178,11 @@
       "mcp_tools": [],
       "external_systems": ["公式ドキュメント/価格ページ (取得は必ず C02 経由・C01 は直接 fetch しない)"],
       "deterministic_checks": ["validate-coverage-matrix.py", "validate-knowledge-graph.py"],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5, "loop_semantics": "per-invocation chunk limit; persist state and return resumable next_question when reached"},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5, "loop_semantics": "per-invocation chunk limit; persist state and return resumable next_question when reached"},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-coverage-matrix.py --spec-state --require-foundationでU1-U9/decision/goal trace/matrixを検証する。C14 knowledge profileでprecedence DAGと型則、required-info profileで最低形状・domain被覆・非空・trace・missing_effect・coverage certificateを検証する", "verify_by": "script"},
@@ -278,11 +278,11 @@
       "mcp_tools": [],
       "external_systems": [],
       "deterministic_checks": ["validate-coverage-matrix.py", "validate-source-citation.py", "validate-knowledge-graph.py"],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-coverage-matrix.py と validate-source-citation.py が生成直前の spec-state.json / fetched-references.json に対し exit0 になること、validate-knowledge-graph.py が C04 knowledge-catalog.json に対し exit0 (DAG循環/dangling参照0件) になることを検証する", "verify_by": "script"},

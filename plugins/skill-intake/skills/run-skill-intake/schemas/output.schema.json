@@ -5,24 +5,55 @@
   "description": "11 phase 委譲結果のトレース。各 phase の delegateType/delegateName 実行結果と最終成果物 URI を保持する。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["session_id", "phases", "artifacts"],
+  "required": ["session_id", "workflow_status", "phases", "artifacts"],
   "properties": {
     "session_id": {"type": "string"},
+    "workflow_status": {"type": "string", "enum": ["in_progress", "completed", "failed"]},
     "topic_hint": {"type": "string"},
     "phases": {
       "type": "array",
       "minItems": 11,
-      "maxItems": 11,
+      "description": "phase attempt の append-only trace。Gate A retry 時は P4-P8 attempt が追加されるため 11 件を超え得る。",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "status", "delegateType", "delegateName"],
+        "required": ["id", "attempt", "status", "delegateType", "delegateName", "started_at", "finished_at", "handoff_path", "handoff_sha256", "exit_code"],
         "properties": {
           "id": {"type": "string"},
-          "status": {"type": "string", "enum": ["PASS", "FAIL", "SKIP"]},
+          "attempt": {"type": "integer", "minimum": 1},
+          "status": {"type": "string", "enum": ["PASS", "FAIL", "SKIP", "RETRY"]},
           "delegateType": {"type": "string", "enum": ["skill", "agent"]},
           "delegateName": {"type": "string"},
           "delegateSkill": {"type": ["string", "null"]},
+          "started_at": {"type": "string", "format": "date-time"},
+          "finished_at": {"type": "string", "format": "date-time"},
+          "handoff_path": {"type": ["string", "null"]},
+          "handoff_sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "exit_code": {"type": "integer"},
+          "skip_reason": {"type": "string"},
+          "retry_reason": {"type": "string"},
+          "exit_hook": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "status", "evidence"],
+            "properties": {
+              "name": {"type": "string"},
+              "status": {"type": "string", "enum": ["RUNNING", "PASS", "FAIL"]},
+              "evidence": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["path", "sha256"],
+                  "properties": {
+                    "path": {"type": "string"},
+                    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+                  }
+                }
+              }
+            }
+          },
           "output_schema": {"type": "string"},
           "artifact_path": {"type": "string"},
           "error": {"type": "string"}

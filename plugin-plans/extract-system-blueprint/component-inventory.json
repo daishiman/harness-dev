@@ -848,11 +848,11 @@
     "システムブループリント抽出",
     "extract-blueprint"
    ],
-   "goal": "対象システムのURL1件について、フロント表層の事実とバックエンド/設計意図の根拠つき推測を明示区別した章別ドキュメント群(md+json+Mermaid、事実推測区別図を含む5種のMermaid図解込み、加えて観測できたlayout.json・verbatimコピーのcontent fact・essence章=本質的問題(JTBD)/想定読者/価値提案/キーメッセージ/トーン/positioning)をローカルへ生成し、C02の独立品質評価がPASSした状態(screenshot/JS実行後DOMはobservation_gap)",
+   "goal": "対象システムのURL1件について、フロント表層の事実とバックエンド/設計意図の根拠つき推測を明示区別した章別ドキュメント群(md+json+Mermaid、事実推測区別図を含む5種のMermaid図解込み、加えて観測できたlayout.json・verbatimコピーのcontent fact・essence章=本質的問題(JTBD)/想定読者/価値提案/キーメッセージ/トーン/positioning)をローカルへ生成し、C02の独立品質評価がPASSした状態(browser-render成功時はscreenshot/JS実行後DOMをfact化し、browser-unavailable時のみobservation_gap)",
    "purpose_background": "URLをブラウザ目視+F12確認する手作業3ステップ(週2.5回×平均90分)を排し、URL解析結果から自社実装の雛形・設計ドキュメントを即生成して自社構築の着手を速くするため",
    "checklist": [
-    "フロント表層の事実抽出(UI要素・限定画面遷移・実行後DOM・観測通信)と欠測の別状態化",
-    "静的に観測できる範囲でfactを取得し(visual formation=色/typography/影/角丸/間隔等のcomputed-style由来項目・viewport screenshot・実行後DOMはブラウザ実行を要するためobservation_gap)、画面→region→主要elementのcoverage manifest、観測できたlayout.jsonとしてdocsへ埋込。未取得fieldはnot_observed+reason",
+    "フロント表層の事実抽出(UI要素・限定画面遷移・実行後DOM・観測通信)と欠測の別状態化。browser-render成功時はrendered DOM/screenshot/computed styleをfact化し、browser-unavailable時のみobservation_gapへ縮退する",
+    "静的HTTP観測をbaselineとしてfactを取得し、browser-render成功時は色/typography/影/角丸/間隔等のcomputed-style由来項目・viewport screenshot・実行後DOMを追加fact化する。画面→region→主要elementのcoverage manifest、観測できたlayout.jsonとしてdocsへ埋込し、未取得fieldはnot_observed+reason",
     "根拠+確度つき推測としてバックエンド機構・設計意図を事実と明示区別して記録",
     "文字(コピー)のverbatim content fact(見出し階層/本文/CTA/microcopy/meta・OGP/構造化データ/locale)を採取し、C13で伝えたいこと(価値提案/キーメッセージ/想定読者/トーン&ボイス/CTA意図)と本質的問題(JTBD)仮説を根拠+確度つき推測として導出し、C06のessence章(本質的問題/読者/価値提案/キーメッセージ/トーン/positioning・差別化)へ統合する",
     "各analyzerの実プロンプトに著名エンジニア名付き原則レンズ見出し・cross-lens conflicts・neutral synthesisを明示し、本人の模倣/承認主張をせず、レンズ由来主張もevidence_refs+confidence必須でfactへ混入させない",
@@ -871,7 +871,7 @@
    "responsibilities": [
     {
      "id": "R1-fetch",
-     "summary": "C12のAuthzEvidence/request budgetとcrawl_profile(single|full_site)を確定し、C09のURL discovery(sitemap/robots/リンクグラフ)→C12のscope分類(in_scope/excluded+reason)でsystem関連URL台帳を作り、C08のfail-closed境界内でC09のHTTP snapshotとC03の静的HTTP観測を全in-scope画面へ取得する。full_siteでも瞬間負荷レバーは緩めずper-run有界+cache/ledgerによるmulti-run resumeで全URLへ到達する。再開runは前runのsite coverage manifestを読み、pendingと未分類discoveredをC12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)",
+     "summary": "C12のAuthzEvidence/request budgetとcrawl_profile(single|full_site)を確定し、C09のURL discovery(sitemap/robots/リンクグラフ)→C12のscope分類(in_scope/excluded+reason)でsystem関連URL台帳を作り、C08のfail-closed境界内でC09のHTTP snapshotを全in-scope画面へ取得する。加えてC15 browser-renderでrendered DOM/screenshot取得を試み、browser-unavailable時のみobservation_gapへ縮退する。full_siteでも瞬間負荷レバーは緩めずper-run有界+cache/ledgerによるmulti-run resumeで全URLへ到達する。再開runは前runのsite coverage manifestを読み、pendingと未分類discoveredをC12 --coverage-manifest-in経由で分類対象へ再投入する(resume状態のwriter=C11/reader=C12を両辺契約化)",
      "prompt_required": true
     },
     {
@@ -881,7 +881,7 @@
     },
     {
      "id": "R3-document",
-     "summary": "doc-emit.pyで章別ローカルdraft(md+json)と5種Mermaid図を確定しmermaid-validate.pyで自己検証する。観測できたlayout factからlayout.jsonとlayout-overlay.svg(テキスト演算)を生成し(screenshotはobservation_gap)、doc-emitのcompleteness検査(--check-screens)を通す",
+     "summary": "doc-emit.pyで章別ローカルdraft(md+json)と5種Mermaid図を確定しmermaid-validate.pyで自己検証する。観測できたlayout factからlayout.jsonとlayout-overlay.svg(テキスト演算)を生成し、browser-render成功時のscreenshot参照を整合検査する。browser-unavailable時のみscreenshotをobservation_gapとして扱い、doc-emitのcompleteness検査(--check-screens)を通す",
      "prompt_required": true
     }
    ],
@@ -891,6 +891,7 @@
     "対象システムの公開URL (HTTP fetch)"
    ],
    "deterministic_checks": [
+    "authz-classify.py",
     "fetch-snapshot.py",
     "mermaid-validate.py",
     "doc-emit.py"
@@ -903,24 +904,43 @@
     "with-feedback-contract"
    ],
    "goal_seek": {
-    "engine": "inline",
-    "fork": "subagent",
+    "activation_state": "semantic_evaluator_started",
+    "engine": "task-graph",
+    "engine_profile": "checklist-graph",
+    "full_task_spec_graph": false,
+    "fork": "agent-team",
+    "spec": "eval-log/goal-spec.json",
+    "progress": "eval-log/run-extract-blueprint-progress.json",
+    "intermediate": "eval-log/run-extract-blueprint-intermediate.jsonl",
     "max_loops": 5
    },
    "feedback_contract": {
+    "activation_state": "semantic_evaluator_started",
+    "max_iterations": 3,
     "criteria": [
      {
       "id": "IN1",
       "loop_scope": "inner",
-      "text": "authz/fetch/mermaid/docの決定論チェックがexit0になり、重要fact欠落0、未観測の無断inference化0、request budget超過0、対象origin並列数1を確認する",
-      "verify_by": "script"
+      "text": "authz/fetch/mermaid/doc の決定論チェックが exit0 になり、重要 fact 欠落 0、未観測の無断 inference 化 0、request budget 超過 0、対象 origin 並列数 1 を確認する",
+      "verify_by": "script",
+      "derived_from": [
+       "CL-1",
+       "CL-2",
+       "CL-3",
+       "CL-6",
+       "CL-9"
+      ]
      },
      {
       "id": "OUT1",
       "loop_scope": "outer",
-      "text": "生成物でバックエンド機構・設計意図が根拠+確度つき推測として事実と明示区別され、AIへ渡した際に追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度であることを受入テストが確認する。EVALS.jsonのreconstruction-rehearsal LLM-evalが、生成blueprintから最小スカフォールド骨子を試導出し事実/推測/確度の必須フィールド欠落0を逆テストで確認する",
+      "text": "生成物でバックエンド機構・設計意図が根拠+確度つき推測として事実と明示区別され、AI へ渡した際に追加のヒアリングなしで自社版スカフォールドの雛形生成に着手できる粒度であることを受入テストが確認する (EVALS reconstruction-rehearsal)",
       "verify_by": "test",
-      "eval_ref": "reconstruction-rehearsal"
+      "derived_from": [
+       "CL-3",
+       "CL-4",
+       "CL-5"
+      ]
      }
     ]
    },
@@ -934,7 +954,8 @@
     "C04",
     "C05",
     "C13",
-    "C06"
+    "C06",
+    "C15"
    ],
    "build_target": "plugins/extract-system-blueprint/skills/run-extract-blueprint/",
    "builder": "run-skill-create",

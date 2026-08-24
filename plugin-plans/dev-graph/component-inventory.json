@@ -47,17 +47,17 @@
       "responsibilities": [
         {
           "id": "R1-elicit",
-          "summary": "C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない",
+          "summary": "C24でcaller repository rootとrepo-local configを解決し、検証済みeffective configを単一正本としてsymlink sourceとcontent authorityを分離する。保存先は質問しない",
           "prompt_required": true
         },
         {
           "id": "R2-plan",
-          "summary": "6 content root (issues/tasks/specs/architecture/features/docs)、frontmatter、routing policyに加え、GitHub enabled=false既定のissue repository/複数Project/field mapping/auto-add設定雛形を組み立てる。保存先やnode IDをユーザーへ求めない",
+          "summary": "欠落時は6 content rootの既定値を組み立て、既存時は検証済みeffective configを保持し、routing/GitHub/worktree/hook policyと実行後readiness gateをdry-run receiptへ決定論的に出力する",
           "prompt_required": true
         },
         {
           "id": "R3-init",
-          "summary": "resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない",
+          "summary": "effective configから解決したrepo内pathだけにcontent/state/cache/locks/graph/receiptを生成し、GitHub設定はtoken/node IDを保存しない",
           "prompt_required": true
         },
         {
@@ -77,7 +77,7 @@
       "deterministic_checks": [
         "validate-graph-schema.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -87,7 +87,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -102,7 +102,7 @@
           {
             "id": "OUT1",
             "loop_scope": "outer",
-            "text": "初期化後にissues/tasks/specs/architecture/features/docsの6 rootとrouting policyとグラフストアが揃い、二回目initで構造が変化しないことを受入テストが確認する",
+            "text": "初期化後にeffective configの6 content rootとrouting policyとグラフストアが揃い、二回目initで構造が変化しないことを受入テストが確認する",
             "verify_by": "live-trial"
           },
           {
@@ -114,7 +114,7 @@
           {
             "id": "OUT3",
             "loop_scope": "outer",
-            "text": "同一symlink harnessをrepo A/Bから実行して各repo固有config/docs/stateだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkは診断付きfail-closedになり、harness link切断はhost launcher preflightが起動前検出する",
+            "text": "initは同一共有scriptをrepo A/Bで実行して各effective configが指すcontent/graph/receiptだけを読み書きし、cross-read/write 0件、absolute stored path 0件、project-root不一致とbroken content linkを診断付きfail-closedにする。起動前のharness link切断はinitの実行可能境界外とし、host正本`scripts/build-claude-symlinks.py --check`の証跡と分離する",
             "verify_by": "test"
           },
           {
@@ -192,7 +192,7 @@
       "purpose_background": "成果物を単一graphで保持する専用writer。feature由来task batchはsystem-dev-plannerのfeature package契約に従い、P01..P13 exact 13 node、共通parent_feature/feature_package_id、同一package内dependencyを事前検証してall-or-none commitする。tracker bindingも同じtransactionで解決する",
       "checklist": [
         "artifact自動分類",
-        "候補path preview",
+        "正規root候補preview (物理pathはC02 receiptで確定)",
         "低信頼時だけ確認",
         "ノード追加/更新",
         "frontmatter/path整合維持",
@@ -215,12 +215,12 @@
         },
         {
           "id": "R1-classify",
-          "summary": "成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない",
+          "summary": "成果物内容からartifact_kind/domain/project_id候補、confidence、reason、正規root候補を推定する。物理pathを決めず保存先を質問しない",
           "prompt_required": true
         },
         {
           "id": "R2-preview",
-          "summary": "分類previewを提示し、閾値未達時だけ確認して正規pathを確定する",
+          "summary": "分類previewを提示し、閾値未達時だけsemantic decisionを確認する。物理pathはC02 CLI receiptでのみ確定する",
           "prompt_required": true
         },
         {
@@ -240,7 +240,7 @@
       "deterministic_checks": [
         "validate-graph-schema.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -250,7 +250,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -274,12 +274,18 @@
             "text": "新規ノード作成時にartifact_kind (architectureは選択したsubtype全て、specificationはAPI変更有無に応じたapi-contract合成) に対応する本文必須セクション見出しが欠落0件で適用されることを受入テストが確認する (要件C18/C19)",
             "verify_by": "test"
           },
-          {
-            "id": "OUT3",
-            "loop_scope": "outer",
-            "text": "12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる",
-            "verify_by": "test"
-          }
+        {
+          "id": "OUT3",
+          "loop_scope": "outer",
+          "text": "12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる",
+          "verify_by": "test"
+        },
+        {
+          "id": "OUT4",
+          "loop_scope": "outer",
+          "text": "新規normal/macroの正規path占有とdurable normal/macroのsymlinkをstaging前に拒否し、dry-run/applyはgraph/content/receiptを変更せず、正常な再実行はwrite_count=0の冪等no-opになる",
+          "verify_by": "test"
+        }
         ]
       },
       "depends_on": [
@@ -419,7 +425,7 @@
         "manage-worktree-lease.py",
         "bd-bridge.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -429,7 +435,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -610,7 +616,7 @@
         "render-graph-html.py",
         "validate-graph-schema.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -620,7 +626,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -747,7 +753,7 @@
         "validate-graph-schema.py",
         "render-graph-html.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -757,7 +763,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -772,7 +778,7 @@
           {
             "id": "OUT1",
             "loop_scope": "outer",
-            "text": "生成したHTML/CSSをブラウザで開いた際に追加ランタイム依存なくSVGグラフが表示され、featureごとの子task進捗X/Yがregistration receiptのapplied_count/expected_countと一致し、表示対象がreceiptのsource_digestに対応することを受入テストが確認する",
+            "text": "生成したHTMLをブラウザで開いた際に追加ランタイム依存なくSVGグラフとfeatureごとの子task実行進捗X/Y (done数/子task数) が表示され、YがC02 registration receiptのexpected_count=applied_countと一致し、子task exact node_ids/package/source lineageがreceiptのsource_digestに一致することを受入テストが確認する",
             "verify_by": "live-trial"
           }
         ]
@@ -1698,7 +1704,7 @@
       "deterministic_checks": [
         "validate-graph-schema.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": false,
       "prompt_layer": "7layer",
       "combinators": [
@@ -1708,7 +1714,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {
@@ -1819,7 +1825,7 @@
         },
         {
           "id": "R2-delegate",
-          "summary": "run-system-spec-elicit→必要時run-system-spec-doc-fetch→run-system-spec-compile→assign-system-spec-completeness-evaluatorを引用実行する",
+          "summary": "run-system-spec-elicit→run-system-spec-doc-fetch(no-op可)→run-system-spec-compile→assign-system-spec-completeness-evaluatorを必ず順番どおり引用実行する",
           "prompt_required": true
         },
         {
@@ -1836,7 +1842,7 @@
         "validate-coverage-matrix.py",
         "validate-source-citation.py"
       ],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": [
@@ -1846,7 +1852,7 @@
       "goal_seek": {
         "activation_state": "semantic_evaluator_started",
         "engine": "inline",
-        "fork": "subagent",
+        "fork": "inline",
         "max_loops": 5
       },
       "feedback_contract": {

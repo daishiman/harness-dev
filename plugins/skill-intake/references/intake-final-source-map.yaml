@@ -1,16 +1,19 @@
 # intake-final-source-map.yaml
 # intake-final-template.md.tmpl の context 変数を「どこから埋めるか」の正本マッピング。
 #
-# 3つの経路:
+# 4つの経路:
 #   subagent: 既存 skill-intake-* SubAgent との対話で埋める（推奨）
 #   prompt:   intake-final-prompts.yaml の 7層構造プロンプトで LLM 単独実行
 #   manual:   人手記入 or 自動派生（rendered or computed）
+#   inline:   owner Skill が実在 script を直接起動して決定的に埋める
 #
 # 各エントリ:
 #   path:          context オブジェクト内の dot-path（例: "purpose.true_purpose"）
-#   source_route:  subagent | prompt | manual
+#   source_route:  subagent | prompt | manual | inline
 #   subagent:      対応 SubAgent 名（source_route=subagent のとき）
-#   output_file:   SubAgent 出力 JSON 名（例: "purpose.json"）
+#   owner_skill:   実行所有 Skill（source_route=inline のとき）
+#   runtime_ref(s): owner Skill が起動する実在 script の plugin-root 相対 path
+#   output_file:   producer 出力 JSON 名（例: "purpose.json"）
 #   output_field:  出力 JSON 内の JSON Pointer
 #   prompt_id:     intake-final-prompts.yaml の id（source_route=prompt のとき）
 #   responsibility_id: prompt-creator-7layer の R-id（再生成時に渡す）
@@ -55,11 +58,13 @@ mappings:
     output_field: "/vocabulary_tier"
     responsibility_id: R-INTAKE-FINAL-META-04
   - path: "meta.value_realized_score"
-    source_route: subagent
-    subagent: skill-intake-self-updater
+    source_route: inline
+    owner_skill: run-skill-intake
+    runtime_ref: scripts/measure_value_realized.py
     output_file: self-update.json
     output_field: "/value_realized_score"
     responsibility_id: R-INTAKE-FINAL-META-05
+    notes: "run-skill-intake が計測 JSON を self-update.json へ集約する"
 
   # ===== executive_summary =====
   - path: "executive_summary.true_purpose"
@@ -168,12 +173,16 @@ mappings:
 
   # ===== self_update =====
   - path: "self_update"
-    source_route: subagent
-    subagent: skill-intake-self-updater
+    source_route: inline
+    owner_skill: run-skill-intake
+    runtime_refs:
+      - scripts/measure_value_realized.py
+      - scripts/update_question_bank.py
     output_file: self-update.json
     output_field: ""
     prompt_id: prompts.self_update
     responsibility_id: R-INTAKE-FINAL-SELF-UPDATE
+    notes: "run-skill-intake が計測結果と候補を集約。question-bank は dry-run 提示→別ターンの明示承認後だけ --apply。declining=true は apply しない"
 
   # ===== artifacts =====
   - path: "artifacts"

@@ -4,6 +4,9 @@ description: 進行中のskill intakeのphaseと5軸を確認したいとき、v
 allowed-tools: Read, Glob
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

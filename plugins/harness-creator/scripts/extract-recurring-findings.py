@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: detect-recurring-findings
+# name: extract-recurring-findings
 # purpose: eval-log/ と plugin-plans/*/plan-findings.json を横断して findings を収集し、
 #          同一 key (finding_code / bucket / finding_id の完全一致) の反復を機械集計する。
 #          学習ラチェット (verification-obligation-protocol.md) の運用口: 閾値以上の反復を
@@ -50,7 +50,7 @@ OBSERVATION_EXCERPT_LEN = 200
 
 
 def _warn(msg: str) -> None:
-    print(f"[detect-recurring-findings] warning: {msg}", file=sys.stderr)
+    print(f"[extract-recurring-findings] warning: {msg}", file=sys.stderr)
 
 
 def iter_finding_dicts(obj):
@@ -181,7 +181,7 @@ def aggregate(repo_root: Path, threshold: int) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="detect-recurring-findings",
+        prog="extract-recurring-findings",
         description="findings の反復を完全一致 key で集計し automation_candidates を台帳化する",
     )
     parser.add_argument("--repo-root", type=Path, default=None)

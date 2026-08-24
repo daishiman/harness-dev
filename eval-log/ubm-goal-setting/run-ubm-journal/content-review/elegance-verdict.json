@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "3b18d9dc94efc27405dabc2b3b20b28979d88a53b2c71a9a8f54a58ef7fa8478"
+    "skill_md_sha256": "c1b9c393872f78ec407d3cfb0492388ee956bdf597123471781a5bfe0128d6cf"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-quarterly-heading-rename-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-23T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "independent-content-review-run-ubm-journal-v2 (focused combined incremental review)",
+  "reviewed_at": "2026-08-24T07:08:58Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,19 +26,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "正本表記の切り替えを『追加』ではなく『候補列』としてモデル化している。`REQUIRED_OUTLINE` / `GOAL_SECTIONS` の要素を str | tuple[str, ...] へ拡張し、`heading_matches` / `section_lines` の両方が候補列を受けるよう揃えたため、後方互換の受理点が 1 箇所の定数 (`QUARTERLY_HEADING`) に集約された。将来 3ヶ月表記を落とすときはこの定数を削るだけで済む。",
-      "後方互換が実挙動として成立していることを機械確認した。golden-sample.md を `2026-08-18.md` として validator に通すと `PASS: 違反 0 件` (exit 0)、`### 2ヶ月目標` を `### 3ヶ月目標` へ置換した版でも骨格違反 (S01/G01) は 0 件で、検出されたのはファイル名日付の不一致 (F03) のみだった。旧表記のジャーナルを再検証しても骨格違反にしない、という変更意図が実際に満たされている。",
-      "違反メッセージの可読性を落としていない。`needle_label()` を導入し、見出しが完全に欠落したケース (`### 4ヶ月目標` へ差し替え) で `S01: 必須見出しが見つからないか順序が不正です: ### 2ヶ月目標 または 3ヶ月目標` と両候補を提示することを実行で確認した。G01 側は逆に候補列ではなく実際に書かれていた見出しへ解決してから出す、と方向を使い分けている。",
-      "`GOAL_KEYS` の優先順位が dict の宣言順で決まることを踏まえ、2ヶ月側を先頭へ移して正本優先に変えている。`extract_journal_goals` を直接呼び、本文の出現順が 3ヶ月→2ヶ月 / 2ヶ月→3ヶ月 のどちらでも `quarterly.goal` が 2ヶ月側になることを実測した。コメントの『先に出た方 (= 正本表記の 2ヶ月側)』は実装と一致している。",
-      "ドキュメント側の追従に漏れがない。`grep -rn '3ヶ月' plugins/ubm-goal-setting/` の残存は (a) 後方互換を検証するテスト、(b) 合宿データの鮮度判定や knowledge 本文中の期間表現、のみで、ジャーナル見出しの追従漏れは 0 件だった。"
+      "IN1: validate-journal-output.py remains the deterministic save gate for the 15-block outline, four goal levels, three journals times three subsections, daily-habit evidence, and unreplaced placeholders; the current focused mutations and the golden sample pass its regression suite.",
+      "IN2: build-journal-context.py remains the sole journal-number source and the validator binds the rendered heading to --expected-number and --expected-date rather than allowing model inference.",
+      "OUT1: the main context owns the natural dialogue and preserves named entities, numbers, times, and raw answers for the composer; journal-composer owns one Phase4-5 write/validate scope and returns a path plus final receipt without a competing parent writer.",
+      "OUT2: the static route is complete from Phase0 context resolution through parent-owned Phase1-3 dialogue, the qualified composer Task, Phase5 validation, and fail-closed completion. Behavioral acceptance remains correctly assigned to the separate live-trial criterion and is not inferred from this static verdict.",
+      "The inline/inline goal loop and forked composer are not competing orchestrators: fork:inline describes the parent goal-loop owner, while journal-composer is the explicitly bounded Phase4-5 writer/validator. The shared anchor checker is claimed only for original-goal integrity, not for journal-specific evidence it does not inspect.",
+      "The two-month heading is canonical across the output contract, composer, and golden sample; the legacy three-month heading remains read/validation compatible, and if both coexist the validator deterministically inspects the canonical section so its body and error label cannot diverge."
     ],
     "negative_feedback": [
-      "[low / smell] `validate()` の目標4階層ループは `body = section_lines(lines, 3, goal)` を候補列のまま先に引き、その後 `goal` を候補の先頭一致へ再解決する。同一ジャーナルに 2ヶ月目標と 3ヶ月目標が併存し、かつ本文で 3ヶ月側が先に現れる異常系では、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。正常系 (片方だけ存在) では起きず、for ループ変数の再束縛は次周回に影響しないため実害は限定的で low に留める。"
+      "[low / inherited convention warning] lint-skill-tree reports LS-203 because assets/ is not in its generic top-level allowlist. The directory contains the directly referenced golden-sample.md fixture, is packaged, and does not create a missing or ambiguous runtime dependency."
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "2026-08-21 付の verdict は external-mutation guard 移行時のもので、本 PR で `### 3ヶ月目標` → `### 2ヶ月目標` の正本表記変更を入れたため skill_md_sha256 が乖離した。content-review-protocol §incremental の focused combined review を 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影している。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff origin/main...HEAD` で対象 6 ファイル (SKILL.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py / agents/journal-composer.md) の差分を全行読了。 (2) `grep -rn '3ヶ月' plugins/ubm-goal-setting/` を全件列挙し、残存が後方互換テストと期間表現のみで 見出し追従漏れ 0 件であることを確認。 (3) validator を 3 パターン実走: 新表記 golden-sample = exit 0 / 違反 0、旧表記 3ヶ月目標 = 骨格違反 0 (F03 は検証手順側のファイル名都合)、`### 4ヶ月目標` = `S01 ... ### 2ヶ月目標 または 3ヶ月目標` を確認。 (4) `extract_journal_goals` を直接呼び、両表記併存時の優先順位が本文出現順によらず 2ヶ月側になることを実測。 (5) frontmatter `feedback_contract.criteria[].id` を実ファイルから読み取り IN1/IN2/OUT1/OUT2 の 4 件を確認。 (6) `python3 scripts/validate-plugin-test-roots.py --workers 4` = roots=19 pass=19 fail=0 (3510 passed, 13 skipped)、`python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q` = 7486 passed, 4 skipped、`build-plugin-release.py --check` = OK (20 plugins)、`lint-vendored-ssot.py` = OK。 未確認: 実際の Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 評価体制の但し書き: 独立 context の subagent へ委譲したが応答が返らず打ち切ったため、本 verdict は主 context の評価者が read-only の grep / 実走のみで判定した。被採点物への改変は行っていない。"
+  "notes": "Fresh focused combined review of the merged current run-ubm-journal SKILL.md, journal-composer, caller command, output/interview/habit contracts, build-journal-context.py, validate-journal-output.py, the shared inline anchor checker, plugin composition, and focused regressions. The initial review found a high responsibility contradiction: the phase table still assigned Phase5 to the parent while the integrated runtime contract assigned Phase4-5 to journal-composer. It also found an overbroad claim that the generic anchor checker verifies journal/Phase0 evidence it does not inspect. Both were corrected without adding a new mechanism: composer is the single writer/validator, the parent accepts its receipt, and the common checker is limited to goal-anchor integrity. The prior low dual-heading label/body mismatch was also fixed with a canonical-priority regression. Validation: 320 plugin tests passed; current focused set 103 passed; runtime-profile inline/inline findings=0; goal-seek and manifest lints pass; dependency graph gaps=[]; direct reference/registration closure passes; composed rubric score=100 with findings=[], pending_human=[], unscored=[], high=0; git diff check passes. All four adequacy conditions have zero remaining findings. This PASS is a static design claim only: no live-trial or criteria evidence was changed or used as a substitute for OUT2 behavioral acceptance. The exhaustive 30-method process was not performed or claimed."
 }

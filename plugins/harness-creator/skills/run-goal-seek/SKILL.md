@@ -15,6 +15,9 @@ allowed-tools:
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: subagent
 owner: team-platform
 since: 2026-05-24
 version: 0.1.0
@@ -81,7 +84,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 > **配布注記**: 本 skill の cross-skill `schema_refs` / `reference_refs` (`../run-goal-elicit/`, `../run-build-skill/`) は repo-bundled 前提 (単独配布非対応)。
 
-## 目的と出力契約
+## Purpose & Output Contract
 
 既存コンテキストから最適ゴールを推定し、そのゴールに対して **手順を固定せず**、完了チェックリストが全て満たされるまで「手順を都度生成 → 実行 → 検証」を反復するゴールシーク実行オーケストレーター。**ループ本体は親セッションを汚さないよう SubAgent（または Agent Team）に fork して実行**し、親には最終成果物とハンドオフ要約のみを返す。達成した成果物を後続 Capability へ受け渡す。
 
@@ -176,9 +179,10 @@ else:
         assert not missing, f"intermediate[{i}] 必須キー不足: {missing}"
         if i == 0:
             first_anchor = entry["original_goal"]
+            assert isinstance(first_anchor, str) and first_anchor.strip(), "original_goal が空"
             expected_hash = hashlib.sha256(first_anchor.encode()).hexdigest()
             actual_hash = prog.get("original_goal_hash")
-            assert actual_hash is None or actual_hash == expected_hash, f"original_goal_hash drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}"
+            assert actual_hash == expected_hash, f"original_goal_hash missing/drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}"
         assert entry["original_goal"] == first_anchor, f"intermediate[{i}] anchor 不変性違反: {entry['original_goal']!r} != {first_anchor!r}"
     print(f"intermediate 検査 OK: {len(lines)} 行 / anchor 不変 / hash 一致")
 

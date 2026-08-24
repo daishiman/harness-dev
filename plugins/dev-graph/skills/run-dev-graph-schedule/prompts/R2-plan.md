@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- validated graph、C28 parity、C27 lease、resource_scope。
+- validated graph/scope closure、execution_tracker.mode、C28 parity evidence、C27 lease、resource_scope。
 
 ### 出力契約
 
-- candidate source、eligibility predicates、conflict partitionのplan。
+- mode別ready-source/ready-json argv、candidate authority、eligibility predicates、conflict partitionのplan。
 
 ### 責務境界
 
@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- 各候補source/除外理由と全gateが明示される。
+- self/bd-bridge/bothの選択、同一C28 evidence path、status/depends_on exact parity、lease snapshot実在、各候補authority/除外理由と全gateが明示される。
 
 ## Layer 3: インフラ層
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-schedule/R2-plan`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-schedule/R2-plan`。親 context が候補生成を担当し、独立検証だけ C17 `Task` へ渡す。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 各候補source/除外理由と全gateが明示される
+- [ ] mode別source/C28 exact parity evidence・lease snapshotと各候補authority/除外理由・全gateが明示される
 
 ### 5.4 実行方式
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

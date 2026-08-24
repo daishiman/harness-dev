@@ -29,13 +29,22 @@ responsibility_refs:
 schema_refs:
   - ../../schemas/fact-inference-confidence.schema.json
   - ../../schemas/system-blueprint.schema.json
+  - ../../schemas/goal-seek-loop.schema.json
+script_refs:
+  - scripts/extract-ready-set-from-checklist.py
+  - scripts/build-self-reflection-entry.py
+  - scripts/extract-capability-dependency-graph.py
+  - scripts/build-capability-graph-knowledge-entry.py
 manifest: workflow-manifest.json
 goal_seek:
   activation_state: semantic_evaluator_started
-  engine: inline
-  fork: subagent
+  engine: task-graph
+  engine_profile: checklist-graph
+  full_task_spec_graph: false
+  fork: agent-team
   spec: eval-log/goal-spec.json
   progress: eval-log/run-extract-blueprint-progress.json
+  intermediate: eval-log/run-extract-blueprint-intermediate.jsonl
   max_loops: 5
 feedback_contract: # per-skill 評価基準。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
@@ -172,10 +181,93 @@ URL をブラウザ目視 + F12 確認する手作業 3 ステップ (週 2.5 �
 
 - goal_seek.spec は plugin 単一の `eval-log/goal-spec.json` を本 skill と `run-blueprint-apply` (C14) が共有する (progress は skill 別ファイル。ゴール正本は 1 つ、周回状態は skill 別という設計意図)。
 - 周回状態と中間成果物は **repo-root (非 repo 環境では plugin-root) 直下**の `eval-log/run-extract-blueprint-intermediate.jsonl` へ追記する (cwd 相対禁止)。各周回末に不変アンカー `original_goal` (上記ゴール文の原文) と `delta_from_original`、次周回の必須入力 `merged_directive_for_next` を記録し、次周回 Step2 の必須入力とする (集約化ドリフト圧縮)。周回サマリは `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/run-extract-blueprint-progress.json` に残す。
-- SubAgent dispatch は責務単位で固定する: fact 抽出は `frontend-surface-analyzer`、バックエンド推測は `backend-inference-analyzer`、UIUX 推測は `uiux-rationale-analyzer`、content 意図は `content-intent-analyzer`、統合は `architecture-essence-synthesizer` を Task で fork する。
-- 重い候補観測・統合は該当 SubAgent へ fork し、親へは最終成果物と要約のみ返す。
+- `workflow-manifest.json` の R1-fetch → R2-analyze → R3-document を progress checklist へ射影し、`dependsOn` を `depends_on` として保つ。pre-choice 実行済みの R1 は証跡 digest を確認して done trace を作り、post-choice の graph は R2 から再開する。
+- progress checklist の決定論的ID写像は `C1=R1-fetch evidence再検証 (depends_on=[])`、`C2=R2-analyze (depends_on=[C1])`、`C3=R3-document (depends_on=[C2])` とする。C1はpre-choice成果物を再取得せず、post-choice最初のtask-graph周回で提示済みdigestとguard receiptを選択・照合してdoneにするため、選択証跡なきdoneを作らない。C1/C2/C3はそれぞれ `CL-1/CL-2/CL-9`、`CL-3/CL-4`、`CL-5/CL-6` をgateし、`max_loops=5` は3 item+最大2件のself-reflect余裕を持つ。
+- 各周回冒頭で `scripts/extract-ready-set-from-checklist.py eval-log/run-extract-blueprint-progress.json` を実行し、ready 集合の最小 id だけを選ぶ。R2 では `frontend-surface-analyzer` による fact (C03) を先行させ、完了後に backend / UIUX / content (C04/C05/C13) の 3 分析を Agent Team で独立 fan-out する。各自は C03 fact を読み、個別 artifact のみを write scope とする。`architecture-essence-synthesizer` (C06) の fan-in 完了後に R2 を done にする。
+- 未網羅タスクを発見した場合だけ `scripts/build-self-reflection-entry.py` で新しい sink item を checklist へ追記する。未知 `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
+- 各周回に `ready_set` と `selected_item` を intermediate.jsonl へ追記する。`selected_item` は `ready_set` 最小 id と一致し、全依存が過去に done であることを検証する。トレース不在を依存順消費の成功に畳まない。
+- 着手前に `scripts/extract-capability-dependency-graph.py` で Skill / SubAgent / script の参照を確認し、dangling があれば停止する。再利用価値のある依存判断だけを `scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
 
-### ゴールシーク検証
+### ゴールシーク検証（task-graph consumption）
+
+`engine: task-graph` の完了判定前に、progress checklistとintermediate traceから依存順消費を機械検査する。`ESB_RUNTIME_ROOT` は上記配線で解決したrepo-root（非repo環境ではplugin-root）のabsolute pathに固定し、cwdから推測しない。intermediate不在、unknown依存、cycle、ready最小ID以外の選択、依存未選択、選択証跡なきdone、未完了itemを残したcompletedはfail-closedにする。
+
+```bash
+ESB_RUNTIME_ROOT="$(git -C "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}" rev-parse --show-toplevel 2>/dev/null || printf '%s' "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}")"
+python3 - "$ESB_RUNTIME_ROOT/eval-log/run-extract-blueprint-progress.json" "$ESB_RUNTIME_ROOT/eval-log/run-extract-blueprint-intermediate.jsonl" <<'PY'
+import json, os, re, sys
+
+progress_path, intermediate_path = sys.argv[1:]
+progress = json.load(open(progress_path, encoding="utf-8"))
+if progress.get("engine") != "task-graph":
+    raise SystemExit("progress.engine must be task-graph")
+checklist = progress.get("checklist", [])
+ids = {item.get("id") for item in checklist}
+deps_of = {item.get("id"): list(item.get("depends_on") or []) for item in checklist}
+for item_id, dependencies in deps_of.items():
+    for dependency in dependencies:
+        assert dependency in ids, f"{item_id}: unknown depends_on={dependency}"
+
+WHITE, GREY, BLACK = 0, 1, 2
+colors = {item_id: WHITE for item_id in ids}
+for start in ids:
+    if colors[start] != WHITE:
+        continue
+    colors[start] = GREY
+    stack = [(start, iter(deps_of[start]))]
+    while stack:
+        item_id, pending = stack[-1]
+        dependency = next(pending, None)
+        if dependency is None:
+            colors[item_id] = BLACK
+            stack.pop()
+        elif colors[dependency] == GREY:
+            raise AssertionError(f"depends_on cycle: {item_id}->{dependency}")
+        elif colors[dependency] == WHITE:
+            colors[dependency] = GREY
+            stack.append((dependency, iter(deps_of[dependency])))
+
+assert os.path.exists(intermediate_path), "task-graph intermediate trace is missing"
+rows = [json.loads(line) for line in open(intermediate_path, encoding="utf-8") if line.strip()]
+traced = [row for row in rows if "ready_set" in row and "selected_item" in row]
+assert traced, "ready_set/selected_item trace is missing"
+numeric = re.compile(r"^C(\d+)$")
+def sort_key(item_id):
+    match = numeric.match(item_id)
+    return (0, int(match.group(1)), item_id) if match else (1, 0, item_id)
+
+selected = []
+items = {item["id"]: item for item in checklist}
+for index, row in enumerate(traced):
+    ready, selected_item = row["ready_set"], row["selected_item"]
+    if not selected_item:
+        continue
+    assert ready, f"iteration {index}: selected_item with empty ready_set"
+    assert selected_item == sorted(ready, key=sort_key)[0], f"iteration {index}: not minimum ready id"
+    assert selected_item in items, f"iteration {index}: unknown selected_item={selected_item}"
+    assert all(dependency in selected for dependency in deps_of[selected_item]), (
+        f"iteration {index}: dependency not previously selected for {selected_item}"
+    )
+    available = items[selected_item].get("available_from_iteration", 0)
+    assert row.get("iteration", index) >= available, (
+        f"iteration {index}: {selected_item} selected before available_from_iteration={available}"
+    )
+    selected.append(selected_item)
+
+selected_set = set(selected)
+untraced_done = [item["id"] for item in checklist if item.get("status") == "done" and item["id"] not in selected_set]
+assert not untraced_done, f"done item without selected trace: {untraced_done}"
+unfinished = [item["id"] for item in checklist if item.get("status") in ("pending", "blocked")]
+if progress.get("status") == "completed":
+    assert not unfinished, f"completed with unfinished items: {unfinished}"
+max_loops = progress.get("max_loops")
+if isinstance(max_loops, int) and len(checklist) > max_loops:
+    raise AssertionError(f"checklist size {len(checklist)} exceeds max_loops {max_loops}")
+print(f"task-graph consumption OK: {len(traced)} traced iterations")
+PY
+```
+
+### ゴールシーク検証（goal anchor）
 
 各周回末に中間成果物 JSONL の整合を機械検証する。`required_keys` (= `original_goal`, `merged_directive_for_next`, `delta_from_original`) が全て存在し、`original_goal_hash` が初回の `hashlib.sha256(original_goal)` と一致することを確認する (ゴール改竄検出)。不一致なら周回を停止し差し戻す。
 

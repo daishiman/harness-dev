@@ -14,6 +14,18 @@ since: 2026-08-20
 last-audited: 2026-08-20
 output_language: ja
 runtime_root_policy: host-skill-path
+script_refs:
+  - ../../scripts/validate-inline-goal-seek-anchor.py
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  fork: inline
+  spec: eval-log/run-slide-report-status-goal-spec.json
+  progress: eval-log/run-slide-report-status-progress.json
+  max_loops: 3
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -75,6 +87,8 @@ Purpose & Output Contractの最小の実回答をmain contextで作成する。s
 
 ## ゴールシーク実行
 
+`goal_seek.engine: inline` / `fork: inline` とし、read-only の2検査と要約をmain contextで完結する。欠落artifactまたは非0終了があれば該当検査だけを最大3周まで再評価し、runtime欠落を自動復元しない。
+
 ```bash
 node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scripts/workflow-manager.js" "<project-dir>" --check --next
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-output-mode.py" --preflight
@@ -82,7 +96,26 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-output-mode.py" 
 
 stdout/stderrとexit codeから現在phase、欠落artifact、次アクションを要約する。
 
+### ゴールシーク配線
+
+`original_goal` と対象 project digest を progress に固定し、各再評価を `run-slide-report-status-intermediate.jsonl` へ append する。各行は `iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を持ち、次回は直前の `merged_directive_for_next` だけを引き継ぐ。
+
+### ゴールシーク検証
+
+共通 validator で intermediate.jsonl の `required_keys`、非空・全行不変 `original_goal`、`original_goal_hash == hashlib.sha256(original_goal)` を fail-closed 検証する。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/run-slide-report-status-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/run-slide-report-status-intermediate.jsonl"
+```
+
 ## 検証
 
 - deck/report両modeを同じworkflow managerで判定する。
 - plugin-local runtime欠落は復元せずremediationとして報告する。
+
+## Gotchas
+
+- 対象 project 側の欠落 artifact と、plugin 側の workflow manager/validator 欠落を同じ原因として扱わない。
+- validator がexit非0のとき、復元・再生成・対象projectへのWriteで緑化しない。出力は読取専用の診断に限る。

@@ -44,7 +44,7 @@
 - render_notion_page.py は当面 v1 を読むが、`SECTION_CANONICAL_MAP_PATH` 環境変数があれば v2 にスイッチ
 
 ### Step M2: 切替 (次セッション、後続 dogfooding 後)
-- `render_notion_page.py` / `section_quality_check.py` / 12 SubAgent を v2 参照に切替
+- `render_notion_page.py` / `section_quality_check.py` / 12 section producer を v2 参照に切替
 - `section-templates.json` を `section-templates.v1.deprecated.json` にリネーム
 - aggregator SKILL.md を v2 ベースで書き直し
 
@@ -52,9 +52,9 @@
 - `section-templates.v1.deprecated.json` を削除
 - 旧 quality_gate ルールを撤去
 
-## 4. SubAgent 出力契約の v2 対応表
+## 4. component 出力契約の v2 対応表
 
-| 旧出力 | 新出力 (intake.schema.json $defs) | 担当 SubAgent |
+| 旧出力 | 新出力 (intake.schema.json $defs) | 担当 component |
 |---|---|---|
 | `cover_meta.*` | `executive_summary` (§0) | summarizer + handoff |
 | `assumption.json` | `assumption_challenger` (§1) | assumption-challenger |
@@ -66,7 +66,7 @@
 | (新規) | `design_decisions` (§7) | option-presenter |
 | (intake.json 既存) | `open_questions` (§8) | handoff |
 | (新規) | `handoff_contract` (§9) | next-action-advisor + handoff |
-| `self-update.json` | `self_updater` (§10) | self-updater |
+| `self-update.json` | `self_updater` (§10) | `run-skill-intake` inline + `measure_value_realized.py` / `update_question_bank.py` |
 | (新規) | `artifact_index` (§11) | handoff |
 
 ## 5. 互換性ブリッジ (Step M1 期間限定)

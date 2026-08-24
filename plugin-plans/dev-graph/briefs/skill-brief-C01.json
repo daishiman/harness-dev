@@ -19,7 +19,7 @@
   ],
   "external_systems": [],
   "mcp_tools": [],
-  "needs_independent_context": true,
+  "needs_independent_context": false,
   "needs_lifecycle_enforcement": true,
   "checklist": [
     "caller repo/worktree root解決",
@@ -36,7 +36,7 @@
   "goal": "symlinkで配布された任意の呼出し元repository/worktreeを解決し、そのrepo内だけに6 content root (issues/tasks/specs/architecture/features/docs)、repo-local config/template/stateと選択式Claude hook配線を冪等初期化できる状態になっている",
   "goal_seek": {
     "engine": "inline",
-    "fork": "subagent",
+    "fork": "inline",
     "max_loops": 5
   },
   "mass_production_profile": "strict",

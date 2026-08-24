@@ -110,7 +110,7 @@
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload と idempotency-key で同期ペイロードを送信前検証し差分抽出の必須キー欠落が 0 件", "verify_by": "script"},
@@ -161,7 +161,7 @@
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload で一括投入ペイロードの必須キーを送信前検証し全件抽出の欠落が 0 件", "verify_by": "script"},
@@ -212,7 +212,7 @@
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "validate-sync-payload で照合対象ペイロードを検証し発行実績照合の必須キー欠落が 0 件", "verify_by": "script"},

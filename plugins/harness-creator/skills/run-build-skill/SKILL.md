@@ -43,6 +43,9 @@ pair: assign-skill-design-evaluator
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-17
 version: 0.3.0 # + with-goal-seek engine:task-graph 変種 (依存順駆動+self-reflect+cross-surface dependency graph knowledge)
@@ -62,10 +65,10 @@ template_refs:
   - templates/prompt-skeleton.md
   - templates/workflow-skeleton.md
   # ENG-Cxx = 生成 harness 同梱 engine 系 component id (凡例表: $PLUGIN_ROOT/references/pipeline-boundary-contract.md)
-  - templates/task-graph-engine/scripts/ready-set-from-checklist.py       # engine:task-graph 同梱 (ENG-C01)
-  - templates/task-graph-engine/scripts/self-reflect-append.py            # engine:task-graph 同梱 (ENG-C02)
+  - templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py       # engine:task-graph 同梱 (ENG-C01)
+  - templates/task-graph-engine/scripts/build-self-reflection-entry.py            # engine:task-graph 同梱 (ENG-C02)
   - templates/task-graph-engine/scripts/extract-capability-dependency-graph.py  # engine:task-graph 同梱 (ENG-C06)
-  - templates/task-graph-engine/scripts/record-capability-graph-knowledge.py    # engine:task-graph 同梱 (ENG-C07)
+  - templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py    # engine:task-graph 同梱 (ENG-C07)
 schema_refs:
   - references/capability-manifest.schema.json
   - schemas/verification-contract.schema.json
@@ -212,7 +215,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 19. **ゴールシーク必須 (固定手順禁止)**: ループ実行系 kind (run / wrap / delegate / orchestrator / agent / agent-team / hook-integrated) は達成手順を固定列挙せず、`## ゴールシーク実行` (**Goal + 目的/背景 + 完了チェックリスト + ゴールシークループ**) で構成する。手順は実行時に AI がチェックリストの未達項目から都度生成する。`assign-*` は評価系のため Goal/Checklist 形は使うが runtime loop は配線しない。`ref-*` (read-only) は対象外で `## 手順` は「参照用。手順なし。」のまま。正本定義は `references/goal-seek-paradigm.md`。lint は `lint-goal-seek.py` (固定 `### Step N:` の連番羅列を実行系本文で検出したら violation)。
     - **実行可能機構の配線 (with-goal-seek combinator)**: loop 実行系 (run / wrap / delegate) は `render-combinators.py` が `with-goal-seek.patch` を**default-ON で自動適用**し (`--no-goal-seek` で opt-out)、frontmatter `goal_seek:` と `### ゴールシーク配線` を注入する。周回状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json` に記録し、重い周回は `Skill(run-goal-seek)` に fork 委譲する。`assign-*` は checklist のみ (ループ非配線)。`lint-goal-seek.py` は loop 実行系に対し二値チェックリスト項目の存在・曖昧語不在を violation、`### ゴールシーク配線` 不在を warning で検査する。フラグ仕様は `schemas/build-flags.schema.json#/properties/with_goal_seek`。
-    - **engine 変種 (inline / run-goal-seek / task-graph)**: `goal_seek.engine` は独立 combinator flag ではなく with-goal-seek 内の選択値。loop kind (run/wrap/delegate) の**既定は `task-graph`** (量産ハーネスは既定で依存順駆動+self-reflect。Step 10.6・`with-goal-seek.patch` default 準拠)、opt-down で `inline`(自己完結)・`run-goal-seek`(重量オーケストレータへ任意 fork) を明示選択する。`task-graph` は checklist の `depends_on` を依存充足順に消費し (`ready-set-from-checklist.py` で ready 集合の最小 id を拘束選択=依存順が「助言」でなく「拘束」)、実行中の新規タスクを `self-reflect-append.py` で checklist 末尾へ自己反映し (別状態ファイル新設せず progress.json を唯一の truth に保つ)、cross-surface dependency graph knowledge を `extract-capability-dependency-graph.py`/`record-capability-graph-knowledge.py` で抽出・記録・consult する engine 変種。同梱は **Step 10.6** の決定論 materializer と build-plan required_deliverables で機械化し、欠落/byte drift/profile driftを `--check` で拒否する。現 profile は `engine_profile=checklist-graph` / `full_task_spec_graph=false` であり、plugin-dev-planner の task-specs→graph→envelope/state/projection→spec-improvement outer loop と同等とは扱わない。
+    - **engine 変種 (inline / run-goal-seek / task-graph)**: loop kind の既定は最小構成の `inline`。Goal・Checklist・検証契約は維持し、追加 engine 資産は同梱しない。実在する依存グラフの順序制御が必要な場合だけ `goal_seek.engine: task-graph` を brief で明示し、checklist の `depends_on` 依存順消費・self-reflect・4 つの engine script を有効化する。重い周回を外部オーケストレータへ分離する場合だけ `run-goal-seek` を明示する。`task-graph` 指定時の profile は従来どおり `checklist-graph` / `full_task_spec_graph=false` とし、materializer と `--check` の fail-closed 検査を保つ。
 
 `kind → templates/_base + combinator` 対応表は **`schemas/template-selection.schema.json#/selection_rules`** を正本とする (本文に再掲しない)。
 
@@ -294,7 +297,7 @@ python3 "$SKILL_DIR/scripts/build-external-intelligence.py" --agent <codex|claud
 **build-plan の決定論導出 (フラグはモデルが決めない)**: brief 確定直後に必須成果物集合を機械導出し、以降はこの plan を作業リストの正本とする。`--with-*` の要否・必須セクション・必須資産は brief の非空フィールドとテンプレート見出しから純関数で決まる (モデルの記憶・判断に依存しない):
 
 ```bash
-python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --out eval-log/build-plan.json
+python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --out eval-log/build-plan.json  # update では --mode update --skill-dir "$OUT_BASE/$SKILL_NAME" を付け、brief 省略 profile を現行生成物から保存
 ```
 
 無指定は `flags.build_stage=draft`。Skill起動時に `--stage release` が明示された場合だけ、上記コマンドに同じ `--stage release` を付け、planへ決定論に固定する。充足検査は Step 4 の `--check` が行う (欠落は exit 1)。brief 無しのフラグ明示 build は NOTE 付き skip。
@@ -337,7 +340,7 @@ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$
 python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..008 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
 python3 "$SKILL_DIR/scripts/lint-capability-graph-knowledge.py" "$OUT_BASE/$SKILL_NAME"  # brief.goal_seek.engine=task-graph の生成 harness のみ ENG-C06/ENG-C07 同梱・consult token・source_ref を検査(非 task-graph は not-applicable exit0・ENG-C08)
 python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
-python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
+python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # update は --mode update を付与。brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
 python3 ${HARNESS_ROOT:-.}/scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出
 ```
 
@@ -371,12 +374,12 @@ draft は決定論ゲートが通ったら Step 12.4 で `usable-draft` proofを
 
 生成スキルに「知識を更新・蓄積し、検索して活用し、使うほど良くなる」ループを組み込む横断 combinator。正本仕様は `Skill(ref-knowledge-loop)`(構築編+運用編)、5 段の実行手順と Loop B (harness-creator 自己適用) の昇格条件は `references/build-steps.md#h7-ナレッジループ注入の詳細手順` (本文に再掲しない=SSOT)。
 
-### Step 10.6: task-graph engine 同梱 (phase: references, engine 既定=task-graph)
+### Step 10.6: task-graph engine 同梱 (phase: references, 明示指定時のみ)
 
-**engine 既定は task-graph**: loop kind (run/wrap/delegate) で brief が `goal_seek.engine` を明示しない場合、`validate-build-plan.py` / `render-combinators.py` が同一規則で task-graph へ default し、本 Step を適用する (量産ハーネスは既定で依存順駆動+self-reflect のタスク実行になる)。opt-out は brief に `goal_seek.engine: inline` (または `run-goal-seek`) を明示するか `--no-goal-seek`。engine は brief 由来のテンプレート変数で、`--engine=task-graph` の独立 flag は追加しない。`validate-build-plan.py` が同梱資産と profile claim を決定論導出し、`render-combinators.py --brief <brief> --materialize-task-graph-engine <skill-dir>` が実体化する。手順:
+**新規の既定は inline**: `goal_seek.engine` が無指定なら本 Step は適用せず、task-graph engine 資産を生成先へ持ち込まない。brief が `goal_seek.engine: task-graph` を明示した場合だけ、`validate-build-plan.py` が同梱資産と profile claim を決定論導出し、`render-combinators.py --brief <brief> --materialize-task-graph-engine <skill-dir>` が実体化する。`--mode update` で brief が engine/fork/max_loops を省略した場合は現行 SKILL.md の値を引き継ぎ、新規既定で黙示ダウングレードしない。明示 `inline` へ変更すると `--check` は新旧 task-graph 資産の残存を拒否する。engine はこの effective brief 由来の選択値を維持し、別の flag は追加しない。
 
-1. 解決後 engine (明示値 > loop kind 既定 task-graph) が `task-graph` でなければ本 Step を skip (`inline`/`run-goal-seek` の明示 opt-out と非 loop kind は従来どおり)。
-2. 上記 materializer を実行し、`templates/task-graph-engine/scripts/` の 4 スクリプト (`ready-set-from-checklist.py`=ENG-C01 / `self-reflect-append.py`=ENG-C02 / `extract-capability-dependency-graph.py`=ENG-C06 / `record-capability-graph-knowledge.py`=ENG-C07) を `$OUT_BASE/$SKILL_NAME/scripts/` へ byte 一致で冪等コピーし、frontmatter を `engine_profile: checklist-graph` / `full_task_spec_graph: false` へ収束させる。
+1. 解決後 engine が `task-graph` でなければ本 Step を skip。
+2. 上記 materializer を実行し、`templates/task-graph-engine/scripts/` の 4 スクリプト (`extract-ready-set-from-checklist.py`=ENG-C01 / `build-self-reflection-entry.py`=ENG-C02 / `extract-capability-dependency-graph.py`=ENG-C06 / `build-capability-graph-knowledge-entry.py`=ENG-C07) を `$OUT_BASE/$SKILL_NAME/scripts/` へ byte 一致で冪等コピーし、frontmatter を `engine_profile: checklist-graph` / `full_task_spec_graph: false` へ収束させる。
 3. `render-combinators.py` は default-ON の with-goal-seek 内へ既に `### ゴールシーク配線（task-graph 変種）` / `### ゴールシーク検証（task-graph 変種・機械検査）` / `### dependency graph knowledge consult` の 3 サブセクションを注入済み (engine 値 `task-graph` で有効化)。追加の combinator 適用は不要。
 4. `validate-build-plan.py --check` と Step 4 の `lint-capability-graph-knowledge.py` を後段検査する。engine:task-graph でなければ not-applicable、指定時は4資産欠落・テンプレートとのbyte drift・profile claim driftを fail-closed にする。
 

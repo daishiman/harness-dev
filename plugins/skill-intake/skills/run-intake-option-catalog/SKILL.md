@@ -9,6 +9,9 @@ allowed-tools:
   - AskUserQuestion
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 user-invocable: true
 disable-model-invocation: false
 effect: local-artifact

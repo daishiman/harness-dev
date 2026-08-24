@@ -2,13 +2,13 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-decompose",
-    "skill_md_sha256": "ab974f7bedb4d2d4d73cea2bf9a0f62493dc6684f8a58a3491abfcb5213063c2"
+    "skill_md_sha256": "e6288e9ad7cf4d306c744e8b3c82cd8cc6943f8782c6307a5dda2c24ba6bc30b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator (focused incremental projection)",
+  "reviewed_at": "2026-08-24T07:18:44Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -23,25 +23,28 @@
       "OUT7"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "rubric v1.3.1の対象skill用24 rule中23 ruleを機械採点し、score 94/threshold 80、high severity 0、required_fixes 0でPASSした。",
+      "PG-001はprompt_required=trueのR1/R2/R2b/R3/R4/R6とskill-local Markdown promptを1:1で解決し、各prompt本文のsame responsibility_idまで確認した。",
+      "REG-001はplugin completeness exit 0に加え、既存skill-build-traceをrun-build-skillの正準validate-build-trace.pyで検査しexit 0である。",
+      "plugin-composition lintは0 warningでPASSし、SKILL script_refsとregister-package/goal validatorのcalls edgeが同一である。",
+      "BD-004はdescriptionの2 triggerが本文のmacro intent preview/applyとready exact-13 package登録へそれぞれ1:1対応することをsemantic reviewで確認した。"
+      ,"runtime portabilityはruntime_root_policy、標準本文、prompt inheritance、全実行行で一貫し、capability parityとruntime profile lintの双方で追加finding 0を確認した。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / FM-005] description first phrase '大きな自然文構想を' is not a verb。triggerの意味対応は明確でhighではない。",
+      "[low / PD-001] body>100 lines but skill-local references/ empty。現状はmacro SSOTを分断しないための非blockingなprogressive-disclosure smellである。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "notes": "L0 ref-skill-design-rubric + L2 assign-skill-design-evaluator rubric v1.3.1を合成。upstream rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a。applicable 24 / scored 23 / pending_human 1 / unscored 0、score 94/threshold 80。BD-004は独立の意味確認で解決し、未解決highは0。PG-001/REG-001は機械検査でPASS。current SHAのfresh focused rereviewでruntime portability、直接依存closure、4条件とIN1/OUT1..OUT7の静的設計adequacyを確認した。capability parity PASS、runtime profile findings 0、goal-seek lint PASS、focused tests 118件PASS。30思考法は使用したと申告しない。529 BLOCKEDはPASS根拠に含めず、live/criteria scenario verdictは更新していない。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   }
 }

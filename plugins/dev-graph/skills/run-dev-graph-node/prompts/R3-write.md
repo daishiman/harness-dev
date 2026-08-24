@@ -13,23 +13,23 @@
 
 ### 入力契約
 
-- containment receipt、classification decision、artifactまたはfeature package、graph revision。
+- containment receipt、classification decision、artifact、C14 macro intentまたはfeature package、graph revision。
 
 ### 出力契約
 
-- atomic node updateまたはimmutable package receiptと新graph revision。
+- atomic node/macro update、immutable macro/package receiptと新graph revision、またはlegacy package receipt用versioned revalidation evidence。
 
 ### 責務境界
 
-- C02単一writer/lockのみで書き物理削除・partial commit・cross-feature edgeを禁止する。
+- 通常artifactはメンテナンス済み `register-package.py artifacts --repo-root ... --input ... --plan ... [--patches ...] [--initial-state ...]` をdry-run→applyで呼ぶ。C14 macroは同じintentを`preview-macro --dry-run`→`apply-macro --expected-candidate-digest ... --receipt ...`の順で渡し、featureの`architecture_refs`はtop-level architectureからC02に導出させる。`--initial-state` は新規local-only履歴artifactの明示closed importだけに限定する。一時writerの自作、直接graph/content書込み、preview candidateのcopy、物理削除、partial commit、cross-feature edgeを禁止する。
 
 ### 受入条件
 
-- 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。
+- 通常writeは新規path占有とdurable pathのsymlinkをstaging前に拒否した上で `owner=C02/run-dev-graph-node` / `operation=write_artifacts` / `temporary_driver=false` / staged C11 PASS、macroはpreview/apply candidate digest一致・C11 PASS・immutable receipt、packageはP01..P13 exact 13・共通parent/package・DAGとなる。legacy receipt再検証は旧receipt/graphを変更せずcurrent C11/sourceを束縛したevidenceだけをatomic発行し、失敗時partial 0になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: `register-package.py`と`validate-graph-schema.py`。
+- 使用資産: プラグイン内の `register-package.py artifacts/preview-macro/apply-macro/register`、`validate-graph-schema.py`。scratchpadにwriter scriptは作らない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R3-write`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-node/R3-write`。`goal_seek.fork=inline` に従いmain contextで実行する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる
+- [ ] 通常write/macroはC11 PASS、macroはpreview/apply digest一致、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時partial 0になる
 
 ### 5.4 実行方式
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

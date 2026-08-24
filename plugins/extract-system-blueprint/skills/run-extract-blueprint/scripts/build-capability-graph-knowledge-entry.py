@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: record-capability-graph-knowledge
+# name: build-capability-graph-knowledge-entry
 # purpose: C06 の capability 依存グラフと self-reflect で発見された未網羅タスクを、生成 harness 側 knowledge (Loop A) と harness-creator 側 knowledge (Loop B) へ source_ref 付き要約として記録する。生ログ全文や task-graph.json 相当の別状態を複製せず、依存詰まり・dangling 参照・再利用すべき順序判断だけを knowledge entry 化する (H6 の実装物)。
 # inputs:
 #   - argv: <dependency_graph_json> --target-knowledge-dir <knowledge/> [--harness-knowledge-dir <plugins/harness-creator/knowledge>] [--discovered-json <tasks.json>] [--dry-run]

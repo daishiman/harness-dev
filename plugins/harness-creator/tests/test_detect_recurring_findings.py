@@ -1,4 +1,4 @@
-"""detect-recurring-findings.py (学習ラチェット運用口) の機能テスト。
+"""extract-recurring-findings.py (学習ラチェット運用口) の機能テスト。
 
 conftest 非依存で module-level に importlib ロードする (自己特結)。
 網羅: 同一 key 2 回で候補入り・1 回では非候補・閾値可変・壊れた JSONL 行の
@@ -23,7 +23,7 @@ def _load(stem: str):
     return m
 
 
-det = _load("detect-recurring-findings")
+det = _load("extract-recurring-findings")
 
 
 # ─────────────────────────── fixtures / helpers ───────────────────────────

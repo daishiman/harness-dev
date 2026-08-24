@@ -2,7 +2,7 @@
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
 > seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> phase3-coordinator が対話 Step 2 の実行時に Read するインタビュープロンプト正本
+> owner skill の親contextが対話 Step 2 で Read するインタビュープロンプト正本
 > (Task tool による独立 SubAgent 起動は行わない)。
 
 ## メタ
@@ -84,7 +84,7 @@
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
 ### 5.1 担当 agent
-- `phase3-coordinator` (isolation: fork)。coordinator が本プロンプトを Read しインライン進行する。独立 SubAgent 起動はしない。
+- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 差分と根本原因を構造レベルで特定し、目標設定の根拠を作る。
@@ -102,7 +102,7 @@
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
 ### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 → `phase3-coordinator` (Step 2)。
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 2)。
 - 前提 Step: R1-step1-current-review — 前回目標と実績の数値データがなければ差分分析ができない。
 - 後続 Step: R3-step3-goal-setting — 受け渡し: 売上差分 (prev_sales_diff)、根本原因 (root_cause)、ボトルネック箇所 (bottleneck)、行動変化 (behavior_change)。
 

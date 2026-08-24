@@ -61,17 +61,18 @@
 - `analyze_user_intent.py` (internal-analysis 再生成)
 - `render-intake-final.py` (正本再 render)
 - `intake_publish_pipeline.py --intake <intake.json> --manifest <notion-manifest.json> --revise --page-id` (Notion PATCH。`--intake` 必須。欠くと exit 2 で停止)
+- `update_question_bank.py --diff <question-bank-update.json> --hint <hint>` (question-bank 追記候補の dry-run。結果提示と別承認後だけ `--apply`)
 - AskUserQuestion (差分ヒアリング / Gate R)
 
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 失敗時挙動
-- exit 0: 正常反映 (revision-log 追記済み)
+- exit 0: 正常反映 (revision-log 追記済み)。question-bank 別承認拒否は `status=skipped` / `skip_reason=question_bank_update_declined` 記録後に正常停止
 - exit 2: Gate R cancel (旧版維持、ローカル巻き戻し)
 - exit 44: Keychain Notion トークン取得失敗
 - exit 51: Notion ページ ID 不一致 (PATCH 続行禁止)
 - exit 60: revision 回数上限超過 (>5)
-- exit 61: self-updater 失敗 (revision-log 追記失敗 / question-bank 更新失敗) → `revision-log.jsonl` を確認し手動修復
+- exit 61: revision-log 追記または `update_question_bank.py` dry-run/apply 失敗 → `revision-log.jsonl` / `question-bank-update.json` を確認し P7/P8 から再実行
 
 ### 4.1a 最大反復回数
 - 同一 hint の revision 上限: **5 回** (超過時 exit 60)。対話反復 (re-revise ループ) の上限も 5 回に統一。
@@ -87,7 +88,7 @@
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
 ### 5.1 担当 agent
-- `@intake-revise-controller` (対話あり、AskUserQuestion 起動、最大反復回数 5)
+- 本 Skill の inline 実行主体 (対話あり、AskUserQuestion 起動、最大反復回数 5)
 
 ### 5.2 ゴール定義
 - 目的: 既存 intake への追加要望を最大 5 回の制約下で対話的に確定し、同一 Notion ページに PATCH 反映する。
@@ -105,18 +106,19 @@
 - [ ] apply 時に render-intake-final.py → intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID> で PATCH を完了した
 - [ ] PNG/mermaid 欠落時は旧版維持し rollback JSON を保存した
 - [ ] revision-log.jsonl に schemas/output.schema.json 準拠の 1 行を追記した
-- [ ] self-updater を再起動し question-bank に「足りなかった質問」を追記した
+- [ ] 「足りなかった質問」を `question-bank-update.json.questions[]` に記録し、`update_question_bank.py` dry-run 結果を提示した
+- [ ] question-bank 別承認が approve なら `update_question_bank.py --apply` exit 0 と追記数を確認。decline なら `question-bank-update.json` に `status: skipped` / `skip_reason: question_bank_update_declined` を記録し、P8 success で停止した
 
 ### 5.4 実行方式
-- 固定手順を持たない。完了チェックリストを唯一の停止条件とし、未充足項目を特定→必要 script (analyze_user_intent / render-intake-final / intake_publish_pipeline) と AskUserQuestion をその都度起動→revision-log 更新→checklist で自己評価を反復する。
+- 固定手順を持たない。完了チェックリストを唯一の停止条件とし、未充足項目を特定→必要 script (analyze_user_intent / render-intake-final / intake_publish_pipeline / update_question_bank) と AskUserQuestion をその都度起動→revision-log 更新→checklist で自己評価を反復する。
 - Gate R cancel / 上限超過 / page-id 不一致 / Keychain 失敗は即座に exit。
-- 反復は分離 context で完結させ、親へは Notion URL + revision_no + exit code のみ返却。
+- 反復は `goal_seek.fork: inline` の同一 context で完結し、分離 SubAgent は起動しない。
 
 ## Layer 6: オーケストレーション層
 
 ### 6.1 上位 skill との接続
 - 呼び出し元: `/intake-revise <hint>` command (薄ラッパー)
-- 後続 phase: `skill-intake-self-updater` (question-bank 更新)
+- 後続 phase: 本 Skill 内で `update_question_bank.py` を dry-run → 別承認とし、approve は apply、decline は skip_reason 記録後に success 停止する P8-self-update
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: P1-load → P2-hear → P3-analyze → P4-preview → P5-gateR → P6-patch → P7-log → P8-self-update (順序固定)。
@@ -144,6 +146,7 @@ revision-log.jsonl 追記後に以下を自己確認する。未達があれば�
 | All-or-Nothing | PNG/mermaid 欠落時に旧版維持 + rollback JSON を保存している | PASS/FAIL |
 | 回数上限 | revision_no が 5 以下（超過時は exit 60） | PASS/FAIL |
 | log 追記 | revision-log.jsonl に schemas/output.schema.json 準拠の 1 行が追記されている | PASS/FAIL |
+| bank 承認 | dry-run 後の approve だけ --apply、decline は skip_reason 記録後に success 停止している | PASS/FAIL |
 
 ---
 
@@ -151,4 +154,4 @@ revision-log.jsonl 追記後に以下を自己確認する。未達があれば�
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-引数 `{{hint}}` (+ optional `--dry-run`) を受け取り、`output/{{hint}}/` 配下の既存 4 ファイルをロードせよ。revision_no を確認し 5 を超えるなら exit 60。AskUserQuestion で対象章 / 変更内容 / 変更理由 (必要なら 5 軸再確認) を収集し、`analyze_user_intent.py` を再実行して `internal-analysis.json` を更新せよ (ユーザーには直接見せない)。差分プレビューと要約理解テキストを提示後、Gate R (apply / re-revise / cancel) を `AskUserQuestion` で取得。apply のとき `render-intake-final.py` → `intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID>` を実行し、成功したら `output/{{hint}}/revision-log.jsonl` に schemas/output.schema.json 準拠の 1 行を追記、最後に `skill-intake-self-updater` を再起動せよ。失敗時は rollback JSON を保存し、対応する exit code (2/44/51/60/61) を返却。出力は revision-log.jsonl の 1 行 JSON のみ、余計な前置き・後書き・思考過程出力は禁止。
+引数 `{{hint}}` (+ optional `--dry-run`) を受け取り、`output/{{hint}}/` 配下の既存 4 ファイルをロードせよ。revision_no を確認し 5 を超えるなら exit 60。AskUserQuestion で対象章 / 変更内容 / 変更理由 (必要なら 5 軸再確認) を収集し、`analyze_user_intent.py` を再実行して `internal-analysis.json` を更新せよ (ユーザーには直接見せない)。差分プレビューと要約理解テキストを提示後、Gate R (apply / re-revise / cancel) を `AskUserQuestion` で取得。apply のとき `render-intake-final.py` → `intake_publish_pipeline.py --intake output/{{hint}}/intake.json --manifest output/{{hint}}/notion-manifest.json --revise --page-id <既存 ID>` を実行し、成功したら `output/{{hint}}/revision-log.jsonl` に schemas/output.schema.json 準拠の 1 行を追記せよ。次に、今回足りなかった質問を `output/{{hint}}/question-bank-update.json` の `{session_id:"revision-<revision_no>",hint:"{{hint}}",questions:[...]}` に記録し、`update_question_bank.py --diff ... --hint {{hint}}` を dry-run せよ。結果を提示し、question-bank 変更の別承認が approve の場合だけ同命令を `--apply` 付きで実行せよ。decline の場合は `question-bank-update.json` へ `status:"skipped"` / `skip_reason:"question_bank_update_declined"` を記録し、Notion PATCH と revision-log を巻き戻さず P8 success / exit 0 で停止せよ。失敗時は rollback JSON を保存し、対応する exit code (2/44/51/60/61) を返却。出力は revision-log.jsonl の 1 行 JSON のみ、余計な前置き・後書き・思考過程出力は禁止。

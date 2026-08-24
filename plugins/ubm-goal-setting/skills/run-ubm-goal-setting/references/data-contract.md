@@ -9,14 +9,14 @@ Phase間のデータ受け渡し仕様を定義するドキュメント。
 
 ```
 Phase 0 ──[GoalConfig]──> Phase 1-2 ──[PastSummary]──> Phase 3 ──[InterviewData]──> Phase 4 ──[FormattedOutput]──> File
-(目標種別確認)          (info-collector)             (phase3-coordinator)         (output-formatter)          (05_Project/UBM/目標設定/)
+(目標種別確認)          (info-collector)             (owner parent dialogue)      (output-formatter)          (05_Project/UBM/目標設定/)
 ```
 
 | 契約名 | 生産者 | 消費者 | データ形式 |
 |--------|--------|--------|-----------|
 | GoalConfig | Phase 0（メインフロー） | info-collector | 構造化テキスト |
-| PastSummary | info-collector | phase3-coordinator | マーク付き構造化サマリー（文脈フィールド継承を含む。§2.8） |
-| InterviewData | phase3-coordinator | output-formatter | 構造化テキスト（全35フィールド） |
+| PastSummary | info-collector | run-ubm-goal-setting 親context | マーク付き構造化サマリー（文脈フィールド継承を含む。§2.8） |
+| InterviewData | run-ubm-goal-setting 親context | output-formatter | 構造化テキスト（全35フィールド） |
 | FormattedOutput | output-formatter | ファイルシステム | Markdown ファイル |
 
 ---
@@ -166,7 +166,7 @@ info-collector が「現在の月報/期報」から抽出し、週報の自動�
 
 ## 3. InterviewData（Phase 3 → Phase 4）
 
-phase3-coordinator が全5Stepのヒアリングで収集し、output-formatter に引き渡す構造化データ。
+run-ubm-goal-setting の親contextが全5Stepのヒアリングで収集し、output-formatter に引き渡す構造化データ。phase3-coordinator は必要時に次問案を返すだけで、このデータのproducerではない。
 
 ### 3.1 全35フィールド一覧
 
@@ -384,7 +384,7 @@ output-formatter SubAgent が生成する最終成果物。
 | 合宿ファイルなし | `[要ヒアリング]` マーク | Phase 3 Step 5 で合宿整合性チェックをスキップ |
 | 日付パターン不正 | ファイル更新日時で代替ソート | 正常系と同じフローで継続 |
 
-### Phase 3（phase3-coordinator）
+### Phase 3（run-ubm-goal-setting 親context）
 
 | 状況 | 対応 | 後続Phaseへの影響 |
 |------|------|-----------------|

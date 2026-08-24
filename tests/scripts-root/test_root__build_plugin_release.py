@@ -127,6 +127,31 @@ def test_manual_version_bump_is_respected(mod, tmp_path, monkeypatch):
     assert mod.read_version(plugin) == "1.0.0"
 
 
+def test_manual_version_record_repairs_release_surfaces(mod, tmp_path, monkeypatch):
+    """manifest だけ先に進んだ record 状態でも派生面を旧版のまま固定しない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    (tmp_path / "marketplace.json").write_text(
+        '{"plugins": [{"name": "probe", "version": "0.1.0"}]}\n',
+        encoding="utf-8",
+    )
+    assert mod.main([]) == 0
+
+    manifest = plugin / ".claude-plugin" / "plugin.json"
+    manifest.write_text(
+        manifest.read_text(encoding="utf-8").replace('"0.1.0"', '"1.0.0"', 1),
+        encoding="utf-8",
+    )
+    assert mod.main([]) == 0
+
+    assert mod.read_version(plugin) == "1.0.0"
+    marketplace = json.loads((tmp_path / "marketplace.json").read_text(encoding="utf-8"))
+    assert marketplace["plugins"][0]["version"] == "1.0.0"
+    recorded = json.loads((tmp_path / "fingerprints.json").read_text(encoding="utf-8"))["plugins"]
+    assert recorded["probe"]["version"] == "1.0.0"
+    assert recorded["probe"]["fingerprint"] == mod.fingerprint(plugin)
+
+
 def test_removed_plugin_is_pruned_from_fingerprint_state(mod, tmp_path, monkeypatch):
     plugin = _fake_plugin(tmp_path, "retired", "0.1.0")
     keep = _fake_plugin(tmp_path, "keep", "0.1.0")

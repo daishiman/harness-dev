@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- schedule plan、candidates、dependencies、leases、touches。
+- schedule plan、scope closure、binding-partitioned candidates、C28 evidence、dependencies、leases、touches。
 
 ### 出力契約
 
-- feature/task別ready-set、batches、conflicts、branch/claim command。
+- feature/task・binding別ready-set、統合後batches、source/lease/resource conflicts、branch/claim command。
 
 ### 責務境界
 
@@ -25,11 +25,11 @@
 
 ### 受入条件
 
-- 全推薦eligible、batch touch重複0、branch=devgraph/idになる。
+- 全推薦がscope内・C28 status/depends_on exact parity・正規binding authority・eligible、batch touch/lease重複0、branch=devgraph/idになり、再実行のsemantic digestが一致する。
 
 ## Layer 3: インフラ層
 
-- 使用資産: schedule-graphとAgent verifier。
+- 使用資産: maintained `schedule-graph.py` と、`Task(subagent_type=dev-graph:dev-graph-parallel-safety-verifier)` 内で実行する maintained `validate-schedule-receipt.py`。一時 driver は作らない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-schedule/R3-schedule`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-schedule/R3-schedule`。候補生成は親、独立検証だけ C17 `Task` へ分離し、親が receipt を統合する。
 
 ### 5.2 ゴール定義
 
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] 全推薦eligible、batch touch重複0、branch=devgraph/idになる
+- [ ] 全推薦がscope内・C28 exact parity・正規binding authority・eligible、batch touch/lease重複0、branch=devgraph/id、再実行semantic digest一致になる
 
 ### 5.4 実行方式
 
@@ -64,6 +64,8 @@
 ## Layer 6: オーケストレーション層
 
 - public claim commandと返す。
+- `both`はbeads=C28、github/none=localでpartitionし、異なるauthorityの候補を同一binding resultに混ぜず、統合後にresource-safe batchを再構成する。
+- C17 receipt の `verifier/component/verdict/findings/unsafe_pairs/schedule_digest` を候補 receipt と照合し、PASS 以外は推薦0件にする。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,4 +76,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

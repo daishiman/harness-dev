@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-sync/R5-dryrun`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-sync/R5-dryrun`。main contextで未達checklistを処理する。
 
 ### 5.2 ゴール定義
 
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

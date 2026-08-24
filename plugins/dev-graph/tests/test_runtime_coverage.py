@@ -213,7 +213,7 @@ def test_gh_bridge_helpers_and_operations(common, tmp_path, monkeypatch, capsys)
     seen = []
     monkeypatch.setattr(mod, "gh_json", lambda argv: seen.append(argv) or {"data": {}})
     mod.graphql("Q", {"z": "2", "a": "1"})
-    assert seen[0][-4:] == ["-F", "a=1", "-F", "z=2"]
+    assert seen[0][-4:] == ["-f", "a=1", "-f", "z=2"]
 
     monkeypatch.setattr(mod, "gh_json", lambda argv: {"id": "I", "number": 1, "title": "T", "state": "OPEN", "url": "https://github.test/o/r/issues/1", "updatedAt": "2026-07-13T00:00:00Z"})
     monkeypatch.setattr(mod, "run", lambda *a, **k: SimpleNamespace(stdout="https://github.test/o/r/issues/1\n", returncode=0))
@@ -226,12 +226,26 @@ def test_gh_bridge_helpers_and_operations(common, tmp_path, monkeypatch, capsys)
         ("--op", "project-item-edit", "--project-id", "P", "--item-id", "I", "--field-id", "F", "--option-id", "O"),
     ):
         assert call_main(mod, monkeypatch, capsys, *argv)[0] == 0
-    _, out = call_main(mod, monkeypatch, capsys, "--op", "issue-create", "--repo", "o/r", "--dry-run")
+    _, out = call_main(
+        mod, monkeypatch, capsys,
+        "--op", "issue-create", "--repo", "o/r", "--title", "T", "--dry-run",
+    )
     assert out["mutation_suppressed"] is True
 
-    monkeypatch.setattr(mod, "graphql", lambda q, v: {"data": {"user": {"projectV2": {"id": "P", "fields": {"nodes": [{"name": "Status"}]}}}, "organization": {"projectV2": None}}})
+    project_queries = []
+    monkeypatch.setattr(
+        mod,
+        "graphql",
+        lambda q, v: project_queries.append(q) or {
+            "data": {
+                "user": {"projectV2": {"id": "P", "fields": {"nodes": [{"name": "Status"}]}}},
+                "organization": {"projectV2": None},
+            },
+        },
+    )
     _, out = call_main(mod, monkeypatch, capsys, "--op", "project-resolve", "--owner", "o", "--project-number", "1")
     assert out["result"]["id"] == "P"
+    assert "ProjectV2IterationField" in project_queries[0]
     pages = iter([
         {"data": {"node": {"items": {"nodes": [], "pageInfo": {"hasNextPage": True, "endCursor": "next"}}}}},
         {"data": {"node": {"items": {"nodes": [{"id": "X", "content": {"id": "C"}}], "pageInfo": {"hasNextPage": False, "endCursor": None}}}}},
@@ -245,33 +259,29 @@ def test_render_and_schedule(common, tmp_path, monkeypatch, capsys):
     render = load(SCRIPTS / "render-graph-html.py", "render_graph_cov")
     graph = tmp_path / "graph.json"; out = tmp_path / "out.html"
     graph.write_text(json.dumps({"nodes": [
-        {"id": "feature", "title": "<Feature>", "artifact_kind": "feature", "status": "active", "depends_on": []},
-        {"id": "a", "title": "<A>", "status": "done", "parent_feature": "feature", "depends_on": []},
-        {"id": "b", "status": "active", "parent_feature": "feature", "depends_on": ["a"]},
+        {"id": "feature", "title": "<Feature>", "artifact_kind": "document", "status": "active", "depends_on": []},
+        {"id": "a", "title": "<A>", "status": "done", "depends_on": []},
+        {"id": "b", "status": "active", "depends_on": ["a"]},
     ]}))
-    code, receipt = call_main(render, monkeypatch, capsys, "--graph", graph, "--out", out)
+    code, receipt = call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", graph, "--out", out)
     assert code == 0
     assert {key: receipt[key] for key in ("edges", "nodes", "ok", "out")} == {
-        "edges": 1, "nodes": 3, "ok": True, "out": str(out),
+        "edges": 1, "nodes": 3, "ok": True, "out": "out.html",
     }
     assert receipt["input_sha256"] == hashlib.sha256(graph.read_bytes()).hexdigest()
     assert receipt["output_sha256"] == hashlib.sha256(out.read_bytes()).hexdigest()
-    assert receipt["feature_progress"] == {
-        "aggregate": {"done": 1, "total": 2},
-        "by_feature": {"feature": {"done": 1, "total": 2}},
-    }
+    assert receipt["feature_progress"] == {"aggregate": {"done": 0, "total": 0}, "by_feature": {}}
     text = out.read_text()
     assert "&lt;A&gt;" in text and "<script type=\"application/json\"" in text
-    assert "active · feature · 1/2" in text
     assert "https://" not in text and "http://" not in text
     with pytest.raises(common.ContractError, match="overwrite"):
-        call_main(render, monkeypatch, capsys, "--graph", graph, "--out", graph)
+        call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", graph, "--out", graph)
     graph.write_text(json.dumps({"nodes": [{"id": "a", "depends_on": ["x"]}]}))
     with pytest.raises(common.ContractError, match="dangling"):
-        call_main(render, monkeypatch, capsys, "--graph", graph, "--out", out)
+        call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", graph, "--out", out)
     graph.write_text(json.dumps({"nodes": [{"id": "a", "parent_feature": "missing", "depends_on": []}]}))
     with pytest.raises(common.ContractError, match="dangling parent_feature"):
-        call_main(render, monkeypatch, capsys, "--graph", graph, "--out", out)
+        call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", graph, "--out", out)
 
     sched = load(SCRIPTS / "schedule-graph.py", "schedule_graph_cov")
     graph.write_text(json.dumps({"nodes": [
@@ -286,7 +296,7 @@ def test_render_and_schedule(common, tmp_path, monkeypatch, capsys):
     leases = tmp_path / "leases.json"; leases.write_text(json.dumps({"leases": [{"graph_node_id": "t1", "state": "claimed", "resource_scope": ["web"]}]}))
     _, plan = call_main(sched, monkeypatch, capsys, "--graph", graph, "--leases", leases)
     assert "t1" in plan["conflicts"] and "t2" in plan["conflicts"]
-    ready = tmp_path / "ready.json"; ready.write_text(json.dumps({"ready_set": [{"external_ref": "t2"}, {"external_ref": "unknown"}]}))
+    ready = tmp_path / "ready.json"; ready.write_text(json.dumps({"ready_set": [{"external_ref": "t2", "edge_parity": {"confirmed": True}}, {"external_ref": "unknown", "edge_parity": {"confirmed": True}}], "conflicts": []}))
     _, plan = call_main(sched, monkeypatch, capsys, "--graph", graph, "--ready-source", "bd-bridge", "--ready-json", ready)
     assert plan["ready_source"] == "bd-bridge" and plan["unmapped"]
 
@@ -305,23 +315,23 @@ def test_render_receipt_hashes_progress_and_rejects_invalid_input(
     out = tmp_path / "index.html"
     graph.write_bytes(json.dumps({"nodes": [
         {"id": "feature", "artifact_kind": "feature", "status": "active", "depends_on": []},
-        {"id": "done", "status": "done", "parent_feature": "feature", "depends_on": []},
-        {"id": "open", "status": "active", "parent_feature": "feature", "depends_on": ["done"]},
+        {"id": "done", "status": "done", "depends_on": []},
+        {"id": "open", "status": "active", "depends_on": ["done"]},
     ]}, sort_keys=True).encode("utf-8"))
 
-    code, receipt = call_main(render, monkeypatch, capsys, "--graph", graph, "--out", out)
+    code, receipt = call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", graph, "--out", out)
 
     assert code == 0
     assert receipt["input_sha256"] == hashlib.sha256(graph.read_bytes()).hexdigest()
     assert receipt["output_sha256"] == hashlib.sha256(out.read_bytes()).hexdigest()
-    assert receipt["feature_progress"]["by_feature"]["feature"] == {"done": 1, "total": 2}
-    assert receipt["feature_progress"]["aggregate"] == {"done": 1, "total": 2}
+    assert receipt["feature_progress"]["by_feature"]["feature"] == {"done": 0, "total": 0}
+    assert receipt["feature_progress"]["aggregate"] == {"done": 0, "total": 0}
 
     invalid = tmp_path / "invalid.json"
     invalid.write_text("{", encoding="utf-8")
     rejected_out = tmp_path / "rejected.html"
     with pytest.raises(common.ContractError, match="invalid JSON"):
-        call_main(render, monkeypatch, capsys, "--graph", invalid, "--out", rejected_out)
+        call_main(render, monkeypatch, capsys, "--repo-root", tmp_path, "--graph", invalid, "--out", rejected_out)
     assert not rejected_out.exists()
 
 

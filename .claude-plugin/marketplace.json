@@ -15,7 +15,7 @@
       "name": "skill-intake",
       "source": "./plugins/skill-intake",
       "description": "harness-creator の前段ヒアリングを非技術者にも開く plugin。Markdown/JSON/Notion ページを Keychain 経由で一括生成。図解マスト + 5 軸ヒアリング (出力先/情報源/共有相手/真の課題/ナレッジ資産) を機械検証。",
-      "version": "0.1.15",
+      "version": "0.1.17",
       "category": "productivity",
       "tags": ["skills", "intake", "elicitation", "notion", "non-tech"]
     },
@@ -23,7 +23,7 @@
       "name": "contract-generator",
       "source": "./plugins/contract-generator",
       "description": "企業別の業務委託契約書を、Drive上の.docxひな形(個人/法人)と管理台帳(Google Sheets)を照合して半自動生成。python-docxで差込・法人別紙生成、Slack承認2フェーズ、ひな形変更追従に対応。認証情報はOS資格情報ストアで管理。",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "category": "productivity",
       "tags": ["contract", "docx", "google-drive", "google-sheets", "slack", "automation"]
     },
@@ -31,7 +31,7 @@
       "name": "skill-governance-config",
       "source": "./plugins/skill-governance-config",
       "description": "ガバナンスポリシー・rubric レジストリ・アダプタ登録・テンプレート変数など、governance 基盤の設定ファイル群を管理するプラグイン。",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "category": "governance",
       "tags": ["governance", "config", "rubric", "policy"]
     },
@@ -39,7 +39,7 @@
       "name": "skill-governance-lint",
       "source": "./plugins/skill-governance-lint",
       "description": "Skill / Agent / Hook / manifest の静的解析スクリプト群。命名・依存方向・rubric 参照・frontmatter 整合などを自動検証する lint プラグイン。",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "category": "governance",
       "tags": ["governance", "lint", "static-analysis", "rubric"]
     },
@@ -47,7 +47,7 @@
       "name": "skill-governance-hooks",
       "source": "./plugins/skill-governance-hooks",
       "description": "PreToolUse / PostToolUse / SubagentStop など Claude Code フックポイントで動作するガバナンスフックスクリプト群。rubric ガード・SKILL.md 検証・handoff 制御を担う。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "governance",
       "tags": ["governance", "hooks", "guard", "validation"]
     },
@@ -55,7 +55,7 @@
       "name": "skill-governance-automation",
       "source": "./plugins/skill-governance-automation",
       "description": "rubric 合成・eval 記録・変更カテゴリガード・ドキュメント→スキル変換など、ガバナンス自動化スクリプト群を提供するプラグイン。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "governance",
       "tags": ["governance", "automation", "rubric", "eval"]
     },
@@ -63,7 +63,7 @@
       "name": "skill-governance-adapters",
       "source": "./plugins/skill-governance-adapters",
       "description": "外部システム(Notion / GitHub / Slack など)との統合アダプタスクリプト群。skill-governance-config のアダプタレジストリと連動する。",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "category": "governance",
       "tags": ["governance", "adapters", "notion", "github", "integration"]
     },
@@ -71,7 +71,7 @@
       "name": "skill-governance-migration",
       "source": "./plugins/skill-governance-migration",
       "description": "Skill / manifest の構造移行スクリプト群。旧バージョンの資産を最新スキーマへ安全に変換する migration プラグイン。",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "category": "governance",
       "tags": ["governance", "migration", "schema", "upgrade"]
     },
@@ -79,7 +79,7 @@
       "name": "skill-governance-secrets",
       "source": "./plugins/skill-governance-secrets",
       "description": "macOS Keychain を介した機密管理スクリプト群。API キー・トークンの安全な保存・取得・ローテーションをサポートする secrets プラグイン。",
-      "version": "0.1.9",
+      "version": "0.1.10",
       "category": "governance",
       "tags": ["governance", "secrets", "keychain", "security"]
     },
@@ -87,7 +87,7 @@
       "name": "system-spec-harness",
       "source": "./plugins/system-spec-harness",
       "description": "システム構築(Web/モバイル/タブレット/デスクトップ横断)に必要な仕様情報を、ユーザーとの往復ヒアリングでカテゴリ×プラットフォームの網羅マトリクスとして漏れなく収集し、設計知識 (クリーンアーキテクチャ/デザインパターン/API デザインパターン/セキュアバイデザイン/DDD/クリーンコード) の参照と最新公式ドキュメントの出典記録を添えて、章立て複数 Markdown ファイル + index の仕様書ドキュメントセットへまとめるハーネス plugin。ヒアリングは5周ごとに状態保存+resume で継続し未収集セルを完了扱いしない。収集マトリクス網羅性 (validate-coverage-matrix.py) と出典記録 (validate-source-citation.py) を決定論ゲートで検証し、独立 context の完成度評価 (assign-system-spec-completeness-evaluator) と 3 監査 sub-agent (hearing/matrix/doc-freshness) で網羅性を担保する。確定済み章は fail-closed hook で誤上書きを防ぐ。改善要望は `/run-skill-feedback system-spec-harness` で投入可能。",
-      "version": "0.1.11",
+      "version": "0.1.13",
       "category": "productivity",
       "tags": ["spec", "hearing", "system-design"]
     },
@@ -95,7 +95,7 @@
       "name": "extract-system-blueprint",
       "source": "./plugins/extract-system-blueprint",
       "description": "参考システムの公開URLを認可・低負荷budget内で調査し、静的HTTP(WebFetch/stdlib静的DOM観測)+browser-render(MCP非依存のローカルheadless Chrome via Bash)の観測fact、根拠つきinference、欠測(observation_gap)を明示区別したmd+json+Mermaidのローカル章別ブループリントを生成するplugin。外部サービス連携(MCP/Notion)なしで自己完結する。",
-      "version": "0.2.9",
+      "version": "0.2.11",
       "category": "Productivity",
       "tags": ["extraction", "blueprint", "mermaid", "documentation"]
     },
@@ -103,7 +103,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.9",
+      "version": "0.1.11",
       "category": "development-planning",
       "tags": ["task-graph", "feature-orchestration", "worktree"]
     },
@@ -111,7 +111,7 @@
       "name": "slide-report-generator",
       "source": "./plugins/slide-report-generator",
       "description": "presentation-slide-generator v8.4.2 の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa/16:9/GSAP/インライン SVG2/Codex Image2/決定論レンダラ/A4 印刷/style genome) を単一 SSOT で共有し、コンテンツ意図層のみ mode 別に分岐する。slide=1スライド1メッセージ/107 slideType、report=読み物/4 reportType/1項目1ビジュアル最適化/Mermaid 統合。Node 製レンダリング/画像/印刷/検証エンジンは vendor として携行し、OS/CPU別Playwright Chromiumはinstall先のplugin-local cacheへ決定論的に復元して起動する。",
-      "version": "0.1.26",
+      "version": "0.1.27",
       "category": "Productivity",
       "tags": ["slides", "report", "visual", "presentation", "codex-image", "mermaid"]
     },
@@ -119,7 +119,7 @@
       "name": "spec-drift-guardian",
       "source": "./plugins/spec-drift-guardian",
       "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "category": "developer-tools",
       "tags": ["spec-drift", "triage", "harness-creator"]
     },
@@ -127,7 +127,7 @@
       "name": "system-dev-planner",
       "source": "./plugins/system-dev-planner",
       "description": "確定したdev-graph featureを、同一digestで昇格可能なexact 13実行タスクへ分解するシステム開発planner。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "development-planning",
       "tags": ["system-design", "task-planning", "dev-graph"]
     },
@@ -135,7 +135,7 @@
       "name": "ubm-goal-setting",
       "source": "./plugins/ubm-goal-setting",
       "description": "北原さん式ゴールセッティング、会話型の日次ジャーナル作成、2-source YouTube全量/自動同期、根拠付きknowledge/harness artifact graph consultを提供する個人利用向けplugin。",
-      "version": "0.3.21",
+      "version": "0.3.24",
       "category": "productivity",
       "tags": ["goal-setting", "knowledge-sync", "journal", "obsidian"]
     },
@@ -143,7 +143,7 @@
       "name": "guide-doc-generator",
       "source": "./plugins/guide-doc-generator",
       "description": "初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成するプラグイン。ヒアリング→構成データ設計→レンダリング→4 ゲート検証→出力先ルーティングを分界し、レンダリング経路に LLM を挟まないことで同一構成データからのバイト一致再現を保証する。素材は data URI で内包し、絵文字を使わずインライン SVG アイコンで表す。既存 HTML からの逆抽出 (round-trip) と A4 印刷・a11y にも対応する。",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "category": "Productivity",
       "tags": ["handout", "html", "self-contained", "beginner", "print", "a11y"]
     }

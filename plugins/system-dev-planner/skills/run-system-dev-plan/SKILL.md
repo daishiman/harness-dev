@@ -38,8 +38,17 @@ script_refs:
   - ../../scripts/build-system-handoff.py
   - ../../scripts/validate-system-plan.py
   - ../../scripts/promote-system-plan.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 combinators:
+  - with-goal-seek
   - with-feedback-contract
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  fork: inline
+  spec: eval-log/run-system-dev-plan-goal-spec.json
+  progress: eval-log/run-system-dev-plan-progress.json
+  max_loops: 5
 feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -102,6 +111,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 
+## Purpose & Output Contract
+
+- **入力**: caller repository 内の `--feature-id` と repo-relative `--feature-context`、confirmed system-spec/readiness。C09 が realpath containment・feature id・digest を固定する。
+- **出力**: exact 13 task specs、13-entry inventory、13-node DAG、`system-build-handoff.json`、staging/promotion/registration receipts。すべて同一 feature digest に接地する。
+- **完了条件**: C12 決定論 gate と独立 evaluator C1-C4 が同一 digest を PASS し、C11 が atomic promotion して lock を解放した状態。
+- **非目標**: 実装codeの生成、複数featureの同時分解、exact-13 外タスクの混入、dev-graph registration receipt の自己発行は行わない。
+
 ## Invariants
 
 - caller repository の解決と全 path 検査は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` に一元化する。`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` は code/assets の位置決めだけに使い、caller の文書・状態の authority にはしない。
@@ -136,6 +152,48 @@ pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生�
 - **仕様書ブラウザ (task-specs.html) が生成されている**: 13 フェーズ仕様書 (phase-01..13) と `task-specs/*.md` の本文を、サイドバー index → 各仕様書へページ遷移 → ブラウザ back で戻れる自己完結 HTML にする (中身閲覧ビュー)。構造/依存/価値の `plan-structure-report.html` と対になり、相互リンクで往復できる。**plugin-dev-planner と共通の完了ステップ** (best-effort・非ゲート):
   `python3 plugins/harness-creator/scripts/render-spec-browser.py --plan-dir <PLAN_DIR>`
 
+## ゴールシーク実行
+
+### ゴール (Goal)
+
+1 feature が exact 13 task specs、13-entry inventory、13-node DAG、handoff に分解され、決定論 gate と独立 evaluator が同一 digest を PASS した状態。
+
+### 目的・背景 (Why)
+
+動的な分解を許しつつ、feature 境界・exact-13・atomic promotion を周回中に変質させないため。
+
+### 完了チェックリスト
+
+- [ ] C09/C08/C13 の context・readiness・lock が同一 feature digest に接地した
+- [ ] exact 13 package と handoff が C12 の全決定論 gate を exit0 で通過した
+- [ ] `system-dev-plan-evaluator` が C1-C4 を PASS し、同一 digest を C11 が atomic promotion した
+
+### ゴールシークループ
+
+post-choice のみ、main context が package と lock を所有したまま未達項目を1つ改善する。改善後に C12 を再実行し、独立判定だけを `Task` で `system-dev-plan-evaluator` へ委譲する。親へは verdict・blocker・対象 digest だけを返し、5周で停止する。
+
+### ゴールシーク配線
+
+`goal-spec.json` の `original_goal` と feature digest を progress に固定する。各周回は intermediate JSONL へ `original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal`、C12 receipt digest、evaluator verdict を append し、次周回は直前の `merged_directive_for_next` を必須入力とする。
+
+### ゴールシーク検証
+
+post-choice 周回の各回末に共通 validator を実行し、intermediate.jsonl の `required_keys`、非空 `original_goal`、全行不変性、`original_goal_hash == hashlib.sha256(original_goal)` を fail-closed 検証する。その後に feature/C12/evaluator digest 一致を検査する。
+
+```bash
+CONTEXT_JSON="$(python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py" --repo-root "${CLAUDE_PROJECT_DIR:?caller project root is required}" --json)" || exit $?
+PROJECT_ROOT="$(python3 -c 'import json,sys; print(json.load(sys.stdin)["repo_root"])' <<<"$CONTEXT_JSON")" || exit $?
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "$PROJECT_ROOT/eval-log/run-system-dev-plan-progress.json" \
+  "$PROJECT_ROOT/eval-log/run-system-dev-plan-intermediate.jsonl"
+```
+
+## Gotchas
+
+- best-effort の HTML reporter を cwd 相対で呼び、別repositoryの `task-graph.json` を読まない。C09 receipt の repo root と出力 containment を先に固定する。
+- lock 取得前の staging write、lock 解放前の完了報告、C12/evaluator PASS 前の promotion は禁止。失敗時は旧 current を保つ。
+- P01..P13 以外の14件目や別phase文書を「詳細化」として追加しない。発見作業は follow-up feature candidate へ分離する。
+
 ## Failure handling
 
-light/standard/detailed選択後だけ `component-inventory.json` の `goal_seek.max_loops=5` を有効化する。5周で未達なら自動続行せず findings と staging path を報告する。accept-as-isではこの周回を0回のまま終了する。途中失敗時も published/current は旧世代を維持する。発見した独立作業は package に追加せず follow-up feature candidate として返す。
+light/standard/detailed選択後だけ frontmatter の `goal_seek`（engine=inline / fork=inline / max_loops=5）を有効化する。main context が package を所有し、独立評価だけを `Task` で system-dev-plan-evaluator へ分離する。5周で未達なら自動続行せず findings と staging path を報告する。accept-as-isではこの周回を0回のまま終了する。途中失敗時も published/current は旧世代を維持する。発見した独立作業は package に追加せず follow-up feature candidate として返す。

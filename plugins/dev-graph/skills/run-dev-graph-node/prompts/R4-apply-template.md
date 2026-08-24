@@ -17,7 +17,7 @@
 
 ### 出力契約
 
-- 不足sectionのみ加えたbody patchとtemplate metadata。
+- 新規は必須sectionを満たす `rendered_body`、更新は不足sectionのみを持つappend-only patch。template metadata/frontmatterはC02 CLIに生成させる。
 
 ### 責務境界
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R4-apply-template`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-node/R4-apply-template`。`goal_seek.fork=inline` に従いmain contextで実行する。
 
 ### 5.2 ゴール定義
 
@@ -63,7 +63,7 @@
 
 ## Layer 6: オーケストレーション層
 
-- R3 atomic candidateへpatchを渡す。
+- R3 が contained plan/patch JSON にして正規 `register-package.py artifacts` へ渡す。実行scriptは生成しない。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,4 +74,3 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
-

@@ -12,7 +12,6 @@ arguments-optional: [plugin, skill_name]
 allowed-tools:
   - Read
   - Bash(python3 *)   # Keychain 参照は notion_config が python 内から security を呼ぶので Bash(security *) は不要
-  - Agent
   - Grep
   - Glob
 kind: run
@@ -23,7 +22,6 @@ external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts
 owner: team-platform
 since: 2026-05-25
 version: 0.1.0
-max_loops: 5
 reference_refs:
   - plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
   - plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md
@@ -45,6 +43,14 @@ audit-trigger: on-change
 manifest: workflow-manifest.json
 completeness_exempt:
   - "prompts: 対話手順は doc/notion-schema/skill-list.schema.json#feedback_protocol 正本 (Notion §7 と同一) から本文に展開している (初見実行の自己完結性のため)。整合は scripts/lint-feedback-protocol.py で発火条件と参照経路を検証。prompt-creator の R-id 単位 7 層プロンプトは適用外 (二重定義禁止 [[project_ssot_dedup_mechanism]])。"
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  spec: eval-log/goal-spec.json
+  progress: eval-log/run-skill-feedback-progress.json
+  intermediate: eval-log/run-skill-feedback-intermediate.jsonl
+  max_loops: 5
+  fork: inline
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -198,7 +204,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 - **progress ログ**: `eval-log/run-skill-feedback-intermediate.jsonl`（周回ごとに append）
 - **goal-spec**: `eval-log/goal-spec.json`（初回起動時に original_goal を記録）
-- **コンテキスト分離**: 多フェーズ実行時は SubAgent へ fork（allowed-tools: Agent）
+- **コンテキスト配置**: 同定から投入結果の確認までを同じ文脈の `inline` で実行し、不要な委譲往復を作らない
 - **打ち切り**: `max_loops: 5` を超えたら open_issues に記録して human_review へ差し戻す
 - **ドリフト検知**: 各周回末に original_goal_hash と現 goal-spec の hash を比較し乖離 > 閾値なら Anchor Step を発火する
 

@@ -77,7 +77,7 @@ def test_project_brief_removes_planner_keys_and_renames_kind(skill_brief, specfm
     """射影が planner 固有キーを除去し skill_kind→kind へ写像、base required を保持する。"""
     comp = component_entry("C01", "skill", skill_kind="run")
     comp["couples_with"] = ["C02"]
-    comp["goal_seek"] = {"engine": "inline", "fork": "subagent", "max_loops": 5}
+    comp["goal_seek"] = {"engine": "inline", "fork": "inline", "max_loops": 5}
     brief = skill_brief.project_brief(comp)
     assert brief["kind"] == "run"
     assert brief["goal_seek"] == comp["goal_seek"]

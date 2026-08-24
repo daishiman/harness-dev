@@ -5,7 +5,7 @@
 name: harness-creator
 description: Codex / Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.4.22
+version: 1.4.24
 owner: team-platform
 since: 2026-05-17
 last-audited: 2026-07-13
@@ -32,6 +32,7 @@ contract:
     - "run-skill-live-trial / run-skill-iter-improve (実行 acceptance 系) は量産先 plugin へ配備せず (feedback-deploy の配備対象は run-skill-feedback のみ) リモート CI でも実走しない (D14)。harness-creator 自身の Codex 配布可否と、量産先に含める capability の範囲は分離する (enforcement: run-build-skill workflow-manifest feedback-deploy 配備対象限定 + Codex standalone package test)"
     - "behavioral claim (自走/入れ子 Skill/対話 gate/goal 適合) の受け入れ証拠は live-trial verdict (schema 適合 + skill_dir_tree_sha 一致 + overall.verdict=PASS + tier=live 非降格) + transcript のみとし、静的レビュー成果物を Gate D の収束根拠に混ぜないこと (enforcement: scripts/lint-live-trial-verdict.py — D13 パイロットゲート中は record-only WARN、P3 常設化 go/no-go で --enforce 昇格)"
     - "project native surface projection の owner は scripts/sync-native-surfaces.py (C01)、plugin manifest/repo marketplace projection の owner は scripts/sync-plugin-platforms.py とする。Claude/Codex共通local user installは scripts/install-local-plugins.py、Codex local/Git単独installは scripts/install-codex-plugin.py へ明示分離し、hook trustは pending_user_gate のまま保持する (enforcement: tests/test_native_surface_repo_integration.py + tests/test_sync_plugin_platforms.py + tests/test_install_local_plugins.py + tests/test_install_codex_plugin.py)"
+    - "構築時 component DAG と完成後 Skill runtime DAG を別契約とし、対象データが graph であることだけで task-graph engine を選ばない。loop Skill は engine/fork を明示し、workflow dependsOn と委譲先は解決可能かつ非循環であること (enforcement: scripts/lint-skill-runtime-profiles.py)"
     - "native-surfaces.toml は共通 hook delivery と Codex discovery の期待意味論、`.claude-plugin/plugin.json` + `.codex-plugin-overrides.json` はCodex package入力、`.codex-plugin/plugin.json` + root marketplaceはsync-plugin-platforms.pyの生成物とする。生成物を次回desired入力へ戻さず、非公式 `.agents/settings.json`・`.agents/{agents,commands,hooks}`・plugin/project hook重複を禁止する (enforcement: scripts/check-native-surface-parity.py + scripts/sync-plugin-platforms.py --all --check)"
 
 capabilities:
@@ -113,6 +114,7 @@ capabilities:
   - { kind: script, ref: scripts/sync-plugin-platforms.py, tier: core }
   - { kind: script, ref: scripts/install-codex-plugin.py, tier: core }
   - { kind: script, ref: scripts/sync-native-surfaces.py,        tier: core }
+  - { kind: script, ref: scripts/lint-skill-runtime-profiles.py, tier: core }
   - { kind: script, ref: scripts/record-task-graph-knowledge.py, tier: core }
   - { kind: script, ref: skills/run-build-skill/scripts/build-external-intelligence.py, tier: core }
   - { kind: script, ref: skills/run-build-skill/scripts/build-external-intelligence-runtime.py, tier: core }

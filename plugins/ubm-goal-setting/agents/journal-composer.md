@@ -20,6 +20,7 @@ isolation: fork
 1. **context JSON**: `build-journal-context.py` の出力全体（`journal_number` / `output_path` /
    `goals` / `previous_journal` / `weekly_report` / `warnings`）。
 2. **対話ログ**: ユーザーが語った内容。要約前の生の情報を含む。
+3. **plugin_root**: 親スキルが host-skill-path から解決した plugin root の absolute path。Task 開始時に `PLUGIN_ROOT` として設定し、未指定または absolute path でなければ Write 前に停止する。
 
 ## 責務
 
@@ -64,7 +65,7 @@ isolation: fork
 3. 次を実行し PASS を確認する。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-output.py" \
+python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-journal/scripts/validate-journal-output.py" \
   --file "{output_path}" --expected-number {journal_number} --expected-date {target_date}
 ```
 

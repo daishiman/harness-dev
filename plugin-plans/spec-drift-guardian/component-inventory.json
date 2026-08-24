@@ -139,11 +139,11 @@
       "mcp_tools": [],
       "external_systems": ["GitHub Issues (gh CLI)"],
       "deterministic_checks": ["aggregate-issue-diffs.py", "parse-spec-diff.py", "map-field-impact.py"],
-      "needs_independent_context": true,
+      "needs_independent_context": false,
       "needs_lifecycle_enforcement": true,
       "prompt_layer": "7layer",
       "combinators": ["with-goal-seek", "with-feedback-contract"],
-      "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+      "goal_seek": {"engine": "inline", "fork": "inline", "max_loops": 5},
       "feedback_contract": {
         "criteria": [
           {"id": "IN1", "loop_scope": "inner", "text": "C11出力がcomplete=trueでcommit pair/digestを持ち、C08/C09出力のname/type/required/enum/semantics・before/after/evidence必須キー欠落が0件", "verify_by": "script"},
