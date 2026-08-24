@@ -128,16 +128,19 @@
       }
     },
     "selection_rule": {
-      "primary_key": "図解型 (diagram_pattern)。C11 / C14 が持つ 6 語の閉じた列挙がそのまま定義域であり、全域写像なので未定義の入力が存在しない",
+      "primary_key": "図解型 (diagram_pattern)。C11 / C14 が持つ 9 語の閉じた列挙がそのまま定義域であり、全域写像なので未定義の入力が存在しない。キーは C14 render-diagram-svg.py の PATTERNS と逐語同一の id であって、日本語ラベル (比較・対比2択) の英訳を id にしない — 別名を作った時点で同じ概念の名簿が 2 つに分かれる",
       "map": {
         "flow": "isometric-diorama",
         "cycle": "isometric-diorama",
         "hierarchy": "isometric-diorama",
-        "comparison": "flat-infographic-jp",
+        "compare": "flat-infographic-jp",
         "matrix": "flat-infographic-jp",
-        "binary-contrast": "flat-infographic-jp"
+        "versus": "flat-infographic-jp",
+        "before_after": "flat-infographic-jp",
+        "analogy": "flat-infographic-jp",
+        "bignumber": "flat-infographic-jp"
       },
-      "boundary_principle": "奥行き・順序・連結を読む図はアイソメ、面積・格子・二項対比を読む図はフラット。この線は genome 自身も引いている (tableAndMatrixRules と nonApplicableTypes.precise-table-or-number が格子と精密な数値をアイソメから退避させよと述べている)。本裁定はその退避先に『画風を変える』という第 3 の選択肢を与えたもので、新しい原則を持ち込んでいない",
+      "boundary_principle": "奥行き・順序・連結を読む図はアイソメ、面積・格子・二項対比・数値の言い切りを読む図はフラット。未知を既知へ橋渡しする 3 語 (before_after / analogy / bignumber) がフラット側なのは新しい線引きではなく、flat-infographic-jp の genome が『カード枠で対比 (導入前/導入後)』『大きな数値強調』を look として既に宣言しているためである。この線は genome 自身も引いている (tableAndMatrixRules と nonApplicableTypes.precise-table-or-number が格子と精密な数値をアイソメから退避させよと述べている)。本裁定はその退避先に『画風を変える』という第 3 の選択肢を与えたもので、新しい原則を持ち込んでいない",
       "override": "構成データのセクションが style_family を明示したときはそれが勝つ。値は families のキー 2 語の allowlist で、それ以外は exit2"
     },
     "no_pattern_rule": "図解型を持たないセクションの画像は style_family の明示が必須。既定へ落とさない。欠落は exit2 (E-IMG-FAMILY-MISSING)。fallback を置かないのは RESOLUTION-P04-x-05 裁定 C と同じ理由で、無言の既定は『誰も適切さを判断していない画風』を出荷させるためである",

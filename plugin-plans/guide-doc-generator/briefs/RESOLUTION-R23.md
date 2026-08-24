@@ -99,18 +99,23 @@ genome の `patterns["image-only"].rules` は `max 6-8 text blocks per slide` / 
 
 ### (2) 決定論選択規則 — 図解型からの全域写像
 
-一次キーは**図解型**とし、6 語の閉じた列挙に対する全域写像を置く。C11 / C14 が持つ図解パターン語彙がそのまま定義域である。
+一次キーは**図解型**とし、閉じた列挙に対する全域写像を置く。C11 / C14 が持つ図解パターン語彙がそのまま定義域である。**表の左列に書くのは C14 `PATTERNS` の id そのもの**であり、日本語ラベルの英訳を id にしない。
 
 | 図解型 | family | 理由 |
 | --- | --- | --- |
-| フロー (flow) | `isometric-diorama` | 工程の受け渡しは奥行きと連結で読む |
-| サイクル (cycle) | `isometric-diorama` | 循環は場面タイルの連結で表す |
-| 階層 (hierarchy) | `isometric-diorama` | 積層は 30 度の奥行きが最も読みやすい |
-| 比較 (comparison) | `flat-infographic-jp` | 量の比較はアイソメで面積が歪む |
-| マトリクス (matrix) | `flat-infographic-jp` | 格子はアイソメで軸が斜行して読めない |
-| 対比2択 (binary-contrast) | `flat-infographic-jp` | 導入前 / 導入後のカード対比が参考フラット図そのもの |
+| フロー (`flow`) | `isometric-diorama` | 工程の受け渡しは奥行きと連結で読む |
+| サイクル (`cycle`) | `isometric-diorama` | 循環は場面タイルの連結で表す |
+| 階層 (`hierarchy`) | `isometric-diorama` | 積層は 30 度の奥行きが最も読みやすい |
+| 比較 (`compare`) | `flat-infographic-jp` | 量の比較はアイソメで面積が歪む |
+| マトリクス (`matrix`) | `flat-infographic-jp` | 格子はアイソメで軸が斜行して読めない |
+| 対比2択 (`versus`) | `flat-infographic-jp` | 導入前 / 導入後のカード対比が参考フラット図そのもの |
+| 前後変化 (`before_after`) | `flat-infographic-jp` | genome の look が「カード枠で対比 (導入前/導入後)」を既に宣言している |
+| たとえ (`analogy`) | `flat-infographic-jp` | 既知と未知の 1 対 1 対応は二項対比の一種であり、面で並べたときに読める |
+| 数値の言い切り (`bignumber`) | `flat-infographic-jp` | genome の look が「大きな数値強調」を既に宣言している |
 
-境界は「**奥行き・順序・連結を読む図はアイソメ、面積・格子・二項対比を読む図はフラット**」である。この線は genome 自身も引いている — `tableAndMatrixRules` と `nonApplicableTypes.precise-table-or-number` は、格子と精密な数値をアイソメから退避させよと述べている。本裁定はその退避先に「画風を変える」という第 3 の選択肢を与えたものであって、新しい原則を持ち込んでいない。
+境界は「**奥行き・順序・連結を読む図はアイソメ、面積・格子・二項対比・数値の言い切りを読む図はフラット**」である。
+
+> **訂正 (2026-08-23)** — 初版の表は左列に `comparison` / `binary-contrast` と書いていたが、これは日本語ラベルの英訳であって C14 の id (`compare` / `versus`) ではなかった。本文が「C11 / C14 が持つ図解パターン語彙がそのまま定義域」と述べているとおりへ id を揃え、後から C14 へ追加された 3 語も全域写像へ含めた。裁定の内容は変えていない。この線は genome 自身も引いている — `tableAndMatrixRules` と `nonApplicableTypes.precise-table-or-number` は、格子と精密な数値をアイソメから退避させよと述べている。本裁定はその退避先に「画風を変える」という第 3 の選択肢を与えたものであって、新しい原則を持ち込んでいない。
 
 上書きと欠落の扱い:
 

@@ -28,6 +28,7 @@ script_refs:
   - ../../scripts/route-handout-output.py
 schema_refs:
   - ../../schemas/handout-config.schema.json
+  - plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
 command_refs:
   - ../../commands/handout-verify.md
 agent_refs:
@@ -115,19 +116,18 @@ build_mode:
       when: "検証済みの構成データを直接渡された場合 (逆抽出からの再生成・自動実行)"
       rule: "ヒアリングも第1稿も持たず設計以降へ進む"
 build_stage:
-  note: "完了条件を 2 段に割る。draft は『どこまで作るか』を決める軸であって、品質を落とす軸ではない。第1稿で外すのは意味レビュー (C03) だけで、決定論ゲートは 1 つも外さない (数百ミリ秒で終わるうえ、外すと『開けない HTML』を渡すことになる)。挿絵委譲 (C21) も外さない — R25 (goal-spec C69) で第1稿から回すと決めており、min_images_per_main_section が level=error (E-IMAGE-ABSENT) である以上、外せば第1稿が D3 を通らないため速さと引き換えにできる工程ではない。外す工程の正本は config/handout-visual-policy.json#draft_first.skipped_in_draft。速さは検証を薄めることでなく、確定と意味レビューを待たずに現物を一度渡すことで得る"
+  loop_ceiling: "周回上限は段ごとに持たない。goal_seek.max_loops (正本: component-inventory.json#C01) が plugin 全体で唯一の暴走止めであり、draft も release もこの 1 個の下で回る。段ごとの違いは『何のために回してよいか』であって回してよい回数ではないため、その違いは各段の loop_rule が持つ。上限を段ごとに分けると数が合成され (段の上限 × criteria の反復上限)、最悪何周するのかを誰も言えなくなる"
+  note: "完了条件を 2 段に割る。draft は『どこまで作るか』を決める軸であって、品質を落とす軸ではない。第1稿で外すのは意味レビュー (C03) だけで、決定論ゲートは 1 つも外さない (数百ミリ秒で終わるうえ、外すと『開けない HTML』を渡すことになる)。挿絵委譲 (C21) も外さない — R25 (goal-spec C69) で第1稿から回すと決めており、min_images_per_main_section が level=error (E-IMAGE-ABSENT) である以上、外せば第1稿が G1 を通らないため速さと引き換えにできる工程ではない。外す工程の正本は config/handout-visual-policy.json#draft_first.skipped_in_draft。速さは検証を薄めることでなく、確定と意味レビューを待たずに現物を一度渡すことで得る"
   default: draft
   stages:
     - id: draft
-      checklist_scope: "## 完了チェックリスト の『第1稿の完了条件』(D1-D10)"
+      checklist_scope: "## 完了チェックリスト の G1-G3、各判定の draft 行"
       criteria_scope: [IN1, OUT1, OUT2]
-      max_loops: 2
       loop_rule: "回してよいのは決定論ゲートを exit0 へ戻す修復だけ。意味品質を上げるための周回は draft では回さない (利用者が現物を見るほうが速い)"
-      exit: "D1-D10 が揃ったら completed を宣言せず、成果物のパス・仮置き項目・第1稿で回さなかった工程を提示して停止する"
+      exit: "G1-G3 の draft 行が揃ったら completed を宣言せず、成果物のパス・仮置き項目・第1稿で回さなかった工程を提示して停止する"
     - id: release
-      checklist_scope: "『第1稿の完了条件』(D1-D10) + 『仕上げの完了条件』(F1-F4)"
+      checklist_scope: "## 完了チェックリスト の G1-G3、各判定の draft 行 + release 行"
       criteria_scope: [IN1, OUT1, OUT2]
-      max_loops: 5
       entry: "利用者の指摘を受け取ってから入る。指摘なしに自動で昇格しない"
       loop_rule: "R5-refine の差分修正として回す。ヒアリングはやり直さない"
 visual_policy_ref: ../../config/handout-visual-policy.json
@@ -143,7 +143,7 @@ completeness_exempt:
   - "manifest: goal_seek.engine=inline が未達 checklist から実行局面を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行 を正本とする。"
 feedback_contract:
   activation_state: semantic_evaluator_started
-  max_iterations: 3
+  iteration_note: "反復上限をここに持たない。criteria の検証はゴールシーク 1 周につき 1 回であり、周回の上限は goal_seek.max_loops が単独で持つ。IN1 / OUT1 / OUT2 は決定論検証なので、資料を直さずに再評価しても結果は変わらない — 結果を変える修復こそがゴールシークの 1 周であり、独立した反復予算を置くとその 1 周を二重に数えることになる"
   criteria:
     - id: IN1
       loop_scope: inner
@@ -159,7 +159,7 @@ feedback_contract:
       verify_by: test
     - id: OUT3
       loop_scope: outer
-      text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、D1-D10 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する"
+      text: "題材と素材だけを与えた実起動で、質問ラウンドが draft_first.max_question_rounds_before_first_draft 回以内に収まり、G1-G3 の draft 行が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示すること、および C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する"
       verify_by: live-trial
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -213,7 +213,7 @@ frontmatter の `hearing_required_items_r21` が plugin 全体で唯一の項目
 
 用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
 
-資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・D10。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
+資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
 
 節の中の並びも C05 へ渡す前に決めておく。本編の節は 見出し → 絵 1 枚 → 目的と言いたいこと → 要点を並べる部品 → 補足 の順で、構成データ側では `blocks[0]` を image (要請があれば diagram) にする (`config/handout-visual-policy.json#opening.section_opening.order`・検査は W-SECTION-VISUAL-NOT-FIRST)。前へ出すのは先頭の 1 枚だけで、その 1 枚は「具体部品」に数えない (節の中身が絵だけなら LANG-06)。情報量が多いときは 1 節を厚くせず節を増やしてよい — 増えた分は目次が 2 行まで折り返して受ける (`nav.max_rows`) ので、`heading` は `nav.max_chars` に収める。絵の粒度は冊子で 1 つに揃える (画風系統・密度・視点は全節同値。混在は C21 の E-IMG-GRANULARITY-DRIFT で停止する)。
 
@@ -241,6 +241,16 @@ C05 が書いた構成データは validate-handout-config.py で検証し、`--
 
 release 段でゲートの verdict が pass になった資料について assign-handout-readability-evaluator (C03) へ 1 回委譲する。C03 は verdict を無加工で返し、再レビューの起動と打ち切りは本 skill のゴールシークだけが持つ。
 
+**初回の委譲は `scope` を渡さず全体を読ませる。2 回目以降は、直前の周回で実際に手を入れた節の id だけを `scope` として渡す。** 触っていない節を毎周読み直しても、同じ HTML から同じ判定が返るだけで待ち時間と読み込みだけが増える。節をまたぐ軸 (goal-chain / opening-order / nav-scannability) はレビュアー側が `scope` に関わらず全体で見るので、絞ったことで全体の筋の断裂を見落とすことはない。
+
+`scope` に載せるのは**直した節**であって、指摘が出ていた節ではない。指摘に対して別の節を直したなら渡すのは直したほうである。また `scope` へ添えてよいのは節 id だけで、何周目か・前回何を指摘されたか・どこをどう直したかは渡さない。渡した時点で独立 context が壊れ、レビュアーの verdict に「もう十分だろう」が入る。
+
+**`scope` を絞ったときの `verdict=PASS` は、それだけでは release の完了根拠にならない。** verdict はレビュアーが読んだ範囲の findings から計算されるので、`severity=high` の指摘を受けた節を直さないまま `scope` から外せば、その節は読まれず findings に現れず PASS が返る。これを塞ぐため、本 skill は受け取った `severity=high` の指摘を**解消するまで自分の側に残す**。解消とは資料を直したうえで、その節を次の `scope` に載せて再度レビューを受け、その周の findings に現れないことである。同じ形で、**最後に手を入れて以降まだ一度も読まれていない節**も未解消として扱う。初回の全件レビューで読み終えた無改修の節は既読なので消え、直した節は次周の `scope` に載せて読ませれば消える。「そのレビューで読まれなかった節」を数えてはならない — 2 周目以降は `scope` を絞る以上つねに未読の節があり、それを未解消と数えると release へ永久に到達しない。
+
+`not_reviewed` を一括で未解消にしてはならない。この配列は性質の異なる 2 群を運んでいる — (a) `scope` により読まなかった節・軸 と、(b) `machine_gate_overlap` により除外した面である。(b) は決定論ゲートが既に見ている面を二重に指摘しないための除外であり、C06 は全件レビューでも必ず理由付きで残す。したがって `not_reviewed` は非空が正常形であり、(a) についても上のとおり「未読のまま残っているか」で見る。
+
+これは verdict の再判定ではない。severity を決めるのも PASS/FAIL を決めるのも C06 のままで、本 skill が持つのは「受け取った指摘がまだ残っているか」だけである。
+
 - `status=blocked` は verdict を伴わない。pass とも fail とも読まず、ゲート修復へ戻してから委譲し直す。
 - verdict の決め方はレビュアー (C06) 側の規則であり、本 skill で再判定しない。`suggestion` は提案であって適用指示ではなく、どう直すかは本 skill が決める。
 - 戻り値の項目が欠けていたら、その資料は判定が揃っていないものとして再委譲する。欠落を本 skill が補完しない。
@@ -258,47 +268,78 @@ release 段でゲートの verdict が pass になった資料について assig
 
 ### 完了チェックリスト
 
-分類の基準は「利用者が現物を見るまでに要るか」の一点であり、重要度ではない。F へ回した項目は品質を捨てたのではなく、**現物が出てから効くもの**を第1稿の待ち時間から外しただけである。
+判定は 3 つしかない。**構成が確定したか (G1) / 資料が読める形で成立したか (G2) / 渡せる形で開示したか (G3)** である。段 (draft / release) が変えるのは判定の数ではなく、各判定を満たしたと言える中身である。
 
-#### 第1稿の完了条件 (D1-D10・`build_stage: draft`)
+分類の基準は「利用者が現物を見るまでに要るか」の一点であり、重要度ではない。release 側へ回した中身は品質を捨てたのではなく、**現物が出てから効くもの**を第1稿の待ち時間から外しただけである。
 
-- [ ] D1: `never_inferred_fields` (`doc_type` / `out_dir`) が確定し、他の `hearing_required_items_r21` / `_r22` は 1 ラウンドで聞くか素材から推定で埋めた (回答を待たずに進む。非対話経路では検証済み構成データがその代わりを満たす)
-- [ ] D2: 第1稿を `draft_first.first_draft_detail_level` の粒度で出した (全体を詳細で作ってから削らない)
-- [ ] D3: 構成データが validate-handout-config.py を exit0 で通っている
-- [ ] D4: 図解密度と文字量の警告 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`) が 0 件である
-- [ ] D5: 層の切り分けの警告 (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`) が 0 件である (要点層を先に、各項目の手順・流れを持つ詳細層を後に置いた)
-- [ ] D6: 冒頭の置き方の警告 (`W-HERO-LONG` / `W-OPENS-PROSE`) が 0 件である (目的・背景・ゴールを 1 行の宣言に留め、中身はカードと図解へ移した)
-- [ ] D7: 単一 HTML が決定論 script 列で生成されている
-- [ ] D8: `/handout-verify` の集約 verdict が pass である
-- [ ] D9: 出力先へ同梱物が揃い `README.md` を書き、生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果・**仮置き項目**・載せなかった項目・**第1稿で回さなかった工程**) を返した
-- [ ] D10: 節の入口と共有面の警告 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`) が 0 件である (見出しの次に絵を置き、共有時のサムネイルに使う 1 枚を指した)
+#### G1: 構成データが確定している
 
-D4-D6 と D10 を第1稿に残すのは速さと衝突しないためである。いずれも C12 が決定論で数える警告であって周回を要さず、しかもこれが 0 でない資料は「図が無く文章が長い」「節の入口に絵が無い」= 読み手が読まない状態そのものになる。第1稿の目的は読める物を早く渡すことであり、読めない物を早く渡すことではない。
+- [ ] draft: validate-handout-config.py が exit0 で、**読まれない状態を示す warning** が 0 件である
+- [ ] release: 同左を維持している (指摘の反映で新たに出していない)
 
-#### 仕上げの完了条件 (F1-F4・`build_stage: release`)
+0 件を求めるのは次の 13 コードであって、C12 が出す warning の全件ではない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`)、用語の言い換え (`W-GLOSSARY-EMPTY`)。最後の 1 つを外せない理由は `criteria:IN1` が「用語言い換え宣言の欠落 0 件」を要求する一方、**欠落**を見る診断がこれしか無いためである (error 側の `E-GLOSSARY-DUP` は重複を見るので代わりにならない)。いずれも同じ 1 回の出力に並んでいるので、種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える — だから 13 項目ではなく 1 項目で受ける。
 
-- [ ] F1: 生成レポートで開示した仮置き項目を利用者が確認し、覆った項目を R5-refine で反映した
-- [ ] F2: `draft_first.skipped_in_draft` の工程 (C03 への可読性レビュー委譲) を回した
-- [ ] F3: C03 から回収した verdict が PASS で、指摘に対する修正が資料へ反映されている。visual-fit は全 illustration の実画素を開き、(a) 節の人物/役割主体・行為・場所・主役の具体物、(b) 読み順、(c) 指定された画風・配色・俯瞰角度、(d) 冊子内の統一と節ごとの場面差、を確認済みである
-- [ ] F4: 粒度を上げたのは利用者が指した箇所だけで、他は `first_draft_detail_level` のままである
+残りの warning は**利用者が選んだ結果を報告するもの**であり、完了を阻まない。とりわけ `W-SECTIONS-MANY` は本文が明示的に許可した行為 (情報量が多いときは 1 節を厚くせず節を増やしてよい・`nav.max_rows`) に対して出る。これを欠陥として数えると、許可した行為を選んだ資料が draft を完了できなくなる。**「warning 全件 0」を完了条件にしない**のはこのためで、0 件を求める対象を上の 13 コードに固定してあるのはその境界そのものである。
+
+それでも種別を挙げるのは、0 件でない資料が具体的にどう読まれないか (図が無く文章が長い / 要点より先に手順が来る / 冒頭が段落で始まる / 節の入口に絵が無い = 読み手が読まない状態そのもの) を設計時に思い出すためである。速さのためにこれらを外さない — C12 は数百ミリ秒で終わるので待ち時間の原因ではない。
+
+ヒアリング必須項目 (`hearing_required_items_r21` / `_r22`) の確定もここで落ちる。`never_inferred_fields` (`doc_type` / `out_dir`) 以外は 1 ラウンドで聞くか素材から推定で埋めてよく (回答を待たずに進む。非対話経路では検証済み構成データがその代わりを満たす)、埋まったかどうかは C12 の必須検査が判定する。項目ごとの検査コードは frontmatter の `checked_by` が持つので、散文で二重に数えない。
+
+`criteria:IN1` はこの判定の別名である。
+
+#### G2: 資料が読める形で成立している
+
+- [ ] draft: 単一 HTML を決定論 script 列で生成し、`/handout-verify` の集約 verdict が pass で、同梱構成データからの再生成がバイト一致する
+- [ ] release: 同左に加えて、C03 (`draft_first.skipped_in_draft` の可読性レビュー) から回収した verdict が PASS で、**未解消の `severity=high` 指摘が 0 件**であり、**最後に手を入れて以降まだ一度も読まれていない節が 0 件**である
+
+ゲート面を面ごとに数え直さない。集約は C09 の CR-GATE-AGG が単一正本であり、本 skill が受け取るのは verdict 1 個である。第1稿の粒度 (`draft_first.first_draft_detail_level` — 全体を詳細で作ってから削らない) が守られているかもここで落ちる。実態との一致を見るのは C22 の NAR-09 / NAR-10 であって散文の自己申告ではない。
+
+release の visual-fit は alt 文でなく全 illustration の実画素を開き、(a) 節の人物/役割主体・行為・場所・主役の具体物、(b) 読み順、(c) 指定された画風・配色・俯瞰角度、(d) 冊子内の統一と節ごとの場面差、を確認して初めて PASS にできる。
+
+`criteria:OUT1` のゲート面と `criteria:OUT2` はこの判定の別名である。
+
+#### G3: 渡せる形で開示している
+
+- [ ] draft: 出力先へ同梱物が揃い `README.md` を書き、生成レポート (適用部品・埋め込みサイズ・warning・ゲート結果・**仮置き項目**・載せなかった項目・**第1稿で回さなかった工程**) を返して停止した
+- [ ] release: 開示した仮置き項目を利用者が確認し、覆った項目を R5-refine で反映した。粒度を上げたのは利用者が指した箇所だけで、他は `first_draft_detail_level` のままである
+
+draft でこの判定を満たすことは completed ではない。**第1稿は速い完了ではなく、未完了だが読める状態である。** 開示そのものを判定に入れてあるのは、回さなかった工程が黙って消えるのを防ぐためであり、`criteria:OUT3` はこの開示が実走で起きたことを見る。
+
+`criteria:OUT1` の同梱物面はこの判定の別名である。
+
+#### 旧 D1-D10 / F1-F4 との対応
+
+検査は 1 つも減っていない。3 判定は同じ検査を、それを返す機械の単位で束ね直したものである。
+
+| 旧 | 現 | 旧 | 現 |
+| --- | --- | --- | --- |
+| D1 ヒアリング必須項目 | G1 | D8 集約 verdict | G2 |
+| D2 第1稿の粒度 | G2 | D9 同梱物・README・生成レポート | G3 |
+| D3 C12 exit0 | G1 | D10 節の入口・共有面の警告 | G1 |
+| D4 図解密度・文字量の警告 | G1 | F1 仮置き項目の確認と反映 | G3 |
+| D5 層の切り分けの警告 | G1 | F2 可読性レビューを回した | G2 |
+| D6 冒頭の置き方の警告 | G1 | F3 C03 verdict PASS・visual-fit | G2 |
+| D7 決定論 script 列での生成 | G2 | F4 粒度を上げた範囲 | G3 |
 
 ### ゴールシークループ
 
-frontmatter の `goal_seek.engine: inline` / `fork: subagent` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。周回上限は `goal_seek.max_loops` の一本値でなく **`build_stage.stages[].max_loops` で段ごとに持つ**。
+frontmatter の `goal_seek.engine: inline` / `fork: subagent` を実行契約とする。固定手順は使わず、未達 checklist と担当 `prompts/*.md` からその周回の操作を都度生成する。**周回上限は `goal_seek.max_loops` の一本値だけ**であり、段ごとの上限も criteria ごとの反復上限も置かない。段が変えるのは回数ではなく、何を未達として拾い何のために回してよいかである。
 
-- **draft (既定・上限 2 周)**: 未達として拾うのは D1-D10 だけで、F1-F4 は未達に数えない。回してよいのは決定論ゲートを exit0 へ戻す修復に限る。「もっと良くできる」は draft の周回理由にならない — その判断は利用者が現物を見て下すほうが速く、正確である。
-- **draft の出口**: D1-D10 が揃ったら completed を宣言せず停止し、(1) 出力ディレクトリのパス、(2) 生成レポートの仮置き項目、(3) `skipped_in_draft` により回さなかった工程、(4) 指摘の受け取り先が R5-refine であること、を提示する。**第1稿は速い完了ではなく、未完了だが読める状態である。**
-- **release (上限 5 周)**: 利用者の指摘を受け取ってから入る。指摘なしに自動昇格しない。D1-D10 は draft で確定済みとして再取得せず、F1-F4 と、指摘で壊れた D 項目だけを回す。
+- **draft (既定)**: 未達として拾うのは G1-G3 の draft 行だけで、release 行は未達に数えない。回してよいのは決定論ゲートを exit0 へ戻す修復に限る。「もっと良くできる」は draft の周回理由にならない — その判断は利用者が現物を見て下すほうが速く、正確である。この制約は上限の数ではなくこの規則が担う。上限に達する前に回す理由が尽きるのが draft の正常形である。
+- **draft の出口**: G1-G3 の draft 行が揃ったら completed を宣言せず停止し、(1) 出力ディレクトリのパス、(2) 生成レポートの仮置き項目、(3) `skipped_in_draft` により回さなかった工程、(4) 指摘の受け取り先が R5-refine であること、を提示する。**第1稿は速い完了ではなく、未完了だが読める状態である。**
+- **release**: 利用者の指摘を受け取ってから入る。指摘なしに自動昇格しない。draft 行は確定済みとして再取得せず、release 行と、指摘で壊れた draft 行だけを回す。
 
-各周回で inner criterion を検証し、完了後は outer criterion を最大 `feedback_contract.max_iterations=3` 周で評価する。IN1 / OUT1 / OUT2 はいずれも決定論検証であり draft でも省かない (省くと開けない HTML を渡すことになる)。
+各周回で inner criterion (IN1) を検証し、その周回の修復が終わった時点で outer criterion (OUT1 / OUT2) を 1 回評価する。評価のための追加の周回予算は持たない — 資料を直さずに再評価しても決定論検証の結果は変わらないため、fail なら次の 1 周として修復へ戻るだけである。IN1 / OUT1 / OUT2 はいずれも決定論検証であり draft でも省かない (省くと開けない HTML を渡すことになる)。
 
 ### ゴールシーク配線
 
 - 元のゴールを `eval-log/guide-doc-generator/run-handout-build-goal-spec.json` へ、各 checklist の status と evidence を `eval-log/guide-doc-generator/run-handout-build-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
-- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
-- 上限周回に到達しても未達が残れば完了扱いにせず、progress と blocker を親へ handoff する。completed を宣言できるのは **release 段で D1-D10 + F1-F4 と `feedback_contract.criteria` が全て PASS のとき**だけである。draft 段の停止は完了ではなく引き渡しであり、progress には未達として F1-F4 を残す。
-- progress には各 checklist の status と併せて現在の `build_stage` を記録する。draft の停止を「全項目 PASS」と書かない — 記録が完了に見えると、繰り越した F1-F4 が回収されないまま積み上がる。
+- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ 1 行 append-only で記録する。正本 `plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json` の `intermediate_artifacts[]` が必須とするのは `iteration`、`original_goal`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` の 6 キーであり、本文はこの 6 キーの意味を再定義しない。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 上の 6 キーに加えて本 skill は `original_goal_hash` を各行へ足す。**これは正本には無い local 拡張である。** 正本では `original_goal_hash` は progress.json のトップレベルに 1 つ置かれ、照合相手は `intermediate_artifacts[0].original_goal` である。本 skill は照合相手を第三のファイル `run-handout-build-goal-spec.json` の `original_goal` に取るので、行ごとに持たせている。正本由来と local 拡張の境界はここにあり、後者を正本準拠と呼ばない。
+- `drift_signal` には正本の値域外を書かない。差分ゼロは `aligned`、前周回が無い初回は `initial` である。この 1 語だけが周回ごとに変わり次の周回の判断に使われるので、`none` のような値域外の語を置くと「差が出ていない」のか「判定していない」のかが区別できなくなる。下の検証はこの値域だけを正本から写して実行時に照合する — 意味は正本にあり、写しているのは 6 語の集合だけである。正本の enum が将来変わっても写しは自動追随しないが、劣化方向は「通すべき新値を止める」側なので fail-closed を崩さない。
+- 上限周回に到達しても未達が残れば完了扱いにせず、progress と blocker を親へ handoff する。completed を宣言できるのは **release 段で G1-G3 の draft 行と release 行、および `feedback_contract.criteria` が全て PASS のとき**だけである。draft 段の停止は完了ではなく引き渡しであり、progress には未達として各判定の release 行を残す。
+- progress には各 checklist の status と併せて現在の `build_stage` を記録する。draft の停止を「全項目 PASS」と書かない — 記録が完了に見えると、繰り越した release 行が回収されないまま積み上がる。
 
 ### ゴールシーク検証
 
@@ -309,13 +350,17 @@ python3 - "eval-log/guide-doc-generator/run-handout-build-goal-spec.json" "eval-
 import hashlib, json, sys
 goal = json.load(open(sys.argv[1], encoding='utf-8'))
 rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
-required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+canon_keys = {'iteration','original_goal','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+required_keys = canon_keys | {'original_goal_hash'}
+drift_values = {'initial','aligned','compressing','stagnant','widening','oscillating'}
 expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
 assert rows, 'intermediate.jsonl is empty'
 for row in rows:
     assert required_keys <= row.keys(), required_keys - row.keys()
     assert row['original_goal'] == goal['original_goal']
     assert row['original_goal_hash'] == expected
+    assert row['drift_signal'] in drift_values, row['drift_signal']
+assert len(rows) == rows[-1]['iteration'] + 1, (len(rows), rows[-1]['iteration'])
 PY
 ```
 
@@ -324,7 +369,7 @@ PY
 - `criteria:IN1`: validate-handout-config.py が exit0 で、lead-line と判断軸の一文・日付フィールド・用語言い換え宣言の欠落が 0 件である。
 - `criteria:OUT1`: 生成した単一 HTML が外部依存ゼロで開き、検証ゲートが全て exit0 になり、出力先に資料 HTML と構成データと素材と README が揃うことを受入テストが確認する。
 - `criteria:OUT2`: 同梱された構成データからの再生成で出力 HTML がバイト一致することを受入テストが確認する。
-- `criteria:OUT3`: 題材と素材だけを与えた実起動で、質問ラウンドが `draft_first.max_question_rounds_before_first_draft` 回以内に収まり、D1-D10 が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示し、C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する。
+- `criteria:OUT3`: 題材と素材だけを与えた実起動で、質問ラウンドが `draft_first.max_question_rounds_before_first_draft` 回以内に収まり、G1-G3 の draft 行が揃った時点で completed を宣言せず停止して成果物のパス・仮置き項目・回さなかった工程を提示し、C03 委譲が draft 段で起動しておらず、挿絵生成 (C21) は R25 (goal-spec C69) により draft 段でも起動していることを実走の痕跡で確認する。
 
 ## Gotchas
 
@@ -341,6 +386,6 @@ PY
 - 節を散文で始めない。言いたいことは `lead_line` が 1 行で担い、その直後は形 (図解・カード・表)、TEXT はその後の補足 1 本。
 - 逆に、詳細層を網羅の場にしない。判断の分かれ目になる工程だけを、手順の形で残す。全工程を散文で書き写すと要点層より読みにくい塊が後半に生まれる。
 - C03 の verdict を要約しない。`location` の逐語引用を落とすと修正箇所が当て推量になる。
-- 第1稿を渡す前に完璧を狙わない。利用者が見ていない資料に対する「まだ良くできる」は推測であり、その推測を潰す周回が待ち時間の主因になる。D1-D10 が揃った時点で必ず一度渡す。
-- draft の停止を completed と報告しない。F1-F4 は繰り越しであって免除ではなく、「全部通りました」と報告した瞬間に回収されなくなる。停止時は必ず未回収の工程を名指しする。
-- 速さのために決定論ゲートや D4-D6 の警告を外さない。これらは数百ミリ秒で終わるため待ち時間の原因ではなく、外すと「開けない HTML」や「図が無く文章が長い資料」を第1稿として渡すことになる。第1稿で外してよいのは `draft_first.skipped_in_draft` に挙がった工程だけである。
+- 第1稿を渡す前に完璧を狙わない。利用者が見ていない資料に対する「まだ良くできる」は推測であり、その推測を潰す周回が待ち時間の主因になる。G1-G3 の draft 行が揃った時点で必ず一度渡す。
+- draft の停止を completed と報告しない。各判定の release 行は繰り越しであって免除ではなく、「全部通りました」と報告した瞬間に回収されなくなる。停止時は必ず未回収の工程を名指しする。
+- 速さのために決定論ゲートや C12 の warning を外さない。これらは数百ミリ秒で終わるため待ち時間の原因ではなく、外すと「開けない HTML」や「図が無く文章が長い資料」を第1稿として渡すことになる。第1稿で外してよいのは `draft_first.skipped_in_draft` に挙がった工程だけである。

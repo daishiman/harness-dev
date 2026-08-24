@@ -57,7 +57,7 @@ verdict を呼び出し元 (C01 run-handout-build) へ運ぶ。委譲する理�
 | `config_path` | 出力先へ同梱された正規化済み構成データ JSON のパス |
 | `gate_reports` | 決定論ゲート (C16 / C17 / C18 / C22) の json-report のパス一覧と各 exit code |
 | `reader_profile` | 構成データの reader / prior_knowledge_level / usage_scene。誰の立場で読むかの指定 |
-| `scope` | 任意。特定セクションだけを読ませる場合の section id 一覧。省略時は資料全体 |
+| `scope` | 任意。読む範囲を絞るときの section id 一覧。省略時は資料全体。指すのは「どこを読むか」だけで、どの軸をどれだけ厳しく見るかは変えない。節をまたぐ軸は C06 が `scope` に関わらず全体で見る |
 
 `gate_reports` は本 skill が収集する。`verify-handout-language.py` は
 `--json-report` つきで実行し、出力されたレポートのパスと exit code をそのまま載せる。
