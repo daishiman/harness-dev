@@ -141,6 +141,17 @@ def _is_path_shaped(value: str) -> bool:
     return "/" in value
 
 
+def _artifact_missing(path: str, repo_root: str | None) -> bool:
+    """成果物実在検査 (F5) の実体。相対パスは repo_root 基準で解決する。
+
+    contract/graph の成果物パスは repo 相対が正本。repo_root 未指定時は従来どおり
+    CWD 解決 (repo root からの起動) に後方互換で従う。
+    """
+    if repo_root is not None and not os.path.isabs(path):
+        return not os.path.exists(os.path.join(repo_root, path))
+    return not os.path.exists(path)
+
+
 def _producer_artifacts(node: dict | None, graph: dict, producer_id: str) -> list[str]:
     """producer のパス形状の成果物パスを順序保持・重複排除で返す。
 
@@ -191,6 +202,7 @@ def resolve_inputs(
     max_notes: int | None = None,
     max_note_chars: int | None = None,
     notes_schema: str = DEFAULT_NOTES_SCHEMA,
+    repo_root: str | None = None,
 ) -> dict:
     """task_id へ注入すべき producer 成果物と有界 notes を解決する (read-only 純関数)。
 
@@ -250,7 +262,7 @@ def resolve_inputs(
     injected_inputs: list[dict] = []
     for pid in producers:
         for artifact_path in _producer_artifacts(graph_nodes.get(pid), graph, pid):
-            if not os.path.exists(artifact_path):
+            if _artifact_missing(artifact_path, repo_root):
                 return {
                     "rejected": True,
                     "reason": "producer artifact missing",
@@ -308,6 +320,7 @@ def resolve_execution_unit_inputs(
     max_notes: int | None = None,
     max_note_chars: int | None = None,
     notes_schema: str = DEFAULT_NOTES_SCHEMA,
+    repo_root: str | None = None,
 ) -> dict:
     """execution-unit scheduler の dependency proof から unit-wide 入力を解決する。
 
@@ -371,7 +384,7 @@ def resolve_execution_unit_inputs(
             return {"rejected": True, "reason": f"dependency evidence coverage mismatch: {exc}",
                     "blocking_producer_task_id": producer_id}
         for artifact_path in [report, *_producer_artifacts(graph_nodes.get(producer_id), graph, producer_id)]:
-            if not os.path.exists(artifact_path):
+            if _artifact_missing(artifact_path, repo_root):
                 return {"rejected": True, "reason": "producer artifact missing",
                         "blocking_producer_task_id": producer_id, "missing_artifact": artifact_path}
             artifact_sources.setdefault(artifact_path, set()).add(producer_id)
@@ -437,6 +450,8 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="notes 上限 SSOT (既定 producer handoff-notes.schema.json)")
     p.add_argument("--max-notes", type=int, default=None, help="件数上限の任意上書き (既定 schema maxItems)")
     p.add_argument("--max-note-chars", type=int, default=None, help="文字数上限の任意上書き (既定 schema maxLength)")
+    p.add_argument("--repo-root", default=None,
+                   help="相対 artifact パスの解決基準 (未指定時は CWD=repo root 前提の従来解決)")
     return p
 
 
@@ -464,6 +479,7 @@ def main(argv: list[str] | None = None) -> int:
             "max_notes": args.max_notes,
             "max_note_chars": args.max_note_chars,
             "notes_schema": args.notes_schema,
+            "repo_root": args.repo_root,
         }
         if args.execution_contract or args.unit_id:
             if not args.execution_contract or not args.unit_id or args.task_id:

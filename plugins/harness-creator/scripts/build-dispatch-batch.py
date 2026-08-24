@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: plan-dispatch-batch
+# name: build-dispatch-batch
 # purpose: task-graph 駆動 build の dispatch batch 機械導出器 (TG-C10)。TG-C01 (dispatch-ready-set.py) の ready-set 算出を subprocess 再利用した上で、runtime 契約の束ね規則 — route 束ね (entity_ref/route_ref==route.id)・決定論 validator 直実行判別・conflict/file_ownership 回避・--max-workers 制限 — を決定論適用し、direct_validator_batch[] (dispatcher 自身が Bash 実行する read-only validator)・subagent_batches[] (最小コンテキスト付き SubAgent dispatch 単位)・delayed[] (今回見送り+理由) を emit する。AI 判断が必要な要素 (build 本体の内容・discovered-task の --node-title/--reason) は生成しない。曖昧・解決不能は fail-closed で subagent_batches 側へ倒すか理由付き delayed にする。
 # inputs:
 #   - argv: --task-graph <task-graph.json> --task-state <task-state.json> --handoff <handoff.json> [--max-workers N] [--in-flight <json path>] [--planner-root <path>] [--repo-root <path>] [--out <path>]
@@ -324,7 +324,7 @@ def select(candidates: list[dict], conflicts: list, in_flight: list[dict],
 # ── main ─────────────────────────────────────────────────────────────────────
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="plan-dispatch-batch.py",
+        prog="build-dispatch-batch.py",
         description="TG-C01 ready-set に束ね規則を適用し dispatch batch を機械導出する (TG-C10)。",
     )
     p.add_argument("--task-graph", required=True, help="task-graph.json のパス")
@@ -389,7 +389,7 @@ def main(argv: list[str] | None = None) -> int:
         if upstream.get("graph_hash_pin") == "mismatch":
             print(json.dumps({"graph_hash_pin": "mismatch", "direct_validator_batch": [],
                               "subagent_batches": [], "delayed": [], "blocked": [],
-                              "source": "plan-dispatch-batch.py"}, ensure_ascii=False, indent=2))
+                              "source": "build-dispatch-batch.py"}, ensure_ascii=False, indent=2))
         else:
             print(f"dispatch-ready-set.py 失敗 (rc={proc.returncode})", file=sys.stderr)
         return 1
@@ -466,7 +466,7 @@ def main(argv: list[str] | None = None) -> int:
 
     out = {
         "schema_version": "1.0",
-        "source": "plan-dispatch-batch.py",
+        "source": "build-dispatch-batch.py",
         "graph_hash_pin": ready.get("graph_hash_pin"),
         "max_workers": args.max_workers,
         "direct_validator_batch": direct_batch,
