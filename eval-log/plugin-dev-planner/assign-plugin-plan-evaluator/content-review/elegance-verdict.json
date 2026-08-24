@@ -2,33 +2,40 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "assign-plugin-plan-evaluator",
-    "skill_md_sha256": "ba3b6b3636cf0a671426e46aee45d5458298fa6768ee856f6501f07b4daebdbe"
+    "skill_md_sha256": "db123e35716c6c330433e4fc98f06728391d448b703e4f3dd0bf2bbd4631f633"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T11:10:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "新設 Key Rule 8 (鮮度台帳と証拠再利用の分離) は scripts/evaluate-plan.py の実装 (STALENESS_RULE 定数・_collect_evaluated_inputs の plan_dir.rglob 再帰収集・evaluator 出力/transient 除外) と文言レベルで一致しており、宣言↔実装 drift が無い。",
+      "Rule 8 が指す正本 plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md は実在し、obligation fingerprint の決定論導出 (claim・入力 digest・checker 契約・上流 fingerprint) と current PASS receipt の再利用条件を実際に規定している。参照は空指しではない。",
+      "同じ規則が責務正本 prompts/R1-evaluate.md の「鮮度台帳と semantic 証拠再利用の境界」節および完了チェックリストにも同一語彙 (resolver / exact fingerprint / PASS receipt DAG) で存在し、SKILL.md 要約と責務正本の間に矛盾が無い。",
+      "「この台帳は semantic 再評価範囲を決めず、verdict 再利用を認可しない」という境界宣言は、run-build-skill 側 content-review-protocol.md の admission_control 記述 (sha 一致は pre-filter であり proof 再利用の十分条件ではない、正準 resolver は fingerprint と receipt evidence SHA を照合) と整合している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "SKILL.md 変更 (merge-base b1d8e88→HEAD の diff = Key Rules への規則 8 の 1 行追加のみ) を受けた incremental focused combined review。builder とは別 context の独立 evaluator が (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を 1 回の読解で同時判定し、結果を elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実際に読んだもの: 本 SKILL.md 全文、diff、scripts/evaluate-plan.py の evaluated_inputs emit 実装 (定数群 L53-68・_collect_evaluated_inputs L324-345・出力キー evaluated_inputs/staleness_rule L380-381)、prompts/R1-evaluate.md の該当節、verification-obligation-protocol.md 全文、content-review-protocol.md の resolver/admission_control 記述、schemas/plan-findings.schema.json の evaluated_inputs/staleness_rule 定義。確認結果: (a) 規則 8 は既存 Rule 2 (決定論ゲート優先) や R1-evaluate の「決定論ゲートは常に全走する」と矛盾しない (鮮度台帳の射程は semantic 証拠再利用のみ)。(b) 言及される仕組みは全て実在 (evaluated_inputs[] emit・envelope-draft/task-specs nested 収集・fingerprint/PASS receipt 規定)。(c) 用語 (resolver/exact fingerprint/receipt DAG) は protocol・prompt と同一語彙。(d) 参照パス 2 件 (scripts/evaluate-plan.py・verification-obligation-protocol.md) 実在。(e) high/medium finding 0。criteria_evaluated について: 本 skill は kind=assign で自身の feedback_contract を携帯しない (Gotcha 5 に明記・N/A)。列挙した IN1/IN2/OUT1/OUT2 は pair skill run-plugin-dev-plan の feedback_contract criteria であり、評価器側 (OUT2 の fork evaluator 役・IN1/IN2 の決定論ゲート束ね役) からの整合を確認した。前回 verdict (2026-07-11) の positive_feedback は今回の変更範囲外の主張のため盲目的に引き継がず、今回の評価で確認した事実のみ記載した。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
-  },
-  "reviewer": "capability-build R2 fresh-fork 3-way independent review",
-  "reviewed_at": "2026-07-11T00:00:00+00:00",
-  "iterations": 1,
-  "human_review_required": false,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "S5-S9 semantic buckets were exercised by the fresh post-build review",
-      "deterministic evaluator parity tests remain green"
-    ],
-    "negative_feedback": [],
-    "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "capability-build",
-    "next_action": "none"
-  },
-  "notes": "Evidence: plan-findings.json post-build buckets and review artifact R2"
+  }
 }
