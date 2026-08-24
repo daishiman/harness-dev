@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-24T01:06:20Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -108,11 +108,6 @@
+ and
+ /verify
+ how to build and launch your project
+-All three skills require Claude Code v2.1.145 or later. Check your version with
+-claude --version
+-or the
+-/status
+-command.
+ /run
+ and
+ /verify
+@@ -350,23 +345,6 @@
+ , skills in
+ packages/frontend/.claude/skills/
+ become available. Until then, those skills don’t appear in autocomplete and can’t be invoked by name.
+-Each skill is a directory with
+-SKILL.md
+-as the entrypoint:
+-my-skill/
+-├── SKILL.md           # Main instructions (required)
+-├── template.md        # Template for Claude to fill in
+-├── examples/
+-│   └── sample.md      # Example output showing expected format
+-└── scripts/
+-└── validate.sh    # Script Claude can execute
+-The
+-SKILL.md
+-contains the main instructions and is required. Other files are optional and let you build more powerful skills: templates for Claude to fill in, example outputs showing the expected format, scripts Claude can execute, or detailed reference documentation. Reference these files from your
+-SKILL.md
+-so Claude knows what they contain and when to load them. See
+-Add supporting files
+-for more details.
+ Files in
+ .claude/commands/
+ support the same
+@@ -375,7 +353,9 @@
+ name
+ and
+ paths
+-, which Claude Code ignores in a command file. You invoke a command file by its file name. Skills are recommended since they support additional features like supporting files.
++, which Claude Code ignores in a command file. You invoke a command file by its file name. Skills are recommended since they support additional features like
++supporting files
++.
+ ​
+ Skills from additional directories
+ The
+@@ -396,10 +376,14 @@
+ permissions.additionalDirectories
+ setting in
+ settings.json
+-grants file access only and doesn’t load skills or commands. See
++grants file access only and doesn’t load skills, commands, or subagents. See
+ Live change detection
+ for how skill edits are picked up during a session.
+-Other
++Subagents follow the same exception: when you add a directory, Claude Code loads its
++.claude/agents/
++folder too. It doesn’t watch that folder, or the added directory’s
++.claude/commands/
++, so after you add or edit a subagent or command file there, restart the session to load the change. Other
+ .claude/
+ configuration such as output styles is not loaded from additional directories. See the
+ exceptions table
+@@ -559,6 +543,66 @@
+ disableSkillShellExecution
+ is on.
+ ​
++Remove a skill
++How you remove a skill depends on where it came from:
++Personal or project skill
++: delete the skill’s directory,
++~/.claude/skills/<skill-name>/
++or
++.claude/skills/<skill-name>/
++. Claude Code
++drops it from
++/skills
+... (4779 more lines)
+```
+
 ## 2026-08-17T01:05:13Z
 
 実仕様ページに変更を検知。
