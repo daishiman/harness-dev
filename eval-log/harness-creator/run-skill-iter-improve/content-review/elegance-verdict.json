@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-iter-improve",
-    "skill_md_sha256": "cd0f908107e7eb103297a54f5e7b71ccb7d1ac415657c73ae73dd238a1fc924c"
+    "skill_md_sha256": "27d36765f59f11677498a4978a3c39e0627152314014eb7f301ed22587da930e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "iter-improve-source-path-focused-review",
-  "reviewed_at": "2026-08-24T07:40:32Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T13:06:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,14 +27,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "source を現行 plugin 内の ROADMAP.md へ束縛し、anti-goodhart 統合と run-skill-live-trial / run-skill-iter-improve 新設の由来を、改名前 eval-log path に依存せず追跡できる。",
-      "ROADMAP の anti-goodhart 節は Gate D、live-trial パイロット、verify_by: live-trial ratchet を明記しており、本 skill の実走 eval 帰属・PASS 偽装防止と意味的に接続している。"
+      "goal_seek task-graph block と本文「ゴールシーク配線（task-graph 変種）」節が一対一で対応し、収束判定を GOAL VERIFICATION の単一成功停止へ改めたことで、fan-out 消化のプロセス完遂を品質近似にしない設計 (anti-goodhart) が本文とfrontmatterの両方で一貫した。",
+      "新設 IN3 (verify_by: verification-obligation) は feedback_contract_ssot.py の CRITERIA_VERIFY_BY に含まれる有効値であり、proof plan 局面 (plan-verification-obligations.py / plan-live-trials.py / record-verification-evidence.py) の bash 例と対応する実行体は全て実在を確認した。",
+      "CL-1..CL-10 の checklist anchor 化と CL-1/7/8/9 の exempt 注記 (決定論検査で閉じるため semantic criteria 対象外) により、criteria の derived_from (CL-2,3,4,5,6,10) と exempt の合併が checklist 全件を漏れなく被覆する。exempt 理由も各項目の検査主体 (lint/script) と一致する。",
+      "script_refs 7 件・schema_refs 2 件・reference_refs 7 件 (cross-skill 参照含む計 16 refs) は全て実在し、source の plugins/harness-creator/ROADMAP.md への束縛も維持されている。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:source-path-focused-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "1 context/1 target の incremental focused combined content review。直前の current PASS からの実質変更は source を改名前 eval-log path から plugins/harness-creator/ROADMAP.md へ変えた1点。current SKILL.md 全文、ROADMAP 全文、schema_refs 2件、script_refs 7件、reference_refs 7件、IN1/IN2/IN3/OUT1/OUT2、4条件を1 contextで再評価した。ROADMAP の anti-goodhart 節が本 skill の設計由来を保持し、source と全 *_refs は実在。矛盾なし/漏れなし/整合性あり/依存関係整合は全PASS、未解決 high/medium/low=0。関連 pytest 139 passed、frontmatter/runtime-profile/goal-seek/feedback-contract/dependency-knowledge/legacy-name lint PASS。30思考法は実施・申告していない。live trialは実行しておらず、本PASSはdesign claimのみでlive/criteria acceptanceの代替ではない。"
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (goal_seek task-graph block・IN3 追加・CL anchor 化・proof plan 局面・収束判定変更ほか)・feedback_contract IN1/IN2/IN3/OUT1/OUT2 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、全 16 refs の実在、CRITERIA_VERIFY_BY への verification-obligation 収載、CL 被覆の完全性。矛盾・漏れ・規約逸脱・依存断絶いずれも 0、high/medium/low とも新規 finding 0。live trial は実行しておらず、本 PASS は design claim のみで live/criteria acceptance の代替ではない。"
 }

@@ -22,7 +22,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import urlsplit
 
-from _common import ContractError, c11_readiness_digest, contained, dump, load_json
+from _common import ContractError, contained, dump, load_json
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = PLUGIN_ROOT / "schemas" / "graph-node.schema.json"
@@ -363,7 +363,6 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", required=True)
     parser.add_argument("--repo-root")
-    parser.add_argument("--feature-id")
     args = parser.parse_args()
     graph = Path(args.graph).expanduser().resolve(strict=True)
     nodes = nodes_of(load_json(graph))
@@ -373,31 +372,13 @@ def main() -> int:
         if item["code"] in {"frontmatter_missing", "artifact_missing"}
         or (item["code"] == "schema_violation" and "required property" in item["detail"])
     })
-    feature_ids = sorted(
-        str(node.get("graph_node_id") or node.get("id"))
-        for node in nodes
-        if node.get("artifact_kind") == "feature"
-        and isinstance(node.get("graph_node_id") or node.get("id"), str)
-        and (node.get("graph_node_id") or node.get("id"))
-    )
-    if args.feature_id and args.feature_id not in feature_ids:
-        raise ContractError(f"C11 readiness feature not found: {args.feature_id}")
-    readiness_digests = {
-        feature_id: c11_readiness_digest(nodes, feature_id)
-        for feature_id in feature_ids
-    }
-    report = {
+    dump({
         "valid": not violations,
         "implementation_readiness": "complete" if not violations else "incomplete",
         "missing_sections": missing,
-        "readiness_digests": readiness_digests,
         "schema": str(SCHEMA_PATH),
         "violations": violations,
-    }
-    if args.feature_id:
-        report["feature_id"] = args.feature_id
-        report["readiness_digest"] = readiness_digests[args.feature_id]
-    dump(report)
+    })
     return 0 if not violations else 1
 
 

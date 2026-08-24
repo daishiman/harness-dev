@@ -60,11 +60,7 @@ def test_run_skill_frontmatter_is_inventory_exact(component: dict) -> None:
     required = [item for item in component["responsibilities"] if item["prompt_required"]]
     expected_refs = [f"prompts/{item['id']}.md" for item in required]
     assert fm["responsibility_refs"] == expected_refs
-    assert {"Skill", "AskUserQuestion"} <= set(fm["allowed-tools"])
-    if component["goal_seek"]["fork"] == "subagent":
-        assert {"Agent", "Task"} & set(fm["allowed-tools"])
-    else:
-        assert "Agent" not in fm["allowed-tools"]
+    assert {"Skill", "Agent", "AskUserQuestion"} <= set(fm["allowed-tools"])
     assert any(
         item["loop_scope"] == "outer" and item["verify_by"] == "live-trial"
         for item in fm["feedback_contract"]["criteria"]

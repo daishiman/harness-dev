@@ -21,15 +21,15 @@
 
 ### 責務境界
 
-- C02は`run-dev-graph-node`の正本`register-package.py preview-macro --dry-run`だけを呼び、`apply-macro`、C28/C12 mutationを呼ばずpreviewをappliedと表示しない。LLMがcandidate graph/receiptを手書きせず、C02非0終了後の自作・cache copy・別script fallbackを禁止する。goal/checklist/intermediateはtargetへ書かず、同じrequired-key/hash validatorへcaller側environment JSON/JSONLから渡す。
+- C02/C28/C12 mutationを呼ばずpreviewをappliedと表示しない。
 
 ### 受入条件
 
-- C02 receiptが`owner=C02/run-dev-graph-node`、`operation=preview_macro_decomposition`、`status=preview`、`dry_run=true`、`write_count=0`、`validation.authority=C11/validate-graph-schema.py`、`validation.violations=[]`を満たし、原graph digest不変、target repositoryの全write count 0、caller側goal検証PASSになる。
+- 全target/operation/digest表示、全write count 0になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: `Skill(dev-graph:run-dev-graph-node)`とC02正本`../../scripts/register-package.py preview-macro --dry-run`、各adapter dry-run。
+- 使用資産: 各adapter dry-run。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -63,7 +63,7 @@
 
 ## Layer 6: オーケストレーション層
 
-- C14 macro intentだけを`--request-json`へ渡し、C02が返すstdout preview receiptをそのまま返す。candidate graph/receiptのtarget file materializeは禁止する。goal stateは`DEV_GRAPH_GOAL_SPEC_JSON`/`DEV_GRAPH_PROGRESS_JSON`/`DEV_GRAPH_INTERMEDIATE_JSONL`で共通`validate-goal-seek-runtime.py`のmemory modeへ渡し、通常実行だけ別invocation applyへ進める。
+- previewを返し別invocation applyにだけ使う。
 - 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

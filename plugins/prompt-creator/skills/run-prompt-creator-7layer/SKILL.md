@@ -18,6 +18,7 @@ kind: run
 version: 2.1.0
 effect: local-artifact
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
 owner: team-platform

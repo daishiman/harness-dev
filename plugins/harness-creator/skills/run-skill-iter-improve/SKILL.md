@@ -157,15 +157,15 @@ artifact 単体の改善は LLM 主観評価 ±3-5pt のブレに律速され pl
 
 ### 完了チェックリスト (Checklist)
 
-- [ ] iter 0 GOAL DECLARATION 完了 (goal 正本読取 / proxy 妥当性審問 Yes|No+根拠 / forbidden_loosening 宣言。手順: `references/goal-declaration.md`) <!-- CL-1 -->
+- [ ] iter 0 GOAL DECLARATION 完了 (goal 正本読取 / proxy 妥当性審問 Yes|No+根拠 / forbidden_loosening 宣言。手順: `references/goal-declaration.md`) <!-- CL-1 exempt: iter 0 の手順前提 (goal-declaration.md 準拠の宣言記録) であり、達成判定は run dir の宣言実体で決定論確認する。semantic criteria の評価対象ではない -->
 - [ ] 毎 iter の審問ログが `interrogation-log.jsonl` へ 1 行 append され `schemas/interrogation-log.schema.json` を通過する <!-- CL-2 -->
 - [ ] 各 iter の改善投入件数が `loop_bounds.iter_improve.batch_per_iter_max` 以下 <!-- CL-3 -->
 - [ ] score 急変または評価経路接触の iter は別個体 fresh agent の独立判定 verdict が記録済 (発火条件は同 schema の allOf が機械強制) <!-- CL-4 -->
 - [ ] commit は全て eval 集計後・1 commit 1 ロジック (`wrap-git-commit-safe` 経由) <!-- CL-5 -->
 - [ ] 収束宣言前に GOAL VERIFICATION を実施し PASS、または max_iter 到達時に「score X / goal FAIL / 残 blocker」を隠さず報告した <!-- CL-6 -->
-- [ ] 全 artifact が `eval-log/<plugin>/<skill>/iter-improve/<run-id>/` に保存済 (score は `*-score.jsonl` 合流規約) <!-- CL-7 -->
-- [ ] Claude plugin envelope配下なら `sync-plugin-platforms.py --all --check` が exit 0 <!-- CL-8 -->
-- [ ] plugin公開面・Codex代替・依存を変更した場合、repo rootで `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all` と `python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml` がともに exit 0。静的契約PASSをinstall/enabled/trust/new-session/runtime実証と混同しない <!-- CL-9 -->
+- [ ] 全 artifact が `eval-log/<plugin>/<skill>/iter-improve/<run-id>/` に保存済 (score は `*-score.jsonl` 合流規約) <!-- CL-7 exempt: run dir への保存規約は path 実在と *-score.jsonl 形式の決定論検査で閉じる。semantic criteria の評価対象ではない -->
+- [ ] Claude plugin envelope配下なら `sync-plugin-platforms.py --all --check` が exit 0 <!-- CL-8 exempt: sync-plugin-platforms.py --all --check の exit 0 で閉じる決定論検査。semantic criteria の評価対象ではない -->
+- [ ] plugin公開面・Codex代替・依存を変更した場合、repo rootで `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all` と `python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml` がともに exit 0。静的契約PASSをinstall/enabled/trust/new-session/runtime実証と混同しない <!-- CL-9 exempt: audit-capability-parity.py / lint-plugin-composition.py の exit 0 で閉じる決定論検査。semantic criteria の評価対象ではない -->
 - [ ] 各 iter の Agent 起動前に verification obligation を計画し、current PASS receipt は再利用、入力 slice / checker・scenario 契約 / 上流 proof が変わった claim と未解決 claim だけを再評価し、新規 evidence を同じ fingerprint へ記録した。`intermediate.jsonl` に action と evidence path がある <!-- CL-10 -->
 
 ### ゴールシークループ

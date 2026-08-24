@@ -21,11 +21,11 @@
 
 ### 責務境界
 
-- graph/contentを変更せずroot外・broken symlink・別common-dirを許容しない。新規artifactの正規leafは未占有、durable artifactのleafはsymlinkでない通常fileであることを確定する。
+- graph/contentを変更せずroot外・broken symlink・別common-dirを許容しない。
 
 ### 受入条件
 
-- 全候補pathがroot内でrepository_idがconfig/graphと一致し、未登録leaf占有とdurable leafのsymlinkが0件である。
+- 全候補pathがroot内でrepository_idがconfig/graphと一致する。
 
 ## Layer 3: インフラ層
 
@@ -42,7 +42,7 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R0-context`。`goal_seek.fork=inline` に従いmain contextで実行する。
+- `run-dev-graph-node/R0-context`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

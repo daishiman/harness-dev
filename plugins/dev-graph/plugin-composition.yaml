@@ -1,7 +1,7 @@
 name: dev-graph
 description: macro feature graph、tracker projection、worktree lifecycleを構成するときに使うlocal-first plugin bundle。
 kind: plugin-composition
-version: 0.1.11
+version: 0.1.9
 owner: harness maintainers
 
 contract:
@@ -12,7 +12,6 @@ contract:
   invariant:
     - local graph/Markdownが正本で外部trackerはbinding別projectionである
     - C02だけがgraph/content writerでC12/C28だけが外部tracker writerである
-    - GitHub Project fieldの3-way remote inputはC12 project-item-fieldsのnormalized read receiptだけを正本とする
     - C14はmacro featureだけを所有しexact-13 task生成はexternal system-dev-plannerへ委譲する
     - C19はexternal system-spec-harnessを引用しcompilerを複製しない
     - caller repository外content accessとfeature branch上durable completionを拒否する
@@ -46,22 +45,12 @@ capabilities:
   - {kind: script, ref: scripts/reconcile-github-lifecycle.py, tier: core}
   - {kind: script, ref: scripts/render-graph-html.py, tier: core}
   - {kind: script, ref: scripts/schedule-graph.py, tier: core}
-  - {kind: script, ref: scripts/extract-graph-status.py, tier: core}
   - {kind: script, ref: scripts/register-package.py, tier: core}
 
 internal_support:
   - ref: scripts/_common.py
     owners: [C11, C12, C13, C16, C24, C26, C27, C28, C29]
     purpose: top-level capability ではなく、plugin-root scripts が共有する内部 runtime helper
-  - ref: scripts/build-requirements-handoff.py
-    owners: [C04]
-    purpose: C04 の C11/C02/exact-13/lineage gate と handoff emit を機械化する内部 runtime
-  - ref: scripts/validate-schedule-receipt.py
-    owners: [C17]
-    purpose: C17 が分離 context で候補 schedule を再計算する内部 runtime
-  - ref: scripts/validate-goal-seek-runtime.py
-    owners: [C04, C14, C15]
-    purpose: C04/C14/C15 の goal-spec/progress/intermediate anchor を共有検証する内部 runtime
 
 dependencies:
   - {from: commands/dev-graph.md, to: skills/run-dev-graph-init, type: calls}
@@ -76,9 +65,7 @@ dependencies:
   - {from: commands/dev-graph.md, to: scripts/manage-worktree-lease.py, type: calls}
   - {from: skills/run-dev-graph-decompose, to: skills/run-dev-graph-node, type: calls}
   - {from: skills/run-dev-graph-decompose, to: scripts/resolve-repo-context.py, type: calls}
-  - {from: skills/run-dev-graph-decompose, to: scripts/register-package.py, type: calls}
   - {from: skills/run-dev-graph-decompose, to: scripts/validate-graph-schema.py, type: calls}
-  - {from: skills/run-dev-graph-decompose, to: scripts/validate-goal-seek-runtime.py, type: calls}
   - {from: skills/run-dev-graph-decompose, to: scripts/gh-bridge.py, type: calls}
   - {from: skills/run-dev-graph-decompose, to: scripts/bd-bridge.py, type: calls}
   - {from: skills/run-dev-graph-init, to: scripts/validate-graph-schema.py, type: calls}
@@ -86,14 +73,13 @@ dependencies:
   - {from: skills/run-dev-graph-render, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-render, to: scripts/validate-graph-schema.py, type: calls}
   - {from: skills/run-dev-graph-requirements, to: scripts/resolve-repo-context.py, type: calls}
-  - {from: skills/run-dev-graph-requirements, to: scripts/build-requirements-handoff.py, type: calls}
-  - {from: skills/run-dev-graph-requirements, to: scripts/validate-goal-seek-runtime.py, type: calls}
+  - {from: skills/run-dev-graph-requirements, to: scripts/validate-graph-schema.py, type: calls}
+  - {from: skills/run-dev-graph-requirements, to: scripts/gh-bridge.py, type: calls}
   - {from: skills/run-dev-graph-schedule, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-schedule, to: scripts/manage-worktree-lease.py, type: calls}
   - {from: skills/run-dev-graph-schedule, to: scripts/bd-bridge.py, type: calls}
   - {from: skills/run-dev-graph-status, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-status, to: scripts/validate-graph-schema.py, type: calls}
-  - {from: skills/run-dev-graph-status, to: scripts/extract-graph-status.py, type: calls}
   - {from: skills/run-dev-graph-sync, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-sync, to: scripts/gh-bridge.py, type: calls}
   - {from: skills/run-dev-graph-sync, to: scripts/bd-bridge.py, type: calls}
@@ -102,16 +88,10 @@ dependencies:
   - {from: skills/run-dev-graph-sync, to: scripts/manage-worktree-lease.py, type: calls}
   - {from: skills/run-dev-graph-render, to: scripts/render-graph-html.py, type: calls}
   - {from: skills/run-dev-graph-schedule, to: scripts/schedule-graph.py, type: calls}
-  - {from: skills/run-dev-graph-schedule, to: agents/dev-graph-parallel-safety-verifier, type: calls}
-  - {from: agents/dev-graph-parallel-safety-verifier, to: scripts/validate-schedule-receipt.py, type: calls}
-  - {from: skills/run-dev-graph-schedule, to: scripts/validate-goal-seek-runtime.py, type: calls}
-  - {from: scripts/build-requirements-handoff.py, to: scripts/validate-graph-schema.py, type: calls}
   - {from: skills/run-dev-graph-init, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/validate-graph-schema.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/register-package.py, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/resolve-repo-context.py, type: calls}
-  - {from: skills/run-dev-graph-system-spec, to: scripts/validate-system-spec-delegation.py, type: calls}
-  - {from: skills/run-dev-graph-system-spec, to: skills/run-dev-graph-node, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/validate-graph-schema.py, type: calls}
   - {from: "hook:PreToolUse-Bash/guard-graph-schema", to: scripts/validate-graph-schema.py, type: calls}
   - {from: "hook:SessionStart-startupresume/reconcile-task-lifecycle", to: scripts/reconcile-github-lifecycle.py, type: calls}

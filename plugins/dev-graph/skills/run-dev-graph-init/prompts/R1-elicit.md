@@ -1,12 +1,12 @@
 # Prompt: R1-elicit
 
-> C24でcaller repository rootとrepo-local configを解決し、検証済みeffective configを単一正本としてsymlink sourceとcontent authorityを分離する。保存先は質問しない
+> C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R1-elicit`
 - `skill`: `run-dev-graph-init`
-- 不変目的: C24でcaller repository rootとrepo-local configを解決し、検証済みeffective configを単一正本としてsymlink sourceとcontent authorityを分離する。保存先は質問しない
+- 不変目的: C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -17,7 +17,7 @@
 
 ### 出力契約
 
-- `repository_id`、resolved repo/common dir、plugin code authority、および既存configがあればその検証済みcontent/local-state pathを持つcontext receipt。
+- `repository_id`、resolved repo/common dir、content authority、plugin code authority、symlink診断を持つcontext receipt。
 
 ### 責務境界
 
@@ -25,7 +25,7 @@
 
 ### 受入条件
 
-- 検証済みeffective configの全content/local-state pathがresolved root内、host project rootと一致し、曖昧pathとbroken/out-of-root linkが書込み前にfail-closedになる。
+- 全content realpathがresolved root内、host project rootと一致し、broken/out-of-root linkがfail-closedになる。
 
 ## Layer 3: インフラ層
 
@@ -42,20 +42,20 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-init/R1-elicit`。frontmatterの`fork:inline`に従いmain contextで処理する。
+- `run-dev-graph-init/R1-elicit`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
-- 目的: C24でcaller repository rootとrepo-local configを解決し、検証済みeffective configを単一正本としてsymlink sourceとcontent authorityを分離する。保存先は質問しない
+- 目的: C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: `repository_id`、resolved repo/common dir、plugin code authority、検証済みeffective configのcontent/local-state authorityを持つcontext receiptが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: `repository_id`、resolved repo/common dir、content authority、plugin code authority、symlink診断を持つcontext receiptが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] effective configの全content/local-state pathがresolved root内、host project rootと一致し、曖昧pathとbroken/out-of-root linkがfail-closedになる
+- [ ] 全content realpathがresolved root内、host project rootと一致し、broken/out-of-root linkがfail-closedになる
 
 ### 5.4 実行方式
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

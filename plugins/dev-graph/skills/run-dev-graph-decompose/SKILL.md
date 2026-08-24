@@ -6,14 +6,13 @@ owner: harness maintainers
 source: plugin-plans/dev-graph/component-inventory.json#C14
 kind: run
 effect: local-artifact
-runtime_root_policy: host-skill-path
 prefix: run
 hierarchy: L1
 user-invocable: true
 argument-hint: "<want|--package PATH> [--repo-root PATH] [--manual-plan] [--dry-run]"
 allowed-tools: [Read, Write, Bash, Skill, AskUserQuestion, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/register-package.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-goal-seek-runtime.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py]
-schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/macro-intent.schema.json, ../../schemas/macro-registration-receipt.schema.json]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py]
+schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../../system-dev-planner/references/feature-execution-package-contract.md, ../../references/execution-tracker-contract.md]
 responsibility_refs:
   - prompts/R1-elicit.md
@@ -115,14 +114,6 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
-## Runtime root contract
-
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
-
 ## Pre-choice usable artifact execution
 
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
@@ -144,38 +135,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 dev-graph はマクロ層: purpose/goal/scope/acceptance を持つ feature、共有 architecture node、feature 間 `depends_on` を所有する。system-dev-planner はミクロ層: **1 feature から P01..P13 の13 task specs/DAG/package** を所有する。本 skill が phase task を独自生成してはならない。
 
-macro graph と C02 receipt を LLM が手書きしてはならない。C14 が作ってよいのは `../../schemas/macro-intent.schema.json` の `schema_version/observed_at/project_id/source_digest/architecture/features` から成る **macro intent** だけで、graph node の共通field補完・schema/DAG/C11検証・candidate graph digest・receipt は、`run-dev-graph-node` を読み込んだ上で C02 正本 `../../scripts/register-package.py preview-macro|apply-macro` に生成させる。C02 が非0終了したらその時点で FAIL とし、callerによるscratch/cacheへのcandidate copy、receiptの自作、別scriptによる代替を禁止する。C02内部の自動破棄されるprivate stagingだけをC11検証用に許可する。
-
 ## Macro flow
 
 1. 大きな want、feature 粒度、依存推定方針、dry-run を確認する。
-2. want を feature 候補と architecture context に分解し、各 feature intent に `graph_node_id/title/domain/purpose/goal/scope_in/scope_out/acceptance/depends_on/resource_scope` を付ける。`architecture_refs` は入力せず、C02が唯一のtop-level architectureから全featureへ導出する。循環と実装粒度の task 混入を独立 auditor で拒否する。
-3. `Skill({skill: "dev-graph:run-dev-graph-node", args: "preview-macro ... --dry-run"})` で C02 契約を読み、次の唯一のpreview入口を実行する。`MACRO_INTENT_JSON` はgraph node/receiptではなく上記macro intentだけを含める。
-
-   ```bash
-   python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/register-package.py" preview-macro \
-     --repo-root "$DEV_GRAPH_ROOT" \
-     --graph .dev-graph/state/graph.json \
-     --request-json "$MACRO_INTENT_JSON" \
-     --dry-run
-   ```
-
-   stdout receipt の `owner=C02/run-dev-graph-node`、`operation=preview_macro_decomposition`、`status=preview`、`dry_run=true`、`write_count=0`、`validation.authority=C11/validate-graph-schema.py`、`validation.violations=[]` と実行前後の原graph sha256不変を確認する。候補は常に draft/unconfirmed/pending で、tracker 投影しない。
-4. `--dry-run` ならapplyせずpreview receiptを返す。通常実行は同じintentと直前previewのdigestをC02へ渡し、preview JSON自体はfileへcopyしない。
-
-   ```bash
-   python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/register-package.py" apply-macro \
-     --repo-root "$DEV_GRAPH_ROOT" \
-     --graph .dev-graph/state/graph.json \
-     --request-json "$MACRO_INTENT_JSON" \
-     --expected-candidate-digest "$PREVIEW_DIGEST" \
-     --receipt "$MACRO_RECEIPT"
-   ```
-
-   apply receiptの `operation=apply_macro_decomposition/status=applied`、preview/applyの `intent_digest/candidate_graph_digest/candidate_node_ids` 一致、C11 PASSを確認する。同一intent再実行は `idempotent=true/write_count=0`、不一致・partial・receipt競合はFAILとする。
-5. feature 間依存が満たされた ready feature ごとに `run-system-dev-plan` を Skill 呼出しする。`--manual-plan`/`/system-dev-plan` 結果も同じ package gate へ入れる。
-6. P01..P13 exact 13、共通 parent/package、13-node DAG、source digest を検証し、C02 `register-package` へ渡す。`graph_node_id+source_digest` で自動/手動の二重登録を防ぐ。
-7. `beads` は C28 create/dep-add、`github` は C12 Issue/任意 Projects、`none` は local only。mode=both+auto、github+local_only、beads+GitHub Issue mutation は fail-closed。
+2. want を feature 候補と architecture context に分解し、各 feature に `purpose/goal/scope_in/scope_out/acceptance/architecture_refs` を付ける。循環と実装粒度の task 混入を独立 auditor で拒否する。
+3. C02 preview/atomic writer で macro graph を登録する。draft/unconfirmed/readiness incomplete は tracker 投影しない。
+4. feature 間依存が満たされた ready feature ごとに `run-system-dev-plan` を Skill 呼出しする。`--manual-plan`/`/system-dev-plan` 結果も同じ package gate へ入れる。
+5. P01..P13 exact 13、共通 parent/package、13-node DAG、source digest を検証し、C02 `register-package` へ渡す。`graph_node_id+source_digest` で自動/手動の二重登録を防ぐ。
+6. `beads` は C28 create/dep-add、`github` は C12 Issue/任意 Projects、`none` は local only。mode=both+auto、github+local_only、beads+GitHub Issue mutation は fail-closed。
 
 local commit 後の外部失敗は rollback せず node/operation 単位 pending_retry。`--dry-run` は local/Beads/GitHub write 0。出力は macro report、per-feature package receipt、publication report。
 
@@ -205,31 +172,28 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 ### ゴールシーク配線
 
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
-- 通常実行は元のゴールと `original_goal_hash` を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-goal-spec.json` へ、同hashと各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-progress.json` へ記録する。dry-runは同じJSONをtargetへ書かず、caller側の `DEV_GRAPH_GOAL_SPEC_JSON` / `DEV_GRAPH_PROGRESS_JSON` とmain contextに保持する。
+- 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
-- 通常実行は各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-intermediate.jsonl` へ `iteration`、`original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。dry-runは同じ行をtargetへ書かずcaller側の `DEV_GRAPH_INTERMEDIATE_JSONL` とmain contextに保持する。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
-
-`--dry-run` は対象repositoryへのwrite 0が最優先であり、上記3ファイルも対象repositoryへ作らない。dry-run中のgoal/checklist/intermediateはmain contextで保持し、C02 stdout receiptとAgent監査receiptをcaller側の実走ログへ返す。previewをtarget cache/eval-logへcopyしてgoal-seek証跡に見せかけてはならない。
 
 ### ゴールシーク検証
 
-各周回後にC14固有validatorを作らず、共通 `validate-goal-seek-runtime.py` で中間成果物の欠落・goal drift・hash 不一致を fail-closed にする。`required_keys` と `hashlib.sha256` 判定は同scriptをSSOTとし、通常実行はfile modeを使う。
+各周回後に次の検査を実行し、中間成果物の欠落・goal drift・hash 不一致を fail-closed にする。
 
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-runtime.py" \
-  --goal-spec "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-goal-spec.json" \
-  --progress "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-progress.json" \
-  --intermediate "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-intermediate.jsonl"
-```
-
-dry-runはtarget pathを渡さず、同じvalidatorのmemory modeを使う。
-
-```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-runtime.py" \
-  --goal-spec-json "$DEV_GRAPH_GOAL_SPEC_JSON" \
-  --progress-json "$DEV_GRAPH_PROGRESS_JSON" \
-  --intermediate-jsonl "$DEV_GRAPH_INTERMEDIATE_JSONL"
+python3 - "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-goal-spec.json" "$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-intermediate.jsonl" <<'PY'
+import hashlib, json, sys
+goal = json.load(open(sys.argv[1], encoding='utf-8'))
+rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
+required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
+assert rows, 'intermediate.jsonl is empty'
+for row in rows:
+    assert required_keys <= row.keys(), required_keys - row.keys()
+    assert row['original_goal'] == goal['original_goal']
+    assert row['original_goal_hash'] == expected
+PY
 ```
 
 ## Criteria acceptance
@@ -250,4 +214,3 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-runtim
 - 自動と手動の planner 結果を別 gate にせず、同じ `graph_node_id+source_digest` の冪等キーへ収束させる。
 - local commit 後の外部失敗で macro graph を rollback せず、失敗 operation だけを `pending_retry` に残す。
 - `mode=both+auto`、`github+local_only`、`beads+Issue mutation` は authority 衝突として fail-closed にする。
-- C02 previewが失敗した後にcandidate graph/receiptを自作したり、authority root外の成果をtarget cacheへcopyしたりしない。

@@ -46,6 +46,29 @@ TASK_GRAPH_ASSETS = (
 )
 GOAL_SEEK_ANCHOR = "validate-inline-goal-seek-anchor.py"
 
+# goal_seek block 未宣言のまま残る既存 loop skill の残存数 ratchet。
+# 現残存 = run-skill-feedback 配布複製 20 + run-governance-adapters
+# + run-system-dev-plan。宣言移行が済んだら数を下げる。増加は fail。
+LEGACY_LOOP_BASELINE = 22
+
+# has_goal_seek=False の loop skill に限り ratchet 扱いへ降格する finding。
+LEGACY_FINDING_MARKERS = (
+    "goal_seek block がない",
+    "goal_seek.engine が未宣言",
+    "goal_seek.fork が未宣言",
+)
+
+# fork=subagent と allowed-tools の不整合が導入前から存在する skill。
+# 修正は SKILL.md 変更 = live-trial closure の再試行を伴うため、
+# closure 更新と同時に解消するまで path 固定で ratchet 扱い。追加は不可。
+FORK_TOOLS_MARKER = "allowed-tools に Agent/Task がない"
+FORK_TOOLS_BASELINE = frozenset(
+    {
+        "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md",
+        "plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md",
+    }
+)
+
 
 @dataclass(frozen=True)
 class RuntimeProfile:
@@ -56,7 +79,34 @@ class RuntimeProfile:
     applicable: bool
     engine: str | None
     fork: str | None
+    has_goal_seek: bool
     findings: tuple[str, ...]
+
+    @property
+    def is_legacy_loop(self) -> bool:
+        return self.applicable and not self.has_goal_seek
+
+    def split_findings(self) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        """(enforced, legacy) に分ける。
+
+        legacy は未宣言 loop skill の宣言系 finding と、
+        FORK_TOOLS_BASELINE に path 固定された既存不整合だけ。
+        """
+        enforced: list[str] = []
+        legacy: list[str] = []
+        for finding in self.findings:
+            if self.is_legacy_loop and any(
+                marker in finding for marker in LEGACY_FINDING_MARKERS
+            ):
+                legacy.append(finding)
+            elif (
+                self.path in FORK_TOOLS_BASELINE
+                and FORK_TOOLS_MARKER in finding
+            ):
+                legacy.append(finding)
+            else:
+                enforced.append(finding)
+        return tuple(enforced), tuple(legacy)
 
 
 def _strip_scalar(value: str) -> str:
@@ -245,7 +295,7 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
         return RuntimeProfile(
-            relative, plugin, skill, "", False, None, None, (f"read error: {exc}",)
+            relative, plugin, skill, "", False, None, None, False, (f"read error: {exc}",)
         )
 
     fm = _frontmatter(text)
@@ -386,6 +436,7 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
         applicable,
         engine,
         fork,
+        bool(goal_seek),
         tuple(findings),
     )
 
@@ -431,16 +482,33 @@ def build_report(
             else "not-applicable"
         )
         by_profile[key] = by_profile.get(key, 0) + 1
+    skill_entries: list[dict[str, object]] = []
+    enforced_total = 0
+    legacy_total = 0
+    legacy_skills = 0
+    for profile in profiles:
+        enforced, legacy = profile.split_findings()
+        entry = asdict(profile)
+        entry["enforced_findings"] = list(enforced)
+        entry["legacy_findings"] = list(legacy)
+        skill_entries.append(entry)
+        enforced_total += len(enforced)
+        legacy_total += len(legacy)
+        legacy_skills += profile.is_legacy_loop
     return {
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "repo_root": str(repo_root),
         "summary": {
             "skills": len(profiles),
             "loop_skills": sum(profile.applicable for profile in profiles),
             "findings": sum(len(profile.findings) for profile in profiles),
+            "enforced_findings": enforced_total,
+            "legacy_findings": legacy_total,
+            "legacy_loop_skills": legacy_skills,
+            "legacy_loop_baseline": LEGACY_LOOP_BASELINE,
             "by_profile": dict(sorted(by_profile.items())),
         },
-        "skills": [asdict(profile) for profile in profiles],
+        "skills": skill_entries,
     }
 
 
@@ -467,19 +535,31 @@ def main(argv: list[str]) -> int:
         sys.stderr.write("no canonical SKILL.md target found\n")
         return 2
 
+    summary = report["summary"]
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
     else:
-        summary = report["summary"]
         print(
             "skill-runtime-profile: "
             f"skills={summary['skills']} loop={summary['loop_skills']} "
-            f"findings={summary['findings']} profiles={summary['by_profile']}"
+            f"enforced={summary['enforced_findings']} "
+            f"legacy={summary['legacy_loop_skills']}/{summary['legacy_loop_baseline']} "
+            f"profiles={summary['by_profile']}"
         )
         for profile in report["skills"]:
-            for finding in profile["findings"]:
+            for finding in profile["enforced_findings"]:
                 sys.stderr.write(f"{profile['path']}: {finding}\n")
-    return 1 if report["summary"]["findings"] else 0
+            for finding in profile["legacy_findings"]:
+                sys.stderr.write(f"{profile['path']}: [legacy] {finding}\n")
+    if summary["enforced_findings"]:
+        return 1
+    if summary["legacy_loop_skills"] > LEGACY_LOOP_BASELINE:
+        sys.stderr.write(
+            "legacy loop skill ratchet 超過: "
+            f"{summary['legacy_loop_skills']} > baseline {LEGACY_LOOP_BASELINE}\n"
+        )
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

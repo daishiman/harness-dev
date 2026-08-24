@@ -2,12 +2,12 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
-    "skill_md_sha256": "16f1f7d0272d750f8d86a973598a853e87b99bdfe048cb5fbcc8f38ca6ba0794"
+    "skill_md_sha256": "81185c39a0b014443e75f263cd57db68b28a424b7d134be550410974f5802942"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "focused-status-portable-root-content-review (incremental profile)",
-  "reviewed_at": "2026-08-24T07:23:07Z",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -18,26 +18,25 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "C24 authority確定、C11 schema検査、AND/tag検索、依存関係展開、前後digest比較を maintained extract-graph-status.py 1本に集約し、同一の機械証跡でIN1/OUT1/OUT2を支えている。",
-      "SKILL.mdの goal_seek.engine/fork=inline、allowed-tools、artifact_delivery.pre_choice_forbidden と、3つの responsibility prompt のmain-context実行指示が一致し、未宣言Agent生成の矛盾がない。",
-      "portable root差分はruntime_root_policy=host-skill-path、標準Runtime root contract、dual-root実行行の3点が正本テンプレートと一致し、Codexでcwd推測や空のCLAUDE_PLUGIN_ROOTへ依存しない。",
-      "空結果は成功、schema/containment/dangling破れは失敗とする境界がSKILL、prompt、runtimeで同じ方向に揃っている。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[medium / non-blocking style] rubric PD-002: 本文先30行にKey Rule見出しがない。ただしpre-choice禁止とread-only禁則はfrontmatterおよびPurpose/Gotchasで明示され、実行契約の欠落にはなっていない。",
-      "[low / non-blocking style] rubric FM-005: descriptionの先頭語が動詞ではない。トリガー2系統と本文の検索/状態確認手順の対応は意味上1:1である。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "content-review-protocolのincremental profileに基づく、portable root差分後のfresh focused combined review。30思考法のexhaustive reviewは実施しておらず、実施済みとは申告しない。現在のSKILL.md、3 prompt、extract-graph-status.py、C18 inventory criteria、直接参照closure、focused testを同一contextで確認し、矛盾0・漏れ0・整合性違反0・依存関係破壊0と判定した。criteria IN1/OUT1/OUT2は全て明示的なacceptance clauseと決定論runtime/test経路を持つ。portable root契約はscripts/build-artifact-delivery.pyの標準sectionと一致し、実行行は${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}を使用する。rubricはversion 1.3.1、score 87/threshold 80、high severity 0、scored 23/24。pending BD-004はdescriptionの2 triggerが本文のmetadata検索と依存・tombstone・completionのread-only確認へ1:1対応することを意味確認した。残るmedium/lowは表現上のsmellで、4条件や受入基準を破らないためPASS。本verdictは静的design claimであり、live/criteria verdictを更新・代替しない。",
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 1
   }
 }

@@ -20,7 +20,7 @@
       "name": "contract-generator",
       "source": "./plugins/contract-generator",
       "description": "tenant業務委託契約書を台帳×Driveひな形から黄色維持で半自動量産 (draft/finalize/sync の3 skill構成)。改善要望は `/run-skill-feedback contract-generator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "development-tools",
       "tags": [
         "contracts",
@@ -32,7 +32,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.11",
+      "version": "0.1.9",
       "category": "development-planning",
       "tags": [
         "task-graph",
@@ -44,7 +44,7 @@
       "name": "extract-system-blueprint",
       "source": "./plugins/extract-system-blueprint",
       "description": "参考システムの公開URLを認可・低負荷budget内で調査し、静的HTTP(WebFetch/stdlib静的DOM観測)+browser-render(MCP非依存のローカルheadless Chrome via Bash)の観測fact、根拠つきinference、欠測(observation_gap)を明示区別したmd+json+Mermaidのローカル章別ブループリントを生成するplugin。外部サービス連携(MCP/Notion)なしで自己完結する。",
-      "version": "0.2.11",
+      "version": "0.2.12",
       "category": "Productivity",
       "tags": [
         "extraction",
@@ -57,7 +57,7 @@
       "name": "guide-doc-generator",
       "source": "./plugins/guide-doc-generator",
       "description": "初心者・非エンジニア向けのレクチャー/導入ガイド資料を、外部依存ゼロの単一 HTML として構成データ駆動で決定論生成するプラグイン。ヒアリング→構成データ設計→レンダリング→4 ゲート検証→出力先ルーティングを分界し、レンダリング経路に LLM を挟まないことで同一構成データからのバイト一致再現を保証する。素材は data URI で内包し、絵文字を使わずインライン SVG アイコンで表す。既存 HTML からの逆抽出 (round-trip) と A4 印刷・a11y にも対応する。",
-      "version": "0.1.17",
+      "version": "0.1.18",
       "category": "Productivity",
       "tags": [
         "handout",
@@ -72,7 +72,7 @@
       "name": "harness-creator",
       "source": "./plugins/harness-creator",
       "description": "Codex と Claude Code のハーネスを新規作成・既存改善し、Capability の評価・統治・プラグイン配布を一貫して行うメタプラグイン。",
-      "version": "1.4.25",
+      "version": "1.4.28",
       "category": "development-tools",
       "tags": [
         "capability-build",
@@ -84,7 +84,7 @@
       "name": "plugin-dev-planner",
       "source": "./plugins/plugin-dev-planner",
       "description": "プラグイン構想を index + 13 フェーズファイル(phase-01〜phase-13) + component-inventory.json へ目的ドリブンで分解し、skill/sub-agent/slash-command/hook/script/harness/manifest を漏れなく評価する前段の計画プラグイン。ライフサイクル軸=13 フェーズ / 成果物実体軸=N component の 2 軸直交に加え、タスク粒度の型付き依存グラフ (task-graph) を第 3 の射影として保持し、依存駆動の並列実行・成果物連結・discovered-task 還流を機械保証する。orchestrator skill (run-plugin-dev-plan) + prompt-creator 仕様準拠の agents (elicitor=R1 / architect=R2,R3 / evaluator=R4 / improvement-reviewer) + command + hook + harness で構成。実ビルドは harness-creator へ委譲し、本プラグインは計画生成までを担う。改善要望は `/run-skill-feedback plugin-dev-planner` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "category": "development-tools",
       "tags": []
     },
@@ -92,7 +92,7 @@
       "name": "prompt-creator",
       "source": "./plugins/prompt-creator",
       "description": "7 層プロンプトアーキテクチャ (Role/Context/Principles/Workflow/Constraints/Output/Evaluation) で SubAgent 向けプロンプトを生成・更新する skill 群。harness-creator 仕様準拠の orchestrator (run-prompt-create) と elicit / evaluator / 7layer worker / 3 agents で構成。harness-creator (run-build-skill Step 7.5) からも呼び出される。改善要望は `/run-skill-feedback prompt-creator` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "2.1.7",
+      "version": "2.1.9",
       "category": "development-tools",
       "tags": []
     },
@@ -100,7 +100,7 @@
       "name": "skill-governance-adapters",
       "source": "./plugins/skill-governance-adapters",
       "description": "外部 CI/IDE 連携アダプタを提供する governance プラグイン。Notion・GitHub Actions・VS Code との橋渡しスクリプトを束ね、skill governance の通知・公開・診断を一元化する。改善要望は `/run-skill-feedback skill-governance-adapters` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.10",
+      "version": "0.1.9",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -114,7 +114,7 @@
       "name": "skill-governance-automation",
       "source": "./plugins/skill-governance-automation",
       "description": "skill governance の定期実行・自動化スクリプト群。スキル一覧の rollup 更新、未対応要望の集計、cron トリガで走る監査ジョブをまとめる。改善要望は `/run-skill-feedback skill-governance-automation` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -128,7 +128,7 @@
       "name": "skill-governance-config",
       "source": "./plugins/skill-governance-config",
       "description": "skill governance 全体の共有設定 (rubric weights / lint 閾値 / governance-params) を SSOT として保持する config プラグイン。各 lint/automation/adapter が参照する単一の真実源。改善要望は `/run-skill-feedback skill-governance-config` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -141,7 +141,7 @@
       "name": "skill-governance-hooks",
       "source": "./plugins/skill-governance-hooks",
       "description": "Claude Code の hook event (PreToolUse / PostToolUse / Stop など) に紐付ける governance hook スクリプト集。スキル品質ゲートを実行前後で機械的に発火させる。改善要望は `/run-skill-feedback skill-governance-hooks` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -153,7 +153,7 @@
       "name": "skill-governance-lint",
       "source": "./plugins/skill-governance-lint",
       "description": "skill / frontmatter / SSOT 重複 / goal-seek / completeness など P0 lint 群を提供する検査プラグイン。CI の merge gate と build-skill Step 4 の preflight 両方で実行される。改善要望は `/run-skill-feedback skill-governance-lint` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -166,7 +166,7 @@
       "name": "skill-governance-migration",
       "source": "./plugins/skill-governance-migration",
       "description": "旧スキル構造から最新 Capability 7 kind 仕様への migration helper 群。frontmatter 自動移行・symlink 切替・archive 操作を冪等に行う。改善要望は `/run-skill-feedback skill-governance-migration` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -178,7 +178,7 @@
       "name": "skill-governance-secrets",
       "source": "./plugins/skill-governance-secrets",
       "description": "Notion PAT / API token 等の secret を macOS Keychain と env から安全に取得する helper プラグイン。token を context に露出させないアクセス層を提供する。改善要望は `/run-skill-feedback skill-governance-secrets` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -190,7 +190,7 @@
       "name": "skill-intake",
       "source": "./plugins/skill-intake",
       "description": "harness-creator の前段ヒアリングを非技術者にも開く plugin。Markdown 正本+JSON 副本+Notion ページを生成し、macOS Keychain 経由の Notion PAT/Internal Integration で公開する。図解マスト要件と 5 軸ヒアリング (出力先/情報源/共有相手/真の課題/ナレッジ資産) を機械検証する。本 plugin は単独インストールで intake→Notion publish のコアフローが自己完結動作する (notion_config.py を同梱)。改善要望投入 (`/run-skill-feedback`) は harness-creator 併用時のみ利用可能。",
-      "version": "0.1.17",
+      "version": "0.1.19",
       "category": "productivity",
       "tags": [
         "skills",
@@ -204,7 +204,7 @@
       "name": "slide-report-generator",
       "source": "./plugins/slide-report-generator",
       "description": "presentation-slide-generator v8.4.2 の全機能を移植した共通コア + output_mode=slide/report の 2 モード・ビジュアル生成ハーネス。意匠/技術層 (Kanagawa/16:9/GSAP/インライン SVG2/Codex Image2/決定論レンダラ/A4 印刷/style genome) を単一 SSOT で共有し、コンテンツ意図層のみ mode 別に分岐する。slide=1スライド1メッセージ/107 slideType、report=読み物/4 reportType/1項目1ビジュアル最適化/Mermaid 統合。Node 製レンダリング/画像/印刷/検証エンジンは vendor として携行し、OS/CPU別Playwright Chromiumはinstall先のplugin-local cacheへ決定論的に復元して起動する。",
-      "version": "0.1.27",
+      "version": "0.1.28",
       "category": "Productivity",
       "tags": [
         "slides",
@@ -219,7 +219,7 @@
       "name": "spec-drift-guardian",
       "source": "./plugins/spec-drift-guardian",
       "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "category": "developer-tools",
       "tags": [
         "spec-drift",
@@ -231,7 +231,7 @@
       "name": "system-dev-planner",
       "source": "./plugins/system-dev-planner",
       "description": "確定したdev-graph featureを、同一digestで昇格可能なexact 13実行タスクへ分解するシステム開発planner。",
-      "version": "0.1.11",
+      "version": "0.1.10",
       "category": "development-planning",
       "tags": [
         "system-design",
@@ -243,7 +243,7 @@
       "name": "system-spec-harness",
       "source": "./plugins/system-spec-harness",
       "description": "カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。",
-      "version": "0.1.13",
+      "version": "0.1.11",
       "category": "productivity",
       "tags": [
         "spec",
@@ -255,7 +255,7 @@
       "name": "ubm-goal-setting",
       "source": "./plugins/ubm-goal-setting",
       "description": "北原さん式ゴールセッティング、会話型の日次ジャーナル作成、2-source YouTube全量/自動同期、根拠付きknowledge/harness artifact graph consultを提供する個人利用向けplugin。",
-      "version": "0.3.25",
+      "version": "0.3.26",
       "category": "productivity",
       "tags": [
         "goal-setting",

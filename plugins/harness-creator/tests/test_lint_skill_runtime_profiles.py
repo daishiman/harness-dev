@@ -218,6 +218,57 @@ def test_manifest_dependencies_and_delegate_refs_are_validated(tmp_path: Path) -
     assert any("dependsOn が循環" in finding for finding in profile.findings)
 
 
+def test_legacy_loop_declaration_findings_are_demoted(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path, goal_seek="")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert profile.is_legacy_loop is True
+    assert enforced == ()
+    assert len(legacy) == 3
+
+
+def test_declared_loop_keeps_findings_enforced(tmp_path: Path) -> None:
+    root, skill = _skill(
+        tmp_path, goal_seek="  engine: inline\n  fork: subagent\n"
+    )
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert profile.is_legacy_loop is False
+    assert legacy == ()
+    assert any("allowed-tools に Agent/Task がない" in finding for finding in enforced)
+
+
+def test_fork_tools_baseline_path_is_demoted(tmp_path: Path) -> None:
+    root = tmp_path
+    skill = (
+        root / "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md"
+    )
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\nname: run-system-spec-compile\nallowed-tools:\n  - Read\n"
+        "kind: run\nprefix: run\ngoal_seek:\n  engine: inline\n  fork: subagent\n"
+        "---\n\n## ゴールシーク実行\n",
+        encoding="utf-8",
+    )
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert enforced == ()
+    assert any("allowed-tools に Agent/Task がない" in finding for finding in legacy)
+
+
+def test_report_exit_uses_legacy_ratchet(tmp_path: Path, monkeypatch, capsys) -> None:
+    root, _skill_path = _skill(tmp_path, goal_seek="")
+    assert MODULE.main(["--repo-root", str(root)]) == 0
+    captured = capsys.readouterr()
+    assert "legacy=1/" in captured.out
+    assert "[legacy]" in captured.err
+
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE", 0)
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "ratchet 超過" in captured.err
+
+
 def test_manifest_agent_ref_must_exist(tmp_path: Path) -> None:
     root, skill = _skill(tmp_path)
     text = skill.read_text(encoding="utf-8").replace(

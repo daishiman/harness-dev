@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "0cd9b79147ef19686206aef3c82dcd87a1b02aa10f32cbc0b71bfc6c61e1a1f8"
+    "skill_md_sha256": "4994cc8a3677cde4b29937d2868cd0322e8597a6eafb08740a04780abdd93702"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "independent-content-review-skill-intake-description-v5 (focused combined fresh review)",
-  "reviewed_at": "2026-08-24T07:43:09Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T13:18:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,17 +25,18 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "The revised description removes the prohibited action-detail phrase while retaining exactly two accurate invocation triggers: eliciting requirements from a non-engineer and generating the intake/Notion artifacts through the manifest-driven workflow.",
-      "IN1 passed: workflow-manifest.json remains the executable SSOT for all eleven phases, dependencies, delegates, conditional skip/retry rules, resources, and exit hooks; the SKILL body describes control invariants without reproducing the manifest phase table.",
-      "IN2 passed: the PreToolUse guard remains wired and regression-tested across Skill, Task, and Bash entry paths, so the recommendation-only handoff cannot silently become a skill-generation invocation while the intake lock is active.",
-      "OUT1 passed: pre-choice remains a lossless request snapshot plus read-only preview, and post-choice business logic stays in the owning skills, agents, and scripts while the orchestrator selects, validates, records, and stops.",
-      "The current target, prompt, manifest, schemas, direct references, task-graph validator, hook guard, and downstream handoff boundary agree on the same pre-choice, external-mutation, task-graph, and recommendation-only contracts."
+      "checklist の manifest 駆動化 (skipWhen/retryOn/exitHook を workflow-manifest.json の SSOT へ委譲) は実体と一致する: P5-excavation の skipWhen (interview.json.needs_excavation=false)+skipReason、P8-summary の retryOn (gate_a=denied)/retryTo (P4-interview)/maxRetries=2、P9-finalize と P11-next-action の exitHook を manifest 実物で突合し、SKILL.md の記述 (Gate A 最大 2 周含む) と全て一致した。",
+      "goal_seek task-graph block (fork: inline / max_loops: 17 / activation_state: semantic_evaluator_started) は「ゴールシーク配線（task-graph 変種）」節の validate-task-graph-progress.py 2 回 exit 0 停止条件と対応し、artifact_delivery 状態機械とも整合する。",
+      "新設 Purpose & Output Contract の pre-choice 契約 (intake-request.json の無損失 snapshot + read-only preview のみ・推測補完禁止) は schemas/intake-request.schema.json の実在とともに確認でき、post-choice の業務ロジック委譲境界と矛盾しない。",
+      "Key Rule 10 (Phase 9 exitHook の inline 自己更新: measure→derive、--apply は別ターン明示承認後のみ・declining=true なら不適用) は manifest の P9 exitHook 定義と対応し、外部反映を承認前に行わない external-mutation 規約とも整合する。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell / pre-existing] Key Rule 9 は hook 配線を「配線は `.claude-plugin/plugin.json`」と記すが、当該 plugin.json に hooks キーは無く、実配線は plugins/skill-intake/hooks/hooks.json (PreToolUse: Skill|Task|Bash に hook-guard-skillgen.py を 5 箇所配線) にある。hook 本体と回帰テスト tests/test_skill_intake_guard_skillgen.py は実在するため IN2 の実質保証は満たすが、配線先ファイル名の記述が不正確。本 diff で導入された記述ではない。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental review in one independent context for the current SKILL.md bytes. The full 251-line target and its directly referenced manifest, R1 prompt, request/trace and phase schemas, resource map, workflow/handoff/keychain references, runtime scripts, generator guard, and plugin dependency surface were read. Contradiction, omission, terminology/format consistency, and dependency integrity all pass; IN1/IN2/OUT1 were each checked rather than inferred from the prior verdict. Focused tests: 114 passed. Targeted description lint reports 12 skills OK/0 violations, runtime-profile reports task-graph/inline with zero findings, goal-seek lint passes, repository manifest gate passes, and the rubric composition passes at 97/100 with no high or medium finding. This is a static focused review; live-trial and criteria-scenario verdict files were not modified, and no exhaustive 30-method review is claimed."
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (description 変更・goal_seek task-graph block・intake-request.schema.json 追加・Purpose & Output Contract 新設・Key Rule 10・manifest 駆動 checklist・配線節)・feedback_contract IN1/IN2/OUT1 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、workflow-manifest.json 実物との突合、intake-request.schema.json・hook・回帰テスト・validate-task-graph-progress.py ほか参照 scripts の実在。finding は low 1 件 (hook 配線先ファイル名の記述不正確、pre-existing) のみで high/medium 0。live trial は実行しておらず、本 PASS は design claim のみ。"
 }

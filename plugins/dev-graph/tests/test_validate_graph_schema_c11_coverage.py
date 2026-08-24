@@ -193,47 +193,6 @@ def task(node_id: str, **overrides):
     return node
 
 
-def test_c11_readiness_digest_is_feature_scoped_deterministic_and_semantic():
-    mod = load()
-    feature = task(
-        "feature",
-        artifact_kind="feature",
-        related_nodes=["spec"],
-        confirmation_status="confirmed",
-        evaluation_status="pass",
-        implementation_readiness={"status": "complete", "missing_sections": [], "checked_at": "old"},
-        source_lineage={"source_digest": "feature-digest"},
-    )
-    spec = task(
-        "spec",
-        artifact_kind="specification",
-        confirmation_status="confirmed",
-        evaluation_status="pass",
-        implementation_readiness={"status": "complete", "missing_sections": []},
-        source_lineage={"source_digest": "spec-digest"},
-    )
-    child = task(
-        "p01",
-        parent_feature="feature",
-        feature_package_id="feature-package/feature",
-        phase_ref="P01",
-        confirmation_status="confirmed",
-        evaluation_status="pass",
-        implementation_readiness={"status": "complete", "missing_sections": []},
-        source_lineage={"source_digest": "plan-digest"},
-    )
-    first = mod.c11_readiness_digest([feature, spec, child], "feature")
-    reordered = mod.c11_readiness_digest([child, feature, spec], "feature")
-    assert first == reordered
-    timestamp_only = dict(feature)
-    timestamp_only["implementation_readiness"] = {
-        "status": "complete", "missing_sections": [], "checked_at": "new"
-    }
-    assert mod.c11_readiness_digest([timestamp_only, spec, child], "feature") == first
-    changed = dict(child, evaluation_status="fail")
-    assert mod.c11_readiness_digest([feature, spec, changed], "feature") != first
-
-
 def test_domain_dag_exact13_evidence_and_readiness_boundaries():
     mod = load()
     bad_refs = task(

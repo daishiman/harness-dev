@@ -11,12 +11,12 @@
     {
       "id": "C01",
       "component_kind": "script",
-      "name": "ready-set-from-checklist.py",
+      "name": "extract-ready-set-from-checklist.py",
       "spec": "phase-05-implementation.md",
       "depends_on": [],
       "builder": "parent-skill-build",
       "build_kind": "script",
-      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py",
       "status": "planned",
       "placement_scope": "skill",
       "builder_status": "contract-only",
@@ -24,20 +24,20 @@
       "requires_parent_scaffold": "C05",
       "build_args": {
         "parent_skill": "run-build-skill",
-        "script_path": "templates/task-graph-engine/scripts/ready-set-from-checklist.py"
+        "script_path": "templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py"
       }
     },
     {
       "id": "C02",
       "component_kind": "script",
-      "name": "self-reflect-append.py",
+      "name": "build-self-reflection-entry.py",
       "spec": "phase-05-implementation.md",
       "depends_on": [
         "C01"
       ],
       "builder": "parent-skill-build",
       "build_kind": "script",
-      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py",
       "status": "planned",
       "placement_scope": "skill",
       "builder_status": "contract-only",
@@ -45,7 +45,7 @@
       "requires_parent_scaffold": "C05",
       "build_args": {
         "parent_skill": "run-build-skill",
-        "script_path": "templates/task-graph-engine/scripts/self-reflect-append.py"
+        "script_path": "templates/task-graph-engine/scripts/build-self-reflection-entry.py"
       }
     },
     {
@@ -73,7 +73,7 @@
     {
       "id": "C07",
       "component_kind": "script",
-      "name": "record-capability-graph-knowledge.py",
+      "name": "build-capability-graph-knowledge-entry.py",
       "spec": "phase-05-implementation.md",
       "depends_on": [
         "C02",
@@ -81,7 +81,7 @@
       ],
       "builder": "parent-skill-build",
       "build_kind": "script",
-      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py",
+      "build_target": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py",
       "status": "planned",
       "placement_scope": "skill",
       "builder_status": "contract-only",
@@ -89,7 +89,7 @@
       "requires_parent_scaffold": "C05",
       "build_args": {
         "parent_skill": "run-build-skill",
-        "script_path": "templates/task-graph-engine/scripts/record-capability-graph-knowledge.py"
+        "script_path": "templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py"
       }
     },
     {

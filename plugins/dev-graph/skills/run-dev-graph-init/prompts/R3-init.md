@@ -1,12 +1,12 @@
 # Prompt: R3-init
 
-> effective configから解決したrepo内pathだけにcontent/state/cache/locks/graph/receiptを生成し、GitHub設定はtoken/node IDを保存しない
+> resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない
 
 ## Layer 1: 基本定義層
 
 - `responsibility_id`: `R3-init`
 - `skill`: `run-dev-graph-init`
-- 不変目的: effective configから解決したrepo内pathだけにcontent/state/cache/locks/graph/receiptを生成し、GitHub設定はtoken/node IDを保存しない
+- 不変目的: resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない
 - 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
 
 ## Layer 2: ドメイン層
@@ -17,19 +17,19 @@
 
 ### 出力契約
 
-- 検証済みeffective configが指すgraph/state/cache/locks/content rootsの作成・保持結果と、graphと同じstate directoryのimmutable init receipt。
+- repo-local config/graph/state/cache/locks/content rootsの作成・保持結果とimmutable init receipt。
 
 ### 責務境界
 
-- `scripts/build-dev-graph.py`を唯一のwriterとし、resolved repo外、絶対path、secret、GitHub node IDを書かず既存fileを上書きしない。config/init receiptやrunnerをLLMが手書きしない。
+- resolved repo外、絶対path、secret、GitHub node IDを書かず既存fileを上書きしない。
 
 ### 受入条件
 
-- `repository_id`とeffective config digestを含む全必須資産が解決済みpathに揃い、repo-config/C11/template/goal-seek readinessが全PASS、二回目`planned_changes=[]`になる。
+- `repository_id`を含む全必須資産が揃い、二回目planned changeが0、schema gateがexit0になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: 正本`../scripts/build-dev-graph.py` (内部で`resolve-repo-context.py`、repo-config schema、`validate-graph-schema.py`を使用)。
+- 使用資産: Write/Edit、`validate-graph-schema.py`。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -42,13 +42,13 @@
 
 ### 5.1 担当 agent
 
-- `run-dev-graph-init/R3-init`。frontmatterの`fork:inline`に従いmain contextで正本initializerを実行する。
+- `run-dev-graph-init/R3-init`。重い判断または独立検証は `Agent` で分離 context に fork する。
 
 ### 5.2 ゴール定義
 
-- 目的: effective configから解決したrepo内pathだけにcontent/state/cache/locks/graph/receiptを生成し、GitHub設定はtoken/node IDを保存しない
+- 目的: resolved repo内へrepository_idを埋めたconfig/content/state/cache/locksを生成し、GitHub設定はowner/project number/field nameだけをrepo-local保存、token/node IDは保存しない
 - 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: effective configが指すgraph/state/cache/locks/content rootsの作成・保持結果とimmutable init receiptが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: repo-local config/graph/state/cache/locks/content rootsの作成・保持結果とimmutable init receiptが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
@@ -74,3 +74,4 @@
 ## 出力指示
 
 Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+

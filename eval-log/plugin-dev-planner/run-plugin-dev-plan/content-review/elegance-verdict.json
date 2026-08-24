@@ -2,12 +2,19 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "949423deb823c6ccab3677d399fe8800bcfbb3b49a4d6523747182513f64087c"
+    "skill_md_sha256": "a659099d131b8c0511c65a85e71435490a894e419b8159416eabd2b7d77d3865"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-08-24T11:10:00Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T13:10:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -19,25 +26,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "主要ルール 5 末尾の追記 (quality_gates は claim 集合・実行頻度は consumer 側 verification-obligation-protocol.md の fingerprint 再利用が決める・頻度指示を plan 本文へ焼かない) は、同 SKILL.md の Rule 6「現状数値非焼込 (Goodhart 回避)」と同型の非焼込原則であり、protocol 側の削減原理 (obligation fingerprint・証拠再利用) とも一致する。plan 内に「毎周回フル再実行」を含意する既存記述が無いことを grep で確認した。",
-      "ゴールシークループの追記は evaluated_inputs[] の位置づけ (鮮度台帳・semantic scope 推論禁止・prose/構造区分での outer review 再利用認可禁止・exact receipt 不在/不一致/判定不能時の再評価) を、evaluate-plan.py の STALENESS_RULE 実装および assign-plugin-plan-evaluator の Key Rule 8 / prompts/R1-evaluate.md と同一語彙で記述しており、pair skill 間の contract drift が無い。",
-      "「最大 3 周 (上限であって規定回数ではない)」の明確化は、周回数のプロセス完遂を品質近似にしない protocol の趣旨 (route数×反復数をコストモデルに含めない) と整合する。",
-      "参照される正本パス plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md は実在し、resolver という呼称も content-review-protocol.md (verification obligation resolver / 正準 resolver) で確立された語彙である。"
+      "本ブランチの diff は見出し「目的と出力契約」→「Purpose & Output Contract」の改名 1 点のみで、他 4 skill と同一の見出し規約へ揃える純粋な整合変更である。本文への参照 (アンカー・目次的言及) に断絶が生じていないことを実読で確認した。",
+      "既存の goal_seek block・feedback_contract IN1/IN2/OUT1/OUT2・pair skill (assign-plugin-plan-evaluator) との contract 語彙 (evaluated_inputs[]・鮮度台帳・fingerprint/PASS receipt) は変更されておらず、前回 review で確認済みの宣言↔実装 parity が維持されている。"
     ],
     "negative_feedback": [
-      "[low / smell] 「最大 3 周」の言及が 2 箇所ある (ゴールシークループ節と局面 R4 節の「NG は R3 へ差し戻す (最大 3 周)」)。上限であって規定回数ではないという明確化はゴールシークループ節のみに追記され、R4 節側には無い。ループ節が正本として読めるため実害は無いが、片側のみの注記は将来の読み違いの種になりうる。"
+      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記 (上限であって規定回数ではない) がゴールシークループ節のみにあり、局面 R4 節の同語には無い非対称が残存する。今回の見出し改名 diff では解消も悪化もしていないため、前回 verdict の low finding をそのまま引き継ぐ。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "SKILL.md 変更 (merge-base b1d8e88→HEAD の diff = 主要ルール 5 末尾追記 + ゴールシークループ 1 bullet の修正の 2 passage) を受けた incremental focused combined review。builder とは別 context の独立 evaluator が (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を 1 回の読解で同時判定し、elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実際に読んだもの: 本 SKILL.md 全文、diff、verification-obligation-protocol.md 全文 (fingerprint 決定論導出・PASS receipt 再利用・証拠 DAG・削減原理)、content-review-protocol.md の resolver/admission_control 記述、assign-plugin-plan-evaluator の SKILL.md/prompts/R1-evaluate.md、scripts/evaluate-plan.py の evaluated_inputs emit 実装、plan-findings.schema.json の evaluated_inputs/staleness_rule 定義。確認結果: (a) 追記は Rule 6 の非焼込原則・R4 節・完了条件と矛盾しない (完了条件の「全 exit0」は本 skill 自身の plan ゲートであり、plan が焼く quality_gates の実行頻度とは別レイヤー)。(b) 言及機構は全て実在: plan-findings.json.evaluated_inputs[] は evaluate-plan.py L350/L380 が emit し schema にも定義済み、fingerprint/PASS receipt は protocol L45/L54/L57 に実在。(c) 用語は pair skill・protocol と同一語彙。(d) 参照パス実在。(e) high/medium 0 件、low 1 件 (上記 smell) のみ。前回 verdict (2026-08-20, cr-artifact-delivery-v1) の low finding (Pre-choice の accept-as-is と external mutation の読み分け) は再確認した: 本 skill は effect=local-artifact であり Pre-choice 本文に mutation 分岐の曖昧さは発生しないため、本 skill の finding としては引き継がない (当該 finding は external-mutation skill 群への横断観察だった)。PASS の射程は design claim (静的設計 adequacy) に限る。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 1
-  }
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (見出し改名のみ)・feedback_contract IN1/IN2/OUT1/OUT2 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、主要参照パス (verification-obligation-protocol.md ほか) の実在 spot-check。新規 finding 0、既存 low 1 件 (最大 3 周注記の非対称) を引き継ぎ、high/medium 0。PASS の射程は design claim (静的設計 adequacy) に限る。"
 }

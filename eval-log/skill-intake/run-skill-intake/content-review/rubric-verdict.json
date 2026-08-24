@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "0cd9b79147ef19686206aef3c82dcd87a1b02aa10f32cbc0b71bfc6c61e1a1f8"
+    "skill_md_sha256": "4994cc8a3677cde4b29937d2868cd0322e8597a6eafb08740a04780abdd93702"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "independent-content-review-skill-intake-description-v5 (focused combined fresh review)",
-  "reviewed_at": "2026-08-24T07:43:09Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-08-24T13:18:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,19 +25,17 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "The revised description has two trigger clauses, ends with Japanese punctuation, contains none of lint-skill-description's prohibited action-detail phrases, and each trigger maps directly to the Purpose/Runtime workflow contract.",
-      "IN1 passed: the manifest remains the single executable phase/resource contract and the final validator checks exact manifest projection, dependency closure, skip/retry bounds, delegate identity, evidence digests, ready-set consumption, and workflow finalization.",
-      "IN2 passed: hook-based generation blocking is wired through the declared plugin surface and its lock lifecycle and Skill/Task/Bash denial paths are covered by focused regression tests.",
-      "OUT1 passed: the main context owns only the request snapshot, preview, orchestration, evidence validation, and reporting; question gathering, scoring, publication, measurement, and question-bank candidate derivation remain delegated.",
-      "The L0 ref-skill-design-rubric plus L2 evaluator overlay produced score 97 at threshold 80, passed=true, 24 applicable rules, 23 mechanically scored rules, no high/medium findings, no required fixes, and composition hash sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a."
+      "IN1: workflow-manifest.json が 11 phase の実行可能 SSOT であり続け、SKILL.md 本文は phase 表を複製せず制御不変条件のみを記述する分担が維持されている。skip/retry/exitHook の各主張は manifest 実物との突合で一致した。",
+      "IN2: hook-guard-skillgen.py の Skill/Task/Bash 遮断は hooks/hooks.json に配線され、回帰テストも実在する (配線先の本文表記の不正確さは low として別掲)。",
+      "OUT1: pre-choice は intake-request.json snapshot + read-only preview に限定され、post-choice の業務ロジック (質問収集・採点・公開・計測・question-bank 派生) は委譲先に留まるオーケストレータ境界が新設 Purpose & Output Contract で明文化された。"
     ],
     "negative_feedback": [
-      "FM-005 remains a low-severity wording smell: the description begins with a contextual noun phrase ('非エンジニアから…') rather than the rubric's preferred verb-like opening. It does not affect trigger accuracy, runtime behavior, or the four adequacy conditions."
+      "[low / smell / pre-existing] Key Rule 9 の hook 配線先の記述 (`.claude-plugin/plugin.json`) が実配線 (plugins/skill-intake/hooks/hooks.json) と一致しない。保証の実体 (hook+テスト) は実在するため severity は low。elegance 側と同一 finding の投影。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Rubric projection from the same one-context focused combined review and current-byte target as the elegance verdict. L0 rubric hash is sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d and the L0+L2 composition hash is sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a. The machine evaluator reported score 97/100, threshold 80, passed=true, one low FM-005 finding, zero high/medium findings, and no required fixes. Its BD-004 semantic trigger-to-body question was resolved in this combined context: both description triggers map to the Purpose, pre-choice, post-choice, and manifest-driven runtime sections. Focused tests: 114 passed; description, runtime-profile, goal-seek, manifest, and JSON/diff checks pass. Static PASS does not replace live or criteria-scenario evidence, which were not modified."
+  "notes": "elegance 側 verdict と同一の focused combined review (独立 evaluator context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更差分 (description・goal_seek block・Purpose & Output Contract・Key Rule 10・manifest 駆動 checklist) に対して構造規範 (記述規約整合・manifest/schema/hook/テストの実在と突合・宣言↔実装 parity・criteria との整合) を実読で確認し、combined review の単一判断として medium 以上 finding 0 件 (low 1 件のみ) を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 3 件 (IN1/IN2/OUT1)。静的 PASS は live/criteria acceptance の証拠を代替しない。"
 }

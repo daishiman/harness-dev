@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-goal-seek",
-    "skill_md_sha256": "c87ec44cc2e861f8d186252c4296c4dffe6572015c30c037e333f1757e1b3ac2"
+    "skill_md_sha256": "e16f0cba8fb766c4bcab4d539c8cee561c4a8325de55e1d552befc9467ead125"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:51Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T13:02:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,13 +26,17 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/subagent は重い反復を独立contextへ閉じ込める本文契約と一致する。最新anchor verifierはintermediate先頭のoriginal_goalを非空文字列に限定し、progress.original_goal_hashの存在とSHA-256完全一致を必須化したため、空アンカーやhash欠落を成功へ畳まずIN1のfail-closed契約を実装している。"
+      "goal_seek frontmatter block (engine: inline / fork: subagent / activation_state: semantic_evaluator_started / progress・intermediate path / max_loops) は本文の分離context契約・Anchor Step・停止条件と一致し、artifact_delivery 状態機械 (artifact_created→…→semantic_evaluator_started→handoff_complete) とも整合する。",
+      "検証ブロックの強化 (original_goal を非空文字列に限定、progress.original_goal_hash の存在必須化と SHA-256 完全一致 assert) は、旧版の `actual_hash is None or ...` による hash 欠落黙認を塞ぎ、IN1 の fail-closed 契約を実装として強めている。既存の全行 anchor 不変性・行数検査・未達 open_issues 分岐は弱められていない。",
+      "見出しの Purpose & Output Contract への改名は他 4 skill と同一規約で、本文参照 (goal-seek-paradigm.md・eval-log 命名規約・intermediate 6 必須キー) は全て実在を確認した。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell / pre-existing] IN1 の文言は「drift_signal が固定enumに収まる(検証ブロックで機械判定)」と主張するが、SKILL.md 内の inline 検証ブロックは required_keys の存在・anchor 不変性・hash 一致のみを検査し、drift_signal の enum 値そのものは検査しない。enum の機械保証は goal-seek-loop.schema.json と lint-goal-seek.py --self-test (schema↔配線テキストの enum drift 検査) に存在するが、検証ブロックが担うという IN1 の記述は実装より広い。本 diff で導入された記述ではない。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "run-goal-seek の追加修正後に current SKILL.md 全文・git diff・feedback_contract IN1/IN2/OUT1/OUT2・goal-seek paradigm参照を再読した focused combined review。original_goal非空検査とoriginal_goal_hash必須一致は既存の全行anchor不変性・行数検査・未達open_issues分岐を弱めず、今回導入の未解決 medium/high 0、L0 rubric high severity 0。"
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (goal_seek block 追加・見出し改名・検証ブロック厳格化)・feedback_contract IN1/IN2/OUT1/OUT2 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、参照 references/scripts の実在 (goal-seek-paradigm.md、lint-goal-seek.py は run-build-skill/scripts/ に実在し drift_signal enum の self-test を含むことを grep で確認)。finding は low 1 件 (IN1 の drift_signal enum 判定主体の記述過大、pre-existing) のみで high/medium 0。PASS の射程は design claim (静的設計 adequacy) に限る。"
 }
