@@ -565,7 +565,9 @@ def test_real_p05_draft_unit_inputs_follow_scheduler_not_raw_p04_gate(tmp_path: 
     report = tmp_path / "p02-proof.json"
     report.write_text(json.dumps({"covered_task_ids": dependency_claims}), encoding="utf-8")
     state = {task_id: {"state": "done", "route_report": str(report)} for task_id in dependency_claims}
-    out = INPUT_INJECTOR.resolve_execution_unit_inputs(graph, state, contract, unit_id)
+    out = INPUT_INJECTOR.resolve_execution_unit_inputs(
+        graph, state, contract, unit_id, repo_root=str(repo_root),
+    )
     assert "rejected" not in out
     assert out["dependency_unit_ids"] == obligation["depends_on"]
     assert out["covered_task_ids"] == obligation["parameters"]["covered_task_ids"]
@@ -590,7 +592,7 @@ def test_real_p05_draft_unit_inputs_follow_scheduler_not_raw_p04_gate(tmp_path: 
         for task_id in largest_dependencies
     )
     largest_out = INPUT_INJECTOR.resolve_execution_unit_inputs(
-        graph, largest_state, contract, "unit:route:C06:P05",
+        graph, largest_state, contract, "unit:route:C06:P05", repo_root=str(repo_root),
     )
     assert raw_entries == 310
     assert len(largest_out["injected_inputs"]) == 9
