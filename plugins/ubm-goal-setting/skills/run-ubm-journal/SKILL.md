@@ -20,7 +20,7 @@ effect: external-mutation
 external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: harness-maintainers
 since: 2026-08-17
-version: 0.5.0
+version: 0.6.0
 subagent_refs:
   - journal-composer
 schema_refs:
@@ -33,6 +33,7 @@ reference_refs:
   - references/output-format.md
   - references/interview-map.md
   - references/daily-habits.json
+  - references/principle-checklist.md
 source: ユーザーの既存 Obsidian Daily 運用 (02_Configs/Daily/) の仕組み化
 source-tier: internal
 last-audited: 2026-08-17
@@ -202,8 +203,13 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/va
 - **要約しすぎない**: ユーザーが出した固有名詞・数値・時刻・相手の発言はそのまま残す。
   1項目1事実に分解し、冗長な言い回しだけを削る。
 - **3小節を混ぜない**: 「現状を確認する」に評価や改善案を書かない。事実／解釈／打ち手を分離する。
-- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシートは前回から引き継ぎ、
-  ユーザーが変更を申し出た項目だけ更新する。
+- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシート・原理原則チェックシートは
+  前回から引き継ぎ、ユーザーが変更を申し出た項目だけ更新する。
+- **原理原則チェックシートは毎回出す**: `# 原理原則 チェックシート`（11 設問）は省略・要約・抜粋をしない。
+  前回ジャーナルの状態をそのまま写し、対話で変化があったチェック状態だけを更新する。
+  前回に本ブロックが無ければ `references/principle-checklist.md` のテンプレートを未チェックで書き出す。
+  **対話（Phase1-3）では読み上げない**。11 設問を聞き取りに足すとジャーナル対話が倍の長さになって
+  毎日の運用が続かない。Phase4 の生成時に器として出すだけで要求は満たされる。
 
 ## Gotchas
 
@@ -216,6 +222,10 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/va
   1週間目標の残日数は `0日（期間終了・次週分の週報は未作成）` と書く。
 - **1年目標の対応レポートは存在しない**: 前回ジャーナルからの継承のみ。満了していたら対話で確認する。
 - **フェーズ別課題チェックシートは本文の外**: `## 【お金のジャーナル】` の後、レベル1見出しとして置く。
+- **チェックシート2種を取り違えない**: `# フェーズ別 課題チェックシート`（0→1 / 1→10 / 10→100）と
+  `# 原理原則 チェックシート`（11 設問）は別ブロックで、どちらも `- [ ]` の塊なので見た目では区別できない。
+  順序は必ずフェーズ別 → 原理原則（ファイル末尾）。原理原則の本文に水平線 `---` を入れると、
+  翌日の継承がそこで打ち切られて以降の設問が静かに消える。
 
 ## Additional Resources
 
@@ -225,6 +235,8 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/va
   `references/output-format.md`（骨格の正本）/ `references/interview-map.md`（問い→セクション対応）/
   `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集し、
   `keywords` と `search_scopes`（H01 が検査するセクション）を必ず併記する。`search_scopes` を
-  書き忘れた習慣は検査不能として H02 違反になる）。
+  書き忘れた習慣は検査不能として H02 違反になる）/
+  `references/principle-checklist.md`（`# 原理原則 チェックシート` 11 設問の正本テンプレートと出力規則。
+  設問を増減するときはこのファイルと `validate-journal-output.py` の `PRINCIPLE_SECTIONS` を同時に直す）。
 - **assets**: `assets/golden-sample.md`（バリデータ PASS の見本 / Few-shot）。
 - **agents**: `journal-composer`（plugin 直下 `agents/`）。

@@ -545,3 +545,152 @@ def test_legacy_quarterly_heading_violation_names_the_written_heading(
     # タプルを素朴に f-string へ埋める退行はここで落とす。
     assert "('2ヶ月目標'" not in proc.stdout
 
+
+# --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---------------------------------
+
+# ネストしたサブ項目も設問なので先頭空白を許す (validator の CHECKBOX_RE と同形)。
+CHECKBOX = re.compile(r"^\s*-\s*\[[ xX]\]")
+
+
+def split_principle(golden: str) -> tuple[str, list[str]]:
+    """golden を「チェックシートより前」と「設問セクションの列」へ割る。
+
+    先頭要素は `# 原理原則 チェックシート` 直後の空行なので、設問は `sections[1:]` にあたる。
+    """
+    head, marker, tail = golden.partition("\n# 原理原則 チェックシート\n")
+    assert marker, "golden-sample.md に # 原理原則 チェックシート が無い"
+    return head, re.split(r"(?m)^(?=## ◇)", tail)
+
+
+def test_principle_checklist_block_is_required(tmp_path: Path, golden: str):
+    """`# 原理原則 チェックシート` ブロックごと落ちたら S01 で落とす。
+
+    「毎回丸ごと出す」が利用者の要求なので、ブロック不在は骨格違反として扱う。
+    """
+    head, _ = split_principle(golden)
+    proc = run(write(tmp_path, head), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert "S01" in proc.stdout
+    assert "# 原理原則 チェックシート" in proc.stdout
+
+
+def test_principle_checklist_excerpt_fails_per_missing_section(tmp_path: Path, golden: str):
+    """設問を抜粋したチェックシートを PASS にしない。
+
+    「1 つでもあれば可」にすると、3 設問だけ書いたチェックシートが通り、
+    毎回丸ごと出すという要求が検査を素通りして空洞化する。欠落は 1 件 1 行で出す。
+    """
+    head, sections = split_principle(golden)
+    text = head + "\n# 原理原則 チェックシート\n" + "".join(sections[:4])  # 先頭3設問だけ残す
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("K01:") == 8, proc.stdout
+    assert "K01: チェックシートに「## ◇支出は前回から下げられましたか…」の設問がありません" in proc.stdout
+
+
+def test_principle_checklist_checkbox_is_required_per_section(tmp_path: Path, golden: str):
+    """チェックボックスの有無は設問セクション単位で見る。
+
+    ブロック全体から 1 行でも見つかれば可にすると、1 設問だけ埋まっていて残り 10 設問が
+    見出しだけ、という状態を通す (P02 と同じ形の fail-open)。空にした 10 設問すべてが
+    K02 で挙がることを固定する。
+    """
+    head, sections = split_principle(golden)
+    stripped = [sections[0], sections[1]] + [
+        re.sub(r"(?m)^\s*-\s*\[[ xX]\].*\n", "", s) for s in sections[2:]
+    ]
+    text = head + "\n# 原理原則 チェックシート\n" + "".join(stripped)
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("K02:") == 10, proc.stdout
+    assert proc.stdout.count("K01:") == 0, proc.stdout
+
+
+def principle_headings(text: str) -> list[str]:
+    """`# 原理原則 チェックシート` 配下の H2 設問見出しを出現順で返す。"""
+    _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
+    return [l.strip() for l in tail.splitlines() if l.strip().startswith("## ◇")]
+
+
+def test_principle_sections_stay_in_sync_across_the_four_sources(golden: str):
+    """設問の正本が 4 箇所に分散しているので、ズレをテストで落とす。
+
+    正本テンプレート (principle-checklist.md) / Few-shot (golden-sample.md) /
+    人間向け骨格 (output-format.md) / 機械検査キー (PRINCIPLE_SECTIONS) の 4 つが
+    同じ 11 設問を指していなければならない。1 箇所だけ直す変更は必ず起きるので、
+    「実測で確認した」ではなく検査として固定する。
+    """
+    skill = PLUGIN_ROOT / "skills/run-ubm-journal"
+    template = (skill / "references/principle-checklist.md").read_text(encoding="utf-8")
+    fmt = (skill / "references/output-format.md").read_text(encoding="utf-8")
+    source = (skill / "scripts/validate-journal-output.py").read_text(encoding="utf-8")
+
+    headings = principle_headings(golden)
+    assert len(headings) == 11, headings
+    assert principle_headings(template) == headings
+    assert principle_headings(fmt) == headings
+
+    block = re.search(r"PRINCIPLE_SECTIONS = \[(.*?)\n\]", source, re.S)
+    assert block, "PRINCIPLE_SECTIONS が見つからない"
+    keys = re.findall(r'"([^"]+)"', block.group(1))
+    assert len(keys) == len(headings)
+    # 各キーは 1 つの設問だけに一致すること。複数に当たると K01 が別の設問の存在で
+    # 満たされ、欠落を検出できなくなる。
+    for key in keys:
+        assert sum(key in h for h in headings) == 1, key
+
+
+def test_principle_checklist_template_and_golden_have_same_questions(golden: str):
+    """テンプレートと golden で設問本文（チェックボックス行）が一致する。
+
+    見出しだけ揃えても設問が抜ければ意味がない。チェック状態 (`[ ]` / `[x]`) の
+    違いは正常なので、そこだけ正規化してから比べる。
+    """
+    template = (
+        PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
+    ).read_text(encoding="utf-8")
+
+    def questions(text: str) -> list[str]:
+        _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
+        return [
+            re.sub(r"\[[ xX]\]", "[ ]", l.rstrip())
+            for l in tail.splitlines()
+            if CHECKBOX.match(l)
+        ]
+
+    assert questions(golden) == questions(template)
+    assert len(questions(golden)) == 56
+
+
+def test_principle_checklist_has_no_horizontal_rule(golden: str):
+    """`# 原理原則 チェックシート` 本文に水平線を置かない。
+
+    build-journal-context の section_body は `---` をセクション終端として扱うため、
+    区切り線を書くと翌日の継承がそこで打ち切られ、以降の設問が静かに消える。
+    """
+    _, _, tail = golden.partition("\n# 原理原則 チェックシート\n")
+    assert not [l for l in tail.splitlines() if l.strip() == "---"], tail
+
+
+def test_principle_checklist_nested_checkbox_counts(tmp_path: Path, golden: str):
+    """インデントされたサブ項目**だけ**の設問も K02 を満たす。
+
+    golden をそのまま通すだけでは、この主張は固定できない。「（1）」の設問は
+    ネストした項目とトップレベルの項目を両方持つため、先頭空白を許さない正規表現へ
+    退行させても K02 はトップレベル側で満たされてしまう。ネスト以外を取り除いた
+    設問を作り、それが PASS することで初めて `^\\s*-` の `\\s*` を固定できる。
+    """
+    head, sections = split_principle(golden)
+    target = "歴史の共有ができていますか？（1）"
+    rebuilt = []
+    for sec in sections:
+        if target in sec:
+            # トップレベルのチェックボックス行だけ落とし、ネストした項目を残す。
+            sec = re.sub(r"(?m)^-\s*\[[ xX]\].*\n", "", sec)
+            assert re.search(r"(?m)^\s+-\s*\[[ xX]\]", sec), sec
+            assert not re.search(r"(?m)^-\s*\[[ xX]\]", sec), sec
+        rebuilt.append(sec)
+    proc = run(write(tmp_path, head + "\n# 原理原則 チェックシート\n" + "".join(rebuilt)),
+               GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+

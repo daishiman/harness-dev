@@ -234,6 +234,38 @@ def test_previous_journal_inherits_purpose_and_checklist(vault: Path):
     assert "◇【0→1】" in prev["phase_checklist"]
 
 
+def test_principle_checklist_absent_does_not_borrow_phase_checklist(vault: Path):
+    """前回に `# 原理原則 チェックシート` が無いとき、フェーズ別の中身を継承しない。
+
+    `# フェーズ別 課題チェックシート` は「チェックシート」を部分一致で含むため、
+    section_body の fallback に任せると本ブロックを持たない移行期のジャーナルから
+    フェーズ別の中身が原理原則チェックシートとして流れ込む。どちらも `- [ ]` の塊なので
+    取り違えても見た目では気づけない。空で返してテンプレート初期化へ倒す経路を固定する。
+    """
+    ctx = run(vault, "2026-08-18")
+    prev = ctx["previous_journal"]
+    assert prev["principle_checklist"] == ""
+    assert "◇【0→1】" not in prev["principle_checklist"]
+    assert any("principle-checklist.md" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_principle_checklist_inherited_when_present(vault: Path):
+    """前回に `# 原理原則 チェックシート` があればその中身をそのまま継承する。"""
+    prev_path = vault / "02_Configs/Daily/2026-08-17.md"
+    prev_path.write_text(
+        prev_path.read_text(encoding="utf-8")
+        + "\n# 原理原則 チェックシート\n\n## ◇ 右肩上がりになっていますか？\n\n"
+        "- [x] 会社（事業）の口座残高\n- [ ] 個人の口座残高\n",
+        encoding="utf-8",
+    )
+    ctx = run(vault, "2026-08-18")
+    body = ctx["previous_journal"]["principle_checklist"]
+    assert "◇ 右肩上がりになっていますか？" in body
+    assert "- [x] 会社（事業）の口座残高" in body
+    assert "◇【0→1】" not in body
+    assert not [w for w in ctx["warnings"] if "principle-checklist.md" in w], ctx["warnings"]
+
+
 def test_days_remaining_uses_report_period(vault: Path):
     ctx = run(vault, "2026-08-18")
     weekly = ctx["goals"]["weekly"]
