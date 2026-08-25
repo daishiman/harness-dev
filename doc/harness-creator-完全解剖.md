@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.23 / skills 32 + agents 8 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.24 / skills 32 + agents 8 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
