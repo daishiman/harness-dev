@@ -217,6 +217,136 @@ def test_load_evals_merges_score_jsonl_and_verdict(monkeypatch, tmp_path):
     assert {"run-x", "run-y"}.issubset(skills)
 
 
+def _write_review_round(cr_dir, *, skill, reviewed_at, iterations, negatives, kinds=("elegance", "rubric")):
+    """content-review 規約どおり、1 レビューを複数ファイルへ同値投影する。"""
+    cr_dir.mkdir(parents=True, exist_ok=True)
+    for kind in kinds:
+        (cr_dir / f"{kind}-verdict.json").write_text(
+            json.dumps({
+                "target": {"plugin": "demo", "skill": skill},
+                "verdict": "PASS",
+                "reviewed_at": reviewed_at,
+                "iterations": iterations,
+                "feedback_loop": {"negative_feedback": ["n"] * negatives},
+            }),
+            encoding="utf-8",
+        )
+
+
+def test_review_projections_of_one_round_collapse_to_one_record(monkeypatch, tmp_path):
+    """elegance/rubric の 2 ファイル投影は 1 レビュー = 1 レコードへ畳まれる。"""
+    eval_log = tmp_path / "eval-log"
+    _write_review_round(
+        eval_log / "demo" / "run-y" / "content-review",
+        skill="run-y", reviewed_at="2026-06-11T00:00:00Z", iterations=4, negatives=4,
+    )
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: eval_log)
+
+    recs = MOD._load_content_review_verdicts()
+    assert len(recs) == 1
+    assert recs[0]["iterations"] == 4
+    assert recs[0]["negative_feedback_count"] == 4
+
+
+def test_self_corroborating_projections_do_not_fire_friction_density(monkeypatch, tmp_path):
+    """自分自身のコピーでは相互裏付けにならない (これが二重計上バグの本体)。"""
+    eval_log = tmp_path / "eval-log"
+    _write_review_round(
+        eval_log / "demo" / "run-y" / "content-review",
+        skill="run-y", reviewed_at="2026-06-11T00:00:00Z", iterations=4, negatives=4,
+    )
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: eval_log)
+
+    evals = MOD._load_content_review_verdicts()
+    assert not any(a["kind"] == "friction_density" for a in MOD._detect_anomalies(evals))
+
+
+def test_distinct_rounds_still_corroborate_each_other():
+    """畳んでも、別ラウンド 2 件の本物の裏付けは従来どおり発火する。
+
+    content-review の verdict は同じ 2 ファイルを毎回上書きするので、eval-log 上に別ラウンドが
+    並ぶのは score.jsonl / live-trial など他 sink と合流した後になる。ここは合流後の窓を
+    直接組んで、畳み込みが「別レコード同士の裏付け」まで潰していないことを見る。
+    """
+    evals = [
+        {"skill": "run-y", "date": "2026-06-11", "verdict": "PASS", "iterations": 4,
+         "negative_feedback_count": 4, "findings": []},
+        {"skill": "run-y", "date": "2026-06-12", "verdict": "PASS", "iterations": 4,
+         "negative_feedback_count": 4, "findings": []},
+    ]
+    hit = [a for a in MOD._detect_anomalies(evals) if a["kind"] == "friction_density"]
+    assert len(hit) == 1
+    assert hit[0]["friction_records"] == 2
+
+
+def test_same_day_distinct_rounds_are_not_collapsed():
+    """同日 2 回のレビューは別ラウンド。date へ丸めて畳むと本物の裏付けが消える。"""
+    am = {"skill": "run-y", "date": "2026-06-11", "reviewed_at": "2026-06-11T01:00:00Z"}
+    pm = {"skill": "run-y", "date": "2026-06-11", "reviewed_at": "2026-06-11T20:00:00Z"}
+    assert MOD._review_identity(am) != MOD._review_identity(pm)
+
+
+def test_same_round_projections_share_one_identity():
+    """同一ラウンドの 2 投影は reviewed_at が同値なので同じキーになる。"""
+    a = {"skill": "run-y", "date": "2026-06-11", "reviewed_at": "2026-06-11T01:00:00Z"}
+    b = dict(a)
+    assert MOD._review_identity(a) == MOD._review_identity(b)
+
+
+def test_merge_keeps_the_larger_friction_when_projections_disagree(monkeypatch, tmp_path):
+    """片方だけ更新された中途半端な状態では、摩擦の大きい側を採って情報を捨てない。"""
+    cr_dir = tmp_path / "eval-log" / "demo" / "run-y" / "content-review"
+    cr_dir.mkdir(parents=True)
+    # elegance は sorted() 順で先に読まれる。先勝ちなら iterations=1 が残ってしまう。
+    for kind, iterations, negatives in (("elegance", 1, 0), ("rubric", 5, 3)):
+        (cr_dir / f"{kind}-verdict.json").write_text(
+            json.dumps({
+                "target": {"plugin": "demo", "skill": "run-y"},
+                "verdict": "PASS",
+                "reviewed_at": "2026-06-11T00:00:00Z",
+                "iterations": iterations,
+                "feedback_loop": {"negative_feedback": ["n"] * negatives},
+            }),
+            encoding="utf-8",
+        )
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: tmp_path / "eval-log")
+
+    recs = MOD._load_content_review_verdicts()
+    assert len(recs) == 1
+    assert recs[0]["iterations"] == 5
+    assert recs[0]["negative_feedback_count"] == 3
+
+
+def test_merge_survives_missing_iterations(monkeypatch, tmp_path):
+    """iterations は verdict に無ければ None。max へ直接渡すと TypeError で落ちる。"""
+    cr_dir = tmp_path / "eval-log" / "demo" / "run-y" / "content-review"
+    cr_dir.mkdir(parents=True)
+    for kind, rec in (
+        ("elegance", {"verdict": "PASS", "reviewed_at": "2026-06-11T00:00:00Z"}),
+        ("rubric", {"verdict": "PASS", "reviewed_at": "2026-06-11T00:00:00Z", "iterations": 3}),
+    ):
+        rec["target"] = {"plugin": "demo", "skill": "run-y"}
+        (cr_dir / f"{kind}-verdict.json").write_text(json.dumps(rec), encoding="utf-8")
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: tmp_path / "eval-log")
+
+    recs = MOD._load_content_review_verdicts()
+    assert len(recs) == 1
+    assert recs[0]["iterations"] == 3
+
+
+def test_different_skills_are_never_collapsed(monkeypatch, tmp_path):
+    """同時刻でも skill が違えば別レコード。"""
+    eval_log = tmp_path / "eval-log"
+    for skill in ("run-y", "run-z"):
+        _write_review_round(
+            eval_log / "demo" / skill / "content-review",
+            skill=skill, reviewed_at="2026-06-11T00:00:00Z", iterations=4, negatives=4,
+        )
+    monkeypatch.setattr(MOD, "_eval_log_dir", lambda: eval_log)
+
+    assert {r["skill"] for r in MOD._load_content_review_verdicts()} == {"run-y", "run-z"}
+
+
 def test_load_evals_empty_when_no_sources(monkeypatch, tmp_path):
     monkeypatch.setattr(MOD, "_eval_log_dir", lambda: tmp_path / "missing")
     monkeypatch.setattr(MOD, "_evals_path", lambda: tmp_path / "EVALS.json")
