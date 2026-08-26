@@ -471,4 +471,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 420 -> 434: YouTube「顧客をお客様扱いしない〜」(NH1W-BKfPUI) から 14 件を追加、削除 0 件。
     # 434 -> 450: YouTube「人を育てる前に、今の仕事を分解する」(7I6dPQTCnuw) から 16 件を追加、削除 0 件。
     # 450 -> 477: UBM大阪合宿 (2026-08-22) + 兵庫支部会 (2026-08-23) のメモから 27 件を追加、削除 0 件。
-    assert graph["node_count"] == 477
+    # 477 -> 599: 北原孝彦アカデミー3文書 (挨拶/コラム/心構え) から 122 件を追加、削除 0 件。
+    assert graph["node_count"] == 599
