@@ -315,3 +315,11 @@ node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/evaluate
 - [ ] 深度: 7 層本文の設計規律を表層でなく実装レベルで満たしたか。
 - [ ] 検証可能性: 成果物が下流 agent / 決定論ゲート (validate-*/render-*/verify-*) で機械検証できる形か。
 - [ ] 簡潔性: 冗長・重複を排し、単一責務に集中したか。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: deck-evaluator; run-by: agent -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer deck-evaluator --format json`
+を実行し、通常 selection ではなく checklist 用 envelope を判断軸へ加える。

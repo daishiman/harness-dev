@@ -419,3 +419,10 @@ hearing-facilitator の report モード出力に沿ったヒアリング結果�
 ## Handoff
 
 ユーザー承認済みの report-structure.json を structure-validator（C06）へ引き継ぐ。validator が schema/仕様確定ゲートを PASS したのち、visual-strategist（C18）がビジュアル三択を最適化し、report-composer（C19）/ render-report.js が report.html を生成する。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: report-structure-designer; run-by: orchestrator -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。起動側から
+`report-structure-designer` の selection envelope を task brief で受け取り、無ければ差し戻す。

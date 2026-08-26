@@ -17,7 +17,8 @@
 
 vendor/ 配下の byte 携行ツリー (scripts/ assets/ schemas-fixtures/ package.json
 package-lock.json) を、plan 同梱の再現性アンカー ``vendor-digest-manifest.json``
-(191 files sha256 pin) と照合する。移植元 live tree には依存しない。
+の承認済み base snapshot sha256 pin と照合する。件数は manifest が正本で、
+移植元 live tree には依存しない。
 
 additive_new_files (report 新規 Node: render-report.js / mermaid-render.js、
 および vendor/tests/ 配下、manifest 自身) と package.json/package-lock.json の
@@ -80,7 +81,7 @@ ADDITIVE_LOCAL_FORK = {
         "function snapUp",
         "function snapDown",
         "const floorW = snapUp(minW);",
-        "const sw = snapUp(fontSize - 2);",
+        "const swH = snapUp(fontSize - 2);",
         # 折れ線の可視性。どちらも消えても図は描けてしまうが、描けた図が壊れる。
         # trunkY を落とすと分岐の横走りが宛先の上辺と重なって線が枠へ溶け、
         # opts.mid を落とすと同じ段間を走る複数本が全部同じ高さで重なる。
@@ -101,7 +102,7 @@ ADDITIVE_LOCAL_FORK = {
         '<rect data-legend="1"',
         # 線種の凡例。線で意味を分けた図 (実線=同期 / 破線=非同期) を
         # 色の四角だけで説明する形へ戻ると、凡例があるのに読み解けない。
-        "function legendSwatch(it, x, y, sw) {",
+        "function legendSwatch(it, x, y, sw, swH) {",
     ),
     # 構造図 10 タイプ。配置戦略 × ノード語彙 × コネクタ語彙 の組合せで組む。
     "scripts/svg-structures.cjs": (
@@ -236,6 +237,14 @@ ADDITIVE_LOCAL_FORK = {
         "clearProps: 'opacity,transform'",
         "(el) => !el.classList.contains('fo-card')",
     ),
+    # 印刷用 HTML 表は独立パレットを持たず、deck 共通の paper/ink/tone-3 を
+    # fallback 付きで消費する component にした。局所 --surface/--accent を戻すと
+    # 第 2 の配色正本が復活するため、semantic token で固定する。
+    "assets/print-styles.css": (
+        "border: 1.5px solid var(--ink, #141412) !important;",
+        "background: var(--paper, #F7F6F3) !important;",
+        "color: var(--tone-3, #4B6681) !important;",
+    ),
     # link された stylesheet が読めなかったときに握り潰さない fail-closed。
     # upstream は catch を空にしていたため、参照先 CSS が消えた deck でも
     # 「@media print が 0 件」のまま全 check を通って PASS になる。実際に
@@ -291,10 +300,9 @@ ADDITIVE_LOCAL_FORK = {
         "setInputsCoveredByRun(categoriesToRun.includes('inputs'))",
     ),
 }
-# この辞書は manifest の additive_managed と local_fork_managed の両方に対する
-# トークン契約を持つ。名前が runtime なのは経緯であって範囲の宣言ではない。
-# 辞書を 2 つに割ると「どちらに入れるか」が毎回判断事項になり、入れ忘れた分が
-# 静かに無検査になるため、追加先はここ 1 箇所に寄せる。
+# manifest.additive_managed のうち package 2 件を除く runtime 6 件の
+# semantic token 契約。宣言集合との一致は validate_additive_runtime_manifest で
+# fail-closed に検査し、manifest だけ／実装だけに項目が増える状態を許さない。
 ADDITIVE_RUNTIME_CONTRACT = {
     # 「ブラウザが実際に読むもの」を解決する共有 SSOT。upstream に無い新規ファイル。
     # validate-print.js / validate-ai-image-assets.js / cross-deck-consistency.js の
@@ -468,6 +476,29 @@ def validate_additive_runtime() -> list[str]:
     return errors
 
 
+def validate_additive_runtime_manifest(manifest: dict[str, object]) -> list[str]:
+    """additive 宣言集合と package/runtime の semantic 実装集合を一致させる。"""
+    declared = manifest.get("additive_managed")
+    if not isinstance(declared, dict):
+        return ["vendor-digest-manifest.json: additive_managed object missing"]
+    declared_paths = {key for key in declared if key != "note"}
+    implemented_paths = {
+        f"vendor/{name}"
+        for name in ADDITIVE_PACKAGE_FILES | set(ADDITIVE_RUNTIME_CONTRACT)
+    }
+    errors: list[str] = []
+    for path in sorted(implemented_paths - declared_paths):
+        errors.append(f"{path}: additive implementation missing from manifest")
+    for path in sorted(declared_paths - implemented_paths):
+        errors.append(f"{path}: manifest additive entry has no semantic contract")
+    for key, entry in declared.items():
+        if key == "note":
+            continue
+        if not isinstance(entry, dict) or not entry.get("strategy"):
+            errors.append(f"{key}: additive entry requires strategy")
+    return errors
+
+
 def main() -> int:
     if not os.path.exists(MANIFEST):
         print(f"FAIL: manifest not found: {MANIFEST}", file=sys.stderr)
@@ -511,6 +542,7 @@ def main() -> int:
     for error in (
         validate_local_fork_manifest(manifest)
         + validate_local_fork()
+        + validate_additive_runtime_manifest(manifest)
         + validate_additive_runtime()
     ):
         mismatch += 1

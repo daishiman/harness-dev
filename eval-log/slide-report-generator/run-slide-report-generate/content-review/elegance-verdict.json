@@ -1,1 +1,37 @@
-{"target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "9786229c4a8c56ed49b552af0c1980823518f14a7272f95349fb1e9afd838846"}, "review_kind": "elegance", "verdict": "PASS", "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)", "reviewed_at": "2026-08-21T00:00:00Z", "iterations": 1, "human_review_required": false, "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "IN2", "OUT1"], "positive_feedback": ["生成後の自動評価を廃し R6 明示実行へ寄せる意図が、R3 の『post-choice品質補正: 実描画・印刷・図解の詳細gateはR6でのみ実行する』(:151) と、図解 3 本の各説明 (:186,:191,:205) の『改善レベル選択後の R6 で明示実行し、hook-postgen-eval は実行しない』で一貫している。pre_choice_forbidden 契約と本文が同じ方向を向く。", "validate-diagram-coverage.py を『R2 構成段階 (候補判定)』と『R3 生成後の成果物 (正本)』の 2 箇所へ役割分けし、前者が過剰に赤を出すことを本文自身が明言している。検査の限界が宣言されているため緑を実力以上に読まない。", "『SVG があるか』で数えない設計判断を、実測反例 (CSS の軸+節点で成立する slide-timeline) を根拠に本文へ残している。"], "negative_feedback": ["low: `## 決定論チェック` の前置き (:161)『送信前・生成後に以下の機械検証を実行する』が無条件に読め、列挙のうち R6 限定マーカーを持たないもの (verify-slides.js / validate-slide-layout.js / validate-compare-ratio.mjs / verify-report-runtime.js / validate-report-visual.py / validate-report-layout.js / evaluate-deck.js / validate-print.js) は R3 の『R6でのみ実行する』(:151) を読まないと実行時期が確定しない。R3 側に明示があるため矛盾ではなく、節見出しの記述不足。", "low: :213 の『(2) **R3 生成後**に成果物 HTML へ当てる。こちらが正本』は入力対象を述べた文だが、同じ段の bash コメント (:191) が持つ『改善レベル選択後の R6 で明示実行』の時期条件を再掲していないため、単独で読むと R3 での即時実行と取れる。", "low: Gotchas (:235,:242,:244)・R1 (:127)・R2 (:135) の path 表記が `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` の旧形のまま残り、Runtime root contract および bash 起動行の dual-root 形と食い違う。実行行 (python3/node で始まる行) は全て新形へ移行済みで動作影響は無い。"], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual:merge-guard-migration-recheck", "next_action": "none"}, "notes": "git diff HEAD で SKILL.md 差分全件 (runtime_root_policy 追加・Runtime root contract 節・dual-root への一括置換・図解被覆 3 本目の追加・validate-compare-ratio.mjs 追加・information-design.md の参照先修正・『Kanagawa 配色』→『配色トークン』) を読み、本文 285 行を通読した。参照実在確認: prompts/ 16 本 (R1-orchestrate.md 含む)・schemas/generation-report.schema.json・../../schemas/{structure,report-structure}.schema.json・workflow-manifest.json・scripts/{validate-diagram-coverage.py,validate-compare-ratio.mjs,validate-output-mode.py,setup-playwright.py,validate-slide-layout.js,validate-report-layout.js,validate-report-visual.py,validate-svg-diagram.py,validate-diagram-information.py,validate-slide-skeleton.py}・vendor/scripts/workflow-manager.js をいずれも ls で確認。plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md への参照先修正 (旧 `.../...` 省略形) も実在を確認した。effect=local-artifact ゆえ external_mutation_guard 不要。runtime_root_policy 宣言と `## Runtime root contract` 節が両方あり、python3/node 起動行は全て `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` 形 (bare 残置は散文・path 参照のみ)。pre_choice_forbidden との整合は R3:151 / 186 / 191 / 205 を突合して確認し、生成前に自動評価を起こす記述は残っていない。scripts/lint-entrypoint-artifact-first.py と scripts/lint-artifact-delivery.py は双方 OK。未解決 finding は low 3 件で medium 以上 0。"}
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-generate",
+    "skill_md_sha256": "ae1f888e1692fa4b0dac2fca5d8d93b3096569f91c8bda9345c927373fd27dc7"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator:focused-combined",
+  "reviewed_at": "2026-08-26T05:56:18Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "consumer-bootstrap、binding、consumer marker、extract-deck-principles.py を分離し、原則本文を複製せず必要な部分集合だけを渡す設計が一貫している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
+    "next_action": "none"
+  },
+  "notes": "incremental focused combined review。現行 SKILL.md と変更関連 prompt/reference、原則validator、focused tests を照合した。"
+}

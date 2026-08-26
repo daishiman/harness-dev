@@ -379,3 +379,11 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば意味
 - [ ] 深度: 7 層本文の設計規律を表層でなく実装レベルで満たし、read-through 品質を深く検証したか。
 - [ ] 検証可能性: 成果物が下流 agent（deck-evaluator）/ 決定論ゲート（validate-report-visual.py）で機械検証できる形か。
 - [ ] 簡潔性: 冗長・重複を排し、単一責務（read-through 品質の検証＋補正指針）に集中したか。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: report-quality-reviewer; run-by: agent -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer report-quality-reviewer --format json`
+を実行し、返却された selection envelope を判断軸へ加える。

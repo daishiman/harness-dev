@@ -14,6 +14,12 @@ output_language: ja
 source: plugin-plans/guide-doc-generator/component-inventory.json#C04
 since: 2026-08-17
 version: 0.2.0
+responsibility_refs:
+  - references/answer-patterns.md
+schema_refs:
+  - ../../schemas/handout-config.schema.json
+completeness_exempt:
+  - "manifest: ref kind は問い合わせに応じて正本の所在を返す参照専用面で、phase 遷移や副作用を持たないため workflow manifest は作らない。"
 ---
 
 # ref-handout-design-system
@@ -21,17 +27,20 @@ version: 0.2.0
 ## Purpose & Output Contract
 
 guide-doc-generator が生成する資料のデザイン言語について、問い合わせに対して規範を
-引用で返す参照。返す面は 5 つに限る。
+引用で返す参照。返す面は 6 つに限る。
 
 1. 部品カタログの構成データ表現
 2. CSS 変数トークン一覧
 3. アイコン規約
 4. 文章設計の型
 5. カードとナビの視覚設計 (R25)
+6. 資料作成の大原則 (考え方層)
 
 デザイン言語の出所は jp-web-design のモードB「Pop・親しみ」である。実行時に
 plugin の外を読まないため、採用した規範は `assets/jp-web-design-mode-b.md` へ
-vendoring した。回答の組み立て方は `references/answer-patterns.md` に置く。
+vendoring した。同じ理由で、資料作成の大原則は上流正本から
+`assets/deck-principles/principles.json` へ generated mirror として同梱する (面 6)。
+回答の組み立て方は `references/answer-patterns.md` に置く。
 ユーザーグローバル資産 (`~/.claude` 配下など) と絶対パスは参照しない。
 
 ## 責務境界 (Boundary)
@@ -63,6 +72,9 @@ vendoring した。回答の組み立て方は `references/answer-patterns.md` �
 | 外部参照ゼロの判定規則 | C16 `verify-handout-selfcontained.py` の CR-EXT | C16 |
 | テーマトークンの実値 | `assets/tokens/<theme>.json` | C11 (スキーマ owner は C11) |
 | 採用したデザイン言語 | `assets/jp-web-design-mode-b.md` | C04 (vendoring 実体) |
+| 資料作成の大原則の配布境界と共通契約 | `assets/deck-principles/README.md` | guide-doc-generator |
+| 資料作成の大原則の本文と閾値 | `assets/deck-principles/principles.json` (`scripts/extract-deck-principles.py` 経由) | slide-report-generator (上流正本) |
+| guide consumer の対応 | `assets/deck-principles/binding.json` | guide-doc-generator (local overlay) |
 | 回答の型 | `references/answer-patterns.md` | C04 |
 
 ## 面 1: 部品カタログの構成データ表現
@@ -213,3 +225,13 @@ viewBox を混ぜない。
   判定もしない。
 - 参照先のキーが正本ファイルに存在しないときは、記憶や推測で埋めない。
   「未確定」と答え、正本の owner へ差し戻す。
+
+## 面 6: 資料作成の大原則 (考え方層)
+
+面 4 が扱うのは本 plugin の資料に固有の文章の型である。その手前にある「誰に何を
+してほしいか」「骨格をどう組むか」「箇条書きをどこで切るか」「図解の型を何から
+決めるか」は媒体をまたぐ原則である。所在・consumer marker・selection envelope・
+上流 mirror と local overlay の境界は `assets/deck-principles/README.md` だけを読む。
+
+面 4 と選択原則が競合するときは本 plugin 固有の面 4 を優先する。判定はこの skill が
+行わず、読みやすさは C18 と C22、自己完結は C16、a11y と印刷は C17 が担う。

@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "deck-principles.schema.json",
+  "title": "資料作成の大原則カタログ",
+  "description": "references/deck-principles/principles.json の構造契約。値域の正本は本 schema の enum ではなく principles.json の axes セクションであり、schema 側は axes に列挙された key と一致することを validate-deck-principles.py が別途照合する",
+  "type": "object",
+  "required": ["schema_version", "axes", "chapters", "groups", "principles", "checklist"],
+  "additionalProperties": false,
+  "properties": {
+    "_meta": {"type": "object"},
+    "schema_version": {"type": "integer", "minimum": 1},
+
+    "axes": {
+      "type": "object",
+      "required": ["applies_to", "phase", "enforcement"],
+      "additionalProperties": false,
+      "description": "applies_to / phase / enforcement の値域定義。key が値、value が説明",
+      "properties": {
+        "applies_to": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}},
+        "phase": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}},
+        "enforcement": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}}
+      }
+    },
+
+    "chapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "no", "title_ja", "principles"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^C[0-9]{2}$"},
+          "no": {"type": "integer", "minimum": 1},
+          "title_ja": {"type": "string", "minLength": 1},
+          "principles": {"type": "string", "pattern": "^[0-9]+-[0-9]+$", "description": "この章が担当する no の閉区間"}
+        }
+      }
+    },
+
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "chapter", "title_ja"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^G[0-9]{2}$"},
+          "chapter": {"type": "string", "pattern": "^C[0-9]{2}$"},
+          "title_ja": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "no", "group", "title_ja", "applies_to", "phase", "rule", "enforcement"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^DP-[0-9]{3}$"},
+          "no": {"type": "integer", "minimum": 1},
+          "group": {"type": "string", "pattern": "^G[0-9]{2}$"},
+          "title_ja": {"type": "string", "minLength": 1},
+          "applies_to": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "phase": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "rule": {"type": "string", "minLength": 10, "description": "ツール非依存の規範。これが原則本文の正本"},
+          "thresholds": {
+            "type": "object",
+            "minProperties": 1,
+            "description": "この原則が持つ数値・列挙の正本。prompt / script / SKILL.md へ写さない"
+          },
+          "rationale": {"type": "string"},
+          "antipattern": {"type": "string"},
+          "tool_intent": {"type": "string", "description": "原本のツール操作を『何を達成したい操作か』へ畳んだもの。手順そのものは書かない"},
+          "enforcement": {"type": "string"}
+        }
+      }
+    },
+
+    "checklist": {
+      "type": "object",
+      "required": ["items"],
+      "additionalProperties": false,
+      "properties": {
+        "_note": {"type": "string"},
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "refs"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"type": "string", "pattern": "^CL-[0-9]{2}$"},
+              "text": {"type": "string", "minLength": 1},
+              "refs": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {"type": "string", "pattern": "^DP-[0-9]{3}$"},
+                "description": "根拠となる原則。空にできない = チェック項目が独自規範を新設できない"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

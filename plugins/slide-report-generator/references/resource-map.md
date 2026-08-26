@@ -6,14 +6,21 @@
 
 | 対象 | 正本 |
 |---|---|
-| plugin surface / component 一覧 | `plugin-composition.yaml` と `.claude-plugin/plugin.json` |
+| plugin capability 構成 | `plugin-composition.yaml` |
+| 配布 entry point / 依存 / 配布先 | `references/package-contract.json` |
+| native plugin メタ情報 / hook 参照 | `.claude-plugin/plugin.json` |
 | skill 実行 phase / resources | `skills/<skill>/workflow-manifest.json` |
 | agent の詳細 7 層 prompt | `skills/<owner-skill>/prompts/R*.md` |
 | agent の Task adapter | `agents/*.md` |
 | skill-local 手続き知識 | `skills/<skill>/references/resource-map.yaml` |
 | runtime schema | `schemas/*.schema.json` |
 | vendor integrity（upstream byte-pin + managed overlay） | `vendor/vendor-digest-manifest.json` + `scripts/lint-vendor-parity.py` |
-| package contract | `references/package-contract.json` |
+| 資料作成の大原則（考え方層）の本文・閾値 | `references/deck-principles/principles.json` |
+| 原則 → agent / 検査器 / 既存 reference の写像 | `references/deck-principles/binding.json` |
+| consumer 宣言・取得・受渡しの共通契約 | `references/deck-principles/consumer-bootstrap.md` |
+| tool-neutral rule → 製品固有操作の adapter | `references/deck-principles/tool-adapters.json` |
+| consumer binding の構造契約 | `schemas/deck-principles-binding.schema.json` |
+| standalone plugin へ複製するartifact set | `references/deck-principles/vendor-manifest.json` |
 
 このファイルは上記の inventory を複製しない。重複を避けるため、共有 reference の読込条件だけを保持する。
 
@@ -23,6 +30,9 @@
 
 | グループ | 対象ファイル | 読むタイミング |
 |---|---|---|
+| 資料作成の大原則（全モード共通） | `deck-principles/consumer-bootstrap.md`, `deck-principles/binding.json`, `deck-principles/principles.json` | 資料作成の判断前。prompt の marker に従い `scripts/extract-deck-principles.py --consumer <id> --format json` を実行または brief で受領する。件数・selected/xref内訳は実出力から導出し、checklistは別返却型として扱う。JSON正本を直接読まず、既存referenceとの優先関係・単位規則はbootstrapへ一本化する |
+| PowerPoint / Google Slides / HTML のtool adapter | `deck-principles/tool-adapters.json` | selectorが返すtool-neutralな `rule` / `tool_intent` を製品固有操作へ変換するときだけ読む。共通selection envelopeへ製品名や操作手順を焼き付けない |
+| binding schema / vendor artifact set | `../schemas/deck-principles-binding.schema.json`, `deck-principles/vendor-manifest.json` | consumer追加・run_by変更・vendoring更新時。bindingの構造と配布artifact集合を検査器へ委ね、promptや更新手順へ一覧を複製しない |
 | 仕様レジストリ | `spec-registry.md`, `bp-classification.md`, `v8-spec-fields.md` | SR-ID / V-ID / v8 フィールドの根拠が必要なとき |
 | 構成設計 | `structure.md`, `strategy.md`, `slide-type-decision-tree.md`, `slide-types-basic.md`, `slide-types-extended.md` | slide 構成、slideType 選択、構成粒度を決めるとき |
 | report 設計 | `report-types.md`, `report-writing-rules.md`, `report-visual-strategy.md`, `mermaid-integration.md` | `output_mode=report` の骨格、文体、visual 三択、Mermaid を扱うとき |
@@ -45,5 +55,6 @@
 - `python3 plugins/slide-report-generator/scripts/validate-plugin-completeness.py`
 - `python3 plugins/slide-report-generator/scripts/lint-reference-attribution.py plugins/slide-report-generator`
 - `python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/slide-report-generator`
+- `python3 plugins/slide-report-generator/scripts/validate-deck-principles.py --vendor-target ../guide-doc-generator/assets/deck-principles/principles.json`
 
 上記で agent prompt の配置、skill-local reference の帰属、同一 schema ID の重複を検出する。

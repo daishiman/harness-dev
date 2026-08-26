@@ -4,12 +4,12 @@
 #       意匠/技術コアを単一 SSOT 共有するビジュアル生成 orchestrator プラグインの自己記述。
 
 name: slide-report-generator
-description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは upstream byte-pin + 明示local overlay で携行。
+description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは承認済み base snapshot の byte-pin + 明示local overlay で携行。
 kind: plugin-composition
-version: 0.1.26
+version: 0.1.27
 owner: harness maintainers
 since: 2026-07-05
-last-audited: 2026-07-05
+last-audited: 2026-08-26
 
 contract:
   intent: 1 プラグイン内で output_mode(slide|report) を分岐し、意匠/技術コア(Kanagawa/16:9/GSAP/SVG2/Codex Image2/決定論レンダラ)を共有したまま、slide=1スライド1メッセージ・report=読み物/1項目1ビジュアルの成果物を生成・修正・横断検証する統一抽象を提供する。
@@ -20,7 +20,7 @@ contract:
     - 意匠/技術層(配色/16:9/最小1.4rem/GSAP/インラインSVG2/印刷CSS/letterbox/Codex Image2/style genome/決定論レンダラ)は単一 SSOT で共有し slide/report で重複させないこと
     - コンテンツ意図層のみ output_mode で分岐する (slide=1メッセージ/chip強制/長文禁止 BP11-13、report=読み物/セクション+段落/1項目1ビジュアル)
     - Node 製レンダリング/画像/印刷/検証エンジンは vendor surface として携行し Python-stdlib へ書き換えないこと。skill/agent は Bash(node *) で起動する
-    - vendor integrity は vendor-digest-manifest.json を正本とし、upstream 非改変ファイルは sha256 byte-pin、明示的 local fork/additive は owner 付き semantic contract + tests/goldens で検証すること (移植元 live tree 非依存)
+    - vendor integrity は vendor-digest-manifest.json を正本とし、承認済み base snapshot は sha256 byte-pin、明示的 local fork/additive は semantic contract + tests/goldens で検証すること (移植元 live tree 非依存)
     - report runtime を含む local fork は manifest の local_fork_managed に全件列挙し、未宣言の pin 不一致を許可しないこと。render-report.js の品質は tests_min>=80 + lint で担保すること
     - sub-agent/skill 本文は prompt-creator 7 層構造 (L1 基本定義 → L7 ユーザーインタラクション) で記述すること
     - 成果物本文・ヒアリング・評価は日本語、パラメーター名・JSON キー・CLI 引数・output_mode/reportType の enum 値は英語のままとすること
@@ -58,7 +58,7 @@ capabilities:
   # === Skills (kind=skill) ===
   # 参照専用 (kind=ref / effect=none)。図解 1 枚を描くときの手続き知識の索引。
 
-  # === Agents (kind=agent) — plugin.json agents 配線と 1 対 1 対応 ===
+  # === Agents (kind=agent) — package-contract.json entry_points.agents と 1 対 1 対応 ===
 
   # === Commands (kind=command) ===
 
@@ -69,6 +69,14 @@ capabilities:
   - { kind: script, ref: scripts/build-slide-skeleton-js.py,         tier: core }
   - { kind: script, ref: scripts/build-slide-skeletons.py,           tier: core }
   - { kind: script, ref: scripts/validate-output-mode.py,          tier: core }
+  # 資料作成の大原則カタログ (references/deck-principles/principles.json) から、
+  # agent ごとに applies_to × phase で絞った部分集合だけを返す抽出器。
+  # agent prompt は --consumer <id> だけを書く (条件と pin は binding.json が正本)。
+  - { kind: script, ref: scripts/extract-deck-principles.py,        tier: core }
+  # 上記カタログの fail-closed ゲート。採番連続性・分類整合・軸の値域・相互参照の実在に加え、
+  # binding.json の select を実際に評価して core_refs ⊆ 抽出結果を検証し、
+  # --vendor-target で guide-doc-generator への複製を sha256 で追従確認する。
+  - { kind: script, ref: scripts/validate-deck-principles.py,      tier: core }
   - { kind: script, ref: scripts/lint-vendor-parity.py,           tier: core }
   - { kind: script, ref: scripts/validate-plugin-completeness.py,  tier: core }
   # skill 私有 references/ の帰属完全性 (resource-map.yaml が orphan/dangling 0) を検査。
@@ -151,12 +159,26 @@ capabilities:
 
 dependencies:
   # 本 DAG は skill→agent / command→skill の実呼出構造を全被覆する。
-  # 循環検出は lint-dependency-direction.py が担う。plugin 自身の component/capability 正本は本 composition の capabilities[] と .claude-plugin/plugin.json entry_points (両者は validate-plugin-completeness.py が 1:1 照合)。
+  # 循環検出は lint-dependency-direction.py が担う。plugin 自身の capability 構成は本 composition の capabilities[]、配布 entry point は references/package-contract.json を正本とし、validate-plugin-completeness.py がディスク実体と照合する。
   # 各 agent の粒度別依存 (前提/後続・R1→R2→R3 連鎖) の正本は該当 skill の workflow-manifest.json resources[]。build 計画の被覆正本は plugin-plans/slide-report-generator/component-inventory.json (validate-plan-coverage.py が sweep)。
   # --- command → skill 構造エッジ (entry points) ---
   - { from: commands/slide-report-generate.md, to: skills/run-slide-report-generate, type: calls }
   - { from: commands/slide-report-generate.md, to: scripts/validate-output-mode.py,  type: calls }
   - { from: commands/slide-report-status.md,   to: skills/run-slide-report-generate, type: reads }
+  # --- 資料作成の大原則: owner skill → selector → 正本データ/契約 ---
+  - { from: skills/run-slide-report-generate, to: scripts/extract-deck-principles.py,                         type: calls }
+  - { from: skills/run-slide-report-generate, to: references/deck-principles/consumer-bootstrap.md,          type: reads }
+  - { from: skills/run-slide-report-modify,   to: scripts/extract-deck-principles.py,                         type: calls }
+  - { from: skills/run-slide-report-modify,   to: references/deck-principles/consumer-bootstrap.md,          type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/principles.json,               type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/binding.json,                  type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/tool-adapters.json,            type: reads }
+  - { from: scripts/validate-deck-principles.py, to: schemas/deck-principles.schema.json,                    type: reads }
+  - { from: scripts/validate-deck-principles.py, to: schemas/deck-principles-binding.schema.json,            type: reads }
+  - { from: scripts/validate-deck-principles.py, to: references/deck-principles/principles.json,             type: reads }
+  - { from: scripts/validate-deck-principles.py, to: references/deck-principles/binding.json,                type: reads }
+  - { from: scripts/validate-deck-principles.py, to: references/deck-principles/tool-adapters.json,          type: reads }
+  - { from: scripts/validate-deck-principles.py, to: references/deck-principles/vendor-manifest.json,        type: reads }
   # --- skill → agent 呼出 ---
   - { from: skills/run-slide-report-generate, to: agents/hearing-facilitator,       type: calls }
   - { from: skills/run-slide-report-generate, to: agents/structure-designer,        type: calls }
@@ -183,6 +205,16 @@ external_dependencies:
     version: ">=1.4.0 <2.0.0"
     relation: skill-feedback-ssot-provider
     required_entry_points: [run-skill-feedback]
+  system-spec-harness:
+    version: ">=0.1.0 <1.0.0"
+    relation: information-priority-contract-provider
+    required_entry_points: [ref-system-design-knowledge]
+    required_runtime_scripts: [scripts/validate-information-priority.py]
+    required_runtime_schemas: [schemas/information-priority-map.schema.json]
+    required_runtime_resources:
+      - skills/ref-system-design-knowledge/references/information-design.md
+    edges:
+      - { from: skills/run-slide-report-generate, to: skills/ref-system-design-knowledge, type: reads }
 
 eval_sinks:
   - EVALS.json

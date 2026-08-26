@@ -83,7 +83,15 @@ def lint_skill(skill_dir: Path) -> list[str]:
             f"{skill_dir.name}: references/ が {len(ref_files)} 件 (>=3) だが"
             " resource-map.yaml が不在 (lint-skill-tree 第13条)"
         ]
-    listed = _map_files(rmap)
+    try:
+        listed = _map_files(rmap)
+    except yaml.YAMLError as exc:
+        mark = getattr(exc, "problem_mark", None)
+        where = f" line {mark.line + 1}, column {mark.column + 1}" if mark else ""
+        problem = getattr(exc, "problem", None) or str(exc).splitlines()[0]
+        return [
+            f"{skill_dir.name}: resource-map.yaml YAML invalid{where}: {problem}"
+        ]
     # skill dir 相対に正規化した listed の basename と full 相対の両方で照合
     listed_norm = {p.lstrip("./") for p in listed}
     findings: list[str] = []

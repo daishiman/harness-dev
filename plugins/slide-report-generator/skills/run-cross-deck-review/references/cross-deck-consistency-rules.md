@@ -44,7 +44,7 @@
 - **CONST_003 (P1のユーザー承認必須)**: P1（要判断）の修正提案は下流での適用前にユーザー確認を必須とする。P0（即時修正候補）と P1 の区別は残すが、cross-deck-reviewer は適用（ファイル書き換え）を一切行わず、分類済み提案を run-slide-report-modify へ委譲する。
   - 目的: コンテンツ追加・スライド追加など編集判断を伴う変更を勝手に適用しない。
   - 背景: 比喩追加やスライド追加は意図に依存するため、機械的差分修正（P0候補）と区別する必要がある。
-- **CONST_004 (read_only原則・修正の委譲)**: cross-deck-reviewer は検出・分類専任で、いかなるファイル（structure.md / ソースmd / index.html / styles.css / scripts.js）も直接書き換えない。P0/P1/P2 いずれの修正も、適用は後続の run-slide-report-modify（slide-modifier）へ委譲する。
+- **CONST_004 (read_only原則・修正の委譲)**: cross-deck-reviewer は検出・分類専任で、いかなる入力ファイル（structure.md / ソースmd / index.html / index.html に inline または link された CSS/JS）も直接書き換えない。P0/P1/P2 いずれの修正も、適用は後続の run-slide-report-modify（slide-modifier）へ委譲する。
   - 目的: 横断検証が誤って生成物を破壊するリスクを避け、修正経路を run-slide-report-modify に一本化する。
   - 背景: P5は検証中心の工程であり、デッキ本体・structure.md・ソースmd の修正は専任エージェント（run-slide-report-modify）の責務だから。
 - **CONST_005 (絵文字ゼロ)**: 修正・提案・レポート出力に絵文字を使わない。アイコンが要る場合はFont Awesomeの `fa-*` 名で表現する。

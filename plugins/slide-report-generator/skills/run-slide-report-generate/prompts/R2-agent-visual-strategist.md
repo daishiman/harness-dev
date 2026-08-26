@@ -401,3 +401,11 @@ report-structure-designer が付した第一候補付きの section 例:
 ## Handoff
 
 種別・配置・rationale を付与した更新済み構造を、html-generator / slide-renderer（slide）または report-composer（C19）/ render-report.js（report）と ai-image-diagram-producer（Codex 画像）へ引き継ぐ。実描画は各生成器が担い、本エージェントは意思決定層として決定のみを渡す。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: visual-strategist; run-by: agent -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer visual-strategist --format json`
+を実行し、返却された selection envelope を判断軸へ加える。

@@ -104,10 +104,10 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 まず機械的チェックで shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合する:
 
 ```bash
-node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all --json
 ```
 
-FAIL／WARN 項目について `Task` で **cross-deck-reviewer** を起動 (`isolation: fork`)。cross-deck-reviewer は**単一 fork context 内で Agent A/B/C の 3 レンズ**(論理・構造 / メタ・発想 / システム・戦略) として用語／意匠／構成の観点を多角分析し (再 fork＝SubAgent 起動はしない)、**4 条件** (矛盾なし／漏れなし／整合性／依存関係整合) で判定する。用語ゆれ (メタファー・専門語の不一致)・意匠差 (配色・レイアウト・shared-spec の乖離)・構成不整合 (章立て・粒度・難易度段階の崩れ) を洗い出す。
+終了コード 0／1／2 と parse 可能な JSON をそれぞれ PASS／WARN／FAIL の検査結果として受け取り、判定を一次根拠として `Task` で **cross-deck-reviewer** を常に起動する (`isolation: fork`)。機械チェックが全 PASS でも意味・構成上の C3-C10 は自動判定できないため省略しない。JSON を取得できない起動・解析不能だけを実行障害として扱う。cross-deck-reviewer は**単一 fork context 内で Agent A/B/C の 3 レンズ**(論理・構造 / メタ・発想 / システム・戦略) として用語／意匠／構成の観点を多角分析し (再 fork＝SubAgent 起動はしない)、**4 条件** (矛盾なし／漏れなし／整合性／依存関係整合) で判定する。用語ゆれ (メタファー・専門語の不一致)・意匠差 (配色・レイアウト・shared-spec の乖離)・構成不整合 (章立て・粒度・難易度段階の崩れ) を洗い出す。
 
 ### R3: 網羅検出結果の報告
 
@@ -117,12 +117,14 @@ FAIL／WARN 項目について `Task` で **cross-deck-reviewer** を起動 (`is
 
 ```bash
 # シリーズ横断整合性の機械チェック (shared-spec/URL/CSS変数/GSAP/印刷)
-node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all --json
 # 個別成果物の統一感検証 (テーマ・スタイル整合)
 node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" <deck-dir>
 ```
 
-## ゴールシークと受入基準 (combinators)
+## ゴールシーク実行
+
+### 受入基準 (combinators)
 
 `with-goal-seek`(max_loops 5) + `with-feedback-contract`。ループ本体は `Task` で cross-deck-reviewer worker (単一 fork) へ委譲し、親へは横断レポートのみ返す。受入基準は当該 skill の goal／checklist 由来の受入条件 (purpose-acceptance):
 
@@ -153,7 +155,7 @@ node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-co
 | 用途 | 出力先 |
 |---|---|
 | 本 skill 資産 | `plugins/slide-report-generator/skills/run-cross-deck-review/` |
-| 横断レポート | 呼び出し時に指定 (既定は series-dir 直下の分析レポート) |
+| 横断レポート | conversation-output として呼び出し元へ返す (永続ファイルは作成しない) |
 
 ## 追加リソース
 

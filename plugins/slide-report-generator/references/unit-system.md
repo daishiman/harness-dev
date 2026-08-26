@@ -250,18 +250,17 @@ viewBox がスライド領域に伸縮するため、画面・印刷で完全に
 
 ### Phase B: 既存 styles.css の段階置換
 対象:
-1. `vendor/assets/src/styles/variables.css` … `--fs-*` トークン定義を vw 化
-2. `vendor/assets/src/styles/base.css` … 外周 padding / gap を vw 化
-3. `vendor/assets/src/styles/slide-types.css` … 各 `.slide-*` の rem を §3 の表に従って置換
-4. `vendor/assets/src/styles/print.css` … `@page` と viewport 固定のみ残し、印刷専用 font-size 上書きを全削除
-5. `vendor/assets/print-styles.css` … 同上
-6. `vendor/assets/slide-template.html` / `slide-template-single.html` / `d3-slide-template.html` … インラインスタイル除去
-7. `vendor/assets/structure-template.md` … サンプル値更新
-8. `references/theme-style.md` … トークン定義表を vw に更新
-9. `references/print-layout.md` … §フォント縮小ルール（l.222-358）を全削除し、本ファイルへのリンクに置換
-10. `vendor/scripts/validate-print.js` … 印刷専用 font-size 上書きを「警告」から「禁止」へ
-11. `vendor/scripts/cross-deck-consistency.js` … rem 検出を追加
-12. `vendor/scripts/html-scaffold.js` … テンプレート出力を vw に変更
+旧 `vendor/assets/src/styles/` 4 本は import/consumer が無く現行値の第 2 正本だったため、
+旧単一 HTML snapshot とともに 2026-08-26 に削除した。移行対象は live 経路だけに限定する。
+
+1. `vendor/assets/print-styles.css` … `@page` と viewport 固定のみ残し、印刷専用 font-size 上書きを全削除
+2. `vendor/assets/slide-template.html` / `d3-slide-template.html` … インラインスタイル除去
+3. `vendor/assets/structure-template.md` … サンプル値更新
+4. `references/theme-style.md` … トークン定義表を vw に更新
+5. `references/print-layout.md` … §フォント縮小ルールを全削除し、本ファイルへのリンクに置換
+6. `vendor/scripts/validate-print.js` … 印刷専用 font-size 上書きを「警告」から「禁止」へ
+7. `vendor/scripts/cross-deck-consistency.js` … rem 検出を追加
+8. `vendor/scripts/html-scaffold.js` … テンプレート出力を vw に変更
 
 ### Phase C: クリーンアップ
 - `print-layout.md` の§フォント縮小ルール削除

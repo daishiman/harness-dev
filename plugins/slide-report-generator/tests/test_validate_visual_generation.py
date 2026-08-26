@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -46,7 +47,7 @@ FLAT_DECK = """<!doctype html><html><head><style>
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["python3", str(VALIDATOR), *args], capture_output=True, text=True, check=False
+        [sys.executable, str(VALIDATOR), *args], capture_output=True, text=True, check=False
     )
 
 

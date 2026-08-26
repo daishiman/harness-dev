@@ -1,1 +1,36 @@
-{"target": {"plugin": "slide-report-generator", "skill": "run-slide-report-modify", "skill_md_sha256": "dd3e4e5607604870c42acffdb39f100a9579766a98d5705da8c2dda5b98ba613"}, "review_kind": "elegance", "verdict": "PASS", "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)", "reviewed_at": "2026-08-21T00:00:00Z", "iterations": 1, "human_review_required": false, "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1"], "positive_feedback": ["pre-choice で main context が最小修正版を作り、Task 起動 (slide-report-modifier) は light/standard/detailed 選択後だけという境界が、選択後ワークフロー冒頭 (:112)・R2 (:120)・ゴールシーク節 (:155,:160) の 4 箇所で一貫して書かれている。", "worker が Task を持たない (tools は Read/Write/Bash) ため下流 agent は本 skill が dispatch する、という再 fork 禁止の写像が明示されている。"], "negative_feedback": ["low: 役割行 (:91) と Gotchas『配置非依存』(:171) が `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` の旧形のまま残り、Runtime root contract および bash 起動行 (:135-147) の dual-root 形と食い違う。実行行は全て新形で動作影響なし。"], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual:merge-guard-migration-recheck", "next_action": "none"}, "notes": "git diff HEAD の差分 (runtime_root_policy 追加・Runtime root contract 節・bash 起動行 6 本の dual-root 化・『Kanagawa 配色』→『配色トークン』) を全て読み、本文 198 行を通読した。参照実在確認: prompts/{R1-orchestrate.md,R2-agent-slide-report-modifier.md}・schemas/modification-report.schema.json・../../schemas/{structure,report-structure}.schema.json・workflow-manifest.json・references/{modification-rules.md,report-modification-rules.md}・scripts/{setup-playwright.py,validate-output-mode.py,validate-report-visual.py}・vendor/scripts/{verify-slides.js,evaluate-deck.js,validate-print.js,render-report.js,verify-report-runtime.js}。effect=local-artifact ゆえ external_mutation_guard 不要。runtime_root_policy 宣言と `## Runtime root contract` 節が揃い、python3/node 起動行は全て dual-root 形。差分は mode 判定・R1-R3・境界・受入基準を変更していない。未解決 finding は low 1 件。"}
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-modify",
+    "skill_md_sha256": "1df228931e858d92c2178ed5b198674e67dfb19595b89d63368acd8a739de8fd"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator:focused-combined",
+  "reviewed_at": "2026-08-26T05:56:18Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "consumer固有原則の抽出を局所修正・mode維持・非対象箇所不変という既存責務を広げず追加し、抽出実行責務とbindingが一致している。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
+    "next_action": "none"
+  },
+  "notes": "incremental focused combined review。現行 SKILL.md、modifier prompt、consumer-bootstrap、binding、focused tests を照合した。"
+}

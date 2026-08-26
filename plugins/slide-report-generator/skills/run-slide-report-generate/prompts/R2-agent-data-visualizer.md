@@ -320,3 +320,10 @@ structure-validator により structure が仕様準拠と判定され、かつ 
 - [ ] 深度: 7 層本文の設計規律を表層でなく実装レベルで満たしたか。
 - [ ] 検証可能性: 成果物が下流 agent / 決定論ゲート (validate-*/render-*/verify-*) で機械検証できる形か。
 - [ ] 簡潔性: 冗長・重複を排し、単一責務に集中したか。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: data-visualizer; run-by: orchestrator -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。起動側から
+`data-visualizer` の selection envelope を task brief で受け取り、無ければ差し戻す。

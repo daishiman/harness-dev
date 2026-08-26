@@ -690,30 +690,27 @@
      HTML表 世界観統一ユーティリティ（D9 / 角丸タイル・淡色面・紺アウトライン）
 
      画像図解と並ぶ HTML 表・料金表を kanagawa-comic-diagram の見た目に揃える。
-     淡色面 var(--surface)・紺アウトライン var(--ink)・同色アクセント var(--accent)。
+     共通デザイントークンの paper・ink・tone-3 を消費し、局所パレットは定義しない。
      印刷では color-adjust:exact で面色を保持。任意適用（.wb-table 付与時のみ）。
      ----------------------------------------------------------------- */
   .wb-table {
-    --surface: #F2F1EA;
-    --ink: #2B3A55;
-    --accent: #4D699B;
     border-collapse: separate !important;
     border-spacing: 0 !important;
-    border: 1.5px solid var(--ink) !important;
+    border: 1.5px solid var(--ink, #141412) !important;
     border-radius: 10px !important;
     overflow: hidden !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
   .wb-table th {
-    background: var(--ink) !important;
+    background: var(--ink, #141412) !important;
     color: #FAFAFA !important;
     border: none !important;
-    border-bottom: 1.5px solid var(--ink) !important;
+    border-bottom: 1.5px solid var(--ink, #141412) !important;
   }
   .wb-table td {
-    background: var(--surface) !important;
-    color: var(--ink) !important;
+    background: var(--paper, #F7F6F3) !important;
+    color: var(--ink, #141412) !important;
     border: none !important;
     border-bottom: 1px solid rgba(43, 58, 85, 0.18) !important;
   }
@@ -721,8 +718,8 @@
     background: #FAFAF7 !important;
   }
   .wb-table .wb-accent {
-    color: var(--accent) !important;
-    -webkit-text-fill-color: var(--accent) !important;
+    color: var(--tone-3, #4B6681) !important;
+    -webkit-text-fill-color: var(--tone-3, #4B6681) !important;
     font-weight: 700 !important;
   }
 }

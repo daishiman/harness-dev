@@ -385,3 +385,11 @@ visual-strategist が visual を確定した section の例:
 ## Handoff
 
 生成した report.html を deck-evaluator（C13・report rubric）へ引き継ぐ。生成後評価で視覚崩れ・可読性・図解適合を検査し、最終的な視覚確認（ブラウザ表示）を経る。局所修正が必要な場合は slide-report-modifier（C15）へ回す。
+
+## 資料作成の大原則（適用する規範の引き方）
+
+<!-- deck-principles-consumer: report-composer; run-by: agent -->
+
+共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer report-composer --format json`
+を実行し、返却された selection envelope を判断軸へ加える。

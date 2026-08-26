@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "role": "ツール中立の rule/tool_intent を、利用ツール向けの短い実行 brief と確認文へ投影する。原則本文・閾値は持たない"
+  },
+  "adapters": {
+    "powerpoint": {
+      "label": "PowerPoint",
+      "brief": "rule を判断基準として保ち、tool_intent がある項目だけを PowerPoint の標準機能で実現する。アプリ固有操作を新しい原則へ昇格させない。",
+      "intent_prefix": "標準機能を使って「",
+      "intent_suffix": "」を達成する。",
+      "checklist_prompt": "スライドショー表示と配布形式の双方で、各チェック項目の結果を確認する。"
+    },
+    "google-slides": {
+      "label": "Google Slides",
+      "brief": "rule を判断基準として保ち、tool_intent がある項目だけを Google Slides の標準機能で実現する。共同編集設定を原則本文へ混ぜない。",
+      "intent_prefix": "標準機能を使って「",
+      "intent_suffix": "」を達成する。",
+      "checklist_prompt": "編集画面だけでなくプレゼン表示と共有権限下の閲覧結果でも、各チェック項目を確認する。"
+    },
+    "html": {
+      "label": "HTML",
+      "brief": "rule を判断基準として保ち、tool_intent は既存のHTML/CSS/JSレンダラと単位・token正本へ写像する。アプリ固有の操作名を直訳しない。",
+      "intent_prefix": "既存レンダラとtokenで「",
+      "intent_suffix": "」を達成する。",
+      "checklist_prompt": "実ブラウザ表示と印刷レンダリングの双方で、各チェック項目の結果を確認する。"
+    }
+  }
+}

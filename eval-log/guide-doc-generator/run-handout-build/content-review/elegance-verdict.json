@@ -2,20 +2,20 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "run-handout-build",
-    "skill_md_sha256": "d6b6739ec2b5af16bf1b1a703bad1733782b1fd7692014bf306e553387de6bc3"
+    "skill_md_sha256": "f6db3c498c189593f13cd98937926aa74829659742984b179a744748657f514e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator:focused-combined",
+  "reviewed_at": "2026-08-26T05:57:06Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 0
   },
-  "reviewer": "cr-goalseek-canon-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
-  "iterations": 6,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,25 +26,13 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "F1 (high) は閉じた。:353 の canon_keys を goal-seek-loop.schema.json の intermediate_artifacts.items.required と集合比較したところ完全一致 (差分 0)。:338 の散文列挙も同じ 6 キーで、`iteration` が正本どおり先頭に戻っている。canon_keys / required_keys の分割により『正本が必須とするもの』と『本 skill が足すもの』が検証コード上でも分離され、要求元を取り違えられない形になった。",
-      "F1 の第 2 要件 (行数対応検査) も入った。:363 `assert len(rows) == rows[-1]['iteration'] + 1` は for ループの外 (インデント 0) に正しく置かれており、全行走査後に 1 回評価される。この式は欠番 ([0,1,3])・重複 ([0,1,1])・開始ずれ ([1,2,3]) をいずれも捕捉する。正本 render-combinators.py:452 が progress.json 側の iteration と突き合わせるのに対し本文は jsonl 内の自己整合に留まるが、本 skill の検証ブロックが progress.json を引数に取らない設計 (:347 の引数は goal-spec と jsonl の 2 つ) と整合しており、取れる範囲での最大の検査になっている。",
-      "F2 (medium) は閉じた。:339 が独立 bullet として立ち、(a) original_goal_hash が正本に無い local 拡張であること、(b) 正本では progress.json トップレベルに 1 つ置かれ照合相手が intermediate_artifacts[0].original_goal であること、(c) 本 skill は照合相手を goal-spec.json に取るため行ごとに持たせること、の 3 点が明記された。『後者を正本準拠と呼ばない』の一文で境界の呼び分けまで固定されている。iteration 5 で指摘した『正本にない意味を本文が与えている』状態は、その事実を本文が自己申告する形へ変わり、claim と実体の乖離が解消した。",
-      "F3 (medium) は閉じた。frontmatter schema_refs:31 へ `plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json` が repo 相対で追加された。解決可能性を実装で確認済み — lint-skill-completeness.py:167-193 の _resolve_ref は (a) skill dir 相対 -> (b) repo root 相対 -> (c) skill 名解決 の順に試すため、`../../schemas/...` と `plugins/...` の混在は正しく解決される。実行結果も `ok: run-handout-build (completeness)`。同一 plugin の run-skill-feedback/SKILL.md:27-29,36-39 が reference_refs / script_refs で同じ混在をしている先例とも一致する。",
-      "『schema_refs の追加が既存テストを壊さない』という事前確認は正しい。ただし根拠は contract_lib が schema_refs を見ないことだけではない — schema_refs を実際に消費するのは lint-skill-completeness.py (REF_KEYS_FOR_CATEGORY:61 で schemas カテゴリの充足判定に使い、MD-208 修復以降は実在まで検証する) / validate-plugin-package.py:52 (推奨キーの有無) / live-trial-verdict.py:103 の 3 箇所である。前者は実在検証を行うため『存在しないパスを足すと落ちる』経路が実在したが、追加したパスは実在し repo root 相対で解決されるため通った。validate-plugin-package.py --plugin-dir plugins/guide-doc-generator の 2 件の fail はいずれも run-skill-feedback の feedback_contract に関するもので run-handout-build に紐づく finding は 0 件、かつ本差分以前から存在する。",
-      "F4 (low, 任意) の扱いは受け入れる。写しを schema 読み出しへ変えず、:340 末尾に『正本の enum が将来変わっても写しは自動追随しないが、劣化方向は「通すべき新値を止める」側なので fail-closed を崩さない』と明示した対応で足りる。指摘の本体は『複製がある』ことではなく『複製が古びる経路が見えないこと』であり、経路とその劣化方向が本文に書かれたことで読み手が判断できる状態になった。drift_values を schema の enum と集合比較したところ現時点では完全一致 (差分 0)。",
-      "F5 (low) は閉じた。eval-log/guide-doc-generator/README.md を新規作成し、jsonl を書き換えずに provenance を記録した。指摘した 2 点 (drift_signal: none / iteration 欠落・loop 代替) の両方が具体値つきで記載され、さらに『3 行はいずれも非空の delta_from_original を持つので aligned は事実に反し、推定して埋めるのは捏造にあたる』と、なぜ書き換えないかの理由まで残っている。『現行規約下の新しい run はこのファイルへ追記せず別ファイルとして始めること』という混在防止の指示も入っており、指摘の remedy (provenance 注記 or archive 退避) を上回る形で閉じている。",
-      "退行なし。差分は 3 hunk (frontmatter schema_refs 1 行 / :338-340 の配線 3 bullet / :353-363 の検証ブロック) に限られ、`12 コード`/`12 項目` の grep 0 件、:247 の high 台帳と未読節の 2 条件、:249 の not_reviewed 2 群、:292 の release 行 3 連言はいずれも無傷。lint-goal-seek.py exit0 / pytest 64 passed / lint-skill-completeness ok。",
-      "lint-goal-seek.py の VERIFICATION_REQUIRED_TOKENS (`required_keys` / `original_goal_hash` / `hashlib.sha256`) は 3 トークンとも本文に残存し、canon_keys / required_keys の分割によって欠落していない (`required_keys = canon_keys | {'original_goal_hash'}` が両トークンを同時に運ぶ)。lint 実測も exit0。"
+      "runtime root、原則抽出、task brief の selection envelope が一続きに定義され、既存の設計・検証分離を維持している。"
     ],
-    "negative_feedback": [
-      "[low / smell] 追加した行数対応検査 :363 は、iteration が 0 始まり・単調増加・欠番なし・draft と release をまたいで連続、という 4 つの前提の上に立つが、本文はそのどれも明示していない。導出は可能である — 0 始まりは正本 progress.iteration の description『現在の周回番号 (0始まり)』に由来し (:338 が 6 キーの意味を再定義しないと宣言している以上ここは正本の意味に従う)、単調連続は frontmatter :118『draft も release もこの 1 個 (goal_seek.max_loops) の下で回る』という単一予算と append-only、および :338『次周回は直前の merged_directive_for_next を必須入力にする』(= 毎周回、最終行を読む) から従う。したがって欠陥ではなく未記載である。ただし『draft で停止 -> 利用者の指摘を待つ -> release で再開』(:330-331) の再開時に番号を 0 から振り直す実装を書くと、この assert が正当な run を落とす。失敗方向は fail-closed かつ即座に可視なので severity は low に留める。remedy (任意): :338 か :339 へ『iteration は 0 始まりで、release 段の再開時も jsonl 最終行の iteration+1 から続ける (段をまたいで振り直さない)』の 1 句を足す。",
-      "[low / smell] 新設 README が、本文 :341 の『progress には各 checklist の status と併せて現在の build_stage を記録する』を機械的に検査するものが存在しないことを可視化した (README『### ゴールシーク検証 の検証ブロックは progress.json を読まない。上の不整合が機械的に検出されないのはこのため』)。実アーティファクト run-handout-build-progress.json は build_stage を欠き checklist も正本 schema の {id,text,status} 形ではない。これは本差分が持ち込んだものではなく、検証ブロックが元から progress.json を引数に取らないことに由来する既存の性質であり、本文もこの規則を機械検査済みとは主張していない。また :341 の狙い (draft の停止を全項目 PASS と書かせない) の実効的な歯止めは :328 / :339 の completed 宣言条件が別に持っている。severity は low。remedy (任意): 検証ブロックの引数へ progress.json を足して build_stage の存在と checklist 形を assert するか、検査しない旨を本文へ明記する。",
-      "[low / smell] F4 の残差。:340 の注記により『写しが古びる』ことは読み手に見えるようになったが、古びたことを検出する機械は依然として無い (lint-goal-seek.py:374-386 の enum self-test が見るのは render-combinators.py と with-goal-seek.patch だけで、量産済み SKILL.md は対象外)。現時点で drift_values は schema の enum と完全一致しており実害は無い。remedy (任意・iteration 5 から不変): lint-goal-seek.py の enum self-test の対象へ量産 SKILL.md を含める。"
-    ],
-    "iteration": 6,
-    "iteration_limit": 6,
-    "hook_trigger": "manual",
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
     "next_action": "none"
   },
-  "notes": "content-review-protocol.md §『incremental: unresolved semantic batch』の focused combined review を 1 context で実行し、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実行しておらず、実行したとも申告しない。数値 score は機械算出していない。 本 iteration の対象は iteration 5 の FAIL findings (F1 high / F2 medium / F3 medium / F4 low / F5 low) に対する remedy と、その remedy が新たな欠陥を持ち込んでいないかである。 判定: F1 / F2 / F3 / F5 は閉じた。F4 は本文への明示という対応で受け入れる。 検証方法: git diff の 3 hunk を確認したうえで SKILL.md の該当領域 (frontmatter :29-31 / :335-343 / :346-365) を読み直し、canon_keys と drift_values を goal-seek-loop.schema.json の required / enum と集合比較 (いずれも差分 0)、:363 の assert のインデント位置と検出能力 ([0,1,3] / [0,1,1] / [1,2,3] の各ケース) を確認、schema_refs の解決可能性を lint-skill-completeness.py:167-193 の _resolve_ref 実装 ((a) skill dir 相対 -> (b) repo root 相対 -> (c) skill 名) から確認し実行でも ok を得た。schema_refs の消費者を grep で洗い出し lint-skill-completeness.py / validate-plugin-package.py / live-trial-verdict.py の 3 箇所を特定し、うち実在検証を行う前者を実走させた。 機械検証の実測: lint-goal-seek.py exit0 / pytest plugins/guide-doc-generator/tests/run-handout-build -q = 64 passed / lint-skill-completeness = ok: run-handout-build (completeness) / validate-plugin-package --plugin-dir plugins/guide-doc-generator = 8 中 2 fail (いずれも run-skill-feedback の feedback_contract 由来で本差分以前から存在、run-handout-build に紐づく finding は 0 件)。 未解消の medium 以上は 0 件。残る low 3 件はいずれも実行不能にならず、劣化方向も fail-closed 側なので verdict は PASS、next_action は none とする。 判定の射程は静的な設計 adequacy に限る。中間成果物が実行時に実際に正本準拠で書かれること・release 再開時に iteration が連続することの受け入れは Gate D の実走証拠に属し、本 verdict はそれを代替しない。"
+  "notes": "incremental focused combined review。現行 SKILL.md、R2a prompt、deck-principles binding/extractor と focused tests を照合した。"
 }
