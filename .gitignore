@@ -81,6 +81,13 @@ eval-log/skill-intake/**
 !eval-log/skill-intake/standalone/elegant-review/20260606T001612-standalone/**
 eval-log/docs/
 eval-log/notion-conflicts.json
+# check-review-trigger.py が hook から append する評価要求キュー。
+# content-review-protocol.md が「queue は追跡用で自動 consumer を持たない」と定めており、
+# 実際 machine consumer はゼロ (閉路は Stop hook の notice と pre-push/CI の
+# lint-content-review.py が別 trust boundary として担っている)。
+# 共有価値が無い一方、hook が随時 append するので追跡していると作業ツリーが常時 dirty になり、
+# git pull --rebase や gh pr merge を無関係に阻害する。
+eval-log/review-queue.jsonl
 
 # plugin-dev-planner の計画成果物は tracked。周回・buildごとの揮発投影だけを除外する。
 plugin-plans/*/run-plugin-dev-plan-progress.json

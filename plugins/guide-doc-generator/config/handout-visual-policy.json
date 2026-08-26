@@ -203,12 +203,36 @@
       "labels_source": "config/handout-vocabulary.json#hero_card_labels。カードの見出し語 (目的 / 背景 / ゴール) はこの正本にしか置かない。script へ焼くと表示語彙の第 2 の出所ができる",
       "list_headings_source": "config/handout-vocabulary.json#hero_list_headings。hero の各箇条リストにも見出しを付ける。見出しの無い ul が縦に積まれると、読み手は何の一覧なのか分からないまま行を読む",
       "dom": {
-        "grid": "hero-card-grid",
-        "card": "hero-card",
+        "grid": "hero-card-grid (ul)",
+        "card": "hero-card (li)",
         "label": "hero-card-label",
         "selector": "各 .hero-card は data-hb-field を保持する (同定はマーカーのみ・CR-HERO1)"
       },
-      "what_replaced": "p.hero-purpose / p.hero-background / p.hero-goal の散文 3 行。ラベルが行頭の inline span だったため、3 行が 1 つの段落の塊に見えていた"
+      "what_replaced": "p.hero-purpose / p.hero-background / p.hero-goal の散文 3 行。ラベルが行頭の inline span だったため、3 行が 1 つの段落の塊に見えていた",
+      "perspective": {
+        "note": "冒頭 3 要素の主語は読み手であって書き手ではない",
+        "rule": "goal は『読み手が読み終えたとき何をできるか』、purpose は『読み手にとって何のためか』、background は『読み手が今どこで困っているか』で書く。資料の制作意図 (この資料は〜のために作る) を冒頭へ置かない",
+        "why": "利用者指定 2026-08-26『この資料の背景・目的ではなく、受け手がどのように受け止めるか、受講してくださっている方がどうなるかを目的・背景・ゴールへ落とし込む』。冒頭で読み手が決めるのは『自分に関係があるか』であり、資料がどう作られたかはその判断に要らない",
+        "code": "W-HERO-AUTHOR-VIEW",
+        "level": "warning",
+        "enforced_by": "C12 check_opening が書き手視点でしか出ない指し語 (この資料 / 本資料 / 本書 …) の有無だけを当てる。視点そのものは値域で判定できないため、書き方の強制は C05 の設計と C01 の完了条件が持つ",
+        "examples": {
+          "author_view": "仕組みを覚えなくても貼れば動く文言と置き場所が分かる。この資料はその文言を持ち帰るために作る",
+          "reader_view": "貼るだけで動く文言が手元に残り、次の日から自分の業務で同じ手順を繰り返せる"
+        }
+      },
+      "reading_shape": {
+        "note": "3 要素の見せ方。横並びのカードでなく、1 行ずつ拾える箇条書きにする",
+        "dom": {
+          "list": "ul.hero-card-grid",
+          "item": "li.hero-card",
+          "label": "p.hero-card-label",
+          "body": "p.hero-card-body"
+        },
+        "why": "利用者指定 2026-08-25『箇条書きでわかりやすくシンプルに。変なところで改行を貼ると見えにくい』。3 列へ割ると 1 列が 220px まで細り、1 行 10 字前後で折り返して語の途中が切れていた。読みにくさの出所は文の長さでなく列の細さだった",
+        "line_breaking": "本文は line-break: strict と word-break: auto-phrase で折る。見え方だけを変えて可視テキストは変えないので NAR-02 の一致は保たれる",
+        "semantics": "箇条であることを CSS でなく ul/li で表す。div の羅列にすると読み上げでも印刷でも件数が伝わらない"
+      }
     },
     "hero_fields": {
       "note": "文書直下の目的・背景・ゴール。C11 が hero へカードとして描画するため、長いとそのままカードの中の散文の塊になる",
@@ -327,6 +351,14 @@
       "number_separator": ".",
       "why": "利用者指定 2026-08-19『ナンバリングで数字の後にすぐに文章が入っているので、ピリオドをつけてセクションのナンバーとタイトルを切り分けてほしい』。区切りが無いと『1毎日の確認作業』が 1 つの語に見える",
       "read_by": "C11 render-handout.py (.section-num の描画)。見出しの素値には混ぜない — 連番は index からの派生であり、素値へ混ぜると round-trip で戻せない"
+    },
+    "thumbnail": {
+      "note": "一覧と共有プレビュー (og:image) で最初に目に入る 1 枚",
+      "rule": "thumbnail_asset_id には表紙専用の 1 枚を指す。第 1 節の挿絵と同じ id を指さない",
+      "code": "W-THUMBNAIL-SAME-AS-FIRST",
+      "level": "warning",
+      "why": "利用者指定 2026-08-25『1 枚目の画像と 1 つ目のセクションの画像が同じなので、共通にならないようにしてほしい』。同じ絵が続くと、めくった手応えの無いまま本編へ入る",
+      "enforced_by": "C12 check_references が表紙の id と第 1 節の最初の asset_id を比べる。C11 の resolve_thumbnail_asset は『既定で先頭節の絵を流用しない』を持つが、同じ id を書けること自体は禁じていなかった"
     }
   },
   "layering": {

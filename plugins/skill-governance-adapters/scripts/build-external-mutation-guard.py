@@ -64,7 +64,10 @@ CANONICAL_ACTION_FLAGS = {
 DIRECT_MUTATION_PATTERNS = (
     re.compile(r"\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:--data(?:-raw|-binary)?|-d)\s", re.I),
-    re.compile(r"\bgh\s+(?:issue|pr)\s+(?:create|edit|close|reopen|merge|comment)\b", re.I),
+    # PR と Issue の「作成」は確認を求めない。作成はあくまで提案の提出であり、本番へ反映されるのは
+    # merge の時点だから。取り消しにくい edit / close / reopen / merge は引き続きガードする。
+    re.compile(r"\bgh\s+pr\s+(?:edit|close|reopen|merge|comment)\b", re.I),
+    re.compile(r"\bgh\s+issue\s+(?:edit|close|reopen|comment)\b", re.I),
     re.compile(r"\bgh\s+api\b[^\n]*(?:-X|--method)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bbd\s+(?:create|update|close|reopen|delete|dep\s+add)\b", re.I),
     re.compile(r"\b(?:send-campaign|publish-notion-page|notion-submit-improvement)\.py\b", re.I),
