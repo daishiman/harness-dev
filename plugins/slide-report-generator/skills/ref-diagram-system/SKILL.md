@@ -16,13 +16,9 @@ output_language: ja
 allowed-tools:
   - Read
   - Grep
-responsibility_refs:
-  - references/resource-map.yaml
-schema_refs:
-  - ../../schemas/visual-derivation-table.json
+responsibility_refs: []
 completeness_exempt:
   - "prompts: 本スキルは正本への到達経路だけを持つ索引で、自身は判断を実行しない。責務プロンプトを置くと『索引が正本を語る』二重管理になり lint-ssot-duplication.py の検出対象になるため持たない。"
-  - "manifest: 参照専用の索引で phase 遷移や副作用を持たず、resource-map.yaml が読込分岐の正本のため workflow manifest は作らない。"
 ---
 
 # ref-diagram-system

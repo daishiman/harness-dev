@@ -1873,24 +1873,30 @@ body {
   background: var(--pop-primary-soft);
   color: var(--pop-primary-deep);
 }
-/* 冒頭は「読む段落」でなく「見比べるカード」。ラベルを行頭の inline span から
-   カードの見出しへ格上げし、3 枚を横に並べる (利用者要求 R9/R3)。
-   列数は幅に追従させ、数値の折り返し位置を固定しない。 */
+/* 冒頭は「読む段落」でなく「1 行ずつ拾える箇条書き」。ラベルを行頭の札に固定し、
+   本文は 1 列で流す (利用者要求 R9/R3 + 2026-08-25『箇条書きでわかりやすく
+   シンプルに』)。3 枚を横へ並べると 1 列が 220px まで細り、1 行 10 字前後で
+   折り返して語の途中が切れる — 読みにくさの出所は文の長さでなく列の細さだった。 */
 .hero-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 16px 0;
+  padding: 0;
+  list-style: none;
 }
 /* 面は白 1 色、区別は主題色 1 色の細い帯だけで付ける。新しい色トークンは足さない
-   (テーマのアクセント 4 段以外の色を増やさない規約)。冒頭は 3 枚が横並びになる
-   ので、枠線だけだと 3 枚が同じ濃さの箱に見えて読み始める場所が決まらない。 */
+   (テーマのアクセント 4 段以外の色を増やさない規約)。札は本文の左でなく 1 段上に
+   置き、冒頭の他の塊 (hero-list 群) と入れ物の形を同値にする (2026-08-26 利用者
+   要求『冒頭の他の一覧と同じく、1 つ上の行に見出しを置く』)。左に並べると
+   本文の左端だけがカードごとに違い、同じ冒頭の中で読み口が 2 種類に割れていた。 */
 .hero-card {
   position: relative;
+  margin: 0;
   border: 1px solid var(--line);
   border-left: 4px solid var(--pop-primary);
   border-radius: var(--card-radius);
-  padding: 14px 16px;
+  padding: 12px 16px;
   background: #fff;
 }
 .hero-card-label {
@@ -1903,19 +1909,66 @@ body {
   font-size: 0.8em;
   font-weight: 700;
   letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
 }
-.hero-card-body { margin: 0; line-height: 1.85; }
+/* 日本語を語の途中で折らない。auto-phrase は文節の切れ目で折り、未対応の環境でも
+   line-break: strict が最低限の禁則を担う (どちらも 1 行の見え方だけを変え、
+   可視テキストは変えない = NAR-02 の一致は保たれる)。 */
+.hero-card-body {
+  margin: 0;
+  line-height: 1.9;
+  line-break: strict;
+  overflow-wrap: break-word;
+  word-break: auto-phrase;
+  text-wrap: pretty;
+}
+/* 文が 2 つ以上ある本文は段落で流さず、文ごとの行にする (2026-08-25 利用者要求
+   『目的や背景が複数あるときは冒頭の他の一覧と同じ表示方法に』)。行頭記号と
+   字下げは meta-list と同値にして、冊子の中で箇条書きの形が 1 つになるようにする。
+   左の主題色の帯はカード側に残るので、色の手がかりは変わらない。 */
+.hero-card-body-list {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.hero-card-body-list > li + li { margin-top: 4px; }
 /* 最初に読む 1 枚 (並び順の先頭 = goal) だけ面を淡く塗って視線の入口にする。 */
 .hero-card:first-child { background: var(--pop-primary-soft); }
 .hero-card:first-child .hero-card-label { background: #fff; }
 /* 見出しの無い ul が縦に積まれると、何の一覧かを知らないまま行を読むことに
-   なる。リストごとに見出しを付け、塊として区切る。 */
+   なる。リストごとに見出しを付け、塊として区切る。左の帯はカードと同値にして、
+   冒頭の塊がどれも同じ読み口に見えるようにする。 */
 .hero-list {
   margin: 12px 0;
   padding: 12px 16px;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--pop-primary);
   border-radius: var(--card-radius);
   background: #fff;
+}
+/* いま指している 1 枚を、面と帯の濃さで返す (2026-08-25 利用者要求『カードごとに
+   ホバーしたら今ここを見ていると分かるように』)。増やすのは主題色 1 色の濃淡と影
+   だけで、新しい色トークンも文字も足さない — CSS の content へ語を置くと、構成
+   データの外から可視テキストが生えて NAR-02 の一致が崩れる。 */
+@media (hover: hover) {
+  .hero-card, .hero-list {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .hero-card:hover, .hero-list:hover {
+    border-color: var(--pop-primary-deep);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+  .hero-card:hover .hero-card-label,
+  .hero-list:hover .hero-list-heading {
+    background: var(--pop-primary);
+    color: #fff;
+  }
+}
+/* 動きを減らす設定では持ち上げをやめる。色の変化だけで「いま指している」は伝わる。 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-card, .hero-list { transition: none; }
+  .hero-card:hover, .hero-list:hover { transform: none; }
 }
 .hero-list-heading {
   display: inline-block;
@@ -1990,6 +2043,27 @@ body {
   border-radius: var(--card-radius);
   padding: 12px;
   background: var(--pop-bg);
+}
+/* 節の中のカードも冒頭と同じ返し方にする。指している 1 枚だけ左に主題色の帯が
+   立ち、面が浮く (冒頭だけホバーが効くと、同じ見た目の箱で反応が食い違う)。
+   帯は透明な border を最初から確保した上で色を差すので、幅は動かない。節の外枠
+   (.section-card) は入れない — 面が広すぎて、常時点いているのと変わらなくなる。 */
+.trio-card, .feature-card, .versus-side {
+  border-left: 4px solid transparent;
+}
+@media (hover: hover) {
+  .trio-card, .feature-card, .versus-side {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover {
+    border-left-color: var(--pop-primary);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trio-card, .feature-card, .versus-side { transition: none; }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover { transform: none; }
 }
 .versus { display: flex; gap: 12px; flex-wrap: wrap; }
 .table-wrap { overflow-x: auto; }
@@ -2470,16 +2544,64 @@ def build_doc_head(config) -> str:
     return ""
 
 
+HERO_SENTENCE_END = "。"
+
+
+def hero_body_lines(value):
+    """冒頭カードの本文を、文の切れ目で 1 行ずつに割る。
+
+    割った行は li になり、可視テキストは行を空白 1 個で継いだ形になる (HTML の
+    要素境界は必ず 1 区切りとして読まれるため、行間に空白を書かなくてもそうなる)。
+    構成データ側の文区切りも同じ空白 1 個へ揃えてある (C12 の正規化が単一 writer)
+    ので、割っても NAR-02 の『可視テキスト == 構成データ』は保たれる。
+    """
+    lines = []
+    buf = ""
+    for char in str(value):
+        buf += char
+        if char == HERO_SENTENCE_END:
+            lines.append(buf.strip())
+            buf = ""
+    tail = buf.strip()
+    if tail:
+        lines.append(tail)
+    return [line for line in lines if line]
+
+
+def hero_card_body(field, value) -> str:
+    """冒頭カードの本文要素。文が 2 つ以上なら段落でなく箇条書きにする。
+
+    段落で流すと、目的や背景が 2 文 3 文になった瞬間に読み手は「自分に関係が
+    あるか」を段落から探すことになる (利用者要求 2026-08-25)。冒頭に並ぶ他の
+    一覧 (hero_list_headings 群) と同じ箇条書きの形へ揃え、1 行ずつ拾えるようにする。
+
+    `data-hb-field` は本文要素 1 つにだけ置く。行ごとに刻むと同じ印が複数出て
+    NAR-02 の重複検出に掛かり、外枠へ移すと見出し語が印の可視テキストへ混ざる。
+    """
+    lines = hero_body_lines(value)
+    if len(lines) <= 1:
+        return '<p class="hero-card-body">{}</p>'.format(field_span(field, value))
+    items = "".join("<li>{}</li>".format(esc(line)) for line in lines)
+    return tag("ul",
+               [("class", "hero-card-body hero-card-body-list"),
+                ("data-hb-field", field)],
+               items)
+
+
 def hero_card(field, label, body_html) -> str:
-    """冒頭カード 1 枚。見出し語と本文を分けて積む。
+    """冒頭の箇条 1 件。見出し語と本文を分けて積む。
+
+    要素は li にする。冒頭の 3 要素は並列に読む一覧であり、div の羅列にすると
+    読み上げでも印刷でも「いくつあるか」が伝わらない (箇条書きであることを
+    見た目の CSS だけで表さない)。
 
     `data-hb-field` は本文側の要素にだけ置く。カードの外枠へ置くと、見出し語
     (語彙正本から引いた「目的」等) がマーカー要素の可視テキストに混ざり、
     NAR-02 の『可視テキスト == 構成データ』と C20 の読み戻しが同時に壊れる。
+    本文要素の組み立ては hero_card_body が持つ (1 文なら段落・複数文なら箇条書き)。
     """
-    return tag("div", [("class", "hero-card"), ("data-hb-card-field", field)],
-               '<p class="hero-card-label">{}</p>'
-               '<p class="hero-card-body">{}</p>'.format(esc(label), body_html))
+    return tag("li", [("class", "hero-card"), ("data-hb-card-field", field)],
+               '<p class="hero-card-label">{}</p>{}'.format(esc(label), body_html))
 
 
 def hero_list_block(field, headings, list_html) -> str:
@@ -2611,9 +2733,9 @@ def build_hero(config, hero_part) -> str:
             raise DataError(
                 "冒頭カードの見出し語が表示語彙正本 (hero_card_labels) に無い: {!r}"
                 .format(field))
-        cards.append(hero_card(field, label, field_span(field, value)))
+        cards.append(hero_card(field, label, hero_card_body(field, value)))
     if cards:
-        parts.append('<div class="hero-card-grid">{}</div>'.format("".join(cards)))
+        parts.append('<ul class="hero-card-grid">{}</ul>'.format("".join(cards)))
 
     chips = []
     for chip in config.get("goal_chips") or []:

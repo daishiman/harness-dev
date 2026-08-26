@@ -85,7 +85,7 @@ def test_inline_code_in_markdown_is_not_a_reliable_marker():
     # 上の判断の根拠を実物で固定する。同じインラインコードの表セルが、
     # 片方は実装の指示・片方は違反の記録。構造が同一なので構造では分けられない。
     spec = (_PLUGIN_ROOT / "references" / "spec-registry.md").read_text(encoding="utf-8")
-    assert "`.pg-dots__item:nth-child(5n) { width: 1.2vh; height: 1.2vh; }`" in spec
+    assert "`.pagination .dot:nth-child(5n) { background: var(--accent-aqua-vivid);" in spec
 
 
 @pytest.mark.parametrize("html,label", _CASES)

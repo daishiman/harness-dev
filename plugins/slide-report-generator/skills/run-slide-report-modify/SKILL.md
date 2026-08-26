@@ -150,9 +150,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-rep
 
 mode を先に確定し (`validate-output-mode.py`)、R3 は mode 分岐で実行する: **slide**=`verify-slides.js` (＋意匠/印刷影響時 `evaluate-deck.js`／`validate-print.js`) で視覚崩れ 0、**report**=`render-report.js` 再レンダ整合 ＋ `validate-report-visual.py` ＋ mode-aware `deck-evaluator`。いずれも全ゲート exit 0 を完成根拠とする。
 
-## ゴールシーク実行
-
-### 受入基準 (combinators)
+## ゴールシークと受入基準 (combinators)
 
 light/standard/detailed選択後だけ `with-goal-seek`(max_loops 5) + `with-feedback-contract` を有効化する。ループ本体は `Task` でSubAgentへforkし、親へは修正レポートのみ返す。accept-as-isでは両loopを0回のまま完了する。受入基準は当該skillのgoal/checklist由来:
 

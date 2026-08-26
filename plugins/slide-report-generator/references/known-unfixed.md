@@ -8,13 +8,7 @@
 
 **この台帳は検査の網の中に置いてある**（`references/**/*.md` は `lint-count-parity.py` も `lint-contract-drift.py` も読む）。網の外へ避難させないこと。ただしその副作用として、**違反の証拠として CSS を貼ると、その引用自体が違反として検出される**。実測では、K-001 の VG08 の証拠を `box-shadow` プロパティと `--shadow-subtle` を CSS の関数記法で繋いだ形で書いたところ、その行が `css-var-fallback` として 1 件検出された。**さらに、その顛末をここへ書くときに同じ記法をもう一度書いてしまい、2 度目の検出が出た。**証拠を引くときは関数記法を使わず、プロパティ名と変数名を分けて書くこと。
 
-現在の寄与は **0 件**（2026-08-26 実測）。以前残っていた 7 件は、色相依存の例を
-反転面・濃度・寸法差へ統合し、印刷表を共通トークン消費 component に変更し、未消費の
-旧 stylesheet と単一 HTML snapshot を削除して解消した。現在の正本に対する
-`lint-contract-drift.py` は finding 0 件である。
-
-以下の「7件」「凍結中のaccent」「孤児3件」に関する記述は、検出器を弱めずに解消した
-経緯を残す履歴であり、現在の未修正一覧ではない。
+現在の寄与は **0 件**（2026-08-14 実測）。測り方は「台帳を一時退避して `lint-contract-drift.py` を回し、戻して再度回す」で、**あり 7 件 / なし 7 件 / 戻した後 7 件**、台帳ありでだけ出る finding は無し。同時点で残っている 7 件（`design-quality-guide.md` / `slide-design-patterns.md` / `spec-registry.md` / `ui-quality-checklist.md` の `css-var-fallback`、`print-styles.css` / `slide-template-single.html` / `variables.css` の `orphan-var-definer`）は**この台帳とは独立に存在する**。
 
 **この 7 という数字を基準線として使わないこと。**内訳が動いている。同日中に `orphan-var-definer` 3 件が別作業で足されており、残る 4 件が凍結中の accent。台帳の寄与を測り直すときは、7 との差ではなく**退避あり／なしの同時比較**で見ること。
 
@@ -276,9 +270,10 @@ grep で「実行体が在る」まで分かった時点で「検査されてい
 | 同 `surfaces[]` | 10 | **無** | 下記「誤りの実例」参照 |
 | 同 `surfaces_enforced_by` | 10 | **無** | K-006（書く側だけ） |
 | 同 `harness.threshold_note` / `llm_eval_note` | 2 | 無（人間向け注記） | 表示するだけ |
-| `.claude-plugin/plugin.json` `hooks` | 1 参照 | 有 | native manifest は `hooks/hooks.json` への参照だけを持ち、Harness metadata は重複させない |
-| `references/package-contract.json` `package_mode` / `entry_points` / `distribution` / `depends_on` | 4 キー | 有 | `validate-plugin-completeness.py` / repo validator / `validate-plugin-package.py` が実体・marketplace・bundle と突合 |
-| 同 `pkg_checks` | 9（PKG-001〜008 / PKG-014） | 有 | PKG-001 は strict wrapper、残る8件は `assign-plugin-package-evaluator/scripts/validate-plugin-package.py` が実行し、結果を同じ契約面へ記録する |
+| `.claude-plugin/plugin.json` `entry_points.*` / `hooks` / `distributable` / `bundle_targets` / `category` / `package_mode` | 24 + 5 キー | 有 | 突合するだけ（`validate-plugin-completeness.py` ほか repo 側 lint 群） |
+| 同 `tags[]` | 6 | **測れない** | 触るのは repo 側テスト 5 本のみ。配布時に読まれる可能性を測っていない |
+| `references/package-contract.json` `package_mode` / `entry_points` / `skill_dependencies` / `depends_on` | 4 キー | 有 | 突合するだけ（`validate-plugin-package.py`） |
+| 同 `pkg_checks` | 4（PKG-001..004） | **無** | 同スクリプトの `pkg_checks` は**出力側**（`"pkg_checks": result_checks`）。実装は `PKG-002` 以降で、**`PKG-001` は dispatch 表に無い** |
 | `assets/slide-templates/frame-contract.json` 幾何・閾値 | 13 節 | 有 | **実行する**（`build-slide-skeleton*.py` が CSS/JS/HTML を生成、`validate-slide-*.py|js` が判定） |
 | 同 `fill_policy.type_area_ratio` / `fill_policy.target_canvas_whitespace_ratio` / `vertical_margin_policy.target_proximity_gap_ratio` / `canvas.unit` / `schema_version` | 5 | **無** | 前 3 つは**閾値の形をしている**（`note_*` と違い、読まれる前提で書かれた値） |
 | 同 `note_*` 各種 | 37 | 無（人間向け注記） | 表示するだけ |
@@ -286,8 +281,8 @@ grep で「実行体が在る」まで分かった時点で「検査されてい
 | 同 `source_of_truth.slide_types` / `.geometry` | 2 | **測れない** | 値が「正本はどこか」を書いた文字列で、反復で読まれても検知できない |
 | `schemas/visual-derivation-table.json` `rows[]` | 14 | 有 | **実行する**（`vendor/scripts/render-report.js` が `require` して `table.rows` を実行） |
 | 同 `override` / `definitions` / `implementedBy` / `appliesTo` | 4 / 4 / 2 / 1 | **無** | 唯一の読み手が `rows` しか見ない。`override` は `requires` / `forbidden` を持つ**規則**である |
-| `vendor/vendor-digest-manifest.json` `local_fork_managed` / `subtrees` | 17 / 5 | 有 | **実行する**（`lint-vendor-parity.py` が `manifest.get()` で読む） |
-| 同 `additive_managed` | 8 ファイル | 有 | `validate_additive_runtime_manifest()` が package 2 件 + runtime 6 件の実装集合と宣言集合を双方向照合する |
+| `vendor/vendor-digest-manifest.json` `local_fork_managed` / `subtrees` | 16 / 5 | 有 | **実行する**（`lint-vendor-parity.py` が `manifest.get()` で読む） |
+| 同 `additive_managed` | 8 ファイル | **無** | 同スクリプトは `ADDITIVE_RUNTIME_CONTRACT` という**自前の辞書**を持ち、manifest 側は読まない |
 | 同 `upstream_name` / `upstream_version` / `source_root` / `generated_at` / `total_pinned_files` / `hash_algorithm` / `excluded_dirs` / `purpose` / `version` | 9 | **無** | — |
 | `skills/*/workflow-manifest.json` `resources[]` | 60 + 14 + 6 = 80 | **無** | 唯一の repo 側読み手 `lint-skill-completeness.py` は `is_file()` の**存在確認だけ**で、キーを 1 つも開かない |
 | 同 `phases` / `schemaVersion` / `workflowId` | 9 / 3 / 3 | **無** | 同上 |
@@ -296,27 +291,27 @@ grep で「実行体が在る」まで分かった時点で「検査されてい
 | `schemas/*.schema.json` 8 本の本体 | — | 有 | **実行する**（`validate-structure.js` / `render-slide.cjs` が読み込んで検証） |
 | 同 `$id` / `title` / `description` などメタ | — | **測れない** | schema 本体が読まれることと、メタが読まれることは別 |
 
-**合計: 読み手「無」= 14 面（要素で数えると 200 超）。「測れない」= 6 面。**
+**合計: 読み手「無」= 15 面（要素で数えると 200 超）。「測れない」= 6 面。**
 
-### PKG-001 の実行経路は evaluator と別 — 2026-08-26 解消
+### PKG-001 は宣言だけがあって実装が存在しない
 
-旧 census は、package check 全体と sub-check evaluator の責務境界を同一視していた。
+**上表の 1 行に埋めない。**これは「読み手が無い」より重い。
 
-`assign-plugin-package-evaluator` が担当するのは意図どおり `PKG-002〜008 / PKG-014` の 8 sub-check である。`PKG-001` は `run-plugin-package-check/SKILL.md` から `scripts/run-plugin-validate-strict.sh` を実行する strict validation の入口であり、現行 package check で PASS する。evaluator の dispatch 表に PKG-001 が無いことは、実装欠落ではなく責務分離である。
+`references/package-contract.json` の `pkg_checks` は `PKG-001` から `PKG-004` までを宣言している。しかし `plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py` の dispatch 表（46 行）に並ぶのは `PKG-002` `PKG-003` `PKG-004` `PKG-005` `PKG-006` `PKG-007` `PKG-008` `PKG-014` で、**`PKG-001` は無い**。同ファイル 2 行目の docstring も「PKG-002〜008 / PKG-014 sub-check 実装。」と書いている。
 
-`references/package-contract.json` の `pkg_checks` は PKG-001 の strict 結果と evaluator が記録する 8 sub-check、計9件を保持する。ただし実行責務は分離したままとし、PKG-001 を evaluator の dispatch へ重複実装しない。
+**`PKG-001` は ID が振られ、連番の先頭にあり、実装がどこにも無い。**次に `pkg_checks` を開いた人は「001 から 004 まで在る」と読む。連番の先頭が欠けている形は、途中が欠けているより気づかれにくい。
 
-### `lint-vendor-parity.py` の additive 宣言照合 — 2026-08-26 解消
+### `lint-vendor-parity.py` のコメントが実装より広い範囲を主張している
 
-旧実装は `additive_managed` の集合を読まず、コメントの主張範囲と実装範囲がずれていた。2026-08-26 に package 2 件 + runtime 6 件の実装集合と manifest 宣言集合の一致検査を追加し、このコメントずれは解消した。
+`lint-vendor-parity.py` 294-297 行のコメントは「この辞書は manifest の `additive_managed` と `local_fork_managed` の両方に対するトークン契約を持つ」と書いているが、**実装が読むのは `local_fork_managed`（436 行）と `subtrees`（480 行）だけで、`additive_managed` は読まない**。コメントの主張する範囲と実装の範囲が違う。
 
 **この検査器には自動経路が 1 つも無い**（pytest 0 / hook 0 / SKILL 0 / command 0、`scripts/run-ci-checks.sh` に記載なし。**測定時刻 2026-08-14 15:14:48**、走査条件は下記「上限であって下限ではない」節と同じ）。手で叩いたときだけ走る。
 
-残る制約は自動起動経路である。検査を手で実行した場合の緑は、**「その時刻に手で叩いて緑だった」以上のことを意味しない。**
+**この 2 つが重なると、緑の意味が読み手の想定より狭くなる。**コメントを読んだ人は `additive_managed` も検査されていると考える。実装は読まない。そして検査そのものが手動でしか走らないので、**「緑だった」は「その時刻に手で叩いて緑だった」以上のことを意味しない。**
 
 ### 対照（同じ走査で読み手が出ること）
 
-- **同一ファイル内で割れた例がある。**`visual-derivation-table.json` は `rows` が読まれて `override` が読まれない。**走査が壊れていれば同じファイルの中で有無が分かれることは起きない**
+- **同一ファイル内で割れた例が 2 つある。**`vendor-digest-manifest.json` は `local_fork_managed` が読まれて `additive_managed` が読まれない。`visual-derivation-table.json` は `rows` が読まれて `override` が読まれない。**走査が壊れていれば同じファイルの中で有無が分かれることは起きない**
 - `frame-contract.json` の `fill_policy.min_stage_fill_ratio` は `validate-slide-skeleton.py` が実際に読む。同じ節の `type_area_ratio` は読まない
 - `EVALS.json` の対照は K-006 で取った（plugin-dev-planner の `test_gate_parity.py` が自プラグインの `harness.mechanical` を読んで assert する）
 
@@ -351,7 +346,7 @@ K-002 の census は経路を hook / pytest / SKILL・commands・agents / prompt
 
 **「読む実行体が在る」と「実際に読まれる」は別の数である。**上表の有無は前者しか測っていないので、**上限側の数**である。下限は「その読み手が自動で起動されるか」で決まる。読み手 11 本について起動経路を測った（harness root 5372 ファイル、suffix `.py .js .cjs .mjs .ts .sh .md .json .yaml .yml`、除外は上記と同じ、**2026-08-14 15:14:48**）。
 
-- **`lint-vendor-parity.py` は自動経路が 1 つも無い。**pytest 0・hook 0・SKILL 0・command 0、`scripts/run-ci-checks.sh` にも無い。**手動でしか走らない。**したがって `vendor-digest-manifest.json` の `local_fork_managed` 17 件と `subtrees` 5 件は「読み手 有」だが、**下限は 0** である。**対照**: 同じ `grep -c` を同じ `run-ci-checks.sh` に当てて `lint-skill-completeness` は **3 件**（rc=0）、`lint-vendor-parity|lint-contract-drift|lint-count-parity` は **0 件**（rc=1）。同一ファイル・同一コマンドで割れているので、grep が壊れて 0 になったのではない。
+- **`lint-vendor-parity.py` は自動経路が 1 つも無い。**pytest 0・hook 0・SKILL 0・command 0、`scripts/run-ci-checks.sh` にも無い。**手動でしか走らない。**したがって `vendor-digest-manifest.json` の `local_fork_managed` 16 件と `subtrees` 5 件は「読み手 有」だが、**下限は 0** である。**対照**: 同じ `grep -c` を同じ `run-ci-checks.sh` に当てて `lint-skill-completeness` は **3 件**（rc=0）、`lint-vendor-parity|lint-contract-drift|lint-count-parity` は **0 件**（rc=1）。同一ファイル・同一コマンドで割れているので、grep が壊れて 0 になったのではない。
 - **`validate-slide-layout.js` は hook 内で実際に実行される**（`hook-postgen-eval.py` 436・464 行が `subprocess.run`、docstring 27 行に「例外 2: slide の実描画レイアウト契約は hook 内で実行する」と明記）。**提示ではない。**よって `frame-contract.json` の `min_stage_fill_ratio` などは下限も有。
 - `validate-structure.js` / `render-slide.cjs` / `validate-slide-skeleton.py` は pytest 3-5 本ずつが到達する。**自テスト以外**が含まれるので下限 > 0。
 

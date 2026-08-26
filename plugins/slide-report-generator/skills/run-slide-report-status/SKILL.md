@@ -14,16 +14,6 @@ since: 2026-08-20
 last-audited: 2026-08-20
 output_language: ja
 runtime_root_policy: host-skill-path
-combinators:
-  - with-feedback-contract
-responsibility_refs:
-  - ../../vendor/scripts/workflow-manager.js
-  - ../../scripts/validate-output-mode.py
-schema_refs:
-  - ../../schemas/structure.schema.json
-  - ../../schemas/report-structure.schema.json
-completeness_exempt:
-  - "manifest: 単一の read-only 照会で phase を進めず、本文の定型 2 コマンド以外の workflow 遷移がないため workflow manifest は作らない。"
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3

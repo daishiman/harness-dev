@@ -23,12 +23,6 @@ last-audited: 2026-07-05
 
 # AI画像図解生成・差し替え（7層構造プロンプト）
 
-<!-- deck-principles-consumer: ai-image-diagram-producer; run-by: agent -->
-
-共通契約は `references/deck-principles/consumer-bootstrap.md`。画像化候補を分類する前に
-selector を1回実行し、selection envelope を判断軸へ加える。画像生成固有の値域・禁止事項は
-本promptが参照する固有referenceを優先し、原則本文をここへ転記しない。
-
 > 読み込み条件: ユーザーが画像生成・Codex図解作成・スタイルゲノム量産を明示した場合、または修正案提示後にユーザーが特定スライドの画像アセット化を承認した場合のみ起動する。
 > 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-ai-image-diagram-producer.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。

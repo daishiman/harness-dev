@@ -1,6 +1,6 @@
 {
   "plugin": "slide-report-generator",
-  "version": "0.1.26",
+  "version": "0.1.0",
   "harness": {
     "mechanical": [
       "cd plugins/slide-report-generator && python3 -m pytest tests/ -q",
@@ -42,14 +42,14 @@
   ],
   "surfaces_enforced_by": {
     "skills": "governance-check + per-plugin pytest。frontmatter(name/description/kind/allowed-tools) + 7 層本文",
-    "agents": "frontmatter(name/description/kind:agent/tools/owner_skill/prompt_ref/prompt_layer) を機械固定。thin adapter 集合が references/package-contract.json entry_points.agents と 1 対 1",
+    "agents": "frontmatter(name/description/kind:agent/tools/owner_skill/prompt_ref/prompt_layer) を機械固定。17 thin adapters が plugin.json entry_points.agents と 1 対 1",
     "commands": "frontmatter(name/description/argument-hint/allowed-tools/disable-model-invocation) 契約",
-    "hooks": ".claude-plugin/plugin.json が hooks/hooks.json を参照し、そこで宣言した PostToolUse 配線 + hook-postgen-eval.py の fail-soft 挙動",
+    "hooks": "plugin.json PostToolUse 配線 + hook-postgen-eval.py の fail-soft 挙動",
     "scripts": "tests/test_validate_output_mode.py / test_validate_report_visual.py / test_setup_playwright.py + validate-output-mode.py / validate-report-visual.py / setup-playwright.py の exit code・plugin-local browser規約",
     "schemas": "plugin-root schemas/ が runtime SSOT。vendor/schemas-fixtures の重複 schema は持たず、lint-vendor-parity.py が root schemas を upstream digest と照合",
-    "references": "references/ 直下を実体集合の正本とし、resource map と attribution lint で帰属を検証",
-    "vendor": "lint-vendor-parity.py が vendor/vendor-digest-manifest.json の pinned files を sha256 照合し、package.json/package-lock.jsonと plugin-local Playwright runtime を semantic 検証。additive renderer/runtime 群は vendor/tests で品質担保",
-    "plugin-manifest": "scripts/validate-plugin-completeness.py (name↔folder 一致 / package-contract の distributable/entry point 整合 / placeholder 禁止 / declared hooks 実在)",
+    "references": "42 upstream + report 新規 5 (report-types/report-writing-rules/report-visual-strategy/mermaid-integration/report-narrative-logic)",
+    "vendor": "lint-vendor-parity.py が191 pinned fileをsha256照合し、package.json/package-lock.jsonとplugin-local Playwright runtimeをsemantic検証。additive renderer/runtime群はvendor/testsで品質担保",
+    "plugin-manifest": "scripts/validate-plugin-completeness.py (name↔folder 一致 / distributable:false 整合 / placeholder 禁止 / declared hooks 実在)",
     "harness-evals": "declarative (本 EVALS.json 自体が harness。mechanical[] の全 invocation が一次)"
   }
 }

@@ -154,10 +154,3 @@
 
 agent 本体の手順に従って構成データを設計し、`out_config_path` へ書き出して戻り値を返す。
 検証と配置は親が行う。自分で合否を判定しない。
-
-## 資料作成の大原則
-
-<!-- deck-principles-consumer: handout-content-architect; run-by: orchestrator -->
-
-共通契約は `assets/deck-principles/README.md`。起動側から
-`handout-content-architect` の selection envelope を task brief で受け取り、無ければ差し戻す。

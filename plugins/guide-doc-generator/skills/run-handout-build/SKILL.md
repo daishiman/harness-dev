@@ -7,7 +7,6 @@ source: plugin-plans/guide-doc-generator/component-inventory.json#C01
 kind: run
 effect: local-artifact
 prefix: run
-runtime_root_policy: host-skill-path
 hierarchy: L1
 user-invocable: true
 output_language: ja
@@ -144,8 +143,7 @@ completeness_exempt:
   - "manifest: goal_seek.engine=inline が未達 checklist から実行局面を都度選ぶため、固定 phase の workflow-manifest.json は適用外。停止条件と配線は本文 ## ゴールシーク実行 を正本とする。"
 feedback_contract:
   activation_state: semantic_evaluator_started
-  max_iterations: 1
-  iteration_note: "max_iterations=1 はゴールシーク 1 周内の criteria 検証を 1 回に固定する値。修復を伴う周回の上限は goal_seek.max_loops が単独で持つ。IN1 / OUT1 / OUT2 は決定論検証なので、資料を直さずに同じ周内で再評価しない"
+  iteration_note: "反復上限をここに持たない。criteria の検証はゴールシーク 1 周につき 1 回であり、周回の上限は goal_seek.max_loops が単独で持つ。IN1 / OUT1 / OUT2 は決定論検証なので、資料を直さずに再評価しても結果は変わらない — 結果を変える修復こそがゴールシークの 1 周であり、独立した反復予算を置くとその 1 周を二重に数えることになる"
   criteria:
     - id: IN1
       loop_scope: inner
@@ -192,14 +190,6 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-handout-build
 
-## Runtime root contract
-
-- `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
-
 ## Purpose & Output Contract
 
 - 入力: 題材と素材、または検証済みの構成データ。
@@ -221,9 +211,7 @@ frontmatter の `hearing_required_items_r21` が plugin 全体で唯一の項目
 
 ## 構成データの設計と検証
 
-用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。
-
-委譲の直前に `python3 "${HB_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer handout-content-architect --format json` を 1 回実行し、JSON selection envelope を task brief へ載せる。共通契約は `assets/deck-principles/README.md`。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
+用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
 
 資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
 

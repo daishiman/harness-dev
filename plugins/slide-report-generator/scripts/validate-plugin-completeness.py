@@ -24,21 +24,23 @@ from __future__ import annotations
 import json
 import os
 import re
-import shlex
 import sys
 from pathlib import Path
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
-NATIVE_MANIFEST_PATH = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
-PACKAGE_CONTRACT_PATH = PLUGIN_ROOT / "references" / "package-contract.json"
 REQUIRED_TOP_LEVEL = (
     "README.md",
     "plugin-composition.yaml",
     "EVALS.json",
 )
 PLACEHOLDER_TOKENS = ("[TODO", "TODO:", "{{TODO", "未定義")
+# lint-feedback-protocol R7 で全 product plugin に配備される共有 vendored skill。
+# skills/run-skill-feedback は harness-creator SSOT への symlink であり所有 skill では
+# ないため、他 product plugin (notion-gmail-send / mf-kessai-invoice-check 等) と同様
+# entry_points.skills には宣言しない。completeness 突合でも所有計上から除外する。
+SHARED_SKILLS = frozenset({"run-skill-feedback"})
 MAX_AGENT_ADAPTER_LINES = 80
 PROMPT_REF_RE = re.compile(
     r"^skills/[a-z][a-z0-9-]*/prompts/R[0-9]+(-[a-z0-9]+)*\.md$"
@@ -67,18 +69,14 @@ def fail(errors: list[str], message: str) -> None:
     errors.append(message)
 
 
-def load_json(errors: list[str], path: Path, label: str) -> dict:
-    if not path.exists():
-        fail(errors, f"{label} missing: {path.relative_to(PLUGIN_ROOT)}")
+def load_manifest(errors: list[str]) -> dict:
+    if not MANIFEST_PATH.exists():
+        fail(errors, f"manifest missing: {MANIFEST_PATH.relative_to(PLUGIN_ROOT)}")
         return {}
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        if not isinstance(data, dict):
-            fail(errors, f"{label} must be a JSON object")
-            return {}
-        return data
+        return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        fail(errors, f"{label} JSON invalid: {exc}")
+        fail(errors, f"manifest JSON invalid: {exc}")
         return {}
 
 
@@ -97,52 +95,21 @@ def names_in_dir(path: Path, suffix: str = "") -> list[str]:
     return sorted(p.name for p in path.iterdir() if p.is_dir())
 
 
-def check_entry_points(errors: list[str], contract: dict) -> None:
-    """Package inventory is owned by package-contract, not the native manifest."""
-    entry_points = contract.get("entry_points")
+def check_entry_points(errors: list[str], manifest: dict) -> None:
+    entry_points = manifest.get("entry_points")
     if not isinstance(entry_points, dict):
-        fail(errors, "package-contract entry_points object missing")
+        fail(errors, "entry_points object missing")
         return
 
     expected = {
-        "skills": names_in_dir(PLUGIN_ROOT / "skills"),
+        "skills": [s for s in names_in_dir(PLUGIN_ROOT / "skills") if s not in SHARED_SKILLS],
         "agents": names_in_dir(PLUGIN_ROOT / "agents", ".md"),
         "commands": names_in_dir(PLUGIN_ROOT / "commands", ".md"),
-        "hooks": sorted(
-            p.name
-            for p in (PLUGIN_ROOT / "hooks").iterdir()
-            if p.is_file() and p.suffix in {".py", ".sh"}
-        ),
     }
     for key, actual in expected.items():
-        declared_raw = entry_points.get(key)
-        if not isinstance(declared_raw, list) or not all(isinstance(v, str) for v in declared_raw):
-            fail(errors, f"package-contract entry_points.{key} must be a string array")
-            continue
-        declared = sorted(declared_raw)
+        declared = sorted(entry_points.get(key, []))
         if declared != actual:
-            fail(
-                errors,
-                f"package-contract entry_points.{key} mismatch: "
-                f"declared={declared} actual={actual}",
-            )
-
-
-def check_distribution(errors: list[str], contract: dict) -> None:
-    distribution = contract.get("distribution")
-    if not isinstance(distribution, dict):
-        fail(errors, "package-contract distribution object missing")
-        return
-    distributable = distribution.get("distributable")
-    targets = distribution.get("bundle_targets")
-    if not isinstance(distributable, bool):
-        fail(errors, "package-contract distribution.distributable must be boolean")
-    if not isinstance(targets, list) or not all(isinstance(v, str) for v in targets):
-        fail(errors, "package-contract distribution.bundle_targets must be a string array")
-    elif distributable is False and targets:
-        fail(errors, "package-contract bundle_targets must be empty when distributable=false")
-    elif distributable is True and not targets:
-        fail(errors, "package-contract bundle_targets must not be empty when distributable=true")
+            fail(errors, f"entry_points.{key} mismatch: declared={declared} actual={actual}")
 
 
 def parse_frontmatter(path: Path, errors: list[str]) -> dict[str, str]:
@@ -227,64 +194,24 @@ def check_thin_agent_adapters(errors: list[str]) -> None:
                 fail(errors, f"agent required section missing: {rel} -> {section}")
 
 
-def check_hooks(errors: list[str], manifest: dict, contract: dict) -> None:
-    hook_ref = manifest.get("hooks")
-    if not isinstance(hook_ref, str) or not hook_ref:
-        fail(errors, "manifest hooks must reference a plugin-relative hooks.json")
+def check_hooks(errors: list[str], manifest: dict) -> None:
+    hooks = manifest.get("hooks", {})
+    if not hooks:
+        fail(errors, "hooks object missing")
         return
-    hook_path = (PLUGIN_ROOT / hook_ref).resolve()
-    try:
-        hook_path.relative_to(PLUGIN_ROOT.resolve())
-    except ValueError:
-        fail(errors, f"manifest hooks reference escapes plugin root: {hook_ref}")
-        return
-    hook_doc = load_json(errors, hook_path, "hook config")
-    hooks = hook_doc.get("hooks") if hook_doc else None
-    if not isinstance(hooks, dict) or not hooks:
-        fail(errors, "hook config hooks object missing")
-        return
-    declared = set(contract.get("entry_points", {}).get("hooks", []))
-    wired: set[str] = set()
     for event, configs in hooks.items():
         if not isinstance(configs, list):
             fail(errors, f"hooks.{event} must be a list")
             continue
         for i, config in enumerate(configs):
-            if not isinstance(config, dict):
-                fail(errors, f"hooks.{event}[{i}] must be an object")
-                continue
             for j, hook in enumerate(config.get("hooks", [])):
-                if not isinstance(hook, dict):
-                    fail(errors, f"hooks.{event}[{i}].hooks[{j}] must be an object")
-                    continue
                 command = hook.get("command", "")
-                if not isinstance(command, str) or not command:
-                    fail(errors, f"hooks.{event}[{i}].hooks[{j}] command missing")
+                if "$CLAUDE_PLUGIN_ROOT/" not in command:
+                    fail(errors, f"hooks.{event}[{i}].hooks[{j}] command must use $CLAUDE_PLUGIN_ROOT")
                     continue
-                try:
-                    tokens = shlex.split(command)
-                except ValueError as exc:
-                    fail(errors, f"hooks.{event}[{i}].hooks[{j}] command malformed: {exc}")
-                    continue
-                targets = [
-                    match.group(1)
-                    for token in tokens
-                    if (match := re.search(r"/hooks/([A-Za-z0-9_.-]+)$", token))
-                ]
-                if len(targets) != 1:
-                    fail(
-                        errors,
-                        f"hooks.{event}[{i}].hooks[{j}] must reference exactly one hooks/* target",
-                    )
-                    continue
-                name = targets[0]
-                wired.add(name)
-                if name not in declared:
-                    fail(errors, f"hook target not declared in package-contract: {name}")
-                if not (PLUGIN_ROOT / "hooks" / name).is_file():
-                    fail(errors, f"hook command target missing: hooks/{name}")
-    if wired != declared:
-        fail(errors, f"hook wiring mismatch: wired={sorted(wired)} declared={sorted(declared)}")
+                rel = command.split("$CLAUDE_PLUGIN_ROOT/", 1)[1].split()[0]
+                if not (PLUGIN_ROOT / rel).exists():
+                    fail(errors, f"hook command target missing: {rel}")
 
 
 def check_plugin_surfaces(errors: list[str]) -> None:
@@ -319,34 +246,18 @@ def check_script_inventory(errors: list[str]) -> None:
 
 def main() -> int:
     errors: list[str] = []
-    manifest = load_json(errors, MANIFEST_PATH, "manifest")
-    native_manifest = load_json(errors, NATIVE_MANIFEST_PATH, "native manifest")
-    contract = load_json(errors, PACKAGE_CONTRACT_PATH, "package contract")
+    manifest = load_manifest(errors)
 
     if manifest:
         if manifest.get("name") != PLUGIN_ROOT.name:
             fail(errors, f"manifest name must match folder: {manifest.get('name')!r} != {PLUGIN_ROOT.name!r}")
+        if manifest.get("distributable") is not False:
+            fail(errors, "distributable must be false for this local-only plugin")
+        if manifest.get("bundle_targets") != []:
+            fail(errors, "bundle_targets must be an empty array when distributable=false")
         check_placeholders(errors, MANIFEST_PATH)
-    if native_manifest:
-        if native_manifest.get("name") != PLUGIN_ROOT.name:
-            fail(
-                errors,
-                f"native manifest name must match folder: "
-                f"{native_manifest.get('name')!r} != {PLUGIN_ROOT.name!r}",
-            )
-        check_placeholders(errors, NATIVE_MANIFEST_PATH)
-    if contract:
-        if contract.get("plugin_name") != PLUGIN_ROOT.name:
-            fail(
-                errors,
-                f"package-contract plugin_name must match folder: "
-                f"{contract.get('plugin_name')!r} != {PLUGIN_ROOT.name!r}",
-            )
-        check_placeholders(errors, PACKAGE_CONTRACT_PATH)
-        check_entry_points(errors, contract)
-        check_distribution(errors, contract)
-    if native_manifest and contract:
-        check_hooks(errors, native_manifest, contract)
+        check_entry_points(errors, manifest)
+        check_hooks(errors, manifest)
 
     check_plugin_surfaces(errors)
     check_script_inventory(errors)

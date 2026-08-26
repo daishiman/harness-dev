@@ -162,10 +162,3 @@
 決定論ゲートの結果を収集し、委譲入力を組み立て、独立 context の
 handout-readability-reviewer へ委譲して verdict を回収する。回収した verdict を
 そのまま返す。自分の見解・再判定・修正提案を付け足さない。
-
-## 資料作成の大原則
-
-<!-- deck-principles-consumer: handout-readability-reviewer; run-by: agent -->
-
-共通契約は `assets/deck-principles/README.md`。作業開始前に 1 回だけ selector を実行し、
-返却された selection envelope を判断軸へ加える。

@@ -46,7 +46,6 @@ schema_refs:
   - ../../schemas/handout-config.schema.json
 feedback_contract:
   activation_state: semantic_evaluator_started
-  max_iterations: 1
   criteria:
     - id: IN1
       loop_scope: inner

@@ -46,7 +46,7 @@
 |-------|--------|-----------|-----|
 | SR-2-01 | デフォルトテーマは **インク・オン・ペーパー**（紙地にインク文字のライトモード）。1 面に置く色は 地 / 文字 / 反転面 の 3 つに限る | 地色・文字色は CSS 変数で定義し、値は style genome の `palette` 定義に従う（本表に hex を書かない）。色数の逐語正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_001 | 印刷配布・明るい環境で最大の可読性。色数を固定すると面をまたいでも見え方が揃う |
 | SR-2-02 | 基本カラー変数は CSS 変数で定義し、**カラーコード直書き禁止** | `var(--wave-blue)` 等を使用 | テーマ切替・量産時の一括変更を可能に |
-| SR-2-03 | **アクセント変数の名前と数は css-route ごとに違う。本表に一覧を持たない** | 名前の正本はその経路の生成器（report / hand-slide 系は `vendor/scripts/html-scaffold.js` と `render-report.js`、det-slide 系は `vendor/scripts/style-builder.cjs`）。経路と産出元の対応は `scripts/lint-contract-drift.py` の `_VAR_ROUTE_SOURCES` | 経路が複数あるのに 1 つの一覧を本表へ写経すると、どの経路にも当てはまらない名前が残る。実際、旧記述の6種には生成器が定義しない名前が混在し、経路外の旧資産が第2の正本になっていた。旧資産は2026-08-26に削除済み。残る名前も経路間で共通ではないため、名前を数える前に経路を決める。旧6色はSR-2-04（高彩度アクセントを定義しない）とも矛盾していたので、SR-2-04を正とする |
+| SR-2-03 | **アクセント変数の名前と数は css-route ごとに違う。本表に一覧を持たない** | 名前の正本はその経路の生成器（report / hand-slide 系は `vendor/scripts/html-scaffold.js` と `render-report.js`、det-slide 系は `vendor/scripts/style-builder.cjs`）。経路と産出元の対応は `scripts/lint-contract-drift.py` の `_VAR_ROUTE_SOURCES` | 経路が 6 つあるのに 1 つの一覧を本表へ写経すると、どの経路にも当てはまらない名前が残る。**実際に残っていた**: 旧記述は 6 種を列挙していたが、実測（2026-08-14）で `--spring-violet` と `--fuji-gray` は**どの経路の生成器も定義しておらず**、`vendor/assets/` の経路外ファイル 2 つにしか無かった（`lint-contract-drift.py` が `orphan-var-definer` で挙げている 2 ファイル）。残る 4 種も det-slide 系には無い。名前を数えたい人は経路を先に決める必要がある。**加えて旧 SR-2-03 の 6 色は SR-2-04（高彩度アクセントを定義しない）と矛盾していた。配色 D の確定により SR-2-04 を正とする**（矛盾が在ったこと自体を残す。消すと、旧 Lotus のファイルを見た人が「規則にあるから復活させよう」となる） |
 | SR-2-04 | **高彩度のアクセント色を定義しない**。アクセントは色ではなく**反転面**（インク地に紙色文字）で作る | 反転面の CSS 変数は地色・文字色の入れ替えで定義する。図解の内部に限り単一色相の濃度段を使ってよい（段数・彩度・面積の上限は `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本。本表へ写経しない） | 色を足して焦点を作ると面ごとに色相が増え、デッキ全体の統一が崩れる。反転は色数を増やさずに最大のコントラストを作れる |
 | SR-2-04-alt | **アクセント色セットの切替という選択肢を持たない**。クライアント指定のトーンがある場合も色相を増やさず、style genome の `palette` 定義そのものを差し替えて対応する | `theme.accentSet` によるセット切替は行わない | 色相セットを増やすと 1 面の色数上限（SR-2-01 / VGCONST_001）を面ごとに超える |
 | SR-2-05 | **1 面の強調は 1 箇所**。強調手段は反転面であって色ではない | 反転面は 1 面につき 1 個。面積の上限は VGCONST_002 が正本 | 焦点が複数あると視線の優先順位が消える |
@@ -175,8 +175,8 @@
 
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
-| SR-8-01 | **ページネーションは 5 個区切りマイルストーン方式**（標準） | `.pg-dots__item:nth-child(5n) { width: 1.2vh; height: 1.2vh; }` | 25 枚超でも現在位置が一目で分かる |
-| SR-8-02 | 色だけで区切りを示すことは禁止（寸法差を必須とする） | `nth-child(5n)` で幅・高さを通常ドットより大きくする | 色覚やグレースケール出力に依存せず位置を示す |
+| SR-8-01 | **ページネーションは 5 個区切りマイルストーン方式**（標準） | `.pagination .dot:nth-child(5n) { background: var(--accent-aqua-vivid); width: 0.7rem; height: 0.7rem; margin-right: 0.5rem; }` | 25 枚超でも現在位置が一目で分かる |
+| SR-8-02 | 単色ドットのみは禁止（区切り必須） | `nth-child(5n)` 必須 | 多枚スライドでの位置感覚喪失防止 |
 | SR-8-03 | **セクション目次ナビ（section-nav）を常時表示** | スライド左上 `.agenda-indicator` または上部 `.section-nav` | 構造把握を補助 |
 | SR-8-04 | **`.section-nav__item.active[data-section="X"]` は HTML の全 data-section 値を網羅** | opening / lecture / demo / ws / summary / closing 等すべて 1対1 で CSS 定義 | 1つでも欠けるとナビ色が表示されない |
 | SR-8-05 | セクション色分けは代替案（オプション）。基本は SR-8-01 とセクションナビの併用 | `.pagination .dot[data-section="X"]` は無くてよい | 役割分担の明確化 |
@@ -189,7 +189,7 @@
 | SR-ID | ルール | 値 / 実装 | Why |
 |-------|--------|-----------|-----|
 | SR-9-01 | **WCAG 2.1 AA 準拠**（コントラスト比 4.5:1 以上） | 本文前景で最小になるのは `--fg-muted` on 地（`paper`）= **5.02:1**。この値は `paper` に連動するので、`paper` を動かしたら引き直す。色の正本は `style-builder.cjs SPEC.colors` | 視覚障害含む全ユーザー可読性 |
-| SR-9-02 | `:focus-visible` を全インタラクティブ要素に適用 | `:focus-visible { outline: 3px solid var(--ink, #141412); outline-offset: 2px; }` | キーボード操作可視性 |
+| SR-9-02 | `:focus-visible` を全インタラクティブ要素に適用 | `:focus-visible { outline: 3px solid var(--accent-blue-vivid, #3B7DD8); outline-offset: 2px; }` | キーボード操作可視性 |
 | SR-9-03 | `prefers-reduced-motion` 対応必須 | CSS: `@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }` ＋ JS は SR-6-08 | 前庭障害・乗り物酔い配慮 |
 | SR-9-04 | **UI テキスト（ナビ・ラベル・キャプション）の opacity は 0.6 以上**。ただし **`--fg-muted` に opacity を掛けない**。薄くするなら `--ink` から下げる | `.text-note { opacity: 0.7; }` 等 | 0.3 等は読めない。`--fg-muted` を除外するのは、SR-9-01 の下限に対する余裕が **0.5 しかない**ため。0.6 を掛けると AA を割る。**別々に読めば両方正しく、組み合わせたときだけ壊れる**ので、どちらの検査器も鳴らない |
 | SR-9-05 | `aria-label` を SVG 図解に必須 | `<svg role="img" aria-label="図解の説明">` | スクリーンリーダー対応 |
@@ -204,9 +204,9 @@
 | SR-10-01 | **コードブロックの縦上限は面の高さの 60%（全回統一・px 直書き禁止）** | `.code-block { max-height: calc(60 * var(--sv)); overflow-y: auto; }`。`--sv` は面の高さの 1%（`style-builder.cjs`）。`--sv` を持たない LLM 経路は面の高さ（`--slide-max-height`）の 60% を書く（同じ寸法） | 視覚的一貫性。px 固定にすると画面比率で面に対する占有率が変わる。旧値 420px は 1920x1080 で内容枠の 54% しか使わず、コード面の充填率が 10 行で 0.548 に頭打ちして `fill_policy.exceptions.code` の下限へ何行書いても届かなかった |
 | SR-10-02 | フォントは SF Mono / Fira Code（Noto Sans JP は禁止） | `font-family: var(--font-mono, 'SF Mono', 'Fira Code', monospace)` | 等幅表示 |
 | SR-10-03 | 共通スタイル: `font-size: 1.5625rem; line-height: 1.7; padding: calc(1.8519 * var(--sv)) calc(1.25 * var(--su)); border-radius: calc(0.625 * var(--su));` | `style-builder.cjs` の `.code-block` | 可読性。`1.5625rem` は `typography.min` の 18px を面座標で表した値（18 / 11.52）。旧値 `1.4rem` は最小の観測点 1280x1024 で 16.1px となり `typography.min` を割っていた。余白も px でなく面単位で書く |
-| SR-10-04 | ヘッダー行（`#`）は太字、変数（`{変数}`）は下線 + 太字 | 色相を増やさず、font-weight と text-decoration の組で区別 | 色覚・グレースケールに依存しない簡易構文強調 |
+| SR-10-04 | ヘッダー行（`#`）はアクセントブルー太字、変数（`{変数}`）はアクセントイエローハイライト | 色は `--accent-blue-vivid` / `--accent-yellow-vivid` | 構文ハイライトの簡易版 |
 | SR-10-05 | Before/After コードブロックは横並び 48% / 4% / 48%（SR-4-03 と整合）。縦上限は SR-10-01 と同じ | `.code-compare { display: flex; gap: 4%; } .code-panel { width: 48%; max-height: calc(60 * var(--sv)); }` | 比較しやすさ。左右に並ぶぶん横は 48% だが、縦は片側と同じだけ与えてよい。旧値 280px は使える縦の 36% しか使わず、比較したい 2 つのコードがどちらも数行で切れていた |
-| SR-10-06 | Before は通常面 + 「Before」ラベル、After は反転面 + 「After」ラベル | SR-4-04 と整合し、色だけで意味を担わせない | 意味と強調順位の一貫 |
+| SR-10-06 | Before ヘッダー = `--accent-pink-vivid` 背景、After ヘッダー = `--accent-aqua-vivid` 背景 | SR-4-04 と整合 | 意味の一貫 |
 
 > §10 の数値は `vendor/scripts/style-builder.cjs` が正本で、本表はそれを読者へ示す唯一の写しである。両者のずれは `scripts/lint-contract-drift.py` のチェック F（生成器定数 ↔ 正本文書）が検出する。**他の文書は §10 の数値を書き写さず SR-ID で参照する**（F へ登録できない場所に数値を置くと、同じ値が複数箇所に別の顔で残る）。
 

@@ -914,6 +914,13 @@ class Checker(object):
         上限を当てるためである。
         """
         if isinstance(node, dict):
+            # タブ (B13) の中へ入れ子にした部品も、単独で置いたときと同じ免除を受ける。
+            # 免除を親の part だけで判定すると、B11 を B13 の中へ移した瞬間に
+            # 「原文をそのまま貼る部品」が長すぎる要素として数えられてしまう。
+            nested = node.get("part")
+            if isinstance(nested, str) and "data" in node:
+                if nested in self.ctx.micro_copy_exempt_parts:
+                    return
             for key, value in node.items():
                 self.walk_micro_copy(value, "%s/%s" % (pointer, key), emit)
         elif isinstance(node, list):
@@ -1936,9 +1943,31 @@ def drop_empty_optionals(container, keys):
             del container[key]
 
 
+HERO_TEXT_FIELDS = ("purpose", "background", "goal")
+# 「。」とそれに続く空白 (半角・全角・タブ)。末尾の 。は後続が無いので当たらない。
+_HERO_SENTENCE_BREAK_RE = re.compile("。[ \t　]*(?=.)")
+
+
+def normalize_hero_sentences(data):
+    """冒頭 3 要素の文の切れ目を、空白 1 個へ揃える。
+
+    C11 はこの 3 つを文ごとの箇条書きへ割って描く。HTML の要素境界は必ず 1 区切り
+    として読まれるので、割った可視テキストは「文 + 空白 + 文」になる。構成データ側の
+    区切りが無い (または全角空白) ままだと、NAR-02 の『可視テキスト == 構成データ』
+    と C20 の読み戻しが同時にずれる。ずらさない側を 1 か所に決めるための正規化で
+    あり、書き手にこの空白を書かせるためのものではない。冪等 (既に空白 1 個なら不変)。
+    """
+    for key in HERO_TEXT_FIELDS:
+        value = data.get(key)
+        if not isinstance(value, str):
+            continue
+        data[key] = _HERO_SENTENCE_BREAK_RE.sub("。 ", value)
+
+
 def normalize_config(cfg, ctx, today, diags):
     data = json.loads(json.dumps(cfg))
     data["schema_version"] = ctx.schema_version
+    normalize_hero_sentences(data)
 
     parts = parse_date_parts(data.get("date"))
     if parts is not None:
