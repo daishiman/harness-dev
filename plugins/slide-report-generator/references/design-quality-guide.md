@@ -27,28 +27,11 @@
 
 反転面は地色と文字色の入れ替えなので、通常面と同じ組み合わせのコントラスト比がそのまま効く。地色・文字色の実測は [SR-9-01](spec-registry.md#sr-9-01) を参照。濃度段を使う場合は、その段が文字を載せる面かどうかで判定を分ける（文字を載せるなら 4.5:1 以上、図解の面塗りのみなら隣接段との差が判別できること）。
 
-### グラデーション定義
+### 濃度と反転の使い分け
 
-```css
-:root {
-  /* 主要グラデーション */
-  --gradient-blue-pink: linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-pink-vivid));
-  --gradient-blue-aqua: linear-gradient(135deg, var(--accent-blue-vivid), var(--accent-aqua-vivid));
-  --gradient-violet-pink: linear-gradient(135deg, var(--accent-violet-vivid), var(--accent-pink-vivid));
-
-  /* 微細グラデーション（カード背景用） */
-  --gradient-subtle: linear-gradient(135deg, var(--bg-dim, #F5F5F5), var(--bg-card, #F0F0F0));
-}
-```
-
-### 使い分け
-
-| グラデーション | 用途 |
-|--------------|------|
-| blue-pink | タイトルスライド背景、CTA要素 |
-| blue-aqua | プロセス・フロー系のアクセント |
-| violet-pink | セクション区切り、引用背景 |
-| subtle | カード背景、パネル |
+色相を増やすグラデーションは使わない。通常面は地色・パネル地・文字色の濃度差で整理し、
+最重要ブロックだけを反転面にする。これにより、色覚や印刷条件が変わっても強調順位が
+失われず、配色トークンを別名で重複定義せずに済む。
 
 ---
 
@@ -221,28 +204,6 @@ gsap.timeline()
 }
 .card-hover-border:hover {
   opacity: 1;
-}
-```
-
-#### gradient-reveal（グラデーション出現）
-
-```css
-.card-hover-gradient {
-  position: relative;
-  overflow: hidden;
-}
-.card-hover-gradient::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--gradient-blue-pink);
-  opacity: 0;
-  transition: opacity 0.3s var(--ease-standard);
-  pointer-events: none;
-  border-radius: inherit;
-}
-.card-hover-gradient:hover::after {
-  opacity: 0.08;
 }
 ```
 

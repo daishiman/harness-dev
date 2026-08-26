@@ -118,6 +118,16 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 参照 agent は **name で Task 起動**する (ファイル依存なし)。各 agent は独立 context (isolation) で自身の 7 層本文に従う。
 
+**資料作成の大原則の適用 (R1〜R6 横断・両 mode 共通)**: 全 consumer の共通契約は
+`references/deck-principles/consumer-bootstrap.md`。各 prompt の
+`<!-- deck-principles-consumer: <id>; run-by: <agent|orchestrator> -->` 宣言に従い、
+`agent` は自分で selector を 1 回実行し、`orchestrator` は Task 起動直前に実行して
+tool-neutral な selection envelope を brief へ載せる。consumer、選択条件、pin、実行主体は
+`binding.json`、返却件数・selected/xref内訳は selector の実出力から導出し、ここへ固定値を
+写さない。checklist consumer は通常 selection と異なる checklist 用 envelope を返す。
+PowerPoint / Google Slides / HTML は同じ `rule` と selection envelope を共有し、製品固有操作は
+`tool_intent` を各 adapter が解釈する。
+
 ### R1: ヒアリングと mode 確定
 
 `Task` で **hearing-facilitator** を起動 (`isolation: inherit`・会話履歴を保持して mode 推定)。成果物前の追加質問はせず、不足は最尤仮定としてhandoffに明記する。
@@ -212,7 +222,9 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 >
 > **走らせる場所は 2 箇所**: (1) **R2 仕様確定ゲート**で `structure.json` へ当てる (slideType のテンプレート実体と `vendor/scripts/style-builder.cjs` の CSS を実行時に走査し、`slide-list`/`slide-grid`/`slide-icon-grid`/`slide-process`/`slide-compare` のように **図を 1 つも出さない型**しか持たない構成を生成前に落とす。`slide-timeline` は CSS 側で図になるので図として数える)。ここでは型しか見えないので **QR 主役の面や実項目数は見えず過剰に赤が出る — 候補判定である**。(2) **R3 生成後**に成果物 HTML へ当てる。こちらが正本。片方だけでは足りない — 型の宣言と描画実体は別物 (`references/diagram-type-crosswalk.md` §10)。
 
-## ゴールシークと受入基準 (combinators)
+## ゴールシーク実行
+
+### 受入基準 (combinators)
 
 本 skill は固定手順でなく、**ゴール** (上記「目的と出力契約」の完了条件) へ向けて未達項目を埋める手順を都度生成して反復する。`with-goal-seek`(max_loops 5) + `with-feedback-contract` を適用する。ループ本体は親セッションで直接回さず `Task` で SubAgent へ fork し (`goal_seek.fork: subagent`)、親へは最終成果物パスと生成レポートのみ返す。
 
@@ -232,7 +244,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 
 ## Gotchas
 
-- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`、資産 = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/…`。repo-root 直書き禁止。**唯一の carve-out が cross-plugin glue** — system-spec-harness の資産だけは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/…` と兄弟相対で引く (IN2 の `validate-information-priority.py` と `information-priority-map.schema.json`)。本 plugin は `distributable: false` で marketplace source が `./plugins/<name>` ゆえ install 後も兄弟配置が保たれる前提であり、`HARNESS_ROOT` などの repo-root 変数へ戻さない。
+- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`、資産 = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/…`。repo-root 直書き禁止。**唯一の carve-out が cross-plugin glue** — package contract の `depends_on` に宣言した system-spec-harness の資産だけは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/…` と兄弟相対で引く (IN2 の `validate-information-priority.py` と `information-priority-map.schema.json`)。両 plugin を含む `skills-full` bundle の兄弟配置を前提とし、`HARNESS_ROOT` などの repo-root 変数へ戻さない。
 - **意匠は共有・mode で重複させない**: 配色／サイズ／レンダラ／schema `$defs` は単一 SSOT。slide／report で意匠を二重定義しない (`output_mode` 分岐契約)。
 - **入口を広げても対象範囲・正確さを壊さない**: audience/reportType は維持し、正式名称・検索語・適用範囲が必要なら主タイトルに残す。読者価値は subtitle/keyMessage/summary で補い、素材にない数字・実績を作らない。
 - **codex は画像生成器ではない**: `ai-image-diagram-producer` 起動時は着手前に実 text-to-image backend を確認する。`meta.source` は実体名 `codex-image2` を記録し plain `codex` は不可。
@@ -280,5 +292,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 **plugin 共有 scripts**
 - `../../scripts/setup-playwright.py` / `validate-output-mode.py` — plugin-local Chromium復元・検査 + 送信前 mode/reportType 値域検証 (fail-closed exit 2) / 環境 preflight。
 - `../../vendor/scripts/` — 決定論レンダラ・validator 群 13 本 (`render-slide.cjs`/`render-report.js`/`mermaid-render.js`/`validate-structure.js`/`verify-slides.js`/`verify-report-runtime.js`/`evaluate-deck.js`/`validate-print.js`/`build-image-prompts.js`/`generate-images-codex.js`/`build-deck-html.js`/`validate-ai-image-assets.js`/`workflow-manager.js`。byte 携行・書換禁止)。**この列挙は manifest の vendor script 全件と一致させる** — 携行制約を宣言する節が取りこぼすと「携行対象でない」と読み違えられる。
-- `../../../system-spec-harness/scripts/validate-information-priority.py` — 構成着手前の情報優先度宣言ゲート (順位が装飾・強弱に先行しているかの機械検査。0=OK/1=違反/2=usage)。SRG は `distributable: false` の repo 同梱 plugin なので同一 repo 内の他 plugin script を直接起動してよい。原理の正本は `system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
+- `../../../system-spec-harness/scripts/validate-information-priority.py` — 構成着手前の情報優先度宣言ゲート (順位が装飾・強弱に先行しているかの機械検査。0=OK/1=違反/2=usage)。依存は package contract の `depends_on`、兄弟配置は両 plugin を含む `skills-full` bundle が保証する。原理の正本は `system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
+- `../../scripts/select-deck-principles.py` — consumer 別の必要原則を抽出する (`--consumer <agent-name>`)。selection の件数・内訳は実出力から導出し、checklist は別返却型とする。絞り込み条件・必須原則の正本は `../../references/deck-principles/binding.json`、共通受渡契約は同 `consumer-bootstrap.md`、原則本文・閾値の正本は同 `principles.json`。
+- `../../scripts/validate-deck-principles.py` — 原則カタログの整合ゲート (通し番号 1-177 の欠番/重複、相互参照切れ、値域、binding の配線が core_refs を実際に拾えるか、規範文の複製、vendoring 先とのバイト一致)。
 - plugin-root references (本文が参照): `../../references/full-image-deck-method.md` / `post-generation-evaluation.md` / `report-types.md` ほか意匠・生成規範の共有正本。

@@ -26,7 +26,7 @@ def _load():
 mod = _load()
 
 
-# --- (1) 回帰ガード: 現行実体の drift は既知の 1 件だけ ---------------------------
+# --- (1) 回帰ガード: 現行実体の drift は 0 件 ------------------------------------
 
 # 既知の未解決 drift。ここは「直せないもの置き場」ではなく**期限付きの台帳**で、
 # 完全一致で照合する。新しい drift が増えても、ここの 1 件が直っても落ちる。
@@ -47,8 +47,8 @@ mod = _load()
 # 台帳から消えている (12 件 -> 5 件)。
 #
 # 残る --accent-*-vivid 5 件の性質を 2026-08-14 に exec-visual が測定した。**変数が
-# 存在しないのではない。** 定義は vendor/assets/src/styles/variables.css:61-65 にあり、
-# render-report.js:182-186 が 5 つとも var(--ink) へ再定義したうえで多数箇所から参照し、
+# 存在しないのではない。** 当時は未消費の旧 stylesheet に定義があり、
+# render-report.js が 5 つとも var(--ink) へ再定義したうえで多数箇所から参照し、
 # render-slide.cjs:484-504 の V8_COLOR_VAR にも写像がある。したがって
 # 「文書だけが存在しない変数を規定している」という別種の欠陥ではなく、6 色相と同じ類型。
 #
@@ -78,18 +78,7 @@ mod = _load()
 # 指摘が実際に出なくなったものを残すのは別の話 (残せば台帳が実体と食い違う)。
 # 書き換え後の本文は「hand-slide 経路の :root には定義が無い」と記録しており、
 # 上の分析と一致する。残る 4 件は測って消えるまで動かさない。
-_GAP_PALETTE = {
-    ("css-var-fallback", "references/design-quality-guide.md",
-     ("--accent-aqua-vivid", "--accent-blue-vivid", "--accent-pink-vivid",
-      "--accent-violet-vivid")),
-    ("css-var-fallback", "references/slide-design-patterns.md",
-     ("--accent-aqua-vivid", "--accent-pink-vivid")),
-    ("css-var-fallback", "references/spec-registry.md",
-     ("--accent-aqua-vivid",)),
-    ("css-var-fallback",
-     "skills/run-slide-report-generate/references/ui-quality-checklist.md",
-     ("--accent-blue-vivid",)),
-}
+_GAP_PALETTE: set[tuple] = set()
 
 # 分類 B: 生成器が :root へ流していない変数。2026-08-14 に 2 件とも解消して空。
 # どちらも CONST_010 の CSS 例の中にしか無く、repo 内に定義する生成器も読む検査器も
@@ -140,19 +129,9 @@ _GAP_DEPRECATED: set[tuple] = set()
 #   **文書が実装を兼ねている**からで、別ファイルを指しているだけの本件とは違う。
 #   「5 本の文書が指しているのに誰も読み込んでいない」は、読み手が引ける値が実装に
 #   存在しない状態そのもので、むしろ鳴らすべき度合いが高い。
-# slide-template-single.html (33 個): コードからの参照は digest のみ。
-# variables.css (59 個): 旧 Lotus パレット。現行のどの生成器も読まない。--fg: #43436c 等が
-#   現行値の第 2 の正本になっている。**扱いは T7 (team-lead 持ち) と重なるので、
-#   ここでは鳴らすところまで。消すかどうかはこの台帳の担当ではない。**
-_GAP_ORPHAN = {
-    ("orphan-var-definer", "vendor/assets/print-styles.css",
-     ("--accent", "--ink", "--surface")),
-    ("orphan-var-definer", "vendor/assets/slide-template-single.html",
-     ("--accent", "--autumn-yellow", "--bg-card", "--bg-dark", "--bg-dim")),
-    ("orphan-var-definer", "vendor/assets/src/styles/variables.css",
-     ("--accent-aqua-vivid", "--accent-blue-vivid", "--accent-pink-vivid",
-      "--accent-violet-vivid", "--accent-yellow-vivid")),
-}
+# 旧単一 HTML snapshot と旧 stylesheet 群はコードから消費されず第 2 の正本だったため、
+# 2026-08-26 に削除済み。print-styles.css の表は独立色を定義せず共通 token を消費する。
+_GAP_ORPHAN: set[tuple] = set()
 
 _KNOWN_GAPS = _GAP_PALETTE | _GAP_UNOWNED | _GAP_DEPRECATED | _GAP_ORPHAN
 
@@ -164,7 +143,7 @@ def _gap_key(f: dict) -> tuple:
     return (f["check"], f["where"], tuple(sorted(set(_VAR_IN_MSG_RE.findall(head)))))
 
 
-def test_current_plugin_drift_is_only_the_known_gaps():
+def test_current_plugin_has_no_contract_drift():
     findings = mod.run_checks(_PLUGIN_ROOT)
     got = {_gap_key(f) for f in findings}
     assert got == _KNOWN_GAPS, "contract-drift の増減: " + json.dumps(findings, ensure_ascii=False)

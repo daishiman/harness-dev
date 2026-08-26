@@ -1,0 +1,1 @@
+対象は2 pluginの未コミット31ファイルと直接参照先。177原則はprinciples.json、16 consumer配線はbinding.json、抽出は共通scriptが担う。guide側は3データをvendoringし、各promptはrun_byに応じて自己実行またはbrief受領を宣言。

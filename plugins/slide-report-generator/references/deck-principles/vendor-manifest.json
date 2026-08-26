@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "_meta": {
+    "role": "slide-report-generator が所有する canonical file と guide-doc-generator の standalone vendor copy の parity 正本",
+    "path_base": "source/target とも slide-report-generator plugin root 相対"
+  },
+  "entries": [
+    {
+      "source": "references/deck-principles/principles.json",
+      "target": "../guide-doc-generator/assets/deck-principles/principles.json"
+    },
+    {
+      "source": "scripts/select-deck-principles.py",
+      "target": "../guide-doc-generator/scripts/select-deck-principles.py"
+    },
+    {
+      "source": "references/deck-principles/tool-adapters.json",
+      "target": "../guide-doc-generator/assets/deck-principles/tool-adapters.json"
+    }
+  ],
+  "excluded_overlays": [
+    {
+      "source": "references/deck-principles/binding.json",
+      "target": "../guide-doc-generator/assets/deck-principles/binding.json",
+      "reason": "guide 側は plugin-local consumer だけを持つ overlay。共通 schema へ適合させるが byte parity の対象にしない",
+      "validation": "binding-overlay"
+    }
+  ]
+}

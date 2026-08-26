@@ -1,0 +1,112 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["fail-closed 宣言に対し jsonschema 不在時は構造検査を省略する: plugins/slide-report-generator/scripts/validate-deck-principles.py:46"],
+      "condition_matrix": {"C1":{"verdict":"FAIL","evidence":["宣言と縮退挙動が相反する"],"violation_count":1},"C2":{"verdict":"PARTIAL","evidence":["意味検査だけではschema全件を代替しない"],"violation_count":1},"C3":{"verdict":"FAIL","evidence":["plugin-compositionの品質契約と不一致"],"violation_count":1},"C4":{"verdict":"PASS","evidence":["依存存在時の実行順は成立"],"violation_count":0}},
+      "issues": [{"condition":"C1","severity":"critical","bucket":"schema","description":"fail-closed gateが必須schema検査を黙って省略できる。","recommended_intervention":"依存欠落を非0終了にし、必須検査not-runをPASSへ畳まない。","condition_signal":"contradiction","location":{"file":"plugins/slide-report-generator/scripts/validate-deck-principles.py","line":46,"section":"validate_schema"},"root_cause":"可用性優先で必須検査の省略を許し、実行済みsignalを最終判定へ伝播していない。"}],
+      "score": 0.52
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["guide側selectorがSRG固有の正本パスを表示する: plugins/guide-doc-generator/scripts/select-deck-principles.py:151"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["抽出規則自体は一貫"],"violation_count":0},"C2":{"verdict":"PASS","evidence":["guide用3成果物は配置済み"],"violation_count":0},"C3":{"verdict":"FAIL","evidence":["表示provenanceが実配置と不一致"],"violation_count":1},"C4":{"verdict":"PARTIAL","evidence":["探索は成功するが表示依存が誤る"],"violation_count":1}},
+      "issues": [{"condition":"C3","severity":"critical","bucket":"doc","description":"共通selectorがguide実行時にもSRG固有の正本位置を表示する。","recommended_intervention":"解決済みcatalog pathまたは媒体中立ラベルをrenderへ渡す。","condition_signal":"inconsistency","location":{"file":"plugins/guide-doc-generator/scripts/select-deck-principles.py","line":151,"section":"render_markdown"},"root_cause":"実行ロジックだけ共通化し、人間向けprovenance文がsource配置に固定された。"}],
+      "score": 0.61
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["同型bootstrap規約が多数promptへ反復する: plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R2-agent-structure-designer.md:480"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["複製間の意味差は未検出"],"violation_count":0},"C2":{"verdict":"PASS","evidence":["対象promptに配線説明が存在"],"violation_count":0},"C3":{"verdict":"PASS","evidence":["現時点はsmell枠"],"violation_count":0},"C4":{"verdict":"PASS","evidence":["run_by分岐と対応"],"violation_count":0}},
+      "issues": [{"condition":"C3","severity":"low","bucket":"doc","description":"共通取得・競合解決規約がconsumer promptごとに複製され更新面積を増やす。","recommended_intervention":"共通adapter/referenceへ集約し各promptはconsumer宣言だけにする。","condition_signal":"smell","location":{"file":"plugins/slide-report-generator/skills/run-slide-report-generate/prompts/R2-agent-structure-designer.md","line":480,"section":"資料作成の大原則"},"root_cause":"自己完結性のため共通規約まで全consumerへ展開した。"}],
+      "score": 0.76
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["生成AI章はあるが --phase ai のconsumerがない: plugins/slide-report-generator/references/deck-principles/binding.json:12"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["章内に直接矛盾なし"],"violation_count":0},"C2":{"verdict":"FAIL","evidence":["ai局面の体系的抽出経路がない"],"violation_count":1},"C3":{"verdict":"PARTIAL","evidence":["catalogとbindingの利用意図が不完全"],"violation_count":1},"C4":{"verdict":"PARTIAL","evidence":["別phaseで偶然選択されるのみ"],"violation_count":1}},
+      "issues": [{"condition":"C2","severity":"high","bucket":"other","description":"生成AI活用原則をai局面として引くconsumer配線がない。","recommended_intervention":"AI支援consumerへai phaseを割り当て、非採用は明示除外する。","condition_signal":"omission","location":{"file":"plugins/slide-report-generator/references/deck-principles/binding.json","line":12,"section":"consumers"},"root_cause":"catalog収録を先行し実生成工程とのmappingを閉じていない。"}],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["vendor parityは2 JSONのみでselectorを追跡できない: plugins/slide-report-generator/scripts/validate-deck-principles.py:344"],
+      "condition_matrix": {"C1":{"verdict":"PARTIAL","evidence":["3点複製宣言と検証範囲が不一致"],"violation_count":1},"C2":{"verdict":"FAIL","evidence":["selector parityが欠落"],"violation_count":1},"C3":{"verdict":"PARTIAL","evidence":["同一vendor単位で検証方式が不統一"],"violation_count":1},"C4":{"verdict":"FAIL","evidence":["selector追従を機械保証できない"],"violation_count":1}},
+      "issues": [{"condition":"C4","severity":"high","bucket":"dependency-loop","description":"vendored selectorの上流追従がparity gate外にある。","recommended_intervention":"source-target対応をmanifest化しJSONとscriptを一括検証する。","condition_signal":"dependency_break","location":{"file":"plugins/slide-report-generator/scripts/validate-deck-principles.py","line":344,"section":"vendor source resolution"},"root_cause":"JSON向けparity実装へselectorを後付けしsource解決を拡張していない。"}],
+      "score": 0.42
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["xref parserは完全形IDだけを認識し短縮rangeを展開しない: plugins/slide-report-generator/scripts/select-deck-principles.py:23"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["参照先内容に矛盾なし"],"violation_count":0},"C2":{"verdict":"PARTIAL","evidence":["短縮参照の一部が漏れる"],"violation_count":1},"C3":{"verdict":"PARTIAL","evidence":["catalog文法とparser文法が不一致"],"violation_count":1},"C4":{"verdict":"FAIL","evidence":["依存edgeを構築できない"],"violation_count":1}},
+      "issues": [{"condition":"C4","severity":"high","bucket":"dependency-loop","description":"range・短縮slash形式のxrefをparserが展開せず依存補完が欠落する。","recommended_intervention":"完全形IDへ正規化しselectorとvalidatorで同一parserを使う。","condition_signal":"dependency_break","location":{"file":"plugins/slide-report-generator/scripts/select-deck-principles.py","line":23,"section":"XREF"},"root_cause":"人間向け短縮記法と機械文法を別々に定義した。"}],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["全原則と適用・既存執行・明示除外の和集合一致を検査しない: plugins/slide-report-generator/scripts/validate-deck-principles.py:234"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["局所重複は禁止"],"violation_count":0},"C2":{"verdict":"FAIL","evidence":["全体被覆gateがない"],"violation_count":1},"C3":{"verdict":"PARTIAL","evidence":["分類はあるが閉世界invariantがない"],"violation_count":1},"C4":{"verdict":"PASS","evidence":["列挙core_refsは依存検証済み"],"violation_count":0}},
+      "issues": [{"condition":"C2","severity":"high","bucket":"schema","description":"全原則が適用・既存担保・明示除外のどれかへ到達する保証がない。","recommended_intervention":"全IDの排他的coverage closureをfail-closed検査する。","condition_signal":"omission","location":{"file":"plugins/slide-report-generator/scripts/validate-deck-principles.py","line":234,"section":"validate_binding"},"root_cause":"参照の局所妥当性だけを検査し全体集合を閉じていない。"}],
+      "score": 0.43
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["成果物軸×工程軸を軸内OR・軸間ANDで選択する: plugins/slide-report-generator/scripts/select-deck-principles.py:93"],
+      "condition_matrix": {"C1":{"verdict":"PASS","evidence":["論理結合がdocstringと一致"],"violation_count":0},"C2":{"verdict":"PASS","evidence":["両軸を指定可能"],"violation_count":0},"C3":{"verdict":"PASS","evidence":["値域はcatalogから参照"],"violation_count":0},"C4":{"verdict":"PASS","evidence":["選択順は決定論的"],"violation_count":0}},
+      "issues": [],
+      "score": 0.91,
+      "reusable_abstraction": "成果物種別×作業局面で抽出し順位キーで上限制御する。",
+      "template_variables": ["{{APPLIES_TO_AXIS}}","{{PHASE_AXIS}}","{{SELECTION_LIMIT}}"],
+      "reuse_surface": "script-frontmatter"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["必須selector呼出がplugin dependency DAGにない: plugins/slide-report-generator/plugin-composition.yaml:160"],
+      "condition_matrix": {"C1":{"verdict":"PARTIAL","evidence":["全被覆宣言と列挙が不一致"],"violation_count":1},"C2":{"verdict":"PARTIAL","evidence":["composition上の工程が欠落"],"violation_count":1},"C3":{"verdict":"PARTIAL","evidence":["SKILLとcompositionが未同期"],"violation_count":1},"C4":{"verdict":"FAIL","evidence":["selector依存がトポロジー監査から不可視"],"violation_count":1}},
+      "issues": [{"condition":"C4","severity":"high","bucket":"dependency-loop","description":"必須selector呼出が実呼出構造の正本DAGにない。","recommended_intervention":"run-slide-report-generateからselectorへのcalls edgeを追加する。","condition_signal":"dependency_break","location":{"file":"plugins/slide-report-generator/plugin-composition.yaml","line":160,"section":"dependencies"},"root_cause":"prompt配線とcomposition更新を別作業にした。"}],
+      "score": 0.39
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": ["通常上限の説明がchecklist専用consumerにも一般化される: plugins/slide-report-generator/skills/run-slide-report-generate/SKILL.md:121"],
+      "condition_matrix": {"C1":{"verdict":"FAIL","evidence":["通常選択とchecklist例外が両立しない"],"violation_count":1},"C2":{"verdict":"PASS","evidence":["checklist分岐自体は実装済み"],"violation_count":0},"C3":{"verdict":"FAIL","evidence":["上位説明と返却構造が不一致"],"violation_count":1},"C4":{"verdict":"PASS","evidence":["checklist呼出依存は解決"],"violation_count":0}},
+      "issues": [{"condition":"C1","severity":"critical","bucket":"doc","description":"通常consumerの選択件数説明がchecklist専用出力にも適用され自己矛盾する。","recommended_intervention":"通常選択とchecklist項目を別概念・導出値として記述する。","condition_signal":"contradiction","location":{"file":"plugins/slide-report-generator/skills/run-slide-report-generate/SKILL.md","line":121,"section":"資料作成の大原則の適用"},"root_cause":"共通説明を簡潔化する際に異なる返却型を同一件数概念へ畳んだ。"}],
+      "score": 0.50
+    }
+  ],
+  "variable_abstraction": [
+    {"concrete_value":"177","variable_name":"{{CATALOG_PRINCIPLE_COUNT}}","default_value":"catalog.principles.length","source_trace":"plugins/slide-report-generator/references/deck-principles/principles.json"},
+    {"concrete_value":"8〜16","variable_name":"{{STANDARD_CONSUMER_LIMIT_RANGE}}","default_value":"consumer.select.limit","source_trace":"plugins/slide-report-generator/skills/run-slide-report-generate/SKILL.md:121"},
+    {"concrete_value":"20","variable_name":"{{CHECKLIST_ITEM_COUNT}}","default_value":"catalog.checklist.length","source_trace":"plugins/slide-report-generator/scripts/select-deck-principles.py:200"}
+  ]
+}

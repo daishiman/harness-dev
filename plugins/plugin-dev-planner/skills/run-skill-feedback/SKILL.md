@@ -19,6 +19,14 @@ kind: run
 prefix: run
 effect: external-mutation
 runtime_root_policy: host-skill-path
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  fork: subagent
+  max_loops: 5
 external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: team-platform
 since: 2026-05-25

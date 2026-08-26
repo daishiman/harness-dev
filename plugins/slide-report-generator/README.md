@@ -11,14 +11,14 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 
 | surface | 実体 |
 |---|---|
-| skills | `run-slide-report-generate` (主オーケストレータ) / `run-slide-report-modify` / `run-cross-deck-review` |
-| agents | 17 thin Task adapters (詳細 7 層 prompt は各 owner skill の `prompts/R*.md`) |
+| skills | エントリポイント集合は `references/package-contract.json` が正本。生成の主オーケストレータは `run-slide-report-generate` |
+| agents | thin Task adapters。集合は `references/package-contract.json` が正本で、詳細 7 層 prompt は各 owner skill の `prompts/R*.md` |
 | commands | `/slide-report-generate` / `/slide-report-status` |
 | hooks | `hook-postgen-eval.py` (PostToolUse・最小guard・成果物提示・利用者選択を促すadvisory・fail-soft) |
 | scripts | 主要な plugin-root scripts: `validate-output-mode.py` / `lint-vendor-parity.py` / `validate-plugin-completeness.py` / `lint-reference-attribution.py` / `validate-report-visual.py` / `lint-contract-drift.py` / `lint-count-parity.py` (散文の数詞 ↔ 正本の実測値。件数は `ls scripts/` が正本なのでここに書かない) |
 | schemas | `structure.schema.json` (slide) / `report-structure.schema.json` (report・共通コア共有) ほか |
-| references | 42 upstream + report 新規 5 (report-types / report-writing-rules / report-visual-strategy / mermaid-integration / report-narrative-logic) |
-| vendor | Node engine 一式 (191 files byte 携行: 真 schema 4本は plugin-root `schemas/` live SSOT) + report 新規 Node 2 (render-report.js / mermaid-render.js) |
+| references | 共通設計・slide/report 固有設計・配布契約。実体集合は `references/` 直下が正本 |
+| vendor | Node engine の byte 携行本体（対象集合と件数は `vendor/vendor-digest-manifest.json` が正本。真 schema は plugin-root `schemas/` live SSOT）+ report runtime |
 
 ## 使い方 (概要)
 
@@ -56,16 +56,17 @@ Mermaid は runtime 依存を増やさず、`mermaid-render.js` が CDN 初期�
 
 ## 品質・再現性
 
-- **vendor integrity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` と照合する。upstream 非改変ファイルは sha256 pin、明示local overlayは owner付き semantic contract + tests/goldens で検証する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にする。
-- **plugin completeness**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-plugin-completeness.py"` が manifest 名・entry_points・hook 実体・必須 surface を検証する。
+- **vendor integrity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` と照合する。承認済み base snapshot は sha256 pin、明示local overlayは semantic contract + tests/goldens で検証する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にする。
+- **plugin completeness**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-plugin-completeness.py"` が native manifest の名前と hook 参照、`references/package-contract.json` の entry point/配布契約、および必須 surface のディスク実体を照合する。
 - **mode 検証**: `validate-output-mode.py` が `output_mode`/`reportType` の値域を fail-closed 検証。
 - **生成後advisory**: `hook-postgen-eval.py` は deck/report 中核ファイル書込を検知し、実HTMLの UTF-8 open / HTML parse / 空・NUL破損 / secret だけを検査する。子プロセスや deck-evaluator は起動せず、成果物の提示と `accept-as-is / light / standard / detailed` の選択を促す。semantic evaluatorは改善レベル選択後だけ起動する。
-- **改善要望ループ**: `run-skill-feedback`（`skills/run-skill-feedback` は harness-creator の SSOT へ向く任意 symlink adapter）で本プラグインの skill への改善要望を起票・集約できる。これは本プラグイン所有の entry point ではないため、handoff routes / `plugin-composition.yaml` / `.claude-plugin/plugin.json` には含めない。
+- **改善要望ループ**: `run-skill-feedback`（`skills/run-skill-feedback` は harness-creator 所有の byte-identical vendored adapter）で本プラグインの skill への改善要望を起票・集約できる。配布上は `references/package-contract.json` の entry point/runtime dependency に明示するが、所有権は harness-creator にあり、本プラグイン固有の handoff route としては扱わない。
 
-`distributable: false` (社内専用・marketplace/bundle 非登録)。
+配布契約の正本は `references/package-contract.json`。本 plugin は `distributable: true` で
+marketplace と `skills-full` bundle から配布し、entry point・依存・配布先を native manifest に重複記述しない。
 
 ## ドキュメントとリリース状態
 
-このプラグインは `plugin-plans/slide-report-generator/` の L3 計画から、ユーザー指示により実体 build まで進めたローカル plugin 版。公開 marketplace / bundle / PR 配布は非スコープで、release 判定は local plugin としての manifest・composition・EVALS・vendor parity・mechanical tests の PASS を基準にする。
+このプラグインは `plugin-plans/slide-report-generator/` の L3 計画から実体 build まで反映済み。配布対象と配布先は `references/package-contract.json` だけで宣言し、release 判定は manifest・composition・EVALS・vendor parity・mechanical tests の PASS を基準にする。
 
 中学生向けに言うと、slide は「発表用の1枚ずつの紙」、report は「読み物のレポート」。どちらも同じ色・部品・描画エンジンを使い、内容の組み立て方だけを `output_mode` で切り替える。

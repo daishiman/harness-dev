@@ -122,7 +122,9 @@ node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-de
 node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" <deck-dir>
 ```
 
-## ゴールシークと受入基準 (combinators)
+## ゴールシーク実行
+
+### 受入基準 (combinators)
 
 `with-goal-seek`(max_loops 5) + `with-feedback-contract`。ループ本体は `Task` で cross-deck-reviewer worker (単一 fork) へ委譲し、親へは横断レポートのみ返す。受入基準は当該 skill の goal／checklist 由来の受入条件 (purpose-acceptance):
 

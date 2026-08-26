@@ -79,9 +79,8 @@ CSS 変数は slide/report の `:root` で
 > 引っかけている**。不在の記録が存在の証拠として読まれる形）。`rule-solid` は
 > `style-builder.cjs:222` の `--rule-solid: 1px` で**線幅**であり、色ではない（使用箇所 6 件は
 > すべて `border-top: var(--rule-solid) solid var(--hairline)` の形で、色は `--hairline` が担う）。
-> そして主語の `--fuji-gray` は**どの経路の生成器も定義していない**（実在は経路外の
-> `vendor/assets/src/styles/variables.css` と `vendor/assets/slide-template-single.html` の 2 件で、
-> これは drift の `orphan-var-definer` に出ている 2 件そのもの）。
+> そして主語の `--fuji-gray` は**どの経路の生成器も定義していない**。経路外に残っていた
+> 旧 stylesheet と単一 HTML snapshot は 2026-08-26 に削除し、第 2 の配色正本も除いた。
 > 綴りだけ直すと「**どの経路にも属していない変数について、経路を書いていない行**」が延命する。
 > 色ロールの一覧はこの表に持てない（経路ごとに名前も数も違う）。SR-5-05 と同じ扱いにした。
 >

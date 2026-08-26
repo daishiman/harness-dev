@@ -25,6 +25,10 @@ script_refs:
   - ../../scripts/verify-handout-language.py
 responsibility_refs:
   - prompts/R1-review-readability.md
+schema_refs:
+  - ../../schemas/handout-config.schema.json
+completeness_exempt:
+  - "manifest: assign kind は 1 回の委譲と verdict 回収だけを行い phase 遷移を持たない。委譲入力と停止条件は prompts/R1-review-readability.md が正本のため workflow manifest は作らない。"
 responsibilities:
   - id: R1-assign
     prompt_required: true

@@ -4,15 +4,13 @@
 検査器が壊れる形の 1 つに「**実体でないものを実体として読む**」がある。2026-08-14 に
 別の検査器・別の言語・別のファイル種で独立に 3 回出た。
 
-  1. validate-linebreak-position.mjs が slide-template-single.html:2873 の
-     `{ pattern: /([。！？])(?!<br>)/g }` を改行の欠陥として検出。検査器自身のパターン定義
-  2. 同じ検査器が d3-slide-template.html:952 の `${d.label}` を検出。
+  1. validate-linebreak-position.mjs が d3-slide-template.html:952 の `${d.label}` を検出。
      テンプレートリテラルのソース断片
-  3. lint-contract-drift.py が known-unfixed.md の表セル
+  2. lint-contract-drift.py が known-unfixed.md の表セル
      `box-shadow: var(--shadow-subtle)` を「経路宣言の無い実参照」として検出。
      出荷デッキで見つかった違反を**記録した**行
 
-3 例目が特に悪い。違反を記録した文書が、その記録ゆえに違反判定される。記録を増やすほど
+2 例目が特に悪い。違反を記録した文書が、その記録ゆえに違反判定される。記録を増やすほど
 赤が増えるので、検査が記録を増やす動機を奪う。
 
 ## 判定は構造だけで行う
@@ -40,7 +38,7 @@
 含まれていた。
 
   - references/spec-registry.md:177 は SR-8-01 の**標準実装**をインラインコードで書いて
-    いる (`.pagination .dot:nth-child(5n) { background: var(--accent-aqua-vivid); ... }`)。
+    いる (`.pg-dots__item:nth-child(5n) { width: 1.2vh; height: 1.2vh; }`)。
     読み手はこれを写して使う。剥がすと実在の指摘が黙って消える
   - references/known-unfixed.md の VG08 行は**違反の記録**を同じインラインコードで書いて
     いた
