@@ -1873,42 +1873,29 @@ body {
   background: var(--pop-primary-soft);
   color: var(--pop-primary-deep);
 }
-/* 冒頭は「読む段落」でなく「1 行ずつ拾える箇条書き」。ラベルを行頭の札に固定し、
-   本文は 1 列で流す (利用者要求 R9/R3 + 2026-08-25『箇条書きでわかりやすく
-   シンプルに』)。3 枚を横へ並べると 1 列が 220px まで細り、1 行 10 字前後で
-   折り返して語の途中が切れる — 読みにくさの出所は文の長さでなく列の細さだった。 */
+/* 冒頭は「読む段落」でなく「見比べるカード」。ラベルを行頭の inline span から
+   カードの見出しへ格上げし、3 枚を横に並べる (利用者要求 R9/R3)。
+   列数は幅に追従させ、数値の折り返し位置を固定しない。 */
 .hero-card-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
   margin: 16px 0;
-  padding: 0;
-  list-style: none;
 }
 /* 面は白 1 色、区別は主題色 1 色の細い帯だけで付ける。新しい色トークンは足さない
-   (テーマのアクセント 4 段以外の色を増やさない規約)。ラベル列の幅を固定すると
-   3 行の本文の頭が縦に揃い、どこから読むかが迷わずに決まる。 */
+   (テーマのアクセント 4 段以外の色を増やさない規約)。冒頭は 3 枚が横並びになる
+   ので、枠線だけだと 3 枚が同じ濃さの箱に見えて読み始める場所が決まらない。 */
 .hero-card {
   position: relative;
-  display: grid;
-  grid-template-columns: 5.5em minmax(0, 1fr);
-  align-items: baseline;
-  column-gap: 14px;
-  row-gap: 4px;
   border: 1px solid var(--line);
   border-left: 4px solid var(--pop-primary);
   border-radius: var(--card-radius);
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: #fff;
-}
-/* 狭い画面ではラベル列を畳んで 2 段にする。5.5em を残したまま詰めると本文側が
-   さらに細り、横並びカードと同じ折り返しの荒れ方に戻る。 */
-@media (max-width: 640px) {
-  .hero-card { grid-template-columns: minmax(0, 1fr); }
 }
 .hero-card-label {
   display: inline-block;
-  margin: 0;
+  margin: 0 0 6px;
   padding: 1px 10px;
   border-radius: 999px;
   background: var(--pop-primary-soft);
@@ -1916,20 +1903,8 @@ body {
   font-size: 0.8em;
   font-weight: 700;
   letter-spacing: 0.04em;
-  text-align: center;
-  white-space: nowrap;
 }
-/* 日本語を語の途中で折らない。auto-phrase は文節の切れ目で折り、未対応の環境でも
-   line-break: strict が最低限の禁則を担う (どちらも 1 行の見え方だけを変え、
-   可視テキストは変えない = NAR-02 の一致は保たれる)。 */
-.hero-card-body {
-  margin: 0;
-  line-height: 1.9;
-  line-break: strict;
-  overflow-wrap: break-word;
-  word-break: auto-phrase;
-  text-wrap: pretty;
-}
+.hero-card-body { margin: 0; line-height: 1.85; }
 /* 最初に読む 1 枚 (並び順の先頭 = goal) だけ面を淡く塗って視線の入口にする。 */
 .hero-card:first-child { background: var(--pop-primary-soft); }
 .hero-card:first-child .hero-card-label { background: #fff; }
@@ -2432,66 +2407,6 @@ SCRIPT_BODY = """'use strict';
     });
   }
 
-  function copyPlainText(text) {
-    // file:// で開いた資料でも渡ることを優先する。Clipboard API が使えない
-    // 環境 (権限拒否・非セキュアコンテキスト) では選択してコピーへ落とす。
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        var p = navigator.clipboard.writeText(text);
-        if (p && p.then) { return p; }
-        return {then: function (fn) { fn(); return this; },
-                catch: function () { return this; }};
-      } catch (err) { /* fallthrough */ }
-    }
-    var area = document.createElement('textarea');
-    area.value = text;
-    area.setAttribute('readonly', '');
-    area.style.position = 'fixed';
-    area.style.top = '-1000px';
-    document.body.appendChild(area);
-    area.select();
-    var ok = false;
-    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
-    document.body.removeChild(area);
-    return {then: function (fn) { if (ok) { fn(); } return this; },
-            catch: function (fn) { if (!ok) { fn(); } return this; }};
-  }
-
-  function wirePromptCopy() {
-    // 貼り付けて使う文言は、押した先が動いて初めて意味を持つ。
-    // 本文の正本は data-hb-body (改行と空白がそのまま残る) で、
-    // 属性が無い古い構成データでは表示中の本文へ落とす。
-    Array.prototype.forEach.call(
-      document.querySelectorAll('.prompt-copy'),
-      function (btn) {
-        var box = btn.closest ? btn.closest('.prompt-box') : null;
-        if (!box) { return; }
-        var label = btn.textContent;
-        var timer = null;
-        btn.addEventListener('click', function () {
-          var text = box.getAttribute('data-hb-body');
-          if (text === null) {
-            var pre = box.querySelector('.prompt-text');
-            text = pre ? pre.textContent : '';
-          }
-          function flash(word) {
-            btn.textContent = word;
-            btn.setAttribute('data-hb-copy-state',
-                             word === label ? 'idle' : 'done');
-            if (timer) { window.clearTimeout(timer); }
-            timer = window.setTimeout(function () {
-              btn.textContent = label;
-              btn.setAttribute('data-hb-copy-state', 'idle');
-            }, 1600);
-          }
-          copyPlainText(text)
-            .then(function () { flash('コピーしました'); })
-            .catch(function () { flash('コピーできませんでした'); });
-        });
-      }
-    );
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
     wireNav();
     wireNavCurrent();
@@ -2500,7 +2415,6 @@ SCRIPT_BODY = """'use strict';
     wireCheckboxes();
     wireMemo();
     wireMemoActions();
-    wirePromptCopy();
     wireLightbox();
     wireToolbar();
     if (window.location.hash.length > 1) {
@@ -2557,17 +2471,13 @@ def build_doc_head(config) -> str:
 
 
 def hero_card(field, label, body_html) -> str:
-    """冒頭の箇条 1 件。見出し語と本文を分けて積む。
-
-    要素は li にする。冒頭の 3 要素は並列に読む一覧であり、div の羅列にすると
-    読み上げでも印刷でも「いくつあるか」が伝わらない (箇条書きであることを
-    見た目の CSS だけで表さない)。
+    """冒頭カード 1 枚。見出し語と本文を分けて積む。
 
     `data-hb-field` は本文側の要素にだけ置く。カードの外枠へ置くと、見出し語
     (語彙正本から引いた「目的」等) がマーカー要素の可視テキストに混ざり、
     NAR-02 の『可視テキスト == 構成データ』と C20 の読み戻しが同時に壊れる。
     """
-    return tag("li", [("class", "hero-card"), ("data-hb-card-field", field)],
+    return tag("div", [("class", "hero-card"), ("data-hb-card-field", field)],
                '<p class="hero-card-label">{}</p>'
                '<p class="hero-card-body">{}</p>'.format(esc(label), body_html))
 
@@ -2703,7 +2613,7 @@ def build_hero(config, hero_part) -> str:
                 .format(field))
         cards.append(hero_card(field, label, field_span(field, value)))
     if cards:
-        parts.append('<ul class="hero-card-grid">{}</ul>'.format("".join(cards)))
+        parts.append('<div class="hero-card-grid">{}</div>'.format("".join(cards)))
 
     chips = []
     for chip in config.get("goal_chips") or []:

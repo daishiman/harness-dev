@@ -213,7 +213,7 @@ frontmatter の `hearing_required_items_r21` が plugin 全体で唯一の項目
 
 用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
 
-資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。先頭節の挿絵を流用せず、表紙専用の 1 枚を用意する — 同じ id を指すと `W-THUMBNAIL-SAME-AS-FIRST` が出る)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
+資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
 
 節の中の並びも C05 へ渡す前に決めておく。本編の節は 見出し → 絵 1 枚 → 目的と言いたいこと → 要点を並べる部品 → 補足 の順で、構成データ側では `blocks[0]` を image (要請があれば diagram) にする (`config/handout-visual-policy.json#opening.section_opening.order`・検査は W-SECTION-VISUAL-NOT-FIRST)。前へ出すのは先頭の 1 枚だけで、その 1 枚は「具体部品」に数えない (節の中身が絵だけなら LANG-06)。情報量が多いときは 1 節を厚くせず節を増やしてよい — 増えた分は目次が 2 行まで折り返して受ける (`nav.max_rows`) ので、`heading` は `nav.max_chars` に収める。絵の粒度は冊子で 1 つに揃える (画風系統・密度・視点は全節同値。混在は C21 の E-IMG-GRANULARITY-DRIFT で停止する)。
 
@@ -277,7 +277,7 @@ release 段でゲートの verdict が pass になった資料について assig
 - [ ] draft: validate-handout-config.py が exit0 で、**読まれない状態を示す warning** が 0 件である
 - [ ] release: 同左を維持している (指摘の反映で新たに出していない)
 
-0 件を求めるのは次の 15 コードであって、C12 が出す warning の全件ではない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE` / `W-HERO-AUTHOR-VIEW`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT` / `W-THUMBNAIL-SAME-AS-FIRST`)、用語の言い換え (`W-GLOSSARY-EMPTY`)。最後の 1 つを外せない理由は `criteria:IN1` が「用語言い換え宣言の欠落 0 件」を要求する一方、**欠落**を見る診断がこれしか無いためである (error 側の `E-GLOSSARY-DUP` は重複を見るので代わりにならない)。いずれも同じ 1 回の出力に並んでいるので、種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える — だから 15 項目ではなく 1 項目で受ける。
+0 件を求めるのは次の 13 コードであって、C12 が出す warning の全件ではない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`)、用語の言い換え (`W-GLOSSARY-EMPTY`)。最後の 1 つを外せない理由は `criteria:IN1` が「用語言い換え宣言の欠落 0 件」を要求する一方、**欠落**を見る診断がこれしか無いためである (error 側の `E-GLOSSARY-DUP` は重複を見るので代わりにならない)。いずれも同じ 1 回の出力に並んでいるので、種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える — だから 13 項目ではなく 1 項目で受ける。
 
 残りの warning は**利用者が選んだ結果を報告するもの**であり、完了を阻まない。とりわけ `W-SECTIONS-MANY` は本文が明示的に許可した行為 (情報量が多いときは 1 節を厚くせず節を増やしてよい・`nav.max_rows`) に対して出る。これを欠陥として数えると、許可した行為を選んだ資料が draft を完了できなくなる。**「warning 全件 0」を完了条件にしない**のはこのためで、0 件を求める対象を上の 13 コードに固定してあるのはその境界そのものである。
 

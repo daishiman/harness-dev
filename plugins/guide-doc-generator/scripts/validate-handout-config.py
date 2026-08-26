@@ -392,40 +392,6 @@ def same_scalar(left, right):
     return left == right
 
 
-def first_section_asset_id(cfg):
-    """第 1 節が最初に見せる素材の id。見つからなければ None。
-
-    part の名簿をここへ持たない。素材の参照は入れ子の位置がどうであれ
-    `asset_id` という鍵で書かれるので、第 1 節の中を素直に辿って最初の 1 件を
-    拾う (image_plan の宣言も同じ鍵を使う)。名簿を持つと、部品が 1 つ増える
-    たびにこの検査だけが黙って当たらなくなる。
-    """
-    sections = cfg.get("sections")
-    if not isinstance(sections, list) or not sections:
-        return None
-    stack = [sections[0]]
-    while stack:
-        node = stack.pop(0)
-        if isinstance(node, dict):
-            value = node.get("asset_id")
-            if isinstance(value, str) and value:
-                return value
-            stack.extend(node.values())
-        elif isinstance(node, list):
-            stack.extend(node)
-    return None
-
-
-# 冒頭 3 要素に書かれてはいけない書き手視点の指し語。読み手が冒頭で決めるのは
-# 「自分がどうなるか」であって「この資料が何のために作られたか」ではない。
-# 判定を語彙の一致だけに絞るのは、視点そのものを機械で判定できないため
-# (曖昧な推定で error を出すと、正しい文まで書き直させることになる)。
-HERO_AUTHOR_VIEW_TERMS = (
-    "この資料", "本資料", "当資料", "この文書", "本文書",
-    "本書", "本ドキュメント", "この講座資料", "このドキュメント",
-)
-
-
 # ---------------------------------------------------------------------------
 # 検証本体
 # ---------------------------------------------------------------------------
@@ -811,23 +777,6 @@ class Checker(object):
                 self.add("W-HERO-LONG", "/" + field,
                          "%d 文字 (上限 %d 文字)。冒頭の各要素は宣言であって説明ではない。%s"
                          % (length, cap, escape))
-
-        # 冒頭 3 要素の主語は読み手である。「この資料は〜のために作る」は書き手の
-        # 制作意図であって、読み手が冒頭で決めたい「自分がどうなるか」を答えて
-        # いない。視点そのものは機械で判定できないので、書き手視点でしか出て
-        # こない指し語 (この資料 / 本書 …) が冒頭に在ることだけを当てる。
-        for field in sorted(self.ctx.hero_field_limits):
-            value = cfg.get(field)
-            if not isinstance(value, str) or not value.strip():
-                continue
-            body = nfc(value)
-            hit = next((term for term in HERO_AUTHOR_VIEW_TERMS if term in body),
-                       None)
-            if hit is not None:
-                self.add("W-HERO-AUTHOR-VIEW", "/" + field,
-                         "%r が冒頭に在る。冒頭の目的・背景・ゴールは資料を作る側の"
-                         "意図ではなく、読み手が『読み終えたとき自分は何をできるか』"
-                         "を決められる形で書く (主語を読み手にする)" % hit)
 
         # 冒頭は「読み手が最初に見る 1 文」であり、文書中で最も長い文がここに
         # 置かれるのが最悪の分布。TEXT 本文と同じ 1 文長の上限をそのまま当てる
@@ -1529,17 +1478,6 @@ class Checker(object):
                 self.add("E-THUMBNAIL-UNRESOLVED", "/thumbnail_asset_id",
                          "assets[] に id=%r が無い。冒頭サムネイルは assets の"
                          "参照であり、素材そのものを別に持たない" % thumb)
-            else:
-                # 表紙と第 1 節の絵が同じ 1 枚だと、読み手は冒頭で見た絵を
-                # もう一度見せられ、めくった手応えが無いまま本編へ入る。
-                # 解決 (resolve_thumbnail_asset) は「先頭節の絵を既定で流用
-                # しない」と決めているが、同じ id を書けることまでは禁じて
-                # いない — 禁じる側をここに置く。
-                first = first_section_asset_id(cfg)
-                if first is not None and nfc(first) == nfc(thumb):
-                    self.add("W-THUMBNAIL-SAME-AS-FIRST", "/thumbnail_asset_id",
-                             "表紙の 1 枚が第 1 節の挿絵 (id=%r) と同じ。"
-                             "表紙は表紙用の 1 枚を別に用意する" % thumb)
         elif declared:
             # 素材はあるのに顔が決まっていない状態。描画は続くが、この 1 枚は
             # 冒頭だけでなく共有時のプレビュー画像 (og:image) も兼ねるため、
