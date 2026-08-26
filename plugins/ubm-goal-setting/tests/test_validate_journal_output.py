@@ -546,6 +546,102 @@ def test_legacy_quarterly_heading_violation_names_the_written_heading(
     assert "('2ヶ月目標'" not in proc.stdout
 
 
+def test_legacy_quarterly_heading_is_noticed_even_though_it_passes(
+    tmp_path: Path, golden: str
+):
+    """旧表記を受理はするが黙らない。PASS したまま正本への書き換えを促す。
+
+    受理だけして無言だと、「前回ジャーナルを継承して今日の分を書く」運用の中で
+    旧表記が自己複製し続け、正本へ寄る契機が来ない (自己複製の指摘が smell の実体)。
+    """
+    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標")
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "NOTICE: D01" in proc.stdout
+    # 「今どれが書かれていて、何に直すのか」の両方が読めること。
+    assert "「3ヶ月目標」" in proc.stdout and "「2ヶ月目標」" in proc.stdout
+
+
+def test_canonical_heading_emits_no_notice(tmp_path: Path, golden: str):
+    """正本どおりのジャーナルには通知を出さない (常時 NOTICE は無視されて死ぬ)。"""
+    proc = run(write(tmp_path, golden), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "NOTICE" not in proc.stdout
+
+
+def test_deprecation_notice_survives_a_failing_run(tmp_path: Path, golden: str):
+    """違反があっても通知は出す。
+
+    FAIL のとき黙ると、違反を直して再実行し PASS した瞬間にしか旧表記に気づけない。
+    通知が一番効くのは「今まさにこのファイルを直している」周回のほうなので、
+    そこで消えるのは通知経路として本末転倒になる。
+    """
+    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標").replace(
+        "- 期間：2026-06-29〜2026-08-30\n", ""
+    )
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "NOTICE: D01" in proc.stdout
+
+
+def _with_both_quarterly_headings(golden: str, canonical_body: str) -> str:
+    """正本 `### 2ヶ月目標` の手前に完全な旧表記 `### 3ヶ月目標` 節を差し込む。
+
+    「移行途中で両方書いてしまった」異常系。本文の出現順は 3ヶ月 → 2ヶ月になる。
+    """
+    legacy = (
+        "### 3ヶ月目標\n"
+        "- 期間：2026-06-29〜2026-08-30\n"
+        "- 残り：5日\n"
+        "- 目標：旧表記の節に書かれた本文。\n"
+    )
+    # 正本節は「中身ごと」差し替える。golden の本文を残したまま前置きすると、
+    # 期間行が居座って何を検査しているのか分からないテストになる。
+    replaced, count = re.subn(
+        r"### 2ヶ月目標\n.*?(?=^### )",
+        legacy + "### 2ヶ月目標\n" + canonical_body,
+        golden,
+        count=1,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    assert count == 1, "golden の `### 2ヶ月目標` 節を特定できなかった"
+    return replaced
+
+
+def test_both_quarterly_headings_validates_the_canonical_section(
+    tmp_path: Path, golden: str
+):
+    """2ヶ月・3ヶ月が併存したら、検査対象は必ず正本の `2ヶ月目標` 節にする。
+
+    body を本文の出現順で、ラベルを候補順で別々に決めていた頃は、旧表記が手前にあると
+    「3ヶ月節の中身を 2ヶ月目標として報告する」ラベル錯誤が起きた。正本節の期間行だけを
+    壊したとき、ラベルが `2ヶ月目標` で出ることをもって「正本を見ている」ことを固定する。
+    """
+    text = _with_both_quarterly_headings(golden, "- 残り：5日\n- 目標：正本の本文。\n")
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "G01: 2ヶ月目標 に「- 期間：」の行がありません" in proc.stdout
+    # 旧表記節は完全なので、そちらを見ていれば違反は 1 件も出ない。
+    # 見るのは違反行 (`  - `) だけ。旧表記が併存する以上 D01 の NOTICE は出るのが正しく、
+    # stdout 全体で判定すると通知経路と検査対象の話が混ざる。
+    violation_lines = [l for l in proc.stdout.splitlines() if l.startswith("  - ")]
+    assert not [l for l in violation_lines if "3ヶ月目標" in l], violation_lines
+
+
+def test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section(
+    tmp_path: Path, golden: str
+):
+    """正本節が空なら、手前に完全な旧表記節があっても PASS させない (fail-open 回帰)。
+
+    旧表記の受理は「過去分を再検証できる」ための後方互換であって、正本が空のまま
+    出荷できる抜け道ではない。本文の出現順に任せると exit 0 になっていた。
+    """
+    text = _with_both_quarterly_headings(golden, "")
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "2ヶ月目標" in proc.stdout
+
+
 # --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---------------------------------
 
 # ネストしたサブ項目も設問なので先頭空白を許す (validator の CHECKBOX_RE と同形)。

@@ -319,6 +319,32 @@ def content_bullets(body: list[str]) -> list[str]:
     return items
 
 
+def deprecation_notices(lines: list[str]) -> list[str]:
+    """旧表記の見出しが使われていることを利用者へ知らせる (違反にはしない)。
+
+    REQUIRED_OUTLINE の見出しタプルは「先頭が正本、以降は受理だけ続ける旧表記」という規約。
+    その規約からそのまま導出するので、次に別の見出しを改称したときも通知経路が自動で付く。
+
+    違反にしないのは後方互換のため。旧表記で書かれた既存ジャーナルの再検証を落とすと、
+    過去分を一括で書き換えるまで検査そのものが使えなくなる。一方、黙って受理するだけだと
+    「前回ジャーナルを継承して今日の分を書く」運用の中で旧表記が自己複製し続け、
+    正本へ寄る契機が永久に来ない。通す・けれど毎回知らせる、が正しい強さになる。
+    """
+    notices: list[str] = []
+    written = {text for _, text, _ in headings(lines)}
+    for _, needle, mode in REQUIRED_OUTLINE:
+        if not isinstance(needle, tuple):
+            continue
+        canonical, legacy_names = needle[0], needle[1:]
+        for legacy in legacy_names:
+            if any(heading_matches(t, legacy, mode) for t in written):
+                notices.append(
+                    f"D01: 旧表記の見出し「{legacy}」が使われています。正本は「{canonical}」です"
+                    "（前回ジャーナルの継承で複製され続けるため、次回分から書き換えてください）"
+                )
+    return notices
+
+
 def validate(
     path: Path,
     expected_number: int | None,
@@ -388,15 +414,22 @@ def validate(
 
     # --- 目標4階層: 期間・残り・目標が揃っているか ---
     for goal in GOAL_SECTIONS:
-        body = section_lines(lines, 3, goal)
+        # 別表記候補は「正本 (タプル先頭) を優先」で 1 つの節に決め、本文とラベルを
+        # 同じ探索から取る。両者を別々に決めると、2ヶ月・3ヶ月が併存し本文で旧表記が
+        # 先に現れたとき body は 3ヶ月節・ラベルは「2ヶ月目標」というズレが起き、
+        # さらに正本の節を空にしても手前の完全な旧表記節が検査を通す fail-open になる
+        # (どちらも実測で再現済み)。正本が存在するなら必ず正本を検査対象にする。
+        candidates = (goal,) if isinstance(goal, str) else goal
+        goal, body = next(
+            (
+                (c, found)
+                for c in candidates
+                if (found := section_lines(lines, 3, c)) is not None
+            ),
+            (needle_label(goal), None),
+        )
         if body is None:
             continue  # S01 で既に報告済み
-        # 違反メッセージには別表記候補の列ではなく、実際に書かれていた見出しを出す。
-        candidates = (goal,) if isinstance(goal, str) else goal
-        goal = next(
-            (c for c in candidates if section_lines(lines, 3, c) is not None),
-            needle_label(goal),
-        )
         joined = "\n".join(body)
         values: dict[str, str] = {}
         for field in ("期間", "残り", "目標"):
@@ -566,12 +599,20 @@ def main() -> int:
         return 2
     try:
         violations = validate(path, args.expected_number, args.expected_date, load_daily_habits())
+        # 違反ではないので exit code には効かせない。同じ try で包むのは、読み直しが
+        # ここで失敗しても「1=違反あり / 2=読み込み不能」の契約から外れないようにするため。
+        notices = deprecation_notices(path.read_text(encoding="utf-8").splitlines())
     except (OSError, UnicodeDecodeError) as exc:
         # UnicodeDecodeError は OSError を継承しないため個別に拾う。
         # 拾わないと非 UTF-8 ファイルが traceback + exit 1 となり、
         # frontmatter が宣言する「1=違反あり / 2=読み込み不能」の契約が壊れる。
         sys.stderr.write(f"validate-journal-output: 読み込みに失敗しました: {exc}\n")
         return 2
+
+    # notice は PASS / FAIL のどちらでも出す。FAIL のときに黙ると、違反を直して
+    # 再実行して PASS した瞬間にしか旧表記へ気づけず、通知が一番効く周回で消える。
+    for n in notices:
+        print(f"NOTICE: {n}")
 
     if violations:
         print(f"FAIL: {path.name} — 違反 {len(violations)} 件")
