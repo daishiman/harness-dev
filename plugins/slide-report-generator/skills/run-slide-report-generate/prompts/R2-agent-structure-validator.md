@@ -344,5 +344,5 @@ Layer 1 成功基準（レポート生成・P2.5 実施項目の合否明示・�
 <!-- deck-principles-consumer: structure-validator; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer structure-validator --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer structure-validator --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

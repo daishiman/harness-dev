@@ -1,11 +1,11 @@
 {
   "_meta": {
     "role": "資料作成の大原則 177 件の単一正本。slide / report / doc / diagram / chart / delivery の全モードが共有する『考え方』層のカタログ",
-    "why": "原則本文を散文 md に置くと、必要な 5 件を引くために 177 件を読ませることになる。ここでは 1 原則 = 1 レコードとし、applies_to × phase の 2 軸で機械的に絞り込めるようにしてある。抽出は scripts/select-deck-principles.py が行う",
+    "why": "原則本文を散文 md に置くと、必要な 5 件を引くために 177 件を読ませることになる。ここでは 1 原則 = 1 レコードとし、applies_to × phase の 2 軸で機械的に絞り込めるようにしてある。抽出は scripts/extract-deck-principles.py が行う",
     "tool_neutrality": "規範 (rule) は特定のスライドツールに依存しない表現だけで書く。ツール固有の操作は tool_intent に『その操作で何を達成したいか』として残す。PowerPoint / Google Slides / 本 plugin の HTML 経路のいずれで作っても rule はそのまま通用する",
     "canon_authority": "本ファイル。原則本文・閾値をここ以外へ書き写さない。受け皿 (agent / schema / 検査器) への写像は binding.json が持つ",
     "readers": [
-      "scripts/select-deck-principles.py (抽出器)",
+      "scripts/extract-deck-principles.py (抽出器)",
       "scripts/validate-deck-principles.py (整合ゲート)",
       "skills/run-slide-report-generate/prompts/R*.md (各 agent が phase 別に引く)",
       "guide-doc-generator (assets/deck-principles/principles.json へ vendoring)"

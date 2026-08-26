@@ -42,7 +42,7 @@
     {
       "id": "R2-parallel-analysis",
       "step": 2,
-      "title": "cross-deck-consistency.js --check all で機械チェック先行 (CONST_001) → cross-deck-reviewer を Task fork 起動し Agent A/B/C の 3 レンズ分析 (CONST_002・単一 fork context 内・再 fork しない) × 4 条件で C1-C15 を判定",
+      "title": "cross-deck-consistency.js --check all --json で機械チェック先行 (exit 0/1/2 = PASS/WARN/FAIL の有効判定、JSON取得不能のみ実行障害) → cross-deck-reviewer を Task fork 起動し Agent A/B/C の 3 レンズ分析 (CONST_002・単一 fork context 内・再 fork しない) × 4 条件で C1-C15 を判定",
       "gate": "C2",
       "dependsOn": [
         "R1-collect-scope"
@@ -55,9 +55,7 @@
         "script-check-consistency",
         "subagent-cross-deck-reviewer"
       ],
-      "fatal_exit_codes": [
-        2
-      ]
+      "fatal_exit_codes": []
     },
     {
       "id": "R3-report",

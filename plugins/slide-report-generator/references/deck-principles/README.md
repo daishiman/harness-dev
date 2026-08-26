@@ -17,7 +17,7 @@
 | `applies_to` | どの成果物に効くか | slide / report / doc / diagram / chart / delivery / meta |
 | `phase` | 作成のどの局面で効くか | purpose / story / research / skeleton / rule / write / diagram / chart / flow / deliver / review / env / ai |
 
-抽出は `scripts/select-deck-principles.py` が行う。agent は「全部読んで選ぶ」のではなく「絞り込まれたものを適用する」。
+抽出は `scripts/extract-deck-principles.py` が行う。agent は「全部読んで選ぶ」のではなく「絞り込まれたものを適用する」。
 
 ---
 
@@ -37,7 +37,7 @@
 | 原則 → 本 plugin の受け皿（agent / 検査器 / reference）の写像 | `binding.json` |
 | JSON の構造契約 | `../../schemas/deck-principles.schema.json` |
 | consumer 写像の構造契約 | `../../schemas/deck-principles-binding.schema.json` |
-| 抽出手続き | `../../scripts/select-deck-principles.py` |
+| 抽出手続き | `../../scripts/extract-deck-principles.py` |
 | 整合ゲート | `../../scripts/validate-deck-principles.py` |
 | PowerPoint / Google Slides / HTML への薄い投影 | `tool-adapters.json`（原則本文は持たない） |
 | guide-doc-generator vendor parity | `vendor-manifest.json`（binding は plugin-local overlay のため対象外） |
@@ -52,21 +52,21 @@
 
 ```bash
 # report の構成を設計する局面で効く原則だけを引く
-python3 scripts/select-deck-principles.py --applies-to report --phase story
+python3 scripts/extract-deck-principles.py --applies-to report --phase story
 
 # 図解を 1 枚描く直前
-python3 scripts/select-deck-principles.py --applies-to diagram --phase diagram
+python3 scripts/extract-deck-principles.py --applies-to diagram --phase diagram
 
 # 出力直前の点検（チェックリスト 20 項目 + 根拠原則）
-python3 scripts/select-deck-principles.py --checklist
+python3 scripts/extract-deck-principles.py --checklist
 
 # 特定 id を直接引く（他の原則から参照されたとき）
-python3 scripts/select-deck-principles.py --id DP-034 --id DP-108
+python3 scripts/extract-deck-principles.py --id DP-034 --id DP-108
 
 # 同じ rule を PowerPoint / Google Slides / HTML の実行 brief へ薄く投影
-python3 scripts/select-deck-principles.py --consumer structure-designer --tool powerpoint
-python3 scripts/select-deck-principles.py --consumer structure-designer --tool google-slides
-python3 scripts/select-deck-principles.py --consumer html-generator --tool html
+python3 scripts/extract-deck-principles.py --consumer structure-designer --tool powerpoint
+python3 scripts/extract-deck-principles.py --consumer structure-designer --tool google-slides
+python3 scripts/extract-deck-principles.py --consumer html-generator --tool html
 ```
 
 既定は agent の context へそのまま貼れる markdown。`--format json` は `selection` envelope

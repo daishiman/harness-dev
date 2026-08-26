@@ -14,7 +14,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PLUGIN_ROOT.parents[1]
 SOURCE_ROOT = REPO_ROOT / "plugins" / "slide-report-generator"
 ASSET_DIR = PLUGIN_ROOT / "assets" / "deck-principles"
-SELECTOR = PLUGIN_ROOT / "scripts" / "select-deck-principles.py"
+SELECTOR = PLUGIN_ROOT / "scripts" / "extract-deck-principles.py"
 BINDING = ASSET_DIR / "binding.json"
 
 ROOT_ENV_KEYS = (
@@ -106,7 +106,7 @@ def test_canonical_catalog_and_selector_are_generated_byte_mirrors() -> None:
         SOURCE_ROOT / "references" / "deck-principles" / "principles.json"
     ).read_bytes()
     assert SELECTOR.read_bytes() == (
-        SOURCE_ROOT / "scripts" / "select-deck-principles.py"
+        SOURCE_ROOT / "scripts" / "extract-deck-principles.py"
     ).read_bytes()
     assert (ASSET_DIR / "tool-adapters.json").read_bytes() == (
         SOURCE_ROOT / "references" / "deck-principles" / "tool-adapters.json"
@@ -180,15 +180,15 @@ def test_guide_docs_do_not_redeclare_the_shared_policy_block() -> None:
 def test_plugin_composition_declares_selector_and_local_assets() -> None:
     composition = (PLUGIN_ROOT / "plugin-composition.yaml").read_text(encoding="utf-8")
     lines = composition.splitlines()
-    assert "kind: script, ref: scripts/select-deck-principles.py" in composition
+    assert "kind: script, ref: scripts/extract-deck-principles.py" in composition
     for owner in ("skills/run-handout-build", "skills/assign-handout-readability-evaluator"):
         assert any(
-            f"from: {owner}," in line and "to: scripts/select-deck-principles.py" in line
+            f"from: {owner}," in line and "to: scripts/extract-deck-principles.py" in line
             for line in lines
         )
     for asset in ("principles.json", "binding.json", "tool-adapters.json"):
         assert any(
-            "from: scripts/select-deck-principles.py," in line
+            "from: scripts/extract-deck-principles.py," in line
             and f"to: assets/deck-principles/{asset}" in line
             for line in lines
         )

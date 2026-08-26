@@ -223,7 +223,7 @@ frontmatter の `hearing_required_items_r21` が plugin 全体で唯一の項目
 
 用途プリセットは resolve-handout-preset.py で解決し、用途語彙とプリセット内容を本 skill が持たない。解決した preset とヒアリング結果と素材の論理名を handout-content-architect (C05) へ渡して構成データ設計を委譲する。
 
-委譲の直前に `python3 "${HB_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer handout-content-architect --format json` を 1 回実行し、JSON selection envelope を task brief へ載せる。共通契約は `assets/deck-principles/README.md`。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
+委譲の直前に `python3 "${HB_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer handout-content-architect --format json` を 1 回実行し、JSON selection envelope を task brief へ載せる。共通契約は `assets/deck-principles/README.md`。C05 が `status=blocked` を返したら、欠落項目をヒアリングへ差し戻してから再委譲する。
 
 資料全体に効く 3 つの指定は C05 へ渡す前にここで確定させる (節ごとの設計では決まらないため)。(a) 文章量は `detail_level` で選ぶ — 「もっと詳しく / 要点だけでいい」は書き足しや削りではなく水準の選択で、節あたりの予算は `assets/tokens/<theme>.json#text_limits.section_body_chars_by_detail_level` が正本 (NAR-09 が上下双方を検査する)。(b) 一覧で最初に目に入る 1 枚を `thumbnail_asset_id` に指定する (素材があるなら未指定にしない — 検査は `W-THUMBNAIL-ABSENT`・G1。既定で先頭節の挿絵を流用せず、どれを表紙にするかは必ず選ぶ)。(c) 本編の最後に `section_kind: "closing-summary"` を 1 節置く — 各節を要点へ絞るほど、節をまたいで残るものが本文中のどこにも書かれなくなるためで、冒頭の `goal` は予告であって総括ではない。
 

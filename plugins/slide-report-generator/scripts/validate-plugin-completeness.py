@@ -31,6 +31,7 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+NATIVE_MANIFEST_PATH = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 PACKAGE_CONTRACT_PATH = PLUGIN_ROOT / "references" / "package-contract.json"
 REQUIRED_TOP_LEVEL = (
     "README.md",
@@ -319,12 +320,21 @@ def check_script_inventory(errors: list[str]) -> None:
 def main() -> int:
     errors: list[str] = []
     manifest = load_json(errors, MANIFEST_PATH, "manifest")
+    native_manifest = load_json(errors, NATIVE_MANIFEST_PATH, "native manifest")
     contract = load_json(errors, PACKAGE_CONTRACT_PATH, "package contract")
 
     if manifest:
         if manifest.get("name") != PLUGIN_ROOT.name:
             fail(errors, f"manifest name must match folder: {manifest.get('name')!r} != {PLUGIN_ROOT.name!r}")
         check_placeholders(errors, MANIFEST_PATH)
+    if native_manifest:
+        if native_manifest.get("name") != PLUGIN_ROOT.name:
+            fail(
+                errors,
+                f"native manifest name must match folder: "
+                f"{native_manifest.get('name')!r} != {PLUGIN_ROOT.name!r}",
+            )
+        check_placeholders(errors, NATIVE_MANIFEST_PATH)
     if contract:
         if contract.get("plugin_name") != PLUGIN_ROOT.name:
             fail(
@@ -335,8 +345,8 @@ def main() -> int:
         check_placeholders(errors, PACKAGE_CONTRACT_PATH)
         check_entry_points(errors, contract)
         check_distribution(errors, contract)
-    if manifest and contract:
-        check_hooks(errors, manifest, contract)
+    if native_manifest and contract:
+        check_hooks(errors, native_manifest, contract)
 
     check_plugin_surfaces(errors)
     check_script_inventory(errors)

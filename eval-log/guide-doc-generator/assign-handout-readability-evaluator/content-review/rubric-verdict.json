@@ -2,20 +2,21 @@
   "target": {
     "plugin": "guide-doc-generator",
     "skill": "assign-handout-readability-evaluator",
-    "skill_md_sha256": "6a011b9440b19a0f10d62ab15b4b3f3e53c38469e8d6177b5b240e61949a0ace"
+    "skill_md_sha256": "4034b6cbd92d9bc16cce02955fd5918259f008ee7f11f9fbc55c2a8c310c71aa"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-simplify-loop-ceiling-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-23T00:00:00Z",
-  "iterations": 2,
+  "reviewer": "assign-skill-design-evaluator:focused-combined",
+  "reviewed_at": "2026-08-26T05:57:06Z",
+  "iterations": 1,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 0
   },
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -26,24 +27,13 @@
       "rubric-high-severity-zero"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。",
-      "今回の 2 行差分 (SKILL.md:60 / prompts/R1-review-readability.md:56) は C03 の役割境界を動かしていない。加筆されたのは入力 field `scope` が何を指すかの説明であって判定基準ではなく、SKILL.md:49『本 skill は判定基準を持たない』、:84『回収した verdict を書き換えない』、R1 の 1.1『判定は行わない。判定基準は本 prompt にも SKILL.md にも置かない』/『回収した verdict を書き換えない』はいずれも無傷である。委譲入力表の他 4 行と同じ粒度の説明行に留まっている。",
-      "文言が C06 の正本と語義的に一致する。追加分『指すのは「どこを読むか」だけで、どの軸をどれだけ厳しく見るかは変えない』は agents/handout-readability-reviewer.md:47 および :64 と同義、『節をまたぐ軸は C06 が scope に関わらず全体で見る』は同 :57 と同義である。呼び出し元 C01 (run-handout-build/SKILL.md:243) も同じ 3 点を述べており、C01 / C03 / C06 の三者で scope の意味は一致した。iteration 1 で C01 側に記録した中継層の非対称はこれで閉じている。",
-      "Key Rules の持ち込み禁止 5 種 (設計意図・ヒアリング生ログ・参照 HTML の文面・何周目か・過去の findings) は今回の加筆で緩んでいない。scope に添えてよいのが節 id だけであることは C01:245 側で担保され、C03 は『どこを読むか』以上の情報を運ばない構図のままである。"
+      "L0+L2 の high severity 規範に対し、命名・Purpose & Output Contract・責務参照・schema/rubric/prompt参照・plugin登録が成立し、high severity finding は0件だった。"
     ],
-    "negative_feedback": [
-      "[low / smell] 追加した 2 文は agents/handout-readability-reviewer.md:47 / :57 / :64 の再掲であるのに、正本がどこかを名指ししていない。C03 は他の規則では正本を明示する慣習を持つ (SKILL.md:81『集約規則の正本は /handout-verify (C09) の CR-GATE-AGG』、:83『verdict の決め方は C06 側の規則』)。同じ文が C01:243 / C03 SKILL.md:60 / C03 R1:56 / C06:47・:57・:64 の 4 ファイルに散在するため、C06 が軸の分類を変えたときに中継層 2 箇所が黙って古くなる。『詳細は C06 の scope 節が正本』の 1 句を添えれば慣習に揃う。実行不能にはならないため low。",
-      "[low / smell] 委譲入力表の他行が 1 文の説明であるのに対し、`scope` 行だけが 3 文 (約 90 字) になり表としての粒度が揃っていない。内容は正しく、表の可読性の問題に留まる。",
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。(artifact-delivery-v1 由来の持ち越し。今回の差分とは無関係で、閉じられていないため残す)"
-    ],
-    "iteration": 2,
+    "negative_feedback": [],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "pre-push",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+1 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。 --- 2026-08-23 更新 (iteration 2): run-handout-build (C01) の scope 指摘駆動化に伴い、C01 側 verdict で記録した [low/inconsistency] 中継層の非対称を閉じるため C03 が編集され、SKILL.md の sha が cf500c8e… から 6a011b94… へ変わった。本更新はその stale-sha を解消する再束縛であり、C01 iteration 3 の combined review と同一 context で判定した。 今回の差分は 2 行のみ (SKILL.md:60 と prompts/R1-review-readability.md:56 の `scope` 行) で、両ファイルの全文と C06 agents/handout-readability-reviewer.md の scope 節 (:47-64)、C01 run-handout-build/SKILL.md:243-256 を読んで判定した。 依頼された 2 点への回答: (1) C03 の既存設計 (判定基準を持たない・verdict を無加工で返す) との衝突は無い。加筆は入力 field の意味説明であって判定基準ではなく、R1 の 1.1 と SKILL.md:49 / :84 は無傷。(2) C01 / C03 / C06 の三者一致は成立している (C06:47・:57・:64 と語義同一)。 ただし正本の名指しが無い再掲であることと表の粒度不揃いを新たに low 2 件として記録した。 前回の [low/smell] (pre-choice の読み分け) は今回の差分と無関係で未解消のため、そのまま残している。 medium 以上の未解決 finding は 0 件のため verdict は PASS を維持する。30 思考法は実施しておらず、実施したとも申告しない。数値 score は算出していない。 なお呼び出し元 C01 には medium 1 件が残っており (release 完了条件が round>=2 の scope 指定と噛み合わない)、C01 側 verdict は FAIL である。C03 の PASS はその影響を受けないが、C01 の当該 medium は C03:60 が述べる scope 運用の前提と接しているため、C01 側の修正時に本 skill の記述も再確認すること。",
-  "human_review_required": false
+  "notes": "incremental focused combined review。現行 SKILL.md、R1 prompt、reviewer agent、deck-principles binding/README と focused tests を照合した。"
 }

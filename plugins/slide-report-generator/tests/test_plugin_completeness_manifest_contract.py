@@ -28,10 +28,12 @@ def test_current_plugin_contract_is_complete():
     assert result.returncode == 0, result.stderr
 
 
-def test_native_manifest_references_hooks_without_duplicating_harness_metadata():
-    manifest = json.loads((PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text())
-    assert manifest["hooks"] == "./hooks/hooks.json"
-    assert {"entry_points", "distributable", "bundle_targets"}.isdisjoint(manifest)
+def test_native_manifest_references_hooks_without_duplicating_catalog_metadata():
+    catalog_manifest = json.loads((PLUGIN_ROOT / ".claude-plugin" / "plugin.json").read_text())
+    native_manifest = json.loads((PLUGIN_ROOT / ".codex-plugin" / "plugin.json").read_text())
+    assert "hooks" not in catalog_manifest
+    assert native_manifest["hooks"] == "./hooks/hooks.json"
+    assert {"entry_points", "distributable", "bundle_targets"}.isdisjoint(native_manifest)
 
 
 def test_missing_contract_hook_is_detected():

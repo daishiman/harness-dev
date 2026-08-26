@@ -10,7 +10,7 @@ consumer 固有の取得責務だけを持ち、本節の規則を複製しな�
 ## 取得と受け渡し
 
 - `run-by: agent`: 作業開始前に
-  `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer <consumer-id> --format json`
+  `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer <consumer-id> --format json`
   を 1 回実行し、返却された selection を判断軸へ加える。
 - `run-by: orchestrator`: 起動側が同じ selector を `--format json` で Task 起動直前に実行し、返却された
   tool-neutral な selection envelope を task brief へ載せる。agent は envelope がなければ

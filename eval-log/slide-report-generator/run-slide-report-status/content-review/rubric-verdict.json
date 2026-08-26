@@ -1,1 +1,36 @@
-{"target": {"plugin": "slide-report-generator", "skill": "run-slide-report-status", "skill_md_sha256": "8d99740338a9fc02301b655ea63635745997f0566187f73722f8bed6cd8909e6"}, "review_kind": "rubric", "verdict": "PASS", "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)", "reviewed_at": "2026-08-21T00:00:00Z", "iterations": 1, "human_review_required": false, "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "OUT1"], "positive_feedback": ["status という単一責務に対し、発火条件 (生成中の phase 確認・中断後の次アクション特定) が description と Purpose & Output Contract で一致している。", "『対象path未指定時は推測せず確認する』『validator非0を成功へ畳まない』という fail-closed 規則が Key Rules に明文化されている。"], "negative_feedback": ["low: 定型文『`prompts/` 配下はこのowner Skill契約を継承する』が prompts/ を持たない本 skill に残る。", "low: 本文が `## ゴールシーク実行` 節を持つ一方、frontmatter に combinators / goal_seek の宣言が無い (同種の run-dev-graph-status は両方を宣言している)。read-only skill としては実害が無く lint も通るが、節名と宣言が対応していない。"], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual:merge-guard-migration-recheck", "next_action": "none"}, "notes": "frontmatter 全項目 (name/description/kind/prefix/version/allowed-tools/effect/output_language/runtime_root_policy/feedback_contract/artifact_delivery) と本文 88 行を通読し、比較対象として plugins/dev-graph/skills/run-dev-graph-status/SKILL.md の frontmatter を参照した。feedback_contract.criteria id は tests/criteria/criteria_roster.py:74 の (IN1, OUT1) と一致。artifact_delivery.state_machine は scripts/lint-entrypoint-artifact-first.py の正準定義と一致し、lint-entrypoint-artifact-first.py / lint-artifact-delivery.py は双方 OK。high severity 0。"}
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-status",
+    "skill_md_sha256": "f023bb0cef3276a1eb5a205ba60461124b380d097ade8c16c9120243aee618ce"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator:focused-combined",
+  "reviewed_at": "2026-08-26T05:56:18Z",
+  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "Purpose & Output Contract、命名、責務参照、schema参照、限定された completeness_exempt が成立し、high severity finding は0件だった。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "pre-push",
+    "next_action": "none"
+  },
+  "notes": "incremental focused combined review。現行 SKILL.md、workflow-manager、output-mode validator、focused tests を照合した。"
+}

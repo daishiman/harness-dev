@@ -6,7 +6,7 @@
 name: slide-report-generator
 description: 共通コア + output_mode=slide/report の 2 モードで HTML スライド/レポートを生成・修正・横断検証するビジュアル生成ハーネス。意匠/技術層は単一 SSOT 共有・コンテンツ意図層のみ mode 別。Node 製エンジンは承認済み base snapshot の byte-pin + 明示local overlay で携行。
 kind: plugin-composition
-version: 0.1.26
+version: 0.1.27
 owner: harness maintainers
 since: 2026-07-05
 last-audited: 2026-08-26
@@ -72,7 +72,7 @@ capabilities:
   # 資料作成の大原則カタログ (references/deck-principles/principles.json) から、
   # agent ごとに applies_to × phase で絞った部分集合だけを返す抽出器。
   # agent prompt は --consumer <id> だけを書く (条件と pin は binding.json が正本)。
-  - { kind: script, ref: scripts/select-deck-principles.py,        tier: core }
+  - { kind: script, ref: scripts/extract-deck-principles.py,        tier: core }
   # 上記カタログの fail-closed ゲート。採番連続性・分類整合・軸の値域・相互参照の実在に加え、
   # binding.json の select を実際に評価して core_refs ⊆ 抽出結果を検証し、
   # --vendor-target で guide-doc-generator への複製を sha256 で追従確認する。
@@ -166,13 +166,13 @@ dependencies:
   - { from: commands/slide-report-generate.md, to: scripts/validate-output-mode.py,  type: calls }
   - { from: commands/slide-report-status.md,   to: skills/run-slide-report-generate, type: reads }
   # --- 資料作成の大原則: owner skill → selector → 正本データ/契約 ---
-  - { from: skills/run-slide-report-generate, to: scripts/select-deck-principles.py,                         type: calls }
+  - { from: skills/run-slide-report-generate, to: scripts/extract-deck-principles.py,                         type: calls }
   - { from: skills/run-slide-report-generate, to: references/deck-principles/consumer-bootstrap.md,          type: reads }
-  - { from: skills/run-slide-report-modify,   to: scripts/select-deck-principles.py,                         type: calls }
+  - { from: skills/run-slide-report-modify,   to: scripts/extract-deck-principles.py,                         type: calls }
   - { from: skills/run-slide-report-modify,   to: references/deck-principles/consumer-bootstrap.md,          type: reads }
-  - { from: scripts/select-deck-principles.py, to: references/deck-principles/principles.json,               type: reads }
-  - { from: scripts/select-deck-principles.py, to: references/deck-principles/binding.json,                  type: reads }
-  - { from: scripts/select-deck-principles.py, to: references/deck-principles/tool-adapters.json,            type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/principles.json,               type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/binding.json,                  type: reads }
+  - { from: scripts/extract-deck-principles.py, to: references/deck-principles/tool-adapters.json,            type: reads }
   - { from: scripts/validate-deck-principles.py, to: schemas/deck-principles.schema.json,                    type: reads }
   - { from: scripts/validate-deck-principles.py, to: schemas/deck-principles-binding.schema.json,            type: reads }
   - { from: scripts/validate-deck-principles.py, to: references/deck-principles/principles.json,             type: reads }

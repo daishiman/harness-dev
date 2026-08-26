@@ -383,7 +383,7 @@ def _load_selector(root: Path):
     """ハイフン入りファイル名なので importlib.util で直接読む。"""
     import importlib.util
 
-    path = root / "scripts" / "select-deck-principles.py"
+    path = root / "scripts" / "extract-deck-principles.py"
     spec = importlib.util.spec_from_file_location("srg_select_deck_principles", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

@@ -378,5 +378,5 @@ Layer 1 成功基準（修正対象特定・ユーザー承認・同期確認チ
 <!-- deck-principles-consumer: slide-report-modifier; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer slide-report-modifier --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer slide-report-modifier --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

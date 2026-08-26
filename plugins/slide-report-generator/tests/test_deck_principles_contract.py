@@ -11,7 +11,7 @@ from unittest import mock
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
-SELECTOR_PATH = PLUGIN_ROOT / "scripts" / "select-deck-principles.py"
+SELECTOR_PATH = PLUGIN_ROOT / "scripts" / "extract-deck-principles.py"
 VALIDATOR_PATH = PLUGIN_ROOT / "scripts" / "validate-deck-principles.py"
 CATALOG_DIR = PLUGIN_ROOT / "references" / "deck-principles"
 
@@ -165,7 +165,7 @@ def test_composition_declares_generate_and_modify_selector_dependencies() -> Non
     lines = composition.splitlines()
     for owner in ("skills/run-slide-report-generate", "skills/run-slide-report-modify"):
         assert any(
-            f"from: {owner}," in line and "to: scripts/select-deck-principles.py" in line
+            f"from: {owner}," in line and "to: scripts/extract-deck-principles.py" in line
             for line in lines
         )
         assert any(

@@ -407,5 +407,5 @@ report-structure-designer が付した第一候補付きの section 例:
 <!-- deck-principles-consumer: visual-strategist; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer visual-strategist --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer visual-strategist --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

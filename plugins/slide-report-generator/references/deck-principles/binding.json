@@ -4,10 +4,10 @@
     "role": "原則カタログ (principles.json) と、本 plugin の受け皿 (agent / 検査器 / 既存 reference) の写像。原則本文をここへ写さない",
     "why": "『177 原則を持っている』ことと『生成物へ効いている』ことは別。どの agent がどの局面でどの部分集合を引くかを 1 箇所で宣言し、配線漏れを検出可能にする",
     "canon_authority": "本ファイルは写像の正本。原則本文・閾値の正本は principles.json、agent の 7 層 prompt の正本は skills/<owner>/prompts/R*.md",
-    "invocation": "agent は scripts/select-deck-principles.py --consumer <id> だけを実行する。絞り込み条件 (select) と必須原則 (core_refs) は本ファイルから引かれるので、prompt 側へ条件も規範文も書き写さない",
+    "invocation": "agent は scripts/extract-deck-principles.py --consumer <id> だけを実行する。絞り込み条件 (select) と必須原則 (core_refs) は本ファイルから引かれるので、prompt 側へ条件も規範文も書き写さない",
     "core_refs_semantics": "その consumer が必ず受け取る原則。--consumer 経由では pin されるので --limit の枠に関係なく残り、limit は残り枠にだけ効く",
     "limit_ration": "limit は agent 1 体が 1 局面で実際に適用しきれる件数の上限。超えると『読んだが使わなかった』原則が増え、選定の意味が消える",
-    "run_by_semantics": "agent = その agent が tools に Bash を持つので自分で select-deck-principles.py を実行する。orchestrator = Bash を持たないので、起動する側が実行して抽出結果を task brief へ載せる。この値は agent frontmatter の tools から導出され、検査器 P29 が実体と突合する。Bash の付与/剥奪だけして本フィールドを放置すると P29 が落ちる。"
+    "run_by_semantics": "agent = その agent が tools に Bash を持つので自分で extract-deck-principles.py を実行する。orchestrator = Bash を持たないので、起動する側が実行して抽出結果を task brief へ載せる。この値は agent frontmatter の tools から導出され、検査器 P29 が実体と突合する。Bash の付与/剥奪だけして本フィールドを放置すると P29 が落ちる。"
   },
   "schema_version": 1,
   "consumer_scope": {

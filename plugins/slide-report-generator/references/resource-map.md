@@ -30,7 +30,7 @@
 
 | グループ | 対象ファイル | 読むタイミング |
 |---|---|---|
-| 資料作成の大原則（全モード共通） | `deck-principles/consumer-bootstrap.md`, `deck-principles/binding.json`, `deck-principles/principles.json` | 資料作成の判断前。prompt の marker に従い `scripts/select-deck-principles.py --consumer <id> --format json` を実行または brief で受領する。件数・selected/xref内訳は実出力から導出し、checklistは別返却型として扱う。JSON正本を直接読まず、既存referenceとの優先関係・単位規則はbootstrapへ一本化する |
+| 資料作成の大原則（全モード共通） | `deck-principles/consumer-bootstrap.md`, `deck-principles/binding.json`, `deck-principles/principles.json` | 資料作成の判断前。prompt の marker に従い `scripts/extract-deck-principles.py --consumer <id> --format json` を実行または brief で受領する。件数・selected/xref内訳は実出力から導出し、checklistは別返却型として扱う。JSON正本を直接読まず、既存referenceとの優先関係・単位規則はbootstrapへ一本化する |
 | PowerPoint / Google Slides / HTML のtool adapter | `deck-principles/tool-adapters.json` | selectorが返すtool-neutralな `rule` / `tool_intent` を製品固有操作へ変換するときだけ読む。共通selection envelopeへ製品名や操作手順を焼き付けない |
 | binding schema / vendor artifact set | `../schemas/deck-principles-binding.schema.json`, `deck-principles/vendor-manifest.json` | consumer追加・run_by変更・vendoring更新時。bindingの構造と配布artifact集合を検査器へ委ね、promptや更新手順へ一覧を複製しない |
 | 仕様レジストリ | `spec-registry.md`, `bp-classification.md`, `v8-spec-fields.md` | SR-ID / V-ID / v8 フィールドの根拠が必要なとき |

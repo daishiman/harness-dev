@@ -321,5 +321,5 @@ node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/evaluate
 <!-- deck-principles-consumer: deck-evaluator; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer deck-evaluator --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer deck-evaluator --format json`
 を実行し、通常 selection ではなく checklist 用 envelope を判断軸へ加える。

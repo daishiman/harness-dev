@@ -374,5 +374,5 @@ Layer 1 成功基準（全タイトル1行収まり・同一スライド内カ�
 <!-- deck-principles-consumer: layout-optimizer; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer layout-optimizer --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer layout-optimizer --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

@@ -405,5 +405,5 @@ Layer 4 出力評価基準で自己評価し、不合格項目があれば修正
 <!-- deck-principles-consumer: ui-quality-reviewer; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer ui-quality-reviewer --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer ui-quality-reviewer --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

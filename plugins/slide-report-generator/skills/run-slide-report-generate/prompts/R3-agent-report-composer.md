@@ -391,5 +391,5 @@ visual-strategist が visual を確定した section の例:
 <!-- deck-principles-consumer: report-composer; run-by: agent -->
 
 共通契約は `references/deck-principles/consumer-bootstrap.md`。作業開始前に 1 回だけ
-`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/select-deck-principles.py" --consumer report-composer --format json`
+`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/extract-deck-principles.py" --consumer report-composer --format json`
 を実行し、返却された selection envelope を判断軸へ加える。

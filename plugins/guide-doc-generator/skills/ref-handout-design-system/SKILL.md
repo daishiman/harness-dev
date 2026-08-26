@@ -73,7 +73,7 @@ vendoring した。同じ理由で、資料作成の大原則は上流正本か�
 | テーマトークンの実値 | `assets/tokens/<theme>.json` | C11 (スキーマ owner は C11) |
 | 採用したデザイン言語 | `assets/jp-web-design-mode-b.md` | C04 (vendoring 実体) |
 | 資料作成の大原則の配布境界と共通契約 | `assets/deck-principles/README.md` | guide-doc-generator |
-| 資料作成の大原則の本文と閾値 | `assets/deck-principles/principles.json` (`scripts/select-deck-principles.py` 経由) | slide-report-generator (上流正本) |
+| 資料作成の大原則の本文と閾値 | `assets/deck-principles/principles.json` (`scripts/extract-deck-principles.py` 経由) | slide-report-generator (上流正本) |
 | guide consumer の対応 | `assets/deck-principles/binding.json` | guide-doc-generator (local overlay) |
 | 回答の型 | `references/answer-patterns.md` | C04 |
 
