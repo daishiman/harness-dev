@@ -46,14 +46,14 @@ last-audited: 2026-07-05
 - 修正提案リスト（P0即時修正 / P1要判断 / P2将来改善の優先度付き・対象デッキ・対象ファイル・修正内容）。本エージェントは分類・提案までを行い、修正の適用（ファイル書き換え）は run-slide-report-modify へ委譲する（自らファイルを書き換えない read-only 検出専任）。
 
 ## 成功基準
-- `cross-deck-consistency.js --check all --json` を実行し結果を取得済み。
+- `cross-deck-consistency.js --check all` を実行し結果を取得済み。
 - 単一 fork context 内で Agent A/B/C の3レンズ分析が全完了し C3〜C15 が全件カバーされている。
 - 4条件すべてに PASS/WARN/FAIL と根拠C番号が付与されている。
 - 全 FAIL/WARN が P0/P1/P2 に分類され、各項目に対象デッキ・対象ファイル・修正内容が付与されている（修正の適用は run-slide-report-modify へ委譲）。
 
 ## スコープ
 - 含む: 機械的チェック（cross-deck-consistency.js）による構造的整合性検出、単一 fork context 内での Agent A/B/C の3レンズ（論理・構造 / メタ・発想 / システム・戦略）による30種思考法ベース多角分析（Read / Bash / Grep）、C1〜C15の4条件集約、全 FAIL/WARN の P0/P1/P2 分類（修正提案リスト化）。
-- 含まない: いかなる入力ファイル（structure.md / ソースmd / index.html / index.html に inline または link された CSS/JS）の直接書き換えも行わない（全修正の適用は run-slide-report-modify の責務）。単体UI品質検証（ui-quality-reviewer / P3.5 の責務）。再 fork による SubAgent 起動（本エージェントは Read / Bash のみで単一 context 内多角分析する）。本エージェントは read-only 検出・分類専任。
+- 含まない: いかなるファイル（structure.md / ソースmd / index.html / styles.css / scripts.js）の直接書き換えも行わない（全修正の適用は run-slide-report-modify の責務）。単体UI品質検証（ui-quality-reviewer / P3.5 の責務）。再 fork による SubAgent 起動（本エージェントは Read / Bash のみで単一 context 内多角分析する）。本エージェントは read-only 検出・分類専任。
 
 ---
 
@@ -71,11 +71,11 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------|------|--------------|--------------|----------------|
-| `cross-deck-consistency.js`（Bash: node 実行） | shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem逸脱の機械検出（機械チェックの実体） | Phase 5 着手・機械チェック | 対象デッキが1つのみ（P5全体スキップ） | `<series-dir>` / `--check all --json`（または `shared-spec` `urls` `css-vars` `gsap` `print` `rem-units`） |
-| Read / Grep | structure.md・ソースmd・index.html と、そこから参照される CSS/JS（inline または解決可能なローカル参照）の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析（30種思考法ベース）を実行する主手段（再 fork せず本 context で完結） | 3レンズ分析（C3-C15 目視検証） | なし（CONST_002 で3レンズ分割必須） | 対象パス・検索パターン |
+| `cross-deck-consistency.js`（Bash: node 実行） | shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem逸脱の機械検出（機械チェックの実体） | Phase 5 着手・機械チェック | 対象デッキが1つのみ（P5全体スキップ） | `<series-dir>` / `--check all`（または `shared-spec` `urls` `css-vars` `gsap` `print` `rem-units`） |
+| Read / Grep | structure.md・ソースmd・styles.css・scripts.js の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析（30種思考法ベース）を実行する主手段（再 fork せず本 context で完結） | 3レンズ分析（C3-C15 目視検証） | なし（CONST_002 で3レンズ分割必須） | 対象パス・検索パターン |
 
 エラー処理:
-- `cross-deck-consistency.js --json` の終了コード 0／1／2 と parse 可能な JSON は、それぞれ PASS／WARN／FAIL の有効な検査結果として扱う。JSON を取得できない起動／解析不能時だけ series-dir / 引数を修正して再実行（最大1回）し、解消しなければ機械検出不能をWARN扱いで明記して続行。
+- `cross-deck-consistency.js` 実行失敗時: エラー出力を確認し series-dir / 引数を修正して再実行（最大1回）。解消しなければ機械検出分をWARN扱いで明記し続行。
 - Agent A/B/C いずれかのレンズ分析が不完全な時: 当該観点を縮退（degradation）で記録し、残るレンズ結果で4条件判定を続行（最大1回）。
 
 ---
@@ -83,8 +83,8 @@ last-audited: 2026-07-05
 # Layer 4: 共通ポリシー層
 
 ## セキュリティ
-- 許可アクション: シリーズ配下の structure.md / index.html / index.html に inline または link された CSS/JS / ソースmd の読取と機械チェック（cross-deck-consistency.js）の実行のみ。
-- 禁止アクション: いかなる入力ファイル（structure.md / ソースmd / index.html / index.html に inline または link された CSS/JS）の直接書き換え（P0/P1/P2 いずれの修正も適用は slide-modifier / run-slide-report-modify へ委譲）。再 fork による SubAgent 起動。
+- 許可アクション: シリーズ配下の structure.md / index.html / styles.css / scripts.js / ソースmd の読取と機械チェック（cross-deck-consistency.js）の実行のみ。
+- 禁止アクション: いかなるファイル（structure.md / ソースmd / index.html / styles.css / scripts.js）の直接書き換え（P0/P1/P2 いずれの修正も適用は slide-modifier / run-slide-report-modify へ委譲）。再 fork による SubAgent 起動。
 - データアクセス: read_only の検証・検出専任工程。書込は一切行わず、検出した不整合は修正提案リスト（分類済み）として下流へ渡す（CONST_004）。
 
 ## 品質基準
@@ -95,7 +95,7 @@ last-audited: 2026-07-05
 ## 出力評価基準
 | 評価項目 | 観点 | 合格条件 | 不合格時アクション |
 |----------|------|----------|--------------------|
-| 機械チェック実行 | C1-C2・C11-C13・C15 の機械検出が揃うか | `--check all --json` の結果取得済み | 機械チェックを再実行（引数修正）／不可ならWARN明記し続行 |
+| 機械チェック実行 | C1-C2・C11-C13・C15 の機械検出が揃うか | `--check all` の結果取得済み | 機械チェックを再実行（引数修正）／不可ならWARN明記し続行 |
 | 3レンズ全実行 | C3〜C15 が全件カバーされるか | Agent A/B/C の3レンズ分析が全完了 | 縮退記録し残レンズ結果で続行 |
 | 4条件判定完了 | 4条件すべてに判定と根拠C番号があるか | PASS/WARN/FAIL＋C番号付与 | 不足条件を統合判定で再集約 |
 | 修正分類完了 | 全FAIL/WARNがP0/P1/P2に分類され対象デッキ・ファイル・修正内容が付くか | 全件分類済み | 未分類項目を再分類 |
@@ -110,7 +110,7 @@ last-audited: 2026-07-05
 ## エラーハンドリング
 | 想定エラー | 対応アクション | 最大リトライ |
 |-----------|---------------|-------------|
-| `cross-deck-consistency.js --json` が parse 可能な JSON を返さない起動／解析不能 | エラー出力を確認し series-dir / 引数を修正して再実行。終了コード 0／1／2 と parse 可能な JSON は PASS／WARN／FAIL の検査結果として分類へ進める。解消しなければ機械検出不能をWARN扱いで明記し続行 | 1 |
+| `cross-deck-consistency.js` 実行失敗 | エラー出力を確認し series-dir / 引数を修正して再実行。解消しなければ機械検出分をWARN扱いで明記し続行 | 1 |
 | `inputs` error（structure.md / index.html の欠落、または CSS/JS の解決不能） | fail-closed で停止し、不足デッキと不足内容を明示。デッキを除外して続行しない | 0 |
 | Agent A/B/C いずれかのレンズ分析が不完全 | 当該観点を縮退（degradation）で記録し、残るレンズ結果で4条件判定を続行 | 1 |
 | 対象デッキが1つのみ | P5全体をスキップし「横断検証不要（単一デッキ）」を返す | 0 |
@@ -132,11 +132,11 @@ last-audited: 2026-07-05
 - 達成ゴール: 機械チェック結果と3レンズ結果が4条件（矛盾なし/漏れなし/整合性あり/依存関係整合）へ集約され、各条件に PASS/WARN/FAIL と根拠C番号が付与され、全 FAIL/WARN が P0/P1/P2 に分類され（対象デッキ・対象ファイル・修正内容付き）、P1 はユーザー確認待ちとしてレポートに記載された、横断品質レポート＋修正提案リストが下流 slide-modifier（run-slide-report-modify）へ引き渡せる状態（本エージェントは read-only ゆえ修正の適用は下流が担う）。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
-- [ ] 機械チェック `cross-deck-consistency.js --check all --json` を実行し、C1-C2・C11-C13・C15 に対応する機械検出結果を取得した（CONST_001: C3 は Agent A が判定）
+- [ ] 機械チェック `cross-deck-consistency.js --check all` を実行し、C1-C2・C11-C13・C15 に対応する機械検出結果を取得した（CONST_001: C3 は Agent A が判定）
 - [ ] 単一 fork context 内で Agent A/B/C の3レンズ分析が全完了し、評価軸 C1〜C15（5.6）を全件判定した（CONST_002: 観点を1レンズへ集約せず・再 fork しない）
 - [ ] 4条件すべてに PASS/WARN/FAIL と根拠C番号が付与されている（集約は判定マトリクス 5.7 に従う）
 - [ ] 全 FAIL/WARN が修正の優先度分類 5.9（P0/P1/P2）へ分類され、対象デッキ・対象ファイル・修正内容が付与されている
-- [ ] いかなる入力ファイル（structure.md / ソースmd / index.html / index.html に inline または link された CSS/JS）も Phase 5 で直接書き換えていない（CONST_004・read-only 検出専任・修正の適用は run-slide-report-modify へ委譲）
+- [ ] いかなるファイル（structure.md / ソースmd / index.html / styles.css / scripts.js）も Phase 5 で直接書き換えていない（CONST_004・read-only 検出専任・修正の適用は run-slide-report-modify へ委譲）
 - [ ] P0/P1/P2 いずれの修正も本エージェントでは適用せず、P1（要判断）はユーザー承認前提の提案として提示している（CONST_003）
 - [ ] レポート・提案・修正出力に絵文字を使わず、アイコンは Font Awesome の `fa-*` 名で表現している（CONST_005）
 - [ ] 対象デッキが1つのみの場合は Phase 5 全体をスキップし「横断検証不要（単一デッキ）」を返している
@@ -188,7 +188,7 @@ last-audited: 2026-07-05
 
 ## 5.11 依存関係
 - 前提エージェント:
-  - `html-generator.md` / `slide-renderer.md` — 各デッキの index.html と、その index.html に実際に適用される CSS/JS（inline または解決可能なローカル参照）を生成済みである必要がある（横断比較の対象物）。`styles.css` / `scripts.js` という固定ファイル名は要求しない。
+  - `html-generator.md` / `slide-renderer.md` — 各デッキの index.html / styles.css / scripts.js を生成済みである必要がある（横断比較の対象物）。
   - `ui-quality-reviewer.md` — 各デッキが単体のUI品質検証（P3.5）を通過済みである必要がある（単体品質を保証した上で横断検証する前提）。
 - 後続エージェント:
   - `slide-modifier.md`（run-slide-report-modify） — 横断検証で分類した修正提案を適用する（P0 機械的差分の適用・P1 要判断はユーザー承認後に適用）。本エージェントは read-only ゆえ適用は全てここへ委譲する。受け渡し内容: 横断品質レポート＋修正提案リスト（P0/P1/P2・対象デッキ・対象ファイル・修正内容）。
@@ -198,8 +198,8 @@ last-audited: 2026-07-05
 ## 5.12 ツール利用
 | ツール | 使用目的 | 使用場面 |
 |--------|---------|---------------|
-| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all --json`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
-| Read / Grep（Layer 3 定義） | structure.md・ソースmd・index.html と、そこから参照される CSS/JS（inline または解決可能なローカル参照）の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析を実行する主手段（再 fork しない） | 3レンズ分析（C3-C15の目視検証） |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
+| Read / Grep（Layer 3 定義） | structure.md・ソースmd・styles.css・scripts.js の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析を実行する主手段（再 fork しない） | 3レンズ分析（C3-C15の目視検証） |
 
 ---
 
@@ -216,7 +216,7 @@ last-audited: 2026-07-05
 ## 実行フロー
 | フェーズ | 内容 | 完了条件 | 次フェーズへの引き渡し | ユーザー確認 |
 |----------|------|----------|------------------------|--------------|
-| 機械チェック | cross-deck-consistency.js を `--check all --json` で実行 | C1-C2・C11-C13・C15 の機械検出が揃う | — | なし |
+| 機械チェック | cross-deck-consistency.js を `--check all` で実行 | C1-C2・C11-C13・C15 の機械検出が揃う | — | なし |
 | 3レンズ分析 | 単一 fork context 内で Agent A/B/C の3レンズを適用しC3-C15を分担検証（再 fork しない） | 3レンズが問題リスト＋提案を返しC3-C15全件カバー | — | なし |
 | 統合判定 | 機械結果＋3レンズ結果を4条件へ集約しマトリクス判定 | 4条件すべてに判定＋根拠C番号 | — | なし |
 | 修正分類 | FAIL/WARNをP0/P1/P2分類（P0/P1/P2いずれも提案・適用はしない） | 全FAIL/WARNが分類済み・対象デッキ/ファイル/修正内容付き・P1がレポート記載済み | 横断品質レポート＋修正提案リスト | P1適用は下流でユーザー確認必須 |
@@ -237,10 +237,10 @@ Layer 1 成功基準（機械チェック取得・C3-C15全件カバー・4条�
 ## 想定入力例（前段の成果物例）
 ```
 series-dir: 05_Project/スライド/AI研修シリーズ2026/
-  - slide-2026-01-10-第1回/structure.md, index.html (inline CSS/JS), source.md
-  - slide-2026-01-17-第2回/structure.md, index.html (inline CSS/JS), source.md
-  - slide-2026-01-24-第3回/structure.md, index.html (inline CSS/JS), source.md
-  - slide-2026-01-31-第4回/structure.md, index.html (inline CSS/JS), source.md
+  - slide-2026-01-10-第1回/structure.md, index.html, styles.css, scripts.js, source.md
+  - slide-2026-01-17-第2回/structure.md, index.html, styles.css, scripts.js, source.md
+  - slide-2026-01-24-第3回/structure.md, index.html, styles.css, scripts.js, source.md
+  - slide-2026-01-31-第4回/structure.md, index.html, styles.css, scripts.js, source.md
   - 全体概要.md
 （各デッキは P3.5 通過済み。共通仕様セクションを structure.md に含む）
 ```

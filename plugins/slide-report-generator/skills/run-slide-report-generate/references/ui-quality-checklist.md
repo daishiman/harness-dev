@@ -13,7 +13,7 @@
 | 必須構造検証 S1〜S26 | HTML生成後に最優先で確認する26項目の客観的構造チェック。1件でも違反で差し戻し | CONST_001 |
 | 図解の溶け込み検証 S27〜S29 | 図解を含むスライドにのみ適用する 3 項目の意味判定チェック。図解が面の中で浮いていないか（占有率・本文重複禁止・文脈適合と骨格の出自）を見る。閾値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-layout-contract.md` §D-4 | R9 溶け込み契約 / D14-D17 |
 | 品質レポート | 検証結果サマリ + 検出問題 + 修正提案を構造化した出力 | Layer 5 出力テンプレート |
-| 反転アクセント | 地色と文字色を入れ替え、面内の最重要ブロックを1つだけ強調する方式 | S10 / 60-30-10配色 |
+| ビビッドアクセント | `--accent-*-vivid` CSS変数で表現する高彩度の強調色 | S10 / 60-30-10配色 |
 | foreignObject | SVG内にHTMLを埋め込む要素。clearProps破壊回避のため `.fo-card` で保護 | S17 / S18 / CONST_006 |
 | Read-Do チェックリスト | 各項目を実行しつつ1件ずつ確認する省略不可の検証様式 | The Checklist Manifesto |
 | Gap-Bridge Cycle | 理想→現実→ギャップ→解決策の構成サイクル | 構成検証 |
@@ -27,7 +27,7 @@
 | S27〜S29 合否 | 図解を含むスライドで全3項目が §D-4 の契約を満たす=合格 / 違反は補正指針を添えて html-generator へ返す（S1〜S26 と異なり即時中断はしない） |
 | 最小フォントサイズ | 下限を下回るテキストが 0 件=合格。画面の下限は SR-3-04、SVG `<text>` の下限は SR-3-05（CONST_004） |
 | コントラスト比 | WCAG 2.1 AA（4.5:1）以上で合格 / 未満は不合格 |
-| 配色面積 | 反転面が10%以下・1スライド1箇所以内で合格（60-30-10、S16） |
+| 配色面積 | アクセント面積10%以下・1スライドのビビッド2色以内で合格（60-30-10、S16） |
 | 縦方向配分 | 合格=ブロック高が内容量に比例し残余が群の外側余白に残る / 不合格=**縦方向の伸長指定**（`grid-auto-rows: 1fr`・`align-content: stretch`・`flex: 1 1 0`・column flex 上の `justify-content: space-between\|space-evenly`）で伸長または分散。**対象外**=`grid-template-columns` の `1fr`・`--space-*` 変数・横方向の `align-items: stretch`。**grep 対象は `styles.css` / `index.html`（inline `<style>`）/ `custom.css` の 3 つ**（`styles.css` だけを見ると engine 出力には該当指定が 0 件なので常に緑になる構造的な偽陰性。override は `custom.css` か inline `<style>` に入る） |
 | 改善ループ収束 | 修正→再検証が3周以内で全基準充足=収束 / 3周で未収束=エスカレーション |
 
@@ -116,14 +116,14 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 | S6 | 16:9アスペクト比 | `.slide-area`に`aspect-ratio: 16/9`が設定 | CSSルールの確認 |
 | S7 | 印刷カード比率 | 印刷CSSのカードpadding≧5mm、本文font-size≧10pt、gap≧3mm、border-radius≧3mm | @media print内の各スライドタイプの値を確認 |
 | S8 | 印刷A4フルサイズ | `@page { margin: 0 }` + `.slider__item { width: 297mm; height: 210mm; border: none }` が存在 | @media print内の確認 |
-| S9 | ページネーション区切り | `nth-child(5n)` / `nth-child(10n)` が通常ドットと異なる寸法を持ち、色だけに依存しない | pagination.css と生成ドット数の確認 |
+| S9 | ページネーション色分け | 5の倍数にmilestone-5、10の倍数にmilestone-10クラス付与 | scripts.js buildNavigation()の確認 |
 | S10 | 反転アクセント | 各スライドの強調が反転面（地色と文字色の入れ替え）1 個で作られ、そのために色を足していない | styles.css で面の色数が 地 / 文字 / 反転面 の 3 つ以内か確認（SR-2-01 / SR-2-04 / SR-2-05） |
 | S11 | アニメーションイージング多様性 | GSAPアニメーションで3種類以上のイージングが使用（power2.out, back.out, power1.inOut等） | scripts.jsのease値を確認 |
 | S12 | アクセシビリティ基本 | focus-visible, prefers-reduced-motion, sr-only, aria-liveが全て実装 | styles.css + index.htmlを確認 |
 | S13 | UIテキスト最低opacity | ナビゲーション・ラベル・キャプション等のopacityが全て0.6以上 | styles.cssのopacity値を確認 |
 | S14 | 視覚階層 | 各スライドに明確なL1（フォーカルポイント）があり、L1とL3のサイズ差が2倍以上 | フォントサイズの階層確認 |
 | S15 | CARP原則 | 近接（グループ内gap<グループ間gap）かつ対比（差2倍以上）が適用 | gap/margin/font-size値の確認 |
-| S16 | 60-30-10配色 | 反転面の面積が10%以下、1スライド1箇所以内 | 反転面の数と面積を確認 |
+| S16 | 60-30-10配色 | アクセントカラー面積が10%以下、1スライドのビビッドカラーが2色以内 | 色使用箇所の確認 |
 | S17 | clearProps安全パターン | clearPropsがcontent.childrenのみに適用。`querySelectorAll('*')`でのclearProps適用が0件（SVG fill/stroke破壊・foreignObjectレイアウト崩壊の原因） | scripts.jsのclearProps使用箇所を確認 |
 | S18 | foreignObject CSS保護 | foreignObject > divに`class="fo-card"`（またはfo-card fo-card--row）が適用。インラインstyleのみのレイアウト定義が0件（GSAPのclearPropsで破壊される） | index.htmlのforeignObject内div要素のclass属性を確認 |
 | S19 | A4印刷仕様準拠 | structure.mdのA4印刷品質保証仕様（単位mm/rem/vw、px禁止、@page margin:0、画面=印刷一致）がstyles.cssに実装 | @media printセクションの単位・レイアウト確認 |
@@ -365,6 +365,6 @@ HTML生成後、他のUI検証に先立ち以下を**必ず**確認する。1つ
 | 問題 | 原因 | 対処法 |
 |------|------|--------|
 | クリック領域が小さい | padding不足 | 最小44x44px確保 |
-| フォーカスが見えない | outline未設定 | `outline: 2px solid var(--ink, #141412)` |
+| フォーカスが見えない | outline未設定 | outline: 2px solid var(--accent-blue-vivid) |
 | 状態変化がわからない | transition未設定 | transition: 0.2s ease追加 |
 | スクロールがガタつく | scroll-snap未設定 | scroll-snap-type: x mandatory |

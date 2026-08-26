@@ -28,9 +28,9 @@
 |------|------|
 | 大きいフォント | 小さいフォント |
 | 太字 | 細字 |
-| 反転面 | 通常面 |
+| ビビッドカラー | ミュートカラー |
 | 画像・アイコン | テキスト |
-| 太い主線 | 細い補助線 |
+| 影付き要素 | フラット要素 |
 | 密集エリア | 余白エリア |
 
 **実践**: 最も「重い」要素が最も伝えたいメッセージか確認する。
@@ -84,7 +84,7 @@ gsap.from('.item', {
 ┌─────────────────────────────────────┐
 │                                     │
 │           ┌─────────┐               │
-│           │  4.5x   │  ← L1: --fs-display, --ink, --fw-bold
+│           │  4.5x   │  ← L1: --fs-display, --accent-blue-vivid, --fw-bold
 │           └─────────┘               │
 │        生産性向上率                   │  ← L2: --fs-subheading, --fg
 │                                     │
@@ -194,8 +194,8 @@ gsap.from('.item', {
 
 **デザインTips**:
 - レイアウト比率 2:1（グラフ:インサイト）
-- インサイトパネルだけを反転面にし、数値は大きさと太さで強調
-- グラフの注目点は主線・ラベル・マーカー寸法で示し、他は補助線へ落とす
+- インサイトパネルにビビッドカラーの数値
+- グラフの注目データポイントだけビビッドカラー、他はミュート
 - 「何を読み取るべきか」をインサイトパネルで明示
 
 ### 2.6 アイコン+テキストグリッドパターン
@@ -235,14 +235,14 @@ gsap.from('.item', {
 │  Q1   Q2   Q3   Q4   完了           │
 │  分析  設計  開発  テスト  リリース    │
 │                                     │
-│  [Q2を強調: 反転面 + 現在地ラベル]    │
+│  [Q2を強調: --accent-blue-vivid]     │
 │                                     │
 └─────────────────────────────────────┘
 ```
 
 **デザインTips**:
 - タイムライン線は --fg-muted で控えめに
-- ノードは --bg-card 背景、アクティブノードだけ反転面 + 現在地ラベル
+- ノードは --bg-card 背景、アクティブノードだけビビッドカラー
 - stagger で左→右に順次表示
 - 各ノードにホバーで詳細ツールチップ
 
@@ -254,14 +254,14 @@ gsap.from('.item', {
 ┌─────────────────────────────────────┐
 │                                     │
 │  ┌─────────────────────────────┐    │
-│  │  こんな課題はありませんか？    │    │  ← 罫 + 「課題」ラベル
+│  │  こんな課題はありませんか？    │    │  ← --accent-pink-vivid アクセント
 │  │                             │    │
 │  │  ・課題1                     │    │
 │  │  ・課題2                     │    │
 │  └─────────────────────────────┘    │
 │               ↓                     │
 │  ┌─────────────────────────────┐    │
-│  │  解決策                      │    │  ← 反転面 + 「解決策」ラベル
+│  │  解決策                      │    │  ← --accent-aqua-vivid アクセント
 │  │                             │    │
 │  │  ソリューション説明           │    │
 │  └─────────────────────────────┘    │
@@ -399,16 +399,15 @@ gsap.from('.item', {
 .desc-compare { display: flex; gap: 4%; align-items: stretch; }
 .desc-compare__panel { width: 48%; padding: 2vw; border-radius: 1vw; }
 .desc-compare__panel--bad {
-  border: 1px solid var(--hairline, #D5D4D1);
-  background: var(--paper, #F7F6F3);
+  border: 2px solid var(--accent-pink-vivid);
+  background: color-mix(in srgb, var(--accent-pink-vivid) 6%, var(--bg-card, #F0F0F0));
 }
 .desc-compare__panel--good {
-  border: 2px solid var(--ink, #141412);
-  background: var(--ink, #141412);
-  color: var(--paper, #F7F6F3);
+  border: 2px solid var(--accent-aqua-vivid);
+  background: color-mix(in srgb, var(--accent-aqua-vivid) 6%, var(--bg-card, #F0F0F0));
 }
-.dc-badge { font-size: 1.4rem; color: var(--fg-muted, #6A6A68); margin-bottom: 1vw; }
-.dc-badge--ok { color: inherit; }
+.dc-badge { font-size: 1.4rem; color: var(--accent-pink-vivid); margin-bottom: 1vw; }
+.dc-badge--ok { color: var(--accent-aqua-vivid); }
 .dc-title { font-size: 1.85rem; margin-bottom: 0.8vw; }
 .dc-desc { font-size: 1.45rem; line-height: 1.6; }
 .misfire-sample {
@@ -417,7 +416,6 @@ gsap.from('.item', {
   padding: 1vw 1.4vw;
   border-radius: 0.6vw;
   background: var(--bg-dim, #F5F5F5);
-  color: var(--ink, #141412);
   margin: 0.8vw 0;
 }
 ```
