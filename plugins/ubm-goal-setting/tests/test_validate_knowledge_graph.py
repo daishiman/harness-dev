@@ -472,4 +472,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 434 -> 450: YouTube「人を育てる前に、今の仕事を分解する」(7I6dPQTCnuw) から 16 件を追加、削除 0 件。
     # 450 -> 477: UBM大阪合宿 (2026-08-22) + 兵庫支部会 (2026-08-23) のメモから 27 件を追加、削除 0 件。
     # 477 -> 599: 北原孝彦アカデミー3文書 (挨拶/コラム/心構え) から 122 件を追加、削除 0 件。
-    assert graph["node_count"] == 599
+    # 599 -> 629: YouTube「待てない経営者が、先に整えるもの」(cMpb84eVKbg) から 30 件を追加、削除 0 件。
+    assert graph["node_count"] == 629
