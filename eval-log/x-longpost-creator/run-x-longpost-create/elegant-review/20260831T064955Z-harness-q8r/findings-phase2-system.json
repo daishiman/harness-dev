@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "target": {"type": "kit-component", "path": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator", "reviewed_at": "2026-08-31T06:49:55Z"},
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19, "paradigm_name": "systems", "category": "E-system", "agent": "elegant-system-strategic-analyst",
+      "observations": ["主要DAGは追跡可能だが、旧prompt rootと到達不能なESM calls edgeが宣言と実行を分断する。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:76-128"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:99-100"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:114"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:193"]}
+      },
+      "issues": [{"condition": "C4", "severity": "medium", "bucket": "dependency-loop", "description": "compositionが到達しないlog_usage.mjs calls edgeを持つ。", "recommended_intervention": "ESMをruntime adapterとして表現し、通常callsから外す。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml", "line": 100}, "root_cause": "同梱と呼出しを同じedge型で表現。"}],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 20, "paradigm_name": "causal", "category": "E-system", "agent": "elegant-system-strategic-analyst",
+      "observations": ["3prompt検証と書きつつdiagramだけを検査し、thumbnail違反が課金生成へ伝播できる。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:232"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:208-214"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:26,120"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:236-241"]}
+      },
+      "issues": [{"condition": "C2", "severity": "high", "bucket": "hook-ci", "description": "全3promptのemoji検査契約に対しdiagramだけを検査する。", "recommended_intervention": "選択VISUAL_KINDSを全件検査してから画像生成する。", "condition_signal": "omission", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md", "line": 214}, "root_cause": "単一例示を全件契約へ展開しない。"}],
+      "score": 0.52
+    },
+    {
+      "paradigm_id": 21, "paradigm_name": "causal-loop", "category": "E-system", "agent": "elegant-system-strategic-analyst",
+      "observations": ["parity testsは良い負feedbackだが、EVALSは旧H10挙動と旧versionを再生産する。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:41"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:3,29"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:9"]},
+        "C4": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:81-94"]}
+      },
+      "issues": [{"condition": "C1", "severity": "medium", "bucket": "eval-log", "description": "EVALSのH10説明とversionが現行実装に追随しない。", "recommended_intervention": "現行version/entrypointsへ更新しvisual評価を追加する。", "condition_signal": "contradiction", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json", "line": 41}, "root_cause": "release完了条件にEVAL更新がない。"}],
+      "score": 0.58
+    },
+    {
+      "paradigm_id": 22, "paradigm_name": "trade-on", "category": "F-strategic", "agent": "elegant-system-strategic-analyst",
+      "observations": ["domain固有instructionはlocalに残し、汎用Codex回収coreのみ共有/provenance管理する両立解がある。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py:399-485"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:11,127"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/slide-report-generator/vendor/scripts/generate-images-codex.js:180"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/guide-doc-generator/scripts/srg-image-bridge.py:23-27"]}
+      },
+      "issues": [{"condition": "C4", "severity": "low", "bucket": "dependency-loop", "description": "汎用Codex回収coreがupstreamから分岐する。", "recommended_intervention": "今回の最小修正ではprovenanceを記録し、共有provider化は別スコープに留める。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js", "line": 113}, "root_cause": "domain policyと汎用coreを同時コピー。"}],
+      "score": 0.64
+    },
+    {
+      "paradigm_id": 23, "paradigm_name": "plus-sum", "category": "F-strategic", "agent": "elegant-system-strategic-analyst",
+      "observations": ["governance adapterは安全性を高めるが、package-contractの依存閉包へ伝播しない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.claude-plugin/plugin.json:8; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/references/package-contract.json:30"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/artifact-delivery.json:50"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/artifact-delivery.json:52,71"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/artifact-delivery.json:75"]}
+      },
+      "issues": [{"condition": "C4", "severity": "high", "bucket": "schema", "description": "package contractがgovernance adapter依存を欠く。", "recommended_intervention": "manifest・artifact-delivery・package-contractの依存集合を一致させる。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/references/package-contract.json", "line": 30}, "root_cause": "依存面が別々に管理された。"}],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 24, "paradigm_name": "value-proposition", "category": "F-strategic", "agent": "elegant-system-strategic-analyst",
+      "observations": ["主価値はscript-first fail-closedだが、中心text pipelineの統合回帰testが未整備でvisual/logへ偏る。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:77-84"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:7-8"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:42"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:39-40"]}
+      },
+      "issues": [{"condition": "C2", "severity": "high", "bucket": "hook-ci", "description": "中心text pipelineの回帰testが無い。", "recommended_intervention": "最小fixtureでfilename→template→validators→更新の失敗原子性を検査する。", "condition_signal": "omission", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md", "line": 7}, "root_cause": "個別script完成を優先し統合fixtureを作らなかった。"}],
+      "score": 0.63
+    },
+    {
+      "paradigm_id": 25, "paradigm_name": "strategic", "category": "F-strategic", "agent": "elegant-system-strategic-analyst",
+      "observations": ["二runtime対応戦略に対しCodex manifestとREADMEだけがvisual追加前の成熟度に留まる。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.claude-plugin/plugin.json:3; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:3"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:45-51"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:4"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"]}
+      },
+      "issues": [{"condition": "C3", "severity": "high", "bucket": "rubric-governance", "description": "Codex公開契約がvisual追加前のversion/descriptionである。", "recommended_intervention": "両manifestとREADME runtime例のprojection parityを追加する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json", "line": 3}, "root_cause": "release projection比較ゲート不在。"}],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 27, "paradigm_name": "kaizen", "category": "G-problem", "agent": "elegant-system-strategic-analyst",
+      "observations": ["改名理由は残るがmachine resource-mapだけ旧agents件数を次回判断へ返す。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.yaml:5"]},
+        "C2": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.md:27-77"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/CHANGELOG.md:35"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.yaml:31-32"]}
+      },
+      "issues": [{"condition": "C3", "severity": "low", "bucket": "doc", "description": "resource-map.yamlが旧agents名と件数を保持する。", "recommended_intervention": "変動件数を削除し実体pathだけを索引化する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.yaml", "line": 5}, "root_cause": "説明commentが更新check外。"}],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 28, "paradigm_name": "hypothesis", "category": "G-problem", "agent": "elegant-system-strategic-analyst",
+      "observations": ["非対話shellでcodex aliasが使える中心仮説はpreflight/live-trialなしで、dry-run testだけでは反証できない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:51,60"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/references/package-contract.json:43-49"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:24,115"]}
+      },
+      "issues": [{"condition": "C4", "severity": "medium", "bucket": "dogfooding", "description": "Codex backendがshell aliasへ依存しpreflightがない。", "recommended_intervention": "実行可能fileを設定化しspawn系APIと課金前preflightを使う。live課金試験は明示承認まで保留。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js", "line": 24}, "root_cause": "ローカルalias運用をportable契約なしで移植。"}],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 29, "paradigm_name": "issue", "category": "G-problem", "agent": "elegant-system-strategic-analyst",
+      "observations": ["本質論点は長文handoffとvisual handoffを独立sessionとして扱うかであり、現状はaccept-as-isの意味が混在する。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:87-89,316"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/artifact-delivery.json:23-45"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:63,77,85"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:228-236"]}
+      },
+      "issues": [{"condition": "C1", "severity": "high", "bucket": "other", "description": "長文とvisualのaccept-as-is/handoff境界が混在する。", "recommended_intervention": "長文accept後にvisualを別sessionで明示起動し、diagram提示・選択後だけ残り生成/embedへ進む。", "condition_signal": "contradiction", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md", "line": 316}, "root_cause": "visual deliveryの後付け。"}],
+      "score": 0.42
+    },
+    {
+      "paradigm_id": 30, "paradigm_name": "kj", "category": "G-problem", "agent": "elegant-system-strategic-analyst",
+      "observations": ["所見は手動projection、gate欠落、dependency曖昧の3島に集約され、単一consistency testが再発源を横断できる。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:3"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:7-12"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:3"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py:464-485"]}
+      },
+      "issues": [{"condition": "C3", "severity": "medium", "bucket": "rubric-governance", "description": "SSOT宣言に対し下流projectionの統合validatorがない。", "recommended_intervention": "compositionからmanifest、依存、resource、path、EVALSを検査する単一read-only testを追加する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml", "line": 3}, "root_cause": "SSOTからの生成またはprojection検査不在。"}],
+      "score": 0.56
+    }
+  ],
+  "variable_abstraction": [],
+  "total_score": 0.53
+}

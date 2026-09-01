@@ -1,0 +1,67 @@
+{
+  "iteration": 2,
+  "status": "in_progress",
+  "iteration_count": 2,
+  "changed_paths": [
+    "plugins/x-longpost-creator/plugin-composition.yaml",
+    "plugins/x-longpost-creator/references/package-contract.json",
+    "plugins/x-longpost-creator/README.md",
+    "plugins/x-longpost-creator/CHANGELOG.md",
+    "plugins/x-longpost-creator/EVALS.json",
+    "plugins/x-longpost-creator/ROADMAP.md",
+    "plugins/x-longpost-creator/skills"
+  ],
+  "validation_commands": [
+    "pytest -q tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py tests/scripts-plugins/test_x_longpost_creator__contract_parity.py tests/scripts-plugins/test_x_longpost_creator__text_pipeline.py tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py",
+    "python3 plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py --check all --plugin-dir plugins/x-longpost-creator",
+    "python3 scripts/validate-frontmatter.py --skills-dir plugins/x-longpost-creator/skills"
+  ],
+  "residual_risks": [
+    "independent approval found results[].presentation documentation drift, strict-validation receipt gap and incomplete final review artifacts"
+  ],
+  "convergence_status": "in_progress",
+  "root_fixes": [
+    {
+      "root_cause": "diagram-first orchestration overrode the required two-thumbnail outcome",
+      "resolution": "all runtime and documentation defaults now require x-thumb 5:2 plus note-thumb exact 1280x670; diagram is explicit optional"
+    },
+    {
+      "root_cause": "generation, delivery and presentation used different notions of the artifact",
+      "resolution": "Codex imagegen output is recovered into XLP_IMAGE_DIR and the same absolute path is handed to Claude Code Read or Codex view_image"
+    },
+    {
+      "root_cause": "semantic review was not bound to the bytes embedded into a post",
+      "resolution": "five PASS checks, host/tool and image SHA256 are recorded in a review receipt; embed verifies the current bytes"
+    },
+    {
+      "root_cause": "prompt pair and source structure could drift",
+      "resolution": "TL-11 and TL-12 fail before paid generation on structure or shared-block drift"
+    },
+    {
+      "root_cause": "generation provenance was insufficient for audit and controlled reruns",
+      "resolution": "meta now records hashes, session, executor/version, stochastic mode and explicit seed unsupported state"
+    },
+    {
+      "root_cause": "written style canon conflicted with accepted reference thumbnails",
+      "resolution": "restrained paper-cut texture and shallow object shadow are allowed; people, info-product motifs, text shadow and dramatic 3D remain forbidden"
+    }
+  ],
+  "initial_high_critical_signals": 30,
+  "unresolved_high_critical_signals": 4,
+  "validation": {
+    "plugin_tests": "100 passed",
+    "package_checks": "8 passed, 0 failed",
+    "skill_name_lint": "5 passed",
+    "skill_description_lint": "5 passed",
+    "frontmatter_validation": "5 passed",
+    "node_syntax_and_json_parse": "passed",
+    "thought_methods": "30/30 structured coverage"
+  },
+  "four_conditions": {
+    "C1": "FAIL",
+    "C2": "FAIL",
+    "C3": "FAIL",
+    "C4": "FAIL"
+  },
+  "residual_risk": "Paid live Codex image generation was not executed because the user did not explicitly authorize charges. The no-charge fake-Codex integration covers invocation, session recovery, absolute-path handoff, receipt/hash gating and embedding."
+}

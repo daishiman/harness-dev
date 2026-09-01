@@ -380,7 +380,7 @@ def test_all_projections_pin_the_executable_guard_runtime():
     runner_sha = hashlib.sha256(RUNNER.read_bytes()).hexdigest()
     schema_sha = hashlib.sha256(SCHEMA.read_bytes()).hexdigest()
     projections = sorted(ROOT.glob("plugins/*/artifact-delivery.json"))
-    assert len(projections) == 20
+    assert len(projections) == 21
     external = 0
     for path in projections:
         projection = json.loads(path.read_text())

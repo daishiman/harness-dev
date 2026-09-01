@@ -1,0 +1,143 @@
+# CapabilityBundle 宣言 — plugins/x-longpost-creator
+# 正本スキーマ: ../harness-creator/skills/run-build-skill/references/capability-manifest.schema.json (kindPluginComposition)
+# 用途: x-longpost-creator の公開 Capability・依存 DAG・統治を宣言する SSOT。
+#       .claude-plugin/plugin.json / references/package-contract.json の entry_points と1対1対応する。
+
+name: x-longpost-creator
+description: キャッチコピーとメモ (または音声の文字起こし) から X の長文投稿・短文投稿を作成する plugin。文体適用・テーマ抽出・言語化という創造の判断を LLM に残し、文字数・タイトル長・見出し構造・絵文字ゼロという数えられる判断を Node.js スクリプトへ寄せる。
+kind: plugin-composition
+version: 1.2.1
+owner: team-content
+since: 2026-08-31
+last-audited: 2026-08-31
+# 単独配布しない: 特定の書き手のスタイルゲノムと個人 vault の運用前提 (00ネタファイル・
+# Obsidian テンプレート) に依存するため、公開 marketplace の配布対象にしない (層A-internal)。
+distribution: internal-only
+
+contract:
+  intent: 投稿の中身を書く仕事は書き手と LLM に残し、投稿の形を保つ仕事を機械へ寄せる。文字数・タイトル長・見出し構造・絵文字の有無は数えられるため、LLM の自己申告ではなくスクリプトの終了コードで判定する。
+  interface:
+    inputs: [catchcopy, transcript, memo, text, references/output-config.json]
+    outputs: ["X長文投稿-prompt作成 - YYYY-MM-DD_[タイトル].md", "投稿1〜8 (各180〜220文字)", "投稿9｜要約型 (400〜499文字)", "短文投稿1本", "Idea Compass", "00ネタファイル更新", "diagram.png", "x-thumb.png", "note-thumb.png", "Obsidian添付先の投稿固有名画像", "投稿ファイルの図解・サムネイル欄更新"]
+  invariant:
+    # enforcement 注記: 機械執行 (script) がある項目はその名前を、無い項目は manual を併記する。
+    - "成果物にも plugin 内の文書自体にも絵文字を含めないこと。会話中のユーザー指示より本仕様が優先される (enforcement: scripts/check-no-emoji.js exit 0)"
+    - "見出し1 (タイトル) は 50 文字以内とし、超過時に末尾を切り詰めないこと。リライトへ戻す (enforcement: scripts/validate-title.js exit 0 + scripts/generate-filename.js exit 1)"
+    - "見出し1の直後に見出し2が 3〜8 個存在すること (enforcement: scripts/validate-headings.js --strict-h2-count exit 0)"
+    - "タイトル文字列を見出し1・長文Bの先頭行・`# タイトル` セクション・ファイル名の 4 箇所で一字一句一致させること (enforcement: scripts/validate-headings.js --file の 4 箇所一致検証)"
+    - "長文Aの Markdown 見出しを除いた本文と、長文Bの先頭タイトルを除いた本文を空白・改行正規化した結果が同値であること (enforcement: scripts/validate-headings.js --file の F4)"
+    - "長文Bの非空本文行は1行につきちょうど1文であること (enforcement: scripts/validate-headings.js --file の F5)"
+    - "長文投稿 A/B を 1800〜2200 文字に収めること (enforcement: scripts/count-chars.js --min 1800 --max 2200)"
+    - "長文投稿と短文投稿を同時に作る場合、投稿9｜要約型 (400〜499文字) を必ず出力すること。8投稿だけで完了扱いにしない (enforcement: scripts/count-chars.js --min 400 --max 499)"
+    - "同一の規定を複数ファイルに実体で持たないこと。正本1箇所＋参照のみとし、所在は ref-x-longpost-canon を正本とする (enforcement: manual + ref-x-longpost-canon)"
+    - "環境固有の実パスを plugin 内のどのファイルにも書かないこと。出力先の解決は XLP_OUTPUT_DIR → XLP_VAULT_ROOT の順のみとし、既定値へのフォールバックは持たず、どちらも未設定なら fail-closed で停止する (enforcement: scripts/generate-filename.js の終了コード 1)"
+    - "検証スクリプトが PASS するまで出力を確定しないこと (enforcement: 各 SKILL.md の実行手順 + script exit code)"
+
+capabilities:
+  - { kind: skill, ref: skills/ref-x-longpost-canon, tier: core }
+  - { kind: skill, ref: skills/run-x-longpost-create, tier: core }
+  - { kind: skill, ref: skills/run-x-multipost-create, tier: core }
+  - { kind: skill, ref: skills/run-x-shortpost-optimize, tier: core }
+  - { kind: skill, ref: skills/run-x-visual-generate, tier: core }
+  # prompts/ 配下の各ファイルは kind: prompt として宣言する。frontmatter を持たず Task で起動
+  # される sub-agent ではなく、各 skill が Read で読み込む phase 別のプロンプト参照文書
+  # だからである。ディレクトリ名は prompts/ のままだが、実行される sub-agent ではない。
+  # (ubm-goal-setting が prompts/*.md を kind: prompt で宣言するのと同じパターン)
+  - { kind: prompt, ref: prompts/x-longpost-structure-transcript.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-parse-input.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-resolve-contradictions.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-create-title.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-apply-style-genome.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-optimize-length.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-split-thread.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-output-file.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-generate-idea-compass.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-create-multi-posts.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-short-post-optimizer.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-analyze-visual-structure.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-design-diagram-prompt.md, tier: core }
+  - { kind: prompt, ref: prompts/x-longpost-design-thumbnail-prompt.md, tier: core }
+  # scripts/ の公開 CLI は kind: script で宣言する。scripts は自己 manifest を持たないため
+  # 参照専用 kind として列挙する (ubm-goal-setting が採用する確立パターン)。
+  # lint-skill-tree 第 10 条により skills/*/scripts/ へは置けないので plugin ルート直下にある。
+  - { kind: script, ref: scripts/calculate-next-date.js, tier: core }
+  - { kind: script, ref: scripts/check-no-emoji.js, tier: core }
+  - { kind: script, ref: scripts/count-chars.js, tier: core }
+  - { kind: script, ref: scripts/expand-template.js, tier: core }
+  - { kind: script, ref: scripts/generate-filename.js, tier: core }
+  - { kind: script, ref: scripts/log_usage.js, tier: core }
+  # log_usage.mjs は ESM 宿主のための意図的 runtime adapter。実行 skill は CJS 版を
+  # calls し、ESM 版は公開 capability と parity test で同値性を維持する。
+  - { kind: script, ref: scripts/log_usage.mjs, tier: core }
+  - { kind: script, ref: scripts/update-neta-file.js, tier: core }
+  - { kind: script, ref: scripts/validate-headings.js, tier: core }
+  - { kind: script, ref: scripts/validate-title.js, tier: core }
+  - { kind: script, ref: scripts/build-visual-prompts.js, tier: core }
+  - { kind: script, ref: scripts/generate-images-codex.js, tier: core }
+  - { kind: script, ref: scripts/lint-thumbnail-prompt.js, tier: core }
+  - { kind: script, ref: scripts/validate-visual-assets.js, tier: core }
+  - { kind: script, ref: scripts/record-thumbnail-review.js, tier: core }
+  - { kind: script, ref: scripts/embed-visual-paths.js, tier: core }
+
+# Capability 間 DAG。各 run-* skill が実際に Read する prompts と実行する scripts を列挙する
+# (SKILL.md 本文からの実参照を機械抽出して起こした)。ref-x-longpost-canon は正本索引なので
+# to 側にのみ現れる。plugin 間依存 (skill-governance-adapters) と runtime 要件 (Node.js v18 以上) は
+# 本ファイルのスキーマ外なので .claude-plugin/plugin.json と README「実行環境」が正本。
+dependencies:
+  # run-x-longpost-create
+  - { from: skills/run-x-longpost-create, to: skills/ref-x-longpost-canon, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-apply-style-genome.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-create-multi-posts.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-create-title.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-generate-idea-compass.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-optimize-length.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-output-file.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-parse-input.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-resolve-contradictions.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-short-post-optimizer.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-split-thread.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: prompts/x-longpost-structure-transcript.md, type: reads }
+  - { from: skills/run-x-longpost-create, to: scripts/calculate-next-date.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/check-no-emoji.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/count-chars.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/expand-template.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/generate-filename.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/log_usage.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/update-neta-file.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/validate-headings.js, type: calls }
+  - { from: skills/run-x-longpost-create, to: scripts/validate-title.js, type: calls }
+  # run-x-multipost-create
+  - { from: skills/run-x-multipost-create, to: skills/ref-x-longpost-canon, type: reads }
+  - { from: skills/run-x-multipost-create, to: prompts/x-longpost-create-multi-posts.md, type: reads }
+  - { from: skills/run-x-multipost-create, to: prompts/x-longpost-structure-transcript.md, type: reads }
+  - { from: skills/run-x-multipost-create, to: scripts/check-no-emoji.js, type: calls }
+  - { from: skills/run-x-multipost-create, to: scripts/count-chars.js, type: calls }
+  - { from: skills/run-x-multipost-create, to: scripts/log_usage.js, type: calls }
+  # run-x-shortpost-optimize
+  - { from: skills/run-x-shortpost-optimize, to: skills/ref-x-longpost-canon, type: reads }
+  - { from: skills/run-x-shortpost-optimize, to: prompts/x-longpost-short-post-optimizer.md, type: reads }
+  - { from: skills/run-x-shortpost-optimize, to: scripts/check-no-emoji.js, type: calls }
+  - { from: skills/run-x-shortpost-optimize, to: scripts/log_usage.js, type: calls }
+  # run-x-visual-generate
+  - { from: skills/run-x-visual-generate, to: skills/ref-x-longpost-canon, type: reads }
+  - { from: skills/run-x-visual-generate, to: prompts/x-longpost-analyze-visual-structure.md, type: reads }
+  - { from: skills/run-x-visual-generate, to: prompts/x-longpost-design-diagram-prompt.md, type: reads }
+  - { from: skills/run-x-visual-generate, to: prompts/x-longpost-design-thumbnail-prompt.md, type: reads }
+  - { from: skills/run-x-visual-generate, to: scripts/build-visual-prompts.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/generate-images-codex.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/lint-thumbnail-prompt.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/validate-visual-assets.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/record-thumbnail-review.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/embed-visual-paths.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/check-no-emoji.js, type: calls }
+  - { from: skills/run-x-visual-generate, to: scripts/log_usage.js, type: calls }
+  # 長文投稿フローの Phase 4 接続点。パターン A 確定後にだけ引き継ぐ。
+  - { from: skills/run-x-longpost-create, to: skills/run-x-visual-generate, type: delegates }
+
+governance:
+  canon_index: skills/ref-x-longpost-canon/SKILL.md
+  resource_root: .
+  path_resolution: skills/run-x-longpost-create/references/output-config.json
+  changelog: CHANGELOG.md
+  roadmap: ROADMAP.md
+  evals: EVALS.json

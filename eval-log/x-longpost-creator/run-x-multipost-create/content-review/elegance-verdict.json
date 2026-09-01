@@ -1,0 +1,61 @@
+{
+  "target": {
+    "plugin": "x-longpost-creator",
+    "skill": "run-x-multipost-create",
+    "skill_md_sha256": "38fcee0a61ebd09bc4a23528f7db75625e2b40efec781dd7eafd396898ff63aa"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "elegant-review (思考リセット + 30思考法7カテゴリを analyst SubAgent へ分割適用、改善は worker SubAgent 5 並列、統合検証は main context で実測) / 最終反復 (2026-09-01) は 1.2.0 (サムネイル 2 枚必須化) 反映後の SKILL.md 全文 232 行の再読と機械ゲートの実走のみ。30 思考法の再適用は行っていない",
+  "reviewed_at": "2026-09-01T06:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "[漏れなし・実測] 移設に伴う参照の総点検で、plugin 内の全 md/json/yaml のリンクとバッククォートパスを相対解決して存在確認する自作 linkcheck を回し、broken 43 件 -> 0 件にした。共有 references 6 本を skill 配下から plugin ルート references/ へ移した際の 83 箇所 (19 ファイル) の書き換えに加え、移設前から陳腐化していた既存リンクも同時に露出して修正している。",
+      "[整合性・実測] 絵文字全面禁止が宣言だけでなく実体として成立している。plugin 配下の全 md/json/yaml/js に対する絵文字検査で違反 0 件。判定基準は \\p{Extended_Pictographic} で、この定義を維持したうえで明文化した (利用者確認済みの方針)。",
+      "[依存関係整合・実測] Codex と Claude Code の両面が発見経路として実在する状態にした。Codex 側は sync-plugin-platforms.py --apply で .codex-plugin/plugin.json と .agents/plugins/marketplace.json を決定論生成し、marketplace が 20 -> 21 plugin、x-longpost-creator: True を確認。Claude Code 側は .claude/settings.json の enabledPlugins へ x-longpost-creator@skills を追加し sync-native-surfaces.py --apply を実行、.claude/skills/ へ 4 skill が projection され make native-surfaces-check が exit 0 に戻った。両者は再チェックで noop。",
+      "[矛盾なし・修正済] fail-closed の宣言が実装で fail-open だった矛盾を解消した。output-config.json の defaults.vaultRoot と /Users/dm 直書きを削除 (grep 0 件) し、generate-filename.js は XLP_OUTPUT_DIR 未設定時に既定値へ戻らず exit 1 で停止する。env を落とした実起動で exit 1、XLP_OUTPUT_DIR=/tmp/xlp-verify を与えた実起動で exit 0 を実測した。5 箇所で宣言されていた fail-closed が初めて真になった。",
+      "[漏れなし・修正済] 検査対象ゼロの緑を塞いだ。lint-plugin-lint-coverage.py は .claude-plugin/marketplace.json 登録済み plugin だけを列挙するため、未登録の本 plugin は被覆漏れとしてすら検出されていなかった。Makefile の lint ターゲットへ lint-skill-name / lint-skill-description / validate-frontmatter の 3 本を明示配線し、skill 4 本を実際に検査して exit 0 になることを確認した。",
+      "[依存関係整合・修正済] 宣言と実態の食い違いを、ディレクトリ名・宣言・linter の 3 者が一致する形で解消した。旧 agents/ 配下 11 本は frontmatter を持たず Task で起動される sub-agent ではなく、各 skill が Read で読み込む phase 別プロンプト参照文書である。当初は kind: agent から kind: prompt への宣言変更のみを行ったが、lint-plugin-composition.py が agents/*.md を無条件に agent public surface とみなして kind: agent での宣言を要求するため、宣言変更だけでは composition lint が exit 1 のままだった。利用者の判断を仰いだうえで、ディレクトリを prompts/ へリネームし kind: prompt を維持した (ubm-goal-setting が prompts/*.md を kind: prompt で宣言する先例と完全一致)。plugin 内 104 行を書き換え、Codex 側の .agents/ 表記を誤って巻き込んでいないことを確認済み。composition lint と build-trace はともに exit 0。",
+      "[矛盾なし・修正済] plugin-composition.yaml の dependencies が正本スキーマ (Capability 間 DAG。from/to/type の配列) に従っておらず、plugins / runtime という別形式のキーを持っていたため validate-build-trace.py が exit 1 だった。各 SKILL.md 本文からの実参照を機械抽出して 32 本のエッジ (skill -> prompts は reads、skill -> scripts は calls、各 skill -> ref-x-longpost-canon は reads) を起こし、scripts 10 本を kind: script として capabilities へ追加した。スキーマ外だった runtime 要件 (Node.js v18 以上) と plugin 間依存の正本は .claude-plugin/plugin.json と README に置くことを注記した。",
+      "[漏れなし・修正済] lint-skill-tree 第 10 条 (skills/*/scripts/ には .py / .sh のみ) の違反を、repo 唯一の先行例 slide-report-generator (全 .js/.cjs/.mjs を plugin ルート scripts/ に置く) に接地して解消した。scripts 10 本と assets 1 本を plugin ルート直下へ移設し、副産物として multipost / shortpost から longpost の内部を直接触る ../run-x-longpost-create/scripts/ というクロススキル参照も消えた。skill 4 本すべてで lint-skill-tree が exit 0。",
+      "[漏れなし・修正済] SKILL.md が 446 行で P0-2 の上限 300 行を超えていた。削ったのは正本と重複していた 3 セクションのみである。ワークフロー図 2 本は references/workflow-diagrams.md へ移設し (削除ではない)、リソース一覧 4 表は superset である resource-map.md と新設した resource-map.yaml を指す 2 行表へ、スタイルゲノム L1-L8 の要約表は全件を持つ style-genome.md への参照へ置き換えた。本文 298 行。P1-2 が要求する機械可読索引 resource-map.yaml も新設し、resource-map.md の再掲を避けて read_when だけを持たせた。",
+      "[整合性・修正済] 絵文字の判定境界に処理系依存の落とし穴があることを明文化した。check-no-emoji.js が使う Node.js (V8) の \\p{Extended_Pictographic} では ★ (U+2605) は該当しないが、grep -P (PCRE) の同名プロパティでは該当する。同じ Unicode プロパティ名でも実装で範囲が異なるため、grep -P で走査すると ★ を絵文字と誤検出する。ref-x-longpost-canon へ「判定器を替えてはならない。絵文字検査は必ず check-no-emoji.js を通す」と記載した。判定ロジック自体は利用者の決定どおり変更していない。",
+      "[整合性・修正済] log_usage.js (CJS) と log_usage.mjs (ESM) の等価性が散文の約束にすぎなかった問題を機械保証へ格上げした。tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py を追加し、成功系・失敗系・引数エラー系・ヘルプ系の 6 CLI ケースで exit code / stdout / stderr / 追記ログ本文の一致を検証する (7 passed)。正規化はタイムスタンプと自ファイル名の 2 点のみ。さらに mjs のログ整形を Result -> Outcome に変異させると 3 件が FAIL し、復元すると 7 passed に戻ることを実測して、検出力があることを確認した。",
+      "[矛盾なし・修正済] pre-choice と post-choice の循環を解消した。Post-choice ゲートの対象を意味評価・リライト・追加パターン生成の 3 種に限定し、後続の実行手順節は pre-choice の実成果物 (投稿 1〜8 の本文) を組み立てる段取りであってゲート対象ではないことを明記した。段取りの順番も 実行手順 -> 機械検証 -> 現物提示 -> 選択記録 -> 選択された改善 と明示した。",
+      "[整合性・確認済] 投稿 9 (要約型) の扱いが IN2 と IN3 で二重に規定されているが矛盾はない。IN2 は「含まれる場合の文字数 400〜499」という条件付き機械検証、IN3 は「含まれるべきか否か」という呼び出し文脈との一致であり、対象が異なる。長文投稿と同時作成のときだけ投稿 9 を含めるという規則は output-template.md と agents/x-longpost-create-multi-posts.md §5.3.5 でも同じ向きに書かれており、3 箇所で一致していることを確認した。"
+    ],
+    "negative_feedback": [
+      "[medium / 未実施] OUT 系のうち verify_by=live-trial の基準は本 review では確認していない。lint-live-trial-verdict.py は verdict 不在を record-only WARN として扱い make content-review では exit 0 になるため、この未取得は自動では止まらない。実起動による取得は次の作業として残す。",
+      "[medium / 未実施] verify_by=human の基準 (読者に伝わるか、主張が欠落していないか等) は書き手の判断を要するため機械確認の対象外であり、本 review では未確認のまま据え置いている。",
+      "[low / smell] plugin-package-check は本 plugin について advisory PKG-004 / PKG-014 を出し続けている。repo 横断で 38 件の未採用将来標準があり非ブロッキング扱いのため、本 plugin 単独では解消しない。",
+      "[medium / 過程の欠陥] scripts 移設に伴う機械書き換えで、前方文脈を見ない正規表現が ${CLAUDE_PLUGIN_ROOT}/scripts/ を ${CLAUDE_PLUGIN_ROOT}/../../scripts/ へ 55 箇所 (11 ファイル) 破壊した。当時の自作 linkcheck は ${...} を含むパスを解決対象外として黙ってスキップしていたため broken 0 を返し、この破壊を検出できなかった。破壊は修正し、env を実際に export した node 実起動で確認済みだが、検証器が「何を見ないか」を報告しない限り緑の意味が読めないという問題は、本 review の過程で 3 度目の同型の踏み方である (対象ゼロの緑が 2 度、見ない緑が 1 度)。改良版 linkcheck は skipped の件数と内訳を必ず出力するようにした。",
+      "[low / smell] SKILL.md 本文は 298 行で上限 300 行に対し warn 閾値 280 を超えている (SS-203)。ベストプラクティス表 21 行は references/writing-guidelines.md §8 / §9 が正本として持つ内容と重なるため移設余地があるが、上限内で通っているため本 review では手を入れていない。次に本文へ追記するときは先にこの表を移す。",
+      "[low / smell] .codex-plugin/plugin.json の category (Development Tools) と references/package-contract.json の category (Productivity) が一致しない。前者は sync-plugin-platforms.py が決定論生成する値で、後者は別タクソノミーであり repo 横断で表記が混在している。片方を書き換えても次の sync で戻るため変更しなかった。",
+      "[medium / 未実施] IN1 と IN2 は verify_by=script だが、投稿 1〜8 を含む実成果物を本 review では生成していないため、実成果物に対する実走確認はしていない。確認したのはスクリプト側の挙動 (count-chars.js が --min/--max 未指定で exit 2、レンジ外で exit 1、レンジ内で exit 0 を返すこと、check-no-emoji.js が exit 0 を返すこと) までである。",
+      "[low / smell] IN3 は verify_by=human である。呼び出し文脈 (長文と同時か 8 投稿単独か) は原理的には機械判定しうるが、現状は書き手の判断に委ねられている。",
+      "[medium / 未実施] 最終反復 (2026-09-01) で確認したのは、1.2.0 変更後の SKILL.md 全文の再読と機械ゲートの実走に限られる。30 思考法による網羅的な再診断と、実生成物に対するOUT2 の目視判定は本反復でも未実施である。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "実行した手順: Phase1 で思考をリセットして read-only の俯瞰を行い、Phase2 で 30 種の思考法を 7 カテゴリ (論理分析系 5 / 構造分解系 4 / メタ抽象系 3 / 発想拡張系 6 / システム系 3 / 戦略価値系 4 / 問題解決系 5) へ分割して analyst SubAgent を並列起動し、Phase3 で worker SubAgent 5 本 (scripts / agents / longpost / canon / root) を並列起動して改善を実装した。worker からの報告は届かなかったため、全成果は main context で私が実測して独立に検証している (報告の受理ではなく再実行による確認)。 実行したゲートと実測 exit code: make lint = 0 (本 plugin の 3 lint 配線を含む)、make plugin-package-check = 0 (advisory のみ)、make feedback-contract = 0、make native-surfaces-check = 0、lint-entrypoint-artifact-first.py = 0 (117 inventory / 92 enforced / 25 exempt)、lint-live-trial-verdict.py --all = 0、build-local-marketplace.py --check = 0 (21 plugin, drift なし)、自作 linkcheck = broken 0、plugin 全 md/json/yaml/js の絵文字検査 = 違反 0、pytest tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py = 0 (7 passed)、lint-plugin-composition.py = 0、validate-build-trace.py --bundle = 0、lint-skill-tree.py = 0 (skill 4 本すべて)、sync-plugin-platforms.py --check = 0、build-plugin-release.py = 0 (x-longpost-creator 1.0.0 を新規記録、marketplace 21 plugin)、validate-llm-coverage.py --all = 0 (73 skill / 平均 100%)、${...} を展開する改良版 linkcheck = broken 0 (checked 165)。make pytest (python3 -m pytest tests/ -q) = 8 failed / 7506 passed / 4 skipped の状態から、本 review の修正で fleet-count のピン留め 5 箇所を実測値 21 へ更新し、criteria roster を再生成し、build-plugin-release.py で本 plugin を記録した。残る失敗のうち 6 件は本 verdict の生成そのもので解消される OUT1/OUT2 であり、guide-doc-generator/run-handout-build::IN1 は本 plugin と無関係な未追跡の実行残骸 (.claude/handoff/20260831T092735.md が第13条違反) が原因で、他セッションの成果物のため利用者へ報告して判断を仰ぐ。 criteria 別の評価: IN1 = スクリプト側の終了コード挙動のみ確認、実成果物に対する実走は未実施 (negative_feedback へ記録)。IN2 = 同上。条件付き検証としての定義自体に矛盾はない。IN3 = verify_by=human。規則が 3 箇所で一致していることは確認した。OUT1 = verify_by=live-trial のため未確認。OUT2 = verify_by=human のため未確認。 4 条件の判定: 矛盾なし = 実装と宣言の食い違い (fail-closed / agents の kind / IN1 の不能な定義 / pre-post の循環) をすべて実装側または宣言側の修正で解消し PASS。漏れなし = リンク切れ 0、未検査だった lint の配線、実行経路に無かった --strict-h2-count の追加で PASS。整合性あり = 絵文字定義の一本化、共有 references の集約、log_usage 二重実装の parity 機械保証で PASS。依存関係整合 = Codex 側 marketplace 登録と Claude Code 側 enabledPlugins / projection の両方が 実体として成立し再チェック noop で PASS。未確認の基準 (live-trial / human) は緑と申告せず negative_feedback へ未実施として記録した。 追記 (2026-09-01 最終反復): 1.2.0 の反映で SKILL.md の sha が 5b214574 ... から e74f7c04 ... へ動いていた。読んでいない内容の sha を打ち直すと虚偽のレビュー申告になるため、対象 4 skill の SKILL.md 全文 (計 1139 行) を再読したうえで本反復を記録する。変更の実体は、サムネイル 2 枚 (X 5:2 / note 実 PNG 1280x670) を標準成果物として必須化し図解を optional へ降格したこと、record-thumbnail-review.js による目視 receipt をembed の前提条件に据えたこと、および run-x-longpost-create 側の Phase 4 引き継ぎ記述をその導線へ揃えたことである。いずれも第 3 反復までの findings と方向が一致する強化であり、新たな設計上の後退は見つからなかった。実走したゲートと実測結果: pytest (x-longpost 4 本 + 影響範囲) = 476 passed、build-plugin-release.py --check = OK (21 plugins)、make feedback-contract = 0 (74 loop-kind skill)、lint-plugin-composition.py = 0 (WARN 4 はいずれも画像生成前の output path 未存在で正当)。OUT2 (human) は課金を伴う実生成が要るため本反復でも未取得で、negative_feedback へ据え置いた。 同一反復内の追加変更: make lint の lint-entrypoint-artifact-first.py が 4 skill 全件を FAIL させていたため、feedback_contract へ activation_state: semantic_evaluator_started を 追記した (1.2.1)。本文の Post-choice 節には元から同じ規定があり、散文と frontmatter の 機械宣言が食い違っていただけで、規定そのものは変えていない。修正後の make lint = exit 0。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 8
+  }
+}

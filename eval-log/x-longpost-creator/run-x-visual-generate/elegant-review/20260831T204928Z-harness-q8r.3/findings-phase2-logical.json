@@ -1,0 +1,597 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator",
+    "reviewed_at": "2026-09-01T00:00:00+09:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "公開intent、必須2種、再現性主張を疑うと、accept分岐とprovenance不足が反例になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:19,245"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:19,245"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:19,245"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:19,245"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "other",
+          "description": "accept-as-isで必須サムネイル2種が生成されない。",
+          "recommended_intervention": "全正常終了経路で2種を生成・検証・提示する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md",
+            "line": 245
+          },
+          "depends_on": [],
+          "root_cause": "図解を必須最終成果物と混同した。"
+        }
+      ],
+      "score": 0.3
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "必須成果物は全正常終了経路に存在し、納品寸法は実体で満たし、生成パスと提示パスは同一という一般則に3つの反例がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json:43-45"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json:43-45"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json:43-45"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json:43-45"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "note-thumb実体が1280x670にならない。",
+          "recommended_intervention": "1280x670のdelivery PNGを作りstrict検証後に提示・embedする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json",
+            "line": 43
+          },
+          "depends_on": [],
+          "root_cause": "generationとdeliveryを接続する処理がない。"
+        }
+      ],
+      "score": 0.27
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "同梱良例2枚には短い主文と紙工作風の影・質感が共通するが、規範は16字下限とshadow/texture/3D禁止である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json:26-37; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md:61-62"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json:26-37; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md:61-62"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json:26-37; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md:61-62"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json:26-37; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md:61-62"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "other",
+          "description": "正例画像と文章canonが相反するスタイル信号を与える。",
+          "recommended_intervention": "承認済み参照画像へcanonを合わせるかcanon準拠画像へ差し替える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json",
+            "line": 26
+          },
+          "depends_on": [],
+          "root_cause": "参照画像の配色だけを整合対象にした。"
+        }
+      ],
+      "score": 0.22
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "必須2種欠落・実寸欠落・提示欠落を最小原因で説明すると、図解中心ゲートとdelivery consumer不在に収束する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:167"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:167"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:167"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:167"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "deliverSizeが後続処理に消費されない孤立値である。",
+          "recommended_intervention": "delivery変換をDAGへ追加し、結果をvalidate/present/embedの共通入力にする。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js",
+            "line": 167
+          },
+          "depends_on": [],
+          "root_cause": "メタ宣言を実装完了と誤認した。"
+        }
+      ],
+      "score": 0.28
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "note実寸欠落を5段深掘りすると、高解像度生成→縮小外部委譲→generationだけ検証→raw copy→delivery consumer不在となる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:117-164; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/embed-visual-paths.js:112-126"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:117-164; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/embed-visual-paths.js:112-126"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:117-164; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/embed-visual-paths.js:112-126"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:117-164; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/embed-visual-paths.js:112-126"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "delivery PNG生成と実寸検証が欠落する。",
+          "recommended_intervention": "workとdeliveryを分離し1280x670へ決定論的変換する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js",
+            "line": 117
+          },
+          "depends_on": [],
+          "root_cause": "比率が合えば外部縮小でよいという旧前提が残った。"
+        }
+      ],
+      "score": 0.24
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "12要素へ分解すると、必須生成・実寸・2枚の同一パス表示・provenance・structureとの文言一致が未達である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js:180-239"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js:180-239"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js:180-239"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js:180-239"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "promptの主文・補助句とstructure正本の一致を検査しない。",
+          "recommended_intervention": "structure入力を受け完全一致比較する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js",
+            "line": 180
+          },
+          "depends_on": [],
+          "root_cause": "決定論比較可能な値を目視へ残した。"
+        }
+      ],
+      "score": 0.34
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "何を、寸法、内容、保存、提示、再実行の6面で整理すると、2種存在・delivery実寸・表示証跡・本文一致・provenanceが欠ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:324-379"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:324-379"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:324-379"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:324-379"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "最終manifestに再実行・監査用provenanceがない。",
+          "recommended_intervention": "prompt/structure/reference/image hashとmodel/Codex版・session idを記録する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js",
+            "line": 329
+          },
+          "depends_on": [],
+          "root_cause": "部分メタだけで横断完了判定がない。"
+        }
+      ],
+      "score": 0.31
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "重要度×機械執行度では、prompt書式が強制される一方、必須2種・実寸・提示という高重要要件がfail-closedでない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:150-164"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:150-164"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:150-164"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js:150-164"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "品質ゲートの優先順位が利用者価値と逆転している。",
+          "recommended_intervention": "必須2種・delivery実寸・同一パス表示をblocking gateへ置く。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js",
+            "line": 150
+          },
+          "depends_on": [],
+          "root_cause": "実装容易性が検査優先順位を決めた。"
+        }
+      ],
+      "score": 0.36
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Pattern A→structure→prompt→imagegen→回収→work検証→delivery→表示→embedの時系列で、deliveryと2枚提示が抜ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:252-264"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:252-264"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:252-264"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:252-264"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "validateからembedへ進み2枚の同一パス提示を通らない。",
+          "recommended_intervention": "validate→delivery→strict validate→Read/view_image→embedの順を固定する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md",
+            "line": 261
+          },
+          "depends_on": [],
+          "root_cause": "図解提示を全artifactのgateへ展開しなかった。"
+        }
+      ],
+      "score": 0.21
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "なぜを重ねると、図解minimal、縮小外部委譲、図解だけpresentation、生成条件記録不足が根因である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md:12"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "dogfooding",
+          "description": "実Codex生成とsession回収のlive trial証拠がない。",
+          "recommended_intervention": "明示承認後に代表Pattern Aで有償live trialを行い証跡を保存する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/ROADMAP.md",
+            "line": 12
+          },
+          "depends_on": [],
+          "root_cause": "fake実行の保証範囲と外部生成器の保証範囲が分離されている。"
+        }
+      ],
+      "score": 0.26
+    }
+  ],
+  "variable_abstraction": [
+    {
+      "concrete_value": "x-thumb,note-thumb",
+      "variable_name": "{{REQUIRED_THUMBNAIL_KINDS}}",
+      "default_value": "x-thumb,note-thumb",
+      "source_trace": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:19"
+    },
+    {
+      "concrete_value": "1280x670",
+      "variable_name": "{{NOTE_DELIVERY_SIZE}}",
+      "default_value": "1280x670",
+      "source_trace": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json:44"
+    },
+    {
+      "concrete_value": "Claude Code=Read, Codex=view_image",
+      "variable_name": "{{IMAGE_PRESENTATION_ADAPTER}}",
+      "default_value": "host-auto",
+      "source_trace": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:236-241"
+    },
+    {
+      "concrete_value": "seed:null",
+      "variable_name": "{{IMAGE_REPRODUCIBILITY_RECORD}}",
+      "default_value": "hashes,versions,session,seed-status",
+      "source_trace": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:170-173"
+    }
+  ]
+}
