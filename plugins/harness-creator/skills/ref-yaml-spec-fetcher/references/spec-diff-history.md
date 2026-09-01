@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-08-31T03:32:29Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -70,7 +70,12 @@
+ followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
+ /verify
+ , run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens.
+-Bundled skills are available in every session. To turn them off, use the
++Most bundled skills are available in every session. A few depend on a specific feature:
++/workflow-authoring
++, for example, is available only when
++dynamic workflows
++are enabled.
++To turn bundled skills off, use the
+ disableBundledSkills
+ setting, which disables every bundled skill except
+ /doctor
+@@ -337,7 +342,10 @@
+ --add-dir
+ . Claude Code reads
+ .claude/skills/
+-inside each added directory alongside the project skills.
++inside each added directory alongside the project skills. When you
++move the session with
++/cd
++on v2.1.246 or later, Claude Code adds the new directory’s project skills.
+ Skills in nested
+ .claude/skills/
+ directories below your starting directory aren’t loaded at startup. They load the first time Claude reads or edits a file inside that subdirectory, and stay available for the rest of the session. For example, after Claude edits a file under
+@@ -368,24 +376,76 @@
+ .claude/skills/
+ and
+ .claude/commands/
+-from each added directory automatically. This exception applies only to
++from each added directory automatically. This exception applies to
+ --add-dir
+-and
++,
+ /add-dir
+-. The
++, and directories the Agent SDK adds through
++additionalDirectories
++in TypeScript or
++add_dirs
++in Python, which the SDK passes to Claude Code as
++--add-dir
++.
++The
+ permissions.additionalDirectories
+ setting in
+ settings.json
+-grants file access only and doesn’t load skills, commands, or subagents. See
++grants file access only and doesn’t load skills, commands, or subagents, even though the TypeScript option has the same name. See
+ Live change detection
+ for how skill edits are picked up during a session.
+-Subagents follow the same exception: when you add a directory, Claude Code loads its
++Claude Code loads skills, commands, and subagents from an added directory only when the
++project
++setting source
++is enabled, which is the default. If you pass
++--setting-sources
++on the CLI, or set
++settingSources
++or
++setting_sources
++explicitly in the SDK, include
++project
++in the list. In
++--safe-mode
++, Claude Code loads none of the three. A
++strictPluginOnlyCustomization
++managed policy and
++bare mode
++treat the three differently:
++Skills
++in
++.claude/skills/
++: a policy that locks skills turns them off. Bare mode still loads them.
++Commands
++in
++.claude/commands/
+... (3840 more lines)
+```
+
 ## 2026-08-24T01:06:20Z
 
 実仕様ページに変更を検知。
