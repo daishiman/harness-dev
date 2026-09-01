@@ -105,6 +105,20 @@ jobs:
           git add plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/spec-diff-history.md
           git diff --staged --quiet || git commit -m "chore: update spec-diff-history (${{ steps.fetch.outputs.fetch_date }})"
 
+      # 上の 2 commit は plugins/harness-creator/ 配下を書き換える。plugin fingerprint は
+      # ツリー全体の内容 hash なので、version を据え置くと governance-check の
+      # `build-plugin-release.py --check` が「上げ忘れ」として必ず exit 1 で落ちる。
+      # キャッシュは install で実際に copy される中身なので fingerprint から除外はできない
+      # (build-plugin-release.py 冒頭「fingerprint から除外するもの」参照)。追従させる。
+      # 内容が変わらなかった週は release が no-op になり、この commit も生まれない。
+      - name: Bump plugin version for spec cache change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          python3 scripts/build-plugin-release.py
+          git add -u
+          git diff --staged --quiet || git commit -m "chore: bump plugin version for spec cache update (${{ steps.fetch.outputs.fetch_date }})"
+
       - name: Push changes
         uses: ad-m/github-push-action@v0.8.0
         with:
