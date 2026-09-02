@@ -24,12 +24,18 @@ ROOT = Path(__file__).resolve().parents[2]
 # scripts は plugin ルート直下にある (lint-skill-tree 第10条: skills/*/scripts/ は .py/.sh のみ)
 SCRIPTS = ROOT / "plugins" / "x-longpost-creator" / "scripts"
 
-# 両実装とも node で起動する。node の無い環境 (CI ランナー) では等価性を確かめようが
-# ないので skip する。ここが無いと FileNotFoundError('node') が「等価性の破れ」と
-# 区別なく failure として出る。visual_pipeline 側と同じ前提を明示する。
-pytestmark = pytest.mark.skipif(
-    shutil.which("node") is None, reason="node が PATH に無い"
-)
+# 両実装とも node で起動する。node の無い環境では等価性を確かめようがないので skip
+# する。ここが無いと FileNotFoundError('node') が「等価性の破れ」と区別なく failure
+# として出る。
+#
+# 絶対パスで解決して保持するのは、_run が env を固定するためである。テストプロセスの
+# PATH に node があっても、_run が渡す最小 PATH に無ければ subprocess からは見えず、
+# 「skip 条件は満たさないのに実行はできない」という食い違いが起きる (CI ランナーが
+# まさにこれで、node は入っているが /usr/local/bin ではない場所にある)。node の解決
+# だけを PATH から切り離し、env 固定が確かめたい「実装の環境変数非依存」は保つ。
+NODE = shutil.which("node")
+
+pytestmark = pytest.mark.skipif(NODE is None, reason="node が PATH に無い")
 
 # 両実装へ同一に与える CLI ケース。成功系・失敗系・引数エラー系・ヘルプ系を網羅する。
 CASES = [
@@ -54,10 +60,6 @@ CASES = [
 
 TIMESTAMP_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z")
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("node") is None, reason="node 未インストール環境では parity を実行できない"
-)
-
 
 def _normalize(text: str, out_dir: Path) -> str:
     text = TIMESTAMP_RE.sub("<TS>", text)
@@ -71,7 +73,7 @@ def _run(ext: str, args: list[str], tmp_path: Path) -> dict:
     out_dir = tmp_path / ext
     out_dir.mkdir(parents=True, exist_ok=True)
     proc = subprocess.run(
-        ["node", str(SCRIPTS / f"log_usage.{ext}"), *args],
+        [NODE, str(SCRIPTS / f"log_usage.{ext}"), *args],
         capture_output=True,
         text=True,
         env={"PATH": "/usr/bin:/bin:/usr/local/bin", "XLP_OUTPUT_DIR": str(out_dir)},
