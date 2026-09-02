@@ -1,0 +1,57 @@
+{
+  "parent_context_discarded": true,
+  "first_impressions": [
+    "少文字、温かい白系背景、人物なし、情報商材的意匠の禁止、余白によるインパクトは、文章規範と参照画像の両方で明確に表現されている。",
+    "Claude Code/Codexからcodex execを起動し、内蔵imagegenを強制し、生成PNGをXLP_IMAGE_DIRへ回収後、同じ絶対パスをRead/view_imageへ渡す流れが実装されている。",
+    "利用者要件はサムネイル2種だが、skillの標準導線は図解1枚を先に生成し、light/standard/detailed選択後だけサムネイル2枚へ進む。accept-as-isではサムネイルを作らず終了する。",
+    "note用PNGは2560x1340で生成・検証・添付され、1280x670はdeliveryメタデータに留まる。納品寸法への縮小は利用側へ委ねられている。",
+    "visual-structure.json、prompt、meta、参照画像、dry-runにより手順と出自は追跡しやすい。一方metaのseedはnullで、同一ピクセル出力の再現性は示されていない。",
+    "参照サムネイルは優しい白系、太い少文字、人物なしで強い視認性がある。目視では紙質感・影・立体感を含み、文章側のno textures/no shadows/no 3Dとは異なる視覚信号も持つ。"
+  ],
+  "facts_and_assumptions": {
+    "facts": [
+      "入力は確定済み長文投稿パターンAで、visual-structure.jsonから3種の画像用情報を派生させる。",
+      "x-thumbは5:2、note-thumbはdelivery 1280x670としてvisual-spec.jsonに宣言されている。",
+      "生成寸法はx-thumbが2560x1024、note-thumbが2560x1340である。",
+      "サムネイル主文は16〜24字、補助句を含め合計44字以内、図形要素は1〜3個である。",
+      "背景は#F8F3E6、本文文字は#1A1A1A、人物は禁止され、情報商材的意匠6分類がNEGATIVEへ列挙される。",
+      "generate-images-codex.jsはcodex execへimagegen利用を指示し、生成物をXLP_IMAGE_DIRのx-thumb.png/note-thumb.pngへ回収する。",
+      "presentationHandoffは同じPNG絶対パスについてClaude CodeのReadとCodexのview_imageを指定する。",
+      "参照画像の実寸はXが1983x793、noteが1733x907である。"
+    ],
+    "assumptions": [
+      "再現可能を同じ手順・入力・参照・出力先を再構成できる意味と解釈すれば、現構成はその意図を強く持つ。",
+      "1280x670を最終PNGの実寸要求と解釈すると、現行のnote-thumb.pngとは寸法が異なる。",
+      "利用者が図解を求めていない場合、標準のartifact-delivery導線は期待する最短体験と異なる可能性がある。"
+    ]
+  },
+  "variable_candidates": [
+    {"value": "XLP_IMAGE_DIR", "kind": "output_directory"},
+    {"value": "XLP_CODEX_BIN", "kind": "generator_executable"},
+    {"value": "CODEX_HOME/generated_images/<session-id>", "kind": "generator_recovery_root"},
+    {"value": "XLP_REFERENCE_IMAGE_DIR", "kind": "style_reference_directory"},
+    {"value": "x-thumb,note-thumb", "kind": "requested_artifact_set"},
+    {"value": "2560x1024 / 2560x1340", "kind": "generation_dimensions"},
+    {"value": "1500x600 / 1280x670", "kind": "delivery_dimensions"},
+    {"value": "#F8F3E6 / #1A1A1A / #C1C2A0 / #D87C45", "kind": "thumbnail_palette"},
+    {"value": "16〜24字・合計44字以内", "kind": "text_density"},
+    {"value": "accept-as-is / light / standard / detailed", "kind": "artifact_delivery_choice"}
+  ],
+  "reviewed_paths": [
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.claude-plugin/plugin.json",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/thumbnail-specs.md",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/thumbnail-style-canon.md",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/lint-thumbnail-prompt.js",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-visual-assets.js",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/manifest.json",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/thumbnail-sample-x.png",
+    "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/reference-images/thumbnail-sample-note.png"
+  ]
+}

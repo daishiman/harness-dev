@@ -1,0 +1,22 @@
+{
+  "name": "x-longpost-creator",
+  "version": "1.2.2",
+  "description": "キャッチコピーとメモ (または音声の文字起こし) から X の長文投稿・短文投稿を作成する skill 群。スタイルゲノム 8 レベルの文体特徴を適用し、文脈 (文節・句読点) で改行した 1800〜2200 文字の投稿を A/B 2 パターンで生成する。タイトル 50 文字・見出し構造・文字数・絵文字ゼロは Node.js スクリプトで機械検証し、PASS するまで出力を確定しない fail-closed 設計。文字起こしから各 200 文字・別テーマの短文投稿 8 本を作る経路と、任意の文章 1 本を短文投稿へ最適化する経路も持つ。実行には node (v18 以上) が必要。確定した長文投稿から X 5:2 と note 実 PNG 1280x670 のサムネイル2枚を Codex Image2 で生成し、図解 16:9 は明示指定時のみ追加する経路も持つ (画像生成のみ codex コマンドが必要・課金あり)。",
+  "author": {
+    "name": "harness maintainers"
+  },
+  "interface": {
+    "displayName": "X Longpost Creator",
+    "shortDescription": "キャッチコピーとメモ (または音声の文字起こし) から X の長文投稿・短文投稿を作成する skill 群。スタイルゲノム 8 レベルの文体特徴を適用し、文脈 (文節・句読点) で改行した 1800〜2200 文字の投稿を A/B 2 パタ",
+    "longDescription": "キャッチコピーとメモ (または音声の文字起こし) から X の長文投稿・短文投稿を作成する skill 群。スタイルゲノム 8 レベルの文体特徴を適用し、文脈 (文節・句読点) で改行した 1800〜2200 文字の投稿を A/B 2 パターンで生成する。タイトル 50 文字・見出し構造・文字数・絵文字ゼロは Node.js スクリプトで機械検証し、PASS するまで出力を確定しない fail-closed 設計。文字起こしから各 200 文字・別テーマの短文投稿 8 本を作る経路と、任意の文章 1 本を短文投稿へ最適化する経路も持つ。実行には node (v18 以上) が必要。確定した長文投稿から X 5:2 と note 実 PNG 1280x670 のサムネイル2枚を Codex Image2 で生成し、図解 16:9 は明示指定時のみ追加する経路も持つ (画像生成のみ codex コマンドが必要・課金あり)。",
+    "developerName": "harness maintainers",
+    "category": "Development Tools",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "Help me use X Longpost Creator."
+    ]
+  },
+  "skills": "./skills/"
+}

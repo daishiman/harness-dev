@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "x_longpost_creator_version": "1.1.0",
+  "evaluations": [
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-longpost-create",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。長文投稿の生成統括 (Phase 0 文字起こし構造化 → Phase 1 入力解析 → Phase 1.5 タイトル確定 → Phase 2 文章生成 → Phase 3 出力整形 → Phase 3.5 Idea Compass)。機械検証は check-no-emoji.js / validate-title.js / validate-headings.js --strict-h2-count / count-chars.js --min 1800 --max 2200 / generate-filename.js の 5 経路。いずれも PASS するまで出力を確定しない fail-closed。validate-headings.js --file は F1-F3 のタイトル整合に加え F4 のA/B本文同値と F5 のB本文1文1行を FAIL 判定する。H5 と F1-F5 の強制範囲は呼び出し方に依存する (known_limitations 参照)。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-multipost-create",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。文字起こしから互いにテーマの異なる短文投稿 8 本を生成する。機械検証は count-chars.js --min 180 --max 220 と check-no-emoji.js。長文と同時作成する場合のみ投稿9｜要約型 (400〜499文字) を追加し、count-chars.js --min 400 --max 499 で検証する。単独ワークフローでは投稿9を作らない (要約対象が存在しないため)。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-shortpost-optimize",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。任意の文章 1 本を短文投稿へ最適化する 4 フェーズ (入力文章分析 → フォーマット選定 → 候補生成 → スタイル最適化)。移植元で同一責務だった create-short-post と short-post-optimizer を 1 本へ統合し、独立実行モードと長文フロー内モードの差を出力の包み方のみに限定した。機械検証は check-no-emoji.js。文体・改行の品質判定は機械検証を持たず LLM 判断に依存する (既知の限界)。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "ref-x-longpost-canon",
+      "kind": "ref",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。正本の所在一覧・数値の正本・移植時に解消した重複8件を記録する。移植元では同じ規定が最大 5 箇所に実体で重複し値が食い違っていたため、参照側が正本と異なる場合に参照側を drift と判定できる構造を先に作った。値の変更時は本ファイルの数値表と検証スクリプトの引数を同時に更新する運用。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-visual-generate",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "v1.1.0 追加。pre-choice は diagram のみを生成・検証・提示し、accept-as-is はその場で終了する。light / standard / detailed 選択後だけ残り2枚を生成し、3枚の最終検証後に原子的に embed する。visual-spec.json を生成と検証の共通寸法正本とし、全文字列 leaf の禁止語・絵文字・未許可記号を課金前に機械検査する。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-longpost-create",
+      "kind": "run",
+      "verdict": "updated",
+      "findings": [],
+      "note": "v1.1.0 追跡。validate-headings.js の H10 (役割名見出し) は現行実装で FAIL となり exit 1 で止まる。H9 (見出し2の長さ) は意図的に推奨値の warning として残す。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-longpost-create",
+      "kind": "run",
+      "verdict": "updated",
+      "findings": [],
+      "note": "Phase3 iteration 2。既存 output-template.md を filename と同じ basename で scratch に展開し、validate-headings.js の F4/F5・絵文字・文字数が全て PASS した場合だけ正規配置する契約を統合テスト化した。違反候補は scratch に残り、既存の正規配置先 bytes を変更しない。"
+    },
+    {
+      "date": "2026-08-31",
+      "skill": "run-x-visual-generate",
+      "kind": "run",
+      "verdict": "updated",
+      "findings": [],
+      "note": "Phase3 iteration 2。pre-choice は diagram-only、post-choice は thumbnails-only に統一。generate-images-codex.js は XLP_CODEX_BIN (既定 codex) を課金前に preflight し、shell を介さない argv 実行・stdin ignore・stdout/stderr log fd 接続へ変更した。明示した実行ファイルが欠落する dry-run も retry なし exit 2。"
+    },
+    {
+      "date": "2026-09-01",
+      "skill": "run-x-visual-generate",
+      "kind": "run",
+      "verdict": "updated",
+      "findings": [],
+      "note": "v1.2.0 で旧 diagram-first 導線を置き換えた。標準は pre-choice に x-thumb 5:2 と note-thumb 実 PNG 1280x670 の2枚を生成・strict検証・現物表示し、accept-as-is でその2枚を採用する。図解は明示指定時のみ optional。Claude Code は Read、Codex は view_image で XLP_IMAGE_DIR の同じ絶対パスを開き、5項目の PASS と画像 SHA256 を review receipt に記録する。embed は receipt と現在の PNG hash が一致しない限り fail-closed。"
+    }
+  ],
+  "known_limitations": [
+    "「機械検証する」と宣言した項目の一部が、実際には呼び出し方次第で検証されない。validate-headings.js の H5 (見出し2が3〜8個) は --strict-h2-count を付けた場合のみ FAIL になり、付け忘れると severity: warning へ落ちて exit 0 のまま通る。フラグの付与自体は SKILL.md の手順に依存し、機械では強制されない",
+    "同じく validate-headings.js のファイル横断検証 (F1-F3 タイトル整合 / F4 A/B本文同値 / F5 B本文1文1行) は --file を渡した場合にのみ実行される。--text は生成途中のパターンA見出し検証用であり F1-F5 を生成しない。確定候補は SKILL.md の手順どおり必ず --file で検証する必要がある。H8 (見出し1 == --title) も --allow-no-title で無効化できる",
+    "H9 (見出し2の長さ 12〜28字) は推奨値のため severity: warning で ok: true のままとなる",
+    "画像の PNG 署名・比率・寸法・透過・背景色は機械検証する。画風の退化、人物の混入、情報商材化、文字の読みやすさ、視覚的インパクトは目視し、5項目の PASS と画像 SHA256 を review receipt に記録する",
+    "文体品質 (スタイルゲノム適用度・AI臭の除去度) は機械検証を持たず LLM の自己判断に依存する"
+  ]
+}

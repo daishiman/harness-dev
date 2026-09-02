@@ -82,6 +82,9 @@ lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot 
 	python3 scripts/lint-skill-name.py --skills-dir plugins/guide-doc-generator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/guide-doc-generator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/guide-doc-generator/skills
+	python3 scripts/lint-skill-name.py --skills-dir plugins/x-longpost-creator/skills
+	python3 scripts/lint-skill-description.py --skills-dir plugins/x-longpost-creator/skills
+	python3 scripts/validate-frontmatter.py --skills-dir plugins/x-longpost-creator/skills
 	# governance fleet 7 pluginもmarketplace登録と同時に3種lintへ必ず配線する。
 	python3 scripts/lint-skill-name.py --skills-dir plugins/skill-governance-adapters/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/skill-governance-adapters/skills

@@ -1,0 +1,55 @@
+{
+  "changed_paths": [
+    "plugins/x-longpost-creator/.codex-plugin/plugin.json",
+    "plugins/x-longpost-creator/CHANGELOG.md",
+    "plugins/x-longpost-creator/EVALS.json",
+    "plugins/x-longpost-creator/README.md",
+    "plugins/x-longpost-creator/ROADMAP.md",
+    "plugins/x-longpost-creator/plugin-composition.yaml",
+    "plugins/x-longpost-creator/references/package-contract.json",
+    "plugins/x-longpost-creator/prompts/x-longpost-design-diagram-prompt.md",
+    "plugins/x-longpost-creator/prompts/x-longpost-design-thumbnail-prompt.md",
+    "plugins/x-longpost-creator/prompts/x-longpost-generate-idea-compass.md",
+    "plugins/x-longpost-creator/prompts/x-longpost-output-file.md",
+    "plugins/x-longpost-creator/scripts/build-visual-prompts.js",
+    "plugins/x-longpost-creator/scripts/check-no-emoji.js",
+    "plugins/x-longpost-creator/scripts/embed-visual-paths.js",
+    "plugins/x-longpost-creator/scripts/generate-images-codex.js",
+    "plugins/x-longpost-creator/scripts/lib/text-rules.js",
+    "plugins/x-longpost-creator/scripts/validate-headings.js",
+    "plugins/x-longpost-creator/scripts/validate-title.js",
+    "plugins/x-longpost-creator/scripts/validate-visual-assets.js",
+    "plugins/x-longpost-creator/skills/ref-x-longpost-canon/SKILL.md",
+    "plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md",
+    "plugins/x-longpost-creator/skills/run-x-longpost-create/references/heading-structure-rules.md",
+    "plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.md",
+    "plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.yaml",
+    "plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md",
+    "plugins/x-longpost-creator/skills/run-x-visual-generate/references/diagram-style-canon.md",
+    "plugins/x-longpost-creator/skills/run-x-visual-generate/references/resource-map.yaml",
+    "plugins/x-longpost-creator/skills/run-x-visual-generate/references/thumbnail-specs.md",
+    "plugins/x-longpost-creator/skills/run-x-visual-generate/references/visual-spec.json",
+    "tests/scripts-plugins/test_x_longpost_creator__contract_parity.py",
+    "tests/scripts-plugins/test_x_longpost_creator__text_pipeline.py",
+    "tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py"
+  ],
+  "validation_commands": [
+    "pytest -q tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py tests/scripts-plugins/test_x_longpost_creator__contract_parity.py tests/scripts-plugins/test_x_longpost_creator__text_pipeline.py tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py (58 passed)",
+    "node --check plugins/x-longpost-creator/scripts/*.js plugins/x-longpost-creator/scripts/lib/*.js (PASS)",
+    "jq empty plugins/x-longpost-creator/**/*.json (PASS)",
+    "python3 scripts/validate-plugin-packages.py (blocking failure なし)"
+  ],
+  "residual_risks": [
+    "PKG-004 と PKG-014 は repo 横断の非ブロッキング advisory",
+    "課金を伴う Codex live 画像生成はユーザー承認なしのため未実行",
+    "cross-plugin 画像回収 core の共通 provider 化は別スコープ"
+  ],
+  "convergence_status": "complete",
+  "iteration_count": 2,
+  "four_conditions": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS"
+  }
+}

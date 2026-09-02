@@ -1,0 +1,32 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-x-longpost-create の Progressive Disclosure 索引 (機械可読)。
+#
+# 本ファイルは「いつ何を開くか」だけを持つ。規定の実体は一切書かない。
+# 散文の plugin 全体リソース表は同ディレクトリの resource-map.md にあり、本ファイルは
+# その一覧を再掲しない。規定が食い違って見えたときの決着は
+# ../../ref-x-longpost-canon/SKILL.md が正本索引として担う。
+resources:
+  - file: writing-guidelines.md
+    topic: 文章整形の規約と §8 表現ルール・§9 チェックルール索引 (他 reference からの中継点)
+    read_when: 本文を整形するとき (必須)。§8 / §9 への参照は本ファイル経由で解決する
+  - file: heading-structure-rules.md
+    topic: 見出し構造・タイトル4箇所一致・A/B本文同値・B本文1文1行と validate-headings.js の check ID (H1-H10 / F1-F5) 対応
+    read_when: 見出しとA/B本文を組むとき、および --file で確定前候補を検証するとき
+  - file: heading-title-guide.md
+    topic: 見出しとタイトルの書き分け (タイトル構文は plugin ルート references/title-guidelines.md が正本)
+    read_when: 見出し文言を決めるとき
+  - file: optimize-length-details.md
+    topic: 1800〜2200 文字へ収めるための加筆・圧縮の具体手順
+    read_when: count-chars.js がレンジ外で終了コード 1 を返したとき
+  - file: script-llm-patterns.md
+    topic: スクリプトで機械判定する範囲と LLM が判断する範囲の切り分け
+    read_when: 検証をスクリプトへ寄せるか LLM に残すか迷ったとき
+  - file: workflow-diagrams.md
+    topic: phase 間の遷移図 (どの prompts/*.md をどの順で Read するか)
+    read_when: 実行順序を確認するとき
+  - file: output-config.json
+    topic: 出力先の解決順 (XLP_OUTPUT_DIR -> XLP_VAULT_ROOT の 2 段のみ。既定値を持たない)
+    read_when: 出力先が解決できず generate-filename.js が終了コード 1 で停止したとき
+  - file: resource-map.md
+    topic: plugin 全体のリソース散文表 (prompts / scripts / references の所在と読込条件)
+    read_when: 本ファイルに載らない plugin ルート側のリソースを探すとき

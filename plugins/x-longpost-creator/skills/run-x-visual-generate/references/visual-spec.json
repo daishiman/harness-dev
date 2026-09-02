@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "version": 1,
+  "ratioTolerance": 0.01,
+  "textRules": {
+    "forbiddenWords": ["\u50d5", "\u79c1", "\u30b3\u30e1\u30f3\u30c8", "\u30ad\u30e3\u30c3\u30c1\u30b3\u30d4\u30fc"],
+    "allowedSymbols": ["\u2192", "\u2715"]
+  },
+  "palettes": {
+    "diagram": {
+      "background": "#FFFFFF",
+      "text": "#000000",
+      "accent": "#D32F2F",
+      "accentUse": "否定・失敗を示す ✕ 印と取り消し線に限る"
+    },
+    "thumbnail": {
+      "background": "#F8F3E6",
+      "text": "#1A1A1A",
+      "accent": "#C1C2A0",
+      "accentUse": "図形をつなぐ線・台・輪など「構造」に使う。文字には乗せない",
+      "label": "#D87C45",
+      "labelUse": "補助句を載せる帯1枚だけ。帯の中の文字は白にする"
+    }
+  },
+  "kinds": {
+    "diagram": {
+      "generation": {"width": 2560, "height": 1440},
+      "delivery": {"width": 2560, "height": 1440},
+      "ratio": {"numerator": 16, "denominator": 9, "label": "16:9"},
+      "palette": "diagram",
+      "styleCanon": "diagram-style-canon.md",
+      "background": {"rule": "white", "minChannel": 245}
+    },
+    "x-thumb": {
+      "generation": {"width": 2560, "height": 1024},
+      "delivery": {"width": 1500, "height": 600},
+      "ratio": {"numerator": 5, "denominator": 2, "label": "5:2"},
+      "palette": "thumbnail",
+      "styleCanon": "thumbnail-style-canon.md",
+      "background": {"rule": "off-white", "minChannel": 225, "maxChannel": 250}
+    },
+    "note-thumb": {
+      "generation": {"width": 1280, "height": 670},
+      "delivery": {"width": 1280, "height": 670},
+      "ratio": {"numerator": 1280, "denominator": 670, "label": "1.91:1"},
+      "palette": "thumbnail",
+      "styleCanon": "thumbnail-style-canon.md",
+      "background": {"rule": "off-white", "minChannel": 225, "maxChannel": 250}
+    }
+  }
+}

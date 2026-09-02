@@ -1,0 +1,25 @@
+# resource-map.yaml — 設計書06 第13条スキーマ準拠
+# run-x-visual-generate の Progressive Disclosure 索引 (機械可読)。
+#
+# 本ファイルは「いつ何を開くか」だけを持つ。規定の実体は一切書かない。
+# 規定が食い違って見えたときの決着は ../../ref-x-longpost-canon/SKILL.md が
+# 正本索引として担う。
+resources:
+  - file: visual-spec.json
+    topic: visual kind・生成/納品寸法・比率・palette・背景規則・禁止語・許可記号の機械可読正本
+    read_when: 寸法・配色・背景規則・横断 text rule を検証・変更するとき (必須)。配色の差し替えはこの1ファイルで完結する
+  - file: diagram-style-canon.md
+    topic: 図解の絶対ルール (VS-01〜VS-10)・三分割版面・構造型 T1〜T4・退化パターン
+    read_when: 図解のプロンプトを設計するとき (必須)。生成物が意図と違うときの判定基準もここ
+  - file: icon-vocabulary.md
+    topic: アイコンの粒度の見本 (人物・道具・状態・時間・概念・矢印・ロゴ)
+    read_when: どのアイコンをどの簡略度で描くか決めるとき。表に無い概念を作るときの基準にも使う
+  - file: thumbnail-style-canon.md
+    topic: サムネイルの絶対ルール (TS-01〜TS-12)・インパクトの作り方・情報商材的意匠の禁止リスト・退化パターン
+    read_when: サムネイル2種のプロンプトを設計するとき (必須)。図解の画風規範は継承しないので、diagram-style-canon.md の代わりにこちらを開く
+  - file: thumbnail-specs.md
+    topic: X (5:2) と note (1280x670) の寸法・版面・図解との役割差
+    read_when: サムネイル2種の版面と寸法を確認するとき。禁止事項の実体は thumbnail-style-canon.md にある
+  - file: ../../../assets/reference-images/README.md
+    topic: 画風の見本画像の置き場・manifest の書き方・見本に選んではいけない画像
+    read_when: 生成が画風から外れるとき、見本を追加・差し替えるとき。線の太さや簡略度など文章で決めにくい量はここの絵が担う

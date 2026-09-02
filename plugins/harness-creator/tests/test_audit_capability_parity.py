@@ -477,13 +477,13 @@ def test_hook_omission_for_an_event_codex_exposes_is_rejected(tmp_path):
     assert "hook_omission_orphan" in codes(report)
 
 
-def test_current_repository_has_twenty_passing_plugins():
+def test_current_repository_has_all_plugins_passing():
     mod = load_module()
     repo = Path(__file__).resolve().parents[3]
 
     report = mod.audit_repo(repo)
 
-    assert report["plugin_count"] == 20
+    assert report["plugin_count"] == 21
     assert report["verdict"] == "PASS", {
         item["plugin"]: [v["code"] for v in item["violations"]]
         for item in report["plugins"]
@@ -527,7 +527,7 @@ def test_repo_audit_aggregates_invalid_contracts_instead_of_aborting(tmp_path):
     )
 
 
-def test_all_twenty_package_contracts_match_schema_and_feedback_boundary():
+def test_all_package_contracts_match_schema_and_feedback_boundary():
     repo = Path(__file__).resolve().parents[3]
     schema = json.loads(
         (
@@ -538,7 +538,7 @@ def test_all_twenty_package_contracts_match_schema_and_feedback_boundary():
     validator = Draft202012Validator(schema)
     contracts = sorted(repo.glob("plugins/*/references/package-contract.json"))
 
-    assert len(contracts) == 20
+    assert len(contracts) == 21
     for path in contracts:
         payload = json.loads(path.read_text(encoding="utf-8"))
         assert list(validator.iter_errors(payload)) == [], path
