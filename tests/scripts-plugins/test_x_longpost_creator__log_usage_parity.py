@@ -24,6 +24,13 @@ ROOT = Path(__file__).resolve().parents[2]
 # scripts は plugin ルート直下にある (lint-skill-tree 第10条: skills/*/scripts/ は .py/.sh のみ)
 SCRIPTS = ROOT / "plugins" / "x-longpost-creator" / "scripts"
 
+# 両実装とも node で起動する。node の無い環境 (CI ランナー) では等価性を確かめようが
+# ないので skip する。ここが無いと FileNotFoundError('node') が「等価性の破れ」と
+# 区別なく failure として出る。visual_pipeline 側と同じ前提を明示する。
+pytestmark = pytest.mark.skipif(
+    shutil.which("node") is None, reason="node が PATH に無い"
+)
+
 # 両実装へ同一に与える CLI ケース。成功系・失敗系・引数エラー系・ヘルプ系を網羅する。
 CASES = [
     pytest.param(["--result", "success", "--phase", "Phase 4"], id="success-minimal"),

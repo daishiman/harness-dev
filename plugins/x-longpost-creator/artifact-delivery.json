@@ -27,6 +27,15 @@
       "guard": "read-only"
     },
     {
+      "path": "skills/run-skill-feedback/SKILL.md",
+      "effect": "external-mutation",
+      "guard": "preview-and-explicit-confirmation",
+      "guard_contract": {
+        "runtime_ref": "#/external_mutation_runtime",
+        "flow": "preview-confirm-authorize-execute-v1"
+      }
+    },
+    {
       "path": "skills/run-x-longpost-create/SKILL.md",
       "effect": "local-artifact",
       "guard": "declared-target-scope-only"

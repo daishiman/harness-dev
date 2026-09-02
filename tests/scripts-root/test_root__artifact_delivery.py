@@ -431,7 +431,7 @@ def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
             for action in ("preview", "hook-confirm", "authorize", "execute"):
                 assert action in text, (skill, action)
             assert text.count("build-external-mutation-guard.py") >= 3, skill
-    assert count == 33
+    assert count == 34
 
 
 def test_structured_marker_without_canonical_cli_wiring_fails_closed(tmp_path):

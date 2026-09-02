@@ -395,4 +395,4 @@ def test_all_projections_pin_the_executable_guard_runtime():
                     "runtime_ref": "#/external_mutation_runtime",
                     "flow": "preview-confirm-authorize-execute-v1",
                 }
-    assert external == 33
+    assert external == 34

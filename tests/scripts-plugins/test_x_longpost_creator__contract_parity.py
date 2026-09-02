@@ -48,8 +48,11 @@ def test_governance_dependency_matches_package_contract():
     claude = _json(".claude-plugin/plugin.json")
     package_contract = _json("references/package-contract.json")
 
+    # harness-creator は skills/run-skill-feedback/ の owned-vendored 元。
+    # 実体コピーで持つ以上、所有者を依存として宣言しないと出所が追えなくなる。
     assert package_contract["depends_on"] == claude["dependencies"] == [
-        "skill-governance-adapters"
+        "harness-creator",
+        "skill-governance-adapters",
     ]
 
 

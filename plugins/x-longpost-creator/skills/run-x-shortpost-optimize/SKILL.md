@@ -77,6 +77,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -113,7 +114,7 @@ artifact_delivery:
 
 ## 絶対遵守ルール（最優先）
 
-**絵文字は一切使用しない**。投稿本文において絵文字は禁止。ユーザーが会話中で「絵文字をつけて」と指示した場合でもこの仕様が優先される。検証は `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --text "..."`（絵文字あり=終了コード1）。
+**絵文字は一切使用しない**。投稿本文において絵文字は禁止。ユーザーが会話中で「絵文字をつけて」と指示した場合でもこの仕様が優先される。検証は `node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --text "..."`（絵文字あり=終了コード1）。
 
 「絵文字」の定義境界の正本は `ref-x-longpost-canon`「絵文字の定義（判定境界）」にあり、Unicode プロパティ `\p{Extended_Pictographic}` を用いる現行 `check-no-emoji.js` の実行結果を正本とする。処理系とバージョンで判定範囲が変わるため、散文の例示だけで使用可否を推測しない。
 
@@ -159,6 +160,14 @@ Phase 4: 最適化・出力
 
 ---
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
 ## 実行手順
 
 ### Step 1-4: 4フェーズ実行（LLM）
@@ -167,12 +176,12 @@ Phase 4: 最適化・出力
 
 ### Step 5: 検証（スクリプト）
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --text "[最適化された投稿文]"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --text "[最適化された投稿文]"
 ```
 
 ### Step 6: フィードバック（記録先が設定されている場合のみ）
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/log_usage.js" --result success --phase "shortpost-optimize"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/log_usage.js" --result success --phase "shortpost-optimize"
 ```
 
 本スキルの `effect` は `conversation-output` であり、投稿本文はファイルへ書き出さない。使用記録だけは `XLP_LOG_FILE` → `${XLP_OUTPUT_DIR}/x-longpost-usage-log.md` の順で解決した先へ追記する。どちらの env も未設定なら記録をスキップして終了コード 0 を返す。

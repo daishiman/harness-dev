@@ -113,7 +113,8 @@ x-longpost-creator/
 │   ├── run-x-shortpost-optimize/
 │   ├── run-x-visual-generate/    # 図解・サムネイルの画風と版面の正本はここ
 │   │   └── references/           # visual-spec + diagram-style-canon / icon-vocabulary / thumbnail-specs
-│   └── ref-x-longpost-canon/
+│   ├── ref-x-longpost-canon/
+│   └── run-skill-feedback/       # 全 plugin 共通。本 plugin が所有する entry point ではない
 ├── references/                   # skill 横断で共有する 6 本 + package-contract.json
 ├── plugin-composition.yaml
 ├── artifact-delivery.json
@@ -125,6 +126,14 @@ x-longpost-creator/
 複数の skill が読む共有 references（`style-genome.md` / `short-post-formats.md` / `expression-variations.md` / `anti-ai-writing-guide.md` / `horizontal-vertical-guide.md` / `title-guidelines.md`）は plugin ルートの `references/` に 1 組だけ置く。`scripts/` と `assets/` は plugin ルート直下に 1 組だけ置く（`lint-skill-tree` 第 10 条により `skills/*/scripts/` には `.py` / `.sh` しか置けないため、Node スクリプトは skill 配下に置かない）。`run-x-longpost-create` だけが読む references は `skills/run-x-longpost-create/references/` に 1 組だけ置く。いずれも同一 plugin 内の相対パスで参照する（層A→層A の同一 plugin 内参照のみ）。
 
 `prompts/` は Task で起動される sub-agent ではない。frontmatter を持たず、各 skill が Read で読み込む phase 別のプロンプト文書である（ディレクトリ名は互換のため `prompts/` のまま）。
+
+---
+
+## 改善要望を出す
+
+使っていて「ここが違う」と思ったら `run-skill-feedback` で本 plugin の skill への改善要望を起票できる。全 plugin へ同一内容で配備される共通 skill で、正本は harness-creator が所有する。
+
+本 plugin が所有していないが、install 先で実際に到達できる surface なので `entry_points.skills` と `plugin-composition.yaml` の capabilities には載せ、所有者は `runtime_dependencies` に `owned-vendored` として明記する。持ち方は実体コピーである。plugin は marketplace 経由で 1 つずつ install され、install 先には自分の plugin ディレクトリしか展開されないため、正本へ向けた symlink は install 先で必ず切れる。
 
 ---
 

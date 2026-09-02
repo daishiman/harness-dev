@@ -94,6 +94,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -147,7 +148,7 @@ artifact_delivery:
 - 違反例: `## [絵文字] ヒアリングをスキル化する` → 正: `## ヒアリングをスキル化する`
 - 装飾は記号に頼らず、見出しの言葉そのもので表現する
 - このルールは成果物だけでなく、スキル文書自体（SKILL.md・prompts/・references/・assets/・scripts/ の出力メッセージ）にも適用する。NG例の見本にも絵文字そのものを記載せず `[絵文字]` のように言葉で表す
-- 検証は `node ${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js --file <path>`（または `--text "..."`）で機械的に行う（絵文字あり=終了コード1）
+- 検証は `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js --file <path>`（または `--text "..."`）で機械的に行う（絵文字あり=終了コード1）
 
 **絵文字の定義（判定境界）**: 何を絵文字とみなすかの境界（`\p{Extended_Pictographic}`・使用可の記号一覧・処理系差）は `ref-x-longpost-canon`「絵文字の定義（判定境界）」が唯一の正本である。`scripts/lib/text-rules.js` が共有意味実装を持ち、`check-no-emoji.js` / `validate-title.js` / `validate-headings.js` / `build-visual-prompts.js` がそれぞれの CLI 入力境界で検査する。
 
@@ -157,7 +158,7 @@ artifact_delivery:
 
 **見出し1の後に見出し2が必ず存在する**。`# タイトル` の後に `##` が1つも無い状態を許さない。見出し2の個数は **3〜8個**（check ID H5）。H5 は `validate-headings.js` の既定では警告止まりのため、本スキルでは常に `--strict-h2-count` を付けて FAIL 扱いにする。欠落したら本文の文脈の区切りから見出し2を生成し直す。間には冒頭フックのリード文を置いてよい（見出しを挟まず8行・300文字以内。空白込みの NFC コードポイント数／`validate-headings.js` の測定）。
 
-- 検証は `node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "..."` と `node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --file <path> --strict-h2-count` で機械的に行う（違反=終了コード1）。**PASS するまで出力を確定しない**
+- 検証は `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "..."` と `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --file <path> --strict-h2-count` で機械的に行う（違反=終了コード1）。**PASS するまで出力を確定しない**
 - 正本: [references/heading-structure-rules.md](references/heading-structure-rules.md) / [references/title-guidelines.md](../../references/title-guidelines.md)
 
 **長文投稿を作る場合、短文は8投稿では終わらせず「投稿9｜要約型」（400〜499文字。空白・改行を除く／`count-chars.js` の測定）を必ず出力する**。長文投稿と短文投稿を同時に作成するワークフロー（文字起こし → 長文投稿 + 短文投稿）では、投稿1〜8に加えて投稿9が成果物の一部であり、8投稿だけで出力を確定してはならない。
@@ -165,7 +166,7 @@ artifact_delivery:
 - 投稿9は長文投稿パターンAの要点の要約であり、新規の主張・推論・創作を含めない。400文字以上499文字以下（空白・改行を除く／`count-chars.js` の測定。範囲外はFAIL）。改行は文脈（文節・句読点）で入れる。見出しは `## 投稿9｜要約型`、直下に `**テーマ**: 長文投稿の要点を[実際の文字数]文字で要約（[要約対象の核]）` を置く
 - 投稿9は長文パターンAが確定してからでないと作れないため、長文投稿フローの完了を待って実行する（Phase 3.4）。8投稿の出力だけで完了扱いにしない
 - ユーザーが「8投稿作成して」とだけ指示した場合でも、長文投稿を同時に作るなら投稿9は省略しない。長文投稿を作らない8投稿単独ワークフローに限り投稿9は作成しない（要約対象が存在しないため）
-- 検証は `node ${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js --text "<投稿9本文>" --min 400 --max 499` で機械的に行う（範囲外=終了コード1）。**PASSするまで出力を確定しない**。正本: [x-longpost-create-multi-posts.md](../../prompts/x-longpost-create-multi-posts.md) §5.3.5 / MP-C07
+- 検証は `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js --text "<投稿9本文>" --min 400 --max 499` で機械的に行う（範囲外=終了コード1）。**PASSするまで出力を確定しない**。正本: [x-longpost-create-multi-posts.md](../../prompts/x-longpost-create-multi-posts.md) §5.3.5 / MP-C07
 
 ---
 
@@ -177,7 +178,7 @@ artifact_delivery:
 | **8投稿作成** | `run-x-multipost-create` を使う（文字起こしを入力し「8投稿作成して」と指示） |
 | **長文投稿 + 8投稿** | 文字起こし + キャッチコピーを入力し「8投稿も作成して」と指示（→ 投稿9｜要約型400〜499文字（空白・改行を除く）が必ず付く） |
 | **短文投稿最適化（1つ）** | `run-x-shortpost-optimize` を使う |
-| 日付計算のみ | `node ${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js --neta-file "${XLP_NETA_FILE}"` |
+| 日付計算のみ | `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/calculate-next-date.js --neta-file "${XLP_NETA_FILE}"` |
 
 ---
 
@@ -261,6 +262,14 @@ L1 表層 / L2 語彙 / L3 統語 / L4 談話 / L5 修辞 / L6 認知 / L7 価�
 
 ---
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
 ## 実行手順
 
 ### 【文字起こし入力時のみ】Step 0: 文字起こし構造化（LLM）
@@ -270,7 +279,7 @@ L1 表層 / L2 語彙 / L3 統語 / L4 談話 / L5 修辞 / L6 認知 / L7 価�
 
 ### Step 1: 日付計算（スクリプト）
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js" --neta-file "${XLP_NETA_FILE}"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/calculate-next-date.js" --neta-file "${XLP_NETA_FILE}"
 ```
 
 ### Step 2-3: 入力解析（Phase 1・LLM）
@@ -279,7 +288,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js" --neta-file "${XLP_N
 
 ### Step 4: タイトル作成（Phase 1.5・LLM + スクリプト）
 - `x-longpost-create-title.md` → 3案生成・最適選定
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js" --title "[タイトル案]"` を3案すべてに実行。PASSしない案は次へ渡さない
+- `node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js" --title "[タイトル案]"` を3案すべてに実行。PASSしない案は次へ渡さない
 - ここで確定した文字列が唯一のタイトル。以降の見出し1・長文Bの先頭行・`# タイトル` セクション・ファイル名で一字一句そのまま使う
 
 ### Step 5: 文章生成（Phase 2・LLM）
@@ -288,10 +297,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js" --neta-file "${XLP_N
 
 ### Step 6: 文字数・見出し構造検証（スクリプト）
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js" --text "[生成された投稿文]" --min 1800 --max 2200
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js" --text "[生成された投稿文]" --min 1800 --max 2200
 # 見出し1の50文字・見出し2の存在（3〜8個）を検証（PASSするまで出力へ進まない）
 # --text には「# タイトル」行を含むパターンA全文を渡す（--title は必須）
-node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js" --text "[# タイトル 行を含むパターンA全文]" --title "[Step 4 の確定タイトル]" --strict-h2-count
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js" --text "[# タイトル 行を含むパターンA全文]" --title "[Step 4 の確定タイトル]" --strict-h2-count
 ```
 
 ### Step 7: 出力（スクリプト + LLM）
@@ -300,7 +309,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js" --text "[# タイト�
 
 ### Step 7.4: 投稿9｜要約型（Phase 3.4・LLM + スクリプト）
 - 長文パターンA確定後に `x-longpost-create-multi-posts.md` §5.3.5 → 長文Aの要点を400〜499文字（空白・改行を除く）で要約（新規主張なし）
-- `node "${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js" --text "[投稿9本文]" --min 400 --max 499` がPASSするまで出力を確定しない。長文投稿を作らない8投稿単独ワークフローでは実行しない
+- `node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js" --text "[投稿9本文]" --min 400 --max 499` がPASSするまで出力を確定しない。長文投稿を作らない8投稿単独ワークフローでは実行しない
 
 ### Step 7.5: アイデアコンパス生成（LLM）
 - `x-longpost-generate-idea-compass.md` → 投稿テーマと00ネタファイルから4方向×5ノートを選定
@@ -356,8 +365,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js" --text "[# タイト�
 実行後は必ず記録:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/log_usage.js" --result success --phase "Phase 4"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/log_usage.js" --result failure --phase "Phase 3" --error "ValidationError"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/log_usage.js" --result success --phase "Phase 4"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/log_usage.js" --result failure --phase "Phase 3" --error "ValidationError"
 ```
 
 記録先は `XLP_LOG_FILE` → `${XLP_OUTPUT_DIR}/x-longpost-usage-log.md` の順で解決する。plugin ディレクトリの中には書かない（配布物を実行時に書き換えないため）。どちらの env も未設定の場合は記録をスキップして終了コード 0 を返す（推測パスへ書き出さない）。

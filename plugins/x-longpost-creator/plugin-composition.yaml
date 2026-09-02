@@ -6,7 +6,7 @@
 name: x-longpost-creator
 description: キャッチコピーとメモ (または音声の文字起こし) から X の長文投稿・短文投稿を作成する plugin。文体適用・テーマ抽出・言語化という創造の判断を LLM に残し、文字数・タイトル長・見出し構造・絵文字ゼロという数えられる判断を Node.js スクリプトへ寄せる。
 kind: plugin-composition
-version: 1.2.1
+version: 1.2.2
 owner: team-content
 since: 2026-08-31
 last-audited: 2026-08-31
@@ -35,6 +35,9 @@ contract:
 
 capabilities:
   - { kind: skill, ref: skills/ref-x-longpost-canon, tier: core }
+  # 全 plugin へ同一内容で配備される共通 skill。正本は harness-creator が所有し、
+  # ここには実体コピーを置く (install 先には自分の plugin しか展開されないため symlink は切れる)。
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
   - { kind: skill, ref: skills/run-x-longpost-create, tier: core }
   - { kind: skill, ref: skills/run-x-multipost-create, tier: core }
   - { kind: skill, ref: skills/run-x-shortpost-optimize, tier: core }
@@ -133,6 +136,12 @@ dependencies:
   - { from: skills/run-x-visual-generate, to: scripts/log_usage.js, type: calls }
   # 長文投稿フローの Phase 4 接続点。パターン A 確定後にだけ引き継ぐ。
   - { from: skills/run-x-longpost-create, to: skills/run-x-visual-generate, type: delegates }
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
 
 governance:
   canon_index: skills/ref-x-longpost-canon/SKILL.md

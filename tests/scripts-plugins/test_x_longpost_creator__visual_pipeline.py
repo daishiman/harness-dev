@@ -96,6 +96,36 @@ VALID_STRUCTURE = {
 }
 
 
+@pytest.fixture(scope="session")
+def _stub_codex(tmp_path_factory) -> Path:
+    """実在するだけの偽 codex を 1 つ用意する。
+
+    dry-run しか通さないテスト向けなので中身は起動されない。万一起動したら
+    「無課金のはずの経路が実際に走った」ことが分かるよう専用 exit code で落とす。
+    """
+    path = tmp_path_factory.mktemp("codex-stub") / "codex"
+    path.write_text(
+        "#!/bin/sh\necho 'stub codex must not be executed' >&2\nexit 97\n",
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+    return path
+
+
+@pytest.fixture(autouse=True)
+def _pin_codex_bin(_stub_codex, monkeypatch):
+    """codex の実在確認を PATH から切り離す。
+
+    generate-images-codex.js は --dry-run でも起動前に codex の実在を確かめる
+    (課金経路へ入る前に落とす設計)。この確認は PATH 依存なので、codex を持つ
+    開発機では通り、持たない CI ランナーでは検証本体へ到達する前に全滅していた。
+    実在を固定して、テストが見たい「組み立てた指示の中身」だけを残す。
+    codex 不在そのものを検証するテストは os.environ のコピー後に自分で
+    XLP_CODEX_BIN を上書きするため、こちらの値には影響されない。
+    """
+    monkeypatch.setenv("XLP_CODEX_BIN", str(_stub_codex))
+
+
 def _run(script: str, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["node", str(SCRIPTS / script), *args],

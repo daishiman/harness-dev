@@ -93,6 +93,7 @@ artifact_delivery:
     accept_contexts: {evaluator: 0, improver: 0}
   release: explicit-only
   exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
@@ -147,7 +148,7 @@ artifact_delivery:
 
 **画像生成は課金される。** 1枚あたり概ね 1〜2 分かかり、標準の2枚で2回、optional 図解も作る場合は追加で1回の課金が発生する。プロンプトを確定する前に `--dry-run` で組み立てたコマンドを目視する。
 
-**絵文字は一切使用しない**。画像内・プロンプト内・ファイル名のすべてで禁止する。検証は `node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --file "[prompt.txt]"`。定義境界の正本は `ref-x-longpost-canon`「絵文字の定義（判定境界）」にある。
+**絵文字は一切使用しない**。画像内・プロンプト内・ファイル名のすべてで禁止する。検証は `node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --file "[prompt.txt]"`。定義境界の正本は `ref-x-longpost-canon`「絵文字の定義（判定境界）」にある。
 
 **「僕」「私」という文字を画像に入れない**。図解では一人称の主体を人物アイコンの位置だけで表す（VS-07）。**サムネイルには人物そのものを描かない**（TS-03）。
 
@@ -162,20 +163,20 @@ artifact_delivery:
 ```bash
 # 1. 構造解析（LLM）→ visual-structure.json を書く
 # 2. 標準: 構造検証とサムネイル2種の meta 生成
-node "${CLAUDE_PLUGIN_ROOT}/scripts/build-visual-prompts.js" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-visual-prompts.js" \
   --structure "${XLP_IMAGE_DIR}/visual-structure.json" --out-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
 # 3. 二つの prompt を設計し、課金前に構造と完全一致するか検査
-node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/x-thumb.prompt.txt"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/note-thumb.prompt.txt"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/x-thumb.prompt.txt"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/note-thumb.prompt.txt"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" \
   --structure "${XLP_IMAGE_DIR}/visual-structure.json"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
-node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
 # 4. 戻り値 results[].presentation の2つの absolutePath を Read / view_image で開き、各画像を記録
-node "${CLAUDE_PLUGIN_ROOT}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind x-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
-node "${CLAUDE_PLUGIN_ROOT}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind note-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind x-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind note-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
 # 5. accept-as-is はこの2枚を採用
-node "${CLAUDE_PLUGIN_ROOT}/scripts/embed-visual-paths.js" --file "[投稿ファイル]" --image-dir "${XLP_IMAGE_DIR}" --attachment-dir "${XLP_ATTACHMENT_DIR}" --only x-thumb,note-thumb
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/embed-visual-paths.js" --file "[投稿ファイル]" --image-dir "${XLP_IMAGE_DIR}" --attachment-dir "${XLP_ATTACHMENT_DIR}" --only x-thumb,note-thumb
 ```
 
 ---
@@ -227,6 +228,14 @@ Phase 4.1（構造解析）→ Phase 4.2（プロンプト設計）→ Phase 4.3
 
 ---
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
 ## 実行手順
 
 ### Step 1: 構造解析（Phase 4.1・LLM）
@@ -238,13 +247,13 @@ Phase 4.1（構造解析）→ Phase 4.2（プロンプト設計）→ Phase 4.3
 `x-longpost-design-thumbnail-prompt.md` を Read し、`x-thumb.prompt.txt` と `note-thumb.prompt.txt` を作る。両者の STYLE / TYPOGRAPHY / NEGATIVE は完全一致させる。
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/build-visual-prompts.js" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-visual-prompts.js" \
   --structure "${XLP_IMAGE_DIR}/visual-structure.json" --out-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
-node "${CLAUDE_PLUGIN_ROOT}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" \
   --structure "${XLP_IMAGE_DIR}/visual-structure.json"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --dry-run
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
-node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --dry-run
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
 ```
 
 生成 JSON の `results[].presentation` にある x-thumb / note-thumb の各 `absolutePath` は、指定した `${XLP_IMAGE_DIR}` に回収された同じ PNG の絶対パスである。2枚のどちらも、実行ホストに応じて必ず開く。
@@ -264,17 +273,17 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-visual-assets.js" --image-dir "${XL
 サムネイル2本は `lint-thumbnail-prompt.js --structure` の TL-01〜TL-12 を満たし、生成後は下記の手順で receipt を作る。
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/build-visual-prompts.js" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-visual-prompts.js" \
   --structure "${XLP_IMAGE_DIR}/visual-structure.json" --out-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
-node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/x-thumb.prompt.txt"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/note-thumb.prompt.txt"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" --structure "${XLP_IMAGE_DIR}/visual-structure.json"
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --dry-run
-node "${CLAUDE_PLUGIN_ROOT}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
-node "${CLAUDE_PLUGIN_ROOT}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
-node "${CLAUDE_PLUGIN_ROOT}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind x-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
-node "${CLAUDE_PLUGIN_ROOT}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind note-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
-node "${CLAUDE_PLUGIN_ROOT}/scripts/embed-visual-paths.js" \
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/x-thumb.prompt.txt"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js" --file "${XLP_IMAGE_DIR}/note-thumb.prompt.txt"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/lint-thumbnail-prompt.js" --image-dir "${XLP_IMAGE_DIR}" --structure "${XLP_IMAGE_DIR}/visual-structure.json"
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --dry-run
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-images-codex.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-visual-assets.js" --image-dir "${XLP_IMAGE_DIR}" --only x-thumb,note-thumb --strict
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind x-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/record-thumbnail-review.js" --image-dir "${XLP_IMAGE_DIR}" --kind note-thumb --host "[claude-code|codex]" --no-people PASS --no-info-product PASS --text-readable-correct PASS --gentle-off-white PASS --impact PASS
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/embed-visual-paths.js" \
   --file "[投稿ファイルの絶対パス]" --image-dir "${XLP_IMAGE_DIR}" \
   --attachment-dir "${XLP_ATTACHMENT_DIR}" --only x-thumb,note-thumb
 ```
@@ -300,7 +309,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/embed-visual-paths.js" \
 実行の記録は `log_usage.js` に残す。
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/log_usage.js" --result success --phase "Phase 4" --agent x-longpost-analyze-visual-structure
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/log_usage.js" --result success --phase "Phase 4" --agent x-longpost-analyze-visual-structure
 ```
 
 ## Anchors（設計の根拠）

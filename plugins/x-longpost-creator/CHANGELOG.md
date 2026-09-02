@@ -3,6 +3,18 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.2.2 — 2026-09-02
+
+他の 20 plugin が満たしていた plugin 横断の規約を、本 plugin だけが満たしていなかったのを揃えた版である。機能の変更はない。
+
+これらは plugin 総数を直書きしたテスト (`assert plugin_count == 20`) が件数の段階で先に落ちていたため、その先の中身の検査に一度も到達しておらず、追加当初から検出されていなかった。総数を 21 に直して初めて全項目が走った。
+
+### 変更
+
+- `skills/run-skill-feedback/` を配備した。全 plugin へ同一内容で配備される共通 skill で、正本は harness-creator が所有する。install 先には自分の plugin ディレクトリしか展開されず symlink は切れるため、実体コピーで持ち `runtime_dependencies` へ `owned-vendored` として所有者を明記する。あわせて `entry_points` / `plugin-composition.yaml` / `artifact-delivery.json` / README へ反映した
+- `references/package-contract.json` を schema 準拠に直した。`package_mode` に schema の列挙に無い `standalone` を書いていたのを `bundle` にし、`runtime_dependencies` へ node / codex を `external-runtime` として書いていたのを取り下げた。この枠は「他 plugin が所有する capability」の申告先であり (schema の `owner` は plugin 名、`local_path` / `owner_route` は `skills/` パスに固定されている)、PATH 上の外部バイナリを書く場所ではない。node / codex の要件は `notes` へ移した
+- 4 skill の実行手順にある `${CLAUDE_PLUGIN_ROOT}` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃え、frontmatter へ `runtime_root_policy: host-skill-path` と本文の Runtime root contract 節を追加した。Claude Code は `CLAUDE_PLUGIN_ROOT` を与えるが Codex は与えないため、二段構えにしないと Codex 側で解決できない
+
 ## 1.2.1 — 2026-09-01
 
 「改善ループは利用者の選択より後にしか動かない」ことを、散文だけでなく frontmatter からも機械的に読み取れるようにした版である。
