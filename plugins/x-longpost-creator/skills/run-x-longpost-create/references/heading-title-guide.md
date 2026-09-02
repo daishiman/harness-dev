@@ -9,7 +9,7 @@
 - 見出しは内容を具体的に表現したテキストのみで構成する
 - 装飾は記号や絵文字に頼らず、見出しの言葉そのもので表現する
 - 意味の象徴・強調・分類のいずれの目的でも絵文字は使わない
-- 検証: `node ${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js --file <path>` で絵文字ゼロを機械的に確認できる
+- 検証: `node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js --file <path>` で絵文字ゼロを機械的に確認できる
 
 ---
 

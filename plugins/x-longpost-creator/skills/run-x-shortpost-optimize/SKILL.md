@@ -108,7 +108,7 @@ runtime_root_policy: host-skill-path
 
 ## 実行環境
 
-パス変数・依存ランタイム（Node.js v18 以上）の定義は `run-x-longpost-create` SKILL.md「実行環境」と共通。本スキルは `${CLAUDE_PLUGIN_ROOT}/scripts/` のスクリプトと、`${XLP_SKILL_DIR}` = `${CLAUDE_PLUGIN_ROOT}/skills/run-x-longpost-create` の references を参照する。
+パス変数・依存ランタイム（Node.js v18 以上）の定義は `run-x-longpost-create` SKILL.md「実行環境」と共通。本スキルは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` のスクリプトと、`${XLP_SKILL_DIR}` = `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-x-longpost-create` の references を参照する。
 
 ---
 
@@ -171,7 +171,7 @@ Phase 4: 最適化・出力
 ## 実行手順
 
 ### Step 1-4: 4フェーズ実行（LLM）
-- `${CLAUDE_PLUGIN_ROOT}/prompts/x-longpost-short-post-optimizer.md` を**独立実行モード**（§4.5）で適用する
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/prompts/x-longpost-short-post-optimizer.md` を**独立実行モード**（§4.5）で適用する
 - 制約 SP-C01〜SP-C08、成功基準（§4.5.1）、スコープ外（§4.5.2）はすべて同エージェントが正本
 
 ### Step 5: 検証（スクリプト）

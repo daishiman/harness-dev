@@ -17,6 +17,17 @@ def _text(relative_path: str):
     return (PLUGIN / relative_path).read_text(encoding="utf-8")
 
 
+# plugin root の正規表記。Claude Code は CLAUDE_PLUGIN_ROOT を渡すが Codex は渡さない
+# ので、Codex 側で解決した PLUGIN_ROOT を先に見る二段構えにしてある。
+# `\$` はテンプレートリテラル内でのエスケープ形 (expand-template.js) を吸収する。
+PLUGIN_ROOT_EXPR = re.compile(r"\\?\$\{PLUGIN_ROOT:-\\?\$\{CLAUDE_PLUGIN_ROOT\}\}")
+
+
+def _normalize_plugin_root(text: str) -> str:
+    """plugin root の表記を <ROOT> へ潰す。指し先だけを検査したいときに使う。"""
+    return PLUGIN_ROOT_EXPR.sub("<ROOT>", text)
+
+
 def test_release_metadata_and_visual_capability_match_on_both_hosts():
     claude = _json(".claude-plugin/plugin.json")
     codex = _json(".codex-plugin/plugin.json")
@@ -44,16 +55,54 @@ def test_release_metadata_and_visual_capability_match_on_both_hosts():
     assert "4 skill" not in readme
 
 
-def test_governance_dependency_matches_package_contract():
+def test_governance_dependency_follows_repository_convention():
+    """依存宣言が他 plugin の慣行から外れていないことを見る。
+
+    この 2 層は同じ「依存」という語を使いながら別のものを指しており、内容も
+    一致しない。
+
+      - package-contract.json の depends_on: 設計上どの plugin に依っているか。
+        run-skill-feedback の正本を持つ harness-creator は全 plugin が書く
+      - plugin.json の dependencies: install 時に何を一緒に解決するか。
+        run-skill-feedback は実体コピーなので単体で動き、harness-creator は不要
+
+    両者が一致するものとして書くと、実体コピーで自己完結しているはずの plugin
+    が install 時に所有者を引き連れる。期待値を直書きせず他 plugin から導出す
+    るのは、慣行が動いたときにこの plugin だけ取り残される形を避けるためであ
+    る。
+    """
     claude = _json(".claude-plugin/plugin.json")
     package_contract = _json("references/package-contract.json")
 
-    # harness-creator は skills/run-skill-feedback/ の owned-vendored 元。
-    # 実体コピーで持つ以上、所有者を依存として宣言しないと出所が追えなくなる。
-    assert package_contract["depends_on"] == claude["dependencies"] == [
-        "harness-creator",
-        "skill-governance-adapters",
+    plugins_dir = ROOT / "plugins"
+    others = [
+        d for d in sorted(plugins_dir.iterdir())
+        if d.is_dir() and d.name != "x-longpost-creator"
+        and (d / ".claude-plugin" / "plugin.json").is_file()
     ]
+
+    def _load(path: Path) -> dict:
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    # install 依存: 自分自身を依存に書けない adapters を除いた全 plugin が
+    # 同一の集合を宣言している。その集合と一致すること。
+    install_deps = {
+        tuple(_load(d / ".claude-plugin" / "plugin.json").get("dependencies") or [])
+        for d in others
+        if _load(d / ".claude-plugin" / "plugin.json").get("dependencies")
+    }
+    assert len(install_deps) == 1, f"他 plugin の install 依存が割れている: {install_deps}"
+    assert tuple(claude["dependencies"]) == next(iter(install_deps))
+
+    # 設計依存: 全 plugin が harness-creator を書く (harness-creator 自身は除く)。
+    for d in others:
+        contract = d / "references" / "package-contract.json"
+        if d.name == "harness-creator" or not contract.is_file():
+            continue
+        assert "harness-creator" in _load(contract)["depends_on"], (
+            f"{d.name} が harness-creator を depends_on に書いていない (慣行が変わった可能性)"
+        )
+    assert "harness-creator" in package_contract["depends_on"]
 
 
 def test_runtime_paths_use_prompts_and_env_only_output_resolution():
@@ -63,16 +112,91 @@ def test_runtime_paths_use_prompts_and_env_only_output_resolution():
     output_config = _json("skills/run-x-longpost-create/references/output-config.json")
 
     combined = "\n".join((skill, resource_yaml, resource_md))
-    assert "${CLAUDE_PLUGIN_ROOT}/agents" not in combined
+    # plugin root の表記は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の二段構えで、
+    # ホストごとに与えられる変数が違うことを吸収している。ここで確かめたいのは
+    # 「どの変数名で書いてあるか」ではなく「plugin root 起点でどこを指しているか」
+    # なので、表記を潰してから相対部分だけを見る。表記を直書きすると、記法を変える
+    # たびに指し先の検査まで巻き添えで落ちる。
+    combined = _normalize_plugin_root(combined)
+    assert "<ROOT>/agents" not in combined
     assert "defaults.vaultRoot" not in combined
     assert "agents / scripts" not in combined
     assert "agents 11" not in combined
-    assert "${CLAUDE_PLUGIN_ROOT}/prompts" in skill
+    assert "<ROOT>/prompts" in _normalize_plugin_root(skill)
     assert output_config["resolutionOrder"] == [
         "XLP_OUTPUT_DIR (出力ディレクトリを直接指定)",
         "XLP_VAULT_ROOT (vault ルート。出力先は ${XLP_VAULT_ROOT}/05_Project/X)",
     ]
     assert "defaults" not in output_config
+
+
+def test_plugin_root_is_always_written_in_the_host_neutral_form():
+    """plugin root を Claude Code 専用の変数だけで書いた箇所が無いことを見る。
+
+    `${CLAUDE_PLUGIN_ROOT}` は Claude Code が渡す変数で、Codex は渡さない。裸で
+    書くと Codex では空文字へ展開され、`/prompts/...` という絶対パスを読みに行って
+    静かに失敗する。落ちるのが実行時なので、書いた時点では気づけない。
+
+    1 箇所でも裸で残ると「二段構えで書いてある」という README の申告が崩れるため、
+    件数ではなく存在で判定する。指し先ではなく表記そのものを守る検査なので、ここ
+    だけは _normalize_plugin_root を通さない。
+    """
+    # placeholder が現れうる面をすべて見る。scripts の .js も対象に含めるのは、
+    # エラーメッセージや nextAction として利用者へ提示するパスが同じ規約に従う
+    # 必要があるためである。
+    suffixes = {".md", ".yaml", ".yml", ".json", ".js", ".mjs"}
+    offenders = []
+    for path in sorted(PLUGIN.rglob("*")):
+        if not path.is_file() or path.suffix not in suffixes:
+            continue
+        # CHANGELOG は過去の状態を記述する場所で、「旧記法を裸で書いていたのを直した」
+        # と書くには旧記法を引用するほかない。ここを検査対象に含めると、何を直したかを
+        # 書けなくなる。実行時に読まれるファイルではないので除外する。
+        if path.name == "CHANGELOG.md":
+            continue
+        text = path.read_text(encoding="utf-8")
+        if "CLAUDE_PLUGIN_ROOT" not in text:
+            continue
+        # 探すのは展開される `${...}` の形だけである。規約そのものを説明する散文
+        # (README の「Claude Code は `CLAUDE_PLUGIN_ROOT` を渡す」など) は変数名を
+        # 地の文で名指しているだけで、パスとして展開されることはない。
+        # 正規表記を伏せ字にしてから探せば、残るのは裸で書かれたものだけになる。
+        for lineno, line in enumerate(_normalize_plugin_root(text).splitlines(), 1):
+            if "${CLAUDE_PLUGIN_ROOT}" in line:
+                offenders.append(f"{path.relative_to(PLUGIN)}:{lineno}: {line.strip()}")
+
+    assert not offenders, (
+        "plugin root が Claude Code 専用の変数だけで書かれている箇所がある。\n"
+        "`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃えること "
+        "(テンプレートリテラル内では `\\${PLUGIN_ROOT:-\\${CLAUDE_PLUGIN_ROOT}}`)。\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_runtime_root_contract_is_declared_where_skills_are_read():
+    """各 skill が root 解決の規約を自分の中で宣言していることを見る。
+
+    skill は 1 本ずつ独立に読まれる。README に書いてあっても、その skill だけを
+    渡されたホストには届かない。frontmatter の宣言と本文の節を skill 側に持たせる
+    ことで、読み手が root をどう解決すべきかを skill 単体から判断できる。
+    """
+    for skill_dir in sorted((PLUGIN / "skills").iterdir()):
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.is_file():
+            continue
+        text = skill_md.read_text(encoding="utf-8")
+        # 共通 skill (run-skill-feedback) は harness-creator が所有する正本の実体
+        # コピーで、本 plugin の規約を後付けする対象ではない。
+        if skill_dir.name == "run-skill-feedback":
+            continue
+        if "CLAUDE_PLUGIN_ROOT" not in text:
+            continue
+        assert "runtime_root_policy: host-skill-path" in text, (
+            f"{skill_dir.name}/SKILL.md の frontmatter に runtime_root_policy が無い"
+        )
+        assert "## Runtime root contract" in text, (
+            f"{skill_dir.name}/SKILL.md に Runtime root contract 節が無い"
+        )
 
 
 def test_composition_models_esm_logger_as_adapter_not_a_runtime_call():

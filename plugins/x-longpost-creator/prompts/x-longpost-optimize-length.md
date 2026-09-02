@@ -102,7 +102,7 @@
 **検証（必須・出力前に実行）**
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --text "[# タイトル行を含むパターンA全文]" --title "[Phase 1.5 の確定タイトル]" --strict-h2-count
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --text "[# タイトル行を含むパターンA全文]" --title "[Phase 1.5 の確定タイトル]" --strict-h2-count
 ```
 
 | 引数 | 渡す内容 |
@@ -215,7 +215,7 @@ AIの返答がズレる。
 | 見出し2の個数 | 3〜8個（実運用中心は5〜8個）。H5 が PASS |
 | 見出し2の長さ | 12〜28字。H9 が PASS |
 | 見出し2が役割名でない | H10 が PASS（FAIL条件） |
-| **見出し構造の機械検証** | **`node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --text ... --title ... --strict-h2-count` が終了コード0** |
+| **見出し構造の機械検証** | **`node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --text ... --title ... --strict-h2-count` が終了コード0** |
 | 文字数             | 1800-2200文字            |
 | **文の改行（パターンB・絶対）** | **句点（。）が2つ以上含まれる行が1つも無い（1文=1行）** |
 | 改行位置（パターンB） | 文脈（文節・句読点）で改行。単語・文節の途中で切れていない。1行は目安30-40字程度の自然な区切り |

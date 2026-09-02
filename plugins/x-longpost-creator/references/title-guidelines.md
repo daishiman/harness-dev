@@ -174,7 +174,7 @@ SNSのタイムラインやWeb検索結果画面には、わずかな情報し�
 
 ### 3.3 避けるべき表現パターン【重要】
 
-> **正本宣言**: 本節は禁止表現リストの唯一の正本である。タイトル用（§3.3.1）と本文用（§3.3.2）の両方をここに置く。`prompts/x-longpost-create-title.md`・`prompts/x-longpost-apply-style-genome.md`・`prompts/x-longpost-optimize-length.md`・各 SKILL.md（いずれも plugin ルート `${CLAUDE_PLUGIN_ROOT}` からの相対パス）は実体を持たず、本節への参照のみを持つ。リストを追加・変更する場合はここだけを編集する。
+> **正本宣言**: 本節は禁止表現リストの唯一の正本である。タイトル用（§3.3.1）と本文用（§3.3.2）の両方をここに置く。`prompts/x-longpost-create-title.md`・`prompts/x-longpost-apply-style-genome.md`・`prompts/x-longpost-optimize-length.md`・各 SKILL.md（いずれも plugin ルート `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` からの相対パス）は実体を持たず、本節への参照のみを持つ。リストを追加・変更する場合はここだけを編集する。
 
 #### 3.3.1 タイトルの禁止表現
 
@@ -277,7 +277,7 @@ After（40字・PASS / 前半27字・後半13字）
 #### 検証（必須・機械的に行う）
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "[生成したタイトル]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "[生成したタイトル]"
 ```
 
 終了コード0（PASS）になるまでタイトルを確定しない。
@@ -355,7 +355,7 @@ Step 8: 期待値の調整
 └─ 内容と期待が一致しているか確認
 
 Step 9: 機械検証
-└─ node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "..." を3案すべてに実行し、
+└─ node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "..." を3案すべてに実行し、
    終了コード0（PASS）の案だけを次フェーズへ渡す（§3.4）
 ```
 
@@ -369,7 +369,7 @@ Step 9: 機械検証
 
 | 項目 | 確認内容 |
 |------|----------|
-| **50文字以内** | **`node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "..."` が終了コード0か（絶対ルールの正本は [heading-structure-rules.md](../skills/run-x-longpost-create/references/heading-structure-rules.md) R1・推奨レンジは§3.4）** |
+| **50文字以内** | **`node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "..."` が終了コード0か（絶対ルールの正本は [heading-structure-rules.md](../skills/run-x-longpost-create/references/heading-structure-rules.md) R1・推奨レンジは§3.4）** |
 | **字数配分** | **前半（入口）26〜32字・後半（予告）8〜18字に収まっているか（§3.4）** |
 | 内容伝達 | タイトルだけで記事の内容がわかるか |
 | 結論含有 | 読者が得られるベネフィットが明確か |

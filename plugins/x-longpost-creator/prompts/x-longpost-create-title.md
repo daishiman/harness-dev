@@ -150,7 +150,7 @@ parse-input の構成要素リストから、読まれやすいタイトルを3�
 推奨タイトルを確定する前に、3案すべてに対して実行する。
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "[タイトル案]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "[タイトル案]"
 ```
 
 | 終了コード | 意味 | 次アクション |

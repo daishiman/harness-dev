@@ -3,7 +3,7 @@
  * validate-title.js - 見出し1タイトルの絶対ルール検証（決定論的処理）
  *
  * 見出し1（# タイトル）に使うタイトル文字列が、
- * ${CLAUDE_PLUGIN_ROOT}/references/title-guidelines.md §3.4 の絶対ルールを満たすか検証する。
+ * ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/title-guidelines.md §3.4 の絶対ルールを満たすか検証する。
  * このタイトルはそのままファイル名のタイトル部にもなるため、
  * ファイル名として安全であることも同時に検証する。
  *
@@ -146,7 +146,7 @@ function validateTitle(rawTitle, maxChars) {
     // FAIL時の次アクション（LLMへの指示）
     nextAction: failed.length === 0
       ? null
-      : "${CLAUDE_PLUGIN_ROOT}/references/title-guidelines.md の構文パターンA〜Hに沿ってタイトルを作り直す。末尾の切り捨てではなく、前半30文字のホリゾンタル入口を維持したまま後半を圧縮する。",
+      : "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/title-guidelines.md の構文パターンA〜Hに沿ってタイトルを作り直す。末尾の切り捨てではなく、前半30文字のホリゾンタル入口を維持したまま後半を圧縮する。",
   };
 }
 

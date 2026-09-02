@@ -57,12 +57,12 @@
 | `# タイトル` セクションの値 | プレーンテキストのタイトル | F2 |
 | ファイル名のタイトル部 | `X長文投稿-prompt作成 - YYYY-MM-DD_[サニタイズ済タイトル].md` | F3 |
 
-サニタイズは `\ / : * ? " < > |` を除去し、空白を `_` に置換するのみ（`${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js` の `sanitizeTitle` と同一ロジック）。**長さによる切り詰めはしない。**
+サニタイズは `\ / : * ? " < > |` を除去し、空白を `_` に置換するのみ（`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js` の `sanitizeTitle` と同一ロジック）。**長さによる切り詰めはしない。**
 
 ファイル名は必ずスクリプト経由で生成する（手書きで組み立てない）。
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js --date "YYYY-MM-DD" --title "[見出し1と同一のタイトル]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js --date "YYYY-MM-DD" --title "[見出し1と同一のタイトル]"
 ```
 
 | 終了コード | 意味 | 次アクション |
@@ -77,7 +77,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js --date "YYYY-MM-DD" --ti
 ### 3.1 タイトル単体（Phase 1.5 create-title）
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "[タイトル案]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js --title "[タイトル案]"
 ```
 
 終了コード 0=PASS / 1=FAIL / 2=引数エラー。3案すべてに実行し、推奨タイトルがPASSしない状態で次フェーズへ渡さない。
@@ -87,7 +87,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js --title "[タイトル案]"
 `--text` に渡すのは **`# タイトル` 行を含むパターンA全文**。`prompts/x-longpost-output-file.md` の `{{投稿文_長文A}}`（タイトル行を除く本文）とは別物なので混同しない。
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --text "[# タイトル 行を含むパターンA全文]" --title "[Phase 1.5 で確定したタイトル]" --strict-h2-count
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --text "[# タイトル 行を含むパターンA全文]" --title "[Phase 1.5 で確定したタイトル]" --strict-h2-count
 ```
 
 `--text` を使うときは `--title` が必須（未指定は exit 2）。本スキルでは H5（見出し2が3〜8個）を警告で見逃さないため `--strict-h2-count` を常に付ける。タイトル比較を意図的に外す場合のみ `--allow-no-title` を付ける。
@@ -95,7 +95,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --text "[# タイトル 
 ### 3.3 生成ファイル全体（Phase 3 output-file・出力直後）
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --file "[生成ファイルの絶対パス]" --title "[Phase 1.5 で確定したタイトル]" --strict-h2-count
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --file "[生成ファイルの絶対パス]" --title "[Phase 1.5 で確定したタイトル]" --strict-h2-count
 ```
 
 `--file` でも `--strict-h2-count` を付ける（未指定だと H5 が警告扱いのまま常に PASS する）。`--title` を併せて渡すと H8 も判定され、4箇所一致が全項目そろう。`## Aパターン` / `## Bパターン` 直後のコードブロックを自動抽出し、F1〜F3 のタイトル整合、F4 のA/B本文同値、F5 のB本文1文1行をまとめて検証する。

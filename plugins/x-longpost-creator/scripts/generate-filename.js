@@ -150,7 +150,7 @@ function main() {
     console.error(JSON.stringify({
       ok: false,
       error: `タイトルが${MAX_TITLE_CHARS}文字を超えています（${titleLength}文字・${titleLength - MAX_TITLE_CHARS}文字超過）`,
-      nextAction: "切り詰めではなく、${CLAUDE_PLUGIN_ROOT}/references/title-guidelines.md の構文パターンに沿って50文字以内へリライトし直す",
+      nextAction: "切り詰めではなく、${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/title-guidelines.md の構文パターンに沿って50文字以内へリライトし直す",
       title,
       titleLength,
       maxTitleChars: MAX_TITLE_CHARS

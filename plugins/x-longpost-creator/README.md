@@ -169,7 +169,9 @@ export XLP_VAULT_ROOT="/path/to/your/vault"
 export XLP_NETA_FILE="${XLP_VAULT_ROOT}/05_Project/X/<00ネタファイル名>.md"
 ```
 
-skill 内のパス参照は `${CLAUDE_PLUGIN_ROOT}` 起点で解決する（`${XLP_SKILL_DIR}` = `${CLAUDE_PLUGIN_ROOT}/skills/run-x-longpost-create`、`${XLP_PROMPTS_DIR}` = `${CLAUDE_PLUGIN_ROOT}/prompts`）。
+skill 内のパス参照は plugin root 起点で解決する。表記は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で統一してある（`${XLP_SKILL_DIR}` = その `/skills/run-x-longpost-create`、`${XLP_PROMPTS_DIR}` = その `/prompts`）。
+
+二段構えなのはホストによって与えられる変数が違うためである。Claude Code は `CLAUDE_PLUGIN_ROOT` を渡すが、Codex は渡さない。Codex ではホストが提示した `SKILL.md` の絶対パスから plugin manifest を持つ祖先を上方探索し、解決済みの絶対パスを `PLUGIN_ROOT` に入れてから使う。`cwd` から推測したり、placeholder をそのまま shell へ渡したりしない。
 
 ---
 
