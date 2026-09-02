@@ -108,14 +108,14 @@ visual references は4本で、kind・生成/納品寸法・比率・横断 text
 Phase 1: 入力解析
 ├── prompts/x-longpost-parse-input.md
 ├── prompts/x-longpost-resolve-contradictions.md
-└── ${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js
+└── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/calculate-next-date.js
 
 Phase 1.5: タイトル確定（以後この文字列が唯一のタイトル）
 ├── prompts/x-longpost-create-title.md
 ├── references/title-guidelines.md（構文パターンA〜H・推奨はE）
 ├── references/heading-structure-rules.md（50字ルールの根拠・リライト6手順）
 ├── references/horizontal-vertical-guide.md（ネタ性質判定・欲求翻訳・TAMチェック・2層設計）
-└── ${CLAUDE_PLUGIN_ROOT}/scripts/validate-title.js（3案すべてに実行）
+└── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-title.js（3案すべてに実行）
 
 Phase 2: 文章生成（タイトルは作らない。Phase 1.5 の確定タイトルをそのまま見出し1に置く）
 ├── prompts/x-longpost-apply-style-genome.md
@@ -126,16 +126,16 @@ Phase 2: 文章生成（タイトルは作らない。Phase 1.5 の確定タイ�
 ├── references/heading-structure-rules.md（見出し1の50文字・見出し2必須の絶対ルール）
 ├── references/heading-title-guide.md（見出し2の書き方・NG役割名）
 ├── references/optimize-length-details.md（AI編集4原則・AI臭6分類・改行詳細ルール）
-└── ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js（--text は `# タイトル` 行を含むパターンA全文＋--title 必須。PASSするまでパターンAを確定しない）
+└── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js（--text は `# タイトル` 行を含むパターンA全文＋--title 必須。PASSするまでパターンAを確定しない）
 
 Phase 3: 出力整形
 ├── prompts/x-longpost-split-thread.md
 ├── prompts/x-longpost-output-file.md
-├── ${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js
-├── ${CLAUDE_PLUGIN_ROOT}/scripts/expand-template.js（Writeで直接組み立てず必ず展開経由。missingVars が空であること）
-├── ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js（--file で H1〜H10 / F1〜F5 を一時パス上で検証 → PASS後に X/ へ配置 → 配置後に再検証）
-├── ${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js
-├── ${CLAUDE_PLUGIN_ROOT}/scripts/update-neta-file.js
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/expand-template.js（Writeで直接組み立てず必ず展開経由。missingVars が空であること）
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js（--file で H1〜H10 / F1〜F5 を一時パス上で検証 → PASS後に X/ へ配置 → 配置後に再検証）
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update-neta-file.js
 └── ../../../assets/output-template.md
 ```
 

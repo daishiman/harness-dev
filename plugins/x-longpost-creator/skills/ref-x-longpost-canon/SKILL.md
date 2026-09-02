@@ -22,6 +22,7 @@ schema_refs:
   - ../run-x-visual-generate/references/visual-spec.json
 completeness_exempt:
   - "manifest: ref/effect:none の読み取り専用正本索引であり、実行 Phase や gate を持たない。"
+runtime_root_policy: host-skill-path
 ---
 
 # ref-x-longpost-canon
@@ -36,9 +37,18 @@ completeness_exempt:
 
 ---
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。本skillは `Read` のみを持ち自らshellを起動しないため、下表のパスを開く側が解決済みabsolute pathへ展開してから読む。
+
+---
+
 ## 正本一覧
 
-本表のパスはすべて plugin ルート `${CLAUDE_PLUGIN_ROOT}` からの相対である（読み手のファイル位置に依存しない）。
+本表のパスはすべて plugin ルート `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` からの相対である（読み手のファイル位置に依存しない）。
 
 | 規定 | 正本 | 参照のみ（実体を持たない） |
 |------|------|---------------------------|

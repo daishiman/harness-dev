@@ -75,7 +75,7 @@ Phase 1.5 の create-title が確定した同一のタイトル文字列が「�
 **ファイル名生成は必ずスクリプト経由で行う**（手書きで組み立てない）:
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js --date "YYYY-MM-DD" --title "[見出し1と同一のタイトル]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js --date "YYYY-MM-DD" --title "[見出し1と同一のタイトル]"
 ```
 
 | 終了コード | 意味 | 次アクション |
@@ -151,8 +151,8 @@ ${XLP_OUTPUT_DIR}/
 2. **テンプレートを scratch の同名ファイルへ展開する**
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/expand-template.js \
-  --template "${CLAUDE_PLUGIN_ROOT}/assets/output-template.md" \
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/expand-template.js \
+  --template "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/assets/output-template.md" \
   --vars-file "[scratch path]/vars.json" \
   --output "[scratch path]/[generate-filename.js が返した filename]" \
   --json
@@ -167,8 +167,8 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/expand-template.js \
 4. **scratch の展開結果を事前検証する**
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --file "[scratch path]/[generate-filename.js が返した filename]" --strict-h2-count
-node ${CLAUDE_PLUGIN_ROOT}/scripts/check-no-emoji.js --file "[scratch path]/[generate-filename.js が返した filename]"
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --file "[scratch path]/[generate-filename.js が返した filename]" --strict-h2-count
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-no-emoji.js --file "[scratch path]/[generate-filename.js が返した filename]"
 ```
 
 `--strict-h2-count` を必ず付ける（付けないと H5「見出し2が3〜8個」が警告止まりで PASS 扱いになる）。
@@ -241,14 +241,14 @@ ${XLP_NETA_FILE}
 | 構造が正しいか     | `expand-template.js` 経由で展開済み・`--json` 出力の `missingVars` が空（§4.5.1） |
 | 出力前の事前検証   | 一時パスで `validate-headings.js --file <path> --strict-h2-count` が PASS してから出力先へ配置した（§4.5.1） |
 | 00ネタ更新されたか | リスト最上部に追記       |
-| **見出し構造の絶対ルール** | **`node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --file "[生成ファイルの絶対パス]" --strict-h2-count` が終了コード0** |
+| **見出し構造の絶対ルール** | **`node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --file "[生成ファイルの絶対パス]" --strict-h2-count` が終了コード0** |
 
 #### 出力後の必須検証
 
 ファイル書き込み後、必ず実行する。
 
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/validate-headings.js --file "${XLP_OUTPUT_DIR}/X長文投稿-prompt作成 - YYYY-MM-DD_[タイトル].md" --strict-h2-count
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js --file "${XLP_OUTPUT_DIR}/X長文投稿-prompt作成 - YYYY-MM-DD_[タイトル].md" --strict-h2-count
 ```
 
 主な FAIL と対処（全 check ID は [references/heading-structure-rules.md §3.4](../skills/run-x-longpost-create/references/heading-structure-rules.md)）:

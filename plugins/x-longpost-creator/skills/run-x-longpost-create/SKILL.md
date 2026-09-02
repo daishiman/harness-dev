@@ -125,8 +125,8 @@ runtime_root_policy: host-skill-path
 
 | 変数 | 意味 | 解決方法 |
 |------|------|-------------|
-| `${XLP_SKILL_DIR}` | 本スキルのルート | `${CLAUDE_PLUGIN_ROOT}/skills/run-x-longpost-create` |
-| `${XLP_PROMPTS_DIR}` | Read 用プロンプト群 | `${CLAUDE_PLUGIN_ROOT}/prompts` |
+| `${XLP_SKILL_DIR}` | 本スキルのルート | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-x-longpost-create` |
+| `${XLP_PROMPTS_DIR}` | Read 用プロンプト群 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/prompts` |
 | `${XLP_VAULT_ROOT}` | vault ルート | env のみ。未設定なら vault 内 path は解決不能 |
 | `${XLP_OUTPUT_DIR}` | 出力先ディレクトリ | env → `${XLP_VAULT_ROOT}/05_Project/X` の2段のみ |
 | `${XLP_NETA_FILE}` | 00ネタファイル | env。未設定時は `${XLP_VAULT_ROOT}` がある場合のみ `output-config.json` の path template を解決 |
@@ -236,7 +236,7 @@ Phase 4 は本スキルの範囲外であり、`run-x-visual-generate` が担う
 | [references/resource-map.md](references/resource-map.md) | prompts / scripts / 共有 references / assets の所在と読込条件（散文・plugin 全体） |
 | [references/resource-map.yaml](references/resource-map.yaml) | 本スキルの references を「いつ開くか」で引く機械可読索引 |
 
-スクリプトは `${CLAUDE_PLUGIN_ROOT}/scripts/`、prompts・共有 references・assets は plugin ルート直下、本スキル専用の references は `${XLP_SKILL_DIR}/references/` にある。規定が食い違って見えたときの決着は `ref-x-longpost-canon` が正本索引として担う。
+スクリプトは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/`、prompts・共有 references・assets は plugin ルート直下、本スキル専用の references は `${XLP_SKILL_DIR}/references/` にある。規定が食い違って見えたときの決着は `ref-x-longpost-canon` が正本索引として担う。
 
 ---
 

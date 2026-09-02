@@ -89,7 +89,7 @@ X長文投稿クリエーター内の処理を「スクリプト（決定論的�
 
 ### 日付計算
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js \
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/calculate-next-date.js \
   --neta-file "/05_Project/X/X長文投稿-prompt作成 - 0000-00-00_ネタ - プロンプト作りで大事なこと.md"
 ```
 
@@ -104,14 +104,14 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/calculate-next-date.js \
 
 ### ファイル名生成
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/generate-filename.js \
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js \
   --date "2026-02-05" \
   --title "AIで開発環境を整えたら、作業時間が10分の1になった"
 ```
 
 ### 文字数検証
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js \
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js \
   --text "投稿文テキスト..." \
   --min 1800 \
   --max 2200
@@ -119,7 +119,7 @@ node ${CLAUDE_PLUGIN_ROOT}/scripts/count-chars.js \
 
 ### 00ネタファイル更新
 ```bash
-node ${CLAUDE_PLUGIN_ROOT}/scripts/update-neta-file.js \
+node ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update-neta-file.js \
   --neta-file "${XLP_NETA_FILE}" \
   --filename "X長文投稿-prompt作成 - 2026-02-05_タイトル.md"
 ```

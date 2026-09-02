@@ -3,6 +3,24 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.2.3 — 2026-09-02
+
+1.2.2 で 4 skill の実行手順だけに入れた plugin root の二段構え表記を、plugin 内のすべての面へ広げた版である。機能の変更はない。
+
+1.2.2 の時点では skill の実行手順だけを直したが、そこから読まれる prompts・references と、利用者へパスを提示する scripts のエラーメッセージが Claude Code 専用の変数のまま残っていた。skill が二段構えで解決しても、その先で読むファイルが `${CLAUDE_PLUGIN_ROOT}` を裸で書いていれば Codex では空文字へ展開され、`/prompts/...` という絶対パスを読みに行って静かに失敗する。表記が面ごとにばらついている状態そのものが欠陥だった。
+
+### 変更
+
+- plugin 内で `${CLAUDE_PLUGIN_ROOT}` を裸で書いていた箇所を prompts・references・scripts まで残らず `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ統一した。`scripts/expand-template.js` はテンプレートリテラル内にあるため内側の `$` もエスケープしてある
+- `skills/ref-x-longpost-canon/` へ `runtime_root_policy: host-skill-path` と Runtime root contract 節を追加した。本 skill は `Read` のみを持ち自らは shell を起動しないが、正本一覧の全パスが plugin root 起点で書かれているため、開く側がどう解決すべきかを skill 単体から判断できる必要がある
+- `.claude-plugin/plugin.json` の `dependencies` から `harness-creator` を外した。`references/package-contract.json` の `depends_on` (設計上どの plugin に依っているか) と `plugin.json` の `dependencies` (install 時に何を一緒に解決するか) は別のものを指す。run-skill-feedback は実体コピーで自己完結するため install に所有者を引き連れる必要がなく、他 20 plugin もそう宣言している
+
+### テスト
+
+- `test_plugin_root_is_always_written_in_the_host_neutral_form` を追加した。裸で書かれた箇所を件数ではなく存在で検出する。規約を説明する散文が変数名を地の文で名指すのは違反にしない
+- `test_runtime_root_contract_is_declared_where_skills_are_read` を追加した。root を参照する skill が解決規約を自分の中で宣言していることを見る。skill は 1 本ずつ独立に読まれるため、README の記載はその skill だけを渡されたホストには届かない
+- `test_governance_dependency_follows_repository_convention` を書き直した。2 層の依存宣言を一致するものとして検査していたのを、期待値を直書きせず他 plugin の慣行から導出する形へ改めた
+
 ## 1.2.2 — 2026-09-02
 
 他の 20 plugin が満たしていた plugin 横断の規約を、本 plugin だけが満たしていなかったのを揃えた版である。機能の変更はない。
@@ -13,7 +31,7 @@
 
 - `skills/run-skill-feedback/` を配備した。全 plugin へ同一内容で配備される共通 skill で、正本は harness-creator が所有する。install 先には自分の plugin ディレクトリしか展開されず symlink は切れるため、実体コピーで持ち `runtime_dependencies` へ `owned-vendored` として所有者を明記する。あわせて `entry_points` / `plugin-composition.yaml` / `artifact-delivery.json` / README へ反映した
 - `references/package-contract.json` を schema 準拠に直した。`package_mode` に schema の列挙に無い `standalone` を書いていたのを `bundle` にし、`runtime_dependencies` へ node / codex を `external-runtime` として書いていたのを取り下げた。この枠は「他 plugin が所有する capability」の申告先であり (schema の `owner` は plugin 名、`local_path` / `owner_route` は `skills/` パスに固定されている)、PATH 上の外部バイナリを書く場所ではない。node / codex の要件は `notes` へ移した
-- 4 skill の実行手順にある `${CLAUDE_PLUGIN_ROOT}` を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃え、frontmatter へ `runtime_root_policy: host-skill-path` と本文の Runtime root contract 節を追加した。Claude Code は `CLAUDE_PLUGIN_ROOT` を与えるが Codex は与えないため、二段構えにしないと Codex 側で解決できない
+- 4 skill の実行手順にある Claude Code 専用の plugin root 変数を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃え、frontmatter へ `runtime_root_policy: host-skill-path` と本文の Runtime root contract 節を追加した。Claude Code は `CLAUDE_PLUGIN_ROOT` を与えるが Codex は与えないため、二段構えにしないと Codex 側で解決できない
 
 ## 1.2.1 — 2026-09-01
 

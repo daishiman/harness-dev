@@ -112,7 +112,7 @@ runtime_root_policy: host-skill-path
 
 ## 実行環境
 
-パス変数・依存ランタイム（Node.js v18 以上）の定義は `run-x-longpost-create` SKILL.md「実行環境」と共通。本スキルは `${CLAUDE_PLUGIN_ROOT}/scripts/` のスクリプトと、`${XLP_SKILL_DIR}` = `${CLAUDE_PLUGIN_ROOT}/skills/run-x-longpost-create` の references を参照する（同一 plugin 内参照）。
+パス変数・依存ランタイム（Node.js v18 以上）の定義は `run-x-longpost-create` SKILL.md「実行環境」と共通。本スキルは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/` のスクリプトと、`${XLP_SKILL_DIR}` = `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-x-longpost-create` の references を参照する（同一 plugin 内参照）。
 
 ---
 
@@ -187,11 +187,11 @@ Phase 1: 8投稿作成
 ## 実行手順
 
 ### Step 0: 文字起こし構造化（LLM）
-- `${CLAUDE_PLUGIN_ROOT}/prompts/x-longpost-structure-transcript.md` を適用し、フィラー除去・書き言葉変換・構造化メモ生成を行う
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/prompts/x-longpost-structure-transcript.md` を適用し、フィラー除去・書き言葉変換・構造化メモ生成を行う
 - 構造化メモが既にある場合は本 Step をスキップ
 
 ### Step 1: 8投稿作成（LLM）
-- `${CLAUDE_PLUGIN_ROOT}/prompts/x-longpost-create-multi-posts.md` の §5.1〜§5.4 に従い、テーマ抽出 → フォーマット選定 → 生成 → スタイルゲノム適用 → AI臭チェックを実行する
+- `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/prompts/x-longpost-create-multi-posts.md` の §5.1〜§5.4 に従い、テーマ抽出 → フォーマット選定 → 生成 → スタイルゲノム適用 → AI臭チェックを実行する
 
 ### Step 2: 検証（スクリプト）
 ```bash

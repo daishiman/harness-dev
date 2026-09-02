@@ -42,7 +42,7 @@ Variables:
   テンプレートに TEMPLATE-START/END マーカーがある場合はその間だけを展開します。
 
   主要な変数（assets/output-template.md 準拠。
-  一覧は \${CLAUDE_PLUGIN_ROOT}/prompts/x-longpost-output-file.md §4.5）:
+  一覧は \${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}/prompts/x-longpost-output-file.md §4.5）:
     - タイトル / キャッチコピー / メモ / 文字起こし
     - 投稿文_短文 / 投稿文_長文A / 投稿文_長文B
     - IdeaCompass / ハッシュタグ（生成時は空文字を渡す）
