@@ -11,7 +11,22 @@
   "properties": {
     "schema_version": {"const": 1},
     "contract_id": {"const": "external-mutation-guard-v1"},
-    "kind": {"enum": ["preview", "confirmation", "authorization", "completion"]},
+    "kind": {
+      "enum": [
+        "preview", "confirmation", "intent",
+        "authorization", "completion", "cancellation"
+      ]
+    },
+    "action_class": {
+      "oneOf": [
+        {"type": "null"},
+        {"enum": ["github-pr-write", "github-issue-write", "beads-issue-write"]}
+      ]
+    },
+    "granted_classes": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"enum": ["github-pr-write", "github-issue-write", "beads-issue-write"]}
+    },
     "receipt_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
     "issued_at": {"type": "integer", "minimum": 0},
     "expires_at": {"type": "integer", "minimum": 0},
@@ -30,9 +45,24 @@
       "then": {
         "required": [
           "entrypoint_ref", "target_scope", "command_argv", "command_sha256",
-          "diff_summary", "side_effect_summary",
+          "action_class", "diff_summary", "side_effect_summary",
           "challenge_sha256", "status"
         ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "intent"}}},
+      "then": {
+        "required": [
+          "granted_classes", "producer", "user_event_id",
+          "prompt_excerpt", "decision"
+        ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "cancellation"}}},
+      "then": {
+        "required": ["preview_receipt_id", "preview_receipt_sha256", "status"]
       }
     },
     {
@@ -50,6 +80,7 @@
         "required": [
           "preview_receipt_id", "preview_receipt_sha256",
           "confirmation_receipt_id", "confirmation_receipt_sha256",
+          "confirmation_receipt_kind",
           "entrypoint_ref", "target_scope", "command_sha256", "status"
         ]
       }
