@@ -168,6 +168,7 @@ ATTR_ROW_DETAIL_MAX_CHARS = "row_detail_max_chars"
 ATTR_REQUIRED_ROLE = "required_role"
 ATTR_PLACEMENT = "placement"
 PLACEMENT_LAST_MAIN = "last-main"
+PLACEMENT_FIRST_MAIN = "first-main"
 
 # 追加検査規則が名指しする「器」は構成データ側の block.type で指す (P03 Y-05 /
 # AC-C11-19)。部品 id の literal はこの script に一切持たず、id が要る箇所は
@@ -1412,6 +1413,16 @@ class Checker(object):
                     self.add("E-SECTION-PLACEMENT", pointer,
                              "この section_kind は本編の最後に置く "
                              "(後ろに本編セクションが %d 件ある)" % len(later_mains))
+            if attrs.get(ATTR_PLACEMENT) == PLACEMENT_FIRST_MAIN:
+                # 自己紹介は「読み始める前」に効く。途中に置くと、読み手は誰の話か
+                # 分からないまま何節か読むことになり、置いた意味が消える。
+                earlier_mains = [i for i, s in enumerate(sections[:index])
+                                 if isinstance(s, dict)
+                                 and self.section_role(s) == self.ctx.default_role]
+                if earlier_mains:
+                    self.add("E-SECTION-PLACEMENT", pointer,
+                             "この section_kind は本編の先頭に置く "
+                             "(前に本編セクションが %d 件ある)" % len(earlier_mains))
         for index, role in enumerate(roles):
             if role != self.ctx.appendix_role:
                 continue

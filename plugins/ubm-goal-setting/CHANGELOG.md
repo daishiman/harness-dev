@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.3.32 - 2026-09-03
+
+`validate-goal-output.py` に **`--type` と本文タイトル見出しの不一致検出** を追加。種別の取り違えが素通りしていた穴を塞いだ。
+
+修正した問題:
+
+- 同一の3ヶ月期報が `--type quarterly` でも `--type bimonthly` でも rc=0 で PASS していた。`TYPE_MAP` が両者を分岐キー `period` へ潰しており、以降の判定が元の `--type` を参照できず、`check_require_prefix_any(["3ヶ月の目標", "2ヶ月の目標"])` が両ラベルを無条件に受理していたため。
+
+契約の変更:
+
+- **不一致は error（rc=1）**: `--type` に対応するタイトル見出しラベル（`weekly`=【1週間の目標】／`monthly`=【1ヶ月の目標】／`quarterly`=【3ヶ月の目標】／`bimonthly`=【2ヶ月の目標】）が本文と食い違う場合に FAIL する。エラー文は「引数側が旧種別」「ファイル側が旧種別」を書き分ける。
+- **読みの後方互換は維持**: 旧2ヶ月期報を `--type bimonthly` で再検証する経路は rc=0 のまま。`TYPE_MAP` のキー集合（argparse の `choices` の生成元）は不変。
+- **内部整理**: `check_require_prefix` / `check_require_prefix_any` を `check_title_matches_type` へ統合。`Validator` は元の `--type` 値を `type_name` として保持する（第4引数・省略時は `kind` から逆引き）。script version 0.2.0 → 0.2.1。
+- **テスト**: `tests/test_validate_goal_output.py` に期報の4パターン（quarterly×3ヶ月=PASS／bimonthly×2ヶ月=PASS／quarterly×2ヶ月=FAIL／bimonthly×3ヶ月=FAIL）と週報のラベル不一致を追加。
+
+不変（この修正で変えていないもの）:
+
+- 種別別の必須見出し集合・NG表現・やらないこと3項目以上・プロジェクト別タスク方針。
+- `--help` の rc=0、不正な `--type` の rc=2。
+
+## 0.3.31 - 2026-09-03
+
+期報を **2ヶ月目標から3ヶ月目標へ改定**。目標設定側（`run-ubm-goal-setting` / `info-collector` / `output-formatter` / `phase3-coordinator` / `/ubm-goal-setting`）の契約とドキュメントを3ヶ月へ統一した。
+
+破壊的でない変更（後方互換あり）:
+
+- **種別キーの改名**: `bimonthly` → `quarterly`。新規は `quarterly` を正とする。`bimonthly` は後方互換の別名として受理し続ける（`/ubm-goal-setting` の引数解釈・`validate-goal-output.py --type`・`workflow-manifest.json` の Phase0 gate・各 agent の入力契約）。`validate-goal-output.py` の `TYPE_MAP` は `quarterly` と `bimonthly` の両方を同一の分岐キー `period` へ写す。
+- **ファイル命名**: 新規は `UBM - 3-月報（３ヶ月） - YYYY-MM-DD〜YYYY-MM-DD.md`。旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` は読み取り・過去参照で受理を継続する（validator のファイル名チェックは `UBM - {1,2,3}-` プレフィックスと日付パターンのみを見るため旧名を弾かない）。
+
+契約の変更:
+
+- **期報の期間**: UBM の目標期間は月の最終月曜日起点。期報は対象3ヶ月分の月報期間の連結で、開始日=1ヶ月目の月報開始日／終了日=3ヶ月目の月報終了日（例: 7月・8月・9月分 → `2026-06-29〜2026-09-27`）。
+- **ロールアップ元**: 月報2件 → **月報3件**。`info-collector` の quarterly 取得スコープを「直近3ヶ月の全週報 + 全月報（3件）+ 前回期報」へ変更。
+- **validator**: 期報のサマリー見出しの必須判定を `## 【2ヶ月の目標】…` → `## 【3ヶ月の目標】…` へ変更。全角数字チェックの許容に `３ヶ月` を追加（`２ヶ月` は旧期報の後方互換で許容を継続）。script version 0.1.0 → 0.2.0。
+- **表示名**: 「期報（2ヶ月目標）」「2ヶ月目標」「２ヶ月」を3ヶ月へ統一。見出し名 `【今期の売上目標】` `【今期の累計売上実績】` 等は不変で、「今期」は3ヶ月を指す。
+
+不変（この改定で変えていないもの）:
+
+- 統一ハイブリッド21項目の構造・公式セクション順・採用案 A1（期報はヘッダーの `【今期の売上目標】` を出力しない）。
+- プロジェクト別タスクの適用範囲（週報=任意／月報=必須／期報=禁止）。
+- `weekly` / `monthly` の見出し集合・必須セクション・検証結果。
+
 ## 0.2.0 - 2026-07-11
 
 北原さん YouTube 全量/自動同期と相談 capability、根拠付き knowledge / harness artifact graph consult を **非後退（additive）** で追加。既存 capability A（21 項目目標設定）/ B（6 カテゴリ同期）の契約は不変。

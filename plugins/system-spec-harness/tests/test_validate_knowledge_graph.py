@@ -591,3 +591,98 @@ def test_main_cross_missing_args_exit2(tmp_path):
 def test_main_input_required_for_non_cross_exit2():
     rc = kg.main(["--profile", "knowledge"])
     assert rc == 2
+
+
+# ── required-info: block item の確定接地 (--state) ───────────────────────────
+# certificate は従来 blocking_items を「列挙」するだけで、それが確定へ接地しているかは
+# 誰も検査しておらず、監査者の目視相関に委ねられていた。qa_log entry の
+# required_info_items と確定セルの qa_ref を辿る鎖を決定論ゲートへ格上げした分の回帰。
+def _state_with(qa_entries: list[dict], cell: dict) -> dict:
+    return {
+        "qa_log": qa_entries,
+        "matrix": {"backend": {"web": cell}},
+    }
+
+
+def test_block_item_grounded_through_confirmed_cell():
+    state = _state_with(
+        [{"id": "qa-1", "required_info_items": ["api-contract"]}],
+        {"state": "確定", "qa_ref": "qa-1"},
+    )
+    findings, result = kg.validate_required_info(_valid_required_info(), state)
+    assert findings == []
+    cert = result["coverage_certificate"]
+    assert cert["grounded_blocking_items"] == ["api-contract"]
+    assert cert["ungrounded_blocking_items"] == []
+
+
+def test_block_item_without_any_qa_link_is_violation():
+    state = _state_with(
+        [{"id": "qa-1", "question": "q", "answer": "a"}],
+        {"state": "確定", "qa_ref": "qa-1"},
+    )
+    findings, _ = kg.validate_required_info(_valid_required_info(), state)
+    assert any("接地していない" in f and "api-contract" in f for f in findings)
+
+
+def test_qa_link_not_reachable_from_any_resolved_cell_is_not_grounding():
+    # 回答に item_id が書いてあっても、どのセルにも使われていなければ充足の証拠にならない。
+    state = _state_with(
+        [{"id": "qa-1", "required_info_items": ["api-contract"]}],
+        {"state": "未収集"},
+    )
+    findings, _ = kg.validate_required_info(_valid_required_info(), state)
+    assert any("接地していない" in f for f in findings)
+
+
+def test_exclusion_cell_also_grounds_its_required_info():
+    """除外は収集した結論の一種。対象外セルの根拠質疑も接地として数える。
+
+    target-platforms のように「どの platform を外すか」という答えが除外セルの根拠になる
+    item を、確定セルだけを見て未接地と誤判定しないため。
+    """
+    state = _state_with(
+        [{"id": "qa-1", "required_info_items": ["api-contract"]}],
+        {"state": "対象外", "reason": "この platform は対象外", "qa_ref": "qa-1"},
+    )
+    findings, result = kg.validate_required_info(_valid_required_info(), state)
+    assert findings == []
+    assert result["coverage_certificate"]["grounded_blocking_items"] == ["api-contract"]
+
+
+def test_qa_link_via_qa_refs_list_also_grounds():
+    state = _state_with(
+        [{"id": "qa-2", "required_info_items": ["api-contract"]}],
+        {"state": "確定", "qa_ref": "qa-1", "qa_refs": ["qa-2"]},
+    )
+    findings, result = kg.validate_required_info(_valid_required_info(), state)
+    assert findings == []
+    assert result["coverage_certificate"]["grounded_blocking_items"] == ["api-contract"]
+
+
+def test_qa_link_to_unknown_item_id_is_violation():
+    state = _state_with(
+        [{"id": "qa-1", "required_info_items": ["api-contract", "typo-item"]}],
+        {"state": "確定", "qa_ref": "qa-1"},
+    )
+    findings, _ = kg.validate_required_info(_valid_required_info(), state)
+    assert any("カタログ外の item_id" in f and "typo-item" in f for f in findings)
+
+
+def test_state_omitted_keeps_catalog_only_verdict():
+    # 単体カタログ検証は接地を判定できない。--state 無しで赤くしない (既存契約の保護)。
+    findings, result = kg.validate_required_info(_valid_required_info())
+    assert findings == []
+    assert "ungrounded_blocking_items" not in result["coverage_certificate"]
+
+
+def test_main_state_flag_rejects_other_profiles(tmp_path):
+    kp = write(tmp_path, "k.json", _valid_knowledge())
+    sp = write(tmp_path, "s.json", _state_with([], {"state": "確定", "qa_ref": "q"}))
+    assert kg.main(["--profile", "knowledge", "--input", kp, "--state", sp]) == 2
+
+
+def test_main_state_flag_fails_on_ungrounded_block_item(tmp_path):
+    rp = write(tmp_path, "ri.json", _valid_required_info())
+    sp = write(tmp_path, "s.json", _state_with([], {"state": "確定", "qa_ref": "q"}))
+    assert kg.main(["--profile", "required-info", "--input", rp, "--state", sp]) == 1

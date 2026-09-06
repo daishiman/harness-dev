@@ -233,8 +233,14 @@ def test_tampered_preview_and_changed_execute_argv_fail_closed(tmp_path):
             }
         ),
     )
-    assert tampered_confirmation.returncode != 0
-    assert "challenge" in tampered_confirmation.stderr
+    # 改ざんされた preview は seal 検証で落ちるため候補にならず、confirmation は発行されない。
+    # プロンプト自体は握り潰さない (拒否しても安全性は増えず、セッションだけが詰まるため)。
+    assert tampered_confirmation.returncode == 0, tampered_confirmation.stderr
+    context = json.loads(tampered_confirmation.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert json.loads(context.split("\n", 1)[1])["status"] == "confirmation-unmatched"
+    assert not list(
+        (tmp_path / ".artifact-delivery" / "external-mutation").glob("confirmation-*.json")
+    )
 
     preview = _preview(tmp_path, command)
     confirmation = _confirm(tmp_path, preview["challenge"])
@@ -349,6 +355,201 @@ def test_pretool_blocks_known_entrypoint_mutation_clis_without_central_execute()
         assert result.returncode == 0
         output = json.loads(result.stdout)
         assert output["hookSpecificOutput"]["permissionDecision"] == "deny", command
+
+
+def _intent(project: pathlib.Path, prompt: str) -> dict:
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": str(project),
+        "session_id": "session-fixture",
+        "prompt": prompt,
+    }
+    result = _run("hook-confirm", input_text=json.dumps(payload))
+    assert result.returncode == 0, result.stderr
+    context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    return json.loads(context.split("\n", 1)[1])
+
+
+def _fake_gh(project: pathlib.Path) -> tuple[pathlib.Path, pathlib.Path]:
+    """A stand-in whose basename is `gh`, so argv classifies without touching GitHub."""
+    marker = project / "gh-ran.txt"
+    binary = project / "bin" / "gh"
+    binary.parent.mkdir(parents=True, exist_ok=True)
+    binary.write_text(f'#!/bin/sh\necho "$@" > {marker}\n')
+    binary.chmod(0o755)
+    return binary, marker
+
+
+def test_natural_language_request_authorizes_a_pr_create_without_a_typed_challenge(tmp_path):
+    grant = _intent(tmp_path, "この変更でプルリクを出しておいてください")
+    assert grant["status"] == "intent-granted"
+    assert grant["granted_classes"] == ["github-pr-write"]
+
+    binary, marker = _fake_gh(tmp_path)
+    command = [str(binary), "pr", "create", "--draft", "--title", "fixture"]
+    preview = _preview(tmp_path, command)
+    assert preview["action_class"] == "github-pr-write"
+    assert preview["auto_grantable"] is True
+    assert not marker.exists()
+
+    authorization = _run(
+        "authorize-intent",
+        "--project-root",
+        str(tmp_path),
+        "--preview-receipt",
+        preview["receipt_path"],
+        "--intent-receipt",
+        grant["receipt_path"],
+    )
+    assert authorization.returncode == 0, authorization.stderr
+    authorized = json.loads(authorization.stdout)
+    assert authorized["confirmation_receipt_kind"] == "intent"
+    assert not marker.exists()
+
+    execute = _run(
+        "execute",
+        "--project-root",
+        str(tmp_path),
+        "--authorization-receipt",
+        authorized["receipt_path"],
+        "--command-json",
+        json.dumps(command),
+    )
+    assert execute.returncode == 0, execute.stderr
+    assert marker.read_text().strip() == "pr create --draft --title fixture"
+
+
+def test_intent_grant_never_covers_irreversible_or_unclassified_argv(tmp_path):
+    grant = _intent(tmp_path, "プルリクを作成して")
+    binary, _ = _fake_gh(tmp_path)
+    for command in (
+        [str(binary), "pr", "merge", "--squash"],
+        [str(binary), "api", "-X", "POST", "/repos/o/r/releases"],
+        [sys.executable, "-c", "print('unclassified')"],
+    ):
+        preview = _preview(tmp_path, command)
+        assert preview["action_class"] is None, command
+        assert preview["auto_grantable"] is False, command
+        result = _run(
+            "authorize-intent",
+            "--project-root",
+            str(tmp_path),
+            "--preview-receipt",
+            preview["receipt_path"],
+            "--intent-receipt",
+            grant["receipt_path"],
+        )
+        assert result.returncode != 0, command
+        assert "not auto-grantable" in result.stderr
+
+
+def test_intent_grant_is_single_use_and_cannot_backdate_a_preview(tmp_path):
+    binary, _ = _fake_gh(tmp_path)
+    early = _preview(tmp_path, [str(binary), "pr", "create", "--title", "early"])
+    grant = _intent(tmp_path, "プルリクを出して")
+    backdated = _run(
+        "authorize-intent",
+        "--project-root",
+        str(tmp_path),
+        "--preview-receipt",
+        early["receipt_path"],
+        "--intent-receipt",
+        grant["receipt_path"],
+    )
+    assert backdated.returncode != 0
+    assert "predates the intent grant" in backdated.stderr
+
+    first_preview = _preview(tmp_path, [str(binary), "pr", "create", "--title", "one"])
+    second_preview = _preview(tmp_path, [str(binary), "pr", "create", "--title", "two"])
+    args = ("--project-root", str(tmp_path), "--intent-receipt", grant["receipt_path"])
+    first = _run("authorize-intent", *args, "--preview-receipt", first_preview["receipt_path"])
+    second = _run("authorize-intent", *args, "--preview-receipt", second_preview["receipt_path"])
+    assert first.returncode == 0, first.stderr
+    assert second.returncode != 0
+    assert "already consumed" in second.stderr
+
+
+def test_japanese_phrasings_without_spaces_are_recognized(tmp_path):
+    """CJK が \\w に含まれるため \\bPR\\b は "PRを出して" で落ちる。実際の言い回しで固定する。"""
+    for prompt in ("pr出して", "PRを出して", "PR出しておいて", "プルリクを出して", "pull request を作成して"):
+        grant = _intent(tmp_path, prompt)
+        assert grant["status"] == "intent-granted", prompt
+        assert grant["granted_classes"] == ["github-pr-write"], prompt
+
+
+def test_unrelated_prompt_grants_nothing(tmp_path):
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": str(tmp_path),
+        "session_id": "session-fixture",
+        "prompt": "このテストが落ちる原因を調べて",
+    }
+    result = _run("hook-confirm", input_text=json.dumps(payload))
+    assert result.returncode == 0
+    assert result.stdout == ""
+
+
+def test_stale_challenge_does_not_block_the_prompt(tmp_path):
+    _preview(tmp_path, [sys.executable, "-c", "print('live')"])
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "cwd": str(tmp_path),
+        "session_id": "session-fixture",
+        "prompt": "CONFIRM EXTERNAL MUTATION " + "0" * 24,
+    }
+    result = _run("hook-confirm", input_text=json.dumps(payload))
+    assert result.returncode == 0, result.stderr
+    context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert json.loads(context.split("\n", 1)[1])["status"] == "confirmation-unmatched"
+    assert not list(
+        (tmp_path / ".artifact-delivery" / "external-mutation").glob("confirmation-*.json")
+    )
+
+
+def test_cancel_releases_pending_guard_context(tmp_path):
+    preview = _preview(tmp_path, [sys.executable, "-c", "print('abandoned')"])
+    probe = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "cwd": str(tmp_path),
+        "tool_input": {"command": "git status --short"},
+    }
+    blocked = _run("pretool", input_text=json.dumps(probe))
+    assert json.loads(blocked.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+    cancelled = _run(
+        "cancel",
+        "--project-root",
+        str(tmp_path),
+        "--preview-receipt",
+        preview["receipt_path"],
+    )
+    assert cancelled.returncode == 0, cancelled.stderr
+    released = _run("pretool", input_text=json.dumps(probe))
+    assert released.returncode == 0
+    assert released.stdout == ""
+
+
+def test_pretool_allows_the_new_canonical_actions():
+    commands = (
+        "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py authorize-intent "
+        "--project-root /tmp --preview-receipt p.json --intent-receipt i.json",
+        "python3 $CLAUDE_PLUGIN_ROOT/scripts/build-external-mutation-guard.py cancel "
+        "--project-root /tmp --preview-receipt p.json",
+    )
+    for command in commands:
+        result = _run(
+            "pretool",
+            input_text=json.dumps(
+                {
+                    "hook_event_name": "PreToolUse",
+                    "tool_name": "Bash",
+                    "tool_input": {"command": command},
+                }
+            ),
+        )
+        assert result.returncode == 0
+        assert result.stdout == "", command
 
 
 def test_manifest_connects_confirmation_producer_and_pretool_enforcer():

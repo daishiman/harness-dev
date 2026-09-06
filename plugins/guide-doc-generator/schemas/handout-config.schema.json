@@ -1276,6 +1276,55 @@
         },
         "description": "R21 C53 のハンズオン部品。live_demo=true は『登壇者がその場で実演し受講者が画面を見る』手順であることを表し、C22 NAR-07 が demo_first の実画面判定でこのフラグを見る (実画面の代替として認めるのは role=screenshot の画像かこのフラグだけ)。ハンズオンの section_kind では本部品が 1 件以上必要 (E-SECTIONKIND-HANDSON)。"
       },
+      "B18": {
+        "x_placement": "section",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "minItems": 1,
+            "x_unique_by": "key",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "label",
+                "url"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "minLength": 1,
+                  "x_non_blank": true
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "x_non_blank": true,
+                  "description": "リンクの見出し。どの資料かがこの 1 行で分かること。URL をそのまま入れない (読み手はどこへ行くのか判断できず、読み上げでも意味を成さない)。"
+                },
+                "url": {
+                  "type": "string",
+                  "pattern": "^https://",
+                  "description": "行き先。https のみ受ける。http や data: を許すと、案内リンクの例外 (C16 SC-01 の NAV_LINK_TAG) が同梱閉包の抜け道になる。"
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "誰がどの場面で開く資料かの一言。『自分はどれを見ればよいか』が分かれば足り、資料の内容をここへ写さない。"
+                }
+              }
+            }
+          }
+        },
+        "description": "別資料への案内リンク。B12 DL ボタンとの違いは行き先で、B12 は同梱した実体を手元へ保存させ、B18 は外部の資料へ送り出す。C11 は各リンクを新しいタブで開き (target=_blank rel=noopener noreferrer)、印刷時にだけ URL 文字列を併記する (紙で読む人は打ち込む以外に辿る手段が無い)。"
+      },
       "IMG": {
         "x_placement": "section",
         "type": "object",

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-external-mutation-guard
-# purpose: Bind an external mutation to a preview receipt, an actual UserPromptSubmit confirmation event, and an exact argv consumer.
+# purpose: Bind an external mutation to a preview receipt, an actual UserPromptSubmit confirmation or intent event, and an exact argv consumer.
 # inputs:
-#   - argv: preview | hook-confirm | authorize | execute | pretool
+#   - argv: preview | hook-confirm | authorize | authorize-intent | cancel | execute | pretool
 #   - stdin: Claude hook JSON for hook-confirm/pretool
 # outputs:
 #   - stdout: sealed receipt metadata or official PreToolUse deny JSON
@@ -39,6 +39,35 @@ STATE_REL = Path(".artifact-delivery/external-mutation")
 KEY_NAME = ".guard-key"
 TTL_SECONDS = 900
 CONFIRM_RE = re.compile(r"^CONFIRM EXTERNAL MUTATION ([0-9A-F]{24})$")
+INTENT_KIND = "intent"
+# 人間の自然文リクエストで自動承認してよい操作クラス。取り消し可能な範囲だけを列挙する。
+AUTO_GRANT_CLASSES = frozenset({"github-pr-write", "github-issue-write", "beads-issue-write"})
+GH_PR_AUTO_VERBS = frozenset({"create", "edit", "comment", "ready"})
+GH_ISSUE_AUTO_VERBS = frozenset({"create", "edit", "comment", "close", "reopen"})
+BD_AUTO_VERBS = frozenset({"create", "update", "close", "reopen"})
+# 自然文の意図宣言。UserPromptSubmit の実イベントでのみ評価され、付与クラスを限定する。
+INTENT_PATTERNS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
+    (
+        re.compile(
+            # \bPR\b は使えない: Python の \w は CJK を含むため "PRを出して" で
+            # 単語境界が成立せず落ちる。境界判定を ASCII 英字だけに限定する。
+            r"(?:プルリク(?:エスト)?|プル\s*リクエスト|pull\s*request|(?<![A-Za-z])PR(?![A-Za-z]))"
+            r"[^\n]{0,40}?"
+            r"(?:出し|出す|出せ|作成|作って|作る|上げ|開い|投げ|送っ|create|open|raise|submit)",
+            re.I,
+        ),
+        frozenset({"github-pr-write"}),
+    ),
+    (
+        re.compile(
+            r"(?:issue|イシュー|課題|チケット)"
+            r"[^\n]{0,40}?"
+            r"(?:立て|作成|作って|作る|閉じ|クローズ|更新|create|close|reopen|update)",
+            re.I,
+        ),
+        frozenset({"github-issue-write", "beads-issue-write"}),
+    ),
+)
 ENTRYPOINT_RE = re.compile(r"^plugin:[a-z0-9][a-z0-9-]*/skills/[a-z0-9][a-z0-9-]*/SKILL\.md$")
 PYTHON_RE = re.compile(r"^python3(?:\.\d+)?$")
 RUNNER_NAME = "build-external-mutation-guard.py"
@@ -57,9 +86,13 @@ CANONICAL_ACTION_FLAGS = {
     "authorize": frozenset(
         {"--project-root", "--preview-receipt", "--confirmation-receipt"}
     ),
+    "authorize-intent": frozenset(
+        {"--project-root", "--preview-receipt", "--intent-receipt"}
+    ),
     "execute": frozenset(
         {"--project-root", "--authorization-receipt", "--command-json"}
     ),
+    "cancel": frozenset({"--project-root", "--preview-receipt"}),
 }
 DIRECT_MUTATION_PATTERNS = (
     re.compile(r"\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
@@ -111,6 +144,33 @@ def _command(value: str) -> list[str]:
 
 def _command_sha256(argv: list[str]) -> str:
     return _sha256_bytes(_compact(argv).encode("utf-8"))
+
+
+def _action_class(argv: list[str]) -> str | None:
+    """Classify argv into an auto-grantable class; unknown or irreversible argv stays None."""
+    program = Path(argv[0]).name
+    rest = argv[1:]
+    if program == "gh" and len(rest) >= 2:
+        surface, verb = rest[0], rest[1]
+        if surface == "pr" and verb in GH_PR_AUTO_VERBS:
+            return "github-pr-write"
+        if surface == "issue" and verb in GH_ISSUE_AUTO_VERBS:
+            return "github-issue-write"
+        return None
+    if program == "bd" and rest:
+        if rest[0] in BD_AUTO_VERBS:
+            return "beads-issue-write"
+        if rest[0] == "dep" and len(rest) >= 2 and rest[1] == "add":
+            return "beads-issue-write"
+    return None
+
+
+def _intent_classes(prompt: str) -> frozenset[str]:
+    granted: set[str] = set()
+    for pattern, classes in INTENT_PATTERNS:
+        if pattern.search(prompt):
+            granted |= set(classes)
+    return frozenset(granted & AUTO_GRANT_CLASSES)
 
 
 def _review_text(value: str, *, name: str) -> str:
@@ -244,8 +304,17 @@ def _base(kind: str, receipt_id: str, *, now: int) -> dict[str, Any]:
         "kind": kind,
         "receipt_id": receipt_id,
         "issued_at": now,
+        # Second resolution cannot order two receipts issued inside the same second.
+        "issued_at_ns": time.time_ns(),
         "expires_at": now + TTL_SECONDS,
     }
+
+
+def _issued_ns(receipt: dict[str, Any]) -> int:
+    value = receipt.get("issued_at_ns")
+    if isinstance(value, int):
+        return value
+    return int(receipt["issued_at"]) * 1_000_000_000
 
 
 def preview(args: argparse.Namespace) -> dict[str, Any]:
@@ -261,18 +330,27 @@ def preview(args: argparse.Namespace) -> dict[str, Any]:
     now = int(time.time())
     receipt_id = uuid.uuid4().hex
     challenge = secrets.token_hex(12).upper()
+    action_class = _action_class(argv)
     body = {
         **_base("preview", receipt_id, now=now),
         "entrypoint_ref": args.entrypoint_ref,
         "target_scope": target_scope,
         "command_argv": argv,
         "command_sha256": _command_sha256(argv),
+        "action_class": action_class,
         "diff_summary": diff_summary,
         "side_effect_summary": side_effect_summary,
         "challenge_sha256": _sha256_bytes(challenge.encode("ascii")),
         "status": "pending-user-confirmation",
     }
     path = _write_receipt(state, f"preview-{receipt_id}.json", body, key)
+    auto_grantable = action_class in AUTO_GRANT_CLASSES
+    instruction = f"Reply exactly: CONFIRM EXTERNAL MUTATION {challenge}"
+    if auto_grantable:
+        instruction = (
+            f"A live intent grant covering {action_class} authorizes this via authorize-intent; "
+            f"otherwise reply exactly: CONFIRM EXTERNAL MUTATION {challenge}"
+        )
     return {
         "contract_id": CONTRACT_ID,
         "status": "preview-created",
@@ -280,10 +358,12 @@ def preview(args: argparse.Namespace) -> dict[str, Any]:
         "receipt_sha256": _sha256_file(path),
         "target_scope": target_scope,
         "command_argv": argv,
+        "action_class": action_class,
+        "auto_grantable": auto_grantable,
         "diff_summary": diff_summary,
         "side_effect_summary": side_effect_summary,
         "challenge": challenge,
-        "user_instruction": f"Reply exactly: CONFIRM EXTERNAL MUTATION {challenge}",
+        "user_instruction": instruction,
     }
 
 
@@ -304,13 +384,40 @@ def hook_confirm() -> dict[str, Any] | None:
     session_id = payload.get("session_id")
     if not isinstance(prompt, str) or not isinstance(cwd, str) or not isinstance(session_id, str):
         return None
-    matched = CONFIRM_RE.fullmatch(prompt.strip())
-    if matched is None:
-        return None
+    stripped = prompt.strip()
     root = _project_root(cwd)
-    state = _state_dir(root, create=False)
-    key = _key(state, create=False)
-    challenge_hash = _sha256_bytes(matched.group(1).encode("ascii"))
+    matched = CONFIRM_RE.fullmatch(stripped)
+    if matched is not None:
+        return _confirm_challenge(root, stripped, session_id, matched.group(1))
+    granted = _intent_classes(stripped)
+    if not granted:
+        return None
+    return _grant_intent(root, stripped, session_id, granted)
+
+
+def _user_event_id(session_id: str, prompt: str) -> str:
+    return _sha256_bytes(f"{session_id}\0{prompt}".encode("utf-8"))
+
+
+def _confirm_challenge(
+    root: Path, prompt: str, session_id: str, challenge: str
+) -> dict[str, Any]:
+    """Bind a typed challenge to its single live preview.
+
+    A challenge that matches no live preview creates no receipt and does not block the
+    prompt: refusing the user's message buys no safety and strands the session.
+    """
+    unmatched = {
+        "contract_id": CONTRACT_ID,
+        "status": "confirmation-unmatched",
+        "detail": "no live preview matches this challenge; it may have expired or been consumed",
+    }
+    try:
+        state = _state_dir(root, create=False)
+        key = _key(state, create=False)
+    except GuardError:
+        return unmatched
+    challenge_hash = _sha256_bytes(challenge.encode("ascii"))
     candidates: list[tuple[Path, dict[str, Any]]] = []
     for path in sorted(state.glob("preview-*.json")):
         try:
@@ -320,7 +427,7 @@ def hook_confirm() -> dict[str, Any] | None:
         if receipt.get("challenge_sha256") == challenge_hash:
             candidates.append((loaded_path, receipt))
     if len(candidates) != 1:
-        raise GuardError("confirmation challenge does not identify exactly one live preview")
+        return unmatched
     preview_path, preview_receipt = candidates[0]
     now = int(time.time())
     receipt_id = uuid.uuid4().hex
@@ -329,7 +436,7 @@ def hook_confirm() -> dict[str, Any] | None:
         "preview_receipt_id": preview_receipt["receipt_id"],
         "preview_receipt_sha256": _sha256_file(preview_path),
         "producer": "claude-code-user-prompt-submit",
-        "user_event_id": _sha256_bytes(f"{session_id}\0{prompt.strip()}".encode("utf-8")),
+        "user_event_id": _user_event_id(session_id, prompt),
         "decision": "confirm",
     }
     path = _write_receipt(state, f"confirmation-{receipt_id}.json", body, key)
@@ -338,6 +445,32 @@ def hook_confirm() -> dict[str, Any] | None:
         "status": "confirmation-created",
         "receipt_path": str(path),
         "receipt_sha256": _sha256_file(path),
+    }
+
+
+def _grant_intent(
+    root: Path, prompt: str, session_id: str, granted: frozenset[str]
+) -> dict[str, Any]:
+    """Seal a single-use grant proving a human asked for this class of mutation."""
+    state = _state_dir(root, create=True)
+    key = _key(state, create=True)
+    now = int(time.time())
+    receipt_id = uuid.uuid4().hex
+    body = {
+        **_base(INTENT_KIND, receipt_id, now=now),
+        "granted_classes": sorted(granted),
+        "producer": "claude-code-user-prompt-submit",
+        "user_event_id": _user_event_id(session_id, prompt),
+        "prompt_excerpt": " ".join(prompt.split())[:200],
+        "decision": "confirm-by-intent",
+    }
+    path = _write_receipt(state, f"{INTENT_KIND}-{receipt_id}.json", body, key)
+    return {
+        "contract_id": CONTRACT_ID,
+        "status": "intent-granted",
+        "receipt_path": str(path),
+        "receipt_sha256": _sha256_file(path),
+        "granted_classes": sorted(granted),
     }
 
 
@@ -354,6 +487,69 @@ def authorize(args: argparse.Namespace) -> dict[str, Any]:
         or confirmation_receipt.get("preview_receipt_sha256") != _sha256_file(preview_path)
     ):
         raise GuardError("confirmation receipt is not bound to the supplied preview receipt")
+    return _seal_authorization(
+        state,
+        key,
+        preview_path,
+        preview_receipt,
+        confirmation_path,
+        confirmation_receipt,
+        confirmation_kind="confirmation",
+    )
+
+
+def authorize_intent(args: argparse.Namespace) -> dict[str, Any]:
+    """Authorize an auto-grantable preview against a live human intent grant."""
+    root = _project_root(args.project_root)
+    state = _state_dir(root, create=False)
+    key = _key(state, create=False)
+    preview_path, preview_receipt = _receipt(state, args.preview_receipt, "preview", key)
+    intent_path, intent_receipt = _receipt(state, args.intent_receipt, INTENT_KIND, key)
+    action_class = preview_receipt.get("action_class")
+    if action_class not in AUTO_GRANT_CLASSES:
+        raise GuardError(
+            "preview action class is not auto-grantable; use the typed confirmation flow"
+        )
+    granted = intent_receipt.get("granted_classes")
+    if not isinstance(granted, list) or action_class not in granted:
+        raise GuardError("intent grant does not cover the preview action class")
+    if _issued_ns(intent_receipt) > _issued_ns(preview_receipt):
+        raise GuardError("preview predates the intent grant; the user request must come first")
+    _write_once(
+        state,
+        f"intent-claim-{intent_receipt['receipt_id']}.json",
+        {
+            "contract_id": CONTRACT_ID,
+            "schema_version": SCHEMA_VERSION,
+            "kind": "intent-claim",
+            "intent_receipt_id": intent_receipt["receipt_id"],
+            "intent_receipt_sha256": _sha256_file(intent_path),
+            "preview_receipt_id": preview_receipt["receipt_id"],
+            "claimed_at": int(time.time()),
+        },
+        key,
+    )
+    return _seal_authorization(
+        state,
+        key,
+        preview_path,
+        preview_receipt,
+        intent_path,
+        intent_receipt,
+        confirmation_kind=INTENT_KIND,
+    )
+
+
+def _seal_authorization(
+    state: Path,
+    key: bytes,
+    preview_path: Path,
+    preview_receipt: dict[str, Any],
+    confirmation_path: Path,
+    confirmation_receipt: dict[str, Any],
+    *,
+    confirmation_kind: str,
+) -> dict[str, Any]:
     now = int(time.time())
     preview_sha256 = _sha256_file(preview_path)
     confirmation_sha256 = _sha256_file(confirmation_path)
@@ -379,6 +575,7 @@ def authorize(args: argparse.Namespace) -> dict[str, Any]:
         "preview_receipt_sha256": preview_sha256,
         "confirmation_receipt_id": confirmation_receipt["receipt_id"],
         "confirmation_receipt_sha256": confirmation_sha256,
+        "confirmation_receipt_kind": confirmation_kind,
         "entrypoint_ref": preview_receipt["entrypoint_ref"],
         "target_scope": preview_receipt["target_scope"],
         "command_sha256": preview_receipt["command_sha256"],
@@ -388,6 +585,34 @@ def authorize(args: argparse.Namespace) -> dict[str, Any]:
     return {
         "contract_id": CONTRACT_ID,
         "status": "authorized",
+        "receipt_path": str(path),
+        "receipt_sha256": _sha256_file(path),
+        "confirmation_receipt_kind": confirmation_kind,
+    }
+
+
+def cancel(args: argparse.Namespace) -> dict[str, Any]:
+    """Resolve a preview without executing it so pending guard context stops blocking Bash."""
+    root = _project_root(args.project_root)
+    state = _state_dir(root, create=False)
+    key = _key(state, create=False)
+    preview_path, preview_receipt = _receipt(state, args.preview_receipt, "preview", key)
+    now = int(time.time())
+    receipt_id = uuid.uuid4().hex
+    path = _write_receipt(
+        state,
+        f"cancellation-preview-{preview_receipt['receipt_id']}.json",
+        {
+            **_base("cancellation", receipt_id, now=now),
+            "preview_receipt_id": preview_receipt["receipt_id"],
+            "preview_receipt_sha256": _sha256_file(preview_path),
+            "status": "cancelled",
+        },
+        key,
+    )
+    return {
+        "contract_id": CONTRACT_ID,
+        "status": "cancelled",
         "receipt_path": str(path),
         "receipt_sha256": _sha256_file(path),
     }
@@ -404,7 +629,12 @@ def execute(args: argparse.Namespace) -> int:
     if authorization.get("command_sha256") != _command_sha256(argv):
         raise GuardError("execute command digest differs from authorized preview")
     preview_path = state / f"preview-{authorization['preview_receipt_id']}.json"
-    confirmation_path = state / f"confirmation-{authorization['confirmation_receipt_id']}.json"
+    confirmation_kind = authorization.get("confirmation_receipt_kind", "confirmation")
+    if confirmation_kind not in {"confirmation", INTENT_KIND}:
+        raise GuardError("authorization names an unknown confirmation receipt kind")
+    confirmation_path = (
+        state / f"{confirmation_kind}-{authorization['confirmation_receipt_id']}.json"
+    )
     if _sha256_file(preview_path) != authorization.get("preview_receipt_sha256"):
         raise GuardError("preview receipt changed after authorization")
     if _sha256_file(confirmation_path) != authorization.get("confirmation_receipt_sha256"):
@@ -498,16 +728,25 @@ def _has_pending_guard_context(payload: dict[str, Any]) -> bool:
                 continue
             # A malformed receipt inside canonical state cannot safely prove no pending mutation.
             return True
-        completion_path = state / f"completion-preview-{preview_receipt['receipt_id']}.json"
-        if not completion_path.is_file():
+        resolution: tuple[str, Path, str] | None = None
+        for kind, terminal_status in (
+            ("completion", "executed-successfully"),
+            ("cancellation", "cancelled"),
+        ):
+            candidate = state / f"{kind}-preview-{preview_receipt['receipt_id']}.json"
+            if candidate.is_file():
+                resolution = (kind, candidate, terminal_status)
+                break
+        if resolution is None:
             return True
+        kind, resolution_path, terminal_status = resolution
         try:
-            _, completion = _receipt(state, str(completion_path), "completion", key)
+            _, resolved = _receipt(state, str(resolution_path), kind, key)
         except GuardError:
             return True
         if (
-            completion.get("preview_receipt_id") != preview_receipt["receipt_id"]
-            or completion.get("status") != "executed-successfully"
+            resolved.get("preview_receipt_id") != preview_receipt["receipt_id"]
+            or resolved.get("status") != terminal_status
         ):
             return True
     return False
@@ -568,6 +807,13 @@ def _parser() -> argparse.ArgumentParser:
     authorize_parser.add_argument("--project-root", required=True)
     authorize_parser.add_argument("--preview-receipt", required=True)
     authorize_parser.add_argument("--confirmation-receipt", required=True)
+    authorize_intent_parser = commands.add_parser("authorize-intent")
+    authorize_intent_parser.add_argument("--project-root", required=True)
+    authorize_intent_parser.add_argument("--preview-receipt", required=True)
+    authorize_intent_parser.add_argument("--intent-receipt", required=True)
+    cancel_parser = commands.add_parser("cancel")
+    cancel_parser.add_argument("--project-root", required=True)
+    cancel_parser.add_argument("--preview-receipt", required=True)
     execute_parser = commands.add_parser("execute")
     execute_parser.add_argument("--project-root", required=True)
     execute_parser.add_argument("--authorization-receipt", required=True)
@@ -601,6 +847,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.action == "authorize":
             print(_compact(authorize(args)))
+            return 0
+        if args.action == "authorize-intent":
+            print(_compact(authorize_intent(args)))
+            return 0
+        if args.action == "cancel":
+            print(_compact(cancel(args)))
             return 0
         if args.action == "execute":
             return execute(args)

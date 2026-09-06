@@ -37,11 +37,11 @@ tags:
 - 残り：0日（期間終了）
 - 目標：1年目標の本文。
 
-### 3ヶ月目標
+### 2ヶ月目標
 
 - 期間：2026-06-29〜2026-08-30
 - 残り：12日
-- 目標：3ヶ月目標の本文。
+- 目標：2ヶ月目標の本文。
 
 ### 1ヶ月目標
 
@@ -759,13 +759,49 @@ def test_canonical_habit_goal_heading_is_not_a_partial_match(vault: Path):
 
 
 def test_alternate_goal_spelling_does_not_warn(vault: Path):
-    """正本は `### 2ヶ月目標`。fixture の `### 3ヶ月目標` は旧表記で、読み取りだけ通る。
+    """正本は `### 3ヶ月目標`。fixture の `### 2ヶ月目標` は旧表記で、読み取りだけ通る。
 
     片方だけ在るのが正常なので、解決できた側について warning を立ててはいけない。
     """
     ctx = run(vault, "2026-08-18")
     assert ctx["goals"]["quarterly"]["goal"], ctx["goals"]["quarterly"]
-    assert not [w for w in ctx["warnings"] if "2ヶ月目標" in w], ctx["warnings"]
+    assert not [w for w in ctx["warnings"] if "3ヶ月目標" in w], ctx["warnings"]
+
+
+@pytest.mark.parametrize(
+    "name, label",
+    [
+        # 新名・新ラベル
+        ("UBM - 3-月報（３ヶ月） - 2026-06-29〜2026-09-27.md", "3ヶ月の目標"),
+        # 旧名・旧ラベル。期報が 2ヶ月だった頃に保存されたファイルで、改名後も
+        # 拾えないと「過去の期報が消える」ため受理し続ける。
+        ("UBM - 3-月報（２ヶ月） - 2026-06-29〜2026-09-27.md", "2ヶ月の目標"),
+        ("UBM - 3-期報 - 2026-06-29〜2026-09-27.md", "2ヶ月の目標"),
+        # 名前は旧・ラベルは新、という移行途中の組み合わせも拾える
+        ("UBM - 3-期報 - 2026-06-29〜2026-09-27.md", "3ヶ月の目標"),
+    ],
+)
+def test_legacy_quarterly_report_filenames_are_still_picked_up(
+    vault: Path, name: str, label: str
+):
+    """期報の判別はファイル名でなく先頭の `## 【…の目標】` 見出しで行う。
+
+    scan_reports は `goals_dir.glob("*.md")` で全 .md を走査し、REPORT_LABELS の
+    ラベルで種別を決める。よって旧名 (`3-期報` / `（２ヶ月）`) のファイルも
+    quarterly として拾える。この不変条件を名前側から固定する。
+    """
+    goals = vault / "05_Project" / "UBM" / "目標設定"
+    (goals / name).write_text(
+        f"## 【{label}】2026-06-29〜2026-09-27\n期報の本文。\n", encoding="utf-8"
+    )
+    ctx = run(vault, "2026-08-18")
+    src = ctx["report_sources"].get("quarterly")
+    assert src is not None, ctx["report_sources"]
+    assert src["path"].endswith(name)
+    assert src["period"] == "2026-06-29〜2026-09-27"
+    assert src["covers_target"] is True
+    # 期間はレポート側が正。前回ジャーナル (旧表記・2026-08-30 終了) を上書きする。
+    assert ctx["goals"]["quarterly"]["period_end"] == "2026-09-27"
 
 
 def test_unresolved_goal_layer_still_warns():

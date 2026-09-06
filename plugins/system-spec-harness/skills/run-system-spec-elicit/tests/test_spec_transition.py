@@ -170,7 +170,8 @@ def test_reopen_only_from_confirmed():
     state = mod.init_state(_taxonomy())  # 未収集
     with pytest.raises(mod.TransitionError):
         mod.apply_cell_op(
-            state, {"action": "reopen", "category": "database", "platform": "web", "reason": "x"}
+            state, {"action": "reopen", "category": "database", "platform": "web", "reason": "x",
+                    "reopened_at": "2020-01-01T00:00:00Z"}
         )
 
 
@@ -178,14 +179,16 @@ def test_reopen_requires_reason():
     state = _confirmed_state()
     with pytest.raises(mod.TransitionError):
         mod.apply_cell_op(
-            state, {"action": "reopen", "category": "database", "platform": "web"}
+            state, {"action": "reopen", "category": "database", "platform": "web",
+             "reopened_at": "2020-01-01T00:00:00Z"}
         )
 
 
 def test_reopen_then_reconfirm_allowed():
     state = _confirmed_state()
     mod.apply_cell_op(
-        state, {"action": "reopen", "category": "database", "platform": "web", "reason": "追加要件が判明"}
+        state, {"action": "reopen", "category": "database", "platform": "web", "reason": "追加要件が判明",
+         "reopened_at": "2020-01-01T00:00:00Z"}
     )
     assert state["matrix"]["database"]["web"]["state"] == "未収集"
     assert state["reopen_log"][-1]["reason"] == "追加要件が判明"
@@ -321,7 +324,8 @@ def test_cli_init_chunk_apply_aggregate(tmp_path):
     st = json.loads(state_path.read_text(encoding="utf-8"))
     assert st["hearing_progress"]["complete"] is False
     # apply 単一 op: reopen 確定セル → 未収集
-    reopen = json.dumps({"action": "reopen", "category": "database", "platform": "web", "reason": "再確認"})
+    reopen = json.dumps({"action": "reopen", "category": "database", "platform": "web", "reason": "再確認",
+                        "reopened_at": "2020-01-01T00:00:00Z"})
     assert mod.main(["apply", "--state", str(state_path), "--op", reopen]) == 0
     # aggregate 再計算
     assert mod.main(["aggregate", "--state", str(state_path)]) == 0
