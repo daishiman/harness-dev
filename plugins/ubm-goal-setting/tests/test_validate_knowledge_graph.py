@@ -473,4 +473,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 450 -> 477: UBM大阪合宿 (2026-08-22) + 兵庫支部会 (2026-08-23) のメモから 27 件を追加、削除 0 件。
     # 477 -> 599: 北原孝彦アカデミー3文書 (挨拶/コラム/心構え) から 122 件を追加、削除 0 件。
     # 599 -> 629: YouTube「待てない経営者が、先に整えるもの」(cMpb84eVKbg) から 30 件を追加、削除 0 件。
-    assert graph["node_count"] == 629
+    # 629 -> 688: 全国支部会 (2026-09-06) から 59 件を追加、削除 0 件。
+    assert graph["node_count"] == 688
