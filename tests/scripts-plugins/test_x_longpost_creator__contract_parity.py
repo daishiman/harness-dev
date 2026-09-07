@@ -305,8 +305,29 @@ def test_text_validator_contract_is_declared_at_each_runtime_surface():
     resource_map = _text("skills/run-x-longpost-create/references/resource-map.md")
 
     for text in (skill, composition, resource_map):
-        assert "F4" in text and "F5" in text
-    assert "A/B" in skill and "1文=1行" in skill
+        assert "F4" in text and "F5" in text and "F6" in text
+    assert "A/B" in skill
+    # F5 は「1行へ2文を詰めない」であって「1文=1行」ではない。B は文脈 (文節・句読点)
+    # で改行するため 1 文が複数行にまたがるのが正しく、旧文言のままだと正しい出力を
+    # 違反として教えてしまう。
+    assert "1行へ2文を詰めない" in skill
+    assert "【見出し文言】" in skill
+
+    # fail-closed ループで AI が実際に読むのは validator の可視文字列 (check の name /
+    # detail / nextAction) なので、宣言層だけ新契約へ揃えても script が旧規範を指示し
+    # 続けると是正方向が 1.3.0 の捨てた「1文1行」へ巻き戻る。可視文字列も回帰対象にする。
+    # 索引層 (resource-map.yaml) と既知制約 (EVALS.json の known_limitations) も AI が
+    # 規範を引く生きた宣言面なので、宣言・enforcement・索引の3面を同じ回帰で縛る。
+    surfaces = {
+        "scripts/validate-headings.js": _text("scripts/validate-headings.js"),
+        "resource-map.yaml": _text("skills/run-x-longpost-create/references/resource-map.yaml"),
+        "resource-map.md": resource_map,
+        "EVALS.json known_limitations": "\n".join(_json("EVALS.json")["known_limitations"]),
+    }
+    for name, text in surfaces.items():
+        assert "1文1行" not in text, f"{name} に旧 F5 規範 (1文1行) が残っている"
+        assert "F1-F5" not in text and "F1〜F5" not in text, f"{name} が F6 を欠いた check ID 範囲を述べている"
+    assert "1行に2文以上を詰めた本文行" in surfaces["scripts/validate-headings.js"]
 
 
 def test_evals_follow_current_release_without_erasing_baselines():

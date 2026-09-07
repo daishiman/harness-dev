@@ -44,10 +44,18 @@ def _short_bodies(*, drift=False, packed=False):
     if drift:
         b_sentences[-1] = "三つ目の内容を勝手に変えました。"
     if packed:
-        b = f"{b_sentences[0]}{b_sentences[1]}\n\n{b_sentences[2]}"
+        # 1行へ2文を詰めた B (F5 の負例)。見出しは正しく保ち F5 だけを破る。
+        blocks = [
+            f"【{H2S[0]}】\n\n{b_sentences[0]}{b_sentences[1]}",
+            f"【{H2S[1]}】",
+            f"【{H2S[2]}】\n\n{b_sentences[2]}",
+        ]
     else:
-        b = "\n\n".join(b_sentences)
-    return a, b
+        blocks = [
+            f"【{heading}】\n\n{sentence}"
+            for heading, sentence in zip(H2S, b_sentences)
+        ]
+    return a, "\n\n".join(blocks)
 
 
 def _vars(a_body: str, b_body: str):
@@ -124,16 +132,45 @@ def test_two_sentences_on_one_b_line_are_rejected(tmp_path):
     assert any(item.startswith("F5 ") for item in failed)
 
 
-def test_b_body_line_without_sentence_terminator_is_rejected(tmp_path):
+def test_b_line_without_sentence_terminator_is_accepted(tmp_path):
+    # B は文脈 (文節・句読点) で改行するため 1 文が複数行にまたがるのが正しい。
+    # 文末記号を持たない行を F5 が弾くと、その文脈改行そのものが違反になってしまう。
+    # F5 が禁じるのは「1行へ2文以上を詰める」ことだけである。
     a_body, b_body = _short_bodies()
+    a_body = a_body.replace("二つ目の主張です。", "二つ目の主張です")
     b_body = b_body.replace("二つ目の主張です。", "二つ目の主張です")
+    output = _expanded_file(tmp_path, a_body, b_body)
+
+    proc = _check(output)
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    checks = {item["id"]: item for item in json.loads(proc.stdout)["checks"]}
+    assert checks["F5"]["ok"] is True
+
+
+def test_b_heading_without_brackets_is_rejected(tmp_path):
+    # `【】` を外すと A の見出し2 との対応が機械的に取れなくなる (F6 の負例)。
+    a_body, b_body = _short_bodies()
+    b_body = b_body.replace(f"【{H2S[1]}】", H2S[1])
     output = _expanded_file(tmp_path, a_body, b_body)
 
     proc = _check(output)
 
     assert proc.returncode == 1
     failed = json.loads(proc.stdout)["failed"]
-    assert any(item.startswith("F5 ") for item in failed)
+    assert any(item.startswith("F6 ") for item in failed)
+
+
+def test_b_heading_order_mismatch_is_rejected(tmp_path):
+    a_body, b_body = _short_bodies()
+    b_body = b_body.replace(f"【{H2S[0]}】", "【順序を入れ替えた見出し】")
+    output = _expanded_file(tmp_path, a_body, b_body)
+
+    proc = _check(output)
+
+    assert proc.returncode == 1
+    failed = json.loads(proc.stdout)["failed"]
+    assert any(item.startswith("F6 ") for item in failed)
 
 
 def test_decimal_point_inside_single_b_sentence_is_not_a_boundary(tmp_path):
@@ -141,7 +178,9 @@ def test_decimal_point_inside_single_b_sentence_is_not_a_boundary(tmp_path):
     a_body = "\n\n".join(
         f"## {heading}\n\n{sentence}" for heading, sentence in zip(H2S, sentences)
     )
-    b_body = "\n\n".join(sentences)
+    b_body = "\n\n".join(
+        f"【{heading}】\n\n{sentence}" for heading, sentence in zip(H2S, sentences)
+    )
     output = _expanded_file(tmp_path, a_body, b_body)
 
     proc = _check(output)

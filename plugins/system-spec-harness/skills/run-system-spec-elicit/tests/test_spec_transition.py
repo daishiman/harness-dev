@@ -29,6 +29,7 @@ import pytest
 SKILL_DIR = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = SKILL_DIR.parents[1]
 VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-coverage-matrix.py"
+KNOWLEDGE_VALIDATOR = PLUGIN_ROOT / "scripts" / "validate-knowledge-graph.py"
 TAXONOMY = (
     PLUGIN_ROOT
     / "skills"
@@ -62,12 +63,19 @@ def _turns() -> list:
     return json.loads(TURNS.read_text(encoding="utf-8"))
 
 
-def _run_validator(matrix: Path, require_complete: bool = False, require_foundation: bool = False) -> int:
+def _run_validator(
+    matrix: Path,
+    require_complete: bool = False,
+    require_foundation: bool = False,
+    require_basis: bool = False,
+) -> int:
     argv = [sys.executable, str(VALIDATOR), "--matrix", str(matrix)]
     if require_complete:
         argv.append("--require-complete")
     if require_foundation:
         argv.append("--require-foundation")
+    if require_basis:
+        argv.append("--require-basis")
     return subprocess.run(argv, capture_output=True, text=True).returncode
 
 
@@ -88,6 +96,44 @@ def test_IN1_validator_exit0_on_final_fixture_loop():
 # --------------------------------------------------------------------------- #
 def test_OUT1_final_require_complete_exit0():
     assert _run_validator(GOLDEN_FINAL, require_complete=True) == 0
+
+
+def test_OUT1_final_full_completion_condition_exit0():
+    # SKILL.md / feedback_contract OUT1 が宣言する最終条件そのものを施行する。
+    # 未収集0 (require-complete) だけでは「根拠の性質が不明な確定」と「どのゴールにも
+    # 資さない確定」を素通しできるため、宣言に合わせて basis と foundation も課す。
+    assert (
+        _run_validator(
+            GOLDEN_FINAL,
+            require_complete=True,
+            require_basis=True,
+            require_foundation=True,
+        )
+        == 0
+    )
+
+
+def test_OUT1_final_grounds_all_blocking_required_info():
+    # 収集ゲート (C16): block 指定の必須情報が決着済みセル -> qa_ref/qa_refs ->
+    # qa_log.required_info_items の鎖で実際に接地していることを最終状態で確認する。
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(KNOWLEDGE_VALIDATOR),
+            "--profile",
+            "required-info",
+            "--input",
+            str(SKILL_DIR / "references" / "required-info-catalog.json"),
+            "--state",
+            str(GOLDEN_FINAL),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    cert = json.loads(proc.stdout)["coverage_certificate"]
+    assert cert["ungrounded_blocking_items"] == []
+    assert set(cert["grounded_blocking_items"]) == set(cert["blocking_items"])
 
 
 def test_resume_require_complete_fails():

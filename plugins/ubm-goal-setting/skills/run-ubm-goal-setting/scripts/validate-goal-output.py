@@ -255,7 +255,7 @@ class Validator:
         else:
             self.fail(f"必須見出し「## 【{label}】」がありません（完全一致）")
 
-    # 旧 check_require_prefix / check_require_prefix_any は check_title_matches_type に統合した。
+    # 旧 check_require_prefix は check_title_matches_type に統合した。
     # prefix_any は「3ヶ月」「2ヶ月」の両方を無条件に受理するため、--type の取り違えを
     # 検出できなかった（同じ3ヶ月期報が quarterly でも bimonthly でも PASS していた）。
 

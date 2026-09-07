@@ -2,23 +2,26 @@
 
 ## 0.3.32 - 2026-09-03
 
-`validate-goal-output.py` に **`--type` と本文タイトル見出しの不一致検出** を追加。種別の取り違えが素通りしていた穴を塞いだ。
+`validate-goal-output.py` に **`--type` と本文タイトル見出しの不一致検出**、**`--peer` 層間整合チェック**、**`--help` の rc 修正** を追加。種別の取り違えと層をまたいだ値ズレが素通りしていた穴を塞いだ。
 
 修正した問題:
 
-- 同一の3ヶ月期報が `--type quarterly` でも `--type bimonthly` でも rc=0 で PASS していた。`TYPE_MAP` が両者を分岐キー `period` へ潰しており、以降の判定が元の `--type` を参照できず、`check_require_prefix_any(["3ヶ月の目標", "2ヶ月の目標"])` が両ラベルを無条件に受理していたため。
+- 同一の3ヶ月期報が `--type quarterly` でも `--type bimonthly` でも rc=0 で PASS していた。`TYPE_MAP` が両者を分岐キー `period` へ潰しており、以降の判定が元の `--type` を参照できず、タイトル見出しの検査が「3ヶ月の目標」「2ヶ月の目標」の両ラベルを無条件に受理していたため。
+- `--help` が rc=2 を返していた。argparse が `--help` / `--version` で投げる `SystemExit(0)` を、例外ハンドラが一律 `return 2` に潰していたため。
 
 契約の変更:
 
 - **不一致は error（rc=1）**: `--type` に対応するタイトル見出しラベル（`weekly`=【1週間の目標】／`monthly`=【1ヶ月の目標】／`quarterly`=【3ヶ月の目標】／`bimonthly`=【2ヶ月の目標】）が本文と食い違う場合に FAIL する。エラー文は「引数側が旧種別」「ファイル側が旧種別」を書き分ける。
+- **`--peer PATH`（任意・複数可）を新設**: 指定したときだけ他層のファイルを開き、期アンカー（今期の売上目標／今期の累計売上実績など）の3値を層間で突き合わせて **WARN** で報告する。`--peer` 未指定時のコードパスは従来と完全に同一で、既存の rc も変わらない。週報に存在しない期アンカーは `WEEKLY_EXEMPT_ANCHORS` で免除する。
+- **`--help` は rc=0**: `SystemExit` ハンドラを `return 0 if e.code == 0 else 2` へ変更。不正な `--type` の rc=2 は不変。
 - **読みの後方互換は維持**: 旧2ヶ月期報を `--type bimonthly` で再検証する経路は rc=0 のまま。`TYPE_MAP` のキー集合（argparse の `choices` の生成元）は不変。
-- **内部整理**: `check_require_prefix` / `check_require_prefix_any` を `check_title_matches_type` へ統合。`Validator` は元の `--type` 値を `type_name` として保持する（第4引数・省略時は `kind` から逆引き）。script version 0.2.0 → 0.2.1。
-- **テスト**: `tests/test_validate_goal_output.py` に期報の4パターン（quarterly×3ヶ月=PASS／bimonthly×2ヶ月=PASS／quarterly×2ヶ月=FAIL／bimonthly×3ヶ月=FAIL）と週報のラベル不一致を追加。
+- **内部整理**: `check_require_prefix` を `check_title_matches_type` へ統合。`Validator` は元の `--type` 値を `type_name` として保持する（第4引数・省略時は `kind` から逆引き）。script version 0.1.0 → 0.2.3。
+- **テスト**: `tests/test_validate_goal_output.py` に期報の4パターン（quarterly×3ヶ月=PASS／bimonthly×2ヶ月=PASS／quarterly×2ヶ月=FAIL／bimonthly×3ヶ月=FAIL）、週報のラベル不一致、`--peer` の層間整合を追加。
 
 不変（この修正で変えていないもの）:
 
 - 種別別の必須見出し集合・NG表現・やらないこと3項目以上・プロジェクト別タスク方針。
-- `--help` の rc=0、不正な `--type` の rc=2。
+- 不正な `--type` の rc=2。`--peer` 未指定時の検査内容と rc。
 
 ## 0.3.31 - 2026-09-03
 
@@ -33,7 +36,7 @@
 
 - **期報の期間**: UBM の目標期間は月の最終月曜日起点。期報は対象3ヶ月分の月報期間の連結で、開始日=1ヶ月目の月報開始日／終了日=3ヶ月目の月報終了日（例: 7月・8月・9月分 → `2026-06-29〜2026-09-27`）。
 - **ロールアップ元**: 月報2件 → **月報3件**。`info-collector` の quarterly 取得スコープを「直近3ヶ月の全週報 + 全月報（3件）+ 前回期報」へ変更。
-- **validator**: 期報のサマリー見出しの必須判定を `## 【2ヶ月の目標】…` → `## 【3ヶ月の目標】…` へ変更。全角数字チェックの許容に `３ヶ月` を追加（`２ヶ月` は旧期報の後方互換で許容を継続）。script version 0.1.0 → 0.2.0。
+- **validator**: 期報のサマリー見出しの必須判定を `## 【2ヶ月の目標】…` → `## 【3ヶ月の目標】…` へ変更。全角数字チェックの許容に `３ヶ月` を追加（`２ヶ月` は旧期報の後方互換で許容を継続）。なお本 branch で `validate-goal-output.py` に入った変更は 0.3.31 と 0.3.32 を合わせて 1 回の commit で、script version は `0.1.0 → 0.2.3` へ直行している（0.2.0 / 0.2.1 という中間状態は tree のどの commit にも存在しない。版数は 0.3.32 側にまとめて記録する）。
 - **表示名**: 「期報（2ヶ月目標）」「2ヶ月目標」「２ヶ月」を3ヶ月へ統一。見出し名 `【今期の売上目標】` `【今期の累計売上実績】` 等は不変で、「今期」は3ヶ月を指す。
 
 不変（この改定で変えていないもの）:

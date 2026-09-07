@@ -68,7 +68,7 @@ feedback_contract:
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を検証し違反0件であることを確認する。
+      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、--type と本文タイトル見出しラベルの一致(不一致は rc=1 で FAIL となる停止条件)を検証し違反0件であることを確認する。
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -177,7 +177,7 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 Anchor Step の検証は `required_keys = {"iteration","original_goal","current_goal_snapshot","delta_from_original","merged_directive_for_next","drift_signal"}` を満たす全 JSONL 行を対象にする。初回に `hashlib.sha256(original_goal)` を `original_goal_hash` として progress へ固定し、以後の周回で `original_goal` が変化していないことを照合する。
 
-- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。
+- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、**`--type` と本文タイトル見出しラベルの一致**（不一致は rc=1 で FAIL。種別の取り違えを止める停止条件）を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を WARN で併せて報告する（任意・rc には影響しない）。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
 - **behavioral acceptance (OUT2)**: 静的 content-review とは分離し、`run-skill-live-trial` で AskUserQuestion gate → Phase3 対話 → Phase5 検証 → Phase6 Daily.md embed 更新と目標設定ファイル実生成までを実走証拠として確認する。
 

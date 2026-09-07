@@ -22,8 +22,9 @@
  *   F1  Bパターン先頭行が見出し1のタイトルと完全一致する
  *   F2  `# タイトル` セクションの値が見出し1のタイトルと完全一致する
  *   F3  ファイル名のタイトル部が見出し1のタイトル（サニタイズ後）と完全一致する
- *   F4  Markdown 見出しを除いた A 本文と、先頭タイトルを除いた B 本文が空白正規化後に同値
- *   F5  B の非空本文行が1行につきちょうど1文
+ *   F4  Markdown 見出しを除いた A 本文と、先頭タイトルと `【…】` 見出し行を除いた B 本文が空白正規化後に同値
+ *   F5  B の非空本文行に2文以上を詰めない（1文が複数行にまたがる文脈改行は正。`【…】` の見出し行は対象外）
+ *   F6  B の見出しが `【…】` で囲まれ、A の見出し2と順序込みで一致する
  *
  * 使用例:
  *   node scripts/validate-headings.js --file "/path/to/X長文投稿-prompt作成 - 2026-08-11_タイトル.md"
@@ -209,11 +210,24 @@ function extractBBodyLines(bBody) {
   return titleIndex === -1 ? [] : lines.slice(titleIndex + 1);
 }
 
+/** B の見出し行（`【…】` だけの行）かを判定する。 */
+const B_HEADING_RE = /^【[^【】]+】$/u;
+function isBHeadingLine(line) {
+  return B_HEADING_RE.test(String(line).normalize("NFC").trim());
+}
+
+/** B の見出し行から `【】` を外した中身を返す。 */
+function stripBHeadingMarkers(line) {
+  return String(line).normalize("NFC").trim().slice(1, -1);
+}
+
 /**
- * B の1行が「ちょうど1文」かを判定する。
- * `!?` のような連続終端記号は1組として扱い、閉じ括弧・閉じ引用符は文末に許可する。
+ * B の1行に文末（句点相当）が2つ以上詰まっていないかを判定する。
+ * B は文字数でなく文脈（文節・句読点の切れ目）で改行するため、1文が複数行にまたがるのは正しい。
+ * 禁じるのは「1行へ2文以上を詰める」ことだけなので、終端記号の個数が0または1なら PASS とする。
+ * `!?` のような連続終端記号は1組として扱う。
  */
-function isSingleSentenceLine(line) {
+function hasAtMostOneSentence(line) {
   const text = String(line).normalize("NFC").trim();
   if (text === "") return true;
   let terminatorGroups = 0;
@@ -231,8 +245,10 @@ function isSingleSentenceLine(line) {
     if (isTerminator && !previousWasTerminator) terminatorGroups++;
     previousWasTerminator = isTerminator;
   }
-  return terminatorGroups === 1
-    && /[。！？!?．.]+[」』）】〕〉》”’"')\]]*$/u.test(text);
+  if (terminatorGroups >= 2) return false;
+  // 終端記号を含む行は、その記号が行末（閉じ括弧・閉じ引用符は許可）に来ていること
+  if (terminatorGroups === 1) return /[。！？!?．.]+[」』）】〕〉》”’"')\]]*$/u.test(text);
+  return true;
 }
 
 function analyzeBody(body, opts) {
@@ -510,8 +526,10 @@ function main() {
     });
 
     const bBodyLines = bBody === null ? [] : extractBBodyLines(bBody);
+    // A は Markdown 見出しを除いて比較するため、B も `【…】` の見出し行を除いて比較する
+    const bProseLines = bBodyLines.filter(line => !isBHeadingLine(line));
     const normalizedA = extractComparableABody(body);
-    const normalizedB = normalizeComparableBody(bBodyLines.join("\n"));
+    const normalizedB = normalizeComparableBody(bProseLines.join("\n"));
     extraChecks.push({
       id: "F4",
       name: "A/B本文が空白・改行正規化後に同値",
@@ -525,18 +543,44 @@ function main() {
 
     const invalidBLines = bBodyLines
       .map((line, index) => ({ line, lineNumber: index + 2 }))
-      .filter(item => item.line.trim() !== "" && !isSingleSentenceLine(item.line));
+      .filter(item => item.line.trim() !== "" && !isBHeadingLine(item.line) && !hasAtMostOneSentence(item.line));
     extraChecks.push({
       id: "F5",
-      name: "B本文が1文1行",
-      ok: bBody !== null && invalidBLines.length === 0 && bBodyLines.some(line => line.trim() !== ""),
+      name: "B本文に1行2文が無い",
+      ok: bBody !== null && invalidBLines.length === 0 && bProseLines.some(line => line.trim() !== ""),
       detail: bBody === null
         ? "Bパターンのコードブロックを抽出できない"
         : invalidBLines.length > 0
-          ? `1文1行でない本文行: ${invalidBLines.map(item => `B内L${item.lineNumber}: ${item.line.trim()}`).join(" / ")}`
-          : bBodyLines.some(line => line.trim() !== "")
-            ? "すべての非空本文行が1文"
+          ? `1行に2文以上を詰めた本文行: ${invalidBLines.map(item => `B内L${item.lineNumber}: ${item.line.trim()}`).join(" / ")}`
+          : bProseLines.some(line => line.trim() !== "")
+            ? "2文以上を詰めた非空本文行なし（1文が複数行にまたがる文脈改行は正。`【…】` の見出し行は対象外）"
             : "Bパターンの本文が空",
+    });
+
+    // F6: B の見出しが `【…】` で囲まれ、A の見出し2と順序込みで一致する
+    const aH2Texts = analysis.headings
+      .filter(h => h.level === 2)
+      .map(h => h.text.normalize("NFC").trim());
+    const bHeadingTexts = bBodyLines
+      .filter(line => isBHeadingLine(line))
+      .map(line => stripBHeadingMarkers(line).trim());
+    // `【】` が付いていない見出し行の取りこぼしを拾う（A の見出し2と同一文言の素の行）
+    const unbracketed = bBodyLines
+      .map((line, index) => ({ text: line.normalize("NFC").trim(), lineNumber: index + 2 }))
+      .filter(item => item.text !== "" && !isBHeadingLine(item.text) && aH2Texts.includes(item.text));
+    const headingsMatch = aH2Texts.length === bHeadingTexts.length
+      && aH2Texts.every((text, index) => text === bHeadingTexts[index]);
+    extraChecks.push({
+      id: "F6",
+      name: "Bの見出しが `【】` で囲まれ、Aの見出し2と一致",
+      ok: bBody !== null && unbracketed.length === 0 && headingsMatch,
+      detail: bBody === null
+        ? "Bパターンのコードブロックを抽出できない"
+        : unbracketed.length > 0
+          ? `【】で囲まれていない見出し行: ${unbracketed.map(item => `B内L${item.lineNumber}: ${item.text}`).join(" / ")}`
+          : headingsMatch
+            ? `見出し ${bHeadingTexts.length}件がAの見出し2と一致`
+            : `不一致（A ${aH2Texts.length}件 / B ${bHeadingTexts.length}件）: A[${aH2Texts.join(" | ")}] / B[${bHeadingTexts.join(" | ")}]`,
     });
   }
 
@@ -555,7 +599,7 @@ function main() {
     warnings: warnings.map(c => `${c.id} ${c.name}: ${c.detail}`),
     nextAction: failed.length === 0
       ? null
-      : "FAIL項目を修正してから再実行する。H3はタイトルを50文字以内へリライト、H4は見出し1の後に見出し2を必ず置く、H10は役割名の見出しを内容の核心を表す具体的な見出しへ書き換える。F4はA/Bの本文内容を一致させ、F5はB本文を1文1行へ直す。PASSするまで出力を確定しない。",
+      : "FAIL項目を修正してから再実行する。H3はタイトルを50文字以内へリライト、H4は見出し1の後に見出し2を必ず置く、H10は役割名の見出しを内容の核心を表す具体的な見出しへ書き換える。F4はA/Bの本文内容を一致させ、F5は該当行を分割して1行に2文以上を詰めた行を無くし（1文を文脈で複数行に割るのは正）、F6はBの見出し行を `【】` で囲んでAの見出し2と同一文言・同一順序へ揃える。PASSするまで出力を確定しない。",
   };
 
   console.log(JSON.stringify(result, null, 2));
