@@ -283,6 +283,24 @@
       "default": true,
       "description": "メモ機構と localStorage 永続化の出力可否。normalize が既定 true を充填する。"
     },
+    "hero_hidden_fields": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "goal_chips",
+          "focus_theme",
+          "target_tasks",
+          "attainment_level",
+          "prerequisite_connectors",
+          "must_remember",
+          "no_need_to_remember"
+        ]
+      },
+      "description": "冒頭 (hero) に描かない一覧ブロックの追加宣言。値そのものは構成データに残り、整合検査 (E-SECTION-UNTIED-TASK / E-ATTAINMENT-UNREACHED 等) はそのまま効く。冒頭は読み手が『自分に関係があるか』を決める場所で、一覧が積み上がるほどその判断が遅れる。ここに挙げた欄は紙面から外れるだけで、構成データからは消えない。冒頭カード (goal / purpose / background) と lead は対象外。既定の非表示は config/handout-visual-policy.json#opening.hero_list_fields.hidden_by_default が持ち、実際に隠れるのは『既定 ∪ この配列』である (この配列を空にしても既定は解除されない)。",
+      "x_roundtrip": "隠した欄は可視要素が無くなるが、値は失われない。C11 が root へ実効の非表示名簿 (data-hb-hero-hidden) とその値 (data-hb-hero-hidden-data) を刻み、C20 は名簿にある欄を欠落として数えず値を属性から戻す (日付を data-hb-date で運ぶのと同じ扱い)。round-trip 比較から外れるのはこの宣言キー 1 個だけ。裁定は ROUNDTRIP-CONTRACT.md の /hero_hidden_fields。"
+    },
     "provenance": {
       "$ref": "#/$defs/provenance",
       "description": "normalize が充填する来歴ブロック。C20 の round-trip 比較ではこのブロック全体を比較対象から外す。"

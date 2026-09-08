@@ -742,10 +742,19 @@ class Checker(object):
         数える対象は正本 (opening.hero_total.counted_fields) が持つ。値の形は
         文字列・文字列配列・{label} を持つオブジェクト配列の 3 通りで、いずれも
         C11 build_hero が 1 行として描画する単位で数える。
+
+        紙面に描かない欄 (opening.hero_list_fields.hidden_by_default ∪ 構成
+        データの hero_hidden_fields) は数えない。数えると、読み手が見ない行で
+        冒頭が重いと判定され、著者は見えている文を削ることになる。
         """
         total = 0
         lines = 0
+        declared = cfg.get("hero_hidden_fields") or []
+        hidden = set(self.ctx.hero_hidden_default) | {
+            name for name in declared if isinstance(name, str) and name}
         for name in self.ctx.hero_total_fields:
+            if name in hidden:
+                continue
             value = cfg.get(name)
             if isinstance(value, str):
                 text = value.strip()
@@ -1826,6 +1835,15 @@ class Context(object):
         self.hero_total_fields = (
             tuple(n for n in names if isinstance(n, str))
             if isinstance(names, list) and names else tuple(FALLBACK_HERO_TOTAL_FIELDS))
+
+        # 既定で紙面に描かない箇条リスト。counted_fields は「冒頭に描画される文」
+        # を数える集合なので、描かない欄を数えたままだと読み手が見ない行で
+        # W-HERO-HEAVY が出る。名簿の正本は C11 と同じ 1 箇所だけを見る。
+        hidden = opening.get("hero_list_fields")
+        hidden = hidden.get("hidden_by_default") if isinstance(hidden, dict) else None
+        self.hero_hidden_default = (
+            tuple(n for n in hidden if isinstance(n, str) and n)
+            if isinstance(hidden, list) else ())
 
     def load_layering(self, layering):
         """要点層と詳細層の切り分け規則を正本から引く (fail-soft)。

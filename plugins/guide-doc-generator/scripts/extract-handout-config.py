@@ -98,6 +98,7 @@ BLOCK_TYPE_CLASS_MAP = {
     "accordion": ("acc",),
     "prompt": ("prompt-box",),
     "download": ("dl-btn",),
+    "links": ("nav-links", "nav-link-row"),
     "tabs": ("prompt-panel",),
     "flow": ("flow", "flow-step"),
     "chips": ("pop-chips",),
@@ -157,6 +158,14 @@ ATTR_DIAGRAM_DATA = "data-hb-diagram-data"
 ATTR_GLOSSARY_TERM = "data-hb-glossary-term"
 ATTR_GLOSSARY_PLAIN = "data-hb-glossary-plain"
 ATTR_GLOSSARY_SCOPE = "data-hb-glossary-scope"
+# 冒頭に描かなかった箇条リストの実効名簿 (空白区切り・C11 が root へ刻む)。
+# 名簿を読まないと「著者が書かなかった」と「書いたが紙面から外した」を区別
+# できず、隠すたびに E-EXTRACT-UNRECOVERABLE が出る。
+ATTR_HERO_HIDDEN = "data-hb-hero-hidden"
+# 同じ欄の値 (JSON)。紙面には出ないが記録は残す (data-hb-date と同じ扱い)。
+# これが無いと、逆抽出した構成データが schema 必須の欄を欠いて validate を
+# 通らず、「HTML を出発点に構成データを起こす」経路が成立しない。
+ATTR_HERO_HIDDEN_DATA = "data-hb-hero-hidden-data"
 
 DOC_META_ATTRS = (
     ("schema_version", "data-hb-schema-version", True),
@@ -591,6 +600,21 @@ def nfc(text):
     return unicodedata.normalize("NFC", text)
 
 
+def nfc_deep(value):
+    """入れ子の値の中の文字列を全て NFC へ揃える。
+
+    可視テキスト経路 (text_value) は 1 文字列ごとに nfc を通している。属性へ
+    JSON で載せた値だけ素通しにすると、同じ資料の中で正規化形が 2 通りになる。
+    """
+    if isinstance(value, str):
+        return nfc(value)
+    if isinstance(value, list):
+        return [nfc_deep(item) for item in value]
+    if isinstance(value, dict):
+        return {nfc(key): nfc_deep(item) for key, item in value.items()}
+    return value
+
+
 def raw_text(node):
     chunks = []
 
@@ -711,6 +735,8 @@ class Extractor(object):
         self.fallback_part_id = part_ids_by_block_type(catalog).get(FALLBACK_BLOCK_TYPE)
         self.required_gaps = []
         self.optional_gaps = []
+        # 紙面から外された冒頭の欄。extract() が root の名簿から埋める。
+        self.hero_hidden = frozenset()
         self.heuristics = []
         self.exact_parts = 0
         self.heuristic_parts = 0
@@ -733,6 +759,33 @@ class Extractor(object):
     def heuristic(self, pointer, part_id, evidence):
         self.heuristics.append({"pointer": pointer, "part": part_id, "evidence": evidence})
 
+    def parse_hero_hidden_values(self, raw):
+        """data-hb-hero-hidden-data を欄名 → 値の辞書へ。
+
+        名簿に載っていない欄は受け取らない。属性 1 本で任意のキーを構成データへ
+        流し込めると、紙面にも名簿にも無い値が復元結果に現れる口になる。
+        """
+        if raw is None or raw == "":
+            return {}
+        try:
+            data = json.loads(raw)
+        except ValueError:
+            self.gap("/", "%s が JSON として読めない" % ATTR_HERO_HIDDEN_DATA, True)
+            return {}
+        if not isinstance(data, dict):
+            self.gap("/", "%s が object でない" % ATTR_HERO_HIDDEN_DATA, True)
+            return {}
+        values = {}
+        for field, value in data.items():
+            name = nfc(field)
+            if name not in self.hero_hidden:
+                self.gap("/" + name,
+                         "%s に非表示名簿 (%s) へ無い欄がある"
+                         % (ATTR_HERO_HIDDEN_DATA, ATTR_HERO_HIDDEN), True)
+                continue
+            values[name] = nfc_deep(value)
+        return values
+
     def marked_value(self, node, attr, pointer, field_label, required=True):
         value = node.attr(attr) if node is not None else None
         if value is None or value == "":
@@ -746,6 +799,13 @@ class Extractor(object):
         html_node = self.find_element(root, "html")
         if html_node is None:
             raise MalformedHtml(1, "<html> 要素が見つからず文書レベルのメタを確定できない")
+
+        # 冒頭から外された欄の名簿を先に読む。以降の走査は、名簿に載った欄を
+        # 「復元できなかった」ではなく「紙面に無いと宣言されている」として扱い、
+        # 値は可視要素ではなく root 属性から戻す。
+        self.hero_hidden = parse_hero_hidden(html_node.attr(ATTR_HERO_HIDDEN))
+        hero_hidden_values = self.parse_hero_hidden_values(
+            html_node.attr(ATTR_HERO_HIDDEN_DATA))
 
         config = {}
         for field, attr, required in DOC_META_ATTRS:
@@ -770,6 +830,8 @@ class Extractor(object):
             nodes = found_nodes.get(marker)
             if nodes:
                 config[field] = text_value(nodes[0])
+            elif field in self.hero_hidden:
+                pass
             elif field in ABSENCE_IS_NOT_A_GAP:
                 # キー自体を置かない。null を置くと「書いていない」が「null と
                 # 書いた」になり、schema の型検査 (string) が読み戻し側だけで落ちる。
@@ -782,7 +844,7 @@ class Extractor(object):
         for marker, field, required in DOC_LIST_FIELDS:
             nodes = found_nodes.get(marker)
             if nodes is None:
-                if field not in ABSENCE_IS_NOT_A_GAP:
+                if field not in ABSENCE_IS_NOT_A_GAP and field not in self.hero_hidden:
                     config[field] = None
                     self.gap("/" + field,
                              "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker),
@@ -792,6 +854,8 @@ class Extractor(object):
 
         for marker, field, text_field, required in DOC_ENTRY_FIELDS:
             nodes = found_nodes.get(marker)
+            if nodes is None and field in self.hero_hidden:
+                continue
             if nodes is None:
                 config[field] = None
                 self.gap("/" + field, "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker),
@@ -815,7 +879,7 @@ class Extractor(object):
                 # DIFFERENT になる。穴としても数えない — 著者が 1 件も書かなかった
                 # 資料と、印が落ちた資料を、この位置では区別できないうえ、前者が
                 # 通常であり後者は round-trip 比較が差分として捕らえる。
-                if required:
+                if required and field not in self.hero_hidden:
                     config[field] = None
                     self.gap("/" + field,
                              "%s を運ぶ %s=\"%s\" が無い" % (field, ATTR_FIELD, marker), True)
@@ -832,6 +896,14 @@ class Extractor(object):
                     entry[note_field] = text_value(note_node)
                 entries.append(entry)
             config[field] = entries
+
+        # 紙面から外した欄を root 属性の値で埋め戻す。可視要素の走査より後に
+        # 置くのは、名簿に載っていながら印も残っている資料 (正本を書き換えた
+        # 直後など) で、実際に描かれた値のほうを正としないため — 名簿は
+        # 「この HTML では紙面に出していない」の宣言であり、属性の値がその
+        # 資料の構成データそのものである。
+        for field, value in hero_hidden_values.items():
+            config[field] = value
 
         for key in UNMARKED_DOCUMENT_KEYS:
             config[key] = None
@@ -1469,10 +1541,31 @@ class Extractor(object):
 # ---------------------------------------------------------------------------
 
 
+def parse_hero_hidden(value):
+    """root の data-hb-hero-hidden を欄名の集合へ。無ければ空集合。
+
+    属性が無いのは「隠していない」であって「読めなかった」ではない。C11 は
+    隠す欄が 0 件でも属性を空文字で出すため、ここで既定へ落としても
+    『隠されているのに数えない』側へ倒れることはない。
+    """
+    if not isinstance(value, str) or not value.strip():
+        return frozenset()
+    return frozenset(nfc(name) for name in value.split() if name)
+
+
+# 非表示の宣言そのものは比較対象から外す。HTML が運ぶのは実効名簿 (視覚方針
+# 正本の既定 ∪ 構成データの宣言) であり、構成データ側の宣言とは別物なので、
+# 読み戻すと「書いていない宣言を書いた」ことになる。隠した欄の値は
+# data-hb-hero-hidden-data で無損失に戻るため、比較から外すのはこの 1 キーだけ。
+# 裁定は ROUNDTRIP-CONTRACT.md の /hero_hidden_fields。
+HERO_HIDDEN_DECLARATION_KEY = "hero_hidden_fields"
+
+
 def comparable_projection(config):
     if not isinstance(config, dict):
         return config
-    return {key: value for key, value in config.items() if key != "provenance"}
+    dropped = {"provenance", HERO_HIDDEN_DECLARATION_KEY}
+    return {key: value for key, value in config.items() if key not in dropped}
 
 
 def canonical_date(value, c12):
