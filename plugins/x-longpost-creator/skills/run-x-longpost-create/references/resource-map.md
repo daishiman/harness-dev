@@ -55,7 +55,7 @@ visual references は4本で、kind・生成/納品寸法・比率・横断 text
 | [writing-guidelines.md](writing-guidelines.md) | 文章整形ガイド | 文章整形時（必須） |
 | [horizontal-vertical-guide.md](../../../references/horizontal-vertical-guide.md) | ホリゾンタル入口×バーティカル中身の設計原則（正本: 欲求翻訳・TAMチェック・ネタ性質判定・2層設計） | タイトル・冒頭・フック・本文構成の作成時（必須） |
 | [title-guidelines.md](../../../references/title-guidelines.md) | **タイトルの文言設計の正本**（構文パターンA〜H・共感/結末ワード・心理トリガー・禁止表現・字数配分） | タイトル生成時（Phase 1.5・必須） |
-| [heading-structure-rules.md](heading-structure-rules.md) | **見出し構造とA/B表現契約の正本**（R1/R2・4箇所一致・F4本文同値・F5の1文1行・check ID・終了コード） | タイトル生成時・長文A/B生成時・ファイル出力時（必須） |
+| [heading-structure-rules.md](heading-structure-rules.md) | **見出し構造とA/B表現契約の正本**（R1/R2/R3・4箇所一致・F4本文同値・F5の1行2文禁止・F6のB見出し `【】` 表記・check ID・終了コード） | タイトル生成時・長文A/B生成時・ファイル出力時（必須） |
 | [short-post-formats.md](../../../references/short-post-formats.md) | 短文投稿8パターン（冒頭フックバリエーション付き） | 短文投稿生成時（必須） |
 | [expression-variations.md](../../../references/expression-variations.md) | 表現バリエーション（接続詞・文末・締め・問いかけ） | 短文投稿生成時（必須） |
 | [anti-ai-writing-guide.md](../../../references/anti-ai-writing-guide.md) | AI臭除去ガイド（6分類+崩し3技法） | 短文投稿生成時・AI臭チェック時（必須） |
@@ -83,7 +83,7 @@ visual references は4本で、kind・生成/納品寸法・比率・横断 text
 | [calculate-next-date.js](../../../scripts/calculate-next-date.js) | 次の投稿日計算 | 00ネタファイルパス | JSON |
 | [generate-filename.js](../../../scripts/generate-filename.js) | ファイル名生成（タイトル50文字超はfail-closed） | 日付、タイトル | JSON |
 | [validate-title.js](../../../scripts/validate-title.js) | タイトル絶対ルール検証（50文字・非空・単一行・絵文字・禁止表現・ファイル名安全） | タイトル | JSON |
-| [validate-headings.js](../../../scripts/validate-headings.js) | 見出し構造の絶対ルール検証（H1〜H10）と、タイトル4箇所一致 F1〜F3・A/B本文同値 F4・B本文1文1行 F5 | 本文（`--text` は `# タイトル` 行を含むパターンA全文＋`--title` 必須）またはファイルパス | JSON |
+| [validate-headings.js](../../../scripts/validate-headings.js) | 見出し構造の絶対ルール検証（H1〜H10）と、タイトル4箇所一致 F1〜F3・A/B本文同値 F4・B本文の1行2文禁止 F5・B見出しの `【】` 表記 F6 | 本文（`--text` は `# タイトル` 行を含むパターンA全文＋`--title` 必須）またはファイルパス | JSON |
 | [count-chars.js](../../../scripts/count-chars.js) | 文字数カウント・検証（空白・改行を除いた文字数で判定） | `--text` または `--file`。`--min` `--max` は必須で既定値なし（未指定は終了コード2） | JSON |
 | [update-neta-file.js](../../../scripts/update-neta-file.js) | 00ネタファイル更新 | ファイルパス | JSON |
 | [expand-template.js](../../../scripts/expand-template.js) | テンプレート展開 | テンプレート、変数 | テキスト |
@@ -133,7 +133,7 @@ Phase 3: 出力整形
 ├── prompts/x-longpost-output-file.md
 ├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/generate-filename.js
 ├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/expand-template.js（Writeで直接組み立てず必ず展開経由。missingVars が空であること）
-├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js（--file で H1〜H10 / F1〜F5 を一時パス上で検証 → PASS後に X/ へ配置 → 配置後に再検証）
+├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js（--file で H1〜H10 / F1〜F6 を一時パス上で検証 → PASS後に X/ へ配置 → 配置後に再検証）
 ├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/count-chars.js
 ├── ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update-neta-file.js
 └── ../../../assets/output-template.md

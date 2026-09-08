@@ -28,11 +28,19 @@ THREE = [{"connector": "google-drive"}, {"connector": "onedrive"}, {"connector":
 class TestConnectorCard(unittest.TestCase):
 
     def render(self, connectors):
+        """描画そのものを見るので、冒頭リストの既定の非表示は外して起動する。
+
+        既定 (opening.hero_list_fields.hidden_by_default) では前提コネクタは
+        紙面に出ない (利用者指定 2026-09-08)。ここで見たいのは「出すと決めた
+        ときにどう描くか」なので、非表示の正本だけを差し替える。既定のほうは
+        TestHiddenByDefault が別に押さえる。
+        """
         cfg = H.base_config()
         if connectors is not None:
             cfg["prerequisite_connectors"] = connectors
         with tempfile.TemporaryDirectory() as tmp:
-            res, html_text, _ = H.render_html(tmp, cfg)
+            res, html_text, _ = H.render_html(
+                tmp, cfg, env_extra=H.hero_lists_visible(tmp))
         return res, html_text
 
     def test_three_user_specified_connectors_are_rendered(self):
@@ -79,6 +87,34 @@ class TestConnectorCard(unittest.TestCase):
         for label in ("Google Drive", "OneDrive", "kintone"):
             self.assertNotIn(label, src,
                              "render-handout.py に表示ラベル %r が焼かれている" % label)
+
+
+class TestHiddenByDefault(unittest.TestCase):
+    """既定では冒頭に描かない (利用者指定 2026-09-08)。
+
+    紙面から外すだけで値は捨てない。捨てると C12 の整合検査が効かなくなり、
+    「紙面に出さない」と「関係を切る」が同じ操作になってしまう。
+    """
+
+    def render_default(self):
+        cfg = H.base_config()
+        cfg["prerequisite_connectors"] = THREE
+        with tempfile.TemporaryDirectory() as tmp:
+            res, html_text, _ = H.render_html(tmp, cfg)
+        return res, html_text
+
+    def test_connectors_are_not_on_the_page_by_default(self):
+        res, html_text = self.render_default()
+        self.assertEqual(0, res.returncode, res.stderr)
+        self.assertEqual([], H.elements_with(html_text, "data-hb-field", FIELD))
+
+    def test_the_field_is_named_in_the_hidden_roster(self):
+        """なぜ紙面に無いのかを HTML 自身が言えること (欠落と非表示の区別)。"""
+        res, html_text = self.render_default()
+        self.assertEqual(0, res.returncode, res.stderr)
+        head, _, tail = html_text.partition('data-hb-hero-hidden="')
+        self.assertTrue(tail, "data-hb-hero-hidden が刻まれていない")
+        self.assertIn("prerequisite_connectors", tail.split('"')[0].split())
 
 
 class TestConnectorListIsAChipRow(unittest.TestCase):

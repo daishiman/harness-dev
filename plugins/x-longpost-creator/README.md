@@ -90,7 +90,7 @@ export XLP_NETA_FILE="${XLP_VAULT_ROOT}/05_Project/X/<00ネタファイル名>.m
 |------|-----------|------|
 | 絵文字ゼロ | `check-no-emoji.js` | 1個でもあれば終了コード 1 |
 | タイトル 50 文字以内 | `validate-title.js` | 超過時は切り詰めずリライトへ戻す |
-| 見出し・A/B表現 | `validate-headings.js --file ... --strict-h2-count` | 見出し2が3〜8個、タイトル4箇所一致、A/B本文同値 F4、Bの1文=1行 F5 |
+| 見出し・A/B表現 | `validate-headings.js --file ... --strict-h2-count` | 見出し2が3〜8個、タイトル4箇所一致、A/B本文同値 F4、Bの1行2文禁止 F5、Bの見出し `【】` 表記 F6 |
 | 文字数 | `count-chars.js` | 長文 1800〜2200 / 短文 180〜220 / 投稿9 400〜499 |
 | ファイル名 | `generate-filename.js` | タイトル 50 文字超は終了コード 1（切り詰め禁止） |
 | 出力先 | `generate-filename.js` | `XLP_OUTPUT_DIR` も `XLP_VAULT_ROOT` も未設定なら終了コード 1（既定値へフォールバックしない） |

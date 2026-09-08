@@ -314,6 +314,17 @@ C20 route report (`eval-log/guide-doc-generator/build/route-P05-C20-01.json`) �
       "evidence": "render-handout.py:1537-1538",
       "rationale": "実測で追加検出。attainment_level との整合検査の被検査側であり、normalize が充填しない (推測しない) と schema が明記しているため、抽出器が埋めることも許されない。マーカーは既に出ている。",
       "residual_work": "同上"
+    },
+    {
+      "pointer": "/hero_hidden_fields",
+      "decision": "exempt",
+      "marker": "data-hb-hero-hidden (実効名簿・欄名だけを空白区切りで運ぶ) と data-hb-hero-hidden-data (同じ欄の値・JSON)",
+      "marker_status": "emitted",
+      "evidence": "render-handout.py hero_hidden_attr_value / hero_hidden_payload、extract-handout-config.py parse_hero_hidden / parse_hero_hidden_values",
+      "scope": "免除するのは宣言そのもの (/hero_hidden_fields) の 1 キーだけ。名簿に載った欄 (goal_chips / focus_theme / target_tasks / attainment_level / prerequisite_connectors / must_remember / no_need_to_remember) の値は data-hb-hero-hidden-data で無損失に戻るため、上の各 adjudication の marker 裁定はそのまま有効である。",
+      "rationale": "利用者指定 2026-09-08 により、これらの欄は既定で紙面に描かない (config/handout-visual-policy.json#opening.hero_list_fields.hidden_by_default)。可視要素が無くなるので data-hb-field からは読めないが、値まで落とすのは採らない — /notes_enabled と同じ基準で、それは P1 (再生成可能) ではなく値の消失であり、逆抽出した構成データが schema 必須の 5 欄を欠いて validate を通らなくなる (『HTML を出発点に構成データを起こす』経路が成立しない)。日付 (/date を root の data-hb-date で運ぶ判断) と同じく、紙面には出さず記録は残す。宣言そのものだけを免除するのは、HTML が運ぶのが実効名簿 (正本の既定 ∪ 構成データの宣言) であり、構成データ側の宣言と同じものではないため — 読み戻すと、書いていない宣言を書いたことになる。",
+      "how_to_restore_roundtrip": "宣言キーの免除は残る (実効名簿と宣言は別物であるため)。欄の値は隠していても隠していなくても無損失に戻る。",
+      "residual_work": "無し"
     }
   ],
   "exempt_preexisting": {
@@ -343,9 +354,15 @@ C20 route report (`eval-log/guide-doc-generator/build/route-P05-C20-01.json`) �
 ## 4. この裁定が schema に与える影響
 
 **schema (`handout-config.schema.json`) の値域・必須・additionalProperties は 1 箇所も緩めない。**
-著者記述の項目を 1 件も免除しなかったため、round-trip 免除の宣言を schema へ足す必要が無い。
 schema には本ファイルへの参照 (`x_roundtrip_contract`) だけを置き、
 裁定表の実体を二重化しない (二名簿を作らないため)。
+
+2026-09-08 追補: `/hero_hidden_fields` の免除を 1 件足した (利用者指定により、
+冒頭の一部の箇条リストを既定で紙面に描かなくなったため)。ここでも schema は緩めていない。
+免除したのは非表示の宣言キー 1 個だけで、著者記述の値は 1 件も免除していない
+(隠した欄の値は root の `data-hb-hero-hidden-data` で無損失に戻る)。
+どの欄を隠すかの正本は `config/handout-visual-policy.json#opening.hero_list_fields.hidden_by_default`
+の 1 箇所だけで、schema 側の `hero_hidden_fields` は資料ごとの追加宣言である。
 
 ## 5. 未達の受入要素
 

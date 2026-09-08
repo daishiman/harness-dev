@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "8f494704bf79350fd2aad73125fed6b027e8bd87c6f20ad17ece5292f6f81f09"
+    "skill_md_sha256": "05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 3
   },
-  "reviewer": "cr-principle-checklist-v2 (focused combined content review, incremental profile) の elegance 投影",
-  "reviewed_at": "2026-08-25T12:00:00Z",
-  "iterations": 4,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-06T23:53:16Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,23 +26,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "設問の正本が 4 箇所 (references/principle-checklist.md / assets/golden-sample.md / references/output-format.md の骨格ブロック / validate-journal-output.py の PRINCIPLE_SECTIONS) に分散する構造を、実測確認で済ませずテストで固定した。test_principle_sections_stay_in_sync_across_the_four_sources が 4 者の H2 設問列の一致と「各キーが 1 設問だけに一致すること」を検査し、test_principle_checklist_template_and_golden_have_same_questions がチェック状態を正規化したうえで設問本文 56 行の一致を検査する。1 箇所だけ直す変更は必ず起きるので、同期の主張を人間の目視から外した。",
-      "前ラウンドで残した smell (見出し名 `# チェックシート` が `# フェーズ別 課題チェックシート` の部分文字列である) を、見出しを `# 原理原則 チェックシート` へ改名して構造的に解消した。改名が 4 者すべてへ行き渡ったことをミューテーション 2 件で確認した。(1) golden の H1 だけ旧名へ戻す -> 8 failed (S01 と同期検査が独立に反応)、(2) テンプレートの設問 1 件だけ改稿 -> 1 failed (同期検査だけが唯一の砦)。改名により validate 側 (EXACT) と build 側 (完全一致ガード) の双方で衝突可能性が消え、`原理原則 チェックシート` と `フェーズ別 課題チェックシート` はどちら向きにも部分一致しない。",
-      "K02 のチェックボックス探索を設問セクション単位にし、P02 が持つ fail-open の形を継承しなかった。ブロック全体から 1 行でも見つかれば可にすると、1 設問だけ埋まって残り 10 設問が見出しだけの状態を通す。実測で 10 件の K02 が挙がることをテストで固定した。",
-      "水平線 `---` を本文へ入れない規則を、正本テンプレート・output-format.md・SKILL.md Gotchas・テスト (test_principle_checklist_has_no_horizontal_rule) の 4 箇所へ接地させた。利用者提示の原文は設問ごとに `---` で区切られていたが、section_body が `---` をセクション終端として扱うため、そのまま写すと翌日の継承が最初の区切り線で打ち切られ以降 10 設問が静かに消える。原文の `―――（必要に応じて）―――` は全角ダッシュで HRULE_RE にマッチしないため原文表記のまま復元し、半角化する退行は golden の水平線検査と 4 者同期検査の両方で落ちる。",
-      "「原理原則チェックシートは対話 (Phase1-3) では読み上げない」という運用契約を、interview-map.md の『対話で扱わないもの』節・SKILL.md Key Rules・resource-map.yaml の read_when・journal-composer.md・plugin README の 5 箇所へ接地させた。この明示が無いと、11 設問が『毎回出す固定ブロック』ではなくヒアリング項目として解釈され、日次対話 (既存 11 問) が倍の長さになって毎日の運用が続かなくなる。",
-      "設問文・注記行・階層・チェック状態の 56 項目が利用者提示の原文と 1 件も違わないことを、設問数 11・チェックボックス数 56 の両方で照合した。"
+      "期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転する変更で、build 側の実際の効き所は GOAL_KEYS の宣言順の入れ替えだった。extract_journal_goals は候補見出しを GOAL_KEYS の順で走査して goals.setdefault で先勝ちさせるため、順序を入れ替えないと『新旧が併存する前回ジャーナル』で旧 2ヶ月節が勝ち、古い期間 (2026-08-30) を今日のジャーナルへ継承する。実測で確認した: 現状は 3ヶ月節 (2026-09-27) を採り、GOAL_KEYS を旧順へ戻すと 2ヶ月節 (2026-08-30) を採る。dict の並びが挙動の正本になっていることを、コメントだけでなく順序そのもので担保している。",
+      "旧表記の通知経路 (D01) を今回まったく触らずに向きが反転した。deprecation_notices() が REQUIRED_OUTLINE のタプルを『先頭が正本・以降が旧表記』という規約からそのまま導出しているため、QUARTERLY_HEADING = (\"3ヶ月目標\", \"2ヶ月目標\") の 1 行を変えるだけで通知文の canonical/legacy が入れ替わる。改名のたびに通知側へ手を入れる設計だったら、今回のような向きの反転で通知が旧向きのまま残る事故が起きていた。validate 側の 4 本のテストがこの反転後の向きを固定している。",
+      "validate 側の『正本 (タプル先頭) を優先して 1 つの節に決め、本文とラベルを同じ探索から取る』構造 (validate-journal-output.py の GOAL_SECTIONS ループ) が、表記の向きに依存しない形で書かれていた。おかげで今回の反転は QUARTERLY_HEADING の 1 行と説明コメントだけで済み、ラベル錯誤・fail-open の再発がテスト (test_both_quarterly_headings_validates_the_canonical_section / test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section) でそのまま効き続けている。",
+      "後方互換の射程をファイル名ではなく本文見出しに置いていることを、新規テスト test_legacy_quarterly_report_filenames_are_still_picked_up が 4 パターン (新名×新ラベル / 旧名（２ヶ月）×旧ラベル / 3-期報×旧ラベル / 3-期報×新ラベル) で固定した。scan_reports が goals_dir.glob(\"*.md\") で全 .md を走査し先頭の `## 【…の目標】` で種別を決める、という不変条件を名前側から押さえたので、『期報を改名したら過去の期報が消えた』が起きない。",
+      "上流 (run-ubm-goal-setting) と下流 (run-ubm-journal) で契約が割れていない。産出側は `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力の正本とし旧名を読み取り受理、消費側の REPORT_LABELS は `3ヶ月の目標` と `2ヶ月の目標` の両方を quarterly 枠へ写す。journal-composer.md も『読み取りでは受理、新規出力は必ず 3ヶ月』と同じ非対称を明記しており、3 者の後方互換ポリシーが同一方向で揃っている。"
     ],
     "negative_feedback": [
-      "[low / smell → 解消済み] 見出し名 `# チェックシート` が `# フェーズ別 課題チェックシート` の部分文字列だった問題 (前ラウンド iteration 3 で『原文どおりを優先』として残した smell)。`# 原理原則 チェックシート` への改名で構造的に消えた。build-journal-context 側の principle_checklist_body() は残してあるが、その存在理由は『取り違え防止』ではなく『ブロック不在を空文字と区別して初期化 note を出す』へ変わり、docstring もその通りに書き直した。",
-      "[low / smell / 残存] 目標4階層ループの併存時ラベル錯誤 (2026-08-24 iteration 2 から継続)。2ヶ月目標と 3ヶ月目標が併存し本文で 3ヶ月側が先に現れる異常系で、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。本 PR のスコープ外。",
-      "[low / smell / 残存] 目標4階層の併存時 fail-open (2026-08-24 iteration 2 から継続)。正本 `### 2ヶ月目標` 節を空にし手前に完全な `### 3ヶ月目標` 節を置くと exit 0 になる。本 PR のスコープ外。",
-      "[low / smell / 残存] 旧表記 `3ヶ月目標` に deprecation の通知経路が無く、前回ジャーナル継承で自己複製し続ける (2026-08-24 iteration 2 から継続)。本 PR のスコープ外。"
+      "[low / smell] build 側の正本優先が GOAL_KEYS の宣言順にだけ依存しており、その不変条件を固定するテストが無い。validate 側は同じ不変条件を 2 本のテストで押さえているのに、build 側は新旧併存の前回ジャーナルを入力にしたケースが 1 本も無い。順序を旧順へ戻すと旧 2ヶ月節を採ることを実測で再現した (期間 2026-08-30 を継承)。影響は quarterly の期報が存在しない場合に限られる (期報があれば『レポート側が正』で period が上書きされる) ため low に留めるが、辞書の並び替えという無害に見える整理で静かに退行する形をしている。extract_journal_goals へ新旧併存 fixture のテストを 1 本足すのが最小の手当て。",
+      "[low / smell] frontmatter の IN1 が『骨格15ブロック』と書いているが、REQUIRED_OUTLINE の実体は 16 件 (`# 原理原則 チェックシート` 追加後に数が合わなくなった)。本 PR 以前からの繰越で、検証手段 (verify_by: script) 自体は成立しているため PASS 阻害はしないが、criterion 本文の数値が実装より 1 件古い。",
+      "[low / smell] CHANGELOG 0.3.31 の見出し文が『目標設定側 (run-ubm-goal-setting / info-collector / output-formatter / phase3-coordinator / /ubm-goal-setting) の契約とドキュメントを3ヶ月へ統一』と列挙しており、同時に反転した journal 側 (run-ubm-journal SKILL.md / journal-composer.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py) が名前として出てこない。過去ジャーナルの再検証で D01 が出る側の変更なので、読者が『日次ジャーナルは無関係』と読む余地が残る。あわせて run-ubm-journal の SKILL.md は本文が変わったが frontmatter version は 0.6.0 据え置き。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "incremental profile の focused combined review を 1 context で実行した。本ラウンド (iteration 1/3) の入力は、同一内容を先行して出していた PR #52 の統合である。前ラウンド (2026-08-25 の iteration 1-3、対象は `# チェックシート` ブロックの新規追加) の結論と残 finding は下記へ引き継いだ。 本ラウンドの変更点: (i) 見出しを `# チェックシート` -> `# 原理原則 チェックシート` へ改名し、前ラウンドの残 smell を構造的に解消 (10 ファイル)。(ii) 原文表記 `―――（必要に応じて）―――` (全角ダッシュ) を復元。(iii) 『対話では読み上げない』運用契約を 5 箇所へ接地 (PR #52 由来)。(iv) output-format.md の同時更新先へ principle-checklist.md と test_validate_journal_output.py を追記。(v) validate 側の section_lines 呼び出しへ EXACT を明示。 (a) 矛盾なし: 4 者 (テンプレート / golden / output-format 骨格 / PRINCIPLE_SECTIONS) の設問列一致をテストで機械照合 = True。 (b) 漏れなし: 利用者提示の原文と設問数 11・チェックボックス数 56 が一致。注記行・H3 小見出し・ネスト階層も保存。 (c) 規約整合: SKILL.md の reference_refs / Key Rules / Gotchas / Additional Resources、resource-map.yaml、output-format.md、interview-map.md、journal-composer.md、plugin README へ追従済み。skill version 0.5.0 -> 0.6.0。 (d) 依存関係整合: build-journal-context.py が previous_journal.principle_checklist を出力し、journal-composer が空文字のときテンプレート初期化へ倒す経路を明記。 (e) rubric high severity 0。 実施した検証: plugins/ubm-goal-setting/tests = 316 passed (原理原則チェックシート関連 9 本を含む)。ミューテーション 2 件で改名の同期を確認 (golden の H1 だけ旧名 -> 8 failed / テンプレートの設問 1 件改稿 -> 1 failed、いずれも復元後 316 passed)。 30 思考法は実施しておらず、実施も申告しない。 未確認: 実 Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。OUT2 はこの理由で実走未達のまま据え置く。"
+  "notes": "incremental profile の unresolved semantic batch を独立 context で 1 回実行した (iteration 1/3)。入力は git diff origin/main...HEAD の run-ubm-journal 配下 + journal-composer.md + 2 つの test ファイルと、依存確認のための run-ubm-goal-setting 側 data-contract / output-formats / output-formatter / info-collector。SKILL.md sha256 は実測 05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26。 本ラウンドの変更の実体: 期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転し、旧表記を読み取り受理側へ落とした (前回 verdict の時点とは正本の向きが逆)。 (a) 矛盾なし: run-ubm-journal 配下・journal-composer・上流 run-ubm-goal-setting を横断 grep し、新規出力=3ヶ月 / 読み取り受理=2ヶ月+3ヶ月 の非対称がすべての箇所で同じ向きに揃っていることを確認した。SKILL.md 180 行の『1年/3ヶ月/1ヶ月/1週間』・output-format.md の骨格行と対応表・golden-sample の `### 3ヶ月目標`・両 script の定数とコメント・journal-composer の見出し規則に食い違いは無い。 (b) 漏れなし: golden の期間 2026-06-29〜2026-09-27 と残り 40 日が対象日 2026-08-18 と算術的に整合 (差 40 日)。1ヶ月・1週間の各期間も期報期間に内包される。旧表記に触れる箇所 (プレースホルダ正規表現 123 行) は両表記を保持したままで受理側が狭まっていない。 (c) 規約整合: content-review-protocol の incremental 契約に従い 1 context で (a)-(e) を判定し、同一結果を elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。 (d) 依存関係整合: 上流 run-ubm-goal-setting が `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力とし、消費側 REPORT_LABELS が新旧両ラベルを quarterly へ写すことを確認。旧名 3 パターンが拾えることは新規テストで固定済み。 (e) rubric high severity 0。残 finding はすべて low の smell 3 件。 実施した検証: plugins/ubm-goal-setting/tests = 338 passed (63.8s, exit 0)。golden-sample.md を 2026-08-18.md として validate-journal-output.py へ通し PASS 違反 0 件・D01 通知なしを確認。extract_journal_goals へ新旧併存本文を直接与え、GOAL_KEYS の順序が正本優先の唯一の根拠であることを実測で再現 (現状=3ヶ月節を採用 / 旧順へ戻すと 2ヶ月節を採用)。 未確認: 実 Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、behavioral claim の受け入れは Gate D の実走証拠を要する。OUT2 (verify_by: live-trial) はこの理由で実走未達のまま据え置く。OUT1 も現状は unit/golden テストによる被覆であり、実対話の transcript を用いた受入は含まない (前ラウンドからの姿勢を継続)。"
 }

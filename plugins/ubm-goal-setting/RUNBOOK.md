@@ -6,7 +6,7 @@
 
 ## Entry Points
 
-- `/ubm-goal-setting [weekly|monthly|bimonthly]`: 目標設定・振り返り対話を生成し、`validate-goal-output.py` で保存前検証する。
+- `/ubm-goal-setting [weekly|monthly|quarterly]`: 目標設定・振り返り対話を生成し、`validate-goal-output.py` で保存前検証する。期報は 3 ヶ月。旧値 `bimonthly` は `quarterly` の後方互換の別名として受理する。
 - `/ubm-knowledge-sync [--all] [--since YYYY-MM-DD] [--dry-run]`: L2 vault source の差分を検知し、knowledge JSON を同期する。
 - `/ubm-youtube-ingest [--url URL | --backfill | --sync] [--source SOURCE] [--dry-run]` (v0.2.0): 北原さん YouTube を 3 モード（URL 単発 / 厳格全量 / scheduler 無人差分）で手動起動・再実行・dry-run する。手動 sync は scheduler one-shot と同一 cursor / idempotency key（`video_id`）を共有する。モード（`--url`/`--backfill`/`--sync`）は相互排他。
 - `/ubm-consult "[相談内容]"` (v0.2.0): 具体解を処方せず考え方（思考フレーム）を提示するコーチング型相談。`run-ubm-consult` スキルは `disable-model-invocation: true` のため発話では自動起動せず、本コマンドが唯一の入口。目標設定そのものは `/ubm-goal-setting`（`run-ubm-goal-setting`）へ委譲する。
@@ -161,7 +161,7 @@ python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
 
 ## Acceptance Evidence
 
-- C16: 週報/月報/期報を生成し、`validate-goal-output.py --type weekly|monthly|bimonthly` が PASS すること。
+- C16: 週報/月報/期報を生成し、`validate-goal-output.py --type weekly|monthly|quarterly` が PASS すること。
 - C17: 既知の更新済み source で NEW/MODIFIED を検知し、knowledge-extractor が6カテゴリ分類と `router.json` / `registry.json` 同期を完了すること。
 - C04: `UBM_VAULT_ROOT` 配下の許可外 path への Write/Edit/MultiEdit が exit 2 で阻止されること。
 

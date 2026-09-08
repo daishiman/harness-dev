@@ -11,7 +11,7 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 **たとえ話**: 部活の顧問の先生（＝北原さん）が隣にいて、「今週は何をがんばる？」「先月は何がうまくいった？」と質問しながら、目標カードを一緒に作ってくれる道具です。
 
 1. **目標設定・振り返り対話** (`/ubm-goal-setting`)
-   - 「1 週間（週報）・1 ヶ月（月報）・2 ヶ月（期報）」の目標を、AI との短い対話で作ります。
+   - 「1 週間（週報）・1 ヶ月（月報）・3 ヶ月（期報）」の目標を、AI との短い対話で作ります。
    - できあがった目標は決まった型（**21 項目**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、「誰に・何を・いつまでに・何件」まで具体化させます。
    - 目標には「**やらないこと**」も 3 つ以上書きます。やることを増やすより、迷いを減らすほうが行動につながるからです。
 
@@ -125,7 +125,7 @@ export UBM_VAULT_ROOT="$HOME/dev/dev/ObsidianMemo"
 /ubm-knowledge-sync --dry-run  # ナレッジ差分の検知だけ試す (書き込みなし)
 ```
 
-引数なしの `/ubm-goal-setting` は、どの種別（週報/月報/期報）かの確認から始まります。
+引数なしの `/ubm-goal-setting` は、どの種別（週報/月報/期報）かの確認から始まります。種別の引数は `weekly` / `monthly` / `quarterly`（期報＝3 ヶ月）です。旧値 `bimonthly` も後方互換で受理されます。
 
 ---
 
@@ -236,7 +236,7 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 | Phase | 責務 | 実行体 |
 |---|---|---|
-| Phase0-init | 種別（weekly/monthly/bimonthly）と実行日を確定 | 本 skill / AskUserQuestion |
+| Phase0-init | 種別（weekly/monthly/quarterly）と実行日を確定 | 本 skill / AskUserQuestion |
 | Phase1-2-collect | 過去目標・合宿情報・ナレッジ・journal を並列収集 | `info-collector` sub-agent |
 | Phase2b-review | 振り返り時に既存目標を 8 項目で再評価 | `goal-reviewer` sub-agent |
 | Phase3-dialogue | step1〜5 対話（現状振り返り→ギャップ→目標→行動計画→最終確認） | `phase3-coordinator` + 責務プロンプト `prompts/R1-R5` |

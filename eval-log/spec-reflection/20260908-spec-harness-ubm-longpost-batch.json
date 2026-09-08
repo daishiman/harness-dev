@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-09-08",
+  "branch": "feat/spec-harness-ubm-guard-batch-20260907",
+  "scope": [
+    "plugins/system-spec-harness/skills/run-system-spec-elicit",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting",
+    "plugins/x-longpost-creator"
+  ],
+  "canonical_spec_locations_probe": {
+    "system-spec/": "absent",
+    "specs/": "absent",
+    "architecture/": "absent",
+    "features/": "absent",
+    "tasks/": "absent",
+    "docs/": "absent"
+  },
+  "decision": "no-separate-reflection-required",
+  "rationale": "本 repository は system-spec/specs/architecture/tasks/features/docs のいずれも持たない plugin monorepo であり、仕様の正本は各 plugin 配下の SKILL.md (feedback_contract を含む)・prompts/*.md・references/*.md・plugin-composition.yaml・CHANGELOG.md に置かれる。本変更はその正本自体を直接更新しているため、下流へ写す別系統の仕様文書は存在しない。dev-graph も .dev-graph/render のみで graph.json を持たず、対応する graph node は無い。",
+  "spec_artifacts_updated": [
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md (feedback_contract IN1/OUT1 に --require-basis と ungrounded_blocking_items を明記)",
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R2-interview.md (turn 形状表: basis / required_info_items を必須化)",
+    "plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md (C16 収集ゲートを prose ゲートから決定論ゲートへ格上げ)",
+    "plugins/x-longpost-creator/skills/run-x-longpost-create/references/heading-structure-rules.md (F6 追加・F5 再定義)",
+    "plugins/x-longpost-creator/prompts/x-longpost-optimize-length.md (パターンB 見出し【】表記の規約)",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md",
+    "plugins/*/CHANGELOG.md, plugin-composition.yaml, .claude-plugin|.codex-plugin/plugin.json (version bump)",
+    "marketplaces/local/.claude-plugin/marketplace.json, marketplaces/local/plugin-fingerprints.json (release 投影)"
+  ],
+  "verification": {
+    "pytest": "752 passed (run-system-spec-elicit 75 / system-spec-harness 316 / x-longpost contract-parity 15 / x-longpost text-pipeline 8 / ubm-goal-setting 338)",
+    "make lint": "exit 0"
+  }
+}

@@ -21,6 +21,7 @@
 本 script は次の 2 つの規則の **単一正本 (owner)** である。
 
 - CR-EXT  : 取得 (fetch) を発生させる参照は data: 以外を一律違反とする (SC-01..04 / SC-10)
+            唯一の例外が NAV_LINK_TAG (B18 案内リンク)。詳細は _nav_link_exempt。
 - CR-EMOJI: 絵文字判定の二層規則 (SC-05)。ブロック丸ごとの denylist は用いない
 
 C10 hook / C11 レンダラ / C15 build-icon-sprite.py は独自判定を持たず、
@@ -610,6 +611,29 @@ def _url_matches(css_text):
 # ---------------------------------------------------------------------------
 
 
+NAV_LINK_TAG = "data-hb-nav-link"
+
+
+def _nav_link_exempt(node, key, url):
+    """SC-01 の唯一の例外 — B18 案内リンク (NAV_LINK_TAG)。
+
+    自己完結性が守っているのは「この資料は単体で開いても崩れない」ことであって、
+    「読み手をどこへも行かせない」ことではない。B18 は押した人が別の資料へ移る
+    ための部品なので、行き先が外部スキームになるのは仕様どおりであり、これを
+    一律違反にすると部品自体が成立しない。
+
+    一方この例外は同梱閉包の抜け道になり得るので、4 条件すべてを満たすときだけ
+    通す: a 要素であること / href であること / C11 が B18 にだけ付ける印を持つ
+    こと / https スキームであること。data: や http: を通すと、画像や script を
+    この印で持ち込めてしまう。印の無い外部参照は従来どおり違反のままである。
+    """
+    if node.tag != "a" or key != "href":
+        return False
+    if not any(name.lower() == NAV_LINK_TAG for name, _ in node.attr_list):
+        return False
+    return url.strip().lower().startswith("https://")
+
+
 def _detect_sc01(doc):
     violations = []
     checked = 0
@@ -631,6 +655,8 @@ def _detect_sc01(doc):
                 continue
             for part in _attr_url_values(node, key, value):
                 checked += 1
+                if _nav_link_exempt(node, key, part):
+                    continue
                 if _has_external_scheme(part):
                     line, col = node.attr_pos(name)
                     violations.append(Violation(

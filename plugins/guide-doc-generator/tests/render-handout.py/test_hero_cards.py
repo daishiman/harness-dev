@@ -155,10 +155,15 @@ class ListsCarryHeadings(unittest.TestCase):
     """見出しの無い ul を冒頭へ積まない (利用者要求 R9)。"""
 
     def test_each_hero_list_is_named(self):
-        res, html_text, _ = render(
+        # 既定ではこの 3 本は紙面に出ない (利用者指定 2026-09-08)。ここで見たいのは
+        # 「出すと決めたときに見出しが付くか」なので、非表示の正本だけを外す。
+        cfg = H.base_config(
             focus_theme=["最初の 1 回"],
             must_remember=["保存先を決める"],
             no_need_to_remember=["内部の仕組み"])
+        with tempfile.TemporaryDirectory() as tmp:
+            res, html_text, _ = H.render_html(
+                tmp, cfg, env_extra=H.hero_lists_visible(tmp))
         self.assertEqual(0, res.returncode, res.stderr)
         headings = vocabulary_group("hero_list_headings")
         named = {el.attrs.get("data-hb-list-field") for el in H.parse(html_text)

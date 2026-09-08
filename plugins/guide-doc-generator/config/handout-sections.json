@@ -12,14 +12,14 @@
     "cycle_note": "従来は C12 のスキーマ散文が enum 正本で、C23 がそれを参照し、同時に C12 が C23 のプリセットを参照していたため C12 ⇄ C23 の循環に見えていた。enum をこのファイルへ出し、C23 は C12 ではなくこのファイルを読む形にしたので、残る依存は C12 → C23 (プリセット解決) の一方向だけになる",
     "constraint_note": "section_kind ごとの『追加検査規則』(handson の B17 必須 等) の定義は C12 の config_schema / normalize_algorithm N8 が唯一の正本であり、このファイルは値の語彙と意味、および script へ焼き込まないための閾値だけを持つ"
   },
-  "version": 3,
+  "version": 4,
   "default": "standard",
   "kind_attribute_semantics": {
     "note": "R21 (P03-x-04) で追加した任意属性。値を持つ section_kind に対してだけ C12 が追加検査を行い、値そのものはこのファイルで変更できる (script 側に数値を書かない)",
     "max_items": "この種別のセクションに置ける列挙行 (B03 rows / B04 cards / B09 rows) の上限件数。超過は E-SECTIONKIND-MAXITEMS",
     "forbid_row_detail": "true のとき B03 rows[].sub を非 null にできない (詳細を書けなくすることで『大きな流れだけ』を型で担保する)",
     "required_role": "この種別のセクションが取らねばならない section.role。main を禁じたい種別に appendix を指定する",
-    "placement": "この種別のセクションを資料内のどこに置くかの制約。値域は last-main のみ (本編の最後・appendix より前)。違反は E-SECTION-PLACEMENT。required_role が『本編か付録か』を決めるのに対し、placement は本編内での位置を決める — 総括のように『読み終えた後に効く』種別は role だけでは位置を縛れない"
+    "placement": "この種別のセクションを資料内のどこに置くかの制約。値域は last-main (本編の最後・appendix より前) と first-main (本編の先頭) の 2 種。違反は E-SECTION-PLACEMENT。required_role が『本編か付録か』を決めるのに対し、placement は本編内での位置を決める — 総括のように『読み終えた後に効く』種別と、自己紹介のように『読み始める前に効く』種別は、どちらも role だけでは位置を縛れない"
   },
   "section_kinds": [
     {
@@ -46,6 +46,15 @@
       "slug": "known-unknown-next",
       "label_ja": "分かっている / 分からない / 次に調べる",
       "description": "学習計画型の 3 分割。B04 トリオカードを器として使う"
+    },
+    {
+      "slug": "self-intro",
+      "label_ja": "話し手の自己紹介",
+      "description": "資料の冒頭に置く話し手の自己紹介 (利用者指定 2026-09-04『自己紹介のライフ表をデフォルトで入るように』)。 読み手は『誰の話を聞くのか』が分からないまま本編へ入ると、書かれている判断の重みを測れない。冒頭の goal / focus_theme は資料の中身の予告であって話し手の説明ではないため、兼ねられない。 置く中身は 3 点に限る: (1) 経歴の年表 (ライフ表) — 時期と『そのとき何をしていたか』の 2 列で B05 比較表を器として使う。肩書きの列挙ではなく、いま話す内容へつながる筋が読める並びにする。(2) いま何をしているか — 1 行。(3) 連絡先・コミュニティ — 外部 URL を持つ唯一の部品である B18 案内リンクを器として使う。 実績・受賞・取引先の列挙は置かない (読み手の判断材料にならず、冒頭が縦に伸びるだけになる)。位置は本編の先頭、role は main。",
+      "required_role": "main",
+      "placement": "first-main",
+      "max_items": 8,
+      "max_items_why": "ライフ表の行数の上限。年表が 8 行を超えると読み手は年号を追う作業になり、話し手を掴むという目的から外れる。8 は『10 年単位の転機』が並ぶ想定の上限"
     },
     {
       "slug": "flow-overview",
