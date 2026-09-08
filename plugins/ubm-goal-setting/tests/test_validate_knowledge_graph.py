@@ -475,4 +475,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 599 -> 629: YouTube「待てない経営者が、先に整えるもの」(cMpb84eVKbg) から 30 件を追加、削除 0 件。
     # 629 -> 688: 全国支部会 (2026-09-06) から 59 件を追加、削除 0 件。
     # 688 -> 738: YouTube qd_sO6UtH-w (2026-09-06) から 50 件を追加、削除 0 件。
-    assert graph["node_count"] == 738
+    # 738 -> 750: 全国支部会 (2026-09-06) の要約メモから 12 件を追加、削除 0 件。
+    assert graph["node_count"] == 750
