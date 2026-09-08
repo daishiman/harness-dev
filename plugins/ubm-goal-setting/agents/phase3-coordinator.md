@@ -157,8 +157,8 @@ Phase 3 全体の制御・共通ルール・Step間遷移を管理する。
 
 #### 入力
 
-- **goal_type**: weekly / monthly / bimonthly
-- **target_period**: 対象期間（start_date〜end_date）
+- **goal_type**: weekly / monthly / quarterly（`bimonthly` を受け取った場合は `quarterly` として扱う＝後方互換の別名）
+- **target_period**: 対象期間（start_date〜end_date）。期報は3ヶ月分の月報期間の連結
 - **past_summary**: info-collectorの構造化サマリー
 - **camp_data**: 合宿アドバイスの有無と鮮度マーク
 

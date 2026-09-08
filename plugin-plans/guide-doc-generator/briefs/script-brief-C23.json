@@ -223,6 +223,19 @@
       },
       "section_order": [
         {
+          "id": "self-intro",
+          "heading": "話し手について",
+          "section_kind": "self-intro",
+          "image_role": "illustration",
+          "recommended_parts": [
+            "DIAGRAM",
+            "IMG",
+            "B05",
+            "B18"
+          ],
+          "required": true
+        },
+        {
           "id": "flow",
           "heading": "今日の流れ",
           "section_kind": "timeline",
@@ -348,10 +361,12 @@
         "B14",
         "B17",
         "DIAGRAM",
-        "IMG"
+        "IMG",
+        "B18"
       ],
       "presentation_order_variants": {
         "demo_first": [
+          "self-intro",
           "flow",
           "context",
           "demo",
@@ -363,6 +378,7 @@
           "next"
         ],
         "explain_first": [
+          "self-intro",
           "flow",
           "context",
           "capability",
@@ -467,6 +483,19 @@
       },
       "section_order": [
         {
+          "id": "self-intro",
+          "heading": "話し手について",
+          "section_kind": "self-intro",
+          "image_role": "illustration",
+          "recommended_parts": [
+            "DIAGRAM",
+            "IMG",
+            "B05",
+            "B18"
+          ],
+          "required": false
+        },
+        {
           "id": "overview",
           "heading": "この資料でわかること",
           "section_kind": "map",
@@ -537,7 +566,9 @@
         "B10",
         "B12",
         "DIAGRAM",
-        "IMG"
+        "IMG",
+        "B05",
+        "B18"
       ],
       "notes": "配布して独り歩きする資料。前提を書き切り、添付は B12 の data URI ダウンロードで同梱する。R25/REQ-4 (C70) により冒頭 (id=overview) は section_kind=map (器 B08 + DIAGRAM(pattern=hierarchy)) へ変更し、資料全体の章立てを地図として見せる。手順 (id=steps) は流れを DIAGRAM(pattern=flow) で示し、実際の操作画面 (assets.role=screenshot の IMG) を添える。choices (迷ったときの判断) は判断の位置づけを 2 軸で DIAGRAM(pattern=matrix) に示す。faq (よくあるつまずき) はつまずきの分類を DIAGRAM(pattern=hierarchy) で示す。files (配布ファイル) はファイルの内訳を DIAGRAM(pattern=hierarchy) で示す。overview/choices/faq/files は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
@@ -548,6 +579,19 @@
         "evidence_depth": "cited"
       },
       "section_order": [
+        {
+          "id": "self-intro",
+          "heading": "話し手について",
+          "section_kind": "self-intro",
+          "image_role": "illustration",
+          "recommended_parts": [
+            "DIAGRAM",
+            "IMG",
+            "B05",
+            "B18"
+          ],
+          "required": true
+        },
         {
           "id": "map",
           "heading": "全体マップ",
@@ -631,7 +675,9 @@
         "B09",
         "B14",
         "DIAGRAM",
-        "IMG"
+        "IMG",
+        "B05",
+        "B18"
       ],
       "notes": "読み手の前提知識が最も低い用途。専門用語の言い換え宣言 (glossary) を厚くすることを notes で促す。R25/REQ-4 (C70) により冒頭は section_order[0]=map (id=map。既存の『全体マップ』セクションをそのまま section_kind=map、器 B08 + DIAGRAM(pattern=hierarchy) の冒頭概観として採用し、welcome を 2 番目へ繰り下げた) とする。welcome (はじめに) は入社前後の変化を DIAGRAM(pattern=versus) で示す。roles (登場人物と役割) は役割間の関係を DIAGRAM(pattern=hierarchy) で示し、day1 (初日にやること) は当日の流れを DIAGRAM(pattern=flow) で示し実際の初日の様子 (assets.role=screenshot の IMG。素材が無ければ illustration へ落とす) を添える。week1 (最初の 1 週間) は 1 週間の流れを DIAGRAM(pattern=flow) で示す。who (相談先) は相談先の体系を DIAGRAM(pattern=hierarchy) で示す。welcome には概念導入の挿絵 (assets.role=illustration の IMG) を添える (R25/REQ-3(b) C69)。map/roles/week1/who も同様に概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 6 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
@@ -724,6 +770,19 @@
       },
       "section_order": [
         {
+          "id": "self-intro",
+          "heading": "話し手について",
+          "section_kind": "self-intro",
+          "image_role": "illustration",
+          "recommended_parts": [
+            "DIAGRAM",
+            "IMG",
+            "B05",
+            "B18"
+          ],
+          "required": false
+        },
+        {
           "id": "problem",
           "heading": "解きたい課題",
           "section_kind": "thesis",
@@ -793,7 +852,8 @@
         "B14",
         "B16",
         "DIAGRAM",
-        "IMG"
+        "IMG",
+        "B18"
       ],
       "notes": "判断軸 (judgment_axis) が最も効く用途。比較部品の直後に必ず 1 文の判断軸を置く。R25/REQ-4 (C70) により冒頭 (id=problem) は section_kind=thesis (器 B07 + DIAGRAM(pattern=compare)) とし、課題の要点を先出しする。proposal (提案) は提案実現までの流れを DIAGRAM(pattern=flow) で示し、提案物の実画面・完成イメージ (assets.role=illustration の IMG) を添える。options (選択肢の比較) は選択肢の対比を DIAGRAM(pattern=compare) で示す。plan (進め方) は工程の流れを DIAGRAM(pattern=flow) で示す。ask (お願いしたいこと) はお願い事項の分類を DIAGRAM(pattern=hierarchy) で示す。problem/options/plan/ask は概念導入の挿絵 (assets.role=illustration の IMG) を添える。R25/REQ-2(a)/REQ-3(b) (goal-spec C68/C69 / improvement/visual-per-section-decision.json 正本、利用者指定 2026-08-18 追補) により、判定単位を資料全体の総量比から main セクション単位へ変更し、本 preset の全 main セクション 5 件 (section_order の全要素) へ DIAGRAM と IMG を 1 件以上ずつ配線した。旧: main セクション数に対する下限式 (improvement/diagram-gate-decision.json、superseded) は使わない"
     },
@@ -1148,7 +1208,16 @@
       "rationale": "存在しない部品を推奨すると C05 が実在しない部品を構成データへ書き、失敗が C11 まで遅延する。最上流で落とす"
     }
   ],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "id": "OQ-C23-self-intro-vs-overview-order",
+      "raised": "2026-09-04",
+      "question": "self-intro (placement=first-main) と R25/REQ-4 の概観セクション (timeline / map / thesis) のどちらが section_order[0] を取るか",
+      "context": "self-intro は利用者指定で本編の先頭に置く種別として追加した。一方 C70 の E-OVERVIEW-SECTION-ORDER は対象 doc_type の section_order[0] が概観セクションであることを求める。両方を素直に読むと index 0 の取り合いになる",
+      "current_handling": "出荷 config には timeline / map / thesis が未反映 (P05-x-62) のため実装上の衝突は起きていない。plan 上は self-intro を index 0 に置き、概観セクションは index 1 とした",
+      "needs_decision": "C70 を出荷へ反映する際に E-OVERVIEW-SECTION-ORDER を『self-intro を除いた最初の本編セクション』基準へ読み替えるか、self-intro を概観セクションより後ろへ移すかを決める"
+    }
+  ],
   "granularity_defaults": {
     "since": "R22 (goal-spec C61)",
     "owner": "C23 (doc_type ごとの既定値の単一正本。直交性と上書き規則の正本は C12 の CR-GRANULARITY-ORTHOGONAL / CR-GRANULARITY-PRESET-DEFAULT-ONLY であり、ここでは複製しない)",

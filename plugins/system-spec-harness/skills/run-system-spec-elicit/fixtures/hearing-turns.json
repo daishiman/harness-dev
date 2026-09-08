@@ -4,6 +4,11 @@
     "answer": "本システムは社内向け Web アプリのみ。モバイル/タブレット/デスクトップは全カテゴリで対象外。",
     "approval_id": "appr-001",
     "approval_note": "ユーザー一括承認: 非 Web プラットフォームは全カテゴリで対象外",
+    "qa_id": "qa-000",
+    "basis": "user-decision",
+    "required_info_items": [
+      "target-platforms"
+    ],
     "ops": [
       {
         "action": "exclude",
@@ -211,6 +216,11 @@
     "question": "データベース（database）× Web の要件は?",
     "answer": "PostgreSQL 15。ユーザー/請求/監査ログの3スキーマ。日次バックアップ。",
     "qa_id": "qa-001",
+    "basis": "user-decision",
+    "required_info_items": [
+      "domain-model",
+      "data-persistence"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -223,6 +233,10 @@
     "question": "認証(ログイン)（auth）× Web の要件は?",
     "answer": "OIDC(社内 IdP)+ ロールベース認可。セッションは 8h。",
     "qa_id": "qa-002",
+    "basis": "user-decision",
+    "required_info_items": [
+      "auth-model"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -235,6 +249,10 @@
     "question": "UI-UX（ui-ux）× Web の要件は?",
     "answer": "レスポンシブ Web。WCAG 2.1 AA 目標。主要動線は3クリック以内。",
     "qa_id": "qa-003",
+    "basis": "user-decision",
+    "required_info_items": [
+      "information-priority"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -247,6 +265,10 @@
     "question": "セキュリティ（security）× Web の要件は?",
     "answer": "TLS1.3・入力検証・監査ログ・OWASP Top10 受動対策。",
     "qa_id": "qa-004",
+    "basis": "user-decision",
+    "required_info_items": [
+      "security-posture"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -259,6 +281,10 @@
     "question": "インフラ（infrastructure）× Web の要件は?",
     "answer": "コンテナを社内 k8s にデプロイ。CI/CD は GitHub Actions。",
     "qa_id": "qa-005",
+    "basis": "user-decision",
+    "required_info_items": [
+      "infra-topology"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -271,6 +297,10 @@
     "question": "バックエンド（backend）× Web の要件は?",
     "answer": "Python/FastAPI。REST + 非同期ジョブ(キュー)。",
     "qa_id": "qa-006",
+    "basis": "user-decision",
+    "required_info_items": [
+      "api-contract"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -283,6 +313,10 @@
     "question": "フロントエンド（frontend）× Web の要件は?",
     "answer": "React + TypeScript。状態管理は最小限のグローバルストア。",
     "qa_id": "qa-007",
+    "basis": "user-decision",
+    "required_info_items": [
+      "frontend-arch"
+    ],
     "ops": [
       {
         "action": "confirm",
@@ -295,11 +329,43 @@
     "question": "保守運用管理（maintenance-ops）× Web の要件は?",
     "answer": "オンコール輪番・障害 runbook・週次リストア訓練。",
     "qa_id": "qa-008",
+    "basis": "user-decision",
+    "required_info_items": [
+      "ops-runbook"
+    ],
     "ops": [
       {
         "action": "confirm",
         "category": "maintenance-ops",
         "platform": "web"
+      }
+    ]
+  },
+  {
+    "question": "この Web アプリが解決する主要な利用者課題 (JTBD)・対象ユーザーと、利用される文脈 (場所/端末/頻度/制約) は?",
+    "answer": "対象は社内の請求業務担当 40 名。月次請求の突合を表計算の手作業から移し、締め日前の残業を無くすことが主要課題。利用文脈は社内ネットワーク上のデスクトップブラウザが中心で、月末3営業日に利用が集中する。",
+    "qa_id": "qa-009",
+    "basis": "user-decision",
+    "required_info_items": [
+      "product-goal",
+      "context-of-use"
+    ],
+    "ops": [
+      {
+        "action": "add-qa-ref",
+        "category": "ui-ux",
+        "platform": "web",
+        "qa_refs": [
+          "qa-009"
+        ]
+      },
+      {
+        "action": "add-qa-ref",
+        "category": "infrastructure",
+        "platform": "web",
+        "qa_refs": [
+          "qa-000"
+        ]
       }
     ]
   }

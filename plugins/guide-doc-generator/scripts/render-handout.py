@@ -357,6 +357,72 @@ def hero_card_order():
     return names
 
 
+def hero_hidden_by_default():
+    """冒頭に既定で描かない箇条リストの名簿を正本から引く。
+
+    hero_card_order と同じ流儀で、名簿を script の定数で持たない。持つと
+    『正本を書き換えたのに紙面が変わらない』食い違いが出るうえ、描画する C11 と
+    総量を数える C12・読み戻す C20 がそれぞれ別の名簿を持つ多名簿になる。
+    読めなければ既定 (全部出す) へ落とさず落ちる — 落とすと利用者指定
+    2026-09-08 が黙って解除され、冒頭に一覧が積み上がった資料が出る。
+    """
+    hidden = (((load_visual_policy().get("opening") or {})
+               .get("hero_list_fields") or {}).get("hidden_by_default"))
+    if not isinstance(hidden, list):
+        raise LaunchError(
+            "視覚方針正本に opening.hero_list_fields.hidden_by_default が無い "
+            "(冒頭に描かない箇条リストの単一正本)")
+    return [name for name in hidden if isinstance(name, str) and name]
+
+
+def hero_hidden_fields(config):
+    """実効の非表示集合 = 正本の既定 ∪ 構成データの追加宣言。
+
+    構成データ側 (hero_hidden_fields) は追加宣言であって上書きではない。
+    空配列を書けば既定が解除される形にすると、既定を持つ意味が無くなる。
+    """
+    declared = config.get("hero_hidden_fields") or []
+    return set(hero_hidden_by_default()) | {
+        name for name in declared if isinstance(name, str) and name}
+
+
+def hero_hidden_order(config):
+    """実効の非表示名簿を、正本の順序 + 追加宣言の順で並べたもの。"""
+    hidden = hero_hidden_fields(config)
+    ordered = [name for name in hero_hidden_by_default() if name in hidden]
+    ordered += sorted(hidden - set(ordered))
+    return ordered
+
+
+def hero_hidden_attr_value(config) -> str:
+    """root へ刻む非表示名簿 (空白区切り)。
+
+    名簿を刻まないと C20 は『著者が書かなかった』のか『書いたが紙面から
+    外したのか』を区別できず、隠すたびに欠落として数えることになる。
+    """
+    return " ".join(hero_hidden_order(config))
+
+
+def hero_hidden_payload(config) -> str:
+    """紙面から外した欄の値を root 属性 1 本へ JSON で載せる。
+
+    日付と同じ扱いにする (build_doc_head: 可視要素をやめて root の
+    data-hb-date で運ぶ)。紙面から外すのは『読み手に見せない』であって
+    『値を捨てる』ではない。値を HTML から落とすと、逆抽出した構成データが
+    schema 必須 (focus_theme / target_tasks / attainment_level /
+    must_remember / no_need_to_remember) を欠いて validate を通らなくなり、
+    「HTML を出発点に構成データを起こす」経路が成立しなくなる。
+    属性へ載せるのは中身の JSON で、紙面 (可視テキスト) には 1 文字も出ない。
+    """
+    payload = OrderedDict()
+    for name in hero_hidden_order(config):
+        if name in config:
+            payload[name] = config.get(name)
+    if not payload:
+        return ""
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
 def nav_max_rows() -> int:
     """目次を帯として出すときに占めてよい行数。正本は nav.max_rows。
 
@@ -678,6 +744,14 @@ def _project_download(data, ctx):
     return {"attachments": [attachment]}
 
 
+def _project_links(data, ctx):
+    return {"links": [
+        _entry(("key", link.get("key")), ("label", link.get("label")),
+               ("url", link.get("url")), ("note", link.get("note")))
+        for link in data.get("links") or []
+    ]}
+
+
 def _project_tabs(data, ctx):
     tabs = []
     for tab in data.get("tabs") or []:
@@ -775,6 +849,7 @@ PART_DATA_PROJECTIONS = {
     "accordion": _project_accordion,
     "prompt": _project_prompt,
     "download": _project_download,
+    "links": _project_links,
     "tabs": _project_tabs,
     "flow": _project_flow,
     "chips": _project_chips,
@@ -1340,6 +1415,43 @@ class Renderer:
             items.append('<li class="dl-row">{}{}</li>'.format(link, hint))
         return tag("ul", pairs + [("class", "downloads")], "".join(items))
 
+    def links(self, block, pairs):
+        """B18 案内リンク。B12 と違い、実体を保存させず外部の資料へ送り出す。
+
+        新しいタブで開く (target=_blank rel=noopener noreferrer)。資料を読んでいる
+        途中で画面が入れ替わると、読み手は元の位置へ戻る手立てを失うためである。
+        URL 文字列は画面では出さず印刷時にだけ併記する。紙で読む人には打ち込む以外
+        に辿る手段が無い一方、画面ではラベルの方が「どこへ行くのか」を早く伝える。
+        """
+        items = []
+        for index, link in enumerate(block.get("links") or []):
+            url = link.get("url") or ""
+            anchor = tag("a", [
+                ("class", "nav-link"),
+                ("href", url),
+                ("target", "_blank"),
+                ("rel", "noopener noreferrer"),
+                # 同梱閉包の検査 (C16 SC-01) はこの印を見て案内リンクを例外扱いする。
+                # 印が無い外部参照は従来どおり違反のままにしておく。
+                ("data-hb-nav-link", "external"),
+            ], esc(link.get("label")))
+            note = link.get("note")
+            note_html = (
+                '<span class="nav-link-note">{}</span>'.format(esc(note))
+                if _nonempty(note) else ""
+            )
+            url_html = '<span class="nav-link-url">{}</span>'.format(esc(url))
+            # 反復要素の境界と各項目の値は li が持つ (C20 の復元契約)。href や
+            # 表示テキストからの読み戻しに頼ると、印刷用の URL 併記と本文の
+            # どちらが原本か決められない。
+            items.append(tag("li", [
+                ("class", "nav-link-row"),
+                ("data-hb-key", entry_key(link, index)),
+            ] + self.entry_data_pairs(self.source_entry(block, index, link)),
+                anchor + note_html + url_html))
+        return tag("ul", pairs + [("class", "nav-links")] + self.entries_pairs(block),
+                   "".join(items))
+
     def tabs(self, block, pairs, depth=0):
         if depth > 0:
             raise DataError(
@@ -1540,6 +1652,7 @@ class Renderer:
         "accordion": "accordion",
         "prompt": "prompt",
         "download": "download",
+        "links": "links",
         "tabs": "tabs",
         "flow": "flow",
         "chips": "chips",
@@ -2018,12 +2131,12 @@ body {
   border-left: 4px solid var(--pop-primary);
   padding-left: 12px;
 }
-.steps, .checklist, .downloads, .action-items, .handson {
+.steps, .checklist, .downloads, .nav-links, .action-items, .handson {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.step-row, .check-row, .dl-row, .ai-row, .hs-row {
+.step-row, .check-row, .dl-row, .nav-link-row, .ai-row, .hs-row {
   display: flex;
   gap: 8px;
   align-items: baseline;
@@ -2098,6 +2211,11 @@ body {
   cursor: pointer;
 }
 .dl-hint { color: var(--ink-muted); font-size: 88%; }
+.nav-link { font-weight: 600; }
+.nav-link-note { color: var(--ink-muted); font-size: 88%; }
+/* 画面ではラベルの方が行き先を早く伝えるので URL は隠す。紙では打ち込む以外に
+   辿る手段が無いため、印刷時にだけ出す (@media print で display を戻す)。 */
+.nav-link-url { display: none; }
 .tab-strip { display: flex; gap: 8px; margin-bottom: 8px; }
 .fold { border-bottom: 1px solid var(--line); }
 .asset { margin: 12px 0; }
@@ -2178,6 +2296,8 @@ textarea:focus-visible {
   .pop-header--sidebar { height: auto; border-right: none; box-shadow: none; }
   /* 紙に「本文へ移動」は届かない。焦点を持てない媒体では消す。 */
   .skip-to-main, .skip-to-main:focus { display: none; }
+  /* 逆に案内リンクの URL は紙でだけ要る。押せないので文字列が唯一の手掛かり。 */
+  .nav-link-url { display: inline; color: var(--ink-muted); font-size: 88%; }
   .navbar { flex-wrap: wrap; overflow-x: visible; }
   .pop-header--sidebar .navbar { flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
   .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
@@ -2713,6 +2833,14 @@ def build_hero(config, hero_part) -> str:
     parts = []
     labels = vocabulary_labels("hero_card_labels", "field")
     headings = vocabulary_labels("hero_list_headings", "field")
+    # 冒頭に描かない箇条リストの実効名簿。値は構成データに残したまま紙面から
+    # だけ外す — 消すと E-SECTION-UNTIED-TASK などの整合検査が効かなくなり、
+    # 「紙面に出さない」と「関係を切る」が同じ操作になってしまう。
+    hidden = hero_hidden_fields(config)
+
+    def hero_shown(field):
+        return field not in hidden
+
     parts.append(build_hero_thumbnail(config))
     parts.append('<h1 data-hb-field="title">{}</h1>'.format(esc(config.get("title"))))
     if _nonempty(config.get("lead")):
@@ -2738,7 +2866,7 @@ def build_hero(config, hero_part) -> str:
         parts.append('<ul class="hero-card-grid">{}</ul>'.format("".join(cards)))
 
     chips = []
-    for chip in config.get("goal_chips") or []:
+    for chip in (config.get("goal_chips") or []) if hero_shown("goal_chips") else []:
         # 1 チップ 1 マーカー。外枠 (data-hb-list-field) だけでは何個あったかは
         # 読めても各値の境界が読めないため、配列の要素側へ刻む (focus_theme と同型)。
         chips.append(field_span("goal_chips", chip, klass="goal-chip"))
@@ -2747,7 +2875,7 @@ def build_hero(config, hero_part) -> str:
             "goal_chips", headings,
             '<p class="goal-chips">{}</p>'.format("".join(chips))))
 
-    focus = config.get("focus_theme") or []
+    focus = (config.get("focus_theme") or []) if hero_shown("focus_theme") else []
     if focus:
         items = "".join(
             field_span("focus_theme", value, element="li") for value in focus)
@@ -2755,7 +2883,7 @@ def build_hero(config, hero_part) -> str:
             "focus_theme", headings,
             '<ul class="meta-list focus-theme">{}</ul>'.format(items)))
 
-    tasks = config.get("target_tasks") or []
+    tasks = (config.get("target_tasks") or []) if hero_shown("target_tasks") else []
     if tasks:
         items = []
         for task in tasks:
@@ -2768,14 +2896,15 @@ def build_hero(config, hero_part) -> str:
             "target_tasks", headings,
             '<ul class="meta-list target-tasks">{}</ul>'.format("".join(items))))
 
-    if _nonempty(config.get("attainment_level")):
+    if hero_shown("attainment_level") and _nonempty(config.get("attainment_level")):
         parts.append(hero_list_block(
             "attainment_level", headings,
             '<p class="attainment">'
             + field_span("attainment_level", config.get("attainment_level"))
             + "</p>"))
 
-    connectors = config.get("prerequisite_connectors")
+    connectors = (config.get("prerequisite_connectors")
+                  if hero_shown("prerequisite_connectors") else None)
     if isinstance(connectors, list) and connectors:
         labels = vocabulary_labels("connectors", "id")
         items = []
@@ -2810,13 +2939,14 @@ def build_hero(config, hero_part) -> str:
             '<ul class="meta-list prerequisite-connectors">{}</ul>'
             .format("".join(items))))
 
-    must = config.get("must_remember") or []
+    must = (config.get("must_remember") or []) if hero_shown("must_remember") else []
     if must:
         items = "".join(field_span("must_remember", value, element="li") for value in must)
         parts.append(hero_list_block(
             "must_remember", headings,
             '<ul class="meta-list must-remember">{}</ul>'.format(items)))
-    no_need = config.get("no_need_to_remember") or []
+    no_need = ((config.get("no_need_to_remember") or [])
+               if hero_shown("no_need_to_remember") else [])
     if no_need:
         items = "".join(
             field_span("no_need_to_remember", value, element="li") for value in no_need)
@@ -3133,6 +3263,12 @@ def render_document(config, theme, tokens, modules):
         ("data-hb-must-remember-max",
          "" if config.get("must_remember_max") is None
          else str(config.get("must_remember_max"))),
+        # 冒頭に描かなかった箇条リストの実効名簿 (空白区切り) と、その値。
+        # 名簿と値を分けるのは、名簿が「なぜ紙面に無いか」を、値が「何が
+        # 書かれていたか」をそれぞれ運ぶため。日付と同じで、紙面には出さず
+        # 記録は残す (build_doc_head の判断と同じ扱い)。
+        ("data-hb-hero-hidden", hero_hidden_attr_value(config)),
+        ("data-hb-hero-hidden-data", hero_hidden_payload(config)),
     ]
 
     body = [

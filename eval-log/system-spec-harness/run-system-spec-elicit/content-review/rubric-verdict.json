@@ -2,20 +2,20 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "7dd7709ed486f5d4b8fd7582ed603786dcfe780e59285f947c5c2b0c48f42b05"
+    "skill_md_sha256": "79c829284fce9de4d8204598319072c7debdccbbb705a334f34cf1eb3b92aedb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-merge-guard-migration-v3 (focused combined content review, incremental profile, round 3)",
-  "reviewed_at": "2026-08-21T03:00:00Z",
-  "iterations": 3,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-07T02:41:00Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,19 +25,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "round 2 medium (contradiction) の規約整合未達が解消した。`runtime_root_policy: host-skill-path` (SKILL.md:109) と `## Runtime root contract` 節 (SKILL.md:123-129) が継承範囲と名指しした prompts/ 配下の起動行 12 本 — R0-foundation.md:70 の 2 本・:130、R1-init.md:55・:110、R2-interview.md:58・:59・:60・:118、R3-reask.md:54・:110、R4-reopen.md:55・:112 — がすべて `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py\"` 形へ移行済み。skill 配下 *.md への `grep -rnE 'python3 +\"?(\\.\\./|scripts/|[a-z0-9-]+\\.py)'` は無出力 (exit 1)、cwd 相対起動行 0 件を実測した。",
-      "round 2 medium (inconsistency) の形式割れも解消した。IN1 (SKILL.md:184) と IN1 補完の収集ゲート (SKILL.md:186) が同一の dual-root 形になり、同節内の 2 形式混在は消えた。併せて指摘した SKILL.md:140・:146・:173 と references/spec-state-contract.md の 8 本 (84/101/104/113/114/115/163/194) も同形へ揃い、prompts/R5-decision-guide.md:29-30 / R6-audit-hearing.md:4 / R7-audit-matrix.md の bare `$CLAUDE_PLUGIN_ROOT` 参照も dual-root 形へ移行済み。skill 配下に残る bare は SKILL.md:126 の契約説明文 1 件 (起動行ではない)。",
-      "IN1 criterion の接地先が path 実在と実行の両方で裏取りできた。IN1 が指す validate-coverage-matrix.py と収集ゲートの validate-knowledge-graph.py は `plugins/system-spec-harness/scripts/` 直下に、bootstrap の apply-spec-transition.py は `plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/` 配下に実在し、`--input` のカタログは `skills/run-system-spec-elicit/references/required-info-catalog.json` に実在する。plugin 直下 scripts/ と skill 配下 scripts/ の使い分けが実配置と一致。`PLUGIN_ROOT` を設定して SKILL.md:186 / :193 / :184 の 3 行をそのまま実行し、それぞれ exit 0 / exit 0 / exit 1 (空 matrix に対する violation。usage/parse error の 2 ではない) を得た。",
-      "構造規範は round 2 から維持: frontmatter 必須キー充足、responsibility_refs 6 件 (SKILL.md:29-35) と責務表 6 行・responsibilities 6 件 (SKILL.md:47-62) の 1:1 対応、feedback_contract.criteria が IN1/OUT1/OUT2 の 3 件、runtime_root_policy 宣言と `## Runtime root contract` 節の対存在。`python3 scripts/lint-skill-tree.py plugins/system-spec-harness/skills/run-system-spec-elicit` は exit 0 / `ok`。",
-      "plugin 内の適用非対称も解消した。兄弟 skill run-system-spec-doc-fetch / run-system-spec-compile への同 grep はともに 0 件で、plugin 内で同一規約が一様に適用された状態になった。"
+      "構造規範は維持されている。frontmatter 必須キー充足、`responsibility_refs` 6 件 (SKILL.md:29-35) と責務表 6 行・`responsibilities` 6 件 (:46-64) の 1:1、`feedback_contract.criteria` は IN1/OUT1/OUT2 の 3 件で verify_by が script/test/live-trial に分かれる、`runtime_root_policy: host-skill-path` 宣言 (:109) と `## Runtime root contract` 節 (:123-129) の対存在、artifact_delivery 状態機械。今回の差分は criteria の text 2 件のみで、構造キーを壊していない。prompts の起動行も dual-root 形 (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`) を保ち、R5:30 は差分で `python3 \"...\"` の quote 付き起動へ揃った。",
+      "criteria が「実際に検証可能」という rubric 観点を満たす方向へ強化された。OUT1 は `--require-complete --require-basis --require-foundation` を最終条件に含め、IN1 は `--require-basis` と `ungrounded_blocking_items` 空を段階条件として明記する。両者を fixture へ実行して exit 0 を確認済みで、宣言と施行が一致する。前回指摘の「宣言した完了条件を検証する criterion が 1 つも無い」状態は解消した。",
+      "OUT1 の verify_by=test が実体を得た。`tests/test_spec_transition.py` に `test_OUT1_final_full_completion_condition_exit0` (三フラグ同時 exit 0) と `test_OUT1_final_grounds_all_blocking_required_info` (`--state` 実行 + `ungrounded_blocking_items == []` + `grounded == blocking` の集合一致) が追加され、criterion 文面と test の主張が 1 対 1 で対応する。resume 保存の再現 test も従来どおり残っている。",
+      "prompt 側の携帯性が上がった。R2-interview.md に writer `chunk` の turn 形状表 (id/question/answer・basis・required_info_items・provenance/answered_at) が入り、各行の主張が apply-spec-transition.py の実装 (`QA_BASIS_VALUES`:774、enum 外拒否:858、`_incoming_required_info_items`:777、`QA_PROVENANCE_KEYS`:768、`_require_past_rfc3339`) と照合できる。停止条件 5.3 にも `--require-basis` と `ungrounded_blocking_items` の 2 行が加わり、実行者が完了条件へ到達する手順を prompt だけで辿れる。",
+      "決定論ゲートの negative case が test で押さえられている。`test_c12_require_basis_closes_undeclared_loophole` / `test_block_item_without_any_qa_link_is_violation` / `test_qa_link_not_reachable_from_any_resolved_cell_is_not_grounding` / `test_main_state_flag_fails_on_ungrounded_block_item` などにより、fixture が偶然通っただけでないことを確認した。`test_exclusion_cell_also_grounds_its_required_info` は SKILL.md:186 が新たに明文化した「`対象外` も接地元に数える」設計と一致し、本文要約が実装より狭いという前回の low を解消している。"
     ],
     "negative_feedback": [
-      "[low / smell] prompts/R6-audit-hearing.md / R7-audit-matrix.md が responsibility_refs にも責務表にも現れない点は round 1 から不変で、lint-skill-tree.py が MED-4 で 2 件、LS-203 で tests/ と fixtures/ を規約外 top-level dir として Warn する (計 4 Warn、exit は 0)。plugin 全体の既存慣行に由来し今回の差分の産物ではないため PASS を妨げない残件として記録する。"
+      "[low / inconsistency] 本文の IN1 箇条書き (SKILL.md:184) は `--require-foundation` までで、frontmatter IN1 が加えた `--require-basis` に対応する記述が無い (収集ゲートの側は :186 の「収集ゲート (C16 / IN1 補完)」が受ける)。完了条件 :146・OUT1 :185・使い方 6 :198 には現れるため実害は小さいが、criteria が本文より広い状態は導出方向 (Checklist が上流・criteria が下流) の可読性を下げる。",
+      "[low / smell] `plugins/system-spec-harness/scripts/validate-spec-doc-sync.py` は test (9 件) を得たものの、SKILL.md / references / prompts / `deterministic_checks` / manifest からの起動元は依然ゼロ。本 skill の契約外のため rubric 判定は妨げない。",
+      "[low / 参考] R3-reask.md の入力契約 (2.3) は `answers | turns` のみで、R2 に追加した turn 形状 (basis / required_info_items) を継承していない。SSOT は `references/spec-state-contract.md`:78-91 にあり R3 は R2 を前段と明示しているため low。"
     ],
-    "iteration": 3,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行しておらず数値 score は算出していない。機械的に確認したのは構造規範相当の項目に限る — frontmatter 必須キー、responsibility_refs と責務表の 1:1、feedback_contract.criteria id 集合 (IN1/OUT1/OUT2)、runtime_root_policy 宣言と契約節の対存在、script/カタログ/agent 実配置 (`ls` で 6 経路)、bare `$CLAUDE_PLUGIN_ROOT` と cwd 相対起動行の grep 全数、`PLUGIN_ROOT` 設定下での実行 3 本、`python3 scripts/lint-skill-tree.py plugins/system-spec-harness/skills/run-system-spec-elicit` (exit 0 / `ok`、Warn 4 件)。lint-skill-tree.py は top-level dir と responsibility_refs 被覆を見るもので prompts/ 本文の起動行形式は検査しないため、exit 0 を規約適合の根拠にはしていない — 規約適合の根拠は grep 実測 (0 件) と実行結果である。 30 思考法は実施しておらず、実施も申告しない。 読んだもの: 既存 elegance/rubric verdict 2 本、`git status --porcelain` (対象 skill に untracked 新規ファイルなし)、`git diff HEAD` の全差分 10 ファイル (SKILL.md / prompts R0-R7 / references/spec-state-contract.md)、SKILL.md frontmatter と 120-200 行の現物。 判定: round 2 の medium 2 件はいずれも現物行と実行結果で解消を確認した。規約整合 (c) は達成、依存関係整合 (d) は移行先 6 経路の実在で裏取り済み、矛盾 (a)・漏れ (b) なし、high severity 0・未解決 medium 0。残るのは既存慣行由来の low 1 件のみのため PASS、human_review_required=false、next_action=none。"
+  "notes": "採点の扱いを正確に述べる: ref-skill-design-rubric の rule 群を機械実行しておらず数値 score は算出していない。30 思考法も実施しておらず、実施も申告しない。前回 verdict の結論は引き継がず独立に再判定した。 機械/実行で確認したのは以下に限る — frontmatter 必須キーと responsibility_refs↔責務表の 1:1、criteria id 集合 (IN1/OUT1/OUT2) と verify_by 写像、runtime_root_policy 宣言と契約節の対存在、SKILL.md/prompt が名指しする flag・key の実装実在 (validate-coverage-matrix.py の --require-basis:569-599 と _inference_only_findings:200-230、validate-knowledge-graph.py の --state:597 と grounded_required_info_items:219-231 と ungrounded_blocking_items:379-381、apply-spec-transition.py の QA_BASIS_VALUES/required_info_items/provenance 経路)、`shasum -a 256 SKILL.md` = 79c829284fce9de4d8204598319072c7debdccbbb705a334f34cf1eb3b92aedb (指示値と一致)、`python3 -m pytest plugins/system-spec-harness/ -q` = 490 passed、golden final への三フラグ同時実行 (exit 0) と `--profile required-info --state` (exit 0・ungrounded 空・grounded=blocking 6 件一致)、golden resume への `--require-basis` 単独 (exit 0)、prompts/references への basis|required_info_items|provenance|answered_at grep (R2 5 件 / R5 1 件)、validate-spec-doc-sync の参照元 grep (script 自身 + 新規 test のみ)。差分は `git diff origin/main...HEAD` に加え未 commit の `git diff HEAD` (10 ファイル) と未追跡 test 1 件も読んだ (今回の対処はそちらに存在するため)。 判定: (a) 矛盾 0 (SKILL.md R5 行/収集ゲート/R5 prompt が同一文面へ収束)、(b) 漏れ 0 (basis・required_info_items の記録手順が R2 turn 形状表と停止条件に存在し writer と一致)、(c) 規約整合 (停止条件の強化が criteria へ写像済み・残るのは本文 IN1 の語句抜け low)、(d) 依存関係整合の破断なし、(e) high 0・medium 0。未解決は low 3 件のため PASS、human_review_required=false、next_action=none。 OUT2 (verify_by=live-trial) は behavioral claim であり本静的レビューでは criterion 記述の整合のみを見た。実走の受け入れは Gate D (run-skill-live-trial) の実走証拠に依り、本 verdict を流用しないこと。"
 }

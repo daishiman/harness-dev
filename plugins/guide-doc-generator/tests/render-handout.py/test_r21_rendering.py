@@ -99,7 +99,10 @@ class R21AttributeTest(unittest.TestCase):
     def setUpClass(cls):
         cls._td = tempfile.TemporaryDirectory()
         cls.config = r21_config()
-        cls.result, cls.html, _ = H.render_html(cls._td.name, cls.config)
+        # 冒頭の箇条リストは既定で紙面に出ない (利用者指定 2026-09-08)。ここで見たいのは
+        # R21 の欄が「出すと決めたときに定義どおり描かれるか」なので、非表示の正本だけを外す。
+        cls.result, cls.html, _ = H.render_html(
+            cls._td.name, cls.config, env_extra=H.hero_lists_visible(cls._td.name))
         if cls.result.returncode != 0:
             raise AssertionError("R21 fixture の生成に失敗: %s" % cls.result.stderr)
 
@@ -185,7 +188,8 @@ class RememberPairTest(unittest.TestCase):
     def test_both_remember_fields_are_always_rendered_together(self):
         cfg = r21_config()
         with tempfile.TemporaryDirectory() as td:
-            res, html_text, _ = H.render_html(td, cfg)
+            res, html_text, _ = H.render_html(
+                td, cfg, env_extra=H.hero_lists_visible(td))
         self.assertEqual(0, res.returncode, res.stderr)
         self.assertTrue(H.field_elements(html_text, "must_remember"))
         self.assertTrue(H.field_elements(html_text, "no_need_to_remember"))
@@ -200,6 +204,13 @@ class RememberPairTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             clone_root = Path(td) / "plugin"
             shutil.copytree(H.PLUGIN_ROOT, clone_root, symlinks=True)
+            # 既定の非表示のままだと「改変しても欄が出ない」ので、見張りが何も
+            # 見張らない状態 (空振りの PASS) になる。写しの正本側で表示に戻す。
+            policy_path = clone_root / "config" / "handout-visual-policy.json"
+            policy = json.loads(policy_path.read_text(encoding="utf-8"))
+            policy["opening"]["hero_list_fields"]["hidden_by_default"] = []
+            policy_path.write_text(json.dumps(policy, ensure_ascii=False, indent=2) + "\n",
+                                   encoding="utf-8")
             script = clone_root / "scripts" / "render-handout.py"
             src = script.read_text(encoding="utf-8")
             self.assertIn("no_need_to_remember", src)

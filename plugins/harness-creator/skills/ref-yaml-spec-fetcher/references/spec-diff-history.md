@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-09-07T02:49:42Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -348,11 +348,14 @@
+ on v2.1.246 or later, Claude Code adds the new directory’s project skills.
+ Skills in nested
+ .claude/skills/
+-directories below your starting directory aren’t loaded at startup. They load the first time Claude reads or edits a file inside that subdirectory, and stay available for the rest of the session. For example, after Claude edits a file under
++directories below your starting directory don’t load at startup. They load the first time Claude reads or edits a file in the subdirectory that contains them, and stay available for the rest of the session. For example, after Claude edits a file under
+ packages/frontend/
+ , skills in
+ packages/frontend/.claude/skills/
+-become available. Until then, those skills don’t appear in autocomplete and can’t be invoked by name.
++become available. Until then, those skills don’t appear in autocomplete, and you can’t invoke them by name.
++To load a subdirectory’s skills before Claude reads or edits a file there, run
++/add-dir
++with that subdirectory’s path. This requires Claude Code v2.1.257 or later.
+ Files in
+ .claude/commands/
+ support the same
+@@ -1066,23 +1069,19 @@
+ already carried it.
+ In
+ non-interactive sessions
+-, Claude Code doesn’t reserve the names
++, the names
+ help
+ and
+ feedback
+-for their terminal-only built-in commands, so a plugin skill with one of those names keeps its bare command there. Claude Code still reserves the name of every other terminal-only built-in, such as
++aren’t reserved for their terminal-only built-in commands, so a plugin skill with one of those names keeps its bare command there. Every other terminal-only built-in’s name, such as
+ /login
+-, even though the command can’t run in those sessions. In those sessions Claude Code also skips a synced skill named
++, stays reserved even though the command can’t run in those sessions. A synced skill named
+ help
+ or
+ feedback
+-, because it
++is still skipped there, because Claude Code
+ skips a synced skill
+-whose name matches any built-in command whether or not that command can run. From v2.1.216 through v2.1.220,
+-help
+-and
+-feedback
+-were reserved too, so a plugin skill with one of those names was invocable only by its namespaced command in non-interactive sessions.
++whose name matches any built-in command whether or not that command can run.
+ For a plugin-root
+ SKILL.md
+ , there is no skill directory to take the name from, so
+@@ -1577,7 +1576,9 @@
+ , regardless of this setting.
+ How Claude Code handles the body of a synced skill
+ says what Claude receives in place of the command in each kind of session.
+-To request deeper reasoning when
++To request deeper reasoning when a skill runs, include
++ultrathink
++anywhere 
+ 
+ ## Source (settings): https://docs.claude.com/en/docs/claude-code/settings
+ 
+@@ -1963,6 +1964,8 @@
+ --effort
+ for
+ effortLevel
++and
++modelSettings
+ .
+ An environment variable
+ : export the key’s paired variable before you run
+@@ -1977,21 +1980,22 @@
+ lists its per-session overrides and which one takes precedence, so check the entry for the key you want to change.
+ Commands you run inside a session mostly save your choice:
+ /config
+-writes to your settings files, and
++writes to your settings files,
+ /model
+-and
++saves the value as your default for new sessions, and
+ /effort
+-save the value as your default for new sessions. Pressing
++on your machine saves the level as your default for the model you’re using.
+... (1733 more lines)
+```
+
 ## 2026-08-31T03:32:29Z
 
 実仕様ページに変更を検知。

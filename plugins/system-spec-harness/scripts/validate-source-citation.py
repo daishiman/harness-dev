@@ -164,6 +164,18 @@ def validate(targets_data: dict, refs_data: dict) -> list[str]:
     if missing:
         findings.append(f"対象 target_id の参照欠落: {missing}")
 
+    # 逆向き (references → targets) の孤児検出。
+    # 従来は targets→references の片方向しか見ておらず、取得対象から外れた (または最初から
+    # 対象一覧に無い) 出典記録が references に残っても検出できなかった。孤児参照は「取得
+    # 対象でないものを根拠として引いている」状態で、章がどの対象について語っているのかを
+    # 曖昧にする。対応は双方向で全単射であることを課す。
+    orphans = [t for t in by_id if t not in set(target_ids)]
+    if orphans:
+        findings.append(
+            f"取得対象一覧に無い出典記録 (孤児参照): {sorted(orphans)}。"
+            "targets へ加えるか references から取り下げること"
+        )
+
     return findings
 
 

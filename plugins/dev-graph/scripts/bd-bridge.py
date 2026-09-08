@@ -23,7 +23,7 @@ from typing import Any
 
 from _common import ContractError, dump, run
 
-MUTATIONS = {"create", "update", "dep-add", "close", "claim", "github-push", "gate-add"}
+MUTATIONS = {"create", "update", "dep-add", "close", "claim", "github-push", "gate-add", "reconcile-duplicates"}
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
 
 
@@ -138,11 +138,36 @@ def _external_ref(row: dict[str, Any]) -> str | None:
 
 def _find_external(root: Path, graph_node_id: str) -> dict[str, Any] | None:
     marker = f"dev-graph:{graph_node_id}"
-    rows = _rows(bd(["search", "--external-contains", marker, "--status", "all", "--json"], cwd=root, check=False))
+    # Beads 1.1 requires a positional/query term even when an external-ref
+    # filter is present.  A failed search must never be interpreted as a miss,
+    # otherwise a transient/contract error creates a duplicate issue.
+    rows = _rows(bd(["search", graph_node_id, "--external-contains", marker, "--status", "all", "--json"], cwd=root))
     exact = [row for row in rows if _external_ref(row) == graph_node_id]
     if len(exact) > 1:
         raise ContractError(f"duplicate beads external_ref for {graph_node_id}")
     return exact[0] if exact else None
+
+
+def _validate_bound_issue(
+    root: Path,
+    *,
+    issue_id: str,
+    graph_node_id: str,
+    issue_type: str,
+    parent: str | None,
+) -> dict[str, Any]:
+    existing = _issue(bd(["show", issue_id, "--json"], cwd=root), issue_id)
+    if _external_ref(existing) != graph_node_id:
+        raise ContractError(f"linked issue {issue_id} external_ref does not match {graph_node_id}")
+    actual_type = existing.get("issue_type") or existing.get("type")
+    if actual_type and actual_type != issue_type:
+        raise ContractError(f"linked issue {issue_id} has type {actual_type}, expected {issue_type}")
+    actual_parent = existing.get("parent") or existing.get("parent_id")
+    if parent is not None and str(actual_parent) != parent:
+        raise ContractError(f"linked issue {issue_id} belongs to a different epic")
+    if parent is None and actual_parent:
+        raise ContractError(f"linked epic {issue_id} unexpectedly has a parent")
+    return existing
 
 
 def _create_one(
@@ -153,8 +178,19 @@ def _create_one(
     description: str,
     issue_type: str,
     parent: str | None = None,
+    existing_issue_id: str | None = None,
 ) -> dict[str, Any]:
-    existing = _find_external(root, graph_node_id)
+    existing = (
+        _validate_bound_issue(
+            root,
+            issue_id=existing_issue_id,
+            graph_node_id=graph_node_id,
+            issue_type=issue_type,
+            parent=parent,
+        )
+        if existing_issue_id
+        else _find_external(root, graph_node_id)
+    )
     if existing:
         actual_type = existing.get("issue_type") or existing.get("type")
         if actual_type and actual_type != issue_type:
@@ -197,6 +233,12 @@ def _validate_projection(manifest: dict[str, Any]) -> tuple[dict[str, Any], list
         dependencies = row.get("depends_on", [])
         if not isinstance(dependencies, list) or any(dep not in id_set for dep in dependencies):
             raise ContractError("projection child dependency escapes the exact-13 package")
+    linkage_ids = [feature.get("bd_issue_id"), *[row.get("bd_issue_id") for row in children]]
+    linked_count = sum(isinstance(value, str) and bool(value) for value in linkage_ids)
+    if linked_count not in {0, 14}:
+        raise ContractError("projection Beads linkages must be absent or complete for feature + exact-13")
+    if linked_count == 14 and len(set(linkage_ids)) != 14:
+        raise ContractError("projection Beads linkages must be unique")
     return feature, children
 
 
@@ -210,6 +252,7 @@ def _package_projection(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         title=str(feature.get("title") or feature_id),
         description=str(feature.get("description") or "dev-graph feature projection"),
         issue_type="epic",
+        existing_issue_id=feature.get("bd_issue_id"),
     )
     projected: list[dict[str, Any]] = []
     issue_ids: dict[str, str] = {}
@@ -221,6 +264,7 @@ def _package_projection(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
             description=str(row.get("description") or f"dev-graph {row['phase_ref']} projection"),
             issue_type="task",
             parent=str(epic["id"]),
+            existing_issue_id=row.get("bd_issue_id"),
         )
         projected_row["phase_ref"] = row["phase_ref"]
         projected.append(projected_row)
@@ -254,6 +298,176 @@ def _package_projection(root: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         "phase_refs": PHASES,
         "expected_count": 13,
         "applied_count": len(projected),
+    }
+
+
+def _validate_duplicate_manifest(
+    manifest: dict[str, Any],
+    feature: dict[str, Any],
+    children: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    if manifest.get("schema_version") != "1.0.0" or manifest.get("feature_id") != feature["graph_node_id"]:
+        raise ContractError("duplicate manifest identity/version mismatch")
+    rows = manifest.get("nodes")
+    if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+        raise ContractError("duplicate manifest nodes must be an array of objects")
+    expected_ids = [feature["graph_node_id"], *[row["graph_node_id"] for row in children]]
+    if [row.get("graph_node_id") for row in rows] != expected_ids:
+        raise ContractError("duplicate manifest must contain ordered feature + P01..P13 exact-set")
+    canonical_by_graph = {
+        feature["graph_node_id"]: feature.get("bd_issue_id"),
+        **{row["graph_node_id"]: row.get("bd_issue_id") for row in children},
+    }
+    normalized: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        graph_node_id = row.get("graph_node_id")
+        canonical_id = row.get("canonical_bd_issue_id")
+        duplicate_id = row.get("duplicate_bd_issue_id")
+        if not all(isinstance(value, str) and value for value in (graph_node_id, canonical_id, duplicate_id)):
+            raise ContractError("duplicate manifest identities must be non-empty strings")
+        if canonical_id != canonical_by_graph.get(graph_node_id):
+            raise ContractError(f"duplicate manifest canonical linkage mismatch: {graph_node_id}")
+        if canonical_id == duplicate_id or duplicate_id in seen:
+            raise ContractError("duplicate manifest issue identities must be distinct")
+        seen.add(duplicate_id)
+        normalized.append({
+            "graph_node_id": graph_node_id,
+            "canonical_bd_issue_id": canonical_id,
+            "duplicate_bd_issue_id": duplicate_id,
+        })
+    return normalized
+
+
+def _reconcile_duplicates(
+    root: Path,
+    projection: dict[str, Any],
+    duplicate_manifest: dict[str, Any],
+    *,
+    dry_run: bool,
+) -> dict[str, Any]:
+    feature, children = _validate_projection(projection)
+    if not feature.get("bd_issue_id"):
+        raise ContractError("duplicate reconciliation requires complete canonical Beads linkages")
+    rows = _validate_duplicate_manifest(duplicate_manifest, feature, children)
+    canonical_epic = str(feature["bd_issue_id"])
+    duplicate_epic = rows[0]["duplicate_bd_issue_id"]
+    child_ids = {row["graph_node_id"] for row in children}
+    child_by_graph = {row["graph_node_id"]: row for row in children}
+    canonical_by_graph = {row["graph_node_id"]: row["canonical_bd_issue_id"] for row in rows}
+    duplicate_by_graph = {row["graph_node_id"]: row["duplicate_bd_issue_id"] for row in rows}
+
+    def verify_edges(
+        issue: dict[str, Any],
+        *,
+        expected_blocks: set[str],
+        expected_dependent_count: int,
+        label: str,
+    ) -> None:
+        actual_blocks = _dependency_ids(issue)
+        if actual_blocks != expected_blocks:
+            raise ContractError(
+                f"{label} blocks parity mismatch: expected={sorted(expected_blocks)}, actual={sorted(actual_blocks)}"
+            )
+        actual_dependent_count = issue.get("dependent_count")
+        if actual_dependent_count != expected_dependent_count:
+            raise ContractError(
+                f"{label} dependent count mismatch: expected={expected_dependent_count}, actual={actual_dependent_count}"
+            )
+
+    current_duplicates: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        graph_node_id = row["graph_node_id"]
+        issue_type = "task" if graph_node_id in child_ids else "epic"
+        canonical_parent = canonical_epic if issue_type == "task" else None
+        duplicate_parent = duplicate_epic if issue_type == "task" else None
+        canonical = _validate_bound_issue(
+            root,
+            issue_id=row["canonical_bd_issue_id"],
+            graph_node_id=graph_node_id,
+            issue_type=issue_type,
+            parent=canonical_parent,
+        )
+        duplicate = _issue(
+            bd(["show", row["duplicate_bd_issue_id"], "--json"], cwd=root),
+            row["duplicate_bd_issue_id"],
+        )
+        actual_type = duplicate.get("issue_type") or duplicate.get("type")
+        actual_parent = duplicate.get("parent") or duplicate.get("parent_id")
+        if actual_type and actual_type != issue_type:
+            raise ContractError(f"duplicate issue type mismatch: {row['duplicate_bd_issue_id']}")
+        if duplicate_parent is not None and str(actual_parent) != duplicate_parent:
+            raise ContractError(f"duplicate issue parent mismatch: {row['duplicate_bd_issue_id']}")
+        if duplicate_parent is None and actual_parent:
+            raise ContractError(f"duplicate epic unexpectedly has a parent: {row['duplicate_bd_issue_id']}")
+        expected_live_ref = f"dev-graph:{graph_node_id}"
+        expected_tombstone_ref = f"dev-graph-tombstone:{graph_node_id}:{row['duplicate_bd_issue_id']}"
+        actual_ref = duplicate.get("external_ref") or duplicate.get("externalRef")
+        if actual_ref not in {expected_live_ref, expected_tombstone_ref}:
+            raise ContractError(f"duplicate issue external_ref mismatch: {row['duplicate_bd_issue_id']}")
+        graph_dependencies = child_by_graph.get(graph_node_id, {}).get("depends_on", [])
+        dependent_count = (
+            len(children)
+            if graph_node_id == feature["graph_node_id"]
+            else sum(graph_node_id in child.get("depends_on", []) for child in children)
+        )
+        verify_edges(
+            canonical,
+            expected_blocks={canonical_by_graph[dependency] for dependency in graph_dependencies},
+            expected_dependent_count=dependent_count,
+            label=f"canonical {row['canonical_bd_issue_id']}",
+        )
+        verify_edges(
+            duplicate,
+            expected_blocks={duplicate_by_graph[dependency] for dependency in graph_dependencies},
+            expected_dependent_count=dependent_count,
+            label=f"duplicate {row['duplicate_bd_issue_id']}",
+        )
+        current_duplicates[graph_node_id] = duplicate
+
+    results: list[dict[str, Any]] = []
+    # Children are tombstoned before their accidental epic so no open child is orphaned.
+    for row in [*reversed(rows[1:]), rows[0]]:
+        graph_node_id = row["graph_node_id"]
+        duplicate_id = row["duplicate_bd_issue_id"]
+        duplicate = current_duplicates[graph_node_id]
+        tombstone_ref = f"dev-graph-tombstone:{graph_node_id}:{duplicate_id}"
+        actual_ref = duplicate.get("external_ref") or duplicate.get("externalRef")
+        idempotent = actual_ref == tombstone_ref and duplicate.get("status") == "closed"
+        if not dry_run and not idempotent:
+            bd(
+                [
+                    "update", duplicate_id,
+                    "--external-ref", tombstone_ref,
+                    "--status", "closed",
+                    "--append-notes", "Tombstoned by dev-graph duplicate reconciliation; canonical linkage preserved.",
+                    "--json",
+                ],
+                cwd=root,
+            )
+            verified = _issue(bd(["show", duplicate_id, "--json"], cwd=root), duplicate_id)
+            verified_ref = verified.get("external_ref") or verified.get("externalRef")
+            if verified_ref != tombstone_ref or verified.get("status") != "closed":
+                raise ContractError(f"duplicate tombstone verification failed: {duplicate_id}")
+        results.append({
+            "graph_node_id": graph_node_id,
+            "duplicate_bd_issue_id": duplicate_id,
+            "tombstone_external_ref": tombstone_ref,
+            "idempotent": idempotent,
+            "would_change": not idempotent,
+        })
+    changed_count = sum(not row["idempotent"] for row in results)
+    return {
+        "status": "preview" if dry_run else "reconciled",
+        "feature_id": feature["graph_node_id"],
+        "canonical_epic": canonical_epic,
+        "duplicate_epic": duplicate_epic,
+        "expected_count": 14,
+        "examined_count": len(results),
+        "changed_count": changed_count,
+        "idempotent": changed_count == 0,
+        "write_count": 0 if dry_run else changed_count,
+        "nodes": results,
     }
 
 
@@ -313,12 +527,19 @@ def _verify_feature_rollup(manifest: dict[str, Any], issue_id: str) -> dict[str,
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check"))
+    p = argparse.ArgumentParser(); p.add_argument("--op", required=True, choices=("create", "update", "dep-add", "close", "ready", "show", "claim", "github-push", "gate-add", "gate-check", "reconcile-duplicates"))
     p.add_argument("--repo-root", default="."); p.add_argument("--graph-node-id"); p.add_argument("--bd-issue-id"); p.add_argument("--depends-on"); p.add_argument("--expected-depends-on", action="append", default=[]); p.add_argument("--expected-status"); p.add_argument("--expected-workspace-id"); p.add_argument("--verify-parity", action="store_true"); p.add_argument("--title"); p.add_argument("--description"); p.add_argument("--status"); p.add_argument("--reason"); p.add_argument("--pr", type=int); p.add_argument("--dry-run", action="store_true")
-    p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
+    p.add_argument("--parity-manifest"); p.add_argument("--projection-manifest"); p.add_argument("--duplicate-manifest"); p.add_argument("--feature-rollup-manifest"); p.add_argument("--artifact-kind", choices=("feature", "task"))
     a = p.parse_args(); root = Path(a.repo_root).resolve(strict=True)
     pf = preflight(root, a.expected_workspace_id) if a.expected_workspace_id else preflight(root)
     if a.dry_run and a.op in MUTATIONS:
+        if a.op == "reconcile-duplicates":
+            projection = _load_manifest(a.projection_manifest, root, label="projection")
+            duplicates = _load_manifest(a.duplicate_manifest, root, label="duplicate")
+            if projection is None or duplicates is None:
+                raise ContractError("reconcile-duplicates requires projection and duplicate manifests")
+            result = _reconcile_duplicates(root, projection, duplicates, dry_run=True)
+            dump({"op": a.op, "dry_run_preview": result, **pf}); return 0
         preview: dict[str, Any] = {k: v for k, v in vars(a).items() if v is not None and k != "dry_run"}
         if a.op == "create" and a.projection_manifest:
             feature, children = _validate_projection(_load_manifest(a.projection_manifest, root, label="projection") or {})
@@ -342,6 +563,12 @@ def main() -> int:
         else:
             if not a.graph_node_id or not a.title: raise ContractError("create requires --graph-node-id and --title")
             result = _create_one(root, graph_node_id=a.graph_node_id, title=a.title, description=a.description or "", issue_type="epic" if a.artifact_kind == "feature" else "task")
+    elif a.op == "reconcile-duplicates":
+        projection = _load_manifest(a.projection_manifest, root, label="projection")
+        duplicates = _load_manifest(a.duplicate_manifest, root, label="duplicate")
+        if projection is None or duplicates is None:
+            raise ContractError("reconcile-duplicates requires projection and duplicate manifests")
+        result = _reconcile_duplicates(root, projection, duplicates, dry_run=False)
     elif a.op in {"update", "close", "claim", "show"}:
         if not issue: raise ContractError(f"{a.op} requires --bd-issue-id")
         shown = bd(["show", issue, "--json"], cwd=root)

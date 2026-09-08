@@ -3,7 +3,7 @@ name: run-ubm-goal-setting
 description: 週報・月報・期報の目標設定をしたいとき、振り返り対話を北原さん式の統一ハイブリッド構造で作成したいときに使う。
 disable-model-invocation: true
 user-invocable: true
-argument-hint: "[weekly|monthly|bimonthly]"
+argument-hint: "[weekly|monthly|quarterly]"
 arguments: [type]
 allowed-tools:
   - Read
@@ -68,7 +68,7 @@ feedback_contract:
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を検証し違反0件であることを確認する。
+      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、--type と本文タイトル見出しラベルの一致(不一致は rc=1 で FAIL となる停止条件)を検証し違反0件であることを確認する。
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -136,7 +136,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 # run-ubm-goal-setting
 
-UBM（北原さん式ゴールセッティング）の目標設定（週報=1週間 / 月報=1ヶ月 / 期報=2ヶ月）を高速対話で作成し、「行動を促し→実行し→成果を出す」サイクルを支援する。思考法駆動＋「愛情ある厳しさ」で本質を突き、即行動可能な計画を設計する。
+UBM（北原さん式ゴールセッティング）の目標設定（週報=1週間 / 月報=1ヶ月 / 期報=3ヶ月）を高速対話で作成し、「行動を促し→実行し→成果を出す」サイクルを支援する。思考法駆動＋「愛情ある厳しさ」で本質を突き、即行動可能な計画を設計する。
 
 ## Purpose & Output Contract
 
@@ -177,7 +177,7 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 Anchor Step の検証は `required_keys = {"iteration","original_goal","current_goal_snapshot","delta_from_original","merged_directive_for_next","drift_signal"}` を満たす全 JSONL 行を対象にする。初回に `hashlib.sha256(original_goal)` を `original_goal_hash` として progress へ固定し、以後の周回で `original_goal` が変化していないことを照合する。
 
-- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|bimonthly>` を実行。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。
+- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、**`--type` と本文タイトル見出しラベルの一致**（不一致は rc=1 で FAIL。種別の取り違えを止める停止条件）を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を WARN で併せて報告する（任意・rc には影響しない）。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
 - **behavioral acceptance (OUT2)**: 静的 content-review とは分離し、`run-skill-live-trial` で AskUserQuestion gate → Phase3 対話 → Phase5 検証 → Phase6 Daily.md embed 更新と目標設定ファイル実生成までを実走証拠として確認する。
 
@@ -195,9 +195,10 @@ Anchor Step の検証は `required_keys = {"iteration","original_goal","current_
 
 ## Gotchas
 
-- **出力ファイル命名**: 週報 `UBM - 1-週報 - {期間}.md` / 月報 `UBM - 2-月報（１ヶ月） - {期間}.md` / 期報 `UBM - 3-月報（２ヶ月） - {期間}.md`（`{期間}` は `YYYY-MM-DD〜YYYY-MM-DD`）。
+- **出力ファイル命名**: 週報 `UBM - 1-週報 - {期間}.md` / 月報 `UBM - 2-月報（１ヶ月） - {期間}.md` / 期報 `UBM - 3-月報（３ヶ月） - {期間}.md`（`{期間}` は `YYYY-MM-DD〜YYYY-MM-DD`）。旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` は読み取り・過去参照では受理し続ける（新規作成では使わない）。
+- **期報の期間**: UBM の目標期間は月の最終月曜日起点。期報は対象3ヶ月分の月報期間の連結で、開始日=1ヶ月目の月報開始日 / 終了日=3ヶ月目の月報終了日（例: 7月・8月・9月分 → `2026-06-29〜2026-09-27`）。期報は月報3件をロールアップして作る。
 - **保存先**: `$UBM_VAULT_ROOT/05_Project/UBM/目標設定/` のみ（`UBM_VAULT_ROOT` 未設定時は self-relative 解決）。
-- **Daily.md 更新（Phase6）**: `$UBM_VAULT_ROOT/02_Configs/Templates/Daily.md` の該当 embed 行のみ正規表現で検出・置換し、他部分は一切変更しない。サマリー見出し（`【1週間の目標】`/`【1ヶ月の目標】`/`【2ヶ月の目標】`）は継続語彙で凍結（今週/今月/今期へ改名しない）。
+- **Daily.md 更新（Phase6）**: `$UBM_VAULT_ROOT/02_Configs/Templates/Daily.md` の該当 embed 行のみ正規表現で検出・置換し、他部分は一切変更しない。サマリー見出し（`【1週間の目標】`/`【1ヶ月の目標】`/`【3ヶ月の目標】`）は継続語彙で凍結（今週/今月/今期へ改名しない）。
 - **期報の正本**: `references/output-formats.md` の静的規則を A1 優先で正本化し、動的学習はスタイル参照に限定（見出し集合を上書きしない）。
 - **書き込み保護**: `ubm-write-path-guard` hook が `UBM_VAULT_ROOT` 配下の禁止パスへの Write|Edit|MultiEdit を fail-closed で阻む。許可は目標設定/ 保存と Daily.md embed 更新のみ。vault 外の plugin 同梱 data は保護対象外。
 

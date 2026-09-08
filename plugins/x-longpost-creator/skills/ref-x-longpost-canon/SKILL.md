@@ -55,7 +55,7 @@ runtime_root_policy: host-skill-path
 | **禁止表現リスト（タイトル）** | `references/title-guidelines.md` §3.3.1 | `prompts/x-longpost-create-title.md` §9 |
 | **禁止表現リスト（本文）** | `references/title-guidelines.md` §3.3.2 | `prompts/x-longpost-apply-style-genome.md` §4.5、`prompts/x-longpost-optimize-length.md` §4.3.1、各 SKILL.md |
 | **タイトル構文パターンA〜H・字数配分・心理トリガー** | `references/title-guidelines.md` | `prompts/x-longpost-create-title.md` |
-| **見出し構造の絶対ルール R1/R2・4箇所一致・A/B本文同値・Bの1文1行・check ID H1〜H10 / F1〜F5** | `skills/run-x-longpost-create/references/heading-structure-rules.md` | `prompts/x-longpost-optimize-length.md`、`prompts/x-longpost-output-file.md`、`skills/run-x-longpost-create/SKILL.md` |
+| **見出し構造の絶対ルール R1/R2/R3・4箇所一致・A/B本文同値・Bの改行と `【】` 見出し・check ID H1〜H10 / F1〜F6** | `skills/run-x-longpost-create/references/heading-structure-rules.md` | `prompts/x-longpost-optimize-length.md`、`prompts/x-longpost-output-file.md`、`skills/run-x-longpost-create/SKILL.md` |
 | **スタイルゲノム 8レベル（L1〜L8）の詳細** | `references/style-genome.md` | `skills/run-x-longpost-create/SKILL.md`（索引表のみ）、`prompts/x-longpost-apply-style-genome.md`、`prompts/x-longpost-short-post-optimizer.md` §5 Phase 4、`prompts/x-longpost-create-multi-posts.md` §5.3 |
 | **AI臭6分類 + 崩し3技法** | `references/anti-ai-writing-guide.md` | `prompts/x-longpost-apply-style-genome.md`、`prompts/x-longpost-optimize-length.md`、`prompts/x-longpost-short-post-optimizer.md`、`prompts/x-longpost-create-multi-posts.md` §5.4、`skills/run-x-longpost-create/references/optimize-length-details.md` §2 |
 | **AI文章編集4原則（中村昌弘）** | `skills/run-x-longpost-create/references/optimize-length-details.md` §1 | `prompts/x-longpost-apply-style-genome.md`（①②主担当）、`prompts/x-longpost-optimize-length.md`（③④主担当） |
@@ -110,7 +110,8 @@ U+2705 と `✓`（U+2713）は見た目が近いが、Extended_Pictographic に
 | 1行の目安幅（文脈改行） | 30〜40字程度（文字数ぴったりでは切らない） | — |
 | 絵文字 | **0個**（例外なし） | `check-no-emoji.js --file <path>` |
 | 長文 A/B の本文同値 | Markdown 見出し・先頭タイトル・空白・改行を表示差として除いた本文が同一 | `validate-headings.js --file <path>`（F4） |
-| 長文 B の改行 | 非空本文行が1行につきちょうど1文 | `validate-headings.js --file <path>`（F5） |
+| 長文 B の改行 | 非空本文行に2文以上を詰めない（`【…】` 見出し行は対象外） | `validate-headings.js --file <path>`（F5） |
+| 長文 B の見出し | `【見出し文言】` の単独1行で、Aの見出し2と文言・順序が一致（先頭タイトル行と本文行は囲まない） | `validate-headings.js --file <path>`（F6） |
 
 ---
 

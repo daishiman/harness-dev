@@ -210,6 +210,23 @@
       },
       "what_replaced": "p.hero-purpose / p.hero-background / p.hero-goal の散文 3 行。ラベルが行頭の inline span だったため、3 行が 1 つの段落の塊に見えていた"
     },
+    "hero_list_fields": {
+      "note": "冒頭カードの下へ縦に積まれる箇条リストのうち、既定で紙面に描かないものの名簿。非表示の単一正本はこの hidden_by_default であり、script (C11 描画 / C12 総量計上 / C20 復元) は非表示名簿を自前の定数で持たない",
+      "why": "利用者指定 2026-09-08『扱うテーマ・対象業務・到達段階・覚えておくこと・覚えなくてよいことは毎回削除。表示するのはゴール・目的・背景・達成目標のみ』。冒頭は読み手が『自分に関係があるか』を決める場所であり、一覧が積み上がるほどその判断が遅れる。判断に要らない欄を既定で下ろす",
+      "hidden_by_default": [
+        "focus_theme",
+        "target_tasks",
+        "attainment_level",
+        "prerequisite_connectors",
+        "must_remember",
+        "no_need_to_remember"
+      ],
+      "still_rendered": "title / lead / 冒頭カード (goal / purpose / background) / goal_chips。goal_chips は『読み終えたときの到達形』であり、関係があるかの判断に直接効くため残す",
+      "how_to_show_again": "この hidden_by_default から欄名を外す。構成データ側 (handout-config.schema.json#hero_hidden_fields) は追加の非表示宣言であり、そこを空にしても既定の非表示は解除されない",
+      "effective_rule": "実効の非表示集合 = hidden_by_default ∪ 構成データの hero_hidden_fields",
+      "values_are_kept": "隠すのは紙面だけで、構成データからは消さない。消すと E-SECTION-UNTIED-TASK / E-ATTAINMENT-UNREACHED などの整合検査が効かなくなり、『紙面に出さない』と『関係を切る』が同じ操作になってしまう",
+      "read_by": "C11 render-handout.py (hero_hidden_by_default / build_hero・root へ data-hb-hero-hidden と data-hb-hero-hidden-data を刻む) / C12 validate-handout-config.py (opening.hero_total の計上対象から外す) / C20 extract-handout-config.py (欠落として数えず、値は root 属性から戻す)"
+    },
     "hero_fields": {
       "note": "文書直下の目的・背景・ゴール。C11 が hero へカードとして描画するため、長いとそのままカードの中の散文の塊になる",
       "code": "W-HERO-LONG",

@@ -25,9 +25,9 @@
       "<platform_id>": {"state": "未収集"}
     }
   },
-  "qa_log": [{"id": "qa-001", "question": "...", "answer": "..."}],
+  "qa_log": [{"id": "qa-001", "question": "...", "answer": "...", "provenance": "AskUserQuestion / 選択肢提示あり", "answered_at": "2026-09-04T21:20:00Z"}],
   "approval_log": [{"id": "appr-001", "note": "..."}],
-  "reopen_log": [{"category": "database", "platform": "web", "reason": "...", "from": "確定"}],
+  "reopen_log": [{"category": "database", "platform": "web", "reason": "...", "from": "確定", "reopened_at": "2026-09-05T00:31:44Z"}],
   "category_aggregate": {"<category_id>": "確定|収集中|未着手|対象外"},
   "targets": [{"target_id": "react"}],
   "requirements_foundation": {
@@ -54,8 +54,55 @@
 | state | 付帯 | 意味 |
 |---|---|---|
 | `未収集` | なし | 未ヒアリング。最終時は0にする。 |
-| `対象外` | `reason` か `approval_ref` | 当該カテゴリ×platform は対象外 (理由必須)。 |
+| `対象外` | `reason` か `approval_ref` (+ 任意 `qa_ref`) | 当該カテゴリ×platform は対象外 (理由必須)。 |
 | `確定` | `qa_ref` (qa_log 参照) | 要件が確定。質疑ログ entry を参照。 |
+
+`対象外` の `reason` には**そのカテゴリ固有の帰結**を書く。除外の共通根拠 (例: 対象 platform は
+web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す。byte 同一の理由文を複数
+カテゴリへ複製すると `validate-coverage-matrix.py` が違反として検出する — 共通根拠の複製で
+一律に埋めた状態は、検討済みと未検討が見分けられないため。
+
+`対象外` セルにも任意で `qa_ref` を付けられる。除外は未検討ではなく**収集した結論**の一種で
+あり、どの質疑で外したのかを機械で辿れるようにするための項目である。`apply_turn` は `confirm`
+と同じく turn の `qa_id` を `exclude` op へ補完する。
+
+## qa_log entry の項目
+
+| 項目 | 必須 | 意味 |
+|---|---|---|
+| `id` | 必須 | 質疑 entry の識別子。確定セルの `qa_ref` / `qa_refs` の参照先。 |
+| `question` | 必須 | 問いの逐語。登録後は書換不可。 |
+| `answer` | 必須 | 回答の逐語。登録後は書換不可。 |
+| `provenance` | 任意 | その回答の出所 (例: `AskUserQuestion / 選択肢提示あり`、`既存コードの読解`)。出所不明の回答が確定根拠になるのを防ぐ。 |
+| `answered_at` | 任意 | 回答時刻 (RFC3339・未来不可)。実測値のみ。 |
+| `required_info_items` | 任意 | この回答が満たす `required-info-catalog.json` の `item_id` 配列。追記のみ (和集合)。 |
+| `basis` | 任意 | 回答の性質。`user-decision` / `observed-fact` / `agent-inference` のいずれか。 |
+
+`basis` は「その確定が誰の判断か」を機械可読にする。`user-decision` は利用者が代替案を見た上で
+明示選択したもの、`observed-fact` はコード・設定・公式ドキュメントで検証できる観測事実、
+`agent-inference` はアシスタントの推定 (利用者確認も検証可能な出典も経ていない) を指す。
+推定は仕様と矛盾しないため、これを宣言しない限りどの決定論ゲートにも掛からない。
+`validate-coverage-matrix.py` は、確定セルの根拠が `agent-inference` だけの場合を既定で違反とし、
+`--require-basis` を付けると確定セルの根拠に `basis` 宣言そのものを要求する
+(既存 state への一斉 backfill を強いないため opt-in)。
+
+`required_info_items` は「必須情報が確定へ接地しているか」を決定論で検査するための機械可読な
+紐付けである。`validate-knowledge-graph.py --profile required-info --state <spec-state.json>` が
+**確定セル → `qa_ref`/`qa_refs` → qa entry → `required_info_items`** の鎖を辿り、
+`missing_effect=block` の item が全て接地していることを検証する。qa entry に item_id を書いた
+だけで、どの確定セルからも参照されていない回答は接地の証拠として数えない。
+
+`question` / `answer` の事後書換は writer が拒否する (記録の改竄防止)。訂正が要る場合は新しい
+`id` を発行する。`provenance` / `answered_at` は**未設定のときに限り**後から追記でき、既に値が
+ある項目の上書きは拒否される (追記は冪等)。C03 compile はこれらを章の「確定内容 (質疑録)」節へ
+併記する。
+
+## 時刻項目の検証 (書式 + 単調性)
+
+`recommendation.latest_checked_at` / `user_decision.confirmed_at` / `answered_at` は RFC3339 の
+**書式**に加えて「未来でないこと」を writer が課す (時計ずれ許容 300 秒)。書式だけを見る検査は
+「書式の正しい嘘」— まだ行っていない照合や採択を済んだものとして書いた値 — を素通りさせるため。
+値は `date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を使う。
 
 ## category_aggregate 真理値表 (4値・導出のみ)
 
@@ -119,12 +166,23 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scr
 
 ユーザーが決めきれない論点を、2-3件の無料/低コスト候補を含む比較、最新一次情報に基づくAI推奨、ユーザー確認へ分離して記録する。AI推奨だけで `confirmed` にしてはならない。
 
+**何を `decisions[]` へ載せるか (登録基準)**。載せるのは **R5 が選択肢を組み立てた論点**、すなわち
+公式一次情報に接地した 2-3 件の候補・コスト構造・5軸の比較を伴う技術選定に限る。利用者の
+明示選択であっても、候補の組み立てを伴わない論点 (業務規則の確認、画面の置き場所、表示範囲の
+決定など) は `decisions[]` に入らず、**`qa_log` entry の `basis: user-decision`** として記録する。
+両者は根拠の重さが違うのではなく、**残すべき証跡の形が違う** — 前者は「なぜ他案を採らなかったか」
+が後から検算できる必要があり、後者は「利用者が何と答えたか」の逐語が正本になる。
+`options` / `comparison_basis` を持たない決定を体裁のために `decisions[]` へ入れると、比較して
+いない軸を比較したかのように書くことになるため、writer はこれを必須項目の欠落として拒否する。
+したがって `decisions[]` と `basis: user-decision` の件数が一致しないのは**設計上の非対称**であり、
+接地の網羅は `decisions[]` の件数ではなく `required_info_items` の接地検査で担保する。
+
 - `status`: `needs_guidance` / `recommended_pending_confirmation` / `confirmed`。
 - `options`: 2-3件で、最低1件は `cost_model.category=free|low-cost`。各要素は `id` / `label` / `cost_model` / `free_tier_limits` / `goal_fit` / `security_fit` / `pros` / `cons` / `risks` / `lock_in` / `ops_burden` / `evidence_refs` を持つ。`evidence_refs` は公式 `https` URL の非空配列。
 - `cost_model`: `category` (`free|low-cost|paid|unknown`) / `amount` (free=0、low-cost/paid=正数、unknownのみnull可) / `currency` / `billing_period` / `tco` を持つ。ライセンス料金だけでなく構築・運用・移行・撤退費を `tco` に明示する。
 - `recommendation`: 推奨を提示した状態では `option_id` / `rationale` / `comparison_basis` / `caveats` / `confidence` / `latest_checked_at` が必須。`comparison_basis` は `goal_fit` / `tco` / `security` / `operations` / `lock_in` の全軸を持つ。`caveats` は非空配列、`latest_checked_at` は RFC3339、`option_id` は options 内を指す。
 - `serves_goals`: 非空で実在する U3 goal id を指す。
-- `user_decision`: `confirmed` のときだけ必須。`{"option_id":"...","confirmed_at":"<RFC3339>"[,"note":"..."]}`。AI推奨 (`recommended_pending_confirmation`) はユーザー確認ではない。
+- `user_decision`: `confirmed` のときだけ必須。`{"option_id":"...","confirmed_at":"<RFC3339>"[,"note":"..."]}`。AI推奨 (`recommended_pending_confirmation`) はユーザー確認ではない。`confirmed_at` は**選択が行われた実測時刻**を書く。実測できず記録の書込時刻しか手元に無い場合は、それが選択時刻そのものではなく**上限値**であることを `note` に明記する。RFC3339 検査は書式しか見ないため、書式の正しい推定値は全ゲートを素通りする。
 
 ```json
 {
@@ -200,10 +258,29 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scr
 `scripts/apply-spec-transition.py` のみが matrix / logs / aggregate / hearing_progress / targets / requirements_foundation を書き換える。
 
 - **確定巻き戻し拒否**: `確定` セルへの `confirm` / `exclude` は `TransitionError`。Bash/script 経由でも拒否。
-- **R4-reopen 経由のみ確定変更**: `確定` を動かせるのは `reopen` (要 reason) だけ。`未収集` へ戻し `reopen_log` に根拠を残す。
+- **R4-reopen 経由のみ確定変更**: `確定` を動かせるのは `reopen` (要 `reason` と `reopened_at`) だけ。`未収集` へ戻し `reopen_log` に根拠を残す。
+  `reopened_at` は他の時刻と同じく**呼び出し側の実測値** (`date -u +%Y-%m-%dT%H:%M:%SZ`) を要求し、未来値は拒否する
+  (writer が `now()` で埋めると書込時刻が実施時刻を騙るため)。reopen は確定を巻き戻せる唯一の経路であり、
+  時刻が無いと「差し替え後の主根拠がこの reopen より後に取り直された回答か」を検査できず、
+  先に確定を壊してから既存の回答を主根拠に流用した場合と、正当に取り直した場合が同じ見た目になる。
+  時刻を欠く既存 entry の `reopened_at` は**遡って埋めない**。`reopen_log` entry の**既存フィールドを書き換える op は置かない** — reopen は確定を巻き戻せる唯一の経路であり、その記録自体を後から書き換えられる経路を作ると「確定を壊した事実」ごと消せてしまう。
+- **`add-reopen-correction` (追記専用)**: 欠測時刻は `reopen_log[].corrections[]` (`{recovered_at, note, observed_reopened_at?}`) への**追記**で回復する。
+  `qa_log` が `question`/`answer` を凍結したまま `corrections[]` への追記だけを許すのと同型で、既存キー (`category` / `platform` / `reason` / `from` / `reopened_at`) は不可侵。
+  entry に id が無いため `index` で指すが、`match_category` / `match_platform` の照合を必須にして番号だけの指定は受け付けない (取り違えると別の reopen へ他人の時刻が付き、まさにこの記録が防ごうとしている汚染になる)。
+  復元値は `reopened_at` へは書かず `observed_reopened_at` として補記側にのみ置く。両者は**意味が違う** — 前者は reopen 直前に測った実測値、後者は writer への適用が完了し state へ反映された時刻で、数十秒の範囲で上界寄りの近似である
+  (精度は時刻を持つ entry で検算できる: `reopened_at=2026-09-05T02:03:58Z` に対し同手続きの返す反映時刻は `02:04:18Z`、差は約 20 秒)。
+  この条項は 2 度の誤りを経て今の形になった。**誤った論拠も消さずに残す** — 正しい結論だけを置くと、なぜこの区別が要るのかが後から読めなくなるからである。
+  1 回目「時刻が実測できないから埋めない」は端的に**偽**だった (reopen の適用はトランスクリプトに時刻付きで残っており、探せば読める)。
+  2 回目「既存 entry を書き換える op を置かないため埋めない」は結論こそ維持すべきだが、**禁止対象を取り違えていた** — 守るべきは既存フィールドの改変であって、新しいフィールドの追記ではない。
+  `append-only` の下では「訂正 (既存事実の修正)」と「補記 (新しい事実の追加)」は別物であり、後者は改竄経路にならない (独立ヒアリング監査 2026-09-05 の指摘)。
 - **goal-seek chunk**: `chunk` は 1 invocation で最大 `max_loops` (5) turn を適用。未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null を保存 (resumable)。未収集0のときだけ `complete=true`。
 - **set-targets**: `targets[]` の唯一の書込経路 (上記「targets と set-targets op」)。
 - **set-foundation / set-serves / set-decision / set-knowledge-candidate**: `requirements_foundation`、確定セルの `serves_goals`、`decisions[]`、`knowledge_candidates[]` の唯一の書込経路。
+- **set-design-application / set-doctrine-application**: 章 (カテゴリ) 固有の「その設計知識・上流指針を本章の確定内容へどう適用したか」の唯一の書込経路。前者は `design_applications[category] = {text, recorded_at, basis?}` (deep knowledge card 単位)、後者は `doctrine_applications[category][concern_id] = {text, recorded_at, basis?}` (doctrine concern 単位)。
+  どちらも存在理由は同じで、**compile が機械注入した参照を、自分で「適用した」証拠として数える自己循環を断つ**ためにある。card 本文も doctrine registry の転記表も共有資産なので、同じものを引く章どうしが一致するのは当然であり、一致する記述は適用の証拠になり得ない。章固有性を担えるのはここに書かれた記述だけで、未記入なら compile は空欄で濁さず「未記入」と本文に出す。
+  `set-doctrine-application` は加えて、**同じ concern を引く他章と正規化後に一致する `text` を拒否する**。registry では 7 concern がいずれも 2 つ以上のカテゴリから参照される (`presentation` → ui-ux / frontend、`data-access` → database / backend、`operations` → infrastructure / maintenance-ops 等) ため、章が違えば確定セルも違うにもかかわらず記述が一致することは、上流の要約を写しただけの指紋になる。
+  正規化は空白と句読点・記号の除去に留める — 素の完全一致では句読点 1 つで抜けられ、言い換えの検出まで踏み込むと正当な記述を弾いて「回避のためだけの言い換え」を書き手に強いる (Goodhart を別の口から入れることになる)。表層記号だけなら内容の異なる 2 記述が一致することはなく、偽陽性が原理的に出ない。
+  記述には**上流指針に従わなかったことも書ける**。従っていない章に authority の名だけ掲げるほうが、従っていないと書くより有害だからである (例: 単独利用のため SLO を定義していない、目的適合を理由に小画面での列削減を採らなかった)。
 
 ## 検証 (deterministic gate)
 
