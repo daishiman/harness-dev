@@ -21,6 +21,10 @@ external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts
 owner: harness-maintainers
 since: 2026-08-17
 version: 0.6.0
+responsibility_refs:
+  - scripts/build-journal-context.py
+  - ../../agents/journal-composer.md
+  - scripts/validate-journal-output.py
 subagent_refs:
   - journal-composer
 schema_refs:
@@ -38,6 +42,10 @@ source: ユーザーの既存 Obsidian Daily 運用 (02_Configs/Daily/) の仕�
 source-tier: internal
 last-audited: 2026-08-17
 audit-trigger: quarterly
+completeness_exempt:
+  - "manifest: context 生成 (build-journal-context.py) → 整形 (SubAgent journal-composer) → 検証 (validate-journal-output.py) の一本道で、分岐も並列も再入も無い。workflow-manifest.json を置いても Phase 遷移の正本が SKILL.md 本文と二重になるだけで、片方が古びる (二重定義禁止 [[project_ssot_dedup_mechanism]])。実行体の対応は responsibility_refs が持ち、Write の可否は external_mutation_guard が機械判定する。"
+combinators:
+  - with-feedback-contract
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3
