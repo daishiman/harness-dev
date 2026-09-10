@@ -277,7 +277,7 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 ### 品質ゲート
 
-- `validate-goal-output.py`: 統一ハイブリッド構造 21 項目・NG 表現・やらないこと 3 項目以上を保存前に決定論検証。
+- `validate-goal-output.py`: 統一ハイブリッド構造 21 項目・NG 表現・やらないこと 3 項目以上（月報・期報の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
 - `tests/`（pytest 44 件）: script×3 / hook×1 の機能テスト + knowledge 台帳整合 + golden-sample 回帰。
 - `EVALS.json`: mechanical lint 13 本と受入基準（criteria-test）の配線宣言。実行手順は `RUNBOOK.md` の Verification 節。
 

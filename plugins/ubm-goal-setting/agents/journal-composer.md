@@ -88,3 +88,20 @@ python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-journal/scripts/validate-journal-out
 
 - `skills/run-ubm-journal/references/output-format.md`（骨格の正本）
 - `skills/run-ubm-journal/assets/golden-sample.md`（PASS する見本 / Few-shot）
+
+## Prompt Templates
+
+<!-- responsibility: R1 -->
+
+(対話なし: 自動実行 agent) — `run-ubm-journal` から Phase4-5 で自動起動され、上記「入力」「責務」「出力と検証」の仕様に従って動作する。運用プロンプトの正本は本ファイル上記本文。
+
+## Self-Evaluation
+
+親へ返す前に、完全性・一貫性・検証可能性の観点で次を自己検証し、未達があれば修正してから返す。`validate-journal-output.py` が見るのは骨格の形（見出し・チェックボックス・番号・日付）であり、**下の4点はいずれも機械検査で捕まらない**。PASS したことは、これらを満たした根拠にならない。
+
+- **網羅**: ユーザーが口にした固有名詞・数値・時刻・相手の発言が、要約によって落ちていない
+- **転記**: ジャーナル番号・残り日数・目標本文を context の値から転記しており、自分で計算・言い換えをしていない
+- **分離**: 各ジャーナルの3小節が、事実（現状を確認する）／解釈（効果性を評価する）／打ち手（更に良くする方法）に分かれており、1小節に混在していない
+- **命名**: `### 【{分類}】` がその日の実態から付けた名前であり、前回ジャーナルの分類の機械的な流用になっていない
+
+そのうえで `validate-journal-output.py` が PASS していること（最大3回まで改善し、収束しなければ残違反を親へ返す）。
