@@ -476,4 +476,5 @@ def test_real_knowledge_relations_absent_exit0(tmp_path: Path):
     # 629 -> 688: 全国支部会 (2026-09-06) から 59 件を追加、削除 0 件。
     # 688 -> 738: YouTube qd_sO6UtH-w (2026-09-06) から 50 件を追加、削除 0 件。
     # 738 -> 750: 全国支部会 (2026-09-06) の要約メモから 12 件を追加、削除 0 件。
-    assert graph["node_count"] == 750
+    # 750 -> 937: アカデミー勉強会 (2026-09-09) から 187 件を追加、削除 0 件。
+    assert graph["node_count"] == 937
