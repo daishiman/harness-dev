@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "3b18d9dc94efc27405dabc2b3b20b28979d88a53b2c71a9a8f54a58ef7fa8478"
+    "skill_md_sha256": "05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   },
-  "reviewer": "cr-quarterly-heading-rename-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-23T00:00:00Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-06T23:53:16Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,19 +26,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "正本表記の切り替えを『追加』ではなく『候補列』としてモデル化している。`REQUIRED_OUTLINE` / `GOAL_SECTIONS` の要素を str | tuple[str, ...] へ拡張し、`heading_matches` / `section_lines` の両方が候補列を受けるよう揃えたため、後方互換の受理点が 1 箇所の定数 (`QUARTERLY_HEADING`) に集約された。将来 3ヶ月表記を落とすときはこの定数を削るだけで済む。",
-      "後方互換が実挙動として成立していることを機械確認した。golden-sample.md を `2026-08-18.md` として validator に通すと `PASS: 違反 0 件` (exit 0)、`### 2ヶ月目標` を `### 3ヶ月目標` へ置換した版でも骨格違反 (S01/G01) は 0 件で、検出されたのはファイル名日付の不一致 (F03) のみだった。旧表記のジャーナルを再検証しても骨格違反にしない、という変更意図が実際に満たされている。",
-      "違反メッセージの可読性を落としていない。`needle_label()` を導入し、見出しが完全に欠落したケース (`### 4ヶ月目標` へ差し替え) で `S01: 必須見出しが見つからないか順序が不正です: ### 2ヶ月目標 または 3ヶ月目標` と両候補を提示することを実行で確認した。G01 側は逆に候補列ではなく実際に書かれていた見出しへ解決してから出す、と方向を使い分けている。",
-      "`GOAL_KEYS` の優先順位が dict の宣言順で決まることを踏まえ、2ヶ月側を先頭へ移して正本優先に変えている。`extract_journal_goals` を直接呼び、本文の出現順が 3ヶ月→2ヶ月 / 2ヶ月→3ヶ月 のどちらでも `quarterly.goal` が 2ヶ月側になることを実測した。コメントの『先に出た方 (= 正本表記の 2ヶ月側)』は実装と一致している。",
-      "ドキュメント側の追従に漏れがない。`grep -rn '3ヶ月' plugins/ubm-goal-setting/` の残存は (a) 後方互換を検証するテスト、(b) 合宿データの鮮度判定や knowledge 本文中の期間表現、のみで、ジャーナル見出しの追従漏れは 0 件だった。"
+      "期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転する変更で、build 側の実際の効き所は GOAL_KEYS の宣言順の入れ替えだった。extract_journal_goals は候補見出しを GOAL_KEYS の順で走査して goals.setdefault で先勝ちさせるため、順序を入れ替えないと『新旧が併存する前回ジャーナル』で旧 2ヶ月節が勝ち、古い期間 (2026-08-30) を今日のジャーナルへ継承する。実測で確認した: 現状は 3ヶ月節 (2026-09-27) を採り、GOAL_KEYS を旧順へ戻すと 2ヶ月節 (2026-08-30) を採る。dict の並びが挙動の正本になっていることを、コメントだけでなく順序そのもので担保している。",
+      "旧表記の通知経路 (D01) を今回まったく触らずに向きが反転した。deprecation_notices() が REQUIRED_OUTLINE のタプルを『先頭が正本・以降が旧表記』という規約からそのまま導出しているため、QUARTERLY_HEADING = (\"3ヶ月目標\", \"2ヶ月目標\") の 1 行を変えるだけで通知文の canonical/legacy が入れ替わる。改名のたびに通知側へ手を入れる設計だったら、今回のような向きの反転で通知が旧向きのまま残る事故が起きていた。validate 側の 4 本のテストがこの反転後の向きを固定している。",
+      "validate 側の『正本 (タプル先頭) を優先して 1 つの節に決め、本文とラベルを同じ探索から取る』構造 (validate-journal-output.py の GOAL_SECTIONS ループ) が、表記の向きに依存しない形で書かれていた。おかげで今回の反転は QUARTERLY_HEADING の 1 行と説明コメントだけで済み、ラベル錯誤・fail-open の再発がテスト (test_both_quarterly_headings_validates_the_canonical_section / test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section) でそのまま効き続けている。",
+      "後方互換の射程をファイル名ではなく本文見出しに置いていることを、新規テスト test_legacy_quarterly_report_filenames_are_still_picked_up が 4 パターン (新名×新ラベル / 旧名（２ヶ月）×旧ラベル / 3-期報×旧ラベル / 3-期報×新ラベル) で固定した。scan_reports が goals_dir.glob(\"*.md\") で全 .md を走査し先頭の `## 【…の目標】` で種別を決める、という不変条件を名前側から押さえたので、『期報を改名したら過去の期報が消えた』が起きない。",
+      "上流 (run-ubm-goal-setting) と下流 (run-ubm-journal) で契約が割れていない。産出側は `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力の正本とし旧名を読み取り受理、消費側の REPORT_LABELS は `3ヶ月の目標` と `2ヶ月の目標` の両方を quarterly 枠へ写す。journal-composer.md も『読み取りでは受理、新規出力は必ず 3ヶ月』と同じ非対称を明記しており、3 者の後方互換ポリシーが同一方向で揃っている。"
     ],
     "negative_feedback": [
-      "[low / smell] `validate()` の目標4階層ループは `body = section_lines(lines, 3, goal)` を候補列のまま先に引き、その後 `goal` を候補の先頭一致へ再解決する。同一ジャーナルに 2ヶ月目標と 3ヶ月目標が併存し、かつ本文で 3ヶ月側が先に現れる異常系では、body が 3ヶ月節の中身なのに G01 のラベルだけ『2ヶ月目標』になりうる。正常系 (片方だけ存在) では起きず、for ループ変数の再束縛は次周回に影響しないため実害は限定的で low に留める。"
+      "[low / smell] build 側の正本優先が GOAL_KEYS の宣言順にだけ依存しており、その不変条件を固定するテストが無い。validate 側は同じ不変条件を 2 本のテストで押さえているのに、build 側は新旧併存の前回ジャーナルを入力にしたケースが 1 本も無い。順序を旧順へ戻すと旧 2ヶ月節を採ることを実測で再現した (期間 2026-08-30 を継承)。影響は quarterly の期報が存在しない場合に限られる (期報があれば『レポート側が正』で period が上書きされる) ため low に留めるが、辞書の並び替えという無害に見える整理で静かに退行する形をしている。extract_journal_goals へ新旧併存 fixture のテストを 1 本足すのが最小の手当て。",
+      "[low / smell] frontmatter の IN1 が『骨格15ブロック』と書いているが、REQUIRED_OUTLINE の実体は 16 件 (`# 原理原則 チェックシート` 追加後に数が合わなくなった)。本 PR 以前からの繰越で、検証手段 (verify_by: script) 自体は成立しているため PASS 阻害はしないが、criterion 本文の数値が実装より 1 件古い。",
+      "[low / smell] CHANGELOG 0.3.31 の見出し文が『目標設定側 (run-ubm-goal-setting / info-collector / output-formatter / phase3-coordinator / /ubm-goal-setting) の契約とドキュメントを3ヶ月へ統一』と列挙しており、同時に反転した journal 側 (run-ubm-journal SKILL.md / journal-composer.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py) が名前として出てこない。過去ジャーナルの再検証で D01 が出る側の変更なので、読者が『日次ジャーナルは無関係』と読む余地が残る。あわせて run-ubm-journal の SKILL.md は本文が変わったが frontmatter version は 0.6.0 据え置き。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "2026-08-21 付の verdict は external-mutation guard 移行時のもので、本 PR で `### 3ヶ月目標` → `### 2ヶ月目標` の正本表記変更を入れたため skill_md_sha256 が乖離した。content-review-protocol §incremental の focused combined review を 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影している。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff origin/main...HEAD` で対象 6 ファイル (SKILL.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py / agents/journal-composer.md) の差分を全行読了。 (2) `grep -rn '3ヶ月' plugins/ubm-goal-setting/` を全件列挙し、残存が後方互換テストと期間表現のみで 見出し追従漏れ 0 件であることを確認。 (3) validator を 3 パターン実走: 新表記 golden-sample = exit 0 / 違反 0、旧表記 3ヶ月目標 = 骨格違反 0 (F03 は検証手順側のファイル名都合)、`### 4ヶ月目標` = `S01 ... ### 2ヶ月目標 または 3ヶ月目標` を確認。 (4) `extract_journal_goals` を直接呼び、両表記併存時の優先順位が本文出現順によらず 2ヶ月側になることを実測。 (5) frontmatter `feedback_contract.criteria[].id` を実ファイルから読み取り IN1/IN2/OUT1/OUT2 の 4 件を確認。 (6) `python3 scripts/validate-plugin-test-roots.py --workers 4` = roots=19 pass=19 fail=0 (3510 passed, 13 skipped)、`python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q` = 7486 passed, 4 skipped、`build-plugin-release.py --check` = OK (20 plugins)、`lint-vendored-ssot.py` = OK。 未確認: 実際の Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 評価体制の但し書き: 独立 context の subagent へ委譲したが応答が返らず打ち切ったため、本 verdict は主 context の評価者が read-only の grep / 実走のみで判定した。被採点物への改変は行っていない。"
+  "notes": "incremental profile の unresolved semantic batch を独立 context で 1 回実行した (iteration 1/3)。入力は git diff origin/main...HEAD の run-ubm-journal 配下 + journal-composer.md + 2 つの test ファイルと、依存確認のための run-ubm-goal-setting 側 data-contract / output-formats / output-formatter / info-collector。SKILL.md sha256 は実測 05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26。 本ラウンドの変更の実体: 期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転し、旧表記を読み取り受理側へ落とした (前回 verdict の時点とは正本の向きが逆)。 (a) 矛盾なし: run-ubm-journal 配下・journal-composer・上流 run-ubm-goal-setting を横断 grep し、新規出力=3ヶ月 / 読み取り受理=2ヶ月+3ヶ月 の非対称がすべての箇所で同じ向きに揃っていることを確認した。SKILL.md 180 行の『1年/3ヶ月/1ヶ月/1週間』・output-format.md の骨格行と対応表・golden-sample の `### 3ヶ月目標`・両 script の定数とコメント・journal-composer の見出し規則に食い違いは無い。 (b) 漏れなし: golden の期間 2026-06-29〜2026-09-27 と残り 40 日が対象日 2026-08-18 と算術的に整合 (差 40 日)。1ヶ月・1週間の各期間も期報期間に内包される。旧表記に触れる箇所 (プレースホルダ正規表現 123 行) は両表記を保持したままで受理側が狭まっていない。 (c) 規約整合: content-review-protocol の incremental 契約に従い 1 context で (a)-(e) を判定し、同一結果を elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。 (d) 依存関係整合: 上流 run-ubm-goal-setting が `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力とし、消費側 REPORT_LABELS が新旧両ラベルを quarterly へ写すことを確認。旧名 3 パターンが拾えることは新規テストで固定済み。 (e) rubric high severity 0。残 finding はすべて low の smell 3 件。 実施した検証: plugins/ubm-goal-setting/tests = 338 passed (63.8s, exit 0)。golden-sample.md を 2026-08-18.md として validate-journal-output.py へ通し PASS 違反 0 件・D01 通知なしを確認。extract_journal_goals へ新旧併存本文を直接与え、GOAL_KEYS の順序が正本優先の唯一の根拠であることを実測で再現 (現状=3ヶ月節を採用 / 旧順へ戻すと 2ヶ月節を採用)。 未確認: 実 Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、behavioral claim の受け入れは Gate D の実走証拠を要する。OUT2 (verify_by: live-trial) はこの理由で実走未達のまま据え置く。OUT1 も現状は unit/golden テストによる被覆であり、実対話の transcript を用いた受入は含まない (前ラウンドからの姿勢を継続)。"
 }

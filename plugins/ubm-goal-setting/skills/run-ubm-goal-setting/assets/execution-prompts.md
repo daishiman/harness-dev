@@ -43,7 +43,7 @@ Phase 3: 高速対話ヒアリング → agents/phase3-coordinator.md + skills/r
     └── Step 5: 最終確認+合宿整合性（メタ思考×システム思考）
     ↓
 Phase 4: 出力・保存 → agents/output-formatter.md
-    ├── [並列Read] テンプレート + 既存期報（bimonthly時）
+    ├── [並列Read] テンプレート + 既存期報（quarterly時・旧名ファイルも対象）
     ├── データ整形 → バリデーション → 保存（順次）
     └── ファイル保存
 ```
@@ -59,7 +59,7 @@ UBMの目標設定を始めます。どの種類の目標を作成・確認し�
 
 1. 1週間目標（週報）
 2. 1ヶ月目標（月報）
-3. 2ヶ月目標（期報）
+3. 3ヶ月目標（期報）
 4. 既存目標の見直し・改善（北原視点レビュー）
 
 あわせて、目標期間（開始日〜終了日）を教えてください（1〜3の場合）。
@@ -107,7 +107,7 @@ Agent ツールで SubAgent を起動する際の設定:
 - `prompt`: output-formatter.md 内の実行プロンプトを変数を埋めて渡す
 - `run_in_background`: false（結果を待つ）
 
-**並列実行**: テンプレート読み込み時、output-formats.md と既存ファイル（期報時）を並列Readする（詳細は output-formatter.md の並列実行ポリシー参照）。
+**並列実行**: テンプレート読み込み時、output-formats.md と既存ファイル（期報時・旧名ファイルも対象）を並列Readする（詳細は output-formatter.md の並列実行ポリシー参照）。
 
 ---
 

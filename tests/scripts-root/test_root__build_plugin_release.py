@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import pathlib
@@ -304,18 +305,92 @@ def test_tests_dir_is_part_of_fingerprint(mod, tmp_path, monkeypatch):
     assert mod.main(["--check"]) == 1
 
 
+def _write_installed(home: pathlib.Path, plugins: dict) -> None:
+    (home / ".claude" / "plugins").mkdir(parents=True, exist_ok=True)
+    (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
+        json.dumps({"plugins": plugins}), encoding="utf-8"
+    )
+
+
 def test_install_targets_only_installed_plugins(mod, tmp_path, monkeypatch):
     """install していない plugin へ update をかけてもエラーになるだけ。"""
     home = tmp_path / "home"
-    (home / ".claude" / "plugins").mkdir(parents=True)
-    (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
-        json.dumps(
-            {"plugins": {"a@harness-local": [], "b@xl-skills": [], "c@harness-local": []}}
-        ),
-        encoding="utf-8",
+    _write_installed(
+        home,
+        {
+            "a@harness-local": [{"scope": "user"}],
+            "b@xl-skills": [{"scope": "user"}],
+            "c@harness-local": [{"scope": "user"}],
+        },
     )
     monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
-    assert mod.installed_plugin_names() == ["a", "c"]
+    assert mod.installed_plugin_scopes(str(tmp_path)) == {"a": "user", "c": "user"}
+
+
+def test_install_follows_the_scope_the_copy_actually_lives_in(mod, tmp_path, monkeypatch):
+    """既定では install 済み copy が実際に居る scope へ update をかける。
+
+    実測 (2026-08-26) では harness-local の全 plugin が user scope なのに --scope の既定が
+    project だった。全件が「project に入っていない」で exit 1 になり、`--install` は
+    一度も成功しない状態が続いていた。既定を実態追随にしてその退行を塞ぐ。
+    """
+    home = tmp_path / "home"
+    _write_installed(home, {"a@harness-local": [{"scope": "user"}]})
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    calls: list[list[str]] = []
+    monkeypatch.setattr(mod, "run_install", lambda t, d, p: calls.append(t) or 0)
+    args = argparse.Namespace(
+        project_dir=str(tmp_path), scope=None, dry_run=False
+    )
+    assert mod.drive_install(args, []) == 0
+    assert calls == [{"a": "user"}]
+
+
+def test_project_scope_entries_of_other_projects_are_ignored(mod, tmp_path, monkeypatch):
+    """project scope の entry は projectPath がこの repo を指すものだけ拾う。
+
+    拾わないと、別 project へ入れた同名 plugin を掴んで無関係な install 先を更新する。
+    """
+    home = tmp_path / "home"
+    _write_installed(
+        home,
+        {
+            "a@harness-local": [
+                {"scope": "project", "projectPath": str(tmp_path / "elsewhere")}
+            ],
+            "b@harness-local": [{"scope": "project", "projectPath": str(tmp_path)}],
+        },
+    )
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    assert mod.installed_plugin_scopes(str(tmp_path)) == {"b": "project"}
+
+
+def test_install_fails_loudly_when_nothing_is_installed(mod, tmp_path, monkeypatch, capsys):
+    """対象 0 件を成功にしない。
+
+    exit 0 にすると、bump した新版がどこにも届いていないのに成功として通り、
+    「新しい版を install したのに古い copy を見続ける」無音故障になる。
+    """
+    home = tmp_path / "home"
+    _write_installed(home, {})
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    args = argparse.Namespace(project_dir=str(tmp_path), scope=None, dry_run=False)
+    assert mod.drive_install(args, []) == 1
+    assert "install 済み plugin がありません" in capsys.readouterr().err
+
+
+def test_install_respects_only_on_the_no_change_path(mod, tmp_path, monkeypatch):
+    """変更なし経路でも --only を尊重する (以前は無視して全件へ update していた)。"""
+    home = tmp_path / "home"
+    _write_installed(
+        home, {"a@harness-local": [{"scope": "user"}], "c@harness-local": [{"scope": "user"}]}
+    )
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    calls: list[dict] = []
+    monkeypatch.setattr(mod, "run_install", lambda t, d, p: calls.append(t) or 0)
+    args = argparse.Namespace(project_dir=str(tmp_path), scope=None, dry_run=False)
+    assert mod.drive_install(args, ["c"]) == 0
+    assert calls == [{"c": "user"}]
 
 
 # ── ヘルパ ─────────────────────────────────────────────────────────

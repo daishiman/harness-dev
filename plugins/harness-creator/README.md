@@ -205,7 +205,7 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
      skill route は内部で /run-skill-create へ、build_kind=script は build-script-route.py へ
      自動 dispatch される。kind・name は routes[] から機械抽出され手写し不要。
      単一 route だけ消費する段階 build / デバッグは --route-id <Cxx> を明示する（escape hatch）。
-     正本: commands/capability-build.md の「task-graph route モード」節。
+     分岐正本: commands/capability-build.md。詳細運用正本: references/capability-build-runtime-contract.md の「task-graph route モード」節。
 
 2D. 現物提示と診断深度選択（Step2 が自動的に導くのは提示まで）:
      全7 Capabilityを共通gateへ渡し、build-review-launch.pyがclaimをatomic consumeして共通payloadを1件生成。

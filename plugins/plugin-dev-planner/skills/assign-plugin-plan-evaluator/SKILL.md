@@ -94,6 +94,7 @@ role_suffix: evaluator
 5. **suggested_fix 明示**: high/medium には差し戻し方針を 1-2 文で明記し architect (R3) へ返す。
 6. **空 findings 禁止**: PASS でも info severity で「確認した観点」を 1 件以上残す。
 7. **plan を書き換えない**: read-only 評価 (Edit を持たない)。Bash は検証スクリプト実行のみ。
+8. **鮮度台帳と証拠再利用を分離**: `scripts/evaluate-plan.py` は plan 配下の安定 artifact (直下 + `envelope-draft/**` / `task-specs/**` 等の nested) を再帰収集した `evaluated_inputs[]` を鮮度台帳として emit する。この台帳は semantic 再評価範囲を決めず、verdict 再利用を認可しない。semantic 証拠の再利用は `plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md` の exact obligation fingerprint + current PASS receipt DAG だけを正本とする。
 
 ## Steps
 

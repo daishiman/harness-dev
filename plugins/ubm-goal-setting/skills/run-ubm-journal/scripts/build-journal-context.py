@@ -100,21 +100,23 @@ FILE_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.md$")
 GOAL_LABEL_RE = re.compile(r"^目標\s*[：:]\s*")
 
 # ジャーナル側の目標見出し → context キー
-# 正本表記は `2ヶ月目標`。`3ヶ月目標` は旧表記で、過去ジャーナルがこの見出しで
-# 書かれているため読み取りだけ残す (両方ある場合は先に書いた 2ヶ月側が優先される)。
+# 正本表記は `3ヶ月目標`。`2ヶ月目標` は旧表記 (期報が 2ヶ月だった頃の表記) で、
+# 過去ジャーナルがこの見出しで書かれているため読み取りだけ残す
+# (両方ある場合は先に書いた 3ヶ月側が優先される)。
 GOAL_KEYS = {
     "1年目標": "yearly",
-    "2ヶ月目標": "quarterly",
     "3ヶ月目標": "quarterly",
+    "2ヶ月目標": "quarterly",
     "1ヶ月目標": "monthly",
     "1週間目標": "weekly",
 }
-# レポート側ラベル → context キー (期報は 2ヶ月 = quarterly 枠に入れる)
+# レポート側ラベル → context キー (期報は 3ヶ月 = quarterly 枠に入れる。
+# 旧期報の `2ヶ月の目標` も同じ枠へ受理し続ける)
 REPORT_LABELS = {
     "1週間の目標": "weekly",
     "1ヶ月の目標": "monthly",
-    "2ヶ月の目標": "quarterly",
     "3ヶ月の目標": "quarterly",
+    "2ヶ月の目標": "quarterly",
 }
 
 
@@ -278,6 +280,31 @@ def section_body(
     return "\n".join(out).strip("\n")
 
 
+def principle_checklist_body(text: str, notes: list[str] | None = None) -> str:
+    """前回ジャーナルの `# 原理原則 チェックシート` 本文。ブロックが無ければ "" を返す。
+
+    section_body に任せず完全一致の有無を先に確かめるのは、本ブロックを持たない移行期の
+    ジャーナル (導入前に書かれた過去分) を黙って "" で通さず、テンプレから初期化せよという
+    note を残すため。section_body は不在をただの空文字として返すので、区別が付かない。
+
+    見出しに「原理原則」を冠したことで `# フェーズ別 課題チェックシート` との部分一致衝突は
+    起きないが、両者とも `- [ ]` 行の塊で取り違えても目視では気づけない以上、照合は完全一致に
+    寄せておく。
+    """
+    for line in text.splitlines():
+        s = line.strip()
+        if not s.startswith("# "):
+            continue
+        if s[1:].strip().strip(TITLE_DECOR).strip() == "原理原則 チェックシート":
+            return section_body(text, "原理原則 チェックシート", level="#", notes=notes)
+    if notes is not None:
+        notes.append(
+            "前回ジャーナルに「# 原理原則 チェックシート」がありません。"
+            "references/principle-checklist.md のテンプレートを未チェック状態で書き出してください。"
+        )
+    return ""
+
+
 def bullets(body: str) -> list[str]:
     """`- ` / `- [ ] ` 行を本文だけのリストにして返す (ネストは維持せず平坦化)。"""
     items = []
@@ -322,9 +349,9 @@ def scan_journals(daily_dir: Path) -> list[dict[str, Any]]:
 def extract_journal_goals(text: str, notes: list[str] | None = None) -> dict[str, dict[str, Any]]:
     """前回ジャーナルの目標4階層 (期間・目標本文) を取り出す。
 
-    GOAL_KEYS は 2ヶ月/3ヶ月 のように 1 つの階層に複数の表記を持つ。実在するのは
-    片方だけが正常 (正本テンプレは `### 2ヶ月目標`) なので、見出しごとの notes を
-    そのまま外へ出すと「2ヶ月目標が見つかりません」が毎回出る。階層単位で保留し、
+    GOAL_KEYS は 3ヶ月/2ヶ月 のように 1 つの階層に複数の表記を持つ。実在するのは
+    片方だけが正常 (正本テンプレは `### 3ヶ月目標`) なので、見出しごとの notes を
+    そのまま外へ出すと「3ヶ月目標が見つかりません」が毎回出る。階層単位で保留し、
     どの表記でも解決しなかったときだけ出す。
     """
     goals: dict[str, dict[str, Any]] = {}
@@ -354,7 +381,7 @@ def extract_journal_goals(text: str, notes: list[str] | None = None) -> dict[str
             "period_end": period_end.isoformat() if period_end else None,
             "goal": goal_text,
         }
-        # 2ヶ月/3ヶ月が両方ある場合は先に出た方 (= 正本表記の 2ヶ月側) を優先
+        # 3ヶ月/2ヶ月が両方ある場合は先に出た方 (= 正本表記の 3ヶ月側) を優先
         goals.setdefault(key, entry)
         pending.pop(key, None)
     if notes is not None:
@@ -705,6 +732,7 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             "goals": extract_journal_goals(prev_text, notes=prev_notes),
             "prohibitions": bullets(section_body(prev_text, "【禁止事項】", notes=prev_notes)),
             "phase_checklist": section_body(prev_text, "フェーズ別 課題チェックシート", level="#", notes=prev_notes),
+            "principle_checklist": principle_checklist_body(prev_text, notes=prev_notes),
         }
         if prev["number"] is not None and number != prev["number"] + 1 and not is_regeneration:
             warnings.append(
@@ -712,7 +740,8 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             )
     else:
         warnings.append(
-            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
+            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェック・"
+            "原理原則チェックシート (references/principle-checklist.md のテンプレート) は対話で確定し、"
             "あわせてジャーナル習慣が途切れていないかも確認してください。"
         )
 

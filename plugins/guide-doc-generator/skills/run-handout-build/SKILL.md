@@ -28,6 +28,7 @@ script_refs:
   - ../../scripts/route-handout-output.py
 schema_refs:
   - ../../schemas/handout-config.schema.json
+  - plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json
 command_refs:
   - ../../commands/handout-verify.md
 agent_refs:
@@ -244,6 +245,12 @@ release 段でゲートの verdict が pass になった資料について assig
 
 `scope` に載せるのは**直した節**であって、指摘が出ていた節ではない。指摘に対して別の節を直したなら渡すのは直したほうである。また `scope` へ添えてよいのは節 id だけで、何周目か・前回何を指摘されたか・どこをどう直したかは渡さない。渡した時点で独立 context が壊れ、レビュアーの verdict に「もう十分だろう」が入る。
 
+**`scope` を絞ったときの `verdict=PASS` は、それだけでは release の完了根拠にならない。** verdict はレビュアーが読んだ範囲の findings から計算されるので、`severity=high` の指摘を受けた節を直さないまま `scope` から外せば、その節は読まれず findings に現れず PASS が返る。これを塞ぐため、本 skill は受け取った `severity=high` の指摘を**解消するまで自分の側に残す**。解消とは資料を直したうえで、その節を次の `scope` に載せて再度レビューを受け、その周の findings に現れないことである。同じ形で、**最後に手を入れて以降まだ一度も読まれていない節**も未解消として扱う。初回の全件レビューで読み終えた無改修の節は既読なので消え、直した節は次周の `scope` に載せて読ませれば消える。「そのレビューで読まれなかった節」を数えてはならない — 2 周目以降は `scope` を絞る以上つねに未読の節があり、それを未解消と数えると release へ永久に到達しない。
+
+`not_reviewed` を一括で未解消にしてはならない。この配列は性質の異なる 2 群を運んでいる — (a) `scope` により読まなかった節・軸 と、(b) `machine_gate_overlap` により除外した面である。(b) は決定論ゲートが既に見ている面を二重に指摘しないための除外であり、C06 は全件レビューでも必ず理由付きで残す。したがって `not_reviewed` は非空が正常形であり、(a) についても上のとおり「未読のまま残っているか」で見る。
+
+これは verdict の再判定ではない。severity を決めるのも PASS/FAIL を決めるのも C06 のままで、本 skill が持つのは「受け取った指摘がまだ残っているか」だけである。
+
 - `status=blocked` は verdict を伴わない。pass とも fail とも読まず、ゲート修復へ戻してから委譲し直す。
 - verdict の決め方はレビュアー (C06) 側の規則であり、本 skill で再判定しない。`suggestion` は提案であって適用指示ではなく、どう直すかは本 skill が決める。
 - 戻り値の項目が欠けていたら、その資料は判定が揃っていないものとして再委譲する。欠落を本 skill が補完しない。
@@ -267,10 +274,12 @@ release 段でゲートの verdict が pass になった資料について assig
 
 #### G1: 構成データが確定している
 
-- [ ] draft: validate-handout-config.py が exit0 で、warning が 0 件である
-- [ ] release: 同左を維持している (指摘の反映で warning を出していない)
+- [ ] draft: validate-handout-config.py が exit0 で、**読まれない状態を示す warning** が 0 件である
+- [ ] release: 同左を維持している (指摘の反映で新たに出していない)
 
-C12 が 1 回で返す exit code と warning 件数がこの判定の全てであり、warning を種別ごとに数え直さない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`) はいずれも同じ 1 回の出力に並んでいる。種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える。
+0 件を求めるのは次の 13 コードであって、C12 が出す warning の全件ではない。図解密度と文字量 (`W-VISUAL-ABSENT` / `W-DIAGRAM-FEW` / `W-TEXT-HEAVY` / `W-TEXT-RUN` / `W-COPY-LONG`)、層の切り分け (`W-DETAIL-ABSENT` / `W-LAYER-ORDER` / `W-DETAIL-FLOWLESS`)、冒頭の置き方 (`W-HERO-LONG` / `W-OPENS-PROSE`)、節の入口と共有面 (`W-SECTION-VISUAL-NOT-FIRST` / `W-THUMBNAIL-ABSENT`)、用語の言い換え (`W-GLOSSARY-EMPTY`)。最後の 1 つを外せない理由は `criteria:IN1` が「用語言い換え宣言の欠落 0 件」を要求する一方、**欠落**を見る診断がこれしか無いためである (error 側の `E-GLOSSARY-DUP` は重複を見るので代わりにならない)。いずれも同じ 1 回の出力に並んでいるので、種別ごとに項目を立てても検査は 1 つも増えず、同じ出力の読み直しだけが増える — だから 13 項目ではなく 1 項目で受ける。
+
+残りの warning は**利用者が選んだ結果を報告するもの**であり、完了を阻まない。とりわけ `W-SECTIONS-MANY` は本文が明示的に許可した行為 (情報量が多いときは 1 節を厚くせず節を増やしてよい・`nav.max_rows`) に対して出る。これを欠陥として数えると、許可した行為を選んだ資料が draft を完了できなくなる。**「warning 全件 0」を完了条件にしない**のはこのためで、0 件を求める対象を上の 13 コードに固定してあるのはその境界そのものである。
 
 それでも種別を挙げるのは、0 件でない資料が具体的にどう読まれないか (図が無く文章が長い / 要点より先に手順が来る / 冒頭が段落で始まる / 節の入口に絵が無い = 読み手が読まない状態そのもの) を設計時に思い出すためである。速さのためにこれらを外さない — C12 は数百ミリ秒で終わるので待ち時間の原因ではない。
 
@@ -281,7 +290,7 @@ C12 が 1 回で返す exit code と warning 件数がこの判定の全てで�
 #### G2: 資料が読める形で成立している
 
 - [ ] draft: 単一 HTML を決定論 script 列で生成し、`/handout-verify` の集約 verdict が pass で、同梱構成データからの再生成がバイト一致する
-- [ ] release: 同左に加えて、C03 (`draft_first.skipped_in_draft` の可読性レビュー) から回収した verdict が PASS で、指摘に対する修正が資料へ反映されている
+- [ ] release: 同左に加えて、C03 (`draft_first.skipped_in_draft` の可読性レビュー) から回収した verdict が PASS で、**未解消の `severity=high` 指摘が 0 件**であり、**最後に手を入れて以降まだ一度も読まれていない節が 0 件**である
 
 ゲート面を面ごとに数え直さない。集約は C09 の CR-GATE-AGG が単一正本であり、本 skill が受け取るのは verdict 1 個である。第1稿の粒度 (`draft_first.first_draft_detail_level` — 全体を詳細で作ってから削らない) が守られているかもここで落ちる。実態との一致を見るのは C22 の NAR-09 / NAR-10 であって散文の自己申告ではない。
 
@@ -326,7 +335,9 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` を実行契約と
 
 - 元のゴールを `eval-log/guide-doc-generator/run-handout-build-goal-spec.json` へ、各 checklist の status と evidence を `eval-log/guide-doc-generator/run-handout-build-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
-- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 各周回末に `eval-log/guide-doc-generator/run-handout-build-intermediate.jsonl` へ 1 行 append-only で記録する。正本 `plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json` の `intermediate_artifacts[]` が必須とするのは `iteration`、`original_goal`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` の 6 キーであり、本文はこの 6 キーの意味を再定義しない。次周回は直前の `merged_directive_for_next` を必須入力にする。
+- 上の 6 キーに加えて本 skill は `original_goal_hash` を各行へ足す。**これは正本には無い local 拡張である。** 正本では `original_goal_hash` は progress.json のトップレベルに 1 つ置かれ、照合相手は `intermediate_artifacts[0].original_goal` である。本 skill は照合相手を第三のファイル `run-handout-build-goal-spec.json` の `original_goal` に取るので、行ごとに持たせている。正本由来と local 拡張の境界はここにあり、後者を正本準拠と呼ばない。
+- `drift_signal` には正本の値域外を書かない。差分ゼロは `aligned`、前周回が無い初回は `initial` である。この 1 語だけが周回ごとに変わり次の周回の判断に使われるので、`none` のような値域外の語を置くと「差が出ていない」のか「判定していない」のかが区別できなくなる。下の検証はこの値域だけを正本から写して実行時に照合する — 意味は正本にあり、写しているのは 6 語の集合だけである。正本の enum が将来変わっても写しは自動追随しないが、劣化方向は「通すべき新値を止める」側なので fail-closed を崩さない。
 - 上限周回に到達しても未達が残れば完了扱いにせず、progress と blocker を親へ handoff する。completed を宣言できるのは **release 段で G1-G3 の draft 行と release 行、および `feedback_contract.criteria` が全て PASS のとき**だけである。draft 段の停止は完了ではなく引き渡しであり、progress には未達として各判定の release 行を残す。
 - progress には各 checklist の status と併せて現在の `build_stage` を記録する。draft の停止を「全項目 PASS」と書かない — 記録が完了に見えると、繰り越した release 行が回収されないまま積み上がる。
 
@@ -339,13 +350,17 @@ python3 - "eval-log/guide-doc-generator/run-handout-build-goal-spec.json" "eval-
 import hashlib, json, sys
 goal = json.load(open(sys.argv[1], encoding='utf-8'))
 rows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]
-required_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+canon_keys = {'iteration','original_goal','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}
+required_keys = canon_keys | {'original_goal_hash'}
+drift_values = {'initial','aligned','compressing','stagnant','widening','oscillating'}
 expected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()
 assert rows, 'intermediate.jsonl is empty'
 for row in rows:
     assert required_keys <= row.keys(), required_keys - row.keys()
     assert row['original_goal'] == goal['original_goal']
     assert row['original_goal_hash'] == expected
+    assert row['drift_signal'] in drift_values, row['drift_signal']
+assert len(rows) == rows[-1]['iteration'] + 1, (len(rows), rows[-1]['iteration'])
 PY
 ```
 

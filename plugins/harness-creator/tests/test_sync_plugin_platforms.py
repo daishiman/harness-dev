@@ -604,7 +604,7 @@ def test_repository_fleet_is_complete_self_contained_and_excludes_retired_plugin
     )
     marketplace_names = {item["name"] for item in marketplace["plugins"]}
 
-    assert len(discovered_names) == 20
+    assert len(discovered_names) == 21
     assert discovered_names == codex_names == marketplace_names
     assert retired.isdisjoint(discovered_names)
     for plugin in discovered:

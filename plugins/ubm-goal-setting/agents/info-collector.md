@@ -95,7 +95,9 @@ JSON ベースのナレッジ管理システム（knowledge/router.json）と連
 |----------|----------|----------|--------|-----------|
 | weekly | 直前の週報1件 + 現在の月報 | Tier 1 + フェーズ別 Tier 2 | 最新1件 | 対象週の全日分 |
 | monthly | 直近1ヶ月の全週報 + 現在の期報 + 前回月報 | Tier 1 + Tier 2 + 直近フィードバック | 最新2件 | 不要（週報に圧縮済み） |
-| bimonthly | 直近2ヶ月の全週報 + 全月報 + 前回期報 | Tier 1 + Tier 2 + Tier 3 | 最新2件 | 不要（週報→月報に圧縮済み） |
+| quarterly | 直近3ヶ月の全週報 + 全月報（3件）+ 前回期報 | Tier 1 + Tier 2 + Tier 3 | 最新2件 | 不要（週報→月報に圧縮済み） |
+
+`bimonthly` は `quarterly` の後方互換の別名として受理し、`quarterly` と同じスコープで収集する。前回期報の収集では旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` も対象に含める（旧名を弾かない）。
 
 #### 思考プロセス
 
@@ -108,7 +110,7 @@ JSON ベースのナレッジ管理システム（knowledge/router.json）と連
 3. 該当ファイルをReadで読み込み（複数ファイルは並列Read）、目標値・実績値・行動変化を抽出
 4. **プロジェクト別タスクの抽出**: 前回月報（monthly時）の【プロジェクト別タスク】セクションがある場合、各プロジェクト名・目的・タスク（[ ]/[x]）・サブプロジェクトを抽出。完了/未完了の比率と、未完了のまま繰り越されているタスクをリストアップする。未完了[ ]のタスクは当月月報への繰越供給候補として明示する
 5. **習慣目標の抽出（weeklyのみ）**: 前回週報に【習慣目標】セクションがある場合、3原則（30分切替・大物分散・粒度の粗さ）の各チェック項目の達成状況を抽出
-6. **継承文脈フィールドの抽出**: weeklyは『現在の月報』、monthly/bimonthlyは『現在の期報』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定null。取得不可の項目は[要ヒアリング]を付与する
+6. **継承文脈フィールドの抽出**: weeklyは『現在の月報』、monthly/quarterlyは『現在の期報』から今期文脈10種（period_sales_target/period_sales_cumulative/business_partner_count/grid_partner_count/grid_partner_goal/last_academy_date/next_academy_date/next_sparring_date/sparring_target_state/sparring_deliverables）を抽出する。grid_partner_goalは半角数字または未設定null。取得不可の項目は[要ヒアリング]を付与する
 
 **完了条件**: 前回の目標と実績の数値、プロジェクト別タスクの継続状況、習慣目標の達成状況（weeklyのみ）、継承文脈フィールドが抽出済みまたは[要ヒアリング]付与済みである
 
@@ -120,7 +122,7 @@ JSON ベースのナレッジ管理システム（knowledge/router.json）と連
 2. 最新ディレクトリ内の全.mdファイルを並列Read（特に相談内容.md、事業相談の全体議事録.md優先）
 3. 抽出: 事業方針、具体的アクション、克服すべき課題、数値目標
 4. 鮮度チェック: 合宿日が3ヶ月以上前→[鮮度注意]マーク付与
-5. bimonthlyの場合: 対象期間内の合宿を全て読み込み、方針の変化を時系列記録
+5. quarterlyの場合: 対象期間（3ヶ月）内の合宿を全て読み込み、方針の変化を時系列記録
 
 **完了条件**: 合宿アドバイスが4観点で整理されている、またはエラーマーク付与済み
 
@@ -251,7 +253,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/scripts/consult-harness-artifact-graph.py" \
 ##### Step 3.7: ジャーナル収集（週報のみ）
 
 **並列実行**: Step 1/2/3/3.5 と同時に実行可能
-**スキップ条件**: goal_type が monthly または bimonthly の場合はスキップ（週報に圧縮済みのため不要）
+**スキップ条件**: goal_type が monthly または quarterly の場合はスキップ（週報に圧縮済みのため不要）
 
 1. 対象期間（start_date〜end_date）から日付リストを生成（例: 2026-03-30〜2026-04-05 → 7日分）
 2. `Glob: $UBM_VAULT_ROOT/02_Configs/Daily/YYYY-MM-DD.md` で各日付のファイル存在を確認
@@ -276,7 +278,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/scripts/consult-harness-artifact-graph.py" \
    - `issue_statement`
    - `user_solution.text`（role=user turn provenance 検証済み）
    - `closure.type=action` の `closure.next_step`（reflection は行動候補にしない）
-4. これらを「直近の相談からの引き継ぎ」として構造化サマリーに載せる。**あくまで文脈の引き継ぎであり、目標そのものではない**（目標設定は Phase 3 で対話生成する）。相談の次の一歩が今回の目標種別（weekly/monthly/bimonthly）に合致する場合は、行動目標の候補として Phase 3 へ渡す。
+4. これらを「直近の相談からの引き継ぎ」として構造化サマリーに載せる。**あくまで文脈の引き継ぎであり、目標そのものではない**（目標設定は Phase 3 で対話生成する）。相談の次の一歩が今回の目標種別（weekly/monthly/quarterly）に合致する場合は、行動目標の候補として Phase 3 へ渡す。
 5. read-only。本 Step は eval-log へ書き込まない（`ubm-write-path-guard` の対象外 path だが、そもそも参照専用）。
 
 **完了条件**: 同意済み・期限内の consult_completed record があれば issue_statement / user_solution / 任意の next_step が引き継がれている、または[相談履歴なし/同意なし/対象外]で skip 済みである
@@ -300,7 +302,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/scripts/consult-harness-artifact-graph.py" \
 
 #### 入力
 
-- **goal_type**: weekly / monthly / bimonthly のいずれか
+- **goal_type**: weekly / monthly / quarterly のいずれか（`bimonthly` を受け取った場合は `quarterly` として扱う＝後方互換の別名）
 - **target_period**: YYYY-MM-DD〜YYYY-MM-DD形式
 
 #### 出力テンプレート
@@ -448,7 +450,7 @@ UBMメンバーの目標設定に必要な全データを自動収集し、
 - パス: `$UBM_VAULT_ROOT/02_Configs/Daily/YYYY-MM-DD.md`
 - 対象期間の開始日〜終了日の各日付でファイル存在を確認し、存在するものを並列Read
 - 抽出: 行動のジャーナル、時間のジャーナル、お金のジャーナル（各3観点: 現状確認/効果性評価/改善方法）
-- monthly/bimonthlyではスキップ（週報に圧縮済み）
+- monthly/quarterlyではスキップ（週報に圧縮済み）
 
 ## 取得スコープ（{{goal_type}}）
 info-collector.md の「取得スコープ」テーブルを参照し、

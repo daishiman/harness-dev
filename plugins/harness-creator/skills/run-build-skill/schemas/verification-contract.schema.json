@@ -9,6 +9,35 @@
   "properties": {
     "schema_version": {"const": 1},
     "subject": {"type": "string", "minLength": 1},
+    "claim_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable_claim_count", "assigned_claim_count", "execution_unit_count", "phase_gate_count", "unassigned_task_ids", "duplicate_task_ids", "assignment_sha256"],
+      "properties": {
+        "executable_claim_count": {"type": "integer", "minimum": 1},
+        "assigned_claim_count": {"type": "integer", "minimum": 1},
+        "execution_unit_count": {"type": "integer", "minimum": 1},
+        "phase_gate_count": {"type": "integer", "minimum": 1},
+        "unassigned_task_ids": {"type": "array", "maxItems": 0},
+        "duplicate_task_ids": {"type": "array", "maxItems": 0},
+        "assignment_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "proof_projections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "dispatch", "required_claim_ids", "required_unit_ids", "proof_policy"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "dispatch": {"const": "none"},
+          "required_claim_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "required_unit_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "proof_policy": {"const": "all-claims-done-with-unique-evidence-report-ref"}
+        }
+      }
+    },
     "obligations": {
       "type": "array",
       "minItems": 1,

@@ -36,6 +36,7 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -262,6 +263,77 @@ def renew_lease(task_state: dict, task_id: str, now: datetime, lease_seconds: in
         raise ValueError(f"renew 対象は running node のみ (task={task_id!r})")
     node["lease_expires_at"] = _iso(now + timedelta(seconds=lease_seconds))
     return clone
+
+
+def project_phase_gates(task_state: dict, task_graph: dict) -> tuple[dict, list[dict]]:
+    """child claim の done 証拠が揃った phase-gate を Agent 無しで done へ投影する。
+
+    parent_of と gate→child depends_on の子集合が完全一致し、全 child が done で、
+    それぞれに実在 route_report 参照がある場合だけ更新する。同一 batch report が
+    複数 child を被覆するのは正常なため、proof ref の一意性は
+        (task_id, evidence_report_ref) の組で検査する。
+    """
+    nodes = task_graph.get("nodes")
+    edges = task_graph.get("edges")
+    if not isinstance(nodes, list) or not isinstance(edges, list):
+        raise ValueError("phase projection には task-graph nodes/edges list が必要")
+    node_by_id = {str(node.get("id")): node for node in nodes if isinstance(node, dict) and node.get("id")}
+    if len(node_by_id) != len(nodes):
+        raise ValueError("task-graph node id が空または重複")
+    gates = sorted(
+        task_id for task_id, node in node_by_id.items()
+        if node.get("execution_kind") == "phase-gate"
+    )
+    clone = _clone_state(task_state)
+    by_state = {str(node.get("id")): node for node in clone.get("nodes", [])}
+    projected: list[dict] = []
+    for gate_id in gates:
+        parent_list = [str(edge.get("to")) for edge in edges
+                       if edge.get("type") == "parent_of" and str(edge.get("from")) == gate_id]
+        proof_list = [str(edge.get("to")) for edge in edges
+                      if edge.get("type") == "depends_on" and str(edge.get("from")) == gate_id]
+        if not parent_list or len(parent_list) != len(set(parent_list)):
+            raise ValueError(f"phase-gate {gate_id} の parent child が欠落/重複")
+        if len(proof_list) != len(set(proof_list)) or set(proof_list) != set(parent_list):
+            raise ValueError(f"phase-gate {gate_id} の proof dependency が欠落/重複/不一致")
+        refs: list[dict] = []
+        incomplete = False
+        for child_id in sorted(parent_list):
+            child_graph = node_by_id.get(child_id)
+            if child_graph is None or child_graph.get("execution_kind") == "phase-gate":
+                raise ValueError(f"phase-gate {gate_id} の child {child_id} が executable claim でない")
+            child_state = by_state.get(child_id)
+            if child_state is None or child_state.get("state") != "done":
+                incomplete = True
+                continue
+            report = child_state.get("route_report")
+            if not isinstance(report, str) or not report or not os.path.exists(report):
+                raise ValueError(f"phase-gate {gate_id} child {child_id} の proof ref が欠落/非実在")
+            _assert_covered(report, child_id, require_covered=True)
+            refs.append({"task_id": child_id, "evidence_report_ref": report})
+        if incomplete:
+            continue  # 未完了 gate は pending のまま。Agent dispatch には回さない。
+        ref_keys = {(ref["task_id"], ref["evidence_report_ref"]) for ref in refs}
+        if len(ref_keys) != len(refs):
+            raise ValueError(f"phase-gate {gate_id} の proof ref が重複")
+        gate_state = by_state.get(gate_id)
+        if gate_state is None:
+            gate_state = _new_node(gate_id)
+            clone["nodes"].append(gate_state)
+            by_state[gate_id] = gate_state
+        if gate_state.get("state") == "done":
+            if gate_state.get("proof_refs") != refs:
+                raise ValueError(f"phase-gate {gate_id} の既存 proof refs が現在の child proof と不一致")
+            continue
+        if gate_state.get("state", "pending") != "pending":
+            raise ValueError(f"phase-gate {gate_id} は pending 以外から機械投影できない")
+        gate_state["state"] = "done"
+        gate_state["started_at"] = None
+        gate_state["lease_expires_at"] = None
+        gate_state["projection_kind"] = "phase-proof"
+        gate_state["proof_refs"] = refs
+        projected.append({"task_id": gate_id, "proof_refs": refs})
+    return clone, projected
 
 
 def pin_graph_hash(task_state: dict, graph_hash: str) -> dict:
@@ -529,6 +601,24 @@ def append_event(events_path, event: dict) -> None:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
+def atomic_write_state(state_path: Path, task_state: dict) -> None:
+    """canonical state を同一 directory 内 temp から os.replace し、1回の原子更新にする。"""
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{state_path.name}.", dir=str(state_path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(canonical_state_json(task_state) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp_name, state_path)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except FileNotFoundError:
+            pass
+        raise
+
+
 # ── canonical serialization (producer 決定論規約を task-state shape へ踏襲) ────
 def canonical_state_json(task_state: dict) -> str:
     """nodes を id 昇順ソートし json.dumps(indent=2, ensure_ascii=False)。末尾 newline は書込側。"""
@@ -575,7 +665,8 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="task-graph.json (遷移 task-id 検査/blocked 閉包、repin 時の done dirty-closure 再開に使用)")
     p.add_argument("--initialize-from-graph", action="store_true",
                    help="--task-graph の全 node を不足分だけ pending で task-state へ初期化")
-    p.add_argument("--task-id", default=None)
+    p.add_argument("--task-id", action="append", default=[],
+                   help="対象 task id。複数回指定で 1 read/validate/write の atomic batch")
     p.add_argument("--to-state", default=None, choices=["pending", "running", "done", "blocked"])
     p.add_argument("--route-report", default=None)
     p.add_argument("--require-covered", action="store_true",
@@ -583,6 +674,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--reason", default=None, choices=sorted(BLOCKED_REASONS))
     p.add_argument("--reap-lease", action="store_true")
     p.add_argument("--renew-lease", action="store_true")
+    p.add_argument("--project-phase-gates", action="store_true",
+                   help="child done proof が揃った phase-gate を Agent 無しで一括 done 投影 (要 --task-graph)")
     p.add_argument("--pin-graph-hash", default=None)
     p.add_argument("--repin-graph-hash", default=None,
                    help="外ループ再入用の provenance-gated 再 pin (要 --task-graph; 異値は --authorized-hash も必須)")
@@ -650,16 +743,32 @@ def main(argv: list[str] | None = None) -> int:
             if not args.task_id:
                 print("--reap-lease には --task-id が必須", file=sys.stderr)
                 return 2
-            frm = current_state(state, args.task_id)
-            state = reap_expired_lease(state, args.task_id, _utc_now())
-            events.append({"type": "lease_reaped", "task_id": args.task_id,
-                           "from_state": frm, "to_state": "pending", "reason": "lease_expired"})
+            now = _utc_now()
+            for task_id in args.task_id:
+                frm = current_state(state, task_id)
+                state = reap_expired_lease(state, task_id, now)
+                events.append({"type": "lease_reaped", "task_id": task_id,
+                               "from_state": frm, "to_state": "pending", "reason": "lease_expired"})
         elif args.renew_lease:
             if not args.task_id:
                 print("--renew-lease には --task-id が必須", file=sys.stderr)
                 return 2
-            state = renew_lease(state, args.task_id, _utc_now(), args.lease_seconds)
-            events.append({"type": "lease_renewed", "task_id": args.task_id})
+            now = _utc_now()
+            for task_id in args.task_id:
+                state = renew_lease(state, task_id, now, args.lease_seconds)
+                events.append({"type": "lease_renewed", "task_id": task_id})
+        elif args.project_phase_gates:
+            if not args.task_graph:
+                print("--project-phase-gates には --task-graph が必須", file=sys.stderr)
+                return 2
+            try:
+                task_graph = json.loads(Path(args.task_graph).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
+                return 2
+            state, projected = project_phase_gates(state, task_graph)
+            for item in projected:
+                events.append({"type": "phase_gate_projected", **item})
         elif args.pin_graph_hash is not None:
             state = pin_graph_hash(state, args.pin_graph_hash)
             events.append({"type": "graph_hash_pinned", "graph_hash": args.pin_graph_hash})
@@ -722,16 +831,21 @@ def main(argv: list[str] | None = None) -> int:
                 except (OSError, json.JSONDecodeError) as exc:
                     print(f"task-graph 読込/parse 失敗: {args.task_graph}: {exc}", file=sys.stderr)
                     return 2
-                assert_task_in_graph(task_graph, args.task_id)
-            frm = current_state(state, args.task_id)
-            state = transition(
-                state, args.task_id, args.to_state,
-                route_report=args.route_report, reason=args.reason,
-                require_covered=args.require_covered,
-                now=_utc_now(), lease_seconds=args.lease_seconds,
-            )
-            events.append({"type": "state_transition", "task_id": args.task_id,
-                           "from_state": frm, "to_state": args.to_state})
+                for task_id in args.task_id:
+                    assert_task_in_graph(task_graph, task_id)
+            if len(set(args.task_id)) != len(args.task_id):
+                raise ValueError(f"batch task-id が重複: {args.task_id}")
+            now = _utc_now()
+            for task_id in args.task_id:
+                frm = current_state(state, task_id)
+                state = transition(
+                    state, task_id, args.to_state,
+                    route_report=args.route_report, reason=args.reason,
+                    require_covered=args.require_covered,
+                    now=now, lease_seconds=args.lease_seconds,
+                )
+                events.append({"type": "state_transition", "task_id": task_id,
+                               "from_state": frm, "to_state": args.to_state})
             if args.propagate_blocked:
                 if args.to_state != "blocked":
                     print("--propagate-blocked は --to-state blocked と併用する", file=sys.stderr)
@@ -739,11 +853,14 @@ def main(argv: list[str] | None = None) -> int:
                 if task_graph is None:
                     print("--propagate-blocked には --task-graph が必須", file=sys.stderr)
                     return 2
-                state = propagate_blocked(state, task_graph, args.task_id, _utc_now())
-                for tid in sorted(_downstream_closure(task_graph, args.task_id)):
+                if len(args.task_id) != 1:
+                    raise ValueError("--propagate-blocked の origin --task-id は1件のみ")
+                origin_task_id = args.task_id[0]
+                state = propagate_blocked(state, task_graph, origin_task_id, now)
+                for tid in sorted(_downstream_closure(task_graph, origin_task_id)):
                     events.append({"type": "state_transition", "task_id": tid,
                                    "from_state": None, "to_state": "blocked",
-                                   "blocked_reason": "propagated", "origin_task_id": args.task_id})
+                                   "blocked_reason": "propagated", "origin_task_id": origin_task_id})
         else:
             print("操作 (--initialize-from-graph / --to-state / --reap-lease / --renew-lease / "
                   "--pin-graph-hash / --repin-graph-hash) を 1 つ指定",
@@ -765,7 +882,7 @@ def main(argv: list[str] | None = None) -> int:
     # 書込 (単一 writer): task-state を canonical で上書き + task-events を append。
     try:
         build_dir.mkdir(parents=True, exist_ok=True)
-        state_path.write_text(canonical_state_json(state) + "\n", encoding="utf-8")
+        atomic_write_state(state_path, state)
         for ev in events:
             append_event(events_path, ev)
     except OSError as exc:

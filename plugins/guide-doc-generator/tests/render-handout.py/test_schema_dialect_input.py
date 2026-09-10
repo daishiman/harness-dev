@@ -62,6 +62,11 @@ PART_DATA_FIXTURES = {
     "accordion": {"items": [{"summary": "補足", "body": "詳しい説明の本文", "open": False}]},
     "prompt": {"label": "貼り付けるプロンプト", "body": "次の資料を要約してください", "copyable": True},
     "download": {"attachment_id": "att-1", "label": "手順書をダウンロードする"},
+    "links": {"links": [
+        {"key": "ln1", "label": "詳しい手順の資料",
+         "url": "https://example.com/handbook",
+         "note": "初めて操作する人はこちらを先に読む"},
+    ]},
     "tabs": {"tabs": [
         {"key": "tb1", "label": "概要", "panel_parts": [
             {"part": None, "id": "p-tab-text", "data": {"body": "タブ内の地の文をここへ置く。"}},

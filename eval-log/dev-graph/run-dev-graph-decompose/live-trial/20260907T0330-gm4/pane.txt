@@ -1,0 +1,398 @@
+ ▐▛███▛█   Claude Code v2.1.263
+▝▜██████▀  Opus 5 · Claude Max
+  ▝▝ ▝▝    ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260907T0330-gm4/task.md
+
+⏺ I'll read the task file first.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-init)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose && ls -la && git status --short && git log --oneline -3 2>&1 | head)
+  ⎿  total 8
+     drwxr-xr-x@  4 dm  staff   128 Sep  7 13:09 .
+     drwxr-xr-x@ 43 dm  staff  1376 Sep  7 13:09 ..
+     … +3 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py --help 2>&1 | head -40)
+  ⎿  usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]
+                                    [--mode {read,write}]
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py --repo-root "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-tri…)
+  ⎿  {
+       "branch": "main",
+       "content_roots": {
+     … +40 lines (ctrl+o to expand)
+
+  Read 3 files (ctrl+o to expand)
+
+⏺ Bash(ls /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/ 2>&1; echo ---; python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-sch…)
+  ⎿  criteria-scenario-verdict.schema.json
+     graph-node.schema.json
+     package-registration-receipt.schema.json
+     … +8 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(sed -n 1,80p "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py")
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: validate-graph-schema
+     … +77 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph && ls live-trial-fixtures/ && echo --- && for d in live-trial-fixtures/*/; do if [ -d "$d/.dev-graph" ]; th…)
+  ⎿  gm4-decompose
+     gm4-init
+     gm4-node
+     … +119 lines (ctrl+o to expand)
+
+  Read 2 files (ctrl+o to expand)
+
+⏺ Bash(cat "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-init/.dev-graph/state/graph.json"; echo "---HOOKS---"; ls /Users/dm/dev/dev/個人開発/…)
+  ⎿  Error: Exit code 1
+     {
+       "graph_revision": 0,
+       "nodes": [],
+       "schema_version": "1.0.0"
+     }
+     ---HOOKS---
+     __pycache__
+     guard-graph-schema.py
+     hooks.json
+     … +4 lines (ctrl+o to expand)
+
+⏺ Bash(R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; ls -a "$R"; echo "--- planned-create preview ---"; for p in issues task…)
+  ⎿  .
+     ..
+     .git
+     … +16 lines (ctrl+o to expand)
+
+⏺ Bash(set -e; R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; P="/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph"; mkdir -p…)
+  ⎿  21
+     .
+     ..
+     … +10 lines (ctrl+o to expand)
+
+⏺ Now writing repo-local config, initial graph, and receipt.
+
+⏺ Write(live-trial-fixtures/gm4-decompose/.dev-graph/config.json)
+  ⎿  Wrote 112 lines to live-trial-fixtures/gm4-decompose/.dev-graph/config.json
+       1 {
+       2   "claude_hooks": {
+       3     "post_tool_reconcile": true,
+       4     "project_plugin_link": ".claude/dev-graph-plugin",
+       5     "session_start": true,
+       6     "source": "plugin",
+       7     "task_completed_gate": true
+       8   },
+       9   "content_roots": {
+      10     "architecture": "architecture",
+     … +102 lines (ctrl+o to expand)
+
+⏺ Write(live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json)
+  ⎿  Wrote 5 lines to live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json
+      1 {
+      2   "graph_revision": 0,
+      3   "nodes": [],
+      4   "schema_version": "1.0.0"
+      5 }
+
+⏺ Bash(R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; python3 "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/valid…)
+  ⎿  {
+       "implementation_readiness": "complete",
+       "missing_sections": [],
+     … +5 lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts" && python3 - <<'PY'
+      import json,sys…)
+  ⎿  Traceback (most recent call last):
+       File "<stdin>", line 3, in <module>
+     ModuleNotFoundError: No module named 'validate_shim'
+     []
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/init-receipt.json)
+  ⎿  Wrote 140 lines to ../../../eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/init-receipt.json
+       1 {
+       2   "content_roots": {
+       3     "architecture": "architecture",
+       4     "documents": "docs",
+       5     "features": "features",
+       6     "issues": "issues",
+       7     "specifications": "specs",
+       8     "system_spec": "system-spec",
+       9     "tasks": "tasks"
+      10   },
+     … +130 lines (ctrl+o to expand)
+
+⏺ Bash(R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; P="/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph"; echo "== second-r…)
+  ⎿  == second-run planned changes ==
+     planned_changes=0
+     == absolute path scan in stored config/receipt ==
+     … +4 lines (ctrl+o to expand)
+
+⏺ Init complete (planned changes on re-run: 0). Now the main run.
+
+⏺ Skill(dev-graph:run-dev-graph-decompose)
+  ⎿  Successfully loaded skill · 6 tools allowed
+
+  Read 6 files, listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; echo "== baseline graph digest =="; shasum -a 256 "$R/.dev-graph/state/…)
+  ⎿  == baseline graph digest ==
+     27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json
+     == baseline tree snapshot ==
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(python3 -c "
+      import json;d=json.load(open('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/graph-node.schema.json'));print('required:',d.get('required'…)
+  ⎿  required: ['graph_node_id', 'artifact_kind', 'artifact_subtypes', 'title', 'project_id', 'domain', 'status', 'owners', 'tags', 'priority', 'start_date', 'target_date', 'iteration', 'created_at', 'updated_at', '
+     depends_on', 'related_nodes', 'resource_scope', 'parent_feature', 'feature_package_id', 'phase_ref', 'file_path', 'template_id', 'template_version', 'confirmation_status', 'evaluation_status', 'confirmation_evi
+     dence', 'source_lineage', 'classification_confidence', 'classification_reason', 'classification_candidates', 'github_publication', 'issue_linkage', 'tracker_binding', 'beads_linkage', 'github_project_linkages',
+     … +5 lines (ctrl+o to expand)
+
+  Made 1 scratchpad edit +78 (ctrl+o to expand)
+
+⏺ Macro candidate assembled. Now the independent auditor required by the Macro flow.
+
+⏺ dev-graph:dev-graph-integrity-auditor(Audit macro decomposition DAG)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph && grep -rn "C14" --include=*.md --include=*.py --include=*.json . | grep -iv "component-inventory" | head -…)
+  ⎿  EVALS.json:63:      "C14": {
+     references/github-lifecycle-contract.md:10:2. C14はtask batchをlocal atomic commit後、resolved tracker bindingに従ってGitHubならC12、BeadsならC28へ択一publicationする。noneは外部起票しない。
+     tests/test_skill_mass_production_contracts.py:14:COMPONENT_IDS = {"C01", "C02", "C03", "C04", "C05", "C14", "C15", "C18", "C19"}
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(python3 -c "
+      import json;d=json.load(open('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json'));print(json.dump…)
+  ⎿  {
+      "schema_version": "1.0.0",
+      import json;d=json.load(open('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json'));print(json.dump…)
+  ⎿  {
+      "schema_version": "1.0.0",
+      "scenarios": [
+     … +58 lines (ctrl+o to expand)
+
+  Read 5 files (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/templates && grep -n "^#\{1,3\} " feature.md | head -30; echo "=== architecture.md ==="; grep -n "^#\{1,3\}…)
+  ⎿  1:# 目的
+     5:## 到達状態
+     9:## スコープ
+     … +32 lines (ctrl+o to expand)
+
+⏺ Task Output macro-auditor@session-65feb1fa
+  ⎿  Error: No task found with ID: macro-auditor@session-65feb1fa
+
+⏺ Bash(sleep 90; echo waited)
+  ⎿  waited
+  ⎿  (timeout 2m)
+
+⏺ Bash(sleep 150; echo waited)
+  ⎿  waited
+  ⎿  (timeout 3m)
+
+⏺ Bash(sleep 100; echo waited)
+  ⎿  waited
+  ⎿  (timeout 2m 10s)
+
+⏺ Task Output(non-blocking) macro-auditor
+  ⎿  Error: No task found with ID: macro-auditor
+⏺ Bash(sleep 120; echo waited)
+  ⎿  waited
+  ⎿  (timeout 2m 30s)
+
+⏺ Bash(sleep 120; echo waited)
+  ⎿  waited
+  ⎿  (timeout 2m 30s)
+
+› Message from @macro-auditor (ctrl+o to expand)
+
+⏺ Bash(python3 - <<'PY'
+      import json…)
+  ⎿  evaluation_status {"type": "string", "enum": ["pending", "pass", "fail", "stale"], "description": "独立評価状態。C14/C15/C04はpass以外をIssue起票・推薦・実装handoff対象にしない"}
+
+     implementation_readiness {"type": "object", "required": ["status", "missing_sections", "checked_at"], "properties": {"status": {"type": "string", "enum": ["complete", "incomplete", "not_applicable"]}, "missing_
+     … +86 lines (ctrl+o to expand)
+
+⏺ Bash(python3 - <<'PY'
+       File "<stdin>", line 2, in <module>
+     FileNotFoundError: [Errno 2] No such file or directory: '/Users/dm/dev/dev/個人開発/harness/schemas/../plugins/dev-graph/schemas/graph-node.schema.json'
+
+⏺ Bash(python3 - <<'PY'
+      import json…)
+  ⎿  [
+       {
+         "if": {
+     … +582 lines (ctrl+o to expand)
+
+⏺ The auditor found schema violations (plus confirmation_status enum I verified myself). Correcting the candidate.
+
+  Made 1 scratchpad edit +105 (ctrl+o to expand)
+
+⏺ Bash(sleep 180; echo waited)
+  ⎿  waited
+  ⎿  (timeout 3m 20s)
+
+› Message from @macro-auditor (ctrl+o to expand)
+
+⏺ Auditor PASS on the corrected candidate. Proceeding to the C02 single writer preview.
+
+⏺ Bash(R="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"; P="/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph"; echo "== R0 C24 r…)
+  ⎿  == R0 C24 receipt (write mode) ==
+     {
+       "repo_root": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose",
+ ▐▛███▛█   Claude Code v2.1.263
+▝▜██████▀  Opus 5 · Claude Max
+  ▝▝ ▝▝    ~/dev/dev/個人開発/harness
+
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+  Read 5 files (ctrl+o to expand)
+  ⎿  Read ../../../../../../../../../private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad/staging/preview-graph.json (202 lines)
+  ⎿  Read ../../../../../../../../../private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad/macro-candidate-v2.json (105 lines)
+  ⎿  Read ../../../../../../../../../private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad/macro-candidate.json (78 lines)
+  ⎿  Read ../../../eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/init-receipt.json (141 lines)
+  ⎿  Read ../../../eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json (6 lines)
+  ⎿  Skills restored (dev-graph:run-dev-graph-node, dev-graph:run-dev-graph-decompose, dev-graph:run-dev-graph-init)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 -c "
+      import json…)
+  ⎿  46
+     ['graph_node_id', 'artifact_kind', 'artifact_subtypes', 'title', 'project_id', 'domain', 'status', 'priority', 'start_date', 'target_date', 'iteration', 'owners', 'tags', 'file_path', 'template_id', 'template_v
+     ersion', 'confirmation_status', 'evaluation_status', 'confirmation_evidence', 'source_lineage', 'created_at', 'updated_at', 'depends_on', 'related_nodes', 'resource_scope', 'purpose', 'goal', 'scope_in', 'scope
+     … +2 lines (ctrl+o to expand)
+
+  Made 3 scratchpad edits +466 (ctrl+o to expand)
+
+⏺ Now the pre-write validation (C11 gate) on the staged preview, in the write-free staging root:
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/dev-graph/scripts/validate-graph-schema.py --graph "/private/tmp/claude-501/-Users-dm-dev-dev------harnes…)
+  ⎿  {
+       "implementation_readiness": "complete",
+       "missing_sections": [],
+     … +5 lines (ctrl+o to expand)
+
+⏺ dev-graph:dev-graph-integrity-auditor(Audit final macro preview)
+
+⏺ Bash(F="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"
+      echo "--- graph.json sha256 ---"; shasum -a 256 "$F/.dev-graph/state/gra…)
+  ⎿  --- graph.json sha256 ---
+     27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json
+     --- content roots .md ---
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(F="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose"
+      echo "--- newest 12 by mtime (excluding .git) ---"…)
+  ⎿  --- newest 12 by mtime (excluding .git) ---
+     2026-09-07T13:12:25 /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/init-receipt.json
+     2026-09-07T13:11:50 /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4-decompose/.dev-graph/state/graph.json
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose" && ls -1 prompts/ && echo "--- node prompts ---" && ls -1 ../run-dev-graph-…)
+  ⎿  R1-elicit.md
+     R2-plan.md
+     R2b-feature-planning.md
+     … +13 lines (ctrl+o to expand)
+
+  Read 5 files (ctrl+o to expand)
+
+⏺ Bash(S="/private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad"
+      shasum -a 256 "$S/staging/tmproot/.dev-graph/state/gr…)
+  ⎿  81734bc76e3a05a9ce14281972b3ba035c04c7587e4a5080413e7a236927c454  /private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad/staging/tmproot/.dev-graph/state/graph.js
+     on
+     6443d80796f6c372eea63f4b01ebfe86d7ae9ac64b12aa13ea1b2effe37bd175  /private/tmp/claude-501/-Users-dm-dev-dev------harness/3ced1aaa-d8ed-41d4-aac9-865697e6b6b7/scratchpad/staging/tmproot/architecture/arch-auth-to
+     … +4 lines (ctrl+o to expand)
+
+  Made 2 scratchpad edits +183 (ctrl+o to expand)
+
+⏺ Bash(sleep 120; echo waited)
+  ⎿  waited
+  ⎿  (timeout 2m 10s)
+
+› Message from @macro-final-auditor (ctrl+o to expand)
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260907T0330-gm4/out/status.json)
+  ⎿  Wrote 1 line to ../../../../eval-log/dev-graph/run-dev-graph-decompose/live-trial/20260907T0330-gm4/out/status.json
+      1 {"status":"PASS","scenario":"decompose-macro-positive"}
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --operation finish --capture '{"…)
+  ⎿  usage: build-external-intelligence-runtime.py [-h]
+                                                   (--request REQUEST | --request-json REQUEST_JSON)
+     build-external-intelligence-runtime.py: error: one of the arguments --request --request-json is required
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{"operation":"fi…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "request keys mismatch: missing=['context_id', 'contract_id', 'runtime', 'schema_version', 'state'], extra=[]",
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{
+      "schema_versio…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "request keys mismatch: missing=['project_root', 'run_id'], extra=[]",
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{
+      "schema_versio…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "capture keys mismatch: missing=['countercondition', 'evidence_ref', 'evidence_source', 'rule', 'tags'], extra=['status']",
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness" && python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{
+      "schema_versio…)
+  ⎿  {"candidates": [], "capture": {"action": "created", "id": "ei-107d0964a44f", "resolution_status": null}, "contract_id": "external-intelligence-runtime-v1", "details": [], "memory": {"engine": "central:skill-gov
+     ernance-adapters/build-external-intelligence.py", "scope": "project", "status": "available", "user_scope_used": false}, "operation": "finish", "policy": {"detail_max_bytes": 4096, "details_total_max_bytes": 163
+     84, "score_threshold": 1.0, "search_limit_max": 5, "search_results_max_bytes": 4096, "summary_max_bytes": 512}, "reuses": [], "runtime": "claude-code", "schema_version": 1, "state": {"candidate_ids": ["ei-61eaf
+     … +3 lines (ctrl+o to expand)
+
+⏺ DONE: PASS
+
+
+› Message from @macro-auditor (ctrl+o to expand)
+
+⏺ Teammate @macro-auditor finished
+  Audit complete and sent to team-lead. Summary:…
+
+› Message from @macro-auditor (ctrl+o to expand)
+
+⏺ Teammate @macro-auditor finished
+  Re-sent the completed audit verdict JSON to team-lead. Overall verdict: **FAIL** — items 1, 2, 3, 6, 7 pass cleanly, item 4 passes for the architecture-specific ask, and item 5 passes semantically but…
+
+⏺ Teammate @macro-auditor finished
+  Sent the full audit verdict JSON to `main` as requested (queued for the main conversation's next turn). Summary: overall verdict **FAIL** — items 1, 2, 3, 6, 7 pass fully; item 4 passes for its archit…
+
+⏺ Teammate @macro-auditor finished
+  Re-audit of `macro-candidate-v2.json` complete and sent to `main`. Overall verdict: **PASS**.…
+
+⏺ Teammate @macro-final-auditor finished
+  I completed the independent audit and sent the full verdict to `main`. Summary:…
+
+⏺ DONE: PASS
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)                                                                                                                                   ✘ Auto-update failed · Run claude doctor
+
+
+
+

@@ -218,7 +218,7 @@ def test_draft202012_projection_validation_rejects_missing_required_field():
 def test_real_repository_all_manifest_plugins_are_green_and_dynamic():
     mod = _load_generator()
     manifests = _manifest_plugins(ROOT)
-    assert len(manifests) == 20  # current fact, not a generator allowlist
+    assert len(manifests) == 21  # current fact, not a generator allowlist
     assert [p.name for p in mod.discover_plugin_dirs(ROOT)] == [
         p.parents[1].name for p in manifests
     ]
@@ -229,7 +229,7 @@ def test_real_repository_all_manifest_plugins_are_green_and_dynamic():
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "20 plugins" in result.stdout
+    assert "21 plugins" in result.stdout
 
 
 def test_temp_twenty_first_manifest_without_projection_fails_closed(tmp_path):
@@ -431,7 +431,7 @@ def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
             for action in ("preview", "hook-confirm", "authorize", "execute"):
                 assert action in text, (skill, action)
             assert text.count("build-external-mutation-guard.py") >= 3, skill
-    assert count == 33
+    assert count == 34
 
 
 def test_structured_marker_without_canonical_cli_wiring_fails_closed(tmp_path):

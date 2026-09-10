@@ -40,7 +40,7 @@ P01 で確定した consumer 責務 (並列 dispatch・state write-back・成果
 
 DAG は C01-C04 が相互 depends_on なし (並列 buildable)、C05 と C07 はいずれも C02 の内部関数を import/subprocess 再利用するため C02 に依存する (C05 は `resolve_build_dir()` を import、C07 は `reap_expired_lease()` を subprocess 経由で呼ぶ・いずれも build 時コード再利用依存であり実行時呼出順とは別軸)、C08 は C02 の task-events/task-state、C04 の discovered-task inbox、C05 の stall summary を読むため [C02,C04,C05] に依存する → C06 が C01-C05, C07, C08 の全 7 script に依存して統合する形 (非循環)。これは checklist C1 が要求する「相互独立タスクの並列 dispatch」と C13 が要求する「発見タスクを残したまま完了しない」を、component 分解そのものが体現する構造になっている。
 
-### state_file パス確定 (open_questions[2] の最終解消)
+### state_file パス確定 (P01 で解決済み)
 `eval-log/<slug>/build/task-state.json` に確定する。根拠: producer 側 `handoff-run-plugin-dev-plan.json` の `open_issues[0]` が「task state ファイルは仮置きで `eval-log/<slug>/build/task-state.json` (route-build-report と同居) とし単一 writer は consumer 側」と既に記述しており (`aligned_with: goal-spec.json#checklist.C7`)、producer 側は既にこの前提で task-graph 設計を完了している。route-build-report (`eval-log/<slug>/build/route-<id>.json`, PR#70 契約) と同居させることで、C02/C05 が同一ディレクトリを read/write するだけで完結し新規ディレクトリ規約を持ち込まない。
 
 task-graph.json (構造・producer SSOT・consumer からは read-only) と task-state.json (runtime state・consumer SSOT・単一 writer=C02) を分離する設計とする。producer 側 `derive-task-graph.py` は `node.state=pending` の初期値を書くのみで単一 writer 原則は破らない。C01 は両ファイルをマージした上で producer 側 `compute-ready-set.py` を cross-plugin subprocess として呼び出す (再実装しない)。

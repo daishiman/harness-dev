@@ -775,14 +775,14 @@ def test_external_dependency_requires_declared_entrypoint_and_package_edge(tmp_p
     assert any("external required entry point is unresolved: owner.run-missing" in f for f in findings)
 
 
-def test_repo_all_twenty_compositions_pass_as_one_fleet():
+def test_repo_all_compositions_pass_as_one_fleet():
     compositions = sorted((ROOT / "plugins").glob("*/plugin-composition.yaml"))
-    assert len(compositions) == 20
+    assert len(compositions) == 21
 
     proc = run_cli(*(str(path) for path in compositions))
 
     assert proc.returncode == 0, proc.stderr
-    assert "OK: 20 composition file(s) passed" in proc.stdout
+    assert "OK: 21 composition file(s) passed" in proc.stdout
 
 
 # --------------------------------------------------------------------------

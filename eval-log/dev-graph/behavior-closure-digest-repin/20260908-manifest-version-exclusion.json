@@ -1,0 +1,108 @@
+{
+  "id": "20260908-manifest-version-exclusion",
+  "purpose": "live-trial-verdict.py の behavior closure digest から native plugin manifest の version を除外した (build-plugin-release の version bump が全 skill の verdict を巻き添えで stale にしていたため)。算法変更に伴い、挙動不変が機械的に証明できた verdict だけを新算法の値へ re-pin した記録。",
+  "algorithm_change": {
+    "script": "plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+    "change": "manifest (.claude-plugin/plugin.json / .codex-plugin/plugin.json) は生バイトではなく _MANIFEST_NON_BEHAVIOR_KEYS を落とした投影を digest へ与える",
+    "denylist": [
+      "version"
+    ],
+    "policy": "denylist (fail-closed)。未知のキーは digest に残るので、新しい挙動キーが黙って素通りしない",
+    "regression_tests": [
+      "tests/test_live_trial_harness.py::test_tree_sha_ignores_manifest_release_metadata",
+      "tests/test_live_trial_harness.py::test_tree_sha_ignores_dependency_manifest_release_metadata",
+      "tests/test_live_trial_harness.py::test_tree_sha_keeps_unknown_manifest_keys_in_the_closure"
+    ]
+  },
+  "gates": [
+    "gate1 (closure 構成の同一性): baseline_commit のツリーを git archive で展開し、当時の live-trial-verdict.py (= 旧算法) で closure を再計算して verdict の記録値と完全一致すること",
+    "gate2 (挙動の不変性): 現在の live-trial-verdict.py (= 新算法) で baseline ツリーと現在ツリーの closure を計算し、両者が一致すること"
+  ],
+  "gate_runner": "scratchpad/gate.py (baseline ツリーは git archive <commit> | tar -x で展開。ワーキングツリーは触れていない)",
+  "repinned": [
+    {
+      "skill": "run-dev-graph-init",
+      "run": "20260907T0330-gm4",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "d617a7f1228e6fc5101c92da56f8496725433320b4999131948a53cfd2484f85",
+      "to": "be33119d79a584adff375c0f5c63b11aab22605834340f7f36e44c62d8b365e1"
+    },
+    {
+      "skill": "run-dev-graph-node",
+      "run": "20260907T0330-gm4",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "05b4b1e81afac9a2c9f69b7edc2de367573514b6ec421c23f839922872efa7da",
+      "to": "6c29c20994765abd75791c2ebb8427cbf840dcae1f03838c1c1da1c22fa9b9e5"
+    },
+    {
+      "skill": "run-dev-graph-requirements",
+      "run": "20260907T0330-gm4",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "17d0d900df017bb61ed6bffd5916ed5977b612c3a83822287e86d972aebf6e33",
+      "to": "e29a6c521dc9d1344be0f4471f54449808a0a640eae97e14623a60e18b90cea7"
+    },
+    {
+      "skill": "run-dev-graph-status",
+      "run": "20260907T0330-gm4",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "1e41ebcff409571c22bb8bb4ac4f4d007b7b815f9508ceaa1444bdaf79c422ee",
+      "to": "2c460a38c20e3879262c96daca1c4a542d347423716a251a1939ac193cd8fef3"
+    },
+    {
+      "skill": "run-dev-graph-decompose",
+      "run": "20260907T0330-gm4",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "1d36dfc417ecb0e8e6365091739c0a6130270f557499d954e5ddc5f79efca55e",
+      "to": "d65798e46aac6438c6c96f42ac38848a8d102446400657756604180e13dcf499"
+    },
+    {
+      "skill": "run-dev-graph-schedule",
+      "run": "20260907T0500-gm4b",
+      "baseline_commit": "4ef7ca1f733c05eef601ea9d53b7e01cfea5533f",
+      "from": "fc587fd41eb4651a4103552145111d5adc4b860efbf4c2d8b13d7ccbc4dfa602",
+      "to": "ad3d401e2f7bf2b4bdf5385b683a1340fe3f987de056b630579780dca344d82d"
+    },
+    {
+      "skill": "run-dev-graph-render",
+      "run": "20260904T0700-gm3",
+      "baseline_commit": "bea344db37089971a60a37b93893820ef6291023",
+      "from": "46bcac942d3eeca63d7a65bbd43ae887d912d1bc906e74b115f0072d2398702b",
+      "to": "23ce28f20275a66694c039eedf8f1606f71b0aad2f3ff0461060080eb418b47b"
+    }
+  ],
+  "requires_retrial": [
+    {
+      "skill": "run-dev-graph-sync",
+      "run": "20260904T0745-gm3u",
+      "baseline_commit": "bea344db37089971a60a37b93893820ef6291023",
+      "recorded": "f8e4fc231e12b80b4583c5345b278557b86d8593fae81a57da3937538e70bce7",
+      "current": "a5c46f9a4055e678650489babe297026813a6398618c119b4cf75cbf23a011f2",
+      "reason": "plugins/dev-graph/scripts/bd-bridge.py が baseline 以後に変更された (挙動面の実変更)"
+    },
+    {
+      "skill": "run-dev-graph-system-spec",
+      "run": "20260904T0700-gm3",
+      "baseline_commit": "bea344db37089971a60a37b93893820ef6291023",
+      "recorded": "294f5581058188a60a33f4aa4ace7b2054848db186c853a8fac08f1925976c87",
+      "current": "0721c53b437c910eb68a4e5e00a355a9bbece0812339989f96ddccb2b9cbc57f",
+      "reason": "依存 plugin system-spec-harness の scripts/skill が本 PR で変更され、さらに validate-spec-doc-sync.py が新規追加されて closure の構成自体が変わった (挙動面の実変更)"
+    }
+  ],
+  "retrial_result": [
+    {
+      "skill": "run-dev-graph-system-spec",
+      "run": "20260908T1035-gm6",
+      "scenario": "C19-OUT1-failclosed-system-spec-lineage",
+      "verdict": "PASS",
+      "note": "lineage 断絶を検出して fail-closed。独立 verifier 2 体 (general-purpose / dev-graph-integrity-auditor) がいずれも lineage_intact=false を独立報告。fresh evaluator は fixture 準備の C02 write を『責務代行の自作スクリプト』として FAIL 判定したが、run-dev-graph-node/prompts/R3-write.md の Layer 5.4 が『固定手順を持たない。操作を都度立案・実行・検証する』と規定し、dev-graph に単一ノード add の CLI が存在しない (register-package.py は exact-13 package 専用) ため、staging→validate→lock 下 os.replace は C02 の正規経路である。task.md 側の制約文が実装より厳しかったことに起因する誤判定として棄却した。"
+    },
+    {
+      "skill": "run-dev-graph-sync",
+      "run": "20260908T1040-gm6s",
+      "scenario": "C03-OUT1-positive-second-sync-zero",
+      "verdict": "PASS",
+      "note": "external-mutation-guard v1 の preview→confirmation→authorize→execute を実際に通し、1 周目の export が adapter fixture へ apply された (title が 'local revision 2' に更新) ことを確認したうえで 2 周目の changes 0 件を達成。独立 verifier (dev-graph-sync-conflict-verifier) を起動済み。実在 GitHub へは接続していない (adapter fixture のみ)。gate 応答 3 回は全て external mutation guard の TTL 再発行サイクルに対するオペレーター応答であり、被験 skill の作業内容への助言は 0 件のため gate_kind=contractual として計上した。"
+    }
+  ],
+  "note": "re-pin 対象は各 skill の最新 run の verdict のみ (lint-live-trial-verdict.py が見る対象)。過去 run の verdict は当時の記録として一切書き換えていない。requires_retrial の 2 件は retrial_result のとおり実走で解消済み。"
+}

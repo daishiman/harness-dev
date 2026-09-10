@@ -21,7 +21,7 @@
 | 表記 | 系統 | 番号→実体の対応 | 番号正本 |
 |---|---|---|---|
 | `PB-Cxx` | パイプライン契約系 (本ファイルの境界表 C01..C11) | PB-C01=`run-plugin-dev-plan` R1 / PB-C02=`/plugin-dev-plan` / PB-C04=`check-intake-consumption.py` / PB-C05=`check-provenance-chain.py` / PB-C06=`run-skill-create` R1 (`brief_path`/`handoff` 消費) / PB-C07=`/capability-build` build 入口 / PB-C08=`check-route-component-parity.py` / PB-C09=`emit-improvement-handoff.py` / PB-C10=`plugin-dev-plan-improvement-reviewer` / PB-C11=`enforce-provenance-chain` hook | 本ファイル |
-| `TG-Cxx` | task-graph 実行系 (harness-creator `scripts/` + dispatcher) | TG-C01=`dispatch-ready-set.py` / TG-C02=`sync-task-state.py` / TG-C03=`inject-task-inputs.py` / TG-C04=`emit-discovered-task.py` / TG-C05=`summarize-task-progress.py` / TG-C06=`/capability-build` の task-graph dispatcher 拡張 (command 本文・script ではない) / TG-C07=`manage-build-lease.py` / TG-C08=`record-task-graph-knowledge.py` / TG-C09=`project-task-status.py` (live 状態の plan dir 投影・観測性) | 本表が正本 (歴史的導出元: 当該周回の phase-05) |
+| `TG-Cxx` | task-graph 実行系 (harness-creator `scripts/` + dispatcher) | TG-C01=`dispatch-ready-set.py` / TG-C02=`sync-task-state.py` / TG-C03=`inject-task-inputs.py` / TG-C04=`emit-discovered-task.py` / TG-C05=`summarize-task-progress.py` / TG-C06=`/capability-build` の task-graph dispatcher 拡張 (`capability-build-runtime-contract.md`・script ではない) / TG-C07=`manage-build-lease.py` / TG-C08=`record-task-graph-knowledge.py` / TG-C09=`project-task-status.py` (live 状態の plan dir 投影・観測性) / TG-C10=`build-dispatch-batch.py` (dispatch batch 機械導出・direct validator/subagent/delayed 振り分け) | 本表が正本 (歴史的導出元: 当該周回の phase-05) |
 | `ENG-Cxx` | 生成 harness 同梱 engine 系 (with-goal-seek `engine:task-graph` 変種) | ENG-C01=`ready-set-from-checklist.py` / ENG-C02=`self-reflect-append.py` / ENG-C06=`extract-capability-dependency-graph.py` / ENG-C07=`record-capability-graph-knowledge.py` / ENG-C08=`lint-capability-graph-knowledge.py` | `skills/run-build-skill/SKILL.md` |
 | `route Cxx` / `component Cxx` | plan-local component id (各 plan の inventory 内番号) | 接頭辞は付けず、必ず「route C09」「component C12」のように文脈語を添える | 各 `plugin-plans/<slug>/component-inventory.json` |
 
@@ -59,7 +59,7 @@
 
 task-graph は planner が作る計画構造であり、harness-creator は build 実行状態と知見だけを書く。両者を双方向 writer にしない。日々の build で新しい課題が見つかった場合も、harness が graph/phase/inventory/handoff を直接編集せず、proposal と knowledge を残し、次サイクルの planner update が graph を更新する。
 
-実行は **2 つの入れ子ループ** (内=build-execution loop・TG-C06 所有 / 外=spec-improvement loop) で駆動する。dispatch 手順・stall 分岐・handback 提示などの**制御フロー正本は `commands/capability-build.md` の「task-graph route モード」節**であり、本ファイルはループ間契約の不変条件のみを定める:
+実行は **2 つの入れ子ループ** (内=build-execution loop・TG-C06 所有 / 外=spec-improvement loop) で駆動する。dispatch 手順・stall 分岐・handback 提示などの**制御フロー正本は `references/capability-build-runtime-contract.md` の「task-graph route モード」節**であり、`commands/capability-build.md` は分岐後に同節だけを遅延参照する。本ファイルはループ間契約の不変条件のみを定める:
 - **単一 writer**: state write-back は dispatcher (TG-C06) が直列呼出しする `sync-task-state.py` (TG-C02) のみが行う (SubAgent は state を書かない)。
 - **完了ゲート fail-closed**: `record-task-graph-knowledge.py` (TG-C08) が未処理 discovered-task 残存時に completed を機構的にブロックし、`handback_command` で外ループへ制御返却する。第2段=--task-state の blocked node 残存、第3段=graph の local required node 全件 done (P13 一括例外は禁止。schema-valid `runtime-evidence-ledger.json` が task id 単位で列挙した install/enable/trust/new-session/uninstall/PR の user-owned node だけを保留可)、第4段=C01 `sync-native-surfaces.py --check --json` の単一 desired-set gate とする。TG-C08 から旧 reflector/C02 を個別再実行せず、C01 child report に含まれる parity 結果を判定する。
 - **provenance-gated repin**: 実行中の graph 差替えは accepted discovered-task の `resulting_graph_hash` と一致する場合のみ TG-C07→TG-C02 委譲で再 pin (`repinned`) し、不一致は不正混入 (F10) として `mismatch` で fail-closed 拒否する。
@@ -69,7 +69,7 @@ task-graph は planner が作る計画構造であり、harness-creator は buil
 | 項目 | writer / owner | reader / consumer | 完了ゲート | 備考 |
 |---|---|---|---|---|
 | `task-graph.json` / phase / inventory / handoff | plugin-dev-planner | harness-creator `/capability-build` | planner 側 graph/schema/gate | harness は read-only。plan 直接 mutation 禁止 (例外は下行 TG-C09 の gitignore 済派生投影ビューと、`reports/` 行のリッチ版納品物の 2 write class のみ) |
-| `task-state.json` / `task-events.jsonl` | harness-creator `sync-task-state.py` | `dispatch-ready-set.py` / `summarize-task-progress.py` / `record-task-graph-knowledge.py` | state schema + replay 整合 | state と event は同じ単一 writer。TG-C07 acquire は dispatch 前に TG-C02 `--initialize-from-graph` へ委譲し、graph 全 node を pending materialize (既存 state は保持、未知/重複は拒否) して sparse state を禁止 |
+| `task-state.json` / `task-events.jsonl` | harness-creator `sync-task-state.py` | `dispatch-ready-set.py` / `summarize-task-progress.py` / `record-task-graph-knowledge.py` | state schema + replay 整合 | state/event の単一 writer。repeatable `--task-id` は全件検査後に1 atomic replace。`--project-phase-gates` は child done + covered evidence refs だけを Agent 無しで done 投影 |
 | discovered-task inbox | harness-creator `emit-discovered-task.py` | planner `accept-discovered-task.py` | 未処理 status があれば TG-C08 が completed 拒否 | status は `accepted` / `rejected` / `superseded` で解決済み |
 | build 成果物の周回 scope | harness-creator `resolve_build_dir(target_plugin_slug, cycle_id)` | TG-C02/TG-C05/TG-C07/TG-C08 | `cycle_id` は handoff top-level だけを消費 | `plan_dir` のパス解析は禁止 |
 | blocked 起点/伝播 | harness-creator `sync-task-state.py` | progress summary / knowledge distill | `blocked_reason` 必須 | `origin-failure` と `propagated` を state enum ではなく第一級 field で区別 |
@@ -121,12 +121,13 @@ owner token 導入前の `{started_at,pid,host}` lock は推測可能な pid/hos
 |---|---|---|---|---|
 | 内 | build 開始ゲート (lock 排他 / graph node 初期化 / 孤児 lease 回収 / graph_hash pin) | 決定論 script | `manage-build-lease.py` (TG-C07) → `sync-task-state.py --initialize-from-graph` (TG-C02) | owner-token + O_EXCL・pid 生存判定・全 node materialize・producer hash 照合 |
 | 内 | ready-set 計算 | 決定論 script | `dispatch-ready-set.py` (TG-C01) → producer `compute-ready-set.py` | depends_on 完了 + consumes 実在 + write_scope 非重複 |
-| 内 | fan-out 判断 (どの ready を並列起動するか) | **AI orchestrator** | dispatcher=`/capability-build` (TG-C06) | TG-C01 の `ready_batch`/`conflicts` を入力に起動を決める |
+| 内 | execution unit / dispatch batch 導出 | 決定論 script | `derive-route-build-obligations.py` → `build-dispatch-batch.py --execution-contract ... --stage ...` (TG-C10) | 304 claimをroute×phase/global×phaseへ一意射影。未割当/重複/self-depはfail-closed。phase-gateは`proof_projection_batch` でAgentなし |
+| 内 | dispatch 実行 (TG-C10 出力どおりの SubAgent 起動 / direct validator の Bash 直実行) | **AI orchestrator** | dispatcher=`/capability-build` (TG-C06) | fan-out の導出は TG-C10 が機械化済み。LLM 判断は build 本体と discovered-task の 2 引数のみ |
 | 内 | node→build 解決 (`entity_ref`→route 写像) | 決定論写像 | dispatcher (`entity_ref==route.component_id`) | 自然文 title 解釈に依存しない |
 | 内 | route build 実行 | **独立 SubAgent** | `run-build-skill` / `run-skill-create` / `build-script-route.py` | 各 SubAgent 内は AI・state は書かない |
-| 内 | 入力注入 (producer 成果物 / handoff_notes) | 決定論 script | `inject-task-inputs.py` (TG-C03) | 有界注入 |
-| 内 | state write-back (done/blocked/lease) | 決定論 script (単一 writer) | `sync-task-state.py` (TG-C02) を dispatcher が直列呼出 | SubAgent は TG-C02 を呼ばない |
-| 内 | heartbeat (lock/lease 延長) | 決定論 script | TG-C07 `renew` / TG-C02 `--renew-lease` | 偽孤児回収を防ぐ |
+| 内 | 入力注入 (producer proof/artifact / handoff_notes) | 決定論 script | `inject-task-inputs.py --execution-contract ... --unit-id ...` (TG-C03) | 1 unit=1 process、unique path/valueにdedupe、unit DAGと同じdependencyをfail-closed検査 |
+| 内 | state write-back / phase proof 投影 | 決定論 script (単一 writer) | `sync-task-state.py` repeatable `--task-id` / `--project-phase-gates` (TG-C02) | batchは1 atomic write。SubAgentはTG-C02を呼ばない |
+| 内 | heartbeat (lock/lease 延長) | 決定論 script | TG-C07 `renew` / TG-C02 repeatable `--task-id ... --renew-lease` | batchごと1 lease writeで偽孤児回収を防ぐ |
 | 内 | 進捗集計 / 停滞判定 | 決定論 script | `summarize-task-progress.py` (TG-C05) | stall を kind 分類 |
 | 内 | live 状態の plan dir 投影 (観測性) | 決定論 script | `project-task-status.py` (TG-C09) | task-graph.json+task-state.json を **read-only** merge 投影 (SSOT 不変・plan dir へ status JSON / progress md / execution-report HTML の 3 成果物・観測性断絶を解消) |
 | 外 | 発見タスク emit | 決定論 script (引数の 2 つのみ AI) | `emit-discovered-task.py` (TG-C04) | stall 由来は TG-C05 構造化フィールドから機械導出・`--node-title`/`--reason` のみ AI 判断 |

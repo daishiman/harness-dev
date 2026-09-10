@@ -1,0 +1,24 @@
+{
+  "changed_paths": [
+    "plugins/x-longpost-creator/**",
+    "tests/scripts-plugins/test_x_longpost_creator__contract_parity.py",
+    "tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py"
+  ],
+  "validation_commands": [
+    "pytest -q tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py tests/scripts-plugins/test_x_longpost_creator__contract_parity.py tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py (46 passed)",
+    "python3 scripts/validate-plugin-packages.py (blocking failure なし)"
+  ],
+  "residual_risks": [
+    "visual prompt 文書の段階分離が旧一括処理のまま残存",
+    "A/B 本文同値・B 一文一行・失敗原子性の実行検査が未実装",
+    "Codex executable の課金前 preflight が未実装"
+  ],
+  "convergence_status": "in_progress",
+  "iteration_count": 1,
+  "four_conditions": {
+    "C1": "FAIL",
+    "C2": "FAIL",
+    "C3": "FAIL",
+    "C4": "FAIL"
+  }
+}

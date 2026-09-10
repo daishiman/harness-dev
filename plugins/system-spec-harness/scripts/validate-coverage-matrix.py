@@ -4,7 +4,7 @@
 # version: 0.1.0
 # purpose: システム構成カテゴリ×canonical platform id の収集マトリクスの全セルが『未収集/対象外/確定』のいずれかで埋まり、対象外に理由・確定に qa_ref が付与され、必須プラットフォーム行が全存在し、カテゴリ集約状態が真理値表と一致することを検証する決定論ゲート (goal-spec C7 の直接実装)。
 # inputs:
-#   - argv: --matrix FILE [--require-complete]
+#   - argv: --matrix FILE [--require-complete] [--require-basis] [--require-foundation]
 # outputs:
 #   - stdout: OK summary
 #   - stderr: violation 一覧
@@ -92,7 +92,7 @@ def _derive_aggregate(cells: list[str]) -> str:
     return "確定"
 
 
-def validate(data: dict, require_complete: bool = False) -> list[str]:
+def validate(data: dict, require_complete: bool = False, require_basis: bool = False) -> list[str]:
     findings: list[str] = []
 
     categories = data.get("categories")
@@ -126,6 +126,7 @@ def validate(data: dict, require_complete: bool = False) -> list[str]:
     ref_ids = qa_ids | approval_ids
 
     unresolved = 0
+    reasons_by_category: dict[str, set[str]] = {}
     for cat_id in cat_ids:
         row = matrix.get(cat_id)
         if not isinstance(row, dict):
@@ -138,6 +139,7 @@ def validate(data: dict, require_complete: bool = False) -> list[str]:
             findings.append(f"matrix[{cat_id}]: 必須 platform {missing_pf} が欠落")
 
         cells: list[str] = []
+        cat_reasons: set[str] = set()
         for pf in CANONICAL_PLATFORMS:
             cell = row.get(pf)
             if cell is None:
@@ -159,6 +161,9 @@ def validate(data: dict, require_complete: bool = False) -> list[str]:
                     findings.append(
                         f"matrix[{cat_id}][{pf}]: 対象外だが reason も approval_ref も無い"
                     )
+                reason = cell.get("reason")
+                if isinstance(reason, str) and reason.strip():
+                    cat_reasons.add(reason.strip())
             elif state == "確定":
                 qa_ref = cell.get("qa_ref")
                 if not qa_ref:
@@ -167,6 +172,8 @@ def validate(data: dict, require_complete: bool = False) -> list[str]:
                     findings.append(
                         f"matrix[{cat_id}][{pf}]: 確定 qa_ref={qa_ref!r} が qa_log/approval_log に不在"
                     )
+
+        reasons_by_category[cat_id] = cat_reasons
 
         # 集約状態の真理値表照合 (宣言があれば)
         declared = (data.get("category_aggregate") or {}).get(cat_id)
@@ -180,6 +187,82 @@ def validate(data: dict, require_complete: bool = False) -> list[str]:
     if require_complete and unresolved:
         findings.append(f"未収集セルが {unresolved} 件残存 (最終時は未収集 0 が必須)")
 
+    findings.extend(_boilerplate_reason_findings(reasons_by_category))
+    findings.extend(_inference_only_findings(data, matrix, cat_ids, require_basis))
+    return findings
+
+
+# 回答の性質 (qa_log entry の basis)。詳細は spec-state-contract.md。
+_INFERENCE = "agent-inference"
+
+
+def _inference_only_findings(
+    data: dict, matrix: dict, cat_ids: list[str], require_basis: bool
+) -> list[str]:
+    """確定セルが『アシスタントの推定』だけを根拠にしていないかを検査する。
+
+    設計判断を利用者に確認せずアシスタントが決め、それが `確定` として仕様に載ると、
+    利用者が選んだ結論と区別がつかなくなる。しかも矛盾しないので、どの決定論ゲートにも
+    引っ掛からない。qa entry の `basis` を導入したことで、この区別が機械可読になった。
+
+    `basis` を宣言している参照だけを見て判定するため、未宣言の既存 state を壊さない。
+    「宣言しなければ検査されない」という抜け道は `--require-basis` が塞ぐ (確定セルの
+    根拠に basis 宣言そのものを要求する)。既存 state へ一斉に backfill を強いないよう、
+    既定では課さず、収集を閉じる側が明示的に有効化する。
+    """
+    findings: list[str] = []
+    basis_by_qa = {
+        e["id"]: e.get("basis")
+        for e in data.get("qa_log", []) or []
+        if isinstance(e, dict) and e.get("id")
+    }
+    for cat_id in cat_ids:
+        row = matrix.get(cat_id)
+        if not isinstance(row, dict):
+            continue
+        for pf, cell in row.items():
+            if not isinstance(cell, dict) or cell.get("state") != "確定":
+                continue
+            refs = [cell["qa_ref"]] if cell.get("qa_ref") else []
+            refs += [r for r in (cell.get("qa_refs") or []) if isinstance(r, str)]
+            declared = [basis_by_qa[r] for r in refs if basis_by_qa.get(r)]
+            if not declared:
+                if require_basis and refs:
+                    findings.append(
+                        f"matrix[{cat_id}][{pf}]: 確定の根拠 {refs} が basis を宣言していない "
+                        "(利用者決定・観測事実・推定の区別が付かない)"
+                    )
+                continue
+            if all(b == _INFERENCE for b in declared):
+                findings.append(
+                    f"matrix[{cat_id}][{pf}]: 確定の根拠が {_INFERENCE} のみ "
+                    f"({refs})。利用者確認 (user-decision) か検証可能な出典 "
+                    "(observed-fact) を根拠に加えること"
+                )
+    return findings
+
+
+def _boilerplate_reason_findings(reasons_by_category: dict[str, set[str]]) -> list[str]:
+    """同一の対象外 reason が複数カテゴリに跨っていないかを検査する。
+
+    カテゴリを跨いで byte 同一の理由文が使われている状態は、「そのカテゴリで何を諦めたか」を
+    セルが一度も述べていないことと区別がつかない。除外の**共通根拠** (例: 対象 platform は
+    web のみ) は approval_log の 1 箇所に置き、セルの `reason` には当該カテゴリ固有の帰結
+    (そのカテゴリで本来収集したはずの事項と、その関心事をどこで代替して扱うか) を書く。
+    共通根拠の複製で 40 セルを一律に埋めると、検討済みと未検討が同じ見た目になる。
+    """
+    findings: list[str] = []
+    owners: dict[str, list[str]] = {}
+    for cat_id, reasons in reasons_by_category.items():
+        for reason in reasons:
+            owners.setdefault(reason, []).append(cat_id)
+    for reason, cats in owners.items():
+        if len(cats) > 1:
+            findings.append(
+                f"対象外 reason がカテゴリ {sorted(cats)} で byte 同一 "
+                f"(共通根拠は approval_log へ、reason にはカテゴリ固有の帰結を書くこと): "
+                f"{reason[:60]!r}..."
+            )
     return findings
 
 
@@ -483,6 +566,11 @@ def main(argv: list[str]) -> int:
         help="最終時: 未収集セル 0 を必須にする (OUT1/C7 受入)",
     )
     ap.add_argument(
+        "--require-basis",
+        action="store_true",
+        help="確定セルの根拠 qa_ref に basis 宣言 (user-decision/observed-fact/agent-inference) を必須にする (opt-in)",
+    )
+    ap.add_argument(
         "--require-foundation",
         action="store_true",
         help="上位概念 (requirements_foundation U1-U9 値ありまたは明示N/A)・decisions・goalトレースを検証 (C9・opt-in)",
@@ -499,7 +587,7 @@ def main(argv: list[str]) -> int:
         print(f"matrix ファイルの JSON parse 失敗: {exc}", file=sys.stderr)
         return 2
 
-    findings = validate(data, require_complete=args.require_complete)
+    findings = validate(data, require_complete=args.require_complete, require_basis=args.require_basis)
     if args.require_foundation:
         findings += validate_foundation(data)
     if findings:
@@ -508,6 +596,8 @@ def main(argv: list[str]) -> int:
         print(f"FAIL: {len(findings)} 件の網羅性違反", file=sys.stderr)
         return 1
     mode = "final(未収集0)" if args.require_complete else "loop"
+    if args.require_basis:
+        mode += "+basis(根拠の性質宣言)"
     if args.require_foundation:
         mode += "+foundation(上位概念トレース)"
     print(f"OK: 収集マトリクス網羅性 ({mode}) を満たす")

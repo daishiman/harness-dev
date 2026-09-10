@@ -40,6 +40,13 @@ EXTRA_ASSERTIONS = {
         t.assertIn(text, html)
         for text in ("画面右上のボタンを押す", "一覧が表示される", "権限設定を見直す")
     ],
+    # B18 は「押すと何が起きるか」が要。新しいタブで開くこと、外部リンクの印が
+    # 付いていること (C16 の同梱閉包検査がこれを見て例外扱いする) を固定する。
+    "B18": lambda t, html, el: (
+        t.assertTrue(H.elements_with(html, "data-hb-nav-link")),
+        t.assertIn('rel="noopener noreferrer"', html),
+        t.assertIn('target="_blank"', html),
+    ),
     "IMG": lambda t, html, el: (
         t.assertTrue(H.elements_with(html, "data-hb-asset-id")),
         t.assertTrue(H.part_elements(html, "lightbox")),

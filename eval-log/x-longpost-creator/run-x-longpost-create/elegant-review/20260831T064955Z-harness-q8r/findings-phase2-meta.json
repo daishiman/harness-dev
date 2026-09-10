@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "target": {"type": "kit-component", "path": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator", "reviewed_at": "2026-08-31T06:49:55Z"},
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10, "paradigm_name": "meta", "category": "C-meta", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["正本台帳優先とscript実装優先が併存し、authorityとenforcementが分離されていない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/ref-x-longpost-canon/SKILL.md:81,119"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/ref-x-longpost-canon/SKILL.md:38-58"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-apply-style-genome.md:24-104"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:130-136"]}
+      },
+      "issues": [{"condition": "C1", "severity": "critical", "bucket": "rubric-governance", "description": "数値台帳優先とscript優先が併存する。", "recommended_intervention": "機械可読specを正本、scriptと文書を照合対象に固定する。", "condition_signal": "contradiction", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/ref-x-longpost-canon/SKILL.md", "line": 81}, "root_cause": "authorityとenforcementの混同。"}],
+      "score": 0.4, "reusable_abstraction": "authority registry", "template_variables": ["{{AUTHORITY_REGISTRY}}"], "reuse_surface": "governance-log", "negative_cases": ["runtime parity duplicationは削除対象にしない。"], "re_audit_trigger": "正本追加時"
+    },
+    {
+      "paradigm_id": 11, "paradigm_name": "abstraction", "category": "C-meta", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["emoji判定とvisual寸法は意味規定を複数JSへ写経しており、共通rule/specへ抽象化できる。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/check-no-emoji.js:26-34"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-title.js:50; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-headings.js:64"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:28-41"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:81-94"]}
+      },
+      "issues": [{"condition": "C3", "severity": "high", "bucket": "variable-abstraction", "description": "emoji意味実装とvisual寸法が複数runtimeへ分散する。", "recommended_intervention": "plugin-local rule coreとvisual-spec.jsonへ集約する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js", "line": 28}, "root_cause": "文書値をruntimeへ手作業写経。"}],
+      "score": 0.45, "reusable_abstraction": "rule core + machine spec", "template_variables": ["{{VISUAL_SPEC_FILE}}"], "reuse_surface": "adapter", "negative_cases": ["境界validator自体は残す。"], "re_audit_trigger": "Unicode/寸法変更時"
+    },
+    {
+      "paradigm_id": 12, "paradigm_name": "double-loop", "category": "C-meta", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["agents→prompts改名の改善後も代表skillとresource-mapに旧名称・旧件数が残り、再発防止規範がない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/CHANGELOG.md:35; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:114"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:4-36"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/resource-map.yaml:5"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:193"]}
+      },
+      "issues": [{"condition": "C4", "severity": "high", "bucket": "dependency-loop", "description": "改名後のdangling prompt rootが主要フローに残る。", "recommended_intervention": "promptsへ修正し、宣言path実在・旧実行pathゼロを検査する。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md", "line": 114}, "root_cause": "rename graph全体の検証不足。"}],
+      "score": 0.35, "reusable_abstraction": "change-impact gate", "template_variables": ["{{PROMPTS_DIR}}"], "reuse_surface": "hook", "negative_cases": ["CHANGELOG履歴は修正しない。"], "re_audit_trigger": "rename/version bump時"
+    },
+    {
+      "paradigm_id": 13, "paradigm_name": "brainstorming", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["7代替案を比較し、spec+rule core+parity gateへ収束した。全prompt統合やvisual別plugin化は結合を移すだけで採らない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:77-82"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:34-74"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:44-57"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:76-128"]}
+      },
+      "issues": [{"condition": "C4", "severity": "medium", "bucket": "schema", "description": "構成DAGと実行手順が別管理され、正しいpathが伝播しない。", "recommended_intervention": "大規模generator追加ではなく、まず単一consistency testで投影を照合する。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml", "line": 76}, "root_cause": "compositionを静的台帳に限定。"}],
+      "score": 0.55, "reusable_abstraction": "declarative content pipeline", "template_variables": ["{{WORKFLOW_MANIFEST}}"], "reuse_surface": "template", "negative_cases": ["過剰なgenerator導入は避ける。"], "re_audit_trigger": "同型drift再発時"
+    },
+    {
+      "paradigm_id": 14, "paradigm_name": "lateral", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["DB正規化の観点ではClaude/Codex/EVALSがrelease identityの非正規化viewになっている。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.claude-plugin/plugin.json:3; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:3"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/EVALS.json:4-36"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:4-11"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:21"]}
+      },
+      "issues": [{"condition": "C3", "severity": "critical", "bucket": "schema", "description": "同一releaseのversionとcapability説明が配布面で分岐する。", "recommended_intervention": "compositionのrelease metadataを正本にprojection parityを検査する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json", "line": 3}, "root_cause": "release transaction境界不在。"}],
+      "score": 0.45, "reusable_abstraction": "normalized release registry", "template_variables": ["{{PLUGIN_VERSION}}"], "reuse_surface": "config", "negative_cases": ["skill個別versionは一律同値にしない。"], "re_audit_trigger": "release時"
+    },
+    {
+      "paradigm_id": 15, "paradigm_name": "paradox", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["重複ゼロ化はfail-closed性を損なう。意味規定は単一化し、runtime adapterと境界再検査は複数残す。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/log_usage.mjs:4-8"]},
+        "C2": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:27-46"]},
+        "C3": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:86-94"]},
+        "C4": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:81-94"]}
+      },
+      "issues": [], "score": 0.9, "reusable_abstraction": "declared duplication taxonomy", "template_variables": ["{{RUNTIME_ADAPTERS}}"], "reuse_surface": "reference", "negative_cases": ["CJS/ESMの片方を削除しない。"], "re_audit_trigger": "runtime廃止時"
+    },
+    {
+      "paradigm_id": 16, "paradigm_name": "analogy", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["兄弟plugin由来のimage runnerはfork provenanceと追従契約がなく、汎用回収coreを別々に保守する。"],
+      "condition_matrix": {
+        "C1": {"verdict": "PASS", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:262"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py:334-396"]},
+        "C3": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/slide-report-generator/vendor/vendor-digest-manifest.json:244"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js:118-197"]}
+      },
+      "issues": [{"condition": "C4", "severity": "medium", "bucket": "dogfooding", "description": "画像回収runtimeのforkに追従契約がない。", "recommended_intervention": "今回はdomain固有runnerを残し、provenanceとre-audit triggerを明示する。", "condition_signal": "dependency_break", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/generate-images-codex.js", "line": 11}, "root_cause": "code copyで再利用を完了扱い。"}],
+      "score": 0.5, "reusable_abstraction": "provenance-pinned fork", "template_variables": ["{{IMAGE_RUNTIME_SOURCE}}"], "reuse_surface": "adapter", "negative_cases": ["domain固有prompt policyは共通coreへ混ぜない。"], "re_audit_trigger": "upstream事故修正時"
+    },
+    {
+      "paradigm_id": 17, "paradigm_name": "if", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["titleへの禁止語・emoji、未許可記号、未知fieldを入れると手書きvalidatorがfalse-passし得る。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/prompts/x-longpost-analyze-visual-structure.md:40-41"]},
+        "C2": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:76-183"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js:11-16,79-81"]},
+        "C4": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:196-204"]}
+      },
+      "issues": [{"condition": "C2", "severity": "high", "bucket": "schema", "description": "visual横断制約がtitleと許可記号へ適用されない。", "recommended_intervention": "全文字列leafの再帰走査とnegative testsを追加する。", "condition_signal": "omission", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/build-visual-prompts.js", "line": 79}, "root_cause": "横断制約をfield別列挙。"}],
+      "score": 0.3, "reusable_abstraction": "schema-first recursive validator", "template_variables": ["{{VISUAL_STRUCTURE_SCHEMA}}"], "reuse_surface": "config", "negative_cases": ["title絵文字、未知field、非文字icon。"], "re_audit_trigger": "field追加時"
+    },
+    {
+      "paradigm_id": 18, "paradigm_name": "naive", "category": "D-divergent", "agent": "elegant-meta-divergent-analyst",
+      "observations": ["初見では旧agents pathと存在しないdefaults.vaultRootにより、正しい起動・出力解決を自力補正できない。"],
+      "condition_matrix": {
+        "C1": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:105; /Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:114"]},
+        "C2": {"verdict": "PARTIAL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:107-123"]},
+        "C3": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/references/output-config.json:1-20"]},
+        "C4": {"verdict": "FAIL", "evidence": ["/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:193,208-209"]}
+      },
+      "issues": [{"condition": "C3", "severity": "medium", "bucket": "doc", "description": "存在しないdefaults fallbackとenv-only policyが混在する。", "recommended_intervention": "env-only二段解決へ統一しpath alias種別を明記する。", "condition_signal": "inconsistency", "location": {"file": "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md", "line": 115}, "root_cause": "移植元fallback語彙の残存。"}],
+      "score": 0.25, "reusable_abstraction": "first-run contract", "template_variables": ["{{OUTPUT_DIR}}"], "reuse_surface": "skill", "negative_cases": ["必須env未設定。"], "re_audit_trigger": "quickstart変更時"
+    }
+  ],
+  "variable_abstraction": [],
+  "total_score": 0.46
+}

@@ -2,9 +2,9 @@
 # /// script
 # name: validate-knowledge-graph
 # version: 0.1.0
-# purpose: 知識依存グラフ (goal-spec C13/C14)・必須情報カタログ (C16)・doctrine anchor 写像 (C15) を検証する決定論ゲート。4 profile: knowledge=depends_on precedence DAG (A depends_on B なら B before A)+循環/dangling/root到達性/孤立node と refines(有向精緻化)/conflicts_with(対称非順序)型則、required-info=item最低形状/domain被覆/収集順序/coverage certificate/missing_effect、doctrine=concern_id 一意性+各 concern の authority 非空 (authority は concern 間で共有可・種類数は不問)+全category→concern写像全射+orphan concern+未帰属pending例外、cross=taxonomy/doctrine/required-info の語彙横断整合 (category 集合一致・concern 部分集合・domain 被覆)。本 gate は well-formedness と順序決定論のみを保証し、辺やカタログ内容の意味妥当性は content-review/human の責務。
+# purpose: 知識依存グラフ (goal-spec C13/C14)・必須情報カタログ (C16)・doctrine anchor 写像 (C15) を検証する決定論ゲート。4 profile: knowledge=depends_on precedence DAG (A depends_on B なら B before A)+循環/dangling/root到達性/孤立node と refines(有向精緻化)/conflicts_with(対称非順序)型則、required-info=item最低形状/domain被覆/収集順序/coverage certificate/missing_effect (--state 指定時は missing_effect=block item の確定接地も検査)、doctrine=concern_id 一意性+各 concern の authority 非空 (authority は concern 間で共有可・種類数は不問)+全category→concern写像全射+orphan concern+未帰属pending例外、cross=taxonomy/doctrine/required-info の語彙横断整合 (category 集合一致・concern 部分集合・domain 被覆)。本 gate は well-formedness と順序決定論のみを保証し、辺やカタログ内容の意味妥当性は content-review/human の責務。
 # inputs:
-#   - argv: --profile knowledge|required-info|doctrine --input FILE [--order]  |  --profile cross --taxonomy FILE --doctrine FILE --required-info FILE
+#   - argv: --profile knowledge|required-info|doctrine --input FILE [--order] [--state FILE (required-info のみ)]  |  --profile cross --taxonomy FILE --doctrine FILE --required-info FILE
 # outputs:
 #   - stdout: profile 別 JSON (knowledge={status,topo_order} / required-info={status,collection_order,coverage_certificate} / doctrine={status,category_concern_mapping,concern_authorities,pending_exceptions} / cross={status,shared_categories,extra_domains})。--order 指定時は順序配列のみ。
 #   - stderr: violation 一覧
@@ -216,7 +216,50 @@ def validate_knowledge(data: dict) -> tuple[list[str], dict]:
 
 
 # ── profile: required-info ───────────────────────────────────────────────────
-def validate_required_info(data: dict) -> tuple[list[str], dict]:
+def grounded_required_info_items(state: dict) -> set[str]:
+    """決着済みセルが参照する qa_log entry が宣言した required_info item_id の集合を返す。
+
+    「接地している」= 決着済みセル (`確定` または `対象外`) -> qa_ref/qa_refs -> qa_log entry
+    -> required_info_items の鎖が実際に繋がっていること。qa_log に item_id が書いてあるだけ
+    では足りない (どのセルにも使われていない回答は必須情報を満たした証拠にならない) ため、
+    セルからの到達性を必ず経由する。
+
+    `対象外` も数えるのは、除外が「収集した結論」の一種だからである。たとえば
+    target-platforms は、どの platform を外すかという答えそのものが除外セルの根拠になる。
+    確定セルだけに限ると、正しく答えた必須情報を未接地と誤判定する。
+    """
+    resolved = {"確定", "対象外"}
+    by_id = {
+        e["id"]: e
+        for e in state.get("qa_log", []) or []
+        if isinstance(e, dict) and e.get("id")
+    }
+    referenced: set[str] = set()
+    matrix = state.get("matrix", {}) or {}
+    for row in matrix.values():
+        if not isinstance(row, dict):
+            continue
+        for cell in row.values():
+            if not isinstance(cell, dict) or cell.get("state") not in resolved:
+                continue
+            if cell.get("qa_ref"):
+                referenced.add(cell["qa_ref"])
+            for ref in cell.get("qa_refs", []) or []:
+                if isinstance(ref, str):
+                    referenced.add(ref)
+
+    grounded: set[str] = set()
+    for ref in referenced:
+        entry = by_id.get(ref)
+        if not entry:
+            continue
+        for iid in entry.get("required_info_items", []) or []:
+            if isinstance(iid, str):
+                grounded.add(iid)
+    return grounded
+
+
+def validate_required_info(data: dict, state: dict | None = None) -> tuple[list[str], dict]:
     findings: list[str] = []
     items = data.get("items")
     if not isinstance(items, list) or not items:
@@ -321,6 +364,30 @@ def validate_required_info(data: dict) -> tuple[list[str], dict]:
         "total_items": len(ids),
         "blocking_items": sorted(blocking_items),
     }
+
+    # state を渡された場合だけ、block item の接地を検査する。
+    # 従来この certificate は「block 指定の item 一覧」を出すだけで、それが確定へ接地して
+    # いるかは誰も検査しておらず、監査者の目視相関に委ねられていた。カタログ単体検証では
+    # 判定不能な事実なので、spec-state を与えられたときに限り決定論ゲートへ格上げする。
+    if state is not None:
+        grounded = grounded_required_info_items(state)
+        unknown = sorted(grounded - set(ids))
+        if unknown:
+            findings.append(
+                f"qa_log が宣言した required_info_items にカタログ外の item_id: {unknown}"
+            )
+        ungrounded = sorted(set(blocking_items) - grounded)
+        certificate["grounded_blocking_items"] = sorted(set(blocking_items) & grounded)
+        certificate["ungrounded_blocking_items"] = ungrounded
+        if ungrounded:
+            findings.append(
+                f"missing_effect=block の必須情報が確定へ接地していない: {ungrounded}。"
+                "当該 item_id を required_info_items に宣言した qa_log entry を、"
+                "確定セルが qa_ref/qa_refs で参照すること"
+            )
+        if findings:
+            return findings, {}
+
     return [], {
         "status": "ok",
         "collection_order": collection_order,
@@ -503,11 +570,11 @@ def _load(path_str: str) -> tuple[dict | None, int]:
     return data, 0
 
 
-def run(profile: str, data: dict) -> tuple[list[str], dict]:
+def run(profile: str, data: dict, state: dict | None = None) -> tuple[list[str], dict]:
     if profile == "knowledge":
         return validate_knowledge(data)
     if profile == "required-info":
-        return validate_required_info(data)
+        return validate_required_info(data, state)
     if profile == "doctrine":
         return validate_doctrine(data)
     return ([f"未知 profile: {profile}"], {})
@@ -526,6 +593,11 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--taxonomy", help="cross profile: system-category-taxonomy.json")
     ap.add_argument("--doctrine", help="cross profile: doctrine-anchor-registry.json")
     ap.add_argument("--required-info", dest="required_info", help="cross profile: required-info-catalog.json")
+    ap.add_argument(
+        "--state",
+        help="required-info profile (任意): spec-state.json。missing_effect=block の item が"
+        "確定セル→qa_ref→qa_log.required_info_items で接地しているかを検証する",
+    )
     ap.add_argument(
         "--order",
         action="store_true",
@@ -551,7 +623,15 @@ def main(argv: list[str]) -> int:
         data, rc = _load(args.input)
         if rc:
             return rc
-        findings, result = run(args.profile, data)
+        state = None
+        if args.state:
+            if args.profile != "required-info":
+                print("--state は --profile required-info でのみ使用できる", file=sys.stderr)
+                return 2
+            state, rc = _load(args.state)
+            if rc:
+                return rc
+        findings, result = run(args.profile, data, state)
     if findings:
         for f in findings:
             print(f"VIOLATION: {f}", file=sys.stderr)

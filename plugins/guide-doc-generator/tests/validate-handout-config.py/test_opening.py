@@ -32,6 +32,19 @@ class OpeningTestBase(VisualDensityTestBase):
         policy.setdefault("opening", {}).update(attrs)
         path.write_text(json.dumps(policy, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    def show_hero_lists(self):
+        """冒頭の箇条リストを紙面へ戻す (既定は非表示・利用者指定 2026-09-08)。
+
+        総量 (opening.hero_total) が数えているのは冒頭に積まれる字数であり、
+        紙面に出ない欄はそこへ積まれない。ここで測りたいのは「積まれたときに
+        落ちるか」なので、非表示の名簿だけを空にしてから積む。名簿ごと差し替え
+        ずに hidden_by_default のみ触るのは、注記 (note / why) を落とすと写しの
+        正本が本体と別物になり、後から読む人が違いの理由を追えなくなるため。
+        """
+        lists = dict((self.visual_policy().get("opening") or {}).get("hero_list_fields") or {})
+        lists["hidden_by_default"] = []
+        self.patch_opening(hero_list_fields=lists)
+
 
 class TestHeroFields(OpeningTestBase):
     """文書冒頭の 3 要素は宣言であって説明ではない。"""
@@ -93,6 +106,7 @@ class TestHeroTotal(OpeningTestBase):
 
     def test_piled_up_short_lines_stop_the_build(self):
         """個別の上限 (W-HERO-LONG) をどれも超えていなくても総量で落ちる。"""
+        self.show_hero_lists()
         cfg = self.visual_ok_config(no_need_to_remember=self.PILED_UP)
         res, _ = self.validate(cfg)
         self.assert_no_diag(res, "W-HERO-LONG")
@@ -100,12 +114,14 @@ class TestHeroTotal(OpeningTestBase):
 
     def test_limit_comes_from_canon(self):
         """上限を緩めれば警告は消える (script に埋まっていない)。"""
+        self.show_hero_lists()
         self.patch_opening(hero_total={"max_chars": 4000})
         res, _ = self.validate(self.visual_ok_config(no_need_to_remember=self.PILED_UP))
         self.assert_no_diag(res, "W-HERO-HEAVY")
 
     def test_counted_fields_come_from_canon(self):
         """数える対象も正本側が決める。対象から外せば同じ構成でも黙る。"""
+        self.show_hero_lists()
         self.patch_opening(hero_total={"counted_fields": ["purpose", "background", "goal"]})
         res, _ = self.validate(self.visual_ok_config(no_need_to_remember=self.PILED_UP))
         self.assert_no_diag(res, "W-HERO-HEAVY")

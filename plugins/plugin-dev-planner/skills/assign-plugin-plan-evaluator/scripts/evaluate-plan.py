@@ -21,6 +21,7 @@ path used by tests and by agents that need reproducible findings.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -48,6 +49,22 @@ REQUIRED_PLUGIN_SURFACES = (
     "vendor",
     "mcp_app_connector",
     "notion_config",
+)
+# evaluated_inputs は plan の鮮度台帳に限定する。plan 配下の安定 artifact は
+# nested の envelope-draft/task-specs も含めて再帰収集し、自己参照になる evaluator
+# 出力と goal-seek/エディタの一時物だけを除外する。
+EVALUATOR_OUTPUT_NAMES = frozenset({"plan-findings.json"})
+TRANSIENT_ARTIFACT_NAMES = frozenset({
+    "run-plugin-dev-plan-progress.json",
+    "run-plugin-dev-plan-intermediate.jsonl",
+    ".DS_Store",
+})
+TRANSIENT_DIR_NAMES = frozenset({".goal-seek", "__pycache__", ".pytest_cache"})
+TEMPORARY_SUFFIXES = (".tmp", ".temp", ".swp", ".swo", ".pyc", "~")
+STALENESS_RULE = (
+    "evaluated_inputs は plan 配下の安定 artifact を再帰収集した鮮度台帳である。"
+    "path 集合または sha256 が現物と一致しない findings は stale とする。"
+    "この台帳は semantic 再評価範囲を決めず、証拠再利用を認可しない。"
 )
 
 
@@ -304,8 +321,33 @@ def _conditions(gate_results: list[dict], findings: list[dict]) -> dict:
     return out
 
 
+def _collect_evaluated_inputs(plan_dir: Path, output: Path | None = None) -> list[dict]:
+    """plan 配下の安定 artifact を再帰収集し、path 昇順の鮮度台帳を返す。"""
+    plan_dir = plan_dir.resolve()
+    output_resolved = output.resolve() if output is not None else None
+    entries: list[dict] = []
+    for path in plan_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(plan_dir)
+        if output_resolved is not None and path.resolve() == output_resolved:
+            continue
+        if relative.name in EVALUATOR_OUTPUT_NAMES | TRANSIENT_ARTIFACT_NAMES:
+            continue
+        if any(part in TRANSIENT_DIR_NAMES for part in relative.parts[:-1]):
+            continue
+        if relative.name.startswith(".#") or relative.name.endswith(TEMPORARY_SUFFIXES):
+            continue
+        entries.append({
+            "path": relative.as_posix(),
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        })
+    return sorted(entries, key=lambda entry: entry["path"])
+
+
 def evaluate(plan_dir: Path, output: Path) -> tuple[int, dict]:
     evaluator_skill, run_skill, repo_root = _paths()
+    evaluated_inputs = _collect_evaluated_inputs(plan_dir, output)
     gate_results = [_run_gate(g, repo_root) for g in _gate_defs(run_skill, plan_dir)]
     findings = _gate_findings(gate_results)
     findings.extend(_surface_findings(plan_dir))
@@ -335,6 +377,8 @@ def evaluate(plan_dir: Path, output: Path) -> tuple[int, dict]:
         "conditions": conditions,
         "gate_results": gate_results,
         "findings": findings,
+        "evaluated_inputs": evaluated_inputs,
+        "staleness_rule": STALENESS_RULE,
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -354,6 +398,7 @@ def main(argv: list[str] | None = None) -> int:
     output = Path(args.output).resolve() if args.output else plan_dir / "plan-findings.json"
     code, data = evaluate(plan_dir, output)
     sys.stdout.write(f"{data['verdict']}: wrote {output}\n")
+    sys.stdout.write(f"evaluated_inputs: {len(data['evaluated_inputs'])} stable artifacts\n")
     return code
 
 

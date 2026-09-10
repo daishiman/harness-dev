@@ -2,12 +2,12 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "133f8af8edb196d7bb19ceaf306baabea350b4cf1742b6f791b440ceba8a45ce"
+    "skill_md_sha256": "949423deb823c6ccab3677d399fe8800bcfbb3b49a4d6523747182513f64087c"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T11:10:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -19,20 +19,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "主要ルール 5 末尾の追記 (quality_gates は claim 集合・実行頻度は consumer 側 verification-obligation-protocol.md の fingerprint 再利用が決める・頻度指示を plan 本文へ焼かない) は、同 SKILL.md の Rule 6「現状数値非焼込 (Goodhart 回避)」と同型の非焼込原則であり、protocol 側の削減原理 (obligation fingerprint・証拠再利用) とも一致する。plan 内に「毎周回フル再実行」を含意する既存記述が無いことを grep で確認した。",
+      "ゴールシークループの追記は evaluated_inputs[] の位置づけ (鮮度台帳・semantic scope 推論禁止・prose/構造区分での outer review 再利用認可禁止・exact receipt 不在/不一致/判定不能時の再評価) を、evaluate-plan.py の STALENESS_RULE 実装および assign-plugin-plan-evaluator の Key Rule 8 / prompts/R1-evaluate.md と同一語彙で記述しており、pair skill 間の contract drift が無い。",
+      "「最大 3 周 (上限であって規定回数ではない)」の明確化は、周回数のプロセス完遂を品質近似にしない protocol の趣旨 (route数×反復数をコストモデルに含めない) と整合する。",
+      "参照される正本パス plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md は実在し、resolver という呼称も content-review-protocol.md (verification obligation resolver / 正準 resolver) で確立された語彙である。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] 「最大 3 周」の言及が 2 箇所ある (ゴールシークループ節と局面 R4 節の「NG は R3 へ差し戻す (最大 3 周)」)。上限であって規定回数ではないという明確化はゴールシークループ節のみに追記され、R4 節側には無い。ループ節が正本として読めるため実害は無いが、片側のみの注記は将来の読み違いの種になりうる。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "notes": "SKILL.md 変更 (merge-base b1d8e88→HEAD の diff = 主要ルール 5 末尾追記 + ゴールシークループ 1 bullet の修正の 2 passage) を受けた incremental focused combined review。builder とは別 context の独立 evaluator が (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を 1 回の読解で同時判定し、elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実際に読んだもの: 本 SKILL.md 全文、diff、verification-obligation-protocol.md 全文 (fingerprint 決定論導出・PASS receipt 再利用・証拠 DAG・削減原理)、content-review-protocol.md の resolver/admission_control 記述、assign-plugin-plan-evaluator の SKILL.md/prompts/R1-evaluate.md、scripts/evaluate-plan.py の evaluated_inputs emit 実装、plan-findings.schema.json の evaluated_inputs/staleness_rule 定義。確認結果: (a) 追記は Rule 6 の非焼込原則・R4 節・完了条件と矛盾しない (完了条件の「全 exit0」は本 skill 自身の plan ゲートであり、plan が焼く quality_gates の実行頻度とは別レイヤー)。(b) 言及機構は全て実在: plan-findings.json.evaluated_inputs[] は evaluate-plan.py L350/L380 が emit し schema にも定義済み、fingerprint/PASS receipt は protocol L45/L54/L57 に実在。(c) 用語は pair skill・protocol と同一語彙。(d) 参照パス実在。(e) high/medium 0 件、low 1 件 (上記 smell) のみ。前回 verdict (2026-08-20, cr-artifact-delivery-v1) の low finding (Pre-choice の accept-as-is と external mutation の読み分け) は再確認した: 本 skill は effect=local-artifact であり Pre-choice 本文に mutation 分岐の曖昧さは発生しないため、本 skill の finding としては引き継がない (当該 finding は external-mutation skill 群への横断観察だった)。PASS の射程は design claim (静的設計 adequacy) に限る。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
