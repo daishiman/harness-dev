@@ -45,8 +45,6 @@ audit-trigger: on-change
 manifest: workflow-manifest.json
 completeness_exempt:
   - "prompts: 対話手順は doc/notion-schema/skill-list.schema.json#feedback_protocol 正本 (Notion §7 と同一) から本文に展開している (初見実行の自己完結性のため)。整合は scripts/lint-feedback-protocol.py で発火条件と参照経路を検証。prompt-creator の R-id 単位 7 層プロンプトは適用外 (二重定義禁止 [[project_ssot_dedup_mechanism]])。"
-combinators:
-  - with-feedback-contract
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
   max_iterations: 3

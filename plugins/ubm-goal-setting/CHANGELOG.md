@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.42 - 2026-09-10
+
+`skills/run-skill-feedback/SKILL.md` へ加えかけた変更（`combinators` 宣言と `OUT3` 基準）を撤回した。
+
+このファイルは 21 プラグインに配置されている**共有スキルで、全コピーがバイト単位で同一に保たれている**（`scripts/lint-plugin-lint-coverage.py` の「symlink 共有 (run-skill-feedback 等)」がその前提）。harness-creator 側の `eval-log/.../elegance-verdict.json` は対象を `skill_md_sha256` で pin しており、1 つの verdict が全コピーを射程に持つ設計になっている。ubm-goal-setting の 1 コピーだけを書き換えたことでハッシュが `1b957a02…` → `8c987925…` へ乖離し、その verdict の射程から外れて `OUT1`/`OUT2`/`OUT3` が検証不能になっていた。
+
+`combinators` 宣言の欠落（PKG-014）は 21 コピーすべてに共通する指摘であり、ubm-goal-setting 単独で直す対象ではない（PKG-003 と同じ構造）。1 箇所だけ直すと共有の不変則が壊れる。**したがって解決は「verdict を作る」ことではなく、共有ファイルの同一性を回復すること**だった。
+
+- ubm-goal-setting 固有の 4 スキル（`run-ubm-goal-setting` / `run-ubm-journal` / `run-ubm-knowledge-sync` / `run-ubm-youtube-ingest`）への `combinators` 追加は、共有ファイルではないため維持している。
+
 ## 0.3.41 - 2026-09-10
 
 「売上に直結する成果目標」と「直感的に読める出力」の2点を、記法そのものを変えることで構造的に担保した。指摘は「この行動をすれば売上が上がるのかが直接見えない」「文章が羅列していて読みにくい」の2つ。どちらも書き手の努力目標ではなく、書式が許していた抜け道だった。
