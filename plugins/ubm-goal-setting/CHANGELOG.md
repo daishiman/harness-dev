@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.43 - 2026-09-10
+
+PR #74（`feat/ubm-yt-ingest-20260720`）が持っていた 45 件のナレッジを、現行 main の採番へ載せ替えて取り込んだ。総 entry 937 → 982。取り込み元は 2026-07-22 の熱海リトリート（14 件）、2025-09-07 の YouTube（8 件）、2025-08-31 の YouTube（6 件）、および既取込 3 本への追加分（17 件）。
+
+**なぜ rebase ではなく載せ替えだったか。** entry ID `<PREFIX>-<NNN>` はカテゴリ内の共有連番であり、採番は「取り込んだ順序」に依存する。PR #74 は merge-base（386 entry）の上で 386→431 と採番したが、その後 main が独立に 937 entry まで伸びたため、**45 件すべてが既存 ID と衝突していた**。これは「198 コミット遅れている」ことの症状ではなく、ID の生成規則そのものが分岐に耐えない設計であることの帰結で、rebase では解けない。中身は変えず ID だけを main の続きへ振り直し、`related` の相互参照も同じ対応表で張り替えた（解決不能な参照 0 件）。
+
+**既存ファイルは 1 行も書き換えていない。** knowledge JSON の整形はファイル間で（indent 1 空白 / 2 空白）も、同一ファイル内の entry 間で（`tags` の inline / block）も揺れており、再直列化では 119 ファイル中 99 ファイルしか原文を再現できない。よってファイル全体の書き出しは行わず、`entries` 配列末尾への**テキスト挿入だけ**で追記した。過去の取込が sync-log の `warnings` に残した「既存整形に合わせて書き出し、差分を追加分に限定した」と同じ扱いである。
+
+**500 行ゲート（`check-knowledge-split.py`、`test_vendored_knowledge_passes` で CI 強制）に触れる 6 ファイルは、追記せず新規サブトピックへ逃がした。** 分割は行数合わせではなく主題で切っている。
+
+- `action-guides-thinking-day.json` — 考える日を予定としてロックする
+- `principles-business-execution-alignment.json` — 決定後は反対しない鉄の規定・外交を業績へ紐付ける
+- `principles-business-growth-structure-shift.json` — 収益構造の段階移行・挑戦しやすさを設計目標に置く
+- `principles-relationship-money-for-others.json` — 責任の肩代わりとしてのお金・余剰資金は広告でなく人へ
+- `principles-relationship-interest-in-people.json` — 人への興味が指導の前提・照準は会社でなく個人
+- `mindset-strength-from-people-and-context.json` — 事業を支えるのは自分の実力・数字・影響力ではなく人との関わりと文脈
+
+最後の 1 件は 4 entry が別々の主題に見えて、実際は同一の軸（成果と支えの**帰属先**の置き直し）の 4 つの現れだったため 1 ファイルにまとめた。ほかに PR #74 由来の新規ファイルが 6 件（組織変革・地域との関わり・救済・顧客維持・権限委譲・社会貢献）。
+
+`router.json` の `entry_count` / `subcategory_counts` / `total_entries` はディスク実測から再計算し、PR #74 が既存ファイルへ足していたタグは merge-base と突き合わせて**増分だけ**合流させた。`quick_lookup` の参照は分割後の実ファイル名へ写している。
+
 ## 0.3.42 - 2026-09-10
 
 `skills/run-skill-feedback/SKILL.md` へ加えかけた変更（`combinators` 宣言と `OUT3` 基準）を撤回した。
