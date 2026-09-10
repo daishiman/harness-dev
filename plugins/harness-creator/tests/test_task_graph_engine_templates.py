@@ -4,10 +4,10 @@
 pytest、(b) runtime ループの E2E 実走、(c) engine:task-graph 宣言 SKILL.md 実例を恒久化する。
 
 対象テンプレ (run-build-skill/templates/task-graph-engine/scripts/・生成 harness へ byte-copy 同梱):
-  - ready-set-from-checklist.py   (ENG-C01): depends_on 充足順の ready 集合をステートレス算出
-  - self-reflect-append.py        (ENG-C02): 発見タスクを checklist 末尾へ単一truth追記
+  - extract-ready-set-from-checklist.py   (ENG-C01): depends_on 充足順の ready 集合をステートレス算出
+  - build-self-reflection-entry.py        (ENG-C02): 発見タスクを checklist 末尾へ単一truth追記
   - extract-capability-dependency-graph.py (ENG-C06): cross-surface 依存グラフ抽出
-  - record-capability-graph-knowledge.py   (ENG-C07): Loop A/B knowledge へ source_ref 付き記録
+  - build-capability-graph-knowledge-entry.py   (ENG-C07): Loop A/B knowledge へ source_ref 付き記録
 
 script 本体は原則無改修 (仕様は各 script の header docstring を正とする)。
 """
@@ -39,10 +39,10 @@ def _load(stem: str) -> ModuleType:
     return mod
 
 
-READY = _load("ready-set-from-checklist")
-REFLECT = _load("self-reflect-append")
+READY = _load("extract-ready-set-from-checklist")
+REFLECT = _load("build-self-reflection-entry")
 EXTRACT = _load("extract-capability-dependency-graph")
-RECORD = _load("record-capability-graph-knowledge")
+RECORD = _load("build-capability-graph-knowledge-entry")
 
 
 def _run(script: str, *args: str, **kw) -> subprocess.CompletedProcess:
@@ -53,7 +53,7 @@ def _run(script: str, *args: str, **kw) -> subprocess.CompletedProcess:
 
 
 # --------------------------------------------------------------------------- #
-# ENG-C01: ready-set-from-checklist.py                                         #
+# ENG-C01: extract-ready-set-from-checklist.py                                         #
 # --------------------------------------------------------------------------- #
 class TestReadySetFromChecklist:
     def test_ready_is_pending_with_all_deps_done(self) -> None:
@@ -99,7 +99,7 @@ class TestReadySetFromChecklist:
     def test_empty_ready_exit0(self, tmp_path: Path) -> None:
         p = tmp_path / "prog.json"
         p.write_text(json.dumps({"checklist": [{"id": "C1", "text": "a", "status": "done"}]}), encoding="utf-8")
-        r = _run("ready-set-from-checklist", str(p))
+        r = _run("extract-ready-set-from-checklist", str(p))
         assert r.returncode == 0
         assert json.loads(r.stdout) == {"ready": []}
 
@@ -107,21 +107,38 @@ class TestReadySetFromChecklist:
         # id 欠落 = データ不整合 (exit1)。
         p = tmp_path / "prog.json"
         p.write_text(json.dumps({"checklist": [{"text": "a", "status": "pending"}]}), encoding="utf-8")
-        r = _run("ready-set-from-checklist", str(p))
+        r = _run("extract-ready-set-from-checklist", str(p))
         assert r.returncode == 1
         assert "不整合" in r.stderr
 
+    @pytest.mark.parametrize(
+        "checklist",
+        [
+            [{"id": "C1", "status": "done"}, {"id": "C1", "status": "pending"}],
+            [{"id": "C1", "status": "bogus"}],
+            [{"id": 1, "status": "pending"}],
+            [{"id": "C1", "status": "pending", "depends_on": [1]}],
+        ],
+    )
+    def test_rejects_ambiguous_or_malformed_checklist(self, tmp_path: Path, checklist: list[dict]) -> None:
+        p = tmp_path / "prog.json"
+        p.write_text(json.dumps({"checklist": checklist}), encoding="utf-8")
+        r = _run("extract-ready-set-from-checklist", str(p))
+        assert r.returncode == 1
+        assert "不整合" in r.stderr
+        assert "Traceback" not in r.stderr
+
     def test_missing_file_exit2(self, tmp_path: Path) -> None:
-        r = _run("ready-set-from-checklist", str(tmp_path / "nope.json"))
+        r = _run("extract-ready-set-from-checklist", str(tmp_path / "nope.json"))
         assert r.returncode == 2
 
     def test_usage_exit2(self) -> None:
-        r = _run("ready-set-from-checklist")  # 引数なし
+        r = _run("extract-ready-set-from-checklist")  # 引数なし
         assert r.returncode == 2
 
 
 # --------------------------------------------------------------------------- #
-# ENG-C02: self-reflect-append.py                                             #
+# ENG-C02: build-self-reflection-entry.py                                             #
 # --------------------------------------------------------------------------- #
 class TestSelfReflectAppend:
     @staticmethod
@@ -135,37 +152,61 @@ class TestSelfReflectAppend:
 
     def test_append_adds_pending_item_to_tail(self, tmp_path: Path) -> None:
         p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "done"}])
-        r = _run("self-reflect-append", str(p), "--id", "C2", "--text", "new",
+        r = _run("build-self-reflection-entry", str(p), "--id", "C2", "--text", "new",
                  "--depends-on", "C1", "--verify-by", "script")
         assert r.returncode == 0
         data = json.loads(p.read_text())
         assert data["checklist"][-1] == {
             "id": "C2", "text": "new", "status": "pending",
             "depends_on": ["C1"], "verify_by": "script",
+            "created_iteration": 0, "available_from_iteration": 1,
         }
         # 既存 item は一切書き換えない (単一truth追記)。
         assert data["checklist"][0] == {"id": "C1", "text": "a", "status": "done"}
 
     def test_append_without_deps_omits_field(self, tmp_path: Path) -> None:
         p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "pending"}])
-        r = _run("self-reflect-append", str(p), "--id", "C2", "--text", "n")
+        r = _run("build-self-reflection-entry", str(p), "--id", "C2", "--text", "n")
         assert r.returncode == 0
         item = json.loads(p.read_text())["checklist"][-1]
         assert "depends_on" not in item and "verify_by" not in item
+        assert item["created_iteration"] == 0
+        assert item["available_from_iteration"] == 1
+
+    def test_explicit_available_iteration_must_follow_creation(self, tmp_path: Path) -> None:
+        p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "done"}])
+        data = json.loads(p.read_text())
+        data["iteration"] = 3
+        p.write_text(json.dumps(data), encoding="utf-8")
+        ok = _run(
+            "build-self-reflection-entry", str(p), "--id", "C2", "--text", "n",
+            "--available-from-iteration", "5",
+        )
+        assert ok.returncode == 0, ok.stderr
+        item = json.loads(p.read_text())["checklist"][-1]
+        assert item["created_iteration"] == 3
+        assert item["available_from_iteration"] == 5
+
+        bad = _run(
+            "build-self-reflection-entry", str(p), "--id", "C3", "--text", "n",
+            "--available-from-iteration", "3",
+        )
+        assert bad.returncode == 1
+        assert "available_from_iteration" in bad.stderr
 
     def test_id_pattern_violation_exit1(self, tmp_path: Path) -> None:
         p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "pending"}])
-        r = _run("self-reflect-append", str(p), "--id", "task2", "--text", "n")
+        r = _run("build-self-reflection-entry", str(p), "--id", "task2", "--text", "n")
         assert r.returncode == 1 and "pattern" in r.stderr
 
     def test_duplicate_id_exit1(self, tmp_path: Path) -> None:
         p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "pending"}])
-        r = _run("self-reflect-append", str(p), "--id", "C1", "--text", "n")
+        r = _run("build-self-reflection-entry", str(p), "--id", "C1", "--text", "n")
         assert r.returncode == 1 and "重複" in r.stderr
 
     def test_unknown_dependency_exit1(self, tmp_path: Path) -> None:
         p = self._prog(tmp_path, [{"id": "C1", "text": "a", "status": "pending"}])
-        r = _run("self-reflect-append", str(p), "--id", "C2", "--text", "n", "--depends-on", "C9")
+        r = _run("build-self-reflection-entry", str(p), "--id", "C2", "--text", "n", "--depends-on", "C9")
         assert r.returncode == 1 and "未知" in r.stderr
 
     def test_appended_item_is_sink_no_cycle(self, tmp_path: Path) -> None:
@@ -174,7 +215,7 @@ class TestSelfReflectAppend:
             {"id": "C1", "text": "a", "status": "pending"},
             {"id": "C2", "text": "b", "status": "pending", "depends_on": ["C1"]},
         ])
-        r = _run("self-reflect-append", str(p), "--id", "C3", "--text", "n", "--depends-on", "C1,C2")
+        r = _run("build-self-reflection-entry", str(p), "--id", "C3", "--text", "n", "--depends-on", "C1,C2")
         assert r.returncode == 0
 
     def test_has_cycle_detects_preexisting_cycle(self) -> None:
@@ -188,7 +229,7 @@ class TestSelfReflectAppend:
             {"id": "C1", "text": "a", "status": "pending", "depends_on": ["C2"]},
             {"id": "C2", "text": "b", "status": "pending", "depends_on": ["C1"]},
         ])
-        r = _run("self-reflect-append", str(p), "--id", "C3", "--text", "n", "--depends-on", "C1")
+        r = _run("build-self-reflection-entry", str(p), "--id", "C3", "--text", "n", "--depends-on", "C1")
         assert r.returncode == 1 and "サイクル" in r.stderr
 
 
@@ -234,6 +275,34 @@ class TestExtractDependencyGraph:
         assert all(e["to"] != "agent:general-purpose" for e in graph["edges"])
         assert all("general-purpose" not in g["ref"] for g in graph["gaps"])
 
+    def test_python_docstring_examples_are_not_runtime_edges(self, tmp_path: Path) -> None:
+        root = self._harness(tmp_path)
+        (root / "scripts/example.py").write_text(
+            '"""Skill(missing-skill) / Agent(missing-agent) / scripts/missing.py are examples."""\n',
+            encoding="utf-8",
+        )
+        graph, findings = EXTRACT.build_graph(root)
+        assert graph["gaps"] == []
+        assert findings == []
+
+    def test_explicit_cross_plugin_script_is_resolved_as_external_node(self, tmp_path: Path) -> None:
+        repo = tmp_path / "repo"
+        root = self._harness(repo / "plugins/demo")
+        external = repo / "plugins/shared/scripts"
+        external.mkdir(parents=True)
+        (external / "guard.py").write_text("# shared guard\n", encoding="utf-8")
+        skill = root / "skills/run-a/SKILL.md"
+        skill.write_text(
+            skill.read_text(encoding="utf-8")
+            + '\npython3 "${PLUGIN_ROOT}/../shared/scripts/guard.py" preview\n',
+            encoding="utf-8",
+        )
+        graph, findings = EXTRACT.build_graph(root)
+        target = "external-script:plugins/shared/scripts/guard.py"
+        assert any(node["id"] == target for node in graph["nodes"])
+        assert any(edge["to"] == target for edge in graph["edges"])
+        assert findings == []
+
     def test_empty_graph_is_fail_closed(self, tmp_path: Path) -> None:
         (tmp_path / "empty").mkdir()
         graph, findings = EXTRACT.build_graph(tmp_path / "empty")
@@ -266,7 +335,7 @@ class TestExtractDependencyGraph:
 
 
 # --------------------------------------------------------------------------- #
-# ENG-C07: record-capability-graph-knowledge.py                              #
+# ENG-C07: build-capability-graph-knowledge-entry.py                              #
 # --------------------------------------------------------------------------- #
 class TestRecordCapabilityGraphKnowledge:
     @staticmethod
@@ -322,7 +391,7 @@ class TestRecordCapabilityGraphKnowledge:
         graph_path.write_text(json.dumps(self._graph()), encoding="utf-8")
         loop_a = tmp_path / "knowledge_a"
         loop_b = tmp_path / "knowledge_b"
-        r = _run("record-capability-graph-knowledge", str(graph_path),
+        r = _run("build-capability-graph-knowledge-entry", str(graph_path),
                  "--target-knowledge-dir", str(loop_a),
                  "--harness-knowledge-dir", str(loop_b))
         assert r.returncode == 0, r.stderr
@@ -334,7 +403,7 @@ class TestRecordCapabilityGraphKnowledge:
             assert all(it["source_ref"] for it in store["items"])
 
     def test_main_missing_graph_exit2(self, tmp_path: Path) -> None:
-        r = _run("record-capability-graph-knowledge", str(tmp_path / "nope.json"),
+        r = _run("build-capability-graph-knowledge-entry", str(tmp_path / "nope.json"),
                  "--target-knowledge-dir", str(tmp_path / "k"))
         assert r.returncode == 2
 
@@ -349,7 +418,7 @@ def _keyfn(item_id: str) -> tuple[int, int, str]:
 
 
 def _ready(progress_path: Path) -> list[str]:
-    r = _run("ready-set-from-checklist", str(progress_path))
+    r = _run("extract-ready-set-from-checklist", str(progress_path))
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)["ready"]
 
@@ -384,7 +453,7 @@ def _drive_loop(prog_path: Path) -> list[dict]:
         prog_path.write_text(json.dumps(prog, ensure_ascii=False, indent=2), encoding="utf-8")
         if sel == "C1" and not appended:
             # 実行中に発見した未網羅タスクを self-reflect で checklist 末尾へ追記 (別状態ファイルを作らない)。
-            rr = _run("self-reflect-append", str(prog_path), "--id", "C4",
+            rr = _run("build-self-reflection-entry", str(prog_path), "--id", "C4",
                       "--text", "発見タスク: 追加検証", "--depends-on", "C3")
             assert rr.returncode == 0, rr.stderr
             appended = True

@@ -2,7 +2,7 @@
   "target": {
     "plugin": "spec-drift-guardian",
     "skill": "run-spec-drift-triage",
-    "skill_md_sha256": "c607c2e36a0e78d6cf18d317cf725ce793dc54c4b898025dcc241a50e6844f43"
+    "skill_md_sha256": "3a55e67b7ac166827e663d3f58816a26c9e5d5309afd0b0de31a03e6c7107452"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-24T01:04:16Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,10 +24,9 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "frontmatter の規範項目が欠損なく揃う。name/description/kind/prefix/effect/owner/since/version/source/source-tier/last-audited/audit-trigger に加え、responsibilities (R1/R2/R3, prompt_required: true) と responsibility_refs が一対一で対応し、宣言だけで実体を欠く責務が 0 件。",
-      "feedback_contract の verify_by が責務に即している。IN1=script (C11/C08/C09 の exit code による機械判定で、目視確認に退化していない)、OUT1=test (Issue #17 完全 commit pair と source-category fixture matrix に対する誤検出/見逃し threshold、および truncated preview の fail-closed)。汎用ゲート言い換えではなく本 skill 固有の受入条件になっている。",
-      "allowed-tools が Read/Write/Bash に限られ Edit を持たない点が、boundary 宣言 (提案・適用は C02、独立再導出は C03、commit/PR/issue close はしない) と権限レベルで整合する。単一 writer 契約 (.spec-drift/<issue>/triage-report.json への書込は本 skill のみ) も明記されている。",
-      "今回の差分で追加された runtime_root_policy: host-skill-path が `## Runtime root contract` 節と対で入り、決定論段テーブルの shell 起動行 3 箇所も規約形へ揃った。規約項目の片側宣言 (frontmatter のみ / 本文のみ) は 0 件で、effect=local-artifact に対する external_mutation_guard / receipt block の不在も双方向で一致している。"
+      "Purpose & Output Contract は入力、出力、完了条件、やらないことを具体化し、Gotchas 6件と合わせてBD-001/BD-002を満たす。228行でBD-003上限内。",
+      "responsibility_refs R1-R3、schema/script/reference refs は全件実在し、inline/inline profileにTask/Agent残存がない。",
+      "feedback_contract IN1/OUT1 を全件照合し、spec-drift-guardian tests 103 passed、runtime-profile/goal-seek lint finding/warning 0。"
     ],
     "negative_feedback": [],
     "iteration": 1,
@@ -35,5 +34,5 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は cr-merge-guard-migration-v1 の focused combined review (1 context で (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定) の結果を rubric 観点へ投影したものであり、elegance-verdict.json と同一の読解に基づく。30 思考法は実施しておらず、実施も申告しない。 判定根拠: git diff HEAD で差分全 3 hunk を読み SKILL.md 全 193 行を通読、frontmatter 宣言 8 path (responsibility_refs 3 / reference_refs 1 / script_refs 3 / schema_refs 1) の実在をファイル存在検査で確認 (欠損 0)、SKILL.md および本 skill 配下の prompts/・references/ に bare `$CLAUDE_PLUGIN_ROOT` が 0 件であることを grep で確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに不在であることを grep -c で確認した。 規範採点の観点では、宣言と実体の対応 (responsibilities↔responsibility_refs、combinators↔goal_seek/feedback_contract、runtime_root_policy↔Runtime root contract 節、effect↔guard 有無)、criteria の verify_by 妥当性、allowed-tools の最小権限と boundary の一致、決定論段 (Bash) と意味判断 (LLM) の二層分離および写像規則の非 hardcode (guardian 自身の drift 源化の回避) がいずれも満たされている。 high severity finding は 0 件、medium 以上の未解決も 0 件で verdict は PASS。PASS の射程は静的な規範適合に限り、OUT1 の test 実走証拠は本 verdict に含まれない。"
+  "notes": "Focused rubric projection。41規則の数値採点はしていない。Purpose/Gotchas/行数、refs実在、criteria exact-set、caller-root fail-closed、anchor validator、tests/lintsを確認。30思考法は未実施。BD-001/002/003およびdependency boundaryに未解決medium/high 0のためPASS。"
 }

@@ -3,6 +3,9 @@ name: run-governance-migration
 description: governance artifactのmigration候補とdry-run差分を確認したいとき、rollback条件を保った移行を実行したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

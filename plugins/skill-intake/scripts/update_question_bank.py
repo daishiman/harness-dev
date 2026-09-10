@@ -11,6 +11,8 @@ from typing import Any
 
 MAX_LINES = 3000
 MAX_PER_SESSION = 5
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_BANK = PLUGIN_ROOT / 'references' / 'question-bank.md'
 
 _BULLET_RE = re.compile(r'^\s*-\s+(.+?)(?:<!--.*?-->)?\s*$', re.MULTILINE)
 
@@ -81,6 +83,28 @@ def save_snapshot(bank_file: Path, hint: str | None) -> Path | None:
     return snap
 
 
+def derive_candidates(intake: dict[str, Any], hint: str) -> dict[str, Any]:
+    """Normalize v2 section 10 question additions for the existing updater."""
+    sections = intake.get('sections')
+    self_updater = sections.get('10_self_updater') if isinstance(sections, dict) else None
+    additions = self_updater.get('question_bank_additions') if isinstance(self_updater, dict) else []
+    questions: list[dict[str, Any]] = []
+    if isinstance(additions, list):
+        for item in additions:
+            if not isinstance(item, dict):
+                continue
+            text = item.get('text') or item.get('question_text') or item.get('question')
+            if not isinstance(text, str) or not text.strip():
+                continue
+            tags = [
+                value.strip()
+                for key in ('category', 'technique')
+                if isinstance((value := item.get(key)), str) and value.strip()
+            ]
+            questions.append({'text': text.strip(), 'tags': tags})
+    return {'session_id': f'intake-{hint}', 'hint': hint, 'questions': questions}
+
+
 def rollback(bank_file: Path, hint: str) -> int:
     snap = snapshot_path(hint)
     if not snap.exists():
@@ -109,6 +133,12 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
         elif a == '--bank':
             i += 1
             args['bank'] = argv[i]
+        elif a == '--derive-from-intake':
+            i += 1
+            args['derive_from_intake'] = argv[i]
+        elif a == '--out':
+            i += 1
+            args['out'] = argv[i]
         elif a == '--apply':
             args['apply'] = True
         else:
@@ -119,18 +149,33 @@ def parse_args(argv: list[str]) -> dict[str, Any]:
 
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
-    bank_file = Path(
-        args.get('bank')
-        or (args['positional'][0] if args['positional'] else None)
-        or 'plugins/skill-intake/references/question-bank.md'
-    ).resolve()
+    explicit_bank = args.get('bank') or (args['positional'][0] if args['positional'] else None)
+    bank_file = Path(explicit_bank).resolve() if explicit_bank else DEFAULT_BANK
+
+    if args.get('derive_from_intake'):
+        if not args.get('out'):
+            sys.stderr.write('usage: update_question_bank.py --derive-from-intake <intake.json> --out <qb-candidates.json> [--hint <hint>]\n')
+            return 2
+        try:
+            intake_file = Path(args['derive_from_intake']).resolve()
+            intake = json.loads(intake_file.read_text(encoding='utf-8'))
+            hint = args.get('hint') or intake.get('hint') or intake_file.parent.name
+            payload = derive_candidates(intake, hint)
+            out = Path(args['out']).resolve()
+            ensure_dir(out)
+            out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        except Exception as e:
+            sys.stderr.write(f'input error: {e}\n')
+            return 2
+        sys.stdout.write(json.dumps({'ok': True, 'derived': len(payload['questions']), 'out': str(out)}, ensure_ascii=False) + '\n')
+        return 0
 
     if args.get('rollback'):
         return rollback(bank_file, args['rollback'])
 
     session_file = args.get('diff') or (args['positional'][1] if len(args['positional']) > 1 else None)
     if not session_file:
-        sys.stderr.write('usage: update_question_bank.py [--bank <path>] [--diff <session.json>] [--apply] [--hint <hint>] | --rollback <hint>\n')
+        sys.stderr.write('usage: update_question_bank.py [--bank <path>] [--diff <session.json>] [--apply] [--hint <hint>] | --rollback <hint> | --derive-from-intake <intake.json> --out <qb-candidates.json>\n')
         return 2
     try:
         session = json.loads(Path(session_file).resolve().read_text(encoding='utf-8'))
@@ -141,8 +186,6 @@ def main(argv: list[str]) -> int:
     session_id = session.get('session_id') or session.get('id') or f's-{int(datetime.now().timestamp()*1000)}'
     hint = args.get('hint') or session.get('hint') or session_id
     candidates = session.get('questions') or session.get('used_questions') or session.get('candidates') or []
-
-    save_snapshot(bank_file, hint)
 
     bank = load_bank(bank_file)
 
@@ -163,6 +206,7 @@ def main(argv: list[str]) -> int:
     if count_lines(nxt) > MAX_LINES:
         sys.stdout.write(json.dumps({'ok': False, 'status': 'halted_capacity', 'would_lines': count_lines(nxt), 'max': MAX_LINES}, ensure_ascii=False) + '\n')
         return 3
+    save_snapshot(bank_file, hint)
     bank_file.write_text(nxt, encoding='utf-8')
     sys.stdout.write(json.dumps({'ok': True, 'appended': len(unique), 'skipped_duplicates': skipped, 'session_id': session_id, 'hint': hint}, ensure_ascii=False) + '\n')
     return 0

@@ -2,7 +2,7 @@
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
 > seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> phase3-coordinator が対話 Step 3 の実行時に Read するインタビュープロンプト正本
+> owner skill の親contextが対話 Step 3 で Read するインタビュープロンプト正本
 > (Task tool による独立 SubAgent 起動は行わない)。
 
 ## メタ
@@ -78,7 +78,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| ナレッジサマリー | past_summary 内 (info-collector 生成・coordinator 経由で受領) | 前提検証の根拠・引用に使うとき |
+| ナレッジサマリー | past_summary 内 (info-collector 生成・親 context が受領) | 前提検証の根拠・引用に使うとき |
 | data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
 | selection-focus-goal-frame | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
 
@@ -107,7 +107,7 @@
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
 ### 5.1 担当 agent
-- `phase3-coordinator` (isolation: fork)。coordinator が本プロンプトを Read しインライン進行する。独立 SubAgent 起動はしない。
+- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 前提検証を経た、逆算根拠のある数値目標を確定する。
@@ -131,7 +131,7 @@
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
 ### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 → `phase3-coordinator` (Step 3)。
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 3)。
 - 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため root_cause / bottleneck を null で受領する。
 - 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (sales_target)、成果目標 (other_targets)。
 

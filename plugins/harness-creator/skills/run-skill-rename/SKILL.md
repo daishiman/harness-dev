@@ -13,6 +13,9 @@ allowed-tools:
   - Bash(git *)
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-05-18
 version: 0.1.0

@@ -157,7 +157,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 > **配布注記**: 本 skill の cross-skill `reference_refs` (`../../../harness-creator/...goal-seek-paradigm.md`) は repo-bundled 前提。plugin-dev-planner は `distributable:false` フラグで marketplace/bundles へ登録しない (`scripts/validate-plugin-completeness.py` が distributable:false プラグインの非登録を機械強制)。加えて plugin-dev-planner は `NEVER_DISTRIBUTE` denylist (`validate-plugin-completeness.py`) にも登録済みで、フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する二重ロック。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。また standalone 配布時は repo 側の schema parity テスト網 (upstream 突合) が skip され drift を検知しないため、repo-bundled 運用を既定とする。
 
-## 目的と出力契約
+## Purpose & Output Contract
 
 プラグイン構想 1 件を、目的ドリブンで **2 軸直交** (ライフサイクル軸=13 フェーズ / 成果物実体軸=N 個の buildable component) に分解し、`run-skill-create` が段階実行できる **index(main) + 13 フェーズファイル + component-inventory.json** に変換する前段の計画スキル。フェーズファイルは上から順に読める宣言型タスク仕様 (8 節・人間向け primary deliverable)、`component-inventory.json` は buildable 実体の build routing・依存 DAG・評価基準を保持する唯一の機械 SSOT、index は plugin-creator の manifest / marketplace / cachebuster / validation 契約を `plugin_meta` で携帯する。両軸は build_target/depends_on を二重に持たず (正規化)、component は `entities_covered: [C01, ...]` の id 参照だけでフェーズに紐づく。
 

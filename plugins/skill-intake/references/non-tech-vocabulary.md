@@ -152,7 +152,7 @@ function rewriteForNonTech(text, dict) {
 
 ## 自己拡張
 
-ヒアリング中に未登録の専門用語が検出されたら、`skill-intake-self-updater` が草稿として末尾に追加。人間レビューで採用・却下。
+ヒアリング中に未登録の専門用語が検出されたら、実行中の owner Skill (`run-skill-intake` / `run-intake-revise`) が草稿候補を記録する。`update_question_bank.py` の dry-run 差分を人間がレビューし、別ターンの明示承認後にだけ採用する。
 
 ```javascript
 if (!dict[term] && isTechnicalTerm(term)) {

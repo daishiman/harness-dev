@@ -7,14 +7,16 @@
 +++ b/_base.md
 @@ -23,6 +23,12 @@ since: {{date}}
  rubric_refs: {{rubric_refs | default([])}}
-+# goal-seek: 固定手順を持たず Goal+Checklist へ向けて反復する。engine 既定は task-graph (依存順駆動)。反復ループは fork で分離 context に切り出し親へ最終差分のみ返す(2軸は独立)。
++# goal-seek: Goal+Checklist は維持し、実行方式は最小で十分な profile を使う。task-graph / fork は brief で必要性が明示された場合だけ起動する。
 +goal_seek:
-+  engine: {{goal_seek.engine | default("task-graph")}}      # task-graph(既定/依存順駆動+self-reflect・生成harnessに task-graph-engine 同梱) | inline(opt-down/自己完結・外部スキル不要) | run-goal-seek(同梱時のみ任意で使う重量オーケストレータ)
++  engine: {{goal_seek.engine | default("inline")}}      # inline(既定/自己完結) | task-graph(明示された依存グラフ用) | run-goal-seek(明示された重い周回用)
++  engine_profile: {{goal_seek.engine_profile | default("goal-loop")}}  # inline・run-goal-seek=goal-loop / task-graph=checklist-graph
++  full_task_spec_graph: false                         # 縮小 profile の fail-closed capability claim
 +  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定
 +  progress: eval-log/{{skill_name}}-progress.json     # schemas/goal-seek-loop.schema.json 準拠
 +  intermediate: eval-log/{{skill_name}}-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)
 +  max_loops: {{goal_seek.max_loops | default(5)}}
-+  fork: {{goal_seek.fork | default("subagent")}}        # subagent(既定/反復を分離contextで実行し親へ最終差分のみ) | agent-team | inline(軽量単発のみ opt-down)
++  fork: {{goal_seek.fork | default("inline")}}        # inline(既定) | subagent(needs_independent_context時) | agent-team(明示された独立並列作業時)
  # doc/21 source-traceability
  source: {{source_url_or_path}}
  source-tier: {{source_tier | default("internal")}}
@@ -27,7 +29,7 @@
 +
 +- **goal-spec**: `eval-log/goal-spec.json` があればロードして利用する（spec schema が同梱されていれば検証、無ければそのまま利用）。無ければ既存コンテキスト（直近依頼・制約・対象ファイル）から AI が最適ゴール+完了チェックリストを推定生成する（ユーザーへの追加質問は原則しない）。
 +- **周回状態**: 各周回で `eval-log/{{skill_name}}-progress.json`（`run-build-skill/schemas/goal-seek-loop.schema.json` 準拠）に `iteration` / 各 checklist 項目 `{id,text,status}` / `open_issues` を記録する。
-+- **コンテキスト分離（fork 軸）**: 反復ループは既定で SubAgent（`Agent`）に分離して実行し、親には最終成果物と `handoff-*.json` 要約のみ返す（中間試行で親 context を汚さない）。`fork: inline` は軽量単発時の opt-down。なお重い周回で `engine: run-goal-seek`（同梱時のみ）を使うのは外部依存軸の任意最適化で、fork 分離とは独立（`references/goal-seek-paradigm.md`「コンテキスト分離」）。
++- **コンテキスト配置（fork 軸）**: 既定は `inline`。`needs_independent_context: true` またはユーザーの明示指定がある場合だけ SubAgent / Agent Team に分離し、親には最終成果物と `handoff-*.json` 要約のみ返す。
 +- **中間成果物アンカー (ドリフト圧縮)**: 各周回末に `eval-log/{{skill_name}}-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を 1 行追記する。`original_goal` は全周回で**不変**。次周回 Step2 (手順生成) は直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み込み、AI が単独で再導出しない。これにより固定手順なしの自由度を保ちつつ、AI が確率的最尤の抽象解へ集約化していくドリフトをアンカーで毎周回押し戻す (`references/goal-seek-paradigm.md`「中間成果物」)。
 +- **drift_signal** (enum 6 値、schema 必須): `initial` (iteration=0 のみ・前周回無し) / `aligned` (差分ゼロ) / `compressing` (縮んでいる・継続) / `stagnant` (2 周連続変化なし・アプローチ転換) / `widening` (広がっている・差し戻し検討) / `oscillating` (正負反転・打ち切り検討)。判定主体はループ実行 SubAgent (fork 内自己評価)、判定タイミングは Step4 検証後・Step5 反復判定前。
 +- **打ち切り**: `goal_seek.max_loops`（既定 5）到達でも未達、または `drift_signal: stagnant`/`widening`/`oscillating` が 2 周連続なら、残項目と差分を `open_issues` に記録し人間 or 上位 orchestrator へ差し戻す。
@@ -41,11 +43,10 @@
 +python3 - "$PWD/eval-log/{{skill_name}}-progress.json" "$PWD/eval-log/{{skill_name}}-intermediate.jsonl" <<'PY'
 +import json, sys, os, hashlib
 +prog_path, inter_path = sys.argv[1], sys.argv[2]
-+prog = json.load(open(prog_path, encoding="utf-8")) if os.path.exists(prog_path) else {}
++assert os.path.exists(prog_path), "progress.json 未生成 (周回証跡の absence-as-violation)"
++assert os.path.exists(inter_path), "intermediate.jsonl 未生成 (周回証跡の absence-as-violation)"
++prog = json.load(open(prog_path, encoding="utf-8"))
 +required_keys = {"iteration","original_goal","current_goal_snapshot","delta_from_original","merged_directive_for_next","drift_signal"}
-+if not os.path.exists(inter_path):
-+    print("intermediate.jsonl 未生成 (ループ未実行)")
-+    sys.exit(0)
 +lines = [l for l in open(inter_path, encoding="utf-8").read().splitlines() if l.strip()]
 +assert lines, "intermediate.jsonl が空"
 +iters = prog.get("iteration", len(lines) - 1)
@@ -55,11 +56,13 @@
 +    entry = json.loads(line)
 +    missing = required_keys - entry.keys()
 +    assert not missing, f"intermediate[{i}] 必須キー不足: {missing}"
++    assert entry["iteration"] == i, f"intermediate[{i}].iteration={entry['iteration']} (連続周回番号でない)"
 +    if i == 0:
 +        first_anchor = entry["original_goal"]
++        assert isinstance(first_anchor, str) and first_anchor.strip(), "original_goal が空"
 +        expected_hash = hashlib.sha256(first_anchor.encode()).hexdigest()
 +        actual_hash = prog.get("original_goal_hash")
-+        assert actual_hash is None or actual_hash == expected_hash, f"original_goal_hash drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}"
++        assert actual_hash == expected_hash, f"original_goal_hash missing/drift: progress={actual_hash} vs sha256(intermediate[0])={expected_hash}"
 +    assert entry["original_goal"] == first_anchor, f"intermediate[{i}] anchor 不変性違反"
 +print(f"intermediate 検査 OK: {len(lines)} 行 / anchor 不変 / hash 一致")
 +PY

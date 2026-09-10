@@ -3,6 +3,9 @@ name: run-governance-secrets
 description: governance secret helperの利用可否を確認したいとき、key名とbackendを値を露出せず監査したいときに使う。
 kind: run
 prefix: run
+goal_seek:
+  engine: inline
+  fork: inline
 version: 0.1.0
 user-invocable: true
 disable-model-invocation: false

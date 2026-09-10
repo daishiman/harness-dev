@@ -7,17 +7,64 @@ import sys
 from pathlib import Path
 from typing import Any
 
-AXES = ['output_destination', 'info_source', 'share_target', 'true_problem', 'knowledge_assets']
+CANONICAL_AXES = ('output_to', 'input_from', 'share_target', 'real_problem', 'knowledge_asset')
+LEGACY_AXIS_KEYS = {
+    'output_to': ('output_to', 'output_destination'),
+    'input_from': ('input_from', 'info_source'),
+    'share_target': ('share_target',),
+    'real_problem': ('real_problem', 'true_problem'),
+    'knowledge_asset': ('knowledge_asset', 'knowledge_assets'),
+}
+# Public compatibility alias used by existing callers and tests.
+AXES = [aliases[-1] for aliases in LEGACY_AXIS_KEYS.values()]
+
+
+def extract_axes(intake: dict[str, Any]) -> dict[str, Any]:
+    """Return one answer per canonical axis from v2 or legacy intake shapes."""
+    answers: dict[str, Any] = {}
+    sections = intake.get('sections')
+    if isinstance(sections, dict):
+        summary = sections.get('6_five_axes_summary')
+        if isinstance(summary, dict) and isinstance(summary.get('axes'), list):
+            for axis in summary['axes']:
+                if not isinstance(axis, dict):
+                    continue
+                axis_id = axis.get('axis_id')
+                if axis_id in CANONICAL_AXES:
+                    answers[axis_id] = axis.get('answer')
+
+    legacy = intake.get('5_axes') or intake.get('five_axes')
+    if isinstance(legacy, dict):
+        for canonical, aliases in LEGACY_AXIS_KEYS.items():
+            if canonical in answers:
+                continue
+            for alias in aliases:
+                if alias in legacy:
+                    answers[canonical] = legacy[alias]
+                    break
+    return answers
+
+
+def count_open_questions(intake: dict[str, Any]) -> int:
+    questions = intake.get('open_questions')
+    if isinstance(questions, list):
+        return len(questions)
+    sections = intake.get('sections')
+    if isinstance(sections, dict):
+        open_section = sections.get('8_open_questions')
+        if isinstance(open_section, dict) and isinstance(open_section.get('questions'), list):
+            return len(open_section['questions'])
+    return 0
 
 
 def score(intake: dict[str, Any], manifest: dict[str, Any] | None) -> dict[str, Any]:
-    axes = intake.get('5_axes') or intake.get('five_axes') or {}
-    filled = 0
-    for k in AXES:
-        v = axes.get(k)
-        if isinstance(v, str) and len(v.strip()) >= 4:
-            filled += 1
-    axis_score = filled / len(AXES)
+    axes = extract_axes(intake)
+    filled = sum(
+        1
+        for key in CANONICAL_AXES
+        if isinstance(axes.get(key), str) and len(axes[key].strip()) >= 4
+    )
+    axis_score = filled / len(CANONICAL_AXES)
     vis_count = 0
     if isinstance(manifest, dict):
         summ = manifest.get('summary')
@@ -26,11 +73,12 @@ def score(intake: dict[str, Any], manifest: dict[str, Any] | None) -> dict[str, 
         elif isinstance(manifest.get('items'), list):
             vis_count = len(manifest['items'])
     vis_score = min(vis_count / 12, 1)
-    open_q = len(intake['open_questions']) if isinstance(intake.get('open_questions'), list) else 0
+    open_q = count_open_questions(intake)
     open_penalty = max(0.0, 1 - open_q * 0.05)
     total = round(0.55 * axis_score + 0.35 * vis_score + 0.10 * open_penalty, 3)
     return {
         'score': total,
+        'value_realized_score': total,
         'components': {'axisScore': axis_score, 'visScore': vis_score, 'openPenalty': open_penalty},
         'axes_filled': filled,
         'visualization_count': vis_count,

@@ -34,14 +34,14 @@
     "engine": {
       "type": "string",
       "enum": ["inline", "run-goal-seek", "task-graph"],
-      "default": "task-graph",
-      "description": "この周回状態を回している goal-seek engine (frontmatter goal_seek.engine と一致)。additive/後方互換 (既定 task-graph・build-flags schema の engine 既定と一致)。engine==task-graph の周回状態は intermediate.jsonl へ ready_set/selected_item トレースを必須で追記し、機械検査 (task-graph 変種) が『トレース不在=拘束違反 (exit1)』として絶対検査する — 沈黙による依存順消費の回避を封鎖する (absence-as-violation)。"
+      "default": "inline",
+      "description": "この周回状態を回している goal-seek engine (frontmatter goal_seek.engine と一致)。既定 inline で追加 engine 資産を同梱しない。engine==task-graph を明示した場合は intermediate.jsonl へ ready_set/selected_item トレースを必須で追記し、機械検査が『トレース不在=拘束違反 (exit1)』として検査する。"
     },
     "fork_context": {
       "type": "string",
       "enum": ["inline", "subagent", "agent-team"],
-      "default": "subagent",
-      "description": "ループ本体の実行コンテキスト。多周回/重い試行は親 context を汚さないよう subagent/agent-team に fork する。"
+      "default": "inline",
+      "description": "ループ本体の実行コンテキスト。既定は inline。needs_independent_context=true または明示指定時だけ subagent/agent-team に fork する。"
     },
     "checklist": {
       "type": "array",
@@ -63,7 +63,19 @@
             "type": "array",
             "items": { "type": "string", "pattern": "^C[0-9]+$" },
             "default": [],
-            "description": "engine:task-graph 変種の additive フィールド。依存先 checklist item の id 群。全ての depends_on 先が status==done になって初めて当該 item は ready 集合 (ready-set-from-checklist.py) に入る。engine:inline では無視され後方互換 (default [])。逐次単一 self-writer ゆえ write_scope/tie-break は持たない (H1)。"
+            "description": "engine:task-graph 変種の additive フィールド。依存先 checklist item の id 群。全ての depends_on 先が status==done になって初めて当該 item は ready 集合 (extract-ready-set-from-checklist.py) に入る。engine:inline では無視され後方互換 (default [])。逐次単一 self-writer ゆえ write_scope/tie-break は持たない (H1)。"
+          },
+          "created_iteration": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "item が checklist に登録された周回。初期 item は省略時 0、self-reflect 追記 item は追記時の progress.iteration を記録する。"
+          },
+          "available_from_iteration": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "履歴 verifier が item を ready 候補に含める最初の周回。初期 item は省略時 0、self-reflect 追記 item は既定で created_iteration+1。"
           },
           "verify_by": {
             "type": "string",

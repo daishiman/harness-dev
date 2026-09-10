@@ -30,10 +30,10 @@ TASK_GRAPH_TOKENS = [
     "ゴールシーク配線（task-graph 変種）",
     "ゴールシーク検証（task-graph 変種・機械検査）",
     "dependency graph knowledge consult",
-    "ready-set-from-checklist.py",
-    "self-reflect-append.py",
+    "extract-ready-set-from-checklist.py",
+    "build-self-reflection-entry.py",
     "extract-capability-dependency-graph.py",
-    "record-capability-graph-knowledge.py",
+    "build-capability-graph-knowledge-entry.py",
     "ready_set",
     "selected_item",
     "依存順消費",
@@ -55,6 +55,15 @@ mod = _load()
 
 def test_task_graph_section_concatenated():
     assert mod.GOAL_SEEK_TASK_GRAPH_SECTION in mod.GOAL_SEEK_WIRING_SECTION
+
+
+def test_goal_seek_patch_always_uses_semantic_ssot(monkeypatch):
+    base = (RB / "templates/_base.md").read_text(encoding="utf-8")
+    patch_path = RB / "templates/combinators/with-goal-seek.patch"
+    monkeypatch.setattr(mod, "apply_unified_diff", lambda *_args: "stale-diff-snapshot")
+    rendered = mod.apply_patch_file(base, patch_path)
+    assert rendered != "stale-diff-snapshot"
+    assert mod.GOAL_SEEK_TASK_GRAPH_SECTION in rendered
 
 
 def test_fm_block_mentions_task_graph():
@@ -91,8 +100,8 @@ def test_build_flags_engine_enum_additive():
     enum = schema["properties"]["with_goal_seek"]["properties"]["engine"]["enum"]
     assert "task-graph" in enum
     assert "inline" in enum and "run-goal-seek" in enum  # 既存維持 (enum は additive)
-    # 量産既定を task-graph へ反転 (SKILL.md Step 10.6「engine 既定=task-graph」/ with-goal-seek.patch default 準拠)。
-    assert schema["properties"]["with_goal_seek"]["properties"]["engine"]["default"] == "task-graph"
+    # 量産既定は最小の inline。task-graph は brief が依存 DAG を明示した場合だけ選択する。
+    assert schema["properties"]["with_goal_seek"]["properties"]["engine"]["default"] == "inline"
 
 
 def test_loop_schema_depends_on_additive():
@@ -107,11 +116,22 @@ def test_loop_schema_depends_on_additive():
         assert k in props
 
 
+def test_loop_schema_dynamic_append_availability_is_backward_compatible():
+    schema = json.loads(LOOP_SCHEMA.read_text(encoding="utf-8"))
+    props = schema["properties"]["checklist"]["items"]["properties"]
+    for key in ("created_iteration", "available_from_iteration"):
+        assert props[key]["type"] == "integer"
+        assert props[key]["minimum"] == 0
+        assert props[key]["default"] == 0
+    assert "created_iteration" not in schema["properties"]["checklist"]["items"]["required"]
+    assert "available_from_iteration" not in schema["properties"]["checklist"]["items"]["required"]
+
+
 def test_loop_schema_engine_additive():
     schema = json.loads(LOOP_SCHEMA.read_text(encoding="utf-8"))
     eng = schema["properties"]["engine"]
-    # enum は additive (3値維持)・既定は量産反転で task-graph (SKILL.md Step 10.6 準拠)。
-    assert eng["default"] == "task-graph" and set(eng["enum"]) == {"inline", "run-goal-seek", "task-graph"}
+    # enum は additive (3値維持)・既定は最小の inline。
+    assert eng["default"] == "inline" and set(eng["enum"]) == {"inline", "run-goal-seek", "task-graph"}
 
 
 # --- consumption verifier bash の「実挙動」検査 (presence でなく behavior・§11 対応) ---
@@ -128,6 +148,16 @@ def _extract_verifier_bash():
 
 
 VERIFIER = _extract_verifier_bash()
+
+
+def _extract_anchor_verifier_bash():
+    out = _render("run")
+    m = _re.search(r"ゴールシーク検証（機械検査）.*?<<'PY'\n(.*?)\nPY\n", out, _re.DOTALL)
+    assert m, "goal-seek anchor verifier が抽出できない"
+    return m.group(1)
+
+
+ANCHOR_VERIFIER = _extract_anchor_verifier_bash()
 
 
 def _run_verifier(tmp_path, prog, inter_lines):
@@ -169,6 +199,76 @@ def test_verifier_task_graph_valid_trace_ok(tmp_path):
              {"iteration": 1, "ready_set": ["C2"], "selected_item": "C2"}]
     r = _run_verifier(tmp_path, prog, inter)
     assert r.returncode == 0 and "OK" in r.stdout
+
+
+def test_anchor_verifier_missing_trace_fails_closed(tmp_path):
+    progress = tmp_path / "progress.json"
+    progress.write_text("{}", encoding="utf-8")
+    missing = tmp_path / "missing.jsonl"
+    r = _sub.run(
+        [sys.executable, "-", str(progress), str(missing)],
+        input=ANCHOR_VERIFIER,
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode != 0 and "absence-as-violation" in r.stderr
+
+
+def test_verifier_bound_shortage_fails_closed_even_if_completed(tmp_path):
+    prog = {
+        "engine": "task-graph",
+        "status": "completed",
+        "max_loops": 1,
+        "checklist": [
+            {"id": "C1", "status": "done"},
+            {"id": "C2", "status": "done", "depends_on": ["C1"]},
+        ],
+    }
+    inter = [
+        {"iteration": 0, "ready_set": ["C1"], "selected_item": "C1"},
+        {"iteration": 1, "ready_set": ["C2"], "selected_item": "C2"},
+    ]
+    r = _run_verifier(tmp_path, prog, inter)
+    assert r.returncode != 0 and "bound 不足" in r.stderr
+
+
+def test_verifier_rejects_dynamic_item_before_available_iteration(tmp_path):
+    prog = {
+        "engine": "task-graph",
+        "checklist": [
+            {
+                "id": "C1",
+                "status": "done",
+                "created_iteration": 0,
+                "available_from_iteration": 1,
+            }
+        ],
+    }
+    r = _run_verifier(
+        tmp_path,
+        prog,
+        [{"iteration": 0, "ready_set": ["C1"], "selected_item": "C1"}],
+    )
+    assert r.returncode != 0 and "未利用" in r.stderr
+
+
+def test_verifier_rejects_omitted_lower_ready_item(tmp_path):
+    prog = {
+        "engine": "task-graph",
+        "checklist": [
+            {"id": "C1", "status": "done"},
+            {"id": "C2", "status": "done"},
+        ],
+    }
+    r = _run_verifier(
+        tmp_path,
+        prog,
+        [
+            {"iteration": 0, "ready_set": ["C2"], "selected_item": "C2"},
+            {"iteration": 1, "ready_set": ["C1"], "selected_item": "C1"},
+        ],
+    )
+    assert r.returncode != 0 and "再計算した ready" in r.stderr
 
 
 def test_verifier_empty_ready_with_selection_violation(tmp_path):
@@ -235,7 +335,10 @@ def test_verifier_dangling_depends_on_violation(tmp_path):
 def test_verifier_self_reflect_gate_violation(tmp_path):
     # completed 宣言だが pending 残 → self-reflect 完了 gate 違反
     prog = {"engine": "task-graph", "status": "completed",
-            "checklist": [{"id": "C1", "status": "done"}, {"id": "C2", "status": "pending"}]}
+            "checklist": [
+                {"id": "C1", "status": "done"},
+                {"id": "C2", "status": "pending", "available_from_iteration": 2},
+            ]}
     inter = [{"iteration": 0, "ready_set": ["C1"], "selected_item": "C1"}]
     r = _run_verifier(tmp_path, prog, inter)
     assert r.returncode != 0 and "完了 gate 違反" in r.stderr

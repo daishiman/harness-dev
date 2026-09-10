@@ -17,11 +17,16 @@ from __future__ import annotations
 # ///
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+from jsonschema import Draft7Validator
+
 PLUGIN_ROOT = Path(__file__).resolve().parents[3]  # skills/run-extract-blueprint/tests -> plugin root
+REPO_ROOT = Path(__file__).resolve().parents[5]
+SKILL_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _run(rel_path, *args):
@@ -70,3 +75,102 @@ def test_out1_fact_inference_distinction_is_machine_enforced(tmp_path):
     }]), encoding="utf-8")
     rejected = _run("scripts/doc-emit.py", "--check-apply", str(ungrounded), "--blueprint", str(blueprint))
     assert rejected.returncode == 1, "ungrounded fact-claim must be rejected (fail-closed)"
+
+
+def test_task_graph_runtime_profile_matches_inventory_and_template_ssot():
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    assert "engine: task-graph" in skill
+    assert "engine_profile: checklist-graph" in skill
+    assert "full_task_spec_graph: false" in skill
+    assert "fork: agent-team" in skill
+
+    inventory = json.loads(
+        (REPO_ROOT / "plugin-plans/extract-system-blueprint/component-inventory.json").read_text(encoding="utf-8")
+    )
+    component = next(item for item in inventory["components"] if item["id"] == "C01")
+    assert component["goal_seek"] == {
+        "activation_state": "semantic_evaluator_started",
+        "engine": "task-graph",
+        "engine_profile": "checklist-graph",
+        "full_task_spec_graph": False,
+        "fork": "agent-team",
+        "spec": "eval-log/goal-spec.json",
+        "progress": "eval-log/run-extract-blueprint-progress.json",
+        "intermediate": "eval-log/run-extract-blueprint-intermediate.jsonl",
+        "max_loops": 5,
+    }
+    template_root = REPO_ROOT / "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts"
+    for name in (
+        "extract-ready-set-from-checklist.py",
+        "build-self-reflection-entry.py",
+        "extract-capability-dependency-graph.py",
+        "build-capability-graph-knowledge-entry.py",
+    ):
+        assert (SKILL_ROOT / "scripts" / name).read_bytes() == (template_root / name).read_bytes()
+
+
+def test_self_reflect_item_is_accepted_by_plugin_goal_seek_schema():
+    schema = json.loads((PLUGIN_ROOT / "schemas/goal-seek-loop.schema.json").read_text(encoding="utf-8"))
+    instance = {
+        "skill": "run-extract-blueprint",
+        "goal": "blueprint completion",
+        "iteration": 1,
+        "max_loops": 5,
+        "engine": "task-graph",
+        "fork_context": "agent-team",
+        "checklist": [{
+            "id": "C4",
+            "text": "self-reflect task",
+            "status": "pending",
+            "depends_on": ["C1"],
+            "created_iteration": 1,
+            "available_from_iteration": 2,
+        }, {
+            "id": "C1",
+            "text": "precondition",
+            "status": "done",
+        }],
+        "status": "in_progress",
+    }
+    Draft7Validator(schema).validate(instance)
+
+
+def _task_graph_verifier() -> str:
+    skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    blocks = re.findall(r"```bash\n(.*?)```", skill, re.DOTALL)
+    block = next(item for item in blocks if "task-graph consumption OK" in item)
+    return re.search(r"<<'PY'\n(.*?)\nPY", block, re.DOTALL).group(1)
+
+
+def test_task_graph_consumption_verifier_accepts_order_and_rejects_untraced_done(tmp_path):
+    progress = tmp_path / "progress.json"
+    intermediate = tmp_path / "intermediate.jsonl"
+    data = {
+        "engine": "task-graph",
+        "max_loops": 5,
+        "status": "completed",
+        "checklist": [
+            {"id": "C1", "status": "done"},
+            {"id": "C2", "status": "done", "depends_on": ["C1"]},
+        ],
+    }
+    progress.write_text(json.dumps(data), encoding="utf-8")
+    intermediate.write_text("\n".join((
+        json.dumps({"iteration": 0, "ready_set": ["C1"], "selected_item": "C1"}),
+        json.dumps({"iteration": 1, "ready_set": ["C2"], "selected_item": "C2"}),
+    )) + "\n", encoding="utf-8")
+    accepted = subprocess.run(
+        [sys.executable, "-", str(progress), str(intermediate)],
+        input=_task_graph_verifier(), capture_output=True, text=True,
+    )
+    assert accepted.returncode == 0, accepted.stderr
+
+    intermediate.write_text(
+        json.dumps({"iteration": 0, "ready_set": ["C2"], "selected_item": "C2"}) + "\n",
+        encoding="utf-8",
+    )
+    rejected = subprocess.run(
+        [sys.executable, "-", str(progress), str(intermediate)],
+        input=_task_graph_verifier(), capture_output=True, text=True,
+    )
+    assert rejected.returncode != 0

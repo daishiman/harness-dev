@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "9cd5183db3ccae34596fde39367f573529767e3b164a6c1142110065d9791819"
+    "skill_md_sha256": "3493881c06b89025f048519575dc7d7ce16e7e8db22b6a7901247df61bbed3d0"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,27 +11,31 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   },
   "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-09-10T06:25:20Z",
-  "iterations": 1,
+  "reviewed_at": "2026-09-10T09:10:14Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "本 branch の 4 SKILL.md 変更が「宣言を実体へ合わせる」方向で統一されている。combinators は本 branch 以前から 26 skill が持つ既存キーで、値も with-goal-seek / with-feedback-contract の 2 語に閉じている。本 skill は goal_seek ブロックを持たないため with-feedback-contract 単独を宣言しており、宣言と実体が一致している。新語を発明せず既存の閉じた語彙へ後から合流させる直し方は横展開に値する。",
-      "completeness_exempt の理由文が「無いこと」ではなく「置いたら何が壊れるか」を書いている。workflow-manifest.json を置いても Phase 遷移の正本が SKILL.md 本文と二重になるだけで片方が古びる、と述べ、代わりに責務の対応は responsibility_refs、Write の可否は external_mutation_guard が持つ、と代替の担い手まで指している。lint-skill-completeness.py は `<category>: <理由>` の形式しか要求しないので、この水準の理由は規約に強制された結果ではなく設計判断として書かれている。",
-      "同時に足された responsibility_refs 3 件（build-journal-context.py / ../../agents/journal-composer.md / validate-journal-output.py）が、completeness_exempt が「実行体の対応は responsibility_refs が持つ」と主張する相手そのものになっている。免除の宣言と、その免除を成立させる代替宣言が同じ変更で入っており、参照先の実在も全件確認できた。免除だけ先に入って代替が後回しになる典型を避けている。"
+      "単一 writer 境界が実ファイルで整合している: SKILL.md Phase4-5 (親は対話・保存可否・入力スナップショットを所有し receipt でのみ完了判定) と agents/journal-composer.md 『出力と検証』(write_mode=blocked なら Write せず差し戻し / output_path へ Write / validate → 最大3回修復) が同じ責務分割を述べており、二重 writer は成立していない。goal-seek が inline 化されても親が書くのは progress/intermediate/handoff の 3 path だけで journal 本文とスコープが交差しない。",
+      "validate-journal-output.py の GOAL_SECTIONS 修正 (L417-431) は候補列を正本先頭順で 1 回の探索に統合し、body とラベルを同一 next() から取る。これにより『正本 3ヶ月目標 の節が空でも本文前方の旧表記 2ヶ月目標 節が検査を通す』fail-open が閉じ、G01/G02/G03 のラベルと検査対象のズレも同時に消えている。別表記の後方互換を残しつつ fail-open を塞ぐ再利用可能なパターン。",
+      "2 つのループの非対称な扱いが横展開に値する: 親周回 (対話で埋められる不足) と composer 内 3 回 (機械違反の修復) を、失敗の種類が違うという理由で明示的に分け、後者の非収束では周回を消費せず停止すると書いた。ループが入れ子になる skill で max_loops の意味が曖昧化する典型を、周回の消費規則を言語化することで防いでいる。",
+      "iteration 3 の test 強化は『退化した test』という検出しにくい欠陥を潰した良い横展開候補: golden の見出しが正本へ移った結果 golden.replace() が空振りし、旧表記の併存 test 2 本が『golden がそのまま通る』だけの無内容な test に退化していた。置換が実際に起きたことのアサート追加と、見出し定数を validator の QUARTERLY_HEADING に縛る test_quarterly_heading_constants_track_validator により、fixture 側の変更で test が黙って無内容化する経路が閉じた。fixture 変形に依存する test 一般へ適用できる。",
+      "PLUGIN_ROOT の fail-closed 受け渡し (SKILL.md L203 と composer L23 / L76 の `${PLUGIN_ROOT:?...}`) が親子で二重に宣言されており、Task 境界を越える runtime root 解決が片側の記述漏れで崩れない。"
     ],
     "negative_feedback": [
-      "[smell/low] lint-goal-seek.py が本 SKILL.md に対して rc=1 を返す（実行系 Skill に '## ゴールシーク実行' 見出しがない、および WARN 3 件）。ただし git show origin/main: 版でも全く同じ出力・同じ rc=1 であり、本 branch が持ち込んだ劣化ではない。また本 lint の CI 強制範囲は --skills-dir plugins/harness-creator/skills に限られており（scripts/run-ci-checks.sh と .github/workflows/governance-check.yml で確認）、ubm-goal-setting は強制対象外。本 branch が combinators に with-goal-seek を宣言していない点は goal_seek ブロック不在という実体と一致しており、宣言と実体の齟齬ではない。既知の未配線状態として記録するにとどめ、本 verdict をブロックしない。"
+      "[smell/low・継続] frontmatter `completeness_exempt` の理由文が『分岐も並列も再入も無い』のままで、本文に明記された親周回 (Phase1-3 へ戻って Phase4-5 を再委譲) と字面で食い違う。周回は同じ一本道の有界な繰り返しで分岐も並列も増えないため workflow-manifest 免除の実質的根拠は保たれる。次に SKILL.md へ触れる際に『分岐も並列も無く、再入は goal-seek の有界周回のみ』程度へ寄せること。単独では免除判断を変えないため FAIL 事由に数えない。",
+      "[smell/low・新規] tests/test_runtime_simplification_contracts.py:59 が SKILL.md の日本語散文を部分文字列で固定しているため、意味を変えない語順調整でも test が落ちる (iteration 3 の再編集はこれが契機)。契約文を守る意図自体は妥当だが、固定対象を『composer 非収束時に親が Phase4 を再起動しない』という命題単位 (複数キーワードの共起や正規表現) にすると、文体の改善を妨げずに同じ契約を守れる。",
+      "[smell/low・継続] artifact-delivery wrapper (L100-106) の下に Phase0-5 の全工程が置かれ、accept-as-is では『後続 section を実行しない』ため成果物であるジャーナル自体が生成されない読みになる。plugins 配下の run-* 多数に同型で入る repo 共通 governance boilerplate であり本 skill 固有の退行ではないため、横断課題として据え置く。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "CI:change-category-guard (PR #70 の lint-content-review.py --all が stale-sha 8 件で fail)",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "【profile=incremental】前回 verdict の結論を引き継がず独立に再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。4 skill を 1 context で結合評価し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を一度に判定した。その単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側（4条件）の投影である。rubric 側の投影は同ディレクトリの rubric-verdict.json で、両者は同一の観測に基づく。 【読んだもの】content-review-protocol.md 全文 / content-review-verdict.schema.json 全文（実在パスは plugins/harness-creator/skills/run-build-skill/schemas/ 配下）/ scripts/lint-content-review.py 全文 / 評価対象 4 skill の SKILL.md 全文（本 skill は 250 行）/ git diff origin/main...HEAD の当該 4 SKILL.md 差分全文（本 skill の追加分は combinators: [with-feedback-contract]、responsibility_refs 3 件、completeness_exempt 1 件）/ plugins/ubm-goal-setting/CHANGELOG.md の 0.3.40・0.3.41・0.3.42 / 新規 tests/test_notation_consistency.py 全文 / run-ubm-goal-setting の references/output-formats.md・references/data-contract.md の該当節 / scripts/validate-goal-output.py の定数と C1/C1c/C1d/C1e/C4b/C5/S1/S2/S3 および「やらないこと」検査ブロック。 【実行したもの（コマンドと実測結果）】(1) shasum -a 256 を 4 SKILL.md へ実行し、本 skill は 9cd5183db3ccae34596fde39367f573529767e3b164a6c1142110065d9791819 を得た。本 verdict の skill_md_sha256 はこの実測値そのもので、手書換は一切していない。(2) python3 -m pytest plugins/ubm-goal-setting/ -q = 392 passed in 78.98s（exit 0）。(3) tests/test_notation_consistency.py -q = 24 passed。(4) validate-goal-output.py を importlib で読み込み Validator._parse_contribution へ合成行を通し、C1 / C1c / C1e の検出力を実測確認した（被評価物は変更していない）。(5) golden-sample-weekly.md の scratchpad 複製に対し validate-goal-output.py --type weekly = rc=0 / STATUS: PASS / エラー 0・警告 0 / PASS 32 件。(6) 違反注入実測で --type 取り違え・裸の数字（C1）・グループ金額不一致（C4b）がいずれも rc=1 になることを確認。(7) frontmatter 宣言 refs の実在を全件走査。本 skill は 12 件すべて実在（responsibility_refs の build-journal-context.py・agents/journal-composer.md・validate-journal-output.py を含む）、4 skill 合計 64 件で欠損 0。(8) lint 実行。lint-skill-description OK=187 VIOLATION=0、lint-feedback-contract --all = [OK] 74 loop-kind skills（本 skill は WARN 一覧にも live-trial baseline 免除一覧にも不在）、lint-config-version-sync OK、lint-artifact-delivery = 21 plugins OK、lint-entrypoint-artifact-first OK（119 inventory）、lint-runtime-portability OK、lint-script-naming VIOLATION=0、lint-skill-name ok、lint-skill-completeness --skills-dir plugins/ubm-goal-setting/skills = ok（6 skills, completeness）。(9) lint-goal-seek を本 SKILL.md へ実行 = rc=1。同じ lint を git show origin/main: 版へ実行しても同一出力・同一 rc=1 であることを確認し、pre-existing と判定した。CI 強制範囲が plugins/harness-creator/skills に限られることも run-ci-checks.sh と governance-check.yml で確認した。(10) completeness_exempt が lint-skill-completeness.py と validate-plugin-package.py に実際に読まれる既存キーであること、combinators が本 branch 以前から 26 skill にある既存キーであることを確認した。(11) 配布物 version が 4 箇所すべて 0.3.42 で一致。 【判定理由】(a) 矛盾 0。SKILL.md 本文の Phase 遷移と responsibility_refs・external_mutation_guard・artifact_delivery の宣言が食い違わないことを確認した。completeness_exempt が「manifest を置くと Phase 遷移の正本が二重になる」と述べる根拠どおり、本文の Phase 記述は一本道で分岐も並列も再入も無い。(b) 漏れ 0。本 branch の追加 3 種（combinators / responsibility_refs / completeness_exempt）はいずれも実体を伴い、CHANGELOG にも対応記述がある。(c) 規約整合 = 充足。免除カテゴリ表記 `manifest: <理由>` は lint-skill-completeness.py が要求する形式に合致し、同 lint は ok。(d) 依存関係整合 = 充足。宣言 refs 12 件全件実在、plugin 全体 392 passed。(e) rubric high severity 0。negative_feedback は low（smell 1 件、しかも pre-existing）のみ。 【PASS の射程】design claim（静的設計 adequacy）に限る。verify_by: live-trial を持つ criterion（OUT2）の behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
+  "notes": "iteration 3 は語順調整と test 強化に対する再確認 (30思考法は未使用)。SKILL.md の差分は『機械違反は対話で埋められない種類の失敗なので』を固定句の前へ移した 1 文の語順のみで、周回の消費規則・停止条件・報告義務の命題は iteration 2 と同一。意味変化なしを差分で確認した。frontmatter は combinators 重複 0 件・解決値 ['with-goal-seek','with-feedback-contract'] を維持。tests/test_runtime_simplification_contracts.py:59 の固定句は現本文に 1 件存在。python3 -m pytest plugins/ubm-goal-setting/tests/ -q は 408 passed を自分で実行して確認済み。iteration 3 で新たに評価対象へ入った test 変更 (旧表記併存 test 2 本の退化修正 + QUARTERLY_HEADING 追従 test 追加) は、iteration 1 で妥当と評価した validator 修正の検査能力を実際に担保する方向の変更で、退行はない。残 findings は low の smell 3 件のみ (うち 1 件は repo 横断 boilerplate)。未解決の contradiction / omission / dependency break は 0 のため PASS。同一評価を rubric-verdict.json へ分離投影済み。"
 }

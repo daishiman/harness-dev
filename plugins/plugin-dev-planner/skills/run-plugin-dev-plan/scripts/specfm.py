@@ -1135,7 +1135,10 @@ def minimal_frontmatter(component_kind: str, *, spec_id: str = "C01", skill_kind
                  "text": "本文の完了条件 (goal の受入基準) が観測可能な形で満たされ受入テストが PASS する",
                  "verify_by": "test"},
             ]}
-            fm["goal_seek"] = {"engine": "inline", "fork": "subagent", "max_loops": 5}
+            # 最小十分 profile: skeleton は needs_independent_context=False なので
+            # 制御往復を増やす subagent を予防的に起動しない。実 spec で
+            # needs_independent_context=true と判定した場合だけ fork を明示する。
+            fm["goal_seek"] = {"engine": "inline", "fork": "inline", "max_loops": 5}
         else:
             fm["feedback_contract"] = {"skip_reason": f"{skill_kind} kind は loop criteria 必須対象外"}
         fm["combinators"] = ["with-goal-seek"] if skill_kind in FEEDBACK_LOOP_SKILL_KINDS else []

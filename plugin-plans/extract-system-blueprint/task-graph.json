@@ -402,6 +402,14 @@
       "write_scope": "plugins/extract-system-blueprint/tests/"
     },
     {
+      "id": "P06-impl-browser-render",
+      "title": "MCP非依存 browser-render (C15: ローカルheadless ChromeをBash経由起動しJS後DOM+screenshot取得・不在時exit3 graceful縮退) をfixture駆動で実装",
+      "phase_ref": "P06",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "plugins/extract-system-blueprint/scripts/browser-render.py"
+    },
+    {
       "id": "P06-impl-deterministic-png-shrink",
       "title": "4MiB以下への決定論的PNG縮小実行器を実装",
       "phase_ref": "P06",
@@ -416,14 +424,6 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "plugins/extract-system-blueprint/scripts/layout-template-dedup.py"
-    },
-    {
-      "id": "P06-impl-browser-render",
-      "title": "MCP非依存 browser-render (C15: ローカルheadless ChromeをBash経由起動しJS後DOM+screenshot取得・不在時exit3 graceful縮退) をfixture駆動で実装",
-      "phase_ref": "P06",
-      "entity_ref": null,
-      "state": "pending",
-      "write_scope": "plugins/extract-system-blueprint/scripts/browser-render.py"
     },
     {
       "id": "P06-llm-lane-fixtures-and-dedup",
@@ -1528,17 +1528,17 @@
     },
     {
       "type": "depends_on",
+      "from": "P06-impl-browser-render",
+      "to": "P06-llm-lane-fixtures-and-dedup"
+    },
+    {
+      "type": "depends_on",
       "from": "P06-impl-deterministic-png-shrink",
       "to": "P06-llm-lane-fixtures-and-dedup"
     },
     {
       "type": "depends_on",
       "from": "P06-impl-layout-template-dedup",
-      "to": "P06-llm-lane-fixtures-and-dedup"
-    },
-    {
-      "type": "depends_on",
-      "from": "P06-impl-browser-render",
       "to": "P06-llm-lane-fixtures-and-dedup"
     },
     {

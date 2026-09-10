@@ -1,10 +1,11 @@
 {
   "version": 1,
   "rubric_id": "skill-design",
-  "rubric_version": "1.3.0",
+  "rubric_version": "1.3.1",
   "layer": "L2",
   "upstream_version_pin": "1.3.0",
-  "_doc": "設計書29 §3 L2: assign-skill-design-evaluator 固有 override (delta-only)。L0 正本 (ref-skill-design-rubric/references/rubric.json) の全コピーは保持しない。compose-rubrics.py の deep-merge は overlay に無いキーを base から継承し、rules を id 単位でマージするため、本ファイルは L0 に存在しない evaluator 固有 rule のみを宣言する。rubric_version は upstream_version_pin と同値で upstream に追随し、check-rubric-sync.py のバージョン同期モードで版ずれを検出する。",
+  "rubric_hash": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+  "_doc": "設計書29 §3 L2: assign-skill-design-evaluator 固有 override (delta-only)。L0 正本 (ref-skill-design-rubric/references/rubric.json) の全コピーは保持しない。compose-rubrics.py の deep-merge は overlay に無いキーを base から継承し、rules を id 単位でマージするため、本ファイルは L0 に存在しない evaluator 固有 rule のみを宣言する。rubric_version は L2 独自の実行契約版、upstream_version_pin/rubric_hash は合成元 L0 版・内容への厳密拘束である。1.3.1 は PG-001/REG-001 の実行不能な古い物理パスを現行 SSOT へ同期する high false-positive 緊急 patch。",
   "upstream": [
     "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
   ],
@@ -17,7 +18,7 @@
       "severity": "high",
       "weight": 10,
       "applies_to_kinds": ["skill"],
-      "check": "kind in (run, assign) AND brief.responsibilities[] non-empty => plugins/<plugin>/skills/<skill>/prompts/<R-id>.yaml exists for every R-id",
+      "check": "kind in (run, assign) AND responsibilities[].prompt_required=true => a canonical Markdown prompt exists for every required responsibility. Canonical mapping is exact prompts/<id>.md, bare numeric <id>-<name>.md, or an explicit responsibility_refs prompt path whose body declares that same responsibility id. Unlisted discovery, unbound content, duplicate mappings, and legacy .yaml-only mappings fail",
       "rationale": "Phase 3: 責務単位プロンプトと SubAgent.md の 1:1 整合を物理ファイルレベルで担保"
     },
     {
@@ -46,7 +47,7 @@
       "weight": 7,
       "_design_doc_id": "RG-001",
       "applies_to_kinds": ["skill"],
-      "check": "scripts/validate-plugin-completeness.py と scripts/validate-build-trace.py が exit 0 で通る",
+      "check": "repo-root scripts/validate-plugin-completeness.py が exit 0。eval-log/<plugin>/<skill>/skill-build-trace.json が存在する target は canonical plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py <trace> も exit 0。per-skill trace 未導入の legacy target は trace 部分のみ N/A (存在する trace の失敗は N/A に降格不可)",
       "rationale": "Phase 3: 配布完全性と再現性トレースの 2 gate を必須化。設計文書では RG-001 表記、既存 governance RG-001 と衝突回避で REG-001"
     }
   ]

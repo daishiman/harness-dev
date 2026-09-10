@@ -2,37 +2,35 @@
   "target": {
     "plugin": "skill-governance-config",
     "skill": "run-governance-config",
-    "skill_md_sha256": "76305fb1df2807f37ef692214bd06625e2f78936d510a950076b577a8fb55b12"
+    "skill_md_sha256": "dd1c12c2d35c3bc0a372938373fa8f564b659edcd29edd854d1165c6cfcda055"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 2
+    "smell": 0
   },
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "artifact_delivery の pre_choice_forbidden / accept_contexts 0-0 と本文 Pre-choice / Post-choice 節が一対一で対応し、accept-as-is で後続節を実行しない停止条件が本文側にも明記されている。",
-      "required / present / unresolved / owner の 4 分類が IN1 の判定軸そのままで、ゴールシーク実行と検証節が入力から出力契約まで最短で結ばれている。",
-      "`.example` を実 credential として扱わない・secret 値を表示しないという境界が Key Rules と OUT1 の双方に置かれ、read-only 既定が allowed-tools: Read, Glob と一致している。"
+      "read-only の registry/policy/example 棚卸しを inline/inline と宣言し、allowed-tools が Read/Glob のままなので secret生成や設定反映へ越境しない。config と composition ref の実在を確認できる。"
     ],
-    "negative_feedback": [
-      "smell(low): Key Rules の `plugin rootは${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}として扱う。` は本文に shell 起動行が無く allowed-tools にも Bash が無いため実行経路を持たない。sibling の run-governance-secrets / hooks / lint / migration / automation と同形の house pattern であり、単独では退行ではない。",
-      "smell(low): Post-choice 節の「以下の…section」は字面上 Purpose & Output Contract / Key Rules も範囲に含み得るが、列挙が workflow・goal-seek・評価・修正に限定されており、Pre-choice 節が Purpose & Output Contract の実行を前提にしていることで曖昧さは解消できる。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "git diff HEAD -- plugins/skill-governance-config/skills/run-governance-config/SKILL.md (HEAD 未追跡のため全 73 行が差分) と SKILL.md 全文を読んだ。(a) 矛盾: Pre-choice 節の accept-as-is 停止と state_machine の user_choice_recorded --accept-as-is--> handoff_complete が一致、Key Rules の read-only 既定と allowed-tools: Read, Glob / effect: conversation-output が一致し矛盾なし。(b) 漏れ: Purpose & Output Contract・Key Rules・ゴールシーク実行・検証の各節が残存し、migration 前後で workflow が欠落していない。(c) 規約整合: frontmatter は *_refs / schema_refs / prompts 参照を宣言しておらず dangling 対象なし。effect: conversation-output のため external_mutation_guard と canonical receipt flow block はいずれも不要で、双方とも不在という整合状態。runtime_root_policy 未宣言のため `## Runtime root contract` 節の必須要件は発火しない (宣言済みの run-governance-adapters とは条件が異なる)。見出し順 (Pre-choice / Post-choice / H1 / Purpose) は sibling の run-governance-adapters・run-governance-secrets と同一で house convention に沿う。(d) 依存関係: Purpose が参照する `config/` の registry/policy/example は plugins/skill-governance-config/config/ に adapter-registry.json・rubric-registry.json・governance-policy.json・governance-params.json.example 等として実在。plugin-composition.yaml の capabilities と references/package-contract.json の entry_points.skills が run-governance-config を列挙しており境界も整合。(e) 未解決 finding は low の smell 2 件のみで medium 以上は 0。以上により PASS。30 思考法は実施していない (focused combined review プロファイル)。"
+  "notes": "現行 bytes、git diff、criteria、plugin-composition、config 参照を再確認。runtime-profile/frontmatter/tree lint は exit 0。full goal-seek wiring 未注入の warning 3件は推奨扱いで exit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

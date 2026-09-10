@@ -48,14 +48,16 @@
 ### 2.2 ドメインルール
 - 独立変更は分けて適用、依存変更は順序を守る
 - 具体値直書きは `variable_abstraction` に基づき `{{VAR}}` へ置換し source_trace を保持
+- `dry_run=true` は対象を Edit / Write せず、適用予定の patch と検証結果のみを返す。`dry_run=false` でも commit / PR は後続の明示依頼がなければ行わない
 - パッチ適用後、`validation_commands` (validate-paradigm-coverage.py 等) を実行
-- **claim_vs_reality_audit (MED-3)**: 前回 run の `changed_paths[]` を実 file に対し `grep -F` で再検証し、gap があれば severity=contradiction の finding として再起票
+- 差分再評価と PASS 証拠の再利用は `../run-build-skill/references/verification-obligation-protocol.md` の exact obligation fingerprint + current PASS receipt DAG にだけ従う。`changed_paths[]` や自然文の自己申告で判定を省略しない
 
 ### 2.3 入力契約
 
 | field | type | required | 説明 |
 |---|---|---|---|
 | phase2_output | path | yes | findings.json |
+| dry_run | bool | yes | true は対象への Edit / Write を禁止 |
 | convergence_policy | path | yes | ./references/convergence-policy.json |
 | amplified_patterns | path | yes | ./references/amplified-patterns.json |
 | variable_contract | path | yes | ./references/variable-template-contract.md |
@@ -74,9 +76,10 @@
 | policy | ./references/convergence-policy.json | 収束判定時 |
 | patterns | ./references/amplified-patterns.json | パッチ生成時 |
 | contract | ./references/variable-template-contract.md | 変数化適用時 |
+| verification | ../run-build-skill/references/verification-obligation-protocol.md | 差分再評価・PASS 証拠再利用判定時 |
 
 ### 3.2 外部ツール / API
-- Edit / Write (最小スコープ)
+- Edit / Write (`dry_run=false` の最小スコープだけ)
 - `scripts/validate-paradigm-coverage.py` 等 (validation_commands)
 - Agent Team: 独立 finding は SubAgent 並列起動、依存 finding は直列 (依存関係整合を保つ)
 - Codex 委譲 (任意): 大規模 patch / 専門領域は `delegate-codex-skill-review` 経由で外部委譲可能
@@ -114,6 +117,7 @@
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] severity_order: high/critical から順に適用
 - [ ] scope_minimal: findings 外の変更を混ぜていない
+- [ ] dry_run_guard: `dry_run=true` で対象を Edit / Write していない
 - [ ] variable_abstraction_applied: 直書き具体値を `{{VAR}}` へ昇格、source_trace 保持
 - [ ] validation_run: `validation_commands` を実行し結果を記録 (未実行のまま pass 宣言禁止)
 - [ ] safety_valve: `max_iterations=3` 超過時 `convergence_status: human_escalate` を選択 (force_pass 禁止)

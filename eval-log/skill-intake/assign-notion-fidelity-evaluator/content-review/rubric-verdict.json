@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "assign-notion-fidelity-evaluator",
-    "skill_md_sha256": "f879fda8910f2b379e63a4a95b0af692293b89cc2b995793c94e1d618ef35ea5"
+    "skill_md_sha256": "626054974f643017fd1a0232b393ebe9e07fa5c26bf48b2fc9a705050ac3d1a4"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:05:55Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,14 +25,13 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "evaluator が draft_hash 束縛の verdict を返す proposer≠approver 構造を保ち、判定対象の書き換えを行わない read-only 境界が本文に明示されている。",
-      "同梱 script の起動はすべて `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/<skill>/scripts/...` の正準形で、canonical snapshot 再生成の入出力だけが repo 資産の更新操作として repo 相対で指定されており用途が区別できている。"
+      "rubric観点でも確認: `pair: run-notion-intake-publish` が追加され、publish側の本文・composition dependencyにも evaluator 呼出しが実在するため pair は架空参照でない。assign kind には runtime goal_seek を追加せず fork evaluator の責務を保持した。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-stale-review",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental)。SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を 現行本文に対して実質再評価した。sha256/criteria は再評価時点の現行値。"
+  "notes": "現行全文、pair先、composition、canonical map/result schema、criteriaをfresh review。runtime-profileはnot-applicable finding 0、frontmatter/tree lintはexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

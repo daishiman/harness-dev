@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "2b824c7b695e4b23d34d972b9b2693081b4b3e03032d271e2048c14aaa07d4ca"
+    "skill_md_sha256": "88695d78bb1283e1f99d3243699d4aaa7245878ef44e5916a0ae2655cf5d233a"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "runtime-profile-core-focused-review",
+  "reviewed_at": "2026-08-24T00:45:09Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,18 +25,13 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "description の書き換え (Slack 承認ポーリング前提 → 「ユーザーの明示指示で draft を completed へ遷移」) が、本文 Purpose & Output Contract・Gotchas・prompt SSOT `prompts/R1-approve-and-finalize.md` (L19/L30/L99/L123/L127) ・実行アダプタ `agents/contract-finalize-agent.md` の description まで一貫している。pull 型ゲート設計が 4 層で同一に読める。",
-      "重複していた `external_mutation_guard` frontmatter キー 2 行のうち 1 行が除去され、canonical receipt flow block との 1:1 対応が回復した。YAML の重複キーという静かな不整合が解消されている。",
-      "`runtime_root_policy: host-skill-path` の宣言と `## Runtime root contract` 節の追加が対になっており、guard 3 行・config_auth.py・check_intermediate.py・運用 cron 例まで shell 起動行が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ移行済み。bare `${CLAUDE_PLUGIN_ROOT}` は契約説明文 (L95) の 1 箇所のみで、起動行には残っていない。",
-      "運用節の起動行が cwd 依存の `python3 scripts/finalize.py` から `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-contract-finalize/scripts/finalize.py` へ、cron 例も `cd \"$CG\" && python3 scripts/...` から `$CG/skills/.../finalize.py` へ変わり、Runtime root contract の「cwd から plugin root を推測しない」規約と実際の起動行が一致している。"
+      "inline/inline が契約ドラフト確定・決定論検査・人間承認境界に一致し、不要な委譲を追加していない。"
     ],
-    "negative_feedback": [
-      "[low / smell] plugin 直下 README.md の Step 8 は依然「Slack の通知スレッドで承認の意思表示をしてください」を手順として提示しており、SKILL.md の「Slack ✅/OK は発火条件ではない (任意)」より強い義務として読める。同 Step が「承認しただけでは PDF は自動生成されません」と明記しているため pull 型ゲートの実質は破れておらず、実行不能にもならないため low に留める。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:runtime-profile-migration",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 評価方法: `git diff HEAD -- plugins/contract-generator/skills/<skill>/SKILL.md` の差分を全行読み、現行 SKILL.md frontmatter 全体、prompts/ の prompt SSOT、../../agents/ の実行アダプタ、plugin 直下 README.md の該当節を読んだ。機械検査として (1) frontmatter が宣言した rubric_refs / responsibility_refs / prompt_ssot / external_mutation_guard.runtime_ref の実在を `ls`/存在判定で全件確認 (欠損 0 件)、(2) effect=external-mutation と external_mutation_guard frontmatter・canonical receipt flow block の双方向対応を確認、(3) SKILL.md 内の `CLAUDE_PLUGIN_ROOT` 出現箇所を grep し bare 参照が Runtime root contract の説明文 1 行のみで shell 起動行には残っていないことを確認、(4) `python3` / `scripts/` を含む全行を列挙して起動形式を点検した。 frontmatter が宣言した参照 (rubric_refs の thought-methods.yaml・run-contract-finalize 固有 lib、responsibility_refs の prompts/prompt SSOT・../../agents/*.md・scripts/*.py、external_mutation_guard.runtime_ref の build-external-mutation-guard.py) は全件実在を確認した。欠損 0 件。 差分の実体は 4 つ: (1) description の pull 型への書き換え、(2) 重複 external_mutation_guard キーの除去、(3) runtime_root_policy + Runtime root contract 節の追加と全 shell 起動行の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 化、(4) README の Task 番号参照を「セットアップ節」へ改めた追随。Purpose & Output Contract・ゴールシーク実行 Checklist・feedback_contract.criteria (IN1/IN2/OUT1) の意味は変更前後で同一で、責務境界 (draft→completed のみ、下書き生成は run-contract-generate) も壊れていない。rubric_refs に残る `../../lib/slack_poll.py` は本文・prompt が任意 poll 経路 (`--phase poll`) を保持しているため依存として整合しており dangling ではない。未解決の medium 以上は 0 件、残る low 1 件は plugin README 側の記述トーンの smell で本 skill の実行を妨げないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは Gate D の実走証拠を別途要する。 本ファイルは elegance 射影 (4 条件 = 矛盾なし/漏れなし/規約整合/依存関係整合 の観点) である。"
+  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
 }

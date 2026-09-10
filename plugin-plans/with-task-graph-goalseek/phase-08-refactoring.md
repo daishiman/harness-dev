@@ -16,7 +16,7 @@ applicability:
 # P08 — refactoring (改善)
 
 ## 目的
-実装の重複・複雑性を解消する。特に C01(ready-set-from-checklist.py)と C02(self-reflect-append.py)が checklist item の id/depends_on 形状パース処理を重複実装していないか、また C06-C08 が surface graph/knowledge entry 形状パース処理を不必要に重複実装していないか(共通ヘルパー化の余地)を再確認する。
+実装の重複・複雑性を解消する。特に C01(extract-ready-set-from-checklist.py)と C02(build-self-reflection-entry.py)が checklist item の id/depends_on 形状パース処理を重複実装していないか、また C06-C08 が surface graph/knowledge entry 形状パース処理を不必要に重複実装していないか(共通ヘルパー化の余地)を再確認する。
 
 ## 背景
 Phase02 の H1 節は「write_scope tie-break という死機構を複製しない」ことを設計上の必須制約とする。実装段階で C01/C02 が独自に checklist 走査ロジックを複製してしまうと保守性が下がるため、本 phase で重複コードの有無を明示的に点検する。

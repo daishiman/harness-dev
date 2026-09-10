@@ -6,6 +6,9 @@ user-invocable: true
 allowed-tools: [Read, Bash(python3 *)]
 kind: run
 version: 0.3.0
+goal_seek:
+  engine: inline
+  fork: inline
 owner: harness maintainers
 since: 2026-05-29
 role_suffix: generator

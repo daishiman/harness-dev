@@ -10,6 +10,9 @@ allowed-tools:
 kind: delegate
 prefix: delegate
 effect: none
+goal_seek:
+  engine: inline
+  fork: inline
 delegate_agent: codex-cli
 owner: team-platform
 since: 2026-05-18

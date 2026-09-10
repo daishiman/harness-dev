@@ -237,7 +237,7 @@ prompts:
   # ----- self_update -----
   self_update:
     id: prompts.self_update
-    title: "自己進化結果（self-updater）"
+    title: "自己進化結果（inline script 集約）"
     responsibility_id: R-INTAKE-FINAL-SELF-UPDATE
     layer1_basic:
       purpose: "value_realized_score の自己採点と question-bank への追加候補を確定する"
@@ -249,6 +249,8 @@ prompts:
       input_keys: ["全フェーズの出力", "対話履歴"]
       output_keys: ["self_update.value_realized_score", "self_update.deductions", "self_update.question_bank_additions", "self_update.session_observations", "self_update.skipped_phases"]
       output_shape_ref: "intake-final-schema.json#/properties/self_update"
+      runtime_owner: "skill:run-skill-intake"
+      runtime_refs: ["scripts/measure_value_realized.py", "scripts/update_question_bank.py"]
     layer7_interaction:
       first_question: "今回のセッションで決定打になった質問は何でしたか"
       followups:

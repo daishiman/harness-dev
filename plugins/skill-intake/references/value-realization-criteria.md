@@ -148,12 +148,12 @@ type: reference
 
 ## 連続低下の扱い
 
-`value_realized_score` が直前2回連続で低下した場合、`skill-intake-self-updater` は question-bank への追記を halt する（`status: halted_score_decline`）。これは自己進化ループが質を下げる方向へ暴走することを防ぐ安全装置である。
+`run-skill-intake` は `measure_value_realized.py --history <self-update.json>` の `declining=true` を受けた場合、`update_question_bank.py --apply` を起動せず `status: halted_score_decline` を記録する。これは自己進化ループが質を下げる方向へ暴走することを防ぐ安全装置である。
 
-### 連携している暴走防止条件 (skill-intake-self-updater)
+### inline script 経路の暴走防止条件
 
 1. `value_realized_score` の直前2回連続低下 → `status: halted_score_decline`
 2. `references/question-bank.md` 行数上限 3000 行超過 → `status: halted_capacity`
 3. halt 時は `output/<hint>/question-bank.snapshot.md` を保持し、`python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/update_question_bank.py --rollback <hint>` で復元可能
 
-`measure_value_realized.py --history <self-update.json>` で `previous_scores` と `declining` フラグを返し、self-updater がこの判定に使う。
+`measure_value_realized.py --history <self-update.json>` は `previous_scores` と `declining` を返すだけで、書込みは行わない。判定を消費し `self-update.json` を集約する所有者は `run-skill-intake`、question-bank の重複排除・preview・適用は `update_question_bank.py` である。

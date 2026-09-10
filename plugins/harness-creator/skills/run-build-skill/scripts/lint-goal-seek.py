@@ -252,8 +252,8 @@ _TASK_GRAPH_ENGINE_VALUE = "task-graph"
 # (c-1) consumption verifier トークン: 依存順消費 (ready 集合の最小 id を拘束選択) と
 #        self-reflect 追記 item の完了 gate を intermediate.jsonl トレースで機械検査する証跡。
 _TASK_GRAPH_WIRING_TOKENS = (
-    "ready-set-from-checklist.py",  # ENG-C01 同梱・ready 算出
-    "self-reflect-append.py",        # ENG-C02 同梱・自己反映
+    "extract-ready-set-from-checklist.py",  # ENG-C01 同梱・ready 算出
+    "build-self-reflection-entry.py",        # ENG-C02 同梱・自己反映
     "ready_set",                     # intermediate.jsonl additive (算出時点の ready 集合)
     "selected_item",                 # intermediate.jsonl additive (実際に選択した id)
     "依存順消費",                     # consumption verifier: selected_item==ready 最小 id 検査
@@ -262,7 +262,7 @@ _TASK_GRAPH_WIRING_TOKENS = (
 # (c-2) dependency graph knowledge consult トークン: ENG-C06/ENG-C07 同梱と各 surface consult 手順。
 _TASK_GRAPH_KNOWLEDGE_TOKENS = (
     "extract-capability-dependency-graph.py",  # ENG-C06 同梱
-    "record-capability-graph-knowledge.py",    # ENG-C07 同梱
+    "build-capability-graph-knowledge-entry.py",    # ENG-C07 同梱
     "dependency graph knowledge",              # 各 surface 実行前 consult 手順
 )
 # 生成 SKILL.md が concrete に engine: task-graph を宣言しているかの判定。

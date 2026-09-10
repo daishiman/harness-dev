@@ -37,7 +37,7 @@
 | `detect_contradictions.py` | SubAgent 出力間の矛盾検出。 |
 | `extract_open_questions.py` | 未解決質問の抽出。 |
 | `quality_gate.py` | 5 次元ルブリック自己採点 PASS/FAIL 判定。 |
-| `measure_value_realized.py` | 真の課題言語化スコア (0-100) 採点。 |
+| `measure_value_realized.py` | v2 `sections.6_five_axes_summary` と可視化数・未解決質問から正規化スコア (0-1) を post-finalize 計測。 |
 | `lint_subagent_seven_layer.py` | SubAgent prompt の 7 層構造遵守を静的検査。 |
 | `analyze_user_intent.py` | ユーザ入力から意図カテゴリを推定し question-bank 適用順を決める。 |
 | `append_eval_log.py` | 各 phase の評価結果を `eval-log/` に追記 (構造化ログ)。 |
@@ -67,10 +67,12 @@
 
 ### self-update 系 (2 本)
 
+`run-skill-intake` P9 は finalize で `intake.json` を生成した後、`measure_value_realized.py` を実行する。question-bank 候補は新規 producer を追加せず、既存 `update_question_bank.py --derive-from-intake <intake.json> --out <qb-candidates.json>` が `sections.10_self_updater.question_bank_additions` を正規化する。その後 `--diff <qb-candidates.json>` で無書込み preview、別承認後だけ `--apply` する。
+
 | スクリプト | サマリ |
 |---|---|
-| `update_question_bank.py` | question-bank.md にパッチ適用 (`--apply` / `--rollback <hint>`)。 |
-| `m3_deprecation_reverse_index.py` | M3 マイグレーションの非推奨項目を逆引き index 化し、self-updater 経由で警告。repo 保守者専用・配布除外 (`package.exclude`)。 |
+| `update_question_bank.py` | `run-skill-intake` / `run-intake-revise` が inline 起動し、question-bank.md の重複排除・dry-run preview・承認後の適用 (`--apply` / `--rollback <hint>`) を担う。 |
+| `m3_deprecation_reverse_index.py` | M3 マイグレーションの非推奨項目を逆引き index 化し、`run-skill-intake` の inline 集約経路で警告。repo 保守者専用・配布除外 (`package.exclude`)。 |
 
 ### dogfooding / pipeline 系 (3 本)
 

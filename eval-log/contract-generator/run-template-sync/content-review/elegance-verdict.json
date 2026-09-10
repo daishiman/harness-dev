@@ -2,7 +2,7 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "b2a9716e95e5d96c300af8216ce7f93a8f0e680a43753640d22bd53b6063fefc"
+    "skill_md_sha256": "18ea37ed9afdf9e156a0fe33e15235b3cb557766aeb91eaa0d434459b5ddcfa9"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +13,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
-  "reviewed_at": "2026-08-21T01:00:00Z",
-  "iterations": 2,
+  "reviewer": "runtime-profile-core-focused-review",
+  "reviewed_at": "2026-08-24T00:45:09Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,15 +25,13 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "round 1 の唯一の medium 指摘 (「## 使い方」の cwd 相対起動 2 行) は解消した。現行 SKILL.md:170-171 は `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py\" --type all` / 同 `--apply` となっており、`## Runtime root contract` (SKILL.md:93-99) の「`cwd` からplugin rootを推測せず…各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する」と整合する。姉妹 skill run-contract-finalize との非対称も解消した。",
-      "SKILL.md / prompts/ を全走査した結果、shell 起動行に cwd 相対パスも bare `$CLAUDE_PLUGIN_ROOT` も残存しない。起動行は SKILL.md:75,82,83 (external mutation guard 3 行)・SKILL.md:136 (check_intermediate.py)・SKILL.md:151 (scan_template.py 実装参照)・SKILL.md:170-171 (使い方)・prompts/R1-diagnose-and-resync.md:65,66,145 の全件が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。bare `CLAUDE_PLUGIN_ROOT` の残存は SKILL.md:95 の Runtime root contract 説明文のみで、これは shell 起動行ではなく policy 記述であり矛盾しない。skill-local `references/` は存在しない (skill 直下は SKILL.md / prompts / scripts のみ)。",
-      "修正が新たな矛盾を持ち込んでいない。frontmatter は `runtime_root_policy: host-skill-path` を 1 回だけ宣言 (SKILL.md:55)、`external_mutation_guard` も 1 回だけ (SKILL.md:20) で round 1 の重複除去は維持されている。feedback_contract.criteria は IN1/IN2/OUT1 で変更なし、Purpose & Output Contract・発火条件 (明示意図のみ) も不変。参照先も全件実在 (plugins/contract-generator/lib/ に scan_template.py・ledger.py・docx_lib.py・check_intermediate.py、skills/run-template-sync/scripts/sync.py)。`python3 scripts/lint-skill-tree.py plugins/contract-generator/skills/run-template-sync` は `ok: run-template-sync` / exit 0。"
+      "inline/inline がテンプレート差分の検出・同期・再検査という決定論的な単一writer処理に適合している。"
     ],
     "negative_feedback": [],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:runtime-profile-migration",
     "next_action": "none"
   },
-  "notes": "round 2 再判定。30 思考法は実施しておらず、実施も申告しない。 読んだファイル: eval-log/contract-generator/run-template-sync/content-review/{elegance,rubric}-verdict.json (round 1 の negative_feedback 抽出)、plugins/contract-generator/skills/run-template-sync/SKILL.md (frontmatter 全体および全本文)、plugins/contract-generator/skills/run-template-sync/prompts/R1-diagnose-and-resync.md。 実行したコマンド: (1) `git diff HEAD -- plugins/contract-generator/skills/run-template-sync/` で今回の差分全行を読み、「## 使い方」2 行が `python3 scripts/sync.py` から `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py\"` へ置換されたことを確認、(2) skill tree 配下の *.md に対する grep で `python3` / `CLAUDE_PLUGIN_ROOT` / `PLUGIN_ROOT` / `.py` を含む全行を列挙し、cwd 相対起動行 0 件・bare `$CLAUDE_PLUGIN_ROOT` 起動行 0 件を確認、(3) `python3 scripts/lint-skill-tree.py plugins/contract-generator/skills/run-template-sync` → `ok: run-template-sync` (exit 0)、(4) `ls plugins/contract-generator/lib/` で frontmatter 宣言参照の実在を確認、(5) SKILL.md の sha256 を再計算し target.skill_md_sha256 に反映。 5 点判定: (a) 矛盾なし=充足 (Runtime root contract と全起動行が一致)、(b) 漏れなし=充足、(c) 規約整合=充足 (round 1 の唯一の未達点が解消)、(d) 依存関係整合=充足 (参照先欠損 0 件)、(e) rubric high severity 0=充足。よって INCOMPLETE から PASS へ変更する。 本ファイルは elegance 射影 (4 条件 = 矛盾なし/漏れなし/規約整合/依存関係整合 の観点) である。"
+  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
 }

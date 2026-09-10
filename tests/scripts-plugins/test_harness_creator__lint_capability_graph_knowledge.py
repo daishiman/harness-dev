@@ -49,8 +49,8 @@ def _tg_harness(tmp_path, *, bundle=True, consult=True, store=True, bad_ref=Fals
     )
     if bundle:
         # 同梱契約は「テンプレ原本の無改変コピー」— byte-parity 検査対象のため実バイトを複製する。
-        for s in ("ready-set-from-checklist.py", "self-reflect-append.py",
-                  "extract-capability-dependency-graph.py", "record-capability-graph-knowledge.py"):
+        for s in ("extract-ready-set-from-checklist.py", "build-self-reflection-entry.py",
+                  "extract-capability-dependency-graph.py", "build-capability-graph-knowledge-entry.py"):
             (sk / "scripts" / s).write_bytes((TG / s).read_bytes())
     if store:
         kdir = sk / "knowledge"
@@ -115,11 +115,11 @@ def test_bundling_missing(tmp_path):
 
 def test_bundling_byte_parity_violation(tmp_path):
     root = _tg_harness(tmp_path, bundle=True)
-    tampered = root / "skills/run-tg/scripts/self-reflect-append.py"
+    tampered = root / "skills/run-tg/scripts/build-self-reflection-entry.py"
     tampered.write_text(tampered.read_text() + "\n# 手改変\n")
     skills = mod.collect_task_graph_skills(root, None)
     findings = mod.check_bundling(skills)
-    assert any("byte-parity 違反" in f and "self-reflect-append.py" in f for f in findings)
+    assert any("byte-parity 違反" in f and "build-self-reflection-entry.py" in f for f in findings)
 
 
 def test_self_test_ok():

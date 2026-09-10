@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-kickoff",
-    "skill_md_sha256": "957e59a28dcaa94e4eadb2e9b8b3524b8334ab18a93d1a3868e0ca4fd2007f5b"
+    "skill_md_sha256": "de8cd31dcc50410501d0c046c2965fbe9fd18ad1016ed61d9610b372c8526685"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,18 +25,13 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "runtime_root_policy: host-skill-path を宣言した7 skill 全件が `## Runtime root contract` 節を持ち、SKILL.md 内の全 shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT...}}` の入れ子形へ移行済み。bare `${CLAUDE_PLUGIN_ROOT}` の残存は SKILL.md 本文に 0 件 (grep で全件確認)。",
-      "external_mutation_guard を持つ 3 skill (run-skill-intake / run-intake-revise / run-notion-intake-publish) は canonical receipt flow block も併せ持ち、guard block 内の 3 行 (preview/authorize/execute) も同一の入れ子形へ移行されている。片側だけの移行は 0 件。",
-      "effect が external-mutation でない skill (finalize / interview / kickoff / visualize / status) には external_mutation_guard も receipt flow block も焼かれておらず、双方向の対応が保たれている。",
-      "frontmatter が宣言した responsibility_refs / schema_refs / rubric_refs は run-intake-status を除く全件で実在を確認した (prompts/R1-main.md, schemas/output.schema.json, references/republish-contract.md, ../../references/quality-rubric.md 等)。参照先の `../skill-governance-adapters/scripts/build-external-mutation-guard.py` も実在する。"
+      "rubric観点でも確認: pattern/depth/painの短い対話とkickoff.json生成にinline/inlineを選び、不要なtask graphやsubagentを持ち込んでいない。manifest・schema・prompt参照は解決する。"
     ],
-    "negative_feedback": [
-      "[low / smell] `## Runtime root contract` の挿入位置が skill 間で揃っていない。run-skill-intake だけ Pre-choice section より前 (L74)、他 6 skill は `# <skill>` H1 の直後 (Post-choice section より後) に置かれている。Post-choice の gating 文が列挙するのは workflow・goal-seek・評価・修正 section であり Runtime root contract はそのいずれでもない (直後の Purpose & Output Contract も同様に非 gating) ため実行意味は変わらないが、位置規約が本文に明文化されていない。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/skill-intake/skills/<skill>/SKILL.md` の全差分 (8 skill 分)、対象 SKILL.md 本文、plugin-composition.yaml と .claude-plugin/plugin.json の差分、references/package-contract.json の該当節。 実行したコマンド: `python3 scripts/lint-content-review.py --all` (現行 sha の取得)、`python3 scripts/lint-feedback-contract.py --all` (skill-intake の指摘は既存 baseline 免除の live-trial WARN のみで本差分由来の新規指摘なし)、`python3 scripts/lint-feedback-protocol.py` (skill-intake 該当 0 件)、`python3 scripts/lint-skill-tree.py <skill-dir>`、frontmatter *_refs の実在の機械走査、SKILL.md 全 shell 行の bare `${CLAUDE_PLUGIN_ROOT}` 残存 grep。 本 skill の差分は runtime_root_policy frontmatter 1 行の追加、`## Runtime root contract` 節の追加、および shell 起動行の `${PLUGIN_ROOT:-...}` 入れ子化に限られ、Purpose & Output Contract / Key Rules / ゴールシーク実行 / 完了チェックリスト / feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "current bytes/diff/criteria/delegate refsを再読。runtime-profile/frontmatter/tree lintはexit 0。legacy goal-seek warning 3件はfull wiring推奨のみ。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

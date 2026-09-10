@@ -81,7 +81,7 @@ type: reference
 
 ## 自己拡張
 
-ヒアリング中に未登録の専門用語が出たら、`skill-intake-self-updater` が草稿登録 → 月次レビューで採用。
+ヒアリング中に未登録の専門用語が出たら、実行中の owner Skill (`run-skill-intake` / `run-intake-revise`) が草稿候補を記録 → `update_question_bank.py` が dry-run 提示 → 明示承認後のレビューで採用。
 
 ## 注意
 

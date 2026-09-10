@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 83,
+    "notes": "実コードレビュー + 実テスト実行で検証。C06 依存グラフ + discovered task を Loop A/B の knowledge-capability-graph.json へ append/merge (id 既存は skip・既存 entry 不変) し、knowledge-index.json へ category を冪等登録する。--dry-run で書込抑止。entry は id 昇順ソートで決定論生成、source_ref 明示。読込失敗は exit2、書込 OSError は exit1。`# /// script` frontmatter あり (write-scope に対象2ファイル明記)。py_compile OK。TESTS: tests/scripts-plugins/test_harness_creator__record_capability_graph_knowledge.py 15ケース全 PASS (0.43s)。指摘: (1) merge_into_store が既存 store の json.loads を try せず、破損 store で JSONDecodeError が uncaught traceback になる (register_in_index は破損 index を catch して初期化と非対称。ただし初期化は既存 index 内容を上書き喪失するリスクもある)。(2) build_entries が edges の e['from']/e['to'] を無検証参照し、malformed graph で KeyError crash。いずれも異常入力時の診断品質の問題で、正常系・テスト範囲では健全。"
+  },
+  "reviewed_by": "coverage-reviewer-restore-20260824",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

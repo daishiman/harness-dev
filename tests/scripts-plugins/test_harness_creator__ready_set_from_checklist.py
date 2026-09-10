@@ -1,4 +1,4 @@
-"""ENG-C01 ready-set-from-checklist.py の genuine 機能テスト。
+"""ENG-C01 extract-ready-set-from-checklist.py の genuine 機能テスト。
 
 with-goal-seek engine:task-graph 変種の ready 集合ステートレス算出 (H1 実装)。
 純関数を importlib でロードして実入力で assert し、main は subprocess で exit/出力を確認する。
@@ -23,7 +23,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = (
     ROOT / "plugins/harness-creator/skills/run-build-skill"
-    / "templates/task-graph-engine/scripts/ready-set-from-checklist.py"
+    / "templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py"
 )
 
 
@@ -116,6 +116,33 @@ def test_compute_ready_item_not_object_raises():
         mod.compute_ready(["notdict"])
 
 
+def test_compute_ready_duplicate_id_raises():
+    with pytest.raises(ValueError, match="重複"):
+        mod.compute_ready([
+            {"id": "C1", "status": "done"},
+            {"id": "C1", "status": "pending"},
+        ])
+
+
+@pytest.mark.parametrize("status", ["bogus", None, 1])
+def test_compute_ready_invalid_status_raises(status):
+    with pytest.raises(ValueError, match="status"):
+        mod.compute_ready([{"id": "C1", "status": status}])
+
+
+@pytest.mark.parametrize(
+    "item",
+    [
+        {"id": 1, "status": "pending"},
+        {"id": "C1", "status": "pending", "depends_on": [1]},
+        {"id": "C1", "status": "pending", "depends_on": [""]},
+    ],
+)
+def test_compute_ready_invalid_id_or_dependency_type_raises(item):
+    with pytest.raises(ValueError):
+        mod.compute_ready([item])
+
+
 # --- load_checklist ---
 def test_load_checklist_ok(tmp_path):
     p = _write(tmp_path, [{"id": "C1", "status": "done"}])
@@ -126,6 +153,13 @@ def test_load_checklist_non_array_raises(tmp_path):
     p = tmp_path / "bad.json"
     p.write_text(json.dumps({"checklist": {"not": "array"}}), encoding="utf-8")
     with pytest.raises(ValueError):
+        mod.load_checklist(p)
+
+
+def test_load_checklist_non_object_root_raises(tmp_path):
+    p = tmp_path / "bad-root.json"
+    p.write_text("[]", encoding="utf-8")
+    with pytest.raises(ValueError, match="root"):
         mod.load_checklist(p)
 
 
@@ -148,6 +182,15 @@ def test_main_usage_exit2():
 def test_main_help_exit0():
     r = subprocess.run([sys.executable, str(SCRIPT), "--help"], capture_output=True, text=True)
     assert r.returncode == 0
+
+
+def test_main_data_integrity_exit1_without_traceback(tmp_path):
+    p = tmp_path / "bad-root.json"
+    p.write_text("[]", encoding="utf-8")
+    r = _run(p)
+    assert r.returncode == 1
+    assert "データ不整合" in r.stderr
+    assert "Traceback" not in r.stderr
 
 
 def test_main_bad_json_exit2(tmp_path):

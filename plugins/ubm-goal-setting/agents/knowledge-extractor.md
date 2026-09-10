@@ -290,7 +290,8 @@ Step U-2: 既存エントリの全削除（分散配置に完全対応した3方
 
 Step U-3: ファイル全体を再処理（Step 2/3 の通常フローを実行）
   → 重複チェックは不要（Step U-2 で削除済みのため）
-Step U-4: registry.json を更新
+Step U-4: source 単位の commit sequence を実行
+  → knowledge JSON 確定 → router 再集計 → idempotency key 付き sync-log 追記 → registry.json の順を守る
   → file_hash を新しいハッシュで上書き
   → entries_extracted を今回の抽出件数で上書き
   → extracted_entry_ids を今回の新規エントリIDで上書き
@@ -584,27 +585,23 @@ Rule A を実行:
      - `default`: そのカテゴリの他のファイルに `default: true` が既にある場合は `false`
      - tags にはエントリの tags から代表的なキーワードを選定する
 
-2. `knowledge/registry.json` を更新:
-   - 処理済みファイルのエントリを追加/更新
-   - `file_hash`: MD5ハッシュ（`! md5 -q {file}` で取得）
-   - `status`: "processed"
-   - `processed_date`: 現在日時（YYYY-MM-DDTHH:MM:SS形式）
-   - `entries_extracted`: 抽出件数
-   - `extracted_entry_ids`: 今回追加したエントリIDの配列（例: `["PR-013", "CP-007", "AG-005"]`）
-   - `deleted_entry_ids`: 今回削除したエントリIDの配列（mode: "new" の場合は `[]`）
-   - `target_categories`: エントリを格納したカテゴリ一覧
+2. `knowledge/sync-log.jsonl` に実行ログを**追記**（上書き禁止・永続ログ）:
 
-3. `knowledge/sync-log.jsonl` に実行ログを**追記**（上書き禁止・永続ログ）:
+   `idempotency_key = sha256(mode + "|" + source_file + "|" + file_hash)` を各行に必須記録する。追記前に既存行を読み、同じ key があれば追記しない。これにより registry commit 前の再実行でログが重複しない。
 
    **通常ログ（正常完了）:**
    ```json
-   {"timestamp":"YYYY-MM-DDTHH:MM:SS","mode":"new|update|full","source_file":"ファイルパス","added":["PR-013","CP-007"],"deleted":[],"warnings":[],"categories_updated":["principles","consultation"]}
+   {"timestamp":"YYYY-MM-DDTHH:MM:SS","idempotency_key":"sha256:<hex>","file_hash":"<md5>","mode":"new|update|full","source_file":"ファイルパス","added":["PR-013","CP-007"],"deleted":[],"warnings":[],"categories_updated":["principles","consultation"]}
    ```
 
    **警告ログ（異常あり・処理は続行）:**
    ```json
-   {"timestamp":"YYYY-MM-DDTHH:MM:SS","mode":"update","source_file":"ファイルパス","added":["PR-015"],"deleted":["PR-010"],"warnings":["ID PR-011: not found in any knowledge file (already deleted?)","Case C: 残存エントリ2件を修復削除した"],"categories_updated":["principles"]}
+   {"timestamp":"YYYY-MM-DDTHH:MM:SS","idempotency_key":"sha256:<hex>","file_hash":"<md5>","mode":"update","source_file":"ファイルパス","added":["PR-015"],"deleted":["PR-010"],"warnings":["ID PR-011: not found in any knowledge file (already deleted?)","Case C: 残存エントリ2件を修復削除した"],"categories_updated":["principles"]}
    ```
+
+   - ファイルが存在しない場合は新規作成（1行目から追記）
+   - 1回の実行でファイルが複数ある場合は、source ごとに一意な key で1行ずつ追記
+   - warnings が空 [] の場合は正常完了。warnings があっても処理は続行する
 
    **warnings フィールドの記録ルール:**
    | 状況 | warnings に記録する内容 |
@@ -614,17 +611,24 @@ Rule A を実行:
    | Case C で残存エントリが発見された | `"Case C: {N}件の残存エントリを修復削除した"` |
    | total_entries の再集計で不整合を修正した | `"total_entries 不整合を修正: {old} → {new}"` |
 
-   - ファイルが存在しない場合は新規作成（1行目から追記）
-   - 1回の実行でファイルが複数ある場合は、ファイルごとに1行ずつ追記
-   - warnings が空 [] の場合は正常完了。warnings があっても処理は続行する
-   - このログにより「いつ・どのファイルを・どのモードで処理し・何を追加/削除したか・何が警告されたか」が全て追跡可能になる
+   このログにより「いつ・どのファイルを・どのモードで処理し・何を追加/削除したか・何が警告されたか」が追跡可能になる。
+
+3. `knowledge/registry.json` を**source の最終 commit point として最後に**更新:
+   - 処理済みファイルのエントリを追加/更新
+   - `file_hash`: MD5ハッシュ（`! md5 -q {file}` で取得）
+   - `status`: "processed"
+   - `processed_date`: 現在日時（YYYY-MM-DDTHH:MM:SS形式）
+   - `entries_extracted`: 抽出件数
+   - `extracted_entry_ids`: 今回追加したエントリIDの配列（例: `["PR-013", "CP-007", "AG-005"]`）
+   - `deleted_entry_ids`: 今回削除したエントリIDの配列（mode: "new" の場合は `[]`）
+   - `target_categories`: エントリを格納したカテゴリ一覧
 
    **なぜこのログが必要か**: LLMの実行内容はセッションをまたいで記憶されない。`registry.json`は「最新状態」のみ保持するが、`sync-log.jsonl`は「実行の全履歴」を保持する。更新ミス・重複・矛盾を後から検証するためにこのログは不可欠。
 
 ##### Step 5: 原則DBとの同期
 
 新しい原則・名言が見つかった場合:
-1. `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` の該当カテゴリに追加
+1. `${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` の該当カテゴリに追加
 2. 既存カテゴリに該当しない場合は新カテゴリを提案
 
 ### インターフェース
@@ -633,6 +637,7 @@ Rule A を実行:
 
 - `target_files`: 処理対象ファイルのリスト（detect-knowledge-updates.py の出力）
 - `mode`: `new`（新規追加）| `update`（既存更新）| `full`（全件再構築）
+- `plugin_root`: 親スキルが host-skill-path から解決した plugin root の absolute path。Task 開始時に `PLUGIN_ROOT` として設定し、未指定・非 absolute・realpath が予告 target scope 外・write target が symlink のいずれかなら write 前に停止する。vault source は常に read-only。
 
 #### 出力テンプレート（標準・全カテゴリ共通）
 
@@ -674,7 +679,7 @@ Rule A を実行:
 - 処理したファイル数と抽出件数のサマリー
 - `knowledge/*.json` の更新差分
 - `knowledge/registry.json` の更新
-- （あれば）`$CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` への追加提案
+- （あれば）`${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` への追加提案
 
 ## Layer 6: オーケストレーション層
 
@@ -695,13 +700,13 @@ Rule A を実行:
 
 ```bash
 # 更新検知
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM
+! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM"
 
 # 全件再構築
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --all
+! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM" --all
 
 # 特定日以降の更新のみ
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --since 2026-03-01
+! python3 "${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py" --registry "$PLUGIN_ROOT/knowledge/registry.json" --sources "$UBM_VAULT_ROOT/05_Project/UBM" --since 2026-03-01
 ```
 
 ### 実行プロンプト
@@ -723,4 +728,4 @@ Rule A を実行:
 - 目標設定に活用できる知識の抽出が完了している
 - JSON 形式での構造化格納が正しく行われている（schema.json 準拠）
 - 全ソースファイルの処理状態が registry.json で追跡されている
-- router.json / 新原則発見時の $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md が同期されている
+- router.json / 新原則発見時の `${PLUGIN_ROOT:?absolute plugin root from owner skill is required}/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md` が同期されている

@@ -174,12 +174,12 @@ skill-intake の Keychain 取得テスト（keychain_get_secret.py --check）を
 > drift 検証 lint / sync 等は repo 保守者専用で、単独 install には不要・未同梱です。
 > 移行計画等の保守者専用資材（migration-plan-v2.md / RENAME_PLAN.md / v1→v2 変換系スクリプト）も
 > `package.exclude` により配布から除外済みです。
-> ただし改善要望投入 `/run-skill-feedback`、および生成した intake.json を Skill 本体生成へ流す
+> ただし改善要望投入 `/run-skill-feedback`、および intake 完了後に別アクションとして開始できる
 > `run-skill-create` は、いずれも **harness-creator が提供する機能**です。harness-creator は
 > **配布対象外（`distributable: false`）** で marketplace から install できないため、これらは
 > **repo を clone した開発環境でのみ**利用できます（skill-intake のコアフロー = ヒアリング →
-> Markdown/JSON 生成 → Notion publish には不要）。つまり skill-intake が生成した brief
-> （intake.json）の**消費先である harness-creator は配布されず、clone 環境で消費**します。
+> Markdown/JSON 生成 → Notion publish には不要）。現行 `run-skill-create` は `intake.json` を
+> 直接消費せず、ユーザーが clone 環境で別途 Step 1 を開始します。
 > なお `harness-intake` bundle は skill-intake + skill-governance-secrets のみで、harness-creator は含みません。
 
 ### 方式A: GitHub Marketplace から install（推奨）
@@ -408,7 +408,7 @@ Claude Code セッション内で:
 | ファイル | 用途 |
 |---|---|
 | `intake.md` | 人間向けヒアリングシート（正本） |
-| `intake.json` | harness-creator 入力用 |
+| `intake.json` | intake の構造化正本（現行 harness-creator へは recommendation-only。直接自動消費なし） |
 | `notion-url.txt` | 公開済み Notion ページ URL |
 | `notion-manifest.json` | アセット SHA-256 マニフェスト |
 | `notion-blocks.json` | publisher 中間生成物 |
@@ -556,7 +556,7 @@ plugins/skill-intake/
 | **`run-skill-intake`** (本 plugin) | **非技術者対応** | ✅ Mermaid 12+SVG 8 | ✅ Keychain × REST API |
 | `run-skill-create` (harness-creator plugin) | スキル本体生成 | — | — |
 
-`run-skill-create` から Step 1 を呼ぶ際、ヒアリング対象が非技術者なら本 plugin の `run-skill-intake` を起動。
+非技術者向けヒアリングは本 plugin の `run-skill-intake` を独立起動する。現行 `run-skill-create` は intake.json を直接消費せず、intake 完了後にユーザーが別途 Step 1 を開始する。Notion 指定時は公開証跡だけを機械検証する。
 
 ### 環境変数一覧
 

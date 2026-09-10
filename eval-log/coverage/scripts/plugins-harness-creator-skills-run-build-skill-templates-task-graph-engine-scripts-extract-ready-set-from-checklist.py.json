@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "実コードレビュー + 実テスト実行で検証。checklist の depends_on から ready 集合をステートレス決定論算出する read-only ゲート (write-scope: none・ファイル書込なし)。id 重複/status 不正/depends_on 型不正は ValueError→exit1 (fail-closed)、読込/parse 失敗は exit2、dangling 依存は not-ready 扱いで C02 へ委譲と役割分離が明確。出力は id 昇順 (C<n> 数値順) で決定論。`# /// script` frontmatter あり (name/purpose/inputs/outputs/write-scope: none/requires-python)。py_compile OK。TESTS: tests/scripts-plugins/test_harness_creator__ready_set_from_checklist.py 26ケース全 PASS (0.50s)。軽微: `-h` に余分な引数を付けた場合 (argv=['-h','x']) も usage 表示で exit0 になる edge があるが実害なし。"
+  },
+  "reviewed_by": "coverage-reviewer-restore-20260824",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

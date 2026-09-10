@@ -12,6 +12,9 @@ allowed-tools:
 kind: wrap
 prefix: wrap
 effect: local-artifact  # wrap-* は base: run-build-skill の effect を継承
+goal_seek:
+  engine: inline
+  fork: inline
 base: run-build-skill
 owner: team-platform
 since: 2026-05-18

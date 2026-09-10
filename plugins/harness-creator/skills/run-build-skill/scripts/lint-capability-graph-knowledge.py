@@ -46,13 +46,13 @@ from pathlib import Path
 CONSULT_TOKEN = "dependency graph knowledge"
 # 生成 SKILL.md の task-graph 変種配線が scripts/ 経由で参照する 4 本すべてを同梱ゲート対象にする
 # (gate-coverage parity: 参照集合と検査集合を一致させ「ENG-C06/ENG-C07 だけコピーすれば緑」の誤メンタルモデルを排す)。
-# ready-set-from-checklist.py(ENG-C01)/self-reflect-append.py(ENG-C02) が漏れると実行時 dangling するため
+# extract-ready-set-from-checklist.py(ENG-C01)/build-self-reflection-entry.py(ENG-C02) が漏れると実行時 dangling するため
 # build-time に fail-closed 検出する。
 BUNDLED_SCRIPTS = (
-    "ready-set-from-checklist.py",
-    "self-reflect-append.py",
+    "extract-ready-set-from-checklist.py",
+    "build-self-reflection-entry.py",
     "extract-capability-dependency-graph.py",
-    "record-capability-graph-knowledge.py",
+    "build-capability-graph-knowledge-entry.py",
 )
 KNOWLEDGE_STORE = "knowledge-capability-graph.json"
 # concrete な engine: task-graph 宣言 (frontmatter YAML 行・末尾コメント許容) のみに一致。
@@ -196,7 +196,7 @@ def check_source_refs(root: Path) -> tuple[list[str], list[str]]:
     stores = sorted(root.glob(f"**/{KNOWLEDGE_STORE}"))
     if not stores:
         warnings.append(
-            f"{KNOWLEDGE_STORE} が未生成 (record-capability-graph-knowledge.py 未実行)。"
+            f"{KNOWLEDGE_STORE} が未生成 (build-capability-graph-knowledge-entry.py 未実行)。"
             "runtime で記録されるため build 時点では warning 止まり"
         )
         return findings, warnings

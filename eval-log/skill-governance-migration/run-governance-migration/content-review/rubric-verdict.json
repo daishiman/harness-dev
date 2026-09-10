@@ -2,7 +2,7 @@
   "target": {
     "plugin": "skill-governance-migration",
     "skill": "run-governance-migration",
-    "skill_md_sha256": "eacbeb41d71890c338c146b6a8be839883aa13115102f35b4d3920ef646336d1"
+    "skill_md_sha256": "5405e885fd9142a1f11a11d83158e645bfedfb447dcb3d4489e1ac6bbad9c066"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,27 +11,26 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
+  "reviewed_at": "2026-08-24T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "frontmatter 必須項目 (name/description/kind/prefix/version/user-invocable/allowed-tools/effect/owner/since/last-audited/source/source-tier) が揃い、name は run- prefix 命名規約と一致している。",
-      "allowed-tools が Bash, Read, Glob に限定され、write 系ツールを持たないため apply は scripts/migrate/ 経由に強制される。effect: local-artifact と権限集合が整合している。",
-      "IN1(verify_by: script) が dry-run と digest という機械検証可能な述語に、OUT1(verify_by: evaluator) が承認・部分適用・残件報告という意味判定に割り当てられており、verify_by の写像が loop_scope と矛盾していない。"
+      "rubric観点でも確認: version確認→help/dry-run/check→別承認後applyの直列migrationを inline で実行する宣言は責務と一致する。backup/rollback・部分適用を成功へ畳まない境界と scripts/migrate の参照も維持される。"
     ],
-    "negative_feedback": [
-      "low(smell): description と IN1 が使う「version」語彙が scripts/migrate/ 側の実装語彙に接地していない。high severity 相当の rubric 違反ではないため PASS を妨げない。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 観点 (frontmatter 規範 / 命名 / 権限最小化 / feedback_contract 構造 / 責務単一性 / 出力契約) で採点した。frontmatter の feedback_contract.criteria は IN1(loop_scope: inner, verify_by: script) と OUT1(loop_scope: outer, verify_by: evaluator) の 2 件で、本 verdict の criteria_evaluated と全件一致する。artifact_delivery は contract: artifact-delivery-v1、initial: artifact_created、6 状態と 5 遷移が閉じており、user_choice_recorded から accept-as-is / light|standard|detailed の 2 分岐がそれぞれ handoff_complete と semantic_evaluator_started へ到達する。activation_state: semantic_evaluator_started が state_machine の状態名と一致している。release/exhaustive がともに explicit-only で自動 exhaustive 起動が無いことも確認した。責務は「対象 version の migration を選び dry-run 検証し承認後に apply」の単一動詞列に収まり、同 plugin 内の run-skill-feedback とは責務が重ならない。high severity finding は 0 件。残る 1 件は low の語彙接地 smell のみのため PASS とした。30思考法は実施していない (incremental profile の focused combined review)。"
+  "notes": "現行全文、diff、composition、migrate scripts、criteriaをfresh review。runtime-profile/frontmatter/tree lintはexit 0。full combinator wiringの推奨warning 3件はexit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
 }

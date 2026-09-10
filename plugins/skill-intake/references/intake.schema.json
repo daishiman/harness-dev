@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://harness.local/plugins/skill-intake/intake.schema.json",
   "title": "skill-intake intake.json contract",
-  "description": "ユーザー正本(info-collector-agent §0〜§11) と section_canonical_map.json (schema_version 2.0.0) から派生する、12 SubAgent 出力契約の機械検証スキーマ。SubAgent 出力 / aggregator 統合 / render_notion_page.py 入力の単一契約。",
+  "description": "ユーザー正本(info-collector-agent §0〜§11) と section_canonical_map.json (schema_version 2.0.0) から派生する、12 section 出力契約の機械検証スキーマ。SubAgent / Skill / script 出力、aggregator 統合、render_notion_page.py 入力の単一契約。",
   "type": "object",
   "required": ["schema_version", "source_of_truth", "sections", "notion_target"],
   "properties": {
@@ -531,11 +531,26 @@
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["path", "role_one_liner", "generator_subagent"],
+            "required": ["path", "role_one_liner"],
+            "anyOf": [
+              {"required": ["generator_component"]},
+              {"required": ["generator_subagent"]}
+            ],
             "properties": {
               "path": {"type": "string"},
               "role_one_liner": {"type": "string"},
-              "generator_subagent": {"type": "string"},
+              "generator_component": {
+                "type": "string",
+                "description": "Preferred producer reference (skill:<name> or script:<plugin-relative-path>)."
+              },
+              "generator_subagent": {
+                "type": "string",
+                "description": "Legacy compatibility field; new non-Agent producers use generator_component."
+              },
+              "runtime_ref": {
+                "type": "string",
+                "description": "Optional concrete runtime implementation used by generator_component."
+              },
               "optional": {"type": "boolean", "default": false}
             }
           }

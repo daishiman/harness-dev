@@ -11,7 +11,7 @@ source: plugin-plans/guide-doc-generator/component-inventory.json#C02
 user-invocable: true
 output_language: ja
 argument-hint: "<html-path> [--out <handout-config.json>] [--report <extract-report.json>]"
-allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion]
+allowed-tools: [Read, Write, Bash, Glob, Grep, AskUserQuestion, Agent]
 depends_on: [C11, C12, C16, C20]
 combinators:
   - with-goal-seek

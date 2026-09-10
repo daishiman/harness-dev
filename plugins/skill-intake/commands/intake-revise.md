@@ -13,7 +13,7 @@ argument-hint: "<hint> [--dry-run]"
 ## 振る舞い
 
 1. `Skill(run-intake-revise, args="$ARGUMENTS")` を呼ぶ。
-2. スキル側で既存 4 ファイルロード → 差分ヒアリング → 内部解析再実行 → 差分プレビュー → Gate R → Notion PATCH → revision-log 追記 → self-updater 再起動。
+2. スキル側で既存 4 ファイルロード → 差分ヒアリング → 内部解析再実行 → 差分プレビュー → Gate R → Notion PATCH → revision-log 追記 → `update_question_bank.py` dry-run → question-bank 別承認。approve の場合だけ apply、decline は `question-bank-update.json` に skip 理由を残し、改訂本体は成功のまま停止。
 3. 完了後、Notion URL と revision_no を返す。`--dry-run` 指定時は Notion API を呼ばず差分のみ表示。
 
 ## 用途

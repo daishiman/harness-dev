@@ -182,6 +182,19 @@ def test_minimal_frontmatter_criteria_are_purpose_traceable(specfm_mod):
         assert errs == [], (sk, errs)
 
 
+def test_minimal_frontmatter_uses_minimum_sufficient_runtime(specfm_mod):
+    """Goal/Checklist は残すが、依存・独立 context 無しで重い runtime を予約しない。"""
+    for sk in specfm_mod.FEEDBACK_LOOP_SKILL_KINDS:
+        fm = specfm_mod.minimal_frontmatter("skill", skill_kind=sk)
+        assert fm["goal_seek"] == {
+            "engine": "inline",
+            "fork": "inline",
+            "max_loops": 5,
+        }
+        assert fm["goal"]
+        assert fm["checklist"]
+
+
 def test_as_int(specfm_mod):
     assert specfm_mod.as_int(80) == 80
     assert specfm_mod.as_int("80") == 80

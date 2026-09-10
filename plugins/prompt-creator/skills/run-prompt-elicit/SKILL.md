@@ -15,6 +15,9 @@ allowed-tools:
 kind: run
 version: 2.2.0
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 contract:
   intent: プロンプト要望を対話で構造化し、後続 build/evaluate が依拠できる prompt-brief.json を確定するため、ヒアリング責務 (単独起動・委譲呼出共通の正本) を提供する。

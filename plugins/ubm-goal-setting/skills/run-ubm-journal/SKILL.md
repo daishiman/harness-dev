@@ -1,6 +1,6 @@
 ---
 name: run-ubm-journal
-description: 日次ジャーナルを作りたいとき、今日やったことを会話で振り返りながら Obsidian の Daily へ構造化した新規ファイルを生成したいときに使う。
+description: 日次ジャーナルを作りたいとき、今日やったことを会話で振り返りながら Obsidian の Daily へ構造化したファイルを生成・再生成したいときに使う。
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[YYYY-MM-DD]"
@@ -32,20 +32,30 @@ schema_refs:
 script_refs:
   - scripts/build-journal-context.py
   - scripts/validate-journal-output.py
+  - ../../scripts/validate-inline-goal-seek-anchor.py
 reference_refs:
   - references/resource-map.yaml
   - references/output-format.md
   - references/interview-map.md
   - references/daily-habits.json
   - references/principle-checklist.md
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  fork: inline
+  progress: eval-log/ubm-goal-setting/run-ubm-journal/goal-seek-progress.json
+  intermediate: eval-log/ubm-goal-setting/run-ubm-journal/run-ubm-journal-intermediate.jsonl
+  handoff: eval-log/ubm-goal-setting/run-ubm-journal/handoff-run-ubm-journal.json
+  max_loops: 3
 source: ユーザーの既存 Obsidian Daily 運用 (02_Configs/Daily/) の仕組み化
 source-tier: internal
 last-audited: 2026-08-17
 audit-trigger: quarterly
 completeness_exempt:
   - "manifest: context 生成 (build-journal-context.py) → 整形 (SubAgent journal-composer) → 検証 (validate-journal-output.py) の一本道で、分岐も並列も再入も無い。workflow-manifest.json を置いても Phase 遷移の正本が SKILL.md 本文と二重になるだけで、片方が古びる (二重定義禁止 [[project_ssot_dedup_mechanism]])。実行体の対応は responsibility_refs が持ち、Write の可否は external_mutation_guard が機械判定する。"
-combinators:
-  - with-feedback-contract
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -148,7 +158,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 | Phase2-deepen | 気づき・うまくいかなかったこと・時間の使い方・お金の動きを掘る | 本 skill |
 | Phase3-fill | 埋まっていない枠（感謝・禁止事項・タスク）と**未確認の固定習慣**を、週報の呼び水を使って補う | 本 skill |
 | Phase4-compose | 収集内容を骨格へ整形し Markdown を組み立てる | `journal-composer`（Task） |
-| Phase5-validate | `validate-journal-output.py` で検証、違反があれば最大3回修正して保存 | 本 skill + script |
+| Phase5-validate | `validate-journal-output.py` で検証、違反があれば最大3回修正して保存 | `journal-composer` + script |
 
 **所要時間目安**: 5〜10分。
 
@@ -190,8 +200,8 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/bu
 
 ## Phase4-5: 整形と検証
 
-- `journal-composer` サブエージェントへ、Phase0 の context JSON と対話で得た内容を渡して整形させる。
-- 保存後に必ず検証する:
+- `journal-composer` サブエージェントへ Phase0 の context JSON、対話内容、親が host-skill-path から解決した absolute `PLUGIN_ROOT` を渡し、Phase4の整形から Phase5の保存・検証・最大3回修復までを一つの write scope で所有させる。親は対話、保存可否、入力スナップショットを所有し、保存済みpathとvalidator receiptだけを受け取る。Task 内で `PLUGIN_ROOT` が未指定または absolute でなければ fail-closed で停止する。
+- `journal-composer` は保存後に必ず次を検証し、親へ path と最終 validator receipt を返す。親は同じファイルを再編集せず、receipt の exit 0 と対象 path / expected 値の一致で完了を判定する:
 
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/validate-journal-output.py" \
@@ -199,8 +209,30 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/va
   --expected-number {journal_number} --expected-date {YYYY-MM-DD}
 ```
 
-- FAIL なら違反コードに従って修正し、最大3回まで再検証する。3回で収束しなければ違反を残したまま
+- FAIL なら `journal-composer` が違反コードに従って修正し、最大3回まで再検証する。3回で収束しなければ違反を残したまま
   完了扱いにせず、残件をユーザーへ報告する。
+
+## ゴールシーク実行
+
+`goal_seek.engine: inline` / `fork: inline` とし、ユーザー対話と保存可否はmain contextが所有する。`journal-composer` は Phase4-5 の単一 writer/validator を `Task` で担い、親は receipt で完了を判定する。最大3周で未達なら残件を `open_issues` と handoff に記録し、完了扱いにしない。
+
+親の 1 周回の実体は **Phase1-3 の対話へ戻って不足を埋め、`journal-composer` を Phase4-5 へ再委譲すること**である。周回の発火条件は「保存された journal が `original_goal` に対して不足している」とmain contextが判断した場合に限る (例: 事実・数値・固有名詞の取りこぼし、当日の意思決定が言語化されていない)。周回ごとに `intermediate.jsonl` へ 1 行 append し `iteration` を進める。
+
+composer 内の最大3回は同じMarkdownに対する機械違反の修復であり、親のgoal-seek周回とは別である。機械違反は対話で埋められない種類の失敗なので、composerが3回で収束しなければ親がPhase4を自動再起動せず、周回を消費しないままその時点で停止し、違反コードをユーザーへ報告する。
+
+### ゴールシーク配線
+
+`original_goal` と対象日を progress に固定し、各反復を `run-ubm-journal-intermediate.jsonl` へ append する。各行は `iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を持ち、journal path / validator receipt は結果の観測値として併記する。次回は直前の `merged_directive_for_next` を必須入力とする。
+
+### ゴールシーク検証
+
+共通 validator の検査範囲は intermediate.jsonl の `required_keys`、非空・全行不変 `original_goal`、`original_goal_hash == hashlib.sha256(original_goal)` である。journal本文・番号・日付は Phase5 の `validate-journal-output.py`、保存pathとreceiptの対応は親の完了判定が担い、共通validatorがそれらも検査すると扱わない。
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
+  "${CLAUDE_PROJECT_DIR:?caller project root is required}/eval-log/ubm-goal-setting/run-ubm-journal/goal-seek-progress.json" \
+  "${CLAUDE_PROJECT_DIR}/eval-log/ubm-goal-setting/run-ubm-journal/run-ubm-journal-intermediate.jsonl"
+```
 
 ## Key Rules
 

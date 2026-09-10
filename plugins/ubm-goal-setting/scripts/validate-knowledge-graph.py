@@ -6,7 +6,7 @@
 #          knowledge/knowledge-graph.json を決定論再生成し検証する共有ゲート (C06)。C08 は read-only
 #          (辺候補 JSON を返すのみ) ゆえ永続化 owner が不在だったため、本 script が --merge-relations で
 #          候補を canonical key (source_id,target_id,relation_type) により knowledge-relations.json へ
-#          冪等 merge (既存辺は保持=first-write-wins)、検証 PASS 時のみ relations と graph を atomic 書込する。
+#          冪等 merge (既存辺は保持=first-write-wins)、検証 PASS 時のみ relations と graph を正準書込する。
 #          self-loop 禁止・depends_on の DAG 非循環・edge evidence≥1・confidence 0..1・
 #          review_status 必須を検査する。related は無方向連想として cycle 対象外・dangling は非致命 drop。
 #          endpoint 不在 (dangling) の辺は hard-fail にせず knowledge-relations-quarantine.json へ
@@ -22,7 +22,7 @@
 #   - stderr: violation 一覧 (self-loop/evidence欠落/confidence範囲外/review_status欠落/cycle 等) と
 #             WARN (dangling 辺の quarantine 退避・edges=0 の退化グラフ)
 #   - file: graph-out (既定 <knowledge-dir>/knowledge-graph.json) ※検証 PASS 時のみ書込
-#   - file: <knowledge-dir>/knowledge-relations.json ※(--merge-relations または quarantine 発生) かつ検証 PASS 時のみ atomic 書込
+#   - file: <knowledge-dir>/knowledge-relations.json ※(--merge-relations または quarantine 発生) かつ検証 PASS 時のみ正準書込
 #   - file: <knowledge-dir>/knowledge-relations-quarantine.json ※dangling 辺検出かつ検証 PASS 時のみ冪等追記
 #   - exit: 0=OK / 1=violation / 2=usage
 # contexts: [E, C]
@@ -46,7 +46,7 @@ canonical 文字列でソートし入力順に非依存)。
 で起動する。merge は canonical key (source_id, target_id, relation_type) で冪等: 既存辺は evidence/
 confidence/review_status を含め保持し (human review 済み status を候補で上書きしない=first-write-wins)、
 未知 key の候補のみ append する。同じ候補を二度 merge しても knowledge-relations.json は byte-identical で
-不変。merge は atomic で、検証 PASS 時のみ relations と graph の双方を書き、FAIL 時は双方とも書かない
+不変。merge は全候補を先に検証し、PASS 時のみ relations → graph の順に正準書込する。検証 FAIL 時は双方とも書かない。書込中断時は同一候補の再実行で冪等修復する（複数ファイル跨ぎの atomicity は保証しない）
 (壊れた辺・循環を永続化しない)。
 
 dangling (endpoint の entry 不在) だけは violation でなく縮退: entry 削除で dangling 化した辺が
@@ -444,7 +444,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # --merge-relations: C08 候補を knowledge-relations.json へ冪等 merge してから検証する。
-    # merge は atomic = 検証 PASS 時のみ relations を書く。merge 入力 (既存 relations か候補) が
+    # merge は validation-first = 検証 PASS 時のみ relations を書く。merge 入力 (既存 relations か候補) が
     # 壊れていれば何も書かず exit1 で差し戻す。
     merged_relations: list[dict] | None = None
     merge_added = merge_kept = 0
@@ -515,7 +515,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     # merge した場合、および quarantine で辺を除去した場合のみ辺ストアを canonical 書込する
-    # (atomic: 検証を通った辺だけ永続化。quarantine 辺は knowledge-relations.json から除去される)。
+    # (検証を通った辺だけ永続化。quarantine 辺は knowledge-relations.json から除去される)。
     if merged_relations is not None or quarantined:
         store_edges = merged_relations if merged_relations is not None else sorted(raw_edges, key=_relation_key)
         relations_payload = json.dumps(

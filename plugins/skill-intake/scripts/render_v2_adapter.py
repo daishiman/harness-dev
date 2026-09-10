@@ -68,6 +68,17 @@ def iter_sections(intake: dict) -> Iterator[tuple[dict, dict]]:
         yield entry, value
 
 
+def responsible_components(entry: dict) -> list[str]:
+    """General component ownership with legacy responsible_subagent fallback."""
+    components = entry.get("responsible_components")
+    if isinstance(components, list) and components:
+        return [str(component) for component in components]
+    legacy = entry.get("responsible_subagent", [])
+    if isinstance(legacy, list):
+        return [f"agent:{name}" for name in legacy]
+    return []
+
+
 def summarize(intake_path: Path) -> int:
     intake = json.loads(intake_path.read_text(encoding="utf-8"))
     cmap = load_canonical_map()
@@ -78,7 +89,7 @@ def summarize(intake_path: Path) -> int:
         present = "present" if value else "EMPTY"
         print(
             f"  [{entry['section_key']}] {entry['user_canonical_section']} "
-            f"→ subagent={entry['responsible_subagent']} status={present}"
+            f"→ components={responsible_components(entry)} status={present}"
         )
     return 0
 

@@ -2,12 +2,19 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "949423deb823c6ccab3677d399fe8800bcfbb3b49a4d6523747182513f64087c"
+    "skill_md_sha256": "a659099d131b8c0511c65a85e71435490a894e419b8159416eabd2b7d77d3865"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
-  "reviewed_at": "2026-08-24T11:10:00Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-08-24T13:10:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -19,24 +26,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "2 passage の追記はいずれも既存の記述規約 (太字強調 + 正本パス明示 + 括弧内補足) に沿っており、SKILL.md 内の文体・語彙 (claim 集合/鮮度台帳/receipt) が pair skill と protocol 正本に対して一貫している。",
-      "追記が導入する契約 (evaluated_inputs[] は鮮度台帳・semantic 再利用は fingerprint+PASS receipt のみ) は evaluate-plan.py の STALENESS_RULE / plan-findings.schema.json の staleness_rule フィールドとして機械実装済みであり、宣言だけの空文になっていない。",
-      "feedback_contract criteria (IN1/IN2/OUT1/OUT2) の対象 (index topsort・frontmatter/gates lint・elegant-review C1-C4・skill-brief 写像粒度) は今回の 2 passage 変更で意味が変わらず、criteria 本文と本文記述の間に新たな乖離は生じていない。"
+      "見出し改名は他 skill 群と同一の Purpose & Output Contract 規約への追従であり、記述規約整合の観点でむしろ横断一貫性を高めている。",
+      "feedback_contract criteria (IN1/IN2/OUT1/OUT2) の対象 (index topsort・frontmatter/gates lint・elegant-review C1-C4・skill-brief 写像粒度) は今回の見出し改名で意味が変わらず、criteria 本文と本文記述の間に新たな乖離は生じていない。"
     ],
     "negative_feedback": [
-      "[low / smell] 「最大 3 周」の上限注記がゴールシークループ節のみで、局面 R4 節の同語 (最大 3 周) には反映されていない。矛盾ではないが表記の非対称。"
+      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記がゴールシークループ節のみで、局面 R4 節の同語には反映されていない表記の非対称。矛盾ではなく、今回 diff の対象外。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側 verdict と同一の incremental focused combined review (独立 evaluator context・builder 別 context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更 2 passage に対して構造規範 (記述規約整合・正本パス実在・宣言↔実装 parity・criteria との整合) を実読で確認し、combined review の単一判断として medium 以上 finding 0 件を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 4 件 (IN1/IN2/OUT1/OUT2)。前回 verdict (2026-08-20) の low finding (Pre-choice の external mutation 読み分け) は effect=local-artifact の本 skill には適用されないと再確認し、引き継がない。",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 1
-  }
+  "notes": "elegance 側 verdict と同一の focused combined review (独立 evaluator context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更 (見出し改名 1 点) に対して構造規範 (記述規約整合・アンカー断絶なし・criteria との整合) を実読で確認し、combined review の単一判断として medium 以上 finding 0 件 (low 1 件の引き継ぎのみ) を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 4 件。"
 }

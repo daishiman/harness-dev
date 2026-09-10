@@ -6,6 +6,9 @@ allowed-tools:
   - Write
   - Bash
 kind: run
+goal_seek:
+  engine: inline
+  fork: inline
 disable-model-invocation: true
 user-invocable: true
 effect: external-mutation
@@ -127,7 +130,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 | Skill / Script | 責務 | 本スキルとの境界 |
 |---|---|---|
-| `run-skill-intake` | ヒアリング・5 軸抽出・図解 | publish は初回含め workflow-manifest P10 が本 skill へ委譲。初回=intake.json `notion_target` 翻訳 / 再公開=`--revise` (Step 3 分岐) |
+| `run-skill-intake` | ヒアリング・5 軸抽出・図解 | publish は初回含め workflow-manifest P10 が本 skill へ委譲。初回=intake.json `notion_target` 翻訳 / 再公開=`--revise` (pipeline 起動局面の分岐) |
 | `assign-notion-fidelity-evaluator` | 公開直前の構造粒度検証 | 本 skill は呼び出し元として fidelity-guard `verdict=pass` を前提 |
 | `intake_publish_pipeline.py` | render → quality_gate → publish の単一発火点 | 本 skill は引数を整え 1 回呼ぶだけ |
 
@@ -136,12 +139,12 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 1. **単一発火点**: publish パイプは `intake_publish_pipeline.py` のみ。本 skill から
    `render_notion_page.py` / `publish_notion_page.py` を直接呼ばない。単一発火点の SSOT 定義は `../run-skill-intake/SKILL.md` 「単一発火点」項 (ゴールシークループ内) を参照。
 2. **publish 専用**: ヒアリング・図解生成・JSON 整形はやらない (aggregator の責務)。
-   初回 / 再公開の別は Step 3 の分岐 (成果物実在チェック) に従う。
+   初回 / 再公開の別は pipeline 起動局面の分岐 (成果物実在チェック) に従う。
 3. **All-or-Nothing**: `verify_notion_assets.py` 通過必須。PNG 1 枚でも欠ければ停止。
 4. **Secret-Out-of-Repo**: トークンは Keychain からのみ取得。環境変数・CLI 引数禁止。
 5. **読み取り専用 (入力側)**: `intake.json` / `notion-manifest.json` を書き換えない。
 6. **Progressive Disclosure**: 詳細ルールは `references/` に分割し、SKILL.md 本体は
-   起動契約 (入出力 / Steps / ゴールシーク) に絞る。
+   起動契約 (入出力 / 安全ガード / ゴールシーク) に絞る。
 
 ## Responsibilities (1 layer / wrapper)
 
@@ -151,9 +154,9 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 wrapper skill のため `prompts/` は持たない。判断は全て script の exit code に従う。
 
-## Steps
+## 実行局面（依存のある部分は直列）
 
-### Step 0: 引数正規化
+### 引数正規化
 
 ```bash
 HINT=""
@@ -173,14 +176,14 @@ done
 test -n "$HINT" || { echo "skill-name-hint is required"; exit 2; }
 ```
 
-### Step 1: precondition 検査
+### precondition 検査
 
 ```bash
 test -f "output/$HINT/intake.json"          || { echo "intake.json not found";          exit 2; }
 test -f "output/$HINT/notion-manifest.json" || { echo "notion-manifest.json not found"; exit 2; }
 ```
 
-### Step 2: 副作用前検査 (Keychain / Schema / Assets)
+### 副作用前検査 (Keychain / Schema / Assets)
 
 ```bash
 PLUGIN_ROOT="${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}"
@@ -193,7 +196,7 @@ python3 "$PLUGIN_ROOT/scripts/verify_notion_assets.py" "output/$HINT/notion-mani
 `references/republish-contract.md`。
 `validate-notion-ready.py --check-api` が PASS した場合、API キー / Notion トークンは確認済みとして扱い、ユーザーへ再入力を求めない。exit 44 のときだけ Keychain セットアップを案内する。
 
-### Step 3: pipeline 起動 (唯一の publish 発火点)
+### pipeline 起動 (唯一の publish 発火点)
 
 ```bash
 # 再公開 (notion-url.txt / notion-publish-result.json 等が実在) は update 専用 --revise で

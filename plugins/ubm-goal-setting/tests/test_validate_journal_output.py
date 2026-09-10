@@ -21,6 +21,12 @@ GOLDEN_NAME = "2026-08-18.md"
 GOLDEN_NUMBER = 389
 GOLDEN_DATE = "2026-08-18"
 
+# 四半期見出しの正本と後方互換表記。validator の QUARTERLY_HEADING と一致することを
+# test_quarterly_heading_constants_track_validator が縛る (ここを直書きしたまま validator
+# 側の正本が変わると、置換が空振りして併存 test が無内容に退化するため)。
+CANONICAL_QUARTERLY = "### 3ヶ月目標"
+LEGACY_QUARTERLY = "### 2ヶ月目標"
+
 
 def run(path: Path, number: int | None = None, date: str | None = None) -> subprocess.CompletedProcess:
     cmd = [sys.executable, str(VALIDATE), "--file", str(path)]
@@ -112,6 +118,59 @@ def test_goal_bad_period_format_fails(tmp_path: Path, golden: str):
     proc = run(write(tmp_path, text))
     assert proc.returncode == 1
     assert "G02" in proc.stdout
+
+
+def test_quarterly_heading_constants_track_validator():
+    """test 側の見出し定数が validator の正本・後方互換表記と一致すること。"""
+    module = _load_validator()
+    assert module.QUARTERLY_HEADING[0] == CANONICAL_QUARTERLY.removeprefix("### ")
+    assert LEGACY_QUARTERLY.removeprefix("### ") in module.QUARTERLY_HEADING[1:]
+
+
+def test_legacy_two_month_heading_remains_valid(tmp_path: Path, golden: str):
+    """既存ジャーナルの旧見出し (2ヶ月目標) は再検証で骨格違反にしない。
+
+    正本は `3ヶ月目標` (QUARTERLY_HEADING の先頭)。旧表記で保存済みのジャーナルを
+    後から検証し直しても骨格違反にならないことを、置換が実際に起きたことを
+    確かめたうえで検査する (見出しが変わって置換が空振りすると、この test は
+    「golden がそのまま通る」だけの無内容な test に退化するため)。
+    """
+    assert CANONICAL_QUARTERLY in golden
+    text = golden.replace(CANONICAL_QUARTERLY, LEGACY_QUARTERLY, 1)
+    assert LEGACY_QUARTERLY in text
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+
+
+def test_canonical_quarterly_goal_wins_when_legacy_heading_also_exists(
+    tmp_path: Path, golden: str
+):
+    """併存時に旧見出しの本文で満足して正本側の空値を見逃してはならない。
+
+    旧表記の完成セクションを正本セクションより前に置き、正本の「- 目標：」だけを
+    空にする。旧表記側を先に拾って PASS すると fail-open になるので、違反が
+    正本の見出し名で報告されることを要求する。
+    """
+    assert CANONICAL_QUARTERLY in golden
+    legacy_section = f"""{LEGACY_QUARTERLY}
+
+- 期間：2026-06-29〜2026-08-30
+- 残り：12日
+- 目標：旧表記側には値がある。
+
+"""
+    text = golden.replace(
+        f"{CANONICAL_QUARTERLY}\n", legacy_section + f"{CANONICAL_QUARTERLY}\n", 1
+    )
+    canonical_body = (
+        "次回壁打ち（9/9・北原さん）までに、ティアマインドの支援が期待値6項目の合意文書の上で回り、"
+        "青木さんの週1支援と合わせて毎月の固定費300,000に届く売上の形が見えている状態を作った。"
+    )
+    assert canonical_body in text
+    text = text.replace(f"- 目標：{canonical_body}", "- 目標：", 1)
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1, proc.stdout
+    assert "G03: 3ヶ月目標" in proc.stdout, proc.stdout
 
 
 def test_empty_gratitude_fails(tmp_path: Path, golden: str):

@@ -41,7 +41,7 @@ IMPLEMENTED_RULES = frozenset({
     "PD-001", "PD-002",
     "RG-001",
     "KL-001", "KL-002", "KL-003", "KL-004", "KL-005",
-    "PG-002", "BND-001",
+    "PG-001", "PG-002", "BND-001", "REG-001",
 })
 
 # 機械では判定できず LLM judge が要る rule。満点へ吸わせず pending_human へ出す。
@@ -49,23 +49,9 @@ LLM_JUDGE_RULES = {
     "BD-004": "description の trigger と body の手順の 1:1 対応は意味判断が要る (LLM judge)",
 }
 
-# rule の記述が現在の repo 実態と食い違っており、書かれたとおりには実行できない
-# rule。実装すると repo 全体が落ちるので採点せず、pending_human へ理由と提案の
-# 参照つきで出す。silent pass にはしない。rubric 本体の訂正は
-# run-skill-rubric-governance の proposer != approver 承認が要るため、ここでは
-# 状態を可視化するに留める。
-BLOCKED_ON_RUBRIC = {
-    "PG-001": (
-        "check が prompts/<R-id>.yaml を要求するが repo 内の prompts は "
-        ".yaml が 0 件 / .md が 185 件。記述どおり実装すると全 skill が落ちる。"
-        "訂正提案: proposals/2026-08-14-pg001-reg001-text-fix.md"
-    ),
-    "REG-001": (
-        "check の後半 validate-build-trace.py は build-trace.json を引数に要求するが "
-        "plugins/ 配下に build-trace.json が 0 件で、repo 全体へは掛けられない。"
-        "rule の半分が判定不能。訂正提案: proposals/2026-08-14-pg001-reg001-text-fix.md"
-    ),
-}
+# rubric 記述が repo 実態と一致せず機械判定できないときの退避用。
+# silent pass を避け、pending_human へ明示する。現在は該当 rule なし。
+BLOCKED_ON_RUBRIC: dict[str, str] = {}
 
 
 def rule_applies(rule: dict, kind: str) -> bool:
@@ -252,8 +238,12 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
         return _check_knowledge_loop(rid, kdir, skill_dir, fail)
     elif rid == "PG-002":
         return _check_prompt_anchors(skill_dir, fail)
+    elif rid == "PG-001":
+        return _check_required_prompts(skill_dir, fm, fail)
     elif rid == "BND-001":
         return _check_bundle_registration(skill_dir, fail)
+    elif rid == "REG-001":
+        return _check_registration_and_trace(skill_dir, fail)
     elif rid == "RG-001":
         # always satisfied since we emit hash
         return None
@@ -469,6 +459,199 @@ def _check_prompt_anchors(skill_dir: Path, fail) -> dict | None:
             return fail(f"agents/{agent_name}.md の responsibility アンカー {anchors} が "
                         f"'{rid_num}' / '{p.stem}' のどちらとも一致しない",
                         "prompt-governance")
+    return None
+
+
+def _required_responsibilities(skill_md: Path) -> list[tuple[str, str | None]]:
+    """frontmatter responsibilities[] の prompt_required=true だけを読む。
+
+    evaluator を PyYAML 必須にしないため、frontmatter の対象 block
+    だけを厳密な縮小パーサで扱う。返値は (id, name)。
+    """
+    text = skill_md.read_text(encoding="utf-8", errors="replace")
+    if not text.startswith("---"):
+        return []
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return []
+    in_block = False
+    rows: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
+    for line in parts[1].splitlines():
+        if not in_block:
+            if re.fullmatch(r"responsibilities:\s*", line):
+                in_block = True
+            continue
+        if line and not line[0].isspace():
+            break
+        item = re.match(r"^\s*-\s+id:\s*['\"]?([^'\"\s#]+)", line)
+        if item:
+            if current is not None:
+                rows.append(current)
+            current = {"id": item.group(1), "name": None, "prompt_required": False}
+            continue
+        if current is None:
+            continue
+        name = re.match(r"^\s+name:\s*['\"]?(.+?)['\"]?\s*$", line)
+        if name:
+            current["name"] = name.group(1).strip().strip("'\"")
+            continue
+        required = re.match(r"^\s+prompt_required:\s*(true|false)\s*$", line, re.I)
+        if required:
+            current["prompt_required"] = required.group(1).lower() == "true"
+    if current is not None:
+        rows.append(current)
+    return [
+        (str(row["id"]), str(row["name"]) if row.get("name") else None)
+        for row in rows if row.get("prompt_required") is True
+    ]
+
+
+def _responsibility_ref_paths(skill_md: Path) -> list[str]:
+    """frontmatter responsibility_refs[] の明示 path だけを返す。"""
+    text = skill_md.read_text(encoding="utf-8", errors="replace")
+    if not text.startswith("---"):
+        return []
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return []
+    in_block = False
+    refs: list[str] = []
+    for line in parts[1].splitlines():
+        if not in_block:
+            if re.fullmatch(r"responsibility_refs:\s*", line):
+                in_block = True
+            continue
+        if line and not line[0].isspace():
+            break
+        item = re.match(r"^\s*-\s*['\"]?([^'\"#]+?)['\"]?\s*$", line)
+        if item:
+            refs.append(item.group(1).strip())
+    return refs
+
+
+def _prompt_declares_responsibility(path: Path, rid: str) -> bool:
+    """explicit ref の内容が同じ responsibility id に束縛されるか。"""
+    text = path.read_text(encoding="utf-8", errors="replace")
+    escaped = re.escape(rid)
+    patterns = (
+        rf"`responsibility_id`\s*:\s*`{escaped}`",
+        rf"\|\s*responsibility\s*\|\s*`?{escaped}`?(?:\s|\(|\|)",
+        rf"責務\s*id\s*は\s*`{escaped}`",
+        rf"<!--\s*responsibility:\s*{escaped}\s*-->",
+    )
+    return any(re.search(pattern, text, re.I) for pattern in patterns)
+
+
+def _check_required_prompts(skill_dir: Path, fm: dict, fail) -> dict | None:
+    """PG-001: required responsibility と canonical Markdown prompt の 1:1 結合。"""
+    if fm.get("kind") not in {"run", "assign"}:
+        return None
+    required = _required_responsibilities(skill_dir / "SKILL.md")
+    if not required:
+        # 条件は responsibilities[] が明示された target だけ。旧 target へ
+        # 実在しない responsibility を推測で生やさない。
+        return None
+    pdir = skill_dir / "prompts"
+    explicit_refs: list[Path] = []
+    invalid_refs: list[str] = []
+    skill_real = skill_dir.resolve()
+    for raw in _responsibility_ref_paths(skill_dir / "SKILL.md"):
+        candidate = (skill_dir / raw).resolve()
+        try:
+            candidate.relative_to(skill_real)
+        except ValueError:
+            invalid_refs.append(raw)
+            continue
+        if candidate.parent != (skill_real / "prompts") or candidate.suffix != ".md":
+            invalid_refs.append(raw)
+            continue
+        if candidate.is_file():
+            explicit_refs.append(candidate)
+    if invalid_refs:
+        return fail(f"responsibility_refs が skill-local prompts/*.md 外を指す: {invalid_refs}",
+                    "prompt-governance")
+    missing: list[str] = []
+    ambiguous: list[str] = []
+    used: dict[Path, str] = {}
+    for rid, name in required:
+        candidates = [pdir / f"{rid}.md"]
+        # 現行 generator の id=R1 + name=elicit → R1-elicit.md も正準射影。
+        # id 自体が R1-elicit なら exact path のみを許す。
+        if re.fullmatch(r"R[0-9]+[a-z]?", rid) and name:
+            slug = re.sub(r"[^a-z0-9]+", "-", name.casefold()).strip("-")
+            if slug:
+                candidates.append(pdir / f"{rid}-{slug}.md")
+        existing = {path.resolve() for path in candidates if path.is_file()}
+        existing.update(
+            path for path in explicit_refs if _prompt_declares_responsibility(path, rid)
+        )
+        if not existing:
+            missing.append(
+                f"{rid}=>expected={[path.name for path in candidates]}, "
+                f"explicit_refs={[path.name for path in explicit_refs]}"
+            )
+        elif len(existing) > 1:
+            ambiguous.append(f"{rid}=>{sorted(path.name for path in existing)}")
+        else:
+            path = next(iter(existing))
+            if path in used:
+                ambiguous.append(f"{rid}/{used[path]}=>{path.name}")
+            used[path] = rid
+    if missing:
+        return fail(f"prompt_required=true の Markdown prompt が欠落: {missing}",
+                    "prompt-governance")
+    if ambiguous:
+        return fail(f"1 responsibility に複数の canonical prompt が競合: {ambiguous}",
+                    "prompt-governance")
+    return None
+
+
+def _check_registration_and_trace(skill_dir: Path, fail) -> dict | None:
+    """REG-001: plugin completeness + 存在する per-skill trace の正本検証。"""
+    root = find_repo_root(skill_dir)
+    plugin = _plugin_dir(skill_dir)
+    if root is None or plugin is None:
+        return fail("repository/plugin root を解決できない", "governance")
+    completeness = root / "scripts" / "validate-plugin-completeness.py"
+    validator = (
+        root / "plugins" / "harness-creator" / "skills" / "run-build-skill"
+        / "scripts" / "validate-build-trace.py"
+    )
+    for path, label in ((completeness, "plugin completeness validator"),
+                        (validator, "canonical build-trace validator")):
+        if not path.is_file():
+            return fail(f"{label} not found: {path}", "governance")
+    try:
+        complete = subprocess.run(
+            [sys.executable, str(completeness)], cwd=root,
+            capture_output=True, text=True, check=False, timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return fail(f"validate-plugin-completeness.py を実行できない: {exc}",
+                    "governance")
+    if complete.returncode != 0:
+        detail = complete.stderr.strip() or complete.stdout.strip()
+        return fail(f"validate-plugin-completeness.py exit={complete.returncode}: {detail}",
+                    "governance")
+
+    trace = root / "eval-log" / plugin.name / skill_dir.name / "skill-build-trace.json"
+    if not trace.is_file():
+        # per-skill trace 導入前の target は trace 部分のみ N/A。completeness
+        # は常に検査し、存在する trace の失敗を N/A に降格しない。
+        return None
+    try:
+        checked = subprocess.run(
+            [sys.executable, str(validator), str(trace)], cwd=root,
+            capture_output=True, text=True, check=False, timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return fail(f"canonical validate-build-trace.py を実行できない: {exc}",
+                    "governance")
+    if checked.returncode != 0:
+        detail = checked.stderr.strip() or checked.stdout.strip()
+        return fail(f"canonical validate-build-trace.py exit={checked.returncode}: {detail}",
+                    "governance")
     return None
 
 

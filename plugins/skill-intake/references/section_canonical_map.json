@@ -271,7 +271,11 @@
       "user_canonical_section": "§10",
       "section_key": "10_self_updater",
       "title": "10. Phase: self-updater（自己進化結果）",
-      "responsible_subagent": ["skill-intake-self-updater"],
+      "responsible_components": [
+        "skill:run-skill-intake",
+        "script:plugins/skill-intake/scripts/measure_value_realized.py",
+        "script:plugins/skill-intake/scripts/update_question_bank.py"
+      ],
       "role_label": "value_realized_score / 控除点 / question-bank への追加質問 / セッション観察 を残す",
       "purpose_slots": {
         "decides_what": "value_realized_score_estimate (0-100) と控除根拠、question-bank 追加候補",
@@ -301,12 +305,12 @@
       "responsible_subagent": ["skill-intake-handoff"],
       "role_label": "output/<hint>/ 配下に生成された全ファイルと役割を網羅一覧化する",
       "purpose_slots": {
-        "decides_what": "[{path, role_one_liner, generator_subagent}] の表",
+        "decides_what": "[{path, role_one_liner, generator_component|generator_subagent}] の表",
         "ensures_what": "Notion ページ末尾で『この intake が何を物理的に残したか』が再開時に1秒で読める",
         "prevents_what": "成果物の所在不明・再開時の探索コスト"
       },
       "required_fields": [
-        {"key": "artifacts", "type": "array", "constraint": "[{path:string(relative), role_one_liner, generator_subagent, optional:bool}]", "absence_behavior": "block"},
+        {"key": "artifacts", "type": "array", "constraint": "[{path:string(relative), role_one_liner, generator_component|generator_subagent, optional:bool}]", "absence_behavior": "block"},
         {"key": "base_path", "type": "string", "constraint": ".claude/skills/skill-intake-interviewer/output/<hint>/ または plugins/skill-intake/output/<hint>/", "absence_behavior": "block"}
       ],
       "viz_slots": [

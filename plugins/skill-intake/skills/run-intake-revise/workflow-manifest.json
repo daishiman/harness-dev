@@ -100,22 +100,27 @@
       "entryHook": null,
       "exitHook": null,
       "resourceIds": ["schema-revision-log"],
-      "fatal_exit_codes": [2]
+      "fatal_exit_codes": [2, 61]
     },
     {
       "id": "P8-self-update",
       "step": 8,
-      "title": "skill-intake-self-updater 再起動で question-bank 追記",
+      "title": "update_question_bank.py dry-run 提示 → 別承認 (approve: --apply / decline: skip success)",
       "gate": "C8",
       "dependsOn": ["P7-log"],
       "entryHook": null,
-      "exitHook": null,
-      "resourceIds": [],
+      "exitHook": "update-question-bank",
+      "resourceIds": ["script-update-question-bank"],
+      "success_outcomes": [
+        {"decision": "approved", "result": "apply_exit_0"},
+        {"decision": "declined", "result": "stop_success", "record": "question-bank-update.json.status=skipped; skip_reason=question_bank_update_declined"}
+      ],
       "fatal_exit_codes": [61]
     }
   ],
   "resources": [
     {"id": "schema-revision-log", "kind": "schema", "path": "./schemas/output.schema.json", "phaseIds": ["P7-log"]},
-    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["P1-load"]}
+    {"id": "ref-resource-map", "kind": "reference", "path": "./references/resource-map.yaml", "phaseIds": ["P1-load"]},
+    {"id": "script-update-question-bank", "kind": "script", "path": "../../scripts/update_question_bank.py", "phaseIds": ["P8-self-update"]}
   ]
 }

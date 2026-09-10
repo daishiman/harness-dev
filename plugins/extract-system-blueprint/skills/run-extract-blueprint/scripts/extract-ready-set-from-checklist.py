@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# name: ready-set-from-checklist
+# name: extract-ready-set-from-checklist
 # purpose: with-goal-seek の checklist (progress.json) へ additive 付与された depends_on から、依存充足順の ready 集合をステートレスに算出する決定論ゲート。逐次単一 self-writer 実行を前提とし write_scope 衝突/tie-break 機構は一切持たない (H1 解消の実装物)。
 # inputs:
 #   - argv: <progress_json_path> (schemas/goal-seek-loop.schema.json 準拠 checklist を持つ)
@@ -36,6 +36,7 @@ import sys
 from pathlib import Path
 
 _ID_NUM_RE = re.compile(r"^C(\d+)$")
+_VALID_STATUSES = {"pending", "done", "blocked"}
 
 
 def id_sort_key(item_id: str) -> tuple[int, int, str]:
@@ -53,6 +54,8 @@ def id_sort_key(item_id: str) -> tuple[int, int, str]:
 def load_checklist(progress_path: Path) -> list[dict]:
     """progress.json を読み checklist 配列を返す。無ければ空配列。"""
     data = json.loads(progress_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("progress.json の root が object でない")
     checklist = data.get("checklist", [])
     if not isinstance(checklist, list):
         raise ValueError("progress.json の checklist が配列でない")
@@ -68,22 +71,30 @@ def compute_ready(checklist: list[dict]) -> list[str]:
       ならないため当該 item は ready にならない (C01 は fail-closed 検査を C02 へ委ね、
       read-only 算出では単に not-ready として扱う)。
     """
-    done_ids = {
-        it["id"] for it in checklist
-        if isinstance(it, dict) and it.get("status") == "done" and it.get("id")
-    }
-    ready: list[str] = []
+    seen_ids: set[str] = set()
     for it in checklist:
         if not isinstance(it, dict):
             raise ValueError("checklist item が object でない")
         item_id = it.get("id")
-        if not item_id:
-            raise ValueError("checklist item に id がない")
+        if not isinstance(item_id, str) or not item_id:
+            raise ValueError("checklist item の id が非空文字列でない")
+        if item_id in seen_ids:
+            raise ValueError(f"checklist item id が重複: {item_id}")
+        seen_ids.add(item_id)
+        status = it.get("status")
+        if status not in _VALID_STATUSES:
+            raise ValueError(f"{item_id}: status が不正: {status!r}")
+        deps = it.get("depends_on", [])
+        if not isinstance(deps, list) or any(not isinstance(dep, str) or not dep for dep in deps):
+            raise ValueError(f"{item_id}: depends_on が非空文字列の配列でない")
+
+    done_ids = {it["id"] for it in checklist if it["status"] == "done"}
+    ready: list[str] = []
+    for it in checklist:
+        item_id = it["id"]
         if it.get("status") != "pending":
             continue
-        deps = it.get("depends_on", []) or []
-        if not isinstance(deps, list):
-            raise ValueError(f"{item_id}: depends_on が配列でない")
+        deps = it.get("depends_on", [])
         if all(dep in done_ids for dep in deps):
             ready.append(item_id)
     return sorted(ready, key=id_sort_key)
@@ -92,7 +103,7 @@ def compute_ready(checklist: list[dict]) -> list[str]:
 def main(argv: list[str]) -> int:
     if len(argv) != 1 or argv[0] in ("-h", "--help"):
         sys.stderr.write(
-            "usage: ready-set-from-checklist.py <progress_json_path>\n"
+            "usage: extract-ready-set-from-checklist.py <progress_json_path>\n"
             "  stdout: {\"ready\":[id,...]} (id 昇順・status==pending かつ depends_on 全 done)\n"
         )
         return 2 if argv[:1] not in (["-h"], ["--help"]) else 0
@@ -102,6 +113,9 @@ def main(argv: list[str]) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"progress.json 読込/parse 失敗: {progress_path}: {exc}\n")
         return 2
+    except ValueError as exc:
+        sys.stderr.write(f"checklist データ不整合: {exc}\n")
+        return 1
     try:
         ready = compute_ready(checklist)
     except ValueError as exc:

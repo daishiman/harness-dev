@@ -49,8 +49,8 @@ plugin_meta:
 ## ドメイン知識
 - **engine 変種**: with-goal-seek の `goal_seek.engine` フィールド(既定 `inline`、追加 opt-in 値 `task-graph`)。独立 combinator flag ではなく、既に default-ON の with-goal-seek 内部の選択値として表現する(H5 解消)。
 - **depends_on**: checklist item への additive フィールド(`goal-seek-loop.schema.json` へ追加)。array<string>・pattern `^C[0-9]+$`・default `[]`。依存先 item が全て `status==done` になって初めて当該 item は ready 集合に入る。
-- **ready 集合**: depends_on が全充足かつ `status==pending` の checklist item を id 昇順で決定論算出したもの(C01 ready-set-from-checklist.py が算出)。write_scope フィールド・tie-break 機構は持たない(逐次単一 self-writer ゆえ構造的に不要・H1 解消)。
-- **self-reflect append**: 実行中に発見した新規タスクを、別状態ファイルを新設せず checklist(progress.json)の末尾へ新しい item として追記する仕組み(C02 self-reflect-append.py)。追記された item は done-judge が毎回スキャンする同一配列の一部になるため、発見した課題が完了判定へ反映されない非統合は構造的に発生しない(単一truth原則・H3 解消)。
+- **ready 集合**: depends_on が全充足かつ `status==pending` の checklist item を id 昇順で決定論算出したもの(C01 extract-ready-set-from-checklist.py が算出)。write_scope フィールド・tie-break 機構は持たない(逐次単一 self-writer ゆえ構造的に不要・H1 解消)。
+- **self-reflect append**: 実行中に発見した新規タスクを、別状態ファイルを新設せず checklist(progress.json)の末尾へ新しい item として追記する仕組み(C02 build-self-reflection-entry.py)。追記された item は done-judge が毎回スキャンする同一配列の一部になるため、発見した課題が完了判定へ反映されない非統合は構造的に発生しない(単一truth原則・H3 解消)。
 - **consumption verifier**: depends_on 消費(ready 集合の実行)と self-reflect 完了gate が実際に機能していることを、既存 with-goal-seek の intermediate.jsonl アンカー検査と同型の機械検査トークンとして生成 SKILL.md へ埋め込む仕組み(C03/C04 が担当・H4 解消)。
 - **既存 compute-ready-set.py の正しい位置付け**(H2 解消): `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/compute-ready-set.py` の write_scope tie-break(id 昇順で勝者 1 件を採用し残りを deferred/conflicts へ回す)は「バグ」ではなく、複数 candidate が同時に ready になり得る**並列/多ノード dispatch モデル**を前提とした意図的な fail-closed 回避設計である(同ファイル docstring L16-27・実装 L90-109)。本計画の engine:task-graph 変種は**逐次単一 self-writer**であり、この並列 dispatch 前提が構造的に成立しないため、同型の tie-break 機構を複製しない。詳細な file:line 引用は `phase-02-design.md` H2 節を参照。
 - **既存 build-pipeline task-graph との区別**: `plugin-plans/harness-creator/` が実装した producer(plugin-dev-planner)/ consumer(capability-build 側 `/capability-build` route-mode dispatch)の片方向 writer 2 プラグイン構成であり、本計画の「with-goal-seek engine:task-graph 変種」とは別概念。本計画はこれを一切改変しない。
@@ -68,10 +68,10 @@ plugin_meta:
 ## Component 一覧 (1行 role 表)
 | id | component_kind | build_target | 責務(1行) |
 |---|---|---|---|
-| C01 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/ready-set-from-checklist.py` | checklist の depends_on から ready 集合をステートレス算出(write_scope 機構なし) |
-| C02 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/self-reflect-append.py` | discovered task を checklist 末尾へ単一truth追記(既存 item 不変・サイクル検査) |
+| C01 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py` | checklist の depends_on から ready 集合をステートレス算出(write_scope 機構なし) |
+| C02 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py` | discovered task を checklist 末尾へ単一truth追記(既存 item 不変・サイクル検査) |
 | C06 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py` | 生成 harness の skill/command/agent/hook/script surface から dependency graph を抽出 |
-| C07 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/record-capability-graph-knowledge.py` | dependency graph を Loop A/Loop B knowledge entry へ source_ref 付きで記録 |
+| C07 | script | `plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py` | dependency graph を Loop A/Loop B knowledge entry へ source_ref 付きで記録 |
 | C03 | script | `plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py` | with-goal-seek へ task-graph 配線・C06/C07 同梱・knowledge consult 手順を追加 |
 | C04 | script | `plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py` | engine:task-graph 変種の SSOT drift + consumption verifier トークンを self-test 検査 |
 | C08 | script | `plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-graph-knowledge.py` | dependency graph knowledge の同梱・記録・各 surface consult 配線を検査 |
@@ -132,7 +132,7 @@ goal-spec checklist 全項目(C1-C12)の受入基準を二値で列挙する:
 ## 受入確認
 build 後に組み上がった実プラグイン(`plugins/harness-creator/skills/run-build-skill/`)が purpose を満たすか確認する trace:
 - goal-spec checklist C1-C12 の全項目が上記完了チェックリストで done 相当になっていること。
-- brief.goal_seek.engine=task-graph 指定で生成したハーネスの SKILL.md に engine:task-graph 変種の配線サブセクション(『### ゴールシーク配線(task-graph 変種)』『### ゴールシーク検証(task-graph 変種・機械検査)』)が注入され、同梱 scripts/ に C01/C02/C06/C07(ready-set-from-checklist.py / self-reflect-append.py / extract-capability-dependency-graph.py / record-capability-graph-knowledge.py)がコピーされ、C04 拡張後の `lint-goal-seek.py` self-test と C08 `lint-capability-graph-knowledge.py` が exit0 になること。
+- brief.goal_seek.engine=task-graph 指定で生成したハーネスの SKILL.md に engine:task-graph 変種の配線サブセクション(『### ゴールシーク配線(task-graph 変種)』『### ゴールシーク検証(task-graph 変種・機械検査)』)が注入され、同梱 scripts/ に C01/C02/C06/C07(extract-ready-set-from-checklist.py / build-self-reflection-entry.py / extract-capability-dependency-graph.py / build-capability-graph-knowledge-entry.py)がコピーされ、C04 拡張後の `lint-goal-seek.py` self-test と C08 `lint-capability-graph-knowledge.py` が exit0 になること。
 - **既存 build-pipeline task-graph(`plugin-plans/harness-creator/`、producer=plugin-dev-planner / consumer=capability-build の `/capability-build` route-mode dispatch 機構)は本計画の対象外であり、本計画の build_target・side_effect_targets のいずれにも `plugin-plans/harness-creator/` 配下のファイルは一切含まれない。** この非改変境界は goal-spec constraints #2 / checklist C9 の直接充足であり、`plugins/harness-creator/skills/run-build-skill/` 配下(C01-C08)への変更のみが本計画のスコープである。
 - 独立 combinator flag(`with_task_graph`)は一切追加されておらず、default/opt-in 軸は with-goal-seek 自体の `engine` 選択値(既定 `inline` / opt-in `task-graph`)としてのみ表現されていること(goal-spec constraints #3 / checklist C10)。
 - 単一truth設計(H3)と write_scope 並列衝突機構不要の判断根拠(H1/H2)は `phase-02-design.md` の該当節で機械可読な形で明記され、`lint-goal-seek.py` 拡張 self-test(C04)と `lint-capability-graph-knowledge.py`(C08)が consumption verifier / dependency knowledge consult トークンの存在を機械検査する。

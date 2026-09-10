@@ -38,6 +38,7 @@ Exit 0 = ok, 1 = 欠落あり, 2 = usage error。
 """
 from __future__ import annotations
 
+import copy
 import json
 import re
 import sys
@@ -86,10 +87,10 @@ KNOWLEDGE_SCRIPTS = (
 # engine 資産。build-plan / materializer / lint が同じファイル名集合を使い、prose の
 # Step 10.6 に依存せず欠落と byte drift を fail-closed にする。
 TASK_GRAPH_ENGINE_SCRIPTS = (
-    "ready-set-from-checklist.py",
-    "self-reflect-append.py",
+    "extract-ready-set-from-checklist.py",
+    "build-self-reflection-entry.py",
     "extract-capability-dependency-graph.py",
-    "record-capability-graph-knowledge.py",
+    "build-capability-graph-knowledge-entry.py",
 )
 TASK_GRAPH_TEMPLATE_PREFIX = "templates/task-graph-engine/scripts"
 
@@ -209,14 +210,35 @@ def derive_acceptance_tier(kind: str, has_hooks: bool, allowed_tools: object) ->
 def derive_goal_seek_engine(brief: dict) -> str:
     """brief.goal_seek.engine の明示値を型安全かつ決定論的に正規化する。
 
-    無指定 ("") の loop kind への task-graph defaulting は derive_plan が
-    flags 導出後 (with_goal_seek 確定後) に適用する。opt-out は brief に
-    `goal_seek.engine: inline` (または run-goal-seek) を明示するか --no-goal-seek。
+    無指定 ("") の loop kind は derive_plan が最小構成 `inline` へ
+    defaulting する。task-graph / run-goal-seek は brief で明示された
+    場合だけ使い、複雑性を「必要かもしれない」という推測で追加しない。
     """
     goal_seek = brief.get("goal_seek")
     if not isinstance(goal_seek, dict):
         return ""
-    return str(goal_seek.get("engine", "")).strip()
+    engine = str(goal_seek.get("engine", "")).strip()
+    if engine and engine not in {"inline", "run-goal-seek", "task-graph"}:
+        raise ValueError(f"unknown goal_seek.engine: {engine!r}")
+    return engine
+
+
+def derive_goal_seek_fork(brief: dict) -> str:
+    """ゴールシークの context 配置を最小で十分な形に導出する。
+
+    明示値を最優先し、無指定では
+    needs_independent_context=true のときだけ subagent、それ以外は inline。
+    Agent Team はユーザー/設計者が brief で明示した場合に限る。
+    """
+    goal_seek = brief.get("goal_seek")
+    explicit = (
+        str(goal_seek.get("fork", "")).strip() if isinstance(goal_seek, dict) else ""
+    )
+    if explicit:
+        if explicit not in {"inline", "subagent", "agent-team"}:
+            raise ValueError(f"unknown goal_seek.fork: {explicit!r}")
+        return explicit
+    return "subagent" if brief.get("needs_independent_context") is True else "inline"
 
 
 def derive_plan(brief: dict, cli_flags: dict | None = None) -> dict:
@@ -224,12 +246,13 @@ def derive_plan(brief: dict, cli_flags: dict | None = None) -> dict:
     role_suffix = str(brief.get("role_suffix", "") or "").strip()
     flags = derive_flags(brief, cli_flags)
     goal_seek_engine = derive_goal_seek_engine(brief)
-    # engine 既定 = task-graph: loop kind で goal-seek 配線が有効かつ brief が engine を
-    # 明示しない場合、依存順駆動 (checklist-graph) を既定で焼き込む。明示値は常に優先
-    # (inline/run-goal-seek が opt-out)。render-combinators._brief_requests_task_graph と同一規則。
+    goal_seek_fork = derive_goal_seek_fork(brief) if flags["with_goal_seek"] else ""
+    # engine 既定 = inline: 実在する依存グラフが brief で明示されない
+    # loop kind へ task-graph engine と 4 スクリプトを予防的に同梱しない。
+    # 明示値は常に優先。render-combinators._brief_requests_task_graph と同一規則。
     engine_defaulted = False
     if not goal_seek_engine and kind in LOOP_KINDS and flags["with_goal_seek"]:
-        goal_seek_engine = "task-graph"
+        goal_seek_engine = "inline"
         engine_defaulted = True
 
     template = KIND_TEMPLATE_FALLBACK.get((kind, role_suffix if kind == "assign" else ""))
@@ -315,11 +338,24 @@ def derive_plan(brief: dict, cli_flags: dict | None = None) -> dict:
             }
         )
 
-    if goal_seek_engine == "task-graph":
+    if flags["with_goal_seek"]:
         engine_source = (
-            "default: loop kind + with_goal_seek (engine unset in brief)"
+            "default: minimum-sufficient inline (engine unset in brief)"
             if engine_defaulted
             else "brief.goal_seek.engine"
+        )
+        goal_seek = brief.get("goal_seek")
+        fork_explicit = isinstance(goal_seek, dict) and bool(
+            str(goal_seek.get("fork", "")).strip()
+        )
+        fork_source = (
+            "brief.goal_seek.fork"
+            if fork_explicit
+            else (
+                "default: needs_independent_context=true"
+                if brief.get("needs_independent_context") is True
+                else "default: minimum-sufficient inline context"
+            )
         )
         deliverables.extend(
             [
@@ -327,24 +363,38 @@ def derive_plan(brief: dict, cli_flags: dict | None = None) -> dict:
                     "id": "frontmatter:goal_seek.engine",
                     "type": "frontmatter-value",
                     "path": "goal_seek.engine",
-                    "expected": "task-graph",
+                    "expected": goal_seek_engine,
                     "source": engine_source,
                 },
                 {
                     "id": "frontmatter:goal_seek.engine_profile",
                     "type": "frontmatter-value",
                     "path": "goal_seek.engine_profile",
-                    "expected": "checklist-graph",
-                    "source": f"derived from goal_seek_engine=task-graph ({engine_source})",
+                    "expected": (
+                        "checklist-graph" if goal_seek_engine == "task-graph" else "goal-loop"
+                    ),
+                    "source": f"derived from goal_seek_engine={goal_seek_engine} ({engine_source})",
                 },
                 {
-                    "id": "frontmatter:goal_seek.full_task_spec_graph",
+                    "id": "frontmatter:goal_seek.fork",
                     "type": "frontmatter-value",
-                    "path": "goal_seek.full_task_spec_graph",
-                    "expected": "false",
-                    "source": "checklist-graph capability boundary",
+                    "path": "goal_seek.fork",
+                    "expected": goal_seek_fork,
+                    "source": fork_source,
                 },
             ]
+        )
+
+    if goal_seek_engine == "task-graph":
+        engine_source = "brief.goal_seek.engine"
+        deliverables.append(
+            {
+                "id": "frontmatter:goal_seek.full_task_spec_graph",
+                "type": "frontmatter-value",
+                "path": "goal_seek.full_task_spec_graph",
+                "expected": "false",
+                "source": "checklist-graph capability boundary",
+            }
         )
         for script in TASK_GRAPH_ENGINE_SCRIPTS:
             deliverables.append(
@@ -388,6 +438,12 @@ def derive_plan(brief: dict, cli_flags: dict | None = None) -> dict:
                 "FAIL-CLOSED: task-graph engine は loop kind (run/wrap/delegate) + with_goal_seek=true "
                 "でのみ実行可能。現在の brief は配線条件を満たさない。"
             )
+    elif goal_seek_engine == "inline":
+        notes.append(
+            "minimum-sufficient runtime: checklist と検証契約は維持し、"
+            "task-graph engine 資産は同梱しない。依存グラフが必要な場合だけ "
+            "brief.goal_seek.engine=task-graph を明示する。"
+        )
 
     plan = {
         "schema": "schemas/build-plan.schema.json",
@@ -485,6 +541,45 @@ def _frontmatter_nested_value(text: str, dotted_key: str) -> str:
     return ""
 
 
+def preserve_update_runtime_profile(brief: dict, skill_dir: Path) -> dict:
+    """update で brief が省略した runtime profile を現行生成物から引き継ぐ。
+
+    新規生成の既定値を inline へ変えても、update 時に必要な
+    task-graph/subagent を黙示ダウングレードしない。brief の明示値が常に優先。
+    """
+    skill_md = skill_dir / "SKILL.md"
+    if skill_md.is_symlink() or not skill_md.is_file():
+        raise ValueError(f"update target SKILL.md is missing or unsafe: {skill_md}")
+    text = skill_md.read_text(encoding="utf-8")
+    effective = copy.deepcopy(brief)
+    goal_seek = effective.get("goal_seek")
+    if goal_seek is None:
+        goal_seek = {}
+        effective["goal_seek"] = goal_seek
+    if not isinstance(goal_seek, dict):
+        raise ValueError("brief.goal_seek must be an object")
+
+    for key, allowed in (
+        ("engine", {"inline", "run-goal-seek", "task-graph"}),
+        ("fork", {"inline", "subagent", "agent-team"}),
+    ):
+        if str(goal_seek.get(key, "")).strip():
+            continue
+        current = _frontmatter_nested_value(text, f"goal_seek.{key}")
+        if current:
+            if current not in allowed:
+                raise ValueError(f"unknown current goal_seek.{key}: {current!r}")
+            goal_seek[key] = current
+
+    if "max_loops" not in goal_seek:
+        current_max = _frontmatter_nested_value(text, "goal_seek.max_loops")
+        if current_max:
+            if not current_max.isdigit() or int(current_max) < 1:
+                raise ValueError(f"invalid current goal_seek.max_loops: {current_max!r}")
+            goal_seek["max_loops"] = int(current_max)
+    return effective
+
+
 def _body_sections(text: str) -> dict[str, int]:
     """SKILL.md 本文の ## 見出し → 見出し直下の本文行数 (非空・非見出し)。"""
     parts = text.split("---", 2)
@@ -517,6 +612,24 @@ def check_plan(plan: dict, skill_dir: Path) -> list[str]:
             "task-graph engine requested but with_goal_seek=false: "
             "loop kind (run/wrap/delegate) 以外では checklist-graph を成功扱いできない"
         )
+
+    if plan.get("goal_seek_engine") not in {"", "task-graph"}:
+        stale_names = set(TASK_GRAPH_ENGINE_SCRIPTS) | {
+            "ready-set-from-checklist.py",
+            "self-reflect-append.py",
+            "record-capability-graph-knowledge.py",
+        }
+        stale = [
+            f"scripts/{name}"
+            for name in sorted(stale_names)
+            if (skill_dir / "scripts" / name).exists()
+            or (skill_dir / "scripts" / name).is_symlink()
+        ]
+        if stale:
+            errs.append(
+                f"goal_seek.engine={plan.get('goal_seek_engine')} だが task-graph engine 資産が残存: {stale}"
+                " (update では canonical bytes のみ除去し、改変済み/symlink は fail-closed で手動判断)"
+            )
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         return [f"SKILL.md not found: {skill_md}"]
@@ -749,6 +862,7 @@ def main(argv: list[str]) -> int:
     check = "--check" in args
     skill_dir = _opt("--skill-dir")
     out = _opt("--out")
+    mode = _opt("--mode") or "create"
     cli_flags_raw = _opt("--flags")
     build_stage = _opt("--stage")
 
@@ -761,10 +875,16 @@ def main(argv: list[str]) -> int:
         return 0
     try:
         brief = _load_brief(bp)
+        if mode not in {"create", "update"}:
+            raise ValueError("mode must be create or update")
+        if mode == "update":
+            if not skill_dir:
+                raise ValueError("--mode update requires --skill-dir <existing-skill-dir>")
+            brief = preserve_update_runtime_profile(brief, Path(skill_dir))
         cli_flags = json.loads(cli_flags_raw) if cli_flags_raw else {}
         if build_stage is not None:
             cli_flags["build_stage"] = build_stage
-    except (json.JSONDecodeError, OSError) as exc:
+    except (json.JSONDecodeError, OSError, ValueError) as exc:
         print(f"invalid input: {exc}", file=sys.stderr)
         return 2
 

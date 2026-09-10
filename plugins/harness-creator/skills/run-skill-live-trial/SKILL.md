@@ -18,6 +18,9 @@ allowed-tools:
 kind: run
 prefix: run
 effect: local-artifact
+goal_seek:
+  engine: inline
+  fork: inline
 owner: team-platform
 since: 2026-07-02
 version: 0.1.0
@@ -37,7 +40,7 @@ script_refs:
   - scripts/live-trial-status.py
   - scripts/live-trial-poll.py
   - scripts/live-trial-verdict.py
-source: eval-log/harness-creator/_plugin/elegant-review/20260702T160010-anti-goodhart/design-decisions.md
+source: plugins/harness-creator/ROADMAP.md
 source-tier: internal
 last-audited: 2026-07-02
 audit-trigger: quarterly
@@ -96,6 +99,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 
 # run-skill-live-trial
+
+## Purpose & Output Contract
 
 対象 skill を**別プロセスの本物の claude セッション** (tmux backend) で fresh context のまま実走させ、**期待どおり動くか (受け入れ) を確認する** acceptance harness。実走証拠 (verdict + transcript) は behavioral claim (自走完遂 / 入れ子 Skill / 対話 gate 越え / goal 達成) の唯一の収束根拠であり、静的レビューの design claim とは直交する (`../../references/orchestrate-gate-pattern.md` **Gate D**)。
 

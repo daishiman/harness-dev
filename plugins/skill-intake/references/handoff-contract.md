@@ -1,12 +1,12 @@
 ---
 name: handoff-contract
-description: harness-creator (run-skill-create) / plugin-dev-planner (run-plugin-dev-plan) への引き渡し JSON (intake.json) の正本参照と入力契約マッピング
+description: intake.json の正本参照、下流への recommendation-only handoff、将来の決定論射影に使う論理マッピング
 type: reference
 ---
 
 # ハンドオフ契約 JSON Schema
 
-`skill-intake-handoff` SubAgent の最終出力 `intake.json` の契約。**スキーマ正本は `references/intake.schema.json` (schema_version 2.0.0, `sections` 12 章構造)** であり、本ファイルは配置規約と下流 (harness-creator / plugin-dev-planner) への入力契約マッピングを定める。`run-skill-create` はこの JSON を読み込んで Phase 0-0 を簡略化または飛ばす。
+最終出力 `intake.json` の契約。**スキーマ正本は `references/intake.schema.json` (schema_version 2.0.0, `sections` 12 章構造)** であり、本ファイルは配置規約と下流への推奨境界を定める。現行 `run-skill-create` は `--intake-json` を受け取らず、`intake.json` の12章を `skill-brief.json` へ直接射影する runtime も持たない。したがって mode A-E は `next-action.json` と構想要約・公開済み Notion URLを提示して停止し、ユーザーが別アクションとして `run-skill-create` Step 1 を開始する **recommendation-only-v1** が実行契約である。以下の表は将来 converter を追加するときの論理マッピングであり、現行 runtime の自動消費を主張しない。
 
 ## ファイル配置
 
@@ -40,9 +40,9 @@ intake.json の正規スキーマは **`references/intake.schema.json` (schema_v
 - `scripts/validate-procedure-completeness.py` が `sections.6_five_axes_summary.procedure` (現状手順) の mode 別完全性 (detailed の `steps[]` / overview_fallback の `difficulty_flag`+`overview`) と、as-is フィールド (`procedure.*` / 真の課題 content) への to-be 語彙非混入 (contamination check) を検証する。結果は `validation.procedure_completeness` に格納
 - `scripts/quality_gate.py --require-procedure` が true_purpose (本質的課題) と procedure (現状手順) の両方非空を強制し、いずれか欠落・to-be 混入のまま handoff へ進めない (procedure 拡張 intake のみ発火。procedure 導入前の旧 intake は migration_warn で通す後方互換)
 
-## harness-creator 入力契約マッピング
+## harness-creator 論理マッピング (現行 runtime では未自動射影)
 
-`run-skill-create` (`plugins/harness-creator/skills/run-build-skill/SKILL.md`) は、ユーザーが intake 完了後に別途明示起動した場合に限り、本 intake.json を入力として **ビルドフロー** を駆動する。ただし Notion 指定ありの intake は、`notion-log.json.status=="published"` と `notion-publish-result.json.page_id` が `notion_target` と一致するまで Step 2 build へ進めない。intake 側は next-action 推奨を出して停止し、`run-skill-create` / `run-build-skill` を起動しない。最終成果物として **SubAgent ファイル (agent-template.md の 9 セクション固定構造)** を量産する。「9 セクション」は agent-template.md の正本構造を指し、build-steps.md の **Step 1〜9** (ビルドフロー手順) とは別軸である。両軸のマッピングを以下に明示する。
+現行の機械境界は `run-intake-next-action` が mode A-E と `harness_creator_handoff_phase="Step 1 (elicit...)"` を確定するところまでである。別途起動された `run-skill-create` は自身の `argument-hint` と `prompts/R1-elicit.md` に従い Step 1 から開始し、Notion 指定がある場合だけ `validate-intake-publish-ready.py` で公開証跡を検査する。`intake.json` 内容の自動転記、Step skip、SubAgent 9セクション量産は現行実装では保証しない。以下は converter 導入時の設計入力に限定する。
 
 ### 軸 A: SubAgent 9 セクション正本 (agent-template.md) ← intake.json 派生元
 
@@ -78,14 +78,14 @@ intake.json の正規スキーマは **`references/intake.schema.json` (schema_v
 | §7 design_decisions | `sections.7_design_decisions.adoptions` / `.output_priority_finalized` | Step 2 (kind / pair / hooks の宣言値) | SubAgent §1 Frontmatter の `pair`/`kind`/`script_refs` |
 | §8 open_questions | `sections.8_open_questions.questions[]` (blocking / defer_to) | Step 1 (defer_to=harness-creator 再尋問) | blocking=true で Step 6 ゲート停止 |
 | §9 handoff_contract | `sections.9_handoff_contract.recommended_next` (mode / skip_to_phase / reason) | Step 1 → Step 2 ジャンプ条件 | mode=fast-track で Step 1 簡略化 |
-| §10 self_updater | `sections.10_self_updater` (+ `self-update.json`) | (harness-creator スコープ外) | skill-intake 自己進化専用 |
+| §10 self_updater | `sections.10_self_updater` (+ `self-update.json`) | (harness-creator スコープ外) | `run-skill-intake` が `measure_value_realized.py` / `update_question_bank.py` を inline 起動して集約 |
 | §11 artifact_index | `sections.11_artifact_index.base_path` / `.artifacts[]` | Step 3.5 再現性トレース | skill-build-trace.json の source_docs に登録 |
 
-Step 1 が読むのは §1/§2/§3/§6/§8/§9。Step 2 は §4/§7。Step 3 は §5/§11。§0/§10 は人間レビュー専用。
+将来 converter の射影先は Step 1=§1/§2/§3/§6/§8/§9、Step 2=§4/§7、Step 3=§5/§11、§0/§10=人間レビュー用とする。現行 runtime がこれらを直接読むという意味ではない。
 
 ### 軸 A と軸 B の関係
 
-軸 B (ビルドフロー) は **手順**、軸 A (SubAgent 9 セクション) は **成果物の構造正本**。intake.json は両軸を同時に駆動するため、本契約では「intake.json → 軸 A 派生 → 軸 B の各 Step が軸 A を充填」という 2 段の責務分離を保証する。`agent-template.md` 改版時は軸 A 表を、`build-steps.md` 改版時は軸 B 表を独立に更新すること。
+軸 B (ビルドフロー) は **手順**、軸 A (SubAgent 9 セクション) は **成果物構造の設計参照**。将来 converter を実装する場合は「intake.json → 軸 A 派生 → 軸 B 各 Step」という2段にし、同時に機械テストを追加する。converter がない現行状態では本表だけを自動 handoff の根拠にしない。
 
 ## plugin-dev-planner 分岐 (mode P)
 
@@ -99,9 +99,9 @@ Step 1 が読むのは §1/§2/§3/§6/§8/§9。Step 2 は §4/§7。Step 3 は
 
 受け側契約の正本は `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md` §9 (intake.json は**任意の構造化入力**であり必須ではない)。harness-creator 分岐 (mode A-D) と同じく、intake 側は推奨を出して停止し `run-plugin-dev-plan` を起動しない。
 
-## `run-skill-elicit` との互換
+## `run-skill-elicit` との境界
 
-`run-skill-elicit` が生成する brief.json も、本スキーマの `five_axes` 部分を空オブジェクトとして許容することで吸収できる。`run-skill-create` 側は両者を区別せず読み込めるよう、本スキーマを上位互換として運用する。
+`run-skill-elicit` の `skill-brief.json` と本 `intake.json` は別 schema であり、現行 `run-skill-create` は前者を消費する。両者を同一 schema、または変換済みとして扱わない。
 
 ## 12 Agent × 出力 × Script 依存 DAG
 
@@ -161,7 +161,7 @@ flowchart TD
     end
 
     subgraph P6[Phase 6 自己進化]
-        A_self(["self-updater"])
+        A_self(["run-skill-intake inline"])
         F_self["self-update.json / question-bank.md 追記"]
         A_self --> F_self
     end

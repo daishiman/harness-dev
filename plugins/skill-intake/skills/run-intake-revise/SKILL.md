@@ -7,9 +7,12 @@ allowed-tools:
   - Edit
   - Bash
   - AskUserQuestion
-  - Skill
 kind: run
+goal_seek:
+  engine: inline
+  fork: inline
 user-invocable: true
+disable-model-invocation: true
 effect: external-mutation  # Notion ページ PATCH = 外部変更 (run-notion-intake-publish と同値)
 external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: plugins/skill-intake
@@ -37,7 +40,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: lint
     - id: IN2
       loop_scope: inner
-      text: revision 回数上限 5 / page-id 不一致 / Keychain 失敗 / cancel / self-updater 失敗 が exit code 60/51/44/2/61 に決定論的に対応し、PATCH 失敗時は output/<hint>/notion-rollback-<rev>.json を必ず保存して旧版を維持する
+      text: revision 回数上限 5 / page-id 不一致 / Keychain 失敗 / cancel / revision-log 追記または question-bank 更新失敗 が exit code 60/51/44/2/61 に決定論的に対応し、PATCH 失敗時は output/<hint>/notion-rollback-<rev>.json を必ず保存して旧版を維持する
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -110,9 +113,10 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 **出力**:
 - 更新済み Notion ページ (同一 page ID、PATCH children)
 - `output/<hint>/revision-log.jsonl` への 1 行追記 (`schemas/output.schema.json` 準拠)
+- `output/<hint>/question-bank-update.json` と `update_question_bank.py` の dry-run/apply 結果
 - 失敗時: `output/<hint>/notion-rollback-<rev>.json`
 
-**完了条件**: Gate R で `apply` 承認 → Notion PATCH 成功 → revision-log 追記済み。または cancel/上限/失敗で適切な exit code を返却。
+**完了条件**: Gate R で `apply` 承認 → Notion PATCH 成功 → revision-log 追記 → question-bank dry-run の提示。別承認が approve なら apply exit 0、decline なら `question-bank-update.json` に `status: skipped` / `skip_reason: question_bank_update_declined` を記録して停止する。どちらも改訂本体は success (exit 0)。または Gate R cancel/上限/失敗で適切な exit code を返却。
 
 ## Key Rules
 
@@ -121,6 +125,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 3. **PATCH 更新固定**: delete-then-insert ではなく block 単位 update。失敗時は rollback JSON を保存。
 4. **内部解析非開示**: `internal-analysis.json` をユーザーに直接見せない。要約済み「あなたの追加要望をこう理解しました」テキストのみ Gate R 直前に提示。
 5. **日本語成果物**: 本文・revision-log の `user_request` / `applied_changes` は日本語、schema key / CLI 引数 / page-id は英語。
+6. **question-bank は別承認**: 新規質問候補を `question-bank-update.json` の `questions[]` に明示し、`update_question_bank.py` をまず dry-run する。承認時だけ `--apply`。拒否時は同 JSON に `status: skipped` / `skip_reason: question_bank_update_declined` を追記して P8 を success で停止し、PATCH/revision-log を巻き戻さない。
 
 ## ゴールシーク実行
 
@@ -141,10 +146,11 @@ Notion ページの新規作成は URL 変更とリンク断絶を招くため�
 - [ ] `apply` の場合 `render-intake-final.py` で正本再生成 → `intake_publish_pipeline.py --revise --page-id <既存 ID>` で PATCH 更新した
 - [ ] PNG / mermaid の全揃いを確認し、欠落時は旧版維持 + rollback JSON を保存した
 - [ ] `output/<hint>/revision-log.jsonl` に `{revision_no, timestamp, target_section, user_request, applied_changes, notion_page_url}` を 1 行追記した
-- [ ] `skill-intake-self-updater` 再起動で question-bank に「足りなかった質問」を追記した
+- [ ] 「足りなかった質問」を `output/<hint>/question-bank-update.json` の `questions[]` に記録し、`update_question_bank.py` dry-run 結果を提示した
+- [ ] question-bank 別承認が approve なら `update_question_bank.py --apply` exit 0 と追記数を確認。decline なら `question-bank-update.json` に `status: skipped` / `skip_reason: question_bank_update_declined` を記録し、P8 success で停止した
 - [ ] 内部解析 (`internal-analysis.json`) をユーザーに直接見せていない
 
-未充足項目を特定 → 必要 script (`analyze_user_intent.py` / `render-intake-final.py` / `intake_publish_pipeline.py`) を該当ステップから起動 → revision-log 更新 → 再度チェックリストで自己評価、を反復する。固定手順は持たない。
+未充足項目を特定 → 必要 script (`analyze_user_intent.py` / `render-intake-final.py` / `intake_publish_pipeline.py` / `update_question_bank.py`) を該当ステップから起動 → revision-log 更新 → 再度チェックリストで自己評価、を反復する。固定手順は持たない。
 
 ### 参考: 主要 script 起動例
 
@@ -156,6 +162,15 @@ python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/anal
 python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/render-intake-final.py output/<hint>
 
 # Notion PATCH mutation: construct <MUTATION_ARGV_JSON> with the resolved intake_publish_pipeline.py path and --intake/--manifest/--revise/--page-id argv; pass it only to the canonical receipt flow above.
+
+# question-bank 追記候補の機械プレビュー（questions=[] でも実行）
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/update_question_bank.py --diff output/<hint>/question-bank-update.json --hint <hint>
+
+# 上の dry-run 結果を提示し、question-bank 変更を別承認された場合だけ実行
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/update_question_bank.py --diff output/<hint>/question-bank-update.json --hint <hint> --apply
+
+# 別承認を拒否した場合は --apply せず、question-bank-update.json へ
+# {"status":"skipped","skip_reason":"question_bank_update_declined"} を追記して exit 0 で停止
 
 # --dry-run 指定時は Notion API 呼び出しを行わず差分のみ表示
 ```
@@ -169,6 +184,7 @@ Step/Gate の機械可読定義は `workflow-manifest.json` (P1-load / P2-hear /
 3. **回数上限超過**: 5 回を超えたら exit 60 (新規 hint へ移行)。リセットしない。
 4. **cancel は完全巻き戻し**: Gate R cancel で exit 2、既存ページ不変、ローカル中間生成物も巻き戻す。
 5. **rollback JSON**: PATCH 失敗時は `output/<hint>/notion-rollback-<rev>.json` を必ず保存。次回実行で参照する。
+6. **question-bank の暗黙更新禁止**: Gate R は Notion PATCH の承認であり、question-bank 更新の承認を兼ねない。dry-run と別承認なしの `--apply` は実行しない。別承認を拒否しても改訂本体を失敗/巻き戻しにしない。
 
 ## Additional Resources
 
@@ -176,14 +192,17 @@ Step/Gate の機械可読定義は `workflow-manifest.json` (P1-load / P2-hear /
 - `schemas/output.schema.json` — revision-log.jsonl の 1 行スキーマ
 - `prompts/R1-main.md` — R1 責務プロンプト (7 層 Markdown、ヒアリング+PATCH 制御)
 - `references/resource-map.yaml` — リソース一覧 (machine-readable)
+- `../../scripts/update_question_bank.py` — question-bank 追記候補の dry-run / 明示承認後 apply
 
 ## エラー処理 (exit code)
 
+`revision-log` 追記失敗と question-bank dry-run/apply 失敗はどちらも **exit 61** とし、P7/P8 から再開する。
+
 | exit | 意味 | 対処 |
 |---|---|---|
-| 0 | 正常反映 | revision-log に追記済み |
+| 0 | 正常反映 | revision-log に追記済み。question-bank 別承認拒否も skip_reason 記録後は正常停止 |
 | 2 | Gate R で cancel | 既存ページ不変、ローカル変更も巻き戻し |
 | 44 | Keychain Notion トークン取得失敗 | `keychain-setup.md` 参照 |
 | 51 | Notion ページ ID 不一致 | 新規 hint で `/intake` を案内 |
 | 60 | revision 回数上限超過 (>5) | 新規 hint へ移行 |
-| 61 | self-updater 失敗 (revision-log 追記失敗 / question-bank 更新失敗等) | `output/<hint>/revision-log.jsonl` を確認し手動修復、再実行 |
+| 61 | revision-log 追記または `update_question_bank.py` dry-run/apply 失敗 | `revision-log.jsonl` と `question-bank-update.json` を確認し、修復後に P7/P8 から再実行 |
