@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P03-x-04",
+  "covered_task_ids": [
+    "P03-x-04"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "C46-C59 の 14 件全てに責務 component が一意に割り当たった",
+      "method": "RESOLUTION-R21.md の表を機械抽出し行数と id を照合",
+      "result": "14 行 / 要件 id C46..C59 が過不足なく出現。owner は C12=9 / C23=2 / C01=1 / C16=1 / C22=1"
+    },
+    {
+      "claim": "各要件に検証手段 (script|test) が割り当たった",
+      "method": "表の検証手段列を全行確認",
+      "result": "全 14 行に script か test と、判定を持つ component の判定 id (E-FOCUS-THEME / SC-09 / NAR-07 等) が記載"
+    },
+    {
+      "claim": "component を新設していない",
+      "method": "component-inventory.json の component 件数を計数",
+      "result": "23 件で不変"
+    },
+    {
+      "claim": "presentation_order が prior_knowledge から決定論導出される",
+      "method": "briefs 全体の presentation_order / prior_knowledge 参照を掃き出し",
+      "result": "presentation_order 53 件・prior_knowledge 21 件。導出は C12 が持ち provenance.presentation_order_source で explicit/derived を区別。C23 は導出せず確定値を受け取るだけ"
+    },
+    {
+      "claim": "C59 の所要時間フィールドが二重化していない",
+      "method": "競合しうる時間フィールド名 5 種を掃き出し",
+      "result": "duration のみ 31 件。time_allocation / time_budget / estimated_minutes は 0 件"
+    },
+    {
+      "claim": "新部品が config/handout-parts.json 側の登録で処理され散文へ id を列挙していない",
+      "method": "C11 ブリーフの B17 記述を文脈確認",
+      "result": "B17 ハンズオン手順は部品テーブルへの登録として追加。B16 と同じく独立 component にしない扱いを明記。先回り Q&A は既存 B10 を器として再利用"
+    },
+    {
+      "claim": "成果物 RESOLUTION-R21.md の存在",
+      "method": "ファイル実在確認",
+      "result": "20474 bytes / 14 行の表と設計判断の根拠を記載"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定した JSON 形式の最終メッセージを返さず idle 通知のみだった (P03-x-02 / P03-x-03 と同一挙動)。判定は dispatcher の独立掃き出しによる"
+    },
+    {
+      "kind": "scope-note",
+      "detail": "C52 の文字数上限をテーマトークン (assets/tokens/<theme>.json の text_limits.block_body_max_chars 既定 400) に置き、スキーマ owner を C11 とした。要件の『テーマ設定で変更できる』を満たすが、C12 の判定が C11 所有のトークンを読む形になるため P04 のテストで両者の整合を固定する必要がある"
+    }
+  ]
+}

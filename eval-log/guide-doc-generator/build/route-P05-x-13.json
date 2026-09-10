@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-13",
+  "covered_task_ids": [
+    "P05-x-13"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "完全マーカー付き HTML の正常系 extract で W-EXTRACT-CATALOG-DRIFT が 1 行も出ない",
+      "method": "当方が render 済み HTML に対し extract-handout-config.py を実行し stderr を W-EXTRACT-CATALOG-DRIFT で grep -c した",
+      "result": "pass (0 行。stderr に出るのは W-EXTRACT-OPTIONAL /theme の 1 件のみで、これは別事象)"
+    },
+    {
+      "claim": "警告条件そのものを削除して黙らせていない",
+      "method": "当方が extract-handout-config.py のスイートを実行し、選んだ解消手段の記録の所在を確認した",
+      "result": "pass (tests/extract-handout-config.py 152 件が緑。理由の記録は plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md にある)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "resolution-doc-not-re-read",
+      "detail": "RESOLUTION-P05-x-13.md の存在は確認したが、記された解消手段 (class_map への 4 行追記か検査の片方向化のいずれか) と実装の一致は当方が読み合わせていない。警告が消えている事実と記録の存在までが実測範囲である"
+    }
+  ]
+}

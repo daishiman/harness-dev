@@ -235,7 +235,11 @@ def test_build_script_route_report_omits_covered_task_ids_without_graph(tmp_path
 
     assert rc == 1
     assert payload["ok"] is False
-    assert any("current handoff" in error for error in payload["errors"])
+    # graph 不在は「読めなかった」として落ちる。plan_dir を validator へ渡す前は
+    # 「plan_dir/repo_root が無く structured evidence を検証できない」という
+    # 経路そのものの不成立で落ちていたが、それは検査が成立していない状態であり
+    # graph 不在の検出ではなかった。
+    assert any("task_graph_ref" in error for error in payload["errors"]), payload["errors"]
 
 
 def test_build_script_route_rejects_script_path_build_target_mismatch(tmp_path, monkeypatch, script_route_builder):

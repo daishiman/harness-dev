@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "role": "読者に見える列挙値の表示ラベル語彙、および前提コネクタ名語彙の単一正本 (R25 / 2026-08-18 追補・goal-spec C74/C75)",
+    "owner_component": "C12 validate-handout-config.py",
+    "readers": [
+      "C11 render-handout.py (前提カードと表示ラベルの参照描画)",
+      "C18 verify-handout-language.py (E-ENUM-RAW の変換対応表)",
+      "C12 validate-handout-config.py (E-CONNECTOR-UNKNOWN の語彙妥当性)",
+      "C20 extract-handout-config.py (round-trip では id だけを読み戻し、ラベルは復元しない)"
+    ],
+    "rule": "enum の表示ラベルとコネクタ名をこのファイル以外の場所へ書かない。script (C11/C12/C18/C20) は日本語を焼かず、必ずこのファイル経由で引く。追加・改名はこのファイルの変更点として閉じる",
+    "why_new_file": "attainment_level には従来から表示語彙が存在しなかった。既存の handout-purposes.json (doc_type 語彙・C23 owner) や handout-sections.json (section_kind 語彙・C12 owner だが別ドメイン) のいずれにも同居させない。connector 語彙も同じ性質 (読者向け表示ラベルを持つ語彙) のためここへ集約する",
+    "plan_source": "plugin-plans/guide-doc-generator/briefs/config/handout-vocabulary.json",
+    "decision_sources": [
+      "plugin-plans/guide-doc-generator/improvement/hero-card-decision.json#decision.raw_enum_leak",
+      "plugin-plans/guide-doc-generator/goal-spec.json (C74 / C75)"
+    ]
+  },
+  "schema_version": 1,
+  "hero_card_labels": {
+    "note": "冒頭カード (hero-card) の見出し語。並び順はここでなく config/handout-visual-policy.json#opening.hero_card_fields.order が持つ (順序と表記を同じ場所に置くと、片方を直したつもりでもう片方が動く)。C11 はこの表を引いて描画し、日本語を 1 文字も焼かない",
+    "field_semantics": {
+      "field": "構成データの文書直下フィールド名 (data-hb-field の値と同じ)",
+      "label": "カードの見出しとして表示する語。見出しなので体言止めで 8 字以内"
+    },
+    "entries": [
+      {"field": "goal", "label": "ゴール"},
+      {"field": "purpose", "label": "目的"},
+      {"field": "background", "label": "背景"},
+      {"field": "lead", "label": "この資料の要点"}
+    ],
+    "closed": false,
+    "why_not_closed": "冒頭に置くフィールドは order 側の変更で増減する。順序正本に無いフィールドの label がここに残っていても描画されない (order が描画対象の唯一の決定者)"
+  },
+  "hero_list_headings": {
+    "note": "冒頭の各箇条リストに付ける見出し。見出しの無い ul が縦に何本も積まれると、読み手は何の一覧を読んでいるのか分からないまま行を読むことになる (利用者要求 R9)",
+    "field_semantics": {
+      "field": "構成データの配列フィールド名",
+      "label": "リストの見出しとして表示する語。8 字以内"
+    },
+    "entries": [
+      {"field": "goal_chips", "label": "達成目標"},
+      {"field": "focus_theme", "label": "扱うテーマ"},
+      {"field": "target_tasks", "label": "対象業務"},
+      {"field": "attainment_level", "label": "到達段階"},
+      {"field": "prerequisite_connectors", "label": "前提となる外部接続"},
+      {"field": "must_remember", "label": "覚えておくこと"},
+      {"field": "no_need_to_remember", "label": "覚えなくてよいこと"}
+    ],
+    "closed": false,
+    "why_not_closed": "冒頭に置く箇条リストは構成データのスキーマ側で増減する。ここに無いフィールドを C11 が描こうとしたら見出しを引けずに落ちる (無題の ul を黙って出す方が事故になる)"
+  },
+  "attainment_level_labels": {
+    "note": "config.attainment_level (enum) → 読者向け表示ラベルの対応表。C18 の ENUM-01 (E-ENUM-RAW) がこの対応表と可視テキストを突き合わせる。対応の無い enum 値が構成データに現れたら C12 が E-ENUM-VOCAB-INCOMPLETE (自己整合検査) で止める",
+    "field_semantics": {
+      "enum": "schemas/handout-config.schema.json の $defs.attainment_level.enum と 1:1 で一致すること",
+      "label": "表示ラベル。micro_copy.roles の秩序に準じ短く言い切る (目安: 14 字以内)"
+    },
+    "entries": [
+      {"enum": "overview", "label": "概要が分かる"},
+      {"enum": "operable", "label": "実務で使える"},
+      {"enum": "reproducible", "label": "自分で再現できる"},
+      {"enum": "skill-authoring", "label": "自分でスキルを書ける"}
+    ],
+    "closed": true,
+    "why_closed": "attainment_level_labels は schema の attainment_level enum の完全な写像でなければならない (欠落があると E-ENUM-RAW が『変換のしようが無い』違反を出す)。値を増やすときは schema の enum とここを同時に変更する"
+  },
+  "connectors": {
+    "note": "R25/REQ-9 (goal-spec C75)。前提コネクタ宣言 (構成データの prerequisite_connectors[]) が参照する id とその表示ラベルの語彙。3 種から始まるが、この entries への追記だけで拡張できる (script へ列挙値を焼かない)",
+    "field_semantics": {
+      "id": "prerequisite_connectors[].connector が参照する値。^[a-z][a-z0-9-]*$",
+      "label": "冒頭『前提』カードに表示する表記。micro_copy.roles.caption の秩序に準じ 32 字以内。製品名の大文字小文字はベンダー表記に従う (kintone は小文字始まりが正式)"
+    },
+    "entries": [
+      {"id": "google-drive", "label": "Google Drive"},
+      {"id": "onedrive", "label": "OneDrive"},
+      {"id": "kintone", "label": "kintone"}
+    ],
+    "closed": false,
+    "why_not_closed": "利用者指定は『今回接続するのは Google Drive、OneDrive、kintone の 3 つ』であり、将来の接続先追加を排除する指示ではない。closed=false は『未知の id はこの語彙への追記のみで受理できる』という拡張容易性の宣言であって、実行時の許容範囲を緩めるものではない。C12 の E-CONNECTOR-UNKNOWN は依然として entries に無い id を機械的に拒む"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C04-01",
+  "reason": "上部ナビの視覚設計が字数上限のみで閉じていない。micro_copy.roles の role=label が nav_item に max_chars 14 を課しているが、超過時の扱い (折返し / 省略記号 / ツールチップ) と項目数が多いときの段組・横スクロールが script-brief-C11.json にも handout-visual-policy.json にも定義されていない (SubAgent が 折返し/省略/ellipsis/overflow/段組 を grep しナビ対象のヒット 0 件)。利用者の R11 指摘 (スクリーンショット付きの『上部を見やすくしてください』) は字数だけでは閉じない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C04-01.json",
+  "proposed_node": {
+    "id": "P02-nav-overflow-design",
+    "title": "ナビ項目の字数超過と項目過多に対する描画時の破綻回避を定める",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+    "acceptance_criterion": "script-brief-C11.json のナビ描画契約が (1) ラベルが 14 字上限を超えた場合の扱い (2) 項目数が多い場合の折返しまたは横スクロール、の 2 点を決定論的に定め、いずれも外部依存なしに実現できる形で記述されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

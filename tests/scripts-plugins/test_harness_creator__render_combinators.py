@@ -439,6 +439,7 @@ def test_semantic_subagent(base_text):
 def test_semantic_knowledge(base_text):
     out = MOD.apply_semantic_patch(base_text, "with-knowledge.patch")
     assert "knowledge_loop:" in out
+    assert "contract_version: 1" in out
     assert "## ナレッジループ" in out
 
 

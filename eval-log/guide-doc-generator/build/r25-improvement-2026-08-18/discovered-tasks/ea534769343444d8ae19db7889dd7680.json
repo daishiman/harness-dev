@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c11-img-alt-attribute",
+  "reason": "Renderer.image() は self.ctx[\"assets\"].get(block.get(\"asset_id\")) or {} で未解決の asset を空 dict にし、alt = block.get(\"alt\") or asset.get(\"alt\") or \"\" で空文字へ落として描画を続ける。空 alt の <img> は装飾画像の宣言として C17 の a11y ゲートを通過するため、素材の解決失敗が緑のまま出力される (黙った免除)。C12 が非空 alt を必須にしているので通常経路では到達しないが、レンダラ単体起動や C12 を通さない経路では到達する。asset_id 未解決は exit 1 とし、data_uri / caption / role の空落ちも同じ扱いにする",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c11-img-alt-attribute.json",
+  "proposed_node": {
+    "id": "P05-x-139-render-unresolved-asset-id",
+    "title": "render-handout.py の asset_id 未解決を fail-closed にする",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/render-handout.py"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

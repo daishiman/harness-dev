@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C20-01",
+  "reason": "正常系でも stderr に W-EXTRACT-CATALOG-DRIFT が B16/B17/IMG/DIAGRAM の 4 行出続ける。ブリーフ heuristic_fallback.class_map がこの 4 部品の行を持たず、双方向自己整合検査が毎回『カタログにあって鍵が無い』を報告するため。常時出る警告は警告として機能しなくなる",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+  "proposed_node": {
+    "id": "P05-x-13",
+    "title": "C20 の常時発火する catalog-drift 警告を解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs",
+    "acceptance_criterion": "完全マーカー付き HTML に対する extract-handout-config.py の正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 1 行も出ない。解消手段は class_map への 4 行追記か検査の片方向化のいずれかで、選んだ理由が記録されていること。警告条件そのものを削除して黙らせる解は不可",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-13.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

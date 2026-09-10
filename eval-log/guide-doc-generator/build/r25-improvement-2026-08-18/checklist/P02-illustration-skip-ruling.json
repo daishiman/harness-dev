@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-illustration-skip-ruling",
+  "covered_task_ids": ["P02-illustration-skip-ruling"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+  "verified_by": [
+    {
+      "claim": "編集前は裁定がどこにも存在しなかった",
+      "method": "grep -c 'skipped' を decision ファイルと C01/C07/C12 の 3 brief に対して実測",
+      "result": "pass (不在を実測): decision=0 / C01=3 / C07=3 / C12=0。C01 と C07 の 'skipped' は draft_first.skipped_in_draft (第 1 稿で回さない工程) と C21 の status=skipped の話で、E-IMAGE-ABSENT の充足判定に触れた記述は 1 件も無かった"
+    },
+    {
+      "claim": "裁定が 1 箇所で明文化された",
+      "method": "decision.skipped_image_counting (CR-IMG-SKIP-COUNT) を新設し、owner に単一正本であることと 3 brief が複製しない旨を宣言",
+      "result": "pass: ruling='数える。E-IMAGE-ABSENT は構成データ段で宣言された IMG 部品の件数だけを数え、実体が生成できたかは判定に入れない'"
+    },
+    {
+      "claim": "裁定の根拠が時系列の実測に基づく",
+      "method": "C12 の起動時点 (C01 R2-design 直後) と C21 の起動時点 (R3-render) を skill-brief-C01.json の責務順で確認",
+      "result": "pass: C12 は C21 より前に走るため skip の発生を観測できない。skip を減算する規則は測定不能な対象を数える契約になるため採らない、という導出が成立"
+    },
+    {
+      "claim": "緑が何を保証しないかが書かれている",
+      "method": "therefore_not キーの読解",
+      "result": "pass: 'E-IMAGE-ABSENT が緑であることを《各セクションに画像がある》の証明として読まない — 緑が保証するのは宣言の存在だけ' と明記"
+    },
+    {
+      "claim": "C01/C07/C12 の 3 brief が裁定を参照していること",
+      "method": "grep -c 'visual-per-section-decision' を 3 brief に対して実測",
+      "result": "fail: C01=2 / C12=2 / C07=0。C07 だけが decision ファイルへの参照を 1 件も持たない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02skip-01",
+      "level": "blocking-for-release",
+      "summary": "AC 後半が未達。command-brief-C07.json は visual-per-section-decision.json を 1 度も参照せず E-IMAGE-ABSENT の語も持たないため、C07 の fail-soft 規約が本裁定の受け皿であることが C07 側から辿れない。write_scope 外のため未修正。discovered-task P02-c07-img-skip-ruling-ref として emit 済み (form: discovered-tasks/30b3c001fb4241afa6b767006f76d311.json)"
+    },
+    {
+      "id": "F-P02skip-02",
+      "level": "blocking-for-release",
+      "summary": "裁定の結果として構造的な穴が確定した: 描画後の HTML に対して『IMG 部品が宣言されているのに img 実体が無い』を機械判定するゲートが存在しない。実体欠落の唯一の受け皿である C07 の提示規約は人間への申告であって関門ではないため、C07 を経由しない経路 (script 直叩き・再生成) では乖離が黙って通る。known_gap として decision へ記録し、discovered-task P02-img-realization-gate-owner として担い手の割当を emit 済み (form: discovered-tasks/875bd443a918464f902c742a71e7ebf2.json)"
+    },
+    {
+      "id": "F-P02skip-03",
+      "level": "carry-forward",
+      "summary": "C01 と C12 の参照は decision ファイル単位であり、新設した skipped_image_counting キーを名指ししていない。ファイル内で裁定が増えるほど『どの裁定を参照しているか』が曖昧になるため、release でキー単位の参照へ寄せる候補"
+    }
+  ]
+}

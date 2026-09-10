@@ -1,0 +1,474 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator",
+    "reviewed_at": "2026-08-20T01:20:00+09:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "単一pluginのhappy pathは通るが、複数plugin・stale hook・install状態では公称契約と実状態が一致しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "critical",
+          "bucket": "dependency-loop",
+          "description": "共有marketplaceで対象entryを末尾へ移動するため複数pluginのcheckが同時収束しない。",
+          "recommended_intervention": "既存位置を保って置換し、2+ plugin fixed-point testを追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+            "line": 74
+          }
+        }
+      ],
+      "score": 0.42
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "共有marketplaceの各plugin checkが同時に収束するという要件から、対象entryの末尾移動は不成立と導ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "生成済みCodex interfaceをdesired入力へmergeし、削除済みfieldが残留する。",
+          "recommended_intervention": "明示override sidecarだけを入力にし、生成物を入力にしない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+            "line": 43
+          }
+        }
+      ],
+      "score": 0.34
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "25件の既存testがPASSしても、2 pluginと既存hookの最小反例でfalse-greenを再現した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "description": "既存hooks.jsonがあるとClaude inline hook変更を比較せずnoopになる。",
+          "recommended_intervention": "明示Codex overrideが無ければ毎回投影し、stale update testを追加する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+            "line": 114
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "false-greenの共通原因は、生成済み出力を次回のdesired inputとして再利用する暗黙所有権にある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.43
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "生成から新規threadでの利用まで深掘ると、install・enable・trust・再読込の実行契約が欠ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.46
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "manifest、marketplace、install、trust、releaseを分解すると責務境界はあるがwriterが重複する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "interface/hook/versionは重複所有、明示install receiptとfleet checkは欠落している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.38
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "create/update×local/Gitの4象限で、artifact upsertのみ共通化されinstall refreshが未分岐である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.33
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "apply後check、release、optional installの順序が単一の機械フローとして閉じていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "複数fileのatomic writeはtransactionではなく後段失敗で部分適用になる。",
+          "recommended_intervention": "全出力をstageし、失敗時rollbackするtransactionを追加する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/harness-creator/scripts/sync-plugin-platforms.py",
+            "line": 198
+          }
+        }
+      ],
+      "score": 0.35
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "根本原因はgenerated-output-as-input、shared aggregateのper-item末尾化、lifecycle stateのprose化である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.4
+    }
+  ],
+  "total_score": 0.41600000000000004
+}

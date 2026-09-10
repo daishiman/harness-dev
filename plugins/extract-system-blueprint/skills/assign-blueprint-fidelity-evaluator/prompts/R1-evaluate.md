@@ -49,7 +49,7 @@
 | field | type | required | 説明 |
 |---|---|---|---|
 | --draft-dir | path | yes | C01 draft ディレクトリ (blueprint.json / 章別 md / design-tokens.json / sink-status.json / request ledger) |
-| C03-C06/C13 prompt | path | yes | `$CLAUDE_PLUGIN_ROOT/agents/*.md` の実プロンプト (anti-overfit 構造検査) |
+| C03-C06/C13 prompt | path | yes | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/*.md` の実プロンプト (anti-overfit 構造検査) |
 
 ### 2.4 出力契約
 - schema: `schemas/verdict.schema.json` の assessment サブセット (`findings[]` / `observation_completeness` / `load_policy_result` / `gate_results` / `recount` / `reconstruction`)。
@@ -61,12 +61,12 @@
 
 | id | path | when_to_read |
 |---|---|---|
-| 共有ゲート C10 | `$CLAUDE_PLUGIN_ROOT/scripts/mermaid-validate.py` | 5 種 Mermaid 網羅の再検証時 |
-| 共有ゲート C11 | `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py --check-screens` | screenshot/layout/palette 孤児/pending 無言欠落の再検証時 |
+| 共有ゲート C10 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/mermaid-validate.py` | 5 種 Mermaid 網羅の再検証時 |
+| 共有ゲート C11 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py --check-screens` | screenshot/layout/palette 孤児/pending 無言欠落の再検証時 |
 | 非共有再計数 | `scripts/recount-palette-orphans.py` | palette 孤児を独立経路で数え直す common-mode 破り時 |
 | verdict 発行 | `scripts/emit-verdict.py` | assessment → draft_hash 束縛 receipt を書くとき |
 | 採点観点 | `references/evaluation-rubric.md` | 三値排他/被覆/anti-overfit/ペルソナの詳細判定時 |
-| blueprint 契約 | `$CLAUDE_PLUGIN_ROOT/schemas/system-blueprint.schema.json` | top-level 必須項目/最小スカフォールド逆テスト時 |
+| blueprint 契約 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-blueprint.schema.json` | top-level 必須項目/最小スカフォールド逆テスト時 |
 
 ### 3.2 外部ツール / API
 - Python 3 (共有ゲート・再計数・発行 script)。外部 HTTP なし。外部 API を叩かない (構造/文書比較のみ)。
@@ -133,4 +133,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`{{draft_dir}}` の `blueprint.json`・章別 md・`design-tokens.json`・`sink-status.json`・request ledger と、`$CLAUDE_PLUGIN_ROOT/agents/` の C03-C06/C13 実プロンプトを Read (改変禁止・read-only) せよ。次を実施する: (1) 共有ゲート `mermaid-validate.py --docs-dir {{draft_dir}}` と `doc-emit.py --check-screens --extraction {{draft_dir}}/blueprint.json --out-dir {{draft_dir}}` を再実行し exit code を `gate_results` へ記録。(2) 非共有 `recount-palette-orphans.py --blueprint {{draft_dir}}/blueprint.json` を実行し `recount`(orphan_count/observed_count/palette_count/agrees_with_gate=C11 判定との一致) を記録。(3) 三値排他・レンズ主張の evidence_refs+confidence 接地と fact 非混入・ペルソナ偽装・verbatim/content-intent/essence/tech/nonfunctional/R5 被覆・実名 prompt 構造 (anti-overfit)・最小スカフォールド逆テストを判定し `findings[]`(id/severity/loc/reason/criterion=CL-1..CL-10)・`observation_completeness`・`load_policy_result`・`reconstruction` を組み立てる。(4) これら 6 キーの assessment JSON を一時ファイルへ書き、`emit-verdict.py --assessment <file> --draft-hash <sink-status.json の draft_hash> --out-dir ${ESB_VERDICT_DIR:-.esb-verdict}` で draft_hash 束縛 verdict を発行する。出力は verdict サマリのみ、前置き禁止。判定は `schemas/verdict.schema.json` と `references/evaluation-rubric.md` に準拠する。
+`{{draft_dir}}` の `blueprint.json`・章別 md・`design-tokens.json`・`sink-status.json`・request ledger と、`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/` の C03-C06/C13 実プロンプトを Read (改変禁止・read-only) せよ。次を実施する: (1) 共有ゲート `mermaid-validate.py --docs-dir {{draft_dir}}` と `doc-emit.py --check-screens --extraction {{draft_dir}}/blueprint.json --out-dir {{draft_dir}}` を再実行し exit code を `gate_results` へ記録。(2) 非共有 `recount-palette-orphans.py --blueprint {{draft_dir}}/blueprint.json` を実行し `recount`(orphan_count/observed_count/palette_count/agrees_with_gate=C11 判定との一致) を記録。(3) 三値排他・レンズ主張の evidence_refs+confidence 接地と fact 非混入・ペルソナ偽装・verbatim/content-intent/essence/tech/nonfunctional/R5 被覆・実名 prompt 構造 (anti-overfit)・最小スカフォールド逆テストを判定し `findings[]`(id/severity/loc/reason/criterion=CL-1..CL-10)・`observation_completeness`・`load_policy_result`・`reconstruction` を組み立てる。(4) これら 6 キーの assessment JSON を一時ファイルへ書き、`emit-verdict.py --assessment <file> --draft-hash <sink-status.json の draft_hash> --out-dir ${ESB_VERDICT_DIR:-.esb-verdict}` で draft_hash 束縛 verdict を発行する。出力は verdict サマリのみ、前置き禁止。判定は `schemas/verdict.schema.json` と `references/evaluation-rubric.md` に準拠する。

@@ -1,0 +1,368 @@
+{
+  "component_id": "C16",
+  "component_kind": "script",
+  "name": "verify-handout-selfcontained.py",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py",
+  "purpose": "生成された単一 HTML が外部世界を一切参照せずに閉じていること (C60: JavaScript・CSS・画像・フォント・添付の全てが HTML 内に実体として同梱され、取得を発生させ得る参照は data: 以外 0 件。この 1 ファイルを配置するだけで資料が成立する)、装飾が絵文字ではなく統一様式の inline SVG アイコンで構成されていること (絵文字 0 件・アイコン様式適合・未使用 symbol 0 件)、sticky ナビの href と section id が 1:1 で解決すること、および図表・グラフの枠が空でないこと (R21 C55。外部参照ゼロを満たしたまま中身だけが欠落する欠陥クラスを独立に捕える) を、Python 標準ライブラリのみで決定論的に検査する fail-closed ゲート。判定対象は生成 HTML 1 ファイルの静的内容のみで、ネットワークアクセスは行わない (参照の実在確認ではなく参照の不在確認であるため不要)",
+  "argv": [
+    "--html FILE (必須): 検査対象の生成 HTML。1 実行 1 ファイル。ディレクトリ指定やグロブは受け付けない (対象集合の決定を呼び出し側へ寄せ、本 script を単純な述語に保つ)",
+    "--json-report FILE (任意): 機械可読の検査結果 JSON をこのパスへ書き出す。未指定時は一切ファイルを書かない"
+  ],
+  "stdin": "使用しない。stdin から HTML を読む経路は設けない (--json-report の相対解決や違反行番号の再現に入力ファイルパスが要るため、パス指定を必須とする)",
+  "stdout": "人間可読の検査サマリ。1 行目に `RESULT: PASS|FAIL <html_path>`、以降 detection_id ごとに `<detection_id> <PASS|FAIL> checked=<件数> violations=<件数>` を固定順 (SC-01..SC-11) で 1 行ずつ出力する。PASS/FAIL いずれでも同じ行構成を出す (差分比較を容易にするため)",
+  "stderr": "違反 1 件につき 1 行、タブ区切りで `FAIL<TAB><detection_id><TAB>line:col<TAB><message><TAB><evidence>`。evidence は該当箇所を最大 120 文字へ切り詰めた抜粋 (絵文字違反は `U+XXXX` のコードポイント列も併記)。使用法エラー・入出力エラーは `ERROR<TAB><reason>` の 1 行で出す。stdout は判定サマリ、stderr は個別違反という分担を守り、両者を混ぜない",
+  "exit_codes": {
+    "0": "全 detection (SC-01..SC-11) が違反 0 件。自己完結性 (SC-01..SC-04)・絵文字ゼロ (SC-05)・アイコン様式 (SC-06)・symbol 整合 (SC-07)・アンカー整合 (SC-08)・図表の中身 (SC-09)・同梱閉包 (SC-10)・main セクションの画像実体 (SC-11) のすべてを満たす",
+    "1": "1 件以上の違反を検出した (品質判定としての FAIL)。加えて SC-06 で様式検査の対象分類が確定できない `<svg>` を見つけた場合もここに落とす (分類不能を pass へ畳まない)",
+    "2": "検査そのものが成立しなかった。引数不正、--html の不在・読み取り不可、UTF-8 としてデコード不能、HTML パーサが回復不能な例外を出した、--json-report の書き込み失敗。1 (品質 FAIL) と 2 (検査不能) を混同させない"
+  },
+  "write_scope": [
+    "--json-report で明示指定されたファイル 1 点のみ"
+  ],
+  "single_writer": "--json-report のパス。指定が無ければ本 script は一切ファイルを書かない。検査対象 HTML を書き換えることは絶対にしない (検査器と修正器を分離し、ゲートの冪等性を保つ)",
+  "stdlib_only": true,
+  "dependencies": {
+    "reads": [
+      "--html で指定された生成 HTML (テキスト・UTF-8)"
+    ],
+    "invoked_by": [
+      "C01 run-handout-build (生成後の品質ゲート段)",
+      "C09 verify-handout (手動ゲート実行。4 面ゲートの 1 面として起動され、判定は C09 が集約する)",
+      "C10 guard-handout-external-ref (PostToolUse フック経路。Write|Edit の直後に、資料出力ディレクトリ配下の *.html と同ディレクトリの handout-config.json に対してのみ発火する。C10 は本 script の判定規則 (canonical_rules) を再実行して結果を受け取る側であり、独自の判定規則を持たない。pre-write hook 経路ではない)",
+      "C11 render-handout.py (module import 経由。algorithm 23 の出力直前の自己検査で scan_external_references(html) を呼ぶ)",
+      "C15 build-icon-sprite.py (module import 経由。アイコン名と title の絵文字判定を scan_emoji(text) へ委譲する。P04-x-05 の G-03 により C15 は独自の Unicode 範囲を一切持たず、本 script が解決できない場合は自前判定へ退避せず exit 2 とする契約。inventory C16 の couples_with: [C15] はこの関係を指す)",
+      "P06 のテスト実行"
+    ],
+    "invokes": []
+  },
+  "algorithm": [
+    "1. argparse で --html / --json-report を解析する。--html 不在・不正引数は exit 2",
+    "2. --html を UTF-8 (errors='strict') で読み込む。デコード失敗は exit 2。生文字列 raw と、行頭オフセット表 (line:col 算出用) を保持する",
+    "3. html.parser.HTMLParser を継承した収集器で 1 パス走査し、(a) 開始/自己終了タグの (tagname, attrs, position) 列 (b) text node の (text, position) 列 (c) <style> 要素の内容 (d) <script> 要素の内容 (e) <svg>/<symbol>/<use> の入れ子関係 を集める。convert_charrefs=True とし、数値文字参照経由の絵文字混入を復号後の文字列で捕捉する",
+    "4. SC-01/SC-02/SC-03/SC-04 を属性値・<style> 内 url()/@import・<script> 本文に対して評価する",
+    "5. SC-05 を raw 全体 (復号後テキストと属性値を含む再構成文字列) に対してコードポイント単位で評価する",
+    "6. SC-06/SC-07 を svg/symbol/use の収集結果に対して評価する",
+    "7. SC-08 を nav 内 a[href^='#'] と文書内 id 集合に対して評価する",
+    "7b. SC-09 を data-hb-part が IMG / DIAGRAM の要素と <figure> 要素に対して評価する (R21 C55)。手順 3 の収集器が保持する入れ子関係をそのまま使い、対象要素ごとに配下の img@src の data URI 実体長と svg 配下の描画要素数、可視テキストのプレースホルダ一致を判定する。追加の走査パスは設けない",
+    "7c. SC-10 を手順 3 が集めたタグ列と <style> 内容に対して評価する (C60)。手順 4 と同じ収集結果を使い追加の走査パスは設けない。判定は『data: で始まるか』の単一述語で行い、スキームの正規表現による外部判定を再利用しない (再利用すると denylist へ退行する)",
+    "8. 違反を detection_id・出現位置の昇順に並べて stderr へ、サマリを stdout へ出す。--json-report があれば {html, result, detections:[{id, status, checked, violations:[{line, col, message, evidence, codepoints}]}], summary} を書く",
+    "9. 違反 0 なら exit 0、違反ありなら exit 1、以上のいずれかで検査不能に陥ったら exit 2"
+  ],
+  "canonical_rules": {
+    "note": "外部参照判定 (Y-02) と絵文字判定 (Y-03) の規則正本は plugin 全体でこの 1 箇所だけに存在する。C10 hook と C11 レンダラは自前の判定を持たず、ここで定義された規則を再実行して結果を受け取る。規則を変更するときはこのブロックだけを編集し、他所には規則本文を複製しない",
+    "external_reference_rule": {
+      "id": "CR-EXT",
+      "owner": "C16 (単一正本)",
+      "statement": "外部参照の違反は『取得 (fetch) を発生させる参照』に限る。具体的には URL を取り得る属性 (href / src / srcset / poster / data / action / formaction / cite / background / xlink:href / use@href / image@href) の値、CSS の url() と @import、および外部取得を前提とする <link rel> 指定 (stylesheet / preconnect / dns-prefetch / preload / prefetch / modulepreload) が、data: 以外の実体を指すこと。HTML の text node に現れる URL 文字列 (画面に表示するだけの URL) は違反ではない。さらに C60 (2026-08-17) により、上記の属性列挙に依らない包括規則 SC-10 を置く — 取得を発生させ得る参照は data: でなければ一律違反とし、判定軸をスキームの有無から data: か否かへ反転させる。属性を列挙する SC-01/SC-03/SC-04 は SC-10 の部分集合に対する詳細診断として残し、列挙漏れは SC-10 が受け止める",
+      "rationale": "R01 が要求するのは『オフライン環境でも同一に動くこと』であり、取得を発生させない文字列は挙動に影響しない。text node の URL をリンク化した瞬間 href 属性となり SC-01 が捕えるため、fail-closed 性は失われない。一方で『取得を発生させる参照』の集合を列挙で表現すると列挙漏れが黙って通るため (実際 script@src と iframe が漏れていた)、集合の定義は許可列挙 (data: のみ許可) で行い、列挙は診断の粒度を上げるためだけに用いる",
+      "exception": "<script> / <style> 本文中の http:// https:// リテラルは、コメント・文字列リテラルの区別なく違反とする (SC-02)。静的解析でコメントと実行コードを厳密に切り分ける実装コストに対し、生成側で消す修正コストが極端に低いため、この 1 点だけ誤検出側へ倒している",
+      "implemented_by_detections": [
+        "SC-01",
+        "SC-02",
+        "SC-03",
+        "SC-04",
+        "SC-10"
+      ],
+      "delegated_consumers": [
+        "C10 detection_rules D1-external-url-attr (同一規則を PostToolUse で再実行する。独自定義を持たない。SC-10 を含む CR-EXT 全体が対象)",
+        "C11 render-handout.py algorithm 23 (出力直前の自己検査。同一規則を再実行する。独自定義を持たない)"
+      ]
+    },
+    "emoji_rule": {
+      "id": "CR-EMOJI",
+      "owner": "C16 (単一正本)",
+      "statement": "絵文字判定は SC-05 の二層規則をもって唯一の定義とする。Unicode ブロック丸ごとの denylist (U+2600-U+27BF 等) は用いない。★ U+2605 / ☆ U+2606 / ✔ U+2714 (VS16 なし) / ♪ U+266A / ■ U+25A0 / © U+00A9 (VS16 なし) のような記号は絵文字ではなく通す",
+      "rationale": "ブロック単位の denylist は日本語文書で常用する記号・約物を巻き込む。絵文字表示が既定のコードポイント (層 1) と、VS16 を伴ったときだけ絵文字化するコードポイント (層 2) を分けることで、記号を殺さずに絵文字だけを落とせる",
+      "implemented_by_detections": [
+        "SC-05"
+      ],
+      "delegated_consumers": [
+        "C10 detection_rules D2-emoji (同一規則を PostToolUse で再実行する。独自の denylist を持たない)",
+        "C15 build-icon-sprite.py (module import 経由で scan_emoji(text) を呼ぶ。P04-x-05 の G-03 による裁定で、C15 が持っていた U+1F300-1FAFF / U+2600-27BF / U+2190-21FF / U+FE0F の denylist は撤去された。撤去前は層 2 の ✔ U+2714 を VS16 なしでも弾いており、本規則と判定が実際に食い違っていた)",
+        "P05-x-02 が実体化する assets/icons/icon-set.json (task-specs/P05-x-02.md の『絵文字を 1 文字も含めない』の判定は本規則へ委ねる。判定の実行点は C15 であり、資産側に独自の denylist を置かない)"
+      ],
+      "not_delegated_consumers": [
+        "C14 render-diagram-svg.py — AC-C14-4 が持つコードポイント列挙は『本 script が自ら絵文字を書き出さないこと』を自出力に対して確かめる test 用の走査であり、判定規則ではない。入力 label 由来の絵文字は C14 では判定せず素通しし、最終 HTML に対する本規則が単一の判定点になる (AC-C14-4 の本文がそう明記している)",
+        "C04 handout-design-consultant — skill-brief-C04.json の key_constraints が CR-EXT を参照するのは設計回答の制約としてであり、実行時に判定を再実行する consumer ではない"
+      ]
+    },
+    "invariant": "C10 が検査を完走した入力に対し、C10 と C16 は必ず同一判定を返す。両者は同じ判定モジュール (verify-handout-selfcontained.py が公開する判定関数) を用い、片方だけが FAIL/PASS になる状態を設計上作らない。差異が出たらそれは実装バグであり、P06 のテストで両者を同一 fixture に掛けて突き合わせる (AC-C16-11)",
+    "invariant_scope": "『完走した入力に対し』の限定は必須である。C10 は hook-brief-C10.json の fail_closed_scope (c) により『自前予算 3 秒またはファイルサイズ 8 MiB を超えて検査を完走できないとき は打ち切って exit0』とする。本 script はサイズ・時間の打ち切りを持たないため、8 MiB を超える資料では C10 が exit0・C16 が exit1 になり得る。これは判定規則の乖離ではなく C10 側の予算による意図的な二重防御 (同 fail_closed_scope が『見逃しは C16 の完成物ゲートで必ず捕まる』と明記) であり、打ち切りは stdout の systemMessage で必ず可視化される。したがって AC-C16-11 の突合 fixture は C10 の予算内 (8 MiB 未満・3 秒以内) のものに限る"
+  },
+  "requirements_covered": [
+    "R01 (C60 の拡張を含む。判定は許可列挙 = data: 以外は一律違反)",
+    "R02",
+    "R08",
+    "R21 (図表・グラフの欠落検査 C55 のみ。他の R21 項目は C12 / C22 / C23 / C01 が持つ)",
+    "R25 (CR-IMG-REALIZED / goal-spec C69。main セクションの画像実体検査 SC-11 のみ。宣言側の件数 E-IMAGE-ABSENT は C12 が持つ)"
+  ],
+  "r21_criterion_coverage_ledger": "plugin-plans/guide-doc-generator/improvement/r21-criterion-coverage.json — R21 (goal-spec C46-C59) の owner・検証手段・criterion 文との一致度の単一正本 (P03-x-04)。本 brief が担当するのは C55 (SC-09)。criterion 文の残余は ledger 側にのみ書き、ここへ写さない",
+  "checklist_covered": [
+    "C2",
+    "C3",
+    "C10",
+    "C11",
+    "C55",
+    "C60"
+  ],
+  "detections": [
+    {
+      "id": "SC-01",
+      "rule": "URL を取り得る属性の値が外部スキームを持たないこと。対象属性は href / src / srcset / poster / data / action / formaction / cite / background / xlink:href / use@href / image@href。値を前後空白除去し小文字化した先頭が `http://` `https://` `//` `ftp://` `ws://` `wss://` のいずれかなら違反。srcset はカンマ分割後の各候補の先頭トークンを個別に判定する。除外は名前空間宣言属性 (`xmlns` / `xmlns:xlink` / `xml:lang` / `xml:base` を除く `xmlns:*`) の値と、その値が `http://www.w3.org/2000/svg` `http://www.w3.org/1999/xlink` `http://www.w3.org/XML/1998/namespace` の 3 値に完全一致する場合のみ。名前空間 URI は取得を発生させない識別子であり参照ではない、という根拠で除外する。この 3 値のホワイトリストは完全一致であり前方一致にしない (`http://www.w3.org/2000/svg/evil.js` を通さないため)",
+      "violation_example": "<script src=\"https://cdn.jsdelivr.net/npm/x.js\"></script> / <img src=\"//example.com/a.png\"> / <a href=\"http://example.com/doc\">資料</a>",
+      "pass_example": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">…</svg> / <a href=\"#s3\">3 章へ</a> / <img src=\"data:image/png;base64,iVBORw0…\">",
+      "false_positive_risk": "低。xmlns 値のホワイトリストが 3 値固定のため、SVG 1.1 以外の名前空間 (例 MathML の `http://www.w3.org/1998/Math/MathML`) を使うと誤検出する。本 plugin の生成物は SVG のみを使う前提なので許容し、必要になった時点でホワイトリストへ追加する"
+    },
+    {
+      "id": "SC-02",
+      "rule": "<script> 本文および <style> 本文に `http://` `https://` のリテラルが現れないこと。コメント内 URL・JS 文字列リテラル内 URL も区別せず違反とする。根拠: 静的解析でコメントと実行コードを厳密に切り分けるコストに対し、生成物側で URL 文字列を消す修正コストが極めて低い。取りこぼし (false negative) を許すより誤検出 (false positive) を許す側へ倒す。なお HTML の text node に現れる URL 文字列 (画面に表示するだけの URL) は SC-02 の対象外とする。表示は取得を発生させないため自己完結性を破らない",
+      "violation_example": "<script>// 詳細は https://docs.example.com を参照\nfetch('https://api.example.com/x')</script>",
+      "pass_example": "<script>'use strict';document.querySelectorAll('.tab').forEach(…)</script> / <p class=\"f-sub\">配布元は社内ポータル (https://portal.example.com) です</p> ← text node なので通る",
+      "false_positive_risk": "中。JS コメントとして残した参考 URL が FAIL になる。意図した設計であり、report の message に「コメントであっても削除すること」と明記する。逆に text node 内 URL を検出しないため、リンク化されていない誘導文言は素通りする (これは仕様であり、リンク化された瞬間 SC-01 が捕える)"
+    },
+    {
+      "id": "SC-03",
+      "rule": "アセット参照が単一ファイル内に閉じていること。img@src / source@srcset / video@poster / object@data / embed@src の値が `data:` で始まらなければ違反 (相対パス・絶対パスも含む)。a@href は `#` / `data:` / `mailto:` / `tel:` で始まる場合のみ許可し、それ以外 (相対パス `./assets/x.pdf` を含む) は違反。link 要素は SC-04 で扱う",
+      "violation_example": "<img src=\"./assets/screenshot.png\" alt=\"画面\"> / <a href=\"../material/sheet.xlsx\" download>DL</a>",
+      "pass_example": "<img src=\"data:image/webp;base64,UklGR…\" alt=\"画面\"> / <a class=\"dl-btn\" href=\"data:application/zip;base64,UEsDB…\" download=\"material.zip\">DL</a>",
+      "false_positive_risk": "低。同梱物ディレクトリ (README・素材原本) は資料 HTML から参照されない設計 (C19 が同梱を保証する) なので、相対パス参照は常に設計違反である"
+    },
+    {
+      "id": "SC-04",
+      "rule": "外部フォント・外部スタイルシートの取得経路が存在しないこと。(a) <link> 要素の rel に stylesheet / preconnect / dns-prefetch / preload / prefetch / modulepreload のいずれかが含まれれば違反 (href の値によらず、これらの rel は外部取得を前提とする指示であるため)。(b) <style> 内の `@import` は値によらず違反。(c) `@font-face` ブロック内の `src: url(...)` の URL が `data:` で始まらなければ違反。(d) `local(...)` 指定は端末フォント依存となるため違反 (機種差を排する R01 の趣旨)。url() の引用符は ' \" 無しの 3 形を受理する",
+      "violation_example": "<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css2?family=Noto+Sans+JP\"> / @font-face{font-family:X;src:local(\"Hiragino Sans\")}",
+      "pass_example": "<link rel=\"icon\" href=\"data:image/svg+xml,…\"> / font-family: system-ui, \"Hiragino Sans\", sans-serif; ← font-family でのフォント名列挙は @font-face ではないので通る",
+      "false_positive_risk": "低。rel=icon / rel=canonical は対象外なので通る。font-family のフォールバック列挙を違反にしないことを明記する (端末フォントの列挙自体は外部取得ではない)"
+    },
+    {
+      "id": "SC-05",
+      "rule": "絵文字が 0 件であること。判定は文字参照復号後の文書全体 (text node・全属性値・<style>・<script> 本文) のコードポイント列に対して行い、二層の明示集合で判定する。日本語の記号・約物を誤検出しないため、Unicode ブロック丸ごとの denylist を避け、面 1 の絵文字ブロック群と、BMP については絵文字表示が既定 (Emoji_Presentation=Yes 相当) のコードポイントだけを層 1 に置く。\n【層 1 = 単独で違反】U+1F000-U+1F02F, U+1F0A0-U+1F0FF, U+1F100-U+1F1FF (Regional Indicator U+1F1E6-U+1F1FF を含み、2 連の国旗も 1 件ずつ計上), U+1F200-U+1F2FF, U+1F300-U+1F5FF, U+1F600-U+1F64F, U+1F680-U+1F6FF, U+1F700-U+1F8FF, U+1F900-U+1F9FF, U+1FA00-U+1FAFF (肌色修飾 U+1F3FB-U+1F3FF はこの範囲に含まれる), U+E0020-U+E007F (タグ文字・サブディビジョンフラグ), U+FE0F (VS16 = 絵文字表示指定そのもの), U+20E3 (キーキャップ), U+203C, U+2049, U+2614, U+2615, U+2648-U+2653, U+267F, U+2693, U+26A1, U+26AA, U+26AB, U+26BD, U+26BE, U+26C4, U+26C5, U+26CE, U+26D4, U+26EA, U+26F2, U+26F3, U+26F5, U+26FA, U+26FD, U+2705, U+270A, U+270B, U+2728, U+274C, U+274E, U+2753-U+2755, U+2757, U+2795-U+2797, U+27B0, U+27BF, U+2934, U+2935, U+2B05-U+2B07, U+2B1B, U+2B1C, U+2B50, U+2B55。\n【層 2 = 直後に U+FE0F が続くときのみ違反】U+00A9, U+00AE, U+2122, U+2139, U+2194-U+21AA, U+231A, U+231B, U+2328, U+23CF, U+23E9-U+23FA, U+24C2, U+25AA, U+25AB, U+25B6, U+25C0, U+25FB-U+25FE, U+2600-U+2604, U+260E, U+2611, U+2618, U+261D, U+2620, U+2622, U+2623, U+2626, U+262A, U+262E, U+262F, U+2638-U+263A, U+2640, U+2642, U+265F, U+2660, U+2663, U+2665, U+2666, U+2668, U+267B, U+267E, U+2692, U+2694-U+2699, U+269B, U+269C, U+26A0, U+26A7, U+26B0, U+26B1, U+26C8, U+26CF, U+26D1, U+26D3, U+26E9, U+26F0, U+26F1, U+26F4, U+26F7-U+26F9, U+2702, U+2708, U+2709, U+270C, U+270D, U+270F, U+2712, U+2714, U+2716, U+271D, U+2721, U+2733, U+2734, U+2744, U+2747, U+2763, U+2764, U+27A1, U+3030, U+303D, U+3297, U+3299。層 2 のコードポイントは U+FE0F を伴わなければ通す (© ® ™ の法的表記、★ ▶ ♪ ♂ 等の日本語文書で通常使う記号を殺さないため)。\n【ZWJ】U+200D は、前後いずれかが層 1 のコードポイントであるときだけ違反 (絵文字連結シーケンス)。孤立 ZWJ は絵文字ではないので通し、json-report に info として記録する。\n【異体字セレクタ】U+FE0F は層 1。U+FE00-U+FE0E (VS1-VS15) は絵文字ではなく字形指定なので通すが、json-report に info を残す。\n【明示的に非検出】U+3000-U+303F の全域 (、。「」『』・〜々〆 等。ただし U+3030 U+303D は層 2)、U+FF01-U+FF60 (全角英数記号)、U+FF61-U+FF9F (半角カナ)、U+2010-U+2027 (— – … 等)、U+2030-U+205E (‰ † ‡ 等。ただし U+203C U+2049 は層 1)、U+25A0-U+25FF (■ □ ▲ △ ● ○。ただし層 2 該当は VS16 併用時のみ)、U+2605 U+2606 (★ ☆)、U+266A 等の音楽記号。違反 1 件は 1 コードポイント (または 1 ZWJ シーケンス) 単位で計上し、message にコードポイント列と代替のアイコン名候補を出す",
+      "violation_example": "<p>まずはここから 👉 触ってみる</p> (U+1F449) / <span>✅ 完了</span> (U+2705) / <li>🇯🇵 日本語版</li> (U+1F1EF U+1F1F5) / <button>⚙️ 設定</button> (U+2699 U+FE0F ← 層 2 + VS16) / <span>1️⃣</span> (U+0031 U+FE0F U+20E3)",
+      "pass_example": "<p>まずはここから。触ってみる、そして「慣れる」。所要 〜30 分</p> の約物一式 / <p>Copyright © 2026 例</p> (VS16 なしの U+00A9) / <p>★ 重要</p> (U+2605) / <p>♪ BGM あり</p> (U+266A) / <p>■ 前提</p> (U+25A0) / <svg …><path d=\"…\"/></svg> の inline SVG アイコン",
+      "false_positive_risk": "中。層 2 の運用が肝で、`⚙` を VS16 なしで書けば通ってしまう (機種によっては絵文字表示になる) という false negative が残る。これは日本語文書で常用される記号を殺さないための意図的なトレードオフであり、json-report に層 2 コードポイントの VS16 なし出現を info として列挙して人間レビュー (C06) へ渡す。逆方向の false positive として、本文中で Unicode を解説する資料 (絵文字そのものを題材にする資料) が書けなくなるが、本 plugin の用途では発生しないと判断する"
+    },
+    {
+      "id": "SC-06",
+      "rule": "アイコンが統一様式であること。検査対象の同定は宣言駆動とし、`data-hb-kind` 属性で分類する: `data-hb-kind=\"icon\"` を持つ <symbol> と <svg> のみを様式検査にかけ、`data-hb-kind=\"mascot\"` (CSS 変数で再着色するマスコット) と `data-hb-kind=\"decor\"` (波線・矢印などの装飾) は対象外とする。様式は viewBox=\"0 0 24 24\" (空白正規化後の完全一致) / fill=\"none\" / stroke=\"currentColor\" / stroke-linecap=\"round\" / stroke-linejoin=\"round\" の 5 属性がすべて存在し値が一致すること、および stroke-width が 2.2 以上 2.6 以下の数値であること。`data-hb-kind` 属性を持たない <svg> / <symbol> が 1 個でもあれば「分類不能」として違反に計上する (未分類を暗黙 pass へ畳まないため)",
+      "violation_example": "<svg data-hb-kind=\"icon\" width=\"18\" height=\"18\" viewBox=\"0 0 20 20\" fill=\"currentColor\"><path d=\"…\"/></svg> (viewBox 不一致・fill 違反・stroke 系欠落) / <svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\">…</svg> (data-hb-kind 無し = 分類不能)",
+      "pass_example": "<symbol id=\"ic-check\" data-hb-kind=\"icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12l5 5L20 6\"/></symbol> / <svg data-hb-kind=\"mascot\" width=\"0\" height=\"0\"><defs>…</defs></svg> (対象外)",
+      "false_positive_risk": "中。`data-hb-kind` の付与は C11 render-handout.py と C15 build-icon-sprite.py の出力契約に依存する。契約が守られないと全 svg が「分類不能」で FAIL する。これは fail-closed として正しい向きだが、C11/C15 の brief 側と属性名を一致させる必要がある (open_questions 参照)"
+    },
+    {
+      "id": "SC-07",
+      "rule": "symbol 定義と use 参照が過不足なく対応すること。文書内の全 <symbol id=\"X\"> の id 集合 D と、全 <use href=\"#X\"> / <use xlink:href=\"#X\"> の参照 id 集合 U を収集し、(a) D - U が非空なら未使用 symbol として違反 (差集合の各 id を 1 件ずつ計上) (b) U - D が非空なら未定義参照として違反 (c) D に重複 id があれば違反。`#` を持たない use@href (外部ファイル参照) は SC-01/SC-03 側で捕まるため、ここでは id 参照形のみ扱う",
+      "violation_example": "<symbol id=\"ic-check\">…</symbol><symbol id=\"ic-warn\">…</symbol> があり <use href=\"#ic-check\"> だけが存在する (ic-warn が未使用)",
+      "pass_example": "定義された symbol が ic-check / mascot-plain の 2 個で、<use href=\"#ic-check\"> ×3 と <use href=\"#mascot-plain\"> ×1 が存在する",
+      "false_positive_risk": "低。JS が実行時に <use> を生成する設計だと未使用と誤判定するが、本 plugin のレンダラは決定論的に静的出力する契約 (C29 のバイト一致再現性) なので発生しない"
+    },
+    {
+      "id": "SC-08",
+      "rule": "sticky ナビのアンカーが双方向に 1:1 で解決すること。<nav> 要素 (または class に `navbar` を含む要素) の配下にある a[href^='#'] を N、文書内の <section id> を S とし、(a) N の各 href の id が S に存在しなければ未解決参照として違反 (b) S の各 id が N から参照されていなければ未リンク section として違反 (c) N 内に同一 href が 2 回以上現れれば違反 (d) 文書全体で id が重複していれば違反。href=\"#\" (空フラグメント) は違反",
+      "violation_example": "<nav class=\"navbar\"><a href=\"#s1\">導入</a><a href=\"#s8\">まとめ</a></nav> に対し <section id=\"s1\">…<section id=\"s7\"> しか存在しない (#s8 が未解決、s2-s7 が未リンク)",
+      "pass_example": "<nav class=\"navbar\"> の a が #s1..#s7 の 7 個で、<section id=\"s1\">..<section id=\"s7\"> がちょうど 7 個存在する",
+      "false_positive_risk": "低〜中。hero 直下の「今日の流れ」のように id を持ちつつ nav に載せない section を作ると (b) で誤検出する。この場合は当該 section へ `data-hb-nav=\"exclude\"` を付ける逃げ道を 1 つだけ用意し、逃げ道を使った section を json-report に列挙して可視化する (無条件の暗黙除外は作らない)"
+    },
+    {
+      "id": "SC-09",
+      "since": "R21 (goal-spec C55)",
+      "rule": "図表・グラフの枠が中身を持つこと。対象は data-hb-part が IMG / DIAGRAM のいずれかである要素、および <figure> 要素。各対象について (a) IMG: 配下の <img> が存在し、その src が data: スキームで、base64 部を除いた実体長が 64 バイト以上であること (空 data URI / `data:,` / 1x1 相当のプレースホルダ長は違反) (b) DIAGRAM: 配下の <svg> が描画要素 (path / rect / circle / ellipse / line / polyline / polygon / text / image / use) を 1 つ以上持つこと。<svg> が <title>/<desc>/<defs>/<g> だけで構成され描画要素 0 個なら違反 (c) 共通: 対象要素の可視テキストが未解決プレースホルダ (`{{`…`}}` / `TODO` / `図はここに入ります` / `グラフを挿入` / `chart placeholder`) に完全一致または前方一致するなら違反 (d) 共通: 対象要素が配下に <img> も <svg> も持たないなら『枠だけが残った図表』として違反",
+      "why_independent_from_sc01": "R01 の外部参照ゼロ検査 (SC-01..SC-04) は『参照が外を向いていないこと』しか見ない。生成に失敗して src が空になった img や、描画要素が 1 つも無い svg は、外部参照を 1 件も持たないので SC-01..SC-04 を全て通過してしまう。『参照が無い』と『中身がある』は別の述語であり、後者には独立した検出が要る",
+      "violation_example": "<figure data-hb-part=\"DIAGRAM\"><svg viewBox=\"0 0 400 240\"><title>収支の流れ</title></svg><figcaption>収支の流れ</figcaption></figure> (title だけで描画要素 0) / <div data-hb-part=\"IMG\"><img src=\"data:,\" alt=\"管理画面\"></div> / <figure>図はここに入ります</figure>",
+      "pass_example": "<figure data-hb-part=\"DIAGRAM\"><svg viewBox=\"0 0 400 240\"><rect …/><path …/><text …>収支</text></svg><figcaption>…</figcaption></figure>",
+      "false_positive_risk": "低。CSS 背景だけで図を描く経路は本 plugin に存在せず (C11 は inline SVG か data URI の img しか出さない)、装飾アイコンは data-hb-part を持たない <svg> なので対象外。64 バイト閾値は判定の数値であり、C11 が出す最小の実画像 (PNG ヘッダ + IDAT) でも 200 バイトを超えるため余裕がある",
+      "delegated_to": "本 detection の判定はレンダラ側 (C11) へは委譲しない。C11 は図の中身を作る側であり、作った本人に空判定を任せると欠落が検出されない"
+    },
+    {
+      "id": "SC-10",
+      "since": "C60 (利用者要件 2026-08-17。R01 の拡張)",
+      "rule": "同梱閉包の包括規則。取得 (fetch) を発生させ得る全ての参照は data: でなければ違反とする。判定軸は『外部スキームか否か』ではなく『data: であるか否か』であり、スキームを持たない相対パス・絶対パスも違反とする。対象は (a) <script> の src 属性 — 値によらず違反 (インライン本文のみの <script> は pass) (b) <iframe> / <frame> / <portal> — 要素が存在すること自体が違反 (c) <link> の href — rel によらず data: 以外なら違反 (d) CSS の url() — @font-face の src に限らず全ての宣言が対象 (e) 上記以外でも、将来 HTML に取得を発生させる属性が追加された場合は既定で違反側へ倒す。SC-01 / SC-03 / SC-04 が対象を列挙する形で書かれているのに対し、本規則は許可を列挙する形 (allowlist) で書かれており、列挙漏れが黙って通ることが構造的に起こらない",
+      "why_independent_from_sc01": "SC-01 は外部スキームを持つ URL 属性を、SC-03 は img/source/video/object/embed の属性列挙を、SC-04 は <link> と @font-face を検査する。いずれも『検査対象を列挙する』方式であり、列挙から漏れたものを黙って通す。実際 <script src=\"./app.js\"> は SC-03 の属性列挙に script@src が無く、相対パスなのでスキームも持たないため SC-01 にも掛からず全通過する。<iframe src> はどの規則の対象でもない。結果として『外部参照ゼロ』を全 PASS しながら、その 1 ファイルを配置しただけでは成立しない生成物が作れてしまう。SC-10 は個別規則の追加ではなく判定方式の反転として置く",
+      "boundary": "SC-02 が確定させた境界を壊さない。HTML の text node に現れる URL 文字列・相対パス文字列・コード例は取得を発生させないため違反にしない。alt / title の URL も同様。SC-10 が見るのは属性値と CSS 値だけである。また要素名は完全一致で判定し、<frame> の前方一致で <frameset> や <figure> を拾わない",
+      "adjudication_srcdoc": "<iframe srcdoc=\"...\"> のみを持つ場合も例外なく違反とする。srcdoc 自体は取得を発生させないが、(1) 配布資料に入れ子閲覧文脈の正当な用途が無く、(2) srcdoc の内容は独立した HTML として再帰的に外部参照を持ち得るため検査器が入れ子パースを要求されることになり、(3) 例外を 1 つ設けた時点で allowlist の『既定で違反側へ倒す』性質が失われる。したがって (b) は要素の存在のみで判定する",
+      "adjudication_double_report": "<script src=\"https://…\"> のように SC-01 と SC-10 の両方に該当する場合、両方を報告する。detection は欠陥の分類であって排他的な分割ではなく、片方を抑止すると『どの規則クラスの欠陥か』の情報が失われる。加えて SC-10 は取りこぼしを塞ぐ網であり、他規則へ判定を譲る設計にすると再び順序依存が生まれる",
+      "adjudication_css_url": "CSS の url() は @font-face の src を SC-04 が、それ以外の全ての宣言 (background / background-image / mask / border-image / cursor / list-style-image 等) を SC-10 が報告する。この分担により『どちらかが必ず捕える』ことと『同一違反を 2 度数えない』ことが両立する",
+      "violation_example": "<script src=\"./app.js\"></script> (相対パスでも違反) / <iframe src=\"data:text/html,...\"></iframe> (data: でも要素の存在自体が違反) / <iframe srcdoc=\"<p>x</p>\"></iframe> / <link rel=\"icon\" href=\"./favicon.png\"> (rel が stylesheet でなくても違反) / .hero{background:url(./bg.png)}",
+      "pass_example": "<script>document.addEventListener(...)</script> (インライン本文のみ) / <link rel=\"icon\" href=\"data:image/png;base64,iVBOR...\"> / .hero{background:url(data:image/png;base64,iVBOR...)} / <p>詳しくは https://example.com/docs を参照してください</p> (text node なので pass)",
+      "false_positive_risk": "低。本 plugin の生成物は設計上あらゆる資産を data URI で内包するため、data: 以外の値が正当になる経路が存在しない。誤検出が起きるとすれば手書きで生成物を編集した場合だが、その場合こそ検出されるべきである"
+    },
+    {
+      "id": "SC-11",
+      "since": "R25 (改善 2026-08-18・裁定正本 improvement/visual-per-section-decision.json#decision.img_realization_gate = CR-IMG-REALIZED)",
+      "code": "E-IMG-UNREALIZED",
+      "rule": "main セクションが画像の実体を持つこと。main セクション = data-hb-part=\"SECTION\" を持つ <section> のうち、data-hb-section-role の値が \"main\" であるか、値が空文字であるか、属性が無いもの (空/不在を main に含めるのは構成データ側の role が任意項目で既定 main であり、C12 も section.get(\"role\") in (None, \"main\") で数えているため。空を外すと role を書かなかった節が HTML 側だけ検査対象から消える)。各 main セクションについて、配下に data-hb-part=\"IMG\" 要素が 1 件以上存在し、かつその少なくとも 1 件が SC-09 (a) の実体条件 (配下の <img> が存在し src が data: で base64 部の実体長 64 バイト以上) を満たすこと。0 件の節、または IMG 要素はあるが全て SC-09 (a) を満たさない節が 1 つでもあれば違反",
+      "why_independent_from_sc09": "SC-09 は『存在する枠が空でないか』を枠単位で見る。C21 srg-image-bridge.py が status=skipped を返し、レンダラが IMG 要素ごと出さなかった節では SC-09 の走査対象が 1 件も無いため緑になる — 検査対象が消えると検査も消える経路であり、件数を節側から数える SC-11 でしか塞げない。両者は包含関係になく、片方だけでは gap が残る",
+      "why_independent_from_c12": "C12 の E-IMAGE-ABSENT は構成データ段で『宣言された IMG 部品の件数』だけを数える (CR-IMG-SKIP-COUNT)。C12 はレンダリングと C21 生成より前に走るため実体を観測できない。宣言側 (C12) と実体側 (C16) を別 component に置くのは冗長ではなく時系列上の必然であり、E-IMAGE-ABSENT の緑と E-IMG-UNREALIZED の緑が揃って初めて『各セクションに画像がある』が言える",
+      "violation_example": "<section data-hb-part=\"SECTION\" data-hb-section-role=\"main\"><h2>導入手順</h2><figure data-hb-part=\"DIAGRAM\"><svg><rect/></svg></figure></section> (図解はあるが IMG 部品が 1 件も無い) / <section data-hb-part=\"SECTION\" data-hb-section-role=\"\"><div data-hb-part=\"IMG\"><img src=\"data:,\" alt=\"管理画面\"></div></section> (role 未指定 = main、IMG はあるが実体が空)",
+      "pass_example": "<section data-hb-part=\"SECTION\" data-hb-section-role=\"main\"><div data-hb-part=\"IMG\"><img src=\"data:image/png;base64,iVBORw0…(64 バイト超)\" alt=\"管理画面の初期状態\"></div></section>",
+      "false_positive_risk": "低〜中。appendix 節 (data-hb-section-role=\"appendix\") は対象外であり、R25 の per-section 必須も main セクションのみを対象とするため宣言側と数える母集合が一致する。誤検出が起き得るのは『role の既定値解釈が C11 側で変わった場合』のみで、その場合は SC-11 でなく既定値の二重定義 (P05-x-126) の側を直す",
+      "why_not_config_input": "節ごとの宣言件数を構成データから読み込んで突合する設計も採り得るが、C16 の argv を --html 1 点に閉じる契約を崩す。『節には画像の実体がある』は HTML 単体で判定できる述語なので、突合ではなく直接判定にする",
+      "delegated_to": "本 detection の判定は C11 (レンダラ) にも C21 (生成委譲) にも委譲しない。作った本人・埋められなかった本人に欠落判定を任せると skip がそのまま緑になる"
+    }
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C16-01",
+      "how": "参照 v2 相当の自己完結 HTML (外部参照 0・絵文字 0・data-hb-kind 付き symbol・nav 7 項目と section 7 個) を渡す",
+      "expected": "exit 0、stdout に `RESULT: PASS` と SC-01..SC-10 の 10 行 (stdout 契約の固定順と件数が一致すること)、stderr は空 (fixture には描画要素を持つ図表を 1 件と data URI の <link rel=\"icon\"> を 1 件含め、SC-09 と SC-10 も実際に評価させる)"
+    },
+    {
+      "id": "AC-C16-02",
+      "how": "CDN script 1 本・Google Fonts link 1 本を混ぜた HTML を渡す",
+      "expected": "exit 1、stderr に SC-01 と SC-04 の違反行が行番号付きで出る"
+    },
+    {
+      "id": "AC-C16-03",
+      "how": "本文に 、。「」・…〜 ★ ♪ ■ © (VS16 なし) だけを含み絵文字を含まない HTML を渡す",
+      "expected": "exit 0。SC-05 の violations=0 (日本語約物の誤検出が無いことの回帰テスト)"
+    },
+    {
+      "id": "AC-C16-04",
+      "how": "U+1F449 / U+2705 / 国旗 (U+1F1EF U+1F1F5) / U+2699 U+FE0F / キーキャップ (U+0031 U+FE0F U+20E3) を 1 個ずつ含む HTML を渡す",
+      "expected": "exit 1、SC-05 の violations が 5 件以上で、各行に U+XXXX のコードポイント列が出る"
+    },
+    {
+      "id": "AC-C16-05",
+      "how": "data-hb-kind 属性を持たない <svg> を 1 個含む HTML を渡す",
+      "expected": "exit 1、SC-06 に「分類不能」の違反が 1 件 (暗黙 pass にならない)"
+    },
+    {
+      "id": "AC-C16-06",
+      "how": "未使用 symbol 1 個と未定義 use 1 個を含む HTML を渡す",
+      "expected": "exit 1、SC-07 に違反 2 件"
+    },
+    {
+      "id": "AC-C16-07",
+      "how": "nav に #s8 を追加し section を 7 個のままにした HTML を渡す",
+      "expected": "exit 1、SC-08 に未解決参照 1 件"
+    },
+    {
+      "id": "AC-C16-08",
+      "how": "--html に存在しないパスを渡す / --json-report に書き込み不可のディレクトリを渡す",
+      "expected": "どちらも exit 2、stderr に `ERROR<TAB>…` 1 行。exit 1 にはならない"
+    },
+    {
+      "id": "AC-C16-09",
+      "how": "--json-report を指定して FAIL する HTML を検査した後、対象 HTML の mtime と内容を確認する",
+      "expected": "対象 HTML は無変更。書かれたファイルは --json-report の 1 点のみ"
+    },
+    {
+      "id": "AC-C16-10",
+      "how": "同一 HTML に対して 2 回実行し stdout / --json-report の内容を比較する",
+      "expected": "バイト一致 (辞書順・出現位置順の安定ソートにより非決定な出力を持たない)"
+    },
+    {
+      "id": "AC-C16-11",
+      "how": "外部参照と絵文字の境界事例を集めた共通 fixture 群 (text node の URL / href の URL / ★ ✔ © の VS16 有無 / U+1F449) を、C16 本体と C10 hook の両方へ同一入力で掛けて判定を突き合わせる",
+      "expected": "全 fixture で C10 と C16 の判定 (違反有無・違反コードポイント) が完全一致する。canonical_rules.invariant の回帰テスト"
+    },
+    {
+      "id": "AC-C16-12",
+      "how": "C10 hook と C11 render-handout.py と C15 build-icon-sprite.py の 3 者を grep する (Unicode コードポイント表記 U+XXXX / \\u / \\U / re のコードポイント範囲クラス、および http:// https:// // ftp:// ws:// wss:// のスキーム列挙)",
+      "expected": "外部参照スキームの列挙と絵文字コードポイントの列挙が 3 者のソースに 0 件で、判定は module_api の関数呼び出しに一本化されている (規則本文の複製が無い)。C15 は絵文字判定のみを委譲するため、C15 に対する検査対象はコードポイント列挙側 (AC-C15-11 と同一の検査を C16 側からも掛ける)"
+    },
+    {
+      "id": "AC-C16-R21-55a",
+      "how": "描画要素を持たない <svg> (title と desc のみ) の DIAGRAM 1 件、実体長 0 の data URI を持つ IMG 1 件、img も svg も持たない <figure> 1 件を含む HTML を渡す (C55 の test)",
+      "expected": "exit 1、SC-09 に違反 3 件が行番号付きで出る。同一 HTML は SC-01..SC-04 を全て PASS する — 『外部参照ゼロ検査を通過する欠陥クラス』であることが同じ実行結果の中で示される"
+    },
+    {
+      "id": "AC-C16-R21-55b",
+      "how": "描画要素を持つ正常な図表 (rect+path の DIAGRAM / 実画像 data URI の IMG) だけを含む HTML を渡す",
+      "expected": "exit 0、SC-09 の checked が図表件数と一致し violations=0。装飾用 inline SVG アイコン (data-hb-part を持たない) は checked に数えられない (対象範囲の回帰テスト)"
+    },
+    {
+      "id": "AC-C16-R21-55c",
+      "how": "図表のキャプションに『図はここに入ります』が残った HTML を渡す",
+      "expected": "exit 1、SC-09 の未解決プレースホルダ違反 1 件。C22 の物語検査ではなく本ゲートで落ちる (欠落は自己完結性の欠陥として扱う)"
+    },
+    {
+      "id": "AC-C16-C60-10a",
+      "how": "<script src=\"./app.js\">・<script src=\"https://cdn.example.com/x.js\">・インライン本文のみの <script> を 1 つずつ含む HTML を渡す",
+      "expected": "exit 1。SC-10 が相対パスと外部 URL の 2 件を報告し、インライン本文の <script> は違反にしない。外部 URL の 1 件は SC-01 からも報告される (adjudication_double_report の回帰テスト)"
+    },
+    {
+      "id": "AC-C16-C60-10b",
+      "how": "<iframe src=\"data:text/html,x\">・<iframe srcdoc=\"<p>x</p>\">・<frame>・<portal>・<frameset>・<figure> を含む HTML を渡す",
+      "expected": "exit 1。iframe 2 件・frame 1 件・portal 1 件の計 4 件を報告する。data: を持つ iframe も srcdoc のみの iframe も違反になる (adjudication_srcdoc)。<frameset> と <figure> は報告しない (要素名の前方一致で誤検出しないことの回帰テスト)"
+    },
+    {
+      "id": "AC-C16-C60-10c",
+      "how": "<link rel=\"icon\" href=\"./favicon.png\">・<link rel=\"icon\" href=\"data:image/png;base64,iVBOR…\">・.hero{background:url(./bg.png)}・.hero{background:url(data:image/png;base64,…)} を含む HTML を渡す",
+      "expected": "exit 1。rel が stylesheet でない link の非 data: href 1 件と、@font-face 外の CSS url() の非 data: 値 1 件を SC-10 が報告する。data: の 2 件は違反にしない (adjudication_css_url の分担どおり @font-face 外は SC-10 が担当)"
+    },
+    {
+      "id": "AC-C16-C60-10d",
+      "how": "<p>詳しくは https://example.com/docs を参照</p>・<code>&lt;script src=\"./app.js\"&gt;</code>・<img alt=\"https://example.com\" src=\"data:image/png;base64,…\"> を含む HTML を渡す",
+      "expected": "exit 0。text node の URL・エスケープされたコード例・alt の URL はいずれも取得を発生させないので違反にしない。SC-02 が確定させた境界を SC-10 が壊していないことの回帰テスト"
+    },
+    {
+      "id": "AC-C16-C60-10e",
+      "how": "C10 hook と C11 render-handout.py へ AC-C16-C60-10a..10d と同一の fixture を掛ける",
+      "expected": "SC-10 の判定が C16 と完全一致する。SC-10 は scan_external_references の返り値に含まれ、module_api 経由で C10 / C11 へ届く (AC-C16-11 / AC-C16-12 の適用範囲が SC-10 を含む)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-a",
+      "how": "main セクション 3 個のうち 1 個だけ data-hb-part=\"IMG\" 要素を持たない HTML を渡す (他の全 detection は充足させる)",
+      "expected": "exit 1、stderr に SC-11 の違反行が当該 section の id と行番号付きで出る。SC-09 は checked/violations とも 0 でない PASS のまま (枠単位の検査は無傷であること = 2 つの検査が別物であることの対照)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-b",
+      "how": "main セクションに data-hb-part=\"IMG\" があるが <img src=\"data:,\"> で実体が空の HTML を渡す",
+      "expected": "exit 1、SC-09 と SC-11 の両方が FAIL。同一の欠陥が両検査で捕まることは重複ではなく、枠単位と節単位のどちらから見ても不合格であることの確認"
+    },
+    {
+      "id": "AC-C16-R25-IMG-c",
+      "how": "data-hb-section-role 属性を持たない (または空文字の) main セクションに IMG を置かない HTML を渡す",
+      "expected": "exit 1、SC-11 が FAIL。role 未指定の節を main とみなす既定値が実装されていること (未実装だと素通りする最も危険な fail-open)"
+    },
+    {
+      "id": "AC-C16-R25-IMG-d",
+      "how": "data-hb-section-role=\"appendix\" の節に IMG を 1 件も置かず、全 main 節には実体つき IMG を置いた HTML を渡す",
+      "expected": "exit 0。appendix は R25 の per-section 必須の対象外であり、C12 の E-IMAGE-ABSENT が数える母集合と一致すること"
+    }
+  ],
+  "module_api": {
+    "why": "外部参照判定と絵文字判定を C10 / C11 が再実装しないための、単一実装の公開点。ファイル名にハイフンを含むため importlib.util.spec_from_file_location('hb_selfcontained', Path(__file__).parent / 'verify-handout-selfcontained.py') で読み込む (C23 と同じ作法)",
+    "exports": [
+      "scan_external_references(html_text) -> list[Violation]: CR-EXT を適用し SC-01..SC-04 および SC-10 相当の違反を返す。取得を発生させない text node の URL は返さない",
+      "scan_emoji(text) -> list[Violation]: CR-EMOJI (SC-05 の二層規則) を適用する。HTML 以外の素のテキスト (handout-config.json の値など) にも掛けられるよう、入力は文字列とする",
+      "Violation = {detection_id, line, col, message, evidence, codepoints}"
+    ],
+    "constraint": "CLI 実行時 (__main__) と module 呼び出し時で同一関数を通す。CLI 側にだけ存在する判定分岐を作らない"
+  },
+  "failure_modes": [
+    {
+      "case": "html.parser が不正な入れ子や未閉じタグに遭遇する",
+      "behavior": "パーサを寛容モードで続行し、収集できた範囲で検査した上で SC-00 相当の警告を json-report に残す。ただし例外で走査が中断した場合は exit 2",
+      "rationale": "レンダラ出力は整形式である契約なので、崩れているなら検査結果ではなく生成側の異常として扱う。壊れた入力に対して PASS を返すことだけは避ける"
+    },
+    {
+      "case": "巨大な data URI (参照 v1 は 5 MiB 中 99% が data URI) で走査が重い",
+      "behavior": "属性値が `data:` で始まる場合、SC-01/SC-03/SC-10 の判定に必要な先頭 64 文字だけを見て残りは走査対象から除外する。SC-05 の絵文字走査からも base64 本体を除外する。SC-09 の実体長判定は base64 部の長さのみを数え、復号もデコードもしない",
+      "rationale": "base64 は ASCII 部分集合であり絵文字を含み得ない。除外は検出漏れを生まないうえ、実行時間を本文サイズに比例させられる",
+      "r25_scale_note": "R25 (改善 2026-08-18・goal-spec C69 / 正本 improvement/visual-per-section-decision.json#decision.image_per_main_section) により IMG は main セクション 1 個あたり 1 件以上が必須になり、素材の無い節は role=illustration として C21 srg-image-bridge.py の生成画像で埋められる。生成画像も C13 embed-assets.py が data URI 化して同梱するため、埋め込み data URI の件数は main セクション数に比例して増える。増えるのは同種の対象の件数であって検出対象のクラスではない (SC-09 は data-hb-part=IMG を件数に依らず走査し、SC-10 は data: 以外を一律違反とする allowlist であるため、件数の増加で規則を書き換える必要はない)。ただし本 behavior の base64 除外は R25 以降『あれば速い最適化』ではなく実行時間を線形に保つための前提条件になる"
+    },
+    {
+      "case": "--json-report の親ディレクトリが存在しない",
+      "behavior": "ディレクトリを作らず exit 2",
+      "rationale": "検査器の write_scope は指定ファイル 1 点であり、ディレクトリ作成は C19 route-handout-output.py の責務。単一 writer の原則を跨がない"
+    },
+    {
+      "case": "検査対象が資料 HTML ではない任意の HTML",
+      "behavior": "nav も section も存在しなければ SC-08 の checked=0 として PASS 扱いにせず、「資料 HTML の構造要件を満たさない」として exit 1",
+      "rationale": "対象外ファイルの選別は呼び出し側 (hook は資料出力ディレクトリ配下の *.html のみ発火) の責務。本 script に届いた時点で資料 HTML とみなすのが分界として一貫する"
+    },
+    {
+      "case": "main セクションが 1 個も存在しない HTML が届く",
+      "behavior": "SC-11 を checked=0 の PASS にせず、SC-08 の『資料 HTML の構造要件を満たさない』と同じ扱いで exit 1",
+      "rationale": "検査対象が 0 件であることを合格の根拠にしない。本 script に届いた時点で資料 HTML とみなす分界 (SC-08 の failure_mode と同一) を SC-11 でも守る。母集合が空になる経路を緑にすると、レンダラが節を出さなくなった事故がそのまま通る"
+    }
+  ],
+  "open_questions": [
+    "【X-03 決着済み・記録】SC-06 が依存する `data-hb-kind=\"icon|mascot|decor|figure\"` 属性の正本は C11 render-handout.py のブリーフの html_attribute_contract 1 箇所に確定し、C11 の algorithm 手順 22b と AC-C11-18 で全 svg/symbol への付与が担保される。本 script は参照するだけで再定義しない (旧称 data-kind から改称)",
+    "SC-05 層 2 のコードポイントが VS16 なしで出現した場合、機種によっては絵文字表示になるが本ゲートは通す。この残余リスクを C06 handout-readability-reviewer が拾う設計でよいか、層 2 を warn 出力として json-report にのみ残す現案で足りるかは P03 design-gate の判断に委ねる",
+    "SC-08 の逃げ道 `data-hb-nav=\"exclude\"` を導入するか否か。導入しない場合は「id を持つ section は必ず nav に載せる」をレンダラ側の不変条件として C11 へ移す",
+    "R25 (2026-08-18) の per-section IMG 必須化により、生成 HTML のサイズは main セクション数に比例して伸びる。C10 の打ち切り閾値 8 MiB (hook-brief-C10.json の open_questions が『実測に基づく値ではない』と自認している仮置き) を超える資料が現実的になるため、閾値を config/handout-output.json#size_limits と揃えるかは C12 / config 側の確定待ちのまま残る。本 script 側は打ち切りを持たない設計 (完成物ゲートとして必ず完走する) を変えないので、決着がどちらに転んでも本 script の契約は変わらない",
+    "goal-spec C4 (sticky オフセット補正が CSS scroll-margin-top と JS getBoundingClientRect の両方に存在すること) は本 script の担当外とした。自己完結性ではなくレイアウト規則の検査であり、CSS を読む機構を持つ C17 側へ寄せている (C17 brief の STICKY-01 を参照)"
+  ]
+}

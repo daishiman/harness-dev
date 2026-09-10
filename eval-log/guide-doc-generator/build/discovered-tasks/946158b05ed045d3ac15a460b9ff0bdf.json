@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C02-01",
+  "reason": "C20 の実装 scripts/extract-handout-config.py は診断コード W-EXTRACT-OPTIONAL を発火させ C02 の skill 本文もそれを前提に書かれているが、plugin-plans/guide-doc-generator/briefs/script-brief-C20.json の stderr 契約には当該コードが未記載で、実装が brief を追い越している。診断コードは下流 (C02/C08) の分岐条件として参照されるため、正本が brief に無いまま複数の消費者が実装本文から孤立して写し取るとコード名の変更に誰も追随できない。同じ script-brief-C20.json を対象とする P05-x-13 と併せて処理できる。",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+  "proposed_node": {
+    "id": "P05-x-16",
+    "title": "script-brief-C20 の stderr 契約へ W-EXTRACT-OPTIONAL を追記し実装との乖離を解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs",
+    "acceptance_criterion": "scripts/extract-handout-config.py が発火させる診断コードの集合が script-brief-C20.json の stderr 契約に記載された集合に包含されることを grep で確認できる",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-16.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-16.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

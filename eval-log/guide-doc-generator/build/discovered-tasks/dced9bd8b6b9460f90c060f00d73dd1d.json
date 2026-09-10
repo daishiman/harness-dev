@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-12",
+  "reason": "P05-x-12 の worker が write_scope 内だが受入基準外として意図的に見送った項目。B03/B09 の rows[].key には『何を同定する鍵か』を書き分けた description が入ったが、同じく key を持つ B08/B13/B15/B16 には description が無い。key の意味 (並び順由来の i0/i1 フォールバックを避けるためか、DOM id と localStorage 保存先の構成要素かなど) は部品ごとに異なるため、B09 の文面を機械的に複製すると誤った根拠を配ることになる。P05-x-12 は done で受け皿が消滅している (PAT-4)",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-x-12.json",
+  "proposed_node": {
+    "id": "P05-x-27",
+    "title": "B08/B13/B15/B16 の rows[].key に同定根拠の description を与える",
+    "phase_ref": "P05",
+    "entity_ref": "C12",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas",
+    "acceptance_criterion": "4 部品それぞれの key.description に『何を同定する鍵か』と『省略/重複したとき何が壊れるか』が部品ごとの実際の用途に即して書かれている (B09 の文面の複製でない)。各記述の根拠を render-handout.py の実装で確認したうえで書く。additionalProperties:false と required を緩めない。key を新たに required へ昇格させない (著者が省略した config も正当であるため)。tests/validate-handout-config.py / tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-27.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-27.md"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/schemas/handout-config.schema.json"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

@@ -3,26 +3,30 @@ name: ref-diagram-system
 description: 図解1枚で何をどの順に決めるか引きたいとき、図種選定・コネクタ入射・日本語ラベル・素材レイヤ検査の根拠を参照したいときに使う。
 kind: ref
 prefix: ref
-version: 0.1.0
+version: 0.1.1
 user-invocable: false
 disable-model-invocation: false
 effect: none
 owner: harness maintainers
 since: 2026-08-09
-last-audited: 2026-08-09
+source: plugins/slide-report-generator/vendor/scripts/
+source-tier: internal
+last-audited: 2026-08-17
 output_language: ja
 allowed-tools:
   - Read
   - Grep
 responsibility_refs: []
 completeness_exempt:
-  - "manifest: kind=ref / effect=none は参照素材のみを提供し実行 phase を持たないため workflow-manifest.json を持たない。"
+  - "prompts: 本スキルは正本への到達経路だけを持つ索引で、自身は判断を実行しない。責務プロンプトを置くと『索引が正本を語る』二重管理になり lint-ssot-duplication.py の検出対象になるため持たない。"
 ---
 
 # ref-diagram-system
 
 > **役割**: 図解 1 枚を描くときの**手続き知識の索引**。値・閾値・列挙の正本は一切持たない。
-> plugin root = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}`。以下のパスは全てそこ起点で読む。
+> **パスの読み方**: 裸の `references/...` は**本スキル私有**（`skills/ref-diagram-system/references/`、
+> 全 4 ファイル）を指す。`（plugin root）` 注記のあるものと `vendor/` `schemas/` `scripts/` `assets/`
+> `tests/` は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。
 
 ## Purpose & Output Contract
 
@@ -127,3 +131,19 @@ completeness_exempt:
 - **図種選定の条件式** — `schemas/visual-derivation-table.json` が正本。
 
 本スキルはそれらへ**どういう問いで到達するか**だけを持つ。
+
+## Gotchas
+
+- **`references/` は 2 箇所ある**。裸の `references/...` は本スキル私有（4 ファイル）、
+  `（plugin root）` 注記付きは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/`（56 ファイル）。
+  前者を plugin root 側で探すと 1 件も見つからない。
+- **`resource-map` も 2 つある**。plugin root の `resource-map.md` は共有 reference 層全体の索引、
+  本スキル私有の `resource-map.yaml` は本スキル 4 ファイルの読込条件。stem が同じで拡張子だけ違う。
+- **§2 の routing 表は D0-D13 しか受けていない**。実在する検査コードは `validate-svg-diagram.py` の
+  `ALL_CODES` が示すとおり D0-D23。特に「線が読めない」で落ちたときは D19-D21（線がノードを貫く／
+  重なる）が原因のことがあり、`connector-incidence.md` の入射規則だけでは解けない。
+  CSS 図解経路（`cssDiagramType`）では強調色の件数は D7 ではなく D16 が見る。
+- **`CANVAS` を経由しない描画が 1 つだけある**。`render-report.js` の `buildNeutralComparison` は
+  自前の幅・高さで描く（不変条件 6 の既知の例外）。viewBox が揃わないのはバグではない。
+- **値をここへ写さない**。`lint-contract-drift.py` と `lint-ssot-duplication.py` が二重管理として
+  検出する。数を書くときは `<!-- count: <key> -->` を付ける（`lint-count-parity.py` の追随対象になる）。

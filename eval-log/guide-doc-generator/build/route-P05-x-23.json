@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-23",
+  "covered_task_ids": [
+    "P05-x-23"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "extract-handout-config.py に部品 id のリテラルが 1 件も残っていない (PAT-7 の第 2 名簿が消えた)",
+      "method": "当方が Python の re.findall で `\\bB[01][0-9]\\b` を全行走査 (BSD grep の \\b artifact を避けるため)",
+      "result": "pass (**出現 0 件**。照合表は `BLOCK_TYPE_CLASS_MAP` へ改称され、鍵は `steps`/`trio`/`table`… の **data_block_type 18 語**。部品 id は `build_part_class_map()` がカタログとの join で実行時に導出する)"
+    },
+    {
+      "claim": "採られた解が既存の 2 先例と同じ形であり、第 3 の語彙を作っていない",
+      "method": "当方が `build_part_class_map()` / `part_ids_by_block_type()` を実装から読解し、C11 `PART_DATA_PROJECTIONS` / C17 `load_part_ids_by_block_type()` と突合",
+      "result": "pass (3 箇所とも鍵が `data_block_type`。**カタログ = 「どの部品がどの block type か」(語彙)、C20 = 「その block type をクラス名からどう見分けるか」(手口)** という責務分割になっており、C20 が持っていた『B03 はステップ行』という知識はカタログの複製だったものが複製でなくなった)"
+    },
+    {
+      "claim": "受入基準のテストが実際に緑になり、失敗テスト名の集合が減っている",
+      "method": "当方が 4 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名の集合を採取 (件数でなく名前集合で判定)",
+      "result": "pass (render: Ran 207 / **failures=1**。集合は `{test_round_trip_equivalence}` のみで、`test_part_ids_are_not_enumerated_outside_the_catalog` が**集合から消えた**。extract: Ran 152 **OK**。a11y: Ran 187 **OK**。validate: Ran 278 / 既知 4 件と一致。**着手前の集合 (render 2 + validate 4) から真に 1 件減り、増加は 0 件**)"
+    },
+    {
+      "claim": "走査範囲の narrowing が assert を弱めていない (本来検出すべき列挙は依然として赤くなる)",
+      "method": "**当方が独立に 9 通りの反例を注入して実測した**。`GREP_SCOPE_DIRS` 配下を scratch の使い捨て root へ複製し `H.PLUGIN_ROOT` を差し替えて走査したため、**repo 上のファイルには 1 バイトも書いていない** (worker は実ファイルへ注入+復元しており、当方の経路の方が復元漏れのリスクが無い)",
+      "result": "pass (**RED になるべき 5 通りはすべて RED**: scripts/*.py の実行コード上のリテラル列挙 / skills の SKILL.md / skills の frontmatter 無し prompts/*.md / commands/*.md / **skills 配下の .py の実行コード**。**GREEN になるべき 3 通りはすべて GREEN**: .py の docstring 内の散文 / .py のコメント内の散文 / scripts/*.md の作業記録。注入前後の baseline は双方 0 件)"
+    },
+    {
+      "claim": "マスクが『データとしての文字列』まで潰していない (照合表の鍵を隠していない)",
+      "method": "当方が `_mask_python_prose()` の実装を読解",
+      "result": "pass (潰すのは **`ast.Expr` 直下の文字列 (= docstring) と `tokenize.COMMENT` だけ**で、文字列リテラル一般は潰さない。したがって `SECOND = (\"B03\", ...)` のような**データとしての列挙は検出され続ける** — 反例 a が実測で RED。桁位置を空白で保つため行番号も元ファイルと一致する)"
+    },
+    {
+      "claim": "W-EXTRACT-CATALOG-DRIFT が死んでいない (双方向とも発火する)",
+      "method": "**当方が独立に 6 通りの反例をメモリ上の deepcopy へ注入した** (ディスク上のカタログ正本には触っていない)",
+      "result": "pass (表→カタログの向き: steps / image / action-items / handson / diagram をそれぞれカタログから削除して **5 通りとも 1 行ずつ発火** (`block.type=<型> は照合表の鍵にあるがカタログのどの部品も要求していない`)。カタログ→表の向き: 未知 block type を持つ B98 を追加して **1 行発火** (`B98 はカタログにあるが照合表に鍵が無い`)。**注入前後の baseline はいずれも 0 行**)"
+    },
+    {
+      "claim": "drift 検査が『検査へ到達していない 0 行』ではない",
+      "method": "上記の反例が baseline 0 行 → 注入で 1 行 → 復元で 0 行と往復することを実測",
+      "result": "pass (**0 行が『直った 0』であることが往復で示されている**。worker はさらに `self_check_catalog()` の 2 つの向きを 1 つずつ削除する変異テストを行い、対応する 2 テストがそれぞれ独立に RED になることを報告している)"
+    },
+    {
+      "claim": "join 導出後も走査順 (受け皿が最後) が保たれている",
+      "method": "当方が `build_part_class_map()` の返り値のキー順を実測",
+      "result": "pass (18 件で**最終要素が受け皿部品**。`BLOCK_TYPE_CLASS_MAP` の宣言順を dict の挿入順で引き継いでおり、`FALLBACK_BLOCK_TYPE = \"text\"` がカタログ経由で受け皿部品 id へ解決される。**順序という暗黙の契約が導出化で壊れていない**)"
+    },
+    {
+      "claim": "カタログ正本と C17 を変更せずに成立している",
+      "method": "当方が mtime を実測",
+      "result": "pass (`config/handout-parts.json` は **21:22:22** で本 leaf の窓 (00:31-00:53) の外。`scripts/verify-handout-a11y-print.py` は 22:00:35 で同じく窓の外。**カタログへ `selector_class` 列を足す案を採らなかったため、plan 側カタログ (`_meta.source_of_truth`) への追随も発生していない**)"
+    },
+    {
+      "claim": "反例注入の残渣が repo に残っていない",
+      "method": "当方が `SECOND_VOCABULARY` / `_prose_probe` / `使うこと。` を scripts・skills・commands・agents・hooks・references・tests 全体へ grep し、注入対象だった 5 ファイルの末尾を目視",
+      "result": "pass (**grep 出力 0 行**。worker が実ファイルへ注入した 5 件 (`commands/handout-build.md` / `SKILL.md` / `prompts/R2-design.md` / `answer-patterns.md` / `RESOLUTION-P05-x-19.md`) は mtime だけが動いており内容は復元済み。**当方の走査でも offender は注入前後とも 0 件**)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が本 leaf の実行窓 (00:30 以降) で plugin-plans / plugins / eval-log / analysis の全ファイル mtime を採取",
+      "result": "pass (`plugins/guide-doc-generator/` 配下のみ。**`plugin-plans/` 配下は 1 件も動いていない**。eval-log 側の 4 件は dispatcher (当方) 自身の書き込み。`git stash` は使われておらず、worker は scratchpad 上の in-memory backup + finally 復元を用いている)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-premise-confirmed",
+      "detail": "当方が dispatch prompt で渡した中心的前提 —『**写像の owner を解決してもこのテストは緑にならない。走査範囲の設計にも踏み込む必要がある**』— は正しく、worker は両方へ手を入れて緑にした。**件数を渡さず構造だけを渡し、数は自分で測らせた**判断も機能している (下記のとおり当方の記憶していた件数は古かった)"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方の『.md も走査対象なのが問題』という括り方は半分外れていた**。外すべきだったのは `scripts/` 配下の .md (誰にも読み込まれない作業記録) **だけ**で、`skills`/`agents`/`commands`/`hooks`/`references` の .md は frontmatter を持たない `prompts/*.md` まで含めて全て対象のまま残っている。**判断基準は拡張子でもディレクトリでもなく『そのテキストを何かが読むか (実行される / 指示として読み込まれる)』の 1 本**であり、当方の枠組みはこの軸を持っていなかった。当方は反例 b/c/e で発火を独立に実測して確認した"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方が dispatch 時に持っていた『offender は 13 件で全て extract-handout-config.py:62-74』は古い情報だった** (compaction 前の値)。worker の実測は **30 件・3 系統** (照合表リテラル 15 / `scripts/*.md` 13 / `.py` docstring 内の散文 2) で、行番号も 68-82 へずれていた。**PAT-1 の 17 例目**であり、行番号と件数を task-spec へ書き下す習慣が並列 build 下で常に腐ることの 3 連続の実例。当方は今回 prompt へ数値を書かず構造だけを渡したため、この腐りは worker の作業を誤らせていない"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**task-spec 進め方 2 の分岐 (『`_class_map()` がリテラルであることを要求していたら解 (a) は成立しない』) は『導出でも通る』側だった**。`_class_map()` は `dir(module)` による**形**の走査で dict の由来を縛っていない。したがって代替案 (b) への退避は不要となり、SSOT テストの変更は 1 メソッド + 1 メソッドの強化に留まった。**dispatcher が『成立しないかもしれない』と書いた分岐を worker が実装読解で潰した**"
+    },
+    {
+      "kind": "design-choice-recorded",
+      "detail": "**task-spec の本命案 (カタログへ `selector_class` 列を足す) は退けられた**。理由 2 点。(1) **owner が逆になる** — クラス名は C20 が HTML を見分けるための手口であって部品語彙の属性ではなく、C11 所有・C04/C12/C18/C23 が読むカタログへ C20 の抽出戦略を書き込むと、抽出器の都合で語彙正本が動く。(2) **drift 検査が完全に死ぬ** — 両側が 1 ファイルへ畳まれると食い違いが原理上起きなくなり `W-EXTRACT-CATALOG-DRIFT` が永久沈黙する (PAT-8 の逆)。採られた `data_block_type` 鍵の解は**両側が独立に書かれ続けるため drift が起き得る場所を部品 id 空間から block type 空間へ移しただけ**で、検査の生存を保っている。当方は 6 通りの反例で生存を実測した"
+    },
+    {
+      "kind": "test-strengthened-during-work",
+      "detail": "**worker が作業中に、既存の drift テストが偽の理由で緑になり得る穴を見つけて強化した**。`test_class_map_row_without_catalog_entry_is_reported` は `assertIn(removed_part_id, res.stderr)` だったが、fixture HTML に当の部品が含まれるためカタログから消すと `E-EXTRACT-UNRECOVERABLE` が**別件として**同じ id を stderr へ出す。本裁定後はこの経路だけでテストが通り、**drift 検査を丸ごと削除しても緑のまま**になっていた。診断コードまで見る `assert_diag()` へ強化済み。**assert の追加であり弱体化ではない**"
+    },
+    {
+      "kind": "residual-goodhart-escape-found-by-dispatcher",
+      "detail": "**当方が worker の 8 反例に無い軸を 1 本足したところ、narrowing の副作用として新しい抜け道が開いていることが判明した**。`scripts/` 配下は `.py` 以外が走査対象から外れたため、**`scripts/part-map.json` のようなデータファイルへ部品 id の名簿を置くと検出されない** (当方の反例 i で GREEN を実測)。これは worker 自身が『Goodhart 的回避』として明示的に退けた『表を config/ へ移して走査から外す』と**同じ効果を持つ経路**であり、narrowing の判断基準 (『そのテキストを何かが読むか』) に照らせば `scripts/*.json` は**プログラムが読む**ので本来は対象であるべき。現時点で該当ファイルは存在せず (scripts 配下の非 .py は .md 2 件と .pyc のみ) **実害ゼロ**だが、抜け道が開いたままなのは事実。受け皿として discovered-task を起票した"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "**`plugin-plans/guide-doc-generator/briefs/script-brief-C20.json#heuristic_fallback.class_map` が部品 id 鍵のまま**で、本裁定 (`data_block_type` 鍵) に追随していない。加えて worker の指摘によれば、実装は**本 leaf 以前から**この brief のセレクタを簡略化しており (brief `.table-wrap > table` ↔ 実装 `(\"table-wrap\",)` など)、契約と実装の乖離は既存。**受け皿は起票済みの P05-x-25 (C11/C20/C17 brief の未追随)** の範囲に入るため新規起票はしない"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "**leaf 作業記録の置き場が 2 系統に割れている**。既存慣行は `schemas/INPUT-CONTRACT-RESOLUTION.md` と `tests/*-ALIGNMENT.md` (どちらも走査範囲外) だが、P05-x-18 / P05-x-19 の task-spec は `produces:` を `plugins/guide-doc-generator/scripts/` 配下に指定しており (`task-graph.json` の辺も同様)、走査対象の `scripts/` へ .md が落ちる。**worker は plan が write_scope 外のため置き場を動かせず、走査規則側で解いた**。本 leaf の task-spec が産出物を `schemas/` に指定しているのは正しい設計。plan 側の一貫化は P05-x-25 の範囲"
+    },
+    {
+      "kind": "signature-discipline-held",
+      "detail": "**当方はこのセッションで 3 度目になる同じ誤りを踏んだ** — `Catalog(data)` と呼んで `__init__() missing 1 required positional argument: 'path'` になった。今回は即座にクラス定義を読んで `Catalog(data, path)` へ直しており測定結果には影響していないが、**『黒箱で叩く前にシグネチャを読む』規律が dispatcher 側で依然として定着していない**ことの 3 例目。一方 worker は本 leaf でこの誤りを 1 度も踏んでおらず、`add_argument` とシグネチャを先に読んだと報告している"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

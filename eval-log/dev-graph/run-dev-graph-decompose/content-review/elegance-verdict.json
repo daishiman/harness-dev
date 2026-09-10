@@ -2,27 +2,46 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-decompose",
-    "skill_md_sha256": "0f687c574616ac556a0b45c1405ffb5ff9722a5c5e1d20e2a1df3cd388685d11"
+    "skill_md_sha256": "ab974f7bedb4d2d4d73cea2bf9a0f62493dc6684f8a58a3491abfcb5213063c2"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7"],
-    "positive_feedback": [
-      "C1 矛盾なし: Hard boundary (L108) で dev-graph=macro (feature/architecture/機能間 depends_on)、system-dev-planner=micro (P01..P13 の13 task) と宣言し、description・Purpose・Macro flow・Why・Gotchas 全てで『本 skill は phase task を独自生成しない』が一貫。責務分割が矛盾なく貫かれている。",
-      "C2 漏れなし: feedback_contract の IN1/OUT1..OUT7 全 8 criteria が ## Criteria acceptance に 1:1 で受入条件化され、dry-run write 0 (OUT3)・authority 衝突 fail-closed (OUT4)・pending_retry 冪等 (OUT5)・自動/手動経路の二重登録 0 (OUT6/OUT7) まで欠落なく網羅。",
-      "C4 依存整合: script_refs 4本 (resolve-repo-context/validate-graph-schema/gh-bridge/bd-bridge)、schema_refs、reference_refs (feature-execution-package-contract.md・execution-tracker-contract.md)、responsibility_refs の prompts/R1,R2,R2b,R3,R4,R6 が全て実在。R5-retry は prompt_required:false で responsibility_refs から意図的に除外され整合。external handoff JSON も実在。"
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2",
+      "OUT3",
+      "OUT4",
+      "OUT5",
+      "OUT6",
+      "OUT7"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 0f687c57...) を frontmatter+本文全文 read し 4 条件で genuine 再評価。①矛盾なし: macro/micro 境界と『phase task 非生成』が description〜Gotchas で終始一貫。②漏れなし: IN1+OUT1..OUT7 全 8 criteria を acceptance で受入条件化し、goal-seek の goal/why/checklist/配線/検証 (hash 不一致 fail-closed) まで完備。③整合性: responsibilities R1-R6 と Macro flow 手順、criteria acceptance が齟齬なく対応 (register-package 委譲・binding 別投影 beads/github/none も一致)。④依存整合: 参照 script/schema/reference/prompt/外部 handoff の実在をファイルシステムで確認済み。重大 (contradiction/omission/inconsistency/dependency_break) は 0 件。PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

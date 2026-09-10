@@ -1,0 +1,70 @@
+{
+  "approver": "elegant-meta-divergent-analyst",
+  "proposer": "elegant-improvement-executor (/root/elegant_logical)",
+  "reviewed_at": "2026-08-23T10:09:44Z",
+  "iteration_count": 3,
+  "approval": "NOT_APPROVED",
+  "verdict": "FAIL",
+  "conditions": {
+    "C1": "FAIL",
+    "C2": "FAIL",
+    "C3": "FAIL",
+    "C4": "FAIL"
+  },
+  "blockers": [
+    {
+      "id": "B-01",
+      "conditions": ["C3", "C4"],
+      "signal": "dependency_break",
+      "file": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+      "line": 1557,
+      "description": "image_plan.diagram_pattern は新3語を受理するが、C21 srg-image-bridge.py の style-family 写像は受理しない。",
+      "minimal_resolution": "新3語を DIAGRAM の pattern にだけ閉じ、image_plan.diagram_pattern の列挙から外す。"
+    },
+    {
+      "id": "B-02",
+      "conditions": ["C2"],
+      "signal": "omission",
+      "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "line": 61,
+      "description": "C05 は全patternを画像計画へ流せるが、style-family 選択は新3語を覆わない。",
+      "minimal_resolution": "新3語を DIAGRAM 専用に限定し、画像計画側へ流さない。"
+    },
+    {
+      "id": "B-03",
+      "conditions": ["C4"],
+      "signal": "dependency_break",
+      "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+      "line": 196,
+      "description": "visual-fit が visual policy を参照する一方、reads_files と build target に読み込み契約がない。",
+      "minimal_resolution": "外部参照を増やさず、固定pattern語彙を持たない一般的な意味判定へ戻す。"
+    },
+    {
+      "id": "B-04",
+      "conditions": ["C1"],
+      "signal": "contradiction",
+      "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+      "line": 46,
+      "description": "policy は DIAGRAM 下限0・warningだが、C05 brief は各main節最低1件・errorと記述する。",
+      "minimal_resolution": "件数とlevelの直書きを削除し、policy参照だけにする。"
+    },
+    {
+      "id": "B-05",
+      "conditions": ["C1"],
+      "signal": "contradiction",
+      "file": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+      "line": 45,
+      "description": "C14 brief に旧『各main節最低1件』前提が残り、現在のDIAGRAM任意方針と矛盾する。",
+      "minimal_resolution": "C14 の責務を1図解の描画契約に限定し、資料内件数の前提を削除する。"
+    }
+  ],
+  "non_blocking_notes": [
+    "独立EXPLAIN部品・schema・renderer分岐は撤回済み。",
+    "catalog metadata と README の不要差分は撤回済み。",
+    "C05/C06 の固定6語と、C05/R2の新3語直接列挙は正本参照へ統合済み。",
+    "renderer 172件、C05 53件、C06 168件、C21 style-family 24件はPASSしたが、cross-component enum整合は現行テストの検査外。"
+  ],
+  "max_iterations_reached": true,
+  "force_pass": false,
+  "human_review_required": true
+}

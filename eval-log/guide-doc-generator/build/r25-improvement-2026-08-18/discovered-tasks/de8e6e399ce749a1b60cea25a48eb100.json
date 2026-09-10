@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C22-01",
+  "reason": "P03-x-04 (orange) が AC-C22-R21-56b を新規 id のつもりで追加したが同 id が既存だった。結果 acceptance_checks に id 重複 2 件が生じ、既存 56b の expected が上書きで破壊されている。配列要素の id 重複なので json.load では検出できない。dispatcher が全 brief を横断確認したところ重複は C22 のみ。原意は tests/verify-handout-narrative.py/test_nar07_demo_first.py:108 test_ac56b_screenshot_inserted_before_diagram_passes が保持しており現在も緑。orange の自己申告",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-75-c22-brief-ac-id-duplication",
+    "title": "script-brief-C22.json の AC id 重複と expected 破壊を復旧する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+    "acceptance_criterion": "acceptance_checks[].id が一意であること。1 つ目の AC-C22-R21-56b の expected が HEAD 原文 (exit 0、NAR-07 PASS。概念図の存在自体は禁じておらず、実画面より前に置くことだけが禁止であることの回帰テスト) へ復元されていること。P03-x-04 で追加された方が AC-C22-R21-56d へ改番されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

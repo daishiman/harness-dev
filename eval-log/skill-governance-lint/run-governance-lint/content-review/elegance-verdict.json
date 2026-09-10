@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "skill-governance-lint",
+    "skill": "run-governance-lint",
+    "skill_md_sha256": "a211d47b11a269d6838c606a174f0b602b2455f4d853bc0f27f050387b26469b"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "責務が「artifact kind から適用可能な lint/validator を選び全 exit code と finding を返す」一点に絞られ、Purpose & Output Contract / Key Rules / ゴールシーク実行 / 検証 が同じ 1 責務を指している。",
+      "Key Rules の「非0を自動修正や成功へ畳まない」「複数lintは独立結果として保持する」が OUT1 の偽緑化防止をそのまま本文規約にしており、fail-closed 方針が criteria と本文で一致している。",
+      "plugin root 解決を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の dual-root 形で書いており、bare `${CLAUDE_PLUGIN_ROOT}` による Codex 側空文字展開を避けている。"
+    ],
+    "negative_feedback": [
+      "low: kind:run でありながら `workflow-manifest.json` と `prompts/` を持たず `completeness_exempt` / `responsibility_refs` の宣言も無いため lint-skill-completeness が exit 1 になる。ただし skill-governance-config / -adapters / -hooks など同族 plugin の run skill も同一状態で、scripts/run-ci-checks.sh では harness-creator / prompt-creator 以外を run_soft (warning) 扱いにする段階導入 (SS-201) が明記されている。今回の差分が持ち込んだ退行ではなく plugin family 全体の既知 backlog。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "next_action": "none"
+  },
+  "notes": "git diff HEAD -- plugins/skill-governance-lint/skills/run-governance-lint/SKILL.md で差分全量 (新規 73 行) を読み、SKILL.md 本文と frontmatter を精査した。(a) 矛盾なし: artifact-delivery block の Pre-choice / Post-choice 節と本体 workflow の順序・文言が同族 plugins/skill-governance-config/skills/run-governance-config/SKILL.md と完全一致し、既存 Purpose & Output Contract / ゴールシーク実行 / 検証 を壊していない。(b) 漏れなし: IN1 が要求する「実在 entrypoint から選び各 help と exit code を独立確認」は『ゴールシーク実行』節に、OUT1 が要求する「未実行の理由付き残存と表形式報告」は『検証』節の `lint | target | exit | finding` 表と Key Rules に対応がある。(c) 規約整合: effect は conversation-output で external-mutation ではないため external_mutation_guard / receipt flow block は不要 (frontmatter・本文とも非宣言で片側不整合なし)。runtime_root_policy は宣言していないので `## Runtime root contract` 節の要求は発生せず、本文の shell root 参照は dual-root 形。(d) 依存関係整合: frontmatter に *_refs / schema_refs / prompts 参照が無く、参照先不在は発生しない。本文が指す `scripts/lint-*.py` / `validate-*.py` は plugins/skill-governance-lint/scripts/ に lint-skill-completeness.py など 24 本が実在する。(e) 実行した機械検査: scripts/lint-runtime-portability.py, lint-artifact-delivery.py, lint-feedback-contract.py, lint-skill-description.py, lint-skill-name.py, validate-frontmatter.py はいずれも本 skill に対する finding を出さなかった。plugins/skill-governance-lint/scripts/lint-skill-completeness.py のみ exit 1 (workflow-manifest.json / prompts 不在) で、これは negative_feedback に low として記録した既知の family-wide soft-gate baseline。high severity 0 のため PASS。"
+}

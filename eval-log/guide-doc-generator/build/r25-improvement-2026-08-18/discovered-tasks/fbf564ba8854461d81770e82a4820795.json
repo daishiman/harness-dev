@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "schemas/handout-config.schema.json:400 は required_slot を持つ section_kind では全 part に必須 と属性駆動を宣言するが、required_slot は repo 全体でこの記述文字列 1 件のみで属性としては出荷・plan いずれの handout-sections.json にも 0 件。実装は validate-handout-config.py:1160 の if kind == KIND_CAPABILITY_EXPLAINER で slug 直書き。C46 で属性駆動へ直したのと同じ欠陥が C51 側に残っている。dispatcher が grep と該当行の直読みで確認。cyan が検出",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-70-required-slot-described-but-unimplemented",
+    "title": "required_slot の schema 記述と slug 直書き実装の不一致を解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "slot 検査の適用対象が section_kind 属性から決まるか、あるいは schema 記述が実装どおりへ改まっているかのいずれかで、記述と実装が一致していること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

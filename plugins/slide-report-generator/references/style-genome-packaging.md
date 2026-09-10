@@ -25,7 +25,7 @@
 
 | プリセット | パス | 用途 |
 |---|---|---|
-| `kanagawa-comic-diagram` | `assets/style-genome-kanagawa-comic-diagram.json` | `slide-2026-06-13-skill-mass-production/assets/generated/` の画像群に近い、漫画チックな説明図、吹き出しラベル、簡易表、角丸アイソメタイル、青い発光フローラインを再現する |
+| `kanagawa-comic-diagram` | `vendor/assets/style-genome-kanagawa-comic-diagram.json` | `slide-2026-06-13-skill-mass-production/assets/generated/` の画像群に近い、漫画チックな説明図、吹き出しラベル、簡易表、角丸アイソメタイル、青い発光フローラインを再現する |
 
 新規デッキでは、このプリセットをコピーして `assets/generated/style-genome.json` として保存し、必要な差分だけ project-local に上書きする。毎回「スタイルゲノム取得プロンプト」を実行する運用ではない。
 
@@ -33,19 +33,18 @@
 
 ### 2.1 再現対象ディレクトリの主要特徴
 
-`slide-2026-06-13-skill-mass-production/assets/generated/` の画像群を再現する時は、以下を固定する。実物は人物・AIロボットマスコット込みの複雑め(リッチ)なジオラマであり、シンプルな角丸タイル＋少数モチーフではない。
+`slide-2026-06-13-skill-mass-production/assets/generated/` の画像群を再現する時は、以下を固定する。実物は描き込み密度の高い(リッチな)ジオラマであり、少数モチーフの平坦図ではない。固有のマスコットキャラクターを規範として置かない（描くかどうかは内容が要求する場合に限る）。
 
 | 要素 | 固定する特徴 |
 |---|---|
 | 画面 | 16:9、白〜オフホワイト背景(#FAFAFA)、薄いアイソメドットグリッド床 |
 | 主体 | 角丸アイソメタイル上に、工程・概念をリッチな小ジオラマとして配置。重なり(occlusion)と奥行きを積極利用 |
 | 人物 | 半抽象・無表情の簡略人物。全員が紺〜くすんだ青系の服。座位エンジニア／手を広げて話す立ち姿／タブレット操作者／建設作業者の系統。シーン高の1/4〜1/3。フェーズごとに複数点在 |
-| キャラ | 白〜淡青のAIロボットマスコット(濃紺フェイスパネル＋シアン楕円目2つ＋アンテナ＋sparkle)。全身／頭部浮遊／上半身クリップボードの変種。AI・判断・自動化の象徴 |
-| 線 | 紺系の細いアウトライン、手描き風ではなく均一でクリーン |
+| 線 | 均一でクリーンな細いアウトライン。太さは `skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_004 の 3 段で階層を作る |
 | タイトル | 上部中央に太い濃紺の日本語見出し |
 | ラベル | 吹き出し型または角丸ラベル。淡色塗り＋濃紺太字 |
 | フロー | 青白い発光矢印・発光ライン。複数フェーズを通す蛇行する青い道(serpentine path)も使う |
-| 色 | Kanagawa系の淡い blue / aqua / yellow / violet / pink を章/STEPごとの支配色で使い分け。段ボールのamber茶、植物のteal-green、AIロボ/矢印/ゲートのシアン発光(#BFD9FF)が共通アクセント |
+| 色 | style genome の `palette` 定義と一致させる（配色値の正本は genome。本書へ HEX や色名を写経しない）。面の色数・アクセントの作り方は `skills/run-slide-report-generate/references/visual-generation-rules.md` §1 に従う |
 | 反復具体物 | 歯車群・モニター群・書類束・チェッククリップボード・観葉植物・円柱DB・配送箱・トラック・ベルトコンベア・ロボットアーム・信号塔・キャビネット・虫眼鏡・電卓・QRカード・地球儀スクリーン・コーヒー・本棚・位置ピン・吹き出し群・選択式UIタブレット等(genome motifs 参照) |
 | 章扉 | 巨大な半透明ゴースト章番号(02/03)＋STEP1-4の角丸ピル進行ナビ＋QRカードが章扉の固定パーツ |
 | レイアウト | 表紙ミニマル／章扉(ゴースト番号)／左右二層対比(中央ゲート)／4フェーズ直列(下に循環戻り)／蛇行メカニズムの5型(genome compositionRules.layoutTemplates 参照) |
@@ -54,7 +53,7 @@
 
 ## 3. スタイルゲノムの正本フィールド
 
-`assets/style-genome-kanagawa-comic-diagram.json` または project-local の `assets/generated/style-genome.json` は以下を固定値として持つ。
+`vendor/assets/style-genome-kanagawa-comic-diagram.json` または project-local の `assets/generated/style-genome.json` は以下を固定値として持つ。
 
 現行 `schemaVersion` は **1.3.0**。下表のフィールド名は実 JSON のキーと一致させる（追加のみ・後方互換。既存フィールド/motif は削除しない）。
 
@@ -77,7 +76,7 @@
 | `tableAndMatrixRules` | 表/マトリックスの描き分け。`modes`（`illustrated-mini-table` / `illustrated-full-table`＝見出し+全行を画像内に verbatim 焼き込み・HTML重ね不使用 / `html-overlay-table` / `diagram-translation` / `html-primary`）＋`selectionAxes`/`selection`＋`visualBalanceTokens`（HTML表を画像版と世界観統一する surface/outline/cornerRadius/shadow/accent/props トークン）＋`boundaryRule`（混在境界＝slideType の意味境界＝コード/精密表/逐語数値はHTML側）。image-only デッキで表を見せるときは `illustrated-full-table`（全部画像で焼く）を既定にし、精密数値/料金/長文/複数行コードのみ HTML 系へ |
 | `printReadinessRules` | 全面画像デッキの全ページ印刷前提（`imageCanvas`＝16:9・safeArea 内・`object-fit:contain` 既定/cover は被写体切れ確認時のみ、`textForPrint`、`contrast`、`validation`） |
 | `promptSuffix` / `negativePrompt` | 全プロンプト末尾に固定付与する共通サフィックスと共通禁止語 |
-| `machineContract` | 機械SSoT（`scripts/validate-ai-image-assets.js`）へのポインタ。pattern/textPolicy/backgroundSource の許容値はこのスクリプトが正本 |
+| `machineContract` | 機械SSoT（`vendor/scripts/validate-ai-image-assets.js`）へのポインタ。pattern/textPolicy/backgroundSource の許容値はこのスクリプトが正本 |
 | `perSlideDiffContract` | per-slide 差分の規約。各スライドで使う motif は plan の `motifs` に書き、genome の `motifs[].name` の部分集合として参照する |
 | `reproducibility` | seed、style reference、解像度、保存規約、検証コマンド |
 
@@ -91,7 +90,7 @@
 
 ### 3.2 build-image-prompts.js 連携（スタイルゲノム → プロンプト → 画像生成）
 
-`assets/generated/style-genome.json` は、`scripts/build-image-prompts.js` が `assets/generated/image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json` 準拠）と合成して、各 `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成するための**入力仕様**である。ビルダーは genome の `artStyle` / `palette` / `compositionRules` / `motifs` / `promptSuffix` / `negativePrompt` を STYLE BIBLE preamble へ決定論で展開し、plan の per-slide 差分（`subject` / `diagramStructure` / `camera` / `accent` / `motifs` / `overlayText` 等）を本文へ流し込む。`scripts/generate-images-codex.js` が生成された prompt.md を codex exec で画像化し（`meta.source` は実体名 `codex-image2`）、`scripts/validate-ai-image-assets.js --check-genome-content` が genome 仕様の prompt 反映（promptSuffix 主要語・motif 名・accent HEX）を検証する。プレースホルダ（`{{STYLE_BIBLE}}` 等）の手動展開は不要。
+`assets/generated/style-genome.json` は、`vendor/scripts/build-image-prompts.js` が `assets/generated/image-deck-plan.json`（per-slide 差分の入力契約・`schemas/image-deck-plan.schema.json` 準拠）と合成して、各 `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成するための**入力仕様**である。ビルダーは genome の `artStyle` / `palette` / `compositionRules` / `motifs` / `promptSuffix` / `negativePrompt` を STYLE BIBLE preamble へ決定論で展開し、plan の per-slide 差分（`subject` / `diagramStructure` / `camera` / `accent` / `motifs` / `overlayText` 等）を本文へ流し込む。`vendor/scripts/generate-images-codex.js` が生成された prompt.md を codex exec で画像化し（`meta.source` は実体名 `codex-image2`）、`vendor/scripts/validate-ai-image-assets.js --check-genome-content` が genome 仕様の prompt 反映（promptSuffix 主要語・motif 名・accent HEX）を検証する。プレースホルダ（`{{STYLE_BIBLE}}` 等）の手動展開は不要。
 
 ビルダーの決定論性・検証ゲートで保証する事項:
 
@@ -152,8 +151,8 @@ gpt-image-2 でデッキの世界観を全ページ統一する手段は、(A) �
 
 画像アセットの検証は3層に分担する。各層は別の手段で別の対象を見る。
 
-- **Tier1（機械ゲート）**: 字数・存在・enum などの形式検証。`scripts/validate-ai-image-assets.js` / `build-image-prompts.js` の validateSlide / schema が担う。`negativeSpecific` の20字以上 assert・`tableContent` の各セル14字以内・列行整合・`pattern`×`textPolicy` 整合・必須キー存在もここ。
-- **Tier2（LLM-judge / eval）**: 意味の妥当性。`scripts/evaluate-image-consistency.js` のルブリック採点や `--strict-intent` の意味照合が担う。負制約が「実際に間違えやすい構成」を突いているか、支配色宣言が prompt 本文に意味として反映されているかなど、形式では測れない妥当性を見る。
+- **Tier1（機械ゲート）**: 字数・存在・enum などの形式検証。`vendor/scripts/validate-ai-image-assets.js` / `build-image-prompts.js` の validateSlide / schema が担う。`negativeSpecific` の20字以上 assert・`tableContent` の各セル14字以内・列行整合・`pattern`×`textPolicy` 整合・必須キー存在もここ。
+- **Tier2（LLM-judge / eval）**: 意味の妥当性。`vendor/scripts/evaluate-image-consistency.js` のルブリック採点や `--strict-intent` の意味照合が担う。負制約が「実際に間違えやすい構成」を突いているか、支配色宣言が prompt 本文に意味として反映されているかなど、形式では測れない妥当性を見る。
 - **Tier3（目視）**: 生成画像の文字化け・被写体切れ・コントラスト・印刷端欠けの最終確認。人間が見る。
 
 分担の例: `negativeSpecific` の「20字以上」は形式ゲート（Tier1）が assert し、その20字が意味のある負制約になっているか（誤ノード数・逆向き・対称崩れを的確に列挙しているか）の妥当性は Tier2/Tier3 が担う。形式を満たしただけで意味の妥当性が保証されるわけではない。
@@ -162,7 +161,7 @@ gpt-image-2 でデッキの世界観を全ページ統一する手段は、(A) �
 
 ## 4. 量産パターン（2主パターン + html-primary）
 
-ユーザーの2パターン（画像生成でスライドを作る / HTMLと画像・SVGを組み合わせる）を `pattern` の3値で表す。`html-primary` は「HTML側で画像を使わない」退避先で Pattern B の特殊形。機械的な許容値は `scripts/validate-ai-image-assets.js` を正本とする。
+ユーザーの2パターン（画像生成でスライドを作る / HTMLと画像・SVGを組み合わせる）を `pattern` の3値で表す。`html-primary` は「HTML側で画像を使わない」退避先で Pattern B の特殊形。機械的な許容値は `vendor/scripts/validate-ai-image-assets.js` を正本とする。
 
 | `pattern` | 器 | `textPolicy` | `backgroundSource` |
 |---|---|---|---|
@@ -253,7 +252,7 @@ STYLE BIBLE を毎回直書きせず、スライドごとのプロンプトに�
 - `html-composite` のときは `backgroundSource`（`raster` / `svg`）を付ける。
 - 表を画像内に焼くときは `tableMode: illustrated-full-table` + `tableContent`（`headers` / `rows[][]` / `monospaceColumns?` / `caption?`）を付け、`textPolicy: baked-with-overlay` にして `overlayText` に表全文（全セル）を保持する（各セル14字以内・最大5列×6行）。HTML のピンポイント重ねは使わない。
 - `styleGenome` には実際に使ったゲノムのパスを書く（§2 でコピーした project-local の `assets/generated/style-genome.json` を推奨）。
-- plan の必須キーは `schemas/image-deck-plan.schema.json` を正本とする。生成物 meta の必須キー（`slide` / `asset` / `source` / `decision` / `reason` / `alt` / `pattern` / `textPolicy` / `backgroundSource` / `styleGenome` / `prompt` / `purpose` / `audienceTakeaway` / `background` / `layout` / `generation`）は `scripts/validate-ai-image-assets.js --strict-style-genome --strict-intent` を正本とする。
+- plan の必須キーは `schemas/image-deck-plan.schema.json` を正本とする。生成物 meta の必須キー（`slide` / `asset` / `source` / `decision` / `reason` / `alt` / `pattern` / `textPolicy` / `backgroundSource` / `styleGenome` / `prompt` / `purpose` / `audienceTakeaway` / `background` / `layout` / `generation`）は `vendor/scripts/validate-ai-image-assets.js --strict-style-genome --strict-intent` を正本とする。
 
 ---
 
@@ -270,11 +269,11 @@ STYLE BIBLE を毎回直書きせず、スライドごとのプロンプトに�
 検証コマンド:
 
 ```bash
-node scripts/validate-ai-image-assets.js <slide-dir> --strict-style-genome
+node vendor/scripts/validate-ai-image-assets.js <slide-dir> --strict-style-genome
 # 全面画像生成モードではこちらを使う
-node scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome
-node scripts/verify-slides.js <slide-dir>/index.html --check-ratio
-node scripts/sync-checker.js <slide-dir>/index.html <slide-dir>/structure.md
+node vendor/scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome
+node vendor/scripts/verify-slides.js <slide-dir>/index.html --check-ratio
+node vendor/scripts/sync-checker.js <slide-dir>/index.html <slide-dir>/structure.md
 ```
 
 ---

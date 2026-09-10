@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C22-01",
+  "reason": "R25/REQ-3 で全 main セクションに IMG 必須になった結果、demo_first の資料で最初の main セクションの IMG が素材不足で illustration へ落ちると C22 の NAR-07 (最初の提示物は実画面) が必ず FAIL する。evidence/P07.json:68 と evidence/P13.json:166 に NAR-07 初回 FAIL の実績あり。C01 の R3-render fallback と C05 の設計手順のどちらかに『demo_first のとき最初の main セクションは illustration への降格を許さず、screenshot 素材か live_demo の B17 を確保する』を配線する必要がある",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C22-01.json",
+  "proposed_node": {
+    "id": "P02-demo-first-no-fallback",
+    "title": "demo_first の先頭 main セクションで illustration fallback を禁止する配線を C01/C05 へ入れる",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+    "acceptance_criterion": "skill-brief-C01.json の R3-render に、presentation_order=demo_first のとき最初の main セクションの assets[].role を illustration へ書き換えない例外が明記され、素材が無い場合の代替 (live_demo=true の B17 を先頭に置く) と、それも不可能な場合の失敗の出し方が定まっていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

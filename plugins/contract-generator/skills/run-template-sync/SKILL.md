@@ -17,11 +17,13 @@ rubric_refs:
 responsibility_refs: [prompts/R1-diagnose-and-resync.md, ../../agents/template-sync-agent.md, scripts/sync.py]
 prompt_ssot: prompts/R1-diagnose-and-resync.md
 effect: external-mutation
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: output/contract-generator-v2/(refactor-plan.md) + run-contract-generate/references/template-change-runbook.md
 source-tier: internal
 last-audited: 2026-05-30
 audit-trigger: on-change
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -36,9 +38,64 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 「ひな形が変わった」等の明示意図でのみ発火し、作成意図(「契約書を作って」)では発火しない誤発火防止設計が description に純化されていること。
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
+
 # run-template-sync
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 ユーザーが「ひな形が変わった/テンプレートが更新された」と**明示した時のみ**発火する独立スキル。自社のひな形フォルダに置き換えられた `.docx` を `scan_template` で診断し、黄色run/プレースホルダの差分(MISSING=差込位置消失/UNMAPPED=新規プレースホルダ)を検知。`--apply` で `template-mapping.json`・台帳列の更新を促し、`completed` 行に**再生成フラグ**を立てて `未作成` へ差し戻す→次回 `run-contract-generate(--phase draft)` で作り直される。実体は `scripts/sync.py`(共有 `../../lib/scan_template.py` を使用)。
@@ -76,7 +133,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 ひな形差分解消を多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-template-sync-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-template-sync-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-template-sync
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-template-sync
 # → eval-log/run-template-sync-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -91,7 +148,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-template-sync
 - `scan_template --type {individual,corporate}` が exit 0(整合)/5(drift)
 - `--apply` 後、対象 `completed` 行が `未作成`+再生成フラグ◯ になっている
 - `--dry-run` で台帳書込を抑止可能
-- 実装: `scripts/sync.py`(集約診断 + `--apply` 時の台帳差し戻し entrypoint) / `$CLAUDE_PLUGIN_ROOT/lib/scan_template.py`(個別ひな形の drift 判定)
+- 実装: `scripts/sync.py`(集約診断 + `--apply` 時の台帳差し戻し entrypoint) / `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/scan_template.py`(個別ひな形の drift 判定)
 
 ## Gotchas
 - `read_file_content`(MCP)ではハイライト属性が取れない。黄色run確認は `scan_template`(標準ライブラリ `docx_lib`)で行う。
@@ -110,8 +167,8 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-template-sync
 
 ## 使い方
 ```bash
-python3 scripts/sync.py --type all              # 診断のみ(差分検知)
-python3 scripts/sync.py --type all --apply      # 差分解消後: 再生成フラグを立て未作成へ差し戻し
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py" --type all           # 診断のみ(差分検知)
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-template-sync/scripts/sync.py" --type all --apply   # 差分解消後: 再生成フラグを立て未作成へ差し戻し
 ```
 または自然言語で「契約書のひな形が変わりました」と伝える。
 

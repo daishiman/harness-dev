@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-04",
+  "covered_task_ids": [
+    "P04-x-04"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 R22-AMENDMENT.md が実在する",
+      "method": "ls plugins/guide-doc-generator/tests/R22-AMENDMENT.md",
+      "result": "pass (7498 bytes)"
+    },
+    {
+      "claim": "C61-C66 の責務 component 全 5 ディレクトリへ追補された",
+      "method": "test_r22_*.py の列挙 (validate-handout-config.py x2 / resolve-handout-preset.py x1 / render-handout.py x2 / run-handout-build x1 / verify-handout-narrative.py x1)",
+      "result": "pass (7 ファイル)"
+    },
+    {
+      "claim": "追補分が実装前に赤である",
+      "method": "python3 -m unittest discover -s tests/resolve-handout-preset.py -p 'test_r22_*.py'",
+      "result": "pass (Ran 10 / FAILED failures=10 / errors=0)"
+    },
+    {
+      "claim": "追補分が setUpClass 内で例外を投げない (failures と errors の区別を保つ)",
+      "method": "grep -l setUpClass tests/*/test_r22_*.py",
+      "result": "pass (該当なし)"
+    },
+    {
+      "claim": "既存テストの受入基準を緩める書き換えが無い",
+      "method": "agent 報告 existing_tests_weakened=false および追補が既存ファイルへの追記でなく新規ファイル 7 本であること",
+      "result": "pass"
+    },
+    {
+      "claim": "追補内容と checklist 項目の対応表が記録されている",
+      "method": "R22-AMENDMENT.md の checklist_covered = C61..C66",
+      "result": "pass"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "pre-existing-red-structure",
+      "detail": "render-handout.py ディレクトリに errors=20 が残る。追補前から存在する test_html_attributes.py / test_html_structure.py / test_r21_rendering.py が setUpClass 内で未実装を検出して例外を投げる構造で、既存テスト書き換え禁止のため本 leaf では解消不能。追補した 2 ファイルは errors を 1 件も増やしていない"
+    },
+    {
+      "kind": "canon-conflict-deferred",
+      "detail": "P04-x-04 の禁止事項に従い書き換えず記録した正本矛盾 3 件。(a) script-brief-C23.json の structural_guarantee『プリセット鍵ちょうど 5 個』と新設 granularity_defaults が矛盾し、既存 test_r20_invariants.PresetKeySurfaceTest と両立しない (b) script-brief-C22.json は 10 検出だが既存 test_cli_contract.py が NAR-01..08 の 8 件ちょうどを assertEqual で固定しており、NAR-09/10 を出す実装は既存テストを緑にできない (c) C23 granularity_defaults.defaults が doc_type 7 種のみで語彙 slug proposal に既定が無く、C64 の『無回答でも既定が引ける』が proposal で成立しない。いずれも P04-x-05 (正本修正 leaf) で裁定する"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "2 件。(1) detail_level / evidence_depth の enum 違反に対する診断コード名が C12 ブリーフ未定義のため、exit 1 と stderr が当該 JSON pointer を名指すことのみ固定しコード名は縛っていない (2) NAR-09 の standard 帯の上下限、および claim / evidence 属性を C11 がどのブロック種別から生成するかが未定義のため、standard は両極端で PASS することのみ、NAR-10 は属性を直接注入した HTML でのゲート判定のみを固定した"
+    }
+  ]
+}

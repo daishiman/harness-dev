@@ -1,0 +1,49 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C04-01",
+ "covered_task_ids": [
+  "P02-C04-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C04.json",
+ "verified_by": [
+  {
+   "claim": "skill-brief.schema.json 適合 (修正前は boundary が maxLength 200 に対し 205 字で違反)",
+   "method": "dispatcher が jsonschema.Draft202012Validator で再検証",
+   "result": "pass: errors 0 / boundary 177 字 / 余剰キー 0"
+  },
+  {
+   "claim": "カード語彙の参照経路が C04 に存在しなかった (描画側 C11 と config 側には存在)",
+   "method": "SubAgent が card/カード/hero/visual-policy を grep し 0 件。dispatcher が修正後の output_contract と key_constraints を確認",
+   "result": "pass: 追記後は閾値=handout-visual-policy.json#opening.hero_card_fields.*、DOM/クラス名=C11 brief を参照する形。C04 本文へ語彙を複製していない"
+  },
+  {
+   "claim": "外部依存ゼロが key_constraints として明文化された",
+   "method": "key_constraints の 2 要素を読み、判定正本が C16 CR-EXT を指すことを確認",
+   "result": "pass: CDN/web font/外部 URL/外部アイコンフォントの禁止と、値判定を C12 へ委ねる分界の 2 件"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git status --porcelain plugin-plans/",
+   "result": "pass: 本ノード由来の変更は skill-brief-C04.json のみ"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C04-01",
+   "level": "blocking-for-release",
+   "summary": "ナビ項目が micro_copy.roles の 14 字上限を超えた場合の視覚的な扱い (折返し/省略/ツールチップ) と、項目数が多いときの段組・横スクロールがプラン全体で未定義。C11 brief にも handout-visual-policy.json にも該当なし。利用者の R11 指摘は字数上限だけでは閉じない"
+  },
+  {
+   "id": "F-C04-02",
+   "level": "carry-forward",
+   "summary": "inventory C04 の trigger_conditions 3 件 (部品カタログ/デザイントークン/アイコン規約) ではカード・ナビ系の問いで発火しない。schema の maxItems 3 のため追加でなく差替えが必要で、inventory と brief を同時に触るノードが要る"
+  },
+  {
+   "id": "F-C04-03",
+   "level": "carry-forward",
+   "summary": "inventory C04 の harness_coverage に R25 の regression_scope が無い (C11 は C67/C71/C73/C74 と resolution_ref を保持)。C04 が R25 設計語彙を持つ以上、回帰範囲の宣言が要る"
+  }
+ ]
+}

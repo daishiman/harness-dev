@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-24",
+  "covered_task_ids": [
+    "P05-x-24"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs",
+  "verified_by": [
+    {
+      "claim": "C17 の exit 2 の 4 形が実在し、それぞれ区別可能な診断を出す",
+      "method": "**当方が独立に再現した。しかも worker より安全な経路を採った** — `load_part_ids_by_block_type(root=...)` が root を引数で受けることを実装から読み取り、scratchpad 上の使い捨て root 4 個へそれぞれ変異カタログを置いて呼び分けた。**repo 上の `config/handout-parts.json` には一切触れていない** (並行実行中の P05-x-20 worker への副作用が原理的に起こらない)",
+      "result": "pass (baseline は 18 entries で成功。不在 → `部品カタログ正本を読めない: … [Errno 2]`、不正 JSON → 同メッセージで JSON パーサ理由付き、`data_block_type` 重複 → `部品カタログの data_block_type が一意でない: steps`、検査対象 type 欠落 → `部品カタログに検査対象の block.type が無い: map, chips, tabs`。**4 形すべて CatalogError で区別可能**)"
+    },
+    {
+      "claim": "C17 の exit code が 0/1/2 の 3 種のみで、カタログ失敗に別番号を割く必要がない",
+      "method": "当方が `verify-handout-a11y-print.py` の全 return 経路を Python の `re.findall` で列挙 (BSD grep の `\\b` artifact を避けるため)",
+      "result": "pass (リテラル return は 0 と 2 のみ。1 は `return 0 if report[\"result\"] == \"PASS\" else 1` の算出経路 1 箇所。`sys.exit(n)` は 0 件。**番号衝突なし**で、既存 2 の定義文へ追記した判断は正しい)"
+    },
+    {
+      "claim": "C17 brief の exit_codes にカタログ失敗が明記され、別番号を割かない理由も書かれている",
+      "method": "当方が exit_codes を json.load して読解",
+      "result": "pass (`2` の本文へ『部品カタログ正本 (config/handout-parts.json) を解決できない場合』を追加したうえで、**『カタログ失敗は既存の 2 と別番号を割かない — 2 の意味は「検査が成立しなかった」であり、検査対象の器を同定できない状態はその一例だからである』と理由を明記**。コードを発明していない)"
+    },
+    {
+      "claim": "C22 の hero フィールド規約が『どのマーカーで引くか』で書かれている (位置条件ベースでない)",
+      "method": "当方が `canonical_rules.hero_field_resolution` (CR-HERO1) を読解",
+      "result": "pass (`statement` が『`data-hb-field=\"<名>\"` によってのみ同定する。「どの要素の中にあるか」を同定条件に用いない』と明示。**`rationale` が P05-x-18 の日付移動と hero 2 層化を具体的な失敗事例として引いており**、なぜ位置条件が壊れるかが規約自体から追える)"
+    },
+    {
+      "claim": "PAT-1 (導出値を契約へ書き下す) を新たに作っていない",
+      "method": "当方が `field_set` / `cardinality` / `part_id_literals` の書き方を検査し、B0x literal を re.findall で全数走査",
+      "result": "pass (`field_set` は 8 フィールドを**列挙せず**『C20 required_markers の data-hb-field 値のうち document スコープのもの。正本は ROUNDTRIP-CONTRACT.md の adjudications』と導出参照。`cardinality` も名前列挙でなく**スキーマ型から導出**。`part_id_literals` は B01/B02 の名指しを禁止しカタログの `section_scope=document` 順から導出させる。**C22 全文の B0x literal 出現は 1 件のみで、それは禁止条項そのものの中の例示**)"
+    },
+    {
+      "claim": "detection を増やしていない (件数契約を壊していない)",
+      "method": "当方が detections 配列の要素数と id 列を実測",
+      "result": "pass (**10 件・NAR-01..NAR-10** で `detection_order_contract` の『現時点では 10 件』と一致。新設 0 件)"
+    },
+    {
+      "claim": "旧 NAR-01 が『対象 0 件で静かに PASS する偽の条件』だったという指摘が事実である",
+      "method": "当方が P05-x-18 の実装 (`.hero` = 著者記述 / `.hero-frame` = 空の枠に B02 + generated) と旧規約文を突合",
+      "result": "pass (**骨格部品マーカーは空の枠側へ移っており、著者記述はその外側**。したがって『3 要素が部品マーカーの内部にある』という旧条件は現行描画に対して常に偽であり、かつ**検査対象が 0 件になるため違反 0 件として静かに PASS する形の偽**だった。worker が『条件が偽』でなく『静かに緑になる偽』と性質を言い当てている点が重要)"
+    },
+    {
+      "claim": "新 NAR-01 が位置要件を捨てず、文書順の窓として書き直している",
+      "method": "当方が NAR-01 の rule / pass_example を読解",
+      "result": "pass (同定はマーカーのみ。位置は『骨格部品マーカーの出現位置以降、かつ最初の `<section id>` より前』という**文書順の窓**として残り、さらに『骨格部品マーカーが無い文書では窓の下端を課さない』というフォールバックまで書かれている。**要件を落とさずに器依存を外した**。`position_conditions_allowed` に『日付は hero より前に出ることがあるため窓を全フィールドへ広げてはならない』と P05-x-18 の変更が明示的に射程へ入っている)"
+    },
+    {
+      "claim": "C20 の chrome_boundary と整合し、かつ規定文を複製していない",
+      "method": "当方が `chrome_boundary_alignment` を読解",
+      "result": "pass (**規定文を複製せず参照する形**。`data-hb-field` が chrome_boundary の言う『著者データマーカー』に当たるという立場を明示し、`no_inference_inside_chrome` とも整合。決定的なのは『**本規約はその実装方式に依存しない — 枠を分離しても穴あき走査にしてもマーカー同定である限り判定は同じ**』という一文で、C20 の `not_specified_here` (実装は P05-x-18/19 の裁量) と正しく噛み合っている)"
+    },
+    {
+      "claim": "既存キーを壊していない",
+      "method": "当方が両 brief を json.load してトップレベルキーを実測",
+      "result": "pass (C17 = **21 キー**、C22 = **22 キー** (C22 のみ `canonical_rules` を持つ)。追加はすべて既存キーの内側)"
+    },
+    {
+      "claim": "write_scope 外を変更していない / 他 leaf の担当ファイルを触っていない",
+      "method": "当方が C20 brief の sha256 を実測し、briefs 配下の全ファイル mtime を採取",
+      "result": "pass (`script-brief-C20.json` = f48131d5f9599bece61a7fc356dbfac820c4d42314315c68e981c1053433b3e7 / mtime 23:54:46 で **P05-x-21 の完了時点から不変**。本 leaf の窓 (23:58-00:11) に入るのは `script-brief-C17.json` (00:04) / `script-brief-C22.json` (00:08) / `RESOLUTION-P05-x-24.md` (00:10) の **3 件のみ**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-premise-confirmed",
+      "detail": "当方は dispatch prompt で『**`verify-handout-a11y-print.py` の exit 2 経路を当方は再現していない。worker が自分で再現すること**』と未検証であることを明示して渡した。worker はこれを受けて 4 形すべてを実測している。**dispatcher が「確認していない」を明言することが worker の掘り下げを引き出す**という点で、P05-x-22 の『dispatcher は実行検証していないので鵜呑みにするな』と同じ効果が再現した"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**task-spec は『C22 に hero フィールドの規約が無い』としていたが、正確には「位置ベースの誤った規約が既にあった」**。したがって作業は新設でなく**撤去+置換**であり、性質が異なる (新設なら既存の緑を壊す心配は無いが、置換は旧条件を信じている他の記述との整合を要する)。加えて **C22 に未宣言の実行時依存が 4 件** (部品カタログ / セクション語彙 / スキーマ / テーマトークン) あり、worker が `dependencies.runtime_data` として宣言追記した — task-spec は言及していない"
+    },
+    {
+      "kind": "worker-measurement-bug-self-disclosed",
+      "detail": "worker が自身の測定バグを 2 件開示した。(1) **`prune_chrome()` は破壊的で `None` を返す** ため `pruned = prune_chrome(tree)` と書くと `walk(None)` を測ることになり『全フィールドが消えた』という**逆の結論**が出かけた (実際に踏んで測り直している)。(2) `H.render_html()` は 3-tuple で、戻り値形を確認せず `TypeError` を踏んだ。**当方も本検証で同じ (2) を踏んでおり** (`render_html()` が `tmpdir` / `config` の 2 引数必須であることを知らずに呼んで TypeError)、**黒箱で叩く前にシグネチャを読む規律はまだ定着していない**"
+    },
+    {
+      "kind": "worker-baseline-not-reproduced",
+      "detail": "**worker の CASE 0 (カタログ正常) が exit=1 で A11Y-07 / PRINT-01 / PRINT-04 ×2 / STICKY-01 ×2 を FAIL したという報告を、当方は再現できなかった**。当方が `H.render_html(td, H.base_config())` で生成した HTML に対し C17 を走らせると **exit 0 / RESULT: PASS で 12 detection すべて violations=0**。worker が別の fixture (おそらく手書き HTML) を使ったものと見られる。**本 leaf の受入基準は exit 2 経路の再現であり CASE 0 は参考値のため結論に影響しないが、「C17 ゲートが赤い」と読み違えると誤った起票を生むため明記する**。なお当方の実測で A11Y-01/02/04/05 が `checked=0` であり、**base_config fixture がこれら 4 detection を一度も起動していない**ことは別途観測される (本 leaf の担当外)"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が write_scope 外として手を出さず記録した事項。(a) **`extract-handout-config.py` の `prune_chrome()` が部分木を丸ごと落としており、C20 brief の `chrome_boundary.rule`「著者データマーカーを持つノードを抜いた部分木」を実装していない**。現状は C11 が枠を空にしているため実害ゼロだが、**chrome 部分木の内側に著者マーカーが 1 つ置かれた瞬間に値が消える**。宣言 (C20 brief) と実装の乖離であり、P05-x-19 は照合表しか触っていないため**受け皿が空いている** — 実装へ書ける P05-x-20 か新規 leaf が要る。(b) C17 の A11Y-04 は冒頭句が『特定部品配下の `<table>`』だが実装は全 `<table>` 対象。brief 後段が同じ結論を書いているため受入基準外として未修正"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

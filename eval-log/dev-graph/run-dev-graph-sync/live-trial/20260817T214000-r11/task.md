@@ -1,0 +1,12 @@
+# タスク: dev-graph:run-dev-graph-sync 二回収束の正経路実走
+
+fixture repoにtracker_binding=githubのconfirmed/pass/readiness-complete taskと、1件のimport・1件のexport、安定したtimestamps/IDs/aliases/snapshotsを持つ決定論 `github-adapter.json` を準備してください。外部writeは常にfixture adapter内へ閉じ、同じ状態で以下を実行してください:
+
+Skill({skill: "dev-graph:run-dev-graph-sync", args: "sync --repo-root /Users/dm/orca/workspaces/harness/ジャーナル作成/eval-log/dev-graph/live-trial-fixtures/r5-sync --binding github --adapter-fixture /Users/dm/orca/workspaces/harness/ジャーナル作成/eval-log/dev-graph/live-trial-fixtures/r5-sync/github-adapter.json --repeat 2"})
+
+1回目が期待するimport/exportを適用し、2回目のimports/exports changesがともに0、stable IDs/snapshots不変、3-way base保持であることを検証してください。remote fixture以外のGitHubへ接続しないでください。scenario IDは `C03-OUT1-positive-second-sync-zero` です。
+
+1. `/Users/dm/orca/workspaces/harness/ジャーナル作成/eval-log/dev-graph/run-dev-graph-sync/live-trial/20260817T214000-r11/out/status.json` だけに `{"status":"PASS|FAIL|ERROR","scenario":"sync-positive-two-pass-convergence"}` をWriteする。
+2. `DONE: <status>` と1行だけ報告する。
+
+途中で人間に質問せず最後まで自走し、skillの手順を省略しないこと。out/に中間成果物を書かないこと。

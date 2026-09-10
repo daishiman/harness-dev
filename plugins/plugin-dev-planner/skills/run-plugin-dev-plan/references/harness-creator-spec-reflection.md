@@ -31,7 +31,7 @@ source-tier: internal
 
 | ID | 仕様 | 絶対パス | 何を強制 | 焼き先 |
 |---|---|---|---|---|
-| B1 | feedback_contract_ssot.py(+vendoring) | `plugins/harness-creator/scripts/feedback_contract_ssot.py` | CRITERIA_ID_RE=`^(IN\|OUT\|C)[0-9]+$`・verify_by∈{lint,test,script,evaluator,elegant-review,live-trial,human,verification-obligation}・loop_scope∈{inner,outer}各≥1・必須キー(id,loop_scope,text,verify_by)・FEEDBACK_LOOP_KINDS={run,wrap,delegate}・FEEDBACK_SKIP_KINDS={ref,assign}・frontmatter スカラは行末インラインコメントを除去して解釈 (PyYAML 有無で値が食い違わないこと)・3 者ミラー解消 | P6 + inventory component エントリ |
+| B1 | feedback_contract_ssot.py(+vendoring) | `plugins/harness-creator/scripts/feedback_contract_ssot.py` | CRITERIA_ID_RE=`^(IN\|OUT\|C)[0-9]+$`・verify_by∈{lint,test,script,evaluator,elegant-review,live-trial,human,verification-obligation}・loop_scope∈{inner,outer}各≥1・必須キー(id,loop_scope,text,verify_by)・FEEDBACK_LOOP_KINDS={run,wrap,delegate}・FEEDBACK_SKIP_KINDS={ref,assign}・frontmatter スカラは行末インラインコメントを除去して解釈 (PyYAML 有無で値が食い違わないこと)・Codex 単体 cache 配布向け `run-skill-feedback` は symlink ではなく byte-identical 物理コピーとし、repo-wide lint/eval の重複除外は「同名の非正本ツリーが相対パス・エントリ種類・バイト列・symlink 先を含む content SHA-256 で正本と完全一致」する場合のみ (正本自身・改変コピー・別名 skill は評価対象)・3 者ミラー解消 | P6 + inventory component エントリ |
 | B2 | lint-feedback-contract.py | `scripts/lint-feedback-contract.py` | kind∈{run,wrap,delegate} の frontmatter に criteria 必須・SSOT 制約満たす・CI/pre-push fail-closed・skip_reason で N/A・フォールバック既定残存 WARN | P6 完了条件(verify) |
 | B3 | run-build-skill Step1/3.5 | `plugins/harness-creator/skills/run-build-skill/` (+`templates/combinators/with-feedback-contract.patch`) | loop 系は Step1 で brief.goal/checklist から criteria を test-first 導出 → Step3.5 で SKILL.md frontmatter と build-trace 両方に固定・patch 注入 | P4/P6 |
 | B4 | notion_config.py (per-project Notion DB 解決 SSOT) | `plugins/harness-creator/scripts/notion_config.py` | DB キー (論理名)=plan 宣言 / DB ID (具体値)=config 供給の二層分離・config は多段フォールバック解決 (env `NOTION_CONFIG_PATH` → repo-root `.notion-config.json` (gitignore) → plugin-root → 焼き込み `notion-config.fixed.json`。単独 install でも repo-root 非依存)・plugin-root アンカー自体も多段解決 (`plugin_root()`: env `HC_ROOT` → env `CLAUDE_PLUGIN_ROOT` → `__file__` 相対。env 値は `.claude-plugin/plugin.json` の `name` を自 plugin 名 (`__file__` から上向き探索で同定) と照合し、**別 plugin を指すと確認できた場合のみ拒否**して次段へ落とす。`.claude` 平置き projection の借用先で env が他 plugin を指す環境でも誤読しない)・require_or_skip fail-closed・解決ロジックは名前参照のみ (planner 側で再実装/複製禁止) | inventory `plugin_level_surfaces.notion_config` + index `plugin_meta.feedback_deploy.notion_sink.resolution` |
@@ -99,13 +99,13 @@ A1-A11(11) + B1-B5(5) + C1-C4(4) + D1-D6(6) + E1-E6(6) + F1-F8(8) + G1-G6(6) = *
 ## 完全性の証明 (§14.1 / 全サーフェス列挙 → ラベル付け)
 
 > 上記 46 行のうち 43 行は「指示インベントリ」と 1 対 1 (F8 install-portability は per-phase 転換で追加した配布携帯性規律、B4/B5 は feedback-Notion 連携で追加した宣言スロット規律) だが、それだけでは *分母が自己定義* で完全性を証明しない。
-> ここでは **harness-creator の全サーフェス (skills 33 本 + 設計書の関連章) を独立列挙**し、各々を
+> ここでは **harness-creator の全サーフェス (skills 32 本 + 設計書の関連章) を独立列挙**し、各々を
 > `反映済(行ID)` / `含意済(行IDに包含)` / `意図的除外(理由)` でラベル付けする。これにより「漏れていない」が
 > 監査可能になる (循環論法の解消)。新規 skill/章が harness-creator に増えたら本表へ追記する運用とする。
 
-### skills/ 全 33 本 (実体所有 30 本 + contract-generator への symlink 3 本)
+### skills/ 全 32 本
 
-> 注: `plugins/harness-creator/skills/` を `ls` すると 33 エントリだが、実体 `SKILL.md` (`-type f`) は **30 本**。残 3 件 (`run-contract-finalize`/`run-contract-generate`/`run-template-sync`) は `../../contract-generator/skills/` への **symlink** で、harness-creator が所有するのでなく共有参照する (下表で各々注記)。完全性証明の本質 (harness-creator サーフェスの欠落 0) は維持されるが、分母 33 は「所有 30 + symlink 3」の合算である。
+> 注: `plugins/harness-creator/skills/` の skill directory と、その直下に実在する `SKILL.md` はともに **32 本**。旧 contract-generator 参照 (`run-contract-finalize`/`run-contract-generate`/`run-template-sync`) は harness-creator から削除済みで、現在の分母には含めない。
 
 | skill | ラベル | 根拠 |
 |---|---|---|
@@ -125,8 +125,8 @@ A1-A11(11) + B1-B5(5) + C1-C4(4) + D1-D6(6) + E1-E6(6) + F1-F8(8) + G1-G6(6) = *
 | ref-task-context-map | 意図的除外 | context budget 索引。実 build 時の参照資料で計画規律でない |
 | ref-yaml-spec-fetcher | 意図的除外 | 外部 YAML spec 取得ユーティリティ。本計画ドメインに無関係 |
 | run-build-skill | 反映済 C4/E3/F2/B3/D1/D5 | build Step カタログ/criteria 固定/trace 等 多数行が参照 |
-| run-contract-finalize | 意図的除外 (symlink→contract-generator) | 業務委託契約ドメインの別 skill。plugin 量産規律でない。実体は contract-generator 所有 |
-| run-contract-generate | 意図的除外 (symlink→contract-generator) | 同上 |
+| run-codex-plugin-install | 含意済 F5/F8 | local/Git source の Codex install と receipt 検証は、PKG runtime 検証 (F5) と cwd 非依存の install-portability (F8) を実行する |
+| run-codex-plugin-package | 含意済 F3/F5/F8 | Codex manifest/marketplace 同期は、plugin 完全性 (F3)・PKG 契約 (F5)・単独配布携帯性 (F8) の Codex 配布面を実行する |
 | run-elegant-review | 反映済 A2 | 30 思考法 elegance |
 | run-goal-elicit | 反映済 D3 | goal-spec |
 | run-goal-seek | 反映済 D4 | ゴールシーク反復 |
@@ -140,7 +140,6 @@ A1-A11(11) + B1-B5(5) + C1-C4(4) + D1-D6(6) + E1-E6(6) + F1-F8(8) + G1-G6(6) = *
 | run-skill-rename | 意図的除外 (update で別扱い) | 改名は `--mode update` の運用で、計画生成段階の規律でない |
 | run-skill-rubric-governance | 反映済 A10 | rubric governance runbook |
 | run-skill-update-notifier | 意図的除外 | 更新通知の運用 skill。生成規律でない |
-| run-template-sync | 意図的除外 (symlink→contract-generator) | テンプレ同期の運用。生成規律でない。実体は contract-generator 所有 |
 | wrap-git-commit-safe | 意図的除外 | git commit ラッパー。生成規律でない (PR/commit は最終仕様書が言及・本スキル責務外) |
 
 ### 設計書 関連章 (46 行が直接引用しないが関連)

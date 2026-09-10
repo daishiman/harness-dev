@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P10",
+  "covered_task_ids": [
+    "P10"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "hook が意図した場面で発火し、意図しない場面で発火しない",
+      "method": "evidence/P10.json",
+      "result": "対象内で exit2 が 2 件 (外部 URL / 絵文字)、対象外で exit0 が 3 件 (config 不在 / 日付接頭でない / 拡張子違い)"
+    },
+    {
+      "claim": "委譲先不在時に縮退動作で完走する",
+      "method": "tests/srg-image-bridge.py 291 件",
+      "result": "skip 側は status=skipped + skip_reason を返し exit0 で完走。--srg-root に不在 path を明示した場合のみ exit2"
+    },
+    {
+      "claim": "manifest の宣言と実体が一致している",
+      "method": "evidence/P13.json の entity_parity (P13-x-01 の実測を流用)",
+      "result": "entry_points 9 件すべて実在、missing 0 件"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "independent-context-review-not-run",
+      "detail": "P10 は『最終レビューを独立 context で通す』フェーズだが、実施したのは決定論ゲートと hook の発火境界の実測のみ。handout-readability-reviewer による意味レビューは起動していない"
+    },
+    {
+      "kind": "hook-registration-is-manual",
+      "detail": "marketplace install した利用者は settings.json への手登録をしない限り hook が発火しない。登録漏れを機械検出する手段が無い"
+    }
+  ]
+}

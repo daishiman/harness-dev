@@ -2,14 +2,10 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d"
+    "skill_md_sha256": "837e9922df0f424180f53e43e49fadf7c51bf4f2e893d3da0d2e97a2d90fbb30"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -17,19 +13,31 @@
     "dependency_break": 0,
     "smell": 0
   },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["foundation_trace", "decision_guidance", "matrix_coverage", "design_knowledge_reflection", "doc_freshness", "prompt_quality"],
+    "criteria_evaluated": [
+      "foundation_trace",
+      "decision_guidance",
+      "matrix_coverage",
+      "design_knowledge_reflection",
+      "doc_freshness",
+      "prompt_quality"
+    ],
     "positive_feedback": [
-      "単一責務が明確 (independent evaluator=採点ゲート) で境界が rubric 通り: proposer≠approver / read-only / context:fork を Key Rules と Purpose で明示し、修正は elicit/doc-fetch/compile への差し戻しに限定。allowed-tools は Read/Bash/Task の最小 allowlist。",
-      "出力契約が schema (completeness-findings.schema.json) に接地し、総合判定が aggregate-completeness.py の決定論再導出と一致必須という検証可能述語 (exit0) で担保され、rubric の出力契約・検証可能性次元を高く満たす。",
-      "SSOT が明快: completeness_exempt manifest で rubric/schema/aggregate script を runtime SSOT と宣言し、監査ロジックは各 auditor agent の SSOT prompt に委ね本 skill は集約のみ (書換えなし)。命名は assign prefix + role_suffix=evaluator + kebab-case で naming 規範に整合。"
+      "前回 FAIL とした L144 の `PLUGIN_ROOT=plugins/system-spec-harness` ハードコード代入が撤去され、Step 2 の両コマンド (L144 共有 `validate-coverage-matrix.py` / L148 同梱 `aggregate-completeness.py`) が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点へ是正された。host 提供値を上書きする経路が消え、`## Runtime root contract` の『cwd から plugin root を推測しない』と一致した。",
+      "6 観点の評価主体対応が本文表・レポート形状 (aspects の auditor/component)・Gotchas 1 で三重一致し、『C06 は system-spec/*.md を読まないため設計知識反映へ束縛しない』と撤去理由まで明記されている (虚偽対応の再発防止)。",
+      "総合判定が `aggregate-completeness.py` の `aggregate_verdict` で再導出でき レポートの `verdict` と一致すること、を整合検査として要求しており、採点者が総合判定を恣意的に置く Goodhart 経路を機構で塞いでいる。",
+      "C13-C16 を新 aspect にせず既存 aspect の追加評価次元として折り込む方針が明示され、top-level 6 aspect の fail-closed 集約構造が不変であることと両立している。C16 について『機械層ゲートは blocking_items 列挙のみで runtime 施行せず・決定論 writer 施行は follow-up』と現状の施行境界を誇張していない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d) を ref-skill-design-rubric の規範 (単一責務・命名 kebab+prefix・境界・出力契約・SSOT・Progressive Disclosure) で採点。FM: name=kebab+assign prefix・description=Use when 形・kind/prefix/role_suffix 整合。BD: Purpose & Output Contract 節・Gotchas 節・出力 schema あり (164 行、references へ Progressive Disclosure)。境界: read-only/context:fork/proposer≠approver 明示。SSOT: rubric.json + aggregate-completeness.py が runtime 正本と宣言。全参照 (prompts/rubric/reference/script/schema/agent) 実在。high severity 0 のため PASS。criteria_evaluated は feedback_contract に criteria を持たない assign kind のため 6 品質次元 (aspect id) を採用。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (`PLUGIN_ROOT` の repo 相対ハードコード代入と同梱 script の同経路起動) の解消を確認して PASS へ転じた。 frontmatter は assign kind として `feedback_contract.skip_reason` を持ち criteria を携帯しないため、criteria_evaluated は既存 verdict の評価次元 id を継続採用した。"
 }

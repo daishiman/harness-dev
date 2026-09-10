@@ -1,0 +1,104 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C08-01",
+ "covered_task_ids": [
+  "P02-C08-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C08.json",
+ "verified_by": [
+  {
+   "claim": "disable_model_invocation の欠落が補修され inventory と一致する",
+   "method": "dispatcher が brief のキーと component-inventory.json#C08 を直接突合",
+   "result": "pass: brief=false / inventory の disable-model-invocation=false。AC-C08-1 が照合対象と宣言していた基準値が brief に存在しなかった欠陥は解消 (C09 F-C09-04 と同型)"
+  },
+  {
+   "claim": "behavior 4 の復元可否リストが C20 の preserved_exact と矛盾していた (最大の欠陥)",
+   "method": "script-brief-C20.json#roundtrip_granularity.preserved_exact を dispatcher が全文確認し、報告された 4 系統の帰属を照合",
+   "result": "pass(=報告どおり): preserved_exact に『purpose / background / goal (文書レベル)』『sections[].id / heading / goal / lead_line / judgment_axis / …』『glossary[].term / plain』が実在。C08 が『復元できない』と断定していた 4 系統はすべて復元対象で、誤誘導だった"
+  },
+  {
+   "claim": "個別フィールド名の可否リストが brief から除去された",
+   "method": "lead_line / judgment_axis / glossary の出現を計数し文脈確認",
+   "result": "pass: 各 2 件で、いずれも recovery_scope_canonicality の『正本は C20#roundtrip_granularity 1 箇所』という非複製宣言と、その drift 実測記録の文脈のみ。behavior 本体に可否リストは残っていない"
+  },
+  {
+   "claim": "診断コードのリテラルを持たない旨が明文化されている",
+   "method": "E-EXTRACT / E-ROUNDTRIP / E-HTML / W-EXTRACT を正規表現計数し全ヒットの文脈を確認",
+   "result": "pass: 出現はすべて recovery_scope_canonicality の『本 command はコード ID のリテラルもフィールド名の可否リストも持たない』という宣言文の内側。C09 の gate_detection_canonicality と同じ形"
+  },
+  {
+   "claim": "C20 の exit code 規約が C09 の 4 ゲートと同型",
+   "method": "script-brief-C20.json#exit_codes を dispatcher が全文確認",
+   "result": "pass: 0=復元成立かつ E-EXTRACT-UNRECOVERABLE / E-ROUNDTRIP-DIFF 0 件、1=復元または比較の失敗 (品質 FAIL)、2=起動側の不正。C09 で実測した『0=違反0 / 1=品質FAIL / 2=検査不能・引数不正含む』と一致"
+  },
+  {
+   "claim": "round-trip 差分時に --out が書かれない非対称が brief へ反映された",
+   "method": "C20#fail_semantics を直接引用確認し、C08 の fail_semantics 参照を計数",
+   "result": "pass: C20 は『E-EXTRACT-UNRECOVERABLE のときに限り --out へ穴を null にした部分成果物を書き exit 1。E-ROUNDTRIP-DIFF と E-HTML-MALFORMED と exit 2 のときは --out を書かない』と明記。C08 側は fail_semantics を 4 箇所で参照し、存在しないパスを案内する動きを解消"
+  },
+  {
+   "claim": "comparable projection (provenance 除外) が round-trip 粒度の定義に含まれた",
+   "method": "C20#roundtrip_granularity.comparable_projection を確認し C08 側の provenance 言及を計数",
+   "result": "pass: C20 は『provenance ブロック全体 (normalized_by / schema_version / catalog_sha256 / date_source) を除いた残り』と定義。C08 側に provenance の言及 1 件を確認"
+  },
+  {
+   "claim": "C08 が C19 の dir_name_format ブロッカーの影響下に無い",
+   "method": "dir_name / yyyy / 出力ディレクトリ を identifier・和文とも grep",
+   "result": "pass: dir_name 0 件 / yyyy 0 件。C19 の言及 1 件は『C19 に依存しない』ことを固定する rationale。--out の既定は入力 HTML と同ディレクトリの handout-config.json で、命名規約を持たない"
+  },
+  {
+   "claim": "属性契約の片方向破れを引きずっていない",
+   "method": "data-hb の出現 7 件の文脈を確認",
+   "result": "pass: 個別マーカー名の列挙は無く、『data-hb-* の有無で境界が動く』という性質と例示の data-hb-field のみ。C11:339 の consumers 行が C20 を『全属性』で受けている以上、C08 が属性名を持たないのが正しい"
+  },
+  {
+   "claim": "--strict-fidelity が利用者へ露出していない",
+   "method": "C08 の strict-fidelity 出現数と inventory C08 の argument-hint を確認",
+   "result": "fail(=報告どおり): C08 は 0 件、C20 側は 7 件。inventory の argument-hint は '<html-path> [--out <config.json>]' で strict 系フラグを持たない。brief 単独では足せず inventory 変更を要する"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "json.load 通過確認と git 変更範囲の確認",
+   "result": "pass: command-brief-C08.json のみ (+33 / -10)。top-level 21 キー / behavior 8 / acceptance_checks 7 件"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C08-01",
+   "level": "resolved",
+   "summary": "behavior 4 の可否リストが C20 preserved_exact および C02 R2-complete と矛盾し、マーカー付き HTML でも復元されるフィールドを『復元できない』と断定していた。手書き HTML 前提の可否を無条件の性質として固定した誤り。3 性質のみを残し正本を C20 へ寄せた"
+  },
+  {
+   "id": "F-C08-02",
+   "level": "resolved",
+   "summary": "disable_model_invocation + rationale の欠落。AC-C08-1 が照合対象と宣言しているのに基準値が無かった (C09 と同型)"
+  },
+  {
+   "id": "F-C08-03",
+   "level": "resolved",
+   "summary": "round-trip 差分時に --out が書かれない (C20 fail_semantics) ことが未記述で、存在しないパスを案内する動きだった"
+  },
+  {
+   "id": "F-C08-04",
+   "level": "resolved",
+   "summary": "round-trip 粒度の定義に comparable projection (provenance 除外) が欠けており、実行環境やカタログ版の差が差分に見える読み方が残っていた"
+  },
+  {
+   "id": "F-C08-05",
+   "level": "carry-forward",
+   "summary": "C20 の --strict-fidelity (復元不能や heuristic 採用を exit 1 に昇格させる) が C08 から利用者へ露出していない。argument-hint は inventory と一致必須のため inventory 側の変更を伴う"
+  },
+  {
+   "id": "F-C08-06",
+   "level": "carry-forward",
+   "summary": "C08 の checklist_covered が ['C20'] の 1 件のみ (C09 は 12 件)。C20 の checklist_covered と C02 の checklist を突合しておらず被覆宣言が過少の可能性がある"
+  },
+  {
+   "id": "F-C08-07",
+   "level": "carry-forward",
+   "summary": "C02 の output_contract が 1 文のみで、C20 の --report が出す JSON 形状 (report_shape) との対応が書かれていない"
+  }
+ ]
+}

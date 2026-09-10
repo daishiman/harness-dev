@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C22-01",
+  "reason": "dispatcher が 23 brief を横断実測したところ acceptance_checks の形が 3 種類に割れている: dict + id を持つ 17 brief (計 302 件)、id を持たない文字列配列 2 brief (hook-brief-C10 が 23 件・script-brief-C19 が 27 件)、acceptance_checks 自体が 0 件の 4 brief (skill-brief-C01..C04)。id 一意性を検査する gate が存在しないため P05-x-75 の id 重複が誰にも検出されなかった。文字列配列の 2 brief は id を持たないため参照も差分追跡もできない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-76-brief-acceptance-checks-shape-and-id-gate",
+    "title": "brief の acceptance_checks の形と id 一意性を機械検査するゲートを置く",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/",
+    "acceptance_criterion": "全 brief の acceptance_checks について (a) id が brief 内で一意、(b) 要素の形が brief 間で統一されている、のいずれも機械検査するゲートが存在し exit0 であること。統一しない判断を採る場合はその根拠が記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

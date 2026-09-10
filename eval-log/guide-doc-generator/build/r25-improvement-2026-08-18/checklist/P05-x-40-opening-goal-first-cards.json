@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-40-opening-goal-first-cards",
+  "covered_task_ids": [
+    "P05-x-40-opening-goal-first-cards"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/",
+  "acceptance_criterion_restated": "冒頭が goal → 全体像 → 各カードの順に並び、hero が個別カードとして描画され、冒頭ブロックの 1 文が閾値内に収まる (利用者要求 R3『ゴールを最初に置く』・R9『冒頭の散文をカードへ』・R7『長い文を絶対に防ぐ』の受け皿)",
+  "verified_by": [
+    {
+      "claim": "冒頭の並び順の出所が 1 か所であり、その先頭が goal である",
+      "method": "順序の値を config/handout-visual-policy.json#opening.hero_card_fields.order へ置き、描画 (render-handout.py:hero_card_order) と検査 (verify-handout-narrative.py:hero_field_order) の双方がそこから引くようにした。どちらも読めなければ既定順へ落とさず LaunchError / GateError で落ちる (fail-closed)。tests 側も _support.canonical_hero_field_order() で正本から引く",
+      "result": "tests/render-handout.py/test_hero_cards.py の GoalComesFirst 4 本と、tests/verify-handout-narrative.py/test_nar01_nar02_hero.py の TestNar01Position 4 本が green。正本を逆順にした fixture・先頭 2 つを入れ替えた fixture はいずれも NAR-01 違反として落ちる。『先頭が goal であること』は正本そのものを固定する test_goal_comes_first_in_the_canon / test_the_canon_puts_goal_first の 2 本 (両スイート) が押さえる"
+    },
+    {
+      "claim": "冒頭の 3 要素が散文 3 行ではなくカードとして描かれる",
+      "method": "build_hero が p.hero-purpose / p.hero-background / p.hero-goal の 3 行を捨て、.hero-card-grid > .hero-card (見出し .hero-card-label + 本文 .hero-card-body) を正本の順で積むようにした。grid は repeat(auto-fit, minmax(220px, 1fr)) で列数を固定しない (印刷と狭い画面で崩さない)",
+      "result": "CardsInsteadOfProse 4 本 green。旧い器 (hero-purpose / hero-background / hero-goal / hero-label) が HTML から 1 つも出ないことを陰性対照として固定した"
+    },
+    {
+      "claim": "見出し語の出所が表示語彙正本であり script ではない",
+      "method": "config/handout-vocabulary.json へ hero_card_labels (ゴール/目的/背景/この資料の要点) と hero_list_headings (達成目標/扱うテーマ/対象業務/到達段階/前提となる外部接続/覚えておくこと/覚えなくてよいこと) の 2 群を新設し、build_hero が vocabulary_labels() で引く。語彙に無ければ DataError で落ちる",
+      "result": "描画された見出し語が語彙正本の entries と一致することを test_each_field_gets_its_own_card_with_a_heading が固定。配線側は test_both_label_groups_are_read_from_the_vocabulary が vocabulary_labels(\"hero_card_labels\"/\"hero_list_headings\") の呼出しを固定する"
+    },
+    {
+      "claim": "マーカーの可視テキストが構成データの値と一致したままである (NAR-02 / C20 を壊していない)",
+      "method": "data-hb-field をカード外枠でなくカード内の本文要素へ置き、外枠には data-hb-card-field を置いた。外枠へ置くと見出し語がマーカーの可視テキストへ混ざる",
+      "result": "MarkersStayOnTheBody 2 本 green (マーカーのテキストが config の値と完全一致し、見出し語を含まない)。C20 extract スイート 159 本と C22 narrative の NAR-02 群も全 green"
+    },
+    {
+      "claim": "冒頭の箇条リストに見出しが付く (R9 の読みやすさ)",
+      "method": "冒頭の 7 本のリストを hero_list_block() で .hero-list + .hero-list-heading の塊にした。見出しを見える形で置いたので、接続コネクタの ul から aria-label は外した (同じ語を 2 か所で言わない)",
+      "result": "ListsCarryHeadings 3 本 green。C17 a11y-print スイート 187 本も全 green (aria-label 除去で読み上げ経路が失われていないこと)"
+    },
+    {
+      "claim": "冒頭にも 1 文長ゲートが当たる (F-P05X35SENT-SCOPE-01 の解消)",
+      "method": "check_opening に W-SENTENCE-LONG の走査を追加した。閾値も判定も新設せず、本文側 (check_text_bodies) と同じ long_sentence_count / 同じ >= 比較で対象集合だけを hero へ広げた",
+      "result": "tests/validate-handout-config.py/test_r25_hero_cards.py の HeroSentenceLength 3 本 green。本文側の上限を動かすと冒頭の判定も動くことを対照で固定した (同じ名前のつまみが 2 つある状態でない)"
+    },
+    {
+      "claim": "字数が収まっていても、短い文を並べて冒頭を段落にできない",
+      "method": "opening.hero_fields.max_sentences (purpose 1 / background 2 / goal 1 / lead 1) を正本へ置き、超過を E-HERO-PARAGRAPH として exit1 にした",
+      "result": "HeroSentenceCount 6 本 green。正本で上限を 3 へ上げれば黙り、level を warning へ落としても落ち続ける (降格経路が無いことの陽性対照)"
+    },
+    {
+      "claim": "冒頭のゲートは設定でも正本の不在でも緩まない",
+      "method": "W-HERO-LONG / W-HERO-HEAVY / E-HERO-PARAGRAPH を FALLBACK_ERROR_CODES へ入れ、正本側にも level=error を宣言した。重大度は和集合で決まるので正本は昇格だけができる (P05-x-115)",
+      "result": "test_opening.py の TestHeroFields.test_missing_canon_does_not_loosen_the_gate と TestHeroTotal.test_missing_canon_does_not_loosen_the_gate が、正本ファイルを削除した状態でも exit1 を要求して green"
+    },
+    {
+      "claim": "溢れたときの逃がし先を診断そのものが持つ",
+      "method": "opening.hero_fields.escape を正本へ置き、W-HERO-LONG / E-HERO-PARAGRAPH の本文へ差し込む。逃がし先は箇条書きか先頭セクションであり、折り畳みは用意しない (長さを消さず読み手から隠すだけなので E-TEXT-FOLDED と同じ理由で禁じる)",
+      "result": "OverflowGuidanceNamesTheEscape 1 本 green (正本の escape 文言が stderr に出る)"
+    },
+    {
+      "claim": "隣接スイートを壊していない",
+      "method": "repo root から 5 スイートを個別実行",
+      "result": "C11 render 239 OK / C20 extract 159 OK / C17 a11y-print 187 OK / C12 validate 386 run 16 failed (全て既存の P05-x-25・P05-x-64 由来。本ノード新設の test_r25_hero_cards.py 10 本と修正した test_opening.py 4 本は green) / C22 narrative 224 run 8 failed (全て既存の P05-x-71 由来)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X40HERO-ORDER-01",
+      "level": "warn",
+      "summary": "briefs/script-brief-C22.json#detections[NAR-01] の条項本文は今も『文書順は purpose → background → goal であること』と旧順序を literal で綴っている。実装は構造規則 (順序が正本どおり) の側を保存し、値を config/handout-visual-policy.json#opening.hero_card_fields.order へ移したので挙動は R3 に沿うが、条項が値を持ち続ける限り順序の出所が 2 つある。plan 側は本ノードの write_scope 外なので discovered-task P05-x-121-nar01-order-canon-ref (structural) として emit した"
+    },
+    {
+      "id": "F-P05X40HERO-DOM-01",
+      "level": "warn",
+      "summary": "improvement/hero-card-decision.json#hero_card_contract.dom_contract は『各 .hero-card は data-hb-field を保持する』と書くが、そのとおりに実装すると見出し語がマーカーの可視テキストへ混ざり NAR-02 と C20 が同時に壊れる。マーカーをカード内の本文要素へ置き、外枠は data-hb-card-field とした (P05-x-34 が接続コネクタのマーカーを li へ移したのと同じ理由)。決定文書の追従は discovered-task P05-x-122-hero-card-marker-contract (structural) として emit した"
+    },
+    {
+      "id": "F-P05X40HERO-CODE-01",
+      "level": "warn",
+      "summary": "W-HERO-LONG / W-HERO-HEAVY は接頭辞が W- のまま level=error として exit1 を起こす。読み手には警告に見えて実際は完了ゲートという食い違いで、F-P05X35SENT-CODE-01 と同じ類。改名しない理由も同じで、code 名が plan 側 (write_scope 外) に綴られており片側だけ変えると逆向きのドリフトを自分で作る。改名するなら plan 側と同時に行う"
+    },
+    {
+      "id": "F-P05X40HERO-LEAD-01",
+      "level": "info",
+      "summary": "hero の lead (p.hero-lead) は今も data-hb-field マーカーを持たない。マーカーを付けると C20 の読み戻し対象 (DOC_FIELDS) を増やすことになり、その受け皿は P05-x-56 (extractor へ lead / goal_chips / prerequisite_connectors を足す) である。本ノードでは触らず、lead の字数・文数ゲート (max_chars.lead 40 / max_sentences.lead 1) だけを先に敷いた"
+    },
+    {
+      "id": "F-P05X40HERO-CSS-01",
+      "level": "info",
+      "summary": ".hero-card に背景色を敷いていない。テーマトークンに定義があるのは --pop-primary 系 / --pop-bg / --ink / --ink-muted / --line / --subtle / --card-radius / --font-num だけで、カード面用の色を足すには assets/tokens/*.json 側へ新トークンを入れる必要がある。hero の枠が既に --subtle を敷いているため、枠線と余白だけでカードの区切りは立っている"
+    },
+    {
+      "id": "F-P05X40HERO-SCAN-01",
+      "level": "info",
+      "summary": "『見出し語が script へ焼かれていないこと』を素の部分一致で書くと、2 字の一般語 (目的・背景) が注釈や CSS コメントにも当然現れるため、注釈を書いた瞬間に赤くなる検査になる。カード見出しについては配線 (vocabulary_labels の呼出し) を固定し、描画文字列と語彙正本の一致は別テストで押さえる形にした。同様に順序についても、旧順序の 3 語は必須キーの集合 (順序を持たない) にも現れるため、禁止語は『今の正本の並び』だけに絞った (集合と順列を取り違えた検査にしない)"
+    }
+  ]
+}

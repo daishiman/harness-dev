@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "role": "既定出力先とサイズ上限の宣言データ (R17)",
+    "canon_authority": "C19 route-handout-output.py (script-brief-C19.json)",
+    "produced_by": "P05-x-03 (config/ の唯一の producer / P04-x-05 G-04)",
+    "rule": "既定出力先の値を script ソースへ書かない (C19 の受入検査は script ソースに環境固有の絶対パスが 0 件であることを要求する)。~ 展開と環境変数展開は C19 が行う。**配布物である本ファイルには環境固有の絶対パスを置かない** — 個人の固定出力先は環境変数 HB_OUT_DIR で与える",
+    "resolution_order": "--out-dir > 環境変数 HB_OUT_DIR > 本ファイルの default_out_dir > 未解決なら exit 2 (C19 algorithm 6)",
+    "default_out_dir_policy": "配布既定は cwd 相対の ./handout-output とする。別環境の利用者が何も指定しなくても他人のツリーを作りに行かず、手元に出力が落ちることを保証するため。固定の出力先が欲しい利用者は HB_OUT_DIR を設定する (--out-dir > HB_OUT_DIR > 本キー の順に強い)",
+    "dir_name_format_policy": "出力ディレクトリ名の書式の唯一の正本。C19 route-handout-output.py (生成)・C18 verify-handout-language.py の DATE-03 (区切り文字の検査)・C10 hooks/guard-handout-external-ref.py (適用対象の判定) の 3 者がここから引き、自分のソースへ書式リテラルを持たない。R25 で {date}-{doc_type}-{slug} から {date}_{slug} へ変えた際、3 箇所へ同じ書式が焼かれていたため 1 箇所を直しても 他の 2 箇所が古い区切りで判定し、生成は通るのに検査が落ちる状態になった。プレースホルダは {date} と {slug} の 2 種のみ。doc_type は marker.json へ dir_token として残すがディレクトリ名には出さない (日本語 slug の直前に 英字トークンが挟まると利用者指定の yyyy-mm-dd_日本語命名 にならないため)"
+  },
+  "version": 1,
+  "dir_name_format": "{date}_{slug}",
+  "default_out_dir": "./handout-output",
+  "size_limits": {
+    "note": "値をここに置くのは『閾値を script ソースへ焼き込まない』ためであり、超過時の挙動 (fail-soft / warning 継続) の定義は各 component 側が持つ",
+    "asset_max_bytes": 5242880,
+    "asset_max_bytes_semantics": "1 素材あたりの埋め込み上限 (原本バイト数・base64 化前)。累積合計に対する閾値は持たない (合計は事実として報告するだけで合否判定に使わない)。超過素材は埋め込まずに warning を残して処理を継続する (C30)",
+    "asset_max_bytes_source": "script-brief-C13.json の --max-bytes 既定値 5 MiB (5242880)。base64 化で原本の約 4/3 に膨らむこと、単一 HTML が DOM 上 1 本の文字列として保持されることによる運用上の保守的な初期値",
+    "hook_scan_budget": {
+      "max_bytes": 16777216,
+      "max_seconds": 8.0
+    },
+    "hook_scan_budget_semantics": "C10 hooks/guard-handout-external-ref.py が 1 回の PostToolUse 起動で走査してよい上限。max_bytes は書込先 HTML 全体のバイト数 (base64 化後の実ファイルサイズ。asset_max_bytes の『1 素材あたり・base64 化前』とは対象も単位も異なるので流用しない)。max_seconds は D1 走査と D2 走査のあいだで測る経過秒数。どちらを超えても検査は打ち切りだが、exit2 は立てず exit0 + stdout の systemMessage 1 行で打ち切りを可視化する (hook-brief-C10.json#fail_closed_scope (c) / #output_contract.abort)。見逃しは C16 verify-handout-selfcontained.py の完成物ゲートで捕まる",
+    "hook_scan_budget_source": "max_bytes: hook-brief-C10.json#budget_thresholds.scale_check が旧仮置き 8 MiB を明示的に否定し、R25 (per-section IMG 必須化) 後の 2 つの規模シナリオを根拠として与えている — (a) 上限いっぱいの素材 2 点 = 2 * asset_max_bytes(5242880) * 4/3 = 13981013 バイト、(b) 1 MiB の挿絵 6 節 = 約 8 MiB。両シナリオを上回る最小の 2^n MiB として 16 MiB (16777216) を採る。max_seconds: hook-brief-C10.json#settings_registration が PostToolUse への登録エントリを timeout 10 と定めており、hook 自身の打ち切り (可視) が harness の kill (不可視) より先に発火しなければ budget が観測不能になるため、10 秒からプロセス起動・C16 module import・ファイル読込の実測余裕 (小サイズ入力の端から端まで 0.07 秒) を差し引いた 8.0 秒とする",
+    "hook_scan_budget_known_conflict": "実測 (2026-08-18・darwin/python3.11): C16 scan_emoji は R25 が実際に増やす形 (img@src の base64 data URI) の 16.06 MiB を 31.98 秒、同 4 MiB を 7.03 秒で走査する (約 0.5 MiB/秒)。一方 scan_emoji は list を返す eager 実装であり、hook は D1 走査と D2 走査の『あいだ』でしか deadline を見られないため、max_seconds は 1 回の走査の途中で発火できない。したがって max_bytes 直下 (16 MiB) の入力は max_seconds 8.0 秒より先に settings_registration の timeout 10 秒に到達し、hook 自身の systemMessage を出せないまま harness に落とされる。実在の handout は 0.05-0.07 MiB (実測 4 件) で桁が違うため現行運用では発火しないが、R25 の画像埋め込みが本格化すると顕在化する。解消は本 config ではなく (i) C16 scan_emoji を逐次 yield へ変える、(ii) settings_registration の timeout を上げる、のいずれかであり、どちらも本キーの write_scope 外"
+  }
+}

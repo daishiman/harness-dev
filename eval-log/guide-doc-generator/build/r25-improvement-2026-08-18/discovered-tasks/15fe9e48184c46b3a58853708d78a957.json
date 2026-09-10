@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-03",
+  "reason": "用途語彙 dir_token の正本が 2 つ。出荷 config は和文 8 件・brief vocabulary_ssot は ASCII slug 8 件で 8/8 不一致なのに出荷 _meta.source_of_truth は brief を正本と宣言。さらに出荷 resolve-handout-preset.py:329 _dir_token_is_safe() が brief 手順 4(d) の fail-closed 検査を文字種不問へ緩和し、正本側の契約を実装で無効化している。緩和の根拠 (:86) は R25/REQ-6 で dir_token がパスから外れた時点で失効。dispatcher が両ファイルと実装を直読みして確認",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-03.json",
+  "proposed_node": {
+    "id": "P05-x-58",
+    "title": "dir_token の正本を 1 つに裁定し出荷と brief を一致させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "dir_token の値域が出荷 config と script-brief-C23.json#vocabulary_ssot で一致し、_dir_token_is_safe の検査が採用した正本の契約と同一になること。ASCII slug へ戻すか和文を維持するかの裁定理由が記録されていること — 日本語ディレクトリ名は slug が運ぶため R5 はどちらでも壊れないが、索引メタデータとしての望ましい形は別問題であり、決めずに片方だけ直すと再び正本が 2 つになる",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,5 +1,8 @@
 # HTML生成規約（html-generator 手続き知識 SSOT）
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: このファイルは html-generator から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/html-generator.md）の双方がこれを参照する。規則の上位正本 (SR-ID) は spec-registry.md を辿る。
 
 **責務**: slide HTML 生成のドメイン定義（用語集・precheck-layout 判定基準・制約カタログ CONST_001-039）と生成規約（§5.6: 16:9／整合性維持／部分AI画像化／意図的改行／スライドタイプ別問題／HTML生成仕様／PDF出力／操作方法・全コード例）の逐語正本。html-generator（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。
@@ -8,7 +11,7 @@
 | 用語 | 定義 | 関連概念 |
 |------|------|----------|
 | 分離形式 | index.html + styles.css + scripts.js の3ファイル構成。インラインCSS/JS禁止 | CONST_002 |
-| Kanagawaテーマ | ライトモード既定のカラーパレット（`--bg-dark:#FFFFFF` / `--fg:#2D2D2D`）。CSS変数で統一 | CONST_037 / theme-style.md |
+| テーマ | 既定のカラーパレット。値は style genome の palette 定義が正本で、CSS変数で統一する | CONST_037 / theme-style.md |
 | slide-area | 16:9を強制するコンテナ。`.slider` 内に置き JS の幅計算基準とする | CONST_001 |
 | SVG2図解 | サイクル・フロー・ファネル・ベン図等をインラインSVG2で描画。CSS absolute配置禁止 | CONST_004 / svg-diagram-primitives.md |
 | code-block / code-compare-body | コードを画像化せず実HTMLで前面描画するコードブロック要素 | CONST_020 / CONST_024 |
@@ -60,9 +63,9 @@ precheck-layout の判定としきい値:
 - **CONST_004 (SVG2図解必須)**: サイクル・フロー・ファネル・ベン図・マインドマップ・フローチャート・成長曲線はインラインSVG2で描画。CSS absolute配置での図作成は禁止。${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/svg-diagram-primitives.md のパーツを使用。
   - 目的: 拡縮で劣化せず、テーマ連携・印刷で正確に再現できる図解を保証
   - 背景: CSS absolute の図は要素ずれ・印刷崩れ・スケール非追従が起きやすい
-- **CONST_005 (SVGテーマ連携)**: SVGの fill/stroke に CSS変数を使用（例 `fill="var(--wave-blue,#7E9CD8)"`）。カラーコード直書き禁止。
+- **CONST_005 (SVGテーマ連携)**: SVGの fill/stroke に CSS変数を使用（例 `fill="var(--wave-blue)"`）。カラーコード直書き禁止。
   - 目的: テーマ変更時に図の色を一括追従させる
-  - 背景: 直書きはテーマ切替時に色が取り残され、Kanagawa統一が崩れる
+  - 背景: 直書きはテーマ切替時に色が取り残され、配色の統一が崩れる
 - **CONST_006 (SVGテキスト最小13px)**: SVG `<text>` の font-size は13px以上。12pxは小バッジ・角の補助ラベルのみ許容、11px以下禁止。
   - 目的: 対面プレゼンの大画面でテキストが視認可能な下限を担保
   - 背景: 11px以下は投影時に不可視となり情報が伝わらない実害があった
@@ -165,12 +168,12 @@ precheck-layout の判定としきい値:
 
 ### デザイン品質
 
-- **CONST_029 (ビビッドアクセント必須)**: 各スライドに `--accent-*-vivid` 変数を1つ以上使用。装飾だけでなく意味を持つ色使い。
+- **CONST_029 (反転アクセント)**: 各スライドの強調は反転面（地色と文字色を入れ替えた面）1 個で作る。強調のために色を足さない。面に置く色は 地 / 文字 / 反転面 の 3 つ以内（SR-2-01 / SR-2-04 / SR-2-05。面積・彩度の上限は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本）。
   - 目的: フォーカルポイントの明確化と単調配色の回避
-  - 背景: アクセント不在のスライドは視線誘導が弱く印象に残らない
-- **CONST_030 (シャドウ段階適用)**: カード=--shadow-subtle、ホバー=--shadow-medium、モーダル=--shadow-prominent。
+  - 背景: 色を足して焦点を作ると面ごとに色相が増え、デッキ全体で統一が崩れる。反転は色数を増やさずに最大のコントラストを作れる
+- **CONST_030 (罫による階層表現)**: 影・グロウを意匠手段として使わない。区切りの既定は 1px の下罫、従属的な区切りは hairline、その面の主線だけ 2px。角丸は 0px（写真・図のみ例外）。線幅・hairline の値は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_003 / VGCONST_004 が正本（SR-2-09）。
   - 目的: 奥行きの段階表現で要素の重要度・状態を伝える
-  - 背景: 単一シャドウは階層感がなく平板に見える
+  - 背景: 影は紙に出ないうえ、Chrome 印刷では影がカード周囲の薄いグレーの塗りになる。罫なら画面と紙で同じ階層が出る
 - **CONST_031 (アクセシビリティ必須)**: prefers-reduced-motion, focus-visible, sr-only, aria-live を実装。UIテキストの opacity は0.6以上。
   - 目的: キーボード操作・スクリーンリーダー・モーション過敏への配慮
   - 背景: 未実装は WCAG 非準拠で一部利用者が操作・認識できない
@@ -192,7 +195,7 @@ precheck-layout の判定としきい値:
 - **CONST_036 (CDN使用)**: GSAP, FontAwesome, Google Fonts のみを CDN で使用（GSAP 3.12.2 / FontAwesome 6.5.1 ほか icons.md の代替可 / Noto Sans JP）。
   - 目的: 依存を限定し再現性・安定性を確保
   - 背景: 不定の外部依存はロード失敗・バージョン差で表示崩れを招く
-- **CONST_037 (テーマ準拠)**: Kanagawa カラーパレット使用必須。
+- **CONST_037 (テーマ準拠)**: 使用する色は style genome の palette 定義と一致すること。色数・アクセントの作り方の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` §1。
   - 目的: スキル全体のビジュアル統一
   - 背景: パレット逸脱はブランド一貫性を損なう
 - **CONST_038 (list-item/ig-item全幅)**: list-container・ig-grid に `width:100%`、各item に `width:100%; box-sizing:border-box`。
@@ -508,7 +511,7 @@ structure.md の各スライドに付与された形式区分と `pattern` / `te
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: var(--bg-dark, #FFFFFF);
+  background: var(--bg-dark, var(--paper));
 }
 .ai-slide-canvas img,
 .slide-bg img {
@@ -530,8 +533,8 @@ structure.md の各スライドに付与された形式区分と `pattern` / `te
 /* 画像がない場合: セクション色系 CSS 背景でフォールバック */
 .slider__item:not(:has(.slide-bg)):not(:has(.ai-slide-canvas)) {
   background: linear-gradient(135deg,
-    var(--section-accent, var(--wave-blue, #7E9CD8)) 0%,
-    var(--bg-dark, #FFFFFF) 100%);
+    var(--section-accent, var(--wave-blue)) 0%,
+    var(--bg-dark, var(--paper)) 100%);
 }
 .visual-overlay { position: relative; z-index: 1; }
 ```

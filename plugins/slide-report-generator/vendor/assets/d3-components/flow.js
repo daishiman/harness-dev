@@ -245,7 +245,7 @@ const D3Flow = {
       .attr('x', (d, i) => i === 0 ? chevronWidth / 2 - chevronDepth / 2 : chevronWidth / 2 - chevronDepth)
       .attr('y', chevronHeight / 2 - 12)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(d.highlight ? accentPalette[1] : accentPalette[i % accentPalette.length]))
       .style('font-size', '12px')
       .style('font-weight', 'bold')
       .text((d, i) => `STEP ${i + 1}`);
@@ -255,7 +255,7 @@ const D3Flow = {
       .attr('x', (d, i) => i === 0 ? chevronWidth / 2 - chevronDepth / 2 : chevronWidth / 2 - chevronDepth)
       .attr('y', chevronHeight / 2 + 8)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(d.highlight ? accentPalette[1] : accentPalette[i % accentPalette.length]))
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .text(d => d.label.length > 10 ? d.label.slice(0, 10) + '…' : d.label);
@@ -368,7 +368,7 @@ const D3Flow = {
     phases.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(d.highlight ? accentPalette[1] : accentPalette[i % accentPalette.length]))
       .style('font-size', '12px')
       .style('font-weight', 'bold')
       .text((d, i) => i + 1);
@@ -406,7 +406,7 @@ const D3Flow = {
             .attr('y', i * (itemHeight + 4))
             .attr('width', itemWidth)
             .attr('height', itemHeight)
-            .attr('rx', 4)
+            // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
             .attr('fill', theme.surface)
             .attr('stroke', theme.border)
             .attr('stroke-width', 1);
@@ -517,7 +517,7 @@ const D3Flow = {
       .attr('y', (d, i) => i * layerHeight + layerHeight / 2)
       .attr('dy', '0.35em')
       .attr('text-anchor', 'middle')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(accentPalette[i % accentPalette.length]))
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .text(d => d.label);
@@ -670,7 +670,7 @@ const D3Flow = {
     cards.append('rect')
       .attr('width', width - margin.left - margin.right - 50)
       .attr('height', 50)
-      .attr('rx', 8)
+      // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
       .attr('fill', theme.surface)
       .attr('stroke', (d, i) => d.highlight ? accentPalette[1] : theme.border)
       .attr('stroke-width', d => d.highlight ? 2 : 1);

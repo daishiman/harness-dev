@@ -20,7 +20,9 @@ def test_run_build_skill_requires_doctor_and_readme_portability_lint():
     assert "__file__" in text
     assert "doctor" in text
     assert "scripts/lint-readme-plugin-root-portability.py" in text
-    assert "${CLAUDE_PLUGIN_ROOT:-plugins/<name>}" in text
+    # Runtime root契約はownerごとに複製せず、共有正本を参照する。
+    assert "../ref-cross-platform-runtime/references/runtime-portability.md" in text
+    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}}" not in text
     # setup 手順 (references/*-setup.md) も裸変数/repo相対禁止の射程に入ること
     # (README だけの被覆では company-master 型の setup docs が抜ける穴を塞いだ)。
     assert "references/*-setup.md" in text
@@ -32,7 +34,9 @@ def test_cross_platform_runtime_documents_readme_empty_expansion_failure_mode():
     assert "can't open file '/lib/...'" in text
     assert "scripts/lint-readme-plugin-root-portability.py" in text
     assert "doctor スクリプト" in text
-    assert "${CLAUDE_PLUGIN_ROOT:-plugins/<name>}" in text
+    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<name>}}" in text
+    assert "marketplaces/local" in text
+    assert ".agents/plugins/marketplace.json" in text
     # lint の走査対象が README のみでなく setup 手順まで及ぶことを正本に明記させる。
     assert "references/*-setup.md" in text
 
@@ -40,7 +44,7 @@ def test_cross_platform_runtime_documents_readme_empty_expansion_failure_mode():
 def test_command_skeleton_supports_direct_script_doctor_without_bare_root():
     text = (RUN_BUILD / "templates" / "command-skeleton.md").read_text(encoding="utf-8")
     assert "direct-script command" in text
-    assert "${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}" in text
+    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}}" in text
     assert "__file__" in text
     assert "lint-readme-plugin-root-portability.py" in text
 
@@ -50,7 +54,7 @@ def test_command_schema_allows_direct_script_command_with_portability_contract()
         encoding="utf-8"
     )
     assert "direct-script command" in text
-    assert "${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}" in text
+    assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}}" in text
     assert "__file__" in text
 
 

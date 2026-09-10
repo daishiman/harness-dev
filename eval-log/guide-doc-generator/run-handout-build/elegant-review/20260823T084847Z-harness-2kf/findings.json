@@ -1,0 +1,1519 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正",
+    "reviewed_at": "2026-08-23T10:09:44Z"
+  },
+  "loop_count": 3,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py:1586 はEXPLAINを既存DIAGRAM/IMG rendererへ委譲する薄い複合として実装し、render-diagram-svg.py:1078 は既存diagram.titleを既に可視描画する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "C05/C14 briefに現行visual policyと相反する旧数量方針が2件残る。"
+          ],
+          "violation_count": 2
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "other",
+          "description": "visual policyはDIAGRAM下限0・warningだが、C05 briefは各main節最低1件・errorと記述する。",
+          "recommended_intervention": "件数とlevelの直書きを削除し、policy参照だけにする。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+            "line": 46,
+            "section": "procedure"
+          },
+          "root_cause": "正本変更後も旧閾値の説明がbriefに残った。"
+        },
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "C14 briefに旧『各main節最低1件』前提が残り、現在のDIAGRAM任意方針と矛盾する。",
+          "recommended_intervention": "C14の責務を1図解の描画契約に限定し、資料内件数の前提を削除する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json",
+            "line": 45,
+            "section": "requirements_covered"
+          },
+          "root_cause": "rendererの単体責務に上位workflowの旧数量方針が混入した。"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:54 は9pattern、同:1057とplugin-plans/guide-doc-generator/briefs/script-brief-C14.json:9は6patternを主張する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugin-plans/guide-doc-generator/briefs/config/handout-parts.json:3 と plugins/guide-doc-generator/config/handout-parts.json:3 は双方が単一正本を名乗り、README.md:190-211も一覧を再掲する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:37、schemas/handout-config.schema.json:464、scripts/render-diagram-svg.py:54は同じpattern集合を別形式で保持する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:168 は4段を宣言するが、同:171-181は2・3・4・5である。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/schemas/handout-config.schema.json:1304、scripts/validate-handout-config.py:1188、scripts/render-handout.py:788が同じexactly-one契約を別々に実装する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "画像計画のstyle-family写像に新3patternの扱いがない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "C05は全patternを画像計画へ流せるが、style-family選択は新3語を覆わない。",
+          "recommended_intervention": "新3語をDIAGRAM専用に限定し、image_plan.diagram_patternへ流さない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+            "line": 61,
+            "section": "procedure"
+          },
+          "root_cause": "DIAGRAM用pattern語彙と画像生成計画用diagram_pattern語彙を同一集合として拡張した。"
+        }
+      ],
+      "score": 0.60
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/README.md:188 は20種類と記載する一方、同:190-211とconfig/handout-parts.json:175-212は21 IDを列挙する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:11 は閾値の単一正本を宣言するが、scripts/validate-handout-config.py:118-119とR2-design.md:152-154へ1・3が複製される。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:309 はprogression step 3をDIAGRAMのみ、skills/run-handout-build/prompts/R2-design.md:110はIMG/DIAGRAM/EXPLAINとする。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "C06が宣言していないファイル依存を判定時に必要とする。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "C06 visual-fitがvisual policyを参照するが、reads_filesとbuild targetに読込契約がない。",
+          "recommended_intervention": "外部参照を増やさず、固定pattern語彙を持たない一般的な意味判定へ戻す。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+            "line": 196,
+            "section": "r25_semantic_axes.visual-fit"
+          },
+          "root_cause": "briefの判定文だけを外部正本参照へ変え、agentの入力契約へ依存を投影しなかった。"
+        }
+      ],
+      "score": 0.60
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugin-plans/guide-doc-generator/briefs/config/handout-parts.json:3 と plugins/guide-doc-generator/config/handout-parts.json:3が双方で単一正本を宣言する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "単一カタログから出荷configと文書表示を派生させるcatalog projection",
+      "template_variables": [
+        "{{PART_CATALOG_PATH}}",
+        "{{PART_CATALOG_PROJECTION}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "planと出荷configが異なる責務を持ち同一レコードを複写しない場合"
+      ],
+      "re_audit_trigger": "部品IDの追加・改名時"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/schemas/handout-config.schema.json:1297のEXPLAINはdiagram_idまたはasset_idとheadline/noteだけで、render-handout.py:1586は既存rendererへ委譲する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "既存媒体へ短文見出しと表示モードを与えるpresentation decorator",
+      "template_variables": [
+        "{{MEDIA_KIND}}",
+        "{{PRESENTATION_MODE}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "将来EXPLAINが独自媒体実体を所有する場合"
+      ],
+      "re_audit_trigger": "第三の媒体種別または独自描画追加時"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報単位ごとの説明を求めるが、scripts/validate-handout-config.py:1051は部品数と間隔だけを測る。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "媒体IDに依存しない情報単位と視覚説明の対応ゲート",
+      "template_variables": [
+        "{{INFORMATION_UNIT_SELECTOR}}",
+        "{{VISUAL_EXPLANATION_PREDICATE}}"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "構文上の存在だけを検査する場合"
+      ],
+      "re_audit_trigger": "visual density合格条件変更時"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:732のversusと同:792のbefore_afterは二列版組を重複し、独立builder・versus拡張・共通primitive・compare変換・CSS template・宣言的engineの6案では共通primitiveが最小である。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "意味patternから独立したtwo-column SVG layout primitive",
+      "template_variables": [
+        "{{LEFT_FIELD}}",
+        "{{RIGHT_FIELD}}",
+        "{{CONNECTOR_STYLE}}"
+      ],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "左右の幾何構造が異なるpattern"
+      ],
+      "re_audit_trigger": "二列型pattern追加・変更時"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:443はデータ宣言だが、scripts/validate-handout-config.py:123はEXPLAIN IDを再度ハードコードする。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "selectorとmetricで表すデータ駆動のpart-density rule",
+      "template_variables": [
+        "{{PART_SELECTOR}}",
+        "{{DENSITY_METRIC}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "意味解析を要する規則"
+      ],
+      "re_audit_trigger": "部品別密度警告追加時"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:449は挿絵だけで足りる節を許すwarningとするが、skills/run-handout-build/SKILL.md:269はwarningゼロをdraft条件にする。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "診断levelとapplicabilityを唯一の完了判定へ伝播するpolicy-driven gate",
+      "template_variables": [
+        "{{DIAGNOSTIC_LEVEL}}",
+        "{{APPLICABILITY_PREDICATE}}"
+      ],
+      "reuse_surface": "skill",
+      "negative_cases": [
+        "利用者が明示的に必須化した場合はpolicy側をerrorにする"
+      ],
+      "re_audit_trigger": "完了条件またはdiagnostic level変更時"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:54の9語に対し、plugin-plans/guide-doc-generator/briefs/script-brief-C14.json:9とtests/render-diagram-svg.py/_harness.py:29は6語である。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "公開語彙を契約registryからschema・runtime・conformance suiteへ投影するpattern registry",
+      "template_variables": [
+        "{{PATTERN_REGISTRY}}",
+        "{{CONFORMANCE_FIXTURE_FACTORY}}"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "schema/CLIから到達不能な実験pattern",
+        "golden不要と正本で明示された非決定論renderer"
+      ],
+      "re_audit_trigger": "diagram pattern追加・改名時"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報変化ごとに全幅媒体を要求する一方、config/handout-visual-policy.json:443-457は最大数・紙面長・容量予算を持たない。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "文章と視覚媒体を同じ選別予算で制御するsection information budget",
+      "template_variables": [
+        "best",
+        "worst",
+        "edge"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "情報単位が少なく紙面予算内の場合"
+      ],
+      "re_audit_trigger": "section部品数・容量・印刷ページ上限変更時"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/README.md:188は20種類、同:190-211の表は21 IDを掲載する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95,
+      "reusable_abstraction": "catalog-derived count label",
+      "template_variables": [
+        "{{PART_COUNT}}"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "意図的に一部を除外する件数なら数え方を明記する"
+      ],
+      "re_audit_trigger": "部品カタログ件数変更時"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:54とschemas/handout-config.schema.json:462は9pattern、plugin-plans/guide-doc-generator/briefs/script-brief-C14.json:6とtests/render-diagram-svg.py/_harness.py:29は6patternである。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "schemaの受理集合とC21の処理集合が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "schema→C21の依存経路が新3patternで切れる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "image_plan.diagram_patternは新3語を受理するが、C21のstyle-family写像はそれらを受理しない。",
+          "recommended_intervention": "新3語をDIAGRAMのpatternにだけ閉じ、image_plan.diagram_patternの列挙から外す。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+            "line": 1557,
+            "section": "$defs.image_plan.properties.diagram_pattern"
+          },
+          "root_cause": "異なる下流consumerを持つ2つのpatternフィールドを同じ値域として同時拡張した。"
+        },
+        {
+          "condition": "C4",
+          "severity": "critical",
+          "bucket": "dependency-loop",
+          "description": "schemaが受理したimage_planの新3語をC21 srg-image-bridge.pyが拒否する。",
+          "recommended_intervention": "image_plan側の値域をC21が処理できる集合へ戻し、C14新3語はDIAGRAMだけに限定する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/guide-doc-generator/scripts/srg-image-bridge.py",
+            "line": 91,
+            "section": "style family mapping"
+          },
+          "root_cause": "schemaからC21までのcross-component enum集合一致を検査するgateがない。"
+        }
+      ],
+      "score": 0.40
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:443-452は閾値1・3、scripts/validate-handout-config.py:114-119も同値を保持する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md:145は情報単位ごと、scripts/validate-handout-config.py:1051は件数と間隔だけを測る。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py:1586は選択した媒体を既存rendererへ渡す。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py:1575とscripts/extract-handout-config.py:106は既存媒体rendererとregistryを再利用する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog.py:48はDOM classを確認するが、大きな絵が主となる実寸・読み順・初心者理解は観測しない。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:36は9pattern意図写像を持つ一方、plan・出荷catalogの追随は手動である。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報単位ごとを要求するが、scripts/validate-handout-config.py:1051-1069はpart件数と連続数だけを検査する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:171-181の局所段番号2-5と同:178の『前段19』は現在構造へ追随していない。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py:1572は既存媒体rendererへ短文wrapperを合成する。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/schemas/handout-config.schema.json:475はpatternをC14へ、R2-design.md:152は閾値をpolicyへ委ねるが、実値は各所へ再掲される。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Phase2時点: /Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugin-plans/guide-doc-generator/briefs/script-brief-C14.json:6、config/handout-visual-policy.json:443、schemas/handout-config.schema.json:1297、R2-design.md:145はpattern契約・密度・合成・価値の4島を作る。",
+        "Phase3最終再監査: 独立EXPLAINの撤回と9pattern契約統合を確認したが、独立承認で残存blockerが検出された。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC1違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC2違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC3違反は解消済み。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Phase3再監査で当該思考法に属するC4違反は解消済み。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.95
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "C05/C14に現行visual policyと矛盾する旧数量方針が残る。"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "画像計画のstyle-family選択が新3patternを覆わない。"
+      ],
+      "violation_count": 1
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "image_plan schemaの受理集合とC21の処理集合が一致しない。"
+      ],
+      "violation_count": 1
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "schema→C21とC06→policyの依存経路が未接続。"
+      ],
+      "violation_count": 2
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "total_score": 0.8949999999999996
+}

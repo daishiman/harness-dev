@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04",
+  "covered_task_ids": [
+    "P04"
+  ],
+  "status": "blocked",
+  "verified_by": [
+    {
+      "claim": "P04 phase の子 leaf 31 件がすべて done である",
+      "method": "task-state.json の nodes を P04- 前置で全列挙",
+      "result": "pass (P04-C01-01 .. P04-C23-01 の 23 件 + P04-x-01 .. P04-x-08 の 8 件 = 31 件すべて done)"
+    },
+    {
+      "claim": "完了チェックリスト (1) 全 component にテストが存在し、実装前に失敗している",
+      "method": "plugin-plans/guide-doc-generator/evidence/P04.json の 23 件について test_dir の isdir と baseline_source の exists、baseline_failures + baseline_errors > 0 を当方が独立検査 (P04-x-01 の検証と同一手順を再実行)",
+      "result": "pass (test_dir 欠落 0 / baseline_source 欠落 0 / baseline が赤でない component 0)"
+    },
+    {
+      "claim": "完了チェックリスト (2) 各検証 script が違反系ケースを持つ",
+      "method": "5 つの検証系 test_dir について def test_* を全抽出し、違反を表す語 (violation/invalid/reject/exit2/missing/blocked/unknown/forbidden/emoji/external/mismatch/duplicate/empty/no_) を含む件数を数えた",
+      "result": "pass (verify-handout-selfcontained.py 109/335 / verify-handout-a11y-print.py 59/187 / verify-handout-language.py 118/248 / verify-handout-narrative.py 70/217 / guard-handout-external-ref 29/136。いずれも違反系ケースが実在し『正常系だけで緑になる』状態ではない)"
+    },
+    {
+      "claim": "完了チェックリスト (3) カタログ部品ごとのレンダリングテストが存在する",
+      "method": "schemas/handout-config.schema.json の $defs.part_data から part id を全列挙 (description を除く 20 件) し、tests/render-handout.py/ 配下の全 .py を連結した文字列に対する出現を照合",
+      "result": "FAIL (20 件中 B04 / B06 / B07 / B14 の 4 件が 1 度も出現しない。これらのレンダリングテストが存在せず、C11 実装が当該 4 部品を落としても suite は緑のまま通過する)"
+    },
+    {
+      "claim": "完了チェックリスト (4) 再現性テストと round-trip テストが存在する",
+      "method": "def test_* が byte_identical / determinis / reproduc / round_?trip を含むファイルを全走査",
+      "result": "pass (29 ファイルに実在。再現性は render-handout.py / embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / route-handout-output.py / resolve-handout-preset.py / validate-handout-config.py など主要 script を網羅し、round-trip は extract-handout-config.py/test_roundtrip_compare.py が担保している)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "gate-blocked",
+      "detail": "完了チェックリスト (3) が未達のため phase gate を pass にせず blocked とした。実測不能・証跡不在を pass と推定しない fail-closed 規約に従う。対応として discovered-task を additive で emit 済み (eval-log/guide-doc-generator/build/discovered-tasks/32c1e3328c0d45d3b2dcd11d5430e2ca.json / proposed_node_id=P04-x-09 / write_scope=plugins/guide-doc-generator/tests/render-handout.py)。planner が inbox をドレインして P04-x-09 を task-graph へ反映し、B04/B06/B07/B14 のレンダリングテストが追加された時点で P04 を再評価する"
+    },
+    {
+      "kind": "carried-over-from-child",
+      "detail": "P04-x-01 が挙げた integrity_flags のうち P04 gate で引き継ぐもの 2 件。(a) leaf-id-swap: P04-C11-01 の対象 test_dir が tests/validate-handout-config.py (inventory では C12)、P04-C12-01 の対象が tests/render-handout.py (inventory では C11) と入れ替わっている。P05 の route 報告は inventory 側に従っているため現状の突合は成立しているが、task-graph 側を直すか既知として明文化するかを P05-x-01 phase gate で決める。(b) test-count-drift 9 件は P04-x-0N のテスト leaf 群による正当な追加と説明できるが、どの leaf がどの test_dir を増やしたかの対応表が無いため、同じく P05-x-01 で内訳を突合する"
+    },
+    {
+      "kind": "rejected-child-claim",
+      "detail": "P04-x-01 の『P05 緑報告後の回帰 (C16, C21)』は当方の再確認で棄却済み。route-P05-C16-01.json は failures=26 を記録しており failures=0 ではない (残 26 件は C10/C11 待ちと明記)。C21 も P04-x-08 の R23 テスト追加で母数が 175→291 に増えた後の値であり回帰ではない"
+    }
+  ]
+}

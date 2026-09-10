@@ -3,7 +3,7 @@ name: run-ubm-goal-setting
 description: 週報・月報・期報の目標設定をしたいとき、振り返り対話を北原さん式の統一ハイブリッド構造で作成したいときに使う。
 disable-model-invocation: true
 user-invocable: true
-argument-hint: "[weekly|monthly|bimonthly]"
+argument-hint: "[weekly|monthly|quarterly]"
 arguments: [type]
 allowed-tools:
   - Read
@@ -17,11 +17,17 @@ allowed-tools:
 kind: run
 prefix: run
 effect: external-mutation
+runtime_root_policy: host-skill-path
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: harness-maintainers
 since: 2026-07-04
 version: 0.1.0
 manifest: workflow-manifest.json
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   progress: eval-log/ubm-goal-setting/run-ubm-goal-setting/goal-seek-progress.json
@@ -60,11 +66,12 @@ source-tier: internal
 last-audited: 2026-07-04
 audit-trigger: quarterly
 feedback_contract:
+  activation_state: semantic_evaluator_started
   max_iterations: 5
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を検証し違反0件であることを確認する。
+      text: validate-goal-output.py が出力前に統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、--type と本文タイトル見出しラベルの一致(不一致は rc=1 で FAIL となる停止条件)を検証し違反0件であることを確認する。
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -74,11 +81,65 @@ feedback_contract:
       loop_scope: outer
       text: run-skill-live-trial で対話を実走し、AskUserQuestion gate を越えて Phase3 対話→Phase5 検証→Phase6 Daily.md embed 更新まで自走完遂し目標設定ファイルが実生成されることを実行証拠で確認する。
       verify_by: live-trial
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
 
 # run-ubm-goal-setting
 
-UBM（北原さん式ゴールセッティング）の目標設定（週報=1週間 / 月報=1ヶ月 / 期報=2ヶ月）を高速対話で作成し、「行動を促し→実行し→成果を出す」サイクルを支援する。思考法駆動＋「愛情ある厳しさ」で本質を突き、即行動可能な計画を設計する。
+UBM（北原さん式ゴールセッティング）の目標設定（週報=1週間 / 月報=1ヶ月 / 期報=3ヶ月）を高速対話で作成し、「行動を促し→実行し→成果を出す」サイクルを支援する。思考法駆動＋「愛情ある厳しさ」で本質を突き、即行動可能な計画を設計する。
 
 ## Purpose & Output Contract
 
@@ -119,16 +180,21 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 Anchor Step の検証は `required_keys = {"iteration","original_goal","current_goal_snapshot","delta_from_original","merged_directive_for_next","drift_signal"}` を満たす全 JSONL 行を対象にする。初回に `hashlib.sha256(original_goal)` を `original_goal_hash` として progress へ固定し、以後の周回で `original_goal` が変化していないことを照合する。
 
-- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|bimonthly>` を実行。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。
+- **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造21項目・NG表現・やらないこと3項目以上に加え、**`--type` と本文タイトル見出しラベルの一致**（不一致は rc=1 で FAIL。種別の取り違えを止める停止条件）を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を WARN で併せて報告する（任意・rc には影響しない）。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
 - **behavioral acceptance (OUT2)**: 静的 content-review とは分離し、`run-skill-live-trial` で AskUserQuestion gate → Phase3 対話 → Phase5 検証 → Phase6 Daily.md embed 更新と目標設定ファイル実生成までを実走証拠として確認する。
 
 ## Key Rules
 
+- **売上 → 成果 → 行動の順に降ろす（週報・月報・期報 共通・最重要）**: 売上目標をまず1つ決め、そこから成果目標を逆算し、成果目標から行動目標を逆算する。行動から書き始めて成果を後付けする順序は禁止。
+- **実行した時点で達成になる目標を置かない**: 「勉強会を月4回開催する」「アカデミーに参加する」等は成果ではなく行動。目標欄に置かず、当たり前の土台として扱う。成果目標は「実行した結果、相手側で何が起きたか」で書く。
+- **成果と売上を数値で結ぶ**: 各成果目標は **1項目=2行**（1行目 `- 項目：先方判断・結果の状態　期日M/D` ／ 2行目 `  → 売上貢献：<単価> × <件数> = <貢献額>`）。裸の数字は不可で、式にできないものは `→ 売上貢献：<金額>（値引き後の一括見積 等の根拠）` と括弧で根拠を添える（`150000` だけでは後から誰も検算できないため）。計上するのは **その期間に実際に売上として立つ分だけ**（月額5万円の顧問の今週分は `50000 × 1 = 50000`。式の件数に `ヶ月`／`年` 等の期間単位を掛けない）。売上に直接乗らないものは `→ 売上貢献：0（いつ・いくらの見込みか）`。貢献の合計が売上目標に届くまで対話を止めない。記法の正本は `references/output-formats.md`。
+- **行動と成果をグループで結ぶ**: 行動目標は `### → XXX：{要約}（{貢献額}円）` の見出しでグループ化し、その配下に `- [ ]` を並べる。XXX は成果目標セクションに実在する項目で、見出しの `{貢献額}` はその成果目標の貢献額と一致させる。習慣・土台のみ `### → （土台）`／`### → （関係維持）` 可。貢献額の大きいグループを上に置く並び順は推奨（優先順位が見えるため。機械検査はしない）。
+- **シンプルに書く（1項目=1つのこと）**: 成果目標は5件・1項目50字まで、行動目標は8件・1項目60字まで。`・` で複数の成果を1項目に詰め込まない。長くなったら短縮でなく2件に割る。背景・理由は `→ 【考え】`／`→ 【思い】` の注記行へ寄せ、目標本文には入れない。
 - **数値は半角のみ**（「万円」不可 → `600000`）。差分は必ず `+`/`-` 付き（例 `-300000`, `+2`）。行動目標には期日と数値を含める。
 - **関係構築が軸**: 売上目標を「追う」のでなく「人との関係を育む」を先に置く。売上は関係の結果。
 - **精神論 NG**: 「頑張る」「意識する」「気をつける」は行動目標として不可 → 具体化（誰に・何を・いつまで・何件）を要求。
-- **やらないこと3項目以上** + 判断基準1文で迷いを排除する。
+- **やらないこと3項目以上** + 判断基準1文で迷いを排除する。出力先は種別依存（月報・期報＝独立セクション必須／週報＝該当日の到達ラインの子タスクへ組み込み）。
 - **合宿（アカデミー）整合**: 直近の合宿アドバイスと目標の方向性のズレを検出したら即軌道修正。
 - **プロジェクト別タスク**: 週報=任意 / 月報=必須 / 期報=禁止。`- [ ] [期日] [提出先・宛先] 対象物・行動` のチェックリスト形式・2階層まで・先方担当者付き。
 - **選択と集中の1点収束**: 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているかを検査し、中途半端が混ざっていたら差し戻す。判断基準は `references/selection-focus-goal-frame.md`（見出し構造は変更しない・対話側の検査基準のみ）。
@@ -137,9 +203,10 @@ Anchor Step の検証は `required_keys = {"iteration","original_goal","current_
 
 ## Gotchas
 
-- **出力ファイル命名**: 週報 `UBM - 1-週報 - {期間}.md` / 月報 `UBM - 2-月報（１ヶ月） - {期間}.md` / 期報 `UBM - 3-月報（２ヶ月） - {期間}.md`（`{期間}` は `YYYY-MM-DD〜YYYY-MM-DD`）。
+- **出力ファイル命名**: 週報 `UBM - 1-週報 - {期間}.md` / 月報 `UBM - 2-月報（１ヶ月） - {期間}.md` / 期報 `UBM - 3-月報（３ヶ月） - {期間}.md`（`{期間}` は `YYYY-MM-DD〜YYYY-MM-DD`）。旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` は読み取り・過去参照では受理し続ける（新規作成では使わない）。
+- **期報の期間**: UBM の目標期間は月の最終月曜日起点。期報は対象3ヶ月分の月報期間の連結で、開始日=1ヶ月目の月報開始日 / 終了日=3ヶ月目の月報終了日（例: 7月・8月・9月分 → `2026-06-29〜2026-09-27`）。期報は月報3件をロールアップして作る。
 - **保存先**: `$UBM_VAULT_ROOT/05_Project/UBM/目標設定/` のみ（`UBM_VAULT_ROOT` 未設定時は self-relative 解決）。
-- **Daily.md 更新（Phase6）**: `$UBM_VAULT_ROOT/02_Configs/Templates/Daily.md` の該当 embed 行のみ正規表現で検出・置換し、他部分は一切変更しない。サマリー見出し（`【1週間の目標】`/`【1ヶ月の目標】`/`【2ヶ月の目標】`）は継続語彙で凍結（今週/今月/今期へ改名しない）。
+- **Daily.md 更新（Phase6）**: `$UBM_VAULT_ROOT/02_Configs/Templates/Daily.md` の該当 embed 行のみ正規表現で検出・置換し、他部分は一切変更しない。サマリー見出し（`【1週間の目標】`/`【1ヶ月の目標】`/`【3ヶ月の目標】`）は継続語彙で凍結（今週/今月/今期へ改名しない）。
 - **期報の正本**: `references/output-formats.md` の静的規則を A1 優先で正本化し、動的学習はスタイル参照に限定（見出し集合を上書きしない）。
 - **書き込み保護**: `ubm-write-path-guard` hook が `UBM_VAULT_ROOT` 配下の禁止パスへの Write|Edit|MultiEdit を fail-closed で阻む。許可は目標設定/ 保存と Daily.md embed 更新のみ。vault 外の plugin 同梱 data は保護対象外。
 

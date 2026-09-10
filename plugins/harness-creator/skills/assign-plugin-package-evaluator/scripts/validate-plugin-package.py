@@ -16,6 +16,7 @@ exit codes:
 
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -271,11 +272,24 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
     return findings
 
 
+def _tree_fingerprint(root: Path) -> str:
+    """Directory内容をpath込みでhashし、物理vendored copyの同一性を判定する。"""
+    digest = hashlib.sha256()
+    for path in sorted(candidate for candidate in root.rglob("*") if candidate.is_file()):
+        relative = path.relative_to(root).as_posix()
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def check_pkg_003(plugin_dir: Path) -> list[dict]:
     findings: list[dict] = []
     target_name = plugin_dir.name
     plugins_root = plugin_dir.parent
     skill_names: dict[str, list[str]] = {}
+    skill_fingerprints: dict[str, list[str]] = {}
     agent_names: dict[str, list[str]] = {}
     for plug in plugins_root.iterdir():
         if not plug.is_dir() or not (plug / ".claude-plugin").exists():
@@ -288,13 +302,19 @@ def check_pkg_003(plugin_dir: Path) -> list[dict]:
                 continue
             name = sk.parent.name
             skill_names.setdefault(name, []).append(plug.name)
+            skill_fingerprints.setdefault(name, []).append(_tree_fingerprint(sk.parent))
         for ag in (plug / "agents").glob("*.md") if (plug / "agents").exists() else []:
             if ag.is_symlink():
                 continue
             agent_names.setdefault(ag.stem, []).append(plug.name)
     idx = 1
     for name, owners in skill_names.items():
-        if len(owners) > 1 and target_name in owners:
+        shared_feedback_copy = (
+            name == "run-skill-feedback"
+            and len(skill_fingerprints.get(name, [])) == len(owners)
+            and len(set(skill_fingerprints[name])) == 1
+        )
+        if len(owners) > 1 and target_name in owners and not shared_feedback_copy:
             findings.append(make_finding(
                 "PKG-003", idx,
                 f"plugins/{','.join(owners)}/skills/{name}",
@@ -399,6 +419,26 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
         registered.add(name)
         registered.add(Path(name).stem)
 
+    def register_hook_commands(hooks: object) -> None:
+        """Claude/Codex hook map に含まれる command entrypoint を登録する。"""
+        if not isinstance(hooks, dict):
+            return
+        for event_hooks in hooks.values():
+            for entry in event_hooks if isinstance(event_hooks, list) else []:
+                if not isinstance(entry, dict):
+                    continue
+                for hook in entry.get("hooks", []):
+                    command = hook.get("command") if isinstance(hook, dict) else None
+                    if not command:
+                        continue
+                    try:
+                        tokens = shlex.split(command)
+                    except ValueError:
+                        tokens = command.split()
+                    for token in tokens:
+                        if "/hooks/" in token:
+                            register_hook_name(token)
+
     plugin_json = plugin_dir / ".claude-plugin" / "plugin.json"
     if plugin_json.exists():
         try:
@@ -407,18 +447,20 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
             data = {}
         hooks = data.get("hooks", {})
         if isinstance(hooks, dict):
-            for event_hooks in hooks.values():
-                for entry in event_hooks if isinstance(event_hooks, list) else []:
-                    for h in entry.get("hooks", []) if isinstance(entry, dict) else []:
-                        cmd = h.get("command") if isinstance(h, dict) else None
-                        if cmd:
-                            try:
-                                tokens = shlex.split(cmd)
-                            except ValueError:
-                                tokens = cmd.split()
-                            for token in tokens:
-                                if "/hooks/" in token:
-                                    register_hook_name(token)
+            register_hook_commands(hooks)
+        elif isinstance(hooks, str):
+            plugin_root = plugin_dir.resolve()
+            hook_file = (plugin_dir / hooks).resolve()
+            try:
+                hook_file.relative_to(plugin_root)
+            except ValueError:
+                hook_file = Path()
+            if hook_file.is_file():
+                try:
+                    hook_data = json.loads(hook_file.read_text())
+                except (OSError, json.JSONDecodeError):
+                    hook_data = {}
+                register_hook_commands(hook_data.get("hooks", {}))
         entry_points = data.get("entry_points", {})
         if isinstance(entry_points, dict):
             for hook_name in entry_points.get("hooks", []):
@@ -452,8 +494,8 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
         if hook.name not in registered and hook.stem not in registered:
             findings.append(make_finding(
                 "PKG-006", idx, str(hook),
-                "hook ファイル実体は存在するが settings 断片の hooks 配列に未登録",
-                suggested_fix=f"settings/*.json の hooks 配列に {hook.name} を追加"))
+                "hook ファイル実体は存在するが plugin hook 契約に未登録",
+                suggested_fix=f"hooks/hooks.json または package contract に {hook.name} を追加"))
             idx += 1
     return findings
 

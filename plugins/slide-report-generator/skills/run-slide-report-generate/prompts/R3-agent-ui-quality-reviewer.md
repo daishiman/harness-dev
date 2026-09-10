@@ -74,8 +74,8 @@ last-audited: 2026-07-05
 
 | ツール / スクリプト | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------------------|------|--------------|--------------|----------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 | chromium非依存の静的検証で代替時 | 入力 index.html / 出力先 screenshots / `--check-ratio` |
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 | なし | 入力 index.html |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 | chromium非依存の静的検証で代替時 | 入力 index.html / 出力先 screenshots / `--check-ratio` |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 | なし | 入力 index.html |
 | Read（index.html / styles.css / scripts.js / structure.md） | S1〜S26 とコードレビューの目視判定 | 自動検証・視覚検証・コードレビュー時 | なし | 対象ファイルパス |
 | grep（`font-size:[0-9][0-9]px` / `&#xf` 等） | S22/S23 等の客観検出 | 必須構造検証時 | なし | 検索パターン |
 | Edit（index.html / styles.css） | 検出問題の修正 | 修正時 | 検出問題ゼロ時 | 修正対象ファイル / 差分 |
@@ -169,8 +169,8 @@ last-audited: 2026-07-05
 | CARP原則（近接・整列・反復・対比） | S14（視覚階層）/ S15（CARP）の判定基準に適用。gap・整列・サイズ差を客観値で評価する |
 | 60-30-10 配色則 | S16 の配色判定に適用。アクセント面積10%以下・ビビッド2色以内を定量検証する |
 | WCAG 2.1 AA（コントラスト4.5:1） | テーマ別UX検証の合否境界として適用。前景背景の色差を数値で判定する |
-| [references/layout-visual.md](../references/layout-visual.md) Section 6 | スライド内統一感（色・フォント・図形・配置）の詳細ルールの正本として参照 |
-| [references/structure.md](../references/structure.md) | 構成テンプレート（理想→現実→ギャップ→解決策サイクル）の判定基準として参照 |
+| [references/layout-visual.md](../../../references/layout-visual.md) Section 6 | スライド内統一感（色・フォント・図形・配置）の詳細ルールの正本として参照 |
+| [references/structure.md](../../../references/structure.md) | 構成テンプレート（理想→現実→ギャップ→解決策サイクル）の判定基準として参照 |
 
 ## 5.6 検証基準 (必須構造検証 S1〜S26 と多面検証)
 
@@ -198,7 +198,7 @@ last-audited: 2026-07-05
 | styles.css | html-generator / slide-renderer | 外部参照され存在すること（S2）。欠損は S1/S2 違反 | 差し戻し |
 | scripts.js | html-generator / slide-renderer | 外部参照され存在すること（S2）。欠損は S1/S2 違反 | 差し戻し |
 | structure.md / structure.json | structure-designer（承認済み仕様SSoT）| スライド一覧が存在すること。S20/S21 の照合基準として必須 | 照合不能のため検証中断・上流確認 |
-| [references/structure.md](../references/structure.md) | スキル references | 構成テンプレート（理想→現実→ギャップ→解決策）の参照 | 構成検証をスキップせず手動確認 |
+| [references/structure.md](../../../references/structure.md) | スキル references | 構成テンプレート（理想→現実→ギャップ→解決策）の参照 | 構成検証をスキップせず手動確認 |
 
 ### 出力
 
@@ -281,8 +281,8 @@ Layer 3 で定義したツールを、5.4 実行方式のゴールシークル�
 
 | ツール / スクリプト | 使用目的 | 使用タイミング |
 |--------------------|---------|---------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 |
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-slides.js" ./index.html ./screenshots --check-ratio` | スクリーンショット撮影・16:9検証・基本HTML構造検証 | 自動検証時 / 再検証時 |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" ./index.html` | カラー・フォント・スタイルの統一感検証 | 自動検証時 / 再検証時 |
 | Read（index.html / styles.css / scripts.js / structure.md）| S1〜S26 とコードレビューの目視判定 | 自動検証・視覚検証・コードレビュー時 |
 | grep（`font-size:[0-9][0-9]px` / `&#xf` 等）| S22/S23 等の客観検出 | 必須構造検証時 |
 | Edit（index.html / styles.css）| 検出問題の修正 | 修正時 |

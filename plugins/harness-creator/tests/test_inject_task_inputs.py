@@ -440,6 +440,37 @@ def test_resolve_inputs_does_not_mutate_state(tmp_path):
     assert state == snapshot
 
 
+def test_resolve_inputs_batch_reads_one_snapshot_and_preserves_task_boundaries(tmp_path):
+    artifact = _artifact(tmp_path, "batch.json")
+    graph = _graph(
+        _dep("T2", "T1"), _dep("T3", "T1"),
+        nodes=[_gnode("T1", write_scope=artifact)],
+    )
+    out = iji.resolve_inputs_batch(graph, {"T1": _pstate()}, ["T2", "T3"])
+    assert out["task_count"] == 2
+    assert [item["task_id"] for item in out["tasks"]] == ["T2", "T3"]
+    assert all(item["injected_inputs"][0]["artifact_path"] == artifact for item in out["tasks"])
+
+
+def test_resolve_inputs_batch_is_fail_closed_on_one_rejection(tmp_path):
+    artifact = _artifact(tmp_path, "batch.json")
+    graph = _graph(_dep("T2", "T1"), nodes=[_gnode("T1", write_scope=artifact), _gnode("T3")])
+    out = iji.resolve_inputs_batch(graph, {"T1": _pstate(state="pending")}, ["T3", "T2"])
+    assert out["rejected"] is True and out["failed_task_id"] == "T2"
+    assert "tasks" not in out
+
+
+def test_main_batch_keeps_single_cli_compatible_and_emits_batch_shape(tmp_path, capsys):
+    graph = _graph(nodes=[_gnode("T1"), _gnode("T2")])
+    gp = _write(tmp_path, "g-batch.json", graph)
+    sp = _write(tmp_path, "s-batch.json", {})
+    assert iji.main(["--task-graph", gp, "--task-state", sp,
+                     "--task-id", "T1", "--task-id", "T2"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["task_count"] == 2
+    assert [item["task_id"] for item in out["tasks"]] == ["T1", "T2"]
+
+
 # ─────────────────────────── main() CLI ───────────────────────────
 def _write(tmp_path, name: str, obj) -> str:
     p = tmp_path / name

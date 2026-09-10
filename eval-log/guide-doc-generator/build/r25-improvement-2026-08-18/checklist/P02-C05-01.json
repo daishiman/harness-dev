@@ -1,0 +1,59 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C05-01",
+ "covered_task_ids": [
+  "P02-C05-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+ "verified_by": [
+  {
+   "claim": "全 main セクションへ DIAGRAM と IMG を配線する責務を持つ (R25 重点 a)",
+   "method": "agent-brief-C05.json:46 の原文確認 + 旧総量比キーワード (0.4 / floor / diagram-gate-decision / min_diagrams_per_main_sections) の grep",
+   "result": "pass: per-section 規則で記述。旧総量比の残骸 0 件"
+  },
+  {
+   "claim": "IMG の role の宣言者が一意に決まる (R25 重点 b)",
+   "method": "編集前は C05 が『節ごとに選び』と読め、C23 側にも preset_impact の宿題が残る二重帰属だった。正本 visual-per-section-decision.json:40 と handout-visual-policy.json#draft_first...wait_time_scales_with_main_sections を根拠に一意化",
+   "result": "pass (修正後): 宣言者=C23 (preset)、C05 は採用者 + 素材欠如時の fallback 実行者 + assets[].role の唯一の writer。dispatcher が 'プリセットで role を宣言' の記述 1 件を実測確認"
+  },
+  {
+   "claim": "本文の短さを起草時点で守る指示がある (R25 重点 c)",
+   "method": "編集前 grep で W-SENTENCE-LONG / E-TEXT-PARAGRAPH / hero_fields / 文数 が全て 0 件だったことを SubAgent が実測。修正後を dispatcher が再測",
+   "result": "pass (修正後): W-SENTENCE-LONG 2 件 / E-TEXT-PARAGRAPH 2 件が brief 内に出現。数値は本文へ書き写さず config 参照に留める分界を維持"
+  },
+  {
+   "claim": "件数の緩和が文量の緩和へ波及しない",
+   "method": "granularity_anchor の記述へ『下限の目安であって上限ではない』『この緩和は文字量・文数には及ばない』を追記。dispatcher が '上限ではない' 1 件を実測確認",
+   "result": "pass"
+  },
+  {
+   "claim": "inventory C05 が要求する C67 (lead/goal_chips) と C71 (1 セクション = 1 カード構造化) が本文に実体化",
+   "method": "編集前は description にコピーがあるだけで procedure/AC に実体なし。修正後 dispatcher が goal_chips 7 件 / E-SECTION-NO-STRUCTURE 2 件を実測",
+   "result": "pass (修正後)"
+  },
+  {
+   "claim": "agent-brief 用 schema の有無",
+   "method": "find plugins -name '*brief*.schema.json'",
+   "result": "schema 不在。plan 側独自形式のため機械検証対象外。JSON 構文妥当性のみ確認 (pass)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C05-01",
+   "level": "resolved",
+   "summary": "handout-visual-policy.json の role_split.roles[illustration].source が 'C13 srg-image-bridge.py' (正しくは C21)。dispatcher が本 cycle 内で修正済み (同一誤記の 3 例目)"
+  },
+  {
+   "id": "F-C05-02",
+   "level": "carry-forward",
+   "summary": "C23 の preset へ IMG + role を全 main セクション配線する宿題が未消化。未消化のままだと C05 は『宣言の無い節』経路しか通らず role 宣言者の一意化が実効を持たない"
+  },
+  {
+   "id": "F-C05-03",
+   "level": "carry-forward",
+   "summary": "C11 の overlay_text 受け側が未解決 (C05 brief の open_question)。C05 が非空で書いても C11 が描画しなければ R15 の安全弁が片肺"
+  }
+ ]
+}

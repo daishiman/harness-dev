@@ -6,7 +6,7 @@
 name: prompt-creator
 description: 7 層プロンプトアーキテクチャ (Role/Context/Principles/Workflow/Constraints/Output/Evaluation) で SubAgent 向けプロンプトを生成・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 2.1.0
+version: 2.1.7
 owner: team-platform
 since: 2026-05-20
 last-audited: 2026-05-24
@@ -27,16 +27,18 @@ contract:
     - cross-plugin 参照は harness-creator (run-build-skill / run-elegant-review / run-skill-rubric-governance) と skill-governance-lint (lint scripts 直呼び) への一方向のみ
 
 capabilities:
-  # === Skills (kind=skill) ===
-  - { kind: skill, ref: skills/run-prompt-create,              tier: core }
-  - { kind: skill, ref: skills/run-prompt-elicit,              tier: core }
-  - { kind: skill, ref: skills/run-prompt-creator-7layer,      tier: core }
   - { kind: skill, ref: skills/assign-prompt-design-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-prompt-create, tier: core }
+  - { kind: skill, ref: skills/run-prompt-creator-7layer, tier: core }
+  - { kind: skill, ref: skills/run-prompt-elicit, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-generate-prompt, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-interview-user, tier: core }
+  - { kind: agent, ref: agents/prompt-creator-review-prompt, tier: core }
+
+  # === Skills (kind=skill) ===
 
   # === Agents (kind=agent) — plugin.json agents 配線と1対1対応 ===
-  - { kind: agent, ref: agents/prompt-creator-interview-user,  tier: core }
-  - { kind: agent, ref: agents/prompt-creator-generate-prompt, tier: core }
-  - { kind: agent, ref: agents/prompt-creator-review-prompt,   tier: core }
 
 dependencies:
   # 主要 DAG。lint-dependency-direction.py で循環検出。
@@ -47,13 +49,22 @@ dependencies:
   - { from: skills/run-prompt-creator-7layer,      to: agents/prompt-creator-generate-prompt, type: calls }
   - { from: skills/assign-prompt-design-evaluator, to: agents/prompt-creator-review-prompt,   type: calls }
   - { from: skills/assign-prompt-design-evaluator, to: skills/run-prompt-creator-7layer,      type: evaluates }
-  # cross-plugin (out-going, harness-creator / skill-governance-lint への一方向のみ — invariant で許可済み)
-  - { from: skills/run-prompt-create, to: ../harness-creator/skills/run-elegant-review,          type: calls,    note: "Step 4 elegant-review (条件: new or >30 行)" }
-  - { from: skills/run-prompt-create, to: ../harness-creator/skills/run-skill-rubric-governance, type: calls,    note: "Step 5 governance (auto_approve 不充足時)" }
-  - { from: skills/run-prompt-create,         to: ../skill-governance-lint,                    type: calls,    note: "p0-lint (workflow-manifest phases) で lint scripts 直呼び (plugin.json depends_on と対応)" }
-  - { from: skills/run-prompt-creator-7layer, to: ../skill-governance-lint,                    type: calls,    note: "Phase 5 で lint-agent-prompt-section.py 直呼び (plugin.json depends_on と対応)" }
-  # cross-plugin (in-coming, called-by — 情報的記述、DAG 逆方向ではない)
-  - { from: ../harness-creator/skills/run-build-skill, to: skills/run-prompt-creator-7layer,    type: called-by, note: "Step 7.5 で prompt 生成委譲を受ける (informational)" }
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback, run-elegant-review, run-skill-rubric-governance, run-build-skill]
+    edges:
+      - {from: skills/run-prompt-create, to: skills/run-elegant-review, type: calls}
+      - {from: skills/run-prompt-create, to: skills/run-skill-rubric-governance, type: calls}
+      - {from: skills/run-build-skill, to: skills/run-prompt-creator-7layer, type: calls}
+  skill-governance-lint:
+    version: ">=0.1.3 <1.0.0"
+    relation: governance-lint-provider
+    required_entry_points: [run-governance-lint]
+    edges:
+      - {from: skills/run-prompt-create, to: skills/run-governance-lint, type: calls}
+      - {from: skills/run-prompt-creator-7layer, to: skills/run-governance-lint, type: calls}
 
 eval_sinks:
   - EVALS.json

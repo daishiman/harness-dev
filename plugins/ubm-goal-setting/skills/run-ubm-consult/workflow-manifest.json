@@ -1,4 +1,24 @@
 {
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
+      "transitions": [
+        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
+        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
+        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
+        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
+        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
+        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
+      ],
+      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
+      "accept_contexts": {"evaluator": 0, "improver": 0}
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "schemaVersion": 1,
   "workflowId": "run-ubm-consult",

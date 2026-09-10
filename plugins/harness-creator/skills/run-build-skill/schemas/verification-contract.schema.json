@@ -9,6 +9,35 @@
   "properties": {
     "schema_version": {"const": 1},
     "subject": {"type": "string", "minLength": 1},
+    "claim_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executable_claim_count", "assigned_claim_count", "execution_unit_count", "phase_gate_count", "unassigned_task_ids", "duplicate_task_ids", "assignment_sha256"],
+      "properties": {
+        "executable_claim_count": {"type": "integer", "minimum": 1},
+        "assigned_claim_count": {"type": "integer", "minimum": 1},
+        "execution_unit_count": {"type": "integer", "minimum": 1},
+        "phase_gate_count": {"type": "integer", "minimum": 1},
+        "unassigned_task_ids": {"type": "array", "maxItems": 0},
+        "duplicate_task_ids": {"type": "array", "maxItems": 0},
+        "assignment_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+      }
+    },
+    "proof_projections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["task_id", "dispatch", "required_claim_ids", "required_unit_ids", "proof_policy"],
+        "properties": {
+          "task_id": {"type": "string", "minLength": 1},
+          "dispatch": {"const": "none"},
+          "required_claim_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "required_unit_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "proof_policy": {"const": "all-claims-done-with-unique-evidence-report-ref"}
+        }
+      }
+    },
     "obligations": {
       "type": "array",
       "minItems": 1,
@@ -22,6 +51,12 @@
           "kind": {"type": "string", "enum": ["generative", "deterministic", "semantic", "observational", "audit"]},
           "risk": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
           "activation": {"type": "string", "enum": ["changed", "always", "exhaustive"]},
+          "stage": {
+            "type": "string",
+            "enum": ["draft", "release"],
+            "default": "draft",
+            "description": "build stage。profile (証明の深さ) と直交する『どこまで作るか』の軸。draft=使える実体が立ち上がるまでに要る claim、release=現物が出てから効く claim (受入テスト設計・意味レビュー・監査・リリース準備)。未宣言は draft 扱い — 未分類を release へ倒すと stage を知らない旧 contract が draft で全 defer になり、何も作らない計画が黙って成立するため。fingerprint には含めない (draft の PASS receipt を release でそのまま再利用させ、昇格を追加実行だけで済ませる)。"
+          },
           "depends_on": {
             "type": "array",
             "uniqueItems": true,

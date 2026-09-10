@@ -1,0 +1,628 @@
+{
+  "schema_version": "1.0.0",
+  "doc_types": [
+    "lecture",
+    "agenda",
+    "guide",
+    "onboarding",
+    "report",
+    "proposal",
+    "study-notes",
+    "study-plan"
+  ],
+  "doc_type_count": 8,
+  "shared_keys": [
+    "applied_variant",
+    "catalog_sha256",
+    "dir_token",
+    "granularity_defaults",
+    "label_ja",
+    "notes",
+    "presentation_order",
+    "purpose",
+    "recommended_parts",
+    "section_order"
+  ],
+  "shared_key_count": 10,
+  "varying_keys": [
+    "dir_token",
+    "granularity_defaults",
+    "label_ja",
+    "notes",
+    "purpose",
+    "recommended_parts",
+    "section_order"
+  ],
+  "optional_keys": [
+    "required_document_fields"
+  ],
+  "presets": {
+    "lecture": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "lecture",
+      "granularity_defaults": {
+        "detail_level": "standard",
+        "evidence_depth": "none"
+      },
+      "label_ja": "勉強会・レクチャー",
+      "notes": "参照 v1 の骨格に R21 (実施済み研修のフィードバック) を反映した骨格。冒頭は flow-overview で大きな流れだけを 5 件以内に抑え、demo は実際の画面 (assets.role=screenshot の IMG) から入る。capability は機能名からではなく成果から書く型 (parts[].slot が outcome → breakdown → feature)。handson は B17 を器に読み手がその場で操作し、qa は畳んだ B10 で先回りの疑問に答える。voices は受講者の具体業務と困りごとを聞く対話枠で、全体所要時間の 15% 以上を確保する (下限は config/handout-sections.json の dialogue.min_duration_share)",
+      "presentation_order": null,
+      "purpose": "lecture",
+      "recommended_parts": [
+        "B03",
+        "B05",
+        "B07",
+        "B09",
+        "B10",
+        "B11",
+        "B14",
+        "B17",
+        "IMG"
+      ],
+      "required_document_fields": [
+        "must_remember",
+        "no_need_to_remember"
+      ],
+      "section_order": [
+        {
+          "heading": "今日の流れ",
+          "id": "flow",
+          "recommended_parts": [
+            "B03"
+          ],
+          "required": true,
+          "section_kind": "flow-overview"
+        },
+        {
+          "heading": "なぜこれをやるのか",
+          "id": "context",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "まず動くところを見る",
+          "id": "demo",
+          "recommended_parts": [
+            "IMG",
+            "B14"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "できることと、その分解",
+          "id": "capability",
+          "recommended_parts": [
+            "B07",
+            "B14",
+            "B05"
+          ],
+          "required": true,
+          "section_kind": "capability-explainer"
+        },
+        {
+          "heading": "使い分けの軸",
+          "id": "compare",
+          "recommended_parts": [
+            "B05",
+            "B06"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "手を動かす",
+          "id": "handson",
+          "recommended_parts": [
+            "B17",
+            "B11",
+            "B13"
+          ],
+          "required": true,
+          "section_kind": "handson"
+        },
+        {
+          "heading": "先回りの Q&A",
+          "id": "qa",
+          "recommended_parts": [
+            "B10"
+          ],
+          "required": true,
+          "section_kind": "anticipated-qa"
+        },
+        {
+          "heading": "困っていること・やりたいことを聞く",
+          "id": "voices",
+          "recommended_parts": [
+            "B09",
+            "B15"
+          ],
+          "required": true,
+          "section_kind": "dialogue"
+        },
+        {
+          "heading": "持ち帰りと次の一歩",
+          "id": "next",
+          "recommended_parts": [
+            "B09",
+            "B15"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        }
+      ]
+    },
+    "agenda": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "agenda",
+      "granularity_defaults": {
+        "detail_level": "overview",
+        "evidence_depth": "none"
+      },
+      "label_ja": "定例会議アジェンダ",
+      "notes": "時間配分は B03 の右列 (data.time) に割り当てる。決定事項は B09 のチェック行で二値表現し、アクションアイテムは担当と期限を必須メタに持つ B16 行部品を使う",
+      "presentation_order": null,
+      "purpose": "agenda",
+      "recommended_parts": [
+        "B03",
+        "B09",
+        "B16",
+        "B10"
+      ],
+      "section_order": [
+        {
+          "heading": "本日の議題と時間配分",
+          "id": "timebox",
+          "recommended_parts": [
+            "B03"
+          ],
+          "required": true,
+          "section_kind": "agenda-timebox"
+        },
+        {
+          "heading": "議題ごとの論点",
+          "id": "topics",
+          "recommended_parts": [
+            "B07",
+            "B05"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "決定事項",
+          "id": "decisions",
+          "recommended_parts": [
+            "B09"
+          ],
+          "required": true,
+          "section_kind": "decisions"
+        },
+        {
+          "heading": "アクションアイテム",
+          "id": "actions",
+          "recommended_parts": [
+            "B16"
+          ],
+          "required": true,
+          "section_kind": "action-items"
+        },
+        {
+          "heading": "持ち越し",
+          "id": "parking",
+          "recommended_parts": [
+            "B10"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        }
+      ]
+    },
+    "guide": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "guide",
+      "granularity_defaults": {
+        "detail_level": "standard",
+        "evidence_depth": "cited"
+      },
+      "label_ja": "一般配布資料",
+      "notes": "配布して独り歩きする資料。前提を書き切り、添付は B12 の data URI ダウンロードで同梱する",
+      "presentation_order": null,
+      "purpose": "guide",
+      "recommended_parts": [
+        "B03",
+        "B06",
+        "B07",
+        "B10",
+        "B12"
+      ],
+      "section_order": [
+        {
+          "heading": "この資料でわかること",
+          "id": "overview",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "手順",
+          "id": "steps",
+          "recommended_parts": [
+            "B03",
+            "B14"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "迷ったときの判断",
+          "id": "choices",
+          "recommended_parts": [
+            "B06",
+            "B08"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "よくあるつまずき",
+          "id": "faq",
+          "recommended_parts": [
+            "B10"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "配布ファイル",
+          "id": "files",
+          "recommended_parts": [
+            "B12"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        }
+      ]
+    },
+    "onboarding": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "onboarding",
+      "granularity_defaults": {
+        "detail_level": "detailed",
+        "evidence_depth": "cited"
+      },
+      "label_ja": "オンボーディング・導入ガイド",
+      "notes": "読み手の前提知識が最も低い用途。専門用語の言い換え宣言 (glossary) を厚くすることを notes で促す",
+      "presentation_order": null,
+      "purpose": "onboarding",
+      "recommended_parts": [
+        "B03",
+        "B04",
+        "B07",
+        "B08",
+        "B09"
+      ],
+      "section_order": [
+        {
+          "heading": "はじめに",
+          "id": "welcome",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "全体マップ",
+          "id": "map",
+          "recommended_parts": [
+            "B08",
+            "B14"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "登場人物と役割",
+          "id": "roles",
+          "recommended_parts": [
+            "B04"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "初日にやること",
+          "id": "day1",
+          "recommended_parts": [
+            "B03",
+            "B09"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "最初の 1 週間",
+          "id": "week1",
+          "recommended_parts": [
+            "B09"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "困ったときの相談先",
+          "id": "who",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        }
+      ]
+    },
+    "report": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "report",
+      "granularity_defaults": {
+        "detail_level": "detailed",
+        "evidence_depth": "sourced"
+      },
+      "label_ja": "報告資料",
+      "notes": "要点を先頭に置く。数値は .num (tabular-nums) を持つ部品側の表記規約に従う",
+      "presentation_order": null,
+      "purpose": "report",
+      "recommended_parts": [
+        "B05",
+        "B07",
+        "B10",
+        "B16"
+      ],
+      "section_order": [
+        {
+          "heading": "要点",
+          "id": "summary",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "何が起きたか",
+          "id": "facts",
+          "recommended_parts": [
+            "B05",
+            "B03"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "評価",
+          "id": "analysis",
+          "recommended_parts": [
+            "B05",
+            "B04"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "次にやること",
+          "id": "next",
+          "recommended_parts": [
+            "B16"
+          ],
+          "required": true,
+          "section_kind": "action-items"
+        },
+        {
+          "heading": "補足",
+          "id": "appendix",
+          "recommended_parts": [
+            "B10",
+            "B12"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        }
+      ]
+    },
+    "proposal": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "proposal",
+      "granularity_defaults": {
+        "detail_level": "standard",
+        "evidence_depth": "sourced"
+      },
+      "label_ja": "提案資料",
+      "notes": "判断軸 (judgment_axis) が最も効く用途。比較部品の直後に必ず 1 文の判断軸を置く",
+      "presentation_order": null,
+      "purpose": "proposal",
+      "recommended_parts": [
+        "B03",
+        "B05",
+        "B06",
+        "B14",
+        "B16"
+      ],
+      "section_order": [
+        {
+          "heading": "解きたい課題",
+          "id": "problem",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "提案",
+          "id": "proposal",
+          "recommended_parts": [
+            "B14",
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "選択肢の比較",
+          "id": "options",
+          "recommended_parts": [
+            "B05",
+            "B06"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "進め方",
+          "id": "plan",
+          "recommended_parts": [
+            "B03"
+          ],
+          "required": true,
+          "section_kind": "agenda-timebox"
+        },
+        {
+          "heading": "お願いしたいこと",
+          "id": "ask",
+          "recommended_parts": [
+            "B16"
+          ],
+          "required": true,
+          "section_kind": "action-items"
+        }
+      ]
+    },
+    "study-notes": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "study-notes",
+      "granularity_defaults": {
+        "detail_level": "overview",
+        "evidence_depth": "cited"
+      },
+      "label_ja": "学習内容のまとめ",
+      "notes": "出典は B07 特徴カードの脚注領域 (data.footnote) に置く。外部参照ゼロの制約があるためリンクは資料内アンカーか出典表記のテキストに留め、外部 URL は素材の出所表示としてのみ書く (この制約の担保は C16 自己完結検査)",
+      "presentation_order": null,
+      "purpose": "study-notes",
+      "recommended_parts": [
+        "B04",
+        "B05",
+        "B07",
+        "B10"
+      ],
+      "section_order": [
+        {
+          "heading": "学んだこと",
+          "id": "topic",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "要点の整理",
+          "id": "keypoints",
+          "recommended_parts": [
+            "B04",
+            "B05"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "具体例",
+          "id": "examples",
+          "recommended_parts": [
+            "B11",
+            "B10"
+          ],
+          "required": false,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "出典・参考",
+          "id": "sources",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "sources"
+        }
+      ]
+    },
+    "study-plan": {
+      "applied_variant": null,
+      "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+      "dir_token": "study-plan",
+      "granularity_defaults": {
+        "detail_level": "standard",
+        "evidence_depth": "sourced"
+      },
+      "label_ja": "学習計画",
+      "notes": "3 分割は B04 トリオカードを器として使い、更新され続ける内容は C11 が出力するメモ機構 (localStorage 保持) を各枠へ結線して受ける。新規部品も新規機構も不要",
+      "presentation_order": null,
+      "purpose": "study-plan",
+      "recommended_parts": [
+        "B03",
+        "B04",
+        "B07",
+        "B09"
+      ],
+      "section_order": [
+        {
+          "heading": "何ができるようになりたいか",
+          "id": "goal",
+          "recommended_parts": [
+            "B07"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        },
+        {
+          "heading": "分かっていること / 分からないこと / 次に調べること",
+          "id": "triage",
+          "recommended_parts": [
+            "B04"
+          ],
+          "required": true,
+          "section_kind": "known-unknown-next"
+        },
+        {
+          "heading": "進め方と時間の見積もり",
+          "id": "plan",
+          "recommended_parts": [
+            "B03"
+          ],
+          "required": true,
+          "section_kind": "agenda-timebox"
+        },
+        {
+          "heading": "到達チェック",
+          "id": "check",
+          "recommended_parts": [
+            "B09"
+          ],
+          "required": true,
+          "section_kind": "standard"
+        }
+      ]
+    }
+  }
+}

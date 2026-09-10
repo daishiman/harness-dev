@@ -1,0 +1,13 @@
+{
+  "set_version": "1",
+  "produced_by": "P05-x-02 (assets/ の唯一の producer / P04-x-05 G-04)",
+  "defs_file": "mascot-defs.svg",
+  "embed_rule": "defs_file の中身を <body> 直後へ 1 度だけ inline で置き、参照側は <use href=\"#<symbol_id>\"> だけを書く。同じ図形を複数回インライン展開しない (参照解析 §9 D1)",
+  "no_external_reference": "外部参照・xmlns 宣言を持たない。文書内の断片識別子のみを参照する (R01)",
+  "recolor_contract": "色は assets/tokens/<theme>.json の mascot_css_variables 11 変数の var() 参照で解決する。マスコット SVG 側に色の実値を持たない (参照解析 §9 D2)",
+  "symbols": [
+    {"symbol_id": "hbm-bordered", "viewBox": "49 40 1155 1194", "usage": "hero の主役。縁取りあり", "reference_size": {"width": 92, "height": 95}},
+    {"symbol_id": "hbm-plain", "viewBox": "120 116 1009 1044", "usage": "header ロゴ・footer の小サイズ。縁取りなし", "reference_size": {"width": 34, "height": 35}}
+  ],
+  "a11y": "装飾用途のため参照側の <svg> に aria-hidden=\"true\" を付ける。data-hb-kind は \"mascot\" (C16 SC-06 の様式検査の対象外区分)"
+}

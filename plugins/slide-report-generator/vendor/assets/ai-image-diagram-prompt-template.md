@@ -8,7 +8,7 @@ Use this template only when the user explicitly asks for AI-generated images or 
 
 注記（gpt-image-2 のプロンプト記述順）: 本ビルダー（`build-image-prompts.js` の `buildPrompt()`）は**制約先行方式**を採る。不変制約（STYLE LOCK / Geometry lock / consistency anchors）を毎ページ先頭で逐語固定してから、Intended use → Purpose → Background（デッキ内文脈）→ Layout → Dominant accent → Subject → Negative の順で展開する。gpt-image-2 公式の Scene-first 推奨（Scene→Subject→Key details→Constraints+Use case）とは並びが異なるが、デッキ一貫性のため不変要素を先頭固定する設計を優先する。なお本テンプレートの **Background はデッキ内の前後文脈であり、画面シーン（床・空間）ではない**。画面シーンは `subject` 冒頭に書く（例: faint dotted isometric grid floor on off-white #FAFAFA）。曖昧語（beautiful / きれい / high quality）は禁止。具体名詞＋視認可能な属性で書く。正確な展開順の正本は本ファイル「ビルダーが自動展開する固定行」節とする。
 
-注記（v8.2.0・ビルダー自動展開）: 全面画像生成モードでは、本テンプレートのプレースホルダ（`{{STYLE_BIBLE}}` / `{{expanded_style_bible_from_assets_generated_style_genome_json}}` 等）を手動で展開しない。`scripts/build-image-prompts.js` の `buildPrompt()` が `assets/generated/image-deck-plan.json`（per-slide 差分・`schemas/image-deck-plan.schema.json` 準拠）と `assets/generated/style-genome.json` を合成し、STYLE LOCK / MODE（Intended use）/ GEOMETRY LOCK / Layout / Subject / Negative の各行を決定論で展開して `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。したがって本テンプレートは**ビルダー出力の参照仕様（生成される prompt.md がどんな構造になるかの目安）であり、buildPrompt() の出力が正本**。ビルダーを使わない単発の手動差し替え時にのみ手で埋める。
+注記（v8.2.0・ビルダー自動展開）: 全面画像生成モードでは、本テンプレートのプレースホルダ（`{{STYLE_BIBLE}}` / `{{expanded_style_bible_from_assets_generated_style_genome_json}}` 等）を手動で展開しない。`vendor/scripts/build-image-prompts.js` の `buildPrompt()` が `assets/generated/image-deck-plan.json`（per-slide 差分・`schemas/image-deck-plan.schema.json` 準拠）と `assets/generated/style-genome.json` を合成し、STYLE LOCK / MODE（Intended use）/ GEOMETRY LOCK / Layout / Subject / Negative の各行を決定論で展開して `slide-NN-{slug}.prompt.md` / `slide-NN-{slug}.meta.json` を機械生成する。したがって本テンプレートは**ビルダー出力の参照仕様（生成される prompt.md がどんな構造になるかの目安）であり、buildPrompt() の出力が正本**。ビルダーを使わない単発の手動差し替え時にのみ手で埋める。
 
 ### ビルダーが自動展開する固定行（buildPrompt() が正本・手で書かない）
 
@@ -18,7 +18,7 @@ Use this template only when the user explicitly asks for AI-generated images or 
 STYLE LOCK (keep identical on every page):
 - Art style: ...
 - Camera: ...; structural slides use ...
-- Palette (...): ...; 60-30-10 rule, one dominant accent per image.
+- Palette (...): ...; Exactly one inverted block per image (surface and ink swapped on a single region, 8 to 15 percent of the canvas). Emphasis is made by inversion, never by adding a color.
 - Composition: 16:9 (2560x1440). Keep safe margins ... clear for overlay text. ...
 - In-image text policy: ...
 - Content adaptation: ...
@@ -37,7 +37,7 @@ Purpose (why this slide exists): ...        <- Purpose (Why)
 Audience takeaway (one sentence ...): ...    <- Audience takeaway (Who)
 Background / context: ...                     <- Background (Context)
 Layout: grid=...; zones=[area:content; ...]; reading order=a > b > c; focal point=...; emphasis=...   <- Layout/Zones (Where)
-Dominant accent for this slide (the 10-percent lead color in the 60-30-10 split): <name> <hex>   <- Dominant accent (accent を HEX 解決して支配色を明示。accent=multi は「1ゾーン1アクセント+1色が60%」)
+Accent on this slide is exactly one inverted block ... Draw that inverted face with <name> <hex> as its ink.   <- Accent (accent は色相ではなく地とインクの反転 1 個・面積 8-15%。HEX はその反転面のインク色。accent=multi は HEX が無いだけで指示は同じ)
 [空行]
 <subject>                                     <- Subject (What)
 <diagramStructure>
@@ -121,7 +121,7 @@ PNG source image for `assets/generated/slide-NN-{slug}.png`, then convert to Web
 
 ## バリアント: kanagawa-comic-diagram（assets/generated画像群の再現）
 
-`05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/` に含まれている画像群に近い、漫画チックな説明図を量産する時に使う。STYLE GENOME は同梱プリセット `assets/style-genome-kanagawa-comic-diagram.json` をコピーした project-local の `assets/generated/style-genome.json` を正本とし、per-slide では差分だけを書く。
+`05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/` に含まれている画像群に近い、漫画チックな説明図を量産する時に使う。STYLE GENOME は同梱プリセット `vendor/assets/style-genome-kanagawa-comic-diagram.json` をコピーした project-local の `assets/generated/style-genome.json` を正本とし、per-slide では差分だけを書く。
 
 ### 全面画像生成モード共通プリセット（各ページ=1枚の主キャンバス）
 

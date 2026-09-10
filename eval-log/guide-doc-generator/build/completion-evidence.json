@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "guide-doc-generator",
+  "overall_status": "blocked",
+  "gates": [
+    {
+      "id": "G-unit-suites",
+      "status": "pass",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/all-suites.log"
+      ],
+      "findings": [
+        "23 スイート / 3308 テスト / failed=0 / red_suites=[]"
+      ],
+      "metrics": {
+        "suites": 23,
+        "tests": 3308,
+        "failed": 0
+      }
+    },
+    {
+      "id": "G-real-subject-gates",
+      "status": "pass",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-render.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-selfcontained.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-a11y-print.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-language.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-narrative.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-routing.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-roundtrip-extract.txt",
+        "eval-log/guide-doc-generator/evidence/real-sample/gate-roundtrip-validate.txt"
+      ],
+      "findings": [
+        "実題材 1 本に対する 8 ゲートすべて exit0。LANG-01 と NAR-07 は初回 FAIL し、構成データ側を修正して PASS"
+      ],
+      "metrics": {
+        "gates": 8,
+        "exit_nonzero": 0
+      }
+    },
+    {
+      "id": "G-reproducibility",
+      "status": "pass",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/real-sample/reproducibility-record.json",
+        "eval-log/guide-doc-generator/evidence/real-sample/regenerated-from-bundle.html"
+      ],
+      "findings": [
+        "同一引数の二重生成・config 書き戻しの二重出力・引数なしの同梱 config からの再生成の 3 通りすべて identical:true",
+        "初回は不一致。render-handout.py が --theme を config へ書き戻さず data-hb-config-theme だけ空になる欠陥を修正して一致"
+      ],
+      "metrics": {
+        "methods": 3,
+        "identical": 3
+      }
+    },
+    {
+      "id": "G-bundle-4-artifacts",
+      "status": "pass",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/handout.html",
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/handout-config.json",
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/README.md",
+        "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/.handout-route.json"
+      ],
+      "findings": [
+        "<YYYY-MM-DD>-<種別>-<主題slug> 命名で同梱物 4 種が揃う"
+      ],
+      "metrics": {
+        "artifacts": 4
+      }
+    },
+    {
+      "id": "G-manifest-parity",
+      "status": "pass",
+      "evidence": [
+        "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+        "plugin-plans/guide-doc-generator/evidence/P13.json"
+      ],
+      "findings": [
+        "entry_points の skill 4 / agent 2 / command 3 がすべて実在 (missing 0)。hooks 非宣言は単一登録面の意図的選択で manifest 自身に理由を記載"
+      ],
+      "metrics": {
+        "entry_points": 9,
+        "missing": 0
+      }
+    },
+    {
+      "id": "G-marketplace-registration",
+      "status": "pass",
+      "evidence": [
+        ".claude-plugin/marketplace.json",
+        ".claude-plugin/bundles.json",
+        "marketplaces/local/.claude-plugin/marketplace.json"
+      ],
+      "findings": [
+        "3 つの登録先すべてに guide-doc-generator が存在し、bundle_targets と bundles.json が一致。build-local-marketplace.py --check exit0 (23 plugin, no drift)"
+      ],
+      "metrics": {
+        "registries": 3
+      }
+    },
+    {
+      "id": "G-coverage",
+      "status": "pass",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/evidence/P09.json"
+      ],
+      "findings": [
+        "23 component すべてで harness カバレッジが閾値 80 以上。violations 0 件"
+      ],
+      "metrics": {
+        "components": 23,
+        "threshold": 80,
+        "violations": 0
+      }
+    },
+    {
+      "id": "G-no-absolute-paths",
+      "status": "pass",
+      "evidence": [
+        "plugins/guide-doc-generator/config/handout-output.json",
+        "plugins/guide-doc-generator/README.md",
+        "plugin-plans/guide-doc-generator/evidence/P09.json"
+      ],
+      "findings": [
+        "config/handout-output.json#default_out_dir を \"./handout-output\" へ改め、配布物から環境固有の絶対パスを外した",
+        "出力先の解決順は --out-dir > 環境変数 HB_OUT_DIR > default_out_dir。個人の固定出力先は HB_OUT_DIR で与える手順を README に記載した",
+        "plugins/guide-doc-generator 配下 (tests を除く) を /Users/ と /home/ で走査して残り 0 件",
+        "transcript 絶対パスを含む .claude/handoff ファイル 4 件を配布物から削除済み"
+      ],
+      "metrics": {
+        "remaining": 0,
+        "removed_files": 4
+      }
+    },
+    {
+      "id": "G-github-marketplace-path",
+      "status": "blocked",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/evidence/P13.json"
+      ],
+      "findings": [
+        "plugins/guide-doc-generator/ 配下が git 未追跡 (git ls-files = 0 件)。ローカル経路は marketplaces/local/plugins の symlink で作業ツリーを解決するため成立するが、GitHub marketplace 経路はコミット済みツリーを解決するため commit + push + PR マージまで source が空になる",
+        "コミットは利用者承認待ちのため実行していない"
+      ],
+      "metrics": {
+        "tracked_files": 0
+      }
+    },
+    {
+      "id": "G-p0-lint",
+      "status": "pass",
+      "evidence": [
+        "eval-log/guide-doc-generator/evidence/p0-lint.log",
+        "plugin-plans/guide-doc-generator/evidence/P09.json"
+      ],
+      "findings": [
+        "component-inventory が宣言する p0_lint 10 種すべてを plugin 単位で実行し 10 件とも exit0",
+        "前版の「実行体が repo に存在しない / 呼出し規約が合わない」は誤りだった。10 種すべて plugins/skill-governance-lint/scripts に実在する",
+        "実行して見つかった違反は是正済み: script frontmatter 12 件 / ref skill の owner・source-tier / assign skill 名の role 接尾辞 / assign-*-evaluator の pair",
+        "lint-forbidden-deps は skill-governance-lint/manifest.json 不在のため lint 側の設計で SKIP。合格ではなく未検査である"
+      ],
+      "metrics": {
+        "declared": 10,
+        "executed": 10,
+        "exit_zero": 10,
+        "skipped_by_design": 1
+      }
+    },
+    {
+      "id": "G-independent-context-review",
+      "status": "blocked",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/evidence/P07.json",
+        "plugin-plans/guide-doc-generator/evidence/P10.json"
+      ],
+      "findings": [
+        "P07 の初心者向け読みやすさと P10 の最終レビューはいずれも決定論ゲートの実測のみで判定した",
+        "独立 context の意味レビューを担う handout-readability-reviewer の agent type が本セッションで利用不能になり、起動できない",
+        "決定論ゲートの PASS を意味判定の代替にしていない",
+        "塞ぎ方: agent type が使える環境で assign-handout-readability-evaluator を起動し verdict を回収する"
+      ],
+      "metrics": {
+        "reviews_declared": 2,
+        "reviews_run": 0
+      }
+    }
+  ],
+  "invalidated_task_ids": [],
+  "invalidated_phase_refs": []
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-24",
+  "reason": "P05-x-24 の worker が観測し、当方も extract-handout-config.py の prune_chrome 実装で確認した宣言と実装の乖離。P05-x-21 が script-brief-C20.json へ規定した chrome_boundary.rule は『data-hb-generated=true の読み飛ばし単位は部分木そのものではなく、著者データマーカーを持つノードを抜いた部分木である』と定めるが、実装の prune_chrome() は親を捨てた時点で子を見ず部分木を丸ごと落とす。現状は C11 が hero 枠を空の生成要素として分離しているため実害ゼロだが、chrome 部分木の内側に著者データマーカーが 1 つ置かれた瞬間にその値が黙って消える。P05-x-19 は照合表 (PART_CLASS_MAP) しか触っておらず、P05-x-21 は brief 側 (write_scope=briefs) のため実装へ書けず、受け皿が空いている",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-x-24.json",
+  "proposed_node": {
+    "id": "P05-x-26",
+    "title": "prune_chrome を chrome_boundary.rule の穴あき走査へ合わせる (宣言と実装の乖離解消)",
+    "phase_ref": "P05",
+    "entity_ref": "C20",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts",
+    "acceptance_criterion": "chrome 部分木の内側へ著者データマーカーを持つノードを 1 個置いた HTML を prune_chrome() へ通すと、そのノードが生き残ることを実測で示す (現状は消えることを反例として先に実測し、両方向を測る)。既存の chrome 読み飛ばし自体は弱めない — マーカーを持たない chrome ノードは従来どおり捨てられること。読み飛ばし対象から外す著者データマーカーの集合は literal で列挙せず schemas/ROUNDTRIP-CONTRACT.md の裁定表から導出する (PAT-1)。tests/extract-handout-config.py / tests/render-handout.py の失敗テスト名の集合が増えない",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-26.md",
+    "produces": [
+      "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-26.md"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

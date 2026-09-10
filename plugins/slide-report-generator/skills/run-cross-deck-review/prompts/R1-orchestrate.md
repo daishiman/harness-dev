@@ -65,11 +65,11 @@
 
 | agent | 起動方式 | 役割 |
 |---|---|---|
-| `cross-deck-reviewer` | `Task` (name 参照・`isolation: fork`) | 独立 context で機械チェック結果を一次根拠に Agent A/B/C の 3 レンズ分析 (単一 fork context 内・再 fork しない) × 4 条件を実行する read-only 自動 worker。実体は `../../agents/cross-deck-reviewer.md` だが起動はファイルパス依存でなく Task の name 参照。ドメイン規範は reference を SSOT とする薄化アダプタ |
+| `cross-deck-reviewer` | `Task` (name 参照・`isolation: fork`) | 独立 context で機械チェック結果を一次根拠に Agent A/B/C の 3 レンズ分析 (単一 fork context 内・再 fork しない) × 4 条件を実行する read-only 自動 worker。実体は `../../../agents/cross-deck-reviewer.md` だが起動はファイルパス依存でなく Task の name 参照。ドメイン規範は reference を SSOT とする薄化アダプタ |
 
 ### 3.3 外部ツール / vendor scripts (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/`)
-- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all` — 必須入力欠落・shared-spec 差分 (A4印刷/コードブロック/GSAP/フォント)・CSS 変数・GSAP・印刷・外部 URL 混入・rem 残存の機械検出 (C1-C2 / C11-C13 / C15 の一次根拠。SVG設計/スライドタイプ定義の異同は Agent A 目視)。`--check` の個別カテゴリは `inputs` / `shared-spec` / `urls` / `css-vars` / `gsap` / `print` / `rem-units`。
-- `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" <deck-dir>` — 個別成果物の統一感検証 (テーマ・スタイル整合)。
+- `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all` — 必須入力欠落・shared-spec 差分 (A4印刷/コードブロック/GSAP/フォント)・CSS 変数・GSAP・印刷・外部 URL 混入・rem 残存の機械検出 (C1-C2 / C11-C13 / C15 の一次根拠。SVG設計/スライドタイプ定義の異同は Agent A 目視)。`--check` の個別カテゴリは `inputs` / `shared-spec` / `urls` / `css-vars` / `gsap` / `print` / `rem-units`。
+- `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" <deck-dir>` — 個別成果物の統一感検証 (テーマ・スタイル整合)。
 - `Read` / `Grep` — structure.md ／ ソース md ／ styles.css ／ scripts.js の横断読取と用語横断検索 (C3-C15 の目視検証)。
 - `Task` — `cross-deck-reviewer` を独立 context で fork 起動。
 
@@ -78,7 +78,7 @@
 ### 4.1 失敗時挙動
 - `cross-deck-consistency.js` 実行失敗 (exit≠0 ／ node 不在 ／ series-dir 不正) → series-dir・引数を修正して**最大 1 回**再実行。解消しなければ機械検出分を **WARN で明記して続行**し、機械チェック不能を隠さない。引数不正 ／ 環境エラー (exit 2) は fatal。
 - Agent A/B/C いずれかのレンズ分析が不完全 → 当該観点を**縮退 (degradation) で記録**し、残るレンズ結果で 4 条件判定を続行 (最大 1 回)。
-- 必須入力 (structure.md / index.html / styles.css / scripts.js) が 1 件でも不足 → `inputs` error として fail-closed で停止し、不足デッキとファイルを明示して生成完了を求める。欠落デッキを除外して続行しない。
+- 必須入力が 1 件でも不足 → `inputs` error として fail-closed で停止し、不足デッキと不足内容を明示して生成完了を求める。欠落デッキを除外して続行しない。必須入力はファイルとしての `structure.md` / `index.html` と、**index.html が実際に読み込む CSS/JS が解決できること**。`styles.css` / `scripts.js` というファイル名の存在は要件ではない (インライン化された自己完結デッキはそれらを持たないが正しい)。逆に `<link href="styles.css">` があるのに参照先が無い場合は未解決参照として error。
 
 ### 4.2 観測 / ロギング
 - 各周回末に中間成果物アンカー (`original_goal` 不変 / `current_goal_snapshot` / `delta_from_original` / `merged_directive_for_next` / `drift_signal`) を記録し次周回の入力とする。`drift_signal` が stagnant / widening / oscillating で 2 周連続なら上位オーケストレータへ差し戻す。
@@ -109,8 +109,8 @@
 - [ ] 4 条件 (矛盾 / 漏れ / 整合性 / 依存) すべてに PASS/WARN/FAIL と根拠 C 番号を付与した (判定マトリクス)
 - [ ] 全 FAIL/WARN を P0/P1/P2 に分類した
 - [ ] 用語ゆれ一覧 ＋ 意匠差一覧 ＋ 構成不整合一覧 ＋ 網羅率を横断レポートに統合した
-- [ ] IN1: `cross-deck-consistency.js` が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合し、機械チェック入力 (各デッキの structure.md / index.html / styles.css / scripts.js) の欠落が 0 件
-- [ ] OUT1: 既知の機械検出可能な不整合 (shared-spec差分 ／ rem単位 ／ 外部URL ／ 必須入力欠落) を注入したシリーズで全件検出し、クリーンseriesをPASSとすることを受入テストが確認した
+- [ ] IN1: `cross-deck-consistency.js` が横断対象 slide deck を走査し必須入力欠落・shared-spec 差分・外部 URL 混入・CSS 変数・GSAP・印刷 CSS・rem 逸脱を突合し、機械チェック入力 (各デッキの structure.md / index.html と、index.html が実際に読み込む CSS/JS) が全て解決でき未解決参照が 0 件
+- [ ] OUT1: 既知の機械検出可能な不整合 (shared-spec差分 ／ rem単位 ／ 外部URL ／ index.html 欠落 ／ 未解決のローカル参照) を注入したシリーズで全件検出し、クリーンseriesをPASSとすることを受入テストが確認した
 - [ ] read-only を維持し成果物を書き換えていない (修正は `run-slide-report-modify` へ委譲)
 - [ ] レポート・提案に絵文字を使っていない (CONST_005・`fa-*` で表現)
 - [ ] デッキ 1 つのみの場合は横断検証 (P5) 全体をスキップし「横断検証不要 (単一デッキ)」を返した
@@ -129,7 +129,7 @@
 
 ### 6.2 R1 → R2 → R3 の agent dispatch 詳細
 - **R1 (横断対象の収集と観点確定)**: `series_dir` 配下の `slide-*` deck を `Glob` で列挙し、比較の基準 (共通用語・共通意匠 SSOT・章立て構成) を明示する。P3.5 通過済みデッキが 2 未満なら横断検証をスキップして終了する。
-- **R2 (3 レンズ分析)**: まず `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all` で機械チェックし、FAIL ／ WARN 項目について `Task` で `cross-deck-reviewer` を `isolation: fork` 起動する。cross-deck-reviewer は**単一 fork context 内で Agent A/B/C の 3 レンズ** (再 fork＝SubAgent 起動しない) で用語 ／ 意匠 ／ 構成の観点を多角分析し、4 条件で判定する。個別成果物は `check-consistency.js <deck-dir>` で統一感を検証する。
+- **R2 (3 レンズ分析)**: まず `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all` で機械チェックし、FAIL ／ WARN 項目について `Task` で `cross-deck-reviewer` を `isolation: fork` 起動する。cross-deck-reviewer は**単一 fork context 内で Agent A/B/C の 3 レンズ** (再 fork＝SubAgent 起動しない) で用語 ／ 意匠 ／ 構成の観点を多角分析し、4 条件で判定する。個別成果物は `check-consistency.js <deck-dir>` で統一感を検証する。
 - **R3 (網羅検出結果の報告)**: 機械結果と 3 Agent 結果を統合し、不整合の網羅検出結果を横断レポート (用語ゆれ一覧 ＋ 意匠差一覧 ＋ 構成不整合一覧 ＋ 網羅率) として返す。修正が必要な項目は P0/P1/P2 分類付きで `run-slide-report-modify` への委譲として提示する (本 skill は検証のみ)。
 
 ### 6.3 ハンドオフ / 実行性
@@ -164,4 +164,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`{{series_dir}}` 配下の `slide-*` deck を `Glob` で列挙し、P3.5 通過済みデッキが 2 未満なら「横断検証不要 (単一デッキ)」を返して終了せよ (R1)。2 つ以上なら、まず `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" {{series_dir}} --check all` を実行する。各デッキの structure.md / index.html / styles.css / scripts.js のいずれかが欠落する場合は fail-closed で停止し、不足デッキとファイルを明示せよ。欠落がなければ C1-C2 / C11-C13 / C15 の機械検出結果を一次根拠として取得する (CONST_001)。次に `Task` で `cross-deck-reviewer` を `isolation: fork` 起動し、cross-deck-reviewer が `references/cross-deck-consistency-rules.md` (§Agent A/B/C 3レンズ分析テンプレート) の Agent A (C3-C5) ／ Agent B (C6-C10) ／ Agent C (C11-C15) を**単一 fork context 内の 3 レンズ**として分析し (再 fork＝SubAgent 起動しない)、観点を 1 レンズへ集約しない (CONST_002)。個別成果物は `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/check-consistency.js" <deck-dir>` で統一感を検証する (R2)。機械結果と 3 Agent 結果を突き合わせ、4 条件 (矛盾 / 漏れ / 整合性 / 依存) に reference (§評価軸: 判定マトリクス) の基準で PASS/WARN/FAIL と根拠 C 番号を付与し、全 FAIL/WARN を P0/P1/P2 (§修正の優先度分類) に分類する。用語ゆれ一覧 ＋ 意匠差一覧 ＋ 構成不整合一覧 ＋ 網羅率を横断レポートに統合して返し、修正は `run-slide-report-modify` への委譲として提示する (本 skill は read-only・書き換えない、R3)。IN1 (分析入力の欠落 0 件) と OUT1 (既知不整合の全件検出) を満たすまで with-goal-seek (max_loops 5) / with-feedback-contract (inner max_iterations 3) で反復し、未達なら未検出観点を明示する。絵文字を使わず `fa-*` で表現し、前置き禁止。
+`{{series_dir}}` 配下の `slide-*` deck を `Glob` で列挙し、P3.5 通過済みデッキが 2 未満なら「横断検証不要 (単一デッキ)」を返して終了せよ (R1)。2 つ以上なら、まず `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" {{series_dir}} --check all` を実行する。各デッキの structure.md / index.html が欠落する場合、または index.html が実際に読み込む CSS/JS が解決できない場合 (`<link>` / `<script src>` の参照先が無い、もしくは inline も link も実体が無い) は fail-closed で停止し、不足デッキと不足内容を明示せよ (`styles.css` / `scripts.js` というファイル名の存在は要件ではない)。欠落がなければ C1-C2 / C11-C13 / C15 の機械検出結果を一次根拠として取得する (CONST_001)。次に `Task` で `cross-deck-reviewer` を `isolation: fork` 起動し、cross-deck-reviewer が `references/cross-deck-consistency-rules.md` (§Agent A/B/C 3レンズ分析テンプレート) の Agent A (C3-C5) ／ Agent B (C6-C10) ／ Agent C (C11-C15) を**単一 fork context 内の 3 レンズ**として分析し (再 fork＝SubAgent 起動しない)、観点を 1 レンズへ集約しない (CONST_002)。個別成果物は `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/check-consistency.js" <deck-dir>` で統一感を検証する (R2)。機械結果と 3 Agent 結果を突き合わせ、4 条件 (矛盾 / 漏れ / 整合性 / 依存) に reference (§評価軸: 判定マトリクス) の基準で PASS/WARN/FAIL と根拠 C 番号を付与し、全 FAIL/WARN を P0/P1/P2 (§修正の優先度分類) に分類する。用語ゆれ一覧 ＋ 意匠差一覧 ＋ 構成不整合一覧 ＋ 網羅率を横断レポートに統合して返し、修正は `run-slide-report-modify` への委譲として提示する (本 skill は read-only・書き換えない、R3)。IN1 (分析入力の欠落 0 件) と OUT1 (既知不整合の全件検出) を満たすまで with-goal-seek (max_loops 5) / with-feedback-contract (inner max_iterations 3) で反復し、未達なら未検出観点を明示する。絵文字を使わず `fa-*` で表現し、前置き禁止。

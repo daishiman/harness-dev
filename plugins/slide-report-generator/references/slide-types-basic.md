@@ -1,5 +1,8 @@
 # 基本スライドタイプ
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: 基本9種のスライドタイプ（タイトル、メッセージ、リスト、比較、フロー、タイムライン、テーブル、コード、コード比較）のCSS・HTMLテンプレート
 
 ---
@@ -23,7 +26,7 @@
 
 .slide-title .sub-title {
   font-size: 1.5rem;
-  color: var(--fg-dim);
+  color: var(--fg-muted);
 }
 
 .slide-title .title-icon {
@@ -62,7 +65,7 @@
 
 .slide-message .sub-message {
   font-size: 1.2rem;
-  color: var(--fg-dim);
+  color: var(--fg-muted);
   margin-top: 1rem;
 }
 ```
@@ -417,12 +420,12 @@
   text-align: left;
   font-weight: 700;
   color: var(--wave-blue);
-  border-bottom: 2px solid var(--fuji-gray);
+  border-bottom: 2px solid var(--fg-muted);
 }
 
 .slide-table td {
   padding: 1rem;
-  border-bottom: 1px solid var(--fuji-gray);
+  border-bottom: 1px solid var(--fg-muted);
 }
 
 .slide-table tr:last-child td {

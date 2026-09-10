@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-03",
+  "covered_task_ids": [
+    "P05-x-03"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/config/",
+  "verified_by": [
+    {
+      "claim": "出荷 preset の全 main 節が DIAGRAM を 1 件以上持つ",
+      "method": "handout-purposes.json の presets[].section_order[].recommended_parts を全走査し DIAGRAM を数えた",
+      "result": "43/43 節が DIAGRAM を含む (変更前は 0/43)"
+    },
+    {
+      "claim": "出荷 preset の全 main 節が IMG を 1 件以上持つ",
+      "method": "同上 (IMG を数えた)",
+      "result": "43/43 節が IMG を含む (変更前は 1/43 = lecture/demo のみ)"
+    },
+    {
+      "claim": "全節が image_role を {screenshot, illustration} の範囲で宣言する",
+      "method": "resolve-handout-preset.py --purpose <8 用途> を全実行し exit code を実測",
+      "result": "lecture/agenda/guide/onboarding/report/proposal/study-notes/study-plan の 8 用途すべて exit=0。screenshot 9 節 / illustration 34 節"
+    },
+    {
+      "claim": "変更が section_order[] 以外へ及んでいない",
+      "method": "git diff で dir_token 等の他キーの差分を確認",
+      "result": "vocabulary の dir_token 差分は本セッション以前からの未コミット変更であり、stash 実験で本 node 由来でないことを確認した (DT-1 裁定待ちの既存の赤)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X03-VIS-01",
+      "level": "info",
+      "summary": "image_role の割当は「実物・画面・場面を見せる節」を screenshot、それ以外を illustration とした。screenshot は lecture/demo, lecture/handson, guide/steps, guide/files, onboarding/day1, report/facts, report/appendix, study-notes/examples, study-notes/sources の 9 節"
+    },
+    {
+      "id": "F-P05X03-VIS-02",
+      "level": "warn",
+      "summary": "出荷 _meta.source_of_truth が指名する script-brief-C23.json#preset_definitions は旧形のままで、実体が 2 つに割れている。discovered-task P02-c23-preset-definitions-visual-sync として emit 済み"
+    },
+    {
+      "id": "F-P05X03-VIS-03",
+      "level": "warn",
+      "summary": "本 node は出力先ディレクトリの三択 (P05-x-03.md の 05_Project/資料作成/ vs 出荷 handout-output.json の ./handout-output vs 利用者指定の 05_Project/説明資料/) を裁定していない。利用者裁定が要るため未着手"
+    }
+  ]
+}

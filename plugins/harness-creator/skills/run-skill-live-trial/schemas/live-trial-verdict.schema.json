@@ -40,6 +40,16 @@
     },
     "nudge_count": {"type": "integer", "minimum": 0},
     "gate_response_count": {"type": "integer", "minimum": 0},
+    "gate_kind": {
+      "enum": ["rescue", "contractual"],
+      "description": "gate 応答の種別。rescue=stall 解除のための救済介入 (自走未達として降格対象)。contractual=被験 skill が契約上要求する確認 gate への正規応答 (external mutation の人間確認等) で、gate を通ること自体が受け入れ条件のため降格しない。gate_response_count=0 のときは区分に意味が無いため rescue 固定。required にしない (この field 導入前の verdict は gate=0 で意味が変わらず、書き直す理由が無い)。欠落は fail-closed に rescue とみなす"
+    },
+    "gate_contract_evidence": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1,
+      "description": "gate_kind=contractual を被験 skill 側の宣言へ接地させた根拠 (frontmatter.external_mutation_guard / frontmatter.allowed-tools:AskUserQuestion 等)。live-trial-verdict.py は gate 応答があるのに根拠 0 件の contractual を exit 2 で拒否するため、contractual かつ gate_response_count>0 の verdict には必ず入る。gate_kind=rescue のときは存在しない"
+    },
     "goal_verdict": {
       "type": "object",
       "required": ["result", "blockers"],

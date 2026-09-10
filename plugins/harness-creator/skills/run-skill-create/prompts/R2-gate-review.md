@@ -152,6 +152,6 @@
 
 ---
 
-## 出力指示
+## Output Contract
 
 LLM は Layer 5.2 ゴール + 5.3 完了チェックリストを停止条件として、5.4 ループで動的に手順を生成・実行する。`{{gate_id}}` に対応する `{{artifacts}}` を集約し `AskUserQuestion` を発行、応答を解釈して `schemas/handoff.schema.json` 準拠の JSON を出力する (`handoff-after_<gate>.json` へ保存)。前置き・後書き・思考過程出力は禁止。

@@ -1,0 +1,69 @@
+{
+  "reset_declaration": "既存の設計意図、前回判断、rubric、C1-C4採点、改善案、親コンテキストを参照せず、指定ファイルを fresh に読んだ観察のみ。",
+  "purpose": "Claude Code plugin の manifest を入力として、Codex plugin manifest と repository marketplace entry を決定論的に生成・同期し、作成・更新フローおよび利用手順へ接続する。",
+  "scope": {
+    "in_scope": [
+      ".codex-plugin/plugin.json の自動生成・同期",
+      ".agents/plugins/marketplace.json の同名entry置換・追加",
+      "create/update双方の呼出契約",
+      "Codex install手順と自動実行境界",
+      "README、build、create、iter-improveからの導線",
+      "Claude側の登録・release・projection機構との責務関係",
+      "関連テストの記述内容"
+    ],
+    "out_of_scope": [
+      "Decision Surface",
+      "外部知能",
+      "使用量最適化",
+      "実際のuser global install状態",
+      "hook trust・enable状態",
+      "Codex CLIの実機実行",
+      "CI全体の配線",
+      "採点・改善案"
+    ]
+  },
+  "stakeholders": [
+    "pluginを新規作成する開発者",
+    "既存pluginを更新する開発者",
+    "repository marketplaceの保守者",
+    "ローカルcloneまたはGitHub refからinstallするCodex利用者",
+    "manifest差分を承認するレビュー担当",
+    "check結果を消費するCI/pre-push運用"
+  ],
+  "first_impressions": [
+    "生成ロジックはsync-plugin-platforms.pyに集約され、専用Skill、README、create workflow、build手順、iter-improveが同じ生成器を参照する。",
+    "artifact生成とuser global installは別境界で扱われる。生成は自動化され、install・trustは明示操作として記述される。",
+    "create/updateは同一変換処理を共有し、intentは入力検証・報告値・呼出文脈として保持される。",
+    "Codex同期の周囲にはClaude marketplace登録、local marketplace生成、release/version記録、native surface projectionが併存し、それぞれ別の出力先を持つ。"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "Codex manifestはskillsとhooksをplugin相対パスで宣言する。",
+      "repository marketplaceは対象pluginをlocal sourceで掲載する。",
+      "生成器はClaude manifestを入力にCodex manifestとmarketplace entryを生成する。",
+      "生成器はrepo/plugins直下の1 pluginを1回の実行対象とする。",
+      "checkは無書込、applyはatomic write、入力不正はJSONで報告する。",
+      "create/updateは同一変換処理で、intentによる生成分岐はない。",
+      "生成器はcodex plugin addを実行せず、install/trustは明示操作としている。",
+      "READMEと専用Skillはlocal clone/GitHub refからのCLI導入手順を記載する。",
+      "create workflow、iter-improve、build手順が同じ同期器を参照する。",
+      "Claude登録・release・projectionは別artifactと別コマンドである。"
+    ],
+    "assumptions_not_verified": [
+      "記載されたCodex CLI構文が現在の実機で成功すること",
+      "現在のmanifestが生成器のcheckでdriftなしになること",
+      "テストが現時点でPASSすること",
+      "対象pluginが実際にinstall・enable・trust済みであること",
+      "対象外のCI設定が各checkを実行していること"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "harness-creator", "kind": "plugin-name"},
+    {"value": "harness-dev", "kind": "marketplace-name"},
+    {"value": "./plugins/harness-creator", "kind": "plugin-source"},
+    {"value": "/absolute/path/to/harness", "kind": "local-repository"},
+    {"value": "owner/repo --ref main", "kind": "github-source"},
+    {"value": "1.4.0", "kind": "manifest-version"},
+    {"value": "create/update", "kind": "lifecycle-intent"}
+  ]
+}

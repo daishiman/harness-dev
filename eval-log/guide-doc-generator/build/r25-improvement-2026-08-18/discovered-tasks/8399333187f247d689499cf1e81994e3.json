@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "C46 の検査は属性駆動化後もなお criterion に届いていない。validate-handout-config.py:1075 の max_items 検査は ('rows','cards') 両方を走査するのに対し :1081-1087 の forbid_row_detail 検査は :1082 で rows ブロックに限定し cards を見ない。冒頭概観を B04 cards で組むと forbid_row_detail が 1 件も検査されず max_items だけが効く。さらに検査対象が row.sub is not None のみのため row 本文へ手順を書けば『個々の手順・操作の詳細を冒頭の流れに含めない』を素通りする。P03-x-04 の修正 (brief:674 と回帰 AC:947-948) はいずれも rows 前提のままでこの 2 つの穴を塞いでいない",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "proposed_node": {
+    "id": "P05-x-64-c46-rowdetail-scope-asymmetry",
+    "title": "forbid_row_detail の走査対象を cards へ拡張し row 本文の手順記述も検出する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "forbid_row_detail を持つ section_kind について rows と cards の両方が検査され、cards で組んだ冒頭概観でも E-SECTIONKIND-ROWDETAIL が発火する。かつ row/card 本文へ手順・操作の詳細を書いた構成データが exit 1 になる。回帰テストは走査対象キーをデータファイルから導出し ('rows','cards') をテストへ literal で書かない",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

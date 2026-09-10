@@ -39,6 +39,12 @@ from pathlib import Path
 TRIGGER_TOKENS = ("run-plugin-dev-plan", "plugin-dev-plan")
 # C11 が検証する pass marker のゲート名 (C04/C05 の write_pass_marker と一致する契約)。
 REQUIRED_GATES = ("intake-consumption", "provenance-chain")
+# plan の出自によらず常に要求するゲート。C05 は --allow-missing-intake を持ち
+# greenfield でも PASS 可能なので、無条件に要求してよい。
+ALWAYS_REQUIRED_GATES = ("provenance-chain",)
+# intake 由来の plan でだけ要求するゲート。C04 は --intake が required=True で
+# 入力が無いと exit2 になるため、greenfield へ無条件に課すと到達不能になる。
+INTAKE_GATE = "intake-consumption"
 _UPDATE_RE = re.compile(r"--mode[=\s]+update|\"mode\"\s*:\s*\"update\"")
 _OUT_DIR_RE = re.compile(r"--out-dir[=\s]+(\S+)")
 _IMPROVEMENT_HANDOFF_RE = re.compile(r"--improvement-handoff[=\s]+(\S+)")
@@ -85,14 +91,64 @@ def _resolve_plan_dir(text: str) -> Path | None:
     return None
 
 
+def intake_gate_applies(goal_spec_bytes: bytes) -> bool:
+    """この goal-spec に intake-consumption ゲートを課すべきかを判定する。
+
+    C05 (check-provenance-chain.py) が `--allow-missing-intake` で intake 不在を
+    正当な greenfield として受理する一方、C04 (check-intake-consumption.py) は
+    `--intake` が required=True で入力が無ければ exit2 になる。よって intake を
+    持たない plan へ C04 の marker を要求すると、そのゲートは*原理的に PASS
+    不能*になり `--mode update` が恒久的に到達不能になる (PAT-7: 両立不能な
+    二重契約)。判定の正本は goal-spec 側に既にある `source_intake` であり、
+    ここで第 2 の名簿を作らないこと。
+
+    Args:
+        goal_spec_bytes: goal-spec.json の生バイト列 (digest 計算と同一の入力)。
+
+    Returns:
+        True なら INTAKE_GATE の marker も要求する。
+    """
+    # 壊れて読めない goal-spec は「intake 無し」と断定できない。緩める側へ倒すと
+    # 「goal-spec を壊せば C04 を回避できる」抜け道になるので fail-closed で True。
+    # (壊れている旨は check_markers が別診断として出すので誤診にはならない)
+    try:
+        data = json.loads(goal_spec_bytes)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return True
+    if not isinstance(data, dict):
+        return True
+    # planner は greenfield で source_intake に null を書く。null / 空文字 / 空 dict は
+    # すべて「intake 由来でない」として扱う (空の器は出自の証拠にならない)。
+    return bool(data.get("source_intake"))
+
+
+def required_gates(goal_spec_bytes: bytes) -> tuple[str, ...]:
+    """この goal-spec に対して marker を要求するゲート名を導出する。"""
+    gates = ALWAYS_REQUIRED_GATES
+    if intake_gate_applies(goal_spec_bytes):
+        gates = gates + (INTAKE_GATE,)
+    return gates
+
+
 def check_markers(plan_dir: Path) -> list[str]:
     """plan_dir の C04/C05 marker が現 goal-spec digest に pin されているか検査する。"""
     goal_spec = plan_dir / "goal-spec.json"
     if not goal_spec.is_file():
         return []  # goal-spec が無い = update 対象として特定不能 (関与しない)
-    digest = hashlib.sha256(goal_spec.read_bytes()).hexdigest()
+    raw = goal_spec.read_bytes()
+    digest = hashlib.sha256(raw).hexdigest()
     problems: list[str] = []
-    for gate in REQUIRED_GATES:
+    # 出自を読み取れない goal-spec は「marker が無い」ではなく「壊れている」と言う。
+    # intake_gate_applies が fail-closed で True を返す根拠をここで可視化しておかないと、
+    # 壊れた plan が「C04 未実行」と誤診されて原因追跡が 1 段遠くなる。
+    try:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        parsed = None
+        problems.append(f"goal-spec.json を JSON として読めない ({goal_spec}): {exc}")
+    if parsed is not None and not isinstance(parsed, dict):
+        problems.append(f"goal-spec.json が object でない ({goal_spec}): {type(parsed).__name__}")
+    for gate in required_gates(raw):
         marker = plan_dir / ".gate" / f"{gate}.pass"
         if not marker.is_file():
             problems.append(f"{gate} の pass marker が無い ({marker}): ゲート未実行のまま --mode update しようとしている")

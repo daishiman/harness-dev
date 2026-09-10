@@ -4,13 +4,70 @@
   "plugin_name": "harness-creator",
   "entry_points": {
     "skills": [
-      "run-build-skill"
+      "assign-plugin-package-evaluator",
+      "assign-skill-design-evaluator",
+      "delegate-codex-skill-review",
+      "ref-claude-code-skill-spec",
+      "ref-cross-platform-runtime",
+      "ref-domain-rubric-template",
+      "ref-domain-task-spec-rubric",
+      "ref-knowledge-loop",
+      "ref-output-routing",
+      "ref-pkg-contract",
+      "ref-skill-design-rubric",
+      "ref-skill-glossary",
+      "ref-skill-naming-convention",
+      "ref-task-context-map",
+      "ref-yaml-spec-fetcher",
+      "run-build-skill",
+      "run-codex-plugin-install",
+      "run-codex-plugin-package",
+      "run-elegant-review",
+      "run-goal-elicit",
+      "run-goal-seek",
+      "run-migrate-audit",
+      "run-plugin-package-check",
+      "run-skill-create",
+      "run-skill-elicit",
+      "run-skill-feedback",
+      "run-skill-iter-improve",
+      "run-skill-live-trial",
+      "run-skill-rename",
+      "run-skill-rubric-governance",
+      "run-skill-update-notifier",
+      "wrap-git-commit-safe"
     ],
-    "agents": [],
+    "agents": [
+      "elegant-bounded-improvement-executor",
+      "elegant-improvement-executor",
+      "elegant-initial-draft-evaluator",
+      "elegant-logical-structural-analyst",
+      "elegant-meta-divergent-analyst",
+      "elegant-reset-observer",
+      "elegant-system-strategic-analyst",
+      "run-build-skill-subagent"
+    ],
     "commands": [
-      "capability-build"
+      "capability-build",
+      "capability-review",
+      "install-bundle",
+      "marketplace-register",
+      "plugin-compose",
+      "skill-improve"
     ],
-    "hooks": []
+    "hooks": [
+      "aggregate-evals.py",
+      "auto-sync-on-session-start.py",
+      "cache-refresh.py",
+      "content-review-queue.py",
+      "diff-rubric-impact.py",
+      "elegant-review-trigger.py",
+      "external-intelligence-observe.py",
+      "lint-capability-manifest.py",
+      "notify-skill-end.py",
+      "ref-task-context-map-preload.py",
+      "wrap-git-commit-safe.py"
+    ]
   },
   "distribution": {
     "distributable": false,
@@ -22,7 +79,18 @@
       "quality-governance"
     ]
   },
-  "depends_on": [],
+  "codex_distribution": {
+    "distributable": true,
+    "marketplace": ".agents/plugins/marketplace.json",
+    "source": "./plugins/harness-creator",
+    "supports": [
+      "local-path",
+      "github-ref"
+    ]
+  },
+  "depends_on": [
+    "skill-governance-adapters"
+  ],
   "requirements": {
     "external_clis": [
       {
@@ -34,5 +102,351 @@
       }
     ]
   },
-  "pkg_checks": {}
+  "pkg_checks": {},
+  "runtime_dependencies": [],
+  "codex_alternatives": {
+    "commands": {
+      "capability-build": {
+        "relation": "orchestrated-by",
+        "purpose": "Expose Claude command capability-build through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "orchestrated",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-build-skill",
+            "run-skill-create"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-build-skill",
+            "run-skill-create"
+          ]
+        }
+      },
+      "capability-review": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command capability-review through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "install-bundle": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command install-bundle through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-codex-plugin-install"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-codex-plugin-install"
+          ]
+        }
+      },
+      "marketplace-register": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command marketplace-register through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-codex-plugin-package"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-codex-plugin-package"
+          ]
+        }
+      },
+      "plugin-compose": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command plugin-compose through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-plugin-package-check"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-plugin-package-check"
+          ]
+        }
+      },
+      "skill-improve": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command skill-improve through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-iter-improve"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-skill-iter-improve"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "elegant-bounded-improvement-executor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-bounded-improvement-executor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        }
+      },
+      "elegant-improvement-executor": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-improvement-executor through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "elegant-initial-draft-evaluator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-initial-draft-evaluator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        }
+      },
+      "elegant-logical-structural-analyst": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-logical-structural-analyst through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "elegant-meta-divergent-analyst": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-meta-divergent-analyst through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "elegant-reset-observer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-reset-observer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "elegant-system-strategic-analyst": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent elegant-system-strategic-analyst through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-elegant-review"
+          ]
+        }
+      },
+      "run-build-skill-subagent": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent run-build-skill-subagent through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        },
+        "owner_route": {
+          "plugin": "harness-creator",
+          "entry_points": [
+            "run-build-skill"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
 }

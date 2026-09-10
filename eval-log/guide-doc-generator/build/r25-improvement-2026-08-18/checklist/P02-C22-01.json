@@ -1,0 +1,59 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C22-01",
+ "covered_task_ids": [
+  "P02-C22-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C22.json",
+ "verified_by": [
+  {
+   "claim": "『全体像 (今日の流れ) が本編先頭』の順序ゲートが C22 に存在するか",
+   "method": "SubAgent が 全体像/今日の流れ/flow-overview/C46/C70/E-OVERVIEW-SECTION-MISSING/section_kind を grep。順序を見る detection を全件分類",
+   "result": "C22 には不在 (順序を見るのは NAR-01/03/07/08 の 4 件で、ゴール先頭と付録後置のみ)。ただし正本 findings-2026-08-18.json REQ-4 が検査主体を C12 と指定しているため C22 の欠落ではない。責務重複を避け NAR-11 は追加しないという判断を受理"
+  },
+  {
+   "claim": "doc_type による『今日の流れ』の表現差を C22 が持つべきか",
+   "method": "doc_type/preset/purposes を grep (全て 0 件)、argv 3 本を確認",
+   "result": "pass: 一律で妥当。3 型は handout-sections.json の section_kind 語彙と handout-purposes.json のプリセットが持ち、C22 は runtime_data で語彙を引くため型追加時も無改修。doc_type 分岐を持たせると literal 分岐へ退化し、緩い経路が実質基準になる"
+  },
+  {
+   "claim": "W-OPENS-PROSE の実体が producer 側に存在するか",
+   "method": "dispatcher が script-brief-C12.json を直接 grep",
+   "result": "0 件を確認。handout-visual-policy.json:323 が『機械検査は W-OPENS-PROSE だけが持つ』と定め、skill-brief-C01.json:64 と agent-brief-C05.json の AC-C05-R24-04 が完了条件として当てにしているのに producer が空。同ファイル内で W-LEADLINE-LONG は 1 件 / E-OVERVIEW-SECTION-MISSING は 1 件 (AC 内のみ)"
+  },
+  {
+   "claim": "NAR-07 の実画面判定が C12 の live_demo 記述と一致するか",
+   "method": "C22 NAR-07 の 2 択集合と script-brief-C12.json:796 を突合",
+   "result": "pass: screenshot 画像 / live_demo フラグの 2 択が完全一致。修正前は HTML 描画属性名が欠けていたため実装不能だったが、C11 の data-hb-live-demo を参照する形で補われた (再定義していないことを dispatcher が確認: 出現 1 件)"
+  },
+  {
+   "claim": "件数リテラルの写しが除去されたか",
+   "method": "dispatcher が '10 行' と 'NAR-01..NAR-10' を grep",
+   "result": "pass: '10 行' 0 件。'NAR-01..NAR-10' の残り 2 件は :161 の正本 statement 自身と :302 の『件数を独立した数値リテラルとして期待しない』と明記した AC で、いずれも写しではない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C22-01",
+   "level": "blocking-for-release",
+   "summary": "W-OPENS-PROSE の実体が script-brief-C12.json に 0 件。C01/C05/visual-policy の 3 者が機械検査として当てにしている診断コードの producer が空という、この build で反復している欠陥型。P02-C12-01 は done 済みのため別ノードが要る"
+  },
+  {
+   "id": "F-C22-02",
+   "level": "blocking-for-release",
+   "summary": "E-OVERVIEW-SECTION-MISSING が C12 brief の AC 内 1 件のみに現れ (『または該当コード』と留保つき)、detections 本体に定義が無い。REQ-4 = 利用者指定の第 2 段 (全体像を先に) がコード未確定のまま無検査で出荷される"
+  },
+  {
+   "id": "F-C22-03",
+   "level": "blocking-for-release",
+   "summary": "demo_first と IMG 必須の衝突。R25/REQ-3 で全 main セクションに IMG 必須になったため、最初の main セクションの IMG が素材不足で illustration へ落ちると NAR-07 が必ず FAIL する。evidence/P07.json:68 と evidence/P13.json:166 に NAR-07 初回 FAIL の実績あり。C01 の R3-render か C05 の設計手順に『demo_first のとき最初の main セクションは fallback 不可』の配線が要る"
+  },
+  {
+   "id": "F-C22-04",
+   "level": "carry-forward",
+   "summary": "overview-first を HTML 層でも二重に見るか (NAR-11 新設) は plan 全体の判断。SubAgent の推奨は『当面 C12 単独で可』(C11 は config 順どおりに描画する決定論レンダラのため、role のように HTML 側で属性と順序が独立に壊れる余地が小さい)。dispatcher もこれを支持し、NAR-11 は追加しない"
+  }
+ ]
+}

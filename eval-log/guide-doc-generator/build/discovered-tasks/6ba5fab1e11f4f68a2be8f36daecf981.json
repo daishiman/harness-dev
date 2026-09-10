@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-13",
+  "reason": "P05-x-13 が script-brief-C20.json の heuristic_fallback.class_map へ B16 / B17 / DIAGRAM / IMG の 4 行を追加したが、W-EXTRACT-CATALOG-DRIFT の発火判定は実装のモジュール定数 PART_CLASS_MAP (scripts/extract-handout-config.py:61-76) とカタログの突合で行われ、抽出器は実行時に brief を読まない。よって repo 実測の stderr は 4 行のまま。実装を brief へ追随させる受け皿が要る。selector のクラス名は C11 の実出力から採取済みで dispatcher が実在を独立確認した (action-items/ai-row :745,750 / handson/hs-row :763,766 / diagram :817 かつ data-hb-kind=figure :813 / asset-img :780)。適用手順とパッチは briefs/RESOLUTION-P05-x-13.md §5 にある 加えて P05-x-11 の裁定により抽出器の読み取り拡張が確定した。DOC_FIELDS / SECTION_FIELDS へ focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / date / heading / role / attainment_step / ties_to を追加し、notes_enabled を data-hb-notes-enabled から boolean として復元し、schema に存在しない data_uri キーの発明をやめて $defs.local_source の src へ格納する ($defs.local_source は src が data URI であることを既に許しており、schema を緩める必要は無い)。同一ファイルのため本 leaf へ束ねる。",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-x-13.json",
+  "proposed_node": {
+    "id": "P05-x-19",
+    "title": "C20 extract-handout-config.py の照合表と読み取り範囲を裁定結果へ追随させる",
+    "phase_ref": "P05",
+    "entity_ref": "C20",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts",
+    "acceptance_criterion": "完全マーカー付き HTML への正常系実行で stderr に W-EXTRACT-CATALOG-DRIFT が 0 行。双方向の drift 検査 (:261-267) は無改変で、カタログ側・照合表側それぞれへ不整合を注入すると依然として鳴ること。TEXT 行は本文の受け皿でタグ名照合のため最後に置く。加えて ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目が復元され、復元結果が validate-handout-config.py --config を exit0 で通過する。schema に無いキーを発明しない。tests/extract-handout-config.py が緑を維持する",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-19.md",
+    "produces": [
+      "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-19.md"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-13.md",
+      "plugin-plans/guide-doc-generator/briefs/script-brief-C20.json",
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

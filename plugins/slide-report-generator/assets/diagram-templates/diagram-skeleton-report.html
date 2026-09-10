@@ -27,21 +27,22 @@
                 python3 scripts/validate-report-visual.py [出力file]
 
   ===========================================================================
-  使える色は次の 11 個だけ。
+  使える色は次の 11 役割だけ。
 
-    役割                       CSS 変数名        フォールバック
-    主テキスト・主ストローク   fg                #43436c
-    副テキスト・既定の矢印     fg-dim            #54546d
-    補助ラベル                 fuji-gray         #8a8980
-    焦点 (1 図 1-2 件)         sakura-pink       #D27E99
-    接続・外部呼び出し         wave-blue         #7E9CD8
-    系列色 2                   wave-aqua         #7FB4CA
-    系列色 4                   autumn-yellow     #DCA561
-    系列色 5                   spring-violet     #957FB8
-    カード地・マスク           (変数なし)        #FFFFFF
-    副次的な面                 (変数なし)        #F8F7F0
-    ヘアライン                 (変数なし)        #DCD7BA
-    焦点の塗り                 (変数なし)        rgba(210,126,153,0.14)
+    役割                       ロール名 (正本での呼び名)
+    主テキスト・主ストローク   ink
+    副テキスト・既定の矢印     muted
+    補助ラベル                 soft
+    焦点 (1 図 1-2 件)         accent
+    接続・外部呼び出し         link
+    濃度段 (図解内 3 段まで)   tone-1 / tone-2 / tone-3
+    カード地・マスク           paper
+    副次的な面                 paper2
+    ヘアライン                 rule
+
+  ここに hex を書かない。値の正本は vendor/scripts/svg-kit.cjs の TOKENS で、
+  役割の定義は references/diagram-style-tokens.md である。表へ hex を写すと
+  正本が 2 つになり、片方だけ直しても図は描けてしまうので退行に気付けない。
 
   書式 (var 参照 + フォールバック) は下の defs にある marker の fill 属性が
   実物の見本なので、そこから写すのが確実である。ここへ書式ごと転記しないのは、
@@ -86,13 +87,13 @@
         下の fill 属性の書き方が、そのまま図解本体で使う色の書き方の見本である。
       -->
       <marker id="f1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #6A6A68)"/>
       </marker>
       <marker id="f1-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="f1-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-03",
+  "reason": "script-brief-C15.json#dependencies.invokes が C16 への module import (scan_emoji) を宣言するのに inventory C15.depends_on=[]。P05-x-49 (C11→C16) と完全に同型で、C16 は根なので循環は生じない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-03.json",
+  "proposed_node": {
+    "id": "P05-x-59",
+    "title": "component-inventory.json の C15.depends_on へ C16 を追加する (P05-x-49 と同一ノードで処理)",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+    "acceptance_criterion": "C15.depends_on に C16 が含まれ、Kahn 法で 23/23 の位相順序が成立すること。P05-x-49 と同時に適用して 1 回で検証すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C15"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "W-DIAGRAM-FEW の pointer が :937 で /diagrams = 文書全体比率になっており、REQ-2/REQ-3 が要求する per-section 判定になっていない。加えて E-IMAGE-ABSENT / role_split / min_images_per_main_section は出荷ツリー全体で 0 件。利用者要件『毎回セクションごとに図解と画像を追加する』が判定不能",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-36-per-section-visual-gate",
+    "title": "図解・画像の充足判定を文書全体比率から per-section 判定へ変える",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "全 main section が図解 1 点以上と画像 1 点以上を持つことを per-section で検査し、欠けたセクションを pointer 付きで error として報告する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

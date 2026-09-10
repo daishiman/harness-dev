@@ -10,7 +10,9 @@
 #   - stdout: 変更検出 / bump / install の要約
 # contexts: [A]
 # network: false  (--install 時のみ claude CLI がローカル marketplace を読む。外部通信はしない)
-# write-scope: plugins/*/.claude-plugin/plugin.json, marketplaces/local, --lock で指定した lock file
+# write-scope: plugins/*/.claude-plugin/plugin.json, plugins/*/.codex-plugin/plugin.json,
+#              .agents/plugins/marketplace.json, .claude-plugin/marketplace.json,
+#              marketplaces/local, config-version-lock.json, --lock で指定した lock file
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -45,7 +47,12 @@ version を進めて対応表を書き直し、ローカル marketplace まで�
 3 番目は `claude plugin update` が担う。`--install` はそれを CLI で駆動する:
 
     claude plugin marketplace update harness-local   # カタログ再読込
-    claude plugin update <name> --scope project      # 新 version を copy
+    claude plugin update <name> --scope <s>          # 新 version を copy
+
+`<s>` は既定では install 済み copy が実際に居る scope (installed_plugins.json が持つ
+`scope`) をそのまま使う。install-local-plugins.py が `--scope user` で入れるため実態は
+user だが、そこを project と決め打ちしていた頃は全件が「入っていない」で exit 1 になり、
+`--install` が一度も成功しなかった。`--scope` を明示すればその scope だけに絞れる。
 
 なぜ git commit hash を使わないのか
 -----------------------------------
@@ -147,23 +154,62 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
     path.write_text(replaced, encoding="utf-8")
     sync_public_marketplace_version(plugin_dir.name, version)
     sync_codex_manifest_version(plugin_dir, version)
+    sync_plugin_composition_version(plugin_dir, version)
 
 
 def sync_codex_manifest_version(plugin_dir: pathlib.Path, version: str) -> None:
-    """Codex 側 manifest の version を追従させる。
+    """Codex manifest/versionを専用projector経由で追従させる。
 
-    .codex-plugin/plugin.json を持つ plugin は check-native-surface-parity が
-    .claude-plugin/plugin.json との一致を要求する。持たない plugin (大多数) は
-    何もしない。
+    release scriptが生成済みCodex manifestを直接編集するとwriterが二重化するため、
+    `.codex-plugin/plugin.json` を持つpluginだけ `sync-plugin-platforms.py` へ委譲する。
     """
     path = plugin_dir / ".codex-plugin" / "plugin.json"
     if not path.exists():
         return
+    source_version = read_version(plugin_dir)
+    if source_version != version:
+        raise SystemExit(
+            f"[build-plugin-release] projector source version mismatch: {source_version} != {version}"
+        )
+    projector = ROOT / "plugins" / "harness-creator" / "scripts" / "sync-plugin-platforms.py"
+    repo_root = plugin_dir.parents[1]
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(projector),
+            "--repo-root", str(repo_root),
+            "--plugin", str(plugin_dir),
+            "--apply",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise SystemExit(
+            "[build-plugin-release] Codex projection failed\n"
+            f"{result.stdout}{result.stderr}"
+        )
+
+
+def sync_plugin_composition_version(plugin_dir: pathlib.Path, version: str) -> None:
+    """自己記述 CapabilityBundle の version を plugin manifest へ追従させる。
+
+    bundle を持たない plugin は何もしない。version を別操作で更新すると、その更新自体が
+    plugin fingerprint を変えて次回 bump を誘発するため、manifest と同じ採番操作の中で
+    原文の top-level version 行だけを同期する。
+    """
+    path = plugin_dir / "plugin-composition.yaml"
+    if not path.exists():
+        return
     text = path.read_text(encoding="utf-8")
-    pattern = re.compile(r'("version"\s*:\s*)"[^"]*"')
-    replaced, count = pattern.subn(lambda m: f'{m.group(1)}{json.dumps(version)}', text, count=1)
+    pattern = re.compile(r"(?m)^(version\s*:\s*)[^\s#]+(\s*(?:#.*)?)$")
+    replaced, count = pattern.subn(
+        lambda match: f"{match.group(1)}{version}{match.group(2)}", text, count=1
+    )
     if count != 1:
-        raise SystemExit(f"[build-plugin-release] {path} の version 行を一意に特定できない")
+        raise SystemExit(
+            f"[build-plugin-release] {path} の top-level version 行を一意に特定できない"
+        )
     path.write_text(replaced, encoding="utf-8")
 
 
@@ -446,19 +492,53 @@ def regenerate_config_version_lock() -> None:
         )
 
 
-def installed_plugin_names() -> list[str]:
-    """harness-local から install 済みの plugin 名。install していないものへ
-    update をかけてもエラーになるだけなので、対象を実態に絞る。"""
+def installed_plugin_scopes(project_dir: str) -> dict[str, str]:
+    """harness-local から install 済みの plugin 名 -> **実際に入っている scope**。
+
+    install していないものへ update をかけてもエラーになるだけなので実態に絞る。
+    名前だけでなく scope まで返すのは、`claude plugin update --scope <s>` が
+    「その scope に入っていること」を要求するため。実測 (2026-08-26) では harness-local の
+    20 plugin すべてが user scope なのに --scope の既定が project だったので、
+    `--install` は毎回 20 件とも exit 1 になっていた。
+
+    project scope の entry は projectPath で絞る。他 project へ入れた同名 plugin を
+    掴んで、この repo とは無関係な install 先を更新してしまうのを防ぐ。
+    """
     path = pathlib.Path.home() / ".claude" / "plugins" / "installed_plugins.json"
     if not path.exists():
-        return []
-    data = json.loads(path.read_text(encoding="utf-8")).get("plugins", {})
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")).get("plugins", {})
+    except (OSError, json.JSONDecodeError):
+        return {}
+    here = pathlib.Path(project_dir).resolve()
     suffix = f"@{MARKETPLACE_NAME}"
-    return sorted(k[: -len(suffix)] for k in data if k.endswith(suffix))
+    out: dict[str, str] = {}
+    for key, entries in data.items():
+        if not key.endswith(suffix) or not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            scope = entry.get("scope")
+            if not isinstance(scope, str):
+                continue
+            if scope == "project":
+                raw = entry.get("projectPath")
+                if not isinstance(raw, str) or pathlib.Path(raw).resolve() != here:
+                    continue
+            # 同一 plugin が複数 scope に居ることはありうる。より狭い project を優先する
+            # (この repo で作業している人が見ているのはそちら)。
+            name = key[: -len(suffix)]
+            if name not in out or scope == "project":
+                out[name] = scope
+    return out
 
 
-def run_install(names: list[str], dry_run: bool, project_dir: str, scope: str) -> int:
-    """`claude plugin` CLI を駆動する。
+def run_install(
+    targets: dict[str, str], dry_run: bool, project_dir: str
+) -> int:
+    """`claude plugin` CLI を駆動する。targets は plugin 名 -> update する scope。
 
     実測 (2026-08-11) で確かめた 2 つの必須条件:
       - plugin は `<name>@<marketplace>` 形式で指す。裸の名前は
@@ -469,7 +549,7 @@ def run_install(names: list[str], dry_run: bool, project_dir: str, scope: str) -
     commands = [["claude", "plugin", "marketplace", "update", MARKETPLACE_NAME]]
     commands += [
         ["claude", "plugin", "update", f"{name}@{MARKETPLACE_NAME}", "--scope", scope]
-        for name in names
+        for name, scope in sorted(targets.items())
     ]
     failed = 0
     for command in commands:
@@ -494,6 +574,35 @@ def run_install(names: list[str], dry_run: bool, project_dir: str, scope: str) -
             if tail:
                 print(f"    {tail[-1].strip()}")
     return failed
+
+
+def drive_install(args, only: set[str] | list[str]) -> int:
+    """`--install` の実体。update 対象を決めて run_install を回し exit code を返す。
+
+    `--scope` 未指定は「実態へ追随する」を意味する。install 済み copy がどの scope に
+    居るかは利用者の環境が決めることで、release script が決め打ちする筋合いがない。
+    決め打ちしていた頃は、全 plugin が user scope の環境で project を要求し続けて
+    `--install` が常時全滅していた。
+    """
+    targets = installed_plugin_scopes(args.project_dir)
+    if args.scope is not None:
+        skipped = {n: s for n, s in targets.items() if s != args.scope}
+        targets = {n: s for n, s in targets.items() if s == args.scope}
+        if skipped:
+            # 黙って落とすと「対象 0 件で成功」に化ける。どこに居るのかまで出す。
+            detail = ", ".join(f"{n}({s})" for n, s in sorted(skipped.items()))
+            print(f"  skip   --scope {args.scope} 以外に install 済み: {detail}")
+    if only:
+        targets = {n: s for n, s in targets.items() if n in only}
+    if not targets:
+        # ここを exit 0 にすると、bump した新版がどこにも届いていないのに成功に見える。
+        print(
+            "[build-plugin-release] update 対象の install 済み plugin がありません。"
+            f"`claude plugin install <name>@{MARKETPLACE_NAME}` で入れてください",
+            file=sys.stderr,
+        )
+        return 1
+    return 1 if run_install(targets, args.dry_run, args.project_dir) else 0
 
 
 # ── CLI ────────────────────────────────────────────────────────────
@@ -521,7 +630,10 @@ def main(argv: list[str] | None = None) -> int:
         help="--install の実行 cwd。--scope project は cwd の project を対象にするため必須",
     )
     parser.add_argument(
-        "--scope", default="project", choices=["user", "project", "local", "managed"]
+        "--scope",
+        default=None,
+        choices=["user", "project", "local", "managed"],
+        help="update する scope。既定は install 済み copy が実際に居る scope へ追随する",
     )
     parser.add_argument(
         "--quiet-period",
@@ -553,6 +665,12 @@ def _run(args) -> int:
     only = set(args.only) or None
     rows = survey(only)
     pending = [r for r in rows if r["status"] in ("changed", "new", "released")]
+    recorded = load_fingerprints()
+    retired = (
+        sorted(set(recorded) - {row["name"] for row in rows})
+        if only is None
+        else []
+    )
 
     if args.quiet_period > 0:
         threshold = args.quiet_period * 60
@@ -565,6 +683,8 @@ def _run(args) -> int:
         stale = [r for r in pending if r["status"] == "changed"]
         for row in pending:
             print(f"[{row['status']:8}] {row['name']} {row['version']}")
+        for name in retired:
+            print(f"[retired ] {name}")
         if stale:
             print(
                 f"\n[build-plugin-release] version 上げ忘れ {len(stale)} 件。"
@@ -572,9 +692,10 @@ def _run(args) -> int:
                 file=sys.stderr,
             )
             return 1
-        if pending:
+        if pending or retired:
             print(
-                f"\n[build-plugin-release] 対応表が未更新 {len(pending)} 件。"
+                f"\n[build-plugin-release] 対応表が未更新 "
+                f"{len(pending) + len(retired)} 件。"
                 "python3 scripts/build-plugin-release.py で解消する",
                 file=sys.stderr,
             )
@@ -582,19 +703,16 @@ def _run(args) -> int:
         print(f"[build-plugin-release] OK ({len(rows)} plugins)")
         return 0
 
-    if not pending:
+    if not pending and not retired:
         print(f"[build-plugin-release] 変更なし ({len(rows)} plugins)")
         if args.install:
-            return (
-                1
-                if run_install(
-                    installed_plugin_names(), args.dry_run, args.project_dir, args.scope
-                )
-                else 0
-            )
+            return drive_install(args, only)
         return 0
 
-    state = load_fingerprints()
+    state = recorded
+    for name in retired:
+        state.pop(name, None)
+        print(f"  prune  {name}: plugin directory retired")
     bumped = []
     for row in pending:
         version = row["version"]
@@ -624,8 +742,7 @@ def _run(args) -> int:
     print(f"[build-plugin-release] {len(bumped)} 件 bump / marketplace 再生成 完了")
 
     if args.install:
-        targets = [n for n in installed_plugin_names() if not only or n in only]
-        return 1 if run_install(targets, args.dry_run, args.project_dir, args.scope) else 0
+        return drive_install(args, only)
     if bumped:
         print("  反映するには: python3 scripts/build-plugin-release.py --install")
     return 0

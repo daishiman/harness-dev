@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import pathlib
@@ -127,6 +128,19 @@ def test_manual_version_bump_is_respected(mod, tmp_path, monkeypatch):
     assert mod.read_version(plugin) == "1.0.0"
 
 
+def test_removed_plugin_is_pruned_from_fingerprint_state(mod, tmp_path, monkeypatch):
+    plugin = _fake_plugin(tmp_path, "retired", "0.1.0")
+    keep = _fake_plugin(tmp_path, "keep", "0.1.0")
+    _isolate(mod, monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    plugin.rename(tmp_path / "retired-outside-plugins")
+
+    assert mod.main(["--check"]) == 1
+    assert mod.main([]) == 0
+    recorded = json.loads((tmp_path / "fingerprints.json").read_text())["plugins"]
+    assert set(recorded) == {keep.name}
+
+
 def test_bump_touches_only_the_version_line(mod, tmp_path, monkeypatch):
     """json 往復での再整形を禁じる。整形差分は内容 hash を動かし bump を自己増殖させる。"""
     plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
@@ -143,6 +157,23 @@ def test_bump_touches_only_the_version_line(mod, tmp_path, monkeypatch):
     assert len(before) == len(after)
     assert [i for i, (a, b) in enumerate(zip(before, after)) if a != b] == [2]
     assert '"author": {"name": "someone"}' in after[3]
+
+
+def test_bump_keeps_plugin_composition_version_in_the_same_atomic_release(mod, tmp_path, monkeypatch):
+    """自己記述 bundle のversion同期が次回bumpを自己誘発しない。"""
+    plugin = _fake_plugin(tmp_path, "probe", "0.1.0")
+    composition = plugin / "plugin-composition.yaml"
+    composition.write_text(
+        "name: probe\nkind: plugin-composition\nversion: 0.1.0\n",
+        encoding="utf-8",
+    )
+    _isolate(mod, monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    (plugin / "SKILL.md").write_text("changed", encoding="utf-8")
+    assert mod.main([]) == 0
+    assert mod.read_version(plugin) == "0.1.1"
+    assert "version: 0.1.1" in composition.read_text(encoding="utf-8")
+    assert mod.main(["--check"]) == 0
 
 
 def test_build_artifacts_do_not_trigger_bumps(mod, tmp_path, monkeypatch):
@@ -274,18 +305,92 @@ def test_tests_dir_is_part_of_fingerprint(mod, tmp_path, monkeypatch):
     assert mod.main(["--check"]) == 1
 
 
+def _write_installed(home: pathlib.Path, plugins: dict) -> None:
+    (home / ".claude" / "plugins").mkdir(parents=True, exist_ok=True)
+    (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
+        json.dumps({"plugins": plugins}), encoding="utf-8"
+    )
+
+
 def test_install_targets_only_installed_plugins(mod, tmp_path, monkeypatch):
     """install していない plugin へ update をかけてもエラーになるだけ。"""
     home = tmp_path / "home"
-    (home / ".claude" / "plugins").mkdir(parents=True)
-    (home / ".claude" / "plugins" / "installed_plugins.json").write_text(
-        json.dumps(
-            {"plugins": {"a@harness-local": [], "b@xl-skills": [], "c@harness-local": []}}
-        ),
-        encoding="utf-8",
+    _write_installed(
+        home,
+        {
+            "a@harness-local": [{"scope": "user"}],
+            "b@xl-skills": [{"scope": "user"}],
+            "c@harness-local": [{"scope": "user"}],
+        },
     )
     monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
-    assert mod.installed_plugin_names() == ["a", "c"]
+    assert mod.installed_plugin_scopes(str(tmp_path)) == {"a": "user", "c": "user"}
+
+
+def test_install_follows_the_scope_the_copy_actually_lives_in(mod, tmp_path, monkeypatch):
+    """既定では install 済み copy が実際に居る scope へ update をかける。
+
+    実測 (2026-08-26) では harness-local の全 plugin が user scope なのに --scope の既定が
+    project だった。全件が「project に入っていない」で exit 1 になり、`--install` は
+    一度も成功しない状態が続いていた。既定を実態追随にしてその退行を塞ぐ。
+    """
+    home = tmp_path / "home"
+    _write_installed(home, {"a@harness-local": [{"scope": "user"}]})
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    calls: list[list[str]] = []
+    monkeypatch.setattr(mod, "run_install", lambda t, d, p: calls.append(t) or 0)
+    args = argparse.Namespace(
+        project_dir=str(tmp_path), scope=None, dry_run=False
+    )
+    assert mod.drive_install(args, []) == 0
+    assert calls == [{"a": "user"}]
+
+
+def test_project_scope_entries_of_other_projects_are_ignored(mod, tmp_path, monkeypatch):
+    """project scope の entry は projectPath がこの repo を指すものだけ拾う。
+
+    拾わないと、別 project へ入れた同名 plugin を掴んで無関係な install 先を更新する。
+    """
+    home = tmp_path / "home"
+    _write_installed(
+        home,
+        {
+            "a@harness-local": [
+                {"scope": "project", "projectPath": str(tmp_path / "elsewhere")}
+            ],
+            "b@harness-local": [{"scope": "project", "projectPath": str(tmp_path)}],
+        },
+    )
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    assert mod.installed_plugin_scopes(str(tmp_path)) == {"b": "project"}
+
+
+def test_install_fails_loudly_when_nothing_is_installed(mod, tmp_path, monkeypatch, capsys):
+    """対象 0 件を成功にしない。
+
+    exit 0 にすると、bump した新版がどこにも届いていないのに成功として通り、
+    「新しい版を install したのに古い copy を見続ける」無音故障になる。
+    """
+    home = tmp_path / "home"
+    _write_installed(home, {})
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    args = argparse.Namespace(project_dir=str(tmp_path), scope=None, dry_run=False)
+    assert mod.drive_install(args, []) == 1
+    assert "install 済み plugin がありません" in capsys.readouterr().err
+
+
+def test_install_respects_only_on_the_no_change_path(mod, tmp_path, monkeypatch):
+    """変更なし経路でも --only を尊重する (以前は無視して全件へ update していた)。"""
+    home = tmp_path / "home"
+    _write_installed(
+        home, {"a@harness-local": [{"scope": "user"}], "c@harness-local": [{"scope": "user"}]}
+    )
+    monkeypatch.setattr(pathlib.Path, "home", staticmethod(lambda: home))
+    calls: list[dict] = []
+    monkeypatch.setattr(mod, "run_install", lambda t, d, p: calls.append(t) or 0)
+    args = argparse.Namespace(project_dir=str(tmp_path), scope=None, dry_run=False)
+    assert mod.drive_install(args, ["c"]) == 0
+    assert calls == [{"c": "user"}]
 
 
 # ── ヘルパ ─────────────────────────────────────────────────────────
@@ -298,7 +403,8 @@ def _fake_plugin(tmp_path: pathlib.Path, name: str, version: str) -> pathlib.Pat
     plugin = tmp_path / "plugins" / name
     (plugin / ".claude-plugin").mkdir(parents=True)
     (plugin / ".claude-plugin" / "plugin.json").write_text(
-        json.dumps({"name": name, "version": version}, indent=2) + "\n", encoding="utf-8"
+        json.dumps({"name": name, "version": version, "description": "Fixture plugin"}, indent=2) + "\n",
+        encoding="utf-8",
     )
     (plugin / "SKILL.md").write_text("original", encoding="utf-8")
     return plugin

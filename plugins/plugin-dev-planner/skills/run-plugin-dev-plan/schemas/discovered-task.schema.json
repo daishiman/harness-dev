@@ -80,6 +80,43 @@
             "type": "string"
           },
           "description": "additive optional。接合が密な既存兄弟 component の entity_ref id 群。accept-discovered-task が受理時、同一 phase の当該兄弟 node へ直列化 depends_on (from=新ノード to=兄弟=新タスクは既存兄弟の後) を張り、外ループ追記でも盲目並列 (統合 finding 先送り) を防ぐ。新ノードは leaf dependent ゆえ cycle を作らず additive のまま (既存ノードの依存は書き換えない)"
+        },
+        "execution_kind": {
+          "type": "string",
+          "enum": [
+            "direct-task",
+            "component-build"
+          ],
+          "description": "target shape (shape_marker=task-graph-derived) の graph へ追記する実行可能 leaf に必須。validate-task-graph (k) の leaf 契約を満たすために accept 時そのまま node へ写す"
+        },
+        "route_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "execution_kind=component-build の leaf に必須の route id。direct-task では null"
+        },
+        "task_spec_ref": {
+          "type": "string",
+          "pattern": "^task-specs/.+\\.md$",
+          "description": "plan_dir 相対の task spec パス。target shape の leaf は実在する task-specs/*.md を指すこと (validate-task-graph が実体存在も検査する)"
+        },
+        "produces": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "description": "この leaf が産出する検証可能成果物。accept 時 produces エッジへ展開する (target shape の leaf は 1 件以上必須)"
+        },
+        "consumes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "この leaf が入力として消費する上流成果物。accept 時 consumes エッジ (from=成果物 / to=leaf) へ展開する"
         }
       }
     },

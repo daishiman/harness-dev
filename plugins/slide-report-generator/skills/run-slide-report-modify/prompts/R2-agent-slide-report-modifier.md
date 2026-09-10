@@ -79,7 +79,7 @@ last-audited: 2026-07-05
 
 ## 外部システム連携
 - 本 worker のツールは `Read, Write, Bash` のみ（frontmatter `tools` 正）。**Task を持たないため下流 agent を自ら dispatch しない**。slide の HTML 再生成（`html-generator`）・構成再設計（`structure-designer`/`report-structure-designer`）・画像生成（`ai-image-diagram-producer`）が要るケースでは、その必要を成果物1（修正案）に明記して返し、**オーケストレータ（run-slide-report-modify）が委譲する**。
-- **report のレンダ再生成は本 worker が直接行う**: `report-structure.json` を Write 編集後、`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` を Bash 実行して `report.html` を決定論再生成する（下流委譲不要の常道経路）。同期確認は Layer 6 のチェックリストで検証する。
+- **report のレンダ再生成は本 worker が直接行う**: `report-structure.json` を Write 編集後、`node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` を Bash 実行して `report.html` を決定論再生成する（下流委譲不要の常道経路）。同期確認は Layer 6 のチェックリストで検証する。
 
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | エラー処理 |
@@ -249,7 +249,7 @@ last-audited: 2026-07-05
 |--------|---------|--------------|
 | Read（Layer 3 定義） | 正本・描画物の読み込み（slide=`structure.md`/`index.html` / report=`report-structure.json`/`report.html`） | 読み込み・分析フェーズ |
 | Write（Layer 3 定義） | 正本の該当箇所・修正履歴の更新（slide=`structure.md` / report=`report-structure.json`＋sidecar `report-structure.history.json`）。局所差分編集 | 再生成・同期フェーズ（履歴更新時） |
-| Bash（report のみ・Layer 3 定義） | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を決定論再生成 | report の再生成・同期フェーズ |
+| Bash（report のみ・Layer 3 定義） | `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <report.html>` で `report.html` を決定論再生成 | report の再生成・同期フェーズ |
 
 > **下流 agent（`html-generator`／`structure-designer`／`report-structure-designer`／`ai-image-diagram-producer`）は本 worker が Task で起動しない**。必要を成果物1に明記し、オーケストレータ（run-slide-report-modify）が dispatch する。slide の再生成・視覚崩れ検証はオーケストレータ／後続 agent 側、report のレンダ再生成のみ本 worker が Bash で実施し、同期確認は Layer 6 チェックリストで検証する。
 

@@ -31,6 +31,7 @@ completeness_exempt:
   - "prompts: 責務単位プロンプトを持たない汎用オーケストレーター。手順は固定化せずゴールシークループで都度生成するため、prompt-creator の R-id 単位 7 層プロンプトは適用外 (prompt-placement-convention.md の ref/wrap/delegate 同等の skip 扱い)。ループ規約は ../run-build-skill/references/goal-seek-paradigm.md を共有正本として参照。"
   - "manifest: ゴールシークループで手順を都度生成するため phase/gate 固定の workflow-manifest は適用外。"
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -49,7 +50,32 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 固定手順を SKILL.md にハードコードせず Step1-3 を本文に焼かない都度生成原則を保ち paradigm.md を共有正本として参照し本スキル固有差分のみ記す
       verify_by: evaluator
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-goal-seek
 
@@ -81,6 +107,17 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 6. **コンテキスト分離（必須）**: ループは親セッションで直接回さず、`Agent` ツールで専用 SubAgent に fork して実行する。複数ゴールを並列で回すなら Agent Team に分離する。親に返すのは最終成果物パスと `handoff-goal-seek.json` 要約のみで、周回の中間情報（生成手順・試行錯誤）は fork 内に留める。詳細は `../run-build-skill/references/goal-seek-paradigm.md` の「コンテキスト分離」。
 7. **質問しない自走**: 不足情報は最尤仮説で補い、仮定を `goal-spec.constraints` / `goal-seek-progress.json.open_issues` に残す。
 8. **中間成果物アンカー（必須）**: 各周回末 (Anchor Step) に `eval-log/run-goal-seek-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を 1 行追記する。`original_goal` は全周回で**不変** (SHA-256 を `progress.original_goal_hash` に固定し毎周回照合)。次周回 Step2（手順生成）は直前の `merged_directive_for_next` と `original_goal` を**必須入力**として読み、AI が単独で再導出してはならない。`drift_signal` は schema 必須 (`initial`/`aligned`/`compressing`/`stagnant`/`widening`/`oscillating`)。これにより固定手順なしの自由度を保ちつつ、確率的最尤の抽象解へ集約化していくドリフトをアンカーで毎周回押し戻す。
+
+## 成果物デリバリー不変条件
+
+ゴールシークの既存ループが実用可能な成果物に達した時点で、別の自動評価ループを足さず、同じhandoff経路で次のevent順を守る。
+
+`artifact_created` → `minimal_guard_passed` → `artifact_presented` → `user_choice_recorded` → `semantic_evaluator_started`
+
+- `minimal_guard_passed` は成果物classに応じた最小限の parse/open、secret混入、不可逆操作、破損検査だけを意味する。意味的な「よさ」はここで判定しない。
+- `artifact_presented` で現物のpathと試し方を利用者に渡し、その後に診断・改善深度を聞く。提示前の evaluator 起動は順序違反とする。
+- `accept-as-is` は `evaluator_contexts=0` / `improver_contexts=0` でhandoff完了。診断を選んだ場合のみ semantic evaluator、30思考法、multi-agent、有界改善を使う。
+- release / exhaustive は利用者の明示選択だけで開始し、finding数や直前の依頼から自動昇格しない。
 
 ## ゴールシーク実行
 > 固定手順は書かない。毎周「ゴール・目的/背景・チェックリスト」を読み、その時点で最適な手順を AI が生成・実行する。詳細は `../run-build-skill/references/goal-seek-paradigm.md`。

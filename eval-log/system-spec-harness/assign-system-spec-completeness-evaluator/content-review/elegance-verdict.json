@@ -2,14 +2,10 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "assign-system-spec-completeness-evaluator",
-    "skill_md_sha256": "d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d"
+    "skill_md_sha256": "837e9922df0f424180f53e43e49fadf7c51bf4f2e893d3da0d2e97a2d90fbb30"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -17,19 +13,31 @@
     "dependency_break": 0,
     "smell": 0
   },
+  "reviewer": "focused-combined-review",
+  "reviewed_at": "2026-08-20T07:16:43Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["foundation_trace", "decision_guidance", "matrix_coverage", "design_knowledge_reflection", "doc_freshness", "prompt_quality"],
+    "criteria_evaluated": [
+      "foundation_trace",
+      "decision_guidance",
+      "matrix_coverage",
+      "design_knowledge_reflection",
+      "doc_freshness",
+      "prompt_quality"
+    ],
     "positive_feedback": [
-      "観点↔評価主体の対応が矛盾なく一貫している: C06 (hearing-auditor) は system-spec/*.md を読まないため design_knowledge_reflection へ束縛せず matrix_coverage の sub-input へ再配置した旨を、対応表 (L70-74)・本文 (L76)・Step1 (L131)・Gotcha1 (L150) の全箇所で同一に記述し、旧世代の虚偽対応を明示撤去している。",
-      "Goodhart 防止が設計思想として貫通している: design_knowledge_reflection は『存在確認だけで PASS にしない』(意味層=確定セルへの具体適用)、総合判定は aggregate-completeness.py の aggregate_verdict で観点スコアから fail-closed 再導出しレポート verdict と一致必須、と自己肯定バイアスを断つ機構が本文全体で一致。",
-      "C13-C16 の知識グラフ/doctrine 要件を新 top-level aspect を増やさず既存 6 aspect の追加評価次元へ折り込む方針が、折込先 aspect と機械層ゲート (validate-knowledge-graph.py の profile) と意味層失敗を漏れなく対応付けており、C16 の runtime 施行未実装を follow-up として誠実開示している (漏れの隠蔽なし)。"
+      "前回 FAIL とした L144 の `PLUGIN_ROOT=plugins/system-spec-harness` ハードコード代入が撤去され、Step 2 の両コマンド (L144 共有 `validate-coverage-matrix.py` / L148 同梱 `aggregate-completeness.py`) が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点へ是正された。host 提供値を上書きする経路が消え、`## Runtime root contract` の『cwd から plugin root を推測しない』と一致した。",
+      "6 観点の評価主体対応が本文表・レポート形状 (aspects の auditor/component)・Gotchas 1 で三重一致し、『C06 は system-spec/*.md を読まないため設計知識反映へ束縛しない』と撤去理由まで明記されている (虚偽対応の再発防止)。",
+      "総合判定が `aggregate-completeness.py` の `aggregate_verdict` で再導出でき レポートの `verdict` と一致すること、を整合検査として要求しており、採点者が総合判定を恣意的に置く Goodhart 経路を機構で塞いでいる。",
+      "C13-C16 を新 aspect にせず既存 aspect の追加評価次元として折り込む方針が明示され、top-level 6 aspect の fail-closed 集約構造が不変であることと両立している。C16 について『機械層ゲートは blocking_items 列挙のみで runtime 施行せず・決定論 writer 施行は follow-up』と現状の施行境界を誇張していない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr-ci-fix-rereview",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=d76db131604e23370a858412867ed02da99ef06ce5b4b886139b17613610f36d) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 6 aspect 採点主体 (foundation_trace/decision_guidance/design_knowledge_reflection/prompt_quality=C05 自前 / matrix_coverage=C07+C06 sub-input / doc_freshness=C08) が対応表・本文・Steps・Gotchas で一致し矛盾なし。②漏れなし: Purpose/Output Contract・監査 sub-agent 対応・C13-C16 追加次元・評価レポート schema・fail-closed 集約・Key Rules・Steps・Gotchas を被覆。proposer≠approver / read-only / context:fork の境界も明示。③整合性: kind=assign のため feedback_contract.criteria は N/A で skip_reason に checklist 6 観点 + evaluator ゲートで担保する旨を書き Gotcha5 と整合。④依存整合: responsibility_refs (R1-score/R2-delegate)・rubric_refs (scoring-rubric.json)・reference_refs (aspect-criteria.md/resource-map.yaml)・script_refs (aggregate-completeness.py / ../../scripts/validate-coverage-matrix.py)・schema_refs (completeness-findings.schema.json)・agent_refs (matrix/hearing/doc-freshness auditor) を test -e で全件実在確認 (dependency_break=0)。重大問題なし。criteria_evaluated は feedback_contract に criteria が無い assign kind のため主要品質次元 (6 aspect id) を採用。"
+  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (`PLUGIN_ROOT` の repo 相対ハードコード代入と同梱 script の同経路起動) の解消を確認して PASS へ転じた。 frontmatter は assign kind として `feedback_contract.skip_reason` を持ち criteria を携帯しないため、criteria_evaluated は既存 verdict の評価次元 id を継続採用した。"
 }

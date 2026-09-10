@@ -16,36 +16,73 @@ import { getDirname, EXIT_CODES } from './utils.js';
 
 const __dirname = getDirname(import.meta.url);
 const COMPONENTS_DIR = join(__dirname, '../assets/d3-components');
+const ASSETS_DIR = join(__dirname, '../assets');
 
-// Kanagawaテーマカラー定義
-const KANAGAWA_COLORS = {
-  light: {
-    bg: '#FFFFFF',
-    fg: '#2D2D2D',
-    accent1: '#7E9CD8',
-    accent2: '#E46876',
-    accent3: '#98BB6C',
-    accent4: '#DCA561',
-    accent5: '#7AA89F',
-    accent6: '#957FB8',
-    muted: '#717C7C',
-    surface: '#F2F2F2',
-    border: '#C8C093'
-  },
-  dark: {
-    bg: '#1F1F28',
-    fg: '#DCD7BA',
-    accent1: '#7E9CD8',
-    accent2: '#E46876',
-    accent3: '#98BB6C',
-    accent4: '#DCA561',
-    accent5: '#7AA89F',
-    accent6: '#957FB8',
-    muted: '#727169',
-    surface: '#2A2A37',
-    border: '#54546D'
+// パレットは style genome (vendor/assets/style-genome-*.json) を実行時に読んで取得する。
+// スクリプト側に色値をハードコードしない（genome が単一正本）。
+const HEX_RE = /#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{4}\b|#[0-9a-fA-F]{3}\b/g;
+
+function normalizeHex(hex) {
+  const body = hex.slice(1).toLowerCase();
+  if (body.length === 3 || body.length === 4) {
+    return '#' + body.slice(0, 3).split('').map(c => c + c).join('');
   }
-};
+  return '#' + body.slice(0, 6);
+}
+
+/**
+ * style genome の palette 定義から色トークン集合を読み込む
+ * 戻り値: { tokens: Set<正規化hex>, sources: string[], failure: string|null }
+ */
+function loadGenomePalette() {
+  let files = [];
+  try {
+    files = readdirSync(ASSETS_DIR).filter(f => /^style-genome-.*\.json$/.test(f));
+  } catch (e) {
+    return { tokens: new Set(), sources: [], failure: `style genome ディレクトリを読めません: ${ASSETS_DIR} (${e.message})` };
+  }
+  if (files.length === 0) {
+    return { tokens: new Set(), sources: [], failure: `style genome が見つかりません: ${ASSETS_DIR}/style-genome-*.json` };
+  }
+
+  const tokens = new Set();
+  const sources = [];
+  const problems = [];
+  for (const file of files) {
+    const path = join(ASSETS_DIR, file);
+    try {
+      const genome = JSON.parse(readFileSync(path, 'utf-8'));
+      if (!genome.palette) {
+        problems.push(`${file}: palette 定義がありません`);
+        continue;
+      }
+      const found = JSON.stringify(genome.palette).match(HEX_RE) || [];
+      found.forEach(h => tokens.add(normalizeHex(h)));
+      sources.push(file);
+    } catch (e) {
+      problems.push(`${file}: パースに失敗 (${e.message})`);
+    }
+  }
+  if (tokens.size === 0) {
+    return { tokens, sources, failure: `style genome の palette から色トークンを取得できません: ${problems.join(' / ') || 'palette が空'}` };
+  }
+  return { tokens, sources, failure: null };
+}
+
+const GENOME_PALETTE = loadGenomePalette();
+
+/**
+ * パレット検査の対象コンポーネント一覧
+ * REQUIRED_COMPONENTS は「必須ファイル」の定義であり被覆定義ではない。
+ * 配色の取り残しを作らないため、ディレクトリ内の .js を全件対象にする。
+ */
+function listComponentFiles() {
+  try {
+    return readdirSync(COMPONENTS_DIR).filter(f => f.endsWith('.js')).sort();
+  } catch (e) {
+    return [];
+  }
+}
 
 // 必須のD3コンポーネント
 const REQUIRED_COMPONENTS = [
@@ -117,19 +154,34 @@ function checkFunctionDefinitions(filename, requiredFunctions) {
 }
 
 /**
- * Kanagawaカラー使用チェック
+ * パレット準拠チェック
+ * style genome の palette に定義された色トークンのみを使っているか検証する。
+ * genome を読めない場合は判定不能として fail-closed（errors）にする。
  */
-function checkKanagawaColors(filename) {
+function checkPaletteConformance(filename) {
   const filepath = join(COMPONENTS_DIR, filename);
   if (!existsSync(filepath)) return;
 
-  const content = readFileSync(filepath, 'utf-8');
+  if (GENOME_PALETTE.failure) {
+    results.errors.push(`✗ ${filename}: パレット準拠を判定できません（${GENOME_PALETTE.failure}）`);
+    return;
+  }
 
-  // Kanagawaカラー定数のチェック
-  if (content.includes('KanagawaColors') || content.includes('#7E9CD8')) {
-    results.passed.push(`✓ ${filename}: Kanagawaカラーを使用しています`);
-  } else if (filename !== 'base.js') {
-    results.warnings.push(`△ ${filename}: Kanagawaカラー参照が見つかりません（D3Baseから継承の可能性）`);
+  const content = readFileSync(filepath, 'utf-8');
+  const used = content.match(HEX_RE) || [];
+
+  if (used.length === 0) {
+    // 色リテラルなし = CSS変数/D3Base 経由。パレット逸脱は発生しない。
+    results.passed.push(`✓ ${filename}: 色リテラルなし（CSS変数/D3Base 継承）`);
+    return;
+  }
+
+  const offenders = [...new Set(used.map(normalizeHex))].filter(h => !GENOME_PALETTE.tokens.has(h));
+
+  if (offenders.length === 0) {
+    results.passed.push(`✓ ${filename}: 色は style genome の palette トークンのみ（${GENOME_PALETTE.sources.join(', ')}）`);
+  } else {
+    results.errors.push(`✗ ${filename}: style genome の palette に無い色リテラル ${offenders.join(', ')}（正本: ${GENOME_PALETTE.sources.join(', ')}）`);
   }
 }
 
@@ -257,11 +309,11 @@ function validateTemplate() {
     results.warnings.push(`△ テンプレート: GSAP が含まれていません`);
   }
 
-  // Kanagawa CSS変数チェック
+  // テーマ CSS変数チェック（色値は genome、変数名はテンプレート契約）
   if (content.includes('--accent1') && content.includes('--bg')) {
-    results.passed.push(`✓ テンプレート: Kanagawa CSS変数が定義されています`);
+    results.passed.push(`✓ テンプレート: テーマ CSS変数が定義されています`);
   } else {
-    results.errors.push(`✗ テンプレート: Kanagawa CSS変数が不足しています`);
+    results.errors.push(`✗ テンプレート: テーマ CSS変数が不足しています`);
   }
 
   // テーマ切り替え機能チェック
@@ -298,9 +350,13 @@ function main() {
   });
   console.log();
 
-  // 3. テーマカラーチェック
-  console.log('【3. Kanagawaカラーチェック】');
-  REQUIRED_COMPONENTS.forEach(checkKanagawaColors);
+  // 3. パレット準拠チェック（style genome が正本）
+  console.log('【3. パレット準拠チェック（style genome）】');
+  const componentFiles = listComponentFiles();
+  if (componentFiles.length === 0) {
+    results.errors.push(`✗ ${COMPONENTS_DIR}: パレット検査対象の .js が 0 件（被覆ゼロ）`);
+  }
+  componentFiles.forEach(checkPaletteConformance);
   console.log();
 
   // 4. レスポンシブ設定チェック

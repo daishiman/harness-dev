@@ -1,0 +1,37 @@
+{
+  "target": {
+    "plugin": "skill-governance-lint",
+    "skill": "run-governance-lint",
+    "skill_md_sha256": "a211d47b11a269d6838c606a174f0b602b2455f4d853bc0f27f050387b26469b"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "frontmatter の commonCore (name/kind/prefix/version/allowed-tools/effect/owner/since/last-audited/source/source-tier) が揃い、validate-frontmatter.py が finding を出さない。",
+      "artifact_delivery が artifact-delivery-v1 の state machine を完全形で宣言し、pre_choice_forbidden と accept_contexts:{evaluator:0, improver:0} により choice 前の subagent 起動を機械的に禁じている。lint-artifact-delivery.py も finding 0。",
+      "feedback_contract の IN1 (verify_by: script) / OUT1 (verify_by: evaluator) が inner/outer に正しく割り当てられ、本文の『ゴールシーク実行』『検証』節に検証可能な対応物がある。"
+    ],
+    "negative_feedback": [
+      "low: kind:run の必須カテゴリ `prompts` と `workflow-manifest.json` が不在で lint-skill-completeness.py が exit 1。completeness_exempt も responsibility_refs も未宣言。skill-governance-config / -adapters / -hooks の run skill も同一状態で、run-ci-checks.sh が harness-creator / prompt-creator 以外を run_soft 扱いする段階導入 (SS-201) の範囲内。high ではないが解消 backlog として残る。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:merge-guard-migration-rebind",
+    "next_action": "none"
+  },
+  "notes": "rubric 観点の判定根拠。命名: name/prefix ともに run-<動詞句> 規約に合致し lint-skill-name.py が finding 0。description: 「〜したいとき」形の起動条件 2 件を含み lint-skill-description.py が finding 0。単一責務: Purpose & Output Contract が lint 選択・実行・結果集約に限定され、修正や artifact 生成へ越境していない (Key Rules『非0を自動修正や成功へ畳まない』が越境を明示禁止)。allowed-tools: Bash/Read/Glob は lint 実行と候補列挙に必要十分で、Write/Edit を持たないため effect: conversation-output と整合する。fail-closed: 全 exit code を独立保持し未実施理由を残す設計で、部分実行を成功へ畳む Goodhart 経路が塞がれている。参照整合: frontmatter に *_refs / schema_refs が無く、本文が指す lint entrypoint は plugins/skill-governance-lint/scripts/ に実在。runtime root: runtime_root_policy 非宣言のため Runtime root contract 節は不要、本文の root 参照は dual-root 形で lint-runtime-portability.py も finding 0。未解決 high severity は 0 のため PASS とし、completeness の欠落のみ low として残した。"
+}

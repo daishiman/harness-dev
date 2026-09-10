@@ -2,27 +2,41 @@
   "target": {
     "plugin": "prompt-creator",
     "skill": "run-prompt-create",
-    "skill_md_sha256": "ad6ed915a10391609641c6d8844f33666230dbf03466487ff9ad749d6e086cfc"
+    "skill_md_sha256": "3d34909935931266899f6dd70fc91fbbb59021c7aaf0a6d769a914059f35d039"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-review-subagent",
-  "reviewed_at": "2026-07-03T22:14:21Z",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
-    "positive_feedback": [
-      "完全性 3/3: frontmatter が intent/interface (inputs topic,mode,fast / outputs seven-layer-prompt.md, prompt-build-trace.json, findings.json, handoff-*.json, completion-report)/invariant 6 項/script_refs/schema_refs 4/responsibility_refs 3/manifest を機械可読に宣言し、responsibilities R1-R3 (prompt_required=true) が prompts/R1-elicit.md・R2-gate-review.md・R3-governance-decide.md と 1:1 で実在。Phase 表 7 行が manifest 7 phase と対応。",
-      "検証可能性 3/3・一貫性 3/3: IN1 (verify_by=lint) の p0-lint 表記が manifest commands 9 要素 (distinct 8 本・validate-prompt 2 相) と粒度一致し、本数条件が機械実体と齟齬なく検証可能。IN2 (verify_by=script) は handoff 7 本の schema 準拠永続化と auto_approve_conditions evidence の 1:1 で証跡化。用語統一 (Gate/handoff/phase/fork) が全節で一貫。",
-      "深度 2/3・簡潔性 3/3: preconditions (環境前提) と auto_approve_conditions (品質条件) の分離、--fast の new_prompt 除外×diff<=30 の evaluate-create-gates.py 機械決定など orchestrator 固有の設計判断が掘られている。本文 188 行で 300 行制約内、手続き列挙を廃し workflow-manifest.json へ委譲する二重管理排除で冗長ゼロ。Key Rule 8 のテンプレ相対パス是正で参照導線も明確化。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SHA (ad6ed915...) の SKILL.md を quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。今回変更 (p0-lint 本数表記の粒度精緻化・テンプレ参照の相対パス是正) は前回 low negative 2 件を解消し、検証可能性・整合性を底上げ。導出 criteria IN1/IN2/OUT1 は本スキル固有目的 (P0 lint ゲート・handoff 証跡永続化・orchestrator 制御専従+fork 強制) から導出され frontmatter feedback_contract と一致。negative_feedback 空。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+54 行) には共通 injection 以外の残差 53 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

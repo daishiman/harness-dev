@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-demo-first-no-fallback",
+  "covered_task_ids": [
+    "P02-demo-first-no-fallback"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+  "acceptance_criterion_restated": "skill-brief-C01.json の R3-render に、presentation_order=demo_first のとき最初の main セクションの assets[].role を illustration へ書き換えない例外が明記され、素材が無い場合の代替 (live_demo=true の B17 を先頭に置く) と、それも不可能な場合の失敗の出し方が定まっていること",
+  "verified_by": [
+    {
+      "claim": "例外を明記した",
+      "method": "responsibilities[R3-render] へ demo_first_screenshot_exception (id CR-DEMO-NO-FALLBACK) を新設。適用範囲を『presentation_order=demo_first のときの最初の main セクションの最初の提示物 1 件のみ』と限定し、role_split.fallback の唯一の例外であると位置づけた",
+      "result": "既存の R3-render 本文が持つ一般規則 (screenshot 素材が無ければ illustration へ書き換える) を消さず、範囲を限った例外として重ねた。一般規則を弱めると素材の無い節で第 1 稿が止まる (fallback を入れた元の理由) ため"
+    },
+    {
+      "claim": "何が失われるのかを、実装が読める形で書いた",
+      "method": "why に『illustration へ落とすと E-IMAGE-ABSENT も C16 SC-11 も緑になる』と明記",
+      "result": "この欠陥は全ての画像ゲートを通過する。緑になる経路であることを書かないと、実装者は『ゲートが通るなら問題ない』と読む。失われるのは画像ではなく demo_first という構成の意図だけである"
+    },
+    {
+      "claim": "代替を定めた",
+      "method": "C22 NAR-07 の _is_real_screen を読み、実画面として認められるのが (a) data-hb-asset-role=screenshot の IMG (b) data-hb-live-demo=true の B17 の 2 種のみであることを確認",
+      "result": "代替は『当該セクションに既に設計されている live_demo=true の B17 を先頭へ移す』。B17 は素材ファイルを必要としないため素材欠如でも成立する。B17 が無いときに C01 が手順を創作することは禁じた (ヒアリングで得ていない操作手順を書くことになる)"
+    },
+    {
+      "claim": "どちらも不可能な場合の失敗の出し方を定めた",
+      "method": "C13 を呼ぶ前に停止し、欠けている素材のパスを名指しして (a) 素材を渡す (b) explain_first にする の 2 択を利用者へ出す、と規定",
+      "result": "黙って選ばない。加えて (b) の自動適用可否を provenance.presentation_order_source で分岐させた: 'derived' (C12 が prior_knowledge_level から導出) なら生成レポートへの記録を条件に自動変更を認め、'explicit' (利用者が明示) なら自動変更を禁止して必ず停止する"
+    },
+    {
+      "claim": "推定と指示を区別する根拠を書いた",
+      "method": "provenance_dependent_autonomy の後段に理由を記述",
+      "result": "『導出値は本プラグインの推定であって利用者の指示ではないため覆せるが、明示指示を素材の都合で覆すのは指示の握り潰しである』。同じ presentation_order という値でも、どちらから来たかで自律の範囲が変わることを 1 文で固定した"
+    },
+    {
+      "claim": "実装漏れが黙って通らないことを確認した",
+      "method": "verify-handout-narrative.py check_nar07 を読み、demo_first のとき最初の main セクションの最初の提示物を _is_real_screen で判定して違反を立てることを確認",
+      "result": "本例外を実装し忘れても生成後の HTML で NAR-07 が捕まえる。よって本規約は fail-open の穴埋めではなく、NAR-07 が赤になってから作り直す往復を減らす前段である旨を not_fail_open に明記し、『NAR-07 側を緩めてはならない』を併記した"
+    },
+    {
+      "claim": "定義を複製していない",
+      "method": "canonical_refs に role_split.fallback (上書きされる一般規則) と NAR-07 (実画面の定義の正本) を挙げ、本文では『NAR-07 が認める 2 種』と参照で受けた",
+      "result": "実画面の判定条件 (属性名と値) を C01 側へ書き写していない。写すと NAR-07 の判定が変わったとき brief だけが古い定義を主張する"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02DEMO-C05-01",
+      "level": "warn",
+      "summary": "ノードの title は『C01/C05 へ入れる』だが、write_scope も受入条件も C01 のみを対象としており、C05 (handout-content-architect) 側には何も入れていない。demo_first のとき最初の main セクションへ何を置くかは本来 R2-design (C05) の構成設計時点で決まる話で、R3-render (C01) の例外は『設計が screenshot を置いたのに素材が無かった』後始末にすぎない。設計段で live_demo=true の B17 を優先的に先頭へ置く指針は C05 の brief に無いままで、これは別ノードが要る"
+    },
+    {
+      "id": "F-P02DEMO-EXPLICIT-01",
+      "level": "info",
+      "summary": "provenance.presentation_order_source の 'explicit' / 'derived' を C01 の判断分岐に使ったが、この値を書くのは C12 (CR-PRESENTATION-ORDER) であり、round-trip で HTML から復元できるかは未確認。第 1 稿を作り直す周回 (R5-refine) で構成データを HTML から戻す経路を通ると、explicit だった指定が derived として戻る可能性がある。戻ると『明示指示は覆さない』が黙って効かなくなる"
+    },
+    {
+      "id": "F-P02DEMO-FIRSTITEM-01",
+      "level": "info",
+      "summary": "NAR-07 の『最初の提示物』は _first_presentation_item が決めており、部品だけでなく『data-hb-field を持たない一定長以上の <p>』も候補に含む。よって B17 を先頭へ移しても、その前に長めの導入文が 1 段落あれば違反になる。C01 側の代替手順 (B17 を先頭へ移す) は段落の位置まで含めて先頭にする必要があり、brief の記述は『セクションの先頭へ移す』としか書いていない"
+    }
+  ]
+}

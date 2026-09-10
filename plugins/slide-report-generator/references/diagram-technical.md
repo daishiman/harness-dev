@@ -1,5 +1,8 @@
 # 図解タイプ: 技術系（手書き経路・SVG2）
 
+<!-- css-route: diagram -->
+<!-- この宣言より後ろの var() は diagram 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: ER・シーケンス・状態遷移・アーキテクチャ層構成・スイムレーンプロセス・システムコンテキストの、LLM が直接書くための SVG2 テンプレート
 
 **含まれるタイプ**: 11.35-11.40
@@ -50,21 +53,21 @@
 
 ```css
 /* エンティティ枠 */
-.er-card       { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
+.er-card       { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
 .er-card-head  { fill: rgba(67, 67, 108, 0.05); }
 .er-card-rule  { stroke: #DCD7BA; stroke-width: 1.25; }
 
 /* 焦点（1 件だけ） */
-.er-card--focal      { fill: #FFFFFF; stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
+.er-card--focal      { fill: #FFFFFF; stroke: var(--ink, #141412); stroke-width: 2; }
 .er-card-head--focal { fill: rgba(210, 126, 153, 0.14); }
 
 /* 文字（エンティティ名は既定書体、列と型は等幅） */
-.er-name   { font-size: 16px; fill: var(--fg, #43436c); }
-.er-field  { font-size: 14px; font-family: monospace; fill: var(--fuji-gray, #8a8980); }
+.er-name   { font-size: 16px; fill: var(--fg); }
+.er-field  { font-size: 14px; font-family: monospace; fill: var(--fg-muted, #6A6A68); }
 
 /* 関係とカーディナリティ */
-.er-rel    { stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.er-card-n { font-size: 12px; fill: var(--fuji-gray, #8a8980); }
+.er-rel    { stroke: var(--fg-muted); stroke-width: 2; }
+.er-card-n { font-size: 12px; fill: var(--fg-muted, #6A6A68); }
 ```
 
 ```html
@@ -95,10 +98,10 @@
 
     <!-- 注釈（余白のみ・矢じりなし・最大 2） -->
     <text x="912" y="320" text-anchor="end" font-size="12" font-style="italic"
-          fill="var(--fuji-gray,#8a8980)">{{図では言えない一言}}</text>
+          fill="var(--fg-muted, #6A6A68)">{{図では言えない一言}}</text>
     <path d="M 856 312 Q 828 296 792 280" fill="none"
-          stroke="var(--fuji-gray,#8a8980)" stroke-width="1.25" stroke-dasharray="4 3" />
-    <circle cx="792" cy="280" r="2" fill="var(--fuji-gray,#8a8980)" />
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4 3" />
+    <circle cx="792" cy="280" r="2" fill="var(--fg-muted, #6A6A68)" />
   </svg>
   <figcaption id="f1-caption" class="srg-diagram__caption">
     <span class="srg-diagram__label">図 1</span>{{読む順と結論}}
@@ -132,28 +135,35 @@
 **幾何**（`viewBox="0 0 960 540"`・すべて 4px グリッド）
 
 - アクター見出しは幅 **192** / 高さ **64**、列間隔 **224**（x = 48 / 272 / 496 / 720）
-- ライフラインは見出しの下端（y = 112）から y = 424 まで。`#DCD7BA` の 1.25 で
-  `stroke-dasharray="4 4"`。**ライフラインだけは破線でよい**（メッセージの破線とは
-  太さで区別が付く）
+- ライフラインは見出しの下端（y = 112）から y = 424 まで。`#DCD7BA` の 1.25 の破線。
+  **ライフラインだけは破線でよい**（メッセージの破線とは太さで区別が付く。
+  線種そのものでは区別しない——下記のとおり線種の語彙は閉じていて、
+  「もう 1 つ別の破線」を作る余地が無い）
 - 活性化帯は幅 **8**、ライフラインの中心から左へ 4 ずらす。通常は白 + `muted` の 1.25、
   焦点だけ `accent-tint` + `accent` の 2
 - メッセージは y = 160 から **56 ずつ**下げる。ラベルは線の 10px 上に置く
-- 戻りと非同期だけ `stroke-dasharray="5 4"`。外部連携のメッセージは `link` の色と
+- 戻りと非同期だけ破線。外部連携のメッセージは `link` の色と
   `-arrow-link` のマーカーにする
+
+> **線種の語彙は閉じている。** 使えるのは実線と 2 種類の破線だけで、
+> 値の正本は `scripts/validate-svg-diagram.py` の `DASH_VOCAB`（検査は D25）。
+> 語彙外の破線は検査で落ちる。**ここに値を書き写さない**（周期の比を保つために
+> 選ばれた値なので、片方だけ動かすと隣り合った 2 本の区別が消える）。
+> 下のコード例は語彙内の値を実際に使っているので、そのまま写して構わない。
 - ラベルが他の線と交差する位置に来たら、**先に `#FFFFFF` の矩形マスクを敷いてから**文字を置く
 
 ```css
-.sq-head      { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
-.sq-name      { font-size: 16px; fill: var(--fg, #43436c); }
-.sq-lifeline  { stroke: #DCD7BA; stroke-width: 1.25; stroke-dasharray: 4 4; }
+.sq-head      { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
+.sq-name      { font-size: 16px; fill: var(--fg); }
+.sq-lifeline  { stroke: #DCD7BA; stroke-width: 1.25; stroke-dasharray: 4 3; }
 
-.sq-act       { fill: #FFFFFF; stroke: var(--fg-dim, #54546d); stroke-width: 1.25; }
-.sq-act--focal{ fill: rgba(210, 126, 153, 0.14); stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
+.sq-act       { fill: #FFFFFF; stroke: var(--fg-muted); stroke-width: 1.25; }
+.sq-act--focal{ fill: rgba(210, 126, 153, 0.14); stroke: var(--ink, #141412); stroke-width: 2; }
 
-.sq-msg       { stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.sq-msg--soft { stroke: var(--fg-dim, #54546d); stroke-width: 2; stroke-dasharray: 5 4; }
-.sq-msg--link { stroke: var(--wave-blue, #7E9CD8); stroke-width: 2; stroke-dasharray: 5 4; }
-.sq-label     { font-size: 14px; fill: var(--fg, #43436c); }
+.sq-msg       { stroke: var(--fg-muted); stroke-width: 2; }
+.sq-msg--soft { stroke: var(--fg-muted); stroke-width: 2; stroke-dasharray: 4 3; }
+.sq-msg--link { stroke: var(--tone-3, #4B6681); stroke-width: 2; stroke-dasharray: 4 3; }
+.sq-label     { font-size: 14px; fill: var(--fg); }
 .sq-mask      { fill: #FFFFFF; }
 ```
 
@@ -188,10 +198,10 @@
 
     <!-- 注釈（余白のみ・最大 2） -->
     <text x="912" y="32" text-anchor="end" font-size="12" font-style="italic"
-          fill="var(--fuji-gray,#8a8980)">{{図では言えない一言}}</text>
+          fill="var(--fg-muted, #6A6A68)">{{図では言えない一言}}</text>
     <path d="M 704 36 Q 700 56 696 70" fill="none"
-          stroke="var(--fuji-gray,#8a8980)" stroke-width="1.25" stroke-dasharray="4 3" />
-    <circle cx="696" cy="72" r="2" fill="var(--fuji-gray,#8a8980)" />
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4 3" />
+    <circle cx="696" cy="72" r="2" fill="var(--fg-muted, #6A6A68)" />
   </svg>
   <figcaption id="f2-caption" class="srg-diagram__caption">
     <span class="srg-diagram__label">図 2</span>{{読む順と結論}}
@@ -234,17 +244,17 @@
 - 戻りの契機ラベルは経路を跨ぐので、**`#FFFFFF` のマスク矩形を先に敷く**
 
 ```css
-.st-node       { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
-.st-node--focal{ fill: rgba(210, 126, 153, 0.14); stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
-.st-name       { font-size: 16px; fill: var(--fg, #43436c); }
-.st-constraint { font-size: 12px; fill: var(--fg-dim, #54546d); }
+.st-node       { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
+.st-node--focal{ fill: rgba(210, 126, 153, 0.14); stroke: var(--ink, #141412); stroke-width: 2; }
+.st-name       { font-size: 16px; fill: var(--fg); }
+.st-constraint { font-size: 12px; fill: var(--fg-muted); }
 
-.st-terminal-in  { fill: var(--fg, #43436c); }
-.st-terminal-out { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
-.st-terminal-cap { font-size: 12px; fill: var(--fuji-gray, #8a8980); }
+.st-terminal-in  { fill: var(--fg); }
+.st-terminal-out { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
+.st-terminal-cap { font-size: 12px; fill: var(--fg-muted, #6A6A68); }
 
-.st-edge  { fill: none; stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.st-label { font-size: 14px; fill: var(--fg, #43436c); }
+.st-edge  { fill: none; stroke: var(--fg-muted); stroke-width: 2; }
+.st-label { font-size: 14px; fill: var(--fg); }
 .st-mask  { fill: #FFFFFF; }
 ```
 
@@ -312,7 +322,8 @@
 **幾何**（`viewBox="0 0 960 540"`・すべて 4px グリッド）
 
 - 層帯は幅 **864** / 高さ **112**、層間 **32**（y = 64 / 208 / 352）。`fill="none"` +
-  `#DCD7BA` の 1.25 + `stroke-dasharray="4 4"`。**器なので塗らない**
+  `#DCD7BA` の 1.25 の破線（値は下の `.al-band`。線種の語彙は §11.36 のとおり閉じている）。
+  **器なので塗らない**
 - 層名は帯の左内側（x = 64）に 14px。見出し列として左 176 を空ける
 - コンポーネントは幅 **192** / 高さ **64**、列間 **32**（x = 224 / 448 / 672）。
   帯の上下に 32 の余白が残る位置（y = 帯 + 32）に置く
@@ -324,16 +335,16 @@
   ラベルを 112 間隔で並べる。**凡例を置いた面には注釈を置かない**（余白が競合する）
 
 ```css
-.al-band  { fill: none; stroke: #DCD7BA; stroke-width: 1.25; stroke-dasharray: 4 4; }
-.al-band-label { font-size: 14px; fill: var(--fg, #43436c); }
+.al-band  { fill: none; stroke: #DCD7BA; stroke-width: 1.25; stroke-dasharray: 4 3; }
+.al-band-label { font-size: 14px; fill: var(--fg); }
 
-.al-node        { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
-.al-node--store { fill: rgba(67, 67, 108, 0.05); stroke: var(--fg-dim, #54546d); stroke-width: 1.5; }
-.al-node--focal { fill: rgba(210, 126, 153, 0.14); stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
-.al-name  { font-size: 16px; fill: var(--fg, #43436c); }
+.al-node        { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
+.al-node--store { fill: rgba(67, 67, 108, 0.05); stroke: var(--fg-muted); stroke-width: 1.5; }
+.al-node--focal { fill: rgba(210, 126, 153, 0.14); stroke: var(--ink, #141412); stroke-width: 2; }
+.al-name  { font-size: 16px; fill: var(--fg); }
 
-.al-dep   { stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.al-legend-label { font-size: 12px; fill: var(--fg-dim, #54546d); }
+.al-dep   { stroke: var(--fg-muted); stroke-width: 2; }
+.al-legend-label { font-size: 12px; fill: var(--fg-muted); }
 ```
 
 ```html
@@ -414,15 +425,15 @@
 ```css
 .sw-lane      { fill: #FFFFFF; stroke: #DCD7BA; stroke-width: 1.25; }
 .sw-lane--alt { fill: #F8F7F0; stroke: #DCD7BA; stroke-width: 1.25; }
-.sw-lane-name { font-size: 16px; fill: var(--fg, #43436c); }
-.sw-stage     { font-size: 12px; fill: var(--fuji-gray, #8a8980); }
+.sw-lane-name { font-size: 16px; fill: var(--fg); }
+.sw-stage     { font-size: 12px; fill: var(--fg-muted, #6A6A68); }
 
-.sw-step      { fill: #FFFFFF; stroke: var(--fg, #43436c); stroke-width: 1.5; }
-.sw-gate      { fill: rgba(210, 126, 153, 0.14); stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
-.sw-name      { font-size: 16px; fill: var(--fg, #43436c); }
+.sw-step      { fill: #FFFFFF; stroke: var(--fg); stroke-width: 1.5; }
+.sw-gate      { fill: rgba(210, 126, 153, 0.14); stroke: var(--ink, #141412); stroke-width: 2; }
+.sw-name      { font-size: 16px; fill: var(--fg); }
 
-.sw-flow      { fill: none; stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.sw-label     { font-size: 14px; fill: var(--fg, #43436c); }
+.sw-flow      { fill: none; stroke: var(--fg-muted); stroke-width: 2; }
+.sw-label     { font-size: 14px; fill: var(--fg); }
 ```
 
 ```html
@@ -491,7 +502,7 @@
 - 中心は幅 **224** / 高さ **96**（x = 368, y = 224）。名前 16px（y = 268）と
   「何を持っているか」の 1 行 12px（y = 296）を入れる
 - 責任境界は幅 **288** / 高さ **160**（x = 336, y = 192）で中心の 16 外側。
-  `rgba(210, 126, 153, 0.05)` + `rgba(210, 126, 153, 0.50)` の 1.5 + `stroke-dasharray="4 4"`。
+  `rgba(210, 126, 153, 0.05)` + `rgba(210, 126, 153, 0.50)` の 1.5 の破線（値は下の CSS ブロック）。
   **境界は器なのでノードとして数えない**。ラベルは枠の左上外側（y = 184）に 12px の `soft`
 - 外部アクターは幅 **176** / 高さ **80**。上 (392, 64) / 下 (392, 400) / 左 (64, 232) /
   右 (720, 232) の 4 箇所のみ。`rgba(67, 67, 108, 0.03)` + `rgba(67, 67, 108, 0.30)` の 1.5
@@ -503,19 +514,19 @@
 
 ```css
 .sc-boundary  { fill: rgba(210, 126, 153, 0.05); stroke: rgba(210, 126, 153, 0.50);
-                stroke-width: 1.5; stroke-dasharray: 4 4; }
-.sc-boundary-label { font-size: 12px; fill: var(--fuji-gray, #8a8980); }
+                stroke-width: 1.5; stroke-dasharray: 4 3; }
+.sc-boundary-label { font-size: 12px; fill: var(--fg-muted, #6A6A68); }
 
-.sc-core      { fill: rgba(210, 126, 153, 0.14); stroke: var(--sakura-pink, #D27E99); stroke-width: 2; }
-.sc-core-name { font-size: 16px; fill: var(--fg, #43436c); }
-.sc-core-sub  { font-size: 12px; fill: var(--fg-dim, #54546d); }
+.sc-core      { fill: rgba(210, 126, 153, 0.14); stroke: var(--ink, #141412); stroke-width: 2; }
+.sc-core-name { font-size: 16px; fill: var(--fg); }
+.sc-core-sub  { font-size: 12px; fill: var(--fg-muted); }
 
 .sc-external  { fill: rgba(67, 67, 108, 0.03); stroke: rgba(67, 67, 108, 0.30); stroke-width: 1.5; }
-.sc-name      { font-size: 16px; fill: var(--fg, #43436c); }
+.sc-name      { font-size: 16px; fill: var(--fg); }
 
-.sc-link      { stroke: var(--fg-dim, #54546d); stroke-width: 2; }
-.sc-link--sys { stroke: var(--wave-blue, #7E9CD8); stroke-width: 2; }
-.sc-label     { font-size: 12px; fill: var(--fg, #43436c); }
+.sc-link      { stroke: var(--fg-muted); stroke-width: 2; }
+.sc-link--sys { stroke: var(--tone-3, #4B6681); stroke-width: 2; }
+.sc-label     { font-size: 12px; fill: var(--fg); }
 ```
 
 ```html
@@ -547,10 +558,10 @@
 
     <!-- 注釈（余白のみ・1 件） -->
     <text x="912" y="512" text-anchor="end" font-size="12" font-style="italic"
-          fill="var(--fuji-gray,#8a8980)">{{図では言えない一言}}</text>
+          fill="var(--fg-muted, #6A6A68)">{{図では言えない一言}}</text>
     <path d="M 856 500 Q 760 456 632 358" fill="none"
-          stroke="var(--fuji-gray,#8a8980)" stroke-width="1.25" stroke-dasharray="4 3" />
-    <circle cx="628" cy="356" r="2" fill="var(--fuji-gray,#8a8980)" />
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4 3" />
+    <circle cx="628" cy="356" r="2" fill="var(--fg-muted, #6A6A68)" />
   </svg>
   <figcaption id="d4-caption" class="srg-diagram__caption">{{読む順と結論}}</figcaption>
 </figure>

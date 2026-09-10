@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C09",
+  "task_id": "P05-C09-01",
+  "covered_task_ids": [
+    "P05-C09-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/commands/handout-verify.md",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (117 行)"
+    },
+    {
+      "claim": "テスト 60 件中 59 件が緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-verify -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 60 / failures=1 / errors=0 / 0.161s。実装前は failures=31)"
+    },
+    {
+      "claim": "残る赤 1 件が C01 待ちであり実装不足でない",
+      "method": "FAIL 行の全列挙とテスト実体の確認",
+      "result": "pass (test_handout_verify_command.ConsumerParityTest.test_c01_delegates_aggregation_to_c09 の 1 件のみ。検査対象は C09 の build_target でなく skills/run-handout-build/SKILL.md (component C01) の本文であり write_scope 外。C09 側で緑にする手段は存在しない)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込んで本文へ適用",
+      "result": "pass (違反 0 件。自前のコードポイント列挙は行っておらず単一正本で判定している)"
+    },
+    {
+      "claim": "用途語彙・部品 id を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -oE '\\b(lecture|guide|onboarding|report|proposal|study-notes|study-plan|agenda|B[0-9]{2})\\b' を全文へ適用",
+      "result": "pass (ヒット 1 件は --json-report / 『報告』由来の report という部分文字列であり用途語彙の列挙ではない。部品 id は 0 件、閾値の数値も 0 件)"
+    },
+    {
+      "claim": "ゲート語彙を第 2 の正本にしていない",
+      "method": "本文の集約規則ブロックの構造確認",
+      "result": "pass (CR-GATE-AGG を id に持つ fenced json ブロックで gate_faces / states / not_run_reasons / verdict_table を機械可読に定義し、C01 へは『自前集約を持たず /handout-verify を起動して summary.json を受け取れ』と委譲を明記している。P03 Y-07 の canonical_aggregation 単一化に沿う)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/handout-verify/ 配下 13 ファイルの sha256 を実装前後で取得し diff",
+      "result": "pass (差分なし)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain と plugins/guide-doc-generator/ 配下の書込確認",
+      "result": "pass (書込は commands/handout-verify.md 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-forces-derived-value",
+      "detail": "要裁定 / 本 leaf の write_scope 外。tests/handout-verify/contract_lib.py:509 が `re.search(r\"4\\s*(ゲート|行|面)\", body)` でゲート件数 4 を成果物本文へ literal で書くことを強制している。これは RESOLUTION-P04-x-05 が同定した『導出値を契約へ書き下す』欠陥クラスの 5 例目 (C22 の assertEqual(8,...) に続く) であり、ゲートが 1 本増減した瞬間にドキュメントが嘘になるうえ検査は緑のまま通る。worker は SSOT 規律とテスト要求の衝突を認識したうえでテスト側を優先し (テスト変更は禁止のため)、4 の使用を 2 箇所に限定して報告した。修正の方向は『件数を書け』でなく『gate_faces の全要素が表に現れること』を述語にすること。owner leaf を P05-x-01 で決めること"
+    },
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C01 (P05-C01-01) へ申し送り。(1) SKILL.md 本文に `/handout-verify` と `CR-GATE-AGG` の 2 語を literal で含めること (ConsumerParityTest がこの 2 語の存在を要求しており、満たすまで C09 のテストは 1 件赤のまま) (2) R4-verify は自前集約を持たず /handout-verify を起動し --json-report の summary.json (verdict + gates) を受け取って報告に載せること。4 状態分類と verdict 判定規則を SKILL.md の散文へ複製しないこと (3) 同一のゲート実行結果に対し C09 直叩き経路と C01 経路の verdict が一致することが invariant。差異が出たら C01 側の独自集約バグ"
+    },
+    {
+      "kind": "canon-conflict",
+      "detail": "argument-hint が brief と component-inventory.json#C09 で食い違う。worker は brief 側の長い形 (`<html-path> [--config ...] [--out-dir ...] [--only ...] [--json-report ...]`) を採用したが、inventory 側は短い形のまま (README gap 1 が既知として記録)。inventory は他 leaf の criteria_ref でもあるため、放置すると別 leaf が短い形を前提に組む。P05-x-01 で inventory 側を更新すること"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 8 件。(1) argument-hint は brief 側を採用 (上記 canon-conflict) (2) 集約規則の機械可読形式は brief に無く、テスト群が定めた CR-GATE-AGG の fenced json 形式を採用。verdict_table は aggregation_spec.REFERENCE_VERDICT_TABLE と同じ 4 行 first-match (3) frontmatter に source と output_language: ja を追加 (テスト要求外だが fixture の accept 例と他 component の書きぶりに合わせた) (4) 集約サマリのファイル名を summary.json、各ゲートを <gate_id>.json と規定 (brief は『同ディレクトリへ置く』としか書いていない) (5) exit 2 は引数エラーを含め error として fail 側へ倒す。brief の open_questions は C16/C17/C18/C22 側の確定待ちとしていたが、実物の script が EXIT_UNUSABLE = 2 を使っており矛盾しないことを確認済み (6) 『手順』節を追加 (テスト要求外だが command として実行可能にするため) (7) 件数 4 の使用を 2 箇所へ限定 (上記 test-forces-derived-value) (8) 見出しと description では件数語を避け『検証ゲート』『ゲート面』と書き、ゲートは表で列挙する形にした"
+    }
+  ]
+}

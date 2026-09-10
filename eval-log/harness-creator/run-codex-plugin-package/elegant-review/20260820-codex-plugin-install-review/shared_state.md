@@ -1,0 +1,1 @@
+Claude manifestを正本に、1 plugin単位でCodex manifestとrepo marketplaceを同期する。create/updateは同一生成器。install/trustは自動化せず明示CLI境界。create・改善・build各導線は同じ同期器を参照し、Claude登録やreleaseとは出力責務を分ける。

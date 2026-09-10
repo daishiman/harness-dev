@@ -6,8 +6,8 @@
 # 規約: command は薄いラッパ。通常は実体ロジックを entrypoint で指す Skill に置く。
 # 例外: セットアップ doctor など「スキルではなく同梱 script を直接叩く」command は
 # entrypoint を空にし、実行コードを fallback 形
-# `${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}/...` で書く。script 自体は
-# `$CLAUDE_PLUGIN_ROOT` に依存せず `__file__` 相対で plugin root / lib を自己解決する。
+# `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}}/...` で書く。script 自体は
+# plugin root環境変数に依存せず `__file__` 相対で plugin root / lib を自己解決する。
 # 書式は install-bundle.md 等の既存 command に準拠。
 #
 # TODO: build-skill が以下プレースホルダを置換する
@@ -34,8 +34,8 @@ contract:
   invariant:
     - command 自体にビジネスロジックを書かない (entrypoint または同梱 script へ委譲)
     - allowed-tools を最小集合に保つ
-    - direct-script command は README の一次導線に裸 $CLAUDE_PLUGIN_ROOT を出さず、bash 例は fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}` にする
-    - direct-script command の同梱 script は `$CLAUDE_PLUGIN_ROOT` 未設定でも `__file__` 相対で自己解決する
+    - direct-script command は README の一次導線に裸root変数を出さず、bash 例は fallback 形 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/<plugin-name>}}` にする
+    - direct-script command の同梱 script はroot変数未設定でも `__file__` 相対で自己解決する
 ---
 
 # /{{CAPABILITY_NAME}}

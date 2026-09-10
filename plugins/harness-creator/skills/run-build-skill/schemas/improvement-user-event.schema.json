@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/improvement-user-event.schema.json",
+  "title": "Improvement User Event",
+  "description": "改善level選択、exhaustiveの別確認、critical risk受容をcurrent run/artifact/reviewへ束縛するuser event receipt。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "event_type", "source", "run_id", "subject",
+    "artifact_fingerprint_sha256", "review_sha256", "occurred_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "event_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"},
+    "event_type": {
+      "type": "string",
+      "enum": ["improvement-level-selected", "exhaustive-confirmed", "critical-risk-acknowledged"]
+    },
+    "source": {"type": "string", "const": "user"},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "artifact_fingerprint_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "selected_level": {"type": "string", "enum": ["accept-draft", "light", "standard", "detailed", "release", "exhaustive"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"const": "improvement-level-selected"}}},
+      "then": {"required": ["selected_level"]},
+      "else": {"not": {"required": ["selected_level"]}}
+    }
+  ]
+}

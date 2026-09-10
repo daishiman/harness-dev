@@ -140,6 +140,8 @@ def test_c11_uses_canonical_schema_and_frontmatter_path_contract(tmp_path, monke
 
 def test_c10_invokes_c11_then_still_rejects_direct_mutation(tmp_path, monkeypatch, capsys):
     mod = load(HOOKS / "guard-graph-schema.py", "guard_contract_c10")
+    (tmp_path / ".dev-graph").mkdir()
+    (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
     graph = tmp_path / ".dev-graph" / "state" / "graph.json"
     graph.parent.mkdir(parents=True)
     graph.write_text('{"nodes": []}\n', encoding="utf-8")
@@ -177,6 +179,8 @@ def test_c10_redirect_detection_is_bound_to_the_redirect_destination(
     tmp_path, monkeypatch, capsys,
 ):
     mod = load(HOOKS / "guard-graph-schema.py", "guard_redirect_target_contract")
+    (tmp_path / ".dev-graph").mkdir()
+    (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(mod, "context_ok", lambda _root: (True, "{}"))
     monkeypatch.setattr(mod, "schema_ok", lambda _root, _detail: (True, "ok"))
 
@@ -205,6 +209,8 @@ def test_c10_destructive_detection_distinguishes_sources_from_destinations(
     tmp_path, monkeypatch, capsys,
 ):
     mod = load(HOOKS / "guard-graph-schema.py", "guard_operand_contract")
+    (tmp_path / ".dev-graph").mkdir()
+    (tmp_path / ".dev-graph" / "config.json").write_text("{}\n", encoding="utf-8")
     monkeypatch.setattr(mod, "context_ok", lambda _root: (True, "{}"))
     monkeypatch.setattr(mod, "schema_ok", lambda _root, _detail: (True, "ok"))
 
@@ -240,6 +246,26 @@ def test_c10_destructive_detection_distinguishes_sources_from_destinations(
             stdin={"tool_input": {"command": command}},
         )
         assert code == 2, command
+
+
+@pytest.mark.parametrize("make_git_dir", [False, True])
+def test_c10_unmanaged_repository_is_immediate_noop(
+    tmp_path, monkeypatch, capsys, make_git_dir,
+):
+    mod = load(HOOKS / "guard-graph-schema.py", f"guard_unmanaged_{make_git_dir}")
+    if make_git_dir:
+        (tmp_path / ".git").mkdir()
+    monkeypatch.setattr(mod, "context_ok", lambda _root: pytest.fail("resolver must not run"))
+    monkeypatch.setattr(mod, "schema_ok", lambda *_a: pytest.fail("validator must not run"))
+    code, captured = call_main(
+        mod,
+        monkeypatch,
+        capsys,
+        "--repo-root",
+        tmp_path,
+        stdin={"tool_input": {"command": "rm -rf .dev-graph; bd close everything"}},
+    )
+    assert code == 0 and captured.err == ""
 
 
 def git(cwd: Path, *args: str) -> str:

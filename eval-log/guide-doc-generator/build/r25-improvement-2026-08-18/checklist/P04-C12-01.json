@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C12-01",
+ "covered_task_ids": [
+  "P04-C12-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/validate-handout-config.py/",
+ "verified_by": [
+  {
+   "claim": "3 面がすべて充足しており、面の名指しが関数名で示された",
+   "method": "dispatcher が報告の名指し先を確認し、対象ディレクトリで unittest discover を独立実行",
+   "result": "pass: argv/exit code 契約は test_argv_contract.py の ArgvContract 10 関数で、--config 欠落 / パス不在 / --normalize 単独 / out と config の realpath 同一 (symlink 経由も別関数) / 親ディレクトリ不在 / --today 書式不正 / schema・catalog パス解決不能 をすべて exit2 側へ、broken JSON だけを exit1 側へ振り分けており、1 と 2 の境界を両側から固定している。再現性は test_normalize_date_determinism.py の EncodingAndDeterminism 8 関数 (バイト一致・キー順非依存・BOM・CRLF・NFC・末尾空白) + FailClosed 3 関数 (違反時に out を作らない / 既存 out を壊さない / temp を残さない)。違反系 exit1 は 12 ファイル 111 関数で、締めは共通ヘルパ assert_fails_with (exit1 + 診断コードの同時検査)"
+  },
+  {
+   "claim": "test_r21_text_fold.py が旧契約の追認だったという指摘が正しい",
+   "method": "dispatcher が正本 (improvement/text-length-gate-decision.json / script-brief-C12.json) と旧テストの期待値を突合",
+   "result": "pass(=最も重要な指摘): 旧テストは DEFAULT_LIMIT=400 を先頭に直書きし、関数名にまで焼いていた (test_limit_falls_back_to_400_when_key_absent)。さらに TextFoldNormalize 9 関数が『超過分を B10 へ畳んで exit 0』を期待値として固定していた。これは decision#close_the_escape_hatch が『長文の逃げ道』として名指しで塞いだ挙動そのもの。SentenceLengthWarning::test_long_sentences_are_warning_only に至っては『45 字超の文が 3 つ以上でも exit 0 で通す』を固定していた。つまりテストが利用者要件 R7 の反対側を守っていた。撤回して R25 契約 (E-TEXT-FOLDED level=error / fold 回数上限 0) へ書き直した判断は正しい"
+  },
+  {
+   "claim": "test_r22_detail_budget.py の FoldBehaviourAtDetailed も撤回済み妥協の追認だった",
+   "method": "dispatcher が brief の撤回記録を確認",
+   "result": "pass: script-brief-C11.json#added_block_r22_values.why_no_longer_open_true が『R25 は折り畳みそのものを長文の逃げ道として塞ぐため、この妥協は不要になった』と明示している。旧 4 関数は撤回済みの中間解を守っていた。NoAccordionIsGenerated への置換は正本に沿う"
+  },
+  {
+   "claim": "赤 24 件がすべて意図的であり、内訳が説明されている",
+   "method": "dispatcher が対象ディレクトリで unittest discover を独立実行",
+   "result": "pass: Ran 341 tests / FAILED (failures=24)。報告の件数と完全一致。dispatcher が観測した失敗例 NoAccordionIsGenerated::test_no_generated_part_at_any_level (standard/detailed) は exit 1 を期待して実際 0 で、stderr には W-VISUAL-ABSENT / W-TEXT-HEAVY / W-DIAGRAM-FEW / W-OPENS-PROSE が出ている。すなわち出荷実装は現在これらを warning 止まりにしており、R25 が error へ格上げすると決めた項目が緑で通り続けている状態が赤で固定された。内訳 (P05-x-64 系 3 / R25 REQ-7 系 20 / DT-1 同根 1) は報告どおり。P05-C12 の完了条件そのものであり、P04 の趣旨に合致する"
+  },
+  {
+   "claim": "リテラル写しが除去され、テストが第 2 正本にならない形になっている",
+   "method": "dispatcher が報告の導出先を確認",
+   "result": "pass: DEFAULT_LIMIT=400 が唯一の値域リテラルで、除去された。新規テストでも section_kind の slug・件数を書かず config/handout-sections.json から forbid_row_detail 属性で引き当てている。cyan が P04-C23-01 で採った『値を写すとテスト自体が 3 つ目の正本になる』という判断と同じ形で、チーム内で独立に収束している"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=代理再現として正しく記録): C11 と同じ複製 probe で run=3 / failures=11 / errors=0 / skipped=0。_harness.py:37 _synthetic_missing() が returncode=127 の合成結果を返すため exit 0/1/2 を期待する全テストが failure になる、という機構まで名指しされている。skip でも error でもないことを測っている点が重要"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/validate-handout-config.py/ 配下の 3 パス (test_r21_text_fold.py 変更 / test_r22_detail_budget.py 変更 / test_r21_row_detail_scope.py 新規) のみ。scripts/ には 1 バイトも書いていない。セッション開始時ベースライン 7 行と現在の増分を分けて提示しており、自分由来でない差分を並行ノードのものと正しく切り分けている"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C12-01",
+   "level": "blocking-for-release",
+   "summary": "テストが利用者要件の反対側を守っていた事例が初めて出た。R7 (『文章が長ったらしく何行も書く』を絶対に防ぐ) に対し、test_r21_text_fold.py は『超過分を畳んで exit 0』『45 字超の文が 3 つ以上でも exit 0』を期待値として固定しており、実装がこの穴を残す限りテストは緑を出し続けた。本 cycle で繰り返してきた fail-open (検査が空振りする) の一段上で、検査が誤った契約を能動的に守っている型。撤回済み正本 (text-length-gate-decision.json) が存在したのにテストが追随していなかったことが直接原因で、『正本の撤回がテストへ伝播しない』経路の是正が要る。P05-x-84"
+  },
+  {
+   "id": "F-P04C12-02",
+   "level": "blocking-for-release",
+   "summary": "config/handout-visual-policy.json に sentence 節が存在しない (DT-2)。dispatcher が top-level キーを直読みし _meta / schema_version / visual_parts / diagram_patterns_by_intent / micro_copy / content_selection / opening / layering / thresholds / draft_first の 10 キーで sentence 不在を確認。正本 text-length-gate-decision.json#sentence_gate.canonical_location は micro_copy と同階層への新設を指定している。閾値は validate-handout-config.py:72-73 に LONG_SENTENCE_CHARS=45 / LONG_SENTENCE_COUNT=3 として直書きのままで、しかも旧値。文長ゲートは R7 の直接の実装点であり、正本の置き場所ごと未実装。P05-x-85"
+  },
+  {
+   "id": "F-P04C12-03",
+   "level": "blocking-for-release",
+   "summary": "FALLBACK_BODY_MAX_CHARS = 400 が validate-handout-config.py:70 に残っている (DT-3)。dispatcher が直読みで確認し :1495 と :1661 で既定として使われることも確認。DT-1 で tokens を直しても、text_limits を持たないテーマは旧予算で通る。『トークンを消せば旧予算に戻る』という抜け道が 1 箇所だけ残る形で、本 cycle の fail-open 族と同型。P05-x-86"
+  },
+  {
+   "id": "F-P04C12-04",
+   "level": "carry-forward",
+   "summary": "段付けの依存が明示された (DT-5)。text-length-gate-decision.json#risk_and_impact.existing_artifacts のとおり、旧予算で書かれた examples/ は新予算では落ちる。tokens 更新 (P05-x-83) を先に入れて examples/ を後にすると、examples/ を入力に使う全テストが一斉に赤になる。fix-plan の段付けへ『tokens 更新と examples 書き直しは同一段』を追加する必要がある"
+  }
+ ]
+}

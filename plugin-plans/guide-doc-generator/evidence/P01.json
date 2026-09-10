@@ -1,0 +1,158 @@
+{
+  "task_id": "P01-x-01",
+  "phase_ref": "P01",
+  "status": "partial",
+  "measured_at": "2026-08-18",
+  "cycle": "r25-improvement-2026-08-18",
+  "acceptance_criterion": "C1-C45 が全て verify_by を持ち、参照解析の実測値が要件へ数値として混入しておらず、分界線が要件文として明示されている",
+  "document_kind": "requirements-record",
+  "document_kind_note": "本ファイルは『要件の検証手段と分界線がどこに、どういう形で実在するか』を記録する。前版 (mtime 2026-08-18 18:21) は status=pass / checks[].status=pass の主張文書だった。主張の根拠を要件文書側 (goal-spec.json / index.md / phase-01-requirements.md / 判定ゲートの実装) で独立に測り直した結果、3 主張のうち 2 つは形式充足であって実質は成立していないため、判定を partial へ改めた。判定の根拠は全て本ファイル外の実ファイルにあり、本ファイル内で完結する主張は置いていない。",
+  "checks": [
+    {
+      "id": "verify-by-coverage",
+      "claim": "C1-C45 が全て verify_by を持つ",
+      "status": "formally-satisfied-but-not-substantive",
+      "method": "(1) python3 で goal-spec.json を parse し C1-C45 の verify_by を全件列挙。(2) verify_by の値の型を repr で確認。(3) 判定ゲート check-plugin-goal-spec.py:185-187 を直読み。(4) 変異注入 — C12 の verify_by を削除した複製と空文字にした複製をゲートへかけ exit code を実測。(5) C1-C45 の criterion 45 本を全文読解し、合否を分ける観測点を criterion 自身が持つかで分類。",
+      "formal_result": "45/45 が非空の verify_by を持つ。内訳 script=29 / test=15 / reasoning=1 (C25 のみ)。checklist 各要素のキー集合は全件 (criterion, done, id, verify_by) で一様。欠落・enum 外は 0 件。",
+      "why_not_substantive": [
+        "verify_by の値は 'script' / 'test' / 'reasoning' という 3 値の裸の enum ラベルであり、検証器を名指ししない。どの script か・どのテスト関数かは 1 件も書かれていない。したがって『持っている』ことは 45 件すべてについて自明であり、要件間の識別力がゼロ。phase-01-requirements.md:42 と :63 が『verify_by が script / test / reasoning のいずれかであること』を成果物および受入例として定義しているため、これは設計どおりの自明さであって記入漏れではない。",
+        "この形式充足を守る機械ゲートが存在しない。check-plugin-goal-spec.py:186 は `if verify_by is not None and verify_by not in {...}` で、値が enum 外のときだけ落とす。変異注入で実測 — C12 から verify_by を丸ごと削除した複製は exit 0 (検出されない)、空文字にした複製のみ exit 1。つまり『全件が verify_by を持つ』という AC 第 1 節は、現在 45/45 で成立しているが、欠けても緑になる。",
+        "実質の検証手段は verify_by ではなく criterion 本文に書かれている。そこで criterion 本文が観測点を持つかで測ると、9 件が『検査が存在すること』を要求する形で、検査が何を測るかを要求していない。"
+      ],
+      "criterion_requires_only_that_a_check_exists": [
+        {"id": "C9", "verify_by": "test", "phrase": "各パターンに再現性テストがある"},
+        {"id": "C12", "verify_by": "test", "phrase": "部品 id ごとにレンダリングテストがある"},
+        {"id": "C20", "verify_by": "test", "phrase": "意味的に一致する round-trip テストが PASS する", "note": "『意味的に一致』の定義が要件文側に無く、合否の定義がテスト実装へ委譲されている"},
+        {"id": "C25", "verify_by": "reasoning", "phrase": "index に明記されている", "note": "要件が『要件が文書に書いてあること』を要求する自己言及。機械検査されない唯一の項目"},
+        {"id": "C28", "verify_by": "script", "phrase": "採否と根拠を記録している", "note": "記録の存在は機械検査できるが根拠の妥当性は測れない"},
+        {"id": "C29", "verify_by": "test", "phrase": "バイト一致する再現性テストがある"},
+        {"id": "C30", "verify_by": "test", "phrase": "挙動がテストで確認できる"},
+        {"id": "C44", "verify_by": "test", "phrase": "テストが確認する"},
+        {"id": "C45", "verify_by": "script", "phrase": "判定と根拠が component-inventory に記録されている"}
+      ],
+      "additional_unobservable_predicate": [
+        {"id": "C26", "verify_by": "script", "phrase": "後続 L4 build が追加質問なしで実行できる", "note": "『追加質問なし』は script で観測できない述語。verify_by=script と criterion の観測可能性が食い違っている"}
+      ],
+      "substantive_count": "45 件中 35 件は criterion 自身が二値判定可能な観測点 (exit0 / 検出 0 件 / FAIL する / バイト一致 等) を持つ。残り 10 件 (上記 9 + C26) は観測点が検査実装側または文書の存在へ委譲されている。"
+    },
+    {
+      "id": "no-measured-value-baked",
+      "claim": "参照解析の実測値が要件へ数値として混入していない",
+      "status": "pass-with-one-named-exception",
+      "method": "C1-C45 の criterion 45 本から数値トークンを正規表現で全抽出し、1 件ずつ出典を判定。あわせて reference-analysis.md の数量事実 (§2 部品カタログ行数 / §12 文字数実測) を直読みして突合。",
+      "raw_measured_values_result": "参照資料の観測統計 (段落 43 件・中央値 21 字・p90 54 字・最大 81 字 / 文 中央値 20.5 字・最大 67 字 / サイズ 5,364,417 / data URI 比率 99.16% 等) の C1-C45 への一致は 0 件。C1-C45 に現れる数値は全て次のいずれかで、実測由来ではない — 要件番号 ([R01]-[R20] の '01'..'20')、二値の閾 ('0 件' / '1 個' / '1:1' / '2 回')、規約定数 (C10 の viewBox '0 0 24 24'、C34 の日付書式 '\\d{4}/\\d{2}/\\d{2}' と反例 '8/17' '2026-8-17')、要件が定義する列挙数 (C9 の 6 パターン / C41 の 6 用途 / C37 の 3 要素 / C32 の 13 phase / C45 の 3 分割)、base64 の '64'。",
+      "named_exception": {
+        "ids": ["C12", "C45"],
+        "token": "B01-B15",
+        "why_it_is_a_measured_value": "B01-B15 は要件が定義した語彙ではなく、reference-analysis.md §2 の部品カタログ表の行数 (grep '^| B[0-9]' で 15 行) から来た列挙範囲である。goal-spec.json constraints[5] 自身が『参照 v1 = 骨格・部品カタログ B01-B15 の正本』と述べており、参照資料の観測に由来することを認めている。数値目標ではなく範囲リテラルだが、『参照資料が差し替わった瞬間に要件が嘘になる』という混入の害はそのまま当てはまる。",
+        "already_stale": "現物の出荷カタログ config/handout-parts.json は 20 件 (B01-B17 + DIAGRAM / IMG / TEXT)。B16 は briefs/RESOLUTION-P03.md:107-111 が『参照解析 §2 は B01-B15 の 15 行のみで B16 は無い』と明記したうえで since='plan' として追加し、B17 は index.md:174 で C53 (その場で手を動かす枠) のために追加された。つまり要件文 C12 の『B01-B15 が全て…部品 id ごとにレンダリングテストがある』は、現在の部品集合を記述していない。実装側の被覆検査 (tests/render-handout.py/test_parts_catalog.py CatalogCoverageTest::test_every_catalog_part_has_a_dedicated_test_method) は要件文でなくカタログから期待集合を導出しているため緑のままで、要件文の陳腐化を検出しない。",
+        "correct_form": "constraints[5] が既に『参照 v1 が B01-B15 の正本』を持っているので、C12 / C45 の要件文は個数を持たず『参照解析 §2 の部品カタログおよびそれ以後に追加された部品の全てが』と述べ、集合の実体は config/handout-parts.json を単一正本とする形が正しい。"
+      },
+      "out_of_scope_note": "AC の scope である C1-C45 の外側では、C73 (REQ-7) が確定値 overview=60 / standard=100 / detailed=160 / 文上限 60 字 / 段落あたり文数 3 を要件文へ直接持つ。これらは参照資料の生の実測値ではなく improvement/text-length-gate-decision.json による利用者確定値であり、C73 はその正本パスを明記している。よって『実測値の焼込』ではないが、確定値そのものを要件文が重ねて持つ以上、正本が改訂されたとき要件文が追随しない第 2 正本のリスクは残る。goal-spec constraints[13] の禁止条項が C46-C75 にも及ぶかは明文化されていない。"
+    },
+    {
+      "id": "boundary-stated",
+      "claim": "分界線が要件文として明示されている",
+      "status": "partial",
+      "method": "和文語彙 (分界 / 作らない / 生成しない / 再実装しない / 対象外 / スコープ外 / 非対象 / 委譲) と identifier (LLM / 決定論) の両系統で goal-spec.json / index.md / phase-01-requirements.md を grep し、ヒットした各行が要件文 (合否を分ける規範文) か背景説明かを節見出しで判定。あわせて C1-C45 の criterion を LLM / 決定論 / 委譲 / 再実装 で走査。",
+      "deterministic_side_is_stated_as_requirements": [
+        {"id": "C29", "verify_by": "test", "statement": "HTML レンダラが LLM 非依存の決定論処理として計画され、同一構成データから 2 回生成したとき出力 HTML がバイト一致する", "note": "分界線の唯一の機械的裏づけ。LLM を挟むと原理的に破れる"},
+        {"id": "C17", "verify_by": "script", "statement": "guide-doc-generator 内に画像生成ロジックの再実装が 0 件である", "note": "『何を作らないか』を検出可能な形で立てた要件文"},
+        {"id": "C13", "verify_by": "script", "statement": "~/.claude/skills など plugin 外資産への実行時参照が 0 件である"},
+        {"id": "C27", "verify_by": "script", "statement": "新規 .sh / .js が 0 件かつ yaml import が 0 件"},
+        {"id": "C18", "verify_by": "test", "statement": "slide-report-generator が未導入の環境で画像生成ステップのみが skip され他ステップが完走して exit0 (fail-soft)"}
+      ],
+      "llm_side_is_not_stated_as_a_requirement": {
+        "detail": "『ヒアリング→構成データの起草』『読みやすさのレビュー』を LLM の責務とする側は、C1-C45 の criterion に 1 件も存在しない。C1-C45 で 'LLM' の語を含むのは C29 のみで、それも『レンダラを LLM 非依存にする』という決定論側の言明である。C28 は責務候補の列挙に『初心者向け読みやすさレビュー』を含むが、要求しているのは component-inventory への採否記録であって責務の割当そのものではない。",
+        "where_it_actually_lives": [
+          {"path": "plugin-plans/guide-doc-generator/goal-spec.json", "locator": "constraints[8]", "form": "制約文 (規範)", "text": "R19 の分界を崩さない。ヒアリングと構成データの起草は LLM 側 (skill) の責務、構成データから HTML への描画は決定論 script 側の責務。レンダラを LLM 依存にしない (C29 のバイト一致再現性と整合させる)"},
+          {"path": "plugin-plans/guide-doc-generator/index.md", "locator": "L64 `## ドメイン知識`", "form": "背景説明 (用語定義節)", "text": "分界線 (本計画の中核): 「ヒアリング→構成データを書く」「読みやすさをレビューする」は LLM、「構成データ→単一 HTML」「生成物の検証」「出力先の解決」は決定論 script。レンダリング経路に LLM を挟むと同一入力からの再現性が原理的に失われ、機械ゲートが成立しない。"},
+          {"path": "plugin-plans/guide-doc-generator/phase-01-requirements.md", "locator": "L36 `## ドメイン知識`", "form": "背景説明。ただし末尾『この線を越える設計は要件違反として扱う』で規範化している", "text": "分界線: 「ヒアリング→構成データ」「読みやすさ判定」は LLM、「構成データ→HTML」「検証」「出力先解決」は決定論 script"}
+        ],
+        "self_referential_locator": "phase-01-requirements.md L57 の完了チェックリスト『LLM 領域と決定論領域の分界線が要件文として言い切られている』は、分界線が要件文であることを要求しているだけで、それ自体は分界線の要件文ではない。ここを根拠に『明示されている』と判定すると自己言及になる。"
+      },
+      "scope_out_statements": {
+        "path": "plugin-plans/guide-doc-generator/phase-01-requirements.md",
+        "locator": "L48 `## スコープ外`",
+        "items": ["component への分解と build_target の割当 (P02 と component-inventory.json)", "資料の中身そのもの (題材はユーザー固有であり plugin 資産ではない)", "実コードの記述 (本 plan は L3 計画層で完結する)"],
+        "note": "3 件とも P01 phase の作業スコープ外を述べたものであり、plugin が何を作らないかの分界線ではない。plugin 側の『作らない』は C13 / C17 / C27 が要件文として担っている。"
+      },
+      "verdict": "決定論側 (どこから先に LLM を入れないか) は C13 / C17 / C18 / C27 / C29 の 5 件が検出可能な要件文として立っており、膨張に対して閉じている。LLM 側 (どこまでを決定論化しないか) は constraints[8] と 2 つの `## ドメイン知識` 節にしかなく、checklist の要件文になっていない。AC が問う『分界線が要件文として明示』は片側のみ成立。"
+    }
+  ],
+  "gates": [
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py plugin-plans/guide-doc-generator/goal-spec.json",
+      "exit_code": 0,
+      "stdout": "WARN: source_intake 不在: intake/改善 由来でない既存 goal-spec として WARN 受理 (後方互換) / OK: plugin goal-spec schema + plugin anchors validated",
+      "mutation_probe": "C12 の verify_by を削除した複製で exit 0 / 空文字にした複製で exit 1。本ゲートは verify_by の欠落を検出しない。"
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py plugin-plans/guide-doc-generator",
+      "exit_code": 0,
+      "stdout": "OK: goal-spec checklist の全要件 id が index の完了チェックリスト/受入確認へトレース済み",
+      "note": "検査対象は id のトレース有無であり、criterion が観測点を持つかも verify_by の内容も見ない。"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P01-01",
+      "severity": "high",
+      "title": "verify_by は検証手段を指しておらず、欠落してもゲートが検出しない",
+      "detail": "verify_by は script / test / reasoning の 3 値ラベルで、検証器を名指ししない。したがって『全件が verify_by を持つ』は 45 件すべてについて自明であり、要件が実際に検証されるかを一切保証しない。さらに check-plugin-goal-spec.py:186 は None を素通しするため、verify_by が消えても緑になる (変異注入で実測)。要件の検証可能性を担保したいなら verify_by を『どの gate script / どのテストファイル』の pointer 型へ移し、ゲート側を欠落検出 fail-closed へ変える必要がある。"
+    },
+    {
+      "id": "F-P01-02",
+      "severity": "high",
+      "title": "9 件の要件が『検査が存在すること』しか要求しておらず、検査が何を測るかを要求していない",
+      "detail": "C9 / C12 / C20 / C25 / C28 / C29 / C30 / C44 / C45。『再現性テストがある』『記録されている』『index に明記されている』という形は、空のテストや形だけの記録で満たせる。本 cycle が P04-C09-01 で見つけた test_exit_code_mapping 型 (検査がテスト側の定数をテスト側のリテラルと比べるだけ) の要件側の対応物であり、要件がその形を許しているために下流で同型が再生産される。特に C20 は『意味的に一致』の定義を要件文が持たずテスト実装へ委譲しているため、実装が定義を緩めても要件違反にならない。"
+    },
+    {
+      "id": "F-P01-03",
+      "severity": "high",
+      "title": "C12 / C45 の 'B01-B15' が参照解析由来の範囲リテラルとして要件文へ焼かれ、既に現物と食い違っている",
+      "detail": "reference-analysis.md §2 の部品カタログは 15 行。出荷カタログ config/handout-parts.json は B01-B17 + DIAGRAM / IMG / TEXT の 20 件。B16 の追加経緯は briefs/RESOLUTION-P03.md:107-111 に、B17 は index.md:174 に記録されている。要件文だけが 15 件のまま残り、実装側の被覆検査 (test_parts_catalog.py CatalogCoverageTest) はカタログから期待集合を導出するため陳腐化を検出しない。AC 第 2 節『参照解析の実測値が要件へ数値として混入していない』の唯一の実害例。修正は goal-spec.json (本 leaf の write_scope 外)。"
+    },
+    {
+      "id": "F-P01-04",
+      "severity": "medium",
+      "title": "分界線の LLM 側が要件文になっておらず、背景説明節にしかない",
+      "detail": "決定論側は C13 / C17 / C18 / C27 / C29 が要件文として立つ。LLM 側は goal-spec constraints[8] と index.md L64 / phase-01-requirements.md L36 の `## ドメイン知識` にしかない。後者 2 つは背景説明節であり、phase-01-requirements.md L57 の完了チェックリストは『要件文として言い切られている』ことを要求するだけの自己言及。『明記されていないから対象』の膨張は LLM 側で起きうる。"
+    },
+    {
+      "id": "F-P01-05",
+      "severity": "medium",
+      "title": "C26 の述語が verify_by=script では観測できない",
+      "detail": "『後続 L4 build が追加質問なしで実行できる』は script で観測できない。verify_by のラベルと criterion の観測可能性が食い違っており、これも verify_by がラベルでしかないために検出されない (F-P01-01 の帰結)。"
+    },
+    {
+      "id": "F-P01-06",
+      "severity": "medium",
+      "title": "open_questions 18 件中 15 件が未確定のまま",
+      "detail": "phase-01-requirements.md L59 は『open_questions が回答済みで、設計を拘束する決着は 13 phase 本文へ転記されている』を P01 完了条件に挙げるが、goal-spec.json の open_questions は 18 件で 15 件が未確定の記述のまま。本ノードの acceptance_criterion 3 点には含まれず、goal-spec.json は write_scope 外のため未着手。両ゲートともこの差分を検出しない。"
+    },
+    {
+      "id": "F-P01-07",
+      "severity": "low",
+      "title": "前版 evidence/P01.json は主張文書であり、3 主張のうち 2 つが形式充足を実質充足と読んでいた",
+      "detail": "前版は status=pass / checks[].status 全て pass。verify-by-coverage は 45/45 の存在のみを根拠にしており、値が 3 値ラベルであることとゲートが欠落を検出しないことを測っていない。boundary-stated は index.md `## ドメイン知識` を『要件文で宣言』と記述しているが、当該節は背景説明節である。no-measured-value-baked は §0/§8/§12 の数値トークンのみを突合しており、§2 由来の範囲リテラル B01-B15 (F-P01-03) を対象外にしていた。件数も checklist 45 件時点の記述が残っていた (現在 75 件)。"
+    }
+  ],
+  "notes": {
+    "went_well": [
+      "verify_by の実質を測る決め手は値の型と判定ゲートの実装で、変異注入 (削除 / 空文字) 2 件だけで『欠落しても緑』を二値で確定できた",
+      "実測値の混入は数値 grep では B01-B15 を拾えず、『その数はどこから来たか』を出典ファイル (reference-analysis.md §2 の行数) まで遡る形にして初めて摘出できた",
+      "分界線は決定論側と LLM 側を分けて測ることで、片側のみ成立という中間状態を pass/fail に潰さず記録できた"
+    ],
+    "friction_points": [
+      "AC 第 1 節『verify_by を持つ』は phase-01-requirements.md:42/:63 が 3 値 enum で定義しているため、AC を字義どおり測ると必ず pass になる。AC 自身が実質を測れない形をしている",
+      "AC の scope が C1-C45 である一方 checklist は C75 まで拡張済みで、実測値非焼込の禁止条項 (constraints[13]) の適用範囲が明文化されていない",
+      "摘出した 4 件の high/medium はいずれも修正先が goal-spec.json であり本 leaf の write_scope 外のため、記録に留めた"
+    ],
+    "downstream_watchouts": [
+      "F-P01-01 を直さない限り、以後どの phase でも『verify_by がある』を検証可能性の証拠に使えない。P04 で見つかった空ゲート族の上流がここにある",
+      "F-P01-03 の B01-B15 は C12 の要件文であり、P05-C11 / P05-C12 が部品を追加するたびに要件文との乖離が広がる。カタログ単一正本へ寄せる裁定が要る",
+      "F-P01-04 により、LLM 側の責務 (ヒアリング / 読みやすさレビュー) を決定論化する設計変更が要件違反として検出されない。C29 は逆方向 (決定論側への LLM 混入) しか守らない"
+    ]
+  }
+}

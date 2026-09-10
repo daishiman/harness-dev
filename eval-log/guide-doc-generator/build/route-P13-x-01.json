@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P13-x-01",
+  "covered_task_ids": ["P13-x-01"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P13.json",
+  "verified_by": [
+    {
+      "claim": "manifest の配布可否 (distributable:true / bundle_targets:[skills-full]) と実体が整合している",
+      "method": "plugin.json の entry_points を規約パス (skills/<n>/SKILL.md, agents/<n>.md, commands/<n>.md) へ展開し os.path.isfile で存在確認",
+      "result": "skill 4 / agent 2 / command 3 の 9 件すべて実在。missing 0 件。scripts 17 / schemas 5 / config 4 / hooks 1 も実在"
+    },
+    {
+      "claim": "hooks が manifest に宣言されていないのは欠落ではなく意図的な単一登録面の選択である",
+      "method": "plugin.json の hook_registration_note と README の登録手順を突合",
+      "result": "plugin.json と settings.json の両方へ置くと 1 書込で 2 回発火するため settings.json 一本へ寄せた旨が manifest 自身に記載されている。宣言不在の理由が機械可読な位置にある"
+    },
+    {
+      "claim": "marketplace 登録の判断と理由が記録されている",
+      "method": "phase-13-release.md の事前解決済み判断と evidence/P13.json の decision_record を照合",
+      "result": "元判断 (配布しない) と 2026-08-18 の反転、反転根拠 (利用者の 2 経路要求が留保していた人手承認にあたる)、残留リスクと緩和 (0.1.0 固定・証跡付き配布)、改善の受け皿 (discovered-task inbox) が追記形式で残っている。裁定の履歴は消していない"
+    },
+    {
+      "claim": "3 つの登録先が相互整合している",
+      "method": ".claude-plugin/marketplace.json / .claude-plugin/bundles.json / marketplaces/local/.claude-plugin/marketplace.json を直接読取",
+      "result": "marketplace.json (name: skills) に guide-doc-generator エントリあり (source: ./plugins/guide-doc-generator, version 0.1.0)。bundles.json の skills-full に登録あり、plugin.json の bundle_targets と一致。ローカル marketplace も再生成済みで --check exit0 (23 plugin, no drift)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "path-b-not-yet-satisfied",
+      "detail": "plugins/guide-doc-generator/ 配下は git 未追跡 (git ls-files = 0 件)。ローカル経路は marketplaces/local/plugins -> ../../plugins の symlink で作業ツリーの実体を解決するため現状で成立するが、GitHub marketplace 経路はコミット済みツリーを解決するため commit + push + PR マージまで source が空になる。コミットは利用者承認待ちのため本 leaf では実行しない"
+    },
+    {
+      "kind": "install-command-not-executable",
+      "detail": "/plugin marketplace add と /plugin install は Claude Code の対話面でのみ実行でき、本 leaf の実行環境から起動できない。P13-x-04 の evidence と同じく not-verifiable として記録し pass と推定していない"
+    }
+  ]
+}

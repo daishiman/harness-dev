@@ -1,0 +1,135 @@
+{
+  "component_id": "C08",
+  "component_kind": "slash-command",
+  "name": "handout-extract",
+  "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+  "description": "既存の単一 HTML から構成データの逆抽出と round-trip 判定を手動起動する",
+  "argument_hint": "<html-path> [--out <config.json>]",
+  "allowed_tools": [
+    "Read",
+    "Write",
+    "Bash",
+    "Skill"
+  ],
+  "allowed_tools_rationale": "component-inventory.json#C08 の allowed-tools と一致させる。Skill=委譲先 run-handout-extract の起動、Read=入力 HTML の存在確認、Bash=委譲先が回す extract-handout-config.py / validate-handout-config.py / render-handout.py / verify-handout-selfcontained.py の実行、Write=--out への構成データ JSON と逆抽出レポートの書き出し。round-trip 判定は再レンダリングを伴うため Bash と Write の両方が要る",
+  "disable_model_invocation": false,
+  "disable_model_invocation_rationale": "component-inventory.json#C08 の disable-model-invocation と一致させる (AC-C08-1 がこの 1 値も照合対象にしているが、ブリーフ側に値が無いと builder が frontmatter の値を推測することになるため明示する。C07 / C09 が同じ理由で明示しているのと同型)。false = モデル側から起動できる。利用者が『この HTML から構成データを起こして』と自然文で頼む経路を塞がないため",
+  "delegates_to": "run-handout-extract (C02 skill)",
+  "delegation_form": "Skill(run-handout-extract, args=\"$ARGUMENTS\")",
+  "arguments": [
+    {
+      "name": "html-path",
+      "position": "positional",
+      "required": true,
+      "default": "なし",
+      "override_rule": "逆抽出対象の単一 HTML ファイルパス。guide-doc-generator が生成した HTML でも手書き HTML でも受け付ける。ディレクトリを渡された場合は展開せず停止する (どの HTML を正とするかを command が推測しない)",
+      "rationale": "R14 の入口。C02 boundary の『入力=既存の単一 HTML』をそのまま必須 positional にすることで、対象の曖昧さを起動時点で排除する"
+    },
+    {
+      "name": "--out",
+      "required": false,
+      "default": "入力 HTML と同じディレクトリの handout-config.json",
+      "override_rule": "逆抽出した構成データ JSON の書き出し先だけを上書きする。既存ファイルがある場合は黙って上書きせず、上書き可否を確認する。逆抽出レポートは --out と同じディレクトリへ併置する",
+      "rationale": "既定を入力 HTML の隣に置くのは、逆抽出結果が対象 HTML と 1:1 で対応する派生物であるため。この既定は command / skill 側の決定であり script の既定ではない — extract-handout-config.py の --out は未指定時『書き出さず検査のみ行う』なので、既定パスは委譲時に明示的に渡すことで初めて成立する。上書き確認を入れるのは、過去に手で補完した構成データを黙って失わせないため。script 側には既存ファイルを拒否する経路が無く (open_questions の決着参照)、確認は command の責務に閉じる。なお C08 は出力ディレクトリを作らないため、C19 route-handout-output.py のディレクトリ命名規則には依存しない (日付書式やディレクトリ名の書式文字列をこの brief は一切持たない)"
+    }
+  ],
+  "behavior": [
+    "1. $ARGUMENTS を <html-path> [--out <config.json>] にパースする。html-path が無い / 存在しない / ディレクトリの場合は委譲先を起動せず停止する",
+    "2. Skill(run-handout-extract, args=\"$ARGUMENTS\") を起動する。以降の走査 (R1-scan) → 復元不能箇所の補完判断 (R2-complete) → round-trip 判定 (R3-roundtrip) を委譲する。command は HTML の解釈にも構成データの補完にも関与しない",
+    "3. 起動時に round-trip の粒度の限界を先に宣言する。等価判定は『正規化済み構成データの比較対象射影の上での深い等価』で行い、HTML のバイト一致は判定しない (空白と属性順で差が出るため)。射影とは provenance ブロック (normalized_by / schema_version / catalog_sha256 / date_source) を除いた残りであり、実行環境やカタログ版に依存する値は等価判定に含まれない。バイト一致が課されるのは同一構成データからの再生成のみである、と明示する。粒度定義の正本は script-brief-C20.json#roundtrip_granularity 1 箇所であり、この command は要約して伝えるだけで独自の判定基準を持たない",
+    "4. 復元される範囲と復元されない範囲を、結果提示の前に区別して伝える。**境界は入力 HTML が data-hb-* マーカーを持つかどうかで動く**ことを最初に伝える — これを言わずに固定の可否リストを見せると、マーカー付き HTML でも意味情報は失われると誤解させる。区分は 3 つで、正本は script 側 (script-brief-C20.json#roundtrip_granularity の preserved_exact / preserved_only_with_markers / not_preserved_by_design) にあり、この command は個別フィールド名のリストを自前で保持しない: (a) マーカーの有無に依らず復元される構造と、マーカーがあれば値まで復元される著者記述 (b) 対応する data-hb-* マーカーがある場合にのみ復元され、マーカーの無い手書き HTML では推測せず null + 復元不能として返される意味情報 (c) 設計として復元しないもの (生成 chrome や HTML の空白・属性順など、構成データから毎回再生成されるため構成データ側へ戻すと単一正本が崩れるもの)。とくに (b) について、この command は『推測しない』が既定であることを利用者へ伝える",
+    "5. 復元不能箇所は黙って欠落させず、逆抽出レポートへ『どのキーパスが / なぜ復元できず / どの補完方針を採ったか』の 3 点セットで列挙させる。補完方針は推測値の充填・空のまま残置・利用者への確認のいずれかを明示する。推測で埋めた値と HTML から実際に読み取った値は、レポート上で必ず区別する",
+    "6. 逆抽出した構成データが validate-handout-config.py を通らない場合 (必須フィールド欠落等) は、通らない事実と欠落キーパスを提示する。command が値を捏造して通すことはしない",
+    "7. round-trip 判定の結果 (等価 / 差分あり) と差分の内訳、構成データ JSON のパス、逆抽出レポートのパスを提示する。差分ありを等価と読める要約にしない。ここで構成データ JSON が書き出されるかは失敗の種類で変わり、その規則の正本は script-brief-C20.json#fail_semantics である — 必須フィールドの復元不能では穴を null にした部分成果物が書かれるが、round-trip 差分・HTML 構造不正・起動引数不正では書かれない。したがって『差分あり』の提示では構成データのパスを一律に示さず、書かれなかった場合はその事実を伝える (書かれていないパスを案内すると、利用者が存在しないファイルを次の一手へ渡すことになる)",
+    "8. 逆抽出した構成データを資料生成へ回す場合の次の一手として、/handout-build --config <出力パス> を案内する (生成の実行そのものは C07 の責務であり、この command は行わない)"
+  ],
+  "boundary": "command が持つ責務 = 入力パスの検証、出力先の既定解決と上書き確認、round-trip の粒度の限界の事前開示、委譲先の起動、復元/未復元の区別を保った結果提示。skill へ渡す責務 = HTML の走査と部品同定、復元不能箇所の補完方針の判断、構成データの確定、再レンダリングと構成データ等価の判定、逆抽出レポートの作成。command も skill も資料内容の書き換え・改善提案はしない (C02 boundary)。資料の生成は C07 の責務であり、この command は構成データを出すところで止まる",
+  "failure_modes": [
+    {
+      "case": "html-path 未指定 / 不在 / ディレクトリ指定",
+      "behavior": "委譲先を起動せず停止し、解決したパスと期待する形 (単一 HTML ファイル) を示す",
+      "rationale": "必須引数であり、対象を推測で決めると意図しない HTML を資産化してしまう"
+    },
+    {
+      "case": "--out の既存ファイルが存在する",
+      "behavior": "黙って上書きせず、既存ファイルの存在を示して上書き可否を確認する",
+      "rationale": "手で補完した意味情報 (lead-line・判断軸・goal) は再逆抽出では復元できないため、上書きは不可逆な損失になりうる"
+    },
+    {
+      "case": "対象 HTML が guide-doc-generator のレンダラ出力ではなく、部品構造を同定できない",
+      "behavior": "抽出できた範囲までの構成データと、同定不能だった領域の一覧を返す。空の構成データを『成功』として返さない",
+      "rationale": "手書き HTML のテンプレート化は C02 の想定用途そのもの。部分成功を部分成功として返すことが、次にどこを手で埋めるかの判断材料になる"
+    },
+    {
+      "case": "復元不能な意味情報がある (lead-line / 判断軸 / セクション goal / 用語言い換え宣言 等)",
+      "behavior": "レポートへキーパスと理由と採った補完方針を列挙し、推測充填した値には推測である旨の印を付ける。黙って落とさない",
+      "rationale": "これらは HTML の見た目から一意に逆算できない意味情報であり、推測値を事実と混ぜると再生成した資料が元の意図から静かにずれる"
+    },
+    {
+      "case": "round-trip で構成データ等価にならない",
+      "behavior": "差分のキーパスと両側の値を提示して FAIL とする。等価扱いにしない。この場合 --out へは構成データが書かれない (C20 の fail_semantics: 部分成果物を書くのは必須フィールドの復元不能のときだけ) ため、書き出されなかったことを明示し、存在しないパスを次の一手として案内しない",
+      "rationale": "C02 の OUT1 は round-trip 等価を条件とする。差分を隠すと逆抽出の信頼性が測れなくなる。書き出しの有無を command が言い換えると、C20 の fail_semantics と command の案内が食い違って利用者が空振りする"
+    },
+    {
+      "case": "逆抽出結果が validate-handout-config.py で FAIL",
+      "behavior": "FAIL の事実と欠落キーパスを提示し、構成データは書き出したうえで『そのままでは生成に使えない』ことを明示する",
+      "rationale": "書き出さないと利用者が手で補完する足場を失う。通ったことにすると下流で気付きにくい失敗になる"
+    }
+  ],
+  "recovery_scope_canonicality": {
+    "statement": "どのフィールドが復元されるか・マーカー依存か・設計として復元しないかの分類の正本は script-brief-C20.json#roundtrip_granularity (preserved_exact / preserved_only_with_markers / not_preserved_by_design) 1 箇所である。診断コード (E-EXTRACT-UNRECOVERABLE / E-ROUNDTRIP-DIFF / E-HTML-MALFORMED / W-EXTRACT-OPTIONAL / W-EXTRACT-HEURISTIC / W-EXTRACT-CATALOG-DRIFT) の語彙も同様に C20 が正本で、本 command はコード ID のリテラルもフィールド名の可否リストも持たない",
+    "why": "C09 の gate_detection_canonicality と同じ理由。集約/起動側が個別フィールド名を列挙すると、抽出器が復元範囲を広げた瞬間に command 側が黙って古くなる。実際 R25/REQ-8・REQ-9 で lead / goal_chips / prerequisite_connectors / attainment_level (data-hb-raw) が preserved_exact へ追加されており、リストを焼いていれば必ず追従漏れになっていた",
+    "measured_drift_2026_08_18": "本ノードの突合時点で behavior 4 の可否リストが C20 と食い違っていた。『復元できない意味情報』として列挙されていた 資料全体の目的・背景・ゴール / 各セクションの lead-line と判断軸 / セクション goal / 用語言い換え宣言 の 4 系統は、いずれも C20 の preserved_exact に入っており、data-hb-* マーカーがあれば復元される (purpose / background / goal (文書レベル)、sections[].goal / lead_line / judgment_axis、glossary[].term / plain)。skill-brief-C02.json#responsibilities の R2-complete も『マーカー (data-hb-field) がある HTML では同じフィールドが決定論的に復元されるため補完の対象にしない』と明記しており、command だけが手書き HTML 前提の固定リストを持っていた。この brief は『guide-doc-generator が生成した HTML でも手書き HTML でも受け付ける』(arguments.html-path) と宣言しているため、片方の前提で可否を固定するのは誤りである",
+    "what_the_command_keeps": "command が保持してよいのは (1) 3 区分が存在すること (2) 境界が data-hb-* マーカーの有無で動くこと (3) マーカーが無い場合は推測せず null + 復元不能として返すこと、の 3 つの性質だけ。具体的なフィールド名は結果提示の時点で skill / script が返した実際の内訳をそのまま見せる"
+  },
+  "requirements_covered": [
+    "R14"
+  ],
+  "checklist_covered": [
+    "C20",
+    "C74 (副。冒頭 hero フィールド lead / goal_chips の往復非破壊を利用者が確認できる唯一の起動口。正本の検査は C20 が持つ)",
+    "C75 (副。prerequisite_connectors の往復非破壊。同上)"
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-C08-1",
+      "how": "生成された handout-extract.md の frontmatter を validate-frontmatter にかけ、name / description / argument-hint / allowed-tools / disable-model-invocation が component-inventory.json#C08 と一致することを照合する",
+      "expected": "全項目一致で exit0"
+    },
+    {
+      "id": "AC-C08-2",
+      "how": "委譲先 run-handout-extract が component-inventory.json に skill として実在し、その deterministic_checks に extract-handout-config.py (C20) が含まれることを照合する",
+      "expected": "実在し、C20 が委譲チェーンに含まれる"
+    },
+    {
+      "id": "AC-C08-3",
+      "how": "command 定義本文に round-trip の粒度 (比較対象射影の上での深い等価で判定し HTML バイト一致は課さない) と、復元範囲の 3 区分および境界が data-hb-* マーカーの有無で動くことが記述されているか読み取り確認する",
+      "expected": "両方が明記されている。かつ復元可否を固定リストとして断定していない (フィールド名の可否リストの正本は C20 側 1 箇所)"
+    },
+    {
+      "id": "AC-C08-5",
+      "how": "command 定義本文を診断コード表記 (E-EXTRACT- / E-ROUNDTRIP- / E-HTML- / W-EXTRACT-) と、C20 の preserved_exact / preserved_only_with_markers に載るフィールド名 (purpose / background / goal / lead_line / judgment_axis / glossary / lead / goal_chips / prerequisite_connectors / attainment_level 等) で grep する",
+      "expected": "コード ID 0 件。フィールド名は『復元できない』と断定する文脈では 0 件 (recovery_scope_canonicality の what_the_command_keeps に従い、性質のみを述べる)"
+    },
+    {
+      "id": "AC-C08-6",
+      "how": "round-trip 差分ありのシナリオと、必須フィールド復元不能のシナリオの 2 つを実行し、案内される構成データ JSON のパスと実際の書き出し有無を突合する",
+      "expected": "復元不能のときのみ部分成果物が存在しパスが案内される。差分ありのときは書き出されず、書き出されなかった事実が提示される (C20 fail_semantics と一致)"
+    },
+    {
+      "id": "AC-C08-7",
+      "how": "--out に既存ファイルがある状態で実行する",
+      "expected": "起動前に上書き可否が確認され、承諾なしには上書きされない。script 側に既存拒否が無いため、この確認が唯一の防波堤として機能していること"
+    },
+    {
+      "id": "AC-C08-4",
+      "how": "C07 / C09 の brief と責務を突き合わせ、逆抽出の責務がこの command にのみあり、生成 (C07) と検証 (C09) を兼ねていないことを確認する",
+      "expected": "責務の重複 0 件。生成は /handout-build への案内に留まる"
+    }
+  ],
+  "open_questions": [
+    "【P02-C08-01 で決着】extract-handout-config.py の --out に既存拒否フラグは無い。script-brief-C20.json#argv の --out は『復元した構成データ JSON の書き出し先。--html と同一 realpath なら exit 2。未指定時は書き出さず検査のみ行う』のみで、既存ファイルの有無を見る記述が無い (identifier `既存`・`overwrite`・`--force`、和文『上書き』で 0 件)。すなわち script は無条件上書きであり、上書き確認は command 側 (起動前の Read による存在確認と利用者への可否確認) が唯一の防波堤である。C20 側へフラグを足す案は採らない — 対話による確認は script の責務ではなく、決定論 script に対話経路を持ち込むと C29 の再現性検査が人間の応答に依存してしまうため",
+    "【P02-C08-01 で決着】round-trip 比較は script の --compare ではなく C02 skill の R3-roundtrip (再レンダリング比較) が行う。skill-brief-C02.json#responsibilities の R3-roundtrip が『確定した構成データを再レンダリングし、元 HTML との構成データ等価を判定して逆抽出レポートを返す』と定めており、C20 の --compare は比較対象の構成データを既に持っている場合の経路である。この command は R2-complete による補完後の構成データを比較したいので、補完前の抽出結果を比較する --compare では判定の意味が変わる。いずれにせよ command の契約は変わらない"
+  ],
+  "checklist_coverage_note": "P03-x-02 で C20 の checklist_covered (C20 / C27 / C29 / C74 副 / C75 副) と突合した結果を反映した。C74 / C75 は C20 が副として担う往復非破壊であり、利用者がそれを実際に走らせる口は本 command しか無いため副として宣言する。一方 C27 (scripts が Python 標準ライブラリのみに依存し新規 .sh/.js が 0 件) と C29 (同一構成データから 2 回生成した HTML がバイト一致) は script 実装そのものの性質に対する検査で、command は起動するだけで成立にも不成立にも寄与しない。起動口であることを理由に被覆を広げると『command を直せば C27 が緑になる』という誤った修正先を示すことになるため、この 2 件は意図的に含めない。被覆件数が C09 の 12 件より少ないのは過少宣言ではなく、C09 が 4 本のゲートを束ねる口であるのに対し本 command が単一 script の口であることの反映である / 【P02-c08-checklist-coverage で追記】除外した 2 件の担当を明示する: C27 (Python 標準ライブラリのみ・新規 .sh/.js 0 件) と C29 (2 回生成した HTML のバイト一致) の担当はいずれも C20 extract-handout-config.py の実装であり、修正先は script-brief-C20.json#checklist_covered が宣言する C20 側である。 / 委譲先 C02 側の被覆については分割すべき項目が存在しない: skill-brief-C02.json の checklist_covered は null であり (実測)、C02 は checklist 項目を 1 件も宣言していない。したがって本 command が『C02 の分のうち自分が担う分』として列挙できるものは無く、ここで C02 の代わりに項目を立てない — 起動口である本 command が委譲先の被覆を代理宣言すると、C02 を直すべき不足が C08 の宣言だけで埋まったように見え、被覆の空白が隠れる。C02 が checklist_covered を持たないこと自体は C02 側で解消されるべき欠落であり、本 command の宣言範囲外である。"
+}

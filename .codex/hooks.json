@@ -12,6 +12,17 @@
         "matcher": "manual|auto"
       }
     ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event PostToolUse --host codex # harness-managed:hook-router:PostToolUse",
+            "type": "command"
+          }
+        ],
+        "matcher": "apply_patch|exec_command|shell_command"
+      }
+    ],
     "PreCompact": [
       {
         "hooks": [
@@ -24,6 +35,27 @@
         "matcher": "manual|auto"
       }
     ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event PreToolUse --host codex # harness-managed:hook-router:PreToolUse",
+            "type": "command"
+          }
+        ],
+        "matcher": "apply_patch|exec_command|shell_command"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event SessionEnd --host codex # harness-managed:hook-router:SessionEnd",
+            "type": "command"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "hooks": [
@@ -34,6 +66,25 @@
           }
         ],
         "matcher": "startup|resume|clear"
+      },
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event SessionStart --host codex # harness-managed:hook-router:SessionStart",
+            "type": "command"
+          }
+        ],
+        "matcher": "clear|resume|startup"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event Stop --host codex # harness-managed:hook-router:Stop",
+            "type": "command"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -42,6 +93,14 @@
           {
             "command": "bd codex-hook UserPromptSubmit",
             "statusMessage": "Refreshing Beads context",
+            "type": "command"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "command": "python3 \"plugins/harness-creator/scripts/hook-router.py\" --event UserPromptSubmit --host codex # harness-managed:hook-router:UserPromptSubmit",
             "type": "command"
           }
         ]

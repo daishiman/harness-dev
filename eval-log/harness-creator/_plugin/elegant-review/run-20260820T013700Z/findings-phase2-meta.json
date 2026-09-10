@@ -1,0 +1,527 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/harness-creator",
+    "reviewed_at": "2026-08-20T01:37:00Z"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "process lens と独立に、state enum だけで transition relation が正本化されていないことを engine:544-597 で確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "状態契約と promote 実装が矛盾する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "状態名自体は揃う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "共通遷移検証器がない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "mutation が遷移元に依存しない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.34,
+      "reusable_abstraction": "state enum と allowed transitions を分離せず一つの状態機械契約として持つ。",
+      "template_variables": [
+        "{{status_graph}}",
+        "{{terminal_statuses}}"
+      ],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "明示 restore command と独立監査 event がある場合は終端からの復帰を許可できる。"
+      ],
+      "re_audit_trigger": "status/restore command 変更時"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "auto-record-lesson.py:123-173 の instance hint が engine:85-90 の identity に混入する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "同一入力への fingerprint は決定論的。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "instance hint と root-cause key が分離されない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "具体値→抽象キーの契約と整合しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "adapter の self-relative engine 依存は正しい。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.46,
+      "reusable_abstraction": "instance hint は source trace、root-cause key は identity として分離する。",
+      "template_variables": [
+        "{{instance_hint}}",
+        "{{root_cause_key}}"
+      ],
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "対象固有 path 自体が根本原因の場合は identity に残す。"
+      ],
+      "re_audit_trigger": "fingerprint/hint 変更時"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        ".claude-plugin/plugin.json:88 は PostToolUseFailure を使うが capability-manifest.schema.json:132 の event enum にない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "実装 event と生成 schema 語彙が矛盾する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "必要 event が schema に欠落する。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "自己改善が次の生成規範へ戻っていない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugin-composition は両 hook を列挙する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "今回必要となった failure hook を次の CapabilityManifest が表現できない。",
+          "recommended_intervention": "PostToolUseFailure を schema event enum へ追加し、manifest・settings builder・tests と同期する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json",
+            "line": 132
+          },
+          "root_cause": "個別 hook 改善と生成規範更新が別工程になっている。"
+        }
+      ],
+      "score": 0.29,
+      "reusable_abstraction": "runtime event 追加時に schema と generator を同一変更で追従させる。",
+      "template_variables": [
+        "{{implemented_events}}",
+        "{{schema_events}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "product が failure event を提供しない場合は product 別 adapter 語彙にする。"
+      ],
+      "re_audit_trigger": "hook event/schema 変更時"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "possible_duplicate に対し pending event、auto-merge+split、quarantine entry、retry queue、event-only inbox、force-new quarantine の6案を検討し、event-only pending view が最小と判定した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "曖昧類似を無理に merge しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "pending observation 永続化がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "exit 3 の CLI 契約は文書と合う。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "無人 hook は解決者へ payload を渡せない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "eval-log",
+          "description": "自動 hook の曖昧重複が durable state に残らず解決待ちから消える。",
+          "recommended_intervention": "PENDING_RESOLUTION event と有界 pending view を追加し merge/force-new 解決と接続する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+            "line": 440
+          },
+          "root_cause": "対話 CLI の exit 3 契約を無人 adapter にそのまま適用した。"
+        }
+      ],
+      "score": 0.41,
+      "reusable_abstraction": "曖昧判定は破棄せず解決待ち監査 event として隔離する。",
+      "template_variables": [
+        "{{similarity_band}}",
+        "{{pending_store}}"
+      ],
+      "reuse_surface": "governance-log",
+      "negative_cases": [
+        "高機密モードでは内容でなく匿名件数だけを残す。"
+      ],
+      "re_audit_trigger": "similarity threshold/adapter exit 変更時"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "build-external-intelligence.py:187-205 の O_EXCL sentinel は owner liveness・TTL・stale recovery を持たない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "通常中の同時 writer は排他できる。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "stale lock recovery がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "durable state の crash recovery 契約がない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "残留 lock に全 mutation が依存し停止する。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "SIGKILL 等で .write.lock が残ると以後の writer が恒久停止する。",
+          "recommended_intervention": "PID/host/created_at を持つ lease と同一 host liveness/TTL による stale takeover を実装する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+            "line": 192
+          },
+          "root_cause": "sentinel file を crash-safe lock service と同一視した。"
+        }
+      ],
+      "score": 0.39,
+      "reusable_abstraction": "file lock は作成だけでなく lease と liveness を持つ。",
+      "template_variables": [
+        "{{lock_ttl_seconds}}",
+        "{{owner_liveness_probe}}"
+      ],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "kernel advisory lock が必ず解放される構成では lease を重ねない。"
+      ],
+      "re_audit_trigger": "lock/network filesystem 変更時"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "auto-record-lesson.py:193-211 は親操作を止めないが、engine timeout/corruption 時の観測を無記録で消す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "失敗を記憶する目的と自身配送失敗の消去が衝突する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "spool/retry/dead-letter/health counter がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "fail-soft の補償契約がない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "親 hook はブロックされない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "description": "adapter 自身の配送失敗を無音で消す。",
+          "recommended_intervention": "v1 は有界 health counter と診断を持ち、内容 spool は機密ポリシーにより opt-in にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
+            "line": 193
+          },
+          "root_cause": "非ブロック性を無状態の握り潰しで実装した。"
+        }
+      ],
+      "score": 0.33,
+      "reusable_abstraction": "hook SLA と観測配送保証を別契約にする。",
+      "template_variables": [
+        "{{hook_sla_ms}}",
+        "{{delivery_policy}}"
+      ],
+      "reuse_surface": "hook",
+      "negative_cases": [
+        "内容永続化が規制違反の場合は匿名 health metric に限定する。"
+      ],
+      "re_audit_trigger": "timeout/exit policy 変更時"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "object-store key の類推で、engine:639-647 の entry id に grammar/containment が必要と確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "内部生成 ID は安全。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "外部 --id の grammar がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "文書は entry-id の信頼境界を定義しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "path containment がない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.25,
+      "reusable_abstraction": "external ID を opaque key として文法検証し root containment も確認する。",
+      "template_variables": [
+        "{{entry_id_pattern}}",
+        "{{state_root}}"
+      ],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "ID が閉じた process 内だけで渡る場合は重い外部検証を省ける。"
+      ],
+      "re_audit_trigger": "id/import/export 変更時"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best=小規模では snapshot が単純、worst=観測10倍で履歴が二次増幅、edge=8秒 timeout で正常観測も消失する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "小規模の決定論復旧は単純。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "上限と移行 trigger が未定義。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "thin read と thick write の成長境界が不均衡。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "hook timeout への依存が規模で破綻しうる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.31,
+      "reusable_abstraction": "best/worst/edge を明示し event count 上限で再監査する。",
+      "template_variables": [
+        "{{best}}",
+        "{{worst}}",
+        "{{edge}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "厳格な小容量上限がある batch 用途では snapshot を維持できる。"
+      ],
+      "re_audit_trigger": "event数10倍/p95 latency上昇時"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "external-intelligence.md:51 の --owner-approved 例では誰が何を確認したかを記録できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "flag は必須だが意味主体は不明。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "承認者と証拠が promotion record にない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugin owner 情報と承認 CLI が接続されない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "target/falsifier/rollback は必須。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.44,
+      "reusable_abstraction": "human approval は boolean ではなく approver/evidence を監査記録に残す。",
+      "template_variables": [
+        "{{approver_identity}}",
+        "{{approval_evidence_ref}}"
+      ],
+      "reuse_surface": "governance-log",
+      "negative_cases": [
+        "単一利用者の非共有 local state では acknowledgement で十分な場合がある。"
+      ],
+      "re_audit_trigger": "owner/promotion policy 変更時"
+    }
+  ]
+}

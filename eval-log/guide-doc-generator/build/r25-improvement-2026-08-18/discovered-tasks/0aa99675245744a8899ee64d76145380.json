@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "本 cycle で初めて『出荷実装の方が正しく設計散文が古い』逆向きドリフトが 2 件検出された (C46 の slug 名指し / C49 の必須性欠落。出荷側は ATTR_MAX_ITEMS の属性駆動と REQUIRED_CONFIG_KEYS で既に正しい)。これまでの RG-01 / RG-02 / RG-04 / DT-1 はすべて『設計が正しく出荷が未追随』の順向きで、逆向きを検出する手段が無い。brief だけを読んで修正すると実装側を壊す方向の提案になる",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/",
+  "proposed_node": {
+    "id": "P05-x-66-reverse-drift-sweep",
+    "title": "実装から設計へ向けた逆向き突合を全 AC へ一度通す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/evidence/",
+    "acceptance_criterion": "全 component の AC について『出荷実装が brief より厳しい / 適用対象が広い』箇所を列挙した evidence が存在し、各件が順向き・逆向きのどちらのドリフトかで分類されている",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

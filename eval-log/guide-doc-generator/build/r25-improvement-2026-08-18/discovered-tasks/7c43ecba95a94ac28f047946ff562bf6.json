@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C10-01",
+  "reason": "TG-C05 (summarize-task-progress.py) を cycle build_dir に対して実行すると route_report_count=2 (route-build-contract.json / route-build-plan.json のみ) を返す。本 cycle で実際に生成された route-build-report 72 件は eval-log/guide-doc-generator/build/ 直下に flat 配置され、cycle dir r25-improvement-2026-08-18/ には 1 件も無い。よって TG-C05 の進捗サマリと TG-C08 の完了ゲートは route 証跡をゼロ件として扱い、route の成否 (success 71 / failure 1) が集計から丸ごと落ちる。しかも route 証跡が 0 件という状態自体はエラーにならないため、測っていないことに気づけない。単純な移動では解決しない: 各 report の inputs_consumed が eval-log/guide-doc-generator/build/route-C16.json 形式の flat パスで相互参照しており、移動すると依存宣言が全て dangling になる。書込側 (resolve_build_dir を使う route executor 群) が --cycle-id を受け取っていないか無視しているのが根因と推定され、書込側 flat と読込側 cycle-dir のどちらを正本にするかの裁定を要する。本 cycle が繰り返し検出してきた検査が空振りする族の、集計層での実例。",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/build-summary.json",
+  "proposed_node": {
+    "id": "P05-x-126-route-report-build-dir",
+    "title": "route-build-report の書込先を cycle build_dir へ統一し TG-C05/TG-C08 から可視化する",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/harness-creator/scripts/",
+    "acceptance_criterion": "route executor 群の書込先と TG-C05/TG-C08 の読込先が同一 build_dir を指すことを、route-build-report を 1 件生成したうえで TG-C05 の route_report_count が 0 でなく実数を返すことで実証する。既存 report の inputs_consumed 相互参照が dangling にならないことも同時に確認する。",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C10"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

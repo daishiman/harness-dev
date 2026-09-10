@@ -26,8 +26,8 @@
 ## Layer 3: インフラ層
 - **入力**: R1 の集約 JSON (`untriaged_entries` の完全 diff 集合)。
 - **決定論段**:
-  1. `python3 $CLAUDE_PLUGIN_ROOT/scripts/parse-spec-diff.py --stdin` — 集約 diff を stdin で渡し、`source_commit` / `base_commit` / `diff_sha256` を継承した hunks JSON 配列を得る。
-  2. `python3 $CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py --stdin` — hunks JSON を stdin で渡し、`artifact_kind` / `artifact_path` / `axis` / `name` / `type` / `required` / `enum` / `semantics` / `before` / `after` / `evidence` を持つ影響候補 JSON 配列を得る (`--map` 省略時は self-relative の写像表)。
+  1. `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/parse-spec-diff.py --stdin` — 集約 diff を stdin で渡し、`source_commit` / `base_commit` / `diff_sha256` を継承した hunks JSON 配列を得る。
+  2. `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/map-field-impact.py --stdin` — hunks JSON を stdin で渡し、`artifact_kind` / `artifact_path` / `axis` / `name` / `type` / `required` / `enum` / `semantics` / `before` / `after` / `evidence` を持つ影響候補 JSON 配列を得る (`--map` 省略時は self-relative の写像表)。
 - **ツール**: Bash (`python3` で C08→C09 をパイプ実行) / Read (中間 JSON の確認)。ネットワークなし。
 
 ## Layer 4: 共通ポリシー層

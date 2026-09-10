@@ -58,9 +58,9 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| elicitor agent | `$CLAUDE_PLUGIN_ROOT/agents/system-dev-plan-elicitor.md` | goal-spec 抽出委譲 |
-| feature-context schema | `$CLAUDE_PLUGIN_ROOT/schemas/feature-context.schema.json` | 入力 9 フィールド正本 |
-| package contract | `$CLAUDE_PLUGIN_ROOT/references/feature-execution-package-contract.md` | macro/micro 境界・非担当 |
+| elicitor agent | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/system-dev-plan-elicitor.md` | goal-spec 抽出委譲 |
+| feature-context schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/feature-context.schema.json` | 入力 9 フィールド正本 |
+| package contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/feature-execution-package-contract.md` | macro/micro 境界・非担当 |
 | feature-context (caller) | `--feature-context` の repo-relative JSON | feature identity/purpose/goal/scope/acceptance/refs |
 | confirmed system-spec (caller) | architecture_refs が指す caller repo 内 artifact | lineage 引用元 |
 

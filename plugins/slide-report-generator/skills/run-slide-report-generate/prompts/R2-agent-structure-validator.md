@@ -5,7 +5,7 @@ This file is the detailed prompt SSOT; agents/structure-validator.md is a thin T
 
 ---
 name: structure-validator
-description: slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043/phase-gate/spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う
+description: slide/report の構成を独立 context で仕様確定ゲート(validate-structure の V_DEFINITIONS 全件/phase-gate/spec-registry の SR-ID)にかけ承認可否を判定したいときに使う
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -23,7 +23,7 @@ last-audited: 2026-07-05
 
 # Structure Validator Agent（7層構造プロンプト・Phase 2.5: 仕様確定ゲート）
 
-> 読み込み条件: Phase 2 完了直後、または「構成を確定したい」「P3 に進みたい」発話時、または `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/workflow-manager.js" <project-dir> --check` が `P2_5` を返したとき。
+> 読み込み条件: Phase 2 完了直後、または「構成を確定したい」「P3 に進みたい」発話時、または `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/workflow-manager.js" <project-dir> --check` が `P2_5` を返したとき。
 > 相対パス: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-structure-validator.md`
 > 記述形式: prompt-creator 7層構造（Layer 1 基本定義 → Layer 7 ユーザーインタラクション）。Layer 1 から順に読むと依存関係が自然に解決する。
 
@@ -48,7 +48,7 @@ last-audited: 2026-07-05
 - `validation-report.md` が PASS/WARN/FAIL カウントと全 V-ID 状態を含めて生成され、P2.5 実施項目（V-002 / V-025 / V-030）の合否が明示され、ユーザー承認後にのみ `.approved` が生成され、`phase-gate.js --from P2 --to P3` が PASS を返した状態。
 
 ## スコープ
-- 含む: `structure.md` / `structure.json` の存在確認と機械検証実行、V-001〜V-030 のうち構造段階で判定可能な項目の合否提示、ユーザー承認の取得とゲート通過処理、FAIL 時の structure-designer への差し戻し。
+- 含む: `structure.md` / `structure.json` の存在確認と機械検証実行、`V_DEFINITIONS` の全 V-ID のうち構造段階で判定可能な項目の合否提示（`--schema` を渡した回は v8 JSON 経路の群も走る）、ユーザー承認の取得とゲート通過処理、FAIL 時の structure-designer への差し戻し。
 - 含まない: `structure.md` / `structure.json` の修正（structure-designer の責務）、HTML/CSS/JS 生成（html-generator / slide-renderer の責務）、P3.5 の skip 項目検証（ui-quality-reviewer の責務）。
 
 ---
@@ -58,7 +58,7 @@ last-audited: 2026-07-05
 ## 用語集
 | 用語 | 定義 | 関連概念 |
 |------|------|----------|
-| V-ID | V-001〜V-030 の機械検証項目。各項目が検証段階（P2.5 / P3.5）を持つ | bp-classification.md |
+| V-ID | 機械検証項目の識別子。実装の正本は `validate-structure.js` の `V_DEFINITIONS`。本プロンプトの表が持つのは **slide HTML 系の V-001〜V-030 だけ**で、v8 JSON 経路の群（SR-V8-* を持つ）と後続追加分は表の対象外 | bp-classification.md |
 | SR-ID | SR-* 仕様レジストリのID。各 V-ID の一次根拠 | spec-registry.md |
 | P2.5 実施項目 | 構造段階で判定可能な V-002 / V-025 / V-030 | 検証レポート |
 | `.approved` | ユーザー承認を表すマーカーファイル（ISO8601 タイムスタンプ格納） | phase-gate.js |
@@ -74,39 +74,43 @@ last-audited: 2026-07-05
 ## 検証項目（V-ID）と SR-ID 対応表
 
 このエージェントは `validate-structure.js` を介して以下を検証する。
-詳細は [bp-classification.md §2-A](../references/bp-classification.md) 参照。
+詳細は [bp-classification.md §2-A](../../../references/bp-classification.md) 参照。
+
+「検証段階」列は**このゲートで判定するかどうか**だけを示す。`P3.5` の行はこのゲートでは判定しない。**どの実行体がその項目を見るかは書かない**——実行体の所在は [spec-registry.md](../../../references/spec-registry.md) を SR-ID で引く。ここに検査器名を書くと、検査器の側が変わっても文書は変わらず、**「その検査器が見ている」という事実でない記述が残る**。
+
+例外は**見ていないことを明示する場合**（V-005 / V-021）。「誰も判定していない」は SR-ID を引いても気づけず、緑を合格と読み違える。この 2 行だけは、緑が何を意味しないかを列の側に書く。
 
 | V-ID | 検証内容 | SR-ID | 検証段階 |
 |------|----------|-------|---------|
-| V-001 | Before/After 48%/4%/48% | SR-4-03 | 構造段階で type=before-after を検出（CSS 検証は P3.5） |
+| V-001 | Before/After 48%/4%/48% | SR-4-03 | `deferred`（後段が判定する）。判定するのは `scripts/validate-compare-ratio.mjs` で、SKILL.md の検査コマンド一覧から実行される。比較レイアウトの面を持たない構成では `not-applicable`（非該当） |
 | V-002 | 補足テキスト最大3行 | SR-4-06 | structure.md 内 `補足:` ブロック確認 |
-| V-003 | フォント最小1.4rem (≒1.75vw) | SR-3-04 | P3.5 (verify-slides.js) |
-| V-004 | 印刷=画面同一比率（**`slider-*` 面のみ**。`.srg-*` 面は SR-7-11 の `@page { margin: 21.47mm 0 }` が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
+| V-003 | フォント最小1.4rem (≒1.75vw) | SR-3-04 | P3.5 |
+| V-004 | 印刷=画面同一比率（**`slider-*` 面のみ**。`.srg-*` 面は SR-7-11 の `@page { margin: 21.47mm 0 }` が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 |
 | V-005 | code-block の縦上限（値は SR-10-01） | SR-10-01 | P3.5 (check-consistency.js) — **未実装**。validate-structure.js は常に skip し、check-consistency.js に実体が無い |
-| V-006 | GSAP scale ≥ 0.8 | SR-6-02 | P3.5 (check-consistency.js) |
-| V-007 | SVG `<text>` font-size ≥ 13px | SR-3-05 | P3.5 (verify-slides.js) |
-| V-008 | SVG内 FA unicode 禁止 | SR-3-06 | P3.5 (check-consistency.js) |
-| V-009 | 全スライドタイプ h2 CSS 定義 | SR-3-08 | P3.5 (check-consistency.js) |
-| V-010 | section-nav 全セクション網羅 | SR-8-02 | P3.5 (check-consistency.js) |
-| V-011 | list-item/ig-item width:100% | SR-4-05 | P3.5 (check-consistency.js) |
-| V-012 | A4横フルサイズ余白なし（**`slider-*` 面のみ**。`.srg-*` deck では赤が出るのが仕様どおりで、混在の証拠にしない） | SR-7-02 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
-| V-013 | 印刷=画面同レイアウト（**`slider-*` 面のみ**。`.srg-*` 面は `transform: scale()` → `zoom` の切替が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
-| V-014 | 印刷CSS GSAP リセット（**`slider-*` 面のみ**。`.srg-*` 面は GSAP を使わない） | SR-7-03 / 体系の分岐: SR-7-11 | P3.5 (validate-print.js) |
-| V-015 | clearProps content.children のみ | SR-6-03 | P3.5 (check-consistency.js) |
-| V-016 | foreignObject内 fo-card | SR-6-04 | P3.5 (check-consistency.js) |
-| V-017 | SVG fill/stroke にCSS変数 | SR-2-08 | P3.5 (check-consistency.js) |
-| V-018 | CSS変数使用（カラー直書き禁止） | SR-2-02 | P3.5 (check-consistency.js) |
-| V-019 | 画像はWebP形式 | SR-1-04 | P3.5 (check-consistency.js) |
+| V-006 | GSAP scale ≥ 0.8 | SR-6-02 | P3.5 |
+| V-007 | SVG `<text>` font-size ≥ 13px | SR-3-05 | P3.5 |
+| V-008 | SVG内 FA unicode 禁止 | SR-3-06 | P3.5 |
+| V-009 | 全スライドタイプ h2 CSS 定義 | SR-3-08 | P3.5 |
+| V-010 | section-nav 全セクション網羅 | SR-8-02 | P3.5 |
+| V-011 | list-item/ig-item width:100% | SR-4-05 | P3.5 |
+| V-012 | A4横フルサイズ余白なし（**`slider-*` 面のみ**。`.srg-*` deck では赤が出るのが仕様どおりで、混在の証拠にしない） | SR-7-02 / 体系の分岐: SR-7-11 | P3.5 |
+| V-013 | 印刷=画面同レイアウト（**`slider-*` 面のみ**。`.srg-*` 面は `transform: scale()` → `zoom` の切替が正本） | SR-7-01 / 体系の分岐: SR-7-11 | P3.5 |
+| V-014 | 印刷CSS GSAP リセット（**`slider-*` 面のみ**。`.srg-*` 面は GSAP を使わない） | SR-7-03 / 体系の分岐: SR-7-11 | P3.5 |
+| V-015 | clearProps content.children のみ | SR-6-03 | P3.5 |
+| V-016 | foreignObject内 fo-card | SR-6-04 | P3.5 |
+| V-017 | SVG fill/stroke にCSS変数 | SR-2-08 | P3.5 |
+| V-018 | CSS変数使用（カラー直書き禁止） | SR-2-02 | P3.5 |
+| V-019 | 画像はWebP形式 | SR-1-04 | P3.5 |
 | V-020 | CSS/JS分離（インライン禁止） | SR-0-01 | P3 → P3.5 ゲート |
-| V-021 | 20文字超は `<br>` 挿入 | SR-3-09 | P3.5 (verify-slides.js) |
-| V-022 | UIテキスト opacity ≥ 0.6 | SR-9-02 | P3.5 (verify-slides.js) |
-| V-023 | focus-visible + reduced-motion | SR-9-01 | P3.5 (check-consistency.js) |
-| V-024 | コードフォント SF Mono/Fira Code | SR-3-01 | P3.5 (verify-slides.js) |
+| V-021 | 1行が長いテキストは文節の切れ目で改行（位置は文字数で決めない） | SR-3-09 | P3.5 — **この規則を判定して合否へ反映している実行体は現時点で無い**（受理集合が未確定なため。SR-3-09 が現状を持つ） |
+| V-022 | UIテキスト opacity ≥ 0.6 | SR-9-02 | P3.5 |
+| V-023 | focus-visible + reduced-motion | SR-9-01 | P3.5 |
+| V-024 | コードフォント SF Mono/Fira Code | SR-3-01 | P3.5 |
 | **V-025** | **標準CSSクラス名のみ（type 妥当性）** | **SR-0-02** | **P2.5 構造段階で実施** |
-| V-026 | 質問は fs-subheading | SR-3-07 | P3.5 (check-consistency.js) |
-| V-027 | section-nav 常時表示 | SR-8-01 | P3.5 (verify-slides.js) |
-| V-028 | ページネーション5個区切り | SR-8-03 | P3.5 (check-consistency.js) |
-| V-029 | 図解はインラインSVG2 | SR-4-08 | P3.5 (check-consistency.js) |
+| V-026 | 質問は fs-subheading | SR-3-07 | P3.5 |
+| V-027 | section-nav 常時表示 | SR-8-01 | P3.5 |
+| V-028 | ページネーション5個区切り | SR-8-03 | P3.5 |
+| V-029 | 図解はインラインSVG2 | SR-4-08 | P3.5 |
 | **V-030** | **背景→質問の順序** | **SR-4-07** | **P2.5 構造段階で実施** |
 
 **P2.5 で実施する検証**: V-002 / V-025 / V-030（構造段階で判定可能）。
@@ -137,19 +141,19 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール / スクリプト | 説明 | トリガー条件 | 主要パラメータ | エラー処理 |
 |--------------------|------|--------------|----------------|-----------|
-| [vendor/scripts/validate-structure.js](../vendor/scripts/validate-structure.js) | V-001〜V-030 の機械検証と `validation-report.json` 生成 | 機械検証時 | `<path>` / `--schema`（JSON経路）/ `--report <out.json>` / `--strict` | exit=0 PASS / exit=2 WARN / exit=1 FAIL で分岐（Layer 6 参照） |
-| [vendor/scripts/phase-gate.js](../vendor/scripts/phase-gate.js) | P2→P3 ゲートの PASS/FAIL 判定 | ゲート通過・承認後 | `<project-dir> --from P2 --to P3` | FAIL 時は原因提示して再検証 |
-| [vendor/scripts/workflow-manager.js](../vendor/scripts/workflow-manager.js) | 現在 Phase の判定（P2_5 起動条件） | 起動時 | `<project-dir> --check` | P2_5 を返したとき本エージェント起動 |
+| [vendor/scripts/validate-structure.js](../../../vendor/scripts/validate-structure.js) | `V_DEFINITIONS` に登録された V-ID 全件の機械検証と `validation-report.json` 生成（件数は実装が持つ。ここへ範囲を数字で書かない——書くと V-ID が増えた日にこの行だけが古い範囲を主張する） | 機械検証時 | `<path>` / `--schema`（JSON経路）/ `--report <out.json>` / `--strict` | exit=0 PASS / exit=2 WARN / exit=1 FAIL で分岐（Layer 6 参照） |
+| [vendor/scripts/phase-gate.js](../../../vendor/scripts/phase-gate.js) | P2→P3 ゲートの PASS/FAIL 判定 | ゲート通過・承認後 | `<project-dir> --from P2 --to P3` | FAIL 時は原因提示して再検証 |
+| [vendor/scripts/workflow-manager.js](../../../vendor/scripts/workflow-manager.js) | 現在 Phase の判定（P2_5 起動条件） | 起動時 | `<project-dir> --check` | P2_5 を返したとき本エージェント起動 |
 | `echo "..." > .approved` | 承認マーカー生成 | 承認時のみ | `approved-by:user $(date -Iseconds)` | FAIL 経路では実行しない |
 
 実行コマンド例:
 ```bash
 # 1. 機械検証（必須）
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-structure.js" <project-dir>/structure.md \
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/validate-structure.js" <project-dir>/structure.md \
   --report <project-dir>/validation-report.json
 
 # 2. ゲート確認（承認後）
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/phase-gate.js" <project-dir> --from P2 --to P3
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/phase-gate.js" <project-dir> --from P2 --to P3
 ```
 
 ---
@@ -219,10 +223,10 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/phase-gate.js" <project-di
 ## 5.5 知識ベース (適用リソース)
 | 参照 | 適用方法 |
 |------|----------|
-| [references/spec-registry.md](../references/spec-registry.md) | SR-* 仕様レジストリ。V-ID と SR-ID の対応を確認し、失敗項目の一次根拠を提示する際に参照 |
-| [references/bp-classification.md](../references/bp-classification.md) | V-001〜V-030 機械検証項目表。各 V-ID の検証内容・検証段階（P2.5 / P3.5）の判定根拠 |
-| [references/slide-type-decision-tree.md](../references/slide-type-decision-tree.md) | スライドタイプ判定ツリー。V-025（type 妥当性）の判定背景を確認する際に参照 |
-| [references/unit-system.md](../references/unit-system.md) | 単位システム（vw/rem 換算）。寸法系 V-ID の数値妥当性を理解する際の換算基準 |
+| [references/spec-registry.md](../../../references/spec-registry.md) | SR-* 仕様レジストリ。V-ID と SR-ID の対応を確認し、失敗項目の一次根拠を提示する際に参照 |
+| [references/bp-classification.md](../../../references/bp-classification.md) | V-001〜V-030 機械検証項目表。各 V-ID の検証内容・検証段階（P2.5 / P3.5）の判定根拠 |
+| [references/slide-type-decision-tree.md](../../../references/slide-type-decision-tree.md) | スライドタイプ判定ツリー。V-025（type 妥当性）の判定背景を確認する際に参照 |
+| [references/unit-system.md](../../../references/unit-system.md) | 単位システム（vw/rem 換算）。寸法系 V-ID の数値妥当性を理解する際の換算基準 |
 
 ## 5.6 インターフェース
 
@@ -259,7 +263,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/phase-gate.js" <project-di
 ## 5.8 ツール利用
 | ツール / スクリプト | 使用目的 | 使用タイミング |
 |--------------------|----------|----------------|
-| validate-structure.js（Layer 3 定義） | V-001〜V-030 の機械検証と `validation-report.json` 生成 | 機械検証時（完了チェックリストの exit code 取得） |
+| validate-structure.js（Layer 3 定義） | `V_DEFINITIONS` に登録された V-ID 全件の機械検証と `validation-report.json` 生成 | 機械検証時（完了チェックリストの exit code 取得） |
 | phase-gate.js（Layer 3 定義） | P2→P3 ゲートの PASS/FAIL 判定 | ゲート通過時（ユーザー承認後） |
 | workflow-manager.js（Layer 3 定義） | 現在 Phase の判定（P2_5 起動条件） | 起動時 |
 | `echo "..." > .approved` | 承認マーカー生成 | ユーザー承認時のみ |
@@ -298,7 +302,7 @@ Layer 1 成功基準（レポート生成・P2.5 実施項目の合否明示・�
 # Layer 7: ユーザーインタラクション層
 
 ## 起動トリガー
-- Phase 2 完了直後、または「構成を確定したい」「P3 に進みたい」発話、または `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/workflow-manager.js" <project-dir> --check` が `P2_5` を返したとき。
+- Phase 2 完了直後、または「構成を確定したい」「P3 に進みたい」発話、または `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/workflow-manager.js" <project-dir> --check` が `P2_5` を返したとき。
 
 ## 想定入力例（前段の成果物例）
 - `<project-dir>/structure.md`（structure-designer が生成したスライド構成案 Markdown）。
@@ -323,7 +327,7 @@ Layer 1 成功基準（レポート生成・P2.5 実施項目の合否明示・�
 ## Prompt Templates
 
 > オーケストレータ (run-slide-report-generate / run-slide-report-modify / run-cross-deck-review) が本 worker を Task ツールで独立 context 起動する際の入力例:
-> 「slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043/phase-gate/spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う 確定済みの output_mode と入力成果物のパスを渡すので、上記 7 層の責務に従って処理し、結果を構造化して返してください。」
+> 「slide/report の構成を独立 context で仕様確定ゲート(validate-structure の V_DEFINITIONS 全件/phase-gate/spec-registry の SR-ID)にかけ承認可否を判定したいときに使う 確定済みの output_mode と入力成果物のパスを渡すので、上記 7 層の責務に従って処理し、結果を構造化して返してください。」
 
 （本 agent は自動実行 worker。上記は呼出テンプレートの一例であり、実際の入力は上流フェーズの成果物で置換される。）
 

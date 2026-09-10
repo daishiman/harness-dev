@@ -79,6 +79,7 @@ KNOWLEDGE_SCRIPTS = (
     "build_index.py",
     "record_usage.py",
     "add_entry.py",
+    "build-external-intelligence.py",
 )
 
 # brief.goal_seek.engine=task-graph の生成先へ無改変コピーする checklist-graph
@@ -153,7 +154,7 @@ def derive_flags(brief: dict, cli_flags: dict | None = None) -> dict:
     """brief の非空フィールドから --with-* フラグ集合を純関数導出する。
 
     cli_flags は明示 opt-out (no_feedback_loop / skip_content_review /
-    no_goal_seek) と明示 opt-in の上書きのみ許す。
+    no_goal_seek)、stage/profile、明示 opt-in の上書きのみ許す。
     """
     cli = cli_flags or {}
     verification_profile = str(cli.get("verification_profile", "incremental")).strip()
@@ -161,6 +162,9 @@ def derive_flags(brief: dict, cli_flags: dict | None = None) -> dict:
         raise ValueError(
             "verification_profile must be incremental, exhaustive, or build-only"
         )
+    build_stage = str(cli.get("build_stage", "draft")).strip()
+    if build_stage not in {"draft", "release"}:
+        raise ValueError("build_stage must be draft or release")
     kind = str(brief.get("kind", "")).strip()
     prompt_policy = str(brief.get("prompt_creator_policy", "")).strip().lower()
     responsibilities = brief.get("responsibilities") or []
@@ -175,6 +179,7 @@ def derive_flags(brief: dict, cli_flags: dict | None = None) -> dict:
         "feedback_loop_deploy": not cli.get("no_feedback_loop", False),
         "content_review": not cli.get("skip_content_review", False),
         "verification_profile": verification_profile,
+        "build_stage": build_stage,
     }
     # 明示 opt-in 上書き (brief に無くても CLI で足す運用を許容)
     for key in ("with_prompts", "with_evaluator", "with_hooks", "with_subagent", "with_knowledge"):
@@ -643,6 +648,7 @@ def _self_test() -> int:
     assert plan["flags"]["with_subagent"] is True
     assert plan["flags"]["with_goal_seek"] is True
     assert plan["flags"]["feedback_contract_required"] is True
+    assert plan["flags"]["build_stage"] == "draft"
     ids = {d["id"] for d in plan["required_deliverables"]}
     assert {"prompt:R1", "prompt:R2", "knowledge-dir", "evaluator-pair", "subagent"} <= ids
     assert "目的と出力契約" in plan["required_sections"]
@@ -744,6 +750,7 @@ def main(argv: list[str]) -> int:
     skill_dir = _opt("--skill-dir")
     out = _opt("--out")
     cli_flags_raw = _opt("--flags")
+    build_stage = _opt("--stage")
 
     bp = Path(brief_path)
     if not bp.exists():
@@ -754,7 +761,9 @@ def main(argv: list[str]) -> int:
         return 0
     try:
         brief = _load_brief(bp)
-        cli_flags = json.loads(cli_flags_raw) if cli_flags_raw else None
+        cli_flags = json.loads(cli_flags_raw) if cli_flags_raw else {}
+        if build_stage is not None:
+            cli_flags["build_stage"] = build_stage
     except (json.JSONDecodeError, OSError) as exc:
         print(f"invalid input: {exc}", file=sys.stderr)
         return 2

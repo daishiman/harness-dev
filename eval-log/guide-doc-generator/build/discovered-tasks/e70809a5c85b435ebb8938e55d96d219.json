@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C01-01",
+  "reason": "tests/run-handout-build/reject_cases.py:110-114 の non-interactive-path-blocked が恒久的に検出不能。contract_lib.py:423-427 の AC-C01-19 検出条件は body 全体への部分文字列一致だが、reject 置換は fixtures/accept/.../SKILL.md:111 の 1 行しか書き換えないため、別箇所に残る『入力: 題材と素材、または検証済みの構成データ。』と見出し『## ヒアリングと非対話経路』が両条件を満たしてしまう。述語が緩すぎて reject fixture を違反状態にできない欠陥で、C01 の実装内容によらず赤のまま",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/run-handout-build/reject_cases.py",
+  "proposed_node": {
+    "id": "P05-x-14",
+    "title": "AC-C01-19 の reject fixture が検出可能になるよう述語か置換範囲を直す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/run-handout-build",
+    "acceptance_criterion": "run-handout-build スイートが Ran 48 / OK になる。かつ受入 fixture (無置換) では AC-C01-19 が発火しないこと (reject 側だけを通すために述語を無効化していないことの確認)。修正方向は検出条件を節スコープへ限定するか、reject の置換範囲を該当宣言の全出現へ広げるか",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-14.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/run-handout-build/reject_cases.py"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "独立設計レビュー (P03-x-01) が責務重複 6 件と宣言・実態の辺の乖離 2 件を検出したが (Y-01..Y-09・blocking 3 / high 2)、これを解消する作業ノードが task-graph に存在しない。P03-x-02 は P02 由来の命名の割れ (X-01..X-08) 専用の leaf であり本指摘を write_scope に含めても acceptance_criterion が対応しない。仕様側の欠落。 / 受理経路: produces は briefs/ ディレクトリ自体だと P03-x-02 と producer 衝突するため固有成果物 briefs/RESOLUTION-P03.md (指摘ごとの解消記録) へ割り当てた。順序保証として P04 の全 24 spec の depends_on へ P03-x-03 を追加し derive-task-graph.py (単一 writer) で再導出した。resulting_graph_hash は再導出後の最終 hash。",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P03.json",
+  "proposed_node": {
+    "id": "P03-x-03",
+    "title": "独立レビュー指摘 Y-01..Y-09 を単一 writer で解消する",
+    "phase_ref": "P03",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/",
+    "acceptance_criterion": "evidence/P03.json の findings Y-01..Y-09 のうち blocking/high 全件が解消され、外部参照検査・絵文字検査・ゲート結果集約がそれぞれ単一の実装に帰属し、出力ディレクトリ同梱物の全てに writer が一意に割り当たり、部品 id 語彙と用途語彙の slug 対応がそれぞれ単一の正本を持つ",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P03-x-03.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P03.md"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/evidence/P03.json"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P03"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:50abb7ce784a052fb756cb9edaa0bc8b212adb035e32fac8997b454a57776aa0"
+}

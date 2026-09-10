@@ -58,7 +58,11 @@ def _resolve_hook_map(plugin_root: Path, hooks: object) -> dict:
 
 
 def _hook_scripts() -> list[Path]:
-    """全 plugin.json の hooks[] に配線された command script の絶対パスを集める。"""
+    """Claude が実際にロードする hook command script の絶対パスを集める。
+
+    Claude Code は ``hooks/hooks.json`` を標準位置から自動検出する。manifest の
+    ``hooks`` が省略されていても、この標準ファイルが存在すれば検査対象に含める。
+    """
     scripts: list[Path] = []
     for pj in sorted(ROOT.glob("plugins/*/.claude-plugin/plugin.json")):
         plugin_root = pj.parent.parent  # plugins/<plugin>/
@@ -66,13 +70,20 @@ def _hook_scripts() -> list[Path]:
             data = json.loads(pj.read_text(encoding="utf-8"))
         except Exception:
             continue
-        hook_map = _resolve_hook_map(plugin_root, data.get("hooks"))
+        hooks = data.get("hooks")
+        if hooks is None and (plugin_root / "hooks" / "hooks.json").is_file():
+            hooks = "./hooks/hooks.json"
+        hook_map = _resolve_hook_map(plugin_root, hooks)
         for _ev, matchers in hook_map.items():
             for m in matchers or []:
                 for h in m.get("hooks", []) or []:
                     cmd = h.get("command", "") or ""
-                    # $CLAUDE_PLUGIN_ROOT と ${CLAUDE_PLUGIN_ROOT} の両記法を拾う。
-                    mm = re.search(r"\$\{?CLAUDE_PLUGIN_ROOT\}?/(\S+?\.py)", cmd)
+                    # Claude単独rootとClaude/Codex共通dual-rootの全正規形を拾う。
+                    mm = re.search(
+                        r"(?:\$\{PLUGIN_ROOT:-\$\{CLAUDE_PLUGIN_ROOT\}\}|"
+                        r"\$\{CLAUDE_PLUGIN_ROOT\}|\$CLAUDE_PLUGIN_ROOT)/(\S+?\.py)",
+                        cmd,
+                    )
                     if not mm:
                         continue
                     p = plugin_root / mm.group(1)

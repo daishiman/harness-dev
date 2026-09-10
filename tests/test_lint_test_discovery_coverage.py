@@ -56,9 +56,7 @@ GOOD_CI = """jobs:
   verify:
     steps:
       - run: python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q
-      - run: |
-          root = Path("plugins")
-          subprocess.run([sys.executable, "-m", "pytest", *args, "-q"], cwd=test_root)
+      - run: python3 scripts/validate-plugin-test-roots.py --workers 4
 """
 
 
@@ -233,3 +231,10 @@ class TestRealRepoIntegration:
 
     def test_real_repo_module_orphans_empty(self):
         assert DRT.orphan_test_files(ROOT) == []
+
+    def test_real_workflow_uses_extracted_bounded_runner(self):
+        workflow = (
+            ROOT / ".github" / "workflows" / "harness-creator-kit-ci.yml"
+        ).read_text(encoding="utf-8")
+        assert "python3 scripts/validate-plugin-test-roots.py --workers 4" in workflow
+        assert "python3 - <<'PY'" not in workflow

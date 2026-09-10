@@ -101,45 +101,83 @@ function escapeXml(s) {
  * という構造であって、色そのものではない。
  */
 const TOKENS = {
-  /** カード地・不透明マスク。既存ビルダーの白カードと同一 */
-  paper: '#FFFFFF',
-  /** 副次的な面。既存 buildVs の項目行と同一 */
-  paper2: '#F8F7F0',
+  /** カード地・不透明マスク。面の地と同一にし、カード境界は輪郭で示す */
+  paper: '#F7F6F3',
+  /** 副次的な面。従属関係だけを示す最も淡い濃度段 (tone1) */
+  paper2: '#E1E6EA',
+  /**
+   * 塗りとして紙と区別できる唯一の中間濃度 (tone2)。
+   *
+   * 紙 -> tone2 -> muted -> ink の 4 段が、隣接する塗りとして見分けられる全て。
+   * tone1 は紙とのコントラスト比 1.16、tone3 は muted との比 1.10 で、**隣に
+   * 置くと同じ濃さに見える**ため段として数えない。塗りで区別したいときは
+   * ここを使い、足りなければ色でなく輪郭と線種へ逃がす。
+   */
+  tone2: 'var(--wave-aqua, #9BADBF)',
   /** 主テキスト・主ストローク */
-  ink: 'var(--fg, #43436c)',
-  /** 副次テキスト・既定の矢印ストローク */
-  muted: 'var(--fg-dim, #54546d)',
-  /** 補助ラベル */
-  soft: 'var(--fuji-gray, #8a8980)',
-  /** ヘアライン。既存 buildVs のボーダーと同一 */
-  rule: '#DCD7BA',
-  ruleSolid: 'var(--fuji-gray, #8a8980)',
-  /** 焦点 (1図解 1-2 件)。既存の強調色である桜ピンクを流用 */
-  accent: 'var(--sakura-pink, #D27E99)',
-  accentTint: 'rgba(210,126,153,0.14)',
-  /** フロー・接続。既存の全ビルダーが矢印に使っている波青を流用 */
-  link: 'var(--wave-blue, #7E9CD8)',
-  white: '#FFFFFF',
+  ink: 'var(--fg, #141412)',
+  /**
+   * 副次テキスト・補助ラベル・既定の矢印ストローク。ink 62% on paper。
+   *
+   * 同じ濃度を指す別名を 2 つ併置していたが、描画結果が完全に同一だったため、
+   * **呼び分けても図の上では 1 種類にしか見えない**状態だった。
+   * 名前が 2 つあること自体が「区別がある」という誤った主張になるため 1 本に寄せた。
+   * 大きさや線幅で区別したいときは、色でなく font-size と STROKE を変える。
+   *
+   * 寄せ先は `--fg-muted` である。`--fg-dim` ではない。
+   * この濃度に**値を代入している**のは style-builder.cjs / render-report.js の
+   * `--fg-muted: <inkMuted>` の 1 行だけで、`--fg-dim: var(--fg-muted)` は
+   * そこから派生した別名にすぎない。**別名のほうへ寄せると、後で別名を消せなくなる**
+   * (消した瞬間に寄せ先が消えるため)。代入先の名前だけを参照する。
+   * fallback の #6A6A68 は SPEC.colors.inkMuted と同値で、assertDensity() が
+   * ink 62% on paper であることを式で確かめている。
+   */
+  muted: 'var(--fg-muted, #6A6A68)',
+  /** ヘアライン。ink 15% on paper */
+  rule: '#D5D4D1',
+  /** 焦点 (1図解 1-2 件)。アクセントは色ではなく地の反転で作るため ink */
+  accent: 'var(--sakura-pink, #141412)',
+  /** フロー・接続。主線に次ぐ濃度段 (tone3) */
+  link: 'var(--wave-blue, #4B6681)',
+  white: '#F7F6F3',
 };
 
 /**
- * 系列色。既存 svg-builder.cjs の COLOR_PALETTE と**同一の順序**を保つ
- * (色替えを起こさないため。順序を変えると既存スライドの見た目が変わる)。
+ * 系列色。既存 svg-builder.cjs の COLOR_PALETTE と**同一の順序・同一の変数名**を保つ
+ * (順序や変数名を変えると既存スライドの見た目が変わる)。変えたのは色値だけ。
+ *
+ * 色で区別してよいのは 3 段まで (単一色相 H210 の濃度段・S15-30%)。
+ * 4 系列目は地の反転 (ink) で作る。5 系列目以降は色で分けない。
+ *
+ * **この表は 4 枠しかない。** 以前は 5 枠あり、5 枠目は `--spring-violet` という
+ * 別名で書かれていたが、値は 1 枠目の `--wave-blue` と同じ `#4B6681` だった。
+ * 名前ごと 1 枠目へ寄せたあと、枠だけが残った。**同じ見た目を 2 枠から配れる表は、
+ * 呼び出し側に「2 通りある」と信じさせる**。実際に 2 枠を同時に取った図が
+ * 作られた日に、区別できない 2 系列が出る (D29 はまさにそれを鳴らしていた)。
+ * 供給を実際の通り数へ合わせるため、枠を落とした。
+ *
+ * 5 系列目が要る図は、色ではなく線幅 3 段 (1.25/2/3)・破線/実線・ラベルで分ける
+ * (VGCONST_004「階層は色でなく太さで作る」)。それでも足りないなら、増やすのは
+ * 符号ではなく減らすのは系列のほうである。
  */
 const SERIES = [
-  'var(--wave-blue, #7E9CD8)',
-  'var(--wave-aqua, #7FB4CA)',
-  'var(--sakura-pink, #D27E99)',
-  'var(--autumn-yellow, #DCA561)',
-  'var(--spring-violet, #957FB8)',
+  'var(--wave-blue, #4B6681)',
+  'var(--wave-aqua, #9BADBF)',
+  'var(--sakura-pink, #141412)',
+  'var(--autumn-yellow, #E1E6EA)',
 ];
 
-/** 旧 svg-builder との互換用エイリアス */
+/**
+ * 旧 svg-builder との互換用エイリアス。名は呼出し側の既存記述に合わせて残す。
+ * VAR_VIOLET は VAR_BLUE と**同じ値の別名**で、指す先も同じ枠になった
+ * (上記のとおり色相名を 1 本へ寄せ、余った枠を落としたため)。
+ * 新しい記述で VAR_VIOLET を使わないこと。増える区別は 1 つも無い。
+ */
 const VAR_BLUE = SERIES[0];
 const VAR_AQUA = SERIES[1];
 const VAR_PINK = SERIES[2];
 const VAR_YELLOW = SERIES[3];
-const VAR_VIOLET = SERIES[4];
+const VAR_VIOLET = SERIES[0];
 
 /**
  * 線幅トークン。役割ごとに階層を持たせ、全ビルダーがここを参照する。
@@ -153,20 +191,54 @@ const VAR_VIOLET = SERIES[4];
  *
  * 階層は「太さ = 情報の重要度」で読ませるためのもので、太さが 1 種類しか
  * ないと全部が同じ強さで主張して視線の順序が生まれない。
+ *
+ * 値は 3 段 (1.25 / 2 / 3) に閉じる。比は 1.6 と 1.5 で、縮小表示でも隣り合った
+ * 2 段が別の太さとして読める。以前は 2.5 / 2 / 1.5 / 1.25 の 4 値があったが、
+ * 2 と 1.5 は比 1.33 しかなく、**区別しているつもりで目には分かれていなかった**。
+ * 役割名は 6 つ残す (呼ぶ側が意図を書けるようにするため) が、落ちる先は 3 値だけ。
  */
 const STROKE = {
   /** 主コネクタ。図解の主張そのもの (フローの本線・矢印) */
-  primary: 2.5,
+  primary: 3,
   /** 副コネクタ。補足の流れ・戻り線 */
   secondary: 2,
-  /** ノードの輪郭 */
-  node: 1.5,
+  /** ノードの輪郭。主張ではないが構造なので中段に置く */
+  node: 2,
   /** 軸・基準線 */
   axis: 2,
   /** 補助罫・ゾーン境界・グリッド。これが最も細い許容値 */
   hairline: 1.25,
-  /** ゲージ等の帯 (線でなく面として読ませる) */
+  /** ゲージ等の帯 (線でなく面として読ませる。太さの階層ではない) */
   band: 24,
+};
+
+/**
+ * 破線語彙。**これが正本**。ここ以外に stroke-dasharray のリテラルを書かない。
+ *
+ * 語彙は 2 つだけ (実線を含めて 3 語彙)。周期 7 と 16 で比 2.29 あり、縮小表示でも
+ * 「細かい破線」と「長い破線」として読み分けられる。
+ *
+ * なぜ 2 つに閉じるか: 以前は 4,3 / 4,4 / 3,3 / 5,4 / 8,4 / 8,6 / 12,4 の 7 種が
+ * 正本なしに散在していた。4,3 (周期 7) と 4,4 (周期 8) は周期差 1 で肉眼では
+ * 同一に見える。**見分けられない 2 種類は 2 種類でなく 1 種類**なので、区別を
+ * 運んでいるつもりで何も運んでいない状態だった。畳んだ 4,4 / 3,3 / 5,4 が担って
+ * いた区別 (器・ライフライン・グリッド・非同期・双方向) は、罫色と矢印マーカーが
+ * 既に別の軸で運んでいるため、畳んでも情報は落ちない。
+ *
+ * 寸法の下限: 破線は輪郭を一周するので、1 辺でも 3 周期を割ればその辺は実線と
+ * 区別できない。fine は短辺 21 以上、long は短辺 48 以上の図形にだけ使う。
+ */
+const DASH = {
+  /** 細かい破線 (周期 7)。任意・非同期・外部 */
+  fine: '4,3',
+  /** 長い破線 (周期 16)。境界・囲い・参照線 */
+  long: '12,4',
+};
+
+/** DASH が要求する最小の短辺。3 周期を下限とする */
+const DASH_MIN_SIDE = {
+  fine: 21,
+  long: 48,
 };
 
 /**
@@ -207,22 +279,37 @@ function markerOverhangPx(strokeWidth = STROKE.primary) {
  * ノード種別 → 塗り/線の対応表。
  * diagram-design style-guide.md 「Node type → treatment」を、本ハーネスの
  * プレゼン用語彙 (塗りつぶしカード) と共存させた形で定義する。
+ *
+ * 7 種を分けているのは (塗り, 輪郭色, 線幅, 線種) の組であって、色相ではない。
+ * 旧版は塗りの透明度 0.02 / 0.03 / 0.05 で store / external / optional を分けて
+ * いたが、この 3 つは紙の上で同じ濃さに見えるため、**7 種のうち 3 種が実質
+ * 1 種**だった。組で分ける形へ移し、対ごとに何が区別を運ぶかを固定する。
+ *
+ *   focal    … 反転 (地とインクの入替)。ここだけ塗りが ink なので一意
+ *   store    … 唯一の有色塗り (tone2)
+ *   plain 対 input        … 輪郭色 ink 対 muted (コントラスト比 3.46)
+ *   optional 対 external  … 同上
+ *   plain 対 optional     … 実線 対 破線
+ *   boundary 対 optional  … 破線の周期 16 対 7 (比 2.29)
+ *
+ * 半透明 rgba() は使わない。印刷経路と画像化経路で合成結果が環境依存になり、
+ * 「画面では分かれているのに刷ると同じ」が起きる。値は solid で持つ。
  */
 const NODE_STYLES = {
-  /** 焦点 (1図解に 1-2 件まで) */
-  focal: { fill: TOKENS.accentTint, stroke: TOKENS.accent, strokeWidth: STROKE.secondary, text: TOKENS.ink },
-  /** 通常ノード: 白地 + ink 罫 (editorial grammar) */
-  plain: { fill: TOKENS.white, stroke: TOKENS.ink, strokeWidth: STROKE.node, text: TOKENS.ink },
-  /** 状態・保管 */
-  store: { fill: 'rgba(67,67,108,0.05)', stroke: TOKENS.muted, strokeWidth: STROKE.node, text: TOKENS.ink },
-  /** 外部システム */
-  external: { fill: 'rgba(67,67,108,0.03)', stroke: 'rgba(67,67,108,0.30)', strokeWidth: STROKE.node, text: TOKENS.muted },
-  /** 入力・利用者 */
-  input: { fill: 'rgba(84,84,109,0.10)', stroke: TOKENS.soft, strokeWidth: STROKE.node, text: TOKENS.ink },
-  /** 任意・非同期 */
-  optional: { fill: 'rgba(67,67,108,0.02)', stroke: 'rgba(67,67,108,0.20)', strokeWidth: STROKE.node, dash: '4,3', text: TOKENS.muted },
-  /** 境界・セキュリティ */
-  boundary: { fill: 'rgba(210,126,153,0.05)', stroke: 'rgba(210,126,153,0.50)', strokeWidth: STROKE.node, dash: '4,4', text: TOKENS.muted },
+  /** 焦点 (1図解に 1-2 件まで)。地とインクを入れ替えた反転ブロックで作る */
+  focal: { fill: TOKENS.ink, stroke: TOKENS.ink, strokeWidth: STROKE.secondary, text: TOKENS.paper },
+  /** 状態・保管。塗りで区別する唯一の種別 (紙と見分けられる中間濃度は tone2 だけ) */
+  store: { fill: TOKENS.tone2, stroke: TOKENS.ink, strokeWidth: STROKE.node, text: TOKENS.ink },
+  /** 通常ノード: 地 + ink 罫 (editorial grammar) */
+  plain: { fill: TOKENS.paper, stroke: TOKENS.ink, strokeWidth: STROKE.node, text: TOKENS.ink },
+  /** 入力・利用者。plain との区別は輪郭色 ink 対 muted (コントラスト比 3.46) */
+  input: { fill: TOKENS.paper, stroke: TOKENS.muted, strokeWidth: STROKE.node, text: TOKENS.ink },
+  /** 任意・非同期。plain との区別は細かい破線 */
+  optional: { fill: TOKENS.paper, stroke: TOKENS.ink, strokeWidth: STROKE.hairline, dash: DASH.fine, text: TOKENS.muted },
+  /** 外部システム。optional との区別は輪郭色 */
+  external: { fill: TOKENS.paper, stroke: TOKENS.muted, strokeWidth: STROKE.hairline, dash: DASH.fine, text: TOKENS.muted },
+  /** 境界・セキュリティ。optional / external との区別は破線の周期 (16 対 7) */
+  boundary: { fill: TOKENS.paper, stroke: TOKENS.muted, strokeWidth: STROKE.hairline, dash: DASH.long, text: TOKENS.muted },
 };
 
 /** 塗りつぶしカード (従来グラマー) の色から style を組み立てる */
@@ -824,9 +911,15 @@ function safeElbow(from, to, srcBox, dstBox, opts = {}) {
  *
  * 導出: 矢じりは markerUnits="strokeWidth" なので実寸は marker 座標 × 線幅。
  * 辺へ正対して入る矢の「辺に沿った見かけの幅」は MARKER.h × stroke-width で、
- * 主コネクタ (STROKE.primary) を最悪ケースとすると 6 × 2.5 = 15px。
- * これを 4px グリッドへ寄せて 16px を下限とする (snap(MARKER.h * STROKE.primary))。
+ * 主コネクタ (STROKE.primary) を最悪ケースとし、それを 4px グリッドへ寄せた値を
+ * 下限とする (snap(MARKER.h * STROKE.primary))。
  * 新しいマジックナンバーではなく MARKER / STROKE からの導出値。
+ *
+ * ここに計算後の数値を書かない。以前は「6 × 2.5 = 15px」「16px を下限とする」と
+ * 書いてあったが、STROKE.primary が 2.5 から 3 になった後もこの行だけ 16 のまま
+ * 残っていた。**式が正しく直っても、式の答えを書いた散文は一緒に動かない。**
+ * この行は constant-parity の照合対象ではないので、誰も鳴らさない。
+ * 実値が要るときは式ではなく `FAN_MIN_GAP` を評価して読む。
  */
 const FAN_MIN_GAP = snap(MARKER.h * STROKE.primary);
 
@@ -983,8 +1076,9 @@ function markerDefs(colors) {
 
 /**
  * 矢印マーカー定義。
- * 既定 (muted) / 焦点 (accent) / 外部 (link) / 補助 (soft) の 4 種を常に定義し、
+ * 既定 (muted) / 焦点 (accent) / 外部 (link) の 3 種を常に定義し、
  * 旧 svg-builder 互換の arrow-blue/pink/aqua/yellow/violet も併せて出力する。
+ * arrow-soft は arrow-muted と同色で、矢じりの形も同一だったため置いていない。
  * 形状は MARKER が正本 (stroke-width 1.2-3 に対して視認できる 8×6)。
  */
 function arrowMarkers(extraColors = []) {
@@ -992,7 +1086,6 @@ function arrowMarkers(extraColors = []) {
     muted: TOKENS.muted,
     accent: TOKENS.accent,
     link: TOKENS.link,
-    soft: TOKENS.soft,
     ink: TOKENS.ink,
     blue: VAR_BLUE,
     aqua: VAR_AQUA,
@@ -1006,7 +1099,7 @@ function arrowMarkers(extraColors = []) {
 
 /** 色から marker-end の url を得る (未知色は extraColors 経由で定義済みの前提) */
 function arrowUrl(color) {
-  const named = { [TOKENS.muted]: 'muted', [TOKENS.accent]: 'accent', [TOKENS.link]: 'link', [TOKENS.soft]: 'soft', [TOKENS.ink]: 'ink', [VAR_BLUE]: 'blue', [VAR_AQUA]: 'aqua', [VAR_PINK]: 'pink', [VAR_YELLOW]: 'yellow', [VAR_VIOLET]: 'violet' };
+  const named = { [TOKENS.muted]: 'muted', [TOKENS.accent]: 'accent', [TOKENS.link]: 'link', [TOKENS.ink]: 'ink', [VAR_BLUE]: 'blue', [VAR_AQUA]: 'aqua', [VAR_PINK]: 'pink', [VAR_YELLOW]: 'yellow', [VAR_VIOLET]: 'violet' };
   return `url(#arrow-${named[color] || markerKey(color)})`;
 }
 
@@ -1068,7 +1161,7 @@ function arrowLabel(text, x, y, opts = {}) {
   const fontSize = opts.fontSize || MIN_FONT_SMALL;
   const gap = opts.gap || LABEL_GAP;
   const paper = opts.paper || TOKENS.paper;
-  const fill = opts.fill || TOKENS.soft;
+  const fill = opts.fill || TOKENS.muted;
   // 文字数での切り詰めはしない。指定幅 (既定 140px) で最大2行へ折り返す
   const maxW = opts.maxWidth || 140;
   const lineHeight = fontSize + 4;
@@ -1144,7 +1237,18 @@ function legendLayout(items, width, opts = {}) {
   const list = (items || []).filter(Boolean);
   const fontSize = opts.fontSize || MIN_FONT_SMALL;
   // 見本矩形は <rect> なので D6 (4px グリッド) の検査対象。寸法も x も 4 の倍数へ。
-  const sw = snapUp(fontSize - 2);
+  const swH = snapUp(fontSize - 2);
+  // 破線を含む見本は、その破線が 3 周期入る幅を確保しないと実線と同じ絵になる。
+  // 12px の見本に 12,4 を引いても 1 周期に満たず、**凡例だけが嘘をつく**
+  // (図の中では境界と任意が分かれているのに、凡例では両方とも同じ実線に見える)。
+  // 幅は全項目で共通にする。項目ごとに変えると legendLayout の折返し見積り
+  // (sw 固定で計算する) と実描画が食い違い、右端で D1 を踏む。
+  const dashNeed = list.reduce((acc, it) => {
+    const d = it && ((it.style && it.style.dash) || it.dash || (it.kind === 'dashed' ? DASH.fine : ''));
+    if (!d) return acc;
+    return Math.max(acc, d === DASH.long ? DASH_MIN_SIDE.long : DASH_MIN_SIDE.fine);
+  }, 0);
+  const sw = Math.max(swH, snapUp(dashNeed));
   const swGap = LABEL_GAP - 2;
   const itemGap = LABEL_GAP * 2;
   const rowH = fontSize + LABEL_GAP;
@@ -1156,20 +1260,25 @@ function legendLayout(items, width, opts = {}) {
     // kind は見本の**形**を選ぶ。線種で意味を分けている図 (実線=同期 /
     // 破線=非同期 / 二重線=正本) では、色の四角を並べても凡例にならない。
     const kind = (it && it.kind) || 'fill';
-    const color = (it && it.color) || (kind === 'fill' ? TOKENS.muted : TOKENS.ink);
+    const style = (it && it.style) || null;
+    // 既定色は見本の**形ごとに、図が既定で描く色**へ合わせる。線の見本の既定を
+    // ink にしていたが、コネクタの既定色は muted なので、色を書かずに kind だけ
+    // 渡した凡例は**図に無い符号を説明する**状態になっていた (読者は ink の線を
+    // 探すが、図にあるのは muted の線だけ)。塗りも線も既定は muted で揃える。
+    const color = (it && it.color) || TOKENS.muted;
     const w = sw + swGap + measureText(label, fontSize);
     if (row.length && cx + w > width) {
       rows.push(row);
       row = [];
       cx = 0;
     }
-    row.push({ label, color, kind, dx: snap(cx) });
+    row.push({ label, color, kind, style, dx: snap(cx) });
     cx += w + itemGap;
   }
   if (row.length) rows.push(row);
   // 罫線は 1 行目の LABEL_GAP 上にあるので、その分も占有高へ含める
   const height = rows.length ? LABEL_GAP + rows.length * rowH : 0;
-  return { rows, height, rowH, fontSize, sw, swGap };
+  return { rows, height, rowH, fontSize, sw, swH, swGap };
 }
 
 /**
@@ -1193,17 +1302,29 @@ function legendHeight(items, width, opts = {}) {
  * 線種の見本は塗りの見本と**同じ幅**を占める。占有幅が kind で変わると
  * legendLayout の折返し計算 (幅は sw 固定で見積る) と食い違い、右端で
  * はみ出す (D1)。
+ *
+ * it.style を渡すと NODE_STYLES の組 (塗り・輪郭色・線幅・線種) をそのまま
+ * 見本にする。**図の中でノードを分けている 4 つの軸と、凡例が語る軸を同じに
+ * するため**の経路で、色だけを渡す it.color の経路より優先する。色だけを渡す
+ * と、破線で分かれている 2 種が凡例では同じ見本になる。
  */
-function legendSwatch(it, x, y, sw) {
+function legendSwatch(it, x, y, sw, swH) {
+  const h = swH || sw;
+  const st = it.style;
+  if (st) {
+    const dash = st.dash ? ` stroke-dasharray="${st.dash}"` : '';
+    const stroke = st.stroke && st.stroke !== 'none' ? ` stroke="${st.stroke}" stroke-width="${st.strokeWidth || STROKE.node}"` : '';
+    return `<rect data-legend="1" x="${num(x)}" y="${num(y)}" width="${num(sw)}" height="${num(h)}" fill="${st.fill}"${stroke}${dash}/>`;
+  }
   const kind = it.kind || 'fill';
   if (kind === 'fill') {
-    return `<rect data-legend="1" x="${num(x)}" y="${num(y)}" width="${num(sw)}" height="${num(sw)}" rx="2" fill="${it.color}"/>`;
+    return `<rect data-legend="1" x="${num(x)}" y="${num(y)}" width="${num(sw)}" height="${num(h)}" rx="2" fill="${it.color}"/>`;
   }
-  const my = y + sw / 2;
+  const my = y + h / 2;
   const line = (yy, w, dash) =>
     `<line data-legend="1" x1="${num(x)}" y1="${num(yy)}" x2="${num(x + sw)}" y2="${num(yy)}" stroke="${it.color}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`;
   if (kind === 'double') return `${line(my - 2, STROKE.hairline)}${line(my + 2, STROKE.hairline)}`;
-  if (kind === 'dashed') return line(my, STROKE.secondary, '4,3');
+  if (kind === 'dashed') return line(my, STROKE.secondary, it.dash || DASH.fine);
   if (kind === 'thick') return line(my, STROKE.primary);
   return line(my, STROKE.secondary);
 }
@@ -1211,18 +1332,18 @@ function legendSwatch(it, x, y, sw) {
 function legendStrip(items, x, y, width, opts = {}) {
   const lay = legendLayout(items, width, opts);
   if (!lay.rows.length) return '';
-  const { fontSize, rowH, sw, swGap } = lay;
+  const { fontSize, rowH, sw, swH, swGap } = lay;
   const parts = [
     `<line x1="${num(x)}" y1="${num(y - LABEL_GAP)}" x2="${num(x + width)}" y2="${num(y - LABEL_GAP)}" stroke="${TOKENS.rule}" stroke-width="${STROKE.hairline}"/>`,
   ];
   lay.rows.forEach((row, r) => {
     const ry = y + r * rowH;
     // 行の中で見本を垂直中央に置く。オフセットもグリッド上に載せる
-    const sy = ry + snap((rowH - sw) / 2);
+    const sy = ry + snap((rowH - swH) / 2);
     for (const it of row) {
-      parts.push(legendSwatch(it, x + it.dx, sy, sw));
+      parts.push(legendSwatch(it, x + it.dx, sy, sw, swH));
       parts.push(
-        textBlock({ x: x + it.dx + sw + swGap, y: sy + sw / 2, lines: [it.label], fontSize, lineHeight: fontSize, fill: TOKENS.muted, weight: 500, anchor: 'start' })
+        textBlock({ x: x + it.dx + sw + swGap, y: sy + swH / 2, lines: [it.label], fontSize, lineHeight: fontSize, fill: TOKENS.muted, weight: 500, anchor: 'start' })
       );
     }
   });
@@ -1242,16 +1363,20 @@ function svgRoot(o) {
 }
 
 /**
- * 角丸ノード矩形。style は NODE_STYLES の値または filledStyle の戻り値。
+ * ノード矩形。style は NODE_STYLES の値または filledStyle の戻り値。
+ * 角は落とさない (VGCONST_003: 角丸 = 0px)。角丸は「柔らかさ」という 2 本目の
+ * 装飾軸で、線幅と反転だけで階層を作るこの意匠では情報を持たない。
+ * opts.radius を明示した呼び出しだけ例外的に丸める。
  */
 function nodeRect(box, style, opts = {}) {
-  const rx = opts.radius != null ? opts.radius : 6;
+  const rx = opts.radius != null ? opts.radius : 0;
+  const rxAttr = rx > 0 ? ` rx="${rx}"` : '';
   const st = style || NODE_STYLES.plain;
   const dash = st.dash ? ` stroke-dasharray="${st.dash}"` : '';
   const strokeAttr = st.stroke && st.stroke !== 'none' ? ` stroke="${st.stroke}" stroke-width="${st.strokeWidth || STROKE.node}"` : '';
   // 不透明マスク: 半透明塗りのノードでも背面の矢印が透けないようにする
-  const mask = opts.mask === false ? '' : `<rect x="${num(box.x)}" y="${num(box.y)}" width="${num(box.w)}" height="${num(box.h)}" rx="${rx}" fill="${opts.paper || TOKENS.paper}"/>`;
-  return `${mask}<rect x="${num(box.x)}" y="${num(box.y)}" width="${num(box.w)}" height="${num(box.h)}" rx="${rx}" fill="${st.fill}"${strokeAttr}${dash}/>`;
+  const mask = opts.mask === false ? '' : `<rect x="${num(box.x)}" y="${num(box.y)}" width="${num(box.w)}" height="${num(box.h)}"${rxAttr} fill="${opts.paper || TOKENS.paper}"/>`;
+  return `${mask}<rect x="${num(box.x)}" y="${num(box.y)}" width="${num(box.w)}" height="${num(box.h)}"${rxAttr} fill="${st.fill}"${strokeAttr}${dash}/>`;
 }
 
 /* ============================================================
@@ -1568,7 +1693,7 @@ module.exports = {
   // 定数
   GRID, MIN_FONT, MIN_FONT_SMALL, LINE_HEIGHT_RATIO, LABEL_GAP,
   MARKER, FAN_MIN_GAP, INCIDENCE_RULE,
-  TOKENS, SERIES, NODE_STYLES, STROKE,
+  TOKENS, SERIES, NODE_STYLES, STROKE, DASH, DASH_MIN_SIDE,
   VAR_BLUE, VAR_AQUA, VAR_PINK, VAR_YELLOW, VAR_VIOLET,
   FORBID_LINE_START, FORBID_LINE_END,
   // ユーティリティ

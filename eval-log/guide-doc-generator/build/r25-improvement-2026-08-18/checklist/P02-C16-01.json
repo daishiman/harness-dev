@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C16-01",
+ "covered_task_ids": [
+  "P02-C16-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+ "verified_by": [
+  {
+   "claim": "C04 と C14/P05-x-02 が委譲している CR-EXT / CR-EMOJI が C16 に実体として存在するか",
+   "method": "dispatcher が canonical_rules と detections を json で列挙",
+   "result": "pass: CR-EXT / CR-EMOJI とも定義 1 件ずつ。detections は SC-01..SC-10 の 10 件が全て実体で、CR-EXT が SC-01..04+SC-10、CR-EMOJI が SC-05 を implemented_by として持つ。W-OPENS-PROSE 型の ghost ではない"
+  },
+  {
+   "claim": "producer 側が consumer を知らない逆向きの欠落があったか",
+   "method": "修正後の dependencies.invoked_by を確認し、script-brief-C15.json の invokes 宣言と inventory C16 の couples_with と突合",
+   "result": "修正前は C11 と C15 が invoked_by に不在で片側エッジだった。修正後は 6 件へ拡張され、C11 (scan_external_references) / C15 (scan_emoji・退避せず exit2) の両方が理由つきで記録されている"
+  },
+  {
+   "claim": "exit0 の列挙が detection の追加に追従していたか",
+   "method": "exit_codes['0'] の本文と 'SC-01..SC-09' の残存を grep",
+   "result": "修正前は 5 項目で止まり SC-09/SC-10 が不在、AC-C16-01 の期待も 9 行だった。修正後は SC-01..SC-10 の 7 分類を全列挙し、'SC-01..SC-09' の残存 0 件 / 'SC-01..SC-10' 3 箇所。stdout 契約 (固定順 SC-01..SC-10) と一致。放置すれば AC-C16-01 が必ず落ちるか stdout を 9 行にする実装が生まれていた"
+  },
+  {
+   "claim": "invariant (C10 と C16 は必ず同一判定) が C10 の予算打ち切りと矛盾するか",
+   "method": "hook-brief-C10.json を dispatcher が grep",
+   "result": "矛盾を確認: '8 MiB' 3 件、'実測に基づく値ではない' 1 件。C10 は 3 秒 / 8 MiB 超で打ち切り exit0 とし二重防御の内側と位置づけるが、C16 は打ち切りを持たない。誤っていたのは C16 の invariant の書きすぎであり、『C10 が検査を完走した入力に対し』へ限定した修正は正しい。C16 に打ち切りを付ける誤実装 (完成物ゲートの fail-open) を防ぐ"
+  },
+  {
+   "claim": "R25 で C16 の検出クラスが増えるか",
+   "method": "SubAgent が R25/REQ-/C21/C13/挿絵/illustration を identifier と和文の両系統で grep (修正前 0 件)。dispatcher が SC-09/SC-10 の件数非依存性を確認",
+   "result": "pass: 挿絵も C13 が data URI 化するため対象の件数のみが増え検出クラスは不変。SC-09 は全件走査、SC-10 は allowlist。枚数の検査は C12 の E-IMAGE-ABSENT が持ち二重定義なし"
+  },
+  {
+   "claim": "絵文字の分界が C14 と C16 の双方向で一致するか",
+   "method": "C14:71 (自出力のみ検査・入力由来は素通し) と C16 purpose / SC-05 rule (文書全体のコードポイント列) を突合",
+   "result": "pass: C14 の出力 SVG は inline 埋め込みで最終 HTML の一部になるため取りこぼしなし。G-03 (ブロック denylist 不使用) とも整合し、✔ U+2714 は層 2 で VS16 なしなら通る"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git diff --stat",
+   "result": "pass: script-brief-C16.json のみ (+19/-8)。既存記述の削除は 0 件"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C16-01",
+   "level": "blocking-for-release",
+   "summary": "出荷済み plugins/guide-doc-generator/config/handout-visual-policy.json の thresholds が旧キー min_diagrams_per_main_sections (複数形・総量比) のままで、正本の per-section 単数形へ未追従。さらに dispatcher の実測では min_images_per_main_section が出荷 config に存在しない — C12 の E-IMAGE-ABSENT が threshold_key として参照する閾値そのものが実データ側に無い。P05-x-03 / P05-x-25 の対象"
+  },
+  {
+   "id": "F-C16-02",
+   "level": "carry-forward",
+   "summary": "script-brief-C14.json:70-71 の AC が U+1F300-1FAFF / U+2600-27BF / U+FE0F と http:// https:// // xlink:href を独自列挙しており、G-03 が撤去した denylist の複製が test 側に残る。判定自体は C16 へ委譲済みなので裁定違反ではないが、C15 が踏んだ『test だけが古い denylist を持つ』構図。現時点の実害 0 (C14 は該当文字を出力しない契約)"
+  },
+  {
+   "id": "F-C16-03",
+   "level": "carry-forward",
+   "summary": "C10 の 8 MiB / 3 秒 打ち切り閾値が実測に基づかない仮値のまま config/handout-output.json#size_limits と未突合。R25 の per-section IMG 必須化で HTML サイズが節数に比例して伸びるため優先度が上がった。C16 側は影響を受けない設計と確認済み"
+  },
+  {
+   "id": "F-C16-04",
+   "level": "carry-forward",
+   "summary": "CR-* prefix の owner 一覧が存在しない。C08 が owner の CR-EXTRACT-ARGS が別系統で存在し、RESOLUTION-P03.md:212-213 の表は CR-EXT / CR-EMOJI の 2 件のみ。3 つ目が増えたときに衝突を検出できない"
+  }
+ ]
+}

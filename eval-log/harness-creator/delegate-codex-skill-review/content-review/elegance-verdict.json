@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "delegate-codex-skill-review",
-    "skill_md_sha256": "8a8d87fd8316172687f2c0e90be77cd953d7f912fd1cc4648c4e6cf16181b6c3"
+    "skill_md_sha256": "08bccd76f9a38a7ba113da8850768d64140a89b433b187be509f9c103551029d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,24 +11,33 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "independent-rename-review-subagent-a",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
-    "positive_feedback": [
-      "OUT1(自セッション非採点)の不変量が Key Rule 2『自セッションで採点しない』・Gotchas『委譲結果を再評価しない: 自セッションでスコア改竄をしない』・ゴールシークループ『委譲結果を自セッションで再評価しない』で多重一致し、委譲境界に矛盾がない。",
-      "OUT2(opt-in 依存)の補完関係が PARA-001 表・Key Rule 4『Node/npm/shell/codex CLI を標準依存にしない』・Goal『標準フローの必須依存にしないまま』で重畳明示され、改名後もコマンド例の実行パス (L112/119) が harness-creator 配下で解決し依存断絶がない。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "skill-creator → harness-creator 改名後の現 SKILL.md (sha256=8a8d87fd8316172687f2c0e90be77cd953d7f912fd1cc4648c4e6cf16181b6c3 実測) を独立 context で全文精読し、frontmatter feedback_contract の全 criteria (IN1/IN2/OUT1/OUT2) を C1-C4 で genuine 再評価。旧固有名の残存 0 件 (grep 実測)。IN1: check-codex-installed.py の exit0/未導入 exit2 判定 → BLOCK & Node/npm 非推奨が完了チェックリストと局面カタログ (L98/109-114) に一致、script 実在。IN2: io-contract.schema.json 準拠の eval-log/delegate-codex-request.json 提示が schema_refs と本文で整合、schema 実在。OUT1: 非採点境界が三箇所で一貫 (前述)。OUT2: opt-in cross-check の依存最小化が PARA-001/Key Rule 4/Goal で明示。C1 矛盾なし・C2 漏れなし (IN/OUT 4 criterion が完了チェックリストに 1:1)・C3 整合性 (frontmatter refs↔本文引用一致)・C4 依存整合 (check-codex-installed.py/io-contract.schema.json/codex-connection.md/R2-codex-review.md が harness-creator 配下で全実在、改名追従漏れなし)。意味論境界違反なし: 本 skill は単一 SKILL.md を外部レビューへ委譲する部品ゆえ skill 語が正しく、harness 語は plugin 名にのみ出現。matrix 5観点 (矛盾/欠落/不整合/依存断絶/smell) すべて 0、被採点物への改変なし (read-only) につき PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

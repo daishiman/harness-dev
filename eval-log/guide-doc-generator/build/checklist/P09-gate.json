@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P09",
+  "covered_task_ids": [
+    "P09"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "全 component のカバレッジが閾値以上である",
+      "method": "evidence/P09.json の coverage 表",
+      "result": "23 component / 3308 テスト / 閾値 80 に対し violations=[]"
+    },
+    {
+      "claim": "全 component の p0_lint が合格している",
+      "method": "evidence/P09.json の p0_lint",
+      "result": "lint-skill-description で 3 件の違反を検出し修正後に緑。ただし宣言された 4 種のうち 3 種 (lint-script-frontmatter / lint-skill-dep-step7 / lint-agent-prompt-section) は実行体が repo に存在せず not_executable"
+    },
+    {
+      "claim": "環境固有の絶対パス直書きが 0 件である",
+      "method": "evidence/P09.json の absolute_paths",
+      "result": "FAIL。config/handout-output.json#default_out_dir に作者の絶対パスが残る。加えて transcript 絶対パスを含む .claude/handoff ファイル 4 件を配布物から削除済み"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "absolute-path-not-zero",
+      "detail": "『絶対パス直書き 0 件』は未達。config/handout-output.json#default_out_dir が作者の絶対パスを保持しており、別環境の利用者が出力先を指定しないと他人のツリーを黙って作りに行く。利用者が指定した出力先ゆえ当方の判断で削除していない"
+    },
+    {
+      "kind": "p0-lint-partially-not-executable",
+      "detail": "宣言された p0_lint 4 種のうち 3 種は実行体が repo に無く not_executable。実行できたのは lint-skill-description のみ"
+    },
+    {
+      "kind": "build-trace-validator-red",
+      "detail": "validate-route-build-reports.py は route-<Cxx>.json を期待するが dispatcher は route-P05-<Cxx>-01.json を書くため、本 plugin では恒常的に赤になる。trace 自体は存在する"
+    }
+  ]
+}

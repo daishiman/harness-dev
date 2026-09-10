@@ -1,7 +1,7 @@
 # R6-audit-hearing 責務プロンプト (7層)
 
 > 往復ヒアリング (C01 `run-system-spec-elicit`) の質問設計と回答反映を独立 context で監査する責務本文の SSOT。
-> 起動アダプタ = `$CLAUDE_PLUGIN_ROOT/agents/system-spec-hearing-auditor.md` (C06)。両者の差分は本ファイルを優先する。
+> 起動アダプタ = `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/system-spec-hearing-auditor.md` (C06)。両者の差分は本ファイルを優先する。
 
 ## メタ
 

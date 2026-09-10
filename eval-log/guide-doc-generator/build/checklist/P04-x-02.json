@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-02",
+  "covered_task_ids": [
+    "P04-x-02"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "SC-10 が detections に許可列挙規則として存在する",
+      "method": "script-brief-C16.json の detections を dispatcher が確認",
+      "result": "SC-01..SC-10 の 10 件。SC-10 の rule に『判定軸は外部スキームか否かではなく data: であるか否か』『スキームを持たない相対パス・絶対パスも違反』を明記"
+    },
+    {
+      "claim": "script@src / link@href (rel 不問) / iframe・frame・portal / CSS url() (@font-face 外) / img 等が例外なく適用対象として列挙されている",
+      "method": "SC-10 の rule (a)-(e) を確認",
+      "result": "(a) script@src は値によらず違反 (b) iframe/frame/portal は存在自体が違反 (c) link@href は rel 不問 (d) CSS url() は @font-face 外も対象 (e) 将来の取得属性は既定で違反側"
+    },
+    {
+      "claim": "SC-02 の境界が維持されている",
+      "method": "SC-10 の boundary キーを確認",
+      "result": "text node の URL・相対パス文字列・コード例・alt/title の URL は違反にしない。SC-10 が見るのは属性値と CSS 値のみ。要素名は完全一致判定で <frameset>/<figure> を拾わない"
+    },
+    {
+      "claim": "テスト側が固定した契約と正本が一致する",
+      "method": "tests/verify-handout-selfcontained.py/README.md の gaps 6 と突合",
+      "result": "gaps 6 が要求した 4 箇所 (detections / stdout の固定順 / canonical_rules.external_reference_rule.implemented_by_detections / acceptance_checks) を全て反映。stdout は SC-01..SC-10、implemented_by_detections は SC-01..SC-04+SC-10、acceptance_checks は AC-C16-C60-10a..10e の 5 件追加で 20 件"
+    },
+    {
+      "claim": "テストが未決として残した 2 件を正本側で裁定した",
+      "method": "gaps 7 / gaps 8 に対する adjudication キーの存在確認",
+      "result": "adjudication_srcdoc (srcdoc 単独の iframe も例外なく違反) と adjudication_double_report (SC-01/SC-10 の二重報告を許容) を根拠付きで記載。付随して adjudication_css_url (@font-face は SC-04・それ以外は SC-10) も決定"
+    },
+    {
+      "claim": "SC-10 が module_api 経由で C10 / C11 へ届く",
+      "method": "module_api.exports と delegated_consumers を確認",
+      "result": "scan_external_references の返り値に SC-10 を含めることを明記。C10 の delegated_consumers 行を『SC-10 を含む CR-EXT 全体が対象』へ更新"
+    },
+    {
+      "claim": "JSON として妥当である",
+      "method": "python3 -c 'json.load(...)'",
+      "result": "パース成功"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "design-canon-lags-test",
+      "detail": "設計正本がテストに後追いする逆順で実施した。C60 は P04-C16-01 の実行中に利用者から提示された要件のため。RESOLUTION-C60.md の『順序についての逸脱』へ記録済み"
+    },
+    {
+      "kind": "dispatcher-executed",
+      "detail": "SubAgent へ委譲せず dispatcher が直接実施した。SC-10 の文言は dispatcher が走行中の C16 エージェントへ伝達した本人であり、裁定 2 件も設計判断として dispatcher が下したため"
+    }
+  ]
+}

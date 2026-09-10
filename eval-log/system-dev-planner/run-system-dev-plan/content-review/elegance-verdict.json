@@ -2,27 +2,44 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "run-system-dev-plan",
-    "skill_md_sha256": "ffa504058be24e15d0cb83389cbb13727184360e898811205b8e37adff1b0572"
+    "skill_md_sha256": "552ffa7caa1ee19eefefed562ad03e19971a105e6471105c65c64aebcd64b2b4"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2", "OUT3"],
-    "positive_feedback": [
-      "publish ゲートが単一の合流点で整合: C08 readiness/C14 handoff producer/C12 deterministic validation/fork evaluator C1-C4/canonical digest が全一致するまで publish しない (本文73) と feedback_contract IN1/IN2 (inner) + OUT1/OUT2/OUT3 (outer) が同じ受入条件を指しており矛盾がない",
-      "staging lock の生成/更新/解放を C13 の manage-system-plan-lock.py に一元化し acquire→renew→release のライフサイクルと他 component 直接改変禁止を明記 (本文74) して並行安全が整合的",
-      "共有 reporter (plan-structure / spec-browser) を harness-creator 未配備環境では skip・非ゲートの best-effort と明示し (本文97-101)、cross-plugin 依存を publish ゲートへ持ち込まず依存整合を保っている"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2",
+      "OUT3"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "SKILL.md 内の plugin root 参照 5 箇所 (resolve-project-context.py・authority 注記・manage-system-plan-lock.py・guard-implementation-readiness.py・init-project-layout.py) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形へ揃い、bare 形の取り残しは SKILL.md 内に 0 件。`$CLAUDE_PROJECT_DIR` は出力先解決としてそのまま残されており、plugin root と成果物出力先の役割分離が保たれている。",
+      "追加された `## Runtime root contract` 節が run-build-skill の正本テンプレート `templates/_base.md` の 5 行ブロックと逐語一致し、frontmatter `runtime_root_policy: host-skill-path` と本文節が対で揃っている。節の配置も `# System development planning` 直下・`## Invariants` の直前で、Invariants が参照する記法の定義が先行する順序になっている。",
+      "declared refs 全件 (responsibility_refs 6 / schema_refs 4 / reference_refs 3 / script_refs 7 + manifest + hooks/guard-implementation-readiness.py) の実在を機械確認し、欠損 0 件。artifact_delivery の 6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive=explicit-only と feedback_contract.criteria (IN1,IN2,OUT1,OUT2,OUT3) は差分で改変されておらず、usable-first 契約が退行していない。",
+      "declared prompts のうち R1-elicit.md・R2-decompose.md・R3-emit.md の道具表・コマンド行 (計 14 箇所) も新形式へ移行済みで、Runtime root contract の「`prompts/` 配下は owner Skill 契約を継承する」が実体として満たされている。"
+    ],
+    "negative_feedback": [
+      "[low / smell] `prompts/R3-emit.md:24` が「`$CLAUDE_PLUGIN_ROOT` は code/asset の位置決め専用で、caller の文書・状態の authority にしない」と bare 形のまま書いている。SKILL.md:107 の同趣旨の一文は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ移行済みで、写し同士の表記が食い違う。ただしこれは shell 起動行ではなく authority 境界を述べる散文であり、同ファイル内の実行行 (R3-emit.md:71-74) は全て新形式であるため実行不能にはならない。Runtime root contract の継承宣言でも意味的には覆われるため low に留める。",
+      "[low / smell] `plan` 完了条件の共有 reporter 呼び出し 2 行 (SKILL.md:134 `plugins/harness-creator/scripts/project-task-status.py`、SKILL.md:137 `plugins/harness-creator/scripts/render-spec-browser.py`) は cwd 相対 path で他 plugin の資産を指しており、Runtime root contract の「`cwd` からplugin rootを推測せず」と方向が揃わない。実害は限定的で、両行とも本文が best-effort・非ゲート・「harness-creator 未配備環境では skip」と明記しており fail-soft が設計済みだが、結果として marketplace install 環境では plan-structure レポートと仕様書ブラウザが常に沈黙 skip する。本差分で導入された行ではなく (両行は差分外)、新設の Runtime root contract がこの既存の緊張を可視化したもの。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 ffa504058be24e15d0cb83389cbb13727184360e898811205b8e37adff1b0572) を全文 read し 4 条件で genuine 再評価した。C1 矛盾なし: Invariants は 1 run=1 parent_feature・P01..P13 exact 13 tasks・14件目/別13phase文書を作らない・全ゲート一致まで非 publish・lock は C13 のみ、と一貫し、best-effort な plan-structure/spec-browser を非ゲートと明示するため『ゲート緑まで publish しない』と衝突しない。C2 漏れなし: init(層作成の非破壊)・plan(必須引数/feature-context 構造/realpath containment/absolute・..・root外symlink・別repo拒否)・動的計画で埋める成果状態列挙・Failure handling(max_loops=5/旧世代維持/独立作業は follow-up feature candidate) を網羅。C3 整合性: feedback_contract IN1(exact13+DAG非循環+validate exit0)/IN2(構造契約+handoff exit0) が inner script/lint、OUT1(feature/repository boundary+elegant C1-C4)/OUT2(readiness+実装粒度を fork evaluator 確認)/OUT3(end-to-end R1→R3 と二回目実行の構造不変を受入テスト) が outer で、本文 invariants (C12 決定論検証・fork evaluator C1-C4・atomic promotion・二回目安定) と対応整合。C4 依存整合: 本文参照 script (resolve-project-context/check-implementation-readiness/init-project-layout/manage-system-plan-lock/build-system-handoff/validate-system-plan/promote-system-plan) が全て script_refs に実在、hook guard-implementation-readiness.py も参照整合、schema_refs/reference_refs 一致。cross-plugin の harness-creator reporter は best-effort skip として依存整合。重大問題は検出されず PASS。criteria_evaluated は feedback_contract.criteria の全 id (IN1/IN2/OUT1/OUT2/OUT3) を被覆。"
+  "notes": "本 verdict は main マージと runtime-root guard の機械 migration により skill_md_sha256 が既存 verdict と乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実際に読んだもの: `git diff HEAD -- plugins/system-dev-planner/skills/run-system-dev-plan/SKILL.md` の全差分 (+13/-5 行)、SKILL.md 全文 142 行、正本テンプレート `plugins/harness-creator/skills/run-build-skill/templates/_base.md` の Runtime root contract ブロック、`prompts/R3-emit.md` の該当行。 実行した機械検査: (1) frontmatter が宣言した responsibility_refs/schema_refs/reference_refs/script_refs/manifest と本文が参照する hooks/guard-implementation-readiness.py・plugins/harness-creator/scripts/{project-task-status,render-spec-browser}.py の全 path を存在確認し、欠損 0 件を確認した。(2) skill directory 全体へ `grep -rn 'CLAUDE_PLUGIN_ROOT'` をかけ、bare 形の残存箇所を列挙した (SKILL.md 内 0 件、prompts 内 1 件 = 上記 low)。(3) SKILL.md の sha256 を算出し target へ固定した。 判定: 差分は共通 migration (frontmatter 1 行 + Runtime root contract 5 行 + placeholder 置換 5 箇所) だけで完全に説明でき、Purpose & Output Contract・Pre-choice/Post-choice section・Invariants の意味・`init`/`plan`/Failure handling の各手順・feedback_contract の 5 criteria はいずれも差分前と同一である。effect は local-artifact で external_mutation_guard は不要 (宣言も guard block も無く双方向の対応は崩れていない)。未解決の medium 以上は 0 件、残る low 2 件はいずれも実行不能を招かない記述上の smell であるため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT3 (live-trial) など実行挙動の受け入れは別途実走証拠を要する。"
 }

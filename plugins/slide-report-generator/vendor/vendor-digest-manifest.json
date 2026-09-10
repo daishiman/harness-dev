@@ -49,6 +49,11 @@
         "node_modules/playwright"
       ]
     },
+    "vendor/scripts/deck-assets-resolver.js": {
+      "strategy": "semantic-additive",
+      "note": "index.html が実際に読み込む CSS/JS (inline <style>/<script> と <link>/<script src> の両方) を解決する共有 SSOT。upstream に無い新規ファイル。validate-print.js / validate-ai-image-assets.js / cross-deck-consistency.js の 3 本が同じ経路をここへ寄せており、別実装を持たない。解決できないローカル参照は握り潰さず unresolved[] に積んで返す (fail-closed)。トークン契約は lint-vendor-parity.py の ADDITIVE_RUNTIME_CONTRACT。",
+      "gate_gap": "専用 test を持たない。ただし test-cross-deck-consistency.js の fixture が 3 経路を通す: (a)(b) link 解決あり / (c) 参照は在るが参照先が無い (unresolved) / (e) inline のみで link 0 件。残るのは describeUnresolved の文字列整形と、この関数を直接呼ぶ単体面。--self-test の追加が残件。"
+    },
     "vendor/scripts/playwright-runtime.js": {
       "strategy": "semantic-additive",
       "note": "PLAYWRIGHT_BROWSERS_PATH を plugin-local vendor/playwright-browsers へ固定する runtime SSOT。"
@@ -136,24 +141,28 @@
       "owner": "structure-gate",
       "gates": [
         "lint-vendor-parity.py",
-        "npm test"
-      ]
+        "python3 -m pytest tests/"
+      ],
+      "gate_gap": "この file を直接対象にする test は tests/ に無い。上の pytest は repo 全体の suite であって本 file の回帰を捉える保証はない。以前ここには 'npm test' と書かれていたが plugin 内・harness root いずれにも package.json が無く実行不能な偽 gate だったため置換した。専用 test の追加が残件。"
     },
     "vendor/scripts/render-report.js": {
       "strategy": "semantic-contract",
       "owner": "report-runtime",
       "gates": [
         "lint-vendor-parity.py",
-        "npm test>=80%"
-      ]
+        "python3 -m pytest tests/test_validate_report_visual.py"
+      ],
+      "gate_gap": "以前は 'npm test>=80%' と書かれていたが package.json が無く実行不能な偽 gate だった。上の test は report の視覚契約側を見るもので、render-report.js の出力そのものを固定する golden は無い。残件。"
     },
     "vendor/scripts/style-builder.cjs": {
       "strategy": "semantic-contract",
       "owner": "shared-style-runtime",
       "gates": [
         "lint-vendor-parity.py",
-        "npm test"
-      ]
+        "python3 -m pytest tests/test_lint_contract_drift.py",
+        "python3 -m pytest tests/test_slide_skeleton.py"
+      ],
+      "gate_gap": "以前は 'npm test' と書かれていたが package.json が無く実行不能な偽 gate だった。test_lint_contract_drift は SPEC.colors と references/ の色見本の食い違いを捉えるので配色変更の回帰は拾えるが、SPEC 自体の妥当性は見ていない。"
     },
     "vendor/assets/structure-template.md": {
       "strategy": "semantic-contract",
@@ -171,6 +180,44 @@
         "validate-slide-layout.js (transition-props)"
       ],
       "note": "clearProps を 'all' から 'opacity,transform' へ限定した。対象 (content.children・fo-card 除外) は upstream のまま。'all' は style 属性ごと落とし、描画時のインライン custom property (--grid-cols / --fit-t / --fit-d) を消す"
+    },
+    "vendor/scripts/validate-print.js": {
+      "strategy": "semantic-contract",
+      "owner": "print-gate",
+      "gates": [
+        "lint-vendor-parity.py"
+      ],
+      "gate_gap": "--self-test を持たず専用 test も無い。現状 lint-vendor-parity.py 以外に回帰を捉える手段が無い。--self-test の追加が残件 (owner: print-gate)。",
+      "note": "意匠刷新に伴う印刷契約の修正。@media print 内の cover 検出を残したまま判定対象を広げた。"
+    },
+    "vendor/scripts/validate-d3.js": {
+      "strategy": "semantic-contract",
+      "owner": "d3-runtime",
+      "gates": [
+        "lint-vendor-parity.py",
+        "node vendor/scripts/validate-d3.js (対象 deck 指定・exit 0)"
+      ],
+      "gate_gap": "--self-test を持たない。上の実行は実 deck 依存で、fixture が無いため CI 的に固定できない。--self-test の追加が残件 (owner: d3-runtime)。",
+      "note": "色の許可集合を style-genome-*.json の palette から実行時に読むよう変更した。従来は script 内に写経した HEX 列で判定していた。"
+    },
+    "vendor/scripts/cross-deck-consistency.js": {
+      "strategy": "semantic-contract",
+      "owner": "cross-deck-gate",
+      "gates": [
+        "lint-vendor-parity.py",
+        "node vendor/tests/test-cross-deck-consistency.js"
+      ],
+      "gate_gap": "上の test は 6 シリーズ fixture で 22 件を見る。うち (e) 2 シリーズが inline <style>/<script> のみの自己完結デッキ (link 0 件・styles.css / scripts.js 不在) で、出荷デッキと同じ形を fixture 側で通す。残る未検査は 4 デッキ以上のシリーズと、link と inline が同一プロパティを二重定義する場合の優先順位 (owner: cross-deck-gate)。",
+      "note": "判定の入力を join(deckDir, 'styles.css') から index.html が実際に読む CSS/JS へ移した。解決は deck-assets-resolver.js が SSOT。併せて (1) inline と link の両方を 1 つとして見る (2) 解決できないときの黙った continue を廃し未検査を error として出す (3) 必須入力を「styles.css というファイルが在ること」から「CSS が解決できること」へ改めた。自己完結 HTML は styles.css を持たないが正しい。"
+    },
+    "vendor/scripts/validate-ai-image-assets.js": {
+      "strategy": "semantic-contract",
+      "owner": "ai-image-gate",
+      "gates": [
+        "lint-vendor-parity.py"
+      ],
+      "gate_gap": "--self-test を持たず専用 test も無い。全面画像 deck の fixture が必要。--self-test の追加が残件 (owner: ai-image-gate)。",
+      "note": "REQUIRED_COMPONENTS のハードコード 6 件を listComponentFiles() の readdirSync へ置換した。従来は d3-components/ に 7 件あるうち extended.js が検査対象から漏れていた。列挙 0 件は fail-closed。"
     }
   },
   "excluded_dirs": [

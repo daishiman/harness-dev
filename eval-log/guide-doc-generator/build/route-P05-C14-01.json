@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "task_id": "P05-C14-01",
+  "covered_task_ids": [
+    "P05-C14-01"
+  ],
+  "route_id": "C14",
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在する",
+      "method": "ls plugins/guide-doc-generator/scripts/",
+      "result": "pass"
+    },
+    {
+      "claim": "C14 自身の責務に属する赤が緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-diagram-svg.py -p 'test_*.py'",
+      "result": "partial (Ran 166 / failures=4 / errors=3)。残る 7 件は全てテストハーネス側の欠陥 (下記 H-01..H-03) であり、要求されている振る舞い自体は dispatcher が実測で満たしていることを確認した。159/166 緑"
+    },
+    {
+      "claim": "H-01 (viewBox が構造上引けない) がテスト側の欠陥である",
+      "method": "_harness.py の _Collector が html.parser.HTMLParser を継承 (17,290 行) し Element.get (283 行) が attrs.get の素通しであることを読解。HTMLParser は属性名を必ず小文字化するため get('viewBox') は常に None",
+      "result": "confirmed (テスト側欠陥)"
+    },
+    {
+      "claim": "H-01 が要求する振る舞いを実装が満たしている",
+      "method": "生成 SVG を直接 grep。既定 viewBox=\"0 0 860 116\"、--width 600 で viewBox=\"0 0 600 116\"、数値は全て整数",
+      "result": "pass"
+    },
+    {
+      "claim": "H-02 / H-03 がテスト側の欠陥である",
+      "method": "test_argv_and_exit_codes.py:146 が TemporaryDirectory の with ブロック外で path.read_text() を呼ぶこと、同 :114 が assertEqual へ位置引数 4 個を渡すことを読解",
+      "result": "confirmed (テスト側欠陥)"
+    },
+    {
+      "claim": "H-03 が要求する振る舞いを実装が満たしている",
+      "method": "--width 860.5 での実行",
+      "result": "pass (exit=2)"
+    },
+    {
+      "claim": "テストが改変されていない (判定基準の自作差し替えが無い)",
+      "method": "find tests/render-diagram-svg.py -newer scripts/render-diagram-svg.py -type f -name '*.py' が空",
+      "result": "pass"
+    },
+    {
+      "claim": "標準ライブラリのみに依存する",
+      "method": "import 文の列挙 (argparse/html/json/math/re/sys/unicodedata/collections)",
+      "result": "pass"
+    },
+    {
+      "claim": "決定論的である",
+      "method": "PYTHONHASHSEED=7 / TZ=UTC を変えた 2 回実行で stdout がバイト一致",
+      "result": "pass"
+    },
+    {
+      "claim": "生成 SVG が外部参照ゼロである (R01)",
+      "method": "grep -cE 'https?:|url\\(|xmlns' が 0",
+      "result": "pass"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-harness-defect",
+      "detail": "残る 7 赤は正しい実装でも構造上パスできないテストハーネス欠陥 3 件に起因する。H-01: _harness.Element.get が大文字小文字を区別する一方 HTMLParser が属性名を小文字化するため get('viewBox') が常に None (5 テスト)。H-02: test_stdin_is_not_used が TemporaryDirectory の with 外で read_text し FileNotFoundError。H-03: test_width_float_is_exit2 が assertEqual へ位置引数 4 個を渡し TypeError。いずれも dispatcher が該当行を読んで確認済みで、修正は P04-x-06 の H-01..H-03 として task-spec 化した。テストは 1 行も改変していない"
+    },
+    {
+      "kind": "write-scope-excursion-directed-by-tests",
+      "detail": "worker が write_scope 外へ plugins/guide-doc-generator/tests/render-diagram-svg.py/golden/ の 6 SVG を書いた。GoldenSvgTest 7 件が golden ファイルの実在を要求し、テスト群の README.md と record_goldens.py が『実装後に 1 回だけ実行する』と明示指示している手順による。テストファイル自体は 1 行も変更されておらず、既存ファイルの上書きもなく新規ディレクトリの追加のみ。P04-C14-01 が意図した手順であるため撤回せず保持する"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "ブリーフ未定義でテスト README の gaps に沿って解釈した点。compare.cells は items x axes の 2 次元配列、hierarchy の深さは root を第 1 層と数える、title の折返し上限 2 行、note/bullets の上限 2 行、flow の margin=16 / gap=24 / padding=12、単一行テキストは tspan を出さない (test_first_line_dy_is_zero_and_later_lines_are_one_point_four_five_em が文書順の全 tspan に dy=1.45em を要求するため)。C11 の埋め込み側との語義突合が要る"
+    }
+  ]
+}

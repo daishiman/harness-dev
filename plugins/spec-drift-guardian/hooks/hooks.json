@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-spec-drift-close.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

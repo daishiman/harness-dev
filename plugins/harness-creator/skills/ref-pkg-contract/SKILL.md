@@ -82,6 +82,12 @@ PKG fail は 35章 `pkg_check_failed` failure_mode として observable 集約�
 
 `skill-only` 選択時は `references/package-contract.json` の `package_mode_exception` に `legacy` / `dev-only` / `migration` のいずれかを記録すること（schema enforced）。公式 CLI が読む `.claude-plugin/plugin.json` には harness 専用キーを混在させない。
 
+`distribution.distributable` は Claude marketplace の従来契約。Codex 配布は独立の
+`codex_distribution` で宣言し、`marketplace=.agents/plugins/marketplace.json`、
+`source=./plugins/<plugin-name>` を使う。製品間で公開可否が異なる場合に、
+Claude 側を true へ強制的に引き上げない。Codex projection は
+`run-codex-plugin-package` / `sync-plugin-platforms.py` が生成・検査する。
+
 ## Gotchas
 
 1. **PKG ID 新設禁止**: 表に存在しない ID を本 skill で受理しない。governance を通すこと

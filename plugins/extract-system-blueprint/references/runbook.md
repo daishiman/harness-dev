@@ -105,7 +105,7 @@ exit コード:
 
 - 起動は薄いラッパ (command)。順序保証は **C01 draft 生成 → C02 独立品質 verdict → 報告**。
   draft の完成可否 (PASS/FAIL) は C02 の品質 verdict が決める (外部公開の Step は無い)。
-- C08 hook の bootstrap は**単一 Bash 呼び** (`mkdir -p "${CLAUDE_PROJECT_DIR:-$PWD}/.esb-authz" && python3 .../authz-classify.py --url <url> ...`) が正本。hook は呼び時点で dir 不在なら非アクティブで素通し、呼び完了時には dir+evidence が揃って以後の全 tool call が enforce される (evidence 不在窓なし)。**`mkdir` 単独先行は禁止**: dir 発見で hook が即アクティブ化し、C12 呼び自身が evidence 不在=fail-closed deny で遮断される (bootstrap deadlock)。`ESB_RUN=1` は hook が別プロセスで spawn されるため Bash セッション内 export では継承されず、セッション起動時 env としてのみ有効な補助上書き。
+- C08 hook の bootstrap は**単一 Python 呼び** (`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json`) が正本 (`authz-classify.py` 自身が出力親dirを作る。C01 の allowed-tools は `Bash(python3 *)` のみで compound Bash は許可されない)。hook は呼び時点で dir 不在なら非アクティブで素通し、呼び完了時には dir+evidence が揃って以後の全 tool call が enforce される (evidence 不在窓なし)。**`mkdir` 単独先行は禁止**: dir 発見で hook が即アクティブ化し、C12 呼び自身が evidence 不在=fail-closed deny で遮断される (bootstrap deadlock)。`ESB_RUN=1` は hook が別プロセスで spawn されるため Bash セッション内 export では継承されず、セッション起動時 env としてのみ有効な補助上書き。
 
 ### 3.1 crawl mode と全域被覆
 

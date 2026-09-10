@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-23",
+  "reason": "tests/validate-handout-config.py に受け皿の無い赤が 4 件残っている (dispatcher が実体を採取済み)。(1) test_unknown_doc_type_lists_vocabulary と (2) test_no_purpose_vocabulary_literals はいずれも KeyError: 'entries' で、テストが用途語彙カタログを catalog['entries'] として読むのに対し実カタログがその形を持たない (テスト↔カタログの形状 drift・ERROR であって FAIL ですらないため検査本体へ到達していない)。(3) test_no_temp_file_left_behind は --out と同じディレクトリに 'plugin-root' が残る (N12 違反)。(4) test_provenance_shape は provenance に detail_level_source / evidence_depth_source の 2 キーが欠ける — R22 の detail_level × evidence_depth 二軸が正規化器へ未反映。既存 blocked ノードの write_scope はいずれも tests/validate-handout-config.py と scripts/validate-handout-config.py を含まないため受け皿が無い (PAT-4)。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "proposed_node": {
+    "id": "P05-x-30",
+    "title": "validate-handout-config.py の残存する赤 4 件を解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "tests/validate-handout-config.py の失敗テスト名の集合が空になること。テストの assert を弱めずに達成すること。とくに (1)(2) は ERROR であり検査本体へ到達していないので、形状 drift を直した後に『検査が実際に働いている』ことを反例注入で示すこと (到達していない 0 件と直った 0 件は出力では区別が付かない)。着手前後で他 3 スイートの失敗テスト名の集合が増えないこと。",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-30.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-30.md"
+    ],
+    "depends_on": [
+      "P05-x-23"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "P05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

@@ -12,7 +12,7 @@
 例:
 
 ```
-/skill-improve plugins/company-master/skills/run-company-master-build
+/skill-improve plugins/contract-generator/skills/run-contract-generate
 ```
 
 ```

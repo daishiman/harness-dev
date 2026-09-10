@@ -76,7 +76,8 @@ def _all_skills() -> set[tuple[str, str]]:
         if not sk_dir.is_dir():
             continue
         for s in sk_dir.iterdir():
-            if s.is_symlink():  # symlink は実体側で計測
+            if s.is_symlink() or FC.is_vendored_feedback_skill(s, plugins_dir=PLUGINS_DIR):
+                # symlink / Codex 配布用の同一コピーは正本側で計測
                 continue
             if (s / "SKILL.md").is_file():
                 out.add((plugin_dir.name, s.name))
@@ -192,6 +193,13 @@ def main() -> int:
         return 2
 
     targets = _git_changed_skills(args.base) if args.changed_only else _all_skills()
+    targets = {
+        (plugin, skill)
+        for plugin, skill in targets
+        if not FC.is_vendored_feedback_skill(
+            PLUGINS_DIR / plugin / "skills" / skill, plugins_dir=PLUGINS_DIR
+        )
+    }
     repo_tests = _repo_tests_text()
     reports = [r for plugin, skill in sorted(targets)
                if (r := measure_skill(plugin, skill, repo_tests))]

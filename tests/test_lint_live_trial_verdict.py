@@ -78,6 +78,7 @@ def _valid_doc(lint, skill_dir, skill="run-demo"):
         "actual_model": ["claude-sonnet-5"],
         "nudge_count": 0,
         "gate_response_count": 0,
+        "gate_kind": "rescue",
         "goal_verdict": {"result": "PASS", "blockers": []},
         "overall": {"launch": "PASS", "completion": "PASS", "goal_fit": "PASS", "verdict": "PASS"},
         "skill_dir_tree_sha": verdict_mod.skill_dir_tree_sha(skill_dir),
@@ -109,6 +110,62 @@ def test_valid_pass_verdict_exit0(lint, capsys):
     _write_verdict(lint, _valid_doc(lint, skill_dir))
     assert lint.run_lint() == 0
     assert "[OK]" in capsys.readouterr().out
+
+
+def test_contractual_gate_exemption_is_surfaced(lint, capsys):
+    """契約 gate 免除は合格だが黙って通さない — [NOTE] で必ず可視化されること。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["gate_response_count"] = 1
+    doc["gate_kind"] = "contractual"
+    doc["gate_contract_evidence"] = ["frontmatter.external_mutation_guard"]
+    _write_verdict(lint, doc)
+    assert lint.run_lint() == 0
+    out = capsys.readouterr().out
+    assert "[NOTE]" in out
+    assert "gate_kind=contractual" in out
+    assert "frontmatter.external_mutation_guard" in out
+
+
+def test_contractual_without_evidence_is_a_violation(lint, capsys):
+    """接地根拠なき contractual は手書き verdict でも通さないこと (CLI 迂回の封鎖)。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["gate_response_count"] = 1
+    doc["gate_kind"] = "contractual"
+    _write_verdict(lint, doc)
+    assert lint.run_lint() == 1
+    assert "gate_contract_evidence が空" in capsys.readouterr().out
+
+
+def test_rescue_gate_is_not_reported_as_exemption(lint, capsys):
+    """rescue の gate 応答は免除ではない (降格側で裁かれる) — NOTE を出さないこと。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["gate_response_count"] = 1
+    _write_verdict(lint, doc)
+    lint.run_lint()
+    assert "[NOTE]" not in capsys.readouterr().out
+
+
+def test_verdict_without_gate_kind_stays_valid(lint):
+    """gate_kind 導入前の verdict (gate=0) を schema 違反にしないこと。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    del doc["gate_kind"]
+    _write_verdict(lint, doc)
+    assert lint.run_lint() == 0
+
+
+def test_missing_gate_kind_is_not_an_exemption(lint, capsys):
+    """gate_kind 欠落は fail-closed に rescue — 免除として扱わないこと。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    del doc["gate_kind"]
+    doc["gate_response_count"] = 1
+    _write_verdict(lint, doc)
+    lint.run_lint()
+    assert "[NOTE]" not in capsys.readouterr().out
 
 
 def test_valid_pass_verdict_exit0_with_enforce(lint):

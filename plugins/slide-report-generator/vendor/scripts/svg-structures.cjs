@@ -93,13 +93,15 @@ const STYLE_LEGEND = {
  * 1 種類しか使っていない図で凡例を出すと、区別のない塗りに意味があるように
  * 読ませてしまうので空を返す (呼出し側は高さ 0 として扱える)。
  *
- * 見本の色は fill でなく stroke を使う。plain の fill は白なので、白地の凡例帯へ
- * 置くと見本が消えて「色のない項目」になる。
+ * 見本には NODE_STYLES の組をそのまま渡す。stroke の色だけを渡していた旧版は、
+ * **図の中では破線で分かれている 2 種が、凡例では同じ色の四角**になっていた。
+ * optional と boundary は輪郭色が同じで線種だけが違うので、色だけを渡すと
+ * 凡例が 2 項目とも同じ絵になり、区別の根拠を語れない。
  */
 function styleLegend(types) {
   const uniq = (types || []).filter((t, i, a) => t && kit.NODE_STYLES[t] && a.indexOf(t) === i);
   if (uniq.length < 2) return [];
-  return uniq.map((t) => ({ label: STYLE_LEGEND[t] || t, color: kit.NODE_STYLES[t].stroke }));
+  return uniq.map((t) => ({ label: STYLE_LEGEND[t] || t, style: kit.NODE_STYLES[t] }));
 }
 
 /**
@@ -109,6 +111,26 @@ function styleLegend(types) {
  *   y = bottom - (legendHeight - LABEL_GAP)
  * viewBox 高は必ず legendHeight を先に足してから確定する (後付けは D1 error)。
  */
+/**
+ * 呼出し側が書いた凡例項目を、図が実際に使っている符号へ解決する。
+ *
+ * type を書いた項目は NODE_STYLES を引いて見本にする。呼出し側が color で
+ * 直に色を書けるようにしていたが、**図はノード種別で描き、凡例は手書きの色で
+ * 描く**ことになるので、両者が黙って食い違う。実際 data-flow の凡例は
+ * 「入力・利用者」と「保管・データ」に同じ #6A6A68 を当てていて、3 分類を
+ * 名乗りながら見た目は 2 分類だった。type を通す限りこの食い違いは起きない。
+ *
+ * type を持たない項目 (「実線の矢印は受け渡し」のような線種の説明) はそのまま
+ * 通す。図の符号を語れるのは呼出し側だけなので、口は塞がない。
+ */
+function resolveLegendItems(items) {
+  return (items || []).filter(Boolean).map((it) => {
+    if (typeof it === 'string' || !it.type || !kit.NODE_STYLES[it.type]) return it;
+    const { type, color, ...rest } = it;
+    return { ...rest, style: kit.NODE_STYLES[type] };
+  });
+}
+
 function legendAt(items, x, bottom, width) {
   const h = kit.legendHeight(items, width);
   if (!h) return '';
@@ -190,7 +212,7 @@ function node(box, it, opts = {}) {
     // 丸ごと落とす (契約 §3)。名前のほうは落とすと空の箱になり、ノードが何なのか
     // 分からなくなるので落とさない。
     parts.push(fittedLines(sub, { x: box.x, y: box.y + nameH - 2, w: box.w, h: box.h - nameH }, {
-      fill: T.soft, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 10, padY: 2,
+      fill: T.muted, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 10, padY: 2,
       dropIfTruncated: true,
     }));
   } else {
@@ -221,7 +243,7 @@ function port(box, side, fan) {
 /** 直交コネクタ 1 本 (marker つき) */
 function connector(from, to, opts = {}) {
   const color = opts.color || T.muted;
-  const dash = opts.dashed ? ' stroke-dasharray="5,4"' : '';
+  const dash = opts.dashed ? ` stroke-dasharray="${kit.DASH.fine}"` : '';
   // コネクタは図解の主張そのもの。1.2 は縮小表示で灰色に溶けるので
   // 既定を STROKE.secondary に上げる (根拠は svg-kit.cjs の STROKE 定義)。
   const width = opts.width || kit.STROKE.secondary;
@@ -242,7 +264,7 @@ function connector(from, to, opts = {}) {
 function bandLabel(box, text, opts = {}) {
   if (!text) return '';
   return fittedLines(text, box, {
-    fill: opts.fill || T.soft, weight: 700, maxFont: opts.maxFont || 13,
+    fill: opts.fill || T.muted, weight: 700, maxFont: opts.maxFont || 13,
     minFont: kit.MIN_FONT_SMALL, padX: 6, padY: 2, anchor: opts.anchor,
   });
 }
@@ -337,7 +359,7 @@ function buildArchitecture(zones, opts = {}) {
   zoneBoxes.forEach((z, zi) => {
     const zone = list[zi];
     const nodes = ((zone && zone.nodes) || []).filter(Boolean).slice(0, ARCH_NODES_PER_ZONE);
-    body.push(`<rect x="${kit.num(z.x)}" y="${kit.num(z.y)}" width="${kit.num(z.w)}" height="${kit.num(z.h)}" rx="8" fill="none" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}" stroke-dasharray="4,4"/>`);
+    body.push(`<rect x="${kit.num(z.x)}" y="${kit.num(z.y)}" width="${kit.num(z.w)}" height="${kit.num(z.h)}" fill="none" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}" stroke-dasharray="${kit.DASH.fine}"/>`);
     body.push(bandLabel(z.label, nameOf(zone) || `ゾーン${zi + 1}`));
     if (!nodes.length) return;
     const inner = kit.area(z.body.x + 12, z.body.y + 8, z.body.w - 24, z.body.h - 16);
@@ -418,7 +440,11 @@ function buildDataFlow(stages, opts = {}) {
   const W = CANVAS.w, M = 48;
   // 段は input / plain / store を塗り分けるので凡例が要る (契約 §1.2)。
   // opts.legend が来ればそれを優先する (呼出し側の語のほうが具体的なため)。
-  const legend = (opts.legend && opts.legend.length) ? opts.legend : styleLegend(['input', 'plain', 'store']);
+  // ただし見本の絵は resolveLegendItems を通す。語だけを呼出し側から取り、
+  // 符号は図と同じ NODE_STYLES から引くことで、凡例と図が別々に動けなくする。
+  const legend = (opts.legend && opts.legend.length)
+    ? resolveLegendItems(opts.legend)
+    : styleLegend(['input', 'plain', 'store']);
   const legendH = kit.legendHeight(legend, W - M * 2);
   // 必要高 = 段の上端 120 + 段高 140 + 下余白 M + 凡例 → 階段で確定
   const H = CANVAS.height(120 + 140 + M + legendH);
@@ -478,15 +504,17 @@ function buildEr(entities, opts = {}) {
     const e = list[i];
     const box = { x: cell.x, y: cell.y, w: cell.w, h: cardH };
     boxOf.set(nameOf(e), box);
-    body.push(kit.nodeRect(box, kit.NODE_STYLES.plain, { radius: 6 }));
-    // 見出し帯
-    body.push(`<rect x="${kit.num(box.x)}" y="${kit.num(box.y)}" width="${kit.num(box.w)}" height="${headH}" rx="6" fill="${T.accentTint}"/>`);
+    body.push(kit.nodeRect(box, kit.NODE_STYLES.plain));
+    // 見出し帯。**強調ではなく濃度段**で作る。実体の数だけ帯が並ぶので、ここを
+    // 強調色にすると 1 図に強調が実体数だけ現れ、「どれが焦点か」を言わない図になる。
+    // 帯の役目は実体名と列の並びを分けることだけなので、紙の次の濃度段を当てる。
+    body.push(`<rect x="${kit.num(box.x)}" y="${kit.num(box.y)}" width="${kit.num(box.w)}" height="${headH}" fill="${T.tone2}"/>`);
     body.push(`<line x1="${kit.num(box.x)}" y1="${kit.num(box.y + headH)}" x2="${kit.num(box.x + box.w)}" y2="${kit.num(box.y + headH)}" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
     body.push(fittedLines(nameOf(e), { x: box.x, y: box.y, w: box.w, h: headH }, { fill: T.ink, weight: 700, maxFont: 15, padX: 8, padY: 2 }));
     ((e && e.fields) || []).filter(Boolean).slice(0, ER_FIELDS).forEach((f, fi) => {
       const fy = box.y + headH + 6 + fi * fieldH;
       body.push(fittedLines(String(f), { x: box.x + 6, y: fy, w: box.w - 12, h: fieldH }, {
-        fill: T.soft, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 4, padY: 1,
+        fill: T.muted, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 4, padY: 1,
       }));
     });
   });
@@ -496,7 +524,7 @@ function buildEr(entities, opts = {}) {
     const sameRow = Math.abs(a.y - b.y) < 4;
     const from = sameRow ? port(a, b.x > a.x ? 'right' : 'left') : port(a, b.y > a.y ? 'bottom' : 'top');
     const to = sameRow ? port(b, b.x > a.x ? 'left' : 'right') : port(b, b.y > a.y ? 'top' : 'bottom');
-    body.push(connector(from, to, { axis: sameRow ? 'h' : 'v', color: T.soft, srcBox: a, dstBox: b }));
+    body.push(connector(from, to, { axis: sameRow ? 'h' : 'v', color: T.muted, srcBox: a, dstBox: b }));
     // 関係名は発側の直後へ。中点は 2 枚のカードの間で、他の関係線と重なりやすい
     if (r.label) {
       const dir = sameRow ? (b.x > a.x ? 'right' : 'left') : (b.y > a.y ? 'down' : 'up');
@@ -540,13 +568,13 @@ function buildSequence(actors, messages, opts = {}) {
   heads.forEach((b, i) => {
     body.push(node(b, acts[i], { fallbackType: i === 0 ? 'input' : 'plain', maxFont: 15 }));
     // ライフライン (凡例帯の手前で止める。重ねると凡例が図の一部に見える)
-    body.push(`<line x1="${kit.num(laneX[i])}" y1="${kit.num(b.y + b.h)}" x2="${kit.num(laneX[i])}" y2="${kit.num(lifeBottom)}" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}" stroke-dasharray="4,4"/>`);
+    body.push(`<line x1="${kit.num(laneX[i])}" y1="${kit.num(b.y + b.h)}" x2="${kit.num(laneX[i])}" y2="${kit.num(lifeBottom)}" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}" stroke-dasharray="${kit.DASH.fine}"/>`);
   });
   drawn.forEach(({ m, a, b }, i) => {
     const y = M + headH + 40 + i * step;
     const x1 = laneX[a], x2 = laneX[b];
     const color = m.external ? T.link : T.muted;
-    body.push(`<line x1="${kit.num(x1)}" y1="${kit.num(y)}" x2="${kit.num(x2)}" y2="${kit.num(y)}" stroke="${color}" stroke-width="${kit.STROKE.secondary}"${m.dashed ? ' stroke-dasharray="5,4"' : ''} marker-end="${kit.arrowUrl(color)}"/>`);
+    body.push(`<line x1="${kit.num(x1)}" y1="${kit.num(y)}" x2="${kit.num(x2)}" y2="${kit.num(y)}" stroke="${color}" stroke-width="${kit.STROKE.secondary}"${m.dashed ? ` stroke-dasharray="${kit.DASH.fine}"` : ''} marker-end="${kit.arrowUrl(color)}"/>`);
     if (m.label) body.push(kit.arrowLabel(m.label, (x1 + x2) / 2, y, { side: 'above', maxWidth: Math.abs(x2 - x1) - 16 }));
   });
   body.push(legendAt(legend, M, H - M / 2, W - M * 2));
@@ -565,8 +593,11 @@ function buildSequence(actors, messages, opts = {}) {
 function buildState(states, transitions, opts = {}) {
   const list = (states || []).filter(Boolean).slice(0, CAP.buildState);
   if (!list.length) return base.emptyState(opts);
-  // 遷移も上限を持つ。1 辺に取り付けられる本数は fanCapacity(96) = 5 本で、
-  // 「状態 6 × 辺 4 ÷ 端点 2 = 12」を超えると必ずどこかの辺が飽和する
+  // 遷移も上限を持つ。上限 12 の出どころは「状態 6 × 辺 4 ÷ 端点 2」で、
+  // 端点の数だけで決まる (辺の容量からは出ていない)。
+  // 以前ここには「1 辺に取り付けられる本数は fanCapacity(96) = 5 本」と
+  // 添えてあったが、現行の FAN_MIN_GAP 20 では 3 本である。96 は箱の高さなので
+  // これは縦辺の容量で、横辺 (列幅 約 250) は 11 本入る。律速は縦辺のみ
   const trs = (transitions || []).filter(Boolean).slice(0, (base.CAPACITY_ARGS.buildState || [])[1] || 12);
   const W = CANVAS.w, M = 48;
   // focal 指定の状態があるときだけ 2 語彙になるので、そのときだけ凡例を出す
@@ -582,7 +613,7 @@ function buildState(states, transitions, opts = {}) {
   cells.forEach((cell, i) => {
     const box = { x: cell.x, y: cell.y, w: cell.w, h: Math.min(96, cell.h) };
     boxOf.set(nameOf(list[i]), box);
-    body.push(node(box, list[i], { radius: 8 }));
+    body.push(node(box, list[i]));
   });
   // 辺ごとの本数を先に数える。状態遷移は 1 つの状態に複数の出入りが集まるため、
   // 数えずに辺の中央へ全部着けると線が重なって行き先が読めなくなる。
@@ -677,14 +708,17 @@ function buildState(states, transitions, opts = {}) {
     if (p.kind === 'self') {
       // 自己遷移: 箱の上辺へ半円を回す (斜め線を作らない)
       const x = a.x + a.w / 2, y = a.y;
-      body.push(`<path d="M${kit.num(x - 20)},${kit.num(y)} A20,20 0 1 1 ${kit.num(x + 20)},${kit.num(y)}" fill="none" stroke="${T.soft}" stroke-width="${kit.STROKE.secondary}" marker-end="${kit.arrowUrl(T.soft)}"/>`);
+      body.push(`<path d="M${kit.num(x - 20)},${kit.num(y)} A20,20 0 1 1 ${kit.num(x + 20)},${kit.num(y)}" fill="none" stroke="${T.muted}" stroke-width="${kit.STROKE.secondary}" marker-end="${kit.arrowUrl(T.muted)}"/>`);
       if (t.label) body.push(kit.arrowLabel(t.label, x, y - 22, { side: 'above' }));
       continue;
     }
     const sameRow = p.kind !== 'fold';
     if (p.kind === 'detour') {
+      // 迂回は経路の都合であって遷移の種別ではない。以前はここだけ別トークンを
+      // 当てていたが、**読者は色差を意味差として読む**ので「この遷移だけ別種」と
+      // 誤って主張していた。迂回していることは経路の形が既に示している。
       const d = kit.detourPath(p.from.x, p.from.y, p.to.x, p.to.y, p.lane != null ? p.lane : bandOf(a.y)[0] + 24);
-      body.push(`<path d="${d}" fill="none" stroke="${T.soft}" stroke-width="${kit.STROKE.secondary}" marker-end="${kit.arrowUrl(T.soft)}"/>`);
+      body.push(`<path d="${d}" fill="none" stroke="${T.muted}" stroke-width="${kit.STROKE.secondary}" marker-end="${kit.arrowUrl(T.muted)}"/>`);
     } else {
       body.push(connector(p.from, p.to, {
         axis: sameRow ? 'h' : 'v', srcBox: a, dstBox: b, mid: p.lane,
@@ -719,8 +753,8 @@ function buildState(states, transitions, opts = {}) {
  * 入力のどこにもそう書かれていないので、それは読者への嘘である。
  *
  * @param {Array} placed [{id, lane, step, order, box}]
- * @param {Array} links  opts.links。[{from, to}] を step の id で指す明示辺
- * @returns {Array<[number, number]>} placed の添字ペア
+ * @param {Array} links  opts.links。[{from, to, label, dashed}] を step の id で指す明示辺
+ * @returns {Array<[number, number, string, boolean]>} placed の添字ペア + ラベル + 破線か
  */
 function swimlanePairs(placed, links) {
   // (1) 明示辺。両端が解決できるものだけを引く (部分宣言はその部分だけが正しい)。
@@ -731,7 +765,7 @@ function swimlanePairs(placed, links) {
     links.forEach((l) => {
       if (!l) return;
       const a = byId.get(l.from), b = byId.get(l.to);
-      if (a != null && b != null && a !== b) out.push([a, b, l.label || '']);
+      if (a != null && b != null && a !== b) out.push([a, b, l.label || '', l.dashed === true]);
     });
     if (out.length) return out;
   }
@@ -789,7 +823,7 @@ function buildSwimlane(lanes, opts = {}) {
   }
   const placed = [];
   laneBoxes.forEach((lane, li) => {
-    body.push(`<rect x="${kit.num(lane.x)}" y="${kit.num(lane.y)}" width="${kit.num(lane.w)}" height="${kit.num(lane.h)}" rx="6" fill="${li % 2 === 0 ? T.paper : T.paper2}" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
+    body.push(`<rect x="${kit.num(lane.x)}" y="${kit.num(lane.y)}" width="${kit.num(lane.w)}" height="${kit.num(lane.h)}" fill="${li % 2 === 0 ? T.paper : T.paper2}" stroke="${T.rule}" stroke-width="${kit.STROKE.hairline}"/>`);
     body.push(bandLabel(lane.header, nameOf(list[li]), { maxFont: 15, fill: T.ink }));
     const steps = ((list[li] && list[li].steps) || []).slice(0, stepCount);
     steps.forEach((s, si) => {
@@ -810,11 +844,11 @@ function buildSwimlane(lanes, opts = {}) {
   // 同じ辺へ入る線と出る線を両方とも辺の中央へ着けると、レーンを往復する区間で
   // 2 本が同じ直線に乗り、行って戻ったことが 1 本に見える (受け渡しの回数が
   // 読めない)。辺ごとの本数を先に数え、辺上へ散らしてから引く。
-  const links = swimlanePairs(placed, opts.links).map(([ai, bi, label]) => {
+  const links = swimlanePairs(placed, opts.links).map(([ai, bi, label, dashed]) => {
     const a = placed[ai].box, b = placed[bi].box;
     const sameLane = Math.abs(a.y - b.y) < 4;
     return {
-      ai, bi, a, b, sameLane, label,
+      ai, bi, a, b, sameLane, label, dashed,
       fromSide: sameLane ? 'right' : (b.y > a.y ? 'bottom' : 'top'),
       toSide: sameLane ? 'left' : (b.y > a.y ? 'top' : 'bottom'),
     };
@@ -835,7 +869,10 @@ function buildSwimlane(lanes, opts = {}) {
   links.forEach((l) => {
     const from = port(l.a, l.fromSide, fanOf(sideKey(l.ai, l.fromSide)));
     const to = port(l.b, l.toSide, fanOf(sideKey(l.bi, l.toSide)));
-    body.push(connector(from, to, { axis: l.sameLane ? 'h' : 'v', srcBox: l.a, dstBox: l.b }));
+    // 差戻し・再送のように「同じ向きの受け渡しではない」辺は、宣言があれば線種で
+    // 分ける。ラベルだけに任せると、線を目で追う読者にはすべて同じ受け渡しに見える。
+    // 推測はしない (位置から逆流を割り出さない)。宣言された辺だけを破線にする。
+    body.push(connector(from, to, { axis: l.sameLane ? 'h' : 'v', srcBox: l.a, dstBox: l.b, dashed: l.dashed }));
     // 帯をまたぐ線には「何を渡したか」を載せる (契約 §2.4)。
     // 『渡した』だけでは、待ちが発生した理由も差し戻しの単位も読めない。
     // 同一レーン内は同じ担当の連続作業なので受け渡し物が無く、書かない。
@@ -932,8 +969,8 @@ function buildHighLevel(levels, opts = {}) {
       kit.trunkPaths({ x: trunkX, y: rowBottom }, dsts, trunkX, trunkY).forEach((seg) => {
         // 幹には矢じりを付けない。付けると母線の途中に向きが生えて、
         // 「どこが終点か」が読めなくなる。終点は枝の先だけである。
-        const marker = seg.arrow ? ` marker-end="${kit.arrowUrl(T.soft)}"` : '';
-        body.push(`<path d="${seg.d}" fill="none" stroke="${T.soft}" stroke-width="${kit.STROKE.secondary}"${marker}/>`);
+        const marker = seg.arrow ? ` marker-end="${kit.arrowUrl(T.muted)}"` : '';
+        body.push(`<path d="${seg.d}" fill="none" stroke="${T.muted}" stroke-width="${kit.STROKE.secondary}"${marker}/>`);
       });
       return;
     }
@@ -962,7 +999,7 @@ function buildHighLevel(levels, opts = {}) {
     });
     drawn.forEach((e) => {
       body.push(connector(e.from, e.to, {
-        axis: 'v', color: T.soft, srcBox: e.box, dstBox: e.dst, mid: e.mid,
+        axis: 'v', color: T.muted, srcBox: e.box, dstBox: e.dst, mid: e.mid,
       }));
     });
   });
@@ -1004,7 +1041,7 @@ function buildItState(rows, opts = {}) {
     const value = r && (r[key] != null ? r[key] : positional[cell.col]);
     // あるべき姿の列だけ焦点扱いにして、視線の着地点をひとつに保つ
     const st = cell.col === headers.length - 1 ? kit.NODE_STYLES.focal : kit.NODE_STYLES.plain;
-    body.push(kit.nodeRect(cell, st, { radius: 6 }));
+    body.push(kit.nodeRect(cell, st));
     body.push(fittedLines(nameOf(value) || String(value || ''), cell, {
       fill: T.ink, weight: 600, maxFont: 15, padX: 12, padY: 8,
     }));
@@ -1040,15 +1077,15 @@ function buildMedallion(tiers, opts = {}) {
   boxes.forEach((b, i) => {
     const tier = list[i];
     const st = i === list.length - 1 ? kit.NODE_STYLES.focal : kit.NODE_STYLES.plain;
-    body.push(kit.nodeRect(b, st, { radius: 8 }));
+    body.push(kit.nodeRect(b, st));
     body.push(fittedLines(nameOf(tier), { x: b.x, y: b.y + 10, w: b.w, h: 40 }, { fill: T.ink, weight: 800, maxFont: 18, padX: 10, padY: 2 }));
     const sub = subOf(tier);
-    if (sub) body.push(fittedLines(sub, { x: b.x, y: b.y + 50, w: b.w, h: 34 }, { fill: T.soft, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 10, padY: 2 }));
+    if (sub) body.push(fittedLines(sub, { x: b.x, y: b.y + 50, w: b.w, h: 34 }, { fill: T.muted, weight: 500, maxFont: 12, minFont: kit.MIN_FONT_SMALL, padX: 10, padY: 2 }));
     const items = ((tier && tier.items) || []).filter(Boolean).slice(0, MEDALLION_ITEMS);
     if (items.length) {
       const inner = kit.columnLayout(items.length, kit.area(b.x + 12, b.y + 92, b.w - 24, b.h - 104), { gap: 8 });
       inner.forEach((ib, ii) => {
-        body.push(kit.nodeRect(ib, kit.NODE_STYLES.store, { radius: 4 }));
+        body.push(kit.nodeRect(ib, kit.NODE_STYLES.store));
         body.push(fittedLines(nameOf(items[ii]), ib, { fill: T.ink, weight: 600, maxFont: 13, minFont: kit.MIN_FONT_SMALL, padX: 8, padY: 4 }));
       });
     }
@@ -1088,12 +1125,22 @@ function buildDpIntegration(hub, spokes, opts = {}) {
   const list = (spokes || []).filter(Boolean).slice(0, CAP.buildDpIntegration);
   if (!list.length) return base.emptyState(opts);
   // ハブは focal、周辺は plain なので 2 語彙 = 凡例が要る (契約 §1.2)。
-  // 加えて向き (受信 / 送信 / 双方向) を色と破線で分けているので、その語も出す。
+  // 加えて向き (受信 / 送信 / 双方向) をスポークの色と線種で分けているので、その語も出す。
   const W = CANVAS.w, M = 48;
-  const legend = styleLegend(['focal', 'plain']).concat([
-    { label: 'ハブへ入る', color: T.muted },
-    { label: 'ハブから出る', color: T.link },
-  ]);
+  // 向きの見本は kind:'line' で描く。塗りの四角で出していたが、図の中で向きを
+  // 運んでいるのは線なので、**凡例が図に無い符号 (色の面) を説明する**状態だった。
+  // 出す項目は実際に使われている向きだけに絞る。使われていない向きを常に並べると、
+  // 読者は図の中に無い線を探すことになる。逆に both を落とすと、破線のスポークが
+  // 凡例に無い符号として残る。
+  const dirsUsed = new Set(list.map((s) => (s && s.direction) || 'in'));
+  const DIR_LEGEND = [
+    { key: 'in', label: 'ハブへ入る', color: T.muted, kind: 'line' },
+    { key: 'out', label: 'ハブから出る', color: T.link, kind: 'line' },
+    { key: 'both', label: '双方向', color: T.muted, kind: 'dashed', dash: kit.DASH.fine },
+  ];
+  const legend = styleLegend(['focal', 'plain']).concat(
+    DIR_LEGEND.filter((d) => dirsUsed.has(d.key)).map(({ key, ...it }) => it)
+  );
   const legendH = kit.legendHeight(legend, W - M * 2);
   // 必要高 = リング直径 2R(536) + ノード高 72 + 上下の逃がし 20×2 + 凡例。
   // md 540 には入らないので lg 720 へ倒れる (536 + 72 + 40 + 凡例 ≒ 676)
@@ -1124,14 +1171,14 @@ function buildDpIntegration(hub, spokes, opts = {}) {
     const color = dir === 'out' ? T.link : T.muted;
     const a = dir === 'out' ? inner : outer;
     const b = dir === 'out' ? outer : inner;
-    body.push(`<line x1="${kit.num(a.x)}" y1="${kit.num(a.y)}" x2="${kit.num(b.x)}" y2="${kit.num(b.y)}" stroke="${color}" stroke-width="${kit.STROKE.secondary}"${dir === 'both' ? ' stroke-dasharray="5,4"' : ''} marker-end="${kit.arrowUrl(color)}"/>`);
+    body.push(`<line x1="${kit.num(a.x)}" y1="${kit.num(a.y)}" x2="${kit.num(b.x)}" y2="${kit.num(b.y)}" stroke="${color}" stroke-width="${kit.STROKE.secondary}"${dir === 'both' ? ` stroke-dasharray="${kit.DASH.fine}"` : ''} marker-end="${kit.arrowUrl(color)}"/>`);
     body.push(node(box, s, { maxFont: 15 }));
   });
   // ハブは最後に描いてスポークの微小なはみ出しを隠す
-  body.push(kit.nodeRect(hubBox, kit.NODE_STYLES.focal, { radius: 8 }));
+  body.push(kit.nodeRect(hubBox, kit.NODE_STYLES.focal));
   body.push(fittedLines(nameOf(hub) || '統合基盤', { x: hubBox.x, y: hubBox.y + 8, w: hubBox.w, h: 52 }, { fill: T.ink, weight: 800, maxFont: 20, padX: 12, padY: 4 }));
   const hubSub = subOf(hub);
-  if (hubSub) body.push(fittedLines(hubSub, { x: hubBox.x, y: hubBox.y + 62, w: hubBox.w, h: 44 }, { fill: T.soft, weight: 500, maxFont: 13, minFont: kit.MIN_FONT_SMALL, padX: 12, padY: 4 }));
+  if (hubSub) body.push(fittedLines(hubSub, { x: hubBox.x, y: hubBox.y + 62, w: hubBox.w, h: 44 }, { fill: T.muted, weight: 500, maxFont: 13, minFont: kit.MIN_FONT_SMALL, padX: 12, padY: 4 }));
   body.push(legendAt(legend, M, H - M / 2, W - M * 2));
   return frame(W, H, body.filter(Boolean).join('\n  '), { ...opts, className: 'integration-svg' });
 }

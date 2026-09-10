@@ -55,6 +55,13 @@ UI 品質(テキスト切れ/改行/バランス S1-S26)を独立 context で検
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
 - If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-ui-quality-reviewer.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 
+## Isolation
+
+<!-- TODO(human): この agent が「触らないもの」を書く。
+     frontmatter の tools: Read, Bash / isolation: fork は能力の上限を宣言するが、
+     能力の範囲内で何をしないかは書かれていない。AG-002 が本文の記述を求めるのは
+     そのため。他 16 agent へ同じ形で展開するので、ここが雛形になる。 -->
+
 ## Prompt Templates
 
 (対話なし: 自動実行 agent) — owner skill から自動起動され、実行仕様の正本は下記 prompts/R*.md を参照する。

@@ -1,0 +1,39 @@
+{
+  "target": {
+    "plugin": "skill-governance-hooks",
+    "skill": "run-governance-hooks",
+    "skill_md_sha256": "1f6e4912e8213684a864a98b28bc69473531166449261b95cca8d6dbc25addcb"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "OUT1"],
+    "positive_feedback": [
+      "round 1 medium (omission+contradiction: 「実projectを変更しない」の実現手段が本文に無い) は解消。SKILL.md Key Rules 第3項 (L64) が「書込を持つhookは既定の書込先がproject-localのため、必ず退避先を明示してから起動する」と絶対要求へ言い換えたうえで、`hook-handoff.py` と `hook-post-compact.py` は `CLAUDE_HANDOFF_DIR` (既定 `.claude/handoff`)、`hook-check-file-ownership.py` は `CLAUDE_TASK_OWNERSHIP_STATE` (既定 `.claude/logs/task-ownership.json`) と env 名・既定値を明記した。env 名と既定値は実装と逐語一致する (hook-handoff.py:26 `Path(os.environ.get(\"CLAUDE_HANDOFF_DIR\", \".claude/handoff\"))`, hook-post-compact.py:26 同, hook-check-file-ownership.py:28 `Path(os.environ.get(\"CLAUDE_TASK_OWNERSHIP_STATE\", \".claude/logs/task-ownership.json\"))`)。",
+      "退避手段が取れない場合のフォールバック梯子 (env上書き → 隔離cwd → 実行せず未検証理由として報告) が L64 に書かれており、「優先する」という緩い語が消えて OUT1 の絶対要求と語気が揃った。ゴールシーク節 L69 も「write scopeがnone以外なら上記envで書込先を退避してからfixtureで実行する」と手順側へ再掲しており、Key Rules と手順の二重配線になっている。",
+      "実測で裏取り済み: `CLAUDE_HANDOFF_DIR=<tmp>/handoff` で hook-handoff.py に fixture stdin を流したところ exit 0 で成果物は `<tmp>/handoff/20260821T005543.md` のみに出力され、project の `.claude/handoff` は生成されなかった。`CLAUDE_TASK_OWNERSHIP_STATE=<tmp>/own.json` での hook-check-file-ownership.py も exit 0 で project 側 write 無し。本文の手段が実際に無変更を達成することを確認した。",
+      "round 1 low (IN1 の verify_by: script に対応する script が未同定) は解消。検証節 L73 が「IN1の機械根拠は『hook実体をfixture stdinで起動したときのexit code』であり、hook script自身が検証scriptを兼ねる (別途の検証scriptは持たない)」と明示し、機械根拠の所在と別script不在の理由が本文で閉じた。",
+      "hook 6 本の write scope 網羅を確認: project-local へ実書込するのは hook-handoff.py (OUT_DIR) と hook-check-file-ownership.py (STATE_FILE) の 2 本のみで、いずれも L64 の env 指定で網羅されている。hook-guard-rubric.py は stdout JSON のみ (:89)、hook-validate-skill-md.py は stderr と read-only validator の subprocess のみ (:39)、hook-verify-evaluator-json.py と hook-post-compact.py は `write-scope: none` 宣言どおり write 無し。網羅漏れの hook は無い。"
+    ],
+    "negative_feedback": [
+      "[low / smell] L64 は hook-post-compact.py を「書込を持つhook」の一覧へ含めているが、同 script のヘッダは `write-scope: none` (hook-post-compact.py:12) で、CLAUDE_HANDOFF_DIR は読み取り先の glob にしか使われない (:36)。退避先を向けること自体は隔離として正しく無変更契約も破らないため実害は無いが、分類語としては不正確。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "読んだファイル: plugins/skill-governance-hooks/skills/run-governance-hooks/SKILL.md (全文), plugins/skill-governance-hooks/scripts/{hook-handoff,hook-post-compact,hook-check-file-ownership,hook-guard-rubric,hook-validate-skill-md,hook-verify-evaluator-json}.py, eval-log/skill-governance-hooks/run-governance-hooks/content-review/{elegance,rubric}-verdict.json (round 1), .claude/settings.json (hook 配線行), plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json。実行したコマンド: `git diff HEAD --stat -- plugins/skill-governance-hooks/`, `grep -n 'environ|getenv|open(|write_text|mkdir|Path(' *.py`, `grep -n write-scope *.py`, `python3 scripts/lint-skill-tree.py plugins/skill-governance-hooks/skills/run-governance-hooks` (=> `ok: run-governance-hooks`, exit 0), env 上書きつき hook-handoff.py / hook-check-file-ownership.py の fixture stdin 実行 (いずれも exit 0・project write 無し), sha256 算出。30 思考法は実施していない (incremental profile の焦点再判定)。"
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "実体解決が C17 (HB_ROOT→CLAUDE_PLUGIN_ROOT→2階層上) と C09 ($CLAUDE_PLUGIN_ROOT のみ) で manifest name 照合を欠く 3 段へ縮退。.claude/ 平置き projection では CLAUDE_PLUGIN_ROOT が 1 値しか持てず他 plugin の root を掴みうる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-x-01.json",
+  "proposed_node": {
+    "id": "P02-root-resolution-align",
+    "title": "C17 / C09 の実体解決を C15 と同じ 4 段へ揃える",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "script-brief-C17.json と command-brief-C09.json の root 解決が plugin.json の name 照合を含む 4 段になり、C15 と同じく全段外れた場合の挙動が明記されていること"
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C17"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

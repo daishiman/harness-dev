@@ -1,0 +1,510 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugin-plans/guide-doc-generator/briefs/config/handout-parts.json:3 と plugins/guide-doc-generator/config/handout-parts.json:3が双方で単一正本を宣言する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 3が同根問題を一意に所有する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "EXPLAINレコードの必要属性は揃う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "READMEの運用説明と実体が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "同期は人手である。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.35,
+      "reusable_abstraction": "単一カタログから出荷configと文書表示を派生させるcatalog projection",
+      "template_variables": [
+        "{{PART_CATALOG_PATH}}",
+        "{{PART_CATALOG_PROJECTION}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "planと出荷configが異なる責務を持ち同一レコードを複写しない場合"
+      ],
+      "re_audit_trigger": "部品IDの追加・改名時"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/schemas/handout-config.schema.json:1297のEXPLAINはdiagram_idまたはasset_idとheadline/noteだけで、render-handout.py:1586は既存rendererへ委譲する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 1が独立型重複を所有する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "短文フィールドは揃う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "独自媒体ではなく表示装飾である。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "抽出順依存を追加する。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.58,
+      "reusable_abstraction": "既存媒体へ短文見出しと表示モードを与えるpresentation decorator",
+      "template_variables": [
+        "{{MEDIA_KIND}}",
+        "{{PRESENTATION_MODE}}"
+      ],
+      "reuse_surface": "schema",
+      "negative_cases": [
+        "将来EXPLAINが独自媒体実体を所有する場合"
+      ],
+      "re_audit_trigger": "第三の媒体種別または独自描画追加時"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報単位ごとの説明を求めるが、scripts/validate-handout-config.py:1051は部品数と間隔だけを測る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "選別規範と一律配置規範の境界がない。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 26が意味対応の欠落を所有する。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "媒体形式を成功proxyへ固定する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "閾値はpolicyから解決される。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.44,
+      "reusable_abstraction": "媒体IDに依存しない情報単位と視覚説明の対応ゲート",
+      "template_variables": [
+        "{{INFORMATION_UNIT_SELECTOR}}",
+        "{{VISUAL_EXPLANATION_PREDICATE}}"
+      ],
+      "reuse_surface": "rubric",
+      "negative_cases": [
+        "構文上の存在だけを検査する場合"
+      ],
+      "re_audit_trigger": "visual density合格条件変更時"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:732のversusと同:792のbefore_afterは二列版組を重複し、独立builder・versus拡張・共通primitive・compare変換・CSS template・宣言的engineの6案では共通primitiveが最小である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "意味差は保持できる。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "9種すべてにbuilderがある。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "意味差を超えて版組処理が重複する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "BUILDERS表から分岐する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "before_afterとversusが二列の高さ計算・箱・箇条描画を複製し、将来の版組修正を二経路にする。",
+          "recommended_intervention": "意味pattern名は維持し、列準備・高さ計算・箱描画を共通two-column primitiveへ統合する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+            "line": 792,
+            "section": "build_before_after"
+          },
+          "root_cause": "意味上の新patternを版組実装まで完全分岐させた。"
+        }
+      ],
+      "score": 0.64,
+      "reusable_abstraction": "意味patternから独立したtwo-column SVG layout primitive",
+      "template_variables": [
+        "{{LEFT_FIELD}}",
+        "{{RIGHT_FIELD}}",
+        "{{CONNECTOR_STYLE}}"
+      ],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "左右の幾何構造が異なるpattern"
+      ],
+      "re_audit_trigger": "二列型pattern追加・変更時"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:443はデータ宣言だが、scripts/validate-handout-config.py:123はEXPLAIN IDを再度ハードコードする。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "二閾値の意味は両立する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "下限と間隔の双方を実装する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 1・8の専用型と閾値重複に包含する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "part ID改名へ自動追随しない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.61,
+      "reusable_abstraction": "selectorとmetricで表すデータ駆動のpart-density rule",
+      "template_variables": [
+        "{{PART_SELECTOR}}",
+        "{{DENSITY_METRIC}}"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "意味解析を要する規則"
+      ],
+      "re_audit_trigger": "部品別密度警告追加時"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:449は挿絵だけで足りる節を許すwarningとするが、skills/run-handout-build/SKILL.md:269はwarningゼロをdraft条件にする。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "policyが許容する例外をworkflowが無条件に阻止する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "validator層のtestはworkflow完了条件を覆わない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "warningが実運用ではblocking gateになる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "skillはpolicy level_reasonを読まない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "挿絵だけで足りる節を許すwarningというpolicyと、そのwarningが一件でもあればdraft未完了というskillが矛盾する。",
+          "recommended_intervention": "完了条件をpolicyのlevel/applicabilityへ従属させ、warningは表示しつつerrorだけをblockingにする。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/skills/run-handout-build/SKILL.md",
+            "line": 269,
+            "section": "D4b"
+          },
+          "root_cause": "validator重大度とworkflow完了条件を別々に定義した。"
+        }
+      ],
+      "score": 0.28,
+      "reusable_abstraction": "診断levelとapplicabilityを唯一の完了判定へ伝播するpolicy-driven gate",
+      "template_variables": [
+        "{{DIAGNOSTIC_LEVEL}}",
+        "{{APPLICABILITY_PREDICATE}}"
+      ],
+      "reuse_surface": "skill",
+      "negative_cases": [
+        "利用者が明示的に必須化した場合はpolicy側をerrorにする"
+      ],
+      "re_audit_trigger": "完了条件またはdiagnostic level変更時"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:54の9語に対し、plugin-plans/guide-doc-generator/briefs/script-brief-C14.json:9とtests/render-diagram-svg.py/_harness.py:29は6語である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 2が値域矛盾を所有する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "新3patternの受入が欠ける。"
+          ],
+          "violation_count": 3
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "正本enumと実装が違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "既存検証経路を迂回する。"
+          ],
+          "violation_count": 3
+        }
+      },
+      "issues": [],
+      "score": 0.20,
+      "reusable_abstraction": "公開語彙を契約registryからschema・runtime・conformance suiteへ投影するpattern registry",
+      "template_variables": [
+        "{{PATTERN_REGISTRY}}",
+        "{{CONFORMANCE_FIXTURE_FACTORY}}"
+      ],
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "schema/CLIから到達不能な実験pattern",
+        "golden不要と正本で明示された非決定論renderer"
+      ],
+      "re_audit_trigger": "diagram pattern追加・改名時"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報変化ごとに全幅媒体を要求する一方、config/handout-visual-policy.json:443-457は最大数・紙面長・容量予算を持たない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "通常規模では下限と間隔が両立する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "情報量10倍時の上限・分割・省略条件がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "要点選別規範と配置規則の優先度が接続されない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "各媒体描画は既存rendererへ委譲する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "description": "情報単位が増えた場合に全幅視覚説明が無制限に増え、可読性を逆に下げる過剰配置を止める予算がない。",
+          "recommended_intervention": "新しい専用上限を増やさず、既存content_selection/detail_levelのsection予算へ視覚媒体を含め、超過時は選別または分割する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json",
+            "line": 443,
+            "section": "thresholds"
+          },
+          "root_cause": "配置不足だけを設計し、過剰配置の反対側を破壊試験していない。"
+        }
+      ],
+      "score": 0.46,
+      "reusable_abstraction": "文章と視覚媒体を同じ選別予算で制御するsection information budget",
+      "template_variables": [
+        "best",
+        "worst",
+        "edge"
+      ],
+      "reuse_surface": "config",
+      "negative_cases": [
+        "情報単位が少なく紙面予算内の場合"
+      ],
+      "re_audit_trigger": "section部品数・容量・印刷ページ上限変更時"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/README.md:188は20種類、同:190-211の表は21 IDを掲載する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 3が派生文書問題を所有する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "EXPLAIN用途説明は存在する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "実catalog件数と固定数が違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "READMEは正本参照先を示す。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.52,
+      "reusable_abstraction": "catalog-derived count label",
+      "template_variables": [
+        "{{PART_COUNT}}"
+      ],
+      "reuse_surface": "template",
+      "negative_cases": [
+        "意図的に一部を除外する件数なら数え方を明記する"
+      ],
+      "re_audit_trigger": "部品カタログ件数変更時"
+    }
+  ]
+}

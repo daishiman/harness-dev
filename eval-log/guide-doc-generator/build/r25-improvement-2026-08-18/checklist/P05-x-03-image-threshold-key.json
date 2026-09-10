@@ -1,0 +1,39 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-03-image-threshold-key",
+ "covered_task_ids": [
+  "P05-x-03-image-threshold-key"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+ "verified_by": [
+  {
+   "claim": "thresholds に min_diagrams_per_main_section (単数形) と min_images_per_main_section が実在する",
+   "method": "briefs/config/handout-visual-policy.json (正本) の同キーを出荷 config へ写し、キー一覧を出力",
+   "result": "pass: min_visual_parts_per_main_section / min_diagrams_per_main_section / min_images_per_main_section / max_text_parts_ratio_per_section / max_consecutive_text_parts の 5 キー。level=error と why・decision_source も正本のまま持ち込んだ"
+  },
+  {
+   "claim": "旧 min_diagrams_per_main_sections (複数形・総量比) が 0 件",
+   "method": "出荷 config へ grep -c",
+   "result": "pass: 0 件。旧キーは value=0.6 / floor=2 の総量比で、9 節の資料が図解 4 枚で通り図解の無い節が 5 つ残る形だった。per-section 1 件は常に総量比以上に厳しいため二重に持たない"
+  },
+  {
+   "claim": "値が improvement/visual-per-section-decision.json#decision と一致する",
+   "method": "決定ファイルの diagram_per_main_section.value / image_per_main_section.value と出荷 config の value を突合",
+   "result": "pass: 図解 1 = 1、画像 1 = 1。code も W-DIAGRAM-FEW / E-IMAGE-ABSENT で一致"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x03itk-01",
+   "level": "blocking-for-release",
+   "summary": "出荷 script validate-handout-config.py:1561-1563 は依然 'min_diagrams_per_main_sections' (複数形) を number(...) で読み、不在時は FALLBACK_MIN_DIAGRAM_RATIO へ倒す。旧キーを消した今、この経路は config を読まずハードコード既定で判定する fail-open になっている。config が正本になったのは宣言だけで、実際の判定はまだ per-section へ変わっていない。script は本ノードの write_scope 外で、owner は P05-C12-01 (state=pending・build:C12 は deferred_to_release に含まれないため本 draft 内で実施可能)。利用者要件『図解と画像を毎セクション必ず追加する』は P05-C12-01 の完了までゲートとして効かない"
+  },
+  {
+   "id": "F-P05x03itk-02",
+   "level": "carry-forward",
+   "summary": "config/handout-visual-density.json:9 と examples/granularity-anchor.md:42 が旧キー名 min_diagrams_per_main_sections を参照したまま残る。どちらも判定には使われない記述だが、キー名の第 2 の出典として読まれる。tests/.../test_visual_density.py:166 も旧キーを patch しており、P05-C12-01 と同時に書き直しが要る (P05-x-25 の範囲と重なる)"
+  }
+ ]
+}

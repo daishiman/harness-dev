@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-15",
+  "reason": "P05-x-15 が argument_hint の正本を briefs/command-brief-<id>.json#argument_hint と確定し、inventory を derived-copy として一方向同期に整えた。しかし tests/handout-extract/contract_lib.py は ARGUMENT_HINT = \"<html-path> [--out <config.json>]\" という完全文字列リテラルを保持しており、正本を読まずに独自の写しで突合している。これは正本 3 箇所目に相当し、brief が変わると同テストだけが古い値で緑を保つ (または誤って赤くなる) 再発経路が残る。P05-x-15 の write_scope は plugin-plans/guide-doc-generator であり plugins/ 配下は範囲外のため受け皿が要る。置換後コードは RESOLUTION-P05-x-15-argument-hint.md §6-1 に貼り付け可能な形で記載済み。assert は弱まらず、突合基準が brief へ移るだけである",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/handout-extract/contract_lib.py",
+  "proposed_node": {
+    "id": "P05-x-22",
+    "title": "C08 テストの argument-hint 突合基準を brief 正本へ移す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/handout-extract/",
+    "acceptance_criterion": "tests/handout-extract/contract_lib.py が argument-hint の期待値を plugin-plans/guide-doc-generator/briefs/command-brief-C08.json#argument_hint から読み取り、完全文字列リテラルを保持しない。frontmatter と component-inventory.json 双方への完全一致検査は維持する (assert を弱めない)。brief の値を変えると当該テストが追随して赤くなることを実測で示す。tests/handout-extract が緑のままであること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-22.md",
+    "produces": [
+      "plugins/guide-doc-generator/tests/handout-extract/contract_lib.py"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C08"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

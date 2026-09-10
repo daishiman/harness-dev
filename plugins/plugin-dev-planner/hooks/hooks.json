@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-validate-plugin-plan.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/enforce-provenance-chain.py",
+            "timeout": 10000
+          }
+        ]
+      }
+    ]
+  }
+}

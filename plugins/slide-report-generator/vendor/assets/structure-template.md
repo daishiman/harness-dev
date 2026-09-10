@@ -387,7 +387,7 @@ HTML生成時はこのマッピングに従ってクラスを付与する。
 - 全面画像生成の場合: 生成画像は背景ではなく各ページの主キャンバス。HTMLは正テキストfallback・コード・QR/ロゴ・ページUIの正確性レイヤ
 - preset: kanagawa-comic-diagram
 - styleGenome: assets/generated/style-genome.json（同梱プリセットをコピーした project-local 正本）
-- presetOrigin: assets/style-genome-kanagawa-comic-diagram.json（コピー元の同梱プリセット）
+- presetOrigin: vendor/assets/style-genome-kanagawa-comic-diagram.json（コピー元の同梱プリセット）
 - 再現対象: slide-2026-06-13-skill-mass-production/assets/generated/ の画像群
 - 主要特徴: 白〜オフホワイト背景、薄いアイソメドットグリッド床、角丸アイソメタイル、濃紺太字見出し、吹き出しラベル、青白い発光フロー矢印、Kanagawa淡色パレット
 - 量産パターン:
@@ -397,7 +397,7 @@ HTML生成時はこのマッピングに従ってクラスを付与する。
   - 退避先: html-primary + textPolicy=none + backgroundSource=none|svg（正確な表・料金・数値が主役のとき画像を使わない）
 - per-slide meta 必須キー: slide / asset / source（実際に使った text-to-image バックエンド） / decision / reason / alt / pattern / textPolicy / backgroundSource / styleGenome / prompt（`--strict-style-genome` validator 整合）
 - 正本ルール: 画像内に説明文を入れる場合でも overlayText が正テキスト。崩れたらHTML overlayへ切替
-- 検証: 全面画像生成では `node scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome` を必須実行
+- 検証: 全面画像生成では `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/validate-ai-image-assets.js" <slide-dir> --full-image-deck --strict-style-genome` を必須実行
 ```
 
 ---

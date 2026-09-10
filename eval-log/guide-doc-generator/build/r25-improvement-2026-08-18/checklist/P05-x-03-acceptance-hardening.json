@@ -1,0 +1,49 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-x-03-acceptance-hardening",
+ "covered_task_ids": [
+  "P05-x-03-acceptance-hardening"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/task-specs/P05-x-03.md",
+ "verified_by": [
+  {
+   "claim": "acceptance_criterion が 3 点 (DIAGRAM 1 件以上 / IMG 1 件以上 / image_role の値域宣言) を明示要求している",
+   "method": "frontmatter の (3) 節を書き換え、書き換え後の本文を読み直した",
+   "result": "pass: 『全 preset の全 main セクションについて (3a) recommended_parts に DIAGRAM が 1 件以上 (3b) 同じく IMG が 1 件以上 (3c) section_order[] の各要素が image_role を screenshot または illustration のいずれかで宣言』を太字で明示。verify 行にも『DIAGRAM 欠落・IMG 欠落・image_role 未宣言の合計件数が 0』という走査形の検査を足した"
+  },
+  {
+   "claim": "キー名の存在のみを問う表現が残っていない",
+   "method": "(3) 節から section_order / recommended_parts の列挙を外し、キー列挙は granularity_defaults / notes / presentation_order_variants / required_document_fields のみへ縮めた",
+   "result": "pass: section_order と recommended_parts はキー名としてではなく、中身の条件 (3a)-(3c) の対象としてのみ現れる。『キーが存在することだけを問う表現をここへ残さない』理由も AC 本文へ書いた"
+  },
+  {
+   "claim": "強化後の受入条件が空ゲートでない (現物が実際に赤になる)",
+   "method": "出荷 config/handout-purposes.json の 8 preset を走査し、section_order[] の各要素で DIAGRAM / IMG / image_role を数えた",
+   "result": "pass: 43 セクション全件が DIAGRAM を持たず、42 件が IMG を持たず、43 件が image_role を宣言していない。旧 AC (キーの存在のみ) はこの状態を合格と判定する。強化後の AC は 43 件の違反として赤になる。強化が現物へ効くことの実測"
+  },
+  {
+   "claim": "閾値の第 2 正本を作っていない",
+   "method": "追記した節の記述と improvement/visual-per-section-decision.json#decision の突合",
+   "result": "pass: 値 (1 / 1) と役割語彙 (screenshot|illustration) は決定ファイルを参照する形で書き、spec 側へ数値を再定義していない"
+  },
+  {
+   "claim": "『main セクション』の定義が逃げ道にならない",
+   "method": "追記した判定単位の節",
+   "result": "pass: 除外規則は C23 が持つ場合のみそれに従い、無ければ section_order[] の全要素を対象とすると明記。spec 側で除外を発明すると、対象から外すことで緑にできてしまう"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05x03ah-01",
+   "level": "blocking-for-release",
+   "summary": "利用者要件『図解と画像を毎セクション必ず追加する』は、出荷 config/handout-purposes.json では 1 セクションも満たされていない (43/43 が DIAGRAM 無し・42/43 が IMG 無し・43/43 が image_role 未宣言)。本ノードは受入条件を強化しただけで、データを直すのは P05-x-03 (state=pending・write_scope=config/) の仕事。P05-x-03 が走るまで要件は満たされない"
+  },
+  {
+   "id": "F-P05x03ah-02",
+   "level": "needs-user-decision",
+   "summary": "P05-x-03.md は default_out_dir を R17 の /Users/dm/dev/dev/ObsidianMemo/05_Project/資料作成/ と書いているが、出荷 config/handout-output.json は ./handout-output で、その _meta が『配布物に環境固有の絶対パスを置かない・固定出力先は環境変数 HB_OUT_DIR で与える』と明示的に反対の裁定をしている。さらに利用者が指定したのは 05_Project/説明資料/ であり spec の 資料作成/ とも違う。spec と出荷物と利用者指定の 3 者が食い違っており、どれを正とするかは利用者の裁定が要る"
+  }
+ ]
+}

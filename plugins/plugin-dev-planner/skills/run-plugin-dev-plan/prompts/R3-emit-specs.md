@@ -52,7 +52,7 @@
 - **sub-agent**: `name`/`description`/`tools`(最小権限)/`independent_context: true`/`responsibility_anchor`(prompts) + `prompt_layer: 7layer` + core 規律。
 - **slash-command**: `name`/`description`/`argument-hint`/`allowed-tools`/`disable-model-invocation` + core 規律。
 - **hook**: `event`(PreToolUse|PostToolUse|Stop|UserPromptSubmit|SessionEnd)/`matcher`/`exit_semantics`(fail-closed=exit2)/`settings_wiring`/`fail_closed: true` + core 規律。
-- **script**: `script_name`/`purpose`/`inputs`/`outputs`/`exit_codes`/`network`/`write_scope` + `stdlib_only: true` + `tests_min: 80` + core 規律。
+- **script**: `script_name`/`purpose`/`inputs`/`outputs`/`exit_codes`/`network`/`write_scope` + `stdlib_only: true` + `tests_min: 12 以上` + core 規律。tests_min は「テスト 1 本だけの見せかけ」を落とすための本数の床であって網羅性の指標ではない。網羅性は `harness_coverage.min` (80%) が持つので、本数を水増しして床へ合わせない。
 
 **(C) index(main)**: P01..P13 を **phase_number 昇順**で列挙した目次 + 各 status + コンポーネント目録の所在 (buildable 実体は inventory が SSOT) + Plugin-level surfaces 表 + 全体完了条件 + 受入確認 (build 後の見方) + `plugin_meta`(manifest/marketplace/distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy = plugin-creator + F3/F4/F5/F6/A10/A7/F7/D6/B4/B5 を焼く。feedback_deploy はコア=常時・notion_sink 契約は io-contract §9) を保持する。受入確認には consumer TG-C09 が生成する `task-execution-report.html` (図解付き実行記録) を第一導線、`task-progress.md` を差分確認導線、`task-graph-status.json` を機械導線として明記する。plugin 階層横断規律は index の `plugin_meta` に集約する (phase/component に加算しない)。
 - `plugin_meta.manifest`: `required:true`、`path:.claude-plugin/plugin.json`、`name_matches_folder:true`、`no_unresolved_placeholders:true`、`validate_plugin:true` を必須にする。

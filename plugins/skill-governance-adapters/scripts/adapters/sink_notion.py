@@ -28,8 +28,8 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "secrets"))
-from keychain_helper import get_secret, sanitize_error, SecretError  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from secret_helper import get_secret, sanitize_error, SecretError  # noqa: E402
 
 
 NOTION_API = "https://api.notion.com/v1/pages"
@@ -76,17 +76,19 @@ def main():
         database_id = params["database_id"]
         token_ref = params["token_ref"]
 
+        page = build_notion_page(payload, database_id)
+
+        # dry-run は credential を参照しない。secret 取得より前に返すことで、
+        # keychain provider 非配備でも副作用なしの契約確認が成立する。
+        if args.dry_run:
+            print(json.dumps({"status": "success", "adapter": "notion", "location": f"notion://db/{database_id}", "external_id": "", "dry_run": True}))
+            return
+
         try:
             secret = get_secret(token_ref)
         except SecretError as se:
             print(json.dumps({"status": "failure", "adapter": "notion", "errors": [str(se)]}))
             sys.exit(2)
-
-        page = build_notion_page(payload, database_id)
-
-        if args.dry_run:
-            print(json.dumps({"status": "success", "adapter": "notion", "location": f"notion://db/{database_id}", "external_id": "", "dry_run": True}))
-            return
 
         body = json.dumps(page).encode()
         req = urllib.request.Request(

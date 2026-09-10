@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-07",
+  "reason": "AC-C11-19 (カタログ外に部品 id リテラルを置かない) と tests/extract-handout-config.py/test_parts_catalog_ssot.py (C20 は部品 id をキーとする dict をちょうど 1 個持つこと) が両立不能な二重契約 (PAT-7) を成しており、PART_CLASS_MAP 13 行を消せない。真因は『部品 id → CSS クラス名』写像の owner が未決定であること。写像を持つ側は必然的に id を列挙するため、id を列挙してよい唯一の場所と写像を持つ場所が別々に決まっている限り片方が必ず違反する。解決には scripts / config / tests の 3 箇所を同時に成立させる必要があり P05-x-07 の write_scope では解けない",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/PART-CLASS-MAP-RESOLUTION.md",
+  "proposed_node": {
+    "id": "P05-x-23",
+    "title": "部品 id ↔ CSS クラス名 写像の owner を裁定し AC-C11-19 と SSOT テストの二重契約を解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "tests/render-handout.py/test_parts_catalog.py::test_part_ids_are_not_enumerated_outside_the_catalog と tests/extract-handout-config.py/test_parts_catalog_ssot.py が同時に緑になる。どちらのテストの assert も弱めない。extract-handout-config.py の正常系実行で W-EXTRACT-CATALOG-DRIFT が 0 行のまま。カタログ側・照合表側それぞれへ不整合を注入すると依然として drift 検査が鳴ること。3 スイートの失敗テスト名の集合が着手前から増えないこと。裁定内容と退けた案が schemas/PART-CLASS-MAP-RESOLUTION.md に記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-23.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/PART-CLASS-MAP-RESOLUTION.md"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

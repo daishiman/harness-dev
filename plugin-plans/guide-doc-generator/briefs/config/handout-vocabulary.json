@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "role": "読者に見える列挙値の表示ラベル語彙、および R25/REQ-9 の前提コネクタ名語彙の単一正本。新設 (R25 / 2026-08-18 追補・goal-spec C74/C75)",
+    "build_target": "plugins/guide-doc-generator/config/handout-vocabulary.json",
+    "owner_component": "C12 validate-handout-config.py",
+    "readers": ["C11 (表示ラベルの参照描画)", "C18 (E-ENUM-RAW の変換対応表)", "C12 (E-CONNECTOR-UNKNOWN の語彙妥当性)"],
+    "rule": "enum の表示ラベルとコネクタ名をこのファイル以外の場所へ書かない。script (C11/C12/C18) は日本語を焼かず、必ずこのファイル経由で引く。追加・改名はこのファイルの変更点として閉じる",
+    "note": "ここは plugin-plans 配下の設計 plan 上の表現であり、実ファイルの生成は P05 (P05-x-03) の担当。内容はこのファイルを正とする",
+    "why_new_file": "attainment_level には従来から表示語彙が存在せず (improvement/hero-card-decision.json#decision.raw_enum_leak が grep で確認済み『handout-*.json に定義なし』)、既存の handout-purposes.json (doc_type 語彙、C23 owner) や handout-sections.json (section_kind 語彙、C12 owner だが別ドメイン) のいずれにも同居させない。REQ-9 の connector 語彙も同じ性質 (読者向け表示ラベルを持つ閉じた語彙) のため同じファイルへ集約する",
+    "decision_sources": [
+      "plugin-plans/guide-doc-generator/improvement/hero-card-decision.json#decision.raw_enum_leak",
+      "plugin-plans/guide-doc-generator/goal-spec.json (C75)"
+    ]
+  },
+  "schema_version": 1,
+  "attainment_level_labels": {
+    "note": "config.attainment_level (enum) → 読者向け表示ラベルの対応表。C18 の ENUM-01 (E-ENUM-RAW) がこの対応表と可視テキストを突き合わせる。対応の無い enum 値が構成データに現れたら C12 が E-ENUM-VOCAB-INCOMPLETE (自己整合検査) で止める",
+    "field_semantics": {
+      "enum": "config_schema (C12 canon) の attainment_level の許容値と 1:1 で一致すること",
+      "label": "表示ラベル。micro_copy.roles の秩序に準じ短く言い切る (目安: 14 字以内)"
+    },
+    "entries": [
+      {"enum": "overview", "label": "概要が分かる"},
+      {"enum": "operable", "label": "実務で使える"},
+      {"enum": "reproducible", "label": "自分で再現できる"},
+      {"enum": "skill-authoring", "label": "自分でスキルを書ける"}
+    ],
+    "closed": true,
+    "why_closed": "attainment_level_labels は C12 の attainment_level enum の完全な写像でなければならない (欠落があると E-ENUM-RAW が『変換のしようが無い』違反を出す)。値を増やすときは config_schema の enum とここを同時に変更する"
+  },
+  "connectors": {
+    "note": "R25/REQ-9 (goal-spec C75)。前提コネクタ宣言 (document_level_fields.prerequisite_connectors) が参照する id とその表示ラベルの語彙。3 種から始まるが config への追記だけで拡張できる設計とする (script へ列挙値を焼かない)",
+    "field_semantics": {
+      "id": "prerequisite_connectors[].connector が参照する値。^[a-z][a-z0-9-]*$",
+      "label": "冒頭『前提』カードに表示する日本語ラベル。micro_copy.roles.caption の秩序に準じ 32 字以内"
+    },
+    "entries": [
+      {"id": "google-drive", "label": "Google Drive"},
+      {"id": "onedrive", "label": "OneDrive"},
+      {"id": "kintone", "label": "kintone"}
+    ],
+    "closed": false,
+    "why_not_closed": "利用者指定は『今回接続するのは Google Drive、OneDrive、kintone の 3 つ』であり、将来的な接続先の追加を排除する指示ではない。closed=false は『未知の id は現状ここに無いだけで、語彙ファイルへの追記のみで受理できる』設計上の宣言であり、C12 の E-CONNECTOR-UNKNOWN 判定自体は依然としてこの entries に無い id を機械的に拒む (『語彙にあるものだけ許す』運用は変わらない。closed はスキーマ上の拡張容易性の宣言であって、実行時の許容範囲を緩めるものではない)"
+  }
+}

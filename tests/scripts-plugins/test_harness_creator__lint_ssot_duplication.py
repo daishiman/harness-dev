@@ -312,6 +312,36 @@ def test_check_passages_non_excluded_dirs_still_detected(MOD, tmp_path):
     assert "DUP-PASSAGE" in warns[0]
 
 
+def test_check_passages_generated_block_excluded(MOD, tmp_path):
+    # `<!-- name:vN -->` 囲みは生成スクリプトが焼き込む射影で、正本は生成側にある。
+    # 「正本 1 箇所に置き他は参照化」という指摘に従う操作が定義できないので伝搬例外。
+    marked = (
+        "<!-- external-mutation-guard-cli:v1 -->\n" + _PASSAGE_BLOCK
+        + "<!-- /external-mutation-guard-cli:v1 -->\n"
+    )
+    a = _write_md(tmp_path, "skills/a/SKILL.md", marked)
+    b = _write_md(tmp_path, "skills/b/SKILL.md", marked)
+    assert MOD.check_passages([a, b]) == []
+
+
+def test_check_passages_prose_around_generated_block_still_detected(MOD, tmp_path):
+    # 除外は生成ブロックの中身だけ。地の文が一致するなら seam をまたいでも本物の重複。
+    half = "\n".join(_PASSAGE_LINES[:3]) + "\n"
+    rest = "\n".join(_PASSAGE_LINES[3:]) + "\n"
+    text = half + "<!-- gen-block:v1 -->\nignored generated body line here\n<!-- /gen-block:v1 -->\n" + rest
+    a = _write_md(tmp_path, "skills/a/SKILL.md", text)
+    b = _write_md(tmp_path, "skills/b/SKILL.md", text)
+    warns = MOD.check_passages([a, b])
+    assert len(warns) == 1
+    assert "DUP-PASSAGE" in warns[0]
+
+
+def test_strip_generated_blocks_requires_matching_close_marker(MOD):
+    # 閉じ marker 名が違えば剥がさない (未閉鎖 marker で本文を丸ごと隠せてしまうのを防ぐ)。
+    text = "<!-- gen-block:v1 -->\n" + _PASSAGE_BLOCK + "<!-- /other-block:v1 -->\n"
+    assert MOD.strip_generated_blocks(text) == text
+
+
 def test_check_passages_single_file_no_dup(MOD, tmp_path):
     a = _write_md(tmp_path, "a.md", _PASSAGE_BLOCK)
     assert MOD.check_passages([a]) == []

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "P05-x-89 事前実測の構造的発見 SF-1: 型Bの解法は P05-x-17 で既に実装済みで PREDICATE-SCOPE-POLICY.md に方針も明文化されているが、8 component 中 run-handout-build 1件にしか適用されていない。新規設計は不要で横展開が最小の道筋。対象は assign-handout-readability-evaluator / handout-build / handout-content-architect / handout-extract / handout-verify / ref-handout-design-system / run-handout-extract",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json",
+  "proposed_node": {
+    "id": "P05-x-99",
+    "title": "test_predicate_scope.py を残り7 component へ横展開する",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "reject_cases.py を持つ8 component すべてが test_predicate_scope.py を持ち、(a) 全述語の単点変異発火 (b) 本文側述語の語がスコープ内で一意 (c) 述語追加時に変異を足し忘れたら赤 の3点を満たすこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,51 @@
+{
+  "_meta": {
+    "status": "superseded",
+    "superseded_by": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+    "superseded_why": "利用者指定 2026-08-18 追補『図解と画像は毎回セクションごとに追加する』により、判定単位が資料全体の総量から main セクション単位へ変わった。本ファイルの decision (level=error / value=0.4 / floor=2) は総量比であり、図解の無い節が残っても通るため要求を満たさない。閾値は参照しないこと。参照資料の実測と導出過程は経緯として残す",
+    "role": "REQ-2(b) の入力。W-DIAGRAM-FEW を『警告』から『第1稿でも通せない完了ゲート』へ昇格するときの下限式を決める。この値は config/handout-visual-policy.json の thresholds.min_diagrams_per_main_sections として build が焼き込む",
+    "consumed_by": "REQ-2 (plugin-plans/guide-doc-generator/improvement/findings-2026-08-18.json)",
+    "why_here": "config/ は P05-x-03 が唯一の producer であり build が上書きする。判断の正本は build の入力側であるこのファイルに置く",
+    "current_state": {
+      "code": "W-DIAGRAM-FEW",
+      "level": "warning",
+      "value": 0.6,
+      "floor": 2,
+      "meaning": "main セクション数 × 0.6 と floor 2 の大きい方を下限とし、下回れば警告のみ。exit 0 で完了できる",
+      "observed": "examples/minimal-config.json は main 1 節・図解 0 枚で W-DIAGRAM-FEW を出しつつ exit 0"
+    },
+    "tradeoff": {
+      "too_strict": "第1稿が図解不足で毎回落ち、たたき台優先 (draft_first) が機能しなくなる。利用者は現物を見る前に待たされる",
+      "too_loose": "昇格した意味が無く、図解 0 枚の資料が再び通る。REQ-2 が解こうとしている問題がそのまま残る",
+      "note": "参照資料の実測は main 7 節に対し図解相当 (flow / versus / compare) が 3 箇所。granularity_anchor.diagram_parts は [2, 3] を第1稿の目標形として持つ"
+    }
+  },
+
+  "decision": {
+    "code": "W-DIAGRAM-FEW",
+
+    "level": "error",
+    "value": 0.4,
+    "floor": 2,
+    "why": "下限式は required = max(floor, ceil(main_count × value)) であり、value=0.4 / floor=2 は granularity_anchor.main_sections [4,6] を入れると ceil(1.6)=2・ceil(2.4)=3 となって diagram_parts [2,3] と完全に一致する。同じ式へ参照資料の実測 (main 7 節・図解 3 箇所) を入れても ceil(2.8)=3 で過不足なく通るため、現行 0.6 のまま error へ上げると参照資料そのものが落ちる。第1稿でも達成できる値であることを二つの実測で裏づけたうえで level を error にし、図解ゼロの完了経路だけを塞ぐ",
+
+    "derivation": {
+      "formula": "required = max(floor, ceil(main_count × value))  (validate-handout-config.py:934-935)",
+      "checks": [
+        {"case": "granularity_anchor 下限", "main_count": 4, "required": 2, "target": "diagram_parts[0] = 2", "verdict": "一致"},
+        {"case": "granularity_anchor 上限", "main_count": 6, "required": 3, "target": "diagram_parts[1] = 3", "verdict": "一致"},
+        {"case": "参照資料の実測", "main_count": 7, "required": 3, "actual": 3, "verdict": "通る"},
+        {"case": "現行値 0.6 を error 化した場合", "main_count": 7, "required": 5, "actual": 3, "verdict": "参照資料が落ちるため不採用"}
+      ],
+      "why_not_warning": "REQ-2 の問題は『図解を描く実体 (C14) はあるのに呼ばれない』ことであり、警告のままでは第1稿が図解 0 枚で exit 0 のまま完了できてしまう。examples/minimal-config.json で再現済み",
+      "draft_first_impact": "図解 SVG は C14 の決定論生成であり draft_first.skipped_in_draft にも入っていない (『図解 SVG は決定論で速いので第1稿でも回す』)。error 化しても第1稿の待ち時間は伸びない"
+    }
+  },
+
+  "field_semantics": {
+    "level": "\"warning\" | \"error\"。error にすると第1稿でも図解ゼロで完了できなくなる",
+    "value": "main セクション 1 個あたりに要求する図解枚数 (小数可)。現行 0.6",
+    "floor": "セクション数に依らない最低枚数 (整数)。現行 2",
+    "why": "その値にした理由を 1 文。config/handout-visual-policy.json の各閾値が why を必須で持つ規約に合わせる"
+  }
+}

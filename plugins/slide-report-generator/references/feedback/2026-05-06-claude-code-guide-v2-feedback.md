@@ -1,5 +1,8 @@
 # 2026-05-06 Claude Code 概念ガイド v2 — UI/UX フィードバックと反映
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 ## 案件
 `05_Project/スライド/slide-2026-05-06-claude-code-guide-v2/` の図解スライド全47枚に
 ついて、目視レビューでスキル側の致命的バグと図解品質の問題が発見された。
@@ -13,7 +16,7 @@
   `.is-active` クラスで切り替える方式（GSAP 駆動）。translateX は無視され、
   毎回1枚目の slide_01 だけが映り、他は空白で保存される。03 フェーズで PASS と
   なっていた検証は事実上機能しておらず虚偽だった。
-- **反映先**: `scripts/verify-slides.js` の captureScreenshots 内 Python ブロック
+- **反映先**: `vendor/scripts/verify-slides.js` の captureScreenshots 内 Python ブロック
 - **適用内容（v7.5.0）**: `.is-active` を1枚ずつ付け替え、`page.screenshot({ clip })`
   で実際に可視化されたスライドエリアのみを撮影する実装に置換。
   `transform / visibility` 操作は完全削除。
@@ -23,7 +26,7 @@
   使用、ラベルをノード円内部に置いていたため、日本語の長い枝
   （「プラグイン配布」「スラッシュコマンド」「サブエージェント」）が
   円外にはみ出す or 切れて読めない。
-- **反映先**: `scripts/svg-builder.cjs` `buildMindmap`
+- **反映先**: `vendor/scripts/svg-builder.cjs` `buildMindmap`
 - **適用内容（v7.5.0）**: viewBox を 1100x600 に拡大、外円ノード r=38 とし、
   ラベルはノード外側にリーダー線で配置。テキスト anchor は方位ベクトルに
   応じて `start`/`middle`/`end` を切替え、上下位置も微調整。
@@ -31,8 +34,8 @@
 ### 3. diagram-cycle の余白過多 + 補足不足
 - **症状**: SIZE=540 正方形でビュー全体の30%程度しか使っておらず、左右が
   真っ白。各ノードに desc があっても表示されない。
-- **反映先**: `scripts/svg-builder.cjs` `buildCycle` および
-  `scripts/render-slide.cjs` の dispatch
+- **反映先**: `vendor/scripts/svg-builder.cjs` `buildCycle` および
+  `vendor/scripts/render-slide.cjs` の dispatch
 - **適用内容（v7.5.0）**:
   - viewBox を 1200x600 に横長化、サイクルは右側、左側に
     `headline / subtext / description / caption` を表示するキャプションカード
@@ -45,8 +48,8 @@
 - **症状**: render-slide の dispatch が `buildHorizontalFlow(both)` を呼んでおり、
   Before/After の概念が消えて 6 個の箱が並ぶだけ。SR-4-04 の 48%/4%/48% 構造
   が完全に欠落。
-- **反映先**: `scripts/svg-builder.cjs` 新規 `buildVs` を実装、
-  `scripts/render-slide.cjs` を `buildVs` 呼び出しに切替
+- **反映先**: `vendor/scripts/svg-builder.cjs` 新規 `buildVs` を実装、
+  `vendor/scripts/render-slide.cjs` を `buildVs` 呼び出しに切替
 - **適用内容（v7.5.0）**:
   - 1200x620 の 2 カラム比較レイアウト（左 colW=540, 中央gap=60, 右 colW=540）。
   - 左 = sakura-pink（Before/悪い例）、右 = wave-aqua（After/良い例）。
@@ -59,13 +62,13 @@
 ### 5. slide-flow の補足不足
 - **症状**: `buildHorizontalFlow` は items の `desc` を無視、ステップカードに
   ラベルだけ表示。本文ゼロでスカスカ。
-- **反映先**: `scripts/svg-builder.cjs` `buildHorizontalFlow`
+- **反映先**: `vendor/scripts/svg-builder.cjs` `buildHorizontalFlow`
 - **適用内容（v7.5.0）**: viewBox を 1080x540 に拡大。各カード左上に番号バッジ
   （白丸 + 色文字）を追加。カード下に desc キャプションを最大 3 行で描画。
 
 ### 6. slide-list / slide-grid の視覚階層不足
 - **症状**: アイコン色が単調、見出しと補足のサイズ差が小さく、強弱が不明瞭。
-- **反映先**: `scripts/style-builder.cjs` の `.slide-list .list-item` および
+- **反映先**: `vendor/scripts/style-builder.cjs` の `.slide-list .list-item` および
   `.grid-cell` ブロック
 - **適用内容（v7.5.0）**:
   - 各アイテムに `nth-child(5n+x)` で 5 色のビビッドアクセントを
@@ -95,7 +98,7 @@
   していたが、`--card-bg` がどこにも定義されておらず、`var()` の解決失敗時に
   ブラウザが `currentColor`（親要素から継承された `--fg: #43436c`）に
   フォールバックしたためと推定。
-- **反映先**: `scripts/svg-builder.cjs` `buildVs`
+- **反映先**: `vendor/scripts/svg-builder.cjs` `buildVs`
 - **適用内容（v7.5.1）**:
   - カード背景を `fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.5"` に
     ハードコード（var() 排除）。
@@ -111,7 +114,7 @@
 - **症状**: slide 10 / 42 で左の headline+subtext カードがテキスト領域の
   下半分から濃色に塗られる。`height="${H-120}"` 固定でテキスト行数より
   カードが大きすぎ、`fill="#fff" opacity=0.95` の半透明部が背景と相互作用。
-- **反映先**: `scripts/svg-builder.cjs` `buildCycle`
+- **反映先**: `vendor/scripts/svg-builder.cjs` `buildCycle`
 - **適用内容（v7.5.1）**:
   - キャプションカード高さを `cardPadTop + headBlockH + bodyBlockH +
     cardPadBottom` で動的算出。テキスト行数に合わせて短縮。
@@ -119,7 +122,7 @@
   - 左の青ボーダー（6px 幅）も同じ動的高さに揃える。
 
 ## CHANGELOG 追記
-- v7.5.1: buildVs / buildCycle のカード背景 `var(--card-bg)` 変数解決失敗で
+- v7.5.1: buildVs / buildCycle のカード背景 `--card-bg` の変数解決失敗で
   暗色露出する問題を修正。カード高さを内容に合わせて動的算出に変更し、
   下半分の余白を排除。SVG fill を `#FFFFFF` ハードコードに統一。
 

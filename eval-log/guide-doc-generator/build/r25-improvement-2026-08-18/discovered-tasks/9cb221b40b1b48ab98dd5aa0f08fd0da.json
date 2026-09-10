@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "assets が全 4 文書で 0 件である根本原因は書き忘れではなく受け皿の不在。agent-brief-C05.md が構成データへ書けと指示する画像計画 12 フィールド (diagram_pattern / style_family / baked_text ほか) は schemas/ に定義が 0 件で、$defs/asset は additionalProperties:false。dispatcher 実測で diagram_pattern / style_family / baked_text / image_plan いずれも schemas/ ヒット 0 件を確認",
+  "discovered_at_artifact": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-------------/cca76e02-b60e-4a9a-b3de-8a72c1bc02ff/scratchpad/fix-plan-presumed.json",
+  "proposed_node": {
+    "id": "P05-x-54",
+    "title": "画像計画 12 フィールドの受け皿を schema へ新設する (sections[].image_plan 案)",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+    "acceptance_criterion": "agent が書くよう指示されている画像計画フィールドが schema 上に受理先を持ち、additionalProperties:false 下でも検証を通ること。assets[] へ載せるか sections[].image_plan を新設するかの選択理由が記録されていること。この節点は P05-x-36 / P05-x-39 より先に閉じる",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

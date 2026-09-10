@@ -14,7 +14,9 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 HOOK = PLUGIN_ROOT / "hooks" / "ubm-write-path-guard.py"
-MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+HOOKS_CONFIG = PLUGIN_ROOT / "hooks" / "hooks.json"
+CLAUDE_MANIFEST = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+CODEX_MANIFEST = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 
 
 def run(payload: dict, vault: str | None) -> int:
@@ -67,7 +69,8 @@ def test_block_sources_dir(tmp_path: Path):
 
 def test_block_vault_config(tmp_path: Path):
     vault = str(tmp_path)
-    assert run(w(f"{vault}/02_Configs/Daily/2026-07-05.md"), vault) == 2
+    # 02_Configs/ は既定で保護。許可は Daily/ 配下と Templates/Daily.md のみ (下の 2 テスト参照)
+    assert run(w(f"{vault}/02_Configs/scope-protection.md"), vault) == 2
 
 
 def test_allow_outside_vault(tmp_path: Path):
@@ -140,16 +143,36 @@ def test_multiedit_allowed_on_goal_path(tmp_path: Path):
     assert run(payload, vault) == 0
 
 
-def test_manifest_matcher_matches_guarded_tools():
-    """manifest matcher ↔ hook GUARDED_TOOLS の契約一致 (MultiEdit 脱落を捕捉)。
+def test_allow_daily_journal(tmp_path: Path):
+    """run-ubm-journal の出力先 02_Configs/Daily/ は許可する。"""
+    vault = str(tmp_path)
+    assert run(w(f"{vault}/02_Configs/Daily/2026-08-18.md"), vault) == 0
 
-    mf-kessai test_plugin_contract.py の matcher 完全一致パターンを踏襲する。
+
+def test_block_other_configs_path(tmp_path: Path):
+    """Daily/ と Templates/Daily.md 以外の 02_Configs/ は引き続きブロックする。"""
+    vault = str(tmp_path)
+    assert run(w(f"{vault}/02_Configs/settings.md"), vault) == 2
+    assert run(w(f"{vault}/02_Configs/Templates/Weekly.md"), vault) == 2
+
+
+def test_shared_hook_matcher_and_platform_manifest_delivery():
+    """hooks 正本の matcher と実装を突合し、platform 別配線を固定する。
+
+    Claude Code は plugin 直下 `hooks/hooks.json` を標準自動検出するため、
+    manifest に同じ hook を重複配線しない。Codex は同じ正本を明示pointerする。
     """
-    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    entries = manifest["hooks"]["PreToolUse"]
+    hooks_config = json.loads(HOOKS_CONFIG.read_text(encoding="utf-8"))
+    entries = hooks_config["hooks"]["PreToolUse"]
     matchers = [e["matcher"] for e in entries if "ubm-write-path-guard.py" in e["hooks"][0]["command"]]
     assert len(matchers) == 1
     spec = importlib.util.spec_from_file_location("ubm_write_path_guard", HOOK)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     assert set(matchers[0].split("|")) == mod.GUARDED_TOOLS
+
+    claude_manifest = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))
+    codex_manifest = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))
+    assert "hooks" not in claude_manifest
+    assert codex_manifest.get("hooks") == "./hooks/hooks.json"
+    assert (PLUGIN_ROOT / codex_manifest["hooks"]).resolve() == HOOKS_CONFIG.resolve()

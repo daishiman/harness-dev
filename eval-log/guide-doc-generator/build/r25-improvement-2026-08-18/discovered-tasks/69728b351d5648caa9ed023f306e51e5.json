@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "grep で E-TEXT-FOLDED は plugin-plans/ と eval-log/ に 20 件以上あるが plugins/ 配下は 0 件。script-brief-C12.json は C52 の detection として E-TEXT-FOLDED を名指しするが、出荷側の実体は fold_section() による変換であり detection ではない。さらに :1977 の check_text_bodies(cfg, report_overflow=not args.normalize) により --normalize 付きでは E-TEXT-OVERFLOW も出ないため、畳まれていない構成データを検証だけで落とす手段が実質存在しない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-67-e-text-folded-absent-in-shipping",
+    "title": "E-TEXT-FOLDED が設計にのみ存在し出荷コードに無い件を裁定して解消する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "E-TEXT-FOLDED を出荷側に実装するか、設計側から幻の detection 名を撤回するかの裁定が下され、goal-spec C52 と C73 の矛盾も同時に解消していること。--normalize の有無で超過検出と畳み込みが排他になっている状態が解消されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

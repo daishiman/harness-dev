@@ -5,13 +5,15 @@
 # inputs:
 #   - assets/slide-templates/frame-contract.json
 #   - vendor/scripts/style-builder.cjs (SPEC.colors = 配色の正本・read-only)
+#   - vendor/scripts/svg-kit.cjs (色相名の現行値 = fallback の出所・read-only)
 #   - CLI: [--root <plugin-root>] [--check]
 # outputs:
 #   - assets/slide-templates/slide-skeleton.css (--check 時は書かない)
+#   - references/theme-style.md の生成区間 (手書き経路が貼る :root・--check 時は書かない)
 #   - exit: 0=生成成功/一致 / 1=--check で不一致 / 2=契約が読めない
 # contexts: [glue]
 # network: false
-# write-scope: assets/slide-templates/slide-skeleton.css
+# write-scope: assets/slide-templates/slide-skeleton.css, references/theme-style.md (生成区間のみ)
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -49,7 +51,7 @@
 
 そこで配色の正本を `vendor/scripts/style-builder.cjs` の `SPEC.colors`
 1 つに固定し、ここでは **`:root` に `--srg-*` を定義する**。定義の中身は
-`var(--wave-blue, #7E9CD8)` のようにパレット変数への参照 + 生成された
+`var(--ink, #141412)` のようにパレット変数への参照 + 生成された
 fallback なので、
 
 - deck に読み込まれたとき: `:root` のパレット変数が効く (テーマ追随)
@@ -68,21 +70,98 @@ from pathlib import Path
 
 _CONTRACT = "assets/slide-templates/frame-contract.json"
 _PALETTE_SRC = "vendor/scripts/style-builder.cjs"
+_SERIES_SRC = "vendor/scripts/svg-kit.cjs"
 _OUT = "assets/slide-templates/slide-skeleton.css"
+_THEME_DOC = "references/theme-style.md"
+
+# theme-style.md の中で生成器が管理する区間。この外側は人が書く。
+_THEME_BEGIN = "<!-- BEGIN GENERATED: palette (scripts/build-slide-skeleton-css.py) -->"
+_THEME_END = "<!-- END GENERATED: palette -->"
 
 # SPEC.colors のキー → deck の :root が持つパレット変数名。
 # この対応は vendor の buildRootVars() が実際に出力している名前と 1:1。
 _PALETTE_VARS = {
-    "bgDark": "--bg-dark",
-    "fg": "--fg",
-    "fgDim": "--fg-dim",
-    "waveBlue": "--wave-blue",
-    "springViolet": "--spring-violet",
-    "sakuraPink": "--sakura-pink",
-    "waveAqua": "--wave-aqua",
-    "autumnYellow": "--autumn-yellow",
-    "fujiGray": "--fuji-gray",
+    "paper": "--paper",
+    "ink": "--ink",
+    "inkMuted": "--fg-muted",
+    "hairline": "--hairline",
 }
+
+# 手書き経路が使う名前 → パレット変数名。名前の集合は決定論経路と別で、
+# ここでは統合しない (統合すると既存の手書き記述が宣言ごと無効になる)。
+# 値だけをパレットへ寄せて、色の実体を SPEC.colors 1 つに閉じる。
+_HANDWRITTEN_ALIASES = [
+    ("--bg-dark", "--paper", "面の地"),
+    ("--fg", "--ink", "本文"),
+    ("--fg-dim", "--fg-muted", "注記・補助"),
+    ("--bg-dim", "--paper", "沈めた地。面の色数は 3 なので地は紙のまま"),
+    ("--bg-card", "--paper", "カードの地。囲いは罫だけで作るので地は紙のまま"),
+    ("--sumi-ink", "--paper", "面の地の最下段。名前は本家パレットのスロット名で、暗いという意味ではない"),
+]
+
+# 色相名。図版の系列色として参照されているが、定義はどこにも無い。
+# 値の由来は下の read_legacy_hues() を読むこと。
+#
+# 当初は 6 名だった。うち 2 名は**別名が別の色を主張していただけ**で実体が無く、
+# 名前ごと落とした:
+#   --spring-violet -> --wave-blue と同値 (#4B6681)
+#   --fuji-gray     -> --fg-dim   と同値 (#6A6A68)
+# 同じ値に 2 つ名前があると、読む側はそれを 2 種類の区別として扱う。
+# 参照側 (図解経路の golden 408 + 17 件) も同じ便で寄せてある。
+_LEGACY_HUES = [
+    "--sakura-pink", "--wave-blue", "--wave-aqua", "--autumn-yellow",
+]
+
+
+def read_legacy_hues(root: Path) -> dict[str, str]:
+    """色相名の現行値を svg-kit.cjs の fallback から読む。
+
+    ## なぜ「一時定義」が要るのか
+
+    これらは `var(--wave-blue, #4B6681)` の形で多数参照されているが、
+    `:root` にも生成区間にも定義が無い。fallback すら無い参照は
+    **宣言ごと無効**になって色が落ちている。参照側の fallback を外す作業が
+    この定義待ちで止まっているので、規範 (符号系) が決まるまでのあいだ、
+    今出ているのと同じ値で名前だけを定義する。
+
+    ## なぜ値を書き写さないのか
+
+    手で `--sakura-pink: #141412` と書くと、正本が動いた日に静かにズレる。
+    そこで `svg-kit.cjs` が実際に出している fallback を読んで生成する。
+    同じ名前に違う hex が付いていたら例外にするので、正本側が食い違った
+    瞬間 `--check` が赤くなる。
+
+    ## なぜ移行後の値 (符号系の fill) から作らないのか
+
+    符号系は 1 名を (fill, stroke, dash) の組へ写す。CSS 変数は組を運べない
+    ので、そこから作れるのは fill だけになる。地 + 輪郭で区別する系列は
+    fill が紙色なので、`--autumn-yellow` のような塗り用の名前が
+    「紙色・輪郭なし」になって図形が消える。互換名の役目は移行前の見た目を
+    1 ドットも変えずに保つことなので、値は移行前の svg-kit の fallback から
+    作る。組は `seriesStyle()` が運ぶ。
+
+    ## いつ消えるか
+
+    参照側が `seriesStyle()` へ移った時点。人の記憶に頼らないよう、互換名の
+    定義と `seriesStyle(` が同時に存在したら落ちるテストを
+    `tests/test_legacy_hue_aliases.py` に置いてある。
+    """
+    src = (root / _SERIES_SRC).read_text(encoding="utf-8")
+    hues: dict[str, str] = {}
+    for name in _LEGACY_HUES:
+        found = {
+            m.group(1).upper()
+            for m in re.finditer(rf"var\(\s*{re.escape(name)}\s*,\s*(#[0-9A-Fa-f]{{6}})\s*\)", src)
+        }
+        if not found:
+            raise ValueError(
+                f"{_SERIES_SRC} に {name} の fallback が無い。"
+                f" 符号系へ移行済みなら互換名ごと削除する (tests/test_legacy_hue_aliases.py 参照)"
+            )
+        if len(found) > 1:
+            raise ValueError(f"{_SERIES_SRC} の {name} に複数の値 {sorted(found)} が付いている")
+        hues[name] = found.pop()
+    return hues
 
 
 def read_palette(root: Path) -> dict[str, str]:
@@ -119,23 +198,119 @@ def _mix(fg_hex: str, bg_hex: str, alpha: float) -> str:
 
 def _tokens(pal: dict[str, str]) -> list[tuple[str, str, str]]:
     """(トークン名, 値, 用途コメント) を返す。値は必ずパレット由来。"""
-    surface = pal["bgDark"]
-    fg = pal["fg"]
+    surface = pal["paper"]
+    fg = pal["ink"]
     r, g, b = _rgb(surface)
     return [
-        ("--srg-surface", f"var({_PALETTE_VARS['bgDark']}, {surface})", "面の地色"),
-        ("--srg-fg", f"var({_PALETTE_VARS['fg']}, {fg})", "本文色"),
-        ("--srg-fg-muted", f"var({_PALETTE_VARS['fgDim']}, {pal['fgDim']})", "注記・出典"),
-        ("--srg-focal", f"var({_PALETTE_VARS['sakuraPink']}, {pal['sakuraPink']})",
-         "焦点色。図解の accent ロール (svg-kit TOKENS.accent) と同じ色にする"),
-        ("--srg-link", f"var({_PALETTE_VARS['waveBlue']}, {pal['waveBlue']})", "ナビ・リンク"),
-        ("--srg-warn", f"var({_PALETTE_VARS['autumnYellow']}, {pal['autumnYellow']})",
-         "自動縮小が下限に達した面の警告枠"),
-        ("--srg-surface-2", _mix(fg, surface, 0.04), "カードの地色 (本文色 4% を地色へ重ねた solid)"),
-        ("--srg-hairline", _mix(fg, surface, 0.20), "罫線 (本文色 20%)"),
+        ("--srg-surface", f"var({_PALETTE_VARS['paper']}, {surface})", "面の地色"),
+        ("--srg-fg", f"var({_PALETTE_VARS['ink']}, {fg})", "本文色"),
+        ("--srg-fg-muted", f"var({_PALETTE_VARS['inkMuted']}, {pal['inkMuted']})", "注記・出典"),
+        ("--srg-focal", f"var({_PALETTE_VARS['ink']}, {fg})",
+         "焦点色。色相ではなく濃度と反転で作るので本文色と同じインクになる"),
+        ("--srg-link", f"var({_PALETTE_VARS['ink']}, {fg})", "ナビ・リンク"),
+        ("--srg-warn", f"var({_PALETTE_VARS['inkMuted']}, {pal['inkMuted']})",
+         "自動縮小が下限に達した面の警告枠。破線という形で区別し、色は足さない"),
+        # 面の色数は 3 (VGCONST_001)。カードの地を独自に持つとその 1 つを消費する
+        # うえ、囲いを外した意匠と食い違うので、地は面と同じ紙にする。
+        ("--srg-surface-2", f"var({_PALETTE_VARS['paper']}, {surface})", "カードの地色 (面と同じ紙)"),
+        # 罫は vendor の --hairline (本文色 15% を紙へ重ねた solid) と同一値。
+        # ここで別の濃度を決めると罫の太さ感が deck と skeleton で食い違う。
+        ("--srg-hairline", f"var({_PALETTE_VARS['hairline']}, {pal['hairline']})", "罫線 (本文色 15%)"),
         ("--srg-letterbox", _mix(fg, surface, 0.08), "面の外側 (本文色 8%)"),
         ("--srg-scrim", f"rgba({r}, {g}, {b}, .88)", "全面画像の上に題を置くときの下敷き"),
     ]
+
+
+def build_theme_block(pal: dict[str, str], hues: dict[str, str]) -> str:
+    """手書き経路が成果物へ貼る `:root` ブロックを SPEC.colors から作る。
+
+    なぜ文書の中へ生成するのか: 手書き経路の「実装」は references/theme-style.md
+    そのもので、LLM がこの `:root` を読んで成果物の styles.css へ書き出す。
+    つまり文書が実装なので、文書の中に値を手で書いた瞬間そこが第 2 の正本になる。
+
+    なぜ別 CSS への link にしないのか: 出荷される deck の styles.css は
+    index.html へインライン展開されたコピーで、ブラウザは外部 CSS を読んでいない。
+    link で足しても「見えるが効かない」ファイルが 1 つ増えるだけになる。加えて
+    別ファイルは同期で消えたとき無言で既定色へ落ちる (壊れて見えない故障)。
+    """
+    need = ["paper", "ink", "inkMuted", "hairline", "tone1", "tone2", "tone3"]
+    missing = [k for k in need if k not in pal]
+    if missing:
+        raise ValueError(f"{_PALETTE_SRC} の SPEC.colors に {missing} が無い")
+    names = {
+        "--paper": pal["paper"], "--ink": pal["ink"],
+        "--fg-muted": pal["inkMuted"], "--hairline": pal["hairline"],
+        "--tone-1": pal["tone1"], "--tone-2": pal["tone2"], "--tone-3": pal["tone3"],
+    }
+    notes = {
+        "--paper": "紙", "--ink": "インク", "--fg-muted": "注記 (インク 62%)",
+        "--hairline": "罫 (インク 15%)",
+        "--tone-1": "図版の淡い段", "--tone-2": "図版の中間段", "--tone-3": "図版の濃い段",
+    }
+    pal_lines = "\n".join(f"  {n}: {v};  /* {notes[n]} */" for n, v in names.items())
+    alias_lines = "\n".join(
+        f"  {name}: var({target});  /* {note} */" for name, target, note in _HANDWRITTEN_ALIASES
+    )
+    # 色相名は値を書き写さず、svg-kit の fallback と一致するパレット変数を指す。
+    # パレットに無い値だったときだけ hex を直に置く (その状態は正本のズレを意味する)。
+    by_value = {v.upper(): n for n, v in names.items()}
+    hue_lines = "\n".join(
+        f"  {name}: var({by_value[value]});  /* {value} */" if value in by_value
+        else f"  {name}: {value};  /* パレットに無い値 */"
+        for name, value in ((n, hues[n]) for n in _LEGACY_HUES)
+    )
+    return f"""```css
+/* 生成物。手で編集しない。編集しても再生成で消える。
+ * 値の正本: {_PALETTE_SRC} の SPEC.colors
+ * 再生成:   python3 scripts/build-slide-skeleton-css.py
+ * 検証:     python3 scripts/build-slide-skeleton-css.py --check
+ *
+ * 手書き経路はこのブロックを成果物の styles.css へそのまま貼る。
+ * 外部 CSS への link にはしない (出荷 deck の styles.css は index.html へ
+ * インライン展開された写しで、外部 CSS はブラウザに読まれていない)。
+ */
+:root {{
+  /* ---- パレット (色数 3: 紙・インク・反転面) ---- */
+{pal_lines}
+
+  /* ---- 手書き経路の名前。値はパレットを指すだけで実体を持たない ---- */
+{alias_lines}
+
+  /* ---- 色相名 (一時定義)。値の出所は {_SERIES_SRC} の fallback ----
+   * 定義が無いせいで 265 箇所が宣言ごと無効になっていたので、今出ているのと
+   * 同じ値で名前だけを与える。見た目は 1 ドットも変わらない。
+   * 色相を戻したのではない。区別は色でなく (濃度 x 形) の系列へ移す設計で、
+   * 参照側が seriesStyle() を呼ぶようになった時点でこの節ごと消える。
+   * 消し忘れは tests/test_legacy_hue_aliases.py が落として知らせる。
+   */
+{hue_lines}
+}}
+```"""
+
+
+def apply_theme_block(root: Path, block: str, check: bool) -> tuple[bool, str]:
+    """theme-style.md の管理区間を差し替える。戻り値 (一致したか, メッセージ)。
+
+    区間標識が無ければ失敗させる (fail-closed)。黙って追記すると、
+    どこが生成物か分からない写しが増える。
+    """
+    path = root / _THEME_DOC
+    if not path.is_file():
+        return False, f"{_THEME_DOC} が無い"
+    src = path.read_text(encoding="utf-8")
+    if src.count(_THEME_BEGIN) != 1 or src.count(_THEME_END) != 1:
+        return False, f"{_THEME_DOC} に生成区間の標識が 1 組ちょうど無い"
+    head, rest = src.split(_THEME_BEGIN, 1)
+    _, tail = rest.split(_THEME_END, 1)
+    want = f"{head}{_THEME_BEGIN}\n{block}\n{_THEME_END}{tail}"
+    if src == want:
+        return True, f"{_THEME_DOC}: 正本と一致 -> PASS"
+    if check:
+        return False, (
+            f"{_THEME_DOC} の生成区間が SPEC.colors から生成される内容と異なる。\n"
+            "文書側を手で直さず `python3 scripts/build-slide-skeleton-css.py` で再生成する。")
+    path.write_text(want, encoding="utf-8")
+    return True, f"wrote {_THEME_DOC} (生成区間 {len(block)} bytes)"
 
 
 def _plugin_root(explicit: str | None) -> Path:
@@ -144,7 +319,7 @@ def _plugin_root(explicit: str | None) -> Path:
 
 def build_css(c: dict, pal: dict[str, str]) -> str:
     cv, ch, st = c["canvas"], c["chrome"], c["stage"]
-    sp, ty, pr = c["spacing"], c["typography"], c["print"]
+    sp, ty, pr = c["spacing"], c["typography"], c["print_skeleton"]
     # fill_policy / vertical_margin_policy は CSS へ写さない。検査器
     # (scripts/validate-slide-layout.js) が frame-contract.json を直接読むため、
     # CSS 変数として出しても消費者ゼロの第 3 の写しになり、契約を動かすたびに
@@ -406,23 +581,43 @@ def main(argv=None) -> int:
         sys.stderr.write(f"error: 配色の正本を読めない: {e}\n")
         return 2
 
+    try:
+        hues = read_legacy_hues(root)
+    except (OSError, ValueError) as e:
+        sys.stderr.write(f"error: 色相名の現行値を読めない: {e}\n")
+        return 2
+
+    try:
+        block = build_theme_block(pal, hues)
+    except ValueError as e:
+        sys.stderr.write(f"error: 手書き経路のブロックを作れない: {e}\n")
+        return 2
+
     css = build_css(contract, pal)
     out = root / _OUT
+    rc = 0
     if args.check:
         cur = out.read_text(encoding="utf-8") if out.is_file() else ""
         if cur == css:
             sys.stdout.write("slide-skeleton.css: 契約と一致 -> PASS\n")
-            return 0
-        sys.stderr.write(
-            "slide-skeleton.css が frame-contract.json から生成される内容と異なる。\n"
-            "CSS を手で編集した場合は編集を frame-contract.json 側へ移し、\n"
-            "`python3 scripts/build-slide-skeleton-css.py` で再生成する。\n")
-        return 1
+        else:
+            sys.stderr.write(
+                "slide-skeleton.css が frame-contract.json から生成される内容と異なる。\n"
+                "CSS を手で編集した場合は編集を frame-contract.json 側へ移し、\n"
+                "`python3 scripts/build-slide-skeleton-css.py` で再生成する。\n")
+            rc = 1
+    else:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(css, encoding="utf-8")
+        sys.stdout.write(f"wrote {_OUT} ({len(css)} bytes)\n")
 
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(css, encoding="utf-8")
-    sys.stdout.write(f"wrote {_OUT} ({len(css)} bytes)\n")
-    return 0
+    # 手書き経路の色も同じ SPEC.colors から出す。ここを別スクリプトにすると
+    # 正本の読み手が 2 つになり、片方だけ取り残される欠陥が戻る。
+    ok, msg = apply_theme_block(root, block, args.check)
+    (sys.stdout if ok else sys.stderr).write(msg + "\n")
+    if not ok:
+        rc = 1
+    return rc
 
 
 if __name__ == "__main__":

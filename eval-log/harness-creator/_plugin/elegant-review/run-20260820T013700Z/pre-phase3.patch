@@ -1,0 +1,3870 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 9e31835..1204886 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -43,6 +43,12 @@
+         "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/extract-system-blueprint/hooks/pre-fetch-authz-guard.py",
+         "from_plugin": "extract-system-blueprint"
+       },
++      {
++        "event": "PostToolUse",
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\"",
++        "from_plugin": "harness-creator"
++      },
+       {
+         "event": "PostToolUse",
+         "matcher": "Edit",
+@@ -64,19 +70,19 @@
+       {
+         "event": "PostToolUse",
+         "matcher": "Skill",
+-        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py",
+         "from_plugin": "harness-creator"
+       },
+       {
+         "event": "PostToolUse",
+         "matcher": "Skill",
+-        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py",
++        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py",
+         "from_plugin": "harness-creator"
+       },
+       {
+-        "event": "PostToolUse",
+-        "matcher": "Skill",
+-        "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py",
++        "event": "PostToolUseFailure",
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
++        "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\"",
+         "from_plugin": "harness-creator"
+       },
+       {
+@@ -287,20 +293,20 @@
+         ]
+       },
+       {
+-        "matcher": "Edit",
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+         "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py"
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\""
+           }
+         ]
+       },
+       {
+-        "matcher": "Edit|Write",
++        "matcher": "Edit",
+         "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-manifest.py"
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py"
+           }
+         ]
+       },
+@@ -309,16 +315,16 @@
+         "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py"
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/lint-capability-manifest.py"
+           }
+         ]
+       },
+       {
+-        "matcher": "Skill",
++        "matcher": "Edit|Write",
+         "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py"
++            "command": "python3 ${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py"
+           }
+         ]
+       },
+@@ -618,6 +624,17 @@
+         ]
+       }
+     ],
++    "PostToolUseFailure": [
++      {
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"${CLAUDE_PROJECT_DIR}/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py\""
++          }
++        ]
++      }
++    ],
+     "SessionEnd": [
+       {
+         "matcher": ".*",
+diff --git a/.github/workflows/governance-check.yml b/.github/workflows/governance-check.yml
+index 50f266c..68aaa6f 100644
+--- a/.github/workflows/governance-check.yml
++++ b/.github/workflows/governance-check.yml
+@@ -91,10 +91,15 @@ jobs:
+           ' plugins/harness-creator/.codex-plugin/plugin.json
+           jq -e '
+             (.hooks.SessionStart) as $s |
++            (.hooks.PostToolUse) as $p |
+             ($s | type == "array" and length == 1) and
+             ($s[0].hooks | type == "array" and length == 1) and
+             ($s[0].hooks[0].type == "command") and
+-            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py"))
++            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py")) and
++            ($p | type == "array" and length == 1) and
++            ($p[0].matcher | contains("Bash") and contains("apply_patch")) and
++            ($p[0].hooks | type == "array" and length == 1) and
++            ($p[0].hooks[0].command | contains("auto-record-lesson.py"))
+           ' plugins/harness-creator/hooks/hooks.json
+           python3 -c 'import tomllib; c=tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb")); assert c["schema_version"] == 1; p=tomllib.load(open(".codex/config.toml","rb")); assert p["features"]["hooks"] is True and "hooks" not in p'
+           python3 plugins/harness-creator/scripts/sync-codex-project-settings.py --repo-root . --contract plugins/harness-creator/native-surfaces.toml --check --json
+diff --git a/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json b/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
+index 1bd42e3..ed43a2a 100644
+--- a/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
++++ b/eval-log/harness-creator/run-build-skill/content-review/elegance-verdict.json
+@@ -2,40 +2,32 @@
+   "target": {
+     "plugin": "harness-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "70f8b6764da5a7ff7bfc90ba626660a7fc9e1b1ccb12ec4b54fb3656d057cbcf"
++    "skill_md_sha256": "c0461de98a11864e3833b57c32f03d42ea179d77f7a83d389ae934e85be1f347"
+   },
+   "review_kind": "elegance",
+   "verdict": "PASS",
+-  "findings_summary": {
+-    "contradiction": 0,
+-    "omission": 1,
+-    "inconsistency": 1,
+-    "dependency_break": 0,
+-    "smell": 1
+-  },
+-  "reviewer": "assign-skill-design-evaluator",
+-  "reviewed_at": "2026-08-11T05:35:20Z",
++  "findings_summary": {"contradiction": 0, "omission": 1, "inconsistency": 0, "dependency_break": 0, "smell": 0},
++  "reviewer": "claude-code-focused-independent-reviewer",
++  "reviewed_at": "2026-08-20T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "本差分 4 箇所 (L282 lint-feedback-contract.py / L288 lint-readme-plugin-root-portability.py / L345 notion-upsert-plugin.py / L372 sync-skills-to-claude.sh) の ${HARNESS_ROOT:-.} 化が実装と合致している。実ファイルを読むと scripts/lint-feedback-contract.py:50・scripts/notion-upsert-plugin.py:26・scripts/lint-readme-plugin-root-portability.py:72 はいずれも ROOT = Path(__file__).resolve().parent.parent で repo root を自己解決し、lint-feedback-contract.py:91 の git diff も cwd=ROOT 固定、scripts/sync-skills-to-claude.sh は ROOT=$(cd $(dirname $0)/.. && pwd) で解決する。したがって prefix を付けるだけで任意 cwd から起動でき、既定展開 . は従来の repo-root cwd 実行と同一挙動 (退行なし)。",
+-      "doc 間の乖離を 1 件解消している。references/build-steps.md:125 は既に `bash ${HARNESS_ROOT:-.}/scripts/sync-skills-to-claude.sh --apply` 形だったが SKILL.md L372 だけ旧形 `bash scripts/sync-skills-to-claude.sh --apply` で残っており、build 完了契約の表記が本文と詳細手順で割れていた。今回の変更で両者が同一表記へ収束した。",
+-      "採用形が repo 既存の確立済み規約と一致し、新規方言を発明していない。git grep で ${HARNESS_ROOT:-.} は ref-output-routing/SKILL.md:90,94・ref-skill-naming-convention/SKILL.md:54・run-skill-create/SKILL.md:143-145・run-skill-feedback/SKILL.md:212,221・harness-creator/commands/marketplace-register.md:53,75,135・build-steps.md:87,94,125 に既出。",
+-      "Step 4 bash ブロックが references/lint-matrix.json の build-preflight 射影である契約 (L271) を壊していない。lint-matrix-sync.py:38 の抽出は SCRIPT_NAME_RE = \\b((?:lint|validate)-[a-z0-9-]+\\.py)\\b という パス非依存のスクリプト名集合照合で、prefix 付与後も lint-matrix-sync.py + lint-matrix.json が exit 0 で通ることを実行確認した (lint 集合の増減なし)。"
++      "IN1: search が _thin_entry のみ返し observations/reuses 本文を含めないため常時巨大promptを避け、詳細は show --id の on-demand 取得に限定している (scripts/build-external-intelligence.py の search_entries/_thin_entry, SKILL.md Step 6 追記の「上位5件だけを見て、詳細は show --id」)。",
++      "IN3: exact fingerprint 一致は自動統合、REVIEW_THRESHOLD 域は possible_duplicate(exit 3) として --merge-with か --force-new --distinct-reason を強制し、promote は _candidate_ready(独立 context/evidence 各2件) かつ _verified_ready(別 context/evidence での helpful reuse) を満たすまで blocked のままにする実装で、テスト test_ambiguous_similarity_requires_explicit_resolution / test_promotion_requires_independent_observations_helpful_reuse_and_approval が振る舞いを固定している。",
++      "IN2: state は resolve_state_dir で git common dir (worktree 間共有) または .harness/、user は plugin data/XDG state に解決され、plugin package 配下に書かない設計を test_project_scope_uses_git_common_dir_not_plugin_install / test_hook_adapter_records_same_failure_from_codex_and_claude_without_package_writes が verify している。",
++      "OUT1: hooks/hooks.json と native-surfaces.toml (products=[\"claude\",\"codex\"]) が同じ auto-record-lesson.py を PostToolUse に配線し、auto-record-lesson.py 側も _agent() で PLUGIN_ROOT/PLUGIN_DATA (Codex) と CLAUDE_* (Claude) を判別するため双方 agent から同一 store へ書ける。",
++      "OUT2: references/external-intelligence.md が「モデル学習やプロンプトキャッシュそのものではない」「token/quota 削減を保証せず」と明記し、ユーザー提供記事の98.7%再利用の因果は記事自体も証明していないと出典付きで注記しており、prompt cache と external intelligence の別レイヤー扱いが要求どおり明文化されている。"
+     ],
+     "negative_feedback": [
+-      "omission / 低 severity — 部分適用: L235-237 の Step 1 bash フェンスだけが `python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py --dir plugins/harness-creator/knowledge/` と repo 相対直書きのまま残る。直前 L230 で resolve-skill-dirs.py により $SKILL_DIR が確定済みなので同形へ寄せられる。加えて scripts/lint-readme-plugin-root-portability.py の docstring『検査対象外』節が plugins/*/skills/*/SKILL.md を明示的に走査対象から外しているため、この 1 箇所は機械ゲートで検出されない (実際に同 lint は exit 0)。今回の差分が壊した箇所ではないが、同種正規化の未回収残り。",
+-      "inconsistency / 低 severity — 記述の陳腐化: 冒頭 L127 の注記が『Step 4 等の lint コマンドは repo-root cwd 前提で実行する (bundles.json full bundle 同梱の plugins/skill-governance-lint/ への repo-root 相対パスに依存)』のままで、今回入った HARNESS_ROOT による cwd 非依存の逃げ道に言及していない。また根拠部の『repo-root 相対パスに依存』も実際の Step 4 は L274 GOV_LINT_DIR=$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint = $PLUGIN_ROOT 起点解決であり表現が実装とずれている (skill-governance-lint が skills-full bundle に同梱である点は .claude-plugin/bundles.json で確認でき、そこは真)。既定 . により実運用上の文言は真のままなので非阻害だが、差分と同時に更新すべき記述だった。",
+-      "smell / 非退行: ${HARNESS_ROOT:-.} が無引用のため HARNESS_ROOT に空白を含むパスを与えると語分割で壊れる。同ブロック内の他行 (\"$SKILL_DIR/scripts/...\" / \"$GOV_LINT_DIR/...\") は引用済みで表記が不揃い。ただし repo 既存の同形 7 ファイルもすべて無引用であり、本差分固有の逸脱ではない。",
+-      "検証できなかった点 (IN2): 本差分は commit 830ef76 (chore: 未 commit の作業ツリー変更を取り込む) による手編集で run-build-skill 経由の build ではないため、この変更に対応する eval-log/skill-build-trace.json が存在しない。現在 checked-in の trace は skill_name=run-slide-report-generate の別 build のもので (validate-build-trace.py は exit 0)、本編集の source_docs/doc_coverage/layer_decisions/reproducibility_gates は突合できていない。"
++      "IN2 は self-improvement (harness-creator 自身の SKILL.md 変更) のレビューであり、通常の新規skill build (eval-log/skill-build-trace.json 生成) trace が存在しないため、build-trace 経由の実行証跡ではなく diff + スクリプト静的読解 + 既存テストで代替評価した制約付き判定である。"
+     ],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "incremental の unresolved semantic batch として、origin/main..HEAD の SKILL.md 差分 (4 箇所すべて repo-root スクリプト起動の ${HARNESS_ROOT:-.} 化) と SKILL.md 全文 (382 行 = frontmatter 123 行 + 本文 259 行 ≦ 300) を 1 context で読み (a)-(e) を一括判定した。(a) 矛盾なし: 既定展開 . が従来の repo-root cwd 実行と同値のため L127 の repo-root 前提記述と併存しても挙動矛盾はない (記述精度の問題として negative へ)。(b) 漏れ: 差分は Step 4 / Step 11 / 配置先の 3 節に閉じ Purpose・Key Rules・Checklist CL-1..CL-12・局面カタログ Step 0-12 の構造は無改変だが、同種の repo 相対直書きが Step 1 の bash に 1 件残存 (低 severity)。(c) 規約整合: Key Rule 6 (marketplace install 配置非依存) の方向に沿い、repo 既存の ${HARNESS_ROOT:-.} 規約と一致。(d) 依存関係整合: 参照 4 スクリプトの実在と __file__/$0 起点の自己解決を実読で確認し、build-steps.md:125 との表記収束も確認。(e) high severity 0。実行確認: lint-skill-name / lint-skill-description / lint-skill-tree / validate-frontmatter / lint-skill-completeness / lint-goal-seek / lint-matrix-sync / lint-ssot-duplication / lint-readme-plugin-root-portability / validate-plugin-completeness / validate-build-trace を全て exit 0、scripts/lint-feedback-contract.py --changed-only も exit 0 (WARN 3 件 = live-trial ratchet の既存 skill 免除で非 fail)。criteria: IN1=上記 lint 群 exit0 で充足、IN2=本編集は build 経由でなく trace 直接証拠なし (limitation として記録)、IN3=本ブランチで eval-log/harness-creator/build/route-*.json に変更はなく handoff route 消費 build ではないため N/A、OUT1=未解決 high 0 かつ本 verdict を current sha 70f8b676… へ束縛、OUT2=HARNESS_ROOT 規約はブランチ主題 (plugin release / marketplace 自動化) の可搬性ゴールに沿い incremental の未解決 claim だけを対象にした。30 思考法は使用していない (exhaustive 明示時の audit obligation)。"
++  "notes": "incremental review (30思考法未使用、profile=incremental相当の対象限定読解)。判定根拠: (a)矛盾=0 — SKILL.md diff・build-external-intelligence.py・lint-knowledge-loop.py の KL-007/008・external-intelligence.md の間で runtime_store=external-intelligence-v1 / consult_at 契約が一貫。(b)漏れ=1 (medium, 非blocking) — ref-skill-design-rubric/references/rubric.json は rubric_version 1.3.0 で KL-001..005 のみを rule 化しており (comment: 「KL-* rule (5個) を追加」)、本diffで lint-knowledge-loop.py が KL-008 (external-intelligence engine 同梱・runtime_store 整合) を fail-closed 化した一方、rubric.json 側に KL-006/007/008 相当の採点ruleが追加されていない。SKILL.md本文(既存部分)の「assign-skill-design-evaluator も KL-* を採点」という記述と、lint側KL-001..008の拡張範囲との対応が rubric.json 上は未確認 (rules[] 末尾は id=\"KL-005\" で終わる)。ビルドは exit0 のまま進むため機能break ではないが、rubric採点の網羅性が lint と乖離している。(c)規約=違反なし — script_refs frontmatter に build-external-intelligence.py / auto-record-lesson.py が追加されscript_refs⇔本文参照が一致。(d)依存=破損なし — render-combinators.py Step2-5 が knowledge-skeleton 4スクリプト+build-external-intelligence.pyの同梱、consult_at/runtime_store注入を SKILL.md diff と一致させて実装。(e)rubric high=0 — 本レビューで検出した唯一のfindingsはmedium相当のomissionで、high severityの矛盾・破壊的欠陥は確認できず、目的(thin router/on-demand, plugin cache外state, 重複統合, 独立証拠+helpful reuse後昇格, Codex/Claude双方hook, prompt cache非因果の明記)は差分内で達成されている。IN2はself-improvement文脈での制約付き評価である旨を上記negative_feedbackに明記。"
+ }
+diff --git a/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json b/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
+index 29cb383..de424ef 100644
+--- a/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
++++ b/eval-log/harness-creator/run-build-skill/content-review/rubric-verdict.json
+@@ -2,40 +2,32 @@
+   "target": {
+     "plugin": "harness-creator",
+     "skill": "run-build-skill",
+-    "skill_md_sha256": "70f8b6764da5a7ff7bfc90ba626660a7fc9e1b1ccb12ec4b54fb3656d057cbcf"
++    "skill_md_sha256": "c0461de98a11864e3833b57c32f03d42ea179d77f7a83d389ae934e85be1f347"
+   },
+   "review_kind": "rubric",
+   "verdict": "PASS",
+-  "findings_summary": {
+-    "contradiction": 0,
+-    "omission": 1,
+-    "inconsistency": 1,
+-    "dependency_break": 0,
+-    "smell": 1
+-  },
+-  "reviewer": "assign-skill-design-evaluator",
+-  "reviewed_at": "2026-08-11T05:35:20Z",
++  "findings_summary": {"contradiction": 0, "omission": 1, "inconsistency": 0, "dependency_break": 0, "smell": 0},
++  "reviewer": "claude-code-focused-independent-reviewer",
++  "reviewed_at": "2026-08-20T00:00:00Z",
+   "iterations": 1,
+   "human_review_required": false,
+   "feedback_loop": {
+     "loop_scope": "both",
+     "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+     "positive_feedback": [
+-      "L0 rubric (ref-skill-design-rubric/references/rubric.json v1.3.0) の high 規則を差分後の本文で再確認し全て充足: FM-001 (name=run-build-skill が ^(run|ref|assign|wrap|delegate)- に一致・60 字以内)、BD-001 (## Purpose & Output Contract が L129 に存在)、BD-003 (frontmatter 除く本文 259 行 ≦ 300 — 差分は既存行の置換のみで増減なし)、NM-001 (ディレクトリ basename == frontmatter.name)。medium も FM-003 (description の発動条件は『〜とき』2 個)・BD-002 (## Gotchas)・PD-001 (references/ 実在) を満たす。",
+-      "L2 override (assign-skill-design-evaluator/references/rubric.json) の high も充足: REG-001 (validate-plugin-completeness.py / validate-build-trace.py が共に exit 0 を実行確認)、PG-001 (kind=run かつ責務あり → prompts/R1-scaffold.md, R2-responsibility-emit.md, R3-template-select.md, R4-trace-write.md が実在し frontmatter responsibility_refs と 1:1)。",
+-      "4 条件のうち『SSOT 非重複』を差分が強化している: repo-root スクリプト起動形が本文 (SKILL.md) と詳細手順 (references/build-steps.md) で 2 種類存在した状態を ${HARNESS_ROOT:-.} 一形へ統合し、起動表記の二重定義を 1 つ減らした。『決定論ゲート』も無傷で、Step 4 の lint 集合は lint-matrix.json の射影のまま (lint-matrix-sync.py exit 0)、fail-closed 条件 (L291『全て exit 0 でなければ Step 2 / 3.5 へ戻る』) は改変されていない。",
+-      "『単一責務』『fail-closed』の観点で差分の副作用がない: 変更 4 行はいずれもコマンドのパス解決形のみで、フラグ・引数・判定条件・戻り先を変えていない (git diff で語句レベルに確認)。評価分離 (生成本体は自己採点せず fork 評価) の構造も無改変。"
++      "IN1: KL-008 (lint-knowledge-loop.py: check_kl008) は runtime_store 宣言がある場合のみ build-external-intelligence.py 同梱を必須化し、宣言の無い既存生成物は後方互換で許容する fail-closed 設計であり、Goodhart対策 (誤検出で既存生成物を壊さない) と新規契約の強制を両立している。",
++      "IN3: capture_entry の類似度判定 (AUTO_MERGE_THRESHOLD=0.88 で自動統合、REVIEW_THRESHOLD=0.62〜0.88 で exit 3 の明示解決要求) と promote_entry の _candidate_ready/_verified_ready 二段ゲートが、rubric要求する「独立証拠+別文脈helpful reuse後だけ昇格」を数値契約として実装している。",
++      "OUT1: SKILL.md diff の運用コマンド例が --agent <codex|claude|other> を明示し、auto-record-lesson.py の _agent() 判別ロジックと合わせて単一 engine を双方 agent の hook から共用する設計になっている。",
++      "OUT2: external-intelligence.md の出典節が OpenAI/Anthropic の prompt cache ドキュメントと Decision OS V13 Loopkit の commit を明示引用しつつ、quota削減の因果は「記事自身も証明していない」と明記しており、rubricが求める非過大主張の要件を満たす。"
+     ],
+     "negative_feedback": [
+-      "低 severity (非ブロッキング・規約整合): Key Rule 6 (marketplace install 配置非依存) の観点で、同じ正規化が Step 1 の bash フェンス L235-237 (`python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py --dir plugins/harness-creator/knowledge/`) に未適用。scripts/lint-readme-plugin-root-portability.py は SKILL.md を走査対象外と明記しているため機械検出されず (同 lint exit 0)、rubric 上も high 規則の対象外だが、Key Rule 6 の趣旨に照らせば $SKILL_DIR 起点へ寄せるべき残件。",
+-      "低 severity (非ブロッキング): 冒頭 L127 の『Step 4 等の lint コマンドは repo-root cwd 前提で実行する』注記が HARNESS_ROOT 導入後も更新されておらず、根拠として挙げる『repo-root 相対パスに依存』も実際の L274 GOV_LINT_DIR=$(dirname \"$PLUGIN_ROOT\")/skill-governance-lint と表現がずれている。挙動は既定 . で不変のため high ではない。",
+-      "smell (非退行): 新規 4 行の ${HARNESS_ROOT:-.} が無引用で、同ブロック内の \"$SKILL_DIR/...\" / \"$GOV_LINT_DIR/...\" と引用有無が不揃い (空白入りパスで語分割)。repo 既存の同形も全て無引用のため規約準拠であり本差分固有の減点にはしない。",
+-      "検証できなかった点: (IN2) 本差分は手編集コミット 830ef76 由来で対応する build trace が生成されておらず、checked-in の eval-log/skill-build-trace.json は別 skill (run-slide-report-generate) のもの。したがって本編集について source_docs/doc_coverage/layer_decisions/reproducibility_gates の記録充足は突合できていない (既存 trace 自体は validate-build-trace.py exit 0)。(BND-001) harness-creator は .claude-plugin/bundles.json のいずれの bundle にも含まれないが、本差分で新規追加された plugin ではないため BND-001 は適用外と判断した。"
++      "ref-skill-design-rubric/references/rubric.json (rules[], 末尾要素 id=\"KL-005\") が KL-006 (add_entry.py 同梱, lint側ではwarn)・KL-007 (consult_at物理位置整合)・KL-008 (external-intelligence engine同梱) に対応する採点ruleを持たず、lint-knowledge-loop.py の検査範囲(KL-001..008)とrubricの採点範囲(KL-001..005)が乖離している。assign-skill-design-evaluator が「KL-*を採点」する前提と整合させるには、この3ruleの追加要否を明示判断する必要がある (medium, non-blocking)。",
++      "IN2 は self-improvement 変更であり、通常の新規skill build trace (eval-log/skill-build-trace.json) が存在しない前提での静的読解評価である制約を明記する。"
+     ],
+     "iteration": 1,
+     "iteration_limit": 3,
+     "hook_trigger": "manual",
+     "next_action": "none"
+   },
+-  "notes": "incremental の focused combined review。ref-skill-design-rubric v1.3.0 (L0) + assign-skill-design-evaluator rubric.json (L2 delta) を規範に、origin/main..HEAD の SKILL.md 差分 (repo-root スクリプト 4 起動の ${HARNESS_ROOT:-.} 化) と全文を読んで採点した。high severity 0 件 (FM-001/BD-001/BD-003/NM-001/REG-001/PG-001 を実測で充足確認、AG-*/HK-*/CM-*/PC-*/PR-*/WF-* は kind=skill(run) に非適用、KL-* は本 skill に knowledge/ がないため非適用)。残る指摘は低 severity 3 件 (Step 1 bash の repo 相対直書き未回収 / L127 注記の陳腐化 / 無引用変数) でいずれも fail-closed ゲートと決定論射影を毀損しない。criteria 全 5 件を評価: IN1 は lint-skill-name・lint-skill-description・lint-skill-tree・validate-frontmatter・lint-skill-completeness・lint-goal-seek・lint-ssot-duplication・lint-matrix-sync・lint-readme-plugin-root-portability・validate-plugin-completeness・validate-build-trace の実行が全て exit 0、lint-feedback-contract.py --changed-only も exit 0 (WARN 3 件は live-trial ratchet の baseline 免除で非 fail) で充足。IN2 は本編集に対応する trace 不在のため未突合 (limitation 明示)。IN3 は本ブランチで eval-log/harness-creator/build/route-*.json に変更がなく handoff routes 消費 build ではないため N/A。OUT1 は未解決 high 0 で本 verdict を current sha へ束縛。OUT2 は本差分が plugin release / marketplace 自動化ブランチの可搬性ゴールに整合し、incremental 方針どおり未解決 claim のみを対象とした (30 思考法は使用していない)。"
++  "notes": "rubric観点でも(a)〜(e)の判定はelegance側と同じ結論。追加確認: assign-skill-design-evaluator/references/rubric.json (L2 overlay) は PG-001/PG-002/BND-001/REG-001 のみを delta追加しており KL-*には触れていないため、KL-006/007/008の採点責務はL0 (ref-skill-design-rubric)側に残るはずだが未実装。high=0のためPASSとするが、次イテレーションでrubric.json拡張が推奨される。"
+ }
+diff --git a/eval-log/review-queue.jsonl b/eval-log/review-queue.jsonl
+index 9a2e51b..f987a9e 100644
+--- a/eval-log/review-queue.jsonl
++++ b/eval-log/review-queue.jsonl
+@@ -44,3 +44,4 @@
+ {"requested_at": "2026-08-19T11:28:49.905762+00:00", "reason": "評価対象 artifact の変更を検出 (2 件): plugins/guide-doc-generator/skills/ref-handout-design-system/SKILL.md, plugins/guide-doc-generator/skills/run-handout-build/SKILL.md", "changed_skills": ["plugins/guide-doc-generator/skills/ref-handout-design-system/SKILL.md", "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md"], "trigger": "Stop"}
+ {"requested_at": "2026-08-19T13:57:17.131688+00:00", "reason": "git 変更ファイルが 20 件 (閾値 20)", "changed_skills": [], "trigger": "Stop"}
+ {"requested_at": "2026-08-19T14:19:44.114780+00:00", "reason": "評価対象 artifact の変更を検出 (2 件): plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/SKILL.md, plugins/guide-doc-generator/skills/run-handout-build/SKILL.md", "changed_skills": ["plugins/guide-doc-generator/skills/assign-handout-readability-evaluator/SKILL.md", "plugins/guide-doc-generator/skills/run-handout-build/SKILL.md"], "trigger": "Stop"}
++{"requested_at": "2026-08-20T01:30:34.090754+00:00", "reason": "評価対象 artifact の変更を検出 (2 件): plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md, plugins/harness-creator/skills/run-build-skill/SKILL.md", "changed_skills": ["plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md", "plugins/harness-creator/skills/run-build-skill/SKILL.md"], "trigger": "Stop"}
+diff --git a/marketplaces/local/.claude-plugin/marketplace.json b/marketplaces/local/.claude-plugin/marketplace.json
+index 85e93cf..7d3dfca 100644
+--- a/marketplaces/local/.claude-plugin/marketplace.json
++++ b/marketplaces/local/.claude-plugin/marketplace.json
+@@ -89,7 +89,7 @@
+       "name": "harness-creator",
+       "source": "./plugins/harness-creator",
+       "description": "Claude Code のハーネス — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と評価・統治機構の総体 — を構築・評価・統治するメタプラグイン。単体スキル生成は部品単位の能力として内包する。run-build-skill は with-goal-seek の engine:task-graph 変種 (brief.goal_seek.engine=task-graph 指定時に checklist の depends_on 依存充足順で実行し self-reflect で発見タスクを単一 truth の checklist へ追記する) を、既定装備の with-goal-seek 内部の opt-in engine 選択として焼き込む",
+-      "version": "1.3.21",
++      "version": "1.3.23",
+       "category": "development-tools",
+       "tags": [
+         "capability-build",
+diff --git a/marketplaces/local/plugin-fingerprints.json b/marketplaces/local/plugin-fingerprints.json
+index 9112af9..a14fba3 100644
+--- a/marketplaces/local/plugin-fingerprints.json
++++ b/marketplaces/local/plugin-fingerprints.json
+@@ -23,8 +23,8 @@
+       "fingerprint": "977eb41563f983915e5d78fed94bb4ba6ef7cde28782ca1c7bfb834dd8fb134f"
+     },
+     "harness-creator": {
+-      "version": "1.3.21",
+-      "fingerprint": "265b66bb4fde343b1d9e56b9c82f4f4a3302bbdd34216fd9bdb7bbacd20c5e77"
++      "version": "1.3.23",
++      "fingerprint": "494f4e20f1a08d71ae5187196aa616bd35b9a8a6519e755892b86436cc6b1e42"
+     },
+     "mf-kessai-invoice-check": {
+       "version": "0.8.3",
+diff --git a/plugins/harness-creator/.claude-plugin/plugin.json b/plugins/harness-creator/.claude-plugin/plugin.json
+index ba07d7b..e5097e6 100644
+--- a/plugins/harness-creator/.claude-plugin/plugin.json
++++ b/plugins/harness-creator/.claude-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "harness-creator",
+-  "version": "1.3.21",
++  "version": "1.3.23",
+   "description": "Claude Code のハーネス — Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) と評価・統治機構の総体 — を構築・評価・統治するメタプラグイン。単体スキル生成は部品単位の能力として内包する。run-build-skill は with-goal-seek の engine:task-graph 変種 (brief.goal_seek.engine=task-graph 指定時に checklist の depends_on 依存充足順で実行し self-reflect で発見タスクを単一 truth の checklist へ追記する) を、既定装備の with-goal-seek 内部の opt-in engine 選択として焼き込む",
+   "author": {
+     "name": "harness maintainers"
+@@ -36,16 +36,21 @@
+     ],
+     "PostToolUse": [
+       {
+-        "matcher": "Skill",
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
+         "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py"
+-          },
++            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\"",
++            "timeout": 10000
++          }
++        ]
++      },
++      {
++        "matcher": "Skill",
++        "hooks": [
+           {
+             "type": "command",
+-            "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py",
+-            "timeout": 5000
++            "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py"
+           },
+           {
+             "type": "command",
+@@ -80,6 +85,18 @@
+         ]
+       }
+     ],
++    "PostToolUseFailure": [
++      {
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\"",
++            "timeout": 10000
++          }
++        ]
++      }
++    ],
+     "Stop": [
+       {
+         "matcher": ".*",
+diff --git a/plugins/harness-creator/.codex-plugin/plugin.json b/plugins/harness-creator/.codex-plugin/plugin.json
+index 3e05bb8..09b3d30 100644
+--- a/plugins/harness-creator/.codex-plugin/plugin.json
++++ b/plugins/harness-creator/.codex-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "harness-creator",
+-  "version": "1.3.21",
++  "version": "1.3.23",
+   "description": "Claude Code \u306e\u30cf\u30fc\u30cd\u30b9 \u2014 Capability (Skill / Agent / Hook / Command / Plugin-Composition / Prompt / Workflow) \u3068\u8a55\u4fa1\u30fb\u7d71\u6cbb\u6a5f\u69cb\u306e\u7dcf\u4f53 \u2014 \u3092\u69cb\u7bc9\u30fb\u8a55\u4fa1\u30fb\u7d71\u6cbb\u3059\u308b\u30e1\u30bf\u30d7\u30e9\u30b0\u30a4\u30f3\u3002\u5358\u4f53\u30b9\u30ad\u30eb\u751f\u6210\u306f\u90e8\u54c1\u5358\u4f4d\u306e\u80fd\u529b\u3068\u3057\u3066\u5185\u5305\u3059\u308b\u3002run-build-skill \u306f with-goal-seek \u306e engine:task-graph \u5909\u7a2e (brief.goal_seek.engine=task-graph \u6307\u5b9a\u6642\u306b checklist \u306e depends_on \u4f9d\u5b58\u5145\u8db3\u9806\u3067\u5b9f\u884c\u3057 self-reflect \u3067\u767a\u898b\u30bf\u30b9\u30af\u3092\u5358\u4e00 truth \u306e checklist \u3078\u8ffd\u8a18\u3059\u308b) \u3092\u3001\u65e2\u5b9a\u88c5\u5099\u306e with-goal-seek \u5185\u90e8\u306e opt-in engine \u9078\u629e\u3068\u3057\u3066\u713c\u304d\u8fbc\u3080",
+   "author": {
+     "name": "harness maintainers"
+diff --git a/plugins/harness-creator/CHANGELOG.md b/plugins/harness-creator/CHANGELOG.md
+index dd21559..315119d 100644
+--- a/plugins/harness-creator/CHANGELOG.md
++++ b/plugins/harness-creator/CHANGELOG.md
+@@ -4,6 +4,17 @@
+ 
+ ## [Unreleased]
+ 
++### Added (2026-08-20 external intelligence loop)
++
++- Codex / Claude Code 共通の `build-external-intelligence.py` を追加。runtime state を installed plugin 外の project/user state に保存し、thin index、on-demand detail、exact/near-duplicate 統合、hash-chain 検証を実装。
++- observation → candidate → verified → promoted の証拠ゲートを追加。昇格には独立観測2件、別文脈の helpful reuse、owner 承認、反証条件、rollback を必須化。
++- 両製品の PostToolUse payload を共通 engine へ渡す fail-soft adapter と native hook 配線を追加。
++
++### Changed (2026-08-20 external intelligence loop)
++
++- `knowledge/` / `lessons-learned/` を reviewed curated seed に限定し、旧 hook の package 内 Markdown/索引直接追記を削除。
++- with-knowledge 生成契約を5スクリプトへ拡張し、runtime store を package 外へ固定。prompt cache/quota 削減は保証せず、重複統合・helpful reuse・再検索回避を直接 KPI とする。
++
+ 初稿 2026-05-22。以下の内容は**実装済み・版番号確定待ち** (Keep a Changelog の順序に従い最上部に置く。実体は 1.2.0 改名以前に本文へ取り込み済み)。次回リリース時に版番号を確定して正式リリース節へ昇格する。
+ 
+ ### Added
+diff --git a/plugins/harness-creator/README.md b/plugins/harness-creator/README.md
+index 4bad411..2c98cd7 100644
+--- a/plugins/harness-creator/README.md
++++ b/plugins/harness-creator/README.md
+@@ -39,6 +39,12 @@ Native hook/settings の共通意味論は `native-surfaces.toml` が正本。Cl
+ `make native-surfaces-pr-ready` で apply → check → schema検査 → diff表示まで行う
+ (この target は PR を作成しない)。
+ 
++## Codex / Claude 共通の外部知能
++
++PostToolUse の再現可能な失敗は、両製品とも `skills/run-build-skill/scripts/auto-record-lesson.py` から同じ `build-external-intelligence.py` へ渡される。runtime state は installed plugin 内ではなく、既定で Git common dir（非Gitは project `.harness/`）に保存されるため、plugin 更新や worktree 切替でも継続できる。
++
++検索は薄い index の上位5件まで、詳細は必要時だけ `show` する。同一・高類似観測は統合し、1回の観測をルールへ昇格しない。状態遷移・user scope・promotion 条件・cache/quota との因果境界は [`ref-knowledge-loop/references/external-intelligence.md`](skills/ref-knowledge-loop/references/external-intelligence.md) を正本とする。
++
+ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入口とハーネス総体を組む入口は別**である。混同しやすいので下表を正本導線とする (用語規約: リポジトリ root `CONVENTIONS.md` §用語規約 第6条、定義正本: `skills/ref-skill-glossary/references/terms.md`)。
+ 
+ | 作りたいもの | 入口 | 産物 |
+diff --git a/plugins/harness-creator/ROADMAP.md b/plugins/harness-creator/ROADMAP.md
+index 95c4290..0873dc4 100644
+--- a/plugins/harness-creator/ROADMAP.md
++++ b/plugins/harness-creator/ROADMAP.md
+@@ -4,7 +4,7 @@
+ 
+ ## 短期 (本 PR 〜 次 1-2 スプリント)
+ 
+-**目標**: governance/feedback hook を 7 種 target_type へ配線完了し、改善ループを自走させる基盤を確立する — **済 (CHANGELOG [Unreleased] Added に記録・版番号確定待ち)**。7 種 hook 配線 (7/7)・lessons-learned 自動記録パイプライン (`auto-record-lesson.py` PostToolUse 配線)・CHANGELOG.md の運用開始 (各 PR で Unreleased セクションを更新する運用ルール) はいずれも達成済み。**継続運用 KPI**: lessons 自動記録の取りこぼし率 < 5%、CHANGELOG 更新率 100% (governance ラベル付き PR 基準)。
++**目標**: governance/feedback hook を 7 種 target_type へ配線し、改善ループを自走させる基盤を確立する — **済**。旧 lessons-learned 直接追記は、Codex/Claude 共通の package 外 external-intelligence state へ置換した。**継続運用 KPI**: duplicate observation 統合率、helpful reuse 件数、独立証拠を備えた promotion、CHANGELOG 更新率 100%。prompt cache/quota 表示は外部要因を含むため直接 KPI にしない。
+ 
+ ### 意図的 deferred (2026-07-02 elegant-review `20260702-declarative-skillcreator`)
+ 
+diff --git a/plugins/harness-creator/hooks/hooks.json b/plugins/harness-creator/hooks/hooks.json
+index 1826fbe..acdeeb4 100644
+--- a/plugins/harness-creator/hooks/hooks.json
++++ b/plugins/harness-creator/hooks/hooks.json
+@@ -12,6 +12,19 @@
+           }
+         ]
+       }
++    ],
++    "PostToolUse": [
++      {
++        "matcher": "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write",
++        "hooks": [
++          {
++            "type": "command",
++            "command": "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\"",
++            "timeout": 10,
++            "statusMessage": "Recording reusable failure evidence"
++          }
++        ]
++      }
+     ]
+   }
+ }
+diff --git a/plugins/harness-creator/knowledge/README.md b/plugins/harness-creator/knowledge/README.md
+index b66275d..6f464ee 100644
+--- a/plugins/harness-creator/knowledge/README.md
++++ b/plugins/harness-creator/knowledge/README.md
+@@ -1,20 +1,22 @@
+ # knowledge/ — harness-creator 自身の蓄積知見ストア (Loop B)
+ 
+-harness-creator が Capability を作成するとき (build-time) に検索して再利用する「蒸留済み知見」。生成スキルに配るのと**同一機構** (`skills/ref-knowledge-loop` 正本 + `skills/run-build-skill/templates/knowledge-skeleton/scripts/`) を harness-creator 自身へ自己適用する dogfooding。
++harness-creator が Capability を作成するとき (build-time) に検索して再利用する、レビュー済みの curated seed。日々の未検証観測はここへ書かず、package 外の external-intelligence state に置く。
+ 
+ ## Loop A と Loop B の関係
+ 
+ | | 場所 | 誰が更新 | いつ使う |
+ |---|---|---|---|
+-| Loop A (生成物側) | 生成された各スキルの `knowledge/` | そのスキルの運用 | そのスキルの実行時 |
+-| Loop B (メタ側) | 本ディレクトリ `plugins/harness-creator/knowledge/` | harness-creator の運用・自己改善 | 次の Capability 作成時 |
++| Loop A (生成物側) | 生成された各スキルの `knowledge/` | reviewed promotion | そのスキルの実行時 |
++| Loop B (メタ側) | 本ディレクトリ `plugins/harness-creator/knowledge/` | reviewed promotion | 次の Capability 作成時 |
++| Runtime | Git common dir / project `.harness` / user state | `build-external-intelligence.py` | Codex/Claude の観測・重複統合・再利用検証 |
+ 
+-両者は `ref-knowledge-loop` の 1 仕様・1 スクリプトを共有する (並行実装を作らない = SSOT)。
++runtime lifecycle の正本は `build-external-intelligence.py` だけとし、curated seed の検索品質ログとは混ぜない。
+ 
+ ## SSOT の役割分担
+ 
+-- `lessons-learned/*.md` … 失敗・落とし穴の**生ログ (散文)** が正本。`auto-record-lesson.py` が自動追記。
+-- `knowledge/` … 作成時に検索する**蒸留済み知見 (JSON/JSONL)**。`knowledge-lessons-index.json` は lessons-learned 本文をコピーせず `source.file` で参照する (索引のみ)。
++- `lessons-learned/*.md` … owner がレビューした昇格済みの失敗知見。hook は直接追記しない。
++- `knowledge/` … 作成時に検索する curated seed。`knowledge-lessons-index.json` は reviewed lesson 本文をコピーせず `source.file` で参照する。
++- external-intelligence state … 未検証観測の唯一の runtime 正本。installed plugin 配下へ置かない。
+ - `pattern-feedback.json` / `amplified-patterns.json` … elegant-review の量産パターン蓄積 (別系統)。
+ 
+ ### 配置ルール (形式の正本・`scripts/lint-knowledge-layout.py` が fail-closed 強制)
+@@ -23,7 +25,7 @@ harness-creator が Capability を作成するとき (build-time) に検索し
+ 
+ - **K1**: `knowledge/` 直下は `*.json` / `*.jsonl` / `README.md` のみ (散文 `.md` 混入を拒否)。
+ - **K2**: `knowledge-lessons-index.json` の各 `source.file` は実在必須 (dangling 参照禁止)。
+-- **L1-L4**: `lessons-learned/*.md` は `YYYY-MM-DD-<slug>.md` 命名・`date:` frontmatter・種別別の必須セクション (人手記述=`## 背景`/`## 知見`/`## 適用先`・自動記録=`## observation`/`## hypothesis`/`## proposed_action`)・本文 30 行以下。
++- **L1-L4**: `lessons-learned/*.md` は `YYYY-MM-DD-<slug>.md` 命名・`date:` frontmatter・`## 背景`/`## 知見`/`## 適用先`・本文 30 行以下。
+ 
+ ## 構成 (Index-Search型)
+ 
+@@ -44,7 +46,7 @@ python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skele
+   --dir plugins/harness-creator/knowledge/ --query "<作成中スキルのトピック>" --limit 5
+ ```
+ 
+-`run-skill-elicit` / `run-build-skill` は `brief.consult_build_knowledge=true` (既定) のとき Step 1 でこれを実行し、上位 N 件を設計判断の参考として提示する。採否は `record_usage.py --dir plugins/harness-creator/knowledge/` で `usage-log.jsonl` に記録し、§12 品質改善サイクルを回す。
++`run-skill-elicit` / `run-build-skill` は curated seed と external-intelligence の薄い index を各5件まで検索する。前者の採否は `record_usage.py`、後者の実利用は `build-external-intelligence.py reuse` に記録し、同じ事実を両方へ二重記録しない。
+ 
+ ## エントリ追加・更新
+ 
+diff --git a/plugins/harness-creator/knowledge/knowledge-lessons-index.json b/plugins/harness-creator/knowledge/knowledge-lessons-index.json
+index e18f1e6..71b51d0 100644
+--- a/plugins/harness-creator/knowledge/knowledge-lessons-index.json
++++ b/plugins/harness-creator/knowledge/knowledge-lessons-index.json
+@@ -3,7 +3,7 @@
+   "label": "lessons-learned 索引 (失敗ログへのポインタ)",
+   "version": "1.0.0",
+   "created_at": "2026-05-24",
+-  "description": "lessons-learned/*.md (失敗・落とし穴ログ) への検索用ポインタ。本文はコピーせず source.file で参照する (SSOT: lessons-learned が正本)。auto-record-lesson.py が新規 lesson を追記したら本索引にもエントリを追加する。",
++  "description": "owner review を通った lessons-learned/*.md への検索用ポインタ。本文はコピーせず source.file で参照する。runtime hook は本索引へ追記せず、promoted 知見だけを明示的に追加する。",
+   "keywords_global": ["失敗", "落とし穴", "lessons-learned"],
+   "source_note": "本文は lessons-learned/*.md が正本。本索引は検索ヒット用の最小要約のみ持つ。",
+   "items": [
+diff --git a/plugins/harness-creator/lessons-learned/README.md b/plugins/harness-creator/lessons-learned/README.md
+index ec4c703..a25d0b0 100644
+--- a/plugins/harness-creator/lessons-learned/README.md
++++ b/plugins/harness-creator/lessons-learned/README.md
+@@ -1,10 +1,11 @@
+ # lessons-learned/
+ 
+-harness-creator 配下 Skill 群を運用して得た「再利用可能な知見」を 1 件 1 ファイルで蓄積する。
++harness-creator 配下 Skill 群を運用して得た「検証済み・昇格承認済みの再利用可能な知見」を 1 件 1 ファイルで配布する。未検証の hook 観測は external-intelligence state に保存し、ここへ自動追記しない。
+ 
+ ## 運用ルール
+ 
+ - ファイル名: `YYYY-MM-DD-<slug>.md` (kebab-case、内容を表す動詞句)。
+ - 1 ファイル 30 行以下。掘り下げが必要なら設計書本体に昇格させる。
+ - 必須セクション: `## 背景` / `## 知見` / `## 適用先`。
++- external-intelligence の `verified`、独立証拠、反証条件、rollback を owner が確認してから追加する。
+ - changelog とセットで追加するのが望ましい (changelog=何をしたか / lessons-learned=なぜそれが良いか)。
+diff --git a/plugins/harness-creator/native-surfaces.toml b/plugins/harness-creator/native-surfaces.toml
+index 7f904fe..3223685 100644
+--- a/plugins/harness-creator/native-surfaces.toml
++++ b/plugins/harness-creator/native-surfaces.toml
+@@ -28,3 +28,12 @@ matcher = "startup|resume|clear"
+ command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\""
+ delivery = "plugin"
+ products = ["claude", "codex"]
++
++[[hooks]]
++id = "harness-creator-external-intelligence-observe"
++owner = "harness-creator"
++event = "PostToolUse"
++matcher = "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write"
++command = "python3 \"$CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py\""
++delivery = "plugin"
++products = ["claude", "codex"]
+diff --git a/plugins/harness-creator/plugin-composition.yaml b/plugins/harness-creator/plugin-composition.yaml
+index 7e10c19..a63ca1c 100644
+--- a/plugins/harness-creator/plugin-composition.yaml
++++ b/plugins/harness-creator/plugin-composition.yaml
+@@ -16,7 +16,7 @@ contract:
+   intent: Claude Code 拡張資産(Capability)を一貫した品質で生成・改良するため、共通核 + kind 固有スキーマで統一抽象を提供する。
+   interface:
+     inputs: [user-request, plugin-composition.yaml, rubric.json]
+-    outputs: [CapabilityManifest, EVALS.json, lessons-learned/*.md, proposals/*.md]
++    outputs: [CapabilityManifest, EVALS.json, curated-lessons, proposals/*.md, external-intelligence-state]
+   invariant:
+     # enforcement 注記: 機械執行(lint/hook)がある項目はその名前を、無い項目は manual を併記する。
+     - "全 Capability は CapabilityManifest を持ち kind を宣言すること (enforcement: hook:PostToolUse-EditWrite/lint-capability-manifest)"
+@@ -24,7 +24,7 @@ contract:
+     - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order。run dir の Phase1-3 成果物の存在+mtime 順序を機械検査)"
+     - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual。manual 維持の理由: script ヘッダ規約 write-scope は存在するが宣言との自動突合は費用対効果で見送り、意図的残置)"
+     - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。harness-creator / prompt-creator は marketplace / bundle 配布対象ではない (allowed_cross_plugins: skill-intake, skill-governance-lint, skill-governance-automation, skill-governance-config, skill-governance-migration, prompt-creator) (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
+-    - "knowledge-loop は単一機構(ref-knowledge-loop 正本)を生成物(Loop A)と harness-creator 自身(Loop B)で自己適用し、並行ストアを作らないこと(SSOT) (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py)"
++    - "knowledge-loop は immutable な curated seed と plugin package 外の external-intelligence runtime state に責務分離する。runtime の観測/重複統合/再利用/昇格の正本は build-external-intelligence.py だけとし、lessons-learned/ や knowledge/ へ hook が直接追記しない (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py + build-external-intelligence.py verify)"
+     - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(必須共有モジュールは plugin 内へ vendoring し byte 一致 lint で正本と同期/ローダは fail-soft で raise しない)。単独 install でも全フックが exit 0 を維持する。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層1 (enforcement: scripts/lint-runtime-portability.py + scripts/lint-vendored-ssot.py)"
+     - "配布 plugin (kind=plugin) を生成し外部依存(API/DB/秘密)の疎通確認手順が要るなら、install 位置を __file__ 相対で自己解決する doctor スクリプトを同梱し README の疎通確認はチャット委譲(/<name>-doctor or 自然文)を一次導線とすること。README bash/sh フェンスに一次手順の裸 $CLAUDE_PLUGIN_ROOT/... / repo 相対 python3 plugins/<name>/... / os.environ 添字を書かず、生パスは開発者補足へ降格し fallback 形 ${CLAUDE_PLUGIN_ROOT:-plugins/<name>} で書く(導入者の生ターミナル空展開事故を防ぐ)。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層2 (enforcement: scripts/lint-readme-plugin-root-portability.py)"
+     - "全宣言面(lint 集合/完了条件/ゲート/評価 sink)は機械可読正本と対向突合 lint を持つこと。新しい宣言面を追加する際は突合 lint を同時に配線し、突合を持たない manual 宣言は理由注記付きの意図的残置のみ許容する。manual 宣言の残存数は ratchet 監視され増加は CI FAIL (enforcement: skill-governance-lint/scripts/lint-declaration-coverage.py)"
+@@ -90,12 +90,15 @@ capabilities:
+   - { kind: script, ref: scripts/sync-codex-project-settings.py, tier: core }
+   - { kind: script, ref: scripts/sync-native-surfaces.py,        tier: core }
+   - { kind: script, ref: scripts/record-task-graph-knowledge.py, tier: core }
++  - { kind: script, ref: skills/run-build-skill/scripts/build-external-intelligence.py, tier: core }
++  - { kind: script, ref: skills/run-build-skill/scripts/auto-record-lesson.py, tier: core }
+ 
+   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
+   - { kind: hook, ref: "hook:SessionStart/auto-sync-on-session-start", tier: core }
+   - { kind: hook, ref: "hook:UserPromptSubmit/cache-refresh",         tier: extension }
+   - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
+-  - { kind: hook, ref: "hook:PostToolUse-Skill/auto-record-lesson",   tier: core }
++  - { kind: hook, ref: "hook:PostToolUse/external-intelligence-observe", tier: core }
++  - { kind: hook, ref: "hook:PostToolUseFailure/external-intelligence-observe", tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-Skill/content-review-queue", tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-EditWrite/lint-capability-manifest", tier: core }
+   - { kind: hook, ref: "hook:PostToolUse-EditWrite/content-review-queue", tier: core }
+@@ -117,6 +120,8 @@ dependencies:
+   - { from: skills/run-build-skill,         to: skills/ref-skill-naming-convention, type: reads }
+   - { from: skills/run-build-skill,         to: skills/run-goal-seek,               type: emits }
+   - { from: skills/run-build-skill,         to: skills/ref-knowledge-loop,          type: reads }
++  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-external-intelligence.py, type: calls }
++  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
+   - { from: skills/run-build-skill,         to: skills/run-skill-feedback,          type: emits }
+   - { from: skills/run-build-skill,         to: skills/assign-skill-design-evaluator, type: calls }
+   - { from: skills/run-build-skill,         to: skills/run-elegant-review,          type: calls }
+@@ -146,6 +151,9 @@ dependencies:
+   - { from: skills/run-skill-iter-improve,  to: skills/run-build-skill,             type: reads }
+   - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
+   - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
++  - { from: "hook:PostToolUse/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
++  - { from: "hook:PostToolUseFailure/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
++  - { from: skills/run-build-skill/scripts/auto-record-lesson.py, to: skills/run-build-skill/scripts/build-external-intelligence.py, type: calls }
+   - { from: "hook:SessionStart/auto-sync-on-session-start",        to: scripts/sync-native-surfaces.py, type: calls }
+   - { from: scripts/sync-native-surfaces.py, to: scripts/sync-codex-project-settings.py, type: calls }
+   - { from: scripts/sync-native-surfaces.py, to: scripts/check-native-surface-parity.py, type: calls }
+@@ -167,7 +175,8 @@ governance:
+ observability:
+   hooks:
+     - SessionStart/auto-sync-on-session-start
+-    - PostToolUse-Skill/auto-record-lesson
++    - PostToolUse/external-intelligence-observe
++    - PostToolUseFailure/external-intelligence-observe
+     - PostToolUse-Skill/content-review-queue
+     - PostToolUse-EditWrite/lint-capability-manifest
+     - PostToolUse-EditWrite/content-review-queue
+@@ -175,8 +184,11 @@ observability:
+     - SessionEnd/aggregate-evals
+     - Stop/elegant-review-trigger
+   metrics:
+-    - lessons_per_pr
++    - lessons_per_pr # curated lessons only
++    - duplicate_observation_rate
++    - helpful_reuse_count
++    - promotion_evidence_count
+     - review_cycle_time_ms
+     - rubric_bump_frequency
+     - capability_count_by_kind
+-  lessons_path: lessons-learned/
++  lessons_path: lessons-learned/ # reviewed promotion surface only; runtime state is outside the plugin package
+diff --git a/plugins/harness-creator/references/pipeline-boundary-contract.md b/plugins/harness-creator/references/pipeline-boundary-contract.md
+index 549143b..9e916b7 100644
+--- a/plugins/harness-creator/references/pipeline-boundary-contract.md
++++ b/plugins/harness-creator/references/pipeline-boundary-contract.md
+@@ -73,8 +73,9 @@ task-graph は planner が作る計画構造であり、harness-creator は buil
+ | discovered-task inbox | harness-creator `emit-discovered-task.py` | planner `accept-discovered-task.py` | 未処理 status があれば TG-C08 が completed 拒否 | status は `accepted` / `rejected` / `superseded` で解決済み |
+ | build 成果物の周回 scope | harness-creator `resolve_build_dir(target_plugin_slug, cycle_id)` | TG-C02/TG-C05/TG-C07/TG-C08 | `cycle_id` は handoff top-level だけを消費 | `plan_dir` のパス解析は禁止 |
+ | blocked 起点/伝播 | harness-creator `sync-task-state.py` | progress summary / knowledge distill | `blocked_reason` 必須 | `origin-failure` と `propagated` を state enum ではなく第一級 field で区別 |
+-| knowledge Loop A | generated harness の `knowledge/` | 生成後 harness の build/runtime | add_entry.py schema | 生ログ全文ではなく source_ref 付き要約のみ |
+-| knowledge Loop B | `plugins/harness-creator/knowledge/` | harness-creator の次回 build-time search | add_entry.py schema | 依存詰まり・成果物欠落・解決判断を再利用 |
++| knowledge Loop A curated seed | generated harness の `knowledge/` | 生成後 harness の runtime search | add_entry.py schema + owner review | promoted 知見だけ。未検証観測を書かない |
++| knowledge Loop B curated seed | `plugins/harness-creator/knowledge/` | harness-creator の次回 build-time search | add_entry.py schema + owner review | promoted された build 知見だけを配布 |
++| external intelligence runtime | Git common dir / project `.harness` / user state | Codex / Claude Code | build-external-intelligence.py hash chain + verify | plugin package 外。観測・類似統合・再利用検証の唯一の writer |
+ | `.build.lock` (build 排他 lock) | harness-creator `manage-build-lease.py` (TG-C07) | TG-C07 自身 (steal/renew/release 判定) | owner token + lock TTL + pid 生存判定 | 中身は `{started_at, pid, host, owner_token}` JSON。acquire 出力 token をメモリ保持し renew/release で一致必須。runtime 生成物で git 追跡外 |
+ | `runtime-evidence-ledger.json` | dispatcher (TG-C06) | TG-C08 completion gate | `runtime-evidence-ledger.schema.json` + artifact SHA-256 + task-state graph_hash pin + UTC timestamp + gate/task mapping | ledger 所在 build dir 相対 artifact path のみ。local build/native parity/rollback 証跡必須。`not_applicable` は user が不要と明示した PR gate のみ |
+ | `route-*.json` (route-build-report) | route builder (`build-script-route.py` / `run-build-skill`) | `validate-route-build-reports.py` / TG-C02 (done 照合) / TG-C05 / TG-C08 | route-build-report 契約 (PR#70・additive のみ) | `covered_task_ids` は dispatcher (TG-C06) が node→route join から決定論導出して追記する |
+diff --git a/plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md b/plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md
+index a37fa40..1fd1b2a 100644
+--- a/plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md
++++ b/plugins/harness-creator/skills/ref-knowledge-loop/SKILL.md
+@@ -7,7 +7,7 @@ kind: ref
+ prefix: ref
+ effect: none
+ owner: team-platform
+-version: 0.2.0
++version: 0.3.0
+ since: 2026-05-24
+ source: doc/knowledge-loop/
+ source-tier: internal
+@@ -23,7 +23,7 @@ responsibility_refs:
+ 生成スキルに `knowledge/` を追加する際の設計参照。構築編 (パターン選択・構造・フィールド・品質ルーブリック) と運用編 (検索・ライフサイクル・フィードバック) の 2 リファレンスを提供し、Loop A (生成物側) と Loop B (メタ側) を同一機構 SSOT で配線する。
+ 
+ **入力**: なし (Read-only 参照型)
+-**出力**: `references/knowledge-construction.md` / `references/knowledge-search-lifecycle.md` の該当節と、生成スキルへ展開する 4 スクリプト雛形のパス
++**出力**: 構築・検索ライフサイクル・外部知能境界の該当節と、生成スキルへ展開する 5 スクリプトのパス
+ 
+ ## 参照内容
+ 
+@@ -32,20 +32,22 @@ responsibility_refs:
+ | リファレンス | 内容 |
+ |---|---|
+ | `references/knowledge-construction.md` | 構築編: パターン選択・構造・フィールド・品質ルーブリック (§0-6) |
+-| `references/knowledge-search-lifecycle.md` | 運用編: 検索・ライフサイクル・フィードバック・日々のブラッシュアップ (§7-12) |
++| `references/knowledge-search-lifecycle.md` | 運用編: curated seed の検索・ライフサイクル・検索品質 (§7-12) |
++| `references/external-intelligence.md` | runtime 編: package 外 state・重複統合・独立証拠・再利用検証・昇格境界 |
+ 
+ リソース索引 → `references/resource-map.yaml`
+ 
+ ### 同梱スクリプト (雛形 → 生成スキルへ展開)
+ 
+-生成スキルの `scripts/` には4本を同梱する (KL-003/KL-004 で検証):
++生成スキルの `scripts/` には5本を同梱する (KL-003/KL-004/KL-008 で検証):
+ 
+ - `search_knowledge.py`: Stage1+Stage2 検索
+ - `build_index.py`: インデックス整合性検証・自動修正
+-- `record_usage.py`: §12 活用ログ記録・分析。`--analyze --emit-queue <path>` で brushup キュー出力、`--mark-needs-update` で status: needs-update 付与
+-- `add_entry.py`: 必須6フィールド検証つきエントリ追加 (JSON 手編集を排除)
++- `record_usage.py`: curated seed の検索品質記録・分析
++- `add_entry.py`: verified/promoted 知見を curated seed へ取り込むレビュー工程
++- `build-external-intelligence.py`: package 外 runtime state の観測・重複統合・再利用検証・明示昇格（Codex/Claude 共通）
+ 
+-決定論 (スクリプト=検証・追記・status付与) と内容判断 (AI/人) を分離する。各生成スキル (Loop A) はこれらを同梱して自己完結で日々ブラッシュアップできる。harness-creator 自身のメタ知識 (Loop B) は正本スクリプトを `--dir` 共有する (→ construction.md §0a)。
++決定論 (検証・重複判定・状態遷移) と内容判断 (AI/人) を分離する。runtime 観測は installed package 内へ書かず、project/user state に保存する。詳細は `external-intelligence.md`。
+ 
+ ### パターン選択フロー
+ 
+diff --git a/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-construction.md b/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-construction.md
+index 855155f..7d38f06 100644
+--- a/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-construction.md
++++ b/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-construction.md
+@@ -6,36 +6,17 @@
+ 
+ ---
+ 
+-## §0a knowledge/ をどこに置くか (配置の抽象階層)
++## §0a curated seed と runtime state の配置
+ 
+-`knowledge/` の配置先には抽象階層が異なる2層がある。両者は排他でなく役割が違う。全ナレッジを1箇所に強制集約しない (死蔵を招く)。各スキルのドメイン知識はそのスキルに、harness-creator のメタ知識は harness-creator に置く。
++`knowledge/` は配布・レビュー済みの seed であり、日々の未検証観測の書込先ではない。runtime 観測は `build-external-intelligence.py` が plugin package 外へ保存する。これを唯一の書込み正本とし、version 付き marketplace install の上書き消失と二重登録を防ぐ。
+ 
+-| 層 | 配置 | 同梱方針 | 用途 |
+-|----|------|---------|------|
+-| Loop A (生成物側) | 各生成スキルが自前の `{skill}/knowledge/` + `{skill}/scripts/` を持つ | 正本テンプレを展開 (インスタンス化) して scripts/ を同梱。配布される自己完結ユニット | そのスキルのドメイン知識。これが既定 |
+-| Loop B (メタ側) | harness-creator 自身の `plugins/harness-creator/knowledge/` に集約 | 正本スクリプトを複製せず `--dir` で共有参照 | harness-creator の build 知見 (メタ知識) |
++| 層 | 配置 | 用途 |
++|----|------|------|
++| Loop A curated seed | 各生成スキルの `{skill}/knowledge/` | 実行時に配るレビュー済みドメイン知識 |
++| Loop B curated seed | `plugins/harness-creator/knowledge/` / `lessons-learned/` | build-time に配るレビュー済みメタ知識 |
++| runtime external intelligence | Git common dir / `<project>/.harness/` / plugin data・XDG state | Codex/Claude 共通の観測・類似統合・再利用検証 |
+ 
+-Loop A は配布単位ごとに自己完結する必要があるためスクリプトを同梱し、Loop B は単一リポジトリ内のメタ蓄積なので正本スクリプトを `--dir` 共有して重複を避ける。
+-
+-### 判定ルール — 新しい知見をどちらに入れるか
+-
+-置き場所は「選ぶ」のではなく、知見の**消費者**が一意に決める (`consult_at`)。次の一問で判定する。
+-
+-```
+-Q: その知見を読むのは誰か？
+-  A. 生成スキルが「実行時」にエンドユーザー向けの仕事で使う
+-     → Loop A: そのスキルの {skill}/knowledge/    (consult_at: ["runtime"])
+-  B. harness-creator が「ビルド時」にスキルを作る判断で使う
+-     → Loop B: plugins/harness-creator/knowledge/    (consult_at: ["build-time"])
+-```
+-
+-判定軸は「内容のジャンル」ではなく「**誰がいつ読むか**」。各ストアの `knowledge-index.json` は `consult_at` を1つ宣言しており、これが置き場所の機械可読な根拠になる。この分離は **schema の `consult_at` 必須化 + lint KL-007 + add_entry ガード**で機械的に強制される — `consult_at` とストアの物理位置 (Loop A=runtime / Loop B=build-time) が不一致なら CI で fail し、宣言の無いストアへの `add_entry` は拒否される。ドキュメントの努力義務ではなく構造不変条件として固定される。
+-
+-紛らわしい例: 「採用スキルを作っている最中に得た学び」。
+-- 採用ドメインの事実で、スキルが実行時にユーザー回答へ使う → Loop A
+-- 採用系スキルを作る時の手順・勘所 (例: このドメインは style-genome が要る) → Loop B
+-
+-同じ素材から両方のエントリが生まれることはあるが、**別エントリ・別消費者**として分かれる。1つのエントリが2ストアに重複することはない。`add_entry.py` は抽象バケツでなく `--dir <具体パス>` で対象ストアを明示するため、入れ間違いは物理的に起きにくい。
++判定軸は「誰がいつ読むか」に加え「検証済みか」である。未検証なら内容を問わず runtime state、独立証拠と別文脈での helpful reuse を満たし owner が承認したものだけを Loop A/B の該当 seed へ `add_entry.py` で取り込む。詳細な状態遷移と重複規則は [external-intelligence.md](external-intelligence.md) を正本とする。
+ 
+ ---
+ 
+diff --git a/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-search-lifecycle.md b/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-search-lifecycle.md
+index fa761cf..93967e9 100644
+--- a/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-search-lifecycle.md
++++ b/plugins/harness-creator/skills/ref-knowledge-loop/references/knowledge-search-lifecycle.md
+@@ -184,7 +184,7 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
+ 
+ `record_usage.py --analyze` でパターンを自動検出する (→ `scripts/record_usage.py`)。
+ 
+-### 12.3 日々のブラッシュアップ運用サイクル
++### 12.3 curated seed のブラッシュアップ運用
+ 
+ ナレッジは「使うほど良くなる」閉ループで運用する。日次/定期で以下を回す。
+ 
+@@ -200,12 +200,12 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
+          (再処理が必要なエントリに status: needs-update を付与)
+ ```
+ 
+-新知見の追加は `add_entry.py` で行い、必須6フィールド (§4.2) を検証しつつ追記する (JSON 手編集を排除):
++`add_entry.py` は runtime external intelligence で promoted まで到達した知見を curated seed へ取り込むレビュー工程で使う。未検証の新知見を直接追記しない:
+ 
+ ```
+ python3 scripts/add_entry.py --category <cat> --title ... --background ... --keywords ... --source ...
+ ```
+ 
+-二層分離: 決定論 (スクリプト) が担うのは「検証・追記・status付与・パターン検出」、内容判断 (AI/人) が担うのは「何を改善するか・どう書き換えるか」。スクリプトは正解を機械保証し、意味的判断は委ねない。
++二層分離: 決定論 (スクリプト) が担うのは「検証・検索品質記録・status付与・パターン検出」、内容判断 (AI/人) が担うのは「何を改善するか・何を promoted seed として採用するか」。runtime 観測の lifecycle は [external-intelligence.md](external-intelligence.md) だけに定義する。
+ 
+-この閉ループは雛形 (knowledge-skeleton) ごと生成スキル (Loop A) に同梱されるため、量産された各スキルがそれぞれ自己完結で日々ブラッシュアップ可能になる。
++生成スキルは検索/品質計測と外部知能 engine を同梱するが、観測 state は installed package 外に置く。全件常時読込ではなく薄い索引から必要な詳細だけ取得する。
+diff --git a/plugins/harness-creator/skills/ref-knowledge-loop/references/resource-map.yaml b/plugins/harness-creator/skills/ref-knowledge-loop/references/resource-map.yaml
+index 9d59684..b3898ce 100644
+--- a/plugins/harness-creator/skills/ref-knowledge-loop/references/resource-map.yaml
++++ b/plugins/harness-creator/skills/ref-knowledge-loop/references/resource-map.yaml
+@@ -1,5 +1,5 @@
+ # resource-map.yaml — ref-knowledge-loop リソース索引
+-version: "0.2.0"
++version: "0.3.0"
+ 
+ categories:
+   construction:
+@@ -34,6 +34,17 @@ categories:
+       - フィードバックループ (活用ログ/品質改善パターン4種)
+       - 日々のブラッシュアップ運用サイクル (検索→記録→分析→改善→status付与)
+ 
++  external_intelligence:
++    label: "runtime 外部知能"
++    description: "package 外 state・重複統合・独立証拠・再利用検証・昇格境界"
++    file: external-intelligence.md
++    tasks:
++      - Codex / Claude Code 共通 state の解決
++      - thin index と on-demand detail
++      - exact/near duplicate の統合
++      - observation/candidate/verified/promoted の状態遷移
++      - provider cache と外部知能の因果境界
++
+ templates:
+   skeleton_root: "../../../run-build-skill/templates/knowledge-skeleton/"
+   index_search:
+@@ -62,7 +73,9 @@ templates:
+       - file: "scripts/record_usage.py"
+         desc: "§12 活用ログ記録・パターン分析 (--analyze --emit-queue / --mark-needs-update)"
+       - file: "scripts/add_entry.py"
+-        desc: "エントリ追加 (必須6フィールド検証つき・JSON手編集を排除)"
++        desc: "promoted 知見の curated seed 取り込み"
++      - file: "../../scripts/build-external-intelligence.py"
++        desc: "project/user 外部知能 engine (生成先 scripts/ へコピー)"
+ 
+ lint:
+   script: "../../../run-build-skill/scripts/lint-knowledge-loop.py"
+@@ -73,7 +86,8 @@ lint:
+     - "KL-004: record_usage.py 存在"
+     - "KL-005: 分割閾値の記述"
+     - "KL-006: add_entry.py 存在 (日々の追加の機械化, warn)"
+-    - "KL-007: ストア物理位置と consult_at の一致 (Loop A=runtime / Loop B=build-time, 不一致/未宣言/不正値は error)"
++    - "KL-007: curated seed の物理位置と consult_at の一致"
++    - "KL-008: runtime_store 宣言時の build-external-intelligence.py 同梱"
+   selfTest:
+     - "schema↔lint 必須6フィールド drift 検出 (SSOT)"
+     - "lint↔CI 配線メタ検査 (governance-check.yml)"
+diff --git a/plugins/harness-creator/skills/ref-skill-glossary/references/terms.md b/plugins/harness-creator/skills/ref-skill-glossary/references/terms.md
+index 6c33b2c..13aa66f 100644
+--- a/plugins/harness-creator/skills/ref-skill-glossary/references/terms.md
++++ b/plugins/harness-creator/skills/ref-skill-glossary/references/terms.md
+@@ -84,7 +84,7 @@ Capability の種別を表す列挙。値: `skill | agent | hook | command | plu
+ CapabilityBundle の宣言ファイル。plugin 直下に配置し、capabilities/dependencies/eval-sinks/governance/observability を宣言。`render-dependency-graph.py` で Mermaid 図に変換可能。
+ 
+ ## reflective loop
+-intake → build → review → lessons-learned → rubric-governance → 次回 build 品質向上、の閉ループ。35章 meta-harness の中核。auto-record-lesson hook と EVALS→rubric 自動 PR 経路で実体化。
++intake → build → review → external observation → independent reuse verification → owner-approved curated lesson/rubric → 次回 build 品質向上、の閉ループ。35章 meta-harness の中核。auto-record-lesson hook は package 外 state への観測だけを行い、自動 promotion はしない。
+ 
+ ## composition lint
+ plugin-composition.yaml の依存 DAG・rubric_refs・hooks 配線整合を検証する PostToolUse hook。CapabilityBundle 単位の machine-checkable governance。
+diff --git a/plugins/harness-creator/skills/run-build-skill/SKILL.md b/plugins/harness-creator/skills/run-build-skill/SKILL.md
+index 46878f7..63b48c8 100644
+--- a/plugins/harness-creator/skills/run-build-skill/SKILL.md
++++ b/plugins/harness-creator/skills/run-build-skill/SKILL.md
+@@ -67,6 +67,8 @@ schema_refs:
+   - schemas/verification-evidence.schema.json
+ prompt_format: markdown # 既定: Markdown (.md)。YAML (.yaml) は legacy 許容、新規禁止
+ script_refs:
++  - scripts/build-external-intelligence.py
++  - scripts/auto-record-lesson.py
+   - scripts/render-combinators.py
+   - scripts/render-frontmatter.py
+   - scripts/validate-naming.py
+@@ -196,7 +198,7 @@ audit-trigger: quarterly
+   - **ref (辞書型/参照型): source-traceability を検証する** — `source`/`source-tier`/`last-audited`/`audit-trigger` が埋まり、参照内容が `source` と整合することを `eval-log/coverage/skills/<plugin>__<skill>.json` の ref-review verdict (verdict=PASS) で記録。ref は behavioral criteria を持たない代わりにこの source 検証が必須カバレッジ (除外でなく ref 専用パス)
+   - assign: evaluator verdict、その他 kind: content-review verdict を `eval-log/coverage/` に記録
+ - [ ] `eval-log/build-plan.json` (`validate-build-plan.py --brief ... --out eval-log/build-plan.json` で brief から決定論導出) の `flags` が true の subagent/prompt/evaluator/hook/knowledge を全て生成し、`--check` が exit 0 (フラグの要否をモデル判断で省略しない) <!-- CL-9 -->
+-- [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) knowledge/ 雛形展開 + 4スクリプト同梱 + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`) + `lint-knowledge-loop.py` exit0 (KL-001..007) <!-- CL-10 -->
++- [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) curated seed の knowledge/ 雛形展開 + 5スクリプト同梱 + plugin package 外の external-intelligence state + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`consult_at: ["runtime"]`, `runtime_store: external-intelligence-v1`) + `lint-knowledge-loop.py` exit0 (KL-001..008) <!-- CL-10 -->
+ - [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生 `$CLAUDE_PLUGIN_ROOT` 非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash に裸変数/repo相対を書かず fallback 形 `${CLAUDE_PLUGIN_ROOT:-plugins/<name>}` へ降格。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
+ - [ ] (plugin 一括 build=handoff routes 消費時のみ) route 完了ごとに `eval-log/<slug>/build/route-<id>.json` を記録し `validate-route-build-reports.py --route <id>` exit0、全 route 終端で `--complete` exit0 (契約正本 `references/route-build-report.md`) <!-- CL-12 -->
+ 
+@@ -235,9 +237,13 @@ audit-trigger: quarterly
+ # パスはプロジェクトルート基準 (eval-log/ 出力と同じ規約)
+ python3 plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/search_knowledge.py \
+   --dir plugins/harness-creator/knowledge/ --query "<brief.goal と kind の要約>" --limit 5
++
++# 運用中に得た外部知能は薄い index だけを検索し、候補の詳細は必要時だけ show する
++python3 "$SKILL_DIR/scripts/build-external-intelligence.py" --agent <codex|claude|other> \
++  --project-root "${CLAUDE_PROJECT_DIR:-$PWD}" search --query "<brief.goal と kind の要約>" --limit 5
+ ```
+ 
+-検索 0 件・スクリプト不在でも build を止めない。採否は trace の `layer_decisions` に記録する。loop 実行系 (run/wrap/delegate) はこの時点で `brief.goal` と完了チェックリストから per-skill 評価基準 (`feedback_contract.criteria`) を test-first で導出し、Step 3.5 で trace に固定する (criteria は goal-seek checklist と同源)。
++検索 0 件・スクリプト不在でも build を止めない。上位5件だけを見て、詳細は `show --id <id>` で選択取得する。実際に判断を変えた既存 entry は完了時に `reuse --outcome helpful|neutral|unhelpful` で記録し、採否を trace の `layer_decisions` に残す。loop 実行系 (run/wrap/delegate) はこの時点で `brief.goal` と完了チェックリストから per-skill 評価基準 (`feedback_contract.criteria`) を test-first で導出し、Step 3.5 で trace に固定する (criteria は goal-seek checklist と同源)。
+ 
+ **build-plan の決定論導出 (フラグはモデルが決めない)**: brief 確定直後に必須成果物集合を機械導出し、以降はこの plan を作業リストの正本とする。`--with-*` の要否・必須セクション・必須資産は brief の非空フィールドとテンプレート見出しから純関数で決まる (モデルの記憶・判断に依存しない):
+ 
+@@ -281,7 +287,7 @@ python3 "$GOV_LINT_DIR/scripts/lint-skill-completeness.py" "$OUT_BASE/$SKILL_NAM
+ python3 "$SKILL_DIR/scripts/lint-goal-seek.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
+ python3 ${HARNESS_ROOT:-.}/scripts/lint-feedback-contract.py --changed-only  # loop実行系(run/wrap/delegate)のSKILL.md frontmatterに feedback_contract.criteria(inner/outer) が無ければ fail
+ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$OUT_BASE")"  # SSOT 重複(正本曖昧/redirect 太り/required 二重定義/本文再掲)を検出。DUP-SCHEMA-ID は exit 1
+-python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..007 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
++python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..008 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
+ python3 "$SKILL_DIR/scripts/lint-capability-graph-knowledge.py" "$OUT_BASE/$SKILL_NAME"  # brief.goal_seek.engine=task-graph の生成 harness のみ ENG-C06/ENG-C07 同梱・consult token・source_ref を検査(非 task-graph は not-applicable exit0・ENG-C08)
+ python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
+ python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
+@@ -319,12 +325,12 @@ score >= 80 かつ high=0 で完了。それ以外は findings を本文に反
+ 生成スキルに「知識を更新・蓄積し、検索して活用し、使うほど良くなる」ループを組み込む横断 combinator。正本仕様は `Skill(ref-knowledge-loop)`(構築編+運用編)。手順:
+ 
+ 1. `ref-knowledge-loop` を Read し、`brief.knowledge_loop.pattern`(`index-search` | `router-registry`)を確定(未指定なら §パターン選択フローで決定)。
+-2. `templates/knowledge-skeleton/<pattern>/` を `$OUT_BASE/$SKILL_NAME/knowledge/` へ展開し、`scripts/{search_knowledge,build_index,record_usage,add_entry}.py` を `scripts/` へコピー(注入される `## ナレッジループ` 節が参照する4スクリプトと一致させる)。
+-3. `render-combinators.py --with-knowledge` で SKILL.md に `## ナレッジループ` 節と frontmatter `knowledge_loop` ブロックを決定論注入(検索・追加・§12活用ログ・分割閾値・`consult_at` を記載)。注入本文は同梱 `scripts/` のみ参照し harness-creator 内部へ依存しない(配布スキル自己完結)。
+-4. frontmatter `knowledge_loop` 記述子に `consult_at: ["runtime"]` が入る(`references/capability-manifest.schema.json#/definitions/commonCore.properties.knowledge_loop`)。Loop A は必ず runtime。
+-5. Step 4 の `lint-knowledge-loop.py` で KL-001..007 を検査(KL-006=add_entry.py存在/warn、KL-007=ストア位置↔consult_at一致/error)。`assign-skill-design-evaluator` も KL-\* を採点。
++2. `templates/knowledge-skeleton/<pattern>/` を `$OUT_BASE/$SKILL_NAME/knowledge/` へ curated seed として展開し、`scripts/{search_knowledge,build_index,record_usage,add_entry}.py` と正本 `scripts/build-external-intelligence.py` を生成先 `scripts/` へコピーする。前4本は seed の検索・整合性・検索品質、後者だけが runtime 観測の正本である。
++3. `render-combinators.py --with-knowledge` で SKILL.md に `## ナレッジループ` 節と frontmatter `knowledge_loop` ブロックを決定論注入する。`runtime_store: external-intelligence-v1` / `runtime_scope: project` を固定し、installed plugin/skill package 内へ runtime データを書かない。
++4. frontmatter `knowledge_loop` 記述子に `consult_at: ["runtime"]` が入る。project scope は Git worktree 間で共有する Git common dir、非 Git は `<project>/.harness/`、user scope は plugin data / XDG state に解決する。Codex/Claude は同じ event log/index を読む。
++5. Step 4 の `lint-knowledge-loop.py` で KL-001..008 を検査する。KL-008 は `build-external-intelligence.py` の存在と runtime store 宣言を fail-closed で照合する。
+ 
+-> **Loop B (harness-creator 自己適用)**: harness-creator 自身も `plugins/harness-creator/knowledge/` を持ち、`consult_at: [build-time]` で過去ビルド知見を作成時に検索する。生成物側(Loop A)と同一機構を dogfooding する(SSOT)。
++> **Loop B (harness-creator 自己適用)**: `plugins/harness-creator/knowledge/` と `lessons-learned/` はレビュー済み seed/昇格先であり runtime sink ではない。未検証の観測は external-intelligence state だけに置き、同一/高類似は統合、曖昧類似は明示解決、2つの独立観測+別文脈での helpful reuse+owner 承認を満たしたものだけを curated seed/rule へ昇格する。
+ 
+ ### Step 10.6: task-graph engine 同梱 (phase: references, engine 既定=task-graph)
+ 
+@@ -362,6 +368,8 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB)
+ 
+ 機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし、`plan-verification-obligations.py` がcurrent receiptと依存fingerprintから次の最小work setを決める。まず `check` を実行・記録してから再planし、machine proof後に残った `llm_batches[]` だけを独立 evaluatorへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、同時に `record-verification-evidence.py` でsemantic fingerprintへ束縛する。`observational_queue[]` だけをGate Dへ渡す。30思考法は `exhaustive` 明示時のaudit obligationであり通常runtime fan-outにしない。**正本は `references/verification-obligation-protocol.md`、legacy verdict/hook projectionは `references/content-review-protocol.md`**。
+ 
++完了時、今回だけで閉じる事実は保存しない。別案件でも判断を変えうる新規構造が証拠付きで得られた場合だけ `build-external-intelligence.py capture` を最大1件実行する。同じ失敗の自動観測は `auto-record-lesson.py` が PostToolUse から捕捉するため重ねて登録しない。`possible_duplicate` (exit 3) は自動解決せず、`--merge-with` または根拠付き `--force-new --distinct-reason` で解決する。`promote` は verified 前に実行しない。
++
+ ## 配置先
+ 
+ | 用途               | 出力先                                          | 正本                            |
+diff --git a/plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json b/plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json
+index 7248cf4..2825b73 100644
+--- a/plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json
++++ b/plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json
+@@ -57,8 +57,10 @@
+             "pattern": { "enum": ["index-search", "router-registry"], "description": "index-search型=固定/ペルソナ。router-registry型=外部素材から継続同期。" },
+             "index": { "type": "string", "description": "索引ファイルへの相対パス。index-search型は knowledge/knowledge-index.json、router-registry型は knowledge/router.json。" },
+             "scoring_weights": { "type": "object", "description": "フィールド重み付きスコアリングの重み (title/keywords/quote/voice/fulltext)。省略時は既定値。" },
+-            "usage_log": { "type": "string", "description": "§12 活用ログ (jsonl) への相対パス。matched_ids/used_ids/satisfaction を追記。" },
+-            "consult_at": { "type": "array", "items": { "type": "string" }, "description": "蓄積知識を参照する局面 (例: runtime, build-time)。Loop B (harness-creator 自己適用) では build-time を含む。" }
++            "usage_log": { "type": "string", "description": "curated seed の検索品質ログ (jsonl) への相対パス。runtime 観測の正本ではない。" },
++            "consult_at": { "type": "array", "items": { "type": "string" }, "description": "蓄積知識を参照する局面 (例: runtime, build-time)。Loop B (harness-creator 自己適用) では build-time を含む。" },
++            "runtime_store": { "enum": ["external-intelligence-v1"], "description": "未検証の runtime 観測を package 外へ保存する共通 engine 契約。" },
++            "runtime_scope": { "enum": ["project", "user"], "description": "既定 project。project は Git common dir、user は plugin data/XDG state へ解決する。" }
+           }
+         },
+         "feedback_contract": {
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py b/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+old mode 100755
+new mode 100644
+index 0f93d1a..c73efb6
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+@@ -1,447 +1,213 @@
+ #!/usr/bin/env python3
+-# -*- coding: utf-8 -*-
+-"""auto-record-lesson.py
+-
+-Claude Code Hook input (JSON via stdin) を解釈し、失敗パターンが検出された場合に
+-plugins/harness-creator/lessons-learned/ 配下へ構造化 lesson を追記する。
+-新規 lesson の追記と同時に knowledge/knowledge-lessons-index.json へ最小索引
+-エントリを append する (Loop B: 索引の description 宣言と実装の真実合わせ)。
+-
+-記録条件 (genuine 文脈最少条件):
+-    tool 名 + 対象ヒント (command / file_path / path / skill) + tool_response 内の
+-    失敗シグネチャが揃った入力のみ記録する。無関係キーに失敗語が紛れただけの
+-    断片 (テスト副産物・引用の混入) は記録しない。
+-
+-副作用境界:
+-    - lessons-learned ディレクトリと、その sibling knowledge/ 索引への書き込みのみ。
+-    - git・他ディレクトリには触れない。
+-
+-exit_code 仕様 (Claude Code Hooks 準拠):
+-    0  非ブロック (正常 / 失敗未検出 / 書き込み成功)
+-    2  明示拒否 (本 hook は使用しない)
+-    その他 非ブロック警告
+-
+-想定発火イベント:
+-    - PostToolUse:Skill
+-    - PostToolUse:Edit (rubric.json 等)
+-    - Stop
++# /// script
++# name: auto-record-lesson
++# purpose: Claude Code / Codex PostToolUse ペイロードから再現可能な失敗観測だけを抽出し、build-external-intelligence.py の共通 project store へ非ブロックで渡す薄い hook adapter
++# inputs:
++#   - stdin: Claude Code / Codex hook JSON
++#   - env: HARNESS_AGENT(optional), HARNESS_INTELLIGENCE_HOME(optional), plugin/runtime env
++# outputs:
++#   - stderr: 記録結果の有界診断
++#   - write: build-external-intelligence.py が解決する plugin package 外 state のみ
++#   - exit: 常に 0 (hook をブロックしない)
++# contexts: [C, E]
++# network: false
++# write-scope: resolved external-intelligence state root only
++# dependencies: [build-external-intelligence.py]
++# requires-python: ">=3.10"
++# ///
++"""Fail-soft hook adapter for the shared external-intelligence engine.
++
++This file deliberately contains no store implementation. The former behavior
++that appended Markdown and indexes inside the installed plugin was removed:
++marketplace upgrades can replace that directory, and two stores made promotion
++and deduplication ambiguous.
+ """
+-
+ from __future__ import annotations
+ 
+-import datetime as _dt
+ import json
+ import os
+ import re
++import subprocess
+ import sys
+ from pathlib import Path
+ from typing import Any
+ 
+-# --- 失敗検出パターン ---------------------------------------------------------
+-# tool_response / stderr / messages 内に現れる代表的な失敗シグネチャ。
+-_FAILURE_PATTERNS = [
+-    re.compile(r"\bFAIL(ED|URE)?\b", re.IGNORECASE),
++
++_FAILURE_PATTERNS = (
++    re.compile(r"\bFAIL(?:ED|URE)?\b", re.IGNORECASE),
+     re.compile(r"\bERROR\b", re.IGNORECASE),
+     re.compile(r"\bTraceback\b"),
+-    re.compile(r"\bvalidator\b.*\bFAIL", re.IGNORECASE),
+     re.compile(r"\bnon-?zero exit\b", re.IGNORECASE),
+     re.compile(r"\bexit (?:code|status)\s*[:=]?\s*[1-9]\d*", re.IGNORECASE),
+-]
+-
+-# severity 推定: 強いキーワードがあれば high、それ以外は medium。
+-_HIGH_SEVERITY_HINTS = re.compile(
+-    r"\b(FATAL|CRITICAL|Traceback|validator FAIL)\b", re.IGNORECASE
+ )
+-
+-# capability 推定 (tool 名から大雑把に分類)。
+-_CAPABILITY_MAP = {
+-    "Edit": "edit",
+-    "Write": "write",
+-    "Bash": "shell",
+-    "Skill": "skill-invoke",
+-    "Read": "read",
+-}
+-
+-
+-def _manifest_name(root: Path) -> str | None:
+-    """<root>/.claude-plugin/plugin.json の name。読めなければ None。"""
+-    try:
+-        manifest = json.loads(
+-            (root / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+-        )
+-    except (OSError, ValueError):
+-        return None
+-    return manifest.get("name") if isinstance(manifest, dict) else None
+-
+-
+-def _self_plugin_name() -> str | None:
+-    """このファイル自身が属する plugin の manifest name。
+-
+-    なぜ定数リテラルでも SSOT 定数でもなく __file__ 由来なのか:
+-      - リテラルの直書きは制御リテラル散在として禁止
+-        (tests/test_dogfooding_boundary.py)。plugin 改名時に無音で失効する。
+-      - SSOT (feedback_contract_ssot.SELF_DOGFOODING_PLUGIN) は使えない。SSOT を
+-        探すのに plugin root が要り、plugin root の検証に SSOT が要る = 循環。
+-      - __file__ は循環せず、改名時も自動追従する第三の出所。
+-
+-    parents[N] 固定ではなく上向き探索なのは、この関数を各 script へ複製する際に
+-    深さ差 (parents[1] / parents[3]) を持ち込まないため。plugin は入れ子にならない
+-    ので、最初に見つかる manifest が自 plugin のもので確定する。
+-    """
+-    for parent in Path(__file__).resolve().parents:
+-        name = _manifest_name(parent)
+-        if name:
+-            return name
+-    return None
+-
+-
+-def _hc_env_root() -> Path | None:
+-    """env から自 plugin root を得る。他 plugin を指す値は拒否する。
+-
+-    他 repo が .claude 平置き projection で本 plugin を借用している場合、
+-    env CLAUDE_PLUGIN_ROOT は **別 plugin** を指していることがある
+-    (ObsidianMemo では ubm-goal-setting)。空ではなく「存在するが別物」なので
+-    `if env:` や isdir 判定では弾けない。manifest の name で自 plugin か検証する。
+-    借用側は HC_ROOT を設定すれば明示指定できる。
+-    拒否するのは manifest が読めて **別 plugin と確認できた** 場合だけにする。
+-    判定材料が無い (manifest 不在) env は従来どおり採用し、既存挙動を後退
+-    させない。vendored コピー先 (company-master / skill-intake) でも同様。
+-    """
+-    expected = _self_plugin_name()
+-    if not expected:
+-        return None
+-    for _var in ("HC_ROOT", "CLAUDE_PLUGIN_ROOT"):
+-        raw = os.environ.get(_var)
+-        if not raw:
+-            continue
+-        root = Path(raw).expanduser()
+-        _name = _manifest_name(root)
+-        if _name is None or _name == expected:
+-            return root.resolve()
+-    return None
+-
+-
+-def _plugin_root() -> Path:
+-    # このスクリプトは plugins/harness-creator/skills/run-build-skill/scripts/ 配下。
+-    # 4 つ上って plugins/harness-creator (= plugin-root)。
+-    return _hc_env_root() or Path(__file__).resolve().parents[3]
+-
+-
+-def _state_fallback_root() -> Path:
+-    """plugin-root が書込不能な install (read-only / 次回 update で消失) 用の退避先。
+-
+-    手本: notifier-check.py の `Path.home()/.cache/harness` (user 領域退避)。
+-    優先順: $CLAUDE_PROJECT_DIR → $XDG_STATE_HOME → ~/.claude/state。
+-    いずれも harness-creator/ サブディレクトリに隔離する。
+-    """
+-    project = os.environ.get("CLAUDE_PROJECT_DIR")
+-    if project:
+-        return Path(project) / ".claude" / "state" / "harness-creator"
+-    xdg = os.environ.get("XDG_STATE_HOME")
+-    base = Path(xdg) if xdg else Path.home() / ".claude" / "state"
+-    return base / "harness-creator"
+-
+-
+-def _lessons_dir() -> Path:
+-    """lessons-learned の書込先。env override > plugin-root (既定・dogfooding 互換)。
+-
+-    plugin-root を既定に保つことで maintainer の読取フロー (lessons-learned/ 直読み)
+-    を壊さない。read-only install での fallback は呼び出し側 (_write_lesson) が担う。
+-    """
+-    override = os.environ.get("HARNESS_CREATOR_LESSONS_DIR")
+-    if override:
+-        return Path(override).resolve()
+-    return _plugin_root() / "lessons-learned"
+-
+-
+-def _dir_is_writable(d: Path) -> bool:
+-    """d (存在しなければ最寄りの既存祖先) が書込可能かを実 mkdir/touch せず判定。"""
+-    probe = d
+-    while not probe.exists():
+-        if probe.parent == probe:
+-            return False
+-        probe = probe.parent
+-    return os.access(probe, os.W_OK)
++_SENSITIVE = re.compile(
++    r"(?i)(\b(?:token|secret|password|passwd|api[_-]?key|authorization)\b\s*[:=]\s*)"
++    r"([^\s,;]+)"
++)
++_BEARER = re.compile(r"(?i)\bbearer\s+[^\s,;]+")
++_MAX_OBSERVATION = 240
+ 
+ 
+-def _read_hook_input() -> dict[str, Any]:
+-    raw = sys.stdin.read()
+-    if not raw.strip():
+-        return {}
++def _read_input() -> dict[str, Any]:
+     try:
+-        return json.loads(raw)
+-    except json.JSONDecodeError:
+-        # 不正入力も非ブロックで握りつぶす (hook の sla)。
++        value = json.load(sys.stdin)
++    except (json.JSONDecodeError, OSError, TypeError):
+         return {}
++    return value if isinstance(value, dict) else {}
+ 
+ 
+-def _flatten_text(payload: Any) -> str:
+-    """payload 内の文字列を再帰的に抽出して結合 (失敗パターン走査用)。"""
+-    bucket: list[str] = []
++def _flatten(value: Any) -> str:
++    parts: list[str] = []
+ 
+-    def _walk(node: Any) -> None:
++    def walk(node: Any) -> None:
+         if isinstance(node, str):
+-            bucket.append(node)
++            parts.append(node)
++        elif isinstance(node, (int, float)) and not isinstance(node, bool):
++            parts.append(str(node))
+         elif isinstance(node, dict):
+-            for v in node.values():
+-                _walk(v)
++            for key, item in node.items():
++                if key in {"exit_code", "exitCode", "status_code"} and isinstance(item, int) and item:
++                    parts.append(f"exit code {item}")
++                walk(item)
+         elif isinstance(node, list):
+-            for v in node:
+-                _walk(v)
+-
+-    _walk(payload)
+-    return "\n".join(bucket)
+-
+-
+-def _detect_failure(text: str) -> bool:
+-    return any(p.search(text) for p in _FAILURE_PATTERNS)
+-
+-
+-def _has_genuine_context(hook: Any) -> bool:
+-    """genuine 文脈最少条件: 何がどう失敗したか追跡できる入力のみ記録を許可する。
+-
+-    条件 = tool 名 + 対象ヒント (command / file_path / path / skill) +
+-    tool_response 内の失敗シグネチャ。失敗語が tool_response 以外の無関係キーに
+-    紛れただけの断片 ("ERROR boom" 型ノイズ) は human triage 不能なため封鎖する。
+-    """
+-    if not isinstance(hook, dict):
+-        return False
+-    tool = hook.get("tool_name") or hook.get("tool")
+-    if not isinstance(tool, str) or not tool.strip():
+-        return False
+-    ti = hook.get("tool_input")
+-    if not isinstance(ti, dict):
+-        return False
+-    if not any(
+-        isinstance(ti.get(k), str) and ti.get(k).strip()
+-        for k in ("file_path", "path", "skill", "command")
+-    ):
+-        return False
+-    return _detect_failure(_flatten_text(hook.get("tool_response")))
+-
+-
+-def _estimate_severity(text: str) -> str:
+-    return "high" if _HIGH_SEVERITY_HINTS.search(text) else "medium"
+-
+-
+-def _slugify(value: str) -> str:
+-    value = value.lower().strip()
+-    value = re.sub(r"[^a-z0-9]+", "-", value)
+-    value = re.sub(r"-+", "-", value).strip("-")
+-    return value or "lesson"
+-
+-
+-def _extract_slug(hook: dict[str, Any], text: str) -> str:
+-    tool = hook.get("tool_name") or hook.get("tool") or "event"
+-    event = hook.get("hook_event_name") or hook.get("event") or "post"
+-    # tool_input から file_path 等のヒントを拾う。
+-    ti = hook.get("tool_input") or {}
+-    hint = ""
+-    if isinstance(ti, dict):
+-        for k in ("file_path", "path", "skill", "command"):
+-            v = ti.get(k)
+-            if isinstance(v, str) and v:
+-                hint = Path(v).name if k.endswith("path") else v
+-                break
+-    base = f"{event}-{tool}-{hint}" if hint else f"{event}-{tool}"
+-    return _slugify(base)[:60]
+-
+-
+-def _build_entry(hook: dict[str, Any], text: str, severity: str) -> dict[str, str]:
+-    tool = str(hook.get("tool_name") or hook.get("tool") or "unknown")
+-    event = str(hook.get("hook_event_name") or hook.get("event") or "unknown")
+-    capability = _CAPABILITY_MAP.get(tool, "unknown")
+-    # 観測サマリ: 先頭の失敗一致行を 240 文字以内で。
+-    observation = ""
++            for item in node:
++                walk(item)
++
++    walk(value)
++    return "\n".join(parts)
++
++
++def _failure_text(payload: dict[str, Any]) -> str:
++    event = str(payload.get("hook_event_name") or "")
++    candidates = [payload.get("tool_response"), payload.get("error"), payload.get("tool_error")]
++    text = _flatten(candidates)
++    if event == "PostToolUseFailure" and text.strip():
++        return text
++    response = payload.get("tool_response")
++    explicit_failure = False
++    if isinstance(response, dict):
++        exit_code = response.get("exit_code", response.get("exitCode"))
++        explicit_failure = (
++            isinstance(exit_code, int) and not isinstance(exit_code, bool) and exit_code != 0
++        ) or response.get("success") is False or response.get("is_error") is True
++        status = str(response.get("status") or "").lower()
++        explicit_failure = explicit_failure or status in {"error", "failed", "failure"}
++    if explicit_failure:
++        return text
++    # A Skill can report semantic validation failure while the outer tool call
++    # itself succeeded. Other successful tools may merely read/write the word
++    # "ERROR", so pattern-only detection there would create false memories.
++    tool = str(payload.get("tool_name") or payload.get("tool") or "")
++    if tool == "Skill" and any(pattern.search(text) for pattern in _FAILURE_PATTERNS):
++        return text
++    return ""
++
++
++def _redact(value: str) -> str:
++    text = _SENSITIVE.sub(lambda match: f"{match.group(1)}<redacted>", value)
++    text = _BEARER.sub("Bearer <redacted>", text)
++    home = str(Path.home())
++    if home and home != "/":
++        text = text.replace(home, "~")
++    return text
++
++
++def _first_failure_line(text: str) -> str:
+     for line in text.splitlines():
+-        if _detect_failure(line):
+-            observation = line.strip()[:240]
+-            break
+-    if not observation:
+-        observation = "(失敗シグネチャは検出されたが該当行抽出に失敗)"
+-    return {
+-        "date": _dt.date.today().isoformat(),
+-        "trigger_event": event,
+-        "tool": tool,
+-        "severity": severity,
+-        "capability": capability,
+-        "observation": observation,
+-    }
+-
+-
+-def _render_markdown(entry: dict[str, str]) -> str:
+-    fm_lines = [
+-        "---",
+-        f"date: {entry['date']}",
+-        f"trigger_event: {entry['trigger_event']}",
+-        f"tool: {entry['tool']}",
+-        f"severity: {entry['severity']}",
+-        f"capability: {entry['capability']}",
+-        "---",
+-        "",
+-        "## observation",
+-        "",
+-        entry["observation"],
+-        "",
+-        "## hypothesis",
+-        "",
+-        "(自動記録: 失敗パターンを検出。根本原因は要 human triage)",
+-        "",
+-        "## proposed_action",
+-        "",
+-        "- 当該 capability に対する rubric 強化 / validator 追加を検討",
+-        "- 再現条件を別 issue に起票",
+-        "",
+-    ]
+-    return "\n".join(fm_lines)
+-
+-
+-def _upsert_lesson(path: Path, entry: dict[str, str]) -> None:
+-    """同日同 slug は新規 observation を追記 (upsert)。"""
+-    path.parent.mkdir(parents=True, exist_ok=True)
+-    if not path.exists():
+-        path.write_text(_render_markdown(entry), encoding="utf-8")
+-        return
+-    # 追記モード: 既存ファイル末尾に observation セクションを足す。
+-    appended = [
+-        "",
+-        f"## observation ({_dt.datetime.now().isoformat(timespec='seconds')})",
+-        "",
+-        entry["observation"],
+-        "",
+-    ]
+-    with path.open("a", encoding="utf-8") as f:
+-        f.write("\n".join(appended))
+-
+-
+-_INDEX_ID_RE = re.compile(r"lessons-index_(\d+)$")
+-
+-
+-def _lessons_index_path(lessons_dir: Path) -> Path:
+-    """lessons 書込先の sibling knowledge/ 配下の索引パス。
+-
+-    既定 (lessons_dir = plugin-root/lessons-learned) では
+-    plugin-root/knowledge/knowledge-lessons-index.json (正本) を指す。
+-    fallback/override 時は同じ相対関係で書込先ローカルの索引になる。
+-    """
+-    return lessons_dir.parent / "knowledge" / "knowledge-lessons-index.json"
+-
+-
+-def _index_source_file(lesson_path: Path) -> str:
+-    """索引 source.file は repo 相対 (既存エントリと同形)。相対化不能なら絶対のまま。"""
+-    try:
+-        repo_root = _plugin_root().parent.parent
+-        return lesson_path.resolve().relative_to(repo_root.resolve()).as_posix()
+-    except (ValueError, OSError):
+-        return lesson_path.as_posix()
+-
+-
+-def _append_index_entry(index_path: Path, lesson_path: Path, entry: dict[str, str]) -> bool:
+-    """lesson md 追記と同時に索引へ最小エントリを決定論 append する (冪等)。
+-
+-    knowledge-lessons-index.json:description の宣言「auto-record-lesson.py が
+-    新規 lesson を追記したら本索引にもエントリを追加する」の実装。
+-    同一 source.file は再登録しない (md 側は observation 追記で対応済)。
+-    索引書込失敗は lesson 記録を巻き込まない (best-effort, False で握る)。
+-    """
+-    source_file = _index_source_file(lesson_path)
+-    try:
+-        if index_path.exists():
+-            data = json.loads(index_path.read_text(encoding="utf-8"))
+-            if not isinstance(data, dict):
+-                return False
+-        else:
+-            data = {
+-                "category": "lessons-index",
+-                "label": "lessons-learned 索引 (失敗ログへのポインタ)",
+-                "source_note": "本文は lessons-learned/*.md が正本。本索引は検索ヒット用の最小要約のみ持つ。",
+-                "items": [],
+-            }
+-        items = data.setdefault("items", [])
+-        if not isinstance(items, list):
+-            return False
+-        max_seq = 0
+-        for item in items:
+-            if not isinstance(item, dict):
+-                continue
+-            if (item.get("source") or {}).get("file") == source_file:
+-                return False
+-            m = _INDEX_ID_RE.match(str(item.get("id", "")))
+-            if m:
+-                max_seq = max(max_seq, int(m.group(1)))
+-        items.append(
+-            {
+-                "id": f"lessons-index_{max_seq + 1:03d}",
+-                "title": (
+-                    f"[auto] {entry['trigger_event']}:{entry['tool']} 失敗 — "
+-                    f"{entry['observation'][:80]}"
+-                ),
+-                "keywords": [
+-                    entry["trigger_event"],
+-                    entry["tool"],
+-                    entry["capability"],
+-                    entry["severity"],
+-                ],
+-                "message": "自動記録。根本原因の human triage 後に title/message を書き直す。",
+-                "source": {"file": source_file, "type": "lesson", "date": entry["date"]},
+-            }
+-        )
+-        index_path.parent.mkdir(parents=True, exist_ok=True)
+-        index_path.write_text(
+-            json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+-        )
+-        return True
+-    except Exception:
+-        return False
+-
+-
+-def _candidate_dirs() -> list[Path]:
+-    """書込先候補を優先順で返す (3 段 fallback)。
+-
+-    (a) 既定 = plugin-root 配下 lessons-learned/ (dev 既存挙動・dogfooding 読取互換)
+-    (b) plugin-root が書込不能なら user state 領域 (~/.claude/state or $CLAUDE_PROJECT_DIR)
+-    env `HARNESS_CREATOR_LESSONS_DIR` が明示されればそれを単独で使う (override)。
+-    """
+-    if os.environ.get("HARNESS_CREATOR_LESSONS_DIR"):
+-        return [_lessons_dir()]
+-    return [_lessons_dir(), _state_fallback_root() / "lessons-learned"]
++        if any(pattern.search(line) for pattern in _FAILURE_PATTERNS):
++            return _redact(line.strip())[:_MAX_OBSERVATION]
++    fallback = next((line.strip() for line in text.splitlines() if line.strip()), "tool failure")
++    return _redact(fallback)[:_MAX_OBSERVATION]
++
++
++def _hint(payload: dict[str, Any]) -> str:
++    tool_input = payload.get("tool_input")
++    if not isinstance(tool_input, dict):
++        return "unknown-target"
++    for key in ("skill", "file_path", "path", "command", "description"):
++        value = tool_input.get(key)
++        if isinstance(value, str) and value.strip():
++            if key in {"file_path", "path"}:
++                return Path(value).name[:80] or "path"
++            return _redact(value.strip())[:80]
++    return "unknown-target"
++
++
++def _agent() -> str:
++    explicit = os.environ.get("HARNESS_AGENT", "").strip().lower()
++    if explicit in {"codex", "claude", "other"}:
++        return explicit
++    # Codex plugin hooks define PLUGIN_ROOT/PLUGIN_DATA and also compatibility
++    # CLAUDE_* variables. Claude defines CLAUDE_* only.
++    return "codex" if os.environ.get("PLUGIN_ROOT") or os.environ.get("PLUGIN_DATA") else "claude"
++
++
++def _context_id(payload: dict[str, Any]) -> str:
++    session = str(payload.get("session_id") or "unknown-session")
++    return f"session:{session}"
++
++
++def _evidence_ref(payload: dict[str, Any]) -> str:
++    turn = str(payload.get("turn_id") or "unknown-turn")
++    tool_use = str(payload.get("tool_use_id") or "unknown-tool")
++    return f"hook:{turn}:{tool_use}"
++
++
++def build_command(payload: dict[str, Any], failure: str) -> list[str]:
++    engine = Path(__file__).resolve().with_name("build-external-intelligence.py")
++    tool = str(payload.get("tool_name") or payload.get("tool") or "unknown")
++    hint = _hint(payload)
++    observation = _first_failure_line(failure)
++    command = [sys.executable, str(engine), "--agent", _agent()]
++    cwd = payload.get("cwd")
++    if isinstance(cwd, str) and cwd.strip():
++        command.extend(["--project-root", cwd])
++    command.extend(
++        [
++            "capture",
++            "--title",
++            f"Failure pattern: {tool}:{hint}",
++            "--summary",
++            observation,
++            "--rule",
++            f"Prevent repeated {tool} failure for {hint}; verify root cause before promoting a rule.",
++            "--context-id",
++            _context_id(payload),
++            "--evidence-ref",
++            _evidence_ref(payload),
++            "--tags",
++            f"failure,{tool},auto-observation",
++            "--countercondition",
++            "A different root cause produces the same surface error signature.",
++        ]
++    )
++    return command
+ 
+ 
+ def main() -> int:
+-    hook = _read_hook_input()
+-    text = _flatten_text(hook)
+-    if not text or not _detect_failure(text):
+-        # サイレント正常終了。
++    payload = _read_input()
++    failure = _failure_text(payload)
++    tool = payload.get("tool_name") or payload.get("tool")
++    if not failure or not isinstance(tool, str) or not tool.strip():
+         return 0
+-    if not _has_genuine_context(hook):
+-        # 文脈不足の断片ノイズは記録しない (genuine 文脈最少条件)。
++    try:
++        proc = subprocess.run(
++            build_command(payload, failure),
++            text=True,
++            capture_output=True,
++            timeout=8,
++            check=False,
++        )
++    except (OSError, subprocess.SubprocessError) as exc:
++        sys.stderr.write(f"[auto-record-lesson] skipped: {str(exc)[:240]}\n")
+         return 0
+-    severity = _estimate_severity(text)
+-    slug = _extract_slug(hook, text)
+-    today = _dt.date.today().isoformat()
+-    entry = _build_entry(hook, text, severity)
+-    filename = f"{today}-{slug}.md"
+-
+-    # 3 段 fallback: 書込可能な最初の候補へ。全滅なら (c) silent no-op exit 0。
+-    last_exc: OSError | None = None
+-    for base in _candidate_dirs():
+-        if not _dir_is_writable(base):
+-            continue
+-        try:
+-            _upsert_lesson(base / filename, entry)
+-            sys.stderr.write(f"[auto-record-lesson] recorded -> {base / filename}\n")
+-            index_path = _lessons_index_path(base)
+-            if _append_index_entry(index_path, base / filename, entry):
+-                sys.stderr.write(f"[auto-record-lesson] indexed -> {index_path}\n")
+-            return 0
+-        except OSError as exc:
+-            last_exc = exc
+-            continue
+-    # どこにも書けない (read-only install 等): クラッシュさせず no-op で握る。
+-    if last_exc is not None:
+-        sys.stderr.write(f"[auto-record-lesson] no writable sink, skipped: {last_exc}\n")
+-    else:
+-        sys.stderr.write("[auto-record-lesson] no writable sink, skipped\n")
++    try:
++        result = json.loads(proc.stdout)
++    except (json.JSONDecodeError, TypeError):
++        result = {}
++    status = result.get("action") or result.get("status") or f"exit-{proc.returncode}"
++    state_dir = result.get("state_dir", "unresolved")
++    sys.stderr.write(f"[auto-record-lesson] {status} -> {state_dir}\n")
+     return 0
+ 
+ 
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py b/plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py
+index 54df396..8001667 100644
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: lint-knowledge-loop
+-# purpose: knowledge-loop capability の KL-001..007 (index/router 存在・必須6フィールド・検索/記録/追加スクリプト・分割閾値・consult_at とストア位置の一致) を検査する lint。--self-test では schema↔定数の drift 検出と lint↔CI 配線のメタ検査も行う
++# purpose: knowledge-loop capability の KL-001..008 (curated seed と package 外 runtime state の分離を含む) を検査する lint。--self-test では schema↔定数の drift 検出と lint↔CI 配線のメタ検査も行う
+ # inputs:
+ #   - argv: skill_dir / --strict / --store-only / --self-test
+ # outputs:
+@@ -36,6 +36,9 @@ exit_code (Claude Code Hook 準拠):
+             - store_only=True (Loop B / メタ側)  → consult_at == ["build-time"]
+             - store_only=False (Loop A / 生成側) → consult_at == ["runtime"]
+           「ストアの所在 = Loop 種別」を機械的に強制し、置き場所の裁量と矛盾を CI で fail させる。
++  KL-008: SKILL.md が runtime_store: external-intelligence-v1 を宣言する新方式では
++          scripts/build-external-intelligence.py の同梱を必須にし、installed package 内への
++          runtime 書込みを防ぐ。宣言のない既存生成物は後方互換で移行対象として許容する。
+ 
+ --self-test 内メタ検査:
+   - schema↔定数 drift 検出: knowledge-loop.schema.json の KnowledgeEntry.required +
+@@ -426,6 +429,32 @@ def check_kl007(knowledge_dir: Path, store_only: bool) -> list[dict]:
+     return findings
+ 
+ 
++def check_kl008(skill_dir: Path, store_only: bool) -> list[dict]:
++    """KL-008: 新 runtime-store 契約と共通 engine の同梱を照合する。"""
++    if store_only:
++        return []
++    skill_path = skill_dir / "SKILL.md"
++    if not skill_path.exists():
++        return []
++    text = skill_path.read_text(encoding="utf-8")
++    if "runtime_store:" not in text:
++        return []  # legacy output: additive migration, new renderer always declares it
++    if "runtime_store: external-intelligence-v1" not in text:
++        return [{
++            "rule": "KL-008",
++            "severity": "error",
++            "message": "runtime_store は external-intelligence-v1 以外を宣言できません",
++        }]
++    target = skill_dir / "scripts" / "build-external-intelligence.py"
++    if not target.exists():
++        return [{
++            "rule": "KL-008",
++            "severity": "error",
++            "message": f"build-external-intelligence.py が見つからない (期待パス: {target.relative_to(skill_dir)})",
++        }]
++    return []
++
++
+ def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
+     """全ルールを実行してfindings辞書を返す。
+ 
+@@ -460,6 +489,7 @@ def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
+         findings.extend(check_kl006(skill_dir))
+     findings.extend(check_kl005(skill_dir, knowledge_dir))
+     findings.extend(check_kl007(knowledge_dir, store_only))
++    findings.extend(check_kl008(skill_dir, store_only))
+ 
+     errors = [f for f in findings if f["severity"] == "error"]
+     warnings = [f for f in findings if f["severity"] == "warn"]
+@@ -482,7 +512,7 @@ def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
+ def self_test() -> None:
+     """内蔵 OK例/NG例 で全ルールを検証する。
+ 
+-    KL-001..006 の検出/格下げに加え、schema↔定数 drift 検出と
++    KL-001..008 の検出/格下げに加え、schema↔定数 drift 検出と
+     lint↔CI 配線のメタ検査も行う (SSOT/乖離の再発防止)。
+     """
+     import tempfile
+@@ -572,6 +602,20 @@ def self_test() -> None:
+         errors = [f for f in result["findings"] if f["severity"] == "error"]
+         assert len(errors) == 0, f"OK例でエラーが残存: {errors}"
+ 
++        # KL-008: 新 runtime store 宣言時は共通 engine 同梱が必須
++        (skill_dir / "SKILL.md").write_text(
++            "# テスト\n\n分割閾値: 500行/25エントリ\n"
++            "runtime_store: external-intelligence-v1\n",
++            encoding="utf-8",
++        )
++        result = run_lint(skill_dir, strict=True)
++        assert [f for f in result["findings"] if f["rule"] == "KL-008"], \
++            f"KL-008 engine 欠落が検出されない: {result}"
++        (scripts_dir / "build-external-intelligence.py").write_text("# stub", encoding="utf-8")
++        result = run_lint(skill_dir, strict=True)
++        assert not [f for f in result["findings"] if f["rule"] == "KL-008"], \
++            f"KL-008 engine 存在時に finding が残る: {result}"
++
+         # --strict モードのテスト
+         (scripts_dir / "search_knowledge.py").unlink()
+         result_strict = run_lint(skill_dir, strict=True)
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py b/plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py
+index 099af5f..7dc6397 100644
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py
+@@ -204,47 +204,45 @@ FEEDBACK_CONTRACT_SECTION = (
+ )
+ 
+ 
+-# with-knowledge.patch の決定論的注入内容。配布スキルが自己完結するよう、
+-# harness-creator 内部 (ref-knowledge-loop / templates/ / Loop B / --dir) への参照を一切含めない。
++# with-knowledge.patch の決定論的注入内容。配布スキルは engine を同梱するが、
++# runtime state は package 外へ置く。curated seed と観測 state の責務を混ぜない。
+ KNOWLEDGE_FM_BLOCK = (
+-    "# knowledge-loop: 蓄積/検索/§12フィードバックを組み込む。"
+-    "検索・追加・記録・整合性検証は本 Skill 同梱の scripts/ で完結する (外部ツール不要)。\n"
++    "# knowledge-loop: curated seed と plugin package 外の runtime observations を分離する。\n"
+     "knowledge_loop:\n"
+     "  pattern: {{knowledge_loop.pattern}}       # index-search | router-registry\n"
+     "  index: knowledge/knowledge-index.json     # router-registry 型は knowledge/router.json\n"
+-    "  usage_log: knowledge/usage-log.jsonl\n"
+-    "  consult_at: {{knowledge_loop.consult_at | default([\"runtime\"])}}"
++    "  usage_log: knowledge/usage-log.jsonl       # curated seed の検索品質のみ\n"
++    "  consult_at: {{knowledge_loop.consult_at | default([\"runtime\"])}}\n"
++    "  runtime_store: external-intelligence-v1\n"
++    "  runtime_scope: project"
+ )
+ 
+ KNOWLEDGE_SECTION = (
+     "## ナレッジループ\n"
+-    "本 Skill は `knowledge/` に蓄積した知見を実行時に検索し、活用結果を記録して品質を自己改善する。"
+-    "検索・追加・記録・整合性検証はすべて本 Skill 同梱の `scripts/` だけで完結し、外部ツールやメタリポジトリへの依存はない。\n\n"
++    "`knowledge/` はレビュー済み curated seed、`build-external-intelligence.py` が扱う外部 state は未検証の runtime 観測である。"
++    "installed plugin/skill package へ runtime データを書かない。\n\n"
+     "### 構造（pattern: {{knowledge_loop.pattern}}）\n"
+     "- `knowledge/knowledge-index.json`（index-search 型）/ `knowledge/router.json` + `registry.json`（router-registry 型）。"
+     "いずれも `consult_at: [\"runtime\"]` を宣言する。\n"
+     "- 各エントリは必須6フィールド `id / title|content / intent|purpose / background / keywords|tags / source` を満たす。"
+     "整合性 (ID重複・必須欠落) は `scripts/build_index.py --stats` で検証する。\n\n"
+-    "### 検索（決定論段 → AI段）\n"
++    "### 選択検索（薄い索引 → 必要な詳細だけ）\n"
+     "1. `scripts/search_knowledge.py --query \"<query>\" --limit 5`"
+-    "（Stage1 カテゴリ絞り込み + Stage2 重み付きスコアリング・決定論・100%再現）。\n"
+-    "2. 上位 N 件を文脈に照らして取捨選択する（AI判断）。\n\n"
+-    "### 知見の追加（日々の更新）\n"
+-    "- `scripts/add_entry.py --category <id> --id <eid> --title \"...\" --intent \"...\" "
+-    "--background \"...\" --keywords \"k1,k2,...\" --source \"<出典>\"` で追加する。"
+-    "必須6フィールドを検証して追記するため JSON の手編集は不要。"
+-    "誤ったストアへの追加はストアの `consult_at` 不一致として拒否される。\n\n"
+-    "### §12 フィードバックループ（使うほど良くする）\n"
+-    "- 検索→活用のたびに `scripts/record_usage.py --record --query ... --matched-ids ... "
+-    "--used-ids ... --satisfaction helpful|neutral|unhelpful` で `knowledge/usage-log.jsonl` に追記。\n"
+-    "- 定期的に `scripts/record_usage.py --analyze --emit-queue brushup-queue.jsonl` で"
+-    "「マッチするが使われない」「unhelpful 多発」等を検出してキュー化し、"
+-    "`--mark-needs-update` で該当エントリに status を付与、title/keywords/background を改善する。\n\n"
+-    "### ライフサイクル\n"
+-    "- 1ファイル 500行 または 25エントリ超でサブトピック分割（`scripts/build_index.py --stats` で監視）。\n"
+-    "- router-registry 型は `registry.json` の status（pending / processed / needs-update / deprecated）で素材の再同期を追跡。\n\n"
+-    "> このナレッジループは本 Skill 単体で完結する。配布先のどの環境でも、"
+-    "追加・更新・検索・記録が同梱 `scripts/` だけで同じ手順で行える。"
++    "で curated seed を検索する。runtime state は `scripts/build-external-intelligence.py search --query \"<query>\" --limit 5`"
++    "で薄い索引だけを読み、必要な候補だけ `show --id <id>` する。全件を常時プロンプトへ載せない。\n\n"
++    "### 観測・重複統合・昇格\n"
++    "- 再利用可能な発見だけを `build-external-intelligence.py capture` へ証拠/文脈付きで記録する。"
++    "同一/高類似は統合、曖昧類似は exit 3 で明示解決を要求する。\n"
++    "- observation → candidate（独立観測2件）→ verified（別文脈で helpful reuse）→ promoted"
++    "（owner承認+反証条件+rollback）の順だけを許す。1回の観測をルールにしない。\n"
++    "- project scope は Git common dir（非Gitは `<project>/.harness/`）、user scope は plugin data/XDG state。"
++    "Codex と Claude Code は同じ state を共有する。\n\n"
++    "### curated seed の保守\n"
++    "- `add_entry.py` は promoted 知見を配布 seed へ取り込むレビュー工程だけに使う。"
++    "`record_usage.py` は seed の matched/used/satisfaction を測るもので、runtime 観測の正本ではない。\n"
++    "- 1ファイル 500行 または 25エントリ超でサブトピック分割する。\n\n"
++    "> プロンプトキャッシュや quota 減少は保証しない。直接の成功指標は重複観測の統合率、"
++    "helpful reuse、再検索回避、独立証拠を備えた昇格である。"
+ )
+ 
+ 
+diff --git a/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py b/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py
+index d664e83..377bebc 100644
+--- a/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py
++++ b/plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py
+@@ -79,6 +79,7 @@ KNOWLEDGE_SCRIPTS = (
+     "build_index.py",
+     "record_usage.py",
+     "add_entry.py",
++    "build-external-intelligence.py",
+ )
+ 
+ # brief.goal_seek.engine=task-graph の生成先へ無改変コピーする checklist-graph
+diff --git a/plugins/harness-creator/skills/run-build-skill/templates/combinators/with-knowledge.patch b/plugins/harness-creator/skills/run-build-skill/templates/combinators/with-knowledge.patch
+index c023611..a4a901e 100644
+--- a/plugins/harness-creator/skills/run-build-skill/templates/combinators/with-knowledge.patch
++++ b/plugins/harness-creator/skills/run-build-skill/templates/combinators/with-knowledge.patch
+@@ -1,42 +1,41 @@
+ --- a/_base.md
+ +++ b/_base.md
+-@@ -23,6 +23,11 @@ since: {{date}}
++@@ -23,6 +23,13 @@ since: {{date}}
+  rubric_refs: {{rubric_refs | default([])}}
+-+# knowledge-loop: 蓄積/検索/§12フィードバックを組み込む。検索・追加・記録・整合性検証は本 Skill 同梱の scripts/ で完結する (外部ツール不要)。
+++# knowledge-loop: curated seed と plugin package 外の runtime observations を分離する。
+ +knowledge_loop:
+ +  pattern: {{knowledge_loop.pattern}}       # index-search | router-registry
+ +  index: knowledge/knowledge-index.json     # router-registry 型は knowledge/router.json
+-+  usage_log: knowledge/usage-log.jsonl
+++  usage_log: knowledge/usage-log.jsonl       # curated seed の検索品質のみ
+ +  consult_at: {{knowledge_loop.consult_at | default(["runtime"])}}
+++  runtime_store: external-intelligence-v1
+++  runtime_scope: project
+  # doc/21 source-traceability
+  source: {{source_url_or_path}}
+  source-tier: {{source_tier | default("internal")}}
+-@@ -40,6 +45,28 @@ TODO
++@@ -40,6 +47,27 @@ TODO
+  ## 主要ルール
+  {{key_constraints}}
+ 
+ +## ナレッジループ
+-+本 Skill は `knowledge/` に蓄積した知見を実行時に検索し、活用結果を記録して品質を自己改善する。検索・追加・記録・整合性検証はすべて本 Skill 同梱の `scripts/` だけで完結し、外部ツールやメタリポジトリへの依存はない。
+++`knowledge/` はレビュー済み curated seed、`build-external-intelligence.py` が扱う外部 state は未検証の runtime 観測である。installed plugin/skill package へ runtime データを書かない。
+ +
+ +### 構造（pattern: {{knowledge_loop.pattern}}）
+ +- `knowledge/knowledge-index.json`（index-search 型）/ `knowledge/router.json` + `registry.json`（router-registry 型）。いずれも `consult_at: ["runtime"]` を宣言する。
+ +- 各エントリは必須6フィールド `id / title|content / intent|purpose / background / keywords|tags / source` を満たす。整合性 (ID重複・必須欠落) は `scripts/build_index.py --stats` で検証する。
+ +
+-+### 検索（決定論段 → AI段）
+-+1. `scripts/search_knowledge.py --query "<query>" --limit 5`（Stage1 カテゴリ絞り込み + Stage2 重み付きスコアリング・決定論・100%再現）。
+-+2. 上位 N 件を文脈に照らして取捨選択する（AI判断）。
+++### 選択検索（薄い索引 → 必要な詳細だけ）
+++1. `scripts/search_knowledge.py --query "<query>" --limit 5` で curated seed を検索する。runtime state は `scripts/build-external-intelligence.py search --query "<query>" --limit 5` で薄い索引だけを読み、必要な候補だけ `show --id <id>` する。全件を常時プロンプトへ載せない。
+ +
+-+### 知見の追加（日々の更新）
+-+- `scripts/add_entry.py --category <id> --id <eid> --title "..." --intent "..." --background "..." --keywords "k1,k2,..." --source "<出典>"` で追加する。必須6フィールドを検証して追記するため JSON の手編集は不要。誤ったストアへの追加はストアの `consult_at` 不一致として拒否される。
+++### 観測・重複統合・昇格
+++- 再利用可能な発見だけを `build-external-intelligence.py capture` へ証拠/文脈付きで記録する。同一/高類似は統合、曖昧類似は exit 3 で明示解決を要求する。
+++- observation → candidate（独立観測2件）→ verified（別文脈で helpful reuse）→ promoted（owner承認+反証条件+rollback）の順だけを許す。1回の観測をルールにしない。
+++- project scope は Git common dir（非Gitは `<project>/.harness/`）、user scope は plugin data/XDG state。Codex と Claude Code は同じ state を共有する。
+ +
+-+### §12 フィードバックループ（使うほど良くする）
+-+- 検索→活用のたびに `scripts/record_usage.py --record --query ... --matched-ids ... --used-ids ... --satisfaction helpful|neutral|unhelpful` で `knowledge/usage-log.jsonl` に追記。
+-+- 定期的に `scripts/record_usage.py --analyze --emit-queue brushup-queue.jsonl` で「マッチするが使われない」「unhelpful 多発」等を検出してキュー化し、`--mark-needs-update` で該当エントリに status を付与、title/keywords/background を改善する。
+-+
+-+### ライフサイクル
+-+- 1ファイル 500行 または 25エントリ超でサブトピック分割（`scripts/build_index.py --stats` で監視）。
+-+- router-registry 型は `registry.json` の status（pending / processed / needs-update / deprecated）で素材の再同期を追跡。
+-+
+-+> このナレッジループは本 Skill 単体で完結する。配布先のどの環境でも、追加・更新・検索・記録が同梱 `scripts/` だけで同じ手順で行える。
+++### curated seed の保守
+++- `add_entry.py` は promoted 知見を配布 seed へ取り込むレビュー工程だけに使う。`record_usage.py` は seed の matched/used/satisfaction を測るもので、runtime 観測の正本ではない。
+++- 1ファイル 500行 または 25エントリ超でサブトピック分割する。
+ +
+++> プロンプトキャッシュや quota 減少は保証しない。直接の成功指標は重複観測の統合率、helpful reuse、再検索回避、独立証拠を備えた昇格である。
++
+  ## ゴールシーク実行
+diff --git a/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/README.md b/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/README.md
+index 5cbc06e..455a2ce 100644
+--- a/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/README.md
++++ b/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/README.md
+@@ -1,6 +1,6 @@
+ # knowledge-skeleton テンプレート
+ 
+-生成スキルに knowledge/ ディレクトリを追加する際に使用する雛形。
++生成スキルにレビュー済みの curated seed (`knowledge/`) を追加する際に使用する雛形。runtime 観測は `build-external-intelligence.py` が package 外へ保存する。
+ 
+ ## パターン別使い分け
+ 
+@@ -23,7 +23,8 @@
+ ├── search_knowledge.py           ← scripts/search_knowledge.py をコピー
+ ├── build_index.py                ← scripts/build_index.py をコピー
+ ├── record_usage.py               ← scripts/record_usage.py をコピー (§12 活用ログ・分析)
+-└── add_entry.py                  ← scripts/add_entry.py をコピー (必須6フィールド検証つき追加)
++├── add_entry.py                  ← scripts/add_entry.py をコピー (promoted 知見の seed 取り込み)
++└── build-external-intelligence.py      ← run-build-skill/scripts/ の正本をコピー (runtime state は package 外)
+ ```
+ 
+ ### Router-Registry型
+@@ -38,7 +39,8 @@
+ ├── search_knowledge.py           ← scripts/search_knowledge.py をコピー
+ ├── build_index.py                ← scripts/build_index.py をコピー
+ ├── record_usage.py               ← scripts/record_usage.py をコピー (§12 活用ログ・分析)
+-└── add_entry.py                  ← scripts/add_entry.py をコピー (必須6フィールド検証つき追加)
++├── add_entry.py                  ← scripts/add_entry.py をコピー (promoted 知見の seed 取り込み)
++└── build-external-intelligence.py      ← run-build-skill/scripts/ の正本をコピー (runtime state は package 外)
+ ```
+ 
+ ## 変数の置換ルール
+@@ -59,3 +61,5 @@
+ python3 run-build-skill/scripts/lint-knowledge-loop.py {skill_dir}
+ python3 run-build-skill/scripts/lint-knowledge-loop.py {skill_dir} --strict
+ ```
++
++`knowledge/usage-log.jsonl` は curated seed の検索品質だけを測る。未検証の観測・類似統合・再利用・昇格を別実装へ二重記録せず、`build-external-intelligence.py` の event log を唯一の正本にする。
+diff --git a/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py b/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py
+index a71db61..287e806 100644
+--- a/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py
++++ b/plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python3
+ # /// script
+ # name: add_entry
+-# purpose: knowledge/ に新規エントリを安全に追加する決定論スクリプト (Loop A の「日々の追加」入口)。必須6フィールド検証・ID重複検査・カテゴリ/index 自動登録までを担い、本文の良し悪しは判定しない (二層分離)
++# purpose: verified/promoted 知見を curated knowledge seed へ安全に取り込む決定論スクリプト。必須6フィールド検証・ID重複検査・カテゴリ/index 自動登録までを担い、runtime 観測は扱わない
+ # inputs:
+ #   - argv: --category / --id / --title / --intent / --background / --keywords / --source / --json / --file / --index / --dir / --consult-at / --self-test
+ # outputs:
+diff --git a/scripts/build-claude-settings.py b/scripts/build-claude-settings.py
+index 972d1a5..8e16432 100755
+--- a/scripts/build-claude-settings.py
++++ b/scripts/build-claude-settings.py
+@@ -15,6 +15,7 @@ from pathlib import Path
+ HOOK_EVENTS = (
+     "PreToolUse",
+     "PostToolUse",
++    "PostToolUseFailure",
+     "UserPromptSubmit",
+     "UserPromptExpansion",
+     "Stop",
+diff --git a/tests/scripts-plugins/test_harness_creator__auto_record_lesson.py b/tests/scripts-plugins/test_harness_creator__auto_record_lesson.py
+index f7f5283..5abf68c 100644
+--- a/tests/scripts-plugins/test_harness_creator__auto_record_lesson.py
++++ b/tests/scripts-plugins/test_harness_creator__auto_record_lesson.py
+@@ -1,29 +1,17 @@
+-"""Genuine functional tests for
+-plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py.
+-
+-このスクリプトは Claude Code Hook の JSON(stdin)を読み、失敗シグネチャを検出したら
+-lessons-learned/ に構造化 lesson(frontmatter + observation/hypothesis/proposed_action)を
+-upsert する。git や repo の他領域には触れない。
+-
+-network/keychain は無い。唯一の副作用は _lessons_dir() への書き込みのため、
+-- 純関数 (_flatten_text/_detect_failure/_estimate_severity/_slugify/_extract_slug/
+-  _build_entry/_render_markdown) を実ファイルから import して実入力で assert
+-- _upsert_lesson / main() は _lessons_dir を monkeypatch で tmp_path に向けて repo 非汚染
+-- main() の終了コード・サイレント正常系・OSError 経路は in-process で検査
+-- CLI 全体は subprocess(sys.executable + stdin)で exit code と書き込み有無を assert
+-
+-を行う。
+-"""
+-import datetime as _dt
++"""Thin hook-adapter tests for the shared external-intelligence engine."""
++
++from __future__ import annotations
++
+ import importlib.util
++import io
+ import json
+-import os
+ import subprocess
+ import sys
+ from pathlib import Path
+ 
+ import pytest
+ 
++
+ ROOT = Path(__file__).resolve().parents[2]
+ SCRIPT = (
+     ROOT
+@@ -35,435 +23,154 @@ SCRIPT = (
+     / "auto-record-lesson.py"
+ )
+ 
+-_SPEC = importlib.util.spec_from_file_location("auto_record_lesson_s3", SCRIPT)
+-ARL = importlib.util.module_from_spec(_SPEC)
+-_SPEC.loader.exec_module(ARL)
+-
+-
+-# ===================== _flatten_text =====================
+-
+-def test_flatten_text_recurses_dict_list_str():
+-    payload = {
+-        "a": "top",
+-        "b": {"c": "nested", "d": ["l1", "l2"]},
+-        "e": [{"f": "deep"}, 42, None, True],
+-    }
+-    out = ARL._flatten_text(payload)
+-    lines = out.split("\n")
+-    assert "top" in lines
+-    assert "nested" in lines
+-    assert "l1" in lines and "l2" in lines
+-    assert "deep" in lines
+-    # 非文字列 (42/None/True) は無視される
+-    assert "42" not in lines
+-    assert "None" not in lines
+-
+-
+-def test_flatten_text_bare_string():
+-    assert ARL._flatten_text("just a string") == "just a string"
+-
+-
+-def test_flatten_text_empty_payload():
+-    assert ARL._flatten_text({}) == ""
+-    assert ARL._flatten_text([]) == ""
+-
+-
+-# ===================== _detect_failure =====================
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    [
+-        "the test FAILED here",
+-        "FAIL: assertion",
+-        "FAILURE detected",
+-        "some ERROR happened",
+-        "Traceback (most recent call last):",
+-        "validator something FAIL now",
+-        "process exited with non-zero exit",
+-        "exit code 1",
+-        "exit status: 42",
+-    ],
+-)
+-def test_detect_failure_true(text):
+-    assert ARL._detect_failure(text) is True
+-
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    [
+-        "everything is fine",
+-        "all tests passed",
+-        "exit code 0",  # 0 はゼロ終了 → 失敗扱いしない
+-        "exit status 0",
+-        "",
+-    ],
+-)
+-def test_detect_failure_false(text):
+-    assert ARL._detect_failure(text) is False
+-
+-
+-# ===================== _estimate_severity =====================
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    ["FATAL error", "this is CRITICAL", "Traceback (most recent call last)", "validator FAIL"],
+-)
+-def test_estimate_severity_high(text):
+-    assert ARL._estimate_severity(text) == "high"
+-
+-
+-def test_estimate_severity_medium_default():
+-    assert ARL._estimate_severity("plain ERROR with no strong hint") == "medium"
+-    assert ARL._estimate_severity("FAILED") == "medium"
+-
+-
+-# ===================== _slugify =====================
+ 
+-def test_slugify_lowercases_and_dashes():
+-    assert ARL._slugify("Hello World") == "hello-world"
++def _load_module():
++    spec = importlib.util.spec_from_file_location("auto_record_lesson", SCRIPT)
++    assert spec and spec.loader
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
+ 
+ 
+-def test_slugify_collapses_and_strips():
+-    assert ARL._slugify("  Foo___Bar!!! baz  ") == "foo-bar-baz"
++@pytest.fixture
++def mod():
++    return _load_module()
+ 
+ 
+-def test_slugify_empty_fallback():
+-    assert ARL._slugify("") == "lesson"
+-    assert ARL._slugify("!!!") == "lesson"  # 記号のみ → 空 → fallback
+-
+-
+-# ===================== _extract_slug =====================
+-
+-def test_extract_slug_uses_tool_and_event():
+-    hook = {"hook_event_name": "PostToolUse", "tool_name": "Edit"}
+-    assert ARL._extract_slug(hook, "") == "posttooluse-edit"
+-
+-
+-def test_extract_slug_with_file_path_hint_basename():
+-    hook = {
++def test_failure_detection_supports_both_hook_payloads(mod):
++    claude = {
++        "hook_event_name": "PostToolUseFailure",
++        "tool_error": "permission denied",
++    }
++    codex = {
+         "hook_event_name": "PostToolUse",
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/some/dir/rubric.json"},
++        "tool_response": {"exit_code": 2, "output": "command stopped"},
+     }
+-    # *_path は basename だけ採用
+-    assert ARL._extract_slug(hook, "") == "posttooluse-edit-rubric-json"
+-
+-
+-def test_extract_slug_with_skill_hint_not_basenamed():
+-    hook = {"event": "Stop", "tool": "Skill", "tool_input": {"skill": "run-build-skill"}}
+-    assert ARL._extract_slug(hook, "") == "stop-skill-run-build-skill"
+-
+-
+-def test_extract_slug_command_hint():
+-    hook = {"tool_name": "Bash", "tool_input": {"command": "pytest -q"}}
+-    slug = ARL._extract_slug(hook, "")
+-    assert slug.startswith("post-bash-")  # event 既定 'post'
+-    assert "pytest" in slug
+-
+-
+-def test_extract_slug_fallback_event_tool_when_no_hint():
+-    hook = {}  # tool/event とも欠落 → 既定 event/post
+-    assert ARL._extract_slug(hook, "") == "post-event"
+-
+-
+-def test_extract_slug_truncates_to_60():
+-    hook = {
++    success = {
++        "hook_event_name": "PostToolUse",
++        "tool_response": {"exit_code": 0, "output": "ok"},
++    }
++    successful_edit_with_error_text = {
+         "hook_event_name": "PostToolUse",
+         "tool_name": "Edit",
+-        "tool_input": {"command": "x" * 200},
++        "tool_response": {"success": True, "output": "wrote example: ERROR is handled"},
++    }
++    semantic_skill_failure = {
++        "hook_event_name": "PostToolUse",
++        "tool_name": "Skill",
++        "tool_response": {"content": "ERROR validator rejected output"},
+     }
+-    assert len(ARL._extract_slug(hook, "")) <= 60
+-
+-
+-def test_extract_slug_ignores_non_string_tool_input():
+-    hook = {"tool_name": "Edit", "tool_input": ["not", "a", "dict"]}
+-    # tool_input が dict でない → hint 無し
+-    assert ARL._extract_slug(hook, "") == "post-edit"
+-
+-
+-# ===================== _build_entry =====================
+-
+-def test_build_entry_maps_capability_and_picks_first_failing_line():
+-    hook = {"hook_event_name": "PostToolUse", "tool_name": "Bash"}
+-    text = "line ok\nthis ERROR line\nanother FAIL line"
+-    entry = ARL._build_entry(hook, text, "high")
+-    assert entry["date"] == _dt.date.today().isoformat()
+-    assert entry["trigger_event"] == "PostToolUse"
+-    assert entry["tool"] == "Bash"
+-    assert entry["severity"] == "high"
+-    assert entry["capability"] == "shell"  # Bash -> shell
+-    assert entry["observation"] == "this ERROR line"  # 先頭の失敗行
+ 
++    assert mod._failure_text(claude) == "permission denied"
++    assert "exit code 2" in mod._failure_text(codex)
++    assert mod._failure_text(success) == ""
++    assert mod._failure_text(successful_edit_with_error_text) == ""
++    assert "validator rejected" in mod._failure_text(semantic_skill_failure)
+ 
+-def test_build_entry_unknown_tool_capability():
+-    entry = ARL._build_entry({"tool_name": "Mystery"}, "ERROR x", "medium")
+-    assert entry["capability"] == "unknown"
+-    assert entry["tool"] == "Mystery"
+ 
++def test_redaction_removes_credentials_and_home(mod, monkeypatch):
++    monkeypatch.setattr(mod.Path, "home", lambda: Path("/Users/alice"))
++    text = "token=abc password:xyz Bearer secret /Users/alice/project"
+ 
+-def test_build_entry_observation_truncated_to_240():
+-    long_line = "ERROR " + "z" * 400
+-    entry = ARL._build_entry({"tool_name": "Edit"}, long_line, "medium")
+-    assert len(entry["observation"]) == 240
++    redacted = mod._redact(text)
+ 
++    assert "abc" not in redacted
++    assert "xyz" not in redacted
++    assert "Bearer secret" not in redacted
++    assert "/Users/alice" not in redacted
++    assert redacted.endswith("~/project")
+ 
+-def test_build_entry_fallback_observation_when_no_line_matches():
+-    # _flatten_text の都合で text 全体としては検出されうるが、splitlines 各行が
+-    # 単独では失敗判定されないケース(行に分かれて壊れる failure)を作る。
+-    # 行内に必ずパターンがある通常ケースでは観測が取れるので、ここでは
+-    # 多語にまたがり 1 行毎には一致しないシグネチャを使う。
+-    text = "non-zero\nexit"  # "non-zero exit" は連結時のみ一致、行単位では不一致
+-    entry = ARL._build_entry({"tool_name": "Edit"}, text, "medium")
+-    assert entry["observation"] == "(失敗シグネチャは検出されたが該当行抽出に失敗)"
+ 
++def test_agent_detection_prefers_explicit_then_runtime_env(mod, monkeypatch):
++    monkeypatch.setenv("HARNESS_AGENT", "other")
++    assert mod._agent() == "other"
+ 
+-def test_build_entry_all_capability_map_entries():
+-    for tool, cap in {"Edit": "edit", "Write": "write", "Bash": "shell",
+-                      "Skill": "skill-invoke", "Read": "read"}.items():
+-        entry = ARL._build_entry({"tool_name": tool}, "ERROR", "medium")
+-        assert entry["capability"] == cap
++    monkeypatch.delenv("HARNESS_AGENT")
++    monkeypatch.setenv("PLUGIN_DATA", "/tmp/codex-data")
++    assert mod._agent() == "codex"
+ 
++    monkeypatch.delenv("PLUGIN_DATA")
++    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", "/tmp/claude-data")
++    assert mod._agent() == "claude"
+ 
+-# ===================== _render_markdown =====================
+ 
+-def test_render_markdown_contains_frontmatter_and_sections():
+-    entry = {
+-        "date": "2026-06-24",
+-        "trigger_event": "PostToolUse",
+-        "tool": "Edit",
+-        "severity": "high",
+-        "capability": "edit",
+-        "observation": "boom ERROR",
+-    }
+-    md = ARL._render_markdown(entry)
+-    assert md.startswith("---\n")
+-    assert "date: 2026-06-24" in md
+-    assert "trigger_event: PostToolUse" in md
+-    assert "severity: high" in md
+-    assert "capability: edit" in md
+-    assert "## observation" in md
+-    assert "boom ERROR" in md
+-    assert "## hypothesis" in md
+-    assert "## proposed_action" in md
+-
+-
+-# ===================== _upsert_lesson =====================
+-
+-def test_upsert_lesson_creates_new_file(tmp_path):
+-    entry = {
+-        "date": "2026-06-24",
+-        "trigger_event": "Stop",
+-        "tool": "Skill",
+-        "severity": "medium",
+-        "capability": "skill-invoke",
+-        "observation": "first ERROR",
+-    }
+-    target = tmp_path / "nested" / "2026-06-24-stop-skill.md"
+-    ARL._upsert_lesson(target, entry)
+-    assert target.exists()  # 親ディレクトリも自動生成
+-    content = target.read_text(encoding="utf-8")
+-    assert "first ERROR" in content
+-    assert content.startswith("---")
+-
+-
+-def test_upsert_lesson_appends_when_exists(tmp_path):
+-    entry1 = {
+-        "date": "2026-06-24", "trigger_event": "Stop", "tool": "Skill",
+-        "severity": "medium", "capability": "skill-invoke", "observation": "first ERROR",
++def test_build_command_is_argument_safe_and_uses_shared_engine(mod, monkeypatch, tmp_path):
++    monkeypatch.setenv("HARNESS_AGENT", "codex")
++    payload = {
++        "tool_name": "Bash",
++        "tool_input": {"command": "pytest -q"},
++        "cwd": str(tmp_path),
++        "session_id": "s-1",
++        "turn_id": "t-2",
++        "tool_use_id": "u-3",
+     }
+-    entry2 = dict(entry1, observation="second ERROR")
+-    target = tmp_path / "2026-06-24-stop-skill.md"
+-    ARL._upsert_lesson(target, entry1)
+-    ARL._upsert_lesson(target, entry2)
+-    content = target.read_text(encoding="utf-8")
+-    assert "first ERROR" in content
+-    assert "second ERROR" in content
+-    # 追記分には timestamp 付き observation 見出しが入る
+-    assert content.count("## observation") >= 2
+-
+-
+-# ===================== _lessons_dir / _plugin_root =====================
+-
+-def test_lessons_dir_points_to_harness_creator_plugin():
+-    d = ARL._lessons_dir()
+-    assert d.name == "lessons-learned"
+-    assert d.parent.name == "harness-creator"
+-
+-
+-# ===================== _read_hook_input (stdin) =====================
+-
+-def test_read_hook_input_valid_json(monkeypatch):
+-    import io
+-    monkeypatch.setattr(sys, "stdin", io.StringIO('{"tool_name": "Edit"}'))
+-    assert ARL._read_hook_input() == {"tool_name": "Edit"}
+-
+ 
+-def test_read_hook_input_empty_returns_empty_dict(monkeypatch):
+-    import io
+-    monkeypatch.setattr(sys, "stdin", io.StringIO("   \n  "))
+-    assert ARL._read_hook_input() == {}
++    command = mod.build_command(payload, "ERROR token=super-secret")
+ 
++    assert command[0] == sys.executable
++    assert Path(command[1]).name == "build-external-intelligence.py"
++    assert command[2:4] == ["--agent", "codex"]
++    assert command[command.index("--project-root") + 1] == str(tmp_path)
++    assert command[command.index("--context-id") + 1] == "session:s-1"
++    assert command[command.index("--evidence-ref") + 1] == "hook:t-2:u-3"
++    assert "super-secret" not in command[command.index("--summary") + 1]
+ 
+-def test_read_hook_input_invalid_json_swallowed(monkeypatch):
+-    import io
+-    monkeypatch.setattr(sys, "stdin", io.StringIO("{not valid json"))
+-    assert ARL._read_hook_input() == {}
+ 
++def test_main_ignores_invalid_or_successful_payload(mod, monkeypatch):
++    calls = []
++    monkeypatch.setattr(mod.subprocess, "run", lambda *args, **kwargs: calls.append(args))
++    monkeypatch.setattr(mod.sys, "stdin", io.StringIO("not-json"))
++    assert mod.main() == 0
+ 
+-# ===================== main() in-process =====================
++    monkeypatch.setattr(
++        mod.sys,
++        "stdin",
++        io.StringIO(json.dumps({"tool_name": "Bash", "tool_response": "ok"})),
++    )
++    assert mod.main() == 0
++    assert calls == []
+ 
+-def _set_stdin(monkeypatch, payload):
+-    import io
+-    monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+ 
++def test_main_invokes_engine_without_blocking_parent(mod, monkeypatch, capsys, tmp_path):
++    payload = {
++        "hook_event_name": "PostToolUse",
++        "tool_name": "Bash",
++        "tool_response": {"exit_code": 1, "output": "FAIL test_widget"},
++        "cwd": str(tmp_path),
++    }
++    seen = {}
+ 
+-def test_main_no_failure_silent_success(monkeypatch, tmp_path):
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "ok": "all green"}))
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: tmp_path / "lessons")
+-    assert ARL.main() == 0
+-    # 失敗未検出 → ファイルは作られない
+-    assert not (tmp_path / "lessons").exists()
++    def fake_run(command, **kwargs):
++        seen["command"] = command
++        seen["kwargs"] = kwargs
++        return subprocess.CompletedProcess(
++            command,
++            0,
++            stdout=json.dumps({"action": "created", "state_dir": str(tmp_path / ".harness")}),
++            stderr="",
++        )
+ 
++    monkeypatch.setattr(mod.sys, "stdin", io.StringIO(json.dumps(payload)))
++    monkeypatch.setattr(mod.subprocess, "run", fake_run)
+ 
+-def test_main_empty_input_silent_success(monkeypatch, tmp_path):
+-    _set_stdin(monkeypatch, "")
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: tmp_path / "lessons")
+-    assert ARL.main() == 0
+-    assert not (tmp_path / "lessons").exists()
++    assert mod.main() == 0
++    assert seen["kwargs"]["timeout"] == 8
++    assert seen["kwargs"]["check"] is False
++    assert "created" in capsys.readouterr().err
+ 
+ 
+-def test_main_writes_lesson_on_failure(monkeypatch, tmp_path):
+-    payload = {
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Bash",
+-        "tool_input": {"command": "pytest"},
+-        "tool_response": {"stderr": "Traceback (most recent call last):\nERROR boom"},
+-    }
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1
+-    name = files[0].name
+-    today = _dt.date.today().isoformat()
+-    assert name.startswith(today)
+-    assert "bash" in name  # slug に tool 名
+-    body = files[0].read_text(encoding="utf-8")
+-    assert "severity: high" in body  # Traceback -> high
+-    assert "shell" in body  # Bash capability
+-
+-
+-def test_main_upsert_same_slug_appends(monkeypatch, tmp_path):
++def test_main_fails_soft_when_engine_is_unavailable(mod, monkeypatch, capsys):
+     payload = {
+-        "hook_event_name": "Stop",
+-        "tool_name": "Skill",
+-        "tool_input": {"skill": "run-build-skill"},
+-        "tool_response": {"out": "validator FAIL"},
++        "hook_event_name": "PostToolUseFailure",
++        "tool_name": "Write",
++        "tool_error": "permission denied",
+     }
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    # 二回目: 同日同 slug → 追記
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    assert ARL.main() == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1  # 同一ファイルに追記、新規作成しない
+-    assert files[0].read_text(encoding="utf-8").count("## observation") >= 2
+-
+-
+-def test_main_oserror_degrades_to_noop_exit0(monkeypatch, capsys):
+-    """移植性: 全候補が書込不能なら graceful degrade で exit 0 / Traceback 無し。
+-
+-    read-only install を模す。旧仕様の exit 1 は廃し、PostToolUse hook を絶対に
+-    クラッシュさせない (no writable sink → silent no-op)。
+-    """
+-    _set_stdin(monkeypatch, json.dumps({
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/rubric.json"},
+-        "tool_response": {"stderr": "ERROR boom exit code 1"},
+-    }))
+-    monkeypatch.setattr(ARL, "_dir_is_writable", lambda d: False)
+-    assert ARL.main() == 0
+-    err = capsys.readouterr().err
+-    assert "no writable sink" in err
+-    assert "Traceback" not in err
+-
+-
+-def test_main_oserror_on_primary_falls_back_exit0(monkeypatch, tmp_path, capsys):
+-    """primary の upsert が OSError でも fallback 候補へ退避し exit 0。"""
+-    _set_stdin(monkeypatch, json.dumps({
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/rubric.json"},
+-        "tool_response": {"stderr": "ERROR boom exit code 1"},
+-    }))
+-    primary = tmp_path / "primary"
+-    fallback = tmp_path / "fallback"
+-    monkeypatch.setattr(ARL, "_candidate_dirs", lambda: [primary, fallback])
+-    monkeypatch.setattr(ARL, "_dir_is_writable", lambda d: True)
+-    orig = ARL._upsert_lesson
+-
+-    def boom(path, entry):
+-        if primary in path.parents:
+-            raise OSError("disk full")
+-        return orig(path, entry)
+-
+-    monkeypatch.setattr(ARL, "_upsert_lesson", boom)
+-    assert ARL.main() == 0
+-    assert list(fallback.glob("*.md")), "fallback に退避されていない"
+-    assert "Traceback" not in capsys.readouterr().err
+-
+-
+-# ===================== CLI subprocess (exit code + 書き込み) =====================
+-
+-def _run_cli(stdin_payload, lessons_dir):
+-    """auto-record-lesson を子プロセスで起動。_lessons_dir を上書きできないので
+-    書き込み先を tmp に向けるため、スクリプトを wrapper 経由で実行する。"""
+-    env = dict(os.environ)
+-    env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+-    # COVERAGE_PROCESS_START があれば子プロセス計測 (sitecustomize 経由)
+-    wrapper = (
+-        "import importlib.util,sys\n"
+-        f"spec=importlib.util.spec_from_file_location('m', {str(SCRIPT)!r})\n"
+-        "m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+-        f"m._lessons_dir=lambda: __import__('pathlib').Path({str(lessons_dir)!r})\n"
+-        "sys.exit(m.main())\n"
++    monkeypatch.setattr(mod.sys, "stdin", io.StringIO(json.dumps(payload)))
++    monkeypatch.setattr(
++        mod.subprocess,
++        "run",
++        lambda *args, **kwargs: (_ for _ in ()).throw(OSError("missing engine")),
+     )
+-    return subprocess.run(
+-        [sys.executable, "-c", wrapper],
+-        input=stdin_payload,
+-        capture_output=True,
+-        text=True,
+-        env=env,
+-    )
+-
+ 
+-def test_cli_no_failure_exit0_no_write(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    res = _run_cli(json.dumps({"tool_name": "Edit", "x": "all good"}), lessons)
+-    assert res.returncode == 0
+-    assert not lessons.exists()
+-
+-
+-def test_cli_failure_exit0_and_writes(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    payload = json.dumps({
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/rubric.json"},
+-        "tool_response": {"stderr": "ERROR something exit code 1"},
+-    })
+-    res = _run_cli(payload, lessons)
+-    assert res.returncode == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1
+-    assert "rubric-json" in files[0].name
+-
+-
+-def test_cli_invalid_json_stdin_exit0(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    res = _run_cli("{broken json", lessons)
+-    # 不正入力は握りつぶしてサイレント正常終了
+-    assert res.returncode == 0
+-    assert not lessons.exists()
++    assert mod.main() == 0
++    assert "skipped" in capsys.readouterr().err
+diff --git a/tests/scripts-plugins/test_harness_creator__auto_record_lesson_r4.py b/tests/scripts-plugins/test_harness_creator__auto_record_lesson_r4.py
+deleted file mode 100644
+index ef60d7f..0000000
+--- a/tests/scripts-plugins/test_harness_creator__auto_record_lesson_r4.py
++++ /dev/null
+@@ -1,603 +0,0 @@
+-"""Genuine functional tests (scripts4) for
+-plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py.
+-
+-このスクリプトは Claude Code Hook の JSON(stdin)を読み、失敗シグネチャを検出したら
+-plugins/harness-creator/lessons-learned/ に構造化 lesson(frontmatter +
+-observation / hypothesis / proposed_action)を upsert する。git や repo の他領域には
+-触れない。network/keychain は使わない。
+-
+-scripts4 では実ファイルパスを importlib でロードして純関数を実入力で検査し、
+-副作用境界(_lessons_dir への書き込み)は monkeypatch で tmp_path に向けて repo を
+-汚さない形で main / _upsert_lesson の全分岐・終了コードを検証する。CLI 全体は
+-subprocess(sys.executable + stdin)で exit code と書き込みの有無を assert する。
+-
+-scripts3 と同名衝突を避けるため module 名・ファイル名に _r4 サフィックスを付す。
+-"""
+-import datetime as _dt
+-import importlib.util
+-import io
+-import json
+-import os
+-import subprocess
+-import sys
+-from pathlib import Path
+-
+-import pytest
+-
+-ROOT = Path(__file__).resolve().parents[2]
+-SCRIPT = (
+-    ROOT
+-    / "plugins"
+-    / "harness-creator"
+-    / "skills"
+-    / "run-build-skill"
+-    / "scripts"
+-    / "auto-record-lesson.py"
+-)
+-
+-_SPEC = importlib.util.spec_from_file_location("auto_record_lesson_r4", SCRIPT)
+-ARL = importlib.util.module_from_spec(_SPEC)
+-_SPEC.loader.exec_module(ARL)
+-
+-
+-# ===================== _plugin_root / _lessons_dir =====================
+-
+-
+-def test_plugin_root_points_to_harness_creator_plugin():
+-    root = ARL._plugin_root()
+-    assert root.name == "harness-creator"
+-    # 実ファイルは .../harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+-    assert root == SCRIPT.resolve().parents[3]
+-
+-
+-def test_lessons_dir_is_under_plugin_root():
+-    d = ARL._lessons_dir()
+-    assert d.name == "lessons-learned"
+-    assert d.parent.name == "harness-creator"
+-
+-
+-# ===================== _read_hook_input (stdin 解釈) =====================
+-
+-
+-def _set_stdin(monkeypatch, payload):
+-    monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+-
+-
+-def test_read_hook_input_parses_valid_json(monkeypatch):
+-    _set_stdin(monkeypatch, '{"tool_name": "Skill", "n": 3}')
+-    assert ARL._read_hook_input() == {"tool_name": "Skill", "n": 3}
+-
+-
+-def test_read_hook_input_blank_returns_empty(monkeypatch):
+-    _set_stdin(monkeypatch, "\n   \t ")
+-    assert ARL._read_hook_input() == {}
+-
+-
+-def test_read_hook_input_malformed_json_swallowed(monkeypatch):
+-    _set_stdin(monkeypatch, "{this is : not json")
+-    assert ARL._read_hook_input() == {}
+-
+-
+-def test_read_hook_input_non_object_json_returned_as_is(monkeypatch):
+-    # json.loads は list も受理する。例外を投げず素通しすることを確認。
+-    _set_stdin(monkeypatch, "[1, 2, 3]")
+-    assert ARL._read_hook_input() == [1, 2, 3]
+-
+-
+-# ===================== _flatten_text =====================
+-
+-
+-def test_flatten_text_collects_all_strings_recursively():
+-    payload = {
+-        "top": "alpha",
+-        "nest": {"mid": "beta", "arr": ["gamma", "delta"]},
+-        "mixed": [{"deep": "epsilon"}, 7, None, False],
+-    }
+-    lines = ARL._flatten_text(payload).split("\n")
+-    assert {"alpha", "beta", "gamma", "delta", "epsilon"} <= set(lines)
+-    # 非文字列の葉は混入しない
+-    assert "7" not in lines and "None" not in lines and "False" not in lines
+-
+-
+-def test_flatten_text_scalar_inputs():
+-    assert ARL._flatten_text("solo") == "solo"
+-    assert ARL._flatten_text(123) == ""  # 文字列でも dict でも list でもない
+-    assert ARL._flatten_text(None) == ""
+-
+-
+-# ===================== _detect_failure =====================
+-
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    [
+-        "step FAILED",
+-        "FAIL: boom",
+-        "a FAILURE occurred",
+-        "got an ERROR",
+-        "Traceback (most recent call last):",
+-        "validator step FAIL now",
+-        "process had non-zero exit",
+-        "nonzero exit detected",  # ハイフン無しも \bnon-?zero exit\b に一致
+-        "exit code 7",
+-        "exit status: 130",
+-        "exit code=2 from child",
+-    ],
+-)
+-def test_detect_failure_positive(text):
+-    assert ARL._detect_failure(text) is True
+-
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    [
+-        "all good",
+-        "tests passed",
+-        "exit code 0",  # ゼロ終了は失敗扱いしない
+-        "exit status 0",
+-        "failsafe is enabled",  # 'fail' を含むが \bFAIL\b 境界に当たらない
+-        "non zero exit detected",  # 'non zero'(空白)は non-?zero に当たらず非検出
+-        "exit=2 from child",  # code/status キーワードが無いと非検出
+-        "",
+-    ],
+-)
+-def test_detect_failure_negative(text):
+-    assert ARL._detect_failure(text) is False
+-
+-
+-# ===================== _estimate_severity =====================
+-
+-
+-@pytest.mark.parametrize(
+-    "text",
+-    [
+-        "FATAL: kernel panic",
+-        "this is CRITICAL",
+-        "Traceback (most recent call last):",
+-        "validator FAIL on rubric",
+-    ],
+-)
+-def test_estimate_severity_high(text):
+-    assert ARL._estimate_severity(text) == "high"
+-
+-
+-@pytest.mark.parametrize("text", ["plain ERROR", "FAILED softly", "exit code 1"])
+-def test_estimate_severity_medium(text):
+-    assert ARL._estimate_severity(text) == "medium"
+-
+-
+-# ===================== _slugify =====================
+-
+-
+-def test_slugify_basic_lowercase_and_dash():
+-    assert ARL._slugify("My Build Step") == "my-build-step"
+-
+-
+-def test_slugify_collapses_runs_and_trims():
+-    assert ARL._slugify("--Foo__BAR!! Baz--") == "foo-bar-baz"
+-
+-
+-def test_slugify_keeps_digits():
+-    assert ARL._slugify("R4 trace 2026") == "r4-trace-2026"
+-
+-
+-@pytest.mark.parametrize("value", ["", "!!!", "   ", "***---"])
+-def test_slugify_empty_or_symbol_only_fallback(value):
+-    assert ARL._slugify(value) == "lesson"
+-
+-
+-# ===================== _extract_slug =====================
+-
+-
+-def test_extract_slug_event_and_tool_only():
+-    hook = {"hook_event_name": "PostToolUse", "tool_name": "Write"}
+-    assert ARL._extract_slug(hook, "") == "posttooluse-write"
+-
+-
+-def test_extract_slug_path_hint_uses_basename():
+-    hook = {
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/deep/dir/capability.json"},
+-    }
+-    assert ARL._extract_slug(hook, "") == "posttooluse-edit-capability-json"
+-
+-
+-def test_extract_slug_plain_path_key_basenamed():
+-    # キーが 'path'(末尾 path)→ basename 採用
+-    hook = {"tool_name": "Read", "tool_input": {"path": "/a/b/notes.txt"}}
+-    slug = ARL._extract_slug(hook, "")
+-    assert slug == "post-read-notes-txt"
+-
+-
+-def test_extract_slug_skill_hint_not_basenamed():
+-    hook = {"event": "Stop", "tool": "Skill", "tool_input": {"skill": "run-build-skill"}}
+-    assert ARL._extract_slug(hook, "") == "stop-skill-run-build-skill"
+-
+-
+-def test_extract_slug_command_hint_used():
+-    hook = {"tool_name": "Bash", "tool_input": {"command": "make test"}}
+-    slug = ARL._extract_slug(hook, "")
+-    assert slug.startswith("post-bash-")
+-    assert "make" in slug and "test" in slug
+-
+-
+-def test_extract_slug_first_present_hint_wins():
+-    # 優先順 file_path > path > skill > command。両方あれば file_path 採用。
+-    hook = {
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/first.json", "skill": "ignored"},
+-    }
+-    assert ARL._extract_slug(hook, "") == "post-edit-first-json"
+-
+-
+-def test_extract_slug_empty_hint_value_skipped():
+-    # file_path が空文字なら hint 扱いしない(次の候補も無ければ event-tool のみ)
+-    hook = {"tool_name": "Edit", "tool_input": {"file_path": "", "command": "go"}}
+-    slug = ARL._extract_slug(hook, "")
+-    assert slug == "post-edit-go"
+-
+-
+-def test_extract_slug_non_dict_tool_input():
+-    hook = {"tool_name": "Edit", "tool_input": ["a", "b"]}
+-    assert ARL._extract_slug(hook, "") == "post-edit"
+-
+-
+-def test_extract_slug_all_defaults_when_empty_hook():
+-    assert ARL._extract_slug({}, "") == "post-event"
+-
+-
+-def test_extract_slug_truncated_to_60():
+-    hook = {"tool_name": "Bash", "tool_input": {"command": "y" * 300}}
+-    assert len(ARL._extract_slug(hook, "")) <= 60
+-
+-
+-# ===================== _build_entry =====================
+-
+-
+-def test_build_entry_full_fields_and_first_failing_line():
+-    hook = {"hook_event_name": "PostToolUse", "tool_name": "Skill"}
+-    text = "ok line\nnext ERROR boom\ntail FAIL"
+-    entry = ARL._build_entry(hook, text, "high")
+-    assert entry["date"] == _dt.date.today().isoformat()
+-    assert entry["trigger_event"] == "PostToolUse"
+-    assert entry["tool"] == "Skill"
+-    assert entry["severity"] == "high"
+-    assert entry["capability"] == "skill-invoke"
+-    assert entry["observation"] == "next ERROR boom"
+-
+-
+-@pytest.mark.parametrize(
+-    "tool,cap",
+-    [("Edit", "edit"), ("Write", "write"), ("Bash", "shell"),
+-     ("Skill", "skill-invoke"), ("Read", "read")],
+-)
+-def test_build_entry_capability_map_full(tool, cap):
+-    assert ARL._build_entry({"tool_name": tool}, "ERROR", "medium")["capability"] == cap
+-
+-
+-def test_build_entry_unknown_tool_maps_unknown():
+-    e = ARL._build_entry({"tool_name": "Glob"}, "ERROR", "medium")
+-    assert e["capability"] == "unknown"
+-    assert e["tool"] == "Glob"
+-
+-
+-def test_build_entry_defaults_when_tool_event_absent():
+-    e = ARL._build_entry({}, "ERROR x", "medium")
+-    assert e["tool"] == "unknown"
+-    assert e["trigger_event"] == "unknown"
+-    assert e["capability"] == "unknown"
+-
+-
+-def test_build_entry_observation_truncated_to_240():
+-    e = ARL._build_entry({"tool_name": "Edit"}, "ERROR " + "q" * 500, "medium")
+-    assert len(e["observation"]) == 240
+-
+-
+-def test_build_entry_fallback_when_no_single_line_matches():
+-    # "non-zero exit" は連結時のみ一致。行で割ると個々は不一致 → fallback 観測。
+-    e = ARL._build_entry({"tool_name": "Edit"}, "non-zero\nexit", "medium")
+-    assert e["observation"] == "(失敗シグネチャは検出されたが該当行抽出に失敗)"
+-
+-
+-# ===================== _render_markdown =====================
+-
+-
+-def test_render_markdown_structure():
+-    entry = {
+-        "date": "2026-06-24",
+-        "trigger_event": "Stop",
+-        "tool": "Skill",
+-        "severity": "high",
+-        "capability": "skill-invoke",
+-        "observation": "kaboom ERROR",
+-    }
+-    md = ARL._render_markdown(entry)
+-    assert md.startswith("---\n")
+-    for needle in (
+-        "date: 2026-06-24",
+-        "trigger_event: Stop",
+-        "tool: Skill",
+-        "severity: high",
+-        "capability: skill-invoke",
+-        "## observation",
+-        "kaboom ERROR",
+-        "## hypothesis",
+-        "## proposed_action",
+-    ):
+-        assert needle in md
+-
+-
+-# ===================== _upsert_lesson =====================
+-
+-
+-def test_upsert_lesson_creates_file_and_parents(tmp_path):
+-    entry = {
+-        "date": "2026-06-24", "trigger_event": "Stop", "tool": "Skill",
+-        "severity": "medium", "capability": "skill-invoke", "observation": "first ERROR",
+-    }
+-    target = tmp_path / "a" / "b" / "2026-06-24-stop.md"
+-    ARL._upsert_lesson(target, entry)
+-    assert target.exists()
+-    body = target.read_text(encoding="utf-8")
+-    assert body.startswith("---")
+-    assert "first ERROR" in body
+-
+-
+-def test_upsert_lesson_appends_on_existing(tmp_path):
+-    base = {
+-        "date": "2026-06-24", "trigger_event": "Stop", "tool": "Skill",
+-        "severity": "medium", "capability": "skill-invoke", "observation": "first ERROR",
+-    }
+-    target = tmp_path / "2026-06-24-stop.md"
+-    ARL._upsert_lesson(target, base)
+-    ARL._upsert_lesson(target, dict(base, observation="second ERROR"))
+-    body = target.read_text(encoding="utf-8")
+-    assert "first ERROR" in body and "second ERROR" in body
+-    # 追記分には timestamp 付き observation 見出しが増える
+-    assert body.count("## observation") >= 2
+-
+-
+-# ===================== _has_genuine_context (断片ノイズ封鎖) =====================
+-
+-
+-def test_genuine_context_requires_tool_hint_and_response_failure():
+-    hook = {
+-        "tool_name": "Bash",
+-        "tool_input": {"command": "pytest"},
+-        "tool_response": {"stderr": "ERROR exit code 1"},
+-    }
+-    assert ARL._has_genuine_context(hook) is True
+-
+-
+-@pytest.mark.parametrize(
+-    "hook",
+-    [
+-        {"tool_name": "Edit", "x": "ERROR boom"},  # tool_input なし ("ERROR boom" 型)
+-        {"tool_input": {"command": "x"}, "tool_response": {"e": "ERROR"}},  # tool 名なし
+-        {"tool_name": "Bash", "tool_input": {}, "tool_response": {"e": "ERROR"}},  # ヒントなし
+-        {"tool_name": "Bash", "tool_input": {"command": ""}, "tool_response": {"e": "ERROR"}},
+-        # 失敗語が tool_response 外の無関係キーのみ (引用・テスト副産物の混入形)
+-        {"tool_name": "Bash", "tool_input": {"command": "x"}, "note": "ERROR boom"},
+-        {"tool_name": "Bash", "tool_input": {"command": "x"}, "tool_response": {"out": "ok"}},
+-        "not a dict",
+-        {},
+-    ],
+-)
+-def test_genuine_context_rejects_fragments(hook):
+-    assert ARL._has_genuine_context(hook) is False
+-
+-
+-def test_main_skips_fragment_noise(monkeypatch, tmp_path):
+-    # 失敗語はあるが文脈不足 → 記録しない (2026-06-24 "ERROR boom" 再発防止)。
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "x": "ERROR boom"}))
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    assert not lessons.exists()
+-
+-
+-# ===================== 索引 append (Loop B 断線修理) =====================
+-
+-
+-def _entry_fixture(observation="validator FAIL: rule X"):
+-    return {
+-        "date": "2026-07-02", "trigger_event": "PostToolUse", "tool": "Bash",
+-        "severity": "high", "capability": "shell", "observation": observation,
+-    }
+-
+-
+-def test_lessons_index_path_is_sibling_knowledge(tmp_path):
+-    d = tmp_path / "lessons-learned"
+-    assert ARL._lessons_index_path(d) == tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-
+-
+-def test_append_index_entry_creates_index_when_absent(tmp_path):
+-    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
+-    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
+-    data = json.loads(index.read_text(encoding="utf-8"))
+-    assert data["category"] == "lessons-index"
+-    assert len(data["items"]) == 1
+-    item = data["items"][0]
+-    assert item["id"] == "lessons-index_001"
+-    assert "validator FAIL: rule X" in item["title"]
+-    assert item["source"]["type"] == "lesson"
+-    assert item["source"]["date"] == "2026-07-02"
+-
+-
+-def test_append_index_entry_is_idempotent_per_source_file(tmp_path):
+-    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
+-    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
+-    # 同一 lesson (同日 slug への observation 追記) は再登録しない。
+-    assert ARL._append_index_entry(index, lesson, _entry_fixture("second ERROR")) is False
+-    assert len(json.loads(index.read_text(encoding="utf-8"))["items"]) == 1
+-
+-
+-def test_append_index_entry_sequences_id_from_existing_max(tmp_path):
+-    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-    index.parent.mkdir(parents=True)
+-    index.write_text(json.dumps({
+-        "category": "lessons-index",
+-        "items": [{"id": "lessons-index_002", "source": {"file": "other.md"}}],
+-    }), encoding="utf-8")
+-    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
+-    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is True
+-    ids = [i["id"] for i in json.loads(index.read_text(encoding="utf-8"))["items"]]
+-    assert "lessons-index_003" in ids
+-
+-
+-def test_append_index_entry_swallows_broken_index(tmp_path):
+-    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-    index.parent.mkdir(parents=True)
+-    index.write_text("{broken", encoding="utf-8")
+-    lesson = tmp_path / "lessons-learned" / "2026-07-02-x.md"
+-    # 壊れた索引でも例外にせず False (lesson 記録は巻き込まない)。
+-    assert ARL._append_index_entry(index, lesson, _entry_fixture()) is False
+-
+-
+-def test_main_appends_index_alongside_lesson(monkeypatch, tmp_path):
+-    payload = {
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Bash",
+-        "tool_input": {"command": "pytest"},
+-        "tool_response": {"stderr": "Traceback (most recent call last):\nERROR boom"},
+-    }
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    lessons = tmp_path / "lessons-learned"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    index = tmp_path / "knowledge" / "knowledge-lessons-index.json"
+-    assert index.exists()
+-    items = json.loads(index.read_text(encoding="utf-8"))["items"]
+-    assert len(items) == 1
+-    assert items[0]["source"]["file"].endswith(".md")
+-
+-
+-# ===================== main() in-process =====================
+-
+-
+-def test_main_silent_success_when_no_failure(monkeypatch, tmp_path):
+-    _set_stdin(monkeypatch, json.dumps({"tool_name": "Edit", "msg": "all green"}))
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    assert not lessons.exists()  # 書き込み無し
+-
+-
+-def test_main_silent_success_on_empty_stdin(monkeypatch, tmp_path):
+-    _set_stdin(monkeypatch, "")
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    assert not lessons.exists()
+-
+-
+-def test_main_writes_high_severity_lesson(monkeypatch, tmp_path):
+-    payload = {
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Bash",
+-        "tool_input": {"command": "pytest"},
+-        "tool_response": {"stderr": "Traceback (most recent call last):\nERROR boom"},
+-    }
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    assert ARL.main() == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1
+-    assert files[0].name.startswith(_dt.date.today().isoformat())
+-    assert "bash" in files[0].name
+-    body = files[0].read_text(encoding="utf-8")
+-    assert "severity: high" in body  # Traceback -> high
+-    assert "capability: shell" in body
+-
+-
+-def test_main_upsert_same_slug_single_file(monkeypatch, tmp_path):
+-    payload = {
+-        "hook_event_name": "Stop",
+-        "tool_name": "Skill",
+-        "tool_input": {"skill": "run-build-skill"},
+-        "tool_response": {"out": "validator FAIL"},
+-    }
+-    lessons = tmp_path / "lessons"
+-    monkeypatch.setattr(ARL, "_lessons_dir", lambda: lessons)
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    assert ARL.main() == 0
+-    _set_stdin(monkeypatch, json.dumps(payload))
+-    assert ARL.main() == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1  # 同日同 slug → 追記、新規作成しない
+-    assert files[0].read_text(encoding="utf-8").count("## observation") >= 2
+-
+-
+-def test_main_oserror_degrades_to_noop_exit0(monkeypatch, capsys):
+-    """移植性: 全候補が書込不能なら graceful degrade で exit 0 / Traceback 無し。
+-
+-    read-only install を模す。旧仕様の exit 1 は廃し hook を絶対に
+-    クラッシュさせない (no writable sink → silent no-op)。
+-    """
+-    _set_stdin(monkeypatch, json.dumps({
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/rubric.json"},
+-        "tool_response": {"stderr": "ERROR boom exit code 1"},
+-    }))
+-    monkeypatch.setattr(ARL, "_dir_is_writable", lambda d: False)
+-    assert ARL.main() == 0
+-    err = capsys.readouterr().err
+-    assert "no writable sink" in err
+-    assert "Traceback" not in err
+-
+-
+-# ===================== CLI subprocess (exit code + 書き込み) =====================
+-
+-
+-def _run_cli(stdin_payload, lessons_dir):
+-    """子プロセスで起動。_lessons_dir は wrapper で tmp に差し替えて repo 非汚染。
+-    COVERAGE_PROCESS_START があれば sitecustomize 経由で子プロセスも計測される。"""
+-    env = dict(os.environ)
+-    env["PYTHONPATH"] = str(ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+-    wrapper = (
+-        "import importlib.util,sys,pathlib\n"
+-        f"spec=importlib.util.spec_from_file_location('m', {str(SCRIPT)!r})\n"
+-        "m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+-        f"m._lessons_dir=lambda: pathlib.Path({str(lessons_dir)!r})\n"
+-        "sys.exit(m.main())\n"
+-    )
+-    return subprocess.run(
+-        [sys.executable, "-c", wrapper],
+-        input=stdin_payload,
+-        capture_output=True,
+-        text=True,
+-        env=env,
+-    )
+-
+-
+-def test_cli_no_failure_exit0_no_write(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    res = _run_cli(json.dumps({"tool_name": "Edit", "x": "fine"}), lessons)
+-    assert res.returncode == 0
+-    assert not lessons.exists()
+-
+-
+-def test_cli_failure_exit0_and_writes(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    payload = json.dumps({
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Edit",
+-        "tool_input": {"file_path": "/x/rubric.json"},
+-        "tool_response": {"stderr": "ERROR something exit code 1"},
+-    })
+-    res = _run_cli(payload, lessons)
+-    assert res.returncode == 0
+-    files = list(lessons.glob("*.md"))
+-    assert len(files) == 1
+-    assert "rubric-json" in files[0].name
+-
+-
+-def test_cli_invalid_json_stdin_exit0(tmp_path):
+-    lessons = tmp_path / "lessons"
+-    res = _run_cli("{broken", lessons)
+-    assert res.returncode == 0
+-    assert not lessons.exists()
+diff --git a/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r3.py b/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r3.py
+deleted file mode 100644
+index 214a92e..0000000
+--- a/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r3.py
++++ /dev/null
+@@ -1,561 +0,0 @@
+-"""lint-knowledge-loop.py の genuine で網羅的な機能テスト (network 不要)。
+-
+-対象: plugins/harness-creator/skills/run-build-skill/scripts/lint-knowledge-loop.py
+-
+-このスクリプトは knowledge-loop capability の lint (KL-001..007):
+-  KL-001: index|router 存在 + >=3 エントリ
+-  KL-002: 各エントリの必須6フィールド
+-  KL-003/004/006: search_knowledge.py / record_usage.py / add_entry.py の存在
+-  KL-005: 分割閾値の記述/設定
+-  KL-007: consult_at 宣言・妥当性・物理位置(store_only)一致
+-さらに --self-test で schema↔定数 drift / lint↔CI 配線のメタ検査も行う。
+-
+-方針:
+-  - 純関数 (find_knowledge_dir / collect_entries / load_json_safe / check_kl00X /
+-    run_lint / _extract_anyof_required) を tmp_path fixture で直接呼び戻り値を assert。
+-  - 合格 fixture を _good_skill() で組み、各 KL ルールを 1 つずつ壊して検出を確認。
+-  - main は subprocess(sys.executable) で exit code / JSON 出力を assert。
+-  - self_test / check_schema_drift / check_ci_wiring は実 repo の schema・CI を
+-    読むスクリプト挙動をそのまま使う (network/keychain/secret 一切なし)。
+-  - すべて tmp_path に閉じてリポジトリを汚染しない。
+-"""
+-import importlib.util
+-import json
+-import subprocess
+-import sys
+-from pathlib import Path
+-
+-import pytest
+-
+-ROOT = Path(__file__).resolve().parents[2]
+-SCRIPT = (
+-    ROOT
+-    / "plugins"
+-    / "harness-creator"
+-    / "skills"
+-    / "run-build-skill"
+-    / "scripts"
+-    / "lint-knowledge-loop.py"
+-)
+-
+-_SPEC = importlib.util.spec_from_file_location("lint_knowledge_loop_uut", SCRIPT)
+-KL = importlib.util.module_from_spec(_SPEC)
+-_SPEC.loader.exec_module(KL)
+-
+-
+-# =====================================================================
+-# fixture builders
+-# =====================================================================
+-
+-def _entry(i: int) -> dict:
+-    return {
+-        "id": f"t_{i:03d}",
+-        "title": f"タイトル{i}",
+-        "intent": f"意図{i}",
+-        "background": f"背景{i}",
+-        "keywords": [f"kw{i}"],
+-        "source": "test.md",
+-    }
+-
+-
+-def _good_skill(tmp_path, *, store_only=False, consult_at=None, n_entries=3) -> Path:
+-    """KL-001..007 すべて pass する skill ディレクトリを組む。"""
+-    skill_dir = tmp_path / "run-target"
+-    kdir = skill_dir / "knowledge"
+-    kdir.mkdir(parents=True)
+-    scripts_dir = skill_dir / "scripts"
+-    scripts_dir.mkdir()
+-    for name in ("search_knowledge.py", "record_usage.py", "add_entry.py"):
+-        (scripts_dir / name).write_text("# stub", encoding="utf-8")
+-    (skill_dir / "SKILL.md").write_text(
+-        "# テスト\n\n分割閾値: 500行/25エントリ\n", encoding="utf-8"
+-    )
+-    if consult_at is None:
+-        consult_at = ["build-time"] if store_only else ["runtime"]
+-    index = {
+-        "version": "1.0.0",
+-        "consult_at": consult_at,
+-        "categories": [
+-            {"id": "test", "label": "テスト", "file": "knowledge-test.json", "keywords": []}
+-        ],
+-        "global_keywords": {},
+-    }
+-    (kdir / "knowledge-index.json").write_text(json.dumps(index), encoding="utf-8")
+-    cat = {
+-        "category": "test",
+-        "label": "テスト",
+-        "version": "1.0.0",
+-        "items": [_entry(i) for i in range(1, n_entries + 1)],
+-    }
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    return skill_dir
+-
+-
+-# =====================================================================
+-# 純関数: find_knowledge_dir / load_json_safe / collect_entries
+-# =====================================================================
+-
+-def test_find_knowledge_dir_present(tmp_path):
+-    (tmp_path / "knowledge").mkdir()
+-    assert KL.find_knowledge_dir(tmp_path) == tmp_path / "knowledge"
+-
+-
+-def test_find_knowledge_dir_absent(tmp_path):
+-    assert KL.find_knowledge_dir(tmp_path) is None
+-
+-
+-def test_load_json_safe_ok(tmp_path):
+-    p = tmp_path / "a.json"
+-    p.write_text('{"x": 1}', encoding="utf-8")
+-    data, err = KL.load_json_safe(p)
+-    assert err is None
+-    assert data == {"x": 1}
+-
+-
+-def test_load_json_safe_bad_json(tmp_path):
+-    p = tmp_path / "a.json"
+-    p.write_text("{bad", encoding="utf-8")
+-    data, err = KL.load_json_safe(p)
+-    assert data is None
+-    assert "JSON解析失敗" in err
+-
+-
+-def test_load_json_safe_missing_file(tmp_path):
+-    data, err = KL.load_json_safe(tmp_path / "absent.json")
+-    assert data is None
+-    assert "ファイル読み込みエラー" in err
+-
+-
+-def test_collect_entries_items_and_list(tmp_path):
+-    kdir = tmp_path / "knowledge"
+-    kdir.mkdir()
+-    # items 形式
+-    (kdir / "a.json").write_text(
+-        json.dumps({"items": [_entry(1), _entry(2)]}), encoding="utf-8"
+-    )
+-    # 直接 list 形式
+-    (kdir / "b.json").write_text(json.dumps([_entry(3)]), encoding="utf-8")
+-    # 除外されるべきメタファイル
+-    (kdir / "knowledge-index.json").write_text("{}", encoding="utf-8")
+-    (kdir / "router.json").write_text("{}", encoding="utf-8")
+-    entries, errors = KL.collect_entries(kdir)
+-    assert errors == []
+-    assert len(entries) == 3
+-
+-
+-def test_collect_entries_reports_bad_json(tmp_path):
+-    kdir = tmp_path / "knowledge"
+-    kdir.mkdir()
+-    (kdir / "broken.json").write_text("{not json", encoding="utf-8")
+-    entries, errors = KL.collect_entries(kdir)
+-    assert entries == []
+-    assert any("broken.json" in e for e in errors)
+-
+-
+-# =====================================================================
+-# run_lint: happy paths
+-# =====================================================================
+-
+-def test_run_lint_skip_when_no_knowledge_dir(tmp_path):
+-    result = KL.run_lint(tmp_path, strict=False)
+-    assert result["status"] == "skip"
+-    assert "knowledge/" in result["message"]
+-
+-
+-def test_run_lint_all_pass(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    result = KL.run_lint(skill_dir, strict=True)
+-    errors = [f for f in result["findings"] if f["severity"] == "error"]
+-    assert errors == [], errors
+-    assert result["status"] == "pass"
+-    assert result["error_count"] == 0
+-
+-
+-def test_run_lint_store_only_pass(tmp_path):
+-    skill_dir = _good_skill(tmp_path, store_only=True)
+-    # store-only かつ build-time 宣言 → KL-003/004/006 を info に格下げし pass
+-    result = KL.run_lint(skill_dir, strict=True, store_only=True)
+-    assert result["status"] == "pass", result
+-    info = [f for f in result["findings"] if f["severity"] == "info"]
+-    assert any("store-only" in f["message"] for f in info)
+-    assert not [f for f in result["findings"] if f["rule"] == "KL-006"]
+-
+-
+-# =====================================================================
+-# KL-001
+-# =====================================================================
+-
+-def test_kl001_no_index_or_router(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "knowledge" / "knowledge-index.json").unlink()
+-    findings = KL.check_kl001(skill_dir / "knowledge")
+-    assert any("見つからない" in f["message"] for f in findings)
+-    assert findings[0]["severity"] == "error"
+-
+-
+-def test_kl001_too_few_entries(tmp_path):
+-    skill_dir = _good_skill(tmp_path, n_entries=2)
+-    findings = KL.check_kl001(skill_dir / "knowledge")
+-    assert any("3件未満" in f["message"] for f in findings)
+-
+-
+-# =====================================================================
+-# KL-002
+-# =====================================================================
+-
+-def test_kl002_missing_always_field(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    bad = _entry(1)
+-    del bad["source"]  # always-required field
+-    cat = {"items": [bad, _entry(2), _entry(3)]}
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    findings = KL.check_kl002(kdir)
+-    assert any("必須フィールドがない" in f["message"] and "source" in f["message"]
+-               for f in findings)
+-
+-
+-def test_kl002_missing_title_or_content(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    bad = _entry(1)
+-    del bad["title"]  # neither title nor content
+-    cat = {"items": [bad, _entry(2), _entry(3)]}
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    findings = KL.check_kl002(kdir)
+-    assert any("title または content がない" in f["message"] for f in findings)
+-
+-
+-def test_kl002_content_alias_accepted(tmp_path):
+-    """title の代わりに content / intent->purpose / keywords->tags でも合格。"""
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    alias = {
+-        "id": "t_alias",
+-        "content": "本文",
+-        "purpose": "目的",
+-        "background": "背景",
+-        "tags": ["t"],
+-        "source": "s.md",
+-    }
+-    cat = {"items": [alias, _entry(2), _entry(3)]}
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    findings = KL.check_kl002(kdir)
+-    assert findings == []
+-
+-
+-def test_kl002_missing_intent(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    bad = _entry(1)
+-    del bad["intent"]
+-    cat = {"items": [bad, _entry(2), _entry(3)]}
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    findings = KL.check_kl002(kdir)
+-    assert any("intent または purpose がない" in f["message"] for f in findings)
+-
+-
+-def test_kl002_missing_keywords(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    bad = _entry(1)
+-    del bad["keywords"]
+-    cat = {"items": [bad, _entry(2), _entry(3)]}
+-    (kdir / "knowledge-test.json").write_text(json.dumps(cat), encoding="utf-8")
+-    findings = KL.check_kl002(kdir)
+-    assert any("keywords または tags がない" in f["message"] for f in findings)
+-
+-
+-# =====================================================================
+-# KL-003 / KL-004 / KL-006
+-# =====================================================================
+-
+-def test_kl003_missing_search_script(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "search_knowledge.py").unlink()
+-    findings = KL.check_kl003(skill_dir)
+-    assert findings and findings[0]["rule"] == "KL-003"
+-    assert findings[0]["severity"] == "error"
+-
+-
+-def test_kl003_present(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    assert KL.check_kl003(skill_dir) == []
+-
+-
+-def test_kl004_missing_record_script(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "record_usage.py").unlink()
+-    findings = KL.check_kl004(skill_dir)
+-    assert findings and findings[0]["rule"] == "KL-004"
+-
+-
+-def test_kl006_missing_add_entry_is_warn(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "add_entry.py").unlink()
+-    findings = KL.check_kl006(skill_dir)
+-    assert findings and findings[0]["severity"] == "warn"
+-
+-
+-def test_kl006_present(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    assert KL.check_kl006(skill_dir) == []
+-
+-
+-# =====================================================================
+-# KL-005
+-# =====================================================================
+-
+-def test_kl005_threshold_in_skill_md(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    findings = KL.check_kl005(skill_dir, skill_dir / "knowledge")
+-    assert findings == []
+-
+-
+-def test_kl005_threshold_in_index_lifecycle(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    # SKILL.md から閾値文言を消す
+-    (skill_dir / "SKILL.md").write_text("# テスト\n本文のみ\n", encoding="utf-8")
+-    kdir = skill_dir / "knowledge"
+-    idx, _ = KL.load_json_safe(kdir / "knowledge-index.json")
+-    idx["lifecycle"] = {"split_threshold_lines": 500, "split_threshold_entries": 25}
+-    (kdir / "knowledge-index.json").write_text(json.dumps(idx), encoding="utf-8")
+-    findings = KL.check_kl005(skill_dir, kdir)
+-    assert findings == []
+-
+-
+-def test_kl005_missing_threshold_is_warn(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "SKILL.md").write_text("# テスト\n本文のみ\n", encoding="utf-8")
+-    findings = KL.check_kl005(skill_dir, skill_dir / "knowledge")
+-    assert findings and findings[0]["rule"] == "KL-005"
+-    assert findings[0]["severity"] == "warn"
+-
+-
+-# =====================================================================
+-# KL-007: consult_at 宣言・妥当性・物理位置一致
+-# =====================================================================
+-
+-def _write_index(skill_dir: Path, extra: dict) -> None:
+-    kdir = skill_dir / "knowledge"
+-    base = {
+-        "version": "1.0.0",
+-        "categories": [
+-            {"id": "test", "label": "テスト", "file": "knowledge-test.json", "keywords": []}
+-        ],
+-        "global_keywords": {},
+-    }
+-    (kdir / "knowledge-index.json").write_text(
+-        json.dumps({**base, **extra}), encoding="utf-8"
+-    )
+-
+-
+-def test_kl007_unset_consult_at(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "未宣言" in findings[0]["message"]
+-
+-
+-def test_kl007_runtime_loop_a_ok(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": ["runtime"]})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings == []
+-
+-
+-def test_kl007_build_time_loop_b_ok(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": ["build-time"]})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=True)
+-    assert findings == []
+-
+-
+-def test_kl007_loop_a_with_build_time_mismatch(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": ["build-time"]})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "不一致" in findings[0]["message"]
+-
+-
+-def test_kl007_loop_b_with_runtime_mismatch(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": ["runtime"]})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=True)
+-    assert findings and "不一致" in findings[0]["message"]
+-
+-
+-def test_kl007_invalid_value(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": ["sometime"]})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "不正な値" in findings[0]["message"]
+-
+-
+-def test_kl007_not_a_list(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": "runtime"})  # string not list
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "配列である必要" in findings[0]["message"]
+-
+-
+-def test_kl007_empty_list(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    _write_index(skill_dir, {"consult_at": []})
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "未宣言または空" in findings[0]["message"]
+-
+-
+-def test_kl007_decl_file_absent_skips(tmp_path):
+-    """宣言ファイルが無ければ KL-007 は対象なしでスキップ (KL-001 が別途検出)。"""
+-    kdir = tmp_path / "knowledge"
+-    kdir.mkdir()
+-    findings = KL.check_kl007(kdir, store_only=False)
+-    assert findings == []
+-
+-
+-def test_kl007_router_fallback(tmp_path):
+-    """index が無く router.json があれば router を宣言ファイルとして使う。"""
+-    skill_dir = _good_skill(tmp_path)
+-    kdir = skill_dir / "knowledge"
+-    (kdir / "knowledge-index.json").unlink()
+-    (kdir / "router.json").write_text(
+-        json.dumps({"consult_at": ["runtime"]}), encoding="utf-8"
+-    )
+-    findings = KL.check_kl007(kdir, store_only=False)
+-    assert findings == []
+-
+-
+-def test_kl007_bad_json_in_decl(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "knowledge" / "knowledge-index.json").write_text(
+-        "{broken", encoding="utf-8"
+-    )
+-    findings = KL.check_kl007(skill_dir / "knowledge", store_only=False)
+-    assert findings and "JSON 解析に失敗" in findings[0]["message"]
+-
+-
+-# =====================================================================
+-# run_lint: status transitions (strict vs non-strict)
+-# =====================================================================
+-
+-def test_run_lint_strict_fail_on_error(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "search_knowledge.py").unlink()  # KL-003 error
+-    result = KL.run_lint(skill_dir, strict=True)
+-    assert result["status"] == "fail"
+-    assert result["error_count"] >= 1
+-
+-
+-def test_run_lint_non_strict_warn_on_error(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "search_knowledge.py").unlink()
+-    result = KL.run_lint(skill_dir, strict=False)
+-    assert result["status"] == "warn"
+-
+-
+-def test_run_lint_warn_on_warning_only(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "add_entry.py").unlink()  # KL-006 warn only
+-    result = KL.run_lint(skill_dir, strict=True)
+-    assert result["status"] == "warn"
+-    assert result["error_count"] == 0
+-    assert result["warn_count"] >= 1
+-
+-
+-# =====================================================================
+-# _extract_anyof_required (schema 走査純関数)
+-# =====================================================================
+-
+-def test_extract_anyof_required_nested():
+-    node = {
+-        "allOf": [
+-            {"anyOf": [{"required": ["a"]}, {"required": ["b"]}]},
+-            {"properties": {"x": {"anyOf": [{"required": ["c"]}]}}},
+-        ]
+-    }
+-    groups = KL._extract_anyof_required(node)
+-    assert {"a", "b"} in groups
+-    assert {"c"} in groups
+-
+-
+-def test_extract_anyof_required_empty():
+-    assert KL._extract_anyof_required({"x": 1}) == []
+-
+-
+-# =====================================================================
+-# main() via subprocess: exit code + JSON 出力契約
+-# =====================================================================
+-
+-def test_subprocess_self_test():
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), "--self-test"],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 0, r.stderr
+-    assert "PASS" in r.stdout
+-
+-
+-def test_subprocess_pass(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), str(skill_dir)],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 0, r.stderr
+-    payload = json.loads(r.stdout)
+-    assert payload["status"] == "pass"
+-
+-
+-def test_subprocess_strict_fail(tmp_path):
+-    skill_dir = _good_skill(tmp_path)
+-    (skill_dir / "scripts" / "search_knowledge.py").unlink()
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), str(skill_dir), "--strict"],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 1
+-    payload = json.loads(r.stdout)
+-    assert payload["status"] == "fail"
+-
+-
+-def test_subprocess_store_only_flag(tmp_path):
+-    skill_dir = _good_skill(tmp_path, store_only=True)
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), str(skill_dir), "--store-only", "--strict"],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 0, r.stderr
+-    payload = json.loads(r.stdout)
+-    assert payload["status"] == "pass"
+-
+-
+-def test_subprocess_skip_when_no_knowledge(tmp_path):
+-    skill_dir = tmp_path / "run-empty"
+-    skill_dir.mkdir()
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), str(skill_dir)],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 0
+-    payload = json.loads(r.stdout)
+-    assert payload["status"] == "skip"
+-
+-
+-def test_subprocess_missing_skill_dir_arg():
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT)],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode != 0
+-    assert "skill_dir" in r.stderr
+-
+-
+-def test_subprocess_nonexistent_dir(tmp_path):
+-    r = subprocess.run(
+-        [sys.executable, str(SCRIPT), str(tmp_path / "absent")],
+-        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+-    )
+-    assert r.returncode == 1
+-    payload = json.loads(r.stderr)
+-    assert "存在しない" in payload["error"]
+diff --git a/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py b/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py
+index ba8ca5c..f572a30 100644
+--- a/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py
++++ b/tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py
+@@ -371,6 +371,37 @@ def test_kl007_decl_json_error(tmp_path):
+     assert out and "JSON 解析に失敗" in out[0]["message"]
+ 
+ 
++# ── KL-008 ───────────────────────────────────────────────────────────────
++def test_kl008_legacy_output_is_additively_compatible(tmp_path):
++    skill = tmp_path / "skill"
++    skill.mkdir()
++    (skill / "SKILL.md").write_text("# legacy", encoding="utf-8")
++    assert MOD.check_kl008(skill, store_only=False) == []
++
++
++def test_kl008_runtime_store_requires_shared_engine(tmp_path):
++    skill = tmp_path / "skill"
++    scripts = skill / "scripts"
++    scripts.mkdir(parents=True)
++    (skill / "SKILL.md").write_text(
++        "runtime_store: external-intelligence-v1\n", encoding="utf-8"
++    )
++    missing = MOD.check_kl008(skill, store_only=False)
++    assert missing and missing[0]["rule"] == "KL-008"
++
++    (scripts / "build-external-intelligence.py").write_text("# engine", encoding="utf-8")
++    assert MOD.check_kl008(skill, store_only=False) == []
++
++
++def test_kl008_rejects_unknown_runtime_store_but_skips_store_only(tmp_path):
++    skill = tmp_path / "skill"
++    skill.mkdir()
++    (skill / "SKILL.md").write_text("runtime_store: other\n", encoding="utf-8")
++    invalid = MOD.check_kl008(skill, store_only=False)
++    assert invalid and "external-intelligence-v1" in invalid[0]["message"]
++    assert MOD.check_kl008(skill, store_only=True) == []
++
++
+ # ── run_lint orchestration ───────────────────────────────────────────────
+ def test_run_lint_skip_when_no_knowledge(tmp_path):
+     skill = tmp_path / "s"
+diff --git a/tests/scripts-plugins/test_harness_creator__validate_build_plan.py b/tests/scripts-plugins/test_harness_creator__validate_build_plan.py
+index 8990ed6..50e2fd5 100644
+--- a/tests/scripts-plugins/test_harness_creator__validate_build_plan.py
++++ b/tests/scripts-plugins/test_harness_creator__validate_build_plan.py
+@@ -108,6 +108,7 @@ def test_knowledge_flag_adds_section_and_scripts(mod):
+     assert "ナレッジループ" in plan["required_sections"]
+     ids = {d["id"] for d in plan["required_deliverables"]}
+     assert "knowledge-script:search_knowledge.py" in ids
++    assert "knowledge-script:build-external-intelligence.py" in ids
+     assert "frontmatter:knowledge_loop" in ids
+ 
+ 
+diff --git a/tests/test_auto_record_lesson_portability.py b/tests/test_auto_record_lesson_portability.py
+deleted file mode 100644
+index f74ee15..0000000
+--- a/tests/test_auto_record_lesson_portability.py
++++ /dev/null
+@@ -1,173 +0,0 @@
+-"""auto-record-lesson.py の書込先移植性 (3 段 fallback) を実証する。
+-
+-read-only install / cwd 非依存を保証する: plugin-root が書込不能でも user state へ
+-退避し、全滅でも exit 0 / Traceback 無し。dev では plugin-root へ書ける既存挙動維持。
+-"""
+-import importlib.util
+-import json
+-import os
+-from pathlib import Path
+-
+-import pytest
+-
+-
+-ROOT = Path(__file__).resolve().parents[1]
+-SCRIPT = (
+-    ROOT
+-    / "plugins"
+-    / "harness-creator"
+-    / "skills"
+-    / "run-build-skill"
+-    / "scripts"
+-    / "auto-record-lesson.py"
+-)
+-
+-
+-def _load():
+-    spec = importlib.util.spec_from_file_location("auto_record_lesson", SCRIPT)
+-    mod = importlib.util.module_from_spec(spec)
+-    spec.loader.exec_module(mod)
+-    return mod
+-
+-
+-MOD = _load()
+-
+-_FAILING_INPUT = json.dumps(
+-    {
+-        "hook_event_name": "PostToolUse",
+-        "tool_name": "Skill",
+-        "tool_input": {"skill": "run-x"},
+-        "tool_response": {"stderr": "ERROR: something failed Traceback"},
+-    }
+-)
+-
+-
+-def _run_main_with_stdin(monkeypatch, capsys, stdin_text):
+-    import io
+-
+-    monkeypatch.setattr("sys.stdin", io.StringIO(stdin_text))
+-    rc = MOD.main()
+-    return rc, capsys.readouterr()
+-
+-
+-# --- 既定: plugin-root 配下 (dev 既存挙動・dogfooding 互換) ---
+-
+-def test_default_dir_is_plugin_root(monkeypatch):
+-    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+-    monkeypatch.delenv("CLAUDE_PLUGIN_ROOT", raising=False)
+-    d = MOD._lessons_dir()
+-    assert d == MOD._plugin_root() / "lessons-learned"
+-    # plugin-root は harness-creator を指す
+-    assert MOD._plugin_root().name == "harness-creator"
+-
+-
+-def test_env_plugin_root_override(monkeypatch, tmp_path, as_self_plugin):
+-    as_self_plugin(tmp_path)
+-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+-    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+-    assert MOD._plugin_root() == tmp_path.resolve()
+-    assert MOD._lessons_dir() == tmp_path.resolve() / "lessons-learned"
+-
+-
+-def test_env_pointing_at_foreign_plugin_is_rejected(
+-    monkeypatch, tmp_path, as_foreign_plugin
+-):
+-    """借用 repo の平置き projection で env が別 plugin を指す事故を弾く。
+-
+-    空でも非 dir でもないため `if env:` / isdir では検出できない。自 plugin の
+-    manifest name と一致しない env は捨て、__file__ 相対 fallback へ落ちる。
+-    """
+-    as_foreign_plugin(tmp_path)
+-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(tmp_path))
+-    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+-    assert MOD._plugin_root() != tmp_path.resolve()
+-    assert MOD._plugin_root() == SCRIPT.resolve().parents[3]
+-
+-
+-def test_hc_root_wins_over_claude_plugin_root(
+-    monkeypatch, tmp_path, as_self_plugin, as_foreign_plugin
+-):
+-    """借用側が HC_ROOT で明示指定した場合、他 plugin を指す env より優先される。"""
+-    mine = as_self_plugin(tmp_path / "mine")
+-    theirs = as_foreign_plugin(tmp_path / "theirs")
+-    monkeypatch.setenv("HC_ROOT", str(mine))
+-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(theirs))
+-    monkeypatch.delenv("HARNESS_CREATOR_LESSONS_DIR", raising=False)
+-    assert MOD._plugin_root() == mine.resolve()
+-
+-
+-def test_env_lessons_dir_override_is_sole_candidate(monkeypatch, tmp_path):
+-    monkeypatch.setenv("HARNESS_CREATOR_LESSONS_DIR", str(tmp_path / "ld"))
+-    cands = MOD._candidate_dirs()
+-    assert cands == [(tmp_path / "ld").resolve()]
+-
+-
+-# --- (a) 既定で書ける ---
+-
+-def test_writes_to_plugin_root_when_writable(monkeypatch, tmp_path, capsys):
+-    primary = tmp_path / "plugin" / "lessons-learned"
+-    primary.parent.mkdir(parents=True)
+-    monkeypatch.setattr(MOD, "_candidate_dirs", lambda: [primary, tmp_path / "fallback"])
+-    rc, cap = _run_main_with_stdin(monkeypatch, capsys, _FAILING_INPUT)
+-    assert rc == 0
+-    assert list(primary.glob("*.md")), "primary に lesson が書かれていない"
+-    assert "recorded ->" in cap.err  # 書込先を 1 行可視化
+-
+-
+-# --- (b) plugin-root 書込不能 → user state へ degrade ---
+-
+-def test_falls_back_when_primary_unwritable(monkeypatch, tmp_path, capsys):
+-    # primary は親が存在しない & 作れない想定にするため、書込不能フラグを直接注入。
+-    primary = tmp_path / "ro" / "lessons-learned"
+-    fallback = tmp_path / "state" / "lessons-learned"
+-    fallback.parent.mkdir(parents=True)
+-    monkeypatch.setattr(MOD, "_candidate_dirs", lambda: [primary, fallback])
+-
+-    def fake_writable(d):
+-        return d == fallback
+-
+-    monkeypatch.setattr(MOD, "_dir_is_writable", fake_writable)
+-    rc, cap = _run_main_with_stdin(monkeypatch, capsys, _FAILING_INPUT)
+-    assert rc == 0
+-    assert list(fallback.glob("*.md")), "fallback に退避されていない"
+-    assert "recorded ->" in cap.err
+-
+-
+-# --- (c) 全滅でも exit 0 / Traceback 無し ---
+-
+-def test_no_writable_sink_is_noop_exit0(monkeypatch, tmp_path, capsys):
+-    monkeypatch.setattr(MOD, "_candidate_dirs", lambda: [tmp_path / "a", tmp_path / "b"])
+-    monkeypatch.setattr(MOD, "_dir_is_writable", lambda d: False)
+-    rc, cap = _run_main_with_stdin(monkeypatch, capsys, _FAILING_INPUT)
+-    assert rc == 0
+-    assert "no writable sink" in cap.err
+-    assert "Traceback" not in cap.err
+-
+-
+-def test_no_failure_signature_is_silent_exit0(monkeypatch, capsys):
+-    rc, cap = _run_main_with_stdin(
+-        monkeypatch, capsys, json.dumps({"tool_name": "Read", "ok": "all good"})
+-    )
+-    assert rc == 0
+-    assert cap.err == ""
+-
+-
+-# --- state fallback root の env 解決順 ---
+-
+-def test_state_fallback_prefers_project_dir(monkeypatch, tmp_path):
+-    monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path / "proj"))
+-    root = MOD._state_fallback_root()
+-    assert root == tmp_path / "proj" / ".claude" / "state" / "harness-creator"
+-
+-
+-def test_state_fallback_uses_xdg(monkeypatch, tmp_path):
+-    monkeypatch.delenv("CLAUDE_PROJECT_DIR", raising=False)
+-    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "xdg"))
+-    root = MOD._state_fallback_root()
+-    assert root == tmp_path / "xdg" / "harness-creator"
+-
+-
+-def test_dir_is_writable_walks_to_existing_ancestor(tmp_path):
+-    # 深い未作成パスでも、書込可能な既存祖先があれば True。
+-    deep = tmp_path / "a" / "b" / "c"
+-    assert MOD._dir_is_writable(deep) is True
+diff --git a/tests/test_build_claude_settings.py b/tests/test_build_claude_settings.py
+index 54022fd..3f42f7d 100644
+--- a/tests/test_build_claude_settings.py
++++ b/tests/test_build_claude_settings.py
+@@ -348,6 +348,26 @@ class BuildClaudeSettingsTest(unittest.TestCase):
+         self.assertEqual(result.returncode, 3)
+         self.assertIn("unknown hook event", result.stderr)
+ 
++    def test_managed_post_tool_failure_hook_is_supported(self):
++        self.write_target({"permissions": {"deny": [], "ask": []}, "hooks": {}})
++        self.plugin(
++            "alpha",
++            hooks=self.hook(
++                "python3 record-failure.py",
++                matcher="Bash|Write",
++                event="PostToolUseFailure",
++            ),
++        )
++
++        result = self.run_cli()
++
++        self.assertEqual(result.returncode, 0, result.stderr)
++        data = MODULE.load_target(self.target)
++        self.assertEqual(
++            data["hooks"]["PostToolUseFailure"][0]["hooks"][0]["command"],
++            "python3 record-failure.py",
++        )
++
+     def test_symlink_shared_skill_is_not_conflict(self):
+         # 複数 plugin が同名 skill を symlink で 1 実体から共有する場合は、
+         # 名前衝突ではなく共有 (shared) として dedupe し exit2 にしない。

@@ -43,7 +43,10 @@ def test_run_skill_frontmatter_is_inventory_exact(component: dict) -> None:
 
     assert fm["combinators"] == component["combinators"]
     assert fm["goal_seek"] == component["goal_seek"]
+    # activation_state は lint-entrypoint-artifact-first.py が heavy skill へ要求する
+    # 契約キー。inventory を正本にしたまま exact 一致を保つため、期待値も inventory から取る。
     assert fm["feedback_contract"] == {
+        "activation_state": component["feedback_contract"]["activation_state"],
         "max_iterations": 3,
         "criteria": component["feedback_contract"]["criteria"],
     }

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "P05-x-90 事前実測 (audit/P05-x-89-90.json) より: NoLiteralCopyOfCanonTest は左辺 spec.BRIEF[gates] と右辺 spec.GATE_IDS (=同じ BRIEF からの導出) を比べており原理的に落ちない (M-A4 で確認)。しかも実在する写し4定数は対象外。『写しが無いこと』を名乗る検出器が写しを1件も見ていない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json",
+  "proposed_node": {
+    "id": "P05-x-97",
+    "title": "NoLiteralCopyOfCanonTest のトートロジーを解き実際の写し4定数を対象に入れる",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+    "acceptance_criterion": "検出器の左辺が正本 (command-brief-C09.json) 側・右辺がテスト側の定数であり、正本の語彙を改名した変異 (M-A1/M-A2/M-A3 相当) で赤になること。GATE_STATES / NOT_RUN_REASONS / VERDICTS / EXIT_CODE_TO_STATE の4定数が検出器の対象に入っていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

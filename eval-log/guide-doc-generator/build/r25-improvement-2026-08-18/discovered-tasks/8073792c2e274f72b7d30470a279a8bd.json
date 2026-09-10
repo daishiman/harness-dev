@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C22-01",
+  "reason": "test_cli_contract.py の TestArgvAndExit2 は必須フィールド 4 件 (purpose / background / goal / sections) を個別にテストするが、実装の REQUIRED_CONFIG_KEYS は 5 要素で presentation_order の兄弟テストだけが無い。テストが実装の定数から導出されず手書き列挙のため、必須フィールドが増えても網が追随しない。orange が検出",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-79-required-config-keys-test-net-narrower-than-impl",
+    "title": "必須フィールドのテスト網を実装の定数から導出する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/verify-handout-narrative.py/",
+    "acceptance_criterion": "TestArgvAndExit2 の必須フィールド系テストが REQUIRED_CONFIG_KEYS から導出され、定数へ要素を足すとテストが自動的に増えること。手書き列挙が残っていないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

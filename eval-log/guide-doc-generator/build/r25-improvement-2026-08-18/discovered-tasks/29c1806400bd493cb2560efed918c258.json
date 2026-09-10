@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c12-copy-long-impl",
+  "reason": "handout-visual-policy.json の canon_authority が列挙する 14 コードに対し script-brief-C12.json の codes[] は 6 件しかない。実装にあって brief に無いコードが黙って増える",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c12-copy-long-impl.json",
+  "proposed_node": {
+    "id": "P02-x-130-c12-code-inventory-parity",
+    "title": "C12 brief の codes[] を canon_authority の列挙と一致させ、ずれを検査する",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+    "acceptance_criterion": "canon_authority が列挙する全コードが codes[] に載り、各件が閾値の解決元と判定単位を持つこと。加えて『実装が add() するコード集合と brief の codes[] が一致する』ことを突合する検査の担い手が決まっていること (担い手を置かない場合はその理由)",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  }
+}

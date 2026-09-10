@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c06-r25-axes",
+  "reason": "P02-c06-r25-axes の AC は『C03 側は軸を持たないまま (正本が C06 1 箇所)』を求めるが、skill-brief-C03.json の key_constraints が軸名 6 種 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness) をそのまま列挙している。同 brief の open_questions[0] は『本 brief は軸名を 1 つも書かない』と宣言しており、同一ブリーフ内で宣言と実体が食い違う。C06 側は 10 種へ増えているため、C03 の列挙は旧 6 種のまま古びた状態でもある。write_scope が C06 のため本ノードでは直せない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c06-r25-axes.json",
+  "proposed_node": {
+    "id": "P02-c03-axis-vocab-removal",
+    "title": "C03 の key_constraints から軸名の列挙を除き C06 参照へ寄せる",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+    "acceptance_criterion": "skill-brief-C03.json に軸名 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness / opening-order / visual-fit / card-granularity / nav-scannability) が 1 件も現れず、軸の正本として agent-brief-C06.json#output_contract.returns の axis を参照する記述だけが残ること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C03"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

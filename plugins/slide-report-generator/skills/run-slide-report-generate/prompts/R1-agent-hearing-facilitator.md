@@ -56,7 +56,7 @@ last-audited: 2026-07-05
 |------|------|----------|
 | output_mode | 成果物の種別。`slide`（1スライド1メッセージのプレゼンデッキ）/ `report`（セクション+段落の読み物HTMLレポート）の2値。意匠・技術層は共有し、コンテンツ意図層のみ mode で分岐する（§D） | CONST_007 / structure.schema.json ↔ report-structure.schema.json |
 | reportType | output_mode=report 時の読み物型。`internal-analysis`（社内報告分析）/ `client-proposal`（顧客提案WP）/ `tech-doc`（技術ドキュメント）/ `learning`（学習解説）の4択。各型が既定のセクション骨格を持つ（Layer 7 参照） | CONST_007 / report-structure-designer |
-| 意匠・技術層（共有） | Kanagawa 配色 / 最小フォント 1.4rem / インライン SVG / 印刷CSS / Codex 画像 / スタイルゲノム / 決定論レンダラ。両モードで単一 SSOT として共有し mode で重複させない（16:9・letterbox は slide 固有） | §D 共有層 |
+| 意匠・技術層（共有） | 配色トークン / 最小フォント 1.4rem / インライン SVG / 印刷CSS / Codex 画像 / スタイルゲノム / 決定論レンダラ。両モードで単一 SSOT として共有し mode で重複させない（16:9・letterbox は slide 固有） | §D 共有層 |
 | コンテンツ意図層（mode 別） | slide=1スライド1メッセージ/chip強制/長文禁止、report=読み物（文章多め可）/セクション+段落/1項目1ビジュアル。ここだけが mode で分岐する | §D mode 別層 |
 | キーメッセージ | このプレゼンで最も伝えたい1点。1文で言語化する | 最上位目的 |
 | コンテンツ素材 | ユーザー提供のテキスト・箇条書き・データ。原文保持で扱う | 出力テンプレート |
@@ -96,7 +96,7 @@ last-audited: 2026-07-05
   - 目的: ヒアリング段階でモードを確定し、下流（structure-designer・ai-image-diagram-producer）が背景化バランス型で作ることを防ぐ。
   - 背景: 実運用で全面AI画像化の指示が上位の発火点に昇格しておらず、運用者が背景化（バランス型）で作ってしまえた事象の再発防止（2026-06-24）。
 - **CONST_007 (output_mode 確定と mode 別要件)**: ヒアリング冒頭でまず `output_mode` を **slide / report のいずれか1値**に確定してから他項目の収集へ進む。確定後は以下の分岐を適用する。
-  - **共有層（mode で重複させない単一 SSOT）**: 意匠・技術層（Kanagawa 配色・最小フォント 1.4rem・インライン SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は両モード共通。16:9・letterbox は slide 固有。
+  - **共有層（mode で重複させない単一 SSOT）**: 意匠・技術層（配色トークン・最小フォント 1.4rem・インライン SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は両モード共通。16:9・letterbox は slide 固有。
   - **mode 別層（コンテンツ意図のみ分岐）**: `slide`=1スライド1メッセージ / chip 強制 / 長文禁止（下流の structure-designer が structure.schema.json で分解）。`report`=読み物（文章多め可）/ セクション+段落 / 1項目1ビジュアル（下流の report-structure-designer が report-structure.schema.json で設計）。
   - **report 確定時の追加ヒアリング（必須）**: ①`reportType`（`internal-analysis` / `client-proposal` / `tech-doc` / `learning` の4択）②読者（誰向けか）③長さ・粒度（読み物としての深さ）④ビジュアル方針（SVG / Mermaid / Codex 画像の希望）を確定する。
   - 目的: 意匠は共有しつつコンテンツ意図のみ mode 別（§D）とし、下流の構成設計器（slide=structure-designer / report=report-structure-designer）と主 skill（run-slide-report-generate）が正しい意図で構成できるよう、最上位のヒアリングで mode を確定する。
@@ -239,7 +239,7 @@ last-audited: 2026-07-05
 
 {{素材をそのまま記載}}
 ```
-> 読者価値ブリーフは schema 外の設計入力であり、下流で既存フィールド（title/audience/keyMessage/throughLine/sections）へ翻訳する。`structure.json` / `report-structure.json` に未定義フィールドを追加しない。素材にない数字・実績・失敗は作らず「未確認」とする。意匠・技術層（Kanagawa 配色・最小フォント・SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は slide/report 共有の単一 SSOT であり、mode 別に重複記載しない。
+> 読者価値ブリーフは schema 外の設計入力であり、下流で既存フィールド（title/audience/keyMessage/throughLine/sections）へ翻訳する。`structure.json` / `report-structure.json` に未定義フィールドを追加しない。素材にない数字・実績・失敗は作らず「未確認」とする。意匠・技術層（配色トークン・最小フォント・SVG・印刷CSS・Codex 画像・スタイルゲノム・決定論レンダラ）は slide/report 共有の単一 SSOT であり、mode 別に重複記載しない。
 
 ## 5.7 依存関係
 - 前提エージェント: なし（外部=ユーザー初期入力を起点とするワークフロー先頭エージェント）。

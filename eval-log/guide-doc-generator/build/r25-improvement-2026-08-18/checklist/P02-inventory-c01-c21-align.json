@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-inventory-c01-c21-align",
+  "covered_task_ids": [
+    "P02-inventory-c01-c21-align"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+  "acceptance_criterion_restated": "inventory C21 の purpose が『生成対象は role=illustration の節に限る』と読める文言であること、および inventory C01 の deterministic_checks が skill-brief-C01.json の R3-render 呼出し列 (validate / resolve / embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout / C09 4 ゲート / route) を欠落なく列挙すること",
+  "verified_by": [
+    {
+      "claim": "C21 purpose の記述が正本と逆向きだったことを特定した",
+      "method": "inventory C21 の purpose 末尾と script-brief-C21.json#generation_scope を突合",
+      "result": "inventory は『role=illustration を role=screenshot と並ぶ生成対象として扱う』と書いており、両 role が生成対象だと読める。brief の generation_scope.target_set は『載せてよいのは role=illustration の節に限られる — role=screenshot は実素材の埋め込み (C13) で足りる』と真逆を宣言していた。R25 で illustration を生成対象へ加えた際に『並ぶ』という語を選んだことで、screenshot も対象のままだと読める文になっていた"
+    },
+    {
+      "claim": "C21 purpose を書き換え、同時に『C21 が role で絞る』とも読めないようにした",
+      "method": "brief の generation_scope が持つ 3 項 (target_set / who_selects / role_is_not_interpreted_here) の全てが成り立つ文にする",
+      "result": "『載せてよいのは role=illustration の節に限る (理由: screenshot は C13 の実素材埋め込みで足り、生成へ回すと待ち時間が節数に比例する問題の抑制策が無効化する)。ただし本 script 自身は role を読まず絞り込みもしない — 選定は呼び出し側 C01 の R3-render の責務』とし、正本 2 件 (improvement/visual-per-section-decision.json#cost_and_risk.mitigation と script-brief-C21.json#generation_scope) を名指しした。絞込みの主語を書かないと、次に読む人が C21 へ role 検査を足す方向へ動く (brief が明示的に禁じている改変)"
+    },
+    {
+      "claim": "C01 deterministic_checks の欠落を実測で特定した",
+      "method": "inventory C01 の 7 本と skill-brief-C01.json#responsibilities R3-render の本文に現れる script を突合し、plugins/guide-doc-generator/scripts/ の実在ファイルで裏を取った",
+      "result": "生成側 5 本 (embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / render-handout.py) が丸ごと欠落していた。既存の 7 本は検証系 4 + validate + resolve + route であり、この欄だけを読むと『C01 は検証と配置しか起動しない』= 資料を組み立てる本体を持たないコンポーネントに見える。5 本とも実ファイルが存在することを確認済み"
+    },
+    {
+      "claim": "12 本を R3-render の実行順で並べ、順序の意味を書いた",
+      "method": "R3-render の本文 (role 確定 → C13 → C21 → 組み立て) と C09 が束ねる 4 ゲート、C19 の配置を順に写す",
+      "result": "validate → resolve → embed-assets → render-diagram-svg → build-icon-sprite → srg-image-bridge → render-handout → 検証 4 本 → route の 12 本。deterministic_checks_note を新設し『本欄は写しであり、呼出しの条件 (素材不在時の illustration 差し替え・demo_first の例外 CR-DEMO-NO-FALLBACK・C21 へ渡すのは illustration の節だけ) は brief 側にしか書かない』と境界を明記した。条件を写すと差し替え規則の第 2 の出所ができる"
+    },
+    {
+      "claim": "決定論ゲートを通した",
+      "method": "check-surface-inventory.py / check-spec-gates.py / detect-unassigned.py を実行。編集前に JSON の round-trip も確認",
+      "result": "3 本とも exit0 (detect-unassigned は『13 フェーズ完全・section 床充足・orphan 0 件・全 component が build_target を保持』)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02INVALIGN-BRIEFSAME-01",
+      "level": "warn",
+      "summary": "skill-brief-C01.json#deterministic_checks は inventory と 1 文字違わず同じ 7 本で、生成 5 本の欠落も同じ。受入条件は inventory 側だけを直せと言うため、実行すると『正本である brief より写しの inventory の方が完全』という逆転が生まれる。次に brief から inventory を再射影する人が欠落を復活させる経路が残るため P02-x-143-c01-brief-deterministic-checks を emit した"
+    },
+    {
+      "id": "F-P02INVALIGN-DERIVED-01",
+      "level": "warn",
+      "summary": "そもそも deterministic_checks は R3-render の本文から機械導出できる情報を人手で写した欄であり、2 箇所 (inventory / brief) が独立に古くなる。今回は両方が同時に古かったため矛盾として現れず、どちらを読んでも同じ嘘になっていた。矛盾しない複製は矛盾する複製より発見が遅れる"
+    },
+    {
+      "id": "F-P02INVALIGN-NOGATE-01",
+      "level": "info",
+      "summary": "deterministic_checks の各要素が plugins/<slug>/scripts/ に実在するか、依存 component が起動する script を網羅しているかを見るゲートは無い。存在しないファイル名を書いても、逆に半分だけ書いても check-spec-gates.py は緑になる。今回の欠落が長く残った理由でもある"
+    },
+    {
+      "id": "F-P02INVALIGN-WORDING-01",
+      "level": "info",
+      "summary": "C21 purpose の誤りは『並ぶ生成対象として扱う』という一語の選び方から生まれた。R25 で illustration を追加対象にする裁定自体は正しく、追加を表現する際に既存対象 (screenshot) の扱いを言い落としたことで意味が反転した。追加の裁定を書くときは『何が対象でなくなるか』も同じ文で述べないと、加算としてしか読まれない"
+    }
+  ]
+}

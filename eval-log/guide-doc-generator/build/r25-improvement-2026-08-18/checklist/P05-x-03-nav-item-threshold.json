@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-03-nav-item-threshold",
+  "covered_task_ids": [
+    "P05-x-03-nav-item-threshold"
+  ],
+  "status": "blocked",
+  "blocked_reason": "AC 前半 (出荷 config に nav ラベルの上限が実在する) は満たしたが、後半 (C11 が描く nav ラベルが検査対象に入る) は判定器の配線を要し、write_scope (config/handout-visual-policy.json 単体) の外にある。配線は discovered-task P05-x-117-nav-label-check-wiring (additive) として emit 済み",
+  "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+  "verified_by": [
+    {
+      "claim": "nav ラベルの実体は sections[].heading であり、構成データに nav_item というフィールドは無い",
+      "method": "scripts/render-handout.py の nav 導出箇所を読んだ (:789-793 『目次は sections から導出する。構成データ側に第 2 の名簿を作らない』)。build_nav (:2007-2027) も config['nav'] の entry.label をそのまま描く",
+      "result": "nav[].label = sections[].heading の写しであることを確認。nav_item というキーは schema にも構成データにも存在しない"
+    },
+    {
+      "claim": "plan 側 config の nav_item を同値で写すと到達不能な検査になる",
+      "method": "plan の briefs/config/handout-visual-policy.json は micro_copy.roles[label].fields へ nav_item を追加している。一方 micro_copy の適用範囲は同ファイルの note が sections[].parts[].data と diagrams[].data に限ると明記し、tests/validate-handout-config.py/test_micro_copy.py::test_section_fields_are_not_touched がセクション直下フィールドを対象外として固定している",
+      "result": "nav_item を fields へ足しても該当キーが構成データ上に存在せず 1 件も走らない。AC の『plan 側と同値』を字面で満たすと、今 build 中に 2 件 emit したのと同型の到達不能な検査を出荷することになる。よって AC が並置する 2 つ目の選択肢 (専用の検査点) を採った"
+    },
+    {
+      "claim": "専用の検査点が出荷 config に実在する",
+      "method": "handout-visual-policy.json へ nav ブロックを新設した。source_field='sections[].heading' / derived_by='C11 render-handout.py:789-793' / max_chars=14 / code='W-NAV-LONG' を持つ",
+      "result": "上限値 14 は plan 側 nav_item が属する label ロールの max_chars と同値であり、AC の『plan 側の nav_item と同値』を値として満たす。出所は字面でなく実装の実測から取った"
+    },
+    {
+      "claim": "重大度が config で宣言されている",
+      "method": "thresholds.nav_label_max_chars を追加 (value=14 / code=W-NAV-LONG / level=warning / mirrors=nav.max_chars)",
+      "result": "既定で exit=0・--strict で exit=1 になる区分を宣言した。error にしないのは、超過が書き手の推敲で解ける指摘であり完了を止める性質ではないため"
+    },
+    {
+      "claim": "config が壊れていない",
+      "method": "python3 -c 'import json; json.load(open(...))' で再読込し、キー順が _meta..fold の 13 キーで nav が layering と thresholds の間に入ったことを確認",
+      "result": "読み込み成功。既存キーの値は 1 つも変更していない (追加のみ)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X03NAV-WIRING-01",
+      "level": "warn",
+      "summary": "W-NAV-LONG を出す判定は validate-handout-config.py 側に無い。config は受け皿だけを持つ状態であり、この時点では利用者要求 R11 の決定論的担保は成立していない。discovered-task P05-x-117-nav-label-check-wiring (additive) として emit した。陽性・陰性対照と閾値の外部化を AC に明記してある"
+    },
+    {
+      "id": "F-P05X03NAV-PLANDRIFT-01",
+      "level": "warn",
+      "summary": "plan 側 briefs/config/handout-visual-policy.json の micro_copy.roles[label].fields に残る nav_item は、構成データ上に対応キーが無いため plan の側でも到達不能な宣言である。出荷 config を plan へ同値で近づける方向の突合 (P05-x-66-reverse-drift-sweep) が走ると、この nav ブロックが『plan に無い差分』として巻き戻される危険がある。plan 側から nav_item を落とし nav ブロックを反映する追随が要る"
+    },
+    {
+      "id": "F-P05X03NAV-UIUX-01",
+      "level": "info",
+      "summary": "R11 が求める『ナビを見やすく』は文字数上限だけでは満たされない。render-handout.py:1507-1508 の .navbar は gap:12px の素のリンク列で、チップ化・現在位置の強調・折り返し時の整列を持たない。plan 側 config の why も『飾りの無いリンク列のままだった箇所をチップ化する際のラベル上限』と書いており、チップ化そのものは別ノードの担当。本ノードの write_scope では触れられないため、担い手の所在確認が要る"
+    }
+  ]
+}

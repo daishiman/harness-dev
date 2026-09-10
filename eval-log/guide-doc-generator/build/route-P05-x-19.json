@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-19",
+  "covered_task_ids": [
+    "P05-x-19"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/scripts",
+  "verified_by": [
+    {
+      "claim": "PART_CLASS_MAP に B16 / B17 / DIAGRAM / IMG の 4 行が追加され、TEXT が末尾のままである",
+      "method": "当方が extract-handout-config.py の PART_CLASS_MAP を importlib で読み込み、鍵の集合と定義順を実測",
+      "result": "pass (鍵 **18 件**で B03-B17 + DIAGRAM + IMG + TEXT。ソース上 TEXT が最終行に置かれており `FALLBACK_PART_ROW = \"TEXT\"` との対応が保たれている)"
+    },
+    {
+      "claim": "W-EXTRACT-CATALOG-DRIFT が 0 行になっている",
+      "method": "**当方が独立に測定した**。extract-handout-config.py を importlib で読み込み、config/handout-parts.json から Catalog を構築して self_check_catalog() を直接呼んだ (argparse を経由しないため『引数不正で空振り』の測定バグを構造的に排除している)",
+      "result": "pass (drift 行数 **0**。照合表の鍵 18 件と catalog.in_section_ids() 18 件が完全一致)"
+    },
+    {
+      "claim": "上記の 0 行が『検査へ到達していない 0』ではなく『解消した 0』である (双方向の反例が発火する)",
+      "method": "**当方が独立に 5 通りの反例をメモリ上で注入した** (ファイルを書かないため復元漏れが原理的に起きない)。カタログ dict を deepcopy して改変し self_check_catalog() を再呼出し",
+      "result": "pass (カタログ→表の向き: B98 追加で `… B98 はカタログにあるが照合表に鍵が無い (heuristic 経路なし)` 1 行。表→カタログの向き: IMG / DIAGRAM / B16 / B17 をそれぞれカタログから削除して 4 通りとも `… は照合表の鍵にあるがカタログに無い` 1 行。**本 leaf が新設した 4 行すべてが個別に監視下にあることを 1 行ずつ確認**しており、worker 報告の (c)(d) 2 件をさらに B16/B17 まで広げた)"
+    },
+    {
+      "claim": "self_check_catalog を弱めていない (検査本体は無改変で、双方向性が維持されている)",
+      "method": "当方が self_check_catalog() の実装を読解",
+      "result": "pass (`keys - catalog.ids()` と `in_section - keys` の 2 方向の差集合をそのまま列挙する構造で、除外リストや skip が入っていない。**照合表を正解として焼き直すのでなくカタログとの差集合で導出しており PAT-1 を作っていない**)"
+    },
+    {
+      "claim": "追加した 4 行のクラス名が renderer の実出力と対応している (死んだ行を足していない)",
+      "method": "当方が render-handout.py 上で各クラス名の出現を独立に grep",
+      "result": "pass (action-items 3 / ai-row 2 / handson 4 / hs-row 2 / asset-img 3 / diagram 21。**いずれも renderer が実際に出力するクラス名であり、照合表だけの空名前ではない**)"
+    },
+    {
+      "claim": "裸の <img> を照合表へ足さなかった判断が妥当である",
+      "method": "当方が guess_part の照合軸と PART_CLASS_MAP 直上のコメントを読解",
+      "result": "pass (照合は `node.classes()` に対して行われ、タグ名照合は `FALLBACK_PART_ROW` の特例 1 行のみ。したがって `\"img\"` を足しても `class=\"img\"` にしか当たらず**無言の嘘**になる。実効化するには照合軸を 2 本にする必要があり、そうすると TEXT の `\"p\"` が `class=\"p\"` にも当たり始めて全行が曖昧化する。**worker はこれをコメントとして明文化し『値はすべてクラス名である』という不変条件をソースへ残している**)"
+    },
+    {
+      "claim": "自スイートが緑である",
+      "method": "当方が tests/extract-handout-config.py へ cd してスイートを再実行",
+      "result": "pass (Ran 152, OK。**失敗テスト名の集合は空**)"
+    },
+    {
+      "claim": "失敗テスト名の集合が増えていない",
+      "method": "当方が tests/render-handout.py も再実行し失敗名集合を採取 (件数でなく名前集合で判定)",
+      "result": "pass (Ran 195 / failures=2。集合は `test_round_trip_equivalence` / `test_part_ids_are_not_enumerated_outside_the_catalog` の既知 2 件と**完全一致**し、新規の赤 0 件)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が plugin root と plan dir 配下の mtime を本 leaf の実行時間帯 (23:52-00:02) で絞って採取",
+      "result": "pass (該当は `scripts/extract-handout-config.py` (23:56) と `scripts/RESOLUTION-P05-x-19.md` (00:01) の 2 件のみ。`schemas/handout-config.schema.json` (23:46) と `scripts/RESOLUTION-P05-x-18.md` (23:48) は先行 leaf 由来で本 leaf の窓の外。**カタログ・brief・テストは無改変**で、反例注入も temp 複製上で実施されている)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-premise-incomplete",
+      "detail": "**task-spec 手順 1 に書いた行番号が全面的にずれていた** (745/750/763/766/813/817/780 → 実測 744/749/762/765/816/779/785)。P05-x-18 の加除による移動。クラス名の綴りは一致していたため worker は読み直して確定した。PAT-1 の 16 例目であり、**行番号を task-spec へ書き下す習慣そのものが並列 build 下では常に腐る**ことがこれで確定的になった (前 leaf に続き 2 連続)。以後の task-spec は行番号でなく検索語で位置を指す"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "当方は task-spec で `tests/extract-handout-config.py` に赤があるかのように書いたが、**着手前から Ran 152 OK で失敗名集合は空**だった。当方が挙げた 2 件の赤は `tests/render-handout.py` 側のもので、当方がスイートの帰属を取り違えていた。結論には影響しない (どちらも着手前後で不変) が、**赤の所在をスイート単位で確定してから task-spec を書くべき**"
+    },
+    {
+      "kind": "design-choice-recorded",
+      "detail": "worker は裸 `<img>` を照合表へ足す案を 3 つの根拠 (書いても効かない / 意味情報の捏造 / 受入基準に不要) で退けた。当方も guess_part の照合軸を独立に読んで再現している。**注目すべきは worker が『足さない』という不作為をコメントとしてソースへ書き残した点** — 不作為は差分に現れないため、書き残さないと次の leaf が『抜け漏れ』と誤読して足し直す。`値はすべてクラス名である (唯一の例外が TEXT のタグ名)` という不変条件の明文化はこの再発を構造的に防ぐ"
+    },
+    {
+      "kind": "test-design-defect-identified",
+      "detail": "**`test_part_ids_are_not_enumerated_outside_the_catalog` は現状の設計では原理的に緑にならない**。当方が実装を読んだところ `H.GREP_SCOPE_DIRS` (`scripts`/`skills`/`agents`/`commands`/`hooks`/`references`) を `rglob(\"*\")` で走査しており **`.md` を含む全ファイル種別**が対象。したがって RESOLUTION 文書が部品 id に言及するだけで offender が増える。当方の実測で現在 scripts/ 配下の offender は `extract-handout-config.py` 15 / `RESOLUTION-P05-x-19.md` 7 / `RESOLUTION-P05-x-18.md` 6 / `render-handout.py` 2 の **計 30 行** (worker 報告の 23 は自身の RESOLUTION 執筆前の値で、最終値を過少に報告している)。**本 leaf の 2 行を消しても緑にならず、走査対象から文書を外すか言及を許す設計変更が必要**。受け皿は P05-x-23"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "**`script-brief-C20.json:166` の `figure.asset / img.asset-img (本文中の単独 <img> を含む)` という括弧書きが実装と食い違っている** (当方が brief を直接読んで確認)。実装は上記の理由で裸 `<img>` を拾わないため、この括弧書きは**満たされない規定**として残る。worker は write_scope 外のため P05-x-21 へ渡すと書いたが **P05-x-21 は既に done であり受け皿が消えている** (PAT-4 受け皿消滅)。C20 brief の再オープンまたは新規 leaf の起票が要る。加えて worker が引き取らなかった P05-x-18 §7 のうち **(項目1) `CHROME_CLASSES` から `pop-header` を外す裁定** と **(項目2/4) marker 判定 9 項目の読み取り実装・`assets[].data_uri`→`src`** も受け皿未割当のまま (後者は `test_round_trip_equivalence` の赤の原因であり、P05-x-11 は write_scope が `schemas` のみで実装へ書けない)。**受け皿は P05-x-20 (write_scope が `plugins/guide-doc-generator/` で実装へ書ける唯一の leaf)**"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

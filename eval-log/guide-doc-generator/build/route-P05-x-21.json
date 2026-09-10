@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-21",
+  "covered_task_ids": [
+    "P05-x-21"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs",
+  "verified_by": [
+    {
+      "claim": "裁定文書の全マーカーが brief へ反映されている",
+      "method": "**当方が独立に導出して包含関係を検査した**。ROUNDTRIP-CONTRACT.md の fenced JSON を json.loads し、`adjudications[].marker` から `data-hb-[a-z-]+` と `data-hb-field=\"([^\"]+)\"` を re.findall で抽出して brief 全文と突合 (BSD grep の `\\b` artifact を避けるため Python)",
+      "result": "pass (属性の未記載 **0 件**、field 値の未記載 **0 件**。属性は attainment-step / field / key / notes-enabled / section-role / src / ties-to、field 値は attainment_level / date / focus_theme / heading / must_remember / no_need_to_remember / target_task)"
+    },
+    {
+      "claim": "chrome 境界が明文で規定されている",
+      "method": "当方が `renderer_marker_requirements.chrome_boundary` を読解",
+      "result": "pass (`purpose` / `what_is_chrome` / `what_is_not_chrome` / `rule` / `authored_data_markers` / `nesting` / `class_name_fallback` / `no_inference_inside_chrome` の 8 項目で構成。**核心は読み飛ばし単位の再定義** — 『部分木そのもの』から『著者データマーカーを持つノードを抜いた部分木』へ変えている。P05-x-18 が実測で暴いた `CHROME_CLASSES` によるクラス名二重防御も `class_name_fallback` で『クラス名は宣言より弱い根拠であり宣言を覆さない』と明示的に射程へ入れている)"
+    },
+    {
+      "claim": "brief が実装を指示していない (宣言正本と実装指示の境界を守っている)",
+      "method": "当方が chrome_boundary 本文を読解し、実装手順の記述有無を確認",
+      "result": "pass (規定は『何が chrome か』『読み飛ばしの単位は何か』という**性質の宣言**に留まり、走査アルゴリズムや修正箇所を書いていない。`not_specified_here` に P05-x-18 / P05-x-19 の裁量と明記されている。**進め方 3 の『brief は規定だけを書き実装を指示しない』を満たす**)"
+    },
+    {
+      "claim": "PAT-1 (導出値を契約へ書き下す) を新たに作っていない",
+      "method": "当方が `authored_data_markers` の書き方を確認",
+      "result": "pass (除外対象のマーカーを**列挙せず**『その集合は marker_source_of_truth の裁定表から導出する』と書いている。列挙すると裁定表と brief の二名簿になり同期ずれを生むため、**worker が意識的に導出参照を選んでいる**)"
+    },
+    {
+      "claim": "既存キーを壊していない",
+      "method": "当方が json.load してトップレベルキー数と heuristic_fallback のサブキーを検査",
+      "result": "pass (トップレベル **26 キー**を保持。`heuristic_fallback` は `when` / `class_map` / `class_map_completeness` / `recovery_limits` / `reporting` / `never_guessed` の 6 サブキーが不変)"
+    },
+    {
+      "claim": "P05-x-13 が整えた class_map を壊していない (順序制約を含む)",
+      "method": "当方が class_map の行数と末尾要素を実測",
+      "result": "pass (**18 行**で末尾は `{\"selector_class\": \"p / div (上記いずれにも当たらない本文)\", \"part\": \"TEXT\"}`。**TEXT が最後に置かれる順序制約が維持されている**)"
+    },
+    {
+      "claim": "P05-x-16 が整えた stderr 契約を壊していない",
+      "method": "当方が stderr 節から診断コード名を re.findall で採取",
+      "result": "pass (`E-EXTRACT-UNRECOVERABLE` / `E-HTML-MALFORMED` / `E-ROUNDTRIP-DIFF` / `W-EXTRACT-CATALOG-DRIFT` / `W-EXTRACT-HEURISTIC` / `W-EXTRACT-OPTIONAL` の **6 件が保持**され増減なし)"
+    },
+    {
+      "claim": "exit_codes の相互参照が揃い、かつ存在しないコードを発明していない",
+      "method": "当方が exit_codes 本文を読み、stderr 側のコード集合と突合",
+      "result": "pass (exit 0 は各条件へコード名を併記し『W-EXTRACT-CATALOG-DRIFT は出ていても exit 0 を妨げない』と明記。exit 1 は `W-EXTRACT-OPTIONAL` に加え strict 格上げ対象の `W-EXTRACT-HEURISTIC` も併記。**exit 2 は対応コードが stderr 契約に無いため、コードを発明せず『割り当てない／必要なら stderr 契約へ先に追加』と書いている** — stderr 側のコード集合が 6 件のまま増えていないことが裏付け)"
+    },
+    {
+      "claim": "編集範囲が 2 ファイルに限定されている",
+      "method": "当方が briefs ディレクトリ配下の更新ファイルを find -newermt で採取",
+      "result": "pass (`script-brief-C20.json` と `RESOLUTION-P05-x-21.md` の 2 件のみ。**別 leaf 担当の script-brief-C17.json / script-brief-C22.json は無改変**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "dispatcher-premise-confirmed",
+      "detail": "本 leaf では当方の構造前提 (fenced JSON がちょうど 1 個・トップレベルキー構成・`renderer_marker_requirements` が該当節・class_map の行数) がすべて的中した。**当方は dispatch prompt でマーカー名も件数も意図的に書かず『裁定文書から導出せよ』とだけ指示しており**、PAT-1 の再発を作らずに済んでいる。また『class_map 18 行という task-spec の記述も古い可能性があるので今この瞬間の実測値を採れ』と指示した結果、実測でも 18 行で一致した"
+    },
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**task-spec 進め方 6 の『exit_codes の不揃いはこの 1 件だけ』が誤りだった**。当方は P05-x-16 の報告を引き継いで `exit_codes[\"1\"]` の `W-EXTRACT-OPTIONAL` 欠落 1 件と書いたが、worker の実測では **3 箇所**に不揃いがあった (exit 0 はコード名が 1 件も無い / exit 1 は `W-EXTRACT-HEURISTIC` も欠落 / exit 2 は対応コードが stderr 契約に存在しない)。task-spec が『他にも同種の不揃いがないか全 exit code を確認すること』と指示していたため取りこぼしは起きていない。**件数を書き下す代わりに『全件確認せよ』と書く形が有効だった実例**"
+    },
+    {
+      "kind": "design-choice-recorded",
+      "detail": "chrome 境界の解として (a) 抽出器の穴あき走査 と (b) renderer へ『生成枠内に著者データを置かない』構造制約 を課す案が割れた。worker は (b) が C11 へ枠の分割方法を事実上指定することになり進め方 3 (実装を指示しない) に抵触するため、**宣言正本としては (a) を採り (b) は実装選択肢として残した**。なお P05-x-18 は実装側で実質 (b) に近い 2 層化を採っており、宣言が (a) で実装が (b) でも矛盾しない (規定は『捨ててはならない』であって『どう避けるか』を縛っていない)"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が write_scope 外として報告した事項。(1) render-handout.py / extract-handout-config.py 側の実装追随 → **受け皿は P05-x-18 (done) と P05-x-19 (実行中)**。(2) `extract-handout-config.py:822` の `data_uri` キーを廃止し `src` へ寄せる → P05-x-19 の範囲かは要判断。(3) C17/C22 brief → **P05-x-24 (未起動)**。(4) **`c11-c12-input-shape-divergence` (blocks vs parts)** — 『解消されない限り AC-C20-01/02・AC-C11-15 は緑にならない』と指摘。**受け皿は起票済みの P05-x-20 (C11 と C12 の入力契約の乖離を裁定して統一する)** で、`test_round_trip_equivalence` の赤の実体でもある"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

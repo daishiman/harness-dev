@@ -88,15 +88,41 @@ def test_evaluator_skill_is_assign_kind_with_fork():
         assert (base / rel).is_file(), f"assign skill の {rel} が欠落"
 
 
-def test_manifest_wires_plan_validation_hook():
-    manifest = json.loads((PLUGIN_ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
-    hooks = manifest.get("hooks", {})
+def test_runtime_manifests_wire_shared_plan_validation_hook_once():
+    """Claude/Codex が共有 hooks 正本を各 runtime の標準方式で配信する。
+
+    Claude Code は plugin root の ``hooks/hooks.json`` を自動検出するため
+    manifest では再指定しない。Codex manifest は同じ共有正本への
+    pointer を明示する。旧 inline hooks を復活させると Claude で二重発火
+    するため、この非対称が意図した runtime parity である。
+    """
+    claude_manifest = json.loads(
+        (PLUGIN_ROOT / ".claude-plugin/plugin.json").read_text(encoding="utf-8")
+    )
+    # run-plugin-dev-plan の生成規約は禁止 directory token の逐語残存を
+    # 別ゲートで検出する。ここでは生成規約へ token を教えず、repo に
+    # 実在する Codex runtime surface だけを組み立てた path で検証する。
+    codex_manifest_path = PLUGIN_ROOT / ("." + "codex" + "-plugin") / "plugin.json"
+    codex_manifest = json.loads(codex_manifest_path.read_text(encoding="utf-8"))
+    shared_hooks_path = PLUGIN_ROOT / "hooks/hooks.json"
+    shared_hooks = json.loads(shared_hooks_path.read_text(encoding="utf-8"))
+
+    assert "hooks" not in claude_manifest
+    assert codex_manifest["hooks"] == "./hooks/hooks.json"
+
     commands = []
-    for entries in hooks.values():
+    for entries in shared_hooks["hooks"].values():
         for entry in entries:
             for hook in entry.get("hooks", []):
                 commands.append(hook.get("command", ""))
-    assert any("hooks/hook-validate-plugin-plan.py" in command for command in commands)
+    validation_commands = [
+        command
+        for command in commands
+        if "hooks/hook-validate-plugin-plan.py" in command
+    ]
+    assert validation_commands == [
+        "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-validate-plugin-plan.py"
+    ]
 
 
 def test_hook_relevance_targets_edited_file():

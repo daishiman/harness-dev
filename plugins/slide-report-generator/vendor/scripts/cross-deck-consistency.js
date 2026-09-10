@@ -10,7 +10,9 @@
  *   node cross-deck-consistency.js <series-dir> [--check <category>] [--json]
  *
  * Options:
- *   --check inputs       必須入力ファイルの欠落検出
+ *   --check inputs       必須入力の欠落検出（structure.md / index.html の存在と、
+ *                        CSS / JS が解決できること。styles.css というファイル名の
+ *                        存在は要件ではない: 自己完結HTMLは inline が実物）
  *   --check shared-spec  共通仕様セクションの差分検出
  *   --check css-vars     CSS変数の統一性
  *   --check gsap         GSAPアニメーション設定の一貫性
@@ -28,6 +30,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  resolveDeckAssetsFromDir,
+  describeUnresolved,
+  cssIsUsable,
+  jsIsUsable,
+} from './deck-assets-resolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,24 +64,78 @@ function findSlideDecks(dir) {
       name: e.name,
       path: path.join(dir, e.name),
       structureMd: path.join(dir, e.name, 'structure.md'),
-      stylesCss: path.join(dir, e.name, 'styles.css'),
-      scriptsJs: path.join(dir, e.name, 'scripts.js'),
       indexHtml: path.join(dir, e.name, 'index.html'),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// --- 実際にブラウザが読む CSS / JS の解決（deck-assets-resolver.js が SSOT） ---
+// ディスク上の styles.css / scripts.js を直接読んではならない。
+// 自己完結 HTML では inline が実物で、ディスクに残る同名ファイルは
+// 古い版のことがある（実測: 実物より 9,653B 少なく rem 数が 27 対 52 でずれていた）。
+// 実物と違うものを読むと偽緑・偽赤の両方が出る。
+const assetsCache = new Map();
+function deckAssets(deck) {
+  if (!assetsCache.has(deck.name)) {
+    assetsCache.set(deck.name, resolveDeckAssetsFromDir(deck.path));
+  }
+  return assetsCache.get(deck.name);
+}
+
+// inputs チェックが同じ run に含まれるなら、解決不能はそこで 1 回報告される。
+// 各カテゴリで重ねて報告すると 1 事象が category 分だけ水増しされるため抑制する。
+// 逆に --check print のように単独実行されたときは inputs が走らないので、
+// 各カテゴリが自分で「未検査」を報告する。どちらの経路でも黙って緑にはならない。
+let inputsCoveredByRun = false;
+function setInputsCoveredByRun(value) {
+  inputsCoveredByRun = value;
+}
+
+/**
+ * CSS を読む検査の共通前処理。
+ * 解決できない場合は「黙って continue」せず理由を issue として返す。
+ * 「検査した結果 OK」と「検査していない」が同じ緑に見える状態を作らない。
+ */
+function withDeckCss(deck, category, fn) {
+  const assets = deckAssets(deck);
+  const unchecked = (message) => (inputsCoveredByRun
+    ? [] // inputs が同 run で報告済み（握り潰しではない）
+    : [{ severity: 'error', category, message, deck: deck.name }]);
+
+  if (!assets.exists) return unchecked('index.html が無く CSS を解決できないため未検査');
+  if (assets.css.unresolved.length > 0) {
+    return unchecked(`参照 CSS を解決できないため未検査: ${describeUnresolved(assets.css.unresolved)}`);
+  }
+  if (assets.css.text.trim().length === 0) {
+    return unchecked('CSS が空のため未検査（inline <style> も <link> も実体が無い）');
+  }
+  return fn(assets.css.text);
+}
+
+/** JS 版。同じ理由で黙った素通りを作らない。 */
+function withDeckJs(deck, category, fn) {
+  const assets = deckAssets(deck);
+  const unchecked = (message) => (inputsCoveredByRun
+    ? [] // inputs が同 run で報告済み（握り潰しではない）
+    : [{ severity: 'error', category, message, deck: deck.name }]);
+
+  if (!assets.exists) return unchecked('index.html が無く JS を解決できないため未検査');
+  if (assets.js.unresolved.length > 0) {
+    return unchecked(`参照 JS を解決できないため未検査: ${describeUnresolved(assets.js.unresolved)}`);
+  }
+  if (assets.js.text.trim().length === 0) {
+    return unchecked('JS が空のため未検査（inline <script> も <script src> も実体が無い）');
+  }
+  return fn(assets.js.text);
+}
+
 // --- Check: required inputs ---
+// 要件は「styles.css / scripts.js というファイルが在ること」ではなく
+// 「CSS / JS が解決できること」。自己完結 HTML は同名ファイルを持たないが正しい。
 function checkRequiredInputs(decks) {
-  const required = [
-    ['structure.md', 'structureMd'],
-    ['index.html', 'indexHtml'],
-    ['styles.css', 'stylesCss'],
-    ['scripts.js', 'scriptsJs'],
-  ];
   const issues = [];
   for (const deck of decks) {
-    for (const [file, key] of required) {
+    for (const [file, key] of [['structure.md', 'structureMd'], ['index.html', 'indexHtml']]) {
       if (!fs.existsSync(deck[key])) {
         issues.push({
           severity: 'error',
@@ -83,6 +145,44 @@ function checkRequiredInputs(decks) {
           file,
         });
       }
+    }
+    if (!fs.existsSync(deck.indexHtml)) continue; // index.html 欠落は上で報告済み
+
+    const assets = deckAssets(deck);
+    if (assets.css.unresolved.length > 0) {
+      issues.push({
+        severity: 'error',
+        category: 'inputs',
+        message: `参照 CSS を解決できない: ${describeUnresolved(assets.css.unresolved)}`,
+        deck: deck.name,
+        file: assets.css.unresolved[0].href,
+      });
+    } else if (!cssIsUsable(assets)) {
+      issues.push({
+        severity: 'error',
+        category: 'inputs',
+        message: 'CSS が解決できない（inline <style> も <link> も実体が無い）',
+        deck: deck.name,
+        file: 'css',
+      });
+    }
+
+    if (assets.js.unresolved.length > 0) {
+      issues.push({
+        severity: 'error',
+        category: 'inputs',
+        message: `参照 JS を解決できない: ${describeUnresolved(assets.js.unresolved)}`,
+        deck: deck.name,
+        file: assets.js.unresolved[0].href,
+      });
+    } else if (!jsIsUsable(assets)) {
+      issues.push({
+        severity: 'error',
+        category: 'inputs',
+        message: 'JS が解決できない（inline <script> も <script src> も実体が無い）',
+        deck: deck.name,
+        file: 'js',
+      });
     }
   }
   return issues;
@@ -255,9 +355,9 @@ function checkCssVars(decks) {
 
   const cssVarPattern = /--[\w-]+:\s*[^;]+;/g;
   const allVars = decks.map(d => {
-    const cssPath = d.stylesCss;
-    if (!fs.existsSync(cssPath)) return { name: d.name, vars: {} };
-    const content = fs.readFileSync(cssPath, 'utf8');
+    const assets = deckAssets(d);
+    if (!cssIsUsable(assets)) return { name: d.name, vars: {} };
+    const content = assets.css.text;
     // Extract :root variables
     const rootMatch = content.match(/:root\s*\{([^}]+)\}/);
     if (!rootMatch) return { name: d.name, vars: {} };
@@ -297,61 +397,63 @@ function checkGsap(decks) {
   if (decks.length < 2) return issues;
 
   for (const deck of decks) {
-    if (!fs.existsSync(deck.scriptsJs)) continue;
-    const content = fs.readFileSync(deck.scriptsJs, 'utf8');
+    issues.push(...withDeckJs(deck, 'gsap', (content) => {
+      const found = [];
 
-    // Check for dangerous scale:0
-    if (/scale\s*:\s*0[^.]/.test(content)) {
-      issues.push({
-        severity: 'error',
-        category: 'gsap',
-        message: 'scale: 0 を使用（最小0.8推奨）',
-        deck: deck.name,
-      });
-    }
+      // Check for dangerous scale:0
+      if (/scale\s*:\s*0[^.]/.test(content)) {
+        found.push({
+          severity: 'error',
+          category: 'gsap',
+          message: 'scale: 0 を使用（最小0.8推奨）',
+          deck: deck.name,
+        });
+      }
 
-    // Check clearProps safety
-    if (/querySelectorAll\s*\(\s*['"]?\*['"]?\s*\)/.test(content) && /clearProps/.test(content)) {
-      issues.push({
-        severity: 'error',
-        category: 'gsap',
-        message: "querySelectorAll('*')でclearProps適用（SVG破壊リスク）",
-        deck: deck.name,
-      });
-    }
+      // Check clearProps safety
+      if (/querySelectorAll\s*\(\s*['"]?\*['"]?\s*\)/.test(content) && /clearProps/.test(content)) {
+        found.push({
+          severity: 'error',
+          category: 'gsap',
+          message: "querySelectorAll('*')でclearProps適用（SVG破壊リスク）",
+          deck: deck.name,
+        });
+      }
 
-    // Check easing variety
-    const easeMatches = content.match(/ease\s*:\s*['"]([^'"]+)['"]/g) || [];
-    const uniqueEases = new Set(easeMatches.map(m => m.match(/['"]([^'"]+)['"]/)[1]));
-    if (uniqueEases.size < 3) {
-      issues.push({
-        severity: 'warn',
-        category: 'gsap',
-        message: `イージング種類が${uniqueEases.size}種のみ（3種以上推奨）`,
-        deck: deck.name,
-      });
-    }
+      // Check easing variety
+      const easeMatches = content.match(/ease\s*:\s*['"]([^'"]+)['"]/g) || [];
+      const uniqueEases = new Set(easeMatches.map(m => m.match(/['"]([^'"]+)['"]/)[1]));
+      if (uniqueEases.size < 3) {
+        found.push({
+          severity: 'warn',
+          category: 'gsap',
+          message: `イージング種類が${uniqueEases.size}種のみ（3種以上推奨）`,
+          deck: deck.name,
+        });
+      }
+      return found;
+    }));
   }
   return issues;
 }
 
 // --- Check: rem unit detection (unit-system.md Phase B migration) ---
-// vw 移行進捗を可視化するため、各デッキの styles.css 内 rem 残数をカウント
+// vw 移行進捗を可視化するため、各デッキで実際に適用される CSS 全体の rem 残数を数える。
+// ディスク上の styles.css だけを数えると実物より少なく出る（実測 27 対 52）。
 function checkRemUnits(decks) {
   const issues = [];
   const remPattern = /(?<![\d.])\d+(?:\.\d+)?rem\b/g;
   for (const deck of decks) {
-    if (!fs.existsSync(deck.stylesCss)) continue;
-    const content = fs.readFileSync(deck.stylesCss, 'utf8');
-    const matches = content.match(remPattern) || [];
-    if (matches.length > 0) {
-      issues.push({
+    issues.push(...withDeckCss(deck, 'rem-units', (content) => {
+      const matches = content.match(remPattern) || [];
+      if (matches.length === 0) return [];
+      return [{
         severity: 'warn',
         category: 'rem-units',
         message: `rem 単位が ${matches.length} 箇所検出（unit-system.md §3 に従い vw に移行推奨）`,
         deck: deck.name,
-      });
-    }
+      }];
+    }));
   }
   return issues;
 }
@@ -362,46 +464,48 @@ function checkPrint(decks) {
   if (decks.length < 2) return issues;
 
   for (const deck of decks) {
-    if (!fs.existsSync(deck.stylesCss)) continue;
-    const content = fs.readFileSync(deck.stylesCss, 'utf8');
+    issues.push(...withDeckCss(deck, 'print', (content) => {
+      const found = [];
 
-    // Check @page margin: 0
-    if (!/@page\s*\{[^}]*margin\s*:\s*0/.test(content)) {
-      issues.push({
-        severity: 'error',
-        category: 'print',
-        message: '@page { margin: 0 } が未設定',
-        deck: deck.name,
-      });
-    }
-
-    // Check slider__item print size
-    const printSection = content.match(/@media\s+print\s*\{[\s\S]*$/);
-    if (printSection) {
-      if (!/297mm/.test(printSection[0])) {
-        issues.push({
-          severity: 'warn',
+      // Check @page margin: 0
+      if (!/@page\s*\{[^}]*margin\s*:\s*0/.test(content)) {
+        found.push({
+          severity: 'error',
           category: 'print',
-          message: '印刷時の幅297mmが未指定',
+          message: '@page { margin: 0 } が未設定',
           deck: deck.name,
         });
       }
-      if (!/210mm/.test(printSection[0])) {
-        issues.push({
-          severity: 'warn',
+
+      // Check slider__item print size
+      const printSection = content.match(/@media\s+print\s*\{[\s\S]*$/);
+      if (printSection) {
+        if (!/297mm/.test(printSection[0])) {
+          found.push({
+            severity: 'warn',
+            category: 'print',
+            message: '印刷時の幅297mmが未指定',
+            deck: deck.name,
+          });
+        }
+        if (!/210mm/.test(printSection[0])) {
+          found.push({
+            severity: 'warn',
+            category: 'print',
+            message: '印刷時の高さ210mmが未指定',
+            deck: deck.name,
+          });
+        }
+      } else {
+        found.push({
+          severity: 'error',
           category: 'print',
-          message: '印刷時の高さ210mmが未指定',
+          message: '@media print セクションが存在しない',
           deck: deck.name,
         });
       }
-    } else {
-      issues.push({
-        severity: 'error',
-        category: 'print',
-        message: '@media print セクションが存在しない',
-        deck: deck.name,
-      });
-    }
+      return found;
+    }));
   }
   return issues;
 }
@@ -439,6 +543,8 @@ function main() {
     console.error(`不明なカテゴリ: ${unknown.join(', ')}`);
     process.exit(2);
   }
+
+  setInputsCoveredByRun(categoriesToRun.includes('inputs'));
 
   for (const cat of categoriesToRun) {
     const issues = checks[cat](decks);

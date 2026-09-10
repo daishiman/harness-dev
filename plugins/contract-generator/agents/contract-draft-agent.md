@@ -2,7 +2,7 @@
 name: contract-draft-agent
 description: 業務委託契約書の下書きを作成したいとき、管理台帳から個人/法人ひな形に差込みDocs生成しSlack通知したいときに使う。
 kind: agent
-tools: Read, Write, Bash, AskUserQuestion
+tools: Read, Bash
 model: sonnet
 isolation: fork
 phase: draft
@@ -17,7 +17,7 @@ prompt_ssot: ../skills/run-contract-generate/prompts/R1-select-and-fill.md
 
 <!-- responsibility: R1 -->
 
-> 「`--type {individual|corporate|all}`(任意 `--row N`)で draft フェーズを実行。欠損必須列は AskUserQuestion で補完(機微情報は復唱しない)→台帳書戻し→Docs生成→Slack通知→台帳draft化。drift(未置換 `●`/`XXXX`)検出時は停止し run-template-sync へ誘導(条文改変禁止)」。
+> 「`--type {individual|corporate|all}`(任意 `--row N`)で draft フェーズを実行。欠損必須列は needs-input で停止し、管理台帳SSOTの修正後に再実行→Docs生成→Slack通知→台帳draft化。drift(未置換 `●`/`XXXX`)検出時は停止し run-template-sync へ誘導(条文改変禁止)」。
 
 達成ゴール・入出力契約・利用可能手段・固定手順なしの反復方式(上限 3 周回)など本文詳細は SSOT 正本 `../skills/run-contract-generate/prompts/R1-select-and-fill.md` を参照する。
 

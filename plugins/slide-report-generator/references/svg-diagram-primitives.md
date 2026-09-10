@@ -1,5 +1,8 @@
 # SVG2 図解プリミティブ・パターン集
 
+<!-- css-route: diagram -->
+<!-- この宣言より後ろの var() は diagram 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは設計の文脈・例・適用ガイドのみ。規則の正本は SR-ID で参照すること
 
 **責務**: インラインSVG2の実装テンプレート・再利用可能なコンポーネント・defs パターン集。
@@ -64,7 +67,7 @@
 /* SVG内テキスト共通 */
 .diagram-svg text {
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
-  fill: var(--fg, #43436c);
+  fill: var(--fg);
 }
 
 /* SVG内ホバー効果 */
@@ -90,37 +93,37 @@
   <!-- 標準矢印（青） -->
   <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--wave-blue, #7E9CD8)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--tone-3, #4B6681)" />
   </marker>
 
   <!-- 矢印（ピンク） -->
   <marker id="arrow-pink" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--sakura-pink, #D27E99)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink, #141412)" />
   </marker>
 
   <!-- 矢印（黄） -->
   <marker id="arrow-yellow" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--autumn-yellow, #DCA561)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--tone-1, #E1E6EA)" />
   </marker>
 
   <!-- 矢印（バイオレット） -->
   <marker id="arrow-violet" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--spring-violet, #957FB8)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--tone-3, #4B6681)" />
   </marker>
 
   <!-- 矢印（アクア） -->
   <marker id="arrow-aqua" viewBox="0 0 10 10" refX="10" refY="5"
           markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--wave-aqua, #7FB4CA)" />
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--tone-2, #9BADBF)" />
   </marker>
 
   <!-- 丸ドット -->
   <marker id="dot-blue" viewBox="0 0 10 10" refX="5" refY="5"
           markerWidth="6" markerHeight="6">
-    <circle cx="5" cy="5" r="4" fill="var(--wave-blue, #7E9CD8)" />
+    <circle cx="5" cy="5" r="4" fill="var(--tone-3, #4B6681)" />
   </marker>
 </defs>
 ```
@@ -131,23 +134,23 @@
 <defs>
   <!-- 線形グラデーション（青→ピンク） -->
   <linearGradient id="grad-blue-pink" x1="0%" y1="0%" x2="100%" y2="100%">
-    <stop offset="0%" stop-color="var(--wave-blue, #7E9CD8)" />
-    <stop offset="100%" stop-color="var(--sakura-pink, #D27E99)" />
+    <stop offset="0%" stop-color="var(--tone-3, #4B6681)" />
+    <stop offset="100%" stop-color="var(--ink, #141412)" />
   </linearGradient>
 
   <!-- 放射グラデーション（中央ハイライト） -->
   <radialGradient id="grad-radial-blue" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="var(--wave-blue, #7E9CD8)" stop-opacity="0.8" />
-    <stop offset="100%" stop-color="var(--wave-blue, #7E9CD8)" stop-opacity="0.3" />
+    <stop offset="0%" stop-color="var(--tone-3, #4B6681)" stop-opacity="0.8" />
+    <stop offset="100%" stop-color="var(--tone-3, #4B6681)" stop-opacity="0.3" />
   </radialGradient>
 
   <!-- ファネル用グラデーション -->
   <linearGradient id="grad-funnel" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%" stop-color="var(--wave-blue, #7E9CD8)" />
-    <stop offset="25%" stop-color="var(--wave-aqua, #7FB4CA)" />
-    <stop offset="50%" stop-color="var(--spring-violet, #957FB8)" />
-    <stop offset="75%" stop-color="var(--autumn-yellow, #DCA561)" />
-    <stop offset="100%" stop-color="var(--sakura-pink, #D27E99)" />
+    <stop offset="0%" stop-color="var(--tone-3, #4B6681)" />
+    <stop offset="25%" stop-color="var(--tone-2, #9BADBF)" />
+    <stop offset="50%" stop-color="var(--tone-3, #4B6681)" />
+    <stop offset="75%" stop-color="var(--tone-1, #E1E6EA)" />
+    <stop offset="100%" stop-color="var(--ink, #141412)" />
   </linearGradient>
 </defs>
 ```
@@ -168,7 +171,7 @@
   <!-- グロー効果 -->
   <filter id="glow-blue">
     <feGaussianBlur stdDeviation="4" result="blur" />
-    <feFlood flood-color="var(--wave-blue, #7E9CD8)" flood-opacity="0.5" result="color" />
+    <feFlood flood-color="var(--tone-3, #4B6681)" flood-opacity="0.5" result="color" />
     <feComposite in="color" in2="blur" operator="in" result="glow" />
     <feMerge>
       <feMergeNode in="glow" />
@@ -204,11 +207,11 @@
 <!-- 標準ノード -->
 <g class="interactive" transform="translate(100, 100)">
   <rect width="160" height="80" rx="12" ry="12"
-        fill="#FFFFFF" stroke="var(--wave-blue, #7E9CD8)"
+        fill="#FFFFFF" stroke="var(--tone-3, #4B6681)"
         stroke-width="2.5" filter="url(#shadow-sm)" />
   <foreignObject x="8" y="8" width="144" height="64">
     <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card">
-      <i class="fas fa-cog" style="color:var(--wave-blue,#7E9CD8)"></i>
+      <i class="fas fa-cog" style="color:var(--tone-3, #4B6681)"></i>
       <span>{{テキスト}}</span>
     </div>
   </foreignObject>
@@ -223,11 +226,11 @@
 <!-- 円形ノード（サイクル要素用） -->
 <g class="interactive" transform="translate(480, 270)">
   <circle r="55" fill="#FFFFFF"
-          stroke="var(--wave-blue, #7E9CD8)" stroke-width="3"
+          stroke="var(--tone-3, #4B6681)" stroke-width="3"
           filter="url(#shadow-sm)" />
   <foreignObject x="-45" y="-40" width="90" height="80">
     <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card">
-      <i class="fas fa-star" style="font-size:1.4rem;color:var(--autumn-yellow,#DCA561)"></i>
+      <i class="fas fa-star" style="font-size:1.4rem;color:var(--tone-1, #E1E6EA)"></i>
       <span>{{ラベル}}</span>
     </div>
   </foreignObject>
@@ -240,11 +243,11 @@
 <!-- ひし形（フローチャートの判断ノード） -->
 <g class="interactive" transform="translate(480, 270)">
   <polygon points="0,-50 70,0 0,50 -70,0"
-           fill="var(--autumn-yellow, #DCA561)"
-           stroke="var(--autumn-yellow, #DCA561)" stroke-width="2"
+           fill="var(--tone-1, #E1E6EA)"
+           stroke="var(--tone-1, #E1E6EA)" stroke-width="2"
            filter="url(#shadow-sm)" />
   <text text-anchor="middle" dominant-baseline="central"
-        fill="var(--fg, #43436c)" font-weight="700" font-size="16">
+        fill="var(--fg)" font-weight="700" font-size="16">
     {{条件?}}
   </text>
 </g>
@@ -256,9 +259,9 @@
 <!-- カプセル型（フローチャートの開始/終了） -->
 <g class="interactive" transform="translate(480, 50)">
   <rect width="140" height="45" rx="22" ry="22" x="-70" y="-22"
-        fill="var(--sakura-pink, #D27E99)" filter="url(#shadow-sm)" />
+        fill="var(--ink, #141412)" filter="url(#shadow-sm)" />
   <text text-anchor="middle" dominant-baseline="central"
-        fill="var(--fg, #43436c)" font-weight="700" font-size="16">
+        fill="var(--fg)" font-weight="700" font-size="16">
     開始
   </text>
 </g>
@@ -273,7 +276,7 @@
 ```html
 <!-- 矢印付き直線 -->
 <line x1="200" y1="140" x2="200" y2="200"
-      stroke="var(--fuji-gray, #727169)" stroke-width="2.5"
+      stroke="var(--fg-muted, #6A6A68)" stroke-width="2.5"
       marker-end="url(#arrow-blue)" />
 ```
 
@@ -282,12 +285,12 @@
 ```html
 <!-- 2次ベジェ曲線 -->
 <path d="M 200,140 Q 300,170 400,140"
-      fill="none" stroke="var(--wave-blue, #7E9CD8)" stroke-width="2.5"
+      fill="none" stroke="var(--tone-3, #4B6681)" stroke-width="2.5"
       marker-end="url(#arrow-blue)" />
 
 <!-- 3次ベジェ曲線（S字） -->
 <path d="M 200,140 C 250,200 350,80 400,140"
-      fill="none" stroke="var(--wave-aqua, #7FB4CA)" stroke-width="2.5"
+      fill="none" stroke="var(--tone-2, #9BADBF)" stroke-width="2.5"
       marker-end="url(#arrow-aqua)" />
 ```
 
@@ -296,17 +299,23 @@
 ```html
 <!-- 円弧（サイクル図の接続矢印） -->
 <path d="M 560,200 A 180,180 0 0,1 400,380"
-      fill="none" stroke="var(--autumn-yellow, #DCA561)" stroke-width="2.5"
+      fill="none" stroke="var(--tone-1, #E1E6EA)" stroke-width="2.5"
       stroke-dasharray="none" marker-end="url(#arrow-yellow)" />
 ```
 
 ### 4.4 破線接続
 
+> **線種の語彙は閉じている。** 使えるのは実線と 2 種類の破線（短い方・長い方）だけで、
+> 値の正本は `scripts/validate-svg-diagram.py` の `DASH_VOCAB`（検査は D25）。
+> 語彙外の破線は検査で落ちる。**この文へ値を書き写さない**（周期の比を保つために
+> 選ばれた値なので、片方だけ動かすと隣り合った 2 本の区別が消える）。
+> 本ファイルのコード例は語彙内の値を実際に使っているので、そのまま写して構わない。
+
 ```html
 <!-- 破線（弱い関係、オプション） -->
 <line x1="200" y1="270" x2="400" y2="270"
-      stroke="var(--fuji-gray, #727169)" stroke-width="2"
-      stroke-dasharray="8,4" marker-end="url(#arrow-blue)" />
+      stroke="var(--fg-muted, #6A6A68)" stroke-width="2"
+      stroke-dasharray="12 4" marker-end="url(#arrow-blue)" />
 ```
 
 ---
@@ -319,13 +328,13 @@
 <!-- 中央揃えテキスト -->
 <text x="480" y="270" text-anchor="middle" dominant-baseline="central"
       font-size="18" font-weight="700"
-      fill="var(--fg, #43436c)">
+      fill="var(--fg)">
   {{テキスト}}
 </text>
 
 <!-- 折り返しテキスト（tspan使用） -->
 <text x="480" y="250" text-anchor="middle" font-size="14"
-      fill="var(--fg, #43436c)">
+      fill="var(--fg)">
   <tspan x="480" dy="0">{{1行目}}</tspan>
   <tspan x="480" dy="20">{{2行目}}</tspan>
 </text>
@@ -338,7 +347,7 @@
 <foreignObject x="380" y="230" width="200" height="80">
   <div xmlns="http://www.w3.org/1999/xhtml" class="fo-card has-tooltip"
        data-tooltip="{{詳細テキスト}}">
-    <i class="fas fa-lightbulb" style="color:var(--autumn-yellow,#DCA561)"></i>
+    <i class="fas fa-lightbulb" style="color:var(--tone-1, #E1E6EA)"></i>
     <span>{{ラベル}}</span>
   </div>
 </foreignObject>
@@ -500,11 +509,11 @@ Y位置: y = startY + levelH * i
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5"
                 markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--autumn-yellow,#DCA561)" />
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--tone-1, #E1E6EA)" />
         </marker>
       </defs>
       <path d="M 240,270 Q 480,200 720,270"
-            fill="none" stroke="var(--autumn-yellow,#DCA561)"
+            fill="none" stroke="var(--tone-1, #E1E6EA)"
             stroke-width="2.5" marker-end="url(#arrow)" />
     </svg>
     <!-- HTMLカードレイヤー（前面） -->
@@ -540,7 +549,7 @@ Y位置: y = startY + levelH * i
 
   /* テキストを黒に */
   .diagram-svg text {
-    fill: var(--fg, #43436c) !important;
+    fill: var(--fg) !important;
   }
 }
 ```
@@ -567,22 +576,22 @@ Y位置: y = startY + levelH * i
 見分けが付かなくなる。
 
 1. **イタリックの注釈文** — `var(--font-base)` の italic。ノードラベルと同じ立体で書かない
-2. **破線のリーダー線** — `stroke-dasharray="4,3"`・直線または緩い 1 次ベジェ。**矢じりを付けない**
+2. **破線のリーダー線** — 短い方の破線（値は下のコード例）・直線または緩い 1 次ベジェ。**矢じりを付けない**
 3. **指示点のドット** — リーダー線の指示側の端に `r="2"`
 
 ```svg
 <!-- 1. イタリックの注釈文（右上の余白へ） -->
 <text class="dg-annotation" x="608" y="36" text-anchor="end"
-      font-style="italic" font-size="12" fill="var(--fuji-gray,#8a8980)">
+      font-style="italic" font-size="12" fill="var(--fg-muted, #6A6A68)">
   {{注釈テキスト}}
 </text>
 
 <!-- 2. 破線のリーダー線（矢じり無し） -->
 <path d="M 552 44 Q 480 84 384 216" fill="none"
-      stroke="var(--fuji-gray,#8a8980)" stroke-width="1.25" stroke-dasharray="4,3" />
+      stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4,3" />
 
 <!-- 3. 指示点のドット -->
-<circle cx="384" cy="216" r="2" fill="var(--fuji-gray,#8a8980)" />
+<circle cx="384" cy="216" r="2" fill="var(--fg-muted, #6A6A68)" />
 ```
 
 矢じりを付けない理由: 注釈は図の中の流れではない。矢印にするとコネクタと
@@ -593,8 +602,8 @@ Y位置: y = startY + levelH * i
 
 | 用途 | 文字 | リーダー線 |
 |---|---|---|
-| 通常の注釈 | `soft` = `var(--fuji-gray, #8a8980)` | 同上・`stroke-width="1.25"`（`STROKE.hairline`） |
-| 焦点に添える注釈 | `accent` = `var(--sakura-pink, #D27E99)` | 同上 |
+| 通常の注釈 | `soft` = `var(--fg-muted, #6A6A68)` | 同上・`stroke-width="1.25"`（`STROKE.hairline`） |
+| 焦点に添える注釈 | `accent` = `var(--ink, #141412)` | 同上 |
 
 3 段目（`ink` の注釈など）を作らない。注釈が本文と同じ濃さで組まれると、
 読者が図の一部だと誤認する。**焦点色の注釈を使えるのは、その注釈が

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P05",
+  "covered_task_ids": [
+    "P05"
+  ],
+  "status": "success",
+  "leaf_count": 54,
+  "verified_by": [
+    {
+      "claim": "P04 の全テストが green である",
+      "method": "python3 -m unittest discover を 23 スイートへ実行",
+      "result": "suites=23 ran=3308 failed=0 red_suites=[] (2 回の独立実行で同一)"
+    },
+    {
+      "claim": "決定論パイプラインに LLM 呼び出しが無く、script が標準ライブラリのみで動く",
+      "method": "evidence/P05.json の components 表と 54 leaf の checklist report",
+      "result": "レンダリング経路の 17 script は stdlib のみ。LLM を挟むのはヒアリングと読みやすさレビューの 2 面に限定"
+    },
+    {
+      "claim": "共有契約を持つ実体の間で契約の食い違いが無い",
+      "method": "route-P05-x-07/-x-08/-x-09/-x-11/-x-13 の実測",
+      "result": "部品 id リテラルの catalog 外出現 0 件、extract catalog drift 警告 0 件、round-trip の鍵集合一致 (差分は P2 の provenance のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "missing-task-specs",
+      "detail": "P05-x-25/26/27/28/30/31 の 6 leaf は task-spec ファイルが存在しない状態で遂行した。実測と report は残っているが、仕様側の記述は欠けたまま"
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 # 拡張スライドタイプ
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: 拡張8種のスライドタイプ（ピラミッド、サークル、グリッド、ハイライト、アイコングリッド、プロセス、引用、ヒーロー）のCSS・HTMLテンプレート
 
 ---
@@ -282,8 +285,8 @@
 }
 
 .slide-highlight .highlight-label {
-  font-size: var(--fs-subtitle);
-  color: var(--fg-dim);
+  font-size: var(--fs-subheading);
+  color: var(--fg-muted);
 }
 
 .slide-highlight .highlight-description {
@@ -479,7 +482,7 @@
 }
 
 .slide-quote .quote-text {
-  font-size: var(--fs-subtitle);
+  font-size: var(--fs-subheading);
   font-style: italic;
   max-width: 800px;
   line-height: 1.6;
@@ -508,13 +511,13 @@
 }
 
 .slide-quote .quote-author-name {
-  font-size: var(--fs-body-lg);
+  font-size: var(--fs-body);
   font-weight: 700;
 }
 
 .slide-quote .quote-author-title {
   font-size: var(--fs-small);
-  color: var(--fg-dim);
+  color: var(--fg-muted);
 }
 ```
 
@@ -586,8 +589,8 @@
 }
 
 .slide-hero .hero-subtitle {
-  font-size: var(--fs-subtitle);
-  color: var(--fg-dim);
+  font-size: var(--fs-subheading);
+  color: var(--fg-muted);
   max-width: 600px;
 }
 

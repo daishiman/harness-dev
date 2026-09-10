@@ -1,0 +1,60 @@
+{
+  "purpose": "Harness Creatorが最終目的と品質・安全性を変えず、実行時の情報過多と重複判断を減らして短い時間・少ないコンテキストで動けるようにする。",
+  "background": "前段レビューでplanと評価再利用経路は整理済みだが、実Harness Creatorの高頻度入口であるcapability-buildは未改善である。ユーザーは成果物や仕組みの機械的削減ではなく、必要性に基づく最小実行を求めている。",
+  "goal": "capability-buildの高頻度入口が判断に必要な最小契約だけを常時保持し、詳細運用は必要時にだけ参照しながら、既存の目的・品質ゲート・安全境界を同じテスト結果で満たしている。",
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "capability-buildの現行command本文について、行数・bytes・概算token・常時記載責務・参照先が機械集計されたbaseline JSONが存在する。",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C2",
+      "criterion": "command本文から詳細運用設計を遅延参照へ移し、入口には目的・分岐・安全境界・完了条件・参照導線だけが残っている。",
+      "done": true,
+      "verify_by": "reasoning"
+    },
+    {
+      "id": "C3",
+      "criterion": "移動した契約の必須アンカーと参照解決をfocused testまたはlintが検査し、本文短縮による契約欠落をfail-closedで検出できる。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "既存Harness Creatorテストとcapability-build関連検証が変更後もgreenで、品質ゲート・承認・単一writer・fail-closed境界が削除されていない。",
+      "done": true,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "before/afterの常時読込bytes・概算tokenと変更された責務境界を比較するmeasurement JSONが存在し、改善後の常時読込量が減少している。",
+      "done": true,
+      "verify_by": "script"
+    },
+    {
+      "id": "C6",
+      "criterion": "fresh verifierがoriginal goalに対してPASSを返し、成果物・検証・未解決事項をhandoff JSONへ記録している。",
+      "done": true,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "既存のユーザー変更と前段simplification差分を保持し、無関係な編集を戻さない",
+    "文章量・コード量・評価回数の削減自体を目的にしない",
+    "目的、品質ゲート、承認境界、fail-closed、単一writer、証拠鮮度の意味を緩めない",
+    "詳細契約は削除せずSSOTへ移し、入口から必要時に発見可能な参照を残す",
+    "現在のユーザー応答を前段成果物に対するstandard改善の明示承認として扱う",
+    "git commit、git push、Dolt remote syncは行わない"
+  ],
+  "handoff_targets": [],
+  "max_loops": 3,
+  "open_questions": [],
+  "forbidden_loosening": [
+    "テスト・lint・semantic gateを減らして短縮を達成したことにする",
+    "詳細契約を参照先へ移さず削除する",
+    "command本文から安全境界または完了条件を消す",
+    "評価器のthresholdやPASS条件を緩和する"
+  ]
+}

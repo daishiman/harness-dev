@@ -1,0 +1,74 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C17-01",
+ "covered_task_ids": [
+  "P02-C17-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C17.json",
+ "verified_by": [
+  {
+   "claim": "C11 が『唯一の除外口』と断定する data-hb-part-role=aux に C17 側の経路があったか",
+   "method": "dispatcher が C17 全文で data-hb-part-role を数え、出現位置が rule か否かを判定",
+   "result": "pass (欠陥は実在・修正で解消): 修正前は 2 件で、いずれも false_positive_risk 欄と open_questions の語彙記録。A11Y-01 の rule 本文に除外条項が 1 文字も無く、補助ボタンを置いた瞬間に FAIL する状態だった。修正後は 4 件へ増え rule 側に経路がある。C20 の data-hb-asset-role と同型の『属性契約の片方向破れ』で本 build 3 例目"
+  },
+  {
+   "claim": "要件が false_positive_risk 欄に住んでいた 2 箇所を rule へ移送したか",
+   "method": "A11Y-01 と A11Y-05 の rule / risk を修正後に読む",
+   "result": "pass: risk 欄は『rule 側で解消済み』へ書き換えられ、A11Y-05 には (d) 条項 (figure の svg は非空 <title> か aria-label 必須・aria-hidden 禁止) が入った。risk 欄の記述は実装者が実装しないため、要件をそこに置くと『figure を付ければ名前なしで通る』抜け道になる。R25 の per-section DIAGRAM 必須化 (W-DIAGRAM-FEW value 1) により、この抜け道は節数に比例して再現するはずだった"
+  },
+  {
+   "claim": "新設した規範に検査経路 (AC) が伴うか",
+   "method": "dispatcher が acceptance_checks の id を列挙",
+   "result": "pass: AC-C17-15 / AC-C17-16 が既存最大 AC-C17-14 の続番で新設され計 16 件。detections は 12 のままで stdout 固定順と AC-C17-01 の『12 detection 行』を壊していない。『規則はあるが AC が無い』を作らない運用が守られている"
+  },
+  {
+   "claim": "部品カタログ owner の誤記が解消したか",
+   "method": "dispatcher が 'C23 が owner' を grep",
+   "result": "pass: 0 件。修正前は :37 が owner を C23 と書き、同一ファイルの :257 が『C23 は用途種別語彙の owner』と書いて自己矛盾していた。正本は RESOLUTION-P03.md:102 の C11"
+  },
+  {
+   "claim": "診断コードの双方向突合",
+   "method": "SubAgent が C17→他者 (SC-08 のみ・C16:157 に実在) と 他者→C17 (A11Y-01/02/04/07・PRINT-01/03/04・STICKY-01 の 8 種) を全 brief/RESOLUTION へ grep。dispatcher は detections 12 件を再測定",
+   "result": "pass: 過不足なし。C16:326 が goal-spec C4 を C17 へ寄せ、C17:150 が STICKY-01 で引き受ける双方向が噛み合っている"
+  },
+  {
+   "claim": "IMG の役 (illustration) が C17 の値域欠落になるか",
+   "method": "SubAgent が identifier 8 種 (illustration/screenshot/asset/img/alt/IMG/DIAGRAM/role) と和文 6 種 (挿絵/画像/図表/役/代替/図解) を grep",
+   "result": "pass (該当なし): C17 は IMG の役を検査対象にしておらず inventory C17 の purpose も含まない。data-hb-asset-role の消費者は C22 と C20 であって C17 ではないため、C20 で修正した値域問題は C17 へ波及しない"
+  },
+  {
+   "claim": "exit code クラスと各検査の割当が対称",
+   "method": "SubAgent が exit_codes / algorithm 3 箇所 / failure_modes 5 件 / AC 4 件を総当たり突合",
+   "result": "pass: 12 detection が全て exit1 側、成立不能の 5 事由が exit2 側へ排他割当。data-hb-part が 0 個の HTML を exit1 (検査不能を PASS にしない fail-closed) とする点も一貫"
+  },
+  {
+   "claim": "write_scope 外への書込みが無い",
+   "method": "git diff --stat",
+   "result": "pass: script-brief-C17.json のみ (16 insertions / 5 deletions)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C17-01",
+   "level": "blocking-for-release",
+   "summary": "生成 HTML の <img> に alt 属性が出る保証がどこにも無い。dispatcher の実測: script-brief-C11.json の 'alt=' は 0 件で、asset の alt 値は data-hb-asset-alt (data 属性・支援技術は読まない) へ入る記述しかない。C21 は image-plan の alt を必須フィールドとし欠けたら exit2、C12 も構成データ段で alt を必須にしているため値は最後まで運ばれているのに、最終 DOM で alt 属性になる契約文が C11 に存在しない。R25 の per-section IMG 必須化で露出面が節数に比例する"
+  },
+  {
+   "id": "F-C17-02",
+   "level": "carry-forward",
+   "summary": "script-brief-C11.json:341 の consumers 行で C17 の括弧内が 3 属性 (data-hb-part / data-hb-part-role / data-hb-kind) のみだが、C17:73 は data-hb-single も判定条件として読んでいる。同行は『本節を変えるときは 5 本を同時に更新する』と自認しており、その運用が 1 件破れている"
+  },
+  {
+   "id": "F-C17-03",
+   "level": "carry-forward",
+   "summary": "script-brief-C12.json:482 が alt 必須の理由を『a11y ゲート (C22) を構成データ段階で満たすため』と書いているが、a11y ゲートは C17、C22 は筋道ゲート。帰属先の誤記"
+  },
+  {
+   "id": "F-C17-04",
+   "level": "resolved",
+   "summary": "<img alt> の検査点をどこに置くかの裁定 (SubAgent から team-lead へ申し送り)。dispatcher 裁定: C17 に A11Y-08 を新設せず、C16 SC-09 にも足さない。判断点は C12 の構成データ段 1 箇所に置き、C11 が値を無変換で alt 属性へ描くことを C11 の契約で保証する。理由は NAR-11 を新設しなかったのと同じで、C11 は config 順に従う決定論レンダラであり、HTML 段で数え直すと同一概念の判定が 2 つ並ぶため。ただし今回の実測でその前提 (C11 が alt を描く) が契約として書かれていないことが判明したので、F-C17-01 として C11 側の欠落に付け替えた"
+  }
+ ]
+}

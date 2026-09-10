@@ -20,13 +20,13 @@ version: 2.1.0
 effect: local-artifact
 owner: team-platform
 contract:
-  intent: 7 層プロンプトを要望から成果物まで品質保証付きで送り出すため、elicit→build→evaluate→governance をゲート制御で連鎖させる orchestrator を提供する。
+  intent: 7 層プロンプトの実物を最小guard後に先に提示し、利用者選択時だけevaluate→governanceをpost-choiceで連鎖させる orchestrator を提供する。
   interface:
     inputs: [topic, mode, fast]
     outputs: [seven-layer-prompt.md, prompt-build-trace.json, findings.json, "handoff-*.json", completion-report]
   invariant:
-    - Gate 1 (brief 確認) のみユーザー対話を行い、Gate 2-4 は workflow-manifest.json の auto_approve_conditions を機械評価すること
-    - 委譲先 worker のユーザー対話は brief 供給時 skip し、導出確認は brief 内容と Gate 1 承認に委譲すること (user_question_budget=1)
+    - 実prompt生成前の追加対話は行わず依頼からbriefを最尤導出し、artifact提示後にだけ診断深度を聞くこと
+    - 委譲先 worker の成果物前ユーザー対話は skip し、仮定をbrief/traceへ残してartifact提示後のchoiceに委譲すること
     - 各フェーズは独立 Skill へ委譲し、本スキルは制御のみを担うこと (手順の機械正本は workflow-manifest.json、散文はゴール+完了条件のみ宣言)
     - evaluator / governance reviewer は必ず context:fork で起動すること (Sycophancy 防止)
     - 各ゲート通過時に handoff-<step>.json を schemas/handoff.schema.json 準拠で永続化すること
@@ -64,6 +64,7 @@ responsibilities:
     name: governance-decide
     prompt_required: true
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -78,15 +79,40 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: orchestrator が制御のみを担い各フェーズを独立 Skill へ委譲する責務分割と、evaluator や governance reviewer を必ず fork コンテキスト(context=fork)で起動する Sycophancy 防止と、Layer 依存方向 L7→L1 不変の差し戻しが、ユーザ目的(再現性高い 7 層プロンプト生成)に対し過不足ないこと。
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
 ---
+
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
 
 # run-prompt-create
 
-> 端から端まで 7 層プロンプトを構築する **orchestrator skill**。Gate 1 のみユーザー確認を行い、以降は manifest 条件に基づく自動ゲートと eval-log 永続化で再現性を担保する。
+> 7 層プロンプトの実物を usable-first で構築する orchestrator。parse/open・secret・破損のP0 guard後に現物を先に提示し、design/elegant/governanceは利用者が選んだ後だけ起動する。
 
 ## Purpose & Output Contract
 
-ユーザー要望 → `prompt-brief.json` → 7 層プロンプト生成 → P0 lint → 設計評価 → パラダイム評価 → governance 承認 を**ゲートあり自動連鎖**で実行する orchestrator。各 Step/Gate の機械可読定義は `workflow-manifest.json`、責務別プロンプトは `prompts/*.md`、データ契約は `schemas/*.schema.json`。
+ユーザー要望 → 最尤 `prompt-brief.json` → 7 層プロンプト生成 → P0最小guard → 実artifact提示 → 利用者選択。`accept-as-is` はevaluator 0 / improver 0。その他の選択時のみ設計評価→パラダイム評価、明示release時のみgovernanceを実行する。
 
 **入力**: `topic` (任意), `mode` ∈ {create, update}, `--fast` (任意)
 **出力**:
@@ -96,7 +122,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 - `eval-log/handoff-<step>.json` (`schemas/handoff.schema.json` 準拠) ×7
 - 完了レポート (日本語、パラメーター名のみ英語)
 
-**完了条件**: P0 lint pass + (`--fast` でない場合は evaluator JSON pass と elegant-review pass) + `workflow-manifest.json` の `auto_approve_conditions` 全充足または governance handoff 確定。
+**初回handoff完了条件**: 実promptとbuild traceが存在し、P0最小guard pass、成果物path/試し方が提示済み。semantic/governance PASSはhandoff前提ではない。
 
 ### 起動モード
 
@@ -109,8 +135,8 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 ## Key Rules
 
-1. **自動承認既定**: 初回 brief 確定 (Gate 1) のみユーザーに AskUserQuestion を発行。Gate 2-4 は `workflow-manifest.json` の `auto_approve_conditions` を機械評価し、全充足時は `solo_operator_auto` で自動承認。brief を供給して委譲する worker 側のユーザー対話 (導出確認・出力先指定等) は skip し、導出確認は brief 内容と Gate 1 承認に委譲する (user_question_budget=1)。
-2. **条件不充足時のみ停止**: P0 lint fail / evaluator FAIL / Layer 依存違反 / 充足率 95% 未満などのいずれかで停止し findings 提示。
+1. **usable-first**: briefは依頼から最尤導出し、成果物前の追加質問は行わない。`artifact_created → minimal_guard_passed → artifact_presented → user_choice_recorded → semantic_evaluator_started` の順を守る。
+2. **選択後のみ重いゲート**: design/elegantは診断選択後、governanceはrelease選択後のみ。release/exhaustiveを自動昇格しない。
 3. **子スキルへの委譲**: 各フェーズは独立 Skill を Skill tool で起動 (`workflow-manifest.json` の `delegateSkill`)。本スキルは制御のみ。
 4. **context:fork**: evaluator/governance reviewer は必ず context:fork で起動 (Sycophancy 防止)。
 5. **handoff 保存**: 各ゲート通過時に `eval-log/handoff-<step>.json` を `schemas/handoff.schema.json` 準拠で残す。
@@ -125,16 +151,15 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 ## End-to-End Flow (概観図。正本は workflow-manifest.json)
 
 ```
-[Step 1 elicit] run-prompt-elicit ─→ prompt-brief.json ─[Gate 1 ★唯一の対話]─▶
+[Step 1 infer] 依頼から prompt-brief.json を最尤導出─▶
 [Step 2 build]  run-prompt-creator-7layer ─→ prompt-build-trace.json
-[Step 3a p0-lint] (fail→Step 2、最大 3 周) ─[Gate 2 自動]─▶
-[Step 3b design-evaluate] assign-prompt-design-evaluator (context:fork) ─→ findings
-[Step 4 elegant-review] (条件: new or >30 行, context:fork) ─[Gate 3 自動]─▶
-[Step 5 governance] (manifest 条件充足で solo_operator_auto) ─[Gate 4 自動]─▶
-[Step 6 report]
+[Step 3a p0-lint] 最小guard ─▶ [artifact 提示/handoff] ─▶ [利用者choice]
+  ├─ accept-as-is → evaluator=0 / improver=0 で完了
+  └─ 診断選択 → design-evaluate → elegant-review
+                         └─ release明示時だけ governance
 ```
 
-★ ユーザー対話は Gate 1 のみ。Gate 2-4 は `workflow-manifest.json` の `auto_approve_conditions` を機械評価し、全充足で自動承認。1 条件でも不充足なら findings 提示 + 修正ループ。
+ユーザー対話はartifact提示後の診断深度選択だけ。accept-as-isはそのまま試用し、semantic/governanceをhandoffの依存先にしない。
 
 ## Phase 別ゴールと完了条件 (宣言核)
 
@@ -142,13 +167,15 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 
 | phase (step/gate) | ゴール (到達状態) | 完了条件 (受入基準) |
 |---|---|---|
-| elicit (1/G1) | goals (成果状態)・checklist (item+judgement) を含む schema 準拠 brief が `eval-log/prompt-brief.json` に保存済み | R1 5.3 全充足 + Gate 1 ユーザー承認 (唯一の対話。否認は最大 3 周) |
+| elicit (1/-) | goals・checklistを含む schema 準拠 brief が依頼から最尤導出され保存済み | 成果物前の追加質問0、仮定はtraceに明記 |
 | build (2/-) | 7 層プロンプトと `eval-log/prompt-build-trace.json` (build-trace.schema.json 準拠・Layer coverage 全 PASS/N/A/skip 理由付き) が生成済み | trace schema 検証 exit 0 (Gate 2 前提) |
 | p0-lint (3a/G2) | manifest `phases[id=p0-lint].commands` (9 コマンド、ユニークスクリプト 8 本) が全 exit 0 の状態 | 全 exit 0。fail / `TODO` / 未展開 `{{...}}` / 英語仮文残存 (パラメーター名除く) は findings 付きで build へ差し戻し (最大 3 周) |
-| design-evaluate (3b/-) | fork した evaluator の findings (`eval-log/docs/<NN>-<timestamp>.json`, findings.schema.json 準拠) に C1-C4 FAIL がない | FAIL は build へ自律差し戻し (最大 3 周)。未収束は governance へ昇格し solo_operator_auto 失効を判定 |
+| artifact-present-handoff (3b/delivery) | 実promptのpathと試し方が提示済み | semantic/governance非依存でhandoff完了 |
+| diagnostic-choice (3c/user) | 提示後のchoice receiptがある | accept-as-isはevaluator/improver 0 |
+| design-evaluate (4/-) | 選択時のみfork evaluatorが C1-C4 を診断 | choice前の起動は順序違反 |
 | elegant-review (4/G3) | (new_prompt or diff>30 行のみ。判定 `scripts/evaluate-create-gates.py`) C1-C4 全 PASS | FAIL 残存時のみ停止し修正ループへ |
-| governance (5/G4) | preconditions (環境前提) 成立かつ `auto_approve_conditions` 全充足が各 evidence で機械評価済み → solo_operator_auto。不成立は `run-skill-rubric-governance` の手動承認確定 | manifest `governance.auto_approve_conditions` の evidence 全 PASS または手動承認 handoff (R3 5.3 全充足) |
-| report (6/-) | 下記形式の完了レポートが提示され `handoff-prompt_done.json` 保存済み | レポート必須項目が全て埋まっている |
+| governance (6/-) | releaseが明示選択された場合のみ承認証跡がある | auto release/exhaustive 0 |
+| report (3d/-) | usable artifact提示レポートが保存済み | design/elegant/governanceの結果を必須としない |
 
 ### 完了レポート形式 (phase=report の出力契約)
 ```markdown
@@ -156,19 +183,21 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 - mode: create|update
 - responsibility_id: R<n>
 - target_skill: <skill_name>
-- gates_passed: [1,2,3,4]
+- delivery_events: [artifact_created, minimal_guard_passed, artifact_presented]
+- user_choice: accept-as-is|light|standard|detailed
+- release_event / exhaustive_event: user_choiceとは別の明示event (自動昇格なし)
 - p0_lint: PASS
-- evaluator_result: PASS
-- elegant_review: PASS (or N/A)
-- governance: solo_auto_approved (or manual)
+- evaluator_result: PASS (or not-run: accept-as-is)
+- elegant_review: PASS (or not-run: accept-as-is)
+- governance: approved (or not-run: release not selected)
 - output_path: <path>
 - residual_findings: [<未収束 finding 一覧 / 空配列なら全解消>]
-- follow_up_actions: [<AI が自動選定した次アクション>]
+- follow_up_actions: [<利用者choiceで認可された次アクション>]
 ```
 
 ## Gotchas
 
-1. **Gate 条件 skip 禁止**: Gate 1 は明示確認必須。Gate 2-4 は manifest 条件の評価証跡なしに進めない。
+1. **delivery順序 skip 禁止**: artifact created/minimal guard/presented/user choice/evaluator startの順序証跡なしにpost-choice phaseへ進めない。
 2. **同一 context 評価禁止**: evaluator/governance reviewer は必ず context:fork。
 3. **lint 失敗時の自動修正禁止**: 根本原因をユーザー提示。
 4. **mode=update 時の改名**: prompt 名変更は `run-skill-rename` 相当を経由 (本スキル対象外)。

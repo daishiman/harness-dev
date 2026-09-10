@@ -2,27 +2,42 @@
   "target": {
     "plugin": "system-dev-planner",
     "skill": "assign-system-dev-plan-evaluator",
-    "skill_md_sha256": "3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d"
+    "skill_md_sha256": "523d6e2ffd01300d662ec2ad506e7d42bbae254b16c45411fdce4c54b490d2c7"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "rubric-evaluator",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v2 (focused combined content review, incremental profile, round 2)",
+  "reviewed_at": "2026-08-21T01:00:00Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["C1", "C2", "C3", "C4"],
-    "positive_feedback": [
-      "単一責務が明確: 「独立した system plan 評価」に限定し build/生成を持たず対象成果物を改変しない (FM の kind=assign/allowed-tools=[Read,Write,Bash,Task] と本文が整合)",
-      "出力契約が SSOT で pin: plan-findings.schema.json を出力正本、feature-execution-package-contract.md を評価対象契約の正本として $CLAUDE_PLUGIN_ROOT で明示 (本文42)",
-      "命名規約準拠: ディレクトリ名 assign-system-dev-plan-evaluator と name/prefix:assign が一致し L1/role_suffix:evaluator も整合"
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "positive_feedback": [
+      "round 1 medium#1 (contradiction) は解消した。`references/evaluation-rubric.md:16` は現在 ``- 機械根拠 (先行): `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py\" --repo-root <root> --staging <relative>` の `status`(pass/fail) / `validated_digest` / `violations[]`。`` であり、bare `$CLAUDE_PLUGIN_ROOT` は消えている。SKILL.md:45 および prompts/R4-evaluate.md:67,142 の同一起動行と表記が完全一致し、「同じ shell 起動行の写しが 2 形式で併存する」状態は skill 配下から消滅した。Codex 側で `/scripts/validate-system-plan.py` へ誤解決する経路が閉じている。",
+      "round 1 medium#2 (inconsistency) も解消した。round 1 が提示した 2 択のうち「evaluation-rubric.md:16 の 1 行置換」が採られ、skill 資産ツリー全体 (SKILL.md / prompts/ / references/) の実行行 8 箇所すべてが dual-root 形へ揃った結果、frontmatter `runtime_root_policy: host-skill-path` (SKILL.md:30) の宣言に反する実行可能行は skill 配下に 0 件である。Runtime root contract 節 (SKILL.md:35-41) の継承範囲記述を変更しなかった判断は妥当で、同節は run-build-skill 正本テンプレート `plugins/harness-creator/skills/run-build-skill/templates/_base.md:46-52` と 5 行逐語一致を保っており、`references/` を追記していれば正本テンプレートからの skill 固有 drift を新設することになっていた。宣言と実態の一致を、正本一致を壊さない側で達成している。",
+      "規範採点は 4 条件とも PASS。構造規範: frontmatter は name/kind=assign/effect=local-artifact/prefix/hierarchy/version/owner/source/user-invocable=false/disable-model-invocation=true/context=fork/allowed-tools/manifest/role_suffix/runtime_root_policy を完備し (SKILL.md:1-31)、assign kind の read-only 契約と本文 step 5-6 (被評価物を改変せず plan-findings のみ Write) が一致する。参照規範: declared 8 refs + manifest の実在を機械確認し欠損 0、artifact_delivery 不在は assign kind の一律除外規則どおり。`python3 scripts/lint-skill-tree.py plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator` が exit 0 で `ok` を返す。",
+      "修正が新たな矛盾を持ち込んでいない。SKILL.md sha は round 1 と同値 (523d6e2f...) で本体は無改変、evaluation-rubric.md の変更は 16 行目 1 行のみに閉じており、同 rubric の frontmatter (name/type/version/owner)、評価対象と機械根拠の節、C1..C4 判定表、Goodhart 対策の不変ルール (proposer≠approver / evaluated_digest 固定) は無改変。評価契約・workflow・goal_seek.max_loops=5 の記述に退行はない。"
+    ],
+    "negative_feedback": [
+      "[low / out-of-scope observation] 本 skill ツリー外だが、同 plugin 配下には bare `$CLAUDE_PLUGIN_ROOT` の実行行が残存する: `plugins/system-dev-planner/setup.md:27,28,49,60,63,67,79` (7 行) と `plugins/system-dev-planner/commands/system-dev-plan.md:16`。これらは assign-system-dev-plan-evaluator の declared 資産ではなく、`runtime_root_policy` を宣言するのは SKILL.md 単位であるため本 verdict の PASS 条件には影響しない。ただし plugin 全体を Codex で実行する場合は同種の解決失敗を起こすため、plugin-level 資産 (setup.md / commands/) を担当する別 review で処理されるべき残件として記録する。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256 3a551fafd33b217362c3295e96b16f08ca95cb7ff8818e7fa8f148830a8dca0d) を ref-skill-design-rubric の規範 (単一責務/命名/境界/出力契約/SSOT + FM/BD/NM/PD/RG) で採点。FM: name は kebab + assign- prefix (prefix:assign と一致)、description は日本語 Use-when 形式、allowed-tools が明示 allowlist。BD: 出力契約 (plan-findings.json + 評価対象契約) を明示、失敗/境界注記あり、本文 43 行で ≤300 行、references 委譲済みで PD 満たす。NM: ディレクトリ名一致・role_suffix:evaluator と responsibility 整合。境界: plugin の道具・契約は $CLAUDE_PLUGIN_ROOT、評価対象と出力状態は caller repository 内に限定と明記され越境がない。SSOT: schema/contract の正本を単一に pin。high severity 該当 (単一責務崩れ/出力契約欠落/命名不整合/SSOT 二重化) は無く PASS。criteria_evaluated は本 skill の主要品質次元 (4 評価条件 C1-C4) を非空 id 配列で被覆 (frontmatter feedback_contract 不在のため品質次元 id を採用)。"
+  "notes": "読んだファイル: plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator/{SKILL.md, references/evaluation-rubric.md, prompts/R4-evaluate.md, workflow-manifest.json}, plugins/harness-creator/skills/run-build-skill/templates/_base.md, eval-log/system-dev-planner/assign-system-dev-plan-evaluator/content-review/{elegance,rubric}-verdict.json (round 1 の negative_feedback)。 実行したコマンド: (1) `grep -rn 'CLAUDE_PLUGIN_ROOT' plugins/system-dev-planner/ | grep -v 'PLUGIN_ROOT:-'` = 18 hit、うち本 skill 配下は SKILL.md:38 (Runtime root contract の散文行、実行行ではない) のみで実行可能な bare 行は 0 件。 (2) `grep -rn 'PLUGIN_ROOT' <skill dir>` で skill 内の全 8 実行/参照行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形であることを確認 (SKILL.md:45,52 / references/evaluation-rubric.md:16 / prompts/R4-evaluate.md:67,68,69,71,72,142)。 (3) `python3 scripts/lint-skill-tree.py plugins/system-dev-planner/skills/assign-system-dev-plan-evaluator` = `ok: assign-system-dev-plan-evaluator` (exit 0)。 (4) declared refs 9 件 (responsibility 2 / rubric 1 / schema 2 / reference 1 / script 2 / manifest 1) の実在を個別 test で確認、欠損 0。 (5) `python3 -c \"import hashlib,pathlib;...\"` で SKILL.md sha256 を再計算 = 523d6e2f... (round 1 と同値。SKILL.md 本体は今回未変更という申告と一致)。 criteria_evaluated: 対象 SKILL.md frontmatter に `feedback_contract` ブロックは存在しないため、SKILL.md step 4 が定義する評価契約 C1..C4 を criteria id として round 1 と同一集合で束縛した。 本 review は 30 思考法を実施していない (focused combined content review, incremental profile)。SKILL.md 本体は編集していない。"
 }

@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c03-axis-vocab-removal",
+  "covered_task_ids": [
+    "P02-c03-axis-vocab-removal"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C03.json",
+  "acceptance_criterion_restated": "skill-brief-C03.json に軸名 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness / opening-order / visual-fit / card-granularity / nav-scannability) が 1 件も現れず、軸の正本として agent-brief-C06.json#output_contract.returns の axis を参照する記述だけが残ること",
+  "verified_by": [
+    {
+      "claim": "軸名の出現箇所を brief 全体から機械的に洗い出した",
+      "method": "10 軸名それぞれについて brief 全体を JSON 直列化した文字列で検索し、どのトップレベルキーに含まれるかを列挙",
+      "result": "出現は key_constraints の 1 項目のみ (6 軸を列挙)。responsibilities / output_contract / checklist など他の節には無かった。除去後に同じ検索を再実行し 10 軸すべて 0 件を確認済み"
+    },
+    {
+      "claim": "列挙が既に古くなっていた事実を確認した",
+      "method": "agent-brief-C06.json#output_contract.returns の axis enum を実測",
+      "result": "C06 は 10 軸 (R25 で opening-order / visual-fit / card-granularity / nav-scannability を追加) を持つ一方、C03 の列挙は 6 軸のままだった。語彙の第 2 の出所が実際にドリフトを起こしていた実例であり、この事実を書き換え後の本文へ根拠として残した"
+    },
+    {
+      "claim": "参照だけを残す形へ書き換えた",
+      "method": "key_constraints の当該項目を、正本の pointer (agent-brief-C06.json#output_contract.returns の axis) と『本 brief は軸名を 1 つも列挙しない』の宣言、および列挙するとどう壊れるかの理由へ置き換えた",
+      "result": "書き換え済み。『軸を増減する変更先は C06 の 1 箇所』という元の主張は残し、それを実現する条件 (列挙を持たないこと) を明示した"
+    },
+    {
+      "claim": "運搬側が未知の軸名で止まらないことを追記した",
+      "method": "この skill の責務が findings の運搬であることから、軸名の検証を持つと C06 単独での軸追加が完結しなくなる関係を確認",
+      "result": "『知らない軸名が返っても運搬を止めない』を追記した。これを書かないと、次に触る人が『正本は C06 なのだから C03 は C06 の enum を読んで検証すべき』と読み、結局 C03 が語彙へ依存する実装へ戻る"
+    },
+    {
+      "claim": "軸語彙の他の出所を横断で探した",
+      "method": "plugin-plans/ と plugins/ を軸名 3 種で grep",
+      "result": "brief 側は C06 のみ (C03 除去後)。出荷側は plugins/guide-doc-generator/agents/handout-readability-reviewer.md:96 が 6 軸のままで、tests/handout-readability-reviewer/ の 2 本もそれに追随している。これは既存の task-spec P05-x-44-c06-r25-axes-shipped が扱う範囲であり、重複 emit はしていない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C03AXIS-SHIPPED-01",
+      "level": "warn",
+      "summary": "軸語彙の正本は brief 上では C06 の 1 箇所へ寄ったが、出荷物 (agents/handout-readability-reviewer.md:96 の表) は依然 6 軸で、R25 の 4 軸を判定する担当が実行時には不在。brief 側の整理は出荷側の不足を隠す方向に働く — brief を読むと『軸は 10 種で正本は 1 箇所』に見えるため。是正は既存の P05-x-44-c06-r25-axes-shipped (未処理) が持つ"
+    },
+    {
+      "id": "F-P02C03AXIS-TESTS-01",
+      "level": "info",
+      "summary": "tests/handout-readability-reviewer/ の 2 本が 6 軸を前提に書かれており、出荷 md を 10 軸へ更新すると同時に直す必要がある。逆に言えば現状のテストは 6 軸であることを緑として固定しているため、P05-x-44 を md だけ直すと赤になる。P05-x-44 の write_scope は plugins/guide-doc-generator/agents/ でテストを含まない"
+    },
+    {
+      "id": "F-P02C03AXIS-NOGATE-01",
+      "level": "info",
+      "summary": "『brief に軸名を列挙しない』は今回人手で確認しただけで、再発を止める検査は無い。次に C03 へ加筆する人が説明のつもりで軸名を書けば元に戻る。同種の『正本を 1 箇所に寄せた』裁定は本 plugin に複数あり (裁定文の非複製・属性名の単一 owner)、いずれも grep 一発で検査できる形なのに検査が無い"
+    }
+  ]
+}

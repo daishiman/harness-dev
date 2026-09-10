@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "guide-doc-generator",
+  "route_id": "C12",
+  "component_kind": "script",
+  "name": "validate-handout-config.py",
+  "builder": "plugin-scaffold",
+  "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "status": "success",
+  "summary": "REQ-2(b)/REQ-3 (利用者指定『図解と画像はセクションごとに毎回』) の判定を実装した。(1) 削除済みキー min_diagrams_per_main_sections を読む fail-open を解消し単数形 min_diagrams_per_main_section へ切替、(2) W-DIAGRAM-FEW の判定単位を資料全体の総量比から main セクション単位へ変更、(3) 未実装だった E-IMAGE-ABSENT を min_images_per_main_section で新設、(4) 重大度の正本を code 接頭辞から config の level フィールドへ移し level:'error' 宣言を尊重 (正本欠落時も FALLBACK_ERROR_CODES で fail-closed)。総量比の残骸 (math import・min_diagram_ratio/floor・/diagrams pointer) を除去した",
+  "deviations": [
+    "既存 tests/validate-handout-config.py/test_visual_density.py が旧契約を assert しており 7 件 fail する。テストディレクトリは本 node の write_scope 外のため修正できず、discovered-task P05-C12-01-visual-density-tests (structural) として emit 済み"
+  ],
+  "evidence": [
+    "plugins/guide-doc-generator/scripts/validate-handout-config.py exists sha256=defa8091681ffc543a6acb79e13a99878f396269e72c1ae98a7cb3902fb3df56",
+    "plugins/guide-doc-generator/config/handout-visual-policy.json",
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/dd3fe8972d0e42f68f667397cd0726ea.json"
+  ],
+  "inputs_consumed": [
+    "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+    "plugins/guide-doc-generator/config/handout-visual-policy.json"
+  ],
+  "handover": "validate-handout-config.py は main セクション単位で DIAGRAM と IMG の各 1 件以上を要求し、いずれも exit=1 で止まる。同梱 preset (config/handout-purposes.json) は現状 43/43 節が DIAGRAM 無し・42/43 節が IMG 無しのため、preset を所有する P05-x-03 の修正まで本ゲートは赤のままである",
+  "covered_task_ids": [
+    "P05-C12-01"
+  ],
+  "metrics": {
+    "measured_minimal_config_exit": 1,
+    "measured_img_only_exit": 1,
+    "measured_both_present_diagram_image_diags": 0,
+    "existing_tests_failing": 7
+  }
+}

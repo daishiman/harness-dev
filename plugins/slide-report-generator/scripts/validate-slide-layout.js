@@ -16,11 +16,14 @@
  *   L6 文字量     1 スライドの本文が 340 字以内 (1メッセージ1スライドの実効的な上限)
  *   L8 充填率     内容ブロックの外接矩形の和集合 / stage が契約のレンジに入る (面ごと・例外あり)
  *   L8-ink 中身   テキスト行 + media / 内容ブロック和集合。伸ばしただけの空カードを弾く
+ *   L8-void 配り  最大の空き矩形 / 面内余白の総面積。余白が全隙間へ均された面を弾く
  *   L8-font 書体  充填率を書体の縮小で稼いでいない (書体の下限は系統ごとに正本が違う)
  *   L9 縦の残余   群の上下余白の合計比・上下の非対称・群内間隔が契約のレンジに入る
  *
  * L8 と L8-ink は対で効く。部材を伸ばして L8 を稼ぐと、中身は増えないので L8-ink が
  * 落ちる。片方だけでは「ピチピチだが中身は空」を止められない。
+ * L8-void はこの 2 つと軸が違い、余白の「量」ではなく「配り方」を見る。L8 / L8-ink を
+ * 両方満たしても、余白が全隙間へ均等に配られていれば面は締まって見えないので落とす。
  *
  * --measure を付けると判定せず面ごとの実測値だけを出す (閾値を決める前に測るための口)。
  *
@@ -75,6 +78,9 @@ const SEVERITY = {
   L6: 'warning', // 密度は用途による (配布資料は濃くてよい)
   L8: 'warning', // 意図的な低密度面がありうる (--strict で fail へ昇格する)
   'L8-ink': 'warning', // 部材の中身の詰まり具合。L8 と対で見る
+  // 余白の配り方。均等配置そのものは読めなくなる欠陥ではなく意匠の幅があるので、
+  // 低密度面と同じく warning に置く (--strict で fail へ昇格する)。
+  'L8-void': 'warning',
   'L8-font': 'error', // 書体を下限未満へ下げて充填率を稼ぐ抜け道は例外なく不可
   L9: 'warning', // 縦の置き場所は意匠の幅があり、面ごとの逸脱は説明可能なことがある
   // 描画時に付けた作者側のインライン custom property が、面をめくると消える形の欠陥。
@@ -474,6 +480,69 @@ function collectSlide(arg) {
   const fillRatio = stageArea > 0 ? blockArea / stageArea : 0;
   const blockInkRatio = blockArea > 0 ? inkArea / blockArea : 0;
 
+  // --- L8-void 余白の配り方 ---------------------------------------------------
+  // 面内余白 = stage 面積 - 内容ブロック和集合の面積。内容ブロックは stage_fill が
+  // 使っている blockRects をそのまま使う (同じものを別の数え方で二度数えない)。
+  //
+  // 「最大の空き矩形」は、stage の内側にあって blockRects のどれとも重ならない
+  // 軸平行矩形のうち面積が最大のものと定義する。算出は次の 3 手順で厳密に行う。
+  //   1. stage の 4 辺と blockRects の各辺の座標を x / y それぞれ集めて昇順に並べ、
+  //      stage を不等間隔の格子へ切る (座標圧縮。unionArea と同じ考え方)。
+  //   2. 各セルの中点がどれかの block に含まれるかで、セルを塞がり / 空きに塗る。
+  //      中点は相異なる 2 つの境界の間に必ず厳密に入るので、辺を丸める必要はない
+  //      (丸めを持ち込むと箱が縮む観測点ほど誤差の比重が上がる。unionArea と同じ理由)。
+  //   3. 行を上から順に走らせ、列ごとに「上へ連続する空きセルの高さ」を積んだ
+  //      ヒストグラムを作り、単調スタックで最大長方形を取る。セルの幅・高さは実座標の
+  //      差をそのまま使うので、面積は px^2 で出る。
+  // 座標圧縮した格子の上で厳密になる理由: 最大の空き矩形は 4 辺のどれも、ぶつかるまで
+  // 外へ押し広げられる (押し広げた先も空きのままなので面積は減らない)。押し広げた先は
+  // stage の辺か block の辺なので、最大値は必ず格子の境界の上で達成される。
+  //
+  // 均等配置の面では余白が n 箇所へ均され、最大の空き矩形は概ね余白総面積の 1/n に
+  // なる。一箇所へ寄せた面では 1 つの空きが余白の大半を占めるので、比は 1 に近づく。
+  const largestVoidArea = (rects) => {
+    if (!(stage.width > 1) || !(stage.height > 1)) return 0;
+    const inside = (v, lo, hi) => v > lo && v < hi;
+    const xs = [...new Set([stage.left, stage.right,
+      ...rects.flatMap((r) => [r.left, r.right]).filter((v) => inside(v, stage.left, stage.right))])]
+      .sort((a, b) => a - b);
+    const ys = [...new Set([stage.top, stage.bottom,
+      ...rects.flatMap((r) => [r.top, r.bottom]).filter((v) => inside(v, stage.top, stage.bottom))])]
+      .sort((a, b) => a - b);
+    const nx = xs.length - 1;
+    const ny = ys.length - 1;
+    if (nx < 1 || ny < 1) return 0;
+    const heights = new Array(nx).fill(0);
+    let best = 0;
+    for (let j = 0; j < ny; j++) {
+      const cy = (ys[j] + ys[j + 1]) / 2;
+      const rowH = ys[j + 1] - ys[j];
+      for (let i = 0; i < nx; i++) {
+        const cx = (xs[i] + xs[i + 1]) / 2;
+        const filled = rects.some((r) => r.left <= cx && cx <= r.right && r.top <= cy && cy <= r.bottom);
+        heights[i] = filled ? 0 : heights[i] + rowH;
+      }
+      // ヒストグラムの最大長方形。番兵として高さ 0 を末尾に 1 本置く。
+      const stack = [];
+      for (let i = 0; i <= nx; i++) {
+        const h = i < nx ? heights[i] : 0;
+        let startX = xs[i];
+        while (stack.length && stack[stack.length - 1].h >= h) {
+          const top = stack.pop();
+          const area = top.h * (xs[i] - top.x);
+          if (area > best) best = area;
+          startX = top.x;
+        }
+        stack.push({ h, x: startX });
+      }
+    }
+    return best;
+  };
+  const voidArea = Math.max(0, stageArea - blockArea);
+  const maxVoidArea = voidArea > 0 ? largestVoidArea(blockRects) : 0;
+  // 余白が無い面 (voidArea = 0) は配り方を問えないので 1 (合格側) に倒す。
+  const largestVoidShare = voidArea > 0 ? maxVoidArea / voidArea : 1;
+
   // L9 縦方向の残余。基準は「本文の列 (見出しを含む) が stage の中でどこに置かれて
   // いるか」。見出しを stage から先に差し引いて残りの中で測ると、列ごと中央へ寄せても
   // 見出し下の間隔は動かないので上余白が変わらず、中央寄せが検出できない。つまり
@@ -658,6 +727,7 @@ function collectSlide(arg) {
     slide: slideBox, heads, bodies, figs, bands, overflowing, bodyChars,
     fillRatio, blockInkRatio, stageArea: Math.round(stageArea),
     inkArea: Math.round(inkArea), blockArea: Math.round(blockArea),
+    largestVoidShare, voidArea: Math.round(voidArea), maxVoidArea: Math.round(maxVoidArea),
     blockCount: blockRects.length,
     bgPartial,
     minFontPx: minFontRaw,
@@ -701,6 +771,7 @@ async function run() {
   const fontMin = contract.typography && contract.typography.min;
   const fontMinRem = contract.typography && contract.typography.min_rem_engine;
   const inkMin = fp.min_block_ink_ratio;
+  const voidMin = fp.min_largest_void_share;
 
   const { configurePluginLocalPlaywright } = require(path.join(VENDOR, 'scripts', 'playwright-runtime.js'));
   configurePluginLocalPlaywright();
@@ -836,6 +907,8 @@ async function run() {
             where,
             `stage_fill=${r.fillRatio.toFixed(3)}`,
             `block_ink=${r.blockInkRatio.toFixed(3)}`,
+            `void_share=${r.largestVoidShare.toFixed(3)}`,
+            `void_px=${r.voidArea} max_void_px=${r.maxVoidArea}`,
             `blocks=${r.blockCount}`,
             `block_px=${r.blockArea} ink_px=${r.inkArea} stage_px=${r.stageArea}`,
             `min_font=${r.minFontPx === null ? '-' : r.minFontPx.toFixed(1)}px root=${r.rootFontPx}px`,
@@ -908,6 +981,17 @@ async function run() {
               report('L8-ink', where, `部材の中身が ${(r.blockInkRatio * 100).toFixed(1)}% しかない `
                 + `(下限 ${(inkMin * 100).toFixed(0)}%)。部材を伸ばして充填率を作らず、`
                 + '中身を足すか部材を小さくする');
+            }
+            // 余白の配り方。stage_fill (量) と block_ink (中身) を両方満たしても、
+            // 余白が全隙間へ均された面はここで落ちる。
+            // 低密度が意匠である 4 kind は void_exempt で免除する。それらの面は余白が
+            // 主役であり、どこに寄せるかは意匠そのものなので、寄せ方を契約で縛ると
+            // 面の側に解の無い指摘になる (image-full は上の exempt で既に外れている)。
+            if (voidMin && !(exc && exc.void_exempt) && r.voidArea > 0
+                && r.largestVoidShare < voidMin) {
+              report('L8-void', where, `最大の空き矩形が面内余白の ${(r.largestVoidShare * 100).toFixed(1)}% `
+                + `しかない (下限 ${(voidMin * 100).toFixed(0)}%。空き ${r.maxVoidArea}px² / 余白 ${r.voidArea}px²)。`
+                + '余白が全隙間へ均されている。間隔を詰めて空きを一箇所へ寄せる');
             }
           }
         }

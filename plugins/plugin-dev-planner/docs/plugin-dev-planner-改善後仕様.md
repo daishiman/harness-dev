@@ -157,7 +157,7 @@ build_target / quality_gates / harness_coverage / feedback_contract は phase fr
 | **sub-agent** | name / description / tools(最小権限)/ independent_context:true / responsibility_anchor / prompt_layer | 親 skill build 内 `run-build-skill --with-subagent` |
 | **slash-command** | name / description / argument-hint / allowed-tools / disable-model-invocation | 親 skill build 内 `run-build-skill kind=command` |
 | **hook** | event / matcher / exit_semantics / settings_wiring / fail_closed:true | 親 skill build 内 `run-build-skill --with-hooks` |
-| **script** | script_name / purpose / inputs / outputs / exit_codes / network / write_scope / stdlib_only:true / tests_min:80 | 親 skill build の scripts/ + tests/ |
+| **script** | script_name / purpose / inputs / outputs / exit_codes / network / write_scope / stdlib_only:true / tests_min:12 以上 (本数の床。網羅性は harness_coverage の 80% が持つ) | 親 skill build の scripts/ + tests/ |
 
 全 buildable component 共通で **core 規律**を目録エントリに携帯:
 ```yaml

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "P02 集約で 23 設計ブリーフ横断の矛盾 8 件 (X-01..X-08・うち blocking 2) を検出したが、これを解消する作業ノードが task-graph に存在しない。P03 (design-review) の phase 本文は成果物として『指摘に対する設計修正の反映』を宣言しているのに、P03-x-01 の write_scope が plugin-plans/guide-doc-generator/evidence/P03.json のみで briefs/ を含まないため、宣言成果物を write_scope 内で達成できない。仕様側の欠落。 / 受理後の順序保証: P03-x-01 (設計レビュー) が P03-x-02 の後に走るよう task-specs/P03-x-01.md の depends_on へ P03-x-02 を追加し derive-task-graph.py (単一 writer) で再導出した。これにより P03-x-01 へ依存する P04 wave 全 24 leaf が矛盾解消の完了を transitively 待つ。resulting_graph_hash は再導出後の最終 hash (旧: sha256:968499c5d7b49ebc70082d887a968b940b94e93eb0ab5da0e4e856267ad49e71)。",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P03-x-02",
+    "title": "設計ブリーフ横断矛盾を単一 writer で解消する",
+    "phase_ref": "P03",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+    "acceptance_criterion": "evidence/P02.json の findings X-01..X-08 のうち blocking/high 全件が briefs/ 側で解消され、日付正本表現・構成データフィールド名・HTML 機械可読属性語彙がそれぞれ単一の定義を持つ",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P03-x-02.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/"
+    ],
+    "consumes": [
+      "plugin-plans/guide-doc-generator/evidence/P02.json"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "P03"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:3e52326d8e40e2d6951cab7e359508f08bceba615709974d7fd47715c944221a"
+}

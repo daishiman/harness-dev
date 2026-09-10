@@ -1,0 +1,28 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C16-01",
+ "covered_task_ids": ["P04-C16-01"],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+ "verified_by": [
+  {"claim": "3 面がすべて既存で充足しており未充足 0 面",
+   "method": "dispatcher が報告の名指し先を対象ディレクトリで確認",
+   "result": "pass: 違反系 exit1 は SC-01..SC-10 の診断コードごとにファイルが分かれ、締めは共通ヘルパ経由。argv/exit code 契約は test_argv_and_exit_codes 系、再現性は determinism 系で担保。報告は本数でなくファイル・関数の名指しで根拠づけており、dispatch 時要求 (本数を数えて緑にしない) を満たす"},
+  {"claim": "suite が緑であり追加不要という判断が妥当",
+   "method": "dispatcher が対象ディレクトリで python3 -m unittest discover を独立実行",
+   "result": "pass: Ran 354 tests / OK。報告の件数と一致 (C23 側で生じた 2 件の差はここでは生じていない)。本 component は CR-EMOJI / CR-EXT の唯一の実装点であり C10・C11・C15 が module import で委譲する根であるため、ここが緑であることは下流 3 component の前提を成す"},
+  {"claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): pass と書かず再現不能と記録している。P05-x-77 として起票済み"},
+  {"claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来の書込 0 件 (追加不要と判断したため)。scripts/verify-handout-selfcontained.py 未変更"}
+ ],
+ "findings": [
+  {"id": "F-P04C16-01", "level": "resolved",
+   "summary": "3 面とも充足しており本ノードでの追加は不要。CR-EMOJI / CR-EXT の単一実装点である本 component の受入網が最も厚い (354 本) ことは、P03-x-03 の節 1・節 2 で確認した『検査規則が単一正本に帰属している』という設計判断と整合する"},
+  {"id": "F-P04C16-02", "level": "carry-forward",
+   "summary": "本 component は下流 3 component (C10 / C11 / C15) が module import で依存する根だが、依存側から見た契約 (scan_emoji(text) -> list[Violation] の戻り値形) を固定するテストが本ディレクトリにあるか、それとも依存側にあるかは本ノードで確認していない。module_api の契約テストの帰属先は横断で決める必要がある"}
+ ]
+}

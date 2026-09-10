@@ -1,5 +1,8 @@
 # スライドインタラクション
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: [spec-registry.md](spec-registry.md) — このファイルは GSAP 実装テンプレート・パターン集。規則の正本は SR-ID で参照すること
 
 **責務**: ホバーエフェクト・アジェンダインジケーター・TweenSliderクラス・アニメーション定義の**実装**。
@@ -387,7 +390,7 @@
   transition: opacity 0.3s ease, transform 0.3s ease;
   z-index: 1000;
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--fuji-gray);
+  border: 1px solid var(--fg-muted);
   pointer-events: none;
 }
 
@@ -489,12 +492,12 @@
   background: rgba(31, 31, 40, 0.9);
   padding: 0.8rem 1rem;
   border-radius: 8px;
-  border: 1px solid var(--fuji-gray);
+  border: 1px solid var(--fg-muted);
 }
 
 .agenda-indicator-item {
   font-size: 1rem;
-  color: var(--fg-dim);
+  color: var(--fg-muted);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   transition: all 0.3s ease;

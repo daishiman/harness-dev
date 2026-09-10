@@ -1,0 +1,79 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C01-01",
+ "covered_task_ids": [
+  "P02-C01-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C01.json",
+ "verified_by": [
+  {
+   "claim": "R25 重点: R3-render が C13 embed-assets.py 呼出し前の role 確定を順序つきで明記している",
+   "method": "skill-brief-C01.json:169 を dispatcher が直接 grep で確認",
+   "result": "pass: 『本責務の最初のステップ (C13 embed-assets.py を呼ぶ前) として』『存在しなければ、C13 を呼ぶ前に構成データ側の当該 asset の role を illustration へ書き換える』を確認"
+  },
+  {
+   "claim": "C01 と C13 の責務分界に矛盾が無い (二重実装・逆順記述が無い)",
+   "method": "skill-brief-C01.json:169 と script-brief-C13.json:126 を同一正本 improvement/visual-per-section-decision.json#role_split.fallback に対して突合",
+   "result": "pass: 順序・救済責務の所在・C13 の fail-closed 契約・参照正本の 4 軸すべて一致。救済を C13 側に持たない点も双方が明記"
+  },
+  {
+   "claim": "skill-brief.schema.json に対し余剰キー 0",
+   "method": "jsonschema.Draft202012Validator で skill-brief-C01.json を検証 (dispatcher 再実行)",
+   "result": "pass: errors 0。修正前は readme_writer / goal_seek.completion_conditions の 2 件で additionalProperties 違反だった"
+  },
+  {
+   "claim": "schema 適合化が本文の欠落を伴っていない",
+   "method": "file_ownership (1 要素) と key_constraints (7 要素) を読み、旧 completion_conditions の 7 キー (deterministic_gates / visual_density / why_here / on_violation / content_selection / section_opening / hero_volume) が全て残存することを確認",
+   "result": "pass: 7/7 保持。goal_seek は engine/fork/max_loops の 3 キーとなり inventory C01 と一致"
+  },
+  {
+   "claim": "旧キー名の参照残渣が brief 群に無い",
+   "method": "grep -rn 'readme_writer|completion_conditions' plugin-plans/guide-doc-generator/briefs/",
+   "result": "pass: 0 件"
+  },
+  {
+   "claim": "goal / output_contract / boundary が inventory C01 と整合",
+   "method": "SubAgent が Python 文字列比較で検証 (output_contract・boundary は差分 0、goal は inventory 値が brief 値の prefix)",
+   "result": "pass"
+  },
+  {
+   "claim": "決定論 script の呼び出し順が brief と既存 SKILL.md で整合",
+   "method": "brief responsibilities R3-render/R4-verify と skills/run-handout-build/SKILL.md:192 の script 列を突合",
+   "result": "pass: validate → resolve → embed-assets → 図解/sprite → srg-image-bridge → render → C09 4 ゲート → C19 route の順"
+  },
+  {
+   "claim": "射影器 render-skill-brief.py --component C01 が exit0",
+   "method": "SubAgent が scratchpad 出力で修正前後 2 回実行",
+   "result": "pass: 両回 EXIT=0"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "git status --porcelain plugin-plans/ を dispatcher が確認",
+   "result": "pass: skill-brief-C01.json 以外に本 SubAgent 由来の新規変更なし"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C01-01",
+   "level": "carry-forward",
+   "summary": "SKILL.md:192 に C13 前の role 確定手順が未反映。brief 側は確定済みなので後続 build ノード (P05 系) の対象"
+  },
+  {
+   "id": "F-C01-02",
+   "level": "resolved",
+   "summary": "visual-per-section-decision.json の 'C13 srg-image-bridge.py' 誤記 (正しくは C21) を SubAgent が報告。dispatcher が本 cycle 内で 2 箇所とも修正済み"
+  },
+  {
+   "id": "F-C01-03",
+   "level": "carry-forward",
+   "summary": "inventory C01 の deterministic_checks 7 件に embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout が含まれない。brief 単独の不整合ではなく inventory 由来のため別ノードで扱う"
+  },
+  {
+   "id": "F-C01-04",
+   "level": "carry-forward",
+   "summary": "射影器 render-skill-brief.py を C01 の write_scope へ直接向けると R21-R25 の蓄積 (brief superset) が消える。射影先は scratchpad に限る運用の明文化が必要"
+  }
+ ]
+}

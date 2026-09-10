@@ -1,5 +1,8 @@
 # 図解タイプ: 運用・体験・増減系（SVG 手書き経路）
 
+<!-- css-route: diagram -->
+<!-- この宣言より後ろの var() は diagram 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 **責務**: カンバンボード、ユーザージャーニーマップ、ウォーターフォールチャート、ヒートマップの SVG テンプレート
 
 **含まれるタイプ**: 11.41-11.44
@@ -23,7 +26,7 @@
 §D-3 原則 1 の対象外である。この 2 本は `<polyline>` で描く。
 `validate-svg-diagram.py` の D5 は `<line>`、D17 は `<path>` を見る検査なので、
 型語彙のデータ線を検査対象の要素で書かないことが、契約と検査を同時に満たす唯一の書き方である
-（前例: `examples/diagram-goldens/line-chart-golden.html`）。
+（前例: `skills/run-slide-report-generate/examples/diagram-goldens/line-chart-golden.html`）。
 
 ---
 
@@ -59,7 +62,7 @@
        role="img" aria-labelledby="f1-caption">
     <defs>
       <marker id="f1-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted)"/>
       </marker>
     </defs>
 
@@ -69,33 +72,33 @@
     <rect x="656" y="88" width="272" height="376" rx="8" fill="#F8F7F0"/>
 
     <!-- 列見出しと WIP 表示 (上限を超えている列だけが accent) -->
-    <text x="32" y="64" font-size="16" fill="var(--fg, #43436c)">{{列1}}</text>
-    <text x="304" y="64" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">上限なし・3 枚</text>
+    <text x="32" y="64" font-size="16" fill="var(--fg)">{{列1}}</text>
+    <text x="304" y="64" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">上限なし・3 枚</text>
     <line x1="32" y1="76" x2="304" y2="76" stroke="#DCD7BA" stroke-width="1.25"/>
 
-    <text x="344" y="64" font-size="16" fill="var(--fg, #43436c)">{{列2}}</text>
-    <text x="616" y="64" text-anchor="end" font-size="12" fill="var(--sakura-pink, #D27E99)">WIP 上限 2・3 枚</text>
-    <line x1="344" y1="76" x2="616" y2="76" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="344" y="64" font-size="16" fill="var(--fg)">{{列2}}</text>
+    <text x="616" y="64" text-anchor="end" font-size="12" fill="var(--ink, #141412)">WIP 上限 2・3 枚</text>
+    <line x1="344" y1="76" x2="616" y2="76" stroke="var(--ink, #141412)" stroke-width="2"/>
 
     <!-- カード (通常) -->
     <g>
       <rect x="48" y="104" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="64" y="136" font-size="14" fill="var(--fg, #43436c)">{{カード名}}</text>
-      <text x="64" y="160" font-size="12" fill="var(--fuji-gray, #8a8980)">{{補足}}</text>
+      <text x="64" y="136" font-size="14" fill="var(--fg)">{{カード名}}</text>
+      <text x="64" y="160" font-size="12" fill="var(--fg-muted, #6A6A68)">{{補足}}</text>
     </g>
 
     <!-- カード (上限超過ぶん = 焦点。1 枚だけ) -->
     <g>
       <rect x="360" y="280" width="240" height="72" rx="6"
-            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-      <text x="376" y="312" font-size="14" fill="var(--fg, #43436c)">{{滞留カード名}}</text>
-      <text x="376" y="336" font-size="12" fill="var(--fg-dim, #54546d)">5 週目・上限超過</text>
+            fill="rgba(210, 126, 153, 0.14)" stroke="var(--ink, #141412)" stroke-width="2"/>
+      <text x="376" y="312" font-size="14" fill="var(--fg)">{{滞留カード名}}</text>
+      <text x="376" y="336" font-size="12" fill="var(--fg-muted)">5 週目・上限超過</text>
     </g>
 
     <!-- 盤面の読む向き (1 本だけ) -->
     <line x1="32" y1="496" x2="928" y2="496"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f1-arrow)"/>
-    <text x="480" y="488" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">左から右へ流れる</text>
+          stroke="var(--fg-muted)" stroke-width="2" marker-end="url(#f1-arrow)"/>
+    <text x="480" y="488" text-anchor="middle" font-size="12" fill="var(--fg-muted)">左から右へ流れる</text>
   </svg>
   <figcaption id="f1-caption" class="srg-diagram__caption">
     <span class="srg-diagram__label">図 n</span>{{40-120 字}}
@@ -142,35 +145,35 @@
 
 ```html
 <!-- フェーズ見出しと、3 行を貫く列境界 -->
-<text x="256" y="68" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">{{フェーズ1}}</text>
+<text x="256" y="68" text-anchor="middle" font-size="16" fill="var(--fg)">{{フェーズ1}}</text>
 <line x1="160" y1="88" x2="928" y2="88" stroke="#DCD7BA" stroke-width="1.25"/>
 <line x1="352" y1="88" x2="352" y2="408" stroke="#DCD7BA" stroke-width="1.25"/>
 
 <!-- 行ラベル -->
-<text x="144" y="144" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">行動</text>
+<text x="144" y="144" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">行動</text>
 
 <!-- 行動のセル -->
 <g>
   <rect x="168" y="104" width="176" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-  <text x="256" y="136" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">{{行動}}</text>
-  <text x="256" y="160" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">{{補足}}</text>
+  <text x="256" y="136" text-anchor="middle" font-size="14" fill="var(--fg)">{{行動}}</text>
+  <text x="256" y="160" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">{{補足}}</text>
 </g>
 
 <!-- 感情行: 中立の基準線 + 推移線 (polyline) + 各点 -->
 <line x1="160" y1="260" x2="928" y2="260" stroke="#DCD7BA" stroke-width="1.25" stroke-dasharray="4 3"/>
-<text x="152" y="252" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">中立</text>
+<text x="152" y="252" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">中立</text>
 <polyline points="256,288 448,304 640,232 832,216"
-          fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2"
+          fill="none" stroke="var(--fg-muted)" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="256" cy="288" r="4" fill="var(--fg-dim, #54546d)"/>
-<circle cx="448" cy="304" r="6" fill="var(--sakura-pink, #D27E99)"/>
+<circle cx="256" cy="288" r="4" fill="var(--fg-muted)"/>
+<circle cx="448" cy="304" r="6" fill="var(--ink, #141412)"/>
 
 <!-- 接点行: 谷の真下だけが焦点 -->
 <g>
   <rect x="360" y="336" width="176" height="72" rx="6"
-        fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-  <text x="448" y="368" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">{{接点}}</text>
-  <text x="448" y="392" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">{{補足}}</text>
+        fill="rgba(210, 126, 153, 0.14)" stroke="var(--ink, #141412)" stroke-width="2"/>
+  <text x="448" y="368" text-anchor="middle" font-size="14" fill="var(--fg)">{{接点}}</text>
+  <text x="448" y="392" text-anchor="middle" font-size="12" fill="var(--fg-muted)">{{補足}}</text>
 </g>
 ```
 
@@ -209,33 +212,35 @@
   増を緑・減を赤にしない。色相を 2 つ増やすと着地点の焦点が埋もれる。
   **符号は値ラベルの `+` / `−` が既に語っている**
 - **橋渡し兼累計線は 1 本の `<polyline>`**（データ線。冒頭の「斜め線禁止の例外」を参照）。
-  棒と棒の間では水平に走り、棒の上では累計の傾きとして走る。破線 `8 4`・線幅 2
+  棒と棒の間では水平に走り、棒の上では累計の傾きとして走る。破線・線幅 2（破線の値は下のコード例。
+  線種の語彙は閉じていて、正本は `scripts/validate-svg-diagram.py` の `DASH_VOCAB`＝検査は D25。
+  **ここへ値を書き写さない**——語彙外の破線は検査で落ちる）
 - 値ラベルは棒の**外**（上）に置く。棒の中に入れると、高さ 16px の細い棒で字が収まらない。
   `16px` を使うのは開始と着地の 2 本だけ、中間の増減は `14px`
 
 ```html
 <!-- 目盛と基線 -->
 <line x1="64" y1="216" x2="928" y2="216" stroke="#DCD7BA" stroke-width="1.25"/>
-<text x="56" y="220" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">120</text>
-<line x1="64" y1="456" x2="928" y2="456" stroke="var(--fuji-gray, #8a8980)" stroke-width="2"/>
+<text x="56" y="220" text-anchor="end" font-size="12" fill="var(--fg-muted)">120</text>
+<line x1="64" y1="456" x2="928" y2="456" stroke="var(--fg-muted, #6A6A68)" stroke-width="2"/>
 
 <!-- 開始棒 (基準) -->
-<rect x="72" y="216" width="96" height="240" fill="#F8F7F0" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
+<rect x="72" y="216" width="96" height="240" fill="#F8F7F0" stroke="var(--fg)" stroke-width="1.5"/>
 <!-- 増の棒 -->
-<rect x="216" y="136" width="96" height="80" fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+<rect x="216" y="136" width="96" height="80" fill="rgba(67, 67, 108, 0.05)" stroke="var(--fg-muted)" stroke-width="1.5"/>
 <!-- 減の棒 (色相は増と同じ・濃度だけが違う) -->
-<rect x="504" y="88" width="96" height="32" fill="rgba(67, 67, 108, 0.20)" stroke="var(--fg-dim, #54546d)" stroke-width="1.5"/>
+<rect x="504" y="88" width="96" height="32" fill="rgba(67, 67, 108, 0.20)" stroke="var(--fg-muted)" stroke-width="1.5"/>
 <!-- 終了棒 (着地点 = 焦点) -->
-<rect x="792" y="136" width="96" height="320" fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+<rect x="792" y="136" width="96" height="320" fill="rgba(210, 126, 153, 0.14)" stroke="var(--ink, #141412)" stroke-width="2"/>
 
 <!-- 橋渡し兼累計線 (データ線。polyline で描く) -->
 <polyline points="168,216 216,216 312,136 360,136 456,88 504,88 600,120 648,120 744,136 792,136"
-          fill="none" stroke="var(--fg-dim, #54546d)" stroke-width="2" stroke-dasharray="8 4"/>
+          fill="none" stroke="var(--fg-muted)" stroke-width="2" stroke-dasharray="12 4"/>
 
 <!-- 値ラベルは棒の外へ -->
-<text x="120" y="204" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">120</text>
-<text x="264" y="124" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">+40</text>
-<text x="552" y="76" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">−16</text>
+<text x="120" y="204" text-anchor="middle" font-size="16" fill="var(--fg)">120</text>
+<text x="264" y="124" text-anchor="middle" font-size="14" fill="var(--fg)">+40</text>
+<text x="552" y="76" text-anchor="middle" font-size="14" fill="var(--fg)">−16</text>
 ```
 
 **チェックリスト**: □ 各棒の上端・下端が累計と一致しているか（目分量で読んでも値ラベルと矛盾しないか）
@@ -287,16 +292,16 @@
 
 ```html
 <!-- 列ラベル / 行ラベル -->
-<text x="220" y="76" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">{{列1}}</text>
-<text x="144" y="136" text-anchor="end" font-size="12" fill="var(--fg-dim, #54546d)">{{行1}}</text>
+<text x="220" y="76" text-anchor="middle" font-size="12" fill="var(--fg-muted)">{{列1}}</text>
+<text x="144" y="136" text-anchor="end" font-size="12" fill="var(--fg-muted)">{{行1}}</text>
 
 <!-- セル (濃さは 5 段のみ・数値は必ず書く) -->
 <rect x="160" y="96" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.14)" stroke="#DCD7BA" stroke-width="1.25"/>
-<text x="220" y="140" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">12</text>
+<text x="220" y="140" text-anchor="middle" font-size="14" fill="var(--fg)">12</text>
 
 <!-- 最濃セル (焦点。枠だけを accent にし、塗りは濃度段のまま) -->
-<rect x="672" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-<text x="732" y="380" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">38</text>
+<rect x="672" y="336" width="120" height="72" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="var(--ink, #141412)" stroke-width="2"/>
+<text x="732" y="380" text-anchor="middle" font-size="14" fill="var(--fg)">38</text>
 
 <!-- 濃さの凡例 (5 段・両端にだけ語を置く) -->
 <rect x="160" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.05)" stroke="#DCD7BA" stroke-width="1.25"/>
@@ -304,8 +309,8 @@
 <rect x="280" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.20)" stroke="#DCD7BA" stroke-width="1.25"/>
 <rect x="340" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.30)" stroke="#DCD7BA" stroke-width="1.25"/>
 <rect x="400" y="440" width="56" height="24" rx="4" fill="rgba(210, 126, 153, 0.50)" stroke="#DCD7BA" stroke-width="1.25"/>
-<text x="152" y="456" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">少ない</text>
-<text x="464" y="456" text-anchor="start" font-size="12" fill="var(--fuji-gray, #8a8980)">多い</text>
+<text x="152" y="456" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">少ない</text>
+<text x="464" y="456" text-anchor="start" font-size="12" fill="var(--fg-muted, #6A6A68)">多い</text>
 ```
 
 **チェックリスト**: □ セル総数が 24 以下か □ 濃さが 1 色相の 5 段だけで作られているか

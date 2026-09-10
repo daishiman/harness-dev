@@ -1,0 +1,74 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P04-C09-01",
+ "covered_task_ids": [
+  "P04-C09-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/tests/handout-verify/",
+ "verified_by": [
+  {
+   "claim": "argv 面の既存検査が『存在検査』止まりで、契約を測れていなかった",
+   "method": "dispatcher が contract_lib.py:297-340 の現物を直読みし、報告が挙げた 3 つの反例と突合",
+   "result": "pass(=最も重要な発見): 旧実装は `if flag not in body` で本文全体に対してフラグを探しており、ゲートと argv の対応を一切見ていなかった。報告は抽象論でなく実測で 3 反例を出している — (1) language から --config を落としても緑、(2) selfcontained へ受け取らないはずの --config を足しても緑、(3) 突合先がテスト側の表 GATE_ARGV だけで実 argparse を見ていない。dispatcher が現物を読み、現在は declaring = [ln for ln in body.splitlines() if script in ln] として script 名指し行へ束縛され、さらに foreign フラグ混入も検出する形へ変わっていることを確認。理由コメントに『全体一致だとゲートと argv の対応が検査されないまま緑になる』と明記されている"
+  },
+  {
+   "claim": "exit code 面の既存検査に自己言及が含まれており、それを自ら訂正した",
+   "method": "dispatcher が報告の訂正内容と現物を確認",
+   "result": "pass(=自己訂正を受理): test_aggregation_rule.py:56-57 test_exit_code_mapping は assertEqual({0:'pass',1:'fail',2:'error'}, spec.EXIT_CODE_TO_STATE) で、テスト側の定数をテスト側のリテラルと比べているだけで実装 (handout-verify.md) を 1 バイトも読んでいなかった。前便で『exit code 面は covered』と書いた根拠の一部がこれであったことを自ら名指しして訂正している。実装を見る側の AC-C09-AGG-3 も re.search で番号の出現しか見ておらず `- exit 0 -> fail` と書いても緑だった。dispatcher が現物 :423-446 を直読みし、現在は『exit <code> の行に対応状態語があること』と『他状態へ写す宣言が無いこと』の両方を見る形へ変わっていることを確認"
+  },
+  {
+   "claim": "slash-command kind で argv / exit code の面が成立するという判定が妥当",
+   "method": "dispatcher が 3 択の回答と根拠を確認",
+   "result": "pass(=両方 (a) を受理): C09 の exit code の対応物は『自分の exit code』でなく『起動した script の exit code をどう読むか』という写像宣言であり、実行でなく宣言なので Markdown でも成立する。しかも CR-GATE-AGG は C09 が唯一の正本なので、ここで測っても正本は増えない。C01 の exit code を (b) としながら C09 を (a) とした判断は、kind の違いでなく『正本が増えるか』で切っており一貫している"
+  },
+  {
+   "claim": "正本リテラルの写しが除去され、残した写しに理由がある",
+   "method": "dispatcher が報告の導出先と例外の根拠を確認",
+   "result": "pass: GATE_FACES / GATE_IDS / GATE_SCRIPTS / GATES_REQUIRING_CONFIG / GATE_ARGV を command-brief-C09.json#gates[] (requires + optional をフラグ化) から実測導出し、ゲート名簿の第 2 正本を消した。ARGUMENT_DEFAULTS['--only'] の '4' も len(spec.GATE_IDS) へ置換。残した写し (GATE_STATES / NOT_RUN_REASONS / VERDICTS / EXIT_CODE_TO_STATE) は brief 側が散文しか持たず機械可読な出典が無いためで、理由が明示されている。fixtures/accept 配下の具体値は正本が変われば AC-C01-6 で赤くなるため黙って古くならない、という判定も妥当"
+  },
+  {
+   "claim": "強化した検査が空ゲートでないことを変異で実測している",
+   "method": "dispatcher が報告の変異検証と、対象ディレクトリでの独立実行を確認",
+   "result": "pass: Ran 71 tests / OK (60 → +11)。報告の件数と完全一致。変異検証は argv 側 3 件 (language から --config を落とす / selfcontained へ --config を足す / GATE_ARGV に --bogus) と exit code 側 1 件 (exit 0 -> pass を exit 0 -> fail へ) で、後者は 2 件の違反として落ちることまで確認済み。現物の実装は強化後の検査を通過しており『実装は正しく書かれていて検査だけが緩かった』という結論も、変異が赤になる以上は空ゲートでないことの裏付けがある"
+  },
+  {
+   "claim": "AC 後半 (build_target 未実装時に失敗する) の扱い",
+   "method": "dispatcher が報告の判定形式を確認",
+   "result": "pass(=再現不能として正しく記録): C01 と同じく pass と書かず再現不能とし、空 tmpdir を plugin root と見立てた代理検査 (check_command が AC-C09-1 の 1 件だけを返す) を代理と明記して置いている"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugins/ を独立実行",
+   "result": "pass: 本ノード由来は tests/handout-verify/ 配下の 4 パス (aggregation_spec.py / contract_lib.py / README.md の変更 + test_argv_and_reproducibility.py の新規)。scripts/ と commands/ には 1 バイトも書いていない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P04C09-01",
+   "level": "blocking-for-release",
+   "summary": "『本文全体への substring 一致』で契約を検査している箇所が他にもありうる。C09 の argv がまさにこれで、対応関係 (どのゲートに何を渡すか) を測っているつもりで存在しか測れていなかった。`X not in body` 形の検査は原理的に対応関係を検査できないため、判定器レベルでの棚卸しが要る。dispatcher が contract_lib.py を直読みしたところ、強化されたのは argv と exit code の 2 関数のみで、_check_states_and_reasons の他の判定 (:414-514) は依然として `X not in body` 形が 12 箇所以上残っている。同ファイル内で同型が併存している状態。P05-x-89"
+  },
+  {
+   "id": "F-P04C09-02",
+   "level": "blocking-for-release",
+   "summary": "test_exit_code_mapping 型の自己言及テスト (テスト側の定数をテスト側のリテラルと比較する形) が他にもありうる。正本を写した瞬間から『表と表の一致』しか測らなくなり、実装を読まないまま緑を出す。本 cycle が繰り返している『未評価が緑に化ける』の最も静かな形であり、しかも本件は担当 SubAgent が自分の前便の根拠を訂正する形で見つかった。P04 全体での横断確認を推奨。P05-x-90"
+  },
+  {
+   "id": "F-P04C09-04",
+   "level": "blocking-for-release",
+   "summary": "【本エントリの訂正】C09 の再現性面についても、上記 verified_by の変異実測は成立しない。orange の独立 spike が実リポジトリで C09 plugin_root の violations=0 を確認し、複製ツリーで check_command へ random.shuffle(v) を注入しても Ran 11 tests / OK だった。dispatcher が pass と記録した変異は argv 3 件 + exit code 1 件で、これらは赤になるため誤りではないが、再現性面は変異の対象に入っていなかった。P04-C01-01 の F-P04C01-04 と同一の訂正。あわせて、orange 自身が P05-x-88 で C01/C09 の再現性面を covered と判定したことも撤回している (実体は nominal-only)。件数の訂正ではなく判定の質の訂正であり、『covered』という語が『テストが存在する』と『テストが検出する』のどちらを指すかを区別していなかったことが原因。P05-x-123 / P05-x-124"
+  },
+  {
+   "id": "F-P04C09-05",
+   "level": "blocking-for-release",
+   "summary": "F-P04C09-01 で指摘した『本文全体への substring 一致』の残存箇所について、cyan の変異実測 (audit/P05-x-89-typeB-remainder.json) が 4 component 20 変異で 31 トークン分の空振りを確定させた。最も重い ref-handout-design-system では、tabular-nums / font-feature-settings:\"palt\" / prefers-reduced-motion の配慮文 / アイコン様式 4 点の規範文まるごと / 正本表の 3 カタログ行を実装本文から削除しても violations=0 のままだった。機序は handout-verify と同一で、CR-GATE-AGG の json ブロックが果たした役割を SKILL.md では CSS/HTML の例示フェンスが果たしている — 規範文を消しても例示フェンスが語を供給する。component 固有の事情ではなく本 plugin の記述様式に由来するため、判定器の棚卸しは記述様式ごと扱う必要がある。なお cyan は前便の『\"400\" not in body が最も当たりやすい』を撤回している (400 は本文に 1 回しか出ず赤になる)。出現回数≥2 は空振りの必要条件であって十分条件でなく、しかも数える haystack を判定器と揃えないと数自体が誤る。P05-x-120 / P05-x-121 / P05-x-122"
+  },
+  {
+   "id": "F-P04C09-03",
+   "level": "carry-forward",
+   "summary": "brief の behavior 4/5 が散文のみで、EXIT_CODE_TO_STATE / GATE_STATES / NOT_RUN_REASONS の機械可読な出典が無い。結果としてテスト側の表が事実上の正本になっている。command-brief-C09.json へ canonical_aggregation と同様の機械可読宣言を足せば、この 3 つも実測導出へ移せる。第 2 正本の残存点として記録"
+  }
+ ]
+}

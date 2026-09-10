@@ -1,5 +1,8 @@
 # 既存成果物 部分修正規約（slide-report-modifier 手続き知識 SSOT）
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 > **正本**: このファイルは slide-report-modifier から抽出した手続き知識/規範の SSOT。run-slide-report-modify の SKILL.md と agent 本体（agents/slide-report-modifier.md）の双方がこれを参照する。規則の上位正本 (SR-ID) は spec-registry.md を辿る。
 
 **責務**: 既存成果物（slide deck / report）の指定箇所部分修正のドメイン定義（用語集・評価基準・修正タイプ分類・制約カタログ CONST_001-013）と部分修正規範（パース/差分適用/非対象箇所保護・修正フローパターン・index.html ⇔ structure.md 同期維持の詳細ルール/コード例）の逐語正本。slide-report-modifier（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。

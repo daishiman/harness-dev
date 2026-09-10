@@ -1,0 +1,354 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "cross-cutting-audit",
+ "task_id": "P05-x-89-typeB-remainder",
+ "covered_task_ids": [
+  "P05-x-89",
+  "P05-x-99"
+ ],
+ "status": "success",
+ "write_scope": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-typeB-remainder.json",
+ "supersedes": null,
+ "companion": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json (前便。上書きしていない)",
+
+ "_meta": {
+  "role": "前便で『静的センサスのみ』にとどめた 4 component を変異で実測し、P05-x-99 の作業量見積りを推定から実測へ置き換える。P05-x-99 の実作業 (横展開) には着手していない",
+  "measurement_revision": "working tree (2026-08-18 セッション中)。HEAD ではない",
+  "question_measured": "その述語が守っているはずの契約文を実装本文から削除したとき、violations は増えるか。増えなければ confirmed",
+  "sandbox": "scratchpad/mut2/ へ plugins/guide-doc-generator と plugin-plans/guide-doc-generator を複製 (parents[2..4] のレイアウトを保存)。plugins/slide-report-generator は handout-content-architect の genome 実在検査が参照するため symlink で解決した",
+  "method_improvement_over_previous": "前便は violations の件数だけを見たため『変異は赤くなったが、赤くしたのは別の述語』を事後に読み分ける必要があった。今回は baseline の違反メッセージ集合との差分を取り、どの述語が発火しどの述語が黙ったかを 1 回の変異の中で分離している。おかげで『変異全体は赤 / 対象述語は空振り』を直接観測できた",
+  "read_only": "plugins/ 配下は 1 バイトも書いていない。各変異は注入前に text.count(old)==1 を確認し、実行後に必ず原文へ復元。全 4 component で復元後 violations = 0 が baseline と一致することを確認済み",
+  "no_commit": "commit / push は行っていない"
+ },
+
+ "baseline": {
+  "violations": {
+   "ref-handout-design-system": 0,
+   "handout-extract": 0,
+   "handout-build": 0,
+   "handout-content-architect": 0
+  },
+  "suites": {
+   "ref-handout-design-system": "OK",
+   "handout-extract": "OK",
+   "handout-content-architect": "OK (slide-report-generator を解決した後)",
+   "handout-build": "FAILED (failures=1) — test_handout_build_command.SourceOfTruthTest.test_failure_mode_count_matches_brief が 6 != 7。実リポジトリでも同一の 1 件が落ちており、サンドボックス由来ではない。本監査の対象外 (check_command の violations は 0)"
+  }
+ },
+
+ "summary_table": {
+  "note": "『述語数』は本文全体に対して存在だけを見る述語の実測数 (literal + 定数タプル/辞書駆動 + 文脈指定を持たない裸トークン regex)。『≥2』は判定器が実際に使う haystack (body か prose か) での出現数が 2 以上 = 単点注入では違反状態を作れない数",
+  "rows": [
+   {"component": "ref-handout-design-system", "predicates": 28, "occurring_twice_or_more": 22, "mutations_run": 10, "vacuous_tokens_confirmed": 20},
+   {"component": "handout-content-architect", "predicates": 18, "occurring_twice_or_more": 13, "mutations_run": 3, "vacuous_tokens_confirmed": 4},
+   {"component": "handout-build", "predicates": 12, "occurring_twice_or_more": 5, "mutations_run": 4, "vacuous_tokens_confirmed": 5},
+   {"component": "handout-extract", "predicates": 26, "occurring_twice_or_more": 6, "mutations_run": 3, "vacuous_tokens_confirmed": 2}
+  ],
+  "totals": {"predicates": 84, "occurring_twice_or_more": 46, "mutations_run": 20, "vacuous_tokens_confirmed": 31}
+ },
+
+ "mutation_confirmed": [
+  {
+   "id": "M-R1",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:540",
+   "code": "if \"tabular-nums\" not in body:\n    v.append(Violation(\"AC-C04-17\", \"数値の tabular-nums 規約が無い (C11 algorithm 12)\"))",
+   "mutation": "SKILL.md:135 の規約文「- 数値は tabular-nums で桁を揃える。桁が揃わない表は読み比べができない。」を削除",
+   "result": "violations = 0 のまま",
+   "intended": "数値表記に tabular-nums を使う規約が明記されていること",
+   "actual": "tabular-nums の 12 文字が本文のどこかにあること。例示用 CSS フェンス (SKILL.md:117 の .num 規則) が同じ語を供給しているため、規約文を消しても満たされる",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-R2",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:538",
+   "code": "if 'font-feature-settings' not in body or '\"palt\"' not in body:",
+   "mutation": "SKILL.md:134 の規約文「- 和文は `font-feature-settings: \"palt\"` を body に置いて字間を詰める。」を削除",
+   "result": "violations = 0 のまま",
+   "intended": "和文タイポグラフィの palt 規約 (C11 algorithm 12)",
+   "actual": "2 語が本文のどこかにあること。CSS フェンス :113 が両方を供給する",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-R4",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:550",
+   "code": "if \"prefers-reduced-motion\" not in body:",
+   "mutation": "SKILL.md:138-139 の「`prefers-reduced-motion: reduce` では animation と scroll-behavior と transition を無効化する。」を削除",
+   "result": "violations = 0 のまま",
+   "intended": "動きを減らす設定への配慮が書かれていること (a11y)",
+   "actual": "語が本文のどこかにあること。CSS フェンス :125 の @media 行が供給する",
+   "verdict": "confirmed",
+   "note": "a11y 契約が本文から消えても緑になる点で、本監査で最も影響の大きい 1 件"
+  },
+  {
+   "id": "M-R5",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:563 / :565",
+   "code": "if \"<symbol\" not in body: ... / if \"<use\" not in body: ...",
+   "mutation": "SKILL.md:161-162 の「定義は `<symbol>` に 1 回だけ置き、使う側は `<use>` で参照する。同じ図形を複数回インライン展開しない。」を削除",
+   "result": "violations = 0 のまま",
+   "intended": "symbol 定義 + use 参照という sprite 運用の規約 (R08)",
+   "actual": "2 語が本文のどこかにあること。HTML フェンス :153 / :158 が供給する",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-R6",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:558",
+   "code": "missing = [s for s in ICON_STYLE if s not in body]   # ICON_STYLE = 4 語",
+   "mutation": "SKILL.md:147-149 の「様式は 4 点で固定する。`viewBox=\"0 0 24 24\"` / `stroke=\"currentColor\"` / `fill=\"none\"` / `stroke-linecap=\"round\"`。塗りつぶしアイコンと 24 以外の viewBox を混ぜない。」を丸ごと削除",
+   "result": "violations = 0 のまま",
+   "intended": "アイコン様式 4 点の固定 (goal-spec R08)",
+   "actual": "4 語が本文のどこかにあること。例示 SVG フェンス :153 の <symbol> 属性が 4 語すべてを供給する。規範文が消えても、例示が残っている限り緑",
+   "verdict": "confirmed",
+   "vacuous_tokens": 4
+  },
+  {
+   "id": "M-R7",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:459-463",
+   "code": "for cid, (path, owner) in CATALOG_POINTERS.items():\n    if path not in prose: ...\n    if owner not in prose: ...",
+   "mutation": "SKILL.md:58-60 の「参照の正本表」から 3 行 (handout-parts.json / handout-purposes.json / handout-sections.json とその owner C11 / C23 / C12) を削除",
+   "result": "violations = 0 のまま",
+   "intended": "AC-C04-10/11/12 — 語彙の正本ファイルとその owner を指していること。指し先の表そのものが対象",
+   "actual": "6 語が散文のどこかにあること。面 1 の本文 (:70-82) が 3 パスすべてと owner 表記を重複して持つため、正本表を消しても緑",
+   "verdict": "confirmed",
+   "vacuous_tokens": 6
+  },
+  {
+   "id": "M-R9",
+   "component": "ref-handout-design-system",
+   "location": "tests/ref-handout-design-system/contract_lib.py:512",
+   "code": "if \"assets/tokens/\" not in prose:\n    v.append(Violation(\"AC-C04-15\", \"テーマトークンの所在 assets/tokens/ が示されていない\"))",
+   "mutation": "SKILL.md:64 の正本表行「| テーマトークンの実値 | `assets/tokens/<theme>.json` | C11 |」を削除",
+   "result": "violations = 0 のまま",
+   "intended": "値の正本の所在を示していること",
+   "actual": "語が散文のどこかにあること。面 2 の本文 :91 が同じパスを持つ",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-HB2",
+   "component": "handout-build",
+   "location": "tests/handout-build/contract_lib.py:419",
+   "code": "if PRESET_RESOLVER not in prose:   # PRESET_RESOLVER = \"resolve-handout-preset.py\"\n    v.append(Violation(cid, f\"--doc-type の説明が {PRESET_RESOLVER} を参照していない\"))",
+   "mutation": "handout-build.md:81 の「用途種別の語彙とプリセットの正本は resolve-handout-preset.py (C23) ただ一つであり、」から script 名を落とす",
+   "result": "violations = 0 のまま",
+   "intended": "AC-C07-2 — --doc-type の説明が語彙正本 C23 を参照していること",
+   "actual": "script 名が散文のどこかにあること。:83 の `resolve-handout-preset.py --list` と :130 の候補提示案内が供給する。しかも同じ contract の :421 は `PRESET_RESOLVER\\s+--list` という**別の**行を見ており、そちらは無傷なので二重に空振りする",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-HB3",
+   "component": "handout-build",
+   "location": "tests/handout-build/contract_lib.py:441",
+   "code": "if THEME_WRITEBACK_WRITER not in body:   # \"render-handout.py\"\n    v.append(Violation(\"AC-C07-3\", \"... 実行者 render-handout.py (C11) が名指しされていない (command 自身が書き戻すと読める)\"))",
+   "mutation": "handout-build.md:94 の「(書き戻しの実行者は render-handout.py (C11) であり、」から script 名を落とす",
+   "result": "violations = 0 のまま",
+   "intended": "テーマ書き戻しの実行者が C11 であって command 自身ではないこと",
+   "actual": "script 名が本文のどこかにあること。:56 の CR-HB-ARGS json フェンス内 override_rule が同じ名前を持つ。違反メッセージが自ら「command 自身が書き戻すと読める」と危険を述べているのに、その読み違いを起こす変更を検出できない",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-HB4",
+   "component": "handout-build",
+   "location": "tests/handout-build/contract_lib.py:507",
+   "code": "if CONFIG_VALIDATOR not in body:   # \"validate-handout-config.py\"\n    v.append(Violation(cid, f\"妥当性判定の担い手 {CONFIG_VALIDATOR} (C12) が名指しされていない\"))",
+   "mutation": "handout-build.md:76 の「しない (それは validate-handout-config.py (C12) の責務)。」から script 名を落とす",
+   "result": "violations = 0 のまま",
+   "intended": "AC-C07-CONFIG — 妥当性判定を command が行わず C12 が担うこと",
+   "actual": "script 名が本文のどこかにあること。:61 (json フェンス) と :103 が供給する",
+   "verdict": "confirmed"
+  },
+  {
+   "id": "M-HA2",
+   "component": "handout-content-architect",
+   "location": "tests/handout-content-architect/contract_lib.py:470 / :484",
+   "code": "_requires(v, \"AC-C05-18\", body, r\"no_need_to_remember\", \"no_need_to_remember への言及が無い\")\n_requires(v, \"AC-C05-19\", body, r\"blocked_reason\", \"blocked_reason への言及が無い\")",
+   "mutation": "handout-content-architect.md:47 の「status=blocked と blocked_reason で親へ差し戻す。must_remember と no_need_to_remember は」から 2 語を落とす",
+   "result": "violations = 0 のまま",
+   "intended": "blocked 差し戻しの規則と must_remember / no_need_to_remember が対であること (C57)",
+   "actual": "2 語が本文のどこかにあること。:40 の入力 14 項目表と :73 の returns 一覧、:136 の設計手順が供給する。宣言の**所在**が変わっても気づかない",
+   "verdict": "confirmed",
+   "vacuous_tokens": 2
+  },
+  {
+   "id": "M-HA3",
+   "component": "handout-content-architect",
+   "location": "tests/handout-content-architect/contract_lib.py:529",
+   "code": "_requires(v, \"AC-C05-22\", body, r\"handout-config\\.schema\\.json\", \"スキーマ正本 handout-config.schema.json を読む旨の明記が無い\")",
+   "mutation": "handout-content-architect.md:53 の Inputs 節から `plugins/guide-doc-generator/schemas/handout-config.schema.json` の行を削除",
+   "result": "violations = 0 のまま",
+   "intended": "AC-C05-22 — スキーマ正本を読む旨の明記",
+   "actual": "語が本文のどこかにあること。設計手順 :88「handout-config.schema.json を読み、」が供給する",
+   "verdict": "confirmed"
+  }
+ ],
+
+ "mutation_red_but_target_predicate_silent": [
+  {
+   "id": "M-R3",
+   "component": "ref-handout-design-system",
+   "target_predicates": "contract_lib.py:544 `\"rise-in\" not in body` (body 出現 3) / :546 `\"--stagger\" not in body` (body 出現 2)",
+   "mutation": "SKILL.md:136-137 の入場アニメーション規約文を丸ごと削除",
+   "fired": ["AC-C04-18: スタガー入場が JS 非依存である旨の明記が無い (R10)"],
+   "silent": ["AC-C04-18: 入場アニメーション rise-in の言及が無い", "AC-C04-18: --stagger インライン変数の言及が無い"],
+   "reading": "赤にしたのは :548 の文脈つき regex 1 本だけ。rise-in と --stagger の存在述語は 2 本とも黙った。CSS フェンス :119 / :123 が両語を供給するため。同じ contract 内で『文脈つき regex は発火する / 存在述語は黙る』の対比が取れている",
+   "vacuous_tokens": 2
+  },
+  {
+   "id": "M-R8",
+   "component": "ref-handout-design-system",
+   "target_predicates": "contract_lib.py:451 `if owner not in prose` for owner in (\"C11\",\"C16\") — C16 は prose 出現 4",
+   "mutation": "SKILL.md:43-44 の境界文「生成物の検証もしない。自己完結とアイコン様式は C16、a11y と印刷は C17、言語規約は C18、物語構造は C22 が判定する。」を削除",
+   "fired": ["AC-C04-9: 「検証をしない」旨の明記が無い (brief boundary)"],
+   "silent": ["AC-C04-9: 委譲先 C16 の名指しが無い"],
+   "reading": "赤にしたのは :448 の `検証[^\\n]{0,30}しない` regex。委譲先名指しの存在述語は黙った。C16 は正本表 :63 などに残るため。前便の handout-verify M-B2 / M-B7 と同じ構図が別 component でも成立している",
+   "vacuous_tokens": 1
+  },
+  {
+   "id": "M-HB1",
+   "component": "handout-build",
+   "target_predicates": "contract_lib.py:566 `for delegated in (\"ヒアリング\",\"プリセット解決\",\"出力先ルーティング\",\"ゲート結果\"): if delegated not in body`",
+   "mutation": "handout-build.md:17-19 の boundary 列挙文「skill へ渡す責務は、ヒアリング内容の設計判断、構成データの確定、プリセット解決、決定論 script 列の実行順序、ゲート結果の集約、出力先ルーティングである。」を差し替えて 4 語すべてを列挙から落とす",
+   "fired": ["AC-C07-6: skill へ渡す責務 'プリセット解決' が boundary に列挙されていない", "AC-C07-6: skill へ渡す責務 'ゲート結果' が boundary に列挙されていない"],
+   "silent": ["ヒアリング (body 出現 10)", "出力先ルーティング (body 出現 2)"],
+   "reading": "★**同一述語の中で赤と空振りが割れた**。発火した 2 語は本文に 1 回しか出ない語、黙った 2 語は 2 回以上出る語。述語の形は 4 語で同一なので、検出できるかどうかを決めているのは述語の設計ではなく『語がたまたま何回出るか』であることが、1 回の変異の中で直接示された",
+   "vacuous_tokens": 2,
+   "level": "本監査で最も明快な証拠"
+  },
+  {
+   "id": "M-E1",
+   "component": "handout-extract",
+   "target_predicates": "contract_lib.py:360 `for script in DELEGATED_SCRIPTS: if script not in body` (4 語)",
+   "mutation": "handout-extract.md:55 の委譲チェーン宣言文を丸ごと削除",
+   "fired": ["AC-C08-2: 委譲チェーンの script render-handout.py が本文で宣言されていない (body 出現 1)", "AC-C08-2: 委譲チェーンの script verify-handout-selfcontained.py が本文で宣言されていない (body 出現 1)"],
+   "silent": ["extract-handout-config.py (body 出現 3)", "validate-handout-config.py (body 出現 2)"],
+   "reading": "M-HB1 と同じ割れ方。宣言文を丸ごと消したのに、4 語のうち 2 語は黙った。この 2 語だけを宣言から落とす部分的な劣化なら完全に見逃す",
+   "vacuous_tokens": 2
+  },
+  {
+   "id": "M-HA1",
+   "component": "handout-content-architect",
+   "target_predicates": "contract_lib.py:552 `_requires(v, \"AC-C05-25\", body, r\"glossary\", \"glossary への言及が無い\")` (body 出現 4)",
+   "mutation": "handout-content-architect.md:146 の設計手順 18「glossary[] へ {term, plain} の対を宣言する」から glossary[] を落とす",
+   "fired": ["AC-C05-25: glossary[] が {term, plain} の対である旨の明記が無い"],
+   "silent": ["AC-C05-25: glossary への言及が無い"],
+   "reading": "赤にしたのは :553 の `term[^\\n]*plain|plain[^\\n]*term` という同一行 regex。裸トークンの存在述語は黙った",
+   "vacuous_tokens": 1
+  }
+ ],
+
+ "control_experiments": [
+  {
+   "id": "M-R10",
+   "component": "ref-handout-design-system",
+   "predicate": "contract_lib.py:526 `if \"400\" not in body` (body 出現 1)",
+   "mutation": "SKILL.md:140 から「 (既定 400)」だけを削除",
+   "result": "★**赤** — AC-C04-16: block_body_max_chars の既定 400 が示されていない",
+   "significance": "**前便での自分の推測の訂正**。前便で私は「`\"400\" not in body` は数値リテラルの本文全体一致であり、型 B の中で最も当たりやすい形」と書きましたが、実測すると 400 は本文に 1 回しか出ず、単点注入で正しく赤になります。形が危ういことと、実際に空振りすることは別です。**述語の形だけを見て件数を推定してはいけない**という、この監査自身への反証になりました"
+  },
+  {
+   "id": "M-E2",
+   "component": "handout-extract",
+   "predicate": "contract_lib.py:435 `if \"handout-config.json\" not in prose`",
+   "mutation": "handout-extract.md:23 の --out 既定値の記述から handout-config.json を落とす",
+   "result": "赤 — AC-C08-ARGS: --out の既定値 handout-config.json の宣言が無い",
+   "significance": "静的センサスでは body 出現 2 だったが、判定器が使うのは strip_fences 後の prose であり、もう 1 件は ```json フェンス内。prose では 1 回 = 単点。**判定器が実際に使う haystack で数えないと件数が過大に出る**ことの実例で、前便の frontmatter caveat と同根"
+  },
+  {
+   "id": "M-E3",
+   "component": "handout-extract",
+   "predicate": "contract_lib.py:544 `if \"部分成功\" not in prose` (prose 出現 2)",
+   "mutation": "handout-extract.md:84 の「部分成功は部分成功として提示する。」を削除",
+   "result": "赤 — AC-C08-FM-3: 部分成功を部分成功として返す宣言が無い",
+   "significance": "出現 2 回でも、2 回とも同一文の中にあれば単点注入で潰せる。**出現回数 ≥2 は空振りの必要条件であって十分条件ではない**"
+  }
+ ],
+
+ "not_mutatable": [
+  {
+   "component": "ref-handout-design-system",
+   "predicates": "contract_lib.py:486 ACCENT_TOKENS 4 語 (--pop-primary / -pastel / -soft / -deep)",
+   "why": "4 語の唯一の出現場所が :root の例示フェンス :97-100 であり、判定器 :495-509 が『実値は :root の中だけ』『:root 以降で var() 参照する例示があること』を同時に要求している。フェンスを削れば AC-C04-14 が別途赤くなるため、存在述語だけを孤立させる単点変異が組めない。これは述語の設計が良いのではなく、**別 contract の副作用でたまたま守られている**状態",
+   "finding_ref": "F-REM-04"
+  },
+  {
+   "component": "handout-extract",
+   "predicates": "RESTORABLE_TERMS 7 語 / UNRESTORABLE_TERMS 6 語 (contract_lib.py:394 / :397)",
+   "why": "13 語すべて prose 出現 1 回。単点注入で正しく赤になるため、型 B の対象ではない。変異を組む必要が無い側",
+   "finding_ref": null
+  }
+ ],
+
+ "unmeasured": [
+  {
+   "item": "handout-content-architect の裸トークン述語 18 件のうち、変異を組んだのは 4 件 (glossary / blocked_reason / no_need_to_remember / handout-config.schema.json)。残り 14 件のうち出現 ≥2 は 9 件 (C11=4 / lead_line=9 / decision_line=4 / C40=2 / presentation_order=3 / ties_to=2 / duration=3 / must_remember=3 / decision_log=2)",
+   "why": "時間。ただし M-HA2 / M-HA3 と同型であり、出現数も同様なので同じ結果になる蓋然性が高い。ここは推定であると明記する"
+  },
+  {
+   "item": "ref-handout-design-system の 28 述語のうち変異を組んだのは 20 トークン分。残り 8 (差し替え / text_limits.block_body_max_chars / CR-TEXT-FOLD / C15 / TRIGGER_TERMS 3 / ACCENT の一部) は出現 1 回または上記 not_mutatable",
+   "why": "出現 1 回のものは型 B の対象外なので変異不要"
+  },
+  {
+   "item": "handout-build の `_requires` 45 件相当の regex 群",
+   "why": "すべて `.{0,20}` 等の近接指定を持ち、実質的に文スコープ。型 B (本文全体への存在一致) には当たらないと判断した。個別の変異は未実施"
+  },
+  {
+   "item": "全 component の re.search 系のうち文脈指定を持つもの",
+   "why": "型 B の定義 (存在しか測れていない) に当たらないため対象外"
+  }
+ ],
+
+ "findings": [
+  {
+   "id": "F-REM-01",
+   "level": "blocking-for-release",
+   "summary": "型 B は handout-verify 固有ではなく 4 component すべてに存在する。20 変異で 31 トークン分の空振りを確定した。内訳は ref-handout-design-system 20 / handout-build 5 / handout-content-architect 4 / handout-extract 2。とくに ref-handout-design-system は 28 述語中 22 が『判定器の使う haystack に 2 回以上出る』状態で、本 4 component の中で最も重い。AC-C04-17 (和文タイポグラフィ)・AC-C04-18 (prefers-reduced-motion = a11y 配慮)・AC-C04-19 (アイコン様式 4 点)・AC-C04-20 (symbol/use 運用)・AC-C04-10/11/12 (語彙正本の所在) の規範文を実装本文から丸ごと削除しても violations = 0 のまま"
+  },
+  {
+   "id": "F-REM-02",
+   "level": "blocking-for-release",
+   "summary": "ref-handout-design-system で空振りが集中する原因は handout-verify と同一の機序である。SKILL.md は CSS / HTML の例示フェンス (:95-130 / :151-159) を持ち、規範文が使う語 (tabular-nums / palt / rise-in / --stagger / prefers-reduced-motion / <symbol / <use / ICON_STYLE 4 語) をすべて供給する。すなわち『実装本文が機械可読な例示ブロックを持つ component ほど、本文全体への存在一致は無内容になる』。handout-verify の CR-GATE-AGG json ブロックと同じ構造であり、component 固有の事情ではなく本 plugin の記述様式に由来する"
+  },
+  {
+   "id": "F-REM-03",
+   "level": "blocking-for-release",
+   "summary": "検出できるかどうかを決めているのは述語の設計ではなく『語がたまたま何回出るか』である。M-HB1 (handout-build の boundary 4 語) と M-E1 (handout-extract の委譲 script 4 語) では、**同一の述語ループの中で**出現 1 回の語は赤になり出現 2 回以上の語は黙った。述語の形は 4 語とも同一である。したがって『この述語は現に赤くなるから安全』という判断は成り立たない。実装本文に 1 語足された瞬間に同じ述語が空振りへ転じる"
+  },
+  {
+   "id": "F-REM-04",
+   "level": "high",
+   "summary": "ref-handout-design-system の ACCENT_TOKENS 4 語は変異を組めなかった。唯一の出現場所である :root 例示フェンスを消すと AC-C04-14 (実値は :root の中だけ / :root 以降は var() 参照) が別途赤くなるため、存在述語だけを孤立させられない。つまりこの 4 語は述語の設計によってではなく、別 contract の副作用でたまたま守られている。AC-C04-14 の書き方が変われば同時に無防備になる依存関係であり、P05-x-99 の横展開でスコープを寄せるとき、この 2 つの contract は一緒に扱う必要がある"
+  },
+  {
+   "id": "F-REM-05",
+   "level": "method-note",
+   "summary": "取り下げた finding。静的センサスが handout-content-architect:464 の `data_block_type\\s*=\\s*handson` を『本文に 0 件』と数えたため、述語が到達していない疑いとして起票しかけたが、これはセンサス側の誤りだった (regex から backslash を機械的に落として literal として数えたため)。re.search で直接確認すると match: True で、述語は正常に発火する。センサスの数値を finding へ昇格させる前に実測で当てる、という本報告の方針 (F-REM-06) を自分に適用した結果である"
+  },
+  {
+   "id": "F-REM-06",
+   "level": "high",
+   "summary": "静的センサスによる件数推定は使ってはならない。M-R10 は前便で私が『型 B の中で最も当たりやすい形』と名指しした `\"400\" not in body` が、実測では単点で正しく赤になることを示した (本文出現 1 回)。逆に M-E2 は、静的センサスで body 出現 2 と数えた語が、判定器の使う prose では 1 回しかなく赤になることを示した。M-E3 は、出現 2 回でも 2 回が同一文内なら単点注入で潰せることを示した。**出現回数 ≥2 は空振りの必要条件であって十分条件ではなく、しかも数える haystack を判定器と揃えないと数自体が誤る。**P05-x-99 の作業量は、本報告の変異実測値と『判定器の haystack で数え直した ≥2 件数』(4 component 合計 46 / 84) を根拠にすること"
+  },
+  {
+   "id": "F-REM-07",
+   "level": "carry-forward",
+   "summary": "handout-extract の contract_lib.py は本 4 component の中で最も健全である。26 述語中 ≥2 は 6 件にとどまり、変異で確定した空振りも 2 トークンだけだった。理由は _lines_with / _has_negated / _units_with という同一行・同一単位スコープのヘルパを既に多用しているためで、run-handout-build の PREDICATE-SCOPE-POLICY.md が採用した選択肢 (A) と同じ方向へ独立に到達している。P05-x-99 の横展開では handout-extract を後回しにしてよく、また **contract_lib 間でヘルパを共有していない**ことが重複の温床になっている点は別途扱う価値がある"
+  },
+  {
+   "id": "F-REM-08",
+   "level": "carry-forward",
+   "summary": "本監査で採った測定法 (baseline の違反メッセージ集合との差分を取り、1 回の変異の中でどの述語が発火しどの述語が黙ったかを分離する) は、前便の件数比較より明確に強い。前便では『赤になった』としか言えず、救ったのが対象述語なのか別の述語なのかを事後に読み分ける必要があった。P05-x-99 で test_predicate_scope.py を横展開するとき、PredicateSinglePointRejectabilityTest は『違反が 1 件以上出ること』ではなく『**その変異に対応する述語のメッセージが出ること**』を assert すべきである。前者だと、別の述語がたまたま拾っている状態を検出力と誤認する"
+  }
+ ],
+
+ "scope_compliance": {
+  "files_written": ["eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-typeB-remainder.json"],
+  "previous_report_untouched": "P05-x-89-90.json は読んでも書いてもいない",
+  "plugins_touched": "0 件",
+  "p05_x_99_implementation": "着手していない (承認判断のための実測まで)",
+  "git": "commit / push なし"
+ }
+}

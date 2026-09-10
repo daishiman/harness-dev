@@ -101,6 +101,57 @@ def _resolve_plugin_dir(root: Path, plugin_slug: str, *, purpose: str) -> Path:
     return candidate
 
 
+def _manifest_dependency_slugs(plugin_dir: Path) -> tuple[str, ...]:
+    """Return ``.claude-plugin/plugin.json`` の ``dependencies``.
+
+    ホストは未解決依存を持つplugin自体をfail-closedで登録しない。ここに挙がる
+    slugをargvへ入れ損ねると、target pluginのskillが1つも登録されないまま
+    trialだけが成功したように進むため、skill単位のnarrowing対象にできない。
+    """
+    manifest_path = plugin_dir / ".claude-plugin" / "plugin.json"
+    if not manifest_path.is_file():
+        raise ValueError(f"target plugin manifest not found: {manifest_path}")
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            f"target plugin manifest read/parse error: {manifest_path}: {exc}"
+        ) from exc
+    if not isinstance(manifest, dict):
+        raise ValueError(f"target plugin manifest must be an object: {manifest_path}")
+    dependencies = manifest.get("dependencies", [])
+    if not isinstance(dependencies, list) or not all(
+        isinstance(item, str) and _PLUGIN_SLUG_RE.fullmatch(item) for item in dependencies
+    ):
+        raise ValueError(
+            f"target plugin manifest dependencies must be plugin slug strings: {manifest_path}"
+        )
+    if len(dependencies) != len(set(dependencies)):
+        raise ValueError(f"target plugin manifest dependencies contains duplicates: {manifest_path}")
+    if plugin_dir.name in dependencies:
+        raise ValueError(f"target plugin manifest dependencies contains self: {manifest_path}")
+    return tuple(sorted(dependencies))
+
+
+def _merge_dependency_slugs(
+    manifest_slugs: tuple[str, ...],
+    contract_slugs: tuple[str, ...],
+) -> tuple[str, ...]:
+    """argvへloadすべきdirect dependency slugを決定する。
+
+    ``manifest_slugs`` はhostがplugin登録の前提として要求する必須集合、
+    ``contract_slugs`` はpackage-contractがskill単位へ絞り込んだ集合。
+
+    両者は別軸の宣言である。manifestの ``dependencies`` は公式marketplaceの
+    runtime provider解決 (validate-plugin-completeness DEP-001) を担い、
+    ``depends_on`` はharness sidecarのpackage-level allow-listなので、
+    manifest側がsidecarに載っていないのは正常であり不一致ではない。
+    manifest側はskill単位でnarrowingできない (欠けるとtarget pluginごと
+    未登録になる) ため、常にunionを取る。
+    """
+    return tuple(sorted(set(manifest_slugs) | set(contract_slugs)))
+
+
 def _declared_dependency_slugs(plugin_dir: Path, skill_name: str) -> tuple[str, ...]:
     """Return only the direct plugins needed by ``skill_name``.
 
@@ -203,7 +254,10 @@ def resolve_target_plugin_dirs(cwd: str, target_skill: str) -> tuple[Path, ...]:
         raise ValueError(f"target skill not found in pinned plugin: {skill_file}")
     dependencies = tuple(
         _resolve_plugin_dir(root, dependency, purpose="declared dependency")
-        for dependency in _declared_dependency_slugs(candidate, skill_name)
+        for dependency in _merge_dependency_slugs(
+            _manifest_dependency_slugs(candidate),
+            _declared_dependency_slugs(candidate, skill_name),
+        )
     )
     return (candidate, *dependencies)
 
@@ -335,6 +389,12 @@ def _self_test() -> int:
     assert not is_bypass_permissions_confirm(gate.replace("2. Yes, I accept", "2. Continue"))
     assert resolve_target_plugin_dir("/tmp", "plain-skill") is None
     assert resolve_target_plugin_dirs("/tmp", "plain-skill") == ()
+    # manifest dependenciesはskill単位のnarrowingで落ちない (落ちると未登録になる)。
+    assert _merge_dependency_slugs(("skill-governance-adapters",), ()) == (
+        "skill-governance-adapters",
+    )
+    assert _merge_dependency_slugs(("b",), ("c", "a")) == ("a", "b", "c")
+    assert _merge_dependency_slugs(("a",), ("a",)) == ("a",)
     assert backend.deny_target_skill("run-skill-live-trial")
     argv = build_claude_argv("u-1", "claude-opus-4-8")
     assert argv == (

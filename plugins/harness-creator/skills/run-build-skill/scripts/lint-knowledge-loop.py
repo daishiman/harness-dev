@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-knowledge-loop
-# purpose: knowledge-loop capability の KL-001..007 (index/router 存在・必須6フィールド・検索/記録/追加スクリプト・分割閾値・consult_at とストア位置の一致) を検査する lint。--self-test では schema↔定数の drift 検出と lint↔CI 配線のメタ検査も行う
+# purpose: knowledge-loop capability の KL-001..008 (curated seed と package 外 runtime state の分離を含む) を検査する lint。--self-test では schema↔定数の drift 検出と lint↔CI 配線のメタ検査も行う
 # inputs:
 #   - argv: skill_dir / --strict / --store-only / --self-test
 # outputs:
@@ -36,6 +36,9 @@ exit_code (Claude Code Hook 準拠):
             - store_only=True (Loop B / メタ側)  → consult_at == ["build-time"]
             - store_only=False (Loop A / 生成側) → consult_at == ["runtime"]
           「ストアの所在 = Loop 種別」を機械的に強制し、置き場所の裁量と矛盾を CI で fail させる。
+  KL-008: contract_version: 1 の knowledge-loop は必須4キーと
+          scripts/build-external-intelligence.py の正本同一性(SHA-256)を検査する。
+          マーカーのない既存生成物は後方互換で移行対象として許容する。
 
 --self-test 内メタ検査:
   - schema↔定数 drift 検出: knowledge-loop.schema.json の KnowledgeEntry.required +
@@ -52,7 +55,9 @@ exit_code (Claude Code Hook 準拠):
 """
 
 import argparse
+import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -70,6 +75,11 @@ VALID_CONSULT_AT = {"runtime", "build-time"}
 #   store_only=True  (Loop B / メタ側 = harness-creator 自身のストア) → build-time
 #   store_only=False (Loop A / 生成スキルが自前に持つ knowledge/)   → runtime
 EXPECTED_CONSULT_AT = {True: ["build-time"], False: ["runtime"]}
+
+KNOWLEDGE_CONTRACT_VERSION = "1"
+KNOWLEDGE_CONTRACT_REQUIRED = {
+    "pattern", "consult_at", "runtime_store", "runtime_scope",
+}
 
 
 def find_knowledge_dir(skill_dir: Path) -> Path | None:
@@ -426,6 +436,141 @@ def check_kl007(knowledge_dir: Path, store_only: bool) -> list[dict]:
     return findings
 
 
+def _knowledge_loop_fields(text: str) -> dict[str, str]:
+    """SKILL.md frontmatter の knowledge_loop 直下スカラーを軽量抽出する。
+
+    YAML 全体の再実装はせず、KL-008 が管轄する1階層のキーだけを
+    扱う。これにより本文中の例示を契約宣言と誤認しない。
+    """
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        header = re.match(r"^(?P<indent>\s*)knowledge_loop:\s*(?:#.*)?$", line)
+        if not header:
+            continue
+        base_indent = len(header.group("indent"))
+        fields: dict[str, str] = {}
+        for child in lines[index + 1:]:
+            if not child.strip() or child.lstrip().startswith("#"):
+                continue
+            indent = len(child) - len(child.lstrip())
+            if indent <= base_indent:
+                break
+            match = re.match(r"^\s+([A-Za-z_][A-Za-z0-9_-]*):\s*(.*?)\s*$", child)
+            if match:
+                value = match.group(2).split(" #", 1)[0].strip().strip("\"'")
+                fields[match.group(1)] = value
+        return fields
+    return {}
+
+
+def _legacy_runtime_store(text: str) -> str | None:
+    """マーカー導入前ファイルの runtime_store 宣言だけを後方互換で拾う。"""
+    match = re.search(r"(?m)^\s*runtime_store:\s*([^#\s]+)", text)
+    return match.group(1).strip("\"'") if match else None
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def canonical_external_intelligence_engine() -> Path:
+    """Return the one distributable engine SSOT, never the HC forwarder."""
+    harness_plugin = Path(__file__).resolve().parents[3]
+    return (
+        harness_plugin.parent
+        / "skill-governance-adapters"
+        / "scripts"
+        / "build-external-intelligence.py"
+    )
+
+
+def check_kl008(skill_dir: Path, store_only: bool) -> list[dict]:
+    """KL-008: versioned runtime-store 契約と共通 engine の同一性を照合する。"""
+    if store_only:
+        return []
+    skill_path = skill_dir / "SKILL.md"
+    if not skill_path.exists():
+        return []
+    text = skill_path.read_text(encoding="utf-8")
+    fields = _knowledge_loop_fields(text)
+    contract_version = fields.get("contract_version")
+    runtime_store = fields.get("runtime_store") or _legacy_runtime_store(text)
+
+    if contract_version is None and runtime_store is None:
+        return []  # legacy output: additive migration, new renderer always declares marker
+    if contract_version is not None and contract_version != KNOWLEDGE_CONTRACT_VERSION:
+        return [{
+            "rule": "KL-008",
+            "severity": "error",
+            "message": (
+                f"knowledge_loop.contract_version={contract_version!r} は未対応。"
+                f"期待値は {KNOWLEDGE_CONTRACT_VERSION} です"
+            ),
+        }]
+    if contract_version == KNOWLEDGE_CONTRACT_VERSION:
+        missing = sorted(KNOWLEDGE_CONTRACT_REQUIRED - fields.keys())
+        if missing:
+            return [{
+                "rule": "KL-008",
+                "severity": "error",
+                "message": (
+                    "knowledge_loop.contract_version: 1 の必須キーが不足: "
+                    f"{missing}"
+                ),
+            }]
+    if runtime_store != "external-intelligence-v1":
+        return [{
+            "rule": "KL-008",
+            "severity": "error",
+            "message": "runtime_store は external-intelligence-v1 以外を宣言できません",
+        }]
+    if contract_version == KNOWLEDGE_CONTRACT_VERSION:
+        if fields.get("runtime_scope") not in {"project", "user"}:
+            return [{
+                "rule": "KL-008",
+                "severity": "error",
+                "message": "runtime_scope は project または user である必要があります",
+            }]
+    target = skill_dir / "scripts" / "build-external-intelligence.py"
+    if not target.is_file():
+        return [{
+            "rule": "KL-008",
+            "severity": "error",
+            "message": f"build-external-intelligence.py が見つからない (期待パス: {target.relative_to(skill_dir)})",
+        }]
+    if contract_version == KNOWLEDGE_CONTRACT_VERSION:
+        canonical = canonical_external_intelligence_engine()
+        if not canonical.is_file():
+            return [{
+                "rule": "KL-008",
+                "severity": "error",
+                "message": f"照合用の正本 engine が見つからない: {canonical}",
+            }]
+        try:
+            target_digest = _sha256(target)
+            canonical_digest = _sha256(canonical)
+        except OSError as exc:
+            return [{
+                "rule": "KL-008",
+                "severity": "error",
+                "message": f"engine の SHA-256 照合に失敗: {exc}",
+            }]
+        if target_digest != canonical_digest:
+            return [{
+                "rule": "KL-008",
+                "severity": "error",
+                "message": (
+                    "build-external-intelligence.py が正本と不一致 "
+                    f"(generated={target_digest}, canonical={canonical_digest})"
+                ),
+            }]
+    return []
+
+
 def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
     """全ルールを実行してfindings辞書を返す。
 
@@ -460,6 +605,7 @@ def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
         findings.extend(check_kl006(skill_dir))
     findings.extend(check_kl005(skill_dir, knowledge_dir))
     findings.extend(check_kl007(knowledge_dir, store_only))
+    findings.extend(check_kl008(skill_dir, store_only))
 
     errors = [f for f in findings if f["severity"] == "error"]
     warnings = [f for f in findings if f["severity"] == "warn"]
@@ -482,7 +628,7 @@ def run_lint(skill_dir: Path, strict: bool, store_only: bool = False) -> dict:
 def self_test() -> None:
     """内蔵 OK例/NG例 で全ルールを検証する。
 
-    KL-001..006 の検出/格下げに加え、schema↔定数 drift 検出と
+    KL-001..008 の検出/格下げに加え、schema↔定数 drift 検出と
     lint↔CI 配線のメタ検査も行う (SSOT/乖離の再発防止)。
     """
     import tempfile
@@ -571,6 +717,30 @@ def self_test() -> None:
         result = run_lint(skill_dir, strict=False)
         errors = [f for f in result["findings"] if f["severity"] == "error"]
         assert len(errors) == 0, f"OK例でエラーが残存: {errors}"
+
+        # KL-008: versioned runtime store は必須キー + 正本 engine 同一性が必須
+        (skill_dir / "SKILL.md").write_text(
+            "# テスト\n\n分割閾値: 500行/25エントリ\n"
+            "knowledge_loop:\n"
+            "  contract_version: 1\n"
+            "  pattern: index-search\n"
+            "  consult_at: [runtime]\n"
+            "  runtime_store: external-intelligence-v1\n"
+            "  runtime_scope: project\n",
+            encoding="utf-8",
+        )
+        result = run_lint(skill_dir, strict=True)
+        assert [f for f in result["findings"] if f["rule"] == "KL-008"], \
+            f"KL-008 engine 欠落が検出されない: {result}"
+        (scripts_dir / "build-external-intelligence.py").write_text("# stub", encoding="utf-8")
+        result = run_lint(skill_dir, strict=True)
+        assert [f for f in result["findings"] if f["rule"] == "KL-008"], \
+            f"KL-008 が stub engine を拒否しない: {result}"
+        canonical = canonical_external_intelligence_engine()
+        (scripts_dir / "build-external-intelligence.py").write_bytes(canonical.read_bytes())
+        result = run_lint(skill_dir, strict=True)
+        assert not [f for f in result["findings"] if f["rule"] == "KL-008"], \
+            f"KL-008 正本 byte-copy 時に finding が残る: {result}"
 
         # --strict モードのテスト
         (scripts_dir / "search_knowledge.py").unlink()

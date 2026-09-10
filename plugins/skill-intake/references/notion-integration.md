@@ -163,10 +163,12 @@ blocks.append({
 
 ## 公開後通知 (Slack 連携)
 
-Notion 公開成功後、`hooks/post-publish-notify.sh` (PostToolUse hook) が
-`output/<hint>/notion-url.txt` を読み、Slack incoming webhook へ最小ペイロードを送信する。
+Notion 公開成功後、`scripts/intake_publish_pipeline.py` が成功 receipt と hint を
+`scripts/post_publish_notify.py` へ明示的に渡し、Slack incoming webhook へ最小ペイロードを送信する。
+汎用 PostToolUse(Bash) hook には配線せず、無関係な Bash 実行で Keychain 取得や通信を発生させない。
 
 - ペイロード: `{"text":"intake published: <hint> -> <notion-url>"}` (1行・サマリ本文は含めない)
+- 重複防止: receipt の `publish_event_id` ごとに atomic claim を作成し、同一 event を再送しない
 - Webhook 取得経路: `scripts/keychain_get_secret.py --service slack-incoming-webhook --account <keychain-prefix>`
   経由のみ。`security find-generic-password` 直叩きは settings.json の `permissions.deny` で禁止する
   (二段防御)。

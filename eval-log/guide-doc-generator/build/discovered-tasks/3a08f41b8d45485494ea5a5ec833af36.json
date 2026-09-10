@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-08",
+  "reason": "C11 の render-handout.py に 2 件の実装欠陥が確定した。(1) build_css (:885-888) が :root を css_variables からのみ組み立てるため、テーマトークンのトップレベルへアクセント色を置いても出力へ反映されず test_determinism.TokenIndirectionTest.test_accent_token_change_only_diffs_root_block が緑にならない (P05-x-08 が assets/tokens/ 側を整えたが write_scope の壁で未達)。(2) B14 (フロー) を :719 で <ol class=flow> として自前描画しており、script-brief-C11.json の block_to_component_map が定める『C14 の pattern=flow へ委譲。フロー表現をレンダラ側で二重に持たない』に反する。同 script の DIAGRAM 経路 (:804-819) は正しく委譲しているため B14 だけが二重実装。P04-x-09 が追加した FlowRenderingTest の 2 件がこれを検出している。両欠陥は同一ファイルのため 1 leaf へ束ねる さらに P05-x-11 の裁定で render-handout.py 側の欠陥が 2 件追加確定した。(3) hero 枠が data-hb-generated='true' を持つため (:1386-1391)、抽出器 (:422) が部分木を丸ごと読み飛ばし hero 内の data-hb-field が全て到達不能になっている — title すら復元できない。(4) sections[].heading にマーカーが無く (:1511 の h2 は連番 span を含む)、sections[].ties_to (:1536) は Python の list repr がそのまま出力され復元不能。いずれも同一ファイルのため本 leaf へ束ねる。 さらに P05-x-09 が 5 件目を確定した。(5) build_hero (:1332-1336) が .date-pill を hero 内へ出しているが、script-brief-C11.json 手順 13 は『値をそのまま header の .date-pill として 1 個だけ出す』と定めており、header.pop-header (:1405-1416) は nav しか内包しない。このため C18 の DATE-01 が発火し test_cross_component.GateHandoffTest.test_language_gate_passes が赤のまま残る。config に配置を指示する手段が無く fixture 側では吸収不能。同一ファイルのため本 leaf へ束ねる。",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/route-P05-x-08.json",
+  "proposed_node": {
+    "id": "P05-x-18",
+    "title": "C11 render-handout.py の実装欠陥 5 件 (トークン間接参照 / B14 委譲 / chrome 境界 / heading・ties_to マーカー / 日付配置) を是正する",
+    "phase_ref": "P05",
+    "entity_ref": "C11",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts",
+    "acceptance_criterion": "tests/render-handout.py の test_accent_token_change_only_diffs_root_block / FlowRenderingTest.test_flow_is_delegated_to_inline_svg / FlowRenderingTest.test_diagram_pattern_is_exposed および test_cross_component.GateHandoffTest.test_language_gate_passes の 4 件が緑になる。加えて生成 HTML から title / date / purpose / background / goal / duration / focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / sections[].heading が抽出器の読み飛ばし規則の下でも到達可能になり、ties_to が ROUNDTRIP-CONTRACT.md の required_serialization に従って直列化される。テストの assert を弱めない。アクセント実値の重複を現状の 4 箇所から増やさない",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-18.md",
+    "produces": [
+      "plugins/guide-doc-generator/scripts/RESOLUTION-P05-x-18.md"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/tests/render-handout.py/",
+      "plugins/guide-doc-generator/tests/render-handout.py/test_parts_catalog_coverage.py",
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

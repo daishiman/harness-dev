@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P02-x-01",
+  "kind": "checklist-verification",
+  "phase_ref": "P02",
+  "status": "success",
+  "covered_task_ids": [
+    "P02-x-01"
+  ],
+  "verified_by": [
+    {
+      "claim": "acceptance_criterion 第1項 ブリーフ 23/23 存在",
+      "exit_code": 0
+    },
+    {
+      "claim": "acceptance_criterion 第2項 依存 DAG 無循環 (Kahn 法で topological order 成立)",
+      "exit_code": 0
+    },
+    {
+      "claim": "acceptance_criterion 第3項 HB_ROOT 起点 4 段解決の宣言",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py --inventory plugin-plans/guide-doc-generator/component-inventory.json --specs-dir plugin-plans/guide-doc-generator",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py plugin-plans/guide-doc-generator/component-inventory.json",
+      "exit_code": 0
+    }
+  ],
+  "evidence": [
+    "plugin-plans/guide-doc-generator/evidence/P02.json"
+  ],
+  "deviations": [
+    "evidence/P02.json の status は blocked。これは dispatcher が leaf の acceptance_criterion を超えて追加指示した『横断整合検査』の結果であり、本 leaf の acceptance_criterion 3 項目は全て pass。criterion 外の検出を不可逆な blocked へ混ぜないため、横断矛盾 8 件 (X-01..X-08) は P03 (design-review・宣言成果物に『指摘に対する設計修正の反映』を含む) への必須入力として繰り越す。",
+    "X-01/X-02 は blocking 深刻度。P03 が未解消のまま P04/P05 へ進めた場合は実装が破綻するため、P03 の受入条件として明示的に扱う。"
+  ],
+  "summary": "23 設計ブリーフ確定。criterion 3 項目 + ゲート 2 本 pass。横断矛盾 8 件を P03 へ繰り越し"
+}

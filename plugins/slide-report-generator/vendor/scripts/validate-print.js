@@ -32,6 +32,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
+import { resolveDeckAssets } from './deck-assets-resolver.js';
 
 // ============================================================
 // CLI引数パース
@@ -55,7 +56,8 @@ Options:
   --full-image-deck  Force full-image-deck print contract (letterbox + contain)
   --help             Show this help
 
-Checks (P01-P14):
+Checks (P00-P14):
+  P00  Linked local stylesheets all resolvable (fail-closed)
   P01  Chrome extension hiding (body>*:not(.slider))
   P02  Slide number dynamic (attr(data-total))
   P03  data-total attribute on .slider__item
@@ -93,18 +95,13 @@ const html = readFileSync(absPath, 'utf-8');
 
 // 外部 stylesheet（<link rel="stylesheet" href="...">）を解決して取り込む
 // 決定論レンダラ (render-slide.cjs) は CSS を styles.css に分離するため必須
-const baseDir = dirname(absPath);
-const linkRegex = /<link\s+[^>]*rel\s*=\s*["']stylesheet["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/gi;
-let linkedCss = '';
-let linkMatch;
-while ((linkMatch = linkRegex.exec(html)) !== null) {
-  const href = linkMatch[1];
-  if (/^https?:/i.test(href) || /^\/\//.test(href)) continue; // 外部 CDN は無視
-  const cssPath = resolve(baseDir, href);
-  try {
-    linkedCss += '\n' + readFileSync(cssPath, 'utf-8');
-  } catch (e) { /* missing stylesheet — 無視 */ }
-}
+// 解決できないローカル stylesheet は fail-closed（P00 で CRITICAL）。
+// 握り潰すと「参照先 CSS が消えていても @media print 0 件のまま PASS」という偽緑になる。
+// 解決処理そのものは deck-assets-resolver.js が SSOT（別実装を持たない）。
+const deckAssets = resolveDeckAssets(absPath);
+const linkedCss = deckAssets.css.linked;
+const localStylesheets = deckAssets.css.hrefs;
+const unresolvedStylesheets = deckAssets.css.unresolved;
 
 /**
  * @media print ブロックをすべて抽出する
@@ -171,6 +168,16 @@ const isFullImageDeck = detectFullImageDeck();
 // ============================================================
 
 const checks = [
+  {
+    // P00: link された ローカル stylesheet がすべて読めたか。
+    // 読めない参照が1つでもあれば以降の CSS 判定は不完全であり、
+    // PASS を返すと偽緑になるため CRITICAL（fail-closed）。
+    id: 'P00',
+    name: 'link stylesheet 解決 (fail-closed)',
+    severity: 'CRITICAL',
+    test: () => unresolvedStylesheets.length === 0,
+    hint: `Unresolved local stylesheet(s): ${unresolvedStylesheets.map(u => `${u.href} -> ${u.resolved} (${u.reason})`).join(', ')}. Restore the file or fix the href; print CSS cannot be validated without it.`,
+  },
   {
     id: 'P01',
     name: 'Chrome拡張非表示',
@@ -382,6 +389,8 @@ if (flags.json) {
   console.log(JSON.stringify({
     file: absPath,
     printBlocksFound: printBlocks.length,
+    linkedStylesheets: localStylesheets,
+    unresolvedStylesheets,
     fullImageDeck: isFullImageDeck,
     total: results.length,
     passed: passCount,
@@ -393,6 +402,10 @@ if (flags.json) {
   console.log(`\n[print] Print Quality Validation: ${absPath}`);
   console.log(`   @media print blocks found: ${printBlocks.length}`);
   console.log(`   full-image-deck: ${isFullImageDeck ? 'yes' : 'no'}`);
+  console.log(`   linked stylesheets: ${localStylesheets.length} (unresolved: ${unresolvedStylesheets.length})`);
+  for (const u of unresolvedStylesheets) {
+    console.log(`     unresolved: ${u.href} -> ${u.resolved} (${u.reason})`);
+  }
   console.log('─'.repeat(60));
 
   for (const r of results) {

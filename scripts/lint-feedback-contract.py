@@ -110,7 +110,8 @@ def _all_skills() -> set[tuple[str, str]]:
         if not sk_dir.is_dir():
             continue
         for s in sk_dir.iterdir():
-            if s.is_symlink():  # symlink は実体側で検査
+            if s.is_symlink() or FC.is_vendored_feedback_skill(s, plugins_dir=PLUGINS_DIR):
+                # symlink / Codex 配布用の同一コピーは正本側で検査
                 continue
             if (s / "SKILL.md").is_file():
                 out.add((plugin_dir.name, s.name))
@@ -323,6 +324,13 @@ def main() -> int:
 
     baseline = _load_baseline()
     targets = _git_changed_skills(args.base) if args.changed_only else _all_skills()
+    targets = {
+        (plugin, skill)
+        for plugin, skill in targets
+        if not FC.is_vendored_feedback_skill(
+            PLUGINS_DIR / plugin / "skills" / skill, plugins_dir=PLUGINS_DIR
+        )
+    }
     violations: list[str] = []
     warnings: list[str] = []
     checked = 0

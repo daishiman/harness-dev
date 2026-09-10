@@ -49,9 +49,18 @@ agent_refs:
   - ../../agents/system-spec-doc-freshness-auditor.md
 feedback_contract:
   skip_reason: "assign kind は loop criteria 対象外。合否基準は checklist の 6 評価観点 (foundation_trace/decision_guidance/prompt_quality=C05 自前評価 / matrix_coverage=C07 監査 + C06 ヒアリング品質 sub-input / design_knowledge_reflection=C05 自前評価 / doc_freshness=C08 監査) の evaluator ゲート、および validate-coverage-matrix.py の決定論ゲートで担保する。"
+runtime_root_policy: host-skill-path
 ---
 
 # assign-system-spec-completeness-evaluator
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > 生成された仕様書ドキュメントセットを、上位概念trace / 意思決定根拠 / マトリクス網羅性 / deep knowledge目的適合 / 最新出典 / prompt品質の観点で評価し、観点別スコア + 総合判定 (PASS/FAIL) + 不足事項一覧を返す independent evaluator。`context:fork` で生成者と評価者を分離する。
 
@@ -132,12 +141,11 @@ Task tool で監査 sub-agent (`system-spec-matrix-auditor` (C07) / `system-spec
 
 ### Step 2: マトリクス網羅性の決定論ゲート
 ```bash
-PLUGIN_ROOT=plugins/system-spec-harness
-python3 "$PLUGIN_ROOT/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> --require-complete
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> --require-complete
 ```
 exit0 をマトリクス網羅性観点の一次根拠にする (`scripts/aggregate-completeness.py --matrix ...` でも回収可)。
 
-続けて C13-C16 の機械層ゲートを `python3 "$PLUGIN_ROOT/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --knowledge-graph` (出荷 3 カタログを `validate-knowledge-graph.py` の knowledge/doctrine/required-info/cross 4 profile で独立再実行) の全 exit0 で確認する。C13/C14/C15 は design_knowledge_reflection (Step 3)、C16 は matrix_coverage の追加評価次元として意味層採点に併せる。
+続けて C13-C16 の機械層ゲートを `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --knowledge-graph` (出荷 3 カタログを `validate-knowledge-graph.py` の knowledge/doctrine/required-info/cross 4 profile で独立再実行) の全 exit0 で確認する。C13/C14/C15 は design_knowledge_reflection (Step 3)、C16 は matrix_coverage の追加評価次元として意味層採点に併せる。
 
 ### Step 3: 設計知識反映の自前評価 (独立 auditor なし)
 C05 R1-score が `system-spec/*.md` 各章を直接読み、`ref-system-design-knowledge/references/resource-map.yaml` 由来の設計知識ポインタの (1) 存在 (機械層) と (2) その原則が確定セル要件へ具体適用されているか (意味層) を評価する。**存在確認だけで PASS にしない** (compile が機械注入するポインタを自己循環で肯定しない = Goodhart 防止)。汎用ポインタ (resource-map 索引) のみで具体適用が無い章は medium 以上で拾う。C06 のヒアリング品質監査は本観点でなく matrix_coverage の sub-input として使う。

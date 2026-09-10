@@ -50,13 +50,13 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| authz script | `$CLAUDE_PLUGIN_ROOT/scripts/authz-classify.py` | 認可 preflight + budget/crawl_profile 発行 |
-| fetch script | `$CLAUDE_PLUGIN_ROOT/scripts/fetch-snapshot.py` | snapshot + URL discovery + stdlib 静的 DOM/CSS 観測 (static-observation.json) |
-| authz guard | `$CLAUDE_PLUGIN_ROOT/hooks/pre-fetch-authz-guard.py` | fail-closed 境界 (fetch-authz 述語) |
+| authz script | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py` | 認可 preflight + budget/crawl_profile 発行 |
+| fetch script | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fetch-snapshot.py` | snapshot + URL discovery + stdlib 静的 DOM/CSS 観測 (static-observation.json) |
+| authz guard | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/pre-fetch-authz-guard.py` | fail-closed 境界 (fetch-authz 述語) |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls <f> --coverage-manifest-in <f> --scope-manifest-out <f>]`
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out <f>]`
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/authz-classify.py" --url <url> --evidence-out <dir>/authz.json --budget-out <dir>/budget.json [--crawl-mode full_site --discovered-urls <f> --coverage-manifest-in <f> --scope-manifest-out <f>]`
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/fetch-snapshot.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json [--discover-urls --discovered-urls-out <f>]`
 - 対象システムの公開 URL (WebFetch + 静的 HTTP snapshot)。
 
 ## Layer 4: 共通ポリシー層
@@ -118,5 +118,5 @@
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
 `authz-classify.py` で AuthzEvidence/request budget/crawl_profile を確定し (`unknown` は deny)、allow のときだけ `fetch-snapshot.py` で全 in-scope 画面の静的 HTTP snapshot + URL discovery を取る (WebFetch + 静的 HTTP snapshot)。鍵画面では加えて browser-render で rendered DOM/screenshot 取得を試みる (MCP 非依存の headless Chrome を Bash 経由 CLI 起動・不在時は exit 3 で observation_gap 縮退):
-`python3 "$CLAUDE_PLUGIN_ROOT/scripts/browser-render.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json --screenshot --request-ledger <ledger>`
+`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/browser-render.py" --url <url> --out-dir <dir> --authz-evidence <dir>/authz.json --request-budget <dir>/budget.json --screenshot --request-ledger <ledger>`
 evidence/budget を `ESB_AUTHZ_DIR` へ配置し、全 fetch (browser-render の Bash 起動を含む) を C08 の fail-closed 境界内で走らせる。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。対象 origin 並列 1・budget・Retry-After・停止条件を緩めない。出力は件数・coverage サマリのみ、前置き禁止。

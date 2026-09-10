@@ -26,93 +26,93 @@
 
     <defs>
       <marker id="f-kanban-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="f-kanban-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="f-kanban-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
     <!-- ===== EDIT: 図解本体 ここから ===== -->
 
     <!-- 盤面の時点 (相対表記だけにしない) -->
-    <text x="928" y="32" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/7/31 時点</text>
+    <text x="928" y="32" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/7/31 時点</text>
 
     <!-- 列の面 (3 列とも同じ塗り。列で塗りを変えると進捗が色の話になる) -->
-    <rect x="32" y="88" width="272" height="376" rx="8" fill="#F8F7F0"/>
-    <rect x="344" y="88" width="272" height="376" rx="8" fill="#F8F7F0"/>
-    <rect x="656" y="88" width="272" height="376" rx="8" fill="#F8F7F0"/>
+    <rect x="32" y="88" width="272" height="376" fill="#E1E6EA"/>
+    <rect x="344" y="88" width="272" height="376" fill="#E1E6EA"/>
+    <rect x="656" y="88" width="272" height="376" fill="#E1E6EA"/>
 
     <!-- 列見出しと WIP 表示 (見出しの下はヘアラインで区切る) -->
-    <text x="32" y="64" font-size="16" fill="var(--fg, #43436c)">未着手</text>
-    <text x="304" y="64" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">上限なし・3 枚</text>
-    <line x1="32" y1="76" x2="304" y2="76" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="32" y="64" font-size="16" fill="var(--fg, #141412)">未着手</text>
+    <text x="304" y="64" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">上限なし・3 枚</text>
+    <line x1="32" y1="76" x2="304" y2="76" stroke="#D5D4D1" stroke-width="1.25"/>
 
-    <text x="344" y="64" font-size="16" fill="var(--fg, #43436c)">着手中</text>
-    <text x="616" y="64" text-anchor="end" font-size="12" fill="var(--sakura-pink, #D27E99)">WIP 上限 2・3 枚</text>
-    <line x1="344" y1="76" x2="616" y2="76" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
+    <text x="344" y="64" font-size="16" fill="var(--fg, #141412)">着手中</text>
+    <text x="616" y="64" text-anchor="end" font-size="12" fill="var(--sakura-pink, #141412)">WIP 上限 2・3 枚</text>
+    <line x1="344" y1="76" x2="616" y2="76" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
 
-    <text x="656" y="64" font-size="16" fill="var(--fg, #43436c)">完了</text>
-    <text x="928" y="64" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/6 完了・2 枚</text>
-    <line x1="656" y1="76" x2="928" y2="76" stroke="#DCD7BA" stroke-width="1.25"/>
+    <text x="656" y="64" font-size="16" fill="var(--fg, #141412)">完了</text>
+    <text x="928" y="64" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/6 完了・2 枚</text>
+    <line x1="656" y1="76" x2="928" y2="76" stroke="#D5D4D1" stroke-width="1.25"/>
 
     <!-- 未着手の列 -->
     <g>
-      <rect x="48" y="104" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="64" y="136" font-size="14" fill="var(--fg, #43436c)">FAQ の分類やり直し</text>
-      <text x="64" y="160" font-size="12" fill="var(--fuji-gray, #8a8980)">担当未定</text>
+      <rect x="48" y="104" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="64" y="136" font-size="14" fill="var(--fg, #141412)">FAQ の分類やり直し</text>
+      <text x="64" y="160" font-size="12" fill="var(--fg-muted, #6A6A68)">担当未定</text>
     </g>
     <g>
-      <rect x="48" y="192" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="64" y="224" font-size="14" fill="var(--fg, #43436c)">定型返信の棚卸し</text>
-      <text x="64" y="248" font-size="12" fill="var(--fuji-gray, #8a8980)">担当未定</text>
+      <rect x="48" y="192" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="64" y="224" font-size="14" fill="var(--fg, #141412)">定型返信の棚卸し</text>
+      <text x="64" y="248" font-size="12" fill="var(--fg-muted, #6A6A68)">担当未定</text>
     </g>
     <g>
-      <rect x="48" y="280" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="64" y="312" font-size="14" fill="var(--fg, #43436c)">問い合わせ種別の統合</text>
-      <text x="64" y="336" font-size="12" fill="var(--fuji-gray, #8a8980)">担当未定・台帳統合の後</text>
+      <rect x="48" y="280" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="64" y="312" font-size="14" fill="var(--fg, #141412)">問い合わせ種別の統合</text>
+      <text x="64" y="336" font-size="12" fill="var(--fg-muted, #6A6A68)">担当未定・台帳統合の後</text>
     </g>
 
     <!-- 着手中の列 (3 枚目が上限超過ぶん = 焦点) -->
     <g>
-      <rect x="360" y="104" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="376" y="136" font-size="14" fill="var(--fg, #43436c)">受付フォームの改修</text>
-      <text x="376" y="160" font-size="12" fill="var(--fuji-gray, #8a8980)">3 週目</text>
+      <rect x="360" y="104" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="376" y="136" font-size="14" fill="var(--fg, #141412)">受付フォームの改修</text>
+      <text x="376" y="160" font-size="12" fill="var(--fg-muted, #6A6A68)">3 週目</text>
     </g>
     <g>
-      <rect x="360" y="192" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="376" y="224" font-size="14" fill="var(--fg, #43436c)">一次回答テンプレ化</text>
-      <text x="376" y="248" font-size="12" fill="var(--fuji-gray, #8a8980)">2 週目</text>
+      <rect x="360" y="192" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="376" y="224" font-size="14" fill="var(--fg, #141412)">一次回答テンプレ化</text>
+      <text x="376" y="248" font-size="12" fill="var(--fg-muted, #6A6A68)">2 週目</text>
     </g>
     <g>
-      <rect x="360" y="280" width="240" height="72" rx="6"
-            fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-      <text x="376" y="312" font-size="14" fill="var(--fg, #43436c)">電話導線の見直し</text>
-      <text x="376" y="336" font-size="12" fill="var(--fg-dim, #54546d)">5 週目・上限超過</text>
+      <rect x="360" y="280" width="240" height="72"
+            fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
+      <text x="376" y="312" font-size="14" fill="var(--fg, #141412)">電話導線の見直し</text>
+      <text x="376" y="336" font-size="12" fill="var(--fg-muted, #6A6A68)">5 週目・上限超過</text>
     </g>
 
     <!-- 完了の列 -->
     <g>
-      <rect x="672" y="104" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="688" y="136" font-size="14" fill="var(--fg, #43436c)">問い合わせ台帳の統合</text>
-      <text x="688" y="160" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/6 完了</text>
+      <rect x="672" y="104" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="688" y="136" font-size="14" fill="var(--fg, #141412)">問い合わせ台帳の統合</text>
+      <text x="688" y="160" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/6 完了</text>
     </g>
     <g>
-      <rect x="672" y="192" width="240" height="72" rx="6" fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-      <text x="688" y="224" font-size="14" fill="var(--fg, #43436c)">エスカレーション基準</text>
-      <text x="688" y="248" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/6 完了</text>
+      <rect x="672" y="192" width="240" height="72" fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+      <text x="688" y="224" font-size="14" fill="var(--fg, #141412)">エスカレーション基準</text>
+      <text x="688" y="248" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/6 完了</text>
     </g>
 
     <!-- 列の進行方向 (盤面の読む向きを 1 本だけ示す。カード間に線を引かない) -->
     <line x1="32" y1="496" x2="928" y2="496"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-kanban-arrow)"/>
-    <text x="480" y="488" text-anchor="middle" font-size="12" fill="var(--fg-dim, #54546d)">左から右へ流れる</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#f-kanban-arrow)"/>
+    <text x="480" y="488" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">左から右へ流れる</text>
 
     <!-- 完了の判定基準 (「完了」列に入れてよい条件) -->
-    <text x="32" y="524" font-size="12" fill="var(--fuji-gray, #8a8980)">完了の定義: 手順書を更新し、次の担当へ引き継ぎ済み</text>
+    <text x="32" y="524" font-size="12" fill="var(--fg-muted, #6A6A68)">完了の定義: 手順書を更新し、次の担当へ引き継ぎ済み</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

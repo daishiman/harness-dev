@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "P05-x-88 事前実測の付随観測: 対になる verify-handout-a11y-print.py:327 は ra/rb を添えた assertTrue を持つが C16 側に無い。実害は無い (FileNotFoundError で緑には化けない) が、失敗が failure でなく error で立つと契約違反か検査不成立かが report 上で分かれない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-88.json",
+  "proposed_node": {
+    "id": "P05-x-102",
+    "title": "verify-handout-selfcontained の json-report 生成 assert を C17 と対称にする",
+    "phase_ref": "phase-04-tests.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/verify-handout-selfcontained.py/",
+    "acceptance_criterion": "test_cli_contract.py:260 test_json_report_is_byte_identical_across_runs が report 生成の assert を持ち、report 不在時に error でなく failure として立つこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C16"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

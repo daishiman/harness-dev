@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C06",
+  "task_id": "P05-C06-01",
+  "covered_task_ids": [
+    "P05-C06-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/agents/handout-readability-reviewer.md",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し agents/ 直下に置かれている",
+      "method": "wc -l とパス確認",
+      "result": "pass (201 行 / plugins/guide-doc-generator/agents/ 直下)"
+    },
+    {
+      "claim": "C06 自スイートが 164 件中 163 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-readability-reviewer -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 164 / failures=1 / errors=0 / 0.193s。実装前は failures=161)"
+    },
+    {
+      "claim": "C03 の残赤 3 件がこの leaf で解消した",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/assign-handout-readability-evaluator -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 34 / OK。直前まで failures=3 だった test_reviewer_agent_exists / test_AC_C03_4_delegates_to_independent_reviewer_agent / test_no_contract_violation_remains がすべて緑。C03 の申し送り (name / isolation:fork / owner_skill / prompt_ref / <!-- responsibility: R1 --> アンカー) が実際に満たされたことの実証)"
+    },
+    {
+      "claim": "残る赤 1 件が C06 の write_scope では緑にできない",
+      "method": "tests/handout-readability-reviewer/test_no_side_effects.py:23-29 を直接読み、glob 対象の 2 件のパスと mtime を確認",
+      "result": "pass (test_only_one_agent_definition_for_c06 が H.PLUGIN_ROOT.glob('**/handout-readability-reviewer.md') を plugin ルート全域へかけるため、C03 のテスト fixture tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md を第 2 の一致として拾う。fixture の mtime は 8/17 15:44 で本 leaf の作業開始 19:3x より前に既存。C06 側で件数を減らす手段は自分の build_target を消す以外に無く、それは受入条件と背反)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み成果物へ適用",
+      "result": "pass (violations=[]。自前のコードポイント列挙は行わず単一正本で判定)"
+    },
+    {
+      "claim": "用途語彙・部品 id・R22 値域・閾値を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -noE '\\b(B[0-9]{2}|lecture|guide|onboarding|report|proposal|study-notes|study-plan|agenda|overview|standard|detailed|cited|sourced)\\b' を成果物へ適用し全ヒットを弁別",
+      "result": "pass (ヒット 3 件は 45 / 56 / 177 行の report で、いずれも CLI フラグ --json-report および決定論ゲート出力物名 gate_reports の部分文字列。資料種別としての用途語彙ではない。かつ当該 literal は C06 のテスト test_json_report_is_the_only_write / test_reads_gate_json_reports が明示要求している。部品 id・R22 値域・閾値のヒットは 0 件)"
+    },
+    {
+      "claim": "ゲート集約規則を第 2 の正本にしていない",
+      "method": "worker 報告の確認と本文の記述形式の確認",
+      "result": "pass (4 状態分類と verdict 判定表は書き下していない。本 agent が持つのは自身の verdict 規則 (severity=high が 1 件でもあれば FAIL) のみで、これは本 agent が唯一の判定者である領域。ゲート集約は C09 の CR-GATE-AGG が正本のまま)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/handout-readability-reviewer/ 配下 15 ファイルの sha256 を実装前後で取得し diff (worker 実施) + git status --porcelain の確認",
+      "result": "pass (差分なし。C03 の tests 配下も未変更で、C03 が OK になったのは fixture 改変でなく C06 実体の出現によることを当方が両スイートの独立実行で裏取り)"
+    },
+    {
+      "claim": "lint 系ゲートを通過する",
+      "method": "worker が validate-frontmatter.py と lint-agent-prompt-section.py を実行",
+      "result": "pass (validate-frontmatter: ok / exit0、lint-agent-prompt-section: OK 1 agent file(s) passed (Tier 1) / exit0。lint-skill-description の check() は自スイート内 test_lint_skill_description_reports_no_violation で緑)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain と plugins/guide-doc-generator/ 配下の書込確認",
+      "result": "pass (書込は agents/handout-readability-reviewer.md 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-defect-overbroad-scope",
+      "detail": "要裁定 / 本 leaf の write_scope 外。tests/handout-readability-reviewer/test_no_side_effects.py:23-29 の test_only_one_agent_definition_for_c06 が PLUGIN_ROOT.glob('**/handout-readability-reviewer.md') と plugin ルート全域を再帰探索するため、C03 が正当に置いたテスト fixture (tests/assign-handout-readability-evaluator/fixtures/accept/agents/handout-readability-reviewer.md) を第 2 の定義として誤検出し恒久的に赤になる。守りたい不変条件は『production surface における agent 定義の正本が 1 本であること』であり、tests/fixtures は production surface でない。修正方向は glob 対象を agents/ 配下へ限定するか tests/ を除外すること (fixture の改名は C03 の受入 fixture を壊すため不可)。owner は tests を書いた leaf (P04-x-06 系) だが既に done のため受け皿が無く、additive discovered-task で外ループへ回す"
+    },
+    {
+      "kind": "canon-conflict",
+      "detail": "責務アンカーの形式が 2 正本で非互換。component-inventory.json#C06 の responsibility_anchor は 'prompts/R-review-readability.md' だが、lint-agent-prompt-section.py の ANCHOR_RE は R<数字> のみ受理する。worker は C03 と揃えて <!-- responsibility: R1 --> を採用したが、inventory 側は未更新のまま。C05 も含めた 3 者の表記を P05-x-01 で確定し inventory を更新すること (inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む)"
+    },
+    {
+      "kind": "canon-conflict",
+      "detail": "description の末尾句点。agent-brief-C06.json と component-inventory.json#C06 の description は『使う』で終わるが、lint-skill-description.py の R5 は『使う。』を要求する。AC1 が両方の充足を求めるため brief の文言のままでは両立しない (tests は句点の有無を吸収する設計になっており、これが唯一の逃げ道になっている)。成果物は句点ありを採用。brief と inventory 側へ句点を足すのが本筋"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "本 agent は plugins/guide-doc-generator/references/ (ref-handout-design-system) を評価規範の正本として読む前提で書かれているが、当該ディレクトリは現時点で未作成。references を産出する leaf が完了するまでこの読み取りは空振りする。tests/ref-handout-design-system は存在するため producer leaf 自体は graph 上にあると見られるが、C06 完了時点で未着手であることを記録する"
+    },
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C01 (skills/run-handout-build/SKILL.md) へ申し送り 4 件。(1) verdict 規則 (severity=high が 1 件でもあれば FAIL) の正本は本 agent 本文にある。C01 側で再判定・再定義しないこと (2) 本 agent は loop 制御・再レビュー起動・打ち切りを一切持たない。max_loops 等の収束制御は C01 の goal_seek が単独で持つ (brief open_questions[2] はこの形で確定) (3) status=blocked (決定論ゲート未 exit0 で起動された場合) は verdict を伴わない。C01 は blocked を FAIL とも PASS とも読まず、ゲート修復へ戻す分岐を持つ必要がある (4) 修正実施は C01 の責務であり、本 agent の suggestion は提案であって適用指示ではない (本文に明記済み)"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 13 件。(1) model: inherit (brief open_questions[3] 未確定。先例 handout-content-architect.md と brief 本文の推奨に従った) (2) prompt_ref を plugin 相対 skills/assign-handout-readability-evaluator/prompts/R-review-readability.md とした (brief 本文は repo ルート相対だが先例は plugin 相対。テストは両者を区別しない) (3) 責務アンカーを <!-- responsibility: R1 --> 1 個とした (上記 canon-conflict) (4) version 0.1.0 / owner harness maintainers / since 2026-08-17 / last-audited 2026-08-17 は先例に揃えた (5) --json-report 出力先の provider を本文で断定しなかった (brief open_questions[4] 未確定のため『書き込みは --json-report の一時パスのみ』とだけ書いた) (6) description 末尾に句点を追加 (上記 canon-conflict) (7) finding.id を F1 から始まる連番とした (brief は例示 'F1' のみ) (8) location.element の例として lead-line / 判断軸 / 具体部品 を挙げた (9) machine_gate_overlap を『常に false』と本文で書いた (brief は『true の finding を出してはならない』) (10) Goal-Seeking Execution を brief の procedure と同数の番号付きステップへ展開しゴール文を追加 (11) Constraints を 4 小見出しへ分割 (brief は小見出し構成を規定せず) (12) Purpose へ proposer=approver の説明段落を追加 (brief の isolation_rationale を本文化) (13) Bash 許可 script の記述で『4 本に限る』という件数リテラルを 1 箇所使用。script 名自体も併記しているが、導出値忌避の規律からは『次の script に限る』へ落とす余地がある (自己申告された 7 例目の候補・実害は小さいが記録する)"
+    }
+  ]
+}

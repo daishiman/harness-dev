@@ -1,12 +1,14 @@
 # ベストプラクティス分類・整理
 
+> **この文書は移行計画の記録であり、現状の一覧ではない。** 書かれた時点は SKILL.md がベストプラクティス表 37 項目を持ち、`references/spec-registry.md` がまだ存在しなかった頃（本文が「新設想定」と書いているのがその証拠）。以降の各節、特に §2-A が各項目へ割り当てている検査器名は**当時の割り当て**であって、今どの実行体がその規則を見ているかを示さない。現在の担当を知りたいときは実行体の側を見ること。記録なので、現状に合わせて書き換えない。
+>
 > **目的**: SKILL.md l.165-204 のベストプラクティス表（37項目）を、機械検証可能 / テンプレ強制 / LLM判断 / 重複削除 の4カテゴリに分離し、LLMが暗記すべき項目を10条以下に圧縮する。
 >
 > **背景**: changelog v6.0 → v6.6 の各失敗事例修正で +30 項目が積み増され、表が肥大化。LLM が全項目を実装段階で参照できず形骸化リスクが高い。
 >
 > **方針**:
-> - A: 機械検証 → `scripts/validate-structure.js` / `scripts/verify-slides.js` / `scripts/check-consistency.js` のチェック項目に変換し、人間が読む規則からは削除
-> - B: テンプレ/共通CSS強制 → `assets/styles.css`・`scripts/html-scaffold.js` に埋め込み、原則として消す
+> - A: 機械検証 → `vendor/scripts/validate-structure.js` / `vendor/scripts/verify-slides.js` / `vendor/scripts/check-consistency.js` のチェック項目に変換し、人間が読む規則からは削除
+> - B: テンプレ/共通CSS強制 → `assets/styles.css`・`vendor/scripts/html-scaffold.js` に埋め込み、原則として消す
 > - C: LLM判断必須 → 簡潔な10条に圧縮し SKILL.md に残す
 > - D: 重複・冗長 → 削除または `references/spec-registry.md`（新設想定）に SR-* ID で集約
 
@@ -103,7 +105,7 @@
 
 **A合計: 32項目**（V-001〜V-030 + V-043 + V-044。V-031〜V-038 は v8 拡張で別枠）
 
-### B. テンプレート/CSSで強制（→ `assets/styles.css` 共通化 / `scripts/html-scaffold.js` 自動生成）
+### B. テンプレート/CSSで強制（→ `assets/styles.css` 共通化 / `vendor/scripts/html-scaffold.js` 自動生成）
 
 LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれるべき項目。
 
@@ -127,7 +129,7 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 1. **1スライド1メッセージ**（情報密度の判断はLLM）
 2. **長文は図解化**（テキスト → SVG2図解への変換判断）
 3. **背景 → 質問の順で配置**（構成順序の意図設計）
-4. **ビビッドアクセントを各スライド1箇所以上**（どこに置くかは構図判断）
+4. **強調は反転面 1 個で作る**（色を足さない。どのブロックを反転にするかは構図判断）
 5. **補足テキストは最大3行・opacity 0.7**（何を補足にするかの取捨）
 6. **20文字超は`<br>`で意図的改行**（意味の切れ目はLLM判断）
 7. **色・サイズはCSS変数経由**（直書き禁止）
@@ -168,7 +170,7 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 ```markdown
 ## ベストプラクティス（LLM判断10条）
 
-下記10項目は LLM が文脈に応じて判断する原則。機械検証可能な項目（48%/48%, font-size ≥ 1.4rem 等）は `scripts/check-consistency.js` / `verify-slides.js` で自動検証され、テンプレ強制項目（section-nav, pagination, @page A4 等）は `assets/styles.css` / `scripts/html-scaffold.js` に埋め込まれているため、ここでは原則のみを示す。
+下記10項目は LLM が文脈に応じて判断する原則。機械検証可能な項目（48%/48%, font-size ≥ 1.4rem 等）は `vendor/scripts/check-consistency.js` / `verify-slides.js` で自動検証され、テンプレ強制項目（section-nav, pagination, @page A4 等）は `assets/styles.css` / `vendor/scripts/html-scaffold.js` に埋め込まれているため、ここでは原則のみを示す。
 
 | # | 原則 | 補足 |
 |---|------|------|
@@ -180,7 +182,7 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 | 6 | 20文字超は `<br>` で意図改行 | 自動折返しに任せない |
 | 7 | 色・サイズは CSS 変数経由 | カラー直書き禁止 |
 | 8 | 本文 Noto Sans JP / コード SF Mono・Fira Code | 和欧混植の整合 |
-| 9 | 画像素材は WebP | scripts/convert-to-webp.js |
+| 9 | 画像素材は WebP | vendor/scripts/convert-to-webp.js |
 | 10 | イージング3種以上使い分け | 全要素同一 ease 禁止 |
 
 **詳細・拡張**:
@@ -213,10 +215,10 @@ LLM が毎回書くのではなく、scaffold 時点で出力に埋め込まれ�
 
 ## §5 次アクション（参考・このファイル外）
 
-1. `scripts/check-consistency.js` に V-001, V-005, V-008, V-010, V-011, V-014〜V-020, V-023, V-026, V-028, V-029 を追加実装
-2. `scripts/verify-slides.js` に V-002, V-003, V-007, V-013, V-021, V-022, V-024, V-027 を追加実装
-3. `scripts/validate-structure.js` に V-025, V-030 を追加実装
-4. `scripts/validate-print.js` に V-012, V-013, V-014 を追加実装
+1. `vendor/scripts/check-consistency.js` に V-001, V-005, V-008, V-010, V-011, V-014〜V-020, V-023, V-026, V-028, V-029 を追加実装
+2. `vendor/scripts/verify-slides.js` に V-002, V-003, V-007, V-013, V-021, V-022, V-024, V-027 を追加実装
+3. `vendor/scripts/validate-structure.js` に V-025, V-030 を追加実装
+4. `vendor/scripts/validate-print.js` に V-012, V-013, V-014 を追加実装
 5. `references/spec-registry.md` を新設し SR-001, SR-002 を登録
 6. SKILL.md l.165-204 を §3 の置換後内容に差し替え
 7. `agents/ui-quality-reviewer.md` の S1-S26 と V-* のマッピング表を追加

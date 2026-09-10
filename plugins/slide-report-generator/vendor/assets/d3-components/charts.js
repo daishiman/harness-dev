@@ -89,8 +89,8 @@ const D3Charts = {
       .attr('class', 'bar')
       .attr('x', d => xScale(d.label))
       .attr('width', xScale.bandwidth())
-      .attr('fill', (d, i) => d.highlight ? accentPalette[1] : accentPalette[i % accentPalette.length])
-      .attr('rx', 4);
+      // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
+      .attr('fill', (d, i) => d.highlight ? accentPalette[1] : accentPalette[i % accentPalette.length]);
 
     if (animate) {
       bars.attr('y', innerHeight)
@@ -238,7 +238,7 @@ const D3Charts = {
         .attr('class', 'label')
         .attr('transform', d => `translate(${labelArc.centroid(d)})`)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#fff')
+        .attr('fill', (d, i) => D3Base.onFill(accentPalette[i % accentPalette.length]))
         .style('font-size', '12px')
         .style('font-weight', 'bold')
         .text(d => {

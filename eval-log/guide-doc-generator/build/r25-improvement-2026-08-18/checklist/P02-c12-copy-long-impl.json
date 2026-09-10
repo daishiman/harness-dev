@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c12-copy-long-impl",
+  "covered_task_ids": [
+    "P02-c12-copy-long-impl"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+  "acceptance_criterion_restated": "script-brief-C12.json に W-COPY-LONG の detection が実在し、閾値を config/handout-visual-policy.json#micro_copy から解決し、対象フィールドの決定規則 (roles の fields 対応・exempt_parts / exempt_fields の除外) が書かれていること",
+  "verified_by": [
+    {
+      "claim": "W-COPY-LONG が brief の codes[] に無かったことを確認してから足した",
+      "method": "visual_density_constraints.codes の code 一覧を列挙。W-VISUAL-ABSENT / W-DIAGRAM-FEW / E-IMAGE-ABSENT / W-TEXT-HEAVY / W-TEXT-RUN の 5 件のみで W-COPY-LONG は不在。一方 config/handout-visual-policy.json の canon_authority は C12 が W-COPY-LONG の閾値を解決すると宣言しており、実装も tests/validate-handout-config.py/test_micro_copy.py も既に存在していた",
+      "result": "実装・テスト・正本の 3 者が揃っているのに brief だけが持っていない状態だった。追加後は 6 件"
+    },
+    {
+      "claim": "閾値の解決元を正しく書いた",
+      "method": "Context.__init__ の該当箇所を読み、micro_copy.roles[] の (role, max_chars, fields) を fields 名でフラットな辞書へ展開していることを確認",
+      "result": "threshold_key を『micro_copy 直下 (thresholds ではない)』と明記。他 5 コードが thresholds.* を指すのに対しここだけ配置が違うため、単に micro_copy と書くと thresholds.micro_copy と読まれる"
+    },
+    {
+      "claim": "対象フィールドの決定規則を実装どおりに書いた",
+      "method": "walk_micro_copy を読む。JSON pointer の末尾セグメントを役割名とし、末尾が数字 (配列添字) のときは 1 つ上のセグメント名を使う",
+      "result": "field_resolution へ記述。この規則がある理由 (columns[] / cells[] のように『名前は複数形・中身は 1 要素』へ上限を当てる) も併記した。規則だけ書くと、次に触る人が『添字も役割名にする』素直な実装へ戻せてしまう"
+    },
+    {
+      "claim": "除外の 3 系統を書き分けた",
+      "method": "check_micro_copy の走査を読む。part.get(\"part\") in exempt_parts で部品ごと skip、emit 内で field in exempt_fields を skip、diagrams[] の走査は部品 id を持たないので exempt_parts を経由しない",
+      "result": "exclusions[] に 3 件。特に『diagrams には exempt_parts を当てない (exempt_fields は当てる)』は実装を読まないと分からず、brief から実装する人が誤って当てる余地があった"
+    },
+    {
+      "claim": "適用範囲を書いた",
+      "method": "走査の起点が sections[].parts[].data と diagrams[].data の 2 つだけであることを確認",
+      "result": "scope へ記述し、文書直下・セクション直下へ当てない理由 (hero は thresholds.hero_fields、本文は detail_level の文字数予算が別に持つ = 同じ値に 2 つの上限を持たせない) を添えた"
+    },
+    {
+      "claim": "R7 との関係と REQ-8 の緩和対象外であることを明記した",
+      "method": "improvement/visual-per-section-decision.json#decision.no_quantity_cap.keep を参照",
+      "result": "meaning へ『節を増やしてよいが 1 要素は短いまま』と記述。数を絞らない緩和 (REQ-8) と長さを締める要求 (R7) が同じ資料の中で両立することを、コードの説明の位置で固定した"
+    },
+    {
+      "claim": "未列挙フィールドが無制限になる性質を明示した",
+      "method": "emit の limit is None で return する分岐を確認",
+      "result": "unlisted_fields_are_uncapped として記述。仕様 (未知の役割へ勝手な上限を当てない) だが、部品の data にフィールドが増えたとき既定で無制限になる性質でもある。書かないと『全部の文字列に上限が当たっている』と誤読される"
+    },
+    {
+      "claim": "fallback 定数と出荷時の方針ファイルを実際に突合した",
+      "method": "FALLBACK_MICRO_COPY_LIMITS / _EXEMPT_PARTS / _EXEMPT_FIELDS を config/handout-visual-policy.json#micro_copy と 1 件ずつ比較",
+      "result": "不一致を検出。title 24 vs 22、caption 40 vs 32、exempt_parts (TEXT,) vs {TEXT,B10,B11}、exempt_fields は canon が key を免除する一方 fallback は key を label 14 として当てる。fail_soft_thresholds へ実測値つきで記録し、是正を P05-x-129-micro-copy-fallback-drift として emit した"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C12COPY-FALLBACK-01",
+      "level": "warn",
+      "summary": "caption の canon 32 字は利用者フィードバック 2026-08-18 (『40 字では 2 文が入り、カードが小さな段落になった』) で R7 のために引き下げた値だが、fallback は 40 字のまま。方針ファイルが読めない経路だけ R7 の締めが黙って元の値へ戻る。fail-soft は『検査を止めない』ための機構であって『前の基準へ戻す』ための機構ではなく、ここでは fail-soft が緩和として働いている。P05-x-129 として emit 済み"
+    },
+    {
+      "id": "F-P02C12COPY-KEY-01",
+      "level": "info",
+      "summary": "フィールド key の扱いが canon と fallback で逆 (canon = 免除、fallback = label 14 で検査)。canon の why は『C11 が data 属性の出力時に skip する値で読み手の目に触れない』であり、fallback 側の方が誤りだが、この向きのずれは検査が厳しくなる側なので実害は出にくく、それゆえ長く残りやすい"
+    },
+    {
+      "id": "F-P02C12COPY-BRIEFGAP-01",
+      "level": "info",
+      "summary": "実装・テスト・正本 (canon_authority) の 3 者が W-COPY-LONG を知っているのに brief だけが知らなかった。brief の codes[] が実装のコード集合と一致していることを突き合わせる検査は存在しない。同じ抜けが他コード (W-HERO-LONG / W-OPENS-PROSE / W-SENTENCE-LONG / E-TEXT-PARAGRAPH / E-TEXT-FOLDED / W-DETAIL-ABSENT / W-LAYER-ORDER / W-DETAIL-FLOWLESS) にも起きうる — canon_authority が列挙する 14 コードに対し brief の codes[] は 6 件しかない"
+    }
+  ]
+}

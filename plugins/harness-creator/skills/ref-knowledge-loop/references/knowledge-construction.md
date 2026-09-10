@@ -6,36 +6,17 @@
 
 ---
 
-## §0a knowledge/ をどこに置くか (配置の抽象階層)
+## §0a curated seed と runtime state の配置
 
-`knowledge/` の配置先には抽象階層が異なる2層がある。両者は排他でなく役割が違う。全ナレッジを1箇所に強制集約しない (死蔵を招く)。各スキルのドメイン知識はそのスキルに、harness-creator のメタ知識は harness-creator に置く。
+`knowledge/` は配布・レビュー済みの seed であり、日々の未検証観測の書込先ではない。runtime 観測は `build-external-intelligence.py` が plugin package 外へ保存する。これを唯一の書込み正本とし、version 付き marketplace install の上書き消失と二重登録を防ぐ。
 
-| 層 | 配置 | 同梱方針 | 用途 |
-|----|------|---------|------|
-| Loop A (生成物側) | 各生成スキルが自前の `{skill}/knowledge/` + `{skill}/scripts/` を持つ | 正本テンプレを展開 (インスタンス化) して scripts/ を同梱。配布される自己完結ユニット | そのスキルのドメイン知識。これが既定 |
-| Loop B (メタ側) | harness-creator 自身の `plugins/harness-creator/knowledge/` に集約 | 正本スクリプトを複製せず `--dir` で共有参照 | harness-creator の build 知見 (メタ知識) |
+| 層 | 配置 | 用途 |
+|----|------|------|
+| Loop A curated seed | 各生成スキルの `{skill}/knowledge/` | 実行時に配るレビュー済みドメイン知識 |
+| Loop B curated seed | `plugins/harness-creator/knowledge/` / `lessons-learned/` | build-time に配るレビュー済みメタ知識 |
+| runtime external intelligence | Git common dir / `<project>/.harness/` / plugin data・XDG state | Codex/Claude 共通の観測・類似統合・再利用検証 |
 
-Loop A は配布単位ごとに自己完結する必要があるためスクリプトを同梱し、Loop B は単一リポジトリ内のメタ蓄積なので正本スクリプトを `--dir` 共有して重複を避ける。
-
-### 判定ルール — 新しい知見をどちらに入れるか
-
-置き場所は「選ぶ」のではなく、知見の**消費者**が一意に決める (`consult_at`)。次の一問で判定する。
-
-```
-Q: その知見を読むのは誰か？
-  A. 生成スキルが「実行時」にエンドユーザー向けの仕事で使う
-     → Loop A: そのスキルの {skill}/knowledge/    (consult_at: ["runtime"])
-  B. harness-creator が「ビルド時」にスキルを作る判断で使う
-     → Loop B: plugins/harness-creator/knowledge/    (consult_at: ["build-time"])
-```
-
-判定軸は「内容のジャンル」ではなく「**誰がいつ読むか**」。各ストアの `knowledge-index.json` は `consult_at` を1つ宣言しており、これが置き場所の機械可読な根拠になる。この分離は **schema の `consult_at` 必須化 + lint KL-007 + add_entry ガード**で機械的に強制される — `consult_at` とストアの物理位置 (Loop A=runtime / Loop B=build-time) が不一致なら CI で fail し、宣言の無いストアへの `add_entry` は拒否される。ドキュメントの努力義務ではなく構造不変条件として固定される。
-
-紛らわしい例: 「採用スキルを作っている最中に得た学び」。
-- 採用ドメインの事実で、スキルが実行時にユーザー回答へ使う → Loop A
-- 採用系スキルを作る時の手順・勘所 (例: このドメインは style-genome が要る) → Loop B
-
-同じ素材から両方のエントリが生まれることはあるが、**別エントリ・別消費者**として分かれる。1つのエントリが2ストアに重複することはない。`add_entry.py` は抽象バケツでなく `--dir <具体パス>` で対象ストアを明示するため、入れ間違いは物理的に起きにくい。
+判定軸は「誰がいつ読むか」に加え「検証済みか」である。未検証なら内容を問わず runtime state、独立証拠と別文脈での helpful reuse を満たし owner が承認したものだけを Loop A/B の該当 seed へ `add_entry.py` で取り込む。詳細な状態遷移と重複規則は [external-intelligence.md](external-intelligence.md) を正本とする。
 
 ---
 

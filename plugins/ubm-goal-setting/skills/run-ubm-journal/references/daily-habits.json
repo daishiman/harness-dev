@@ -1,0 +1,131 @@
+{
+  "description": "毎日必ずヒアリングする固定習慣。週報の【習慣目標】(週ごとに変わる4群) とは別軸で、日常化したい不変の項目をここに置く。build-journal-context.py が context へ載せ、validate-journal-output.py が記録漏れ (H01) を検査する。項目を増減したいときはこのファイルだけを編集する。",
+  "version": "2.0.0",
+  "schema_note": "search_scopes が H01 検査の正本 (機械可読)。target_section は人間向けの表示文字列にすぎず、検査には使わない。v1 では H01 が本文全体を substring 検索していたため、禁止事項の定型行・H1 見出し・チェックシートの固定設問にキーワードが常在する grid-note / no-unplanned-video / journal / sns-post の 4 件が原理的に発火しない死んだ検査になっていた。scope は 3 ジャーナルのセクション単位で指定する。どの小節に書くかは書き手の判断に委ねる(『現状』に書くか『効果性』に書くかは内容次第) 一方、セクションを跨ぐ誤検出は塞ぐ、という粒度。scope のいずれか 1 つで keywords が見つかれば記録ありとみなす。",
+  "habits": [
+    {
+      "id": "grid-note",
+      "label": "Gridノートを書いた",
+      "natural_question": "今日のGridノート、どのタイミングで書きました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "search_scopes": [
+        {
+          "heading": "【行動のジャーナル】",
+          "level": 2
+        }
+      ],
+      "unmet_signal": "書いた時刻・場面が出てこない / 「まだ」「あとで」「今から」が返る",
+      "keywords": [
+        "Gridノート",
+        "グリッドノート",
+        "gridノート"
+      ]
+    },
+    {
+      "id": "sleep-by-23",
+      "label": "23時以内に就寝した",
+      "natural_question": "昨日は何時に布団に入りました？",
+      "target_section": "【時間のジャーナル】現状を確認する",
+      "search_scopes": [
+        {
+          "heading": "【時間のジャーナル】",
+          "level": 2
+        }
+      ],
+      "unmet_signal": "23:00 より後の時刻が出る / 時刻を答えられない",
+      "keywords": [
+        "就寝",
+        "寝た",
+        "布団",
+        "睡眠",
+        "床に就"
+      ]
+    },
+    {
+      "id": "stretch",
+      "label": "ストレッチをした",
+      "natural_question": "体を動かす時間は取れました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "search_scopes": [
+        {
+          "heading": "【行動のジャーナル】",
+          "level": 2
+        },
+        {
+          "heading": "【時間のジャーナル】",
+          "level": 2
+        }
+      ],
+      "unmet_signal": "ストレッチ・運動の言及がない / 「時間がなかった」が返る",
+      "keywords": [
+        "ストレッチ",
+        "運動",
+        "体を動か",
+        "柔軟"
+      ]
+    },
+    {
+      "id": "no-unplanned-video",
+      "label": "決められた時間以外に動画等を見なかった",
+      "natural_question": "今日、予定していなかった時間に画面を見てしまった場面はありました？",
+      "target_section": "【時間のジャーナル】効果性を評価する",
+      "search_scopes": [
+        {
+          "heading": "【時間のジャーナル】",
+          "level": 2
+        }
+      ],
+      "scope_note": "【禁止事項】は scope に含めない。テンプレの定型行が『漫画・YouTubeへ逃げない』を常に含むため、そこを見ると常時 PASS になり検査が死ぬ。",
+      "unmet_signal": "動画・SNS閲覧・スマホの言及があり、それが計画外の時間帯だった",
+      "keywords": [
+        "動画",
+        "YouTube",
+        "ユーチューブ",
+        "視聴",
+        "スマホ",
+        "画面"
+      ]
+    },
+    {
+      "id": "journal",
+      "label": "ジャーナルを書いた",
+      "natural_question": "（本スキルの実行そのものが該当。何時から振り返りを始めたか）",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "search_scopes": [
+        {
+          "heading": "【行動のジャーナル】",
+          "level": 2
+        }
+      ],
+      "unmet_signal": "前日分のジャーナルが存在しない (build-journal-context.py の previous_journal で判定)",
+      "keywords": [
+        "ジャーナル",
+        "振り返り"
+      ]
+    },
+    {
+      "id": "sns-post",
+      "label": "SNSに投稿した",
+      "natural_question": "今日は何を発信しました？",
+      "target_section": "【行動のジャーナル】現状を確認する",
+      "search_scopes": [
+        {
+          "heading": "【行動のジャーナル】",
+          "level": 2
+        }
+      ],
+      "unmet_signal": "投稿の言及がない / 「明日まとめて」が返る",
+      "keywords": [
+        "SNS",
+        "投稿",
+        "発信",
+        "X(",
+        "Twitter",
+        "ツイート",
+        "Instagram",
+        "Facebook",
+        "note"
+      ]
+    }
+  ]
+}

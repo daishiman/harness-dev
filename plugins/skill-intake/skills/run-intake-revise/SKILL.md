@@ -11,6 +11,7 @@ allowed-tools:
 kind: run
 user-invocable: true
 effect: external-mutation  # Notion ページ PATCH = 外部変更 (run-notion-intake-publish と同値)
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: plugins/skill-intake
 source-tier: internal
 last-audited: 2026-05-24
@@ -27,6 +28,7 @@ schema_refs:
   - schemas/output.schema.json
 manifest: workflow-manifest.json
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -41,9 +43,64 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 本スキルが同一 Notion ページへの PATCH 上書き(新規ページ非作成=URL/リンク保全)に責務を絞り、PNG/mermaid 全揃いの All-or-Nothing と internal-analysis.json 非開示を守りつつ、新規 intake 生成・publish へ逸脱しない設計になっている
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
+
 # run-intake-revise
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -93,17 +150,12 @@ Notion ページの新規作成は URL 変更とリンク断絶を招くため�
 
 ```bash
 # 内部解析再実行
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/analyze_user_intent.py output/<hint>
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/analyze_user_intent.py output/<hint>
 
 # 正本再生成
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/render-intake-final.py output/<hint>
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/render-intake-final.py output/<hint>
 
-# Notion PATCH 更新 (同一ページ ID)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/intake_publish_pipeline.py \
-  --intake   output/<hint>/intake.json \
-  --manifest output/<hint>/notion-manifest.json \
-  --revise \
-  --page-id  <既存ページ ID>
+# Notion PATCH mutation: construct <MUTATION_ARGV_JSON> with the resolved intake_publish_pipeline.py path and --intake/--manifest/--revise/--page-id argv; pass it only to the canonical receipt flow above.
 
 # --dry-run 指定時は Notion API 呼び出しを行わず差分のみ表示
 ```
@@ -113,7 +165,7 @@ Step/Gate の機械可読定義は `workflow-manifest.json` (P1-load / P2-hear /
 ## Gotchas
 
 1. **page-id 不一致は致命**: `notion-url.txt` と Notion DB 上のページが一致しなければ exit 51 で新規 `/intake` を案内 (PATCH 続行禁止)。
-2. **Keychain / API キーは再質問しない**: PATCH 前に `python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/validate-notion-ready.py --check-api` を 1 度だけ実行する。exit 0 なら API キー / Notion トークンは確認済みとして扱い、ユーザーへ再入力を求めない。exit 44 (`service=notion-api-key.<keychain-prefix>, account=<keychain-prefix>` 未登録) のときだけ `keychain-setup.md` を案内し停止する。
+2. **Keychain / API キーは再質問しない**: PATCH 前に `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/scripts/validate-notion-ready.py --check-api` を 1 度だけ実行する。exit 0 なら API キー / Notion トークンは確認済みとして扱い、ユーザーへ再入力を求めない。exit 44 (`service=notion-api-key.<keychain-prefix>, account=<keychain-prefix>` 未登録) のときだけ `keychain-setup.md` を案内し停止する。
 3. **回数上限超過**: 5 回を超えたら exit 60 (新規 hint へ移行)。リセットしない。
 4. **cancel は完全巻き戻し**: Gate R cancel で exit 2、既存ページ不変、ローカル中間生成物も巻き戻す。
 5. **rollback JSON**: PATCH 失敗時は `output/<hint>/notion-rollback-<rev>.json` を必ず保存。次回実行で参照する。

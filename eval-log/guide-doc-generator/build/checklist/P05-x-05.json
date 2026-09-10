@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P05-x-05",
+  "covered_task_ids": [
+    "P05-x-05"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 schemas/handout-config.schema.json が実在し json.load 可能",
+      "method": "json.load とトップレベル構造の再列挙",
+      "result": "pass (38774 bytes。properties 29 キー / $defs 12 件。schemas/ 配下は本ファイル 1 本のみ)"
+    },
+    {
+      "claim": "R22 の 2 軸 enum がスキーマ側の唯一の正本として宣言されている",
+      "method": "properties.detail_level.enum と properties.evidence_depth.enum を独立に出力",
+      "result": "pass (detail_level=[overview, standard, detailed] / evidence_depth=[none, cited, sourced]。task-spec 記載と完全一致)"
+    },
+    {
+      "claim": "P05-C23-01 の残存赤 3 件が緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/resolve-handout-preset.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=0 / errors=0 / OK。本 leaf 実行前は failures=3)"
+    },
+    {
+      "claim": "既に緑だった 125 件を 1 件も赤にしていない",
+      "method": "同 suite の総数と失敗数を実行前後で比較",
+      "result": "pass (128 件中 128 緑。特に test_single_field_of_the_pair_is_not_rejected_by_c23 を含め退行なし)"
+    },
+    {
+      "claim": "外部 URL を 1 件も含まない ($schema の draft URL を含む)",
+      "method": "grep -rEc 'https?://' plugins/guide-doc-generator/schemas/",
+      "result": "pass (0 件・exit 1)。方言は URL でない x_dialect: \"json-schema-2020-12\" で示し、内部参照は #/$defs/... のみ"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "plugins/guide-doc-generator/ 配下の mtime 走査と tests/ scripts/ config/ の内容確認",
+      "result": "pass (本 leaf 由来の書込は schemas/handout-config.schema.json 1 本のみ。他の直近更新は並行 worker (P04-x-08 / P05-C15-01) 由来)"
+    },
+    {
+      "claim": "config/ の値を複製していない (形だけを宣言している)",
+      "method": "用途 slug 8 語 / section_kind slug / part id / テーマ名のリテラル出現を確認",
+      "result": "pass (値の複製なし。x_value_source でファイル参照のみを記述)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "canon-conflict-between-briefs",
+      "detail": "worker が 2 件の brief 間矛盾を検出し task-spec の canon 指定に従って暫定決着させた。要裁定。(1) $defs.diagram の形: C12 config_schema は {id, pattern, data: object, title} とネスト、script-brief-C14.json は「$defs.diagram と同一スキーマ」と言いながら tests/render-diagram-svg.py/_harness.py はフラット ({id, title, pattern, left, right})。C12 形を採用したが C14 実装 (P05-C14-01) 時にどちらへ寄せるか決める必要がある。(2) diagram.pattern の 6 値目: C12 は dichotomy、C14 argv と handout-parts.json の data_block_type は versus。C12 ブリーフ自身が「6 値は C14 側が正本」と書くため versus を採用"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 6 件。(1) document.duration の 'A4 n 枚相当' 書式が未定義のため ^A4\\s?\\d{1,3}\\s?枚相当$ を暫定採用 (2) 「入力必須」と「normalize が充填」を JSON Schema 標準語彙で区別できないため required を入力必須 16 件に限定し充填 7 件を拡張キー x_required_after_normalize へ分離 (3) 散文制約 (空白のみ禁止・配列内一意・相互参照・件数の他フィールド依存) を機械可読にするため x_ 前置の拡張キー 18 種を導入。命名規約の正本が無いため前置記号は本 leaf の裁量 (4) section_kind 依存の追加検査を slug でなく属性名で参照する形にした (config が slug の正本であり、かつ agenda-timebox が validate 側の禁止文字列 timebox に抵触するため) (5) provenance に detail_level_source / evidence_depth_source を追加 (C12 の provenance 制約列には無いが notes が名指ししているため) (6) $defs.part_data は 20 part id 分岐を持つ"
+    },
+    {
+      "kind": "brief-dangling-reference",
+      "detail": "script-brief-C11.json が参照する 'C12 の config_schema.part_catalog' は script-brief-C12.json に存在しない (実体は part_data_schema と推定)。C11 実装 (P05-C11-01) の前に参照名の突合が要る"
+    }
+  ]
+}

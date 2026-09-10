@@ -1,0 +1,39 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-hero-card-element-fix",
+ "covered_task_ids": [
+  "P02-hero-card-element-fix"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/improvement/hero-card-decision.json",
+ "verified_by": [
+  {
+   "claim": "決定ファイルが hero カードの DOM を .hero-card-grid > .hero-card として明示している",
+   "method": "decision.hero_card_contract.dom_contract を新設し、grid / card / selector / field_marker を個別キーで置いた",
+   "result": "pass: selector に '.hero-card-grid > .hero-card' を明示。あわせて rules 内の how から『section-card と同系のカード』という要素名を決めない表現を外し、実要素名へ置き換えた"
+  },
+  {
+   "claim": "script-brief-C11.json:352 と一致する",
+   "method": "両ファイルで hero-card-grid の出現を数え、C11:352 の記述と selector を突合",
+   "result": "pass: C11:352 は『.hero-card-grid > .hero-card』のグリッドを新形として書いており、決定ファイルの selector と同一。決定ファイル側 4 件・C11 側 1 件の出現"
+  },
+  {
+   "claim": "要素名の正本がどちらかに定まっている",
+   "method": "dom_contract.must_match の記述",
+   "result": "pass: 『要素名の正本は本キーであり、C11 はここから引く』と方向を明記した。方向を書かないと、両者が別の名前を書いても双方が自分の記述どおりで緑になる (この node が起票された原因そのもの)"
+  },
+  {
+   "claim": "往復抽出を壊さない条件が残っている",
+   "method": "dom_contract.field_marker と既存 risk_and_impact.round_trip の突合",
+   "result": "pass: 各 .hero-card が data-hb-field を保持する条件を dom_contract 側にも書いた。囲む要素だけを変え field_span の付与は維持する、という既存の round_trip 条件と矛盾しない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02hcf-01",
+   "level": "carry-forward",
+   "summary": "一致は現時点の 2 ファイルの文字列一致でしかなく、片方を変えたときに他方が追随しなかったことを検出する手段が無い。C11 の実装が出た後は生成 HTML 側のセレクタ実測で照合できるが、ブリーフ段では手作業の突合に留まる"
+  }
+ ]
+}

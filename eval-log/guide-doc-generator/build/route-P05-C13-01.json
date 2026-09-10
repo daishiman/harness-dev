@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "task_id": "P05-C13-01",
+  "covered_task_ids": [
+    "P05-C13-01"
+  ],
+  "route_id": "C13",
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/embed-assets.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在する",
+      "method": "ls plugins/guide-doc-generator/scripts/",
+      "result": "pass"
+    },
+    {
+      "claim": "P04-C13-01 が固定した赤が全て緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/embed-assets.py -p 'test_*.py'",
+      "result": "pass (Ran 96 / OK / failures=0 / errors=0)"
+    },
+    {
+      "claim": "テストが改変されていない (判定基準の自作差し替えが無い)",
+      "method": "find tests/embed-assets.py -newer scripts/embed-assets.py -type f が空",
+      "result": "pass"
+    },
+    {
+      "claim": "標準ライブラリのみに依存する",
+      "method": "import 文の列挙 (argparse/base64/json/os/sys/pathlib/__future__)",
+      "result": "pass"
+    },
+    {
+      "claim": "決定論的である",
+      "method": "同一引数の 2 回実行で stdout がバイト一致",
+      "result": "pass"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --short plugins/guide-doc-generator/",
+      "result": "pass (untracked 配下のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "brief-underspecified",
+      "detail": "5 件の未定義事項を worker が判断して実装した。(1) 素材収集対象を assets[]/attachments[] に限定 (C12 正規化後はセクション側が id 参照のみを持つため) (2) skip 素材の相対パスキー名を embed_source_path として採用 (ブリーフ未定義) (3) attachments[].mime の宣言値より自前対応表を優先 (優先順位がブリーフ未定義) (4) 重複参照のキャッシュキーを (相対パス, MIME) とした (failure_modes は絶対パスと書くが出力へ絶対パスを漏らさない方針を優先) (5) embedded_count/total_source_bytes を参照件数ベースとした。いずれも P05 の他 component (C11/C12/C20) との名前・語義の突合が要る"
+    }
+  ]
+}

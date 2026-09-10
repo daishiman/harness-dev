@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/improvement-decision.schema.json",
+  "title": "User Improvement Decision",
+  "description": "初回診断所見の提示後に、user eventが選んだ改善深度をartifact/review digestへ束縛するreceipt。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "subject", "artifact_fingerprint_sha256",
+    "baseline_target_manifest_sha256", "review_sha256", "selected_level",
+    "selected_by", "user_choice_event_id", "user_choice_ref",
+    "explicit_exhaustive_confirmation", "exhaustive_confirmation_event_id",
+    "critical_risk_acknowledgement_event_id", "improvement_authorized",
+    "selected_finding_ids", "max_rounds", "next_stage", "next_profile",
+    "auto_promote_release", "auto_promote_exhaustive", "created_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "artifact_fingerprint_sha256": {"$ref": "#/definitions/sha256"},
+    "baseline_target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+    "review_sha256": {"$ref": "#/definitions/sha256"},
+    "selected_level": {"type": "string", "enum": ["accept-draft", "light", "standard", "detailed", "release", "exhaustive"]},
+    "selected_by": {"type": "string", "const": "user"},
+    "user_choice_event_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"},
+    "user_choice_ref": {"type": "string", "minLength": 1},
+    "explicit_exhaustive_confirmation": {"type": "boolean"},
+    "exhaustive_confirmation_event_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"}
+      ]
+    },
+    "critical_risk_acknowledgement_event_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"}
+      ]
+    },
+    "improvement_authorized": {"type": "boolean"},
+    "selected_finding_ids": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^IDR-[0-9]{3}$"}
+    },
+    "max_rounds": {"type": "integer", "minimum": 0, "maximum": 3},
+    "next_stage": {"type": "string", "enum": ["draft", "release"]},
+    "next_profile": {"type": "string", "enum": ["incremental", "exhaustive"]},
+    "auto_promote_release": {"type": "boolean", "const": false},
+    "auto_promote_exhaustive": {"type": "boolean", "const": false},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

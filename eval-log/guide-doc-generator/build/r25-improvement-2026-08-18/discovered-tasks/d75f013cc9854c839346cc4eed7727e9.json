@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C11-01",
+  "reason": "出荷テーマトークンの本文文字数予算が正本 brief の決定値へ未追随。利用者要件の長文抑止はこのファイル群が実装点であり、旧値のままでは抑止機構が実質無効になる。C11 の赤 5 件と C12 の赤 1 件がすべてここに由来する",
+  "discovered_at_artifact": "plugins/guide-doc-generator/assets/tokens/",
+  "proposed_node": {
+    "id": "P05-x-83",
+    "title": "テーマトークンの本文文字数予算を正本の決定値へ追随させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/assets/tokens/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "assets/tokens/ 配下の出荷テーマトークンの本文文字数予算が正本 brief の決定値と一致し、C11 の赤 5 件と C12 の赤 1 件が緑になることを実測する。値は brief から実測導出しトークン側へ第 2 正本を作らない。brief 側の値を変える変異でトークン検査が追随して赤くなることを確認する。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

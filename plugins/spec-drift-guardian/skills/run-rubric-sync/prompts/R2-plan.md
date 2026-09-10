@@ -46,7 +46,7 @@
 |---|---|---|---|
 | resolved-inputs | object | yes | R1 の解決済み候補集合 (issue/mode/影響 impact/allowlist 分類) |
 | target files | path | yes | 各候補 `artifact_path` の現状 (Read で before/hash 取得) |
-| field-impact-map | path | yes | `$CLAUDE_PLUGIN_ROOT/references/field-impact-map/field-impact-map.json` |
+| field-impact-map | path | yes | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/field-impact-map/field-impact-map.json` |
 | allowlist policy | path | yes | `references/apply-gate-policy.md` §1/§3/§4 |
 
 ### 2.4 出力契約
@@ -62,12 +62,12 @@
 |---|---|---|
 | resolved-inputs | R1 出力 | 候補反復時 |
 | target file | 各 `artifact_path` | before/pre-image 取得時 |
-| field-impact-map | `$CLAUDE_PLUGIN_ROOT/references/field-impact-map/field-impact-map.json` | target×axis 裏取り時 |
+| field-impact-map | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/field-impact-map/field-impact-map.json` | target×axis 裏取り時 |
 | allowlist policy | `references/apply-gate-policy.md` | allowlist/hash/digest 時 |
 | sync-proposal schema | `../../schemas/sync-proposal.schema.json` | emit 検証時 |
 
 ### 3.2 外部ツール / API
-- `python3 $CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py --hunks <hunks.json> --map <field-impact-map.json>` — target×axis の独立再確認。
+- `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/map-field-impact.py --hunks <hunks.json> --map <field-impact-map.json>` — target×axis の独立再確認。
 - `shasum -a 256 <file> | cut -d' ' -f1` (fallback `sha256sum`) — pre_image_sha256。
 - `python3` — proposal_sha256 正規化 digest・schema 検証・JSON 整形。
 

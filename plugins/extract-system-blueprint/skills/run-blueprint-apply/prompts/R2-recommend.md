@@ -51,7 +51,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | blueprint 正本 | `<blueprint_dir>/blueprint.json` | fact/inference/anchor の突合元 |
-| apply 検査契約 | `$CLAUDE_PLUGIN_ROOT/scripts/doc-emit.py` (--check-apply) | recommendations shape の SSOT 確認 |
+| apply 検査契約 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py` (--check-apply) | recommendations shape の SSOT 確認 |
 
 ### 3.2 外部ツール / API
 - 重い突合・導出は Task で独立 context へ fork し、recommendations JSON を成果物ディレクトリへ直接書き出す (応答長起因の無言欠落を排除)。親へは最終 JSON パスと要約のみ返す。

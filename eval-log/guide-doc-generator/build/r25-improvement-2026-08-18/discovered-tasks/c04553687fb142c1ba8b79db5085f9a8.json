@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c12-copy-long-impl",
+  "reason": "W-COPY-LONG の fallback 定数が出荷時の方針ファイルより緩い (title 24 vs 22 / caption 40 vs 32)。caption 32 は利用者フィードバックで R7 のために引き下げた値であり、方針ファイルが読めない経路だけ締めが黙って元へ戻る",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c12-copy-long-impl.json",
+  "proposed_node": {
+    "id": "P05-x-129-micro-copy-fallback-drift",
+    "title": "W-COPY-LONG の fallback 定数を出荷時の方針ファイルへ一致させる",
+    "phase_ref": "P05",
+    "entity_ref": "C12",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+    "acceptance_criterion": "FALLBACK_MICRO_COPY_LIMITS / _EXEMPT_PARTS / _EXEMPT_FIELDS が config/handout-visual-policy.json#micro_copy の出荷値と一致し、その一致を検査するテストが 1 本ある (定数を直書きで二重に持つ以上、ずれを機械で捕まえる)",
+    "execution_kind": "component-build",
+    "route_ref": "C12"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  }
+}

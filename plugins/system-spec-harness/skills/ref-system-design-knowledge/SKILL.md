@@ -24,9 +24,18 @@ completeness_exempt:
   - "manifest: ref/effect:none exposes immutable reference material and has no executable workflow phases."
 allowed-tools:
   - Read
+runtime_root_policy: host-skill-path
 ---
 
 # ref-system-design-knowledge
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -41,10 +50,10 @@ allowed-tools:
 各知識カードは `references/knowledge-card.schema.json` の必須概念に従い、目的・背景・解決する問題・中核概念・適用条件・非適用条件・トレードオフ/失敗モード・目的達成への寄与・一次資料・鮮度を保持する。浅い pointer-only 要約は正本カードとして受け入れない。
 
 ### 知識依存グラフ (goal-spec C13/C14)
-`references/knowledge-catalog.json` は各 entry が typed 辺 (`depends_on` / `refines` / `conflicts_with`) を持つ**知識依存グラフ**である。`A depends_on B` は「B が前提で B を A より先に出す」precedence DAG で、循環/dangling/root到達性/孤立 node と辺型則 (`refines`=有向精緻化・非循環、`conflicts_with`=対称非順序) を `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge` が検証する。C01 (R5) / C03 (R2) はこの validator の位相順 (`--order`・上位概念→下位概念、同順位 knowledge_id 昇順) を**同一 JSON として消費**し、設計知識を上流から下流の順で章へ反映する。この validator が保証するのは well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上正しいか) は content-review/human の未閉塞責務である。
+`references/knowledge-catalog.json` は各 entry が typed 辺 (`depends_on` / `refines` / `conflicts_with`) を持つ**知識依存グラフ**である。`A depends_on B` は「B が前提で B を A より先に出す」precedence DAG で、循環/dangling/root到達性/孤立 node と辺型則 (`refines`=有向精緻化・非循環、`conflicts_with`=対称非順序) を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile knowledge` が検証する。C01 (R5) / C03 (R2) はこの validator の位相順 (`--order`・上位概念→下位概念、同順位 knowledge_id 昇順) を**同一 JSON として消費**し、設計知識を上流から下流の順で章へ反映する。この validator が保証するのは well-formedness (形状・辺型則・写像全射) と位相順の決定性のみで、知識辺の意味妥当性 (依存関係が設計上正しいか) は content-review/human の未閉塞責務である。
 
 ### doctrine anchor 写像 (goal-spec C15)
-`references/doctrine-anchor-registry.json` は正本単位を system category でなく**design concern** とし、7 concern を 4 authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / security・authentication=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) へ **1 concern 1 authority** で固定する (authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる)。全 in-scope category は必要 concern へ全件写像され、C03 が各章生成時に category→concern→authority を**上流指針として反映**する (具体技術は直書きせず上流工程を導く)。registry 形状・concern_id 一意性 (authority 一意性ではない)・カテゴリ写像全射は `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` が、意味反映は content-review/human が検証する。未帰属 category は owner/reason/approval_state を持つ pending 例外として compile を保留する。
+`references/doctrine-anchor-registry.json` は正本単位を system category でなく**design concern** とし、7 concern を 4 authority (presentation=Apple HIG / application-architecture・data-access=Clean Architecture / security・authentication=OWASP ASVS+Secrets Management / reliability・operations=Google SRE) へ **1 concern 1 authority** で固定する (authority は 4 種で application-architecture↔data-access 等の複数 concern に共有されうる)。全 in-scope category は必要 concern へ全件写像され、C03 が各章生成時に category→concern→authority を**上流指針として反映**する (具体技術は直書きせず上流工程を導く)。registry 形状・concern_id 一意性 (authority 一意性ではない)・カテゴリ写像全射は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile doctrine` が、意味反映は content-review/human が検証する。未帰属 category は owner/reason/approval_state を持つ pending 例外として compile を保留する。
 
 ## 参照知識領域 (references/)
 
@@ -68,9 +77,9 @@ allowed-tools:
 1. カテゴリ初期集合が必要なとき (C01 R1-init): `references/system-category-taxonomy.json` を Read し `categories` / `platforms` を取得する。
 2. 設計知識ポインタが必要なとき (C03 R2-render): 該当領域の `references/*.md` を Read し要点と一次資料 URL を章へ反映する。
 3. seed外の知識候補が必要なとき: `references/open-world-knowledge-lifecycle.md` を Read し、C01/C02 に発見・一次資料qualification・project candidate作成を委譲する。C04自身は検索や書込を行わない。
-4. 設計知識を位相順で消費するとき (C01 R5 / C03 R2): `$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile knowledge --input references/knowledge-catalog.json --order` の topo_order に従い上位概念→下位概念の順で反映する。
-5. 人間が読む表現物 (画面・report・slide・CLI 出力・通知・エラーメッセージ) を設計/レビューするとき: `references/information-design.md` を Read し、成果物側は `../../schemas/information-priority-map.schema.json` 準拠の宣言を持つ。`python3 $CLAUDE_PLUGIN_ROOT/scripts/validate-information-priority.py <map.json>` が手順の順序制約 (順位確定→装飾) と削除/加工の説明責任を機械検査する (exit 0=OK / 1=違反 / 2=usage)。
-6. 章の上流指針が必要なとき (C03 R2): `references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` を上流 doctrine として章へ反映する (`$CLAUDE_PLUGIN_ROOT/scripts/validate-knowledge-graph.py --profile doctrine` で写像全射を事前検証)。
+4. 設計知識を位相順で消費するとき (C01 R5 / C03 R2): `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile knowledge --input references/knowledge-catalog.json --order` の topo_order に従い上位概念→下位概念の順で反映する。
+5. 人間が読む表現物 (画面・report・slide・CLI 出力・通知・エラーメッセージ) を設計/レビューするとき: `references/information-design.md` を Read し、成果物側は `../../schemas/information-priority-map.schema.json` 準拠の宣言を持つ。`python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-information-priority.py <map.json>` が手順の順序制約 (順位確定→装飾) と削除/加工の説明責任を機械検査する (exit 0=OK / 1=違反 / 2=usage)。
+6. 章の上流指針が必要なとき (C03 R2): `references/doctrine-anchor-registry.json` の `category_concern_map` から対象カテゴリの concern を引き、`concerns[].authority` を上流 doctrine として章へ反映する (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile doctrine` で写像全射を事前検証)。
 
 ## Gotchas
 

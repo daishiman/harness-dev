@@ -29,7 +29,7 @@ producer 側 plan (`plugin-plans/plugin-dev-planner/`) は R2/R3 が完了し、
 ## ドメイン知識
 - goal-spec の checklist は 13 件 (C1-C13)。C1 (並列 dispatch)・C2 (state write-back)・C3 (produces/consumes 注入)・C4 (discovered-task emit)・C5 (進捗集計) は script/test 主体、C6 (後方互換) は test、C7 (境界契約文書追記) は script/human 混在、C8 (fork evaluator の意味判定) は human、C9 (elegant-review 4条件+全ゲート exit0) は横断完了条件、C10 (冪等再開・実行排他・graph_hash pin)・C11 (実行イベントログ)・C12 (実行時停滞検出) は実行時契約、C13 (未処理 discovered-task 完了ブロック + knowledge 化) は完了前ゲートである。
 - constraints の要旨: (1) task-graph の schema/導出器/validator/ready-set 計算器は producer 側 SSOT・再実装複製禁止、(2) task state ファイルの writer は consumer 側 L4 実行系のみ (単一 writer)、(3) canonical serialization は producer 側 canonicalizer が SSOT、(4) 13 ファイル固定解除後も consumer は task-graph を構成の正本として読む、(5) discovered-task emit は追補提案であり受理判断は producer 側二段受理に従い plan を直接編集しない、(6) script は Python 標準ライブラリのみ (.sh/.js 新規禁止・yaml import 禁止)、(7) 既存 route-build-report 契約 (PR#70) は additive 拡張のみ、(8) harness 現状未達数値は component へ焼かない (Goodhart 回避)、(9) 未処理 discovered-task は completed を block、(10) harness は graph を直接 mutate せず proposal/knowledge のみを書く、(11) knowledge は生ログではなく bounded summary と source_ref に蒸留する。
-- handoff_targets: run-skill-create / run-build-skill / capability-build。max_loops: 5。open_questions 3 件 (並列度既定値/リトライ規約/state file 配置仮置き)。
+- handoff_targets: run-skill-create / run-build-skill / capability-build。max_loops: 5。open_questions 2 件 (並列度既定値/リトライ規約)。state file 配置は本 phase で解決し、P02 の設計へ反映する。
 
 ## 成果物
 - `goal-spec.json` (確定済み・本 phase 時点で再読込による内容確認のみ行い、書き換えは行わない)。
@@ -49,7 +49,7 @@ producer 側 plan (`plugin-plans/plugin-dev-planner/`) は R2/R3 が完了し、
 - 満たさない例: task-graph 消費の目的が「並列実行を追加する」とだけ記され、producer/consumer の責務境界 (SSOT 遵守/単一 writer) が未確定のまま P02 へ進む。
 
 ### 事前解決済み判断
-- 分岐点: open_questions[2] (task state ファイル配置は仮置き) をどう扱うか → 判断: producer 側 handoff の `open_issues[0]` が既に `eval-log/<slug>/build/task-state.json` (route-build-report と同居) を仮置きとして示しており、本 plan (consumer 側) がこれを最終確定する (P02 で反映)。
+- 分岐点: task state ファイルの仮置き配置をどう扱うか → 判断: producer 側 handoff の `open_issues[0]` が既に `eval-log/<slug>/build/task-state.json` (route-build-report と同居) を示しており、本 plan (consumer 側) がこれを最終確定する (P02 で反映)。解決済みのため `goal-spec.json#open_questions` には残さない。
 
 ## 参照情報
 - `plugin-plans/harness-creator/goal-spec.json`。

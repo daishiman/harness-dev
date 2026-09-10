@@ -33,6 +33,7 @@ combinators:
   - with-goal-seek
   - with-feedback-contract
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
   max_loops: 5
@@ -55,6 +56,7 @@ depends_on:
   - C01
   - C09
 feedback_contract: # per-skill 受入基準(purpose-acceptance)。allowlist 限定適用と fail-closed を汎用ゲート言い換えに退化させない
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -69,9 +71,43 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。allowlist 限�
       loop_scope: outer
       text: fresh context の実セッションで /rubric-sync を起動したとき、rubric-sync-auditor SubAgent が実際に発火して sync-audit-verdict を出し、AskUserQuestion の承認 gate が自走で素通りされず、監査 PASS と明示承認の双方が揃うまで apply が保留されることを live 実行で確認する。
       verify_by: live-trial
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+
+
 # run-rubric-sync
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 > **役割**: C01 トリアージで**影響あり**と判定された spec-drift issue に対し、harness-creator 側 rubric/schema/template への**同期を二段階**で行う独立起動 skill (C02)。**propose mode は read-only** で最小 Edit 差分・allowlist・expected pre-image hash を組み立て、**apply mode は apply-gate 条件 (G1-G5) を全充足したときだけ** allowlist 対象へ Edit を適用する。commit / PR / issue close は行わない。plugin root = `$CLAUDE_PLUGIN_ROOT`、artifact は `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/` 起点 (repo-root ハードコード禁止)。
 
@@ -110,8 +146,8 @@ apply mode は次の**5 条件 (G1-G5) を全て**満たすときに限り Edit 
 
 ```bash
 # 影響 target×axis を diff から独立再確認 (LLM の思い込みでなく写像表で裏取り)。写像規則は references から読む
-python3 "$CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py" --hunks <hunks.json> \
-  --map "$CLAUDE_PLUGIN_ROOT/references/field-impact-map/field-impact-map.json"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/map-field-impact.py" --hunks <hunks.json> \
+  --map "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/field-impact-map/field-impact-map.json"
 
 # pre/post-image hash (macOS: shasum、Linux: sha256sum。どちらも先頭 64hex を採る)
 shasum -a 256 <target_file> | cut -d' ' -f1
@@ -142,7 +178,7 @@ allowlist glob 照合・pre/post hash 突合・schema 検証は `references/appl
 - **proposal_sha256 の安定性**: digest は container の `issue` と全 `proposals[]` の不変核 (target_path/axis/before/after/proposed_diff/pre_image_sha256) 上で計算し (target_path 昇順連結)、apply 時に付く post/validator/approval で値が動かない。C04 の proposal_sha256 と一致必須。
 - **hash drift は fail-closed**: 提案時と適用時でファイルが変わっていたら (pre-image 不一致) 適用しない。再 propose を促す。
 - **status は 2 値のみ**: `proposed` / `applied_verified`。proposal-only (proposed のまま) では C10/C07 が close を拒否する。
-- **配置非依存**: script は `$CLAUDE_PLUGIN_ROOT/scripts/`、artifact は `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/` 起点。repo-root 直書き禁止。
+- **配置非依存**: script は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/`、artifact は `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/` 起点。repo-root 直書き禁止。
 - **agent は消費のみ**: C03/C04 の verdict artifact を Read するだけで、本 skill から監査を自作しない (proposer≠approver)。
 
 ## 配置先

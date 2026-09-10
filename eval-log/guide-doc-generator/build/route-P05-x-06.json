@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-06",
+  "covered_task_ids": [
+    "P05-x-06"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/config/handout-parts.json",
+  "verified_by": [
+    {
+      "claim": "parts[] の id 列が sorted(ids) と完全一致する",
+      "method": "当方が json.load して ids == sorted(ids) を評価",
+      "result": "pass (True。実測列は B01..B17, DIAGRAM, IMG, TEXT の 20 件。並べ替え前は IMG が DIAGRAM より前にあった)"
+    },
+    {
+      "claim": "対象テストが緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/render-handout.py を当方が独立実行し、失敗一覧を全件列挙",
+      "result": "pass (test_parts_catalog.CatalogCoverageTest.test_catalog_is_sorted_and_well_formed は失敗一覧に現れない。並べ替え前は同テストが FAIL であった)"
+    },
+    {
+      "claim": "並べ替え以外の内容変更を行っていない",
+      "method": "当方がトップレベルキー順と parts 件数を確認",
+      "result": "pass (トップレベルキーは _meta, version, field_semantics, parts, non_part_structure_markers の順で不変。parts 件数 20 も不変。**plugins/guide-doc-generator/ 全体が git untracked のため git diff による byte 差分検証は原理的に不可能**であり、この点は P05-x-01 が記録した evidence-baseline-absent と同じ構造的制約に当たる)"
+    },
+    {
+      "claim": "姉妹スイートへ回帰を出していない",
+      "method": "worker が validate-handout-config.py と verify-handout-narrative.py を実行。当方は render-handout.py の失敗一覧が既知の 7 件に一致することを確認",
+      "result": "pass (validate-handout-config は前後とも Ran 278 / F2 / E2、verify-handout-narrative は前後とも Ran 217 / F1 で完全同一)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-measurement-confounded-by-parallelism",
+      "detail": "当方が交絡を解いて確定させた。worker は render-handout.py スイートを『前 Ran 174 / F6 → 後 Ran 195 / F7』と報告し、Ran 数と failures の増加を『実行中に別エージェント (P04-x-09) が test_parts_catalog_coverage.py を新規追加したため』と推定した。**この推定は正しい**。当方が両 leaf の完了後に全失敗を列挙したところ、増分 2 件は FlowRenderingTest の 2 件で P04-x-09 の追加分と一致し、消えた 1 件が test_catalog_is_sorted_and_well_formed であることを確認した。すなわち本 leaf は赤を 1 件減らしており、増分は他 leaf 由来である。**並行 build 下ではスイート単位の集計値が他 leaf の書込で交絡するため、before/after の数値比較でなく失敗テスト名の集合差で判定すべき**という教訓を記録する"
+    },
+    {
+      "kind": "worker-restraint-on-filing",
+      "detail": "worker は FlowRenderingTest の赤 2 件を『修正対象は C11 の flow 描画側と推定され write_scope 外、担当エージェントの所管と考えられるため二重起票のおそれがあり自らの起票は控えた』とした。この自制は正しい。**discovered-task の起票は dispatcher が単一 writer として行う**のが本 build の規律であり、当方が route-P04-x-09.json 側で同一欠陥を defect-discovered-in-implementation として記録し起票する"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が実測で所在を特定した。test_parts_catalog.SingleVocabularyTest.test_part_ids_are_not_enumerated_outside_the_catalog (Y-05 カタログ単一語彙) の赤は、scripts/validate-handout-config.py:86-91 / scripts/verify-handout-a11y-print.py:56-58 / scripts/verify-handout-narrative.py:50,976,1003 / agents/handout-content-architect.md:113 に part id リテラルが列挙されていることが原因。**これは既知の P05-x-07 (部品 id の SSOT 一掃) の担当範囲**であり、worker の実測はその write_scope が plugins/guide-doc-generator/ 全体へ広がる根拠を裏付けている (scripts/ と agents/ の双方に跨る)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

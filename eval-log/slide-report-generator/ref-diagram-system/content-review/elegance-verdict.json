@@ -1,0 +1,49 @@
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "ref-diagram-system",
+    "skill_md_sha256": "0a2364cf89a0bfc58f8f7e66ad16efa42337098c3e3e84eb5d2b9b9278b922be"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "elegant-logical-structural-analyst (independent context) + 主 context での独立再検証",
+  "reviewed_at": "2026-08-17T00:00:00Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": [
+      "矛盾なし",
+      "漏れなし",
+      "整合性あり",
+      "依存関係整合"
+    ],
+    "positive_feedback": [
+      "本文が指す参照先の dangling は 0 件。skill 私有 references/ 5 件、plugin root references/ 7 件、vendor/scripts 5 件、schemas/assets/scripts/tests 4 件をすべて実在確認した。",
+      "本文が主張するコード上の契約 (svg-kit.cjs の STROKE/TOKENS/SERIES/LAYOUTS/INCIDENCE_RULE/safeElbow/resolvePalette、svg-builder.cjs の CANVAS/CAPACITY/CAPACITY_ARGS/guard、svg-structures.cjs の NESTED_CAPACITY、render-report.js の fitsCapacity/conciseLabel/labelsOf/deriveVisualFromBody、render-slide.cjs の loadTemplate、validate-svg-diagram.py の SEVERITY/_sev) は全件が実装側に存在し、記述と一致していた。",
+      "L114 の『R01-R14』は schemas/visual-derivation-table.json の id 実測 14 件と一致。"
+    ],
+    "negative_feedback": [
+      "[contradiction/解消済] 旧 L27 の『以下のパスは全てそこ起点で読む』を字義通り適用すると、本スキル私有の references/ 5 ファイルが全て dangling になっていた (plugin root の references/ 56 ファイルに 1 件も存在しない)。索引 skill の中核機能が壊れる矛盾。裸の references/ は skill 私有、注記付きと vendor//schemas//scripts//assets//tests/ は plugin root、と解決規則を実体へ合わせて訂正した。",
+      "[contradiction/解消済] references/resource-map.yaml の『実在ビルダー全 37 種』が実測と不一致。lint-count-parity.py の MEASURERS['svgBuilder'] を直接呼んで 38 を実測 (svg-builder.cjs 27 + svg-structures.cjs 10 + render-report.js の buildNeutralComparison 1)。38 へ訂正し <!-- count: svgBuilder --> を付与した。",
+      "[contradiction/解消済] 補完した source が本文 §3 の宣言する正本群 (vendor/scripts/*.cjs, schemas/, scripts/) をどれも被覆していなかった。validate-frontmatter.py は source-tier=internal に実在検査を行わないため lint では検出されない種類のズレ。vendor/scripts/ へ寄せた。",
+      "[dependency_break/解消済] completeness_exempt が宣言していた 'manifest' は lint-skill-completeness.py の REQUIRED_BY_KIND で run 専用であり、kind=ref では一度も評価されない死んだ免除だった。一方 kind=ref の必須カテゴリ 'prompts' は responsibility_refs=[] かつ prompts/ 不在で未充足のまま lint 違反を出していた (単体実行で再現確認済み)。免除対象を 'prompts' へ差し替え、索引 skill が責務プロンプトを持たない理由を記述した。",
+      "[smell/解消済] skill 私有の references/*.yaml は lint-count-parity.py の _SCAN_GLOBS (.md / .json のみ) の死角で、数字のドリフトを止める機構が構造的に存在しなかった。_SCAN_GLOBS に references/**/*.yaml と skills/**/*.yaml を追加し、実際に 38 が追随対象になったことを exit 0 で確認した。",
+      "[omission/未解消] §2 の routing 表は D0-D13 しか受けておらず、実在する D0-D23 (validate-svg-diagram.py の ALL_CODES) のうち D14-D23 に受け皿がない。Gotchas 節に D19-D21 と D16 の注意を明記して緩和したが、表そのものの拡張は未実施。",
+      "[inconsistency/未解消] sibling の run-slide-report-generate は『plugin-root はフル展開・skill 私有は明示ラベル』の規約で、本スキルの『裸は skill 私有・plugin root は注記』は逆向き。訂正で矛盾は消えたが plugin 内の表記規約統一には至っていない。",
+      "[smell/未解消] L109 の『参考型 27』だけが <!-- count: --> 注記のない裸の数詞。lint-count-parity.py の MEASURERS に対応 key がなく警告も出ない。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "stop-hook",
+    "next_action": "none"
+  },
+  "notes": "検証4条件で 9 件を検出し、うち 6 件 (contradiction 3 / dependency_break 2 / smell 1) を是正した。是正はすべて実測またはコード追跡で裏取りしてから行い、修正後に lint-count-parity.py (exit 0 / findings 0)・lint-skill-completeness.py (ref-diagram-system 違反なし)・validate-frontmatter.py (違反なし) で再確認済み。未解消 3 件は本スキル単体では閉じない範囲 (routing 表の D14-D23 拡張・plugin 内パス表記規約の統一・参考型 27 の measurer 新設) で、いずれも severity は low〜medium、fail-closed 機構を壊すものではないため PASS とした。verdict は実測結果に基づく PASS であり、未解消分を隠した緑化ではない。"
+}

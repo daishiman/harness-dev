@@ -28,9 +28,10 @@
  *   100人中100人が同じ構成を読める程度の具体記述に寄せる。
  *
  * v8.2.4 で追加(elegant-review 第2弾):
- * - D10 支配色(accent)射影: per-slide accent を HEX 解決し「Dominant accent for this slide」行を
- *   本文へ機械展開する。従来 accent は schema 必須・meta 記録のみで本文に出ず、60-30-10 の主役色が
- *   未指定だった(全色羅列のみ)。meta.dominantAccentHex も併記し、validator が支配色の prompt 反映を
+ * - D10 accent 射影: per-slide accent を HEX 解決し「Accent on this slide」行を
+ *   本文へ機械展開する。従来 accent は schema 必須・meta 記録のみで本文に出ず、面の中で
+ *   何が主役かが未指定だった(全色羅列のみ)。accent は色相ではなく地とインクの反転 1 個で、
+ *   面積は 8-15%。meta.dominantAccentHex も併記し、validator が accent の prompt 反映を
  *   偶発一致でなく意味照合できるようにする。あわせて量化曖昧語(various/several/appropriate 等)を
  *   VAGUE_PROMPT_WORDS に限定追加する(clean/simple は genome 画風語と衝突するため足さない)。
  * - D11 構造系スライドの負制約必須化: camera=structural(順序/向き/個数が効く図)は negativeSpecific を
@@ -473,7 +474,7 @@ function validateSlide(slide, motifNames, layoutNames, paletteKeys) {
     errs.push(`${where}: invalid camera "${slide.camera}" (expected default | structural)`);
   }
   // D13: accent のタイポ検出(警告)。"multi" / palette キー / HEX のいずれでもない文字列は
-  // 支配色 HEX が解決されず(resolveDominantAccent が hex=null)、validator の D10 意味照合が静かに
+  // 反転面のインク HEX が解決されず(resolveDominantAccent が hex=null)、validator の D10 意味照合が静かに
   // スキップされる抜け道になる。意図的な multi と事故的な未知文字列を分離するため可視化する(致命的ではない)。
   if (typeof slide.accent === 'string') {
     const acc = slide.accent.trim();
@@ -630,42 +631,49 @@ function metaCameraLabel(slide) {
 }
 
 /**
- * D10: per-slide accent(支配色)を解決し、プロンプト本文へ射影する1行と meta 記録用 HEX を返す。
- * accent は schema 必須だが従来 buildPrompt 本文に出ず、60-30-10 の主役色が未指定だった。
+ * D10: per-slide accent を解決し、プロンプト本文へ射影する1行と meta 記録用 HEX を返す。
+ * accent は schema 必須だが従来 buildPrompt 本文に出ず、面の中で何が主役かが未指定だった。
+ *
+ * accent は**色相ではなく反転**である。地とインクを入れ替えた面を 1 枚だけ置き、
+ * その面が画面の 8-15% を占める。色を 1 つ足して主役を示すのではないので、
+ * 「ゾーンごとに 1 色」という配分は accent の定義と両立しない。
+ * したがって "multi" も他と同じく「反転は 1 個」へ落とす。
+ *
+ * hex は「その反転面でインクとして使う色」を指す。meta.dominantAccentHex として
+ * 記録し validator が意味照合に使うため、HEX が行に残ることは変わらない。
+ *
  * 解決規則(優先順):
- *   (1) "multi"            -> 1ゾーン1アクセント + 1色が60%を担う指示(単一HEXは無いので hex=null)
+ *   (1) "multi"            -> 反転 1 個の指示のみ(単一HEXは無いので hex=null)
  *   (2) palette キー名     -> genome.palette[accent].{name,hex}
  *   (3) #RRGGBB / RRGGBB  -> その HEX をそのまま
  *   (4) 未知の文字列       -> 文字列そのまま(HEX アンカー無し)
- * 戻り値: { hex, line }。hex は meta.dominantAccentHex として記録し validator が意味照合に使う。
+ * 戻り値: { hex, line }。
  * buildPrompt / buildMeta から同一入力で呼ぶため純粋関数にする。
  */
 function resolveDominantAccent(slide, genome) {
   const accent = typeof slide.accent === 'string' ? slide.accent.trim() : '';
   if (!accent) return { hex: null, line: null };
+  const INVERT = 'Accent on this slide is exactly one inverted block: a single region where surface and ink are swapped, covering 8 to 15 percent of the canvas. Accent is not a hue - do not introduce an extra color anywhere to mark it, and do not invert a second region.';
   if (accent === 'multi') {
-    return {
-      hex: null,
-      line: 'Dominant accent for this slide: multi-accent - assign one accent color per zone, but one single color must still carry the 60% so the page is not evenly multicolored.',
-    };
+    return { hex: null, line: INVERT };
   }
   const pal = genome.palette && genome.palette[accent];
   if (pal && typeof pal === 'object' && typeof pal.hex === 'string') {
     return {
       hex: pal.hex,
-      line: `Dominant accent for this slide (the 10-percent lead color in the 60-30-10 split): ${pal.name || accent} ${pal.hex}; every other palette color stays subordinate.`,
+      line: `${INVERT} Draw that inverted face with ${pal.name || accent} ${pal.hex} as its ink.`,
     };
   }
   if (/^#?[0-9a-fA-F]{6}$/.test(accent)) {
     const hex = accent.startsWith('#') ? accent : `#${accent}`;
     return {
       hex,
-      line: `Dominant accent for this slide (the 10-percent lead color in the 60-30-10 split): ${hex}; every other palette color stays subordinate.`,
+      line: `${INVERT} Draw that inverted face with ${hex} as its ink.`,
     };
   }
   return {
     hex: null,
-    line: `Dominant accent for this slide (the 10-percent lead color in the 60-30-10 split): ${accent}; every other palette color stays subordinate.`,
+    line: `${INVERT} Draw that inverted face with ${accent} as its ink.`,
   };
 }
 
@@ -682,12 +690,29 @@ function buildBakedTableLines(slide, genome, dominantAccent) {
   const cols = tc.headers.length;
   const rowCount = tc.rows.length;
   const q = (s) => `"${String(s)}"`;
-  const surfaceHex = (genome.palette && genome.palette.surface && genome.palette.surface.hex) || '#E8E8EC';
-  const inkHex = (genome.palette && genome.palette.ink && genome.palette.ink.hex) || '#0B2A55';
-  const headerFill = dominantAccent && dominantAccent.hex ? dominantAccent.hex : 'the slide dominant accent';
+  // 配色の正本は genome の palette だけ。キーが無いときに既定値へ落とすと、
+  // 配色を入れ替えた後もプロンプトだけ旧色で組まれ、生成画像を見るまで誰も気付けない。
+  // 既定値を持たず、読めなければここで落とす。
+  const paletteHex = (key) => {
+    const entry = genome.palette && genome.palette[key];
+    const hex = entry && entry.hex;
+    if (typeof hex !== 'string' || !/^#[0-9A-Fa-f]{3,8}$/.test(hex)) {
+      throw new Error(`genome.palette.${key}.hex が無い、または hex でない (配色の正本が動いた): ${JSON.stringify(hex)}`);
+    }
+    return hex;
+  };
+  const surfaceHex = paletteHex('surface');
+  const inkHex = paletteHex('ink');
+  // ここだけ既定値を残すのは意図的。surfaceHex/inkHex は genome の palette を引く
+  // 「あるはずの値」で、無ければ正本が動いた証拠なので落とす。headerFill は
+  // resolveDominantAccent の戻りで、accent="multi" のときは単一 HEX が存在しないのが
+  // 正しい状態 (D10 の意味照合もその場合はスキップされる)。ここで落とすと multi を
+  // 使う面が生成できなくなる。値が化けるのではなく指示が語で曖昧になるだけなので、
+  // 文字列のまま渡す。
+  const headerFill = dominantAccent && dominantAccent.hex ? dominantAccent.hex : 'the ink of the inverted block';
   const lines = [];
   lines.push(
-    `In-image baked table (illustrated-full-table): draw a real, readable table INSIDE the image as a rounded isometric card; do NOT leave an empty frame and do NOT rely on an HTML overlay for the cells. The table has exactly ${cols} column(s) and ${rowCount} body row(s) plus 1 header row.`
+    `In-image baked table (illustrated-full-table): draw a real, readable table INSIDE the image as a square-cornered isometric card; do NOT leave an empty frame and do NOT rely on an HTML overlay for the cells. The table has exactly ${cols} column(s) and ${rowCount} body row(s) plus 1 header row.`
   );
   lines.push(
     `Header row, left to right, drawn verbatim in double quotes exactly as written (do not translate, do not add or drop characters): ${tc.headers.map(q).join(' | ')}.`
@@ -698,11 +723,11 @@ function buildBakedTableLines(slide, genome, dominantAccent) {
   });
   if (Array.isArray(tc.monospaceColumns) && tc.monospaceColumns.length > 0) {
     lines.push(
-      `Render column(s) ${tc.monospaceColumns.join(', ')} (0-indexed) in a monospace style for commands/identifiers; keep the other columns in the normal navy label face.`
+      `Render column(s) ${tc.monospaceColumns.join(', ')} (0-indexed) in a monospace style for commands/identifiers; keep the other columns in the normal ink label face.`
     );
   }
   lines.push(
-    `Table styling (match the deck world so it does not look like a flat HTML widget): cell and panel surface ${surfaceHex}; uniform deep-navy ${inkHex} outlines and ruled grid lines; rounded corners 8-18px; soft single shadow from the upper-left; the header row fill uses ${headerFill}; place two or three faint props (clipboard, document, small monitor) behind the card so it reads as part of the isometric diorama.`
+    `Table styling (match the deck world so it does not look like a flat HTML widget): cell and panel surface ${surfaceHex}; uniform ${inkHex} hairline outlines and ruled grid lines; square corners (0px radius); no shadow and no glow; the header row fill uses ${headerFill}; place two or three faint props (clipboard, document, small monitor) behind the card so it reads as part of the isometric diorama.`
   );
   lines.push(
     `Table legibility: every cell text must be large, crisp and fully readable; never render tiny, cramped, cut-off, or garbled cells; left-align text within each cell and keep all columns and rows on a strict even grid. Keep all ${cols} column(s) and ${rowCount} body row(s) present; never add, merge, split, drop, or reorder columns or rows; never invent extra cells or placeholder text.`
@@ -778,7 +803,7 @@ function buildPrompt(slide, genome, safe) {
   lines.push('STYLE LOCK (keep identical on every page):');
   lines.push(`- Art style: ${a.family}, ${a.rendering}. ${a.line}; ${a.corners}. ${a.shadow}. ${a.background}.`);
   lines.push(`- Camera: ${a.camera.default}; structural slides (order/direction/count matter) use ${a.camera.structural}.`);
-  lines.push(`- Palette (${genome.styleName}): ${paletteStr}. 60-30-10 rule, one dominant accent per image.`);
+  lines.push(`- Palette (${genome.styleName}): ${paletteStr}. Exactly one inverted block per image (surface and ink swapped on a single region, 8 to 15 percent of the canvas). Emphasis is made by inversion, never by adding a color.`);
   lines.push(
     `- Composition: ${c.aspect} (${c.targetResolution}). Keep safe margins ${c.safeArea} clear for overlay text. ${c.density}. ${c.titlePlacement}.`
   );
@@ -798,11 +823,11 @@ function buildPrompt(slide, genome, safe) {
       lines.push('Reference images (image-to-image style anchor, actual image files attached at generation time): ' + refs.join(', '));
       const mode = sr.inheritMode || 'style-only';
       if (mode === 'style-and-layout') {
-        lines.push('Inherit from references: palette, navy outline style, isometric geometry, motif rendering, and the overall zone layout of ref-1. Change only the subject described below; keep framing; no extra elements; do not copy the reference subject.');
+        lines.push('Inherit from references: palette, hairline outline style, isometric geometry, motif rendering, and the overall zone layout of ref-1. Change only the subject described below; keep framing; no extra elements; do not copy the reference subject.');
       } else if (mode === 'full') {
         lines.push('Closely match ref-1 overall; vary only the explicitly described differences; do not introduce new logos, text, or props.');
       } else {
-        lines.push('Inherit from references: palette, navy outline style, isometric geometry, motif rendering only. Change only the subject described below; keep framing; no extra elements; do not copy the reference subject.');
+        lines.push('Inherit from references: palette, hairline outline style, isometric geometry, motif rendering only. Change only the subject described below; keep framing; no extra elements; do not copy the reference subject.');
       }
       if (Array.isArray(sr.preserve) && sr.preserve.length > 0) lines.push('Preserve from reference exactly: ' + sr.preserve.join('; ') + '.');
       if (Array.isArray(sr.change) && sr.change.length > 0) lines.push('Change vs reference: ' + sr.change.join('; ') + '.');
@@ -856,7 +881,7 @@ function buildPrompt(slide, genome, safe) {
       lines.push(`Layout: ${parts.join('; ')}.`);
     }
   }
-  // D10: per-slide 支配色(accent)を本文へ射影する。Layout 直後に 60-30-10 の主役色を1行明示する。
+  // D10: per-slide accent を本文へ射影する。Layout 直後に「反転はどこか」を1行明示する。
   const dominantAccent = resolveDominantAccent(slide, genome);
   if (dominantAccent.line) lines.push(dominantAccent.line);
   // D12: illustrated-full-table のとき、見出し+全行を verbatim に焼き込む決定論テーブルブロックを展開する。
@@ -969,7 +994,7 @@ function buildMeta(slide, genome, sourceName, safe) {
     quality: (slide.generation && slide.generation.quality) || 'high',
     size: (slide.generation && slide.generation.size) || '2560x1440',
   };
-  // D10: 支配色 HEX を meta に記録し、validator が「Dominant accent」行の prompt 反映を意味照合できるようにする。
+  // D10: 反転面のインク HEX を meta に記録し、validator が「Accent on this slide」行の prompt 反映を意味照合できるようにする。
   // accent=multi や未知文字列は単一 HEX が無いため記録しない(その場合 validator は意味照合をスキップする)。
   const dominantAccent = resolveDominantAccent(slide, genome);
   if (dominantAccent.hex) meta.dominantAccentHex = dominantAccent.hex;

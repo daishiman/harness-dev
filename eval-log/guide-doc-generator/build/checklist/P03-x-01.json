@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "P03-x-01",
+  "kind": "checklist-verification",
+  "status": "success",
+  "covered_task_ids": ["P03-x-01"],
+  "verified_by": [
+    {"claim": "write_scope の成果物 evidence/P03.json が独立文脈で生成され、D1-D4 の 4 チェックと調査範囲 (how) を伴う", "exit_code": 0},
+    {"claim": "D3 の循環検査が目視でなく機械計算 (Kahn 法 + DFS back-edge)。nodes 23 / order 23 / cycle nodes 0 で真の循環は 0 件", "exit_code": 0},
+    {"claim": "D1 決定論経路への LLM 介在 0 件 (script 13 本 + hook 1 本を語彙 grep 3 系統で全文検索)", "exit_code": 0},
+    {"claim": "D4 不採用 surface の理由 100% (specfm.PLUGIN_LEVEL_SURFACES の 8 surface と集合比較・欠落 0 / 未知 0)", "exit_code": 0}
+  ],
+  "evidence": [
+    "plugin-plans/guide-doc-generator/evidence/P03.json",
+    "plugin-plans/guide-doc-generator/task-specs/P03-x-01.md"
+  ],
+  "deviations": [
+    "leaf の成果物 (独立判定) は完成しているが、判定結果自体は verdict=fail。D2 責務重複 6 件・D3 宣言と実態の辺の乖離 2 件を検出し、findings は blocking 3 / high 2 / medium 3 / info 1 の計 9 件 (Y-01..Y-09)。",
+    "acceptance_criterion は『設計が満たすべき状態』を述べており『レビューが完了した状態』ではない。したがって criterion 未達だが、それは leaf の遂行失敗ではなく判定対象の設計側の欠陥である。P02-x-01 と同じ扱いとし、leaf は done、指摘の解消は新設 leaf P03-x-03 へ carry-forward する (blocked は内ループで事実上不可逆のため、判定対象の欠陥を leaf の blocked に写像しない)。",
+    "P03 phase gate は P03-x-03 の完了まで pending のままとし、findings 未解消のまま P04 wave を発火させない。"
+  ],
+  "summary": "独立設計レビューを完遂。D1/D4 pass、D2/D3 fail で Y-01..Y-09 を検出。真の DAG 循環は 0 件で、D3 の fail は宣言 (inventory) と実態 (brief) の辺の乖離"
+}

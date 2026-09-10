@@ -105,13 +105,13 @@ last-audited: 2026-07-05
 ## エスカレーション
 - P1（要判断）の修正提案が存在する場合は、下流での適用前に必ずユーザー確認を仰ぐ前提で提示する（CONST_003）。
 - 4条件のいずれかがFAILかつP0（機械的差分）の修正提案でも解消方針が定まらない場合は、修正方針をユーザーに提示し判断を仰ぐ。
-- 必須入力（structure.md / index.html / styles.css / scripts.js）が 1 件でも欠落する場合は、`inputs` error として fail-closed で停止し、不足デッキとファイルを明示してユーザーに生成完了を求める。
+- 必須入力が 1 件でも欠落する場合は、`inputs` error として fail-closed で停止し、不足デッキと不足内容を明示してユーザーに生成完了を求める。必須入力はファイルとしての structure.md / index.html と、**index.html が実際に読み込む CSS/JS が解決できること**。`styles.css` / `scripts.js` というファイル名の存在は要件ではない（CSS/JS を index.html へインライン化した自己完結デッキはそれらを持たないが正しい）。
 
 ## エラーハンドリング
 | 想定エラー | 対応アクション | 最大リトライ |
 |-----------|---------------|-------------|
 | `cross-deck-consistency.js` 実行失敗 | エラー出力を確認し series-dir / 引数を修正して再実行。解消しなければ機械検出分をWARN扱いで明記し続行 | 1 |
-| `inputs` error（必須4ファイルの欠落） | fail-closed で停止し、不足デッキとファイルを明示。デッキを除外して続行しない | 0 |
+| `inputs` error（structure.md / index.html の欠落、または CSS/JS の解決不能） | fail-closed で停止し、不足デッキと不足内容を明示。デッキを除外して続行しない | 0 |
 | Agent A/B/C いずれかのレンズ分析が不完全 | 当該観点を縮退（degradation）で記録し、残るレンズ結果で4条件判定を続行 | 1 |
 | 対象デッキが1つのみ | P5全体をスキップし「横断検証不要（単一デッキ）」を返す | 0 |
 
@@ -148,9 +148,9 @@ last-audited: 2026-07-05
 ## 5.5 知識ベース (適用リソース)
 | 参考文献 | 適用方法（本エージェントの分析・判断での使い方） |
 |---------|------------------------------------------------|
-| `../references/spec-registry.md`（SR-ID 共通仕様） | C1（shared-spec一致）の正本。各 structure.md の共通仕様セクションが SR-ID 定義に一致するかの照合基準に使う |
-| `../references/post-generation-evaluation.md`（4条件・30種思考法） | 4条件判定（矛盾/漏れ/整合性/依存）とAgent A/B/Cの思考法配分の根拠に使う |
-| `../references/spec-registry.md` §5 / `theme-style.md` | C11（CSS変数統一）・C13（印刷品質）・C14（a11y）の比較基準に使う |
+| `../../../references/spec-registry.md`（SR-ID 共通仕様） | C1（shared-spec一致）の正本。各 structure.md の共通仕様セクションが SR-ID 定義に一致するかの照合基準に使う |
+| `../../../references/post-generation-evaluation.md`（4条件・30種思考法） | 4条件判定（矛盾/漏れ/整合性/依存）とAgent A/B/Cの思考法配分の根拠に使う |
+| `../../../references/spec-registry.md` §5 / `theme-style.md` | C11（CSS変数統一）・C13（印刷品質）・C14（a11y）の比較基準に使う |
 | 30種思考法（演繹・帰納・MECE・因果・メタ認知・アナロジー・システム思考・制約理論 等） | Agent A/B/Cの各分析手法として割当て、観点漏れを防ぐ検証フレームに使う |
 
 ## 5.6 評価軸: 検証項目（C1〜C15）
@@ -176,8 +176,8 @@ last-audited: 2026-07-05
 |---------|--------|-----------|---------------|-----------|
 | structure.md × N | structure-designer（各デッキ） | 全デッキに共通仕様セクションが存在 | 2デッキ以上の対象で1件でも欠損 | `inputs` error で停止し、欠落回を明示（デッキ2未満はP5スキップ） |
 | index.html × N | html-generator / slide-renderer | 各デッキに存在 | 1件でも未生成 | `inputs` error で停止し、欠落回を明示 |
-| styles.css × N | html-generator / slide-renderer | 各デッキに存在 | 1件でも欠損 | `inputs` error で停止し、欠落回を明示 |
-| scripts.js × N | html-generator / slide-renderer | 各デッキに存在 | 1件でも欠損 | `inputs` error で停止し、欠落回を明示 |
+| 各デッキで実際に適用される CSS × N | html-generator / slide-renderer | index.html の inline `<style>` と `<link>` 先を合わせた実体が解決でき非空 | 参照先が解決できない、または inline も link も実体が無い | `inputs` error で停止し、欠落回と未解決 href を明示 |
+| 各デッキで実際に実行される JS × N | html-generator / slide-renderer | index.html の inline `<script>` と `<script src>` 先を合わせた実体が解決でき非空 | 同上 | `inputs` error で停止し、欠落回と未解決 src を明示 |
 | ソースmd × N（任意） | 各回の講義内容ソース | テキスト読取可能 | なし（任意入力） | 無ければC6-C8の追跡精度を下げて続行 |
 
 ### 出力
@@ -198,7 +198,7 @@ last-audited: 2026-07-05
 ## 5.12 ツール利用
 | ツール | 使用目的 | 使用場面 |
 |--------|---------|---------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/cross-deck-consistency.js" <series-dir> --check all`（Bash・Layer 3 定義） | 必須入力欠落・shared-spec差分・外部URL混入・CSS変数・GSAP・印刷CSS・rem残存の機械検出 | 機械チェック（C1-C2・C11-C13・C15） |
 | Read / Grep（Layer 3 定義） | structure.md・ソースmd・styles.css・scripts.js の横断読取と用語横断検索。単一 fork context 内で Agent A/B/C の3レンズ多角分析を実行する主手段（再 fork しない） | 3レンズ分析（C3-C15の目視検証） |
 
 ---
@@ -248,7 +248,7 @@ series-dir: 05_Project/スライド/AI研修シリーズ2026/
 ## ユーザー確認ポイント
 - P1（要判断）の修正提案: 比喩追加・スライド追加などコンテンツ編集を伴う変更は、適用前に必ずユーザー確認を仰ぐ（CONST_003）。自動適用しない。
 - 4条件FAILかつP0で解消不能: 修正方針をユーザーに提示し判断を仰ぐ。
-- 必須入力（structure.md / index.html / styles.css / scripts.js）の不足: fail-closed で停止し、不足デッキとファイルを明示してユーザーに生成完了を求める。
+- 必須入力（structure.md / index.html と、index.html が実際に読み込む CSS/JS の解決）の不足: fail-closed で停止し、不足デッキと不足内容を明示してユーザーに生成完了を求める。
 
 ## 確認時の提示テンプレート例
 ```markdown

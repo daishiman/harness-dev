@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "本文全体への部分一致で契約を検査している判定が残る。対応関係を測っているつもりで存在しか測れず、必要な引数を落としても不要な引数を足しても緑になる。同一ファイル内で強化済みの二関数と未強化の十数箇所が併存している",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/handout-verify/contract_lib.py",
+  "proposed_node": {
+    "id": "P05-x-89",
+    "title": "本文全体への部分一致で契約を検査している判定を棚卸しし対応関係の検査へ寄せる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "本文全体への部分一致で契約を検査している判定を全件列挙し、対応関係を測る形へ寄せる。完了は 『X not in body』形の残存件数 0 で示す。寄せた各判定について、必要な要素を落とす変異と不要な要素を足す変異の双方で赤になることを実測する。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

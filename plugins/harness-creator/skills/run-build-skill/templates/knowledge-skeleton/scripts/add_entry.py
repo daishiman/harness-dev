@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: add_entry
-# purpose: knowledge/ に新規エントリを安全に追加する決定論スクリプト (Loop A の「日々の追加」入口)。必須6フィールド検証・ID重複検査・カテゴリ/index 自動登録までを担い、本文の良し悪しは判定しない (二層分離)
+# purpose: verified/promoted 知見を curated knowledge seed へ安全に取り込む決定論スクリプト。必須6フィールド検証・ID重複検査・カテゴリ/index 自動登録までを担い、runtime 観測は扱わない
 # inputs:
 #   - argv: --category / --id / --title / --intent / --background / --keywords / --source / --json / --file / --index / --dir / --consult-at / --self-test
 # outputs:

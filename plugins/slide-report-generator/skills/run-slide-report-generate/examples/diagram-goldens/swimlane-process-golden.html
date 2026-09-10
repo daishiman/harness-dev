@@ -21,70 +21,70 @@
 
     <defs>
       <marker id="f-swimlane-process-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-dim, #54546d)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/>
       </marker>
       <marker id="f-swimlane-process-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #D27E99)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/>
       </marker>
       <marker id="f-swimlane-process-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #7E9CD8)"/>
+        <polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/>
       </marker>
     </defs>
 
     <!-- ===== EDIT: 図解本体 ここから ===== -->
 
     <!-- 工程見出し (レーンの外・上端。工程は列であって箱ではない) -->
-    <text x="296" y="112" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">申請 (起点)</text>
-    <text x="472" y="112" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">確認</text>
-    <text x="648" y="112" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">判定</text>
-    <text x="824" y="112" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">支払 (終点)</text>
+    <text x="296" y="112" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">申請 (起点)</text>
+    <text x="472" y="112" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">確認</text>
+    <text x="648" y="112" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">判定</text>
+    <text x="824" y="112" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">支払 (終点)</text>
 
     <!-- レーン帯 (地の面。交互に 2 段だけ。3 段目の面を作らない) -->
-    <rect x="208" y="136" width="704" height="112" rx="6"
-          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-    <text x="48" y="196" font-size="16" fill="var(--fg, #43436c)">申請者</text>
-    <rect x="208" y="264" width="704" height="112" rx="6"
-          fill="#F8F7F0" stroke="#DCD7BA" stroke-width="1.25"/>
-    <text x="48" y="324" font-size="16" fill="var(--fg, #43436c)">上長</text>
-    <rect x="208" y="392" width="704" height="112" rx="6"
-          fill="#FFFFFF" stroke="#DCD7BA" stroke-width="1.25"/>
-    <text x="48" y="452" font-size="16" fill="var(--fg, #43436c)">経理</text>
+    <rect x="208" y="136" width="704" height="112"
+          fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+    <text x="48" y="196" font-size="16" fill="var(--fg, #141412)">申請者</text>
+    <rect x="208" y="264" width="704" height="112"
+          fill="#E1E6EA" stroke="#D5D4D1" stroke-width="1.25"/>
+    <text x="48" y="324" font-size="16" fill="var(--fg, #141412)">上長</text>
+    <rect x="208" y="392" width="704" height="112"
+          fill="#F7F6F3" stroke="#D5D4D1" stroke-width="1.25"/>
+    <text x="48" y="452" font-size="16" fill="var(--fg, #141412)">経理</text>
 
     <!-- 受け渡し (レーンを跨ぐ線は直交エルボー。斜めに引かない) -->
     <path d="M 368 192 H 384 V 320 H 396" fill="none"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
     <line x1="544" y1="320" x2="572" y2="320"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
     <path d="M 720 320 H 736 V 448 H 748" fill="none"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
-    <text x="744" y="312" font-size="14" fill="var(--fg, #43436c)">はい</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
+    <text x="744" y="312" font-size="14" fill="var(--fg, #141412)">はい</text>
 
     <!-- 差し戻し (レーン帯の外を回して戻す。帯の中を逆走させない) -->
     <path d="M 648 344 V 528 H 296 V 228" fill="none"
-          stroke="var(--fg-dim, #54546d)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
-    <text x="472" y="516" text-anchor="middle" font-size="14" fill="var(--fg, #43436c)">いいえ (不備あり)・2 回目で上長判断へ</text>
+          stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#f-swimlane-process-arrow)"/>
+    <text x="472" y="516" text-anchor="middle" font-size="14" fill="var(--fg, #141412)">いいえ (不備あり)・2 回目で上長判断へ</text>
 
     <!-- 工程 -->
-    <rect x="224" y="160" width="144" height="64" rx="6"
-          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <text x="296" y="198" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">経費を申請</text>
-    <text x="296" y="154" text-anchor="middle" font-size="12" fill="var(--fuji-gray, #8a8980)">上長へ: 申請書 + 領収書</text>
-    <rect x="400" y="288" width="144" height="64" rx="6"
-          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <text x="472" y="326" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">内容を確認</text>
-    <rect x="752" y="416" width="144" height="64" rx="6"
-          fill="#FFFFFF" stroke="var(--fg, #43436c)" stroke-width="1.5"/>
-    <text x="824" y="454" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">支払を実行</text>
+    <rect x="224" y="160" width="144" height="64"
+          fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <text x="296" y="198" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">経費を申請</text>
+    <text x="296" y="154" text-anchor="middle" font-size="12" fill="var(--fg-muted, #6A6A68)">上長へ: 申請書 + 領収書</text>
+    <rect x="400" y="288" width="144" height="64"
+          fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <text x="472" y="326" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">内容を確認</text>
+    <rect x="752" y="416" width="144" height="64"
+          fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.5"/>
+    <text x="824" y="454" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">支払を実行</text>
 
     <!-- ゲート (焦点。分岐はここ 1 箇所だけ) -->
-    <rect x="576" y="296" width="144" height="48" rx="4"
-          fill="rgba(210, 126, 153, 0.14)" stroke="var(--sakura-pink, #D27E99)" stroke-width="2"/>
-    <text x="648" y="326" text-anchor="middle" font-size="16" fill="var(--fg, #43436c)">5 万円以内か</text>
-    <text x="636" y="370" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">経理へ: 承認済み申請書</text>
+    <rect x="576" y="296" width="144" height="48"
+          fill="rgba(20, 20, 18, 0.14)" stroke="var(--sakura-pink, #141412)" stroke-width="2"/>
+    <text x="648" y="326" text-anchor="middle" font-size="16" fill="var(--fg, #141412)">5 万円以内か</text>
+    <text x="636" y="370" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">経理へ: 承認済み申請書</text>
 
     <!-- 記号の凡例 (帯の交互色を種別と読ませない) -->
-    <text x="48" y="528" font-size="12" fill="var(--fuji-gray, #8a8980)">帯の色は交互で意味は持たない</text>
-    <text x="912" y="528" text-anchor="end" font-size="12" fill="var(--fuji-gray, #8a8980)">2026/4 改定の経費精算規程・n=214</text>
+    <text x="48" y="528" font-size="12" fill="var(--fg-muted, #6A6A68)">帯の色は交互で意味は持たない</text>
+    <text x="912" y="528" text-anchor="end" font-size="12" fill="var(--fg-muted, #6A6A68)">2026/4 改定の経費精算規程・n=214</text>
 
     <!-- ===== EDIT: 図解本体 ここまで ===== -->
 

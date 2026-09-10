@@ -1,6 +1,6 @@
 # ubm-goal-setting — 北原さん式ゴールセッティング
 
-UBM（北原さん式ゴールセッティング）の**目標設定・振り返り対話**と**ナレッジ差分同期**を 1 つにした Claude Code プラグインです。ObsidianMemo vault で運用していた資産（skill / sub-agent / hook / script / knowledge JSON 一式）を移植したもので、**個人利用前提**（`distributable:false`・公開 marketplace 非掲載）です。
+UBM（北原さん式ゴールセッティング）の**目標設定・振り返り対話**と**ナレッジ差分同期**を 1 つにした Claude Code プラグインです。ObsidianMemo vault で運用していた資産（skill / sub-agent / hook / script / knowledge JSON 一式）を移植したものです。`distributable:true` で**公開カタログ（`.claude-plugin/marketplace.json`）に掲載済み**のため、GitHub 経由の marketplace add とローカル repo 起点の導入の**どちらでも取得できます**。
 
 このドキュメントは「初めて使う人がインストールし、`UBM_VAULT_ROOT` を設定して最初の目標設定を回せる状態にする」までの導入ガイドです。**日々の運用（入口コマンド詳細・検証コマンド・復旧手順）は [`RUNBOOK.md`](./RUNBOOK.md) が正本**で、本 README とは役割を分担しています（README=初見導入 / RUNBOOK=運用）。
 
@@ -11,7 +11,7 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 **たとえ話**: 部活の顧問の先生（＝北原さん）が隣にいて、「今週は何をがんばる？」「先月は何がうまくいった？」と質問しながら、目標カードを一緒に作ってくれる道具です。
 
 1. **目標設定・振り返り対話** (`/ubm-goal-setting`)
-   - 「1 週間（週報）・1 ヶ月（月報）・2 ヶ月（期報）」の目標を、AI との短い対話で作ります。
+   - 「1 週間（週報）・1 ヶ月（月報）・3 ヶ月（期報）」の目標を、AI との短い対話で作ります。
    - できあがった目標は決まった型（**21 項目**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、「誰に・何を・いつまでに・何件」まで具体化させます。
    - 目標には「**やらないこと**」も 3 つ以上書きます。やることを増やすより、迷いを減らすほうが行動につながるからです。
 
@@ -38,7 +38,18 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 
 ## インストール（ローカル導入）
 
-本プラグインは `distributable:false` のため、**公開カタログ（`.claude-plugin/marketplace.json`）には掲載していません**。リモートの `/plugin marketplace add OWNER/harness` からは導入**できず**、clone したローカル repo を起点に導入します。
+本プラグインは `distributable:true` で公開カタログ（`.claude-plugin/marketplace.json`、marketplace 名 `skills`）に掲載済みです。**リモート経由**（方法 0）と**ローカル repo 起点**（方法 A / B）のどちらでも導入できます。
+
+### 方法 0 — GitHub の公開 marketplace から入れる（最短・repo の clone 不要）
+
+Claude Code（CLI / Desktop 共通）のチャット欄で:
+
+```
+/plugin marketplace add daishiman/harness-dev
+/plugin install ubm-goal-setting@skills
+```
+
+install は**コピー**で、キャッシュキーは version です。plugin を更新したら `plugin.json` の `version` を上げないと、install 済みの環境へ変更が届きません。
 
 ### 方法 A — harness repo 内で使う（開発・レビュー向け・最短）
 
@@ -114,7 +125,7 @@ export UBM_VAULT_ROOT="$HOME/dev/dev/ObsidianMemo"
 /ubm-knowledge-sync --dry-run  # ナレッジ差分の検知だけ試す (書き込みなし)
 ```
 
-引数なしの `/ubm-goal-setting` は、どの種別（週報/月報/期報）かの確認から始まります。
+引数なしの `/ubm-goal-setting` は、どの種別（週報/月報/期報）かの確認から始まります。種別の引数は `weekly` / `monthly` / `quarterly`（期報＝3 ヶ月）です。旧値 `bimonthly` も後方互換で受理されます。
 
 ---
 
@@ -157,8 +168,8 @@ required-primary（北原孝彦のコンサルティング）の全公開動画�
 無人（host scheduler が呼ぶ one-shot 本体）:
 
 ```bash
-python3 plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py \
-  --registry plugins/ubm-goal-setting/knowledge/youtube-registry.json \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py \
+  --registry ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/youtube-registry.json \
   --channel <handle> \
   --source-out "$UBM_VAULT_ROOT/05_Project/UBM/YouTube" \
   --mode sync
@@ -181,9 +192,9 @@ scheduler の cron 設定例・retry/alert・lease の確認は [`RUNBOOK.md`](.
 6 カテゴリ knowledge と `knowledge-relation-extractor`（C08）の根拠付き辺から、依存グラフを決定論再生成・検証します。
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py \
-  --knowledge-dir plugins/ubm-goal-setting/knowledge \
-  --graph-out plugins/ubm-goal-setting/knowledge/knowledge-graph.json
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/validate-knowledge-graph.py \
+  --knowledge-dir ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge \
+  --graph-out ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/knowledge-graph.json
 ```
 
 参照整合・self-loop 禁止・`depends_on` の DAG 非循環・evidence≥1・confidence 0..1・review_status 必須を検査し、PASS 時のみ `knowledge-graph.json` を書きます（exit 0=OK / 1=違反 / 2=usage）。
@@ -195,19 +206,19 @@ python3 plugins/ubm-goal-setting/scripts/validate-knowledge-graph.py \
 index 生成:
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/index-harness-artifact-graph.py \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/index-harness-artifact-graph.py \
   --plan-glob "plugin-plans/ubm-goal-setting/*" \
-  --plugin-root plugins/ubm-goal-setting \
-  --out plugins/ubm-goal-setting/knowledge/harness-artifact-graph.json
+  --plugin-root ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting} \
+  --out ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/harness-artifact-graph.json
 ```
 
 consult（書込なし）:
 
 ```bash
-python3 plugins/ubm-goal-setting/scripts/consult-harness-artifact-graph.py \
+python3 ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/scripts/consult-harness-artifact-graph.py \
   --topic "youtube ingest 全量性" \
-  --knowledge-graph plugins/ubm-goal-setting/knowledge/knowledge-graph.json \
-  --harness-artifact-graph plugins/ubm-goal-setting/knowledge/harness-artifact-graph.json \
+  --knowledge-graph ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/knowledge-graph.json \
+  --harness-artifact-graph ${CLAUDE_PLUGIN_ROOT:-plugins/ubm-goal-setting}/knowledge/harness-artifact-graph.json \
   --query-type local --depth 2
 ```
 
@@ -225,7 +236,7 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 | Phase | 責務 | 実行体 |
 |---|---|---|
-| Phase0-init | 種別（weekly/monthly/bimonthly）と実行日を確定 | 本 skill / AskUserQuestion |
+| Phase0-init | 種別（weekly/monthly/quarterly）と実行日を確定 | 本 skill / AskUserQuestion |
 | Phase1-2-collect | 過去目標・合宿情報・ナレッジ・journal を並列収集 | `info-collector` sub-agent |
 | Phase2b-review | 振り返り時に既存目標を 8 項目で再評価 | `goal-reviewer` sub-agent |
 | Phase3-dialogue | step1〜5 対話（現状振り返り→ギャップ→目標→行動計画→最終確認） | `phase3-coordinator` + 責務プロンプト `prompts/R1-R5` |
@@ -234,6 +245,17 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 | Phase6-daily-update | `Daily.md` の種別該当 embed のみ最新目標へ置換 | 本 skill |
 
 21 項目（出力構造）の定義正本は `skills/run-ubm-goal-setting/references/output-formats.md` + `data-contract.md`、15 項目（保存前コンテンツ検証）は `output-formatter` prompt の品質チェックリスト節です。
+
+### 日次ジャーナルの末尾ブロック（`/ubm-journal`）
+
+`run-ubm-journal` skill は対話で集めた内容を `02_Configs/Daily/{YYYY-MM-DD}.md` へ整形しますが、本文の後ろに**対話では聞かない固定ブロックを 2 つ**置きます（正本: skill の `references/output-format.md`）。
+
+| ブロック | 設問の正本 | 生成時の扱い |
+|---|---|---|
+| `# フェーズ別 課題チェックシート` | 前回ジャーナル | 対話で読み上げない。チェック状態を継承 |
+| `# 原理原則 チェックシート` | `skills/run-ubm-journal/references/principle-checklist.md` | 対話で読み上げない。チェック状態を継承 |
+
+`# 原理原則 チェックシート`（原理原則の設問 11 件）は**ジャーナル生成のたびに必ず末尾へ出力**されます。ヒアリング項目ではないので設問を 1 件ずつ確認することはせず、器として出すだけです。**チェック状態は前回ジャーナルから引き継がれ、対話の中で変わったと分かった項目だけが更新されます**（毎日ゼロに戻るわけではありません）。前回ジャーナルが無い初回だけ、正本のテンプレを全て未チェックで出します。設問の文言・順序・階層は生成側で書き換えません。`validate-journal-output.py` が `K01`（設問見出しの欠落）/ `K02`（チェックボックス行なし）で保存前に検査します。
 
 ### デュアルパス検索（ナレッジ参照）
 
@@ -251,11 +273,11 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 ### 書き込み保護（fail-closed hook）
 
-`hooks/ubm-write-path-guard.py` が PreToolUse（`Write|Edit|MultiEdit`）で `UBM_VAULT_ROOT` 配下への書き込みを検査し、許可 2 パス（`05_Project/UBM/目標設定/` 配下・`02_Configs/Templates/Daily.md`）以外は exit 2 で遮断します。vault 外（plugin 同梱 `knowledge/` 等）と `UBM_VAULT_ROOT` 未設定時は保護対象外です。判定不能な入力は**遮断側に倒します**（fail-closed）。
+`hooks/ubm-write-path-guard.py` が PreToolUse（`Write|Edit|MultiEdit`）で `UBM_VAULT_ROOT` 配下への書き込みを検査し、許可は prefix 7 件（`05_Project/`・`02_Configs/Daily/`・`.claude/{skills,agents,commands,rules,prompts}/`）と完全一致 1 件（`02_Configs/Templates/Daily.md`）で、それ以外は exit 2 で遮断します。vault 外（plugin 同梱 `knowledge/` 等）と `UBM_VAULT_ROOT` 未設定時は保護対象外です。判定不能な入力は**遮断側に倒します**（fail-closed）。
 
 ### 品質ゲート
 
-- `validate-goal-output.py`: 統一ハイブリッド構造 21 項目・NG 表現・やらないこと 3 項目以上を保存前に決定論検証。
+- `validate-goal-output.py`: 統一ハイブリッド構造 21 項目・NG 表現・やらないこと 3 項目以上（月報・期報の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
 - `tests/`（pytest 44 件）: script×3 / hook×1 の機能テスト + knowledge 台帳整合 + golden-sample 回帰。
 - `EVALS.json`: mechanical lint 13 本と受入基準（criteria-test）の配線宣言。実行手順は `RUNBOOK.md` の Verification 節。
 
@@ -292,14 +314,15 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 plugins/ubm-goal-setting/
 ├── skills/run-ubm-goal-setting/     # 目標設定 skill (+ scripts/validate-goal-output.py + prompts/R1-R5 対話プロンプト正本)
 ├── skills/run-ubm-knowledge-sync/   # ナレッジ同期 skill (+ detect/check scripts)
-├── agents/                          # sub-agent 5 本 (info-collector/goal-reviewer/phase3-coordinator/output-formatter/knowledge-extractor)
-├── commands/                        # /ubm-goal-setting, /ubm-knowledge-sync, /ubm-youtube-ingest, /ubm-consult
+├── skills/run-ubm-journal/          # 日次ジャーナル skill (+ build-journal-context / validate-journal-output)
+├── agents/                          # sub-agent 8 本 (info-collector/goal-reviewer/phase3-coordinator/output-formatter/knowledge-extractor/knowledge-relation-extractor/youtube-transcript-normalizer/journal-composer)
+├── commands/                        # /ubm-goal-setting, /ubm-knowledge-sync, /ubm-youtube-ingest, /ubm-consult, /ubm-journal
 ├── hooks/ubm-write-path-guard.py    # 書き込み保護 (PreToolUse)
 ├── knowledge/                       # L1 curated 28 JSON + router/schema/registry/sync-log
-├── tests/                           # pytest 44 件
+├── tests/                           # pytest 249 件
 ├── EVALS.json / plugin-composition.yaml / RUNBOOK.md / CHANGELOG.md
 ├── .claude-plugin/plugin.json       # 公式 plugin manifest (hooks 配線)
-└── references/package-contract.json # harness metadata (distributable:false, entry_points)
+└── references/package-contract.json # harness metadata (distributable:true, entry_points)
 ```
 
 ---

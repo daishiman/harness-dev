@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P06-x-01",
+  "covered_task_ids": [
+    "P06-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence",
+  "verified_by": [
+    {
+      "claim": "tests/ 直下 23 スイート 3308 件が全て緑である",
+      "method": "当方が母集合 (tests/ 直下ディレクトリ) を先に列挙し、各スイートを unittest discover で走らせ、失敗テスト名を採取した",
+      "result": "pass (suites=23 ran=3308 failed=0 red_suites=[]。**初回計測は 6 スイート 8 件が赤**で、うち 3 件は本周回の manifest / README 変更が入れた退行だった。全 8 件の原因と対処は evidence/P06.json に個別記録し、検査を緩めて緑にした箇所は 0 件)"
+    },
+    {
+      "claim": "env 未設定・repo 外 cwd で一気通貫が成功する",
+      "method": "HB_ROOT / CLAUDE_PLUGIN_ROOT / SRG_ROOT を環境から除去し cwd を一時ディレクトリへ振って validate --normalize → render → 4 ゲートを実行した",
+      "result": "pass (7 手順すべて exit0。cwd も repo 外へ振ってあるため、__file__ 相対フォールバックが効いていなければ同時に落ちる測り方になっている)"
+    },
+    {
+      "claim": "同一構成データからの生成がバイト一致する",
+      "method": "同じ正規化済み構成データから 2 回 render し sha256 を比較した",
+      "result": "pass (sha256 一致 / 20284 bytes。P08-x-01 の『生成 HTML がバイト一致のまま保たれている』の実測でもある)"
+    },
+    {
+      "claim": "EVALS.json の『全 suite』の記述が母集合と一致する",
+      "method": "当方が EVALS.json の mechanical ブロックを 23 スイート全件へ置き換え、誤っていた旧記述の内容と是正の所在を note へ残した",
+      "result": "pass (旧記述は 4 suite 836 件を『全 suite』としていた。**削除せず是正の経緯を note に残した** — 消すと『なぜ件数が変わったのか』が失われ、次に読む人が部分計測を再発明する)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "single-python-version",
+      "detail": "実行系は Python 3.11 のみ。requirement は 3.10+ と宣言しているが 3.10 実機では未計測である"
+    },
+    {
+      "kind": "serial-execution-only",
+      "detail": "23 スイートは直列実行した。並列時の一時ディレクトリ競合等は未観測"
+    }
+  ]
+}

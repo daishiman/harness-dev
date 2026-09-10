@@ -33,7 +33,7 @@
 | 利点 | 説明 |
 |------|------|
 | **精密な座標制御** | CSS absolute配置の代わりにSVG座標で正確配置 |
-| **CSS変数連携** | `fill="var(--wave-blue,#7E9CD8)"` でテーマ統合 |
+| **CSS変数連携** | `fill="var(--tone-3, #4B6681)"` でテーマ統合 |
 | **スケーラブル** | viewBox指定で任意サイズに拡縮、印刷でも劣化なし |
 | **`<marker>`** | 矢印・接続点をSVGネイティブで精密描画 |
 | **`<path>`** | ベジェ曲線・円弧で滑らかな接続線 |
@@ -47,7 +47,7 @@ SVGは「図解・ダイアグラム」だけでなく、スライドの**背景
 
 ### 全面画像デッキの主キャンバスは contain（背景化禁止）
 
-全面 AI 画像デッキ（各ページを 1 枚の生成画像で構成する運用）では、生成画像は背景素材ではなく各ページの**主キャンバス**である。主キャンバスは規定クラス **`.ai-slide-canvas`**（後方互換エイリアス `.slide-fullbg` / `.slide-bg` / `[data-role="main-canvas"]`）に置き、`object-fit: contain`（`imageFit: contain` 既定）で表示する。CSS background や `object-fit: cover` で主画像を切ってはいけない（装飾だけの背景に限り `.slide-bg--cover-safe` の cover を許可）。印刷は A4横 16:9 letterbox（297mm→高さ167mm・上下 off-white 余白）で全ページ端欠けなしにする。主要被写体は safeArea（top/bottom 8% ≈ 115px・left/right 6% ≈ 154px / 2560×1440 基準）内に置く。この表示・印刷フィット契約の正本は [full-image-deck-method.md §0.3](full-image-deck-method.md) であり、実装の正本は `assets/print-styles.css` / `assets/slide-template-single.html`。
+全面 AI 画像デッキ（各ページを 1 枚の生成画像で構成する運用）では、生成画像は背景素材ではなく各ページの**主キャンバス**である。主キャンバスは規定クラス **`.ai-slide-canvas`**（後方互換エイリアス `.slide-fullbg` / `.slide-bg` / `[data-role="main-canvas"]`）に置き、`object-fit: contain`（`imageFit: contain` 既定）で表示する。CSS background や `object-fit: cover` で主画像を切ってはいけない（装飾だけの背景に限り `.slide-bg--cover-safe` の cover を許可）。印刷は A4横 16:9 letterbox（297mm→高さ167mm・上下 off-white 余白）で全ページ端欠けなしにする。主要被写体は safeArea（top/bottom 8% ≈ 115px・left/right 6% ≈ 154px / 2560×1440 基準）内に置く。この表示・印刷フィット契約の正本は [full-image-deck-method.md §0.3](full-image-deck-method.md)。印刷 CSS がどの経路のどのファイルから出るかは [print-layout.md §印刷 CSS の出所（経路別）](print-layout.md) を見る。
 
 ### 参照先
 
@@ -93,7 +93,7 @@ WebP は PNG 比 60-80% 軽量だが、GAS（Google Apps Script）にデプロ�
 - **base64 は実バイト×約1.37に膨張**する（base64 エンコードのオーバーヘッド）。500KB 予算に対し実バイトで見積もる際はこの係数を掛ける。
 - 実測 **WebP 1枚平均約184KB → base64 後約252KB**。**2枚で上限到達が目安**で、画像合計が **約340KB 以下に確定する軽量デッキのみ** base64 自己完結（`build-single-html.js --inline-images --full-image-deck`）にできる。
 - これを超えるデッキ（全面画像デッキ＝22枚で base64 後約5.5MB・500KB の約11倍 等）は base64 にできない。**外部ホスティング＋絶対URL方式**（`image-asset-manifest.json` 駆動・`build-deck-html.js --manifest`／`--asset-base-url` で Google Drive 直リンク等へ）へ回す。
-- 軽量／超過の判定は `build-image-manifest.js` が行う。詳細は [../assets/gas-deploy-guide.md](../assets/gas-deploy-guide.md) §4 / [full-image-deck-method.md](full-image-deck-method.md) §6.9.1 参照。
+- 軽量／超過の判定は `build-image-manifest.js` が行う。詳細は [vendor/assets/gas-deploy-guide.md](../vendor/assets/gas-deploy-guide.md) §4 / [full-image-deck-method.md](full-image-deck-method.md) §6.9.1 参照。
 
 ### HTML記述例
 
@@ -176,7 +176,7 @@ gpt-image-2 のテキスト描画は向上したが、**日本語（CJK）の文
 ### 注意
 
 - 新規画像の追加時はWebPを第一選択とすること
-- 既存PNGは `scripts/convert-to-webp.js` で一括変換可能
+- 既存PNGは `vendor/scripts/convert-to-webp.js` で一括変換可能
 
 ---
 
@@ -186,13 +186,13 @@ gpt-image-2 のテキスト描画は向上したが、**日本語（CJK）の文
 
 ```bash
 # スライドディレクトリ内のPNG/JPGをWebPに一括変換
-node .claude/skills/presentation-slide-generator/scripts/convert-to-webp.js ./slide-dir/
+node vendor/scripts/convert-to-webp.js ./slide-dir/
 
 # 品質指定
-node .claude/skills/presentation-slide-generator/scripts/convert-to-webp.js ./slide-dir/ --quality 90
+node vendor/scripts/convert-to-webp.js ./slide-dir/ --quality 90
 
 # ロスレス変換
-node .claude/skills/presentation-slide-generator/scripts/convert-to-webp.js ./slide-dir/ --lossless
+node vendor/scripts/convert-to-webp.js ./slide-dir/ --lossless
 ```
 
 ### 手動変換（cwebpコマンド）
@@ -251,6 +251,6 @@ cwebp -lossless input.png -o output.webp
 |---------|------|---------|
 | 1.0.0 | 2026-02-15 | 初版: SVG/WebP/PNG選択ガイド、変換ワークフロー、推奨設定 |
 | 1.1.0 | 2026-05-06 | AI生成の概念図・情景図をWebP化して差し替える判断を追加 |
-| 1.2.0 | 2026-06-24 | 実装整合（elegant-review・D1/D2/D5）。「全面画像デッキの主キャンバスは contain（背景化禁止）」を追加。主キャンバスクラス規定（`.ai-slide-canvas`＋後方互換エイリアス）・`object-fit:contain`・印刷 16:9 letterbox（167mm）・safeArea（115/154px）のフィット契約を明記し、正本を `full-image-deck-method.md §0.3` と実装（`assets/print-styles.css` / `assets/slide-template-single.html`）に参照（DRY） |
+| 1.2.0 | 2026-06-24 | 実装整合（elegant-review・D1/D2/D5）。「全面画像デッキの主キャンバスは contain（背景化禁止）」を追加。主キャンバスクラス規定（`.ai-slide-canvas`＋後方互換エイリアス）・`object-fit:contain`・印刷 16:9 letterbox（167mm）・safeArea（115/154px）のフィット契約を明記し、正本を `full-image-deck-method.md §0.3` と実装（`vendor/assets/print-styles.css` / `vendor/assets/slide-template-single.html`）に参照（DRY） |
 | 1.3.0 | 2026-06-25 | 最新モデル gpt-image-2（2026-04-21）の仕様セクション（§3）を追加。モデル系譜（gpt-image-1→1.5→2）、size制約（両辺16px倍数・長辺3840px未満・3:1・総ピクセル範囲、プレゼンは2560x1440基準、旧1024固定を廃止）、透過はバックエンド対応確認・input_fidelity無効・quality:high、Codex CLI が内部で gpt-image-2 を使う事実と通称「Image 3 / Codex Image 2」の実体注記を明記。日本語CJKラベルの精度限界（60〜70%帯）と対策（短語+引用符+verbatim・長文はHTML前面・目視校正）、codex exec 実呼び出し注意（出力パス明示・`codex --version`確認・大量時API課金・`-i`参照）を追加。PNG/変換/フローチャート節を §4〜6 に繰り下げ |
 | 1.4.0 | 2026-06-26 | GAS 500KB上限との接続（§2 に小見出し追加）。WebP は PNG 比 60-80% 軽量だが GAS デプロイでは単一HTML 500KB上限が効くこと、base64 インラインは実バイト×約1.37に膨張すること、実測 WebP 1枚平均約184KB→base64後約252KB で 2枚で上限到達が目安・画像合計≤約340KB の軽量確定デッキのみ base64 自己完結（`build-single-html.js --inline-images --full-image-deck`）可、超過デッキ（全面画像デッキ＝22枚で base64後約5.5MB）は外部ホスティング＋絶対URL方式（`image-asset-manifest.json` 駆動・`build-deck-html.js --manifest`）へ回すことを明記。判定は `build-image-manifest.js`、詳細は gas-deploy-guide.md §4 / full-image-deck-method.md §6.9.1 へ参照（DRY） |

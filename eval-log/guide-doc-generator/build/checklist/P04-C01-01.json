@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-C01-01",
+  "covered_task_ids": [
+    "P04-C01-01"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "テスト実体が write_scope 配下に存在する",
+      "method": "ls",
+      "result": "plugins/guide-doc-generator/tests/run-handout-build/ に test_*.py と README.md"
+    },
+    {
+      "claim": "実装未存在の時点で赤である",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/run-handout-build -p 'test_*.py' を dispatcher が独立実行",
+      "result": "28 failures + 6 ok。ok の 6 件は test_contract_checker の自己検査 (fixture 実在・frontmatter パーサ・reject fixture) であり実装非依存。実装依存の 28 件は全て赤"
+    },
+    {
+      "claim": "import 例外で落ちるだけの空テストでない",
+      "method": "failures/errors の別を確認",
+      "result": "errors ではなく failures として計上されており、assert が評価された上で落ちている"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    }
+  ]
+}

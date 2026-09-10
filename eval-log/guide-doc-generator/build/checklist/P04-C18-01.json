@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-C18-01",
+  "covered_task_ids": [
+    "P04-C18-01"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "テスト実体が component 単位のディレクトリとして実在する",
+      "method": "ls plugins/guide-doc-generator/tests/verify-handout-language.py/",
+      "result": "pass"
+    },
+    {
+      "claim": "実装前の実行が赤である (failures>0)",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-language.py/ -p 'test_*.py'",
+      "result": "pass (Ran 193 / failures=204 / errors=0)"
+    },
+    {
+      "claim": "errors=0 であり、赤の原因が実装不在であってテスト構造の不備ではない",
+      "method": "unittest 出力の errors 件数",
+      "result": "pass (errors=0)"
+    },
+    {
+      "claim": "通過しているテストは実装の空通過ではなく、テストハーネス自体の自己テスト・参照オラクル・brief↔inventory 契約導出である",
+      "method": "unittest -v の ok 行を dispatcher が個別に検分",
+      "result": "pass"
+    },
+    {
+      "claim": "Python 3.10+ 標準ライブラリのみの unittest で構成されている (pytest / yaml / .sh / .js 不使用)",
+      "method": "discover 実行が追加依存なしで成立",
+      "result": "pass"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "agent-self-report-absent",
+      "detail": "SubAgent は指定 JSON を返さず idle 通知のみ。判定は dispatcher の独立実行による"
+    },
+    {
+      "kind": "lease-expired-before-writeback",
+      "detail": "SubAgent 完了から write-back までの間に task lease が失効した。赤の実測は dispatcher が失効後に再実行して取り直しており、判定根拠は lease の有効期間に依存しない"
+    }
+  ]
+}

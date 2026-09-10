@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-23",
+  "reason": "test_round_trip_equivalence (tests/render-handout.py/test_cross_component.py) の赤の原因が P05-x-20 の完了により移動したが、受け皿が更新されていない。当初の所有者 P05-x-11 は write_scope が plugins/guide-doc-generator/schemas のみで、現在の原因である C20 の抽出粒度 (scripts/extract-handout-config.py) へ書けない。P05-x-20 が定量化した残差: section の role / ties_to / attainment_step / glossary が復元されない、部品内テキストが兄弟要素ごとに分かれず連結される (ステップ部品が '1資料を開く手元で開く5分' になる)、比較表・二択・DLボタン・フローが別部品の形で復元される、タブ部品の panel_parts が平坦化、図解部品の diagram_id に部品 id が入る。P05-x-23 の worker も『抽出結果のセクションに blocks/parts が丸ごと出ない C11↔C20 の往復欠落 (AC-C11-15)』と独立に同じ所見を報告している。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+  "proposed_node": {
+    "id": "P05-x-31",
+    "title": "C20 の抽出粒度を上げて round-trip 等価性を成立させる",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator",
+    "acceptance_criterion": "test_round_trip_equivalence が緑になること。抽出器が部品を『それらしく』復元して等価に見せるのではなく、往復が本当に一致していることを反例注入で示すこと (構成データを 1 箇所変えたら往復が壊れることを実測する)。ROUNDTRIP-CONTRACT.md の裁定と矛盾する場合は先に裁定を更新し、更新理由を書くこと。着手前後で 4 スイートの失敗テスト名の集合が増えないこと。",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-31.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/RESOLUTION-P05-x-31.md"
+    ],
+    "depends_on": [
+      "P05-x-23"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "P05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:e12410508a9838e8ee4a0c780fc6510aed77f2389a9c36a2e1e2539474df568b"
+}

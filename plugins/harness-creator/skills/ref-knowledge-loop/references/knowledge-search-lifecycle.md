@@ -184,7 +184,7 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
 
 `record_usage.py --analyze` でパターンを自動検出する (→ `scripts/record_usage.py`)。
 
-### 12.3 日々のブラッシュアップ運用サイクル
+### 12.3 curated seed のブラッシュアップ運用
 
 ナレッジは「使うほど良くなる」閉ループで運用する。日次/定期で以下を回す。
 
@@ -200,12 +200,12 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
          (再処理が必要なエントリに status: needs-update を付与)
 ```
 
-新知見の追加は `add_entry.py` で行い、必須6フィールド (§4.2) を検証しつつ追記する (JSON 手編集を排除):
+`add_entry.py` は runtime external intelligence で promoted まで到達した知見を curated seed へ取り込むレビュー工程で使う。未検証の新知見を直接追記しない:
 
 ```
 python3 scripts/add_entry.py --category <cat> --title ... --background ... --keywords ... --source ...
 ```
 
-二層分離: 決定論 (スクリプト) が担うのは「検証・追記・status付与・パターン検出」、内容判断 (AI/人) が担うのは「何を改善するか・どう書き換えるか」。スクリプトは正解を機械保証し、意味的判断は委ねない。
+二層分離: 決定論 (スクリプト) が担うのは「検証・検索品質記録・status付与・パターン検出」、内容判断 (AI/人) が担うのは「何を改善するか・何を promoted seed として採用するか」。runtime 観測の lifecycle は [external-intelligence.md](external-intelligence.md) だけに定義する。
 
-この閉ループは雛形 (knowledge-skeleton) ごと生成スキル (Loop A) に同梱されるため、量産された各スキルがそれぞれ自己完結で日々ブラッシュアップ可能になる。
+生成スキルは検索/品質計測と外部知能 engine を同梱するが、観測 state は installed package 外に置く。全件常時読込ではなく薄い索引から必要な詳細だけ取得する。

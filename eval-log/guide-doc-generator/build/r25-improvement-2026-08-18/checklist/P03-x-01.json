@@ -1,0 +1,104 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P03-x-01",
+ "covered_task_ids": [
+  "P03-x-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/evidence/P03.json",
+ "verified_by": [
+  {
+   "claim": "evidence/P03.json が write_scope 内で全面差し替えされ JSON として妥当",
+   "method": "dispatcher が git diff --stat と git status --porcelain plugin-plans/ を実行し、別途 json.load でキー構成を直読み",
+   "result": "pass: 209 insertions / 113 deletions で報告と一致。top-level 13 キー、checks 4 / findings 6 / release_readiness.measured_here 6。plugin-plans/ の他の変更ファイルは全て本 cycle の先行ノード由来 (briefs 群・inventory・task-specs) で、本ノードの新規変更は P03.json のみ"
+  },
+  {
+   "claim": "status (設計側) と release_readiness (出荷側) が別フィールドへ分離され分離理由が書かれている",
+   "method": "dispatcher が両フィールドと why_separate_from_status を直読み",
+   "result": "pass: status=pass / release_readiness.state=blocked。why_separate_from_status に加え design_shipping_gap_is_not_a_design_defect という独立キーを持ち、『乖離で pass を落とすと設計を直せば緑になるという誤った治療方針を示す』理由が明文化されている。dispatch 時の指示 (P02.json と同型の分離) を満たす"
+  },
+  {
+   "claim": "D3 循環 0 件 — inventory の depends_on が非循環",
+   "method": "dispatcher が component-inventory.json から独立に有向グラフを構築し、未知参照検査 + Kahn 法を再実行",
+   "result": "pass: 23 node / 未知参照 0 件 / topo 順序 23/23 成立。C11.depends_on=[C12,C13,C14,C15,C23]、C16.depends_on=[] を確認"
+  },
+  {
+   "claim": "F-P03-04 の提案 (C11.depends_on へ C16 を追加) が循環を生じない",
+   "method": "dispatcher が edges['C11'] に C16 を加えた状態で Kahn 法を再実行",
+   "result": "pass: 23/23 成立 (acyclic True)。C16 が根 (depends_on 空) であるため、この辺の追加は安全であるという報告の根拠を独立に裏付けた"
+  },
+  {
+   "claim": "D2 責務重複 — owner 衝突 0 件で、重点 3 項の複製も 0 件",
+   "method": "dispatcher が C03 / C06 へ R25 の 4 軸名 (opening-order / visual-fit / card-granularity / nav-scannability) を正規表現計数",
+   "result": "pass(=報告どおり): C06 が 10 件保持、C03 は 0 件。軸の正本が C06 単独である状態を確認。P02-C03-01 checklist の『C03 は判定基準を持たない』とも整合"
+  },
+  {
+   "claim": "F-P03-02 の根拠 — C05 に閾値リテラルが残る",
+   "method": "dispatcher が agent-brief-C05.json へ 20-45 を grep し前後文脈を確認",
+   "result": "pass(=報告どおり): C05:51 に『lead_line = …(20-45 字を目安に短く)』が実在。同じ文の末尾が『書き方の正本は config/handout-visual-policy.json#opening.section_opening.assertion_style』と canon 参照を持つため、数値だけが canon の外に居残る形。C06 が 0 件で AC 化済みなのと非対称"
+  },
+  {
+   "claim": "F-P03-05 の根拠 — C16 / C18 の open_questions が P03 design-gate を名指しで待っている",
+   "method": "dispatcher が両 brief の open_questions を全件走査し P03 / design-gate を含む項目を抽出",
+   "result": "pass(=報告どおり): C16 (5 件中 1 件) が SC-05 層 2 の扱いを、C18 (6 件中 2 件) が glossary 網羅性の LLM 工程可否と LANG-05 の検査範囲を、いずれも『P03 の判断に委ねる』と明記。うち glossary の LLM 工程は D1 (決定論経路への LLM 介在 0 件) に正面から抵触するため、採用されると acceptance を事後的に壊す経路である点も確認"
+  },
+  {
+   "claim": "RG-04 の根拠 — dir_name_format が出荷側に不在で区切り文字が 3 箇所へ独立に焼かれている",
+   "method": "dispatcher が plugins/guide-doc-generator/ 全体へ dir_name_format を grep し、DATED_DIR_RE と dir_separator の実装位置を直読み",
+   "result": "pass(=報告どおり): dir_name_format 0 件。hooks/guard-handout-external-ref.py:62 の DATED_DIR_RE = ^\\d{4}-\\d{2}-\\d{2}- (:236 で照合) と scripts/verify-handout-language.py:379 の self.dir_separator = \"-\" (:831,:836 で使用) を確認。いずれもハイフンで、設計の決着 (アンダースコア) と逆向き。config を足すだけでは正本が 4 つになるという第 2 正本居座り型の指摘は妥当"
+  },
+  {
+   "claim": "RG-02 の根拠 — handout-vocabulary.json が出荷側に不在",
+   "method": "dispatcher が出荷 config と plan 側 briefs/config を両方 ls",
+   "result": "pass(=報告どおり): plugins/guide-doc-generator/config/ に vocabulary 系ファイルは無い。一方 plugin-plans/guide-doc-generator/briefs/config/handout-vocabulary.json は本 cycle で新規作成済み (untracked・4297 bytes)。設計側は確定・出荷側が未追随という不在型の分類は正確"
+  },
+  {
+   "claim": "既存生成物の再測定 — IMG 全欠落と per-section 図解の未達",
+   "method": "dispatcher が handout-output/*/handout.html 4 本を独立にパースし <section> 要素と <img> / <svg> を計数",
+   "result": "pass(=結論一致・数値は差異あり): <img> は 4 本すべて 0 件で IMG 100% 欠落は完全一致。ただしセクション総数は dispatcher 計測で 26 件 (8/6/6/6) であり報告の『main 22 件』と 4 件の差、図解を持たない節は 16 件 (62%) で報告の 12 件 (55%) と差がある。出荷 HTML の <section> は全 26 件が class=\"section-card\" の単一種で main という区分自体が存在しないため、報告側は何らかの意味的除外を経た数と判断される。R2/R8 未達という判定は数値差に依存しないため RG-05/06 は成立"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が git status --porcelain plugin-plans/ を実行し、evidence/ 配下の変更を確認",
+   "result": "pass: evidence/ の変更は P01.json / P02.json / P03.json の 3 件で、前 2 者は先行ノード由来。briefs/ と component-inventory.json の変更は P03-x-02 (+522/-119) の既知の書込みで、本ノードの mtime 切り分け報告 (957 秒差) と矛盾しない"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P03X01-01",
+   "level": "blocking-for-release",
+   "summary": "報告の訂正が過剰訂正だった: C10 にも 4 段手順文は実在する。hook-brief-C10.json:84 の settings_registration が『HB_ROOT 一次 / ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} 二次 / manifest name 照合 / __file__ 相対の自己解決フォールバック』を丸ごと含む (報告は同じヒットの前半 = settings.json 登録記述だけを読んで『C10 には無い』と結論した)。したがって複製は 5 component ではなく C10/C11/C12/C15/C21/C23 の 6 component。F-P03-01 の write_scope に hook-brief-C10.json を追加しないと集約が漏れる"
+  },
+  {
+   "id": "F-P03X01-02",
+   "level": "blocking-for-release",
+   "summary": "4 段手順文の正本が 3 者から競合主張されている。index.md:97 にも 4 段が実在し、C10 はそれを『index.md の実行時可搬性方針に従い』と正本指名する。一方 C17/C09 は component-inventory.json#envelope_design.env_resolution と script-brief-C15.json:39 を正本指名する。報告の『正本 2 + 複製 4』は index.md を数えておらず、実態は複製 6 + 競合正本 3。F-P03-01 の集約は『どれを正本にするか』の裁定を先に必要とする"
+  },
+  {
+   "id": "F-P03X01-03",
+   "level": "carry-forward",
+   "summary": "acceptance の『責務重複 0 件』を pass とした裁定 (実体解決は各プロセスが自分で行う行為であり他 component が代行できない・出力が競合しない・5 箇所が矛盾していない) は 3 論拠とも成立すると判断し受理する。ただし精度が 4 段階に割れている (C15:39 が最厳・C12:827 が『manifest name 照合』の略記のみ) 点と、C17/C09 だけが参照形へ移り『参照する派』と『複製する派』が混在する中間状態である点は severity=high のまま残る"
+  },
+  {
+   "id": "F-P03X01-04",
+   "level": "carry-forward",
+   "summary": "既存生成物のセクション計数が報告 (main 22 / 図解なし 12) と dispatcher 実測 (section-card 26 / 図解なし 16) で一致しない。出荷 HTML に main 区分が無いため報告側の除外基準が再現できない。R2/R8 の未達判定は動かないが、P04 で per-section 下限を機械検査へ固定する際に『何を 1 節と数えるか』の定義を先に決めないと、同じ実装で緑にも赤にもなる"
+  },
+  {
+   "id": "F-P03X01-05",
+   "level": "blocking-for-release",
+   "summary": "C16 / C18 の open_questions 3 件が P03 design-gate を名指しで待っているのに、書込権を持つのは P03-x-02 側で本ノードには無いという配線ミスにより、裁定が evidence にしか残らなかった。とくに C18 の『glossary 網羅性を別途 LLM で埋める工程を入れるか』は採用すると決定論ゲート C18 の内側に LLM が入り D1 の acceptance を事後的に壊す唯一の経路であるため、P05-C18 の build より前に briefs へ書き戻す必要がある"
+  },
+  {
+   "id": "F-P03X01-06",
+   "level": "blocking-for-release",
+   "summary": "RG-01 と RG-04 の第 2 正本居座り型が P05-x-03 の完了条件に反映されていない。config を足すだけで literal を消さないと正本が増える構造であり、literal 除去の grep 検査と文長系 5 コードの exit1 を完了条件へ明記しない限り、実装者が『config を足した』時点で完了と判断できてしまう"
+  },
+  {
+   "id": "F-P03X01-07",
+   "level": "resolved",
+   "summary": "D1 (LLM 介在 0 件) の判定手法が健全であることを確認。生ヒット 42 件を件数で切らず全件の前後文脈を読み分けた結果、最多の C20 (推測系 11 件) が heuristic_fallback.never_guessed という推測を禁じる規約そのものであると同定されている。件数判定なら誤って blocking を立てていた。この読み分けは P02-C08-01 checklist で C20#roundtrip_granularity を実読して誤帰属を解いたのと同型の手順"
+  }
+ ]
+}

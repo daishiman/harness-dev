@@ -2,42 +2,40 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "d43d2cee3376e2818aeb65c3d79a9b59ed9f82dba71ecf62f03ec65a7cca2474"
+    "skill_md_sha256": "2e370bb4c3bf296da60cdc5a161d14db81227e68fcd2d3d6a12ac61ceb28ec13"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "focused-combined-review-inline",
-  "reviewed_at": "2026-08-12T00:00:00Z",
-  "iterations": 2,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-10T06:25:20Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1",
-      "OUT2"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
     "positive_feedback": [
-      "構造要件維持: Purpose & Output Contract / Key Rules / Gotchas / Additional Resources の見出し集合は不変。SKILL.md 153行で行数上限内。allowed-tools・manifest・naming は無変更。",
-      "単一責務維持: 追加した参照は『対話側の判断基準』のみで、出力整形（output-formatter）・検証（validate-goal-output.py）・ナレッジ更新（run-ubm-knowledge-sync）の責務境界を跨いでいない。",
-      "Progressive Disclosure 準拠: resource-map.yaml に read_when（Phase3 Step3 / Step4）付きで登録し、SKILL.md 本文へフレーム内容を展開せず参照に留めた。",
-      "宣言と実体の一致: reference_refs / resource-map / R3 / R4 の4箇所すべてで path が実在ファイルを指す（6/6 検証済）。",
-      "iteration2: §3 の期間別検査が実装され、R3 の when_to_read（§2 共通チェック / §3 期間別）が指す参照先が全て充足。差し戻し条件は『やることが2方向以上に分かれている』『やらないことが3項目未満』のように対話中に判定可能な観測形で記述され、phase3-coordinator がそのまま使える。"
+      "本 branch の 4 SKILL.md 変更が「宣言を実体へ合わせる」方向で統一されている。combinators は本 branch 以前から 26 skill が持つ既存キーで、値も with-goal-seek / with-feedback-contract の 2 語に閉じている。今回 4 skill へ足した値は各 skill が実際に持つ frontmatter ブロックと 1:1 に対応する（goal_seek ブロックを持たない run-ubm-journal だけが with-feedback-contract 単独）。新語を発明せず既存の閉じた語彙へ後から合流させる直し方は、宣言が実体から浮かない形になっており横展開に値する。",
+      "Key Rules へ足した 5 行が、どれも対話側の心得で終わらず機械検査へ接地している。「成果と売上を数値で結ぶ」は C1/C1c/C1e、「行動と成果をグループで結ぶ」は C4b/C5、「シンプルに書く（成果5件50字・行動8件60字）」は S1/S3 と、SKILL.md の各文に対応する検査が validate-goal-output.py に実在する。実際に golden-sample の複製へ違反を注入したところ 3 種すべてが rc=1 で落ちた。規範を書いた同じ変更セットの中で検査器まで通していることで、Key Rules が「守られたか誰も見ていない努力目標」になる経路を閉じている。",
+      "「貢献額の大きいグループを上に置く並び順は推奨（優先順位が見えるため。機械検査はしない）」と、非検査であることを SKILL.md 側に明記している。validator にも同じ判断が「同額のときに順序が一意に決まらず、正しく書いても直しようのない FAIL が出るため意図的に非検査」という理由付きで残っており、読み手が実装漏れか意図的かを推測せずに済む。規約を書く側が非検査項目を明示的にラベルする運用は、他 skill の references へ横展開する価値がある。",
+      "新設された tests/test_notation_consistency.py が、正規表現を再定義せず validate-goal-output.py を importlib で読み込んで規則を借りている。docstring が「複製すると規則を変えたときにテストだけが古い規則で緑になる」と理由を書いており、実測でも validator 側の C1/C1c/C1e と同じ判定になった。さらに免除印から掛け算記号の × を意図的に外していることを実測確認した（× を印にすると正しい記法の行が軒並み免除されて検査が空になる）。検査の空洞化条件を先に潰してから検査を置く設計になっている。",
+      "CHANGELOG 0.3.42 が「1 コピーだけ直したことで共有ファイルのハッシュが乖離した」という失敗を撤回として記録している。実測で run-skill-feedback/SKILL.md の 21 コピーすべてが 1b957a02… に揃っており、記録どおり同一性が回復している。共有 skill の不変則（全コピーがバイト同一）を、直した結果ではなく「なぜ 1 箇所だけ直してはいけないか」の理由とともに残しているため、次に同じ誘惑が来たときに読み返せる。"
     ],
     "negative_feedback": [
-      "smell(low): 本 review は独立 evaluator ではなく inline 実行のため、verification_profile=exhaustive（run-elegant-review + 独立 rubric evaluator）相当の外形独立性は持たない。"
+      "[inconsistency/low] scripts/validate-goal-output.py のヘッダ `# version:` が 0.2.3 のままで、origin/main の値と 1 文字も変わっていない（git show origin/main: で実測）。しかし本 branch はこの script を +512 行変更し C1 / C1c / C1d / C1e / C4b と MAX_OUTCOME_* / MAX_ACTION_* を新設している。CHANGELOG は 0.3.32 で「script version 0.1.0 → 0.2.3」と script 版数を明示的に記録する運用を確立しており（0.3.31 では欠番の不在理由まで書いている）、今回の遥かに大きい変更で版数が据え置きなのはその運用と食い違う。SKILL.md は script_refs でこの script を宣言し Key Rules の各行がこの script の挙動に依存しているため、参照先の版数が動かないとどの版の検査規則を指しているかが追えない。修正はヘッダ版数を上げて CHANGELOG 0.3.41 に併記するか、script ヘッダ版数の運用自体を廃止すると明記するかのいずれか。",
+      "[smell/low] 前回 verdict の指摘が未解消のまま残っている。scripts/validate-goal-output.py L1139 のコメントと CHANGELOG L131 が、存在しない --version フラグを argparse が SystemExit(0) を投げる契機として挙げている。実測では --version は rc=2（未知引数）で、rc=0 になるのは --help だけ。読者が挙動を実行で裏取りできない記述である点は前回から変わっていない。",
+      "[smell/low] 同じく未解消。同 script L301 のコメントに prefix_any という識別子様のトークンが残るが、grep -rn prefix_any plugins/ubm-goal-setting/ はこのコメント 1 件しか返さず、コード側に対応する実体が無い。趣旨（prefix 部分一致方式では --type の取り違えを検出できない）は正しいので、旧 prefix 部分一致方式は、等の実装手法を指す語へ言い換えれば読者が探し回らずに済む。"
     ],
-    "iteration": 2,
-    "iteration_limit": 5,
-    "hook_trigger": "stop-hook",
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "CI:change-category-guard (PR #70 の lint-content-review.py --all が stale-sha 8 件で fail)",
     "next_action": "none"
   },
-  "notes": "evidence: python3 -m pytest tests -k ubm → 39 passed / 参照実在 6/6 OK / TODO(human) はリポジトリ全体で1箇所のみ（learning style 制約充足）。ナレッジ側検証: check-knowledge-split.py exit0（全56ファイル500行以内）・validate-knowledge-graph.py exit0（nodes=420）。 iteration2 evidence: pytest -k ubm 39 passed / TODO(human) 残数 0 / validate-knowledge-graph exit0 (nodes=420) / check-knowledge-split exit0。"
+  "notes": "【profile=incremental】前回 verdict の結論を引き継がず独立に再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。4 skill を 1 context で結合評価し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を一度に判定した。その単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは rubric 側（ref-skill-design-rubric の規範採点）の投影である。elegance 側の投影は同ディレクトリの elegance-verdict.json で、両者は同一の観測に基づく。 【読んだもの】content-review-protocol.md 全文 / content-review-verdict.schema.json 全文（実在パスは plugins/harness-creator/skills/run-build-skill/schemas/ 配下。repo 直下 schemas/ は存在しない）/ scripts/lint-content-review.py 全文 / 既存 run-ubm-goal-setting の elegance・rubric verdict 2 本（target sha 3bb5fb95… で本 review の対象 sha とは別物。書式と要求水準の参考にのみ使用）/ 評価対象 4 skill の SKILL.md 全文（run-ubm-goal-setting 220 行 / run-ubm-journal 250 行 / run-ubm-knowledge-sync 196 行 / run-ubm-youtube-ingest 215 行）/ git diff origin/main...HEAD の当該 4 SKILL.md 差分全文 / plugins/ubm-goal-setting/CHANGELOG.md の 0.3.40・0.3.41・0.3.42 / 新規 tests/test_notation_consistency.py 全文（143 行）/ run-ubm-goal-setting の references/output-formats.md・references/data-contract.md の該当節 / scripts/validate-goal-output.py の MAX_OUTCOME_*・MAX_ACTION_*・CONTRIB_RX・CONTRIB_BASIS_RX・PERIOD_COUNT_UNIT_RX・ACTION_GROUP_RX・GROUP_AMOUNT_RX と C1/C1c/C1d/C1e/C2/C3/C4/C4b/C5/S1/S2/S3 および「やらないこと」検査ブロック。 【実行したもの（コマンドと実測結果）】(1) shasum -a 256 を 4 SKILL.md へ実行し run-ubm-goal-setting=2e370bb4… / run-ubm-journal=9cd5183d… / run-ubm-knowledge-sync=5189522… / run-ubm-youtube-ingest=212253e8… を得た。本 verdict の skill_md_sha256 はこの実測値そのもので、手書換は一切していない。(2) python3 -m pytest plugins/ubm-goal-setting/ -q = 392 passed in 78.98s（exit 0）。CHANGELOG 0.3.41 の主張と一致。(3) 同 tests/test_notation_consistency.py -q = 24 passed。(4) 新規テストの検出力を非侵襲に実測。validate-goal-output.py を importlib で読み込み Validator._parse_contribution へ合成行を通したところ、50000 × 1 = 50000 は OK、150000 は C1（裸の数字）、50000 × 3 = 200000 は C1c（検算不一致）、50000 × 3ヶ月 = 150000 は C1e（期間単位）と判定された。テスト側 NEGATIVE_MARKER_RX が掛け算記号の × を免除印に含めない（＝正しい行が免除されて検査が空洞化しない）ことも実測確認した。(5) golden-sample-weekly.md を scratchpad へ規約準拠のファイル名で複製し validate-goal-output.py --type weekly = rc=0 / STATUS: PASS / エラー 0・警告 0 / PASS 32 件（被評価物は一切変更していない）。(6) Key Rules の主張を注入実測で裏取り。--type quarterly の取り違え → rc=1、貢献行を裸の数字へ改変 → rc=1（C1）、グループ見出し金額を成果と食い違う値へ改変 → rc=1（C4b）。(7) frontmatter 宣言 refs の実在を全件走査。20 件 / 12 件 / 13 件 / 19 件 = 計 64 件すべて実在、欠損 0。(8) lint 実行。lint-skill-description OK=187 VIOLATION=0、lint-feedback-contract --all = [OK] 74 loop-kind skills、lint-config-version-sync OK、lint-artifact-delivery = 21 plugins OK、lint-entrypoint-artifact-first OK（119 inventory）、lint-runtime-portability OK、lint-script-naming VIOLATION=0、lint-skill-name ok、lint-skill-completeness ok（6 skills）。(9) lint-goal-seek を 4 SKILL.md へ個別実行。goal-setting rc=0 / knowledge-sync rc=0 / youtube-ingest rc=0（WARN 2）/ journal rc=1。本 lint の CI 強制範囲が plugins/harness-creator/skills に限られることを run-ci-checks.sh と governance-check.yml で確認した。(10) combinators が本 branch 以前から 26 skill にある既存キーで値も 2 語に閉じていること、completeness_exempt が lint-skill-completeness.py と validate-plugin-package.py に実際に読まれる既存キーであることを確認した。(11) CHANGELOG 0.3.42 の主張を検証。shasum -a 256 plugins/*/skills/run-skill-feedback/SKILL.md = 21 コピー全て 1b957a02… で一致。(12) 配布物 version が 4 箇所すべて 0.3.42 で一致。 【判定理由（4 skill 共通）】(a) 矛盾 0。SKILL.md 本文 ↔ references/output-formats.md ↔ references/data-contract.md ↔ validate-goal-output.py の実挙動が、成果目標の 1 項目 = 2 行記法・C1・C1c・C1e・C4b・C5・S1/S3 の件数字数上限で 4 者一致することを確認した。「やらないこと の出力先は種別依存」も validator の必須見出しリスト（月報・期報のみ「やらないこと」を含む）および 3 項目以上検査が `if not_doing:` でセクション実在時のみ走ることと整合する。「並び順は推奨・機械検査しない」も validator の R-d 非検査宣言と一致。(b) 漏れ 0。本 branch の 4 SKILL.md 変更はいずれも CHANGELOG 0.3.41-0.3.42 に対応記述があり、宣言だけあって実体が無い項目は検出されなかった。(c) 規約整合 = 充足。(d) 依存関係整合 = 充足（refs 64 件全件実在、注入実測、392 passed）。(e) rubric high severity 0。 【rubric 投影の補足】ref-skill-design-rubric の high severity 該当項目を照合し違反 0。SKILL.md は 220 行で上限 300 行以内。description は「〜したいときに使う」形式で lint-skill-description.py VIOLATION 0。frontmatter は disable-model-invocation: true / user-invocable: true / argument-hint / kind / prefix / effect / owner / since / version を備え、lint-skill-name.py・lint-skill-completeness.py・lint-entrypoint-artifact-first.py・lint-artifact-delivery.py・lint-feedback-contract.py・lint-script-naming.py・lint-runtime-portability.py がすべて OK。artifact-delivery state machine と external-mutation-guard block も規定どおり本文に存在する。責務境界も End-to-End Flow 表で Phase と実行体が 1:1 に割り当てられ、越境は検出されなかった。よって (e) は充足し、PASS の根拠は rubric 採点と 4 条件の双方である。 【PASS の射程】design claim（静的設計 adequacy）に限る。verify_by: live-trial を持つ criterion（OUT2）の behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
 }

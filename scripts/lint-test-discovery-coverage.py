@@ -62,8 +62,8 @@ ALLOWLIST: dict[str, str] = {}
 CI_RUN_EVIDENCE: dict[str, tuple[str, ...]] = {
     # 機構A: repo-root tests/ を pytest で再帰実行する step
     "tests": ("pytest tests/",),
-    # 機構B: plugins/ を os.walk で収集し per-plugin pytest を subprocess 実行する step
-    "plugins": ('Path("plugins")', '"-m", "pytest"'),
+    # 機構B: discover_repo_tests SSOT を使う extracted runner が plugin pytest を実行
+    "plugins": ("python3 scripts/validate-plugin-test-roots.py", "--workers 4"),
 }
 
 CI_WORKFLOW_REL = ".github/workflows/harness-creator-kit-ci.yml"

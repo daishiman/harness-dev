@@ -84,6 +84,17 @@ def load_contract(path: Path) -> dict:
             raise ContractError("hook.products must contain non-empty strings")
         if hook.get("delivery") not in {"plugin", "project"}:
             raise ContractError("hook delivery must be exactly plugin or project")
+        # Codex 0.148.0 は plugin_hooks が removed で、plugin 配下 hooks.json を
+        # 読まない。delivery=plugin のまま products に codex を書くと「Codex でも
+        # 動く」という到達不能な主張になる (projector は plugin-delivered handler を
+        # .codex/hooks.json から除去するため、宣言と実体が両方 Codex を外す)。
+        # Codex への配達は build-hook-registry.py が生成する project 層 router が担う。
+        if hook["delivery"] == "plugin" and "codex" in hook["products"]:
+            raise ContractError(
+                f"hook {hook['id']}: delivery=plugin cannot reach Codex "
+                "(plugin_hooks is removed). Codex delivery goes through "
+                ".codex/hooks.json の hook-router (build-hook-registry.py)"
+            )
     return data
 
 
@@ -235,11 +246,8 @@ def desired_hooks(existing: dict, contract: dict) -> dict:
     return desired
 
 
-def desired_discovery(existing: dict, contract: dict, repo: Path) -> dict:
-    desired = json.loads(json.dumps(existing))
-    plugins = desired.setdefault("plugins", [])
-    if not isinstance(plugins, list) or not all(isinstance(entry, dict) for entry in plugins):
-        raise ContractError("Codex marketplace plugins must be an array of objects")
+def validate_discovery_source(contract: dict, repo: Path) -> None:
+    """Validate the projector-owned marketplace source without writing discovery."""
     spec = contract["discovery"]
     source_path = spec["source_path"]
     source_root = (repo / source_path).resolve()
@@ -249,23 +257,6 @@ def desired_discovery(existing: dict, contract: dict, repo: Path) -> dict:
         raise ContractError("discovery.source_path escapes repository") from exc
     if not (source_root / ".codex-plugin" / "plugin.json").is_file():
         raise ContractError(f"marketplace source lacks Codex manifest: {source_path}")
-    managed = {
-        "name": spec["plugin_name"],
-        "source": {"source": "local", "path": source_path},
-        "policy": {
-            "installation": spec["installation"],
-            "authentication": spec["authentication"],
-        },
-        "category": spec["category"],
-        "x_harness": {
-            "distributable": spec["distributable"],
-            "scope": spec["scope"],
-            "activation_requires": spec["activation_requires"],
-        },
-    }
-    desired["name"] = spec["marketplace_name"]
-    desired["plugins"] = [entry for entry in plugins if entry.get("name") != spec["plugin_name"]] + [managed]
-    return desired
 
 
 def run(repo: Path, contract_path: Path, mode: str) -> tuple[dict, int]:
@@ -279,29 +270,22 @@ def run(repo: Path, contract_path: Path, mode: str) -> tuple[dict, int]:
             raise ContractError(f"codex.{key} must be confined to {path}")
     if contract.get("activation", {}).get("codex_discovery") != ".agents/plugins/marketplace.json":
         raise ContractError("activation.codex_discovery must be .agents/plugins/marketplace.json")
-    discovery_path = repo / contract["activation"]["codex_discovery"]
+    validate_discovery_source(contract, repo)
     hooks_path = repo / contract["codex"]["hooks_file"]
     config_path = repo / contract["codex"]["config_file"]
     hooks_existing = load_json(hooks_path) if hooks_path.is_file() else {"hooks": {}}
     config_existing = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
-    discovery_existing = load_json(discovery_path) if discovery_path.is_file() else {}
     hooks_text = json.dumps(desired_hooks(hooks_existing, contract), ensure_ascii=False, indent=2) + "\n"
     config_text = desired_config(config_existing, bool(contract["codex"]["features_hooks"]))
-    discovery_text = json.dumps(
-        desired_discovery(discovery_existing, contract, repo), ensure_ascii=False, indent=2
-    ) + "\n"
     drift = []
     if not hooks_path.is_file() or hooks_path.read_text(encoding="utf-8") != hooks_text:
         drift.append(contract["codex"]["hooks_file"])
     if not config_path.is_file() or config_path.read_text(encoding="utf-8") != config_text:
         drift.append(contract["codex"]["config_file"])
-    if not discovery_path.is_file() or discovery_path.read_text(encoding="utf-8") != discovery_text:
-        drift.append(contract["activation"]["codex_discovery"])
     if mode == "apply":
         desired_by_path = {
             contract["codex"]["hooks_file"]: (hooks_path, hooks_text),
             contract["codex"]["config_file"]: (config_path, config_text),
-            contract["activation"]["codex_discovery"]: (discovery_path, discovery_text),
         }
         apply_transaction([desired_by_path[path] for path in drift])
         status, code = ("synced" if drift else "noop"), 0

@@ -1,0 +1,105 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "portability-spike",
+ "audit_id": "P05-x-100-portability-spike",
+ "status": "pre-approval-measurement",
+ "supersedes_claim": "F-P05X88-02 の『CheckerReproducibilityTest は 11 行程度の定型で、そのまま 7 件へ移植できる』",
+ "verdict_on_that_claim": "撤回する。移植は機械的に可能だが、そのまま移植すると 7 件の新しい空ゲートが増える。加えて 1 件は原理的に移植不能",
+ "write_scope": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-100-portability-spike.json",
+ "plugins_bytes_written": 0,
+ "commit_or_push": "していない",
+ "p05_x_100_actual_work": "着手していない (7 件への実移植は未承認の structural discovered-task のため)",
+
+ "spike_setup": {
+  "clone_tree": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-------------/cca76e02-b60e-4a9a-b3de-8a72c1bc02ff/scratchpad/spike1/",
+  "structure": "spike1/plugins/guide-doc-generator/** + spike1/plugin-plans/** (cp -R、__pycache__ 削除)",
+  "root_resolution_verified": "contract_lib.repo_root() が .../spike1 を返し、build_target() が実在ファイルを指すことを実行で確認",
+  "plugin_plans_needed_because": "C01/C09 の判定器は plugin-plans/guide-doc-generator/briefs/*.json を repo root 相対で読む。最初 plugins/ だけ複製したところ RuntimeError: 契約の正本が読めない で落ちた。C05 の判定器は定数直書きで brief を読まないため、この依存の有無自体が component 固有差である"
+ },
+
+ "target_selection": {
+  "chosen": "handout-content-architect (C05)",
+  "reason": "agent kind・P05-x-88 でヒット 0 件の純粋な absent でありながら check_agent(file) という判定器の入口を持つ。つまり『入口の差が定型化の壁になるか』を実際に測れる唯一の最悪条件候補",
+  "rejected_alternative": "handout-readability-reviewer。grep -rn 'def check' plugins/guide-doc-generator/tests/handout-readability-reviewer/ が (none) で判定器そのものが存在しない。移植の可否ではなく『測る対象が無い』という別種の結論になるため、実測ではなく事実の提示で足りる"
+ },
+
+ "mutation_matrix": {
+  "note": "すべて複製ツリー上。M1 = contract_lib の return v を return list(set(v)) へ。M2 = return v の直前へ random.shuffle(v)",
+  "rows": [
+   {"mutation": "なし", "naive_port": "OK (2 tests)", "adapted_port": "OK (3 tests)"},
+   {"mutation": "M1 list(set(v))", "naive_port": "OK (緑のまま = 検出できず)", "adapted_port": "FAILED (failures=1, hash-seed テスト)"},
+   {"mutation": "M2 random.shuffle(v)", "naive_port": "OK (緑のまま = 検出できず)", "adapted_port": "FAILED (failures=2)"}
+  ],
+  "naive_port_definition": "入口の名前だけを check_skill->check_agent / build_target_dir->build_target へ機械的に置換した対照群。対象は build_target と accept fixture の 2 つで C01 の原型と同じ。違反を出す入力を含めない",
+  "adapted_port_definition": "上記に加えて reject_cases を accept fixture へ複数注入した violating fixture を対象へ足し、その違反数が 2 件以上であることを assert してから比較する。PYTHONHASHSEED 0 vs 12345 の subprocess 比較も追加"
+ },
+
+ "critical_finding_on_the_source_template": {
+  "id": "F-P05X100-01",
+  "level": "blocking-for-release",
+  "summary": "移植元である C01/C09 の CheckerReproducibilityTest は、今この瞬間それ自体が空ゲートである",
+  "measured": [
+   "実リポジトリ実測: C01 build_target violations = 0 / C01 accept fixture violations = 0 / C09 plugin_root violations = 0",
+   "したがって既存テストが比較しているのは [] == [] と '[]\\n' == '[]\\n'",
+   "複製ツリーで C01 の check_skill と C09 の check_command に M2 (random.shuffle) を注入し、実物の test_argv_and_reproducibility.py を実行 -> C01: Ran 11 tests / OK、C09: Ran 11 tests / OK。両方緑のまま",
+   "変異が生きていることの裏取り: C01 の accept fixture の SKILL.md で '## ' を '## X' へ置換した入力に対しては violation count = 26 / all identical? False。判定器は実際に非決定化しているのに、C01 のテストは 1 件も捕まえない"
+  ],
+  "implication": "P05-x-88 で covered と判定した 16 件のうち、少なくとも C01/C09 の再現性面は covered ではなく nominal-only へ格下げされる。私の前回の判定はこの 2 件について誤りだった"
+ },
+
+ "answer_q1_is_the_port_boilerplate": {
+  "question": "移植は本当に定型で済むか。check_agent / check_skill / check_command で入口が違うことが定型化の壁になるか",
+  "answer": "入口の差は壁ではない。壁は別の場所にあった",
+  "entry_point_differences_are_absorbable": [
+   "check_agent(file) vs check_skill(dir) vs check_command(root) — 引数の意味は違うが、いずれも 1 引数で list[Violation] を返すため呼び出し側は 1 行の置換で済む",
+   "build_target() (Markdown ファイルを返す) vs build_target_dir() (ディレクトリを返す) — C05 に build_target_dir() は存在しないが、対象の受け渡しを変数化すれば吸収できる",
+   "plugin-plans/ の brief を読むか否か — テスト側のコードには現れない差で、複製ツリーの構成にだけ影響した"
+  ],
+  "the_real_wall": {
+   "what": "『違反を出す入力を対象に含めるか』。ここが component 固有で、しかもこれを外すとテストは必ず緑になる",
+   "evidence": "naive port は M1 も M2 も検出せず緑のまま。adapted port は両方赤。差分は violating fixture を targets に足したかどうかだけ",
+   "why_component_specific": [
+    "違反入力の作り方が component ごとに違う。C05/C01/C09/handout-build/handout-extract/run-handout-extract/assign-handout-readability-evaluator は REJECT_CASES がタプルのリストで accept fixture へ文字列置換する形",
+    "ref-handout-design-system だけは fixtures/ ディレクトリを持たず fixtures_lib.py が受入例を生成し、reject_cases は RejectCase = namedtuple('RejectCase', ['name','expected_id','mutate']) で mutate 関数を持つ別形式。ここへは同じ 11 行は当たらない",
+    "『違反が 2 件以上出る入力』を作れないと順序の非決定 (M1/M2 が入る場所) が観測できない。1 件だけでは順序が定義されない"
+   ]
+  },
+  "boilerplate_size_revised": "11 行ではない。adapted port は 119 行で、うち _violating_target() と『違反 2 件以上』の assert が component 固有部分にあたる"
+ },
+
+ "answer_q2_does_reproducibility_mean_anything_for_agent_kind": {
+  "question": "agent kind で『何の再現性か』が成立するか。意味が無いなら、そう報告してよい",
+  "answer": "成立する。ただし『違反を出す入力を対象に含めた場合に限る』という条件つき",
+  "what_is_being_measured": "agent kind でも測っている対象は判定器 contract_lib.check_agent の出力であって、出荷される agent Markdown の挙動ではない。すなわち『この agent が同じ入力に同じ応答を返すか』ではなく『この agent を検査するテスト自身が今日と明日で同じ赤緑を出すか』を測る。これは意味のある契約である — 判定器が非決定的なら赤緑がその日の運で決まり、CI の結果が信用できなくなる",
+  "what_it_is_not": "F-P05X88-03 で書いた区別がここでも効く。script/hook kind の 14 件が測っている『成果物のバイト再現性』とは対象が違う。同じ covered の語で並べてはいけない",
+  "hard_limit": "handout-readability-reviewer には check_* 判定器が存在しない (grep -rn 'def check' で 0 ヒット)。面ごとの述語 frontmatter() / section() / run_lint() / description_issues() を各テストが直接呼ぶ構造で、『判定器の出力列』という単一の測定対象が無い。ここへはテンプレートが原理的に適用できない"
+ },
+
+ "seven_component_survey": {
+  "method": "grep -ho 'def check_[a-z]*' <comp>/*.py と find <comp>/fixtures -type d -name accept を plugins/guide-doc-generator/tests/ を根に実行",
+  "rows": [
+   {"component": "handout-build", "judge": "check_command", "reject_cases": "yes (tuple 形式)", "accept_fixture": "あり", "portability": "定型 + violating fixture 追加で可"},
+   {"component": "handout-extract", "judge": "check_command", "reject_cases": "yes (tuple 形式)", "accept_fixture": "あり", "portability": "同上"},
+   {"component": "run-handout-extract", "judge": "check_skill", "reject_cases": "yes (tuple 形式)", "accept_fixture": "あり", "portability": "同上"},
+   {"component": "assign-handout-readability-evaluator", "judge": "check_skill", "reject_cases": "yes (tuple 形式)", "accept_fixture": "あり", "portability": "同上"},
+   {"component": "handout-content-architect", "judge": "check_agent", "reject_cases": "yes (tuple 形式)", "accept_fixture": "あり", "portability": "本 spike で実測済み・可"},
+   {"component": "ref-handout-design-system", "judge": "check_skill", "reject_cases": "yes (namedtuple + mutate 関数)", "accept_fixture": "無し (fixtures_lib.py が生成)", "portability": "可だが violating fixture の作り方が別形式。定型の 11 行は当たらない"},
+   {"component": "handout-readability-reviewer", "judge": "NONE", "reject_cases": "無し", "accept_fixture": "無し", "portability": "不可。測定対象が存在しない"}
+  ]
+ },
+
+ "recommended_completion_condition_for_p05_x_100": {
+  "reject": "『7 件へ CheckerReproducibilityTest を移植する』— この完了条件のまま承認すると、緑だが何も検出しないテストが 7 件増える",
+  "adopt": "『各 component で違反を 2 件以上出す入力を用意し、判定器へ M1 (list(set(v))) と M2 (random.shuffle(v)) を注入したとき赤になることを確認する』を完了条件にする",
+  "scope_change": "対象は 7 件ではなく 8 件 (既存の C01/C09 の 2 件も同じ欠陥を持つため改修対象に含める)、ただし handout-readability-reviewer は除外して 7 件。内訳: 新規 5 件 (handout-build / handout-extract / run-handout-extract / assign-handout-readability-evaluator / handout-content-architect) + 別形式 1 件 (ref-handout-design-system) + 既存改修 2 件 (C01 run-handout-build / C09 handout-verify) = 8 件、除外 1 件 (handout-readability-reviewer)",
+  "prerequisite_finding": "F-P05X100-01 を先に受理する必要がある。C01/C09 が空ゲートであるという事実を前提にしないと、この完了条件の変更は過剰に見える"
+ },
+
+ "measured_by": {
+  "everything_above": "複製ツリー上で実際に python3 -m unittest を実行した結果。grep で代替した箇所は seven_component_survey の judge / reject_cases / accept_fixture の 3 列のみで、これは存在の有無を測る列なので grep で足りる",
+  "not_executed": "handout-readability-reviewer 以外の 6 件については adapted port を実際には書いていない。C05 の 1 件から一般化しており、ref-handout-design-system の別形式については reject_cases.py の構造を読んだだけで実行していない",
+  "clone_state": "複製ツリーの run-handout-build / handout-verify / handout-content-architect の contract_lib.py には M2 変異が入ったまま (.orig バックアップあり)。scratchpad なので実害はないが、追加測定をするなら復元が要る"
+ },
+
+ "self_correction": "P05-x-88 の F-P05X88-02 で書いた『そのまま 7 件へ移植できる』は撤回する。加えて同報告で C01/C09 の再現性面を covered と判定したのも誤りで、実測では両方とも空ゲートだった。P05-x-88.json は上書きせず本ファイルで訂正する"
+}

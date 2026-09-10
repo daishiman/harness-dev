@@ -141,6 +141,17 @@ def _is_path_shaped(value: str) -> bool:
     return "/" in value
 
 
+def _artifact_missing(path: str, repo_root: str | None) -> bool:
+    """成果物実在検査 (F5) の実体。相対パスは repo_root 基準で解決する。
+
+    contract/graph の成果物パスは repo 相対が正本。repo_root 未指定時は従来どおり
+    CWD 解決 (repo root からの起動) に後方互換で従う。
+    """
+    if repo_root is not None and not os.path.isabs(path):
+        return not os.path.exists(os.path.join(repo_root, path))
+    return not os.path.exists(path)
+
+
 def _producer_artifacts(node: dict | None, graph: dict, producer_id: str) -> list[str]:
     """producer のパス形状の成果物パスを順序保持・重複排除で返す。
 
@@ -191,6 +202,7 @@ def resolve_inputs(
     max_notes: int | None = None,
     max_note_chars: int | None = None,
     notes_schema: str = DEFAULT_NOTES_SCHEMA,
+    repo_root: str | None = None,
 ) -> dict:
     """task_id へ注入すべき producer 成果物と有界 notes を解決する (read-only 純関数)。
 
@@ -250,7 +262,7 @@ def resolve_inputs(
     injected_inputs: list[dict] = []
     for pid in producers:
         for artifact_path in _producer_artifacts(graph_nodes.get(pid), graph, pid):
-            if not os.path.exists(artifact_path):
+            if _artifact_missing(artifact_path, repo_root):
                 return {
                     "rejected": True,
                     "reason": "producer artifact missing",
@@ -273,6 +285,136 @@ def resolve_inputs(
             return {"rejected": True, "reason": "notes bound exceeded"}
 
     return {"injected_inputs": injected_inputs, "injected_notes": injected_notes}
+
+
+def resolve_inputs_batch(
+    graph: dict,
+    state: dict,
+    task_ids: list[str],
+    **kwargs,
+) -> dict:
+    """1 graph/state snapshot から複数 task の入力を一括解決する。
+
+    重複 id または1件でも拒否があれば batch 全体を fail-closed に拒否し、
+    一部 task だけの dispatch を作らない。
+    """
+    if not task_ids:
+        return {"rejected": True, "reason": "task-id batch is empty"}
+    if len(set(task_ids)) != len(task_ids):
+        return {"rejected": True, "reason": f"duplicate task-id in batch: {task_ids}"}
+    results: list[dict] = []
+    for task_id in task_ids:
+        resolved = resolve_inputs(graph, state, task_id, **kwargs)
+        if resolved.get("rejected"):
+            return {**resolved, "failed_task_id": task_id}
+        results.append({"task_id": task_id, **resolved})
+    return {"tasks": results, "task_count": len(results)}
+
+
+def resolve_execution_unit_inputs(
+    graph: dict,
+    state: dict,
+    contract: dict,
+    unit_id: str,
+    *,
+    max_notes: int | None = None,
+    max_note_chars: int | None = None,
+    notes_schema: str = DEFAULT_NOTES_SCHEMA,
+    repo_root: str | None = None,
+) -> dict:
+    """execution-unit scheduler の dependency proof から unit-wide 入力を解決する。
+
+    raw task edge は claim provenance であり、draft reorder 後の dispatch prerequisite ではない。
+    この経路は contract.depends_on unit の全 covered claim が done で実在 evidence report
+    を持つことを検査し、その proof/artifact/notes だけを 1 回で注入する。
+    """
+    if max_notes is None or max_note_chars is None:
+        schema_notes, schema_chars = _bounds_from_schema(notes_schema)
+        max_notes = schema_notes if max_notes is None else max_notes
+        max_note_chars = schema_chars if max_note_chars is None else max_note_chars
+    obligations = contract.get("obligations")
+    if not isinstance(obligations, list):
+        return {"rejected": True, "reason": "execution contract obligations is not a list"}
+    by_unit = {
+        str(item.get("id")): item for item in obligations
+        if isinstance(item, dict) and item.get("id")
+    }
+    obligation = by_unit.get(unit_id)
+    if obligation is None:
+        return {"rejected": True, "reason": f"unknown execution unit {unit_id!r}"}
+    unit = (obligation.get("parameters") or {}).get("execution_unit")
+    if not isinstance(unit, dict) or unit.get("id") != unit_id:
+        return {"rejected": True, "reason": f"execution unit metadata mismatch: {unit_id}"}
+    covered = unit.get("covered_task_ids")
+    if not isinstance(covered, list) or not covered or len(covered) != len(set(covered)):
+        return {"rejected": True, "reason": f"execution unit covered_task_ids invalid: {unit_id}"}
+    graph_nodes = _nodes_by_id(graph)
+    if any(task_id not in graph_nodes for task_id in covered):
+        return {"rejected": True, "reason": f"execution unit {unit_id} has unknown covered task"}
+
+    dependency_claims: list[str] = []
+    for dependency_id in obligation.get("depends_on") or []:
+        dependency = by_unit.get(str(dependency_id))
+        dep_unit = ((dependency or {}).get("parameters") or {}).get("execution_unit")
+        if not isinstance(dep_unit, dict):
+            return {"rejected": True, "reason": f"unknown/malformed dependency unit {dependency_id}"}
+        dep_claims = dep_unit.get("covered_task_ids")
+        if not isinstance(dep_claims, list) or not dep_claims or len(dep_claims) != len(set(dep_claims)):
+            return {"rejected": True, "reason": f"dependency unit coverage invalid: {dependency_id}"}
+        dependency_claims.extend(dep_claims)
+    if len(dependency_claims) != len(set(dependency_claims)):
+        return {"rejected": True, "reason": f"dependency unit claim overlap: {unit_id}"}
+
+    artifact_sources: dict[str, set[str]] = {}
+    artifact_kinds: dict[str, set[str]] = {}
+    injected_notes: list[str] = []
+    seen_notes: set[str] = set()
+    for producer_id in dependency_claims:
+        state_node = state.get(producer_id, {})
+        if state_node.get("state") != "done":
+            return {"rejected": True, "reason": f"dependency claim {producer_id} not done",
+                    "blocking_producer_task_id": producer_id}
+        report = state_node.get("route_report")
+        if not isinstance(report, str) or not report or not os.path.exists(report):
+            return {"rejected": True, "reason": "dependency evidence report missing",
+                    "blocking_producer_task_id": producer_id, "missing_artifact": report}
+        try:
+            _sts._assert_covered(report, producer_id, require_covered=True)
+        except ValueError as exc:
+            return {"rejected": True, "reason": f"dependency evidence coverage mismatch: {exc}",
+                    "blocking_producer_task_id": producer_id}
+        for artifact_path in [report, *_producer_artifacts(graph_nodes.get(producer_id), graph, producer_id)]:
+            if _artifact_missing(artifact_path, repo_root):
+                return {"rejected": True, "reason": "producer artifact missing",
+                        "blocking_producer_task_id": producer_id, "missing_artifact": artifact_path}
+            artifact_sources.setdefault(artifact_path, set()).add(producer_id)
+            artifact_kinds.setdefault(artifact_path, set()).add(
+                "evidence-report" if artifact_path == report else "producer-artifact"
+            )
+        producer_notes = _producer_notes(state_node)
+        if len(producer_notes) > max_notes or any(len(note) > max_note_chars for note in producer_notes):
+            return {"rejected": True, "reason": "notes bound exceeded",
+                    "blocking_producer_task_id": producer_id}
+        for note in producer_notes:
+            if note not in seen_notes:
+                seen_notes.add(note)
+                injected_notes.append(note)
+    injected_inputs = [
+        {
+            "producer_task_id": sorted(artifact_sources[path])[0],  # 旧 consumer 後方互換
+            "producer_task_ids": sorted(artifact_sources[path]),
+            "artifact_path": path,
+            "kind": "+".join(sorted(artifact_kinds[path])),
+        }
+        for path in sorted(artifact_sources)
+    ]
+    return {
+        "unit_id": unit_id,
+        "covered_task_ids": covered,
+        "dependency_unit_ids": list(obligation.get("depends_on") or []),
+        "injected_inputs": injected_inputs,
+        "injected_notes": injected_notes,
+    }
 
 
 def _keyed_state(task_state: dict) -> dict:
@@ -299,11 +441,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--task-graph", required=True, help="producer task-graph.json のパス")
     p.add_argument("--task-state", required=True, help="task-state.json のパス (nodes list or keyed)")
-    p.add_argument("--task-id", required=True, help="注入対象 task id")
+    p.add_argument("--task-id", action="append", default=[],
+                   help="注入対象 task id。複数回指定で 1 process/read の fail-closed batch")
+    p.add_argument("--execution-contract", default=None,
+                   help="execution-unit contract JSON (unit scheduler の dependency proof を使う)")
+    p.add_argument("--unit-id", default=None, help="--execution-contract と併用する execution unit id")
     p.add_argument("--notes-schema", default=DEFAULT_NOTES_SCHEMA,
                    help="notes 上限 SSOT (既定 producer handoff-notes.schema.json)")
     p.add_argument("--max-notes", type=int, default=None, help="件数上限の任意上書き (既定 schema maxItems)")
     p.add_argument("--max-note-chars", type=int, default=None, help="文字数上限の任意上書き (既定 schema maxLength)")
+    p.add_argument("--repo-root", default=None,
+                   help="相対 artifact パスの解決基準 (未指定時は CWD=repo root 前提の従来解決)")
     return p
 
 
@@ -327,14 +475,28 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        result = resolve_inputs(
-            graph,
-            _keyed_state(task_state),
-            args.task_id,
-            max_notes=args.max_notes,
-            max_note_chars=args.max_note_chars,
-            notes_schema=args.notes_schema,
-        )
+        kwargs = {
+            "max_notes": args.max_notes,
+            "max_note_chars": args.max_note_chars,
+            "notes_schema": args.notes_schema,
+            "repo_root": args.repo_root,
+        }
+        if args.execution_contract or args.unit_id:
+            if not args.execution_contract or not args.unit_id or args.task_id:
+                print("unit 入力解決は --execution-contract + --unit-id のみを指定", file=sys.stderr)
+                return 2
+            contract = json.loads(Path(args.execution_contract).read_text(encoding="utf-8"))
+            result = resolve_execution_unit_inputs(
+                graph, _keyed_state(task_state), contract, args.unit_id, **kwargs,
+            )
+        elif not args.task_id:
+            print("--task-id または --execution-contract + --unit-id が必須", file=sys.stderr)
+            return 2
+        elif len(args.task_id) == 1:
+            # 単数 CLI の stdout shape は完全後方互換。
+            result = resolve_inputs(graph, _keyed_state(task_state), args.task_id[0], **kwargs)
+        else:
+            result = resolve_inputs_batch(graph, _keyed_state(task_state), args.task_id, **kwargs)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"resolve error: {exc}", file=sys.stderr)
         return 2

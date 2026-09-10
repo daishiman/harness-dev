@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C23-01",
+  "reason": "P04 の全 component ノードが build_target が未実装の時点で実行すると失敗する という AC 後半を持つが、実装が既に存在する以上どのノードでも再現不能で、実装を消して測ることは禁止されている。結果として全ノードで同じ 再現不能 が繰り返し報告される。仕掛け自体は実在し名指しできる (各 tests/ の _harness.py / hb_c16.py / _support.py の require_script() が SCRIPT.exists() を見て fail する) が、これは必要条件であって十分条件ではない (空ファイルや別物が置かれた場合の挙動は測っていない)。cyan と orange が独立に同じ結論へ到達",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-77-ac-unimplemented-build-target-unmeasurable",
+    "title": "P04 全ノードの AC 後半 (build_target 未実装時に失敗する) を測定可能な文へ改める",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/task-graph.json",
+    "acceptance_criterion": "P04 の component ノードの acceptance_criterion 後半が、実装を消さずに測定できる文へ改められていること (例: build_target 不在時に全テストが fail する仕掛けを持つこと)。または測定手段が用意されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C23"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

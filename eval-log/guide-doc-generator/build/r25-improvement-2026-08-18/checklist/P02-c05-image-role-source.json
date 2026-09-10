@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c05-image-role-source",
+  "covered_task_ids": ["P02-c05-image-role-source"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C05.json",
+  "verified_by": [
+    {
+      "claim": "C05 の役採用手順が config/handout-purposes.json の presets[].section_order[].image_role を名指ししている",
+      "method": "編集後の agent-brief-C05.json を grep count: 'config/handout-purposes.json' / 'section_order[].image_role'",
+      "result": "pass: それぞれ 1 件 / 2 件。編集前はいずれも 0 件で、『役の宣言はプリセット側が持つ』という無名の記述しかなく読取り先が特定できなかった"
+    },
+    {
+      "claim": "値域が C23 と一致している",
+      "method": "script-brief-C23.json の preset 検査 (h) と突合",
+      "result": "pass: C23 は image_role が {screenshot, illustration} のいずれかであることを要求し、欠落を E-PRESET-IMAGE-ROLE-MISSING、列挙外を E-PRESET-IMAGE-ROLE-UNKNOWN として exit 1 にする。C05 側も同じ 2 値と同じコード名を参照する記述へ置換済み"
+    },
+    {
+      "claim": "C23 の fail-closed を迂回する分岐が C05 に残っていない",
+      "method": "編集前後の分岐記述の比較",
+      "result": "pass: 編集前は『preset が役を宣言していない節についてだけ 2 役から選ぶ』とあり、C23 が欠落を先に落とす契約と矛盾していた (C05 が選べば preset の欠落が黙って埋まり E-PRESET-IMAGE-ROLE-MISSING が発火しない経路になる)。『役を自分で選ぶ分岐を持たず、届いた場合は preset 側の欠落として親へ差し戻す』へ改めた"
+    },
+    {
+      "claim": "role の意味の正本が二重化していない",
+      "method": "参照チェーンの読解",
+      "result": "pass: 意味と使い分け = config/handout-visual-policy.json#thresholds.min_images_per_main_section.role_split、その裁定の正本 = improvement/visual-per-section-decision.json#decision.role_split、宣言の場所 = handout-purposes.json の image_role、と 3 者の役割が分離。C05 本文は語彙の再定義を持たない"
+    },
+    {
+      "claim": "編集後も JSON として妥当",
+      "method": "python3 json.load による再読込",
+      "result": "pass: parse 成功"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c05-01",
+      "level": "blocking-for-release",
+      "summary": "参照先の実データが未整備: 出荷 config/handout-purposes.json の全 43 main セクションが image_role を宣言していない (P05-x-03-acceptance-hardening で実測済み)。C05 の読取り先は正しくなったが、現状の preset を C23 に掛ければ 43 件の E-PRESET-IMAGE-ROLE-MISSING で全滅する。preset へ image_role を入れる作業が別途要る"
+    },
+    {
+      "id": "F-P02c05-02",
+      "level": "carry-forward",
+      "summary": "role_split.fallback (screenshot 素材が無ければ illustration へ落とす) は C05 の実行時判断として残る。この落下は preset の宣言を上書きするため、C23 の静的検査からは見えない。decision_log と materials_unused への記録が唯一の証跡であり、release でこの記録の必須化を検査する候補"
+    }
+  ]
+}

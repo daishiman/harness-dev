@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P01-x-01",
+  "reason": "C69 は末尾が『レビューが確認する』で人手を要するが verify_by=test。C55 は verify_by=test だが述語が『機械検証ゲートが確認する』で担い手は script。単一値のラベルでは 1 criterion 内の複数手段を表せず、P05-x-92 (verify_by が裸のラベル) の別の帰結。enum に human が実在しながら 75 件で 1 度も使われていない点も併せて測る価値がある",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P01-c46-c75.json",
+  "proposed_node": {
+    "id": "P05-x-114",
+    "title": "1 つの criterion が 2 種の検証手段を要求するが verify_by は単一値しか持てない (enum の human は未使用)",
+    "phase_ref": "phase-01-requirements.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+    "acceptance_criterion": "C69 のように test と human の両方を要する criterion が、両方の検証手段を表現できる形になっていること。check-plugin-goal-spec.py の enum に実在する human が実際に使われるか、使わない理由が記録されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C12-01",
+  "reason": "テストが撤回済みの旧契約を期待値として能動的に守っていた。折り畳みで超過を逃がす挙動と文長超過の警告止まりを固定しており、利用者要件の反対側を保証していた。正本の撤回がテストへ伝播しない経路の是正が要る",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/improvement/",
+  "proposed_node": {
+    "id": "P05-x-84",
+    "title": "正本の契約撤回がテストの期待値へ伝播する経路を設ける",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/improvement/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "撤回済み契約 (折り畳みで超過を逃がす / 文長超過を警告止まりにする) を期待値として守っているテストを特定して撤回し、同じ入力に対し現行契約どおり赤になる回帰テストへ置換する。置換後、撤回した挙動を復活させる変異が赤になることを実測する。あわせて正本の撤回がテスト期待値へ伝播しなかった経路を記述し、再発を検出する手段を 1 つ置く。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

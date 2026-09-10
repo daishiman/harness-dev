@@ -76,8 +76,14 @@ MARKETPLACE_INSTALLATION_VALUES = frozenset(
     {"NOT_AVAILABLE", "AVAILABLE", "INSTALLED_BY_DEFAULT"}
 )
 MARKETPLACE_AUTHENTICATION_VALUES = frozenset({"ON_INSTALL", "ON_USE"})
+_PLUGIN_ROOT_EXPR_RE = re.compile(
+    r"(?:"
+    r"\$\{PLUGIN_ROOT:-\$\{CLAUDE_PLUGIN_ROOT\}\}"
+    r"|\$(?:\{(?:CLAUDE_)?PLUGIN_ROOT\}|(?:CLAUDE_)?PLUGIN_ROOT)"
+    r")"
+)
 _PLUGIN_ROOT_REF_RE = re.compile(
-    r"\$(?:\{(?:CLAUDE_)?PLUGIN_ROOT\}|(?:CLAUDE_)?PLUGIN_ROOT)(?P<path>/[^\s\"']+)"
+    _PLUGIN_ROOT_EXPR_RE.pattern + r"(?P<path>/[^\s\"']+)"
 )
 _FORBIDDEN_TOML_MARKER_RE = re.compile(
     r"(?im)^\s*#.*(?:begin|end).*managed.*hooks?\b"
@@ -288,6 +294,15 @@ def _invalid_contract_report(detail: str) -> dict:
     }
 
 
+def _canonical_hook_command(command: str) -> str:
+    command = re.sub(
+        r"\s+# harness-managed:[A-Za-z0-9._-]+:[A-Za-z0-9._-]+\s*$",
+        "",
+        command,
+    )
+    return _PLUGIN_ROOT_EXPR_RE.sub("${PLUGIN_ROOT}", command)
+
+
 def _flatten_hooks(document: dict) -> list[tuple[str, str, str]]:
     hooks = document.get("hooks") if isinstance(document, dict) else None
     if not isinstance(hooks, dict):
@@ -296,12 +311,54 @@ def _flatten_hooks(document: dict) -> list[tuple[str, str, str]]:
         (
             event,
             group.get("matcher") or "",
-            re.sub(r"\s+# harness-managed:[A-Za-z0-9._-]+:[A-Za-z0-9._-]+\s*$", "", handler.get("command") or ""),
+            _canonical_hook_command(handler.get("command") or ""),
         )
         for event, groups in hooks.items() if isinstance(groups, list)
         for group in groups if isinstance(group, dict)
         for handler in group.get("hooks", []) if isinstance(handler, dict)
     ]
+
+
+def _claude_hook_document(plugin_root: Path, manifest: dict, violations: list[dict]) -> dict:
+    """Claude manifest inline hooks / shared hook-file reference を1文書へ解決する。"""
+    declared = manifest.get("hooks") if isinstance(manifest, dict) else None
+    if isinstance(declared, dict):
+        return {"hooks": declared}
+    if declared is None:
+        # Claude Code auto-discovers the product-default hooks/hooks.json.
+        # Omitting the manifest field is therefore an active delivery surface,
+        # not an empty hook document.
+        default_path = plugin_root / "hooks" / "hooks.json"
+        if not default_path.is_file():
+            return {}
+        resolved = default_path.resolve()
+    elif not isinstance(declared, str):
+        violations.append(_v(SEV_INVALID, "claude_hooks_manifest_invalid", "Claude manifest hooks 型が不正"))
+        return {}
+    else:
+        resolved = _path_within(plugin_root, declared)
+        if resolved == (plugin_root / "hooks" / "hooks.json").resolve():
+            violations.append(
+                _v(
+                    SEV_CONFLICT,
+                    "claude_default_hooks_redeclared",
+                    "Claude標準hooks/hooks.jsonは自動loadされるためmanifestで再宣言禁止",
+                )
+            )
+        if resolved is None or not resolved.is_file():
+            violations.append(
+                _v(SEV_INVALID, "claude_hooks_path_invalid", f"Claude manifest hooks path が plugin root 内の実在fileでない: {declared!r}")
+            )
+            return {}
+    try:
+        document = json.loads(resolved.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        violations.append(_v(SEV_INVALID, "claude_hooks_document_invalid", str(exc)))
+        return {}
+    if not isinstance(document, dict) or not isinstance(document.get("hooks"), dict):
+        violations.append(_v(SEV_INVALID, "claude_hooks_document_invalid", f"hooks object がない: {declared!r}"))
+        return {}
+    return document
 
 
 def _validate_common_settings(repo_root: Path, slug: str, violations: list[dict]) -> dict:
@@ -380,11 +437,6 @@ def _validate_common_settings(repo_root: Path, slug: str, violations: list[dict]
             "authentication": discovery.get("authentication"),
         },
         "category": discovery.get("category"),
-        "x_harness": {
-            "distributable": discovery.get("distributable"),
-            "scope": discovery.get("scope"),
-            "activation_requires": discovery.get("activation_requires"),
-        },
     }
     managed_entries = [
         entry for entry in discovery_doc.get("plugins", [])
@@ -402,11 +454,18 @@ def _validate_common_settings(repo_root: Path, slug: str, violations: list[dict]
         violations.append(_v(SEV_DRIFT, "codex_hooks_feature_disabled", ".codex/config.toml features.hooks=true 必須"))
     if isinstance(config.get("hooks"), dict):
         violations.append(_v(SEV_CONFLICT, "codex_same_layer_hook_duplicate", "hooks.json と inline [hooks] の併用禁止"))
-    project_keys, claude_keys, plugin_keys = map(_flatten_hooks, (project, claude, plugin))
+    claude_document = _claude_hook_document(claude_path.parent.parent, claude, violations)
+    project_keys = _flatten_hooks(project)
+    claude_keys = _flatten_hooks(claude_document)
+    plugin_keys = _flatten_hooks(plugin)
     for hook in hooks:
         if not isinstance(hook, dict):
             continue
-        key = (hook.get("event"), hook.get("matcher") or "", hook.get("command"))
+        key = (
+            hook.get("event"),
+            hook.get("matcher") or "",
+            _canonical_hook_command(hook.get("command") or ""),
+        )
         delivery = hook.get("delivery")
         expected_project = 1 if delivery == "project" else 0
         expected_plugin = 1 if delivery == "plugin" else 0

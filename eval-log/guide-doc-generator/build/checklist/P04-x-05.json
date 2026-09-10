@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-05",
+  "covered_task_ids": [
+    "P04-x-05"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 RESOLUTION-P04-x-05.md が実在する",
+      "method": "ls plugin-plans/guide-doc-generator/briefs/RESOLUTION-P04-x-05.md",
+      "result": "pass (29329 bytes)"
+    },
+    {
+      "claim": "G-03: script-brief-C15.json から Unicode ブロック denylist が消え C16 の CR-EMOJI へ委譲されている",
+      "method": "algorithm 手順 4 を読解。残る U+2600-27BF / U+2714 / U+2699 / U+FE0F の言及は全て『旧記述がなぜ誤りか』の否定文脈と acceptance_check のフィクスチャ指定。判定は C16 の scan_emoji(text) 呼出しへ一本化され、C16 が解決できない場合は独自判定へ退避せず exit 2 (fail-closed)",
+      "result": "pass"
+    },
+    {
+      "claim": "G-03: CR-EMOJI が通過させると名指す U+2714 (VS16 なし) が通ることが受入検査になっている",
+      "method": "AC-C15-3b (U+2714 で exit 0) と AC-C15-3c (U+2699 U+FE0F で exit 1) の対が存在する",
+      "result": "pass"
+    },
+    {
+      "claim": "G-04: assets 配下の同梱資産に producer を持つ leaf が task-graph 上に一意に存在する",
+      "method": "task-specs/P05-x-02.md の produces = plugins/guide-doc-generator/assets/ と validate-task-graph 規則 (c) の通過",
+      "result": "pass (P05-x-02。裁定方針が書いた仮名 P05-x-01 は既存 phase gate と id 衝突したため改番済みで、その旨も RESOLUTION へ記録されている)"
+    },
+    {
+      "claim": "A: C23 の structural_guarantee が何を数えているかを一義に読める文言へ更新された",
+      "method": "invariant_vs_variant.structural_guarantee を読解。『preset_definitions の要素 1 件が持つトップレベルのキー面であって本ブリーフ最上位のキー面ではない』と明示し、閉じた allowlist {section_order, recommended_parts, notes, presentation_order_variants, required_document_fields, granularity_defaults} + 手順 4(g) の E-PRESET-FORBIDDEN-KEY へ置き換えられ、不変条件が個数から allowlist の閉性へ移った",
+      "result": "pass"
+    },
+    {
+      "claim": "B: C22 の検出が 10 件で stdout 固定順も 10 件へ揃っている",
+      "method": "detections[].id = NAR-01..NAR-10、stdout に NAR-10 が現れる、canonical_rules.detection_order_contract が新設されている",
+      "result": "pass"
+    },
+    {
+      "claim": "C: granularity_defaults が全語彙を明示列挙し proposal に既定がある",
+      "method": "defaults のキーが agenda/guide/lecture/onboarding/proposal/report/study-notes/study-plan の 8 件。proposal = standard + sourced。fallback 既定を置かず coverage_guarantee がその理由を記述",
+      "result": "pass"
+    },
+    {
+      "claim": "既定値がプリセットの内側の必須キーへ移され被覆漏れが構造的に不可能になった",
+      "method": "preset_definitions[] 全 8 件が granularity_defaults を持つこと、storage_decision と手順 4(j) の必須化、手順 4(f) の presets↔vocabulary 完全一致との組み合わせ",
+      "result": "pass"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --short plugin-plans/guide-doc-generator/ plugins/guide-doc-generator/",
+      "result": "pass (plugins/guide-doc-generator/ 側に本 leaf 由来の変更なし)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "裁定 A / B が要求するテスト実体の期待値更新 (test_cli_contract.py / _support.DETECTION_ORDER / test_r20_invariants.PresetKeySurfaceTest) は本 leaf の write_scope 外のため行っていない。P04-x-06 が引き受ける"
+    },
+    {
+      "kind": "out-of-scope-gap-remaining",
+      "detail": "R22-AMENDMENT.md が記録した未決 3 件 (C12 の enum 違反診断コード名 / NAR-09 の standard 帯の上下限 / claim ブロックの生成責務が C11 のどのブロック種別か) は task-spec の裁定対象 5 件に含まれないため本 leaf では扱っていない。P05-C12-01 / P05-C11-01 / P05-C22-01 の build 時に実装側の判断として記録し、P05-x-01 の集約で突き合わせる"
+    }
+  ]
+}

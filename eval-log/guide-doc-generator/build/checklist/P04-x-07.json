@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-07",
+  "covered_task_ids": [
+    "P04-x-07"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "産出物 RESOLUTION-R23.md が実在する",
+      "method": "ls -la で存在と size を確認",
+      "result": "pass (31349 bytes)"
+    },
+    {
+      "claim": "裁定 (a): overlay-only 固定が撤回され baked-with-overlay が既定になった",
+      "method": "script-brief-C21.json 内の overlay-only 全 7 出現の文脈を再帰走査で列挙",
+      "result": "pass (algorithm[7] は写像固定のみで policy を固定せず、algorithm[9]=8b が text_policy=\"overlay-only\" のとき text_policy_reason 非空を要求、acceptance_checks[11] が『overlay-only 固定が残っていない』を明示検査。固定の記述は 0 件で、選択肢としてのみ残存)"
+    },
+    {
+      "claim": "裁定 (b): 焼き込み量が単一整数で確定した",
+      "method": "baked_text_discipline を全文出力",
+      "result": "pass (blocks_per_image_max=6 / chars_per_block_max=12。いずれも範囲でなく単一整数。実測根拠が blocks_rationale / chars_rationale に記載)"
+    },
+    {
+      "claim": "完全文の禁止が『禁止規則』ではなく『表現不可能な形』として実装された",
+      "method": "block_shape / forms / why_forms_are_an_allowlist を読解",
+      "result": "pass ({form, text, emphasis?} のタグ付きで form は keyword/question/metric の閉じた 3 語。12 字以下 + 文末記号不可の組合せで完全文が成立しない。P04-x-05 の『違反を表現不可能にする』原則の踏襲)"
+    },
+    {
+      "claim": "(b) の数値が C11 の text_limits と別系統として分離されている",
+      "method": "script-brief-C21.json 内の 180 / 400 / 900 の出現数と文脈を確認",
+      "result": "pass (各 1 回。いずれも not_c11_text_limits の相互参照散文の中のみで、キー名・単位・writer・失敗症状の 4 点で別系統である旨が明記。値の第 2 正本にはなっていない)"
+    },
+    {
+      "claim": "裁定 (c): style family 2 系統と決定論選択規則が確定した",
+      "method": "image_style_families のキー構造を列挙",
+      "result": "pass (families / selection_rule / no_pattern_rule / why_purpose_vocabulary_is_not_a_key / future_extension / not_a_reimplementation。図解型 6 語からの全域写像で fallback なし)"
+    },
+    {
+      "claim": "裁定 (d)(e) を含む 3 節が C21 ブリーフへ新設された",
+      "method": "トップレベルキーの存在確認",
+      "result": "pass (baked_text_discipline / image_style_families / degradation_proxy_checks の 3 節)"
+    },
+    {
+      "claim": "C05 ブリーフに追加受入基準が入った",
+      "method": "agent-brief-C05.json の全文文字列に対し AC8 / AC9 / AC10 を探索",
+      "result": "pass (3 件とも存在)"
+    },
+    {
+      "claim": "2 本のブリーフ JSON が parse 可能",
+      "method": "json.load",
+      "result": "pass"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain plugins/guide-doc-generator/",
+      "result": "pass (untracked のディレクトリ 1 行のみ。本 leaf 由来の変更なし)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "裁定 (a) の安全弁の受け側 — 画像が崩れたとき overlay を表示するための C11 側 markup — は C11 ブリーフの変更を要するが、本 leaf の produces / acceptance_criterion の宣言外。RESOLUTION の追従表と C05 の open_questions に未割当として明記されている。owner leaf での追従が必要 (P05-x-01 のフェーズゲートで再確認する)"
+    },
+    {
+      "kind": "spec-question-answered-with-third-option",
+      "detail": "task-spec が二択で問うた 2 点に対し worker が第 3 の形を選んだ。(1) 数値強調の『推奨か必須か』→ 条件付き必須 + 出所の逐語一致 (どちらの二択でも数値捏造の誘因が残るため) (2) motifs の『非空検査を足すか』→ 配列を {platform, primary, props[]} の 3 役構造体へ変更 (非空検査は [\"speech-label\"] 1 件を通してしまうため、richnessFloor をデータ形にした)。いずれも『違反を表現不可能にする』方向であり裁定の原則と整合する"
+    },
+    {
+      "kind": "spec-key-narrowed",
+      "detail": "task-spec は style family の選択を『用途種別 (C23 語彙) × 図解型』から引くとしていたが、worker は用途種別を選択キーから外し図解型 1 本にした。理由: C23 の 8 語が C21 にも並ぶと P04-x-05 裁定 C の『被覆が 2 つの列挙に分かれる』欠陥が再発し、かつ C23 語彙は本 leaf の produces 外。将来経路は preset_definitions[].image_style_family として future_extension に記録済み。妥当と判断する"
+    },
+    {
+      "kind": "adjudication-rejected-spec-candidate",
+      "detail": "task-spec が (d) の候補に挙げた 2 件を worker が根拠つきで却下した。(1) richnessFloor のプロンプト明記 → 実測 prompt.md で vendor script が既に genome から注入しており、C21 が足すと AC-C21-1 が禁じる『プロンプト本文の組み立て』になる (2) diagramPrimitives 非空 → 実測 22 枚の meta に 1 件も存在せず noveltyRule 専用フィールドなので、必須化は deterministicSelection と矛盾する。いずれも実測に基づく却下で、代わりに 4 件の代理指標を採用している"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量の残り 3 件。(1) ブロック数は genome の範囲 6-8 の下限 6 を採用 (本契約が genome の部分集合であり続ける方を選んだ) (2) 2 family 混在時は --genome が 1 つしか取れないため build を family ごとに 2 回起動する設計を追加 (task-spec に記述なし) (3) 生成後 meta の drift を exit1 でなく warn にした (画像自体は有効で出荷を止める理由がないため)"
+    }
+  ]
+}

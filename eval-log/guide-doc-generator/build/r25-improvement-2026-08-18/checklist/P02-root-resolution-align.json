@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-root-resolution-align",
+  "covered_task_ids": ["P02-root-resolution-align"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+  "verified_by": [
+    {
+      "claim": "C17 と C09 の root 解決が C15 と同じ 4 段になっている",
+      "method": "script-brief-C15.json#algorithm 手順 2 (HB_ROOT → ${HB_ROOT:-$CLAUDE_PLUGIN_ROOT} → 候補直下の .claude-plugin/plugin.json の name==\"guide-doc-generator\" 照合 → __file__ の親の親) と、C17#dependencies.runtime_catalog.root_resolution / C09#delegation_form を突合",
+      "result": "pass: 両者とも『plugin 実体解決 4 段に従う』と宣言し、段の内容を複製せず正本を参照する形。旧 3 段記述 (plugin.json 照合を欠く) を P03-x-02 で撤回した経緯も両者に明記されている"
+    },
+    {
+      "claim": "plugin.json の name 照合を含む",
+      "method": "撤回記述の読解",
+      "result": "pass: C17 は『.claude-plugin/plugin.json を読み name==\"guide-doc-generator\" を照合する段を欠いていた』、C09 は『候補直下の .claude-plugin/plugin.json の name==\"guide-doc-generator\" 照合を欠く』として、照合段の欠落が誤動作の原因だったことを両者が記録"
+    },
+    {
+      "claim": "4 段すべてが外れた場合の挙動が書かれている",
+      "method": "C17 の (a) と C09 の failure_modes を読解",
+      "result": "pass: C17 = exit 2 とし試した 4 経路と各々の不成立理由を stderr へ列挙。C09 = root 自体が解決できない場合はゲート単位の not-run ではなく起動側の失敗として全体を incomplete とし『4 本とも走っていない』ことを明示 (root 不在を script 不在と報告しない理由つき)"
+    },
+    {
+      "claim": "正本参照が行番号に依存しない形になった",
+      "method": "'script-brief-C15.json:39' の出現数を編集前後で実測",
+      "result": "pass: C17 1 件 / C09 1 件 → いずれも 0 件。'script-brief-C15.json#algorithm 手順 2' へ置換済み。行番号 39 の実体は algorithm[1] であり、JSON の再整形で容易にずれる参照だった (本 build でも複数の brief を再シリアライズしている)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02root-01",
+      "level": "carry-forward",
+      "summary": "行番号参照 'script-brief-C15.json:39' が write_scope 外に 3 件残存: evidence/P03.json、task-specs/P05-x-47.md、task-specs/P05-x-45-root-resolution-shipped.md。証跡と仕様書側なので実害は小さいが、C15 を再整形した時点で全て別の行を指す"
+    },
+    {
+      "id": "F-P02root-02",
+      "level": "needs-user-decision",
+      "summary": "正本が 2 箇所ある宣言そのものが不整合: C17/C09 は『手順文の正本は component-inventory.json#envelope_design.env_resolution と C15#algorithm 手順 2 の 2 箇所』と書くが、この 2 つは段の並びが違う。inventory は primary / fallback_expression / second_fallback(__file__) / guard(plugin.json 照合) の順で照合を『二重防御』として段の外に置き、C15 は plugin.json 照合を 3 段目・__file__ を 4 段目として段の中に置く。どちらを 4 段の正本とするか (あるいは inventory 側を C15 の並びへ揃えるか) は plan レベルの裁定が要る"
+    }
+  ]
+}

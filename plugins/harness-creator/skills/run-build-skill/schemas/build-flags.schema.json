@@ -28,6 +28,12 @@
       "default": "incremental",
       "description": "post-build検証量。incremental=証跡再利用+差分のみ、exhaustive=30思考法/全live明示実行、build-only=LLM/live未実施を記録。"
     },
+    "build_stage": {
+      "type": "string",
+      "enum": ["draft", "release"],
+      "default": "draft",
+      "description": "構築範囲。draft=まず使える実体+決定論ゲートで停止して利用者へ引き渡す既定、release=確認後に残りの受入・意味・実走・監査を回収。自動昇格しない。"
+    },
     "with_subagent": {
       "type": "object",
       "additionalProperties": false,

@@ -1,0 +1,546 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/harness-creator",
+    "reviewed_at": "2026-08-20T01:37:00Z"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "auto-record-lesson.py:43-108 の regex は quoted JSON、Authorization: Bearer、--api-key VALUE を完全にマスクできない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "安全な永続化目的と credential 残存が衝突する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "quoted/nested/URL/CLI option 形式が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "一部 credential だけはマスクされる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "redaction 後は shell 非依存の引数配列で渡す。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "hook-ci",
+          "description": "代表的な JSON/header/CLI 形式の credential が runtime event log に残りうる。",
+          "recommended_intervention": "構造化 payload の再帰 key redaction、Bearer/header 優先順序、CLI option/URL/token prefix 検査、保存直前再検査を追加する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
+            "line": 43
+          },
+          "root_cause": "機密が残る→構造を失った文字列だけを単一 pass regex で処理→複合構文で先の置換が後の検出条件を壊す→auto-record-lesson.py:43"
+        }
+      ],
+      "score": 0.33
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "engine:363 は context/evidence 文字列の集合サイズを独立性の代理とし、adapter は session/turn/tool-use ID を自動生成する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "状態順序自体は循環しない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "件数条件はあるが証拠源の意味検査がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "ID 一意性と根本原因/証拠源独立性を同一視する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "早期 promote はテストで拒否される。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "同じ障害を別 session で繰り返すだけで独立観測条件を満たしうる。",
+          "recommended_intervention": "session ID を冪等キーに限定し、repository/revision・producer・root-cause fingerprint・evidence locator で独立性を判定する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+            "line": 363
+          },
+          "root_cause": "同一原因が昇格できる→文字列集合数を独立性の代理にする→adapterが一意 ID を自動生成→意味独立性検査がない→engine:363"
+        }
+      ],
+      "score": 0.42
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "engine:380 は helpful reuse だけを上方状態に使い neutral/unhelpful を降格/再監査/検索順位に反映しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "上方状態条件は決定論的。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "負の feedback、再監査、降格がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "supersede は監査履歴を残す。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "events→entry→search は非循環。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dependency-loop",
+          "description": "unhelpful reuse が増えても熟成度と露出が維持される。",
+          "recommended_intervention": "v1 では unhelpful 閾値で needs-review にし、promoted の自動降格は所有者判断が必要な別遷移にする。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py",
+            "line": 380
+          },
+          "root_cause": "低品質 entry が維持される→helpful だけが状態に反映→unhelpful が調整 loop を起動しない→engine:380"
+        }
+      ],
+      "score": 0.4
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "adapter:204 は親 hook を0で返す一方、possible_duplicate を一時 stderr にしか残さない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "非ブロック性と明示解決は両立可能。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "durable pending queue がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "fail-soft と exit0 は一致。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "解決経路への依存が切れる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.58
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "Codex/Claude は薄い adapter と共通 engine を使い、package 不変性と Git common dir の継続性を両立する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "curated/runtime の writer は分離される。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "project/non-git/user 保存先がある。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "製品別入口と共通 store が合う。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "Codex native surface は plugin delivery で配布される。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "external-intelligence.md:7-14 は quota/cache 保証ではなく重複統合・helpful reuse・再検索回避を直接価値にする。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "外部知能と prompt cache の因果を分離する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "主要利用経路は8 commandsで覆われる。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "README・SKILL・参照文書が同じ境界を述べる。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "search→show→reuse の段階依存が明確。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.88
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "engine:335 の full snapshot event に compaction/checkpoint/retention/migration 契約がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "hash chain と派生 projection のモデルは一貫。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "長期容量上限と migration 契約がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "v1 state/schema_version は現行内で合う。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "append→materialize→verify の順は明確。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.48
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "capability-manifest.schema.json:54 は runtime_store/runtime_scope を required にせず、KL-008 も欠落を legacy として skip する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "legacy 互換の意図自体は明示される。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "properties 定義はある。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "新規生成物の境界宣言欠落を fail-closed で検出できない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "宣言がある場合の未知 store/engine 欠落は拒否する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "新世代 with-knowledge 生成物から runtime 境界が脱落しても legacy として合格する。",
+          "recommended_intervention": "generation spec marker を追加し、新世代で runtime_store/runtime_scope/consult_at を required にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/references/capability-manifest.schema.json",
+            "line": 54
+          },
+          "root_cause": "単純な key 欠落を legacy 判定とし、生成世代の証明を持たない。"
+        }
+      ],
+      "score": 0.43
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "plugin-composition.yaml:186 は直接 KPI 名を列挙するが、観測窓・分母・baseline・export を生成する collector がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "quota 因果と直接 KPI を分離する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "KPI 名はあるが集計契約がない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "event data は集計素材になる。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "event log から決定論集計可能。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "dogfooding",
+          "description": "外部知能が再検索/重複を減らしたかを期間別に反証できない。",
+          "recommended_intervention": "read-only metrics subcommand を将来追加する前に KPI 算式・分母・unknown 扱いを契約化する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/plugin-composition.yaml",
+            "line": 186
+          },
+          "root_cause": "KPI 名だけを宣言し集計 export と baseline を設計していない。"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "templates/knowledge-skeleton/scripts/add_entry.py:305 は runtime entry ID、chain head、promoted status、approval evidence を要求せず curated seed へ書ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "runtime と curated の物理先は分離される。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "promotion 側の入力要素は揃う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "promoted 知見だけを curated 化する契約を writer が強制しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "hook から curated writer は直接呼ばれない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "critical",
+          "bucket": "rubric-governance",
+          "description": "未検証の知見も add_entry.py に直接渡せば curated seed へ書ける。",
+          "recommended_intervention": "runtime promoted entry の verify/status/target/approval/falsifier/rollback を検証する curated import command を唯一経路にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py",
+            "line": 305
+          },
+          "root_cause": "promotion は runtime 状態更新だけで、curated writer がその証拠を検証しない。"
+        }
+      ],
+      "score": 0.34
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "所見は入口安全性、runtime状態/成熟、curated昇格、長期運用の4島に集約され、基盤の重複ではなく意味ゲート不足が主因である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "重複 issue を主 finding へ統合した。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "入口から長期運用までの島を覆う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "テスト PASS と意味上の欠落を分離した。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "入口→runtime→curated→次回検索の依存系列で集約できる。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.82
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "_meta": {
+    "role": "REQ-7 の入力。『文章が長ったらしく何行も続く』ことを警告でなく完了ゲートで止めるための確定値を決める",
+    "consumed_by": "REQ-7 (plugin-plans/guide-doc-generator/improvement/findings-2026-08-18.json)",
+    "why_here": "config/ と assets/tokens/ は P05-x-03 が唯一の producer であり build が上書きする。判断の正本は build の入力側であるこのファイルに置く",
+    "user_instruction": "利用者指定 2026-08-18: 『文章が長ったらしく何行も書くっていうところ、これだけは絶対に防ぐ。資料としてめちゃくちゃ見にくいから』",
+
+    "measured_from": {
+      "source": "参照資料 /Users/dm/Downloads/guide (2).html の全 <p> 実測 (2026-08-18)",
+      "paragraphs": {"count": 43, "median": 21, "mean": 28.1, "p90": 54, "max": 81, "over_200_chars": 0},
+      "sentences": {"count": 50, "median": 20.5, "max": 67, "over_45_chars": 5},
+      "sentences_per_paragraph": {"median": 1, "max": 3},
+      "reading": "参照資料の本文は『1 段落 = 1〜2 文・最大でも 81 字』で終わっている。何行も続く散文は 1 つも無い。見やすさの実体はこの短さである"
+    },
+
+    "current_state": {
+      "budget": {"overview": 180, "standard": 400, "detailed": 900},
+      "budget_source": "assets/tokens/*.json の text_limits.block_body_max_chars_by_detail_level",
+      "gap": "参照資料の段落最大 81 字に対し、現行予算は 2.2 倍 (overview) から 11.1 倍 (detailed)。予算内に収まっていても参照資料の 5 倍の長さの散文が書ける",
+      "escape_hatch": "予算を超えてもビルドは通る。E-TEXT-OVERFLOW は report_overflow=not args.normalize (validate-handout-config.py:1977) で、--normalize を通す実運用経路では報告されない。代わりに fold_section が超過分を B10 (折り畳み) へ退避し exit 0 になる",
+      "reproduced": "detail_level=overview の節へ 750 字の TEXT を入れて --normalize → exit 0。TEXT 180 字 + B10 へ 570 字。B10 は micro_copy.exempt_parts なので畳んだ先では文字数を一切問われない"
+    }
+  },
+
+  "decision": {
+    "body_budget": {
+      "code": "E-TEXT-OVERFLOW",
+      "level": "error",
+      "value_by_detail_level": {"overview": 60, "standard": 100, "detailed": 160},
+      "why": "参照資料の段落は中央値 21 字・最大 81 字。standard=100 はその最大値に余裕を足した値で、およそ 2〜3 行に収まる。overview=60 は中央値の約 3 倍で 1〜2 行。detailed=160 でも参照資料の最大値の 2 倍までしか許さない。現行 (180/400/900) は参照資料の 2〜11 倍であり、予算を守っても『何行も続く散文』が書けてしまう",
+      "canonical_location": "assets/tokens/*.json の text_limits.block_body_max_chars_by_detail_level。既存の canonical_source 注記の規約に従い script へ数値を焼かない",
+      "standard_equals_default": "block_body_max_chars (既定) も standard と同じ 100 へ揃える。現行の規約 (standard_equals_default) を維持する"
+    },
+
+    "close_the_escape_hatch": {
+      "value": "折り畳みへの退避を長文の逃げ道として使えなくする",
+      "rules": [
+        {"rule": "report_overflow を --normalize でも真にする", "why": "検査を正規化の有無で切り替えているために、実運用経路だけ検査が消えていた。round-trip の都合で正規化時に本文を切る必要があるとしても、切った事実の報告まで消す理由は無い"},
+        {"rule": "fold_section の実行回数上限を 0 とする (第1稿を含む全経路)", "code": "E-TEXT-FOLDED", "level": "error", "why": "折り畳みは『構造上どうしても長い本文』の救済であって、要約を省く手段ではない。回数 0 にすると、超過は必ず書き手が短くして解決することになる"},
+        {"rule": "B10 を micro_copy.exempt_parts から外さない", "why": "B10 は既定で閉じており原文を畳む部品なので免除自体は妥当。逃げ道を塞ぐのは fold 回数の側で行い、免除規則は触らない"}
+      ]
+    },
+
+    "sentence_gate": {
+      "code": "W-SENTENCE-LONG",
+      "level": "error",
+      "max_chars": 60,
+      "max_count": 1,
+      "why": "参照資料の文は中央値 20.5 字・最大 67 字であり、45 字超の文も 50 文中 5 つある。したがって『45 字超が 3 つ以上で警告』という現行は参照資料を通すための緩さではなく単に緩い。上限を 60 字とし、1 つでも超えたら落とす。長い 1 文は改行では解決せず、文を割るしかないためこの形が正しい",
+      "canonical_location": "config/handout-visual-policy.json の micro_copy と同階層へ sentence 節を新設する",
+      "action": "validate-handout-config.py:72-73 の LONG_SENTENCE_CHARS=45 / LONG_SENTENCE_COUNT=3 を fallback 定数へ降格する (FALLBACK_BODY_MAX_CHARS と同じ扱い)。これは本プラグインで唯一 config へ出ていない文章系閾値である"
+    },
+
+    "sentences_per_body": {
+      "code": "E-TEXT-PARAGRAPH",
+      "level": "error",
+      "max_sentences": 3,
+      "why": "参照資料は 1 段落あたり中央値 1 文・最大 3 文。文字数だけを縛ると『短い文を何本も並べた長い段落』が残るため、文の本数でも縛る。3 文を超えるなら箇条書きへ落とすべき内容である",
+      "canonical_location": "config/handout-visual-policy.json の sentence 節"
+    },
+
+    "why_error_not_warning": "警告は exit 0 で通る。現行は長文に関する検査が 5 つあって全て警告か無効化であり、結果として一度も止まらなかった。利用者の指定は『絶対に防ぐ』であるため、警告のままでは要求を満たさない"
+  },
+
+  "risk_and_impact": {
+    "draft_first": "第1稿優先の運用と衝突しない。文字数検査は決定論で即座に効き、生成待ちを伸ばさない。短く書くことは第1稿でこそ守られるべき制約である",
+    "existing_artifacts": "現行予算 (180/400/900) で書かれた examples/ と tests/ の構成データは新予算で落ちる可能性が高い。examples を新予算へ書き直し、参照資料と同じ粒度の手本にする。これは副作用ではなく、この改善が求めている変更そのものである",
+    "escape_valve": "どうしても長い説明が要る場合の逃がし先は B10 ではなく『節を分ける』か『箇条書きへ落とす』こと。REQ-5(b) の構造化検査 (節が列挙部品または表部品を 1 件以上持つこと) と対で効かせる。片方だけでは、短い散文が大量に並ぶか、構造化されているが 1 要素が段落になるかのどちらかが残る"
+  }
+}

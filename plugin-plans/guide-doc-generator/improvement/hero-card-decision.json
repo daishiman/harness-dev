@@ -1,0 +1,174 @@
+{
+  "_meta": {
+    "role": "REQ-8 の入力。冒頭の資料レベル記述 (目的 / 背景 / ゴール / 覚えること 等) をカード化し、文章長ゲートの対象へ入れる確定値を決める",
+    "consumed_by": "REQ-8 (plugin-plans/guide-doc-generator/improvement/findings-2026-08-18.json)",
+    "why_here": "config/ と assets/tokens/ は P05-x-03 / P05-x-02 が唯一の producer であり build が上書きする。判断の正本は build の入力側であるこのファイルに置く",
+    "user_instruction": "利用者指定 2026-08-18 (追補2): 『各項目、明らかにこの辺文章がめちゃくちゃ多い。この辺もカードで見やすく、UI/UX 見やすく整えてほしい』",
+    "measured_from": {
+      "source": "利用者が提示した実出力の冒頭ブロック (2026-08-18)",
+      "fields": [
+        {
+          "field": "purpose",
+          "chars": 102,
+          "sentences": 1,
+          "max_sentence": 102
+        },
+        {
+          "field": "background",
+          "chars": 185,
+          "sentences": 4,
+          "max_sentence": 70
+        },
+        {
+          "field": "goal",
+          "chars": 89,
+          "sentences": 1,
+          "max_sentence": 89
+        }
+      ],
+      "bullets": "箇条書き 12 件は全て 19-32 字で micro_copy.caption (32) の範囲内。問題は箇条書きではなく、冒頭 3 項目の段落記述である",
+      "reading": "REQ-7 で確定した本文予算 (standard=100 字 / 1 文 60 字 / 1 本文 3 文) を当てると、purpose は 1 文 102 字で 60 字超、background は 185 字で予算超過かつ 4 文。参照資料の段落 (中央値 21 字・最大 81 字) と比べても長い",
+      "screenshot_evidence": [
+        "目的/背景/ゴールがラベルと本文の区切り無く 1 行で続き (『目的裏づけの取れた記述…』)、3 段落が縦に連なっている",
+        "箇条書きが見出し無しで 4 群 (計 12 行) 連続し、どの群が何の一覧か判別できない",
+        "attainment_level の値 `operable` が英字の生の列挙値のまま読者に見えている",
+        "duration `20分` が裸のテキストで、日付 `2026/08/18` のようなチップになっていない",
+        "上部ナビ (要点 / 現行の大きな流れ / 突き合わせて分かったこと / 自動化の可否をどう見るか / 次にやること / 補足) が素のリンク行で、現在位置も区切りも無い"
+      ]
+    },
+    "root_cause": {
+      "not_a_card": "render-handout.py:1947-1951 は目的/背景/ゴールを `<p class=\"hero-purpose\">` 等の段落として縦に並べ、ラベルを行頭の span で付けているだけである。セクション本体には section-card / section-label / section-num の カード契約が既にある (render-handout.py:2137-2173) のに、冒頭だけが素の段落のまま取り残されている",
+      "unlabeled_lists": "focus_theme / target_tasks / must_remember / no_need_to_remember が見出しの無い `<ul class=\"meta-list ...\">` として 4 本連続で並ぶ (render-handout.py:1962-1990)。CSS クラスでしか区別が無いため、読み手はどの箇条書きが何の一覧なのか判別できない",
+      "not_gated": "validate-handout-config.py の check_text_bodies は sections[].parts[] のうち part==TEXT だけを走査する (1402-1416)。資料レベルのフィールドは 1 文字も検査されない。REQ-7 で本文側のゲートを error へ上げても、冒頭の長文はこの経路の外側にあるため一切止まらない",
+      "pattern": "図解 (C14 は描けるのにプリセットが呼ばない)・命名 (C19 は日本語を保てるのに C12 が先に潰す) と同型。機構は既にあるのに、この項目群だけが経路へ繋がっていない"
+    },
+    "user_instruction_2": "利用者指定 2026-08-18 (追補3、実出力スクリーンショット添付): 『上部の要点とか、現行の大きな流れとかっていうところです。ここ、見やすくしてください』",
+    "correction_2026-08-18": "初版の hero_field_budget (新コード E-HERO-OVERFLOW / purpose 60・goal 60・background 100) は誤りだった。briefs/config/handout-visual-policy.json の opening.hero_fields (W-HERO-LONG / purpose 60・background 80・goal 50・lead 40) と opening.hero_total (W-HERO-HEAVY / 合計 400 字) が既に計画に存在しており、新コードを足すと同じ対象に 2 つの閾値が並ぶ。緩い方が実質の基準になり厳しい方が意味を失うため、新設せず既存へ寄せる。REQ-8 の寄与は『閾値の新設』ではなく『既存閾値の level 昇格・文数の追加・カード契約・列挙値の生表示・ナビ整形』に限る"
+  },
+  "decision": {
+    "hero_card_contract": {
+      "value": "冒頭の資料レベル記述をカードのグリッドで描く",
+      "rules": [
+        {
+          "rule": "目的 / 背景 / ゴール は独立したカード要素にする",
+          "how": "`<p class=\"hero-purpose\">` を廃し、`.hero-card-grid > .hero-card` (ラベル + 本文) を並べる。ラベルは行頭の inline span ではなくカードの見出しとして独立させる (要素名の正本は dom_contract)"
+        },
+        {
+          "rule": "カードは横並びのグリッドに載せる",
+          "how": "縦一列の段落連結をやめ、.hero-card-grid をグリッドコンテナにする。狭い画面では 1 列へ折り返す (既存の responsive 規約に従う)"
+        },
+        {
+          "rule": "見出しの無い箇条書きを作らない",
+          "how": "focus_theme / target_tasks / must_remember / no_need_to_remember の各 `<ul>` へ、それが何の一覧かを示すカード見出しを必ず付ける。見出し語は config 側の正本から引き、script へ日本語を焼かない"
+        }
+      ],
+      "why": "利用者が『カードで見やすく』と指したのは、既にセクション本体で成立しているカード契約 (section-card) が冒頭にだけ無いことを指している。冒頭は資料で最初に読まれる場所であり、ここが段落の壁だと以降が読まれない",
+      "canonical_location": "config/handout-opening.json (無ければ config/handout-visual-policy.json の opening 節) の hero_card_fields。フィールドの並び順と見出し語をここへ置く",
+      "dom_contract": {
+        "grid": ".hero-card-grid",
+        "card": ".hero-card",
+        "selector": ".hero-card-grid > .hero-card",
+        "field_marker": "各 .hero-card は data-hb-field を保持する (C20 の往復抽出が著者記述を回収する鍵。囲む要素を変えても data-hb-field 付与は維持する)",
+        "must_match": "script-brief-C11.json の algorithm 16 / rendering_changes B02 が書く要素名と同一であること。要素名の正本は本キーであり、C11 はここから引く",
+        "why": "『section-card と同系のカード』という記述は要素名を決めておらず、C11 と本決定ファイルが別の名前を書いても両方が自分の記述どおりで緑になる。要素名を決定ファイルへ昇格させて 1 箇所にする"
+      }
+    },
+    "hero_field_budget": {
+      "code": "W-HERO-LONG (既存。新設しない)",
+      "canonical_location": "config/handout-visual-policy.json の opening.hero_fields.max_chars (既存)",
+      "keep_values": {
+        "purpose": 60,
+        "background": 80,
+        "goal": 50,
+        "lead": 40
+      },
+      "why_keep": "section.lead_line の schema 上限 80 字 / 警告 60 字と同じ秩序に置くという既存の basis が筋が通っている。実測 (目的 102 / 背景 185 / ゴール 89) は既存値でも全て超過するため、値を変えなくても利用者の指摘は解消する。値を触らないことで REQ-7 の 60 字 (1 文の上限) との関係も既存のまま保たれる",
+      "changes": [
+        {
+          "change": "level を error にする",
+          "targets": [
+            "W-HERO-LONG",
+            "W-HERO-HEAVY"
+          ],
+          "why": "REQ-7 と同じ理由。警告は exit 0 で通るため一度も止まらない。利用者は同じ問題を 2 回指摘しており (2026-08-18 の『冒頭の文章がめちゃくちゃ長い』と本追補)、警告のままでは要求を満たさない。コード体系 (W- prefix) は据え置き、重大度は level フィールドで表現する (W-DIAGRAM-FEW と同じ扱い)"
+        },
+        {
+          "change": "文数の上限を追加する",
+          "values": {
+            "purpose": 1,
+            "goal": 1,
+            "lead": 1,
+            "background": 2
+          },
+          "why": "実測の背景は 185 字 4 文。文字数だけを縛ると『短い文を何本も並べた冒頭』が残る。REQ-7 の sentences_per_body (E-TEXT-PARAGRAPH) と同じ考え方を hero へ適用する。閾値の置き場も同じ config/handout-visual-policy.json とし、新しいファイルを作らない"
+        },
+        {
+          "change": "検査を実装経路へ繋ぐ",
+          "why": "W-HERO-LONG / W-HERO-HEAVY は計画には存在するが出荷スクリプトに実装されていない。validate-handout-config.py の check_text_bodies は sections[].parts[] の TEXT 部品しか走査しない (1402-1416) ため、hero フィールドは 1 文字も検査されない。実測で目的 102 字が素通りしていることが実装未達の証拠である。検査対象の集合へ hero フィールドを加える"
+        },
+        {
+          "change": "REQ-7 の文単位検査を hero へも適用する",
+          "targets": [
+            "W-SENTENCE-LONG (1 文 60 字)"
+          ],
+          "why": "実測の目的 102 字は 1 文である。文字数上限 60 と 1 文上限 60 の両方に掛かるが、判定ロジックは既存のものを対象を広げて使うだけで新設しない"
+        }
+      ]
+    },
+    "list_item_budget": {
+      "value": "資料レベルの箇条書き要素に 1 要素あたりの上限を持たせる。goal_chips は既存値を使い、残り 4 フィールドへ micro_copy.caption (32 字) を適用する",
+      "existing": {
+        "goal_chips": {
+          "max_count": 4,
+          "max_chars_each": 14,
+          "source": "config/handout-visual-policy.json の opening.hero_fields.goal_chips (既存)",
+          "do_not_change": "chips は 1 行に 4 件並ぶ前提の短句であり 14 字が妥当。ここへ caption (32) を重ねると緩い方が実質の基準になる"
+        }
+      },
+      "targets": [
+        "focus_theme",
+        "target_tasks",
+        "must_remember",
+        "no_need_to_remember"
+      ],
+      "why": "実測では 12 件全てが 19-32 字に収まっており現状は問題が無いが、無検査のまま放置すると冒頭の長文が箇条書きへ移るだけで同じ問題が再発する。既存の micro_copy 規約を適用先へ加えるだけで新しい閾値は作らない",
+      "canonical_location": "config/handout-visual-policy.json の micro_copy.roles caption の fields へ上記 4 フィールド名を追加する (goal_chips は追加しない)"
+    },
+    "overflow_guidance": {
+      "value": "超過したときの逃がし先は『箇条書きへ落とす』か『セクション本文へ移す』",
+      "why": "REQ-7 の escape_valve と同じ規約を冒頭にも適用する。B10 折り畳みへの退避は REQ-7 で fold 上限 0 として塞いだので、冒頭でも同じ逃げ道を作らない",
+      "action": "W-HERO-LONG / W-HERO-HEAVY の診断メッセージに、どちらへ落とすべきかを含める (超過文字数だけ出しても書き手は直し方が分からない)"
+    },
+    "raw_enum_leak": {
+      "code": "E-ENUM-RAW",
+      "level": "error",
+      "value": "列挙値をそのまま読者へ見せない",
+      "why": "attainment_level=operable が英字の機械語のまま紙面に出ている。列挙値は構成データの識別子であって読者向けの言葉ではない。config に表示語彙が 1 件も無く (grep で handout-*.json に定義なし)、render-handout.py が field_span で生値を描いているのが原因",
+      "action": "表示語彙の正本を config/handout-vocabulary.json (無ければ既存の語彙正本ファイル) へ置き、attainment_level / doc_type / section_kind など読者に見える列挙フィールドは必ず正本経由で日本語表示へ変換する。script へ日本語を焼かない。変換先が無い列挙値を検出したらゲートで落とす",
+      "why_not_caught": "C18 の言語チェッカ (DATE-01..DATE-04) は日付書式を見るが、列挙値の生表示は検査対象に入っていない。検査対象の集合へ加える"
+    },
+    "nav_and_chips": {
+      "value": "上部ナビと単位付きの値をチップとして扱う",
+      "rules": [
+        {
+          "rule": "ナビ (render-handout.py:2012-2021 の nav.navbar) をチップ列にする",
+          "how": "素のリンク行をやめ、日付チップ (date-pill) と同系の見た目へ揃える。項目間の区切りを明示し、現在位置が分かる状態にする (スクロール連動は必須にしない)"
+        },
+        {
+          "rule": "duration をチップにする",
+          "how": "`20分` を裸テキストではなく date-pill と同系のチップで描く。既に num クラスは付いているので、囲む要素の扱いを揃えるだけでよい"
+        },
+        {
+          "rule": "ナビ項目の文字数に micro_copy.label (14 字) を適用する",
+          "how": "『自動化の可否をどう見るか』は 13 字で範囲内だが、無検査だと見出しが伸びてナビが折り返す。検査対象へ加える"
+        }
+      ],
+      "why": "利用者が『上部の要点とか、現行の大きな流れとか』と指したのはこのナビ行である。資料の全体像を最初に掴む導線であり、素のテキストリンクだと目次として機能しない"
+    }
+  },
+  "risk_and_impact": {
+    "existing_artifacts": "現行の examples / tests の資料レベル記述はほぼ全て新予算を超える。REQ-7 の examples 書き直し (task-specs/P05-x-25.md) と同じ作業に含める。参照資料と同じ粒度の手本にすること",
+    "round_trip": "hero の DOM 構造を変えるため、C20 の往復抽出 (data-hb-field による著者記述の回収) が壊れないことを確認する。field_span による data-hb-field 付与は維持し、囲む要素だけを変える",
+    "draft_first": "文字数検査は決定論で即座に効き、生成待ちを伸ばさない。カード化も CSS と DOM の変更のみで第1稿の待ち時間に影響しない"
+  }
+}

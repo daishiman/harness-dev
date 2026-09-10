@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P08-x-01",
+  "covered_task_ids": [
+    "P08-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence",
+  "verified_by": [
+    {
+      "claim": "argv と exit code が不変で、生成 HTML がバイト一致のまま保たれている",
+      "method": "当方が本周回の変更 (plugin.json の hooks 削除 / README / SKILL.md / テスト fixture 3 件) を通して 23 スイート全件を再実行し、CLI 契約テスト (test_argv_and_exit_codes / test_cli_contract) を含む全件が緑であることと、同一入力からの 2 回生成がバイト一致であることを確認した",
+      "result": "pass (suites=23 ran=3308 failed=0。sha256 一致 20284 bytes。**本周回で変更したのは manifest の hooks キー・README・SKILL.md の記述・テスト側 fixture 3 件のみで、script の argv / exit code / 出力生成路には手を入れていない**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "skill-md-content-changed",
+      "detail": "skills/run-handout-build/SKILL.md へ skip_reason の扱いを追記した。script の挙動ではなく指示テキストの変更だが、LLM が読む面である以上『内部構造の整理』として完全に不変とは言えない。変更内容は既存挙動 (srg-image-bridge が返す status/skip_reason) の明文化であり、新しい挙動を導入していない"
+    }
+  ]
+}

@@ -244,12 +244,12 @@ v8 拡張の取り扱い（`meta.schemaVersion` が `"8.0.0"` のとき自動解
 ### 実行コマンド例
 ```bash
 # 標準実行
-node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./05_Project/スライド/2026-05-03_デモ
 
 # Schema 検証スキップ（デバッグ用、本番では使わない）
-node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./out \
   --no-validate
@@ -311,7 +311,7 @@ Phase 3 で入力が `structure.json`（構造化）のとき、決定論経路�
 structure-designer / structure-validator から受け取る入力の典型:
 ```bash
 # 入力: structure.json のパスと出力先
-node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-slide.cjs \
+node ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-slide.cjs \
   ./structure.json \
   --out ./05_Project/スライド/2026-05-03_デモ
 ```

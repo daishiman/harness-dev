@@ -224,7 +224,91 @@ def _placement_fields(root: Path) -> tuple[list[str], dict[str, str]]:
 # 制約に合わせ、正規表現で定義行から抜く (_load_thresholds と同じ手口)。
 # 生成器が :root へ流し込む CSS 変数の出どころ。ここに定義が無い変数を
 # references が引くなら、フォールバック無しでは実行環境で解決できない。
-_VAR_SOURCES = ("vendor/scripts/style-builder.cjs", "vendor/scripts/render-report.js")
+#
+# 経路ごとに別の集合を持つ。**5 経路を 1 つの集合へ混ぜてはいけない**。混ぜると
+# 「どこかの経路に存在すれば緑」になり、決定論経路の CSS へ手書き経路の名前を書いても
+# 通ってしまう (実例: `--fs-body-lg` は決定論経路に無く、宣言ごと無効になっていた)。
+# 名前が偶然重なるので個数照合も効かない: 決定論 slide の font-size 系 4 種と report の
+# 5 種は、和集合がちょうど 7 種になり、ひな形 slide の 7 種と個数が一致してしまう。
+# 集合そのもので照合すること。
+# 経路の登録簿。ここに載せた経路だけが「CSS 変数を :root へ出す主体」で、
+# 文書側の var() はこの集合とだけ照合される。
+#
+# 登録の条件 (2026-08-14): 各エントリに **何がそれを出力し、何がそれを消費するか**を
+# 書けること。登録すればその変数は鳴らなくなるので、この登録簿は _KNOWN_GAPS と同じ
+# 「書けば黙る」性質を持つ。産出元と消費先を書けないものは経路ではないので載せない。
+#
+# 定義を含むファイルすべてがここへ載るわけではない。定義元は素性で 5 つに分かれ、
+# 経路として登録するのは 1 種類目だけ。残りの区分と根拠は _NON_ROUTE_DEFINERS に置く。
+_VAR_ROUTE_SOURCES = {
+    # 決定論 slide。style-builder.cjs が寸法・単位・書体を、html-scaffold.js が
+    # palette を :root へ流し、render-slide.cjs が面ごとの実測値 (--fit-t / --fit-d) を
+    # 実行時に足す。3 ファイルで 1 経路 (どれも同じ 1 枚の deck の :root を作る)。
+    # 産出: structure.json -> deck の index.html / 消費: validate-print.js,
+    #       validate-slide-layout.js, evaluate-deck.js
+    "det-slide": ("vendor/scripts/style-builder.cjs", "vendor/scripts/html-scaffold.js",
+                  "vendor/scripts/render-slide.cjs"),
+    # ひな形 slide (.srg-* 体系)。閾値の正本は frame-contract.json で、
+    # それを CSS へ落とすのが build-slide-skeleton-css.py。
+    # 産出: assets/slide-templates/slide-skeleton.css / 消費: build-slide-skeletons.py,
+    #       validate-slide-skeleton.py
+    # build-slide-skeletons.py は 2026-08-14 に外した。ひな形 HTML を組み立てるだけで
+    # CSS 変数を 1 つも出しておらず (実測 defs=0)、登録簿が「出している」と主張しながら
+    # 出していない状態だった。宣言と実体のずれは、この検査器が他所で潰している形と同じ。
+    "skeleton-slide": ("scripts/build-slide-skeleton-css.py",),
+    # 手書き slide (slider-* 体系)。LLM が HTML を書く経路で、:root の実体が
+    # references/theme-style.md にある (文書が実装を兼ねている状態)。
+    # 単位トークン (--su / --sv / --slide-max-*) だけは html-generation-rules.md の
+    # §5.6.1 :root が正本で、slide-types-basic.md も「--su / --sv は
+    # html-generation-rules.md §5.6.1 の :root で定義する」と名指ししている。
+    # 2 ファイルで 1 経路 (どちらも手書きデッキの同じ :root を作る)。
+    "hand-slide": ("references/theme-style.md",
+                   "skills/run-slide-report-generate/references/html-generation-rules.md"),
+    # report。
+    # 産出: report.html の :root / 消費: validate-report-visual.py, validate-print.js
+    "report": ("vendor/scripts/render-report.js",),
+    # 図解 (SVG)。値の正本は svg-kit.cjs の TOKENS / SERIES と style-builder の
+    # SPEC.colors の 2 つだけ、と diagram-style-tokens.md 自身が宣言している。
+    # ただし **CSS 変数を出しているのは style-builder だけ**で、svg-kit の TOKENS は
+    # JS の値として SVG 属性へ直接焼かれる (実測 defs=0)。2026-08-14 に svg-kit を
+    # 外し、この経路の CSS 変数集合は style-builder 単独であることを明示した。
+    # 値の正本が 2 つあること自体は変わらない (それは constant-parity が見る)。
+    # 産出: 図解 SVG を含む面の :root / 消費: validate-svg-diagram.py,
+    #       render-diagram-golden.cjs
+    "diagram": ("vendor/scripts/style-builder.cjs",),
+    # 全面画像デッキ。image-deck-plan.json + slide-NN.meta.json から自己完結の
+    # index.html を決定論生成する。2026-08-14 に追加 (それまで登録簿に無く、12 個の
+    # 定義がどの経路にも属さない扱いになっていた)。
+    # 産出: 全面画像 deck の index.html / 消費: build-single-html.js,
+    #       validate-ai-image-assets.js
+    "full-image-deck": ("vendor/scripts/build-deck-html.js",),
+}
+
+# 経路ではないが CSS 変数の定義を含むファイル。区分と、なぜその区分かを 1 行で置く。
+# ここに無く経路にも無い定義元は「孤児」として orphan_definer_findings が鳴らす。
+#
+# 区分を動かすときは根拠の行も書き換えること。根拠が無いと次の人が動かせない。
+_NON_ROUTE_DEFINERS = {
+    # 生成物: 経路の出力。入力として二重に数えないために経路へ載せない。
+    "assets/slide-templates/slide-skeleton.css":
+        "生成物。先頭に「生成物。手で編集しない。再生成: build-slide-skeleton-css.py」と明記。skeleton-slide 経路の出力",
+    # 共通テンプレート: 自分の名前空間を定義しつつ、値は経路変数を消費する。
+    # どの経路にも属さないが孤児でもない (経路をまたいで使われるのが正しい)。
+    "vendor/assets/pagination.css":
+        "共通テンプレート。--pg-* を自分で定義し値は var(--ink, #141412) 等で経路変数を消費する。style-builder.cjs / render-slide.cjs / build-slide-skeleton-css.py から参照",
+    "vendor/assets/d3-slide-template.html":
+        "共通テンプレート。D3 スライドの雛形で、validate-d3.js が消費する",
+    # 検査器・テスト: 期待値として CSS を書くので定義に見えるだけ。
+    "scripts/validate-visual-generation.py":
+        "検査器。--fs-lead: 6rem 等は判定用の期待値文字列で、どの deck にも出力されない",
+    "scripts/lint-contract-drift.py":
+        "検査器。この検査器自身のメッセージ文字列",
+}
+# 文書がどの経路のものかは機械には判定できないので、文書自身に宣言させる。
+# この行より後ろの var() は、その経路の集合とだけ照合する (次の宣言まで有効)。
+# 宣言の無いまま `var(--x)` を書いた文書は fail-closed で落とす。和集合へ退避すると
+# 「どこかにあれば緑」へ戻り、この検査の意味が無くなる。
+_VAR_ROUTE_MARK_RE = re.compile(r"<!--\s*css-route:\s*([a-z-]+)\s*-->")
 _VAR_DEF_RE = re.compile(r"(--[a-z0-9-]+)\s*:")
 # 生成器は `--space-${i + 1}: ...` のように族をループ生成することがある。
 # 静的抽出では 1 件も名前が取れないので、補間を含む定義は「接頭辞の族」として
@@ -232,6 +316,21 @@ _VAR_DEF_RE = re.compile(r"(--[a-z0-9-]+)\s*:")
 _VAR_FAMILY_RE = re.compile(r"(--[a-z0-9-]*?)\$\{[^}]*\}\s*:")
 # `var(--x)` = フォールバック無し / `var(--x, ...)` = あり。後者だけが安全。
 _VAR_USE_RE = re.compile(r"var\(\s*(--[a-z0-9-]+)\s*([,)])")
+
+
+def _var_scan_targets(root: Path) -> list[Path]:
+    """CSS 変数の照合対象となる文書。
+
+    plugin root の `references/*.md` だけを見ていた頃は、手書き経路の記述が
+    `skills/*/references/` にあるため丸ごと検査圏外だった。references は再帰で、
+    skills 配下は references と prompts を拾う (prompts も CSS 例を載せる)。
+    """
+    seen: list[Path] = []
+    for pat in ("references/**/*.md",
+                "skills/*/references/**/*.md",
+                "skills/*/prompts/**/*.md"):
+        seen.extend(root.glob(pat))
+    return sorted(set(seen))
 
 _CONSTANT_PAIRS = (
     (
@@ -300,10 +399,13 @@ _CONSTANT_PAIRS = (
         ("references/spec-registry.md",
          r"\.code-panel \{ width: 48%; max-height: calc\(([0-9.]+) \* var\(--sv\)\)"),
     ),
+    # 字面の下限は frame-contract.json が正本で、style-builder.cjs はそれを
+    # `${MIN_REM_ENGINE}rem` として埋め込むだけになった。生成器側にもう数値の実体が
+    # 無いので、突合の src は契約そのものを見る。
     (
-        "コードの字面 .code-block font-size (typography.min の面座標表現)",
-        ("vendor/scripts/style-builder.cjs",
-         r"\.code-block \{[^}]*font-size: ([0-9.]+)rem"),
+        "コードの字面 .code-block font-size (typography.min_rem_engine の面座標表現)",
+        ("assets/slide-templates/frame-contract.json",
+         r'"min_rem_engine":\s*([0-9.]+)'),
         ("references/spec-registry.md", r"`font-size: ([0-9.]+)rem; line-height: 1\.7;"),
     ),
 )
@@ -312,26 +414,335 @@ _CONSTANT_PAIRS = (
 _PALETTE_SRC = "vendor/scripts/style-builder.cjs"
 _SPEC_COLORS_RE = re.compile(r"colors:\s*\{(.*?)\n  \}", re.S)
 _COLOR_ENTRY_RE = re.compile(r"(\w+):\s*'(#[0-9A-Fa-f]{6})'")
+# buildRootVars() の `  --fg-muted: ${c.inkMuted};` から (変数名, キー名) を採る。
+_ROOT_ASSIGN_RE = re.compile(r"--([a-z0-9-]+):\s*\$\{c\.(\w+)\}")
 _PALETTE_MARKER = "palette-variant:"
 _HEX_RE = re.compile(r"#[0-9A-Fa-f]{6}")
 
 
-def _camel_to_var(key: str) -> str:
-    """SPEC.colors のキー名を、生成器が :root へ書く CSS 変数名へ写す。
+_CONTRACT_PATH = "assets/slide-templates/frame-contract.json"
+# frame-contract.json の節のうち、**1 経路しか読んでいない**もの。
+#
+# 事故は「節名が主張する適用範囲」と「実際の読み手の範囲」がずれたときに起きる。
+# 複数経路が読む節は名前が広くて読み手も広いので一致している。危ないのは名前が広くて
+# 読み手が狭い節で、別経路が同じ名前を見て「自分の契約だ」と読むと、片方の経路にしか
+# 正しくない値がもう片方へ流れる。
+#
+# いちばん強い直し方は名前を直すことなので、`print` は `print_skeleton` へ改名済み。
+# この集合は改名の代わりではなく、改名できていない節 (chrome / media) を止めるためと、
+# 改名した節を将来また広げないための二重化。
+#
+# 逆に複数経路が読む節 (canvas / grid / stage / typography / fill_policy 等) はここに
+# 挙げない。そこにあるのは全経路で同じ値が正しい面の幾何で、経路ごとに値が違う箇所は
+# 既にキーが割られている (typography.min = ひな形 / min_rem_engine・min_font_scale =
+# エンジン)。読み手を固定しても経路の主張にはならず、読み手が増えるたびの更新作業だけ
+# が残る。
+#
+# 限界を明記する: 判定は「契約を読むファイルが節名の文字列を綴っているか」であって、
+# 実際に契約から読んだかではない。build-slide-skeletons.py のようにひな形自身の
+# spec dict が `"chrome": "full"` を持つ書き方は同名で当たる (両者とも集合内なので
+# 現状は無害)。集合外のファイルが同名の自前キーを持った場合は偽陽性になるので、
+# そのときは節名を改名して衝突を解く (免除を足さない)。
+_SECTION_READERS = {
+    "print_skeleton": (
+        "scripts/build-slide-skeleton-css.py",
+        "scripts/build-slide-skeletons.py",
+        "scripts/validate-slide-skeleton.py",
+        "tests/test_slide_skeleton.py",
+    ),
+    "chrome": (
+        "scripts/build-slide-skeleton-css.py",
+        "scripts/build-slide-skeletons.py",
+        "scripts/validate-slide-skeleton.py",
+    ),
+    "media": (
+        "scripts/build-slide-skeletons.py",
+        "scripts/validate-slide-skeleton.py",
+    ),
+}
+_SECTION_READER_ROUTE = "ひな形 (slide-skeleton) 経路"
+# 検査器と検査器のテストは、節名を「宣言として」綴るので必ず当たる。値を読む側では
+# ないため対象外にする。ここを広げると自己免除で検査が無効になるので、2 本に閉じる。
+_SECTION_READER_EXEMPT = (
+    "scripts/lint-contract-drift.py",
+    "tests/test_lint_contract_drift.py",
+)
+_CODE_SUFFIXES = (".py", ".js", ".cjs", ".mjs")
 
-    buildRootVars() が `--bg-dark: ${c.bgDark}` の形で 1:1 に書き下しているので、
-    ここでの変換規則はその写像そのもの。写像を持たない別表を作ると、
-    「正本の正本」が 2 つになって同じドリフトを再発させる。
+
+def _section_ref_re(section: str) -> re.Pattern:
+    """節名の参照だけを拾う。`print(` のような同名の言語機能は拾わない。"""
+    return re.compile(r"""["'\[]""" + re.escape(section) + r"""["'\]]|\.""" + re.escape(section) + r"\b")
+
+
+def _contract_loaders(root: Path) -> list[Path]:
+    """frame-contract.json を読み得るコードファイル (パスを綴っているもの) を返す。
+
+    契約のパスを綴っていないファイルは節を読めないので対象外。ここを広げると
+    `print` のような普遍名が無関係なコードで大量に当たる。
     """
-    return "--" + re.sub(r"(?<!^)(?=[A-Z])", "-", key).lower()
+    out = []
+    for path in sorted(root.rglob("*")):
+        if path.suffix not in _CODE_SUFFIXES or not path.is_file():
+            continue
+        if "node_modules" in path.parts or ".git" in path.parts:
+            continue
+        if "frame-contract" in path.read_text(encoding="utf-8", errors="ignore"):
+            out.append(path)
+    return out
+
+
+def section_reader_findings(root: Path) -> list[dict]:
+    """経路専有の契約節を、宣言された集合の外のファイルが読んでいないか照合する。
+
+    run_checks から切り出してあるのは、この検査自身を反例で試せるようにするため。
+    どこにも違反が無い状態でしか動かしていない検査は、検査しているのか素通りして
+    いるのか区別が付かない (それが今回潰している欠陥そのもの)。
+    """
+    findings: list[dict] = []
+    if not (root / _CONTRACT_PATH).is_file():
+        return [{"check": "contract-section-reader",
+                 "message": f"{_CONTRACT_PATH} が無い (節の読み手を照合できない)",
+                 "where": _CONTRACT_PATH}]
+    loaders = _contract_loaders(root)
+    for section, allowed in _SECTION_READERS.items():
+        ref_re = _section_ref_re(section)
+        for path in loaders:
+            rel = path.relative_to(root).as_posix()
+            if rel in allowed or rel in _SECTION_READER_EXEMPT:
+                continue
+            if not ref_re.search(path.read_text(encoding="utf-8", errors="ignore")):
+                continue
+            findings.append({
+                "check": "contract-section-reader",
+                "message": (
+                    f"{rel} が frame-contract の '{section}' 節を読んでいるが、"
+                    f"この節は {_SECTION_READER_ROUTE} 専有として宣言されている "
+                    f"(読み手は {', '.join(allowed)})。"
+                    "別経路が読むと、片方にしか正しくない値がもう片方へ静かに流れる "
+                    "(例: print_skeleton は 297x167.06mm のレターボックス版面で、"
+                    "決定論エンジンの印刷 297x210mm full-bleed とは別物)。"
+                    f"その経路にも同じ値が正しいなら _SECTION_READERS['{section}'] へ足す。"
+                    "経路ごとに値が違うなら、経路名を含む別キーへ割ること"
+                ),
+                "where": rel,
+            })
+    return findings
+
+
+# 読み取り用画像 (QR 等) の寸法規約 CONST_010 を、文書の側で守らせる検査。
+#
+# 規約は 2 つある。(1) 上限は面高に対する比で置く。(2) `vh` は使わない
+# (`@media print` で基準が用紙高へ変わり、画面と印刷で寸法が食い違う)。
+# どちらも 2026-08-14 までは文書にしか無く、守らせる実行体が無かった。
+#
+# 比の正本は frame-contract.json の read_image.max_height_ratio 1 箇所。生成された
+# CSS 文字列ではなく契約を読むのは、生成器を差し替えた日にこの検査が黙って的外れに
+# ならないようにするため。
+#
+# 文書の CSS 例は `var(--qr-max-ratio, 0.26)` の形で書く。--qr-max-ratio を :root へ
+# 出す経路が 1 つも無いので、フォールバックが無いと解決しない。この 0.26 は契約値の
+# 第 2 の写しなので、下の _QR_FALLBACK_RE で拾って契約値と突き合わせる。写しを許す
+# 代わりに、写しが正本から離れられないようにする形。
+_QR_RATIO_KEY = ("read_image", "max_height_ratio")
+_QR_VAR = "--qr-max-ratio"
+_QR_FALLBACK_RE = re.compile(r"var\(\s*" + re.escape(_QR_VAR) + r"\s*,\s*([0-9.]+)\s*\)")
+# 読み取り用画像の寸法を書いている行の目印。`.qr-img` を含む行だけを見る
+# (文書全体から vh を狩ると、無関係な例まで巻き込む)。
+_QR_SEL = ".qr-img"
+_QR_VH_RE = re.compile(r"[0-9.]+vh\b")
+# vh の検査はコードフェンスの中だけに効かせる。規約が禁じているのは「CSS が vh で
+# 書かれていること」であって、vh という文字列が文書に出ることではない。実際、
+# CONST_010 の未解決メモは出荷済み deck が 18vh / 26vh で書かれている事実を述べる
+# ために .qr-img と vh を同じ行へ並べており、フェンスを見ないとこの記述が落ちる。
+# 違反を記録した文が違反として落ちる検査は、記録を消させる方向に働くので採らない。
+_FENCE_RE = re.compile(r"^\s*```")
+
+
+# 孤児定義 (どの経路にも属さない :root 定義) の検査。
+#
+# 見つけたい欠陥は「経路をまたいで値が違うこと」ではない。経路ごとに値が違うのは
+# 正しい (--fs-body は report で 1.0625rem、slide で vw 基準。読み手は必ず自分の経路の
+# 値を引く)。実測でも「同名・異値」を素直に鳴らすと 205 変数中 99 変数が該当し、その
+# ほとんどが意図した経路差だった。
+#
+# 事故が起きるのは **どの経路にも属さない定義が存在するとき**。読んだ人はどの経路でも
+# 使われていない値を引き、それが正しいかどうかを確かめる手段が無い。実例が
+# vendor/assets/src/styles/variables.css の旧 Lotus パレット (--fg: #43436c) で、
+# 現行のどの生成器も出していない --fg の第 2 の正本になっている。
+#
+# 異名・同値 (--fg-dim と --fuji-gray がどちらも #6a6a68 等) はここでは見ない。あれは
+# 単射性の問題で、図解側の検査が別に見ている。混ぜると、意図的に名前を寄せた結果まで
+# 赤になる。
+_VAR_DEF_VALUE_RE = re.compile(r"(--[a-z0-9-]+)\s*:\s*([^;\n}]+)")
+# 値に和文が混じる「定義」は CSS ではない。実測で 2 種類に当たった:
+#   - CLI フラグのヘルプ (validate-structure.js の `--strict: WARN を FAIL に格上げ`)
+#   - コメントの散文 (pagination.js の `--fit-t : 11.00 が消え、見出しが ...`)
+# 規約が禁じているのは値がそこで定義されていることであって、`--x:` という並びが
+# ファイルに出ることではない。フェンス判定と同じ理由でここも実体だけを見る。
+_JP_RE = re.compile(r"[぀-ヿ一-鿿]")
+_DEFINER_SUFFIXES = (".css", ".js", ".cjs", ".mjs", ".py", ".html")
+
+
+def _definition_names(text: str) -> set[str]:
+    """CSS 変数の実定義名を返す (和文値のものは定義として数えない)。"""
+    return {m.group(1) for m in _VAR_DEF_VALUE_RE.finditer(text)
+            if not _JP_RE.search(m.group(2))}
+
+
+def _definer_files(root: Path) -> list[Path]:
+    """CSS 変数の定義を含みうるコードを列挙する (文書とテストは対象外)。
+
+    文書 (.md) を除くのは、文書は `<!-- css-route: -->` で自分の経路を宣言する別の
+    仕組みに乗っているため。テストと golden を除くのは、fixture の期待値が定義に
+    見えるだけだから。
+    """
+    out: list[Path] = []
+    for path in root.rglob("*"):
+        if not path.is_file() or path.suffix not in _DEFINER_SUFFIXES:
+            continue
+        rel = path.relative_to(root).as_posix()
+        if rel.startswith("tests/") or "/tests/" in rel or "node_modules/" in rel:
+            continue
+        if "examples/diagram-goldens/" in rel:
+            continue
+        out.append(path)
+    return sorted(out)
+
+
+def orphan_definer_findings(root: Path) -> list[dict]:
+    """経路にも既知区分にも属さない CSS 変数定義元を鳴らす。
+
+    併せて逆向きも見る。**登録簿が「出している」と主張しているのに 1 つも出していない
+    ファイル**は、登録簿と実体のずれなので鳴らす。登録すれば黙る仕組みなので、
+    登録が実体を伴っているかを機械で確かめないと、この登録簿自体が埋葬地になる。
+    """
+    findings: list[dict] = []
+    known = {rel for rels in _VAR_ROUTE_SOURCES.values() for rel in rels}
+
+    for rel in sorted(known):
+        path = root / rel
+        if not path.is_file():
+            findings.append({
+                "check": "orphan-var-definer",
+                "message": (f"経路の定義元として登録されている {rel} が存在しない。"
+                            "登録簿が実体を失っている"),
+                "where": rel,
+            })
+            continue
+        if not _definition_names(path.read_text(encoding="utf-8", errors="ignore")):
+            findings.append({
+                "check": "orphan-var-definer",
+                "message": (
+                    f"{rel} は経路の定義元として登録されているが CSS 変数を 1 つも"
+                    "出していない。登録簿が「出している」と主張しながら出していない状態で、"
+                    "この登録を根拠に黙る変数があると、根拠の無い緑になる。"
+                    "出さないなら _VAR_ROUTE_SOURCES から外すこと"
+                ),
+                "where": rel,
+            })
+
+    for path in _definer_files(root):
+        rel = path.relative_to(root).as_posix()
+        if rel in known or rel in _NON_ROUTE_DEFINERS:
+            continue
+        names = _definition_names(path.read_text(encoding="utf-8", errors="ignore"))
+        if not names:
+            continue
+        sample = ", ".join(sorted(names)[:5])
+        findings.append({
+            "check": "orphan-var-definer",
+            "message": (
+                f"{rel} が CSS 変数を {len(names)} 個定義しているが、どの経路にも"
+                f"既知の区分にも属していない (例: {sample})。どの経路も出していない値なので、"
+                "ここを読んだ人は使われていない第 2 の正本を引く。"
+                "経路なら _VAR_ROUTE_SOURCES へ産出元と消費先を書いて登録し、"
+                "生成物・共通テンプレート・検査器なら _NON_ROUTE_DEFINERS へ根拠を書いて置く"
+            ),
+            "where": rel,
+        })
+    return findings
+
+
+def qr_ratio_findings(root: Path) -> list[dict]:
+    """CONST_010 (読み取り用画像の上限比) を文書に対して照合する。
+
+    section_reader_findings と同じく run_checks から切り出してあるのは、この検査
+    自身を反例で試せるようにするため。違反の無い木でしか動かしていない検査は、
+    検査しているのか素通りしているのか区別が付かない。
+    """
+    contract = root / _CONTRACT_PATH
+    if not contract.is_file():
+        return [{"check": "contract-qr-ratio",
+                 "message": f"{_CONTRACT_PATH} が無い (読み取り用画像の上限比を照合できない)",
+                 "where": _CONTRACT_PATH}]
+    data = json.loads(contract.read_text(encoding="utf-8"))
+    node = data
+    for key in _QR_RATIO_KEY:
+        if not isinstance(node, dict) or key not in node:
+            return [{"check": "contract-qr-ratio",
+                     "message": (f"frame-contract に {'.'.join(_QR_RATIO_KEY)} が無い。"
+                                 "上限比の正本が消えると、文書側の写しを突き合わせる相手が"
+                                 "居なくなる (写しだけが残って静かに漂う)"),
+                     "where": _CONTRACT_PATH}]
+        node = node[key]
+    ratio = float(node)
+
+    findings: list[dict] = []
+    for path in _var_scan_targets(root):
+        rel = path.relative_to(root).as_posix()
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        in_code = False
+        for num, line in enumerate(text.splitlines(), 1):
+            if _FENCE_RE.match(line):
+                in_code = not in_code
+                continue
+            for hit in _QR_FALLBACK_RE.finditer(line):
+                if float(hit.group(1)) == ratio:
+                    continue
+                findings.append({
+                    "check": "contract-qr-ratio",
+                    "message": (
+                        f"{rel}:{num} の {_QR_VAR} フォールバック {hit.group(1)} が、"
+                        f"frame-contract の {'.'.join(_QR_RATIO_KEY)} = {ratio} と違う。"
+                        "フォールバックは契約値の写しなので、離れると文書の例だけが別の"
+                        "上限を主張する。値を変えるなら契約側を直してから写しを合わせること"
+                    ),
+                    "where": rel,
+                })
+            if in_code and _QR_SEL in line and _QR_VH_RE.search(line):
+                findings.append({
+                    "check": "contract-qr-ratio",
+                    "message": (
+                        f"{rel}:{num} が読み取り用画像の寸法を vh で書いている "
+                        f"({_QR_VH_RE.search(line).group(0)})。CONST_010 は面高に対する比で"
+                        "置くことを求めている。vh は @media print で基準が用紙高へ変わるため、"
+                        "画面と印刷で寸法が食い違う (CONST_006 違反)。"
+                        f"calc(var(--stage-h) * var({_QR_VAR}, {ratio})) の形へ直すこと"
+                    ),
+                    "where": rel,
+                })
+    return findings
 
 
 def _palette(root: Path) -> dict[str, str]:
-    """配色の正本 SPEC.colors を {CSS 変数名: hex} で返す。"""
-    m = _SPEC_COLORS_RE.search(_read(root, _PALETTE_SRC))
+    """配色の正本を {CSS 変数名: hex} で返す。
+
+    キー名から変数名を綴り規則で推測しない。buildRootVars() が
+    `--fg-muted: ${c.inkMuted}` のようにキーと違う名前で書き出す組があり、
+    規則で当てにいくとその組だけ検査から静かに漏れる (漏れても緑のままなので
+    気付けない)。変数名 ↔ キーの対応は生成器の本文そのものから読む。
+    """
+    src = _read(root, _PALETTE_SRC)
+    m = _SPEC_COLORS_RE.search(src)
     if not m:
         return {}
-    return {_camel_to_var(k): v for k, v in _COLOR_ENTRY_RE.findall(m.group(1))}
+    hexes = dict(_COLOR_ENTRY_RE.findall(m.group(1)))
+    return {
+        f"--{var}": hexes[key]
+        for var, key in _ROOT_ASSIGN_RE.findall(src)
+        if key in hexes
+    }
 
 
 def _palette_checkable_lines(text: str):
@@ -462,33 +873,76 @@ def run_checks(root: Path) -> list[dict]:
                 "片側だけ動かすと検査が実質無効になる",
                 chk_rel)
 
-    # G: references の CSS 変数がフォールバックを持つか
-    defined: set[str] = set()
-    families: set[str] = set()
-    for rel in _VAR_SOURCES:
-        src = _read(root, rel)
-        defined |= set(_VAR_DEF_RE.findall(src))
-        families |= set(_VAR_FAMILY_RE.findall(src))
-    if not defined:
-        add("css-var-fallback", "生成器から CSS 変数定義を抽出できない (出力の書き方が変わった)",
-            _VAR_SOURCES[0])
-    else:
-        for path in sorted((root / "references").glob("*.md")):
-            text = path.read_text(encoding="utf-8")
-            # 同じファイル内で :root 定義しているものは、その文書の中で閉じている。
-            local = set(_VAR_DEF_RE.findall(text))
-            missing = sorted({
-                m.group(1) for m in _VAR_USE_RE.finditer(text)
-                if m.group(2) == ")" and m.group(1) not in defined and m.group(1) not in local
-                and not any(m.group(1).startswith(f) for f in families)
-            })
-            if missing:
-                rel = path.relative_to(root).as_posix()
-                add("css-var-fallback",
-                    f"生成器が定義しない CSS 変数をフォールバック無しで参照: {', '.join(missing)}。"
-                    "未定義の var() は宣言ごと無効になるため、色・背景が黙って消える。"
-                    "`var(--x, <実値>)` の形にするか、生成器側へ定義を足す",
-                    rel)
+    # G: 文書の CSS 変数が「その文書の経路」で定義されているか
+    #
+    # 照合は経路ごとに閉じる。文書 1 件を 1 つの経路の集合とだけ突き合わせ、
+    # 全経路の和集合は決して作らない (_VAR_ROUTE_SOURCES のコメント参照)。
+    routes: dict[str, tuple[set[str], set[str]]] = {}
+    for route, rels in _VAR_ROUTE_SOURCES.items():
+        d, f = set(), set()
+        for rel in rels:
+            src = _read(root, rel)
+            d |= set(_VAR_DEF_RE.findall(src))
+            f |= set(_VAR_FAMILY_RE.findall(src))
+        routes[route] = (d, f)
+        if not d:
+            add("css-var-fallback",
+                f"経路 {route} から CSS 変数定義を抽出できない (出力の書き方が変わった)。"
+                "抽出できない経路は照合が素通りするので、緑を信用してはいけない",
+                rels[0])
+
+    for path in _var_scan_targets(root):
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(root).as_posix()
+        # 同じファイル内で :root 定義しているものは、その文書の中で閉じている。
+        local = set(_VAR_DEF_RE.findall(text))
+        # 経路宣言は位置で効く。宣言行より後ろの var() がその経路に属する。
+        # 1 文書が複数経路の実装例を載せることがある (spec-registry のような索引) ので、
+        # 文書単位でなく宣言単位で切る。どちらにせよ 1 つの var() が照合される集合は 1 つ。
+        marks = [(m.start(), m.group(1)) for m in _VAR_ROUTE_MARK_RE.finditer(text)]
+        undeclared: set[str] = set()
+        per_route: dict[str, set[str]] = {}
+        unknown_routes: set[str] = set()
+        for m in _VAR_USE_RE.finditer(text):
+            if m.group(2) != ")":
+                continue  # フォールバックがあるので未定義でも壊れない
+            name = m.group(1)
+            if name in local:
+                continue
+            route = None
+            for pos, r in marks:
+                if pos < m.start():
+                    route = r
+                else:
+                    break
+            if route is None:
+                undeclared.add(name)
+                continue
+            if route not in routes:
+                unknown_routes.add(route)
+                continue
+            defined, families = routes[route]
+            if name not in defined and not any(name.startswith(f) for f in families):
+                per_route.setdefault(route, set()).add(name)
+
+        if undeclared:
+            add("css-var-fallback",
+                f"経路の宣言が無いまま CSS 変数をフォールバック無しで参照: {', '.join(sorted(undeclared))}。"
+                "どの経路の :root で解決される想定かが決まらないと、定義の有無を照合できない。"
+                f"`<!-- css-route: <{'|'.join(_VAR_ROUTE_SOURCES)}> -->` を該当箇所より前に置く",
+                rel)
+        if unknown_routes:
+            add("css-var-fallback",
+                f"未知の経路名を宣言している: {', '.join(sorted(unknown_routes))}。"
+                f"使えるのは {', '.join(_VAR_ROUTE_SOURCES)} のみ",
+                rel)
+        for route in sorted(per_route):
+            add("css-var-fallback",
+                f"経路 {route} が定義しない CSS 変数をフォールバック無しで参照: "
+                f"{', '.join(sorted(per_route[route]))}。"
+                "未定義の var() は宣言ごと無効になるため、色・背景が黙って消える。"
+                "`var(--x, <実値>)` の形にするか、その経路の生成器へ定義を足す",
+                rel)
 
     # H: 散文が載せるパレット値が SPEC.colors と一致するか
     palette = _palette(root)
@@ -543,6 +997,15 @@ def run_checks(root: Path) -> list[dict]:
                         f"正本へ揃えるか、意図的な別値なら直前に "
                         f"`<!-- {_PALETTE_MARKER} 理由 -->` を書く",
                         rel)
+
+    # I: 経路専有の契約節を、集合外のファイルが読んでいないか
+    findings.extend(section_reader_findings(root))
+
+    # J: 読み取り用画像の上限比 (CONST_010) と、文書側の写しの一致
+    findings.extend(qr_ratio_findings(root))
+
+    # K: どの経路にも属さない CSS 変数定義元 (と、登録だけあって出していない経路)
+    findings.extend(orphan_definer_findings(root))
 
     return findings
 

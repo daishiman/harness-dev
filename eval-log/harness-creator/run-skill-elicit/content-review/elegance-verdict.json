@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-elicit",
-    "skill_md_sha256": "134ff25f1d97c38f82f0c3339b5575473cd13fc06c4c248b460506bead9257ad"
+    "skill_md_sha256": "6fc26b7ec0621240d4d044af3b45805a012aaeed07c3a3f74ca816e6cffc592e"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,24 +11,32 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "independent-rename-review-subagent-c",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
-    "positive_feedback": [
-      "prefix 判定を Decision tree(Q2/Q3 の組合せから裏側で推定)と prefix 判定ウィザード(01a Step3 の 5 分岐を明示確定)の二段に分離し、複数候補該当時は open_questions を経由してウィザードで確定する導線が明示されているため、5 分岐全網羅(CE 要件)を満たしつつ設計用語をユーザーへ直接開示しない OUT1 の制約と矛盾なく両立している。",
-      "Subagent / Agent Team / Hook の placement hint を needs_independent_context / needs_lifecycle_enforcement / with_subagent_hint / with_hooks の boolean として正本スキーマ(additionalProperties:false)へ焼き込み、resolve-brief-to-category.py の CONDITIONAL_CATEGORIES が決定論的に読む設計で LLM 主観依存を排除している(19 章 factory 障害 #6 対応)。build フラグの object 型同名フラグとは別レイヤーである旨も注で明示されドリフトを防いでいる。"
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "skill-creator→harness-creator 改名後の SKILL.md(実測 sha256 134ff25f…)を全文実読し 4 条件で検証。(1) 旧名残存: skill-creator / skill_creator / スキルクリエイター の grep 0 件。knowledge ストア参照は『harness-creator 自身の plugins/harness-creator/knowledge/』へ統一され harness 表現(ハーネス総体の蓄積知見)として正しく、スキル名 run-skill-elicit は単体 skill 要件定義の elicit のため skill 表現維持で意味論境界に適合。(2) 改名追従: frontmatter schema_refs(../run-skill-create/schemas/skill-brief.schema.json)/ responsibility_refs(prompts/R1-elicit.md)/ references/resource-map.yaml / knowledge-skeleton scripts(search_knowledge.py・record_usage.py)/ ../run-build-skill/references/goal-seek-paradigm.md / ../ref-knowledge-loop を実在確認し断線 0。(3) C1 矛盾: 質問上限 5 問が Key Rules 1・Checklist・Gotchas で一貫、出力先 eval-log/skill-brief.json 固定で一貫、Decision tree(推定)と判定ウィザード(確定)の役割分担が明示され矛盾なし。(4) C2 漏れ: 必須フィールドと条件付き必須(wrap→base_skill / delegate→delegate_agent / L2→rubric_refs)・cross_platform・knowledge_loop・placement hint を全網羅。criteria IN1(固定パス+schema 準拠+必須確定)/ IN2(5 分岐決定木+条件付き必須+trigger 2〜3 個)/ OUT1(再質問せず設計用語直接質問せず 5 問以内+open_questions 退避+代理決定しない)を導出し adequacy を確認。4 条件すべて 0 で PASS。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
 }

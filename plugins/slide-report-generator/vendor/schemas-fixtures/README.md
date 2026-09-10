@@ -69,7 +69,7 @@
 | アクセント色は CSS 変数 enum | `$defs/accentColorEnum`, `$defs/colorVar` | SR-2-02, SR-2-08 |
 | SVG 最小フォントサイズ 13px | `globalSpec.minSvgFontSize` `minimum:13` | SR-3-05 |
 | SVG `<text>` 内 FA unicode 禁止 | `$defs/fontAwesomeIcon` パターン（クラス表記強制） | SR-3-06 |
-| 比較は 48-4-48 | `globalSpec.compareRatio` enum 固定 | SR-4-03 |
+| 比較は 2 パネル等幅 + 版面比の間隔 | `globalSpec.compareRatio` は自由文字列。値域の正本は `scripts/validate-compare-ratio.mjs` | SR-4-03 |
 | GSAP scale 最小 0.8 | `$defs/gsapTween.scale` `minimum:0.8`、`globalSpec.minGsapScale` | SR-6-01 |
 | ease は許容セットのみ | `animations.ease` enum | SR-6-05 |
 | コード言語は限定 enum | `$defs/langEnum` | SR-10-* |

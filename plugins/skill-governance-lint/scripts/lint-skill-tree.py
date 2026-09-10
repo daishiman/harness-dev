@@ -30,6 +30,16 @@ ALLOWED_NESTED_DIRS = {
     ("templates", "combinators"),
 }
 SCRIPT_EXTS = {".py", ".sh"}
+# ツールが skill ツリー内に残す非出荷物。いずれも .gitignore 済みで clone 直後には
+# 存在せず、除外しないと「ローカルで何を実行したか」で判定が変わる (下の第13条ループの
+# コメント参照)。`.claude` は Claude Code の運用ディレクトリで、hook が handoff/logs を
+# 書き込む (.gitignore: `plugins/**/.claude/handoff/` 他)。cache と同じく出荷ツリーの
+# 形ではないので、第13条・LS-203 のどちらの対象でもない。
+EPHEMERAL_DIR_NAMES = frozenset({
+    "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".benchmarks",
+    ".claude",
+})
+EPHEMERAL_SUFFIXES = frozenset({".pyc", ".pyo"})
 MAX_SKILL_LINES = 300  # P0-2: 300行 cap 機械強制
 WARN_SKILL_LINES = 280  # SS-203: 上限接近の事前警告 (warn のみ、exit 1 にしない)
 
@@ -203,8 +213,10 @@ def lint_one(root: Path) -> list[str]:
 
     # 第13条 フラットツリー (深さ <= 2)
     for p in root.rglob("*"):
-        # __pycache__ / .pyc を除外
-        if "__pycache__" in p.parts or p.suffix == ".pyc":
+        # ツールが残す一時 cache を除外。出荷物ではなく .gitignore 済みなので
+        # CI (clone 直後) には存在せず、除外しないと「ローカルで pytest を回したか」で
+        # 判定が変わる。第13条は出荷ツリーの形を見る条項であり cache は対象外。
+        if EPHEMERAL_DIR_NAMES & set(p.parts) or p.suffix in EPHEMERAL_SUFFIXES:
             continue
         rel = p.relative_to(root)
         # templates/ 配下は雛形なので skill 規約検査を skip (生成後の skill 側で検査)

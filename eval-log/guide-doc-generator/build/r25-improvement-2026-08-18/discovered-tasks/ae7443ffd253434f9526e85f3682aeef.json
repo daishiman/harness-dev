@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-40-opening-goal-first-cards",
+  "reason": "improvement/hero-card-decision.json#hero_card_contract.dom_contract は『各 .hero-card は data-hb-field を保持する』と書くが、そのとおりに実装すると見出し語 (語彙正本から引いた「ゴール」「目的」等) がマーカー要素の可視テキストへ混ざり、C22 NAR-02 の『マーカーの可視テキスト == 構成データの値』と C20 の読み戻し (extract-handout-config) が同時に壊れる。実装では data-hb-field をカード内の本文要素へ置き、カード外枠には data-hb-card-field を置いた (P05-x-34 が接続コネクタのマーカーを li へ移したのと同じ理由)。決定文書側の dom_contract をこの形へ改める必要がある",
+  "discovered_at_artifact": "plugins/guide-doc-generator/scripts/render-handout.py",
+  "proposed_node": {
+    "id": "P05-x-122-hero-card-marker-contract",
+    "title": "hero-card の dom_contract を『マーカーは本文要素・カードは data-hb-card-field』へ改める",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/improvement/",
+    "acceptance_criterion": "hero-card-decision.json#hero_card_contract.dom_contract が data-hb-field の置き場をカード内の本文要素と定め、カード外枠の識別子を data-hb-card-field と記していること。理由 (見出し語がマーカーの可視テキストへ混ざると NAR-02 と C20 が同時に壊れる) が併記されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

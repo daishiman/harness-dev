@@ -1,0 +1,46 @@
+{
+  "builder": "buildArchitecture",
+  "surface": "slide",
+  "diagramId": "d11",
+  "title": "社内網と社外接続の境界",
+  "caption": "左から右へ 1 方向に読む。長い破線の枠が社内外の境界で、細かい破線は経路が任意であることを示す。境界と任意は破線の刻みの長さで見分ける。",
+  "spec": {
+    "zones": [
+      {
+        "label": "社内",
+        "nodes": [
+          { "label": "社内利用者", "sublabel": "認証済み端末", "type": "input" },
+          { "label": "業務データ", "sublabel": "明細と履歴", "type": "store" }
+        ]
+      },
+      {
+        "label": "社内処理",
+        "nodes": [
+          { "label": "業務処理", "sublabel": "受付から確定まで同期", "type": "plain" }
+        ]
+      },
+      {
+        "label": "境界",
+        "nodes": [
+          { "label": "境界ゲートウェイ", "sublabel": "社内外の出入口・全通信を記録", "type": "boundary" },
+          { "label": "検疫領域", "sublabel": "持込ファイルの隔離保管", "type": "boundary" }
+        ]
+      },
+      {
+        "label": "社外",
+        "nodes": [
+          { "label": "外部照会先", "sublabel": "取引先の在庫 API・同期", "type": "external" },
+          { "label": "夜間バッチ連携", "sublabel": "任意・失敗しても翌日再送", "type": "optional" }
+        ]
+      }
+    ],
+    "links": [
+      { "from": "社内利用者", "to": "業務処理", "label": "申請" },
+      { "from": "業務データ", "to": "業務処理", "label": "参照" },
+      { "from": "業務処理", "to": "境界ゲートウェイ", "label": "外向き" },
+      { "from": "業務処理", "to": "検疫領域", "label": "持込" },
+      { "from": "境界ゲートウェイ", "to": "外部照会先", "label": "照会" },
+      { "from": "検疫領域", "to": "夜間バッチ連携", "label": "夜間送出" }
+    ]
+  }
+}

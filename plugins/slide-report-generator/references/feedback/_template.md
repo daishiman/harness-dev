@@ -38,7 +38,7 @@ escalations: []
 ## §4 適用内容サマリ（差分概要）
 
 - ファイル名: 行数差 / 趣旨
-- 例: `scripts/check-consistency.js` +40 行 / SVG viewBox 16:9 検査追加
+- 例: `vendor/scripts/check-consistency.js` +40 行 / SVG viewBox 16:9 検査追加
 
 ## §5 大規模変更エスカレーション
 

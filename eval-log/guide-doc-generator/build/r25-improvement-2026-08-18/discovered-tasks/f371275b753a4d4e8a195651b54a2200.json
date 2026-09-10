@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C10-01",
+  "reason": "pink (P02-C11-01c) が argv を誤って正本 task-graph.json を上書きし、dispatcher も裁定のための再導出で -o を渡して同じ上書きを踏んだ。2 者が独立に踏んでいるため個人の操作ミスではなく CLI 設計の罠。read-only 経路は --print-graph-hash のみで、再導出結果を比較する安全な手段が存在しない。なお両上書きとも hash 不変 (sha256:c640fb14...) で内容被害は無く、冪等性は副産物として実測された",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/task-graph.json",
+  "proposed_node": {
+    "id": "P05-x-107",
+    "title": "derive-task-graph.py に書き込みを伴わない再導出経路が無い (-o が黙って無視される)",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+    "acceptance_criterion": "-o <path> を渡したとき指定パスへ書くか、受理できない引数として exit2 で明示的に拒否すること。既定の task-graph.json へ黙って書いて exit2 を返す現在の挙動が再現しないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C10"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

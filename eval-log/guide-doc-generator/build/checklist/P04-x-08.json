@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification",
+  "task_id": "P04-x-08",
+  "covered_task_ids": [
+    "P04-x-08"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "R23 の裁定 (a)-(e) を固定する赤テストが実体化された",
+      "method": "ls -la で新規ファイルとサイズを確認",
+      "result": "pass (_r23_support.py 5104 / test_r23_text_policy.py 8050 (16件) / test_r23_baked_text.py 12227 (29件) / test_r23_style_family.py 12117 (20件) / test_r23_degradation.py 15602 (34件) / handout-content-architect/test_r23_image_planning.py 9806 (20件) / R23-ALIGNMENT.md 12429)"
+    },
+    {
+      "claim": "srg-image-bridge suite の実測値が報告と一致する",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/srg-image-bridge.py -p 'test_*.py'",
+      "result": "pass (Ran 291 / failures=120 / errors=0。報告値と完全一致)"
+    },
+    {
+      "claim": "DelegationOnlyTest を弱体化していない (C21 が SRG を再実装しない不変条件の維持)",
+      "method": "test_source_invariants.py を単体実行 (本ファイルは無変更)",
+      "result": "pass (Ran 23 / OK。DelegationOnlyTest 9 件を含み全緑。R23 の追加要求は family ごとの genome パス解決と --genome 受け渡しのみで、genome 複製・プロンプト組み立て・API 呼出しを要求していない)"
+    },
+    {
+      "claim": "委任した『導出値を契約に書いた』欠陥が invariant へ置換された",
+      "method": "test_r21_rendering.py の当該テスト本文を読解し、-k text_limits で単体実行",
+      "result": "pass (Ran 3 / OK)。旧版は config/ のファイル名 3 本をリテラル list で固定していた。新版は config/*.json を全走査し text_limits / block_body_max_chars / block_body_max_chars_by_detail_level を含むキーが 0 件であることを検査する述語へ置換。ファイル本数も固定リストも新たに書いていない"
+    },
+    {
+      "claim": "上記の置換が検出力を落とさず強めている",
+      "method": "旧述語と新述語の検出範囲を比較。対で追加された test_text_limits_live_in_the_theme_tokens を確認",
+      "result": "pass (旧版は『4 本目を作った』ことしか検出できなかったが、新版は既存 3 本のいずれかへ text_limits を紛れ込ませても落ちる。加えて assets/tokens/*.json の少なくとも 1 本が text_limits を持つことを要求する対の正検査を新設し、住所が空になる退化も塞いだ)"
+    },
+    {
+      "claim": "6 / 12 の数値が単一正本から読まれテスト本文にリテラルが無い",
+      "method": "test_r23_baked_text.py への数値 grep と _harness.py の読み出し関数の確認",
+      "result": "pass (テスト本文にリテラル 0 件。_harness.blocks_per_image_max() / chars_per_block_max() が script-brief-C21.json の baked_text_discipline から読む 1 箇所のみ)"
+    },
+    {
+      "claim": "選択写像の全域性も導出値でなく不変条件で書かれている",
+      "method": "test_the_selection_map_is_total_over_the_patterns の述語を確認",
+      "result": "pass (assertEqual(6, len(mapping)) という件数固定を『fallback キーを持たず値が全て埋まっている』へ置換済み。同一欠陥クラスの予防的除去)"
+    },
+    {
+      "claim": "write_scope を逸脱していない (実装側を 1 バイトも触っていない)",
+      "method": "scripts/ config/ genomes/ の mtime とサイズを本 leaf 実行前の記録と突合",
+      "result": "pass (srg-image-bridge.py は 16:23:48 のまま。config/ 4 本は 17:35-17:36 のまま。genome は 47272 bytes で P05-x-04 検証時と同一。書込は tests/ 配下のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "shared-fixture-change-cascades-to-existing-tests",
+      "detail": "worker からの自己申告。_harness.section() / plan_payload() を R23 後の計画形 (3 役 motifs 構造体など) へ更新した結果、既存ファイルのテストも赤化した。120 件の失敗のうち 111 件が単一原因 (contract-violation: motif 'platform' が style の語彙に無い) に収束する。これは fixture 不具合ではなく『未実装の契約に触れた赤』であり、P05-C21-01 の再実装で解ける。既存 assert は 1 件も削除・弱体化していない (DelegationOnlyTest の全緑で裏づけ済み)"
+    },
+    {
+      "kind": "test-discriminating-power-deferred",
+      "detail": "worker からの自己申告。現時点では exit2 を期待する赤の一部が上記の共通原因で偶然通っている可能性があり、真の判別力を持つのは P05-C21-01 が裁定 (d) を実装した後。ただし『境界ちょうどは通る』側 (assertNotExit2) は全て赤で立っているため、実装が緩い方向へ倒れる余地は塞がれている。P05-C21-01 完了後に本 suite を再実行して判別力を確認する必要がある"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 6 件。(1) 書記素の数え方: 標準ライブラリに grapheme cluster 分割が無いため『結合文字列で上限ちょうどが通る』ことだけを要求し分割アルゴリズムは指定しない (2) metric の『逐語で存在する数値』の走査範囲が未定義のため、セクション本文に在る数値なら通る / 無ければ exit2 だけを固定 (3) meta drift の開示書式 (algorithm 14b が warn のみ) は exit code 不変とスライドごとの stderr 出現だけを要求 (4) family 混在時の delegated_commands の並び順は集合一致でのみ判定 (5) 同梱 genome の schemaVersion 一致粒度を major.minor までに留めた (6) C05 AC10 は agent 実行が機械検査不能なため宣言的検査に留め、実行側判定を C21 の事前検査へ委譲"
+    }
+  ]
+}

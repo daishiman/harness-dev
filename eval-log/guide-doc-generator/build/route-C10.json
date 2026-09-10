@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "plugin_slug": "guide-doc-generator",
+  "route_id": "C10",
+  "component_kind": "hook",
+  "name": "guard-handout-external-ref",
+  "builder": "run-build-skill",
+  "build_target": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+  "status": "success",
+  "summary": "前段 (hook を config 正本参照へ切り替える改修) の後半を入れて route を成立させた。config/handout-output.json#size_limits.hook_scan_budget を新設 (max_bytes=16777216 / max_seconds=8.0) し、テスト側に残っていた第 2 正本 (hb_c10.py の SIZE_LIMIT_BYTES = 8*1024*1024) を config からの実測導出へ置換し、R25 で撤回済みの契約を守っていた test_applies_to.py の期待値を撤回した。C10 suite は 196 tests / 96 failures から 203 tests / 0 failures (skipped=13) へ、C16 suite は 354 tests / 12 failures から 354 tests / 0 failures へ移った。予算検査が空ゲートでないことは複製ツリー上の変異 2 種で実測済み (変異証跡は schema 上 test_evidence[] に置けないため evidence[] に格納した。deviations[4] 参照)。",
+  "deviations": [
+    "[known-conflict-disclosed] max_bytes=16777216 は hook-brief-C10.json#budget_thresholds.scale_check の 2 シナリオ (上限素材 2 点 = 2*5242880*4/3 = 13981013 バイト / 1 MiB 挿絵 6 節 = 約 8 MiB) を上回る最小の 2^n MiB として置いたが、実測ではこのサイズを走査しきれない。C16 scan_emoji は R25 が実際に増やす形 (img@src の base64 data URI) の 16.06 MiB を 31.98 秒、4 MiB を 7.03 秒で走査する (約 0.5 MiB/秒)。scan_emoji は list を返す eager 実装で、hook は D1 走査と D2 走査の『あいだ』でしか deadline を見られないため、max_seconds=8.0 は 1 回の走査の途中で発火できない。結果として max_bytes 直下の入力は settings_registration の timeout 10 秒に先に到達し、hook 自身の systemMessage を出せないまま harness に落とされる (= 打ち切りが不可視になる)。実在の handout 4 件は 0.05-0.07 MiB で桁が違うため現行運用では発火しないが、R25 の画像埋め込みが本格化すると顕在化する。解消は (i) C16 scan_emoji を逐次 yield へ、(ii) settings_registration の timeout 引き上げ、のいずれかで、どちらも本 route の write_scope 外。config には hook_scan_budget_known_conflict として同内容を残した。",
+    "[test-expectation-retracted] test_applies_to.py::TestCondition5DirectoryName::test_date_without_trailing_hyphen_passes_through を撤回し test_date_only_directory_is_in_scope へ置換した。旧期待値 (日付の直後がハイフンでなければ素通し) は applies_to.separator_agnostic_rationale が R25 で撤回した挙動そのもので、テストが撤回済み契約を能動的に守る fail-open だった。緩めた変更ではなく、素通しを期待していた入力に exit2 を要求する側へ強める変更である。",
+    "[test-harness-hermeticity] hb_c10.py の run_hook_raw が hook を子プロセス起動する際に HB_ROOT / CLAUDE_PLUGIN_ROOT を環境から除くようにした。除かないと複製 plugin root を指した起動が黙って正本の config を読み、変異検査 (TestMissingBudgetKeyIsVisible) が空ゲートになる。",
+    "[schema-not-applicable] plugins/guide-doc-generator/schemas/ に handout-output.json を対象とする schema は存在しない (実在するのは handout-config.schema.json のみで、grep で size_limits / handout-output.json のヒットは 0 件)。schema 追従は不要。",
+    "[mutation-evidence-has-no-home] 変異注入の赤 (複製ツリーで hook_scan_budget を削除 → exit 1 / failures 104 / errors 2) は『検査が空ゲートでないこと』を示す唯一の証跡だが、route-build-report schema の test_evidence[] は『成果物がゲートを通ること』だけを表す形をしており、status=success と exit_code!=0 が同居できないため置けない。やむなく evidence[] へ文字列として格納した (コマンド・exit code・失敗件数は落としていない)。この構造欠陥は discovered-task 435ee8f30c8647b29c5dffa67b48c41a (P05-x-102-mutation-evidence-slot / change_level=structural) として起票済み。",
+    "[skipped-not-counted-as-green] C10 suite の 13 件は skipped であり緑と数えていない。内訳は全件 `AC-C16-11: <fixture> で違反コードポイントが完全一致する` の parametrized 版で、skip 理由は『この fixture は絵文字違反を持たない』(cdn-script / check-u2714-plain / copyright-plain / data-uri-img / gear-plain / href-url / note-u266a / page-anchor / square-u25a0 / star-u2605 / svg-namespace / text-node-url / white-star-u2606)。同 fixture の『違反有無の一致』側は別テストで緑になっている。本 route の変更前後で 13 件から増減なし。schema の test_evidence[] に skipped を書く場所が無い (additionalProperties=false) ため、passed からも failed からも除いた実数としてここに記録する。"
+  ],
+  "evidence": [
+    "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py sha256=f8b7d6fc83d11e9b789463fe1e9f0a5d70ace701267fe641ee021ee1d384b861 (本 route では未変更。前段の改修をそのまま採る)",
+    "plugins/guide-doc-generator/config/handout-output.json sha256=5f4dcaea3f5e3e9d4283ed342bd4e07c2d4474df92e0d7f02a3c4588eb7863ad",
+    "変異証跡 A (空ゲートでないことの証明): 複製ツリーで config から size_limits.hook_scan_budget を削除し `cd <clone>/tests/guard-handout-external-ref && python3 -m unittest discover -p 'test_*.py'` → exit_code=1 / Ran 203 / failures=104 / errors=2 / skipped=13 (passed 84)。予算検査は空ゲートではない",
+    "変異証跡 B (テストが第 2 正本でないことの証明): 複製ツリーで max_bytes を 2 MiB へ変更して同コマンド → exit_code=0 / Ran 203 / failures=0 / skipped=13 (passed 190)、所要 67 秒→20 秒。閾値が config 由来へ移り fixture が config 値を追っている (変更前の hb_c10.py なら 8 MiB 固定のまま fixture が上限未満へ落ちて空振りしていた)",
+    "変異証跡 C (変異手順そのものが結果を作っていないことの対照): 無変異の複製ツリーで同コマンド → exit_code=0 / Ran 203 / failures=0 / skipped=13",
+    "実測 (変異前後): 正本 config の sha256 は変異走査の前後で 5f4dcaea... のまま一致。複製は tempfile.TemporaryDirectory で自動破棄しており正本ツリーへは書いていない",
+    "実測 (走査性能・darwin/python3.11.4): 実在 handout 0.06 MiB は ext=0.02s emoji=0.10s。同 HTML に 1 MiB 相当の base64 data URI を 12 枚足した 16.06 MiB は ext=0.70s emoji=31.98s。コメント詰め物では 1 MiB=2.18s / 4 MiB=7.03s / 8 MiB=14.07s",
+    "実測 (プロセス起動): 小サイズ入力の端から端まで 0.068 秒 (interpreter 起動 + C16 import + 読込 + 判定)",
+    "改修前 baseline (対照。この成果物のゲート通過証跡ではない): `cd plugins/guide-doc-generator/tests/guard-handout-external-ref && python3 -m unittest discover -p 'test_*.py'` → exit_code=1 / Ran 196 / failures=96 / skipped=13 (passed 87)。C16 suite は exit_code=1 / Ran 354 / failures=12",
+    "hook 本体は本 route で 1 バイトも変更していない (git diff の対象は config 1 件と tests/ 3 件のみ)"
+  ],
+  "inputs_consumed": [
+    "eval-log/guide-doc-generator/build/route-C16.json",
+    "plugin-plans/guide-doc-generator/briefs/hook-brief-C10.json",
+    "plugin-plans/guide-doc-generator/briefs/script-brief-C16.json",
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C10-01.json",
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/0142cd8b47a942cf97ade38bffdc43ea.json",
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/456d938d75064d16ae245643c70fb34b.json"
+  ],
+  "handover": "残る未解決は 2 点。(1) deviations[0] の known-conflict: C16 scan_emoji が eager (list を返す) なため max_seconds は 1 回の走査の途中で発火できず、max_bytes 直下の入力は hook 自身の可視な打ち切りより先に settings_registration の timeout 10 秒に到達する。対処候補は (i) scripts/verify-handout-selfcontained.py (C16 route) の scan_emoji を逐次 yield へ変える、(ii) hook-brief-C10.json#settings_registration の timeout を実測 (約 0.5 MiB/秒) に見合う値へ上げる。どちらも本 route の write_scope 外。(2) deviations[4] の mutation-evidence-has-no-home: 変異注入の赤を格納する場所が route-build-report schema に無く、本 cycle 全体に効く。discovered-task 435ee8f30c8647b29c5dffa67b48c41a として起票済み。なお discovered-task 0142cd8b (P05-x-03-hook-scan-budget) と 456d938d (P05-x-101) は本 route で充足したが、close は dispatcher が inbox 受理と一緒に扱うため本 route では触っていない。",
+  "discovered": [
+    "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/435ee8f30c8647b29c5dffa67b48c41a.json"
+  ],
+  "covered_task_ids": [
+    "P05-C10-01"
+  ],
+  "artifact_sha256": "f8b7d6fc83d11e9b789463fe1e9f0a5d70ace701267fe641ee021ee1d384b861",
+  "graph_hash": "sha256:c640fb14a767468c8b886222beebca5f62a06b2b995bd44f39c6b8dedb048452",
+  "generated_at": "2026-08-18T13:30:00.000Z",
+  "tool_versions": {
+    "python": "3.11.4",
+    "unittest": "3.11.4"
+  },
+  "test_evidence": [
+    {
+      "command": "cd plugins/guide-doc-generator/tests/guard-handout-external-ref && python3 -m unittest discover -p 'test_*.py'",
+      "exit_code": 0,
+      "passed": 190,
+      "failed": 0,
+      "started_at": "2026-08-18T13:18:00.000Z",
+      "completed_at": "2026-08-18T13:19:20.000Z"
+    },
+    {
+      "command": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-selfcontained.py -p 'test_*.py'",
+      "exit_code": 0,
+      "passed": 354,
+      "failed": 0,
+      "started_at": "2026-08-18T13:20:00.000Z",
+      "completed_at": "2026-08-18T13:20:33.000Z"
+    }
+  ]
+}

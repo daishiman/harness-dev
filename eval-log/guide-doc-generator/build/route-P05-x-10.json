@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-10",
+  "covered_task_ids": [
+    "P05-x-10"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+  "verified_by": [
+    {
+      "claim": "C06 スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-readability-reviewer -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 164 / failures=0 / errors=0 / OK。実装前は failures=1)"
+    },
+    {
+      "claim": "C03 の受入 fixture を壊していない",
+      "method": "ls plugins/guide-doc-generator/tests/assign-handout-readability-evaluator/fixtures/accept/agents/",
+      "result": "pass (handout-readability-reviewer.md が実在したまま緑になっている。fixture の改名・削除による緑化ではないことを確認した)"
+    },
+    {
+      "claim": "assert を弱めていない",
+      "method": "変更後のテスト本文を当方が読み、期待値式を確認",
+      "result": "pass (期待値は依然 assertEqual([H.AGENT], matches) の完全一致。許容範囲の拡大・skip の追加は無い。変更されたのは探索集合の絞り込みのみ)"
+    },
+    {
+      "claim": "述語の検出力が落ちていない (反証)",
+      "method": "当方が worker とは別に一時ディレクトリへ擬似 plugin ツリーを組み、述語だけを取り出して独立に反証",
+      "result": "pass (baseline=green。agents/legacy/ / skills/foo/ / commands/ / scripts/ のいずれへ 2 本目を置いても RED になる。tests/ 配下へ 3 本追加しても green のまま。すなわち『production surface の定義が一意』という不変条件は保たれ、非 production surface だけが除外されている)"
+    },
+    {
+      "claim": "tests_root の導出にパス文字列をハードコードしていない",
+      "method": "hb_c06.py:28-33 と変更箇所を突合",
+      "result": "pass (TESTS_DIR = Path(__file__).resolve().parent / PLUGIN_ROOT = TESTS_DIR.parents[1] であり、H.TESTS_DIR.parent は plugins/guide-doc-generator/tests に一致する。件数リテラルの焼き込みも無い)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain plugins/guide-doc-generator/",
+      "result": "pass (plugins/guide-doc-generator/ は untracked ディレクトリ全体として ?? 1 行で出るため個別追跡は不可。worker 報告と、C03 fixture の実在・他 component スイートの不変から逸脱なしと判断する。追跡下の 4 件の M は harness-creator / plugin-dev-planner 配下で本 build 着手前から存在するもの)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-followup-resolved-by-measurement",
+      "detail": "当方が実測して決着させた。worker は『tests/ 配下の他 component にも同種の plugin ルート全域 glob があれば同じ誤検出を起こす』を write_scope 外の未調査事項として残したが、当方が grep -rn 'PLUGIN_ROOT.glob(\"**/' および 'PLUGIN_ROOT.rglob(' を tests/ 全域へ適用したところ C06 以外のヒットは 0 件だった。よって横断タスクの起票は不要と裁定する。**未調査のまま follow-up として繰り越すのではなく、その場で測って閉じられる項目であった**"
+    },
+    {
+      "kind": "verification-method-substituted",
+      "detail": "worker が指示どおりの反証 (実ファイルを agents/legacy/ へ一時作成) を実行しようとしたが sandbox が write_scope 外書込として拒否したため、H.PLUGIN_ROOT 等を擬似ツリーへ差し替える in-process 反証へ代替した。worker はこの代替を隠さず理由つきで申告しており正しい。当方も同じ制約下にあるため、worker とは独立に組んだ擬似ツリーで反証を再現し、結論が一致することを確認した。**実ファイルによる反証は本 build の sandbox 下では原理的に不可能**であり、これは worker の怠慢ではなく環境制約である"
+    },
+    {
+      "kind": "worker-discretion",
+      "detail": "限定方法の 2 択のうち worker は『tests/ ツリーの除外』を採り『agents/ 配下への限定』を退けた。理由は後者だと skills/ や commands/ など本来置いてはならない場所に紛れ込んだ 2 本目を検出できなくなり検出力が落ちるため。当方の反証でこの主張は裏付けられた (agents/ 限定なら skills/foo/ の 2 本目を見逃す)。**受入基準は『agents/ 配下 (もしくは tests/ を除外した範囲) に限定』と両案を許していたが、検出力の差で優劣が付く選択であった**。docstring に不変条件と除外理由を書き残しており、次に読む者が再び範囲を広げ直す事故を防いでいる"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) は未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

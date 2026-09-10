@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C05",
+  "task_id": "P05-C05-01",
+  "covered_task_ids": [
+    "P05-C05-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/agents/handout-content-architect.md",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し frontmatter が規定のキーを持つ",
+      "method": "wc -l と frontmatter の目視確認",
+      "result": "pass (209 行。name / description / kind / version / owner / tools / isolation / model / owner_skill / prompt_ref / prompt_layer / since / last-audited の 13 キー。kind=agent / tools=Read, Write / isolation=fork / model=inherit)"
+    },
+    {
+      "claim": "C05 suite が全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-content-architect -p 'test_*.py'",
+      "result": "pass (Ran 49 / failures=0 / errors=0 / OK。実装前は failures=44。内訳は agent 定義 26 件 + R23 画像計画 20 件 + contract checker 3 件)"
+    },
+    {
+      "claim": "R22 の値域を本文へ複製していない (SSOT 維持)",
+      "method": "grep -nE 'overview|standard|detailed|cited|sourced' で全ヒットを目視確認",
+      "result": "pass (ヒット 1 件は 96 行目の section_kind 名 flow-overview であり detail_level の値域ではない。detail_level / evidence_depth はキー名のみ記載し、値域は handout-config.schema.json と preset を正本として参照する形になっている)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 (verify-handout-selfcontained.py) を importlib で読み込み scan_emoji を本文へ適用",
+      "result": "pass (違反 0 件。判定は絵文字の単一正本で行った)"
+    },
+    {
+      "claim": "R21 の 2 型 (demo-first / explain-first) を固定の型にしていない",
+      "method": "本文の記述方法を確認",
+      "result": "pass (識別子でなく『実演を先に見せる型』『説明を先に置く型』の自然文で表記し、どちらも固定にしない旨を述べている。導出表は CR-PRESENTATION-ORDER を持つ C12 へ委譲し複製していない = AC-C05-13 に抵触しない)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/handout-content-architect/ 配下 6 ファイル (fixtures/accept/ 配下を含む) の sha256 を実装前後で突合",
+      "result": "pass (6 ファイルすべて一致)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status と plugins/guide-doc-generator/ 配下の書込確認",
+      "result": "pass (書込は agents/handout-content-architect.md 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "unowned-followup",
+      "detail": "README G1 が求める『CANONICAL_DESCRIPTIONS を 1 件へ縮める』作業に owner leaf が無い。worker は inventory 側の長い description (R21 の型フィールドを含む方) を採ったが、正本の重複自体は残っている。P05-x-01 phase gate で owner を決めること"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 13 件。(1) description の正本ずれは inventory 側の長い方を採用 (2) 責務アンカー id は ANCHOR_RE 互換の `<!-- responsibility: R1 -->` (3) prompt_ref は owner skill 配下の skills/run-handout-build/prompts/R-design-config.md。C01 側の実ファイル整合は別 leaf 依存 (4) model は inherit (fixture に合わせ sonnet 固定を避けた) (5) version 0.1.0 / owner harness maintainers / since / last-audited は 2026-08-17 (6) R21 のレクチャー型は識別子でなく自然文で表記し導出を C12 へ委譲 (7) R22 は 2 軸のキー名のみ記載し値域は列挙しない (8) 図解型 6 語も列挙せず schema と C11/C14 を参照 (9) part id は B17 のみ単発指名し他は config/handout-parts.json 参照 (10) 戻り値へ image_plan_summary を追加 (brief の output_contract に定義があるためテストの必須 11 キー外だが正本に合わせた) (11) must_remember / no_need_to_remember が両方欠落した場合も blocked と明記 (12) セクション別内容適応の 4 段を独立小見出しに切り出し、テストが要求する順序 (adaptation_trace → semanticMapping → layoutSelectionByStructure → props) を本文構造で満たした (13) 参照 HTML のファイル名を本文から除去し一般名詞のみとした"
+    },
+    {
+      "kind": "verification-gap-carried",
+      "detail": "P04-x-08 が挙げた『C05 AC10 は agent 実行が機械検査不能なため宣言的検査に留め、実行側判定を C21 の事前検査へ委譲』が本 leaf でも解消していない。agent が実際にセクションごとに異なる画像計画を出すことは、C21 の E-IMG-UNIFORM-COMPOSITION (2 セクション以上で構図が全件同一なら exit2) が実行時に担保する"
+    }
+  ]
+}

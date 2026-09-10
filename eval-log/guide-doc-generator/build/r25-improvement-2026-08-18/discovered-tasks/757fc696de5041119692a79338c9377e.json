@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C01-01",
+  "reason": "component-inventory.json の C21 purpose 文言が visual-per-section-decision.json#cost_and_risk.mitigation と矛盾して読める。mitigation は『生成対象は illustration 役の節に限られる』と定めるが、inventory の記述は全節生成と解釈できる。加えて inventory C01 の deterministic_checks 7 件に embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout が含まれず、brief 側の呼出し列と一致しない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C01-01.json",
+  "proposed_node": {
+    "id": "P02-inventory-c01-c21-align",
+    "title": "component-inventory.json の C01 deterministic_checks と C21 purpose を brief 正本へ整合させる",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json",
+    "acceptance_criterion": "inventory C21 の purpose が『生成対象は role=illustration の節に限る』と読める文言であること、および inventory C01 の deterministic_checks が skill-brief-C01.json の R3-render 呼出し列 (validate / resolve / embed-assets / render-diagram-svg / build-icon-sprite / srg-image-bridge / render-handout / C09 4 ゲート / route) を欠落なく列挙すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

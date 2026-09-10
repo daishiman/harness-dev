@@ -1,1 +1,42 @@
-{"target":{"plugin":"skill-intake","skill":"run-notion-intake-publish","skill_md_sha256":"79b662088d20a27a057b26eb625a885fc2bad0fa827bfec1e7d8ac42fe7ce2c6"},"review_kind":"rubric","verdict":"PASS","reviewer":"assign-skill-design-evaluator","reviewed_at":"2026-07-02T00:00:00Z","iterations":2,"human_review_required":false,"feedback_loop":{"loop_scope":"both","criteria_evaluated":["IN1","IN2","OUT1"],"positive_feedback":["前回 FAIL 軸 1 (frontmatter⇔本文不整合) 是正: description が「intake 成果物を Notion へ公開 / 再公開したいときに使う。初回 publish (workflow-manifest P10 委譲) と…再公開の両方に対応する」へ更新され、本文 Purpose L50-52 / 責務境界表 / Gotcha 1 の両対応契約と一致。catalog 上の初回 publish 導線が可視化","前回 FAIL 軸 2 (責務正本の機能不全) 是正: responsibility_refs/rubric_refs 正本の republish-contract.md が P10 委譲 + update 専用再公開の責務配置へ全面追従し、aggregator phase11 / notion-manifest.json.page_id の取り残しが消滅。workflow-manifest.json P10-notion (delegateSkill=run-notion-intake-publish, P11 dependsOn=[P10-notion]) と機械突合一致","構造必須は充足を維持: dir 名 == frontmatter name、'## Purpose & Output Contract' / '## Gotchas' 見出し実在、本文 199 行 ≤ 300、rubric_refs / responsibility_refs / manifest / Additional Resources の参照ファイル全実在 (dangling 0 を実測)","IN2 の機械検証点は実装と一致: pipeline L174-186 と publish --require-update の exit 51 二重防御、quality_gate.check_page_id_consistency (--result-path/--prev-page-id) 実在、初回翻訳ゲートの内容ベース化 (_has_publish_artifact) と retry 回復・legacy 空 url 耐性の regression 49 件 pass を実行確認。加えて create 経路の POST 直後即時 _write_result で partial-create 重複窓も封鎖済み"],"negative_feedback":["残存 (既存負債): Checklist #6 が「機械判定可能な完了条件」と称して委譲する拒否条件のうち 2 件 (intake.json.updated_at 逆転 → exit 2 / 60 秒未満連続起動 → exit 1) は intake_publish_pipeline.py / quality_gate.py に実装が見当たらない文書のみ契約のままで、republish-contract.md に未実装/manual 注記が無い断定宣言が残置。実装か注記付与で整合させるべき","残存 (既存負債): IN1 verify_by:lint に対応する単一発火点検証 lint (本 skill Steps が intake_publish_pipeline.py のみを起動し render/publish を直呼びしないことの機械検査) は今回も未配線 (plugins/skill-intake/scripts・repo scripts/ を走査し該当無し。tests/test_skill_intake_notion_contract.py は --check-api 文言検査のみ)。verify_by 宣言と検証手段の紐付け欠落が継続"],"iteration":2,"iteration_limit":3,"hook_trigger":"manual","next_action":"none"},"notes":"iteration 2 genuine 再評価 (sha f2b756d9)。前回 FAIL を駆動した整合軸 2 件 (description 旧契約 / 責務正本 republish-contract.md の正反対記述) は完全是正を実測確認し、依存実在・責務単一 (R1 pure script orchestration 1 責務・重複実装なし)・IN2 機械検証点の実装一致も維持。残存 negative 2 件は iteration 1 でも FAIL driver でなかった既存負債であり今回変更で悪化しておらず、frontmatter⇔本文⇔委譲先文書⇔実装の全体整合が成立するため PASS。負債 2 件は negative_feedback に明記し次改訂で解消を求める。 次改訂推奨(旧 next_action フィールドより移設・FAIL 非駆動): PASS。次改訂での推奨: 拒否条件 2 件の実装 or 未実装注記による整合、IN1 単一発火点 lint の新設配線 (SKILL.md Steps の起動 script 検査)"}
+{
+  "target": {
+    "plugin": "skill-intake",
+    "skill": "run-notion-intake-publish",
+    "skill_md_sha256": "0278283737c92a6af9b5d0ac4ef294a54d7879e442fac2aff4856405acbc718e"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "runtime_root_policy: host-skill-path を宣言した7 skill 全件が `## Runtime root contract` 節を持ち、SKILL.md 内の全 shell 起動行が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT...}}` の入れ子形へ移行済み。bare `${CLAUDE_PLUGIN_ROOT}` の残存は SKILL.md 本文に 0 件 (grep で全件確認)。",
+      "external_mutation_guard を持つ 3 skill (run-skill-intake / run-intake-revise / run-notion-intake-publish) は canonical receipt flow block も併せ持ち、guard block 内の 3 行 (preview/authorize/execute) も同一の入れ子形へ移行されている。片側だけの移行は 0 件。",
+      "effect が external-mutation でない skill (finalize / interview / kickoff / visualize / status) には external_mutation_guard も receipt flow block も焼かれておらず、双方向の対応が保たれている。",
+      "frontmatter が宣言した responsibility_refs / schema_refs / rubric_refs は run-intake-status を除く全件で実在を確認した (prompts/R1-main.md, schemas/output.schema.json, references/republish-contract.md, ../../references/quality-rubric.md 等)。参照先の `../skill-governance-adapters/scripts/build-external-mutation-guard.py` も実在する。"
+    ],
+    "negative_feedback": [
+      "[low / smell] `## Runtime root contract` の挿入位置が skill 間で揃っていない。run-skill-intake だけ Pre-choice section より前 (L74)、他 6 skill は `# <skill>` H1 の直後 (Post-choice section より後) に置かれている。Post-choice の gating 文が列挙するのは workflow・goal-seek・評価・修正 section であり Runtime root contract はそのいずれでもない (直後の Purpose & Output Contract も同様に非 gating) ため実行意味は変わらないが、位置規約が本文に明文化されていない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration により skill_md_sha256 が乖離したことを受けた再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/skill-intake/skills/<skill>/SKILL.md` の全差分 (8 skill 分)、対象 SKILL.md 本文、plugin-composition.yaml と .claude-plugin/plugin.json の差分、references/package-contract.json の該当節。 実行したコマンド: `python3 scripts/lint-content-review.py --all` (現行 sha の取得)、`python3 scripts/lint-feedback-contract.py --all` (skill-intake の指摘は既存 baseline 免除の live-trial WARN のみで本差分由来の新規指摘なし)、`python3 scripts/lint-feedback-protocol.py` (skill-intake 該当 0 件)、`python3 scripts/lint-skill-tree.py <skill-dir>`、frontmatter *_refs の実在の機械走査、SKILL.md 全 shell 行の bare `${CLAUDE_PLUGIN_ROOT}` 残存 grep。 本 skill の差分は runtime_root_policy frontmatter 1 行の追加、`## Runtime root contract` 節の追加、および shell 起動行の `${PLUGIN_ROOT:-...}` 入れ子化に限られ、Purpose & Output Contract / Key Rules / ゴールシーク実行 / 完了チェックリスト / feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+}

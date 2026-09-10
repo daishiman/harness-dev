@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c12-opens-prose-overview-codes",
+  "covered_task_ids": [
+    "P02-c12-opens-prose-overview-codes"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C12.json",
+  "acceptance_criterion_restated": "script-brief-C12.json の detections 本体に W-OPENS-PROSE と E-OVERVIEW-SECTION-MISSING が定義され、それぞれ検査規則・違反例・exit code クラスへの割当を持つこと。AC 側の『または該当コード』という留保表現が残らないこと",
+  "verified_by": [
+    {
+      "claim": "W-OPENS-PROSE を定義した",
+      "method": "visual_density_constraints.codes へ追加 (level / exit_code_class / meaning / violation_example / pass_example / scope_limit / not_applicable_to)。実装 (validate-handout-config.py の check の該当分岐) を読み、判定が『role が main か未指定の節で part_ids_of の先頭が TEXT』であることを確認して記述",
+      "result": "定義済み。閾値を持たない真偽検査であることを threshold_key へ明記した (他 5 コードが thresholds.* を指すため、空欄にすると『書き忘れ』と読まれる)"
+    },
+    {
+      "claim": "W-OPENS-PROSE の exit code クラスを割り当てた",
+      "method": "exit_codes の定義と照合。W- 系は既定 exit 0 で、--strict 併用時のみ exit 1 の側へ入る",
+      "result": "exit_code_class へ記述。併せて level=error へ昇格させない理由 (図解が主張そのものである節など、書き手の判断で覆せる余地を残す) を書いた。W-HERO-LONG / W-HERO-HEAVY が level=error である前例があるため、昇格しない判断の方を明示する必要がある"
+    },
+    {
+      "claim": "この検査が保証しない範囲を書いた",
+      "method": "正本 opening.section_opening.progression.enforced_by を確認",
+      "result": "scope_limit へ『4 段のうち機械検査が持つのは step 4 (TEXT) を先頭に置いていないかだけ』『緑を並びが正しいことの証明として読まない』と明記。ここを書かないと、W-OPENS-PROSE の緑が progression 全体の充足として読まれる"
+    },
+    {
+      "claim": "E-OVERVIEW-SECTION-MISSING を属性駆動で定義した",
+      "method": "algorithm へ A9f を追加。config/handout-sections.json の overview_type 属性を持つ section_kind を全体像の種別とし、最初の main セクションの section_kind がそれを持たなければ exit 1",
+      "result": "定義済み。C70 の 3 型 (timeline / map / thesis) の型名を script へ書かない — 集約定義の変更が script の変更になるため。C46 で採った属性駆動 (slug を名指ししない) と同じ原則に揃えた"
+    },
+    {
+      "claim": "E-OVERVIEW-SECTION-MISSING の exit code クラスを割り当てた",
+      "method": "exit_codes['1'] の列挙へ追記",
+      "result": "『本編の先頭が全体像セクションでない (E-OVERVIEW-SECTION-MISSING・C70)』を exit 1 の列挙へ追加。level=error であり --strict の有無に依存しない"
+    },
+    {
+      "claim": "留保表現を消した",
+      "method": "AC-C12-R25-70 の expected から『(または該当コード)』を削除し、how も slug 直書きから属性駆動の記述へ書き換えた",
+      "result": "『前者は E-OVERVIEW-SECTION-MISSING で exit 1、後者は exit 0 (C70)』。加えて why_attribute_not_slug を足し、期待値を config から実測で引くよう指定した (テストだけが古い種別を見張る形を避ける)"
+    },
+    {
+      "claim": "検査表の置き場所を作った",
+      "method": "C70 の checks 項目を最初 r21_type_constraints.checks へ入れたが、R21 (section_kind ごとの属性が守られているか) と R25 (資料全体の並びが利用者要求の型か) は掛かっている対象が違うため、r25_structure_constraints を新設して移した",
+      "result": "移設済み。canonical_refs に goal-spec C70 / overview_type の正本 / opening の正本の 3 件を置いた"
+    },
+    {
+      "claim": "検査が実装できる状態にないことを確認し、外へ出した",
+      "method": "config/handout-sections.json の section_kinds を実測。slug は 12 種で timeline / map / thesis は不在、kind_attribute_semantics にも overview_type は不在",
+      "result": "属性が 1 つも無い状態で A9f を実装すると全 doc_type が落ちる。config 側の定義を P05-x-131-overview-kind-config として emit し、brief の checks note へ『config 側の属性追加と同じ稿で入れる』と明記した"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C12OVW-CONFIGGAP-01",
+      "level": "warn",
+      "summary": "C70 は利用者が選んだ『3 種の型に集約』の実体だが、config/handout-sections.json には timeline / map / thesis も overview_type も無い。現状の全体像セクションは flow-overview 1 種のみで、guide 系が取るべき map (時間を持たない章の地図) と report 系が取るべき thesis (要点 3 枚) の器が存在しない。検査 (A9f) を書いても対象となる種別が無いため、config が先である"
+    },
+    {
+      "id": "F-P02C12OVW-MISMATCH-01",
+      "level": "warn",
+      "summary": "『先頭が全体像でない』と『全体像だが doc_type に対応する型と違う』は別の欠陥で、後者は今回のコードでは捕まらない。guide なのに timeline (所要時間つきの手順列) を先頭に置いた資料は E-OVERVIEW-SECTION-MISSING が緑になる。doc_type → 型の対応をどのファイルが持つかも未確定 (C23 のプリセット側が有力)。P02-x-132 として emit 済み"
+    },
+    {
+      "id": "F-P02C12OVW-POSITION-01",
+      "level": "info",
+      "summary": "A9f は『先頭が全体像か』だけを見る。全体像セクションが本編の途中や末尾にも置かれている場合は落とさない — 置いてよい位置の規約が無いため、この検査が独自に禁じるのは筋が悪いと判断した。結果として『全体像が 2 つある資料』は通る"
+    },
+    {
+      "id": "F-P02C12OVW-CODEHOME-01",
+      "level": "info",
+      "summary": "C12 brief にはコードの定義場所が visual_density_constraints.codes / algorithm のステップ文 / 各制約表の checks の 3 系統あり、どのコードがどこに定義されるかの規則が無い。今回は W-OPENS-PROSE を codes へ、E-OVERVIEW-SECTION-MISSING を algorithm + checks へ置いたが、これは正本 (visual-policy か sections か) に従った振り分けであって brief 側の規則ではない。P02-x-130 (codes[] の網羅) と併せて整理する余地がある"
+    }
+  ]
+}

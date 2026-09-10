@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P13",
+  "covered_task_ids": [
+    "P13"
+  ],
+  "status": "success",
+  "leaf_count": 4,
+  "verified_by": [
+    {
+      "claim": "repo 内で利用可能な状態が宣言され、manifest の配布可否と実体が整合している",
+      "method": "evidence/P13.json の manifest_distribution_consistency",
+      "result": "distributable:true / bundle_targets:[skills-full]。entry_points 9 件すべて実在で missing 0 件"
+    },
+    {
+      "claim": "marketplace 登録の判断と理由が記録されている",
+      "method": "phase-13-release.md の事前解決済み判断と evidence/P13.json の decision_record",
+      "result": "元判断・2026-08-18 の反転・反転根拠・残留リスクと緩和・改善の受け皿が追記形式で残る"
+    },
+    {
+      "claim": "install の 2 経路が登録面まで整合している",
+      "method": "evidence/P13.json の path_a / path_b と build-local-marketplace.py --check",
+      "result": "marketplace.json (skills) / bundles.json (skills-full) / marketplaces/local すべてに登録あり、--check exit0 (23 plugin, no drift)"
+    },
+    {
+      "claim": "改善事項の記録先が決まっている",
+      "method": "evidence/P13.json の decision_record.improvement_sink",
+      "result": "eval-log/guide-doc-generator/build/discovered-tasks を経由して外ループへ合流させる"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "path-b-not-yet-satisfied",
+      "detail": "plugins/guide-doc-generator/ は git 未追跡 (git ls-files=0)。ローカル経路は symlink で作業ツリーを解決するため成立するが、GitHub marketplace 経路は commit + push + PR マージまで source が空になる。コミットは利用者承認待ち"
+    },
+    {
+      "kind": "install-command-not-executable",
+      "detail": "/plugin marketplace add と /plugin install は Claude Code の対話面でのみ実行でき、本 build の実行環境から起動できない。not-verifiable として記録し pass と推定していない"
+    }
+  ]
+}

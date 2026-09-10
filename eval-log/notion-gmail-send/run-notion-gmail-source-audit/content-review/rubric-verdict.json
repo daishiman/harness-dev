@@ -2,12 +2,12 @@
   "target": {
     "plugin": "notion-gmail-send",
     "skill": "run-notion-gmail-source-audit",
-    "skill_md_sha256": "edccc6ffe718a2c7fba11656745f5cec14fcc1a65bd44629dc7b42ca960a9476"
+    "skill_md_sha256": "ce824107bd835a2b9405fd1d0b16ff3ca903f609550b191b372c8d18151c346c"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-rubric-reviewer",
-  "reviewed_at": "2026-06-25",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "findings_summary": {
@@ -15,21 +15,27 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "feedback_loop": {
-    "loop_scope": "inner",
-    "criteria_evaluated": ["IN1", "OUT1"],
-    "positive_feedback": [
-      "frontmatter が skill-design rubric に準拠: kind=run / prefix=run / effect=conversation-output(参照専用と整合) / disable-model-invocation=true・user-invocable=true / argument-hint と arguments が --db1/--db2 と一致 / allowed-tools=Read+Bash(python3 *) の最小権限(書き込みツールなし=conversation-output と矛盾なし)。feedback_contract.criteria(IN1=inner/verify_by=test, OUT1=outer/verify_by=elegant-review) が SSOT(scripts/feedback_contract_ssot.py)準拠で過不足なし。",
-      "スクリプトヘッダ規約準拠: audit_mail_dbs.py / mail_db_audit.py の PEP723 風メタ(name/purpose/inputs/outputs/contexts/network/write-scope=none/requires-python)が揃い、write-scope=none が read-only 設計と一致。exit code 規約(0=問題なし/1=改善推奨あり/2=接続設定エラー)も effect=conversation-output と整合。",
-      "IN1 の機械検証可能性が rubric の verify_by=test を満たす: audit テスト群が plugin 内テストで 50 passed、各検出コードに対応するテストが1対1で存在し、検証手段がスキル定義と一致。"
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
     ],
-    "negative_feedback": [],
+    "positive_feedback": [
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+    ],
+    "negative_feedback": [
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "skill-design rubric 観点で genuine 採点。frontmatter(name/description/kind/prefix/effect/owner/since/version/source/source-tier/last-audited/audit-trigger/feedback_contract)が必須項目を満たし、description は2トリガ(品質点検したいとき/洗い出したいとき)で適正。SKILL.md 構成(Purpose & Output Contract / End-to-End Flow / ゴールシーク実行(Goal/Why/Checklist/Loop) / Key Rules / Gotchas / Additional Resources)が run-kind の標準骨格に沿い、本文行数も過大でなく簡潔。argument-hint=[--db1 <id>] [--db2 <id>] [--config <path>] [--json] が script の argparse 定義と一致(dangling/未実装フラグなし)。allowed-tools が Read と Bash(python3 *) のみで conversation-output(書き込みなし)と矛盾せず最小権限。IN1=inner loop_scope/verify_by=test, OUT1=outer loop_scope/verify_by=elegant-review が feedback_contract SSOT と整合。rubric 違反 0 件で PASS。criteria_evaluated は elegance verdict と分担(本 verdict は inner=IN1 機械検証性中心、OUT1 は outer 整合性を補助確認)し重複記載なし。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。"
 }

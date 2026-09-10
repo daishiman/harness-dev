@@ -1,0 +1,271 @@
+diff --git a/plugins/guide-doc-generator/tests/extract-handout-config.py/test_explain_part.py b/plugins/guide-doc-generator/tests/extract-handout-config.py/test_explain_part.py
+new file mode 100644
+index 0000000..622cfaa
+--- /dev/null
++++ b/plugins/guide-doc-generator/tests/extract-handout-config.py/test_explain_part.py
+@@ -0,0 +1,45 @@
++# -*- coding: utf-8 -*-
++"""解説パネル (EXPLAIN) の逆抽出。
++
++EXPLAIN は「大きな絵 + 少ない言葉」を 1 情報単位ぶん抱える部品で、絵そのものは
++入れ子の図解 / 画像が持つ。ここで固定するのは 2 点。
++
++1. 外側は参照側として復元される — headline / note / diagram_id が戻り、入れ子の
++   図解が DIAGRAM 部品として二重に現れない。
++2. 内側の実体は拾われる — diagrams[] は入れ子から復元される。部品の走査は
++   data-hb-part で止まるが、レジストリの走査は部分木全体を歩くため。
++"""
++
++import _harness as H
++
++
++class ExplainPartExtraction(H.C20TestCase):
++
++    def extract_explain(self):
++        res, _ = self.extract(H.full_html(
++            sections=[H.section_html("intro", parts=H.part_explain())]))
++        self.assert_exit(res, 0)
++        return self.read_out()
++
++    def parts(self, cfg):
++        return cfg["sections"][0]["parts"]
++
++    def test_explain_part_is_restored_with_its_words(self):
++        parts = self.parts(self.extract_explain())
++        self.assertEqual(1, len(parts), "解説パネル以外の部品が増えている: %r" % parts)
++        self.assertEqual("EXPLAIN", parts[0]["part"])
++        self.assertEqual("ここから始める", parts[0]["data"]["headline"])
++        self.assertEqual("右上のボタンが入口", parts[0]["data"]["note"])
++
++    def test_visual_is_kept_as_a_reference_not_inlined(self):
++        """絵は id 参照で戻る (解説パネルの data に図解の中身が展開されない)。"""
++        data = self.parts(self.extract_explain())[0]["data"]
++        self.assertEqual("flow-1", data["diagram_id"])
++        self.assertNotIn("pattern", data)
++        self.assertNotIn("data", data)
++
++    def test_nested_diagram_entity_is_recovered(self):
++        diagrams = self.extract_explain().get("diagrams") or []
++        self.assertEqual(1, len(diagrams))
++        self.assertEqual("flow-1", diagrams[0]["id"])
++        self.assertEqual(H.DIAGRAM_DATA, diagrams[0]["data"])
+diff --git a/plugins/guide-doc-generator/tests/validate-handout-config.py/test_explain_density.py b/plugins/guide-doc-generator/tests/validate-handout-config.py/test_explain_density.py
+new file mode 100644
+index 0000000..87500f8
+--- /dev/null
++++ b/plugins/guide-doc-generator/tests/validate-handout-config.py/test_explain_density.py
+@@ -0,0 +1,214 @@
++# -*- coding: utf-8 -*-
++"""解説パネル (EXPLAIN) の検査 (E-EXPLAIN-VISUAL / W-EXPLAIN-FEW / W-EXPLAIN-GAP)。
++
++利用者要求 2026-08-23「各セクション内で含まれている情報ごとに、何も知らない人
++向けに大きな画像と少ない言葉で説明できるように」に対応する。節の顔になる挿絵
++(IMG) は節に 1 枚で、節の中の個々の情報までは説明しない。そこを埋めるのが
++EXPLAIN であり、固定するのは 3 点。
++
++1. 絵の出所は diagram_id か asset_id のどちらか**ちょうど 1 つ** (両方だと同じ
++   構成データから 2 通りの HTML が出うる / 0 個だと絵が無い)。宣言の正本は
++   schemas/handout-config.schema.json の x_exactly_one_of。
++2. 下限 (W-EXPLAIN-FEW) と間隔 (W-EXPLAIN-GAP) は対で効く。下限だけだと節の先頭に
++   1 つ置いて残りをカードと文章で埋める形が通ってしまう。
++3. 閾値の出所は config/handout-visual-policy.json で、退避値は出荷中の正本と同値。
++"""
++
++import importlib.util
++import json
++import unittest
++
++import _harness as H
++from _harness import (diagram_part, explain_part, image_part, table_part, text_part,
++                      valid_config)
++
++VISUAL_POLICY_RELPATH = "config/handout-visual-policy.json"
++
++
++class ExplainTestBase(H.C12TestCase):
++
++    def patch_threshold(self, name, value):
++        path = self.root / VISUAL_POLICY_RELPATH
++        policy = json.loads(path.read_text(encoding="utf-8"))
++        policy.setdefault("thresholds", {}).setdefault(name, {})["value"] = value
++        path.write_text(json.dumps(policy, ensure_ascii=False, indent=2), encoding="utf-8")
++
++    def config_with_parts(self, parts):
++        """intro 節の部品だけを差し替える (practice 節は正しいまま残す)。"""
++        cfg = valid_config()
++        cfg["sections"][0]["parts"] = parts
++        return cfg
++
++    def no_explain_parts(self):
++        return [diagram_part("intro-d1", "intro-flow"),
++                image_part("intro-i1", "intro-shot"),
++                table_part("intro-b1")]
++
++
++class TestVisualSourceIsExactlyOne(ExplainTestBase):
++    """E-EXPLAIN-VISUAL: 絵の出所はどちらか一方ちょうど 1 つ。"""
++
++    def test_one_source_passes(self):
++        res, _ = self.validate(valid_config())
++        self.assert_no_diag(res, "E-EXPLAIN-VISUAL")
++        self.assert_exit(res, 0)
++
++    def test_asset_is_also_a_valid_source(self):
++        cfg = valid_config()
++        cfg["sections"][0]["parts"][2] = explain_part("intro-e1", asset_id="intro-shot")
++        res, _ = self.validate(cfg)
++        self.assert_no_diag(res, "E-EXPLAIN-VISUAL")
++        self.assert_exit(res, 0)
++
++    def test_both_sources_fail(self):
++        cfg = valid_config()
++        cfg["sections"][0]["parts"][2]["data"]["asset_id"] = "intro-shot"
++        res, _ = self.validate(cfg)
++        self.assert_fails_with(res, "E-EXPLAIN-VISUAL", "/sections/0/parts/2/data")
++
++    def test_no_source_fails(self):
++        cfg = valid_config()
++        del cfg["sections"][0]["parts"][2]["data"]["diagram_id"]
++        res, _ = self.validate(cfg)
++        self.assert_fails_with(res, "E-EXPLAIN-VISUAL", "/sections/0/parts/2/data")
++
++    def test_the_rule_comes_from_the_schema_not_the_script(self):
++        """宣言を schema から外すと検査も消える (script へ部品 id が埋まっていない)。"""
++        path = self.root / "schemas" / "handout-config.schema.json"
++        schema = json.loads(path.read_text(encoding="utf-8"))
++        del schema["$defs"]["part_data"]["EXPLAIN"]["x_exactly_one_of"]
++        path.write_text(json.dumps(schema, ensure_ascii=False, indent=2), encoding="utf-8")
++        cfg = valid_config()
++        del cfg["sections"][0]["parts"][2]["data"]["diagram_id"]
++        res, _ = self.validate(cfg)
++        self.assert_no_diag(res, "E-EXPLAIN-VISUAL")
++
++
++class TestExplainFloor(ExplainTestBase):
++    """W-EXPLAIN-FEW: main セクションに解説パネルが足りない。"""
++
++    def test_section_without_explain_warns_without_stopping_completion(self):
++        res, _ = self.validate(self.config_with_parts(self.no_explain_parts()))
++        self.assert_diag(res, "W-EXPLAIN-FEW", "/sections/0/parts")
++        self.assert_exit(res, 0)
++
++    def test_appendix_section_is_exempt(self):
++        """付録は読み飛ばされてよい節なので、情報単位ごとの解説を求めない。"""
++        cfg = valid_config()
++        cfg["sections"][1]["parts"] = [diagram_part("practice-d1", "practice-flow"),
++                                       image_part("practice-i1", "practice-shot"),
++                                       table_part("practice-b1")]
++        cfg["sections"][1]["role"] = "appendix"
++        cfg["sections"][1]["ties_to"] = []
++        res, _ = self.validate(cfg)
++        self.assert_no_diag(res, "W-EXPLAIN-FEW")
++
++    def test_floor_comes_from_canon_not_script(self):
++        self.patch_threshold("min_explain_parts_per_main_section", 2)
++        res, _ = self.validate(valid_config())
++        self.assert_diag(res, "W-EXPLAIN-FEW", "/sections/0/parts")
++
++    def test_zero_in_canon_turns_the_check_off(self):
++        self.patch_threshold("min_explain_parts_per_main_section", 0)
++        self.patch_threshold("max_consecutive_parts_without_explain", 0)
++        res, _ = self.validate(self.config_with_parts(self.no_explain_parts()))
++        self.assert_no_diag(res, "W-EXPLAIN-FEW")
++
++
++class TestExplainGap(ExplainTestBase):
++    """W-EXPLAIN-GAP: 解説パネルを挟まずに部品が続きすぎる。"""
++
++    def long_run_config(self):
++        """下限 1 件は満たしているのに、節の大半が解説なしで流れる形。"""
++        return self.config_with_parts(self.no_explain_parts() + [
++            text_part("intro-t1"),
++            explain_part("intro-e1", "intro-flow"),
++        ])
++
++    def test_long_run_warns_even_though_the_floor_is_met(self):
++        res, _ = self.validate(self.long_run_config())
++        self.assert_diag(res, "W-EXPLAIN-GAP", "/sections/0/parts/3")
++        self.assert_no_diag(res, "W-EXPLAIN-FEW")
++        self.assert_exit(res, 0)
++
++    def test_reported_once_per_section(self):
++        cfg = self.config_with_parts(self.no_explain_parts() + [
++            table_part("intro-b2"),
++            text_part("intro-t1"),
++            explain_part("intro-e1", "intro-flow"),
++        ])
++        res, _ = self.validate(cfg)
++        self.assertEqual(1, len(self.assert_diag(res, "W-EXPLAIN-GAP")))
++
++    def test_an_explain_in_the_middle_resets_the_run(self):
++        res, _ = self.validate(valid_config())
++        self.assert_no_diag(res, "W-EXPLAIN-GAP")
++
++    def test_ceiling_comes_from_canon_not_script(self):
++        self.patch_threshold("max_consecutive_parts_without_explain", 1)
++        res, _ = self.validate(valid_config())
++        self.assert_diag(res, "W-EXPLAIN-GAP", "/sections/0/parts/1")
++
++
++class TestExplainDoesNotReplaceTheSectionFace(ExplainTestBase):
++    """節の顔 (IMG) と情報単位の解説 (EXPLAIN) は別の役である。"""
++
++    def test_explain_does_not_satisfy_the_image_floor(self):
++        cfg = self.config_with_parts([
++            diagram_part("intro-d1", "intro-flow"),
++            explain_part("intro-e1", "intro-flow"),
++            table_part("intro-b1"),
++        ])
++        res, _ = self.validate(cfg)
++        self.assert_fails_with(res, "E-IMAGE-ABSENT", "/sections/0/parts")
++
++    def test_headline_is_measured_as_title_copy(self):
++        """「少ない言葉」であること (要点の文字数上限が当たる)。"""
++        cfg = valid_config()
++        cfg["sections"][0]["parts"][2]["data"]["headline"] = (
++            "受注から加工予定を立てるまでの一連の流れを図の形で示しています")
++        res, _ = self.validate(cfg)
++        self.assert_diag(res, "W-COPY-LONG", "/sections/0/parts/2/data/headline")
++
++
++class FallbackMirrorsTheShippedCanon(unittest.TestCase):
++    """退避値と出荷中の正本が同値であること。
++
++    0 (検査しない) を退避に置くと、方針ファイルを消すだけで「情報単位ごとの解説」
++    という要求を無効化できる。ずれたまま出荷できないことをここで押さえる。
++    """
++
++    @classmethod
++    def setUpClass(cls):
++        spec = importlib.util.spec_from_file_location("hb_c12_explain", str(H.SRC_SCRIPT))
++        cls.module = importlib.util.module_from_spec(spec)
++        spec.loader.exec_module(cls.module)
++        path = H.SRC_PLUGIN_ROOT / VISUAL_POLICY_RELPATH
++        cls.thresholds = json.loads(path.read_text(encoding="utf-8"))["thresholds"]
++
++    def test_min_explain_mirror(self):
++        self.assertEqual(self.thresholds["min_explain_parts_per_main_section"]["value"],
++                         self.module.FALLBACK_MIN_EXPLAIN_PER_SECTION)
++
++    def test_max_gap_mirror(self):
++        self.assertEqual(self.thresholds["max_consecutive_parts_without_explain"]["value"],
++                         self.module.FALLBACK_MAX_PARTS_WITHOUT_EXPLAIN)
++
++
++class TestCanonAbsence(ExplainTestBase):
++    """正本が読めないときも検査は動き、満たしている構成は落ちない。"""
++
++    def test_missing_canon_still_reports(self):
++        (self.root / VISUAL_POLICY_RELPATH).unlink()
++        res, _ = self.validate(self.config_with_parts(self.no_explain_parts()))
++        self.assert_diag(res, "W-EXPLAIN-FEW", "/sections/0/parts")
++
++    def test_missing_canon_does_not_manufacture_findings(self):
++        (self.root / VISUAL_POLICY_RELPATH).unlink()
++        res, _ = self.validate(valid_config())
++        self.assert_no_diag(res, "W-EXPLAIN-FEW")
++        self.assert_no_diag(res, "W-EXPLAIN-GAP")
++
++
++if __name__ == "__main__":
++    unittest.main()

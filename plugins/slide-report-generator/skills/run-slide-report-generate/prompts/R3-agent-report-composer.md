@@ -39,7 +39,7 @@ last-audited: 2026-07-05
 - 注記: テクニカルライティングと構造化ドキュメントの HTML 化手法を適用する。
 
 ## プロジェクト概要
-- 最上位目的: 承認・検証済みの `report-structure.json`（visual 確定済み）から、read-through 粒度の **report HTML/prose**（文章多め・Markdown 本文を HTML 化・visual-strategist 指定のビジュアルを 1 項目 1 点で埋め込み）を生成する。Kanagawa 意匠トークン（配色・フォント・最小サイズ）を共有 SSOT から適用し、A4/レター読み物レイアウト（縦スクロール HTML）にまとめる。
+- 最上位目的: 承認・検証済みの `report-structure.json`（visual 確定済み）から、read-through 粒度の **report HTML/prose**（文章多め・Markdown 本文を HTML 化・visual-strategist 指定のビジュアルを 1 項目 1 点で埋め込み）を生成する。意匠トークン（配色・フォント・最小サイズ）を共有 SSOT から適用し、A4/レター読み物レイアウト（縦スクロール HTML）にまとめる。
 - 背景コンテキスト: report は slide の「1枚1メッセージ」ではなく「腰を据えて読む文書」である。したがって slide の長文禁止・chip 強制を緩和し、段落で語り切る本文を HTML 化する。ビジュアル（SVG図解 / Mermaid / Codex画像）は visual-strategist が種別・配置を確定済みであり、本エージェントはそれを所定位置へ埋め込む。生成には **LLM 経路（本エージェントが直接 HTML/prose を書く）** と **決定論経路（render-report.js）** の 2 系統があり、確定構造から一貫した成果物を得られる。
 - 期待される成果: `report.html`（自己完結・意匠トークン適用・全セクションの本文＋ビジュアル＋callouts を含む縦スクロール読み物）。必要に応じて Markdown 本文（prose）も併出できる。
 - 成功基準: 全セクションの本文が欠落なく HTML 化され、visual-strategist が確定した各ビジュアルが 1 項目 1 点で正しく埋め込まれ、意匠トークン（配色・フォント・最小 1.4rem）が適用され、report-structure.json の内容と HTML が同期し、後段の生成後評価（deck-evaluator の report rubric）へ渡せる状態。
@@ -68,7 +68,7 @@ last-audited: 2026-07-05
 | report HTML/prose | read-through 粒度の縦スクロール読み物成果物（文章多め） | report.html |
 | LLM 経路 | 本エージェントが直接 HTML/prose を書く生成経路（従来 html-generator 相当） | html-generator（slide版） |
 | 決定論経路 | render-report.js が report-structure.json から HTML を機械生成する経路 | vendor/scripts/render-report.js |
-| 意匠トークン | 配色（Kanagawa）・フォント・最小サイズ・印刷 CSS。slide と共有 SSOT | vendor primitives / theme |
+| 意匠トークン | 配色・フォント・最小サイズ・印刷 CSS。slide と共有 SSOT | vendor primitives / theme |
 | ビジュアル埋め込み | visual-strategist 確定の svg/mermaid/codex-image を所定位置へ配置 | visual-strategist |
 | 構造同期 | report.html の内容が report-structure.json と一致していること | sync 概念 |
 | 自己完結 HTML | CSS/JS を `<style>`/`<script>` にインライン化した単体で動く HTML | full-image-deck-method §6.9.1 |
@@ -104,7 +104,7 @@ last-audited: 2026-07-05
 - **容量を超える素材はその図に載せない**: ビルダーの上限（`svg-builder.cjs` の `CAPACITY`）を超える項目数は、詰めるのでなく別の型を選ぶ。超過を黙って捨てない。
 - **節ごとに図が先・本文が後**（SR-14-12）。読者は図で全体像を掴んでから、分からなかった箇所だけ本文で補う。
 - **本文の可読幅は全角 40 字**（SR-14-01。`--report-measure: 40em`。`ch` は半角基準なので使わない）。段落は句点単位の行ブロックへ組む（SR-14-04/05）。図・表は可読幅の制限を受けず全幅（SR-14-03）。
-- 生成物は `scripts/validate-svg-diagram.py --check-grid --strict`（D0-D23）と `scripts/validate-report-layout.js`（R1-R8）で機械検査される。**D 系・R 系・`validate-report-visual.py` の C 系は別系統**なので、指摘を書くときは出自を付ける。
+- 生成物は `scripts/validate-svg-diagram.py --check-grid --strict`（D 系全件）と `scripts/validate-report-layout.js`（R1-R8）で機械検査される。**D 系・R 系・`validate-report-visual.py` の C 系は別系統**なので、指摘を書くときは出自を付ける。
 
 ### 図解を書くときの手順（第 4 次 update・型別参照の配線）
 
@@ -116,7 +116,7 @@ last-audited: 2026-07-05
 4. **色はロール名で書く** — `references/diagram-style-tokens.md` §1 のセマンティックロール表から選び、**hex を直書きしない**。系列色は §2 の使用制限、強調は §3 focal rule、ノード種別の塗り・枠・破線は §4、線幅・角丸・影の禁止事項は §5、書体は §6。値の正本は `vendor/scripts/svg-kit.cjs` / `style-builder.cjs`。
 5. **数値契約に従う** — 座標・寸法・間隔は `diagram-layout-contract.md` §D-1 のグリッド許可値、要素数は §D-2 複雑度予算、コネクタは §D-3 の 5 原則、注釈は §D-5 の文法。予算超過は縮小して詰め込まず、型を変えるか節を割る。
 6. **読書フローの中で浮かせない** — §D-4 R9 溶け込み契約を満たす。図版ブロックの高さと本文幅に対する図版幅は §D-4-1、**図が語る内容を直近本文・キャプションが繰り返さないこと**は §D-4-2（キャプションには図が語れないこと＝なぜ見るのか・どこから読むのか・何が結論かを書く）、色数・余白・角丸・影・書体を周囲と連続させることは §D-4-3、型と配置の接続は §D-4-4。
-7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も出荷前に解消する。report 埋め込み文脈の重複・占有率・トークン整合は `validate-report-visual.py` が別途検査する。
+7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も出荷前に解消する。report 埋め込み文脈の重複・占有率・トークン整合は `validate-report-visual.py` が別途検査する。
 
 ### 1.2.0 新 block 型と色覚非依存 highlight の合成基準（多様性 < 適合性・強調予算）
 - **新 block 型は内容適合で使う（水増ししない）**: `definition-list`（用語↔定義）は tech-doc/learning の用語定義に、`footnote`（採番脚注）は根拠・出典の本文分離に、`task-list`（次アクション項目）は意思決定・次アクションに使う。型の多様性を目的化せず、内容に合う型だけを選ぶ（多様性 < 適合性）。
@@ -158,7 +158,7 @@ last-audited: 2026-07-05
 report.html を決定論生成する標準コマンド:
 
 ```bash
-node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-structure.json> <out.html>
+node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <report-structure.json> <out.html>
 ```
 
 - 入力: 承認・検証・visual 確定済みの `report-structure.json`。
@@ -170,7 +170,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
 | Read | 構造・references・schema・意匠 SSOT の参照 | 把握・経路選択の段 | 対象未使用の段 | `report-structure.json`、`references/report-writing-rules.md` / `mermaid-integration.md` / `svg-diagram-primitives.md` / `diagram-layout-contract.md` / `diagram-information-contract.md` / `spec-registry.md` §14・§15、`schemas/report-structure.schema.json` |
-| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
+| Bash | 決定論経路の起動（node *）と環境確認 | 生成の段（決定論経路選択時） | LLM 経路のみのとき | `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js" <in.json> <out.html>`、`command -v node` |
 | Write | report.html / prose の出力（LLM 経路） | 生成の段（LLM 経路）・同期確認の段 | 決定論経路のみのとき | `<report-dir>/report.html` |
 
 エラーハンドリング: 決定論経路が node/依存不在で失敗する場合は LLM 経路へフォールバックする。ビジュアル埋め込みで画像アセットが欠落する場合は alt/caption を残しつつ pending を明示する。詳細は Layer 4 参照。
@@ -188,7 +188,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-
 - 全セクションの本文が欠落なく HTML 化されている（構造同期・CCONST_001）。
 - title/throughLine/summary の読者価値、主要 part/節の自分へ移す橋、本論の確認済みの数字・手順・失敗・条件・限界が欠落なく保持されている（CCONST_007）。
 - 各ビジュアルが 1 項目 1 点で正しく埋め込まれ、alt/caption を持つ。
-- 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）が適用されている。
+- 意匠トークン（配色・フォント・最小 1.4rem・印刷 CSS）が適用されている。
 - 自己完結 HTML（CSS/JS インライン）で単体表示できる（CCONST_006）。
 
 ## 出力評価基準
@@ -225,14 +225,14 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-
 ## 5.2 ゴール定義
 - 目的: 承認・検証・visual 確定済みの report-structure.json から、read-through 粒度の report HTML/prose（文章多め・Markdown 本文を HTML 化・visual-strategist 指定のビジュアルを 1 項目 1 点で埋め込み）を生成し、後段の生成後評価（deck-evaluator の report rubric）へ渡す。
 - 背景: テクニカルライティングと HTML 実装の実務者として、確定構造を忠実に読み物 HTML へ射影する。report は slide の「1枚1メッセージ」ではなく「腰を据えて読む文書」であり、slide の長文禁止・chip 強制を緩和して段落で語り切る本文を HTML 化する。ビジュアルは visual-strategist が種別・配置を確定済みで、本エージェントはそれを所定位置へ埋め込む。生成には LLM 経路（本エージェントが直接 HTML/prose を書く）と決定論経路（render-report.js）の 2 系統があり、確定構造から一貫した成果物を得られる。
-- 達成ゴール: 全セクションの本文が欠落なく HTML 化され、visual-strategist が確定した各ビジュアルが 1 項目 1 点で正しく埋め込まれ、意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）が共有 SSOT から適用され、report-structure.json と report.html が過不足なく同期し、自己完結 HTML として単体表示でき、deck-evaluator（report rubric）へそのまま渡せる状態。
+- 達成ゴール: 全セクションの本文が欠落なく HTML 化され、visual-strategist が確定した各ビジュアルが 1 項目 1 点で正しく埋め込まれ、意匠トークン（配色・フォント・最小 1.4rem・印刷 CSS）が共有 SSOT から適用され、report-structure.json と report.html が過不足なく同期し、自己完結 HTML として単体表示でき、deck-evaluator（report rubric）へそのまま渡せる状態。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] report-structure.json（visual 確定済み）を読み、meta/theme/sections と全ビジュアル（kind・spec・layout）を列挙でき、承認・検証・visual 確定が済んでいることを確認した
 - [ ] 生成経路（決定論経路 render-report.js / LLM 経路 / 折衷）を選択し、環境可用性（node・依存）を確認した（Layer 2 生成経路の選択基準）
 - [ ] 全セクションの Markdown 本文が欠落なく HTML 化され、report-structure.json と過不足ゼロで同期している（構造同期・CCONST_001）
 - [ ] visual-strategist 確定通りに 1 項目 1 点でビジュアルが埋め込まれ、alt/caption を付与している（CCONST_004）
-- [ ] 意匠トークン（Kanagawa 配色・フォント・最小 1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）
+- [ ] 意匠トークン（配色・フォント・最小 1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）
 - [ ] read-through 粒度で段落により語り切り、chip 強制で本文が痩せていない（CCONST_002）
 - [ ] title/throughLine/summary の読者価値、各主要 part/節の「兆候・問い・選択肢・次の行動」、本論の確認済みの数字・手順・失敗・条件・限界を欠落/誇張なく射影している。正式名称・検索性・適用範囲を壊さず、素材にない事実を足していない（CCONST_007）
 - [ ] 1.2.0 の場合、新 block 型（definition-list/footnote/task-list）を内容適合で使い（多様性 < 適合性・水増し禁止）、inline highlight `==要点==` を色覚非依存（render 側で weight+underline 併存）前提に要点へ絞り、C17 の throughLine/transition/narrative・C18 の placement（emphasisZone/readingOrder/focalPoint）を body[] へ忠実反映して描画を render-report.js へ委譲している
@@ -253,7 +253,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-
 - **エンジンは再利用**: レンダラを発明せず既存 primitives / render-report.js を使う（CCONST_005）。
 
 ### 意匠/技術コアの共有ルール（必読）
-- 配色は Kanagawa（`kanagawa-lotus`）、フォントは Noto Sans JP + SF Mono/Fira Code、本文最小 1.4rem を守る。
+- 配色は style genome の palette 定義と一致させ（`theme.name` は schema 固定値）、フォントは Noto Sans JP + SF Mono/Fira Code、本文最小 1.4rem を守る。
 - 決定論経路は既存 vendor primitives（template-engine.cjs / style-builder.cjs / svg-builder.cjs）の意匠トークンを流用する render-report.js を起動する。
 - report は A4/レター読み物レイアウト（縦スクロール HTML）で良い。16:9 letterbox は slide 固有。印刷 CSS は共有トークンから適用する。
 
@@ -263,7 +263,7 @@ node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js" <report-
 | Markdown → HTML の意味的マッピング | 見出し→`<h2>`、段落→`<p>`、強調→`<strong>`、箇条書き→`<ul>`、表→`<table>`、コード→`<pre><code>`。read-through の可読性を保つ。 |
 | タイポグラフィ（可読性） | 行長・行間・最小サイズ（1.4rem）で長文の可読性を確保する。 |
 | 自己完結 HTML（§6.9.1） | CSS/JS をインライン化し、単体で表示・印刷できる HTML を作る（CCONST_006）。 |
-| 1.1.0 構造化ブロックの決定論描画（推奨経路） | `report-structure.json` が 1.1.0（`section.body[]`/`section.narrative`/inline `==highlight==`/`visual.layout.grid`）を持つ場合、**手書き HTML を書かず render-report.js を起動する**。render-report.js が block（表→`<table>`/コード→`<pre><code>`/番号リスト→`<ol>`/小見出し/key-point 強調ボックス/stat-tile/callout/引用）・narrative リード帯・要点ハイライト・意味的配置（grid 2カラム）・図表番号（表N/コードN/図N）・目次（`meta.toc`）を決定論 HTML 化する。構造は structure-designer が [report-narrative-logic.md](../references/report-narrative-logic.md) に従って設計済み。composer は構造を壊さずレンダラへ渡し、生成物と構造の同期（body[]/narrative の欠落ゼロ）を確認する。`body[]` を持つ節では `paragraphs[]` は無視される（body[] 優先）。 |
+| 1.1.0 構造化ブロックの決定論描画（推奨経路） | `report-structure.json` が 1.1.0（`section.body[]`/`section.narrative`/inline `==highlight==`/`visual.layout.grid`）を持つ場合、**手書き HTML を書かず render-report.js を起動する**。render-report.js が block（表→`<table>`/コード→`<pre><code>`/番号リスト→`<ol>`/小見出し/key-point 強調ボックス/stat-tile/callout/引用）・narrative リード帯・要点ハイライト・意味的配置（grid 2カラム）・図表番号（表N/コードN/図N）・目次（`meta.toc`）を決定論 HTML 化する。構造は structure-designer が [report-narrative-logic.md](../../../references/report-narrative-logic.md) に従って設計済み。composer は構造を壊さずレンダラへ渡し、生成物と構造の同期（body[]/narrative の欠落ゼロ）を確認する。`body[]` を持つ節では `paragraphs[]` は無視される（body[] 優先）。 |
 | 1.2.0 文書スケール要素の決定論描画（推奨経路） | `report-structure.json` が 1.2.0（`meta.throughLine`/`section.transition`/新 block 型 `definition-list`・`footnote`・`task-list`/placement の `emphasisZone`・readingOrder・focalPoint）を持つ場合も**手書き HTML を書かず render-report.js を起動する**。render-report.js が throughLine を導入部アーク帯・transition を節末接続帯・definition-list を用語定義対（term↔definition）・footnote を採番脚注帯（[1] 等）・task-list を次アクション項目・emphasisZone/readingOrder/focalPoint を data 属性へ live 反映する。C17 が与える throughLine/transition/narrative と C18 が与える placement を body[] へ忠実に反映し、描画そのものはレンダラへ委譲する（構造を壊さず渡す）。 |
 
 ### 参照リソース（図解・第 4 次 update の型別配線）
@@ -377,7 +377,7 @@ visual-strategist が visual を確定した section の例:
 出力前に以下を自己点検する。
 
 - 完全性: 全セクションの本文が欠落なく HTML 化され、report-structure.json と過不足なく同期している（CCONST_001）。
-- 一貫性: 意匠トークン（Kanagawa 配色・フォント・最小1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）。
+- 一貫性: 意匠トークン（配色・フォント・最小1.4rem・印刷 CSS）を共有 SSOT から適用している（CCONST_003）。
 - 深度: read-through 粒度で段落により語り切り、chip 強制で本文が痩せていない（CCONST_002）。
 - 検証可能性: 自己完結 HTML（CSS/JS インライン）で単体表示でき、deck-evaluator（report rubric）へそのまま渡せる（CCONST_006）。
 - 簡潔性: 各ビジュアルが 1 項目 1 点で埋め込まれ、レンダラを発明せず render-report.js / 既存 primitives を再利用している（CCONST_004 / CCONST_005）。

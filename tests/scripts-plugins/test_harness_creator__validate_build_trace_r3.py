@@ -704,6 +704,18 @@ def test_bundle_mode_ok(tmp_path, capsys):
     assert out["valid"] is True
 
 
+def test_repo_harness_creator_bundle_is_schema_valid_and_acyclic(capsys):
+    bundle_path = ROOT / "plugins" / "harness-creator" / "plugin-composition.yaml"
+    rc = _run_main_argv(["--bundle", str(bundle_path)])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0, out
+    assert out == {
+        "valid": True,
+        "kind": "plugin-composition",
+        "findings": [],
+    }
+
+
 def test_bundle_mode_missing_ref(tmp_path, capsys):
     plugin_root = tmp_path / "plugins" / "demo"
     plugin_root.mkdir(parents=True)
@@ -781,7 +793,7 @@ def test_plugin_composition_dependency_endpoints_must_be_declared():
     }
     valid, _, findings = M.validate_manifest(data)
     assert valid is False
-    assert any("undeclared capability" in f for f in findings)
+    assert any("undeclared or dangling local endpoint" in f for f in findings)
 
 
 def test_plugin_composition_allows_deploys_dependency_type():
@@ -1050,8 +1062,8 @@ def test_plugin_composition_cycle_detected():
             {"kind": "skill", "ref": "skills/b"},
         ],
         "dependencies": [
-            {"from": "a", "to": "b"},
-            {"from": "b", "to": "a"},
+            {"from": "skills/a", "to": "skills/b", "type": "calls"},
+            {"from": "skills/b", "to": "skills/a", "type": "calls"},
         ],
     }
     valid, _, findings = M.validate_manifest(data)

@@ -18,7 +18,8 @@
  *   3: 引数/環境エラー
  */
 
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, rmSync } from "fs";
+import { tmpdir } from "os";
 import { join, resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
@@ -62,14 +63,48 @@ function gateP2toP3(projectDir, options) {
   if (hasJson) args.push("--schema");
   if (options.strict) args.push("--strict");
 
+  // exit 2 は WARN と PASS_WITH_UNCHECKED の両方で返る（validate-structure.js の
+  // exitCode getter 参照）。exit code だけを見ると、どの工程にも判定する実行体が
+  // 無い規則を抱えた状態が「WARN項目あり（要目視確認）」と表示される。目視で
+  // 確認できる指摘が出ているわけではないので、読者は探しても何も見つからない。
+  // 内訳を分けるために --report を取って status と件数を読む。
+  const tmpDir = mkdtempSync(join(tmpdir(), "phasegate-"));
+  const reportPath = join(tmpDir, "vs.json");
+  args.push("--report", reportPath);
+
   const validation = spawnSync("node", args, { encoding: "utf-8" });
   const exitCode = validation.status;
   const output = (validation.stdout || "") + (validation.stderr || "");
 
+  let vr = null;
+  try {
+    if (existsSync(reportPath)) vr = JSON.parse(readFileSync(reportPath, "utf-8"));
+  } catch { /* 読めなければ exit code だけで判定する（下の else 側へ落ちる） */ }
+  rmSync(tmpDir, { recursive: true, force: true });
+
+  const unchecked = ((vr && vr.skipped) || []).filter(e => e.kind === "no-checker");
+
   if (exitCode === 0) {
-    result.checks.push({ name: "validate-structure.js", status: "PASS", detail: "V-001〜V-030 検証OK" });
+    result.checks.push({
+      name: "validate-structure.js",
+      status: "PASS",
+      detail: `構造仕様 検証OK（passed ${((vr && vr.passed) || []).length}件 / FAIL・WARN・未検査なし）`
+    });
   } else if (exitCode === 2) {
-    result.checks.push({ name: "validate-structure.js", status: "WARN", detail: "WARN項目あり（要目視確認）" });
+    // WARN と未検査は原因が違うので、両方あるときは両方書く。片方に丸めると
+    // 「WARN を直したのに 2 のままだ」あるいはその逆で読み手が迷子になる。
+    const warnedCount = ((vr && vr.warned) || []).length;
+    const parts = [];
+    if (warnedCount > 0) parts.push(`WARN ${warnedCount}件（要目視確認）`);
+    if (unchecked.length > 0) {
+      parts.push(
+        `未検査 ${unchecked.length}件: ${unchecked.map(e => `${e.vid}(${e.sr})`).join(", ")}` +
+        "。これらを判定する実行体がどの工程にも無い。違反していないことの確認ではないので、" +
+        "内容を説明したうえで進めるかを確認すること"
+      );
+    }
+    if (parts.length === 0) parts.push("exit=2 だが内訳を取得できなかった（--report 未出力）");
+    result.checks.push({ name: "validate-structure.js", status: "WARN", detail: parts.join(" / ") });
     if (result.status === "PASS") result.status = "WARN";
   } else {
     result.checks.push({ name: "validate-structure.js", status: "FAIL", detail: `exit=${exitCode} - 詳細は validate-structure.js を直接実行` });

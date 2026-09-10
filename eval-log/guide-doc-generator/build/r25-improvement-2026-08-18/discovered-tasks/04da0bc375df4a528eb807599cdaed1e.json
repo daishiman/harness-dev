@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "既存生成物 4 件すべてで冒頭の DOM 順序と data-hb-field 順序が purpose→background→goal であり、goal が最後に置かれている。冒頭は span.hero-purpose 等の散文でカードではなく、冒頭ブロックは最大 738 字。さらに最長文 101 字と次点 88 字がどちらも冒頭 hero にあり、読み手が最初に見る 1 文が文書中で最も長いという最悪の分布。利用者要件はゴールが最初でカード化",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-40-opening-goal-first-cards",
+    "title": "冒頭を goal 先頭のカード群へ再構成する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "冒頭が goal → 全体像 → 各カードの順に並び、hero が個別カードとして描画され、冒頭ブロックの 1 文が閾値内に収まる",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C05"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

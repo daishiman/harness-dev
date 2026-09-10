@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-29",
+  "covered_task_ids": [
+    "P05-x-29"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/tests",
+  "verified_by": [
+    {
+      "claim": "産出成果物 RESOLUTION-P05-x-29.md が実在し、裁定・退けた案・両方向の実測が記録されている",
+      "method": "当方が `plugins/guide-doc-generator/tests/RESOLUTION-P05-x-29.md` を全文読解",
+      "result": "pass (allowlist → denylist の反転という裁定、退けた案 3 件 (`.json` だけ allowlist へ追加 / narrowing 取消 / assert 緩和) とその理由、RED 期待 5 件・GREEN 期待 5 件の実測表、未解決事項 4 件を含む)"
+    },
+    {
+      "claim": "反例注入テストが実在し、両方向とも実際に緑になる",
+      "method": "当方が `tests/render-handout.py/test_scan_scope.py` を `python3 -m unittest` で独立に実行 (worker の報告を経由せず)",
+      "result": "pass (**Ran 12 tests / OK**。RED 期待側: scripts/*.json の名簿を検出・未知拡張子を走査対象へ・実コード上の名簿を検出・SKILL.md の名簿を検出・参照付き .md の名簿を検出。GREEN 期待側: scripts/*.md の散文・.py の docstring/コメントの散文・コメントだけの参照・__pycache__ 配下)"
+    },
+    {
+      "claim": "リポジトリ上の正本を汚さず、復元手順を必要としない形で実測されている",
+      "method": "当方が `_harness.scannable_sources` / `enumerated_part_id_offenders` のシグネチャを裁定文書と突合",
+      "result": "pass (両関数が `plugin_root=` を受ける形になっており、テストは `tempfile.TemporaryDirectory` の使い捨て root を渡す。**モジュールグローバルの書き換えが無く、したがって復元手順も復元失敗も存在しない**。`test_scannable_sources_does_not_mutate_module_state` がこの性質自体を固定している)"
+    },
+    {
+      "claim": "narrowing の判断基準を増やしていない (実装が基準を写す精度だけを上げている)",
+      "method": "当方が裁定文書の変更前後表と `_harness.py` の除外規則を読解",
+      "result": "pass (基準は P05-x-23 の『そのテキストを何かが読むか』1 本のまま。変わったのは allowlist (`.py` だけ走査) → denylist (『読まれないと特定できるもの』だけ除外) の向きで、**未知の拡張子が既定で走査対象側 (fail-closed) へ倒れる**ようになった。`.md` も『どこからも参照されていない場合のみ』除外へ厳密化されている)"
+    },
+    {
+      "claim": "本番の検査と反例注入の検査が同じ経路を通る (反例では鳴るが本番では鳴らない、を作り込んでいない)",
+      "method": "当方が `test_parts_catalog.py` の AC-C11-19 検査が `H.enumerated_part_id_offenders()` 経由になっていることを裁定文書の変更表で確認",
+      "result": "pass (判定ロジックが `_harness` の 1 関数へ寄せられており、本番検査と反例テストが同一関数を呼ぶ。別実装が残っていれば経路の乖離を作り込めたが、そうなっていない)"
+    },
+    {
+      "claim": "4 スイートの失敗テスト名の集合が増えていない",
+      "method": "当方が 4 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名を採取 (件数でなく名前集合)",
+      "result": "pass (render: Ran 219 / failures=1、集合 = `{test_cross_component.GateHandoffTest.test_round_trip_equivalence}` (P05-x-31 所有の既知赤)。extract: Ran 152 **OK**。a11y: Ran 187 **OK**。validate: Ran 278 / failures=2 errors=2、集合 = `{test_unknown_doc_type_lists_vocabulary (ERROR), test_no_purpose_vocabulary_literals (ERROR), test_no_temp_file_left_behind, test_provenance_shape}` (P05-x-30 所有の既知赤 4 件と完全一致)。**既知 5 件ちょうどで増加 0 件**。render の総数が 207 → 219 へ増えているのは本 leaf が追加した反例 12 件で、これも全て緑)"
+    },
+    {
+      "claim": "反例テスト自体に弁別力がある (『到達していない緑』でない)",
+      "method": "裁定文書 §3.3 の記録を読解し、当方は上記の独立実行 (12/12 OK) と突合",
+      "result": "pass (P05-x-23 時点の allowlist 実装をスクラッチへ複写して同じ 12 件を回すと **5 件が FAIL** (R1/R2/R5/G5/方針テスト) し、本 leaf の実装では 12 件すべて OK。**旧実装で赤・新実装で緑という差が出ているので、テストは到達している**)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "work-found-already-complete",
+      "detail": "**本 leaf は前セッションで既に完遂されており、state の write-back だけが落ちていた**。dispatcher (当方) は実装を行わず、産出成果物の実在・テストの独立実行・失敗集合の差分を実測して done へ write-back した"
+    },
+    {
+      "kind": "dispatch-failed-worker-idle",
+      "detail": "**SubAgent (tg-P05-x-29) を dispatch したが 15 分間 1 ファイルも触らず idle 通知のみを返した**。催促を 1 度送っても内容のある返答が無かったため応答待ちを打ち切った。`find -newermt '-15 minutes'` で実際に何も書かれていないことを実測してから切り替えている"
+    },
+    {
+      "kind": "residual-goodhart-escape-remains",
+      "detail": "**裁定文書 §6-2 が指摘するとおり、本 leaf は `scripts/` 側の穴しか塞いでいない**。`config/` / `schemas/` / `genomes/` は `GREP_SCOPE_DIRS` に入っておらず、『`config/` へ第 2 の表を置く』経路は依然として走査対象外のまま。`config/handout-parts.json` がカタログ正本である以上 `config/` の一律除外には正当性があるが、**P05-x-23 が退けた Goodhart 的回避の本丸はここ**であり、『正本 1 ファイルだけを除外し他は走査する』形へ絞る余地が残っている。実害は現時点でゼロ。**受け皿が無いため追加タスク候補として記録するに留める**"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "部品 id の正規表現 `\\bB[01][0-9]\\b` はカタログ id が `B20` 以降へ伸びると取りこぼす。カタログから id 集合を作って照合する形へ寄せられるが、AC の意味を変えるため裁定を要する (裁定文書 §6-4)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

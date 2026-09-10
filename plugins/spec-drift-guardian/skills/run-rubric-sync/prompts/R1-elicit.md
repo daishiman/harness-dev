@@ -61,12 +61,12 @@
 | triage-report | `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/triage-report.json` | 影響抽出時 |
 | triage-verdict | `$CLAUDE_PROJECT_DIR/.spec-drift/<issue>/triage-verdict.json` | agree/findings 確認時 |
 | allowlist policy | `references/apply-gate-policy.md` | allowlist 分類時 |
-| field-impact-map | `$CLAUDE_PLUGIN_ROOT/references/field-impact-map/field-impact-map.json` | target×axis 裏取り (R2 と共有) |
+| field-impact-map | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/field-impact-map/field-impact-map.json` | target×axis 裏取り (R2 と共有) |
 | target files | 各 impact の `artifact_path` | 実在確認 (Glob/Read) |
 
 ### 3.2 外部ツール / API
 - Read / Glob / Grep (read-only)。
-- `python3 $CLAUDE_PLUGIN_ROOT/scripts/map-field-impact.py` (任意: target×axis の独立再確認。R2 で必須)。
+- `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/map-field-impact.py` (任意: target×axis の独立再確認。R2 で必須)。
 
 ## Layer 4: 共通ポリシー層
 

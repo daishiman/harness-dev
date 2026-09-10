@@ -1,0 +1,69 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-C19-01",
+ "covered_task_ids": [
+  "P02-C19-01"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C19.json",
+ "verified_by": [
+  {
+   "claim": "出力先ルートの解決順が環境固有パスを配布物へ焼かない形になっている",
+   "method": "brief algorithm step 6 の 4 段解決と .claude/settings.local.json の HB_OUT_DIR、config の default_out_dir を dispatcher が実測",
+   "result": "pass: --out-dir > HB_OUT_DIR > config default_out_dir > exit2。HB_OUT_DIR は利用者指定 /Users/dm/dev/dev/ObsidianMemo/05_Project/説明資料 と一致、配布既定は ./handout-output"
+  },
+  {
+   "claim": "ディレクトリ名が現在時刻を読まず構成データ由来である (再実行の冪等性)",
+   "method": "algorithm step 3 と acceptance_checks の『date.today/datetime.now/time.time が 0 件』『同一構成データ 2 回でバイト一致』を確認",
+   "result": "pass: 日付=構成データ date の '/'→'-' 純変換、日本語部分=subject_slug または title 由来"
+  },
+  {
+   "claim": "dir_name_format の正本所在が inventory と一致していなかった",
+   "method": "inventory C19 purpose (『config を正本にし script へ焼かない』) と修正前 brief の algorithm step 7 (リテラル {date}_{slug} 保持) を突合",
+   "result": "修正前 fail → 修正後 pass。config から読み、キー欠落/プレースホルダ欠落は exit2 へ収容。対応する failure_mode と AC-C19-R25-72g を同時に追加しており非対称を作っていない"
+  },
+  {
+   "claim": "config/handout-output.json に dir_name_format キーが実在するか",
+   "method": "dispatcher が json.load でトップキーを列挙",
+   "result": "不在を確認: ['_meta','version','default_out_dir','size_limits']。修正後 brief の前提が実データ側で未充足"
+  },
+  {
+   "claim": "C01 からの呼ばれ方 (--place-config / --assets-src / --config) と argv が一致",
+   "method": "skill-brief-C01.json R4-verify と C19 brief argv を逐語突合",
+   "result": "pass: 4 項目一致。C19 が先・README が後という順序も exit code 定義 (作成直後は README absent でも exit0) と整合"
+  },
+  {
+   "claim": "ghost filename の再発が無い",
+   "method": "resolve-handout-output / route-handout.py / handout-route.py / place-handout を grep",
+   "result": "pass: 0 件。name/build_target は inventory と 3 点一致"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-C19-01",
+   "level": "blocking-for-release",
+   "summary": "config/handout-output.json に dir_name_format が存在しない。正本・inventory・修正後 brief が『script は config から書式を読む』と定めるため、このまま build すると初回実行が exit2。producer は P05-x-03"
+  },
+  {
+   "id": "F-C19-02",
+   "level": "blocking-for-release",
+   "summary": "出荷済み script が R25 前の旧書式のまま。handout-output/ の実出力は 2026-08-18-report-kpi-... で (a) 区切りがハイフン (b) doc_type がパスに含まれる (c) 日本語喪失 (d) 小文字化 と REQ-6 の 4 変更点すべてに違反。route-handout-output.py:433 と validate-handout-config.py:334 の derive_slug が未修正"
+  },
+  {
+   "id": "F-C19-03",
+   "level": "carry-forward",
+   "summary": "C12 の derive_slug 撤廃 (C19 から import) が script-brief-C12.json 側に同じ決着として書かれているかの突合が未実施。P02-C12-01 は done 済みのため別ノードが要る"
+  },
+  {
+   "id": "F-C19-04",
+   "level": "carry-forward",
+   "summary": "既存受入テストが旧命名を期待している可能性。期待値をテストへ直書きせず config の dir_name_format から組み立てる形にできるかの検討を含む"
+  },
+  {
+   "id": "F-C19-05",
+   "level": "carry-forward",
+   "summary": "解決順 (--out-dir > HB_OUT_DIR > config > exit2) の利用者向け提示が SKILL.md / README に未記載。HB_OUT_DIR は個人設定なので他環境では ./handout-output へ落ちる旨の案内も要る"
+  }
+ ]
+}

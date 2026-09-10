@@ -55,8 +55,8 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| ledger-schema | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md` | registry/ledger の形と状態集合を確認するとき |
-| report-format | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-youtube-ingest/references/sync-report-format.md` | sync report の形を確認するとき |
+| ledger-schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md` | registry/ledger の形と状態集合を確認するとき |
+| report-format | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-youtube-ingest/references/sync-report-format.md` | sync report の形を確認するとき |
 
 ### 3.2 外部ツール / API
 - `scripts/run-youtube-sync-oneshot.py` (stdlib・冪等 one-shot)。`scripts/youtube_provider.py` (取得 adapter)。

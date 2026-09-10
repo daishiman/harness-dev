@@ -34,7 +34,7 @@ C1.. を使うため、番号だけで参照すると取り違える。
   D4  最小フォント   font-size が 12px 未満でない (SR-3-05)
   D5  斜めコネクタ   <line>/<polyline> は水平か垂直 (放射状・チャート型は例外申告)
   D6  4px グリッド   矩形の座標・寸法が 4px グリッド上にある (SR-5 系)
-  D7  accent 抑制    強調色の面塗りが 1 図あたり 2 件以下 (視線の着地点をひとつに)
+  D7  焦点の数       最も濃い段で固有の符号を持つ面塗りが 1 図あたり 2 件以下
   D8  FA unicode     <text> 内に Font Awesome の PUA コードがない (SR-3-06)
   D9  線の太さ       stroke-width が 1.25 未満でない (縮小表示で灰色に溶ける)
   D10 パレット逸脱   色が svg-kit の TOKENS/SERIES 由来か var(--*) 参照 (SR-2-02/2-08)
@@ -52,6 +52,32 @@ C1.. を使うため、番号だけで参照すると取り違える。
   D22 id 一意性      1 ファイル内で SVG の id が重複していない (SR-15-20)
   D23 参照の閉じ     文書内参照 (url(#id) / aria-labelledby / href="#id") の
                      参照先が自分の SVG か共有 defs にある (SR-15-20)
+  D24 符号の単射性   別の名前で呼び分けた 2 系列が同じ (塗り, 線色, 線幅, 線種) へ
+                     落ちていない (落ちていれば図の上では 1 系列にしか見えない)
+  D25 線種語彙       stroke-dasharray が実線 / `4 3` / `12 4` の 3 語彙の中にある
+  D26 破線の可読性   破線が走る最短の辺に 3 周期以上入る (入らなければ実線に見える)
+  D27 符号の供給     破線の入らない細い図形が濃度 4 段を超える塗りを要求していない
+  D28 凡例の実在     凡例の見本が語る (塗り, 線色, 線種) が図の中に実在する
+  D29 供給表の単射性 svg-kit の SERIES が枠の数だけの見た目を供給している
+                     (別名で同値を置いた枠は、同時に使う図が出た日に必ず衝突する)
+  D30 濃度段の数     図解内の濃度段が style-builder の tone スロット本数以内
+                     (VGCONST_002。地と反転面は段に数えない)
+
+D24-D28 は「区別が消えているのに緑」を潰す組で、他の検査と見る対象が違う。
+D10 が見るのは色が語彙の中にあるかで、同じ色を 2 系列へ配ったかは見ない。
+CSS 変数は値を 1 つしか運べないため、色 1 つで系列を区別する設計は系列が
+増えた瞬間に必ず破れる。そこで区別の単位を (塗り, 線色, 線幅, 線種) の組に
+置き、組が衝突していないか (D24)、組の材料が語彙内か (D25)、その材料が
+その寸法で実際に見えるか (D26)、配る前に材料が足りているか (D27) を見る。
+D28 だけは向きが逆で、図が持つ組の集合に対して凡例が嘘をついていないかを見る。
+凡例は「この符号はこういう意味だ」という主張なので、主張された組が図の中に
+1 つも無ければ、読者は存在しない区別を探すことになる。
+
+D29 だけは対象が成果物でなく実装 (svg-kit.cjs の SERIES) で、引数のファイルに
+関係なく 1 回だけ走る。D24 は配った結果を 1 枚の図の中で見るため、5 枠のうち
+2 枠が同値でも、その 2 枠を同時に使う図が無いうちは鳴らない。鳴る日は来るが、
+そのとき赤くなるのは図であって表ではない。D29 を別コードにしてあるのは、
+鳴ったときに直す人が最初から svg-kit.cjs へ行けるようにするため。
 
 D0-D9 が幾何と可読性を見るのに対し、D10-D13 は「素材」を見る。素材の検査が
 必要なのは、ビルダー関数の入口 (CAPACITY やトークン表) は決定論経路にしか
@@ -77,6 +103,7 @@ coverage=none (inspected=0) の PASS は「検査対象が 1 つも無かった�
 """
 from __future__ import annotations
 
+import math
 import os
 import re
 import sys
@@ -102,7 +129,7 @@ SEVERITY: dict[str, str] = {
     # D6 は既定オフ。--check-grid で明示的に見るときも、4px からのずれ自体は
     # 誰も気付かない見た目なので報告だけに留める。
     "D6": "warning",
-    # D7 は「強調色は 2 件まで」という美的な指針で、3 件目が本当に害かは図による。
+    # D7 は「焦点は 2 件まで」という美的な指針で、3 件目が本当に害かは図による。
     # 生成を止めるほどの確度はない。
     "D7": "warning",
     # D9 は視認性の下限。細い線は「見えない」のであって「読めない」ではなく、
@@ -155,6 +182,39 @@ SEVERITY: dict[str, str] = {
     # --- 第 7 次 update (文書スコープの id 衝突) ---------------------------------
     # D22/D23 は SEVERITY へ登録しない = fail-closed の error。理由は
     # ERROR_BY_DESIGN の側に書いてある (D3 と同根拠で「矢じりが消える」)。
+    # --- 第 8 次 update (符号系。色 1 つで系列を区別しない) --------------------
+    # D24-D28 はいずれも「既存資産にどれだけ違反が眠っているか読めない」側なので
+    # warning から始める (D14 系と同じ理由)。ゴールデンは --strict で走るため、
+    # 作例側では実質 error として効く。
+    #
+    # D24 は系列の見た目が衝突している = 図の上で 2 系列が 1 系列に見えている。
+    # 実害は D7 (焦点が散る) より重いが、fallback の無い var() を解決できず
+    # 比較から外している以上、検出は網羅的でない。網羅でない検査を error に
+    # すると「出なかった = 無い」と読まれるので warning に留める。
+    "D24": "warning",
+    # D25 は線種語彙の逸脱。1 つ外れた破線だけを見れば読めるので、単体では
+    # 図が壊れない (D11 と同格)。効いてくるのは同じ図に別の破線が来たときで、
+    # そのときは D24 が別途鳴る。
+    "D25": "warning",
+    # D26 は破線が寸法に対して粗すぎて実線に見える形。線は引かれていて値も
+    # 正しく、壊れているのは寸法との関係だけなので D19/D20 と同格。
+    "D26": "warning",
+    # D27 は供給の枯渇。今日のゴールデンには 1 件も無い (需要の最大が 4 で
+    # 供給と同数) が、余裕が 0 なので 1 系列増えた瞬間に踏む。踏んだときに
+    # 黙らないことが目的で、既存を落とすことが目的ではないので warning。
+    "D27": "warning",
+    # D28 は凡例が図に無い符号を語っている形。凡例の見本と系列の見た目は
+    # 別々に組み立てられるので、片方だけ直したときに静かにずれる。図は正しく
+    # 描かれていて壊れているのは説明の側なので、D24 と同じく warning。
+    "D28": "warning",
+    # D29 は供給表 (SERIES) の単射性。実害が出るのは「その 2 枠を同時に使う図」が
+    # 作られた瞬間で、今日の成果物はまだ壊れていない。将来の欠陥を先に告げる形
+    # なので、生成を止める側には置かない。D24 と揃えて warning。
+    "D29": "warning",
+    # D30 は濃度段の数 (VGCONST_002)。段を 1 つ多く取った図は各段が正しく描かれて
+    # おり、壊れているのは段どうしの関係だけなので D19/D20 と同格。上限は
+    # style-builder の tone スロット本数から読むので、供給を増やせば上限も動く。
+    "D30": "warning",
 }
 
 
@@ -192,9 +252,9 @@ ERROR_BY_DESIGN: frozenset[str] = frozenset({
     "D0", "D1", "D2", "D3", "D4", "D8", "D12", "D22", "D23",
 })
 
-# D0-D23 の全コード。SEVERITY ∪ ERROR_BY_DESIGN がこれと一致することを
+# D0-D30 の全コード。SEVERITY ∪ ERROR_BY_DESIGN がこれと一致することを
 # --self-test が検証する (新しい検査を足したとき、どちらかへの登録を強制する)。
-ALL_CODES: frozenset[str] = frozenset(f"D{i}" for i in range(24))
+ALL_CODES: frozenset[str] = frozenset(f"D{i}" for i in range(31))
 
 
 def _sev(code: str) -> str:
@@ -225,6 +285,50 @@ GRID_TOLERANCE = 0.5
 BLEED_TOLERANCE = 2.0
 # 強調色の面塗り上限。焦点が複数あると視線の着地点が散る。
 MAX_ACCENT_FILLS = 2
+# 濃度段の上限 (D30) は定数で持たない。style-builder.cjs の SPEC.colors が
+# 持つ tone スロットの本数が上限そのものなので、_tone_supply() で数える。
+# 3 と書き写すと、供給を 4 段へ増やした日に検査だけが 3 のまま残る。
+
+# --- 符号系 (D24-D28) の定数 ------------------------------------------------
+# 系列の区別を「色 1 つ」でなく (塗り, 線色, 線幅, 線種) の組で運ぶための語彙。
+# CSS 変数は値を 1 つしか運べないため、色だけで 5 系列を区別しようとすると
+# 必ずどこかで 2 系列が同じ見た目になる。
+#
+# 線種は実線を含めて 3 語彙。周期の比が 1 : 2.29 になる組しか残さない
+# (`4 4` = 周期 8 は `4 3` = 周期 7 と差が 1 しかなく、並べても区別できない)。
+DASH_VOCAB: frozenset[str] = frozenset({"4 3", "12 4"})
+# 破線が破線として読める最小の周期数。2 周期では「線が 1 回切れた」に見える。
+DASH_MIN_PERIODS = 3
+# 最も細かい `4 3` (周期 7) が 3 周期入る辺長。これ未満の辺は線種を運べない。
+DASH_MIN_EDGE = 21
+# 2 つの色を「同じ濃度」と見なす境目 (CIEDE2000)。
+#
+# 対比比では測れない。対比比は輝度しか見ないので、輝度が同じで色相が違う
+# `#4B6681` (青) と `#6A6A68` (灰) が 1.102 になり、読者が区別できている組が
+# 全 golden で衝突として上がってくる。同じ組の ΔE2000 は 14.58 で正しく離れる。
+#
+# 5.0 の根拠は設計自身の段差。濃度 4 段の隣り合う差は 21.09 / 25.25 / 28.28 で、
+# 段として意図された最小の差の 1/4 にあたる。意図した段を潰さずに、意図せず
+# 隣り合った色だけを拾える。
+#
+# 向きに注意する。5.0 は人の目が条件を整えて見比べたときの弁別限に近い値で、
+# 図の上で離れた場所に置かれた 2 つの面を見分けるにはこれでも近い。つまり
+# この閾値が言えるのは「これ未満なら確実に見分けられない」であって、
+# 「これ以上なら見分けられる」ではない。鳴らなかったことは、区別が読者に
+# 届いたことの保証にならない。緩める方向へ動かす理由にこの値を使わない。
+#
+# この 1 つの閾値で alpha も畳める。alpha は符号の第 5 の軸ではなく濃度軸の
+# 第 2 の正本で、`rgba(20,20,18,0.05)` は紙の上で 1 つの濃度になる。合成して
+# から比べれば alpha 専用の検査は要らない。専用検査を足すと、濃度の正本が
+# 「濃度トークン」と「alpha」の 2 つになり、以後どちらが本当か決められない。
+DE_EQUIVALENT = 5.0
+# 線種を使えない図形で供給できる符号の数。紙 / tone-2 / fg-muted / ink の
+# 4 段で、隣り合う段のコントラスト比が 1.50 以上ある組はこれで尽きる。
+SERIES_SUPPLY_NO_DASH = 4
+# 符号を担いうる描画要素。<text> は文字自身が識別子なので対象外。
+_SHAPE_TAGS: frozenset[str] = frozenset({
+    "rect", "circle", "ellipse", "line", "polyline", "polygon", "path",
+})
 # 放射状スポークや同半径円弧を正当な語彙として持つ図解タイプ。
 # class 名か data-slide-type にこれらが現れる SVG では D5 を warning へ落とす。
 # 部分一致で見る。"cycle" は slide-diagram-cycle / cycle-svg の双方に当たる。
@@ -252,8 +356,9 @@ BACKGROUND_RECT_RATIO = 0.8
 #              コネクタは必ず箱の辺で終わるので、閾値 0 では全コネクタが引っ掛かる。
 COLLINEAR_TOLERANCE = 0.5
 MIN_OVERLAP_PX = 12.0
-# 強調色として扱うトークン名。既存パレットの語彙だけを見る (新しい色は増やさない)。
-ACCENT_TOKENS = ("--sakura-pink", "--surimi-orange", "--peach-red", "accent")
+# 強調の語彙は svg-kit の TOKENS.accent / accentTint が正本で、ここには持たない。
+# 読み出しは _accent_signatures() を見ること。ただしこれを使うのは CSS 図解の
+# D16 だけで、SVG の D7 は綴りを見ずに濃度 (紙からの ΔE2000 距離) で測る。
 # Font Awesome の Private Use Area。
 PUA_RE = re.compile(r"[-]")
 
@@ -425,6 +530,30 @@ def _paper_token() -> str | None:
     m = re.search(r"const TOKENS\s*=\s*\{.*?\n\s*paper:\s*'([^']+)'", _read_source(_KIT_REL), re.S)
     _paper_cache = m.group(1) if m else None
     return _paper_cache  # type: ignore[return-value]
+
+
+_ink_cache: "str | None | bool" = False
+
+
+def _ink_token() -> str | None:
+    """svg-kit.cjs TOKENS.ink (文字・罫・反転面の地) を、描かれる色まで解決して返す。
+
+    D30 が「反転面は濃度段ではない」を判定するために要る。紙と同じく、値を
+    ここへ書き写さず実行時に読む。
+
+    紙と違い ink は `var(--fg, #141412)` の形で書かれているので、生の綴りを
+    そのまま返すと `_same_density()` が解決できず常に False を返す。図形側の
+    塗りは `_sign_tuple()` が既に解決済みなので、こちらも同じ関数を通して
+    比較の土俵を揃える。
+    """
+    global _ink_cache
+    if _ink_cache is not False:
+        return _ink_cache  # type: ignore[return-value]
+    m = re.search(r"const TOKENS\s*=\s*\{.*?\n\s*ink:\s*'([^']+)'", _read_source(_KIT_REL), re.S)
+    _ink_cache = _resolve_paint(m.group(1)) if m else None
+    if _ink_cache == "none":
+        _ink_cache = None
+    return _ink_cache  # type: ignore[return-value]
 
 
 def _is_label_mask(el: ET.Element, paper: str | None) -> bool:
@@ -629,28 +758,6 @@ def _local_coord_elems(root: ET.Element) -> set[int]:
             walk(child, here)
 
     walk(root, False)
-    return out
-
-
-def _marker_owner(root: ET.Element) -> dict[int, str]:
-    """<marker> の中にある要素 → その marker の id。
-
-    D7 が使う。svg-kit の arrowMarkers は使う色を選ばせず全種類を <defs> へ吐く
-    ため、accent 色のマーカー多角形は「図が強調に使ったか」と無関係に必ず 2 件
-    現れる。参照されていないマーカーは 1px も描かれないので、これを強調として
-    数えると D7 は図の中身ではなく defs の定型文を測ることになる。
-    """
-    out: dict[int, str] = {}
-
-    def walk(el: ET.Element, owner: str | None) -> None:
-        tag = el.tag.split("}")[-1]
-        here = el.get("id") if tag == "marker" else owner
-        if here:
-            out[id(el)] = here
-        for child in el:
-            walk(child, here)
-
-    walk(root, None)
     return out
 
 
@@ -1024,18 +1131,15 @@ _BUDGET_FONT_STEPS = 21
 _accent_cache: tuple[str, ...] | None = None
 
 
-def _accent_signatures() -> tuple[str, ...]:
-    """TOKENS.accent / accentTint が名乗る文字列 (CSS 変数名・hex・rgb 三つ組)。
+def _token_signatures(keys: tuple[str, ...]) -> frozenset[str]:
+    """svg-kit の TOKENS から、指定キーが名乗る文字列を集める。
 
-    CSS 図解の accent は `style="border-color: var(--sakura-pink, #D27E99)"` のように
-    書かれるので、色の同一性ではなく「その色を名指す綴り」の集合で数える。
+    CSS 変数名・hex・rgb 三つ組の 3 通りで名乗るので、色の同一性ではなく
+    「その色を名指す綴り」の集合として返す。
     """
-    global _accent_cache
-    if _accent_cache is not None:
-        return _accent_cache
     src = _read_source(_KIT_REL)
     sigs: set[str] = set()
-    for key in ("accent", "accentTint"):
+    for key in keys:
         m = re.search(rf"^\s*{key}\s*:\s*'([^']+)'", src, re.M)
         if not m:
             continue
@@ -1048,7 +1152,19 @@ def _accent_signatures() -> tuple[str, ...]:
                 sigs.add(f"#{norm}")
         for r, g, b in _RGB_RE.findall(raw):
             sigs.add(f"{r},{g},{b}")
-    _accent_cache = tuple(sorted(sigs))
+    return frozenset(sigs)
+
+
+def _accent_signatures() -> tuple[str, ...]:
+    """TOKENS.accent / accentTint が名乗る文字列 (CSS 変数名・hex・rgb 三つ組)。
+
+    CSS 図解の accent は `style="border-color: var(--accent-bg, #141412)"` のように
+    書かれるので、色の同一性ではなく「その色を名指す綴り」の集合で数える。
+    """
+    global _accent_cache
+    if _accent_cache is not None:
+        return _accent_cache
+    _accent_cache = tuple(sorted(_token_signatures(("accent", "accentTint"))))
     return _accent_cache
 
 
@@ -1285,7 +1401,7 @@ def _check_css_accent(name: str, block: str) -> list[Finding]:
     hits = 0
     for m in re.finditer(r"<[a-zA-Z][^>]*>", block, re.S):
         tag = m.group(0)
-        # hex は綴りの大小を問わない (#D27E99 と #d27e99 は同じ色)。
+        # hex は綴りの大小を問わない (#9BADBF と #9badbf は同じ色)。
         blob = " ".join(filter(None, (
             _attr(tag, "style"), _attr(tag, "fill"), _attr(tag, "stroke"), _attr(tag, "class")))).lower()
         if any(sig in blob for sig in sigs):
@@ -1799,6 +1915,698 @@ def _check_connector_through_box(
     return out
 
 
+def _norm_dash(value: str | None) -> str | None:
+    """stroke-dasharray を「空白区切りの数値列」へ正規化する。
+
+    `4,3` `4, 3` `4 3` はブラウザにとって同じ値なので、表記差で語彙を数え違えない
+    ようにここで潰す。`none` と解釈不能な値は None (= 実線扱いしない・判定しない)。
+    奇数個の指定は SVG 側で 2 周されるので、周期計算のために倍へ展開しておく。
+    """
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw or raw.lower() in ("none", "0"):
+        return None
+    nums = _NUM_TOKEN_RE.findall(raw)
+    if not nums or any(float(n) < 0 for n in nums):
+        return None
+    if len(nums) % 2 == 1:
+        nums = nums + nums
+    return " ".join(str(_trim_num(float(n))) for n in nums)
+
+
+def _trim_num(v: float) -> float | int:
+    return int(v) if v == int(v) else v
+
+
+def _dash_period(dash: str) -> float:
+    """正規化済み dash の 1 周期長 (線分 + 空きの合計)。"""
+    return sum(float(t) for t in dash.split())
+
+
+def _dash_capacity(tag: str, el: ET.Element) -> float | None:
+    """その図形で「破線が走る 1 本の辺」の最短長。求まらない図形は None。
+
+    判定単位が辺なのは、破線が辺ごとに独立して読まれるからである。4x200 の
+    バーは長辺 200 では周期が並ぶが、短辺 4 では 1 周期も入らず 2 辺が実線に
+    見える。図形全体の周長で測ると、この「短辺だけ符号が消える」形を見逃す。
+    曲線の弧長は取らない (通過点の折れ線で近似する) ので、検出漏れ側へ倒れる。
+    """
+    if tag == "rect":
+        w, h = _num(el.get("width")), _num(el.get("height"))
+        if not w or not h:
+            return None
+        return min(abs(w), abs(h))
+    if tag in ("circle", "ellipse"):
+        # 円周は切れ目の無い 1 本の辺。短辺という概念が無いので全長で測る。
+        rx = _num(el.get("r")) if tag == "circle" else _num(el.get("rx"))
+        ry = _num(el.get("r")) if tag == "circle" else _num(el.get("ry"))
+        if not rx or not ry:
+            return None
+        return math.pi * (3 * (rx + ry) - math.sqrt((3 * rx + ry) * (rx + 3 * ry)))
+    if tag == "line":
+        x1, y1 = _num(el.get("x1")), _num(el.get("y1"))
+        x2, y2 = _num(el.get("x2")), _num(el.get("y2"))
+        if None in (x1, y1, x2, y2):
+            return None
+        return math.hypot(x2 - x1, y2 - y1)
+    if tag in ("polyline", "polygon", "path"):
+        if tag == "path":
+            pts = _path_points(el.get("d") or "")
+        else:
+            nums = [float(t) for t in _NUM_TOKEN_RE.findall(el.get("points") or "")]
+            pts = list(zip(nums[0::2], nums[1::2]))
+        if len(pts) < 2:
+            return None
+        # 折れ線は途中で向きが変わっても破線は連続して走るので、全長が 1 本の辺。
+        return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(pts, pts[1:]))
+    return None
+
+
+_VAR_PAINT_RE = re.compile(r"var\(\s*(--[A-Za-z0-9_-]+)\s*(?:,([^)]*))?\)")
+
+
+def _resolve_paint(raw: str | None) -> str | None:
+    """塗り/線の値を「実際に描かれる色」へ寄せる。解決できなければ None。
+
+    `var(--x, #6A6A68)` は fallback が現行の描画値なのでそれを採る。fallback の
+    無い `var(--x)` は CSS 側を読まないと解決できないため None を返し、その図形を
+    比較から外す (解決できない値を別物として数えると、同じ色を別系列と誤認する)。
+    """
+    if raw is None:
+        return None
+    v = str(raw).strip()
+    if not v:
+        return None
+    if v.lower() in ("none", "transparent"):
+        return "none"
+    m = _VAR_PAINT_RE.search(v)
+    if m:
+        fb = (m.group(2) or "").strip()
+        if not fb:
+            return None
+        v = fb
+    hexed = _norm_hex(v)
+    if hexed:
+        return hexed
+    return v.lower()
+
+
+_RGBA_RE = re.compile(
+    r"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)")
+
+
+def _paint_rgb(value: str) -> tuple[int, int, int] | None:
+    """描かれる色を RGB へ。半透明は紙の上へ合成してから返す。
+
+    alpha を残したまま比べると、`rgba(20,20,18,0.05)` と `rgba(20,20,18,0.14)` は
+    別の値に見える。紙の上ではどちらも 1 つの濃度になるので、合成して初めて
+    「同じ濃さか」を問える。合成先の紙は svg-kit の TOKENS.paper を正本とし、
+    読めなければ None を返して呼び出し側を文字列比較へ倒す (紙の色を推測して
+    比べると、推測が外れた分だけ濃度の判定がずれる)。
+    """
+    v = value.strip().lower()
+    if not v or v in ("none", "transparent"):
+        return None
+    if v.startswith("#"):
+        hexed = _norm_hex(v[1:])
+        if hexed:
+            return (int(hexed[0:2], 16), int(hexed[2:4], 16), int(hexed[4:6], 16))
+        return None
+    m = _RGBA_RE.fullmatch(v)
+    if not m:
+        return None
+    rgb = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    alpha = float(m.group(4)) if m.group(4) is not None else 1.0
+    if alpha >= 1.0:
+        return rgb
+    paper = _norm_hex((_paper_token() or "").lstrip("#"))
+    if not paper:
+        return None
+    base = (int(paper[0:2], 16), int(paper[2:4], 16), int(paper[4:6], 16))
+    return tuple(  # type: ignore[return-value]
+        round(rgb[i] * alpha + base[i] * (1 - alpha)) for i in range(3))
+
+
+def _to_lab(rgb: tuple[int, int, int]) -> tuple[float, float, float]:
+    """sRGB -> CIELAB (D65)。"""
+    def linear(c: float) -> float:
+        c /= 255.0
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (linear(v) for v in rgb)
+    x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047
+    y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883
+
+    def f(t: float) -> float:
+        return t ** (1 / 3) if t > 0.008856 else 7.787 * t + 16 / 116
+
+    fx, fy, fz = f(x), f(y), f(z)
+    return (116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz))
+
+
+def _delta_e(c1: tuple[int, int, int], c2: tuple[int, int, int]) -> float:
+    """CIEDE2000 の色差。
+
+    対比比を使わないのは、対比比が輝度しか見ないためである。輝度が同じで
+    色相が違う 2 色は対比比 1.0 付近になり、読者が区別できている組が衝突として
+    上がってくる。実測では `#4B6681` (青) と `#6A6A68` (灰) が対比 1.102 で、
+    この 1 組だけで全 golden が赤くなった。同じ組の ΔE2000 は 14.58。
+    """
+    l1, a1, b1 = _to_lab(c1)
+    l2, a2, b2 = _to_lab(c2)
+    c1v, c2v = math.hypot(a1, b1), math.hypot(a2, b2)
+    cbar = (c1v + c2v) / 2
+    g = 0.5 * (1 - math.sqrt(cbar ** 7 / (cbar ** 7 + 25 ** 7))) if cbar else 0.5
+    a1p, a2p = (1 + g) * a1, (1 + g) * a2
+    c1p, c2p = math.hypot(a1p, b1), math.hypot(a2p, b2)
+    h1p = math.degrees(math.atan2(b1, a1p)) % 360 if (a1p or b1) else 0.0
+    h2p = math.degrees(math.atan2(b2, a2p)) % 360 if (a2p or b2) else 0.0
+    dlp = l2 - l1
+    dcp = c2p - c1p
+    if c1p * c2p == 0:
+        dhp = 0.0
+    elif abs(h2p - h1p) <= 180:
+        dhp = h2p - h1p
+    else:
+        dhp = h2p - h1p - 360 if h2p > h1p else h2p - h1p + 360
+    dhp2 = 2 * math.sqrt(c1p * c2p) * math.sin(math.radians(dhp) / 2)
+    lbar = (l1 + l2) / 2
+    cbarp = (c1p + c2p) / 2
+    if c1p * c2p == 0:
+        hbarp = h1p + h2p
+    elif abs(h1p - h2p) <= 180:
+        hbarp = (h1p + h2p) / 2
+    elif h1p + h2p < 360:
+        hbarp = (h1p + h2p + 360) / 2
+    else:
+        hbarp = (h1p + h2p - 360) / 2
+    t = (1 - 0.17 * math.cos(math.radians(hbarp - 30))
+         + 0.24 * math.cos(math.radians(2 * hbarp))
+         + 0.32 * math.cos(math.radians(3 * hbarp + 6))
+         - 0.20 * math.cos(math.radians(4 * hbarp - 63)))
+    sl = 1 + (0.015 * (lbar - 50) ** 2) / math.sqrt(20 + (lbar - 50) ** 2)
+    sc = 1 + 0.045 * cbarp
+    sh = 1 + 0.015 * cbarp * t
+    rc = 2 * math.sqrt(cbarp ** 7 / (cbarp ** 7 + 25 ** 7)) if cbarp else 0.0
+    rt = -math.sin(math.radians(2 * 30 * math.exp(-(((hbarp - 275) / 25) ** 2)))) * rc
+    return math.sqrt((dlp / sl) ** 2 + (dcp / sc) ** 2 + (dhp2 / sh) ** 2
+                     + rt * (dcp / sc) * (dhp2 / sh))
+
+
+def _same_density(a: str, b: str) -> bool:
+    """2 つの塗り値が、読者にとって同じ濃さか。
+
+    `none` どうしは同じ、片方だけ `none` は別。色として読めない値 (紙を
+    解決できない rgba など) は文字列一致へ倒す。推測で近いと判定するより、
+    別物として扱って検査を鳴らさない側へ倒すほうが誤検知を出さない。
+    """
+    if a == b:
+        return True
+    if a == "none" or b == "none":
+        return False
+    ca, cb = _paint_rgb(a), _paint_rgb(b)
+    if ca is None or cb is None:
+        return False
+    return _delta_e(ca, cb) < DE_EQUIVALENT
+
+
+def _sign_tuple(tag: str, el: ET.Element) -> tuple[str, str, float, str] | None:
+    """符号系の 4 要素 (塗り, 線色, 線幅, 線種)。1 つでも解決できなければ None。
+
+    区別を担うのはこの組であって、塗りの色 1 つではない。CSS 変数は値を 1 つしか
+    運べないので、色だけを見る検査は「濃度を使い回して 2 系列に同じ見た目を配る」
+    という壊れ方を緑のまま通してしまう。
+    """
+    # 属性が無いのと var() を解決できないのは別物として扱う。属性が無い図形は
+    # その channel を名指していないだけなので "none" として比較に載せる。ここを
+    # None (比較から外す) にすると、fill を書かない <line>/<path> — つまり
+    # コネクタのほぼ全部 — が符号系の検査を素通りする。
+    fill = "none" if el.get("fill") is None else _resolve_paint(el.get("fill"))
+    stroke = "none" if el.get("stroke") is None else _resolve_paint(el.get("stroke"))
+    if fill is None or stroke is None:
+        return None
+    width = _num(el.get("stroke-width"), 1.0) or 0.0
+    if stroke == "none":
+        width = 0.0
+    dash = _norm_dash(el.get("stroke-dasharray")) or ""
+    return (fill, stroke, width, dash)
+
+
+def _paint_tokens(el: ET.Element) -> frozenset[tuple[str, str]]:
+    """その図形が名指ししている塗り/線の「呼び名」を (役割, 名前) で返す。
+
+    `var(--wave-blue, #4B6681)` なら `("fill", "--wave-blue")`。変数名が無ければ
+    生の値。別の名前で呼んでいる = 別の系列を意図している、と読む。
+
+    役割を鍵に含めるのは、1 つの図形が持つ塗りの名前と線の名前を「2 系列」と
+    数えないためである。どんな図形も塗りと線を別の名前で書くので、役割を
+    無視して束ねると全ての図形が自分自身と衝突する。
+    """
+    out: set[tuple[str, str]] = set()
+    for attr in ("fill", "stroke"):
+        raw = (el.get(attr) or "").strip()
+        if not raw or raw.lower() in ("none", "transparent"):
+            continue
+        m = _VAR_PAINT_RE.search(raw)
+        out.add((attr, m.group(1) if m else raw.lower()))
+    return frozenset(out)
+
+
+def _check_dash_vocabulary(name: str, root: ET.Element, skip: set[int]) -> list[Finding]:
+    """D25/D26: 線種が 3 語彙の中にあるか、そして実際に破線として読めるか。
+
+    語彙が 3 つなのは、周期の比が 1.3 倍程度では隣り合っても差が読めないため。
+    実線 / `4 3` (周期 7) / `12 4` (周期 16) は比 1 : 2.29 で、`4 4` (周期 8) を
+    残すと `4 3` と周期差 1 になり区別が成立しない。
+    """
+    out: list[Finding] = []
+    for tag, el in _iter(root):
+        if tag not in _SHAPE_TAGS or id(el) in skip:
+            continue
+        dash = _norm_dash(el.get("stroke-dasharray"))
+        if dash is None:
+            continue
+        if dash not in DASH_VOCAB:
+            out.append(Finding(
+                _sev("D25"), "D25", name,
+                f"<{tag}> の stroke-dasharray が '{dash}' で、線種語彙 "
+                f"{' / '.join(sorted(DASH_VOCAB))} の外にある。"
+                "周期が近い破線どうしは並べても区別が付かないため、"
+                "語彙を 3 つ (実線を含む) に閉じている"))
+            continue
+        need = _dash_period(dash) * DASH_MIN_PERIODS
+        cap = _dash_capacity(tag, el)
+        if cap is not None and cap + 0.5 < need:
+            out.append(Finding(
+                _sev("D26"), "D26", name,
+                f"<{tag}> に stroke-dasharray '{dash}' (周期 {_trim_num(_dash_period(dash))}) が"
+                f"付いているが、破線が走る最短の辺が {cap:.0f}px しかない。"
+                f"{DASH_MIN_PERIODS} 周期 = {_trim_num(need)}px 無いと破線に見えず実線と混ざる。"
+                "この寸法の図形は線種でなく塗りの濃度で区別する"))
+    return out
+
+
+def _check_legend_truth(name: str, root: ET.Element, skip: set[int]) -> list[Finding]:
+    """D28: 凡例の見本が語る符号が、その図の中に実在するか。
+
+    凡例は「この見た目はこの意味だ」という主張で、図そのものではない。見本と
+    系列は別々に組み立てられるので、片方だけ直した日に静かにずれる。ずれた
+    凡例は「無い区別を探せ」と読者に指示することになり、色を見比べる時間を
+    まるごと無駄にさせる。図が正しくても説明が嘘なら図は読めない。
+
+    比べるのは (塗り, 線色, 線種) の 3 つだけで、線幅は見ない。凡例の見本は
+    帯や短い線という決まった寸法で描かれ、線幅はその寸法に合わせた表示上の
+    値になる。幅まで一致を求めると、凡例の主張ではなく凡例の体裁を測ることに
+    なる。
+
+    色は綴りでなく濃度 (_same_density) で照合する。凡例の見本と系列は別々に
+    組み立てられるので、見本が `rgba(20,20,18,0.98)` で系列が `#141412` の
+    ように書き方だけ違うことが普通に起きる。綴りで比べると、この図は「凡例が
+    図に無い符号を語っている」と鳴る。実際には同じ色が図にあり、読者は何も
+    探していない。D28 が捕まえるべきは「読者が無い区別を探す」ことなので、
+    綴り違いで鳴るのは偽の赤である。しかも偽の赤が出る先は凡例で、見本を
+    別の書き方で組んだ「正しく作られた凡例」ほど鳴りやすい。
+    """
+    legend: list[tuple[str, str, str]] = []
+    figure: list[tuple[str, str, str]] = []
+    for tag, el in _iter(root):
+        if tag not in _SHAPE_TAGS or id(el) in skip:
+            continue
+        sign = _sign_tuple(tag, el)
+        if sign is None or (sign[0] == "none" and sign[1] == "none"):
+            continue
+        claim = (sign[0], sign[1], sign[3])
+        (legend if el.get("data-legend") else figure).append(claim)
+    if not legend or not figure:
+        # 凡例が無い図と、凡例しか無い断片は対象外。後者を鳴らすと、凡例だけを
+        # 単体で描き出したテスト用の SVG が全部赤くなる。
+        return []
+
+    def _claimed(claim: tuple[str, str, str]) -> bool:
+        """その主張と同じ符号が図の中にあるか。線種は語彙なので綴りで比べる。"""
+        return any(c[2] == claim[2]
+                   and _same_density(c[0], claim[0])
+                   and _same_density(c[1], claim[1])
+                   for c in figure)
+
+    unmet: list[tuple[str, str, str]] = []
+    for claim in legend:
+        if claim in unmet or _claimed(claim):
+            continue
+        unmet.append(claim)
+    out: list[Finding] = []
+    for claim in sorted(unmet):
+        fill, stroke, dash = claim
+        out.append(Finding(
+            _sev("D28"), "D28", name,
+            f"凡例が (塗り {fill} / 線 {stroke} / 線種 {dash or '実線'}) を"
+            "説明しているが、その組み合わせは図の中に 1 つも無い。"
+            "読者は存在しない区別を探すことになる。"
+            "凡例を図に合わせるか、図の側にその符号を実際に使う"))
+    return out
+
+
+def _density(paint: str) -> float | None:
+    """面塗りの濃度。紙からの CIEDE2000 距離で測る。読めなければ None。
+
+    輝度では測れない。輝度は明るさしか見ないので、彩度の高い色が「暗くない」
+    という理由だけで下に置かれる。実測すると `#D02020` (L* 45.0) は 49.11 で
+    `#6A6A68` (L* 44.8) の 39.93 を上回り、逆に `#F0E060` (L* 88.3) の 25.74 は
+    より暗い `#D5D4D1` (L* 84.9) の 7.44 を上回る。紙からどれだけ離れて見えるか
+    が濃度であって、どれだけ暗いかではない。
+
+    供給表の何番目かでも測れない。図が実際に使う面塗りは表の外にいる
+    (`#4B6681` も `#E1E6EA` も表に無く、alpha 由来の濃度も表に無い)。表の外の
+    色が 2 つ並ぶと段の番号は同点になり、「最も濃い」を選べない。
+
+    この距離は供給表の 4 段を 0 / 21.09 / 39.93 / 89.93 と単調に並べるので、
+    表の中の色に限れば段の番号と同じ順序を与える。段の番号はこの測り方の
+    特殊な場合であって、別の物差しではない。物差しを 2 つ持たないことが
+    `DE_EQUIVALENT` を alpha へ流用したのと同じ理由で要る。
+    """
+    paper = _paper_token()
+    if not paper:
+        return None
+    base = _paint_rgb(paper if paper.startswith("#") else f"#{paper}")
+    here = _paint_rgb(paint)
+    if base is None or here is None:
+        return None
+    return _delta_e(base, here)
+
+
+def _check_accent_focus(name: str, root: ET.Element, skip: set[int]) -> list[Finding]:
+    """D7: 視線の着地点が 1 つに定まっているか。
+
+    強調を「accent という名前の色」で数えない。強調は地の反転で作る規約に
+    なり、`TOKENS.accent` の値は ink そのものになった。綴りで数えると ink で
+    書かれた罫も文字も全部が強調に見え、D7 は図の全要素を数える検査になる。
+    その綴り `--sakura-pink` は同時に `SERIES[2]` でもあったので、D7 は
+    「強調が 3 回」と「3 番目の系列が 3 回」を 1 つの数に混ぜて数えていた。
+    どちらの意味で鳴ったのかを、鳴った側から言い当てられない。
+
+    作り直した定義は「その図の中で他のどの要素とも符号が違い、かつ濃度が
+    最も高い面塗り」。名前を経由しないので、パレットを差し替えても意味が
+    ずれない。2 つの条件はどちらも要る:
+
+    - 濃度が最も高いだけでは足りない。20 個の箱がすべて同じ濃い地なら、
+      濃度は最上位だが焦点ではない。それは図の本文であって強調ではない。
+    - 符号が固有なだけでも足りない。薄い色で 1 つだけ違う塗りを持つ図形は、
+      固有ではあるが視線を集めない。
+
+    両方を満たす要素が 3 つ以上あるとき、読者は着地点を選べない。
+    """
+    fills: list[tuple[tuple[str, str, float, str], float]] = []
+    for tag, el in _iter(root):
+        if tag not in _SHAPE_TAGS or id(el) in skip or el.get("data-legend"):
+            continue
+        sign = _sign_tuple(tag, el)
+        if sign is None or sign[0] == "none":
+            continue
+        d = _density(sign[0])
+        if d is None:
+            # 紙が読めない / 塗りを解決できない要素は濃度の比較に載せない。
+            # 載せると、読めなかった値が最上位にも最下位にもなりうる。
+            continue
+        fills.append((sign, d))
+    if not fills:
+        return []
+
+    top = max(d for _, d in fills)
+    # 同点の扱い。上位との差が DE_EQUIVALENT 未満なら同じ段として両方数える。
+    # 差が弁別限より小さい 2 つを「1 番目と 2 番目」に分けると、読者に見えて
+    # いない順位を検査だけが持つことになる。
+    focus: list[tuple[str, str, float, str]] = []
+    for sign, d in fills:
+        if top - d >= DE_EQUIVALENT:
+            continue
+        # 符号が固有か。同じ符号を持つ要素が他にもあれば、それは系列であって
+        # 焦点ではない。比較は D24 と同じ濃度照合で行う (綴り違いの同色を
+        # 別の符号と数えると、本文の箱が全部「固有」になる)。
+        same = sum(1 for other, _ in fills
+                   if other[2] == sign[2] and other[3] == sign[3]
+                   and _same_density(other[0], sign[0])
+                   and _same_density(other[1], sign[1]))
+        if same == 1:
+            focus.append(sign)
+    if len(focus) <= MAX_ACCENT_FILLS:
+        return []
+    shown = " / ".join(sorted({s[0] for s in focus}))
+    return [Finding(
+        _sev("D7"), "D7", name,
+        f"最も濃い段で固有の符号を持つ面塗りが {len(focus)} 件ある (塗り {shown})。"
+        f"視線の着地点は {MAX_ACCENT_FILLS} 件までに抑える。"
+        "焦点でないものは濃度を 1 段落とすか、他の要素と同じ符号へ寄せて"
+        "系列の一部にする")]
+
+
+def _tone_supply() -> int | None:
+    """濃度段の上限。style-builder.cjs の SPEC.colors が持つ tone スロットの本数。
+
+    VGCONST_002 の「3 段まで」を数字で持たない。上限は規約の文言ではなく
+    供給の本数で決まっていて、tone1..3 という 3 つの枠が在るからこそ 3 段が
+    上限になる。枠を 4 本にした日には上限も 4 になるべきで、そのとき検査だけが
+    3 のまま残るのが最も悪い。D29 が SERIES を供給表として読むのと同じ形。
+
+    読めなければ None。0 へ畳まない (読めていないのに「供給 0」と報告しない)。
+    """
+    m = re.search(r"colors\s*:\s*\{(.*?)\n\s*\}", _read_source(_STYLE_REL), re.S)
+    if not m:
+        return None
+    n = len(re.findall(r"^\s*tone(\d+)\s*:", m.group(1), re.M))
+    return n or None
+
+
+def _check_tone_steps(name: str, root: ET.Element, skip: set[int]) -> list[Finding]:
+    """D30: 図の中の濃度段が供給の本数を超えていないか (VGCONST_002)。
+
+    この検査は `validate-visual-generation.py` が明示的にこちらへ委譲している
+    項目で、長らく受け取り手が居なかった。規約が在り、委譲が書かれ、着地点が
+    空だったので、5 段の図が誰にも咎められずに通っていた。
+
+    段は名前でなく見た目で数える。名前で数えると、alpha で作った濃淡は
+    `SPEC.colors` の名簿に無いので 1 段も数えられない (`check-consistency.js` の
+    MAX_HUED_COLORS_PER_SLIDE が heatmap の 5 段を見逃していたのがこの形)。
+    D7 と同じ根で、表の外の色をどう扱うかの問題である。
+
+    地と反転は段に数えない。goldens 自身がその意味論を書いている
+    (clock-chart: 「濃度段 3 段 + 反転 1 個 = 4 通りで尽きる」)。紙と同値の
+    塗りは面の地で、ink と同値の塗りは反転面なので、どちらも濃度段ではない。
+
+    D24 とは重ならない。よく離れた 5 段は D24 では鳴らずここで鳴り、近すぎる
+    2 段は段数に関わらず D24 で鳴る。互いの穴を塞ぐ向きで並んでいる。
+    """
+    limit = _tone_supply()
+    if limit is None:
+        if "tone" in _SOURCE_WARNED:
+            return []
+        _SOURCE_WARNED.add("tone")
+        return [Finding(
+            _sev("D30"), "D30", name,
+            f"{_STYLE_REL} の SPEC.colors から tone スロットの本数を読めないため "
+            "濃度段の上限が決まらず D30 を検査できない")]
+
+    ink = _ink_token()
+    reps: list[str] = []
+    for tag, el in _iter(root):
+        if tag not in _SHAPE_TAGS or id(el) in skip or el.get("data-legend"):
+            continue
+        sign = _sign_tuple(tag, el)
+        if sign is None or sign[0] == "none":
+            continue
+        d = _density(sign[0])
+        if d is None:
+            continue
+        if d < DE_EQUIVALENT:
+            continue  # 紙と見分けが付かない = 面の地
+        if ink and _same_density(sign[0], ink):
+            continue  # ink と同値 = 反転面
+        if not any(_same_density(sign[0], r) for r in reps):
+            reps.append(sign[0])
+    if len(reps) <= limit:
+        return []
+    shown = " / ".join(sorted(reps))
+    return [Finding(
+        _sev("D30"), "D30", name,
+        f"図解内の濃度段が {len(reps)} 段ある (塗り {shown})。"
+        f"供給は {limit} 段しか無い ({_STYLE_REL} の tone スロット)。"
+        "段を寄せて差を詰めるのではなく、段の数を減らして離す "
+        "(寄せると隣どうしが同じ濃さに見え、濃淡で量を語る図は主題を失う)")]
+
+
+def _check_series_distinction(name: str, root: ET.Element, skip: set[int]) -> list[Finding]:
+    """D24/D27: 図の中で系列が実際に区別されているか。
+
+    D24 は写像の単射性を見る。別の呼び名で呼ばれている 2 つの系列が同じ
+    (塗り, 線色, 線幅, 線種) へ落ちたら、図の上では 1 系列に見えている。
+    色の値だけを比べる検査ではこれを緑で通してしまう。
+
+    D27 は供給の枯渇を見る。破線が 1 周期も入らない細い図形しか無い図では、
+    使える符号は塗りの濃度 4 段 (地/tone-2/fg-muted/ink) しか無い。そこへ
+    5 つ目の塗りを要求した時点で、どう配っても 2 つが同じ濃度帯へ入る。
+    配った結果を見る D24 と違い、こちらは「配る前に足りない」を言う。
+
+    凡例の見本 (data-legend) はどちらの対象からも外す。見本は系列そのもの
+    ではなく系列の見本で、意味を運ぶのは隣の文字である。外さないと 2 つ壊れる。
+    D24 は、見本を系列と別の綴りで書いた図を「2 系列が衝突している」と読む
+    (綴りが違うだけで同じ色なのは正常で、D28 が濃度で照合して許している側)。
+    D27 は、見本の帯が短辺 21px 未満なので細い図形として供給に数えられ、
+    凡例の数だけ供給が食われる。見本の見た目が図に在るかは D28 の担当。
+    """
+    out: list[Finding] = []
+    by_token: dict[tuple[str, str], set[tuple[str, str, float, str]]] = {}
+    thin_fills: set[str] = set()
+    for tag, el in _iter(root):
+        if tag not in _SHAPE_TAGS or id(el) in skip or el.get("data-legend"):
+            continue
+        sign = _sign_tuple(tag, el)
+        if sign is None or (sign[0] == "none" and sign[1] == "none"):
+            continue
+        for tok in _paint_tokens(el):
+            by_token.setdefault(tok, set()).add(sign)
+        cap = _dash_capacity(tag, el)
+        if cap is not None and cap < DASH_MIN_EDGE and sign[0] != "none":
+            # 供給を数えるのは塗りだけ。線しか持たない細い図形は罫であって
+            # 系列の器ではなく、濃度 4 段を食い合う相手にならない。
+            thin_fills.add(sign[0])
+
+    stable = [(tok, next(iter(signs))) for tok, signs in sorted(by_token.items())
+              if len(signs) == 1]  # 同じ呼び名を複数の見た目で使う図は系列の器ではない
+
+    # 見た目が同じ組へ束ねる。文字列一致でなく濃度で束ねるので、
+    # `#141412` と `rgba(20,20,18,0.98)` のように綴りが違って同じ濃さの組も
+    # 1 つに入る。alpha を畳むのはここ 1 箇所だけで、専用の検査は足さない。
+    clusters: list[tuple[tuple[str, str, float, str], list[tuple[str, str]]]] = []
+    for tok, sign in stable:
+        for rep, members in clusters:
+            if (rep[2] == sign[2] and rep[3] == sign[3]
+                    and _same_density(rep[0], sign[0])
+                    and _same_density(rep[1], sign[1])):
+                members.append(tok)
+                break
+        else:
+            clusters.append((sign, [tok]))
+
+    for sign, toks in clusters:
+        # 役割ごとに数える。塗りの名前 2 つが衝突していれば 2 系列が同じ面に、
+        # 線の名前 2 つが衝突していれば 2 系列が同じ輪郭になっている。
+        for role, label in (("fill", "塗り"), ("stroke", "線")):
+            names = sorted(n for r, n in toks if r == role)
+            if len(names) < 2:
+                continue
+            fill, stroke, width, dash = sign
+            out.append(Finding(
+                _sev("D24"), "D24", name,
+                f"{label}を {len(names)} 通りの名前 ({' / '.join(names)}) で"
+                f"呼び分けているが、いずれも同じ見た目 (塗り {fill} / 線 {stroke} / "
+                f"幅 {_trim_num(width)} / 線種 {dash or '実線'}) に落ちている。"
+                "図の上では 1 系列にしか見えない。"
+                "濃度・線種・形のいずれかを実際に変えるか、呼び名を 1 つに寄せる"))
+
+    # 供給も濃度で数える。綴りが 5 通りでも読者に 4 段としか見えないなら、
+    # 供給を超えてはいない。ここを綴りで数えると、alpha 違いの同じ濃さが
+    # 別の符号として供給側に計上され、枯渇していないのに鳴る。
+    distinct: list[str] = []
+    for fill in sorted(thin_fills):
+        if not any(_same_density(fill, seen) for seen in distinct):
+            distinct.append(fill)
+    thin_fills = set(distinct)
+    if len(thin_fills) > SERIES_SUPPLY_NO_DASH:
+        out.append(Finding(
+            _sev("D27"), "D27", name,
+            f"破線の入らない細い図形が {len(thin_fills)} 通りの塗り "
+            f"({' / '.join(sorted(thin_fills))}) を要求している。"
+            f"短辺 {DASH_MIN_EDGE}px 未満の図形で使える符号は濃度 "
+            f"{SERIES_SUPPLY_NO_DASH} 段しか無いので、どう配っても 2 つが同じ"
+            "濃度帯へ入る。図形を太くするか、系列を束ねて数を減らす"))
+    return out
+
+
+_SERIES_ITEM_RE = re.compile(r"'([^']*)'|\"([^\"]*)\"")
+
+
+def _series_supply() -> list[str] | None:
+    """svg-kit.cjs の SERIES を「配る前の供給表」として宣言順に読む。
+
+    読めなければ None を返す。空配列と読めなかったことは別の事実なので、
+    空リストへ畳まない (読めていないのに「供給 0 で正常」と報告しない)。
+    """
+    m = re.search(r"const\s+SERIES\s*=\s*\[(.*?)\n\];", _read_source(_KIT_REL), re.S)
+    if not m:
+        return None
+    out: list[str] = []
+    for a, b in _SERIES_ITEM_RE.findall(m.group(1)):
+        out.append(a if a else b)
+    return out
+
+
+def check_series_supply(entries: list[str] | None = None) -> list[Finding]:
+    """D29: 供給表そのものが単射か (svg-kit.cjs の SERIES)。
+
+    D24 と見ているものが違う。D24 は「配った結果」を 1 枚の図の中で見るので、
+    5 枠のうち 2 枠が同じ色でも、その 2 枠を同時に使う図がまだ無ければ鳴らない。
+    鳴るのは、系列が 1 つ増えた図を誰かが作った日である。そのとき赤くなるのは
+    その図で、直す人はその図を見に行くが、原因は図ではなく供給表にある。
+
+    D29 は配る前に供給表だけを見る。5 枠が 5 通りの見た目を供給できているか、
+    それとも見た目としては 4 通りしか無いのに 5 枠あるように見せているか。
+    鳴ったとき指す先は必ず svg-kit.cjs なので、直す人は最初から正しい場所へ行く。
+    D24 と同じコードにまとめると、この「どこを直すか」が figure 側へ吸われる。
+
+    比べるのは濃度だけで、線幅・線種は見ない。SERIES が供給するのは塗りの色
+    であって組ではなく、線種は使う側 (図形の寸法) が決める材料だからである。
+
+    entries を渡せば任意の表を検査できる。self-test はこれを使い、実装が
+    いま持っている値ではなく検査の論理そのものを確かめる。
+    """
+    where = _KIT_REL
+    supply = entries if entries is not None else _series_supply()
+    if supply is None:
+        if "series" not in _SOURCE_WARNED:
+            _SOURCE_WARNED.add("series")
+            return [Finding(
+                "warning", "D29", where,
+                "SERIES を読み出せないため供給表の単射性を検査できなかった "
+                "(const SERIES = [...]; の形が変わった可能性がある)")]
+        return []
+
+    # 見た目が同じ枠へ束ねる。名前ではなく描かれる色で束ねるので、
+    # `var(--wave-blue, #4B6681)` と `var(--spring-violet, #4B6681)` のように
+    # 別名で置かれた同値がここで 1 つに入る。
+    clusters: list[tuple[str, list[str]]] = []
+    for raw in supply:
+        paint = _resolve_paint(raw)
+        if paint is None or paint == "none":
+            # 解決できない値は「別の色」と数えない。数えると、読めなかった枠が
+            # 常に固有の供給として計上され、枯れている表が緑で通る。
+            continue
+        for rep, members in clusters:
+            if _same_density(rep, paint):
+                members.append(raw)
+                break
+        else:
+            clusters.append((paint, [raw]))
+
+    out: list[Finding] = []
+    for paint, members in clusters:
+        if len(members) < 2:
+            continue
+        # 同じ綴りが 2 度置かれている場合と、別の綴りが同じ色へ落ちている場合を
+        # 書き分ける。前者は名前の段階で既に 1 通りなので「呼び名は分かれている」
+        # と書くと事実に反し、読んだ人が値だけを見て直そうとする。
+        how = ("同じ綴りが 2 度置かれている"
+               if len(set(members)) == 1
+               else "呼び名は分かれているが供給される見た目は 1 通りしかない")
+        out.append(Finding(
+            _sev("D29"), "D29", where,
+            f"SERIES の {len(members)} 枠 ({' / '.join(members)}) が同じ濃度 "
+            f"({paint}) を供給している。{how}ので、この 2 枠を同時に使う図が"
+            "作られた日に D24 が鳴る。鳴るのはその図だが、原因はこの表にある。"
+            "値を実際に離すか、枠を 1 つに減らす"))
+    return out
+
+
 def check_diagram_block(name: str, block: str) -> list[Finding]:
     """CSS/HTML 構成の図解ブロックへ D14-D16 を当てる。"""
     findings: list[Finding] = []
@@ -1840,13 +2648,8 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
     diagonal_ok = any(t in haystack for t in RADIAL_TYPES + CHART_TYPES)
 
     local_coord = _local_coord_elems(root)
-    marker_owner = _marker_owner(root)
     defined_markers: set[str] = set()
     referenced_markers: set[str] = set()
-    accent_fills = 0
-    # marker 内の accent は「そのマーカーが参照されたか」が走査を終えるまで確定
-    # しないので、marker id 別に貯めておいて最後に合流させる
-    marker_accents: dict[str, int] = {}
 
     palette = _allowed_palette()
     families = _allowed_families()
@@ -1863,6 +2666,12 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
         findings.append(Finding(
             _sev("D13"), "D13", name,
             f"{_KIT_REL} の textBlock から既定フォントスタックを抽出できないため D13 を検査できない"))
+    if not _paper_token() and "paper" not in _SOURCE_WARNED:
+        _SOURCE_WARNED.add("paper")
+        findings.append(Finding(
+            _sev("D7"), "D7", name,
+            f"{_KIT_REL} の TOKENS.paper を読めないため濃度を測れず D7 を検査できない "
+            "(濃度は紙からの距離なので、紙が無いと最も濃い塗りを決められない)"))
 
     for tag, el in _iter(root):
         if tag == "marker":
@@ -1934,16 +2743,6 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
                         _sev("D6"), "D6", name,
                         f"<rect {key}={v:g}> が {GRID}px グリッド上にない (ずれ {off:.2f}px)"))
 
-        # D7 accent 抑制
-        fill = el.get("fill") or ""
-        if tag in ("rect", "circle", "ellipse", "path", "polygon") and fill not in ("none", ""):
-            if any(tok in fill for tok in ACCENT_TOKENS):
-                owner = marker_owner.get(id(el))
-                if owner is None:
-                    accent_fills += 1
-                else:
-                    marker_accents[owner] = marker_accents.get(owner, 0) + 1
-
         # D10 パレット逸脱 (defs/marker の中も見る。マーカーの色もパレット内であるべき)
         if palette:
             for attr, raw in _iter_color_values(el):
@@ -1997,14 +2796,6 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
             _sev("D3"), "D3", name,
             f"marker '#{ref}' が参照されているが同じ SVG 内で定義されていない"))
 
-    # D7 判定 (図単位)。実際に marker-start/mid/end から参照された marker の中身
-    # だけを数に入れる (定義されただけのマーカーは描画されないので強調ではない)
-    accent_fills += sum(n for mid, n in marker_accents.items() if mid in referenced_markers)
-    if accent_fills > MAX_ACCENT_FILLS:
-        findings.append(Finding(
-            _sev("D7"), "D7", name,
-            f"強調色の面塗りが {accent_fills} 件。{MAX_ACCENT_FILLS} 件以下に抑えると"
-            "視線の着地点がひとつに定まる"))
 
     # D11 成果物側の複雑度上限 (図単位)。
     # CAPACITY はビルダー関数の入口に効く上限で、agent が SVG を直接書く経路には
@@ -2046,6 +2837,20 @@ def check_svg(name: str, svg_text: str, check_grid: bool = False) -> list[Findin
     findings.extend(_check_connector_on_box_edge(name, root, vb, unmeasurable))
     findings.extend(_check_overlapping_connectors(name, root, unmeasurable))
     findings.extend(_check_connector_through_box(name, root, vb, unmeasurable))
+
+    # D24-D28 符号系。系列の区別が (塗り, 線色, 線幅, 線種) の組で成立しているか。
+    # 語彙の検査 (D25) は寸法を要らないので defs 内の見本も見たいところだが、
+    # 破線の可読性 (D26) と揃えて描画される図形だけを対象にする。
+    findings.extend(_check_dash_vocabulary(name, root, unmeasurable))
+    findings.extend(_check_series_distinction(name, root, unmeasurable))
+    findings.extend(_check_legend_truth(name, root, unmeasurable))
+
+    # D7 も符号と濃度で測るのでここに並べる。上の 3 つが「区別が付いているか」を
+    # 見るのに対し、D7 は「区別が付いた上で、視線がどこへ落ちるか」を見る。
+    findings.extend(_check_accent_focus(name, root, unmeasurable))
+    # D30 は同じ濃度の物差しで段の数を見る。D24 が「近すぎる 2 段」を見るのに
+    # 対し、こちらは「よく離れた 4 段以上」を見るので、片方が拾えない側を拾う。
+    findings.extend(_check_tone_steps(name, root, unmeasurable))
 
     # D15 のうち SVG で数えられる 2 項目。
     # #4 annotation は §D-5 が「注釈は font-base のイタリック」と定めているので、
@@ -2349,6 +3154,233 @@ _SELF_TEST_CASES: tuple[tuple[str, str, tuple[tuple[str, str], ...], tuple[str, 
         (),
         ("D19", "D20", "D21"),
     ),
+    # --- 符号系 (D24-D28) ---------------------------------------------------
+    (
+        "2 系列が同じ塗りに落ちている (呼び名は違うが図の上では 1 系列)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--wave-blue, #4B6681)"/>'
+        '<rect x="220" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--spring-violet, #4B6681)"/></svg>',
+        (("warning", "D24"),),
+        ("D27",),
+    ),
+    (
+        "2 系列が濃度で分かれている (同じ形でも見た目が違う)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--wave-blue, #4B6681)"/>'
+        '<rect x="220" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--wave-aqua, #9BADBF)"/></svg>',
+        (),
+        ("D24", "D27"),
+    ),
+    (
+        "1 つの図形の塗りと線は別の名前で書く (自分自身との衝突を数えない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" fill="#F7F6F3"'
+        ' stroke="var(--fg, #141412)" stroke-width="1.5"/></svg>',
+        (),
+        ("D24", "D27"),
+    ),
+    (
+        "語彙外の破線 4 4 (4 3 と周期差 1 で区別が成立しない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line x1="40" y1="150" x2="360" y2="150" stroke="#6A6A68"'
+        ' stroke-width="1.5" stroke-dasharray="4 4"/></svg>',
+        (("warning", "D25"),),
+        ("D26",),
+    ),
+    (
+        "語彙内の破線を十分な長さの辺に置く",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line x1="40" y1="150" x2="360" y2="150" stroke="#6A6A68"'
+        ' stroke-width="1.5" stroke-dasharray="12 4"/></svg>',
+        (),
+        ("D24", "D25", "D26", "D27"),
+    ),
+    (
+        "細いバーの短辺に破線 (2 辺が実線に見えて符号が消える)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="150" width="240" height="4" stroke="#141412"'
+        ' stroke-width="1.5" fill="none" stroke-dasharray="4 3"/></svg>',
+        (("warning", "D26"),),
+        ("D25",),
+    ),
+    (
+        "細い図形だけの図が 5 系列を要求している (配る前に供給が尽きている)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="240" height="4" stroke="none" fill="#141412"/>'
+        '<rect x="40" y="60" width="240" height="4" stroke="none" fill="#6A6A68"/>'
+        '<rect x="40" y="80" width="240" height="4" stroke="none" fill="#9BADBF"/>'
+        '<rect x="40" y="100" width="240" height="4" stroke="none" fill="#E1E6EA"/>'
+        '<rect x="40" y="120" width="240" height="4" stroke="none" fill="#4B6681"/></svg>',
+        (("warning", "D27"),),
+        ("D24",),
+    ),
+    (
+        "細い図形だけの図の 4 系列 (供給ちょうどで余裕は無いが成立している)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="240" height="4" stroke="none" fill="#141412"/>'
+        '<rect x="40" y="60" width="240" height="4" stroke="none" fill="#6A6A68"/>'
+        '<rect x="40" y="80" width="240" height="4" stroke="none" fill="#9BADBF"/>'
+        '<rect x="40" y="100" width="240" height="4" stroke="none" fill="#E1E6EA"/></svg>',
+        (),
+        ("D24", "D27"),
+    ),
+    (
+        "fallback の無い var() は解決できないので比較から外す (誤検知を出さない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" stroke="none" fill="var(--tone-2)"/>'
+        '<rect x="220" y="40" width="120" height="80" stroke="none" fill="var(--tone-3)"/></svg>',
+        (),
+        ("D24", "D27"),
+    ),
+    (
+        "綴りは違うが紙の上で同じ濃さになる 2 系列 (alpha は濃度軸の第 2 の正本)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" stroke="none"'
+        ' fill="#D7D6D4"/>'
+        '<rect x="220" y="40" width="120" height="80" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.14)"/></svg>',
+        (("warning", "D24"),),
+        ("D27",),
+    ),
+    (
+        "輝度が同じで色相が違う 2 系列は衝突ではない (対比比で測ると誤検知になる組)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--wave-blue, #4B6681)"/>'
+        '<rect x="220" y="40" width="120" height="80" stroke="none"'
+        ' fill="var(--fg-dim, #6A6A68)"/></svg>',
+        (),
+        ("D24", "D27"),
+    ),
+    (
+        "fill 属性を書いていない line どうしの衝突 (属性が無いことは"
+        "「解決できない」ではない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line x1="40" y1="120" x2="360" y2="120"'
+        ' stroke="var(--wave-blue, #4B6681)" stroke-width="2"/>'
+        '<line x1="40" y1="180" x2="360" y2="180"'
+        ' stroke="var(--spring-violet, #4B6681)" stroke-width="2"/></svg>',
+        (("warning", "D24"),),
+        ("D25", "D26", "D27"),
+    ),
+    (
+        "凡例が図に無い破線を説明している (読者が無い区別を探す)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line x1="40" y1="150" x2="360" y2="150" stroke="#141412"'
+        ' stroke-width="2"/>'
+        '<line data-legend="1" x1="40" y1="270" x2="88" y2="270" stroke="#141412"'
+        ' stroke-width="2" stroke-dasharray="12 4"/></svg>',
+        (("warning", "D28"),),
+        ("D24", "D25", "D26"),
+    ),
+    (
+        "凡例が図で実際に使われている符号を説明している",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line x1="40" y1="150" x2="360" y2="150" stroke="#141412"'
+        ' stroke-width="2" stroke-dasharray="12 4"/>'
+        '<line data-legend="1" x1="40" y1="270" x2="88" y2="270" stroke="#141412"'
+        ' stroke-width="1.5" stroke-dasharray="12 4"/></svg>',
+        (),
+        ("D24", "D25", "D26", "D28"),
+    ),
+    (
+        "見本を rgba・系列を hex で書いた凡例 (綴りが違うだけで同じ色)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="200" height="120" stroke="none"'
+        ' fill="#141412"/>'
+        '<rect data-legend="1" x="40" y="240" width="48" height="16"'
+        ' stroke="none" fill="rgba(20, 20, 18, 0.98)"/></svg>',
+        (),
+        ("D24", "D28"),
+    ),
+    (
+        "凡例しか無い断片は対象外 (凡例を単体で描き出した図を全部赤くしない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<line data-legend="1" x1="40" y1="150" x2="88" y2="150" stroke="#141412"'
+        ' stroke-width="1.5" stroke-dasharray="12 4"/></svg>',
+        (),
+        ("D28",),
+    ),
+    (
+        "最も濃い段に固有の符号が 3 つある (視線の着地点を選べない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" fill="#141412"'
+        ' stroke="#4B6681" stroke-width="2"/>'
+        '<rect x="160" y="40" width="80" height="60" fill="#141412"'
+        ' stroke="#6A6A68" stroke-width="2"/>'
+        '<rect x="280" y="40" width="80" height="60" fill="#141412"'
+        ' stroke="#E1E6EA" stroke-width="2"/></svg>',
+        (("warning", "D7"),),
+        (),
+    ),
+    (
+        "同じ符号の濃い箱が 4 つ並ぶ (濃度は最上位だが図の本文であって焦点ではない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" fill="#141412" stroke="none"/>'
+        '<rect x="160" y="40" width="80" height="60" fill="#141412" stroke="none"/>'
+        '<rect x="40" y="160" width="80" height="60" fill="#141412" stroke="none"/>'
+        '<rect x="160" y="160" width="80" height="60" fill="#141412"'
+        ' stroke="none"/></svg>',
+        (),
+        ("D7",),
+    ),
+    (
+        "図解内の濃度段が 4 段ある (供給は tone スロット 3 段しか無い)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.14)"/>'
+        '<rect x="160" y="40" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.30)"/>'
+        '<rect x="40" y="160" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.50)"/>'
+        '<rect x="160" y="160" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.80)"/></svg>',
+        (("warning", "D30"),),
+        ("D7", "D24"),
+    ),
+    (
+        "濃度段 3 段に地と反転面を足した図 (地と反転は段に数えない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" stroke="none" fill="#F7F6F3"/>'
+        '<rect x="160" y="40" width="80" height="60" stroke="none" fill="#E1E6EA"/>'
+        '<rect x="280" y="40" width="80" height="60" stroke="none" fill="#9BADBF"/>'
+        '<rect x="40" y="160" width="80" height="60" stroke="none" fill="#4B6681"/>'
+        '<rect x="160" y="160" width="80" height="60" stroke="none"'
+        ' fill="#141412"/></svg>',
+        (),
+        ("D30",),
+    ),
+    (
+        "宣言は 5 段でも紙の上では 3 段の図 (D30 は段数を見るので鳴らない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.05)"/>'
+        '<rect x="160" y="40" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.14)"/>'
+        '<rect x="280" y="40" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.20)"/>'
+        '<rect x="40" y="160" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.30)"/>'
+        '<rect x="160" y="160" width="80" height="60" stroke="none"'
+        ' fill="rgba(20, 20, 18, 0.50)"/></svg>',
+        (),
+        ("D30",),
+    ),
+    (
+        "濃い焦点 1 つと固有だが薄い箱 2 つ (薄い固有色は視線を集めない)",
+        '<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="40" y="40" width="80" height="60" fill="#141412" stroke="none"/>'
+        '<rect x="160" y="40" width="80" height="60" fill="#E1E6EA"'
+        ' stroke="#4B6681" stroke-width="2"/>'
+        '<rect x="280" y="40" width="80" height="60" fill="#E1E6EA"'
+        ' stroke="#6A6A68" stroke-width="2"/></svg>',
+        (),
+        ("D7",),
+    ),
 )
 
 # D22/D23 は SVG どうしの関係を見るため、1 つの SVG を渡す _SELF_TEST_CASES では
@@ -2532,12 +3564,51 @@ _SELF_TEST_DOC_CASES: tuple[tuple[str, tuple[str, ...], tuple[tuple[str, str], .
     ),
 )
 
+# D29 (供給表の単射性) の自己テスト。(説明, SERIES 相当の配列, 期待件数)。
+#
+# 実装がいま持っている SERIES を読ませない。読ませると、値が直った日に
+# このテストは「検査が壊れた」のか「値が直った」のか区別できなくなる。
+_SELF_TEST_SUPPLY_CASES: tuple[tuple[str, list[str], int], ...] = (
+    (
+        "供給表の 5 枠が 5 通りの見た目を供給していれば鳴らない",
+        ["var(--a, #4B6681)", "var(--b, #9BADBF)", "var(--c, #141412)",
+         "var(--d, #E1E6EA)", "var(--e, #6A6A68)"],
+        0,
+    ),
+    (
+        "別名で同じ値を置いた 2 枠は供給表の時点で 1 通りしか供給していない",
+        ["var(--a, #4B6681)", "var(--b, #9BADBF)", "var(--c, #141412)",
+         "var(--d, #E1E6EA)", "var(--e, #4B6681)"],
+        1,
+    ),
+    (
+        "同じ綴りが 2 度置かれている枠 (名前の段階で既に 1 通り)",
+        ["var(--a, #4B6681)", "var(--b, #9BADBF)", "var(--a, #4B6681)"],
+        1,
+    ),
+    (
+        "綴りが違っても紙の上で同じ濃さになる 2 枠は 1 通りと数える",
+        ["#141412", "rgba(20, 20, 18, 0.98)"],
+        1,
+    ),
+    (
+        "輝度が同じで色相が違う 2 枠は別の供給 (対比比で測ると誤検知になる組)",
+        ["var(--a, #4B6681)", "var(--b, #6A6A68)"],
+        0,
+    ),
+    (
+        "fallback の無い var() は解決できないので別の供給として数えない",
+        ["var(--a)", "var(--b)", "var(--c, #141412)"],
+        0,
+    ),
+)
+
 
 def _check_severity_registry() -> list[str]:
     """重大度表そのものの自己検査。違反があれば説明文の一覧を返す。
 
     見るのは 2 点だけ:
-      1. D0-D23 の全コードが SEVERITY か ERROR_BY_DESIGN のどちらかに属する
+      1. D0-D30 の全コードが SEVERITY か ERROR_BY_DESIGN のどちらかに属する
          (= 新しい検査を足したとき、重大度の選択を必ず一度は明示させる)
       2. 両者が交差しない
          (= 「明示的に warning」と「意図して未登録の error」の二枚舌を禁じる)
@@ -2561,7 +3632,7 @@ def _check_severity_registry() -> list[str]:
                      key=lambda c: (len(c), c))
     if unknown:
         problems.append(
-            f"D0-D23 に無いコードが表に載っている: {', '.join(unknown)}"
+            f"D0-D30 に無いコードが表に載っている: {', '.join(unknown)}"
             " (検査を増やしたなら ALL_CODES の範囲も更新する)")
     return problems
 
@@ -2576,7 +3647,7 @@ def _self_test() -> int:
             print(f"  NG   - 重大度表の登録 ({p})", file=sys.stderr)
     else:
         print(f"  ok   - 重大度表の登録 (SEVERITY {len(SEVERITY)} 件 + "
-              f"ERROR_BY_DESIGN {len(ERROR_BY_DESIGN)} 件 = D0-D23 の {len(ALL_CODES)} 件・交差なし)")
+              f"ERROR_BY_DESIGN {len(ERROR_BY_DESIGN)} 件 = 全 {len(ALL_CODES)} 件・交差なし)")
     for label, svg, expect, forbid in _SELF_TEST_CASES:
         found = {(f.severity, f.code) for f in check_svg(f"self-test:{label}", svg, check_grid=True)}
         codes = {c for _, c in found}
@@ -2611,7 +3682,18 @@ def _self_test() -> int:
             print(f"  NG   - {label} ({' / '.join(detail)})", file=sys.stderr)
         else:
             print(f"  ok   - {label}")
-    total = len(_SELF_TEST_CASES) + len(_SELF_TEST_DOC_CASES) + 1  # +1 = 重大度表の登録検査
+    # D29 は SVG を受け取らないので上の 2 つの表では書けない。供給表を直接
+    # 渡して論理だけを確かめる (いま svg-kit.cjs が持っている値には依存しない)。
+    for label, entries, expect_hits in _SELF_TEST_SUPPLY_CASES:
+        hits = len(check_series_supply(entries))
+        if hits != expect_hits:
+            failed += 1
+            print(f"  NG   - {label} (D29 が {expect_hits} 件出るべきだが {hits} 件)",
+                  file=sys.stderr)
+        else:
+            print(f"  ok   - {label}")
+    total = (len(_SELF_TEST_CASES) + len(_SELF_TEST_DOC_CASES)
+             + len(_SELF_TEST_SUPPLY_CASES) + 1)  # +1 = 重大度表の登録検査
     print(f"validate-svg-diagram self-test: {total - failed}/{total} "
           f"{'PASS' if not failed else 'FAIL'}")
     return 1 if failed else 0
@@ -2646,6 +3728,12 @@ def main(argv: list[str]) -> int:
         else:
             warnings += 1
         print(str(f), file=sys.stderr)
+
+    # D29 は成果物でなく供給表 (svg-kit.cjs の SERIES) を見るので、引数が
+    # 何本あっても 1 回だけ。inspected には数えない。inspected は「検査した
+    # 対象の数」で、ここで見ているのは対象ではなく対象を作る側の材料である。
+    for f in check_series_supply():
+        report(f)
 
     for path in paths:
         if not os.path.isfile(path):

@@ -23,6 +23,7 @@
     - REDIRECT-FAT-BODY: `x-canonical-redirect` を宣言しながら自前 `properties` を再掲 (正本の本文コピー)。
     - DUP-REQUIRED-SET: redirect でない schema が同一の `required` 集合を持つ (同一成果物の二重定義疑い)。
     - DUP-PASSAGE: 同一の連続本文パッセージ (既定 6 行窓) が 2 ファイル以上に点在 (正本へ参照化すべき再掲)。
+      templates/ proposals/ 配下と `<!-- name:vN -->` 囲みの機械生成ブロックは伝搬例外。
 
 「両方残す」を防ぎ「正本 1 つ + 参照」へ寄せる判断材料を出すのが目的。Exit 0 = ok, 1 = violation, 2 = usage error。
 """
@@ -42,6 +43,18 @@ PASSAGE_IGNORE_RE = re.compile(r"(正本|canonical|詳細は|参照|references/|
 # DUP-PASSAGE の伝搬例外ディレクトリ (パス要素の完全一致)。
 # いずれも「参照化すべき正本が存在しない」ため、指摘に従う操作自体が定義できない。
 PASSAGE_EXCLUDE_DIRS = frozenset({"templates", "proposals"})
+# `<!-- name:vN -->` ... `<!-- /name:vN -->` で囲まれた機械生成ブロック。
+# 正本は生成スクリプト側にあり、各 SKILL.md のコピーはその射影にすぎない
+# (external-mutation-guard-cli:v1 は build-artifact-delivery.py がバイト単位の
+# 同一性を強制しており、差異はそれ自体が契約違反として弾かれる)。よって
+# 「正本 1 箇所に置き他は参照化」という指摘に従う操作が定義できず、
+# PASSAGE_EXCLUDE_DIRS と同じ理由で伝搬例外にする。
+# 除去であって barrier 挿入ではない: 生成ブロックを挟んで前後の地の文が一致するなら
+# それは人が書いた本物の重複なので、窓が seam をまたいで検出するのが正しい。
+GENERATED_BLOCK_RE = re.compile(
+    r"<!--\s*([A-Za-z0-9][A-Za-z0-9._-]*:v\d+)\s*-->.*?<!--\s*/\1\s*-->",
+    re.DOTALL,
+)
 
 
 def parse_json(path: Path) -> dict | None:
@@ -107,9 +120,14 @@ def check_schemas(schemas: list[Path]) -> tuple[list[str], list[str]]:
 
 # ---- markdown 本文の重複パッセージ -------------------------------------
 
+def strip_generated_blocks(text: str) -> str:
+    """marker で囲まれた機械生成ブロックを落とす (正本は生成スクリプト側)。"""
+    return GENERATED_BLOCK_RE.sub("", text)
+
+
 def substantial_lines(md_text: str) -> list[str]:
     out: list[str] = []
-    for raw in body_after_frontmatter(md_text).splitlines():
+    for raw in strip_generated_blocks(body_after_frontmatter(md_text)).splitlines():
         s = raw.strip()
         if len(s) < MIN_LINE_LEN:
             continue

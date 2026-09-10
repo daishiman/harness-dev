@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-35-sentence-length-error-gate",
+  "covered_task_ids": [
+    "P05-x-35-sentence-length-error-gate"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/",
+  "acceptance_criterion_restated": "handout-visual-policy.json#sentence が正本となり、閾値超過が E-TEXT-* として exit1 で build を止める。Python 定数の重複保持が 0 件 (利用者要求 R7『文章が長ったらしく何行も書くのを絶対に防ぐ』の受け皿)",
+  "verified_by": [
+    {
+      "claim": "閾値の綴りが正本と一致し、正本を読んだ検査が実際に効いている",
+      "method": "briefs/config/handout-visual-policy.json#sentence (実体化の正本) が sentence_gate.max_chars / sentence_gate.max_count / sentences_per_body.max_sentences を綴るのに対し、出荷中の config は max_chars.value / count_threshold / max_sentences_per_body.value へ言い換えられていた。config 側を正本の綴りへ戻し、load_sentence の参照キーも合わせた",
+      "result": "受入テスト test_r21_text_fold.py::SentenceGate の 5 本が赤から緑になった。この 5 本は正本を sentence.sentence_gate から読むため、言い換えられている間は gate_values() が None を掴んで一度も判定へ到達していなかった (到達不能な検査であり、実装は fallback 定数だけで動いていた)"
+    },
+    {
+      "claim": "上限ちょうどは通り、1 文字超えたら exit1 で止まる (off-by-one の解消)",
+      "method": "split_sentences が re.split(SENTENCE_ENDINGS_CLASS) で句点を捨てていたため、long_sentence_count の len() が句点を数えていなかった。捕獲群つきの split へ変え、句点を文の一部として残すようにした。tests/validate-handout-config.py/test_r25_sentence_gate.py を新設 (13 本)",
+      "result": "13 本 green。負の対照として旧実装を再現して測ると『60字+。= 61 字』は long_sentence_count=0 (素通り)、新実装は 1 (exit1)。正本は上限 60 字・1 件で落とすと宣言しているので、旧実装は宣言より 1 文字ぶん緩かった"
+    },
+    {
+      "claim": "上限値の出所が正本であって script の定数ではない",
+      "method": "複製した plugin root の config を書き換えて実行する陽性・陰性対照 (max_chars を 120 へ上げると 80 字が通り、20 へ下げると 30 字が落ちる)",
+      "result": "2 本とも green。定数を触らずに判定が動くので、script の定数が実質の正本になっていない"
+    },
+    {
+      "claim": "正本で level を下げても R7 のゲートは緩まない",
+      "method": "config の sentence_gate.level を warning へ落として 200 字の 1 文を通す",
+      "result": "exit=1 のまま。重大度は FALLBACK_ERROR_CODES との和集合で決まり、正本は昇格だけができる (降格経路は意図的に無い)。R7 は『絶対に防ぐ』なので、設定で緩められる方が事故になる"
+    },
+    {
+      "claim": "文数の上限も正本から引き、境界で切り替わる",
+      "method": "sentences_per_body.max_sentences ちょうどの本文と 1 文超えた本文を実行",
+      "result": "ちょうどは E-TEXT-PARAGRAPH なし、1 文超過は exit1 で /sections/0/parts/3 を名指し"
+    },
+    {
+      "claim": "fallback 定数が出荷中の正本とずれたまま出荷できない",
+      "method": "FallbackMirrorsTheShippedCanon の 4 本で、FALLBACK_LONG_SENTENCE_CHARS / _COUNT / FALLBACK_MAX_SENTENCES_PER_BODY を出荷 config の値と突き合わせ、2 つの code が FALLBACK_ERROR_CODES にいることも固定した",
+      "result": "4 本 green。正本を書き換えて定数を直し忘れると赤くなるので、正本を読めた経路と読めなかった経路で通る文の長さが変わる状態を出荷できない"
+    },
+    {
+      "claim": "カードなど TEXT 以外の中の文言は別経路で既に縛られている (範囲の穴を測った)",
+      "method": "B04 トリオカードの body へ 61 字の 1 文を入れて実行",
+      "result": "W-COPY-LONG /…/cards/0/body が 32 字 (役割 caption) 超過として発火した。1 文長ゲートを部品の中へ広げると同じ対象に 2 つの閾値が乗るため広げていない。R7 の穴は TEXT 部品側の 1 文長にだけ残っていた"
+    },
+    {
+      "claim": "隣接スイートを壊していない",
+      "method": "C11 / C12 / C18 / C20 / C21 / C22 の 6 スイートを全件実行",
+      "result": "render 226 / extract 159 / a11y-print 187 は全 green (着手前と同一)。C12 は着手前 15 failed / 348 passed から 10 failed / 366 passed へ (本ノードの 5 本が緑化・新設 13 本が追加)。残る 10 件は着手前から存在する別ノードの 2 系統 (本文予算 7 件=P05-x-25 / 意図的な赤 3 件=P05-x-64)。language 11 / narrative 8 の失敗も着手前と同数・同一で、いずれも文長に触れない (DT-1 出力先裁定待ちと P05-x-71 系)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X35SENT-CONST-01",
+      "level": "warn",
+      "summary": "受入条件の『Python 定数の重複保持が 0 件』は文字どおりには達成していない。FALLBACK_LONG_SENTENCE_CHARS / _COUNT / FALLBACK_MAX_SENTENCES_PER_BODY の 3 定数は残っている。削除できないのは test_visual_density.py::TestCanonAbsenceFailsClosed が『正本が消えてもゲートは緩まない』を別ノードの契約として固定しているためで、定数を消すと正本不在時にゲートが消える fail-open になる。代わりに『ずれたまま出荷できない』を機械で押さえる形にした (FallbackMirrorsTheShippedCanon 4 本)。定数を真に 0 件にするには、正本不在を LaunchAbort にする fail-closed へ切り替える裁定が要り、それは視覚方針全体の fail-soft 契約の変更になるため本ノードの write_scope を超える"
+    },
+    {
+      "id": "F-P05X35SENT-CODE-01",
+      "level": "warn",
+      "summary": "W-SENTENCE-LONG は接頭辞が W- でありながら level=error として exit1 を起こす。読み手には警告に見えて実際は完了ゲートという食い違いが残る。改名しない理由は、この code 名が briefs/script-brief-C12.json・evidence/P03.json・RESOLUTION-R25 など plan 側 15 ファイル前後 (write_scope 外) に綴られており、片側だけ変えると P05-x-66-reverse-drift-sweep が検出する逆向きのドリフトを自分で作ることになるため。text-length-gate-decision.json#decision.sentence_gate.code も明示的に旧コード名を保持すると裁定している。改名するなら plan 側と同時に行う"
+    },
+    {
+      "id": "F-P05X35SENT-FOLD-01",
+      "level": "info",
+      "summary": "正本 (briefs 側) は折り畳み回数の上限を sentence.fold_escape_hatch に置くが、実体は top-level fold.max_folds_per_section にある。値と code (E-TEXT-FOLDED / 0 回) は一致するので挙動の差は無いが、位置だけが正本と違う。本ノードで統合すると本文予算の担当 (P05-x-25) の変更と衝突するため、discovered-task P05-x-120-fold-escape-hatch-location (additive) として emit した"
+    },
+    {
+      "id": "F-P05X35SENT-SCOPE-01",
+      "level": "info",
+      "summary": "1 文長ゲートの走査対象は今も sections[].parts[] の TEXT 部品だけであり、資料冒頭 (hero) の purpose / background / goal / lead は 1 文字も検査されない。hero-card-decision.json の (c2)(d2) が対象集合を hero へ広げることを求めており、その受け皿は P05-x-40-opening-goal-first-cards である。閾値も判定ロジックも新設せず対象を広げるだけなので、本ノードでは触らず P05-x-40 へ残した"
+    }
+  ]
+}

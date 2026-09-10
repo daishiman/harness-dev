@@ -61,7 +61,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| session-format | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-consult/references/session-record-format.md` | 相談種別・本質課題の記録欄を確認するとき |
+| session-format | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-consult/references/session-record-format.md` | 相談種別・本質課題の記録欄を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし（受理と論点確認のみ。knowledge 参照は R3）。

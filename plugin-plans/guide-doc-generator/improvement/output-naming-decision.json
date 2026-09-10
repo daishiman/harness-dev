@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "role": "REQ-6 の入力。成果物ディレクトリ名の書式と slug 導出の正本を決める。この値は config/handout-output.json へ build が焼き込み、C19 route-handout-output.py が読む",
+    "consumed_by": "REQ-6 (plugin-plans/guide-doc-generator/improvement/findings-2026-08-18.json)",
+    "why_here": "config/ は P05-x-03 が唯一の producer であり build が上書きする。判断の正本は build の入力側であるこのファイルに置く",
+    "user_instruction": "利用者指定 2026-08-18: 『/Users/dm/dev/dev/ObsidianMemo/05_Project/説明資料/yyyy-mm-dd_日本語命名』",
+    "current_state": {
+      "format": "{yyyy-mm-dd}-{dir_token}-{slug}  (route-handout-output.py:433)",
+      "measured": "title='KPI進捗管理の業務フロー' / doc_type=report → '2026-08-18-報告資料-kpi'",
+      "cause": "validate-handout-config.py:334 の derive_slug が re.sub(r'[^a-z0-9]+','-',text) で日本語を全て落とす。C19 の derive_slug は SLUG_FORBIDDEN (パス禁止文字) しか除去せず日本語を保持できるが、受け取る時点で既に潰れている"
+    }
+  },
+
+  "decision": {
+    "slug_source_of_truth": {
+      "value": "C19 route-handout-output.py の derive_slug",
+      "why": "『パス禁止文字だけを除去する』という規則はディレクトリ名として必要十分であり、C12 の ASCII 潰しは slug を識別子とみなした古い前提である。利用者が求めているのは識別子ではなく読める名前なので、緩い方を正本にする",
+      "action": "C12:334 の derive_slug を撤廃し、subject_slug の充填時に C19 と同一の規則を使う。二重実装を避けるため規則は 1 箇所へ寄せ、C12 は import するか C19 側へ充填責務ごと移す (どちらを採るかは plan 側の裁定)"
+    },
+
+    "dir_name_format": {
+      "value": "{date}_{slug}",
+      "example": "2026-08-18_KPI進捗管理の業務フロー",
+      "why": "利用者指定の 'yyyy-mm-dd_日本語命名' をそのまま満たす。日付と名前を '_' で分け、名前の内部には '_' を入れない",
+      "canonical_location": "config/handout-output.json の dir_name_format。script へ書式文字列を焼かない (既存の『閾値・既定値を script ソースへ書かない』規約に従う)"
+    },
+
+    "dir_token_placement": {
+      "value": "パスから外す",
+      "why": "現行は '{date}-{dir_token}-{slug}' で doc_type の分類語がディレクトリ名に混ざる。利用者指定の書式は日付と名前の 2 要素だけであり、分類語を挟むと 'yyyy-mm-dd_報告資料_名前' となって指定から外れる。dir_token は分類のための値なので、パスではなく生成物の索引メタデータ (index / manifest) 側へ残す",
+      "risk": "同日に同題の資料を別 doc_type で作ると衝突しうる。衝突時の扱い (連番付与 / 上書き拒否) を plan 側で決めて C19 の既存の衝突処理と整合させる"
+    },
+
+    "case_preservation": {
+      "value": "原題の大文字小文字を保つ",
+      "why": "C19 の derive_slug は A-Z を小文字化するため 'KPI' が 'kpi' になる。ディレクトリ名を人が読む名前として扱う以上、固有名詞の表記を崩さない。macOS の既定ファイルシステムは大文字小文字を区別しないため、保持しても衝突は増えない",
+      "action": "derive_slug の小文字化を外す。ただし明示 subject_slug の検査 (check_explicit_slug) は現行のまま変更しない"
+    },
+
+    "non_japanese_title": {
+      "value": "そのまま許容する (警告も出さない)",
+      "why": "title が英語だけなら、それが利用者の付けた名前である。日本語を強制すると原題を機械が言い換えることになり、命名の正本が利用者から script へ移ってしまう。『日本語命名』は日本語の題名が潰されないことの要求であって、日本語への変換要求ではない",
+      "note": "title が空、または全てパス禁止文字で slug が空になる場合のみ、現行の SLUG_FALLBACK_PREFIX + sha256 先頭 8 桁へ落ちる既存挙動を維持する"
+    },
+
+    "base_dir": {
+      "value": "環境変数 HB_OUT_DIR",
+      "resolved_to": "/Users/dm/dev/dev/ObsidianMemo/05_Project/説明資料",
+      "why": "config/handout-output.json の _meta が『配布物には環境固有の絶対パスを置かない・固定出力先は環境変数 HB_OUT_DIR で与える』と定めている。設定は .claude/settings.local.json の env へ投入済みなので、本 finding では config を変更しない",
+      "resolution_order": "--out-dir > HB_OUT_DIR > config の default_out_dir > exit 2",
+      "action": "この解決順を run-handout-build の SKILL.md と README へ利用者向けに明記する"
+    }
+  },
+
+  "test_impact": {
+    "note": "既存の受入テストは '2026-08-18-報告資料-kpi' 系の命名を期待している可能性が高い",
+    "action": "tests/ 配下の route-handout-output 関連を新書式へ追従させる。期待値をテストへ直書きせず config/handout-output.json の dir_name_format から組み立てる形にできるかも併せて検討する"
+  }
+}

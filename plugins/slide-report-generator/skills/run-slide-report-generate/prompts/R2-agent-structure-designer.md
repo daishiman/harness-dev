@@ -18,6 +18,9 @@ since: 2026-07-05
 last-audited: 2026-07-05
 ---
 
+<!-- css-route: hand-slide -->
+<!-- この宣言より後ろの var() は hand-slide 経路の :root とだけ照合される (lint-contract-drift.py check G)。経路が違う例を載せるときは、その直前に別の css-route 宣言を置く -->
+
 | responsibility | R2-agent-structure-designer |
 | owner_agent | structure-designer |
 
@@ -76,7 +79,7 @@ last-audited: 2026-07-05
 ## ツール定義
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
-| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID <!-- count: slideTypeDecision -->98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID <!-- count: specRegistryRule -->123）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）・`vendor/schemas-fixtures/example.structure.json`・`assets/slide-templates/registry.json`（slideType → ページひな形 + 受け入れ media 種別の写像。選んだ型の受け皿にその面の差し込み物が含まれるかを確定前に確認する） |
+| Read | references・schemas の参照 | 素材分析・タイプ判定・アイコン選定・SVG設計メモ作成（v8経路は schema 参照・構成案生成も） | 対象未使用の局面 | `references/icons.md`・`slide-type-decision-tree.md`（DT-ID <!-- count: slideTypeDecision -->98）・`style-genome-packaging.md`・`spec-registry.md`（SR-ID の正本。件数は同ファイルを数える）・`unit-system.md`・`bp-classification.md`・`v8-spec-fields.md`・`schemas/structure.schema.json`（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）・`vendor/schemas-fixtures/example.structure.json`・`assets/slide-templates/registry.json`（slideType → ページひな形 + 受け入れ media 種別の写像。選んだ型の受け皿にその面の差し込み物が含まれるかを確定前に確認する） |
 | Write | structure.md（v8経路は structure.json）の出力 | 構成案生成時 | なし | `05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/structure.md` |
 
 エラーハンドリング: 必須入力欠落時は hearing-facilitator へ再要求（1回、不可ならエスカレーション）。タイプが decision-tree で確定できない場合は再参照し近接タイプへ確定（2回）。テキスト収まり検証で必要行数 > 最大行数の場合はリライトまたはカード/viewBox拡大（制限内になるまで）。詳細は Layer 4 参照。
@@ -141,7 +144,7 @@ last-audited: 2026-07-05
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる状態基準として記述する。全項目が YES になった時点でゴール到達とみなす。
-- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が装飾・強弱の宣言に先行していることの機械証明）
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が装飾・強弱の宣言に先行していることの機械証明）
 - [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく task 頻度 × 失敗コストで書かれている
 - [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
 - [ ] slideType の選定が map の `form_selection` に候補と不採用理由つきで記録され、decision-tree を免罪符にした早期形式固定になっていない
@@ -182,7 +185,7 @@ last-audited: 2026-07-05
 ### v7.0.0 連携ルール（必読）
 - **出力後、Phase 2.5（`agents/structure-validator.md`）に必ず引き継ぐ**こと。validator が機械検証を行い、PASS でないと Phase 3 に進めない。
 - 新経路（structure.json）を選ぶ場合は **`schemas/structure.schema.json` に準拠** すること（<!-- count: slideType -->107 slideType, $defs <!-- count: structureDef -->71）。例は `vendor/schemas-fixtures/example.structure.json`。
-- 仕様参照源は `references/spec-registry.md`（**SR-ID 62 項目**）を SSoT として使う。スライドタイプ選択は `references/slide-type-decision-tree.md`（DT-ID 98）に従う。
+- 仕様参照源は `references/spec-registry.md`（**登録済みの SR-ID 全件**。件数は同ファイルが持つ）を SSoT として使う。スライドタイプ選択は plugin-root の `references/slide-type-decision-tree.md`（登録済みの DT-ID 全件）に従う。
 - 単位は `references/unit-system.md` の vw 統一に従う。
 - BP は `references/bp-classification.md` の LLM 判断必須項目のみ意識する（残り 30 項目は機械検証で自動担保）。
 

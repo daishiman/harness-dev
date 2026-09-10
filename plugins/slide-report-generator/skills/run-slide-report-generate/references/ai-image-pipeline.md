@@ -91,7 +91,7 @@
 - 用途宣言: `intendedUse`（presentation infographic / explanatory diagram など）
 - 生成条件: `generation.modelSnapshot` / `generation.quality` / `generation.size`
 - 画面比率: 16:9 または配置先に合わせた透明背景カットアウト
-- スタイル: Kanagawaテーマ、余白、光源、質感、背景の複雑度
+- スタイル: style genome の palette 定義に一致する配色、余白、光源、質感、背景の複雑度
 - スタイルゲノム: `styleName`、参照画像、パレット、反復モチーフ、カメラ角
 - 生成パターン: `pattern`
 - テキスト方針: `textPolicy`
@@ -116,7 +116,7 @@
 Create a premium presentation diagram image for slide {{slide_no}}.
 Purpose: {{one_message}}.
 Visual: {{scene_or_diagram_description}}.
-Style: clean Apple-like editorial design, Kanagawa-inspired palette, vivid but restrained accents, soft depth, high contrast, professional consulting deck.
+Style: clean editorial design, palette exactly as defined in the STYLE GENOME `palette` field (introduce no other hue), soft depth, high contrast, professional consulting deck.
 Composition: 16:9, leave clear negative space at {{overlay_area}} for HTML text overlays.
 Text policy: {{overlay-only / baked-with-overlay}}.
 Do not include logos, watermarks, UI gibberish, or brand marks in the image.

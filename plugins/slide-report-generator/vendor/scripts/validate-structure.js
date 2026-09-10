@@ -146,8 +146,19 @@ function hasBodyValue(slide, content, key) {
 }
 
 // V-ID 定義表（bp-classification.md §2-A 準拠）
+//
+// desc の書き方（規則）: 正本（references/spec-registry.md）から写すとき、
+// **空白を落として切り詰めないこと。**desc はレポートと未検査ブロックへそのまま
+// 出るので、切り詰めた写しが第 2 の正本として読まれる。
+//
+// 実例: SR-4-08「図解はインライン SVG2 で描画」の空白を落として "図解はインライン
+// SVG2描画" と書いた結果、「SVG」「2 描画」と切れて数量に読まれ、実行体の無い
+// 規則として保留され続けた（実際は SVG 仕様のバージョン 2 のことだった）。
+//
+// この種の誤読は「英字の直後に数字」で機械的に見つかる。
+// tests/test_v_definitions_desc.py が許可語（h2 / A4 のような確立した綴り）以外を落とす。
 const V_DEFINITIONS = {
-  "V-001": { sr: "SR-4-03", desc: "Before/After 48%/4%/48%", level: "FAIL" },
+  "V-001": { sr: "SR-4-03", desc: "Before/After は 2 パネル等幅・間隔は版面比（中央要素が無いときは 48% / 4% / 48%）", level: "FAIL" },
   "V-002": { sr: "SR-4-06", desc: "補足テキスト最大3行", level: "FAIL" },
   "V-003": { sr: "SR-3-04", desc: "フォント最小1.4rem (≒1.75vw)", level: "FAIL" },
   "V-004": { sr: "SR-7-01", desc: "印刷=画面同一比率（vw統一）", level: "FAIL" },
@@ -167,15 +178,22 @@ const V_DEFINITIONS = {
   "V-018": { sr: "SR-2-02", desc: "CSS変数使用（カラー直書き禁止）", level: "FAIL" },
   "V-019": { sr: "SR-1-04", desc: "画像はWebP形式", level: "WARN" },
   "V-020": { sr: "SR-0-01", desc: "CSS/JS分離出力（インライン禁止）", level: "FAIL" },
-  "V-021": { sr: "SR-3-09", desc: "20文字超は<br>挿入", level: "WARN" },
+  "V-021": { sr: "SR-3-09", desc: "1行が長いテキストは文節の切れ目で改行", level: "WARN" },
   "V-022": { sr: "SR-9-02", desc: "UIテキスト opacity ≥ 0.6", level: "WARN" },
   "V-023": { sr: "SR-9-01", desc: "focus-visible + reduced-motion", level: "FAIL" },
   "V-024": { sr: "SR-3-01", desc: "コードはSF Mono/Fira Code", level: "WARN" },
-  "V-025": { sr: "SR-0-02", desc: "標準CSSクラス名のみ使用", level: "FAIL" },
+  // V-025 の desc は 2026-08-14 に実態へ寄せた。旧 desc「標準CSSクラス名のみ使用」は
+  // 実装が一度も見ていない規則で、書いた時点から誰も守らせていなかった（class= の値は
+  // どこでも照合していない）。実装が見ている 3 つはいずれも必要な検査なので、名前の側を
+  // 直した。CSS クラス名の照合を本当に入れるなら、それは V-025 の話ではなく新しい V-ID を
+  // 起こす話になる。「元の規則はどこへ行った」と探す人のためにここに残す。
+  // 分割候補: 1 つの V-ID に 3 役が乗っており、どれで落ちたかが V-ID からは分からない。
+  // 3 つの V-ID へ割るのが筋だが、採番は下流の消費者に効くので符号系の着地と混ぜない。
+  "V-025": { sr: "SR-0-02", desc: "構成の基本的な妥当性。slideType が有効・JSON schema 適合・基本構造エラーなし の 3 つの受け皿を兼ねる", level: "FAIL" },
   "V-026": { sr: "SR-3-07", desc: "質問スライドはfs-subheading", level: "FAIL" },
   "V-027": { sr: "SR-8-01", desc: "section-nav 常時表示", level: "WARN" },
   "V-028": { sr: "SR-8-03", desc: "ページネーション5個区切り", level: "WARN" },
-  "V-029": { sr: "SR-4-08", desc: "図解はインラインSVG2描画", level: "WARN" },
+  "V-029": { sr: "SR-4-08", desc: "図解はインライン svg で描画。position:absolute の図解は禁止", level: "WARN" },
   "V-030": { sr: "SR-4-07", desc: "背景→質問の順で配置", level: "FAIL" },
 
   // v8 拡張（schemaVersion=8.0.0 のみ実行、それ以外は skip）
@@ -218,20 +236,68 @@ class ValidationReport {
     this.warned.push({ vid, ...def, detail });
   }
 
-  skip(vid, reason) {
+  /**
+   * この gate で判定しなかった項目。
+   *
+   * kind は 3 種類あり、混ぜてはいけない。
+   *   "deferred"       この gate では材料が無いだけで、対象は在る。後段が判定する
+   *   "not-applicable" 判定する対象がこの構成に無い。後段でも見ることは無い
+   *   "no-checker"     どの工程にも判定する実行体が無い（＝その規則は未検査）
+   * 同じ「SKIPPED」に数えて区別を消すと、"no-checker" が「後段で見てもらえる」と
+   * 読まれる。誤った安心を作らないため、集計も表示も分けている。
+   *
+   * "not-applicable" は 2026-08-14 に足した。それまでは「対象が無い」も既定の
+   * "deferred" に入っており、コメントの定義（後段に実行体がある）と実態がずれて
+   * いた。V-030 / V-043 / V-044 のように後段でも永久に見ないものが "deferred" に
+   * 溜まっていたので、「滞留している deferred を洗い出す」検査を誰かが書けば全部
+   * 引っかかる状態だった。1 つの語に 2 つの意味を載せない。
+   */
+  skip(vid, reason, kind = "deferred") {
     const def = V_DEFINITIONS[vid] || { sr: "?", desc: vid };
-    this.skipped.push({ vid, ...def, reason });
+    this.skipped.push({ vid, ...def, reason, kind });
   }
 
+  get unchecked() {
+    return this.skipped.filter(e => e.kind === "no-checker");
+  }
+
+  /** 対象がこの構成に無いもの。後段へ渡らないので、滞留として数えてはいけない。 */
+  get notApplicable() {
+    return this.skipped.filter(e => e.kind === "not-applicable");
+  }
+
+  /** 後段が判定するもの。ここに溜まったまま誰も見ていないなら、それは異常。 */
+  get deferred() {
+    return this.skipped.filter(e => e.kind === "deferred");
+  }
+
+  /**
+   * FAIL が無くても、どの工程にも実行体が無い規則を抱えているなら PASS とは
+   * 名乗らない。未検査は「見て問題が無かった」ではなく「誰も見ていない」で、
+   * それを PASS に混ぜると緑が何を保証しているのか読めなくなる。
+   */
   get status() {
     if (this.failed.length > 0) return "FAIL";
     if (this.warned.length > 0) return "WARN";
+    if (this.unchecked.length > 0) return "PASS_WITH_UNCHECKED";
     return "PASS";
   }
 
+  /**
+   * PASS_WITH_UNCHECKED の exit code は WARN と同じ 2 にする。呼び出し側
+   * （SKILL.md / R1-orchestrate / R2-agent-structure-validator）は status 文字列
+   * ではなく exit code だけで分岐しており、2 は「影響を説明しユーザー許容可否を
+   * 確認」の経路に入る。未検査に対して取りたい運用（何が未検査かを見せた上で
+   * 承認を求める）がこの既存経路と一致する。
+   *
+   * 新しい番号を作らないのは、読み手が知らない値になるため。未知の exit code は
+   * 呼び出し側の else に落ちて PASS 扱いになるか例外で止まるかのどちらかで、
+   * 前者なら偽緑を移動しただけになる。
+   */
   get exitCode() {
     if (this.failed.length > 0) return 1;
     if (this.warned.length > 0) return 2;
+    if (this.unchecked.length > 0) return 2;
     return 0;
   }
 
@@ -452,7 +518,7 @@ function runVChecks(data, report, options = {}) {
       report.pass("V-030", `背景→質問の順序OK`);
     }
   } else {
-    report.skip("V-030", "質問系スライドなし");
+    report.skip("V-030", "質問系スライドなし", "not-applicable");
   }
 
   // V-002: 補足テキスト最大3行（structure.md内に "補足:" 行があれば近傍を確認）
@@ -469,26 +535,72 @@ function runVChecks(data, report, options = {}) {
     if (supplementBlocks.length > 0 && v002fail === 0) {
       report.pass("V-002", `補足ブロック${supplementBlocks.length}件すべて3行以内`);
     } else if (supplementBlocks.length === 0) {
-      report.skip("V-002", "補足テキストなし");
+      report.skip("V-002", "補足テキストなし", "not-applicable");
     }
   } else {
+    // 対象が無いのではなく、この入力形式では材料（raw text）が取れないだけ。
+    // 補足テキスト自体は json 側に在りうるので not-applicable にはしない。
     report.skip("V-002", "raw textなし（json入力）");
   }
 
-  // V-026: 質問スライドはfs-subheading (構成段階で type=question であれば後段でCSS確認)
+  // V-026: 質問スライドはfs-subheading (構成段階では CSS がまだ無い)
   if (firstQuestionIdx >= 0) {
-    report.skip("V-026", "CSS段階で確認（check-consistency.js）");
+    report.skip("V-026", "構成段階では判定しない（CSS が要る）");
   }
 
-  // 以降の V-* は HTML/CSS/JS 生成後にしか検証できないため skip
+  // 以降の V-* は HTML/CSS/JS が揃ってからでないと判定できないため、この
+  // ゲートでは判定しない。
+  //
+  // skip の理由に検査先を書かないのは意図的である。以前はここで
+  // verify-slides.js / check-consistency.js / validate-print.js の 3 本を
+  // 名指ししていたが、下の 25 件のうちその 3 本が実際に判定しているのは
+  // V-004 / V-007 / V-013 / V-018 だけで、残りは evaluate-deck.js /
+  // validate-slide-layout.js / validate-svg-diagram.py / phase-gate.js /
+  // cross-deck-consistency.js / lint-contract-drift.py が拾うか、どこも
+  // 拾っていない。名指しは実測と食い違っていたうえ、検査器を動かすたびに
+  // 腐る。腐った名指しは「後段で検査される」という誤った地図になり、
+  // 実際には誰も見ていない規則を検査済みだと思わせる。
+  // 「ここでは判定しない」とだけ言えば、その誤解は生まれない。
+  //
+  // V-001 をこの一覧から外して個別に書くのは、非該当と後段送りを分けるためである。
+  //
+  // 2026-08-14 の午前時点では SR-4-03（48%/4%/48%）を判定する実行体がどこにも無く、
+  // ここは "no-checker" を上げていた。同日中に scripts/validate-compare-ratio.mjs が
+  // 実行体として入り（SKILL.md の検査コマンド一覧から実行され、plugin-composition.yaml
+  // が存在を宣言する）、後段で判定されるようになったので deferred へ戻した。
+  // 構成段階で判定できないのは、比率が CSS の値で structure.json に無いためである。
+  //
+  // 比較レイアウトの面を 1 枚も持たない構成は、後段送りですらない（送った先にも
+  // 見るものが無い）。「材料が後段にある」と「対象がそもそも無い」を同じ理由文で
+  // 出すと、skip の一覧から構成の性質が読めなくなるので分けている。理由文だけでなく
+  // kind も分ける（"not-applicable"）。理由文は人が読むためのもので、機械が数える
+  // ときには使えないため、分けたつもりが集計では混ざったままになる。
+  // V-043 / V-044 が「未使用なら skip」を採っているのと同じ形。
+  //
+  // 該当型は compare-container を出すテンプレートから採る。短縮名と長い名が対で
+  // 現役なので両方を見る（templates/compare.html.tpl と slide-compare.html.tpl が
+  // どちらも .compare-container を出す）。code-compare は .code-panel で組む別の
+  // レイアウトで、SR-4-03 が実装列に挙げているのは .compare-container /
+  // .compare-panel なので対象外。diagram-vs は SVG（vs-svg）で描くのでこれも外。
+  const COMPARE_TYPES = new Set(["compare", "slide-compare"]);
+  const compareSlides = slides.filter(s => COMPARE_TYPES.has(s.slideType || s.type));
+  if (compareSlides.length === 0) {
+    report.skip("V-001", "比較レイアウトの面が構成に無い（SR-4-03 非該当）", "not-applicable");
+  } else {
+    report.skip(
+      "V-001",
+      `比較レイアウトの面が ${compareSlides.length} 枚。比率は CSS の値なので構成段階では判定しない（生成後の deck を読む検査が判定する）`
+    );
+  }
+
   const postPhaseChecks = [
-    "V-001", "V-003", "V-004", "V-005", "V-006", "V-007", "V-008",
+    "V-003", "V-004", "V-005", "V-006", "V-007", "V-008",
     "V-009", "V-010", "V-011", "V-012", "V-013", "V-014", "V-015",
     "V-016", "V-017", "V-018", "V-019", "V-020", "V-021", "V-022",
     "V-023", "V-024", "V-027", "V-028", "V-029"
   ];
   postPhaseChecks.forEach(vid => {
-    report.skip(vid, "P3 HTML生成後に verify-slides.js / check-consistency.js / validate-print.js で検証");
+    report.skip(vid, "構成段階では判定しない（HTML/CSS/JS が要る）");
   });
 
   // ----- v8 拡張検証 -----
@@ -505,7 +617,7 @@ function runV8Checks(data, report) {
   const schemaVersion = data?.meta?.schemaVersion || "7.0.0";
   const v8Vids = ["V-031", "V-032", "V-033", "V-034", "V-035", "V-036", "V-037", "V-038"];
   if (schemaVersion !== "8.0.0") {
-    v8Vids.forEach(v => report.skip(v, "schemaVersion!=8.0.0 のため非対象"));
+    v8Vids.forEach(v => report.skip(v, "schemaVersion!=8.0.0 のため非対象", "not-applicable"));
     return;
   }
 
@@ -620,23 +732,24 @@ function runV8Checks(data, report) {
     });
   });
 
-  // 結果集約
+  // 結果集約。未使用の skip はいずれも「対象がこの構成に無い」ので not-applicable。
+  // 後段へ送っても見るものが無く、deferred に入れると滞留として数えられてしまう。
   if (v031Hit && v031ok) report.pass("V-031", "hero-icon の icon 指定OK");
-  if (!v031Hit) report.skip("V-031", "hero-icon variant 未使用");
+  if (!v031Hit) report.skip("V-031", "hero-icon variant 未使用", "not-applicable");
   if (v032Hit && v032ok) report.pass("V-032", "hero-image の imagePath 指定OK");
-  if (!v032Hit) report.skip("V-032", "hero-image variant 未使用");
+  if (!v032Hit) report.skip("V-032", "hero-image variant 未使用", "not-applicable");
   if (v033Hit && v033ok) report.pass("V-033", "index データソースOK");
-  if (!v033Hit) report.skip("V-033", "index slide 未使用");
+  if (!v033Hit) report.skip("V-033", "index slide 未使用", "not-applicable");
   if (v034Hit && v034ok) report.pass("V-034", "currentSection 参照OK");
-  if (!v034Hit) report.skip("V-034", "currentSection 未指定");
+  if (!v034Hit) report.skip("V-034", "currentSection 未指定", "not-applicable");
   if (v035Hit && v035ok) report.pass("V-035", "diagram edges 参照整合OK");
-  if (!v035Hit) report.skip("V-035", "diagram edges 未使用");
+  if (!v035Hit) report.skip("V-035", "diagram edges 未使用", "not-applicable");
   if (v036Hit && v036ok) report.pass("V-036", "diagram nodes ID 一意");
-  if (!v036Hit) report.skip("V-036", "diagram 未使用");
+  if (!v036Hit) report.skip("V-036", "diagram 未使用", "not-applicable");
   if (v037Hit && v037ok) report.pass("V-037", "pageOverride 背景画像指定OK");
-  if (!v037Hit) report.skip("V-037", "pageOverride 未使用");
+  if (!v037Hit) report.skip("V-037", "pageOverride 未使用", "not-applicable");
   if (v038Hit && v038ok) report.pass("V-038", "色は theme.accentColors 内");
-  if (!v038Hit) report.skip("V-038", "section/page 色上書き未使用");
+  if (!v038Hit) report.skip("V-038", "section/page 色上書き未使用", "not-applicable");
 }
 
 // V-043 (SR-13-01): コード非画像化原則。全 schemaVersion で実行（aiVisual 不在時は no-op）。
@@ -658,7 +771,7 @@ function runCodeNonImagingCheck(data, report) {
     }
   });
   if (v043Hit && v043ok) report.pass("V-043", "コード系 slideType の aiVisual は image-only / baked-with-overlay 不使用");
-  if (!v043Hit) report.skip("V-043", "コード系 slideType + aiVisual の組み合わせ未使用");
+  if (!v043Hit) report.skip("V-043", "コード系 slideType + aiVisual の組み合わせ未使用", "not-applicable");
 }
 
 // V-044 (SR-16-01): slideType 別の本文キー整合。全 schemaVersion で実行。
@@ -686,7 +799,7 @@ function runBodyKeyCheck(data, report) {
     }
   });
   if (hit && ok) report.pass("V-044", "各 slideType がテンプレートの読む本文キーを持つ");
-  if (!hit) report.skip("V-044", "本文キー表の対象 slideType 未使用");
+  if (!hit) report.skip("V-044", "本文キー表の対象 slideType 未使用", "not-applicable");
 }
 
 // ==================================================
@@ -695,6 +808,9 @@ function runBodyKeyCheck(data, report) {
 
 function printReport(report, options = {}) {
   const STATUS_ICON = { PASS: "✅", FAIL: "❌", WARN: "⚠️ " };
+  // 未検査つきの合格は警告と同じ見た目にする。緑の印を出すと、未検査があること
+  // が一目では伝わらない。
+  STATUS_ICON.PASS_WITH_UNCHECKED = STATUS_ICON.WARN;
   console.log("");
   console.log("═".repeat(64));
   console.log(`  Phase 2.5 仕様確定ゲート 検証結果: ${STATUS_ICON[report.status]} ${report.status}`);
@@ -702,8 +818,24 @@ function printReport(report, options = {}) {
   console.log(`  PASS:    ${report.passed.length}`);
   console.log(`  FAIL:    ${report.failed.length}`);
   console.log(`  WARN:    ${report.warned.length}`);
-  console.log(`  SKIPPED: ${report.skipped.length} （P3以降で検証）`);
+  const unchecked = report.unchecked;
+  // 3 つの kind を 1 行にまとめない。まとめると「後段が見る」「見る対象が無い」
+  // 「誰も見ていない」が同じ数字になり、この画面から性質が読めなくなる。
+  console.log(`  後段送り: ${report.deferred.length} （このゲートでは材料が無い。後段が判定する）`);
+  console.log(`  非該当:   ${report.notApplicable.length} （判定する対象がこの構成に無い）`);
+  console.log(`  未検査:   ${unchecked.length} （どの工程にも判定する実行体が無い）`);
   console.log("");
+
+  // 未検査は常に出す。件数だけだと「skip の一種」に見えて、実行体が無いこと
+  // 自体が伝わらない。
+  if (unchecked.length > 0) {
+    console.log("--- 未検査（実行体なし）---");
+    unchecked.forEach(e => {
+      console.log(`  [${e.vid} / ${e.sr}] ${e.desc}`);
+      console.log(`    -> ${e.reason}`);
+    });
+    console.log("");
+  }
 
   if (report.failed.length > 0) {
     console.log("--- ❌ FAIL ---");
@@ -733,6 +865,11 @@ function printReport(report, options = {}) {
     console.log("⛔ Phase 2.5 ゲート: 不合格。Phase 2 (structure-designer) に差し戻してください。");
   } else if (report.status === "WARN") {
     console.log("⚠️  Phase 2.5 ゲート: 警告あり。--strict モードでは不合格扱い。");
+  } else if (report.status === "PASS_WITH_UNCHECKED") {
+    // この分岐が無いと下の else に落ちて「合格」と出る。未検査を抱えたまま
+    // 合格を名乗るのが偽緑そのものなので、明示的に受ける。
+    console.log("⚠️  Phase 2.5 ゲート: FAIL は無いが、上の未検査を誰も判定していない。");
+    console.log("   未検査の一覧を利用者に見せた上で、進行の可否を承認してもらうこと。");
   } else {
     console.log("✅ Phase 2.5 ゲート: 合格。Phase 3 (html-generator) に進行可能。");
   }

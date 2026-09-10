@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C09-01",
+  "reason": "cyan の変異実測で、1 回の変異の中で赤と空振りが割れる現象が直接観測された (handout-build/contract_lib.py:566 の 4 語同型述語で、プリセット解決/ゲート結果が発火し ヒアリング(本文10回)/出力先ルーティング(2回) が沈黙)。述語の形が同一でも検出できるかを決めているのは語の出現回数であって述語の設計ではない。『違反が 1 件以上出る』を assert すると、別述語の巻き添え発火を検出力と誤認する。M-R3/M-R8/M-HA1/M-HB1/M-E1 の 5 件で観測",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-typeB-remainder.json",
+  "proposed_node": {
+    "id": "P05-x-120",
+    "title": "述語単点棄却テストの assert を『違反が 1 件以上』から『その変異に対応する述語のメッセージが出ること』へ変える",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "acceptance_criterion": "PredicateSinglePointRejectabilityTest 相当の assert が、変異に対応する述語の違反メッセージの出現を検査すること。別の述語がたまたま拾っている状態が緑にならないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C09"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

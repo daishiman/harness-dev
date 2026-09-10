@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P01-x-01",
+  "reason": "前便で『LLM 側は要件文になっていない』(F-P01-04) と報告したが、C46-C75 まで広げると C64 (ヒアリングで確定する / 上書きの要否だけを聞き / 無回答時は既定を採用して停止しない) が該当する。ただし verify_by=script では対話挙動を観測できないため実質は依然として未検証。F-P01-04 の訂正ではなく補強。C26 と同型",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P01-c46-c75.json",
+  "proposed_node": {
+    "id": "P05-x-115",
+    "title": "C64 が LLM 側の唯一の要件文でありながら verify_by=script で実質未検証",
+    "phase_ref": "phase-01-requirements.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+    "acceptance_criterion": "C64 の検証手段が述語の観測可能性と一致すること。LLM 側の分界線を守る要件が、決定論ラベルのために検証されない状態が解消されていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

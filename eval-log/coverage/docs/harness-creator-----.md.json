@@ -1,0 +1,20 @@
+{
+  "artifact": "doc/harness-creator-完全解剖.md",
+  "type": "docs",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "実装対齐レビューを実施。Claude/Codex manifest の version=1.4.10、実体 inventory=skills 32/agents 6/commands 6、plugin-composition の skill 32/agent 6/command 6/script 6/hook 1 をリポジトリから再集計し、文書の stale な 1.4.1/31/5 を修正。hook 節は旧来の manifest inline 8 event/11 command 説明を廃止し、共有 hooks/hooks.json の SessionStart 1 event/1 command、Claude 標準自動検出と Codex明示pointer、dual-root、projectへの重複投影禁止に現行化。参照先の主要正本、PKG-001〜015 + 016/017予約、12 combinator、32 skill の実在を突合。派生解説のため将来の inventory/hook drift は tests/test_harness_creator_dissection_doc.py で fail-closed 検出する。残存する非阻害の制約は、655行の網羅的な派生文書であり、可変な全表の内容まで機械生成していない点。",
+    "score_rationale": "最も壊れやすい inventory、product別 hook delivery、配布境界を実装とテストで再確認し、直接矛盾を解消したため PASS。一方、解説全文は派生スナップショットで、全段落が生成済みの機械正本ではないため上位帯から減点。",
+    "review_path": "current manifests/package-contract/plugin-composition/templates/ref-pkg-contract との独立突合 + inventory/hook regression test"
+  },
+  "reviewed_by": "independent-doc-implementation-review-20260820",
+  "checked": [
+    "internal-consistency",
+    "implementation-alignment",
+    "inventory-drift",
+    "claude-codex-hook-delivery",
+    "reference-resolution"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-11",
+  "reason": "P05-x-11 の裁定で確定した 12 項目 (受入基準の 9 項目 + 実測で追加検出した sections[].heading / role / attainment_step) を全て decision=marker としたため、C20 の brief 側にマーカー語彙の宣言が要る。script-brief-C20.json の data-hb-field 値列挙へ heading と hero 系フィールド (focus_theme / target_task / attainment_level / must_remember / no_need_to_remember / date) を、required_markers へ data-hb-section-role / data-hb-attainment-step / data-hb-notes-enabled を追加する。あわせて renderer_marker_requirements の chrome 境界規定を見直す必要がある — 現在 hero 枠が data-hb-generated=true を持つため内部の data-hb-field が全て読み飛ばされており (extract-handout-config.py:422)、これは brief の chrome 読み飛ばし規約と marker 契約が両立していないことを意味する 加えて P05-x-16 が同ファイルの残課題を 1 件報告した: exit_codes[\"1\"] の文言が『--strict-fidelity 下での任意フィールドの復元不能』と書くだけでコード名 W-EXTRACT-OPTIONAL を挙げておらず、stderr 契約と exit_codes の間で診断コード名の相互参照が揃っていない。P05-x-16 は stderr キー以外へ踏み込まない自制として手を出していない。同一ファイルのため本 leaf へ束ねる。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md",
+  "proposed_node": {
+    "id": "P05-x-21",
+    "title": "C20 brief のマーカー語彙と chrome 境界規定を裁定結果へ追随させる",
+    "phase_ref": "P05",
+    "entity_ref": "C20",
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs",
+    "acceptance_criterion": "ROUNDTRIP-CONTRACT.md の adjudications で decision=marker とされた全項目の marker 名が script-brief-C20.json の宣言集合に含まれる。chrome 読み飛ばし規約が『data-hb-field を持つ子孫は読み飛ばさない』か『data-hb-generated は枠自体に限る』のどちらへ改まったかが明記されている。既存の stderr 契約行 (P05-x-16 の担当) は触らない。加えて exit_codes の各文言が言及する失敗事由に対応する診断コード名が stderr 契約のコード名と相互参照できる状態になっている",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-21.md",
+    "produces": [
+      "plugin-plans/guide-doc-generator/briefs/RESOLUTION-P05-x-21.md"
+    ],
+    "consumes": [
+      "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+    ]
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:d5b7b69728b1b722353f67ea7f2cf967a19fad71750fdb9f3b0b525f3c14697b"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C22-01",
+  "reason": "verify-handout-narrative.py:558-560 が for key in REQUIRED_CONFIG_KEYS: if key not in config: で見ているため null はキーが存在する扱いで素通りする。素通りした null は NAR-07 で demo_first と一致せず SKIP へ落ちる。dispatcher が実際にテストを走らせて確認: 違反のある HTML (最初の本編セクション先頭が DIAGRAM) が presentation_order を null にするだけで exit 0 / NAR-07 SKIP order=None になり緑化する。キー削除なら exit 2。orange が P04-C22-01 で検出し赤 3 本で固定済み",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-74-required-config-keys-null-passthrough",
+    "title": "必須フィールド検査が null を素通りする fail-open を塞ぐ",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+    "acceptance_criterion": "REQUIRED_CONFIG_KEYS の各キーについて、キー不在と null 代入が同じ扱い (exit 2) になること。tests/verify-handout-narrative.py/test_nar07_demo_first.py::TestNar07CannotBeDisabledByNulling の 3 本が緑になること。空文字・空配列でも同型でないことを併せて確認すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

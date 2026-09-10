@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "plugins/guide-doc-generator/references/ は実在せず (正は skills/ref-handout-design-system/references/)、参照は agents/handout-readability-reviewer.md:57,125 の 2 箇所に加え tests/handout-readability-reviewer/test_input_contract.py:73 の計 3 箇所。テストが誤ったパスを期待値として固定しているため出荷物だけ直すとテストが落ちる。同 md:155 の文長担当 C18 誤帰属 (正本 owner は C12) も同一ファイル内で同時に直す",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-37-dangling-reference-with-test",
+    "title": "実在しない references/ 参照 3 箇所を出荷物とテストで同時に直す",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "3 箇所すべてが skills/ref-handout-design-system/references/ を指し、:155 の担当が C12 と書かれ、当該テストが緑で通る",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

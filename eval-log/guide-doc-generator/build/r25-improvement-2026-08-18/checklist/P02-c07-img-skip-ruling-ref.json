@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c07-img-skip-ruling-ref",
+  "covered_task_ids": [
+    "P02-c07-img-skip-ruling-ref"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+  "acceptance_criterion_restated": "command-brief-C07.json の挿絵 skip の fail-soft 規約が improvement/visual-per-section-decision.json#decision.skipped_image_counting (CR-IMG-SKIP-COUNT) を名指しで参照し、E-IMAGE-ABSENT の緑を『各セクションに画像がある』の証明として読まない旨を裁定の複製ではなく参照として持つこと",
+  "verified_by": [
+    {
+      "claim": "裁定を名指しで参照した",
+      "method": "failure_modes[6] (挿絵生成の委譲先不在) へ ruling_ref を新設し、pointer を improvement/visual-per-section-decision.json#decision.skipped_image_counting (CR-IMG-SKIP-COUNT) として記述",
+      "result": "参照済み。併せて『裁定の本文はここへ複製しない (裁定の第 2 の出所を作らない)』と、本 command が負うのは裁定が名指しした受け皿の実装だけである旨を明記した"
+    },
+    {
+      "claim": "緑を証明として読まない旨を持たせた",
+      "method": "why_the_gate_is_green を新設。E-IMAGE-ABSENT が構成データ段で宣言件数だけを数えるため skip 後も緑のままであること、よって提示側が『緑だから画像がある』と読んではならないこと、読み替えを利用者側にも起こさせないため緑のゲート結果と skip の事実を同じ画面へ並べることを記述",
+      "result": "記述済み。理由の中身 (なぜ C12 が実体を観測できないか) は裁定側の why に置いたまま参照で受けており、判断そのものを複製していない"
+    },
+    {
+      "claim": "複製でなく参照であることを構造で確認した",
+      "method": "追記した 2 フィールドに、裁定側の ruling / why / therefore_not の文面をそのまま持ち込んでいないことを突合。CR-IMG-SKIP-COUNT 側の owner 宣言 (『本キーが裁定の単一正本。C01/C07/C12 は本キーを参照し裁定文を複製しない』) と整合",
+      "result": "整合。C07 側にあるのは『参照先の識別子』と『参照先が C07 へ課した提示上の義務』のみ"
+    },
+    {
+      "claim": "受け皿の暫定性を最新の裁定状況へ更新した",
+      "method": "本 build で新設した CR-IMG-REALIZED (C16 SC-11 / E-IMG-UNREALIZED) を why_the_gate_is_green から参照し、『実装されるまでは本提示が唯一の受け皿』と条件付きで記述",
+      "result": "C16 の実装が入った後も C07 の記述が『唯一の受け皿』と主張し続けて古くなる形を避けた"
+    },
+    {
+      "claim": "参照が守られていることを検査できる受入検査を足した",
+      "method": "AC-C07-R25-IMGSKIP を追加。全ゲート緑 + C21 skipped という最も誤読しやすい入力で提示文面を読み、『画像は揃っています』に相当する表現へ畳まないこと、裁定文の引き写しが提示に混ざらないことを見る",
+      "result": "追加済み。既存の AC-C07-R25-DRAFT (第 1 稿の言い回し) が『完了と言わない』を見るのに対し、本検査は『緑を実体の証明へ読み替えない』を見る別の軸"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C07REF-POINTER-01",
+      "level": "info",
+      "summary": "brief 内の裁定参照は文字列 pointer であり、参照先のキー名が変わっても壊れたことが機械的に分からない。CR-IMG-SKIP-COUNT には id フィールドがあるので、pointer ではなく id で引く形の方が堅い。同種の参照は C01 / C12 の brief にもあるため、裁定 id の実在を突合する検査を将来立てる余地がある"
+    },
+    {
+      "id": "F-P02C07REF-PRESENT-01",
+      "level": "info",
+      "summary": "『緑と skip を同じ画面へ並べる』は brief 上の記述であり、実際の提示文面を作るのは C07 を実行する LLM である。AC-C07-R25-IMGSKIP は文面を読む人手/評価者検査であって決定論ゲートではない。決定論で締められるのは C16 SC-11 の実装 (P05-x-125) が入ってからで、それまでこの受け皿の強度は提示検査の運用に依存する"
+    }
+  ]
+}

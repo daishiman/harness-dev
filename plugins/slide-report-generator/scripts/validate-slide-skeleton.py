@@ -83,7 +83,9 @@ def run_checks(root: Path) -> list[dict]:
     schema = _load_json(schema_p)
 
     base = c["grid"]["base"]
-    cv, ch, st, pr, ty, fp = c["canvas"], c["chrome"], c["stage"], c["print"], c["typography"], c["fill_policy"]
+    cv, ch, st, pr, ty, fp = (
+        c["canvas"], c["chrome"], c["stage"], c["print_skeleton"], c["typography"], c["fill_policy"]
+    )
     kinds = set(c["media"]["kinds"])
 
     # --- ひな形本体を読む -----------------------------------------------------
@@ -442,7 +444,7 @@ def _self_test(root: Path) -> tuple[bool, list[str]]:
         def _break_zoom():
             p = sandbox / _CONTRACT
             d = _load_json(p)
-            d["print"]["zoom_factor"] = 1.0
+            d["print_skeleton"]["zoom_factor"] = 1.0
             p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
 
         def _hand_edit_css():
@@ -531,7 +533,11 @@ def _self_test(root: Path) -> tuple[bool, list[str]]:
         def _bad_exception_range():
             p = sandbox / _CONTRACT
             d = _load_json(p)
-            d["fill_policy"]["exceptions"]["cover"]["min"] = 0.9
+            # min を max より上へ動かす。壊す幅は契約の現在値から採る。
+            # ここに固定値を書くと、契約の max を上げた日に「壊したつもりが
+            # 合法な値」になり、検査は緑のまま欠陥検出だけが死ぬ。
+            cover = d["fill_policy"]["exceptions"]["cover"]
+            cover["min"] = min(cover["max"] + 0.05, 1.0)
             p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
 
         def _bad_vertical_policy():

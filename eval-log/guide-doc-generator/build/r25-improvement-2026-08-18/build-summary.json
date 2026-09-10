@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0.0",
+  "target_plugin_slug": "guide-doc-generator",
+  "cycle_id": "r25-improvement-2026-08-18",
+  "stage": "draft",
+  "progress": {
+    "total": 275,
+    "by_state": {
+      "pending": 177,
+      "running": 0,
+      "done": 66,
+      "blocked": 32
+    },
+    "completion_rate": 0.24,
+    "blocked_tasks": [
+      "P05",
+      "P05-C01-01",
+      "P05-C03-01",
+      "P05-C04-01",
+      "P05-C05-01",
+      "P05-C06-01",
+      "P05-C07-01",
+      "P05-x-01",
+      "P05-x-10",
+      "P05-x-14",
+      "P05-x-15",
+      "P05-x-17",
+      "P05-x-22",
+      "P06",
+      "P06-x-01",
+      "P07",
+      "P07-x-01",
+      "P08",
+      "P08-x-01",
+      "P09",
+      "P09-x-01",
+      "P10",
+      "P10-x-01",
+      "P11",
+      "P11-x-01",
+      "P12",
+      "P12-x-01",
+      "P13",
+      "P13-x-01",
+      "P13-x-02",
+      "P13-x-03",
+      "P13-x-04"
+    ],
+    "route_report_count": 4,
+    "route_reports": [
+      "route-C12.json",
+      "route-C23.json",
+      "route-build-contract.json",
+      "route-build-plan.json"
+    ],
+    "stall": {
+      "evaluated": false
+    }
+  },
+  "completion_gate": {
+    "completion_gate": "blocked",
+    "inbox_absent": false,
+    "pending_discovered_tasks": [
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/0a6d624ffc5f40e98f437171cd4e4329.json",
+        "change_level": "additive",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/12c25bc8d46045888051fba4398d67da.json",
+        "change_level": "structural",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/30b3c001fb4241afa6b767006f76d311.json",
+        "change_level": "additive",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/875bd443a918464f902c742a71e7ebf2.json",
+        "change_level": "additive",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/a05dc889360946afbd87edca7377b80c.json",
+        "change_level": "additive",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/aa77c09e433845afab5839c8fc4161a1.json",
+        "change_level": "structural",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/bcba35f0228d446fbeb2371868bfc0b1.json",
+        "change_level": "additive",
+        "status": null
+      },
+      {
+        "path": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks/dd3fe8972d0e42f68f667397cd0726ea.json",
+        "change_level": "structural",
+        "status": null
+      }
+    ],
+    "needs_approval": true,
+    "handback_command": "run-plugin-dev-plan --mode update --discovered-inbox eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks --out-dir plugin-plans/guide-doc-generator --approved",
+    "next_steps": [
+      "run-plugin-dev-plan --mode update --discovered-inbox eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/discovered-tasks --out-dir plugin-plans/guide-doc-generator --approved",
+      "/capability-build --handoff plugin-plans/guide-doc-generator/improvement/improvement-handoff.json"
+    ]
+  },
+  "verdict": "draft-incomplete",
+  "note": "R7 (長文の抑止) の 3 owner node を done にした周回。機構は実測で働くが plugin 同梱テストが未追従のため G-REQ7-TEXT-LENGTH は blocked。未処理 discovered-task 8 件により completion_gate も blocked。"
+}

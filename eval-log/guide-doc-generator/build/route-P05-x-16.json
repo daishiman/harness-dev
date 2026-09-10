@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-16",
+  "covered_task_ids": [
+    "P05-x-16"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs",
+  "verified_by": [
+    {
+      "claim": "実装が発火させる診断コード集合が brief の stderr 契約へ包含される",
+      "method": "当方が実装を grep し brief の stderr キーを読んで包含関係を確認",
+      "result": "pass (実装 = {E-EXTRACT-UNRECOVERABLE, W-EXTRACT-CATALOG-DRIFT, W-EXTRACT-HEURISTIC, W-EXTRACT-OPTIONAL}。stderr 契約 = 上記 4 件 + E-ROUNDTRIP-DIFF + E-HTML-MALFORMED の 6 件。**impl ⊆ contract が成立**し受入基準を満たす。加えて『E- で始まる 3 件は exit != 0 を伴う失敗、W- で始まる 3 件は既定では exit 0 のまま続行』という失敗意味論と、W- 3 件それぞれの exit code への影響差 (2 件は --strict-fidelity で格上げ / CATALOG-DRIFT は起動時自己整合検査ゆえ exit code を変えない) まで書かれている)"
+    },
+    {
+      "claim": "stderr 契約の正本がトップレベル stderr キーであるという判断",
+      "method": "当方が brief の I/O 契約節と tests/extract-handout-config.py/_harness.py を突合",
+      "result": "pass (根拠 2 点とも確認。(1) stdin/stdout/stderr/exit_codes が並ぶ I/O 契約節にあり `<コード> <引数の型>` の書式を宣言しているのはこのキーだけ (2) `_harness.py:42` が `# 診断コード (script-brief-C20.json#stderr)` とコメントして直下の 4 定数がこのキーの列挙を写している。**受入テスト側が正本を名指ししているという証拠が最も強い**)"
+    },
+    {
+      "claim": "P05-x-13 worker の報告と grep 結果の見かけの矛盾が解消された",
+      "method": "当方が W-EXTRACT-CATALOG-DRIFT の出現箇所を確認",
+      "result": "pass (編集前のファイル内出現は全 1 件で `heuristic_fallback.class_map_completeness` の**散文中のみ**。stderr 契約行には無かった。**『文字列として現れる』と『契約として宣言されている』は別物**であり、P05-x-13 worker の報告が正しく、当方の grep ベースの推定が粗かった。編集後は stderr 契約行にも載り出現 3 件になっている)"
+    },
+    {
+      "claim": "E-EXTRACT-UN / W-EXTRACT-HE は grep の artifact でファイルに実在しない",
+      "method": "当方が同一ファイルへ \\b あり / なしの両方で grep して再現",
+      "result": "pass (`\\b` 付きでは E-EXTRACT-UN / W-EXTRACT-CA / W-EXTRACT-HE の**切れた一致が出る**が、`\\b` を外すと 4 件のみで切れた形はゼロ。Python の re.findall でも切れた形は出ない。**当方が dispatch prompt へ書いた『切れた形が brief に現れる』という前提は誤りで、当方の計測手段の欠陥だった**。macOS BSD grep で日本語を含む長い UTF-8 行に対し `\\b` を使うと語境界判定が壊れる)"
+    },
+    {
+      "claim": "P05-x-13 の成果を壊していない",
+      "method": "当方が heuristic_fallback の内容を実測",
+      "result": "pass (class_map は 18 行で末尾が TEXT (`p / div (上記いずれにも当たらない本文)`) の順序制約を維持。class_map_completeness と recovery_limits も heuristic_fallback 配下に健在。**なお当方の以前のメモは recovery_limits をトップレベルと記録していたが実際は heuristic_fallback 配下であり、これも当方側の記録誤り**)"
+    },
+    {
+      "claim": "トップレベルキーが編集前後で保存されている",
+      "method": "当方が json.load してキー数と一覧を確認",
+      "result": "pass (26 キー。stderr を含む既存キーのみで新規トップレベルキーの追加は無い)"
+    },
+    {
+      "claim": "自スイートと姉妹スイートへ回帰が無い",
+      "method": "worker が着手前後で失敗テスト名の集合を採取 (両方とも空集合)",
+      "result": "pass (extract-handout-config.py 152 OK / run-handout-extract 46 OK が前後で不変。**件数でなく集合で報告している**)"
+    },
+    {
+      "claim": "plugins/ 配下を変更していない",
+      "method": "worker が git status で確認し、当方も M 行が他 leaf 由来であることを確認",
+      "result": "pass (書き換えは script-brief-C20.json の stderr キーと新規 RESOLUTION-P05-x-16.md のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方の起動指示に含めた前提が 2 件とも誤りで、worker が実測で覆した (PAT-1 の 12 例目)**。(1)『欠落は W-EXTRACT-OPTIONAL の 1 件』→ 実際は **2 件** (W-EXTRACT-CATALOG-DRIFT も stderr 契約行に未記載だった)。(2)『E-EXTRACT-UN / W-EXTRACT-HE という切れた形が brief に現れる』→ **実在せず当方の grep の artifact**。当方は dispatch prompt で『鵜呑みにせず自分で測れ』と明示し、かつ『文字列として現れることと契約として宣言されていることは別』という区別を核心として渡していたため、worker はそこを起点に正しく掘り下げた。**指示の前提を疑う設計が 3 例目として機能している** (1 例目 P05-x-01、2 例目 P05-x-11)"
+    },
+    {
+      "kind": "measurement-method-defect",
+      "detail": "**当方の計測手段そのものに欠陥があった**。macOS の BSD grep で日本語を含む長い UTF-8 行へ `grep -oE '\\b<pattern>'` を使うと語境界判定が壊れ、切れた一致が混入する。当方はこれを『brief に切れた形が書かれている』という**ファイル内容の事実として dispatch prompt へ書いた**。以後、診断コードやシンボルの棚卸しに `\\b` 付き `grep -o` を使わず、`\\b` なし grep か Python の re.findall を使う。**この build 中の他の grep ベース計測結果も同じ疑いがある**"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "worker が scope 外として 2 件を報告し、手を出していない。(1) `exit_codes[\"1\"]` の文言が『--strict-fidelity 下での任意フィールドの復元不能』と書くだけでコード名 `W-EXTRACT-OPTIONAL` を挙げていない。stderr 以外の節なので触れていない — **受入基準を満たす範囲を勝手に広げなかった自制は正しい**。診断コード名の相互参照統一は別タスクが適切。(2) P05-x-13 の RESOLUTION §5 は『実装 PART_CLASS_MAP は未追随』と書くが、現 repo の実装は `W_CATALOG_DRIFT` を定義済みであり追随状況の再確認が要る (これは P05-x-19 の担当範囲)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

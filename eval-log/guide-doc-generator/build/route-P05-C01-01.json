@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C01",
+  "task_id": "P05-C01-01",
+  "covered_task_ids": [
+    "P05-C01-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/skills/run-handout-build/",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の構成を持つ",
+      "method": "wc -l",
+      "result": "pass (SKILL.md 235 行 + prompts/ 5 本 (R1-elicit 161 / R2-design 161 / R3-render 157 / R4-verify 167 / R-design-config 155) = 計 1036 行)"
+    },
+    {
+      "claim": "自スイートが 48 件中 47 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/run-handout-build -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 48 / failures=1 / errors=0。実装前は failures=42)"
+    },
+    {
+      "claim": "C09 (handout-verify) が完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-verify -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 60 / OK。C09 の route report が C01 待ちとして記録していた ConsumerParityTest.test_c01_delegates_aggregation_to_c09 が解消。SKILL.md 中の /handout-verify + CR-GATE-AGG の literal ヒットは 5 件で要求どおり存在)"
+    },
+    {
+      "claim": "C19 (route-handout-output.py) が完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/route-handout-output.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 113 / OK。C01 待ちだった 2 件が解消)"
+    },
+    {
+      "claim": "C21 の残赤 1 件は C01 と無関係である",
+      "method": "grep -rl 'run-handout-build' plugins/guide-doc-generator/tests/verify-handout-narrative.py/ を当方が実行",
+      "result": "pass (ヒット 0 件。当該スイートは C01 の産出物を一切参照しない。残赤は test_all_detections_reported_even_when_first_fails の assertEqual(8, len(rows)) で、script が NAR-09/NAR-10 を出すようになった一方テストが 8 行を期待している既知の stale literal。既に P04-x-06 scope の裁定待ち項目として記録済み。上流申し送りの『C21 に C01 待ちの赤が 3 件』は誤りで、実際は 0 件だった)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み産出 6 ファイル全てへ適用",
+      "result": "pass (6 ファイルすべて violations=[])"
+    },
+    {
+      "claim": "部品 id・R22 値域・用途語彙を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -rnoE '\\bB[0-9]{2}\\b|\\b(overview|standard|detailed|cited|sourced|lecture|onboarding|proposal|study-notes|study-plan|agenda)\\b' を build_target 配下へ適用",
+      "result": "pass (ヒット 0 件。worker が別途報告した report のヒット 5 件も当方の正規表現では doc_type 語彙として拾われず、内訳は --json-report フラグ名 3 / 戻り値フィールド名 report 1 / 『report で pass 相当に見せない』1 で用途語彙ではない)"
+    },
+    {
+      "claim": "出力先ルーティングを自前実装していない (C19 の単独責務を侵していない)",
+      "method": "worker が replace( を grep",
+      "result": "pass (ヒット 0 件。C19 の『唯一の writer』検査を壊していない)"
+    },
+    {
+      "claim": "ゲート集約を第 2 の正本にしていない",
+      "method": "worker の not-run grep と C09 スイートの全緑",
+      "result": "pass (not-run のヒットは SKILL.md:158 の 1 行のみで『not-run を通ったと読み替える判断を本 skill 側に持たない』という委譲宣言。4 状態分類と verdict 判定規則の複製は無く、contract_lib の『同一行に 4 状態が並ぶなら C09 か CR-GATE-AGG を要求』にも抵触しない。C09 スイートが全緑であることがこれを独立に裏付ける)"
+    },
+    {
+      "claim": "件数リテラルを本文へ焼いていない",
+      "method": "worker が件数リテラル正規表現を実行し全ヒットを弁別",
+      "result": "pass (ヒット 15 件は『1 問』5 / 『1 点』5 / 『0 件』3 ほかで、いずれも列挙可能なリストの要素数でなく不変条件そのもの (粒度を 1 問へまとめる / 書き出しは 1 点だけ / 推測で埋めた必須項目が 0 件)。『N ゲート』『N 状態』『同梱 N 点』『N 節』『N 軸』『N 段』は 0 件。fixture 由来の『2 軸』『4 段』『5 つの節』『4 要素』は述語表現へ書き換えて除去済み)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "worker が実装前後で sha256 を突合 + find -newer で産出物より新しいテストファイルの不在を確認",
+      "result": "pass (差分なし。find の結果も空。C09 / C19 が緑になったのが fixture 改変でなく C01 実体の出現によることを当方が両スイートの独立実行で裏取り)"
+    },
+    {
+      "claim": "lint 系ゲートを通過する",
+      "method": "worker が skill-governance-lint の各 lint を実行",
+      "result": "partial (lint-skill-name / lint-skill-description (OK=189 VIOLATION=0) / lint-skill-completeness / lint-skill-tree はいずれも exit0。lint-skill-tree は初回 MED-4 Warn (prompts/R-design-config.md が responsibility_refs に未列挙) が出たため追記して解消。lint-skill-dep-step7.py のみディレクトリ引数で IsADirectoryError により exit1 となり未実行のまま。worker はこれを pass と書かず未実行と報告しており、その扱いは正しい)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "git status --porcelain plugins/guide-doc-generator/",
+      "result": "pass (出力は ?? plugins/guide-doc-generator/ のみ=ディレクトリ全体が元から未追跡。書込は build_target 配下 6 ファイルのみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-defect-predicate-too-loose",
+      "detail": "要裁定 / 本 leaf の write_scope 外。当方が実体を読んで独立に再現確認した。reject_cases.py:110-114 の non-interactive-path-blocked は fixtures/accept/.../SKILL.md:111 の 1 行を『常に対話でヒアリングを行ってから R2 へ進む。』へ置換して AC-C01-19 の発火を期待する。しかし contract_lib.py:423-427 の検出条件は body 全体に対する部分文字列一致 ('検証済みの構成データ' not in body / '非対話' not in body and 'ヒアリングを省' not in body) であり、置換後もフィクスチャ本文の別箇所に『入力: 題材と素材、または検証済みの構成データ。』の行と見出し『## ヒアリングと非対話経路』が残るため、どちらの条件も満たされず検出 0 件になる。これは『実装内容によらず恒久的に赤』であり、C01 の産出物を空にしても結果は変わらない。欠陥の性質は『述語が緩すぎて reject fixture を違反状態にできない』こと。修正には fixtures か reject_cases の変更が必要で、どちらも write_scope 外かつ tests 変更禁止。実装前ベースライン failures=42 にもこの 1 件は含まれていた既存の赤である"
+    },
+    {
+      "kind": "canon-conflict",
+      "detail": "C03 / C06 は委譲入力 reader_profile の構成要素として reader / prior_knowledge_level / usage_scene を要求するが、schemas/handout-config.schema.json に usage_scene フィールドは存在せず、schema には『use_scene という別フィールドは作らない』旨が明記されている (実質 doc_type が利用シーンを担う)。worker は存在しないフィールド名を本文へ書かず『読み手・前提知識・用途が正規化済み構成データに入っている必要がある』と表現した。C03 / C06 側の申し送り文言か schema のどちらを正本にするかを P05-x-01 で確定すること"
+    },
+    {
+      "kind": "canon-conflict",
+      "detail": "brief の deterministic_checks は 7 本だが、自スイートが実際に機械検査するのは AC-C01-1..24 の宣言的契約であり両者の粒度が 1 対 1 に対応しない。worker は自スイートの AC を優先した。brief 側の deterministic_checks を AC へ写像する対応表が無いため、どの check がどの AC で担保されているかが追えない"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "lint-skill-dep-step7.py がディレクトリ引数で IsADirectoryError を投げて exit1 になる (skill-governance-lint 側の引数処理の問題)。このため C01 に対する当該 lint は未実行のまま。他 skill の build でも同じ症状が出る可能性があるが、本 build の write_scope 外"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 20 件。(1) version 0.1.0 (2) owner harness maintainers (3) user-invocable true (4) argument-hint '[--config <handout-config.json>] [--out-dir <dir>] [--assets-src <dir>]' (5) allowed-tools [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent] (6) script_refs へ brief 未記載の 5 本 (embed-assets.py / render-diagram-svg.py / build-icon-sprite.py / srg-image-bridge.py / render-handout.py) を追加 (R3 の決定論 script 列を参照するため) (7) schema_refs / command_refs / agent_refs / skill_refs の 4 キーを追加 (8) completeness_exempt に manifest 免除 1 項 (goal_seek.engine=inline のため固定 phase の workflow-manifest.json を持たない) (9) feedback_contract.max_iterations: 3 (inventory は criteria のみ規定) (10) 必須 4 節以外の節名と切り方 (ヒアリングと非対話経路 / 構成データの設計と検証 / 単一 HTML の決定論生成 / ゲート集約と出力配置 / 読みやすさレビューの委譲) (11) ゴールシーク配線の eval-log パスを eval-log/guide-doc-generator/run-handout-build-{goal-spec.json,progress.json,intermediate.jsonl} とした (dev-graph の run 系 skill に倣った) (12) ゴールシーク検証の bash ブロックを plugins/dev-graph/skills/run-dev-graph-node/SKILL.md の様式に倣って書いた (13) C03 から返った verdict に必要項目の欠落があった場合は再委譲すると決めた (C03 が『C01 側で決めること』と申し送った点の決着) (14) srg-image-bridge.py の委譲先が不在のときは skip して warning に載せる (R12 の fail-soft 規定の具体化) (15) prompts/R-design-config.md を新規作成した。brief の responsibilities には無いが agents/handout-content-architect.md の prompt_ref が write_scope 内のこのパスを指しており実体が無かったため。手順と判定規範は agent 本体を正本として複製せず起動契約のみを書いた (16) 同ファイルの本文アンカーを <!-- responsibility: R2 --> とした (起動元が R2-design であり、lint の ANCHOR_RE は R+数字のみ許容するため R-design-config は使えない) (17) 同ファイルを responsibility_refs へ追記 (lint-skill-tree MED-4 Warn の解消) (18) fixture が使っていた件数リテラル (4 ゲート / 同梱 4 点 / 4 状態分類 等) を意図的に採用しなかった。fixture は判定器の入力例であって文言の正本ではないと解釈し横断規律を優先した (19) ゲート面の id 一覧を本文へ列挙しない方針 (面の集合は C09 の正本にある) (20) 各 prompt の Layer 3 参照リソース表のパス選択と相対表記 (../../../scripts/...)"
+    }
+  ]
+}

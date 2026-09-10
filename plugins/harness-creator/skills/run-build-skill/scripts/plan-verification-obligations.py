@@ -21,6 +21,31 @@ from typing import Any
 
 PROFILES = {"incremental", "exhaustive", "build-only"}
 KINDS = {"generative", "deterministic", "semantic", "observational", "audit"}
+
+# build stage は profile と直交する別の量である。
+#
+#   profile = 作った物にどれだけ証明を要求するか (incremental / build-only / exhaustive)
+#   stage   = そもそもどこまで作るか            (draft / release)
+#
+# 両者を 1 本の軸へ潰さない理由: build-only を選んでも「全 component 分の受入テストを
+# 赤で固定する」工程 (P04) は最後まで走る。profile は検証の深さを変えるだけで、
+# 生成 obligation の集合を変えないためである。利用者が最初の 1 本を手にするまでの
+# 時間を決めているのは検証の深さではなく生成の集合なので、軸を分ける。
+STAGES = {"draft", "release"}
+
+# stage 未指定 build と、stage 未宣言 obligation の共通既定。
+#
+# release ではなく draft を既定にする。未分類のものを release 扱いにすると、
+# stage を知らない旧 contract を draft で回した瞬間に全 obligation が黙って defer され、
+# 「何も作られていないのに何も落ちていない」計画が成立してしまう。分類漏れは
+# 「第1稿でも実行する」側へ倒し、遅くなることはあっても静かに欠落しないようにする。
+DEFAULT_STAGE = "draft"
+
+# 第1稿で実行する obligation の種別。利用者の要求どおり「使える実体 (generative) と
+# 決定論ゲート (deterministic) だけ」。意味裁定・live 観測・監査カタログは現物が
+# 出てから効くものであり、初回の待ち時間へ入れても第1稿は良くならない。
+DRAFT_KINDS = {"generative", "deterministic"}
+DRAFT_DEFER_REASON = "not-run(stage=draft)"
 RISK_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 DEFAULT_MAX_CONTEXT_BYTES = 120_000
 DEFAULT_INCREMENTAL_LLM_BATCHES = 1
@@ -246,9 +271,12 @@ def build_plan(
     max_llm_batches: int | None = None,
     run_id: str | None = None,
     max_model_actions: int | None = None,
+    stage: str = DEFAULT_STAGE,
 ) -> dict:
     if profile not in PROFILES:
         raise ContractError(f"unsupported profile: {profile}")
+    if stage not in STAGES:
+        raise ContractError(f"unsupported stage: {stage}")
     if max_context_bytes < 1:
         raise ContractError("max_context_bytes must be positive")
     if max_llm_batches is not None and max_llm_batches < 0:
@@ -301,9 +329,16 @@ def build_plan(
 
     records: list[dict] = []
     actions: dict[str, str] = {}
+    # stage の cut で defer した obligation。下流へ伝播させるために別に持つ
+    # (通常の defer と混ぜると「監査だから defer」と「第1稿の外だから defer」を
+    # 区別できず、release 昇格時に何を回収すべきか読めなくなる)。
+    stage_deferred: set[str] = set()
     for item in obligations:
         oid = item["id"]
         fingerprint = fingerprints[oid]
+        item_stage = str(item.get("stage") or DEFAULT_STAGE)
+        if item_stage not in STAGES:
+            raise ContractError(f"unknown obligation stage for {oid}: {item_stage}")
         blocked_by = [dep for dep in item.get("depends_on") or [] if actions.get(dep) != "reuse"]
         context_paths = [str(entry["path"]) for entry in item["inputs"] if entry["context"]]
         record = {
@@ -311,6 +346,7 @@ def build_plan(
             "claim": item["claim"],
             "kind": item["kind"],
             "risk": item["risk"],
+            "stage": item_stage,
             "fingerprint_sha256": fingerprint,
             "action": "blocked",
             "reason": "dependency-proof-missing",
@@ -322,9 +358,31 @@ def build_plan(
             "model_required": item.get("model_required"),
             "reused_evidence": None,
         }
-        if item["kind"] == "audit" and profile != "exhaustive":
+        deferred_deps = sorted(set(item.get("depends_on") or []) & stage_deferred)
+        if stage == "draft" and item_stage != "draft":
+            record.update(action="defer", reason=DRAFT_DEFER_REASON)
+            stage_deferred.add(oid)
+        elif stage == "draft" and item["kind"] not in DRAFT_KINDS:
+            # 第1稿は「実体 + 決定論ゲート」まで。意味裁定・観測・監査は release で回す。
+            record.update(action="defer", reason=f"{DRAFT_DEFER_REASON};kind={item['kind']}")
+            stage_deferred.add(oid)
+        elif stage == "draft" and deferred_deps:
+            # 上流を第1稿の外へ出した以上、それに依存する claim も証明できない。
+            # ここを blocked にすると「証拠が足りない」と読めてしまうが、実際には
+            # 意図的に後ろへ回しただけなので、原因を defer として明示する。
+            record.update(action="defer",
+                          reason=f"{DRAFT_DEFER_REASON};dependency-deferred",
+                          blocked_by=deferred_deps)
+            stage_deferred.add(oid)
+        elif item["kind"] == "audit" and profile != "exhaustive":
             record.update(action="defer", reason="audit-catalog-is-not-a-runtime-fanout")
-        elif item.get("activation") == "exhaustive" and profile != "exhaustive":
+        elif (
+            item.get("activation") == "exhaustive"
+            and profile != "exhaustive"
+            # draft の generative/deterministic proof は引き渡しの実在条件。
+            # profile で defer すると成果物なしの false-ready になる。
+            and not (stage == "draft" and item["kind"] in DRAFT_KINDS)
+        ):
             record.update(action="defer", reason="activation-requires-exhaustive")
         elif profile == "build-only" and item["kind"] not in {"generative", "deterministic"}:
             record.update(action="defer", reason="not-run(profile=build-only)")
@@ -405,11 +463,62 @@ def build_plan(
         and consumed_model_actions + planned_model_actions > effective_max_model_actions
     ):
         budget_reasons.append("cumulative-model-actions-exceed-run-budget")
+    pending_draft = sorted(
+        record["id"]
+        for record in records
+        if stage == "draft"
+        and record["action"] != "reuse"
+        # stage cut 由来の defer だけが意図的繰越し。profile/activation 等の
+        # defer は実体proofの代わりにならず、引き渡しを fail-closed で止める。
+        and not (record["action"] == "defer" and record["id"] in stage_deferred)
+    )
+    handoff_ready = stage == "draft" and not pending_draft
+    stage_status = (
+        "draft-building"
+        if stage == "draft" and pending_draft
+        else "usable-draft"
+        if stage == "draft"
+        else "ok"
+    )
+    if pending_draft:
+        stage_instruction = (
+            "draft 対象の generation/check が残っている。pending_draft だけを実行し、"
+            "決定論ゲート修復は1周までとする。現物の proof が付くまで引き渡しを宣言しない。"
+        )
+    elif stage_deferred:
+        stage_instruction = (
+            "第1稿は使える実体まで。release completed を宣言せず、"
+            "build-improvement-gate.py へ渡す。単一評価contextの初回30思考法診断を1回だけ行い、"
+            "所見を提示して改善levelを聞く。回答前に改善せず、自動で release/exhaustive へ進まない。"
+            "draft の PASS receipt は fingerprint に stage を含めないため release でそのまま再利用される "
+            "(昇格は繰越し分の追加実行だけで済み、作り直しにならない)。"
+        )
+    else:
+        stage_instruction = "繰越した obligation は無い。"
     return {
         "schema_version": 1,
         "subject": subject,
         "run_id": run_id,
         "profile": profile,
+        "stage": stage,
+        "stage_gate": {
+            # draft-building は生成中、usable-draft は proof 付きの正常引き渡し点。
+            # failure/incomplete と同じ状態へ畳むと dispatcher が完成版を目指して
+            # 自動周回する一方、proof 前から usable とすると空の引き渡しになる。
+            "status": stage_status,
+            "handoff_ready": handoff_ready,
+            "pending_draft": pending_draft,
+            "auto_promote": False,
+            "max_repair_rounds": 1 if stage == "draft" else 3,
+            "deferred_to_release": sorted(stage_deferred),
+            "deferred_count": len(stage_deferred),
+            "next_gate": (
+                "build-improvement-gate.py"
+                if stage == "draft" and not pending_draft
+                else None
+            ),
+            "instruction": stage_instruction,
+        },
         "cost_model": "changed-obligations-plus-unresolved-uncertainty",
         "counts": counts,
         "cost_summary": {
@@ -448,6 +557,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--evidence-dir", required=True)
     parser.add_argument("--profile", choices=sorted(PROFILES), default="incremental")
+    parser.add_argument(
+        "--stage", choices=sorted(STAGES), default=DEFAULT_STAGE,
+        help=("build stage。draft は使える実体 (generative) と決定論ゲートだけを回し、"
+              "受入テスト設計・意味レビュー・監査を release へ繰り越す。無指定は draft。"
+              "release は利用者が第1稿を確認した後に明示する。"),
+    )
     parser.add_argument("--max-context-bytes", type=int, default=DEFAULT_MAX_CONTEXT_BYTES)
     parser.add_argument("--max-llm-batches", type=int)
     parser.add_argument("--run-id")
@@ -465,6 +580,7 @@ def main(argv: list[str] | None = None) -> int:
             args.max_llm_batches,
             args.run_id,
             args.max_model_actions,
+            args.stage,
         )
     except (OSError, json.JSONDecodeError, ContractError) as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)

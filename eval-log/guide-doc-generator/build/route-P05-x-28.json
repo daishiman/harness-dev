@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-28",
+  "covered_task_ids": [
+    "P05-x-28"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "起票時の見立て (AC-C20-06 と ROUNDTRIP-CONTRACT の 2 者矛盾) は当事者の数え違いであり、矛盾していたのは ROUNDTRIP-CONTRACT の 1 者だけだった",
+      "method": "当方が embed-assets.py (C13) から `entry[\"<key>\"] =` を正規表現で全採取し、schema の `$defs.asset` / `$defs.attachment` の properties 集合と突合した",
+      "result": "pass (**C13 が entry へ足すキーは data_uri / embed_status / embed_source_path / embed_skip_reason / encoded_chars / source_bytes の 6 件、文書へ足すのは asset_embedding の 1 件。7 件すべてが schema に無い**。`$defs.asset` の properties は id/kind/src/alt/caption/role の 6 個で additionalProperties:false、`$defs.attachment` は id/filename/mime/src/fallback_hint の 5 個で同じく false。したがって **data_uri は C20 が発明したキーではなく C13 が書いたものを C20 が復元している**。ROUNDTRIP-CONTRACT の rationale 『抽出器が schema に無いキーを発明した E-KEY-UNKNOWN』は主体を取り違えており、かつ data_uri だけを咎める根拠が無い (咎めるなら残り 6 件も同罪)。裁定の前提そのものが反証された)"
+    },
+    {
+      "claim": "旧裁定 (data URI を捨てる) を実行すると値が消失する — 無損失性を守るつもりで逆に壊す",
+      "method": "当方が render-handout.py:1154 の `(\"data-hb-src\", asset.get(\"src\", \"\"))` と `_project_asset()` を読解し、C13 経路と著者直書き経路の 2 分岐で data-hb-src が何になるかを追った",
+      "result": "pass (**C13 経路**: src=原本相対パス → data-hb-src=原本パス。**著者直書き経路**: `_project_asset` が src を data_uri へ移し src を空にする → data-hb-src=空 → C20 の gap() 分岐が発火し src へ data URI を入れる。両分岐とも既に正しい。旧裁定は前者で data URI を捨てるが、**R14 の逆抽出では原本 assets/ が手元に無いのが普通で HTML 中の data URI が唯一の実体コピー**であり、捨てると『再埋め込みは C13 の責務』が実行不能になる。同 contract の /notes_enabled エントリは『P1 (再生成可能) ではなく値の消失である』を理由に免除を退けており、旧裁定は自らの基準に抵触していた)"
+    },
+    {
+      "claim": "テストの assert を 1 件も弱めていない (テストの側が正しく、裁定の側が誤っていた)",
+      "method": "当方が test_marker_extraction.py の 3 件の fixture を読み、data-hb-src の有無と assert の組合せを旧裁定・新裁定の両方で評価した",
+      "result": "pass (**変更 0 件**。test_image_asset_is_restored_with_data_uri と test_attachment_is_restored_with_data_uri は fixture に data-hb-src があり『src が原本パスへ戻る』と『data URI がエントリのどこかに残る』を同時に要求する — **旧裁定はこの 2 件を赤にする**。test_large_data_uri_is_kept_verbatim は fixture に data-hb-src が無く src が data URI を持つため両裁定で緑。キー名を固定しない書き方は tests/.../README.md G4 の意図的な緩和なので、キー名が data_uri に確定した後もそのまま残した (テストが固定すると第 2 の名簿になる))"
+    },
+    {
+      "claim": "schema の変更は description 2 箇所のみで、構造へ一切波及していない",
+      "method": "当方が patch 前後の JSON を OrderedDict で読み、再帰的に description キーを除去した木を等値比較した",
+      "result": "pass (**description 以外の差分 0**。アンカーは patch 前に出現回数 1 を assert してから置換した。$defs.asset は properties=[alt,caption,id,kind,role,src] / additionalProperties=False / required=[id,kind,src,alt,role]、$defs.attachment は properties=[fallback_hint,filename,id,mime,src] / additionalProperties=False / required=[id,filename,mime,src,fallback_hint] で patch 前と同一。**data_uri を schema へ追加していない** — 追加すると 2 つの文書型の境界がぼやけるため、追加せず『本 schema は C13 前の著者構成データを記述する』と境界を明記する側を採った)"
+    },
+    {
+      "claim": "AC-C20-06 は本裁定と一致しており変更不要である (write_scope 外を触っていない)",
+      "method": "当方が script-brief-C20.json の AC-C20-06 の文言を本裁定と突合した",
+      "result": "pass (AC-C20-06 は『filename / mime / alt / fallback_hint と data URI 本体が復元される』であり本裁定と一致。**もし裁定が逆向き (AC を改める) だったなら、AC-C20-06 の本文は plugin-plans/guide-doc-generator/briefs/ にあり本 leaf の write_scope: plugins/guide-doc-generator の外なので書けず、受け皿の割れ (PAT-4) を作っていた**。裁定が write_scope 内で閉じたのは結果であって設計されていたわけではない — この非対称は RESOLUTION §5 に記録した)"
+    },
+    {
+      "claim": "3 スイートの失敗テスト名の集合が増えていない",
+      "method": "当方が validate / extract / render の 3 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名を採取 (件数でなく名前集合で判定)",
+      "result": "pass (validate: Ran 278 / 集合 = {test_unknown_doc_type_lists_vocabulary (ERROR), test_no_purpose_vocabulary_literals (ERROR), test_no_temp_file_left_behind, test_provenance_shape}。extract: Ran 152 **OK**。render: Ran 219 / 集合 = {test_cross_component.GateHandoffTest.test_round_trip_equivalence}。**既知 5 件ちょうどで増加 0 件**、総数も 278/152/219 で着手前と同一)"
+    },
+    {
+      "claim": "本 leaf の変更は render の test_round_trip_equivalence (P05-x-31 所有) に触れていない",
+      "method": "当方が test_cross_component.py:89-97 を読み、比較対象を確認した",
+      "result": "pass (同テストは `self.assertEqual(source[\"sections\"], got[\"sections\"])` のみで **assets / attachments を比較していない**。したがって本 leaf の裁定対象と独立であり、赤のまま残っているのはセクション粒度の問題 (P05-x-31 の所掌) である。conflicts に [P05-x-28, P05-x-31] が宣言されていたが、実際には assets 側で干渉しないことを確認した)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "prior-adjudication-reversed",
+      "detail": "**本 leaf は先行 leaf が書いた裁定を反転している**。ROUNDTRIP-CONTRACT.md の /assets/*/data_uri エントリは『免除を採らない / data URI は捨てる / residual_work: C20 が data_uri キーを発明せず src へ格納する』と裁定済みで、どこかの leaf の route report がこれを成果として主張している可能性がある (どの leaf が書いたかは未特定)。反転の根拠は §1 の機械的事実 (C13 が 7 キーを書く / additionalProperties:false) であって『実装が動いているから』ではないが、**先行 report の該当 claim は現在誤りである**。エントリ本文の冒頭へ『P05-x-28 で裁定を反転した』と明記し、旧裁定の文言も引用して残した (静かに書き換えると反転の事実が消えるため)"
+    },
+    {
+      "kind": "acceptance-met-but-underlying-gap-remains",
+      "detail": "**AC (3 者が同一の契約を述べる) は満たしたが、実害のある穴は残る**。validate-handout-config.py:490-493 は additionalProperties:false のノードで未知キーごとに E-KEY-UNKNOWN を出す。build skill の工程順は R2 で validate → R3 で embed-assets → render なので C13 出力が validate を通る経路は無いが、**C20 の出力には経路がある** — R14 の『逆抽出 → 再編集 → 再描画』では抽出結果を R2 の validate へ入れるのが自然で、そこは /assets/0/data_uri で落ちる。test_round_trip_equivalence は sections しか比較しないためこれを検出しない。解き方 2 案 (C13 後の文書型に専用 schema / C20 に著者構成データ出力モード) を RESOLUTION §7-2 に書いたが **本 leaf では選んでいない。受け皿は現時点で無い**"
+    },
+    {
+      "kind": "documentation-only-change-not-machine-checked",
+      "detail": "**ROUNDTRIP-CONTRACT.md を読むテストは 0 件である** (tests/ 配下の grep で確認)。schema の description も機械検査の対象外。したがって『失敗集合が増えない』は本 leaf の成立を何も証明しない (到達していない緑)。成立の根拠としたのは §1 の機械照合 (C13 の追加キー列挙 vs schema properties) と §4 の構造不変検査 (description 除去後の木が等値) の方である。**逆に言えば、C13 が足すキーが増減しても本裁定文書は黙って古くなる**"
+    },
+    {
+      "kind": "task-spec-missing",
+      "detail": "`plugin-plans/guide-doc-generator/task-specs/P05-x-28.md` が実在しない (P05-x-25 / x-26 / x-27 と同様)。node の acceptance_criterion を正本として遂行した"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。pass と偽装していない"
+    }
+  ]
+}

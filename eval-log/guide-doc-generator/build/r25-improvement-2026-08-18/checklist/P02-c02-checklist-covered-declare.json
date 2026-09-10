@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c02-checklist-covered-declare",
+  "covered_task_ids": [
+    "P02-c02-checklist-covered-declare"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+  "acceptance_criterion_restated": "skill-brief-C02.json の checklist_covered が null でなく、goal-spec.checklist のうち C02 が担う項目を列挙し、隣接する C20 (script 実装側) との重複分は副として理由つきで宣言していること。担わない隣接項目は担当 component が明示されていること",
+  "verified_by": [
+    {
+      "claim": "現状を実測した",
+      "method": "skill-brief-C02.json のキー一覧を確認",
+      "result": "checklist_covered は『null が入っている』のではなくキー自体が存在しなかった。同じ状態が skill-brief-C01 / C03 / C04 の全てにある (skill kind の brief は 4 本とも未宣言)"
+    },
+    {
+      "claim": "担う項目を goal-spec から特定した",
+      "method": "goal-spec.checklist 75 件を『逆抽出 / round-trip / 復元 / 等価』で走査し、C20 (R14 の round-trip テスト PASS) を主対象として同定。加えて C74 / C75 の末尾が hero フィールドとコネクタの往復非破壊を求めていることを確認",
+      "result": "checklist_covered = [C20, C74, C75] を宣言。3 件とも副である"
+    },
+    {
+      "claim": "副である理由を項目ごとに書いた",
+      "method": "既存の副宣言の書式 (command-brief-C08.json / script-brief-C18.json / script-brief-C22.json) に揃え、id の後ろに括弧書きで『副である理由 + 正本の所在』を置く形にした",
+      "result": "C20 は『判定そのもの (復元規則・往復粒度・診断コード) は script-brief-C20.json が持ち、本 skill は起動と結果の日本語要約、および復元不能箇所の補完方針の決定だけを担う』。C74 / C75 は『正本の回帰検査は C20、DOM を出す側は C11』。既存の C08 / C20 側の副宣言と主張が衝突していないことを突合済み (C08 は起動口、C20 は検査、C02 は補完判断と要約 — 3 者の面が重ならない)"
+    },
+    {
+      "claim": "担わない隣接項目を担当つきで明示した",
+      "method": "checklist_not_covered を新設し、C29 (バイト一致の再現性) / C27 (stdlib のみ) / C71 (1 節 = 1 カード) の 3 件について owner と why_not_here を記述",
+      "result": "特に C29 は『round-trip の判定粒度は構成データ等価であり、バイト一致は別の bar。両方を本 skill が主張すると HTML がバイト一致しないと逆抽出は失敗という誤った合格条件が生まれる』と理由を明示した。この誤読は ROUNDTRIP-CONTRACT.md が byte_equality_status を『derived-from-C29-only, not a primary R14 bar』とわざわざ宣言していることからも、実際に起きやすい"
+    },
+    {
+      "claim": "本 skill の責務範囲と宣言が一致していることを確認した",
+      "method": "responsibilities (R1-scan / R2-complete / R3-roundtrip) と key_constraints (推測で埋めない・語彙を複製しない・元 HTML を書き換えない・report_shape を持たない) を読み、宣言した 3 件が全て『対話面と補完判断』に収まることを確認",
+      "result": "一致。key_constraints が既に『正本を複製しない』方向で書かれており、副宣言の形 (正本の所在を必ず併記) がその方針と整合する"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C02CC-SKILLGAP-01",
+      "level": "warn",
+      "summary": "checklist_covered の未宣言は C02 固有ではなく skill kind の brief 4 本 (C01 / C02 / C03 / C04) 全てに及ぶ。script / command / agent / hook の brief は全て宣言済みで、skill だけが抜けている。逆に言えば goal-spec の 75 項目のうち skill が担う面は現在どこにも集計されておらず、『全項目に担当がいるか』を数えると skill 担当分が欠落したまま緑に見える"
+    },
+    {
+      "id": "F-P02C02CC-NOGATE-01",
+      "level": "warn",
+      "summary": "checklist_covered を検査するゲートが無い。detect-unassigned.py は component-inventory と specs-dir を見るもので briefs/ を見ておらず、キーの有無・値の妥当性・goal-spec に実在する id かどうかのいずれも検査されない。存在しない項目 id を書いても、逆に全項目を主張しても緑になる"
+    },
+    {
+      "id": "F-P02C02CC-DUPCLAIM-01",
+      "level": "info",
+      "summary": "C74 / C75 は現在 C11 (主) / C12 (主) / C18 (副) / C20 (副) / C08 (副) / C02 (副) の 6 component が宣言する状態になった。副の宣言は面が違えば重複ではないが、主が誰かは各 brief の括弧書きの自然文にしか書かれておらず、機械的に『主が 1 人であること』を確かめられない"
+    },
+    {
+      "id": "F-P02C02CC-NEWKEY-01",
+      "level": "info",
+      "summary": "checklist_not_covered は本ノードで新設したキーで、他の brief には存在しない。受入条件が『担わない隣接項目は担当 component が明示されていること』を求めるため置いたが、他 brief では同種の情報が boundary の自然文へ埋まっている。表現が 2 系統になったので、どちらへ寄せるかの裁定は残っている"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "plugins/harness-creator/commands/capability-build.md",
+  "captured_at": "2026-08-23T14:05:54Z",
+  "measurement_method": {
+    "lines": "len(Path(path).read_text(encoding='utf-8').splitlines())",
+    "bytes": "len(Path(path).read_bytes())",
+    "estimated_tokens": "ceil(utf8_bytes / 4)",
+    "actual_tokens": "len(tiktoken.get_encoding('o200k_base').encode(text))",
+    "actual_tokenizer": "tiktoken o200k_base"
+  },
+  "baseline": {
+    "source": "worktree_at_task_start",
+    "git_head_used": false,
+    "sha256": "ea96b45aef73b2d50d212a649f86b49e1100a3dd6591128b4c4bc1e79221d117",
+    "lines": 141,
+    "bytes": 43555,
+    "estimated_tokens": 10889,
+    "actual_tokens": 12106,
+    "always_loaded_responsibilities": [
+      "purpose and input normalization",
+      "explicit/single-route/task-graph routing",
+      "route preflight and kind-specific dispatch",
+      "verification obligation resolver and proof reuse",
+      "verification cost model",
+      "draft/release stage operation",
+      "verification profiles and model/live limits",
+      "task-graph node-to-build mapping",
+      "build-execution inner loop",
+      "status projection and completion evidence",
+      "spec-improvement outer loop",
+      "native-surface repair and user gates",
+      "arguments and failure guidance"
+    ],
+    "direct_reference_targets": [
+      "ref-skill-naming-convention",
+      "run-build-skill/references/verification-obligation-protocol.md",
+      "run-build-skill/SKILL.md Step 12.5",
+      "references/pipeline-boundary-contract.md",
+      "references/native-surface-operations.md"
+    ]
+  },
+  "after": {
+    "source": "worktree_after_lazy_boundary",
+    "sha256": "d9290d3b60e502dc1d67c43442b61bd13a3ec3ffffdbb1fec498d95b4d18425a",
+    "lines": 63,
+    "bytes": 6998,
+    "estimated_tokens": 1750,
+    "actual_tokens": 1957,
+    "always_loaded_responsibilities": [
+      "purpose",
+      "exclusive routing decision",
+      "fail-closed safety and approval boundaries",
+      "draft/release completion conditions",
+      "lazy reference section map",
+      "accepted arguments"
+    ],
+    "direct_reference_targets": [
+      "references/capability-build-runtime-contract.md",
+      "references/pipeline-boundary-contract.md"
+    ]
+  },
+  "deferred_contract": {
+    "path": "plugins/harness-creator/references/capability-build-runtime-contract.md",
+    "sha256": "539e85d2ca9920b7495e1c5123500c080a777f256cd6dea28ba0047c4616f884",
+    "lines": 144,
+    "bytes": 43866,
+    "estimated_tokens": 10967,
+    "actual_tokens": 12175,
+    "responsibilities": [
+      "route preflight and exact command invocations",
+      "verification obligation planning and proof reuse",
+      "stage/profile detailed operation",
+      "TG-C01 through TG-C09 inner and outer loops",
+      "evidence shapes, status projection, handback, and native repair"
+    ],
+    "load_policy": "Read only the selected route/stage/profile section after the command chooses one path."
+  },
+  "reduction": {
+    "lines": 78,
+    "lines_percent": 55.32,
+    "bytes": 36557,
+    "bytes_percent": 83.93,
+    "estimated_tokens": 9139,
+    "estimated_tokens_percent": 83.93,
+    "actual_tokens": 10149,
+    "actual_tokens_percent": 83.83,
+    "always_loaded_bytes_decreased": true
+  },
+  "responsibility_boundary": {
+    "command_owns": "purpose, routing, safety, completion, and discovery of the selected detail section",
+    "runtime_reference_owns": "detailed operational sequencing, commands, evidence shapes, and route-specific exception handling",
+    "pipeline_boundary_contract_owns": "E1-E4 producer/consumer invariants, single-writer ownership, actor and TTL contracts",
+    "deletion_policy": "no operational contract was intentionally deleted; detailed content moved behind one lazy-load reference"
+  }
+}

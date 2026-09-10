@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C16-01",
+  "reason": "実測: 出荷 config の閾値キーは min_diagrams_per_main_sections (旧複数形) の 1 件のみで、C12 の E-IMAGE-ABSENT が参照する min_images_per_main_section が実データ側に存在しない。閾値の producer が無いまま error 級ゲートが live になっている",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C16-01.json",
+  "proposed_node": {
+    "id": "P05-x-03-image-threshold-key",
+    "title": "出荷 config の per-section 閾値キーを正本へ追従させる",
+    "phase_ref": "P05",
+    "entity_ref": "C12",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-visual-policy.json",
+    "acceptance_criterion": "config/handout-visual-policy.json#thresholds に min_diagrams_per_main_section (単数形) と min_images_per_main_section が実在し、旧 min_diagrams_per_main_sections (複数形・総量比) が 0 件であること。値は improvement/visual-per-section-decision.json#decision の value=1 と一致すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

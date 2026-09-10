@@ -130,9 +130,9 @@ def test_real_repo_hook_scripts_pass():
 
 
 def test_hook_scripts_discovered():
-    """plugin.json から hook script を実際に発見できること (検査対象 0 件の空振り防止)。"""
+    """標準自動検出を含め hook script を発見できること (検査対象0件の空振り防止)。"""
     scripts = MOD._hook_scripts()
-    assert scripts, "hook script を1件も発見できていない (plugin.json 解析の回帰)"
-    # check-review-trigger.py が対象に含まれること (今回の主修正ファイル)。
+    assert scripts, "hook script を1件も発見できていない (hook discovery の回帰)"
+    # harness-creator は manifest.hooks を重複指定せず標準 hooks/hooks.json から自動load。
     names = {p.name for p in scripts}
-    assert "check-review-trigger.py" in names
+    assert "auto-sync-on-session-start.py" in names

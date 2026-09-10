@@ -1,0 +1,79 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P05-C10-01",
+ "covered_task_ids": [
+  "P05-C10-01"
+ ],
+ "status": "success",
+ "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py, plugins/guide-doc-generator/config/handout-output.json, plugins/guide-doc-generator/tests/guard-handout-external-ref/",
+ "verified_by": [
+  {
+   "claim": "96 件の赤の原因が単一であり、config へのキー 1 件追加で解消する",
+   "method": "dispatcher が C10 / C16 の両 suite を独立実行",
+   "result": "pass(=実測で確定): C10 suite が Ran 203 / OK (skipped=13) で 81.6 秒、C16 suite が Ran 354 / OK で 31.9 秒。前任者 pink の報告 (196 / failures 96、354 / failures 12) と比べて赤が 0 になっている。決定的なのは hooks/guard-handout-external-ref.py の sha256 が f8b7d6fc83d11e9b789463fe1e9f0a5d70ace701267fe641ee021ee1d384b861 のまま 1 バイトも変わっていないことで、hook のコードに触れずに 108 件の赤が消えた。すなわち『実装は brief 準拠だがゲートは外部依存で赤』という pink の切り分けが正しかったことが、後続の作業によって事後的に証明された。pink が緑にするために本数を数えたりテストを触ったりせず failure を名乗った判断は、この結果によって支持される"
+  },
+  {
+   "claim": "追加した config 値がソース側の推測でなく hook のコード読解から導かれている",
+   "method": "dispatcher が config/handout-output.json の該当節を直読み",
+   "result": "pass: size_limits.hook_scan_budget = {max_bytes: 16777216, max_seconds: 8.0}。hook_scan_budget_source に導出過程が残っており、max_bytes は hook-brief-C10.json#budget_thresholds.scale_check が旧仮置き 8 MiB を明示的に否定したうえで与える 2 シナリオ ((a) 上限素材 2 点 = 2 * asset_max_bytes(5242880) * 4/3 = 13981013 バイト、(b) 1 MiB 挿絵 6 節 ≒ 8 MiB) の両方を上回る最小の 2^n MiB として 16 MiB。max_seconds は settings_registration の timeout 10 から実測の起動オーバーヘッド (端から端まで 0.068 秒) を引いた 8.0 秒で、hook 自身の可視な打ち切りが harness の不可視な kill より先に出る必要があるという理由も明記されている。値の隣に根拠が置かれており、後から『なぜこの数か』を問い直せる形になっている"
+  },
+  {
+   "claim": "第 2 正本 (hb_c10.py の SIZE_LIMIT_BYTES = 8 MiB) が実際に除去された",
+   "method": "dispatcher が grep -nE 'SIZE_LIMIT_BYTES|8 \\* 1024|1024 \\* 1024' を独立実行",
+   "result": "pass: リテラル 0 件。scan_budget() / size_limit_bytes() による config からの実測導出へ置換され、キー不在時は既定値へ倒さず AssertionError で赤になる。builder の変異検証 3 番目 (max_bytes を 2 MiB へ変更 → rc=0 Ran 203 / OK、所要 67 秒→20 秒) が、テストが config 値を追っていることを示している。修正前なら config を変えても fixture は 8 MiB 固定で『上限超え』入力が上限未満に落ち、検査が黙って空振りしていた。P04-C01-01 の max_loops と同型の欠陥が、今回は実際に潰された側の実例になった"
+  },
+  {
+   "claim": "強化した検査が空ゲートでないことを変異で実測している",
+   "method": "dispatcher が builder の変異マトリクスを確認し、正本の無改変を sha で照合",
+   "result": "pass: 無変異の複製 rc=0 Ran 203 / OK (複製手順が結果を作っていないことの対照)、hook_scan_budget 削除 rc=1 Ran 203 / failures=104 errors=2 (空ゲートでない)、max_bytes 変更 rc=0 (第 2 正本でない) の 3 シナリオ。正本 config の sha256 は変異走査の前後で 5f4dcaea… のまま一致し、複製は tempfile.TemporaryDirectory で自動破棄されている。対照実験を含めている点が重要で、『複製したから緑になった』という交絡を排除している"
+  },
+  {
+   "claim": "撤回済み契約を守るテストが撤回された",
+   "method": "dispatcher が builder の差し替え内容を確認",
+   "result": "pass: test_date_without_trailing_hyphen_passes_through (『日付の直後がハイフンでなければ素通し』= R25 が撤回した fail-open) を撤回し、同じ入力に exit2 を要求する test_date_only_directory_is_in_scope へ置換。あわせて R25 の _ 区切り書式・旧書式・(?!\\d) 境界・draft- 接頭の回帰を 5 件、予算キー欠落の可視化検査を 3 件追加し 196 → 203 になった。pink が指摘した『撤回済み挙動を守るテストはあるのに新契約の回帰テストが無い』という非対称 (suite に _ 区切り fixture が 1 件も無い) が解消されている。F-P04C12-01 と同型の欠陥の 2 例目が、今回は塞がれた"
+  },
+  {
+   "claim": "変異検査自体が空ゲートになる経路が塞がれた",
+   "method": "dispatcher が builder の補足を確認",
+   "result": "pass(=見落としやすい点を自分で見つけている): run_hook_raw が子プロセスから HB_ROOT / CLAUDE_PLUGIN_ROOT を除くよう変更された。除かないと複製 root を指した起動が黙って正本 config を読み、変異を注入したつもりで正本を測ることになる。すなわち変異検査そのものが空ゲート化する。本 cycle で繰り返し出ている『検査が空振りする』が、検査を検査する層でも起こりうることの実例で、builder が指示されずに自分で潰している"
+  },
+  {
+   "claim": "route-build-report が検証器を最終状態で通る",
+   "method": "dispatcher が validate-route-build-reports.py を独立実行",
+   "result": "pass(=1 度の差し戻しを経て): 初回提出時は exit 1 で 8 findings (skipped が additionalProperties=false に抵触 5 件 / status=success なのに exit_code=1 の証跡 2 件 / inputs_consumed から route-C16.json が欠落)。dispatcher が差し戻し、builder が修正して {valid: true, findings: []} exit 0 を dispatcher 側でも再現。現在 test_evidence は緑 2 件のみ、evidence 10 件、deviations 6 件、route-C16.json の依存宣言あり、skipped 13 件は fixture 名 13 個ごと deviations[5] へ保持。dispatcher は report の修正を代行していない (証跡の取捨を dispatcher が行うとレビューされていない編集が証跡に入るため)"
+  },
+  {
+   "claim": "write_scope 外への書き込みが無い",
+   "method": "dispatcher が builder の自主開示と sha を照合",
+   "result": "pass: 本ノード由来は config/handout-output.json + tests/guard-handout-external-ref/{hb_c10.py, test_abort_and_budget.py, test_applies_to.py} + route-C10.json + discovered-task form 1 件。hooks/guard-handout-external-ref.py は write_scope 内だが 1 バイトも変更していない (sha 一致で裏付け)。指示した『0142cd8b / 456d938d を close しない』も守られている"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P05C10-01",
+   "level": "blocking-for-release",
+   "summary": "変異注入の赤を格納する場所が route-build-report schema に存在しない。空ゲートでないことを示せる証跡は変異の赤だけで、緑の記録は 1 件もそれを示せない。ところが test_evidence[] は additionalProperties=false かつ status=success と exit_code!=0 が同居できないため、最も価値のある証跡を一級市民として置けない。builder が初回提出で status=success と矛盾させたのは不注意だが、置き場所が無いことが誘発している。今回は evidence[] の自由文字列へ移して情報量は保たれたが、builder 自身が『構造化されておらず機械検証もできない。これは劣化です』と開示しており、そのとおりである。C10 固有でなく本 cycle の全 route に効く。mutation_evidence[] (command / exit_code / passed / failed / mutation / baseline_matches) の新設が提案されている。P05-x-102-mutation-evidence-slot"
+  },
+  {
+   "id": "F-P05C10-02",
+   "level": "blocking-for-release",
+   "summary": "max_seconds=8.0 は現在の C16 実装では原理的に発火できない (builder が deviations で自己開示)。実測で C16 scan_emoji は R25 が実際に増やす形 (img@src の base64 data URI) の 16.06 MiB を 31.98 秒、4 MiB を 7.03 秒で走査する (約 0.5 MiB/秒)。しかも scan_emoji は list を返す eager 実装なので、hook は D1 走査と D2 走査の『あいだ』でしか deadline を見られず、1 回の走査の途中では打ち切れない。よって max_bytes 直下 (16 MiB) の入力は hook 自身の systemMessage を出せないまま settings_registration の timeout 10 秒で harness に落とされる。実在 handout は 0.05-0.07 MiB で桁が違うため現行運用では発火しないが、R25 の per-section IMG 必須化が本格化すると顕在化する。これは『設定した閾値が構造上到達不能』という新しい型で、fail-open (検査が空振りする) でも第 2 正本でもない。解消は (i) C16 scan_emoji を逐次 yield へ、(ii) settings_registration の timeout 引き上げ、のいずれかで、どちらも本 route の write_scope 外"
+  },
+  {
+   "id": "F-P05C10-03",
+   "level": "blocking-for-release",
+   "summary": "builder が status を success へ書き換えた時点で最終状態に対して検証器を回していなかった。変異検証まで実測しながら成果物そのものを機械検証していないという非対称で、しかも前任者 pink は同じ検証器を exit 0 で通していたため、編集によって壊れた。検証器は success の詐称を実際に噛む (pink が status だけ書き換えた複製で確認済み) ので機構としては機能しているが、builder が最後に回す手順になっていない。route build の完了条件へ『status 確定後の検証器実行』を明示する必要がある。なお 2 回目の修正で検証器が deviations 本文の discovered 言及に対して discovered[] での実証を要求したことも builder が開示しており、検証器は 2 段階で効いている"
+  },
+  {
+   "id": "F-P05C10-04",
+   "level": "carry-forward",
+   "summary": "skipped 13 件は緑と数えられない実数だが、test_evidence[] の schema に置けないため deviations へ移した。13 件はすべて AC-C16-11 の parametrized 版で『この fixture は絵文字違反を持たない』ことによる skip であり、同 fixture の違反有無の一致側は別テストで緑。本 route の変更前後で増減なし。passed からも failed からも除かれた数が report の構造上どこにも居場所を持たないのは F-P05C10-01 と同根で、report が『通った / 落ちた』の 2 値しか表現できないことの帰結。builder が fixture 名 13 個を落とさず保持した対応は正しい"
+  },
+  {
+   "id": "F-P05C10-05",
+   "level": "carry-forward",
+   "summary": "hook_scan_budget には当初 producer が実質的に存在しなかった (P05-x-104 として起票済み)。write_scope を持つ P05-x-03 の acceptance_criterion は handout-output.json について『default_out_dir とサイズ上限』としか書かず、このキーを名指ししていない。今回は C10 の builder が越境せずに自 route の write_scope 内で追加できたため解決したが、『brief がキーを要求し、config の owner がそのキーを知らない』という requirements 層の断絶そのものは残っている。P05-x-92 (verify_by が検証手段を指さない) と同じく、要件が下流の実体を名指ししないことに由来する"
+  }
+ ]
+}

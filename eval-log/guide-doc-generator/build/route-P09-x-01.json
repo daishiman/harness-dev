@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P09-x-01",
+  "covered_task_ids": [
+    "P09-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P09.json",
+  "verified_by": [
+    {
+      "claim": "harness カバレッジが全 component で閾値以上である",
+      "method": "当方が tests/ 直下 23 ディレクトリを全件走らせ、component-inventory の tests_min と 1:1 で突き合わせた",
+      "result": "pass (23 component / 3308 件 / 閾値未達 0 件。tests_min=80 を持つ script component 13 件はいずれも 96〜354 件で、最小は embed-assets.py の 96。閾値を持たない 10 件も全て自スイートを持ち 0 件のものは無い)"
+    },
+    {
+      "claim": "全 component の p0_lint が合格している",
+      "method": "当方が repo の lint 実行体を列挙し、plugin ディレクトリを対象に実行できるものを実行した",
+      "result": "pass (是正後)。**実行前は 3 件の違反があった**: handout-content-architect と ref-handout-design-system が description 末尾の規約 (使う。/読む。/起動する。) を満たさず、ref-handout-design-system と run-handout-extract が trigger 3 個で上限 2 を超えていた。description を書き直して OK=201 VIOLATION=0 になり、書き直しで壊れていないことを該当 3 スイート (49/37/46 件) の再実行で確認した",
+      "caveat": "inventory が宣言する 10 種の p0_lint のうち 3 種 (lint-script-frontmatter / lint-skill-dep-step7 / lint-agent-prompt-section) は repo に実行体が無く、4 種は plugin 単位で呼ぶ規約を持たない。実行できたのは lint-skill-description と lint-manifest-contents の 2 種で、lint-forbidden-deps は前提ファイル不在により検査せず exit0 する SKIP である"
+    },
+    {
+      "claim": "全 component の build trace が取れている",
+      "method": "当方が inventory の 23 component それぞれについて route-build-report の実在を確認し、validate-route-build-reports.py --complete も併せて実行した",
+      "result": "pass (実体 23/23 present)。ただし **validator は 23 件すべてを『レポート未作成』と報告する** — validator が route-<Cxx>.json を探すのに対し、実際の書き出しは task-graph の node id 命名 route-P05-<Cxx>-01.json だからである。改名すれば validator は緑になるが task-state の covered_task_ids 参照が外れるため、本 build では改名せず命名 drift として記録した"
+    },
+    {
+      "claim": "環境固有の絶対パス直書きが 0 件である",
+      "method": "当方が plugins/guide-doc-generator 配下を /Users/ /home/ C:\\\\ で走査し、ヒットを 1 件ずつ判定した",
+      "result": "fail (1 件残る)。config/handout-output.json の default_out_dir が利用者の絶対パスを持つ。解決は argv > env > この既定値の 3 段で前 2 段から上書きできるが、**別環境の利用者が何も指定しないと他人のパスを黙って作りに行く**。利用者が明示的に指定した出力先であるため独断で消さず、逸脱として残した",
+      "side_finding": "走査の過程で SessionStart hook が plugin 内へ書いた .claude/handoff/*.md を 4 ファイル検出した (当方の transcript 絶対パスを含む配布汚染)。plugin 配下の 3 か所を削除した"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "absolute-path-remains",
+      "detail": "config/handout-output.json:default_out_dir。チェック項目『絶対パス直書きが 0 件』は満たしていない。配布を考えるなら env 既定か『未指定なら明示エラー』へ倒すのが筋だが、利用者指定の出力先を勝手に変えないため保留した"
+    },
+    {
+      "kind": "p0-lint-partially-unexecutable",
+      "detail": "宣言 10 種のうち実行できたのは 2 種。残りは実行体不在または plugin 単位の呼出し規約不在で、合否が機械で出せない"
+    },
+    {
+      "kind": "build-trace-validator-naming-drift",
+      "detail": "validate-route-build-reports.py の期待するファイル名と dispatcher の書き出す名前が食い違っており、この validator は当 plugin に対して常に赤を返す"
+    },
+    {
+      "kind": "lint-forbidden-deps-is-a-skip",
+      "detail": "exit0 だが検査は走っていない。合格として数えていない"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "prompt-creator",
+  "entry_points": {
+    "skills": [
+      "assign-prompt-design-evaluator",
+      "run-prompt-create",
+      "run-prompt-creator-7layer",
+      "run-prompt-elicit",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "prompt-creator-generate-prompt",
+      "prompt-creator-interview-user",
+      "prompt-creator-review-prompt"
+    ],
+    "commands": [],
+    "hooks": []
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "development-tools",
+    "tags": []
+  },
+  "depends_on": [
+    "harness-creator",
+    "skill-governance-lint"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {
+      "prompt-creator-generate-prompt": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent prompt-creator-generate-prompt through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-prompt-create"
+          ]
+        },
+        "owner_route": {
+          "plugin": "prompt-creator",
+          "entry_points": [
+            "run-prompt-create"
+          ]
+        }
+      },
+      "prompt-creator-interview-user": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent prompt-creator-interview-user through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-prompt-elicit"
+          ]
+        },
+        "owner_route": {
+          "plugin": "prompt-creator",
+          "entry_points": [
+            "run-prompt-elicit"
+          ]
+        }
+      },
+      "prompt-creator-review-prompt": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent prompt-creator-review-prompt through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-prompt-design-evaluator"
+          ]
+        },
+        "owner_route": {
+          "plugin": "prompt-creator",
+          "entry_points": [
+            "assign-prompt-design-evaluator"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

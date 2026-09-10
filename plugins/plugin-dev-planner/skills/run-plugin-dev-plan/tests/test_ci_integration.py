@@ -25,24 +25,36 @@ def _read_or_skip(name: str) -> str:
 
 
 def test_creator_kit_ci_discovers_all_plugin_test_files():
-    """per-plugin pytest が plugins/** の test files を深さ非依存に収集する。
+    """workflow が探索 SSOT を使う runner で plugin test 全件を実行する。
 
-    固定 glob (plugins/*/tests, plugins/*/skills/*/tests) だけだと、scripts/tests や
-    hooks/tests に加え、scripts/test_*.py / hooks/*_test.py のような tests/ 外 colocated
-    test files も取りこぼすため、探索はファイル名ベースにする。
+    workflow 内に fnmatch/heredoc を再実装させず、runner が
+    discover_repo_tests.group_plugin_tests を唯一の探索契約として使う。
+    test_*.py / *_test.py の両 glob、test_root 固有 cwd、空集合の
+    fail-closed を固定し、scripts/tests・hooks/tests・colocated test も取りこぼさない。
     """
     ci = _read_or_skip("harness-creator-kit-ci.yml")
-    required = [
-        'fnmatch.fnmatch(filename, "test_*.py")',
-        'fnmatch.fnmatch(filename, "*_test.py")',
-        'if "tests" in parts:',
-        '"-m", "pytest", *args, "-q"',
-        "no plugin test files discovered under plugins/**/{test_*.py,*_test.py}",
+    assert "python3 scripts/validate-plugin-test-roots.py --workers 4" in ci, (
+        "harness-creator-kit-ci.yml が上限4並列の plugin test runner を起動していない"
+    )
+
+    runner = (REPO_ROOT / "scripts" / "validate-plugin-test-roots.py").read_text(
+        encoding="utf-8"
+    )
+    discovery = (REPO_ROOT / "scripts" / "discover_repo_tests.py").read_text(
+        encoding="utf-8"
+    )
+    runner_contract = [
+        "import discover_repo_tests as discovery",
+        "groups = discovery.group_plugin_tests(repo_root)",
+        '[sys.executable, "-m", "pytest", *item.args, "-q"]',
+        "cwd=repo_root / item.test_root",
+        "if not groups:",
+        "no plugin test files discovered under",
     ]
-    missing = [text for text in required if text not in ci]
-    assert missing == [], (
-        "harness-creator-kit-ci.yml の per-plugin pytest が plugins/** の test files を "
-        f"収集していない。欠落: {missing}"
+    missing = [text for text in runner_contract if text not in runner]
+    assert missing == [], f"plugin test runner の SSOT/cwd/fail-closed 契約が欠落: {missing}"
+    assert 'TEST_GLOBS: tuple[str, ...] = ("test_*.py", "*_test.py")' in discovery, (
+        "discover_repo_tests SSOT が pytest の両方の test file glob を定義していない"
     )
 
 

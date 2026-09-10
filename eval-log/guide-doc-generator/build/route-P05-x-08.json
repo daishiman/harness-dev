@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-08",
+  "covered_task_ids": [
+    "P05-x-08"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "アクセント色がトークンファイルのトップレベルキーから解決できる",
+      "method": "当方が assets/tokens/*.json のトップレベルキーを列挙し、テーマ切替の差分テストを実行した",
+      "result": "pass (pop.json / warm-sand.json のトップレベルに `--pop-primary` と `accent` および根拠を残す `accent_top_level_note` が存在する。tests/render-handout.py の test_accent_token_change_only_diffs_root_block を含む 219 件が緑)"
+    },
+    {
+      "claim": "既存の accent.scale と css_variables の内容を壊していない",
+      "method": "当方がトップレベルキー一覧に accent / css_variables が併存することを確認し、render 側 219 件と自己完結ゲート 354 件を実行した",
+      "result": "pass (accent と css_variables は従来のまま残っており、トップレベルキーは追加であって置換ではない。関連スイート全件緑)"
+    }
+  ],
+  "deviations": []
+}

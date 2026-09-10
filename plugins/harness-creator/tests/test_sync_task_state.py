@@ -429,6 +429,115 @@ def test_renew_lease_rejects_non_running():
         sts.renew_lease(_state(_node("T1", "pending")), "T1", T0, 3600)
 
 
+def test_main_batch_renew_uses_one_atomic_state_write(tmp_path, monkeypatch):
+    state_path = tmp_path / "task-state.json"
+    state_path.write_text(json.dumps(_state(
+        _node("T1", "running", lease_expires_at="2026-07-06T12:30:00Z"),
+        _node("T2", "running", lease_expires_at="2026-07-06T12:30:00Z"),
+    )), encoding="utf-8")
+    writes = []
+    real_write = sts.atomic_write_state
+
+    def _counted(path, state):
+        writes.append(path)
+        return real_write(path, state)
+
+    monkeypatch.setattr(sts, "atomic_write_state", _counted)
+    assert sts.main([
+        "--task-state", str(state_path), "--events", str(tmp_path / "events.jsonl"),
+        "--task-id", "T1", "--task-id", "T2", "--renew-lease", "--lease-seconds", "60",
+    ]) == 0
+    assert writes == [state_path]
+    saved = {node["id"]: node for node in json.loads(state_path.read_text(encoding="utf-8"))["nodes"]}
+    assert saved["T1"]["lease_expires_at"] == saved["T2"]["lease_expires_at"]
+
+
+def test_main_batch_transition_failure_is_atomic(tmp_path):
+    state_path = tmp_path / "task-state.json"
+    original = _state(_node("T1"), _node("T2", "done"))
+    state_path.write_text(json.dumps(original), encoding="utf-8")
+    assert sts.main([
+        "--task-state", str(state_path), "--events", str(tmp_path / "events.jsonl"),
+        "--task-id", "T1", "--task-id", "T2", "--to-state", "running",
+    ]) == 1
+    assert json.loads(state_path.read_text(encoding="utf-8")) == original
+
+
+def _phase_projection_graph(duplicate=False, missing=False):
+    proof_edges = [
+        {"type": "depends_on", "from": "P01", "to": "C1"},
+        {"type": "depends_on", "from": "P01", "to": "C2"},
+    ]
+    if duplicate:
+        proof_edges.append(dict(proof_edges[0]))
+    if missing:
+        proof_edges.pop()
+    return {
+        "nodes": [
+            {"id": "P01", "execution_kind": "phase-gate"},
+            {"id": "P02", "execution_kind": "phase-gate"},
+            {"id": "C1", "execution_kind": "verification-claim"},
+            {"id": "C2", "execution_kind": "verification-claim"},
+            {"id": "FUTURE", "execution_kind": "verification-claim"},
+        ],
+        "edges": [
+            {"type": "parent_of", "from": "P01", "to": "C1"},
+            {"type": "parent_of", "from": "P01", "to": "C2"},
+            {"type": "parent_of", "from": "P02", "to": "FUTURE"},
+            {"type": "depends_on", "from": "P02", "to": "FUTURE"},
+            *proof_edges,
+        ],
+    }
+
+
+def test_phase_gate_projection_projects_ready_and_skips_future_pending(tmp_path):
+    report = _route_report(tmp_path, covered=["C1", "C2"])
+    state = _state(
+        _node("P01"), _node("P02"),
+        _node("C1", "done", route_report=report),
+        _node("C2", "done", route_report=report),
+        _node("FUTURE"),
+    )
+    out, projected = sts.project_phase_gates(state, _phase_projection_graph())
+    by_id = {node["id"]: node for node in out["nodes"]}
+    assert [item["task_id"] for item in projected] == ["P01"]
+    assert by_id["P01"]["state"] == "done"
+    assert by_id["P02"]["state"] == "pending"
+    assert by_id["P01"]["proof_refs"] == [
+        {"task_id": "C1", "evidence_report_ref": report},
+        {"task_id": "C2", "evidence_report_ref": report},
+    ]
+
+
+def test_phase_gate_projection_fails_closed_on_done_child_missing_proof(tmp_path):
+    report = _route_report(tmp_path, covered=["C1"])
+    state = _state(_node("P01"), _node("P02"),
+                   _node("C1", "done", route_report=report), _node("C2", "done"), _node("FUTURE"))
+    with pytest.raises(ValueError, match="proof ref"):
+        sts.project_phase_gates(state, _phase_projection_graph())
+
+
+def test_phase_gate_projection_fails_closed_when_report_does_not_cover_child(tmp_path):
+    report = _route_report(tmp_path, covered=["C1"])
+    state = _state(_node("P01"), _node("P02"),
+                   _node("C1", "done", route_report=report),
+                   _node("C2", "done", route_report=report), _node("FUTURE"))
+    with pytest.raises(ValueError, match="covered_task_ids"):
+        sts.project_phase_gates(state, _phase_projection_graph())
+
+
+@pytest.mark.parametrize("kind", ["duplicate", "missing"])
+def test_phase_gate_projection_fails_closed_on_proof_edge_mismatch(tmp_path, kind):
+    report = _route_report(tmp_path, covered=["C1", "C2"])
+    state = _state(_node("P01"), _node("P02"),
+                   _node("C1", "done", route_report=report),
+                   _node("C2", "done", route_report=report), _node("FUTURE"))
+    with pytest.raises(ValueError, match="proof dependency"):
+        sts.project_phase_gates(
+            state, _phase_projection_graph(duplicate=kind == "duplicate", missing=kind == "missing")
+        )
+
+
 # ─────────────────────────── pin_graph_hash ───────────────────────────
 def test_pin_graph_hash_sets_when_unset():
     h = "sha256:" + "a" * 64

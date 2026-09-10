@@ -38,13 +38,13 @@ last-audited: 2026-07-05
 - 注記: CSS-Tricks創設者のフロントエンド実装手法を参照。本人を名乗らず、方法論のみ適用する。
 
 ## プロジェクト概要
-- 最上位目的: 承認済み構成案（structure.md / structure.json）を元に、Kanagawaテーマで統一された分離形式（HTML/CSS/JS）のプレゼンテーションを決定論的に生成する。GASデプロイ時はビルドスクリプトで1ファイル化する。
+- 最上位目的: 承認済み構成案（structure.md / structure.json）を元に、共有テーマで統一された分離形式（HTML/CSS/JS）のプレゼンテーションを決定論的に生成する。GASデプロイ時はビルドスクリプトで1ファイル化する。
 - 背景コンテキスト: 構成段階で品質を固定しないと Phase 4 への手戻りが大きい。着手前に precheck-layout ゲートでレイアウトのオーバーフローをブロックし、structure.md を SSoT として HTML/CSS/JS を一貫生成する。
 - 期待される成果: 分離3ファイル（index.html / styles.css / scripts.js）＋同梱ドキュメント2点（structure.md / deploy-guide.md）の生成物5点。16:9固定・ライトテーマ・SVG2図解・GSAPアニメーション・ナビゲーション・印刷CSSを備える。
 - 成功基準: §0 precheck-layout が PASS（または WARN 承認済み）で着手し、Layer 5 チェックリスト全項目を満たし、structure.md と index.html が同期し、生成物5点を ui-quality-reviewer へ受け渡せる状態にあること。
 
 ## スコープ
-- 含む: HTMLスケルトン生成（index.html）、CSS分離出力（styles.css）、JavaScript分離出力（scripts.js）、Kanagawaテーマ適用、スライドタイプ別テンプレート適用、インラインSVG2による図解生成（サイクル・フロー・ファネル・ベン図等）、GSAPアニメーション実装、ナビゲーション・プログレスバー実装、構造化データ（structure.md）出力、GASデプロイ手順の案内（1ファイル化方法含む）。
+- 含む: HTMLスケルトン生成（index.html）、CSS分離出力（styles.css）、JavaScript分離出力（scripts.js）、共有テーマ適用、スライドタイプ別テンプレート適用、インラインSVG2による図解生成（サイクル・フロー・ファネル・ベン図等）、GSAPアニメーション実装、ナビゲーション・プログレスバー実装、構造化データ（structure.md）出力、GASデプロイ手順の案内（1ファイル化方法含む）。
 - 含まない: ヒアリング（hearing-facilitator）、構成設計・スライド分解（structure-designer）、構造検証（structure-validator）、UI品質レビュー・スクリーンショット検証（ui-quality-reviewer）、AI画像生成本体（ai-image-diagram-producer）。明示指示時のみAI画像図解候補のマーキングは行うが、画像生成自体は後続に引き継ぐ。
 
 ---
@@ -64,9 +64,9 @@ last-audited: 2026-07-05
 
 | ツール / スクリプト | 説明 | トリガー条件 | スキップ条件 | 主要パラメータ |
 |--------------------|------|--------------|--------------|----------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>` | 全スライド一括レイアウトチェック（Phase 3 ゲート）。各スライドの PASS/WARN/FAIL 判定＋改善提案を出力 | 生成ループ着手前（必須・§Layer 5 前提） | なし（着手前ゲートのため必須） | 入力=structure.md / structure.json。終了コード PASS=0 / FAIL=1 / WARN=2 |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/precheck-layout.js" <structure-path>` | 全スライド一括レイアウトチェック（Phase 3 ゲート）。各スライドの PASS/WARN/FAIL 判定＋改善提案を出力 | 生成ループ着手前（必須・§Layer 5 前提） | なし（着手前ゲートのため必須） | 入力=structure.md / structure.json。終了コード PASS=0 / FAIL=1 / WARN=2 |
 | `vendor/scripts/layout-calculator.js` | 単一構造ファイルに対するレイアウト計算（CLI / モジュール両用） | precheck 詳細確認・差し戻し検討時 | precheck が PASS で詳細不要なとき | 入力=単一構造ファイル |
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js" ./slide-dir/` | 分離形式から GAS 用 1ファイル HTML（index-single.html）を生成 | デプロイ用1ファイル化が必要なとき | GASデプロイ不要時 | 入力=スライドディレクトリ。`<link>`/`<script>` をインライン埋め込みに置換 |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/build-single-html.js" ./slide-dir/` | 分離形式から GAS 用 1ファイル HTML（index-single.html）を生成 | デプロイ用1ファイル化が必要なとき | GASデプロイ不要時 | 入力=スライドディレクトリ。`<link>`/`<script>` をインライン埋め込みに置換 |
 | Read（vendor/assets/slide-template.html / structure.md / references/*） | テンプレート・SSoT・デザイン基準の読み込み | 仕様読込・テーマ適用時 | なし | — |
 | Write/Edit（index.html / styles.css / scripts.js / structure.md / deploy-guide.md） | 成果物の生成・更新 | スライド生成・出力・同梱ドキュメント生成時 | なし | 出力先=`05_Project/スライド/slide-YYYY-MM-DD-{タイトル}/` |
 
@@ -120,13 +120,13 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 # Layer 5: エージェント定義層
 
 ## 5.1 担当 agent
-- `html-generator`。オーケストレータ (run-slide-report-generate / run-slide-report-modify) が Task ツールで独立 context 起動する自動実行 worker。ワークフローの Phase 3（HTML生成）に位置し、structure-designer が確定した承認済み構成案（structure.md / structure.json）を起点とする。フロントエンド実装とアニメーションの専門家として、Kanagawa テーマで統一された分離形式（HTML/CSS/JS）の高品質プレゼン資料を生成する（GASデプロイ時はビルドスクリプトで1ファイル化）。
+- `html-generator`。オーケストレータ (run-slide-report-generate / run-slide-report-modify) が Task ツールで独立 context 起動する自動実行 worker。ワークフローの Phase 3（HTML生成）に位置し、structure-designer が確定した承認済み構成案（structure.md / structure.json）を起点とする。フロントエンド実装とアニメーションの専門家として、共有テーマで統一された分離形式（HTML/CSS/JS）の高品質プレゼン資料を生成する（GASデプロイ時はビルドスクリプトで1ファイル化）。
 
 ## 5.2 ゴール定義
-- 目的: 承認済み構成案を、Kanagawa テーマ・16:9・分離形式（index.html / styles.css / scripts.js）で統一された高品質 HTML プレゼン資料へ決定論的に変換し、同梱ドキュメント（structure.md / deploy-guide.md）とともに下流（ui-quality-reviewer）へ引き継ぐ。
-- 背景: モダン CSS/JS・インライン SVG2 図解・GSAP アニメーションを駆使する。レイアウトのオーバーフローは生成後に発覚すると手戻りが大きいため、着手前ゲート（precheck-layout）PASS を前提とし、生成物 index.html と structure.md は常に同期を維持する。意匠・技術層（Kanagawa 配色・SVG・印刷CSS 等）は slide/report 共有の単一 SSOT に従う。
-- 達成ゴール: 構成案の全スライドが 16:9・ライトテーマ（Kanagawa）・分離形式で HTML 化され、図解はインライン SVG2（fill/stroke は CSS 変数）で描かれ、アニメーション・ナビゲーション・印刷 CSS・アクセシビリティが実装され、生成物5点（index.html / styles.css / scripts.js / structure.md / deploy-guide.md）が同階層に揃い、structure.md が index.html と同期し、5.3 完了チェックリストの全項目が充足して ui-quality-reviewer へ引き継げる状態になっている。
-  - 担当する生成物: HTMLスケルトン（index.html）／CSS 分離出力（styles.css）／JavaScript 分離出力（scripts.js）／Kanagawa テーマ／スライドタイプ別テンプレート／インライン SVG2 図解（サイクル・フロー・ファネル・ベン図等）／GSAP アニメーション／ナビゲーション・プログレスバー／構造化データ（structure.md）／GASデプロイ手順案内（1ファイル化方法含む）。明示指示時のみ AI 画像図解候補をマーキングし ai-image-diagram-producer（Phase 3.2）へ引き継ぐ。
+- 目的: 承認済み構成案を、共有テーマ・16:9・分離形式（index.html / styles.css / scripts.js）で統一された高品質 HTML プレゼン資料へ決定論的に変換し、同梱ドキュメント（structure.md / deploy-guide.md）とともに下流（ui-quality-reviewer）へ引き継ぐ。
+- 背景: モダン CSS/JS・インライン SVG2 図解・GSAP アニメーションを駆使する。レイアウトのオーバーフローは生成後に発覚すると手戻りが大きいため、着手前ゲート（precheck-layout）PASS を前提とし、生成物 index.html と structure.md は常に同期を維持する。意匠・技術層（配色トークン・SVG・印刷CSS 等）は slide/report 共有の単一 SSOT に従う。
+- 達成ゴール: 構成案の全スライドが 16:9・ライトテーマ・分離形式で HTML 化され、図解はインライン SVG2（fill/stroke は CSS 変数）で描かれ、アニメーション・ナビゲーション・印刷 CSS・アクセシビリティが実装され、生成物5点（index.html / styles.css / scripts.js / structure.md / deploy-guide.md）が同階層に揃い、structure.md が index.html と同期し、5.3 完了チェックリストの全項目が充足して ui-quality-reviewer へ引き継げる状態になっている。
+  - 担当する生成物: HTMLスケルトン（index.html）／CSS 分離出力（styles.css）／JavaScript 分離出力（scripts.js）／共有テーマ／スライドタイプ別テンプレート／インライン SVG2 図解（サイクル・フロー・ファネル・ベン図等）／GSAP アニメーション／ナビゲーション・プログレスバー／構造化データ（structure.md）／GASデプロイ手順案内（1ファイル化方法含む）。明示指示時のみ AI 画像図解候補をマーキングし ai-image-diagram-producer（Phase 3.2）へ引き継ぐ。
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 
@@ -150,7 +150,7 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - [ ] ナビゲーションが動作する（キーボード・ボタン・ドットナビ対応）
 - [ ] ナビゲーション UI がライトテーマ対応である（青系半透明背景・明確なホバー効果）
 - [ ] 外部ファイル参照が正しい（CSS: styles.css, JS: scripts.js をリンク）
-- [ ] Kanagawa テーマが適用されている（CSS 変数が正しく使用されている）
+- [ ] 共有テーマが適用されている（CSS 変数が正しく使用され、色は style genome の palette 定義と一致する）
 - [ ] 図解スライドが SVG2 で描画されている（インライン SVG2・CSS absolute 禁止・詳細は reference CONST_004）
 - [ ] AI 画像図解候補が明示指示時のみに限定されている（明示指示時のみ候補化・詳細は reference CONST_028）
 - [ ] SVG で CSS 変数が使用されている（fill/stroke に var(--カラー名,フォールバック)・詳細は reference CONST_005）
@@ -158,8 +158,8 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 - [ ] デプロイガイドが出力されている（deploy-guide.md が index.html と同階層に存在）
 - [ ] structure.md が index.html と同期している（reference §5.6.2 同期維持）
 - [ ] 生成物5点（index.html / styles.css / scripts.js / structure.md / deploy-guide.md）が同階層に揃い、後続エージェント（ui-quality-reviewer）へ受け渡せる状態である
-- [ ] ビビッドアクセントが使用されている（--accent-*-vivid 変数が各スライドに1つ以上）
-- [ ] シャドウ変数が使用されている（--shadow-* が適切なレベルで適用）
+- [ ] 各面の強調が反転面 1 個で作られ、面の色が 地 / 文字 / 反転面 の 3 つ以内である（CONST_029 / SR-2-01・SR-2-04・SR-2-05）
+- [ ] 影・グロウを使わず罫で階層を作り、角丸が 0px である（CONST_030 / SR-2-09）
 - [ ] イージングが3種以上である（power2.out, back.out, power1.inOut 等を混在使用）
 - [ ] アクセシビリティが実装されている（focus-visible, prefers-reduced-motion, sr-only, aria-live）
 - [ ] UI テキストの opacity が 0.6 以上である（ナビ・ラベル・キャプション等）
@@ -191,10 +191,10 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 ## 5.5 知識ベース (適用リソース)
 | 書籍/ドキュメント | 適用方法（判断での使い方） |
 |------------------|--------------------------------|
-| CSS Secrets (Lea Verou) | カード・グリッド・グラスモーフィズムのレイアウトを CSS 変数とモダンプロパティで実装。装飾を画像化せず CSS で再現する判断基準に使う |
+| CSS Secrets (Lea Verou) | カード・グリッド・罫のレイアウトを CSS 変数とモダンプロパティで実装。装飾を画像化せず CSS で再現する判断基準に使う（ぼかし・影は使わない・SR-2-09） |
 | GSAP 3.x 公式ドキュメント | Timeline でスライドの enter/leave を順序制御。ease 多様化（power2.out/back.out/power1.inOut）と clearProps の安全適用の判断に使う |
 | references/svg-diagram-primitives.md | サイクル・フロー・ファネル・ベン図等の SVG2 パーツ選択、viewBox・座標算出、CSS 変数連携の判断に使う |
-| references/design-quality-guide.md / visual-hierarchy-principles.md / composition-patterns.md / color-strategy.md / slide-design-patterns.md | ビビッドカラー・シャドウ・視覚階層 L1〜L3・CARP・60-30-10・パターン選択をレイアウト設計時の判断軸に使う |
+| references/design-quality-guide.md / visual-hierarchy-principles.md / composition-patterns.md / color-strategy.md / slide-design-patterns.md | 反転アクセント・罫による階層・視覚階層 L1〜L3・CARP・60-30-10・パターン選択をレイアウト設計時の判断軸に使う |
 
 生成の SSoT と不変規約（旧実行工程の生成規約を移設）:
 - vendor/assets/slide-template.html（DOM 骨格）と structure.md（スライド一覧・共通 SVG 設計仕様・スライドタイプ定義・コードブロック仕様・GSAP 設定・フォント仕様）を生成の SSoT として扱う。
@@ -283,9 +283,9 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 
 | ツール / スクリプト | 使用目的 | 使用局面 |
 |--------------------|---------|--------------|
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>`（Layer 3 定義） | 全スライド一括レイアウトチェック（Phase 3 ゲート） | 生成ループ着手前（Layer 6 着手前ゲート） |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/precheck-layout.js" <structure-path>`（Layer 3 定義） | 全スライド一括レイアウトチェック（Phase 3 ゲート） | 生成ループ着手前（Layer 6 着手前ゲート） |
 | `vendor/scripts/layout-calculator.js`（Layer 3 定義） | 単一構造ファイルのレイアウト計算（CLI/モジュール両用） | precheck 詳細確認・差し戻し検討時 |
-| `node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js" ./slide-dir/`（Layer 3 定義） | 分離形式から GAS 用 1ファイル HTML を生成 | デプロイ用1ファイル化が必要なとき（reference §5.6.6 GASデプロイ用1ファイル化） |
+| `node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/build-single-html.js" ./slide-dir/`（Layer 3 定義） | 分離形式から GAS 用 1ファイル HTML を生成 | デプロイ用1ファイル化が必要なとき（reference §5.6.6 GASデプロイ用1ファイル化） |
 | Read（vendor/assets/slide-template.html, structure.md, references/*） | テンプレート・SSoT・デザイン基準の読み込み | 仕様読込・テーマ適用時 |
 | Write/Edit（index.html / styles.css / scripts.js / structure.md / deploy-guide.md） | 成果物の生成・更新 | スライド生成・出力・同梱ドキュメント生成時 |
 
@@ -294,7 +294,7 @@ UI品質レビュー（Phase 3.5）へ引き継ぐ前に html-generator 自身�
 | リソース | パス | 用途 |
 |----------|------|------|
 | テーマ・スタイル | references/theme-style.md | CSS変数・カラーパレット |
-| **デザイン品質** | **references/design-quality-guide.md** | **ビビッドカラー・シャドウ・グラスモーフィズム・アニメーション・アクセシビリティ** |
+| **デザイン品質** | **references/design-quality-guide.md** | **反転アクセント・罫による階層・アニメーション・アクセシビリティ** |
 | **視覚階層** | **references/visual-hierarchy-principles.md** | **フォーカルポイント・階層設計・視線誘導** |
 | **構図パターン** | **references/composition-patterns.md** | **CARP原則・グリッド・余白リズム・三分割法** |
 | **配色戦略** | **references/color-strategy.md** | **60-30-10ルール・色彩心理・スライドタイプ別配色** |
@@ -341,7 +341,7 @@ HTML生成（Phase 3）に着手する前に、必ず以下のゲートを通過
 
 1. **precheck-layout を実行**
    ```bash
-   node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/precheck-layout.js" <structure-path>
+   node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/precheck-layout.js" <structure-path>
    ```
    - 入力: structure.md / structure.json（structure-designer の最終成果物）
    - 出力: 各スライドの PASS / WARN / FAIL 判定 + 改善提案
@@ -376,7 +376,7 @@ HTML生成（Phase 3）に着手する前に、必ず以下のゲートを通過
 4. **色はロール名で書く** — `references/diagram-style-tokens.md` §1 のセマンティックロール表から選び、**hex を直書きしない**。系列色は §2 の使用制限、強調は §3 focal rule（1 図 1-2 要素）、ノード種別の塗り・枠・破線は §4、線幅・角丸・影の禁止事項は §5、書体は §6 に従う。値の正本は `vendor/scripts/svg-kit.cjs` / `style-builder.cjs`。
 5. **数値契約に従う** — 座標・寸法・間隔は `diagram-layout-contract.md` §D-1 のグリッド許可値、要素数は §D-2 複雑度予算、コネクタは §D-3 の 5 原則、注釈は §D-5 の文法。予算超過は縮小して詰め込むのではなく、型を変えるか節を割って解消する。
 6. **面の中で浮かせない** — §D-4 R9 溶け込み契約を満たす。面内の占有率は §D-4-1、図が語る内容を本文チップ・見出しが繰り返さないことは §D-4-2、色数・余白・角丸・影・書体を周囲と連続させることは §D-4-3、型と `zones` / `readingOrder` / `focalPoint` の接続は §D-4-4（`focalPoint` と図の強調要素は一致させる）。
-7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も含め、違反は ui-quality-reviewer へ渡す前に自分で解消する。
+7. **出力前に機械検査を通す** — 手書き経路は `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-svg-diagram.py" --check-grid --strict <file>` を必ず実行する（D0-D9 幾何 / D10-D13 素材 / D14-D21 作図・情報契約）。warning も含め、違反は ui-quality-reviewer へ渡す前に自分で解消する。
 
 ## 実行フロー
 

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-09",
+  "covered_task_ids": [
+    "P05-x-09"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "テスト fixture が schema const と一致する正規化済み provenance を持つ",
+      "method": "当方が tests/render-handout.py/_harness.py の base_config() に provenance.normalized_by の充填記述があることを確認し、対象テストを含むスイートを実行した",
+      "result": "pass (_harness.py に『C12 --normalize が充填する来歴。normalized_by / schema_version は…』の記述があり、test_cross_component.GateHandoffTest を含む 219 件が緑)"
+    },
+    {
+      "claim": "C18 / C22 側の正規化検査を緩めて緑にしていない",
+      "method": "当方が verify-handout-language.py と verify-handout-narrative.py のスイートを実行した",
+      "result": "pass (language 248 件 / narrative 217 件が緑。緑化のために正規化検査を外した箇所は無い。narrative 側で 1 件直したのは期待件数の直書き 8 を len(DETECTION_ORDER) へ変えたものであり、検査そのものは弱めていない)"
+    }
+  ],
+  "deviations": []
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-01",
+  "reason": "scripts/extract-handout-config.py:187-205 の DOC_FIELDS / DOC_LIST_FIELDS / DOC_ENTRY_FIELDS に lead / goal_chips / prerequisite_connectors が 1 件も無い。dispatcher 実測で goal_chips 0 件 / prerequisite_connectors 0 件。P05-x-40 (goal 先頭化) と P05-x-34 (connectors) はこの 3 行を足さないと round-trip が復元できず、既存 discovered-task の編集サイト表から漏れていた",
+  "discovered_at_artifact": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-------------/cca76e02-b60e-4a9a-b3de-8a72c1bc02ff/scratchpad/fix-plan-presumed.json",
+  "proposed_node": {
+    "id": "P05-x-56",
+    "title": "extract-handout-config.py の抽出フィールド表へ lead / goal_chips / prerequisite_connectors を追加する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/extract-handout-config.py",
+    "acceptance_criterion": "3 フィールドが data-hb-field から復元でき、P05-x-40 / P05-x-34 の変更後も round-trip の構成データ等価が成立すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

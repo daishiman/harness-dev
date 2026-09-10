@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "ref-handout-design-system",
+    "skill_md_sha256": "7c69ed2b469a4dfd2b05bc2c133130abfdc0ead0ef751fac44378a86c4a3ffd5"
+  },
+  "review_kind": "rubric",
+  "verdict": "FAIL",
+  "findings_summary": {
+    "contradiction": 2,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 1
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-18T13:22:58Z",
+  "iterations": 1,
+  "human_review_required": true,
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": [
+      "rubric-high-severity-0",
+      "AC-C04-8",
+      "AC-C04-10",
+      "AC-C04-16",
+      "ref-prefix-規約整合"
+    ],
+    "positive_feedback": [
+      "面 5 末尾の fail-closed 回答規則『参照先のキーが正本ファイルに存在しないときは、記憶や推測で埋めない。「未確定」と答え、正本の owner へ差し戻す』は、本 cycle が繰り返し検出している fail-open (不在を素通しする条件) の逆であり、規範として横展開に値する。面 4 の第 7 項『断定できないことは「未確定」と書く』とも整合しており、後付けの言い訳ではなく既存規範の適用として置かれている。"
+    ],
+    "negative_feedback": [
+      "[high] rubric high severity 0 を満たさない。high が 2 件残っている (references/answer-patterns.md が 4 面のまま据え置かれ面 5 の問い合わせを担当外へ差し戻す件、および config/handout-visual-policy.json の参照キー 3 本 + nav_item が実在せず面 5 の 2 箇条が必ず未確定へ落ちる件)。詳細は elegance-verdict.json の negative_feedback を参照。",
+      "[high] AC 被覆の欠落。AC-C04-8 の REQUIRED_FACES は brief の 4 面をハードコードした第 2 正本で、brief が 5 面へ動いても追随しない。面 5 に対応する AC は 1 件も存在せず (AC-C04-1〜23 のいずれも R25・hero-card・visual-policy・nav_item に言及しない)、37 passed は差分の品質を一切保証していない。テストで担保できない以上、この面の品質保証手段はレビューのみであり、レビューが high を検出した本件で PASS を出す余地は無い。",
+      "[medium] AC-C04-16 の `\"400\" not in body` は本文全体への部分一致であり、依頼で名指しされた fail-open の実例そのものである。SKILL.md 側の『既定 400』が C11 ブリーフの R25/REQ-7 改定 (既定 100) と食い違っても、この検査は緑のまま通る。値の正本は C11 ブリーフと assets/tokens/*.json の間で既に 2 つに割れているため、SKILL.md 単独の修正では閉じない。",
+      "[medium] 面 5 の DOM ポインタが位置指定 (『冒頭ブロックのエントリ』) であり、面 1 が自ら宣言した述語 (section_scope) を使っていない。AC-C04-10 の B\\d{2} 禁止を守りつつ述語で書く解が config/handout-parts.json に実在する (当該 2 部品は section_scope=document)。",
+      "[medium] ref- 規約: disable-model-invocation が false。ref-skill-naming-convention は ref- に true を必須としている。既存の不整合であり今回の差分由来ではないが、規約整合として未解決である。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "human_review"
+  },
+  "notes": "profile=incremental。30 思考法は不使用。criteria_evaluated の出所を明記する: この skill の frontmatter には kind: ref のため feedback_contract.criteria が無く、突合先の正本が存在しない。AC-C04-8 / AC-C04-10 / AC-C04-16 は tests/ref-handout-design-system/contract_lib.py と同 README.md に実在する id を引いたが、rubric-high-severity-0 と ref-prefix-規約整合 は正本が無いため評価者が今回の観点として自分で定めた id である。両論併記が必要な争点: builder が置いた fail-closed 規則 (不在キーは未確定と答え owner へ差し戻す) の評価について、(i) 擁護論としては、正本が後から埋まる前提で参照先だけ先に固定する設計は、実値を skill 本文へ複製するより厳密に良く、fail-open で誤った値を答える経路を先に閉じている点で本 cycle の主要欠陥型を回避している。(ii) 反対論としては、実在しないキーを名指す面を追加した時点で SKILL.md は dangling pointer を抱えており、この面は現 repo で 100% 未確定しか返さない。すなわち面としての機能はゼロで、追加された正味の内容は『未確定と答える』だけである。参照専用 skill にとって参照先の実在は機能そのものであるから、これは omission であり dependency_break でもある。評価者の判定は (ii) 寄りだが、決め手はそこではない。fail-closed 規則の当否と独立に、answer-patterns.md が 4 面のまま面 5 の問い合わせを担当外へ差し戻す欠陥 (high) が残るため、いずれの立場でも PASS は出せない。したがって INCOMPLETE ではなく FAIL とした。ただし config/handout-visual-policy.json にキーを足すか面 5 を撤回するかは C12 (visual-policy owner) と C11 (block_body_max_chars の値) の判断を要し、C04 builder 単独では閉じられないため human_review_required: true とし next_action=human_review とした。SKILL.md は変更していない (sha256 不変)。"
+}

@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-20",
+  "covered_task_ids": [
+    "P05-x-20"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator/",
+  "verified_by": [
+    {
+      "claim": "schema 準拠の構成データが C12 に受理され、かつ C11 が exit 0 で描画する (受入基準の本体)",
+      "method": "**当方が端から端まで独立に実行した**。新テストの `schema_config()` で構成データを組み、まず `validate-handout-config.py --config` へ通し、次に同じ JSON を `render-handout.py --config --out` へ通して生成 HTML の `data-hb-part` 出現数を数えた",
+      "result": "pass (**構成データは `normalized` キーも `nav` キーも持たない** — 実測で双方 False。C12 exit 0 で `sections=1 parts=18 warnings=0`。C11 exit 0 で **`data-hb-part` が 33 箇所・ユニーク 25 種**。**着手前は `blocks_by_type: {}` で部品が 1 件も描かれなかったのだから、パイプラインが初めて端から端まで繋がったことになる**)"
+    },
+    {
+      "claim": "上記の緑が『検査へ到達していない緑』ではない (投影層が実際に働いており、素通ししていない)",
+      "method": "**当方が 3 通りの反例を独立に注入して実測した** (メモリ上の deepcopy に対して行い、ディスク上の正本には触れていない)",
+      "result": "pass (`provenance.normalized_by` 削除 → exit 1 / parts 0 / `正規化済みの証拠が無い (期待値 'validate-handout-config.py')`。同キーを偽値へ → 同じく exit 1。未知 part id `B99` → exit 1 / `部品カタログに無い part id である: 'B99' (既定部品へフォールバックしない)`。**3 通りとも区別可能な診断を出し、いずれも silent fallback していない**)"
+    },
+    {
+      "claim": "schema を 1 バイトも変更していない (検査を弱めて通していない)",
+      "method": "当方が `schemas/handout-config.schema.json` の mtime を実測",
+      "result": "pass (**mtime 23:46:46 で P05-x-12 の完了時点から不変**。本 leaf の実行窓 (00:14-00:28) の外。`additionalProperties` の緩和も `required` 外しも起きていない)"
+    },
+    {
+      "claim": "`normalized` を schema へ足さない判断が妥当である",
+      "method": "当方が `normalized_by_const()` の実装を読解",
+      "result": "pass (schema に既存の `$defs.provenance.properties.normalized_by.const` を**実行時に読んで**期待値とする形で、renderer へ値を焼き込んでいない。**同じ事実を運ぶ 2 本目のフィールドを増やさずに済ませており、判定基準の正本も schema 側のまま**。const が無ければ `LaunchError` で fail-closed)"
+    },
+    {
+      "claim": "`nav` を導出にした判断が PAT-1 に沿っている",
+      "method": "当方が生成 HTML のアンカーを実測し、構成データ側に nav が無いことと突合",
+      "result": "pass (構成データに `nav` キーが無いまま HTML のアンカーに `s1` (= `sections[].id`) が現れる。**目次と本文の二名簿が生じないため『nav 不整合』という失敗モード自体が消えている**。導出で足りる値を契約へ書き下さないという規律の適用例)"
+    },
+    {
+      "claim": "投影表が部品 id を新たに列挙していない",
+      "method": "当方が `PART_DATA_PROJECTIONS` の鍵を読解",
+      "result": "pass (鍵は **`data_block_type`** (steps / trio / table … の 18 語) で part id ではない。part id → block_type は `block_type_by_part_id()` が `config/handout-parts.json` から実行時に引く。**`Renderer.RENDERERS` と同じ語彙を使い第 2 の名簿を作っていない**旨がコメントで明示されている)"
+    },
+    {
+      "claim": "新テストの fixture 網羅がカタログ由来で、部品追加時に自動で赤くなる",
+      "method": "当方が `FixtureCoverageTest.test_every_in_section_part_has_a_schema_data_fixture` の構成を確認",
+      "result": "pass (`in_section_catalog_parts()` からカタログを引いて突合する形。**部品を足して fixture を足さなければ赤くなる**ため、テストが黙って古くなる経路を塞いでいる)"
+    },
+    {
+      "claim": "fixture が schema 適合であることを主張でなく実行で担保している",
+      "method": "当方が新テストのテスト名を確認し、さらに自分でも C12 を通した",
+      "result": "pass (`test_fixture_is_accepted_by_c12_as_schema_conformant` が実際に validator を起動している。**『schema 準拠のつもりの fixture』を自称で済ませていない**。当方の独立実行でも C12 exit 0)"
+    },
+    {
+      "claim": "3 スイートの失敗テスト名の集合が着手前から増えていない",
+      "method": "当方が 3 スイートを各テストディレクトリへ cd して再実行し、失敗テスト名の集合を採取 (件数でなく名前集合で判定)",
+      "result": "pass (render: Ran **207** (195→207 で追加 12 件はすべて緑)・失敗集合は `test_round_trip_equivalence` / `test_part_ids_are_not_enumerated_outside_the_catalog` の既知 2 件と一致。validate: Ran 278・失敗集合は既知 4 件と一致。extract: Ran 152 **OK** で空集合。**3 スイートとも 5 件目が増えていない**)"
+    },
+    {
+      "claim": "write_scope 外を変更していない",
+      "method": "当方が mtime を本 leaf の実行窓で絞って採取",
+      "result": "pass (`scripts/render-handout.py` (00:23) / `tests/render-handout.py/test_schema_dialect_input.py` (00:22) / `schemas/INPUT-CONTRACT-RESOLUTION.md` (00:27) の 3 件のみ。`schemas/handout-config.schema.json` (23:46) と `ROUNDTRIP-CONTRACT.md` (21:34) は窓の外で無改変)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "premise-refuted-by-worker",
+      "detail": "**当方の『乖離は blocks vs parts というキー名の問題』という枠組みが実体を大幅に過小評価していた**。実際には (a) 部品ごとに `data` のフィールド名が異なり (B03 は schema `rows[].text`/`sub` に対し renderer `items[].label`/`detail`)、(b) schema は画像・添付・図解を `asset_id`/`attachment_id`/`diagram_id` の**参照**で持つのに renderer は実体を部品内へ**展開**して持つ。つまり乖離は別名ではなく**正規化の段が 1 段違う**。結果として投影は 18 部品分の個別関数を要し、単純な rename では通らなかった。当方が task-spec の表に 3 行 (a)(b)(c) で書いた乖離は氷山の一角であり、**『dispatcher が数え上げた差分の件数』を worker の作業量見積もりに使ってはならない**ことの実例 (PAT-1 の変種: 差分の網羅性を dispatcher が保証できると仮定していた)"
+    },
+    {
+      "kind": "design-choice-recorded",
+      "detail": "worker は解 (A) schema 正本を採ったが、**純粋な (A) (旧方言の即時削除) は採らなかった**。`_harness.py` の全 fixture と `test_input_violations.py` の AC-C11-16 / AC-C11-8 が旧方言を固定しており、assert を弱めずに消すには fixture 全面移行が要る = 失敗集合が増えるため。旧方言を **deprecated 互換経路**として残し撤去手順を文書へ列挙した。**『正しい終着点』と『今この commit で安全に到達できる点』を分離し、後者を選んだうえで前者への道筋を残した**判断であり、受入基準 (失敗集合を増やさない) と裁定の一貫性を両立させている。解 (C) の中間層独立 component 案は『変換規則の正本が schema でも renderer でもない第 3 の場所に生まれる』ため退けられた"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "**孤児 follow-up 1 (`assets[].data_uri` → `src` へ寄せる) が現状のテスト群では実装不能であることが判明した**。`tests/extract-handout-config.py/test_marker_extraction.py` の AC-C20-06 は同一エントリに**原本相対パス (`src == \"assets/shot-1.png\"`) と data URI 本体の両方**が残ることを要求するが、schema のフィールドは `src` 1 本。したがって ROUNDTRIP-CONTRACT の裁定 (「data URI は捨てる」「`data_uri` キーを発明しない」) を実装すると現在 green の 2 件が赤になる。**これは PAT-7 (両立不能な二重契約) の新規事例であり、裁定文書とテストのどちらを動かすかの決着が要る。受け皿が無い**。なお renderer 内部の `_project_asset` が `data_uri` キーを作るが、これは描画モデル上の一時値で `--config-out` は投影前の入力を書き戻すため、裁定が禁じる『復元結果への新設』には当たらない (当方が確認)"
+    },
+    {
+      "kind": "blocked-item-became-measurable",
+      "detail": "**孤児 follow-up 2 (extract のマーカー読み側) は『測定不能』から『定量化済み』へ変わった**。本変更で初めてパイプラインが繋がり、extract は `sections=1 parts=18 exact=18 heuristic=0 unrecoverable=0` を報告する (投影前は部品が 1 件も描かれず復元しようがなかった)。残差も列挙済み: section の `role`/`ties_to`/`attainment_step`/`glossary` が復元されない、部品内テキストが兄弟要素ごとに分かれず連結される (B03 が `\"1資料を開く手元で開く5分\"`)、B05/B06/B12/B14 が別部品の形で復元される、B13 の `panel_parts` が平坦化、DIAGRAM の `diagram_id` に部品 id が入る。**`test_round_trip_equivalence` の赤はここへ移った**"
+    },
+    {
+      "kind": "unowned-followup-identified",
+      "detail": "**`script-brief-C11.json` が自己矛盾している**。`argv[0].description` / `algorithm[2]` (normalized:true) / `algorithm[7]` (nav と section id の 1:1) / `algorithm[16]` / `block_to_component_map` (`blocks[]`/`block.type`) は schema に存在しない入力形を要求する一方、同じ brief の `algorithm[5]`/`algorithm[6]` は『フィールド名と制約の正本は C12 の config_schema』と書いている。**worker はまさにこの自己矛盾を裁定の根拠に使った** (brief 自身が従属関係を宣言している以上、寄せる向きは一意)。brief 側の追随は起票済みの **P05-x-25** (C11/C20/C17 brief の未追随) の範囲へ入る"
+    },
+    {
+      "kind": "observation-recorded",
+      "detail": "投影で落ちる schema 由来の値が 6 件ある (B03 `rows[].num` / B09 `rows[].decided`・`show_counter` / B11 `copyable` / B12 `label` / IMG `lightbox` / B15 `key`)。これは投影の欠陥ではなく **renderer が元から描画未対応**であることの露出で、繋がって初めて見えた。worker は INPUT-CONTRACT-RESOLUTION.md §4 へ列挙している。**繋がっていない間は「未対応」と「未到達」が区別できなかった**"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲートは未実行。worker はこれを pass と偽装していない"
+    }
+  ]
+}

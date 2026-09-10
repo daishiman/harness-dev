@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c12-opens-prose-overview-codes",
+  "reason": "E-OVERVIEW-SECTION-MISSING は overview_type 属性で全体像セクションを識別する属性駆動の検査だが、config/handout-sections.json には overview_type も 3 型 (timeline/map/thesis) も未定義。属性が無い状態で検査を実装すると全 doc_type が落ちる",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c12-opens-prose-overview-codes.json",
+  "proposed_node": {
+    "id": "P05-x-131-overview-kind-config",
+    "title": "config/handout-sections.json へ全体像 3 型と overview_type 属性を定義する",
+    "phase_ref": "P05",
+    "entity_ref": "C12",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/config/handout-sections.json",
+    "acceptance_criterion": "kind_attribute_semantics に overview_type が定義され、timeline / map / thesis の 3 種別が section_kinds へ追加されて各々が overview_type を持つこと。flow-overview との関係 (集約・deprecated 化) が明記され、既存の flow_overview_relation と矛盾しないこと",
+    "execution_kind": "component-build",
+    "route_ref": "C12"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  }
+}

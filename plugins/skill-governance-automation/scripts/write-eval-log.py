@@ -34,9 +34,33 @@ REQUIRED_KEYS = ("rubric_id", "rubric_version", "rubric_hash", "target", "score"
 SCHEMA_VERSION = "1.0"
 
 
+def derive_plugin(record: dict) -> str:
+    """振り分け先 plugin 名。record → target パス → env → 'core' の順で決める。
+
+    以前は record['plugin'] が無ければ即 'core' だった。採点器はそのキーを
+    出していなかったので、eval-log/<plugin>/ という契約があるのに実際は全件が
+    eval-log/core/ へ落ちていた。集計はこのディレクトリを入力にするため、
+    どの plugin の品質が動いたのかが原理的に読めなくなる。
+    plugin 名は target パスに書いてあるのだから、書いてあるものを読む。
+    """
+    plugin = record.get("plugin")
+    if plugin:
+        return str(plugin)
+    target = record.get("target")
+    if isinstance(target, dict):
+        target = target.get("plugin") or target.get("path") or target.get("name")
+    if target:
+        parts = Path(str(target)).parts
+        if "plugins" in parts:
+            idx = parts.index("plugins")
+            if idx + 1 < len(parts):
+                return parts[idx + 1]
+    return os.environ.get("PLUGIN_NAME", "core")
+
+
 def resolve_log_path(record: dict) -> Path:
     base = os.environ.get("EVAL_LOG_DIR")
-    plugin = str(record.get("plugin") or "core")
+    plugin = derive_plugin(record)
     date = time.strftime("%Y-%m-%d")
     if base:
         return Path(base) / plugin / f"{date}-score.jsonl"
@@ -76,7 +100,7 @@ def normalize(record: dict) -> dict:
         skill_name = str(target or "unknown")
     record.setdefault("timestamp", time.strftime("%Y-%m-%dT%H:%M:%S%z"))
     record.setdefault("release", os.environ.get("RELEASE_VERSION", "local"))
-    record.setdefault("plugin", os.environ.get("PLUGIN_NAME", "core"))
+    record.setdefault("plugin", derive_plugin(record))
     record.setdefault("skill_name", skill_name)
     record.setdefault("threshold", 80)
     record.setdefault("schema_version", SCHEMA_VERSION)

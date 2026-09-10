@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C18",
+  "task_id": "P05-C18-01",
+  "covered_task_ids": [
+    "P05-C18-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/verify-handout-language.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (992 行)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で全 import を列挙し、grep -nE '^\\s+(import|from) [a-z]' で関数内 import を全走査",
+      "result": "pass (argparse / bisect / datetime / json / re / sys / unicodedata / html.parser.HTMLParser / pathlib.Path + __future__ の 9 本のみ。関数内 import 0 件。第三者ライブラリ・subprocess ともに 0)"
+    },
+    {
+      "claim": "C18 の自スイートが全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/verify-handout-language.py -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 248 / failures=0 / errors=0 / OK / 26.537s。実装前は failures=258 = 248 テスト + subTest 分)"
+    },
+    {
+      "claim": "C19 (route-handout-output.py) の残赤 5 件のうち C18 起因の 1 件が解消した",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/route-handout-output.py -p 'test_*.py' を当方が独立実行し FAIL 行を全列挙",
+      "result": "pass (Ran 113 / failures=2。実装前は failures=5。残る 2 件は test_cross_component.BundleWriterUniquenessTest の test_c01_delegates_placement_to_c19 と test_only_c19_builds_the_directory_name で、いずれも owner='C01' と明示された skills/run-handout-build/SKILL.md 未存在待ち。C19 が申し送った『C18 は <YYYY-MM-DD>-<dir_token>-<subject_slug> を日付整合違反として弾かないこと』は充足されている)"
+    },
+    {
+      "claim": "用途語彙・部品 id を script へ literal 列挙していない (SSOT 維持)",
+      "method": "grep -oE '\"(B[0-9]{2}|lecture|guide|onboarding|report|proposal|study-notes|study-plan|agenda)\"' を全文へ適用",
+      "result": "pass (0 件。部品は config/handout-parts.json の section_scope 述語のみで扱い、日付書式は schema の properties.date.pattern、命名側パターンはその pattern の replace('/','-') 純変換 (C19 と同一変換) で導出している)"
+    },
+    {
+      "claim": "閾値を script へ焼いていない",
+      "method": "LANG-05 の一文長上限の取得経路を実読",
+      "result": "pass (349-350 行で schemas/handout-config.schema.json の $defs.section.properties.lead_line.maxLength を実行時に読む。読めなければ exit 2 の fail-closed)"
+    },
+    {
+      "claim": "唯一の識別子リテラル capability-explainer が fail-closed で検証されている",
+      "method": "CAPABILITY_KIND_SLUG の全出現を実読",
+      "result": "pass (72 行で定義し 337 行で config/handout-sections.json の section_kinds[].slug 集合に実在することを起動時検査、不在なら exit 2。カタログが正本である旨のコメント付き。第 2 の正本を作らず、かつカタログ側の改名を検出できる形になっている)"
+    },
+    {
+      "claim": "責務境界を守り C16 を import していない",
+      "method": "grep -c 'verify-handout-selfcontained|spec_from_file_location'",
+      "result": "pass (0 件。裁定 G-03 は『絵文字判定・外部参照判定を行う場合は C16 へ委譲せよ』であり、C18 は LANG-01..07 / DATE-01..04 のいずれでも両判定を行わない。C18 のスイートには『拾わないこと』を要求する責務境界テストが含まれ全緑)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "テスト 9 ファイル + README.md の sha256 を worker 報告値と突合",
+      "result": "pass (10 ファイルすべて一致)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "plugins/guide-doc-generator/ 配下の mtime 走査と git status --porcelain の全体確認",
+      "result": "pass (本 leaf の書込は scripts/verify-handout-language.py 1 本のみ。worker が『自分の作業でない』と報告した harness-creator / plugin-dev-planner の 4 ファイル変更は当方が確認し、13:24 時刻の本セッション既存の外ループ修正 (emit/accept-discovered-task の execution_kind / task_spec_ref / produces / consumes 対応・207 行の純追加) であり本 leaf とも他 P05 leaf とも無関係と判明した)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "handoff-to-downstream-leaf",
+      "detail": "C11 (P05-C11-01) へ申し送り。tests/render-handout.py/test_cross_component.py の test_language_gate_passes は従来 script 不在で skip されていたが、C18 実装により fail へ変わった。原因は C11 の harness H.base_config() が provenance.normalized_by を持たない未正規化 config を C18 へ渡していることで、C18 は 'ERROR 構成データが正規化済みでない' として exit 2 を返す。これは brief C18 の exit_codes.2 と AC-C18-11 が明示的に要求する挙動であり C18 側では吸収できない (吸収すると未正規化 config を検証通過させる穴になる)。C11 leaf 側で正規化済み config を渡すよう fixture を直すこと"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 14 件。(1) 閾値・書式・正規化マーカーをすべて schema から実行時取得し、読めなければ exit 2 (2) LANG-07 の対象種別 slug のみ識別子として持ちカタログ実在を起動時検査 (3) LANG-07 の記号集合・名詞句規則・見出し最小長 3 文字・evidence 半径 40 文字は中立データに存在しないため script 内定数 (ブリーフ参照コメント付き) (4) DATE-01 の『冒頭』を『<header> の子孫、または section_scope==\"document\" 部品の先頭要素より文書順で前』と定義しヒーロー部品 id の焼き込みを回避 (5) 本文テキスト T から script/style/template に加え head 配下 (title 含む) を除外し属性値は含めない (6) LANG-01 は長さを保つ per-char NFKC fold で全角半角差を吸収しつつオフセットを保持、長い term を先に照合してその占有区間を短い term の初出から除外、英数 term のみ単語境界を適用 (7) LANG-06 はアンカーがちょうど 1 個でない section も 1 違反として計上し、1 section 最大 1 違反 (アンカー → 具体部品欠落 → 順序 の優先順) (8) LANG-07 も 1 section 最大 1 違反とし lead_line 不在時は LANG-04 と二重計上しない (9) DATE-02 の基準値は冒頭位置の最初の date-pill、無ければ文書順の最初の pill、0 個なら 1 違反 (10) stderr は FAIL<TAB>id<TAB>locator<TAB>target<TAB>reason<TAB>evidence の 6 フィールド固定、空欄は '-'、空白類は 1 個へ畳む (11) --json-report のキー構造は未確定 (README gap 1) のため detections[]/notes[]/info/out_of_scope[] を sort_keys+indent=2 で決定論出力、親ディレクトリ不在は解析前に exit 2 (12) config.date の書式不正 (README gap 4) は意図的に exit 2 化せず DATE-02/03 の突合値としてそのまま使用 (未確定事項へ判断を持ち込まない) (13) data-hb-glossary-first アンカー経路と section スコープ glossary は owner 未確定のため未採用 (14) --html 欠落時の ERROR 文言に 'date'/'validate' の部分文字列が入らないよう引数検査順を --html → --config → 正規化マーカー の順に固定 (C19 の cross-component テストが文言で判別するため)"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "README gap 1 (--json-report のキー名スキーマ) と gap 4 (config.date 書式不正時の exit code) は依然 owner 不在のまま。worker は決定論的な既定を置いて先へ進めたが、正本化されていないため C11 や C01 が別の想定でキーを読むと壊れる。P05-x-01 phase gate で owner を決めること。gap 13 の glossary アンカー経路も同様"
+    }
+  ]
+}

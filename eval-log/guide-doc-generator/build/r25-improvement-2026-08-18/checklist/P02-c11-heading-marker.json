@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c11-heading-marker",
+  "covered_task_ids": [
+    "P02-c11-heading-marker"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+  "acceptance_criterion_restated": "script-brief-C11.json の data-hb-field enum に heading が含まれ、見出しテキストのみを持つ要素へ付与する手順が algorithm に現れること。あわせて ROUNDTRIP-CONTRACT.md へ /assets/*/role のエントリが追加され、13 pointer の包含関係が brief 側と一致すること",
+  "verified_by": [
+    {
+      "claim": "data-hb-field の enum に heading が含まれることを確認した",
+      "method": "html_attribute_contract.attributes の data-hb-field 項の value 列挙を確認",
+      "result": "含まれている (P03-x-02 で追加済み)。直前ノード P02-c11-heading-field-marker で class 名ドリフトを解消し、契約を『マーカー要素の textContent が素値と完全一致』の 1 述語へ絞ってある"
+    },
+    {
+      "claim": "付与手順を algorithm へ現した (受入条件の未達部分はここだった)",
+      "method": "algorithm 手順 17 は (a) .section-label を『連番 + 見出し + 所要時間』と一括で書いており、内部構造の拘束を持っていなかった。属性を焼く手順 22b も『html_attribute_contract の全属性を漏れなく』という総則で、どの要素へ付けるかは属性契約側へ委ねている。つまり手順のどこにも『h2 ではなく内側要素へ付ける』が現れていなかった",
+      "result": "手順 17 を書き換え、(a) の内部構造が round-trip 契約に拘束されること、連番は派生物なので運搬体の外へ出すこと、h2 へ付けると textContent が '1全体の流れ' になり素値へ戻せないことを手順本文へ入れた"
+    },
+    {
+      "claim": "手順 17 の並びが実装と食い違っていたので実装側へ揃えた",
+      "method": "build_section の出力順を実測: h2(連番+見出し) → goal-chip → lead-line → section-duration → blocks → judgment-axis → glossary → memo。brief は所要時間を (a) の中に含めていた",
+      "result": "所要時間を独立要素として (d) の位置へ書き直した。brief 自身の中で『所要時間は運搬体の外』(data-hb-field 項) と『.section-label は所要時間を含む』(手順 17) が矛盾しており、実装は前者に従っていた。実装に一致する側を残した"
+    },
+    {
+      "claim": "裁定表の pointer を実測し、brief 側の対応を記録した",
+      "method": "ROUNDTRIP-CONTRACT.md の adjudications を全件列挙",
+      "result": "エントリは 15 件で受入条件が言う 13 ではない。roundtrip_marker_pointers を新設し、15 件の pointer 名を実測値として記録したうえで『本 brief は件数を主張しない』と明記した (件数を 2 箇所へ書くと裁定表の増減で必ずずれる)"
+    },
+    {
+      "claim": "/assets/*/role の欠落を確認して外へ出した",
+      "method": "adjudications に /assets/*/role が無いことを確認。一方 data-hb-asset-role は html_attribute_contract に定義があり render-handout.py も刻んでいる",
+      "result": "裁定表の実体は plugins/guide-doc-generator/schemas/ 配下で本ノードの write_scope 外のため、brief 側に known_gap として記録し P05-x-135-roundtrip-contract-asset-role を emit した。エントリ追加そのものは実施していない (受入条件のこの部分は未達であり、達成を主張しない)"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C11HM-SCOPE-01",
+      "level": "warn",
+      "summary": "受入条件が write_scope より広い構造の再発 (P05-x-56 / P02-img-realization-gate-owner と同型で 3 例目)。ROUNDTRIP-CONTRACT.md へのエントリ追加は write_scope=script-brief-C11.json では原理的に不可能で、本ノードは受入条件を完全には満たせない。brief 側の記録と discovered-task の emit までを行い、未達である旨をこの report に明示した。task-graph の derive 時点で『受入条件が参照するファイルが write_scope に含まれるか』を検査する機構が無いことが根本原因"
+    },
+    {
+      "id": "F-P02C11HM-COUNT-01",
+      "level": "warn",
+      "summary": "受入条件が『13 pointer』と件数を名指ししているが、裁定表の実エントリは 15 件。受入条件が書かれた時点の件数が固定値として焼かれ、その後 2 件増えたまま追随していない。件数を受入条件へ書くと、正しい追加によって受入条件の側が偽になる。本 brief 側は件数を持たない形で記録した"
+    },
+    {
+      "id": "F-P02C11HM-SPECDRIFT-01",
+      "level": "warn",
+      "summary": "手順 17 の組み立て順が実装と食い違っていた (所要時間の位置)。しかも brief 内の別項が実装と一致する記述を持っており、同じ brief が 2 つの並びを主張していた。手順表と属性契約という 2 つの節が同じ DOM 構造を別々に記述しているのが構造要因で、どちらが正本かの宣言が無い"
+    },
+    {
+      "id": "F-P02C11HM-DUP-01",
+      "level": "info",
+      "summary": "本ノードと直前の P02-c11-heading-field-marker は受入条件が大きく重なる (どちらも data-hb-field=heading の付与先を扱う)。両者を独立ノードとして持つ利得は薄く、実際に片方は着手時点で文面上ほぼ達成済みだった。discovered-task の accept 時に既存ノードとの受入条件重複を見る手順が無い"
+    }
+  ]
+}

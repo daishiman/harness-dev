@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "grep -rn 'def check' が (none) を返し判定器そのものが存在しない。面ごとの述語 (frontmatter() / section() / run_lint() / description_issues()) を各テストが直接呼ぶ構造のため『判定器の出力列』という単一の測定対象がない。移植の可否ではなく測る対象が存在しないという別種の結論であり、covered / nominal-only / absent の 3 分類に収まらない 4 つ目の状態",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-100-portability-spike.json",
+  "proposed_node": {
+    "id": "P05-x-125",
+    "title": "handout-readability-reviewer は判定器を持たず再現性テンプレートが原理的に適用できない",
+    "phase_ref": "phase-04-testing.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/handout-readability-reviewer/",
+    "acceptance_criterion": "判定器の出力列という単一の測定対象が無いことが記録され、再現性面の扱い (別手段か対象外か) が決まっていること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

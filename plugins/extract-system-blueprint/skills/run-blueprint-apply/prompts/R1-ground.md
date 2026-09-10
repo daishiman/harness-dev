@@ -52,7 +52,7 @@
 |---|---|---|
 | blueprint 正本 | `<blueprint_dir>/blueprint.json` | fact/inference/anchor/draft_hash の読取 |
 | verdict receipt | `<verdict_dir>/<draft_hash>.verdict.json` | C02 PASS + draft_hash 一致検証 |
-| blueprint schema | `$CLAUDE_PLUGIN_ROOT/schemas/system-blueprint.schema.json` | top-level shape 正本 |
+| blueprint schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-blueprint.schema.json` | top-level shape 正本 |
 
 ### 3.2 外部ツール / API
 - ファイル Read のみ (blueprint.json / verdict receipt / own_context 文書)。network なし・書込なし。

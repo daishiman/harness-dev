@@ -69,7 +69,7 @@ const D3Advanced = {
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', '#fff')
+      .attr('fill', d => D3Base.onFill(accentPalette[(d.group || 0) % accentPalette.length]))
       .style('font-size', '11px')
       .style('font-weight', 'bold')
       .text(d => d.label || d.id);
@@ -334,7 +334,7 @@ const D3Advanced = {
           .attr('width', xScale.bandwidth())
           .attr('height', yScale.bandwidth())
           .attr('fill', colorScale(value))
-          .attr('rx', 2)
+          // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
           .attr('stroke', theme.bg)
           .attr('stroke-width', 1);
 
@@ -431,8 +431,8 @@ const D3Advanced = {
     legend.append('rect')
       .attr('width', legendWidth)
       .attr('height', legendHeight)
-      .attr('fill', 'url(#heatmap-gradient)')
-      .attr('rx', 2);
+      // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
+      .attr('fill', 'url(#heatmap-gradient)');
 
     legend.append('g')
       .attr('transform', `translate(0, ${legendHeight})`)

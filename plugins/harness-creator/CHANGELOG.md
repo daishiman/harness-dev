@@ -4,6 +4,29 @@
 
 ## [Unreleased]
 
+### Changed (2026-08-20 usable-first build)
+
+- 既存の `draft / release` stage を再利用し、`/capability-build` と `run-build-skill` の既定を `draft` に変更。新たなMVP modeは増やさず、まず試せる実体+決定論ゲートで `usable-draft` として引き渡す。
+- draft の自動修復を1周に制限。usable draft後だけ単一read-only評価Agentの起動をartifact+contractあたり最大1回認可し、完了時は別runでreceiptを再利用する。評価は30思考法を各1回適用し、所見提示後にユーザーが改善深度を選ぶ。完全監査の3独立Agent、実走、出荷仕上げはrelease/exhaustiveの明示選択後だけ起動する。
+
+### Added (2026-08-20 user-bounded improvement)
+
+- `build-improvement-gate.py` と初回診断/ユーザー選択receipt schemaを追加。usable draft fingerprint・単一context・read-only・canonical 30 method IDの全件をfail-closedで検査する。
+- 改善深度を `現状維持 / 軽微 / 標準 / 詳細 / release` に分け、対象findingと反復上限を決定論化。回答前の改善、release自動昇格、exhaustiveの単一確認起動を禁止した。
+- 初回診断をskill subtype限定から全7 Capability共通へ移し、複数component harnessも評価context総数1に固定。`build-review-launch.py` がdurable claimを同一lock下でatomic consumeし、Claude Code/Codex共通のread-only fresh-context requestをat-most-once認可する。再生・unsupported runtimeをfail-closedに拒否する。
+- `elegant-bounded-improvement-executor` とpost-improvement validatorをdecision後のDAGへ接続。`accept-draft`はexecutor 0、他levelはselected findingとround上限だけを処理し、C1〜C4再検証なしに完了・release/exhaustive昇格しない。
+
+### Added (2026-08-20 external intelligence loop)
+
+- Codex / Claude Code 共通の `build-external-intelligence.py` を追加。runtime state を installed plugin 外の project/user state に保存し、thin index、on-demand detail、exact/near-duplicate 統合、hash-chain 検証を実装。
+- observation → candidate → verified → promoted の証拠ゲートを追加。昇格には独立 evidence source 2件、別文脈の helpful reuse、owner 承認者+承認証跡、反証条件、rollback を必須化。曖昧な無人 hook 観測の隔離保存、superseded の終端化、派生 index/detail の利用時検証も追加。
+- 両製品の PostToolUse payload を共通 engine へ渡す fail-soft adapter と native hook 配線を追加。
+
+### Changed (2026-08-20 external intelligence loop)
+
+- `knowledge/` / `lessons-learned/` を reviewed curated seed に限定し、旧 hook の package 内 Markdown/索引直接追記を削除。
+- with-knowledge 生成契約を5スクリプトへ拡張し、runtime store を package 外へ固定。prompt cache/quota 削減は保証せず、重複統合・helpful reuse・再検索回避を直接 KPI とする。
+
 初稿 2026-05-22。以下の内容は**実装済み・版番号確定待ち** (Keep a Changelog の順序に従い最上部に置く。実体は 1.2.0 改名以前に本文へ取り込み済み)。次回リリース時に版番号を確定して正式リリース節へ昇格する。
 
 ### Added

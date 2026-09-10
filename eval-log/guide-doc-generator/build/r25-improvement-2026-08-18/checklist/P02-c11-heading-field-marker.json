@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c11-heading-field-marker",
+  "covered_task_ids": [
+    "P02-c11-heading-field-marker"
+  ],
+  "status": "done",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+  "acceptance_criterion_restated": "script-brief-C11.json が見出しテキストのみを持つ要素へ data-hb-field=\"heading\" を付けると明記し、C20 の data-hb-field 値の列挙にも heading が含まれること",
+  "verified_by": [
+    {
+      "claim": "C11 側の明記が既に存在することを確認したうえで、書かれていた内容を実装と突合した",
+      "method": "html_attribute_contract.attributes の data-hb-field 項の value を精読。P03-x-02 で追加された『heading の終端』節が既にあり、付与先を h2 でなく内側要素とする旨を持っていた",
+      "result": "受入条件の前半は満たされていたが、記述が指す class 名 (section-title) が出荷実装 (render-handout.py:2365 の klass=\"section-heading\") と一致していなかった。名前の言い換えドリフトであり、brief を正として実装すると別クラスの要素が増える"
+    },
+    {
+      "claim": "class 名を契約から外し、契約を 1 つの述語へ絞った",
+      "method": "『契約は data-hb-field=\"heading\" を持つ要素の textContent が heading の素値と完全一致すること』の 1 点と書き換え、class 名は装飾として括弧内へ落とした (出荷名 section-heading / 外側の .section-num / .section-duration を実測どおり併記)",
+      "result": "class 名という装飾上の識別子が契約の第 2 の出所になっていた状態を解消した。実装がクラスをリネームしても brief が古くならない。逆に運搬体の内側へ装飾要素を入れない禁止は残した (textContent 一致が壊れる唯一の経路のため)"
+    },
+    {
+      "claim": "C20 側の列挙に heading が含まれることを実測した",
+      "method": "script-brief-C20.json の renderer_marker_requirements にある data-hb-field の value 列挙を確認。加えて algorithm A6 (『heading / section_goal / lead_line / judgment_axis は data-hb-field から』) と roundtrip_granularity の sections[] 比較対象も確認",
+      "result": "列挙・抽出手順・比較対象の 3 箇所すべてに heading が入っている。C20 側は当初から欠けておらず、欠落は producer (C11) の片側だった旨を brief 本文へ明記した"
+    },
+    {
+      "claim": "実装が契約どおりであることを確認した",
+      "method": "render-handout.py の build_section を読む。h2.section-label の内側に <span class=\"section-num\"> と field_span(\"heading\", ...) を並べ、section_duration は h2 の外 (lead_line の後) に出している",
+      "result": "連番・所要時間は運搬体の外にあり、heading の運搬体は見出しテキストのみを内容に持つ。契約と実装は一致している"
+    },
+    {
+      "claim": "この終端が無いと何が成立しないかの記述を、実態に合わせて更新した",
+      "method": "旧文は『この終端が無い間は … C02 feedback_contract OUT1 が構造的に成立しない』と現在形で未実装を前提にしていた。実装済みである事実と、契約文書側が未更新である事実を書き分けた",
+      "result": "『producer 側の片側欠落だった本項はこれで閉じている』へ更新し、ROUNDTRIP-CONTRACT.md が stale である旨を別立てで記述した。brief が『まだ無い』と言い続ける形を残さなかった"
+    },
+    {
+      "claim": "受入検査を足した",
+      "method": "AC-C11-R25-HEADING を追加。(a) 節ごとに heading マーカーが 1 個 (b) textContent が素値と完全一致 (連番混入 '1全体の流れ' は不合格) (c) .section-num / .section-duration が外側、に加えて C20 逆抽出で E-EXTRACT-UNRECOVERABLE が出ないことを見る",
+      "result": "追加済み。既存の AC-C11-R25-74-roundtrip が hero 側フィールドの復元を見るのに対し、本検査はセクション見出しの運搬体の形を見る別の軸"
+    },
+    {
+      "claim": "回帰を捕まえる test が実在しないことを確認して外へ出した",
+      "method": "tests/render-handout.py/ と tests/extract-handout-config.py/ を grep。render 側は heading マーカーに触れず、extract 側 fixture (_harness.py:221) は '<h2 data-hb-field=\"heading\">' を自前で書く",
+      "result": "extract 側の fixture は producer の出力ではないため、レンダラが連番を運搬体の内側へ戻しても全 test が緑のまま通る。P05-x-134-heading-roundtrip-regression-test として emit した"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02C11HEAD-CLASSDRIFT-01",
+      "level": "warn",
+      "summary": "brief が名指ししていた class (section-title) は出荷実装に存在しなかった (実装は section-heading)。装飾上の識別子を契約文へ書いたために、実装とドキュメントが別々の名前を持つ状態が生まれていた。契約として本当に必要なのは textContent 一致という述語だけで、要素の名前ではない。同種の class 直書きは本 brief の他項にも残っている可能性がある (.section-num / .section-duration も同じ形で書かれていたが、こちらは実測と一致した)"
+    },
+    {
+      "id": "F-P02C11HEAD-CONTRACT-STALE-01",
+      "level": "warn",
+      "summary": "schemas/ROUNDTRIP-CONTRACT.md の /sections/*/heading は marker_status=\"absent\" と residual_work を持ったままで、実装が入った現在は stale。しかも evidence の行番号 (render-handout.py:1511) も現行 (2365) とずれている。契約文書が『まだ無い』と主張する状態は、既にある終端の再実装か、round-trip 不成立という誤結論のどちらかを招く。P05-x-133 として emit 済み"
+    },
+    {
+      "id": "F-P02C11HEAD-TESTGAP-01",
+      "level": "warn",
+      "summary": "producer 側の退行を捕まえる test が無い。extract 側 test の fixture は正しい HTML を自前で書くので、レンダラが壊れても緑のまま。README.md の G7 が『C11 側と食い違ったらこちらを直す』と書いており、fixture が producer の実出力から独立していることを自認している。決定論ゲートで守られていない契約であり、AC-C11-R25-HEADING は現状 人手検査に留まる。P05-x-134 として emit 済み"
+    },
+    {
+      "id": "F-P02C11HEAD-ALREADYDONE-01",
+      "level": "info",
+      "summary": "本ノードの受入条件は着手時点で文面上ほぼ満たされていた (P03-x-02 が先に入れていた)。task-graph には『先行ノードが既に達成した受入条件を持つノード』を検出する機構が無いため、同じ達成を二度確認する周回が発生する。今回は突合の過程で class ドリフトと契約文書の stale を検出したので空振りではなかったが、これは偶然に近い"
+    }
+  ]
+}

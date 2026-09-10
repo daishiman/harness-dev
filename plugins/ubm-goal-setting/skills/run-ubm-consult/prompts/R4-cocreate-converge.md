@@ -57,8 +57,8 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| session-format | `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-consult/references/session-record-format.md` | 記録の4要素と置き場契約を確認するとき（最初に読む） |
-| coordinator | `$CLAUDE_PLUGIN_ROOT/agents/phase3-coordinator.md` | 精神論排除・行動具体性の合格基準を確認するとき |
+| session-format | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-consult/references/session-record-format.md` | 記録の4要素と置き場契約を確認するとき（最初に読む） |
+| coordinator | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/phase3-coordinator.md` | 精神論排除・行動具体性の合格基準を確認するとき |
 
 ### 3.2 外部ツール / API
 - 保存同意時のみ Write で session-id 配下へ記録し、`validate-consult-session.py` で検証する。

@@ -124,13 +124,13 @@ plugin / skill の改名で verdict の置き場・`target.plugin` が変わる�
 
 ## hook 発火と queue
 
-Claude Code hook はレスポンス時間と副作用境界を守るため、**重い LLM 評価を直接実行しない**。hook は評価要求を `eval-log/review-queue.jsonl` へ queue 化するが、この queue は**診断ログ** (いつ・何が評価要求されたかの追跡証跡) であり、自動 consumer は存在しない (build / pre-push が queue を読んで消化する機構は無い)。評価の強制は queue ではなく次の 2 層が担う: (1) `Stop` hook が `{"decision":"block","reason":...}` を返して **Claude 本体に評価を実行させる** (トリガのみ・実行は本体)、(2) pre-push / CI の `lint-content-review.py` が verdict の存在・PASS・SHA 一致を機械検査する (最終強制層)。Stop block は無限ループ防止のため `stop_hook_active` 継続中は発火せず、`harness-creator` 自身の変更は対象外 (代わりに stdout 通知のみ出す)、env `HARNESS_CREATOR_NO_REVIEW_BLOCK=1` で opt-out できる。
+Claude Code hook はレスポンス時間と副作用境界を守るため、**重い LLM 評価を直接実行しない**。hook は評価要求を `eval-log/review-queue.jsonl` へ queue 化するが、queue は追跡用で自動 consumer を持たない。未評価/stale はStop時にnoticeするだけで `decision:block` を返さない。semantic evaluatorはartifact提示後の利用者choiceがある場合のみ起動する。明示releaseのpre-push / CIでは `lint-content-review.py` が verdictの存在・PASS・SHA一致を別trust boundaryとして検査する。不可逆操作や秘密の防止はそれぞれの安全hookに残す。
 
 | Hook | 役割 |
 |----|----|
 | `PostToolUse:Skill` | `run-build-skill` / `delegate-codex-skill-review` 等の完了後、`check-review-trigger.py` を queue-only で起動し、対象 artifact と hook_trigger を評価要求として記録 |
 | `PostToolUse:Edit|Write` | SKILL.md / rubric / workflow-manifest 変更時に `check-review-trigger.py` を queue-only で起動し、stale verdict 再評価要求を記録 |
-| `Stop` | `check-review-trigger.py`。未評価/stale skill を queue 化し、`decision:block` で Claude 本体へ差し戻す。本体はobligation resolverを再実行し、`llm_batches[]` がある場合だけ互換2 verdictを生成する。`run-elegant-review` + rubric evaluator は exhaustive 明示時だけ。`harness-creator` 自身は自己ブロック回避のため通知のみ、CI/pre-push は同じ2 verdict契約を強制 |
+| `Stop` | `check-review-trigger.py`。未評価/stale skill を queue 化してnoticeするがStopは通す。artifact提示後に利用者が診断を選んだ場合のみfocused reviewを起動し、`run-elegant-review` + rubric evaluator は exhaustive 明示時だけ。明示releaseのCI/pre-pushは同じ2 verdict契約を強制 |
 | `pre-push` / CI | `lint-content-review.py` で verdict の存在・PASS・SHA一致を強制 (最終強制層) |
 
 Codex 委譲の完了も新しい自動実行層を増やさない。`delegate-codex-skill-review` はレスポンス JSON / patch / handoff を artifact として保存し、その artifact を既存の content-review verdict 契約に正規化して評価する。

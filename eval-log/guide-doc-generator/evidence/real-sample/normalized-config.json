@@ -1,0 +1,347 @@
+{
+  "attainment_level": "operable",
+  "background": "作った資料を渡すと、画像が表示されない・社内で開けないという戻りが毎回発生している",
+  "date": "2026/08/18",
+  "detail_level": "detailed",
+  "diagrams": [
+    {
+      "data": {
+        "steps": [
+          {
+            "label": "構成データを書く",
+            "note": "何をどの順で載せるか"
+          },
+          {
+            "label": "点検して整える",
+            "note": "書き方の誤りをここで直す"
+          },
+          {
+            "label": "資料を1本に組む",
+            "note": "画像も含めて1ファイル"
+          },
+          {
+            "label": "最後に点検する",
+            "note": "問題があれば止まる"
+          }
+        ]
+      },
+      "id": "build-flow",
+      "pattern": "flow",
+      "title": "構成データから配れる資料になるまで"
+    }
+  ],
+  "doc_type": "onboarding",
+  "duration": "45分",
+  "essential_problem": "資料の中身を考える時間より、体裁を整えて配れる形にする時間のほうが長くなっている",
+  "evidence_depth": "cited",
+  "focus_theme": [
+    "自分の題材を構成データに落として1本通す力"
+  ],
+  "glossary": [
+    {
+      "plain": "資料に何をどの順で載せるかを書いた設計メモのファイル",
+      "term": "構成データ"
+    },
+    {
+      "plain": "出来上がった資料を機械が点検して、問題があれば止める仕組み",
+      "term": "ゲート"
+    }
+  ],
+  "goal": "自分の題材を1つ選び、構成データ (資料に何をどの順で載せるかを書いた設計メモのファイル) から資料を1本生成して手元で開くまでを通せる",
+  "must_remember": [
+    "資料の正本は HTML ではなく構成データのほうである",
+    "同じ構成データからは何度作っても同じ資料が出る"
+  ],
+  "must_remember_max": 2,
+  "no_need_to_remember": [
+    "部品の記号 (B03 など) の一覧 (本資料と部品カタログを見返せば足りる)"
+  ],
+  "notes_enabled": true,
+  "presentation_order": "demo_first",
+  "prior_knowledge_level": "none",
+  "provenance": {
+    "catalog_sha256": "ef459b03fa326f98807b61290d9ba74b784ed4ba177359c14dbc1928979279de",
+    "date_source": "config",
+    "detail_level_source": "preset-default",
+    "evidence_depth_source": "preset-default",
+    "normalized_by": "validate-handout-config.py",
+    "presentation_order_source": "derived-from-prior-knowledge",
+    "schema_version": "1.0",
+    "text_fold_count": 0
+  },
+  "purpose": "受け取った人がそのまま開いて読める資料を、自分の手で1本作れるようにする",
+  "reader": "資料は日常的に作るが、HTML やコマンド操作は触ったことがない担当者",
+  "schema_version": "1.0",
+  "sections": [
+    {
+      "attainment_step": "overview",
+      "duration": "5分",
+      "goal": "この節を読み終えると、これから自分が何を作るのかが目で分かる",
+      "heading": "まず出来上がりを見る",
+      "id": "demo",
+      "judgment_axis": "迷ったら、自分の題材でも同じ形になるかで見る",
+      "lead_line": "説明より先に、出来上がりを1つ見てしまう",
+      "parts": [
+        {
+          "data": {
+            "live_demo": true,
+            "steps": [
+              {
+                "expected": "目次つきの資料が1枚のファイルとして開き、目次から各見出しへ飛べる",
+                "operation": "手本として配られた資料を、そのままブラウザで開く",
+                "stuck_hint": "開けないときは、ファイルを保存し直してからもう1度開く"
+              }
+            ]
+          },
+          "id": "demo-steps",
+          "part": "B17"
+        }
+      ],
+      "role": "main",
+      "section_kind": "handson",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    },
+    {
+      "duration": "3分",
+      "goal": "この節を読み終えると、45分で自分がどこまで進むのかが分かる",
+      "heading": "今日の流れ",
+      "id": "flow",
+      "judgment_axis": "迷ったら、いま自分がどの段にいるかで次の一手を決める",
+      "lead_line": "先に全体の道のりを見てから細部へ入る",
+      "parts": [
+        {
+          "data": {
+            "rows": [
+              {
+                "key": "s0",
+                "text": "出来上がりを見る",
+                "time": "5分"
+              },
+              {
+                "key": "s1",
+                "text": "資料の作りを知る",
+                "time": "10分"
+              },
+              {
+                "key": "s2",
+                "text": "手元で1本作ってみる",
+                "time": "17分"
+              },
+              {
+                "key": "s3",
+                "text": "詰まりどころに先に答える",
+                "time": "7分"
+              },
+              {
+                "key": "s4",
+                "text": "持ち帰る形に整える",
+                "time": "3分"
+              }
+            ]
+          },
+          "id": "flow-steps",
+          "part": "B03"
+        }
+      ],
+      "role": "main",
+      "section_kind": "flow-overview",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    },
+    {
+      "attainment_step": "overview",
+      "duration": "10分",
+      "goal": "この節を読み終えると、直す場所が HTML ではなく構成データだと分かる",
+      "heading": "資料1本が何でできているか",
+      "id": "anatomy",
+      "judgment_axis": "迷ったら、同じものをもう1度作れるかで判断する",
+      "lead_line": "直す場所は出来上がりでなく設計メモのほうにある",
+      "parts": [
+        {
+          "data": {
+            "diagram_id": "build-flow"
+          },
+          "id": "anatomy-diagram",
+          "part": "DIAGRAM"
+        },
+        {
+          "data": {
+            "body": "図の左端にある構成データ (資料に何をどの順で載せるかを書いた設計メモのファイル) が正本です。出来上がった HTML を直接書き換えると、次に作り直したときに同じ直しが消えます。"
+          },
+          "id": "anatomy-text",
+          "part": "TEXT"
+        },
+        {
+          "data": {
+            "columns": [
+              "次に作り直したとき",
+              "渡した相手から見た違い"
+            ],
+            "rows": [
+              {
+                "cells": [
+                  "直した内容が残る",
+                  "毎回同じ資料が届く"
+                ],
+                "header": "構成データを直す"
+              },
+              {
+                "cells": [
+                  "直した内容が消える",
+                  "版によって中身が違う"
+                ],
+                "header": "HTML を直接直す"
+              }
+            ]
+          },
+          "id": "anatomy-table",
+          "part": "B05"
+        }
+      ],
+      "role": "main",
+      "section_kind": "standard",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    },
+    {
+      "attainment_step": "operable",
+      "duration": "17分",
+      "goal": "この節を読み終えると、自分の題材で資料を1本生成して開けるようになる",
+      "heading": "実際に1本作ってみる",
+      "id": "hands",
+      "judgment_axis": "迷ったら、画面に何が出たかを見てから次へ進む",
+      "lead_line": "読むより先に、手元で1本通してしまう",
+      "parts": [
+        {
+          "data": {
+            "live_demo": true,
+            "steps": [
+              {
+                "expected": "書き換えたファイルが手元に1つできている",
+                "operation": "手本の構成データを写して、題名と目的を自分の題材へ書き換える",
+                "stuck_hint": "題材が思いつかないときは、直近で人に説明した内容をそのまま題材にする"
+              },
+              {
+                "expected": "問題がなければ OK と表示され、あれば直す場所が名指しで出る",
+                "operation": "点検の指示を出して、書き方の誤りがないか確かめる",
+                "stuck_hint": "見慣れない記号が出たら、その行の前後だけを手本と見比べる"
+              },
+              {
+                "expected": "目次つきの資料が1枚のファイルとして開く",
+                "operation": "資料を組む指示を出して、できた HTML を開く",
+                "stuck_hint": "開いても白いときは、点検を通していない可能性が高いので前の手順へ戻る"
+              }
+            ]
+          },
+          "id": "hands-steps",
+          "part": "B17"
+        },
+        {
+          "data": {
+            "body": "この題材で配布用の資料を1本作ってください。読み手は初めて触る人です。",
+            "label": "そのまま使える指示文"
+          },
+          "id": "hands-prompt",
+          "part": "B11"
+        }
+      ],
+      "role": "main",
+      "section_kind": "handson",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    },
+    {
+      "duration": "7分",
+      "goal": "この節を読み終えると、詰まりやすい3点を自分で切り分けられる",
+      "heading": "先回りで答えておくこと",
+      "id": "qa",
+      "judgment_axis": "迷ったら、点検が通っているかどうかを先に確かめる",
+      "lead_line": "詰まる場所はだいたい決まっている",
+      "parts": [
+        {
+          "data": {
+            "items": [
+              {
+                "body": "開けます。画像も含めて1つのファイルに入っているので、通信が無くても中身は欠けません。作る途中でゲート (出来上がった資料を機械が点検して、問題があれば止める仕組み) が外部への参照を止めています。",
+                "open": false,
+                "summary": "社内のパソコンでも開けますか"
+              },
+              {
+                "body": "できます。A4 で切れないように作られており、印刷したときだけ目次が畳まれます。",
+                "open": false,
+                "summary": "作った資料は印刷できますか"
+              },
+              {
+                "body": "見えません。メモはその人のブラウザにだけ残ります。渡したいときは書き出して別に送ります。",
+                "open": false,
+                "summary": "書いたメモは他の人に見えますか"
+              }
+            ]
+          },
+          "id": "qa-acc",
+          "part": "B10"
+        }
+      ],
+      "role": "main",
+      "section_kind": "anticipated-qa",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    },
+    {
+      "duration": "3分",
+      "goal": "この節を読み終えると、次に自分が何をすればよいかが1行で言える",
+      "heading": "持ち帰る形に整える",
+      "id": "takeaway",
+      "judgment_axis": "迷ったら、明日の自分が読んで動けるかで決める",
+      "lead_line": "作り切るより、次に続く形にして終える",
+      "parts": [
+        {
+          "data": {
+            "rows": [
+              {
+                "key": "c1",
+                "text": "自分の題材で構成データを1つ作った"
+              },
+              {
+                "key": "c2",
+                "text": "点検を通してから資料を組んだ"
+              },
+              {
+                "key": "c3",
+                "text": "できた資料を手元で開いて確かめた"
+              }
+            ],
+            "show_counter": true
+          },
+          "id": "takeaway-check",
+          "part": "B09"
+        }
+      ],
+      "role": "main",
+      "section_kind": "standard",
+      "ties_to": [
+        "goal",
+        "target_task:first-handout"
+      ]
+    }
+  ],
+  "subject_slug": "guide-doc-generator-1",
+  "target_tasks": [
+    {
+      "id": "first-handout",
+      "label": "自分の題材で配布できる資料を1本作り切る"
+    }
+  ],
+  "title": "guide-doc-generator で配布用の資料を1本作れるようになる"
+}

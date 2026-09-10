@@ -1,0 +1,83 @@
+{
+  "purpose": "guide-doc-generator / run-handout-build を中心とする現在の未コミット差分を、plugin scope で素観察し、変更の対象・関係者・具体値を記録する。",
+  "scope": {
+    "in_scope": [
+      "git status --short に現れた追跡済み変更 21 ファイル",
+      "未追跡テスト 2 ファイル",
+      "EXPLAIN 部品の計画・カタログ・schema・policy・agent・skill・prompt・描画・逆抽出・検証・test への展開",
+      "before_after / analogy / bignumber 図解パターンの実装と関連する既存 C14 契約・受入テスト資源",
+      "eval-log/review-queue.jsonl の追加行"
+    ],
+    "out_of_scope": [
+      "Phase 2 の採点・finding・4条件判定",
+      "変更内容への修正案",
+      "ファイル編集・生成・削除",
+      "テスト・lint・renderer の実行結果",
+      "今回の識別子・依存参照から接続しなかった他 plugin"
+    ]
+  },
+  "stakeholders": [
+    "前提知識を持たない handout 読者",
+    "run-handout-build を呼び出す利用者",
+    "handout-content-architect と handout 作成者",
+    "guide-doc-generator の schema・policy・renderer・validator・extractor の保守者",
+    "guide-doc-generator の受入テスト利用者",
+    "harness maintainers",
+    "review queue の消費者"
+  ],
+  "first_impressions": [
+    "変更は plan catalog、plugin catalog、schema、visual policy、agent、skill、prompt、3 scripts、test fixtures と test cases を横断している。",
+    "EXPLAIN は diagram_id または asset_id の一方を参照し、既存の diagram / image 描画経路を内側に利用する媒体部品として記述されている。",
+    "新しい図解語彙 before_after / analogy / bignumber は render-diagram-svg.py の PATTERNS と BUILDERS に追加されている。",
+    "EXPLAIN の検査は schema の x_exactly_one_of と visual policy の件数・間隔閾値から構成されている。",
+    "既存 test fixture に EXPLAIN が挿入され、複数 test の parts 配列 index が後方へ移動している。",
+    "未追跡 test は逆抽出用 test_explain_part.py と検証用 test_explain_density.py の 2 本である。",
+    "C14 の計画 brief、既存 render-diagram-svg test harness、README、golden 記録 script は6パターンを記述している。",
+    "handout-content-architect.md の「4段」見出し直下では、差分後の番号が 2・3・4・5 になっている。",
+    "eval-log の差分は run-handout-build/SKILL.md を changed_skills に持つ review queue 1 行の追加である。"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "最終確認時の worktree は追跡済み変更21件、未追跡2件、staged変更0件だった。",
+      "追跡済み差分の shortstat は21 files changed、720 insertions、43 deletionsだった。",
+      "EXPLAIN は plan側と出荷側の handout-parts.json、README、schema、visual policy に追加されている。",
+      "EXPLAIN の headline は schema で必須、diagram_id と asset_id は x_exactly_one_of の対象である。",
+      "visual policy は min_explain_parts_per_main_section=1 と max_consecutive_parts_without_explain=3 を宣言する。",
+      "validator は W-EXPLAIN-FEW、W-EXPLAIN-GAP、E-EXPLAIN-VISUAL を扱う。",
+      "renderer は EXPLAIN の参照先を既存 diagram / image projection と renderer で解決する。",
+      "extractor は explain を diagram / image より前に照合する BLOCK_TYPE_CLASS_MAP 順序を持つ。",
+      "render-diagram-svg.py は9パターンを列挙する。",
+      "script-brief-C14.json と tests/render-diagram-svg.py/_harness.py は6パターンを列挙する。",
+      "既存 golden SVG は flow、compare、hierarchy、cycle、matrix、versus の6ファイルである。",
+      "新規2テストは git status で未追跡として表示される。"
+    ],
+    "assumptions": [
+      "21件の追跡済み変更と2件の未追跡テストは、共通の EXPLAIN 識別子と 2026-08-23 の由来記述を持つため、同一の変更集合として扱った。",
+      "未追跡2テストは現在の変更集合へ含める意図で作成されたものと仮定した。",
+      "eval-log の追加行は機能実装ではなく、SKILL.md 変更を契機に生成された運用記録と仮定した。",
+      "「情報単位」は機械的な意味解析結果ではなく、作成者が parts の配置として表現する単位と仮定した。",
+      "schema の diagram.pattern enum が共通であるため、新しい3パターンは EXPLAIN 内だけでなく DIAGRAM 参照からも選択可能と推定した。"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "guide-doc-generator", "kind": "proper-noun"},
+    {"value": "run-handout-build", "kind": "proper-noun"},
+    {"value": "harness maintainers", "kind": "fixed-owner"},
+    {"value": "plugins/guide-doc-generator", "kind": "fixed-path"},
+    {"value": "plugins/guide-doc-generator/skills/run-handout-build", "kind": "fixed-path"},
+    {"value": "plugin-plans/guide-doc-generator/briefs/script-brief-C14.json", "kind": "fixed-path"},
+    {"value": "config/handout-visual-policy.json#thresholds", "kind": "fixed-path"},
+    {"value": "schemas/handout-config.schema.json", "kind": "fixed-path"},
+    {"value": "eval-log/review-queue.jsonl", "kind": "fixed-path"},
+    {"value": "2026-08-23", "kind": "other"},
+    {"value": "EXPLAIN", "kind": "other"},
+    {"value": "before_after", "kind": "other"},
+    {"value": "analogy", "kind": "other"},
+    {"value": "bignumber", "kind": "other"},
+    {"value": "E-EXPLAIN-VISUAL", "kind": "other"},
+    {"value": "W-EXPLAIN-FEW", "kind": "other"},
+    {"value": "W-EXPLAIN-GAP", "kind": "other"},
+    {"value": "min_explain_parts_per_main_section=1", "kind": "other"},
+    {"value": "max_consecutive_parts_without_explain=3", "kind": "other"}
+  ]
+}

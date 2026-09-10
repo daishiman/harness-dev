@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "verify-handout-narrative.py:1012 の start = mains[0] により、NAR-07 は最初の本編セクションの先頭要素だけを見る。実画面を 1 枚置けば以降を概念説明で埋めても通る。orange が本 cycle で塞いだのは presentation_order 欠落の fail-open であり、criterion 後半の穴は別。dispatcher が該当行を直読みして確認。cyan が検出",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P03-x-04.json",
+  "proposed_node": {
+    "id": "P05-x-71-nar07-checks-only-first-main-section",
+    "title": "NAR-07 が最初の本編セクション 1 つしか見ていない件を塞ぐ",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/scripts/verify-handout-narrative.py",
+    "acceptance_criterion": "C56 criterion 後半 機能説明が必ず実画面より後に置かれる が全本編セクションに対して検査されること。実画面を 1 枚置いて以降を概念説明で埋めた入力が exit 1 になる回帰テストが tests/verify-handout-narrative.py/test_nar07_demo_first.py に存在すること",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C22"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

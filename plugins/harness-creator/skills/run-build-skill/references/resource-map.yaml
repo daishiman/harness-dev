@@ -16,9 +16,6 @@ bundles:
   - name: prompt-creator
     path: ../../../../prompt-creator/plugin-composition.yaml
     role: prompt-factory
-  - name: skill-governance-adapters
-    path: ../../../../skill-governance-adapters/plugin-composition.yaml
-    role: governance
   - name: skill-governance-automation
     path: ../../../../skill-governance-automation/plugin-composition.yaml
     role: governance
@@ -57,11 +54,21 @@ local_artifacts:
     - ../schemas/goal-seek-loop.schema.json   # loop実行系の周回progress契約 (with-goal-seek配線)
     - ../schemas/verification-contract.schema.json
     - ../schemas/verification-evidence.schema.json
+    - ../schemas/review-launch-request.schema.json
+    - ../schemas/artifact-presentation-receipt.schema.json
+    - ../schemas/pre-diagnostic-choice-event.schema.json
+    - ../schemas/initial-draft-review.schema.json
+    - ../schemas/improvement-user-event.schema.json
+    - ../schemas/improvement-decision.schema.json
+    - ../schemas/improvement-result.schema.json
+    - ../schemas/usable-draft-proof.schema.json
   prompts:
     - ../prompts/R1-scaffold.md
     - ../prompts/R2-responsibility-emit.md
     - ../prompts/R3-template-select.md
     - ../prompts/R4-trace-write.md
+    - ../prompts/R5-initial-draft-evaluate.md
+    - ../prompts/R6-bounded-improve.md
 # resources[].bundle が未指定なら default_bundle を継承 (本 skill は harness-creator 所属)
 default_bundle: harness-creator
 
@@ -111,11 +118,18 @@ resources:
       - doc/ClaudeCodeスキルの設計書/29-multi-project-rubric-composition.md
     cover_concerns: ["09-evaluation-orchestration"]
   - category: proof-driven-verification
-    keywords: ["verification", "obligation", "proof", "evidence", "token", "cost", "incremental", "semantic", "route reuse"]
-    max_docs: 1
+    keywords: ["verification", "obligation", "proof", "evidence", "token", "cost", "incremental", "semantic", "route reuse", "usable draft", "改善レベル", "initial review"]
+    max_docs: 2
     local_reference:
       - plugins/harness-creator/skills/run-build-skill/references/verification-obligation-protocol.md
-    cover_concerns: ["verification-as-program", "llm-as-exception", "proof-carrying-build"]
+      - plugins/harness-creator/skills/run-build-skill/references/improvement-levels.json
+    cover_concerns: ["verification-as-program", "llm-as-exception", "proof-carrying-build", "initial-diagnostic", "user-bounded-improvement"]
+  - category: external-intelligence-runtime
+    keywords: ["external intelligence", "runtime memory", "Codex", "Claude Code", "thin search", "reuse", "capture", "token"]
+    max_docs: 1
+    local_reference:
+      - plugins/skill-governance-adapters/references/external-intelligence-runtime-contract.md
+    cover_concerns: ["provider-neutral-runtime", "bounded-retrieval", "project-scope", "warning-continuation"]
   - category: skill-factory-reproducibility
     keywords: ["harness creator", "factory", "量産", "再現性", "rubric_refs", "adapter", "routing", "analogy", "template variable", "横展開"]
     max_docs: 3

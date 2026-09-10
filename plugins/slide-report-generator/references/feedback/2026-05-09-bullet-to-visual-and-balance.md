@@ -32,21 +32,22 @@ status: must-apply-going-forward
 ## 必須運用ルール（恒久）
 
 ### A. 「文字列リストを書きたくなったら止まる」
-スライドに `<ul><li>...</li></ul>` を書こうとした瞬間、以下の代替に置き換える：
+スライドに `<ul><li>...</li></ul>` を書こうとした瞬間に止まる。置換先を一律に名指しせず、次の分岐で決める。
 
-| 項目数 | 推奨パターン | 例 |
-|--------|------------|----|
-| 2〜3 | `access-trio` / `kp-trio` (横3カード+アイコン) | CLI/IDE/Web 切替 |
-| 3〜4 | `keypoint-trio` / `kp-quad` (番号バッジ+アイコン+短文) | 機能特徴4点 |
-| 4〜6 工程 | step-chip ピル+「›」セパレータ (横並び) | Before/After 工程比較 |
-| 5〜7 種類 | overview-grid (アイコン+名前+1行) | 構成要素マップ |
-| 比較2件 | desc-compare (悪/良 並列+アイコン) | description 良し悪し |
+| 条件 | 表現 |
+|------|------|
+| 並列する要素が 3 件以下・項目間に関係が無い | chip |
+| 順序・因果・対比・包含のいずれかの関係を持つ要素が 3 件以上 | 図解 |
+| 各項目が異種要素を束ね、その面でカードが担う役割が定義されている | カード（役割定義なしのカードは不可） |
+
+分岐条件の逐語正本は `skills/run-slide-report-generate/references/visual-generation-rules.md` §4。
 
 ### B. カード内の構造ルール
 1. **見出し**：18〜20px (`1.8rem〜2.0rem`) +アイコン
 2. **本文**：1〜2行で、できれば chip 化（短語 + アイコン）
 3. **長文 desc は禁止**。3行を超えるなら chip 群に分解
 4. アイコンは必ず Font Awesome 6.5.1（絵文字禁止）
+5. 1 つの情報が同時に持ってよい装飾は 1 つまで（囲み・塗り・角丸・影・色・アイコンのうち 1 つ。VGCONST_008）
 
 ### C. レイアウト・余白の鉄則
 1. フローカードの容器は `align-items: center`（矢印を縦中央に）
@@ -68,7 +69,7 @@ status: must-apply-going-forward
 
 ### E. v8 検証で追加すべき自動チェック（提案）
 - V-039: `slide-statement` 内の `statement-sub > ul > li` 数 → 0件であること
-- V-040: `slide-diagram` 内の `code-list > li` 数 → 0件であること（chip/card に置換済みか）
+- V-040: `slide-diagram` 内の `code-list > li` 数 → 0件であること（A の分岐条件で置換済みか）
 - V-041: フローカード／step ボックスの container に `align-items: center` が指定されていること
 - V-042: SVG `max-height` 指定の禁止（HTML カードフローを推奨）
 

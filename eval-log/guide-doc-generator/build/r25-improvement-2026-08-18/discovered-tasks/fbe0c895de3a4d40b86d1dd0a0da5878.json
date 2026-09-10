@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c11-heading-field-marker",
+  "reason": "schemas/ROUNDTRIP-CONTRACT.md の /sections/*/heading は marker_status=\"absent\" と residual_work「C11 が見出しテキストのみを持つ要素へ data-hb-field=heading を付ける」を持ったままだが、render-handout.py:2365 が field_span(\"heading\", ..., klass=\"section-heading\") を出しており終端は既に実装済み。契約文書だけが未実装を主張しているため、次に読む人が既存の終端を再実装するか、逆に「契約が absent と言うので round-trip は成立しない」と誤結論する。marker_status を present へ更新し evidence の行番号 (旧 1511) を現行へ差し替える",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c11-heading-field-marker.json",
+  "proposed_node": {
+    "id": "P05-x-133-roundtrip-contract-heading-status",
+    "title": "ROUNDTRIP-CONTRACT.md の /sections/*/heading を実装済みへ更新する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas/ROUNDTRIP-CONTRACT.md"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C11"
+  }
+}

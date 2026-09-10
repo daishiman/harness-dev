@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P12-x-01",
+  "covered_task_ids": [
+    "P12-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P12.json",
+  "verified_by": [
+    {
+      "claim": "README だけで起動から出力物受け取りまでを追加質問なしに実行できる",
+      "method": "当方が README に載せた実行可能コマンドを全て実際に実行し exit code を採取した。詳細な列挙は plugin-plans/guide-doc-generator/evidence/P12.json",
+      "result": "pass (validate --normalize / render / 4 ゲート / build-local-marketplace の 7 コマンドすべて exit0。README が指す examples/minimal-config.json は擬似コードでなく実際に生成へ通した実体である)"
+    },
+    {
+      "claim": "専門用語に初出言い換えがある",
+      "method": "当方が README の『用語』節を本文の初出より前へ置き、4 語の言い換えを個別に確認した",
+      "result": "pass (構成データ / data URI / round-trip (逆抽出) / ゲート。本 plugin 自身が LANG-01 で資料へ課している『初出の直後に言い換え』の規律を README にも適用した)"
+    },
+    {
+      "claim": "README のコマンド例が install 位置に依存して壊れない",
+      "method": "当方が lint-readme-plugin-root-portability.py を実行した",
+      "result": "pass (`plugins/guide-doc-generator/README.md: OK` exit0。全 bash フェンスが `${HB_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/guide-doc-generator}}` の fallback 形)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "part-catalog-listed-in-readme",
+      "detail": "部品 id 語彙の単一正本は config/handout-parts.json だが、利用者が部品を選べるよう README へ 20 件の表を置いた。意図的な逸脱であり、部品の追加・改名時に README が drift する経路が 1 本できた。同期 lint は未実装で follow-up として残す"
+    },
+    {
+      "kind": "slash-command-not-machine-executable",
+      "detail": "/handout-build 等の実行は Claude Code 対話面でのみ可能で未実測。README の引数記述は command 定義からの転記であり、読み合わせで食い違いが無いことを確認した"
+    }
+  ]
+}

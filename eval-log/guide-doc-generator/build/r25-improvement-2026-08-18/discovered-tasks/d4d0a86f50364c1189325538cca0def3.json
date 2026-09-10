@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-x-01",
+  "reason": "lint-skill-description.py:57 の SKILL_GLOBS は harness-creator/skills と .claude/skills と .claude/agents の 3 本のみで plugins/guide-doc-generator/ を含まない。3 glob の実ヒット 33/91/67 件に handout 系は 0 件。出荷 5 skill + 2 agent へ importlib で直接 check() を当てると全件 ok だが、これはゲートが守った結果ではなく一度も検査されていない結果である",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/evidence/P02.json",
+  "proposed_node": {
+    "id": "P05-x-38-lint-glob-coverage",
+    "title": "skill-governance-lint の検査対象へ guide-doc-generator を含める",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/skill-governance-lint/",
+    "acceptance_criterion": "SKILL_GLOBS が guide-doc-generator の skills/agents を含み、CI の既定実行で本 plugin が検査される",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C19"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

@@ -1,31 +1,44 @@
 {
-  "target": {"plugin": "harness-creator", "skill": "run-skill-feedback", "skill_md_sha256": "7c7b7dbb3d643509036a7d2a132f448790048cc5ebcba29400563b331f756cd9"},
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "1b957a0256ecf99f7d748c969dcb89f63da27b3a1354d5f55316ecf24b753842"
+  },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {"contradiction": 0, "omission": 0, "inconsistency": 1, "dependency_break": 0, "smell": 1},
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-08-11T09:07:03Z",
-  "iterations": 5,
-  "human_review_required": true,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "iteration=4 の [contradiction/high] (token 値が stdout へ出る) が、対症療法でなく根治で閉じたことを実測で確認した。curl() は Authorization を argv から降ろし `--config -` の stdin 経由 (`header = \"Authorization: Bearer <token>\"`) に変えた。argv/stdin を記録する fake curl を PATH へ挿し、canary token `secret_CANARY_TOKEN_9f3a` で 4 経路を実走: curl exit 6 → exit 3 / HTTP 401 → exit 3 / results:[] → exit 2 / create 側 curl exit 7 → exit 3。全経路で stdout+stderr の canary 出現数は 0、curl argv にも 0、canary は stdin (curl config) にのみ存在した。注目すべきは **例外整形を `{e}` のまま残している**点で、CalledProcessError.__str__() は今も cmd 全体を印字しているのに漏れない — 値を経路に載せない設計なので、以後どんな例外整形を足しても再発しない。docstring L41-42 が「print 側を直すのは対症療法 — argv に載せない のが唯一の根治」と選択理由まで書いており、出力側を列挙して塞ぐ (列挙漏れが必ず残る) 設計との差が次の編集者に伝わる形で残っている",
-      "「argv から降ろしたが実は header が飛んでいない」という最悪の退行を、静的読解でなく loopback 実測で排除できている。127.0.0.1 の一時 HTTP サーバへ curl() を向けたところ、受信側ヘッダに `Authorization: Bearer secret_CANARY_TOKEN_9f3a` が完全一致で現れ、Notion-Version / Content-Type / body JSON も往復した (外部ネットワークへは出していない)。さらに `\"` と `\\` を含む token (`ab\"c\\d ef`) でも受信値が完全一致し、L57 の curl config escape (`\\` → `\\\\`、`\"` → `\\\"`) が仕様どおり効いていることを確認した。escape をコメントで「token 実体は英数字+_ だが値の形を script 側の前提にしない」と正当化しているのも、前提が破れたときに壊れる箇所を先回りして特定している",
-      "iteration=4 の [inconsistency/medium] (R8 が行単位 regex で複数行 print を素通し) が、検出力の実測で埋まったことを確認した。tmp コピーへ 11 種を注入 (元ファイルは control で未改変を照合、baseline = 0 violation): (a) --notion-token / --skill-list-db-id、(b) NOTION_TOKEN / NOTION_DB_SKILL_LIST 直読み、(c) 単行 print(f\"{token}\")、(d) 複数行に分割した print、(e) sys.stderr.write、(f) logging.error、(g) argv への -H Authorization 復活、(h) require_or_skip 迂回、(h2) get_db_id 迂回 — **9/9 CAUGHT**。前周 MISSED だった (d) は行単位 regex を AST 走査 (出力呼び出しの引数**部分木**に Name('token') が現れるか) へ置き換えたことで捕まる。(i) 偽陽性検査 (`print(\"token の有効期限を確認してください\")` と散文の stderr.write) は clean で、実際に script へ残る同種の案内文 (L119 / L151) も violation を出していない。緩さだけでなく厳しさの側でも誤爆しないことを両側から測れた",
-      "R8 (5) の「実呼び出しで pin」が、検査自身の副作用まで面倒を見ている。tmp コピーの notion_config.py へ 3 種を注入して全て CAUGHT: (j) INTAKE_ALLOW_ENV_TOKEN gate の削除、(k) get_db_id から key 別 env 優先の削除、(k2) escape hatch を殺す改悪。副作用検査も実測した — env は finally で復元され (NOTION_TOKEN に既存値を置いてから走らせても値が保たれ、canary が残らない)、Keychain は存在しない service/account (`lint-canary-absent-*`) を渡すため実 token を掴まない (subprocess.check_output をトレースし `security find-generic-password -a lint-canary-absent-account -s lint-canary-absent-service -w` の 1 回だけであることを確認)。docstring が AST で実装の形を照合する案を「等価な書き換え (早期 return / ヘルパ抽出) で壊れる割に順序の逆転は捕まえられない」と明示的に退けているので、次の編集者が安易に静的検査へ差し戻す事故も塞げている",
-      "iteration=4 の [smell/low] (解決順が R8 の範囲外) が三者一致の確認まで含めて閉じた。SKILL.md L108 / L133 / L234 と references §1 の表と notion_config.py の実装を突き合わせ、token (get_token L255-274: INTAKE_ALLOW_ENV_TOKEN==1 の時だけ env 先行、既定は Keychain)、DB ID (DB_ENV_NAMES L182-186 + get_db_id L226-237: key 別 env → config)、config path (find_config_path L147-169: NOTION_CONFIG_PATH → repo-root → plugin-root `.notion-config.json` → `notion-config.fixed.json`) が一致することを実読で確認した。references §1 L18-19 に「上表の解決順は散文の宣言ではなく R8 (5) が実際に呼んで返り値で pin している」と書き足されたので、表が実行で守られている事実が読み手側に届く。加えて §「token の受け渡し」節が argv 禁止の理由を ps 可視性でなく CalledProcessError に置いており、前周の実漏洩の原因分析がそのまま設計理由として保存されている",
-      "副次的な資源リークも同じ変更のなかで閉じている。body の一時ファイルが try/finally で unlink されるようになり (旧実装は失敗時 leak)、専用 TMPDIR を与えた 4 経路の実走すべてで残留ファイル数 0 を確認した。指摘された 1 点だけを直して隣接する同種の欠陥を残す実装が多い中で、例外経路の後始末まで同時に閉じている"
+      "frontmatter に 23 重複していた `external_mutation_guard` 行が 1 本へ収束した。YAML mapping の重複キーはパーサ依存で last-wins になる非決定的な状態だったので、これは実害のある退行の除去である。残った 1 行の runtime_ref / flow は削除された 22 行と完全同値で、契約値の書き換えは伴っていない。",
+      "canonical receipt flow block の 3 起動行 (preview / authorize / execute) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の dual-root 形へ揃い、bare `${CLAUDE_PLUGIN_ROOT}` が 0 件になった。block を囲む `<!-- external-mutation-guard-cli:v1 -->` マーカーと receipt 三段 (preview→hook-confirm→authorize→execute) の順序は不変。",
+      "`effect: external-mutation` / `external_mutation_guard` frontmatter / canonical receipt flow block の三点セットが揃い、片側だけの不整合が無い。`runtime_root_policy: host-skill-path` 宣言と `## Runtime root contract` 節も対で入っている。",
+      "本文の Purpose & Output Contract・workflow・feedback_contract.criteria (IN1/IN2/IN3/OUT1/OUT2) は差分の対象外で、今回の変更は frontmatter 正規化と root 変数の綴り替えに閉じている。"
     ],
     "negative_feedback": [
-      "[inconsistency/low] 禁止の射程は「token / DB ID」なのに、根治と R8 が守るのは token だけで、DB ID は exit 3 の経路で実際に stdout へ出る。Key Rule 4 (L108) の末尾と Gotcha 3 (L246) の見出しはいずれも『token / DB ID をコンテキストに乗せない』と 2 つを同一の規則で括るが、curl 失敗時に印字される CalledProcessError.__str__() は cmd 全体を含み、query 側の URL は `https://api.notion.com/v1/databases/<skill-list の db_id>/query` の形なので db_id がそのまま出る。fake curl (exit 6) の実走で stdout に `DB-SKILL-LIST` が現れることを確認した (同じ実走で token の canary は 0 件)。R8 (4) は出力呼び出しの引数部分木に Name('token') が出るかだけを見るので db_id は原理的に対象外で、追加 injection (`print(f\"using db {skill_list_db}\")`) も MISSED だった。`.notion-config.json` は .gitignore:36 で除外されており DB ID を環境ローカル扱いする方針自体は一貫しているので、規則文を消すのでなく射程を書き分けるのが筋: (i) 例外整形から cmd を落とす (`type(e).__name__` + returncode だけ出す)、または (ii) Key Rule 4 / Gotcha 3 に『DB ID は exit 3 の診断メッセージに現れうる。credential ではないので許容する』と明記する。token と違い DB ID は単体では認可に使えず、config 自体も同一 session の Read で到達できる位置にあるため実害は小さい — high ではなく low として計上し、PASS の阻害要因とはしない",
-      "[smell/low] IN2 の『token の**値**を渡さない』は R8 (4) の実力より半歩強い。実装が見るのは出力呼び出しの引数部分木に識別子 `token` が現れるかなので、別名を一段挟むと素通しする — tmp コピーへ `t2 = token` → `print(f\"{t2}\")` を注入すると MISSED になることを実測した。現ソースに live な該当箇所は無く (`esc = token.replace(...)` L57 は curl の stdin へ渡るだけで出力経路に無い)、Gotcha 3 が『lint が守るのはソース側の 5 点だけ』『lint 緑=秘密が漏れていない、と読み替えない』と射程を明示しているので、iteration=4 のような偽の緑ではない。閉じ方は 2 択で、(i) IN2 を『token 識別子を出力呼び出しへ直接渡さないこと』へ言い換える (最小・今周の主張の正確さを保つならこれで十分)、(ii) R8 (4) を token からの代入を辿る簡易 taint へ広げる。(ii) は等価な言い換えを追い続けるコストがあるので、宣言側を実力に合わせる (i) を推す"
+      "[low / smell] 本 skill の `## Runtime root contract` 節だけが共有正本へのリンクではなく 5 行の箇条書きで内容を再掲している。同じ migration を受けた run-build-skill / run-skill-create / run-codex-plugin-* は `ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約` への 1 行リンクに揃えており、本 skill だけ SSOT のコピーを持つ。現時点で記載内容は正本と同義だが、正本更新時にここだけ取り残される drift 面。"
     ],
-    "iteration": 5,
+    "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
-    "next_action": "human_review"
+    "next_action": "none"
   },
-  "notes": "iteration_limit (3) 到達後、被験 SKILL.md および参照実装 (scripts/notion-submit-improvement.py / scripts/lint-feedback-protocol.py) が変更されたため実施した再検証パスである (iteration=5 > iteration_limit=3 の超過を隠さず記録する)。契機: 前 verdict の skill_md_sha256=4226a8d1... に対し現 SKILL.md の実測 sha は 7c7b7dbb... で stale になっていた。sha だけの書き換え (証拠の偽造) を避け、SKILL.md 全文 / references/notion-submit-contract.md / workflow-manifest.json / scripts/lint-feedback-protocol.py / scripts/notion-submit-improvement.py / plugins/harness-creator/scripts/notion_config.py を再読し、実走を伴って再評価した。iteration=4 の negative 3 件の帰結: 全件解消 (詳細は positive_feedback。high の根治は canary token + fake curl の 4 経路実走と loopback HTTP サーバでの header 受信確認、medium は injection 9/9 CAUGHT + 偽陽性 0、low は解決順の三者一致確認と R8 (5) の挙動 pin)。4 条件: (a) 矛盾なし = 実質成立 (前周 high の token 露出は実測で 0 件。残るのは DB ID を token と同じ文で括った射程の広さで、low の inconsistency として計上)、(b) 漏れなし = 成立、(c) 規約整合 = 成立 (exit code 表 §4 と実走 3/3/2/3 が 1:1、Bash/Read の境界宣言、glob 規約)、(d) 依存関係整合 = 成立 (references/ が index へ載り manifest resources[] にも登録済み)。未解決 high 0 のため schema の『未解決 high は PASS 不可』に抵触せず verdict=PASS。ただし iteration_limit を超過しているため human_review_required=true / next_action=human_review を維持し、残 low 2 件の採否は人間の判断に委ねる。実測ログ: python3 scripts/lint-feedback-protocol.py = [OK] all checks passed (exit 0) / python3 scripts/lint-feedback-contract.py --all = exit 0 (19 warning は live 導出 skill 全件が同一 baseline 免除下にあるもので本 skill 固有ではない) / python3 scripts/validate-plugin-completeness.py = OK: 22 plugin(s) complete / python3 -m pytest tests/scripts-root/test_scripts__lint_feedback_protocol.py tests/test_feedback_contract_parity.py tests/test_feedback_contract_ssot.py tests/test_dogfooding_boundary.py = 55 passed / L168 の数値主張 229・116・94 を find・ls で再照合し全一致。injection 実験はすべて tmp コピーに対して実施し、scripts/ 配下と plugins/harness-creator/scripts/ 配下の元ファイルは未改変であることを control で照合した。検証できなかった点: 実 Notion API への投入 ([CREATED] 経路・rollup 増分は Keychain token / DB 未設定のため未実走。上記の exit code 実走は PATH へ挿した fake curl、header 受信確認は 127.0.0.1 の loopback サーバによる経路検査)、および L85 が明示的に対象外と宣言する対話文面の逐語一致。軽微 (finding には計上せず): L169-171 と L191-192 に編集由来の余分な空行が残る / lint 側 _check_resolution_order() が sys.path へ挿した notion_config のパスを復元しない (単発 CLI なので実害なし)。"
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration + runtime_root_policy: host-skill-path 導入によって SKILL.md sha が既存 verdict と乖離したことに対する再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 本 verdict は elegance 面 (30思考法の代替としての focused combined review による設計 adequacy) への投影である。 共通の機械検査として次を実走した: (1) `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` = verdict PASS / violations 空。(2) frontmatter が宣言した responsibility_refs / manifest / schemas と本文が起動する script の実在をファイル存在確認で全件突合 (audit-capability-parity.py, sync-plugin-platforms.py, check-route-component-parity.py, install-codex-plugin.py, install-local-plugins.py, evaluate-create-gates.py, validate-intake-publish-ready.py, lint-plugin-composition.py, search_knowledge.py, build-external-intelligence.py, lint-readme-plugin-root-portability.py, ref-cross-platform-runtime/references/runtime-portability.md) — 欠損 0 件。(3) 本文が引用する CLI flag を各 script の argparse 定義と突合。(4) 参照 anchor `#product別-plugin-root-契約` (runtime-portability.md L41) と `#h7-ナレッジループ注入の詳細手順` (build-steps.md L502) の実在を確認。 評価方法: 差分全体 (frontmatter の external_mutation_guard 22 行削除 + runtime_root_policy 追加 + Runtime root contract 節新設 + guard block 3 起動行の dual-root 化) を読み、現行 frontmatter に external_mutation_guard が 1 本だけ残ること、`effect: external-mutation` と guard 宣言と canonical receipt flow block の 三点が揃うこと、bare `${CLAUDE_PLUGIN_ROOT}` が本文に残っていないことを確認した。`audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` を実走し verdict PASS / violations 空。未解決 medium 以上は 0 件、low 1 件は Runtime root contract 節が共有正本のリンクではなく再掲になっている drift 面で、現時点の記載内容は正本と同義。よって verdict は PASS。PASS の射程は静的設計 adequacy に限り、guard flow の実挙動 (preview→hook-confirm→authorize→execute の receipt 連鎖) は実走証拠を別途要する。"
 }

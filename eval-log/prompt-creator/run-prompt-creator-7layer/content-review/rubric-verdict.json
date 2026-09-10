@@ -2,29 +2,41 @@
   "target": {
     "plugin": "prompt-creator",
     "skill": "run-prompt-creator-7layer",
-    "skill_md_sha256": "9984ebe950b4be6a3639450db946116303961e185b3794ea7e33b8f8ebfd9814"
+    "skill_md_sha256": "3b7c96201529f51591c22d1cf1a8fbc11bb8aed2a5f14eed817684432673291d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-rename-review-subagent-f",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
+  "reviewed_at": "2026-08-20T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "完全性 3/3: 中核要件 (7 層 L1-L7・Layer 単位生成→merge・L5 ゴールシーク宣言 l5-contract v2.0.0・冪等更新・セッション分離・300 行制約・brief 供給時対話 skip・C1-C4 worker 内蔵ゲート・Phase 4-C アンカー) が contract invariant 9 項・Key Rules 12・局面カタログ 8 行・Gotchas 13 に漏れなく分担。旧 Steps の手順情報は workflow-manifest.json と workflow-guide.md へ損失なく移管。",
-      "一貫性 3/3・簡潔性 3/3: 改名後の harness-creator 参照 (L87/L100/L162/L199/L202 の 5 箇所) が全て plugin 総体を指す語として用語規約に適合し、単体スキル操作 (run-build-skill) は skill 表現を維持する意味論境界が保たれ矛盾なし。L5 サブ構造は seven-layer-format.md 正本へ従属、アンカー schema は goal-seek-loop.schema.json へ委譲し再宣言なし。SKILL.md 202 行で 300 行制約内。",
-      "検証可能性 3/3・深度 2/3: IN1 (verify-completeness.py の banned 見出し+連番検出・--layers N/A skip・l5-contract v2.0.0) と IN2 (validate-prompt.py の 7 層マーカー/placeholder/TODO 検出) の verify_by:script 主張が機械層の実能力と一致。機械検証対象外項目の LLM 層委譲先 (quality-criteria.md §8・idempotent-update-policy.md) を明示し二層分離の設計判断が掘られている。"
+      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
+      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
+      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
+      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low] (改名非依存・HEAD 継承) End-to-End Flow/局面カタログの『Phase 4-D 変換+注入 → Phase 5 戻り検証』順と workflow-manifest.json (return-verify → design-gate → inject) の順が逆転。正本宣言により実行は manifest へ決定論的に解決されるが文書間で整列が望ましい。"
+      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "quality-rubric.md 5 次元で genuine 採点 (完全性3/一貫性3/深度2/検証可能性3/簡潔性3=14/15)。全次元が閾値 2 以上で PASS。改名 (skill-creator→harness-creator) 後の記述品質を確認: cross-plugin 参照 5 パスの実在・意味論境界の用語規約適合 (plugin 総体=harness-creator / 単体 skill 操作=skill)・旧固有名残存 0。導出 criteria IN1/IN2/OUT1 は本スキル固有目的から導出され frontmatter feedback_contract と一致。残 negative 1 件は改名非依存の HEAD 継承 low で設計欠陥に非ず。"
+  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+26 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  }
 }

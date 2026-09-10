@@ -1,6 +1,6 @@
 # 図解ゴールデン実例（入力 → 完成 HTML のペア）
 
-> **手書き経路 <!-- count: diagramGoldenHand -->53 組 + 決定論ビルダー経路 <!-- count: diagramGoldenBuilder -->10 組（`builders/`）は「正解の見本」であり、同時に**回帰の基準線**である。**
+> **手書き経路 <!-- count: diagramGoldenHand -->53 組 + 決定論ビルダー経路 <!-- count: diagramGoldenBuilder -->11 組（`builders/`）は「正解の見本」であり、同時に**回帰の基準線**である。**
 > 同じ `<type>-input.json` を与えて図解を書かせたら、出来上がりは
 > `<type>-golden.html` と**視覚的に同一**になるべきである。
 > ずれたら、ずれた側（生成物か、正本の契約か）のどちらが動いたのかを先に決める。

@@ -1,0 +1,32 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02",
+ "covered_task_ids": ["P02"],
+ "status": "success",
+ "write_scope": "P02",
+ "verified_by": [
+  {
+   "claim": "P02 は execution_kind=phase-gate であり、依存 proof の投影であって Agent を起動しない",
+   "method": "task-graph.json の P02 ノードを dispatcher が直読み (execution_kind / entity_ref / task_spec_ref)",
+   "result": "pass: execution_kind='phase-gate' / entity_ref=null / route_ref=null / task_spec_ref=null。capability-build のコストモデル『phase-gate は依存 proof の投影であり Agent を起動しない』に該当"
+  },
+  {
+   "claim": "P02 配下の全ノードが done である",
+   "method": "task-state.json の P02 系ノード 25 件の state を集計",
+   "result": "pass: C01..C23 の 23 component ノードと P02-x-01 がすべて done。checklist は eval-log 配下に 24 本"
+  },
+  {
+   "claim": "P02-x-01 の集約判定が独立再測定済みである",
+   "method": "checklist/P02-x-01.json の verified_by 9 件を参照",
+   "result": "pass: brief 実在 23/23 (set_equal True)・DAG 非循環 (topo 23/23)・4 段解決の plan レベル宣言をいずれも dispatcher が再測定"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P02-GATE-01",
+   "level": "carry-forward",
+   "summary": "本 gate が投影するのは設計 (brief) の proof のみ。evidence/P02.json の release_readiness.state=blocked が示すとおり出荷実体は未達であり、gate 通過を出荷可能と読んではならない"
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P11",
+  "covered_task_ids": [
+    "P11"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "全ゲートの実行出力が実在ファイルとして保全されている",
+      "method": "evidence/P11.json の gate_outputs を os.path.isfile で確認",
+      "result": "9 行すべて exit0 かつ実在。missing=0"
+    },
+    {
+      "claim": "実題材の生成物が構成データとセットで残っている",
+      "method": "eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/",
+      "result": "handout.html / handout-config.json / README.md / .handout-route.json の 4 種が同一ディレクトリに揃う"
+    },
+    {
+      "claim": "再現性の確認記録がある",
+      "method": "evidence/real-sample/reproducibility-record.json",
+      "result": "同一引数の二重生成・config 書き戻しの二重出力・引数なしの同梱 config からの再生成の 3 通りすべて identical:true"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "assets-path-not-exercised",
+      "detail": "実題材が画像を含まないため C13/C15 の assets 経路 (data URI 埋め込み) は本 bundle で実行されていない。単体テストでは覆っている"
+    }
+  ]
+}

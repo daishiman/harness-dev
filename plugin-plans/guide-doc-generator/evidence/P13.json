@@ -1,0 +1,287 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-aggregate-evidence",
+  "task_id": "P13-x-04",
+  "phase_ref": "P13",
+  "produced_by": "P13-x-04 worker (install 可能性の実測) + P13-x-01 worker (manifest 配布可否と実体の整合 / direct-task)",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence",
+  "acceptance_criterion_verbatim": "2 経路それぞれについて実行コマンド・exit code・実測範囲と未実測範囲が evidence へ記録されていること。機械実行できない手順を pass と推定しないこと",
+  "measurement_policy": {
+    "fail_closed": "機械実行できなかった手順は pass と書かず not-verifiable と書く。注釈つきの pass は使わない",
+    "boundary": "この plugin から機械実行できるのは『install の入力となる生成物・登録・実体の整合』までである。`/plugin install` そのものは Claude Code の対話面が実行する手順であり、本 leaf の実行環境からは起動できない"
+  },
+  "path_a_local_marketplace": {
+    "route_name": "ローカル clone からの marketplace install",
+    "user_facing_steps": [
+      "git clone https://github.com/daishiman/harness-dev.git && cd harness-dev",
+      "make sync",
+      "python3 scripts/build-local-marketplace.py",
+      "/plugin marketplace add ./marketplaces/local",
+      "/plugin install guide-doc-generator@harness-local"
+    ],
+    "measured": [
+      {
+        "command": "python3 scripts/build-local-marketplace.py --check",
+        "when": "登録前",
+        "exit_code": 1,
+        "stdout_excerpt": "[build-local-marketplace] DRIFT: marketplaces/local/.claude-plugin/marketplace.json の内容が古い",
+        "interpretation": "新規 plugin の未反映を検出した正しい RED"
+      },
+      {
+        "command": "python3 scripts/build-local-marketplace.py",
+        "exit_code": 0,
+        "stdout_excerpt": "wrote marketplaces/local/.claude-plugin/marketplace.json / plugins: 23 (clone-local only: 3) / plugins link: marketplaces/local/plugins -> ../../plugins"
+      },
+      {
+        "command": "python3 scripts/build-local-marketplace.py --check",
+        "when": "再生成後",
+        "exit_code": 0,
+        "stdout_excerpt": "[build-local-marketplace] OK: 23 plugin(s), no drift"
+      },
+      {
+        "command": "生成物 marketplaces/local/.claude-plugin/marketplace.json の plugins[] を直接読取",
+        "exit_code": 0,
+        "observed": {
+          "name": "guide-doc-generator",
+          "source": "./plugins/guide-doc-generator",
+          "version": "0.1.0",
+          "category": "Productivity",
+          "source_dir_exists": true,
+          "resolves_via_symlink": "marketplaces/local/plugins -> ../../plugins"
+        }
+      },
+      {
+        "command": "plugin.json の name を guide-doc-generator-BROKEN へ改変した反例で python3 scripts/build-local-marketplace.py --check",
+        "exit_code": 1,
+        "interpretation": "検査が実際に効いていることの裏づけ。改変前後で cp による退避と復元を行い、復元後の --check exit0 も再確認済み"
+      }
+    ],
+    "verdict": "verified-up-to-generation-boundary",
+    "not_verifiable": [
+      {
+        "step": "/plugin marketplace add ./marketplaces/local",
+        "reason": "Claude Code の対話面でのみ実行できるコマンドであり、本 leaf の実行環境から起動できない"
+      },
+      {
+        "step": "/plugin install guide-doc-generator@harness-local",
+        "reason": "同上。install 後の skills / agents / commands の実際の登場も未観測"
+      }
+    ]
+  },
+  "path_b_github_marketplace": {
+    "route_name": "GitHub へ PR を出した後の公開 marketplace からの install",
+    "user_facing_steps": [
+      "/plugin marketplace add daishiman/harness-dev",
+      "/plugin install guide-doc-generator@skills"
+    ],
+    "measured": [
+      {
+        "command": "python3 scripts/validate-plugin-completeness.py",
+        "when": "登録前",
+        "exit_code": 1,
+        "stdout_excerpt": "VIOLATION guide-doc-generator: not registered in .claude-plugin/marketplace.json plugins[] (MK-001) / not registered in any .claude-plugin/bundles.json bundle (BD-001)"
+      },
+      {
+        "command": "python3 scripts/validate-plugin-completeness.py --fix",
+        "exit_code": 0,
+        "stdout_excerpt": "--fix actions (append-only): marketplace.json: + guide-doc-generator / bundles.json[skills-full]: + guide-doc-generator / --fix OK: 23 plugin(s) complete"
+      },
+      {
+        "command": "python3 scripts/validate-plugin-completeness.py",
+        "when": "登録後",
+        "exit_code": 0
+      },
+      {
+        "command": "python3 scripts/lint-distributable-ssot.py",
+        "exit_code": 0,
+        "stdout_excerpt": "OK: 23 plugin の配布メタデータ (distributable/bundle_targets/category/tags) が単一の正本に収まっています"
+      },
+      {
+        "command": "python3 scripts/lint-readme-plugin-root-portability.py",
+        "exit_code": 0,
+        "stdout_excerpt": "plugins/guide-doc-generator/README.md: OK",
+        "interpretation": "skip でなく OK。distributable:false のあいだは検査対象外になるため、skip のままでは README のコマンド例が未検査で配布される"
+      },
+      {
+        "command": ".claude-plugin/marketplace.json と bundles.json の登録エントリを直接読取",
+        "exit_code": 0,
+        "observed": {
+          "marketplace_name": "skills",
+          "entry_source": "./plugins/guide-doc-generator",
+          "entry_source_dir_exists": true,
+          "bundle": "skills-full"
+        }
+      },
+      {
+        "command": "manifest の entry_points が指す全実体の存在確認 (skills 4 / agents 2 / commands 3 / hook 1 / surfaces 5)",
+        "exit_code": 0,
+        "observed": "15 件すべて OK。install 時に欠落するアセットは無い"
+      }
+    ],
+    "verdict": "verified-up-to-registration-boundary",
+    "not_verifiable": [
+      {
+        "step": "git commit / git push / PR 作成 / マージ",
+        "reason": "Conservative プロファイルに従い commit・push・PR を行っていない。marketplace.json と bundles.json の登録は作業ツリー上にのみ存在する"
+      },
+      {
+        "step": "/plugin marketplace add daishiman/harness-dev",
+        "reason": "remote の default branch に登録が乗って初めて成立する。マージ前の現時点では remote から guide-doc-generator は見えない"
+      },
+      {
+        "step": "/plugin install guide-doc-generator@skills",
+        "reason": "上記が前提であり、かつ Claude Code の対話面でのみ実行できる"
+      }
+    ]
+  },
+  "functional_smoke_test": {
+    "purpose": "install が成立したとして、その中身が実際に動くかを別途実測する (登録の整合と機能の成立は別の主張である)",
+    "measured": [
+      {
+        "command": "python3 scripts/validate-handout-config.py --config examples/minimal-config.json --normalize --out <tmp>/norm.json",
+        "exit_code": 0,
+        "stdout_excerpt": "OK handout-config: sections=1 parts=3 glossary=1 doc_type=lecture date=2026/08/18 warnings=0"
+      },
+      {
+        "command": "python3 scripts/render-handout.py --config <tmp>/norm.json --out <tmp>/handout.html",
+        "exit_code": 0,
+        "stdout_excerpt": "bytes=19344 sections=1 theme=pop warnings=[]"
+      },
+      {
+        "command": "python3 scripts/verify-handout-selfcontained.py --html <tmp>/handout.html",
+        "exit_code": 0
+      },
+      {
+        "command": "python3 scripts/verify-handout-a11y-print.py --html <tmp>/handout.html",
+        "exit_code": 0
+      },
+      {
+        "command": "python3 scripts/verify-handout-language.py --html <tmp>/handout.html --config <tmp>/norm.json",
+        "exit_code": 0,
+        "note": "初回は LANG-01 FAIL (exit1)。glossary に登録しただけでは通らず、本文の初出直後に括弧書きの言い換えが要る。例を直して緑にした — 検査を緩めていない"
+      },
+      {
+        "command": "python3 scripts/verify-handout-narrative.py --html <tmp>/handout.html --config <tmp>/norm.json",
+        "exit_code": 0,
+        "note": "初回は NAR-07 FAIL (exit1)。prior_knowledge_level=none から presentation_order=demo_first が導出され、セクション先頭に置けるのは screenshot 画像か live_demo:true の B17 のみ。**サンプルの都合で explain_first へ逃げず B17 を先頭に置いて解消した**"
+      }
+    ],
+    "verdict": "pass",
+    "not_verifiable": [
+      {
+        "step": "生成 HTML のブラウザ実描画・A4 実印刷・スクリーンリーダ読み上げ",
+        "reason": "a11y-print ゲートは HTML と CSS の静的検査であり、実際の描画結果は観測していない"
+      },
+      {
+        "step": "画像生成の委譲経路 (srg-image-bridge.py 経由の slide-report-generator 起動)",
+        "reason": "本 smoke test の構成データは画像素材を持たない。fail-soft 経路の実挙動は未観測"
+      }
+    ]
+  },
+  "overall": {
+    "status": "blocked",
+    "reason": "2 経路とも生成物・登録・整合の境界までは実測で緑だが、install コマンド自体と GitHub 側の反映は機械実行できていない。全経路 pass とは書けない",
+    "remaining_user_actions": [
+      "作業ツリーの変更を commit し、daishiman/harness-dev へ PR を出してマージする (Conservative プロファイルにより当方は実行していない)",
+      "マージ後に /plugin marketplace add daishiman/harness-dev → /plugin install guide-doc-generator@skills を実行して GitHub 経路を確認する",
+      "clone 環境では python3 scripts/build-local-marketplace.py → /plugin marketplace add ./marketplaces/local → /plugin install guide-doc-generator@harness-local を実行してローカル経路を確認する"
+    ]
+  },
+  "manifest_distribution_consistency": {
+    "produced_by": "P13-x-01",
+    "acceptance_criterion_verbatim": "manifest の配布可否と実体が整合し、marketplace 登録の判断と理由が記録されている",
+    "declared": {
+      "plugin_json": "plugins/guide-doc-generator/.claude-plugin/plugin.json",
+      "name": "guide-doc-generator",
+      "version": "0.1.0",
+      "distributable": true,
+      "bundle_targets": [
+        "skills-full"
+      ],
+      "category": "Productivity",
+      "tags": [
+        "handout",
+        "html",
+        "self-contained",
+        "beginner",
+        "print",
+        "a11y"
+      ]
+    },
+    "entity_parity": {
+      "method": "entry_points の各名前を規約パス (skills/<n>/SKILL.md, agents/<n>.md, commands/<n>.md) へ展開し os.path.isfile で存在確認",
+      "skills": 4,
+      "agents": 2,
+      "commands": 3,
+      "missing": [],
+      "hooks": {
+        "files": [
+          "hooks/guard-handout-external-ref.py"
+        ],
+        "declared_in_manifest": false,
+        "reason": "plugin.json の hooks キーと導入環境 settings.json の両方へ置くと 1 書込で 2 回発火するため、登録面を settings.json 一本へ寄せた意図的な非宣言。plugin.json の hook_registration_note と README に手順を記載"
+      },
+      "scripts": 17,
+      "schemas": 5,
+      "config": 4
+    },
+    "registration": {
+      "marketplace_json": {
+        "path": ".claude-plugin/marketplace.json",
+        "marketplace_name": "skills",
+        "entry_present": true,
+        "source": "./plugins/guide-doc-generator",
+        "version": "0.1.0",
+        "total_entries": 20
+      },
+      "bundles_json": {
+        "path": ".claude-plugin/bundles.json",
+        "bundle": "skills-full",
+        "entry_present": true,
+        "consistent_with_plugin_json_bundle_targets": true
+      },
+      "local_marketplace": {
+        "path": "marketplaces/local/.claude-plugin/marketplace.json",
+        "entry_present": true,
+        "generator": "scripts/build-local-marketplace.py",
+        "drift_check": "--check exit0 (23 plugin)"
+      }
+    },
+    "decision_record": {
+      "original": "repo 内利用を既定とし配布はしない。marketplace 登録は判断と理由を記録し実登録は人手承認を経る",
+      "reversal_date": "2026-08-18",
+      "reversal_reason": "利用者から配布 2 経路 (ローカル install と GitHub PR 後の marketplace install) の成立を求める明示要求があり、これが留保していた人手承認にあたるため distributable を true とした",
+      "residual_risk": "契約の未成熟が外部利用者へ波及する。緩和として初版を 0.1.0 に固定し、23 スイート 3308 件の緑と実題材 8 ゲートの PASS を証跡に残した状態でのみ配布する",
+      "improvement_sink": "eval-log/guide-doc-generator/build/discovered-tasks (discovered-task inbox) 経由で外ループへ合流させる",
+      "recorded_in": [
+        "plugin-plans/guide-doc-generator/phase-13-release.md",
+        "plugin-plans/guide-doc-generator/evidence/P13.json"
+      ]
+    },
+    "verdict": "pass",
+    "blocking_for_path_b": [
+      {
+        "finding": "plugins/guide-doc-generator/ 配下は git 未追跡 (git ls-files = 0 件)",
+        "impact": "ローカル経路は symlink 経由で作業ツリーの実体を解決するため現状でも成立するが、GitHub marketplace 経路はコミット済みツリーを解決するため、commit + push + PR マージまでは source が空になる",
+        "status": "not-yet-satisfied (コミット権限は利用者承認待ちのため本 leaf では実行しない)"
+      }
+    ],
+    "rename": {
+      "date": "2026-08-18",
+      "from": "handout-builder",
+      "to": "guide-doc-generator",
+      "reason": "製品名が生成物の呼称と同じで、何をする plugin か install 一覧から読み取りにくかった。配布前 (0.1.0・未コミット) の時点で改めた",
+      "scope": "製品同一性のみ: plugin ディレクトリ名・plugin.json の name・marketplace.json / bundles.json / ローカル marketplace の登録名・計画と証跡のディレクトリ名 (3838 箇所の文字列置換)",
+      "intentionally_not_renamed": {
+        "items": [
+          "data-hb-* の HTML 属性 (2690 箇所)",
+          "HB_ROOT / HB_OUT_DIR の環境変数",
+          "handout-config.json などの成果物ファイル名",
+          "run-handout-build などのコンポーネント名"
+        ],
+        "rule": "製品名は変えるがドメイン語彙は変えない。これらが指すのは製品ではなく生成物である『資料 (handout)』であり、改名しても意味が正しいまま残る。巻き込むと再現バイト列と 3000 件超のテスト資産が無効になり、利用者が設定済みの環境変数も壊れる"
+      },
+      "re_measured_after_rename": "script のパスが変わるため、実題材のパイプラインとゲートは文字列置換せず全て再実行して測り直した"
+    }
+  }
+}

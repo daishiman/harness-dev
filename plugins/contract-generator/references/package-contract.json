@@ -1,0 +1,127 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "contract-generator",
+  "entry_points": {
+    "skills": [
+      "run-contract-finalize",
+      "run-contract-generate",
+      "run-skill-feedback",
+      "run-template-sync"
+    ],
+    "agents": [
+      "contract-draft-agent",
+      "contract-finalize-agent",
+      "template-sync-agent"
+    ],
+    "commands": [],
+    "hooks": [
+      "hook-guard-secret.py"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "development-tools",
+    "tags": [
+      "contracts",
+      "templates",
+      "governance"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {
+      "contract-draft-agent": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent contract-draft-agent through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-contract-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "contract-generator",
+          "entry_points": [
+            "run-contract-generate"
+          ]
+        }
+      },
+      "contract-finalize-agent": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent contract-finalize-agent through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-contract-finalize"
+          ]
+        },
+        "owner_route": {
+          "plugin": "contract-generator",
+          "entry_points": [
+            "run-contract-finalize"
+          ]
+        }
+      },
+      "template-sync-agent": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent template-sync-agent through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-template-sync"
+          ]
+        },
+        "owner_route": {
+          "plugin": "contract-generator",
+          "entry_points": [
+            "run-template-sync"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

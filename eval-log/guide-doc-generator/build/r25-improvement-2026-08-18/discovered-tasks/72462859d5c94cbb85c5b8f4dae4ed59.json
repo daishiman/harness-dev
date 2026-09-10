@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P01-x-01",
+  "reason": "dispatcher 実測: goal-spec.checklist は 75 件だが P01-x-01 の AC は C1-C45 しか名指しておらず C46-C75 の 30 件が検査範囲の外にある。範囲を件数リテラルで書いたことによる取りこぼし",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P01-x-01.json",
+  "proposed_node": {
+    "id": "P05-x-96",
+    "title": "checklist C46-C75 を P01 の AC 対象範囲へ含める",
+    "phase_ref": "phase-01-requirements.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/task-graph.json",
+    "acceptance_criterion": "P01 系ノードの acceptance_criterion が goal-spec.checklist の全件を対象として名指ししており、件数が増えたときに範囲外へ落ちる criterion が生じないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

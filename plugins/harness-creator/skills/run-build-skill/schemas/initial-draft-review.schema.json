@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/initial-draft-review.schema.json",
+  "title": "Initial Usable Draft Review",
+  "description": "content/contract fingerprintに束縛された、単一fresh-contextのread-only初回診断receipt。release/audit proofではない。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "subject", "baseline_fingerprint_sha256",
+    "review_claim_id", "launch_request_id", "contract_binding", "target_manifest", "evaluator",
+    "review_mode", "edited_target", "thought_reset", "evidence",
+    "method_observations", "findings", "four_conditions", "recommended_level",
+    "summary", "produced_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "baseline_fingerprint_sha256": {"$ref": "#/definitions/sha256"},
+    "review_claim_id": {"type": "string", "pattern": "^IRC-[0-9a-f]{32}$"},
+    "launch_request_id": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
+    "contract_binding": {"$ref": "#/definitions/contract_binding"},
+    "target_manifest": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/definitions/target_file"}
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "context_count", "runtime"],
+      "properties": {
+        "id": {"type": "string", "const": "elegant-initial-draft-evaluator"},
+        "context_count": {"type": "integer", "const": 1},
+        "runtime": {"type": "string", "enum": ["claude-code", "codex"]}
+      }
+    },
+    "review_mode": {"type": "string", "const": "diagnostic-only"},
+    "edited_target": {"type": "boolean", "const": false},
+    "thought_reset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["performed", "physical_deletion_performed", "parent_history_used", "fresh_target_read", "attested_at"],
+      "properties": {
+        "performed": {"type": "boolean", "const": true},
+        "physical_deletion_performed": {"type": "boolean", "const": false},
+        "parent_history_used": {"type": "boolean", "const": false},
+        "fresh_target_read": {"type": "boolean", "const": true},
+        "attested_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "line"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^EVD-[0-9]{3}$"},
+          "path": {"type": "string", "minLength": 1},
+          "line": {"type": "integer", "minimum": 1},
+          "section": {"type": "string"}
+        }
+      }
+    },
+    "method_observations": {
+      "type": "array",
+      "minItems": 30,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["method_id", "rationale", "observation", "evidence_refs", "finding_refs"],
+        "properties": {
+          "method_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+          "rationale": {"type": "string", "minLength": 1},
+          "observation": {"type": "string", "minLength": 1},
+          "evidence_refs": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^EVD-[0-9]{3}$"}
+          },
+          "finding_refs": {
+            "type": "array", "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^IDR-[0-9]{3}$"}
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "description", "severity", "affects_goal", "actionable", "recommendation", "location", "remediation_paths", "condition_signals"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^IDR-[0-9]{3}$"},
+          "title": {"type": "string", "minLength": 1},
+          "description": {"type": "string", "minLength": 1},
+          "severity": {"type": "string", "enum": ["critical", "high", "medium", "low"]},
+          "affects_goal": {"type": "boolean"},
+          "actionable": {"type": "boolean"},
+          "recommendation": {"type": "string", "minLength": 1},
+          "location": {"$ref": "#/definitions/location"},
+          "remediation_paths": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[\\\\*?\\[\\]{}!])(?!.*//).+$"
+            }
+          },
+          "condition_signals": {
+            "type": "array", "minItems": 1, "uniqueItems": true,
+            "items": {"type": "string", "enum": ["C1", "C2", "C3", "C4"]}
+          }
+        }
+      }
+    },
+    "four_conditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["C1", "C2", "C3", "C4"],
+      "properties": {
+        "C1": {"$ref": "#/definitions/condition"},
+        "C2": {"$ref": "#/definitions/condition"},
+        "C3": {"$ref": "#/definitions/condition"},
+        "C4": {"$ref": "#/definitions/condition"}
+      }
+    },
+    "recommended_level": {"type": "string", "enum": ["accept-draft", "light", "standard", "detailed", "release"]},
+    "summary": {"type": "string", "minLength": 1},
+    "produced_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "contract_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_manifest_sha256", "method_catalog_sha256", "method_catalog_version", "prompt_sha256", "review_schema_sha256", "review_schema_version"],
+      "properties": {
+        "target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+        "method_catalog_sha256": {"$ref": "#/definitions/sha256"},
+        "method_catalog_version": {"type": "string", "minLength": 1},
+        "prompt_sha256": {"$ref": "#/definitions/sha256"},
+        "review_schema_sha256": {"$ref": "#/definitions/sha256"},
+        "review_schema_version": {"type": "integer", "const": 1}
+      }
+    },
+    "target_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/definitions/sha256"},
+        "size": {"type": "integer", "minimum": 0}
+      }
+    },
+    "location": {
+      "type": "object",
+      "description": "Manifest-bound UTF-8 regular-file location. Gate verifies current sha256/size, repo containment, and line <= actual line count.",
+      "additionalProperties": false,
+      "required": ["path", "line"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "line": {"type": "integer", "minimum": 1},
+        "section": {"type": "string"}
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "summary", "finding_refs"],
+      "properties": {
+        "verdict": {"type": "string", "enum": ["PASS", "FAIL", "PARTIAL"]},
+        "summary": {"type": "string", "minLength": 1},
+        "finding_refs": {
+          "type": "array", "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^IDR-[0-9]{3}$"}
+        }
+      }
+    }
+  }
+}

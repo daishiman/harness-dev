@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C12",
+  "task_id": "P05-C12-01",
+  "covered_task_ids": [
+    "P05-C12-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/scripts/validate-handout-config.py",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (1492 行)"
+    },
+    {
+      "claim": "Python 標準ライブラリのみで書かれている",
+      "method": "grep -nE '^\\s*(import|from) ' で import 行を全列挙 (22-31 行目)",
+      "result": "pass (argparse / datetime / importlib.util / json / os / re / sys / tempfile / unicodedata / pathlib の 10 本。yaml / 通信系 / subprocess は 0 件)"
+    },
+    {
+      "claim": "テストが 278 件中 274 件緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/validate-handout-config.py -p 'test_*.py'",
+      "result": "pass (Ran 278 / failures=2 / errors=2。実装前は failures=366 相当の全赤)"
+    },
+    {
+      "claim": "隣接 C23 (resolve-handout-preset.py) に退行させていない",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/resolve-handout-preset.py -p 'test_*.py'",
+      "result": "pass (Ran 128 / failures=0 / errors=0 / OK。C12 は C23 を importlib.util.spec_from_file_location で読み込む側であり、第 2 の正本を作っていない)"
+    },
+    {
+      "claim": "残る赤 4 件が実装不足でなくテスト側の欠陥・契約矛盾である",
+      "method": "4 件それぞれについて当方が独立にテスト本文と正本ファイルを読解 (下記 deviations で個別に検証結果を記載)",
+      "result": "pass (2 件=テストが読むキー名が config 正本と不一致 / 1 件=schema+R22 とテストの相互排他 / 1 件=fixture 由来の恒常赤。実装側の修正で緑化できるものは 0 件)"
+    },
+    {
+      "claim": "--normalize の出力書き込みが原子的である",
+      "method": "tempfile.mkstemp + os.write + os.replace の使用箇所を確認",
+      "result": "pass (部分書き込みの残留を作らない経路になっている)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "tests/validate-handout-config.py/ 配下 16 ファイルの sha256 を実装開始時と突合",
+      "result": "pass (16 ファイルすべて sha256 一致)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "config/ schemas/ tests/ の mtime 確認",
+      "result": "pass (本 leaf 由来の書込は scripts/validate-handout-config.py 1 本のみ。config/handout-purposes.json は未更新のまま = 下記 deviation (1) を実装側で握り潰していない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "test-canon-conflict",
+      "detail": "要裁定 1 / 当方で独立確認済み。test_source_hygiene.test_no_purpose_vocabulary_literals と test_document_fields.DocTypeVocabulary.test_unknown_doc_type_lists_vocabulary が catalog[\"entries\"] を読むが、config/handout-purposes.json のトップレベルは [_meta, schema_version, vocabulary, presets] で entries キーは存在しない (当方が json.load で再確認)。用途語彙の正本キー名は vocabulary。config/ も tests/ も C12 の write_scope 外のため本 leaf では解消不能。裁定方針: config が正本でテスト側の参照名が誤り。テスト 2 件を vocabulary へ改める leaf を別途立てる"
+    },
+    {
+      "kind": "test-canon-conflict",
+      "detail": "要裁定 2 / 当方で独立確認済み。test_normalize_date_determinism.NormalizeDefaults.test_provenance_shape は provenance を {normalized_by, schema_version, catalog_sha256, date_source, presentation_order_source, text_fold_count} のちょうど 6 キーへ assertEqual で固定するが、schemas/handout-config.schema.json の $defs.provenance と R22 は detail_level_source / evidence_depth_source を要求する (P05-x-05 の worker 裁量 (5) で追加され、C12 ブリーフの notes が名指ししている)。6 キー固定と 8 キーは相互排他。実装は schema+R22 側を採り 8 キーを出力している (R22 の 21 件が緑を維持)。加えて本テストは『キー集合ちょうど一致』という導出値を契約に書いた形であり、RESOLUTION-P04-x-05 の欠陥クラスに該当する。裁定方針: 述語を『規定の 6 キーを含む』+『normalized_by と text_fold_count の型』へ緩める"
+    },
+    {
+      "kind": "test-defect-always-red",
+      "detail": "当方で独立確認済み。test_normalize_date_determinism.FailClosed.test_no_temp_file_left_behind は out.parent を iterdir し suffix != '.json' の実体を残留とみなすが、_harness.setUp が self.tmp/'plugin-root' を必ず作り self.out も self.tmp 直下に置く (_harness.py:144-154)。plugin-root は拡張子を持たないディレクトリなので実装の内容に関わらず常に leftovers へ入り恒常赤。裁定方針: 走査対象を『out.parent 直下のファイルのみ』かつ『out.stem を前置する一時名のみ』へ絞る"
+    },
+    {
+      "kind": "resolved-open-question",
+      "detail": "P05-x-05 から引き継いだ未決 3 件のうち 2 件が本 leaf で解けた。(1) $defs.diagram のネスト形 vs C14 のフラット形: C12 suite に diagram オブジェクトの形を検査するテストが 1 件も無いため、C12 側からは schema のネスト形が無競合で立つ。決着は P05-C14-01 に残る。(2) diagram.pattern の 6 値目: script は enum を schema から動的に読み literal を持たないため versus/dichotomy のどちらでも壊れない (正本は C14)。(3) script-brief-C11.json の 'C12 の config_schema.part_catalog' は誤記で、実体は $defs.part_data。script は起動時に config/handout-parts.json の id 集合と $defs.part_data の id 集合の一致 (20 件) を assert し、不一致なら exit 2 する = 第 2 の部品レジストリを作らせない fail-closed"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量。用途語彙・section_kind・part id・テーマ名を script へ列挙せず、すべて config/ と schemas/ から読む方針を全面採用した (語彙の第 2 正本を作らない)。読み込み失敗時は exit 2 の fail-closed"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-34-vocabulary-config-missing",
+  "covered_task_ids": [
+    "P05-x-34-vocabulary-config-missing"
+  ],
+  "status": "done",
+  "write_scope": "plugins/guide-doc-generator/",
+  "acceptance_criterion_restated": "config/handout-vocabulary.json が実在し connectors に Google Drive / OneDrive / kintone を含む。C11 が前提セクションへ描画し C20 が round-trip で復元する。復元の粒度は『構成データが持つ値だけ』であり、表示ラベルは語彙正本の側にしか置かない (利用者要求 R10 の受け皿)",
+  "verified_by": [
+    {
+      "claim": "語彙正本が実在し、利用者指定の 3 コネクタを持つ",
+      "method": "config/handout-vocabulary.json を新設し connectors.entries へ google-drive / onedrive / kintone を登録した。plan 側 briefs/config/handout-vocabulary.json からの移植で、attainment_level_labels も同梱している",
+      "result": "id は ^[a-z][a-z0-9-]*$ / 表示ラベルはベンダー表記どおり (kintone は小文字始まり)。closed=false は『追記だけで拡張できる』宣言であり、実行時の許容範囲を緩めるものではない (C12 は entries に無い id を拒み続ける)"
+    },
+    {
+      "claim": "構成データ側に受け皿がある",
+      "method": "schemas/handout-config.schema.json へ $defs.prerequisite_connector と properties.prerequisite_connectors (x_unique_by=connector) を追加。required には入れない",
+      "result": "$defs 側は connector (id への参照) と note (32 字上限・非空) だけを持ち additionalProperties=false。表示ラベルを書ける欄が構造上存在しないので、2 つ目の出所が生まれる余地がない。required へ入れないため既存の構成データはそのまま通る"
+    },
+    {
+      "claim": "C12 が語彙と突き合わせ、語彙に無い id で完了を止める",
+      "method": "validate-handout-config.py に Context.load_vocabulary / check_connectors / check_attainment_vocabulary を追加。tests/validate-handout-config.py/test_vocabulary.py を新設 (10 本) して実行",
+      "result": "10 本 green。3 コネクタは exit=0、未知 id は E-CONNECTOR-UNKNOWN /prerequisite_connectors/N/connector で exit=1。正本へ追記すると受理され、正本から落とすと拒まれる (許可集合が script でなく正本から来ている陽性・陰性対照)"
+    },
+    {
+      "claim": "語彙正本が読めないときにゲートが緩まない (fail-closed)",
+      "method": "視覚方針 (visual_policy) は fallback を持つが、語彙は持たせず read_json_file の失敗をそのまま LaunchAbort にした。test_vocabulary.py::TestVocabularyCanonFailsClosed で正本の削除・破損を実行",
+      "result": "2 本とも green。どちらも exit≠0。既定値へ落ちる実装だと未知コネクタが素通りする fail-open になるため、ここは意図的に非対称にしてある"
+    },
+    {
+      "claim": "C11 が前提カードを描き、描くのはラベルであって id ではない",
+      "method": "render-handout.py に load_vocabulary / vocabulary_labels を追加し build_hero へ前提コネクタの ul を挿した。tests/render-handout.py/test_prerequisite_connectors.py を新設 (7 本) して実行",
+      "result": "7 本 green。可視テキストは Google Drive / OneDrive / kintone で、id は可視テキストへ現れない。語彙に引けない id は DataError で異常終了する (id を描いて取り繕わない)。script 本文に表示ラベルが焼かれていないことも source 走査で固定した"
+    },
+    {
+      "claim": "C20 が round-trip で復元し、そのとき表示ラベルを読み戻さない",
+      "method": "schemas/ROUNDTRIP-CONTRACT.md へ /prerequisite_connectors の adjudication (decision=marker) を追加し、extract-handout-config.py へ DOC_KEY_ONLY_ENTRY_FIELDS と first_descendant_field を実装。tests/extract-handout-config.py/test_prerequisite_connectors.py を新設 (7 本) して実行",
+      "result": "7 本 green。復元されるのは data-hb-key の id と but 書きだけで、entry のキー集合は {connector, note} を超えない。but 書きは項目の内側からだけ引くので隣の項目へ漏れない。既存 159 本も全 green"
+    },
+    {
+      "claim": "印の置き場所を li 側へ寄せた理由が実装と一致している",
+      "method": "当初 label を印付き span にし note を兄弟要素にしたが、note は印付き要素の子孫でないため first_descendant_field が引けない。印を li へ移し、label は印なし span、note を子の印付き span にした",
+      "result": "li が data-hb-field=prerequisite_connector + data-hb-key を持ち、その内側に note がある形。表示ラベルには一切印が付かないので、C20 が読み戻せる経路そのものが存在しない (規約でなく構造で担保している)"
+    },
+    {
+      "claim": "任意配列の不在が round-trip 差分にならない",
+      "method": "印が 1 つも無い HTML では prerequisite_connectors のキー自体を出さない実装にした (assets / attachments / diagrams と同じ扱い)。W-EXTRACT-OPTIONAL も出さない",
+      "result": "test_absent_list_does_not_produce_a_null_key が green。当初は穴として記録したが、既存の StrictFidelity と自己検査が『前提を書かなかった通常の資料』で警告を出すようになり 2 本落ちた。著者が 1 件も書かなかった状態と印が落ちた状態はこの位置では区別できず、後者は round-trip 比較が差分として捕らえるため、穴に数えないのが正しい"
+    },
+    {
+      "claim": "前提が『読む文』でなく『並ぶ札』として出る (R11/R9 の読みやすさ)",
+      "method": "生成 CSS へ .prerequisite-connectors を追加し list-style を外して flex-wrap のチップ列にした。test_connector_list_is_flex_without_bullets で宣言を固定",
+      "result": "green。数値 (gap / padding) は固定せず、行頭記号を外して横に並べる意図だけを固定した。色は既存トークン (--line / --subtle / --ink-muted) だけを参照しており未定義変数を作っていない"
+    },
+    {
+      "claim": "隣接スイートを壊していない",
+      "method": "C11 / C12 / C18 / C20 / C21 / C22 の 7 スイートを全件実行",
+      "result": "render 226 passed / extract 159 passed / a11y-print 187 passed / selfcontained 354 passed。validate は 15 failed / 348 passed で、失敗 15 件の内訳は着手前と同一の 2 系統 (意図的な赤 3 件 + 本文予算 12 件・F-C1201SFV-REMAIN-01/02)。language 11 / narrative 8 の失敗も本ノード着手前から存在する別系統 (DT-1 出力先裁定待ちの test_date03_out_dir.py と P05-x-71 系の test_r22_nar09_nar10.py) で、いずれも語彙・コネクタに触れない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P05X34VOC-ATTAIN-01",
+      "level": "warn",
+      "summary": "attainment_level_labels を新設したが、どの script もまだ引いていない。C11 は今も enum 値 (operable) をそのまま可視テキストへ描いており、R25 の raw_enum_leak 裁定が求める表示ラベル化は未達である。単純に描き替えると C20 の DOC_FIELDS が可視テキストから attainment_level を読み戻すため round-trip が enum→ラベルへ化ける。前提コネクタと同じ key-only 経路が要る。discovered-task P05-x-118-attainment-label-render (additive) として emit した"
+    },
+    {
+      "id": "F-P05X34VOC-C18-01",
+      "level": "warn",
+      "summary": "handout-vocabulary.json の _meta.readers は C18 verify-handout-language.py を『E-ENUM-RAW の変換対応表』の読み手として挙げるが、C18 に E-ENUM-RAW は存在しない (grep 0 件)。宣言された読み手が読んでいない状態であり、語彙を整えても生の enum 値の可視化を機械的に捕らえられない。discovered-task P05-x-119-c18-enum-raw-check (additive) として emit した"
+    },
+    {
+      "id": "F-P05X34VOC-SEVERITY-01",
+      "level": "info",
+      "summary": "E-CONNECTOR-UNKNOWN / E-ENUM-VOCAB-INCOMPLETE の重大度は handout-visual-policy.json の thresholds を経由せず script 側の判定で error になる。視覚下限で問題になった『正本で降格できない片方向のつまみ』(F-C1201SFV-LEVEL-01) と違い、こちらは最初から正本での調整口を作っていないので『設定できるように見えて効かない』にはならない。将来 thresholds へ載せるなら降格経路の是非 (P05-x-115) と同時に裁定するのが筋"
+    },
+    {
+      "id": "F-P05X34VOC-CLOSED-01",
+      "level": "info",
+      "summary": "connectors.closed=false と attainment_level_labels.closed=true は現状どの script も読んでいない宣言である。attainment 側の closed=true は『schema の enum と完全一致であること』を意味し、その実効化は check_attainment_vocabulary が構成データ側の値についてのみ行う (schema の enum 全件が語彙に在るかは検査していない)。enum を増やしたのに語彙へ足し忘れると、その値を使う資料が現れるまで気付けない。P05-x-119 の AC へ含めるか、独立の自己整合検査にするかは planner 側の裁定に委ねる"
+    }
+  ]
+}

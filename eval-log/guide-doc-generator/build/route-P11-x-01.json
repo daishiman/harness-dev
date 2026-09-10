@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P11-x-01",
+  "covered_task_ids": [
+    "P11-x-01"
+  ],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P11.json",
+  "verified_by": [
+    {
+      "claim": "全ゲートの実行出力が実在ファイルとして残っている",
+      "method": "当方が 9 本のゲート/工程の stdout と JSON レポートを書き出し、記録した全パスを os.path.isfile で存在確認した",
+      "result": "pass (欠落 0 件。証跡は裸の実在パスだけで記録し、コマンド名・exit code は別欄へ分けている — 注釈混じりのパスは実在解決に失敗して緑化を装う経路になるため)"
+    },
+    {
+      "claim": "実題材の生成物が構成データとセットで残っている",
+      "method": "当方が実題材 1 本を出力先ルーティングまで通し、同梱ディレクトリの中身を列挙した",
+      "result": "pass (eval-log/guide-doc-generator/evidence/routed/2026-08-18-onboarding-guide-doc-generator-1/ に handout.html と、それを生む handout-config.json と README.md と .handout-route.json が同居している。**資料だけ残して構成データを捨てていない** ため、この 1 ディレクトリだけで再生成できる)"
+    },
+    {
+      "claim": "再現性の確認記録がある",
+      "method": "当方が 3 種類の一致 (同一引数の 2 回描画 / 書き戻し構成データの 2 回出力 / 同梱構成データからの引数なし再生成) の sha256 を採り 1 ファイルへ記録した",
+      "result": "pass (3 種とも identical=true。記録は evidence/real-sample/reproducibility-record.json。逆抽出→再検証の 2 本のログも同記録から辿れる)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "assets-path-not-exercised-in-real-subject",
+      "detail": "実題材が画像・添付を持たないため assets/ は空で、data URI 化 (C13) と挿絵委譲 (C15) の実行出力が本セットに無い。両者の被覆は単体スイート側 (embed-assets.py 96 件 / srg-image-bridge.py 291 件) にあり、実題材による端から端までの被覆ではない"
+    },
+    {
+      "kind": "evidence-lives-outside-plugin",
+      "detail": "証跡は eval-log/ 配下にあり plugin 本体には同梱していない。配布物の肥大を避ける判断だが、plugin だけを受け取った人からは証跡が見えない"
+    }
+  ]
+}

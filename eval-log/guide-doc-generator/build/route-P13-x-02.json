@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P13-x-02",
+  "covered_task_ids": [
+    "P13-x-02"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "plugin_level_surfaces で required:true の全サーフェスの実体が存在する",
+      "method": "当方が inventory の plugin_level_surfaces から required:true のエントリを列挙し、各 path の実在を os.path.isfile で確認した",
+      "result": "pass (manifest=`.claude-plugin/plugin.json` (新規)・composition=`plugin-composition.yaml` (新規)・harness_eval=`EVALS.json` (新規)・schemas=`schemas/handout-config.schema.json` (既存)・references_config_assets=`assets/` + `config/` (既存・path でなく record_in 型)。**新規に実体化したのは前 3 者**。あわせて manifest の entry_points が指す skills 4 / agents 2 / commands 3 / hook 1 の全 10 実体の実在も個別に確認した)"
+    },
+    {
+      "claim": "build-local-marketplace.py --check が exit0 で guide-doc-generator を掲載対象として解決できる",
+      "method": "当方が --check を実行し、次いで再生成してから --check を再実行し、生成物 `marketplaces/local/.claude-plugin/marketplace.json` の plugins[] を直接読んだ",
+      "result": "pass (初回 --check は `DRIFT: marketplace.json の内容が古い` で exit1。これは新規 plugin の未反映を検出した正しい RED である。`build-local-marketplace.py` で再生成後は `OK: 23 plugin(s), no drift` exit0。**掲載は生成物から実測した**: plugins[] に name=guide-doc-generator / source=./plugins/guide-doc-generator / version=0.1.0 / category=Productivity のエントリが 1 件存在し、`marketplaces/local/plugins` -> `../../plugins` の symlink 経由で実体ディレクトリが解決する)"
+    },
+    {
+      "claim": "manifest を壊した反例で --check が RED になる (検査が実際に効いている)",
+      "method": "当方が plugin.json を scratchpad へ cp で退避したうえで `name` を `guide-doc-generator-BROKEN` へ書き換え (フォルダ名との不一致を作り)、--check と validate-plugin-completeness.py を再実行し、その後 cp で復元して両者の緑を再確認した",
+      "result": "pass (**反例状態: build-local-marketplace.py --check が exit1・validate-plugin-completeness.py が exit1**。復元後は --check が `OK: 23 plugin(s), no drift` exit0 へ戻った。緑が「検査が甘いから緑」ではなく「条件を満たすから緑」であることを、落ちる側の観測で裏づけた)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "install-command-not-machine-executable",
+      "detail": "`/plugin marketplace add ./marketplaces/local` と `/plugin install guide-doc-generator@harness-local` の実行そのものは Claude Code の対話面でしか起動できず、本 leaf からは機械実行していない。実測したのは「install の入力となる marketplace 生成物が guide-doc-generator を正しく掲載し、source が実体へ解決すること」までである。未実測範囲は P13-x-04 の証跡へ明示的に記録する (pass と推定しない)"
+    },
+    {
+      "kind": "composition-file-is-yaml",
+      "detail": "本 repo の script 群は yaml import を禁じているが、`plugin-composition.yaml` は plugin surface として拡張子が固定されており宣言文書である。script から読まないため禁止規律には抵触しない"
+    }
+  ]
+}

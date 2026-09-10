@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-07",
+  "covered_task_ids": [
+    "P05-x-07"
+  ],
+  "status": "success",
+  "write_scope": "plugins/guide-doc-generator",
+  "verified_by": [
+    {
+      "claim": "部品 id の literal が単一正本カタログの外に 0 件である",
+      "method": "当方が AC の指す 4 ファイル (validate-handout-config.py / verify-handout-a11y-print.py / verify-handout-narrative.py / agents/handout-content-architect.md) を B01-B17 の正規表現で走査し、あわせて走査範囲を決める側のテストを実行した",
+      "result": "pass (4 ファイルとも該当 0 件。tests/render-handout.py の test_part_ids_are_not_enumerated_outside_the_catalog を含む 219 件が緑。解決は config/handout-parts.json の kind / section_scope / data_block_type 述語で行う形になっている)"
+    },
+    {
+      "claim": "literal 除去によって壊れた別契約を、id を復活させずに解消した",
+      "method": "当方が 23 スイート全件を走らせ、AC-C05-17 が『B17 への言及』を要求して赤になっていることを検出し、契約側を述語要求へ更新した",
+      "result": "pass (**除去前は見えなかった衝突**: agents/handout-content-architect.md から B17 を消すと AC-C05-17 が赤になる。id を書き戻せば P05-x-07 が赤に戻る二律背反であり、**契約側を data_block_type=handson の述語要求へ変更して解消した**。部品 id の名簿を config/handout-parts.json 以外に作らない裁定を優先したためである。fixtures/accept 側の golden も同じ表現へ揃え、tests/handout-content-architect 49 件が緑)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "prose-is-out-of-scope",
+      "detail": "走査範囲は『実行されるコードと、指示として読み込まれるテキスト』であり散文は対象外と宣言されている。README.md の部品一覧表 20 件はこの宣言により違反にならないが、カタログとの drift 経路であることは変わらない (P12 の逸脱として既記録)"
+    }
+  ]
+}

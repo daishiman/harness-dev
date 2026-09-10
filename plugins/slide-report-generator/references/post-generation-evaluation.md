@@ -1,8 +1,7 @@
 # 生成後評価サブシステム（正本）
 
-> プレゼン生成完了後に「成果物が仕様通り・要望通り・エレガントか」を多角的に評価する仕組みの SSoT。
-> 機械評価 `vendor/scripts/evaluate-deck.js` ＋ LLM評価 `agents/deck-evaluator.md`（思考リセット後30種思考法）＋
-> fail-soft 自動起動フック `hooks/hook-postgen-eval.py` の3点で構成する。
+> 実artifactの提示後、**利用者選択後のみ**、`light / standard / detailed` が選ばれた場合に「成果物が仕様通り・要望通り・エレガントか」を多角的に評価する仕組みの SSoT。
+> 機械評価 `vendor/scripts/evaluate-deck.js` ＋ LLM評価 `agents/deck-evaluator.md`（思考リセット後30種思考法）で構成する。`hooks/hook-postgen-eval.py` は評価系の一部ではなく、最小guard・提示・選択を促すfail-soft advisoryである。
 
 ## 1. 全体像
 
@@ -11,7 +10,11 @@
         │
         ▼  PostToolUse フック（Write|Edit|MultiEdit が中核ファイルを書いた時）
   hook-postgen-eval.py
-        │  mode を判定し、additionalContext で評価起動を促す（重い評価は hook 内で強制実行しない）
+        │  mode 判定＋UTF-8 open/HTML parse/空・NUL破損/secretの最小guard
+        ▼
+  artifact path/open方法を提示 → 利用者choice
+        ├─ accept-as-is → evaluator 0 / improver 0 でhandoff完了
+        └─ light / standard / detailed
         ▼
   evaluate-deck.js（slide 機械評価の正本）
         │  Dx(動作可能性)・D1〜D4 を機械判定 → evaluation-report.json / .md を出力
@@ -24,23 +27,21 @@
 
 - **機械(evaluate-deck.js)**: 再現性のある判定（崩れ・ナビ・仕様適合）。chromium非依存の静的検証が中核。
 - **LLM(deck-evaluator.md)**: 機械では不可能な「要望との矛盾・仕組みの反映・配置の妥当性・エレガンス」を30種思考法で判定。
-- **フック**: 生成完了をトリガに上記の起動を促す。hook 自体は fail-soft に留め、即時の軽量検知＋遅延の完全評価指示で「うるさすぎ/動かない」を両立回避。
+- **フック**: 生成完了を検知して最小guardの結果を返し、現物提示と利用者選択を促す。子プロセスやsemantic evaluatorは起動しない。release/exhaustiveはchoiceと別の明示eventを必要とする。
 
 ## 2. 既存資産との関係（重複させない）
 
 | 既存 | 役割 | 本サブシステムでの扱い |
 |------|------|----------------------|
-| `scripts/verify-slides.js` | スクショ/16:9/型崩れ | 視覚裏取りに利用。evaluate-deck.js の動的検証は同手法を内蔵 |
-| `scripts/evaluate-image-consistency.js` | 全面画像デッキの画風一貫性（lockTiers.tier1+consistencyAnchors） | gpt-image-2 生成画像群を LLM-judge で 0-1 採点し閾値割れページの再生成推奨を出す（破壊操作なし）。evaluate-deck.js(HTML崩れ/ナビ) とは別系統で画像内容の一貫性を見る。目視の前段ゲート |
-| `scripts/sync-checker.js` | structure.md⇔HTML 同期 | evaluate-deck.js が D4 で呼出・集約 |
-| `scripts/validate-structure.js` | 構造仕様 V-001〜V-043 | evaluate-deck.js が D4 で集約（structure.json がある時のみ） |
-| `scripts/check-consistency.js` | 色/フォント統一 | 任意で併用（deck-evaluator 視覚評価の補助） |
+| `vendor/scripts/verify-slides.js` | スクショ/16:9/型崩れ | 視覚裏取りに利用。evaluate-deck.js の動的検証は同手法を内蔵 |
+| `vendor/scripts/evaluate-image-consistency.js` | 全面画像デッキの画風一貫性（lockTiers.tier1+consistencyAnchors） | gpt-image-2 生成画像群を LLM-judge で 0-1 採点し閾値割れページの再生成推奨を出す（破壊操作なし）。evaluate-deck.js(HTML崩れ/ナビ) とは別系統で画像内容の一貫性を見る。目視の前段ゲート |
+| `vendor/scripts/sync-checker.js` | structure.md⇔HTML 同期 | evaluate-deck.js が D4 で呼出・集約 |
+| `vendor/scripts/validate-structure.js` | 構造仕様 V_DEFINITIONS 全件 | evaluate-deck.js が D4 で集約（structure.json がある時のみ） |
+| `vendor/scripts/check-consistency.js` | 色/フォント統一 | 任意で併用（deck-evaluator 視覚評価の補助） |
 | `agents/ui-quality-reviewer.md` | S1〜S26 UIレビュー(Phase 3.5) | deck-evaluator の視覚チェックリスト参照元。**置換せず上位ゲート** |
 | `agents/cross-deck-reviewer.md` | シリーズ横断(Phase 5) | 単一デッキ評価は本サブシステム、横断はP5 と役割分担 |
 
-**根本原因（why5回）**: 評価基準が verify-slides / ui-quality-reviewer / sync-checker / validate-structure に散在し、
-(1) それらを束ねる単一の生成後ゲートが無く、(2) 自動起動(フック)が無かった。本サブシステムは
-「既存の統合 ＋ 自動化 ＋ 要望適合(D5)の追加」であり、新規の重複チェックを増やすものではない。
+**根本原因（why5回）**: 評価基準が verify-slides / ui-quality-reviewer / sync-checker / validate-structure に散在し、それらを束ねる単一の選択後ゲートが無かった。本サブシステムは「既存の統合 ＋ 利用者選択後だけの起動 ＋ 要望適合(D5)の追加」であり、新規の重複チェックや提示前の評価を増やすものではない。
 
 ## 3. 評価次元（Dx・D1〜D5）と機械チェックID
 
@@ -127,19 +128,19 @@ deck-evaluator は下表の30種すべてを必ず適用し、評価レポート
 
 ```bash
 # 機械評価（完全：chromium があれば動的検証も実行）
-node scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/"
+node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/"
 
-# フック相当の高速静的のみ
-node scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/" --static-only
+# 利用者が改善レベルを選択した後の高速静的評価
+node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/" --static-only
 
 # JSON出力 / 厳格(WARNも失敗) / レポート先指定
-node scripts/evaluate-deck.js "<deck>" --json
-node scripts/evaluate-deck.js "<deck>" --strict
-node scripts/evaluate-deck.js "<deck>" --report ./report.json
+node vendor/scripts/evaluate-deck.js "<deck>" --json
+node vendor/scripts/evaluate-deck.js "<deck>" --strict
+node vendor/scripts/evaluate-deck.js "<deck>" --report ./report.json
 
 # 画像一貫性採点（全面画像デッキ・lockTiers.tier1+consistencyAnchors rubric / 破壊操作なし）
-node scripts/evaluate-image-consistency.js "<deck>" --threshold 0.8
-node scripts/evaluate-image-consistency.js "<deck>" --dry-run   # 評価プロンプトのみ（codex呼ばない・コスト無し）
+node vendor/scripts/evaluate-image-consistency.js "<deck>" --threshold 0.8
+node vendor/scripts/evaluate-image-consistency.js "<deck>" --dry-run   # 評価プロンプトのみ（codex呼ばない・コスト無し）
 ```
 
 終了コード: `0=PASS` / `4=FAIL` / `2=引数` / `3=不在`。
@@ -148,8 +149,9 @@ node scripts/evaluate-image-consistency.js "<deck>" --dry-run   # 評価プロ�
 
 PostToolUse（matcher: `Write|Edit|MultiEdit`）に登録する。フックは deck の中核ファイル
 （`index.html` / `styles.css` / `scripts.js` / `structure.md` / `structure.json`）書込時に発火し、
-それ以外は無音（通常編集を妨げない）。`index.deploy.html` / `index-single.html` は除外。
-`index.html` 書込時に CSS/JS がまだ無い生成順序でも、後続の `styles.css` / `scripts.js` 書込で評価を起動できるようにする。
+最小guard結果と現物提示・利用者選択のadvisoryだけを返す。それ以外は無音（通常編集を妨げない）。
+`index.deploy.html` / `index-single.html` は除外する。フック内の子プロセス実行数は0であり、
+`evaluate-deck.js` と `deck-evaluator` は `light / standard / detailed` 選択後のworkflowが起動する。
 
 ```json
 {
@@ -169,5 +171,5 @@ PostToolUse（matcher: `Write|Edit|MultiEdit`）に登録する。フックは d
 
 ## 8. 出力先とスコープ
 
-評価レポートは `<deck-dir>/evaluation-report.json` と `.md`（05_Project配下＝変更可）に出力する。
+改善レベルが選択された場合だけ、評価レポートを `<deck-dir>/evaluation-report.json` と `.md`（05_Project配下＝変更可）に出力する。
 プラグイン本体のリソース（本reference・agent・script・schema）は `$CLAUDE_PLUGIN_ROOT` 配下に置く。

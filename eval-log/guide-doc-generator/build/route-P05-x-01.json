@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P05-x-01",
+  "covered_task_ids": [
+    "P05-x-01"
+  ],
+  "status": "success",
+  "note": "本 leaf の成功は『証跡が記録されたこと』であり、記録された内容 (P05 フェーズの達成) は blocked である。両者を混同しないこと。",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P05.json",
+  "verified_by": [
+    {
+      "claim": "証跡ファイルが write_scope へ作成された",
+      "method": "ls -la と json.load",
+      "result": "pass (plugin-plans/guide-doc-generator/evidence/P05.json / 157065 bytes / schema_version 1.0.0。トップレベルキーは schema_version, report_kind, task_id, phase_ref, generated_at, produced_by, write_scope, no_implementation_performed, acceptance_criterion_verbatim, measurement_policy, acceptance_elements, components, deviation_ledger, patterns, open_adjudications, unowned_followups, graph_absorption_gap, overall, overall_reason, blocking_summary, worker_discretion)"
+    },
+    {
+      "claim": "component 件数が 23 で inventory と task-spec が一致する",
+      "method": "python3 で component-inventory.json の components[] を len",
+      "result": "pass (23。当方の独立実行で確認)"
+    },
+    {
+      "claim": "worker が起動指示中の導出値を実測で上書きした",
+      "method": "ls -d tests/*/ | wc -l と ls route-P0*.json | wc -l を当方が独立実行",
+      "result": "pass (tests ディレクトリは実測 23 で指示文の 26 は誤り。leaf route report は実測 24 で指示文の 26 は誤り=glob には route-build-contract.json / route-build-plan.json が混入する)。**当方が worker へ渡した起動指示そのものが PAT-1 (導出値を契約へ書き下す) の実例であった**。worker はこれを鵜呑みにせず実測で上書きし、かつ指示値と実測値の両方を証跡へ残した。これは本 build で追跡中の欠陥クラスに対する最も正しい対処であり、指示者 (当方) 側の誤りを worker が検出した初のケースとして記録する"
+    },
+    {
+      "claim": "23 スイート全ての実行結果",
+      "method": "worker が全 23 スイートを実行。当方は赤 6 スイートを独立に再実行",
+      "result": "pass (赤 6 スイートの数値が完全に再現: handout-readability-reviewer Ran 164/F1、run-handout-build Ran 48/F1、render-handout.py Ran 174/F6、srg-image-bridge.py Ran 291/F3、validate-handout-config.py Ran 278/F2+E2、verify-handout-narrative.py Ran 217/F1)"
+    },
+    {
+      "claim": "テスト無改変の検証方法と限界の明示",
+      "method": "worker の mtime 逆転検査を当方が C14 について独立再現",
+      "result": "pass (find plugins/guide-doc-generator/tests/render-diagram-svg.py -name '*.py' -newer plugins/guide-doc-generator/scripts/render-diagram-svg.py が _harness.py と test_argv_and_exit_codes.py を返し、worker 報告どおり C14 のみ mtime 逆転が実在する。worker は mtime 法の限界 4 点 (成果物以前の改変を検出できない / 内容を見ない / plugins/guide-doc-generator 全体が untracked / P04 時点の sha256 実値が証跡に存在しない) を明記し、証明できないことを証明したと書かなかった。この自制が element_3 を blocked にした一次的根拠であり正しい)"
+    },
+    {
+      "claim": "graph 吸収ギャップの実測",
+      "method": "discovered-tasks の proposed_node.id を task-graph.json の nodes と突合 (当方が独立実行)",
+      "result": "pass (inbox 26 件のうち **12 件が graph 未登録**: P04-x-09, P05-x-06..P05-x-16。worker 報告の 12 件と id 集合まで完全一致。**現行 graph を完走しても赤は解消しない**という worker の結論はこの実測から直接従う)"
+    },
+    {
+      "claim": "実装を一切行っていない",
+      "method": "worker 報告と write_scope 確認",
+      "result": "pass (plugins/guide-doc-generator/ 配下への書込ゼロ。git status の 4 件の M は harness-creator / plugin-dev-planner 配下で本 build 着手前から存在するもの)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-arithmetic-error",
+      "detail": "当方が実測して補正した。worker は集計行に『23 スイート合計 Ran 3258 / failures 12 / errors 2』および『残る赤は 14 件』と書いたが、**worker 自身の表を合計すると failures 14 / errors 2 / 赤 計 16 件**である (C06 1 + C01 1 + C11 6 + C21 3 + C12 2 + C22 1 = 14 failures、C12 の errors 2 を加えて 16)。当方は赤 6 スイートを独立に再実行し、表側の数値がすべて正しく集計行だけが誤りであることを確認した。**正しい値は failures 14 / errors 2 / 赤 計 16 件**。皮肉なことに、これは worker 自身が PAT-1 として命名した『導出値を書き下すと元の列挙と食い違う』の実例である。worker は『件数は全て列挙から導出しており、食い違った場合は列挙を残せる形にした』と設計方針を述べており、その設計のおかげで列挙側から正しい値を復元できた。証跡ファイル本体の red_tests[] 列挙が正であれば実害はないが、要約を読む者が誤った件数を引用する risk があるため記録する"
+    },
+    {
+      "kind": "phase-gate-blocked",
+      "detail": "**P05 フェーズの達成は blocked**。これは本 leaf の失敗ではなく、本 leaf が正しく測定した結果である。要素別 verdict: element_1 (build_target 実在) = pass (23/23 実在)、element_2 (テスト緑) = blocked、element_3 (テスト無改変) = blocked。blocking 理由 5 件: (B-1) 6 スイートに赤 16 件、うち 12 件は実装内容に依らず赤 (B-2) 赤の owner のうち 8 件は graph 未登録、6 件は提案すら未起票 (B-3) テスト無改変を byte 単位で検証する基準値 (P04 時点の sha256 実値) が証跡に存在しない (B-4) tests/ は P04 以降 3 leaf (P04-x-06-ALIGNMENT.md / R22-AMENDMENT.md / R23-ALIGNMENT.md) により意図的に改訂済みで、受入条件の字義は phase レベルで不成立 (B-5) P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) が全 component で未実行"
+    },
+    {
+      "kind": "acceptance-criterion-literally-unsatisfiable",
+      "detail": "要裁定。本 leaf の受入条件は『P04 が固定した各 component のテストが実装後に緑であり、テストが 1 行も改変されていないこと』だが、**P04 以降にテストを改訂する leaf が 3 本、正規の graph node として存在し実行済みである** (P04-x-06 / R22 追補 / R23 整合)。つまり graph 自身が『テストは改変される』前提で組まれており、受入条件の字義と graph の構造が矛盾している。恒久解は受入条件を『P04 が固定したテストが、承認された改訂 leaf 以外によって改変されていないこと』へ書き換えること。ALIGNMENT 文書は『assert の削除・許容範囲の拡大・skip の追加は 1 件も無い』と自己申告しているが worker は独立検証しておらず、当方も未検証である"
+    },
+    {
+      "kind": "evidence-baseline-absent",
+      "detail": "要裁定 / 構造的欠陥。**P04 時点のテスト sha256 実値がどこにも記録されていない**。24 本の route report は『実装前後で sha256 が一致した』と述べるだけで digest 値そのものを持たないため、いま digest を取っても比較対象が無い。各 worker の自己申告は『自分の作業中に変えていない』ことしか証明せず、leaf をまたいだ改変を検出できない。恒久解は P04 の完了時に全テストファイルの sha256 マニフェストを証跡として固定すること。**これは本 build 固有の失敗ではなく、テスト先行 build における一般的な統治要件**であり、harness 側の phase テンプレートへ反映する価値がある"
+    },
+    {
+      "kind": "new-defect-patterns-named",
+      "detail": "worker が新たに 6 パターンを命名した。特筆すべきは **PAT-3 ハーネス自走型偽赤 (harness-generated false red) = テスト欠陥の第 4 類型**: assert も fixture も正しいのに、ハーネス側 (setUp / payload builder) が状態を自動補完・自動生成するため、テストが作ろうとした条件が成立せず実装内容に依らず赤になる。実例は C21 の plan_payload() が pop された diagram_pattern を 'flow' として再注入 (赤 2)、C12 の setUp が作る plugin-root ディレクトリを残留検査が常に検出 (赤 1)、C14 の Element.get 大文字小文字区別 (是正済み)。既知の 3 類型 (a 導出値の焼き込み / b スコープ過大 / c 述語が緩すぎる) はいずれも assert 側か探索側の欠陥であり、**ハーネスの副作用は別類型**という切り分けは妥当。検出の勘所は『失敗の原因が assert でなく setUp/builder にある』こと。他の 5 件は PAT-4 受け皿消滅 (owner-closed-before-consumer)、PAT-5 テスト起源正本の逆流未了、PAT-6 派生正本の未同期、PAT-7 両立不能な二重契約、PAT-8 常時発火警告による鈍麻。PAT-1 は 8 例から 10 例へ拡大し、再発面が assert / docstring / README / brief / 指示文の 5 面すべてに及ぶことが判明した"
+    },
+    {
+      "kind": "open-adjudications-pending",
+      "detail": "未解決の裁定事項 10 件 (ADJ-01..ADJ-10) が推奨つきで一覧化された。worker は決定せず推奨に留めており、これは正しい (裁定の write_scope を持たないため)。主要な推奨: ADJ-05 (rows[].key は schema へ optional 追加=テストを正本)、ADJ-06 (round-trip は C11 のマーカー契約を data-hb-meta-* へ拡張。schema へ round-trip 免除を足す案は『受入基準を満たすために基準を弱める』形になるため非推奨)、ADJ-02 (inventory の responsibility_anchor が『アンカー id』と『prompt ファイル名』という異なる 2 概念を 1 列に混載しているのが根因なので 2 列へ分離)、ADJ-07 (brief の deterministic_checks を AC 群への参照へ書き換え、brief テンプレート側の規約にする)。いずれも根拠が具体的で、当方が独立に検証した範囲では反証は見つからなかった"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "owner 不在の follow-up 18 グループ。提案すら未起票の主なもの: C12 の赤 4 件、C21 の _harness 自走 2 件、C05 の CANONICAL_DESCRIPTIONS 二重正本、C07/C08 の open_questions (受け皿の C11/C20 が done)、逆抽出レポートのファイル名 (C08/C02/C20 の 3 leaf 全てが『他が決める』で通過した項目)、C18 README gap 1/4/13、C10 の予算 3 秒 vs 実測 13 秒、lint-skill-dep-step7.py の IsADirectoryError"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) が全 component で未実行。worker はこれを not_measured へ明記し pass とも fail とも書かなかった。completion-evidence.json の gate として blocked で記録すること"
+    }
+  ]
+}

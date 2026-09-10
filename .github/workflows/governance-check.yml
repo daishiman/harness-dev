@@ -16,6 +16,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      # このジョブは長く stdlib だけで足りていたが、artifact-delivery の
+      # generator/lint が YAML frontmatter を読むため PyYAML を必要とする。
+      # 依存は requirements-dev.txt を正本にし、job 側で個別 pin しない。
+      - name: install python dependencies
+        run: python3 -m pip install --quiet -r requirements-dev.txt
       - name: guard change category (P0/P1 proposal gate)
         run: python3 scripts/guard-change-category.py --base origin/main --bypass-cooldown
       - name: lint script naming (28章 §4)
@@ -81,29 +86,96 @@ jobs:
           for manifest in plugins/*/.claude-plugin/plugin.json; do
             jq -e '.name and .version and .description' "$manifest" >/dev/null
           done
-          jq -e '.plugins[] | select(.name == "harness-creator") | .source.source == "local" and .source.path == "./plugins/harness-creator"' .agents/plugins/marketplace.json
+          claude_count="$(find plugins -mindepth 3 -maxdepth 3 -path '*/.claude-plugin/plugin.json' -type f | wc -l | tr -d ' ')"
+          codex_count="$(find plugins -mindepth 3 -maxdepth 3 -path '*/.codex-plugin/plugin.json' -type f | wc -l | tr -d ' ')"
+          marketplace_count="$(jq '.plugins | length' .agents/plugins/marketplace.json)"
+          test "$claude_count" = "$codex_count"
+          test "$claude_count" = "$marketplace_count"
+          for plugin_dir in plugins/*; do
+            plugin_name="$(basename "$plugin_dir")"
+            jq -e --arg name "$plugin_name" '
+              any(.plugins[];
+                .name == $name and
+                .source.source == "local" and
+                .source.path == ("./plugins/" + $name)
+              )
+            ' .agents/plugins/marketplace.json >/dev/null
+          done
           jq -e '
             .name == "harness-creator" and
             (.version | type == "string" and length > 0) and
             .skills == "./skills/" and
             (.interface.defaultPrompt | type == "array" and length > 0) and
-            (has("hooks") | not) and (has("x_harness") | not)
+            .hooks == "./hooks/hooks.json" and (has("x_harness") | not)
           ' plugins/harness-creator/.codex-plugin/plugin.json
           jq -e '
             (.hooks.SessionStart) as $s |
+            (.hooks.PostToolUse) as $p |
             ($s | type == "array" and length == 1) and
             ($s[0].hooks | type == "array" and length == 1) and
             ($s[0].hooks[0].type == "command") and
-            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py"))
+            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py")) and
+            ($p | type == "array" and length >= 1) and
+            ([$p[] | select(.matcher | contains("Bash") and contains("apply_patch"))]) as $obs |
+            ($obs | length == 1) and
+            ($obs[0].hooks | type == "array" and length == 1) and
+            ($obs[0].hooks[0].type == "command") and
+            ($obs[0].hooks[0].command | contains("external-intelligence-observe.py"))
           ' plugins/harness-creator/hooks/hooks.json
+          # 記録器は observe hook からの間接呼出しなので、配線だけでなく到達先の実在も縛る。
+          # command 文字列だけを見ていると、observer が記録器を呼ばなくなっても気付けない。
+          test -f plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py
+          grep -q 'auto-record-lesson\.py' plugins/harness-creator/hooks/external-intelligence-observe.py
           python3 -c 'import tomllib; c=tomllib.load(open("plugins/harness-creator/native-surfaces.toml","rb")); assert c["schema_version"] == 1; p=tomllib.load(open(".codex/config.toml","rb")); assert p["features"]["hooks"] is True and "hooks" not in p'
           python3 plugins/harness-creator/scripts/sync-codex-project-settings.py --repo-root . --contract plugins/harness-creator/native-surfaces.toml --check --json
+          python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check
+        continue-on-error: false
+      # manifest投影だけでなく、全pluginの公開面・意味代替・composition依存を
+      # 同じPRでfail-closed検証する。静的PASSとruntime activationは別判定。
+      - name: audit full Claude/Codex plugin fleet contracts
+        run: |
+          python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all
+          python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/*/plugin-composition.yaml
         continue-on-error: false
       # marketplace ↔ plugins / bundles 双方向整合 (MK-001..003 / BD-001) を fail-closed 検査。
       # 実体ディレクトリ起点で全 plugin の marketplace + bundles 登録を強制し、登録漏れ
-      # (notion-gmail-send 未表示) が自己強化ループで永久に見逃される事故を機械遮断する。
+      # (削除済みpluginの残留entry) が自己強化ループで永久に見逃される事故を機械遮断する。
       - name: validate plugin completeness (marketplace + bundles registration)
         run: python3 scripts/validate-plugin-completeness.py
+        continue-on-error: false
+      - name: validate artifact delivery policy projections
+        run: python3 scripts/lint-artifact-delivery.py --repo-root .
+        continue-on-error: false
+      - name: reject pre-choice heavy work in every plugin entrypoint
+        run: python3 scripts/lint-entrypoint-artifact-first.py --repo-root .
+        continue-on-error: false
+      # version bump 忘れの fail-closed 検査。install はコピーで version がキャッシュキーに
+      # なるため、plugin の中身を変えても version を据え置くと install 側は永久に古いまま。
+      # これまで --check は scripts/run-ci-checks.sh (pre-push) にしか無く、GitHub Web の
+      # merge など pre-push を通さない経路では素通りしていた。「PR をマージしたのに
+      # 反映されない」の恒久再発源なのでここで塞ぐ (--check は書き込まない)。
+      - name: validate plugin release (version bump 忘れ)
+        run: python3 scripts/build-plugin-release.py --check
+        continue-on-error: false
+      # ローカル marketplace (marketplaces/local/) の drift を fail-closed 検査。
+      # 公開 marketplace は distributable:false を載せられない (MK-004) ため、非配布 plugin を
+      # install する唯一の経路がここになる。version bump のたびに drift し、誰も気づかないまま
+      # install 不能になっていた (2026-08-17 に ubm-goal-setting 0.3.0 で実際に発生)。
+      - name: validate local marketplace (非配布 plugin の install 経路が最新か)
+        run: python3 scripts/build-local-marketplace.py --check
+        continue-on-error: false
+      # README の install 導線 (marketplace add のリポジトリ名 / install する plugin 名) が
+      # 実体と一致するか fail-closed 検査。リポジトリ改名 manju/skills → daishiman/harness-dev の際に
+      # README が取り残され、「PR をマージしても marketplace に反映されない」と見える事故が実際に起きた。
+      - name: lint marketplace install docs (README 導線 ↔ 実体)
+        run: python3 scripts/lint-marketplace-install-docs.py
+        continue-on-error: false
+      # distributable の真偽が sidecar (references/package-contract.json の distribution) と
+      # manifest (.claude-plugin/plugin.json 直下) で食い違っていないか fail-closed 検査。
+      # harness_metadata() は sidecar-first で解決するため、manifest だけを true に直しても
+      # 無音で無視され「公開したのに載らない」事故になる。その分裂状態を機械遮断する。
+      - name: lint distributable ssot (sidecar ↔ manifest の食い違い)
+        run: python3 scripts/lint-distributable-ssot.py
         continue-on-error: false
       - name: validate-plan-coverage self-test (計画↔実体 completeness 照合器の分岐検査)
         run: python3 plugins/harness-creator/scripts/validate-plan-coverage.py --self-test
@@ -152,8 +224,15 @@ jobs:
       - name: lint plugin composition self-test (fixture drift 検出)
         run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py --self-test
         continue-on-error: false
-      - name: lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/harness-creator/plugin-composition.yaml
+      - name: lint and validate every plugin composition (dynamic discovery)
+        run: |
+          set -euo pipefail
+          mapfile -d '' compositions < <(find plugins -mindepth 2 -maxdepth 2 -name plugin-composition.yaml -print0 | sort -z)
+          test "${#compositions[@]}" -gt 0
+          for composition in "${compositions[@]}"; do
+            python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py "$composition"
+            python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py --bundle "$composition"
+          done
         continue-on-error: false
       - name: lint declaration coverage self-test (ratchet 分岐検査)
         run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py --self-test
@@ -207,19 +286,6 @@ jobs:
         continue-on-error: false
       - name: prompt-creator lint skill completeness (kind別必須サポート資産)
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/prompt-creator/skills
-        continue-on-error: false
-      # ── company-master conformance (harness-creator 仕様準拠) ──
-      - name: company-master validate frontmatter (commonCore + SemVer)
-        run: python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/company-master/skills
-        continue-on-error: false
-      - name: company-master lint skill name (28章 §4)
-        run: python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/company-master/skills
-        continue-on-error: false
-      - name: company-master lint skill description (03章 R1-R5)
-        run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/company-master/skills
-        continue-on-error: false
-      - name: company-master lint skill completeness (kind別必須サポート資産)
-        run: python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/company-master/skills
         continue-on-error: false
       # ── contract-generator conformance (harness-creator 仕様準拠) ──
       - name: contract-generator validate frontmatter (commonCore + SemVer)
@@ -285,14 +351,12 @@ jobs:
       - name: ubm-goal-setting lint skill description (03章 R1-R5)
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/ubm-goal-setting/skills
         continue-on-error: false
-      - name: ubm-goal-setting lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml
-        continue-on-error: false
       # ── extract-system-blueprint conformance (harness-creator 仕様準拠) ──
-      # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) だが
-      #   marketplace 登録は manual-user-gated のため lint-plugin-lint-coverage.py の
-      #   required 集合 (marketplace 起点) にはまだ入らない。配布除外と品質検査は
-      #   独立した関心事なので conformance lint をここで明示配線する。
+      # NOTE: extract-system-blueprint は distributable:true (marketplace-bundle) で
+      #   .claude-plugin/marketplace.json に登録済みのため lint-plugin-lint-coverage.py の
+      #   required 集合 (marketplace 起点) に入っている。ここの明示配線は被覆メタ検査と
+      #   二重になるが、配布可否が将来 false へ変わっても品質検査だけは落ちないよう
+      #   独立配線として残す (配布除外と品質検査は独立した関心事)。
       # per-plugin pytest (plugins/extract-system-blueprint/tests) は
       #   harness-creator-kit-ci.yml の「Run plugin behavior tests (pytest, per-plugin)」
       #   walk が plugins/**/test_*.py を全被覆するため本 workflow では重複させない。
@@ -304,9 +368,6 @@ jobs:
         continue-on-error: false
       - name: extract-system-blueprint lint skill description (03章 R1-R5)
         run: python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/extract-system-blueprint/skills
-        continue-on-error: false
-      - name: extract-system-blueprint lint plugin composition (capabilities 重複/実在 + hooks↔plugin.json 配線対応)
-        run: python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/extract-system-blueprint/plugin-composition.yaml
         continue-on-error: false
       # ── plugin lint 被覆メタ検査 (新 plugin 追加時の配線忘れを fail-closed 検出) ──
       - name: lint plugin lint coverage (marketplace 全 plugin の lint 被覆保証)

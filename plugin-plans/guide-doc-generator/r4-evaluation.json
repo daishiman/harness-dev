@@ -1,0 +1,176 @@
+{
+  "round": 3,
+  "plan_dir": "plugin-plans/guide-doc-generator",
+  "evaluator": {
+    "name": "assign-plugin-plan-evaluator",
+    "version": "0.3.0",
+    "context": "fork"
+  },
+  "verdict": "PASS",
+  "conditions": {
+    "C1": {
+      "id": "no_contradiction",
+      "status": "PASS",
+      "summary": "周回2の high (skill-brief producer 二重宣言) は構造的に解消。P02-C01..C04-01 の 4 件は write_scope / produces に brief パスを残すが、本文が『手書きせず render-skill-brief.py --out で materialize する』と射影コマンドを名指しし、verify も同コマンドの exit0、acceptance_criterion も『射影 exit0 / required 充足 / 余剰キー 0』へ更新された。生成物は route preflight が射影するものと同一なので、preflight の『未 materialize のときだけ射影する』判定を抑止しても壊れない。index.md:76 も skill 4 件=射影 / 他 19 件=plan 内手書き成果物へ書き分け済み。私も render-skill-brief.py --component C01..C04 を独立実行し 4 本とも exit0 を確認した。残る矛盾は medium 1 件 (index.md:78 の『plugins/guide-doc-generator/ 配下へは一切書かない』と P04-x-01 の write_scope=plugins/guide-doc-generator/tests/) で、build を壊す種類ではなく 1 文の追記で閉じる。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/task-specs/P02-C01-01.md",
+        "plugin-plans/guide-doc-generator/index.md:76",
+        "python3 .../render-skill-brief.py --inventory plugin-plans/guide-doc-generator/component-inventory.json --component C01|C02|C03|C04 -> exit 0 (4/4)",
+        "plugin-plans/guide-doc-generator/index.md:78"
+      ]
+    },
+    "C2": {
+      "id": "no_missing",
+      "status": "PASS",
+      "summary": "退行なし。detect-unassigned / check-requirements-coverage / check-surface-inventory / check-plugin-goal-spec すべて exit0。付随修正で C03 に rubric_refs=[ref-handout-design-system] が入り、可読性評価者が何に照らして判定するかという従来の空白が埋まった。周回2 で指摘した『notes 専属の決着 2 件 (曜日和暦の補助表記 / 宣言外用語を推定しない)』は未対応で継続 low。",
+      "evidence": [
+        "python3 .../detect-unassigned.py --inventory plugin-plans/guide-doc-generator/component-inventory.json --specs-dir plugin-plans/guide-doc-generator -> exit 0",
+        "component-inventory.json#C03.rubric_refs"
+      ]
+    },
+    "C3": {
+      "id": "consistent",
+      "status": "PASS",
+      "summary": "退行なし。13 決定論ゲート + 拡張 5 本すべて exit0。task-graph は 72 node / 372 edge (parent_of 59 / depends_on 230 / produces 60 / consumes 23) で、P04 が produces を 2 本持つ分だけ周回2 から増えており task-specs の改訂が graph へ反映されている。validate-task-graph.py が canonicalize() を再適用しても exit0 なので手書き編集ではなく derive-task-graph.py による再生成である。graph_hash = sha256:5af5f3a81567f1733fba08612b5e9d2871a28cedc5da0a3c70eb6aec45682393。",
+      "evidence": [
+        "python3 .../validate-task-graph.py plugin-plans/guide-doc-generator -> exit 0",
+        "python3 .../derive-task-graph.py --print-graph-hash plugin-plans/guide-doc-generator/task-graph.json -> sha256:5af5f3a81567f1733fba08612b5e9d2871a28cedc5da0a3c70eb6aec45682393"
+      ]
+    },
+    "C4": {
+      "id": "dependency_integrity",
+      "status": "PASS",
+      "summary": "付随修正 3 による退行なし。C03.depends_on = [C18, C04]、C04.depends_on = [] なので C03->C04 は一方向で循環しない。rubric_refs=[ref-handout-design-system] と depends_on の C04 は『参照先の宣言』と『build 順序の宣言』で層が異なり、二重依存ではなく同一事実の 2 面表現。C01 も以前から C04 に依存しており参照関係は保たれている。lint-sibling-coupling / check-build-handoff / validate-task-graph すべて exit0 で、23 route は inventory と 1:1、build_order も skill 4 本が script 群の後に来る形を維持している。",
+      "evidence": [
+        "component-inventory.json#C03.depends_on = [C18, C04] / #C04.depends_on = []",
+        "python3 .../lint-sibling-coupling.py plugin-plans/guide-doc-generator -> exit 0",
+        "python3 .../check-build-handoff.py plugin-plans/guide-doc-generator/handoff-run-plugin-dev-plan.json -> exit 0"
+      ]
+    }
+  },
+  "gate_results": [
+    {"id": "G1", "name": "verify-index-topsort", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/verify-index-topsort.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3", "C4"]},
+    {"id": "G2", "name": "detect-unassigned", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/detect-unassigned.py", "--inventory", "plugin-plans/guide-doc-generator/component-inventory.json", "--specs-dir", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C2"]},
+    {"id": "G3", "name": "check-spec-frontmatter", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-frontmatter.py", "--specs-dir", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "G4", "name": "check-spec-gates", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py", "--specs-dir", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "G5", "name": "check-spec-matrix-coverage --self-test", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "--self-test"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "G6", "name": "check-spec-matrix-coverage", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-matrix-coverage.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C2", "C3"]},
+    {"id": "G7", "name": "check-plugin-goal-spec", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-goal-spec.py", "plugin-plans/guide-doc-generator/goal-spec.json"], "exit_code": 0, "conditions": ["C2"]},
+    {"id": "G8", "name": "check-requirements-coverage", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-requirements-coverage.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C2"]},
+    {"id": "G9", "name": "check-surface-inventory", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-surface-inventory.py", "plugin-plans/guide-doc-generator/component-inventory.json"], "exit_code": 0, "conditions": ["C2"]},
+    {"id": "G10", "name": "check-build-handoff", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py", "plugin-plans/guide-doc-generator/handoff-run-plugin-dev-plan.json"], "exit_code": 0, "conditions": ["C4"]},
+    {"id": "G11", "name": "validate-task-graph", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C4"]},
+    {"id": "G12", "name": "check-runtime-portability", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-runtime-portability.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "G13", "name": "check-plugin-surface-audit", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-plugin-surface-audit.py", "--plugins-dir", "plugins", "--strict-manifest", "--expect-plan-ready", "plugin-dev-planner"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "A1", "name": "check-generative-fidelity", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-generative-fidelity.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C2"]},
+    {"id": "A2", "name": "check-downstream-harness", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-downstream-harness.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "A3", "name": "check-cycle-knowledge", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-cycle-knowledge.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C4"]},
+    {"id": "A4", "name": "check-shape-non-regression", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-shape-non-regression.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C3"]},
+    {"id": "A5", "name": "lint-sibling-coupling", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/lint-sibling-coupling.py", "plugin-plans/guide-doc-generator"], "exit_code": 0, "conditions": ["C4"]},
+    {"id": "A6", "name": "render-task-execution-envelope (leaf 59 件)", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-task-execution-envelope.py", "plugin-plans/guide-doc-generator", "--task-id", "<each of 59 leaf ids>"], "exit_code": 0, "conditions": ["C4"]},
+    {"id": "A7", "name": "render-skill-brief (C01-C04)", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-skill-brief.py", "--inventory", "plugin-plans/guide-doc-generator/component-inventory.json", "--component", "<C01|C02|C03|C04>"], "exit_code": 0, "conditions": ["C1"]},
+    {"id": "A8", "name": "derive-task-graph --print-graph-hash", "command": ["python3", "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py", "--print-graph-hash", "plugin-plans/guide-doc-generator/task-graph.json"], "exit_code": 0, "conditions": ["C3"]}
+  ],
+  "findings": [
+    {
+      "severity": "medium",
+      "bucket": "task-graph-semantics",
+      "observation": "S5 genuine FAIL (粒度)。P04-x-01 は write_scope=plugins/guide-doc-generator/tests/ の単一 leaf のまま、acceptance_criterion で『全 component 分のテストが実装前に失敗する』ことを要求する。dispatch 単位としては 23 component 分のテスト (各検証 script の違反系・部品別レンダリング・再現性・round-trip・skill の受入) を 1 envelope で書かせる設計で、P02 (23 leaf) / P05 (23 leaf) が component 粒度なのと非対称。しかも P05-C<nn>-01 23 件が『テストを追加しない。P04 の赤を緑にするのが完了条件』と宣言したことで、P04 単体が tdd-red 全体の単一障害点になった。1 leaf の出力が薄いと、P05 側はテストを足せないため受入が空洞化する。derive-task-graph.py は task-specs/*.md を正本に 1 spec = 1 leaf を導出する (fan-out は planner 側の固定ではない) ので、P04 の component 粒度分岐は plan 内の変更だけで実現できる。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/task-specs/P04-x-01.md",
+        "plugin-plans/guide-doc-generator/task-specs/P05-C11-01.md (本 leaf はテストを書かない)",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:122-131"
+      ],
+      "suggested_fix": "P04 を component 粒度へ分岐させる (task-specs/P04-C<nn>-01.md を 23 件置き、write_scope を plugins/guide-doc-generator/tests/<component 名>/ 単位にし、P05-C<nn>-01 の depends_on を P04-x-01 から P04-C<nn>-01 へ差し替えて derive-task-graph.py を再実行) のが本筋。build 開始を優先するなら、handoff の open_issues へ GAP-P04-GRANULARITY として『P04 は 23 component 分のテストを 1 leaf で担う。dispatch 時は component ごとに分割実行し、テストが薄い component が出たら P04 を分岐させる』を登録して条件付きで進めてよい。"
+    },
+    {
+      "severity": "medium",
+      "bucket": "contract-conflict",
+      "observation": "S1 genuine FAIL。index.md:78 は『本 plan は L3 計画層で完結し、この配下 (plugins/guide-doc-generator/) へは一切書かない』と宣言するが、P04-x-01 の write_scope は plugins/guide-doc-generator/tests/ で、この配下へ直接書く唯一の leaf になっている。P05-C<nn>-01 は同じ配下を write_scope に持つが本文で『本 plan は route を定義するだけで実行は下流 builder の責務』と委譲を明示しているのに対し、P04 は『テスト実体を plugins/guide-doc-generator/tests/ へ書く leaf』と自ら書くと宣言していて委譲先が無い。dispatch 実行時に『この leaf を誰が実行するのか (plan 層の agent か capability-build の builder か)』が読み手ごとに割れる。周回2 の私の指摘 (write_scope を tests/ へ広げよ) が誘発した副作用で、修正は 1 文の追記で足りる。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/index.md:78",
+        "plugin-plans/guide-doc-generator/task-specs/P04-x-01.md",
+        "plugin-plans/guide-doc-generator/task-specs/P05-C11-01.md"
+      ],
+      "suggested_fix": "index.md:78 の一文へ『ただし task-graph の dispatch leaf (P04 のテスト実体・P05 の component build) は下流 builder が同配下へ書く。plan 生成物 (13 phase md / component-inventory.json / handoff / task-specs) はこの配下を作らない』を追記する。合わせて P04-x-01 の本文へ P05 と同じ『実行は下流 builder の責務』の一文を入れて、plan 層と build 層の書き手を揃える。"
+    },
+    {
+      "severity": "low",
+      "bucket": "task-graph-consumer",
+      "observation": "S7 genuine PASS (残存リスクつき)。skill-brief は P02 leaf が render-skill-brief.py で materialize する契約になったが、materialize は dispatch の P02 時点で起き、その後 P03 (設計レビュー) / P05 で component-inventory.json が変わっても briefs/skill-brief-C0N.json は自動追従しない。/capability-build の route preflight は『未 materialize のときだけ射影する』ので、古い brief が残っていると preflight は再射影せず、run-skill-create は stale brief を読む。現時点で briefs/ は不在なので周回2 の指摘の再発は無く、影響は build 実行中に inventory を触った場合に限られる。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/briefs/ は不在",
+        "plugins/harness-creator/commands/capability-build.md:27-28 (未 materialize なら射影)",
+        "plugin-plans/guide-doc-generator/task-specs/P02-C01-01.md"
+      ],
+      "suggested_fix": "task-specs/P05-C0{1,2,3,4}-01.md の本文へ『skill-brief は build 直前に render-skill-brief.py で再射影して上書きする (P02 で materialize した実体が inventory より古い場合に備える)』を 1 文追記する。または briefs/ を .gitignore 相当の扱いにして plan へコミットしない旨を index に明記する。"
+    },
+    {
+      "severity": "low",
+      "bucket": "layer-a-generative-fidelity",
+      "observation": "S3 genuine PASS (継続指摘)。周回2 で挙げた notes 専属の決着 2 件 (曜日・和暦の補助表記は併記可で検査は本体要素のみ / 宣言外の用語は推定せず警告に留める) は今周回も未対応で、C18・C12 の purpose に入っていない。加えて今周回の付随修正 (C04 を L1 へ / C03 に rubric_refs) も plan-design-notes.json の design_decisions_of_note にしか記録が無く、13 phase 本文には現れない。plan-design-notes.json 冒頭の note が主張する『決着は phase 本文へ転記済み、本ファイルはその写し』という性質が徐々に崩れている。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/plan-design-notes.json#design_decisions_of_note[9]",
+        "grep -n 'hierarchy_level|ref-handout-design-system' index.md phase-*.md -> 0 件",
+        "component-inventory.json#C18.purpose / #C12.purpose"
+      ],
+      "suggested_fix": "C18.purpose へ『曜日・和暦などの補助表記は別要素として併記でき、検査対象は本体の yyyy/mm/dd 要素のみ』、C12.purpose へ『宣言外の用語を推定する検出は warning に留め fail-closed にしない』を追記。phase-02 の事前解決済み判断へ『可読性評価者 (C03) は ref-handout-design-system (C04) を判定基準の依拠先とする』を 1 行追加する。"
+    },
+    {
+      "severity": "low",
+      "bucket": "layer-b-downstream-harness",
+      "observation": "S4 genuine PASS (継続指摘)。周回2 の C11 write_scope (out-file のまま同梱構成データへのテーマ書き戻しを含む) は未対応。build 時に『書き戻し先が C12 の正規化済み本体か out-dir の同梱コピーか』を実装者が選ぶことになり、前者を選ぶと日付 single-writer と同型の二重 writer が出る。",
+      "evidence": [
+        "plugin-plans/guide-doc-generator/component-inventory.json#C11.write_scope = out-file",
+        "plugin-plans/guide-doc-generator/component-inventory.json#C19.write_scope = out-dir"
+      ],
+      "suggested_fix": "C11.purpose へ『書き戻しは出力ディレクトリへ同梱するコピーに対して行い、C12 が確定した正規化済み構成データ本体は不変とする』を追記する。"
+    },
+    {
+      "severity": "info",
+      "bucket": "task-graph-consumer",
+      "observation": "付随修正 3 (C04 を L1 へ / C03 に rubric_refs) は正当。skill-brief.schema.json の allOf は hierarchy_level=L2 に rubric_refs (minItems 1) を必須とし、hierarchy_level は L0/L1/L2 の 3 値で rubric-merge の tier (汎用→ドメイン→案件) を表す。C04 は kind=ref の被参照正本で自身の評価 rubric を持たないため L2 を名乗れず、ドメイン基準の L1 が妥当。C03 は assign 評価者なので案件基準 L2 のままで、rubric_refs が C04 を指すのは『可読性判定の依拠先=デザインシステム正本』として意味が通る。循環なし・build_order 不変も確認した。R4 が要求していない自発的変更だが、skill 4 本の射影を exit0 にするために必要な最小変更であり、範囲も 2 component に閉じている。",
+      "evidence": [
+        "plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json (allOf: L2 -> rubric_refs 必須 / hierarchy_level enum L0,L1,L2)",
+        "plugins/harness-creator/skills/run-skill-create/schemas/rubric-merge.schema.json:14 (L0 -> L1 -> L2 の merge 順)",
+        "component-inventory.json#C04.hierarchy_level = L1 / #C03.hierarchy_level = L2"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "execution-envelope",
+      "observation": "S8 genuine PASS。leaf 59 件すべて render-task-execution-envelope.py が exit0 (ng 0)。phase-gate 13 件の exit1 は仕様どおりの非 dispatch 拒否で、周回2 の判定を維持する。",
+      "evidence": [
+        "59/59 leaf exit0 / ng []",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-task-execution-envelope.py:110-111"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "shape-ab-comparison",
+      "observation": "S6 genuine PASS。task-specs 59 件と task-graph 72 node は整合し、P04 の produces が 2 本 (tests/ + evidence/P04.json) に増えた分が graph へ反映されている (produces 59 -> 60)。validate-task-graph.py が canonicalize() を再適用しても exit0 なので、手書き編集ではなく derive-task-graph.py での再生成が行われた。新旧 shape の下流実効性の非劣化は維持されている。",
+      "evidence": [
+        "task-graph.json: 72 nodes / edges parent_of 59 / depends_on 230 / produces 60 / consumes 23",
+        "python3 .../validate-task-graph.py -> exit 0"
+      ]
+    },
+    {
+      "severity": "info",
+      "bucket": "contract-conflict",
+      "observation": "build 実行時にだけ露見する種類の残課題として、既知の open_issues 2 件の影響範囲を確認した。GAP-SCRIPT-BUILDER により builder=plugin-scaffold / builder_status=contract-only の route は 13 件 (C11-C23 の script 群) で、/capability-build --handoff を通しても実装は出ず contract 止まりになる。実体が出るのは run-skill-create 4 件 (C01-C04) と run-build-skill 6 件 (agent 2 / command 3 / hook 1) の計 10 件。GAP-SRG-CONTRACT-DRIFT は C21 の委譲先契約変更を検知できない点で、build 後の運用課題。GAP-ENVELOPE-001 (manifest 適用は人手) も build 後に残る。いずれも plan の欠陥ではなく既知の宣言済み gap。",
+      "evidence": [
+        "handoff-run-plugin-dev-plan.json: builder 内訳 plugin-scaffold(contract-only) 13 / run-build-skill 6 / run-skill-create 4",
+        "handoff-run-plugin-dev-plan.json#open_issues"
+      ]
+    }
+  ],
+  "evaluated_inputs": [
+    {"path": "plugin-plans/guide-doc-generator/index.md", "sha256": "190ddd7332d70f101ccbae5709f2e9af812c8de9ea9ad28493323ddbc2f0deee"},
+    {"path": "plugin-plans/guide-doc-generator/component-inventory.json", "sha256": "ac1f07fdbddcb499eab871a45191f32b6c10915ef4e4beeefe4ac450fd45bf88"},
+    {"path": "plugin-plans/guide-doc-generator/handoff-run-plugin-dev-plan.json", "sha256": "945cdbdcac763f54e5c4c4310fa769c791350fa37f404ae77b1dc6a64ddca8e2"},
+    {"path": "plugin-plans/guide-doc-generator/goal-spec.json", "sha256": "7725f4da53d5d2f5a762d58f918e1b4aad8ff68fc20dfca097345eec9dd90495"},
+    {"path": "plugin-plans/guide-doc-generator/task-graph.json", "sha256": "5d0a4cbc60c4dd259f56661651c5347ffcf1228e8f526fae03d5e6d01466ad13"},
+    {"path": "plugin-plans/guide-doc-generator/plan-design-notes.json", "sha256": "577b05771c2c0bb079fc0ee7a6644d3764113a5f426e5a4c96afa2581250310e"}
+  ],
+  "staleness_rule": "evaluated_inputs の sha256 と現物が一致しない場合、本評価は無効。task-graph.json は graph_hash sha256:5af5f3a81567f1733fba08612b5e9d2871a28cedc5da0a3c70eb6aec45682393 で build 開始時に pin すること。task-specs/*.md を書き換えた場合は derive-task-graph.py で再射影してから再評価する。"
+}

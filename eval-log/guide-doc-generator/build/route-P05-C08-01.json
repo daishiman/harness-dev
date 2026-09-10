@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C08",
+  "task_id": "P05-C08-01",
+  "covered_task_ids": [
+    "P05-C08-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/commands/handout-extract.md",
+  "verified_by": [
+    {
+      "claim": "build_target が実在する",
+      "method": "wc -l",
+      "result": "pass (96 行。他の command である C07 handout-build.md の 153 行より短いが、C08 は逆抽出の判定規則を一切持たず C02 への起動入口に徹する設計のため妥当な短さ)"
+    },
+    {
+      "claim": "自スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-extract -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 47 / failures=0 / errors=0 / OK。実装前は failures=18。残る赤 0 件。worker はテスト欠陥 3 類型のいずれにも遭遇しなかったと報告しており、当方の全緑確認がこれを裏付ける)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み成果物へ適用",
+      "result": "pass (violations=[]。自前のコードポイント列挙なし)"
+    },
+    {
+      "claim": "部品 id・R22 値域・用途語彙を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -noE '\\bB[0-9]{2}\\b|\\b(overview|standard|detailed|cited|sourced|lecture|onboarding|proposal|study-notes|study-plan|agenda)\\b' を成果物へ適用",
+      "result": "pass (ヒット 0 件。当方の独立実行で確認。worker が自己申告した report のヒットは JSON キー名 report_placement の部分文字列であり、当方の正規表現では用途語彙として拾われない)"
+    },
+    {
+      "claim": "件数リテラルを本文へ焼いていない",
+      "method": "grep -noE '[0-9０-９]+ ?(件|点|個|つ|面|ゲート|状態|要素|種|通り|分岐|責務|セット|ステップ|段)' を当方が独立実行",
+      "result": "pass (ヒット 0 件。特筆すべきは受入 fixture が持っていた 2 つの件数リテラルを worker が意図的に採用しなかったこと: fixture の『3 点セット』を『どのキーパスが / なぜ復元できなかったか / どの補完方針を採ったか』の要素列挙へ、『4 面ゲートの検証 (C09 /handout-verify)』を『検証 (C09 /handout-verify)』へ置換した。契約テストが要求するのは語の存在であって件数語ではないという弁別が正しい。C01 の worker が fixture の件数リテラルを不採用にしたのと同じ判断であり、この規律が worker 間で再現している)"
+    },
+    {
+      "claim": "argument-hint が 3 正本で一致する (C07 で 2 例目が出た canon-conflict が C08 では発生していない)",
+      "method": "成果物 frontmatter / component-inventory.json#C08 / command-brief-C08.json / contract_lib.ARGUMENT_HINT の 4 者を当方が突合",
+      "result": "pass (4 者すべて '<html-path> [--out <config.json>]' で完全一致。contract_lib.py:303-304 が AC-C08-1 として実際にこの一致を検査しており緑。C09 / C07 と続いた argument-hint の canon 不整合が C08 では起きていないことを確認した)"
+    },
+    {
+      "claim": "ゲート集約と出力先ルーティングを第 2 の正本にしていない",
+      "method": "worker 報告と本文の記述形式",
+      "result": "pass (4 状態分類と全体 verdict は書き下さず『正本は C09、この command では再解釈しない』の委譲宣言に留めた。ディレクトリ名の組み立ても『導出は C19 の単独責務、この command は --out のパスへ書くだけ』とした。C20 の診断コード語彙 (W-EXTRACT-CATALOG-DRIFT 等) と exit code ごとの成果物対応表も literal 列挙せず『W- で始まる行を失敗として数えない / 正本は C20 と C02 側』という述語と委譲で表現している。第 2 正本の発生を 3 箇所で回避した)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "worker が実装前後で tests/handout-extract/ 配下全ファイル (.py / fixtures / README / __pycache__ 含む) の sha256 を採取し diff",
+      "result": "pass (SHA256 DIFF NONE。当方はスイートの全緑を独立実行で確認しており、これが fixture 改変でなく成果物の出現によることを裏付ける)"
+    },
+    {
+      "claim": "姉妹スイートへ回帰を出していない",
+      "method": "worker が tests/handout-build と tests/handout-verify を実行",
+      "result": "pass (それぞれ Ran 45 / OK、Ran 60 / OK。当方が直前に C07 / C01 の route report で記録した値と一致する)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "worker 報告と git status",
+      "result": "pass (書込は commands/handout-extract.md 1 本のみ。追跡下の 4 件の変更は本 build 着手前から存在するもので worker は触れていない)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "worker-premise-incorrect",
+      "detail": "当方が実測して補正した。worker は『needs_human という語は C02 の SKILL.md 本文に存在しないため、存在しないキー名を command 側に焼くと下流に偽の契約が生まれる』を理由に本文へ書かなかったと報告したが、grep -rn 'needs_human' plugins/guide-doc-generator/skills/run-handout-extract/ を当方が実行したところ prompts/R2-complete.md:75 に『needs_human — 利用者への確認 を選んだキーパスの一覧 (人が埋める経路の入口)』として**実在する**。よって『存在しないキー名』という前提は誤り。ただし**結論 (本文へ書かない) 自体は妥当**である: needs_human は C02 の R2 responsibility prompt の内部出力契約フィールドであり、command が下流 skill の内部フィールド名を写せばそれ自体が第 2 の正本になる。worker は正しい結論へ誤った理由で到達した。申し送り 1 (C02 側でキー名を正式化するなら C08 にも追記が要る) は前提が崩れたため**不要**と裁定する — キー名は既に C02 側で定着しており、command が持つべきは『人が埋める項目が残ることは失敗ではない』という意味だけで足りる (これは本文へ織り込み済み)"
+    },
+    {
+      "kind": "canon-location-inversion",
+      "detail": "要裁定。停止理由の語彙 (html-path-missing / html-path-not-found / html-path-is-directory) の正本が tests 側の resolution_spec.py:41-45 STOP_REASONS にあり、同 file:188-189 が未知の reason を SpecError で拒否する。一方 command-brief-C08.json の failure_modes は『html-path 未指定 / 不在 / ディレクトリ指定』を自然文で 1 case にまとめており、機械可読な語彙を持たない。**テストが brief の上位互換になっている構造**であり、これは C02 で記録した『brief がテストの要求集合を包含していない』と同型だが、C08 では更に一歩進んで『brief に存在しない語彙をテストが定義し実装がそれに従う』という正本の逆転が起きている。brief へ逆流させるべき"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "brief open_questions[0] (--out 既存ファイル上書き確認を command 側の対話で行うか、extract-handout-config.py に既存拒否フラグを持たせるか) が未決のまま。C08 は『command 側で confirm-overwrite を宣言する』までを固定したが、C20 が無条件上書きなら宣言は素通りする。C20 は既に done であり受け皿が無い。brief 自身が『script 側が無条件上書きなら command の確認は素通りされる』と正しく予見していたにもかかわらず、どちらの leaf でも決着しなかった"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "逆抽出レポートのファイル名が未定 (tests/handout-extract/README.md gap 1)。C08 はディレクトリ併置のみを契約化し名前は C02/C20 へ委ねたが、C02 も C20 も名前を確定していない。3 leaf すべてが『他が決める』として通過した項目であり、round-trip の再実行時にレポートを特定できない"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "worker が明示的に未実行と申告した検査。(a) brief の AC-C08-1 が how として名指す validate-frontmatter は repo 内に実行可能な実体を発見できず未実行 (frontmatter の inventory 一致は contract_lib._check_frontmatter が同等の照合をしており緑)。(b) repo scripts/ 配下の lint 79 本のうち slash-command md を対象とするものが見当たらず未実行。worker はこれらを pass と偽装せず未実行と報告しており正しい。**この (b) は C07/C08/C09 の 3 command に共通する統治の穴**であり、command 定義の品質は現状 tests/<command>/contract_lib.py だけが担保している。P05-x-01 で横断ゲートの要否を裁定すること"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 14 件。(1) frontmatter へ source: 'plugin-plans/guide-doc-generator/component-inventory.json#C08' を追加 (brief に規定なし・C07/C09 に揃えた) (2) output_language: ja を追加 (同上) (3) description を引用符で囲んだ (テストは引用の有無を問わない) (4) frontmatter キーの並びを C07 と同一順にした (5) 見出しを '# /handout-extract — 逆抽出の起動入口' とした (C07 '— 資料生成の起動入口' / C09 '— 検証ゲートの集約入口' の踏襲) (6) 節構成 (引数の既定値と上書き規則 / 手順 / round-trip の粒度 / 復元される範囲とされない範囲 / 縮退 / 失敗時の扱い / 境界) を C07 を基に C08 固有の開示を独立節として決めた。fixture の節名 '## 引数' でなく C07 の '## 引数の既定値と上書き規則' を採用 (7) CR-EXTRACT-ARGS へ owner: 'C08 /handout-extract' を追加 (テスト形式は要求しないが C09 の CR-GATE-AGG に揃えた・resolve_declared は未知キーを無視) (8) CR-EXTRACT-ARGS へ positional: ['html-path'] を保持 (評価に使われないが自己記述性のため) (9) 『散文と食い違った場合は機械可読宣言が正しい』という優先順位を明記 (brief になし。二重記載が構造上避けられないため正本を一方へ固定した・良い判断) (10) 逆抽出レポートのファイル名を決めなかった (上記 unowned-followup) (11) 停止理由の語彙をテスト側から採用 (上記 canon-location-inversion) (12) 委譲先不在時の縮退を『停止 + 解決を試みたパスの提示』とした (brief failure_modes に該当項がなく failure_modes 3 の『空を成功にしない』思想を延長) (13) 境界へ C19 の項を 1 行追加 (brief boundary になし。出力先ルーティング非自前実装を明示的に閉じるため) (14) 『人が埋める必要のある項目が残ることは失敗ではない』の一文を追加 (C02 申し送りの本文化)"
+    },
+    {
+      "kind": "handoff-resolved",
+      "detail": "上流申し送りの決着を記録する。(a) C02 の needs_human は意味のみ織り込み・キー名は非記載 (上記 worker-premise-incorrect で裁定済み・結論は妥当) (b) brief open_questions[1] の --compare vs 再レンダリング比較は**再レンダリング比較で決着**。C02 が R3-roundtrip で render-handout.py による再レンダリング等価判定を採り、--compare つき起動は --out を書かないため同一起動に兼ねさせないと決めていたため、C08 はそれに従属し『比較の実行主体は委譲先 skill の再レンダリング比較であり、この command は比較方式を選ばない』と書いた。brief 自身の但し書き (どちらでも command の契約は変わらない) と一致する。**C02 の route report で unowned-followup として記録した項目はこれで解消**する (c) W- 行を fail 扱いしない・exit≠0 の成果物を捨てない はいずれも述語と委譲の形で織り込み済み、診断コード名と exit code 対応表は非列挙"
+    }
+  ]
+}

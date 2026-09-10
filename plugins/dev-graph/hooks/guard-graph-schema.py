@@ -30,6 +30,18 @@ GRAPH_OR_SCHEMA_TARGET = re.compile(
     re.I,
 )
 GRAPH_AUTHORITY_DIR = re.compile(r"(?:^|/)\.dev-graph/?$", re.I)
+OWNERSHIP_MARKER = Path(".dev-graph") / "config.json"
+
+
+def is_managed_repository(root: Path) -> bool:
+    """A repo is hook-managed only when its local dev-graph ownership marker exists."""
+    try:
+        resolved_root = Path(root).resolve(strict=True)
+        marker = (resolved_root / OWNERSHIP_MARKER).resolve(strict=True)
+        marker.relative_to(resolved_root)
+    except (FileNotFoundError, OSError, ValueError):
+        return False
+    return marker.is_file()
 
 
 def payload() -> dict:
@@ -173,11 +185,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo-root", required=True)
     args = parser.parse_args()
+    root = Path(args.repo_root)
+    if not is_managed_repository(root):
+        return 0
     value = payload()
     command = command_of(value)
     if not command:
         return 0
-    ok, detail = context_ok(Path(args.repo_root))
+    ok, detail = context_ok(root)
     if not ok:
         sys.stderr.write(f"[guard-graph-schema] BLOCKED: repository context invalid: {detail}\n")
         return 2
@@ -187,7 +202,7 @@ def main() -> int:
     elif GH_MUTATION.search(command) and "gh-bridge.py" not in command:
         reason = "GitHub bulk/write は scripts/gh-bridge.py の dry-run/ledger 経由に限定"
     elif destructive_graph_or_schema_operation(command):
-        valid, validation_detail = schema_ok(Path(args.repo_root), detail)
+        valid, validation_detail = schema_ok(root, detail)
         if not valid:
             reason = f"C11 schema validation failed before destructive operation: {validation_detail}"
         else:

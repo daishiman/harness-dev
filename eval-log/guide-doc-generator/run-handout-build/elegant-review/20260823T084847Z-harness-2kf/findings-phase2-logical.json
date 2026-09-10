@@ -1,0 +1,534 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py:1586 はEXPLAINを既存DIAGRAM/IMG rendererへ委譲する薄い複合として実装し、render-diagram-svg.py:1078 は既存diagram.titleを既に可視描画する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "独自性の根拠と既存媒体の表示能力が一致せず、diagram titleとEXPLAIN headlineの二重表示を作る。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "EXPLAINの形自体はschemaに存在する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "表示様式を新しい媒体部品としてモデル化している。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "既存projection再利用の上へ専用分岐を追加している。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "schema",
+          "description": "EXPLAINは既存DIAGRAM/IMGの見出し付き表示と責務が重なり、独立part型にしたことでschema・renderer・extractor・validatorへ専用経路を増やしている。",
+          "recommended_intervention": "視覚説明を既存DIAGRAM/IMGの共通presentation属性へ統合し、独立EXPLAIN partとその専用分岐を除く。独自型を残す場合も内部正規形は既存媒体一つにする。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py",
+            "line": 1586,
+            "section": "Renderer.explain"
+          },
+          "root_cause": "既存媒体の表示能力を確認せず、見た目の差を新しいドメイン部品へ昇格した。"
+        }
+      ],
+      "score": 0.25
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py:54 は9pattern、同:1057とplugin-plans/guide-doc-generator/briefs/script-brief-C14.json:9は6patternを主張する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "同じ公開pattern値域が9語と6語に分岐する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "新3patternの共通fixture・golden・違反系が欠ける。"
+          ],
+          "violation_count": 3
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "C14 briefを正本とする宣言と実装が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "contractから既存conformance suiteへの依存が新3patternで切れる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "dependency-loop",
+          "description": "before_after・analogy・bignumberは実装と一部schemaだけ9語化され、C14 brief、同schema内の別enum、共通test registry、golden、診断文は6語のままである。",
+          "recommended_intervention": "採用するpattern集合をC14契約の1箇所へ揃え、schema・runtime・policy・fixture・goldenを同じregistryから導出または集合照合する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-diagram-svg.py",
+            "line": 54,
+            "section": "PATTERNS"
+          },
+          "root_cause": "公開語彙を複数ファイルへ手書きし、追加を既存受入面へ伝播する単一経路がない。"
+        }
+      ],
+      "score": 0.10
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugin-plans/guide-doc-generator/briefs/config/handout-parts.json:3 と plugins/guide-doc-generator/config/handout-parts.json:3 は双方が単一正本を名乗り、README.md:190-211も一覧を再掲する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plan・出荷config・READMEが同じ部品語彙を並行保持する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行集合にはEXPLAINが反映されている。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "他に一覧を持たないというREADMEの説明と実体が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "source_of_truth参照はあるが同期は手作業である。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "critical",
+          "bucket": "config",
+          "description": "部品カタログの正本がplan・出荷config・READMEへ複製され、追加ごとに多重更新が必要になる。",
+          "recommended_intervention": "実行時configを唯一正本にし、planとREADMEは生成・照合されるprojectionへ変える。今回の最小パッチでは手書き件数を除き、両configの同一性を既存テストで機械照合する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-parts.json",
+            "line": 3,
+            "section": "_meta"
+          },
+          "root_cause": "設計時表現と出荷時データを双方authoritativeにし、投影ではなく人手同期を採用した。"
+        }
+      ],
+      "score": 0.20
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:37、schemas/handout-config.schema.json:464、scripts/render-diagram-svg.py:54は同じpattern集合を別形式で保持する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "個別矛盾はparadigm 2・3へ一意に集約した。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "観測した不具合は手書きprojectionの多重化で説明できる。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "同根指摘を再起票していない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "独立した追加根因は観測しなかった。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:168 は4段を宣言するが、同:171-181は2・3・4・5である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "4内容自体は存在する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "概念抽出・写像・図解型・motifsが揃う。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "局所4段が2-5となり参照番号もずれる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "内容上の順序は維持される。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "必須4段の局所番号が2-5になり、本文内の『前段19』も現在の項目を指さない。",
+          "recommended_intervention": "局所番号を1-4へ戻し、本文内ordinal参照を安定した意味名へ置き換える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md",
+            "line": 171,
+            "section": "セクション別内容適応"
+          },
+          "root_cause": "新手順挿入時の機械的renumberを別スコープの局所リストにも適用した。"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/schemas/handout-config.schema.json:1304、scripts/validate-handout-config.py:1188、scripts/render-handout.py:788が同じexactly-one契約を別々に実装する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の値は各層で一致する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "schema・validator・renderer・extractorの実装は存在する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "同じ意味制約を境界ごとに再検証する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "schema変更にrendererとextractorが自動追随しない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "description": "同じ視覚参照契約がschema・validator・rendererに重複し、extractorへ専用の走査順依存が加わる。",
+          "recommended_intervention": "入力を一つのparts正規形へ先に正規化し、意味制約はschema/validator、rendererは検証済み描画、extractorはmarker復元だけに分ける。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/render-handout.py",
+            "line": 788,
+            "section": "_explain_visual_ref"
+          },
+          "root_cause": "複数入力方言を並行維持し、各境界が同じ意味制約を再所有している。"
+        }
+      ],
+      "score": 0.35
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/README.md:188 は20種類と記載する一方、同:190-211とconfig/handout-parts.json:175-212は21 IDを列挙する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "件数と列挙が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "表には21 IDがある。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "paradigm 3のcatalog projection問題に包含する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "実装依存とは独立した派生件数である。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:11 は閾値の単一正本を宣言するが、scripts/validate-handout-config.py:118-119とR2-design.md:152-154へ1・3が複製される。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "値を他へ書かないというruleと具体値fallback・prompt転記が矛盾する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行値は一致する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "mirror testが重複を固定する。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "通常時はpolicyを優先する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "config",
+          "description": "EXPLAIN閾値の単一正本宣言に反し、validator fallbackとpromptへ業務値1・3を複製している。",
+          "recommended_intervention": "policy欠落は固定診断でfail-closedにし、validatorの具体値fallbackを除く。promptはキー名だけを参照する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/validate-handout-config.py",
+            "line": 118,
+            "section": "fallback constants"
+          },
+          "root_cause": "設定欠落時の可用性を単一正本より優先し、業務値を完全複製した。"
+        }
+      ],
+      "score": 0.40
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/config/handout-visual-policy.json:309 はprogression step 3をDIAGRAMのみ、skills/run-handout-build/prompts/R2-design.md:110はIMG/DIAGRAM/EXPLAINとする。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "工程順自体は1-4である。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "4工程は存在する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "正本と実行promptでstep 3の受理集合が違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "機械可読policyと散文prompt/agentを手作業同期する。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "同じ4段progressionがpolicy・prompt・agentへ再掲され、R2だけがEXPLAIN/IMGを追加して正本から漂流した。",
+          "recommended_intervention": "progressionのcarriesをpolicy一箇所で定義し、promptとagentは正本参照だけにする。今回の最小パッチでは正本と散文を同じ媒体集合へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/skills/run-handout-build/prompts/R2-design.md",
+            "line": 110,
+            "section": "4段 progression"
+          },
+          "root_cause": "機械可読progressionがあるのに実行promptとagentが工程表を再所有した。"
+        }
+      ],
+      "score": 0.35
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/agents/handout-content-architect.md:134は情報単位ごとを要求するが、scripts/validate-handout-config.py:1051-1069はpart件数と連続数だけを検査する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "数値gate自体は一貫する。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "情報単位と視覚説明の対応を観測しない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "同値でないproxyを完了条件にする。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "validatorからpolicy参照は解決する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "情報単位ごとの視覚説明を件数と間隔へ置換し、無関係な媒体を一定間隔で置いても警告ゼロにできる。",
+          "recommended_intervention": "新しい対応表を増やす前に既存decision_logを再利用し、選別した情報単位から既存visual part idへの写像を残す。件数・間隔は補助smellへ降格する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/図解ドキュメント修正/plugins/guide-doc-generator/scripts/validate-handout-config.py",
+            "line": 1051,
+            "section": "visual density checks"
+          },
+          "root_cause": "意味要件を観測可能だが同値でない配置proxyへ置換した。"
+        }
+      ],
+      "score": 0.30
+    }
+  ]
+}

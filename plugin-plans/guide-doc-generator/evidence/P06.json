@@ -1,0 +1,267 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-aggregate-evidence",
+  "task_id": "P06-x-01",
+  "phase_ref": "P06",
+  "produced_by": "P06-x-01 worker (テストを実行して緑を記録する / direct-task)",
+  "write_scope": "plugin-plans/guide-doc-generator/evidence/P06.json",
+  "acceptance_criterion_verbatim": "全テストが green で、env 未設定でも __file__ 相対フォールバックで一気通貫が成功する",
+  "measurement_policy": {
+    "fail_closed": "件数の増減でなく失敗テスト名の集合で判定する。スイートの母集合を先に列挙し、部分集合の緑を全体の緑と読み替えない",
+    "why_this_matters": "前周回の EVALS.json は 4 スイート 836 件を『全 suite』と記述していた。実際の母集合は tests/ 直下 23 ディレクトリ 3308 件であり、19 スイートが未計測のまま緑と扱われていた。この証跡はその読み替えを是正したものである"
+  },
+  "element_1_all_tests_green": {
+    "verdict": "pass",
+    "measured": {
+      "command": "python3 -m unittest discover -s tests/<suite> -t tests/<suite> -p 'test_*.py' を tests/ 直下 23 ディレクトリすべてに対して実行",
+      "suite_count": 23,
+      "total_ran": 3308,
+      "total_failed_test_names": 0,
+      "red_suites": [],
+      "per_suite": {
+        "assign-handout-readability-evaluator": {
+          "ran": 34,
+          "exit_code": 0
+        },
+        "build-icon-sprite.py": {
+          "ran": 128,
+          "exit_code": 0
+        },
+        "embed-assets.py": {
+          "ran": 96,
+          "exit_code": 0
+        },
+        "extract-handout-config.py": {
+          "ran": 152,
+          "exit_code": 0
+        },
+        "guard-handout-external-ref": {
+          "ran": 196,
+          "exit_code": 0
+        },
+        "handout-build": {
+          "ran": 45,
+          "exit_code": 0
+        },
+        "handout-content-architect": {
+          "ran": 49,
+          "exit_code": 0
+        },
+        "handout-extract": {
+          "ran": 47,
+          "exit_code": 0
+        },
+        "handout-readability-reviewer": {
+          "ran": 164,
+          "exit_code": 0
+        },
+        "handout-verify": {
+          "ran": 60,
+          "exit_code": 0
+        },
+        "ref-handout-design-system": {
+          "ran": 37,
+          "exit_code": 0
+        },
+        "render-diagram-svg.py": {
+          "ran": 166,
+          "exit_code": 0
+        },
+        "render-handout.py": {
+          "ran": 219,
+          "exit_code": 0
+        },
+        "resolve-handout-preset.py": {
+          "ran": 128,
+          "exit_code": 0
+        },
+        "route-handout-output.py": {
+          "ran": 113,
+          "exit_code": 0
+        },
+        "run-handout-build": {
+          "ran": 53,
+          "exit_code": 0
+        },
+        "run-handout-extract": {
+          "ran": 46,
+          "exit_code": 0
+        },
+        "srg-image-bridge.py": {
+          "ran": 291,
+          "exit_code": 0
+        },
+        "validate-handout-config.py": {
+          "ran": 278,
+          "exit_code": 0
+        },
+        "verify-handout-a11y-print.py": {
+          "ran": 187,
+          "exit_code": 0
+        },
+        "verify-handout-language.py": {
+          "ran": 248,
+          "exit_code": 0
+        },
+        "verify-handout-narrative.py": {
+          "ran": 217,
+          "exit_code": 0
+        },
+        "verify-handout-selfcontained.py": {
+          "ran": 354,
+          "exit_code": 0
+        }
+      }
+    },
+    "initial_red_and_resolution": {
+      "note": "初回計測は 6 スイート 8 件が赤であった。うち 3 件は本周回の作業 (manifest / README) が入れた退行であり、緑にするために検査を緩めた箇所は 1 つも無い",
+      "failed_test_names_at_first_run": {
+        "guard-handout-external-ref": [
+          "test_no_side_effects.TestSingleRegistrationSurface.test_plugin_manifest_does_not_register_hook.test_plugin_manifest_does_not_register_hook"
+        ],
+        "handout-content-architect": [
+          "test_handout_content_architect_agent.HandoutContentArchitectContractTest.test_AC_C05_17_attainment_dialogue_handson_duration.test_AC_C05_17_attainment_dialogue_handson_duration"
+        ],
+        "resolve-handout-preset.py": [
+          "test_audit_duplication.AuditOnRealTreeTest.test_clean_plugin_tree_has_no_violation.test_clean_plugin_tree_has_no_violation"
+        ],
+        "route-handout-output.py": [
+          "test_cross_component.VocabularyDuplicationGateTest.test_audit_duplication_passes_on_the_real_tree.test_audit_duplication_passes_on_the_real_tree"
+        ],
+        "srg-image-bridge.py": [
+          "test_cross_component.BuildSkillContractTest.test_build_skill_surfaces_the_skip_reason.test_build_skill_surfaces_the_skip_reason",
+          "test_r23_style_family.DeterministicSelectionTest.test_family_missing_stops_before_delegating.test_family_missing_stops_before_delegating",
+          "test_r23_style_family.DeterministicSelectionTest.test_section_without_pattern_and_without_family_is_exit2.test_section_without_pattern_and_without_family_is_exit2"
+        ],
+        "verify-handout-narrative.py": [
+          "test_scope_and_determinism.TestMultiViolationAccounting.test_all_detections_reported_even_when_first_fails.test_all_detections_reported_even_when_first_fails"
+        ]
+      },
+      "resolutions": [
+        {
+          "test": "test_no_side_effects.TestSingleRegistrationSurface.test_plugin_manifest_does_not_register_hook",
+          "cause": "本周回で .claude-plugin/plugin.json へ hooks キーを追加したこと。C10 の契約は登録面を settings.json 一本に寄せており、manifest と settings.json の双方に置くと 1 回の書込で 2 回発火する",
+          "fix": "manifest から hooks キーを削除し、理由を hook_registration_note へ明記。あわせて README へ settings.json への手登録手順を追加した (配布時に hook が黙って無効化されるのを防ぐため)",
+          "weakened_check": false
+        },
+        {
+          "test": "test_audit_duplication.AuditOnRealTreeTest.test_clean_plugin_tree_has_no_violation / test_cross_component.VocabularyDuplicationGateTest.test_audit_duplication_passes_on_the_real_tree",
+          "cause": "本周回で README へ用途種別語彙 8 件を書き写したこと。resolve-handout-preset.py --audit-duplication が E-VOCAB-DUPLICATED を 9 件検出した",
+          "fix": "README から列挙を削除し --list への誘導へ置換。P12 の証跡に『同期 lint は未実装』と書いたのは誤りで、lint は実在し赤になっていた",
+          "weakened_check": false
+        },
+        {
+          "test": "test_handout_content_architect_agent.HandoutContentArchitectContractTest.test_AC_C05_17_attainment_dialogue_handson_duration",
+          "cause": "P05-x-07 で agents/handout-content-architect.md から部品 id literal を除去した結果、『B17 に言及せよ』という旧契約と衝突した (2 つの契約が同時に満たせない状態)",
+          "fix": "契約側を literal 要求からカタログ述語要求 (data_block_type=handson) へ更新。部品 id の名簿を config/handout-parts.json 以外に作らない裁定を優先した",
+          "weakened_check": false
+        },
+        {
+          "test": "test_r23_style_family.DeterministicSelectionTest.test_family_missing_stops_before_delegating / test_section_without_pattern_and_without_family_is_exit2",
+          "cause": "テスト側 fixture の欠陥。_harness.plan_payload が、テストが意図的に pop した diagram_pattern を auto マーカーを見て復活させており、『図解型も family も持たないセクション』の検査が素通りしていた",
+          "fix": "復活条件へ『キーがまだ残っていること』を追加。script 側に欠陥は無く、手動実行では正しく E-IMG-FAMILY-MISSING exit2 を返すことを確認済み",
+          "weakened_check": false
+        },
+        {
+          "test": "test_cross_component.BuildSkillContractTest.test_build_skill_surfaces_the_skip_reason",
+          "cause": "skills/run-handout-build/SKILL.md に skip_reason の値 (srg-absent / runtime-absent) の記載が無く、画像 skip を成功へ黙って畳む余地が残っていた",
+          "fix": "SKILL.md へ『exit code でなく stdout の status を読む』『skip_reason を warning へ転記する』を明記",
+          "weakened_check": false
+        },
+        {
+          "test": "test_scope_and_determinism.TestMultiViolationAccounting.test_all_detections_reported_even_when_first_fails",
+          "cause": "期待件数 8 の直書き。R22 で NAR-09 / NAR-10 が増えて実際は 10 行になった",
+          "fix": "len(DETECTION_ORDER) へ置換。件数直書きは『後続 detection を落としていない』でなく『昔の本数と同じ』を測る検査に化ける",
+          "weakened_check": false
+        }
+      ]
+    }
+  },
+  "element_2_env_unset_fallback": {
+    "verdict": "pass",
+    "measured": {
+      "env_removed": [
+        "HB_ROOT",
+        "CLAUDE_PLUGIN_ROOT",
+        "SRG_ROOT"
+      ],
+      "cwd": "repo 外の一時ディレクトリ",
+      "steps": [
+        {
+          "step": "validate --normalize (env 未設定 / cwd=一時ディレクトリ)",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/validate-handout-config.py --config /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/examples/minimal-config.json --normalize --out /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/normalized.json",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "OK handout-config: sections=1 parts=3 glossary=1 doc_type=lecture date=2026/08/18 warnings=0",
+          "stderr_tail": ""
+        },
+        {
+          "step": "render (1 回目)",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/render-handout.py --config /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/normalized.json --out /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "{\"html_path\": \"/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html\", \"bytes\": 20284, \"sections\": 1, \"blocks_by_type\": {\"handson\": 1, \"text\": 1, \"steps\": 1}, \"icons_used\": [], \"diagrams",
+          "stderr_tail": ""
+        },
+        {
+          "step": "render (2 回目・別出力先)",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/render-handout.py --config /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/normalized.json --out /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/b.html",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "{\"html_path\": \"/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/b.html\", \"bytes\": 20284, \"sections\": 1, \"blocks_by_type\": {\"handson\": 1, \"text\": 1, \"steps\": 1}, \"icons_used\": [], \"diagrams",
+          "stderr_tail": ""
+        },
+        {
+          "step": "gate: selfcontained",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/verify-handout-selfcontained.py --html /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "SC-10 PASS checked=1 violations=0",
+          "stderr_tail": ""
+        },
+        {
+          "step": "gate: a11y-print",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/verify-handout-a11y-print.py --html /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "  - A11Y-07 (c) と STICKY-01 (b) は script 本文の共起検査に留まる (実際の分岐利用は検査していない)",
+          "stderr_tail": ""
+        },
+        {
+          "step": "gate: language",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/verify-handout-language.py --html /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html --config /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/normalized.json",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "  - 出力ディレクトリ名の種別語彙と主題 slug は判定していない (C19 route-handout-output.py の面)",
+          "stderr_tail": ""
+        },
+        {
+          "step": "gate: narrative",
+          "command": "python3 /Users/dm/orca/workspaces/harness/資料作成のプラグイン作成/plugins/guide-doc-generator/scripts/verify-handout-narrative.py --html /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/a.html --config /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0/normalized.json",
+          "cwd": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/tmpkg7juiv0",
+          "exit_code": 0,
+          "stdout_tail": "  - 外部参照・空画像などの自己完結性 (C16) と印刷面 (C17) は本ゲートの担当外",
+          "stderr_tail": ""
+        }
+      ],
+      "all_exit_zero": true,
+      "determinism": {
+        "sha256_run1": "7147055d15e763485ec0596816c8ebda567815de21a1e8362efe4d16ab1ea33a",
+        "sha256_run2": "7147055d15e763485ec0596816c8ebda567815de21a1e8362efe4d16ab1ea33a",
+        "byte_identical": true,
+        "bytes": 20284
+      }
+    },
+    "note": "HB_ROOT / CLAUDE_PLUGIN_ROOT / SRG_ROOT を環境から除去し、cwd も repo 外の一時ディレクトリへ振って実行した。cwd 相対の暗黙依存が残っていれば同時に落ちる測り方にしてある"
+  },
+  "not_verifiable": [
+    {
+      "item": "並列実行時の相互干渉",
+      "reason": "23 スイートは直列実行した。共有一時ディレクトリ等の競合は未観測"
+    },
+    {
+      "item": "Python 3.10 / 3.12 での挙動",
+      "reason": "実行系は Python 3.11 のみ。3.10 以上を要件と宣言しているが 3.10 実機では未計測"
+    }
+  ]
+}

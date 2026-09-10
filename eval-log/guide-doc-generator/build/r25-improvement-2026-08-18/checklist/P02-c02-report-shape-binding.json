@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c02-report-shape-binding",
+  "covered_task_ids": ["P02-c02-report-shape-binding"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/skill-brief-C02.json",
+  "verified_by": [
+    {
+      "claim": "C02 の output_contract はレポート形状を自己再定義せず script-brief-C20.json#report_shape への参照で表現している",
+      "method": "本文読解 + grep count 'report_shape'",
+      "result": "pass: report_shape 参照 2 件。『レポートの JSON 形状の正本は script-brief-C20.json#report_shape 1 箇所であり、本 skill はキー名も入れ子構造も複製しない』と明記"
+    },
+    {
+      "claim": "C20 側のフィールド名が C02 へ複製されていない",
+      "method": "grep count: 'fidelity_summary' / 'unrecoverable\"' / 'source_html' / '\"sections\"' / '\"parts\"' を実測",
+      "result": "pass: 全て 0 件"
+    },
+    {
+      "claim": "'roundtrip' の 2 件はキー名の複製ではない",
+      "method": "出現箇所の前後 160 字を目視: 1 件目は C20 の roundtrip_granularity を正本と指すポインタ、2 件目は責務 id 'R3-roundtrip'",
+      "result": "pass: いずれもレポートのキー名複製ではない。語のヒットを複製の証拠と読まない判定に留めた"
+    },
+    {
+      "claim": "参照先 script-brief-C20.json#report_shape が実在する",
+      "method": "C20 ブリーフの report_shape キー読解",
+      "result": "pass: source_html / sections / fidelity_summary / unrecoverable / roundtrip を含む JSON 形状文字列として実在"
+    },
+    {
+      "claim": "C02 が契約として負う 3 面が形状複製と分離して書かれている",
+      "method": "本文読解",
+      "result": "pass: 『復元した部品一覧 (fidelity 別)・復元不能箇所とその理由・round-trip 差分の 3 面がレポートに揃っていること』を C02 側の責務として保持し、キー名の決定は C20 に委ねる分界が成立"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c02-01",
+      "level": "carry-forward",
+      "summary": "本ノードは編集不要で受入条件を満たしていた (既に C20 束縛済み)。ただし C20#report_shape は JSON schema でなく形状を表す文字列であり、C20 実装が形状を変えても C02 との齟齬を機械検出できない。release で report_shape を実 schema 化する候補"
+    }
+  ]
+}

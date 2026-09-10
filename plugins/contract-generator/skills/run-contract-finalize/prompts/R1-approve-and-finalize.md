@@ -58,7 +58,7 @@ reproducible: true (同一承認状態→同一PDF。日付のみ実行日)
 | skill | `../SKILL.md` | 2フェーズ承認の責務・境界 |
 
 ### 3.2 外部ツール / API
-- エントリ: `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase finalize --type <t> [--row N] [--dry-run]`(実体は `lib/engine.py`。等価 shim: `scripts/finalize.py` は `--phase` を finalize に固定して委譲=finalize 単独実行。poll は回さない。承認記録が要る場合のみ `--phase poll` を別途)。
+- エントリ: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase finalize --type <t> [--row N] [--dry-run]`(実体は `lib/engine.py`。等価 shim: `scripts/finalize.py` は `--phase` を finalize に固定して委譲=finalize 単独実行。poll は回さない。承認記録が要る場合のみ `--phase poll` を別途)。
 - Slack API: `reactions.get` / `conversations.replies`(承認検知) / `chat.postMessage`(PDF URL 再共有)。
 - 台帳列: ステータス / Slack_メッセージTS / 承認者 / 承認日時 / PDF_URL / 更新日時。
 
@@ -145,6 +145,6 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 
 入力 `--type {{type}}`(任意 `--row {{row}}` で特定行のみ)で finalize(確定)フローを実行する。Layer 5 の達成ゴール(実行された draft 案件が PDF として該当フォルダに保存・Slack 再共有され、台帳が completed になっている状態)と完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する(固定手順なし、上限: L4 最大反復回数)。
 
-利用可能な手段: `python3 "$CLAUDE_PLUGIN_ROOT/lib/engine.py" --phase finalize --type {{type}} [--row N] [--dry-run]`(finalize 単独を engine へ委譲。poll は回さない。任意 poll は `--phase poll` を別途) / Slack API `reactions.get`・`conversations.replies`(任意 poll の承認検知) / `chat.postMessage`(PDF URL 再共有)。既定は実行された draft 行を直接確定し、未実行行は draft のまま持ち越す(確定しない)。任意 poll を使う場合のみ承認検知を draft 通知メッセージ(台帳 Slack_メッセージTS)スレッドに限定し、その未承認行は waiting で持ち越す。承認者IDは記録可、機微情報(乙住所・乙代表者・銀行口座)は Slack 本文・ログに復唱しない。
+利用可能な手段: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/engine.py" --phase finalize --type {{type}} [--row N] [--dry-run]`(finalize 単独を engine へ委譲。poll は回さない。任意 poll は `--phase poll` を別途) / Slack API `reactions.get`・`conversations.replies`(任意 poll の承認検知) / `chat.postMessage`(PDF URL 再共有)。既定は実行された draft 行を直接確定し、未実行行は draft のまま持ち越す(確定しない)。任意 poll を使う場合のみ承認検知を draft 通知メッセージ(台帳 Slack_メッセージTS)スレッドに限定し、その未承認行は waiting で持ち越す。承認者IDは記録可、機微情報(乙住所・乙代表者・銀行口座)は Slack 本文・ログに復唱しない。
 
 出力は完了レポート(Markdown)のみ。approved/waiting/completed 件数と PDF リンクを列挙。前置き・思考過程の出力は禁止。

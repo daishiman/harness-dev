@@ -1,6 +1,6 @@
 # knowledge-skeleton テンプレート
 
-生成スキルに knowledge/ ディレクトリを追加する際に使用する雛形。
+生成スキルにレビュー済みの curated seed (`knowledge/`) を追加する際に使用する雛形。runtime 観測は `build-external-intelligence.py` が package 外へ保存する。
 
 ## パターン別使い分け
 
@@ -23,7 +23,8 @@
 ├── search_knowledge.py           ← scripts/search_knowledge.py をコピー
 ├── build_index.py                ← scripts/build_index.py をコピー
 ├── record_usage.py               ← scripts/record_usage.py をコピー (§12 活用ログ・分析)
-└── add_entry.py                  ← scripts/add_entry.py をコピー (必須6フィールド検証つき追加)
+├── add_entry.py                  ← scripts/add_entry.py をコピー (promoted 知見の seed 取り込み)
+└── build-external-intelligence.py      ← run-build-skill/scripts/ の正本をコピー (runtime state は package 外)
 ```
 
 ### Router-Registry型
@@ -38,7 +39,8 @@
 ├── search_knowledge.py           ← scripts/search_knowledge.py をコピー
 ├── build_index.py                ← scripts/build_index.py をコピー
 ├── record_usage.py               ← scripts/record_usage.py をコピー (§12 活用ログ・分析)
-└── add_entry.py                  ← scripts/add_entry.py をコピー (必須6フィールド検証つき追加)
+├── add_entry.py                  ← scripts/add_entry.py をコピー (promoted 知見の seed 取り込み)
+└── build-external-intelligence.py      ← run-build-skill/scripts/ の正本をコピー (runtime state は package 外)
 ```
 
 ## 変数の置換ルール
@@ -59,3 +61,5 @@
 python3 run-build-skill/scripts/lint-knowledge-loop.py {skill_dir}
 python3 run-build-skill/scripts/lint-knowledge-loop.py {skill_dir} --strict
 ```
+
+`knowledge/usage-log.jsonl` は curated seed の検索品質だけを測る。未検証の観測・類似統合・再利用・昇格を別実装へ二重記録せず、`build-external-intelligence.py` の event log を唯一の正本にする。

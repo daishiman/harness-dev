@@ -221,7 +221,7 @@ const D3Hierarchy = {
       .attr('y', -nodeHeight / 2)
       .attr('width', nodeWidth)
       .attr('height', nodeHeight)
-      .attr('rx', 8)
+      // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
       .attr('fill', d => d.depth === 0 ? accentPalette[0] : theme.bg)
       .attr('stroke', d => accentPalette[d.depth % accentPalette.length])
       .attr('stroke-width', 2);
@@ -230,7 +230,7 @@ const D3Hierarchy = {
     nodes.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', d => d.data.title ? '-0.3em' : '0.35em')
-      .attr('fill', d => d.depth === 0 ? '#fff' : theme.fg)
+      .attr('fill', d => d.depth === 0 ? D3Base.onFill(accentPalette[0]) : theme.fg)
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .text(d => d.data.name);
@@ -326,7 +326,7 @@ const D3Hierarchy = {
       .attr('y', (d, i) => i * layerHeight + layerHeight / 2)
       .attr('dy', '0.35em')
       .attr('text-anchor', 'middle')
-      .attr('fill', '#fff')
+      .attr('fill', (d, i) => D3Base.onFill(accentPalette[i % accentPalette.length]))
       .style('font-size', '14px')
       .style('font-weight', 'bold')
       .text(d => d.label);
@@ -526,16 +526,18 @@ const D3Hierarchy = {
       .attr('class', 'cell')
       .attr('transform', d => `translate(${d.x0}, ${d.y0})`);
 
+    const cellFill = d => {
+      let current = d;
+      while (current.depth > 1) current = current.parent;
+      const idx = current.parent ? current.parent.children.indexOf(current) : 0;
+      return accentPalette[idx % accentPalette.length];
+    };
+
     // 矩形
     cells.append('rect')
       .attr('width', d => d.x1 - d.x0)
       .attr('height', d => d.y1 - d.y0)
-      .attr('fill', d => {
-        let current = d;
-        while (current.depth > 1) current = current.parent;
-        const idx = current.parent ? current.parent.children.indexOf(current) : 0;
-        return accentPalette[idx % accentPalette.length];
-      })
+      .attr('fill', cellFill)
       .attr('fill-opacity', 0.8)
       .attr('stroke', theme.bg)
       .attr('stroke-width', 1);
@@ -545,7 +547,7 @@ const D3Hierarchy = {
       .append('text')
       .attr('x', 5)
       .attr('y', 15)
-      .attr('fill', '#fff')
+      .attr('fill', d => D3Base.onFill(cellFill(d)))
       .style('font-size', '12px')
       .style('font-weight', 'bold')
       .text(d => d.data.name.length > 10 ? d.data.name.slice(0, 10) + '…' : d.data.name);
@@ -652,7 +654,7 @@ const D3Hierarchy = {
       .append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', '0.35em')
-      .attr('fill', '#fff')
+      .attr('fill', d => D3Base.onFill(accentPalette[d.depth % accentPalette.length]))
       .style('font-size', d => Math.min(d.r / 3, 14) + 'px')
       .text(d => d.data.name.length > 8 ? d.data.name.slice(0, 8) + '…' : d.data.name);
 

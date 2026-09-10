@@ -1,0 +1,42 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-codex-plugin-package",
+    "skill_md_sha256": "1a557128f7f26738da7bdab8b081ff0ca5a7239552d5305f2149fd1b65f60aaa"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "`--check` → `--apply` → 再 `--check` の三段が SKILL.md 実行手順 3-4・`## 検証`・R1-package.md Layer 4/Output Contract で一貫して要求され、書込み前 check と書込み後 check を別証跡として残す設計になっている。生成物の存在ではなく drift 0 を完了条件に置いた点が正しい。",
+      "新規作成と既存改善を状態から自動判定する 1 本の冪等 upsert に統一し (`--intent` は deprecated ラベルとして残置)、create/update で別経路を生やさない方針が SKILL.md・run-skill-create Key Rule 6・run-skill-iter-improve の再同期節で一致している。",
+      "`effect: local-artifact` を宣言し、install/enable/hook trust を明示的にスコープ外へ出して `run-codex-plugin-install` (effect: external-mutation) へ委譲する副作用境界の切り方が、guard block の要否と正しく対応している (local-artifact 側に guard block を焼いていない)。",
+      "本文が起動する `sync-plugin-platforms.py` / `audit-capability-parity.py` の全 flag (--repo-root/--plugin/--all/--apply/--check/--marketplace-name/--json) が実 argparse 定義に存在し、`--marketplace-name` 省略時の既定 (既存名保存→無ければ repo directory 名) も実装の help と一致する。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency] `goal_seek.fork: subagent` を宣言する一方 `allowed-tools` に Agent/Task/Skill が無く、宣言どおりの親 context 分離ができない (run-codex-plugin-install と同型)。post-choice の opt-in section であり、生成の安全性は generator の fail-closed が担保するため low。",
+      "[low / smell] 実行手順 2 の `references/package-contract.json` は skill 相対では実在せず (run-codex-plugin-package/references/ 自体が無い)、対象 plugin 側の `plugins/<plugin-name>/references/package-contract.json` を指す意図と読める。直前後の文脈が `plugins/<plugin-name>/` を基点にしているため解釈は一意だが、同節の他の path が repo root 明示なのに対しここだけ基点が暗黙。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は main マージ + external-mutation guard block の機械 migration + runtime_root_policy: host-skill-path 導入によって SKILL.md sha が既存 verdict と乖離したことに対する再束縛であり、content-review-protocol §incremental の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 本 verdict は rubric 面 (assign-skill-design-evaluator 規範採点相当の high severity 0 判定) への投影である。 共通の機械検査として次を実走した: (1) `python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` = verdict PASS / violations 空。(2) frontmatter が宣言した responsibility_refs / manifest / schemas と本文が起動する script の実在をファイル存在確認で全件突合 (audit-capability-parity.py, sync-plugin-platforms.py, check-route-component-parity.py, install-codex-plugin.py, install-local-plugins.py, evaluate-create-gates.py, validate-intake-publish-ready.py, lint-plugin-composition.py, search_knowledge.py, build-external-intelligence.py, lint-readme-plugin-root-portability.py, ref-cross-platform-runtime/references/runtime-portability.md) — 欠損 0 件。(3) 本文が引用する CLI flag を各 script の argparse 定義と突合。(4) 参照 anchor `#product別-plugin-root-契約` (runtime-portability.md L41) と `#h7-ナレッジループ注入の詳細手順` (build-steps.md L502) の実在を確認。 評価方法: 本 skill は本ブランチ新規追加 (SKILL.md 201 行 + prompts/R1-package.md + workflow-manifest.json) のため 3 ファイルを全文読了した。workflow-manifest.json の phases (preflight→check-drift→apply→verify→handoff) と completion_signals を JSON パースし R1-package.md Layer 6・SKILL.md 完了チェックリストと突合。`sync-plugin-platforms.py` と `audit-capability-parity.py` の argparse を実読し全 flag の実在と既定値を確認、`audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json` を実走して verdict PASS / violations 空を確認した。plugin-composition.yaml L55/L129/L180 と package-contract.json への登録も確認済み。未解決 medium 以上は 0 件で verdict は PASS。PASS の射程は静的設計 adequacy に限り、実際の Codex install 可能性は run-codex-plugin-install 側の実走証拠を要する。"
+}

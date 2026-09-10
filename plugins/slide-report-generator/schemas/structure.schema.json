@@ -78,17 +78,17 @@
 
     "theme": {
       "type": "object",
-      "description": "Kanagawa テーマ固定。SR-2-01〜SR-2-09 参照。",
-      "required": ["name", "accentColors"],
+      "description": "意匠テーマ。配色の規範は SR-2-01〜SR-2-09 参照（正本は visual-generation-rules.md の VGCONST_001 / VGCONST_002）。",
+      "required": ["name"],
       "additionalProperties": false,
       "properties": {
         "name":   { "const": "kanagawa-lotus" },
         "mode":   { "type": "string", "enum": ["light", "dark"], "default": "light" },
         "accentColors": {
           "type": "array",
-          "minItems": 1,
+          "minItems": 0,
           "maxItems": 8,
-          "description": "SR-2-05 / SR-2-06: 各スライドにビビッドアクセント1色以上。v7=最大2色、v8=最大8色（セクション別配色用）。",
+          "description": "任意。色でアクセントを作ることを要求しない（アクセントは反転面で作る: VGCONST_002）。ここは V-038 が参照する登録集合であって、色の使用を促す欄ではない。省略が既定。",
           "items": { "$ref": "#/$defs/accentColorEnum" }
         },
         "fontScale": {
@@ -146,8 +146,7 @@
         "viewBoxDefault": { "$ref": "#/$defs/svgViewBox" },
         "compareRatio": {
           "type": "string",
-          "enum": ["48-4-48"],
-          "description": "SR-4-03 比較レイアウトの比率。固定値のみ許容。"
+          "description": "SR-4-03 比較レイアウトの比率。値域の正本は scripts/validate-compare-ratio.mjs（生成物の CSS を読んで判定する）。かつて enum: [\"48-4-48\"] で固定していたが、48-4-48 は選ぶ値ではなく『2 パネル等幅 + 間隔は版面比』から中央要素が無いときに導かれる 1 例で、導出結果を値域に固定すると前提が変わった瞬間に schema が規則と食い違う（中央要素 .compare-vs を置いた配分を表現できなかった）。"
         },
         "minSvgFontSize": {
           "type": "integer",
@@ -626,6 +625,7 @@
 
     "accentColorEnum": {
       "type": "string",
+      "description": "過渡的な色名の値域。既存入力との互換のために保持しているだけで、新しい面ではここから選ばない。意味を色相で区別してはならない（SR-2-07）。区別が要るときは位置・順序・ラベル・罫を使い、図解の内部に限り単一色相の濃度段を使う（VGCONST_002）。",
       "enum": [
         "blue", "pink", "green", "yellow", "aqua", "violet",
         "wave-blue", "spring-violet", "sakura-pink", "wave-aqua",

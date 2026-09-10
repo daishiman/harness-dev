@@ -1,0 +1,82 @@
+<!--
+  boundary-golden.html — buildArchitecture のゴールデン (自動生成)
+
+  入力: boundary-spec.json
+  骨格: assets/diagram-templates/diagram-skeleton-slide.html
+  ビルダー: vendor/scripts/svg-structures.cjs の buildArchitecture
+  生成: node scripts/render-diagram-golden.cjs <spec> --skeleton slide > <golden>
+  検証: python3 scripts/validate-svg-diagram.py --check-grid --strict <golden>
+
+  svg 要素はビルダーの戻り値をそのまま埋めている (加工しない)。
+  骨格が持つ aria-labelledby の代わりに、ビルダーが出す <title> と aria-label が
+  アクセシブル名になる。これは骨格からの意図的な差で、ゴールデンは
+  「今のビルダーが実際に出すもの」を記録する側に倒している。
+-->
+<figure class="srg-diagram srg-diagram--slide"
+        data-diagram-id="d11">
+  <svg viewBox="0 0 960 360" class="architecture-svg" role="img" aria-label="社内網と社外接続の境界" xmlns="http://www.w3.org/2000/svg">
+    <title>社内網と社外接続の境界</title>
+    <defs>
+      <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg-muted, #6A6A68)"/></marker>
+      <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/></marker>
+      <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/></marker>
+      <marker id="arrow-ink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--fg, #141412)"/></marker>
+      <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/></marker>
+      <marker id="arrow-aqua" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-aqua, #9BADBF)"/></marker>
+      <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--sakura-pink, #141412)"/></marker>
+      <marker id="arrow-yellow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--autumn-yellow, #E1E6EA)"/></marker>
+      <marker id="arrow-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 8 3, 0 6" fill="var(--wave-blue, #4B6681)"/></marker>
+    </defs>
+    <rect x="40" y="40" width="220" height="252" fill="none" stroke="#D5D4D1" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="150" y="58.55" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="150" dy="0">社内</tspan></text>
+    <rect x="52" y="76" width="196" height="96" fill="#F7F6F3"/><rect x="52" y="76" width="196" height="96" fill="#F7F6F3" stroke="var(--fg-muted, #6A6A68)" stroke-width="2"/>
+    <text x="150" y="109.6" text-anchor="middle" fill="var(--fg, #141412)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="150" dy="0">社内利用者</tspan></text>
+    <text x="150" y="154.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="150" dy="0">認証済み端末</tspan></text>
+    <rect x="52" y="188" width="196" height="96" fill="#F7F6F3"/><rect x="52" y="188" width="196" height="96" fill="var(--wave-aqua, #9BADBF)" stroke="var(--fg, #141412)" stroke-width="2"/>
+    <text x="150" y="221.6" text-anchor="middle" fill="var(--fg, #141412)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="150" dy="0">業務データ</tspan></text>
+    <text x="150" y="266.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="150" dy="0">明細と履歴</tspan></text>
+    <rect x="296" y="40" width="112" height="252" fill="none" stroke="#D5D4D1" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="352" y="58.55" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="352" dy="0">社内処理</tspan></text>
+    <rect x="308" y="132" width="88" height="96" fill="#F7F6F3"/><rect x="308" y="132" width="88" height="96" fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="2"/>
+    <text x="352" y="165.6" text-anchor="middle" fill="var(--fg, #141412)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="352" dy="0">業務処理</tspan></text>
+
+    <rect x="444" y="40" width="220" height="252" fill="none" stroke="#D5D4D1" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="554" y="58.55" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="554" dy="0">境界</tspan></text>
+    <rect x="456" y="76" width="196" height="96" fill="#F7F6F3"/><rect x="456" y="76" width="196" height="96" fill="#F7F6F3" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="12,4"/>
+    <text x="554" y="109.6" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="554" dy="0">境界ゲートウェイ</tspan></text>
+    <text x="554" y="154.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="554" dy="0">社内外の出入口・全通信を記録</tspan></text>
+    <rect x="456" y="188" width="196" height="96" fill="#F7F6F3"/><rect x="456" y="188" width="196" height="96" fill="#F7F6F3" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="12,4"/>
+    <text x="554" y="221.6" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="554" dy="0">検疫領域</tspan></text>
+    <text x="554" y="266.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="554" dy="0">持込ファイルの隔離保管</tspan></text>
+    <rect x="700" y="40" width="220" height="252" fill="none" stroke="#D5D4D1" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="810" y="58.55" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="13" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="810" dy="0">社外</tspan></text>
+    <rect x="712" y="76" width="196" height="96" fill="#F7F6F3"/><rect x="712" y="76" width="196" height="96" fill="#F7F6F3" stroke="var(--fg-muted, #6A6A68)" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="810" y="109.6" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="810" dy="0">外部照会先</tspan></text>
+    <text x="810" y="154.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="810" dy="0">取引先の在庫 API・同期</tspan></text>
+    <rect x="712" y="188" width="196" height="96" fill="#F7F6F3"/><rect x="712" y="188" width="196" height="96" fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="1.25" stroke-dasharray="4,3"/>
+    <text x="810" y="221.6" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="16" font-weight="700" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="810" dy="0">夜間バッチ連携</tspan></text>
+    <text x="810" y="266.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="810" dy="0">任意・失敗しても翌日再送</tspan></text>
+    <path d="M248,124 H270 Q278,124 278,132 V156 Q278,164 286,164 H308" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="264" y="92" width="36" height="24" rx="2" fill="#F7F6F3"/><text x="282" y="108.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="282" dy="0">申請</tspan></text>
+    <path d="M248,236 H270 Q278,236 278,228 V204 Q278,196 286,196 H308" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="264" y="204" width="36" height="24" rx="2" fill="#F7F6F3"/><text x="282" y="220.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="282" dy="0">参照</tspan></text>
+    <path d="M396,164 H418 Q426,164 426,156 V132 Q426,124 434,124 H456" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="412" y="132" width="48" height="24" rx="2" fill="#F7F6F3"/><text x="436" y="148.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="436" dy="0">外向き</tspan></text>
+    <path d="M396,196 H418 Q426,196 426,204 V228 Q426,236 434,236 H456" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="412" y="164" width="36" height="24" rx="2" fill="#F7F6F3"/><text x="430" y="180.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="430" dy="0">持込</tspan></text>
+    <path d="M652,124 H712" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="668" y="92" width="36" height="24" rx="2" fill="#F7F6F3"/><text x="686" y="108.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="686" dy="0">照会</tspan></text>
+    <path d="M652,236 H712" fill="none" stroke="var(--fg-muted, #6A6A68)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+    <rect x="668" y="204" width="60" height="24" rx="2" fill="#F7F6F3"/><text x="698" y="220.2" text-anchor="middle" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif" letter-spacing="0.06em"><tspan x="698" dy="0">夜間送出</tspan></text>
+    <line x1="40" y1="312" x2="920" y2="312" stroke="#D5D4D1" stroke-width="1.25"/>
+    <rect data-legend="1" x="40" y="324" width="12" height="12" fill="#F7F6F3" stroke="var(--fg-muted, #6A6A68)" stroke-width="2"/>
+    <text x="58" y="334.2" text-anchor="start" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="58" dy="0">入力・利用者</tspan></text>
+    <rect data-legend="1" x="148" y="324" width="12" height="12" fill="#F7F6F3" stroke="var(--fg, #141412)" stroke-width="2"/>
+    <text x="166" y="334.2" text-anchor="start" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="166" dy="0">処理</tspan></text>
+    <rect data-legend="1" x="204" y="324" width="12" height="12" fill="var(--wave-aqua, #9BADBF)" stroke="var(--fg, #141412)" stroke-width="2"/>
+    <text x="222" y="334.2" text-anchor="start" fill="var(--fg-muted, #6A6A68)" font-size="12" font-weight="500" font-family="'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic', sans-serif"><tspan x="222" dy="0">保管・データ</tspan></text>
+  </svg>
+  <figcaption id="d11-caption" class="srg-diagram__caption">
+    左から右へ 1 方向に読む。長い破線の枠が社内外の境界で、細かい破線は経路が任意であることを示す。境界と任意は破線の刻みの長さで見分ける。
+  </figcaption>
+</figure>

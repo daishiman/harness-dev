@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-C20-01",
+  "reason": "tests/extract-handout-config.py/test_marker_extraction.py:112-123 が rows[].key を要求するが schemas/handout-config.schema.json の $defs.part_data.B03 は additionalProperties:false かつ properties が num/text/time/sub のみで key を持たない。テストを満たすと C12 で E-KEY-UNKNOWN が出て、C12 を満たすとテストが赤になる相互排他。C20 worker はテスト変更禁止の規律下でテスト側を採用したが、どちらが正本かの決定が未了",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+  "proposed_node": {
+    "id": "P05-x-12",
+    "title": "B03/B09 の rows[].key について schema と tests のどちらが正本かを確定する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/schemas",
+    "acceptance_criterion": "extract-handout-config.py の自スイート 152 件が緑のまま、その出力が validate-handout-config.py で E-KEY-UNKNOWN /sections/*/parts/*/data/rows/*/key を出さない。schema へ key を追加した場合は B09 も含め key の意味 (何を同定する鍵か) が description に書かれていること",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "task_spec_ref": "task-specs/P05-x-12.md",
+    "produces": [
+      "plugins/guide-doc-generator/schemas/handout-config.schema.json"
+    ]
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C20"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:daf2a0ec17b447d331e7f9d15ce3286d801f6cb2d88c3206a06b154a7178d3b4"
+}

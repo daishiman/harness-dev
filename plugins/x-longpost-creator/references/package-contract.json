@@ -1,0 +1,64 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "x-longpost-creator",
+  "entry_points": {
+    "skills": [
+      "ref-x-longpost-canon",
+      "run-skill-feedback",
+      "run-x-longpost-create",
+      "run-x-multipost-create",
+      "run-x-shortpost-optimize",
+      "run-x-visual-generate"
+    ],
+    "agents": [],
+    "commands": [],
+    "hooks": []
+  },
+  "distribution": {
+    "distributable": false,
+    "bundle_targets": [],
+    "category": "Productivity",
+    "tags": [
+      "writing",
+      "x",
+      "social-post",
+      "style-genome",
+      "japanese",
+      "internal"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "skill-governance-adapters"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {},
+    "agents": {},
+    "hook_omissions": {}
+  },
+  "notes": [
+    "distributable: false — 特定の書き手のスタイルゲノムと個人 vault の運用前提 (00ネタファイル・Obsidian テンプレート) に依存するため、公開 marketplace への配布対象にしない (層A-internal)。",
+    "plugin 内に環境固有の実パスは持たない。出力先は XLP_OUTPUT_DIR → XLP_VAULT_ROOT の順でのみ解決し、既定値へのフォールバックは無い。どちらも未設定なら generate-filename.js が終了コード 1 で停止する (fail-closed)。00ネタファイルは XLP_NETA_FILE で指定する。",
+    "共有 references 6 本 (style-genome.md / short-post-formats.md / expression-variations.md / anti-ai-writing-guide.md / horizontal-vertical-guide.md / title-guidelines.md) は plugin ルートの references/ に置く。skill 固有の references と output-config.json は skills/run-x-longpost-create/references/ に置く。",
+    "prompts/ は entry_points に載せない。frontmatter を持たず Task で起動される sub-agent ではなく、各 skill が Read で読み込む phase 別のプロンプト文書だからである (plugin-composition.yaml では kind: prompt として宣言する)。",
+    "entry_points.agents は空である。prompts/ は各 skill が Read で読み込む参照文書であり、agent の公開 surface を作らない。",
+    "画像成果物の kind・生成/納品寸法・比率は skills/run-x-visual-generate/references/visual-spec.json が正本。投稿固有の作業先は XLP_IMAGE_DIR で明示し、最終添付先は XLP_ATTACHMENT_DIR → XLP_VAULT_ROOT/02_Configs/Extra の順で解決する。未解決なら run-x-visual-generate は最終差し込み前に停止する (fail-closed)。",
+    "run-x-visual-generate の標準成果物は x-thumb 5:2 と note-thumb 実 PNG 1280x670 の2枚。Claude Code は Read、Codex は view_image で XLP_IMAGE_DIR の同じ絶対パスを開き、5項目の PASS と画像 SHA256 を record-thumbnail-review.js の review receipt に記録した後だけ embed する。図解は明示指定時のみ optional である。",
+    "外部ランタイム要件: scripts/ 配下の実行ファイルは Node.js (v18 以上) で動作する。node が PATH に無い場合は実行を中止する (fail-closed)。runtime_dependencies は他 plugin が所有する capability の申告枠なので、PATH 上の外部バイナリはここへ書かない。",
+    "外部ランタイム要件: run-x-visual-generate の画像生成のみが codex を使う。scripts/generate-images-codex.js が XLP_CODEX_BIN (既定 codex) を executable + argv で起動し、内蔵の image generation (Image2) を呼ぶ。実行ファイルは課金ループ前に preflight し、実行不能なら retry せず exit 2。長文投稿の生成 (Phase 0〜3.5) は codex 無しで完結する。画像生成は課金される。",
+    "skills/run-skill-feedback/ は harness-creator が所有する共通 skill の実体コピーである。plugin は marketplace 経由で単独 install され install 先には自分の plugin ディレクトリしか展開されないため、正本への symlink は install 先で切れる。よって実体で持ち、runtime_dependencies へ owned-vendored として所有者を明記する。"
+  ]
+}

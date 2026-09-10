@@ -100,6 +100,47 @@ def test_hook_manifest_valid():
     assert valid is True, findings
 
 
+def test_hook_manifest_accepts_schema_event_post_tool_use_failure():
+    data = _common_core(
+        kind="hook", event="PostToolUseFailure", command="echo", timeout_ms=1000
+    )
+    valid, _kind, findings = MOD.validate_manifest(data)
+    assert valid is True, findings
+
+
+@pytest.mark.parametrize(
+    "allowed_tools",
+    [
+        "Read, Skill, Task, Bash(python3 *)",
+        "Read",
+        ["Read", "Skill", "Task", "Bash(python3 *)"],
+    ],
+)
+def test_command_manifest_accepts_schema_allowed_tools_forms(allowed_tools):
+    data = _common_core(
+        kind="command",
+        **{"argument-hint": "<kind> <name>", "allowed-tools": allowed_tools},
+    )
+    valid, kind, findings = MOD.validate_manifest(data)
+    assert valid is True, findings
+    assert kind == "command"
+
+
+@pytest.mark.parametrize(
+    "allowed_tools",
+    ["", "   ", "Read, , Skill", [], ["Read", ""], ["Read", 1], 42, {}],
+)
+def test_command_manifest_rejects_empty_or_invalid_allowed_tools(allowed_tools):
+    data = _common_core(
+        kind="command",
+        **{"argument-hint": "<kind> <name>", "allowed-tools": allowed_tools},
+    )
+    valid, kind, findings = MOD.validate_manifest(data)
+    assert valid is False
+    assert kind == "command"
+    assert any("allowed-tools" in finding for finding in findings)
+
+
 def test_prompt_manifest_requires_exactly_seven_layers():
     layers = [{"index": i, "title": f"L{i}"} for i in range(1, 7)]  # 6 のみ
     data = _common_core(kind="prompt", layers=layers)
@@ -170,11 +211,213 @@ def test_plugin_composition_with_cycle_is_invalid():
         kind="plugin-composition",
         capabilities=[{"kind": "skill", "ref": "skills/a"},
                       {"kind": "skill", "ref": "skills/b"}],
-        dependencies=[{"from": "a", "to": "b"}, {"from": "b", "to": "a"}],
+        dependencies=[
+            {"from": "skills/a", "to": "skills/b", "type": "calls"},
+            {"from": "skills/b", "to": "skills/a", "type": "calls"},
+        ],
     )
     valid, _kind, findings = MOD.validate_manifest(data)
     assert valid is False
     assert any("cycle" in f for f in findings)
+
+
+def test_plugin_composition_rejects_duplicate_capability_ref():
+    data = _common_core(
+        kind="plugin-composition",
+        capabilities=[
+            {"kind": "skill", "ref": "skills/a"},
+            {"kind": "skill", "ref": "skills/a"},
+        ],
+    )
+    valid, _kind, findings = MOD.validate_manifest(data)
+    assert valid is False
+    assert any("duplicate capability ref" in finding for finding in findings)
+
+
+def test_plugin_composition_rejects_exact_duplicate_dependency_edge():
+    edge = {"from": "skills/a", "to": "skills/b", "type": "calls"}
+    data = _common_core(
+        kind="plugin-composition",
+        capabilities=[
+            {"kind": "skill", "ref": "skills/a"},
+            {"kind": "skill", "ref": "skills/b"},
+        ],
+        dependencies=[edge, dict(edge)],
+    )
+    valid, _kind, findings = MOD.validate_manifest(data)
+    assert valid is False
+    assert any("duplicate dependency edge" in finding for finding in findings)
+
+
+def _write_composition_plugin(root: Path, name: str, version: str = "1.0.0") -> Path:
+    plugin = root / "plugins" / name
+    plugin.mkdir(parents=True)
+    composition = plugin / "plugin-composition.yaml"
+    composition.write_text(
+        f"name: {name}\n"
+        "description: plugin composition dependency validation fixture.\n"
+        "kind: plugin-composition\n"
+        f"version: {version}\nowner: team-test\ncapabilities: []\n",
+        encoding="utf-8",
+    )
+    return composition
+
+
+def test_plugin_composition_accepts_existing_local_resource_endpoint(tmp_path):
+    composition = _write_composition_plugin(tmp_path, "local-plugin")
+    (composition.parent / "skills" / "run-a").mkdir(parents=True)
+    (composition.parent / "references").mkdir()
+    (composition.parent / "references" / "contract.md").write_text(
+        "contract\n", encoding="utf-8"
+    )
+    data = _common_core(
+        name="local-plugin",
+        kind="plugin-composition",
+        capabilities=[{"kind": "skill", "ref": "skills/run-a"}],
+        dependencies=[
+            {"from": "skills/run-a", "to": "references/contract.md", "type": "reads"}
+        ],
+    )
+    valid, _kind, findings = MOD.validate_manifest(data, manifest_path=composition)
+    assert valid is True, findings
+
+
+def test_plugin_composition_rejects_existing_but_undeclared_local_capability(tmp_path):
+    composition = _write_composition_plugin(tmp_path, "local-plugin")
+    (composition.parent / "skills" / "run-a").mkdir(parents=True)
+    (composition.parent / "skills" / "run-hidden").mkdir(parents=True)
+    data = _common_core(
+        name="local-plugin",
+        kind="plugin-composition",
+        capabilities=[{"kind": "skill", "ref": "skills/run-a"}],
+        dependencies=[
+            {"from": "skills/run-a", "to": "skills/run-hidden", "type": "calls"}
+        ],
+    )
+    valid, _kind, findings = MOD.validate_manifest(data, manifest_path=composition)
+    assert valid is False
+    assert any("undeclared or dangling local endpoint" in finding for finding in findings)
+
+
+def test_plugin_composition_rejects_cross_plugin_endpoint_in_dependencies(tmp_path):
+    composition = _write_composition_plugin(tmp_path, "local-plugin")
+    sibling = tmp_path / "plugins" / "shared-plugin" / "references"
+    sibling.mkdir(parents=True)
+    (sibling / "contract.md").write_text("contract\n", encoding="utf-8")
+    data = _common_core(
+        name="local-plugin",
+        kind="plugin-composition",
+        capabilities=[{"kind": "skill", "ref": "skills/run-a"}],
+        dependencies=[
+            {
+                "from": "skills/run-a",
+                "to": "../shared-plugin/references/contract.md",
+                "type": "reads",
+            }
+        ],
+    )
+    valid, _kind, findings = MOD.validate_manifest(data, manifest_path=composition)
+    assert valid is False
+    assert any("undeclared or dangling local endpoint" in finding for finding in findings)
+
+
+def _external_composition_data() -> dict:
+    return _common_core(
+        name="local-plugin",
+        kind="plugin-composition",
+        capabilities=[{"kind": "skill", "ref": "skills/run-a"}],
+        external_dependencies={
+            "shared-plugin": {
+                "version": ">=1.0.0 <2.0.0",
+                "edges": [
+                    {
+                        "from": "skills/run-a",
+                        "to": "references/contract.md",
+                        "type": "reads",
+                    }
+                ],
+            }
+        },
+    )
+
+
+def _write_external_dependency_layout(tmp_path: Path) -> Path:
+    composition = _write_composition_plugin(tmp_path, "local-plugin")
+    (composition.parent / "skills" / "run-a").mkdir(parents=True)
+    external = _write_composition_plugin(tmp_path, "shared-plugin", "1.4.0").parent
+    (external / "references").mkdir()
+    (external / "references" / "contract.md").write_text("contract\n", encoding="utf-8")
+    return composition
+
+
+def test_plugin_composition_accepts_explicit_cross_plugin_edge(tmp_path):
+    composition = _write_external_dependency_layout(tmp_path)
+    valid, _kind, findings = MOD.validate_manifest(
+        _external_composition_data(), manifest_path=composition
+    )
+    assert valid is True, findings
+
+
+@pytest.mark.parametrize(
+    ("mutate", "expected"),
+    [
+        (lambda data: data["external_dependencies"]["shared-plugin"].pop("version"), "version is required"),
+        (lambda data: data["external_dependencies"]["shared-plugin"]["edges"][0].update(to="references/missing.md"), "dangling external dependency endpoint"),
+        (lambda data: data["external_dependencies"]["shared-plugin"]["edges"][0].update(type="invents"), "type invalid"),
+    ],
+)
+def test_plugin_composition_external_contract_fails_closed(tmp_path, mutate, expected):
+    composition = _write_external_dependency_layout(tmp_path)
+    data = _external_composition_data()
+    mutate(data)
+    valid, _kind, findings = MOD.validate_manifest(data, manifest_path=composition)
+    assert valid is False
+    assert any(expected in finding for finding in findings)
+
+
+def test_dependency_type_enum_matches_capability_schema_ssot():
+    assert MOD._DEPENDENCY_TYPES == {
+        "calls", "reads", "extends", "evaluates", "emits", "writes", "delegates", "deploys"
+    }
+
+
+@pytest.mark.parametrize(
+    ("declared_kind", "effect"),
+    [
+        ("run", "local-artifact"),
+        ("ref", "none"),
+        ("assign", "conversation-output"),
+        ("wrap", "local-artifact"),
+        ("delegate", "none"),
+    ],
+)
+def test_skill_subkind_is_schema_valid_and_reported_as_skill(declared_kind, effect):
+    data = _common_core(kind=declared_kind, effect=effect)
+    valid, reported_kind, findings = MOD.validate_manifest(data)
+    assert valid is True, findings
+    assert reported_kind == "skill"
+
+
+def test_skill_effect_uses_existing_frontmatter_enum():
+    data = _common_core(kind="run", effect="write")
+    valid, reported_kind, findings = MOD.validate_manifest(data)
+    assert valid is False
+    assert reported_kind == "skill"
+    assert any("effect" in finding for finding in findings)
+
+
+def test_skill_effect_schema_covers_current_harness_skills():
+    schema_effects = MOD._SKILL_EFFECT_VALUES
+    actual_effects = set()
+    for skill_path in (ROOT / "plugins" / "harness-creator" / "skills").glob("*/SKILL.md"):
+        data, error = MOD._load_frontmatter(skill_path.read_text(encoding="utf-8"))
+        assert error == "", f"{skill_path}: {error}"
+        if "effect" in data:
+            actual_effects.add(str(data["effect"]))
+    assert actual_effects == {
+        "none", "conversation-output", "local-artifact", "external-mutation"
+    }
+    assert actual_effects == schema_effects
 
 
 # --------------------------------------------------------------------------
@@ -237,6 +480,27 @@ def test_cli_manifest_mode_valid_emits_json_exit0(tmp_path):
     assert out["findings"] == []
 
 
+def test_cli_manifest_skill_subkind_reports_capability_kind_skill(tmp_path):
+    md = tmp_path / "SKILL.md"
+    md.write_text(
+        "---\nname: run-x\n"
+        "description: サブカインドをskill能力として報告するテストです。\n"
+        "kind: run\nversion: 1.0.0\nowner: team-test\n"
+        "effect: local-artifact\n---\nbody\n",
+        encoding="utf-8",
+    )
+    proc = _run("--manifest", str(md))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout) == {"valid": True, "kind": "skill", "findings": []}
+
+
+def test_cli_manifest_real_capability_build_command_passes():
+    command = ROOT / "plugins" / "harness-creator" / "commands" / "capability-build.md"
+    proc = _run("--manifest", str(command))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert json.loads(proc.stdout) == {"valid": True, "kind": "command", "findings": []}
+
+
 def test_cli_manifest_mode_invalid_exit1(tmp_path):
     md = tmp_path / "SKILL.md"
     md.write_text(
@@ -277,6 +541,43 @@ def test_cli_bundle_mode_reports_missing_ref(tmp_path):
     assert proc.returncode == 1
     out = json.loads(proc.stdout)
     assert any("ref not found" in f for f in out["findings"])
+
+
+def test_cli_bundle_mode_rejects_duplicate_dependency_edge(tmp_path):
+    (tmp_path / "skills" / "a").mkdir(parents=True)
+    (tmp_path / "skills" / "b").mkdir(parents=True)
+    (tmp_path / "skills" / "a" / "SKILL.md").write_text("a\n", encoding="utf-8")
+    (tmp_path / "skills" / "b" / "SKILL.md").write_text("b\n", encoding="utf-8")
+    bundle = tmp_path / "plugin-composition.yaml"
+    bundle.write_text(
+        "name: bundle-x\n"
+        "description: duplicate dependency edge を拒否する bundle テストです。\n"
+        "kind: plugin-composition\nversion: 0.0.1\nowner: team-test\n"
+        "capabilities:\n"
+        "  - {kind: skill, ref: skills/a}\n"
+        "  - {kind: skill, ref: skills/b}\n"
+        "dependencies:\n"
+        "  - {from: skills/a, to: skills/b, type: calls}\n"
+        "  - {from: skills/a, to: skills/b, type: calls}\n",
+        encoding="utf-8",
+    )
+    proc = _run("--bundle", str(bundle))
+    assert proc.returncode == 1
+    assert "duplicate dependency edge" in json.loads(proc.stdout)["findings"][0]
+
+
+def test_build_steps_documents_real_bundle_validation_cli():
+    steps = (
+        ROOT
+        / "plugins"
+        / "harness-creator"
+        / "skills"
+        / "run-build-skill"
+        / "references"
+        / "build-steps.md"
+    ).read_text(encoding="utf-8")
+    assert 'validate-build-trace.py" --bundle "$OUT_BASE/plugin-composition.yaml"' in steps
+    assert "--capability-schema" not in steps
 
 
 def test_cli_backcompat_trace_missing_file_exit1(tmp_path):

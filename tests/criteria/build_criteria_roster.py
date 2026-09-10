@@ -60,7 +60,11 @@ def discover() -> list[tuple[str, str, tuple[str, ...]]]:
     found: list[tuple[str, str, tuple[str, ...]]] = []
     for md in sorted((ROOT / "plugins").glob("*/skills/*/SKILL.md")):
         skill_dir = md.parent
-        if skill_dir.is_symlink() or md.is_symlink():
+        if (
+            skill_dir.is_symlink()
+            or md.is_symlink()
+            or FC.is_vendored_feedback_skill(skill_dir, plugins_dir=ROOT / "plugins")
+        ):
             continue
         try:
             text = md.read_text(encoding="utf-8")

@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C07",
+  "task_id": "P05-C07-01",
+  "covered_task_ids": [
+    "P05-C07-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/commands/handout-build.md",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の規模である",
+      "method": "wc -l",
+      "result": "pass (153 行)"
+    },
+    {
+      "claim": "自スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/handout-build -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 45 / failures=0 / errors=0 / OK。実装前は failures=22。残る赤 0 件)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み成果物へ適用",
+      "result": "pass (violations=[]。自前のコードポイント列挙なし)"
+    },
+    {
+      "claim": "部品 id・R22 値域・用途語彙を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -noE '\\bB[0-9]{2}\\b|\\b(overview|standard|detailed|cited|sourced|lecture|onboarding|proposal|study-notes|study-plan|agenda)\\b' を成果物へ適用",
+      "result": "pass (ヒット 0 件。当方の独立実行で確認)"
+    },
+    {
+      "claim": "ゲート集約を第 2 の正本にしていない",
+      "method": "worker のゲート集約語 grep と本文の記述形式の確認",
+      "result": "pass (ヒット 1 件は 136 行の『状態分類と全体判定の規則は /handout-verify (C09) が持つ単一正本に従い、この command では再解釈しない』という委譲宣言のみ。4 状態の列挙も verdict 判定表も書いていない)"
+    },
+    {
+      "claim": "件数リテラルを本文へ焼いていない",
+      "method": "worker が件数リテラル正規表現 (N 件 / N 点 / N ゲート / N 引数 / N 要素) を実行",
+      "result": "pass (ヒット 0 件。数字は序数リスト番号と component/requirement id (C01・R19 等) と日付書式トークンのみ。brief の『同梱 4 点』を『同梱物 (資料 HTML・構成データ JSON・素材・README) の有無』へ、『再現の単位は同梱構成データ 1 点』を『同梱構成データただ一つ』へ書き換えて導出値を除去している)"
+    },
+    {
+      "claim": "テストが導出値を強制していない (C09 のような衝突が無い)",
+      "method": "worker が assertion を調査",
+      "result": "pass (AC-C07-REPORT は要素ごとの正規表現で照合するため列挙で緑化できる。件数固定は test_handout_build_command.py:255-257 の assertEqual(6, len(brief['failure_modes'])) のみで、これは brief 側の件数照合であって成果物本文への強制ではない。C09 の contract_lib.py:509 のような『本文へ件数を書け』は存在しない)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "worker が実装前後で 7 ファイルの sha256 を突合",
+      "result": "pass (完全一致。当方はスイートの全緑を独立実行で確認しており、これが fixture 改変でなく成果物の出現によることを裏付ける)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "worker 報告と git status",
+      "result": "pass (書込は commands/handout-build.md 1 本のみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "canon-conflict",
+      "detail": "要裁定 / 当方が実測して独立確認した。argument-hint が 2 正本で食い違う。成果物 (= brief 準拠) は '[題材] [--config <config.json>] [--doc-type <種別>] [--out-dir <path>] [--theme <preset>] [--date <yyyy/mm/dd>]' の 6 引数版だが、component-inventory.json#C07 は '[題材] [--out-dir <path>] [--theme <preset> (構成データ未指定時のみ)]' の 3 引数版のまま。テスト (contract_lib.ARGUMENT_HINT_TOKENS + SourceOfTruthTest.test_argument_hint_tokens_come_from_brief) が brief を正本として 6 引数すべてを要求するため brief 側の採用は正しいが、AC-C07-1 の『frontmatter が inventory と一致』を字義通り読むと inventory の更新が必要。**これは C09 で記録済みの同種 canon-conflict と同じ欠陥の 2 例目**であり、inventory の argument-hint 列が brief の後追いをできていない構造的問題。inventory は他 leaf の criteria_ref でもあるため放置すると別 leaf が旧表記を前提に組む"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "brief open_questions[0] (C11 render-handout.py 側の衝突時挙動が『無視』か『exit≠0』か) が未決のまま。C07 本文は brief どおり『command 側で停止』と宣言したため、C11 が『無視』を採ると command 経由と直叩きで挙動が割れる。C11 は既に done であり受け皿が無い"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "--presentation-order の CLI 面を C07 に持たせるか否かが未決 (tests/handout-build/README.md gaps#1)。worker は brief arguments[] に無いものを発明しない方針で一切書かず、同時に『提示順は CLI 入口を持たない』という明記も追加しなかった (brief にも tests にも根拠が無いため)。R21 の presentation_order は構成データ側にしか入口が無い状態"
+    },
+    {
+      "kind": "doc-drift",
+      "detail": "tests/handout-build/README.md が実装前の期待値を 'Ran 45 tests / FAILED (failures=26)' と記載するが実測は failures=22。worker は差分の原因を『README 執筆後に C01 skill と scripts 群が実装済みになり BuildTargetLayoutTest / ConsumerParityTest 側の 4 件が先に緑化したため』と推定しつつ、未検証の推定であると明記している。これは README に赤の件数という導出値を書いた結果であり、本 build で追跡中の『導出値を契約へ書き下す』欠陥クラスの 8 例目に相当する (実害は小さいが記録する)"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 10 件。(1) frontmatter へ source: 'plugin-plans/guide-doc-generator/component-inventory.json#C07' と output_language: ja を追加 (brief / inventory に規定なし。既存の C09 handout-verify.md と揃えた。契約チェッカは未知キーを検査しない) (2) description を YAML ダブルクォートで囲んだ (C09 に合わせた。素の値としては inventory と完全一致) (3) 見出し構成 (資料生成の起動入口 / 引数の既定値と上書き規則 / 引数別小節 / 手順 / 停止条件と縮退時の挙動 / 報告) を C09 の書きぶりに寄せて自前決定 (4) brief の behavior と failure_modes を別節にせず停止条件と縮退を 1 節へ統合 (5) 報告項目の『同梱 4 点』を列挙へ置換 (上記 verified_by) (6) 『再現の単位は同梱構成データ 1 点』を『同梱構成データただ一つ』へ (7) ゲート FAIL 時に『状態分類と全体判定の規則は /handout-verify (C09) の単一正本に従い再解釈しない』の 1 文を追加 (brief には無いが集約を C09 へ委ねる方針の明示。テストは要求していない) (8) --date 節に『ディレクトリ名の <YYYY-MM-DD> は C19 が導く命名専用の派生表現で、表示の正本表現とは別概念』を記載 (brief open_questions[1] の X-01 決着の反映。テスト要求ではない) (9) 冒頭 boundary 段落で skill 側責務 (ヒアリング・構成データ確定・プリセット解決・script 実行順序・ゲート結果集約・出力先ルーティング) を列挙する位置を決めた (10) disable-model-invocation は出典が inventory のみのため inventory の false を採用 (brief に規定なし・README gaps#4)"
+    }
+  ]
+}

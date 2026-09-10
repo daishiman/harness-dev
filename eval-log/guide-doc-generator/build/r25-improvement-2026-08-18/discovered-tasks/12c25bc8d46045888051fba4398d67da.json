@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P05-x-86",
+  "reason": "R8 (図解と画像を毎回セクションごとに) で E-IMAGE-ABSENT / W-DIAGRAM-FEW を main セクション単位の error に上げた結果、plugins/guide-doc-generator/tests/validate-handout-config.py/_harness.py が組み立てる最小構成データが IMG も DIAGRAM も持たないため、密度検査と無関係な検査 (micro_copy / layering / normalize_date / r21_text_fold ほか) まで exit=0 の前提が崩れて赤になった。_harness.py の baseline 構成データへ IMG と DIAGRAM の部品および assets/diagrams の実体を足し、密度検査を意図的に検証するテストだけが欠落状態を作る形へ揃える。原因は 1 箇所 (共有フィクスチャ) であり、個々のテストの期待値ではない。",
+  "discovered_at_artifact": "plugins/guide-doc-generator/tests/validate-handout-config.py/_harness.py",
+  "proposed_node": {
+    "id": "P05-C12-01-shared-fixture-visuals",
+    "title": "共有テストフィクスチャの最小構成データへ図解と画像を持たせる",
+    "phase_ref": "phase-05-implementation.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/tests/",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

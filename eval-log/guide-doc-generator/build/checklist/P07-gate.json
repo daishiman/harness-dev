@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P07",
+  "covered_task_ids": [
+    "P07"
+  ],
+  "status": "success",
+  "leaf_count": 1,
+  "verified_by": [
+    {
+      "claim": "index の受入確認表の全行が観測手段つきで判定できる",
+      "method": "evidence/P07.json の acceptance_rows",
+      "result": "7 行すべてに観測手段と裸の証跡パスが付く (pass 5 / partial 2)"
+    },
+    {
+      "claim": "同梱構成データからの再生成がバイト一致する",
+      "method": "regenerated-from-bundle.html と handout.html の sha256 比較",
+      "result": "初回は FAIL。render-handout.py が --theme を config へ書き戻さず data-hb-config-theme だけ空になる欠陥を修正して一致 (sha256 1b25e1a2...)"
+    },
+    {
+      "claim": "導入一文の検査と目的背景ゴールの検査が独立に判定されている",
+      "method": "verify-handout-language.py と verify-handout-narrative.py の個別実行",
+      "result": "初回実行で両者が互いに無関係な理由で FAIL したことが独立性の裏づけ (LANG-01 の言い換え不足 / NAR-07 の demo_first 違反)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "acceptance-text-stale",
+      "detail": "チェックリストは『6 用途のプリセット』かつ差分をセクション並びと推奨部品の 2 軸に限定と書くが、R22 反映後の実体は doc_type 8 種・差分 4 軸 (section_order / recommended_parts / granularity_defaults / required_document_fields)。実測は行い preset-matrix.json に残したが、基準文そのものが古いため当該行は partial とした"
+    },
+    {
+      "kind": "independent-context-review-not-run",
+      "detail": "初心者向け読みやすさの意味レビューを独立 context で再実行していない。決定論ゲートの PASS のみを根拠にしている"
+    }
+  ]
+}

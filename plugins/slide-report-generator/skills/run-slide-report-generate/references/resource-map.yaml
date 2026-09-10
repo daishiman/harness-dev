@@ -30,7 +30,7 @@ read_when:
     when: UI 品質チェックリスト (S 系観点定義・判定基準) を確認するとき
   - file: references/deck-evaluation-rubric.md
     owner_agent: deck-evaluator
-    when: 生成後評価 (30 種思考法 mode-aware rubric・評価次元) の規範を確認するとき。hook-postgen-eval も消費 (consumers>=2)
+    when: 利用者がlight/standard/detailedを選択した後、生成後評価 (30 種思考法 mode-aware rubric・評価次元) の規範を確認するとき。hook-postgen-eval は消費しない
   - file: references/ai-image-pipeline.md
     owner_agent: ai-image-diagram-producer
     when: Codex Image2 全面画像/差替パイプライン規範を確認するとき

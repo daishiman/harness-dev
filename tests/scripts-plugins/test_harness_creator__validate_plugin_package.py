@@ -276,6 +276,33 @@ def test_pkg_003_symlink_not_owner(tmp_path):
     assert MOD.check_pkg_003(a) == []
 
 
+def test_pkg_003_byte_identical_vendored_feedback_skill_is_shared(tmp_path):
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        skill = _write_skill(plug, "run-skill-feedback", _full_required_fm())
+        (skill.parent / "workflow-manifest.json").write_text(
+            '{"name":"run-skill-feedback"}\n', encoding="utf-8"
+        )
+
+    assert MOD.check_pkg_003(a) == []
+
+
+def test_pkg_003_drifted_vendored_feedback_skill_still_collides(tmp_path):
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    _write_skill(a, "run-skill-feedback", _full_required_fm(), body="canonical")
+    _write_skill(b, "run-skill-feedback", _full_required_fm(), body="drifted")
+
+    findings = MOD.check_pkg_003(a)
+    assert len(findings) == 1
+    assert "run-skill-feedback" in findings[0]["evidence"]
+
+
 def test_pkg_003_agent_name_collision(tmp_path):
     a = _plugin(tmp_path, "demo")
     b = _plugin(tmp_path, "other")
@@ -448,6 +475,47 @@ def test_pkg_006_registered_via_plugin_json_hooks(tmp_path):
         },
     })
     assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_registered_via_plugin_json_hook_file(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir(parents=True)
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    (p / "hooks" / "hooks.json").write_text(json.dumps({
+        "hooks": {
+            "PreToolUse": [
+                {"hooks": [{"command": "python3 ${PLUGIN_ROOT}/hooks/guard.py"}]}
+            ]
+        }
+    }), encoding="utf-8")
+    _write_plugin_json(p, {
+        "name": "demo",
+        "hooks": "./hooks/hooks.json",
+    })
+
+    assert MOD.check_pkg_006(p) == []
+
+
+def test_pkg_006_hook_file_reference_cannot_escape_plugin_root(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir(parents=True)
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    outside = tmp_path / "outside-hooks.json"
+    outside.write_text(json.dumps({
+        "hooks": {
+            "PreToolUse": [
+                {"hooks": [{"command": "python3 ${PLUGIN_ROOT}/hooks/guard.py"}]}
+            ]
+        }
+    }), encoding="utf-8")
+    _write_plugin_json(p, {
+        "name": "demo",
+        "hooks": "../outside-hooks.json",
+    })
+
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert fs[0]["pkg_id"] == "PKG-006"
 
 
 def test_pkg_006_registered_via_entry_points(tmp_path):

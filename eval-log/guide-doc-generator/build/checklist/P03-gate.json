@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "phase-gate-projection",
+  "task_id": "P03",
+  "covered_task_ids": [
+    "P03"
+  ],
+  "status": "success",
+  "verified_by": [
+    {
+      "claim": "P03 の全 leaf (x-01..x-04) が done",
+      "method": "task-state.json の state 照合",
+      "result": "4 leaf 全て done。各 leaf に checklist-verification report あり"
+    },
+    {
+      "claim": "独立レビューの blocking/high 指摘が全件解消",
+      "method": "P03-x-03 の checklist report と RESOLUTION-P03.md",
+      "result": "Y-01..Y-09 全件解消 (blocking 3 / high 2 を含む)。残留 1 件は差し戻して解消"
+    },
+    {
+      "claim": "P02 由来の横断矛盾が全件解消",
+      "method": "P03-x-02 の checklist report",
+      "result": "X-01..X-08 解消"
+    },
+    {
+      "claim": "追加要件 R21 が設計へ反映",
+      "method": "P03-x-04 の checklist report と RESOLUTION-R21.md",
+      "result": "C46-C59 の 14 件に owner と検証手段が一意に割当。component 数 23 で不変"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "gate-scope",
+      "detail": "P03 の判定は leaf の完了と成果物の実在・網羅に基づく。D2 責務重複 / D3 宣言整合の再判定 (evidence/P03.json の再生成) は独立 context を要するため P06 以降の統合レビューへ回す。現時点の証跡は dispatcher の独立掃き出しであり、設計者と分離した文脈での再判定ではない"
+    }
+  ]
+}

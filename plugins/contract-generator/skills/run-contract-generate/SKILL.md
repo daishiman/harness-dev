@@ -3,7 +3,7 @@ name: run-contract-generate
 description: tenantの業務委託契約書の下書きを作成・量産したいとき、管理台帳から個人/法人のひな形に差込みDocs生成してSlack通知したいときに使う。
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: [Read, Write, Edit, Bash(python3 *), AskUserQuestion]
+allowed-tools: [Read, Bash(python3 *)]
 kind: run
 version: 0.3.0
 owner: harness maintainers
@@ -18,11 +18,13 @@ rubric_refs:
 responsibility_refs: [prompts/R1-select-and-fill.md, ../../agents/contract-draft-agent.md, scripts/draft.py, references/template-mapping.json]
 prompt_ssot: prompts/R1-select-and-fill.md
 effect: external-mutation
+external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 source: doc/参考Skill/contract-generator/ + output/contract-generator-v2/(concept.md, refactor-plan.md, ledger-*-schema.md)
 source-tier: internal
 last-audited: 2026-05-30
 audit-trigger: on-change
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
+  activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -37,9 +39,64 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: draft の停止条件が「Docs黄色版生成+Slack通知+台帳draft化」までに限定され、PDF確定/completed書戻し(run-contract-finalize)・ひな形追従(run-template-sync)へ責務分離されている設計が、契約書作成負荷削減という目的を最適に反映していること。
       verify_by: elegant-review
+artifact_delivery:
+  contract: artifact-delivery-v1
+  state_machine:
+    initial: artifact_created
+    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
+    transitions:
+      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
+      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
+      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
+      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
+      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
+      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
+    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
+    accept_contexts: {evaluator: 0, improver: 0}
+  release: explicit-only
+  exhaustive: explicit-only
+runtime_root_policy: host-skill-path
 ---
 
+## Pre-choice usable artifact execution
+
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+
+## Post-choice selected improvement execution
+
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+
+<!-- external-mutation-guard-cli:v1 -->
+### Canonical external mutation receipt flow (mandatory)
+
+Never execute the external mutation argv directly. Replace every angle-bracket placeholder
+with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Present that official preview output to the user. Only the exact user reply printed by `preview`
+may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+
+```bash
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
+<!-- /external-mutation-guard-cli:v1 -->
+
+
 # run-contract-generate
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 管理台帳(Google Sheets)の「作成指示◯ かつ 未作成」行ごとに、契約タイプ(個人/法人)に応じた Drive 上の `.docx` ひな形を差込・条項分岐し、**AI記入箇所を黄色化した Google Docs 版(下書き・要確認)** を個人/法人フォルダへ保存→**Slackに通知**→台帳を `draft` 化(ファイル名/契約書URL/Slack TS/日時)。承認後の提出用PDFは `run-contract-finalize` が担う(責務分離)。実体は共有エンジン `../../lib/engine.py --phase draft`。法務承認済の条文は改変しない。概念は `references/concept.md`、差込仕様は `references/injection-mapping.md`、設定は plugin直下 `README.md`。
@@ -66,14 +123,14 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 1人事業の契約書作成負荷を機構に肩代わりさせ本業(AIコンサル)へ時間を再配分する。法務承認済 `.docx` ひな形と都度変わりうる台帳を単一の照合エンジンで結び、二重管理とレイアウト崩れを排除する。
 
 ### 完了チェックリスト (Checklist)
-- [ ] `google-config.json` と Keychain 鍵を読み込み Service Account で認証できる(`python3 $CLAUDE_PLUGIN_ROOT/lib/config_auth.py --check`。セットアップ全体は `python3 $CLAUDE_PLUGIN_ROOT/lib/setup_doctor.py` で横断診断)
+- [ ] `google-config.json` と Keychain 鍵を読み込み Service Account で認証できる(`python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/config_auth.py --check`。セットアップ全体は `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/setup_doctor.py` で横断診断)
 - [ ] 管理台帳に `個人`/`法人` 2シートが存在し各スキーマのヘッダを持つ(無ければ整備・既存サンプル行は保持)
 - [ ] 作成指示◯かつステータス∈{空,未作成} の行を冪等キー付きで抽出できる(既定の draft phase の `_PHASE_STATUS_FILTER`。後方互換の legacy 1パスのみ ステータス≠completed)
 - [ ] 契約タイプに応じ法人①/個人②の `.docx` を名前パターンで取得できる
 - [ ] 標準ライブラリ実装(docx_lib)で黄色run置換・条件分岐(業務内容方式/料金方式/個人情報処分・個人のみ成果物有無)・AI記入の黄色維持ができる
 - [ ] 黄色維持版を Google Docs 化し該当フォルダへ保存できる
 - [ ] ファイル名 `{No}_{乙名}_業務委託契約書_{YYYYMMDD}` で生成される
-- [ ] 欠損必須列は AskUserQuestion で補完してから生成する
+- [ ] 欠損必須列は `needs-input` として行番号・列名を報告し、ユーザーが管理台帳SSOTを修正した後に再実行する
 - [ ] 生成後に未置換プレースホルダ(`●`/`XXXX`)が残っていない
 - [ ] Slack 通知のうえ 台帳へ ファイル名/契約書URL/Slack_メッセージTS/ステータス=`draft`/作成・更新日時 を書き戻せる(draft の停止条件はここまで)
 - [ ] (legacy 1パスモード専用) 黄色除去版を PDF 化し該当フォルダへ保存・台帳へ PDF_URL/ステータス=`completed` を書き戻せる ※既定の draft 経路では `run-contract-finalize` の責務であり本チェックは対象外
@@ -85,7 +142,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
 量産案件(複数行)を多周回す場合の周回状態とドリフト圧縮の配線。周回末に `eval-log/run-contract-generate-intermediate.jsonl` へ `{iteration, original_goal, current_goal_snapshot, delta_from_original, merged_directive_for_next, drift_signal}` を1行追記する。`original_goal` は全周回で不変(SHA-256 を `eval-log/run-contract-generate-progress.json` の `original_goal_hash` に固定し毎周回照合)。次周回の手順生成は直前の `merged_directive_for_next` と `original_goal` を必須入力として読む(AI 単独再導出禁止)。重い周回は `Skill(run-goal-seek)` に fork 委譲する。
 
 ```bash
-python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-generate
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/check_intermediate.py" run-contract-generate
 # → eval-log/run-contract-generate-intermediate.jsonl の original_goal_hash 不変・required_keys 充足を検査
 # 不整合は exit 2 で次周回を停止
 ```
@@ -106,10 +163,10 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-generate
 - `金額`=半角整数(差込時 `100,000円` へ整形)
 - 必須非空: 乙名称 / 乙住所(法人は代表者役職・氏名も)
 - 生成後に未置換プレースホルダ(`●`/`XXXX`)残存なし
-- 実装は `$CLAUDE_PLUGIN_ROOT/lib/validate.py`(差込前)+ `$CLAUDE_PLUGIN_ROOT/lib/docx_fill.py` 末尾の残存チェック(差込後)
+- 実装は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/validate.py`(差込前)+ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/docx_fill.py` 末尾の残存チェック(差込後)
 
 ## Gotchas
-- `read_file_content` 系ではハイライト属性を取得できない。差込アンカーは `$CLAUDE_PLUGIN_ROOT/lib/docx_fill.py` が `run.font.highlight_color==WD_COLOR_INDEX.YELLOW` を機械抽出して特定する。
+- `read_file_content` 系ではハイライト属性を取得できない。差込アンカーは `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/lib/docx_fill.py` が `run.font.highlight_color==WD_COLOR_INDEX.YELLOW` を機械抽出して特定する。
 - PDF は Drive 上で Google Docs 変換→`export(application/pdf)` で生成する(LibreOffice 不要)。
 - 機微情報(住所/代表者/口座)を扱うため、台帳・出力フォルダの共有範囲を最小化する。
 - 副作用(外部書込)を伴う。`--dry-run` で台帳書込・Drive保存を抑止して検証可能。
@@ -118,7 +175,7 @@ python3 "$CLAUDE_PLUGIN_ROOT/lib/check_intermediate.py" run-contract-generate
 `契約タイプ(個人/法人)` / `ひな形DocID(個人②/法人①)` / `台帳シート名` / `出力フォルダID` を `google-config.json` と台帳から注入。具体値は本文に直書きせず config と台帳に置く。
 
 ## 追加リソース
-- `references/README-setup.md` — スキル内部参照用の技術要約(CI/pre-commit配線・template-mapping二重定義注意)。**セットアップ手順の正本は plugin直下 `README.md`(Task 0-14)**
+- `references/README-setup.md` — スキル内部参照用の技術要約(CI/pre-commit配線・template-mapping二重定義注意)。**セットアップ手順の正本は plugin直下 `README.md` のセットアップ節**
 - `lib/setup_doctor.py` — セットアップ総合診断(cwd/Python/gcloud/env/Keychain/config/Drive/Sheets/Slack を横断点検し未完了 Task を名指し)
 - `references/concept.md` — 概念設計(参考スキル継承/転換・概念図)
 - `references/injection-mapping.md` — 個人/法人の台帳列⇄ひな形プレースホルダ差込マッピング

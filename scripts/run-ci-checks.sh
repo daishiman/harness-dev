@@ -55,7 +55,7 @@ run "lint-vendored-ssot"                   python3 scripts/lint-vendored-ssot.py
 run "lint-legacy-plugin-name"              python3 scripts/lint-legacy-plugin-name.py
 run "lint-runtime-portability"             python3 scripts/lint-runtime-portability.py
 run "check-scripts-drift"                  bash scripts/check-scripts-drift.sh
-run "build-claude-symlinks --check"        python3 scripts/build-claude-symlinks.py --check
+run "native-surfaces --check"              python3 plugins/harness-creator/scripts/sync-native-surfaces.py --repo-root . --check
 # ── discovery 派生台帳 parity (roster / llm-coverage が discovery と一致するか) ──
 # governance-check.yml と対称。この2つが run-ci-checks 非包含だと改名/skill 変更時に
 # pre-push を素通りして CI で初めて露見する (2026-07-02 harness-creator 改名で criteria
@@ -73,6 +73,7 @@ run "lint-skill-tree (prompt-creator)"     python3 plugins/skill-governance-lint
 run "lint-skill-completeness (harness-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-completeness.py --skills-dir plugins/harness-creator/skills
 run "validate-frontmatter --self-test"     python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --self-test
 run "validate-frontmatter (harness-creator)" python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
+run "lint-doc20-dependency-contract (harness-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/harness-creator/skills
 run "validate-frontmatter (prompt-creator)" python3 plugins/skill-governance-lint/scripts/validate-frontmatter.py --skills-dir plugins/prompt-creator/skills
 run "lint-skill-name (prompt-creator)"     python3 plugins/skill-governance-lint/scripts/lint-skill-name.py --skills-dir plugins/prompt-creator/skills
 run "lint-skill-description (prompt-creator)" python3 plugins/skill-governance-lint/scripts/lint-skill-description.py --skills-dir plugins/prompt-creator/skills
@@ -139,6 +140,11 @@ run "build-plugin-release --check"         python3 scripts/build-plugin-release.
 # repo-root 直下) に置いた test は CI の探索 2 機構の境界外で無言未実行になりうる。
 # 実 test 集合 ⊆ CI 到達集合 を fail-closed 検査し silent-skip を loud failure 化する。
 run "lint-test-discovery-coverage"         python3 scripts/lint-test-discovery-coverage.py
+
+# ── coverage ratchet (GitHub governance job と同じ blocking gate) ──
+# 従来は remote workflow にだけあり、pre-push の一括検査が緑でも push 後に
+# 初めて新規 artifact の test/verdict 漏れが露見した。floor を下げず同一コマンドで先行検出する。
+run "harness-coverage-ratchet"            python3 scripts/validate-harness-coverage.py --ratchet
 
 # ── サマリ ──
 echo

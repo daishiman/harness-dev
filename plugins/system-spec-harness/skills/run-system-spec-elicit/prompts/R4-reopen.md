@@ -16,7 +16,10 @@
 ## Layer 1: 基本定義層 (不変原則)
 
 ### 1.1 不変ルール
-- `確定` セルの状態を動かせるのは `action=reopen` (要 reason) だけ。
+- `確定` セルの状態を動かせるのは `action=reopen` (要 `reason` と `reopened_at`) だけ。
+- `reopened_at` は `date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を渡す。未来値は writer が拒否する。
+  時刻が無いと「差し替え後の主根拠がこの reopen より後に取り直された回答か」を検査できず、
+  先に確定を壊してから既存の回答を主根拠に流用した場合と正当な取り直しが同じ見た目になる。
 - reopen 非経由の `確定`→`未収集`/`対象外` 直接変更は writer が `TransitionError` で拒否する (C11 hook も遮断)。
 - reopen は当該セルを `未収集` へ戻し `reopen_log` に根拠を残す。
 
@@ -52,7 +55,7 @@
 | question_bank | references/elicit-question-bank.md | 追加質問設計時 |
 
 ### 3.2 外部ツール
-- `Bash`: `python3 scripts/apply-spec-transition.py apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>"}'`
+- `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>","reopened_at":"<date -u +%Y-%m-%dT%H:%M:%SZ の実測値>"}'`
 
 ## Layer 4: 共通ポリシー
 
@@ -82,7 +85,7 @@
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] reopen対象の直前状態が`確定`である
 - [ ] reopen後の対象状態がreason付きの`未収集`である
-- [ ] `reopen_log` に根拠 entry が残っている
+- [ ] `reopen_log` に根拠 entry が残っている (`reason` と実測 `reopened_at` を伴う)
 - [ ] 影響カテゴリの `category_aggregate` が真理値表と一致する
 - [ ] `validate-coverage-matrix.py` (loop) が exit0
 
@@ -109,4 +112,4 @@
 
 ## 出力指示
 
-再検討の根拠を確認し、`python3 scripts/apply-spec-transition.py apply --state spec-state.json --op '{"action":"reopen",...,"reason":"..."}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。余計な前置き・思考過程出力は禁止。
+再検討の根拠を確認し、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen",...,"reason":"...","reopened_at":"<実測 RFC3339>"}'` で対象確定セルを `未収集` へ戻す。`reopen_log` の追記と `validate-coverage-matrix.py` (loop) の exit0 を確認し、R2/R3 へ差し戻す。確定の直接変更 (reopen 非経由) は writer が拒否する。余計な前置き・思考過程出力は禁止。

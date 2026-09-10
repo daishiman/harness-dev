@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "route-build-report",
+  "route_id": "C02",
+  "task_id": "P05-C02-01",
+  "covered_task_ids": [
+    "P05-C02-01"
+  ],
+  "status": "success",
+  "build_target": "plugins/guide-doc-generator/skills/run-handout-extract/",
+  "verified_by": [
+    {
+      "claim": "build_target が実在し規定の構成を持つ",
+      "method": "wc -l",
+      "result": "pass (SKILL.md 236 行 + prompts/ 3 本 (R1-scan 164 / R2-complete 165 / R3-roundtrip 166) = 計 731 行)"
+    },
+    {
+      "claim": "自スイートが完全緑になった",
+      "method": "python3 -m unittest discover -s plugins/guide-doc-generator/tests/run-handout-extract -p 'test_*.py' を当方が独立実行",
+      "result": "pass (Ran 46 / failures=0 / errors=0 / OK。実装前は failures=30。残る赤 0 件)"
+    },
+    {
+      "claim": "R08 (絵文字ゼロ) を満たす",
+      "method": "C16 の scan_emoji を importlib で読み込み産出 4 ファイル全てへ適用",
+      "result": "pass (4 ファイルすべて violations=[])"
+    },
+    {
+      "claim": "部品 id・R22 値域・用途語彙を本文へ列挙していない (SSOT 維持)",
+      "method": "grep -rnoE '\\bB[0-9]{2}\\b|\\b(overview|standard|detailed|cited|sourced|lecture|onboarding|proposal|study-notes|study-plan|agenda)\\b' を build_target 配下へ適用",
+      "result": "pass (ヒット 0 件。worker が別途報告した report の 14 件も --report フラグ名 / report_path / report_shape の識別子であり当方の正規表現では拾われない)"
+    },
+    {
+      "claim": "出力先ルーティングを自前実装していない (C19 の単独責務を侵していない)",
+      "method": "worker が replace('/' 相当を grep",
+      "result": "pass (ヒット 0 件。handout-config.json の文字列は frontmatter の argument-hint 内のみで、パス組み立ての実装ではない。ディレクトリ名の組み立てが C19 の単独責務である旨を Gotchas に明記している)"
+    },
+    {
+      "claim": "件数リテラルの焼き込みを自ら検出して除去した",
+      "method": "worker が件数リテラル正規表現を実行し初稿の 8 ヒットを弁別・修正",
+      "result": "pass (導出値に当たる 5 件を修正済み: SKILL.md『出力は次の 2 つに閉じる』-> 『構成データ JSON と逆抽出レポートに閉じる』、R3 の『3 要素』4 箇所 -> 必須要素の列挙 / 『上記の必須要素』。残る 3 ヒットは『逆写像の実装が 2 つになり』(単一実装であるべき理由)『どれか 1 つでも欠けた記録は不完全』(述語)『部品が 1 件も取れなかった場合』(ゼロ件の述語) でいずれも列挙可能なリストの要素数ではない。本 build で 8 例確認されている欠陥クラスに対し、worker が指示なしで自発的に検出・除去した初のケース)"
+    },
+    {
+      "claim": "C20 からの申し送り 4 件をすべて本文へ織り込んだ",
+      "method": "worker の織り込み先報告と、W-EXTRACT-OPTIONAL の実在確認",
+      "result": "pass (1: W- 行を fail 扱いしない規則を SKILL.md 診断コード一覧 + Gotchas 先頭 + R1 2.2 checklist + R3 2.2 に配置。worker は最小 HTML で extract-handout-config.py を実機起動し当該 W 行が 4 行出ることと exit 1 で --out/--report が書かれることを自ら確認している 2: --compare は別呼び出しにする旨を SKILL.md R1-scan 節末 + R1/R3 prompt へ配置 3: exit code 0/1/2 ごとの成果物残存規則を SKILL.md + Gotchas『exit 1 で終わった起動の成果物を捨てない』+ R1 prompt の exit code 表へ配置 4: 復元結果が C12 を通り切らない件を R2-complete 節末尾 + R2 prompt 2.2 へ配置し、出力契約に needs_human を置いて人が埋める経路を作った)"
+    },
+    {
+      "claim": "テストを 1 行も変更していない",
+      "method": "worker が実装前後で 14 ファイルの sha256 一覧を diff",
+      "result": "pass (SHA256 UNCHANGED / diff empty。当方はスイートの全緑を独立実行で確認しており、これが fixture 改変でなく成果物の出現によることを裏付ける)"
+    },
+    {
+      "claim": "write_scope を逸脱していない",
+      "method": "worker 報告と git status",
+      "result": "pass (書込は build_target 配下 4 ファイルのみ)"
+    }
+  ],
+  "deviations": [
+    {
+      "kind": "brief-implementation-drift",
+      "detail": "当方が実測して独立確認した。診断コード W-EXTRACT-OPTIONAL は実装 (scripts/extract-handout-config.py) に 1 件存在するが、plugin-plans/guide-doc-generator/briefs/script-brief-C20.json の stderr 契約には 0 件で未記載。これは C20 worker が自ら『ブリーフの stderr 契約に該当項が無いため新設した』と申告した裁量 4 件目に対応するもので、実装が brief を追い越した状態。C02 は実機出力から確認して本文へ記載したが、brief 側は未追随。P05-x-13 (catalog-drift の brief 是正) と同じ script-brief-C20.json が対象なので、そこで併せて是正できる"
+    },
+    {
+      "kind": "deliberate-abstraction",
+      "detail": "worker の裁量による情報の抽象化を記録する。C20 申し送り 4 の具体フィールド名 (focus_theme / target_tasks / attainment_level / must_remember / no_need_to_remember / ties_to / notes_enabled / date / assets[].data_uri) と discovered-task id (P05-x-11) を本文へ literal 列挙せず、現象の性質のみを記述した。理由は SSOT 規律と『テストが要求していない詳細を焼かない』判断。**この抽象化は妥当と判断する** (フィールド名は schema 側の正本であり、P05-x-11 が解決すれば列挙自体が古くなる)。ただし利用者から見て『どの項目が復元できなかったか』は実行時に needs_human として返る設計になっているかが要確認事項として残る"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "--compare で比較するか skill が再レンダリング比較するかの決着が未了 (C08 open_questions)。C02 本文は再レンダリング経路を主とし --compare を補助として書いたが、これは plan 上の決着ではなく worker の暫定選択。C08 (commands/handout-extract.md) の build 時に整合を確認すること"
+    },
+    {
+      "kind": "unowned-followup",
+      "detail": "brief / inventory には AC-C02-* の採番が無く、契約 id はテスト側で採番されたもの (テスト README の gaps に明記)。同様に contract_lib.REQUIRED_SUBSECTIONS が要求する『### ゴール (Goal)』『### 目的・背景 (Why)』『### 完了チェックリスト』も brief に無く repo の run 系慣行としてテストが課している。brief がテストの要求集合を包含していない状態が常態化している (C01 の deterministic_checks 7 本 vs AC-C01-1..24 と同型の問題)"
+    },
+    {
+      "kind": "gates-not-run",
+      "detail": "worker が明示的に未実行と申告した検査。P05 の他ゲート (lint-skill-* / build_trace / elegant_review / content_review / evaluator) は未実行。worker が実行したのは自スイート・emoji scan・SSOT grep・sha256 検証のみで、それ以外を pass と主張していない。この自己申告は正しい振る舞いであり、未実行を pass と偽装しなかった点を記録する。P05-x-01 の集約時に lint 系を通すこと"
+    },
+    {
+      "kind": "brief-underspecified",
+      "detail": "worker 裁量 16 件。(1) version 0.1.0 / owner harness maintainers (姉妹 skill C01 に合わせた・テスト要求外) (2) user-invocable true (C08 から Skill() 起動されるが直接起動も塞がない判断) (3) argument-hint '<html-path> [--out <handout-config.json>] [--report <extract-report.json>]' (C08 behavior 1 の引数形から) (4) allowed-tools [Read, Write, Bash, Glob, Grep, AskUserQuestion]。テスト要求は Read/Write/Bash のみ。AskUserQuestion は補完方針の利用者確認と --out 上書き確認、Glob/Grep は入力 HTML の所在確認のため (5) schema_refs ../../schemas/handout-config.schema.json (テスト要求外) (6) completeness_exempt を C01 に倣って付与 (goal_seek engine=inline のため固定 manifest 適用外) (7) eval-log パスを eval-log/guide-doc-generator/run-handout-extract-{goal-spec,progress,intermediate}.* と命名 (C01 の命名からの類推) (8) ゴールシーク検証節の hash 検査スクリプトを C01 と同型で採用 (9) 必須骨格に無い追加セクション『## 逆抽出の入出力契約』(R1/R2/R3 の 3 小節) を設けた (10) 完了チェックリストへ brief の 4 項目に加えて『復元できなかった意味情報を、利用者が埋められる形で提示した』を追加 (C20 申し送り 4 を停止条件へ結びつけるため) (11) feedback_contract.max_iterations は inventory に無いため設定せず (C01 は 3 を持つ・非対称) (12) prompts の内部構成と responsibility アンカーを R1/R2/R3 の短縮形とした (C01 の慣行に合わせた。brief の完全 id ではない) (13) 各 prompt の出力契約フィールド名 (R1: config_path/report_path/exit_code/recovered/unrecoverable/advisories、R2: completions/fidelity_map/validation/needs_human、R3: verdict/diffs/rendered_html/selfcontained/report_path/next_step) はすべて worker の命名 (14) 診断コード W-EXTRACT-OPTIONAL を本文と R1 prompt へ記載 (上記 brief-implementation-drift) (15) 復元対象外の例示 (ナビ・ヒーロー枠・アイコン sprite・CSS 変数・JS・footer・メモ UI) を Gotchas へ記載。C20 の not_preserved_by_design を部品 id 抜きで言い換えたもの (16) 非対話文脈では利用者への確認を未確定のまま返し既定値で埋めない、を R2 prompt 4.1 へ追加"
+    }
+  ]
+}

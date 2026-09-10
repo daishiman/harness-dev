@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "report_kind": "checklist-verification-report",
+  "task_id": "P02-c06-r25-axes",
+  "covered_task_ids": ["P02-c06-r25-axes"],
+  "status": "success",
+  "write_scope": "plugin-plans/guide-doc-generator/briefs/agent-brief-C06.json",
+  "verified_by": [
+    {
+      "claim": "R25 の 4 面が REQ 番号つきで軸として存在する",
+      "method": "agent-brief-C06.json#r25_semantic_axes.axes を列挙し covers を確認",
+      "result": "pass: 4 軸。opening-order (REQ-1 / REQ-4 / REQ-8) / visual-fit (REQ-2 / REQ-3) / card-granularity (REQ-5) / nav-scannability (REQ-5 (d 面))"
+    },
+    {
+      "claim": "4 軸が findings の axis 語彙として実際に返せる",
+      "method": "output_contract.returns の axis enum を読解",
+      "result": "pass: lead-line|decision-line|glossary|goal-chain|sentence-flow|concreteness|opening-order|visual-fit|card-granularity|nav-scannability の 10 種。新設 4 軸が enum に入っており、軸として定義されているが返せない (定義と語彙の乖離) 状態ではない"
+    },
+    {
+      "claim": "各軸が判定する面と判定しない面を分けている",
+      "method": "各軸の judges / not_judged を読解",
+      "result": "pass: 4 軸すべてが not_judged を持ち、枚数・字数・存在検査を C11/C12/C16/C22 側へ明示的に返している。no_threshold_in_this_brief が数値閾値の不在も宣言"
+    },
+    {
+      "claim": "軸の正本が C06 1 箇所であること",
+      "method": "skill-brief-C03.json 全文に対する軸名 grep",
+      "result": "fail: C03 の key_constraints が軸名 6 種 (lead-line / decision-line / glossary / goal-chain / sentence-flow / concreteness) を列挙している。C06 側の AC は満たすが、AC 後半『C03 側は軸を持たないまま』は未達"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-P02c06ax-01",
+      "level": "blocking-for-release",
+      "summary": "AC 後半が未達。skill-brief-C03.json の key_constraints に軸名 6 種が列挙されており、同ブリーフ open_questions[0] の『本 brief は軸名を 1 つも書かない』という自己申告と食い違う。しかも列挙は旧 6 種のままで、C06 が 10 種へ増えた改訂に追随していない (正本が 2 箇所に割れた結果、片方だけが古びる型の実例)。本ノードの write_scope は C06 のため未修正。discovered-task P02-c03-axis-vocab-removal として emit 済み (form: discovered-tasks/0a6d624ffc5f40e98f437171cd4e4329.json / change_level=additive)"
+    },
+    {
+      "id": "F-P02c06ax-02",
+      "level": "carry-forward",
+      "summary": "ブリーフ内の『書かない』という不在宣言が、同じブリーフ内の別キーの実体と矛盾していても検出されない。不在宣言を持つ brief に対し、宣言した語が本文に現れないことを検査する lint を release で検討 (P02-c01 の F-P02c01-01 と同型)"
+    }
+  ]
+}

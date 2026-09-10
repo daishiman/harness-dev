@@ -32,15 +32,30 @@ const VAR_PINK = kit.VAR_PINK;
 const VAR_AQUA = kit.VAR_AQUA;
 const VAR_YELLOW = kit.VAR_YELLOW;
 const VAR_VIOLET = kit.VAR_VIOLET;
-// 既存と同一の並び (色替えを起こさないため順序を変えない)
-const COLOR_PALETTE = [VAR_BLUE, VAR_AQUA, VAR_PINK, VAR_YELLOW, VAR_VIOLET];
+/**
+ * 系列色の供給。並びは既存と同一 (色替えを起こさないため順序を変えない)。
+ *
+ * **5 枠目 (VAR_VIOLET) を落とした。**`VAR_VIOLET` は `SERIES[0]` すなわち
+ * `VAR_BLUE` と同じ濃度を指しているので、5 枠あっても供給される見た目は 4 通り
+ * しかなく、**5 件目の扇・5 本目の系列が 1 件目と同じ色で描かれていた**。
+ * 色でしか見分けられない図 (円・レーダー) でこれが起きると、凡例は 5 行あるのに
+ * 図の上では 2 つが同じものに見える。
+ *
+ * これは `svg-kit.cjs` の `SERIES` を 5 枠 → 4 枠にしたのと同じ穴が、
+ * **2 つ目の供給表にも開いていた**もの。D29 (供給表の単射性) は `SERIES` だけを
+ * 見るので、こちらは鳴らない。`COLOR_PALETTE.length` を上限に使っている口
+ * (`CAPACITY.buildPieChart` / `buildClockPie` / `CAPACITY_ARGS.buildRadarChart`)
+ * は、この定義から数を取っているので自動で 4 へ下がる。
+ * `VAR_VIOLET` の名前は参照側を壊さないため残す (中身は VAR_BLUE)。
+ */
+const COLOR_PALETTE = [VAR_BLUE, VAR_AQUA, VAR_PINK, VAR_YELLOW];
 
 /**
  * 図解キャンバスの標準寸法。**viewBox の正本はここ 1 箇所**。
  *
  * なぜ揃えるか: SVG は本文幅へ合わせて必ず縮小表示される。viewBox 幅が図ごとに
- * 違うと図ごとに実効倍率が変わり、`STROKE.primary`(2.5) が或る図では 1.9px、
- * 別の図では 1.3px で描かれる。線幅と文字サイズの階層 (契約 §1.1 / SR-15) は
+ * 違うと図ごとに実効倍率が変わり、`STROKE.primary`(3) が或る図では 2.3px、
+ * 別の図では 1.6px で描かれる。線幅と文字サイズの階層 (契約 §1.1 / SR-15) は
  * 「同じ倍率で見比べられる」ことが前提なので、倍率が揺れた時点で階層が意味を失う。
  *
  * 幅 960 の根拠 (実測): 変更前の全ビルダーの viewBox 幅を数えると
@@ -166,7 +181,7 @@ function svgTextLines(x, firstY, lines, lineHeight, attrs) {
 
 function svgText({
   x, y, text, fontSize = MIN_FONT, anchor = 'middle',
-  fill = 'var(--fg, #43436c)', weight = 600,
+  fill = kit.TOKENS.ink, weight = 600,
   maxChars = 0, maxWidth = 0, maxLines = 0,
 }) {
   if (!text) return '';
@@ -261,7 +276,7 @@ function buildHorizontalFlow(items, opts = {}) {
     const num = isObj && it.number ? it.number : (i + 1);
     const textBox = { x, y: cy - cardH / 2 + 50, w: cw, h: cardH - 58 };
     return `<g>
-      <rect x="${x}" y="${cy - cardH / 2}" width="${cw}" height="${cardH}" rx="14" ry="14" fill="${color}" opacity="0.92"/>
+      <rect x="${x}" y="${cy - cardH / 2}" width="${cw}" height="${cardH}" fill="${color}" opacity="0.92"/>
       <circle cx="${x + 28}" cy="${cy - cardH / 2 + 28}" r="18" fill="#fff" opacity="0.95"/>
       ${svgText({ x: x + 28, y: cy - cardH / 2 + 34, text: String(num), fontSize: 18, fill: color, weight: 800 })}
       ${svgTextFit(label, textBox, { fill: '#fff', weight: 700, maxFont: 20, padX: 10, padY: 2 })}
@@ -520,10 +535,10 @@ function buildCycle(items, opts = {}) {
     const y = 100;
     const bodyStartY = y + headBlockH;
     captionBlock = `<g>
-      <rect x="${captionX - 16}" y="${cardTop}" width="${captionW}" height="${cardH}" rx="14" fill="#FFFFFF" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.node}"/>
+      <rect x="${captionX - 16}" y="${cardTop}" width="${captionW}" height="${cardH}" fill="${kit.TOKENS.paper}" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.node}"/>
       <rect x="${captionX - 16}" y="${cardTop}" width="6" height="${cardH}" fill="${VAR_BLUE}"/>
-      ${heading ? svgTextLines(captionX, y, hLines, headFs * 1.4, { anchor: 'start', fill: '#43436c', fontSize: headFs, weight: 800 }) : ''}
-      ${caption ? svgTextLines(captionX, bodyStartY, bLines, bodyFs * 1.5, { anchor: 'start', fill: '#54546d', fontSize: bodyFs, weight: 500 }) : ''}
+      ${heading ? svgTextLines(captionX, y, hLines, headFs * 1.4, { anchor: 'start', fill: kit.TOKENS.ink, fontSize: headFs, weight: 800 }) : ''}
+      ${caption ? svgTextLines(captionX, bodyStartY, bLines, bodyFs * 1.5, { anchor: 'start', fill: kit.TOKENS.muted, fontSize: bodyFs, weight: 500 }) : ''}
     </g>`;
   }
   return `<svg viewBox="0 0 ${W} ${H}" class="cycle-svg" role="img" aria-label="${escapeXml(opts.ariaLabel || 'サイクル図')}" xmlns="http://www.w3.org/2000/svg">
@@ -558,7 +573,7 @@ function buildPyramid(items, opts = {}) {
     const label = typeof it === 'string' ? it : it.label || it.text || '';
     const fontSize = Math.max(MIN_FONT, Math.min(22, Math.floor(layerH / 3)));
     return `<g>
-      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(layerH - 6).toFixed(1)}" rx="6" fill="${color}" opacity="0.92"/>
+      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${(layerH - 6).toFixed(1)}" fill="${color}" opacity="0.92"/>
       ${svgTextFit(label, { x, y, w, h: layerH - 6 }, { fill: '#fff', weight: 700, maxFont: fontSize, padX: 24 })}
     </g>`;
   });
@@ -587,7 +602,7 @@ function buildHierarchy(items, opts = {}) {
     const label = typeof it === 'string' ? it : it.label || it.text || '';
     const fontSize = Math.max(MIN_FONT, 20);
     return `<g>
-      <rect x="${x}" y="${y}" width="${w}" height="${layerH - 30}" rx="10" fill="${color}" opacity="0.9"/>
+      <rect x="${x}" y="${y}" width="${w}" height="${layerH - 30}" fill="${color}" opacity="0.9"/>
       ${svgTextFit(label, { x, y, w, h: layerH - 30 }, { fill: '#fff', weight: 700, maxFont: fontSize, padX: 24 })}
     </g>`;
   });
@@ -612,9 +627,9 @@ function buildBarChart(data, opts = {}) {
     const y = padT + innerH - h;
     const color = COLOR_PALETTE[i % COLOR_PALETTE.length];
     return `<g>
-      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${color}"/>
-      ${svgText({ x: x + bw / 2, y: y - 8, text: String(d.value), fontSize: MIN_FONT, fill: 'var(--fg, #43436c)', weight: 700 })}
-      ${svgText({ x: x + bw / 2, y: padT + innerH + 24, text: d.label, fontSize: MIN_FONT, fill: 'var(--fg, #43436c)' })}
+      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${color}"/>
+      ${svgText({ x: x + bw / 2, y: y - 8, text: String(d.value), fontSize: MIN_FONT, fill: kit.TOKENS.ink, weight: 700 })}
+      ${svgText({ x: x + bw / 2, y: padT + innerH + 24, text: d.label, fontSize: MIN_FONT, fill: kit.TOKENS.ink })}
     </g>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || '棒グラフ')}" xmlns="http://www.w3.org/2000/svg">
@@ -650,7 +665,7 @@ function buildPieChart(data, opts = {}) {
     const pct = Math.round((d.value / total) * 100);
     return `<g>
       <path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} z" fill="${color}" opacity="0.92"/>
-      ${svgText({ x: lx, y: ly + 5, text: `${d.label} ${pct}%`, fontSize: MIN_FONT, fill: 'var(--fg, #43436c)', weight: 700 })}
+      ${svgText({ x: lx, y: ly + 5, text: `${d.label} ${pct}%`, fontSize: MIN_FONT, fill: kit.TOKENS.ink, weight: 700 })}
     </g>`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || '円グラフ')}" xmlns="http://www.w3.org/2000/svg">
@@ -688,7 +703,7 @@ function buildVerticalFlow(items, opts = {}) {
     const y = marginY + i * (cardH + gap);
     const c = colorOf(it, i, opts);
     const label = typeof it === 'string' ? it : it.label || it.text || '';
-    return `<g><rect x="${marginX}" y="${y}" width="${cardW}" height="${cardH}" rx="12" fill="${c}" opacity="0.92"/>
+    return `<g><rect x="${marginX}" y="${y}" width="${cardW}" height="${cardH}" fill="${c}" opacity="0.92"/>
       ${svgTextFit(label, { x: marginX, y, w: cardW, h: cardH }, { fill: '#fff', weight: 700, maxFont: 18, padX: 16 })}</g>`;
   });
   // 矢印は「順序・因果がある」という主張。素材にその根拠が無い場合 (本文の段落を
@@ -766,7 +781,7 @@ function buildVenn(circles, opts = {}) {
  * 4 象限すべてが等しく強い面になるため「どこから読むか」が読者任せになり、
  * さらに白抜き文字は系列色 (SERIES) の明度がまちまちなので象限によって
  * コントラストが変わっていた。kit.NODE_STYLES の文法 (白地 + 罫 + 焦点 1 点) へ
- * 寄せ、文字は常に TOKENS.ink にする (白地 #FFFFFF ↔ ink #43436C で AA 以上)。
+ * 寄せ、文字は常に TOKENS.ink にする (paper 地 ↔ ink でコントラスト比 AA 以上)。
  */
 function buildMatrix(quadrants, opts = {}) {
   const W = CANVAS.w, H = CANVAS.h.md;
@@ -783,7 +798,7 @@ function buildMatrix(quadrants, opts = {}) {
     const st = i === focalIdx ? kit.NODE_STYLES.focal : kit.NODE_STYLES.plain;
     const label = typeof it === 'string' ? it : it.label || it.text || '';
     const box = { x: x + 4, y: y + 4, w: cw - 8, h: ch - 8 };
-    cells.push(`${kit.nodeRect(box, st, { radius: 10 })}
+    cells.push(`${kit.nodeRect(box, st)}
       ${svgTextFit(label, box, { fill: st.text || kit.TOKENS.ink, weight: 700, maxFont: 18, padX: 20 })}`);
   }
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || 'マトリクス図')}" xmlns="http://www.w3.org/2000/svg">
@@ -885,7 +900,7 @@ function buildSnake(items, opts = {}) {
     const color = colorOf(it, i, opts);
     const label = getLabel(it);
     cells.push({ x, y, row: r });
-    boxes.push(`<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="10" fill="${color}" opacity="0.9"/>
+    boxes.push(`<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" fill="${color}" opacity="0.9"/>
       ${svgTextFit(label, { x, y, w: boxW, h: boxH }, { fill: '#fff', weight: 700, maxFont: 16, padX: 12 })}`);
   }
   // コネクタ: 同一行は水平 (行の向きに従う)、行が変わるときは折返し辺で縦に落とす
@@ -957,9 +972,9 @@ function buildButterfly(left, right, opts = {}) {
     const y = 30 + i * (bh + gap);
     const lw = (d.l / max) * (cx - 80);
     const rw = (d.r / max) * (cx - 80);
-    return `<rect x="${cx - lw}" y="${y}" width="${lw}" height="${bh}" rx="4" fill="${VAR_BLUE}" opacity="0.9"/>
-      <rect x="${cx}" y="${y}" width="${rw}" height="${bh}" rx="4" fill="${VAR_PINK}" opacity="0.9"/>
-      ${svgText({ x: cx, y: y - 6, text: d.label, fontSize: 14, fill: 'var(--fg, #43436c)', weight: 700 })}`;
+    return `<rect x="${cx - lw}" y="${y}" width="${lw}" height="${bh}" fill="${VAR_BLUE}" opacity="0.9"/>
+      <rect x="${cx}" y="${y}" width="${rw}" height="${bh}" fill="${VAR_PINK}" opacity="0.9"/>
+      ${svgText({ x: cx, y: y - 6, text: d.label, fontSize: 14, fill: kit.TOKENS.ink, weight: 700 })}`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || 'バタフライチャート')}" xmlns="http://www.w3.org/2000/svg">
   <line x1="${cx}" y1="20" x2="${cx}" y2="${H - 20}" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.axis}"/>
@@ -1065,12 +1080,12 @@ function buildVs(leftItems, rightItems, opts = {}) {
   function column(x, items, color, label, title, isLeft) {
     const blocks = [];
     // カード背景: 純白 + 薄ボーダー（var() を使わずハードコード）
-    blocks.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${cardH}" rx="16" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.node}"/>`);
+    blocks.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${cardH}" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.node}"/>`);
     // ヘッダー（カラー）
-    blocks.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${headerH}" rx="16" fill="${color}" opacity="0.92"/>`);
+    blocks.push(`<rect x="${x}" y="${topY}" width="${colW}" height="${headerH}" fill="${color}" opacity="0.92"/>`);
     blocks.push(`<rect x="${x}" y="${topY + headerH - 16}" width="${colW}" height="16" fill="${color}" opacity="0.92"/>`);
     // バッジ
-    blocks.push(`<rect x="${x + 20}" y="${topY + 14}" width="86" height="32" rx="16" fill="${kit.TOKENS.white}" opacity="0.95"/>`);
+    blocks.push(`<rect x="${x + 20}" y="${topY + 14}" width="86" height="32" fill="${kit.TOKENS.white}" opacity="0.95"/>`);
     blocks.push(svgText({ x: x + 63, y: topY + 36, text: label, fontSize: 16, fill: color, weight: 800 }));
     // タイトル: バッジ右端からカード右端までに収める
     blocks.push(svgTextFit(title, { x: x + 116, y: topY + 10, w: colW - 116 - 20, h: headerH - 20 }, { fill: kit.TOKENS.white, weight: 800, maxFont: 22, anchor: 'start', padX: 8 }));
@@ -1078,7 +1093,7 @@ function buildVs(leftItems, rightItems, opts = {}) {
     items.forEach((it, i) => {
       const y = topY + headerH + 22 + i * (itemH + itemGap);
       const lines = itemLines(it);
-      blocks.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" rx="10" fill="${kit.TOKENS.paper2}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.node}"/>`);
+      blocks.push(`<rect x="${x + padX}" y="${y}" width="${colW - padX * 2}" height="${itemH}" fill="${kit.TOKENS.paper2}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.node}"/>`);
       blocks.push(`<rect x="${x + padX}" y="${y}" width="6" height="${itemH}" fill="${color}"/>`);
       // アイコン円
       blocks.push(`<circle cx="${x + padX + 32}" cy="${y + itemH / 2}" r="14" fill="${color}" opacity="0.18"/>`);
@@ -1096,7 +1111,7 @@ function buildVs(leftItems, rightItems, opts = {}) {
   // 中央 VS マーク
   const vsX = leftX + colW + gap / 2;
   const vsCy = topY + cardH / 2;
-  const vsBlock = `<circle cx="${vsX}" cy="${vsCy}" r="34" fill="#FFFFFF" stroke="${VAR_VIOLET}" stroke-width="${kit.STROKE.primary}"/>
+  const vsBlock = `<circle cx="${vsX}" cy="${vsCy}" r="34" fill="${kit.TOKENS.paper}" stroke="${VAR_VIOLET}" stroke-width="${kit.STROKE.primary}"/>
     ${svgText({ x: vsX, y: vsCy + 8, text: 'VS', fontSize: 22, fill: VAR_VIOLET, weight: 900 })}`;
 
   return `<svg viewBox="0 0 ${W} ${H}" class="vs-svg" role="img" aria-label="${escapeXml(opts.ariaLabel || 'Before/After 比較')}" xmlns="http://www.w3.org/2000/svg">
@@ -1126,7 +1141,7 @@ function buildLineChart(data, opts = {}) {
     // 折返し幅は隣のラベルとぶつからない範囲 = 目盛り間隔 - ラベル間隔
     const maxWidth = Math.max(MIN_FONT * 2, stepX - kit.LABEL_GAP);
     return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${VAR_BLUE}"/>
-      ${svgText({ x, y: padT + innerH + 22, text: d.label, fontSize: MIN_FONT, fill: 'var(--fg, #43436c)', anchor, maxWidth, maxLines: 2 })}`;
+      ${svgText({ x, y: padT + innerH + 22, text: d.label, fontSize: MIN_FONT, fill: kit.TOKENS.ink, anchor, maxWidth, maxLines: 2 })}`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || '折れ線グラフ')}" xmlns="http://www.w3.org/2000/svg">
   <line x1="${padL}" y1="${padT + innerH}" x2="${padL + innerW}" y2="${padT + innerH}" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.axis}"/>
@@ -1148,7 +1163,7 @@ function buildRadarChart(axes, series, opts = {}) {
     const x = cx + R * Math.cos(ang), y = cy + R * Math.sin(ang);
     const lx = cx + (R + 30) * Math.cos(ang), ly = cy + (R + 30) * Math.sin(ang);
     return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${VAR_AQUA}" stroke-width="${kit.STROKE.hairline}"/>
-      ${svgText({ x: lx, y: ly + 5, text: a, fontSize: 14, fill: 'var(--fg, #43436c)', weight: 700 })}`;
+      ${svgText({ x: lx, y: ly + 5, text: a, fontSize: 14, fill: kit.TOKENS.ink, weight: 700 })}`;
   }).join('\n  ');
   // 系列は色でしか見分けられないので COLOR_PALETTE の色数を超えて重ねない
   const polys = (series || []).slice(0, COLOR_PALETTE.length).map((s, si) => {
@@ -1185,7 +1200,7 @@ function buildGauge(value, opts = {}) {
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || 'ゲージ')}" xmlns="http://www.w3.org/2000/svg">
   <path d="M${cx - r},${cy} A${r},${r} 0 0 1 ${cx + r},${cy}" fill="none" stroke="${VAR_AQUA}" stroke-width="${kit.STROKE.band}" opacity="0.3"/>
   <path d="M${cx - r},${cy} A${r},${r} 0 ${large} 1 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="${VAR_BLUE}" stroke-width="${kit.STROKE.band}"/>
-  ${svgText({ x: cx, y: cy - 30, text: `${v}%`, fontSize: 36, fill: 'var(--fg, #43436c)', weight: 800 })}
+  ${svgText({ x: cx, y: cy - 30, text: `${v}%`, fontSize: 36, fill: kit.TOKENS.ink, weight: 800 })}
 </svg>`;
 }
 
@@ -1260,7 +1275,7 @@ function buildGantt(tasks, opts = {}) {
     const w = ((Number(t.end) || 0) - (Number(t.start) || 0)) / max * innerW;
     const c = colorOf(t, i, opts);
     // タスク名は軸左の帯 (padL - 30) に収める。溢れると SVG 左端の外へ消えていた
-    return `<rect x="${x.toFixed(1)}" y="${y}" width="${Math.max(20, w).toFixed(1)}" height="32" rx="6" fill="${c}" opacity="0.92"/>
+    return `<rect x="${x.toFixed(1)}" y="${y}" width="${Math.max(20, w).toFixed(1)}" height="32" fill="${c}" opacity="0.92"/>
       ${svgTextFit(t.label || '', { x: 10, y, w: padL - 30, h: 32 }, { fill: kit.TOKENS.ink, weight: 700, maxFont: 14, anchor: 'end', padX: 4, padY: 2 })}`;
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeXml(opts.ariaLabel || 'ガントチャート')}" xmlns="http://www.w3.org/2000/svg">
@@ -1348,7 +1363,7 @@ const CAPACITY = {
   //  (a) 等分割型 … N <= (有効幅 + 間隔) / (最小要素幅 + 間隔)。日本語 1 字の幅は
   //      kit.charWidth で全角 1.0em なので「最小フォント × 想定字数」が最小幅。
   //  (b) 色識別型 … 要素を色でしか見分けられない図は COLOR_PALETTE の色数が上限。
-  //      6 件目から色が一巡し、凡例が引けなくなる。
+  //      5 件目から色が一巡し、凡例が引けなくなる。
   //
   // どちらの幾何も 8 を超える値を許すが、CAPACITY の**最大値**は
   // validate-svg-diagram.py D11 の複雑度上限 (最大値 × COMPLEXITY_FACTOR 4) の
@@ -1365,12 +1380,13 @@ const CAPACITY = {
   //     innerW 870 に対し 51 件まで許すが、それは「読める散布図」ではない。
   //     他チャートと同じ 8 に揃え、D11 の上限を押し上げない
   buildScatterChart: 8,
-  // (b) 扇は色でしか見分けられない。COLOR_PALETTE.length = 5
-  buildPieChart: 5,
-  buildClockPie: 5,          // → buildPieChart
+  // (b) 扇は色でしか見分けられない。COLOR_PALETTE.length = 4
+  //     (5 枠目が 1 枠目と同色だったため落とした。COLOR_PALETTE の定義参照)
+  buildPieChart: 4,
+  buildClockPie: 4,          // → buildPieChart
   // (a) 軸ラベルはラベル環 (R 216 + 30 = 246) の円周 2π×246 = 1546 に並ぶ。隣接
   //     ラベルが重ならない条件は 1546 / N >= MIN_FONT(14) × 8 字 = 112 → N <= 13.8
-  //     → 幾何 13、同上で 8。系列 (第2引数) は (b) で 5 (CAPACITY_ARGS 参照)
+  //     → 幾何 13、同上で 8。系列 (第2引数) は (b) で 4 (CAPACITY_ARGS 参照)
   buildRadarChart: 8,
   // (a) 左端ラベルは縦に積む。ラベル帯 32 + 間隔 8 = 40 刻みで
   //     (H md 540 - padY*2 100 + 8) / 40 = 11.2 → 幾何 11、同上で 8
@@ -1415,8 +1431,14 @@ const CAPACITY = {
   //     / step 54 = 10.0 → 10 (CAPACITY_ARGS 参照)
   buildSequence: 5,
   // (a) 3 列 × 2 行の格子 = 6 (列幅 250 >= 92)。遷移 (第2引数) は
-  //     「状態 6 × 辺 4 ÷ 端点 2 = 12」で、1 辺あたり fanCapacity(96) = 5 本まで
-  //     取り付く余地がある (CAPACITY_ARGS 参照)
+  //     「状態 6 × 辺 4 ÷ 端点 2 = 12」で決まる (CAPACITY_ARGS 参照)。
+  //     この 12 は辺の容量からではなく端点の数から出ているので、FAN_MIN_GAP が
+  //     16 から 20 へ動いても変わらない。以前ここには「1 辺あたり
+  //     fanCapacity(96) = 5 本まで取り付く余地がある」と補強が書いてあったが、
+  //     現行の FAN_MIN_GAP 20 では fanCapacity(96) = 3 本である。
+  //     しかも 96 は箱の**高さ**なので、これは縦辺 (left/right) の容量にすぎない。
+  //     横辺は 3 列格子の列幅 (約 250) なので容量 11 で、律速するのは縦辺だけ。
+  //     余地の有無は 12 の導出に効かないため、補強そのものを落とす
   buildState: 6,
   // (b) レーン高 116 + レーン間隔 12。有効高 = CANVAS.h.lg 720 - 余白 40×2 - 工程見出し 24
   //     → (616 + 12) / (116 + 12) = 4.9 → 4
@@ -1431,8 +1453,9 @@ const CAPACITY = {
   buildMedallion: 4,
   // (c) R = hubW/2 118 + nodeW/2 94 + 逃がし 20 + 最低線長 36 = 268。
   //     ノード外接半径 rNode = √(94² + 36²) = 100.66 →
-  //     2·asin(100.66/536) = 0.3778 rad、離隔角 = FAN_MIN_GAP 16 / 268 = 0.0597 rad。
-  //     2π/N > 0.4375 → N < 14.4 → 幾何 14 だが、D11 の都合 (上記) で 8 に留める
+  //     2·asin(100.66/536) = 0.3778 rad、離隔角 = FAN_MIN_GAP 20 / 268 = 0.0746 rad。
+  //     2π/N > 0.4524 → N < 13.9 → 幾何 13 だが、D11 の都合 (上記) で 8 に留める
+  //     (FAN_MIN_GAP を 16 と書いていた頃は幾何 14。据置きの 8 は動かない)
   buildDpIntegration: 8,
 };
 
@@ -1467,7 +1490,7 @@ function emptyState(opts = {}) {
   const aria = escapeXml(opts.ariaLabel || label);
   return `<svg class="diagram-svg diagram-empty" viewBox="0 0 ${W} ${H}" role="img" aria-label="${aria}" xmlns="http://www.w3.org/2000/svg">
 ${defs()}
-<rect x="40" y="40" width="${W - 80}" height="${H - 80}" rx="16" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.secondary}" stroke-dasharray="8 6"/>
+<rect x="40" y="40" width="${W - 80}" height="${H - 80}" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}" stroke-width="${kit.STROKE.secondary}" stroke-dasharray="${kit.DASH.long}"/>
 ${svgText({ x: W / 2, y: H / 2 + 6, text: label, fontSize: 18, fill: kit.TOKENS.muted, weight: 700 })}
 </svg>`;
 }
@@ -1482,7 +1505,7 @@ function overflowNote(svgStr, hidden) {
   const text = `ほか ${hidden} 件`;
   const tw = Math.ceil(kit.measureText(text, 13)) + 20;
   const x = w - tw - 16, y = h - 34;
-  const note = `<g class="diagram-overflow"><rect x="${x}" y="${y}" width="${tw}" height="24" rx="12" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}"/>${svgText({ x: x + tw / 2, y: y + 16, text, fontSize: 13, fill: kit.TOKENS.muted, weight: 700 })}</g>`;
+  const note = `<g class="diagram-overflow"><rect x="${x}" y="${y}" width="${tw}" height="24" fill="${kit.TOKENS.paper}" stroke="${kit.TOKENS.rule}"/>${svgText({ x: x + tw / 2, y: y + 16, text, fontSize: 13, fill: kit.TOKENS.muted, weight: 700 })}</g>`;
   return svgStr.replace(/<\/svg>\s*$/, `${note}</svg>`);
 }
 

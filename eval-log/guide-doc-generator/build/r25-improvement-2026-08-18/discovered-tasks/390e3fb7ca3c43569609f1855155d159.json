@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-C10-01",
+  "reason": "実測: 出荷正規表現 r'^\\\\d{4}-\\\\d{2}-\\\\d{2}-' は末尾ハイフン固定で、利用者指定の出力先 05_Project/説明資料/yyyy-mm-dd_日本語命名 に一切マッチしない。外部参照ガードが恒久沈黙する",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-C10-01.json",
+  "proposed_node": {
+    "id": "P05-C10-01-dated-dir-regex",
+    "title": "出荷 hook の DATED_DIR_RE を区切り文字非依存へ rebuild する",
+    "phase_ref": "P05",
+    "entity_ref": "C10",
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/hooks/guard-handout-external-ref.py",
+    "acceptance_criterion": "hooks/guard-handout-external-ref.py の適用対象判定が先頭 ISO 日付のみを見る形 (例 ^\\\\d{4}-\\\\d{2}-\\\\d{2}(?!\\\\d)) になり、2026-08-18_日本語名 と 2026-08-18-ascii-slug の両方に発火し、非日付ディレクトリには発火しないこと。区切り文字の正本は config/handout-output.json#dir_name_format であり hook はそれを複製しないこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C10"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

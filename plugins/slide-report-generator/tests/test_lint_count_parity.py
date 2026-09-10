@@ -84,6 +84,52 @@ def test_measurers_do_not_read_prose():
 
 
 
+def _series_root(tmp_path, items: list[str], extra: str = "") -> Path:
+    """svg-kit.cjs だけを持つ合成 root。SERIES 実測器の入力を 1 箇所ずつ壊すため。"""
+    kit = tmp_path / "vendor" / "scripts" / "svg-kit.cjs"
+    kit.parent.mkdir(parents=True, exist_ok=True)
+    body = ",\n".join(f"  '{s}'" for s in items)
+    kit.write_text(f"{extra}const SERIES = [\n{body},\n];\n", encoding="utf-8")
+    return tmp_path
+
+
+def test_series_measurers_separate_frames_from_distinct_colors(tmp_path):
+    """枠数と区別できる色数は別物。同色 2 枠 (D29 が鳴った形) を数字で分離できるか。"""
+    distinct = _series_root(tmp_path / "ok", [
+        "var(--a, #111111)", "var(--b, #222222)", "var(--c, #333333)",
+    ])
+    assert mod._m_series(distinct) == 3
+    assert mod._m_series_distinct(distinct) == 3
+
+    dup = _series_root(tmp_path / "ng", [
+        "var(--a, #111111)", "var(--b, #111111)", "var(--c, #333333)",
+    ])
+    assert mod._m_series(dup) == 3, "枠は減っていない (減るなら枠を数えていない)"
+    assert mod._m_series_distinct(dup) == 2, "同色 2 枠が 1 つに畳まれない"
+
+
+def test_series_block_is_read_without_stripping_urls(tmp_path):
+    """全文へコメント除去を当てると `://` を含む行で文字列が壊れる。その再発を止める。
+
+    実ファイルには `xmlns="http://...` の行がある。`SERIES` 側は逆に、ブロック内の
+    `//` コメントで無効化した要素を数えてはいけない (不在を書いた行が存在として数
+    えられる形)。両方をこの 1 本で固定する。
+    """
+    root = _series_root(
+        tmp_path,
+        ["var(--a, #111111)", "var(--b, #222222)"],
+        extra='const S = `<svg xmlns="http://www.w3.org/2000/svg">`;\n',
+    )
+    kit = root / "vendor" / "scripts" / "svg-kit.cjs"
+    kit.write_text(
+        kit.read_text(encoding="utf-8").replace(
+            "];", "  // 'var(--c, #333333)' は b と同色だったため置いていない\n];"),
+        encoding="utf-8",
+    )
+    assert mod._m_series(root) == 2
+    assert mod._m_series_distinct(root) == 2
+
+
 # --- (3) 検出能 ---------------------------------------------------------------
 
 def _probe(tmp_path, text: str, name: str = "probe.md"):

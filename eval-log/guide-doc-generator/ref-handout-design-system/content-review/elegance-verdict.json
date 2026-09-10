@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "guide-doc-generator",
+    "skill": "ref-handout-design-system",
+    "skill_md_sha256": "7c69ed2b469a4dfd2b05bc2c133130abfdc0ead0ef751fac44378a86c4a3ffd5"
+  },
+  "review_kind": "elegance",
+  "verdict": "FAIL",
+  "findings_summary": {
+    "contradiction": 2,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 1
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-08-18T13:22:58Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "outer",
+    "criteria_evaluated": [
+      "C1-矛盾なし",
+      "C2-漏れなし",
+      "C3-規約整合",
+      "C4-依存関係整合"
+    ],
+    "positive_feedback": [
+      "面 5 の導入文『この面で返すのは「どこに正本があるか」であって、閾値の実値でも DOM の写しでもない。値も構造もこの本文へ複製しない』は、ref skill が第 2 正本になる典型的欠陥を面の冒頭で先に封じる書き方であり、他の ref skill の面冒頭へ横展開する価値がある。ただし本 skill 内では面 2 の『既定 400』がこの宣言に反しており、宣言の実効が自分自身に及んでいない (negative_feedback 4 を参照)。"
+    ],
+    "negative_feedback": [
+      "[high][contradiction/omission] SKILL.md は面を 5 つへ増やし、かつ『回答の組み立て方は references/answer-patterns.md に置く』と本文で宣言しているが、その answer-patterns.md は未更新で『問い合わせを 4 面のどれかへ割り当て』のままである。手順 1 の分類は部品/トークン/アイコン/文章の 4 分類しか列挙せず、『どれにも当たらないなら「この skill の担当外」と答え、担当する component を指す』で閉じる。したがってカード・ナビの問い合わせは面 5 へ届かず担当外として差し戻される。手順 2 の正本ファイル列挙にも handout-visual-policy.json が無い。追加した面が回答経路上は無効化されており、これは builder が自己申告していない欠陥である。",
+      "[high][dependency_break] 面 5 が名指す config/handout-visual-policy.json のキーが実在しない。実測した opening の直下キーは note / why / hero_fields / hero_total / section_opening の 5 つで、hero_card_fields・list_headings・connector_card はいずれも無い。micro_copy.roles は存在し role=\"label\" (max_chars 14) もあるが、その fields は label/term/plain/header/columns/tag/kind であり nav_item を含まない。よって面 5 の第 1・第 2 箇条は現 repo で必ず未確定へ落ちる。builder の自己申告 2 と 3 は事実である。",
+      "[medium][inconsistency] 面 5 の DOM ポインタが『block_to_component_map の冒頭ブロックのエントリ』という位置指定になっている。面 1 は『「セクション内の具体部品か」を判定する述語は section_scope であり、id の範囲指定で判定しない。カタログに部品が増えても述語は変わらない』と自ら宣言している。config/handout-parts.json は当該 2 部品に section_scope=document を持つため、『section_scope=document のエントリ』と書けば部品 id を散文へ書かずに (AC-C04-10 の B\\d{2} 禁止に触れずに) 面 1 の述語規範とも整合した。規約と brief の衝突ではなく、衝突を起こさない解が自 skill 内に既にある。",
+      "[medium][contradiction] 面 2 は『値の正本は assets/tokens/<theme>.json であり、この skill にも生成コードにも実値を焼かない』と書きながら、同じ面の末尾で text_limits.block_body_max_chars の『既定 400』という実値を焼いている。さらに C11 ブリーフの added_block は『既定 100。R25/REQ-7 で standard_equals_default により 100 へ改定。旧既定 400』と書いており、出荷済み assets/tokens/pop.json・warm-sand.json は 400 のままである。SKILL.md 自身の『規範と実装が食い違って見えるときは C11 が正本』という規則を当てると SKILL.md の 400 は陳腐値になる。面 5 が R25 を主題にする以上、R25 で改定された値の齟齬は同一差分の射程内にある。一次的な齟齬は C11 ブリーフと assets の間にあるため、値の確定は C11 owner への差し戻しが必要。",
+      "[medium][smell] frontmatter の disable-model-invocation が false である。ref-skill-naming-convention の Gotchas は『ref- は disable-model-invocation: true 必須 (自動発動を防ぐ)』とし、references/prefix-axis-matrix.md も A1 発動主体を sibling-skill (Read)、『disable-model-invocation: true は ref- のみ既定 ON』としている。今回の 33 行差分の由来ではない既存の規約不整合だが、C3 規約整合の観点として記録する。なお allowed-tools: [Read] / cli_tools・deterministic_checks なし / 実行ループなしという点では ref- 規約に適合しており、追加された面 5 も『どこに正本があるか』を返す引用の範囲に収まっていて手順・判断ロジックの持ち込みは無い。",
+      "[medium][omission] テスト suite が今回の差分を 1 件も測っていない。contract_lib.py の REQUIRED_FACES が brief output_contract の 4 面をコメント『skill-brief-C04.json output_contract の 4 面』付きでハードコードしており、brief が 5 面へ動いても追随しない (第 2 正本)。tests/ref-handout-design-system 配下に R25・hero-card・visual-policy・nav_item の文字列は 1 件も無く、git status 上もテストは未変更のまま 37 passed である。builder の自己申告 1 は事実であり、その構造的原因は REQUIRED_FACES の literal 写しにある。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "Stop",
+    "next_action": "improve"
+  },
+  "notes": "profile=incremental。30 思考法は使用していない (exhaustive 明示時のみ)。読了範囲は skills/ref-handout-design-system 配下・skill-brief-C04.json・ref-skill-naming-convention・tests/ref-handout-design-system と、依存の裏取りに要した config/handout-visual-policy.json / config/handout-parts.json / assets/tokens/*.json / script-brief-C11.json に限定した。SKILL.md は一切変更していない (評価前後で sha256 = 7c69ed2b... 不変)。criteria_evaluated の出所: この skill の frontmatter に feedback_contract.criteria が無く (kind: ref のため) 突合先の正本が存在しないため、id は評価者が content-review-protocol.md の『4条件』および同文書が言う『C1-C4違反』という呼称から自分で定めたものである。repo 内に C1-C4 の正式な id 定義は見つかっていない。この事実を隠すと本 cycle が繰り返し検出している『テスト側が第 2 正本になる』型そのものになるため明記する。positive_feedback は minItems 1 の充足のために 1 件挙げたが、その 1 件も自 skill 内で実効が破れていることを併記した。"
+}

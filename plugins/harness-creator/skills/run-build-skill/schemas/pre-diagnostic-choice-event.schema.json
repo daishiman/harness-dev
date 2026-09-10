@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://harness/run-build-skill/schemas/pre-diagnostic-choice-event.schema.json",
+  "title": "Pre-diagnostic User Choice Event",
+  "description": "artifact提示後、semantic evaluator起動前に利用者がaccept-as-isまたは診断深度を選ぶevent。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "event_id", "event_type", "source", "run_id", "subject",
+    "artifact_path", "artifact_sha256", "target_manifest_sha256",
+    "contract_binding_sha256", "presentation_receipt_sha256", "selected_level",
+    "occurred_at"
+  ],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "event_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{2,127}$"},
+    "event_type": {"type": "string", "const": "pre-diagnostic-choice"},
+    "source": {"type": "string", "const": "user"},
+    "run_id": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "artifact_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "artifact_sha256": {"$ref": "#/definitions/sha256"},
+    "target_manifest_sha256": {"$ref": "#/definitions/sha256"},
+    "contract_binding_sha256": {"$ref": "#/definitions/sha256"},
+    "presentation_receipt_sha256": {"$ref": "#/definitions/sha256"},
+    "selected_level": {"type": "string", "enum": ["accept-as-is", "light", "standard", "detailed"]},
+    "occurred_at": {"type": "string", "format": "date-time"}
+  },
+  "definitions": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

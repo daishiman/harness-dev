@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-c07-regression-scope",
+  "reason": "slash-command 3 件のうち C07 だけが regression_scope を持ち C08 (handout-extract) と C09 (ゲート集約) は持たない。両者とも R25 の影響下にある — C08 は round-trip 対象フィールドの増加 (lead / goal_chips / prerequisite_connectors / attainment_level の data-hb-raw)、C09 は新設コード (E-IMG-UNREALIZED / E-CONNECTOR-UNKNOWN / E-ENUM-RAW 等) の集約。回帰範囲の宣言が無いと、コード追加時にどの command の提示が影響を受けるか追えない",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P02-c07-regression-scope.json",
+  "proposed_node": {
+    "id": "P02-x-136-c08-c09-regression-scope",
+    "title": "C08 / C09 の harness_coverage へ regression_scope を追加する",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/component-inventory.json"
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C07"
+  }
+}

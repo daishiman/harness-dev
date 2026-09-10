@@ -1,16 +1,13 @@
 {
   "$schema": "./bundles-schema.json",
-  "description": "Named plugin bundles for /plugin install. Resolves the lack of native cross-plugin dependency declaration in Claude Code by letting the install-bundle slash command install a curated set in one shot.",
+  "description": "Named plugin lists expanded by scripts/install-bundle.sh or the clone-local install-bundle command. Individual consumers use official plugin.json dependencies to auto-install the shared runtime provider.",
   "bundles": [
     {
       "name": "skills-full",
-      "description": "Recommended. All distributable plugins: the end-user business outcomes (contract-generator, mf-kessai-invoice-check, company-master, notion-gmail-send) plus the governance foundation and the non-engineer intake flow.",
+      "description": "Recommended. All distributable plugins, including contract generation, planning, governance, document generation, and the non-engineer intake flow.",
       "plugins": [
         "skill-intake",
         "contract-generator",
-        "company-master",
-        "mf-kessai-invoice-check",
-        "notion-gmail-send",
         "skill-governance-config",
         "skill-governance-lint",
         "skill-governance-hooks",
@@ -19,14 +16,21 @@
         "skill-governance-migration",
         "skill-governance-secrets",
         "system-spec-harness",
-        "extract-system-blueprint"
+        "extract-system-blueprint",
+        "dev-graph",
+        "slide-report-generator",
+        "spec-drift-guardian",
+        "system-dev-planner",
+        "ubm-goal-setting",
+        "guide-doc-generator"
       ]
     },
     {
       "name": "skills-intake",
-      "description": "Non-engineer elicitation flow that turns plain-language requests into Notion-published briefs, backed by Keychain secrets management.",
+      "description": "Non-engineer elicitation flow that turns plain-language requests into Notion-published briefs, backed by Keychain secrets management and the shared project-scoped external-intelligence runtime.",
       "plugins": [
         "skill-intake",
+        "skill-governance-adapters",
         "skill-governance-secrets"
       ]
     }

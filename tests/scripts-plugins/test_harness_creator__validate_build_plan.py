@@ -18,6 +18,8 @@ SCRIPT = (
     REPO_ROOT
     / "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py"
 )
+RUN_BUILD = REPO_ROOT / "plugins/harness-creator/skills/run-build-skill"
+COMMAND = REPO_ROOT / "plugins/harness-creator/commands/capability-build.md"
 
 
 def _load_module():
@@ -53,6 +55,7 @@ def test_flags_all_derived_from_brief(mod):
     assert flags["with_goal_seek"] is True
     assert flags["feedback_contract_required"] is True
     assert flags["verification_profile"] == "incremental"
+    assert flags["build_stage"] == "draft"
 
 
 def test_flags_empty_brief_defaults_off(mod):
@@ -87,6 +90,33 @@ def test_verification_profile_is_explicit_and_closed(mod):
         mod.derive_flags({"kind": "run"}, {"verification_profile": "unbounded"})
 
 
+def test_build_stage_defaults_to_usable_first_and_release_is_explicit(mod):
+    assert mod.derive_flags({"kind": "run"})["build_stage"] == "draft"
+    assert mod.derive_flags(
+        {"kind": "run"}, {"build_stage": "release"}
+    )["build_stage"] == "release"
+    with pytest.raises(ValueError, match="build_stage"):
+        mod.derive_flags({"kind": "run"}, {"build_stage": "perfect"})
+
+
+def test_build_stage_contract_is_aligned_across_schemas_and_native_surfaces():
+    flags_schema = json.loads(
+        (RUN_BUILD / "schemas/build-flags.schema.json").read_text(encoding="utf-8")
+    )
+    plan_schema = json.loads(
+        (RUN_BUILD / "schemas/build-plan.schema.json").read_text(encoding="utf-8")
+    )
+    assert flags_schema["properties"]["build_stage"]["default"] == "draft"
+    assert "build_stage" in plan_schema["properties"]["flags"]["required"]
+
+    # Claude command と Codex/Skill のどちらから入っても同じ2段階契約を見せる。
+    for surface in (COMMAND, RUN_BUILD / "SKILL.md"):
+        text = surface.read_text(encoding="utf-8")
+        assert "--stage draft|release" in text
+        assert "usable-draft" in text
+        assert "自動昇格" in text
+
+
 # --- derive: セクション正本はテンプレート ---------------------------------
 
 
@@ -108,6 +138,7 @@ def test_knowledge_flag_adds_section_and_scripts(mod):
     assert "ナレッジループ" in plan["required_sections"]
     ids = {d["id"] for d in plan["required_deliverables"]}
     assert "knowledge-script:search_knowledge.py" in ids
+    assert "knowledge-script:build-external-intelligence.py" in ids
     assert "frontmatter:knowledge_loop" in ids
 
 
@@ -237,6 +268,20 @@ def test_cli_emit_writes_plan(tmp_path):
     plan = json.loads(out.read_text(encoding="utf-8"))
     assert plan["flags"]["feedback_contract_required"] is True
     assert "評価・改善ループ契約" in plan["required_sections"]
+
+
+def test_cli_stage_alias_emits_explicit_release_plan(tmp_path):
+    brief = tmp_path / "skill-brief.json"
+    brief.write_text(json.dumps({"skill_name": "run-x", "kind": "run"}), encoding="utf-8")
+    out = tmp_path / "build-plan.json"
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--brief", str(brief), "--stage", "release", "--out", str(out)],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, r.stderr
+    plan = json.loads(out.read_text(encoding="utf-8"))
+    assert plan["flags"]["build_stage"] == "release"
 
 
 def test_cli_check_fails_on_real_gap(tmp_path):

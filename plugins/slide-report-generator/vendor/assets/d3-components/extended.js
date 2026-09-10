@@ -679,7 +679,7 @@ const D3Extended = {
         .attr('y', day * cellSize + 20)
         .attr('width', cellSize - 2)
         .attr('height', cellSize - 2)
-        .attr('rx', 2)
+        // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
         .attr('fill', value > 0 ? colorScale(value) : theme.surface)
         .attr('stroke', theme.border)
         .attr('stroke-width', 0.5)
@@ -930,7 +930,7 @@ const D3Extended = {
           .attr('y', y + (rowHeight - iconSize) / 2)
           .attr('width', iconSize - 4)
           .attr('height', iconSize - 4)
-          .attr('rx', 4)
+          // 角丸は使わない。理由と正本は skills/run-slide-report-generate/references/visual-generation-rules.md
           .attr('fill', color)
           .style('opacity', 0)
           .transition()

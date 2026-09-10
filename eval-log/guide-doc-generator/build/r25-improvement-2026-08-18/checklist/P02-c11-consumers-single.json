@@ -1,0 +1,23 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P02-c11-consumers-single",
+ "covered_task_ids": [
+  "P02-c11-consumers-single"
+ ],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/script-brief-C11.json",
+ "verified_by": [
+  {
+   "claim": "consumers 行の C17 が読む属性に data-hb-single が含まれる",
+   "method": "script-brief-C11.json:339 の consumers 値を直読み",
+   "result": "pass(=既に充足): C17 の括弧内が data-hb-part / data-hb-part-role / data-hb-kind / data-hb-single の 4 属性を列挙し、A11Y-01 が『data-hb-single を持つチップ群では aria-pressed=\"true\" が高々 1 個』を検査する前提であることも同行に書かれている。編集は不要だった"
+  },
+  {
+   "claim": "属性が brief 全体でも生きている",
+   "method": "grep -o data-hb-single の総数",
+   "result": "pass: 5 件。consumers 行だけの孤立した記述ではなく、出力仕様側にも現れている"
+  }
+ ],
+ "findings": []
+}

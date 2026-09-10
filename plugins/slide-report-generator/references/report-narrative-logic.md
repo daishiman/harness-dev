@@ -79,7 +79,7 @@
 | `**太字**` | 用語・ラベルの軽い強調 | 節内で数語 |
 | `callout` | 注意/警告/ヒント（本文と別レーン） | 内容に応じ |
 
-> **過剰強調は減点**（report-quality-reviewer RQ・validate-report-visual の上限チェック）。「全部強調＝どこも強調されていない」。強調は要点にだけ効かせる。配色は意匠 SSOT（Kanagawa accent / callout 色）を流用し新規配色を足さない。
+> **過剰強調は減点**（report-quality-reviewer RQ・validate-report-visual の上限チェック）。「全部強調＝どこも強調されていない」。強調は要点にだけ効かせる。配色は意匠 SSOT（style genome の palette 定義）を流用し新規配色を足さない。
 
 ---
 

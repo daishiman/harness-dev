@@ -2,6 +2,60 @@
   "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
   "package_mode": "bundle",
   "plugin_name": "slide-report-generator",
+  "entry_points": {
+    "skills": [
+      "ref-diagram-system",
+      "run-cross-deck-review",
+      "run-skill-feedback",
+      "run-slide-report-generate",
+      "run-slide-report-modify",
+      "run-slide-report-status"
+    ],
+    "agents": [
+      "ai-image-diagram-producer",
+      "cross-deck-reviewer",
+      "d3-diagram-designer",
+      "data-visualizer",
+      "deck-evaluator",
+      "hearing-facilitator",
+      "html-generator",
+      "layout-optimizer",
+      "report-composer",
+      "report-quality-reviewer",
+      "report-structure-designer",
+      "slide-renderer",
+      "slide-report-modifier",
+      "structure-designer",
+      "structure-validator",
+      "ui-quality-reviewer",
+      "visual-strategist"
+    ],
+    "commands": [
+      "slide-report-generate",
+      "slide-report-status"
+    ],
+    "hooks": [
+      "hook-postgen-eval.py"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "Productivity",
+    "tags": [
+      "slides",
+      "report",
+      "visual",
+      "presentation",
+      "codex-image",
+      "mermaid"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
   "pkg_checks": {
     "PKG-001": {
       "status": "pass",
@@ -23,5 +77,479 @@
       "last_run_at": "2026-07-05T00:00:00+09:00",
       "findings_count": 0
     }
+  },
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "slide-report-generate": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command slide-report-generate through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "slide-report-status": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command slide-report-status through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-status"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-status"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "ai-image-diagram-producer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent ai-image-diagram-producer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "cross-deck-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent cross-deck-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-cross-deck-review"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-cross-deck-review"
+          ]
+        }
+      },
+      "d3-diagram-designer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent d3-diagram-designer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "data-visualizer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent data-visualizer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "deck-evaluator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent deck-evaluator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "hearing-facilitator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent hearing-facilitator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "html-generator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent html-generator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "layout-optimizer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent layout-optimizer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "report-composer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent report-composer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "report-quality-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent report-quality-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "report-structure-designer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent report-structure-designer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "slide-renderer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent slide-renderer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "slide-report-modifier": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent slide-report-modifier through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-modify"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-modify"
+          ]
+        }
+      },
+      "structure-designer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent structure-designer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "structure-validator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent structure-validator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "ui-quality-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent ui-quality-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      },
+      "visual-strategist": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent visual-strategist through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        },
+        "owner_route": {
+          "plugin": "slide-report-generator",
+          "entry_points": [
+            "run-slide-report-generate"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
   }
 }

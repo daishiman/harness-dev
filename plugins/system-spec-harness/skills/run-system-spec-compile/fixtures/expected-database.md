@@ -15,14 +15,129 @@ serves_goals: [G1]
 
 | プラットフォーム | 状態 | 根拠 |
 |---|---|---|
-| Web (web) | 確定 | 確定質疑: qa-database |
+| Web (web) | 確定 | 確定質疑: qa-database。資するゴール: G1 |
 | モバイル (mobile) | 確定 | 確定質疑: qa-database |
 | タブレット (tablet) | 確定 | 確定質疑: qa-database |
 | デスクトップ (Windows) (desktop-windows) | 確定 | 確定質疑: qa-database |
 | デスクトップ (Linux) (desktop-linux) | 確定 | 確定質疑: qa-database |
 | デスクトップ (macOS) (desktop-macos) | 確定 | 確定質疑: qa-database |
 
+## 上流指針 (doctrine anchors)
+
+> 本章の設計判断が従う上流の正本 (1 concern 1 authority)。具体技術ではなく上流工程を導く規範であり、下位の技術選定は本節と矛盾してはならない。正本: `ref-system-design-knowledge/references/doctrine-anchor-registry.json`
+
+| 設計 concern | 上流の正本 (authority) | 導く範囲 | 出典 | 最終確認 | 本章の確定セルへの反映 |
+|---|---|---|---|---|---|
+| data-access | Robert C. Martin — Clean Architecture | 永続化を境界の外側へ追い出し interface adapter で隔離する | Clean Architecture — gateways/repositories boundary | 2026-07-12 | **未記入** |
+| reliability | Google SRE | SLO/エラーバジェット・冗長性・スケーリング・監視の上流指針 | https://sre.google/books/ | 2026-07-12 | **未記入** |
+
+> **未記入** の行は、上流の正本を掲げただけで本章の確定内容へ反映した箇所を示せていない。表への出現は反映の証拠ではない。
+
+## 確定内容 (質疑録)
+
+> 本章の各確定セルが何を根拠に確定したかの実体。`qa_ref` が主たる接地根拠、`qa_refs` がそれを支える裏付け質疑であり、いずれも qa_log (spec-state.json) の逐語である。ここに現れない主張は本章の確定内容ではない。
+
+### Web (web)
+
+- 資するゴール: G1
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+### モバイル (mobile)
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+### タブレット (tablet)
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+### デスクトップ (Windows) (desktop-windows)
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+### デスクトップ (Linux) (desktop-linux)
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+### デスクトップ (macOS) (desktop-macos)
+
+#### 主たる接地根拠: `qa-database`
+
+**問**
+
+データ永続化方式は?
+
+**答**
+
+PostgreSQL 16 を全プラットフォーム共通で採用
+
+## To-Be / Delta
+
+> 本章の**規範**。上位概念 (要件定義書 U3 ゴール / U4 目標 / U9 具体的やりたいこと) を本章の serves_goals で絞り込んだ射影であり、設計知識 card (非規範の参考資料) とは役割が異なる。As-Is (現行実装の姿) は spec-state.json の管轄外のため本節では断定せず、到達点と、その到達を判定する観測点だけを規範として置く。
+
+### 到達すべき状態 (To-Be)
+
+- **G1**: 請求・監査データを単一の信頼できる情報源へ統合する
+
+### 受入条件 (Delta の判定点)
+
+- (本章ゴールに紐づく目標 U4 が無い。受入条件が未定義である)
+
+### 本章がかなえる具体的やりたいこと (U9)
+
+- **I1**: 請求データを日次でバックアップする
+
+### 本章に効く確定意思決定
+
+- (本章ゴールに効く確定 decision なし)
+
 ## 適用された設計知識
+
+> 以下の deep knowledge card は設計判断を支援する**非規範の参考資料**であり、実装済み・検証済みの証拠ではない。カード内の `採否: applied` は設計採用を意味し、実装状態は意味しない。規範となる差分は本章の To-Be / Delta 節と参照先仕様で管理する。
+
+### 本章での適用
+
+> **未記入** — 本章固有の適用記述が spec-state に無い。以下の card 本文は共有資産の逐語であり、同じ card を引く他章と一致する。この節は現時点で「参照した」ことしか示しておらず、「適用した」証拠ではない。
 
 ### Domain-Driven Design — deep knowledge card
 

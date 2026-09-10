@@ -60,18 +60,18 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| package 契約 | `$CLAUDE_PLUGIN_ROOT/references/feature-execution-package-contract.md` | 固定出力形状・13 写像・DAG 規則の正本 |
-| task template | `$CLAUDE_PLUGIN_ROOT/references/system-task-spec-template.md` | 各 task spec の14 必須 section 正本 |
-| phase 名称 | `$CLAUDE_PLUGIN_ROOT/references/system-plan-phase-names.md` | P01..P13 呼称と applicability (P08/P13 は N/A 可) |
-| package schema | `$CLAUDE_PLUGIN_ROOT/schemas/feature-execution-package.schema.json` | feature-package top-level shape |
-| inventory schema | `$CLAUDE_PLUGIN_ROOT/schemas/workstream-inventory.schema.json` | 13 task entry shape |
-| handoff schema | `$CLAUDE_PLUGIN_ROOT/schemas/system-build-handoff.schema.json` | source digest・entry gate・registration ownership の正本 |
+| package 契約 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/feature-execution-package-contract.md` | 固定出力形状・13 写像・DAG 規則の正本 |
+| task template | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/system-task-spec-template.md` | 各 task spec の14 必須 section 正本 |
+| phase 名称 | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/references/system-plan-phase-names.md` | P01..P13 呼称と applicability (P08/P13 は N/A 可) |
+| package schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/feature-execution-package.schema.json` | feature-package top-level shape |
+| inventory schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/workstream-inventory.schema.json` | 13 task entry shape |
+| handoff schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-build-handoff.schema.json` | source digest・entry gate・registration ownership の正本 |
 
 ### 3.2 外部ツール / API
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail / 1=usage)。
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/build-system-handoff.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C14。base manifest を受け、handoff 生成 + 最終 manifest 更新を atomic に行う)。
-- `python3 "$CLAUDE_PLUGIN_ROOT/scripts/check-implementation-readiness.py" ...` (C08。入力 system-spec-harness 確定成果物の readiness ゲート)。
-- path 解決は `$CLAUDE_PLUGIN_ROOT/scripts/resolve-project-context.py` (C09) に一元化。network なし・write は staging のみ。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-system-plan.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C12。exit 0=pass / 2=fail / 1=usage)。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-system-handoff.py" --staging <repo-relative-staging> [--repo-root DIR] [--config .dev-graph/config.json]` (C14。base manifest を受け、handoff 生成 + 最終 manifest 更新を atomic に行う)。
+- `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/check-implementation-readiness.py" ...` (C08。入力 system-spec-harness 確定成果物の readiness ゲート)。
+- path 解決は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` (C09) に一元化。network なし・write は staging のみ。
 
 ## Layer 4: 共通ポリシー層
 

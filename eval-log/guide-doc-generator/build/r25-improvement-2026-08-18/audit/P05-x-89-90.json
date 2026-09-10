@@ -1,0 +1,271 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "cross-cutting-audit",
+ "task_id": "P05-x-89-90-pre-measurement",
+ "covered_task_ids": [
+  "P05-x-89",
+  "P05-x-90"
+ ],
+ "status": "success",
+ "write_scope": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json",
+ "_meta": {
+  "role": "未受理 discovered-task P05-x-89 / P05-x-90 に対する事前実測。ノードの実行ではない",
+  "read_only": "plugins/ 配下は 1 バイトも書いていない。変異はすべて scratchpad の複製ツリー上で行い、実行後に復元して baseline 一致を確認した",
+  "measurement_revision": "working tree (2026-08-18 セッション中)。本 cycle で pink が handout-verify/contract_lib.py・aggregation_spec.py・test_argv_and_reproducibility.py を、別ノードが run-handout-build/test_predicate_scope.py を編集済みの状態で測定した。すなわち本報告は『強化後』の姿に対する測定である (HEAD 版ではない)",
+  "mutation_sandbox": "scratchpad/mut1/ へ plugins/guide-doc-generator と plugin-plans/guide-doc-generator を複製。tests は Path(__file__).resolve().parents[4] を repo root とみなすため構造が保たれ、複製上で suite が baseline 通り緑になることを確認してから変異を入れた",
+  "verdict_vocabulary": "confirmed = 変異で緑のまま (契約を壊しても検出できない) / rescued = 本文全体述語は空振りだが同ファイルの別述語が捕まえた / static-only = 変異未実施 (静的センサスのみ) / excluded = 該当しないと判断"
+ },
+
+ "baseline": {
+  "handout-verify": "71 tests OK (複製ツリー上)。contract_lib.check_command(plugin_root) の violations = 0",
+  "run-handout-build": "64 tests OK (複製ツリー上)"
+ },
+
+ "type_A_self_referential": {
+  "definition": "assert の左辺と右辺がどちらもテストディレクトリ内で完結し、実装ファイル・出荷 config・brief のいずれにも触れていない比較",
+  "confirmed": [
+   {
+    "id": "A-1",
+    "location": "tests/handout-verify/test_aggregation_rule.py:45",
+    "code": "self.assertEqual((\"pass\", \"fail\", \"error\", \"not-run\"), spec.GATE_STATES)",
+    "other_side": "aggregation_spec.py:60 GATE_STATES = (\"pass\", \"fail\", \"error\", \"not-run\")  ← 同ディレクトリ内のリテラル",
+    "intended": "「ゲート結果は 4 状態である」という brief behavior 4 の契約",
+    "actual": "test_aggregation_rule.py のリテラルと aggregation_spec.py のリテラルが一致すること。正本 (command-brief-C09.json) も実装 (commands/handout-verify.md) も 1 バイトも読んでいない",
+    "mutation": "M-A2",
+    "mutation_detail": "正本 canonical_aggregation.statement の「4 状態 (pass / fail / error / not-run)」を「5 状態 (pass / fail / error / not-run / skipped)」へ変更",
+    "mutation_result": "71 tests OK — 緑のまま",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "A-2",
+    "location": "tests/handout-verify/test_aggregation_rule.py:48",
+    "code": "self.assertEqual((\"pass\", \"fail\", \"incomplete\", \"partial\"), spec.VERDICTS)",
+    "other_side": "aggregation_spec.py:71 VERDICTS = (\"pass\", \"fail\", \"incomplete\", \"partial\")",
+    "intended": "全体 verdict の値域が 4 語であること",
+    "actual": "テスト側の写し 2 つが一致すること",
+    "mutation": "M-A3",
+    "mutation_detail": "正本 statement の「全体 verdict (pass / fail / incomplete / partial)」を「(pass / fail / partial-run / partial)」へ改名",
+    "mutation_result": "71 tests OK — 緑のまま",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "A-3",
+    "location": "tests/handout-verify/test_aggregation_rule.py:51-54",
+    "code": "self.assertEqual({\"config-missing\", \"config-not-normalized\", \"excluded-by-only\", \"script-absent\"}, set(spec.NOT_RUN_REASONS))",
+    "other_side": "aggregation_spec.py:63-68 NOT_RUN_REASONS = (同じ 4 語のリテラル)",
+    "intended": "not-run の理由語彙が 4 件ちょうどであること",
+    "actual": "テスト側の写し 2 つが一致すること",
+    "mutation": "M-A1",
+    "mutation_detail": "正本 command-brief-C09.json の script-absent (5 箇所) をすべて script-unresolved へ改名",
+    "mutation_result": "71 tests OK — 緑のまま。正本の語彙が変わっても気づかない",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "A-4",
+    "location": "tests/handout-verify/test_aggregation_rule.py:57",
+    "code": "self.assertEqual({0: \"pass\", 1: \"fail\", 2: \"error\"}, spec.EXIT_CODE_TO_STATE)",
+    "other_side": "aggregation_spec.py:86 EXIT_CODE_TO_STATE = {0: \"pass\", 1: \"fail\", 2: \"error\"}",
+    "intended": "script の exit code から状態への写像",
+    "actual": "テスト側の写し 2 つが一致すること。pink が最初に見つけた実物",
+    "mutation": null,
+    "mutation_result": "変異未実施。正本側は exit 0 / exit 1 / exit 2 を散文で 1-2 回言及するだけで構造化宣言を持たないため、A-1..A-3 と同じ形の単点変異が組めなかった",
+    "verdict": "confirmed (A-1..A-3 と同型・変異未実施)"
+   },
+   {
+    "id": "A-5",
+    "location": "tests/handout-verify/test_argv_and_reproducibility.py:191-196",
+    "code": "class NoLiteralCopyOfCanonTest: gates = spec.BRIEF[\"gates\"]; assertEqual([g[\"gate_id\"] for g in gates], list(spec.GATE_IDS)) ...",
+    "other_side": "aggregation_spec.py:49,57,74,55 — _GATES = BRIEF[\"gates\"] / GATE_IDS = tuple(g[\"gate_id\"] for g in _GATES) など。左辺と右辺が同じ式を 2 回書いているだけ",
+    "intended": "docstring 曰く「値域・件数のリテラルをテスト側へ写していないこと」。写しの検出器そのもの",
+    "actual": "トートロジー。原理的に落ちない。しかも実際の写し (A-1..A-4 の 4 定数) は同じ aggregation_spec.py の中にあるのに、この検出器の対象外である",
+    "mutation": "M-A4",
+    "mutation_detail": "正本 gates[] へ偽のゲート {gate_id: bogus, script: nope.py, component: C99} を 1 件追加 (suite 全体では他の検査が赤くなる変異)",
+    "mutation_result": "NoLiteralCopyOfCanonTest の 2 本は Ran 2 tests OK — 緑のまま",
+    "verdict": "confirmed",
+    "note": "本監査で最も重要な 1 件。『写しを禁じる検査』が自分自身の隣にある写しを見ていない"
+   }
+  ],
+  "excluded_with_reason": [
+   {
+    "id": "A-x1",
+    "location": "tests/handout-verify/test_aggregation_rule.py:38-42 test_gate_faces_are_exactly_four",
+    "code": "assertEqual({\"C16\",\"C17\",\"C18\",\"C22\"}, set(spec.GATE_FACES.values()))",
+    "why_excluded": "右辺 GATE_FACES は aggregation_spec.py:55 で BRIEF[\"gates\"] から導出されており、テストディレクトリ外 (command-brief-C09.json) を読んでいる。左辺リテラルとの比較は『正本を写した』のではなく『正本をこの値へ固定する』番人として働く。対照実験で確認: 正本の gate_id を a11y-print -> a11y_print へ改名すると suite は FAILED (failures=3, errors=5) になる",
+    "verdict": "excluded"
+   },
+   {
+    "id": "A-x2",
+    "location": "tests/render-handout.py/test_scan_scope.py:200",
+    "code": "self.assertEqual((\".md\",), H.SCRIPT_UNREAD_SUFFIXES)",
+    "other_side": "tests/render-handout.py/_harness.py:52 SCRIPT_UNREAD_SUFFIXES = (\".md\",)",
+    "why_borderline": "字義どおりには型 A (両辺ともテストディレクトリ内)。ただし docstring が『除外は「読まれないと特定できるもの」だけ。allowlist へ戻したら赤にする』と目的を明示しており、測っているのは実装の契約ではなく**テストハーネス自身の走査方針**である。同メソッドの第 2 assert (assertFalse(hasattr(H, \"SCRIPT_EXECUTABLE_SUFFIXES\"))) が実質的な中身",
+    "verdict": "型 A だが低優先。分類理由を付して両論併記する (dispatcher 指示による)",
+    "mutation": null
+   },
+   {
+    "id": "A-x3",
+    "location": "tests/handout-readability-reviewer/test_output_contract.py:160 / test_no_side_effects.py:21",
+    "code": "assertEqual([], H.BRIEF[\"output_contract\"][\"writes_files\"]) / assertEqual(\"agents\", H.AGENT.parent.name)",
+    "why_excluded": "前者は brief を、後者はファイルシステム上の実体を読んでおり、どちらもテストディレクトリ外の事実に接地している",
+    "verdict": "excluded"
+   }
+  ]
+ },
+
+ "type_B_body_wide_substring": {
+  "definition": "X in body / X not in body / re.search(pat, body) のうち、対応関係を測っているつもりで存在しか測れていないもの",
+  "mutation_confirmed": [
+   {
+    "id": "B-1",
+    "location": "tests/handout-verify/contract_lib.py:491-492",
+    "code": "if \"ディレクトリ\" not in body:\n    v.append(Violation(\"AC-C09-7\", \"html-path にディレクトリを渡された場合に停止する宣言が無い\"))",
+    "intended": "AC-C09-7 —『html-path にディレクトリを渡されたら停止する』という宣言が実装にあること",
+    "actual": "本文のどこかに「ディレクトリ」の 4 文字があること。実装本文には --out-dir 行 (「html-path の親ディレクトリ」)・--json-report 行 (「このディレクトリへ置く」)・報告節など計 9 箇所に出現し、うち html-path の停止契約と無関係なものが 6 箇所以上ある",
+    "mutation": "M-B1",
+    "mutation_detail": "commands/handout-verify.md から html-path のディレクトリ停止契約を 3 箇所すべて削除 (引数表 :25 / 手順 1 :47 / 縮退時 :96)。他の「ディレクトリ」は残す",
+    "mutation_result": "violations = 0 のまま。★契約が本文から完全に消えても検出できない",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "B-2",
+    "location": "tests/handout-verify/contract_lib.py:538-540",
+    "code": "for forbidden in (\"正規化\", \"生成\", \"逆抽出\"):\n    if forbidden not in body:\n        v.append(Violation(\"AC-C09-6\", f\"{forbidden}を行わない旨の境界宣言が無い\"))",
+    "intended": "AC-C09-6 —『この command は正規化 / 生成 / 逆抽出を行わない』という read-only 境界の宣言",
+    "actual": "「正規化」の 3 文字が本文のどこかにあること。実装には --config 行の「正規化済み構成データ」と縮退節の「未正規化」があり、いずれも境界宣言ではない",
+    "mutation": "M-B3",
+    "mutation_detail": "冒頭の境界宣言から「構成データの正規化 (C12 --normalize) も行わない」を削除。他の「正規化」は残す",
+    "mutation_result": "violations = 0 のまま。★read-only 境界の中核宣言が消えても検出できない",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "B-3",
+    "location": "tests/handout-verify/contract_lib.py:566-568",
+    "code": "for column in (\"gate_id\", \"理由\", \"該当箇所\"):\n    if column not in body:\n        v.append(Violation(\"AC-C09-10\", f\"報告行の要素 {column!r} の宣言が無い\"))",
+    "intended": "AC-C09-10 — 報告の各行が gate_id / 理由 / 該当箇所を持つこと",
+    "actual": "「理由」の 2 文字が本文のどこかにあること。手順 4 の「not-run には必ず理由を添える」と集約規則節の「(理由必須)」が別文脈で存在する",
+    "mutation": "M-B4",
+    "mutation_detail": "報告節の「各行に gate_id / 状態 / 理由または違反件数 / 該当箇所 …」から「理由または」を削除",
+    "mutation_result": "violations = 0 のまま。★報告行の列定義が欠けても検出できない",
+    "verdict": "confirmed"
+   },
+   {
+    "id": "B-4",
+    "location": "tests/handout-verify/contract_lib.py:338-339",
+    "code": "if \"--json-report\" not in body:\n    v.append(Violation(\"AC-C09-2\", \"各 script の --json-report を使う宣言が無い\"))",
+    "intended": "AC-C09-2 — 各ゲート script を --json-report つきで起動する宣言",
+    "actual": "「--json-report」が本文のどこかにあること。実装本文に 8 箇所出現 (引数表 / argv 表 4 行 / 手順 7 / 報告節)",
+    "mutation": "M-B6",
+    "mutation_detail": "引数表の --json-report 行の説明文だけを 1 語書き換え (「この」->「その」)。この述語が守っているはずの『使う宣言』の所在を曖昧にする最小変異",
+    "mutation_result": "violations = 0 のまま",
+    "verdict": "confirmed",
+    "note": "ただし argv 表の行スコープ検査 (:318-337) が同じ契約をより厳しく見ているため、実害は B-1..B-3 より小さい。:338 の述語自体は無内容"
+   }
+  ],
+  "rescued_by_sibling_predicates": [
+   {
+    "id": "B-r1",
+    "location": "tests/handout-verify/contract_lib.py:413-415",
+    "code": "for state in spec.GATE_STATES:\n    if state not in body:\n        v.append(Violation(\"AC-C09-AGG-3\", f\"本文に 4 状態の {state!r} の説明が無い\"))",
+    "why_vacuous": "pass / fail / error / not-run は同じ本文の機械可読ブロック (```json の states 配列) に必ず出現する。散文の説明を 1 行残らず消してもこの述語は満たされる",
+    "mutation": "M-B2 (exit code 写像の散文 4 行を削除、json ブロックは残す)",
+    "mutation_result": "赤になった。ただし赤くしたのは :422-436 の **行スコープ**述語 (『exit {code} の行に対応状態が書かれているか』) であり、:413 の本文全体述語ではない",
+    "verdict": "rescued — 述語自体は空振りだが、pink が強化した行スコープ述語が救っている"
+   },
+   {
+    "id": "B-r2",
+    "location": "tests/handout-verify/contract_lib.py:416-418",
+    "code": "for verdict in spec.VERDICTS:\n    if verdict not in body:",
+    "why_vacuous": "incomplete / partial は verdict_table の json 行に出現するため、散文の説明を消しても満たされる",
+    "mutation": "M-B7 (縮退節から incomplete / partial の説明文を削除)",
+    "mutation_result": "赤になった。赤くしたのは _lines_with(body, \"config-missing\", \"incomplete\") (:471) と _lines_with(body, \"--only\", \"partial\") (:485) の **同一行スコープ**述語",
+    "verdict": "rescued"
+   },
+   {
+    "id": "B-r3",
+    "location": "tests/handout-verify/contract_lib.py:572-574",
+    "code": "for key in SUMMARY_KEYS:  # (\"verdict\", \"gates\")\n    if key not in body:",
+    "why_vacuous": "verdict は本文に 12 回出現 (うち大半は json ブロックと集約規則節)。集約サマリの要素宣言を消しても verdict 側は緑",
+    "mutation": "M-B5 (「集約サマリは全体 verdict と各面の gates 状態一覧を含む」を削除)",
+    "mutation_result": "赤になった。ただし赤くしたのは gates 側だけ (gates は本文に 1 回しか出ないため偶然一意)。verdict 側の述語は空振りしたまま",
+    "verdict": "rescued (半分だけ)",
+    "note": "『語がたまたま 1 回しか出ない』ことに依存して緑/赤が決まっており、本文が 1 語増えた瞬間に崩れる"
+   }
+  ],
+  "static_census": {
+   "method": "各 contract_lib.py から正規表現 '\"リテラル\" not in body' で述語を抽出し、その語が同 component の受入 fixture 本文 (fixtures/accept/**/*.md のうち最大のもの) に何回出現するかを計数。2 回以上なら reject fixture の単一箇所注入 (_materialize の text.count(old)==1) で違反状態を作れない",
+   "caveat": "計数は frontmatter を含む全文に対して行っており、body 分割後の計数よりやや過大に出る (run-handout-build の /handout-verify=2 はうち 1 件が frontmatter)。また変数・定数タプル駆動の述語 (handout-build / handout-extract) はこの正規表現では拾えないため、実数はここに出る件数より多い",
+   "results": [
+    {"component": "handout-verify", "literal_body_predicates": 25, "tokens_occurring_twice_or_more": 10, "examples": ["--json-report=8回", "ディレクトリ=7回", "config-missing=3回", "集約サマリ=3回", "CLAUDE_PLUGIN_ROOT=2回", "excluded-by-only=2回", "script-absent=2回", "config-not-normalized=2回", "単一正本=2回", "しない=2回"]},
+    {"component": "run-handout-extract", "literal_body_predicates": 26, "tokens_occurring_twice_or_more": 11, "examples": ["構成データ等価=5回", "validate-handout-config.py=4回", "再レンダリング=4回", "改善提案=3回", "extract-handout-config.py=2回", "fidelity=2回", "資料内容の書き換え=2回", "/handout-build=2回", "JSON Pointer=2回", "render-handout.py=2回", "verify-handout-selfcontained.py=2回"]},
+    {"component": "assign-handout-readability-evaluator", "literal_body_predicates": 4, "tokens_occurring_twice_or_more": 2, "examples": ["独立 context=4回", "blocked=2回"]},
+    {"component": "run-handout-build", "literal_body_predicates": 4, "tokens_occurring_twice_or_more": 1, "note": "唯一の該当 /handout-verify は 2 回目が frontmatter。BodyWidePredicateScopeTest が body 分割後の一意性を既に固定しているので実質 0 件"},
+    {"component": "ref-handout-design-system", "literal_body_predicates": 8, "tokens_occurring_twice_or_more": null, "note": "fixtures/accept が見つからず出現数を測れなかった。述語の語は text_limits.block_body_max_chars / 400 / tabular-nums / rise-in / --stagger / prefers-reduced-motion / <symbol / <use。とくに '400' は数値リテラルの本文全体一致であり、別文脈の 400 に当たりうる"},
+    {"component": "handout-build", "literal_body_predicates": 0, "note": "6 件あるが定数変数駆動 (THEME_WRITEBACK_WRITER / CONFIG_VALIDATOR / DELEGATION_FORM / DELEGATE_BUILD_TARGET / tolerant / delegated) のため正規表現の対象外。同型かどうかは未測定"},
+    {"component": "handout-extract", "literal_body_predicates": 0, "note": "3 件あるが定数変数駆動 (DELEGATION_FORM / script / rid)。未測定"}
+   ],
+   "total_in_body_hits_repo_wide": "tests/ 配下 7 個の contract_lib.py に 'in body' 系が計 116 箇所、're.search(..., body)' が計 34 箇所"
+  }
+ },
+
+ "structural_finding": {
+  "id": "SF-1",
+  "level": "blocking-for-release",
+  "summary": "型 B に対する解法は既にこのリポジトリ内で 1 回実装されており、1 component にしか適用されていない",
+  "detail": "tests/run-handout-build/ は P05-x-17 で同じ問題 (P05-x-14 が発見) を解いており、PREDICATE-SCOPE-POLICY.md に方針を明文化したうえで test_predicate_scope.py を持つ。この 1 ファイルが (a) 122 変異による単点注入で全述語が発火することの確認 (PredicateSinglePointRejectabilityTest)、(b) 本文側述語の語が判定スコープ内で一意であることの固定 (BodyWidePredicateScopeTest.test_body_side_tokens_occur_once_in_their_scope)、(c) 述語を増やして変異を足し忘れたら赤 (test_every_violation_site_has_a_mutation) の 3 点を担う。reject_cases.py を持つ component は 8 件あるが、test_predicate_scope.py を持つのは run-handout-build ただ 1 件である (ls */test_predicate_scope.py の結果)。",
+  "why_it_matters": "P05-x-89 の修正方針を新規に設計する必要がない。PREDICATE-SCOPE-POLICY.md 節 4 が既に選択肢 (A) 述語を節/宣言行スコープへ寄せる と (B) REJECT_CASES を複数置換対応にする を比較し、(B) は _materialize の text.count(old)==1 という reject fixture の不変条件を壊すとして退けている。残る 7 component へ同じ (A) を横展開するのが最小の道筋",
+  "scope_of_work": "reject_cases.py を持つ 8 component のうち run-handout-build を除く 7 件: assign-handout-readability-evaluator / handout-build / handout-content-architect / handout-extract / handout-verify / ref-handout-design-system / run-handout-extract"
+ },
+
+ "findings": [
+  {
+   "id": "F-AUDIT-01",
+   "level": "blocking-for-release",
+   "summary": "型 A の中核は test_argv_and_reproducibility.py:191-196 NoLiteralCopyOfCanonTest である。『値域・件数のリテラルをテスト側へ写していないこと』を名乗る検出器が、左辺 spec.BRIEF[\"gates\"] と右辺 spec.GATE_IDS (= BRIEF[\"gates\"] からの導出) を比べるトートロジーであり、原理的に落ちない (M-A4 で確認)。同時に、実際の写し 4 定数 (aggregation_spec.py:60 GATE_STATES / :63 NOT_RUN_REASONS / :71 VERDICTS / :86 EXIT_CODE_TO_STATE) はこの検出器の対象外に置かれている。正本 command-brief-C09.json の語彙を改名・拡張しても 71 tests は OK のまま (M-A1 / M-A2 / M-A3)"
+  },
+  {
+   "id": "F-AUDIT-02",
+   "level": "blocking-for-release",
+   "summary": "型 B の変異確定 4 件はいずれも handout-verify/contract_lib.py にあり、うち B-1 (:491 ディレクトリ) と B-2 (:539 正規化) は契約文を本文から完全に削除しても violations = 0 のままだった。B-1 は AC-C09-7『入口停止 = 0 件実行を pass にしない』の一部、B-2 は AC-C09-6『read-only 境界』の中核宣言であり、どちらも本 plugin が繰り返し防ごうとしている『空の集約結果を pass として返さない』系の契約である"
+  },
+  {
+   "id": "F-AUDIT-03",
+   "level": "high",
+   "summary": "型 B が偽緑になる支配的な機序は『実装本文が機械可読ブロック (```json の CR-GATE-AGG) を持ち、そこに状態語・verdict 語・not-run 理由語がすべて出現する』ことである。したがって散文の説明を全部消しても :413-421 の 3 ループは満たされる。M-B2 / M-B7 が赤になったのは本文全体述語ではなく pink が強化した行スコープ述語 (:422-436 の exit 写像 / :462 _lines_with) の働きであり、本文全体述語は 1 件も救援に寄与していない"
+  },
+  {
+   "id": "F-AUDIT-04",
+   "level": "high",
+   "summary": "型 B の緑/赤が『語がたまたま本文に 1 回しか出ないこと』に依存している。M-B5 で赤にできたのは SUMMARY_KEYS の gates が偶然 1 回だからで、同じ述語の verdict (12 回出現) 側は空振りした。実装本文に 1 語追加されるだけで検出力が失われる構造であり、検出できているように見える述語も安全側の証拠にならない"
+  },
+  {
+   "id": "F-AUDIT-05",
+   "level": "carry-forward",
+   "summary": "静的センサスは正規表現で拾える literal 述語しか数えていない。handout-build (6 件) と handout-extract (3 件) の本文述語は定数変数駆動で未測定、ref-handout-design-system (8 件) は受入 fixture が特定できず出現数を測れなかった。とくに ref-handout-design-system:526 の '400' は数値リテラルの本文全体一致であり、型 B の中でも最も当たりやすい形"
+  },
+  {
+   "id": "F-AUDIT-06",
+   "level": "carry-forward",
+   "summary": "型 A の除外判定 1 件を両論併記で残す。tests/render-handout.py/test_scan_scope.py:200 は字義どおり型 A (両辺ともテスト内: _harness.py:52) だが、測っているのはテストハーネス自身の走査方針 (denylist を allowlist へ戻さない) であり、docstring がその目的を明記している。実装の契約を測っていない点は型 A と同じなので、除外するか型 A として直すかは裁定が要る"
+  }
+ ],
+
+ "method_notes": {
+  "mutation_scripts": [
+   "scratchpad/mutate_c09.py — 型 B の 7 変異。commands/handout-verify.md を 1 変異ずつ書き換え contract_lib.check_command の violations を数える。各変異は注入前に text.count(old) == 1 を assert し、実行後に必ず原文へ復元して baseline (violations=0) 一致を確認",
+   "scratchpad/mutate_typeA.py — 型 A の 3 変異。command-brief-C09.json を書き換え 71 tests の suite 全体を再実行",
+   "scratchpad/census.py — 型 B の静的センサス"
+  ],
+  "control_experiment": "導出されている値 (GATE_IDS / GATE_SCRIPTS / GATE_FACES) を正本側で壊すと suite は FAILED (failures=3, errors=5) になる。同じファイル内で『導出は赤くなる / 写しは緑のまま』の対比が取れており、写しであることが原因だと言い切れる",
+  "not_attempted": [
+   "handout-build / handout-extract / ref-handout-design-system / handout-content-architect の変異 (静的センサスのみ、または未測定)",
+   "A-4 EXIT_CODE_TO_STATE の変異 (正本側に構造化宣言が無く単点変異を組めなかった)",
+   "型 B の re.search 系 34 箇所の個別評価"
+  ]
+ },
+
+ "write_scope_compliance": {
+  "files_written": ["eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/audit/P05-x-89-90.json"],
+  "plugins_touched": "0 件。git status --porcelain plugins/ は本監査の前後で同一 (本 cycle の先行ノード由来の差分のみ)",
+  "git": "commit / push は行っていない"
+ }
+}

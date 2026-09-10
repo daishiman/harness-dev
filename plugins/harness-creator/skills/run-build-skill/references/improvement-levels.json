@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "default": "ask",
+  "offered_order": [
+    "accept-draft",
+    "light",
+    "standard",
+    "detailed",
+    "release"
+  ],
+  "levels": {
+    "accept-draft": {
+      "label": "現状で試す",
+      "description": "診断結果だけを受け取り、改善せず usable draft で止める。",
+      "selection": "none",
+      "max_rounds": 0,
+      "next_stage": "draft",
+      "next_profile": "incremental",
+      "offered_by_default": true
+    },
+    "light": {
+      "label": "軽微改善",
+      "description": "critical/high だけを1周で直し、まず試せる状態を優先する。",
+      "selection": "high-or-critical",
+      "max_rounds": 1,
+      "next_stage": "draft",
+      "next_profile": "incremental",
+      "offered_by_default": true
+    },
+    "standard": {
+      "label": "標準改善",
+      "description": "critical/high と目的達成に影響する medium を2周まで改善する。",
+      "selection": "goal-impact",
+      "max_rounds": 2,
+      "next_stage": "draft",
+      "next_profile": "incremental",
+      "offered_by_default": true
+    },
+    "detailed": {
+      "label": "詳細改善",
+      "description": "low を含む actionable な所見のみを3周まで改善するが、release へは上げない。",
+      "selection": "all",
+      "max_rounds": 3,
+      "next_stage": "draft",
+      "next_profile": "incremental",
+      "offered_by_default": true
+    },
+    "release": {
+      "label": "リリース仕上げ",
+      "description": "actionable な所見の改善後、明示的に release stage の繰越し検証を回収する。",
+      "selection": "all",
+      "max_rounds": 3,
+      "next_stage": "release",
+      "next_profile": "incremental",
+      "offered_by_default": true
+    },
+    "exhaustive": {
+      "label": "完全監査",
+      "description": "actionable な所見のrelease改善に加え、3独立分析Agentの30思考法監査と全live候補を実行する。別のuser eventによる二重確認が必要。",
+      "selection": "all",
+      "max_rounds": 3,
+      "next_stage": "release",
+      "next_profile": "exhaustive",
+      "offered_by_default": false
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P02-illustration-skip-ruling",
+  "reason": "CR-IMG-SKIP-COUNT を improvement/visual-per-section-decision.json#decision.skipped_image_counting へ明文化したが、AC が求める『C01/C07/C12 の 3 brief がその裁定を参照している』のうち command-brief-C07.json は visual-per-section-decision.json への参照が 0 件で、E-IMAGE-ABSENT の語も持たない。C07 は skip を含む稿を完了として提示しない fail-soft 規約を持つが、それが本裁定の受け皿であることが C07 側からは辿れない。write_scope が decision ファイルのため本ノードでは直せない",
+  "discovered_at_artifact": "plugin-plans/guide-doc-generator/improvement/visual-per-section-decision.json",
+  "proposed_node": {
+    "id": "P02-c07-img-skip-ruling-ref",
+    "title": "C07 の fail-soft 規約から CR-IMG-SKIP-COUNT を参照させる",
+    "phase_ref": "P02",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/briefs/command-brief-C07.json",
+    "acceptance_criterion": "command-brief-C07.json の挿絵 skip の fail-soft 規約が improvement/visual-per-section-decision.json#decision.skipped_image_counting (CR-IMG-SKIP-COUNT) を名指しで参照し、E-IMAGE-ABSENT の緑を『各セクションに画像がある』の証明として読まない旨を裁定の複製ではなく参照として持つこと",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "additive",
+  "provenance": {
+    "route_id": "C07"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:428f7a8690fa41de8665004be6cf2efad673349e8beb631712865cf033647a00"
+}

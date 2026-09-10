@@ -1,6 +1,6 @@
 ---
 name: structure-validator
-description: slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043・phase-gate・spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う。
+description: slide/report の構成を独立 context で仕様確定ゲート(validate-structure の V_DEFINITIONS 全件・phase-gate・spec-registry の SR-ID)にかけ承認可否を判定したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,7 +20,7 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-slide/report の構成を独立 context で仕様確定ゲート(validate-structure V-001〜043/phase-gate/spec-registry SR-ID 62)にかけ承認可否を判定したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-structure-validator.md` に置く。
+slide/report の構成を独立 context で仕様確定ゲート(validate-structure の V_DEFINITIONS 全件/phase-gate/spec-registry の SR-ID)にかけ承認可否を判定したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R2-agent-structure-validator.md` に置く。
 
 ## Inputs
 

@@ -1,0 +1,407 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator",
+    "reviewed_at": "2026-08-20T01:20:00+09:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "単一generator・SSOT・install別境界という説明と、履歴依存・複数writer・同一skill権限がずれる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "installは明示依頼時のみという文章はあるが実行branchとreceiptがない。",
+          "recommended_intervention": "user-global effectの専用installer helper/skillを追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/harness-creator/skills/run-codex-plugin-package/SKILL.md",
+            "line": 68
+          }
+        }
+      ],
+      "score": 0.38
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "必要な抽象はsource metadata、Codex projection、catalog、explicit install、activationの5層である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.46
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "既存testは初回生成だけを学習し、更新時にルール自体を検証する負例がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.31
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "upsert化、明示override、transaction、別install helper、fleet check等の複数代替を比較した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.58
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "空directoryと既存directoryを横比較すると同じsourceでもhook/interface出力が履歴で変わる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.34
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "安全のためのintentとcheckが何も防がず、false-greenの安心感だけを増やす。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.27
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "compiler/index/installerに類推するとgeneratorが旧objectを入力にしreleaseもobjectを直接編集している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.41
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "2 plugin、書込失敗、既存hook、外部symlink、初見root READMEの極端ケースで破綻する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [],
+      "score": 0.29
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "初見利用者はpackageがinstallまで行うか、create/update差、最初のCodex入口を一意に判断できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "生成契約と既存出力・hook・CIの主張に矛盾がある。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数plugin収束、明示install receipt、失敗時rollbackの必須要素が欠ける。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "README、workflow、generator、CIが同じlifecycleを表現していない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "artifact→catalog→install→trust→new threadの依存が閉じていない。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "root READMEからCodex導線を発見できず、enable/trust/new thread確認も分散する。",
+          "recommended_intervention": "root/plugin READMEに一操作導線と安全境界を追加する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "README.md",
+            "line": 18
+          }
+        }
+      ],
+      "score": 0.44
+    }
+  ],
+  "total_score": 0.38666666666666666
+}

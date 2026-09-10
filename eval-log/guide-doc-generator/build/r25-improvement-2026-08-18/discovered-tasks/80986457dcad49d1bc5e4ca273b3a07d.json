@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P03-x-04",
+  "reason": "出荷 schemas/handout-config.schema.json の top-level required 16 件に presentation_order が不在で、validate-handout-config.py にも C12 A5c 相当 (provenance を持つ構成データでは normalize 充填クラスが非空) の検査が無い。現状は verify-handout-narrative.py:77 の REQUIRED_CONFIG_KEYS が偶然の第 2 防壁になっているだけで C11 / C20 の経路には防壁が無い。normalize 後に手で presentation_order を削ると C56 の実画面先行検査が黙って無効化される",
+  "discovered_at_artifact": "plugins/guide-doc-generator/schemas/handout-config.schema.json",
+  "proposed_node": {
+    "id": "P05-x-65-a5c-not-shipped",
+    "title": "provenance ゲート付き必須性 (A5c) を出荷 schema と validate へ実装する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugins/guide-doc-generator/",
+    "acceptance_criterion": "provenance を持つ構成データで normalize 充填クラスのフィールドが欠落すると E-FIELD-MISSING で exit 1 になり、provenance を持たない手書き入力では exit 0 のままであることを両側から測るテストが存在する",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C12"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

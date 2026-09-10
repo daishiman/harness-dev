@@ -34,6 +34,19 @@ def _load():
 nsp = _load()
 
 
+def _load_platform_projector():
+    spec = importlib.util.spec_from_file_location(
+        "sync_plugin_platforms", _SCRIPTS_DIR / "sync-plugin-platforms.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+projector = _load_platform_projector()
+
+
 # ─────────────────── fixtures / builders ───────────────────
 def _contract() -> dict:
     """構造的に妥当な canonical contract。テストごとに deepcopy して改変する。"""
@@ -238,11 +251,6 @@ def _build_repo(
                             "authentication": "ON_INSTALL",
                         },
                         "category": "Internal-Tooling",
-                        "x_harness": {
-                            "distributable": False,
-                            "scope": "repo-internal",
-                            "activation_requires": ["user-install", "user-enable", "user-hook-trust"],
-                        },
                     }
                 ]
             },
@@ -321,6 +329,34 @@ def test_plugin_delivery_duplicated_in_project_layer_conflicts(tmp_path):
     }]}})
     report, code = _eval(repo)
     assert code == 2 and "hook_delivery_duplicate_or_missing" in _codes(report)
+
+
+def test_claude_common_hook_uses_product_default_when_manifest_omits_hooks(tmp_path):
+    repo = _build_repo(tmp_path)
+    root, slug = repo[0], repo[1]
+    manifest_path = root / "plugins" / slug / ".claude-plugin" / "plugin.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest.pop("hooks")
+    _write_json(manifest_path, manifest)
+
+    report, code = _eval(repo)
+
+    assert code == 0, report["violations"]
+    assert "claude_common_hook_drift" not in _codes(report)
+
+
+def test_claude_common_hook_rejects_redeclared_product_default(tmp_path):
+    repo = _build_repo(tmp_path)
+    root, slug = repo[0], repo[1]
+    manifest_path = root / "plugins" / slug / ".claude-plugin" / "plugin.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["hooks"] = "./hooks/hooks.json"
+    _write_json(manifest_path, manifest)
+
+    report, code = _eval(repo)
+
+    assert code == 2
+    assert "claude_default_hooks_redeclared" in _codes(report)
 
 
 def test_forbidden_agents_native_guess_still_fails_closed(tmp_path):
@@ -854,6 +890,54 @@ def test_plugin_hooks_schema_rejects_non_command(tmp_path):
     report, code = _eval(repo)
     assert code == 3
     assert "plugin_hooks_schema_invalid" in _codes(report)
+
+
+def test_plugin_hooks_accept_projector_dual_root_fallback(tmp_path):
+    repo = _build_repo(tmp_path)
+    root, slug = repo[0], repo[1]
+    projected = projector._normalize_hook_root_variables({
+        "hooks": {
+            "SessionStart": [{
+                "hooks": [{
+                    "type": "command",
+                    "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/auto-sync-on-session-start.py",
+                }]
+            }]
+        }
+    })
+    _write_json(root / "plugins" / slug / "hooks" / "hooks.json", projected)
+
+    report, code = _eval(repo)
+
+    assert code == 0
+    assert report["hook_parity"]["status"] == "confirmed"
+    assert report["hook_parity"]["command_paths_confined"] is True
+
+
+def test_plugin_hooks_dual_root_fallback_escape_is_invalid(tmp_path):
+    repo = _build_repo(tmp_path)
+    root, slug = repo[0], repo[1]
+    _write_json(
+        root / "plugins" / slug / "hooks" / "hooks.json",
+        {
+            "hooks": {
+                "SessionStart": [{
+                    "hooks": [{
+                        "type": "command",
+                        "command": (
+                            "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../outside.py"
+                        ),
+                    }]
+                }]
+            }
+        },
+    )
+
+    report, code = _eval(repo)
+
+    assert code == 3
+    assert "plugin_hooks_schema_invalid" in _codes(report)
+    assert report["hook_parity"]["command_paths_confined"] is False
 
 
 def test_plugin_hooks_sessionstart_command_path_escape_is_invalid(tmp_path):

@@ -187,7 +187,7 @@ report の図種選定の正本は **`schemas/visual-derivation-table.json`（�
 | ツール | 説明 | トリガー条件 | スキップ条件 | パラメータ / 対象 |
 |--------|------|--------------|--------------|-------------------|
 | Read | 構造・references・schema・決定表の参照 | 内容把握・種別判定・**図種導出**・配置設計のとき | 対象未使用のとき | `structure.json` / `report-structure.json`、`references/report-visual-strategy.md` / `diagram-layout-contract.md` / `mermaid-integration.md` / `svg-diagram-primitives.md` / `full-image-deck-method.md`、`schemas/*.schema.json`、**`schemas/visual-derivation-table.json`（report の図種はこれを上から引く。必須）**、`skills/ref-diagram-system/references/diagram-type-catalog.md`（決定表で行が定まらない・override で型を明示指定する段になったとき。ビルダー単位の「選ばないとき」はここにしかない）、`skills/ref-diagram-system/references/connector-incidence.md`（配置を決めた結果として線が引けるかを事前に見積もるとき。入射規則を満たさない配置は描画段で degraded になる） |
-| Bash | 環境可用性の確認（描画はしない） | 種別に codex-image/mermaid 候補があるとき | 全候補が svg/none のみ | `python3 "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-output-mode.py" --preflight`、`command -v codex`、`test -f "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/render-report.js"` などの存在確認 |
+| Bash | 環境可用性の確認（描画はしない） | 種別に codex-image/mermaid 候補があるとき | 全候補が svg/none のみ | `python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-output-mode.py" --preflight`、`command -v codex`、`test -f "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/render-report.js"` などの存在確認 |
 | Write | 種別・配置を付与した構造の更新出力 | 種別・配置・rationale の確定後 | なし | 入力と同じ `structure.json` / `report-structure.json`（visual 部分を確定） |
 
 エラーハンドリング: 種別が判断基準で決まらない場合は tie-break 順で確定する。環境で描画不能な種別が第一候補のときは代替へ寄せ rationale に記録する。詳細は Layer 4 参照。

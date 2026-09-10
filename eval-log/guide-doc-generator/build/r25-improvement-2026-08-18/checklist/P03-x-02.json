@@ -1,0 +1,92 @@
+{
+ "schema_version": "1.0.0",
+ "report_kind": "checklist-verification-report",
+ "task_id": "P03-x-02",
+ "covered_task_ids": ["P03-x-02"],
+ "status": "success",
+ "write_scope": "plugin-plans/guide-doc-generator/briefs/",
+ "verified_by": [
+  {
+   "claim": "A: 実体解決の段数割れ (C17 3 段 / C09 1 段展開 vs C15 4 段) が参照形で解消され、7 本目の複製を作っていない",
+   "method": "dispatcher が git diff --numstat で C17 (17/6) と C09 (46/10) を確認し、HB_ROOT と CLAUDE_PLUGIN_ROOT と __file__ が同一行に並ぶ brief を全 23 本へ再計数",
+   "result": "pass: 手順文の完全複製を持つのは C10/C11/C12/C15/C21/C23 の 6 本のままで、C17/C09 は参照形へ変わり 7 本目・8 本目を作っていない。正本は plan レベル=inventory#envelope_design.env_resolution / 実装レベル=script-brief-C15.json:39 の 2 段構えで固定"
+  },
+  {
+   "claim": "B: R25 の意味軸 4 種が C06 へ新設され、C03 へ漏れていない",
+   "method": "dispatcher が agent-brief-C06.json の 4 語を計数し、procedure / acceptance_checks の要素数と r25_semantic_axes の実在を確認。skill-brief-C03.json へ同 4 語を grep",
+   "result": "pass: opening-order / visual-fit / card-granularity / nav-scannability が C06 に各 4 件、r25_semantic_axes 実在、procedure 14->18、AC 7->10。C03 側は 4 語とも 0 件で『C03 は軸を持たない』という自己宣言と矛盾しない。SubAgent は初稿で C03 へ軸名を書いてしまい最終 grep で自己検出・除去したと申告しており、実測はその申告どおり"
+  },
+  {
+   "claim": "C: data-hb-field=\"heading\" の終端が要素レベルで確定した",
+   "method": "dispatcher が script-brief-C11.json の html_attribute_contract/attributes/5/value の enum と、section-title を含む規範文を全文引用確認",
+   "result": "pass: enum に heading を追加。終端は h2 ではなく『見出しテキストだけを内容に持つ内側の <span class=\"section-title\" data-hb-field=\"heading\"> 1 個』と明記され、h2 へ付けると C20 が <span class=\"section-num\"> の連番を見出しテキストの一部として復元する、という排除理由まで書かれている。装飾要素を内側へ入れない制約も併記。C20 側 enum には既に heading があり片側欠落だったことも確認"
+  },
+  {
+   "claim": "C: consumers 行の data-hb-single 欠落が解消された",
+   "method": "dispatcher が script-brief-C11.json へ data-hb-single を計数",
+   "result": "pass: 3 件。C17 の A11Y-01 が data-hb-single を持つチップ群を検査対象として名指ししている以上、consumers 行が落としていた片方向破れは解消"
+  },
+  {
+   "claim": "D: C12 に --json-report が存在しないという裁定の前提 (最も争点になる主張)",
+   "method": "dispatcher が script-brief-C12.json の argv を parse し、json-report の出現を全文計数",
+   "result": "pass(=報告どおり): argv は --config / --schema / --strict / --normalize / --out / --today / --catalog の 7 本のみ。json-report の出現は 1 件で、それは『本 script は --json-report に相当する引数を持たず』という非保持の宣言文そのもの。渡せる機械可読成果物が無いため『C06 へ含めるか』は現状そのままでは選択肢として成立しないという SubAgent の指摘は正しい"
+  },
+  {
+   "claim": "D: 文長 5 コードが level=error で fail-closed になっている (裁定の妥当性の核)",
+   "method": "dispatcher が W-SENTENCE-LONG / E-TEXT-FOLDED / W-HERO-LONG の周辺文脈を直接引用確認",
+   "result": "pass: 『W-SENTENCE-LONG を level=error として計上し (旧: 45 字超が 3 つ以上で警告)』『E-TEXT-FOLDED (level=error) を計上して exit 1』『W-HERO-LONG / W-HERO-HEAVY はいずれも level=error のため --strict の有無に関わらず』。C06 へ警告を運ぶより C12 が exit 1 で止める方が利用者要件を強く担保するという裁定は妥当。決定論ゲートを 4 本に保つことで C03 / C06 / C09 の 3 箇所へ同一事実が割れるのも防いでいる"
+  },
+  {
+   "claim": "D: 配達経路の主張が単一正本へ集約された",
+   "method": "dispatcher が text_length_verdict_delivery の実在と owner 記述を確認",
+   "result": "pass: id=CR-TEXT-LENGTH-DELIVERY / owner=C12 で『C03 / C06 / C09 は本項を参照し、経路の説明を複製しない』と明記。rule / why_this_is_sufficient を保持"
+  },
+  {
+   "claim": "E1: ghost-name が plan dir 全体から消えた",
+   "method": "dispatcher が plugin-plans/guide-doc-generator/ 全体へ handout-emoji-and-external-ref-guard を再帰 grep",
+   "result": "pass: ヒット 0 件。inventory C10 の正式名 guard-handout-external-ref へ差し替わった"
+  },
+  {
+   "claim": "変更範囲が write_scope 内に閉じ、報告値と git が一致する",
+   "method": "dispatcher が git diff --numstat を briefs/ へ限定して全件突合し、plugins/ の変更を git status で確認",
+   "result": "pass: C06 121/17・C09 46/10・C08 49/14・C11 62/25・C12 152/28・C16 20/9・C17 17/6・C02 11/2・C03 44/8 の 9 本が報告値と完全一致。plugins/guide-doc-generator/ の変更は README.md / config/handout-purposes.json / scripts/resolve-handout-preset.py の 3 件だが、これらは本 cycle 開始時点の git status に既に存在した未コミット変更であり本ノード由来ではない。evidence/P03.json は未作成 (P03-x-01 の write_scope を侵していない)"
+  }
+ ],
+ "findings": [
+  {
+   "id": "F-P03X02-01",
+   "level": "blocking-for-release",
+   "summary": "C11 の data-hb-field=\"heading\" 終端が出荷物 render-handout.py へ未反映。ROUNDTRIP-CONTRACT.md の marker_status も absent のまま。plugin 自身が出した HTML でも /sections/*/heading が E-EXTRACT-UNRECOVERABLE となり C02 feedback_contract OUT1 が成立しない"
+  },
+  {
+   "id": "F-P03X02-02",
+   "level": "blocking-for-release",
+   "summary": "C06 の R25 意味軸 4 種 (opening-order / visual-fit / card-granularity / nav-scannability) が出荷物 agents/handout-readability-reviewer.md へ未反映。AC8-AC10 が緑になるまで R25 の意味側は担当不在"
+  },
+  {
+   "id": "F-P03X02-03",
+   "level": "blocking-for-release",
+   "summary": "C17 / C09 の 4 段解決が出荷物 verify-handout-a11y-print.py と commands/handout-verify.md へ未反映"
+  },
+  {
+   "id": "F-P03X02-04",
+   "level": "blocking-for-release",
+   "summary": "設計側 C12 は文長 5 コードを level=error と定めたが、出荷側 validate-handout-config.py:1425 は W-SENTENCE-LONG を warning としてしか出さず build を止めない。設計と出荷の乖離が利用者最優先要件の直上にある"
+  },
+  {
+   "id": "F-P03X02-05",
+   "level": "carry-forward",
+   "summary": "実体解決 4 段の手順文が C10:84 / C11:51 / C12:827 / C15:9,39,66 / C21:76 / C23:87 の 6 本へ複製されている。段数は一致しており矛盾ではなく冗長だが、内容変更時に 6 箇所同時修正を要する"
+  },
+  {
+   "id": "F-P03X02-06",
+   "level": "carry-forward",
+   "summary": "C12 に --json-report が無いこと自体の是非。今回は『無くても要件は担保される』と裁定したが、CI が違反内訳を機械可読で拾えない不便は残る。追加するなら inventory の argv 変更を伴う"
+  },
+  {
+   "id": "F-P03X02-07",
+   "level": "resolved",
+   "summary": "A-E の 5 系統をすべて解消。特に D は報告された前提 (C12 に json-report がある) 自体が誤りであることを SubAgent が実測で覆し、fail-closed で足りるという逆向きの裁定へ到達した"
+  }
+ ]
+}

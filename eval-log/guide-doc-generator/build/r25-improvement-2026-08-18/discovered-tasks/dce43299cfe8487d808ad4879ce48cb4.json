@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P04-C01-01",
+  "reason": "決定論スクリプトへの委譲という語のヒットを再現性の面の充足と読める構造がある。本ノードでは二件とも再現性が空だったが事前検索では多数ヒットしていた。他の受入テストノードが同じ読み違いをしている可能性が高い",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/",
+  "proposed_node": {
+    "id": "P05-x-88",
+    "title": "再現性の面が語のヒットで充足と誤判定されていないか受入テスト全体を横断確認する",
+    "phase_ref": "P05",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "eval-log/guide-doc-generator/",
+    "execution_kind": "direct-task",
+    "route_ref": null,
+    "acceptance_criterion": "受入テスト全ノードについて再現性の面が検出力を持つかを変異で確認する。判定器へ非決定性 (順序 shuffle 等) を注入して赤にならないノードを空ゲートとして列挙し、件数と対象 id を記録する。語のヒット (determin / 決定) を充足の根拠に使わず、根拠列には変異の結果のみを載せる。"
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}

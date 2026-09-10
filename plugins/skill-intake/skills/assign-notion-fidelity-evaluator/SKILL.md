@@ -42,9 +42,18 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 本スキルが構造粒度の fidelity 検証に責務を単一化し、canonical を section_canonical_map.json からの派生スナップショット(手書き禁止)のみで参照、intake 内容妥当性・スキーマ存在検査・Notion API 経由公開へ越境せず JSON 構造比較のみ(認証情報不保持)を貫く設計になっている
       verify_by: elegant-review
+runtime_root_policy: host-skill-path
 ---
 
 # assign-notion-fidelity-evaluator
+
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
+- `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Purpose & Output Contract
 
@@ -105,16 +114,16 @@ Notion 公開パイプラインは API 経由で行われるため、intake-fina
 
 ```bash
 # canonical snapshot 再生成 (template-change trigger 時のみ)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/assign-notion-fidelity-evaluator/scripts/extract-canonical-snapshot.py \
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/assign-notion-fidelity-evaluator/scripts/extract-canonical-snapshot.py \
   --source plugins/skill-intake/references/section_canonical_map.json \
   --out    plugins/skill-intake/skills/assign-notion-fidelity-evaluator/references/canonical-page-snapshot.json
 
 # fidelity check (公開直前フック)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/assign-notion-fidelity-evaluator/scripts/validate-notion-fidelity.py <intake-final-context.json>
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/assign-notion-fidelity-evaluator/scripts/validate-notion-fidelity.py <intake-final-context.json>
 # exit 0 = pass / 1 = warn / 2 = fail
 
 # 粒度スコア単体取得 (CI メトリクス用)
-python3 ${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/skills/assign-notion-fidelity-evaluator/scripts/extract-granularity-score.py <intake-final-context.json>
+python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/assign-notion-fidelity-evaluator/scripts/extract-granularity-score.py <intake-final-context.json>
 ```
 
 ## Gotchas

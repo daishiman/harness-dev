@@ -185,6 +185,49 @@ def test_derive_component_dependency_does_not_target_future_phase(tmp_path):
     assert {"type": "depends_on", "from": "P02-C02-01", "to": "P03-C01-01"} not in deps
 
 
+def test_component_dependency_preserves_all_direct_producers_across_phases(tmp_path):
+    """depends_on の direct producer 集合は phase barrier で縮約しない。"""
+    _write_phase(
+        tmp_path, "phase-01-requirements.md",
+        "id: P01\nphase_name: requirements\nentities_covered: [C01]",
+        "- [ ] C01 の入力 A を決める\n- [ ] C01 の入力 B を決める\n",
+    )
+    _write_phase(
+        tmp_path, "phase-02-design.md",
+        "id: P02\nphase_name: design\nentities_covered: [C01, C02]",
+        "- [ ] 設計 A を固定する\n- [ ] 設計 B を固定する\n",
+    )
+    _write_phase(
+        tmp_path, "phase-03-design-review.md",
+        "id: P03\nphase_name: review\nentities_covered: [C02]",
+        "- [ ] C02 をレビューする\n",
+    )
+    tmp_path.joinpath("component-inventory.json").write_text(
+        json.dumps({"components": [
+            {"id": "C01", "depends_on": [], "build_target": "plugins/x/scripts/a.py"},
+            {"id": "C02", "depends_on": ["C01"], "build_target": "plugins/x/scripts/b.py"},
+        ]}),
+        encoding="utf-8",
+    )
+
+    graph = DTG.derive(tmp_path)
+    entity_by_node = {node["id"]: node.get("entity_ref") for node in graph["nodes"]}
+
+    def direct_c01_producers(task_id):
+        return {
+            edge["to"] for edge in graph["edges"]
+            if edge["type"] == "depends_on"
+            and edge["from"] == task_id
+            and entity_by_node.get(edge["to"]) == "C01"
+        }
+
+    p01 = {"P01-C01-01", "P01-C01-02"}
+    p02 = {"P02-C01-01", "P02-C01-02"}
+    assert direct_c01_producers("P02-C02-01") == p01 | p02
+    assert direct_c01_producers("P02-C02-02") == p01 | p02
+    assert direct_c01_producers("P03-C02-01") == p01 | p02
+
+
 # ─────────── phase 順序 edge (event 駆動チェーン・M-01/L-09) ───────────
 def _two_phase_plan(tmp_path: Path):
     """P01 (leaf 1) → P02 (leaf 1) の 2 phase plan。phase 順序 edge の検証用。"""
@@ -514,14 +557,35 @@ def test_surface_projection_missing_required_field_fails_closed(tmp_path):
     assert not (tmp_path / "task-graph.json").exists()
 
 
-def test_sample_plan_fixture_byte_identical_after_projection_change(tmp_path):
-    """既存 examples/sample-plan (宣言不在) の derive 再実行が committed fixture と byte 一致。"""
+def test_sample_plan_fixture_rederive_is_typed_and_deterministic(tmp_path):
+    """legacy fixed fixture も gate/claim を機械識別でき、再導出が決定論的。"""
     import shutil
     sample = Path(__file__).resolve().parent.parent / "examples" / "sample-plan"
     work = tmp_path / "sample-plan"
     shutil.copytree(sample, work)
     assert DTG.main([str(work)]) == 0
-    assert (work / "task-graph.json").read_bytes() == (sample / "task-graph.json").read_bytes()
+    first = (work / "task-graph.json").read_bytes()
+    assert DTG.main([str(work)]) == 0
+    assert (work / "task-graph.json").read_bytes() == first
+    graph = json.loads(first)
+    assert {node.get("execution_kind") for node in graph["nodes"]} == {
+        "phase-gate", "verification-claim",
+    }
+    assert all(
+        node.get("acceptance_criterion") and node.get("execution_stage") in {"draft", "release"}
+        for node in graph["nodes"] if node.get("execution_kind") == "verification-claim"
+    )
+
+
+def test_fixed_shape_marks_roots_and_claims_without_changing_claim_count(tmp_path):
+    _fixture_plan(tmp_path)
+    graph = DTG.canonicalize(DTG.derive(tmp_path))
+    roots = [node for node in graph["nodes"] if node.get("execution_kind") == "phase-gate"]
+    claims = [node for node in graph["nodes"] if node.get("execution_kind") == "verification-claim"]
+    assert [node["id"] for node in roots] == ["P01"]
+    assert len(claims) == 2  # fixture の従来 checklist 射影数を削らない
+    assert all(node["task_spec_ref"] is None for node in claims)
+    assert all(node["route_ref"] == node["entity_ref"] for node in claims)
 
 
 # ─────────── task-graph-derived target shape (C17 producer) ───────────

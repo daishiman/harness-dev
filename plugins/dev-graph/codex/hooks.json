@@ -1,0 +1,42 @@
+{
+  "description": "Codex-compatible dev-graph hooks; TaskCompleted is omitted because Codex does not expose that event",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/guard-graph-schema.py\" --repo-root \"$(git -C \"${PWD}\" rev-parse --show-toplevel 2>/dev/null || printf '%s' \"${PWD}\")\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event session-start --repo-root \"$(git -C \"${PWD}\" rev-parse --show-toplevel 2>/dev/null || printf '%s' \"${PWD}\")\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/hooks/reconcile-task-lifecycle.py\" --event post-tool-use --repo-root \"$(git -C \"${PWD}\" rev-parse --show-toplevel 2>/dev/null || printf '%s' \"${PWD}\")\"",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

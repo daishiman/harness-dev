@@ -65,9 +65,9 @@
 
 ### この環境での確認済みバックエンド（codex exec）
 
-実運用の知見として、**この環境では `codex exec` 経由で画像生成の実績がある**（`scripts/generate-images-codex.js` が各 `slide-NN-{slug}.prompt.md` を読み、codex exec へ画像生成を依頼する。1枚 1-2 分・バッチ並列可）。したがって codex exec は本節の「確認済み text-to-image バックエンドの具体例」として扱える。ただし上記2の原則どおり、`codex` という素の CLI 名自体は画像生成モデルではないため、`meta.source` には実体名 `codex-image2` を記録し、plain `codex` 単体を source にはしない。codex exec が起動・生成可能かは着手前に必ず確認し、未確認のまま量産へ進まない（コストはユーザーの codex / OpenAI 課金に発生する）。
+実運用の知見として、**この環境では `codex exec` 経由で画像生成の実績がある**（`vendor/scripts/generate-images-codex.js` が各 `slide-NN-{slug}.prompt.md` を読み、codex exec へ画像生成を依頼する。1枚 1-2 分・バッチ並列可）。したがって codex exec は本節の「確認済み text-to-image バックエンドの具体例」として扱える。ただし上記2の原則どおり、`codex` という素の CLI 名自体は画像生成モデルではないため、`meta.source` には実体名 `codex-image2` を記録し、plain `codex` 単体を source にはしない。codex exec が起動・生成可能かは着手前に必ず確認し、未確認のまま量産へ進まない（コストはユーザーの codex / OpenAI 課金に発生する）。
 
-なお codex は **imagegen（text-to-image 拡散モデル）を明示しないとコード描画（PIL / matplotlib / SVG）に退化**し、単色角丸ボックス＋テキストの平坦図になる（パイロット実証）。これを避けるため、手書きの `codex exec` ではなく必ず `scripts/generate-images-codex.js` の強制プロンプト経由で呼ぶ（imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持を明示する文言を実装済み）。
+なお codex は **imagegen（text-to-image 拡散モデル）を明示しないとコード描画（PIL / matplotlib / SVG）に退化**し、単色角丸ボックス＋テキストの平坦図になる（パイロット実証）。これを避けるため、手書きの `codex exec` ではなく必ず `vendor/scripts/generate-images-codex.js` の強制プロンプト経由で呼ぶ（imagegen 使用・コード描画禁止・リッチなアイソメイラスト維持を明示する文言を実装済み）。
 
 ### バックエンドが使えない / 壊れている場合のフォールバック順
 
@@ -84,14 +84,14 @@
 
 ユーザーが「各ページを1枚ずつ生成画像にする」「スライド全体を生成画像で構成する」「Codex Image 2 / image2 でページ画像を生成する」と明示した場合は、本ワークフローの通常差し替え判定を短絡し、`references/full-image-deck-method.md` を適用する。
 
-この場合の生成画像は背景素材ではなく、各ページの主キャンバスである。HTML では規定クラス **`.ai-slide-canvas`**（後方互換エイリアス `.slide-fullbg` / `.slide-bg` / `[data-role="main-canvas"]`）に置き、`object-fit: contain` で表示する（`cover` による端切れ禁止・印刷は A4横 16:9 letterbox 167mm）。表示・印刷フィット契約の正本は [full-image-deck-method.md §0.3](full-image-deck-method.md)。生成前に必ず `assets/style-genome-kanagawa-comic-diagram.json` を project-local `assets/generated/style-genome.json` へコピーし、STYLE BIBLE と全 prompt/meta に反映する。`05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/` の画風再現が指定されている場合は、その参照デッキの project-local genome / prompt / meta を優先して差分を整理する。
+この場合の生成画像は背景素材ではなく、各ページの主キャンバスである。HTML では規定クラス **`.ai-slide-canvas`**（後方互換エイリアス `.slide-fullbg` / `.slide-bg` / `[data-role="main-canvas"]`）に置き、`object-fit: contain` で表示する（`cover` による端切れ禁止・印刷は A4横 16:9 letterbox 167mm）。表示・印刷フィット契約の正本は [full-image-deck-method.md §0.3](full-image-deck-method.md)。生成前に必ず `vendor/assets/style-genome-kanagawa-comic-diagram.json` を project-local `assets/generated/style-genome.json` へコピーし、STYLE BIBLE と全 prompt/meta に反映する。`05_Project/スライド/slide-2026-06-13-skill-mass-production/assets/generated/` の画風再現が指定されている場合は、その参照デッキの project-local genome / prompt / meta を優先して差分を整理する。
 
 全面画像生成モードの必須検証（検証ゲート接続）:
 
 ```bash
-node scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome --check-genome-content
-node scripts/validate-print.js <slide-dir>/index.html
-node scripts/evaluate-deck.js <slide-dir>
+node vendor/scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome --check-genome-content
+node vendor/scripts/validate-print.js <slide-dir>/index.html
+node vendor/scripts/evaluate-deck.js <slide-dir>
 ```
 
 `evaluate-deck.js` は full-image-deck を検出すると `validate-print.js` と `validate-ai-image-assets.js --full-image-deck --strict-style-genome --check-genome-content` を spawn し、CRITICAL / exit 1 で総合 verdict を FAIL にする。詳細は [full-image-deck-method.md §6](full-image-deck-method.md) を正本とする。
@@ -114,7 +114,7 @@ node scripts/evaluate-deck.js <slide-dir>
 | 実在ブランド・人物 | ユーザー提供素材 | 権利・正確性確認が必要 |
 | コード（slide-code / slide-code-compare）・数式・精密数値表・コマンド列／APIレスポンス例 | 実HTMLコードブロックで描画（画像化しない） | 逐語の正確性・コピー可能性・印刷品質を担保するため |
 
-コード系 slideType（slide-code / slide-code-compare）は対象外であり、`aiVisual.pattern` を `image-only` にできず、`aiVisual.textPolicy` を `baked-with-overlay` にできない（常に実HTMLコードブロック `.code-block` / `.code-compare-body` で描画する）。この機械契約は `scripts/validate-structure.js`（V-043: slideType×aiVisual 整合）と `schemas/structure.schema.json` を正本とし、本表はその人間可読の写しである。
+コード系 slideType（slide-code / slide-code-compare）は対象外であり、`aiVisual.pattern` を `image-only` にできず、`aiVisual.textPolicy` を `baked-with-overlay` にできない（常に実HTMLコードブロック `.code-block` / `.code-compare-body` で描画する）。この機械契約は `vendor/scripts/validate-structure.js`（V-043: slideType×aiVisual 整合）と `schemas/structure.schema.json` を正本とし、本表はその人間可読の写しである。
 
 ### 2.1 モード別テキスト方針
 
@@ -128,7 +128,7 @@ node scripts/evaluate-deck.js <slide-dir>
 | 漫画チック説明図 | `image-only` | `baked-with-overlay` | 短文・少量のみ許可 | `overlayText` |
 | 焼き込みテーブル | `image-only` | `baked-with-overlay` | 表の見出し+全セルを画像内に verbatim 焼き込み（`tableMode: illustrated-full-table`・`tableContent` で運ぶ）。`camera=structural`（near top-down）推奨・`negativeSpecific` 必須（行数/列数の取り違え禁止）。HTMLのピンポイント重ねは使わない（位置ズレ回避） | `overlayText`（表全文） |
 
-`pattern` と `textPolicy` の対応（`image-only`→`baked-with-overlay`/`overlay-only`、`html-composite`→`overlay-only`、`html-primary`→`none`）の正本は `style-genome-packaging.md` §4 と `scripts/validate-ai-image-assets.js` に置く。
+`pattern` と `textPolicy` の対応（`image-only`→`baked-with-overlay`/`overlay-only`、`html-composite`→`overlay-only`、`html-primary`→`none`）の正本は `style-genome-packaging.md` §4 と `vendor/scripts/validate-ai-image-assets.js` に置く。
 
 `baked-with-overlay` は例外モードである。使用時は prompt/meta/structure.md のすべてに同じ値を記録し、`overlayText` を空にしない。
 
@@ -180,7 +180,7 @@ assets/generated/
 - Table（表を画像内に焼く場合）: `tableMode: illustrated-full-table` + `tableContent`（`headers` / `rows[][]` / `monospaceColumns?` / `caption?`）。各セルは短語（14字以内）を verbatim、列数・行数は固定。builder が列数/行数明示・罫線・整列・legible・行列増減禁止を本文展開する。`textPolicy: baked-with-overlay` 固定、`overlayText` に表全文を保持（崩れ時 fallback）。`camera=structural`（near top-down）を推奨し、表セルが正対して可読性が上がるようにする。**14字超の境界事例**: 固有名詞・コマンドが14字を超えるセル（例 `dependency-cruiser`=18字）が出る表は焼き込みをやめ `html-overlay-table` へ切り替える（`tsc --noEmit`=12字は範囲内）。料金/精密数値/長文/複数行コードも HTML 側（`html-overlay-table` / `html-primary`）へ
 - Generation: `modelSnapshot` / `quality` / `size`（焼き込み表は `quality: high` 推奨）
 - 16:9または配置先に合わせた背景/カットアウト指定（バックエンド対応を確認した場合のみ）
-- Kanagawaテーマに合う色・質感
+- style genome の `palette` 定義に一致する色・質感（色名や HEX を本書へ写経しない）
 - HTMLテキストを重ねる余白位置
 - `pattern` と `textPolicy`
 - 禁止事項
@@ -214,7 +214,7 @@ Subject:
 Diagram structure:
 {{diagramStructure}}
 
-Style: clean editorial consulting deck, Kanagawa-inspired palette, bright white base, vivid blue/aqua/pink accent, soft realistic depth, crisp edges, professional.
+Style: clean editorial consulting deck, palette exactly as defined in the STYLE GENOME `palette` field (introduce no other hue), soft realistic depth, crisp edges, professional.
 Composition: leave negative space on {{overlay_area}} for HTML title and labels. Main subject should remain inside safe margins.
 Generation: model={{modelSnapshot}}, quality={{quality}}, size={{size}}.
 Do not include readable text, logos, watermarks, UI gibberish, or brand marks.
@@ -256,7 +256,7 @@ gpt-image-2 は seed 非対応で完全再現ができない。再現性はプ�
 - `styleReference`: 基準ページ(通常 slide-01)を `anchorSlug` に指定し全ページが image-to-image 参照。`inheritMode`(style-only/style-and-layout/full)・`preserve[]`(必ず保持)・`change[]`(変更)で継承を精密化。generate-images-codex.js が基準画像を codex exec 指示文へ添付(エイリアス安全・-i フラグ不使用)。
 - `generation`: `modelSnapshot`(既定 gpt-image-2-2026-04-21)・`quality`(密図は high)・`size`(2560x1440・両辺16px倍数)。meta に記録し再生成時の同条件再現に使う。
 - genome の `lockTiers`(tier1絶対不変/tier2維持/tier3可変)・`consistencyAnchors` が全プロンプトへ展開され画風を固定する。
-- 生成後は `node scripts/evaluate-image-consistency.js <deck> --threshold 0.8` で一貫性(lockTiers.tier1+consistencyAnchors)を LLM-judge 採点し、閾値割れページの再生成推奨を得る(破壊操作なし・目視の前段ゲート)。
+- 生成後は `node vendor/scripts/evaluate-image-consistency.js <deck> --threshold 0.8` で一貫性(lockTiers.tier1+consistencyAnchors)を LLM-judge 採点し、閾値割れページの再生成推奨を得る(破壊操作なし・目視の前段ゲート)。
 
 ## 5. HTML/CSS組み込み
 
@@ -305,10 +305,10 @@ gpt-image-2 は seed 非対応で完全再現ができない。再現性はプ�
 
 ## 6. 検証
 
-1. `node scripts/convert-to-webp.js <slide-dir> --quality 90`
-2. 通常差し替え: `node scripts/validate-ai-image-assets.js <slide-dir> --strict-style-genome`
-   全面画像生成モード: `node scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome`
-3. `node scripts/verify-slides.js ./index.html --check-ratio`
+1. `node vendor/scripts/convert-to-webp.js <slide-dir> --quality 90`
+2. 通常差し替え: `node vendor/scripts/validate-ai-image-assets.js <slide-dir> --strict-style-genome`
+   全面画像生成モード: `node vendor/scripts/validate-ai-image-assets.js <slide-dir> --full-image-deck --strict-style-genome`
+3. `node vendor/scripts/verify-slides.js ./index.html --check-ratio`
 4. 画面表示で主要被写体の切れ、テキスト重なり、コントラストを確認
 5. 印刷/PDFで画像が欠落しないことを確認
 6. `structure.md` に以下が同期されていることを確認
@@ -336,9 +336,9 @@ gpt-image-2 は seed 非対応で完全再現ができない。再現性はプ�
 | 1.2.0 | 2026-05-06 | prompt/meta/WebPの機械検証スクリプトと標準プロンプトテンプレートの参照を追加 |
 | 1.3.0 | 2026-06-02 | §1.2「着手前バックエンド確認（必須）」を追加。実際に使える text-to-image バックエンド（MCP / CLI / 画像API）を生成着手前に確認する手順、codexは画像生成器でない旨、(a)〜(d)のフォールバック順を明記 |
 | 1.4.0 | 2026-06-23 | スタイルゲノム量産、Pattern A/B、`textPolicy` を追加。通常は画像内テキスト禁止、漫画/全面画像化の明示時のみ `baked-with-overlay` を許可する形に整理 |
-| 1.5.0 | 2026-06-24 | 正準モデル整合（elegant-review）。§2.1 で `textPolicy` の `html-primary` を `none` へ修正（部分AI画像化は `html-composite`→`overlay-only` / `html-primary`→`none`）。`pattern`/`textPolicy`/`backgroundSource` の値域定義を `style-genome-packaging.md` §4 と `scripts/validate-ai-image-assets.js` に一本化（DRY）。§3 meta 例に `backgroundSource` を追加 |
-| 1.6.0 | 2026-06-24 | ビルダー連携（SKILL.md v8.2.0）。§1.2 に「この環境での確認済みバックエンド（codex exec）」を追加。codex exec はこの環境で画像生成の実績がある確認済みバックエンドの具体例（`scripts/generate-images-codex.js` 経由）であり、`meta.source` には実体名 `codex-image2` を記録する一方、plain `codex` 単体を source にしない原則は維持 |
-| 1.6.1 | 2026-06-24 | パイロット実証の知見反映。§1.2 codex exec 記述に「codex は imagegen（text-to-image 拡散モデル）を明示しないとコード描画（PIL/matplotlib/SVG）に退化し平坦なボックス図になるため、`scripts/generate-images-codex.js` の強制プロンプト経由で呼ぶ」を追記 |
+| 1.5.0 | 2026-06-24 | 正準モデル整合（elegant-review）。§2.1 で `textPolicy` の `html-primary` を `none` へ修正（部分AI画像化は `html-composite`→`overlay-only` / `html-primary`→`none`）。`pattern`/`textPolicy`/`backgroundSource` の値域定義を `style-genome-packaging.md` §4 と `vendor/scripts/validate-ai-image-assets.js` に一本化（DRY）。§3 meta 例に `backgroundSource` を追加 |
+| 1.6.0 | 2026-06-24 | ビルダー連携（SKILL.md v8.2.0）。§1.2 に「この環境での確認済みバックエンド（codex exec）」を追加。codex exec はこの環境で画像生成の実績がある確認済みバックエンドの具体例（`vendor/scripts/generate-images-codex.js` 経由）であり、`meta.source` には実体名 `codex-image2` を記録する一方、plain `codex` 単体を source にしない原則は維持 |
+| 1.6.1 | 2026-06-24 | パイロット実証の知見反映。§1.2 codex exec 記述に「codex は imagegen（text-to-image 拡散モデル）を明示しないとコード描画（PIL/matplotlib/SVG）に退化し平坦なボックス図になるため、`vendor/scripts/generate-images-codex.js` の強制プロンプト経由で呼ぶ」を追記 |
 | 1.6.2 | 2026-06-24 | 実装整合（elegant-review・D1/D2/D3）。§1.3 全面画像生成モードの分岐に主キャンバスクラス規定（`.ai-slide-canvas`＋後方互換エイリアス・`object-fit:contain`・印刷 16:9 letterbox 167mm・cover 禁止）を追記し、フィット契約の正本を `full-image-deck-method.md §0.3` に参照（DRY）。必須検証に `validate-print.js` と `evaluate-deck.js`（full-image-deck 検出時に validate-print / validate-ai-image-assets を spawn し FAIL 連動）の検証ゲート接続を追加 |
 | 1.7.0 | 2026-06-25 | §4.4「図タイプ別 構図プリセット集」を新設。`image-deck-plan.schema.json` の `layout`（grid/zones/readingOrder/focalPoint/emphasis）を埋めるための6図タイプ（プロセス/フロー・比較/対比・構造/関係・因果・階層/ピラミッド・四象限/マトリクス）プリセットを表で提供し、各タイプに gpt-image-2 用の英語1行プロンプト例を添付。builder が prompt.md の `Layout:` 行へ決定論展開する際の参照元とする |
 | 1.8.0 | 2026-06-25 | 再現性第2弾（elegant-review・D10/D11）。§4.1 必須要素に Dominant accent（`accent` を HEX 解決し「Dominant accent for this slide」行を本文展開・60-30-10 の主役色固定）と 構造系の `negativeSpecific` 必須（`camera=structural` は誤ノード数/逆向き/対称崩れを列挙）を追加。builder（build-image-prompts.js v8.2.4）が accent をプロンプト本文へ射影し `meta.dominantAccentHex` を記録、validator（v4）が支配色のprompt反映を意味照合、schema が camera=structural→negativeSpecific を条件付き必須化、evaluate-image-consistency が per-slide 構図（emphasis/focalPoint/negativeSpecific）を rubric へ追加、generate-images-codex が「prompt.md が画像内テキストの単一正本」を明文化 |

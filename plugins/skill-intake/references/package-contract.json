@@ -1,0 +1,270 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "skill-intake",
+  "entry_points": {
+    "skills": [
+      "assign-notion-fidelity-evaluator",
+      "run-intake-finalize",
+      "run-intake-interview",
+      "run-intake-kickoff",
+      "run-intake-next-action",
+      "run-intake-option-catalog",
+      "run-intake-revise",
+      "run-intake-status",
+      "run-intake-visualize",
+      "run-notion-intake-publish",
+      "run-skill-feedback",
+      "run-skill-intake"
+    ],
+    "agents": [
+      "skill-intake-assumption-challenger",
+      "skill-intake-purpose-excavator",
+      "skill-intake-summarizer",
+      "skill-intake-user-profiler"
+    ],
+    "commands": [
+      "intake",
+      "intake-publish",
+      "intake-revise",
+      "intake-status"
+    ],
+    "hooks": [
+      "hook-guard-skillgen.py",
+      "post-keychain-add.sh",
+      "post-publish-notify.sh",
+      "pre-publish-schema-validate.py",
+      "pre-publish-secret-scrub.sh"
+    ]
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full",
+      "skills-intake"
+    ],
+    "category": "productivity",
+    "tags": [
+      "skills",
+      "intake",
+      "elicitation",
+      "notion",
+      "non-tech"
+    ]
+  },
+  "depends_on": [
+    "harness-creator",
+    "plugin-dev-planner"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "intake": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command intake through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        }
+      },
+      "intake-publish": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command intake-publish through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-notion-intake-publish"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-notion-intake-publish"
+          ]
+        }
+      },
+      "intake-revise": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command intake-revise through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-intake-revise"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-intake-revise"
+          ]
+        }
+      },
+      "intake-status": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command intake-status through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-intake-status"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-intake-status"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "skill-intake-assumption-challenger": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent skill-intake-assumption-challenger through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        }
+      },
+      "skill-intake-purpose-excavator": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent skill-intake-purpose-excavator through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        }
+      },
+      "skill-intake-summarizer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent skill-intake-summarizer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        }
+      },
+      "skill-intake-user-profiler": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent skill-intake-user-profiler through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        },
+        "owner_route": {
+          "plugin": "skill-intake",
+          "entry_points": [
+            "run-skill-intake"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

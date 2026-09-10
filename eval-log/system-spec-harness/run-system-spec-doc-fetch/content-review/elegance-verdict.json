@@ -2,14 +2,10 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4"
+    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "run-elegant-review-subagent-team",
-  "reviewed_at": "2026-07-14",
-  "iterations": 1,
-  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
@@ -17,22 +13,30 @@
     "dependency_break": 0,
     "smell": 2
   },
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "責務境界が矛盾なく分離されている: 本 skill は形式・全件・host 一致まで (IN1 = validate-source-citation.py exit0) を担い、現行最新版かの鮮度判定は C08 (doc-freshness-auditor, OUT1) へ明確に委譲 (Key Rule6)。取得は WebSearch/WebFetch のみで MCP 連携は GAP-MCP-DOCFETCH として保留する旨も正直開示。",
-      "fetched-references.json の出力契約が具体的で漏れがない: 必須フィールド (target_id/retrieved_at/source_url/official_publisher/official_host/latest_checked_at/summary + version|last_updated)・全件対応 (欠落0/重複0)・host 一致を JSON 例と Key Rules と完了チェックリストで一致記述。捏造禁止 (fail-visible)・恒久キャッシュ禁止・実取得時刻厳守も一貫。",
-      "doctrine anchor 段落が上流工程を導くのみで具体技術直書きを避け、取得対象 target_id の正本は spec-state.json という責務分離を維持。concern authority 4 種 (Apple HIG/Clean Arch/OWASP/SRE) が doctrine-anchor-registry.json と整合し、C14 knowledge graph 位相順で後続へ供給する結線も破壊なし。"
+      "runtime_root_policy: host-skill-path の宣言と本文 `## Runtime root contract` 節の追加が対で入っており、片側だけの宣言になっていない。契約本文は build-steps.md:40 の正本文言 (Claude Code=CLAUDE_PLUGIN_ROOT / Codex=SKILL.md absolute path から manifest 祖先を上方探索 / cwd 推測禁止 / prompts 継承) と一致する。",
+      "`## 検証コマンド` block の 2 行が `PLUGIN_ROOT=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"` という script 相対の cwd 推測から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` 形へ置換されており、契約が禁じた cwd 起点解決が本文の実行行から実際に消えている。宣言と実装が同じ差分内で閉じている。",
+      "prompts 側も同時移行されている: R3-record.md の IN1 実行行は `<plugin-root>` literal から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py\"` へ、R4-audit-doc-freshness.md の C13 実行形は bare `$CLAUDE_PLUGIN_ROOT` から同形へ移行済みで、本 skill 配下に bare `$CLAUDE_PLUGIN_ROOT` の実行行は残っていない (grep で確認)。",
+      "frontmatter が宣言した参照は全件実在を確認した: responsibility_refs 3 件 (prompts/R1-identify.md, R2-fetch.md, R3-record.md)、schema_refs 1 件 (../../schemas/fetched-references.schema.json)、Additional Resources が挙げる scripts/build-fetched-references.py・references/official-source-catalog.md・references/resource-map.yaml・../../scripts/validate-source-citation.py。欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low/smell] 『検証コマンド』節 (L137) で PLUGIN_ROOT を算出しているが、後続コマンドは相対パス (skills/... や scripts/...) で PLUGIN_ROOT を参照せず、算出値が実質未使用のデッド変数。cwd=plugin-root 前提なら動くが導線としては不揃い (PASS 非阻害)。",
-      "[low/smell] 本文他所が compile 消費者を 'spec-compile (C10)' と表記する一方、doctrine anchor 段落と consumer 行では 'C03' (compile skill) 表記も混在。README 上は双方正当 (C10=slash command / C03=skill) だが C 番号が高密度で読者が混同しやすい (一語補足で解消可・PASS 非阻害)。"
+      "[low / smell] 局面カタログの記録・検証 (R3) 行は `build-fetched-references.py assemble --records <素材> ...` と path 無しのコマンド名で書かれており、`## 検証コマンド` block だけが PLUGIN_ROOT 形に移行された。実行の正本は検証コマンド block 側であり詳細 pointer も付いているため実行不能にはならないが、同一 skill 内でコマンド表記の粒度が 2 種混在する。",
+      "[low / smell] prompts/ には responsibility_refs に載らない R4-audit-doc-freshness.md が同居する (C08 system-spec-doc-freshness-auditor 側の SSOT)。Additional Resources も R1-R3 のみを挙げるため、prompts ディレクトリの全体像は SKILL.md からは読み取れない。plugin 全体で audit prompt を agent 所有とする既存慣行に沿っており、今回の差分が持ち込んだものではない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "現 SKILL.md (sha256=0b8e80522c1e1f7d7812e190a41c7a80782fd7202729685c13d203a944d42db4) を全文 read し 4 条件で genuine 再評価。①矛盾なし: 2 起動経路 (spec-compile 前 / elicit R2 裏取り)・公式一次情報限定・鮮度判定 C08 委譲が節間で一致。②漏れなし: Purpose/Output Contract・JSON 形状・Key Rules(9)・ゴールシーク (Goal/Why/完了チェックリスト/ループ)・局面カタログ・検証コマンド・Gotchas・Additional Resources を被覆。③整合性: IN1=validate-source-citation.py exit0 が frontmatter/チェックリスト/検証コマンドで一致、max_iterations 5=goal_seek max_loops 5。④依存整合: prompts (R1/R2/R3)・reference (official-source-catalog.md/resource-map.yaml)・script (build-fetched-references.py, ../../scripts/validate-source-citation.py)・schema (fetched-references)・doctrine-anchor-registry.json を test -e で全件実在確認 (dependency_break=0)。残りは cosmetic smell 2 のみのため PASS。"
+  "notes": "main マージ + external-mutation guard block の機械 migration により旧 verdict の skill_md_sha256 (3c406370...) が stale になったための再束縛。content-review-protocol §incremental の focused combined review を 1 context で実行した。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md` (+14/-6 行) の全差分、SKILL.md 全文 197 行、同 skill の prompts/ 差分 (R3-record.md, R4-audit-doc-freshness.md)、正本文言として plugins/harness-creator/skills/run-build-skill/references/build-steps.md:40。 実行したコマンド: sha256 算出 (python3 hashlib)、frontmatter 参照 23 path の実在検査 (test -e)、`grep -rn 'CLAUDE_PLUGIN_ROOT' <skill>/ | grep -v 'PLUGIN_ROOT:-'` による bare 参照検出 (本 skill 配下は契約 prose の 1 行のみ = 変数名への言及であり実行行ではない)、`python3 scripts/lint-runtime-portability.py` (exit 0)。 判定: (a) 矛盾なし — 新設 Runtime root contract が禁じる cwd 推測は同差分で本文から除去済み。(b) 漏れなし — Purpose & Output Contract・Key Rules 9 項・ゴールシーク・完了チェックリスト・Gotchas は差分前と同一で、削られた記述は cwd 推測行だけ。(c) 規約整合 — runtime_root_policy 宣言と Runtime root contract 節が対で存在し、shell 起動行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。effect: local-artifact のため external_mutation_guard は不要側で、宣言も guard block も持たないのが正しい。(d) 依存関係整合 — 宣言参照は全件実在、consumer (C10/C01/C08) との受け渡し形状 fetched-references.json は不変。(e) 未解決 medium 以上 0 件。残る 2 件は表記の smell (low) で実行不能にならないため PASS。 PASS の射程は静的設計 adequacy に限り、OUT1 (受入テスト) の実走証拠は本 review では取得していない。"
 }

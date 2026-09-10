@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "discovering_task_id": "P01-x-01",
+  "reason": "verify_by が裸の3値ラベルで検証手段を指さず、かつ守るゲートが 'is not None and not in enum' で欠落を素通しする (fail-open)。P04 で 5 component から出た空ゲート族の上流",
+  "discovered_at_artifact": "eval-log/guide-doc-generator/build/r25-improvement-2026-08-18/checklist/P01-x-01.json",
+  "proposed_node": {
+    "id": "P05-x-92",
+    "title": "verify_by を pointer 型へ移し欠落検出を fail-closed 化する",
+    "phase_ref": "phase-01-requirements.md",
+    "entity_ref": null,
+    "state": "pending",
+    "write_scope": "plugin-plans/guide-doc-generator/goal-spec.json",
+    "acceptance_criterion": "checklist[] の verify_by が検証手段の実体 (gate script のパス / テストファイル::関数名) を名指ししており、check-plugin-goal-spec.py が verify_by 欠落を exit1 で落とすこと。欠落を注入した複製で exit1 になることを実測で示す",
+    "execution_kind": "direct-task",
+    "route_ref": null
+  },
+  "change_level": "structural",
+  "provenance": {
+    "route_id": "C01"
+  },
+  "status": "accepted",
+  "resulting_graph_hash": "sha256:91c36d32d724e418f3aaff40bf5d72fa8ca63eb398a9f0c3b3b8b68c60194faa"
+}
