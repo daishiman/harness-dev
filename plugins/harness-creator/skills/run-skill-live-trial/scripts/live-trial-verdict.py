@@ -544,13 +544,49 @@ def behavior_closure_files(skill_dir: Path) -> list[tuple[str, Path]]:
     return sorted(((label, path) for path, label in files.items()), key=lambda item: item[0])
 
 
+_MANIFEST_SUFFIXES = (".claude-plugin/plugin.json", ".codex-plugin/plugin.json")
+
+# native plugin manifest のうち、被験 skill の挙動に一切効かないと言い切れるキー。
+# ここに挙げたキーだけを digest から落とし、未知のキーは残す (fail-closed: 知らない
+# キーは挙動かもしれない)。allowlist にすると新しいキーが digest に出ず、検査が
+# 静かに素通りする。
+#
+# なぜ必要か: manifest は closure に生で入っている一方、build-plugin-release は
+# plugin に内容変更があれば必ず version を bump する。よって「どんな変更でも
+# version が動く」→「その plugin の全 skill の verdict が一斉に stale」になり、
+# 再 trial の要求が挙動変更の signal ではなく release 作業の副作用として出ていた。
+# 巻き添えで stale になった verdict は、本当に挙動が変わった verdict と区別が
+# つかないので、検査としての意味が薄れる。
+# 実在キーは name / version / description / author / dependencies / repository の 6 種。
+# 落とすのは version だけに絞る。dependencies は boot が load する plugin 集合そのもの、
+# name は manifest 検証と依存解決の鍵、description は plugin 選択の手掛かりであり、
+# いずれも挙動に効く。author / repository は効かないが、動かないので巻き添えの原因に
+# ならず、除外する実益が無い。denylist は短いほど素通りの余地が小さい。
+_MANIFEST_NON_BEHAVIOR_KEYS: frozenset[str] = frozenset({"version"})
+
+
+def _behavior_bytes(label: str, path: Path) -> bytes:
+    """digest へ与えるバイト列。manifest だけは挙動に効く投影へ正規化する。"""
+    if not label.endswith(_MANIFEST_SUFFIXES):
+        return path.read_bytes()
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"plugin manifest read/parse error: {path}: {exc}") from exc
+    if not isinstance(manifest, dict):
+        return path.read_bytes()
+    projected = {k: v for k, v in manifest.items() if k not in _MANIFEST_NON_BEHAVIOR_KEYS}
+    return json.dumps(projected, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":")).encode("utf-8")
+
+
 def skill_dir_tree_sha(skill_dir: Path) -> str:
     """Declared behavior closure digest (legacy field name retained for compatibility)."""
     h = hashlib.sha256()
     for label, path in behavior_closure_files(skill_dir):
         h.update(label.encode("utf-8"))
         h.update(b"\0")
-        h.update(path.read_bytes())
+        h.update(_behavior_bytes(label, path))
         h.update(b"\0")
     return h.hexdigest()
 

@@ -275,6 +275,37 @@ def run_render(args, cwd=None, env_extra=None):
     return Result(proc)
 
 
+def visual_policy_overlay(tmpdir, mutate):
+    """視覚方針正本だけを差し替えた使い捨て HB_ROOT を作り env_extra を返す。
+
+    C11 の実体解決は HB_ROOT を最優先で見て、無いファイルは次の段 (script の
+    実体位置) へ落ちる。よって overlay に置くのは差し替える 1 ファイルだけで
+    足り、プラグイン全体を複製しなくてよい。
+
+    冒頭の箇条リストの既定が「描かない」になった (opening.hero_list_fields.
+    hidden_by_default) ため、描画そのものを見るテストはここで既定を外す。
+    構成データ側の hero_hidden_fields は追加宣言であって上書きではないので、
+    正本を差し替える以外に再表示する道は無い (道を増やすと非表示の出所が
+    2 つになる)。
+    """
+    policy = json.loads(
+        (PLUGIN_ROOT / "config" / "handout-visual-policy.json").read_text(
+            encoding="utf-8"))
+    mutate(policy)
+    root = Path(tmpdir) / "hb-root-overlay"
+    (root / "config").mkdir(parents=True, exist_ok=True)
+    (root / "config" / "handout-visual-policy.json").write_text(
+        json.dumps(policy, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return {"HB_ROOT": str(root)}
+
+
+def hero_lists_visible(tmpdir):
+    """冒頭の箇条リストを既定でも描く HB_ROOT (hidden_by_default を空にする)。"""
+    def clear(policy):
+        policy["opening"]["hero_list_fields"]["hidden_by_default"] = []
+    return visual_policy_overlay(tmpdir, clear)
+
+
 def write_config(path, config):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -282,11 +313,12 @@ def write_config(path, config):
     return path
 
 
-def render_html(tmpdir, config, extra_args=()):
+def render_html(tmpdir, config, extra_args=(), env_extra=None):
     """正常系の生成 HTML 文字列を返す (exit 0 を前提としない・呼び出し側で検査)。"""
     cfg_path = write_config(Path(tmpdir) / "config.json", config)
     out_path = Path(tmpdir) / "handout.html"
-    res = run_render(["--config", cfg_path, "--out", out_path] + list(extra_args))
+    res = run_render(["--config", cfg_path, "--out", out_path] + list(extra_args),
+                     env_extra=env_extra)
     html_text = out_path.read_text(encoding="utf-8") if out_path.is_file() else ""
     return res, html_text, out_path
 
@@ -389,6 +421,18 @@ BLOCK_FIXTURES = {
                 "data_uri": "data:text/plain;base64,YQ==",
                 "bytes": 1,
                 "fallback_hint": "保存できないときは本文をコピーする",
+            }
+        ],
+    },
+    "links": {
+        "id": "blk-links",
+        "type": "links",
+        "links": [
+            {
+                "key": "ln1",
+                "label": "詳しい手順の資料",
+                "url": "https://example.com/handbook",
+                "note": "初めて操作する人はこちらを先に読む",
             }
         ],
     },

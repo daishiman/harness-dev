@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-youtube-ingest",
-    "skill_md_sha256": "8ff122b52c1f73070320d767fe622ae3a4b0e17f6a6ac21024a57725882574d1"
+    "skill_md_sha256": "212253e82a27a1f603b7d4ed6344f85f3886b2a08ee9c571fabefdf799a979e5"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,29 +13,24 @@
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-10T06:25:20Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "`effect: external-mutation` の 4 skill (run-ubm-goal-setting / run-ubm-journal / run-ubm-knowledge-sync / run-ubm-youtube-ingest) は `external_mutation_guard` frontmatter と canonical receipt flow block の双方を保持したまま、guard block 内の 3 本の shell 起動行 (preview / authorize / execute) が全て `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ揃った。`effect: local-artifact` の run-ubm-consult には frontmatter・block いずれも無く、双方向の対応が崩れていない。",
-      "`runtime_root_policy: host-skill-path` を宣言した 5 skill 全てが `## Runtime root contract` 本文を持ち、SKILL.md 内の shell 起動行に裸の `${CLAUDE_PLUGIN_ROOT}` が 0 件であることを grep で確認した。`audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` が exit 0 / verdict PASS / violations 空で機械確認している。",
-      "frontmatter が宣言した `responsibility_refs` / `subagent_refs` / `schema_refs` / `script_refs` / `reference_refs` / `manifest` を 5 skill 分 (計 62 参照) 機械照合し、欠損 0 件。`../../` を跨ぐ plugin 直下参照 (`knowledge/schema.json`・`agents/*.md`・`scripts/validate-knowledge-graph.py` 等) も含めて実在する。",
-      "差分は runtime root 移行に限定されており、Purpose & Output Contract・End-to-End Flow・Phase 構成・`feedback_contract.criteria` の text/verify_by は一行も書き換わっていない。既存契約への非後退 (additive) が保たれている。"
+      "本 branch の 4 SKILL.md 変更が「宣言を実体へ合わせる」方向で統一されている。combinators は本 branch 以前から 26 skill が持つ既存キーで、本 skill が足した 2 値は実際に持つ goal_seek ブロックと feedback_contract ブロックへ 1:1 に対応する。lint-goal-seek.py も rc=0。",
+      "IN1 の criterion が「exit0 は承認 waiver 込みの ACCOUNTABILITY_PASS も含むため、IN1 の機械判定は content 層（full_backfill_pass）で行い accountability 層とは分離する」と、判定に使ってはいけない信号を明示している。緑の出所を取り違えると全量性が静かに縮む種類の検査で、frontmatter の criterion 本文・本文の完了チェックリスト・inner ループ記述の 3 箇所が同じ分離を繰り返し述べており、携帯される評価基準（frontmatter）だけを読んだ量産先でも誤用しない。"
     ],
     "negative_feedback": [
-      "[low / smell] 同一参照テーブル内で表記が混在した。{where} は Read 対象 (`knowledge/router.json` / `knowledge/schema.json`) を指す行だけ裸の `$CLAUDE_PLUGIN_ROOT` のまま残り、隣接行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` へ移行済み。audit-capability-parity.py の `_portable_root_violations` は bash/sh fence または EXECUTABLE_RE 一致行だけを対象にする設計で、shell 起動行ではないこれらは意図的に scope 外。機械的破綻は無いため low。"
+      "[smell/low] combinators に with-goal-seek を宣言したが、本文のゴールシーク節の見出しが '### ゴールシークループ' で、combinator が注入する '### ゴールシーク配線' という名前になっていない。そのため lint-goal-seek.py が「'### ゴールシーク配線' が無い」および「機械検証 bash の必須トークン（required_keys / original_goal_hash / hashlib.sha256）が不在」の WARN 2 件を出す（rc=0 なので violation ではない）。中身としては progress / intermediate.jsonl / original_goal / merged_directive_for_next / drift_signal の配線は本文に揃っており実害は小さいが、combinator 名を宣言した以上、見出し名を揃えるか、揃えない理由を本文へ 1 行残すのが筋。姉妹 skill の run-ubm-knowledge-sync は同じ宣言で warning 0 なので、plugin 内で書式が 2 通りに割れている。"
     ],
     "iteration": 1,
-    "iteration_limit": 5,
-    "hook_trigger": "manual",
+    "iteration_limit": 3,
+    "hook_trigger": "CI:change-category-guard (PR #70 の lint-content-review.py --all が stale-sha 8 件で fail)",
     "next_action": "none"
   },
-  "notes": "本 verdict は `main` マージ + external-mutation guard block の機械 migration により `skill_md_sha256` が乖離したことを受けた再束縛であり、content-review-protocol §incremental (unresolved semantic batch) の focused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施した検証: (1) `git diff HEAD -- plugins/ubm-goal-setting/skills/<skill>/SKILL.md` で 対象 5 skill の差分を全行読了、加えて同 diff に含まれる `prompts/` 配下 11 ファイルの差分も読了。(2) `grep -rn 'CLAUDE_PLUGIN_ROOT'` を skill ディレクトリ全体へ掛け、移行済み行と未移行行を全件列挙。(3) frontmatter 宣言 refs の実在を Python で機械照合 (5 skill / 62 参照 / 欠損 0)。(4) `plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --plugin ubm-goal-setting` = exit 0 / verdict PASS / violations 空。(5) 規約正本 `plugins/harness-creator/skills/ref-cross-platform-runtime/references/runtime-portability.md` の product別 plugin root 契約 (L41-52) と audit の `_portable_root_violations` 実装を読み、host-skill-path 契約の射程が `SKILL.md` + `prompts/**` の shell 実行行であることを確認。(6) 補助 lint: `lint-artifact-delivery` / `lint-entrypoint-artifact-first` / `lint-prompt-contract-drift` / `lint-runtime-portability` / `lint-external-refs` = exit 0、`lint-feedback-contract --all` = exit 0、`lint-skill-tree` = 5 skill とも ok (LS-203 `assets` 警告は本 diff 以前からの既存事項)。 差分は runtime root 移行に閉じており、既存の Purpose & Output Contract / workflow / criteria への書き換えは無い。未解決の medium 以上は 0 件のため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。 本 skill 固有: `script_refs` 4 本のうち `run-youtube-sync-oneshot.py` は scheduler 無人経路のため SKILL.md の shell 起動行を持たず、移行対象は guard block 3 行に閉じている。IN1 の content 層 (full_backfill_pass) と accountability 層の分離文言も無変更。"
+  "notes": "【profile=incremental】前回 verdict の結論を引き継がず独立に再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。4 skill を 1 context で結合評価し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を一度に判定した。その単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは rubric 側（ref-skill-design-rubric の規範採点）の投影である。elegance 側の投影は同ディレクトリの elegance-verdict.json で、両者は同一の観測に基づく。 【読んだもの】content-review-protocol.md 全文 / content-review-verdict.schema.json 全文（実在パスは plugins/harness-creator/skills/run-build-skill/schemas/ 配下）/ scripts/lint-content-review.py 全文 / 評価対象 4 skill の SKILL.md 全文（本 skill は 215 行）/ git diff origin/main...HEAD の当該 4 SKILL.md 差分全文 / plugins/ubm-goal-setting/CHANGELOG.md の 0.3.40・0.3.41・0.3.42 / 新規 tests/test_notation_consistency.py 全文 / references/output-formats.md・references/data-contract.md の該当節 / scripts/validate-goal-output.py の定数と各 check。 【実行したもの（コマンドと実測結果）】(1) shasum -a 256 で本 skill の SKILL.md = 212253e82a27a1f603b7d4ed6344f85f3886b2a08ee9c571fabefdf799a979e5 を実測。verdict の値はこの実測値そのもので手書換していない。(2) python3 -m pytest plugins/ubm-goal-setting/ -q = 392 passed in 78.98s（exit 0）。(3) tests/test_notation_consistency.py -q = 24 passed。(4) validate-goal-output.py を importlib で読み込み C1 / C1c / C1e の検出力を合成行で実測。(5) golden-sample-weekly.md の scratchpad 複製へ --type weekly = rc=0 / PASS 32 件 / エラー 0・警告 0。(6) 違反注入実測で --type 取り違え・C1・C4b がいずれも rc=1。(7) frontmatter 宣言 refs の実在走査。本 skill 19 件すべて実在、4 skill 合計 64 件で欠損 0。(8) lint 実行。lint-skill-description OK=187 VIOLATION=0、lint-feedback-contract --all = [OK] 74 loop-kind skills、lint-config-version-sync OK、lint-artifact-delivery = 21 plugins OK、lint-entrypoint-artifact-first OK（119 inventory）、lint-runtime-portability OK、lint-script-naming VIOLATION=0、lint-skill-name ok、lint-skill-completeness ok（6 skills, completeness）。(9) lint-goal-seek を本 SKILL.md へ実行 = rc=0（WARN 2 件）。同 lint の CI 強制範囲が plugins/harness-creator/skills に限られることを run-ci-checks.sh と governance-check.yml で確認した。(10) combinators が本 branch 以前から 26 skill にある既存キーであることを確認。(11) 配布物 version が 4 箇所すべて 0.3.42 で一致。 【判定理由】(a) 矛盾 0。frontmatter の宣言群と本文の記述が一致し、IN1 の content 層 / accountability 層の分離が 3 箇所で同一に述べられている。(b) 漏れ 0。追加は combinators 1 行のみで 2 値とも実体を伴う。(c) 規約整合 = おおむね充足（見出し名の不揃いを smell/low として記録。rc=0 の WARN であり violation ではない）。(d) 依存関係整合 = 充足（refs 19 件全件実在、392 passed）。(e) rubric high severity 0。 【rubric 投影の補足】ref-skill-design-rubric の high severity 該当項目を照合し違反 0。SKILL.md は 215 行で上限 300 行以内。description は「〜したいときに使う」形式で lint-skill-description.py VIOLATION 0。frontmatter は disable-model-invocation: true / user-invocable: true / argument-hint / kind / prefix / effect / owner / since / version を備え、lint-skill-name.py・lint-skill-completeness.py・lint-entrypoint-artifact-first.py・lint-artifact-delivery.py・lint-feedback-contract.py・lint-script-naming.py・lint-runtime-portability.py がすべて OK、lint-goal-seek.py も rc=0。artifact-delivery state machine と external-mutation-guard block も規定どおり本文に存在する。責務境界も Phase と実行体（youtube-transcript-normalizer / knowledge-extractor 系）が 1:1 に割り当てられ、越境は検出されなかった。唯一の finding は combinator 規定見出し名との不一致で severity は low であり、high severity 該当は 0 件。よって (e) は充足し、PASS の根拠は rubric 採点と 4 条件の双方である。 【PASS の射程】design claim（静的設計 adequacy）に限る。behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
 }

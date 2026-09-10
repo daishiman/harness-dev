@@ -1,0 +1,40 @@
+{
+  "target": {
+    "plugin": "x-longpost-creator",
+    "skill": "run-x-longpost-create",
+    "skill_md_sha256": "661c20e177094bab778585eb7d3b1c802638491a54022a4247d670111dac6c8a"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-07T02:31:44Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "回帰 assertion が『宣言 (SKILL.md / plugin-composition.yaml)・enforcement (validate-headings.js)・索引 (resource-map.yaml / resource-map.md)・既知制約 (EVALS.json known_limitations)』の4面へ拡張され、旧文言の不在 (`1文1行`) と旧 check ID 範囲の不在 (`F1-F5` / `F1〜F5`) を surfaces dict で一括検査する形になった。指摘のたびに1箇所ずつ潰すのではなく『規範が現れる面の集合』を先に定義してから縛る構造へ移行しており、次に F7 を足すときも同じ dict を1行広げれば伝播漏れが検出される",
+      "EVALS.json の扱いで evaluations[].note (1.1.0 時点の評価記録) を凍結し known_limitations だけを現行リリースへ追従させる、という時間軸の切り分けを保った。テスト名 test_evals_follow_current_release_without_erasing_baselines がその設計判断そのものを表しており、意図が名前として残っている",
+      "F5 の緩和根拠を heading-structure-rules.md §5『設計判断の記録』へ、旧判定が実運用の正しい出力を全 FAIL にしていたという事実つきで残している。閾値変更を『なぜ変えたか』ごと正本へ沈める型は再利用価値がある",
+      "F6 を『【】の有無』だけでなく A の見出し2との順序込み一致まで縛り、囲み漏れを別枠検出したうえで、すり抜けても B に余分な文字列が残って F4 が落ちる二重の網になっている。fail-closed が単一 check に依存していない",
+      "F4 が A の `##` 行を除くのと対称に B の `【…】` 行を除く形へ揃えたため、見出し表記の追加が本文同値契約へ波及していない。表示差と内容差の分離という既存の設計軸を崩さずに拡張できている"
+    ],
+    "negative_feedback": [
+      "[low][omission] ROADMAP.md の2行が 1.3.0 に未追従。L8『検証フラグの既定化』が『H5 は `--strict-h2-count`、F1〜F5 は `--file` を渡したときだけ FAIL になる（`EVALS.json` の known_limitations 参照）』と述べるが、参照先の known_limitations[1] は今回 F1-F6 へ更新済みであり、cross-reference の両端で範囲が食い違う (F6 も --file 時のみ発火するため F1-F6 が正)。L7『scripts のテスト維持』も『`validate-headings.js` の F4/F5と失敗原子性』のままで、今回追加された F6 の負例テスト2本 (囲み外し / 順序不一致) を反映していない。ROADMAP は保守者向けの backlog 文書で生成時の規範ではないため運用影響は無く、今回拡張された surfaces dict も runtime surface を対象とする設計なので対象外であること自体は妥当。次の ROADMAP 更新時に併せて直せば足りる",
+      "[low][omission] EVALS.json に時間軸の区別が in-file で記されていない。`x_longpost_creator_version: \"1.1.0\"` と evaluations[].note (L11 は現在形で『F5 のB本文1文1行を FAIL 判定する』『H5 と F1-F5 の強制範囲は…(known_limitations 参照)』と述べる) は 1.1.0 の凍結記録である一方、known_limitations は 1.3.0 へ追従した。設計としては一貫している (テスト名がその意図を担保している) が、ファイル単体を読むと同一ファイル内で F5 について異なる現在形の記述が並び、しかも note が指す先の known_limitations は別バージョンを述べる。note 側に評価時点 (1.1.0) を示す語を1つ添えるか、$schema 近傍へ『evaluations[] は評価時点の凍結記録、known_limitations は現行追従』と1行置けば解消する"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "profile=incremental の 1 context combined review を elegance/rubric 2 verdict へ分離投影したもの (30 思考法は未使用)。iteration 3 で収束。今回申告された修正4点を全て実測で確認した: (1) resource-map.yaml:13 の topic が『…B本文に1行2文を詰めない・Bの `【見出し文言】` 表記と validate-headings.js の check ID (H1-H10 / F1-F6) 対応』へ更新済み。(2) resource-map.md の ASCII ツリー註記が `F1〜F6` へ更新済み。(3) EVALS.json known_limitations[1] が『F5 B本文に1行2文を詰めない / F6 Bの `【見出し文言】` がAの見出し2と順序込みで一致』『--text は…F1-F6 を生成しない』へ更新済み、evaluations[].note は意図どおり不変。(4) contract_parity の surfaces dict が validate-headings.js / resource-map.yaml / resource-map.md / EVALS.json known_limitations の4面を `1文1行` 不在と `F1-F5`/`F1〜F5` 不在で検査。実測: shasum -a 256 で SKILL.md = 661c20e1... (3 iteration を通じて不変)、pytest 対象2ファイル = 23 passed、validate-headings.js 再実走で正例 rc=0 / F5 負例 rc=1 (F5 検出) / F6 負例 rc=1 (F6 検出) と退行なし。repo 全体 grep (.git/.worktrees/node_modules 除く) の結果、旧文言 `1文1行`・`F1-F5`・`F1〜F5` の残存は (a) CHANGELOG と heading-structure-rules §5 の履歴記述、(b) EVALS.json evaluations[].note の凍結記録、(c) 本 verdict と過去 eval-log、(d) テストの assertion 文字列と説明コメント、(e) 無関係 plugin (mf-kessai / harness-pipeline / notion-gmail-send) の別文脈 F1-F5、(f) 下記 low の ROADMAP.md のみで、生成時に AI が規範として読む面には残っていない。medium 以上 0 件・rubric high severity 0 件のため PASS。残る low 2 件は保守者向け文書の追従漏れで運用影響が無く、次回 ROADMAP 更新時の同梱で足りる。"
+}

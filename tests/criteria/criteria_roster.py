@@ -83,4 +83,8 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("ubm-goal-setting", "run-ubm-journal", ("IN1", "IN2", "OUT1", "OUT2")),
     ("ubm-goal-setting", "run-ubm-knowledge-sync", ("IN1", "OUT1")),
     ("ubm-goal-setting", "run-ubm-youtube-ingest", ("IN1", "OUT1")),
+    ("x-longpost-creator", "run-x-longpost-create", ("IN1", "IN2", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-multipost-create", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-shortpost-optimize", ("IN1", "IN2", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-visual-generate", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
 ]

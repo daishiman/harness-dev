@@ -37,11 +37,11 @@ tags:
 - 残り：0日（期間終了）
 - 目標：1年目標の本文。
 
-### 3ヶ月目標
+### 2ヶ月目標
 
 - 期間：2026-06-29〜2026-08-30
 - 残り：12日
-- 目標：3ヶ月目標の本文。
+- 目標：2ヶ月目標の本文。
 
 ### 1ヶ月目標
 
@@ -232,6 +232,38 @@ def test_previous_journal_inherits_purpose_and_checklist(vault: Path):
     ]
     assert len(prev["prohibitions"]) == 2
     assert "◇【0→1】" in prev["phase_checklist"]
+
+
+def test_principle_checklist_absent_does_not_borrow_phase_checklist(vault: Path):
+    """前回に `# 原理原則 チェックシート` が無いとき、フェーズ別の中身を継承しない。
+
+    `# フェーズ別 課題チェックシート` は「チェックシート」を部分一致で含むため、
+    section_body の fallback に任せると本ブロックを持たない移行期のジャーナルから
+    フェーズ別の中身が原理原則チェックシートとして流れ込む。どちらも `- [ ]` の塊なので
+    取り違えても見た目では気づけない。空で返してテンプレート初期化へ倒す経路を固定する。
+    """
+    ctx = run(vault, "2026-08-18")
+    prev = ctx["previous_journal"]
+    assert prev["principle_checklist"] == ""
+    assert "◇【0→1】" not in prev["principle_checklist"]
+    assert any("principle-checklist.md" in w for w in ctx["warnings"]), ctx["warnings"]
+
+
+def test_principle_checklist_inherited_when_present(vault: Path):
+    """前回に `# 原理原則 チェックシート` があればその中身をそのまま継承する。"""
+    prev_path = vault / "02_Configs/Daily/2026-08-17.md"
+    prev_path.write_text(
+        prev_path.read_text(encoding="utf-8")
+        + "\n# 原理原則 チェックシート\n\n## ◇ 右肩上がりになっていますか？\n\n"
+        "- [x] 会社（事業）の口座残高\n- [ ] 個人の口座残高\n",
+        encoding="utf-8",
+    )
+    ctx = run(vault, "2026-08-18")
+    body = ctx["previous_journal"]["principle_checklist"]
+    assert "◇ 右肩上がりになっていますか？" in body
+    assert "- [x] 会社（事業）の口座残高" in body
+    assert "◇【0→1】" not in body
+    assert not [w for w in ctx["warnings"] if "principle-checklist.md" in w], ctx["warnings"]
 
 
 def test_days_remaining_uses_report_period(vault: Path):
@@ -727,10 +759,49 @@ def test_canonical_habit_goal_heading_is_not_a_partial_match(vault: Path):
 
 
 def test_alternate_goal_spelling_does_not_warn(vault: Path):
-    """`### 2ヶ月目標` は `### 3ヶ月目標` の別表記。片方だけ在るのが正常。"""
+    """正本は `### 3ヶ月目標`。fixture の `### 2ヶ月目標` は旧表記で、読み取りだけ通る。
+
+    片方だけ在るのが正常なので、解決できた側について warning を立ててはいけない。
+    """
     ctx = run(vault, "2026-08-18")
     assert ctx["goals"]["quarterly"]["goal"], ctx["goals"]["quarterly"]
-    assert not [w for w in ctx["warnings"] if "2ヶ月目標" in w], ctx["warnings"]
+    assert not [w for w in ctx["warnings"] if "3ヶ月目標" in w], ctx["warnings"]
+
+
+@pytest.mark.parametrize(
+    "name, label",
+    [
+        # 新名・新ラベル
+        ("UBM - 3-月報（３ヶ月） - 2026-06-29〜2026-09-27.md", "3ヶ月の目標"),
+        # 旧名・旧ラベル。期報が 2ヶ月だった頃に保存されたファイルで、改名後も
+        # 拾えないと「過去の期報が消える」ため受理し続ける。
+        ("UBM - 3-月報（２ヶ月） - 2026-06-29〜2026-09-27.md", "2ヶ月の目標"),
+        ("UBM - 3-期報 - 2026-06-29〜2026-09-27.md", "2ヶ月の目標"),
+        # 名前は旧・ラベルは新、という移行途中の組み合わせも拾える
+        ("UBM - 3-期報 - 2026-06-29〜2026-09-27.md", "3ヶ月の目標"),
+    ],
+)
+def test_legacy_quarterly_report_filenames_are_still_picked_up(
+    vault: Path, name: str, label: str
+):
+    """期報の判別はファイル名でなく先頭の `## 【…の目標】` 見出しで行う。
+
+    scan_reports は `goals_dir.glob("*.md")` で全 .md を走査し、REPORT_LABELS の
+    ラベルで種別を決める。よって旧名 (`3-期報` / `（２ヶ月）`) のファイルも
+    quarterly として拾える。この不変条件を名前側から固定する。
+    """
+    goals = vault / "05_Project" / "UBM" / "目標設定"
+    (goals / name).write_text(
+        f"## 【{label}】2026-06-29〜2026-09-27\n期報の本文。\n", encoding="utf-8"
+    )
+    ctx = run(vault, "2026-08-18")
+    src = ctx["report_sources"].get("quarterly")
+    assert src is not None, ctx["report_sources"]
+    assert src["path"].endswith(name)
+    assert src["period"] == "2026-06-29〜2026-09-27"
+    assert src["covers_target"] is True
+    # 期間はレポート側が正。前回ジャーナル (旧表記・2026-08-30 終了) を上書きする。
+    assert ctx["goals"]["quarterly"]["period_end"] == "2026-09-27"
 
 
 def test_unresolved_goal_layer_still_warns():

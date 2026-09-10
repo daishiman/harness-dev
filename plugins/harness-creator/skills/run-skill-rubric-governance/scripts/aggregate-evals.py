@@ -46,7 +46,12 @@ _RECENT_WINDOW = 5  # 直近窓
 _FRICTION_ITERATIONS_MIN = 2  # 再評価ループが必要だった (上限は max_iterations=3)
 _FRICTION_NEGATIVE_MIN = 2  # 1 レコードの negative_feedback が 2 件以上
 _FRICTION_FINDINGS_MIN = 3  # 1 レコードの findings が 3 件以上 (score.jsonl 系)
-_FRICTION_MIN_RECORDS = 2  # 直近窓内で摩擦レコード 2 件以上 (相互裏付け)
+# 直近窓内で摩擦レコード 2 件以上 (相互裏付け)。この「裏付け」が成立するのは
+# 1 レビュー = 1 レコードが保証されている場合だけで、content-review の 2 ファイル投影を
+# そのまま数えていた頃は自分自身のコピーで満たされ実質 >= 1 に退化していた。
+# 畳み込みは _load_content_review_verdicts 側の責務。ここを上げて対処してはいけない
+# (投影の数が変わればまた壊れる)。
+_FRICTION_MIN_RECORDS = 2
 _FRICTION_RECENT_WINDOW = 6  # 苦戦密度の直近窓
 
 
@@ -228,9 +233,13 @@ def _normalize_verdict_record(rec: dict[str, Any]) -> dict[str, Any] | None:
         return None
     feedback = rec.get("feedback_loop") if isinstance(rec.get("feedback_loop"), dict) else {}
     negative = feedback.get("negative_feedback")
+    reviewed_at = rec.get("reviewed_at")
     return {
         "skill": skill,
-        "date": _date_of(rec.get("reviewed_at")),
+        "date": _date_of(reviewed_at),
+        # 秒精度の生タイムスタンプ。date は日付へ丸まってしまうので、同一レビューラウンドの
+        # 2 ファイル投影を畳む _review_identity のキー材料として別に持つ。
+        "reviewed_at": reviewed_at if isinstance(reviewed_at, str) else None,
         "verdict": str(rec.get("verdict", "")),
         "score": None,  # verdict は数値スコアを持たない
         "findings": [],
@@ -308,8 +317,57 @@ def _normalize_live_trial_record(rec: dict[str, Any], run_id: str = "") -> dict[
     }
 
 
+def _review_identity(rec: dict[str, Any]) -> tuple[Any, ...]:
+    """同一レビューラウンドを指す同一性キー。
+
+    reviewed_at は秒精度のタイムスタンプで、同一ラウンドの 2 ファイルには同じ値が書かれる
+    規約なので、これを skill と組めばラウンドを一意に指せる。date (日付) まで丸めると、
+    同じ日に 2 回別のレビューを回したケースまで畳んでしまい、本物の相互裏付けを消す。
+    """
+    return (rec.get("skill"), rec.get("reviewed_at"), rec.get("date"))
+
+
+def _merge_review_projections(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
+    """同一レビューの 2 投影を 1 レコードへ合成する。
+
+    規約上 a と b の iterations / negative_feedback_count は同値になるはずだが、書き手が
+    片方だけ更新した中途半端な状態は現実に起こる。ここでは大きい方を採る (摩擦情報を捨てない)。
+
+    max を採っても過剰検出にはなりにくい。この合成が決めるのは「この 1 ラウンドが摩擦か」
+    だけで、friction_density の発火には畳んだ後に別ラウンドの裏付けがなお 2 件必要だからだ。
+    先勝ちにすると sorted() 順で elegance 側だけが残り、rubric 側にしか無い摩擦が静かに
+    消える — 落とした情報は後から復元できないが、過大な 1 レコードは裏付け不足で発火しない。
+    非対称なので、復元できない側を避ける。
+
+    iterations は verdict に無ければ None になるので、max へ直接渡すと TypeError で落ちる。
+    """
+    merged = dict(a)
+    iterations = [
+        v for v in (a.get("iterations"), b.get("iterations")) if isinstance(v, int)
+    ]
+    merged["iterations"] = max(iterations) if iterations else None
+    merged["negative_feedback_count"] = max(
+        a.get("negative_feedback_count") if isinstance(a.get("negative_feedback_count"), int) else 0,
+        b.get("negative_feedback_count") if isinstance(b.get("negative_feedback_count"), int) else 0,
+    )
+    # content-review では常に [] だが、将来値が入ったときに片方を捨てないよう和を取る。
+    findings: list[Any] = list(a.get("findings") or [])
+    for f in b.get("findings") or []:
+        if f not in findings:
+            findings.append(f)
+    merged["findings"] = findings
+    return merged
+
+
 def _load_content_review_verdicts() -> list[dict[str, Any]]:
-    """eval-log/<plugin>/<skill>/content-review/*-verdict.json を全件読む。"""
+    """eval-log/<plugin>/<skill>/content-review/*-verdict.json を全件読む。
+
+    content-review 規約は同一レビューを elegance-verdict.json と rubric-verdict.json の
+    2 ファイルへ同じ iterations / negative_feedback で投影する。glob の結果をそのまま
+    返すと 1 回のレビューが常に 2 レコードになり、friction_density の
+    _FRICTION_MIN_RECORDS = 2 (「相互裏付け」) が自分自身のコピーで満たされて実質 >= 1 へ
+    退化する。投影の数は将来増えうるので、閾値側ではなくここで 1 レビュー 1 レコードへ畳む。
+    """
     out: list[dict[str, Any]] = []
     base = _eval_log_dir()
     if not base.exists():
@@ -318,14 +376,24 @@ def _load_content_review_verdicts() -> list[dict[str, Any]]:
         paths = sorted(base.glob("**/content-review/*-verdict.json"))
     except OSError:
         return out
+    merged: dict[tuple[Any, ...], dict[str, Any]] = {}
+    order: list[tuple[Any, ...]] = []
     for path in paths:
         try:
             rec = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
         norm = _normalize_verdict_record(rec)
-        if norm is not None:
-            out.append(norm)
+        if norm is None:
+            continue
+        key = _review_identity(norm)
+        if key in merged:
+            merged[key] = _merge_review_projections(merged[key], norm)
+        else:
+            merged[key] = norm
+            order.append(key)
+    for key in order:
+        out.append(merged[key])
     return out
 
 

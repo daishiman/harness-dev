@@ -357,6 +357,72 @@ def hero_card_order():
     return names
 
 
+def hero_hidden_by_default():
+    """冒頭に既定で描かない箇条リストの名簿を正本から引く。
+
+    hero_card_order と同じ流儀で、名簿を script の定数で持たない。持つと
+    『正本を書き換えたのに紙面が変わらない』食い違いが出るうえ、描画する C11 と
+    総量を数える C12・読み戻す C20 がそれぞれ別の名簿を持つ多名簿になる。
+    読めなければ既定 (全部出す) へ落とさず落ちる — 落とすと利用者指定
+    2026-09-08 が黙って解除され、冒頭に一覧が積み上がった資料が出る。
+    """
+    hidden = (((load_visual_policy().get("opening") or {})
+               .get("hero_list_fields") or {}).get("hidden_by_default"))
+    if not isinstance(hidden, list):
+        raise LaunchError(
+            "視覚方針正本に opening.hero_list_fields.hidden_by_default が無い "
+            "(冒頭に描かない箇条リストの単一正本)")
+    return [name for name in hidden if isinstance(name, str) and name]
+
+
+def hero_hidden_fields(config):
+    """実効の非表示集合 = 正本の既定 ∪ 構成データの追加宣言。
+
+    構成データ側 (hero_hidden_fields) は追加宣言であって上書きではない。
+    空配列を書けば既定が解除される形にすると、既定を持つ意味が無くなる。
+    """
+    declared = config.get("hero_hidden_fields") or []
+    return set(hero_hidden_by_default()) | {
+        name for name in declared if isinstance(name, str) and name}
+
+
+def hero_hidden_order(config):
+    """実効の非表示名簿を、正本の順序 + 追加宣言の順で並べたもの。"""
+    hidden = hero_hidden_fields(config)
+    ordered = [name for name in hero_hidden_by_default() if name in hidden]
+    ordered += sorted(hidden - set(ordered))
+    return ordered
+
+
+def hero_hidden_attr_value(config) -> str:
+    """root へ刻む非表示名簿 (空白区切り)。
+
+    名簿を刻まないと C20 は『著者が書かなかった』のか『書いたが紙面から
+    外したのか』を区別できず、隠すたびに欠落として数えることになる。
+    """
+    return " ".join(hero_hidden_order(config))
+
+
+def hero_hidden_payload(config) -> str:
+    """紙面から外した欄の値を root 属性 1 本へ JSON で載せる。
+
+    日付と同じ扱いにする (build_doc_head: 可視要素をやめて root の
+    data-hb-date で運ぶ)。紙面から外すのは『読み手に見せない』であって
+    『値を捨てる』ではない。値を HTML から落とすと、逆抽出した構成データが
+    schema 必須 (focus_theme / target_tasks / attainment_level /
+    must_remember / no_need_to_remember) を欠いて validate を通らなくなり、
+    「HTML を出発点に構成データを起こす」経路が成立しなくなる。
+    属性へ載せるのは中身の JSON で、紙面 (可視テキスト) には 1 文字も出ない。
+    """
+    payload = OrderedDict()
+    for name in hero_hidden_order(config):
+        if name in config:
+            payload[name] = config.get(name)
+    if not payload:
+        return ""
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
 def nav_max_rows() -> int:
     """目次を帯として出すときに占めてよい行数。正本は nav.max_rows。
 
@@ -678,6 +744,14 @@ def _project_download(data, ctx):
     return {"attachments": [attachment]}
 
 
+def _project_links(data, ctx):
+    return {"links": [
+        _entry(("key", link.get("key")), ("label", link.get("label")),
+               ("url", link.get("url")), ("note", link.get("note")))
+        for link in data.get("links") or []
+    ]}
+
+
 def _project_tabs(data, ctx):
     tabs = []
     for tab in data.get("tabs") or []:
@@ -775,6 +849,7 @@ PART_DATA_PROJECTIONS = {
     "accordion": _project_accordion,
     "prompt": _project_prompt,
     "download": _project_download,
+    "links": _project_links,
     "tabs": _project_tabs,
     "flow": _project_flow,
     "chips": _project_chips,
@@ -1340,6 +1415,43 @@ class Renderer:
             items.append('<li class="dl-row">{}{}</li>'.format(link, hint))
         return tag("ul", pairs + [("class", "downloads")], "".join(items))
 
+    def links(self, block, pairs):
+        """B18 案内リンク。B12 と違い、実体を保存させず外部の資料へ送り出す。
+
+        新しいタブで開く (target=_blank rel=noopener noreferrer)。資料を読んでいる
+        途中で画面が入れ替わると、読み手は元の位置へ戻る手立てを失うためである。
+        URL 文字列は画面では出さず印刷時にだけ併記する。紙で読む人には打ち込む以外
+        に辿る手段が無い一方、画面ではラベルの方が「どこへ行くのか」を早く伝える。
+        """
+        items = []
+        for index, link in enumerate(block.get("links") or []):
+            url = link.get("url") or ""
+            anchor = tag("a", [
+                ("class", "nav-link"),
+                ("href", url),
+                ("target", "_blank"),
+                ("rel", "noopener noreferrer"),
+                # 同梱閉包の検査 (C16 SC-01) はこの印を見て案内リンクを例外扱いする。
+                # 印が無い外部参照は従来どおり違反のままにしておく。
+                ("data-hb-nav-link", "external"),
+            ], esc(link.get("label")))
+            note = link.get("note")
+            note_html = (
+                '<span class="nav-link-note">{}</span>'.format(esc(note))
+                if _nonempty(note) else ""
+            )
+            url_html = '<span class="nav-link-url">{}</span>'.format(esc(url))
+            # 反復要素の境界と各項目の値は li が持つ (C20 の復元契約)。href や
+            # 表示テキストからの読み戻しに頼ると、印刷用の URL 併記と本文の
+            # どちらが原本か決められない。
+            items.append(tag("li", [
+                ("class", "nav-link-row"),
+                ("data-hb-key", entry_key(link, index)),
+            ] + self.entry_data_pairs(self.source_entry(block, index, link)),
+                anchor + note_html + url_html))
+        return tag("ul", pairs + [("class", "nav-links")] + self.entries_pairs(block),
+                   "".join(items))
+
     def tabs(self, block, pairs, depth=0):
         if depth > 0:
             raise DataError(
@@ -1540,6 +1652,7 @@ class Renderer:
         "accordion": "accordion",
         "prompt": "prompt",
         "download": "download",
+        "links": "links",
         "tabs": "tabs",
         "flow": "flow",
         "chips": "chips",
@@ -1873,24 +1986,30 @@ body {
   background: var(--pop-primary-soft);
   color: var(--pop-primary-deep);
 }
-/* 冒頭は「読む段落」でなく「見比べるカード」。ラベルを行頭の inline span から
-   カードの見出しへ格上げし、3 枚を横に並べる (利用者要求 R9/R3)。
-   列数は幅に追従させ、数値の折り返し位置を固定しない。 */
+/* 冒頭は「読む段落」でなく「1 行ずつ拾える箇条書き」。ラベルを行頭の札に固定し、
+   本文は 1 列で流す (利用者要求 R9/R3 + 2026-08-25『箇条書きでわかりやすく
+   シンプルに』)。3 枚を横へ並べると 1 列が 220px まで細り、1 行 10 字前後で
+   折り返して語の途中が切れる — 読みにくさの出所は文の長さでなく列の細さだった。 */
 .hero-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 16px 0;
+  padding: 0;
+  list-style: none;
 }
 /* 面は白 1 色、区別は主題色 1 色の細い帯だけで付ける。新しい色トークンは足さない
-   (テーマのアクセント 4 段以外の色を増やさない規約)。冒頭は 3 枚が横並びになる
-   ので、枠線だけだと 3 枚が同じ濃さの箱に見えて読み始める場所が決まらない。 */
+   (テーマのアクセント 4 段以外の色を増やさない規約)。札は本文の左でなく 1 段上に
+   置き、冒頭の他の塊 (hero-list 群) と入れ物の形を同値にする (2026-08-26 利用者
+   要求『冒頭の他の一覧と同じく、1 つ上の行に見出しを置く』)。左に並べると
+   本文の左端だけがカードごとに違い、同じ冒頭の中で読み口が 2 種類に割れていた。 */
 .hero-card {
   position: relative;
+  margin: 0;
   border: 1px solid var(--line);
   border-left: 4px solid var(--pop-primary);
   border-radius: var(--card-radius);
-  padding: 14px 16px;
+  padding: 12px 16px;
   background: #fff;
 }
 .hero-card-label {
@@ -1903,19 +2022,66 @@ body {
   font-size: 0.8em;
   font-weight: 700;
   letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
 }
-.hero-card-body { margin: 0; line-height: 1.85; }
+/* 日本語を語の途中で折らない。auto-phrase は文節の切れ目で折り、未対応の環境でも
+   line-break: strict が最低限の禁則を担う (どちらも 1 行の見え方だけを変え、
+   可視テキストは変えない = NAR-02 の一致は保たれる)。 */
+.hero-card-body {
+  margin: 0;
+  line-height: 1.9;
+  line-break: strict;
+  overflow-wrap: break-word;
+  word-break: auto-phrase;
+  text-wrap: pretty;
+}
+/* 文が 2 つ以上ある本文は段落で流さず、文ごとの行にする (2026-08-25 利用者要求
+   『目的や背景が複数あるときは冒頭の他の一覧と同じ表示方法に』)。行頭記号と
+   字下げは meta-list と同値にして、冊子の中で箇条書きの形が 1 つになるようにする。
+   左の主題色の帯はカード側に残るので、色の手がかりは変わらない。 */
+.hero-card-body-list {
+  margin: 0;
+  padding-left: 1.2em;
+}
+.hero-card-body-list > li + li { margin-top: 4px; }
 /* 最初に読む 1 枚 (並び順の先頭 = goal) だけ面を淡く塗って視線の入口にする。 */
 .hero-card:first-child { background: var(--pop-primary-soft); }
 .hero-card:first-child .hero-card-label { background: #fff; }
 /* 見出しの無い ul が縦に積まれると、何の一覧かを知らないまま行を読むことに
-   なる。リストごとに見出しを付け、塊として区切る。 */
+   なる。リストごとに見出しを付け、塊として区切る。左の帯はカードと同値にして、
+   冒頭の塊がどれも同じ読み口に見えるようにする。 */
 .hero-list {
   margin: 12px 0;
   padding: 12px 16px;
   border: 1px solid var(--line);
+  border-left: 4px solid var(--pop-primary);
   border-radius: var(--card-radius);
   background: #fff;
+}
+/* いま指している 1 枚を、面と帯の濃さで返す (2026-08-25 利用者要求『カードごとに
+   ホバーしたら今ここを見ていると分かるように』)。増やすのは主題色 1 色の濃淡と影
+   だけで、新しい色トークンも文字も足さない — CSS の content へ語を置くと、構成
+   データの外から可視テキストが生えて NAR-02 の一致が崩れる。 */
+@media (hover: hover) {
+  .hero-card, .hero-list {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .hero-card:hover, .hero-list:hover {
+    border-color: var(--pop-primary-deep);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+  .hero-card:hover .hero-card-label,
+  .hero-list:hover .hero-list-heading {
+    background: var(--pop-primary);
+    color: #fff;
+  }
+}
+/* 動きを減らす設定では持ち上げをやめる。色の変化だけで「いま指している」は伝わる。 */
+@media (prefers-reduced-motion: reduce) {
+  .hero-card, .hero-list { transition: none; }
+  .hero-card:hover, .hero-list:hover { transform: none; }
 }
 .hero-list-heading {
   display: inline-block;
@@ -1965,12 +2131,12 @@ body {
   border-left: 4px solid var(--pop-primary);
   padding-left: 12px;
 }
-.steps, .checklist, .downloads, .action-items, .handson {
+.steps, .checklist, .downloads, .nav-links, .action-items, .handson {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.step-row, .check-row, .dl-row, .ai-row, .hs-row {
+.step-row, .check-row, .dl-row, .nav-link-row, .ai-row, .hs-row {
   display: flex;
   gap: 8px;
   align-items: baseline;
@@ -1990,6 +2156,27 @@ body {
   border-radius: var(--card-radius);
   padding: 12px;
   background: var(--pop-bg);
+}
+/* 節の中のカードも冒頭と同じ返し方にする。指している 1 枚だけ左に主題色の帯が
+   立ち、面が浮く (冒頭だけホバーが効くと、同じ見た目の箱で反応が食い違う)。
+   帯は透明な border を最初から確保した上で色を差すので、幅は動かない。節の外枠
+   (.section-card) は入れない — 面が広すぎて、常時点いているのと変わらなくなる。 */
+.trio-card, .feature-card, .versus-side {
+  border-left: 4px solid transparent;
+}
+@media (hover: hover) {
+  .trio-card, .feature-card, .versus-side {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover {
+    border-left-color: var(--pop-primary);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.10);
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trio-card, .feature-card, .versus-side { transition: none; }
+  .trio-card:hover, .feature-card:hover, .versus-side:hover { transform: none; }
 }
 .versus { display: flex; gap: 12px; flex-wrap: wrap; }
 .table-wrap { overflow-x: auto; }
@@ -2024,6 +2211,11 @@ body {
   cursor: pointer;
 }
 .dl-hint { color: var(--ink-muted); font-size: 88%; }
+.nav-link { font-weight: 600; }
+.nav-link-note { color: var(--ink-muted); font-size: 88%; }
+/* 画面ではラベルの方が行き先を早く伝えるので URL は隠す。紙では打ち込む以外に
+   辿る手段が無いため、印刷時にだけ出す (@media print で display を戻す)。 */
+.nav-link-url { display: none; }
 .tab-strip { display: flex; gap: 8px; margin-bottom: 8px; }
 .fold { border-bottom: 1px solid var(--line); }
 .asset { margin: 12px 0; }
@@ -2104,6 +2296,8 @@ textarea:focus-visible {
   .pop-header--sidebar { height: auto; border-right: none; box-shadow: none; }
   /* 紙に「本文へ移動」は届かない。焦点を持てない媒体では消す。 */
   .skip-to-main, .skip-to-main:focus { display: none; }
+  /* 逆に案内リンクの URL は紙でだけ要る。押せないので文字列が唯一の手掛かり。 */
+  .nav-link-url { display: inline; color: var(--ink-muted); font-size: 88%; }
   .navbar { flex-wrap: wrap; overflow-x: visible; }
   .pop-header--sidebar .navbar { flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
   .pop-header--sidebar .nav-chip { width: auto; max-width: 16em; }
@@ -2470,16 +2664,64 @@ def build_doc_head(config) -> str:
     return ""
 
 
+HERO_SENTENCE_END = "。"
+
+
+def hero_body_lines(value):
+    """冒頭カードの本文を、文の切れ目で 1 行ずつに割る。
+
+    割った行は li になり、可視テキストは行を空白 1 個で継いだ形になる (HTML の
+    要素境界は必ず 1 区切りとして読まれるため、行間に空白を書かなくてもそうなる)。
+    構成データ側の文区切りも同じ空白 1 個へ揃えてある (C12 の正規化が単一 writer)
+    ので、割っても NAR-02 の『可視テキスト == 構成データ』は保たれる。
+    """
+    lines = []
+    buf = ""
+    for char in str(value):
+        buf += char
+        if char == HERO_SENTENCE_END:
+            lines.append(buf.strip())
+            buf = ""
+    tail = buf.strip()
+    if tail:
+        lines.append(tail)
+    return [line for line in lines if line]
+
+
+def hero_card_body(field, value) -> str:
+    """冒頭カードの本文要素。文が 2 つ以上なら段落でなく箇条書きにする。
+
+    段落で流すと、目的や背景が 2 文 3 文になった瞬間に読み手は「自分に関係が
+    あるか」を段落から探すことになる (利用者要求 2026-08-25)。冒頭に並ぶ他の
+    一覧 (hero_list_headings 群) と同じ箇条書きの形へ揃え、1 行ずつ拾えるようにする。
+
+    `data-hb-field` は本文要素 1 つにだけ置く。行ごとに刻むと同じ印が複数出て
+    NAR-02 の重複検出に掛かり、外枠へ移すと見出し語が印の可視テキストへ混ざる。
+    """
+    lines = hero_body_lines(value)
+    if len(lines) <= 1:
+        return '<p class="hero-card-body">{}</p>'.format(field_span(field, value))
+    items = "".join("<li>{}</li>".format(esc(line)) for line in lines)
+    return tag("ul",
+               [("class", "hero-card-body hero-card-body-list"),
+                ("data-hb-field", field)],
+               items)
+
+
 def hero_card(field, label, body_html) -> str:
-    """冒頭カード 1 枚。見出し語と本文を分けて積む。
+    """冒頭の箇条 1 件。見出し語と本文を分けて積む。
+
+    要素は li にする。冒頭の 3 要素は並列に読む一覧であり、div の羅列にすると
+    読み上げでも印刷でも「いくつあるか」が伝わらない (箇条書きであることを
+    見た目の CSS だけで表さない)。
 
     `data-hb-field` は本文側の要素にだけ置く。カードの外枠へ置くと、見出し語
     (語彙正本から引いた「目的」等) がマーカー要素の可視テキストに混ざり、
     NAR-02 の『可視テキスト == 構成データ』と C20 の読み戻しが同時に壊れる。
+    本文要素の組み立ては hero_card_body が持つ (1 文なら段落・複数文なら箇条書き)。
     """
-    return tag("div", [("class", "hero-card"), ("data-hb-card-field", field)],
-               '<p class="hero-card-label">{}</p>'
-               '<p class="hero-card-body">{}</p>'.format(esc(label), body_html))
+    return tag("li", [("class", "hero-card"), ("data-hb-card-field", field)],
+               '<p class="hero-card-label">{}</p>{}'.format(esc(label), body_html))
 
 
 def hero_list_block(field, headings, list_html) -> str:
@@ -2591,6 +2833,14 @@ def build_hero(config, hero_part) -> str:
     parts = []
     labels = vocabulary_labels("hero_card_labels", "field")
     headings = vocabulary_labels("hero_list_headings", "field")
+    # 冒頭に描かない箇条リストの実効名簿。値は構成データに残したまま紙面から
+    # だけ外す — 消すと E-SECTION-UNTIED-TASK などの整合検査が効かなくなり、
+    # 「紙面に出さない」と「関係を切る」が同じ操作になってしまう。
+    hidden = hero_hidden_fields(config)
+
+    def hero_shown(field):
+        return field not in hidden
+
     parts.append(build_hero_thumbnail(config))
     parts.append('<h1 data-hb-field="title">{}</h1>'.format(esc(config.get("title"))))
     if _nonempty(config.get("lead")):
@@ -2611,12 +2861,12 @@ def build_hero(config, hero_part) -> str:
             raise DataError(
                 "冒頭カードの見出し語が表示語彙正本 (hero_card_labels) に無い: {!r}"
                 .format(field))
-        cards.append(hero_card(field, label, field_span(field, value)))
+        cards.append(hero_card(field, label, hero_card_body(field, value)))
     if cards:
-        parts.append('<div class="hero-card-grid">{}</div>'.format("".join(cards)))
+        parts.append('<ul class="hero-card-grid">{}</ul>'.format("".join(cards)))
 
     chips = []
-    for chip in config.get("goal_chips") or []:
+    for chip in (config.get("goal_chips") or []) if hero_shown("goal_chips") else []:
         # 1 チップ 1 マーカー。外枠 (data-hb-list-field) だけでは何個あったかは
         # 読めても各値の境界が読めないため、配列の要素側へ刻む (focus_theme と同型)。
         chips.append(field_span("goal_chips", chip, klass="goal-chip"))
@@ -2625,7 +2875,7 @@ def build_hero(config, hero_part) -> str:
             "goal_chips", headings,
             '<p class="goal-chips">{}</p>'.format("".join(chips))))
 
-    focus = config.get("focus_theme") or []
+    focus = (config.get("focus_theme") or []) if hero_shown("focus_theme") else []
     if focus:
         items = "".join(
             field_span("focus_theme", value, element="li") for value in focus)
@@ -2633,7 +2883,7 @@ def build_hero(config, hero_part) -> str:
             "focus_theme", headings,
             '<ul class="meta-list focus-theme">{}</ul>'.format(items)))
 
-    tasks = config.get("target_tasks") or []
+    tasks = (config.get("target_tasks") or []) if hero_shown("target_tasks") else []
     if tasks:
         items = []
         for task in tasks:
@@ -2646,14 +2896,15 @@ def build_hero(config, hero_part) -> str:
             "target_tasks", headings,
             '<ul class="meta-list target-tasks">{}</ul>'.format("".join(items))))
 
-    if _nonempty(config.get("attainment_level")):
+    if hero_shown("attainment_level") and _nonempty(config.get("attainment_level")):
         parts.append(hero_list_block(
             "attainment_level", headings,
             '<p class="attainment">'
             + field_span("attainment_level", config.get("attainment_level"))
             + "</p>"))
 
-    connectors = config.get("prerequisite_connectors")
+    connectors = (config.get("prerequisite_connectors")
+                  if hero_shown("prerequisite_connectors") else None)
     if isinstance(connectors, list) and connectors:
         labels = vocabulary_labels("connectors", "id")
         items = []
@@ -2688,13 +2939,14 @@ def build_hero(config, hero_part) -> str:
             '<ul class="meta-list prerequisite-connectors">{}</ul>'
             .format("".join(items))))
 
-    must = config.get("must_remember") or []
+    must = (config.get("must_remember") or []) if hero_shown("must_remember") else []
     if must:
         items = "".join(field_span("must_remember", value, element="li") for value in must)
         parts.append(hero_list_block(
             "must_remember", headings,
             '<ul class="meta-list must-remember">{}</ul>'.format(items)))
-    no_need = config.get("no_need_to_remember") or []
+    no_need = ((config.get("no_need_to_remember") or [])
+               if hero_shown("no_need_to_remember") else [])
     if no_need:
         items = "".join(
             field_span("no_need_to_remember", value, element="li") for value in no_need)
@@ -3011,6 +3263,12 @@ def render_document(config, theme, tokens, modules):
         ("data-hb-must-remember-max",
          "" if config.get("must_remember_max") is None
          else str(config.get("must_remember_max"))),
+        # 冒頭に描かなかった箇条リストの実効名簿 (空白区切り) と、その値。
+        # 名簿と値を分けるのは、名簿が「なぜ紙面に無いか」を、値が「何が
+        # 書かれていたか」をそれぞれ運ぶため。日付と同じで、紙面には出さず
+        # 記録は残す (build_doc_head の判断と同じ扱い)。
+        ("data-hb-hero-hidden", hero_hidden_attr_value(config)),
+        ("data-hb-hero-hidden-data", hero_hidden_payload(config)),
     ]
 
     body = [

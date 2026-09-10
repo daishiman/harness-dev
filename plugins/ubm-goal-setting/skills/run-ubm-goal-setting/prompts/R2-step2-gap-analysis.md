@@ -61,7 +61,7 @@
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| ナレッジサマリー | past_summary 内 (info-collector 生成・coordinator 経由で受領) | 原因パターン照合・深掘りの引用に使うとき |
+| ナレッジサマリー | past_summary 内 (info-collector 生成・親 context が受領) | 原因パターン照合・深掘りの引用に使うとき |
 | data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
 
 ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):

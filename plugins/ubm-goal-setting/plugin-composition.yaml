@@ -6,7 +6,7 @@
 name: ubm-goal-setting
 description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。
 kind: plugin-composition
-version: 0.3.26
+version: 0.3.44
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
@@ -14,7 +14,7 @@ last-audited: 2026-07-11
 contract:
   intent: UBM (北原さん式ゴールセッティング) の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract) を継承した 1 plugin へ漏れなく移植する。
   interface:
-    inputs: [目標種別(weekly|monthly|bimonthly), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md)]
+    inputs: [目標種別(weekly|monthly|quarterly。bimonthlyは後方互換の別名), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md)]
     outputs: [統一ハイブリッド構造21項目の目標設定ファイル, Daily.md embed更新, knowledge/*.json更新, router.json/registry.json/sync-log.jsonl追記, 同期レポート]
   invariant:
     - 目標設定出力は統一ハイブリッド構造21項目を満たし validate-goal-output.py の全チェックに PASS すること

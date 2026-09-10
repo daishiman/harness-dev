@@ -21,6 +21,12 @@ GOLDEN_NAME = "2026-08-18.md"
 GOLDEN_NUMBER = 389
 GOLDEN_DATE = "2026-08-18"
 
+# 四半期見出しの正本と後方互換表記。validator の QUARTERLY_HEADING と一致することを
+# test_quarterly_heading_constants_track_validator が縛る (ここを直書きしたまま validator
+# 側の正本が変わると、置換が空振りして併存 test が無内容に退化するため)。
+CANONICAL_QUARTERLY = "### 3ヶ月目標"
+LEGACY_QUARTERLY = "### 2ヶ月目標"
+
 
 def run(path: Path, number: int | None = None, date: str | None = None) -> subprocess.CompletedProcess:
     cmd = [sys.executable, str(VALIDATE), "--file", str(path)]
@@ -114,26 +120,48 @@ def test_goal_bad_period_format_fails(tmp_path: Path, golden: str):
     assert "G02" in proc.stdout
 
 
-def test_legacy_three_month_heading_remains_valid(tmp_path: Path, golden: str):
-    """既存ジャーナルの旧見出しは再検証で骨格違反にしない。"""
-    text = golden.replace("### 2ヶ月目標", "### 3ヶ月目標", 1)
+def test_quarterly_heading_constants_track_validator():
+    """test 側の見出し定数が validator の正本・後方互換表記と一致すること。"""
+    module = _load_validator()
+    assert module.QUARTERLY_HEADING[0] == CANONICAL_QUARTERLY.removeprefix("### ")
+    assert LEGACY_QUARTERLY.removeprefix("### ") in module.QUARTERLY_HEADING[1:]
+
+
+def test_legacy_two_month_heading_remains_valid(tmp_path: Path, golden: str):
+    """既存ジャーナルの旧見出し (2ヶ月目標) は再検証で骨格違反にしない。
+
+    正本は `3ヶ月目標` (QUARTERLY_HEADING の先頭)。旧表記で保存済みのジャーナルを
+    後から検証し直しても骨格違反にならないことを、置換が実際に起きたことを
+    確かめたうえで検査する (見出しが変わって置換が空振りすると、この test は
+    「golden がそのまま通る」だけの無内容な test に退化するため)。
+    """
+    assert CANONICAL_QUARTERLY in golden
+    text = golden.replace(CANONICAL_QUARTERLY, LEGACY_QUARTERLY, 1)
+    assert LEGACY_QUARTERLY in text
     proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
     assert proc.returncode == 0, proc.stdout
 
 
-def test_canonical_two_month_goal_wins_when_legacy_heading_also_exists(
+def test_canonical_quarterly_goal_wins_when_legacy_heading_also_exists(
     tmp_path: Path, golden: str
 ):
-    """併存時に旧見出しの本文を検査して正本側の空値を見逃してはならない。"""
-    canonical = "### 2ヶ月目標\n"
-    legacy = """### 3ヶ月目標
+    """併存時に旧見出しの本文で満足して正本側の空値を見逃してはならない。
+
+    旧表記の完成セクションを正本セクションより前に置き、正本の「- 目標：」だけを
+    空にする。旧表記側を先に拾って PASS すると fail-open になるので、違反が
+    正本の見出し名で報告されることを要求する。
+    """
+    assert CANONICAL_QUARTERLY in golden
+    legacy_section = f"""{LEGACY_QUARTERLY}
 
 - 期間：2026-06-29〜2026-08-30
 - 残り：12日
 - 目標：旧表記側には値がある。
 
 """
-    text = golden.replace(canonical, legacy + canonical, 1)
+    text = golden.replace(
+        f"{CANONICAL_QUARTERLY}\n", legacy_section + f"{CANONICAL_QUARTERLY}\n", 1
+    )
     canonical_body = (
         "次回壁打ち（9/9・北原さん）までに、ティアマインドの支援が期待値6項目の合意文書の上で回り、"
         "青木さんの週1支援と合わせて毎月の固定費300,000に届く売上の形が見えている状態を作った。"
@@ -142,7 +170,7 @@ def test_canonical_two_month_goal_wins_when_legacy_heading_also_exists(
     text = text.replace(f"- 目標：{canonical_body}", "- 目標：", 1)
     proc = run(write(tmp_path, text))
     assert proc.returncode == 1, proc.stdout
-    assert "G03: 2ヶ月目標" in proc.stdout, proc.stdout
+    assert "G03: 3ヶ月目標" in proc.stdout, proc.stdout
 
 
 def test_empty_gratitude_fails(tmp_path: Path, golden: str):
@@ -543,3 +571,281 @@ def test_h01_treats_a_fenced_block_as_not_a_record():
     assert h01("> 22:10 に Gridノートを書いた。") == []  # 引用は記録として数える
     assert h01("```\n- 22:10 に Gridノートを書いた。\n```")
     assert h01("<!-- Gridノートを書いた -->")
+
+
+def test_legacy_quarterly_heading_still_passes(tmp_path: Path, golden: str):
+    """旧表記 `### 2ヶ月目標` だけで書かれた既存ジャーナルを骨格違反にしない。
+
+    正本は `3ヶ月目標` だが、過去分を再検証したときに S01 で落ちると
+    「書き換えないと検証できない」記録が生まれる。後方互換の受理はこの改名の
+    主目的なので、golden 全体を旧表記へ倒した状態を PASS として固定する。
+    """
+    text = golden.replace("### 3ヶ月目標", "### 2ヶ月目標")
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "PASS" in proc.stdout
+
+
+def test_legacy_quarterly_heading_violation_names_the_written_heading(
+    tmp_path: Path, golden: str
+):
+    """旧表記で書かれた節の違反メッセージは、実際に書かれていた見出し名で出す。
+
+    `GOAL_SECTIONS` の要素はタプル (正本, 旧表記) なので、素朴に f-string へ
+    埋めると「('3ヶ月目標', '2ヶ月目標') に…」という内部表現が利用者に漏れる。
+    validate() の 367-376 がここを解決している。その分岐を固定する。
+    """
+    text = golden.replace("### 3ヶ月目標", "### 2ヶ月目標").replace(
+        "- 期間：2026-06-29〜2026-09-27\n", ""
+    )
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "G01: 2ヶ月目標 に「- 期間：」の行がありません" in proc.stdout
+    # タプルを素朴に f-string へ埋める退行はここで落とす。
+    assert "('3ヶ月目標'" not in proc.stdout
+
+
+def test_legacy_quarterly_heading_is_noticed_even_though_it_passes(
+    tmp_path: Path, golden: str
+):
+    """旧表記を受理はするが黙らない。PASS したまま正本への書き換えを促す。
+
+    受理だけして無言だと、「前回ジャーナルを継承して今日の分を書く」運用の中で
+    旧表記が自己複製し続け、正本へ寄る契機が来ない (自己複製の指摘が smell の実体)。
+    """
+    text = golden.replace("### 3ヶ月目標", "### 2ヶ月目標")
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "NOTICE: D01" in proc.stdout
+    # 「今どれが書かれていて、何に直すのか」の両方が読めること。
+    assert "「2ヶ月目標」" in proc.stdout and "「3ヶ月目標」" in proc.stdout
+
+
+def test_canonical_heading_emits_no_notice(tmp_path: Path, golden: str):
+    """正本どおりのジャーナルには通知を出さない (常時 NOTICE は無視されて死ぬ)。"""
+    proc = run(write(tmp_path, golden), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+    assert "NOTICE" not in proc.stdout
+
+
+def test_deprecation_notice_survives_a_failing_run(tmp_path: Path, golden: str):
+    """違反があっても通知は出す。
+
+    FAIL のとき黙ると、違反を直して再実行し PASS した瞬間にしか旧表記に気づけない。
+    通知が一番効くのは「今まさにこのファイルを直している」周回のほうなので、
+    そこで消えるのは通知経路として本末転倒になる。
+    """
+    text = golden.replace("### 3ヶ月目標", "### 2ヶ月目標").replace(
+        "- 期間：2026-06-29〜2026-09-27\n", ""
+    )
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "NOTICE: D01" in proc.stdout
+
+
+def _with_both_quarterly_headings(golden: str, canonical_body: str) -> str:
+    """正本 `### 3ヶ月目標` の手前に完全な旧表記 `### 2ヶ月目標` 節を差し込む。
+
+    「移行途中で両方書いてしまった」異常系。本文の出現順は 2ヶ月 → 3ヶ月になる。
+    """
+    legacy = (
+        "### 2ヶ月目標\n"
+        "- 期間：2026-06-29〜2026-08-30\n"
+        "- 残り：5日\n"
+        "- 目標：旧表記の節に書かれた本文。\n"
+    )
+    # 正本節は「中身ごと」差し替える。golden の本文を残したまま前置きすると、
+    # 期間行が居座って何を検査しているのか分からないテストになる。
+    replaced, count = re.subn(
+        r"### 3ヶ月目標\n.*?(?=^### )",
+        legacy + "### 3ヶ月目標\n" + canonical_body,
+        golden,
+        count=1,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    assert count == 1, "golden の `### 3ヶ月目標` 節を特定できなかった"
+    return replaced
+
+
+def test_both_quarterly_headings_validates_the_canonical_section(
+    tmp_path: Path, golden: str
+):
+    """3ヶ月・2ヶ月が併存したら、検査対象は必ず正本の `3ヶ月目標` 節にする。
+
+    body を本文の出現順で、ラベルを候補順で別々に決めていた頃は、旧表記が手前にあると
+    「2ヶ月節の中身を 3ヶ月目標として報告する」ラベル錯誤が起きた。正本節の期間行だけを
+    壊したとき、ラベルが `3ヶ月目標` で出ることをもって「正本を見ている」ことを固定する。
+    """
+    text = _with_both_quarterly_headings(golden, "- 残り：5日\n- 目標：正本の本文。\n")
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "G01: 3ヶ月目標 に「- 期間：」の行がありません" in proc.stdout
+    # 旧表記節は完全なので、そちらを見ていれば違反は 1 件も出ない。
+    # 見るのは違反行 (`  - `) だけ。旧表記が併存する以上 D01 の NOTICE は出るのが正しく、
+    # stdout 全体で判定すると通知経路と検査対象の話が混ざる。
+    violation_lines = [l for l in proc.stdout.splitlines() if l.startswith("  - ")]
+    assert not [l for l in violation_lines if "2ヶ月目標" in l], violation_lines
+
+
+def test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section(
+    tmp_path: Path, golden: str
+):
+    """正本節が空なら、手前に完全な旧表記節があっても PASS させない (fail-open 回帰)。
+
+    旧表記の受理は「過去分を再検証できる」ための後方互換であって、正本が空のまま
+    出荷できる抜け道ではない。本文の出現順に任せると exit 0 になっていた。
+    """
+    text = _with_both_quarterly_headings(golden, "")
+    proc = run(write(tmp_path, text))
+    assert proc.returncode == 1
+    assert "3ヶ月目標" in proc.stdout
+
+
+# --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---------------------------------
+
+# ネストしたサブ項目も設問なので先頭空白を許す (validator の CHECKBOX_RE と同形)。
+CHECKBOX = re.compile(r"^\s*-\s*\[[ xX]\]")
+
+
+def split_principle(golden: str) -> tuple[str, list[str]]:
+    """golden を「チェックシートより前」と「設問セクションの列」へ割る。
+
+    先頭要素は `# 原理原則 チェックシート` 直後の空行なので、設問は `sections[1:]` にあたる。
+    """
+    head, marker, tail = golden.partition("\n# 原理原則 チェックシート\n")
+    assert marker, "golden-sample.md に # 原理原則 チェックシート が無い"
+    return head, re.split(r"(?m)^(?=## ◇)", tail)
+
+
+def test_principle_checklist_block_is_required(tmp_path: Path, golden: str):
+    """`# 原理原則 チェックシート` ブロックごと落ちたら S01 で落とす。
+
+    「毎回丸ごと出す」が利用者の要求なので、ブロック不在は骨格違反として扱う。
+    """
+    head, _ = split_principle(golden)
+    proc = run(write(tmp_path, head), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert "S01" in proc.stdout
+    assert "# 原理原則 チェックシート" in proc.stdout
+
+
+def test_principle_checklist_excerpt_fails_per_missing_section(tmp_path: Path, golden: str):
+    """設問を抜粋したチェックシートを PASS にしない。
+
+    「1 つでもあれば可」にすると、3 設問だけ書いたチェックシートが通り、
+    毎回丸ごと出すという要求が検査を素通りして空洞化する。欠落は 1 件 1 行で出す。
+    """
+    head, sections = split_principle(golden)
+    text = head + "\n# 原理原則 チェックシート\n" + "".join(sections[:4])  # 先頭3設問だけ残す
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("K01:") == 8, proc.stdout
+    assert "K01: チェックシートに「## ◇支出は前回から下げられましたか…」の設問がありません" in proc.stdout
+
+
+def test_principle_checklist_checkbox_is_required_per_section(tmp_path: Path, golden: str):
+    """チェックボックスの有無は設問セクション単位で見る。
+
+    ブロック全体から 1 行でも見つかれば可にすると、1 設問だけ埋まっていて残り 10 設問が
+    見出しだけ、という状態を通す (P02 と同じ形の fail-open)。空にした 10 設問すべてが
+    K02 で挙がることを固定する。
+    """
+    head, sections = split_principle(golden)
+    stripped = [sections[0], sections[1]] + [
+        re.sub(r"(?m)^\s*-\s*\[[ xX]\].*\n", "", s) for s in sections[2:]
+    ]
+    text = head + "\n# 原理原則 チェックシート\n" + "".join(stripped)
+    proc = run(write(tmp_path, text), GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 1
+    assert proc.stdout.count("K02:") == 10, proc.stdout
+    assert proc.stdout.count("K01:") == 0, proc.stdout
+
+
+def principle_headings(text: str) -> list[str]:
+    """`# 原理原則 チェックシート` 配下の H2 設問見出しを出現順で返す。"""
+    _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
+    return [l.strip() for l in tail.splitlines() if l.strip().startswith("## ◇")]
+
+
+def test_principle_sections_stay_in_sync_across_the_four_sources(golden: str):
+    """設問の正本が 4 箇所に分散しているので、ズレをテストで落とす。
+
+    正本テンプレート (principle-checklist.md) / Few-shot (golden-sample.md) /
+    人間向け骨格 (output-format.md) / 機械検査キー (PRINCIPLE_SECTIONS) の 4 つが
+    同じ 11 設問を指していなければならない。1 箇所だけ直す変更は必ず起きるので、
+    「実測で確認した」ではなく検査として固定する。
+    """
+    skill = PLUGIN_ROOT / "skills/run-ubm-journal"
+    template = (skill / "references/principle-checklist.md").read_text(encoding="utf-8")
+    fmt = (skill / "references/output-format.md").read_text(encoding="utf-8")
+    source = (skill / "scripts/validate-journal-output.py").read_text(encoding="utf-8")
+
+    headings = principle_headings(golden)
+    assert len(headings) == 11, headings
+    assert principle_headings(template) == headings
+    assert principle_headings(fmt) == headings
+
+    block = re.search(r"PRINCIPLE_SECTIONS = \[(.*?)\n\]", source, re.S)
+    assert block, "PRINCIPLE_SECTIONS が見つからない"
+    keys = re.findall(r'"([^"]+)"', block.group(1))
+    assert len(keys) == len(headings)
+    # 各キーは 1 つの設問だけに一致すること。複数に当たると K01 が別の設問の存在で
+    # 満たされ、欠落を検出できなくなる。
+    for key in keys:
+        assert sum(key in h for h in headings) == 1, key
+
+
+def test_principle_checklist_template_and_golden_have_same_questions(golden: str):
+    """テンプレートと golden で設問本文（チェックボックス行）が一致する。
+
+    見出しだけ揃えても設問が抜ければ意味がない。チェック状態 (`[ ]` / `[x]`) の
+    違いは正常なので、そこだけ正規化してから比べる。
+    """
+    template = (
+        PLUGIN_ROOT / "skills/run-ubm-journal/references/principle-checklist.md"
+    ).read_text(encoding="utf-8")
+
+    def questions(text: str) -> list[str]:
+        _, _, tail = text.partition("\n# 原理原則 チェックシート\n")
+        return [
+            re.sub(r"\[[ xX]\]", "[ ]", l.rstrip())
+            for l in tail.splitlines()
+            if CHECKBOX.match(l)
+        ]
+
+    assert questions(golden) == questions(template)
+    assert len(questions(golden)) == 56
+
+
+def test_principle_checklist_has_no_horizontal_rule(golden: str):
+    """`# 原理原則 チェックシート` 本文に水平線を置かない。
+
+    build-journal-context の section_body は `---` をセクション終端として扱うため、
+    区切り線を書くと翌日の継承がそこで打ち切られ、以降の設問が静かに消える。
+    """
+    _, _, tail = golden.partition("\n# 原理原則 チェックシート\n")
+    assert not [l for l in tail.splitlines() if l.strip() == "---"], tail
+
+
+def test_principle_checklist_nested_checkbox_counts(tmp_path: Path, golden: str):
+    """インデントされたサブ項目**だけ**の設問も K02 を満たす。
+
+    golden をそのまま通すだけでは、この主張は固定できない。「（1）」の設問は
+    ネストした項目とトップレベルの項目を両方持つため、先頭空白を許さない正規表現へ
+    退行させても K02 はトップレベル側で満たされてしまう。ネスト以外を取り除いた
+    設問を作り、それが PASS することで初めて `^\\s*-` の `\\s*` を固定できる。
+    """
+    head, sections = split_principle(golden)
+    target = "歴史の共有ができていますか？（1）"
+    rebuilt = []
+    for sec in sections:
+        if target in sec:
+            # トップレベルのチェックボックス行だけ落とし、ネストした項目を残す。
+            sec = re.sub(r"(?m)^-\s*\[[ xX]\].*\n", "", sec)
+            assert re.search(r"(?m)^\s+-\s*\[[ xX]\]", sec), sec
+            assert not re.search(r"(?m)^-\s*\[[ xX]\]", sec), sec
+        rebuilt.append(sec)
+    proc = run(write(tmp_path, head + "\n# 原理原則 チェックシート\n" + "".join(rebuilt)),
+               GOLDEN_NUMBER, GOLDEN_DATE)
+    assert proc.returncode == 0, proc.stdout
+

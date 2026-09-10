@@ -1,0 +1,23 @@
+{
+  "$comment": "X長文投稿の入出力パス設定。plugin 本体は実パスを一切埋め込まない。出力先は env のみで解決し、XLP_OUTPUT_DIR も XLP_VAULT_ROOT も未設定なら解決不能として停止する（fail-closed。既定値へのフォールバックは持たない）。",
+  "resolutionOrder": [
+    "XLP_OUTPUT_DIR (出力ディレクトリを直接指定)",
+    "XLP_VAULT_ROOT (vault ルート。出力先は ${XLP_VAULT_ROOT}/05_Project/X)"
+  ],
+  "paths": {
+    "outputDir": "${XLP_VAULT_ROOT}/05_Project/X",
+    "obsidianAttachmentDir": "${XLP_VAULT_ROOT}/02_Configs/Extra",
+    "netaFile": "${XLP_VAULT_ROOT}/05_Project/X/X長文投稿-prompt作成 - 0000-00-00_ネタ - プロンプト作りで大事なこと.md",
+    "obsidianTemplate": "${XLP_VAULT_ROOT}/02_Configs/Templates/X長文投稿.md",
+    "styleGenomeSource": "${XLP_VAULT_ROOT}/スタイルゲノム抽出用文章/スタイルゲノム基礎分析結果.md"
+  },
+  "filenameFormat": "X長文投稿-prompt作成 - {{YYYY-MM-DD}}_{{タイトル}}.md",
+  "dateRule": "00ネタファイルに記載された最新日付 + 1日",
+  "notes": [
+    "paths の ${XLP_VAULT_ROOT} は環境変数で解決する。XLP_VAULT_ROOT が未設定の場合、これらのパスは解決不能であり、推測したパスで代用してはならない（generate-filename.js は終了コード 1 で停止する）。",
+    "XLP_OUTPUT_DIR を設定した場合は outputDir のみそちらが優先される。netaFile など vault 内の他パスは XLP_VAULT_ROOT が必要。",
+    "画像の最終添付先は XLP_ATTACHMENT_DIR が優先され、未設定時だけ obsidianAttachmentDir を XLP_VAULT_ROOT で解決する。どちらも未解決なら画像の最終差し込みは行わない。",
+    "outputDir は毎時の自動コミット対象であるため、検証未了のファイルを直接置かない。一時パスで validate-headings.js を PASS させてから配置する（prompts/x-longpost-output-file.md §4.5.1）。",
+    "filenameFormat のタイトル部は 50 文字以内。超過時は generate-filename.js が終了コード 1 で fail-closed する（切り詰めは禁止）。"
+  ]
+}

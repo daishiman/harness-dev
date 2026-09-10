@@ -150,9 +150,10 @@ TRANSCLUSION_RE = re.compile(r"!\[\[[^\]]*人生の究極の目的[^\]]*\]\]")
 # 部分一致を許すのは、日付や番号が可変で完全一致できない見出しだけに限る。
 EXACT, CONTAINS = "exact", "contains"
 
-# 2ヶ月階層の見出しは正本が `2ヶ月目標`。`3ヶ月目標` は旧表記で、既存ジャーナルを
-# 再検証したときに骨格違反にしないため受理だけ続ける。タプルの先頭が正本。
-QUARTERLY_HEADING = ("2ヶ月目標", "3ヶ月目標")
+# 期報階層の見出しは正本が `3ヶ月目標`。`2ヶ月目標` は旧表記 (期報が 2ヶ月だった頃の
+# 表記) で、既存ジャーナルを再検証したときに骨格違反にしないため受理だけ続ける。
+# タプルの先頭が正本。
+QUARTERLY_HEADING = ("3ヶ月目標", "2ヶ月目標")
 
 # (見出しレベル, 照合する文字列, 照合モード) を出現順で並べた骨格の正本。
 # 照合する文字列はタプルにでき、その場合は「どれか 1 つに一致すれば可」を意味する。
@@ -172,12 +173,31 @@ REQUIRED_OUTLINE = [
     (2, "【時間のジャーナル】", EXACT),
     (2, "【お金のジャーナル】", EXACT),
     (1, "フェーズ別 課題チェックシート", EXACT),
+    (1, "原理原則 チェックシート", EXACT),
 ]
 
 JOURNAL_SECTIONS = ["【行動のジャーナル】", "【時間のジャーナル】", "【お金のジャーナル】"]
 JOURNAL_SUBSECTIONS = ["現状を確認する", "効果性を評価する", "更に良くする方法はないか"]
 GOAL_SECTIONS = ["1年目標", QUARTERLY_HEADING, "1ヶ月目標", "1週間目標"]
 PHASE_SECTIONS = ["【0→1】", "【1→10】", "【10→100】"]
+
+# `# 原理原則 チェックシート` (原理原則チェックシート) が持つ H2 設問群の正本。
+# 人間向けの正本は references/principle-checklist.md で、増減時は両方を同時に直す。
+# 照合は見出し行の部分一致で行うため、設問文の末尾の記号ゆれ (？ / ?) に依存しない
+# 十分に固有な前半を持たせてある。(1)(2) の対は末尾の括弧まで含めて区別する。
+PRINCIPLE_SECTIONS = [
+    "毎月の利益と口座残高の状況がわかるようになっていますか",
+    "右肩上がりになっていますか",
+    "原理原則を学び見直す状態は作れていますか",
+    "歴史の共有ができていますか？（1）",
+    "歴史の共有ができていますか？（2）",
+    "支出は前回から下げられましたか",
+    "今の行動を積み上げた先に上記のチェックが全て埋まる行動になっていますか",
+    "川上に繋がる描きができスケジュールが配置されていますか",
+    "次回、UBMで原理原則を学び確認する日は入っていますか",
+    "あなたと共に同じ学びを共有するメンバーは増えていますか",
+    "あなたの教え子からリーダーが生まれていますか",
+]
 
 
 def headings(lines: list[str]) -> list[tuple[int, str, int]]:
@@ -282,6 +302,10 @@ def section_lines(
 # 正しく書かれた記録を FAIL にしてしまう (書式の強制は S01/G01 の役目ではない)。
 BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)])\s*")
 
+# チェックボックス行 (`- [ ]` / `- [x]`)。ネストしたサブ項目も数えるため先頭の空白を許す。
+# P02 と K02 が同じ形の行を数えるので、片方だけ書式が緩む/締まることのないよう共有する。
+CHECKBOX_RE = re.compile(r"^\s*-\s*\[[ xX]\]")
+
 
 def content_bullets(body: list[str]) -> list[str]:
     items = []
@@ -294,6 +318,32 @@ def content_bullets(body: list[str]) -> list[str]:
         if s:
             items.append(s)
     return items
+
+
+def deprecation_notices(lines: list[str]) -> list[str]:
+    """旧表記の見出しが使われていることを利用者へ知らせる (違反にはしない)。
+
+    REQUIRED_OUTLINE の見出しタプルは「先頭が正本、以降は受理だけ続ける旧表記」という規約。
+    その規約からそのまま導出するので、次に別の見出しを改称したときも通知経路が自動で付く。
+
+    違反にしないのは後方互換のため。旧表記で書かれた既存ジャーナルの再検証を落とすと、
+    過去分を一括で書き換えるまで検査そのものが使えなくなる。一方、黙って受理するだけだと
+    「前回ジャーナルを継承して今日の分を書く」運用の中で旧表記が自己複製し続け、
+    正本へ寄る契機が永久に来ない。通す・けれど毎回知らせる、が正しい強さになる。
+    """
+    notices: list[str] = []
+    written = {text for _, text, _ in headings(lines)}
+    for _, needle, mode in REQUIRED_OUTLINE:
+        if not isinstance(needle, tuple):
+            continue
+        canonical, legacy_names = needle[0], needle[1:]
+        for legacy in legacy_names:
+            if any(heading_matches(t, legacy, mode) for t in written):
+                notices.append(
+                    f"D01: 旧表記の見出し「{legacy}」が使われています。正本は「{canonical}」です"
+                    "（前回ジャーナルの継承で複製され続けるため、次回分から書き換えてください）"
+                )
+    return notices
 
 
 def validate(
@@ -364,16 +414,23 @@ def validate(
             cursor = found + 1
 
     # --- 目標4階層: 期間・残り・目標が揃っているか ---
-    for goal_spec in GOAL_SECTIONS:
-        # 別表記が併存する異常系でも、候補列の先頭に置いた正本を決定論的に優先する。
-        # tuple のまま section_lines() へ渡すと本文中で先に現れた旧表記を拾う一方、
-        # 違反ラベルだけ正本名になるため、検査対象と報告対象がずれる。
-        candidates = (goal_spec,) if isinstance(goal_spec, str) else goal_spec
-        goal = next((c for c in candidates if section_lines(lines, 3, c) is not None), None)
-        if goal is None:
+    for goal in GOAL_SECTIONS:
+        # 別表記候補は「正本 (タプル先頭) を優先」で 1 つの節に決め、本文とラベルを
+        # 同じ探索から取る。両者を別々に決めると、3ヶ月・2ヶ月が併存し本文で旧表記が
+        # 先に現れたとき body は 2ヶ月節・ラベルは「3ヶ月目標」というズレが起き、
+        # さらに正本の節を空にしても手前の完全な旧表記節が検査を通す fail-open になる
+        # (どちらも実測で再現済み)。正本が存在するなら必ず正本を検査対象にする。
+        candidates = (goal,) if isinstance(goal, str) else goal
+        goal, body = next(
+            (
+                (c, found)
+                for c in candidates
+                if (found := section_lines(lines, 3, c)) is not None
+            ),
+            (needle_label(goal), None),
+        )
+        if body is None:
             continue  # S01 で既に報告済み
-        body = section_lines(lines, 3, goal)
-        assert body is not None
         joined = "\n".join(body)
         values: dict[str, str] = {}
         for field in ("期間", "残り", "目標"):
@@ -433,9 +490,33 @@ def validate(
         for phase in PHASE_SECTIONS:
             if not any(phase in l for l in phase_body if l.strip().startswith("## ")):
                 violations.append(f"P01: フェーズ別課題チェックシートに「## ◇{phase}」がありません")
-        checks = [l for l in phase_body if re.match(r"^\s*-\s*\[[ xX]\]", l)]
+        checks = [l for l in phase_body if CHECKBOX_RE.match(l)]
         if not checks:
             violations.append("P02: フェーズ別課題チェックシートにチェックボックス行がありません")
+
+    # --- 原理原則チェックシート (`# 原理原則 チェックシート`) ---
+    # ブロック自体の有無は S01 が見る (REQUIRED_OUTLINE の最後の要素)。ここは中身を見る。
+    # PHASE 側と違い、このブロックは「11 設問を毎回丸ごと出す」ことが利用者の要求そのもので、
+    # 抜粋・要約されたチェックシートを受理するかどうかは、この検査の厳しさが直接決める。
+    # 見出し名に「原理原則」を冠してあるので `# フェーズ別 課題チェックシート` とは
+    # 部分一致でも衝突しない。EXACT を明示して、将来 CONTAINS へ緩めたくなったときに
+    # 「衝突しないから CONTAINS でよい」と考える余地を残さない。
+    principle_body = section_lines(lines, 1, "原理原則 チェックシート", mode=EXACT)
+    if principle_body is not None:
+        for key in PRINCIPLE_SECTIONS:
+            # 11 設問すべての存在を要求する。「1 つでもあれば可」にすると、設問を 3 つだけ
+            # 抜粋したチェックシートが PASS で通り、「毎回丸ごと出す」という要求が
+            # 検査を素通りして静かに空洞化する。欠落は 1 件ずつ出す (Phase5 の修正ループが
+            # 違反行単位で直すため、まとめて 1 行にすると何を足すのかが読めない)。
+            body = section_lines(principle_body, 2, key, mode=CONTAINS)
+            if body is None:
+                violations.append(f"K01: チェックシートに「## ◇{key}…」の設問がありません")
+                continue
+            # チェックボックスの探索は設問セクションごとに行う。principle_body 全体から
+            # 1 行でも見つかれば可にすると、1 設問だけ埋まっていて残り 10 設問が見出しだけ、
+            # という状態を通す (P02 と同じ形の fail-open)。
+            if not any(CHECKBOX_RE.match(l) for l in body):
+                violations.append(f"K02: チェックシートの「{key}…」にチェックボックス行がありません")
 
     # --- 未置換プレースホルダ ---
     for i, line in enumerate(lines, start=1):
@@ -519,12 +600,20 @@ def main() -> int:
         return 2
     try:
         violations = validate(path, args.expected_number, args.expected_date, load_daily_habits())
+        # 違反ではないので exit code には効かせない。同じ try で包むのは、読み直しが
+        # ここで失敗しても「1=違反あり / 2=読み込み不能」の契約から外れないようにするため。
+        notices = deprecation_notices(path.read_text(encoding="utf-8").splitlines())
     except (OSError, UnicodeDecodeError) as exc:
         # UnicodeDecodeError は OSError を継承しないため個別に拾う。
         # 拾わないと非 UTF-8 ファイルが traceback + exit 1 となり、
         # frontmatter が宣言する「1=違反あり / 2=読み込み不能」の契約が壊れる。
         sys.stderr.write(f"validate-journal-output: 読み込みに失敗しました: {exc}\n")
         return 2
+
+    # notice は PASS / FAIL のどちらでも出す。FAIL のときに黙ると、違反を直して
+    # 再実行して PASS した瞬間にしか旧表記へ気づけず、通知が一番効く周回で消える。
+    for n in notices:
+        print(f"NOTICE: {n}")
 
     if violations:
         print(f"FAIL: {path.name} — 違反 {len(violations)} 件")

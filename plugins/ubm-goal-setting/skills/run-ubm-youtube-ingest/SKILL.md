@@ -22,6 +22,9 @@ owner: harness-maintainers
 since: 2026-07-11
 version: 0.1.0
 manifest: workflow-manifest.json
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline

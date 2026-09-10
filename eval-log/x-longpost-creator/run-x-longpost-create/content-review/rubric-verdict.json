@@ -1,0 +1,40 @@
+{
+  "target": {
+    "plugin": "x-longpost-creator",
+    "skill": "run-x-longpost-create",
+    "skill_md_sha256": "661c20e177094bab778585eb7d3b1c802638491a54022a4247d670111dac6c8a"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-07T02:31:44Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "positive_feedback": [
+      "criterion IN1 (verify_by=script) の宣言・enforcement・索引が三面とも同一規範で一致した。SKILL.md が『F5でB本文に1行2文が無いこと、F6でB見出しの `【】` 表記とAの見出し2との順序込み一致が機械的に確認される』と述べ、実走した validate-headings.js の check name・detail・nextAction が同じ規範を返し、resource-map.yaml の索引 topic も同じ check ID 範囲 (F1-F6) を述べる。verify_by=script の criterion が『何を検証するか』『どう伝わるか』『どこを開けば分かるか』まで揃った状態になっている",
+      "単一正本性が索引層まで回復した。heading-structure-rules.md を正本とし、resource-map.md / resource-map.yaml / EVALS.json known_limitations はその check ID 範囲を指すだけ、という参照構造が全面で成立している",
+      "数えられる判断 (文字数・タイトル長・見出し構造・絵文字ゼロ・A/B同値) を Node スクリプトへ、創造の判断 (文体・テーマ抽出・言語化) を LLM へ残す責務分割が保たれ、F6 追加も境界の script 側に正しく落ちている",
+      "artifact_delivery の pre_choice_forbidden / accept_contexts が check 追加で緩んでおらず、pre-choice で通す機械検証の列挙 (F4/F5/F6) だけが更新されている。ゲート構造と検証項目が独立して進化できている",
+      "規範変更の回帰テストが『新文言の存在』と『旧文言の不在』の両方向 × 4 surfaces で書かれ、面の集合をデータ (surfaces dict) として持つ形になった。3 iteration を通じて指摘された伝播漏れが個別対処ではなく構造として塞がれている"
+    ],
+    "negative_feedback": [
+      "[low] ROADMAP.md の 1.3.0 未追従が 2 行。L8『検証フラグの既定化』が `F1〜F5` と述べつつ `EVALS.json` の known_limitations を参照先に挙げているが、その参照先は F1-F6 へ更新済みで cross-reference の両端が食い違う。L7『scripts のテスト維持』も `F4/F5` 止まりで、今回追加された F6 の負例テスト 2 本を反映していない。保守者向け backlog 文書であり生成時の規範ではないため運用影響は無い",
+      "[low] EVALS.json が時間軸の区別を in-file で持たない。`x_longpost_creator_version: 1.1.0` と evaluations[].note は 1.1.0 の凍結記録、known_limitations は現行 (1.3.0) 追従、という設計は妥当だが、その旨がファイル内に明示されていないため、note の現在形記述 (F5 = 1文1行) と known_limitations (F5 = 1行2文禁止) が同一ファイル内で並んで見える。note へ評価時点を示す語を添えるか、ファイル先頭へ 1 行の但し書きを置けば解消する"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "profile=incremental の 1 context combined review を elegance/rubric 2 verdict へ分離投影したもの (30 思考法は未使用)。iteration 3 で収束。rubric high severity 0・medium 0・low 2 のため PASS。iteration 1 の medium (validate-headings.js の F5 可視文字列) と iteration 2 の medium (機械可読索引 resource-map.yaml の未追従) はいずれも実測で解消を確認済み。criteria_evaluated は SKILL.md frontmatter feedback_contract.criteria の実在 4 件 (IN1/IN2/OUT1/OUT2) 全件。OUT1/OUT2 は verify_by=live-trial/human であり本静的レビューでは宣言整合のみを判定しており、behavioral claim (pre-choice で停止し利用者選択まで評価もリライトも走らないこと / 文体品質) の受け入れは Gate D (run-skill-live-trial) の実走証拠に委ねる。静的設計 adequacy として PASS であることが実行 acceptance を代替しない。実測内容は elegance-verdict.json の notes と同一。"
+}

@@ -80,11 +80,11 @@ feedback_contract:
   criteria:
     - id: IN1
       loop_scope: inner
-      text: validate-coverage-matrix.py が spec-state.json に対し 6 canonical platform 全存在・各セルが未収集/対象外/確定の3値・対象外に理由(または approval_ref)・確定に qa_ref・カテゴリ集約が真理値表一致・不正値0件を機械検証して exit0 になる。R0-foundation 完了後は --require-foundation も付け、requirements_foundation の U1-U9(値ありまたは明示 N/A・U1/U2/U3 は値必須)・decisions 契約・各確定セルの serves_goals トレースも exit0 で検証する(R0 完了前の foundation 未確定段階では --require-foundation を課さない段階条件)。
+      text: validate-coverage-matrix.py が spec-state.json に対し 6 canonical platform 全存在・各セルが未収集/対象外/確定の3値・対象外に理由(または approval_ref)・確定に qa_ref・カテゴリ集約が真理値表一致・不正値0件を機械検証して exit0 になる。R0-foundation 完了後は --require-foundation も付け、requirements_foundation の U1-U9(値ありまたは明示 N/A・U1/U2/U3 は値必須)・decisions 契約・各確定セルの serves_goals トレースも exit0 で検証する(R0 完了前の foundation 未確定段階では --require-foundation を課さない段階条件)。加えて確定セルへ紐づく qa_log entry に basis(user-decision/observed-fact/agent-inference) が付いていることを --require-basis が exit0 で検証し、missing_effect=block の必須情報については validate-knowledge-graph.py --profile required-info --state <spec-state> の coverage_certificate.ungrounded_blocking_items が空であることを確認する(未接地が残る間は当該 domain の確定セルを confirmed にしない収集ゲート)。
       verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: 往復ヒアリングを経て全セルが確定または対象外(理由付き)で埋まり未収集0になった最終 spec-state.json を validate-coverage-matrix.py --require-complete が exit0 で確認し、受入テストが resume 保存も含めて再現する。
+      text: 往復ヒアリングを経て全セルが確定または対象外(理由付き)で埋まり未収集0になった最終 spec-state.json を validate-coverage-matrix.py --require-complete --require-basis --require-foundation が exit0 で確認し(未収集0だけでなく、全確定セルの basis と U1-U9・serves_goals トレースまで最終条件に含める)、受入テストが resume 保存も含めて再現する。
       verify_by: test
     - id: OUT2
       loop_scope: outer
@@ -143,7 +143,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 **入力**: ヒアリング応答 (対話) / 既存 `spec-state.json` (resume 時) / C04 taxonomy。
 **出力**: `spec-state.json` (`references/spec-state-contract.md` の形状。plugin 共有データ契約。上位概念 `requirements_foundation` を含む)。
-**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-foundation` が exit0。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` の `coverage_certificate.blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
+**完了条件**: `requirements_foundation` が確定 (U1-U9 が値または明示 N/A+理由・ただし U1/U2/U3 は値必須で N/A 不可・U1-U9 要約のユーザー承認 `approval_ref` 付き・`confirmed: true`) し、全セルが `確定`(qa_ref 付き) か `対象外`(reason か approval_ref 付き) で、未収集0。`validate-coverage-matrix.py --require-complete --require-basis --require-foundation` が exit0 (`--require-basis` は各確定セルの根拠 qa_ref が `basis` を宣言し、かつ推定 `agent-inference` 単独でないことを課す)。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` が空 (`missing_effect=block` の必須情報が全て確定に接地) である。
 
 - **platforms (6)**: `web` / `mobile` / `tablet` / `desktop-windows` / `desktop-linux` / `desktop-macos`。
 - **cell states (3値, loop 中)**: `未収集` / `対象外` / `確定`。最終時は `未収集` を0にする。
@@ -170,7 +170,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 | R2-interview | `prompts/R2-interview.md` | 未収集セルを対象に 質問→回答→仕様反映 の往復で各セルを `確定` か `対象外+理由` へ遷移。 |
 | R3-reask | `prompts/R3-reask.md` | 未確定セルを再質問。1 invocation の 5 loop 到達時は未完了状態と next_question を保存し resumable な結果を返す。未収集を完了扱いしない。 |
 | R4-reopen | `prompts/R4-reopen.md` | 確定済みセルを根拠付きで再オープンし追加質問サイクルへ戻す。reopen 非経由の確定直接変更は writer が遮断する。 |
-| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` の `coverage_certificate.blocking_items` (`missing_effect=block` の未充足 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
+| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` (`missing_effect=block` の未接地 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
 
 ## ゴールシーク実行
 
@@ -182,8 +182,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## feedback-contract (with-feedback-contract)
 
 - **IN1 (inner / script)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json` が exit0 (loop 中の網羅性)。R0-foundation 完了後は `--require-foundation` を付けて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json --require-foundation` も exit0 とし、上位概念 U1-U9・decisions 契約・serves_goals トレースを段階的に課す (foundation 未確定の R0 完了前には課さない)。
-- **OUT1 (outer / test)**: 最終 `spec-state.json` を `--require-complete` が exit0 で受理し、受入テスト (`tests/`) が resume 保存を含めて再現する。
-- **収集ゲート (C16 / IN1 補完)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` が exit0 かつ `coverage_certificate.blocking_items` が空。`missing_effect=block` の必須情報 (product-goal / context-of-use / target-platforms / domain-model / auth-model / security-posture) が確定に接地するまで当該 domain の確定セルの `confirmed` を許さない (R5 が prose ゲートとして施行し、決定論 writer=apply-spec-transition への block 検査組込は follow-up)。
+- **OUT1 (outer / test)**: 最終 `spec-state.json` を `--require-complete --require-basis --require-foundation` が exit0 で受理し (未収集0・全確定セルの `basis` 宣言・U1-U9 と serves_goals トレースを最終条件に含める)、下の収集ゲートも `ungrounded_blocking_items` が空で通る。受入テスト (`tests/`) が resume 保存を含めてこの最終状態を再現する。
+- **収集ゲート (C16 / IN1 補完)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` が exit0 かつ `coverage_certificate.ungrounded_blocking_items` が空。`missing_effect=block` の必須情報 (product-goal / context-of-use / target-platforms / domain-model / auth-model / security-posture) が確定に接地するまで当該 domain の確定セルの `confirmed` を許さない (接地の判定は qa_log entry の `required_info_items` と**決着済みセル (`確定` または `対象外`) の** `qa_ref`/`qa_refs` を辿って `--state` が決定論検査する。除外もまた「収集した結論」であり、たとえば target-platforms は何を外すかという答えそのものが根拠になるため `対象外` も接地元に数える — 詳細は `references/spec-state-contract.md`)。R2 の各 turn には `basis` と `required_info_items` を付けて writer へ渡す (付けない回答はどの item も接地させない)。
 - **情報優先度の責務境界 (ui-ux / `information-priority` item)**: 本 skill が確定させるのは**方針まで** — 表現物ごとに何を残し・落とし・加工するか、束の順位とその根拠 (task 頻度 × 失敗コスト) — であり、`spec-state.json` の該当セルへ qa_ref 付きで記録する (`missing_effect=degrade`。非適用なら理由を記録する)。この方針を `information-priority-map.json` として具体化し `validate-information-priority.py` で機械検証するのは**下流の生成工程**の責務であり、要件段階で成果物の生成は求めない。下流の現状は 2 系統に分かれる — **map ゲートまで実装済み**なのは slide-report-generator の構成設計 (`structure-designer` / `report-structure-designer` が構成着手前に exit 0 を要求) のみ。**C03 仕様書生成は原理カードの注入まで**で、`../run-system-spec-compile/scripts/compile-spec-doc.py` の `category_design_refs()` が C04 `resource-map.yaml` の `read_when` から ui-ux / frontend 章へ `information-design.md` を自動で引く (map ゲートの C03 への組込は follow-up)。原理の正本は C04 `../ref-system-design-knowledge/references/information-design.md`。
 
 ## 使い方 (ゴールへ向けた反復)
@@ -195,7 +195,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. **R1-init**: taxonomy を Readしてmatrixをpopulateする。既存foundation/decisionsを保持する。
 4. **R2/R3/R5**: 未収集セルをヒアリングし、不明・未決定ならR5で根拠付き候補と推奨を提示する。確定セル/decisionはgoalへトレースし、5 loop超でresume保存。
 5. **R4-reopen**: 確定セルの見直しが要るときのみ reopen。
-6. **検証**: 各周回でvalidator、最終で`--require-complete --require-foundation`。
+6. **検証**: 各周回でvalidator、最終で`--require-complete --require-basis --require-foundation`。
 
 ## Gotchas
 
@@ -213,5 +213,5 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `scripts/apply-spec-transition.py` — 単一 transition writer (init/apply/chunk/aggregate)。
 - `../../scripts/validate-coverage-matrix.py` — 網羅性の決定論ゲート (IN1/OUT1)。
 - `references/required-info-catalog.json` — C16 必須情報カタログ (domain 別 block/degrade/warn item・収集順序 depends_on・coverage certificate の正本)。
-- `../../scripts/validate-knowledge-graph.py` — 知識グラフ / required-info の決定論ゲート (`--profile required-info` が domain 被覆・item 形状・blocking_items を、`--profile knowledge --order` が topo_order を検証)。
+- `../../scripts/validate-knowledge-graph.py` — 知識グラフ / required-info の決定論ゲート (`--profile required-info` が domain 被覆・item 形状・blocking_items を (`--state` 併用で block item の確定接地も)、`--profile knowledge --order` が topo_order を検証)。
 - C04: `../ref-system-design-knowledge/references/system-category-taxonomy.json` — カテゴリ初期集合の正本。
