@@ -6,33 +6,35 @@
   },
   "review_kind": "rubric",
   "verdict": "PASS",
+  "reviewer": "focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-08-24T11:10:00Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "新設 Key Rule 8 は既存 Key Rules の規約 (太字見出し + 1 行規則 + 正本パス明示) に沿って追記されており、番号順・記述形式の揺れが無い。",
+      "規則 8 の記述は scripts/evaluate-plan.py (STALENESS_RULE・_collect_evaluated_inputs) と prompts/R1-evaluate.md の両実体に裏付けられ、参照ポインタでなく実装済み機構を要約している。",
+      "frontmatter script_refs の scripts/evaluate-plan.py、規則 8 が指す cross-plugin 正本 verification-obligation-protocol.md はいずれも実在し、依存関係破れが無い。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "elegance 側 verdict と同一の incremental focused combined review (独立 evaluator context・builder 別 context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更範囲 (Key Rule 8 の 1 行追加) に対して構造規範 (frontmatter 宣言の実在・記述規約整合・正本パスの実在・宣言↔実装 parity) を実読で確認し、combined review の単一判断として medium 以上 finding 0 件を根拠に PASS とした。criteria_evaluated の IN1/IN2/OUT1/OUT2 は pair skill run-plugin-dev-plan の feedback_contract criteria (本 skill は kind=assign で自身の criteria N/A・Gotcha 5) であり、評価器としての整合を確認した。前回 verdict (2026-07-11) の記述は変更前 SHA に束縛された主張のため引き継がず、今回確認した事実のみ記載した。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
-  },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
-  "iterations": 1,
-  "human_review_required": false,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": [
-      "C1",
-      "C2",
-      "C3",
-      "C4"
-    ],
-    "positive_feedback": [
-      "assign評価器はruntime loop非適用のままcontext:fork・read-only評価を維持し、C1-C4と決定論gateのproposer≠approver契約が一貫している。"
-    ],
-    "negative_feedback": [],
-    "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
-    "next_action": "none"
-  },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  }
 }

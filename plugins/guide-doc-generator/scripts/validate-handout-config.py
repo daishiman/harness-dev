@@ -168,6 +168,7 @@ ATTR_ROW_DETAIL_MAX_CHARS = "row_detail_max_chars"
 ATTR_REQUIRED_ROLE = "required_role"
 ATTR_PLACEMENT = "placement"
 PLACEMENT_LAST_MAIN = "last-main"
+PLACEMENT_FIRST_MAIN = "first-main"
 
 # 追加検査規則が名指しする「器」は構成データ側の block.type で指す (P03 Y-05 /
 # AC-C11-19)。部品 id の literal はこの script に一切持たず、id が要る箇所は
@@ -741,10 +742,19 @@ class Checker(object):
         数える対象は正本 (opening.hero_total.counted_fields) が持つ。値の形は
         文字列・文字列配列・{label} を持つオブジェクト配列の 3 通りで、いずれも
         C11 build_hero が 1 行として描画する単位で数える。
+
+        紙面に描かない欄 (opening.hero_list_fields.hidden_by_default ∪ 構成
+        データの hero_hidden_fields) は数えない。数えると、読み手が見ない行で
+        冒頭が重いと判定され、著者は見えている文を削ることになる。
         """
         total = 0
         lines = 0
+        declared = cfg.get("hero_hidden_fields") or []
+        hidden = set(self.ctx.hero_hidden_default) | {
+            name for name in declared if isinstance(name, str) and name}
         for name in self.ctx.hero_total_fields:
+            if name in hidden:
+                continue
             value = cfg.get(name)
             if isinstance(value, str):
                 text = value.strip()
@@ -914,6 +924,13 @@ class Checker(object):
         上限を当てるためである。
         """
         if isinstance(node, dict):
+            # タブ (B13) の中へ入れ子にした部品も、単独で置いたときと同じ免除を受ける。
+            # 免除を親の part だけで判定すると、B11 を B13 の中へ移した瞬間に
+            # 「原文をそのまま貼る部品」が長すぎる要素として数えられてしまう。
+            nested = node.get("part")
+            if isinstance(nested, str) and "data" in node:
+                if nested in self.ctx.micro_copy_exempt_parts:
+                    return
             for key, value in node.items():
                 self.walk_micro_copy(value, "%s/%s" % (pointer, key), emit)
         elif isinstance(node, list):
@@ -1405,6 +1422,16 @@ class Checker(object):
                     self.add("E-SECTION-PLACEMENT", pointer,
                              "この section_kind は本編の最後に置く "
                              "(後ろに本編セクションが %d 件ある)" % len(later_mains))
+            if attrs.get(ATTR_PLACEMENT) == PLACEMENT_FIRST_MAIN:
+                # 自己紹介は「読み始める前」に効く。途中に置くと、読み手は誰の話か
+                # 分からないまま何節か読むことになり、置いた意味が消える。
+                earlier_mains = [i for i, s in enumerate(sections[:index])
+                                 if isinstance(s, dict)
+                                 and self.section_role(s) == self.ctx.default_role]
+                if earlier_mains:
+                    self.add("E-SECTION-PLACEMENT", pointer,
+                             "この section_kind は本編の先頭に置く "
+                             "(前に本編セクションが %d 件ある)" % len(earlier_mains))
         for index, role in enumerate(roles):
             if role != self.ctx.appendix_role:
                 continue
@@ -1809,6 +1836,15 @@ class Context(object):
             tuple(n for n in names if isinstance(n, str))
             if isinstance(names, list) and names else tuple(FALLBACK_HERO_TOTAL_FIELDS))
 
+        # 既定で紙面に描かない箇条リスト。counted_fields は「冒頭に描画される文」
+        # を数える集合なので、描かない欄を数えたままだと読み手が見ない行で
+        # W-HERO-HEAVY が出る。名簿の正本は C11 と同じ 1 箇所だけを見る。
+        hidden = opening.get("hero_list_fields")
+        hidden = hidden.get("hidden_by_default") if isinstance(hidden, dict) else None
+        self.hero_hidden_default = (
+            tuple(n for n in hidden if isinstance(n, str) and n)
+            if isinstance(hidden, list) else ())
+
     def load_layering(self, layering):
         """要点層と詳細層の切り分け規則を正本から引く (fail-soft)。
 
@@ -1936,9 +1972,31 @@ def drop_empty_optionals(container, keys):
             del container[key]
 
 
+HERO_TEXT_FIELDS = ("purpose", "background", "goal")
+# 「。」とそれに続く空白 (半角・全角・タブ)。末尾の 。は後続が無いので当たらない。
+_HERO_SENTENCE_BREAK_RE = re.compile("。[ \t　]*(?=.)")
+
+
+def normalize_hero_sentences(data):
+    """冒頭 3 要素の文の切れ目を、空白 1 個へ揃える。
+
+    C11 はこの 3 つを文ごとの箇条書きへ割って描く。HTML の要素境界は必ず 1 区切り
+    として読まれるので、割った可視テキストは「文 + 空白 + 文」になる。構成データ側の
+    区切りが無い (または全角空白) ままだと、NAR-02 の『可視テキスト == 構成データ』
+    と C20 の読み戻しが同時にずれる。ずらさない側を 1 か所に決めるための正規化で
+    あり、書き手にこの空白を書かせるためのものではない。冪等 (既に空白 1 個なら不変)。
+    """
+    for key in HERO_TEXT_FIELDS:
+        value = data.get(key)
+        if not isinstance(value, str):
+            continue
+        data[key] = _HERO_SENTENCE_BREAK_RE.sub("。 ", value)
+
+
 def normalize_config(cfg, ctx, today, diags):
     data = json.loads(json.dumps(cfg))
     data["schema_version"] = ctx.schema_version
+    normalize_hero_sentences(data)
 
     parts = parse_date_parts(data.get("date"))
     if parts is not None:

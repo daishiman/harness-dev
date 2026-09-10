@@ -1,0 +1,67 @@
+{
+  "purpose": "キャッチコピー、文字起こし、メモまたは既存文章から、X向けの長文・短文投稿を生成し、必要に応じて図解とサムネイルを作成する plugin の構成と役割を素観察する。",
+  "scope": {
+    "in_scope": [
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator 配下の全65ファイル",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md を代表 skill とする plugin 全体",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py"
+    ],
+    "out_of_scope": [
+      "plugin 外部の実利用データ、vault、生成済み投稿および画像",
+      "Claude Code、Codex、Node.js による実行結果",
+      "ファイル変更、git操作、beads操作",
+      "採点、条件判定、改善案の作成"
+    ]
+  },
+  "stakeholders": [
+    "X向けの長文・短文投稿を作成する利用者",
+    "特定文体と個人vaultを運用する書き手",
+    "ownerとして記載されたteam-content",
+    "Claude CodeまたはCodexでpluginを起動する利用者",
+    "X、note、Obsidianへ成果物を受け渡す利用者"
+  ],
+  "first_impressions": [
+    "利用者が起動する4つのrun skillと、所在を示す1つの参照skillに役割が分かれている。",
+    "文章の解釈・生成を担うprompt文書と、文字数・見出し・ファイル・画像を扱うNode.js scriptが別層に置かれている。",
+    "代表skillは入力整理、タイトル確定、本文生成、整形、補助情報作成を段階順に記述し、画像生成は別skillへ接続している。",
+    "図解、Xサムネイル、noteサムネイルは1つの構造データから派生し、生成後に投稿テンプレートへ差し込む流れである。"
+  ],
+  "facts_vs_assumptions": {
+    "facts": [
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator［全ファイル］および指定テスト2ファイル［全行］: plugin配下65ファイルとテスト2ファイル、計67ファイルの列挙とfresh再読込を完了した。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.claude-plugin/plugin.json:2-10: Claude向けmanifestはplugin名、version 1.1.0、説明、依存pluginを記載する。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/.codex-plugin/plugin.json:2-21: Codex向けmanifestはplugin名、version 1.0.2、interface、skillsディレクトリを記載する。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:3-20: 長文A/B、短文8本、短文1本の最適化、画像3種という利用用途と対応skillが説明されている。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/README.md:64-71,130-149: Node.js v18以上を必要とし、出力先はXLP_OUTPUT_DIRまたはXLP_VAULT_ROOTから解決すると記載されている。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/assets/output-template.md:節「図解」「X用サムネイル」「note用サムネイル」「Aパターン」「Bパターン」: 文章2形式と画像3種の配置欄を持つMarkdownテンプレートである。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:20-32: 入力、投稿ファイル・短文・補助情報などの出力、および数値・構造・パスに関する条件を宣言している。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/plugin-composition.yaml:34-74: capabilityとして5 skill、14 prompt、14 scriptを列挙している。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/scripts/validate-headings.js:節「検証項目」および関数analyzeBody/main: H1・H2構造、タイトル長、見出し数、絵文字、タイトル文字列の一致を解析し、結果に応じた終了コードを返す。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:21-32: キャッチコピーと文字起こしまたはメモから、文体情報を適用した長文2パターンとファイル成果物を作る契約を記載する。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md:203-211: Phase 0からPhase 3.5までを本文側、Phase 4をrun-x-visual-generate側として接続している。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md:18-28,155-172: 確定した長文パターンAから画像3種を生成し、共通のvisual-structure.jsonから派生させる。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__log_usage_parity.py:27-94: CJS版とESM版の記録scriptについて、6つのCLIケースで終了コード、標準出力、標準エラー、記録本文を比較するテストが定義されている。",
+      "/Users/dm/orca/workspaces/harness/x長文投稿プラグイン作成/tests/scripts-plugins/test_x_longpost_creator__visual_pipeline.py:1-16,129-396: 構造検証、PNG検証、画像パス差し込み、画像生成コマンドのdry-runを対象とするテストが定義されている。"
+    ],
+    "assumptions": [
+      "実行していないため、各scriptおよびテストが現在の環境で成功するかは確認していない。",
+      "外部vault、環境変数、codex状態ディレクトリの実在性は確認していない。",
+      "実入力と生成成果物が無いため、投稿内容や画像の見た目は観察していない。",
+      "文書に記載された利用者像と運用環境が現在も実運用と一致するとは仮定していない。"
+    ]
+  },
+  "concrete_values_to_abstract": [
+    {"value": "x-longpost-creator", "kind": "proper-noun"},
+    {"value": "run-x-longpost-create", "kind": "proper-noun"},
+    {"value": "team-content", "kind": "fixed-owner"},
+    {"value": "${CLAUDE_PLUGIN_ROOT}/skills/run-x-longpost-create", "kind": "fixed-path"},
+    {"value": "XLP_OUTPUT_DIR → XLP_VAULT_ROOT/05_Project/X", "kind": "fixed-path"},
+    {"value": "X長文投稿-prompt作成 - YYYY-MM-DD_[タイトル].md", "kind": "other"},
+    {"value": "Node.js v18以上", "kind": "other"},
+    {"value": "長文1800〜2200文字、短文180〜220文字、要約400〜499文字", "kind": "other"},
+    {"value": "見出し1は50文字以内、見出し2は3〜8個", "kind": "other"},
+    {"value": "5 skills、14 prompts、14 scripts", "kind": "other"},
+    {"value": "diagram 2560x1440、x-thumb 2560x1024、note-thumb 2560x1340", "kind": "other"}
+  ]
+}

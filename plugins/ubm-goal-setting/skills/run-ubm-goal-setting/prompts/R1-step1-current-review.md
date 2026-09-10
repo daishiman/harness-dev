@@ -78,7 +78,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| info-collector 出力 | past_summary (coordinator 経由で受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
+| info-collector 出力 | past_summary (親 context が受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし (対話とファイル Read のみ)。

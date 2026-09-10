@@ -37,10 +37,11 @@ drift として検証側 (validate) が surface する。
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -171,6 +172,7 @@ def bootstrap_state() -> dict:
         "requirements_foundation": empty_foundation(),
         "decisions": [],
         "knowledge_candidates": [],
+        "design_applications": {},
         "hearing_progress": {"loop_count": 0, "next_question": None, "complete": False},
     }
 
@@ -205,6 +207,7 @@ def init_state(taxonomy: dict, existing_state: dict | None = None) -> dict:
         ),
         "decisions": list(prior.get("decisions") or []),
         "knowledge_candidates": list(prior.get("knowledge_candidates") or []),
+        "design_applications": dict(prior.get("design_applications") or {}),
         "hearing_progress": {"loop_count": 0, "next_question": None, "complete": False},
     }
     recompute_aggregates(state)
@@ -236,6 +239,27 @@ def apply_cell_op(state: dict, op: dict) -> None:
     """
     action = op.get("action")
     cat, pf = op.get("category"), op.get("platform")
+
+    if action == "set-design-application":
+        # カテゴリ (章) 単位の op。platform を持たないのでセル解決の手前で処理する。
+        _apply_design_application(state, cat, op)
+        return
+
+    if action == "set-doctrine-application":
+        # 同じくカテゴリ単位。ただし (category, concern_id) の2軸で持つ。
+        _apply_doctrine_application(state, cat, op)
+        return
+
+    if action == "add-reopen-correction":
+        # reopen_log entry への追記専用 op。セルではなくログを対象にする。
+        _add_reopen_correction(state, op)
+        return
+
+    if action == "correct-qa-timestamp":
+        # qa_log entry の計測値時刻の訂正専用 op。同じくセルではなくログを対象にする。
+        _correct_qa_timestamp(state, op)
+        return
+
     cell = _cell(state, cat, pf)
     cur = cell.get("state")
 
@@ -247,8 +271,21 @@ def apply_cell_op(state: dict, op: dict) -> None:
         reason = op.get("reason")
         if not reason:
             raise TransitionError(f"reopen には reason が必須: {cat}/{pf}")
+        # reopen は確定を巻き戻せる唯一の正規経路であり、いちばん時刻が要る操作である。
+        # 時刻が無いと「差し替え後の主根拠がこの reopen より後に取り直された回答か」を
+        # 検査できず、先に確定を壊してから既存の回答を主根拠に流用した場合と、正当に
+        # 取り直した場合が同じ見た目になる。writer 自身が now() で埋めると書込時刻が
+        # 実施時刻を騙るため、他の時刻と同じく呼び出し側の実測値を要求する。
+        reopened_at = op.get("reopened_at")
+        _require_past_rfc3339(reopened_at, f"reopen[{cat}/{pf}].reopened_at")
         state.setdefault("reopen_log", []).append(
-            {"category": cat, "platform": pf, "reason": reason, "from": "確定"}
+            {
+                "category": cat,
+                "platform": pf,
+                "reason": reason,
+                "from": "確定",
+                "reopened_at": reopened_at,
+            }
         )
         state["matrix"][cat][pf] = {
             "state": "未収集",
@@ -268,6 +305,35 @@ def apply_cell_op(state: dict, op: dict) -> None:
         if not serves:
             raise TransitionError(f"set-serves には非空 serves_goals が必須: {cat}/{pf}")
         cell["serves_goals"] = serves
+        return
+
+    if action == "add-qa-ref":
+        # 確定セルへ根拠参照 (qa_refs) を additive 追記する。
+        # state=確定 を保つため rollback 防御に抵触せず、reopen->confirm と違って
+        # required_info / required_info_checks を落とさない。serves_goals が「どの目的に
+        # 資するか」を示すのに対し、qa_refs は「その主張がどの質疑に遡れるか」を示す。
+        if cur != "確定":
+            raise TransitionError(
+                f"add-qa-ref 不可: {cat}/{pf} は '{cur}' (確定セルのみ qa_refs を追記できる)"
+            )
+        raw = op.get("qa_refs")
+        if raw is None and op.get("qa_ref"):
+            raw = [op["qa_ref"]]
+        if not isinstance(raw, list) or not raw:
+            raise TransitionError(f"add-qa-ref には非空 qa_refs (配列) が必須: {cat}/{pf}")
+        known = {e.get("id") for e in state.get("qa_log") or []}
+        refs = list(cell.get("qa_refs") or [])
+        for ref in raw:
+            if not isinstance(ref, str) or not ref.strip():
+                raise TransitionError(f"qa_refs 要素は非空文字列でない: {ref!r}")
+            if ref not in known:
+                raise TransitionError(
+                    f"add-qa-ref: qa_ref {ref!r} が qa_log に存在しない ({cat}/{pf})。"
+                    "根拠のない参照は追記できない"
+                )
+            if ref not in refs:
+                refs.append(ref)
+        cell["qa_refs"] = refs
         return
 
     # confirm / exclude は確定セルへの直接変更を拒否する (single-writer rollback 防御)
@@ -297,6 +363,12 @@ def apply_cell_op(state: dict, op: dict) -> None:
             newcell["reason"] = reason
         if approval_ref:
             newcell["approval_ref"] = approval_ref
+        # 対象外にした根拠の質疑も記録できるようにする。従来は reason の散文だけが残り、
+        # 「どの質疑でこの platform を外したのか」を機械で辿れなかった。除外は収集した
+        # 結論の一種であって未検討ではない、という区別をデータに持たせる。
+        qa_ref = op.get("qa_ref")
+        if qa_ref:
+            newcell["qa_ref"] = qa_ref
         state["matrix"][cat][pf] = newcell
     else:
         raise TransitionError(f"未知 action: {action!r}")
@@ -542,6 +614,32 @@ def _is_rfc3339(value) -> bool:
     return True
 
 
+FUTURE_TOLERANCE_SECONDS = 300
+
+
+def _require_past_rfc3339(value, label: str) -> None:
+    """RFC3339 かつ「未来でない」ことを課す。
+
+    書式だけを見る検査は「書式の正しい嘘」を素通りさせる。実際、書込時刻より後の時刻を
+    latest_checked_at / confirmed_at に書いても決定論ゲートは全て exit 0 になり、意味層の
+    完成度 evaluator だけがそれを捉えた。まだ起きていない照合・採択を記録済みと主張する
+    のは記録の捏造であり、決定論側で塞ぐ。時計ずれの許容は
+    FUTURE_TOLERANCE_SECONDS 秒まで。
+    """
+    if not _is_rfc3339(value):
+        raise TransitionError(f"{label} は RFC3339 必須 (受領値: {value!r})")
+    when = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    skew = (when - datetime.now(timezone.utc)).total_seconds()
+    if skew > FUTURE_TOLERANCE_SECONDS:
+        raise TransitionError(
+            f"{label} が未来の時刻 ({value}, 現在より {int(skew)} 秒先)。"
+            "まだ起きていない照合・採択を記録済みとして書けない。"
+            "`date -u +%Y-%m-%dT%H:%M:%SZ` の実測値を使うこと"
+        )
+
+
 def _validate_cost_model(value, label: str) -> str:
     """費用分類・金額・周期・TCO を検証し、費用分類を返す。"""
     if not isinstance(value, dict):
@@ -630,8 +728,10 @@ def set_decision(state: dict, decision: dict) -> None:
             _require_nonempty(
                 comparison_basis.get(axis), f"recommendation.comparison_basis.{axis}"
             )
-        if not _is_rfc3339(recommendation.get("latest_checked_at")):
-            raise TransitionError("decision: recommendation.latest_checked_at は RFC3339 必須")
+        _require_past_rfc3339(
+            recommendation.get("latest_checked_at"),
+            "decision: recommendation.latest_checked_at",
+        )
         if recommendation["option_id"] not in option_ids:
             raise TransitionError("decision: recommendation.option_id が options に不在")
 
@@ -641,8 +741,9 @@ def set_decision(state: dict, decision: dict) -> None:
             raise TransitionError("decision: confirmed には user_decision が必須")
         _require_nonempty(user_decision.get("option_id"), "user_decision.option_id")
         _require_nonempty(user_decision.get("confirmed_at"), "user_decision.confirmed_at")
-        if not _is_rfc3339(user_decision.get("confirmed_at")):
-            raise TransitionError("decision: user_decision.confirmed_at は RFC3339 必須")
+        _require_past_rfc3339(
+            user_decision.get("confirmed_at"), "decision: user_decision.confirmed_at"
+        )
         if user_decision["option_id"] not in option_ids:
             raise TransitionError("decision: user_decision.option_id が options に不在")
     elif user_decision:
@@ -664,6 +765,420 @@ def _has_entry(log: list[dict], entry_id: str) -> bool:
     return any(e.get("id") == entry_id for e in log)
 
 
+QA_PROVENANCE_KEYS = ("provenance", "basis", "answered_at")
+
+# 回答の性質。確定の根拠として何が要るかがこれで変わる。
+#   user-decision   : 利用者が代替案を見たうえで明示選択した。設計判断の正当な根拠。
+#   observed-fact   : コード・設定・公式ドキュメントで検証できる観測事実。
+#   agent-inference : アシスタントの推定。利用者確認も検証可能な出典も経ていない。
+QA_BASIS_VALUES = ("user-decision", "observed-fact", "agent-inference")
+
+
+def _incoming_required_info_items(qa_id: str, turn: dict) -> list[str]:
+    """turn.required_info_items を検証して返す (未指定なら空)。
+
+    required-info-catalog の item_id を qa_log entry へ**機械可読**に結び付けるための項目。
+    従来この対応は qa_id の命名規約と確定セルの qa_ref 文字列からの目視推測でしか辿れず、
+    「block 指定の必須情報が本当に確定へ接地しているか」を決定論で検査できなかった。
+    """
+    raw = turn.get("required_info_items")
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or any(
+        not isinstance(i, str) or not i.strip() for i in raw
+    ):
+        raise TransitionError(
+            f"qa_log {qa_id}: required_info_items は非空文字列の配列必須 "
+            "(required-info-catalog の item_id を列挙する)"
+        )
+    return [i.strip() for i in raw]
+
+
+QA_CORRECTION_KEYS = ("corrected_at", "note")
+
+
+def _validate_correction(qa_id: str, index: int, item) -> None:
+    """corrections[] の1件を検証する。不正なら TransitionError を投げる。
+
+    問答本文 (question / answer) は改竄防止のため凍結されている。しかし本文の散文へ
+    誤った値 (例: 実際には発生していない時刻) を書いてしまうと、凍結がそのまま
+    「訂正できない誤り」になる。corrections は本文を書き換えずに『この記録は後に
+    訂正された』という事実だけを append-only で残すための場所である。
+
+    検査は3点。(1) corrected_at は他の時刻と同じく実測 RFC3339 で未来でないこと —
+    まだ起きていない訂正を記録済みとして書けない。(2) note は空白のみでないこと —
+    「何が誤りで何が正しいか」が読めない訂正記録は、訂正した体裁だけを整えて中身が無い。
+    (3) 未知キーは拒否する — 呼び出し側は検証後に既知キーだけを取り出すため、typo を
+    黙って捨てると「書いたつもりの訂正が消える」。
+    """
+    label = f"qa_log {qa_id}: corrections[{index}]"
+    if not isinstance(item, dict):
+        raise TransitionError(f"{label} は object 必須 (受領型: {type(item).__name__})")
+    unknown = sorted(set(item) - set(QA_CORRECTION_KEYS))
+    if unknown:
+        raise TransitionError(
+            f"{label}: 未知のキー {unknown} (既知: {list(QA_CORRECTION_KEYS)})。"
+            "取り込まれずに黙って失われるため拒否する"
+        )
+    _require_past_rfc3339(item.get("corrected_at"), f"{label}.corrected_at")
+    note = item.get("note")
+    if not isinstance(note, str) or not note.strip():
+        raise TransitionError(
+            f"{label}: note は非空文字列必須 (何が誤りで何が正しいかを書く)"
+        )
+
+
+def _upsert_qa_entry(state: dict, qa_id: str, turn: dict) -> None:
+    """qa_log entry を登録する。既存 entry へは provenance 項目だけを追記する。
+
+    従来は `{id, question, answer}` の 3 キーしか保持せず、しかも既存 id を丸ごと
+    読み飛ばしていたため、「その回答が誰のどの発話に由来するか」を後から一切付けられ
+    なかった。出所不明の回答が確定セルの接地根拠になり得るのが問題の本体である。
+
+    ただし question / answer の事後書換は許さない (記録の改竄防止)。既存 entry に対して
+    許すのは、未設定の provenance 項目を**埋める**ことだけで、既に値がある項目の上書きや
+    問答本文の変更は TransitionError で拒否する。追記は冪等 (同値の再適用は無変更)。
+    """
+    entry = next((e for e in state["qa_log"] if e.get("id") == qa_id), None)
+    answered_at = turn.get("answered_at")
+    if answered_at is not None:
+        _require_past_rfc3339(answered_at, f"qa_log {qa_id}: answered_at")
+    items = _incoming_required_info_items(qa_id, turn)
+    corrections = turn.get("corrections")
+    if corrections is not None:
+        if not isinstance(corrections, list) or not corrections:
+            raise TransitionError(
+                f"qa_log {qa_id}: corrections は非空の配列必須"
+            )
+        for idx, item in enumerate(corrections):
+            _validate_correction(qa_id, idx, item)
+        corrections = [
+            {k: item[k] for k in QA_CORRECTION_KEYS} for item in corrections
+        ]
+    basis = turn.get("basis")
+    if basis is not None and basis not in QA_BASIS_VALUES:
+        raise TransitionError(
+            f"qa_log {qa_id}: basis={basis!r} が enum {list(QA_BASIS_VALUES)} 外"
+        )
+    if entry is None:
+        new_entry = {
+            "id": qa_id,
+            "question": turn.get("question", ""),
+            "answer": turn.get("answer", ""),
+        }
+        for key in QA_PROVENANCE_KEYS:
+            if turn.get(key):
+                new_entry[key] = turn[key]
+        if items:
+            new_entry["required_info_items"] = sorted(set(items))
+        if corrections:
+            new_entry["corrections"] = list(corrections)
+        state["qa_log"].append(new_entry)
+        return
+    for key in ("question", "answer"):
+        incoming = turn.get(key)
+        if incoming and incoming != entry.get(key):
+            raise TransitionError(
+                f"qa_log {qa_id}: 既存 entry の {key} は書換不可 "
+                "(記録の改竄防止。訂正が要るなら新しい qa_id を発行すること)"
+            )
+    for key in QA_PROVENANCE_KEYS:
+        incoming = turn.get(key)
+        if not incoming:
+            continue
+        current = entry.get(key)
+        if current and current != incoming:
+            raise TransitionError(
+                f"qa_log {qa_id}: {key} は既に {current!r} が記録済みで上書きできない"
+            )
+        entry[key] = incoming
+    if corrections:
+        # append-only。既存の訂正記録は落とさず、同値の再適用でも増やさない (冪等)。
+        existing = entry.setdefault("corrections", [])
+        for item in corrections:
+            if item not in existing:
+                existing.append(item)
+    if items:
+        # 追記のみ (和集合)。既存の紐付けを turn 側の列挙漏れで落とさない。
+        entry["required_info_items"] = sorted(
+            set(entry.get("required_info_items", [])) | set(items)
+        )
+
+
+def _apply_design_application(state: dict, cat: str, op: dict) -> None:
+    """章 (カテゴリ) 固有の「その設計知識をこの章でどう適用したか」を記録する。
+
+    従来 compile の「適用された設計知識」節は resource-map の card 本文を逐語で流し込む
+    だけで、章固有の記述を置く場所が schema に無かった。その結果、同じ card を引く章どうしが
+    byte 単位で一致し、「適用した」と称しながら実体は「参照した」に過ぎない空洞になっていた
+    (機械注入したものを自分で適用の証拠として数える自己循環)。card 本文は共有資産なので
+    一致するのが当然であり、章固有性はここに書かれた記述だけが担える。
+    """
+    if not isinstance(cat, str) or not cat.strip():
+        raise TransitionError("set-design-application には category が必須")
+    known = {c.get("id") for c in state.get("categories", []) or []}
+    if known and cat not in known:
+        raise TransitionError(
+            f"set-design-application: 未知のカテゴリ {cat!r} (既知: {sorted(known)})"
+        )
+    text = op.get("text")
+    if not isinstance(text, str) or not text.strip():
+        raise TransitionError(
+            f"set-design-application[{cat}]: text は非空文字列必須 "
+            "(card の要約ではなく、この章の確定内容へどう効いたかを書く)"
+        )
+    basis = op.get("basis")
+    if basis is not None and basis not in QA_BASIS_VALUES:
+        raise TransitionError(
+            f"set-design-application[{cat}]: basis={basis!r} が enum {list(QA_BASIS_VALUES)} 外"
+        )
+    recorded_at = op.get("recorded_at")
+    _require_past_rfc3339(recorded_at, f"set-design-application[{cat}].recorded_at")
+    record = {"text": text.strip(), "recorded_at": recorded_at}
+    if basis:
+        record["basis"] = basis
+    state.setdefault("design_applications", {})[cat] = record
+
+
+def _apply_doctrine_application(state: dict, cat: str, op: dict) -> None:
+    """章 × 設計 concern 単位で「その上流指針を本章の確定内容へどう反映したか」を記録する。
+
+    card レベル (design_applications) で塞いだのと同じ空洞が doctrine レベルにも残っていた。
+    compile が doctrine registry を読んで authority を表へ描くようになった結果、
+    Apple HIG / OWASP ASVS / Google SRE の名は章に現れるようになったが、現れる場所は
+    registry の転記表の内側だけで、本文の確定セル要件へ効いた箇所は 1 件も無かった。
+    表への出現を反映の証拠として数えるのは、機械注入したものを自分で証拠に数える自己循環で
+    あり、rubric の Goodhart 防止条項が禁じているもの。章固有の反映はここにしか書けない。
+    """
+    if not isinstance(cat, str) or not cat.strip():
+        raise TransitionError("set-doctrine-application には category が必須")
+    known = {c.get("id") for c in state.get("categories", []) or []}
+    if known and cat not in known:
+        raise TransitionError(
+            f"set-doctrine-application: 未知のカテゴリ {cat!r} (既知: {sorted(known)})"
+        )
+    concern_id = op.get("concern_id")
+    if not isinstance(concern_id, str) or not concern_id.strip():
+        raise TransitionError(
+            f"set-doctrine-application[{cat}]: concern_id は非空文字列必須 "
+            "(doctrine-anchor-registry の concern_id と一致させる)"
+        )
+    concern_id = concern_id.strip()
+    text = op.get("text")
+    if not isinstance(text, str) or not text.strip():
+        raise TransitionError(
+            f"set-doctrine-application[{cat}/{concern_id}]: text は非空文字列必須 "
+            "(authority の要約ではなく、本章の確定セルへどう効いたかを書く)"
+        )
+    text = text.strip()
+    clash = _doctrine_reuse_conflict(state, cat, concern_id, text)
+    if clash:
+        raise TransitionError(
+            f"set-doctrine-application[{cat}/{concern_id}]: 同じ concern を引く "
+            f"{clash!r} 章と実質同一の反映記述である。章が違えば確定セルも違うため、"
+            "反映の記述が一致するのは上流の要約を写しただけの疑いが強い "
+            "(章固有の確定内容へ言及して書き直すこと)"
+        )
+    basis = op.get("basis")
+    if basis is not None and basis not in QA_BASIS_VALUES:
+        raise TransitionError(
+            f"set-doctrine-application[{cat}/{concern_id}]: basis={basis!r} が "
+            f"enum {list(QA_BASIS_VALUES)} 外"
+        )
+    recorded_at = op.get("recorded_at")
+    _require_past_rfc3339(
+        recorded_at, f"set-doctrine-application[{cat}/{concern_id}].recorded_at"
+    )
+    record = {"text": text, "recorded_at": recorded_at}
+    if basis:
+        record["basis"] = basis
+    state.setdefault("doctrine_applications", {}).setdefault(cat, {})[concern_id] = record
+
+
+def _add_reopen_correction(state: dict, op: dict) -> None:
+    """既存 reopen_log entry へ、事後に判明した事実を追記する (既存キーは不可侵)。
+
+    reopened_at を必須化する前に書かれた entry には時刻が無い。当初この欠落は
+    「遡って埋めない」と決めていたが、その理由づけは 2 段階で誤っていた。
+    最初は「実測できないから」としていて、これはトランスクリプトに残っている以上
+    端的に偽だった。次に「既存 entry を書き換える op を writer に置かないため」と
+    書き直したが、これは禁じるべき対象を取り違えていた — 守りたいのは既存フィールドの
+    改変であって、新しいフィールドの追記ではない。qa_log は question/answer を凍結した
+    まま corrections[] への追記だけを許しており、同じ設計をここへ当てはめれば、
+    確定を壊した事実を後から消せる経路は作らずに欠測時刻を回復できる。
+    append-only の下では「訂正 (既存事実の修正)」と「補記 (新しい事実の追加)」は別物で、
+    トランスクリプトから復元した観測は後者である。
+
+    entry には id が無いので index で指す。reopen_log は追記のみで並べ替えないため
+    index は安定だが、取り違えると別の reopen に他人の時刻が付いてしまう。それは
+    まさにこの記録が防ごうとしている種類の汚染なので、category/platform の照合を
+    必須にして、番号だけの指定を受け付けない。
+    """
+    log = state.get("reopen_log") or []
+    index = op.get("index")
+    if not isinstance(index, int) or isinstance(index, bool):
+        raise TransitionError("add-reopen-correction には整数 index が必須")
+    if not 0 <= index < len(log):
+        raise TransitionError(
+            f"add-reopen-correction: index={index} が reopen_log の範囲外 (len={len(log)})"
+        )
+    entry = log[index]
+    for key in ("category", "platform"):
+        expected = op.get(f"match_{key}")
+        if not expected:
+            raise TransitionError(
+                f"add-reopen-correction には match_{key} が必須 "
+                "(index の取り違えで別の reopen へ追記するのを防ぐ)"
+            )
+        if entry.get(key) != expected:
+            raise TransitionError(
+                f"add-reopen-correction: index={index} の {key} は {entry.get(key)!r} で "
+                f"match_{key}={expected!r} と一致しない (index の指定違い)"
+            )
+    note = op.get("note")
+    if not isinstance(note, str) or not note.strip():
+        raise TransitionError(
+            f"add-reopen-correction[{index}]: note は非空文字列必須"
+        )
+    recovered_at = op.get("recovered_at")
+    _require_past_rfc3339(recovered_at, f"add-reopen-correction[{index}].recovered_at")
+    record: dict = {"recovered_at": recovered_at, "note": note.strip()}
+    observed = op.get("observed_reopened_at")
+    if observed is not None:
+        # 復元した「reopen を実施した実測時刻」。既存キー reopened_at は書き換えず、
+        # 補記側にだけ置く。どちらが原記録でどちらが後からの復元かを読み手が区別できる。
+        _require_past_rfc3339(
+            observed, f"add-reopen-correction[{index}].observed_reopened_at"
+        )
+        record["observed_reopened_at"] = observed
+    corrections = entry.setdefault("corrections", [])
+    if record not in corrections:  # 同値の再適用で増やさない (冪等)
+        corrections.append(record)
+
+
+QA_CORRECTABLE_TIMESTAMPS = ("answered_at",)
+
+
+def _correct_qa_timestamp(state: dict, op: dict) -> None:
+    """qa_log entry の計測値時刻を、旧値と根拠を残したうえで正しい実測値へ訂正する。
+
+    背景。provenance 系キーは append-only (不在時のみ設定可) で凍結しており、これは
+    question/answer と同じく「後から書き換えられるなら記録が証跡でなくなる」ためである。
+    ところが answered_at は散文ではなく**計測値**なので、誤って書込時刻を入れてしまうと、
+    正しい値を corrections[] の日本語文にしか置けなくなる。すると answered_at を読む
+    機械は誤値を読み続け、訂正は散文の中にあって届かない。決定論ゲートは全て緑のまま
+    誤った時刻が残る — 緑であることが内容の正しさを示さない典型形である。
+
+    一方で無条件の上書きを許すと凍結の意味が消える。そこで訂正だけを別 op として切り出し、
+    次を必須にする:
+      - expected_current: 現在保持している値と一致すること。取り違えた entry や、既に
+        別の訂正が入った entry を盲目的に塗り潰すことを防ぐ (fail-closed)。
+      - value: 新しい実測値。過去の RFC3339 であること。
+      - note / corrected_at: なぜ誤ったのか、いつ訂正したのか。
+    そして値の差し替えと同時に corrections[] へ旧値・新値・根拠を追記する。フィールドは
+    正しい値になり、誤っていた事実も残る。どちらか一方を捨てない。
+
+    reopen_log の欠測時刻を observed_reopened_at という別キーへ補記したのとは扱いが違う。
+    あちらは「原記録が存在しない」ケースで、後から測った値を原記録と同じ名前に置けば
+    出所を偽ることになる。こちらは「原記録が存在するが誤っている」ケースなので、正しい
+    値をその名前に置いたうえで、誤りの履歴を別に残すのが正しい。
+    """
+    qa_id = op.get("qa_id")
+    if not isinstance(qa_id, str) or not qa_id.strip():
+        raise TransitionError("correct-qa-timestamp には qa_id が必須")
+    entry = next(
+        (e for e in state.get("qa_log", []) or [] if isinstance(e, dict) and e.get("id") == qa_id),
+        None,
+    )
+    if entry is None:
+        raise TransitionError(f"correct-qa-timestamp: qa_log に {qa_id!r} が存在しない")
+    key = op.get("key", "answered_at")
+    if key not in QA_CORRECTABLE_TIMESTAMPS:
+        raise TransitionError(
+            f"correct-qa-timestamp: key={key!r} は訂正対象外 "
+            f"(計測値時刻 {list(QA_CORRECTABLE_TIMESTAMPS)} のみ。"
+            "question/answer/provenance/basis は本文であり、訂正でなく新しい qa_id を発行すること)"
+        )
+    value = op.get("value")
+    _require_past_rfc3339(value, f"correct-qa-timestamp {qa_id}.{key}.value")
+    note = op.get("note")
+    if not isinstance(note, str) or not note.strip():
+        raise TransitionError(f"correct-qa-timestamp {qa_id}: note は非空文字列必須")
+    corrected_at = op.get("corrected_at")
+    _require_past_rfc3339(corrected_at, f"correct-qa-timestamp {qa_id}.corrected_at")
+    current = entry.get(key)
+    corrections = entry.setdefault("corrections", [])
+    # 冪等判定を「同じ record が既にあるか」で行ってはならない。適用後は現在値が新値に
+    # なっているため previous_value が変わり、同じ op でも別 record になってしまう。
+    # 見るべきは「このキーが既にこの値へ訂正済みか」だけである。
+    already = any(
+        isinstance(c, dict)
+        and c.get("corrected_field") == key
+        and c.get("corrected_value") == value
+        and c.get("corrected_at") == corrected_at
+        for c in corrections
+    )
+    if current == value and already:
+        return  # 同値の再適用 (冪等)
+    expected = op.get("expected_current")
+    if expected != current:
+        raise TransitionError(
+            f"correct-qa-timestamp {qa_id}: {key} の現在値は {current!r} で "
+            f"expected_current={expected!r} と一致しない "
+            "(訂正対象を取り違えているか、既に別の訂正が入っている)"
+        )
+    entry[key] = value
+    corrections.append(
+        {
+            "corrected_at": corrected_at,
+            "note": note.strip(),
+            "corrected_field": key,
+            "previous_value": current,
+            "corrected_value": value,
+        }
+    )
+
+
+def _normalize_for_reuse(text: str) -> str:
+    """転記の同一判定用に、意味を変えない表層差を落とす。
+
+    落とすのは空白 (全角半角とも) と句読点・括弧・記号だけで、語は落とさない。
+    ここで語まで削ると別内容が衝突しうるが、表層記号だけなら内容の異なる 2 記述が
+    一致することはない。
+    """
+    return "".join(
+        ch for ch in text if not ch.isspace() and unicodedata.category(ch)[0] != "P"
+    )
+
+
+def _doctrine_reuse_conflict(state: dict, cat: str, concern_id: str, text: str) -> str | None:
+    """同じ concern を引く他章に、実質同一の適用記述が既にあれば、その章 id を返す。
+
+    doctrine registry では 7 concern がいずれも 2 つ以上のカテゴリから参照される
+    (presentation は ui-ux と frontend、data-access は database と backend、
+    operations は infrastructure と maintenance-ops、など)。この構造ゆえ、
+    「その章で本当に適用したのか、上流の要約を写しただけなのか」を機械で疑える —
+    章が違えば確定セルも違うのだから、反映の記述が他章と一致するのは不自然である。
+
+    None を返せば受理、章 id を返せば呼出し側が TransitionError にする。
+    """
+    existing = state.get("doctrine_applications") or {}
+    for other_cat, per_concern in existing.items():
+        if other_cat == cat or not isinstance(per_concern, dict):
+            continue
+        other = str((per_concern.get(concern_id) or {}).get("text") or "")
+        if not other:
+            continue
+        # 正規化してから完全一致で判定する。素の完全一致だと句読点を1つ変えるだけで
+        # 抜けられ、逆に言い換えの検出まで踏み込むと正当な記述を弾いてしまい、
+        # 回避のためだけの無意味な言い換えを書き手に強いる (Goodhart を別の口から
+        # 入れることになる)。正規化一致なら偽陽性が原理的に出ない — 内容の異なる
+        # 2つの記述が正規化後に一致することはないので、writer が理不尽に止まらない。
+        if _normalize_for_reuse(text) == _normalize_for_reuse(other):
+            return other_cat
+    return None
+
+
 def apply_turn(state: dict, turn: dict) -> None:
     """1 ターン (質問→回答→反映) をまとめて適用する。
 
@@ -672,14 +1187,8 @@ def apply_turn(state: dict, turn: dict) -> None:
     approval_ref を補完してから各セル op を適用する。適用後に集約を再計算する。
     """
     qa_id = turn.get("qa_id")
-    if qa_id and not _has_entry(state["qa_log"], qa_id):
-        state["qa_log"].append(
-            {
-                "id": qa_id,
-                "question": turn.get("question", ""),
-                "answer": turn.get("answer", ""),
-            }
-        )
+    if qa_id:
+        _upsert_qa_entry(state, qa_id, turn)
     appr_id = turn.get("approval_id")
     if appr_id and not _has_entry(state["approval_log"], appr_id):
         state["approval_log"].append(
@@ -691,12 +1200,21 @@ def apply_turn(state: dict, turn: dict) -> None:
         if op.get("action") == "confirm" and not op.get("qa_ref") and qa_id:
             op["qa_ref"] = qa_id
         if (
+            op.get("action") == "add-qa-ref"
+            and not op.get("qa_refs")
+            and not op.get("qa_ref")
+            and qa_id
+        ):
+            op["qa_refs"] = [qa_id]
+        if (
             op.get("action") == "exclude"
             and not op.get("reason")
             and not op.get("approval_ref")
             and appr_id
         ):
             op["approval_ref"] = appr_id
+        if op.get("action") == "exclude" and not op.get("qa_ref") and qa_id:
+            op["qa_ref"] = qa_id
         apply_cell_op(state, op)
 
     recompute_aggregates(state)

@@ -218,6 +218,152 @@ def test_manifest_dependencies_and_delegate_refs_are_validated(tmp_path: Path) -
     assert any("dependsOn が循環" in finding for finding in profile.findings)
 
 
+def test_legacy_loop_declaration_findings_are_demoted(tmp_path: Path) -> None:
+    root, skill = _skill(tmp_path, goal_seek="")
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert profile.is_legacy_loop is True
+    assert enforced == ()
+    assert len(legacy) == 3
+
+
+def test_declared_loop_keeps_findings_enforced(tmp_path: Path) -> None:
+    root, skill = _skill(
+        tmp_path, goal_seek="  engine: inline\n  fork: subagent\n"
+    )
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert profile.is_legacy_loop is False
+    assert legacy == ()
+    assert any("allowed-tools に Agent/Task がない" in finding for finding in enforced)
+
+
+def test_fork_tools_baseline_path_is_demoted(tmp_path: Path) -> None:
+    root = tmp_path
+    skill = (
+        root / "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md"
+    )
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\nname: run-system-spec-compile\nallowed-tools:\n  - Read\n"
+        "kind: run\nprefix: run\ngoal_seek:\n  engine: inline\n  fork: subagent\n"
+        "---\n\n## ゴールシーク実行\n",
+        encoding="utf-8",
+    )
+    profile = MODULE.inspect_skill(skill, root / "plugins")
+    enforced, legacy = profile.split_findings()
+    assert enforced == ()
+    assert any("allowed-tools に Agent/Task がない" in finding for finding in legacy)
+
+
+DEMO_SKILL_PATH = "plugins/demo/skills/run-demo/SKILL.md"
+
+
+def test_report_exit_uses_legacy_ratchet(tmp_path: Path, monkeypatch, capsys) -> None:
+    """path 固定 ratchet: 登録済みなら通し、未登録の legacy loop skill なら落ちること。"""
+    root, _skill_path = _skill(tmp_path, goal_seek="")
+    monkeypatch.setattr(
+        MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset({DEMO_SKILL_PATH})
+    )
+    assert MODULE.main(["--repo-root", str(root)]) == 0
+    captured = capsys.readouterr()
+    assert "legacy=1 registered=1 unlisted=0 stale=0" in captured.out
+    assert "[legacy]" in captured.err
+
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "ratchet 超過" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+
+
+def test_stale_baseline_entry_fails(tmp_path: Path, monkeypatch, capsys) -> None:
+    """返済済み (goal_seek 宣言済み) の path が登録に残っていたら落ちること。
+
+    片方向 ratchet を防ぐ検査。登録を残したままだと、同 path が将来 legacy に戻った際に
+    黙って再免除されてしまう。
+    """
+    root, _skill_path = _skill(tmp_path)  # goal_seek 宣言済み = legacy でない
+    monkeypatch.setattr(
+        MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset({DEMO_SKILL_PATH})
+    )
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    captured = capsys.readouterr()
+    assert "免除が陳腐化" in captured.err
+    assert DEMO_SKILL_PATH in captured.err
+
+
+def test_stale_baseline_entry_covers_deleted_path(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """実在しなくなった path も陳腐化として検出されること (リネーム/削除の取りこぼし防止)。"""
+    root, _skill_path = _skill(tmp_path, goal_seek="")
+    monkeypatch.setattr(
+        MODULE,
+        "LEGACY_LOOP_BASELINE_PATHS",
+        frozenset({DEMO_SKILL_PATH, "plugins/gone/skills/run-gone/SKILL.md"}),
+    )
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    # [legacy] finding 行にも demo path は出るので、陳腐化メッセージ行だけを見る。
+    stale_line = next(
+        line for line in capsys.readouterr().err.splitlines() if "免除が陳腐化" in line
+    )
+    assert "plugins/gone/skills/run-gone/SKILL.md" in stale_line
+    assert DEMO_SKILL_PATH not in stale_line
+
+
+def test_stale_check_is_skipped_when_scope_is_filtered(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """--plugin/--skill 絞り込み時は陳腐化検査を行わないこと。
+
+    登録は repo 全体の定数なので、範囲外 plugin の登録が「今回集めた path に無い」ことは
+    返済の証拠にならない。誤検出に従って登録を削ると全体実行で unlisted へ転じてしまう。
+    """
+    root, _skill_path = _skill(tmp_path, goal_seek="")
+    monkeypatch.setattr(
+        MODULE,
+        "LEGACY_LOOP_BASELINE_PATHS",
+        frozenset({DEMO_SKILL_PATH, "plugins/other/skills/run-other/SKILL.md"}),
+    )
+    # 全体実行では範囲外の登録が陳腐化として出る。
+    assert MODULE.main(["--repo-root", str(root)]) == 1
+    assert "免除が陳腐化" in capsys.readouterr().err
+    # 同じ登録でも絞り込み実行なら誤検出しない。
+    assert MODULE.main(["--repo-root", str(root), "--plugin", "demo"]) == 0
+    captured = capsys.readouterr()
+    assert "免除が陳腐化" not in captured.err
+    assert "stale=0" in captured.out
+
+
+def test_replica_skill_name_is_allowed_without_path_registration(
+    tmp_path: Path, monkeypatch, capsys
+) -> None:
+    """配布複製は skill 名で一括許容する (plugin 追加のたび path を足さずに済むこと)。"""
+    root, _skill_path = _skill(tmp_path, goal_seek="")
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_REPLICA_SKILLS", frozenset({"run-demo"}))
+    assert MODULE.main(["--repo-root", str(root)]) == 0
+    assert "[legacy]" in capsys.readouterr().err
+
+
+def test_unlisted_legacy_paths_matches_skill_segment_not_substring(monkeypatch) -> None:
+    """複製判定は skill ディレクトリ名の完全一致であり、部分一致で緩まないこと。"""
+    monkeypatch.setattr(MODULE, "LEGACY_LOOP_BASELINE_PATHS", frozenset())
+    monkeypatch.setattr(
+        MODULE, "LEGACY_LOOP_REPLICA_SKILLS", frozenset({"run-skill-feedback"})
+    )
+    paths = (
+        "plugins/a/skills/run-skill-feedback/SKILL.md",
+        "plugins/b/skills/run-skill-feedback-extra/SKILL.md",
+        "plugins/c/skills/run-other/SKILL.md",
+    )
+    assert MODULE._unlisted_legacy_paths(paths) == (
+        "plugins/b/skills/run-skill-feedback-extra/SKILL.md",
+        "plugins/c/skills/run-other/SKILL.md",
+    )
+
+
 def test_manifest_agent_ref_must_exist(tmp_path: Path) -> None:
     root, skill = _skill(tmp_path)
     text = skill.read_text(encoding="utf-8").replace(

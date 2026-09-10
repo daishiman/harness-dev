@@ -20,7 +20,11 @@ effect: external-mutation
 external_mutation_guard: {runtime_ref: "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py", flow: "preview-confirm-authorize-execute-v1"}
 owner: harness-maintainers
 since: 2026-08-17
-version: 0.5.0
+version: 0.6.0
+responsibility_refs:
+  - scripts/build-journal-context.py
+  - ../../agents/journal-composer.md
+  - scripts/validate-journal-output.py
 subagent_refs:
   - journal-composer
 schema_refs:
@@ -34,6 +38,7 @@ reference_refs:
   - references/output-format.md
   - references/interview-map.md
   - references/daily-habits.json
+  - references/principle-checklist.md
 combinators:
   - with-goal-seek
   - with-feedback-contract
@@ -49,6 +54,8 @@ source: ユーザーの既存 Obsidian Daily 運用 (02_Configs/Daily/) の仕�
 source-tier: internal
 last-audited: 2026-08-17
 audit-trigger: quarterly
+completeness_exempt:
+  - "manifest: context 生成 (build-journal-context.py) → 整形 (SubAgent journal-composer) → 検証 (validate-journal-output.py) の一本道で、分岐も並列も再入も無い。workflow-manifest.json を置いても Phase 遷移の正本が SKILL.md 本文と二重になるだけで、片方が古びる (二重定義禁止 [[project_ssot_dedup_mechanism]])。実行体の対応は responsibility_refs が持ち、Write の可否は external_mutation_guard が機械判定する。"
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -188,7 +195,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/bu
   （本文のどこかにあればよい、ではない）。痕跡ゼロは Phase5 で H01 違反になる。
 - **週次習慣目標**: 週報の習慣目標4群は独立セクションにせず、会話から達成状況を推し量って
   行動・時間・お金の各ジャーナルへ事実として織り込む（`references/interview-map.md` 参照）。
-- **目標セクションだけは自動**: 1年/2ヶ月/1ヶ月/1週間目標と残日数は Phase0 の結果をそのまま使い、
+- **目標セクションだけは自動**: 1年/3ヶ月/1ヶ月/1週間目標と残日数は Phase0 の結果をそのまま使い、
   ユーザーに確認を求めない。ただし `warnings` に期間ズレ・満了があるときだけ確認する。
 
 ## Phase4-5: 整形と検証
@@ -207,7 +214,11 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-journal/scripts/va
 
 ## ゴールシーク実行
 
-`goal_seek.engine: inline` / `fork: inline` とし、ユーザー対話と保存可否はmain contextが所有する。`journal-composer` は Phase4-5 の単一 writer/validator を `Task` で担い、親は receipt で完了を判定する。最大3周で未達なら残件を `open_issues` と handoff に記録し、完了扱いにしない。composer 内の最大3回は同じMarkdownに対する機械違反の修復であり、親のgoal-seek周回とは別である。composerが3回で収束しなければ親がPhase4を自動再起動せず、その時点で停止する。
+`goal_seek.engine: inline` / `fork: inline` とし、ユーザー対話と保存可否はmain contextが所有する。`journal-composer` は Phase4-5 の単一 writer/validator を `Task` で担い、親は receipt で完了を判定する。最大3周で未達なら残件を `open_issues` と handoff に記録し、完了扱いにしない。
+
+親の 1 周回の実体は **Phase1-3 の対話へ戻って不足を埋め、`journal-composer` を Phase4-5 へ再委譲すること**である。周回の発火条件は「保存された journal が `original_goal` に対して不足している」とmain contextが判断した場合に限る (例: 事実・数値・固有名詞の取りこぼし、当日の意思決定が言語化されていない)。周回ごとに `intermediate.jsonl` へ 1 行 append し `iteration` を進める。
+
+composer 内の最大3回は同じMarkdownに対する機械違反の修復であり、親のgoal-seek周回とは別である。機械違反は対話で埋められない種類の失敗なので、composerが3回で収束しなければ親がPhase4を自動再起動せず、周回を消費しないままその時点で停止し、違反コードをユーザーへ報告する。
 
 ### ゴールシーク配線
 
@@ -232,8 +243,13 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 - **要約しすぎない**: ユーザーが出した固有名詞・数値・時刻・相手の発言はそのまま残す。
   1項目1事実に分解し、冗長な言い回しだけを削る。
 - **3小節を混ぜない**: 「現状を確認する」に評価や改善案を書かない。事実／解釈／打ち手を分離する。
-- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシートは前回から引き継ぎ、
-  ユーザーが変更を申し出た項目だけ更新する。
+- **継承値は書き換えない**: 人生の究極目的・フェーズ別課題チェックシート・原理原則チェックシートは
+  前回から引き継ぎ、ユーザーが変更を申し出た項目だけ更新する。
+- **原理原則チェックシートは毎回出す**: `# 原理原則 チェックシート`（11 設問）は省略・要約・抜粋をしない。
+  前回ジャーナルの状態をそのまま写し、対話で変化があったチェック状態だけを更新する。
+  前回に本ブロックが無ければ `references/principle-checklist.md` のテンプレートを未チェックで書き出す。
+  **対話（Phase1-3）では読み上げない**。11 設問を聞き取りに足すとジャーナル対話が倍の長さになって
+  毎日の運用が続かない。Phase4 の生成時に器として出すだけで要求は満たされる。
 
 ## Gotchas
 
@@ -246,6 +262,10 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
   1週間目標の残日数は `0日（期間終了・次週分の週報は未作成）` と書く。
 - **1年目標の対応レポートは存在しない**: 前回ジャーナルからの継承のみ。満了していたら対話で確認する。
 - **フェーズ別課題チェックシートは本文の外**: `## 【お金のジャーナル】` の後、レベル1見出しとして置く。
+- **チェックシート2種を取り違えない**: `# フェーズ別 課題チェックシート`（0→1 / 1→10 / 10→100）と
+  `# 原理原則 チェックシート`（11 設問）は別ブロックで、どちらも `- [ ]` の塊なので見た目では区別できない。
+  順序は必ずフェーズ別 → 原理原則（ファイル末尾）。原理原則の本文に水平線 `---` を入れると、
+  翌日の継承がそこで打ち切られて以降の設問が静かに消える。
 
 ## Additional Resources
 
@@ -255,6 +275,8 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
   `references/output-format.md`（骨格の正本）/ `references/interview-map.md`（問い→セクション対応）/
   `references/daily-habits.json`（毎日固定の習慣6項目の正本。項目を増減するときはここだけを編集し、
   `keywords` と `search_scopes`（H01 が検査するセクション）を必ず併記する。`search_scopes` を
-  書き忘れた習慣は検査不能として H02 違反になる）。
+  書き忘れた習慣は検査不能として H02 違反になる）/
+  `references/principle-checklist.md`（`# 原理原則 チェックシート` 11 設問の正本テンプレートと出力規則。
+  設問を増減するときはこのファイルと `validate-journal-output.py` の `PRINCIPLE_SECTIONS` を同時に直す）。
 - **assets**: `assets/golden-sample.md`（バリデータ PASS の見本 / Few-shot）。
 - **agents**: `journal-composer`（plugin 直下 `agents/`）。

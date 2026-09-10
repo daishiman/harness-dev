@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-iter-improve",
-    "skill_md_sha256": "cd0f908107e7eb103297a54f5e7b71ccb7d1ac415657c73ae73dd238a1fc924c"
+    "skill_md_sha256": "27d36765f59f11677498a4978a3c39e0627152314014eb7f301ed22587da930e"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "iter-improve-source-path-focused-review",
-  "reviewed_at": "2026-08-24T07:40:32Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-08-24T13:06:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,14 +27,15 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "source が実在する現行 plugin 内 ROADMAP.md へ改められ、frontmatter の追跡可能性と改名後の用語整合を同時に回復している。",
-      "description の発動条件は、反復改善は Purpose/各局面、live FAIL handoff と goal-proxy 乖離は起動導線/GOAL VERIFICATION にそれぞれ対応し、BD-004 の意味判定も充足する。"
+      "frontmatter (goal_seek block・script_refs・IN3) と本文 (配線節・proof plan 局面・GOAL VERIFICATION) の宣言↔実装 parity が取れており、宣言だけの空文が無い。IN3 の verify_by 値は SSOT (feedback_contract_ssot.py) で有効。",
+      "CL anchor と exempt 注記は checklist 全件の被覆を機械的に追える形式で書かれ、criteria の derived_from との突合で漏れが無いことを実読で確認した。",
+      "文体・用語 (task-graph 変種・unresolved eval・fail-closed) は run-build-skill 側 references の正本語彙と一貫している。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:source-path-focused-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "1 context/1 target の fresh rubric rereview。rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a、score=100/100、findings=0、high severity=0。機械採点は applicable 24中23、body 235行、BD-004 は反復改善/live FAIL handoff/goal-proxy 乖離と Purpose/起動導線/GOAL VERIFICATION の対応を目視確認。source と全 schema/script/reference refs は実在し、関連 pytest 139 passed、frontmatter/runtime-profile/goal-seek/feedback-contract/dependency-knowledge/legacy-name lint PASS。live trialは実行しておらず、本PASSは静的 rubric/design claim だけである。"
+  "notes": "elegance 側 verdict と同一の focused combined review (独立 evaluator context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更差分全体に対して構造規範 (記述規約整合・refs 実在・宣言↔実装 parity・criteria 被覆) を実読で確認し、combined review の単一判断として high/medium/low finding 0 件を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 5 件 (IN1/IN2/IN3/OUT1/OUT2)。live trial は実行しておらず、本 PASS は静的 design claim だけである。"
 }

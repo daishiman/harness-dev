@@ -104,10 +104,34 @@ class CardsInsteadOfProse(unittest.TestCase):
                  if "hero-card-grid" == (el.attrs.get("class") or "")]
         self.assertEqual(1, len(grids))
 
-    def test_the_grid_reflows_by_width(self):
-        """列数を数値で固定せず、幅に追従させる (印刷と狭い画面で崩さない)。"""
+    def test_the_grid_flows_in_one_column(self):
+        """冒頭は 1 列で流す (2026-08-25 利用者要求)。
+
+        横並びにすると 1 列が 220px まで細り、1 行 10 字前後で折り返して語の
+        途中が切れる。読みにくさの出所は文の長さでなく列の細さだったので、
+        列数を幅へ追従させるのではなく 1 列に固定する。狭い画面で崩れないことは
+        カード 1 枚が縦積み (札が本文の 1 段上) であることが担う。
+        """
         res, html_text, _ = render()
-        self.assertIn("auto-fit", html_text)
+        self.assertEqual(0, res.returncode, res.stderr)
+        self.assertIn(".hero-card-grid {\n  display: flex;\n"
+                      "  flex-direction: column;", html_text)
+        self.assertNotIn("repeat(auto-fit", html_text.split(".hero-card {")[0]
+                         .split(".hero-card-grid {")[-1])
+
+    def test_the_label_sits_above_the_body(self):
+        """札は本文の左でなく 1 段上 (2026-08-26 利用者要求)。
+
+        冒頭には見出し付きの塊が 2 種類ある (hero-card と hero-list)。札を左へ
+        置いていたのはカード側だけで、本文の左端がカードごとに違って見えていた。
+        列を作る宣言がカード側に残っていないことで、2 種類の入れ物が同じ形に
+        なっていることを測る。
+        """
+        res, html_text, _ = render()
+        self.assertEqual(0, res.returncode, res.stderr)
+        card_css = html_text.split(".hero-card {")[-1].split("}")[0]
+        self.assertNotIn("grid-template-columns", card_css)
+        self.assertNotIn("display: grid", card_css)
 
 
 class MarkersStayOnTheBody(unittest.TestCase):
@@ -131,10 +155,15 @@ class ListsCarryHeadings(unittest.TestCase):
     """見出しの無い ul を冒頭へ積まない (利用者要求 R9)。"""
 
     def test_each_hero_list_is_named(self):
-        res, html_text, _ = render(
+        # 既定ではこの 3 本は紙面に出ない (利用者指定 2026-09-08)。ここで見たいのは
+        # 「出すと決めたときに見出しが付くか」なので、非表示の正本だけを外す。
+        cfg = H.base_config(
             focus_theme=["最初の 1 回"],
             must_remember=["保存先を決める"],
             no_need_to_remember=["内部の仕組み"])
+        with tempfile.TemporaryDirectory() as tmp:
+            res, html_text, _ = H.render_html(
+                tmp, cfg, env_extra=H.hero_lists_visible(tmp))
         self.assertEqual(0, res.returncode, res.stderr)
         headings = vocabulary_group("hero_list_headings")
         named = {el.attrs.get("data-hb-list-field") for el in H.parse(html_text)

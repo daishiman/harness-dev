@@ -131,6 +131,130 @@ def test_c28_projects_epic_exact13_and_returns_only_parity_confirmed_ready(tmp_p
     assert closed["result"]["feature_rollup"]["closed_count"] == 13
 
 
+def test_c28_reuses_manifest_linkages_when_external_search_is_stale(tmp_path, monkeypatch, capsys):
+    module = load(SCRIPTS / "bd-bridge.py", "c28_linkage_first")
+    identity = {"workspace_id": "bdw_fixture"}
+    monkeypatch.setattr(module, "preflight", lambda root: {"version": "1.1.0", "workspace_identity": identity})
+    manifest = package_manifest()
+    issues: dict[str, dict] = {
+        "B01": {
+            "id": "B01", "status": "open", "issue_type": "epic",
+            "external_ref": "dev-graph:F", "dependencies": [],
+        }
+    }
+    manifest["feature"]["bd_issue_id"] = "B01"
+    for index, row in enumerate(manifest["children"], 2):
+        issue_id = f"B{index:02d}"
+        row["bd_issue_id"] = issue_id
+        issues[issue_id] = {
+            "id": issue_id, "status": "open", "issue_type": "task", "parent": "B01",
+            "external_ref": f"dev-graph:{row['graph_node_id']}",
+            "dependencies": [] if index == 2 else [{"id": f"B{index - 1:02d}"}],
+        }
+    calls: list[list[str]] = []
+
+    def fake_bd(args, cwd, check=True):
+        calls.append(args)
+        if args[0] == "search":
+            return []  # Simulate the live Beads search visibility failure.
+        if args[0] == "show":
+            return issues[args[1]]
+        if args[0] == "create":
+            raise AssertionError("linked projection must never create a replacement issue")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(module, "bd", fake_bd)
+    projection = tmp_path / "projection-linked.json"
+    projection.write_text(json.dumps(manifest))
+    code, receipt = call_main(
+        module, monkeypatch, capsys,
+        "--op", "create", "--repo-root", tmp_path, "--projection-manifest", projection,
+    )
+    assert code == 0
+    assert receipt["result"]["applied_count"] == 13
+    assert receipt["result"]["feature_epic"]["idempotent"] is True
+    assert all(row["idempotent"] is True for row in receipt["result"]["children"])
+    assert not any(args[0] in {"search", "create"} for args in calls)
+
+
+def test_c28_reconcile_duplicate_package_tombstones_exact_set_idempotently(tmp_path, monkeypatch, capsys):
+    module = load(SCRIPTS / "bd-bridge.py", "c28_duplicate_reconcile")
+    identity = {"workspace_id": "bdw_fixture"}
+    monkeypatch.setattr(module, "preflight", lambda root: {"version": "1.1.0", "workspace_identity": identity})
+    manifest = package_manifest()
+    nodes = [{"graph_node_id": "F", "canonical_bd_issue_id": "B01", "duplicate_bd_issue_id": "D01"}]
+    issues: dict[str, dict] = {
+        "B01": {"id": "B01", "status": "open", "issue_type": "epic", "external_ref": "dev-graph:F", "dependencies": [], "dependent_count": 13},
+        "D01": {"id": "D01", "status": "open", "issue_type": "epic", "external_ref": "dev-graph:F", "dependencies": [], "dependent_count": 13},
+    }
+    manifest["feature"]["bd_issue_id"] = "B01"
+    for index, row in enumerate(manifest["children"], 2):
+        canonical_id = f"B{index:02d}"
+        duplicate_id = f"D{index:02d}"
+        row["bd_issue_id"] = canonical_id
+        nodes.append({
+            "graph_node_id": row["graph_node_id"],
+            "canonical_bd_issue_id": canonical_id,
+            "duplicate_bd_issue_id": duplicate_id,
+        })
+        issues[canonical_id] = {
+            "id": canonical_id, "status": "open", "issue_type": "task", "parent": "B01",
+            "external_ref": f"dev-graph:{row['graph_node_id']}",
+            "dependencies": [] if index == 2 else [{"id": f"B{index - 1:02d}", "dependency_type": "blocks"}],
+            "dependent_count": 0 if index == 14 else 1,
+        }
+        issues[duplicate_id] = {
+            "id": duplicate_id, "status": "open", "issue_type": "task", "parent": "D01",
+            "external_ref": f"dev-graph:{row['graph_node_id']}",
+            "dependencies": [] if index == 2 else [{"id": f"D{index - 1:02d}", "dependency_type": "blocks"}],
+            "dependent_count": 0 if index == 14 else 1,
+        }
+    calls: list[list[str]] = []
+
+    def fake_bd(args, cwd, check=True):
+        calls.append(args)
+        if args[0] == "show":
+            return issues[args[1]]
+        if args[0] == "update":
+            issue = issues[args[1]]
+            issue["external_ref"] = args[args.index("--external-ref") + 1]
+            issue["status"] = args[args.index("--status") + 1]
+            return issue
+        raise AssertionError(args)
+
+    monkeypatch.setattr(module, "bd", fake_bd)
+    projection = tmp_path / "projection-linked.json"
+    duplicate_manifest = tmp_path / "duplicates.json"
+    projection.write_text(json.dumps(manifest))
+    duplicate_manifest.write_text(json.dumps({"schema_version": "1.0.0", "feature_id": "F", "nodes": nodes}))
+    argv = (
+        "--op", "reconcile-duplicates", "--repo-root", tmp_path,
+        "--projection-manifest", projection, "--duplicate-manifest", duplicate_manifest,
+    )
+    _, preview = call_main(module, monkeypatch, capsys, *argv, "--dry-run")
+    assert preview["dry_run_preview"]["changed_count"] == 14
+    assert preview["dry_run_preview"]["write_count"] == 0
+    assert not any(args[0] == "update" for args in calls)
+    code, receipt = call_main(module, monkeypatch, capsys, *argv)
+    assert code == 0
+    assert receipt["result"]["changed_count"] == 14
+    assert receipt["result"]["idempotent"] is False
+    assert all(issues[f"D{index:02d}"]["status"] == "closed" for index in range(1, 15))
+    assert all(
+        issues[f"D{index:02d}"]["external_ref"].startswith("dev-graph-tombstone:")
+        for index in range(1, 15)
+    )
+    assert [args[1] for args in calls if args[0] == "update"] == [
+        *[f"D{index:02d}" for index in range(14, 1, -1)],
+        "D01",
+    ]
+    update_count = sum(args[0] == "update" for args in calls)
+    _, replay = call_main(module, monkeypatch, capsys, *argv)
+    assert replay["result"]["changed_count"] == 0
+    assert replay["result"]["idempotent"] is True
+    assert sum(args[0] == "update" for args in calls) == update_count
+
+
 def test_c27_creates_only_canonical_claim_branch_and_fails_dirty(tmp_path):
     module = load(SCRIPTS / "manage-worktree-lease.py", "c27_branch")
     subprocess.run(["git", "init", "-b", "main", str(tmp_path)], check=True, capture_output=True)

@@ -2,19 +2,19 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "90b61ab5146110370b94b91efefa7a7764ab3cd66569f62293807734baa97a96"
+    "skill_md_sha256": "79c829284fce9de4d8204598319072c7debdccbbb705a334f34cf1eb3b92aedb"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T01:04:16Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-07T02:41:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,17 +25,22 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "fork:inline とし、質問・回答・spec-state単一writer・resumeをmain contextが所有する。Taskは独立した公式情報調査だけに限定され、対話turnをSubAgentへ閉じ込める矛盾が解消されている。",
-      "未収集0だけをcompleteとし、5周上限はhearing_progress/next_questionを保存してresumable停止するため、chunk limitと最終OUT1を混同しない。",
-      "U1-U9 digest、next_question、validator receiptとoriginal_goalをcommon anchor validatorへ接地し、resume時も直前merged directiveを必須入力にする。"
+      "収集ゲートの矛盾 (前回 medium) が実際に解消していることを現物で確認した。prompts/R5-decision-guide.md:30 は `--state \"$CLAUDE_PROJECT_DIR/system-spec/spec-state.json\"` 付きの決定論ゲートへ書き換わり、`ungrounded_blocking_items` が空になるまで当該 domain の確定セルを `confirmed` にしない、と施行主体を明示している。旧文面にあった「施行主体は prose ゲート」「決定論 writer 施行は follow-up」は削除され、代わりに「C05 事後監査はこのゲートの二重確認であり代替ではない」と関係が定義された。SKILL.md:173 の R5 行・SKILL.md:186 の収集ゲート・R5 prompt の三者が同一のコマンドと同一の通過条件を述べている。",
+      "完了条件が要求する接地手順が呼び出し側 prompt へ届いた (前回 medium の omission)。R2-interview.md:45-52 に writer `chunk` が受理する turn 形状表が追加され、`basis` (enum 3値・確定に紐づく turn で必須)、`required_info_items` (block item を答える turn で必須)、`provenance`/`answered_at` (任意) が明記された。5.3 停止条件にも 2 行 (`--require-basis` exit0 / `ungrounded_blocking_items` 空) が加わっている。表の主張は実装と 1 対 1 で照合できた: `QA_BASIS_VALUES = (\"user-decision\",\"observed-fact\",\"agent-inference\")` (apply-spec-transition.py:774) と enum 外拒否 (l.858-862)、`_incoming_required_info_items()` の非空文字列配列検査 (l.777-791)、`QA_PROVENANCE_KEYS` の append-only 追記 (l.768,832-845)、`answered_at` の `_require_past_rfc3339`。「確定後の問答本文の変更は writer が拒否する」も l.877 以降の question/answer 上書き拒否に対応する。",
+      "宣言した完了条件が実データで到達可能であることを実行で確認した (前回 omission の実証が反転)。`validate-coverage-matrix.py --matrix fixtures/expected-final-spec-state.json --require-complete --require-basis --require-foundation` は exit 0 (前回は 8 件 VIOLATION で exit 1)。`validate-knowledge-graph.py --profile required-info --input references/required-info-catalog.json --state <同 fixture>` は exit 0 で `ungrounded_blocking_items: []`、`grounded_blocking_items` が blocking 6 件 (auth-model / context-of-use / domain-model / product-goal / security-posture / target-platforms) と完全一致した。fixtures は hearing-turns.json (10 turn すべてに `basis` と `required_info_items`) から決定論再生され、`test_five_loop_resume_persists_state` が golden resume との完全一致を保っている。",
+      "IN1 が inner loop として実際に成立することを別途確認した。中途状態 (`fixtures/expected-resume-spec-state.json`) に対して `--require-basis` 単独は exit 0 であり、未収集が残る周回中でも basis 検査だけは満たせる (完了条件だけに効く条件を inner へ持ち込んで loop を詰まらせていない)。",
+      "孤児だった `validate-spec-doc-sync.py` に赤/緑が付いた (前回 low の smell に対する部分対処)。`plugins/system-spec-harness/tests/test_validate_spec_doc_sync.py` (151 行・9 test) は goal の要件定義書欠落・宣言 serves_goal の本文不在・確定セル evidence 未投影・カテゴリ章欠落・出典未投影・対象外セルは投影不要・空/不在 root の raise・main の exit code まで正負両方向で押さえており、体裁だけの test ではない。",
+      "回帰なし。`python3 -m pytest plugins/system-spec-harness/ -q` は 490 passed (前回計測の 307+73=380 から +110、内訳は spec-doc-sync 9・knowledge-graph の --state 系・chapter body/provenance 系・elicit 側の OUT1 2 件など)。--require-basis と --state 接地はいずれも negative case が test 済みで (`test_c12_require_basis_closes_undeclared_loophole`、`test_block_item_without_any_qa_link_is_violation`、`test_main_state_flag_fails_on_ungrounded_block_item` 等)、fixture が偶然通っているだけではない。"
     ],
     "negative_feedback": [
-      "[low / tree] prompts/R6-audit-hearing.md/R7-audit-matrix.md は監査側promptとして同居し responsibility_refs R0-R5に未列挙、tests/fixturesもtree Warnになるが、owner interview責務の実経路は欠落していない。"
+      "[low / inconsistency] frontmatter IN1 は `--require-basis` と収集ゲートまで inner loop の script 検証に含めたが、本文の IN1 箇条書き (SKILL.md:184) は `--require-foundation` までしか書いていない。収集ゲートは直後の「収集ゲート (C16 / IN1 補完)」(SKILL.md:186) が引き受けているので実質の抜けは `--require-basis` の 1 語だけで、完了条件 (SKILL.md:146)・OUT1 (:185)・使い方 6 (:198) には現れる。判定は妨げないが、frontmatter criteria が本文より広い状態は「Checklist が上流・criteria が下流」の導出方向を読み取りにくくする。",
+      "[low / smell] `validate-spec-doc-sync.py` は test を得たが、SKILL.md / references / prompts / deterministic_checks / manifest のいずれからも起動されない点は変わらない (`grep -rln validate-spec-doc-sync` の実行系ヒットは script 自身と新規 test のみ)。本 skill の契約 (C16 elicit) の外側であり本 verdict の判定対象ではないが、C03 側でゲートとして起動されるまでは「test は緑だが誰も呼ばない」状態が残る。",
+      "[low / 参考] R3-reask.md:2.3 の入力契約は `answers | turns` とだけ書き、turn 形状 (basis / required_info_items) は R2 側と `references/spec-state-contract.md`:78-91 にしかない。R3 も resume 継続時に同じ turn を writer へ渡すため、R2 で追加した必須項目が R3 経由の回答で落ちる読み違いは理屈上あり得る。SSOT が contract 側に存在し R3 が R2 を前段として明示しているため low に留める。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental content review。30思考法は未実施。現SKILL全文、diff、R0-R5、single writer、Task調査例外、feedback_contract、resume/anchorを読んだ。user dialogue/state writeはmain context、Taskはofficial researchのみ。tests 334 passed、runtime/goal-seek lint 0。未解決medium/high 0、既存tree warning 1。PASSは静的設計adequacyでOUT2 live trialを新規実施したとは主張しない。"
+  "notes": "前回 verdict の結論を引き継がない独立再評価 (incremental profile)。30 思考法は実施しておらず、実施も申告しない。 読んだもの: content-review-protocol.md、content-review-verdict.schema.json、既存 elegance/rubric verdict 2 本、SKILL.md 全文 218 行 (frontmatter criteria は IN1/OUT1/OUT2 の 3 件)、`git diff origin/main...HEAD -- plugins/system-spec-harness/` の 22 ファイル (stat 全件 + SKILL.md/prompts/tests の全 hunk)、加えて working tree の未 commit 差分 `git diff HEAD` 10 ファイル + 未追跡 1 ファイル (今回の対処はこちらに存在するため必須)、prompts/R2-interview.md・R3-reask.md・R5-decision-guide.md の現物、references/spec-state-contract.md の basis/required_info_items 節、apply-spec-transition.py の qa 登録経路 (l.768-905)、tests/test_spec_transition.py の追加 2 test、tests/test_validate_spec_doc_sync.py。 実行したもの: `shasum -a 256 SKILL.md` = 79c829284fce9de4d8204598319072c7debdccbbb705a334f34cf1eb3b92aedb (指示値と一致)、`python3 -m pytest plugins/system-spec-harness/ -q` (490 passed)、`validate-coverage-matrix.py --require-complete --require-basis --require-foundation` を golden final へ (exit 0)、同 `--require-basis` のみを golden resume へ (exit 0・inner loop 成立確認)、`validate-knowledge-graph.py --profile required-info --state <golden final>` (exit 0・ungrounded 空・grounded=blocking 6 件一致)、prompts/references への `basis|required_info_items|provenance|answered_at` grep (R2 に 5 件・R5 に 1 件ヒット、前回 0 件から反転)、`validate-spec-doc-sync` の参照元 grep (script 自身 + 新規 test + 旧 verdict 2 本のみ)、fixtures の qa_log 集計 (final 10 entry すべて basis 付き・required_info_items は 12 item を被覆)。 判定: (a) 矛盾 0 — SKILL.md:173/:186 と R5 prompt が同一ゲートを同一文面で述べる。(b) 漏れ 0 — 完了条件が課す basis/required_info_items の記録手順が R2 の turn 形状表と停止条件に存在し、writer 実装と一致する。(c) 規約整合 — 強化した停止条件が frontmatter IN1/OUT1 へ写像済み (残るのは本文 IN1 箇条書きの語句抜け 1 件で low)。(d) 依存関係整合 — 名指しした flag/key (--require-basis / --state / ungrounded_blocking_items / basis enum / required_info_items) はすべて実在し実行で exit 0 を確認、破断なし。(e) high 0・medium 0。未解決は low 3 件のため PASS、next_action=none。 なお OUT2 は verify_by=live-trial の behavioral claim であり、本静的レビューでは criterion 記述と接地先の宣言整合のみを確認した。実走の受け入れは Gate D (run-skill-live-trial) の証拠に依り、本 verdict をその代替に流用しないこと。"
 }

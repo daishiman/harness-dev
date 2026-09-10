@@ -16,7 +16,7 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("contract-generator", "run-template-sync", ("IN1", "IN2", "OUT1")),
     ("dev-graph", "run-dev-graph-decompose", ("IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5", "OUT6", "OUT7")),
     ("dev-graph", "run-dev-graph-init", ("IN1", "OUT1", "OUT2", "OUT3", "OUT4", "OUT5")),
-    ("dev-graph", "run-dev-graph-node", ("IN1", "OUT1", "OUT2", "OUT3", "OUT4")),
+    ("dev-graph", "run-dev-graph-node", ("IN1", "OUT1", "OUT2", "OUT3")),
     ("dev-graph", "run-dev-graph-render", ("IN1", "OUT1")),
     ("dev-graph", "run-dev-graph-requirements", ("IN1", "OUT1", "OUT2")),
     ("dev-graph", "run-dev-graph-schedule", ("IN1", "OUT1", "OUT2", "OUT3")),
@@ -83,4 +83,8 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("ubm-goal-setting", "run-ubm-journal", ("IN1", "IN2", "OUT1", "OUT2")),
     ("ubm-goal-setting", "run-ubm-knowledge-sync", ("IN1", "OUT1")),
     ("ubm-goal-setting", "run-ubm-youtube-ingest", ("IN1", "OUT1")),
+    ("x-longpost-creator", "run-x-longpost-create", ("IN1", "IN2", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-multipost-create", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-shortpost-optimize", ("IN1", "IN2", "OUT1", "OUT2")),
+    ("x-longpost-creator", "run-x-visual-generate", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
 ]

@@ -89,6 +89,36 @@ def test_c12_excluded_with_reason_ok():
     assert c12.validate(d, require_complete=True) == []
 
 
+def test_c12_same_exclusion_reason_across_categories_is_boilerplate():
+    """共通根拠の複製で複数カテゴリを一律に埋めると、検討済みと未検討が同じ見た目になる。
+
+    除外の共通根拠 (対象 platform は web のみ 等) は approval_log の 1 箇所に置き、セルの
+    reason には当該カテゴリ固有の帰結を書く。byte 同一の理由文がカテゴリを跨ぐのを禁じる。
+    """
+    d = _valid_matrix()
+    boiler = "対象プラットフォームは web のみ。"
+    d["matrix"]["auth"]["tablet"] = {"state": "対象外", "reason": boiler}
+    d["matrix"]["database"]["tablet"] = {"state": "対象外", "reason": boiler}
+    findings = c12.validate(d, require_complete=True)
+    assert any("byte 同一" in f and "auth" in f and "database" in f for f in findings)
+
+
+def test_c12_same_reason_within_one_category_is_allowed():
+    """同一カテゴリ内の platform 間で理由が揃うのは正当 (諦めた事項が同じため)。"""
+    d = _valid_matrix()
+    boiler = "auth はこの platform では専用アプリを持たないため収集対象外。"
+    d["matrix"]["auth"]["tablet"] = {"state": "対象外", "reason": boiler}
+    d["matrix"]["auth"]["mobile"] = {"state": "対象外", "reason": boiler}
+    assert c12.validate(d, require_complete=True) == []
+
+
+def test_c12_category_specific_reasons_pass():
+    d = _valid_matrix()
+    d["matrix"]["auth"]["tablet"] = {"state": "対象外", "reason": "認証: 専用アプリの資格情報保管を持たない"}
+    d["matrix"]["database"]["tablet"] = {"state": "対象外", "reason": "DB: 端末内ローカル永続化を置かない"}
+    assert c12.validate(d, require_complete=True) == []
+
+
 def test_c12_excluded_with_approval_ref_ok():
     d = _valid_matrix()
     d["matrix"]["auth"]["tablet"] = {"state": "対象外", "approval_ref": "appr-001"}
@@ -222,6 +252,19 @@ def _valid_citation() -> tuple[dict, dict]:
 def test_c13_valid():
     t, r = _valid_citation()
     assert c13.validate(t, r) == []
+
+
+def test_c13_orphan_reference_not_in_targets():
+    """取得対象一覧に無い出典記録を孤児として検出する (references → targets の逆向き)。
+
+    従来は targets→references の片方向しか検査せず、対象から外れた出典記録が
+    references に残っても exit 0 だった。取得対象でないものを根拠に引いている状態を
+    見逃さないため、対応は双方向で課す。
+    """
+    t, r = _valid_citation()
+    t["targets"] = [x for x in t["targets"] if x["target_id"] != "postgres"]
+    findings = c13.validate(t, r)
+    assert any("孤児参照" in f and "postgres" in f for f in findings), findings
 
 
 def test_c13_missing_target():
@@ -384,3 +427,47 @@ def test_c13_main_bad_json(tmp_path):
     bad = tmp_path / "bad.json"
     bad.write_text("{nope", encoding="utf-8")
     assert c13.main(["--targets", tp, "--references", str(bad)]) == 2
+
+
+# ── 確定セルが『アシスタントの推定』だけを根拠にしていないか ─────────────────
+# 設計判断を利用者に確認せず確定として載せると、利用者が選んだ結論と区別がつかない。
+# しかも矛盾しないので他のどのゲートにも掛からない。basis の導入で機械可読になった分。
+def _matrix_with_basis(basis_by_qa: dict) -> dict:
+    d = _valid_matrix()
+    d["qa_log"] = [{"id": k, "question": "q", "answer": "a", **({"basis": v} if v else {})}
+                   for k, v in basis_by_qa.items()]
+    d["matrix"]["auth"]["web"] = {"state": "確定", "qa_ref": list(basis_by_qa)[0]}
+    return d
+
+
+def test_c12_confirmed_on_agent_inference_only_is_violation():
+    # basis を宣言してさえいれば、opt-in なしの既定でも推定単独は違反として出す。
+    d = _matrix_with_basis({"qa-001": "agent-inference"})
+    findings = c12.validate(d)
+    assert any("agent-inference" in f and "auth" in f for f in findings)
+
+
+def test_c12_user_decision_alongside_inference_is_ok():
+    d = _matrix_with_basis({"qa-001": "agent-inference", "qa-002": "user-decision"})
+    d["matrix"]["auth"]["web"] = {"state": "確定", "qa_ref": "qa-001", "qa_refs": ["qa-002"]}
+    # 他セルは fixture 由来で qa-001 単独のため、対象セルだけを見る。
+    assert not [f for f in c12.validate(d, require_basis=True) if "[auth][web]" in f]
+
+
+def test_c12_observed_fact_alone_is_ok():
+    d = _matrix_with_basis({"qa-001": "observed-fact"})
+    assert c12.validate(d, require_basis=True) == []
+
+
+def test_c12_undeclared_basis_does_not_break_existing_states():
+    # basis 未宣言の既存 state を既定では壊さない (後方互換)。--require-complete でも同じ。
+    d = _matrix_with_basis({"qa-001": None})
+    assert c12.validate(d) == []
+    assert c12.validate(d, require_complete=True) == []
+
+
+def test_c12_require_basis_closes_undeclared_loophole():
+    # 「宣言しなければ検査されない」抜け道は opt-in フラグで塞ぐ。
+    d = _matrix_with_basis({"qa-001": None})
+    findings = c12.validate(d, require_basis=True)
+    assert any("basis を宣言していない" in f for f in findings)

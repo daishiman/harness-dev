@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "実コードレビュー + 実テスト実行で検証。discovered task を progress.json の checklist 末尾へ単一truth追記する決定論ゲート。write-scope は progress_json_path のみで別 state file を生成しない。追記前 fail-closed 検査: id pattern (^C[0-9]+$)・id 重複・dangling depends_on・追記後サイクル (反復 3-color DFS で RecursionError 回避)・iteration/available_from_iteration の bool 弾き含む整数検証。violation は exit1、読込/parse/schema 前提不備は exit2。既存 item は不変で append のみ。`# /// script` frontmatter あり。py_compile OK。TESTS: tests/scripts-plugins/test_harness_creator__self_reflect_append.py 19ケース全 PASS (0.55s)。軽微: write_text 直書きで atomic write (temp+rename) ではないが、単一 self-writer 逐次実行前提の設計と frontmatter に明記されており許容範囲。"
+  },
+  "reviewed_by": "coverage-reviewer-restore-20260824",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

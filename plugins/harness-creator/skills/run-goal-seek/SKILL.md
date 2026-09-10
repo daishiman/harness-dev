@@ -16,6 +16,7 @@ kind: run
 prefix: run
 effect: local-artifact
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
 owner: team-platform

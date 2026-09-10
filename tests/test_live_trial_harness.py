@@ -499,11 +499,60 @@ def test_tree_sha_binds_declared_behavior_closure(tmp_path, relative_path):
     before = verdict_mod.skill_dir_tree_sha(skill_dir)
     path = (skill_dir / relative_path).resolve()
     if path.name == "plugin.json":
+        # manifest が closure に入っていることの確認は、release メタではなく挙動に
+        # 効くキーで行う。version で確かめると、下の
+        # test_tree_sha_ignores_manifest_release_metadata が守る性質
+        # (bump では stale にしない) と要求が正面衝突する。
         manifest = json.loads(path.read_text(encoding="utf-8"))
-        manifest["version"] = "0.1.1"
+        manifest["hooks"] = "./hooks/hooks.json"
         path.write_text(json.dumps(manifest), encoding="utf-8")
     else:
         path.write_text(path.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
+
+
+def test_tree_sha_ignores_manifest_release_metadata(tmp_path):
+    """version bump だけでは verdict を stale にしない。
+
+    build-plugin-release は plugin に内容変更があれば必ず version を上げる。生の
+    manifest を digest に入れていると「どんな変更でも version が動く」→「その
+    plugin の全 skill の verdict が一斉に stale」になり、再 trial の要求が挙動変更
+    の signal ではなく release 作業の副作用として出る。巻き添えの stale は本物の
+    stale と区別がつかないので、検査そのものが痩せる。
+    """
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    path = (skill_dir / "../../.claude-plugin/plugin.json").resolve()
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["version"] = "9.9.9"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
+def test_tree_sha_ignores_dependency_manifest_release_metadata(tmp_path):
+    """依存 plugin 側の bump も同じ。巻き添えの範囲は依存を辿って更に広い。"""
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    path = tmp_path / "plugins" / "system-spec-harness" / ".claude-plugin" / "plugin.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["version"] = "9.9.9"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    assert verdict_mod.skill_dir_tree_sha(skill_dir) == before
+
+
+def test_tree_sha_keeps_unknown_manifest_keys_in_the_closure(tmp_path):
+    """未知のキーは digest に残す (fail-closed)。
+
+    除外を allowlist で書くと、manifest に新しいキーが増えたとき digest に出ず、
+    挙動が変わったのに verdict が緑のまま通る。除外は「挙動でないと言い切れる
+    キー」の denylist に限る。
+    """
+    _plugin_dir, skill_dir = _behavior_closure_fixture(tmp_path)
+    before = verdict_mod.skill_dir_tree_sha(skill_dir)
+    path = (skill_dir / "../../.claude-plugin/plugin.json").resolve()
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["someFutureBehaviorKey"] = {"loads": "extra"}
+    path.write_text(json.dumps(manifest), encoding="utf-8")
     assert verdict_mod.skill_dir_tree_sha(skill_dir) != before
 
 

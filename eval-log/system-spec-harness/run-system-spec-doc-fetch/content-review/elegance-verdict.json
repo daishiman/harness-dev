@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-doc-fetch",
-    "skill_md_sha256": "07782f20e1b76171199ca646b5a70ad8549fa379b696b4cb96d609eedfc53375"
+    "skill_md_sha256": "b48c977ab7be40a35797a6d96bf7521b7081d5108a8dd5b8b5c4c0a3e58ad70d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T01:04:16Z",
+  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
+  "reviewed_at": "2026-08-21T00:00:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,17 +24,19 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "goal_seek は inline/subagent。公式情報調査R1-R3だけをTaskの1隔離contextへ渡し、親がtarget scopeと採否を所有し、再forkを禁じるため、許可Taskと実委譲境界が具体的に一致する。",
-      "公式host、未取得fail-visible、deterministic assembler、citation gateの責務がKey RulesとIN1/OUT1で一貫し、subagentの戻り値も対象一覧・根拠・検証結果に限定される。",
-      "common anchor validatorでtarget digest、IN1 receipt、original_goal hashをcaller projectに固定し、accept-as-isではTask/loopを起動しない。"
+      "runtime_root_policy: host-skill-path の宣言と本文 `## Runtime root contract` 節の追加が対で入っており、片側だけの宣言になっていない。契約本文は build-steps.md:40 の正本文言 (Claude Code=CLAUDE_PLUGIN_ROOT / Codex=SKILL.md absolute path から manifest 祖先を上方探索 / cwd 推測禁止 / prompts 継承) と一致する。",
+      "`## 検証コマンド` block の 2 行が `PLUGIN_ROOT=\"$(cd \"$(dirname \"$0\")/../..\" && pwd)\"` という script 相対の cwd 推測から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` 形へ置換されており、契約が禁じた cwd 起点解決が本文の実行行から実際に消えている。宣言と実装が同じ差分内で閉じている。",
+      "prompts 側も同時移行されている: R3-record.md の IN1 実行行は `<plugin-root>` literal から `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-source-citation.py\"` へ、R4-audit-doc-freshness.md の C13 実行形は bare `$CLAUDE_PLUGIN_ROOT` から同形へ移行済みで、本 skill 配下に bare `$CLAUDE_PLUGIN_ROOT` の実行行は残っていない (grep で確認)。",
+      "frontmatter が宣言した参照は全件実在を確認した: responsibility_refs 3 件 (prompts/R1-identify.md, R2-fetch.md, R3-record.md)、schema_refs 1 件 (../../schemas/fetched-references.schema.json)、Additional Resources が挙げる scripts/build-fetched-references.py・references/official-source-catalog.md・references/resource-map.yaml・../../scripts/validate-source-citation.py。欠損 0 件。"
     ],
     "negative_feedback": [
-      "[low / tree] prompts/R4-audit-doc-freshness.md はC08側監査promptとして同居し responsibility_refs R1-R3に未列挙、tests/もtree Warnになる。ownerのR1-R3実経路と参照実在は崩れていない。"
+      "[low / smell] 局面カタログの記録・検証 (R3) 行は `build-fetched-references.py assemble --records <素材> ...` と path 無しのコマンド名で書かれており、`## 検証コマンド` block だけが PLUGIN_ROOT 形に移行された。実行の正本は検証コマンド block 側であり詳細 pointer も付いているため実行不能にはならないが、同一 skill 内でコマンド表記の粒度が 2 種混在する。",
+      "[low / smell] prompts/ には responsibility_refs に載らない R4-audit-doc-freshness.md が同居する (C08 system-spec-doc-freshness-auditor 側の SSOT)。Additional Resources も R1-R3 のみを挙げるため、prompts ディレクトリの全体像は SKILL.md からは読み取れない。plugin 全体で audit prompt を agent 所有とする既存慣行に沿っており、今回の差分が持ち込んだものではない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental content review。30思考法は未実施。現SKILL全文、diff、R1-R3 prompts、Task経路、feedback_contract、anchorを読んだ。subagentは公式調査だけ、親はtarget/adoptionを所有する。tests 334 passed、runtime/goal-seek lint 0。未解決medium/high 0、既存tree warning 1。PASSは静的設計adequacyで、OUT1の新規live freshness判定を主張しない。"
+  "notes": "main マージ + external-mutation guard block の機械 migration により旧 verdict の skill_md_sha256 (3c406370...) が stale になったための再束縛。content-review-protocol §incremental の focused combined review を 1 context で実行した。30 思考法は実施しておらず、実施も申告しない。 読んだもの: `git diff HEAD -- plugins/system-spec-harness/skills/run-system-spec-doc-fetch/SKILL.md` (+14/-6 行) の全差分、SKILL.md 全文 197 行、同 skill の prompts/ 差分 (R3-record.md, R4-audit-doc-freshness.md)、正本文言として plugins/harness-creator/skills/run-build-skill/references/build-steps.md:40。 実行したコマンド: sha256 算出 (python3 hashlib)、frontmatter 参照 23 path の実在検査 (test -e)、`grep -rn 'CLAUDE_PLUGIN_ROOT' <skill>/ | grep -v 'PLUGIN_ROOT:-'` による bare 参照検出 (本 skill 配下は契約 prose の 1 行のみ = 変数名への言及であり実行行ではない)、`python3 scripts/lint-runtime-portability.py` (exit 0)。 判定: (a) 矛盾なし — 新設 Runtime root contract が禁じる cwd 推測は同差分で本文から除去済み。(b) 漏れなし — Purpose & Output Contract・Key Rules 9 項・ゴールシーク・完了チェックリスト・Gotchas は差分前と同一で、削られた記述は cwd 推測行だけ。(c) 規約整合 — runtime_root_policy 宣言と Runtime root contract 節が対で存在し、shell 起動行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 形。effect: local-artifact のため external_mutation_guard は不要側で、宣言も guard block も持たないのが正しい。(d) 依存関係整合 — 宣言参照は全件実在、consumer (C10/C01/C08) との受け渡し形状 fetched-references.json は不変。(e) 未解決 medium 以上 0 件。残る 2 件は表記の smell (low) で実行不能にならないため PASS。 PASS の射程は静的設計 adequacy に限り、OUT1 (受入テスト) の実走証拠は本 review では取得していない。"
 }

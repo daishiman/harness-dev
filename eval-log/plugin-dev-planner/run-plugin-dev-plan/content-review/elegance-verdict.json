@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-08-24T13:10:00Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,13 +26,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/subagent はplanner自身の重いarchitect/evaluator分離に一致する一方、生成componentのengine/fork最小既定はinlineへ統一されている。skill-brief schema・R3 prompt・specfm・sample・tests・upstream pinが同じ規則を保持する。"
+      "本ブランチの diff は見出し「目的と出力契約」→「Purpose & Output Contract」の改名 1 点のみで、他 4 skill と同一の見出し規約へ揃える純粋な整合変更である。本文への参照 (アンカー・目次的言及) に断絶が生じていないことを実読で確認した。",
+      "既存の goal_seek block・feedback_contract IN1/IN2/OUT1/OUT2・pair skill (assign-plugin-plan-evaluator) との contract 語彙 (evaluated_inputs[]・鮮度台帳・fingerprint/PASS receipt) は変更されておらず、前回 review で確認済みの宣言↔実装 parity が維持されている。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記 (上限であって規定回数ではない) がゴールシークループ節のみにあり、局面 R4 節の同語には無い非対称が残存する。今回の見出し改名 diff では解消も悪化もしていないため、前回 verdict の low finding をそのまま引き継ぐ。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (見出し改名のみ)・feedback_contract IN1/IN2/OUT1/OUT2 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、主要参照パス (verification-obligation-protocol.md ほか) の実在 spot-check。新規 finding 0、既存 low 1 件 (最大 3 周注記の非対称) を引き継ぎ、high/medium 0。PASS の射程は design claim (静的設計 adequacy) に限る。"
 }

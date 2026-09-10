@@ -11,6 +11,7 @@ allowed-tools:
 kind: run
 prefix: run
 goal_seek:
+  activation_state: semantic_evaluator_started
   engine: task-graph
   full_task_spec_graph: false  # workflow-manifest の phase 依存だけを扱う縮小 profile
   engine_profile: checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)

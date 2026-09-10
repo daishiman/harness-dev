@@ -113,6 +113,19 @@ def validate(progress_path: Path, trace_path: Path) -> tuple[int, str]:
     cycle = _cycle(deps_of)
     if cycle:
         return 1, f"depends_on cycle: {cycle}"
+    # C6 は最終 completion gate であり effective ready から常に除かれるため、C6 へ依存する
+    # 追記 item は永久に ready にならない (到達不能ノード)。append gate は汎用 template の
+    # 複製で C6 の意味を知らないので、skill 固有のここで fail-closed 検出する。
+    gate = REQUIRED_CHAIN[-1]
+    unreachable = sorted(
+        (item_id for item_id, dependencies in deps_of.items() if gate in dependencies),
+        key=_sort_key,
+    )
+    if unreachable:
+        return 1, (
+            f"{gate} (最終 completion gate) へ依存する item は永久に ready にならない: "
+            f"{unreachable}"
+        )
     for index, item_id in enumerate(REQUIRED_CHAIN):
         expected = [] if index == 0 else [REQUIRED_CHAIN[index - 1]]
         if deps_of.get(item_id) != expected:

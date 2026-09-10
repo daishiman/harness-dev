@@ -2,38 +2,41 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "5127646028603c500ae97f262013f230b88dfa787c7c96abd1e2ff540f3d73f0"
+    "skill_md_sha256": "d7294684aea546c190e27e84fd2bdba14b856433bd03da19cecceca9d35010c7"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 0,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
-  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-24T01:16:00Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-09-10T09:01:45Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "OUT1",
-      "OUT2"
-    ],
+    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
     "positive_feedback": [
-      "Purpose/Output、Phase0-6、21項目validator、Daily embed更新の境界が明示され、manifestとresponsibility prompt群に同じownershipで落ちている。",
-      "inline/inline の親が対話と状態を保持し、phase3-coordinator は read-only助言のみ、formatterはformat/validationのみを担うため、対話turnや単一writer stateがfork内へ閉じない。",
-      "original_goalの非空・不変・exact SHA-256を共通scriptでfail-closed検証する実行行があり、最大周回到達時も未達をPASSにせずopen_issuesへ渡す。"
+      "origin/main と PR ブランチの合流が、同一 SKILL.md の別々の層で衝突なく成立している。git diff origin/main -- 当該 SKILL.md の実測差分は PR 側の変更（fork: subagent → inline / script_refs 追加 / Task への plugin_root 引き渡し規定 / Phase3-dialogue の所有者付け替え / ゴールシーク配線の親所有化 / 検証 bash 追加）だけで、main 側の IN1 記述（--type <weekly|monthly|quarterly>・bimonthly alias・title-label 照合・任意 --peer）は無傷。実行体の所有権と検証器の契約が別の関心事に分離されているため両立している。",
+      "fork: inline への変更が宣言だけで終わらず検証器まで揃っている。validate-inline-goal-seek-anchor.py を実走し、正常 rc=0 / progress 不在 rc=1「absence-as-violation」/ original_goal drift rc=1 を確認した。inline goal-seek が失う SubAgent 境界の隔離を SHA-256 アンカーで補っており、inline 化する他 skill へ横展開する価値がある。",
+      "SKILL.md 記載の検証コマンドが実 path で走る形になっている。${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py は script_refs の ../../scripts/... と同一実体を指し、引数は frontmatter goal_seek の同名キーの値と文字列一致する。${CLAUDE_PROJECT_DIR:?...} で caller root 未設定を即失敗させ、literal placeholder が shell へ漏れる経路も塞いである（runtime_root_policy: host-skill-path に整合）。",
+      "IN1 の停止条件が実行で裏取りできる。golden-sample-weekly.md の複製に対し --type weekly rc=0 / --type quarterly rc=1（種別取り違えを名指しで検出）/ --type bimonthly rc=1（後方互換 alias が抜け道になっていない）/ --peer 付きでも rc=0（「rc には影響しない」と実挙動が一致）。",
+      "責務の付け替えが下流成果物まで追従している。agents/phase3-coordinator.md は tools: Read のみで親 context の所有権を明記し、prompts/R1・R2・R3・R5 の入力表も『親 context が受領』へ揃った（R4 は該当記述なし）。grep -rn 'coordinator 経由' plugins/ubm-goal-setting/ はヒット 0 で、workflow-manifest.json の phase3-dialogue も同じ所有権モデル。宣言・agent・prompt・manifest の 4 箇所が一致し、単一責務の境界が文書側でも保たれている。",
+      "前回 low findings への対応が文面合わせでなく実体を伴っている。追記された 2 資源はいずれも実在し、resource-map.yaml は read_when 付きの Progressive Disclosure 索引で注記と中身が合う。加えて現 SKILL.md から当該 2 行だけを旧文へ戻した文字列の sha256 が前 iteration の対象 sha 2130c7cb… と厳密一致することを確認しており、修正が申告どおり 2 行に限定され便乗変更が無いことを暗号学的に裏取りできている。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[inconsistency/low・本 PR の主題外] scripts/validate-goal-output.py のヘッダ `# version:` が 0.2.3 のまま据え置き。SKILL.md は script_refs でこの script を宣言し IN1 の停止条件がその挙動に依存するため、どの版の検査規則を指しているかが追えない。本 merge 以前からの持ち越しのため今回は意図的に未着手（team-lead 判断）。未解決 finding として保持する。",
+      "[smell/low・本 PR の主題外] 同 script L1139 のコメントが、存在しない `--version` フラグを argparse が SystemExit(0) を投げる契機として挙げている（実測では rc=2、rc=0 は --help のみ）。持ち越しのため未着手、未解決として保持。",
+      "[smell/low・本 PR の主題外] 同 script L301 のコメントに `prefix_any` という識別子様のトークンが残るが、コード側に実体が無い（grep 1 件＝当該コメントのみ）。持ち越しのため未着手、未解決として保持。"
+    ],
     "iteration": 2,
-    "iteration_limit": 5,
-    "hook_trigger": "manual",
+    "iteration_limit": 3,
+    "hook_trigger": "manual (前 iteration の low findings 1-3 を修正した結果 SKILL.md の sha が 2130c7cb… → d7294684… へ変わり verdict が stale-sha 化)",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental rubric review。30思考法は未実施。全criteria IDを現frontmatterから照合し、rubric high severity/medium finding 0を確認。UBM suite 309 passed（anchor追加直前の全suite）、最新anchor/runtime targeted 20 passed、runtime findings 0、goal-seek lint PASS、graph gaps 0。OUT2は静的契約のadequacyのみを判定し、今回live-trialを実施したとは主張しない。"
+  "notes": "【profile=incremental / focused combined review・iteration 2】前 iteration（対象 sha 2130c7cb…）の low findings 1-3 が修正されたため新 sha d7294684… に対して再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。1 context で (a)-(e) を一度に判定し、その結合レビュー結果を elegance / rubric の 2 verdict へ分離投影した。本ファイルは rubric 側（ref-skill-design-rubric の規範採点）の投影で、elegance 側は同ディレクトリの elegance-verdict.json。両者は同一の観測に基づく。 【本 iteration で実行したこと】(1) shasum -a 256 = d7294684aea546c190e27e84fd2bdba14b856433bd03da19cecceca9d35010c7 を実測（team-lead 提示値と一致・手書換なし）。(2) 変更範囲の暗号学的限定: 現 SKILL.md の Additional Resources 2 行のみを旧文へ戻した文字列の sha256 が 2130c7cb… と厳密一致。前 iteration で検証済みの全事項が有効なため、再検証は変更 2 行と prompts に限定した。(3) 追記 2 資源の実在と内容整合を確認。(4) prompts/R1・R2・R3・R5 の置換完了と R4 の非該当、grep 'coordinator 経由' ヒット 0 を確認。(5) 4-6 の現存を再実測し未解決として保持。(6) lint 再実行: lint-goal-seek rc=0 / lint-feedback-contract --all OK(74) / lint-skill-description OK=187 VIOLATION=0 / lint-artifact-delivery 21 plugins OK / lint-script-naming VIOLATION=0。 【rubric 採点の要点】high severity 該当項目を照合し違反 0。description は「〜したいときに使う」形式・trigger 2 件で VIOLATION 0。本文 229 行（上限内）かつ references/ を備え PD-001 充足。frontmatter は disable-model-invocation / user-invocable / argument-hint（weekly|monthly|quarterly へ追従済み） / kind / prefix / effect / owner / since / version / manifest を備え、artifact-delivery state machine と external-mutation-guard block も本文に存在する。Purpose & Output Contract・Gotchas・Additional Resources の必須節が揃い、End-to-End Flow 表で Phase と実行体が 1:1 に割り当てられ責務越境なし。goal_seek / feedback_contract は両 lint とも OK で、criteria 3 件（IN1/OUT1/OUT2）はいずれも per-skill 固有かつ verify_by（script / test / live-trial）付き。Progressive Disclosure の索引（resource-map.yaml）が本文からも辿れるようになり、前 iteration の omission 2 件は解消。未解決 finding は low 3 件のみで medium 以上は 0。 【PASS の射程】design claim（静的設計 adequacy）に限る。verify_by: live-trial を持つ OUT2 の behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
 }

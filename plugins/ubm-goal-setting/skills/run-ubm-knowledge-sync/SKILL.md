@@ -22,6 +22,9 @@ owner: harness-maintainers
 since: 2026-07-04
 version: 0.1.0
 manifest: workflow-manifest.json
+combinators:
+  - with-goal-seek
+  - with-feedback-contract
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: task-graph
@@ -174,7 +177,7 @@ Phase5 は差分 entry 起点で発火するため、**差分ゼロの周回で�
 
 - `goal_seek.progress`: 初回に上の C1〜C6 を `{id,text,status:"pending",depends_on,verify_by}` として `eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json` へ記録し、top-level に `engine:"task-graph"`、iteration、`open_issues`、`status`、`max_loops:9` を置く。 `goal_seek.intermediate`: 各周回末の Anchor Step で `run-ubm-knowledge-sync-intermediate.jsonl` に `original_goal` / `current_goal_snapshot` / `delta_from_original` / `merged_directive_for_next` / `drift_signal` と、その周回の `ready_set` / `selected_item` を append-only で残す。 `goal_seek.handoff`: 完了時に検知件数、更新先、split-check/graph検証結果、dry-run 有無、未解決課題を `handoff-run-ubm-knowledge-sync.json` へ書く。
 - ループ・ready-set・外部mutation guard・ユーザー確認・progress write は親 context が所有する。Phase2 の抽出と Phase5 の関係候補生成だけを対応する `knowledge-extractor` / `knowledge-relation-extractor` へ `Task` 委譲し、各自は個別 surface 成果だけを返す。各 Task input には親が host-skill-path から解決した absolute `PLUGIN_ROOT` を明示し、SubAgent は未指定または非 absolute なら write 前に fail-closed で停止する。preview 後の exact reply は親が受け、confirmation receipt を得てから同じ周回を authorize→execute へ再開する。
-- 各周回は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py" "$PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json"` で raw ready を算出する。`C6` は最終 completion gate のため、`C6` 以外の item が1件でも未消費なら raw ready から `C6` を除いた集合を effective `ready_set` とし、その最小IDだけを選択する。実行または条件付きno-opの証跡を残して該当itemを `done` にしてから再計算する。実行中に追加必須作業を発見した場合だけ同じ skill 配下の `build-self-reflection-entry.py` で `C7` 以降のidと実際の先行item（`C6` 以外）への `depends_on` を持つitemを同じ checklist 末尾へ追記する（別 task graph state は作らない）。effective ready が空で将来周回から有効な追記itemがある場合は、その周回を未選択traceとして残し `C6` を先行させない。
+- 各周回は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py" "$PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json"` で raw ready を算出する。effective `ready_set` は raw ready から 2 種類を除いた集合とする: (a) `C6` 以外の item が1件でも未消費なら最終 completion gate である `C6`、(b) `available_from_iteration` が現在の周回 index より後の追記 item (まだ有効化されていない)。除去後の最小IDだけを選択する。この 2 条件は `validate-knowledge-sync-task-graph.py` の ready 再計算と同一であり、片方だけを適用すると検証器と食い違って周回が FAIL する。実行または条件付きno-opの証跡を残して該当itemを `done` にしてから再計算する。実行中に追加必須作業を発見した場合だけ同じ skill 配下の `build-self-reflection-entry.py` で `C7` 以降のidと実際の先行item（`C6` 以外）への `depends_on` を持つitemを同じ checklist 末尾へ追記する（別 task graph state は作らない）。effective ready が空で将来周回から有効な追記itemがある場合は、その周回を未選択traceとして残し `C6` を先行させない。
 - `--dry-run` 指定時も C1→C2(no-op)→C3(no-op)→C4(no-op)→C5 の順に選択してtraceを残し、Phase2 extraction・Phase3 split repair・Phase5 graph writeを禁止する。condition不成立を「未選択」のまま残さない。
 - C6 は `selected_item` trace を先に追記し、C6をdone・全体をcompleted候補へ更新してから下記検証を最終実行する。exit非0ならcompletedを確定せず `status: handed_off` と `open_issues` へ違反を残す。
 - `max_loops` 到達時は PASS 扱いせず、残チェック項目を `open_issues` に残して human review へ差し戻す。
