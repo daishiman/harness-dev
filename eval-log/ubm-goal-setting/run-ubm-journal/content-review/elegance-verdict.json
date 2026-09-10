@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26"
+    "skill_md_sha256": "9cd5183db3ccae34596fde39367f573529767e3b164a6c1142110065d9791819"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,36 +11,27 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 1
   },
   "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-09-06T23:53:16Z",
+  "reviewed_at": "2026-09-10T06:25:20Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": [
-      "IN1",
-      "IN2",
-      "OUT1",
-      "OUT2"
-    ],
+    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転する変更で、build 側の実際の効き所は GOAL_KEYS の宣言順の入れ替えだった。extract_journal_goals は候補見出しを GOAL_KEYS の順で走査して goals.setdefault で先勝ちさせるため、順序を入れ替えないと『新旧が併存する前回ジャーナル』で旧 2ヶ月節が勝ち、古い期間 (2026-08-30) を今日のジャーナルへ継承する。実測で確認した: 現状は 3ヶ月節 (2026-09-27) を採り、GOAL_KEYS を旧順へ戻すと 2ヶ月節 (2026-08-30) を採る。dict の並びが挙動の正本になっていることを、コメントだけでなく順序そのもので担保している。",
-      "旧表記の通知経路 (D01) を今回まったく触らずに向きが反転した。deprecation_notices() が REQUIRED_OUTLINE のタプルを『先頭が正本・以降が旧表記』という規約からそのまま導出しているため、QUARTERLY_HEADING = (\"3ヶ月目標\", \"2ヶ月目標\") の 1 行を変えるだけで通知文の canonical/legacy が入れ替わる。改名のたびに通知側へ手を入れる設計だったら、今回のような向きの反転で通知が旧向きのまま残る事故が起きていた。validate 側の 4 本のテストがこの反転後の向きを固定している。",
-      "validate 側の『正本 (タプル先頭) を優先して 1 つの節に決め、本文とラベルを同じ探索から取る』構造 (validate-journal-output.py の GOAL_SECTIONS ループ) が、表記の向きに依存しない形で書かれていた。おかげで今回の反転は QUARTERLY_HEADING の 1 行と説明コメントだけで済み、ラベル錯誤・fail-open の再発がテスト (test_both_quarterly_headings_validates_the_canonical_section / test_empty_canonical_section_is_not_saved_by_a_complete_legacy_section) でそのまま効き続けている。",
-      "後方互換の射程をファイル名ではなく本文見出しに置いていることを、新規テスト test_legacy_quarterly_report_filenames_are_still_picked_up が 4 パターン (新名×新ラベル / 旧名（２ヶ月）×旧ラベル / 3-期報×旧ラベル / 3-期報×新ラベル) で固定した。scan_reports が goals_dir.glob(\"*.md\") で全 .md を走査し先頭の `## 【…の目標】` で種別を決める、という不変条件を名前側から押さえたので、『期報を改名したら過去の期報が消えた』が起きない。",
-      "上流 (run-ubm-goal-setting) と下流 (run-ubm-journal) で契約が割れていない。産出側は `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力の正本とし旧名を読み取り受理、消費側の REPORT_LABELS は `3ヶ月の目標` と `2ヶ月の目標` の両方を quarterly 枠へ写す。journal-composer.md も『読み取りでは受理、新規出力は必ず 3ヶ月』と同じ非対称を明記しており、3 者の後方互換ポリシーが同一方向で揃っている。"
+      "本 branch の 4 SKILL.md 変更が「宣言を実体へ合わせる」方向で統一されている。combinators は本 branch 以前から 26 skill が持つ既存キーで、値も with-goal-seek / with-feedback-contract の 2 語に閉じている。本 skill は goal_seek ブロックを持たないため with-feedback-contract 単独を宣言しており、宣言と実体が一致している。新語を発明せず既存の閉じた語彙へ後から合流させる直し方は横展開に値する。",
+      "completeness_exempt の理由文が「無いこと」ではなく「置いたら何が壊れるか」を書いている。workflow-manifest.json を置いても Phase 遷移の正本が SKILL.md 本文と二重になるだけで片方が古びる、と述べ、代わりに責務の対応は responsibility_refs、Write の可否は external_mutation_guard が持つ、と代替の担い手まで指している。lint-skill-completeness.py は `<category>: <理由>` の形式しか要求しないので、この水準の理由は規約に強制された結果ではなく設計判断として書かれている。",
+      "同時に足された responsibility_refs 3 件（build-journal-context.py / ../../agents/journal-composer.md / validate-journal-output.py）が、completeness_exempt が「実行体の対応は responsibility_refs が持つ」と主張する相手そのものになっている。免除の宣言と、その免除を成立させる代替宣言が同じ変更で入っており、参照先の実在も全件確認できた。免除だけ先に入って代替が後回しになる典型を避けている。"
     ],
     "negative_feedback": [
-      "[low / smell] build 側の正本優先が GOAL_KEYS の宣言順にだけ依存しており、その不変条件を固定するテストが無い。validate 側は同じ不変条件を 2 本のテストで押さえているのに、build 側は新旧併存の前回ジャーナルを入力にしたケースが 1 本も無い。順序を旧順へ戻すと旧 2ヶ月節を採ることを実測で再現した (期間 2026-08-30 を継承)。影響は quarterly の期報が存在しない場合に限られる (期報があれば『レポート側が正』で period が上書きされる) ため low に留めるが、辞書の並び替えという無害に見える整理で静かに退行する形をしている。extract_journal_goals へ新旧併存 fixture のテストを 1 本足すのが最小の手当て。",
-      "[low / smell] frontmatter の IN1 が『骨格15ブロック』と書いているが、REQUIRED_OUTLINE の実体は 16 件 (`# 原理原則 チェックシート` 追加後に数が合わなくなった)。本 PR 以前からの繰越で、検証手段 (verify_by: script) 自体は成立しているため PASS 阻害はしないが、criterion 本文の数値が実装より 1 件古い。",
-      "[low / smell] CHANGELOG 0.3.31 の見出し文が『目標設定側 (run-ubm-goal-setting / info-collector / output-formatter / phase3-coordinator / /ubm-goal-setting) の契約とドキュメントを3ヶ月へ統一』と列挙しており、同時に反転した journal 側 (run-ubm-journal SKILL.md / journal-composer.md / output-format.md / golden-sample.md / build-journal-context.py / validate-journal-output.py) が名前として出てこない。過去ジャーナルの再検証で D01 が出る側の変更なので、読者が『日次ジャーナルは無関係』と読む余地が残る。あわせて run-ubm-journal の SKILL.md は本文が変わったが frontmatter version は 0.6.0 据え置き。"
+      "[smell/low] lint-goal-seek.py が本 SKILL.md に対して rc=1 を返す（実行系 Skill に '## ゴールシーク実行' 見出しがない、および WARN 3 件）。ただし git show origin/main: 版でも全く同じ出力・同じ rc=1 であり、本 branch が持ち込んだ劣化ではない。また本 lint の CI 強制範囲は --skills-dir plugins/harness-creator/skills に限られており（scripts/run-ci-checks.sh と .github/workflows/governance-check.yml で確認）、ubm-goal-setting は強制対象外。本 branch が combinators に with-goal-seek を宣言していない点は goal_seek ブロック不在という実体と一致しており、宣言と実体の齟齬ではない。既知の未配線状態として記録するにとどめ、本 verdict をブロックしない。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "CI:change-category-guard (PR #70 の lint-content-review.py --all が stale-sha 8 件で fail)",
     "next_action": "none"
   },
-  "notes": "incremental profile の unresolved semantic batch を独立 context で 1 回実行した (iteration 1/3)。入力は git diff origin/main...HEAD の run-ubm-journal 配下 + journal-composer.md + 2 つの test ファイルと、依存確認のための run-ubm-goal-setting 側 data-contract / output-formats / output-formatter / info-collector。SKILL.md sha256 は実測 05723900a2df231d5ae0678ea644f3d6af55f2e454eb050639b68779cbc22a26。 本ラウンドの変更の実体: 期報階層の正本表記を `2ヶ月目標` -> `3ヶ月目標` へ反転し、旧表記を読み取り受理側へ落とした (前回 verdict の時点とは正本の向きが逆)。 (a) 矛盾なし: run-ubm-journal 配下・journal-composer・上流 run-ubm-goal-setting を横断 grep し、新規出力=3ヶ月 / 読み取り受理=2ヶ月+3ヶ月 の非対称がすべての箇所で同じ向きに揃っていることを確認した。SKILL.md 180 行の『1年/3ヶ月/1ヶ月/1週間』・output-format.md の骨格行と対応表・golden-sample の `### 3ヶ月目標`・両 script の定数とコメント・journal-composer の見出し規則に食い違いは無い。 (b) 漏れなし: golden の期間 2026-06-29〜2026-09-27 と残り 40 日が対象日 2026-08-18 と算術的に整合 (差 40 日)。1ヶ月・1週間の各期間も期報期間に内包される。旧表記に触れる箇所 (プレースホルダ正規表現 123 行) は両表記を保持したままで受理側が狭まっていない。 (c) 規約整合: content-review-protocol の incremental 契約に従い 1 context で (a)-(e) を判定し、同一結果を elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。 (d) 依存関係整合: 上流 run-ubm-goal-setting が `UBM - 3-月報（３ヶ月）` / `## 【3ヶ月の目標】` を新規出力とし、消費側 REPORT_LABELS が新旧両ラベルを quarterly へ写すことを確認。旧名 3 パターンが拾えることは新規テストで固定済み。 (e) rubric high severity 0。残 finding はすべて low の smell 3 件。 実施した検証: plugins/ubm-goal-setting/tests = 338 passed (63.8s, exit 0)。golden-sample.md を 2026-08-18.md として validate-journal-output.py へ通し PASS 違反 0 件・D01 通知なしを確認。extract_journal_goals へ新旧併存本文を直接与え、GOAL_KEYS の順序が正本優先の唯一の根拠であることを実測で再現 (現状=3ヶ月節を採用 / 旧順へ戻すと 2ヶ月節を採用)。 未確認: 実 Obsidian vault 上での Phase0→Phase5 通し実行は行っていない。PASS の射程は design claim (静的設計 adequacy) に限り、behavioral claim の受け入れは Gate D の実走証拠を要する。OUT2 (verify_by: live-trial) はこの理由で実走未達のまま据え置く。OUT1 も現状は unit/golden テストによる被覆であり、実対話の transcript を用いた受入は含まない (前ラウンドからの姿勢を継続)。"
+  "notes": "【profile=incremental】前回 verdict の結論を引き継がず独立に再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。4 skill を 1 context で結合評価し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を一度に判定した。その単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側（4条件）の投影である。rubric 側の投影は同ディレクトリの rubric-verdict.json で、両者は同一の観測に基づく。 【読んだもの】content-review-protocol.md 全文 / content-review-verdict.schema.json 全文（実在パスは plugins/harness-creator/skills/run-build-skill/schemas/ 配下）/ scripts/lint-content-review.py 全文 / 評価対象 4 skill の SKILL.md 全文（本 skill は 250 行）/ git diff origin/main...HEAD の当該 4 SKILL.md 差分全文（本 skill の追加分は combinators: [with-feedback-contract]、responsibility_refs 3 件、completeness_exempt 1 件）/ plugins/ubm-goal-setting/CHANGELOG.md の 0.3.40・0.3.41・0.3.42 / 新規 tests/test_notation_consistency.py 全文 / run-ubm-goal-setting の references/output-formats.md・references/data-contract.md の該当節 / scripts/validate-goal-output.py の定数と C1/C1c/C1d/C1e/C4b/C5/S1/S2/S3 および「やらないこと」検査ブロック。 【実行したもの（コマンドと実測結果）】(1) shasum -a 256 を 4 SKILL.md へ実行し、本 skill は 9cd5183db3ccae34596fde39367f573529767e3b164a6c1142110065d9791819 を得た。本 verdict の skill_md_sha256 はこの実測値そのもので、手書換は一切していない。(2) python3 -m pytest plugins/ubm-goal-setting/ -q = 392 passed in 78.98s（exit 0）。(3) tests/test_notation_consistency.py -q = 24 passed。(4) validate-goal-output.py を importlib で読み込み Validator._parse_contribution へ合成行を通し、C1 / C1c / C1e の検出力を実測確認した（被評価物は変更していない）。(5) golden-sample-weekly.md の scratchpad 複製に対し validate-goal-output.py --type weekly = rc=0 / STATUS: PASS / エラー 0・警告 0 / PASS 32 件。(6) 違反注入実測で --type 取り違え・裸の数字（C1）・グループ金額不一致（C4b）がいずれも rc=1 になることを確認。(7) frontmatter 宣言 refs の実在を全件走査。本 skill は 12 件すべて実在（responsibility_refs の build-journal-context.py・agents/journal-composer.md・validate-journal-output.py を含む）、4 skill 合計 64 件で欠損 0。(8) lint 実行。lint-skill-description OK=187 VIOLATION=0、lint-feedback-contract --all = [OK] 74 loop-kind skills（本 skill は WARN 一覧にも live-trial baseline 免除一覧にも不在）、lint-config-version-sync OK、lint-artifact-delivery = 21 plugins OK、lint-entrypoint-artifact-first OK（119 inventory）、lint-runtime-portability OK、lint-script-naming VIOLATION=0、lint-skill-name ok、lint-skill-completeness --skills-dir plugins/ubm-goal-setting/skills = ok（6 skills, completeness）。(9) lint-goal-seek を本 SKILL.md へ実行 = rc=1。同じ lint を git show origin/main: 版へ実行しても同一出力・同一 rc=1 であることを確認し、pre-existing と判定した。CI 強制範囲が plugins/harness-creator/skills に限られることも run-ci-checks.sh と governance-check.yml で確認した。(10) completeness_exempt が lint-skill-completeness.py と validate-plugin-package.py に実際に読まれる既存キーであること、combinators が本 branch 以前から 26 skill にある既存キーであることを確認した。(11) 配布物 version が 4 箇所すべて 0.3.42 で一致。 【判定理由】(a) 矛盾 0。SKILL.md 本文の Phase 遷移と responsibility_refs・external_mutation_guard・artifact_delivery の宣言が食い違わないことを確認した。completeness_exempt が「manifest を置くと Phase 遷移の正本が二重になる」と述べる根拠どおり、本文の Phase 記述は一本道で分岐も並列も再入も無い。(b) 漏れ 0。本 branch の追加 3 種（combinators / responsibility_refs / completeness_exempt）はいずれも実体を伴い、CHANGELOG にも対応記述がある。(c) 規約整合 = 充足。免除カテゴリ表記 `manifest: <理由>` は lint-skill-completeness.py が要求する形式に合致し、同 lint は ok。(d) 依存関係整合 = 充足。宣言 refs 12 件全件実在、plugin 全体 392 passed。(e) rubric high severity 0。negative_feedback は low（smell 1 件、しかも pre-existing）のみ。 【PASS の射程】design claim（静的設計 adequacy）に限る。verify_by: live-trial を持つ criterion（OUT2）の behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
 }

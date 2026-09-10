@@ -30,8 +30,14 @@ ALLOWED_NESTED_DIRS = {
     ("templates", "combinators"),
 }
 SCRIPT_EXTS = {".py", ".sh"}
+# ツールが skill ツリー内に残す非出荷物。いずれも .gitignore 済みで clone 直後には
+# 存在せず、除外しないと「ローカルで何を実行したか」で判定が変わる (下の第13条ループの
+# コメント参照)。`.claude` は Claude Code の運用ディレクトリで、hook が handoff/logs を
+# 書き込む (.gitignore: `plugins/**/.claude/handoff/` 他)。cache と同じく出荷ツリーの
+# 形ではないので、第13条・LS-203 のどちらの対象でもない。
 EPHEMERAL_DIR_NAMES = frozenset({
     "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", ".benchmarks",
+    ".claude",
 })
 EPHEMERAL_SUFFIXES = frozenset({".pyc", ".pyo"})
 MAX_SKILL_LINES = 300  # P0-2: 300行 cap 機械強制
