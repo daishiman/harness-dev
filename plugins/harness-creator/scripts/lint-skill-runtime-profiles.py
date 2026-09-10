@@ -31,6 +31,7 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -46,10 +47,32 @@ TASK_GRAPH_ASSETS = (
 )
 GOAL_SEEK_ANCHOR = "validate-inline-goal-seek-anchor.py"
 
-# goal_seek block 未宣言のまま残る既存 loop skill の残存数 ratchet。
-# 現残存 = run-skill-feedback 配布複製 20 + run-governance-adapters
-# + run-system-dev-plan。宣言移行が済んだら数を下げる。増加は fail。
-LEGACY_LOOP_BASELINE = 22
+# goal_seek block 未宣言のまま残る既存 loop skill の ratchet。
+# 数を数えず「何が残っているか」で固定する。数値 ratchet は「別の新規 legacy が
+# baseline 以内なら素通りする」穴があり、負債の総量しか守れないため。
+#
+# 配布複製: plugin 追加のたび機械的に複製される skill。path 固定にすると新規 plugin の
+# 追加が常にブロックされるので skill 名で一括許容する。複製元 template 側で goal_seek を
+# 宣言すれば全複製が一度に解消するので、返済は 1 箇所で足りる。
+LEGACY_LOOP_REPLICA_SKILLS = frozenset({"run-skill-feedback"})
+
+# 配布複製以外で goal_seek 未宣言のまま残る既存 loop skill。宣言移行が済んだら path を削る。
+# ここに無い legacy loop skill が現れたら新規負債として fail。
+LEGACY_LOOP_BASELINE_PATHS = frozenset(
+    {
+        "plugins/skill-governance-adapters/skills/run-governance-adapters/SKILL.md",
+        "plugins/system-dev-planner/skills/run-system-dev-plan/SKILL.md",
+        # x-longpost-creator は本 lint 導入後に main へ入った既存 plugin。
+        # allowed-tools に Agent/Task が無く goal-seek/task-graph 資産も参照しないため
+        # 宣言値は inline/inline に決まるが、SKILL.md を触ると content-review の
+        # skill_md_sha256 pin が無効化され無関係な verdict 8 件の再生成を誘発するので、
+        # 宣言の追加は当該 plugin 側の変更に合わせて行う。
+        "plugins/x-longpost-creator/skills/run-x-longpost-create/SKILL.md",
+        "plugins/x-longpost-creator/skills/run-x-multipost-create/SKILL.md",
+        "plugins/x-longpost-creator/skills/run-x-shortpost-optimize/SKILL.md",
+        "plugins/x-longpost-creator/skills/run-x-visual-generate/SKILL.md",
+    }
+)
 
 # has_goal_seek=False の loop skill に限り ratchet 扱いへ降格する finding。
 LEGACY_FINDING_MARKERS = (
@@ -107,6 +130,51 @@ class RuntimeProfile:
             else:
                 enforced.append(finding)
         return tuple(enforced), tuple(legacy)
+
+
+def _unlisted_legacy_paths(paths: Iterable[str]) -> tuple[str, ...]:
+    """ratchet に登録されていない legacy loop skill の repo 相対 path を昇順で返す。
+
+    `paths` は goal_seek 未宣言の loop skill (is_legacy_loop=True) の path だけが渡る。
+    返り値が非空なら新規負債とみなして main が exit 1 にする。
+
+    許容の根拠は 2 系統ある: 配布複製 (`LEGACY_LOOP_REPLICA_SKILLS`、skill 名で一括許容)
+    と、複製以外の既知の残存 (`LEGACY_LOOP_BASELINE_PATHS`、path 固定)。path は
+    `plugins/<plugin>/skills/<skill>/SKILL.md` 形式で、skill 名は末尾から 2 番目の要素。
+    """
+    unlisted: set[str] = set()
+    for path in paths:
+        if path in LEGACY_LOOP_BASELINE_PATHS:
+            continue
+        # path は常に "/" 区切りの repo 相対文字列なので split で十分。Path(...).parent.name は
+        # Windows 由来の "\\" も分割してしまい、照合対象を広げる方向に緩むため使わない。
+        segments = path.split("/")
+        skill_name = segments[-2] if len(segments) >= 2 else ""
+        if skill_name in LEGACY_LOOP_REPLICA_SKILLS:
+            continue
+        unlisted.add(path)
+    return tuple(sorted(unlisted))
+
+
+def _stale_legacy_paths(paths: Iterable[str], *, full_scope: bool) -> tuple[str, ...]:
+    """返済済み・消滅済みなのに ratchet へ残ったままの登録 path を昇順で返す。
+
+    `paths` は `_unlisted_legacy_paths` と同じく「今なお legacy な loop skill」の path。
+    ここに現れない登録 path は、goal_seek を宣言し終えたか、リネーム/削除で実在しなくなったか
+    のどちらか。放置すると同じ path が将来再登場した際に黙って再免除され、ratchet が
+    締まる方向にしか効かなくなる (片方向 ratchet)。返済を検知した時点で削除を強制することで、
+    免除リストが「現に残っている負債」と常に一致する。
+
+    `full_scope=False` (--plugin/--skill による絞り込み実行) では常に空を返す。登録は repo 全体
+    の定数なので、範囲外 plugin の登録が「今回集めた path に無い」ことは返済の証拠にならず、
+    誤検出になる。しかもその誤検出に従って登録を削ると、次の全体実行で同じ path が今度は
+    unlisted 判定になる — ratchet を壊す方向へ利用者を誘導してしまう。
+    消滅済み path の検出は「集めた path との交差」では原理的にできない (消えた path は
+    どのスコープにも現れない) ため、絞り込み時は検査ごと落とす方を選ぶ。
+    """
+    if not full_scope:
+        return ()
+    return tuple(sorted(LEGACY_LOOP_BASELINE_PATHS - set(paths)))
 
 
 def _strip_scalar(value: str) -> str:
@@ -491,10 +559,13 @@ def build_report(
         entry = asdict(profile)
         entry["enforced_findings"] = list(enforced)
         entry["legacy_findings"] = list(legacy)
+        # property は asdict に載らないが、ratchet 判定が report 経由で行われるため明示する。
+        entry["is_legacy_loop"] = profile.is_legacy_loop
         skill_entries.append(entry)
         enforced_total += len(enforced)
         legacy_total += len(legacy)
         legacy_skills += profile.is_legacy_loop
+    legacy_paths = tuple(entry["path"] for entry in skill_entries if entry["is_legacy_loop"])
     return {
         "schema_version": "1.1.0",
         "repo_root": str(repo_root),
@@ -505,7 +576,14 @@ def build_report(
             "enforced_findings": enforced_total,
             "legacy_findings": legacy_total,
             "legacy_loop_skills": legacy_skills,
-            "legacy_loop_baseline": LEGACY_LOOP_BASELINE,
+            "legacy_loop_registered": len(LEGACY_LOOP_BASELINE_PATHS),
+            "legacy_loop_unlisted": list(_unlisted_legacy_paths(legacy_paths)),
+            # 返済済み/消滅済みの登録は削除を強制する。免除リストを両方向で実態へ縛るため。
+            "legacy_loop_stale": list(
+                _stale_legacy_paths(
+                    legacy_paths, full_scope=plugin is None and skill is None
+                )
+            ),
             "by_profile": dict(sorted(by_profile.items())),
         },
         "skills": skill_entries,
@@ -543,7 +621,11 @@ def main(argv: list[str]) -> int:
             "skill-runtime-profile: "
             f"skills={summary['skills']} loop={summary['loop_skills']} "
             f"enforced={summary['enforced_findings']} "
-            f"legacy={summary['legacy_loop_skills']}/{summary['legacy_loop_baseline']} "
+            # 分子/分母の意味が揃わない "27/6+replica" 表記はやめ、内訳を独立した数として出す。
+            f"legacy={summary['legacy_loop_skills']} "
+            f"registered={summary['legacy_loop_registered']} "
+            f"unlisted={len(summary['legacy_loop_unlisted'])} "
+            f"stale={len(summary['legacy_loop_stale'])} "
             f"profiles={summary['by_profile']}"
         )
         for profile in report["skills"]:
@@ -553,10 +635,20 @@ def main(argv: list[str]) -> int:
                 sys.stderr.write(f"{profile['path']}: [legacy] {finding}\n")
     if summary["enforced_findings"]:
         return 1
-    if summary["legacy_loop_skills"] > LEGACY_LOOP_BASELINE:
+    if summary["legacy_loop_unlisted"]:
         sys.stderr.write(
-            "legacy loop skill ratchet 超過: "
-            f"{summary['legacy_loop_skills']} > baseline {LEGACY_LOOP_BASELINE}\n"
+            "legacy loop skill ratchet 超過: goal_seek 未宣言の新規 loop skill が"
+            f"{len(summary['legacy_loop_unlisted'])} 件ある。宣言するか、既存負債なら "
+            "LEGACY_LOOP_BASELINE_PATHS へ根拠付きで登録すること: "
+            f"{summary['legacy_loop_unlisted']}\n"
+        )
+        return 1
+    if summary["legacy_loop_stale"]:
+        sys.stderr.write(
+            "legacy loop skill ratchet の免除が陳腐化: 登録済み path が既に legacy でない"
+            f"({len(summary['legacy_loop_stale'])} 件)。返済済みなら "
+            "LEGACY_LOOP_BASELINE_PATHS から削って ratchet を締めること: "
+            f"{summary['legacy_loop_stale']}\n"
         )
         return 1
     return 0
