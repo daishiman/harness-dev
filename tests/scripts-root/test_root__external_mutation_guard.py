@@ -317,6 +317,33 @@ def test_pretool_blocks_direct_remote_mutation_outside_central_consumer():
     assert "full Bash command" in output["hookSpecificOutput"]["permissionDecisionReason"]
 
 
+def test_pretool_gates_gh_issue_but_not_gh_pr():
+    """gh の遮断対象は issue のみで pr は素通りすること (2026-08-21 の方針)。
+
+    PR は「提案」であってそれ自体は誰の状態も変えず、実際に効くレビューとマージには
+    GitHub 側の保護設定という別の関門がある。一方 issue はここを通さないと記録が残らない。
+    `gh pr merge` まで素通りになるのは意図した副作用なので、方針変更が必要になったときに
+    このテストが必ず落ちるよう pr 側も明示的に固定する。
+    """
+
+    def decision(command: str) -> str | None:
+        payload = {
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_input": {"command": command},
+        }
+        result = _run("pretool", input_text=json.dumps(payload))
+        assert result.returncode == 0
+        if not result.stdout:
+            return None
+        return json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"]
+
+    for verb in ("create", "edit", "close", "reopen", "comment"):
+        assert decision(f"gh issue {verb} 1 --body x") == "deny", verb
+    for verb in ("create", "edit", "comment", "merge"):
+        assert decision(f"gh pr {verb} 1 --body x") is None, verb
+
+
 def test_pending_guard_context_blocks_unknown_binary(tmp_path):
     _preview(tmp_path, [sys.executable, "-c", "print('planned')"])
     payload = {
