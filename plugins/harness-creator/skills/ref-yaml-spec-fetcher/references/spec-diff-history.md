@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-09-14T03:19:14Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -77,9 +77,7 @@
+ are enabled.
+ To turn bundled skills off, use the
+ disableBundledSkills
+-setting, which disables every bundled skill except
+-/doctor
+-.
++setting.
+ The
+ /doctor
+ setup checkup stays typable when
+@@ -191,115 +189,79 @@
+ /summarize-changes
+ Either way, Claude should respond with a short summary of your edit and a list of risks.
+ ​
+-Where skills live
+-Where you store a skill determines who can use it:
++Choose where skills load
++Where you save a skill decides which sessions load it. Save it under your home directory to get it in every project, commit it to a repository to share it with everyone who works there, or distribute it through a plugin or managed settings to reach a whole team.
+ Location
+ Path
+-Applies to
++Loads in
+ Enterprise
+-See
+-managed settings
+-All users in your organization
++.claude/skills/<skill-name>/SKILL.md
++in the
++managed settings directory
++All users on machines where your organization deploys it
+ Personal
+ ~/.claude/skills/<skill-name>/SKILL.md
+-All your projects
++All your projects on this machine, but not
++Cowork or cloud sessions
+ Project
+ .claude/skills/<skill-name>/SKILL.md
+-This project only
++Sessions in this repository. Commit it so your team gets it too
++Nested
++<subdir>/.claude/skills/<skill-name>/SKILL.md
++Sessions started in or below
++<subdir>
++. A session started above it loads the skill once Claude works on files there. See
++monorepos and subdirectories
++Additional directory
++.claude/skills/<skill-name>/SKILL.md
++in a directory you pass with
++--add-dir
++That session. See
++directories outside the project
+ Plugin
+ <plugin>/skills/<skill-name>/SKILL.md
+-Where plugin is enabled
+-When skills share the same name, Claude Code resolves the conflict by source:
+-Across levels, enterprise overrides personal, and personal overrides project.
+-For example, with a
+-deploy
+-skill in both
+-~/.claude/skills/
+-and your project’s
+-.claude/skills/
+-,
+-/deploy
+-runs the personal one.
+-A skill at any of these levels also overrides a bundled skill with the same name, but not the bundled skill’s aliases.
+-For example, a
+-code-review
+-skill in your project’s
+-.claude/skills/
+-replaces the bundled
+-/code-review
+-, and typing the bundled alias
+-/review
+-never runs your skill.
+-Plugin skills use a
+-plugin-name:skill-name
+... (2897 more lines)
+```
+
 ## 2026-09-07T02:49:42Z
 
 実仕様ページに変更を検知。
