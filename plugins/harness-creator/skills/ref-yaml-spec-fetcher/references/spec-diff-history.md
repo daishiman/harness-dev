@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-09-28T03:34:28Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -155,7 +155,9 @@
+ SKILL.md
+ file with two parts: YAML frontmatter between
+ ---
+-markers that tells Claude when to use the skill, and markdown content with the instructions Claude follows when the skill runs. The directory name becomes the command you type, and the
++markers that tells Claude when to use the skill, and markdown content with the instructions Claude follows when the skill runs. The directory name, or the frontmatter
++name
++when you set one, becomes the command you type, and the
+ description
+ helps Claude decide when to load the skill automatically.
+ Save this to
+@@ -238,6 +240,7 @@
+ handle symlinks differently
+ .
+ Reserved name
++synced
+ : don’t name a skill folder
+ synced
+ , in any capitalization. Claude Code uses
+@@ -245,6 +248,15 @@
+ for
+ skills downloaded from claude.ai
+ and skips a skill you author at that name in the enterprise, personal, and project locations.
++Reserved name
++anthropic-skills
++: outside a plugin, a skill folder or command file whose name is
++anthropic-skills
++or starts with
++anthropic-skills:
++doesn’t load. See
++Names reserved for synced skills
++.
+ Command files
+ : a Markdown file in
+ .claude/commands/
+@@ -279,6 +291,13 @@
+ move the session with
+ /cd
+ on v2.1.246 or later, Claude Code adds the new directory’s project skills.
++In a session running in a linked
++git worktree
++, Claude Code searches parent directories only up to the worktree root. On Claude Code v2.1.277 or later, when the worktree checkout has no
++.claude/skills
++directory at its root, Claude Code loads the main checkout’s project skills instead. See
++What worktrees share with the main checkout
++.
+ Skills in a
+ .claude/skills/
+ directory below where you started don’t load at startup. They load the first time Claude reads or edits a file in that subdirectory and stay available for the rest of the session. Until then they don’t appear in the
+@@ -286,7 +305,7 @@
+ menu and you can’t invoke them by name. To load them sooner, run
+ /add-dir
+ with the subdirectory’s path, which requires Claude Code v2.1.257 or later.
+-When a nested skill shares a name with another skill, both stay available. With a
++When a nested skill’s directory name matches another skill’s name, both stay available. With a
+ deploy
+ skill at the repository root and another in
+ apps/web/.claude/skills/
+@@ -347,9 +366,13 @@
+ and plugin settings.
+ ​
+ Resolve skills that share a name
+-When two skills share a name, where each one came from decides which one
++When two skills share a directory or file name, where each one came from decides which one
+ /name
+-runs. The table covers the enterprise, personal, project, nested, plugin, and claude.ai locations, bundled skills, and command files:
++runs. For a name set by the frontmatter
++name
++field, see
++How a skill gets its command name
++. The table covers the enterprise, personal, project, nested, plugin, and claude.ai locations, bundled skills, and command files:
+ Same name in
+ Which one runs
+ Two of enterprise, personal, and project
+@@ -380,11 +403,9 @@
+ A plugin skill and a skill at any of the locations above
+ Both load, because plugin skills are namespaced as
+ /plugin-name:skill-name
+... (6880 more lines)
+```
+
 ## 2026-09-21T03:15:50Z
 
 実仕様ページに変更を検知。
