@@ -483,7 +483,7 @@ def test_current_repository_has_all_plugins_passing():
 
     report = mod.audit_repo(repo)
 
-    assert report["plugin_count"] == 21
+    assert report["plugin_count"] == 22
     assert report["verdict"] == "PASS", {
         item["plugin"]: [v["code"] for v in item["violations"]]
         for item in report["plugins"]
@@ -538,7 +538,7 @@ def test_all_package_contracts_match_schema_and_feedback_boundary():
     validator = Draft202012Validator(schema)
     contracts = sorted(repo.glob("plugins/*/references/package-contract.json"))
 
-    assert len(contracts) == 21
+    assert len(contracts) == 22
     for path in contracts:
         payload = json.loads(path.read_text(encoding="utf-8"))
         assert list(validator.iter_errors(payload)) == [], path
