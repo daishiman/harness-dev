@@ -1,6 +1,6 @@
 """lint-legacy-plugin-name.py の外部キット除外の回帰テスト。
 
-外部キット aidd-agent-kit の skill-creator は Claude/Codex 組込の同名別物を指し、
+外部キット aidd-agent-kit が旧 plugin 名と同綴で言及する skill は Claude/Codex 組込の同名別物を指し、
 manifest の SHA と一致させるため書き換えられない。除外が広すぎて harness 自身の
 投影まで素通りさせないことを含め、所有境界の各分岐を機械保証する。
 
