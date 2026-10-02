@@ -2,7 +2,7 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "run-briefing-hearing",
-    "skill_md_sha256": "0e3c0638ae6eb09f1055580d46279ac92820454a5ef34f33c4559ed1840756e0"
+    "skill_md_sha256": "59d88e30e62bb24856c8917c89c8f803703ae5e93bda7bd118cd7748dc825572"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 2,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   },
-  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の rubric 投影",
-  "reviewed_at": "2026-10-02T05:46:09Z",
-  "iterations": 2,
+  "reviewer": "cr-briefing-goal-seek-v1 (focused combined content review, incremental profile, goal_seek 宣言の差分)の rubric 投影",
+  "reviewed_at": "2026-10-02T08:00:13Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,20 +26,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "Runtime root contract (SKILL.md:78-86) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。",
-      "前回 medium (補足行を作るかどうかの食い違い) が直った。hearing-guide.md:169 が「聞く質問と回数は増やさず、既存回答に次の観点を含める。H番号を足してよいのは、この節の最後の段落にある追加要望と `未定` の補足行だけ」になり、同じ節の :176「追加要望の記録や未定の補足行は末尾のH番号を使い、既存番号を変えない」と向きがそろった。SKILL.md:99 (回答に残す設計情報に沿って既存の回答に残す。未確認の詳細を既定案から確定した事実へ置き換えない) と :100 も同じ前提に立つ。",
-      "お手本 examples/sample-haisha/打ち合わせ資料/ヒアリング.md は H25・H26 (:15-16) が要望、H27 (:42)・H28 (:30) が `未定` の補足行で、どれも末尾の番号を使い、既存の H01〜H24 を動かしていない。新しい決まりと合う。",
-      "followup (:132-141) の流れ (効き目の大きい順に 4 つまで、先頭が 案 (おすすめ)・最後が「打ち合わせで聞く」、hearing-guide.md「確認点で出た答えの書き方」(:232-240) で足して番号を振り直さない、Q=H の組を返す) は、IN2、run-briefing の確認点の手順 2 (run-briefing/SKILL.md:200-205)、run-briefing-docs の answers (:152-159) とつながる。"
+      "差分は frontmatter の :9-11 (goal_seek: engine: inline / fork: inline) の 3 行だけで、HEAD の SKILL.md の sha256 は前回 verdict の 0e3c0638… と一致した。本文・feedback_contract・artifact_delivery は前回 iteration 2 で評価した版のまま。",
+      "engine=inline / fork=inline は正しい。allowed-tools (:18) は Read・Write・Edit・Bash・Glob・Grep・AskUserQuestion で Task/Agent/Skill を持たず、:104 が「確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ」と決めている。followup (:137-144) も呼び出し元から Q を受けて 1 回聞き、Q=H の組を返すだけで、分離した文脈を使わない。run-goal-seek・task-graph への参照も無い。lint-skill-runtime-profiles で inline/inline、enforced finding 0。",
+      "fork=inline は分離しないので、pre_choice_forbidden (:63) の subagent・task-fork と食い違わない。feedback_contract.activation_state (:32) は semantic_evaluator_started で、lint-entrypoint-artifact-first もこのスキルには何も出さない。"
     ],
     "negative_feedback": [
-      "[low / 漏れ。前回 low の持ち越し] :155 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :69 (6. 通常生成と確認の選択所有) と :80 (1. どちらのホストでも同じ呼び方) の利用を示さない。本文から辿れるので low。直し方: :155 を「実行場所 (1 節)・終了コード (3 節)・確認の選択所有 (6 節)」にする。",
-      "[low / 漏れ。前回 medium の副次部分] hearing-guide.md 7 章の質問欄 (:207「4 章の表の質問を 1 文字も変えずに写す」) は、4 章に無い行 (要望の行、:176 の `未定` の補足行) の質問文の型を定めていない。確認点で足す行は :237 に「決めること の文を問いの形にする」とあるが、補足行と要望の行には無い。補足行を作るかどうかの揺れは解消し、お手本 (H25〜H28) を見れば形は分かるので low。直し方: 7 章の質問欄に「4 章に無い行は、要望なら『〜を頼まれた』、`未定` の補足なら確かめる事柄を問いの形で 1 文にする」を足す。",
-      "[low / 書き方] hearing-guide.md:169 の「H番号を足してよいのは…追加要望と `未定` の補足行だけ」は、この節 (回答に残す設計情報) の中の決まりとして読むのが自然だが、「だけ」をヒアリング全体に掛けて読むと、:109 (素材から足した質問をその章の最後に入れる) と :237 (確認点で答えが出た Q の行を足す)、SKILL.md:100 と衝突して見える。直し方: 「この節の観点を残すために H 番号を足してよいのは…だけ (素材から足す質問は 4 章、確認点で足す行は 7 章の決まりに従う)」とする。"
+      "[low / 書き方。今回の差分で目立つようになった] Post-choice selected improvement execution の節 (:74-76) の「独立レビューとその指摘に基づく改善を行う」は主語が無く、goal_seek.fork=inline (:11) と Task/Agent/Skill の無い allowed-tools (:18) と並ぶと、このスキル自身が分離した文脈でレビューを回すとも読める。Purpose の :104 (確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ) が持ち主を決めており、lint-skill-runtime-profiles の「本文が分離委譲を必須化」の検査にも掛からないので、矛盾ではなく low。直し方: 見出しと既存の 1 文は lint-entrypoint-artifact-first が見る共通の文なので変えずに、その次に 1 文を足す。足す 1 文の例: 「このスキルは分離した文脈を使わない (goal_seek.fork=inline)。独立レビューは呼び出し元 run-briefing が assign-briefing-evaluator へ渡し、このスキルは頼まれた指摘の行だけを直す」。",
+      "[low / 漏れ。前回 low の持ち越し、今回の差分とは無関係] :158 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :72 (6. 通常生成と確認の選択所有) と :83 (1. どちらのホストでも同じ呼び方) の利用を示さない。本文から辿れるので low。直し方: :158 を「実行場所 (1 節)・終了コード (3 節)・確認の選択所有 (6 節)」にする。",
+      "[low / 漏れ。前回 medium の副次部分の持ち越し、今回の差分とは無関係] hearing-guide.md 7 章の質問欄 (:207「4 章の表の質問を 1 文字も変えずに写す」) は、4 章に無い行 (要望の行、:176 の `未定` の補足行) の質問文の型を定めていない。確認点で足す行は :237 に「決めること の文を問いの形にする」とあるが、補足行と要望の行には無い。補足行を作るかどうかの揺れは解消し、お手本 (H25〜H28) を見れば形は分かるので low。直し方: 7 章の質問欄に「4 章に無い行は、要望なら『〜を頼まれた』、`未定` の補足なら確かめる事柄を問いの形で 1 文にする」を足す。",
+      "[low / 書き方。前回 low の持ち越し、今回の差分とは無関係] hearing-guide.md:169 の「H番号を足してよいのは…追加要望と `未定` の補足行だけ」は、この節 (回答に残す設計情報) の中の決まりとして読むのが自然だが、「だけ」をヒアリング全体に掛けて読むと、:109 (素材から足した質問をその章の最後に入れる) と :237 (確認点で答えが出た Q の行を足す)、SKILL.md:103 と衝突して見える。直し方: 「この節の観点を残すために H 番号を足してよいのは…だけ (素材から足す質問は 4 章、確認点で足す行は 7 章の決まりに従う)」とする。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 2,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 0e3c0638ae6eb09f1055580d46279ac92820454a5ef34f33c4559ed1840756e0) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/run-briefing-hearing/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、hearing-guide.md の 4 章 (:106-110)・「回答に残す設計情報」(:167-176)・7 章 (:201-240)、お手本 examples/sample-haisha/打ち合わせ資料/ヒアリング.md、execution-contract.md §1・§3・§6、呼び出し元 run-briefing の確認点の手順、run-briefing-docs の answers。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。rubric 投影: 前回と同じ rubric の観点 (L0 の FM・NM・BD・PD・RG と、L2 の BND-001・REG-001) で見て、high も medium も残っていない。前回の指摘: 前回の high (Runtime root contract の退行) と medium (補足行の扱いの食い違い) は解消。medium の副次部分 (補足行の質問文の型) と前回 low (Additional Resources) を low で残し、書き換えた :169 の「だけ」の掛かり方を smell として足した。判定: PASS。high 0、medium 0。low 3 件を findings に残す。"
+  "notes": "今回の評価対象は goal_seek 宣言の差分 (frontmatter :9-11 の engine/fork)。CI の lint-skill-runtime-profiles が loop 型に求める goal_seek block を書き足したことで SKILL.md の sha256 が変わり、前回の verdict が stale-sha になったための再評価 (iteration 1)。sha だけを書き換えたのではなく、今の SKILL.md (sha256 59d88e30e62bb24856c8917c89c8f803703ae5e93bda7bd118cd7748dc825572) を読み直して判定した。読んだもの: 5 つの SKILL.md の今の版、`git diff HEAD -- plugins/system-briefing-book/skills/` (5 ファイルとも frontmatter の :9-11 に goal_seek の 3 行を足しただけで、削除 0・ほかの行の変更なし)、HEAD の SKILL.md の sha256 (5 件とも前回 verdict の sha と一致したので、goal_seek 以外は前回 iteration 2 で評価した版と同じ)、assign-briefing-evaluator/SKILL.md、agents/briefing-reviewer.md、前回の verdict 10 件、content-review-protocol.md の「incremental: unresolved semantic batch」。宣言値の意味と検査を確かめるために、plugins/harness-creator/scripts/lint-skill-runtime-profiles.py の engine/fork の判定 (:39-41・:228-253・:373-402・:440-495)、scripts/lint-entrypoint-artifact-first.py の _lint_frontmatter_control_flow (:191-212)、run-build-skill/references/goal-seek-paradigm.md:81、前例 plugins/dev-graph/skills/run-dev-graph-init/SKILL.md の goal_seek (:48-51) と :156、.github/workflows/governance-check.yml の lint 呼び出し行 (:40・:150・:213) だけを追加で読んだ。それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で 5 skill の差分をまとめて見て、(a) 宣言値と本文・allowed-tools・委譲の仕方の矛盾 (b) feedback_contract.activation_state と artifact_delivery.state_machine.pre_choice_forbidden との食い違い (c) 差分が goal_seek block だけか (d) 依存関係整合 (e) rubric の high 0 を同時に判定した。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、SKILL.md と eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。実行した検査: `python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --plugin system-briefing-book` は exit 0 (run-briefing=inline/subagent、ほかの 4 つ=inline/inline、5 つとも enforced finding 0。残る legacy は配布複製の run-skill-feedback だけ)、CI と同じ `--repo-root .` の全体実行も exit 0 (enforced=0、unlisted=0、stale=0)。`python3 scripts/lint-entrypoint-artifact-first.py` は exit 1 で、`[ERROR] plugins/system-briefing-book/skills/run-briefing/SKILL.md: goal_seek heavy control must activate post-choice at semantic_evaluator_started` の 1 件。git archive で取り出した HEAD の plugin では同じ lint が exit 0 なので、この 1 件は今回の差分で生じた。rubric 投影: 前回と同じ rubric の観点 (L0 の FM・NM・BD・PD・RG と、L2 の BND-001・REG-001) で見て、high も medium も無い。前回の指摘: 前回 verdict (cr-briefing-batch-v4、iteration 2、旧 sha 0e3c0638ae6eb09f1055580d46279ac92820454a5ef34f33c4559ed1840756e0、PASS) の low 3 件 (Additional Resources、補足行の質問文の型、hearing-guide.md:169 の「だけ」の掛かり方) は、今回の差分と無関係でまだ直っていないので、SKILL.md の行番号を今の版 (+3) に合わせて negative_feedback に引き継いだ (hearing-guide.md の行番号は変わっていない)。判定: PASS。high 0、medium 0。low 4 件 (新しく 1 件、引き継ぎ 3 件) を findings に残す。宣言値 engine=inline / fork=inline は妥当で、変える必要は無い。"
 }

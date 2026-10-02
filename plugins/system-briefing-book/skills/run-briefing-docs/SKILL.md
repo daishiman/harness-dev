@@ -6,6 +6,9 @@ effect: local-artifact
 prefix: run
 hierarchy: L2
 version: 0.1.0
+goal_seek:
+  engine: inline
+  fork: inline
 owner: harness maintainers
 source: plugins/system-briefing-book/plugin-composition.yaml#skills/run-briefing-docs
 user-invocable: true

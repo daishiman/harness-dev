@@ -6,6 +6,10 @@ effect: local-artifact
 prefix: run
 hierarchy: L1
 version: 0.1.0
+goal_seek:
+  activation_state: semantic_evaluator_started
+  engine: inline
+  fork: subagent
 owner: harness maintainers
 source: plugins/system-briefing-book/plugin-composition.yaml#skills/run-briefing
 user-invocable: true
