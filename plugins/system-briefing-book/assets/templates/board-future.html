@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+.board-body.col > .stage { justify-content: center; }
+.steps .step { gap: 22px; padding: 30px 32px; min-height: 600px; }
+.steps .step .h b { font-size: 26px; }
+.steps .step .h .chip { margin-left: auto; }
+.steps .step.later { border-style: dashed; border-color: var(--line-strong); box-shadow: none; }
+.future-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 24px; }
+.future-items li b { display: block; font-size: 23px; font-weight: 800; line-height: 1.4; }
+.future-items li span { display: block; margin-top: 4px; font-size: 17px; line-height: 1.55; color: var(--text-2); }
+.future-items li span.prep { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.keep { margin-top: auto; padding-top: 16px; border-top: 1px dashed var(--line); font-size: 17px; line-height: 1.55; color: var(--text-2); }
+.keep b { display: block; font-size: 18px; color: var(--text); }
+</style>
+</head>
+<body>
+<!-- 型: future (将来の広げ方)
+     - 置くのは、ヒアリングの「先々、広げたいことはありますか」で「先々の広げ方を 1 枚のボードでも見せる」を選んだときだけ。既定では置かない。
+     - 3 段: 最初の版 → 次の版 → その先。候補は 仕様書「8. 最初の版に入れないもの」の 時期 で振り分ける。候補は合わせて 4 個まで。
+     - 最初の版の段: 要件定義「3.1 最初の版でやること」の利用者の操作と結果だけ。画面やボタンを足さない。
+     - 次の版・その先の段: 候補ごとに 名前 / 何ができるか 1 文 / .prep に利用者が導入を判断する条件。未確認の条件は要確認と明示する。
+     - 保存データ・処理・安全対策などの技術的な備えは仕様書 8 章に保持し、このボードには転記しない。
+     - 注記は 3 個まで。要件の札は置いてよい。 -->
+<div class="board" data-board="{{NO}}" data-type="future">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <div class="steps">
+        <div class="step anchor">
+          <div class="h"><span class="no">1</span><b>最初の版</b><span class="chip brand">今つくる</span></div>
+          <ul class="future-items">
+            <li><b>写真を送る</b></li>
+            <li><b>一覧で確かめる</b></li>
+            <li><b>書き出す</b></li>
+          </ul>
+          <div class="keep"><b>詳しい条件と備え</b>仕様書「8. 最初の版に入れないもの」にまとめています。</div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step later anchor">
+          <div class="h"><span class="no">2</span><b>次の版</b><span class="chip neutral">使ってみてから</span></div>
+          <ul class="future-items">
+            <li><b>月ごとの集計</b><span>記録の数を月ごとにまとめて見る。</span><span class="prep">要確認: 誰が、何を確かめるために使うか。</span></li>
+            <li><b>現場への知らせ</b><span>確認待ちが残ったら、担当の人に知らせる。</span><span class="prep">要確認: 誰に、いつ知らせると助かるか。</span></li>
+          </ul>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step later anchor">
+          <div class="h"><span class="no">3</span><b>その先</b><span class="chip neutral">相手のソフトしだい</span></div>
+          <ul class="future-items">
+            <li><b>今のソフトと直接つなぐ</b><span>書き出しの手間をなくす。相手のソフトの対応しだい。</span><span class="prep">要確認: 今のソフトで受け取れるか。</span></li>
+          </ul>
+          <i class="mk" style="right:-10px;top:-10px">3</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>最初の版で、日々の作業を試す</b><span class="sub">写真を送ってから書き出すまでを確かめる。</span></li>
+        <li data-mark="2" data-kind="how"><b>使ってみて、次に必要なことを選ぶ</b><span class="sub">集計や知らせが、誰の作業に役立つかを相談する。</span></li>
+        <li data-mark="3" data-kind="how"><b>その先は、使ってみてから決め直す</b><span class="sub">次の版を足したあとで、残りの順と中身を相談する。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing",
+    "skill_md_sha256": "380927d2c341758e10c3c4432d74d8c805df8ef429f4a29d61b289c42a5c684e"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 1,
+    "smell": 0
+  },
+  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の rubric 投影",
+  "reviewed_at": "2026-10-02T05:46:09Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "Runtime root contract (SKILL.md:92-100) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。",
+      "工程5 に :177「boards が仕様書の足りない章と画面番号を返したら、Skill `run-briefing-docs` にその箇所だけ書き足してもらい、boards を通し直す」が入り、run-briefing-boards/SKILL.md:109 と board-copy.md:86 の返し方に受け手ができた。boards の返し方 4 つ (:126 BOARD-REF、:144 9 章に無い 決めること、:169 3 回直しても残る error・warn、:109 仕様の不足) のうち、boards モードで出るものはすべて工程4・5 (:170・:175・:176・:177) に受け手がある。",
+      "前回の low 2 件のうち 1 件と半分が直った。revise の手順 5 (:245) が「この版で 決めること の Q が増えたか閉じたら、その Q の話が出てくるボードだけを更新」になり、version-up で増えて開いたままの Q も対象になった (page-patterns.md の ask 注記の置き方と合う)。報告 (:254) に workflow.md:88 の「参考がない通常生成では高再現は 対象外、参考が未提供なら 未検証」が入り、構造の差と高再現の受入を分けて伝える形になった。",
+      "工程6 (:182-183) の book が exit 1 のときの扱い (担当スキルへその行を渡す、担当が無い行 = plugin の入れ直しは通し直さずに伝える、2 回目で相談) は、run-briefing-book/SKILL.md の振り分け表 (:107-116。TEMPLATE-PLACEHOLDER は入れ直し、PNG-HASH を含む PNG 系は boards) と合う。"
+    ],
+    "negative_feedback": [
+      "[low / 漏れ。前回 low の残り] :118 は参考を再現するときの版・全機能の対応・初版範囲・画像比較の結果を「既存の確認点と最終報告に残す」とし、workflow.md:88 も確認点の報告に残すとするが、確認点の手順 1 (:190-199) の見せるものにその行が無く、どの確認点で何を見せるかが読み手しだいになる。最終報告 (:254) の側は今回直った。参考の再現は通常生成では起きず、中身は正本 (workflow.md:85-88) で決まるので low。直し方: :199 の「どの確認点でも」の行の次に「参考を再現するときは、参考版と対応表の今の状態を添える (workflow.md の「再現の測り方」)」を足す。",
+      "[low / 依存関係。今回の修正で見えた] 新しい :177 の受け手は工程5 にだけある。run-briefing-boards/SKILL.md:109 の「仕様書に足りない章や画面があれば、その章と画面番号を呼び出し元へ返す」は Purpose 節にあり pages モードにも掛かるが、工程4 (:169-170) が受けるのは「ボード:」行の番号のずれだけ。pages は仕様書 1・3・8 章の画面一覧から並びを決めるだけで、不足が出るのは主に boards なので low。直し方: :170 の次に「仕様書の足りない章と画面番号が返ってきたら、工程5 と同じく run-briefing-docs にその箇所だけ書き足してもらい、pages を通し直す」を足すか、:177 を工程4・5 に共通の書き方にする。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 380927d2c341758e10c3c4432d74d8c805df8ef429f4a29d61b289c42a5c684e) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/run-briefing/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、references/workflow.md の「再現の測り方」(:71-88)、execution-contract.md §1・§3・§6、呼び出し先の run-briefing-boards・run-briefing-docs・run-briefing-hearing・run-briefing-book の SKILL.md、board-copy.md。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。rubric 投影: 前回と同じ rubric の観点 (L0 の FM・NM・BD・PD・RG と、L2 の BND-001・REG-001) で見て、high も medium も残っていない。前回の指摘: 前回の high (Runtime root contract の退行) は解消。前回 low 2 件のうち revise 手順 5 のボードの直しと報告の 対象外/未検証 は解消し、確認点で参考版と対応表を見せる行だけが low で残った。今回の修正 (:177) で工程4 に受け手が無い点を low で足した。判定: PASS。high 0、medium 0。low 2 件を findings に残す。"
+}

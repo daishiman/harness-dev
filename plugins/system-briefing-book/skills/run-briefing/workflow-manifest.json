@@ -1,0 +1,329 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-briefing",
+  "skill": "run-briefing",
+  "description": "main context が工程0〜6 を順に進め、確認点ごとに検査済みの現物を見せ、その工程で増えた 決めること を聞き足してから accept-as-is/light/standard/detailed を記録する。独立レビューは light/standard/detailed を選んだ確認点でだけ動く。revise は変更点.md を書き、影響する工程だけを進め直す。",
+  "phases": [
+    {
+      "id": "P0-scaffold",
+      "step": 0,
+      "title": "出力フォルダと雛形を用意し素材の一覧を見せる",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-scaffold"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P1-hearing",
+      "step": 1,
+      "title": "ヒアリングを既定案つきで行いヒアリング.md を検査する",
+      "gate": "IN1",
+      "dependsOn": [
+        "P0-scaffold"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-hearing",
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P2-requirements",
+      "step": 2,
+      "title": "要件定義書を書き確認点1 で現物を見せて深さを記録する",
+      "gate": "IN2",
+      "dependsOn": [
+        "P1-hearing"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-docs",
+        "script-validate",
+        "skill-reviewer",
+        "skill-hearing"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P3-spec",
+      "step": 3,
+      "title": "仕様書を書き確認点2 で現物を見せて深さを記録する",
+      "gate": "IN2",
+      "dependsOn": [
+        "P2-requirements"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-docs",
+        "script-validate",
+        "skill-reviewer",
+        "skill-hearing"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P4-pages",
+      "step": 4,
+      "title": "ページ構成を決め確認点3 で現物を見せて深さを記録する",
+      "gate": "IN2",
+      "dependsOn": [
+        "P3-spec"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-boards",
+        "script-profile",
+        "script-validate",
+        "skill-reviewer",
+        "skill-docs"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P5-boards",
+      "step": 5,
+      "title": "ボードを作り PNG 化と検査を error と warn が 0 になるまで進める",
+      "gate": "IN1",
+      "dependsOn": [
+        "P4-pages"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-boards",
+        "skill-reviewer",
+        "skill-docs"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P6-book",
+      "step": 6,
+      "title": "--stage all を通してからまとめ HTML を作り報告する",
+      "gate": "IN1",
+      "dependsOn": [
+        "P5-boards"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate",
+        "script-profile",
+        "skill-book",
+        "skill-boards",
+        "skill-docs",
+        "skill-hearing"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "P7-revise",
+      "step": 7,
+      "title": "打ち合わせメモから変更点.md を書き影響する工程だけ進め直して版を上げる",
+      "gate": "IN3",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "skill-docs",
+        "skill-boards",
+        "skill-book",
+        "script-validate",
+        "skill-hearing",
+        "skill-reviewer"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "script-scaffold",
+      "kind": "script",
+      "path": "../../scripts/build-briefing-scaffold.mjs",
+      "phaseIds": [
+        "P0-scaffold"
+      ]
+    },
+    {
+      "id": "script-validate",
+      "kind": "script",
+      "path": "../../scripts/validate-briefing-docs.mjs",
+      "phaseIds": [
+        "P1-hearing",
+        "P2-requirements",
+        "P3-spec",
+        "P4-pages",
+        "P6-book",
+        "P7-revise"
+      ]
+    },
+    {
+      "id": "script-profile",
+      "kind": "script",
+      "path": "../../scripts/compare-briefing-profile.mjs",
+      "phaseIds": [
+        "P4-pages",
+        "P6-book"
+      ]
+    },
+    {
+      "id": "skill-hearing",
+      "kind": "skill",
+      "path": "../run-briefing-hearing/SKILL.md",
+      "phaseIds": [
+        "P1-hearing",
+        "P2-requirements",
+        "P3-spec",
+        "P6-book",
+        "P7-revise"
+      ]
+    },
+    {
+      "id": "skill-docs",
+      "kind": "skill",
+      "path": "../run-briefing-docs/SKILL.md",
+      "phaseIds": [
+        "P2-requirements",
+        "P3-spec",
+        "P4-pages",
+        "P5-boards",
+        "P6-book",
+        "P7-revise"
+      ]
+    },
+    {
+      "id": "skill-boards",
+      "kind": "skill",
+      "path": "../run-briefing-boards/SKILL.md",
+      "phaseIds": [
+        "P4-pages",
+        "P5-boards",
+        "P6-book",
+        "P7-revise"
+      ]
+    },
+    {
+      "id": "skill-book",
+      "kind": "skill",
+      "path": "../run-briefing-book/SKILL.md",
+      "phaseIds": [
+        "P6-book",
+        "P7-revise"
+      ]
+    },
+    {
+      "id": "skill-reviewer",
+      "kind": "skill",
+      "path": "../assign-briefing-evaluator/SKILL.md",
+      "phaseIds": [
+        "P2-requirements",
+        "P3-spec",
+        "P4-pages",
+        "P5-boards",
+        "P7-revise"
+      ]
+    }
+  ]
+}

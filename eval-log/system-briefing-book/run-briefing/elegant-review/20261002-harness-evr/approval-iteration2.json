@@ -1,0 +1,982 @@
+{
+  "schema": "system-briefing-book-independent-approval-v1",
+  "iteration": 2,
+  "reviewed_at": "2026-10-02T01:33:21.706634+00:00",
+  "approver": "independent-code-auditor",
+  "target": "/Users/dm/orca/workspaces/harness/キット差し替え/plugins/system-briefing-book",
+  "baseline": "/Users/dm/orca/workspaces/harness/キット差し替え/eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline",
+  "scope": "Original 30-paradigm audit plus requested spec/template content for layouts, modals, buttons, overall composition, administration/user distinction, icons, backend/security/infrastructure. Read-only code/content review; browser and full suite remain parent-owned.",
+  "decision": {
+    "approved": false,
+    "verdict": "CHANGES_REQUIRED",
+    "blocking_findings": [
+      "SPEC-01"
+    ],
+    "reason": "Original iteration1 blockers are resolved or explicitly accepted scope changes. One concrete additional-scope inconsistency remains in the active future-board template.",
+    "high_fidelity": "NOT_ESTABLISHED",
+    "four_conditions_all_pass": false
+  },
+  "authorization_update": {
+    "source": "Current user message: 別作業の変更も反映して進める",
+    "accepted": [
+      "PAGE_TYPES contraction",
+      "8-board sample",
+      "version bump and template removals as external changes integrated into current contract"
+    ],
+    "effect": "REG-02 is ACCEPTED_INTENTIONAL_CHANGE, not an unresolved defect. No rollback or obsolete type reintroduction requested."
+  },
+  "independence": {
+    "code_edited": false,
+    "git_executed": false,
+    "browser_executed": false,
+    "writes": "approval-iteration2.json only",
+    "previous_audit": "approval-iteration1.json unchanged",
+    "verification": "Read source, test assertions, parent JSON artifacts and in-memory exported functions; parent browser results attributed."
+  },
+  "phase2_issue_dispositions": [
+    {
+      "id": "L01",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "L02",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "SYS-01",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "META-17",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "L03",
+      "verdict": "RESOLVED",
+      "evidence": "Candidate decoration only accepts unordered leaf children; fallback renders raw list with shared Markdown. Independent nested 保持期限: 30日 probe retained it. META-15 screen condition also retained."
+    },
+    {
+      "id": "META-15",
+      "verdict": "RESOLVED",
+      "evidence": "Candidate decoration only accepts unordered leaf children; fallback renders raw list with shared Markdown. Independent nested 保持期限: 30日 probe retained it. META-15 screen condition also retained."
+    },
+    {
+      "id": "L04",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "SYS-02",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "META-14",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "L05",
+      "verdict": "RESOLVED",
+      "evidence": "screenChips decorates links produced from complete inline text. Independent S01（管理者のみ） probe retained 管理者のみ."
+    },
+    {
+      "id": "L06",
+      "verdict": "RESOLVED",
+      "evidence": "Title slices at the first colon; independent # 仕様書: 配車: 第2版 retained 第2版."
+    },
+    {
+      "id": "META-18",
+      "verdict": "RESOLVED",
+      "evidence": "Title slices at the first colon; independent # 仕様書: 配車: 第2版 retained 第2版."
+    },
+    {
+      "id": "L07",
+      "verdict": "RESOLVED",
+      "evidence": "Unknown tables delegate their raw Markdown to renderMarkdown, retaining alignment; independent right-alignment probe passed."
+    },
+    {
+      "id": "L08",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "Builder preserves PNG/JPEG/WebP base64 data URIs after canonical base64/MIME/header checks. Document-wide reference definitions resolve full/collapsed/shortcut image references through hooks. Independent full/collapsed/shortcut/cross-section probes all called image with resolved URL; unresolved reference invoked missing callback.",
+      "limits": "SVG and external image embedding remain unsupported. Header validation is not full decode; now IMAGE-UNVERIFIED warning and book status=warn make that explicit. Parent reports a real standalone data image decode PASS; approver did not run browser."
+    },
+    {
+      "id": "SYS-10",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "Builder preserves PNG/JPEG/WebP base64 data URIs after canonical base64/MIME/header checks. Document-wide reference definitions resolve full/collapsed/shortcut image references through hooks. Independent full/collapsed/shortcut/cross-section probes all called image with resolved URL; unresolved reference invoked missing callback.",
+      "limits": "SVG and external image embedding remain unsupported. Header validation is not full decode; now IMAGE-UNVERIFIED warning and book status=warn make that explicit. Parent reports a real standalone data image decode PASS; approver did not run browser."
+    },
+    {
+      "id": "META-10",
+      "verdict": "PARTIAL",
+      "evidence": "workflow.md distinguishes sample v0.2/4 screens from reference v0.4/6 screens and requires mapping meaning, version, scope and visual evidence. case-haisha adds login/master/learning mapping.",
+      "limits": "This fixes misleading criteria, not reproduction itself. No completed six-screen mapping or independent visual acceptance in this audit. target-profile intended_additions changed; that is a comparison-condition change, not fidelity evidence."
+    },
+    {
+      "id": "META-11",
+      "verdict": "RESOLVED",
+      "evidence": "execution-contract section 6 owns L1 choices and L2 normal execution. book SKILL and manifest point to that contract and no longer gate normal generation behind independent review selection.",
+      "limits": "Static contract assessment only; no skill live trial."
+    },
+    {
+      "id": "META-12",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "boardTraits excludes explicit hidden/empty content and missing sources; profile requires current dependency receipts and measurements; result explicitly says structure-only/fidelity not-assessed. Independent hidden fact/req/bar probe returned no classes and four invalid records.",
+      "limits": "Static CSS visibility and semantic equivalence remain intentionally unassessed; this cannot establish high fidelity."
+    },
+    {
+      "id": "SYS-09",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "boardTraits excludes explicit hidden/empty content and missing sources; profile requires current dependency receipts and measurements; result explicitly says structure-only/fidelity not-assessed. Independent hidden fact/req/bar probe returned no classes and four invalid records.",
+      "limits": "Static CSS visibility and semantic equivalence remain intentionally unassessed; this cannot establish high fidelity."
+    },
+    {
+      "id": "META-13",
+      "verdict": "RESOLVED",
+      "evidence": "Added doc_report regressions directly cover original quantities, conditions, nested children, title, indentation, and alignment. The approver inspected assertions and independently probed L01–L07.",
+      "limits": "Full test execution remains parent responsibility and was pending at handoff."
+    },
+    {
+      "id": "META-16",
+      "verdict": "RESOLVED",
+      "evidence": "readList and isTableStart are exported/shared; generic table and list fallbacks delegate to markdown-lite. This is localized commonization without a new parser dependency."
+    },
+    {
+      "id": "SYS-03",
+      "verdict": "RESOLVED",
+      "evidence": "render/book share resource-refs HTML token attributes and CSS reference parsing. Independent escaped code-example scan returned []; image-set external URL and unquoted src were both detected.",
+      "limits": "No browser network audit was performed; no claim of exhaustive CSS/HTML grammar compliance."
+    },
+    {
+      "id": "SYS-08",
+      "verdict": "RESOLVED",
+      "evidence": "render/book share resource-refs HTML token attributes and CSS reference parsing. Independent escaped code-example scan returned []; image-set external URL and unquoted src were both detected.",
+      "limits": "No browser network audit was performed; no claim of exhaustive CSS/HTML grammar compliance."
+    },
+    {
+      "id": "SYS-04",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "dependencyReceipt follows CSS imports/backgrounds and srcset resources and stores SHA; render produces receipt, book/profile compare dependencies. Independent srcset probe returned two paths.",
+      "limits": "Legacy receipt-free book inputs retain mtime behavior. No full filesystem dependency mutation test was run by approver; parent owns integration tests."
+    },
+    {
+      "id": "SYS-05",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "Recorded quality warnings propagate as BOARD-CHECK-WARN/status=warn; IMAGE-UNVERIFIED and DOC-IMAGE also produce warning status.",
+      "limits": "Explicit current contract permits warning-only HTML writing and exit0. This is retained behavior, not a new mandatory failure gate. A workflow must inspect status/warnings; exit0 alone is not clean delivery."
+    },
+    {
+      "id": "SYS-06",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "Dimensions and receipt hashes remain checked; missing selected-image receipt and all document images now emit IMAGE-UNVERIFIED and warning status. Tests inspect corrupted hashes, missing receipts and image data URI decode.",
+      "limits": "No full decoder added; old signature/IHDR-only data can still be embedded with explicit warning. This resolves false verification claims, not legacy image integrity itself."
+    },
+    {
+      "id": "SYS-07",
+      "verdict": "RESOLVED",
+      "evidence": "Template activates first/current page before #toc early return and catches malformed decodeURIComponent. Added navigation test inspects direct links and fallback.",
+      "limits": "Independent static inspection; parent standalone sidebar/image/mobile/no-JS PASS reported. No approver browser run."
+    }
+  ],
+  "paradigm_assessments": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L04"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L04=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L03",
+        "L05"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L03=RESOLVED; L05=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L03",
+        "L04",
+        "L05",
+        "L06"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L03=RESOLVED; L04=RESOLVED; L05=RESOLVED; L06=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L07"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L07=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L08"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "L08=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L06",
+        "L07"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L04=RESOLVED; L06=RESOLVED; L07=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L05"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L04=RESOLVED; L05=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [],
+      "verdict": "PARTIAL",
+      "independent_assessment": "Real reference document in phase2 produced 14 sections/8 generic tables/0 d-card; current pattern dispatch still matches exact headers. No current reference card/visual acceptance performed. Sample card count cannot prove reference conversion fidelity.",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-10"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "META-10=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-11"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-11=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-12"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "META-12=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-13"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-13=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-14"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-14=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-15"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-15=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-16"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-16=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-17"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-17=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-18"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-18=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "システム思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-04"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-04=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "因果関係分析",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-01=RESOLVED",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "因果ループ",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-05"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-05=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "トレードオン思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-06"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-06=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "プラスサム思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-03",
+        "SYS-08"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-03=RESOLVED; SYS-08=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "価値提案思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-02"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-02=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "戦略的思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-09"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-09=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-10"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-10=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "改善思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-07"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-07=RESOLVED",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "仮説思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-03",
+        "SYS-06",
+        "SYS-07"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-03=RESOLVED; SYS-06=RESOLVED_WITH_LIMITS; SYS-07=RESOLVED",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "論点思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-02",
+        "SYS-03",
+        "SYS-04",
+        "SYS-05",
+        "SYS-06",
+        "SYS-07",
+        "SYS-08",
+        "SYS-09",
+        "SYS-10"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-02=RESOLVED; SYS-03=RESOLVED; SYS-04=RESOLVED_WITH_LIMITS; SYS-05=RESOLVED_WITH_LIMITS; SYS-06=RESOLVED_WITH_LIMITS; SYS-07=RESOLVED; SYS-08=RESOLVED; SYS-09=RESOLVED_WITH_LIMITS; SYS-10=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "KJ法",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-03",
+        "SYS-04",
+        "SYS-05",
+        "SYS-08"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-03=RESOLVED; SYS-04=RESOLVED_WITH_LIMITS; SYS-05=RESOLVED_WITH_LIMITS; SYS-08=RESOLVED",
+      "new_regression_ids": [],
+      "regression_followup": "REG-01 restored notes-only marker semantics; parent old11 render PASS. REG-02 accepted intentional scope change after explicit user answer."
+    }
+  ],
+  "coverage": {
+    "phase2_json_files": 3,
+    "paradigms_reviewed": 30,
+    "unique_issue_ids_reviewed": 27,
+    "added_scope_fields_read": 22,
+    "note": "22 populated labels are not a semantic completeness score. Content/proposal status assessed below."
+  },
+  "regression_followup": [
+    {
+      "id": "REG-01",
+      "verdict": "RESOLVED",
+      "evidence": "render-board-png.mjs restores listOnly for no .mk and no .anchor, preserving duplicate/stray-marker checks. Parent confirms unchanged old11 render PASS. Added four-case notes-only tests inspected."
+    },
+    {
+      "id": "REG-02",
+      "verdict": "ACCEPTED_INTENTIONAL_CHANGE",
+      "evidence": "Independent validation still gives three PAGE-TYPE errors on old11 fixture; user explicitly accepts reduced types/new8 contract. This is documented compatibility break, not a defect in current approved scope."
+    }
+  ],
+  "findings": [
+    {
+      "id": "SPEC-01",
+      "severity": "medium",
+      "verdict": "FAIL",
+      "title": "Active future template still instructs and displays implementation data-retention details on boards",
+      "evidence_paths": [
+        "assets/templates/board-future.html:27",
+        "assets/templates/board-future.html:28",
+        "assets/templates/board-future.html:49",
+        "assets/templates/board-future.html:56",
+        "assets/templates/board-future.html:65",
+        "skills/run-briefing-boards/references/board-copy.md:78",
+        "skills/run-briefing-boards/references/board-copy.md:85"
+      ],
+      "actual": [
+        "Template comment explicitly requests 先々のために残すデータ and .prep 備え for each candidate.",
+        "Visible template includes 記録の日 ・ 書き出した印, 記録の日を、行ごとに残す, 書き出した行に印を付け、2 回送らない."
+      ],
+      "expected": "User asks boards to focus on user-visible visual/operational behavior and retain technical implementation detail in specification. New board-copy policy specifically places data items/retention/connection methods in spec chapter8.",
+      "impact": "future remains an allowed PAGE_TYPES value. Following its template can reintroduce data-retention implementation details into future boards despite the new policy; the current eight-board sample does not exercise this template.",
+      "minimal_reproduction": "Read or instantiate the existing board-future template; visible .keep/.prep content and comments conflict with board-copy policy even with placeholders filled. Static evidence suffices; no browser needed.",
+      "minimal_fix": "Update active future template instructions and example content to user actions/results and a chapter8 reference, preserving actual implementation details in spec chapter8. No new page, enum rollback or backend design required."
+    }
+  ],
+  "additional_spec_scope": {
+    "recording_structure": "ACCEPTABLE_WITH_OPEN_DECISIONS",
+    "completed_design": "NOT_CLAIMED",
+    "sample_fields": [
+      {
+        "section": "2.1 骨組み",
+        "field": "共通配置",
+        "line": 18,
+        "content": "PCは上の帯・左のメニュー・中央の本文・下の帯の4領域。スマホは上の帯・本文・下の主なボタン「送る」の3領域で、メニューは出さない。固定位置と幅の切替は案としてQ09で確かめる (聞き取り:H07)。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "2.1 骨組み",
+        "field": "画面区分",
+        "line": 19,
+        "content": "S01〜S04は日々の仕事に使うユーザー画面。管理者も同じ画面を使う案とする。人の追加・取消の入口はまだ画面一覧に無く、専用画面の要否をQ09で決める (聞き取り:H24)。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "2.3 メニュー",
+        "field": "アイコン",
+        "line": 28,
+        "content": "案として「一覧」「書き出し」など文字を主にし、追加のアイコンだけで操作させない。付ける場合は同じ意味の形と文字名をそろえ、装飾の印は操作から外す。使用箇所と素材はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "2.4 フッター",
+        "field": "ボタン",
+        "line": 35,
+        "content": "主な操作はS01「送る」、S02「開く」、S03「確かめた」、S04「書き出す」。案として必須欄が不足なら押せない理由を添え、処理中は連打を止める。補助操作との位置・区別はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "2.6 モーダル",
+        "field": "モーダル",
+        "line": 47,
+        "content": "S04の書き出す前の確かめだけに使い、入力には使わない。「書き出す」を押すと「21 行を書き出しますか」のように対象の行数と起きることを1行で示し、「書き出す」か「やめる」を選ぶ。案として開くと取消に操作位置を移し、閉じると元のボタンへ戻す。Escと背景での取消、処理中の閉じ方はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "2.8 空のときと読み込み中",
+        "field": "状態表示",
+        "line": 56,
+        "content": "通常は一覧と可能な操作を表示する。空のときは「まだ配車表がありません」と「スマホから送ると、ここに並びます」を出す。読み込み中は中身の形だけを灰色で出し、読み取っている配車表には「読み取り中」と出す。処理中は結果が出るまで待つ表示、失敗は理由と再試行、完了は結果を出す案とする。既存H14以外の細部はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S01 配車表を送る",
+        "field": "配置",
+        "line": 80,
+        "content": "2.1のスマホ配置。上に日付、中央に撮った写真、下に「送る」を置く案。写真の撮り直しは写真の近くに置き、位置の細部はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S01 配車表を送る",
+        "field": "画面区分",
+        "line": 81,
+        "content": "配車の担当者のユーザー画面。管理者も業務用に使う案。使う人の追加・取消はここに置かず、入口はQ09で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S01 配車表を送る",
+        "field": "状態",
+        "line": 82,
+        "content": "写真なし→撮影済み→送信中→送信済み。失敗時は写真を残し再試行できる案。必須の日付と写真がそろう条件、連打防止、各文言はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S02 配車表の一覧",
+        "field": "配置",
+        "line": 104,
+        "content": "2.1のPC配置。中央に日付・送った人・件数・状態の一覧と各行の「開く」。確認待ちを上に置く。幅と固定領域の細部はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S02 配車表の一覧",
+        "field": "画面区分",
+        "line": 105,
+        "content": "請求の担当者のユーザー画面。管理者も閲覧する案。見えるデータは7.1に従い、人の管理は別の入口をQ09で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S02 配車表の一覧",
+        "field": "状態",
+        "line": 106,
+        "content": "空のときは2.8、読み取り中/確認待ち/確認済み/書き出し済みを文字で表示する。失敗した取込をどう直すかと再試行の位置はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S03 読み取り結果の確認",
+        "field": "配置",
+        "line": 139,
+        "content": "2.1のPC配置。紙の写真と行の一覧を並べて見比べる。選んだ行を写真でも示し、入力欄と候補を近くに置く。左右の幅と狭いときの並びはQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S03 読み取り結果の確認",
+        "field": "画面区分",
+        "line": 140,
+        "content": "請求の担当者が修正するユーザー画面。管理者も同じ画面を使う案。7.1の範囲を処理側でも確かめる方法はQ08で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S03 読み取り結果の確認",
+        "field": "状態",
+        "line": 141,
+        "content": "確認待ちの黄色→候補選択/修正→確認済み。保存中は連打を止め、失敗時は入力を保持して再試行する案。確定できる条件と表示はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S04 書き出し",
+        "field": "配置",
+        "line": 163,
+        "content": "2.1のPC配置。中央に書き出す行数・確認待ちの行数と「書き出す」、その下に前の書き出しを置く案。配置の細部はQ09で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S04 書き出し",
+        "field": "画面区分",
+        "line": 164,
+        "content": "請求の担当者のユーザー画面。管理者も同じ条件で書き出す案。7.1の権限を処理側で確認する方式はQ08で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "S04 書き出し",
+        "field": "状態",
+        "line": 165,
+        "content": "対象なし/書き出せる/確認小窓/処理中/完了/失敗を区別する案。対象なしと処理中は押せない理由を出す。失敗時の再試行と保存先の案内はQ09、重複出力防止はR06とQ08で確かめる。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "6. しくみと基盤",
+        "field": "処理境界",
+        "line": 252,
+        "content": "案として画面は撮影・入力・確認を受け持ち、受信後の読み取りR01〜R04と照合R08、保存D01〜D04、書き出しR06〜R07はサーバー側で行う。外部ソフトへはH18どおりファイルで渡す。保存成立の条件と再試行・二重実行の扱いはQ08で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "6. しくみと基盤",
+        "field": "安全対策",
+        "line": 253,
+        "content": "案として通信を保護し、各処理でログインと7.1の役割・対象範囲を確認する。入力と写真の形式・容量を検査し、秘密値を画面に渡さない。保存データの保護、アクセス取消、操作記録の方式はQ08、ログイン対象者と方式はQ04で決める。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "6. しくみと基盤",
+        "field": "稼働構成",
+        "line": 254,
+        "content": "H15・H16のクラウドを方向性の案として使う。画面/処理/データ/写真/控えをどう配置するかは未決。製品・地域・公開先・開発/検証/本番の分離、設定の保管と配布・戻し方をQ08で決める。既存の素材から具体製品が決定したとは扱わない。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      },
+      {
+        "section": "7.2 運用",
+        "field": "監視と復旧",
+        "line": 267,
+        "content": "案として処理失敗の日時と対象を記録し、開発する人が調べる。連絡先はH22、毎日の控えはH20、保存期間はQ05による。通知の方法、戻せる時点・復旧時間の目標と復元確認はQ08で決める。業務通知を追加した決定ではない。",
+        "verdict": "SUBSTANTIVE_PROPOSAL_RECORDED",
+        "note": "Actual content read; Q08/Q09 unresolved decisions are not design-approved facts."
+      }
+    ],
+    "semantic_assessment": [
+      {
+        "topic": "Layout and overall composition",
+        "finding": "PC header/left menu/body/footer and mobile header/body/send are explicit. S01–S04 describe distinct field/action placement, referring to common2.1. Fixed widths, breakpoints and narrow-screen layout remain Q09."
+      },
+      {
+        "topic": "Administration versus users",
+        "finding": "All four screens identified as business-user screens with administrator shared use proposed; permission table records admin user management. Admin management entry is explicitly undecided/Q09, not silently omitted or claimed implemented."
+      },
+      {
+        "topic": "Buttons/modal/states",
+        "finding": "Primary action names map to S01–S04 operation tables; send/save failures preserve input with retry proposals. Export modal has trigger/count/confirm/cancel and focus proposal. Escape/backdrop/processing close rules explicitly Q09; no false finalized interaction claim."
+      },
+      {
+        "topic": "Icons",
+        "finding": "Text labels prioritized; symbols need consistent meaning and accessible text; decorative versus interactive distinguished. Asset and location remain Q09. No actual complete icon set claimed."
+      },
+      {
+        "topic": "Backend",
+        "finding": "Client capture/input/review and server OCR R01–R04/matchingR08/storageD01–D04/exportR06–R07 explicitly separated; file handoff identified. Commit/retry/idempotency conditions remain Q08."
+      },
+      {
+        "topic": "Security",
+        "finding": "Server verifies authentication/role/data range; input/upload format and size checks and secret exclusion from client explicitly proposed. Storage protection/revocation/audit methods Q08, identity choice Q04. This is documented proposal, not audited production security."
+      },
+      {
+        "topic": "Infrastructure and operations",
+        "finding": "Cloud direction, execution/storage/file/backup roles and dev/test/prod, regional/domain/deployment/rollback open decisions identified. Failure timestamp/target logs, responsible developer/contact and backup references stated; recovery targets and restore drill Q08."
+      },
+      {
+        "topic": "Cross-document trace",
+        "finding": "Requirement Q08/Q09 exist and name developer/customer and customer/frontline confirmers. Independent convertDoc retains representative security, retry, recovery, environment and Q references."
+      }
+    ],
+    "limits": [
+      "The validator checks nonempty labels/obvious placeholder tokens; it does not verify all required semantics or correctness.",
+      "New template has empty fill-in fields by design. Empty template is not a completed sample.",
+      "Some detailed requirements such as breakpoint dimensions, recovery targets and admin entry remain explicitly open; appropriate to proposal recording, insufficient for claiming implementation-ready final design.",
+      "Active future-board template conflict remains SPEC-01."
+    ]
+  },
+  "four_conditions": {
+    "C1": {
+      "name": "矛盾なし",
+      "verdict": "FAIL",
+      "evidence": [
+        "Original population and choice-ownership contradictions addressed.",
+        "SPEC-01 active template instructions contradict new board/spec responsibility policy."
+      ]
+    },
+    "C2": {
+      "name": "漏れなし",
+      "verdict": "PARTIAL",
+      "evidence": [
+        "Image data URI/reference support and unverified warnings added.",
+        "22 actual proposal fields are populated with meaningful content, but open Qs are not finalized design.",
+        "future template was not aligned with additional scope; not all template paths verified complete."
+      ]
+    },
+    "C3": {
+      "name": "整合性あり",
+      "verdict": "FAIL",
+      "evidence": [
+        "REG-02 now accepted contract change.",
+        "SPEC-01 violates current requested separation of user-facing boards and technical spec.",
+        "Four-screen sample still not six-screen reference reproduction."
+      ]
+    },
+    "C4": {
+      "name": "依存関係整合",
+      "verdict": "PARTIAL",
+      "evidence": [
+        "MARK compatibility restored; reference resolution verified across sections.",
+        "All eight current sample render entries have dependency SHA maps matching current artifact inputs."
+      ],
+      "limits": [
+        "Whole dependency graph and final visual comparison not independently executed."
+      ]
+    }
+  },
+  "validation": {
+    "independent_executed": [
+      "In-memory full/collapsed/shortcut/cross-section reference image resolution and unresolved callback probes.",
+      "Current sample validate: errors0 warnings0.",
+      "Old baseline validate: errors3 PAGE-TYPE warnings22 SPEC-DETAIL-MISSING, accepted scope-change evidence rather than current defect.",
+      "Current final8 boards.json: eight ok entries; dependencyReceipt SHA maps independently matched all8.",
+      "convertDoc sample preserves secret boundary, retry input, failure timestamp/target, dev/test/prod and Q08/Q09 strings."
+    ],
+    "static_review": [
+      "Data URI canonical base64, MIME/header matching, positive dimensions and warning paths.",
+      "Notes-only MARK exemption and negative checks.",
+      "22 sample field contents and Q08/Q09 requirement rows.",
+      "spec.md.tmpl, document-structure, writing-patterns, board-copy and active future template."
+    ],
+    "parent_reported": [
+      "New sample8 render0error0warn/docs0error0warn.",
+      "Old11 render compatibility PASS.",
+      "Standalone HTML sidebar/images/390px/no-JS PASS.",
+      "Earlier blank screenshot was capture timing; all decode plus two frames displayed normally.",
+      "Saved validation.json confirms full suite241passed/0failed in288.72s; new8boards12pages docs/render/book0error0warn; offline screenshots p-req/spec-s03/b04 normal.",
+      "Saved reproducibility.json has identical SHA256 13b69616c92d98b1e7dd35db57867a2d8b22693ac79443c9e2ac3bc7e1d16b48 for two fixed SOURCE_DATE_EPOCH1790899200 builds."
+    ],
+    "not_executed": [
+      "Approver browser/render",
+      "Approver full pytest suite",
+      "Reference six-screen visual acceptance",
+      "CLI builds that write artifacts"
+    ],
+    "tool_note": "One in-memory probe had a JavaScript parenthesis typo before execution; corrected rerun succeeded. This was audit harness error, not a product finding."
+  },
+  "fidelity": {
+    "status": "NOT_ESTABLISHED",
+    "sample": "Current sample8 contains 4 screens; old sample11 also contained4. Both are different from reference6.",
+    "reference_artifacts": "Parent fixture reflows all original v0.4 PNG bytes (10 images/6 screens). This demonstrates source-image reassembly, not canonical newly generated case reproduction. Earlier strict reference diagnostics are not current product-regression evidence.",
+    "criterion_change": "Approved type/sample/template changes do not establish reference visual or semantic reproduction."
+  },
+  "snapshot_sha256_at_save": {
+    "assets/data/target-profile.json": "ffe9ea4641496099b412129cd85721863b2409c67324795f2c93cd6cd0c0e6da",
+    "assets/templates/board-future.html": "c4a12e4cb775caa51cf1fda49401e120250ab9ad4b6da225de9b4f0c725d2bbd",
+    "assets/templates/book.html": "ee49d7f8196da2aa693bb9f91f10ff74c965a610cea15a5cbe5a0a13588c7371",
+    "assets/templates/spec.md.tmpl": "88831ffd78662ef58639be284f9efcc5fc20faef8d9d48b26690ba38434e2520",
+    "examples/sample-haisha/打ち合わせ資料/仕様書.md": "e004270df0078e9210b7989cc4e24ba457b8130cba93a6d3c8c608a76c70184a",
+    "examples/sample-haisha/打ち合わせ資料/要件定義.md": "5a730fc3f6fde7c923a2632fb24acdc43d242f731d9ecc8627dbc491e7aa0875",
+    "references/document-structure.md": "ce6eede153df599d695e0e84cee2c4a2a412a04dc1621c480ae66628b502db50",
+    "references/execution-contract.md": "7e8875e385b81b3aa7e84330d780eff907247ca09c7da07c305ca1d785bf6dfd",
+    "references/workflow.md": "ff7ac767405cb4c5d0d3cf32c0e2c2e8044f203e0c4e5801594bf6441470fba5",
+    "schemas/briefing.schema.json": "15851702a6ae28ef2a4afa006fe013efcf28ada9af85ab8dfffbb3b3676a273c",
+    "scripts/build-briefing-book.mjs": "ba603accc660413790db50b6dded31ce999c188935fdc41408ad6fe5f3b171ac",
+    "scripts/compare-briefing-profile.mjs": "b08b6b84606e35a5e9f10d0be1b9455520684d64f8e6ba647be1f91c699b2dd3",
+    "scripts/lib/briefing-files.mjs": "8de0112598670b834bfdcb95d85ee20a34f7499e3ecea116b8ba24cc29fd6c75",
+    "scripts/lib/doc-report.mjs": "34eacfb8b885f17b27967975bf2e4a204866c3ca170d39941aa0cc37ac762b76",
+    "scripts/lib/markdown-lite.mjs": "4e91e192c695f4d6a989eea46746f2fba1eeb0a0cfb5dde114c785e221ff9d8d",
+    "scripts/lib/resource-refs.mjs": "42daf5b6717d8799bcfe7489a0d515da905cd84a55c3458dffe779f698e6800c",
+    "scripts/render-board-png.mjs": "44b1821e6dc9a31da2bac3861c17443f77768acbebcf0adf141a6dc882ffa0d1",
+    "scripts/validate-briefing-docs.mjs": "cdd24c781cf065651831b38f8819bc67c4b3882878755ef7f130664e58c3993d",
+    "skills/run-briefing-boards/references/board-copy.md": "10caea5439750a6a3f5cd63f129000cd5dff67dfa492c2058d957597975956e2",
+    "skills/run-briefing-docs/references/writing-patterns.md": "9feb458c5586de61a17a1c5b4422e57093be849397b991edd05a993070592b45"
+  },
+  "handoff": "Align active future template with approved additional-scope policy, then recheck SPEC-01. Do not restore rejected types or old sample composition. Keep all scoped PASS claims distinct from proposal status and six-screen high-fidelity acceptance.",
+  "final_validation_addendum": {
+    "recorded_at": "2026-10-02T01:36:22.699273+00:00",
+    "provenance": "Parent executed; approver read saved JSON and checked two recorded hashes for equality. No independent full-suite/browser execution.",
+    "validation": {
+      "tests": {
+        "command": "python3 -m pytest plugins/system-briefing-book/tests -q",
+        "passed": 241,
+        "failed": 0,
+        "duration_seconds": 288.72
+      },
+      "standalone_browser": {
+        "all_sidebar_links": true,
+        "images_decode": true,
+        "mobile_width": 390,
+        "no_javascript_fallback": true,
+        "offline_screenshot_checks": [
+          "p-req",
+          "spec-s03",
+          "b04"
+        ]
+      },
+      "sample": {
+        "boards": 8,
+        "pages": 12,
+        "docs_errors": 0,
+        "docs_warnings": 0,
+        "board_errors": 0,
+        "board_warnings": 0,
+        "book_errors": 0,
+        "book_warnings": 0
+      },
+      "reference_limit": "The 6-screen v0.4 source was reflowed with all original PNG bytes, but was not regenerated as canonical new-case input."
+    },
+    "reproducibility": {
+      "scope": "same authored inputs, fixed build time",
+      "source_date_epoch": "1790899200",
+      "runs": [
+        {
+          "exit": 0,
+          "status": "ok",
+          "sha256": "92fa7f612a9f949f459176bf814e36120a4fa19f356baa328b7b9dab28f644e7",
+          "bytes": 2150239,
+          "errors": [],
+          "warnings": []
+        },
+        {
+          "exit": 0,
+          "status": "ok",
+          "sha256": "92fa7f612a9f949f459176bf814e36120a4fa19f356baa328b7b9dab28f644e7",
+          "bytes": 2150239,
+          "errors": [],
+          "warnings": []
+        }
+      ]
+    },
+    "evidence_sha256": {
+      "validation.json": "47b82c10a9e23f6809a1f89bd435faa107684e303eef8216e735fe614d28afc2",
+      "reproducibility.json": "ca5878a85b8eb4030169b283f090f26eff1e428cd8281e798dab4445485d3852"
+    },
+    "remaining_parent_work": "Document deduplication, sample rebuild, final report per user update. Current success predates those changes.",
+    "remaining_approval_finding": "SPEC-01 reconfirmed in active board-future.html:27–28,49,56,65; still unchanged. Full241 and new8 sample success do not cover away this content mismatch."
+  }
+}

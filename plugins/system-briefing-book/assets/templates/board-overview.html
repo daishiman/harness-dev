@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+.board-body.col > .stage { gap: 14px; }
+.cans { margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<!-- 型: overview (全体図)
+     - いちばん上: 今の手間の数字 (.facts の .fact) を 3 個まで。<b> は数と単位、<span> は何の数か、<small> は根拠 (素材:<ファイル名> / 聞き取り:Hxx / 例 / 決めること:Qxx)。
+     - 上: できること 3〜5 個 (要件定義書 3.1「最初の版でやること」と同じ数と言葉)。
+     - 下: 全体の流れ 3〜5 段。人がやる段は chip.person、しくみが自動でやる段は .step.system と chip.system。
+     - 広げる案はここに書かず、仕様書 8 章の「次に広げる候補」へ。
+     - 画面の縮小図 (.thumb-ph) は、端末画像ができたら <img src="assets/export/<name>.png" alt=""> に置きかえてよい。
+     - 素材の紙や画面を見せる img (かその枠) には data-source="<素材のファイル名>" を付ける。 -->
+<div class="board" data-board="{{NO}}" data-type="overview">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <h2 class="sec-label">今の手間<small>聞き取りから</small></h2>
+      <div class="facts">
+        <div class="fact"><b>40 枚</b><span>月に書く紙の記録</span><small>聞き取り:H02</small></div>
+        <div class="fact"><b>1 時間</b><span>毎日、紙を見て打ち直す</span><small>聞き取り:H02</small></div>
+        <div class="fact"><b>月 3 回</b><span>打ちまちがいの直し</span><small>聞き取り:H02</small></div>
+      </div>
+      <h2 class="sec-label">最初の版でできること<small>まずはこの 3 つだけ</small></h2>
+      <div class="cans">
+        <div class="can anchor">
+          <div class="h"><span class="no">1</span><b>現場で記録して送る</b></div>
+          <p>スマホで 4 つの項目を入れて送るだけ。紙を運ばなくてよい。</p>
+          <div class="dev"><span class="chip neutral">スマホ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">2</span><b>事務所でまとめて確かめる</b></div>
+          <p>送られた記録が一覧に並ぶ。気になる所だけ開いて直す。</p>
+          <div class="dev"><span class="chip neutral">PC</span></div>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">3</span><b>今のソフトへ渡す</b></div>
+          <p>確かめた記録を、今使っているソフトに取り込める形で書き出す。</p>
+          <div class="dev"><span class="chip neutral">PC</span></div>
+        </div>
+      </div>
+      <h2 class="sec-label">1 日の流れ<small>白い段は人、青い段はしくみが自動で</small></h2>
+      <div class="steps">
+        <div class="step">
+          <div class="h"><span class="no">1</span><b>記録する</b></div>
+          <div class="vis"><div class="thumb-ph mini sp"><i class="head"></i><i></i><i class="short"></i><i></i><i class="box"></i><i class="btn"></i></div></div>
+          <p>現場の人がスマホで入れて送る。</p>
+          <div class="who"><span class="chip person">人</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">2</span><b>保存して並べる</b></div>
+          <div class="vis"><div class="thumb-ph mini pc"><i class="head"></i><i></i><i></i><i class="short"></i><i></i></div></div>
+          <p>しくみが受け取り、確認待ちを上に並べる。</p>
+          <div class="who"><span class="chip system">しくみ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step">
+          <div class="h"><span class="no">3</span><b>確かめる</b></div>
+          <div class="vis"><div class="thumb-ph mini pc"><i class="head"></i><i class="short"></i><i class="box"></i><i class="btn"></i></div></div>
+          <p>事務所の人が PC で見て、必要なら直す。</p>
+          <div class="who"><span class="chip person">人</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">4</span><b>書き出す</b></div>
+          <div class="vis"><div class="thumb-ph mini paper"><i class="head"></i><i></i><i></i><i></i><i></i><i class="short"></i></div></div>
+          <p>確かめた記録だけを、今のソフトの形にする。</p>
+          <div class="who"><span class="chip system">しくみ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">3</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>現場の入力は、スマホで 4 項目だけ</b><span class="sub">アプリを入れる必要はない。ブラウザで開く。</span></li>
+        <li data-mark="2" data-kind="how"><b>受け取りと並べ替えは、しくみが自動で</b><span class="sub">人がやるのは、入れる・確かめる・書き出すの 3 つ。</span></li>
+        <li data-mark="3" data-kind="ask"><b>書き出す形と、渡す先</b><span class="q">Q02</span><span class="sub">案: 今のソフトが読める形。確かめてから決める。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

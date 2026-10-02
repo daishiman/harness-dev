@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness.local/system-briefing-book/schemas/briefing.schema.json",
+  "title": "briefing.json (打ち合わせ資料の設定)",
+  "description": "打ち合わせ資料フォルダの設定。build-briefing-scaffold.mjs init が作り、pages はページ構成が決まってから書く。",
+  "$comment": "JSON Schema で書けない決まりは validate-briefing-docs.mjs --stage pages が検査する: no の重複 (PAGE-NO)、file の先頭 2 桁と no の一致 (PAGE-FILE)、reader が readers にあるか (PAGE-READER, warn)、screens が仕様書の画面一覧にあるか (PAGE-SCREEN-UNKNOWN)、pages が空でないか (PAGES-EMPTY)。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "title", "readers", "palette", "materials", "data_policy", "pages"],
+  "properties": {
+    "schema": {
+      "const": "briefing-v1"
+    },
+    "title": {
+      "description": "案件のタイトル。まとめ HTML のファイル名 <タイトル>_打ち合わせ資料.html にも使う (ファイル名に使えない文字は _ に置き換わる)。",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "readers": {
+      "description": "資料を読む人。表紙の「読む人ごとのおすすめ」と pages[].reader に使う。",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "pattern": "\\S"}
+    },
+    "palette": {
+      "description": "配色。\"hiraga\" (同梱の平賀カラー) か、配色の CSS ファイルの場所。",
+      "anyOf": [
+        {"const": "hiraga"},
+        {"type": "string", "pattern": "\\.css$"}
+      ]
+    },
+    "materials": {
+      "description": "素材フォルダの場所。資料フォルダから見た相対パス (既定 \"..\")。",
+      "type": "string",
+      "minLength": 1
+    },
+    "data_policy": {
+      "description": "資料に素材の名前・値・画像をそのまま載せるか。\"source\" = 素材のまま (素材をくれた先方と、作る側だけで見る)、\"masked\" = 伏せる (それ以外の人にも見せる。ボードに「例です」の札を置く)。init の前に 1 回聞く。",
+      "enum": ["source", "masked"]
+    },
+    "book": {
+      "description": "まとめ HTML の設定。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include_hearing": {
+          "description": "true ならまとめ HTML の最後にヒアリング記録を載せる。",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "pages": {
+      "description": "ボードの並び。この順で PNG とまとめ HTML に載る。init の直後は空。",
+      "type": "array",
+      "items": {"$ref": "#/$defs/page"}
+    }
+  },
+  "$defs": {
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["no", "file", "type", "title", "reader", "screens", "message"],
+      "properties": {
+        "no": {
+          "description": "2 桁のボード番号。重複させない。",
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "file": {
+          "description": "_src/ に置くボード HTML。<no>_<slug>.html (slug は英小文字・数字・-)。",
+          "type": "string",
+          "pattern": "^\\d{2}_[a-z0-9]+(?:-[a-z0-9]+)*\\.html$"
+        },
+        "type": {
+          "description": "ボードの型。",
+          "enum": ["overview", "screen-map", "phone", "pc", "data-map", "mechanism", "future"]
+        },
+        "title": {
+          "description": "ボードの見出し (h1)。phone / pc は仕様書の画面名そのまま。",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "reader": {
+          "description": "主に読む人。readers のどれか。",
+          "type": "string",
+          "minLength": 1
+        },
+        "screens": {
+          "description": "このボードに載る画面の番号 (仕様書の S01 など)。phone / pc は 1 つ以上。",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^S\\d{2,}$"}
+        },
+        "message": {
+          "description": "このボードで伝えること 1 つ。文は 2 つまで (2 文目は 1 文目の補足)。ボードの lead と、まとめ HTML のページ見出しの下に出る。",
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      },
+      "if": {
+        "properties": {"type": {"enum": ["phone", "pc"]}},
+        "required": ["type"]
+      },
+      "then": {
+        "properties": {"screens": {"minItems": 1}}
+      }
+    }
+  }
+}

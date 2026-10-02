@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-hearing",
+    "skill_md_sha256": "0e3c0638ae6eb09f1055580d46279ac92820454a5ef34f33c4559ed1840756e0"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の elegance 投影",
+  "reviewed_at": "2026-10-02T05:46:09Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "Runtime root contract (SKILL.md:78-86) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。",
+      "前回 medium (補足行を作るかどうかの食い違い) が直った。hearing-guide.md:169 が「聞く質問と回数は増やさず、既存回答に次の観点を含める。H番号を足してよいのは、この節の最後の段落にある追加要望と `未定` の補足行だけ」になり、同じ節の :176「追加要望の記録や未定の補足行は末尾のH番号を使い、既存番号を変えない」と向きがそろった。SKILL.md:99 (回答に残す設計情報に沿って既存の回答に残す。未確認の詳細を既定案から確定した事実へ置き換えない) と :100 も同じ前提に立つ。",
+      "お手本 examples/sample-haisha/打ち合わせ資料/ヒアリング.md は H25・H26 (:15-16) が要望、H27 (:42)・H28 (:30) が `未定` の補足行で、どれも末尾の番号を使い、既存の H01〜H24 を動かしていない。新しい決まりと合う。",
+      "followup (:132-141) の流れ (効き目の大きい順に 4 つまで、先頭が 案 (おすすめ)・最後が「打ち合わせで聞く」、hearing-guide.md「確認点で出た答えの書き方」(:232-240) で足して番号を振り直さない、Q=H の組を返す) は、IN2、run-briefing の確認点の手順 2 (run-briefing/SKILL.md:200-205)、run-briefing-docs の answers (:152-159) とつながる。"
+    ],
+    "negative_feedback": [
+      "[low / 漏れ。前回 low の持ち越し] :155 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :69 (6. 通常生成と確認の選択所有) と :80 (1. どちらのホストでも同じ呼び方) の利用を示さない。本文から辿れるので low。直し方: :155 を「実行場所 (1 節)・終了コード (3 節)・確認の選択所有 (6 節)」にする。",
+      "[low / 漏れ。前回 medium の副次部分] hearing-guide.md 7 章の質問欄 (:207「4 章の表の質問を 1 文字も変えずに写す」) は、4 章に無い行 (要望の行、:176 の `未定` の補足行) の質問文の型を定めていない。確認点で足す行は :237 に「決めること の文を問いの形にする」とあるが、補足行と要望の行には無い。補足行を作るかどうかの揺れは解消し、お手本 (H25〜H28) を見れば形は分かるので low。直し方: 7 章の質問欄に「4 章に無い行は、要望なら『〜を頼まれた』、`未定` の補足なら確かめる事柄を問いの形で 1 文にする」を足す。",
+      "[low / 書き方] hearing-guide.md:169 の「H番号を足してよいのは…追加要望と `未定` の補足行だけ」は、この節 (回答に残す設計情報) の中の決まりとして読むのが自然だが、「だけ」をヒアリング全体に掛けて読むと、:109 (素材から足した質問をその章の最後に入れる) と :237 (確認点で答えが出た Q の行を足す)、SKILL.md:100 と衝突して見える。直し方: 「この節の観点を残すために H 番号を足してよいのは…だけ (素材から足す質問は 4 章、確認点で足す行は 7 章の決まりに従う)」とする。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 0e3c0638ae6eb09f1055580d46279ac92820454a5ef34f33c4559ed1840756e0) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/run-briefing-hearing/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、hearing-guide.md の 4 章 (:106-110)・「回答に残す設計情報」(:167-176)・7 章 (:201-240)、お手本 examples/sample-haisha/打ち合わせ資料/ヒアリング.md、execution-contract.md §1・§3・§6、呼び出し元 run-briefing の確認点の手順、run-briefing-docs の answers。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: 前回の high (Runtime root contract の退行) と medium (補足行の扱いの食い違い) は解消。medium の副次部分 (補足行の質問文の型) と前回 low (Additional Resources) を low で残し、書き換えた :169 の「だけ」の掛かり方を smell として足した。判定: PASS。high 0、medium 0。low 3 件を findings に残す。"
+}

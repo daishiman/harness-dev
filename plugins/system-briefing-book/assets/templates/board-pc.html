@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+</style>
+</head>
+<body>
+<!-- 型: pc (PC の画面 1 枚)
+     - 骨組みは「上の帯 (ヘッダー) / 左のメニュー / 本文 / 下の帯 (フッター)」。仕様書 2 章にそろえる。
+     - 左のメニューは 5 個まで。今いる画面に .on。
+     - 画面一覧 (screen-map) などで使うときは .browser に data-export="s03-list" のように名前を付ける。
+     - 注記は 5 個まで。.anchor の中の <i class="mk"> の番号と、注記の data-mark をそろえる。
+     - 要件の札 (.reqs の .req) は注記の先頭 (ol.marks の前) に置く。要件定義 6 章で、この画面に当たる行をすべて。data-req は F 番号。あとで の行は文の終わりに「(あとで)」と書く。
+     - 文字と数字は例。素材にある値か、仕様書の項目表に合わせて置きかえる。 -->
+<div class="board" data-board="{{NO}}" data-type="pc" data-screens="{{SCREENS}}">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="browser">
+        <div class="browser-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><div class="url">example.app/list</div></div>
+        <div class="browser-body">
+          <div class="admin-head anchor">
+            <div class="brand">アプリ名<small>事務所用</small></div>
+            <div class="who">担当 B さん<span class="link">ログアウト</span></div>
+            <i class="mk" style="left:150px;top:16px">1</i>
+          </div>
+          <div class="app-frame">
+            <nav class="side-nav anchor">
+              <a class="on"><i class="ico"></i>一覧</a>
+              <a><i class="ico"></i>登録</a>
+              <a><i class="ico"></i>書き出し</a>
+              <i class="mk" style="right:-13px;top:14px">2</i>
+            </nav>
+            <div class="app-main">
+              <div class="admin-body">
+                <div class="page-title">
+                  <div><h2>一覧</h2><p>今日のぶん <span class="num">6</span> 件 ・ 確認待ち <span class="num">2</span> 件</p></div>
+                  <div class="btn btn-primary sm anchor">まとめて書き出す<i class="mk" style="right:-12px;top:-14px">4</i></div>
+                </div>
+                <div class="panel anchor">
+                  <div class="panel-head">今日のぶん<span class="aside">新しい順</span></div>
+                  <table class="grid">
+                    <thead><tr><th>日付</th><th>相手先</th><th>種類</th><th class="r">数</th><th>状態</th></tr></thead>
+                    <tbody>
+                      <tr><td class="num">10/01</td><td>取引先 A</td><td>ふつう</td><td class="r num">12</td><td><span class="chip warn">確認待ち</span></td></tr>
+                      <tr><td class="num">10/01</td><td>取引先 B</td><td>急ぎ</td><td class="r num">4</td><td><span class="chip warn">確認待ち</span></td></tr>
+                      <tr><td class="num">10/01</td><td>取引先 C</td><td>ふつう</td><td class="r num">8</td><td><span class="chip ok">済み</span></td></tr>
+                      <tr><td class="num">10/01</td><td>取引先 A</td><td>ふつう</td><td class="r num">10</td><td><span class="chip ok">済み</span></td></tr>
+                      <tr><td class="num">10/01</td><td>取引先 D</td><td>ふつう</td><td class="r num">6</td><td><span class="chip ok">済み</span></td></tr>
+                      <tr><td class="num">10/01</td><td>取引先 B</td><td>ふつう</td><td class="r num">9</td><td><span class="chip ok">済み</span></td></tr>
+                    </tbody>
+                  </table>
+                  <i class="mk" style="left:724px;top:92px">3</i>
+                </div>
+              </div>
+              <div class="app-footer"><span>アプリ名 ・ v0.1</span><span>困ったときの連絡先: 事務所</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F02">F02 送られた記録を一覧で見る</span><span class="req" data-req="F05">F05 記録を絞り込む (あとで)</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>上の帯にアプリ名と使う人</b><span class="sub">スマホと同じ並び。右にログアウト。</span></li>
+        <li data-mark="2" data-kind="can"><b>左のメニューは 3 つだけ</b><span class="sub">今いる画面に色が付く。増やすのは次の版で相談。</span></li>
+        <li data-mark="3" data-kind="how"><b>確認待ちが上に並ぶ</b><span class="sub">黄色が残っていれば、まだ終わっていない。</span></li>
+        <li data-mark="4" data-kind="ask"><b>書き出す形はどれにするか</b><span class="q">Q02</span><span class="sub">案: 今のソフトが読める形。そのまま取り込めるか試す。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

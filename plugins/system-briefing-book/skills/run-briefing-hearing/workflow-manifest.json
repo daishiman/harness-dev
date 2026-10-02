@@ -1,0 +1,148 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-briefing-hearing",
+  "skill": "run-briefing-hearing",
+  "description": "main context が素材から分かることを先に埋め、残りを既定案つきで 1 回 4 問まで聞き、核心の 4 問はあいまいなら促して聞き足してヒアリング.md を書き、--stage hearing を通して見せる。followup では確認点で増えた決めることを 4 問まで聞いてヒアリング.md に足し、答えが出た Q と H の組を返す。",
+  "phases": [
+    {
+      "id": "H1-prefill",
+      "step": 1,
+      "title": "素材と要望から答えが分かる質問を先に埋める",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "H2-ask",
+      "step": 2,
+      "title": "目的と範囲・画面の共通ルール・しくみと基盤・運用を既定案つきで聞き、核心の 4 問はあいまいなら聞き足す",
+      "gate": "IN2",
+      "dependsOn": [
+        "H1-prefill"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "H3-write-check",
+      "step": 3,
+      "title": "ヒアリング.md を書き --stage hearing を通す",
+      "gate": "IN1",
+      "dependsOn": [
+        "H2-ask"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "H4-followup",
+      "step": 4,
+      "title": "followup で確認点の決めることを 4 問まで聞き、ヒアリング.md に足して --stage hearing を通し、Q と H の組を返す",
+      "gate": "IN2",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "script-validate",
+      "kind": "script",
+      "path": "../../scripts/validate-briefing-docs.mjs",
+      "phaseIds": [
+        "H3-write-check",
+        "H4-followup"
+      ]
+    }
+  ]
+}

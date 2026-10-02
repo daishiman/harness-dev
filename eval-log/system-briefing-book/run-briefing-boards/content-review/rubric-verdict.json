@@ -1,0 +1,45 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-boards",
+    "skill_md_sha256": "1289000f4b68c8d52d8c61d23c6fa075b7f153b3d7ac278f96baadcb8199f70c"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の rubric 投影",
+  "reviewed_at": "2026-10-02T05:46:09Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "Runtime root contract (SKILL.md:89-97) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。",
+      "前回 medium (情報不足の返し先に受け手が無い) が直った。:109 が「仕様書に足りない章や画面があれば、その章と画面番号を呼び出し元へ返す (書き足すのは run-briefing-docs)」になり、board-copy.md:86 も同じ言い方になった。受け手は run-briefing/SKILL.md:177 (工程5) にある。これで書けないものの返し方 (:109 仕様の不足、:126 BOARD-REF-*、:144 9 章に無い 決めること、:169 3 回直しても残る error・warn) がすべて「呼び出し元へ返す」にそろった。",
+      "render の exit の扱い (:166-167。warn だけでも exit 1、notices の TEXT-LONG・NOTES-MANY は exit に効かない) と、:173 の `--stage all` の括弧書き (h1 と画面名の一致 = BOARD-TITLE-MISMATCH・BOARD-TITLE-SCREEN は validate-briefing-docs.mjs:1191・:1202、ボード HTML の有無 = BOARD-MISSING :1130、ボードの文字の言い換え = PLAIN-TERM :1205・:1280) は、今のスクリプトと合う。",
+      "baseline との差分は Runtime root contract 節と :109 (と board-copy.md:86) だけで、前回確かめた 7 種類の型の整合 (page-patterns.md、briefing.schema.json の enum、assets/templates/board-*.html、workflow.md の「既定のページ構成」) とボードの範囲 (page-patterns.md:9、board-copy.md:81-86) は変わっていない。"
+    ],
+    "negative_feedback": [
+      "[low / 漏れ。前回 low の持ち越し] :173 で最後に通す `--stage all` の exit 1 (BOARD-MISSING は validate-briefing-docs.mjs:1130、ボードの文字の PLAIN-TERM は :1205) と warn (BOARD-TITLE-MISMATCH :1191、BOARD-TITLE-SCREEN :1202、素材の使い残し MATERIAL-UNUSED :1060) をどうするかが書かれていない。:113 が契約に任せるのは exit 2・3 だけで、exit 1 の扱いは pages の段 (:126) と render (:166) にしか無い。工程6 (run-briefing/SKILL.md:182) で同じ検査を通すので、ここで抜けても後で見つかる (low の理由)。直し方: :173 のあとに「exit 1 か warn が出たら `_check/docs.json` を見てボード HTML を直し、3 に戻る (ボードで直せないものは呼び出し元へ返す)」を足す。",
+      "[low / 書き方。前回 low の持ち越し] :109 の「4〜7章の…詳細は転記しない」は、data-map の区分を仕様書 4 章を読んで決めること (:154) や、mechanism の段を 5 章の R 番号にそろえること (page-patterns.md:136-137) と、文だけ読むと食い違って見える。page-patterns.md:9 (必要なら仕様の節を指す短い 1 行を添える) と :135 (R 番号の技術的な詳細を転記せず、画面上の変化に結びつける) まで読めば矛盾は無い。直し方: 「data-map と mechanism で使うときも、画面に見える形に言い換える (page-patterns.md の各型)」の 1 句を足すか、page-patterns.md:9 への参照にする。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 1289000f4b68c8d52d8c61d23c6fa075b7f153b3d7ac278f96baadcb8199f70c) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/run-briefing-boards/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、references/board-copy.md (:81-86)、page-patterns.md (:9・:133-138)、execution-contract.md §1・§3・§6、validate-briefing-docs.mjs の stage ごとの検査 (:1052-1061・:1129-1130・:1191・:1202・:1205・:1326)、呼び出し元 run-briefing の工程4・5・6 (:167-183)。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。rubric 投影: 前回と同じ rubric の観点 (L0 の FM・NM・BD・PD・RG と、L2 の BND-001・REG-001) で見て、high も medium も残っていない。前回の指摘: 前回の high (Runtime root contract の退行) と medium (情報不足の返し先) は解消。前回 low 2 件 (`--stage all` の exit 1 と warn の扱い、:109 の書き方) は直っていないので low のまま残した。判定: PASS。high 0、medium 0。low 2 件を findings に残す。"
+}

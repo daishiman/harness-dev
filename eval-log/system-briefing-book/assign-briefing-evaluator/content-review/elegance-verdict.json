@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "assign-briefing-evaluator",
+    "skill_md_sha256": "1c0b819b3812bab071b2623a342f7db4ebf4ffc4644392971f97f7a8ea545c7c"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の elegance 投影",
+  "reviewed_at": "2026-10-02T05:46:09Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "no-contradiction",
+      "no-omission",
+      "convention-consistency",
+      "dependency-consistency",
+      "rubric-high-severity-zero"
+    ],
+    "positive_feedback": [
+      "Runtime root contract (SKILL.md:43-51) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。 この skill の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` を使う行 (:100・:106) に対する監査の条件を満たす。",
+      "baseline との差分は Runtime root contract 節だけで、受け取るもの (:58-70)、深さ (:72-85)、返すもの (:87-93) と手順 (:95-114) は変わっていない。呼び出し元 run-briefing の確認点の手順 5 (run-briefing/SKILL.md:219-224) が渡すもの (確認点・深さ・資料フォルダ・素材フォルダ)、保存先 `_check/review-<確認点>.json` を呼び出し元が書くこと、形の誤りの一覧が返ったら保存せずに相談することと、このスキルの :93・:113 が合う。",
+      "独立を保つ決まり (:118 作り手の意図・前の指摘・回数を渡さない、:120 指摘の数と重さを変えない) と、render の exit 3 だけを例外にする説明 (:109・:125) がexecution-contract.md §3 を正本としたうえで違いだけを書く形になっており、例外の範囲がはっきりしている。"
+    ],
+    "negative_feedback": [
+      "[low / 不整合。改善前からある] :103 の括弧書き「`--stage all` が足すのはボード HTML の有無と言い換えの検査だけ」は、validate-briefing-docs.mjs で `ctx.at(\"all\")` に掛かる検査が BOARD-MISSING (:1129-1130)、ボードの文字の PLAIN-TERM (:1205) に加えて MATERIAL-UNUSED の warn (:1052-1061・:1326) もあるのと合わない。括弧書きの狙いは「まとめ HTML は見ない」ことの説明で、reviewer へは終了コードと `_check/docs.json` の場所を渡す (:111) ので、判定には効かない (low の理由)。baseline でも同じ文で、今回の修正で入ったものではない。直し方: 「だけ」を外すか、「素材の使い残し (MATERIAL-UNUSED の warn)」を並べる。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 1c0b819b3812bab071b2623a342f7db4ebf4ffc4644392971f97f7a8ea545c7c) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/assign-briefing-evaluator/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、execution-contract.md §1・§3・§6、呼び出し元 run-briefing の確認点の手順 (:185-224)、validate-briefing-docs.mjs の stage ごとの検査 (:1052-1061・:1129-1130・:1205・:1318-1326)。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: 前回の high (Runtime root contract の退行) は解消。前回はほかの指摘が無かった。今回読み直して、改善前からある :103 の括弧書きの不正確さを low で残した。判定: PASS。high 0、medium 0。low 1 件を findings に残す。"
+}

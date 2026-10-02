@@ -1,0 +1,50 @@
+{
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-02",
+  "branch": "devgraph/harness-evr",
+  "beads": ["harness-evr", "harness-hbg"],
+  "dev_graph_node_id": null,
+  "dev_graph_note": "この repository は dev-graph 未初期化 (.dev-graph/render のみ) のため node は無い。branch 名は Beads ID で代替した。",
+  "canonical_spec_dirs": {
+    "checked": ["system-spec/", "specs/", "architecture/", "docs/", "features/", "tasks/"],
+    "present": [],
+    "decision": "いずれも repository に存在しない。この repository の仕様の正本は plugin 内の SKILL.md / references と script の docstring で、利用者向けの説明は README.md が担う。新しい仕様ディレクトリを作ると正本が二重になるため作らず、既存の正本と README へ反映した。"
+  },
+  "changes": [
+    {
+      "id": "system-briefing-book",
+      "summary": "業務システムの打ち合わせ資料を作る plugin (0.2.0) を新規追加。harness-evr の 30 観点レビュー 3 サイクルの改善を含む。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/references/*.md (plugin 仕様の正本。改善サイクル内で更新済み)",
+        "plugins/system-briefing-book/skills/*/SKILL.md (Runtime root contract の定型 5 行を復元し CI の capability parity 監査に適合)",
+        "最終レビューの medium 3 件: boards の不足の返し先を呼び出し元へ統一 (boards SKILL.md・board-copy.md・run-briefing 工程5)、book の振り分け表へ PNG-HASH、hearing-guide.md の H 番号を足してよい場合の食い違いを解消",
+        "eval-log/system-briefing-book/*/content-review/*-verdict.json (6 スキルとも現行 SKILL.md の SHA で PASS、low は findings に保持)",
+        "README.md (plugin 数 21→22・公開 17→18、用途別の入口に system-briefing-book を追記)",
+        ".claude-plugin/marketplace.json / .claude-plugin/bundles.json / .agents/plugins/marketplace.json / marketplaces/local/ (目録登録)",
+        "tests/criteria/criteria_roster.py / eval-log/llm-coverage.json (派生物の再生成)"
+      ],
+      "not_reflected": "原資料 v0.4 の 6 画面を正規入力から再生成する受入検証は未完了。harness-hbg で追跡する。"
+    },
+    {
+      "id": "aidd-agent-kit-and-lint",
+      "summary": "外部キット aidd-agent-kit 1.11.0 を .claude/.agents/.codex へ実ファイルで導入し、lint-skill-description が manifest に載ったキット所有の実ファイルを検査対象から外すよう変更 (symlink 経由のハーネス投影は除外しない)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/lint-skill-description.py と plugins/skill-governance-lint/scripts/lint-skill-description.py の docstring「対象外」節 (lint 契約の正本)",
+        "tests/scripts-plugins/test_skill_governance_lint__lint_skill_description.py (除外条件を固定するテスト 5 件)",
+        "README.md 4.4 節 (キット所有の実ファイルの置き場所と lint 対象外の扱い)",
+        ".gitignore (キット再インストール時の退避ディレクトリ .claude/backup-*/ .codex/backup-*/)"
+      ],
+      "not_reflected": null
+    }
+  ],
+  "verification": [
+    "python3 -m pytest -q tests/scripts-plugins/test_skill_governance_lint__lint_skill_description.py",
+    "python3 -m pytest -q tests/criteria",
+    "python3 scripts/lint-content-review.py --all",
+    "python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all",
+    "python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check",
+    "python3 scripts/validate-llm-coverage.py --all --check"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-docs",
+    "skill_md_sha256": "eff9f10caabdc4ea23aaf2e74c940a26b44c8564aeffa3331645fa9a9fd5f7fc"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 1
+  },
+  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の rubric 投影",
+  "reviewed_at": "2026-10-02T05:46:09Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "Runtime root contract (SKILL.md:85-93) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。",
+      "baseline との差分は Runtime root contract 節だけ。モード表 (:99-104) の書く範囲 (要件定義.md と 仕様書.md だけ) と、version-up で file が 変更点.md の error を直さずに返して止まる決まり (:168) は、run-briefing の revise の手順 3-4 (run-briefing/SKILL.md:238-241) と合う。",
+      "answers (:152-159) は、run-briefing-hearing の followup が返す Q=H の組を受け、版を上げずに 9 章を閉じて根拠を `聞き取り:Hxx` に書き換える。run-briefing の確認点の手順 2 (:203-205) と revise の手順 5 (:244) の「answers が exit0 で返ってから変更点.md に足す」と順番が合う。"
+    ],
+    "negative_feedback": [
+      "[low / 不整合。前回 low の持ち越し] :175「呼び出し元はこれを run-briefing-hearing の followup に渡す」が、:141 (ボードを組む途中で頼まれてその Q だけを足す) と、呼び出し元 run-briefing/SKILL.md:176 (確認点は過ぎているので、その Q は打ち合わせで聞く)・:200 (followup は確認点1・2 だけ) と食い違ったまま。部分の頼み (:138・:141) のときに何を返すかも書かれていない。呼び出し元の側で扱いが決まっているので low。直し方: :175 を「呼び出し元は確認点でこれを followup に渡す (確認点のあとに頼まれて足した Q は打ち合わせで聞く)」とし、「部分の頼み: 直した行と足した Q 番号と 1 行を返す」を 1 行足す。",
+      "[low / 書き方。前回 low の持ち越し] :118「迷ったら書かないほうを選ぶ」が、:139 (本文ラベルと既存表を埋め、空ラベル・コメントでは記入済みとしない) と document-structure.md:177 (空ラベル・`未定` の一語は埋まったとしない。未確認は `案: <仮の内容> (Qxx)` で残す) と並ぶと、ラベルを空けてよいと読まれうる。直し方: :118 に「本文ラベルを空ける意味ではない。未確認の細部は `案: … (Qxx)` で残す」を添える。",
+      "[low / 漏れ。前回 low の持ち越し] :192 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :76 (6. 通常生成と確認の選択所有) と :87 (1. どちらのホストでも同じ呼び方) の利用を示さない。直し方は run-briefing-hearing と同じ。",
+      "[low / 依存関係。今回の修正で増えた] run-briefing/SKILL.md:177 が「boards が仕様書の足りない章と画面番号を返したら、run-briefing-docs にその箇所だけ書き足してもらう」と頼むようになったが、spec モードが部分の頼みとして挙げるのは「ボード:」行 (:138) と 9 章の Q (:141) だけで、仕様の足りない章を書き足す頼みが並んでいない。spec モードの手順 (章立てどおりに埋めて `--stage spec`) で受けられるので動かなくはないが、雛形から埋め直すのか、その節だけ足すのかが読み手しだい。直し方: :141 の次に「ボードを組む途中で仕様の足りない章と画面番号を頼まれたら、その節だけを書き足して `--stage spec` を通す」を 1 行足す。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 eff9f10caabdc4ea23aaf2e74c940a26b44c8564aeffa3331645fa9a9fd5f7fc) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/run-briefing-docs/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、document-structure.md の「実装へ渡す情報の記入先」(:151-177)、execution-contract.md §1・§3・§6、呼び出し元 run-briefing の工程4・5 (:167-178)・確認点の手順・revise (:226-246)、run-briefing-boards/SKILL.md:109 と board-copy.md:86。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。rubric 投影: 前回と同じ rubric の観点 (L0 の FM・NM・BD・PD・RG と、L2 の BND-001・REG-001) で見て、high も medium も残っていない。前回の指摘: 前回の high (Runtime root contract の退行) は解消。前回 low 3 件 (:175 followup と部分の頼み、:118 の書き方、Additional Resources) は直っていないので low のまま残した。boards の medium を直した結果、run-briefing から docs への新しい頼み (仕様の不足の書き足し) ができたので、受け側の記述が無い点を low で足した。判定: PASS。high 0、medium 0。low 4 件を findings に残す。"
+}
