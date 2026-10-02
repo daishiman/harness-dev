@@ -96,77 +96,8 @@
     return valid
   }
 
-  /* 専門用語の説明。説明文は用語集の dd だけが持ち、ここはそれを読んで用語の下に出すだけ(同じ文を2か所に書かない)。
-     ホバー・キーボードのフォーカス・クリックの3経路で開き、クリックは固定(pin)してページ内遷移を抑える。 */
-  function bindTerms(root) {
-    const terms = [...root.querySelectorAll('a.term[href^="#"]')].filter((term) => !term.dataset.referenceBound)
-    if (!terms.length) return
-    terms.forEach((term) => { term.dataset.referenceBound = 'term' })
-    let pop = document.getElementById('term-pop')
-    if (!pop) {
-      pop = document.createElement('div')
-      pop.id = 'term-pop'
-      pop.className = 'tooltip tip-rich'
-      pop.setAttribute('role', 'status')
-      pop.hidden = true
-      document.body.appendChild(pop)
-    }
-    let pinned = null
-    let hovered = null
-    let restoringFocus = false
-    const hide = () => { pop.hidden = true; pinned = hovered = null }
-    const show = (term) => {
-      const description = document.getElementById(decodeURIComponent(term.getAttribute('href').slice(1)))?.nextElementSibling
-      if (description?.tagName !== 'DD') return false
-      pop.textContent = ''
-      const label = document.createElement('b')
-      label.textContent = term.dataset.term || ''
-      pop.append(label, ...[...description.children].map((line) => {
-        const row = document.createElement('span')
-        row.textContent = line.textContent
-        return row
-      }))
-      pop.hidden = false
-      const box = term.getBoundingClientRect()
-      const left = Math.max(8, Math.min(box.left, global.innerWidth - pop.offsetWidth - 8))
-      const below = box.bottom + 8
-      const top = below + pop.offsetHeight > global.innerHeight - 8 ? Math.max(8, box.top - pop.offsetHeight - 8) : below
-      pop.style.left = `${left}px`
-      pop.style.top = `${top}px`
-      return true
-    }
-    document.addEventListener('mouseover', (event) => {
-      const term = event.target.closest('a.term')
-      if (pinned) return
-      if (term) { if (show(term)) hovered = term } else if (hovered) hide()
-    })
-    document.addEventListener('focusin', (event) => {
-      const term = event.target.closest('a.term')
-      if (restoringFocus) return
-      if (term && !pinned && show(term)) hovered = term
-    })
-    document.addEventListener('focusout', (event) => {
-      if (!pinned && hovered && event.target.closest('a.term') === hovered) hide()
-    })
-    document.addEventListener('click', (event) => {
-      const term = event.target.closest('a.term')
-      if (!term) { if (pinned) hide(); return }
-      event.preventDefault()
-      const same = pinned === term
-      hide()
-      if (!same && show(term)) pinned = term
-    })
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || !pinned) return
-      const term = pinned
-      hide()
-      /* 閉じた直後にフォーカスを戻すと focusin で開き直ってしまうので、この1回だけ止める */
-      restoringFocus = true
-      term.focus()
-      restoringFocus = false
-    })
-    global.addEventListener('scroll', () => { if (pinned || hovered) hide() }, { passive: true })
-  }
+  // 用語の表示・固定・閉じる操作は共通の TermUI へ委譲する。
+  function bindTerms() { global.TermUI.init() }
 
   function init(root = document) {
     bindTerms(root)

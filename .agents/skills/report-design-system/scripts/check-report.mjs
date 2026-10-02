@@ -120,7 +120,7 @@ export function checkReport(html) {
   else if (styles[0][1] !== embeddedCss()) E("E03", "埋め込みCSSが正本 (vendor + report.css) と一致しません。build-report.mjs で再生成してください");
   const scripts = all(html, /<script>\n?([\s\S]*?)\n?<\/script>/g);
   if (scripts.length !== 1) E("E04", `<script> は1つだけにしてください (${scripts.length} 個)`);
-  else if (scripts[0][1] !== embeddedJs()) E("E04", "埋め込みJSが正本 (report.js) と一致しません。build-report.mjs で再生成してください");
+  else if (scripts[0][1] !== embeddedJs()) E("E04", "埋め込みJSが正本 (vendor用語UI → report.js) と一致しません。build-report.mjs で再生成してください");
   for (const v of cssViolations(readFileSync(REPORT_CSS, "utf8"))) E("E03", v);
   for (const v of colorBaseViolations(readFileSync(vendorPath(VENDOR_FILES[0]), "utf8"))) E("E03", v);
 

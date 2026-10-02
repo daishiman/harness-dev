@@ -184,6 +184,7 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/render-board-png.mjs" --dir 
 
 - mechanism を置くのは、workflow.md の「既定のページ構成」の条件に当たるときだけ。それ以外で型に収まらない図を描きたくなったら、まず型のどれかで言えないか考える。
 - Windows で作るときや、別の PC で作り直すときは、execution-contract.md の「4. Mac と Windows」を読む。
+- 色を変えたくなっても `_src/tokens.css` と common.css を書き換えない。案件の色が要るときは、そのことを呼び出し元へ返す (briefing.json の `palette` に配色の CSS の場所を書いて init を回し直すのは run-briefing)。手順は [standard-attribution.md](../../assets/css/standard-attribution.md) の「案件の配色に合わせるとき」、init の引数は execution-contract.md の表にある。
 
 ## Additional Resources
 

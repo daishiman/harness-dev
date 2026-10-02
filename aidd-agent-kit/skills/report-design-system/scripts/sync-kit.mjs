@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// aidd-agent-kit (jp-web-design) の配色正本と部品CSS正本を assets/vendor/ へ無改変で取り込み、
+// aidd-agent-kit (jp-web-design) の配色・部品CSS・用語UI正本を assets/vendor/ へ無改変で取り込み、
 // 出所とハッシュを SOURCE.json に記録する。レポートの生成・検査は assets/vendor/ だけで完結する。
-// キットが要るのは、キット側の配色・部品が更新されて取り込み直すときだけ。
+// キットが要るのは、キット側の配色・部品・用語UIが更新されて取り込み直すときだけ。
 //
 //   node scripts/sync-kit.mjs --verify                              vendor と SOURCE.json の一致だけ検査 (キット不要)
 //   node scripts/sync-kit.mjs --kit <aidd-agent-kit のパス> --check  キットとの乖離だけ検査
@@ -20,12 +20,13 @@ const VENDOR_DIR = join(SKILL_DIR, "assets/vendor");
 export const SOURCE_JSON = join(VENDOR_DIR, "SOURCE.json");
 
 /**
- * 取り込む正本。埋め込み順もこの順 (配色トークン → 部品)。
+ * 取り込む正本。CSSとJSは種類ごとにこの順で埋め込む。
  * kit はキットのルートからの相対パス。vendor は assets/vendor/ 内のファイル名。
  */
 export const VENDOR_FILES = [
-  { vendor: "standard-color-system.css", kit: "skills/jp-web-design/assets/standard/standard-color-system.css" },
-  { vendor: "standard-components.css", kit: "skills/jp-web-design/assets/reference/styles.css" },
+  { kind: "css", vendor: "standard-color-system.css", kit: "skills/jp-web-design/assets/standard/standard-color-system.css" },
+  { kind: "css", vendor: "standard-components.css", kit: "skills/jp-web-design/assets/reference/styles.css" },
+  { kind: "js", vendor: "term-ui.js", kit: "skills/jp-web-design/assets/reference/term-ui.js" },
 ];
 export const vendorPath = (f) => join(VENDOR_DIR, f.vendor);
 
@@ -87,7 +88,7 @@ function main(argv) {
   if (args.has("--check")) {
     const changed = pairs.filter((p) => p.changed);
     if (!changed.length) {
-      console.log("OK: キットの配色・部品の正本と一致");
+      console.log("OK: キットの配色・部品・用語UIの正本と一致");
       return 0;
     }
     console.log(`NG: キット側が更新されています (${changed.map((p) => p.f.kit).join(", ")})。--check を外して取り込み、selftest を通してください`);
@@ -101,6 +102,7 @@ function main(argv) {
     kit_version: meta.version,
     kit_commit: meta.commit,
     files: pairs.map((p) => ({
+      kind: p.f.kind,
       vendor: p.f.vendor,
       kit_path: p.f.kit,
       ...(colorVersion(p.buf.toString("utf8")) ? { color_version: colorVersion(p.buf.toString("utf8")) } : {}),

@@ -10,6 +10,7 @@ const html = Object.fromEntries(await Promise.all(htmlNames.map(async (name) => 
 const styles = await readFile(join(referenceDir, 'styles.css'), 'utf8')
 const appJs = await readFile(join(referenceDir, 'app.js'), 'utf8')
 const interactions = await readFile(join(referenceDir, 'reference-interactions.js'), 'utf8')
+const termUi = await readFile(join(referenceDir, 'term-ui.js'), 'utf8')
 const referenceReadme = await readFile(join(referenceDir, 'README.md'), 'utf8')
 const standardCss = await readFile(join(referenceDir, '../standard/standard-color-system.css'), 'utf8')
 const catalogProfile = JSON.parse(await readFile(join(referenceDir, 'catalog-default-profile.json'), 'utf8'))
@@ -161,9 +162,12 @@ check(/<aside class="glossary[^"]*">\s*<details>\s*<summary>/.test(catalog), 'ca
 check(/<details class="howto">\s*<summary>/.test(catalog) && !/<details class="howto" open/.test(catalog), 'catalog.html: the chart how-to stays collapsed until opened')
 const explanations = [...definitions.values()].map(({ body }) => visibleText(body.match(/<span class="gl-what">([\s\S]*?)<\/span>/)?.[1] ?? ''))
 check(explanations.every((sentence) => sentence && catalog.split(sentence).length === 2), 'catalog.html: each explanation sentence is written in exactly one place')
-check(/function bindTerms/.test(interactions) && /getElementById\(decodeURIComponent/.test(interactions), 'reference-interactions.js: the floating explanation is read from the glossary instead of duplicated')
-check(/event\.preventDefault\(\)[\s\S]{0,200}pinned = term/.test(interactions), 'reference-interactions.js: pressing a term pins its explanation instead of jumping away')
-check(/restoringFocus = true\s*\n\s*term\.focus\(\)/.test(interactions), 'reference-interactions.js: closing with Escape returns focus without reopening the explanation')
+check(/global\.TermUI\.init\(\)/.test(interactions) && /getElementById\(decodeURIComponent/.test(termUi), 'reference-interactions.js: term explanations delegate to the shared glossary reader')
+check(/event\.preventDefault\(\)[\s\S]{0,200}pinned = term/.test(termUi), 'term-ui.js: pressing a term pins its explanation instead of jumping away')
+check(/restoringFocus = true\s*\n\s*term\.focus\(/.test(termUi), 'term-ui.js: closing with Escape returns focus without reopening the explanation')
+check(/role', 'tooltip'/.test(termUi) && /aria-describedby/.test(termUi) && !/aria-hidden/.test(termUi), 'term-ui.js: a visible explanation is available to the accessibility tree and describes its term')
+check(/global\.TermUI =/.test(catalog) && !/script src=/.test(catalog), 'catalog.html: the shared term UI is embedded without external script dependencies')
+check(['index.html', 'pop.html'].every((name) => /<script src="term-ui\.js"><\/script>/.test(html[name])), 'reference pages: the shared term UI is loaded locally')
 
 // catalog-default verify の検査語が参照画面・部品CSSと食い違うと、検査が空振りしても気づけない。
 const referenceSources = [...Object.values(html), appJs].join('\n')

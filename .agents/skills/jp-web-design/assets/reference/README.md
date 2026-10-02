@@ -1,6 +1,6 @@
-# リファレンス実装(構造・UX規律は発注者検収済み・2026-07 / 配色は暫定v0.2・未検収)
+# リファレンス実装(構造・UX規律は発注者検収済み・2026-07 / 配色は暫定・未検収)
 
-このフォルダは、2026-07に発注者検収済みの画面構造・操作・UX規律を実装した動く参照。配色は別契約で、暫定標準カラーv0.2(`../standard/standard-color-system.css`)を使用しているが、正式CI色としては未承認・未検収。新しいアプリでは構造とクラス設計を流用し、配色の承認状態はT2の `brand_color_*` へ別に記録する。
+このフォルダは、2026-07に発注者検収済みの画面構造・操作・UX規律を実装した動く参照。配色は別契約で、暫定標準カラー(`../standard/standard-color-system.css` の `@standard-meta.version` が版の正本)を使用しているが、正式CI色としては未承認・未検収。新しいアプリでは構造とクラス設計を流用し、配色の承認状態はT2の `brand_color_*` へ別に記録する。
 
 ## ファイルマップ
 
@@ -9,8 +9,9 @@
 | `styles.css` | 部品CSSの正本(色の値は持たない)。標準カラーCSSを `@import` し、役割トークンだけで組んだ全コンポーネント。system-first書体・44px操作領域・機能層のLiquid Glass・標準materialの内容面・reduced-transparency/contrast/motion・印刷fallbackを含む |
 | `index.html` | 標準カラー(既定・ライトのみ)。3項目なので上部ナビを採用。ホーム・一括選択・確認モーダル・下書き・レポートを実装 |
 | `app.js` | **UX規律のvanilla実装**。イミュータブルstate・Excel数値整形(Intl)・一括送信(進捗/部分成功/要確認キュー/再試行)・下書き自動保存(debounce/復元通知/破棄/送信時削除)・blur検証+入力中解除・IMEガード・Enter=次フィールド/⌘⌃Enter=送信・全角正規化・トースト(成功自動消滅/エラー残留+アクション) |
+| `term-ui.js` | 用語集の `dt/dd` から説明を出す共通UI。用語専用の説明箱、`aria-describedby`、ホバー・フォーカス・クリック固定・Escを担当。レポートも同じ正本を取り込む |
 | `reference-interactions.js` | catalog / Pop 共通の操作helper。選択、矢印・Enter・Space、現在地とpanel、開閉、短い結果、validation/clear、表sort/filterのARIAと表示状態を同期する |
-| `catalog.html` | 部品カタログ。`styles.css`・標準カラーCSS・`reference-interactions.js` を埋め込んだ単独ファイル(`node scripts/inline-catalog-css.mjs` の生成物。手で編集しない)。外部書体へ依存せず、見出し・ラベル・値・状態・エラーだけで動く見本を示す |
+| `catalog.html` | 部品カタログ。`styles.css`・標準カラーCSS・`term-ui.js`・`reference-interactions.js` を埋め込んだ単独ファイル。本文(用語デモの文言を含む)はこのHTMLが編集原本。埋め込み範囲だけ `node scripts/inline-catalog-css.mjs` の生成物で、手で編集しない。外部書体へ依存せず、見出し・ラベル・値・状態・エラーだけで動く見本を示す |
 | `catalog-default-profile.json` | build / improve が共通利用する版付き既定profile。適用種別、生成物、v0/v1検査を機械可読に定義 |
 | `pop.html` | モードB(Pop・親しみ)。利用者が明示指定した場合だけ使う。パステル変換トークン・マスコット2バージョンの配置・黒太字+傾きの見出し・波線下線・くるっと矢印(確定版)・CTA(ブライト+白字+リング)・白グリフのカスタムチェックボックス・調整ボタン+セグメント・破線機能カード・波フッター |
 | `mascot-bordered.svg` / `mascot-borderless.svg` | マスコットの再着色済み2バージョン(原本は `../pop-mascot-editable.svg`) |

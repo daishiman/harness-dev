@@ -94,7 +94,7 @@ $env:BRIEFING_BROWSER = "C:\Program Files (x86)\Microsoft\Edge\Application\msedg
 
 ### 文字
 
-- Mac はヒラギノ、Windows は游ゴシック UI かメイリオで描かれる (tokens.css の `--font-ui`)。
+- Mac はヒラギノ、Windows は游ゴシック UI かメイリオで描かれる (tokens.css の `--font-ui`。jp-web-design と同じ束)。
 - 文字の幅が違うため、同じボードでも折り返しが変わる。資料を作った PC で PNG と検査を通す。別の PC で作り直したときも通し直す。
 - Windows で CLIPPED が出たら、文字を小さくせず (小さくすると FONT-SMALL で止まる) 文を短くする。
 

@@ -1,0 +1,92 @@
+/* ボードの言葉 (system-briefing-book)
+   既定の見た目は aidd-agent-kit の jp-web-design (標準カラーと、その規範) に従う。
+   色の値はここに書かない。配色の正本は assets/css/vendor/standard-color-system.css
+   (jp-web-design の正本を 1 バイトも変えずに写したもの。出所とハッシュは vendor/SOURCE.json)。
+
+   このファイルが持つもの:
+   - ボードの部品が使ってきた名前 (--text-2、--bg-surface など) を、キットの役割の名前へつなぐ。
+     キットと同じ名前 (--text-muted、--status-info-bg など) はキットのものをそのまま使い、ここでは決めない。
+   - キットに無い、打ち合わせボードのための原色と役割 (ボードの地、注記の番号、端末の枠)。
+     どれもアプリの画面の色ではなく、画面を載せる机と説明の印。
+   - 文字の束と形。文字の束は jp-web-design の SKILL.md §1-4 と同じ値。
+
+   _src/tokens.css は、このファイルの後に配色をつないで作る (scripts/lib/palette.mjs)。
+   部品 (common.css とボード HTML) は var(--...) だけを使い、--p-* を直接使わない。 */
+:root {
+  /* ── 原色: 打ち合わせボードのために足したもの (キットには無い) ── */
+  --p-board: #EDF2F9;          /* ボードの地。白い画面を載せる机。画面の地 (白) と見分ける */
+  --p-anno: #D6246E;           /* 注記の番号。アプリの色ではなく説明の印なので、画面の青と別の色相にする */
+  --p-warning-line: #E9B45C;   /* 注意の枠線 (注意の面 --status-warning-bg の縁) */
+  --p-device: #1C2635;         /* スマホの枠 */
+  --p-device-island: #0E141D;  /* スマホ上部の切り欠きと下のバー */
+  --p-browser-bar: #E4EAF2;    /* ブラウザ上部の帯 */
+  --p-browser-line: #CBD6E4;
+  --p-browser-edge: #B8C6DA;
+  --p-browser-dot: #C3CEDC;
+  --p-url-field: #E9EDF2;
+
+  /* ── 面 ───────────────── */
+  --bg-board: var(--p-board);
+  --bg-page: var(--app-background);       /* 画面の地は白 (jp-web-design §2) */
+  --bg-well: var(--surface-alt);          /* 絵や紙を置く一段沈んだ面 */
+  --bg-surface: var(--surface);
+  --bg-stripe: var(--table-stripe-bg);
+  --bg-brand-soft: var(--surface-selected);
+  --bg-accent-soft: var(--surface-accent); /* 注目させたい面だけ。1 枚に 1〜2 か所 */
+  --bg-disabled: var(--action-disabled-bg);
+
+  /* ── 文字と線 ───────────────── */
+  --text: var(--text-primary);
+  --text-2: var(--text-secondary);
+  --text-brand: var(--text-heading);
+  --text-link: var(--link);               /* リンクはブランドの軸の色。アクセントは主操作だけ */
+  --line: var(--border-subtle);
+  --line-strong: var(--border-control);
+
+  /* ── 操作 ───────────────── */
+  --action-primary-ink: var(--action-primary-text);
+  --action-danger-ink: var(--action-danger-text);
+
+  /* ── 状態 (色と文字の両方で示す) ───────────────── */
+  --status-info: var(--status-info-text);
+  --status-success: var(--status-success-text);
+  --status-warning: var(--status-warning-text);
+  --status-warning-line: var(--p-warning-line);
+  --status-danger: var(--status-danger-text);
+
+  /* ── 注記 (ボードの説明。アプリの画面には出ない) ───────────────── */
+  --anno: var(--p-anno);
+  --anno-ink: var(--text-inverse);
+  --anno-ring: var(--surface);
+  --note-can-ink: var(--status-success-text);   /* できること */
+  --note-can-bg: var(--status-success-bg);
+  --note-how-ink: var(--status-info-text);      /* しくみ */
+  --note-how-bg: var(--status-info-bg);
+  --note-ask-ink: var(--status-warning-text);   /* 決めること */
+  --note-ask-bg: var(--status-warning-bg);
+
+  /* ── 端末の枠 ───────────────── */
+  --device-frame: var(--p-device);
+  --device-island: var(--p-device-island);
+  --browser-bar-bg: var(--p-browser-bar);
+  --browser-bar-line: var(--p-browser-line);
+  --browser-edge: var(--p-browser-edge);
+  --browser-dot: var(--p-browser-dot);
+  --url-field-bg: var(--p-url-field);
+
+  /* ── 影 (端末の影は本文の色を薄めて作る) ───────────────── */
+  --shadow-device: 0 24px 60px color-mix(in srgb, var(--text-primary) 20%, transparent);
+  --shadow-browser: 0 24px 60px color-mix(in srgb, var(--text-primary) 16%, transparent);
+
+  /* ── 文字 (jp-web-design SKILL.md §1-4 と同じ束。数字は欧文の --font-num で描く) ───────────────── */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-num: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+
+  /* ── 形 ───────────────── */
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --tap: 44px;
+}

@@ -60,6 +60,7 @@ import { classesOf, iterNodes, parseHtmlTree, textOf } from "./lib/html-tokens.m
 import { imageSize, imageSizeOfFile } from "./lib/image-size.mjs";
 import { dependencyReceipt, htmlRefs, localRef, externalRef } from "./lib/resource-refs.mjs";
 import { convertDoc, resolveRefs } from "./lib/doc-report.mjs";
+import { composeStandardTokens } from "./lib/palette.mjs";
 
 const USAGE = `
 使い方:
@@ -590,16 +591,17 @@ export function build(base, { out = null, allowStale = false } = {}) {
   const ids = new Set(drafts.flatMap((html) => [...html.matchAll(ID_ATTR_RE)].map((m) => m[1])));
   const rendered = drafts.map((html) => resolveRefs(html, ids));
 
-  let tokensCss = "";
+  let tokensCss;
   const tokensPath = path.join(src, "tokens.css");
   if (isFile(tokensPath)) {
     tokensCss = readText(tokensPath);
-    if (/<\/style/i.test(tokensCss)) {
-      rep.warn("TOKENS-CSS", "_src/tokens.css", "tokens.css に </style が含まれていたので取り除きました");
-      tokensCss = tokensCss.replace(/<\/style/gi, "");
-    }
   } else {
-    rep.warn("TOKENS-MISSING", "_src/tokens.css", "tokens.css が無いため、まとめは既定の色で表示します");
+    rep.warn("TOKENS-MISSING", "_src/tokens.css", "tokens.css が無いため、まとめは既定の配色 (standard) で表示します");
+    tokensCss = composeStandardTokens();
+  }
+  if (/<\/style/i.test(tokensCss)) {
+    rep.warn("TOKENS-CSS", "_src/tokens.css", "tokens.css に </style が含まれていたので取り除きました");
+    tokensCss = tokensCss.replace(/<\/style/gi, "");
   }
 
   const built = buildTime();

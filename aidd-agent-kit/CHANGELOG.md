@@ -7,6 +7,11 @@ AI開発エージェントキットの版ごとの変更点です。現在の版
 - 既定の配色の名前を「標準カラー」(`standard`) に改めました。ファイル名・CSS のクラス名・メタ情報の見出し・`--mode` の値などの旧名は、すべて `standard` になります。主な例は `assets/standard/standard-color-system.css`、`@standard-meta`、`.standard-app`、`check-standard-contrast.mjs`、`catalog-default.mjs --mode=standard` です。色の値と役割トークンの名前は変えていません
 - 見本の画面とレポートの例文に使っていた会社名を、架空の「サンプル運送」に置き換えました。配色の見本 (`standard-color-preview.html`) からは、特定の会社のサイトを調べた節を外しました
 - 既存のアプリが旧名の CSS ファイルや `--mode` の値で取り込んでいる場合は、ファイル名と設定値を新しい名前へ読み替えてください
+- 用語の説明を出す UI を `assets/reference/term-ui.js` に切り出し、catalog・Pop・レポートが同じ正本を使うようにしました。説明箱は用語専用の `role="tooltip"` で、表示中だけ用語と `aria-describedby` で結びます。report-design-system は `sync-kit.mjs` で `assets/vendor/term-ui.js` へ取り込みます
+- 同じ用語に付ける印を「読み手が視線を移すまとまりごとに 1 回」に改めました。まとまりの粒度は文書や生成器の側で決めます
+- `check-token-references.mjs` が、読み込んでいない CSS や別の HTML にある定義で、未定義の色トークンを見逃さないようにしました。`tests/test-color-contracts.mjs` で確かめます
+- `catalog-default.mjs` の apply の生成宣言と plan / verify の期待値を同じ契約から作り、生成した CSS の sha256 も記録するようにしました。`spec` / `specs` フォルダと検査用のファイルは、入口 CSS の候補から外します
+- 色の値と版を変える手順に、配色を適用済みのアプリへの再配布 (手順 8) と、操作・用語 UI だけを変えたときの配布証跡の更新を足しました。テストは `node --test 'tests/*.mjs'` (引用符つき) で回します
 
 ## 1.11.0
 

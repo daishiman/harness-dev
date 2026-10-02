@@ -254,7 +254,7 @@ export function checkImpacts(results, brief, html) {
     else if (claim) {
       const claimId = decodeEntities(claim[1]), claimVerdict = decodeEntities(claim[2]);
       const expectedClaim = (brief?.hypotheses || []).find((item) => item.id === claimId)?.主張;
-      if (expectedClaim != null && decodeEntities(textOf(claim[3])) !== String(expectedClaim).replace(/\s+/g, " ").trim()) {
+      if (expectedClaim != null && textOf(claim[3]) !== String(expectedClaim).replace(/\s+/g, " ").trim()) {
         E.push(`要因「${toc || "?"}」の表示用仮説 ${claimId} の本文が brief.hypotheses の主張と一致しません。hypothesisClaim()で接続する`);
       }
       if (!ids.includes(claimId)) E.push(`要因「${toc || "?"}」の表示用仮説 ${claimId} が data-hypotheses にありません`);

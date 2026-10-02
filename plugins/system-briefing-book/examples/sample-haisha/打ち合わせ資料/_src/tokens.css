@@ -1,44 +1,28 @@
-/* 配色: standard (system-briefing-book の既定の配色)
-   出典: aidd-agent-kit 1.11.0 同梱 jp-web-design スキルの
-         assets/standard/standard-color-system.css (暫定カラー v0.3、2026-09-28)
-   Copyright (c) 2026 daishiman. Licensed under the Apache License, Version 2.0.
-   このファイルは出典を変更したものです。変更点とライセンス全文は assets/css/standard-attribution.md にあります。
+/* _src/tokens.css は build-briefing-scaffold.mjs init が作る。手で直さない。
+   配色を変えるときは briefing.json の palette を変え、init --refresh-css で作り直す。
+   1. ボードの言葉: plugin の assets/css/board-tokens.css
+   2. 標準カラー: jp-web-design の standard-color-system.css v0.3 (sha256 5212debc5d2f)
+   3. 案件の上書き: なし (palette は standard)
+   同じ名前は後に書いたものが勝つ。 */
+/* ボードの言葉 (system-briefing-book)
+   既定の見た目は aidd-agent-kit の jp-web-design (標準カラーと、その規範) に従う。
+   色の値はここに書かない。配色の正本は assets/css/vendor/standard-color-system.css
+   (jp-web-design の正本を 1 バイトも変えずに写したもの。出所とハッシュは vendor/SOURCE.json)。
 
-   使い方:
-   - ボードの色・文字・影はすべてここで決める。common.css とボード HTML は var(--...) だけを使う。
-   - 案件ごとに配色を変えるときは、このファイルと同じ名前のトークンを持つ CSS を用意し、
-     briefing.json の "palette" にそのパスを書く (build-briefing-scaffold.mjs が _src/tokens.css へ写す)。
-   - 原色 (--p-*) は部品から直接使わない。部品は下の「役割」のトークンを使う。 */
+   このファイルが持つもの:
+   - ボードの部品が使ってきた名前 (--text-2、--bg-surface など) を、キットの役割の名前へつなぐ。
+     キットと同じ名前 (--text-muted、--status-info-bg など) はキットのものをそのまま使い、ここでは決めない。
+   - キットに無い、打ち合わせボードのための原色と役割 (ボードの地、注記の番号、端末の枠)。
+     どれもアプリの画面の色ではなく、画面を載せる机と説明の印。
+   - 文字の束と形。文字の束は jp-web-design の SKILL.md §1-4 と同じ値。
+
+   _src/tokens.css は、このファイルの後に配色をつないで作る (scripts/lib/palette.mjs)。
+   部品 (common.css とボード HTML) は var(--...) だけを使い、--p-* を直接使わない。 */
 :root {
-  color-scheme: light;
-
-  /* ── 原色: 出典の値をそのまま写したもの ───────────────── */
-  --p-brand-indigo: #1747B5;
-  --p-brand-accent: #1465E1;
-  --p-brand-accent-soft: #E8F1FF;
-  --p-brand-indigo-soft: #DCE9FC;
-  --p-white: #FFFFFF;
-  --p-surface-subtle: #F3F7FD;
-  --p-surface-stripe: #F9FBFE;
-  --p-ink: #14233B;
-  --p-ink-secondary: #45576F;
-  --p-ink-muted: #506279;
-  --p-line: #D5E1F0;
-  --p-line-strong: #7189A8;
-  --p-disabled-bg: #E9EEF4;
-  --p-info: #0369A1;
-  --p-info-bg: #E6F4FB;
-  --p-success: #166534;
-  --p-success-bg: #ECFDF3;
-  --p-warning: #92400E;
-  --p-warning-bg: #FFF7E6;
-  --p-danger: #D03047;
-  --p-danger-bg: #FFF1F3;
-
-  /* ── 原色: 打ち合わせボードのために足したもの (出典には無い) ── */
-  --p-board: #EDF2F9;          /* ボードの地。画面の地 (--p-surface-subtle) と見分ける */
-  --p-anno: #D6246E;           /* 注記の番号。アプリの色ではなく説明の印 */
-  --p-warning-line: #E9B45C;   /* 注意の枠線 */
+  /* ── 原色: 打ち合わせボードのために足したもの (キットには無い) ── */
+  --p-board: #EDF2F9;          /* ボードの地。白い画面を載せる机。画面の地 (白) と見分ける */
+  --p-anno: #D6246E;           /* 注記の番号。アプリの色ではなく説明の印なので、画面の青と別の色相にする */
+  --p-warning-line: #E9B45C;   /* 注意の枠線 (注意の面 --status-warning-bg の縁) */
   --p-device: #1C2635;         /* スマホの枠 */
   --p-device-island: #0E141D;  /* スマホ上部の切り欠きと下のバー */
   --p-browser-bar: #E4EAF2;    /* ブラウザ上部の帯 */
@@ -47,55 +31,47 @@
   --p-browser-dot: #C3CEDC;
   --p-url-field: #E9EDF2;
 
-  /* ── 役割: 面 ───────────────── */
+  /* ── 面 ───────────────── */
   --bg-board: var(--p-board);
-  --bg-page: var(--p-surface-subtle);
-  --bg-surface: var(--p-white);
-  --bg-stripe: var(--p-surface-stripe);
-  --bg-brand-soft: var(--p-brand-indigo-soft);
-  --bg-accent-soft: var(--p-brand-accent-soft);
-  --bg-disabled: var(--p-disabled-bg);
+  --bg-page: var(--app-background);       /* 画面の地は白 (jp-web-design §2) */
+  --bg-well: var(--surface-alt);          /* 絵や紙を置く一段沈んだ面 */
+  --bg-surface: var(--surface);
+  --bg-stripe: var(--table-stripe-bg);
+  --bg-brand-soft: var(--surface-selected);
+  --bg-accent-soft: var(--surface-accent); /* 注目させたい面だけ。1 枚に 1〜2 か所 */
+  --bg-disabled: var(--action-disabled-bg);
 
-  /* ── 役割: 文字と線 ───────────────── */
-  --text: var(--p-ink);
-  --text-2: var(--p-ink-secondary);
-  --text-muted: var(--p-ink-muted);
-  --text-brand: var(--p-brand-indigo);
-  --text-link: var(--p-brand-accent);
-  --text-inverse: var(--p-white);
-  --line: var(--p-line);
-  --line-strong: var(--p-line-strong);
-  --input-border: var(--p-line-strong);
+  /* ── 文字と線 ───────────────── */
+  --text: var(--text-primary);
+  --text-2: var(--text-secondary);
+  --text-brand: var(--text-heading);
+  --text-link: var(--link);               /* リンクはブランドの軸の色。アクセントは主操作だけ */
+  --line: var(--border-subtle);
+  --line-strong: var(--border-control);
 
-  /* ── 役割: 操作 ───────────────── */
-  --action-primary-bg: var(--p-brand-accent);
-  --action-primary-ink: var(--p-white);
-  --action-danger-bg: var(--p-danger);
-  --action-danger-ink: var(--p-white);
+  /* ── 操作 ───────────────── */
+  --action-primary-ink: var(--action-primary-text);
+  --action-danger-ink: var(--action-danger-text);
 
-  /* ── 役割: 状態 (色と文字の両方で示す) ───────────────── */
-  --status-info: var(--p-info);
-  --status-info-bg: var(--p-info-bg);
-  --status-success: var(--p-success);
-  --status-success-bg: var(--p-success-bg);
-  --status-warning: var(--p-warning);
-  --status-warning-bg: var(--p-warning-bg);
+  /* ── 状態 (色と文字の両方で示す) ───────────────── */
+  --status-info: var(--status-info-text);
+  --status-success: var(--status-success-text);
+  --status-warning: var(--status-warning-text);
   --status-warning-line: var(--p-warning-line);
-  --status-danger: var(--p-danger);
-  --status-danger-bg: var(--p-danger-bg);
+  --status-danger: var(--status-danger-text);
 
-  /* ── 役割: 注記 (ボードの説明。アプリの画面には出ない) ───────────────── */
+  /* ── 注記 (ボードの説明。アプリの画面には出ない) ───────────────── */
   --anno: var(--p-anno);
-  --anno-ink: var(--p-white);
-  --anno-ring: var(--p-white);
-  --note-can-ink: var(--p-success);     /* できること */
-  --note-can-bg: var(--p-success-bg);
-  --note-how-ink: var(--p-info);        /* しくみ */
-  --note-how-bg: var(--p-info-bg);
-  --note-ask-ink: var(--p-warning);     /* 決めること */
-  --note-ask-bg: var(--p-warning-bg);
+  --anno-ink: var(--text-inverse);
+  --anno-ring: var(--surface);
+  --note-can-ink: var(--status-success-text);   /* できること */
+  --note-can-bg: var(--status-success-bg);
+  --note-how-ink: var(--status-info-text);      /* しくみ */
+  --note-how-bg: var(--status-info-bg);
+  --note-ask-ink: var(--status-warning-text);   /* 決めること */
+  --note-ask-bg: var(--status-warning-bg);
 
-  /* ── 役割: 端末の枠 ───────────────── */
+  /* ── 端末の枠 ───────────────── */
   --device-frame: var(--p-device);
   --device-island: var(--p-device-island);
   --browser-bar-bg: var(--p-browser-bar);
@@ -104,24 +80,256 @@
   --browser-dot: var(--p-browser-dot);
   --url-field-bg: var(--p-url-field);
 
-  /* ── 役割: 重なりと影 (出典の値) ───────────────── */
-  --overlay: rgba(15, 45, 110, 0.40);
-  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
-  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
-  --shadow-device: 0 24px 60px rgba(20, 35, 59, 0.20);
-  --shadow-browser: 0 24px 60px rgba(20, 35, 59, 0.16);
-  --skeleton-base: var(--p-surface-subtle);
-  --skeleton-highlight: var(--p-brand-indigo-soft);
+  /* ── 影 (端末の影は本文の色を薄めて作る) ───────────────── */
+  --shadow-device: 0 24px 60px color-mix(in srgb, var(--text-primary) 20%, transparent);
+  --shadow-browser: 0 24px 60px color-mix(in srgb, var(--text-primary) 16%, transparent);
 
-  /* ── 文字 (Mac はヒラギノ、Windows は游ゴシック UI かメイリオ) ───────────────── */
-  --font-ui: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
-    "Yu Gothic UI", "Meiryo UI", "Meiryo", "Noto Sans JP", sans-serif;
-  --font-num: "SF Pro Text", -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI",
-    "Meiryo UI", sans-serif;
+  /* ── 文字 (jp-web-design SKILL.md §1-4 と同じ束。数字は欧文の --font-num で描く) ───────────────── */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-num: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
 
   /* ── 形 ───────────────── */
   --radius-btn: 8px;
   --radius-card: 12px;
   --radius-panel: 16px;
   --tap: 44px;
+}
+
+/*
+ * @standard-meta {"schema_version":1,"name":"標準の暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。正式に承認された配色ではない","theme":"light-only"}
+ * 今回の変更(v0.3): 紫・マゼンタ系をブルー系に置き換え、補助面・罫線・文字も青みのグレーへ。赤字(損失)表示のみ明るい赤で残す。
+ * 前回の変更: 画面背景を白にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相へ寄せた。青系(情報・車両ネイビー)は据え置き。
+ * 全HEXはシステム向け提案値。正式に承認された配色ではありません。
+ * 正式な配色が決まったら、基本色 --p-* だけを差し替える。
+ * ライトテーマのみ。暗背景には inverse 系トークンを明示的に使用してください。
+ * brand-indigo はブランドの軸(ブルー)、brand-accent は主操作のアクセント(明るいブルー)。別の役割です。
+ * 命名の規律: 基本色の名前は「ブランド対の中の位置」を表し、色相は表さない。色相を名前にすると
+ * 値を差し替えたときに名前が嘘になり、名前を語彙にした規範文まで指示対象を失う。v0.3 で
+ * --p-brand-magenta 系を --p-brand-accent 系へ改名したのはこのため (値だけ青くして名前を残すと嘘が残る)。
+ * --p-brand-indigo は値と名前が一致しているので据え置き。次に色相が動くときは名前も見直す。
+ */
+:root {
+  color-scheme: light;
+
+  /* 基本色（すべて暫定提案） */
+  --p-brand-indigo: #1747B5;
+  --p-brand-indigo-hover: #123B99;
+  --p-brand-indigo-active: #0E2F7A;
+  --p-brand-vehicle-navy: #163A5F;
+  --p-brand-accent: #1465E1;
+  --p-brand-accent-hover: #1A5ED0;
+  --p-brand-accent-active: #154DAB;
+  --p-brand-accent-soft: #E8F1FF;
+  --p-brand-indigo-soft: #DCE9FC;
+  --p-white: #FFFFFF;
+  --p-canvas: #FFFFFF;
+  --p-surface-subtle: #F3F7FD;
+  --p-surface-stripe: #F9FBFE;
+  --p-ink: #14233B;
+  --p-ink-secondary: #45576F;
+  --p-ink-muted: #506279;
+  --p-line: #D5E1F0;
+  --p-line-strong: #7189A8;
+  --p-disabled-bg: #E9EEF4;
+  --p-nav-muted: #D2DEEE;
+  --p-focus-on-dark: #AFCBFF;
+  --p-info: #0369A1;
+  --p-info-bg: #E6F4FB;
+  --p-success: #166534;
+  --p-success-bg: #ECFDF3;
+  --p-warning: #92400E;
+  --p-warning-bg: #FFF7E6;
+  --p-danger: #D03047;
+  --p-danger-hover: #B42A3F;
+  --p-danger-active: #962234;
+  --p-danger-bg: #FFF1F3;
+  /* グラフ系列専用の色。UIの面・文字には使わない (§1 の面積比の外)。意味色 (--p-info / --p-warning /
+     --p-success) をここへ流用しない。同じ色が「状態」と「カテゴリ」の二つを指すと読み手が取り違える。
+     カテゴリの見分けは色相差で作るので、v0.3 のブルー化から外して 60 度前後の間隔で色相を確保している。
+     値を変えるときは scripts/check-standard-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
+  --p-chart-amber: #92400E;   /* H23  */
+  --p-chart-lime: #4D7C0F;    /* H86  */
+  --p-chart-teal: #0F766E;    /* H175 */
+  --p-chart-purple: #6D28D9;  /* H263 */
+  --p-chart-magenta: #A81B6B; /* H326 — マゼンタはUIから退いたが、色相の間隔が要るグラフでだけ残す */
+  --p-scale-1: #DCE9FC;
+  --p-scale-2: #B7D0F4;
+  --p-scale-3: #7FA6DE;
+  --p-scale-4: #3B6FC4;
+  --p-scale-5: #1747B5;
+
+  /* 役割別トークン：コンポーネントではこちらを使用 */
+  --app-background: var(--p-canvas);
+  --surface: var(--p-white);
+  --surface-alt: var(--p-surface-subtle);
+  --surface-hover: var(--p-surface-subtle);
+  --surface-selected: var(--p-brand-indigo-soft);
+  --surface-accent: var(--p-brand-accent-soft);
+  --text-primary: var(--p-ink);
+  --text-secondary: var(--p-ink-secondary);
+  --text-muted: var(--p-ink-muted);
+  --text-heading: var(--p-brand-indigo);
+  --text-inverse: var(--p-white);
+  --border-subtle: var(--p-line);
+  --border-control: var(--p-line-strong);
+  --nav-background: var(--p-surface-subtle);
+  --nav-text: var(--p-ink);
+  --nav-text-muted: var(--p-ink-secondary);
+  --nav-hover: var(--p-brand-indigo-soft);
+  --nav-selected-bg: var(--p-white);
+  --nav-selected-text: var(--p-brand-indigo);
+  --nav-selected-indicator: var(--p-brand-indigo);
+  --action-primary-bg: var(--p-brand-accent);
+  --action-primary-text: var(--p-white);
+  --action-primary-hover: var(--p-brand-accent-hover);
+  --action-primary-active: var(--p-brand-accent-active);
+  --action-secondary-bg: var(--p-white);
+  --action-secondary-text: var(--p-brand-indigo);
+  --action-secondary-border: var(--p-brand-indigo);
+  --action-secondary-hover: var(--p-brand-indigo-soft);
+  --action-secondary-active: var(--p-surface-subtle);
+  --action-quiet-bg: var(--p-white);
+  --action-quiet-text: var(--p-brand-indigo);
+  --action-quiet-hover: var(--p-brand-indigo-soft);
+  --action-danger-bg: var(--p-danger);
+  --action-danger-text: var(--p-white);
+  --action-danger-hover: var(--p-danger-hover);
+  --action-danger-active: var(--p-danger-active);
+  --action-disabled-bg: var(--p-disabled-bg);
+  --action-disabled-text: var(--p-ink-muted);
+  --action-disabled-border: var(--p-line-strong);
+  --link: var(--p-brand-indigo);
+  --link-hover: var(--p-brand-accent);
+  --link-visited: var(--p-brand-indigo);
+  --focus-ring: var(--p-brand-accent);
+  --focus-ring-inverse: var(--p-focus-on-dark);
+  --focus-gap: var(--p-white);
+  --input-bg: var(--p-white);
+  --input-text: var(--p-ink);
+  --input-placeholder: var(--p-ink-muted);
+  --input-border: var(--p-line-strong);
+  --input-border-hover: var(--p-brand-indigo);
+  --input-border-focus: var(--p-brand-accent);
+  --input-readonly-bg: var(--p-surface-subtle);
+  --input-invalid-border: var(--p-danger);
+  --input-invalid-message: var(--p-danger);
+  --required-text: var(--p-brand-accent);
+  --required-bg: var(--p-brand-accent-soft);
+  --control-on: var(--p-brand-accent);
+  --control-on-mark: var(--p-white);
+  --control-off-border: var(--p-line-strong);
+  --table-head-bg: var(--p-surface-subtle);
+  --table-head-text: var(--p-brand-indigo);
+  --table-body-bg: var(--p-white);
+  --table-stripe-bg: var(--p-surface-stripe);
+  --table-hover-bg: var(--p-surface-subtle);
+  --table-selected-bg: var(--p-brand-indigo-soft);
+  --table-selected-indicator: var(--p-brand-indigo);
+  --tab-indicator: var(--p-brand-accent);
+  --tab-text-active: var(--p-brand-indigo);
+  --pagination-active-bg: var(--p-brand-indigo);
+  --pagination-active-text: var(--p-white);
+  --tag-bg: var(--p-brand-accent-soft);
+  --tag-text: var(--p-brand-accent);
+  --badge-unread-bg: var(--p-brand-accent);
+  --badge-unread-text: var(--p-white);
+  --status-neutral-text: var(--p-ink-secondary);
+  --status-neutral-bg: var(--p-surface-subtle);
+  --status-info-text: var(--p-info);
+  --status-info-bg: var(--p-info-bg);
+  --status-success-text: var(--p-success);
+  --status-success-bg: var(--p-success-bg);
+  --status-warning-text: var(--p-warning);
+  --status-warning-bg: var(--p-warning-bg);
+  --status-danger-text: var(--p-danger);
+  --status-danger-bg: var(--p-danger-bg);
+  /* 数値の符号と、その量を表す図形(棒・線・点・濃淡)。赤字(損失)だけ赤、黒字は本文色。状態を表す
+     --status-danger-* とは別の役割なので流用しない。「エラーが起きている」と「マイナスの数字」は
+     読み手にとって別の意味である。-soft は図形の地。線は --number-negative を重ねる */
+  --number-negative: var(--p-danger);
+  --number-negative-soft: var(--p-danger-bg);
+  --number-positive: var(--p-ink);
+  --tooltip-bg: var(--p-brand-indigo);
+  --tooltip-text: var(--p-white);
+  --progress-fill: var(--p-brand-indigo);
+  --progress-track: var(--p-surface-subtle);
+  --skeleton-base: var(--p-surface-subtle);
+  --skeleton-highlight: var(--p-brand-indigo-soft);
+  --selection-bg: var(--p-brand-indigo-soft);
+  --selection-text: var(--p-brand-indigo);
+  /* グラフのカテゴリ系列。順序のない並びなので、見分けは明度ではなく色相差で作る。
+     ブランド色を流すのは主役の --chart-main だけに留め、系列 1〜5 には brand/accent を使わない。
+     v0.3 でブランド軸が H260 台から H222 へ移ったため、アクセント青を系列に流すと main と重なる。
+     下の並びは隣接する系列の色相が 60 度以上離れるよう並べてある (最小の対は main と purple の 41 度)。
+     値や並びを変えたら scripts/check-standard-contrast.mjs の系列分離検査が最小色相差を機械で見る */
+  --chart-main: var(--p-brand-indigo);  /* H222 ブルー — ブランドの軸。主役系列 */
+  --chart-1: var(--p-chart-amber);      /* H23  アンバー */
+  --chart-2: var(--p-chart-lime);       /* H86  ライムグリーン */
+  --chart-3: var(--p-chart-teal);       /* H175 ティール */
+  --chart-4: var(--p-chart-purple);     /* H263 バイオレット */
+  --chart-5: var(--p-chart-magenta);    /* H326 マゼンタ */
+  --chart-grid: var(--p-line);
+  --chart-axis: var(--p-ink-secondary);
+  --chart-threshold: var(--p-danger);
+
+  --overlay: rgba(15, 45, 110, 0.40);
+  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
+  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
+}
+
+/* 必要な範囲に適用する共通クラス。フレームワークへの組み込み時は既存クラスにマッピング可。 */
+.standard-app { background: var(--app-background); color: var(--text-primary); }
+.standard-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
+.standard-heading { color: var(--text-heading); }
+.standard-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
+.standard-link:visited { color: var(--link-visited); }
+.standard-link:hover { color: var(--link-hover); }
+.standard-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
+.standard-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
+.standard-button--primary:hover { background: var(--action-primary-hover); }
+.standard-button--primary:active { background: var(--action-primary-active); }
+.standard-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
+.standard-button--secondary:hover { background: var(--action-secondary-hover); }
+.standard-button--secondary:active { background: var(--action-secondary-active); }
+.standard-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
+.standard-button--danger:hover { background: var(--action-danger-hover); }
+.standard-button--danger:active { background: var(--action-danger-active); }
+.standard-button:disabled, .standard-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
+/* aria-disabled のみでは操作は止まりません。アプリ側でもイベントを抑止してください。 */
+.standard-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
+.standard-input::placeholder { color: var(--input-placeholder); opacity: 1; }
+.standard-input:hover { border-color: var(--input-border-hover); }
+.standard-input:focus { border-color: var(--input-border-focus); }
+.standard-input[readonly] { background: var(--input-readonly-bg); }
+.standard-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
+.standard-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+.standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
+/* 淡いナビ面では通常のフォーカスリングを使う。inverse は明示した暗色面だけに限定する。 */
+.standard-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
+.standard-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
+.standard-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
+.standard-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+.standard-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
+.standard-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
+.standard-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.standard-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
+/* ステータスには文字とアイコンを併用。薄い背景色だけで情報を伝えない。 */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: var(--p-line-strong);
+    --text-secondary: var(--p-ink);
+    --text-muted: var(--p-ink);
+    --nav-text-muted: var(--p-ink);
+  }
+}
+@media (forced-colors: active) {
+  .standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .standard-button, .standard-status { border: 1px solid ButtonText; }
+}
+@media print {
+  .standard-app { background: white; color: black; }
+  .standard-card { background: white; border-color: black; box-shadow: none; }
+  .standard-status { color: black; background: white; border: 1px solid black; }
 }

@@ -150,12 +150,12 @@ Tailwind v4 の読み込み順は contract、`@theme inline` の役割トーク�
 本スキルの全規律を実装した「動く正解」がコードで保存されている。指定なしの可視UIは `references/catalog-default-contract.md` を入口に機械適用し、画面固有の構造・操作を実装するときだけ該当部品を開いて流用する(記憶で似せて書かない)。
 
 - `assets/reference/README.md` — ファイルマップとReact/TypeScriptへの移植ルール(クラス→コンポーネント対応表つき)。まずこれを読む。
-- `catalog-default-profile.json` = 生成アプリ向け既定profile / `styles.css` = 全部品のCSS(部品CSSの正本。色の値は持たず標準カラーCSSを import)/ `reference-interactions.js` = catalog・Pop共通の操作helper / `index.html` + `app.js` = 標準カラーの画面構造とvanillaロジック / `pop.html` = モードBの全ディテール / `catalog.html` = 部品カタログ(生成物) / `assets/standard/` = 標準カラーCSS(色の値の正本)・生成JSON・配色プレビュー
+- `catalog-default-profile.json` = 生成アプリ向け既定profile / `styles.css` = 全部品のCSS(部品CSSの正本。色の値は持たず標準カラーCSSを import)/ `term-ui.js` = 用語の段階開示UIの正本 / `reference-interactions.js` = catalog・Pop共通の操作helper / `index.html` + `app.js` = 標準カラーの画面構造とvanillaロジック / `pop.html` = モードBの全ディテール / `catalog.html` = 部品カタログ(本文は編集原本、CSS/JSの埋め込み範囲だけ生成物) / `assets/standard/` = 標準カラーCSS(色の値の正本)・生成JSON・配色プレビュー
 - マスコット: `assets/pop-mascot-editable.svg`(原本)+ `reference/mascot-bordered.svg` / `mascot-borderless.svg`(再着色例)
 - スクリプト(Node 18+、終了コード 0=成功 / 1=要対応 / 2=入力エラー):
   - `node scripts/check-standard-contrast.mjs` — 主要50ペア(本文4.5:1・非テキスト3:1)と避けるペアを検査。axe等の画面全体検査は置き換えない。
   - `node scripts/export-standard-tokens.mjs [--check]` — CSSの機械可読メタデータとトークンからJSON・standalone previewを一括生成。生成物は手書きしない。
-  - `node scripts/inline-catalog-css.mjs [--check]` — `styles.css`・標準カラーCSS・`reference-interactions.js` を `catalog.html` へ埋め込み、HTML 1ファイルで共有できるようにする。いずれかを変えたら再実行する。
+  - `node scripts/inline-catalog-css.mjs [--check]` — `styles.css`・標準カラーCSS・`term-ui.js`・`reference-interactions.js` を `catalog.html` へ埋め込み、HTML 1ファイルで共有できるようにする。いずれかを変えたら再実行する。
   - `node scripts/migrate-legacy-colors.mjs <dir> [--plan|--apply] [--json]` — dry-run→計画→safeだけ適用。schema v1.0の報告へreview-only・対象外・未対応構文も残す。
   - `node scripts/catalog-default.mjs <plan|apply|verify> <app-root> ...` — 新規/既存の適用資格を判定し(既存は `--eligibility` 未指定時に移行スクリプトと同じ共有判定で自動算出)、正本CSS・provenance・v0/v1 conformance reportを生成する。参照画面の説明文やサンプルデータはコピーしない。
   - `node scripts/catalog-runtime-audit.mjs <app-root> [--base-url=<url>]` — 生成アプリをChromeの4幅と実pointer/keyboardで操作し、v1証拠を生成する。`catalog-default.mjs verify --stage=v1` からも必ず再実行される。

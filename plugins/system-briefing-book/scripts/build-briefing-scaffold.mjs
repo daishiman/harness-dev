@@ -10,6 +10,14 @@
  *
  * どちらも既存ファイルは上書きしない (skipped に並べる)。init の --refresh-css だけは CSS 2 つを上書きする。
  *
+ * 配色: _src/tokens.css は、ボードの言葉 (assets/css/board-tokens.css)、標準カラー (jp-web-design の写し
+ *       assets/css/vendor/standard-color-system.css)、案件の上書きの順につないで作る (scripts/lib/palette.mjs)。
+ *       --palette standard (既定) なら上書きは無い。--palette <css> の CSS は標準カラーへの上書きで、
+ *       基本色 (--p-*) だけを書けば役割はすべてそれに付いてくる。標準カラーにもボードにも無い名前があれば注意を出す。
+ *       配色の正は briefing.json の palette。既にあれば --palette を省いてもその値で作り、--palette と違えば止める (exit 2)。
+ *       配色を変えるときは briefing.json の palette を直し、--refresh-css を付けて回し直す。palette は materials と同じく
+ *       出力フォルダからの相対で書く。作り直さなかった CSS がいまの palette と plugin から作るものと違えば stale_css に並べる。
+ *
  * 使い方:
  *   node scripts/build-briefing-scaffold.mjs init --materials <素材フォルダ> --title <タイトル>
  *        [--out <dir>] [--palette standard|<css>] [--data-policy source|masked] [--date YYYY-MM-DD] [--refresh-css] [--quiet]
@@ -45,6 +53,7 @@ import {
   writeJson,
 } from "./lib/briefing-files.mjs";
 import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, runCli } from "./lib/cli-contract.mjs";
+import { BOARD_TOKENS, STANDARD_PALETTE, composeTokens, readOverlay, unknownOverlayNames } from "./lib/palette.mjs";
 
 const USAGE = `
 使い方:
@@ -89,6 +98,53 @@ function pluginRelative(file) {
   return rel && !rel.startsWith("..") && !path.isAbsolute(rel) ? toPosix(rel) : toPosix(file);
 }
 
+/**
+ * 配色を決める。briefing.json が既にあれば、その palette を正とする。init は briefing.json を書き換えないので、
+ * 別の値で tokens.css を作ると記録と実物がずれる。--palette は初めて作るときの値で、記録と違えば止める。
+ * 返り値の value は briefing.json に書く値、overlay は上書きの CSS の実パス (standard なら null)。
+ */
+function resolvePalette(options, out) {
+  const recorded = recordedPalette(out);
+  const given = options.palette === undefined ? undefined : normalizePalette(options.palette, process.cwd());
+  if (recorded && given && recorded.value !== given.value) {
+    throw new UsageError(
+      `briefing.json の palette (${recorded.value}) と --palette (${given.value}) が違います。配色を変えるときは briefing.json の palette を直し、--refresh-css を付けて init を回し直してください`,
+    );
+  }
+  if (recorded || given) return recorded || given;
+  const fallback = loadThresholds().palette_default;
+  if (!fallback) throw new ToolMissing(`しきい値 palette_default がありません: ${THRESHOLDS_PATH}`);
+  return normalizePalette(fallback, process.cwd());
+}
+
+/** palette の値を、briefing.json に書く形にそろえる。standard ならキットの標準カラーだけ。それ以外は上書きの CSS の場所 (base からの相対も可)。 */
+function normalizePalette(palette, base) {
+  if (palette === STANDARD_PALETTE.name) return { value: STANDARD_PALETTE.name, overlay: null };
+  const file = path.resolve(base, expandHome(palette));
+  if (!isFile(file)) throw new UsageError(`配色の CSS がありません: ${palette}`);
+  const overlay = realPath(file);
+  return { value: toPosix(overlay), overlay };
+}
+
+/** 出力フォルダに既にある briefing.json の palette。briefing.json が無いか palette が書かれていなければ undefined。 */
+function recordedPalette(out) {
+  const file = path.join(out, "briefing.json");
+  if (!isFile(file)) return undefined;
+  let palette;
+  try {
+    ({ palette } = JSON.parse(readText(file)));
+  } catch (error) {
+    throw new UsageError(`briefing.json が JSON として読めません: ${error.message}`);
+  }
+  if (typeof palette !== "string" || !palette) return undefined;
+  try {
+    return normalizePalette(palette, out);
+  } catch (error) {
+    if (!(error instanceof UsageError)) throw error;
+    throw new UsageError(`briefing.json の palette が指す配色の CSS がありません: ${palette} (相対の場所は briefing.json のあるフォルダから数えます)`);
+  }
+}
+
 function cmdInit(options) {
   for (const name of ["materials", "title"]) {
     if (options[name] === undefined) throw new UsageError(`--${name} を指定してください`);
@@ -102,18 +158,7 @@ function cmdInit(options) {
   const dataPolicy = options["data-policy"] ?? "source";
   if (!DATA_POLICIES.includes(dataPolicy)) throw new UsageError(`--data-policy は source か masked で指定します: ${dataPolicy}`);
   const out = options.out ? expandHome(options.out) : path.join(materials, OUT_DIR_NAME);
-  const palette = options.palette || loadThresholds().palette_default;
-  if (!palette) throw new ToolMissing(`しきい値 palette_default がありません: ${THRESHOLDS_PATH}`);
-  let paletteSrc;
-  let paletteValue;
-  if (palette === "standard") {
-    paletteSrc = path.join(CSS_DIR, "tokens-standard.css");
-    paletteValue = "standard";
-  } else {
-    paletteSrc = realPath(expandHome(palette));
-    if (!isFile(paletteSrc)) throw new UsageError(`配色の CSS がありません: ${palette}`);
-    paletteValue = toPosix(paletteSrc);
-  }
+  const { overlay: overlaySrc } = resolvePalette(options, out);
 
   const created = [];
   const skipped = [];
@@ -125,7 +170,7 @@ function cmdInit(options) {
     schema: "briefing-v1",
     title,
     readers: [...DEFAULT_READERS],
-    palette: paletteValue,
+    palette: overlaySrc ? relPosix(overlaySrc, outResolved) : STANDARD_PALETTE.name,
     materials: relPosix(realPath(materials), outResolved),
     data_policy: dataPolicy,
     book: { include_hearing: false },
@@ -144,17 +189,28 @@ function cmdInit(options) {
     writeNew(path.join(out, docName), text, created, skipped, out);
   }
 
-  const cssPairs = [
-    [paletteSrc, path.join(out, "_src", "tokens.css")],
-    [path.join(CSS_DIR, "common.css"), path.join(out, "_src", "common.css")],
+  // tokens.css はボードの言葉・標準カラー・案件の上書きをつないで作り (scripts/lib/palette.mjs)、common.css はそのまま写す
+  const commonCss = path.join(CSS_DIR, "common.css");
+  const cssOutputs = [
+    { needs: [BOARD_TOKENS, STANDARD_PALETTE.vendor], dest: path.join(out, "_src", "tokens.css"), text: () => composeTokens(overlaySrc ? readOverlay(overlaySrc) : undefined) },
+    { needs: [commonCss], dest: path.join(out, "_src", "common.css"), text: () => readText(commonCss) },
   ];
-  for (const [src, dest] of cssPairs) {
-    if (!isFile(src)) {
-      missing.push(pluginRelative(src));
+  // 作り直さなかった CSS が、いまの palette と plugin から作るものと違えば知らせる (同じ入力からは同じバイト列になる)
+  const refreshCss = Boolean(options["refresh-css"]);
+  const staleCss = [];
+  for (const { needs, dest, text } of cssOutputs) {
+    const lacking = needs.filter((file) => !isFile(file));
+    if (lacking.length) {
+      missing.push(...lacking.map(pluginRelative));
       continue;
     }
-    writeNew(dest, readText(src), created, skipped, out, Boolean(options["refresh-css"]));
+    const expected = text();
+    if (!refreshCss && isFile(dest) && readText(dest) !== expected) staleCss.push(relPosix(dest, out));
+    writeNew(dest, expected, created, skipped, out, refreshCss);
   }
+  if (staleCss.length) process.stderr.write(`注意: ${staleCss.join(" と ")} が、いまの palette と plugin から作るものと違います。--refresh-css を付けて回し直してください\n`);
+  const unknownNames = overlaySrc ? unknownOverlayNames(readText(overlaySrc)) : [];
+  if (unknownNames.length) process.stderr.write(`注意: 配色の CSS に、標準カラーにもボードにも無い名前があります (綴りを確かめてください): ${unknownNames.join(" ")}\n`);
 
   const report = scanMaterials(materials, out);
   writeJson(path.join(out, "_check", "materials.json"), report);
@@ -167,6 +223,7 @@ function cmdInit(options) {
     created,
     skipped,
     missing_templates: missing,
+    stale_css: staleCss,
     materials: { counts: report.counts, needs_csv: report.needs_csv, truncated: report.truncated },
   };
   return [missing.length ? EXIT.FOUND : EXIT.OK, result];

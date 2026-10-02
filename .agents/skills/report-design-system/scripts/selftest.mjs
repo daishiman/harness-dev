@@ -17,16 +17,16 @@
 // 12. build 証跡が成果物・背景データ集合・実描画結果の変更を検出すること
 // 13. ヒアリングシートの往復 (下書き→AI が直す・ユーザーに聞く→了承) と、実行部隊向け資料の生成・検査が崩れないこと
 // 終了コード: 0=合格 1=不合格
-import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync, existsSync, cpSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
-import { verifyVendor } from "./sync-kit.mjs";
+import { verifyVendor, VENDOR_FILES, vendorPath } from "./sync-kit.mjs";
 import {
   SKILL_DIR, REPORT_CSS, REFERENCE_MAX_LINE_LENGTH, REVIEW_CONDITIONS,
   REVIEW_FINDING_FIELDS, REVIEW_SEVERITIES, REVIEW_STATUSES, REVIEW_VERDICTS,
-  OVERVIEW_JARGON, TECHNICAL_STAT, RENDER_WIDTHS, ASK_LIMIT, parseImpact, serializeImpact, sha256, LIMITS, REPORT_DETAILS, esc,
+  OVERVIEW_JARGON, TECHNICAL_STAT, RENDER_WIDTHS, ASK_LIMIT, parseImpact, serializeImpact, sha256, LIMITS, REPORT_DETAILS, esc, textOf, embeddedCss, embeddedJs,
 } from "./lib.mjs";
 import { buildReport, InputError, layoutWarnings } from "./build-report.mjs";
 import * as st from "./stats.mjs";
@@ -40,7 +40,7 @@ import { FRONTLINE_WORDS, QUESTIONS, TEXT_MAX, TITLE_MAX, askGroups, draftFromRe
 import { HANDOUT_KINDS, buildHandout, checkHandout, handoutModel, plainDue } from "./build-handout.mjs";
 import { INPUT_MANIFEST_FILE, INPUT_MANIFEST_VERSION } from "./new-report.mjs";
 import { BUILD_STATE_FILE, clearBuildState, recordBuildState, verifyBuildState } from "./build-state.mjs";
-import { inputManifest, readInputManifest, readInputRows, readRows, writeInputManifest } from "./inputs.mjs";
+import { inputManifest, readInputManifest, readInputRows, readRows, writeInputManifest, parseNumericCell } from "./inputs.mjs";
 import { runContentChecks } from "./content-selftest.mjs";
 
 const src = readFileSync(join(SKILL_DIR, "assets/template.src.html"), "utf8");
@@ -82,6 +82,8 @@ const reviewPrompt = readFileSync(join(SKILL_DIR, "prompts/review.md"), "utf8");
 for (const [name, values] of Object.entries({ REVIEW_CONDITIONS, REVIEW_VERDICTS, REVIEW_SEVERITIES, REVIEW_STATUSES, REVIEW_FINDING_FIELDS })) {
   for (const value of values) ok(reviewPrompt.includes(value), `prompts/review.md に ${name} の値「${value}」がない`);
 }
+ok(reviewPrompt.includes("仮説を使う要因だけ") && reviewPrompt.includes("単純な記述では仮説と claim の省略を許す"), "review が単純記述にも採用仮説を一律要求している");
+ok(readFileSync(join(SKILL_DIR, "references/statistics.md"), "utf8").includes("仮説を使う場合は複数の仮説を競わせる"), "statistics の手順が仮説使用を一律要求している");
 ok(OVERVIEW_JARGON.test("p値") && TECHNICAL_STAT.test("中央値"), "共有した文章契約の語彙が欠けている");
 ok(parseImpact("−12.5")?.value === -12.5 && parseImpact("▲3")?.value === -3 && parseImpact("+2")?.value === 2, "data-impact の共有正規化が Unicode 符号を扱えない");
 
@@ -98,6 +100,51 @@ ok(a === buildReport(src), "同じソースからのビルド結果が一致し�
 const base = checkReport(a);
 ok(base.errors.length === 0, `テンプレートが不合格: ${base.errors.join(" / ")}`);
 ok(base.warnings.length === 0, `テンプレートに警告: ${base.warnings.join(" / ")}`);
+
+// 共通用語UIはvendor JSとして1つのscriptへ埋め込む。CSSには混入せず、キットを置かない単独コピーでもbuildできる。
+{
+  const jsFiles = VENDOR_FILES.filter((file) => file.kind === "js");
+  ok(jsFiles.length > 0, "共通用語UIのvendor JSが配布契約にない");
+  for (const file of jsFiles) {
+    const javascript = readFileSync(vendorPath(file), "utf8").trimEnd();
+    ok(embeddedJs().includes(javascript) && a.includes(javascript), `${file.vendor} が単一HTMLへ埋め込まれていない`);
+    ok(!embeddedCss().includes(javascript), `${file.vendor} がCSSへ混入している`);
+  }
+  // macOSのtmpdirは/var→/private/varのsymlinkを含む。CLIのimport.meta guardと同じ実パスで起動する。
+  const tmp = realpathSync(mkdtempSync(join(tmpdir(), "rds-standalone-")));
+  try {
+    const copy = join(tmp, "report-design-system"), output = join(tmp, "report.html");
+    cpSync(SKILL_DIR, copy, { recursive: true });
+    const build = spawnSync(process.execPath, [join(copy, "scripts/build-report.mjs"), join(copy, "assets/template.src.html"), output], { cwd: tmp, env: { ...process.env, AIDD_KIT_DIR: "" }, encoding: "utf8" });
+    ok(build.status === 0 && existsSync(output), `キットを置かない単独コピーでbuildできない (${build.error?.message || build.stderr || build.stdout || `status=${build.status}, signal=${build.signal}`})`);
+    if (existsSync(output)) ok(checkReport(readFileSync(output, "utf8")).errors.length === 0, "単独コピーから生成したHTMLが正本と一致しない");
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+// escで増えた実体参照の文字を、表示字数へ戻す。生成が許す48字は最終検査も許し、49字は拒否する。
+for (const symbol of ["&", "<", ">", '"']) {
+  const value = symbol + "あ".repeat(LIMITS.overview - 1);
+  ok(textOf(esc(value)) === value, `表示字数へ戻すときに ${symbol} を復号できない`);
+  const replaceOverview = (text) => src.replace(/(<span class="overview-text">)[^<]*(<\/span>)/, (_all, open, close) => open + esc(text) + close);
+  ok(!checkReport(buildReport(replaceOverview(value))).errors.some((e) => e.startsWith("E20")), `実体参照を含む${LIMITS.overview}字の概要を拒否した (${symbol})`);
+  ok(checkReport(buildReport(replaceOverview(value + "あ"))).errors.some((e) => e.startsWith("E20")), `実体参照を含む${LIMITS.overview + 1}字の概要を受理した (${symbol})`);
+}
+ok(textOf('<b>A&amp;B</b><span class="term-q" aria-hidden="true">?</span>') === "A&B", "用語マークの飾りを表示字数に数えた");
+{
+  const label = '<img src=x>の差は10万円', literalEntity = "A&amp;Bの差は10万円";
+  const withHeading = (text) => src.replace(/(<section data-kind="factor"[^>]*>\s*<h2>)[\s\S]*?(<\/h2>)/, (_all, start, end) => start.replace(/ data-toc="[^"]*"/, "") + esc(text) + end);
+  for (const value of [label, literalEntity]) {
+    const html = buildReport(withHeading(value));
+    ok(html.includes(`<span class="why-text">${esc(value)}</span>`) && html.includes(`<span class="toc-label">${esc(value)}</span>`), "復号した見出しを要因ランキングか目次へ再挿入するときにエスケープしていない");
+    ok(!html.includes(`<span class="why-text">${label}</span>`) && checkReport(html).errors.length === 0, "文字数用の復号が見出しをHTMLタグへ変えた");
+  }
+  const brief = { hypotheses: [{ id: "H1", 主張: literalEntity }] };
+  const results = { steps: [{ label: "売上", value: 10 }], hypotheses: [{ id: "H1", 判定: "採用" }] };
+  const html = `<section data-kind="factor" data-toc="売上" data-impact="10" data-hypotheses="H1"><div class="statement claim" data-hypothesis-id="H1" data-verdict="採用"><span class="statement-text">${esc(literalEntity)}</span></div></section>`;
+  ok(checkImpacts(results, brief, html).length === 0, "表示用claimの実体参照を二重復号した");
+}
 ok((a.match(/<li class="act card card-pad"/g) || []).length === 3 && (a.match(/class="btn btn-primary"/g) || []).length === 1, "打ち手カードと CTA が生成されていない");
 const templateFactors = [...src.matchAll(/<section\b[^>]*data-kind="factor"[^>]*>/g)].map((m) => m[0]);
 ok(templateFactors.length > 0 && templateFactors.every((tag) => /data-hypotheses="[^"]+"/.test(tag)), "テンプレートの要因に仮説 trace がない");
@@ -472,6 +519,7 @@ const cases = [
     ["json", "json", JSON.stringify([{ 値: 1 }, { 値: 2 }])],
     ["d1", "json", JSON.stringify([{ results: [{ 値: 1 }, { 値: 2 }], success: true }])],
     ["d1-object", "json", JSON.stringify({ results: [{ 値: 1 }, { 値: 2 }] })],
+    ["d1-empty", "json", JSON.stringify([{ results: [], success: true }])],
   ];
   try {
     for (const [slug, ext, content] of formats) {
@@ -486,8 +534,9 @@ const cases = [
       const analysisFile = join(dir, "analysis.mjs"), generated = readFileSync(analysisFile, "utf8");
       writeFileSync(analysisFile, generated.split("// ---- 2. 計算:")[0] + '\nconsole.log(JSON.stringify(rows));\n');
       const run = spawnSync(process.execPath, [analysisFile], { encoding: "utf8" });
-      ok(run.status === 0 && run.stdout.trim() === JSON.stringify(expected), `${slug}を雛形readerが同じ行配列にできない (${run.stderr || run.stdout})`);
-      ok(JSON.stringify(readInputRows(dir)) === JSON.stringify(expected) && readInputManifest(dir).files[0].path === data, `${slug}の共有入力readerとmanifestが一致しない`);
+      const expectedRows = slug === "d1-empty" ? [] : expected;
+      ok(run.status === 0 && run.stdout.trim() === JSON.stringify(expectedRows), `${slug}を雛形readerが同じ行配列にできない (${run.stderr || run.stdout})`);
+      ok(JSON.stringify(readInputRows(dir)) === JSON.stringify(expectedRows) && readInputManifest(dir).files[0].path === data, `${slug}の共有入力readerとmanifestが一致しない`);
       writeFileSync(data, content + " ");
       const changed = spawnSync(process.execPath, [analysisFile], { encoding: "utf8" });
       ok(changed.status !== 0 && changed.stderr.includes("init 後に変更"), `${slug}の雛形readerが生入力の変更を見逃した`);
@@ -514,9 +563,53 @@ const cases = [
     const invalidJson = join(tmp, "invalid.json"); writeFileSync(invalidJson, "[null]");
     let invalid = false; try { readRows(invalidJson); } catch { invalid = true; }
     ok(invalid, "JSONの非オブジェクト行を受理した");
+    for (const [slug, wrappers] of [
+      ["d1-multiple", [{ results: [{ 値: 1 }] }, { results: [{ 値: 2 }] }]],
+      ["d1-heterogeneous", [{ results: [{ 値: 1 }] }, { results: [{ 別の列: "x" }] }]],
+      ["d1-mixed", [{ results: [{ 値: 1 }] }, { 値: 2 }]],
+    ]) {
+      const file = join(tmp, `${slug}.json`);
+      writeFileSync(file, JSON.stringify(wrappers));
+      let rejected = false;
+      try { readRows(file); } catch (error) { rejected = error.message.includes("複数の D1 結果"); }
+      ok(rejected, `${slug}の一部だけを黙って採用した`);
+      const init = spawnSync(process.execPath, [join(SKILL_DIR, "scripts/report.mjs"), "init", tmp, "2026-09", slug, file], { encoding: "utf8" });
+      ok(init.status === 2 && init.stderr.includes("複数の D1 結果") && !existsSync(join(tmp, `2026-09-${slug}`)), `${slug}をinitで明示拒否できない`);
+    }
+
+    // 実際に生成された計算例を実行し、profileと同じセル・欠測規則で数値を得る。
+    const numericData = join(tmp, "numeric.csv"), numericDir = join(tmp, "2026-09-numeric");
+    writeFileSync(numericData, '値,項目\n10,a\n,b\n"1,000",c\n');
+    const init = spawnSync(process.execPath, [join(SKILL_DIR, "scripts/report.mjs"), "init", tmp, "2026-09", "numeric", numericData], { encoding: "utf8" });
+    ok(init.status === 0, `数値セルの回帰用initが失敗 (${init.stderr})`);
+    if (init.status === 0) {
+      const briefFile = join(numericDir, "brief.json"), brief = JSON.parse(readFileSync(briefFile, "utf8"));
+      Object.assign(brief.plan, { 問い: "値の分布を確認する", 読み手: "担当者", 判断: "次に確認する値を決める", 指標: "値", 単位: "件", 基準: "なし", 範囲: "2026-09" });
+      writeFileSync(briefFile, JSON.stringify(brief));
+      const analysisFile = join(numericDir, "analysis.mjs"), generated = readFileSync(analysisFile, "utf8");
+      const calculation = generated.split("\n").filter((line) => /^\/\/ const (parsed|x|excluded) =/.test(line)).map((line) => line.replace(/^\/\/ /, "").replace('r["列"]', 'r["値"]')).join("\n");
+      ok(calculation.includes("parseNumericCell") && calculation.includes("const excluded"), "雛形の数値例に共有readerか除外数がない");
+      writeFileSync(analysisFile, generated.split("// ---- 2. 計算:")[0] + calculation + '\nconsole.log(JSON.stringify({ n: x.length, mean: describe(x).mean, excluded }));\n');
+      const run = spawnSync(process.execPath, [analysisFile], { encoding: "utf8" });
+      const numericProfile = JSON.parse(readFileSync(join(numericDir, "profile.json"), "utf8")).files[0].columns.find((column) => column.name === "値");
+      ok(run.status === 0 && run.stdout.trim() === JSON.stringify({ n: numericProfile.valid_numeric_n, mean: numericProfile.mean, excluded: numericProfile.missing }), `雛形とprofileの数値解析が異なる (${run.stderr || run.stdout})`);
+      ok(numericProfile.mean === 505 && numericProfile.missing === 1, "空欄を0にせず桁区切りの数値を保持できない");
+    }
+    const numericValues = ["10", "", null, "1,000", "0", "-12.5", " 2 ", "4", "5", "6", "7", "8", "不明", "Infinity"];
+    const jsonData = join(tmp, "numeric-boundary.json");
+    writeFileSync(jsonData, JSON.stringify(numericValues.map((値, i) => ({ 値, 項目: String(i) }))));
+    const rows = readRows(jsonData), values = rows.map((row) => parseNumericCell(row.値)).filter(Number.isFinite);
+    const numericProfile = profileRows(rows).columns.find((column) => column.name === "値");
+    ok(numericProfile.type === "number" && numericProfile.valid_numeric_n === values.length && numericProfile.mean === Math.round(st.describe(values).mean * 1000) / 1000, "JSONの正常値・不正値・欠測でprofileと計算の数値規則が異なる");
+    ok(numericProfile.missing === 2 && numericProfile.invalid_numeric_n === 2 && values.includes(0), "数値の0、欠測、不正値を区別して数えられない");
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+// 数値セルは0を保持し、欠測・不正値を補完しない。CSV/JSONの文字列化後も同じ契約を使う。
+for (const [value, expected] of [["", null], ["  ", null], [null, null], [undefined, null], ["不明", null], ["Infinity", null], ["1e309", null], [",", null], ["0", 0], [0, 0], ["1,000", 1000], ["-12.5", -12.5], [" 2 ", 2]]) {
+  ok(parseNumericCell(value) === expected, `数値セル ${String(value)} を ${expected} として読めない`);
 }
 
 // 9. 図のデータの端

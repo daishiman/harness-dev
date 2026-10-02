@@ -1,7 +1,7 @@
 name: system-briefing-book
 description: 業務システムの打ち合わせ資料(ヒアリング結果、要件定義書、仕様書、画面ボード PNG、まとめ HTML)を、素材と短いヒアリングから同じ工程・型・品質で作るときに使う plugin bundle。
 kind: plugin-composition
-version: 0.2.4
+version: 0.2.5
 owner: harness maintainers
 
 contract:
@@ -15,6 +15,7 @@ contract:
     - "素材に根拠のない値は「例」と書き、根拠欄を空にしない (enforcement: scripts/validate-briefing-docs.mjs)"
     - "ボードは assets/data/quality-thresholds.json の board の大きさに収まり、はみ出し・重なり・小さすぎる文字が無い。文字と注記の量は報告 (notices) だけで止めない (enforcement: scripts/render-board-png.mjs)"
     - "ボードの色は共通 CSS のトークンだけを使い、生の色を書かない (enforcement: scripts/render-board-png.mjs RAW-COLOR)"
+    - "既定の見た目は aidd-agent-kit の jp-web-design (標準カラーとその規範) で、配色の正本は assets/css/vendor/ の写し 1 つ。案件の配色は基本色 --p-* の上書きだけで変える (enforcement: scripts/extract-kit-palette.mjs --verify, tests/test_palette.py)"
     - "まとめ HTML は画像をはめ込んだ外部参照ゼロの 1 ファイルで、先方にそれだけを渡せば全部が伝わり、JavaScript なしでも全ページを読める (enforcement: scripts/build-briefing-book.mjs LOCAL-REF / EXTERNAL-REF)"
     - "最初の版でやることは 3 から 5 個に絞り、広げる案は 要件定義 6 章の あとで と 仕様書 8 章の 次に広げる候補 へ回す (enforcement: scripts/validate-briefing-docs.mjs の warn + agents/briefing-reviewer.md のシンプルさ観点)"
     - "名前を挙げて頼まれた機能 (要望) は黙って外さず、あとで に回すなら 決めること で聞く (enforcement: scripts/validate-briefing-docs.mjs REQUEST-MISSING / REQUEST-DEFERRED-NO-Q)"
@@ -41,6 +42,7 @@ capabilities:
   - {kind: script, ref: scripts/build-briefing-book.mjs, tier: core}
   - {kind: script, ref: scripts/compare-briefing-profile.mjs, tier: core}
   - {kind: script, ref: scripts/count-csv-columns.mjs, tier: core}
+  - {kind: script, ref: scripts/extract-kit-palette.mjs, tier: core}
 
 dependencies:
   - {from: commands/briefing-build.md, to: skills/run-briefing, type: calls}

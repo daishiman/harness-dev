@@ -10,11 +10,12 @@
 - 機械可読な正本は、レポートのセクション・情報量の段階・上限・列挙値・review の契約が `scripts/lib.mjs` と `scripts/check-llm.mjs`、実行部隊向け資料の質問・字数が `scripts/hearing.mjs`、資料の並びが `scripts/build-handout.mjs`。1回にユーザーへ聞く数の上限 `ASK_LIMIT` は、レポート (`prompts/analyst.md`) と資料 (`prompts/handout.md`) で共通なので `lib.mjs` に置く。prompt に転記した値は `selftest.mjs` が正本と照合する。
 - `scripts/inputs.mjs` はCSV・JSON・D1 JSONの行読込と入力manifestの作成・hash検証の正本。`new-report.mjs`、生成された `analysis.mjs`、厳格証跡は同じ契約を使う。既存レポートを移すときは `writeInputManifest(reportDir, files)` に実際に読む全入力を渡して初回だけ記録し、分析では毎回 `readInputManifest(reportDir)` を通す。
 - `scripts/new-report.mjs` と `scripts/profile-data.mjs` は初期化、`scripts/stats.mjs` は計算、`scripts/charts.mjs` と `scripts/compose.mjs` は表現部品を担う。
-- 専門用語と図の読み方の説明文は `scripts/glossary.mjs` だけが持つ。用語 (`GLOSSARY`: 何の値か・どう読むかの2文と検出する書き方) と図の読み方 (`CHART_HOWTO`: `charts.mjs` の図の種類ごとに1文) が正本で、本文への用語マーク付けと用語集の組み立て (`markTerms` / `glossaryBlock`) も同じファイルが行う。説明は常時表示しない、実体は用語集の `<dd>` 1か所だけが持つ、という表示契約はファイル冒頭に書いてある。同じ文を `report.js` や雛形へ写さない。マークの密度 (1セクションに同じ用語を何回出すか) は `markPolicy` で決める。
+- 専門用語と図の読み方の説明文は `scripts/glossary.mjs` だけが持つ。用語 (`GLOSSARY`: 何の値か・どう読むかの2文と検出する書き方) と図の読み方 (`CHART_HOWTO`: `charts.mjs` の図の種類ごとに1文) が正本で、本文への用語マーク付けと用語集の組み立て (`markTerms` / `glossaryBlock`) も同じファイルが行う。説明は常時表示しない、実体は用語集の `<dd>` 1か所だけが持つ、という表示契約はファイル冒頭に書いてある。同じ文を `report.js` や雛形へ写さない。マークの密度 (読み手が視線を移すまとまりに同じ用語を何回出すか) は `markPolicy` で決める。
+- 用語の表示・固定・閉じる操作は `jp-web-design/assets/reference/term-ui.js` が正本で、`sync-kit.mjs` が `assets/vendor/term-ui.js` へ取り込む。`lib.mjs` はそのローカルJSを `report.js` の前に埋め込むため、reportスキル単体で生成できる。図の値・印刷・目次は `report.js`、用語の見た目はvendor部品CSSが担う。レポート側で用語の状態機械や汎用CSSを再定義しない。
 - `scripts/build-report.mjs` と `check-report.mjs` は通常 build の生成・静的検査、`verify-render.mjs` と `build-state.mjs` は依頼時だけの実描画・証跡を担う。
 - `scripts/hearing.mjs` はヒアリングシートを担う (質問 `QUESTIONS`・シートの形式と読み取り・「AI が直すこと」と「ユーザーに聞くこと」の判定・現場向けの言い換え検査・レポートの打ち手と前の月のシートからの下書き)。どの欄をユーザーが決めるかは `QUESTIONS` の `decide` だけで決まる。`scripts/build-handout.mjs` はシートからの資料の生成と検査を担い、並びとチップの文言は `HANDOUT_KINDS` が正本。件数・欄の有無など生成器の形で決まることは検査せず、selftest が確かめる。
 - `assets/` は雛形と埋め込み資産。雛形 (`template.src.html`) の構造契約は `check-report.mjs` が検査し `selftest.mjs` が同期を確かめる。vendor の出所と digest は `assets/vendor/SOURCE.json` が持つ。
-- 配色の基本色はキット正本 `aidd-agent-kit/skills/jp-web-design/assets/standard/standard-color-system.css` だけが持つ。色を変えるときはキット側を直し、`sync-kit.mjs --kit <キット>` で `assets/vendor/` へ取り込み直す。レポート側に上書き層は置かない (`report.css` にも色の値を書かない)。取り込んだ基本色が文字として白地で読めるかは `check-report.mjs` の E03 が、役割トークン50ペアはキット側の `check-standard-contrast.mjs` が検査する。
+- 配色の基本色はキット正本 `aidd-agent-kit/skills/jp-web-design/assets/standard/standard-color-system.css` だけが持つ。色を変えるときはキット側を直し、`sync-kit.mjs --kit <キット>` で `assets/vendor/` へ取り込み直す。レポート側に上書き層は置かない (`report.css` にも色の値を書かない)。取り込んだ基本色が文字として白地で読めるかは `check-report.mjs` の E03 が、役割トークンの検査ペアはキット側の `check-standard-contrast.mjs` が検査する。
 - 通常変更のゲートは `scripts/smoke-test.mjs`。全変異・統計・図・証跡の回帰ゲートは `scripts/selftest.mjs` に分離し、必要な変更でだけ使う。
 
 ## 変更の流れ

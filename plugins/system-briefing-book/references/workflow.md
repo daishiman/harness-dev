@@ -18,7 +18,7 @@
   要件定義.md               何をするか。2 行目「版: vX.Y」が版の唯一の正
   仕様書.md                 どう動くか
   変更点.md                 版ごとの変更 (v0.2 から中身が入る)
-  _src/tokens.css           配色
+  _src/tokens.css           配色 (ボードの言葉 + jp-web-design の標準カラー + 案件の上書き。init が作る。手で直さない)
   _src/common.css           ボードの部品
   _src/NN_<slug>.html       ボード
   _src/assets/              切り出した素材画像、架空の図
@@ -31,10 +31,10 @@
 
 | ファイル | 書いてよいスキル |
 | --- | --- |
-| 変更点.md | run-briefing |
+| 変更点.md、briefing.json の palette と data_policy (palette を変えたら init を `--refresh-css` で回し直す) | run-briefing |
 | ヒアリング.md | run-briefing-hearing |
 | 要件定義.md、仕様書.md | run-briefing-docs |
-| `_src/`、PNG、briefing.json の pages | run-briefing-boards |
+| `_src/` (init が作る tokens.css と common.css を除く)、PNG、briefing.json の pages | run-briefing-boards |
 | まとめ HTML | run-briefing-book |
 | `_check/review-<stage>.json`、`_check/choices.json` | run-briefing (assign-briefing-evaluator の返事と確認点で選んだ深さを保存) |
 

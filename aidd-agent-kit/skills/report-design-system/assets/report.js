@@ -19,103 +19,26 @@
     reopened = [];
   });
 
-  /* ---- 浮かせて出す説明。1つの箱 (#tip) を2つの用途で使い分ける ----
-     (a) 図の値 (svg の [data-tip]): マウスに追従する1行。
-     (b) 用語の説明 (.term): 用語の下に出す2行。ホバー・キーボードのフォーカス・クリック/タップの3経路で開く。
-         クリックで固定 (pin) し、Esc・外側のクリック・もう一度クリックで閉じる。
-         説明文は末尾の用語集 (dt/dd) だけが持ち、ここはそれを読むだけ (同じ文を2か所に書かない)。
-         JS が無い環境では .term は用語集へのリンクとして働く。 */
+  /* ---- 用語は共通 TermUI、図の値だけ #tip でマウスに追従する ---- */
+  window.TermUI.init();
   var tip = document.getElementById("tip");
   if (tip) {
-    var pinned = null;   // クリックで固定中の .term
-    var hovered = null;  // ホバー/フォーカスで一時的に出している .term
-    var restoringFocus = false; // Esc で閉じた直後にフォーカスを戻している最中
-
-    function hide() {
-      tip.style.opacity = 0;
-      tip.className = "tooltip";
-      hovered = pinned = null;
-    }
-
-    /** 用語集の dt (#gl-*) の次の dd から説明を読む。見つからなければ何も出さない */
-    function showTerm(a) {
-      var dt = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
-      var dd = dt && dt.nextElementSibling;
-      if (!dd || dd.tagName !== "DD") return false;
-      tip.className = "tooltip tip-rich";
-      tip.innerHTML = "";
-      var head = document.createElement("b");
-      head.textContent = a.getAttribute("data-term") || dt.textContent;
-      tip.appendChild(head);
-      Array.prototype.forEach.call(dd.children, function (span) {
-        var p = document.createElement("span");
-        p.textContent = span.textContent;
-        tip.appendChild(p);
-      });
-      tip.style.opacity = 1;
-      // 用語の下に出し、画面からはみ出す側は内側へ寄せる (下に入らなければ上へ)
-      var r = a.getBoundingClientRect();
-      var left = Math.max(8, Math.min(r.left, window.innerWidth - tip.offsetWidth - 8));
-      var top = r.bottom + 8;
-      if (top + tip.offsetHeight > window.innerHeight - 8) top = Math.max(8, r.top - tip.offsetHeight - 8);
-      tip.style.left = left + "px";
-      tip.style.top = top + "px";
-      return true;
-    }
-
     document.addEventListener("mouseover", function (e) {
-      var term = e.target.closest(".term");
-      if (term) {
-        if (pinned) return;
-        if (showTerm(term)) hovered = term;
-        return;
-      }
-      if (pinned) return;
-      if (hovered) hide();
+      var termPop = document.getElementById("term-pop");
       var t = e.target.closest("[data-tip]");
-      if (!t) { tip.style.opacity = 0; return; }
-      tip.className = "tooltip";
+      if (!t || (termPop && !termPop.hidden)) { tip.style.opacity = 0; return; }
       tip.textContent = t.getAttribute("data-tip");
       tip.style.opacity = 1;
     });
     document.addEventListener("mousemove", function (e) {
-      if (tip.style.opacity == "1" && !pinned && !hovered) {
-        var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
-        tip.style.left = x + "px";
-        tip.style.top = (e.clientY + 16) + "px";
-      }
+      if (tip.style.opacity != "1") return;
+      var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 8);
+      tip.style.left = x + "px";
+      tip.style.top = (e.clientY + 16) + "px";
     });
-    // キーボード: Tab で用語へ移ると出て、離れると消える
     document.addEventListener("focusin", function (e) {
-      var term = e.target.closest(".term");
-      if (!term || pinned || restoringFocus) return;
-      if (showTerm(term)) hovered = term;
+      if (e.target.closest("a.term")) tip.style.opacity = 0;
     });
-    document.addEventListener("focusout", function (e) {
-      if (!pinned && hovered && e.target.closest(".term") === hovered) hide();
-    });
-    // クリック/タップ: 用語集へ飛ばずにその場で固定する (もう一度押すか、外側・Esc で閉じる)
-    document.addEventListener("click", function (e) {
-      var term = e.target.closest(".term");
-      if (term) {
-        e.preventDefault();
-        var same = pinned === term;
-        hide();
-        if (!same && showTerm(term)) pinned = term;
-        return;
-      }
-      if (pinned) hide();
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key !== "Escape" || !pinned) return;
-      var focus = pinned;
-      hide();
-      // 閉じた直後にフォーカスを戻すと focusin で開き直ってしまうので、この1回だけ止める
-      restoringFocus = true;
-      focus.focus();
-      restoringFocus = false;
-    });
-    window.addEventListener("scroll", function () { if (pinned || hovered) hide(); }, { passive: true });
   }
 
   /* ---- 目次: 現在地の追従と、狭い画面での開閉 ---- */

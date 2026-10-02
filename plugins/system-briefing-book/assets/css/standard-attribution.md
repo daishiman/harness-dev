@@ -1,6 +1,6 @@
 # 標準カラー (standard) の出典とライセンス
 
-`tokens-standard.css` は、次の著作物を変更して作ったものです (Apache License 2.0 第 4 条 (b) に基づく変更の告知)。
+資料の既定の見た目は、AI開発エージェントキット (AIDD Agent Kit) の `jp-web-design` スキル (標準カラーとその規範) に従う。
 
 | 項目 | 内容 |
 | --- | --- |
@@ -10,17 +10,28 @@
 | ライセンス | Apache License, Version 2.0 (全文は下) |
 | 位置づけ | キットのオリジナル著作物 (第三者から取り込んだ部分ではない) |
 
-## 変更した点
+## どのファイルが何か
 
-1. 出典の色のうち、打ち合わせボードで使う色だけを写した (`--p-*` の原色。値は出典のまま)。
-2. ボードのために原色を足した: ボードの地、注記の番号、注意の枠線、スマホとブラウザの枠。出典には無い色で、`--p-board` `--p-anno` `--p-warning-line` `--p-device*` `--p-browser-*` `--p-url-field` の名前で区別している。
-3. 色の名前を役割の名前に付け替えた (`--bg-*` `--text-*` `--action-*` `--status-*` `--note-*` `--device-*` など)。部品とボードは役割の名前だけを使う。
-4. 注記の 3 種類 (できること / しくみ / 決めること) の色を、出典の状態色 (成功 / 情報 / 注意) に割り当てた。
-5. 出典の説明文・用途メモ・案件名は写していない。
+| ファイル | 中身 |
+| --- | --- |
+| `vendor/standard-color-system.css` | 出典を変更せずに写したもの。出所・版・sha256 は `vendor/SOURCE.json`。手で直さない |
+| `board-tokens.css` | この plugin が足したもの。ボードの部品が使う名前 (`--bg-*` `--text-*` `--note-*` など) を出典の役割の名前へつなぎ、出典に無い色 (ボードの地、注記の番号、注意の枠線、スマホとブラウザの枠) と文字の束と角丸だけを持つ。出典の値は写していない |
 
-## 差し替えるとき
+資料の `_src/tokens.css` は、`build-briefing-scaffold.mjs init` が `board-tokens.css`、`vendor/standard-color-system.css`、案件の上書き (あれば) の順につないで作る (`scripts/lib/palette.mjs`)。同じ名前は後に書いたものが勝つ。
 
-案件ごとに別の配色を使うときは、`tokens-standard.css` と同じ役割の名前を持つ CSS を用意し、`briefing.json` の `palette` にそのパスを書く。原色 (`--p-*`) の名前は自由に変えてよいが、役割の名前は変えない。
+キットの配色が更新されたら、`node scripts/extract-kit-palette.mjs --kit <aidd-agent-kit のルート>` で写し直し、テストを通す。写しが記録どおりかは `--verify` で確かめる。
+
+## 案件の配色に合わせるとき
+
+出典の決まりどおり、基本色 (`--p-*`) だけを書き換えた CSS を用意する。`briefing.json` の `palette` にその場所を書き、最初と同じ `--materials` と `--title` (資料フォルダを `--out` で決めたならそれも) に `--refresh-css` を付けて init を回し直す。相対の場所は `briefing.json` のあるフォルダから数える。初めて作るときは `init --palette <css>` で渡してもよい (init は相対の場所で記録する)。配色の正は `briefing.json` の `palette` で、記録と違う `--palette` を渡すと init は止まる。`--refresh-css` を付け忘れると、init は記録と合わない CSS を `stale_css` に並べて知らせる。役割 (`--surface` `--link` `--action-primary-bg` など) は基本色に付いてくるので書かなくてよい。役割を直接書いてもよい (最後に置くので勝つ)。標準カラーにもボードにも無い名前を書くと、init が綴りの注意を出す。
+
+```css
+:root {
+  --p-brand-indigo: #0B5E4A;
+  --p-brand-indigo-hover: #094D3D;
+  --p-brand-accent: #C2410C;
+}
+```
 
 ## Apache License, Version 2.0 (全文)
 

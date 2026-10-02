@@ -329,42 +329,16 @@ section[data-kind="purpose"] h2{font-size:var(--font-size-page);color:var(--text
 .handout .def-list{margin:0}
 @media (max-width:639px){.handout .act-meta{grid-template-columns:minmax(0,1fr)}}
 
-/* ---- 用語マーク (.term。build-report.mjs が本文へ自動で付ける) ----
-   説明は常時出さない。点線と小さな ? だけを置き、ホバー・フォーカス・クリックで #tip に出す。
-   JS が無ければ末尾の用語集へのリンクとして働く */
-.term{color:inherit;text-decoration:none;border-bottom:1px dashed var(--text-secondary);cursor:help}
-.term:hover,.term:focus-visible{color:var(--text-heading);background:var(--surface-selected);border-bottom-style:solid}
-.term-q{display:inline-grid;place-items:center;width:1.1em;height:1.1em;margin-left:.15em;vertical-align:.15em;
-  font-family:var(--font-num);font-size:.7em;font-weight:700;line-height:1;
-  color:var(--text-secondary);background:var(--surface-alt);border:1px solid var(--border-subtle);border-radius:999px}
-.term:hover .term-q,.term:focus-visible .term-q{color:var(--surface);background:var(--text-secondary);border-color:var(--text-secondary)}
-
-/* ---- この図の読み方 (charts.mjs の figure が必ず付ける折りたたみ) ---- */
-details.howto{margin-top:10px}
-details.howto > summary{color:var(--text-secondary);font-size:var(--font-size-label)}
-details.howto p{margin:8px 0 0;padding:10px 12px;border-radius:var(--radius-glass-sm);background:var(--surface-alt);
-  color:var(--text-primary);line-height:1.6}
-
-/* ---- 用語集 (build-report.mjs が、本文で使われた用語だけで作る) ----
-   画面では閉じた見出しだけ。印刷時は report.js が開く */
-.glossary{margin-top:40px}
-.glossary > details > summary{font-weight:700;color:var(--text-heading)}
-.gl-lead{margin:12px 0 0;color:var(--text-secondary);font-size:var(--font-size-label)}
-.gl-list{display:grid;grid-template-columns:minmax(9rem,auto) minmax(0,1fr);gap:8px 20px;margin:12px 0 0}
-.gl-list dt{font-weight:700;color:var(--text-heading);scroll-margin-top:24px}
-.gl-list dd{margin:0;display:grid;gap:2px;line-height:1.6}
-.gl-how{color:var(--text-secondary)}
+/* ---- 用語UIの見た目は vendor の部品CSS。レポートでは書体と狭い画面の並びだけ変える ---- */
+.term-q{font-family:var(--font-num)}
 @media (max-width:639px){
   .gl-list{grid-template-columns:minmax(0,1fr);gap:2px}
   .gl-list dd{margin-bottom:10px}
 }
 
-/* ---- 浮かせて出す説明 (見た目はキットの .tooltip。位置と表示だけ) ----
-   1行の図の値 (追従) と、2行の用語の説明 (.tip-rich。用語の下に固定) の両方に使う */
+/* ---- 図の値だけをマウスに追従させる。用語は共通UIの別の説明箱 ---- */
 #tip{position:fixed;z-index:50;pointer-events:none;opacity:0;max-width:320px;line-height:1.5;font-family:var(--font-num);
   transition:opacity var(--motion-instant) linear}
-#tip.tip-rich{display:grid;gap:4px;max-width:min(22rem,calc(100vw - 16px));font-family:inherit;text-align:left;white-space:normal}
-#tip.tip-rich b{font-weight:700}
 
 /* ---- フッター (出所) ---- */
 footer{margin-top:64px;padding-top:16px;border-top:1px solid var(--border-subtle);color:var(--text-secondary);font-size:var(--font-size-label)}
@@ -380,7 +354,7 @@ footer{margin-top:64px;padding-top:16px;border-top:1px solid var(--border-subtle
 
 /* ---- 印刷: 目次・操作を消し、本文だけを1段で出す (開閉は report.js が印刷前に開く) ---- */
 @media print{
-  .toc,#tip,.skip,.doc-tools,.cta-row,.act-links{display:none!important}
+  .toc,#tip,#term-pop,.skip,.doc-tools,.cta-row,.act-links{display:none!important}
   .shell{display:block;padding:0;max-width:none}
   main.wrap,main.wrap.handout{max-width:none;padding:0}
   section{break-inside:auto;box-shadow:none}

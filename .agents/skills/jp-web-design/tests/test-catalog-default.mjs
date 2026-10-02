@@ -122,6 +122,90 @@ try {
   const v0 = run(['verify', newApp, '--stage=v0'])
   check(v0.status === 'PASS', 'v0 machine baseline passes')
 
+  // 配布実物だけでなく、applyが管理する出所宣言にも欠落・不正値の負例を当てる。
+  const profilePath = join(newApp, 'docs/product/design-profile.json')
+  for (const [field, id, mutate] of [
+    ['schema_version', 'profile-schema-version', (value) => { value.schema_version = 2 }],
+    ['mode', 'profile-mode', (value) => { value.mode = 'not-standard' }],
+    ['source_catalog', 'profile-source-catalog', (value) => { value.source_catalog = 'missing.html' }],
+    ['assets', 'profile-assets', (value) => { delete value.assets }],
+    ['assets', 'profile-assets', (value) => { value.assets[0].path = 'src/styles/aidd/missing.css' }],
+    ['assets', 'profile-assets', (value) => { value.assets[0].sha256 = 'invalid' }],
+    ['app_state', 'profile-app-state', (value) => { value.app_state = 'unknown' }],
+    ['eligibility', 'profile-eligibility', (value) => { value.eligibility = 'unknown' }],
+    ['reviewed_upgrade', 'profile-reviewed-upgrade', (value) => { value.reviewed_upgrade = 'true' }]
+  ]) {
+    const changed = structuredClone(profile)
+    mutate(changed)
+    await writeFile(profilePath, `${JSON.stringify(changed, null, 2)}\n`)
+    const badMetadata = run(['verify', newApp, '--stage=v0'], 1)
+    check(badMetadata.checks.some((item) => item.id === id && !item.passed), `verify rejects altered generated profile ${field} (${id})`)
+    const metadataPlan = run(['plan', newApp, '--app-state=existing', '--eligibility=eligible'])
+    check(metadataPlan.decision === 'blocked' && metadataPlan.drift.some((item) => item.reason === 'profile-provenance-drift' && item.mismatched_fields.includes(field)), `plan reports generated profile drift for ${field} before replacing it`)
+  }
+  await writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`)
+
+  for (const [label, body, expected] of [
+    ['similar nonexistent URL', '@import url("./styles/aidd/catalog-default.css.not-present");\nbody {}\n', 1],
+    ['URL query suffix', '@import url("./styles/aidd/catalog-default.css?probe=1");\nbody {}\n', 1],
+    ['after style rules', `body {}\n${canonicalImport}\n`, 1],
+    ['inside a block', `@media screen { ${canonicalImport} }\nbody {}\n`, 1],
+    ['quoted example', `body::before { content: '${canonicalImport}'; }\n`, 1],
+    ['print only', canonicalImport.replace(';', ' print;') + '\nbody {}\n', 1],
+    ['conditional viewport', canonicalImport.replace(';', ' screen and (min-width: 1280px);') + '\nbody {}\n', 1],
+    ['conditional support', canonicalImport.replace(';', ' supports(display: unknown-value);') + '\nbody {}\n', 1],
+    ['duplicate conditional import', `${canonicalImport}\n${canonicalImport.replace(';', ' print;')}\nbody {}\n`, 1],
+    ['single quotes', '@import "tailwindcss";\n@import \'./styles/aidd/catalog-default.css\';\nbody {}\n', 0],
+    ['unquoted URL', '@import url(./styles/aidd/catalog-default.css);\nbody {}\n', 0],
+    ['multiline preamble', '@charset "UTF-8";\n@layer reset, theme;\n@import\n "tailwindcss";\n@import url(\n "./styles/aidd/catalog-default.css"\n);\nbody {}\n', 0],
+    ['screen media', canonicalImport.replace(';', ' screen;') + '\nbody {}\n', 0],
+    ['all media', canonicalImport.replace(';', ' all;') + '\nbody {}\n', 0]
+  ]) {
+    await writeFile(join(newApp, 'src/index.css'), body)
+    const imported = run(['verify', newApp, '--stage=v0'], expected)
+    check(imported.status === (expected === 0 ? 'PASS' : 'FAIL'), `verify checks effective canonical imports (${label})`)
+    if (expected === 1) check(imported.checks.some((item) => item.id.startsWith('entry-css-import') && !item.passed), `invalid import is attributed to import checks (${label})`)
+  }
+  // apply repairs the invalid position/condition and preserves unrelated, similar URLs.
+  await writeFile(join(newApp, 'src/index.css'), `@layer reset, theme;\n@import url("./styles/aidd/catalog-default.css.not-present");\nbody {}\n${canonicalImport.replace(';', ' print;')}\n`)
+  run(['apply', newApp, '--app-state=new'])
+  const repairedImport = await readFile(join(newApp, 'src/index.css'), 'utf8')
+  check(repairedImport.includes('catalog-default.css.not-present') && repairedImport.indexOf(canonicalImport) < repairedImport.indexOf('body {}'), 'apply repairs only the exact canonical URL and inserts it before style rules')
+  run(['verify', newApp, '--stage=v0'])
+  await writeFile(join(newApp, 'src/index.css'), uncommentedEntry)
+
+  // 自動走査のテスト/既知ハーネス除外は狭く、宣言されたsource_filesには適用しない。
+  const ignored = ['src/Widget.test.tsx', 'src/Widget.spec.tsx', 'spec/Example.tsx', 'tests/View.tsx', '__check_nav_deploy4.mjs', '__prod_check.mjs']
+  for (const file of ignored) {
+    await mkdir(join(newApp, file, '..'), { recursive: true })
+    await writeFile(join(newApp, file), 'const referenceSample = "田中様"\n')
+  }
+  const filteredInventory = run(['verify', newApp, '--stage=v0'])
+  check(!filteredInventory.checks.some((item) => item.id.startsWith('consumer-source-no-sample') && ignored.some((file) => item.evidence.startsWith(`${file}:`))), 'automatic inventory excludes test/spec files and known local harnesses')
+  for (const file of ['src/test-report.tsx', 'report.mjs']) {
+    await writeFile(join(newApp, file), 'export const sample = "田中様"\n')
+    const actualBusinessSource = run(['verify', newApp, '--stage=v0'], 1)
+    check(actualBusinessSource.checks.some((item) => item.id.startsWith('consumer-source-no-sample') && item.evidence.startsWith(`${file}:`) && !item.passed), `automatic inventory keeps ordinary business sources (${file})`)
+    await rm(join(newApp, file))
+  }
+  for (const file of ['src/Widget.spec.tsx', 'tests/View.tsx', '__check_nav_deploy4.mjs']) {
+    const declared = structuredClone(profile)
+    declared.adopted_components[0].source_files.push(file)
+    await writeFile(profilePath, `${JSON.stringify(declared, null, 2)}\n`)
+    const declaredInventory = run(['verify', newApp, '--stage=v0'], 1)
+    check(declaredInventory.checks.some((item) => item.id.startsWith('consumer-source-no-sample') && item.evidence.startsWith(`${file}:`) && !item.passed), `explicit adoption sources are always scanned (${file})`)
+  }
+  await writeFile(join(newApp, 'tests/View.tsx'), 'export const View = () => null\n')
+  const declaredTest = structuredClone(profile)
+  declaredTest.adopted_components[0].source_files.push('tests/View.tsx')
+  await writeFile(profilePath, `${JSON.stringify(declaredTest, null, 2)}\n`)
+  await writeFile(join(newApp, 'tests/Other.tsx'), 'const referenceSample = "田中様"\n')
+  const declaredOnly = run(['verify', newApp, '--stage=v0'])
+  check(!declaredOnly.checks.some((item) => item.id.startsWith('consumer-source-no-sample') && item.evidence.startsWith('tests/Other.tsx:')), 'a declared test source does not expand inventory to the whole excluded test directory')
+  await rm(join(newApp, 'tests/Other.tsx'))
+  await writeFile(profilePath, `${JSON.stringify(profile, null, 2)}\n`)
+  for (const file of ignored) await rm(join(newApp, file))
+
   const v1Fail = run(['verify', newApp, '--stage=v1'], 1)
   check(v1Fail.status === 'FAIL' && v1Fail.checks.some((item) => item.id === 'runtime-audit-executed' && !item.passed), 'v1 refuses pending or hand-written evidence and executes the browser audit itself')
 
@@ -299,8 +383,8 @@ try {
   check(newBasis.eligibility_basis?.basis === 'new-app' && newBasis.eligibility === 'unknown', 'new apps keep the previous eligibility output and record the new-app basis')
   // apply の冪等性を入口CSSの byte 一致で固定する。入口が @import とコメントだけで
   // 終わる形 (Tailwind v4 の既定エントリなど) は挿入位置の計算が末尾の空要素を
-  // 消費しやすく、再実行のたびに空行が 1 行ずつ積み増す回帰を起こす。verify は
-  // @import の個数と順序しか見ないため、この回帰は byte 比較でしか捕まらない。
+  // 消費しやすく、再実行のたびに空行が 1 行ずつ積み増す回帰を起こす。importの
+  // 有効性を照合するverifyでは空行増加を検出しないため、byte比較でも確かめる。
   for (const [label, entryBody] of [
     ['import only', '@import "tailwindcss";\n'],
     ['import then trailing blank line', '@import "tailwindcss";\n\n'],

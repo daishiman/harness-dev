@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // assets/reference/catalog.html へ styles.css・標準カラーCSS・共通操作helperを埋め込み、HTML 1ファイルで共有できるようにする(手で貼らない)。
-// 正本は styles.css / standard-color-system.css / reference-interactions.js。catalog.html の埋め込み部分は生成物。
+// 正本は styles.css / standard-color-system.css / term-ui.js / reference-interactions.js。catalog.html の本文は原本、埋め込み部分だけが生成物。
 // 使い方: node scripts/inline-catalog-css.mjs [--check]
 //   --check: 埋め込み済みの CSS が正本と一致するかだけを確認する(CI用)
 // 終了コード: 0=成功・一致 / 1=不一致 / 2=読込エラー
@@ -17,12 +17,13 @@ const JS_START = '<!-- inline-reference-interactions:start (node scripts/inline-
 const JS_END = '<!-- inline-reference-interactions:end -->'
 const IMPORT = '@import url("../standard/standard-color-system.css");'
 
-let html, styles, standard, interactions
+let html, styles, standard, terms, interactions
 try {
-  ;[html, styles, standard, interactions] = await Promise.all([
+  ;[html, styles, standard, terms, interactions] = await Promise.all([
     readFile(htmlPath, 'utf8'),
     readFile(refPath('styles.css'), 'utf8'),
     readFile(defaultCssPath, 'utf8'),
+    readFile(refPath('term-ui.js'), 'utf8'),
     readFile(refPath('reference-interactions.js'), 'utf8')
   ])
 } catch (error) {
@@ -41,11 +42,12 @@ if (/<\/style/i.test(css)) {
   process.exit(2)
 }
 const block = `${START}\n<style>\n${css.trim()}\n</style>\n${END}`
-if (/<\/script/i.test(interactions)) {
-  console.error('ERROR reference-interactions.js に </script が含まれています')
+const runtime = `${terms.trim()}\n${interactions.trim()}`
+if (/<\/script/i.test(runtime)) {
+  console.error('ERROR 用語UI・操作helper に </script が含まれています')
   process.exit(2)
 }
-const jsBlock = `${JS_START}\n<script>\n${interactions.trim()}\n</script>\n${JS_END}`
+const jsBlock = `${JS_START}\n<script>\n${runtime}\n</script>\n${JS_END}`
 
 const linkTag = /<link rel="stylesheet" href="styles\.css">/
 const existing = new RegExp(`${START.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${END}`)

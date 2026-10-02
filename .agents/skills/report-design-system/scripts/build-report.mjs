@@ -22,7 +22,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { verifyVendor } from "./sync-kit.mjs";
 import {
   KINDS, ORDER, ACT_SOURCES, ACT_FIELDS, parseImpact, textOf, NAME_RE,
-  pageShell, secHead, PRINT_BUTTON, printResult, writeAtomic, isInsideSkill,
+  pageShell, secHead, PRINT_BUTTON, printResult, writeAtomic, isInsideSkill, esc, decodeEntities,
 } from "./lib.mjs";
 import { checkReport } from "./check-report.mjs";
 import { fmt } from "./charts.mjs";
@@ -35,7 +35,6 @@ const attr = (attrs, name) => {
   const m = attrs.match(new RegExp(`\\b${name}\\s*=\\s*"([^"]*)"`));
   return m ? m[1] : null;
 };
-const escAttr = (s) => s.replace(/&(?![a-zA-Z#][a-zA-Z0-9]*;)/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
 
 /**
  * 要因ランキングに出す影響値の表示を決める。
@@ -67,7 +66,7 @@ function whyBlock(factors, unit) {
     const fill = f.impact.value < 0 ? "is-loss" : "is-brand";
     return (
       `\n<li><a href="#${f.id}"><span class="why-no">${i + 1}</span>` +
-      `<span class="why-text">${f.h2Text}</span>` +
+      `<span class="why-text">${esc(f.h2Text)}</span>` +
       `<span class="why-val badge ${badge}">${text}</span>` +
       `<span class="why-bar bar-track" aria-hidden="true"><i class="bar-fill ${fill}" style="width:${width}%"></i></span></a></li>`
     );
@@ -190,11 +189,11 @@ export function buildReport(src) {
     inner = inner.replace(/<h3\b([^>]*)>([\s\S]*?)<\/h3>/g, (_h3, h3attrs, h3inner) => {
       m += 1;
       const hid = attr(h3attrs, "id") || autoId(`${id}-${m}`);
-      children.push({ id: hid, label: attr(h3attrs, "data-toc") || textOf(h3inner) });
+      children.push({ id: hid, label: decodeEntities(attr(h3attrs, "data-toc") || "") || textOf(h3inner) });
       const rest = h3attrs.replace(/\s*\bid="[^"]*"/, "");
       return `<h3 id="${hid}"${rest}>${h3inner}</h3>`;
     });
-    entries.push({ id, kind, secno, label: attr(attrs, "data-toc") || h2Text, children });
+    entries.push({ id, kind, secno, label: decodeEntities(attr(attrs, "data-toc") || "") || h2Text, children });
     const rest = attrs.replace(/\s*\bid="[^"]*"/, "");
     // 見出し帯: 番号チップと h2 を1つの帯にまとめ、セクションの囲みの上端に置く (種類ごとの色は report.css の --kind)
     const head = inner.match(/<h2\b[^>]*>[\s\S]*?<\/h2>/)[0];
@@ -220,9 +219,9 @@ export function buildReport(src) {
 
   const li = (e) => {
     const sub = e.children.length
-      ? `\n<ol>${e.children.map((c) => `\n<li><a href="#${c.id}" data-label="${escAttr(c.label)}"><span class="toc-label">${c.label}</span></a></li>`).join("")}\n</ol>`
+      ? `\n<ol>${e.children.map((c) => `\n<li><a href="#${c.id}" data-label="${esc(c.label)}"><span class="toc-label">${esc(c.label)}</span></a></li>`).join("")}\n</ol>`
       : "";
-    return `\n<li data-kind="${e.kind}"><a href="#${e.id}" data-label="${escAttr(e.label)}"><span class="toc-no">${e.secno}</span><span class="toc-label">${e.label}</span></a>${sub}</li>`;
+    return `\n<li data-kind="${e.kind}"><a href="#${e.id}" data-label="${esc(e.label)}"><span class="toc-no">${e.secno}</span><span class="toc-label">${esc(e.label)}</span></a>${sub}</li>`;
   };
   const toc =
     `<nav class="toc side-nav" aria-label="目次">\n<details open>\n<summary>目次<span class="toc-current"></span></summary>\n` +

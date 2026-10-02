@@ -138,9 +138,10 @@
 
 守ること:
 
+- 説明箱は用語専用の `role="tooltip"` とし、表示中だけ用語の `aria-describedby` で結ぶ。閉じたらその参照を外し、既存の説明先は保つ。図の値の箱とは分ける。
 - **説明文は `dd` だけが持つ**。その場の説明は `dd` を DOM から読んで組み立てる。同じ文を2か所に書かない(片方だけ直る事故を構造で防ぐ)。
 - **JS を切っても届く**。`.term` は `#<用語集のid>` へのただのリンクなので、印刷でも JS 無効でも同じ説明に辿り着く。
 - 図には `details.howto`(「この図の読み方」)を1文だけ添える。既定は閉じたまま。
-- 用語1語につき印は1つ。同じ用語を何度も印付けすると、点線だらけで本文が読めなくなる。
+- 読み手が視線を移すまとまりごとに、同じ用語の印は1回。まとまりの粒度は文書や生成器側で決め、同じ語の全出現へ印を付けない。
 
-参照実装: `assets/reference/catalog.html` の「用語」、`assets/reference/reference-interactions.js` の `bindTerms`。
+参照実装: `assets/reference/catalog.html` の「用語」、`assets/reference/term-ui.js` (`reference-interactions.js` の `bindTerms` はここへ委譲)。

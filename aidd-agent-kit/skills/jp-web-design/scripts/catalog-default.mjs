@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process'
-import { access, copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { failCli, oneOf, parseArgs as parseCliArgs } from './lib/args.mjs'
 import { projectEligibility, readProjectSources } from './lib/eligibility.mjs'
 import { walkSources } from './lib/fs-walk.mjs'
-import { canonicalPaths, evidenceDigest, isInsideRoot, loadCanonicalSources, sha256, skillRoot } from './lib/provenance.mjs'
+import { evidenceDigest, isInsideRoot, loadCanonicalSources, sha256, skillRoot } from './lib/provenance.mjs'
 
 const runtimeAuditPath = join(skillRoot, 'scripts/catalog-runtime-audit.mjs')
 const usage = 'usage: catalog-default.mjs <plan|apply|verify> <app-root> [--app-state=new|existing] [--mode=standard|pop|external-brand] [--eligibility=eligible|unknown] [--reviewed-upgrade] [--entry-css=path] [--stage=v0|v1] [--base-url=url] [--scenarios=path] [--json]'
@@ -163,7 +163,38 @@ async function exists(path) {
 // 配置先では部品CSSと色CSSが同じフォルダに並ぶため、import だけ書き換える。
 async function readSources() {
   const { profile, token, component, digest } = await loadCanonicalSources()
-  return { profile, token, component: component.replace('@import url("../standard/standard-color-system.css");', '@import url("./standard-color-system.css");'), digest }
+  const appComponent = component.replace('@import url("../standard/standard-color-system.css");', '@import url("./standard-color-system.css");')
+  const assets = [
+    { id: 'token-asset', path: profile.generated_artifacts.token_css, body: token },
+    { id: 'component-asset', path: profile.generated_artifacts.component_css, body: appComponent }
+  ].map((asset) => ({ ...asset, sha256: sha256(asset.body) }))
+  return { profile, token, component: appComponent, digest, assets }
+}
+
+// apply の生成宣言と plan/verify の期待値は同じ契約から作る。採用部品・例外は利用側の記録なので含めない。
+function profileContract(sources) {
+  return [
+    ['schema_version', 'profile-schema-version', 1],
+    ['profile_id', 'profile-id', sources.profile.profile_id],
+    ['profile_version', 'profile-version', sources.profile.profile_version],
+    ['profile_digest', 'profile-digest', sources.digest],
+    ['mode', 'profile-mode', sources.profile.default_mode],
+    ['source_catalog', 'profile-source-catalog', sources.profile.source.catalog],
+    ['assets', 'profile-assets', sources.assets.map(({ path, sha256 }) => ({ path, sha256 }))],
+    ['samples_copied', 'sample-copy-disabled', false]
+  ]
+}
+
+function profileMetadataChecks(adopted, sources) {
+  const checks = profileContract(sources).map(([key, id, expected]) => ({
+    key, id, passed: JSON.stringify(adopted?.[key]) === JSON.stringify(expected), evidence: adopted?.[key] ?? 'missing'
+  }))
+  checks.push(
+    { key: 'app_state', id: 'profile-app-state', passed: ['new', 'existing'].includes(adopted?.app_state), evidence: adopted?.app_state ?? 'missing' },
+    { key: 'eligibility', id: 'profile-eligibility', passed: adopted?.eligibility === (adopted?.app_state === 'new' ? 'new-app' : 'eligible'), evidence: adopted?.eligibility ?? 'missing' },
+    { key: 'reviewed_upgrade', id: 'profile-reviewed-upgrade', passed: typeof adopted?.reviewed_upgrade === 'boolean', evidence: adopted?.reviewed_upgrade ?? 'missing' }
+  )
+  return checks
 }
 
 function parseArgs(argv) {
@@ -206,7 +237,7 @@ async function detectEntry(options) {
 async function consumerSourceFiles(root, adoption) {
   const extensions = new Set(['.html', '.htm', '.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.vue', '.svelte', '.astro', '.md', '.mdx', '.php', '.erb', '.ejs', '.njk', '.twig', '.liquid', '.razor', '.css', '.scss', '.sass', '.less', '.json'])
   // 見本文言の検査は利用側の実装だけが対象。docs・テストは見本文言を正当に含みうるので読まない。
-  const skipDirectories = ['docs', 'test', 'tests', '__tests__', 'eval-log']
+  const skipDirectories = ['docs', 'test', 'tests', '__tests__', 'spec', 'specs', 'eval-log']
   const candidateRoots = new Set(['src', 'app', 'pages', 'components', 'public'])
   const found = new Set()
   for (const item of adoption) {
@@ -214,16 +245,19 @@ async function consumerSourceFiles(root, adoption) {
       const declared = resolve(root, file)
       if (isInsideRoot(root, declared) && await exists(declared)) found.add(declared)
       const [first] = file.split(/[\\/]/)
-      if (first && first !== '..') candidateRoots.add(first)
+      if (first && first !== '..' && !skipDirectories.includes(first)) candidateRoots.add(first)
     }
   }
+  // 検査用ファイルだけを狭く除外する。declared source_files は上で先に追加済みなので必ず照合する。
   const accept = (_path, name) => extensions.has(extname(name).toLowerCase())
+    && !/\.(?:test|spec)\.[^.]+$/i.test(name)
+    && !/^(?:__check_nav_deploy\d*|__prod_check)\.mjs$/.test(name)
   for (const candidate of candidateRoots) {
     for await (const file of walkSources(join(root, candidate), { accept, skipDirectories, ignoreErrors: true })) found.add(file)
   }
   let rootEntries = []
   try { rootEntries = await readdir(root, { withFileTypes: true }) } catch {}
-  for (const entry of rootEntries) if (entry.isFile() && extensions.has(extname(entry.name).toLowerCase())) found.add(join(root, entry.name))
+  for (const entry of rootEntries) if (entry.isFile() && accept(join(root, entry.name), entry.name)) found.add(join(root, entry.name))
   return [...found].sort()
 }
 
@@ -236,10 +270,7 @@ async function existingManagedDrift(options, sources) {
   if (options.appState !== 'existing') return []
   const targets = sources.profile.generated_artifacts
   const drift = []
-  for (const [path, expected] of [
-    [targets.token_css, sources.token],
-    [targets.component_css, sources.component]
-  ]) {
+  for (const { path, body: expected } of sources.assets) {
     const target = join(options.root, path)
     if (!(await exists(target))) continue
     const actual = await readFile(target, 'utf8')
@@ -249,8 +280,9 @@ async function existingManagedDrift(options, sources) {
   if (await exists(designProfilePath)) {
     try {
       const current = JSON.parse(await readFile(designProfilePath, 'utf8'))
-      if (current.profile_id !== sources.profile.profile_id || current.profile_digest !== sources.digest) {
-        drift.push({ path: targets.design_profile, reason: 'profile-provenance-drift', expected_profile_id: sources.profile.profile_id, actual_profile_id: current.profile_id ?? null, expected_digest: sources.digest, actual_digest: current.profile_digest ?? null })
+      const mismatched = profileMetadataChecks(current, sources).filter((item) => !item.passed)
+      if (mismatched.length > 0) {
+        drift.push({ path: targets.design_profile, reason: 'profile-provenance-drift', mismatched_fields: mismatched.map((item) => item.key), expected_profile_id: sources.profile.profile_id, actual_profile_id: current.profile_id ?? null, expected_digest: sources.digest, actual_digest: current.profile_digest ?? null })
       }
     } catch {
       drift.push({ path: targets.design_profile, reason: 'invalid-design-profile' })
@@ -298,63 +330,105 @@ function importPath(fromEntry, targetCss) {
   return path
 }
 
-// insertAt は「直近の @charset/@import/コメント終端の直後」= 確定位置。
-// pending はそこから空行を跨いだ位置で、後ろに本文が現れたときだけ採用する。
-// 空行で insertAt を直接進めると、import とコメントだけで終わるファイル
-// (Tailwind v4 の `@import "tailwindcss";` など) では split('\n') が作る
-// 末尾の空要素まで消費して挿入位置が毎回 1 行ずつ後退し、apply が非冪等になる。
+// 有効な先頭at-ruleの末尾へ挿入する。改行の消費は1件だけにし、applyのbyte冪等性を保つ。
 function addImportAfterExistingImports(body, cssImport) {
-  const lines = body.split('\n')
-  let insertAt = 0
-  let pending = 0
-  let inComment = false
-  for (let index = 0; index < lines.length; index += 1) {
-    const trimmed = lines[index].trim()
-    if (inComment) {
-      pending = index + 1
-      if (trimmed.includes('*/')) { inComment = false; insertAt = pending }
-      continue
-    }
-    if (!trimmed) { pending = index + 1; continue }
-    if (trimmed.startsWith('/*')) {
-      pending = index + 1
-      if (trimmed.includes('*/')) insertAt = pending
-      else inComment = true
-      continue
-    }
-    if (/^@(charset|import)\b/.test(trimmed)) { insertAt = index + 1; pending = insertAt; continue }
-    insertAt = pending
-    break
+  const rules = cssTopLevelRules(body)
+  let insertAt = rules[0]?.index ?? body.length
+  for (const rule of rules) {
+    if (!importPreambleRule(rule)) break
+    insertAt = rule.end
   }
-  lines.splice(insertAt, 0, cssImport)
-  return lines.join('\n')
+  if (body.startsWith('\r\n', insertAt)) insertAt += 2
+  else if (body[insertAt] === '\n') insertAt += 1
+  const before = body.slice(0, insertAt)
+  return `${before}${before && !before.endsWith('\n') ? '\n' : ''}${cssImport}\n${body.slice(insertAt)}`
 }
 
 function cssWithoutComments(body) {
-  return body.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, ' '))
+  // URLや文字列内のコメント風文字はCSSコメントではない。indexは元ソースと一致させる。
+  const output = body.split('')
+  let quote = null
+  for (let index = 0; index < body.length; index += 1) {
+    if (quote) {
+      if (body[index] === '\\') index += 1
+      else if (body[index] === quote) quote = null
+    } else if (body[index] === '"' || body[index] === "'") quote = body[index]
+    else if (body.startsWith('/*', index)) {
+      const closing = body.indexOf('*/', index + 2)
+      const end = closing < 0 ? body.length : closing + 2
+      for (let cursor = index; cursor < end; cursor += 1) if (output[cursor] !== '\n' && output[cursor] !== '\r') output[cursor] = ' '
+      index = end - 1
+    }
+  }
+  return output.join('')
+}
+
+function cssTopLevelRules(body) {
+  const clean = cssWithoutComments(body)
+  const rules = []
+  let start = null
+  let quote = null
+  let parentheses = 0
+  let braces = 0
+  let block = false
+  for (let index = 0; index < clean.length; index += 1) {
+    const char = clean[index]
+    if (start === null) {
+      if (/\s/.test(char)) continue
+      start = index
+    }
+    if (quote) {
+      if (char === '\\') index += 1
+      else if (char === quote) quote = null
+      continue
+    }
+    if (char === '"' || char === "'") { quote = char; continue }
+    if (char === '(') parentheses += 1
+    else if (char === ')') parentheses = Math.max(0, parentheses - 1)
+    if (parentheses > 0) continue
+    if (char === '{') { braces += 1; block = true }
+    else if (char === '}') braces = Math.max(0, braces - 1)
+    if (braces === 0 && (char === ';' || char === '}')) {
+      const text = clean.slice(start, index + 1)
+      rules.push({ index: start, end: index + 1, text, name: text.match(/^@([\w-]+)/)?.[1]?.toLowerCase() ?? '', block })
+      start = null
+      block = false
+    }
+  }
+  return rules
+}
+
+function importPreambleRule(rule) {
+  return !rule.block && ['charset', 'import', 'layer'].includes(rule.name)
 }
 
 function importStatements(body) {
-  return [...cssWithoutComments(body).matchAll(/@import\b[^;]*;/g)].map((match) => ({ index: match.index, text: match[0] }))
+  let preamble = true
+  const imports = []
+  for (const rule of cssTopLevelRules(body)) {
+    if (rule.name === 'import' && !rule.block) imports.push({ ...rule, ...parseImport(rule.text), validPosition: preamble })
+    if (!importPreambleRule(rule)) preamble = false
+  }
+  return imports
 }
 
-function importTarget(cssImport) {
-  return cssImport.match(/["']([^"']+)["']/)?.[1] ?? ''
+function parseImport(cssImport) {
+  const match = cssImport.match(/^@import\s+(?:"([^"\\]*)"|'([^'\\]*)'|url\(\s*(?:"([^"\\]*)"|'([^'\\]*)'|([^'"\s()\\]+))\s*\))\s*([\s\S]*?);\s*$/i)
+  return { target: match ? match.slice(1, 6).find((value) => value !== undefined) ?? '' : '', screenUnconditional: Boolean(match && /^(?:all|screen)?$/i.test(match[6].trim())) }
 }
 
 function canonicalImportState(body, cssImport) {
-  const target = importTarget(cssImport)
+  const { target } = parseImport(cssImport)
   const statements = importStatements(body)
-  const canonical = statements.filter((statement) => target && statement.text.includes(target))
+  const canonical = statements.filter((statement) => target && statement.target === target)
+  const active = canonical.filter((statement) => statement.validPosition && statement.screenUnconditional)
   return {
-    activeCount: canonical.length,
-    orderedAfterImports: canonical.length === 1 && statements.every((statement) => statement === canonical[0] || statement.index < canonical[0].index)
+    activeCount: active.length,
+    orderedAfterImports: canonical.length === 1 && active.length === 1 && statements.filter((statement) => statement.validPosition).every((statement) => statement === canonical[0] || statement.index < canonical[0].index)
   }
 }
 
-// 除去は行単位で行う。addImportAfterExistingImports が行を splice で挿入するため、
-// 文の範囲だけ削ると空行が残り、apply のたびに 1 行ずつ増える(verify は @import の
-// 個数と順序しか見ないので検出されない)。削除と挿入の単位を揃えて冪等にする。
+// 単独行のimportは改行ごと除去する。文だけ削ると再挿入時に空行が増えるため、byte冪等性も保つ。
 function dropRange(body, start, end) {
   const lineStart = body.lastIndexOf('\n', start - 1) + 1
   const newline = body.indexOf('\n', end)
@@ -365,11 +439,10 @@ function dropRange(body, start, end) {
 }
 
 function normalizeCanonicalImport(body, cssImport) {
-  const target = importTarget(cssImport)
-  const clean = cssWithoutComments(body)
-  const ranges = [...clean.matchAll(/@import\b[^;]*;/g)]
-    .filter((match) => target && match[0].includes(target))
-    .map((match) => [match.index, match.index + match[0].length])
+  const { target } = parseImport(cssImport)
+  const ranges = importStatements(body)
+    .filter((statement) => target && statement.target === target)
+    .map((statement) => [statement.index, statement.end])
     .sort((a, b) => b[0] - a[0])
   let normalized = body
   for (const [start, end] of ranges) normalized = dropRange(normalized, start, end)
@@ -388,11 +461,12 @@ async function apply(options, sources) {
   if (!entry) return { ...proposed, action: 'apply', status: 'REFUSED', changed: [] }
 
   const targets = sources.profile.generated_artifacts
-  const tokenTarget = join(options.root, targets.token_css)
   const componentTarget = join(options.root, targets.component_css)
-  await mkdir(dirname(tokenTarget), { recursive: true })
-  await copyFile(canonicalPaths.token, tokenTarget)
-  await writeFile(componentTarget, sources.component)
+  for (const asset of sources.assets) {
+    const target = join(options.root, asset.path)
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, asset.body)
+  }
 
   const cssImport = `@import url("${importPath(entry, componentTarget)}");`
   const entryBody = await readFile(entry, 'utf8')
@@ -402,23 +476,13 @@ async function apply(options, sources) {
   let previous = {}
   try { previous = JSON.parse(await readFile(join(options.root, targets.design_profile), 'utf8')) } catch {}
   const designProfile = {
-    schema_version: 1,
-    profile_id: sources.profile.profile_id,
-    profile_version: sources.profile.profile_version,
-    profile_digest: sources.digest,
-    mode: sources.profile.default_mode,
+    ...Object.fromEntries(profileContract(sources).map(([key, , value]) => [key, value])),
     app_state: options.appState,
     eligibility: options.appState === 'new' ? 'new-app' : options.eligibility,
     reviewed_upgrade: options.reviewedUpgrade,
-    source_catalog: sources.profile.source.catalog,
     entry_css: relative(options.root, entry).split(sep).join('/'),
-    assets: [
-      { path: targets.token_css, sha256: sha256(sources.token) },
-      { path: targets.component_css, sha256: sha256(sources.component) }
-    ],
     adopted_components: Array.isArray(previous.adopted_components) ? previous.adopted_components : [],
-    exceptions: Array.isArray(previous.exceptions) ? previous.exceptions : [],
-    samples_copied: false
+    exceptions: Array.isArray(previous.exceptions) ? previous.exceptions : []
   }
   await writeJson(join(options.root, targets.design_profile), designProfile)
   const scenarioPath = join(options.root, targets.runtime_scenarios)
@@ -455,10 +519,7 @@ async function verify(options, sources) {
   let adopted
   try { adopted = JSON.parse(await readFile(join(options.root, targets.design_profile), 'utf8')) } catch {}
   check('profile-present', adopted, targets.design_profile)
-  check('profile-id', adopted?.profile_id === sources.profile.profile_id, adopted?.profile_id ?? 'missing')
-  check('profile-version', adopted?.profile_version === sources.profile.profile_version, adopted?.profile_version ?? 'missing')
-  check('profile-digest', adopted?.profile_digest === sources.digest, adopted?.profile_digest ?? 'missing')
-  check('sample-copy-disabled', adopted?.samples_copied === false, adopted?.samples_copied ?? 'missing')
+  for (const { id, passed, evidence } of profileMetadataChecks(adopted, sources)) check(id, passed, evidence)
 
   const adoption = Array.isArray(adopted?.adopted_components) ? adopted.adopted_components : []
   check('component-adoption-declared', adoption.length > 0, String(adoption.length))
@@ -499,10 +560,7 @@ async function verify(options, sources) {
     }
   }
 
-  for (const [id, target, expected] of [
-    ['token-asset', targets.token_css, sources.token],
-    ['component-asset', targets.component_css, sources.component]
-  ]) {
+  for (const { id, path: target, body: expected } of sources.assets) {
     let actual
     try { actual = await readFile(join(options.root, target), 'utf8') } catch {}
     check(id, actual === expected, actual ? sha256(actual) : 'missing')

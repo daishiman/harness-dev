@@ -1,15 +1,13 @@
 #!/usr/bin/env node
-// 各ファイルの var(--x) が、正本CSSかそのファイル自身で定義されたトークンを指しているかを検査する。
-// 未定義トークンは CSS では静かに無視され、色が消えても検査もブラウザーも何も言わない。
-// v0.3 の改名 (--p-brand-magenta → --p-brand-accent) で見本の3か所が実際にこうなった。
+// consumer自身と、実際に読み込むstylesheetの定義だけでvar()を検査する。
+// 別HTMLの局所定義で未定義参照を救済しない。fallback付きvar()は未定義でも有効。
 // 使い方: node scripts/check-token-references.mjs
 // 終了コード: 0=全PASS / 1=未定義参照あり / 2=読込エラー
 
 import { readFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { loadTokens } from './standard-tokens.mjs'
 
-// 正本のトークンを使う側のファイル。ここに足し忘れると検査の外に出るので、色を使うCSS/HTMLは必ず載せる
 const CONSUMERS = [
   '../assets/standard/standard-color-preview.html',
   '../assets/reference/styles.css',
@@ -17,47 +15,66 @@ const CONSUMERS = [
   '../assets/reference/index.html',
   '../assets/reference/pop.html'
 ]
+const withoutComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '')
+const attribute = (tag, name) => tag.match(new RegExp(`\\b${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'))?.[2]
 
-let master
+function cssOf(text, path) {
+  const source = withoutComments(text)
+  if (path.endsWith('.css')) return source
+  return [
+    ...[...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map((match) => match[1]),
+    ...[...source.matchAll(/\bstyle\s*=\s*(["'])([\s\S]*?)\1/gi)].map((match) => match[2])
+  ].join('\n')
+}
+
+function importsOf(text, css, path) {
+  const links = path.endsWith('.css') ? [] : [...withoutComments(text).matchAll(/<link\b[^>]*>/gi)]
+    .filter((match) => attribute(match[0], 'rel')?.split(/\s+/).includes('stylesheet'))
+    .map((match) => attribute(match[0], 'href'))
+  const imports = [...css.matchAll(/@import\s+(?:url\(\s*(["']?)([^\s)"']+)\1\s*\)|(["'])(.*?)\3)/gi)]
+    .map((match) => match[2] || match[4])
+  return [...links, ...imports].filter((ref) => ref && !/^(?:[a-z][\w+.-]*:|\/\/|#)/i.test(ref))
+}
+
+const cache = new Map()
+async function source(path) {
+  if (!cache.has(path)) cache.set(path, await readFile(path, 'utf8'))
+  return cache.get(path)
+}
+
+async function definitionsOf(path, seen = new Set()) {
+  if (seen.has(path)) return []
+  seen.add(path)
+  const text = await source(path)
+  const css = cssOf(text, path)
+  const definitions = [...css.matchAll(/--([\w-]+)\s*:/g)].map((match) => match[1])
+  for (const ref of importsOf(text, css, path)) {
+    definitions.push(...await definitionsOf(fileURLToPath(new URL(ref, pathToFileURL(path))), seen))
+  }
+  return definitions
+}
+
 try {
-  ;({ raw: master } = await loadTokens())
+  const { raw: master } = await loadTokens()
+  let failed = false
+  for (const relative of CONSUMERS) {
+    const path = fileURLToPath(new URL(relative, import.meta.url))
+    const text = await source(path)
+    const css = cssOf(text, path)
+    const defined = new Set([...Object.keys(master), ...await definitionsOf(path)])
+    const missing = new Set()
+    for (const match of css.matchAll(/var\(\s*--([\w-]+)\s*([,)])/g)) {
+      if (!defined.has(match[1]) && match[2] !== ',') missing.add(match[1])
+    }
+    const name = relative.replace('../', '')
+    if (!missing.size) console.log(`PASS ${name} の var() は全て定義済み、またはfallbackあり`)
+    else {
+      failed = true
+      for (const token of missing) console.error(`FAIL ${name} 未定義のトークンを参照: --${token}`)
+    }
+  }
+  if (failed) process.exitCode = 1
 } catch (error) {
   console.error(`ERROR ${error.message}`)
-  process.exit(2)
+  process.exitCode = 2
 }
-
-const sources = new Map()
-for (const relative of CONSUMERS) {
-  try {
-    sources.set(relative, await readFile(fileURLToPath(new URL(relative, import.meta.url)), 'utf8'))
-  } catch (error) {
-    console.error(`ERROR ${error.message}`)
-    process.exit(2)
-  }
-}
-// 定義は正本CSSと、キット内で互いに読み込み合うこれらのファイル (styles.css は部品用トークンを自前で持ち、
-// pop.html / index.html はそれを読み込む。--stagger のように style 属性で渡すものもある) の和で判定する
-const defined = new Set(Object.keys(master))
-for (const text of sources.values()) {
-  for (const match of text.matchAll(/--([\w-]+)\s*:/g)) defined.add(match[1])
-}
-
-let failed = false
-for (const [relative, text] of sources) {
-  const missing = new Map()
-  for (const match of text.matchAll(/var\(\s*--([\w-]+)/g)) {
-    const name = match[1]
-    if (defined.has(name)) continue
-    const line = text.slice(0, match.index).split('\n').length
-    if (!missing.has(name)) missing.set(name, line)
-  }
-  const name = relative.replace('../', '')
-  if (missing.size === 0) {
-    console.log(`PASS ${name} の var() は全て定義済み`)
-  } else {
-    failed = true
-    for (const [token, line] of missing) console.error(`FAIL ${name}:${line} 未定義のトークンを参照: --${token}`)
-  }
-}
-
-if (failed) process.exitCode = 1

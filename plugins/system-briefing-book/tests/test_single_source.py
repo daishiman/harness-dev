@@ -3,7 +3,7 @@
 - 文書の見出しと表の列: 正本は assets/templates/*.md.tmpl と validate-briefing-docs.mjs の定数。写しは references/document-structure.md。
 - 型の表示名: 正本は scripts/lib/briefing-files.mjs の TYPE_LABEL。写しは references/page-patterns.md の型の見出し。
 - 検査のコード名: 正本は scripts/**/*.mjs。写しは references・agents・skills/*/references の md。
-- ボードの CSS: 正本は assets/css。写しは examples/sample-haisha/打ち合わせ資料/_src。
+- ボードの CSS: 正本は assets/css (tokens.css は scripts/lib/palette.mjs が組み立てる)。写しは examples/sample-haisha/打ち合わせ資料/_src。
 - ボードの大きさ: 正本は assets/data/quality-thresholds.json の board。写しは assets/css/common.css の .board。
 - お手本の文書: 正本は validate-briefing-docs.mjs の検査。examples/sample-haisha はそれを通る。
 - briefing.json の項目: 正本は schemas/briefing.schema.json (tests/test_briefing_schema.py が見る)。
@@ -139,9 +139,9 @@ def test_code_names_in_docs_exist_in_scripts() -> None:
 
 
 def test_example_css_and_board_size() -> None:
-    palette = json.loads(read(EXAMPLE_OUT / "briefing.json"))["palette"]
+    assert json.loads(read(EXAMPLE_OUT / "briefing.json"))["palette"] == "standard", "お手本は既定の配色で作る"
     assert (EXAMPLE_OUT / "_src" / "common.css").read_bytes() == (CSS / "common.css").read_bytes()
-    assert (EXAMPLE_OUT / "_src" / "tokens.css").read_bytes() == (CSS / f"tokens-{palette}.css").read_bytes()
+    # tokens.css が組み立てどおりかは tests/test_palette.py が見る
     # render-board-png.mjs は描くたびに大きさを確かめる。ここではブラウザが無くても 1 回だけ見る
     board = json.loads(read(PLUGIN_ROOT / "assets" / "data" / "quality-thresholds.json"))["board"]
     rule = re.search(r"^\.board\s*\{([^}]*)\}", read(CSS / "common.css"), re.M)[1]

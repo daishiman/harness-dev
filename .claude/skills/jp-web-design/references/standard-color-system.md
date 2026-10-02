@@ -9,15 +9,20 @@ INV-15: UIの配色は本書と `assets/standard/standard-color-system.css` の�
 - 正本の順位: `assets/standard/standard-color-system.css`(機械可読メタデータ・値・共通クラス) → 本書(使い方) → `assets/standard/standard-color-tokens.json` / standalone preview / catalog実測値(生成物)。
 - 本書はHEXや比率を正本として持たない。値はCSS(版は `@standard-meta` の `version`)、ペアごとの比は `node scripts/check-standard-contrast.mjs` の出力が正。
 - 正式CI色や承認済みロゴ素材が届いたら、基本色 `--p-*` だけを差し替える。役割トークン名と役割の割り当ては変えない。
-- **色の値・版を変えるときの手順(1回の変更で適用先まで通す。正本はここ)**。次のコマンドはすべて `aidd-agent-kit/` を置いた親ディレクトリ(このリポジトリではリポジトリルート)で実行する。キット共通の更新は1〜5・8、6〜7は該当する適用先がある場合だけ行う:
+- **色の値・版を変えるときの手順(1回の変更で適用先まで通す。正本はここ)**。次のコマンドはすべて `aidd-agent-kit/` を置いた親ディレクトリ(このリポジトリではリポジトリルート)で実行する。キット共通の更新は1〜5・9、6〜8は該当する適用先がある場合だけ行う。**6〜8は独立した3系統の配布で、どれか1つを走らせても他は古いまま残る。該当するものをすべて走らせる**:
   1. `aidd-agent-kit/skills/jp-web-design/assets/standard/standard-color-system.css` だけを編集する(値・`@standard-meta` の版)。他のファイルへHEXを書かない。
   2. `node aidd-agent-kit/skills/jp-web-design/scripts/export-standard-tokens.mjs` — `standard-color-tokens.json` と standalone preview を再生成する(生成物は手書きしない)。
   3. `node aidd-agent-kit/skills/jp-web-design/scripts/inline-catalog-css.mjs` — `assets/reference/catalog.html` の埋め込みを再生成する。
   4. `node aidd-agent-kit/skills/jp-web-design/scripts/check-standard-contrast.mjs` と `node aidd-agent-kit/skills/jp-web-design/scripts/check-token-references.mjs` — コントラストと未定義参照を検査する。ペア表に不足があれば足して通す。
-  5. `node --test aidd-agent-kit/skills/jp-web-design/tests/` — 参照実装とスクリプトの回帰テストを通す。
+  5. `node --test 'aidd-agent-kit/skills/jp-web-design/tests/*.mjs'` — 参照実装とスクリプトの回帰テストを通す。**引用符を外さない**(Node自身にglobを展開させる)。ディレクトリを直接渡す形(`tests/`)はNode 22で `MODULE_NOT_FOUND` になり実行できない。
   6. report-design-system を使う場合だけ、`node aidd-agent-kit/skills/report-design-system/scripts/sync-kit.mjs --kit aidd-agent-kit` で下流の vendor へ取り込み、同スキルの保守検査を通す。report-design-system がないキットでは不要。
   7. このリポジトリの project scope を更新する場合だけ、`bash aidd-agent-kit/sync-project-mac.command` で `.claude/` `.agents/` の同期コピーへ配布する(同期コピー側を直接編集しない)。
-  8. 本書と `SKILL.md` の記述を追随させる。特に §1 の「現在の見え方」欄、§1 の面積比、トークン名の言及箇所。版番号は本文へ書かない(手順の外に出さない)。
+  8. **消費アプリ(このキットの配色を適用済みのアプリ)がある場合だけ、そのアプリへ再配布する**。ここを飛ばすと、CSSだけが新しい版になり、届いた証明(`docs/product/design-profile.json` の digest と v0 conformance)は前の版のまま残る。`<app-root>` はリポジトリルートからの相対パス(このリポジトリでは `app`):
+     - `node aidd-agent-kit/skills/jp-web-design/scripts/catalog-default.mjs plan <app-root> --app-state=existing --eligibility=eligible --reviewed-upgrade --json` — `decision` が `apply` になることと、`drift` / `writes_on_apply` の上書き対象を先に確認する。入口CSSを自動検出できず `css-entry-not-found` で止まる場合は `--entry-css=<app root相対パス>` を足す(このリポジトリでは `--entry-css=src/styles.css`)。
+     - `plan` と同じ引数で `apply` を実行する。`--reviewed-upgrade` は、管理下のアプリへ新しい版を上書きすることの明示証跡(付けないと `existing-managed-artifact-drift` で停止する)。配布先の `src/styles/aidd/` と `docs/product/design-profile.json` を手で編集しない。
+     - `node aidd-agent-kit/skills/jp-web-design/scripts/catalog-default.mjs verify <app-root> --stage=v0` が **exit 0(`PASS`)** になることを確認する。`--json` の `profile-digest` チェックが `false` のままなら再配布が効いていない。正式版前は `--stage=v1` も通す。適用判定・段階ゲートの詳細は `catalog-default-contract.md` が正本。
+  9. 本書と `SKILL.md` の記述を追随させる。特に §1 の「現在の見え方」欄、§1 の面積比、トークン名の言及箇所。版番号は本文へ書かない(手順の外に出さない)。
+- **操作・用語UIだけの変更でも配布証跡を更新する**。共通用語JS・操作JSを変えたら上の手順3でcatalogの埋め込みを再生成する。`profile_digest` は配色だけでなく `scripts/lib/provenance.mjs` の `loadCanonicalSources` が読む正本一式に依存するため、手順7・8も行う。report vendorの取り込み対象と各系統の起動条件はリポジトリの `AGENTS.md` の同期系統表を参照する。
 - 旧既定(グラファイト×アンバー、Light/Dark/auto)は廃止した。「ライトのみ」「既存アプリは色だけ移行」は INV-15 の不変条件で、本書が詳細(§2-10・§9)の正本。
 
 ## 1. 配色の軸

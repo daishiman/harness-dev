@@ -24,14 +24,16 @@ export const KIT_COLOR_IMPORT = '@import url("../standard/standard-color-system.
  * 色の値はキット正本 (vendor) だけが持つ。レポート側で基本色を上書きする層は置かない。
  */
 export const embeddedCss = () =>
-  [...VENDOR_FILES.map((f) => readFileSync(vendorPath(f), "utf8").replace(KIT_COLOR_IMPORT, "")), readFileSync(REPORT_CSS, "utf8")]
+  [...VENDOR_FILES.filter((f) => f.kind === "css").map((f) => readFileSync(vendorPath(f), "utf8").replace(KIT_COLOR_IMPORT, "")), readFileSync(REPORT_CSS, "utf8")]
     .map((s) => s.trimEnd())
     .join("\n");
-/** 埋め込むJS */
-export const embeddedJs = () => readFileSync(REPORT_JS, "utf8").trimEnd();
+/** 用語UIのvendor正本 → レポート固有JS。兄弟スキルへの実行時依存を置かない */
+export const embeddedJs = () =>
+  [...VENDOR_FILES.filter((f) => f.kind === "js").map((f) => readFileSync(vendorPath(f), "utf8")), readFileSync(REPORT_JS, "utf8")]
+    .map((s) => s.trimEnd()).join("\n");
 
 /**
- * 配布する単一HTMLの外枠 (vendor 配色 → キット部品 → report.css の <style>、report.js の <script>)。
+ * 配布する単一HTMLの外枠 (vendor 配色 → キット部品 → report.css の <style>、vendor用語UI → report.js の <script>)。
  * title・nav・body は HTML としてそのまま入れる (エスケープは呼ぶ側)。nav があれば目次と本文を .shell で横に並べる。
  * 図のツールチップ要素 (#tip) は常に置く (report.js は無ければ何もしない)。末尾は改行1つで終える。
  */
@@ -71,12 +73,11 @@ export const PRINT_BUTTON = '<div class="doc-tools"><button type="button" class=
 export const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 /** esc の逆 (&lt; &gt; &quot; &amp; だけを戻す。&amp; を最後に戻して二重に解かない) */
 export const decodeEntities = (s) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
-/** HTML断片からタグを除いた表示テキスト (実体参照はそのまま残す。字数の検査はこの長さで数える) */
-/** 表示テキスト。aria-hidden の飾り (用語マークの ?、棒グラフの帯) は読み上げられないので字数にも数えない */
+/** HTML断片の表示テキスト。esc の実体参照を戻し、aria-hidden の飾り (用語マークの ?、棒グラフの帯) は字数に数えない。 */
 export const textOf = (html) =>
-  html
+  decodeEntities(html
     .replace(/<(\w+)[^>]*\baria-hidden="true"[^>]*>[\s\S]*?<\/\1>/g, "")
-    .replace(/<[^>]*>/g, "")
+    .replace(/<[^>]*>/g, ""))
     .replace(/\s+/g, " ")
     .trim();
 /** 見えている文 (style・script を除き、タグを空白にして実体参照を戻したもの) */

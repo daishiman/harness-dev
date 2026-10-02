@@ -22,7 +22,7 @@ export async function loadTokens(cssPath = defaultCssPath) {
   const root = css.match(/:root\s*\{([\s\S]*?)\n\}/)
   if (!root) throw new Error(`:root block not found: ${cssPath}`)
   const raw = Object.fromEntries(
-    [...root[1].matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])
+    [...root[1].replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])
   )
   const resolve = (name, seen = new Set()) => {
     if (seen.has(name)) throw new Error(`circular var(): --${name}`)

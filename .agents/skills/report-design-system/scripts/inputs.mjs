@@ -6,12 +6,26 @@ import { INPUT_MANIFEST_FILE, INPUT_MANIFEST_VERSION, parseCsv, sha256, writeAto
 
 const SHA256_RE = /^[0-9a-f]{64}$/;
 
+/** 数値セル。空欄・非数値は null、桁区切りのカンマを除いた有限数だけを返す。profile と analysis の計算例で共用する。 */
+export function parseNumericCell(value) {
+  const text = String(value ?? "").trim().replace(/,/g, "");
+  if (!text) return null;
+  const number = Number(text);
+  return Number.isFinite(number) ? number : null;
+}
+
 /** CSV・オブジェクト配列JSON・D1 --jsonを、文字列セルの行配列として読む。 */
 export function readRows(file) {
   const text = readFileSync(file, "utf8");
   if (!/\.json$/i.test(file)) return parseCsv(text);
   const data = JSON.parse(text);
-  const rows = Array.isArray(data?.[0]?.results) ? data[0].results
+  const wrappers = Array.isArray(data) && data.some((part) => Array.isArray(part?.results));
+  // 列・型の異なるクエリ結果を黙って混ぜず、先頭だけを採用もしない。
+  // 分割した結果を別ファイルとして init に渡せば、profile-data が同一schemaを検査する。
+  if (wrappers && data.length !== 1) {
+    throw new Error(`${file}: 複数の D1 結果は結果ごとの JSON ファイルに分け、init で指定してください (同一schemaだけを連結できます)`);
+  }
+  const rows = wrappers ? data[0].results
     : Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : null;
   if (!rows || rows.some((row) => !row || typeof row !== "object" || Array.isArray(row))) {
     throw new Error(`${file}: オブジェクトの配列ではありません`);

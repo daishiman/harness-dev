@@ -1,5 +1,8 @@
 /* system-briefing-book ボードの共通部品
    - 色・文字・影はすべて tokens.css の var(--...) を使う。このファイルに色の値を書かない。
+   - 見た目の決まりは aidd-agent-kit の jp-web-design に従う。キットに役割がある部品 (ナビ、表、ボタン、
+     リンク、入力、チェック) はキットの役割の名前を直接使い、無いものはボードの言葉 (board-tokens.css) を使う。
+   - カード左端の色帯と、自作のアイコンは使わない (jp-web-design の恒久ルール)。
    - 1 ボード = 画像 1 枚。伝えることは 1 つ、文字は少なく、余白は広く。
    - 大きさと注記の数は assets/data/quality-thresholds.json の board を読む。.board の width と height はそこに合わせる。
    - 注記の種類ラベル (できること / しくみ / 決めること) は li[data-kind] の ::before が出す。HTML に書かない。
@@ -139,7 +142,7 @@ body {
   display: grid; grid-template-columns: 84px 1fr 84px; align-items: center;
   background: var(--bg-surface); border-bottom: 1px solid var(--line);
 }
-.app-head .back { font-size: 16px; color: var(--text-link); font-weight: 600; }
+.app-head .back { font-size: 16px; color: var(--link); font-weight: 600; }
 .app-head .title { text-align: center; font-size: 17px; font-weight: 800; white-space: nowrap; }
 .app-head .right { text-align: right; font-size: 14px; color: var(--text-muted); }
 .ptitle { font-size: 20px; font-weight: 800; margin: 2px 2px 0; }
@@ -173,8 +176,8 @@ body {
 .admin-head .brand { font-size: 17px; font-weight: 800; color: var(--text-brand); white-space: nowrap; }
 .admin-head .brand small { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); }
 .admin-head nav { display: flex; gap: 26px; height: 100%; }
-.admin-head nav a { display: flex; align-items: center; font-size: 15px; font-weight: 700; color: var(--text-2); border-bottom: 3px solid transparent; padding-top: 3px; }
-.admin-head nav a.on { color: var(--text-brand); border-bottom-color: var(--text-brand); }
+.admin-head nav a { display: flex; align-items: center; font-size: 15px; font-weight: 700; color: var(--nav-text-muted); border-bottom: 3px solid transparent; padding-top: 3px; }
+.admin-head nav a.on { color: var(--nav-selected-text); border-bottom-color: var(--nav-selected-indicator); }
 .admin-head .who { margin-left: auto; font-size: 14px; color: var(--text-2); white-space: nowrap; }
 .admin-head .who .link { margin-left: 14px; }
 
@@ -182,14 +185,13 @@ body {
 .app-frame { flex: 1; min-height: 0; display: grid; grid-template-columns: 208px 1fr; }
 .side-nav {
   min-height: 0; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
-  background: var(--bg-surface); border-right: 1px solid var(--line);
+  background: var(--nav-background); border-right: 1px solid var(--line);
 }
 .side-nav a {
   display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: var(--radius-btn);
-  font-size: 15px; font-weight: 700; color: var(--text-2); white-space: nowrap;
+  font-size: 15px; font-weight: 700; color: var(--nav-text-muted); white-space: nowrap;
 }
-.side-nav a .ico { width: 18px; height: 18px; flex: none; border-radius: 5px; border: 2px solid currentColor; }
-.side-nav a.on { background: var(--bg-brand-soft); color: var(--text-brand); box-shadow: inset 3px 0 0 var(--text-brand); }
+.side-nav a.on { background: var(--nav-selected-bg); color: var(--nav-selected-text); box-shadow: inset 3px 0 0 var(--nav-selected-indicator); }
 .side-nav .gap { flex: 1; }
 .side-nav .small { font-size: 12.5px; color: var(--text-muted); padding: 0 12px; line-height: 1.5; }
 .app-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
@@ -208,18 +210,18 @@ body {
 
 table.grid { width: 100%; border-collapse: collapse; font-size: 14px; }
 table.grid th {
-  text-align: left; font-weight: 700; color: var(--text-2); background: var(--bg-stripe);
+  text-align: left; font-weight: 700; color: var(--table-head-text); background: var(--table-head-bg);
   padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; font-size: 12.5px;
 }
 table.grid td { padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-table.grid tr:nth-child(even) td { background: var(--bg-stripe); }
+table.grid tr:nth-child(even) td { background: var(--table-stripe-bg); }
 table.grid td.r, table.grid th.r { text-align: right; }
 table.grid td.sub { color: var(--text-muted); font-size: 13px; }
-table.grid tr.cur td { background: var(--bg-accent-soft); }
-table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
-.sel { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--input-border); vertical-align: -3px; background: var(--bg-surface); position: relative; }
-.sel.on { background: var(--action-primary-bg); border-color: var(--action-primary-bg); }
-.sel.on::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border: solid var(--action-primary-ink); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+table.grid tr.cur td { background: var(--table-selected-bg); }
+table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--table-selected-indicator); }
+.sel { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--control-off-border); vertical-align: -3px; background: var(--bg-surface); position: relative; }
+.sel.on { background: var(--control-on); border-color: var(--control-on); }
+.sel.on::after { content: ""; position: absolute; left: 4.5px; top: 1px; width: 4px; height: 8px; border: solid var(--control-on-mark); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 
 /* ── 部品 ───────────────────────── */
 .btn {
@@ -228,11 +230,12 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
   border-radius: var(--radius-btn); font-size: 16px; font-weight: 700; white-space: nowrap;
 }
 .btn-primary { background: var(--action-primary-bg); color: var(--action-primary-ink); min-height: 52px; font-size: 17px; }
-.btn-secondary { background: var(--bg-surface); color: var(--text-link); border: 1.5px solid var(--text-link); }
-.btn-quiet { background: var(--bg-surface); color: var(--text-2); border: 1px solid var(--input-border); }
+.btn-secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border: 1px solid var(--action-secondary-border); }
+.btn-quiet { background: var(--action-quiet-bg); color: var(--action-quiet-text); border: 1px solid var(--border-subtle); }
 .btn-danger { background: var(--action-danger-bg); color: var(--action-danger-ink); }
 .btn.sm { min-height: 36px; font-size: 14px; padding: 0 14px; }
-.link { color: var(--text-link); font-weight: 600; }
+/* リンクは色と下線の両方で示す */
+.link { color: var(--link); font-weight: 600; text-decoration: underline; text-underline-offset: .2em; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
@@ -276,9 +279,9 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
 .input .ph { color: var(--text-muted); }
 .input .unit { margin-left: auto; color: var(--text-muted); font-size: 14px; }
 .input.warn { border: 2px solid var(--status-warning-line); background: var(--status-warning-bg); }
-.input.error { border: 2px solid var(--status-danger); background: var(--status-danger-bg); }
+.input.error { border: 2px solid var(--input-invalid-border); background: var(--status-danger-bg); }
 .field .why { font-size: 13px; color: var(--text-muted); line-height: 1.45; }
-.field .why.error { color: var(--status-danger); font-weight: 700; }
+.field .why.error { color: var(--input-invalid-message); font-weight: 700; }
 
 /* 写真の枠 (撮った紙や画像の代わり) */
 .photo {
@@ -317,7 +320,7 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
 .can .h b { font-size: 21px; font-weight: 800; line-height: 1.35; }
 .can p { margin: 0; font-size: 15.5px; color: var(--text-2); line-height: 1.65; }
 .can .dev { margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap; }
-.can .ill { flex: none; height: 150px; border-radius: 10px; background: var(--bg-page); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.can .ill { flex: none; height: 150px; border-radius: 10px; background: var(--bg-well); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .can .ill img { display: block; max-height: 100%; max-width: 100%; }
 .steps { display: flex; align-items: stretch; }
 .step {
@@ -332,9 +335,10 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
 .step p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-2); }
 .step .who { margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap; }
 .steps > .arrow-r { margin: 0 8px; }
-.step.system { background: var(--bg-accent-soft); border-color: var(--bg-accent-soft); }
-.step .vis { flex: none; height: 200px; border-radius: 10px; background: var(--bg-page); display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.step.system .vis { background: var(--bg-surface); }
+/* しくみが自動でやる段は、注記の「しくみ」と同じ色で示す (チップの「しくみ」の文字も添える) */
+.step.system { background: var(--note-how-bg); }
+.step .vis { flex: none; height: 200px; border-radius: 10px; background: var(--bg-well); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.step.system .vis, .step.system .chip.system { background: var(--bg-surface); }
 .step .vis img { display: block; max-width: 100%; max-height: 100%; }
 
 /* ── screen-map: 画面のサムネイル ───────────────────────── */
@@ -351,13 +355,13 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
 .tile .sno { flex: none; font: 800 13px/1.5 var(--font-num); color: var(--text-brand); background: var(--bg-brand-soft); border-radius: 6px; padding: 1px 7px; }
 .tile .h b { font-size: 17px; font-weight: 800; line-height: 1.3; }
 .tile .h .chip { margin-left: auto; }
-.tile .shot { flex: none; padding: 12px; border-radius: 10px; background: var(--bg-page); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.tile .shot { flex: none; padding: 12px; border-radius: 10px; background: var(--bg-well); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .tile .shot img { display: block; width: 100%; height: auto; }
 .tile.sp { flex: 0 0 280px; }
 .tile.sp .shot { height: 480px; }
 .tile.sp .shot img { width: auto; height: 100%; max-width: 100%; }
 .tile p { margin: 0; font-size: 14.5px; line-height: 1.6; }
-.tile .act { margin-top: auto; border-radius: var(--radius-btn); border: 1.5px solid var(--text-link); background: var(--bg-accent-soft); color: var(--text-link); font-size: 14px; font-weight: 700; padding: 6px 10px; text-align: center; }
+.tile .act { margin-top: auto; border-radius: var(--radius-btn); border: 1px solid var(--action-secondary-border); background: var(--action-secondary-bg); color: var(--action-secondary-text); font-size: 14px; font-weight: 700; padding: 6px 10px; text-align: center; }
 .lanes { display: flex; gap: 0; }
 .lane { padding: 6px 12px; border-radius: 10px 10px 0 0; font-size: 15px; font-weight: 800; border-bottom: 3px solid; white-space: nowrap; }
 .lane small { font-size: 13px; font-weight: 600; color: var(--text-2); margin-left: 8px; }
@@ -400,10 +404,10 @@ table.grid tr.cur td:first-child { box-shadow: inset 3px 0 0 var(--text-link); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
 .fact {
   min-width: 0; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 16px; row-gap: 2px;
-  background: var(--bg-surface); border: 1px solid var(--line); border-left: 5px solid var(--status-warning-line);
+  background: var(--bg-surface); border: 1px solid var(--line);
   border-radius: var(--radius-card); box-shadow: var(--shadow-soft); padding: 12px 18px;
 }
-.fact b { grid-row: span 2; font: 800 30px/1.1 var(--font-num); color: var(--text); white-space: nowrap; }
+.fact b { grid-row: span 2; font: 800 30px/1.1 var(--font-num); font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
 .fact span { min-width: 0; font-size: 15px; font-weight: 700; line-height: 1.4; color: var(--text-2); }
 .fact small { min-width: 0; font-size: 12.5px; line-height: 1.4; color: var(--text-muted); }
 

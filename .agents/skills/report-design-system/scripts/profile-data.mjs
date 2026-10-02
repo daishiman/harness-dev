@@ -10,7 +10,7 @@
 import { writeFileSync, existsSync } from "node:fs";
 import { basename } from "node:path";
 import { pathToFileURL } from "node:url";
-import { readRows } from "./inputs.mjs";
+import { readRows, parseNumericCell } from "./inputs.mjs";
 export { readRows };
 import { describe } from "./stats.mjs";
 
@@ -23,7 +23,7 @@ export function profile(rows) {
     const vals = rows.map((r) => (r[name] ?? "").trim());
     const filled = vals.filter((v) => v !== "");
     const col = { name, n: filled.length, missing: vals.length - filled.length };
-    const parsed = filled.map((raw) => ({ raw, value: Number(raw.replace(/,/g, "")) }));
+    const parsed = filled.map((raw) => ({ raw, value: parseNumericCell(raw) }));
     const nums = parsed.filter(({ value }) => Number.isFinite(value)).map(({ value }) => value);
     const invalidNumeric = parsed.filter(({ value }) => !Number.isFinite(value)).map(({ raw }) => raw);
     const distinct = new Set(filled);

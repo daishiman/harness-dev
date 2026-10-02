@@ -48,7 +48,7 @@ import { describe, quantile, outliersIQR, pareto, pearson, spearman, linreg, mea
 import { fmt, sfmt, figure, hbar, columns, line, multiline, waterfall, stacked, dumbbell, butterfly, heatmap, table, histogram, boxplot, scatter, forest, paretoChart, flow } from ${imp("charts.mjs")};
 import { header, conclusion, factor, actions, footer, source, num, parseCsv, hypothesisClaim } from ${imp("compose.mjs")};
 import { checkBrief, mergeBackgroundFiles, BG_FILE } from ${imp("check-llm.mjs")};
-import { readInputManifest, readRows } from ${imp("inputs.mjs")};
+import { readInputManifest, readRows, parseNumericCell } from ${imp("inputs.mjs")};
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = join(HERE, ${JSON.stringify(`${name}.src.html`)});
@@ -83,7 +83,9 @@ const DATA_FILES = INPUTS.files.map((entry) => entry.path);
 const rows = DATA_FILES.flatMap(readRows);
 
 // ---- 2. 計算: 問いの型ごとの関数 (references/statistics.md §2)。まず describe で n・中央値・外れ値を見る ----
-// const x = rows.map((r) => Number(r["列"])).filter(Number.isFinite);
+// const parsed = rows.map((r) => parseNumericCell(r["列"])); // 空欄を0にせず、桁区切りをprofileと同じ規則で読む
+// const x = parsed.filter(Number.isFinite);
+// const excluded = parsed.length - x.length; // 除外数・欠測率と実際のnを示す (statistics.md §4)
 // 分布: describe(x) / outliersIQR(rows, "列")          図: histogram / boxplot
 // 比較: welch(a, b) と mannWhitney(a, b) (順位双列相関は rankEffectLabel) / rateCI(k, n) / chisq([[..],[..]])   図: hbar / boxplot / columns
 // 関係: pearson・spearman(x, y) / linreg(x, y)         図: scatter

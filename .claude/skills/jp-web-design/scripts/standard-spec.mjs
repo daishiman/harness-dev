@@ -7,6 +7,7 @@ export const NON_TEXT = 3.0
 
 /** 満たすべきペア [前景, 背景, 基準, 用途] */
 export const required = [
+  ['text-inverse', 'p-brand-indigo', TEXT, 'ブランド軸×白文字'],
   ['text-primary', 'surface', TEXT, '本文×白'],
   ['text-primary', 'app-background', TEXT, '本文×画面背景'],
   ['text-secondary', 'surface', TEXT, '補助文字×白'],
@@ -21,8 +22,10 @@ export const required = [
   ['action-primary-text', 'action-primary-active', TEXT, '主ボタン押下'],
   ['action-secondary-text', 'action-secondary-bg', TEXT, '副ボタン'],
   ['action-secondary-text', 'action-secondary-hover', TEXT, '副ボタンhover'],
+  ['action-secondary-text', 'action-secondary-active', TEXT, '副ボタン押下'],
   ['action-danger-text', 'action-danger-bg', TEXT, '危険ボタン'],
   ['action-danger-text', 'action-danger-hover', TEXT, '危険ボタンhover'],
+  ['action-danger-text', 'action-danger-active', TEXT, '危険ボタン押下'],
   ['action-disabled-text', 'action-disabled-bg', TEXT, '無効ボタン'],
   ['link', 'surface', TEXT, 'リンク'],
   ['link-hover', 'surface', TEXT, 'リンクhover'],
@@ -89,12 +92,19 @@ export const tones = [
   ['装飾罫線 / 入力枠', 'border-subtle', 'border-control']
 ]
 
-/** 見本のコントラスト実例。required の用途名で引き、比率は計算値を出す */
+/** 見本のペアは検査表から導出する。値・ペアを生成側で別定義しない。 */
+function contrastSample(pair, label, borderSample = false) {
+  const entry = required.find((entry) => entry[3] === pair)
+  if (!entry) throw new Error(`見本の検査ペアがありません: ${pair}`)
+  const [foreground, bg] = entry
+  return { label, fg: borderSample ? 'text-primary' : foreground, bg,
+    ...(borderSample ? { border: foreground } : {}), sample: borderSample ? '枠' : 'Aa' }
+}
 export const contrastSamples = [
-  { label: 'ブランド軸 × 白文字', fg: 'text-inverse', bg: 'p-brand-indigo', sample: 'Aa' },
-  { label: '主ボタン', fg: 'action-primary-text', bg: 'action-primary-bg', sample: 'Aa' },
-  { label: '本文 × 白', fg: 'p-ink', bg: 'p-white', sample: 'Aa' },
-  { label: '入力枠 × 白', fg: 'text-primary', bg: 'surface', border: 'border-control', sample: '枠' }
+  contrastSample('ブランド軸×白文字', 'ブランド軸 × 白文字'),
+  contrastSample('主ボタン', '主ボタン'),
+  contrastSample('本文×白', '本文 × 白'),
+  contrastSample('入力枠×白', '入力枠 × 白', true)
 ]
 
 /** 見本の面積比。正本は references/standard-color-system.md。ここは見本へ焼き込むための転記 */

@@ -1,7 +1,7 @@
 # ページの型とボードの部品
 
 打ち合わせ資料のボード (1 枚 = 1 ページ) は、下の 7 種類の型だけで組む。
-雛形は plugin の `assets/templates/board-<型>.html`、部品の見た目は `assets/css/common.css`、色は `tokens.css` にある。
+雛形は plugin の `assets/templates/board-<型>.html`、部品の見た目は `assets/css/common.css`、色は `tokens.css` にある。見た目の既定は aidd-agent-kit の jp-web-design (標準カラーとその規範) で、組み立て方は [standard-attribution.md](../assets/css/standard-attribution.md) にある。
 
 ## 1 枚のボードの決まり
 
@@ -14,6 +14,7 @@
   - lead: briefing.json の `message` をそのまま使う (雛形が入れる)。言い換えたくなったら message のほうを直す。
 - meta に案件名を置く。briefing.json の `data_policy` が `masked` のときだけ、続けて `<span class="sample-flag">画面の中の名前と値は例です</span>` を置く。雛形 (`build-briefing-scaffold.mjs boards`) が `{{SAMPLE_FLAG}}` を埋める。名前と値の扱いは [quality-rules.md](quality-rules.md) の「名前と値の扱い (data_policy)」を読む。
 - 色・文字・余白は `var(--...)` だけ。`#1a2b3c` や `rgb()` を書くと RAW-COLOR で止まる。
+- jp-web-design の規範に従う。画面の地は白。カードの縁に色帯を付けない (分類と状態はチップ・点・進捗バーと言葉で示す。ナビの選択線と表の選択行の左線は可)。アイコンを自作しない。リンクは色と下線。数字は `--font-num` で桁をそろえる。注目させる色の面は 1 枚に 1〜2 か所まで。
 - 外の URL (画像、フォント、スクリプト) を読まない。画像は `_src/assets/` に置く。
 - スクリプトを書かない。PNG にするとき動かないため。
 

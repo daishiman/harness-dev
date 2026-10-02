@@ -75,6 +75,65 @@ def test_refresh_css_only_touches_css(tmp_path: Path) -> None:
     assert (base / "仕様書.md").read_text(encoding="utf-8") == "書きかけ\n"
 
 
+def test_palette_follows_briefing_json(tmp_path: Path) -> None:
+    """配色の正は briefing.json の palette。--palette を省いて作り直しても、記録した上書きが残る。"""
+    materials = make_materials(tmp_path)
+    first = tmp_path / "案件の配色.css"
+    first.write_text(":root { --p-brand-indigo: #0B5E4A; }\n", encoding="utf-8")
+    rc, _, err = init(materials, "--palette", str(first))
+    assert rc == 0, err
+    base = materials / "打ち合わせ資料"
+    tokens = base / "_src" / "tokens.css"
+    briefing = base / "briefing.json"
+    assert json.loads(briefing.read_text(encoding="utf-8"))["palette"].endswith("案件の配色.css")
+
+    rc, _, err = init(materials, "--refresh-css")
+    assert rc == 0, err
+    assert "--p-brand-indigo: #0B5E4A" in tokens.read_text(encoding="utf-8"), "記録した上書きで作り直す"
+
+    rc, out, _ = init(materials, "--palette", "standard", "--refresh-css")
+    assert rc == 2 and out["status"] == "usage-error", "記録と違う --palette は止める"
+    assert "--p-brand-indigo: #0B5E4A" in tokens.read_text(encoding="utf-8")
+
+    second = tmp_path / "別の配色.css"
+    second.write_text(":root { --p-brand-indigo: #123456; }\n", encoding="utf-8")
+    data = json.loads(briefing.read_text(encoding="utf-8"))
+    data["palette"] = "../../別の配色.css"
+    briefing.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    rc, out, err = init(materials)
+    assert rc == 0, err
+    assert out["stale_css"] == ["_src/tokens.css"], "--refresh-css を付け忘れたら、記録と合わない CSS を知らせる"
+    assert "#0B5E4A" in tokens.read_text(encoding="utf-8")
+    rc, out, err = init(materials, "--refresh-css")
+    assert rc == 0, err
+    assert out["stale_css"] == []
+    css = tokens.read_text(encoding="utf-8")
+    assert "#123456" in css and "#0B5E4A" not in css, "palette を直せば、その上書きで作り直す (相対は briefing.json の場所から)"
+
+
+def test_palette_is_recorded_relative_and_survives_a_move(tmp_path: Path) -> None:
+    """palette は materials と同じく資料フォルダからの相対で書く。素材と配色をまとめて動かしても同じ色で作り直せる。"""
+    project = tmp_path / "案件"
+    materials = make_materials(project)
+    (project / "案件の配色.css").write_text(":root { --p-brand-indigo: #0B5E4A; }\n", encoding="utf-8")
+    rc, _, err = init(materials, "--palette", str(project / "案件の配色.css"))
+    assert rc == 0, err
+    recorded = json.loads((materials / "打ち合わせ資料" / "briefing.json").read_text(encoding="utf-8"))["palette"]
+    assert recorded == "../../案件の配色.css"
+
+    moved = tmp_path / "移した先"
+    project.rename(moved)
+    rc, out, err = init(moved / "素材", "--refresh-css")
+    assert rc == 0, err
+    assert out["stale_css"] == []
+    assert "--p-brand-indigo: #0B5E4A" in (moved / "素材" / "打ち合わせ資料" / "_src" / "tokens.css").read_text(encoding="utf-8")
+
+    (moved / "案件の配色.css").unlink()
+    rc, out, err = init(moved / "素材", "--refresh-css")
+    assert rc == 2 and out["status"] == "usage-error"
+    assert "briefing.json の palette" in json.dumps(out, ensure_ascii=False) + err, "どこから来た値かを言う"
+
+
 def test_init_usage_errors(tmp_path: Path) -> None:
     rc, out, _ = run_script(SCRIPT, "init", "--materials", str(tmp_path / "なし"), "--title", "x")
     assert rc == 2 and out["status"] == "usage-error"
