@@ -160,11 +160,15 @@ def test_boards_sample_flag_follows_data_policy(tmp_path: Path) -> None:
 def test_hearing_template_matches_guide() -> None:
     guide = (PLUGIN_ROOT / "skills/run-briefing-hearing/references/hearing-guide.md").read_text(encoding="utf-8")
     section = guide.split("## 4. 質問の一覧", 1)[1].split("\n## 5.", 1)[0]
-    asked = re.findall(r"^\| [A-D]\d \| ([^|]+?) \|", section, re.M)
+    asked = re.findall(r"^\| ([A-D]\d+) \| (H\d{2}) \| ([^|]+?) \|", section, re.M)
+    numbers = sorted(no for _, no, _ in asked)
+    assert numbers == [f"H{i:02d}" for i in range(1, len(asked) + 1)], "番号は H01 から欠けも重なりもない"
+    legacy = [f"{c}{i}" for c, n in (("A", 6), ("B", 8), ("C", 6), ("D", 4)) for i in range(1, n + 1)]
+    by_symbol = {sym: no for sym, no, _ in asked}
+    assert [by_symbol[s] for s in legacy] == [f"H{i:02d}" for i in range(1, 25)], "もとからある H01〜H24 は変えない"
     template = (PLUGIN_ROOT / "assets/templates/hearing.md.tmpl").read_text(encoding="utf-8")
     rows = re.findall(r"^\| (H\d{2}) \| ([^|]+?) \|", template, re.M)
-    assert [no for no, _ in rows] == [f"H{i:02d}" for i in range(1, len(asked) + 1)]
-    assert [q for _, q in rows] == asked, "雛形の質問は hearing-guide 4 章の表と同じ順・同じ文"
+    assert rows == [(no, q) for _, no, q in asked], "雛形の行は hearing-guide 4 章の表と同じ順・同じ番号・同じ文"
 
 
 def test_kicker_for_single_hidden_page_has_no_number() -> None:

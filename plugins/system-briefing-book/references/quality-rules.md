@@ -50,7 +50,7 @@ render-board-png.mjs は warn でも exit 1 になる。[execution-contract.md](
 | 1 枚の端末 | 2 台まで | phone のボード |
 | 次に広げる候補 | 4 個まで | 仕様書 8 章 |
 
-- 選び方は既定案で決める。迷う所を利用者に何度も聞かず、既定案で進めて 決めること に回す (核心の 4 問の聞き足しは [hearing-guide.md](../skills/run-briefing-hearing/references/hearing-guide.md) の「聞き足しと促し方」を読む)。
+- 選び方は既定案で決める。迷う所を利用者に何度も聞かず、既定案で進めて 決めること に回す (核心の 5 問の聞き足しは [hearing-guide.md](../skills/run-briefing-hearing/references/hearing-guide.md) の「聞き足しと促し方」を読む)。
 - 広げる案 (「あれもできると良い」) は、要件定義 6 章の `あとで` と、仕様書 8 章の 次に広げる候補 に入れる。画面のボードには描かない。
 - 名前を挙げて頼まれた機能 (「候補を出して選ばせたい」のような明示の要望) は、広げる案と扱わない。出どころ `要望` で ヒアリング.md に残し、要件定義 6 章の行に `(要望:Hxx)` を付ける。あとで に回すときは、9 章の 決めること に `要望:Hxx` を書いて利用者に聞く (REQUEST-MISSING、REQUEST-DEFERRED-NO-Q)。書き方は [document-structure.md](document-structure.md) を読む。
 - 先々への備えは データだけ にする (消さずに残す / 分けて置く / 印を付ける)。備えのために、最初の版に画面・ボタン・メニューを足さない。

@@ -38,11 +38,11 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       verify_by: script
     - id: IN2
       loop_scope: inner
-      text: "1 回の質問は 4 問以内で、選択肢を出す質問は先頭が「(おすすめ)」つきの既定案になっており、聞いた回数は 4 回と聞き足しの 2 回以内に収まり、聞き足しが核心の 4 問 (A1・A2・A3・A6) だけで 1 問 2 回以内であること、followup は聞き足しを除いて 1 回・4 問まで (初めのヒアリングの回数には数えない) で最後の選択肢が「打ち合わせで聞く」になっており、返した組の H が ヒアリング.md にあって、もとからある H 番号が変わっていないことを、実際の聞き取りで確かめる"
+      text: "1 回の質問は 4 問以内で、選択肢を出す質問は先頭が「(おすすめ)」つきの既定案になっており、聞いた回数は 6 回と聞き足しの 2 回以内に収まり、聞き足しが核心の 5 問 (A1・A2・A3・A6・A7) だけで 1 問 2 回以内であること、followup は聞き足しを除いて 1 回・4 問まで (初めのヒアリングの回数には数えない) で最後の選択肢が「打ち合わせで聞く」になっており、返した組の H が ヒアリング.md にあって、もとからある H 番号が変わっていないことを、実際の聞き取りで確かめる"
       verify_by: live-trial
     - id: OUT1
       loop_scope: outer
-      text: "画面の共通ルール (骨組み・ヘッダー・メニュー・フッター・色・モーダル・メッセージ・空/読み込み中) と しくみと基盤 (動かす場所・データの置き場所・ログイン・外部とのつなぎ・自動処理・バックアップ・通知) の答えが、仕様書 2 章と 6 章へそのまま写せる粒度で残っていると briefing-reviewer が確認する"
+      text: "仕事の流れ、画面の共通ルール (骨組み・ヘッダー・メニュー・フッター・色・モーダル・メッセージ・空/読み込み中)、管理の画面と直す・消す・人の出し入れ、しくみと基盤 (動かす場所・データの置き場所・ログイン・外部とのつなぎ・自動処理・バックアップ・通知)、残す情報と量と見られると困る情報、止まったときの答えが、要件定義 5・7 章と仕様書 1〜4・6・7 章へそのまま写せる粒度で残っていると briefing-reviewer が確認する"
       verify_by: evaluator
     - id: OUT2
       loop_scope: outer
@@ -74,6 +74,7 @@ runtime_root_policy: host-skill-path
 ## Post-choice selected improvement execution
 
 light / standard / detailed が記録されて `semantic_evaluator_started` へ進んだ確認点だけ、独立レビューとその指摘に基づく改善を行う。release / exhaustive は別の明示 event を要する。
+このスキルは分離した文脈を使わない (goal_seek.fork=inline)。独立レビューは呼び出し元 run-briefing が assign-briefing-evaluator へ渡し、このスキルは頼まれた指摘の行だけを直す。
 
 
 # ヒアリング
@@ -115,7 +116,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 ### 2. 既定案つきで聞く
 
 1. hearing-guide.md の「5. 回の組み方」の回ごとに聞く。問いの形 (1 回の問いの数、おすすめ、header、回の初めに添える 1 行) は「2. 聞き方」を読む。
-2. A1・A2・A3・A6 の答えがあいまいなら、「2. 聞き方」の「聞き足しと促し方」で聞き足す。
+2. 核心の 5 問 (A1・A2・A3・A6・A7) の答えがあいまいなら、「2. 聞き方」の「聞き足しと促し方」で聞き足す。
 3. 答えごとの出どころは「3. 答えの扱い」を読む。
 
 ### 3. ヒアリング.md を書く
@@ -138,10 +139,10 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" 
 
 1. 要件定義.md の「9. 決めること」と ヒアリング.md を読む。渡された Q から、最初の版への効き目が大きい順 (最初の版でやること・画面・しくみと基盤 を変えるものが先) に 4 つまで選ぶ。
 2. 1 回で聞く。1 問に Q を 1 つ。決めること を問いの形にし、先頭の選択肢を 案 (おすすめ)、最後の選択肢を「打ち合わせで聞く」にする。問いの形のほかの決まりは hearing-guide.md の「2. 聞き方」のとおり。
-3. A1・A2・A3・A6 に当たる答えがあいまいなら、同じ章の「聞き足しと促し方」で聞き足す。
+3. 核心の 5 問 (A1・A2・A3・A6・A7) に当たる答えがあいまいなら、同じ章の「聞き足しと促し方」で聞き足す。
 4. 答えを hearing-guide.md の「確認点で出た答えの書き方」のとおりに ヒアリング.md へ書く。「打ち合わせで聞く」「わからない」「あとで」の Q と、選ばなかった Q は何も変えない。
 5. 新しいヒアリングの手順 4 と同じく `--stage hearing` を exit0 まで通す。
-6. 返すもの: 答えが出た Q 番号と H 番号の組の一覧 (例: `Q04=H17, Q01=H25`)。答えが出なかった Q は入れない。文書への反映は、呼び出し元が run-briefing-docs の answers に頼む。
+6. 返すもの: 答えが出た Q 番号と H 番号の組の一覧 (例: `Q04=H17, Q01=H37`)。答えが出なかった Q は入れない。文書への反映は、呼び出し元が run-briefing-docs の answers に頼む。
 
 ## Gotchas
 
@@ -155,4 +156,4 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" 
 - [document-structure.md](../../references/document-structure.md): ヒアリング.md の章立て
 - [plain-language.md](../../references/plain-language.md): 言い換え
 - [quality-rules.md](../../references/quality-rules.md): 既定案の向き (1. シンプルさ)
-- [execution-contract.md](../../references/execution-contract.md): スクリプトの終了コード (exit 2・3)
+- [execution-contract.md](../../references/execution-contract.md): 実行場所 (1 節)・スクリプトの終了コード (3 節)・確認の選択所有 (6 節)
