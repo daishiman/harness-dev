@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>物件提案デスク</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <button type="button" class="app-name" data-nav="home" aria-label="ホームに戻る">物件提案デスク</button>
+</header>
+
+<div class="app-shell">
+<nav class="side-nav" aria-label="主要ナビゲーション">
+  <button type="button" data-nav="home" aria-current="page"><span class="nav-label">ホーム</span></button>
+  <button type="button" data-nav="list"><span class="nav-label">提案リスト</span></button>
+  <button type="button" data-nav="report"><span class="nav-label">レポート</span></button>
+</nav>
+
+<main>
+
+  <!-- ============================================================
+       ホーム: ux-design §9 要対応 → 次のアクション → 最近 → キー数字
+       ============================================================ -->
+  <section class="view" id="view-home">
+    <h1 class="page-title">おはようございます、西山さん</h1>
+
+    <h2 class="section-heading rise-in">要対応 <span class="count">2件</span></h2>
+    <div class="card rise-in" style="--stagger: 40ms">
+      <div class="card-row">
+        <div class="row-main">
+          <div class="todo-row-title">佐藤様への提案メールが送信できませんでした</div>
+          <div class="todo-row-sub">メールアドレスの形式が正しくありません(sato@example)。修正して再送信できます。</div>
+        </div>
+        <span class="badge badge-alert">要確認</span>
+        <button type="button" class="btn btn-secondary pressable" data-nav="list">確認する</button>
+      </div>
+      <div class="card-row">
+        <div class="row-main">
+          <div class="todo-row-title">新着物件「板橋区 一棟マンション」の担当メールが未入力です</div>
+        </div>
+        <span class="badge badge-alert">要入力</span>
+        <button type="button" class="btn btn-secondary pressable" data-nav="list">入力する</button>
+      </div>
+    </div>
+
+    <h2 class="section-heading rise-in" style="--stagger: 80ms">次のアクション</h2>
+    <div class="grid-2 rise-in" style="--stagger: 120ms">
+      <div class="card card-pad hero-tint">
+        <div class="todo-row-title">提案メールをまとめて送る</div>
+        <span class="badge badge-active">3件を選択中</span>
+        <button type="button" class="btn btn-primary pressable" data-nav="list">提案リストを開く</button>
+      </div>
+      <div class="card card-pad">
+        <div class="todo-row-title">物件を登録する</div>
+        <button type="button" class="btn btn-secondary pressable" id="btn-open-register">物件を登録する</button>
+      </div>
+    </div>
+
+    <h2 class="section-heading rise-in" style="--stagger: 160ms">最近の動き</h2>
+    <div class="card rise-in" id="recent-activity" style="--stagger: 200ms">
+      <div class="card-row" aria-hidden="true"><div class="skeleton" style="height:18px;width:70%"></div></div>
+      <div class="card-row" aria-hidden="true"><div class="skeleton" style="height:18px;width:55%"></div></div>
+      <div class="card-row" aria-hidden="true"><div class="skeleton" style="height:18px;width:62%"></div></div>
+    </div>
+
+    <div class="kpi-strip rise-in" style="--stagger: 240ms">
+      <div class="kpi"><div class="kpi-label">進行中の提案</div><div class="kpi-value">12<span class="unit">件</span></div></div>
+      <div class="kpi"><div class="kpi-label">今月の成約</div><div class="kpi-value">3<span class="unit">件</span></div></div>
+      <div class="kpi"><div class="kpi-label">今月の送信数</div><div class="kpi-value">86<span class="unit">通</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       提案リスト: ux-design §5 一括操作の4点セット
+       ============================================================ -->
+  <section class="view" id="view-list" hidden>
+    <h1 class="page-title">提案リスト</h1>
+
+    <div class="card list-host">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:44px">選択</th>
+              <th>物件</th>
+              <th>顧客</th>
+              <th class="col-num">価格(万円)</th>
+              <th class="col-num">利回り(%)</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody id="deal-rows"></tbody>
+        </table>
+      </div>
+      <div class="deal-cards" id="deal-cards"></div>
+      <div class="card-row" style="justify-content:space-between; flex-wrap:wrap; gap:12px">
+        <div class="todo-row-sub" id="selection-summary"></div>
+        <button type="button" class="btn btn-primary pressable" id="btn-open-confirm" style="min-width:220px"></button>
+      </div>
+    </div>
+
+    <h2 class="section-heading" id="fixup-heading" hidden>送信できなかった提案</h2>
+    <div class="card" id="fixup-queue" hidden></div>
+  </section>
+
+  <!-- ============================================================
+       送信レポート: jp-web-design §10 情報階層
+       ============================================================ -->
+  <section class="view" id="view-report" hidden>
+    <h1 class="page-title">送信レポート</h1>
+
+    <div class="card hero-tint rise-in">
+      <div class="hero-number">
+        <div class="hn-label">今月の提案からの反響率</div>
+        <div class="hn-value">18.6<span style="font-size:22px">%</span></div>
+      </div>
+      <div class="kpi-strip" style="margin-top:0; border-bottom:none">
+        <div class="kpi"><div class="kpi-label">送信数</div><div class="kpi-value">86<span class="unit">通</span></div></div>
+        <div class="kpi"><div class="kpi-label">反響</div><div class="kpi-value">16<span class="unit">件</span></div></div>
+        <div class="kpi"><div class="kpi-label">商談化</div><div class="kpi-value">5<span class="unit">件</span></div></div>
+      </div>
+    </div>
+
+    <h2 class="section-heading rise-in" style="--stagger: 60ms">先月との比較</h2>
+    <div class="card card-pad rise-in" style="--stagger: 100ms">
+      <!-- 少数比較はバーではなく「数字+差分」(jp-web-design §9) -->
+      <div class="delta-compare">
+        <div class="dc-item">
+          <div class="dc-label">先月の反響率</div>
+          <div class="dc-value" style="color:var(--text-secondary)">11.2<span class="unit">%</span></div>
+        </div>
+        <span class="dc-arrow" aria-hidden="true">→</span>
+        <div class="dc-item">
+          <div class="dc-label">今月の反響率</div>
+          <div class="dc-value">18.6<span class="unit">%</span></div>
+        </div>
+        <span class="delta-chip">+7.4pt</span>
+      </div>
+    </div>
+
+    <h2 class="section-heading rise-in" style="--stagger: 120ms">今月の送信目標</h2>
+    <div class="card card-pad rise-in" style="--stagger: 140ms">
+      <!-- バーは「100%=目標120通」と分母が定義できるときだけ使う -->
+      <div class="compare-item">
+        <div class="ci-head"><span class="ci-label">目標120通に対する実績</span><span class="ci-value">86<span class="unit">/120通</span></span></div>
+        <div class="bar-track"><div class="bar-fill is-brand" data-width="71.7%"></div></div>
+      </div>
+    </div>
+
+    <h2 class="section-heading rise-in" style="--stagger: 140ms">次にやること</h2>
+    <div class="card card-pad rise-in" style="--stagger: 180ms">
+      <dl class="def-list">
+        <dt>反響済み</dt><dd>16件のうち<strong>11件が未返信</strong>です。返信期限の目安は明日中です。</dd>
+        <dt>商談中</dt><dd>5件。次回面談は 7月22日(水) 佐藤様が最初です。</dd>
+      </dl>
+      <div style="margin-top:16px">
+        <button type="button" class="btn btn-primary btn-block pressable" id="btn-reply-unanswered">未返信の11件に返信する</button>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+</div>
+
+<nav class="bottom-tabs" aria-label="主要ナビゲーション">
+  <button type="button" data-nav="home" aria-current="page">ホーム</button>
+  <button type="button" data-nav="list">提案リスト</button>
+  <button type="button" data-nav="report">レポート</button>
+</nav>
+
+<!-- 送信前のその場確認モーダル (ux §5-2 / jp §5) -->
+<div class="modal-overlay" id="confirm-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="confirm-title">この内容で3件に送信します</h2>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:var(--font-size-label); color:var(--text-secondary); margin:0 0 10px" id="confirm-recipients"></p>
+      <div class="mail-preview">
+        <div class="mp-meta">
+          <span>件名</span><strong>【物件のご提案】ご希望条件に合う物件が見つかりました</strong>
+          <span>添付</span><strong>物件概要書PDF(各物件1部)</strong>
+        </div>
+        <div class="mp-body">いつもお世話になっております。
+ご希望条件(首都圏・一棟マンション・利回り7%以上)に合致する物件をご案内します。
+詳細は添付の概要書をご確認ください。内見のご希望があれば返信にてお知らせください。</div>
+      </div>
+      <div class="caution-panel" style="margin-top:12px">送信後の取り消しはできません。宛先と文面をご確認ください。</div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-tertiary pressable" id="btn-cancel-send">キャンセル</button>
+      <button type="button" class="btn btn-primary pressable" id="btn-do-send" style="min-width:128px">送信する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 物件登録モーダル: 下書き自動保存・復元の可視化・IMEガードのモデルケース (ux §4-1/4-2) -->
+<div class="modal-overlay" id="register-overlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="register-title">
+    <div class="modal-head">
+      <h2 class="modal-title" id="register-title">物件を登録する</h2>
+    </div>
+    <div class="modal-body">
+      <div class="restore-note" id="draft-note" hidden>
+        <span>入力途中の下書きを復元しました</span>
+        <button type="button" id="btn-discard-draft">下書きを破棄する</button>
+      </div>
+      <form id="register-form" novalidate style="display:grid; gap:14px">
+        <div class="field" id="field-reg-name">
+          <label for="reg-name">物件名 <span class="badge badge-required">必須</span></label>
+          <input id="reg-name" type="text" autocomplete="off" placeholder="練馬区 一棟マンション">
+          <p class="error-msg" id="reg-name-err" hidden>物件名を入力してください。</p>
+        </div>
+        <div class="field">
+          <label for="reg-price">価格(万円)</label>
+          <input id="reg-price" type="text" inputmode="numeric" autocomplete="off" placeholder="23,048">
+        </div>
+        <div class="field">
+          <label for="reg-customer">顧客名</label>
+          <input id="reg-customer" type="text" autocomplete="off" placeholder="田中様">
+        </div>
+        <div class="field" id="field-reg-email">
+          <label for="reg-email">顧客メール</label>
+          <input id="reg-email" type="email" inputmode="email" autocomplete="off" placeholder="tanaka@example.com">
+          <p class="error-msg" id="reg-email-err" hidden>メールアドレスの形式が正しくありません。「@」以降にドメインを入れてください。</p>
+        </div>
+      </form>
+      <p class="draft-status" id="draft-status" aria-live="polite"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-tertiary pressable" id="btn-close-register">閉じる</button>
+      <button type="button" class="btn btn-primary pressable" id="btn-do-register">登録する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-region" id="toast-region" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

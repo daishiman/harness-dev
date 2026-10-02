@@ -1,0 +1,17 @@
+import "server-only";
+
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+import type { D1Database } from "@cloudflare/workers-types";
+
+export type AppEnv = {
+  DB: D1Database;
+  BETTER_AUTH_SECRET?: string;
+  BETTER_AUTH_URL?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+};
+
+export async function getRuntimeEnv(): Promise<AppEnv> {
+  const { env } = await getCloudflareContext({ async: true });
+  return env as unknown as AppEnv;
+}

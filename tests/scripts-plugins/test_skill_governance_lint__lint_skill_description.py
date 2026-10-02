@@ -315,6 +315,85 @@ def test_main_inproc_no_targets(MOD, tmp_path, monkeypatch, capsys):
 
 
 # ---------------------------------------------------------------------------
+# 外部キット manifest 所有物の除外 (EXTERNAL_KIT_MANIFESTS)
+# ---------------------------------------------------------------------------
+KIT_BAD = "外部キット独自の書式で、末尾規律に従わない説明"
+
+
+def _write_manifest(root: Path, *lines: str) -> None:
+    manifest = root / ".claude" / "aidd-agent-kit.manifest"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text("".join(f"{line}\n" for line in lines), encoding="utf-8")
+
+
+def test_main_inproc_excludes_kit_owned_real_files(MOD, tmp_path, monkeypatch, capsys):
+    # manifest 所有の skill / agent 実ファイルは既定走査から外れ、所有外の違反は従来どおり検出する
+    _mk_skill_md(tmp_path, "kit-skill", description=KIT_BAD)
+    agents = tmp_path / ".claude" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "kit-agent.md").write_text(
+        f'---\nname: kit-agent\ndescription: "{KIT_BAD}"\n---\n', encoding="utf-8"
+    )
+    _mk_skill_md(tmp_path, "local-bad", description=KIT_BAD)
+    _write_manifest(
+        tmp_path,
+        "0" * 64 + "|skills/kit-skill/SKILL.md",
+        "0" * 64 + "|agents/kit-agent.md",
+    )
+    monkeypatch.chdir(tmp_path)
+    _argv(monkeypatch)
+    assert MOD.main(sys.argv[1:]) == 1
+    captured = capsys.readouterr()
+    assert "local-bad" in captured.err
+    assert "kit-skill" not in captured.err
+    assert "kit-agent" not in captured.err
+    assert "OK=0 VIOLATION=1" in captured.out
+
+
+def test_main_inproc_manifest_cannot_exempt_symlink(MOD, tmp_path, monkeypatch, capsys):
+    # harness の投影物 (symlink) は manifest に載っていても除外しない
+    real = tmp_path / "plugins" / "p" / "skills" / "projected"
+    real.mkdir(parents=True)
+    (real / "SKILL.md").write_text(
+        f'---\nname: projected\ndescription: "{KIT_BAD}"\n---\n', encoding="utf-8"
+    )
+    skills = tmp_path / ".claude" / "skills"
+    skills.mkdir(parents=True)
+    (skills / "projected").symlink_to(Path("../../plugins/p/skills/projected"))
+    _write_manifest(tmp_path, "0" * 64 + "|skills/projected/SKILL.md")
+    monkeypatch.chdir(tmp_path)
+    _argv(monkeypatch)
+    assert MOD.main(sys.argv[1:]) == 1
+    assert "projected" in capsys.readouterr().err
+
+
+def test_load_external_owned_skips_invalid_lines(MOD, tmp_path):
+    _write_manifest(
+        tmp_path,
+        "",
+        "0" * 64 + "|",
+        "0" * 64 + "|/abs/path.md",
+        "0" * 64 + "|skills/../../escape.md",
+        "0" * 64 + "|skills/ok/SKILL.md",
+    )
+    assert MOD.load_external_owned(tmp_path) == {Path(".claude/skills/ok/SKILL.md")}
+
+
+def test_load_external_owned_without_manifest_is_empty(MOD, tmp_path):
+    assert MOD.load_external_owned(tmp_path) == set()
+
+
+def test_main_inproc_skills_dir_override_ignores_manifest(MOD, tmp_path, monkeypatch, capsys):
+    # --skills-dir 明示時は manifest 所有物でも検査する
+    _mk_skill_md(tmp_path, "kit-skill", description=KIT_BAD)
+    _write_manifest(tmp_path, "0" * 64 + "|skills/kit-skill/SKILL.md")
+    monkeypatch.chdir(tmp_path)
+    _argv(monkeypatch, "--skills-dir", ".claude/skills")
+    assert MOD.main(sys.argv[1:]) == 1
+    assert "kit-skill" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
 # main (subprocess) — __main__ ガードと exit code 契約
 # ---------------------------------------------------------------------------
 def test_main_subprocess_violation_exit1(MOD, tmp_path):

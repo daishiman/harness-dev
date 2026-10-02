@@ -1,0 +1,27 @@
+import { redirect } from "next/navigation";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { getSession } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  if (await getSession()) redirect("/");
+  const hasError = Boolean((await searchParams).error);
+
+  return (
+    <main className="fixed inset-0 isolate flex min-h-dvh items-center justify-center overflow-hidden bg-[#f5f5f7] px-4 py-8">
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_12%_8%,rgba(183,214,255,0.7),transparent_38%),radial-gradient(circle_at_88%_92%,rgba(229,212,255,0.6),transparent_38%)]" />
+      <section aria-labelledby="sign-in-title" className="w-full max-w-[440px] rounded-[28px] border border-white/80 bg-white/70 px-6 py-9 shadow-[0_30px_90px_-42px_rgba(48,58,80,0.42)] backdrop-blur-3xl sm:px-10">
+        <div className="text-center">
+          <h1 id="sign-in-title" className="text-[28px] font-semibold tracking-[-0.035em] text-[#1d1d1f]">サインイン</h1>
+          <p className="mx-auto mt-3 max-w-xs text-[15px] leading-6 text-[#626268]">__APP_NAME__を利用するには、Googleアカウントで続けてください。</p>
+        </div>
+        <div className="mt-7">
+          {hasError ? <p role="alert" className="mb-4 rounded-2xl bg-red-50/80 px-4 py-3 text-sm text-red-800">このアカウントでは利用できません。管理者にお問い合わせください。</p> : null}
+          <GoogleSignInButton />
+        </div>
+        <p className="mt-5 text-center text-xs text-[#6e6e73]">@__WORKSPACE_DOMAIN__の社内アカウントのみ利用できます</p>
+      </section>
+    </main>
+  );
+}

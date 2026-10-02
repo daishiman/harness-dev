@@ -1,0 +1,2001 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>部品カタログ</title>
+<!-- inline-css:start (node scripts/inline-catalog-css.mjs で生成。直接編集しない) -->
+<style>
+/* ============================================================
+   平賀暫定カラー — 色の正本は ../hiraga/hiraga-color-system.css
+   ここでは色の値を定義しない。役割トークンだけを参照する(ライトのみ)
+   ============================================================ */
+/*
+ * @hiraga-meta {"schema_version":1,"name":"平賀運送向け 暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。公式CI指定値でも現行サイトの実測値でもない","theme":"light-only"}
+ * 今回の変更(v0.3): 紫・マゼンタ系をブルー系に置き換え、補助面・罫線・文字も青みのグレーへ。赤字(損失)表示のみ明るい赤で残す。
+ * 前回の変更: 画面背景を白にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相へ寄せた。青系(情報・車両ネイビー)は据え置き。
+ * 全HEXはシステム向け提案値。原サイトCSS/SVGからの実測値でも公式CI指定値でもありません。
+ * 根拠: 制作会社の2020年掲載画像・公式車両写真。現行全ページ・全状態は未検証。
+ * ライトテーマのみ。暗背景には inverse 系トークンを明示的に使用してください。
+ * brand-indigo はブランドの軸(ブルー)、brand-accent は主操作のアクセント(明るいブルー)。別の役割です。
+ * 命名の規律: 基本色の名前は「ブランド対の中の位置」を表し、色相は表さない。色相を名前にすると
+ * 値を差し替えたときに名前が嘘になり、名前を語彙にした規範文まで指示対象を失う。v0.3 で
+ * --p-brand-magenta 系を --p-brand-accent 系へ改名したのはこのため (値だけ青くして名前を残すと嘘が残る)。
+ * --p-brand-indigo は値と名前が一致しているので据え置き。次に色相が動くときは名前も見直す。
+ */
+:root {
+  color-scheme: light;
+
+  /* 基本色（すべて暫定提案） */
+  --p-brand-indigo: #1747B5;
+  --p-brand-indigo-hover: #123B99;
+  --p-brand-indigo-active: #0E2F7A;
+  --p-brand-vehicle-navy: #163A5F;
+  --p-brand-accent: #1465E1;
+  --p-brand-accent-hover: #1A5ED0;
+  --p-brand-accent-active: #154DAB;
+  --p-brand-accent-soft: #E8F1FF;
+  --p-brand-indigo-soft: #DCE9FC;
+  --p-white: #FFFFFF;
+  --p-canvas: #FFFFFF;
+  --p-surface-subtle: #F3F7FD;
+  --p-surface-stripe: #F9FBFE;
+  --p-ink: #14233B;
+  --p-ink-secondary: #45576F;
+  --p-ink-muted: #506279;
+  --p-line: #D5E1F0;
+  --p-line-strong: #7189A8;
+  --p-disabled-bg: #E9EEF4;
+  --p-nav-muted: #D2DEEE;
+  --p-focus-on-dark: #AFCBFF;
+  --p-info: #0369A1;
+  --p-info-bg: #E6F4FB;
+  --p-success: #166534;
+  --p-success-bg: #ECFDF3;
+  --p-warning: #92400E;
+  --p-warning-bg: #FFF7E6;
+  --p-danger: #D03047;
+  --p-danger-hover: #B42A3F;
+  --p-danger-active: #962234;
+  --p-danger-bg: #FFF1F3;
+  /* グラフ系列専用の色。UIの面・文字には使わない (§1 の面積比の外)。意味色 (--p-info / --p-warning /
+     --p-success) をここへ流用しない。同じ色が「状態」と「カテゴリ」の二つを指すと読み手が取り違える。
+     カテゴリの見分けは色相差で作るので、v0.3 のブルー化から外して 60 度前後の間隔で色相を確保している。
+     値を変えるときは scripts/check-hiraga-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
+  --p-chart-amber: #92400E;   /* H23  */
+  --p-chart-lime: #4D7C0F;    /* H86  */
+  --p-chart-teal: #0F766E;    /* H175 */
+  --p-chart-purple: #6D28D9;  /* H263 */
+  --p-chart-magenta: #A81B6B; /* H326 — マゼンタはUIから退いたが、色相の間隔が要るグラフでだけ残す */
+  --p-scale-1: #DCE9FC;
+  --p-scale-2: #B7D0F4;
+  --p-scale-3: #7FA6DE;
+  --p-scale-4: #3B6FC4;
+  --p-scale-5: #1747B5;
+
+  /* 役割別トークン：コンポーネントではこちらを使用 */
+  --app-background: var(--p-canvas);
+  --surface: var(--p-white);
+  --surface-alt: var(--p-surface-subtle);
+  --surface-hover: var(--p-surface-subtle);
+  --surface-selected: var(--p-brand-indigo-soft);
+  --surface-accent: var(--p-brand-accent-soft);
+  --text-primary: var(--p-ink);
+  --text-secondary: var(--p-ink-secondary);
+  --text-muted: var(--p-ink-muted);
+  --text-heading: var(--p-brand-indigo);
+  --text-inverse: var(--p-white);
+  --border-subtle: var(--p-line);
+  --border-control: var(--p-line-strong);
+  --nav-background: var(--p-surface-subtle);
+  --nav-text: var(--p-ink);
+  --nav-text-muted: var(--p-ink-secondary);
+  --nav-hover: var(--p-brand-indigo-soft);
+  --nav-selected-bg: var(--p-white);
+  --nav-selected-text: var(--p-brand-indigo);
+  --nav-selected-indicator: var(--p-brand-indigo);
+  --action-primary-bg: var(--p-brand-accent);
+  --action-primary-text: var(--p-white);
+  --action-primary-hover: var(--p-brand-accent-hover);
+  --action-primary-active: var(--p-brand-accent-active);
+  --action-secondary-bg: var(--p-white);
+  --action-secondary-text: var(--p-brand-indigo);
+  --action-secondary-border: var(--p-brand-indigo);
+  --action-secondary-hover: var(--p-brand-indigo-soft);
+  --action-secondary-active: var(--p-surface-subtle);
+  --action-quiet-bg: var(--p-white);
+  --action-quiet-text: var(--p-brand-indigo);
+  --action-quiet-hover: var(--p-brand-indigo-soft);
+  --action-danger-bg: var(--p-danger);
+  --action-danger-text: var(--p-white);
+  --action-danger-hover: var(--p-danger-hover);
+  --action-danger-active: var(--p-danger-active);
+  --action-disabled-bg: var(--p-disabled-bg);
+  --action-disabled-text: var(--p-ink-muted);
+  --action-disabled-border: var(--p-line-strong);
+  --link: var(--p-brand-indigo);
+  --link-hover: var(--p-brand-accent);
+  --link-visited: var(--p-brand-indigo);
+  --focus-ring: var(--p-brand-accent);
+  --focus-ring-inverse: var(--p-focus-on-dark);
+  --focus-gap: var(--p-white);
+  --input-bg: var(--p-white);
+  --input-text: var(--p-ink);
+  --input-placeholder: var(--p-ink-muted);
+  --input-border: var(--p-line-strong);
+  --input-border-hover: var(--p-brand-indigo);
+  --input-border-focus: var(--p-brand-accent);
+  --input-readonly-bg: var(--p-surface-subtle);
+  --input-invalid-border: var(--p-danger);
+  --input-invalid-message: var(--p-danger);
+  --required-text: var(--p-brand-accent);
+  --required-bg: var(--p-brand-accent-soft);
+  --control-on: var(--p-brand-accent);
+  --control-on-mark: var(--p-white);
+  --control-off-border: var(--p-line-strong);
+  --table-head-bg: var(--p-surface-subtle);
+  --table-head-text: var(--p-brand-indigo);
+  --table-body-bg: var(--p-white);
+  --table-stripe-bg: var(--p-surface-stripe);
+  --table-hover-bg: var(--p-surface-subtle);
+  --table-selected-bg: var(--p-brand-indigo-soft);
+  --table-selected-indicator: var(--p-brand-indigo);
+  --tab-indicator: var(--p-brand-accent);
+  --tab-text-active: var(--p-brand-indigo);
+  --pagination-active-bg: var(--p-brand-indigo);
+  --pagination-active-text: var(--p-white);
+  --tag-bg: var(--p-brand-accent-soft);
+  --tag-text: var(--p-brand-accent);
+  --badge-unread-bg: var(--p-brand-accent);
+  --badge-unread-text: var(--p-white);
+  --status-neutral-text: var(--p-ink-secondary);
+  --status-neutral-bg: var(--p-surface-subtle);
+  --status-info-text: var(--p-info);
+  --status-info-bg: var(--p-info-bg);
+  --status-success-text: var(--p-success);
+  --status-success-bg: var(--p-success-bg);
+  --status-warning-text: var(--p-warning);
+  --status-warning-bg: var(--p-warning-bg);
+  --status-danger-text: var(--p-danger);
+  --status-danger-bg: var(--p-danger-bg);
+  /* 数値の符号と、その量を表す図形(棒・線・点・濃淡)。赤字(損失)だけ赤、黒字は本文色。状態を表す
+     --status-danger-* とは別の役割なので流用しない。「エラーが起きている」と「マイナスの数字」は
+     読み手にとって別の意味である。-soft は図形の地。線は --number-negative を重ねる */
+  --number-negative: var(--p-danger);
+  --number-negative-soft: var(--p-danger-bg);
+  --number-positive: var(--p-ink);
+  --tooltip-bg: var(--p-brand-indigo);
+  --tooltip-text: var(--p-white);
+  --progress-fill: var(--p-brand-indigo);
+  --progress-track: var(--p-surface-subtle);
+  --skeleton-base: var(--p-surface-subtle);
+  --skeleton-highlight: var(--p-brand-indigo-soft);
+  --selection-bg: var(--p-brand-indigo-soft);
+  --selection-text: var(--p-brand-indigo);
+  /* グラフのカテゴリ系列。順序のない並びなので、見分けは明度ではなく色相差で作る。
+     ブランド色を流すのは主役の --chart-main だけに留め、系列 1〜5 には brand/accent を使わない。
+     v0.3 でブランド軸が H260 台から H222 へ移ったため、アクセント青を系列に流すと main と重なる。
+     下の並びは隣接する系列の色相が 60 度以上離れるよう並べてある (最小の対は main と purple の 41 度)。
+     値や並びを変えたら scripts/check-hiraga-contrast.mjs の系列分離検査が最小色相差を機械で見る */
+  --chart-main: var(--p-brand-indigo);  /* H222 ブルー — ブランドの軸。主役系列 */
+  --chart-1: var(--p-chart-amber);      /* H23  アンバー */
+  --chart-2: var(--p-chart-lime);       /* H86  ライムグリーン */
+  --chart-3: var(--p-chart-teal);       /* H175 ティール */
+  --chart-4: var(--p-chart-purple);     /* H263 バイオレット */
+  --chart-5: var(--p-chart-magenta);    /* H326 マゼンタ */
+  --chart-grid: var(--p-line);
+  --chart-axis: var(--p-ink-secondary);
+  --chart-threshold: var(--p-danger);
+
+  --overlay: rgba(15, 45, 110, 0.40);
+  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
+  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
+}
+
+/* 必要な範囲に適用する共通クラス。フレームワークへの組み込み時は既存クラスにマッピング可。 */
+.hiraga-app { background: var(--app-background); color: var(--text-primary); }
+.hiraga-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
+.hiraga-heading { color: var(--text-heading); }
+.hiraga-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
+.hiraga-link:visited { color: var(--link-visited); }
+.hiraga-link:hover { color: var(--link-hover); }
+.hiraga-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
+.hiraga-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
+.hiraga-button--primary:hover { background: var(--action-primary-hover); }
+.hiraga-button--primary:active { background: var(--action-primary-active); }
+.hiraga-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
+.hiraga-button--secondary:hover { background: var(--action-secondary-hover); }
+.hiraga-button--secondary:active { background: var(--action-secondary-active); }
+.hiraga-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
+.hiraga-button--danger:hover { background: var(--action-danger-hover); }
+.hiraga-button--danger:active { background: var(--action-danger-active); }
+.hiraga-button:disabled, .hiraga-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
+/* aria-disabled のみでは操作は止まりません。アプリ側でもイベントを抑止してください。 */
+.hiraga-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
+.hiraga-input::placeholder { color: var(--input-placeholder); opacity: 1; }
+.hiraga-input:hover { border-color: var(--input-border-hover); }
+.hiraga-input:focus { border-color: var(--input-border-focus); }
+.hiraga-input[readonly] { background: var(--input-readonly-bg); }
+.hiraga-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
+.hiraga-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+.hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
+/* 淡いナビ面では通常のフォーカスリングを使う。inverse は明示した暗色面だけに限定する。 */
+.hiraga-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
+.hiraga-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
+.hiraga-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
+.hiraga-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+.hiraga-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
+.hiraga-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
+.hiraga-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.hiraga-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
+/* ステータスには文字とアイコンを併用。薄い背景色だけで情報を伝えない。 */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: var(--p-line-strong);
+    --text-secondary: var(--p-ink);
+    --text-muted: var(--p-ink);
+    --nav-text-muted: var(--p-ink);
+  }
+}
+@media (forced-colors: active) {
+  .hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .hiraga-button, .hiraga-status { border: 1px solid ButtonText; }
+}
+@media print {
+  .hiraga-app { background: white; color: black; }
+  .hiraga-card { background: white; border-color: black; box-shadow: none; }
+  .hiraga-status { color: black; background: white; border: 1px solid black; }
+}
+
+:root {
+  /* Liquid Glass 風の面: 既存トークンを color-mix で薄めるだけ(色値は増やさない) */
+  --radius-glass: 22px;
+  --radius-glass-sm: 14px;
+  /* 機能層だけに使う、surface中心の半透明面 */
+  --glass-fill: linear-gradient(135deg,
+    color-mix(in srgb, var(--surface) 76%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 58%, transparent) 100%);
+  --glass-fill-strong: linear-gradient(135deg,
+    color-mix(in srgb, var(--surface) 86%, transparent),
+    color-mix(in srgb, var(--surface) 64%, transparent));
+  --glass-rim: color-mix(in srgb, var(--surface) 72%, transparent);
+  --glass-line: color-mix(in srgb, var(--border-subtle) 55%, transparent);
+  /* iPhone-like optical rim: 暗い線で囲まず、上・左上だけに反射を寄せる */
+  --glass-specular-rim: linear-gradient(135deg,
+    color-mix(in srgb, var(--surface) 72%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 30%, transparent) 34%,
+    transparent 64%,
+    color-mix(in srgb, var(--nav-background) 5%, transparent) 100%);
+  --glass-specular-rim-hover: linear-gradient(135deg,
+    color-mix(in srgb, var(--surface) 84%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 40%, transparent) 38%,
+    transparent 68%,
+    color-mix(in srgb, var(--nav-background) 7%, transparent) 100%);
+  --glass-specular-rim-pressed: linear-gradient(135deg,
+    color-mix(in srgb, var(--surface) 46%, transparent),
+    transparent 58%,
+    color-mix(in srgb, var(--nav-background) 5%, transparent));
+  --glass-filter: blur(28px) saturate(185%);
+  --glass-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 95%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--surface) 55%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--nav-background) 5%, transparent),
+    inset 0 0 28px color-mix(in srgb, var(--surface) 28%, transparent),
+    0 1px 2px color-mix(in srgb, var(--nav-background) 5%, transparent),
+    0 12px 40px color-mix(in srgb, var(--nav-background) 9%, transparent);
+  --glass-shadow-sm:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 95%, transparent),
+    0 1px 2px color-mix(in srgb, var(--nav-background) 6%, transparent),
+    0 4px 14px color-mix(in srgb, var(--nav-background) 7%, transparent);
+  --glass-control-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--surface) 34%, transparent),
+    inset 0 -5px 12px color-mix(in srgb, var(--nav-background) 5%, transparent),
+    0 3px 12px color-mix(in srgb, var(--nav-background) 7%, transparent);
+  --glass-control-shadow-hover:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 82%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--surface) 42%, transparent),
+    inset 0 -5px 12px color-mix(in srgb, var(--nav-background) 6%, transparent),
+    0 4px 14px color-mix(in srgb, var(--nav-background) 8%, transparent);
+  --glass-control-shadow-pressed:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 42%, transparent),
+    inset 0 3px 8px color-mix(in srgb, var(--nav-background) 7%, transparent),
+    0 1px 4px color-mix(in srgb, var(--nav-background) 5%, transparent);
+  /* 濃色の面・ボタンに重ねる光沢(左上を明るく、右下を深く)。下地の色は background-color 側で持つ */
+  --glass-sheen: linear-gradient(135deg, color-mix(in srgb, var(--surface) 16%, transparent) 0%, transparent 48%, color-mix(in srgb, var(--nav-background) 22%, transparent) 100%);
+  --glass-sheen-soft: linear-gradient(180deg, color-mix(in srgb, var(--surface) 60%, transparent), transparent 70%);
+  --glass-sheen-pressed: linear-gradient(160deg, color-mix(in srgb, var(--surface) 8%, transparent), transparent 52%, color-mix(in srgb, var(--nav-background) 12%, transparent));
+  --navigation-glass-fill: linear-gradient(150deg,
+    color-mix(in srgb, var(--surface) 82%, transparent) 0%,
+    color-mix(in srgb, var(--nav-hover) 58%, transparent) 54%,
+    color-mix(in srgb, var(--nav-background) 72%, transparent) 100%);
+  --navigation-glass-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 88%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--surface) 44%, transparent),
+    inset 0 -8px 22px color-mix(in srgb, var(--text-primary) 3%, transparent),
+    0 12px 34px color-mix(in srgb, var(--text-primary) 8%, transparent);
+  /* 白地から淡いブランド軸・アクセント・情報色へ自然に移る背景 */
+  --glass-backdrop:
+    radial-gradient(40rem 30rem at 6% 2%, color-mix(in srgb, var(--nav-background) 11%, transparent), transparent 72%),
+    radial-gradient(36rem 28rem at 98% 14%, color-mix(in srgb, var(--action-primary-bg) 15%, transparent), transparent 72%),
+    radial-gradient(44rem 30rem at 22% 78%, color-mix(in srgb, var(--status-info-text) 11%, transparent), transparent 72%),
+    radial-gradient(40rem 30rem at 92% 96%, color-mix(in srgb, var(--nav-background) 9%, transparent), transparent 72%),
+    linear-gradient(160deg, color-mix(in srgb, var(--surface-selected) 75%, var(--surface)) 0%, var(--surface) 38%, var(--surface-accent) 72%, var(--surface-alt) 100%);
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-num: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+  --font-size-body: 16px;
+  --font-size-control: 16px;
+  --font-size-label: 16px;
+  --font-size-section: 18px;
+  --font-size-page: clamp(22px, 2vw, 24px);
+  --font-size-app: 20px;
+  --font-size-display: clamp(40px, 7vw, 56px);
+  --tap: 44px;
+  --motion-instant: 90ms;
+  --motion-fast: 140ms;
+  --motion-base: 200ms;
+  --motion-slow: 280ms;
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+}
+
+* { box-sizing: border-box; }
+
+:where(button, select, textarea, input:not([type="checkbox"]):not([type="radio"])) {
+  min-height: var(--tap);
+  font-size: var(--font-size-control);
+}
+
+[hidden] { display: none !important; }
+
+html { max-width: 100%; overflow-x: clip; -webkit-text-size-adjust: 100%; }
+
+body {
+  max-width: 100%;
+  overflow-x: clip;
+  margin: 0;
+  background: var(--app-background);
+  /* 透明感: 白地に淡いブランド軸・アクセント・情報色の光を敷き、ガラス越しににじませる(地は白のまま) */
+  background-image: var(--glass-backdrop);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  color: var(--nav-text);
+  /* 欧文を先に置き、数字・ラテン文字を和文フォントに落とさない */
+  font-family: var(--font-ui);
+  font-feature-settings: "palt";
+  font-size: var(--font-size-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard);
+}
+
+/* 数値の禁則 (§3-2) */
+.tnum { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.num-display {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em; /* 大型数字は詰めすぎない */
+  font-weight: 700;
+}
+.unit { font-size: 58%; font-weight: 600; margin-left: 2px; letter-spacing: 0; }
+/* 大型数字の桁区切りは脇役に: サイズを一段下げる(透明度では調整しない) */
+.num-sep { font-size: 0.8em; font-weight: 400; }
+/* 通貨記号は「単位」扱い: 数字(変数)と見分けが付くよう小さく+間隔 */
+.currency { font-size: 62%; font-weight: 600; margin-right: 0.15em; letter-spacing: 0; }
+
+/* キーキャップUI(ショートカットを隠し機能にしない) */
+.kbd {
+  display: inline-block;
+  border: 1px solid transparent;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  box-shadow: var(--glass-control-shadow);
+  padding: 0 5px;
+  font-size: var(--font-size-control);
+  font-family: var(--font-num);
+  color: var(--nav-text-muted);
+  line-height: 1.6;
+}
+
+/* フォーカス可視化 (§9) — 3pxの focus-ring+白の分離帯。暗いナビ内は青白のリング */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px var(--focus-gap);
+  border-radius: 4px;
+}
+.side-nav :where(a, button, [tabindex]):focus-visible {
+  outline-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--focus-gap);
+}
+::selection { background: var(--selection-bg); color: var(--selection-text); }
+
+/* ============================================================
+   モーション (§8) — 因果の説明のみ
+   ============================================================ */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in { animation: rise-in var(--motion-base) var(--ease-standard) both; animation-delay: var(--stagger, 0ms); }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.pop-in { animation: pop-in var(--motion-fast) var(--ease-standard) both; }
+
+.pressable {
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-instant) var(--ease-standard);
+}
+.pressable:active { transform: scale(0.985); }
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+.modal-overlay:not([hidden]) { animation: overlay-in var(--motion-fast) var(--ease-standard) both; }
+.modal-overlay:not([hidden]) .modal { animation: dialog-in var(--motion-base) var(--ease-standard) both; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.toast { animation: toast-in var(--motion-base) var(--ease-standard) both; }
+
+@keyframes state-change {
+  from { border-color: var(--status-info-text); background: var(--status-info-bg); }
+  to { border-color: var(--border-subtle); background: var(--surface); }
+}
+.state-change { animation: state-change 240ms var(--ease-standard) both; }
+
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.skeleton { background: linear-gradient(90deg, var(--surface-selected), color-mix(in srgb, var(--surface-selected) 45%, transparent)); border-radius: 999px; animation: pulse-soft 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .pressable:active { transform: none; }
+}
+
+/* 透明を減らす設定・コントラスト優先では、半透明をやめて不透明な面に戻す */
+
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .btn, .badge, .side-nav :where(a, button)[aria-current="page"] { border: 1px solid ButtonText; }
+}
+
+
+/* ============================================================
+   アプリシェル (§4)
+   ============================================================ */
+.app-header {
+  background: var(--surface);
+  background: var(--glass-fill) padding-box, var(--glass-specular-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid transparent;
+  border-radius: var(--radius-glass);
+  box-shadow: var(--glass-shadow);
+  margin: 12px max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  gap: 24px;
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  z-index: 20;
+}
+/* アプリ名 = ホームに戻るボタン(必須仕様) */
+.app-name {
+  appearance: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--font-size-app);
+  font-weight: 700;
+  color: var(--text-heading);
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 6px 8px;
+  margin: 0 0 0 -8px;
+  border-radius: 6px;
+}
+.app-name:hover { background: var(--surface-hover); }
+h1.app-name, h1.app-name:hover { background: none; cursor: default; }
+.app-nav { display: flex; gap: 4px; margin-left: auto; }
+.app-nav button {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-control);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  min-height: var(--tap);
+}
+.app-nav button:hover { background: var(--surface-hover); color: var(--text-primary); }
+/* 白いヘッダー上の現在地: 濃紺文字+太字+アクセント色の下線(色だけに頼らない) */
+.app-nav button[aria-current="page"] {
+  color: var(--tab-text-active);
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 var(--tab-indicator);
+  border-radius: 6px 6px 0 0;
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    padding-top: max(8px, env(safe-area-inset-top));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: 8px;
+    padding-left: max(12px, env(safe-area-inset-left));
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .app-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* desktop sidebar / mobile bottom tabs の視覚正本。
+   neutral〜薄藤のregular glassを共有し、インディゴは選択indicatorにだけ使う。 */
+:is(.side-nav, .bottom-tabs) {
+  background: var(--navigation-glass-fill) padding-box, var(--glass-specular-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid transparent;
+  box-shadow: var(--navigation-glass-shadow);
+  color: var(--text-primary);
+}
+:is(.side-nav, .bottom-tabs) :where(a, button) {
+  appearance: none;
+  min-height: var(--tap);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: var(--font-size-control);
+  text-decoration: none;
+  cursor: pointer;
+}
+:is(.side-nav, .bottom-tabs) :where(a, button):hover {
+  background: linear-gradient(color-mix(in srgb, var(--surface) 62%, transparent), color-mix(in srgb, var(--surface-selected) 46%, transparent)) padding-box, var(--glass-specular-rim-hover) border-box;
+  box-shadow: var(--glass-control-shadow-hover);
+  color: var(--text-primary);
+}
+:is(.side-nav, .bottom-tabs) :where(a, button)[aria-current="page"] {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-selected) 84%, transparent)) padding-box, var(--glass-specular-rim-hover) border-box;
+  color: var(--text-heading);
+  font-weight: 700;
+}
+
+/* サイドナビ(主要ナビ4〜5個・反復業務のPC骨格) */
+.side-nav {
+  width: 212px;
+  padding: 16px 12px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+}
+.side-nav .nav-caption { color: var(--nav-text-muted); font-size: var(--font-size-label); padding: 8px 12px 4px; }
+.side-nav :where(a, button) {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border-radius: 12px;
+  text-align: left;
+  font-weight: 600;
+}
+.side-nav :where(a, button):hover {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.side-nav :where(a, button)[aria-current="page"] {
+  box-shadow:
+    inset 4px 0 0 var(--nav-selected-indicator),
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, var(--nav-background) 6%, transparent);
+}
+@media (max-width: 1024px) { .app-shell { grid-template-columns: 168px minmax(0, 1fr); } .app-shell .side-nav { width: 168px; } }
+
+/* SPの下部固定タブ。面と状態はサイドナビと共有 */
+.bottom-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-tabs :where(a, button) {
+  min-height: 56px;
+  display: grid;
+  place-items: center;
+}
+.bottom-tabs :where(a, button)[aria-current="page"] {
+  box-shadow: inset 0 3px 0 var(--nav-selected-indicator), inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.tooltip {
+  background-color: var(--tooltip-bg);
+  background-image: var(--glass-sheen);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 22%, transparent), var(--glass-shadow-sm);
+  color: var(--tooltip-text);
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: var(--font-size-label);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+}
+.app-shell > .side-nav {
+  position: sticky;
+  top: 88px;
+  width: auto;
+  min-height: calc(100vh - 100px);
+  margin: 12px 0 12px 12px;
+  border-radius: var(--radius-glass);
+}
+
+main {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding-top: 24px;
+  padding-right: max(20px, env(safe-area-inset-right));
+  padding-bottom: max(64px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
+}
+
+.view[hidden] { display: none; }
+
+.page-title { font-family: var(--font-display); font-size: var(--font-size-page); font-weight: 700; margin: 0 0 4px; color: var(--text-heading); }
+
+.section-heading {
+  font-family: var(--font-display);
+  font-size: var(--font-size-section);
+  font-weight: 700;
+  margin: 28px 0 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.section-heading .count { font-weight: 400; color: var(--text-secondary); font-size: var(--font-size-label); }
+
+/* ============================================================
+   面・カード (§4)
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-glass);
+  box-shadow: var(--shadow-soft);
+}
+.card-pad { padding: 20px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .card.pressable:hover { border-color: var(--border-control); }
+}
+
+/* 視覚的主役の面: 色で飾らず補助面の一段差だけ */
+.card.hero-tint {
+  background: var(--surface-alt);
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.card-row:last-child { border-bottom: none; }
+.row-main { flex: 1 1 auto; min-width: 0; }
+.row-grow { flex: 1 1 auto; }
+
+@media (max-width: 639px) {
+  .card-row { flex-wrap: wrap; }
+  .card-row .row-main { flex-basis: 100%; }
+}
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* 定義リスト */
+.def-list { display: grid; grid-template-columns: 8rem 1fr; row-gap: 8px; font-size: var(--font-size-body); }
+.def-list dt { color: var(--text-secondary); }
+.def-list dd { margin: 0; }
+@media (max-width: 480px) { .def-list { grid-template-columns: 6.5rem 1fr; } }
+
+/* ============================================================
+   ボタン (§5) — 3階層 + 破壊的
+   ============================================================ */
+.btn {
+  appearance: none;
+  font: inherit;
+  font-size: var(--font-size-control);
+  border-radius: 999px;
+  padding: 8px 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1.4;
+  white-space: nowrap;
+  min-height: var(--tap);
+}
+/* 無効は専用トークン。opacityで全体を薄くしない。無効理由は近くに文字で出す */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  background: var(--action-disabled-bg);
+  background-image: none;
+  border-color: color-mix(in srgb, var(--action-disabled-border) 50%, transparent);
+  box-shadow: none;
+  color: var(--action-disabled-text);
+  cursor: not-allowed;
+}
+
+/* 主操作 = action-primary のアクセント色。作業領域ごとに1つだけ */
+.btn-primary {
+  background-color: var(--action-primary-bg);
+  /* 左上を明るく右下を深くした光沢で、単色のベタ塗りにしない(白文字は5.6:1以上) */
+  background-image: var(--glass-sheen), var(--glass-specular-rim);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  border: 1px solid transparent;
+  box-shadow: var(--glass-control-shadow);
+  color: var(--action-primary-text);
+  font-weight: 700;
+  padding: 8px 20px;
+}
+.btn-primary:hover:not(:disabled) { background-color: var(--action-primary-hover); background-image: var(--glass-sheen-soft), var(--glass-specular-rim-hover); box-shadow: var(--glass-control-shadow-hover); }
+.btn-primary:active:not(:disabled) { background-color: var(--action-primary-active); background-image: var(--glass-sheen-pressed), var(--glass-specular-rim-pressed); box-shadow: var(--glass-control-shadow-pressed); }
+
+/* 副操作 = ガラスの白地+濃紺文字+薄い紺の枠 */
+.btn-secondary {
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  border: 1px solid transparent;
+  box-shadow: var(--glass-control-shadow);
+  color: var(--action-secondary-text);
+  font-weight: 700;
+}
+.btn-secondary:hover:not(:disabled) { background: linear-gradient(var(--action-secondary-hover), var(--action-secondary-hover)) padding-box, var(--glass-specular-rim-hover) border-box; box-shadow: var(--glass-control-shadow-hover); }
+.btn-secondary:active:not(:disabled) { background: linear-gradient(var(--action-secondary-active), var(--action-secondary-active)) padding-box, var(--glass-specular-rim-pressed) border-box; box-shadow: var(--glass-control-shadow-pressed); }
+
+.btn-tertiary {
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  border: 1px solid transparent;
+  box-shadow: var(--glass-control-shadow);
+  color: var(--action-quiet-text);
+}
+.btn-tertiary:hover:not(:disabled) { background: linear-gradient(var(--action-quiet-hover), var(--action-quiet-hover)) padding-box, var(--glass-specular-rim-hover) border-box; box-shadow: var(--glass-control-shadow-hover); }
+.btn-tertiary:active:not(:disabled) { background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim-pressed) border-box; box-shadow: var(--glass-control-shadow-pressed); }
+
+/* 危険操作だけ赤系。主操作のアクセント色と混ぜない */
+.btn-danger-outline {
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  border: 1px solid color-mix(in srgb, var(--action-danger-bg) 42%, transparent);
+  box-shadow: var(--glass-control-shadow);
+  color: var(--status-danger-text);
+  font-weight: 600;
+}
+.btn-danger-outline:hover:not(:disabled) { background: linear-gradient(var(--status-danger-bg), var(--status-danger-bg)) padding-box, var(--glass-specular-rim-hover) border-box; box-shadow: var(--glass-control-shadow-hover); }
+.btn-danger-outline:active:not(:disabled) { background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim-pressed) border-box; box-shadow: var(--glass-control-shadow-pressed); }
+
+.btn-danger-solid {
+  background-color: var(--action-danger-bg);
+  background-image: var(--glass-sheen), var(--glass-specular-rim);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--glass-control-shadow);
+  border: 1px solid transparent;
+  color: var(--action-danger-text);
+  font-weight: 600;
+}
+.btn-danger-solid:hover:not(:disabled) { background-color: var(--action-danger-hover); background-image: var(--glass-sheen-soft), var(--glass-specular-rim-hover); box-shadow: var(--glass-control-shadow-hover); }
+.btn-danger-solid:active:not(:disabled) { background-color: var(--action-danger-active); background-image: var(--glass-sheen-pressed), var(--glass-specular-rim-pressed); box-shadow: var(--glass-control-shadow-pressed); }
+
+.btn-block { width: 100%; }
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+  flex: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.6s; } }
+
+/* ============================================================
+   バッジ (§5) — 意味色+記号+文言。塗り/罫線/打消しで区別
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 2px 10px;
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  line-height: 1.6;
+}
+.badge { font-family: var(--font-mono); font-weight: 700; }
+.badge-running,
+.badge-active   { background-color: var(--status-info-bg); color: var(--status-info-text); border-color: color-mix(in srgb, var(--status-info-text) 30%, transparent); }
+.badge-success,
+.badge-done     { background-color: var(--status-success-bg); color: var(--status-success-text); border-color: color-mix(in srgb, var(--status-success-text) 30%, transparent); }
+.badge-warning  { background-color: var(--status-warning-bg); color: var(--status-warning-text); border-color: color-mix(in srgb, var(--status-warning-text) 30%, transparent); }
+.badge-danger,
+.badge-alert    { background-color: var(--status-danger-bg); color: var(--status-danger-text); border-color: color-mix(in srgb, var(--status-danger-text) 30%, transparent); }
+.badge-neutral,
+.badge-closed   { background-color: var(--status-neutral-bg); color: var(--status-neutral-text); border-color: color-mix(in srgb, var(--status-neutral-text) 30%, transparent); text-decoration: line-through; text-decoration-thickness: 1px; }
+.badge-dropped  { background-color: var(--surface); color: var(--status-neutral-text); border-color: var(--border-control); border-style: dashed; }
+.badge-tag      { background: var(--tag-bg); color: var(--tag-text); }
+.badge-unread   { background: var(--badge-unread-bg); color: var(--badge-unread-text); }
+.badge-required {
+  background: var(--required-bg);
+  color: var(--required-text);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: var(--font-size-label);
+}
+.badge-alert {
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+}
+
+/* ============================================================
+   テーブル (§5)
+   ============================================================ */
+.table-scroll { overflow-x: auto; border-radius: var(--radius-glass); }
+table { width: 100%; border-collapse: collapse; font-size: var(--font-size-body); min-width: 640px; }
+/* 表ヘッダーはほぼ白のインディゴ+濃紺文字、本文は白と弱い交互行 */
+thead th {
+  text-align: left;
+  font-size: var(--font-size-label);
+  font-weight: 700;
+  color: var(--table-head-text);
+  background: var(--table-head-bg);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+tbody td { padding: 12px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr { background: var(--table-body-bg); }
+tbody tr:nth-child(even) { background: var(--table-stripe-bg); }
+tbody tr:hover { background: var(--table-hover-bg); }
+/* 選択行は背景+左線+チェック。hoverと区別する */
+tbody tr[aria-selected="true"],
+tbody tr.is-selected { background: var(--table-selected-bg); box-shadow: inset 3px 0 0 var(--table-selected-indicator); }
+th.col-num, td.col-num { text-align: right; }
+tr.row-excluded td { color: var(--text-secondary); }
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--control-on);
+  cursor: pointer;
+}
+input[type="checkbox"]:disabled { cursor: not-allowed; }
+
+/* テーブル→カードの切替は「画面幅」ではなくコンテナクエリ(容器の幅)で判定 (§5-2)
+   同じ部品をモーダルやサイドバーに置いても正しく振る舞う */
+.list-host { container-type: inline-size; }
+.deal-cards { display: none; }
+@container (max-width: 639px) {
+  .table-scroll { display: none; }
+  .deal-cards { display: block; }
+}
+.deal-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-line);
+}
+.deal-card:last-child { border-bottom: none; }
+.deal-card.is-excluded { color: var(--text-secondary); }
+.deal-card .dc-main { flex: 1; min-width: 0; }
+.deal-card .dc-title { font-weight: 600; font-size: var(--font-size-body); }
+.deal-card .dc-sub { font-size: var(--font-size-body); color: var(--text-secondary); }
+.deal-card .dc-price {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: 18px;
+  white-space: nowrap;
+  text-align: right;
+}
+.deal-card .dc-right { display: grid; gap: 6px; justify-items: end; }
+
+/* ============================================================
+   フォーム (§5)
+   ============================================================ */
+.field { display: grid; gap: 6px; }
+.field-pair { align-items: start; }
+@media (min-width: 641px) {
+  .field-pair { grid-template-rows: auto var(--tap) minmax(1.7em, auto); }
+  .field-pair > .field {
+    grid-row: 1 / span 3;
+    grid-template-rows: subgrid;
+    align-self: stretch;
+  }
+}
+.field-pair > .field > :is(input, select) { height: var(--tap); }
+.field label {
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.field :where(input[type="text"], input[type="email"], select, textarea) {
+  font: inherit;
+  font-size: var(--font-size-control);
+  width: 100%;
+  min-height: var(--tap);
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--input-bg) 96%, var(--surface-alt));
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--text-primary) 7%, transparent);
+  padding: 8px 12px;
+  color: var(--input-text);
+  transition: border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+.field :where(input, select, textarea):hover { border-color: var(--input-border-hover); background: var(--input-bg); box-shadow: inset 0 1px 3px color-mix(in srgb, var(--text-primary) 9%, transparent); }
+.field :where(input, select, textarea):focus { border-color: var(--input-border-focus); }
+.field :where(input, textarea)[readonly] { background: var(--input-readonly-bg); }
+.field :where(input, select, textarea):disabled { border-color: var(--action-disabled-border); background: var(--action-disabled-bg); color: var(--action-disabled-text); box-shadow: none; }
+.field input::placeholder,
+.field textarea::placeholder { color: var(--input-placeholder); opacity: 1; }
+.field .error-msg { font-size: var(--font-size-body); color: var(--input-invalid-message); margin: 0; }
+@media (max-width: 767px) {
+  .field :where(input, select, textarea) { font-size: 16px; }
+}
+/* エラーの赤枠はhover・focusでも消さない */
+.field.has-error :where(input, select, textarea),
+.field :where(input, select, textarea)[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+
+/* ============================================================
+   空状態 / 注意の面 (§5)
+   ============================================================ */
+.empty-state {
+  border: 1.5px dashed color-mix(in srgb, var(--border-control) 45%, transparent);
+  border-radius: var(--radius-glass);
+  padding: 48px 24px;
+  text-align: center;
+  background: var(--surface-alt);
+}
+.empty-state .es-title { font-size: var(--font-size-body); font-weight: 600; margin: 0; color: var(--text-heading); }
+
+.caution-panel {
+  border: 1px solid color-mix(in srgb, var(--status-warning-text) 28%, transparent);
+  background: var(--status-warning-bg);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-glass-sm);
+  padding: 12px 16px;
+  font-size: var(--font-size-body);
+  line-height: 1.8;
+}
+
+/* ============================================================
+   モーダル (§5)
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+.modal-overlay[hidden] { display: none; }
+.modal {
+  background: var(--surface);
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid transparent;
+  border-radius: var(--radius-glass);
+  box-shadow: inset 0 1px 0 var(--surface), var(--shadow-raised);
+  max-width: 480px;
+  width: 100%;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+.modal-head { padding: 18px 20px 0; }
+.modal-title { font-family: var(--font-display); font-size: var(--font-size-section); font-weight: 700; margin: 0; }
+.modal-body { padding: 12px 20px; }
+.modal-foot {
+  padding: 12px 20px 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* 下書き復元バー(復元は黙ってやらない: 通知+破棄) */
+.restore-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-alt);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: var(--font-size-body);
+  margin-bottom: 14px;
+}
+.restore-note button {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: 600;
+  color: var(--link);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+.draft-status {
+  font-size: var(--font-size-body);
+  color: var(--text-secondary);
+  margin: 10px 0 0;
+  min-height: 1.2em;
+}
+
+.mail-preview {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: var(--font-size-body);
+}
+.mail-preview .mp-meta {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--glass-line);
+  display: grid;
+  grid-template-columns: 4rem 1fr;
+  row-gap: 4px;
+  color: var(--text-secondary);
+}
+.mail-preview .mp-meta strong { color: var(--text-primary); font-weight: 500; }
+.mail-preview .mp-body { padding: 12px 14px; white-space: pre-line; line-height: 1.9; }
+
+/* ============================================================
+   トースト (§5)
+   ============================================================ */
+.toast-region {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 10px;
+  z-index: 60;
+  max-width: min(360px, calc(100vw - 40px));
+}
+.toast {
+  background: var(--surface);
+  background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim) border-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  border: 1px solid transparent;
+  border-radius: var(--radius-glass-sm);
+  box-shadow: var(--shadow-raised);
+  padding: 12px 16px;
+  font-size: var(--font-size-body);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.toast.toast-error { border-color: color-mix(in srgb, var(--status-danger-text) 30%, transparent); background: linear-gradient(135deg, var(--status-danger-bg), color-mix(in srgb, var(--status-danger-bg) 70%, transparent)); }
+.toast.toast-success { border-color: color-mix(in srgb, var(--status-success-text) 30%, transparent); background: linear-gradient(135deg, var(--status-success-bg), color-mix(in srgb, var(--status-success-bg) 70%, transparent)); }
+.toast .toast-msg { flex: 1; }
+.toast .toast-msg .t-sub { font-size: var(--font-size-body); color: var(--text-secondary); margin-top: 2px; }
+.toast button.toast-action {
+  appearance: none;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-control);
+  font-weight: 600;
+  color: var(--link);
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   ホーム (ux-design §9)
+   ============================================================ */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 14px 0;
+  margin-top: 24px;
+}
+.kpi { text-align: center; padding: 0 8px; }
+.kpi .kpi-label { font-size: var(--font-size-body); color: var(--text-secondary); }
+.kpi .kpi-value {
+  font-size: clamp(28px, 4vw, 36px);
+  font-weight: 700;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.kpi + .kpi { border-left: 1px solid var(--border-subtle); }
+
+.todo-row-title { font-size: var(--font-size-body); font-weight: 600; }
+.todo-row-sub { font-size: var(--font-size-body); color: var(--text-secondary); }
+
+/* ============================================================
+   結果・レポート (jp-web-design §10)
+   ============================================================ */
+.hero-number { text-align: center; padding: 36px 20px 28px; }
+.hero-number .hn-label { font-size: var(--font-size-label); color: var(--text-secondary); }
+.hero-number .hn-value {
+  font-size: var(--font-size-display);
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.2;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em; /* ほんの少しだけ空ける(詰めすぎは窮屈) */
+}
+
+.compare-block { display: grid; gap: 14px; }
+.compare-item { display: grid; gap: 4px; }
+.compare-item .ci-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--font-size-body);
+  gap: 8px;
+}
+.compare-item .ci-head .ci-label { color: var(--text-secondary); }
+.compare-item .ci-head .ci-value {
+  font-weight: 700;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* 少数比較は「数字+差分」で見せる(バーの恣意スケール禁止) */
+.delta-compare {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 0 4px;
+}
+.delta-compare .dc-item { text-align: center; }
+.delta-compare .dc-label { font-size: var(--font-size-label); color: var(--text-secondary); }
+.delta-compare .dc-value {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 36px);
+}
+.delta-compare .dc-arrow { color: var(--text-secondary); font-size: var(--font-size-body); }
+.delta-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background-color: var(--surface-selected);
+  color: var(--text-heading);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--font-size-body);
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+.bar-track { background: color-mix(in srgb, var(--progress-track) 80%, transparent); box-shadow: inset 0 1px 2px color-mix(in srgb, var(--nav-background) 8%, transparent); border-radius: 999px; height: 10px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; transition: width 700ms cubic-bezier(0.2, 0, 0, 1); }
+/* 比較対象は淡色スケール、主系列は濃紺。値ラベルを必ず併記する */
+.bar-fill.is-base { background: var(--p-scale-2); }
+.bar-fill.is-brand { background: var(--chart-main); }
+
+details.disclosure { border: 1px solid var(--border-subtle); border-radius: var(--radius-glass-sm); background: var(--surface); box-shadow: var(--shadow-soft); }
+details.disclosure summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+details.disclosure summary::after { content: "＋"; color: var(--text-secondary); font-weight: 400; }
+details.disclosure[open] summary::after { content: "－"; }
+details.disclosure .disclosure-body {
+  padding: 0 16px 14px;
+  font-size: var(--font-size-body);
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+details.disclosure[open] .disclosure-body { animation: rise-in var(--motion-fast) var(--ease-standard) both; }
+
+/* 専門用語と図の読み方 — 説明は常に出さず、触れたときだけ3段で出す。
+   (1) 本文の印 .term (点線 + ?) → (2) その場に出る .tooltip.tip-rich → (3) 末尾の用語集 .glossary
+   JS を切ると .term は用語集へのリンクとして働き、同じ説明へ到達できる */
+.term { color: inherit; text-decoration: none; border-bottom: 1px dashed var(--text-secondary); cursor: help; }
+.term:hover, .term:focus-visible { color: var(--text-heading); background: var(--surface-selected); border-bottom-style: solid; }
+.term-q {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1em;
+  height: 1.1em;
+  margin-left: 0.15em;
+  vertical-align: 0.15em;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-alt);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.7em;
+  font-weight: 700;
+  line-height: 1;
+}
+.term:hover .term-q, .term:focus-visible .term-q { border-color: var(--text-secondary); background: var(--text-secondary); color: var(--surface); }
+.tooltip.tip-rich {
+  position: fixed;
+  z-index: 50;
+  display: grid;
+  gap: 4px;
+  max-width: min(22rem, calc(100vw - 16px));
+  padding: 10px 12px;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.6;
+  pointer-events: none;
+}
+.tooltip.tip-rich b { font-weight: 700; }
+.tooltip.tip-rich[hidden] { display: none; }
+
+details.howto { margin-top: 10px; }
+details.howto > summary { cursor: pointer; color: var(--text-secondary); font-size: var(--font-size-label); }
+details.howto p {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-glass-sm);
+  background: var(--surface-alt);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.glossary { margin-top: 40px; }
+.glossary > details > summary { cursor: pointer; font-weight: 700; color: var(--text-heading); }
+.gl-lead { margin: 12px 0 0; color: var(--text-secondary); font-size: var(--font-size-label); }
+.gl-list {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) minmax(0, 1fr);
+  gap: 8px 20px;
+  margin: 12px 0 0;
+}
+.gl-list dt { font-weight: 700; color: var(--text-heading); scroll-margin-top: 24px; }
+.gl-list dd { margin: 0; display: grid; gap: 2px; line-height: 1.6; }
+.gl-how { color: var(--text-secondary); }
+
+
+/* ============================================================
+   カタログページ用
+   ============================================================ */
+.catalog-section { margin: 36px 0; }
+.catalog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.swatch-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.swatch { border: 1px solid var(--border-subtle); border-radius: var(--radius-glass-sm); overflow: hidden; background: var(--surface); box-shadow: var(--shadow-soft); }
+.swatch .sw-color { height: 48px; }
+.swatch .sw-meta { padding: 8px 10px; font-size: var(--font-size-label); line-height: 1.6; }
+.demo-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.demo-status { margin: 10px 0 0; min-height: 1.7em; color: var(--text-secondary); font-size: var(--font-size-body); }
+.demo-status[hidden] { display: none; }
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 12px 0;
+}
+.table-toolbar label { font-size: var(--font-size-label); font-weight: 600; }
+.table-toolbar select {
+  min-height: var(--tap);
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--input-text);
+  font: inherit;
+  font-size: var(--font-size-control);
+  padding: 6px 34px 6px 10px;
+}
+.table-sort {
+  min-height: var(--tap);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.table-sort::after { content: " ↕"; }
+th[aria-sort="ascending"] .table-sort::after { content: " ↑"; }
+th[aria-sort="descending"] .table-sort::after { content: " ↓"; }
+
+.chip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 640px) { .chip-grid { grid-template-columns: repeat(4, 1fr); } }
+.chip {
+  border: 1px solid transparent;
+  background: var(--glass-fill) padding-box, var(--glass-specular-rim) border-box;
+  box-shadow: var(--glass-control-shadow);
+  border-radius: 999px;
+  padding: 8px 4px;
+  font-size: var(--font-size-control);
+  text-align: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover { background: var(--glass-fill-strong) padding-box, var(--glass-specular-rim-hover) border-box; box-shadow: var(--glass-control-shadow-hover); }
+}
+.chip:active { background: var(--glass-fill) padding-box, var(--glass-specular-rim-pressed) border-box; box-shadow: var(--glass-control-shadow-pressed); }
+.chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--table-selected-indicator) 32%, transparent);
+  background: linear-gradient(135deg, var(--surface-selected), color-mix(in srgb, var(--surface-selected) 60%, transparent));
+  color: var(--text-heading);
+  font-weight: 700;
+}
+
+/* ============================================================
+   小画面: 縮小ではなく単列へ組み替える
+   ============================================================ */
+@media (max-width: 639px) {
+  main,
+  main.pop {
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+
+  .app-header {
+    margin-right: max(8px, env(safe-area-inset-right));
+    margin-left: max(8px, env(safe-area-inset-left));
+  }
+
+  .app-shell .side-nav { display: none; }
+  .app-shell { display: block; }
+  body > .bottom-tabs :where(a, button) { min-height: var(--tap); font-size: var(--font-size-control); }
+  body > .bottom-tabs { display: grid; }
+
+  .catalog-grid,
+  .grid-2,
+  .kpi-strip,
+  .pop-kpis,
+  .def-list { grid-template-columns: minmax(0, 1fr); }
+
+  .swatch-row,
+  .chip-grid,
+  .pop-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .demo-row .btn { flex: 1 1 100%; width: 100%; }
+  .cta-row { align-items: stretch; flex-direction: column; }
+  .cta-row .tune-btn,
+  .cta-row .pop-cta { width: 100%; }
+
+  .catalog-section .table-scroll { overflow: visible; }
+  .catalog-section table,
+  .catalog-section tbody { display: grid; min-width: 0; gap: 12px; }
+  .catalog-section thead { display: none; }
+  .catalog-section tbody tr {
+    display: grid;
+    min-width: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-glass-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-soft);
+  }
+  .catalog-section tbody td,
+  .catalog-section tbody td.col-num {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: right;
+  }
+  .catalog-section tbody td:last-child { border-bottom: 0; }
+  .catalog-section tbody td::before {
+    content: attr(data-label);
+    color: var(--text-secondary);
+    font-size: var(--font-size-label);
+    text-align: left;
+  }
+
+  .toast-region {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* ============================================================
+   透明を減らす設定・印刷 — ガラス表現を上書きするため末尾に置く
+   ============================================================ */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body { background-image: none; }
+  .app-header, .chip, .btn-secondary, .btn-tertiary, .btn-danger-outline { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; border-color: var(--border-subtle); box-shadow: none; }
+  .btn-secondary { border-color: var(--action-secondary-border); }
+  .btn-tertiary, .empty-state { border-color: var(--border-control); }
+  .btn-danger-outline { border-color: var(--action-danger-bg); }
+  :is(.side-nav, .bottom-tabs) { background: var(--surface-alt); -webkit-backdrop-filter: none; backdrop-filter: none; border-color: var(--border-subtle); box-shadow: none; color: var(--text-primary); }
+  :is(.side-nav, .bottom-tabs) :where(a, button) { color: var(--text-primary); }
+  :is(.side-nav, .bottom-tabs) :where(a, button)[aria-current="page"] { background: var(--surface); }
+  .btn-primary, .btn-danger-solid, .badge, .tooltip, .delta-chip { background-image: none; }
+  .modal, .toast { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  thead th, tbody td, .card-row { border-color: var(--border-subtle); }
+}
+
+@media print {
+  body, .app-header, .card, .modal, .toast { background: white; background-image: none; backdrop-filter: none; color: black; box-shadow: none; }
+  .card, .badge, .toast { border-color: black; }
+  .swatch, .chip, .empty-state, .caution-panel, .btn, .badge, .delta-chip, .bar-fill { background-image: none; box-shadow: none; }
+  .badge { background: white; color: black; }
+  .side-nav, .bottom-tabs, .toast-region { display: none; }
+}
+</style>
+<!-- inline-css:end -->
+</head>
+<body>
+
+<header class="app-header">
+  <h1 class="app-name">部品カタログ</h1>
+</header>
+
+<main>
+  <!-- §1-2 カラートークン -->
+  <section class="catalog-section">
+    <h2 class="section-heading">平賀カラー</h2>
+    <!-- 色名と用途だけを表示する。トークン名とコントラスト実測値は正本CSS・検査スクリプトで管理する。 -->
+    <div class="swatch-row">
+      <div class="swatch" data-token="p-brand-indigo"><div class="sw-color" style="background:var(--p-brand-indigo)"></div><div class="sw-meta"><strong>インディゴ</strong></div></div>
+      <div class="swatch" data-token="action-primary-bg"><div class="sw-color" style="background:var(--action-primary-bg)"></div><div class="sw-meta"><strong>主操作のアクセント</strong></div></div>
+      <div class="swatch" data-token="app-background"><div class="sw-color" style="background:var(--app-background)"></div><div class="sw-meta"><strong>画面背景</strong></div></div>
+      <div class="swatch" data-token="surface"><div class="sw-color" style="background:var(--surface)"></div><div class="sw-meta"><strong>面</strong></div></div>
+      <div class="swatch" data-token="surface-alt"><div class="sw-color" style="background:var(--surface-alt)"></div><div class="sw-meta"><strong>補助面</strong></div></div>
+      <div class="swatch" data-token="surface-selected"><div class="sw-color" style="background:var(--surface-selected)"></div><div class="sw-meta"><strong>選択面</strong></div></div>
+      <div class="swatch" data-token="surface-accent"><div class="sw-color" style="background:var(--surface-accent)"></div><div class="sw-meta"><strong>アクセント面</strong></div></div>
+      <div class="swatch" data-token="text-primary"><div class="sw-color" style="background:var(--text-primary)"></div><div class="sw-meta"><strong>本文</strong></div></div>
+      <div class="swatch" data-token="text-secondary"><div class="sw-color" style="background:var(--text-secondary)"></div><div class="sw-meta"><strong>補助文字</strong></div></div>
+      <div class="swatch" data-token="border-control"><div class="sw-color" style="background:var(--border-control)"></div><div class="sw-meta"><strong>入力枠</strong></div></div>
+      <div class="swatch" data-token="status-info-text"><div class="sw-color" style="background:var(--status-info-text)"></div><div class="sw-meta"><strong>情報・処理中</strong></div></div>
+      <div class="swatch" data-token="status-success-text"><div class="sw-color" style="background:var(--status-success-text)"></div><div class="sw-meta"><strong>成功</strong></div></div>
+      <div class="swatch" data-token="status-warning-text"><div class="sw-color" style="background:var(--status-warning-text)"></div><div class="sw-meta"><strong>注意</strong></div></div>
+      <div class="swatch" data-token="status-danger-text"><div class="sw-color" style="background:var(--status-danger-text)"></div><div class="sw-meta"><strong>エラー</strong></div></div>
+    </div>
+    <h3 class="section-heading">サイドナビ</h3>
+    <nav class="side-nav" id="catalog-nav" data-tabs aria-label="業務メニュー" style="border-radius:var(--radius-glass)">
+      <span class="nav-caption">業務</span>
+      <button type="button" data-tab="home" aria-controls="catalog-panel-home" aria-current="page"><span class="nav-label">ホーム</span></button>
+      <button type="button" data-tab="list" aria-controls="catalog-panel-list"><span class="nav-label">一覧</span></button>
+      <button type="button" data-tab="report" aria-controls="catalog-panel-report"><span class="nav-label">レポート</span></button>
+      <button type="button" data-tab="settings" aria-controls="catalog-panel-settings"><span class="nav-label">設定</span></button>
+    </nav>
+    <div class="demo-status" aria-live="polite">
+      <section id="catalog-panel-home" data-tab-panel="home" data-tabs-owner="catalog-nav">ホーム</section>
+      <section id="catalog-panel-list" data-tab-panel="list" data-tabs-owner="catalog-nav" hidden>一覧</section>
+      <section id="catalog-panel-report" data-tab-panel="report" data-tabs-owner="catalog-nav" hidden>レポート</section>
+      <section id="catalog-panel-settings" data-tab-panel="settings" data-tabs-owner="catalog-nav" hidden>設定</section>
+    </div>
+  </section>
+
+  <!-- §5 ボタン -->
+  <section class="catalog-section">
+    <h2 class="section-heading">ボタン</h2>
+    <div class="card card-pad">
+      <div class="demo-row">
+        <button type="button" class="btn btn-primary pressable" data-action-message="送信しました" data-action-target="#catalog-status">送信する</button>
+        <button type="button" class="btn btn-secondary pressable" data-action-message="編集中です" data-action-target="#catalog-status">編集する</button>
+        <button type="button" class="btn btn-tertiary pressable" data-action-message="キャンセルしました" data-action-target="#catalog-status">キャンセル</button>
+        <button type="button" class="btn btn-danger-outline pressable" data-confirm-message="削除しますか？" data-action-message="削除しました" data-action-target="#catalog-status">削除する</button>
+        <button type="button" class="btn btn-primary" disabled>送信する</button>
+        <button type="button" class="btn btn-primary" style="min-width:112px" disabled><span class="spinner" aria-hidden="true"></span>送信中…</button>
+      </div>
+      <p class="demo-status" id="catalog-status" role="status" hidden></p>
+    </div>
+  </section>
+
+  <section class="catalog-section">
+    <h2 class="section-heading">動き</h2>
+    <div class="grid-2">
+      <!-- pressable: hover / pressed の見本 -->
+      <button type="button" class="card card-pad pressable" data-action-message="内容を確認しました" data-action-target="#catalog-motion-status" style="text-align:left; color:var(--text-primary); cursor:pointer">
+        <strong>内容を確認する</strong>
+      </button>
+      <!-- rise-in: 追加位置を示す一度だけの入場見本 -->
+      <div class="card card-pad rise-in" style="--stagger:40ms">
+        <strong>追加しました</strong>
+      </div>
+    </div>
+    <p class="demo-status" id="catalog-motion-status" role="status" hidden></p>
+  </section>
+
+  <!-- §5 バッジ -->
+  <section class="catalog-section">
+    <h2 class="section-heading">状態</h2>
+    <div class="card card-pad">
+      <div class="demo-row">
+        <span class="badge badge-running">↻ 処理中</span>
+        <span class="badge badge-success">✓ 完了</span>
+        <span class="badge badge-warning">! 要確認</span>
+        <span class="badge badge-danger">× エラー</span>
+        <span class="badge badge-neutral">○ 下書き</span>
+        <span class="badge badge-required">必須</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- §5 フォーム -->
+  <section class="catalog-section">
+    <h2 class="section-heading">入力</h2>
+    <form class="card card-pad" id="catalog-form">
+      <div class="grid-2 field-pair">
+        <div class="field">
+          <label for="cat-email">メールアドレス <span class="badge badge-required">必須</span></label>
+          <input id="cat-email" type="email" inputmode="email" value="taro@example.com" data-validate-email>
+        </div>
+        <div class="field has-error">
+          <label for="cat-email-err">メールアドレス <span class="badge badge-required">必須</span></label>
+          <input id="cat-email-err" type="email" inputmode="email" value="sato@example" aria-invalid="true" aria-describedby="cat-email-error" data-validate-email>
+          <p class="error-msg" id="cat-email-error">メールアドレスの形式が正しくありません。「@」以降にドメインを入れてください。</p>
+        </div>
+      </div>
+      <div class="demo-row"><button type="button" class="btn btn-tertiary pressable" data-clear-form="#catalog-form" data-action-target="#catalog-form-status">クリア</button></div>
+      <p class="demo-status" id="catalog-form-status" role="status" hidden></p>
+    </form>
+  </section>
+
+  <!-- §2 プリセット2層(ux-design §2) -->
+  <section class="catalog-section">
+    <h2 class="section-heading">選択</h2>
+    <div class="card card-pad">
+      <div class="chip-grid" data-exclusive role="group" aria-label="提案エリア">
+        <button type="button" class="chip pressable" aria-pressed="true">東京23区</button>
+        <button type="button" class="chip pressable" aria-pressed="false">首都圏</button>
+        <button type="button" class="chip pressable" aria-pressed="false">関西圏</button>
+        <button type="button" class="chip pressable" aria-pressed="false">地元(和歌山県)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- §5 テーブル -->
+  <section class="catalog-section">
+    <h2 class="section-heading">一覧</h2>
+    <div class="card">
+      <div class="table-toolbar">
+        <label for="catalog-status-filter">状態</label>
+        <select id="catalog-status-filter" data-filter-table="#catalog-table">
+          <option value="all">すべて</option>
+          <option value="active">進行中</option>
+          <option value="closed">売却済</option>
+        </select>
+      </div>
+      <div class="table-scroll">
+        <table id="catalog-table">
+          <thead>
+            <tr><th>物件</th><th class="col-num" aria-sort="none"><button type="button" class="table-sort" data-sort-table="#catalog-table">価格(万円)</button></th><th class="col-num">利回り(%)</th><th>状態</th></tr>
+          </thead>
+          <tbody>
+            <tr data-status="active" data-sort-value="23048"><td data-label="物件">練馬区 一棟マンション</td><td data-label="価格(万円)" class="col-num num">23,048</td><td data-label="利回り(%)" class="col-num num">7.2</td><td data-label="状態"><span class="badge badge-active">進行中</span></td></tr>
+            <tr data-status="active" data-sort-value="9800"><td data-label="物件">川口市 一棟アパート</td><td data-label="価格(万円)" class="col-num num">9,800</td><td data-label="利回り(%)" class="col-num num">8.1</td><td data-label="状態"><span class="badge badge-active">進行中</span></td></tr>
+            <tr data-status="closed" data-sort-value="7350"><td data-label="物件">船橋市 一棟アパート</td><td data-label="価格(万円)" class="col-num num">7,350</td><td data-label="利回り(%)" class="col-num num">8.4</td><td data-label="状態"><span class="badge badge-closed">売却済</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- §5 空状態 / スケルトン / 注意の面 -->
+  <section class="catalog-section">
+    <h2 class="section-heading">案内</h2>
+    <div class="grid-2">
+      <div class="empty-state">
+        <p class="es-title">まだ物件の登録がありません</p>
+        <button type="button" class="btn btn-primary pressable" data-action-message="登録を開始しました" data-action-target="#catalog-guide-status">概要書から登録する</button>
+      </div>
+      <div style="display:grid; gap:12px">
+        <div class="card card-pad" aria-hidden="true" style="display:grid; gap:10px">
+          <div class="skeleton" style="height:16px; width:60%"></div>
+          <div class="skeleton" style="height:16px; width:85%"></div>
+          <div class="skeleton" style="height:16px; width:45%"></div>
+        </div>
+        <div class="caution-panel">この操作は取り消せません。内容をご確認ください。</div>
+        <details class="disclosure">
+          <summary>登録内容</summary>
+          <div class="disclosure-body"><dl class="def-list"><dt>物件</dt><dd>練馬区 一棟マンション</dd><dt>状態</dt><dd>下書き</dd></dl></div>
+        </details>
+      </div>
+    </div>
+    <p class="demo-status" id="catalog-guide-status" role="status" hidden></p>
+  </section>
+
+  <!-- §11 専門用語の段階開示。説明は常時表示せず、印→その場の説明→末尾の用語集の3段で出す。 -->
+  <section class="catalog-section">
+    <h2 class="section-heading">用語</h2>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <p>調べた <a class="term" href="#cat-gl-n" data-term="n（件数）">n<span class="term-q" aria-hidden="true">?</span></a> は48件で、<a class="term" href="#cat-gl-median" data-term="中央値">中央値<span class="term-q" aria-hidden="true">?</span></a> は66%でした。</p>
+        <div class="compare-item">
+          <div class="ci-head"><span class="ci-label">目標75%に対する実績</span><span class="ci-value">66<span class="unit">%</span></span></div>
+          <div class="bar-track"><div class="bar-fill is-brand" style="width:88%"></div></div>
+        </div>
+        <details class="howto">
+          <summary>この図の読み方</summary>
+          <p>横棒が長いほど目標に近い値です。棒の右の数字が、いまの実績を表します。</p>
+        </details>
+      </div>
+      <aside class="glossary card card-pad">
+        <details>
+          <summary>用語の説明</summary>
+          <p class="gl-lead">本文の点線の語にカーソルを合わせるか、押すと同じ説明が出ます。</p>
+          <dl class="gl-list">
+            <dt id="cat-gl-n">n（件数）</dt>
+            <dd><span class="gl-what">その数字を出すのに使ったデータの件数です。</span><span class="gl-how">少ないほど結果はぶれます。10件未満なら傾向として読み、断定しません。</span></dd>
+            <dt id="cat-gl-median">中央値</dt>
+            <dd><span class="gl-what">小さい順に並べたとき、ちょうど真ん中に来る値です。</span><span class="gl-how">平均と大きく離れていたら、一部の極端な値が平均を引っぱっています。</span></dd>
+          </dl>
+        </details>
+      </aside>
+    </div>
+  </section>
+
+  <!-- §9 データ表現 -->
+  <section class="catalog-section">
+    <h2 class="section-heading">比較</h2>
+    <div class="grid-2">
+      <div class="card card-pad">
+        <!-- 少数比較は数字と差分で示す。 -->
+        <div class="delta-compare">
+          <div class="dc-item">
+            <div class="dc-label">先月</div>
+            <div class="dc-value" style="color:var(--text-secondary)">11.2<span class="unit">%</span></div>
+          </div>
+          <span class="dc-arrow" aria-hidden="true">→</span>
+          <div class="dc-item">
+            <div class="dc-label">今月</div>
+            <div class="dc-value">18.6<span class="unit">%</span></div>
+          </div>
+          <span class="delta-chip">+7.4pt</span>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <!-- 進捗バーは分母を明示できる場合だけ使う。 -->
+        <div class="compare-item">
+          <div class="ci-head"><span class="ci-label">目標120通に対する実績</span><span class="ci-value">86<span class="unit">/120通</span></span></div>
+          <div class="bar-track"><div class="bar-fill is-brand" style="width:71.7%"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- §3 タイポグラフィ・メリハリ -->
+  <section class="catalog-section">
+    <h2 class="section-heading">文字と数字</h2>
+    <div class="card card-pad">
+      <!-- 主数字は欧文数字書体、通貨記号と桁区切りは一段控えめにする。 -->
+      <div class="hero-number" style="padding:8px 0 16px">
+        <div class="hn-label">見積金額</div>
+        <div class="hn-value"><span class="currency">¥</span>372<span class="num-sep">,</span>160<span class="num-sep">,</span>000</div>
+      </div>
+      <dl class="def-list" style="border-top:1px solid var(--glass-line); padding-top:14px">
+        <dt>物件</dt><dd style="font-weight:700; font-size:20px">練馬区 一棟マンション</dd>
+        <dt>担当者</dt><dd style="font-weight:700; font-size:18px">田中様</dd>
+        <dt>状況</dt><dd>提案内容を確認中です。</dd>
+        <dt>次の予定</dt><dd style="font-size:16px; color:var(--text-secondary)">7月22日にご連絡します。</dd>
+        <dt>合計</dt><dd class="num" style="font-weight:700">123,456,789円</dd>
+      </dl>
+    </div>
+  </section>
+</main>
+
+<!-- inline-reference-interactions:start (node scripts/inline-catalog-css.mjs で生成。直接編集しない) -->
+<script>
+'use strict'
+
+/* 参照HTML共通の最小操作層。見た目だけの操作部品を残さず、ARIAと表示状態を同時に更新する。 */
+;(function initReferenceInteractions(global) {
+  const SELECTOR = 'button:not([disabled]), [role="radio"]:not([aria-disabled="true"])'
+
+  function showStatus(target, message) {
+    const node = typeof target === 'string' ? document.querySelector(target) : target
+    if (!node) return
+    node.textContent = message
+    node.hidden = false
+  }
+
+  function selectExclusive(container, item) {
+    const attribute = item.hasAttribute('aria-checked') ? 'aria-checked' : 'aria-pressed'
+    container.querySelectorAll(SELECTOR).forEach((control) => {
+      control.setAttribute(attribute, String(control === item))
+      control.tabIndex = control === item ? 0 : -1
+    })
+    item.focus()
+    container.dispatchEvent(new CustomEvent('reference:selection', { bubbles: true, detail: { item } }))
+  }
+
+  function bindExclusive(container) {
+    if (container.dataset.referenceBound === 'exclusive') return
+    container.dataset.referenceBound = 'exclusive'
+    const controls = [...container.querySelectorAll(SELECTOR)]
+    const selected = controls.find((item) => item.getAttribute('aria-pressed') === 'true' || item.getAttribute('aria-checked') === 'true') || controls[0]
+    controls.forEach((item) => { item.tabIndex = item === selected ? 0 : -1 })
+    container.addEventListener('click', (event) => {
+      const item = event.target.closest(SELECTOR)
+      if (item && container.contains(item)) selectExclusive(container, item)
+    })
+    container.addEventListener('keydown', (event) => {
+      const item = event.target.closest(SELECTOR)
+      if (!item || !container.contains(item)) return
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        selectExclusive(container, item)
+        return
+      }
+      const directions = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End']
+      if (!directions.includes(event.key)) return
+      event.preventDefault()
+      const enabled = [...container.querySelectorAll(SELECTOR)]
+      const current = enabled.indexOf(item)
+      const next = event.key === 'Home' ? 0
+        : event.key === 'End' ? enabled.length - 1
+          : (current + (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1) + enabled.length) % enabled.length
+      selectExclusive(container, enabled[next])
+    })
+  }
+
+  function activateTab(tablist, tab) {
+    const selector = tab.dataset.tab
+    tablist.querySelectorAll('[data-tab]').forEach((item) => {
+      const active = item === tab
+      if (active) item.setAttribute('aria-current', 'page')
+      else item.removeAttribute('aria-current')
+      item.tabIndex = active ? 0 : -1
+    })
+    document.querySelectorAll(`[data-tab-panel][data-tabs-owner="${tablist.id}"]`).forEach((panel) => {
+      panel.hidden = panel.dataset.tabPanel !== selector
+    })
+    tab.focus()
+  }
+
+  function bindTabs(tablist) {
+    if (tablist.dataset.referenceBound === 'tabs') return
+    tablist.dataset.referenceBound = 'tabs'
+    const tabs = [...tablist.querySelectorAll('[data-tab]')]
+    const active = tabs.find((tab) => tab.hasAttribute('aria-current')) || tabs[0]
+    tabs.forEach((tab) => { tab.tabIndex = tab === active ? 0 : -1 })
+    tablist.addEventListener('click', (event) => {
+      const tab = event.target.closest('[data-tab]')
+      if (tab && tablist.contains(tab)) activateTab(tablist, tab)
+    })
+    tablist.addEventListener('keydown', (event) => {
+      const tab = event.target.closest('[data-tab]')
+      if (!tab || !['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      event.preventDefault()
+      const current = tabs.indexOf(tab)
+      const next = event.key === 'Home' ? 0
+        : event.key === 'End' ? tabs.length - 1
+          : (current + (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1) + tabs.length) % tabs.length
+      activateTab(tablist, tabs[next])
+    })
+  }
+
+  function validateEmail(input) {
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim())
+    const error = input.getAttribute('aria-describedby') && document.getElementById(input.getAttribute('aria-describedby'))
+    input.setAttribute('aria-invalid', String(!valid))
+    input.closest('.field')?.classList.toggle('has-error', !valid)
+    if (error) error.hidden = valid
+    return valid
+  }
+
+  /* 専門用語の説明。説明文は用語集の dd だけが持ち、ここはそれを読んで用語の下に出すだけ(同じ文を2か所に書かない)。
+     ホバー・キーボードのフォーカス・クリックの3経路で開き、クリックは固定(pin)してページ内遷移を抑える。 */
+  function bindTerms(root) {
+    const terms = [...root.querySelectorAll('a.term[href^="#"]')].filter((term) => !term.dataset.referenceBound)
+    if (!terms.length) return
+    terms.forEach((term) => { term.dataset.referenceBound = 'term' })
+    let pop = document.getElementById('term-pop')
+    if (!pop) {
+      pop = document.createElement('div')
+      pop.id = 'term-pop'
+      pop.className = 'tooltip tip-rich'
+      pop.setAttribute('role', 'status')
+      pop.hidden = true
+      document.body.appendChild(pop)
+    }
+    let pinned = null
+    let hovered = null
+    let restoringFocus = false
+    const hide = () => { pop.hidden = true; pinned = hovered = null }
+    const show = (term) => {
+      const description = document.getElementById(decodeURIComponent(term.getAttribute('href').slice(1)))?.nextElementSibling
+      if (description?.tagName !== 'DD') return false
+      pop.textContent = ''
+      const label = document.createElement('b')
+      label.textContent = term.dataset.term || ''
+      pop.append(label, ...[...description.children].map((line) => {
+        const row = document.createElement('span')
+        row.textContent = line.textContent
+        return row
+      }))
+      pop.hidden = false
+      const box = term.getBoundingClientRect()
+      const left = Math.max(8, Math.min(box.left, global.innerWidth - pop.offsetWidth - 8))
+      const below = box.bottom + 8
+      const top = below + pop.offsetHeight > global.innerHeight - 8 ? Math.max(8, box.top - pop.offsetHeight - 8) : below
+      pop.style.left = `${left}px`
+      pop.style.top = `${top}px`
+      return true
+    }
+    document.addEventListener('mouseover', (event) => {
+      const term = event.target.closest('a.term')
+      if (pinned) return
+      if (term) { if (show(term)) hovered = term } else if (hovered) hide()
+    })
+    document.addEventListener('focusin', (event) => {
+      const term = event.target.closest('a.term')
+      if (restoringFocus) return
+      if (term && !pinned && show(term)) hovered = term
+    })
+    document.addEventListener('focusout', (event) => {
+      if (!pinned && hovered && event.target.closest('a.term') === hovered) hide()
+    })
+    document.addEventListener('click', (event) => {
+      const term = event.target.closest('a.term')
+      if (!term) { if (pinned) hide(); return }
+      event.preventDefault()
+      const same = pinned === term
+      hide()
+      if (!same && show(term)) pinned = term
+    })
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !pinned) return
+      const term = pinned
+      hide()
+      /* 閉じた直後にフォーカスを戻すと focusin で開き直ってしまうので、この1回だけ止める */
+      restoringFocus = true
+      term.focus()
+      restoringFocus = false
+    })
+    global.addEventListener('scroll', () => { if (pinned || hovered) hide() }, { passive: true })
+  }
+
+  function init(root = document) {
+    bindTerms(root)
+    root.querySelectorAll('[data-exclusive]').forEach(bindExclusive)
+    root.querySelectorAll('[data-tabs]').forEach(bindTabs)
+    root.querySelectorAll('[data-disclosure]').forEach((button) => {
+      if (button.dataset.referenceBound) return
+      button.dataset.referenceBound = 'disclosure'
+      button.addEventListener('click', () => {
+        const panel = document.getElementById(button.getAttribute('aria-controls'))
+        const open = panel?.hidden ?? false
+        if (panel) panel.hidden = !open
+        button.setAttribute('aria-expanded', String(open))
+      })
+    })
+    root.querySelectorAll('[data-action-message]').forEach((button) => {
+      if (button.dataset.referenceBound) return
+      button.dataset.referenceBound = 'action'
+      button.addEventListener('click', () => {
+        if (button.dataset.confirmMessage && !global.confirm(button.dataset.confirmMessage)) return
+        showStatus(button.dataset.actionTarget, button.dataset.actionMessage)
+      })
+    })
+    root.querySelectorAll('[data-validate-email]').forEach((input) => {
+      if (input.dataset.referenceBound) return
+      input.dataset.referenceBound = 'email'
+      input.addEventListener('blur', () => validateEmail(input))
+      input.addEventListener('input', () => {
+        if (input.getAttribute('aria-invalid') === 'true' && validateEmail(input)) validateEmail(input)
+      })
+    })
+    root.querySelectorAll('[data-clear-form]').forEach((button) => {
+      if (button.dataset.referenceBound) return
+      button.dataset.referenceBound = 'clear'
+      button.addEventListener('click', () => {
+        const form = document.querySelector(button.dataset.clearForm)
+        form?.reset()
+        form?.querySelectorAll('input, textarea').forEach((control) => { control.value = '' })
+        form?.querySelectorAll('select').forEach((control) => { control.selectedIndex = 0 })
+        form?.querySelectorAll('[aria-invalid]').forEach((input) => {
+          input.setAttribute('aria-invalid', 'false')
+          input.closest('.field')?.classList.remove('has-error')
+          const error = input.getAttribute('aria-describedby') && document.getElementById(input.getAttribute('aria-describedby'))
+          if (error) error.hidden = true
+        })
+        showStatus(button.dataset.actionTarget, button.dataset.actionMessage || '入力をクリアしました')
+      })
+    })
+    root.querySelectorAll('[data-filter-table]').forEach((select) => {
+      if (select.dataset.referenceBound) return
+      select.dataset.referenceBound = 'filter'
+      select.addEventListener('change', () => {
+        document.querySelectorAll(`${select.dataset.filterTable} tbody tr`).forEach((row) => {
+          row.hidden = select.value !== 'all' && row.dataset.status !== select.value
+        })
+      })
+    })
+    root.querySelectorAll('[data-sort-table]').forEach((button) => {
+      if (button.dataset.referenceBound) return
+      button.dataset.referenceBound = 'sort'
+      button.addEventListener('click', () => {
+        const table = document.querySelector(button.dataset.sortTable)
+        const tbody = table?.tBodies[0]
+        if (!tbody) return
+        const direction = button.dataset.direction === 'ascending' ? 'descending' : 'ascending'
+        button.dataset.direction = direction
+        button.closest('th')?.setAttribute('aria-sort', direction)
+        const factor = direction === 'ascending' ? 1 : -1
+        const rows = [...tbody.rows].sort((a, b) => factor * (Number(a.dataset.sortValue) - Number(b.dataset.sortValue)))
+        rows.forEach((row) => tbody.appendChild(row))
+      })
+    })
+  }
+
+  global.ReferenceUI = { init, showStatus, selectExclusive, activateTab, validateEmail, bindTerms }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => init())
+  else init()
+})(window)
+</script>
+<!-- inline-reference-interactions:end -->
+</body>
+</html>

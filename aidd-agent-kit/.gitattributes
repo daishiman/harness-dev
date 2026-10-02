@@ -1,0 +1,10 @@
+# Windows 用スクリプトは CRLF で配布する。
+# cmd.exe / PowerShell は LF のみのファイルで行解釈を誤ることがあるため、
+# チェックアウト時に必ず CRLF へ展開する（リポジトリ内は LF で保持される）。
+# scripts/package-kit.sh はこの CRLF を検査しており、満たさないと配布物を生成できない。
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Mac / Linux 用スクリプトは LF を強制する。
+*.sh text eol=lf
+*.command text eol=lf

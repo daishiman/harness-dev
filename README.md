@@ -509,6 +509,7 @@ copyします。Codexはrepository rootまたはGit refをmarketplaceとして�
 | `~/.claude/plugins/...` (ホームディレクトリ) | Claude Code が自動で保持するキャッシュ | 自動管理、編集しない |
 | Codex CLIが返す`runtime_path` | Codexが実際に読むplugin root | local=`live-source`、Git=`git-snapshot` |
 | `<repo>/.claude/skills/...` | 開発用の **派生 (symlink)** | `plugins/` の正本へのショートカット |
+| `.claude/aidd-agent-kit.manifest` に載った `.claude/` `.agents/` `.codex/` 配下 | 外部キット aidd-agent-kit が置く **実ファイル** | キットのインストーラが管理。ハーネスの skill lint は対象外 (symlink 経由の投影は除外しない) |
 
 > **symlink (シンボリックリンク)**: ファイルの近道。実体は別の場所にあり、symlink はその場所を指すだけ。Windows のショートカットや、Mac の Finder の「エイリアス」と似た仕組み。
 

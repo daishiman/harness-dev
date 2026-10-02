@@ -29,6 +29,10 @@ SKILL.md / agents/*.md の description フィールドを 03章 §description設
   R4 長さ: description は 280 文字以内 (description + when_to_use の合算 1536 字制限の余裕を確保)
   R5 末尾統一: 末尾は「使う」「読む」「起動する」のいずれかで終わる
 
+対象外:
+  既定 glob 走査時、外部キットの installer manifest (EXTERNAL_KIT_MANIFESTS) が所有する
+  .claude 配下の実ファイルは検査しない。--skills-dir 明示時は除外しない。
+
 usage:
   python3 scripts/lint-skill-description.py
   python3 scripts/lint-skill-description.py --report
@@ -59,6 +63,52 @@ SKILL_GLOBS = [
     ".claude/skills/*/SKILL.md",
     ".claude/agents/*.md",
 ]
+
+# 外部キットが自身の installer manifest で所有を宣言した .claude 配置物は、
+# harness の description 規律 (R1-R5) の対象外にする。所有境界の正本は manifest
+# (行形式 "<sha256>|<.claude 相対パス>") で、ここで名前を二重定義しない。
+EXTERNAL_KIT_MANIFESTS = [
+    ".claude/aidd-agent-kit.manifest",
+]
+
+
+def load_external_owned(root: pathlib.Path) -> set:
+    """外部キット manifest が所有する .claude 配下ファイルの root 相対パス集合を返す。
+
+    戻り値の要素は main() の SKILL_GLOBS 走査結果 (例: Path(".claude/skills/x/SKILL.md"))
+    と直接比較できる形にする。manifest 不在は「キット未導入」として空集合。
+    不正行はキット installer 自身の読み方 (valid_relative) と同じく読み飛ばす。
+    harness の投影物は symlink なので、manifest に載っていても経路上に symlink を含む
+    パスは除外しない (manifest の誤記で harness 自身の skill が lint を素通りするのを防ぐ)。
+    """
+    owned = set()
+    for manifest in EXTERNAL_KIT_MANIFESTS:
+        path = root / manifest
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            relative = line.rpartition("|")[2].strip()
+            parts = pathlib.PurePosixPath(relative).parts
+            if not relative or relative.startswith("/") or ".." in parts:
+                continue
+            rel = pathlib.Path(".claude", *parts)
+            if not _passes_symlink(root, rel):
+                owned.add(rel)
+    return owned
+
+
+def _passes_symlink(root: pathlib.Path, rel: pathlib.Path) -> bool:
+    """rel の経路上のいずれかの要素が symlink なら True。
+
+    skill の投影は .claude/skills/<name> (ディレクトリ) 単位の symlink なので、
+    末端の SKILL.md だけを is_symlink() で見ても投影物と判別できない。
+    """
+    current = root
+    for part in rel.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def parse_frontmatter(path: pathlib.Path):
@@ -127,8 +177,9 @@ def main(argv):
             base = pathlib.Path(d)
             targets.extend(base.glob("*/SKILL.md"))
     else:
+        owned = load_external_owned(pathlib.Path("."))
         for pattern in SKILL_GLOBS:
-            targets.extend(pathlib.Path(".").glob(pattern))
+            targets.extend(p for p in pathlib.Path(".").glob(pattern) if p not in owned)
     results = {"OK": [], "VIOLATION": []}
     for p in sorted(set(targets)):
         if p.name.lower() == "readme.md":

@@ -1,0 +1,261 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>平賀運送｜暫定カラーパレット・配色デモ</title><!-- BEGIN GENERATED: hiraga-metadata --><meta name="hiraga-schema-version" content="1"><meta name="hiraga-version" content="0.3"><meta name="hiraga-date" content="2026-09-28"><meta name="hiraga-status" content="暫定提案。公式CI指定値でも現行サイトの実測値でもない"><!-- END GENERATED: hiraga-metadata --><style data-generated-source="hiraga-color-system.css">/* BEGIN GENERATED: hiraga-color-system.css */
+/*
+ * @hiraga-meta {"schema_version":1,"name":"平賀運送向け 暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。公式CI指定値でも現行サイトの実測値でもない","theme":"light-only"}
+ * 今回の変更(v0.3): 紫・マゼンタ系をブルー系に置き換え、補助面・罫線・文字も青みのグレーへ。赤字(損失)表示のみ明るい赤で残す。
+ * 前回の変更: 画面背景を白にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相へ寄せた。青系(情報・車両ネイビー)は据え置き。
+ * 全HEXはシステム向け提案値。原サイトCSS/SVGからの実測値でも公式CI指定値でもありません。
+ * 根拠: 制作会社の2020年掲載画像・公式車両写真。現行全ページ・全状態は未検証。
+ * ライトテーマのみ。暗背景には inverse 系トークンを明示的に使用してください。
+ * brand-indigo はブランドの軸(ブルー)、brand-accent は主操作のアクセント(明るいブルー)。別の役割です。
+ * 命名の規律: 基本色の名前は「ブランド対の中の位置」を表し、色相は表さない。色相を名前にすると
+ * 値を差し替えたときに名前が嘘になり、名前を語彙にした規範文まで指示対象を失う。v0.3 で
+ * --p-brand-magenta 系を --p-brand-accent 系へ改名したのはこのため (値だけ青くして名前を残すと嘘が残る)。
+ * --p-brand-indigo は値と名前が一致しているので据え置き。次に色相が動くときは名前も見直す。
+ */
+:root {
+  color-scheme: light;
+
+  /* 基本色（すべて暫定提案） */
+  --p-brand-indigo: #1747B5;
+  --p-brand-indigo-hover: #123B99;
+  --p-brand-indigo-active: #0E2F7A;
+  --p-brand-vehicle-navy: #163A5F;
+  --p-brand-accent: #1465E1;
+  --p-brand-accent-hover: #1A5ED0;
+  --p-brand-accent-active: #154DAB;
+  --p-brand-accent-soft: #E8F1FF;
+  --p-brand-indigo-soft: #DCE9FC;
+  --p-white: #FFFFFF;
+  --p-canvas: #FFFFFF;
+  --p-surface-subtle: #F3F7FD;
+  --p-surface-stripe: #F9FBFE;
+  --p-ink: #14233B;
+  --p-ink-secondary: #45576F;
+  --p-ink-muted: #506279;
+  --p-line: #D5E1F0;
+  --p-line-strong: #7189A8;
+  --p-disabled-bg: #E9EEF4;
+  --p-nav-muted: #D2DEEE;
+  --p-focus-on-dark: #AFCBFF;
+  --p-info: #0369A1;
+  --p-info-bg: #E6F4FB;
+  --p-success: #166534;
+  --p-success-bg: #ECFDF3;
+  --p-warning: #92400E;
+  --p-warning-bg: #FFF7E6;
+  --p-danger: #D03047;
+  --p-danger-hover: #B42A3F;
+  --p-danger-active: #962234;
+  --p-danger-bg: #FFF1F3;
+  /* グラフ系列専用の色。UIの面・文字には使わない (§1 の面積比の外)。意味色 (--p-info / --p-warning /
+     --p-success) をここへ流用しない。同じ色が「状態」と「カテゴリ」の二つを指すと読み手が取り違える。
+     カテゴリの見分けは色相差で作るので、v0.3 のブルー化から外して 60 度前後の間隔で色相を確保している。
+     値を変えるときは scripts/check-hiraga-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
+  --p-chart-amber: #92400E;   /* H23  */
+  --p-chart-lime: #4D7C0F;    /* H86  */
+  --p-chart-teal: #0F766E;    /* H175 */
+  --p-chart-purple: #6D28D9;  /* H263 */
+  --p-chart-magenta: #A81B6B; /* H326 — マゼンタはUIから退いたが、色相の間隔が要るグラフでだけ残す */
+  --p-scale-1: #DCE9FC;
+  --p-scale-2: #B7D0F4;
+  --p-scale-3: #7FA6DE;
+  --p-scale-4: #3B6FC4;
+  --p-scale-5: #1747B5;
+
+  /* 役割別トークン：コンポーネントではこちらを使用 */
+  --app-background: var(--p-canvas);
+  --surface: var(--p-white);
+  --surface-alt: var(--p-surface-subtle);
+  --surface-hover: var(--p-surface-subtle);
+  --surface-selected: var(--p-brand-indigo-soft);
+  --surface-accent: var(--p-brand-accent-soft);
+  --text-primary: var(--p-ink);
+  --text-secondary: var(--p-ink-secondary);
+  --text-muted: var(--p-ink-muted);
+  --text-heading: var(--p-brand-indigo);
+  --text-inverse: var(--p-white);
+  --border-subtle: var(--p-line);
+  --border-control: var(--p-line-strong);
+  --nav-background: var(--p-surface-subtle);
+  --nav-text: var(--p-ink);
+  --nav-text-muted: var(--p-ink-secondary);
+  --nav-hover: var(--p-brand-indigo-soft);
+  --nav-selected-bg: var(--p-white);
+  --nav-selected-text: var(--p-brand-indigo);
+  --nav-selected-indicator: var(--p-brand-indigo);
+  --action-primary-bg: var(--p-brand-accent);
+  --action-primary-text: var(--p-white);
+  --action-primary-hover: var(--p-brand-accent-hover);
+  --action-primary-active: var(--p-brand-accent-active);
+  --action-secondary-bg: var(--p-white);
+  --action-secondary-text: var(--p-brand-indigo);
+  --action-secondary-border: var(--p-brand-indigo);
+  --action-secondary-hover: var(--p-brand-indigo-soft);
+  --action-secondary-active: var(--p-surface-subtle);
+  --action-quiet-bg: var(--p-white);
+  --action-quiet-text: var(--p-brand-indigo);
+  --action-quiet-hover: var(--p-brand-indigo-soft);
+  --action-danger-bg: var(--p-danger);
+  --action-danger-text: var(--p-white);
+  --action-danger-hover: var(--p-danger-hover);
+  --action-danger-active: var(--p-danger-active);
+  --action-disabled-bg: var(--p-disabled-bg);
+  --action-disabled-text: var(--p-ink-muted);
+  --action-disabled-border: var(--p-line-strong);
+  --link: var(--p-brand-indigo);
+  --link-hover: var(--p-brand-accent);
+  --link-visited: var(--p-brand-indigo);
+  --focus-ring: var(--p-brand-accent);
+  --focus-ring-inverse: var(--p-focus-on-dark);
+  --focus-gap: var(--p-white);
+  --input-bg: var(--p-white);
+  --input-text: var(--p-ink);
+  --input-placeholder: var(--p-ink-muted);
+  --input-border: var(--p-line-strong);
+  --input-border-hover: var(--p-brand-indigo);
+  --input-border-focus: var(--p-brand-accent);
+  --input-readonly-bg: var(--p-surface-subtle);
+  --input-invalid-border: var(--p-danger);
+  --input-invalid-message: var(--p-danger);
+  --required-text: var(--p-brand-accent);
+  --required-bg: var(--p-brand-accent-soft);
+  --control-on: var(--p-brand-accent);
+  --control-on-mark: var(--p-white);
+  --control-off-border: var(--p-line-strong);
+  --table-head-bg: var(--p-surface-subtle);
+  --table-head-text: var(--p-brand-indigo);
+  --table-body-bg: var(--p-white);
+  --table-stripe-bg: var(--p-surface-stripe);
+  --table-hover-bg: var(--p-surface-subtle);
+  --table-selected-bg: var(--p-brand-indigo-soft);
+  --table-selected-indicator: var(--p-brand-indigo);
+  --tab-indicator: var(--p-brand-accent);
+  --tab-text-active: var(--p-brand-indigo);
+  --pagination-active-bg: var(--p-brand-indigo);
+  --pagination-active-text: var(--p-white);
+  --tag-bg: var(--p-brand-accent-soft);
+  --tag-text: var(--p-brand-accent);
+  --badge-unread-bg: var(--p-brand-accent);
+  --badge-unread-text: var(--p-white);
+  --status-neutral-text: var(--p-ink-secondary);
+  --status-neutral-bg: var(--p-surface-subtle);
+  --status-info-text: var(--p-info);
+  --status-info-bg: var(--p-info-bg);
+  --status-success-text: var(--p-success);
+  --status-success-bg: var(--p-success-bg);
+  --status-warning-text: var(--p-warning);
+  --status-warning-bg: var(--p-warning-bg);
+  --status-danger-text: var(--p-danger);
+  --status-danger-bg: var(--p-danger-bg);
+  /* 数値の符号と、その量を表す図形(棒・線・点・濃淡)。赤字(損失)だけ赤、黒字は本文色。状態を表す
+     --status-danger-* とは別の役割なので流用しない。「エラーが起きている」と「マイナスの数字」は
+     読み手にとって別の意味である。-soft は図形の地。線は --number-negative を重ねる */
+  --number-negative: var(--p-danger);
+  --number-negative-soft: var(--p-danger-bg);
+  --number-positive: var(--p-ink);
+  --tooltip-bg: var(--p-brand-indigo);
+  --tooltip-text: var(--p-white);
+  --progress-fill: var(--p-brand-indigo);
+  --progress-track: var(--p-surface-subtle);
+  --skeleton-base: var(--p-surface-subtle);
+  --skeleton-highlight: var(--p-brand-indigo-soft);
+  --selection-bg: var(--p-brand-indigo-soft);
+  --selection-text: var(--p-brand-indigo);
+  /* グラフのカテゴリ系列。順序のない並びなので、見分けは明度ではなく色相差で作る。
+     ブランド色を流すのは主役の --chart-main だけに留め、系列 1〜5 には brand/accent を使わない。
+     v0.3 でブランド軸が H260 台から H222 へ移ったため、アクセント青を系列に流すと main と重なる。
+     下の並びは隣接する系列の色相が 60 度以上離れるよう並べてある (最小の対は main と purple の 41 度)。
+     値や並びを変えたら scripts/check-hiraga-contrast.mjs の系列分離検査が最小色相差を機械で見る */
+  --chart-main: var(--p-brand-indigo);  /* H222 ブルー — ブランドの軸。主役系列 */
+  --chart-1: var(--p-chart-amber);      /* H23  アンバー */
+  --chart-2: var(--p-chart-lime);       /* H86  ライムグリーン */
+  --chart-3: var(--p-chart-teal);       /* H175 ティール */
+  --chart-4: var(--p-chart-purple);     /* H263 バイオレット */
+  --chart-5: var(--p-chart-magenta);    /* H326 マゼンタ */
+  --chart-grid: var(--p-line);
+  --chart-axis: var(--p-ink-secondary);
+  --chart-threshold: var(--p-danger);
+
+  --overlay: rgba(15, 45, 110, 0.40);
+  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
+  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
+}
+
+/* 必要な範囲に適用する共通クラス。フレームワークへの組み込み時は既存クラスにマッピング可。 */
+.hiraga-app { background: var(--app-background); color: var(--text-primary); }
+.hiraga-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
+.hiraga-heading { color: var(--text-heading); }
+.hiraga-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
+.hiraga-link:visited { color: var(--link-visited); }
+.hiraga-link:hover { color: var(--link-hover); }
+.hiraga-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
+.hiraga-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
+.hiraga-button--primary:hover { background: var(--action-primary-hover); }
+.hiraga-button--primary:active { background: var(--action-primary-active); }
+.hiraga-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
+.hiraga-button--secondary:hover { background: var(--action-secondary-hover); }
+.hiraga-button--secondary:active { background: var(--action-secondary-active); }
+.hiraga-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
+.hiraga-button--danger:hover { background: var(--action-danger-hover); }
+.hiraga-button--danger:active { background: var(--action-danger-active); }
+.hiraga-button:disabled, .hiraga-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
+/* aria-disabled のみでは操作は止まりません。アプリ側でもイベントを抑止してください。 */
+.hiraga-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
+.hiraga-input::placeholder { color: var(--input-placeholder); opacity: 1; }
+.hiraga-input:hover { border-color: var(--input-border-hover); }
+.hiraga-input:focus { border-color: var(--input-border-focus); }
+.hiraga-input[readonly] { background: var(--input-readonly-bg); }
+.hiraga-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
+.hiraga-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+.hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
+/* 淡いナビ面では通常のフォーカスリングを使う。inverse は明示した暗色面だけに限定する。 */
+.hiraga-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
+.hiraga-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
+.hiraga-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
+.hiraga-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+.hiraga-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
+.hiraga-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
+.hiraga-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.hiraga-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
+/* ステータスには文字とアイコンを併用。薄い背景色だけで情報を伝えない。 */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: var(--p-line-strong);
+    --text-secondary: var(--p-ink);
+    --text-muted: var(--p-ink);
+    --nav-text-muted: var(--p-ink);
+  }
+}
+@media (forced-colors: active) {
+  .hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .hiraga-button, .hiraga-status { border: 1px solid ButtonText; }
+}
+@media print {
+  .hiraga-app { background: white; color: black; }
+  .hiraga-card { background: white; border-color: black; box-shadow: none; }
+  .hiraga-status { color: black; background: white; border: 1px solid black; }
+}
+/* END GENERATED: hiraga-color-system.css */
+
+/* BEGIN PREVIEW-ONLY STYLES */
+
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;font-family:"Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;line-height:1.75;font-size:14px}button,input{font:inherit}a{color:var(--link);text-underline-offset:3px}button{touch-action:manipulation}.layout{display:grid;grid-template-columns:222px minmax(0,1fr);min-height:100vh}.sidebar{background:var(--nav-background);color:var(--nav-text);padding:30px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:26px}.wordmark{font-size:23px;font-weight:900;letter-spacing:.07em;line-height:1.3;padding:0 14px}.wordmark small{display:block;font-size:10px;letter-spacing:.12em;margin-top:9px;color:var(--nav-text-muted);font-weight:500}.sidebar nav{display:grid;gap:7px}.sidebar nav a{display:flex;gap:14px;align-items:center;padding:11px 14px;color:var(--nav-text);text-decoration:none;border-radius:7px;border-left:4px solid transparent;font-weight:700}.sidebar nav a:hover{background:var(--nav-hover)}.sidebar nav a.active{background:var(--nav-selected-bg);color:var(--nav-selected-text);border-left-color:var(--nav-selected-indicator)}.sidebar nav a span{font:12px monospace;opacity:1}.sidebar-note{margin-top:auto;padding:15px 14px 0;border-top:1px solid var(--nav-text-muted);font-size:11px;line-height:1.9;color:var(--nav-text-muted)}.sidebar-note strong{color:var(--nav-text);display:block}.topbar{background:var(--surface);border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;gap:20px;align-items:center;padding:18px 38px;font-size:12px;color:var(--text-secondary)}.topbar strong{color:var(--text-heading);letter-spacing:.08em}.version{background:var(--tag-bg);color:var(--tag-text);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:700}.main-content{max-width:1460px;padding:32px 38px 64px;margin:auto}.eyebrow{font:700 11px/1.6 monospace;letter-spacing:.16em;color:var(--tag-text);margin:0 0 8px}h1{color:var(--text-heading);font-size:32px;line-height:1.5;letter-spacing:.02em;margin:0 0 10px;font-weight:900}h2{color:var(--text-heading);font-size:21px;margin:0;line-height:1.6}h3{color:var(--text-heading);font-size:15px;margin:0 0 14px}p{margin:0 0 12px}.lead{color:var(--text-secondary);font-size:14px;max-width:910px}.intro{margin-bottom:22px}.notice{padding:14px 18px;background:var(--surface);border:1px solid var(--border-subtle);border-left:4px solid var(--action-primary-bg);border-radius:8px;font-size:12px;color:var(--text-secondary);margin:20px 0 24px}.notice strong{color:var(--text-heading)}.section{margin-top:32px}.section-title{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin-bottom:15px}.section-title small{color:var(--text-muted);font-size:11px}.palette{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.swatch{padding:0;text-align:left;border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer;color:var(--text-primary);box-shadow:var(--shadow-soft);min-width:0}.swatch:hover{border-color:var(--border-control);transform:translateY(-2px)}.swatch-color{display:block;height:84px;border-bottom:1px solid var(--border-subtle)}.swatch-info{display:grid;gap:2px;padding:13px 12px}.swatch-info strong{font-size:10px;letter-spacing:.05em;color:var(--text-heading);white-space:nowrap}.swatch-info code{font:700 17px/1.6 monospace;letter-spacing:.015em}.swatch-info small{font-size:10px;color:var(--text-secondary)}.ratio{display:grid;grid-template-columns:75fr 20fr 5fr;height:10px;border-radius:8px;overflow:hidden;margin:23px 0 8px;border:1px solid var(--border-subtle)}.ratio .base{background:var(--p-surface-subtle)}.ratio .nav{background:var(--p-brand-indigo)}.ratio .accent{background:var(--p-brand-accent)}.ratio-note{font-size:11px;color:var(--text-secondary)}.two-col{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}.panel{padding:22px;border-radius:12px;min-width:0}.panel-sub{font-size:12px;color:var(--text-secondary);margin:-7px 0 17px}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.mini-label{display:block;font-size:11px;color:var(--text-secondary);margin:16px 0 8px}.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{font-size:12px;font-weight:700}.field input{width:100%;font-size:12px;min-width:0}.required{color:var(--required-text);background:var(--required-bg);font-size:9px;padding:2px 6px;border-radius:4px;margin-left:5px}.error-message{color:var(--status-danger-text);font-size:11px}.help{color:var(--text-muted);font-size:11px}.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tone-list{display:grid;gap:8px}.tone-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:7px;font-size:11px;color:var(--text-secondary)}.tone-row code{color:var(--text-heading)}.table-wrap{overflow:auto;border:1px solid var(--border-subtle);border-radius:10px;background:var(--surface)}table{border-collapse:collapse;width:100%;text-align:left;font-size:12px}th{background:var(--table-head-bg);color:var(--table-head-text);font-weight:700;padding:12px 16px;border-bottom:1px solid var(--border-subtle)}td{padding:13px 16px;border-bottom:1px solid var(--border-subtle);vertical-align:top}tbody tr:last-child td{border-bottom:0}.demo-table td{vertical-align:middle}.demo-table tbody tr:nth-child(even){background:var(--table-stripe-bg)}.demo-table tbody tr:hover{background:var(--table-hover-bg)}.demo-table tbody tr.selected{background:var(--table-selected-bg)}.demo-table tbody tr.selected td:first-child{box-shadow:inset 4px 0 0 var(--table-selected-indicator)}.check{accent-color:var(--control-on);width:16px;height:16px;vertical-align:middle}.demo-table .mono{font-family:monospace;font-weight:700;color:var(--text-heading)}.table-tabs{display:flex;gap:24px;margin-top:10px}.table-tab{background:transparent;color:var(--text-secondary);border:0;border-bottom:3px solid transparent;padding:8px 2px;font-size:12px;font-weight:700;cursor:pointer}.table-tab[aria-selected=true]{color:var(--tab-text-active);border-bottom-color:var(--tab-indicator)}.table-tab:hover{color:var(--link-hover)}.table-caption{padding:12px 0 0;font-size:11px;color:var(--text-muted)}.contrast-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.contrast-item{display:flex;align-items:center;gap:12px;border:1px solid var(--border-subtle);background:var(--surface);border-radius:9px;padding:14px}.contrast-sample{width:48px;height:48px;border-radius:7px;display:grid;place-items:center;font-size:21px;font-weight:800;border:1px solid var(--border-subtle);flex-shrink:0}.contrast-item>span:last-child{font-size:10px;color:var(--text-secondary)}.contrast-item strong{display:block;font-size:19px;line-height:1.5;color:var(--text-heading)}.rule-box{margin-top:15px;padding:14px 18px;border-radius:8px;background:var(--status-warning-bg);color:var(--status-warning-text);font-size:12px}.details{background:var(--surface);border:1px solid var(--border-subtle);border-radius:10px;padding:16px 20px;margin-top:14px}.details summary{font-weight:700;color:var(--text-heading);cursor:pointer}.details .table-wrap{margin-top:16px}.details p{margin-top:12px;color:var(--text-secondary);font-size:12px}.details table{font-size:11px;min-width:740px}.details td{padding:10px 12px;overflow-wrap:anywhere}.source-list{padding-left:22px;font-size:12px}.source-list li{margin:12px 0}.source-list span{font-size:11px;color:var(--text-secondary)}.footer{padding:26px 0 0;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border-subtle);margin-top:30px}.toast{position:fixed;bottom:24px;right:24px;max-width:min(410px,calc(100vw - 32px));padding:15px 18px;background:var(--tooltip-bg);color:var(--tooltip-text);border:1px solid var(--focus-ring-inverse);border-radius:10px;box-shadow:var(--shadow-raised);z-index:10;font-size:12px;line-height:1.7}.toast[hidden]{display:none}.focus-demo{margin-top:14px;font-size:11px;color:var(--text-secondary)}.focus-demo kbd{border:1px solid var(--border-control);padding:1px 5px;border-radius:4px;background:var(--surface);color:var(--text-heading)}.section-tools{display:flex;align-items:center;gap:12px}.count{font-size:11px;color:var(--text-muted)}.chart-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-top:12px}.chart-key span{display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary)}.chart-key i{height:10px;width:10px;display:block;background:var(--chart-1)}.chart-key span:nth-child(2) i{background:var(--chart-2);border-radius:50%}.chart-key span:nth-child(3) i{background:var(--chart-3);transform:rotate(45deg)}.chart-key span:nth-child(4) i{background:var(--chart-4);border-radius:50% 50% 0 0}.chart-key span:nth-child(5) i{background:var(--chart-5);border-radius:2px}
+@media(min-width:1500px){.main-content{padding-top:40px}.swatch-color{height:108px}}
+@media(max-width:1190px){.layout{grid-template-columns:190px minmax(0,1fr)}.sidebar{padding:26px 12px}.main-content{padding:28px 26px 50px}.topbar{padding:18px 26px}.palette{grid-template-columns:repeat(3,1fr)}.contrast-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.wordmark{font-size:20px}}
+@media(max-width:700px){.layout{display:block}.sidebar{position:static;height:auto;padding:18px 20px;gap:16px}.wordmark{padding:0;font-size:22px}.wordmark small{margin-top:4px}.sidebar nav{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.sidebar nav a{flex-shrink:0;font-size:11px;padding:7px 11px;border-left:0;border-bottom:3px solid transparent}.sidebar nav a.active{border-bottom-color:var(--nav-selected-indicator)}.sidebar nav a span{display:none}.sidebar-note{display:none}.topbar{padding:12px 18px;font-size:10px;gap:8px}.version{font-size:9px;padding:3px 8px}.main-content{padding:24px 18px 36px}h1{font-size:25px}h2{font-size:19px}.lead{font-size:12px}.palette{grid-template-columns:repeat(2,1fr);gap:10px}.swatch-color{height:72px}.swatch-info{padding:12px}.swatch-info strong{font-size:9px}.section-title{display:block}.section-title small{display:block;margin-top:6px}.panel{padding:18px}.input-grid{grid-template-columns:1fr}.contrast-grid{gap:10px}.contrast-item{padding:10px;gap:9px}.contrast-sample{width:35px;height:40px;font-size:18px}.contrast-item strong{font-size:16px}.demo-table{min-width:650px}.section-tools{margin-top:10px}.notice{font-size:11px;padding:13px}.source-list{padding-left:18px;overflow-wrap:anywhere}.details{padding:14px}.buttons .hiraga-button{font-size:12px}.footer{font-size:10px}.eyebrow{font-size:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.swatch:hover{transform:none}}
+@media print{.sidebar,.topbar,.toast{display:none}.layout{display:block}.main-content{padding:0;max-width:none}.details{break-inside:avoid}.panel,.swatch{box-shadow:none}.section{break-inside:avoid}.two-col{display:block}.panel{margin-bottom:18px}.notice{color:black}.palette{grid-template-columns:repeat(3,1fr)}.swatch-color{print-color-adjust:exact}.table-wrap{overflow:visible}.details table{min-width:0}.footer{color:black}}
+</style></head><body class="hiraga-app"><div class="layout">
+<aside class="sidebar hiraga-nav"><div class="wordmark">平賀運送<small>COLOR DESIGN / PROPOSAL</small></div><nav aria-label="配色資料のセクション"><a class="active" href="#palette" aria-current="location"><span>01</span>基本パレット</a><a href="#components"><span>02</span>部品の配色</a><a href="#table"><span>03</span>一覧の配色</a><a href="#contrast"><span>04</span>見やすさの確認</a><a href="#audit"><span>05</span>調査範囲と根拠</a></nav><div class="sidebar-note"><strong>ブランドの軸と、操作の色を分ける。</strong>深いインディゴで統一感。<br>アクセントのブルーで大切な操作を強調。<br><br>会社名は通常のテキストです。<br>公式ロゴは再現していません。</div></aside>
+<div><header class="topbar"><strong>HIRAGA / COLOR SYSTEM</strong><span class="version">暫定提案 v0.3 ・ 公式HEX未検証</span></header><main class="main-content">
+<div id="palette-overview"><div class="intro"><p class="eyebrow">INDIGO · ACCENT · WHITE</p><h1>平賀運送らしさを、<br>毎日使う画面の色へ。</h1><p class="lead">濃いインディゴを軸に、明るいブルーを少量のアクセントとして。<br>グレーや色付きの地を敷かず、白を基本に作業領域を整える配色案です。</p></div>
+<div class="notice"><strong>この画面のHEXは、すべてシステム用の提案値です。</strong><br>制作会社の2020年掲載画像と公式車両写真を参考にしています。現行サイトは取得がタイムアウトし、全ページ・CSS・正式CI色は未検証です。原サイトからの実測色としては扱わないでください。</div>
+<section id="palette"><div class="section-title"><h2>01　基本パレット（提案）</h2><small>色見本を押すとHEXをコピーできます</small></div><!-- BEGIN GENERATED: hiraga-palette --><div class="palette"><button class="swatch" data-copy="#1747B5" aria-label="ブランドの軸 #1747B5 をコピー"><span class="swatch-color" style="background:var(--p-brand-indigo)"></span><span class="swatch-info"><strong>INDIGO</strong><code>#1747B5</code><small>ブランドの軸</small></span></button><button class="swatch" data-copy="#1465E1" aria-label="重要操作のアクセント #1465E1 をコピー"><span class="swatch-color" style="background:var(--p-brand-accent)"></span><span class="swatch-info"><strong>ACCENT</strong><code>#1465E1</code><small>重要操作のアクセント</small></span></button><button class="swatch" data-copy="#163A5F" aria-label="車両を連想する補助色 #163A5F をコピー"><span class="swatch-color" style="background:var(--p-brand-vehicle-navy)"></span><span class="swatch-info"><strong>VEHICLE NAVY</strong><code>#163A5F</code><small>車両を連想する補助色</small></span></button><button class="swatch" data-copy="#FFFFFF" aria-label="画面背景・作業領域 #FFFFFF をコピー"><span class="swatch-color" style="background:var(--p-white)"></span><span class="swatch-info"><strong>WHITE</strong><code>#FFFFFF</code><small>画面背景・作業領域</small></span></button><button class="swatch" data-copy="#E8F1FF" aria-label="注目面(1画面1〜2か所) #E8F1FF をコピー"><span class="swatch-color" style="background:var(--surface-accent)"></span><span class="swatch-info"><strong>SOFT ACCENT</strong><code>#E8F1FF</code><small>注目面(1画面1〜2か所)</small></span></button><button class="swatch" data-copy="#F3F7FD" aria-label="補助面・表ヘッダー #F3F7FD をコピー"><span class="swatch-color" style="background:var(--p-surface-subtle)"></span><span class="swatch-info"><strong>SOFT SURFACE</strong><code>#F3F7FD</code><small>補助面・表ヘッダー</small></span></button></div><div class="ratio" aria-label="提案の面積目安：地と面75%、文字・罫線・ナビの骨格20%、操作と状態5%"><span class="base"></span><span class="nav"></span><span class="accent"></span></div><p class="ratio-note">面積の出発点：地と面 75% ／ 文字・罫線・ナビの骨格 20% ／ 操作と状態 5%。サイトの実測比率ではありません。</p><!-- END GENERATED: hiraga-palette --></section>
+</div><section class="section" id="components"><div class="section-title"><h2>02　部品に、色の役割を与える</h2><small>機能は配色確認用のデモです。データ送信はありません</small></div><div class="two-col"><article class="panel hiraga-card"><h3>主操作はアクセントのブルー。副操作は白と紺。</h3><p class="panel-sub">重要な操作を絞り、画面全体が強い色で埋まらないようにします。</p><div class="buttons"><button class="hiraga-button hiraga-button--primary" data-demo="保存ボタンの配色デモです。データは送信されません。">保存する</button><button class="hiraga-button hiraga-button--secondary" data-demo="副操作は白背景・濃紺の文字と枠を使います。">内容を確認</button><button class="hiraga-button" disabled>操作できません</button></div><div class="input-grid"><div class="field"><label for="sample-name">名称<span class="required">必須</span></label><input class="hiraga-input" id="sample-name" placeholder="例：管理項目の名称"><span class="help">入力枠は border-control。装飾用の border-subtle とは別のトークンです。</span></div><div class="field"><label for="sample-error">入力エラーの例</label><input class="hiraga-input" id="sample-error" aria-invalid="true" aria-describedby="sample-error-msg" value="未入力の例" readonly><span class="error-message" id="sample-error-msg">× 必須項目を入力してください（表示例）</span></div></div><p class="focus-demo"><kbd>Tab</kbd> キーでフォーカス色も確認できます。暗いナビでは明るいリングに切り替えます。</p></article><article class="panel hiraga-card"><h3>会社の色と、状態を伝える色は別。</h3><p class="panel-sub">成功・注意・エラーには専用色を使い、必ず文字を添えます。</p><div class="chip-row"><span class="hiraga-status hiraga-status--neutral"><span aria-hidden="true">○</span>未処理</span><span class="hiraga-status hiraga-status--info"><span aria-hidden="true">↻</span>処理中</span><span class="hiraga-status hiraga-status--success"><span aria-hidden="true">✓</span>完了</span><span class="hiraga-status hiraga-status--warning"><span aria-hidden="true">!</span>要確認</span><span class="hiraga-status hiraga-status--danger"><span aria-hidden="true">×</span>エラー</span></div><!-- BEGIN GENERATED: hiraga-tones --><div class="tone-list"><div class="tone-row"><span>通常文字 / 補助文字</span><code>#14233B / #45576F</code></div><div class="tone-row"><span>説明・プレースホルダー</span><code>#506279</code></div><div class="tone-row"><span>装飾罫線 / 入力枠</span><code>#D5E1F0 / #7189A8</code></div></div><!-- END GENERATED: hiraga-tones --><p class="mini-label">グラフのカテゴリ色候補：ラベル・形を必ず併用</p><div class="chart-key"><span><i></i>系列A</span><span><i></i>系列B</span><span><i></i>系列C</span><span><i></i>系列D</span><span><i></i>系列E</span></div></article></div></section>
+<section class="section" id="table"><div class="section-title"><div><h2>03　一覧は白を基本に、選択と状態を明快に</h2><div class="table-tabs" role="tablist" aria-label="表示するデモデータ"><button id="tab-all" class="table-tab" role="tab" aria-controls="panel-items" aria-selected="true" data-filter="all">すべて</button><button id="tab-warning" class="table-tab" role="tab" aria-controls="panel-items" aria-selected="false" tabindex="-1" data-filter="warning">要確認</button></div></div><div class="section-tools"><span class="count" id="row-count">架空データ 3件</span><button class="hiraga-button hiraga-button--primary" data-demo="追加ボタンの配色デモです。データは作成されません。">＋ 新規登録</button></div></div><div id="panel-items" role="tabpanel" aria-labelledby="tab-all"><div class="table-wrap"><table class="demo-table"><thead><tr><th scope="col">選択</th><th scope="col">管理番号</th><th scope="col">項目名（架空）</th><th scope="col">状態</th><th scope="col">操作</th></tr></thead><tbody><tr class="selected" data-state="info"><td><input type="checkbox" class="check" checked aria-label="SAMPLE-001を選択"></td><td class="mono">SAMPLE-001</td><td>一覧画面の選択行サンプル</td><td><span class="hiraga-status hiraga-status--info">↻ 処理中</span></td><td><a class="hiraga-link demo-link" href="#table">詳細</a></td></tr><tr data-state="success"><td><input type="checkbox" class="check" aria-label="SAMPLE-002を選択"></td><td class="mono">SAMPLE-002</td><td>完了状態の表示サンプル</td><td><span class="hiraga-status hiraga-status--success">✓ 完了</span></td><td><a class="hiraga-link demo-link" href="#table">詳細</a></td></tr><tr data-state="warning"><td><input type="checkbox" class="check" aria-label="SAMPLE-003を選択"></td><td class="mono">SAMPLE-003</td><td>注意状態の表示サンプル</td><td><span class="hiraga-status hiraga-status--warning">! 要確認</span></td><td><a class="hiraga-link demo-link" href="#table">詳細</a></td></tr></tbody></table></div></div><p class="table-caption">表ヘッダーはほぼ白のインディゴ。選択行は淡いインディゴと左線・チェックで表示。状態は文字とアイコンを併用します。</p></section>
+<section class="section" id="contrast"><div class="section-title"><h2>04　見た目だけでなく、読める組み合わせに</h2><small>提案した不透明sRGB値からの計算</small></div><!-- BEGIN GENERATED: hiraga-contrast --><div class="contrast-grid"><div class="contrast-item"><span class="contrast-sample" style="color:var(--text-inverse);background:var(--p-brand-indigo)">Aa</span><span>ブランド軸 × 白文字<strong>8.06:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--action-primary-text);background:var(--action-primary-bg)">Aa</span><span>主ボタン<strong>5.28:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--p-ink);background:var(--p-white)">Aa</span><span>本文 × 白<strong>15.75:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--text-primary);background:var(--surface);border:2px solid var(--border-control)">枠</span><span>入力枠 × 白<strong>3.59:1</strong></span></div></div><div class="rule-box"><strong>避ける組み合わせ：</strong>ブランド軸の面にアクセント色の小さい文字は約1.53:1で、通常文字の基準(4.5:1)を満たしません。装飾罫線を入力欄の境界に使うは約1.32:1で、識別に必要な境界の基準(3:1)を満たしません。</div><!-- END GENERATED: hiraga-contrast --><p class="table-caption">通常文字4.5:1以上、識別に必要なUIの境界は隣接色と3:1以上を確認。指定ペアのみの検証であり、実画面・全状態やWCAG全体の適合保証ではありません。根拠：[S8] [S9] [S10]</p></section>
+<section class="section" id="audit"><div class="section-title"><h2>05　適用要素と、今回の調査範囲</h2><small>未確認のものを、確認済みとして扱わない</small></div><details class="details"><summary>色を定義すべき要素一覧（74項目）</summary><p>業務機能を追加する要件ではありません。システムに存在する要素へ適用する配色ルールです。</p><div class="table-wrap"><table><thead><tr><th>分類</th><th>要素</th><th>トークン・方針</th><th>注意点</th></tr></thead><tbody><tr><td>ブランド</td><td>ロゴ</td><td>承認済みの元データを使用。濃色面では承認済み白版、または白い台座</td><td>独自の再着色・類似ロゴ生成はしない</td></tr><tr><td>ブランド</td><td>アプリ・ファビコン</td><td>brand-indigoをベース、brand-accentを少量</td><td>原ロゴの余白・色指定は別途確認</td></tr><tr><td>画面基盤</td><td>画面全体</td><td>app-background</td><td>白。グレーや色付きの地を全面に敷かない</td></tr><tr><td>画面基盤</td><td>ヘッダー</td><td>surface / text-heading</td><td>サイドバーも濃色にする場合はヘッダーは白を基本</td></tr><tr><td>画面基盤</td><td>サイドナビ通常</td><td>nav-background / nav-text / nav-text-muted</td><td>アクセント色の小さい文字を紺地に置かない</td></tr><tr><td>画面基盤</td><td>サイドナビhover</td><td>nav-hover / nav-text</td><td>色だけでなくポインターや必要な下線も併用</td></tr><tr><td>画面基盤</td><td>サイドナビ選択</td><td>nav-selected-bg / nav-selected-text / nav-selected-indicator</td><td>白い面＋濃紺文字＋細いアクセント線。aria-currentも設定</td></tr><tr><td>画面基盤</td><td>見出し・パンくず</td><td>text-heading / text-secondary / link</td><td>パンくずリンクは下線等で識別</td></tr><tr><td>画面基盤</td><td>カード・パネル</td><td>surface / border-subtle / shadow-soft</td><td>薄い線は装飾用。操作可能性の唯一の手掛かりにしない</td></tr><tr><td>画面基盤</td><td>補足・折り畳み領域</td><td>surface-alt / text-secondary</td><td>必要な文字のコントラストを維持</td></tr><tr><td>画面基盤</td><td>罫線・区切り</td><td>border-subtle</td><td>入力枠や必須の識別境界には流用しない</td></tr><tr><td>画面基盤</td><td>影・浮遊領域</td><td>shadow-soft / shadow-raised</td><td>ブランド軸のブルーを少量含む低不透明度。濃い黒影を多用しない</td></tr><tr><td>操作</td><td>主ボタン</td><td>action-primary-bg / action-primary-text</td><td>アクセントのブルー。1つの作業領域で最も重要な操作に限定</td></tr><tr><td>操作</td><td>主ボタンhover・押下</td><td>action-primary-hover / action-primary-active</td><td>hoverと押下にそれぞれ専用色</td></tr><tr><td>操作</td><td>副ボタン</td><td>action-secondary-bg / action-secondary-text / action-secondary-border</td><td>白地＋濃紺文字・枠</td></tr><tr><td>操作</td><td>副ボタンhover・押下</td><td>action-secondary-hover / action-secondary-active</td><td>主ボタンと同じアクセント面積にしない</td></tr><tr><td>操作</td><td>テキストボタン・リンク</td><td>action-quiet-text / link / link-hover / link-visited</td><td>リンクは下線。訪問済みも色のみで意味を変えない</td></tr><tr><td>操作</td><td>危険操作</td><td>action-danger-bg / action-danger-text / action-danger-hover / action-danger-active</td><td>削除・取り消せない操作を赤に分離。明確な動詞を表示</td></tr><tr><td>操作</td><td>無効ボタン</td><td>action-disabled-bg / action-disabled-text / action-disabled-border</td><td>opacityで全体を薄くせず、無効理由を表示</td></tr><tr><td>操作</td><td>キーボードフォーカス</td><td>focus-ring / focus-gap</td><td>白い分離帯と3pxリング。クリップ・被覆に注意</td></tr><tr><td>操作</td><td>暗背景フォーカス</td><td>focus-ring-inverse</td><td>紺上では明るい青白色。通常のアクセント色をそのまま使わない</td></tr><tr><td>操作</td><td>ローディングボタン</td><td>action-primary-bg / action-primary-text</td><td>白スピナー＋「保存中」等。操作制御はアプリ側</td></tr><tr><td>フォーム</td><td>入力欄通常</td><td>input-bg / input-text / input-border</td><td>必要な入力枠は3:1以上の色にする</td></tr><tr><td>フォーム</td><td>入力欄hover・focus</td><td>input-border-hover / input-border-focus / focus-ring</td><td>エラー時の赤枠をhoverで消さない</td></tr><tr><td>フォーム</td><td>ラベル・説明文</td><td>text-primary / text-secondary</td><td>常時見えるラベルを設ける</td></tr><tr><td>フォーム</td><td>プレースホルダー</td><td>input-placeholder</td><td>ラベル代替にせず、薄すぎるグレーにしない</td></tr><tr><td>フォーム</td><td>必須ラベル</td><td>required-bg / required-text</td><td>「必須」という文字を添える。色やアスタリスクだけにしない</td></tr><tr><td>フォーム</td><td>入力エラー</td><td>input-invalid-border / input-invalid-message / status-danger-bg</td><td>赤枠＋エラーアイコン＋具体的なメッセージ</td></tr><tr><td>フォーム</td><td>読み取り専用</td><td>input-readonly-bg / input-text</td><td>無効と区別。読めるコントラストを保つ</td></tr><tr><td>フォーム</td><td>無効入力</td><td>action-disabled-bg / action-disabled-text</td><td>利用できない理由を文字で伝える</td></tr><tr><td>フォーム</td><td>チェック・ラジオ</td><td>control-on / control-on-mark / control-off-border</td><td>チェックや点の形状でも選択を示す</td></tr><tr><td>フォーム</td><td>スイッチ</td><td>control-on / control-on-mark / control-off-border</td><td>ON/OFFラベルとノブ位置を併用</td></tr><tr><td>フォーム</td><td>セレクト・候補一覧</td><td>surface / surface-hover / surface-selected / text-primary</td><td>選択項目にチェック。focusとselectedを混同しない</td></tr><tr><td>フォーム</td><td>検索・フィルター</td><td>surface / input-border / tag-bg / tag-text</td><td>適用中は件数や解除ボタンを表示</td></tr><tr><td>フォーム</td><td>日付選択</td><td>surface / pagination-active-bg / pagination-active-text</td><td>本日は枠、選択日は塗りなど形も分ける</td></tr><tr><td>フォーム</td><td>アップロード・ドラッグ</td><td>surface-alt / border-control / focus-ring / status-danger-text</td><td>ドロップ可能状態は点線＋説明文。成功・失敗は状態色</td></tr><tr><td>一覧</td><td>表ヘッダー</td><td>table-head-bg / table-head-text</td><td>ほぼ白のインディゴ背景＋濃紺文字</td></tr><tr><td>一覧</td><td>表本文・交互行</td><td>table-body-bg / table-stripe-bg / text-primary</td><td>強い縞模様は避ける</td></tr><tr><td>一覧</td><td>行hover</td><td>table-hover-bg</td><td>行選択状態とは分離</td></tr><tr><td>一覧</td><td>選択行</td><td>table-selected-bg / table-selected-indicator</td><td>左線やチェックを併用</td></tr><tr><td>一覧</td><td>ソート・フィルター適用</td><td>text-heading / tab-indicator</td><td>矢印向き・条件ラベルで状態を伝える</td></tr><tr><td>一覧</td><td>固定列・固定ヘッダー</td><td>surface / table-head-bg / shadow-soft</td><td>下の文字が透けない不透明な背景</td></tr><tr><td>一覧</td><td>タブ</td><td>tab-text-active / tab-indicator / text-secondary</td><td>下線＋太字＋aria-selectedを使用</td></tr><tr><td>一覧</td><td>ページネーション</td><td>pagination-active-bg / pagination-active-text</td><td>現在ページを数値・aria-currentで示す</td></tr><tr><td>一覧</td><td>分類タグ</td><td>tag-bg / tag-text</td><td>分類タグと成功・警告等の状態タグは別体系</td></tr><tr><td>一覧</td><td>未読件数</td><td>badge-unread-bg / badge-unread-text</td><td>赤の障害表示と混同させない。未読等のラベルを付ける</td></tr><tr><td>状態</td><td>未処理・下書き</td><td>status-neutral-bg / status-neutral-text</td><td>インディゴ色相の淡い面。無彩色の灰色にしない</td></tr><tr><td>状態</td><td>情報・処理中</td><td>status-info-bg / status-info-text</td><td>情報・処理中など文字ラベルを必須にする</td></tr><tr><td>状態</td><td>成功・完了</td><td>status-success-bg / status-success-text</td><td>チェックマーク＋完了等</td></tr><tr><td>状態</td><td>注意・遅延</td><td>status-warning-bg / status-warning-text</td><td>警告記号＋注意内容。黄/橙地に白い小文字を使わない</td></tr><tr><td>状態</td><td>障害・エラー</td><td>status-danger-bg / status-danger-text</td><td>×などの記号＋エラー内容。アクセント色をエラー色にしない</td></tr><tr><td>フィードバック</td><td>通知・トースト</td><td>該当するstatus-*-bg / status-*-text</td><td>保存成功と主ボタンの色は違ってよい</td></tr><tr><td>フィードバック</td><td>ツールチップ</td><td>tooltip-bg / tooltip-text</td><td>濃紺地に白文字。フォーカスでも表示可能に</td></tr><tr><td>フィードバック</td><td>空データ</td><td>surface-alt / text-heading / text-secondary</td><td>灰色だけの空画面にしない。意味のある説明文を表示</td></tr><tr><td>フィードバック</td><td>スケルトン</td><td>skeleton-base / skeleton-highlight</td><td>ごく淡いインディゴ。アニメーションを止められること</td></tr><tr><td>フィードバック</td><td>進捗バー</td><td>progress-track / progress-fill</td><td>進捗値・ラベルを併用し薄いトラックだけで伝えない</td></tr><tr><td>重ね合わせ</td><td>モーダル・ドロワー</td><td>surface / text-primary / shadow-raised</td><td>実際の合成背景でフォーカス・文字を検証</td></tr><tr><td>重ね合わせ</td><td>背景マスク</td><td>overlay</td><td>overlayトークンの値をそのまま使う。その上に直接小さい文字を置かない</td></tr><tr><td>データ可視化</td><td>主指標・KPI</td><td>text-heading / chart-main</td><td>好不調の意味がある場合は状態色と文字を併用</td></tr><tr><td>データ可視化</td><td>金額・増減の数値</td><td>number-negative / number-positive</td><td>損失だけ赤。状態色のstatus-danger-*と混ぜない</td></tr><tr><td>データ可視化</td><td>カテゴリ系列</td><td>chart-1〜chart-5</td><td>名称・マーカー・線種を併用。色覚対応認証済みではない</td></tr><tr><td>データ可視化</td><td>連続量</td><td>scale-1〜scale-5</td><td>淡色セルは数値ラベル・必要な境界を付ける</td></tr><tr><td>データ可視化</td><td>目盛・軸・グリッド</td><td>chart-axis / chart-grid</td><td>装飾グリッドと情報を伝える線を区別</td></tr><tr><td>データ可視化</td><td>閾値・異常線</td><td>chart-threshold</td><td>赤の破線＋値・説明を付ける</td></tr><tr><td>業務表示例</td><td>カレンダー・配車表・ガント</td><td>surface / 各状態色 / surface-selected</td><td>未定の業務機能を要件化しない。存在する場合の色ルール例</td></tr><tr><td>業務表示例</td><td>地図・位置マーカー</td><td>chart-main / 各状態色</td><td>実地図との合成で検証。形状・ラベルで区別</td></tr><tr><td>アカウント</td><td>ログイン・権限表示</td><td>nav-background / surface / action-primary-bg / 各状態色</td><td>ログイン画面も同じトークン。権限は文字で説明</td></tr><tr><td>環境</td><td>モバイル・タッチ</td><td>通常・選択・focusトークン</td><td>hoverだけで操作の意味を伝えない</td></tr><tr><td>環境</td><td>ダークモード</td><td>本版では未定義</td><td>自動反転禁止。導入時は別トークンと再検証が必要</td></tr><tr><td>環境</td><td>印刷・白黒帳票</td><td>白背景・黒文字・罫線・状態ラベル</td><td>画面のブランド配色とは別。背景色が印刷されなくても意味が残る</td></tr><tr><td>環境</td><td>OS強制カラー</td><td>OSのシステムカラーを尊重</td><td>forced-color-adjust:noneによる一括固定を避ける</td></tr><tr><td>環境</td><td>選択文字</td><td>selection-bg / selection-text</td><td>ブラウザーの文字選択の可読性を維持</td></tr><tr><td>品質管理</td><td>追加画面・外部UI部品</td><td>全色を役割トークンにマッピング</td><td>既定のslate/gray/blueやチャート既定色の残留を確認</td></tr><tr><td>品質管理</td><td>色の保守</td><td>基本色→役割色→部品の順で管理</td><td>直接HEXの散在を避ける。変更後はコントラストを再計算</td></tr></tbody></table></div></details><details class="details"><summary>公開ページ群の確認状況</summary><p>検索で発見したURLは32件。これは全URLの完全な一覧ではありません。現行ページのCSS・画面配色は未取得です。</p><div class="table-wrap"><table><thead><tr><th>ページ群</th><th>発見したパス</th><th>確認できた範囲</th><th>未確認の範囲</th></tr></thead><tbody><tr><td>企業トップ</td><td>/</td><td>検索索引確認／2020年制作事例画像を目視</td><td>現行DOM・CSS・レスポンシブ配色未取得</td></tr><tr><td>会社案内</td><td>/company/</td><td>検索索引で存在確認</td><td>現行配色未取得</td></tr><tr><td>平賀イズム</td><td>/ism/</td><td>検索索引本文確認</td><td>現行配色未取得</td></tr><tr><td>事業内容</td><td>/service/</td><td>検索索引で存在確認</td><td>現行配色未取得</td></tr><tr><td>パンフレット</td><td>/pamphlet/</td><td>検索索引で存在確認</td><td>リンク先PDF・色指定は未取得</td></tr><tr><td>お知らせ一覧・詳細</td><td>/news/ /news/detail.php?id=3</td><td>検索索引で存在確認</td><td>全記事列挙・現行配色未取得</td></tr><tr><td>お問い合わせ</td><td>/contact/</td><td>検索索引で存在確認</td><td>通常・エラー・確認・完了画面の配色未取得</td></tr><tr><td>個人情報保護方針</td><td>/privacy/</td><td>検索索引で存在確認</td><td>現行配色未取得</td></tr><tr><td>採用トップ</td><td>/recruit/</td><td>検索索引確認／2020年制作事例画像を目視</td><td>現行DOM・CSS・レスポンシブ配色未取得</td></tr><tr><td>福利厚生・Q&amp;A</td><td>/recruit/benefits/ /recruit/voice/</td><td>検索索引本文確認</td><td>現行配色未取得</td></tr><tr><td>動画一覧・ページ送り</td><td>/recruit/youtube/ /recruit/youtube/index.php?page=2</td><td>検索索引本文確認</td><td>全ページ画面・サムネイル色の網羅検証未実施</td></tr><tr><td>車両詳細</td><td>/recruit/truck/detail.php?id=…</td><td>複数の索引本文・公式画像検索表示を確認</td><td>全車両の列挙・現行UI配色未取得</td></tr><tr><td>募集要項・詳細・応募</td><td>/recruit/entry/ /recruit/entry/detail.php?id=72 /recruit/entry/form.php?id=5</td><td>検索索引で存在確認</td><td>全募集・通常/エラー/確認/完了画面未取得</td></tr><tr><td>mailサブドメインの索引URL</td><td>mail.hiragaunsou.co.jp/recruit/youtube/index.php?page=2 /recruit/alert/form.php?id=10</td><td>検索結果に出現</td><td>本サイトとの重複・正規URL・現行配色未検証</td></tr></tbody></table></div></details><details class="details"><summary>配色の根拠と参照資料</summary><p>企業トップ・採用トップの配色は2020年の制作会社掲載画像を目視したものです。現行の正式カラーコードは未確認であり、本資料の数値は提案値です。</p><ol class="source-list"><li><a href="https://www.hiragaunsou.co.jp/" target="_blank" rel="noreferrer">[S1] 平賀運送公式トップ（公式検索索引で存在を確認、本体取得タイムアウト）</a><br><span>現行画面・CSSは未取得</span></li><li><a href="https://web3.co.jp/case/684/" target="_blank" rel="noreferrer">[S2] 制作会社・コーポレートサイト制作事例（2020-12-03）</a><br><span>2020年の制作事例。現行サイトと同一とは未確認</span></li><li><a href="https://web3.co.jp/case/common/upload/case/image1/l_202012031414040657747.png" target="_blank" rel="noreferrer">[S3] 同制作事例のトップ画面画像</a><br><span>目視確認のみ。ピクセル採色は行っていない</span></li><li><a href="https://web3.co.jp/case/687/" target="_blank" rel="noreferrer">[S4] 制作会社・採用サイト制作事例（2020-12-24）</a><br><span>2020年の制作事例。現行サイトと同一とは未確認</span></li><li><a href="https://web3.co.jp/case/common/upload/case/image1/l_202012241648470903875.png" target="_blank" rel="noreferrer">[S5] 同制作事例の採用トップ画面画像</a><br><span>目視確認のみ。ピクセル採色は行っていない</span></li><li><a href="https://www.hiragaunsou.co.jp/recruit/truck/detail.php?id=18" target="_blank" rel="noreferrer">[S6] 公式・大型ウイング車両ページ（車体色「ネイビー」）</a><br><span>検索索引本文による確認</span></li><li><a href="https://www.hiragaunsou.co.jp/common/photo/truck/image2/l_202012080813480955032.jpg" target="_blank" rel="noreferrer">[S7] 公式・車両画像（車両ページ id=41）</a><br><span>画像検索に表示された公式画像を目視確認。原寸画像の直接取得はタイムアウト</span></li><li><a href="https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html" target="_blank" rel="noreferrer">[S8] W3C: WCAG 2.2 Understanding 1.4.3 Contrast (Minimum)</a><br><span>W3C一次資料</span></li><li><a href="https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html" target="_blank" rel="noreferrer">[S9] W3C: WCAG 2.2 Understanding 1.4.11 Non-text Contrast</a><br><span>W3C一次資料</span></li><li><a href="https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html" target="_blank" rel="noreferrer">[S10] W3C: WCAG 2.2 Understanding 1.4.1 Use of Color</a><br><span>W3C一次資料</span></li><li><a href="https://www.hiragaunsou.co.jp/recruit/voice/" target="_blank" rel="noreferrer">[S11] 公式・採用Q&amp;A（検索索引本文）</a><br><span>ナビゲーション・本文の存在のみ確認。色は未確認</span></li><li><a href="https://www.hiragaunsou.co.jp/recruit/youtube/" target="_blank" rel="noreferrer">[S12] 公式・動画一覧（検索索引本文）</a><br><span>ページネーション1〜5の表示は確認。全5ページの画面は未取得</span></li></ol></details></section>
+<footer class="footer">2026.09.28 / 暫定提案 v0.3<br>現行サイトの全ページ解析・正式CI色の照合・原寸ロゴの採色は未完了です。確定時にはHTML/CSS/画像一式または承認済みブランド資料との照合と再検証が必要です。</footer>
+</main></div></div><div class="toast" id="toast" role="status" aria-live="polite" hidden></div><script>
+(()=>{'use strict';let timer;const toast=document.getElementById('toast');function notify(text){toast.textContent=text;toast.hidden=false;clearTimeout(timer);timer=setTimeout(()=>{toast.hidden=true},4500)}document.querySelectorAll('[data-demo]').forEach(el=>el.addEventListener('click',()=>notify(el.dataset.demo)));document.querySelectorAll('.demo-link').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();notify('リンクの配色デモです。実際の詳細画面はありません。')}));document.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('click',async()=>{const text=el.dataset.copy;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);notify(text+' をコピーしました。')}else{notify('HEX：'+text+'（この環境では自動コピーできません。表示コードを選択してコピーしてください）')}}catch(e){notify('HEX：'+text+'（自動コピーを利用できません。表示コードを選択してコピーしてください）')}}));document.querySelectorAll('.demo-table .check').forEach(el=>el.addEventListener('change',()=>el.closest('tr').classList.toggle('selected',el.checked)));const tabs=[...document.querySelectorAll('[data-filter]')];function selectTab(el){tabs.forEach(t=>{const selected=t===el;t.setAttribute('aria-selected',String(selected));t.tabIndex=selected?0:-1});let count=0;document.querySelectorAll('.demo-table tbody tr').forEach(row=>{const visible=el.dataset.filter==='all'||row.dataset.state===el.dataset.filter;row.hidden=!visible;if(visible)count++});document.getElementById('panel-items').setAttribute('aria-labelledby',el.id);document.getElementById('row-count').textContent='架空データ '+count+'件'}tabs.forEach((el,i)=>{el.addEventListener('click',()=>selectTab(el));el.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;else if(e.key==='ArrowLeft')next=(i-1+tabs.length)%tabs.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=tabs.length-1;else return;e.preventDefault();tabs[next].focus();selectTab(tabs[next])})});document.querySelectorAll('.sidebar nav a').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.sidebar nav a').forEach(a=>{a.classList.remove('active');a.removeAttribute('aria-current')});el.classList.add('active');el.setAttribute('aria-current','location')}));})();
+</script></body></html>

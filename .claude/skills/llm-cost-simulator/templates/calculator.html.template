@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LLM コスト計算機</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --panel:#ffffff; --ink:#1c2430; --muted:#69727f;
+    --line:#e3e7ec; --accent:#2f6f6a; --accent2:#b4532a; --warn:#9a6b00;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;
+    line-height:1.55;font-size:15px}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 64px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:20px}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 14px}
+  label{display:block;font-size:13px;margin:14px 0 4px;color:var(--ink)}
+  label .val{float:right;color:var(--accent);font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%}
+  select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+  .headline{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .headline small{font-size:14px;color:var(--muted);font-weight:400}
+  .kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px}
+  .kpi{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .kpi .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .kpi .v{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+  th{color:var(--muted);font-weight:600}
+  td.n,th.n{text-align:right}
+  .bar{height:10px;background:var(--accent);border-radius:5px}
+  .bar.cur{background:var(--accent2)}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .tag.verify{color:var(--warn);border-color:#e7d9b0;background:#fbf6e7}
+  .tag.authoritative{color:var(--accent);border-color:#cfe6e2;background:#eef6f5}
+  .note{font-size:12px;color:var(--muted);margin-top:14px}
+  .section{margin-top:20px}
+  code{background:var(--bg);padding:1px 5px;border-radius:5px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title">LLM コスト計算機</h1>
+  <div class="sub" id="subtitle"></div>
+
+  <div class="grid">
+    <div class="panel" id="controls">
+      <h2>入力</h2>
+      <label>モデル(全呼び出しに適用)
+        <select id="modelSel"></select>
+      </label>
+      <label>キャッシュヒット率 <span class="val" id="cacheVal">0%</span>
+        <input type="range" id="cache" min="0" max="100" step="5" value="0" />
+      </label>
+      <label>出力トークン倍率 <span class="val" id="outVal">1.0x</span>
+        <input type="range" id="outScale" min="10" max="300" step="10" value="100" />
+      </label>
+      <label>月間処理件数 <span class="val" id="volVal"></span>
+        <input type="range" id="vol" min="0" max="6" step="0.05" value="3" />
+      </label>
+      <div class="note" id="resetNote"></div>
+    </div>
+
+    <div class="panel">
+      <h2>結果</h2>
+      <div class="headline"><span id="perFlow"></span> <small>/ 1 フロー</small></div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">月間</div><div class="v" id="perMonth"></div></div>
+        <div class="kpi"><div class="k">年間</div><div class="v" id="perYear"></div></div>
+        <div class="kpi"><div class="k">1000 件</div><div class="v" id="per1k"></div></div>
+      </div>
+
+      <div class="section">
+        <h2>呼び出し内訳</h2>
+        <table id="callTable"><thead><tr>
+          <th>処理</th><th>モデル</th><th class="n">入力tok</th><th class="n">出力tok</th>
+          <th class="n">反復</th><th class="n">$/フロー</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="section">
+        <h2>モデル比較 (現在の条件で再計算)</h2>
+        <table id="cmpTable"><thead><tr>
+          <th>モデル</th><th class="n">$/フロー</th><th>相対</th><th></th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <div class="note" id="provNote"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+// ---- cost math (faithful port of engine.py) ----
+const COMP = ["system","tools","context","history","user_input"];
+function getModel(pricing,id){
+  const m=(pricing.models||[]).find(x=>x.id===id); if(!m) return null;
+  const pd=(pricing.provider_defaults||{})[m.provider]||{};
+  const gen=(pricing.provider_defaults||{}).generic||{};
+  return Object.assign({},gen,pd,m);
+}
+function rates(model,totalIn){
+  let inP=+model.input, outP=+model.output;
+  (model.context_tiers||[]).slice().sort((a,b)=>(a.min_input_tokens||0)-(b.min_input_tokens||0))
+    .forEach(t=>{ if(totalIn>=(t.min_input_tokens||0)){inP=+t.input;outP=+t.output;} });
+  const rm=model.cache_read_mult!=null?+model.cache_read_mult:0.5;
+  const readP=model.cached_input!=null?+model.cached_input:inP*rm;
+  return {input:inP,output:outP,read:readP,
+    w5:inP*(model.cache_write_5m_mult!=null?+model.cache_write_5m_mult:1),
+    w1:inP*(model.cache_write_1h_mult!=null?+model.cache_write_1h_mult:1),
+    bm:model.batch_mult!=null?+model.batch_mult:1};
+}
+function usd(fi,cr,cw,out,r,ttl,batch){
+  const wr=ttl==="1h"?r.w1:r.w5;
+  let raw=(fi*r.input+cr*r.read+cw*wr+out*r.output)/1e6;
+  return raw*(batch?r.bm:1);
+}
+function loopCost(call,model,hit,ttl,batch,oscale){
+  const lp=call.agent_loop, t=call.tokens||{};
+  const n=Math.max(1,parseInt(lp.iterations||1));
+  const g=+lp.history_growth_per_iter||0;
+  const prefix=+(lp.cached_prefix_tokens!=null?lp.cached_prefix_tokens:(t.cacheable_prefix||0));
+  const hc=!!lp.history_cached;
+  const base=COMP.reduce((s,k)=>s+(+t[k]||0),0);
+  const outIter=((+t.output||0)+(+t.thinking||0))*oscale;
+  let acc={usd:0,input:0,cr:0,cw:0,out:0};
+  for(let i=0;i<n;i++){
+    const grown=g*i; let fi,cr,cw;
+    if(hc){ fi=base; cr=(i>0?prefix:0)+grown; cw=(i===0?prefix:0); }
+    else { fi=base+grown; cr=(i>0?prefix:0); cw=(i===0?prefix:0); }
+    const r=rates(model,fi+cr+cw);
+    acc.usd+=usd(fi,cr,cw,outIter,r,ttl,batch);
+    acc.input+=fi;acc.cr+=cr;acc.cw+=cw;acc.out+=outIter;
+  }
+  return {usd:acc.usd,input:acc.input,cr:acc.cr,cw:acc.cw,out:acc.out,iters:n};
+}
+function callCost(call,pricing,opt){
+  const id=opt.modelOverride||call.model;
+  const model=getModel(pricing,id);
+  if(!model) return {usd:0,model:id,label:call.label,input:0,out:0,iters:1};
+  const t=call.tokens||{}, ttl=t.cache_write_ttl||"5m", batch=!!call.batch;
+  const runs=+(call.runs_per_flow||1), os=opt.outputScale!=null?opt.outputScale:1;
+  let per;
+  if(call.agent_loop){ per=loopCost(call,model,opt.cacheHit,ttl,batch,os); }
+  else {
+    const fi=COMP.reduce((s,k)=>s+(+t[k]||0),0);
+    let cr,cw;
+    if(t.cache_read==null&&t.cache_write==null&&t.cacheable_prefix){
+      const hr=Math.max(0,Math.min(1,opt.cacheHit));
+      cr=t.cacheable_prefix*hr; cw=t.cacheable_prefix*(1-hr);
+    } else { cr=+t.cache_read||0; cw=+t.cache_write||0; }
+    const out=((+t.output||0)+(+t.thinking||0))*os;
+    const r=rates(model,fi+cr+cw);
+    per={usd:usd(fi,cr,cw,out,r,ttl,batch),input:fi,cr:cr,cw:cw,out:out,iters:1};
+  }
+  return {usd:per.usd*runs,model:id,label:call.label||call.id,
+    input:(per.input+per.cr+per.cw)*runs,out:per.out*runs,iters:per.iters};
+}
+function flowCost(scenario,pricing,opt){
+  const calls=(scenario.calls||[]).map(c=>callCost(c,pricing,opt));
+  return {usd:calls.reduce((s,c)=>s+c.usd,0),calls};
+}
+
+// ---- formatting ----
+function fmtUSD(x){
+  if(x===0)return "$0";
+  if(x<0.01)return "$"+x.toFixed(6).replace(/0+$/,"").replace(/\.$/,"");
+  if(x<1)return "$"+x.toFixed(4).replace(/0+$/,"").replace(/\.$/,"");
+  if(x<1000)return "$"+x.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+  return "$"+Math.round(x).toLocaleString();
+}
+function fmtInt(x){return Math.round(x).toLocaleString();}
+
+// ---- UI ----
+const S=DATA.scenario, P=DATA.pricing;
+const proj=S.projection||{};
+document.getElementById("title").textContent=
+  "LLM コスト計算機 — "+((S.meta||{}).app_name||"app")+" / "+((S.meta||{}).flow_name||"flow");
+document.getElementById("subtitle").textContent=
+  "測定ティア "+((S.meta||{}).measurement_tier||"-")+" ・ 既定キャッシュヒット率 "+
+  Math.round((proj.cache_hit_rate||0)*100)+"% ・ 料金 verify 表記は要再確認";
+
+const sel=document.getElementById("modelSel");
+const optEl=document.createElement("option");
+optEl.value="";optEl.textContent="(各呼び出しの既定モデル)";sel.appendChild(optEl);
+(P.models||[]).forEach(m=>{
+  const o=document.createElement("option");o.value=m.id;
+  o.textContent=(m.display_name||m.id)+"  ("+m.input+"/"+m.output+" /1M, "+(m.confidence||"")+")";
+  sel.appendChild(o);
+});
+
+const elCache=document.getElementById("cache"),elOut=document.getElementById("outScale"),
+      elVol=document.getElementById("vol");
+// init monthly volume slider to scenario value if present
+const initVol=proj.monthly_volume||30000;
+elVol.value=Math.log10(Math.max(1,initVol));
+elCache.value=Math.round((proj.cache_hit_rate||0)*100);
+
+function volFromSlider(){return Math.round(Math.pow(10,parseFloat(elVol.value)));}
+
+function recompute(){
+  const cacheHit=parseInt(elCache.value)/100;
+  const outputScale=parseInt(elOut.value)/100;
+  const modelOverride=sel.value||null;
+  const vol=volFromSlider();
+  document.getElementById("cacheVal").textContent=Math.round(cacheHit*100)+"%";
+  document.getElementById("outVal").textContent=outputScale.toFixed(1)+"x";
+  document.getElementById("volVal").textContent=fmtInt(vol)+" /月";
+
+  const opt={cacheHit,outputScale,modelOverride};
+  const f=flowCost(S,P,opt);
+  document.getElementById("perFlow").textContent=fmtUSD(f.usd);
+  document.getElementById("perMonth").textContent=fmtUSD(f.usd*vol);
+  document.getElementById("perYear").textContent=fmtUSD(f.usd*vol*12);
+  document.getElementById("per1k").textContent=fmtUSD(f.usd*1000);
+
+  const tb=document.querySelector("#callTable tbody");tb.innerHTML="";
+  f.calls.forEach(c=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML="<td>"+c.label+"</td><td><code>"+c.model+"</code></td>"+
+      "<td class=n>"+fmtInt(c.input)+"</td><td class=n>"+fmtInt(c.out)+"</td>"+
+      "<td class=n>"+c.iters+"</td><td class=n>"+fmtUSD(c.usd)+"</td>";
+    tb.appendChild(tr);
+  });
+
+  // comparison across all priced models at current conditions
+  const rows=(P.models||[]).map(m=>{
+    const ff=flowCost(S,P,{cacheHit,outputScale,modelOverride:m.id});
+    return {id:m.id,name:m.display_name||m.id,conf:m.confidence||"",usd:ff.usd};
+  }).sort((a,b)=>a.usd-b.usd);
+  const max=Math.max(...rows.map(r=>r.usd),1e-12);
+  const cb=document.querySelector("#cmpTable tbody");cb.innerHTML="";
+  const best=rows[0]?rows[0].usd:0;
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const cur=(modelOverride? r.id===modelOverride : false);
+    const w=Math.max(2,Math.round(r.usd/max*100));
+    tr.innerHTML="<td>"+r.name+" <span class='tag "+(r.conf)+"'>"+r.conf+"</span></td>"+
+      "<td class=n>"+fmtUSD(r.usd)+"</td>"+
+      "<td class=n>"+(best? (r.usd/best).toFixed(2)+"x":"-")+"</td>"+
+      "<td style='width:160px'><div class='bar"+(cur?" cur":"")+"' style='width:"+w+"%'></div></td>";
+    cb.appendChild(tr);
+  });
+  document.getElementById("provNote").innerHTML=
+    "比較は出力トークン長を固定し価格差のみを示す。<span class='tag verify'>verify</span> "+
+    "のモデルは公式料金ページで再確認のこと。";
+}
+[elCache,elOut,elVol,sel].forEach(e=>e.addEventListener("input",recompute));
+document.getElementById("resetNote").textContent=
+  "スライダーは「全呼び出しを1モデルに揃えたら？」「件数/キャッシュ率を変えたら？」の即時試算用。";
+recompute();
+</script>
+</body>
+</html>
