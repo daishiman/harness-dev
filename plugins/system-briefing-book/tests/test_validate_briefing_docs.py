@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
+
+import pytest
 
 from conftest import PAGES, codes, make_case, node_eval, run_script
 
@@ -308,3 +311,149 @@ def test_spec_details_cannot_be_filled_by_comments_or_empty_labels(case: Path) -
     _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
     warnings = [w['message'] for w in out['warnings'] if w['code'] == 'SPEC-DETAIL-MISSING']
     assert not any('2.1 骨組み' in w for w in warnings)
+
+
+def complete_hearing(case: Path) -> None:
+    catalog = node_eval('import { HEARING_QUESTIONS, HEARING_SECTIONS } from "./lib/hearing-catalog.mjs";\n'
+                        'console.log(JSON.stringify({ questions: HEARING_QUESTIONS, sections: HEARING_SECTIONS }));')
+    lines = ["# ヒアリング記録: 写真で記録", "更新日: 2026-10-01", ""]
+    for section in catalog["sections"]:
+        lines += [f'## {section["title"]}', '| 番号 | 質問 | 回答 | 出どころ |', '| --- | --- | --- | --- |']
+        lines += [f'| {q["id"]} | {q["question"]} | 現場で確認した内容 | 聞き取り |'
+                  for q in catalog["questions"] if q["section"] == section["id"]]
+        lines.append("")
+    lines += ['## 5. あとで相談すること', '']
+    (case / 'ヒアリング.md').write_text('\n'.join(lines), encoding='utf-8')
+
+
+@pytest.mark.parametrize('number', range(1, 37))
+def test_each_fixed_hearing_question_is_required(case: Path, number: int) -> None:
+    complete_hearing(case)
+    hearing = case / 'ヒアリング.md'
+    hid = f'H{number:02}'
+    hearing.write_text(re.sub(rf'^\| {hid} \|.*\n', '', hearing.read_text(encoding='utf-8'), flags=re.M), encoding='utf-8')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'hearing')
+    assert rc == 0  # Legacy documents remain readable; omission is not a claim of completion.
+    hits = [w for w in out['warnings'] if w['code'] == 'HEARING-REQUIRED-MISSING']
+    assert len(hits) == 1 and hid in hits[0]['message']
+    assert out['counts']['hearing_required_missing'] == 1
+
+
+def test_hearing_catalog_accepts_extra_question_and_detects_wrong_section(case: Path) -> None:
+    complete_hearing(case)
+    hearing = case / 'ヒアリング.md'
+    last = re.search(r'^\| H36 \|.*\n', hearing.read_text(encoding='utf-8'), flags=re.M)[0]
+    edit(hearing, last, last + '| H37 | 追加で確かめること | 確認済み | 聞き取り |\n')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'hearing')
+    assert rc == 0 and out['warnings'] == []
+    assert out['counts']['hearing_required_missing'] == 0
+    assert out['counts']['hearing_items'] == 37
+    text = hearing.read_text(encoding='utf-8')
+    row = re.search(r'^\| H36 \|.*\n', text, flags=re.M)[0]
+    text = text.replace(row, '').replace('| H01 |', row + '| H01 |')
+    hearing.write_text(text, encoding='utf-8')
+    _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'hearing')
+    assert out['counts']['hearing_wrong_section'] == 1
+    assert 'HEARING-SECTION' in codes(out['warnings'])
+
+
+def test_undecided_answer_must_reach_pending_list_and_question(case: Path) -> None:
+    complete_hearing(case)
+    hearing = case / 'ヒアリング.md'
+    text = hearing.read_text(encoding='utf-8')
+    text = re.sub(r'^(\| H17 \|.*?)\| 聞き取り \|$', r'\1| 未定 |', text, flags=re.M)
+    hearing.write_text(text, encoding='utf-8')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'requirements')
+    assert rc == 0
+    assert {'HEARING-PENDING-MISSING', 'HEARING-PENDING-NO-Q'} <= codes(out['warnings'])
+    assert out['counts']['hearing_pending_unlisted'] == out['counts']['hearing_pending_without_question'] == 1
+    edit(hearing, '## 5. あとで相談すること', '## 5. あとで相談すること\n- H17: 入り方を確かめる')
+    edit(case / '要件定義.md', '入れる項目はこの 4 つでよいか', '入り方を確かめる (H17)')
+    _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'requirements')
+    assert not {'HEARING-PENDING-MISSING', 'HEARING-PENDING-NO-Q'} & codes(out['warnings'])
+    assert out['counts']['hearing_pending_unlisted'] == out['counts']['hearing_pending_without_question'] == 0
+    edit(hearing, '| 未定 |', '| 聞き取り |')
+    _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'hearing')
+    assert 'HEARING-PENDING-STALE' in codes(out['warnings'])
+
+
+@pytest.mark.parametrize('resolution', ['empty', 'placeholder', 'decided'])
+def test_pending_hearing_needs_actionable_open_question(case: Path, resolution: str) -> None:
+    edit(case / '要件定義.md', '| Q01 | 入れる項目はこの 4 つでよいか | 日付・相手先・数・メモ | 現場の担当者 |',
+         '| Q01 | H03の入り方 |  |  |' if resolution == 'empty' else
+         '| Q01 | H03の入り方 | 未定 | <!-- 確認先 --> |' if resolution == 'placeholder' else
+         '| Q01 | H03の入り方 | 会社のメールで入る | 決定 (v0.1) |')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'requirements')
+    assert rc == 0
+    expected = 'HEARING-PENDING-DECIDED-Q' if resolution == 'decided' else 'QUESTION-CELL-EMPTY'
+    assert expected in codes(out['warnings'])
+    assert out['counts']['hearing_pending_without_question'] == 1
+    assert out['counts']['question_rows_incomplete'] == (0 if resolution == 'decided' else 1)
+
+
+@pytest.mark.parametrize('suffix', [' (Q99)', '。Q99で確かめる', ' (案: Q99)'])
+def test_unknown_question_in_spec_text_is_error(case: Path, suffix: str) -> None:
+    edit(case / '仕様書.md', '### 2.1 骨組み', '### 2.1 骨組み\n- 共通配置: 左にメニュー' + suffix)
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert rc == 1
+    assert 'QUESTION-REF-UNKNOWN' in codes(out['errors'])
+    assert out['counts']['question_refs_unknown'] == 1
+
+
+def test_question_refs_allow_real_question_but_ignore_examples_and_identifiers(case: Path) -> None:
+    edit(case / '仕様書.md', '### 2.1 骨組み',
+         '### 2.1 骨組み\n- 共通配置: 案はQ01で確認。製品ABCQ99・Q99ABC・https://example.com/Q99 は参照でない。\n'
+         '<!-- Q99 -->\n```text\nQ99\n```\n`Q99`')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert rc == 0, out['errors']
+    assert out['counts']['question_refs_unknown'] == 0
+
+
+@pytest.mark.parametrize('mutation', ['empty', 'missing', 'duplicate', 'cell'])
+def test_role_coverage(case: Path, mutation: str) -> None:
+    spec = case / '仕様書.md'
+    field = '| 現場の担当者 | 写真を送る | 一覧を直す | 自分が送った記録だけ |'
+    office = '| 事務の担当者 | 一覧を直す | なし | すべての記録 |'
+    if mutation == 'empty':
+        edit(spec, field, '')
+        edit(spec, office, '')
+    elif mutation == 'missing':
+        edit(spec, office, '')
+    elif mutation == 'duplicate':
+        edit(spec, office, office + '\n' + office)
+    else:
+        edit(spec, field, field.replace('自分が送った記録だけ', ''))
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert rc == 0
+    expected = {'empty': 'ROLE-TABLE-EMPTY', 'missing': 'ROLE-MISSING', 'duplicate': 'ROLE-DUP', 'cell': 'ROLE-CELL-EMPTY'}
+    assert expected[mutation] in codes(out['warnings'])
+    counter = {'empty': 'roles_missing', 'missing': 'roles_missing', 'duplicate': 'roles_duplicate', 'cell': 'role_rows_incomplete'}[mutation]
+    assert out['counts'][counter] == (2 if mutation == 'empty' else 1)
+
+
+def test_explicit_role_groups_cover_only_complete_member_names(case: Path) -> None:
+    spec = case / '仕様書.md'
+    edit(spec, '| 現場の担当者 | 写真を送る | 一覧を直す | 自分が送った記録だけ |\n'
+               '| 事務の担当者 | 一覧を直す | なし | すべての記録 |',
+         '| 使う人 (現場の担当者・事務の担当者) | 写真を送る・一覧を直す | なし | 担当する記録 |')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert rc == 0 and out['counts']['roles_missing'] == 0
+    edit(spec, '使う人 (現場の担当者・事務の担当者)', '使う人 (別の現場の担当者・事務の担当者)')
+    _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert out['counts']['roles_missing'] == 1
+
+
+@pytest.mark.parametrize(('section', 'field'), [
+    ('2.2 ヘッダー', '表示内容'), ('2.3 メニュー', '項目と順序'), ('2.4 フッター', '固定領域'),
+    ('2.5 色の役割', '色と意味'), ('2.7 メッセージ', '結果と直し方'),
+])
+@pytest.mark.parametrize('value', ['', '未定', '<案件から記入>', '<!-- 仮の内容 -->'])
+def test_each_previously_unchecked_detail_cannot_be_blank(case: Path, section: str, field: str, value: str) -> None:
+    edit(case / '仕様書.md', f'### {section}', f'### {section}\n- {field}: {value}')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert rc == 0
+    assert any(w['code'] == 'SPEC-DETAIL-MISSING' and f'「{field}」' in w['message'] for w in out['warnings'])
+    assert out['counts']['spec_detail_missing'] > 0
+    edit(case / '仕様書.md', f'- {field}: {value}', f'- {field}: 案として共通の表示を使う (Q01)')
+    _, out, _ = run_script(SCRIPT, '--dir', str(case), '--stage', 'spec')
+    assert not any(w['code'] == 'SPEC-DETAIL-MISSING' and f'「{field}」' in w['message'] for w in out['warnings'])

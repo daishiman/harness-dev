@@ -63,7 +63,7 @@
   "schemaVersion": 1,
   "workflowId": "run-briefing-hearing",
   "skill": "run-briefing-hearing",
-  "description": "main context が素材から分かることを先に埋め、残りを既定案つきで 1 回 4 問まで聞き、核心の 5 問はあいまいなら促して聞き足してヒアリング.md を書き、--stage hearing を通して見せる。followup では確認点で増えた決めることを 4 問まで聞いてヒアリング.md に足し、答えが出た Q と H の組を返す。",
+  "description": "素材とhearing-catalogから業務の答えを集める。1回4問・6回以内と核心の聞き足し2回以内で、事実・設計案・未定を分けてヒアリング.mdへ残す。固定Hと未定の確認先を検査し、followupでは具体的に決まったQとHの組を返す。",
   "phases": [
     {
       "id": "H1-prefill",
@@ -73,7 +73,9 @@
       "dependsOn": [],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": [],
+      "resourceIds": [
+        "hearing-catalog"
+      ],
       "fatal_exit_codes": [
         1,
         2,
@@ -83,14 +85,16 @@
     {
       "id": "H2-ask",
       "step": 2,
-      "title": "目的と範囲・画面の共通ルール・しくみと基盤・運用を既定案つきで聞き、核心の 5 問はあいまいなら聞き足す",
+      "title": "catalogの回ごとに業務の場面を聞き、核心のあいまいさを促す。設計案と未確認条件を分ける",
       "gate": "IN2",
       "dependsOn": [
         "H1-prefill"
       ],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": [],
+      "resourceIds": [
+        "hearing-catalog"
+      ],
       "fatal_exit_codes": [
         1,
         2,
@@ -108,7 +112,8 @@
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [
-        "script-validate"
+        "script-validate",
+        "hearing-catalog"
       ],
       "fatal_exit_codes": [
         1,
@@ -142,6 +147,16 @@
       "phaseIds": [
         "H3-write-check",
         "H4-followup"
+      ]
+    },
+    {
+      "id": "hearing-catalog",
+      "kind": "reference",
+      "path": "../../assets/data/hearing-catalog.json",
+      "phaseIds": [
+        "H1-prefill",
+        "H2-ask",
+        "H3-write-check"
       ]
     }
   ]

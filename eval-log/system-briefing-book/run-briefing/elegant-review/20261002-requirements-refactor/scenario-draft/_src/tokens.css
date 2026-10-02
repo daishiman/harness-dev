@@ -1,0 +1,127 @@
+/* 配色: <旧名> (system-briefing-book の既定の配色)
+   出典: aidd-agent-kit 1.11.0 同梱 jp-web-design スキルの
+         assets/<旧名>/<旧名>-color-system.css (暫定カラー v0.3、2026-09-28)
+   Copyright (c) 2026 daishiman. Licensed under the Apache License, Version 2.0.
+   このファイルは出典を変更したものです。変更点とライセンス全文は assets/css/<旧名>-attribution.md にあります。
+
+   使い方:
+   - ボードの色・文字・影はすべてここで決める。common.css とボード HTML は var(--...) だけを使う。
+   - 案件ごとに配色を変えるときは、このファイルと同じ名前のトークンを持つ CSS を用意し、
+     briefing.json の "palette" にそのパスを書く (build-briefing-scaffold.mjs が _src/tokens.css へ写す)。
+   - 原色 (--p-*) は部品から直接使わない。部品は下の「役割」のトークンを使う。 */
+:root {
+  color-scheme: light;
+
+  /* ── 原色: 出典の値をそのまま写したもの ───────────────── */
+  --p-brand-indigo: #1747B5;
+  --p-brand-accent: #1465E1;
+  --p-brand-accent-soft: #E8F1FF;
+  --p-brand-indigo-soft: #DCE9FC;
+  --p-white: #FFFFFF;
+  --p-surface-subtle: #F3F7FD;
+  --p-surface-stripe: #F9FBFE;
+  --p-ink: #14233B;
+  --p-ink-secondary: #45576F;
+  --p-ink-muted: #506279;
+  --p-line: #D5E1F0;
+  --p-line-strong: #7189A8;
+  --p-disabled-bg: #E9EEF4;
+  --p-info: #0369A1;
+  --p-info-bg: #E6F4FB;
+  --p-success: #166534;
+  --p-success-bg: #ECFDF3;
+  --p-warning: #92400E;
+  --p-warning-bg: #FFF7E6;
+  --p-danger: #D03047;
+  --p-danger-bg: #FFF1F3;
+
+  /* ── 原色: 打ち合わせボードのために足したもの (出典には無い) ── */
+  --p-board: #EDF2F9;          /* ボードの地。画面の地 (--p-surface-subtle) と見分ける */
+  --p-anno: #D6246E;           /* 注記の番号。アプリの色ではなく説明の印 */
+  --p-warning-line: #E9B45C;   /* 注意の枠線 */
+  --p-device: #1C2635;         /* スマホの枠 */
+  --p-device-island: #0E141D;  /* スマホ上部の切り欠きと下のバー */
+  --p-browser-bar: #E4EAF2;    /* ブラウザ上部の帯 */
+  --p-browser-line: #CBD6E4;
+  --p-browser-edge: #B8C6DA;
+  --p-browser-dot: #C3CEDC;
+  --p-url-field: #E9EDF2;
+
+  /* ── 役割: 面 ───────────────── */
+  --bg-board: var(--p-board);
+  --bg-page: var(--p-surface-subtle);
+  --bg-surface: var(--p-white);
+  --bg-stripe: var(--p-surface-stripe);
+  --bg-brand-soft: var(--p-brand-indigo-soft);
+  --bg-accent-soft: var(--p-brand-accent-soft);
+  --bg-disabled: var(--p-disabled-bg);
+
+  /* ── 役割: 文字と線 ───────────────── */
+  --text: var(--p-ink);
+  --text-2: var(--p-ink-secondary);
+  --text-muted: var(--p-ink-muted);
+  --text-brand: var(--p-brand-indigo);
+  --text-link: var(--p-brand-accent);
+  --text-inverse: var(--p-white);
+  --line: var(--p-line);
+  --line-strong: var(--p-line-strong);
+  --input-border: var(--p-line-strong);
+
+  /* ── 役割: 操作 ───────────────── */
+  --action-primary-bg: var(--p-brand-accent);
+  --action-primary-ink: var(--p-white);
+  --action-danger-bg: var(--p-danger);
+  --action-danger-ink: var(--p-white);
+
+  /* ── 役割: 状態 (色と文字の両方で示す) ───────────────── */
+  --status-info: var(--p-info);
+  --status-info-bg: var(--p-info-bg);
+  --status-success: var(--p-success);
+  --status-success-bg: var(--p-success-bg);
+  --status-warning: var(--p-warning);
+  --status-warning-bg: var(--p-warning-bg);
+  --status-warning-line: var(--p-warning-line);
+  --status-danger: var(--p-danger);
+  --status-danger-bg: var(--p-danger-bg);
+
+  /* ── 役割: 注記 (ボードの説明。アプリの画面には出ない) ───────────────── */
+  --anno: var(--p-anno);
+  --anno-ink: var(--p-white);
+  --anno-ring: var(--p-white);
+  --note-can-ink: var(--p-success);     /* できること */
+  --note-can-bg: var(--p-success-bg);
+  --note-how-ink: var(--p-info);        /* しくみ */
+  --note-how-bg: var(--p-info-bg);
+  --note-ask-ink: var(--p-warning);     /* 決めること */
+  --note-ask-bg: var(--p-warning-bg);
+
+  /* ── 役割: 端末の枠 ───────────────── */
+  --device-frame: var(--p-device);
+  --device-island: var(--p-device-island);
+  --browser-bar-bg: var(--p-browser-bar);
+  --browser-bar-line: var(--p-browser-line);
+  --browser-edge: var(--p-browser-edge);
+  --browser-dot: var(--p-browser-dot);
+  --url-field-bg: var(--p-url-field);
+
+  /* ── 役割: 重なりと影 (出典の値) ───────────────── */
+  --overlay: rgba(15, 45, 110, 0.40);
+  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
+  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
+  --shadow-device: 0 24px 60px rgba(20, 35, 59, 0.20);
+  --shadow-browser: 0 24px 60px rgba(20, 35, 59, 0.16);
+  --skeleton-base: var(--p-surface-subtle);
+  --skeleton-highlight: var(--p-brand-indigo-soft);
+
+  /* ── 文字 (Mac はヒラギノ、Windows は游ゴシック UI かメイリオ) ───────────────── */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic UI", "Meiryo UI", "Meiryo", "Noto Sans JP", sans-serif;
+  --font-num: "SF Pro Text", -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI",
+    "Meiryo UI", sans-serif;
+
+  /* ── 形 ───────────────── */
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+  --tap: 44px;
+}

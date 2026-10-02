@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "iteration": 1,
+  "reviewer": "design_approver",
+  "independent": true,
+  "role": "reviewer, not proposer or implementer",
+  "reviewed_at": "2026-10-02T12:13:05.545518+00:00",
+  "target": "plugins/system-briefing-book",
+  "verdict": "FAIL",
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "APP-DESIGN-01"
+      ]
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "APP-DESIGN-01"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "Book aliases/fallback palette removed; shared semantic roles retained; default/custom browser rendering checks pass."
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "Refresh reads existing manifest and resolves relative paths at manifest directory; conflicting CLI palette rejected before writes; bundled runtime dependencies retained."
+      ]
+    }
+  },
+  "unresolved": [
+    {
+      "id": "APP-DESIGN-01",
+      "severity": "high",
+      "conditions": [
+        "C1",
+        "C2"
+      ],
+      "file": "plugins/system-briefing-book/scripts/lib/design-tokens.mjs",
+      "description": "Custom-property cascade was parsed as last declaration wins even when an earlier !important declaration wins in the browser. Missing token dependencies can pass validation.",
+      "reproduction": {
+        "suffix": ":root { --text: var(--missing) !important; --text: #14233B; }",
+        "validator_errors_before_fix": [],
+        "browser_computed_before_fix": {
+          "color": "rgb(0, 0, 0)",
+          "text": ""
+        },
+        "suffix_whitespace_variant": ":root { --text: var(--missing) ! important; --text: #14233B; }",
+        "variant_after_first_correction": {
+          "validator_errors": [],
+          "browser_computed": {
+            "color": "rgb(0, 0, 0)",
+            "text": ""
+          }
+        }
+      },
+      "recommendation": "Honor CSS declaration priority including whitespace/comments between ! and important, or explicitly reject importance syntax; regression-test the supported form."
+    }
+  ],
+  "validation": [
+    {
+      "command": "python -m pytest -q plugins/system-briefing-book/tests/test_design_tokens.py plugins/system-briefing-book/tests/test_design_source.py plugins/system-briefing-book/tests/test_build_briefing_scaffold.py plugins/system-briefing-book/tests/test_design_rendering.py",
+      "result": "35 passed in 41.36s",
+      "note": "Passing tests did not include whitespace priority counterexample; verdict remains FAIL."
+    }
+  ],
+  "limitations": [
+    "Review scoped to documented top-level :root palette contract, not arbitrary CSS parser conformance.",
+    "First-pass source hashes were not captured before concurrent correction; no reconstructed hash is represented as observed evidence."
+  ],
+  "source_edits": false
+}

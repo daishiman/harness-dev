@@ -2,20 +2,20 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "run-briefing-book",
-    "skill_md_sha256": "e2cb9ae0a30ad3368835580f2d4bc02a6e33436ff4f6ff9d8bed18db9d98cdeb"
+    "skill_md_sha256": "4b204edd0ca62ee03a36bca1d741d112d8935c05681d653b31b1736505cc800b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 0,
+    "omission": 3,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "cr-briefing-goal-seek-v1 (focused combined content review, incremental profile, goal_seek 宣言の差分)",
-  "reviewed_at": "2026-10-02T08:00:13Z",
-  "iterations": 1,
+  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)",
+  "reviewed_at": "2026-10-02T14:03:13Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,18 +26,21 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "差分は frontmatter の :9-11 (goal_seek: engine: inline / fork: inline) の 3 行だけで、HEAD の SKILL.md の sha256 は前回 verdict の 11b77030… と一致した。本文・feedback_contract・artifact_delivery は前回 iteration 2 で評価した版のまま。",
-      "engine=inline / fork=inline は正しい。allowed-tools (:18) は Read・Bash・Glob だけで Task/Agent/Skill を持たず、手順 (:102-128) はスクリプトを 1 回呼び、exit 1 なら直す担当を伝えて止まるだけで、分離した文脈も自分での反復も持たない。:98 が「確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ」と決めている。run-goal-seek・task-graph への参照も無い。lint-skill-runtime-profiles で inline/inline、enforced finding 0。",
-      "fork=inline は分離しないので、pre_choice_forbidden (:62) の subagent・task-fork と食い違わない。feedback_contract.activation_state (:31) は semantic_evaluator_started で、lint-entrypoint-artifact-first もこのスキルには何も出さない。"
+      "前回の medium (:114 の担当の食い違い) は直った。:114 は TOKENS-MISSING・TOKENS-INVALID を run-briefing に回し、palette を確かめて init を --refresh-css で回し直したあと、run-briefing-boards の「3. PNG にして検査する」から通し直すと書く。この節は run-briefing-boards/SKILL.md:166 に実在する。workflow.md:35・:38 と run-briefing-boards/SKILL.md:190 の持ち場とも合う。:113 の BRIEFING-JSON も、pages は run-briefing-boards、palette と data_policy は run-briefing と鍵ごとに分け、リンク先の workflow.md の「出力フォルダ」(:11) は実在する。",
+      "前回の判定で別のスキルに書いた low 2 件も直った。render は tokens.css が無いときに TOKENS-MISSING、不正なときに TOKENS-INVALID を出す (render-board-png.mjs:736・:750-752)。これは design-contract.md:32 と、book のコード (build-briefing-book.mjs:599・:604) と合う。tests/test_render_board_png.py:404-418 が両方のコードを確かめ、pytest で通った。references/resource-map.yaml:166-178 に design-contract の項目が足され、consumed_by に run-briefing-book が入った。",
+      ":24 と :93 で design-contract.md を指し、book のメッセージ (build-briefing-book.mjs:599) と render のメッセージ (render-board-png.mjs:739) は、どちらも「init --refresh-css で briefing.json の palette から作り直す」と同じ直し方を示す。TOKENS-* はどちらも error なので、まとめだけ別の色で成功扱いにならない (design-contract.md:32)。お手本の tokens.css は validateDesignTokens で指摘 0 件。test_build_briefing_book.py・test_design_tokens.py・render の bad_tokens の 2 件を合わせた 55 件が通った。"
     ],
     "negative_feedback": [
-      "[low / 書き方。今回の差分で目立つようになった] Post-choice selected improvement execution の節 (:73-75) の「独立レビューとその指摘に基づく改善を行う」は主語が無く、goal_seek.fork=inline (:11) と Task/Agent/Skill の無い allowed-tools (:18) と並ぶと、このスキル自身が分離した文脈でレビューを回すとも読める。Purpose の :98 (確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ) が持ち主を決めており、lint-skill-runtime-profiles の「本文が分離委譲を必須化」の検査にも掛からないので、矛盾ではなく low。このスキルは assign-briefing-evaluator の stage (requirements / spec / pages / boards) の対象でもなく、指摘で直す側にもならない (直すのは元の文書かボード、:133) ので、ほかの 3 つより読み違いの余地が大きい。直し方: 見出しと既存の 1 文は lint-entrypoint-artifact-first が見る共通の文なので変えずに、その次に 1 文を足す。足す 1 文の例: 「まとめ HTML は確認点と独立レビューの対象ではなく、このスキルは分離した文脈も指摘での直しも持たない (goal_seek.fork=inline。直すのは元の文書かボード)」。",
-      "[low / 漏れ。前回 low の持ち越し、今回の差分とは無関係] 報告 (:123-128) に warn が入っていない。build-briefing-book は warn だけなら exit 0 (execution-contract.md §3) で、IMAGE-UNVERIFIED (build-briefing-book.mjs:516・:557)、BOARD-CHECK-MISSING・OLD・WARN (:420・:485-496)、WEBP-* (:324-335)、DOC-IMAGE (:533・:560)、TOKENS-CSS・TOKENS-MISSING (:598・:602)、--allow-stale のときの STALE-PNG (:478) が出ても報告に載らない。単独で呼ばれたとき (:98) は利用者に見えない。run-briefing から呼ばれたときは run-briefing/SKILL.md:260 が book の warn の数を報告するので low。直し方: 報告に「warn の数とコード (出たときだけ)」を 1 行足す。"
+      "[medium / 漏れ。持ち越し・harness-r4p で追う] 担当を run-briefing にしたので、book の表と workflow.md はそろった。しかし受け手の run-briefing の工程5 (:178-184) と工程6 (:186-190) には、TOKENS-* と配色の返事を受ける手順がまだ無い。run-briefing/SKILL.md:189 は「book が示した担当スキル」へ渡すと書くが、その担当が run-briefing 自身になり、何をするかは :114 の括弧の中と design-contract.md:25・:32 にしか無い。2 回目の exit 1 で利用者に相談するので、壊れたまま進むことはない。直すのは run-briefing の SKILL.md で、開いている Beads の課題 harness-r4p で追う。",
+      "[low / 食い違い。今回の直しで目立つようになった] 同じ表の EXTERNAL-REF・LOCAL-REF の行 (:121) は、「file が head なら _src/tokens.css の参照で run-briefing-boards」とする。head の参照は、最初のページより前の style、つまり埋め込んだ tokens.css から拾われる (scripts/lib/resource-refs.mjs:65-67)。しかし、tokens.css は init が palette から作り、run-briefing-boards は書き換えない (run-briefing-boards/SKILL.md:190、workflow.md:38)。今回 :114 を run-briefing に直したのと同じ理由で、この行も合わない。design-tokens.mjs は url() の値を止めないので、案件の上書き CSS に外部の url() があると起こりうる。まれなので low。直し方: head のときは run-briefing (palette の CSS から外部参照を消し、init を --refresh-css で回し直す) にする。",
+      "[low / 漏れ。今回の直し] :113 の BRIEFING-JSON は「壊れた鍵を書いた担当」へ回すが、BRIEFING-JSON は JSON として読めないときに出る (build-briefing-book.mjs:343-352・:382)。壊れた場所が pages・palette・data_policy 以外 (title など init が書く鍵) のときや、場所が分からない壊れ方のときの担当が書かれていない。JSON.parse のメッセージに位置が出るので、たいていは分かる。直し方: 「それ以外か分からないときは run-briefing」を添える。",
+      "[low / 書き方。持ち越し・未解決] Post-choice の節 (:74-76) の、主語の無い「独立レビューとその指摘に基づく改善を行う」。",
+      "[low / 漏れ。持ち越し・未解決] 報告 (:125-130) に warn が入っていない。TOKENS-CSS (build-briefing-book.mjs:607) も warn に入る。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 2,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "今回の評価対象は goal_seek 宣言の差分 (frontmatter :9-11 の engine/fork)。CI の lint-skill-runtime-profiles が loop 型に求める goal_seek block を書き足したことで SKILL.md の sha256 が変わり、前回の verdict が stale-sha になったための再評価 (iteration 1)。sha だけを書き換えたのではなく、今の SKILL.md (sha256 e2cb9ae0a30ad3368835580f2d4bc02a6e33436ff4f6ff9d8bed18db9d98cdeb) を読み直して判定した。読んだもの: 5 つの SKILL.md の今の版、`git diff HEAD -- plugins/system-briefing-book/skills/` (5 ファイルとも frontmatter の :9-11 に goal_seek の 3 行を足しただけで、削除 0・ほかの行の変更なし)、HEAD の SKILL.md の sha256 (5 件とも前回 verdict の sha と一致したので、goal_seek 以外は前回 iteration 2 で評価した版と同じ)、assign-briefing-evaluator/SKILL.md、agents/briefing-reviewer.md、前回の verdict 10 件、content-review-protocol.md の「incremental: unresolved semantic batch」。宣言値の意味と検査を確かめるために、plugins/harness-creator/scripts/lint-skill-runtime-profiles.py の engine/fork の判定 (:39-41・:228-253・:373-402・:440-495)、scripts/lint-entrypoint-artifact-first.py の _lint_frontmatter_control_flow (:191-212)、run-build-skill/references/goal-seek-paradigm.md:81、前例 plugins/dev-graph/skills/run-dev-graph-init/SKILL.md の goal_seek (:48-51) と :156、.github/workflows/governance-check.yml の lint 呼び出し行 (:40・:150・:213) だけを追加で読んだ。それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で 5 skill の差分をまとめて見て、(a) 宣言値と本文・allowed-tools・委譲の仕方の矛盾 (b) feedback_contract.activation_state と artifact_delivery.state_machine.pre_choice_forbidden との食い違い (c) 差分が goal_seek block だけか (d) 依存関係整合 (e) rubric の high 0 を同時に判定した。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、SKILL.md と eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。実行した検査: `python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --plugin system-briefing-book` は exit 0 (run-briefing=inline/subagent、ほかの 4 つ=inline/inline、5 つとも enforced finding 0。残る legacy は配布複製の run-skill-feedback だけ)、CI と同じ `--repo-root .` の全体実行も exit 0 (enforced=0、unlisted=0、stale=0)。`python3 scripts/lint-entrypoint-artifact-first.py` は exit 1 で、`[ERROR] plugins/system-briefing-book/skills/run-briefing/SKILL.md: goal_seek heavy control must activate post-choice at semantic_evaluator_started` の 1 件。git archive で取り出した HEAD の plugin では同じ lint が exit 0 なので、この 1 件は今回の差分で生じた。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: 前回 verdict (cr-briefing-batch-v4、iteration 2、旧 sha 11b7703056e259961b041daa6ef25fe421fe728bb84dca5e8b933e789f21152a、PASS) の low 1 件 (報告に warn が無い) は、今回の差分と無関係でまだ直っていないので、SKILL.md と run-briefing/SKILL.md の行番号を今の版 (どちらも +3) に合わせて negative_feedback に引き継いだ (build-briefing-book.mjs の行番号は変わっていない)。判定: PASS。high 0、medium 0。low 2 件 (新しく 1 件、引き継ぎ 1 件) を findings に残す。宣言値 engine=inline / fork=inline は妥当で、変える必要は無い。"
+  "notes": "今回の評価対象は、前回の判定 (同じ reviewer の iteration 1、sha b5572d2b…、PASS、medium 1) のあとに入った直し。直したのは、run-briefing-book/SKILL.md の表の BRIEFING-JSON と TOKENS-MISSING・TOKENS-INVALID の担当、render-board-png.mjs のコードの分け方 (tests/test_render_board_png.py の bad_tokens も合わせた)、resource-map.yaml の design-contract の項目。この差分について iteration 2 (上限 2)。今の SKILL.md を shasum -a 256 で取り直した (4b204edd0ca62ee03a36bca1d741d112d8935c05681d653b31b1736505cc800b)。git diff --cached HEAD でこのスキルの差分を読み、表 (:111-121) と報告 (:125-130)、workflow.md の「出力フォルダ」、run-briefing-boards/SKILL.md:166・:190、run-briefing/SKILL.md:178-190、render-board-png.mjs:730-755、build-briefing-book.mjs:343-382・:590-610、scripts/lib/resource-refs.mjs の htmlRefs、resource-map.yaml の design-contract の項目、design-contract.md:32 を読んだ。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、直した点に関わるところだけ見た。リンク先と節の名前は grep で実在を確かめ、コード名と担当は実装の行と照らした。pytest で test_build_briefing_book.py・test_design_tokens.py・render の bad_tokens の 2 件を回し、55 件が通った。判定ファイルのほかは、リポジトリのファイルを変えていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。判定: PASS。high は 0。前回の medium (:114 の担当の食い違い) と、関係する low 2 件 (render のコード名、resource-map.yaml) は直った。run-briefing の側に受け手が無い medium は持ち越しで、harness-r4p で追う。新しい指摘は low 2 (:121 の head の担当、:113 の BRIEFING-JSON の残りの担当)。前回からの low 2 件 (Post-choice の主語、報告に warn が無い) は今回の直しと関係なく、持ち越し・未解決 (findings_summary の omission 3 は medium と BRIEFING-JSON と報告、inconsistency 1 は :121、smell 1 は Post-choice)。next_action は none。"
 }

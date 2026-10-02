@@ -1,0 +1,51 @@
+{
+  "schema": "review-integration-v1",
+  "iteration": 1,
+  "analysis_complete": true,
+  "coverage": 30,
+  "skipped": 0,
+  "implementation_groups": [
+    {
+      "owner": "logical_analysis",
+      "findings": [
+        "F-1001",
+        "F-1003",
+        "meta-abstraction"
+      ],
+      "change": "質問カタログ共有と業務の問いへの変換",
+      "depends_on": []
+    },
+    {
+      "owner": "meta_analysis",
+      "findings": [
+        "F-1004",
+        "meta-completeness",
+        "system-handoff"
+      ],
+      "change": "回答・設計案・未決事項と既存仕様章の引継ぎ契約",
+      "depends_on": []
+    },
+    {
+      "owner": "system_analysis",
+      "findings": [
+        "F-1001",
+        "F-1002",
+        "F-1004",
+        "system-validator-probes"
+      ],
+      "change": "質問・役割・未決事項・共通詳細の欠落と参照切れ検出",
+      "depends_on": [
+        "logical_analysis:catalog API"
+      ]
+    }
+  ],
+  "authority": {
+    "user_requested_30_methods": true,
+    "user_requested_parallel_agents": true,
+    "user_requested_refactoring": true,
+    "major_structural_change": false,
+    "git_operations": false,
+    "release": false
+  },
+  "validation_boundary": "機械的なID/参照/構造検査と、情報抽出の意味レビューを分ける。未定を消してPASSにしない。"
+}

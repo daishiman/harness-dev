@@ -1,0 +1,584 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "display_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "standardという名称と正本コピーだけで再現性が保証されるかを確認。生成後refreshで配色の宣言と実体が変わる反例を再現した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "display_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "「同名トークンCSSを用意する」契約なら、その契約を欠くCSSは拒否または標準へ補完されるべきだが、1役割しかないCSSを受理する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/tokens-standard.css:9",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:114"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/tokens-standard.css:9",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:114"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/tokens-standard.css:9",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:114"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/tokens-standard.css:9",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:114"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "custom CSSはファイル存在のみ確認し、同名トークンを揃える文書契約を検証しない。1変数だけのCSSでもinit成功し共通部品の色・フォントが未解決になる。",
+          "recommended_intervention": "scaffold/render/bookで共有するデザイン契約を設け、必須役割トークンとCSS依存の欠落を検出する。customは完全契約CSSか標準への差分上書きかを明文化し1つに統一。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 114
+          },
+          "finding_id": "L3"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "display_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "共通CSSと7種ボード雛形を列挙し、var参照はstandardの定義または同じ雛形のローカル定義で全て解決できることを静的集計。共通化は既に機能しており、全面置換の根拠はない。bookだけ別色fallbackを持つ例外を発見。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/common.css:2",
+            "plugins/system-briefing-book/assets/templates/board-pc.html:1",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/common.css:2",
+            "plugins/system-briefing-book/assets/templates/board-pc.html:1",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/common.css:2",
+            "plugins/system-briefing-book/assets/templates/board-pc.html:1",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/common.css:2",
+            "plugins/system-briefing-book/assets/templates/board-pc.html:1",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "book.htmlの約25色フォールバックがtokens-standard.cssと異なる第二の配色定義。tokens欠落時に別配色が使われ、buildはTOKENS-MISSING警告のみで出力する。",
+          "recommended_intervention": "bookの役割トークン参照から色リテラルのfallbackを除く。必須CSS欠落時は共通契約で停止するか、正本CSSを明示的に読込む。案件custom欠落をstandardと誤認させない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "finding_id": "L2"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "display_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "配色ズレの最善説明は青色の選択誤りではなく、欠落時のbook独自fallbackと再initの設定未参照という複数の解決経路。共有loaderの境界整備が小さい介入になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "book.htmlの約25色フォールバックがtokens-standard.cssと異なる第二の配色定義。tokens欠落時に別配色が使われ、buildはTOKENS-MISSING警告のみで出力する。",
+          "recommended_intervention": "bookの役割トークン参照から色リテラルのfallbackを除く。必須CSS欠落時は共通契約で停止するか、正本CSSを明示的に読込む。案件custom欠落をstandardと誤認させない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "finding_id": "L2"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "display_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "refreshの入力を追跡:CLI未指定→quality-thresholds.palette_default→standard、briefing.jsonはwriteNewでskip、CSSだけforce=true。宣言と実体の不一致が成立する最下流まで確認。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:134",
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "display_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "経路を既定選択・案件コピー・ボード参照・PNG receipt・book埋込・検査に分割。receiptはCSSハッシュを保持するが欠落はnullで記録し、色契約の妥当性は判定しない。再現証拠とデザインの完全性を別々に検証する必要がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/resource-refs.mjs:87",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:595"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/resource-refs.mjs:87",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:595"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/resource-refs.mjs:87",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:595"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/resource-refs.mjs:87",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:595"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "custom CSSはファイル存在のみ確認し、同名トークンを揃える文書契約を検証しない。1変数だけのCSSでもinit成功し共通部品の色・フォントが未解決になる。",
+          "recommended_intervention": "scaffold/render/bookで共有するデザイン契約を設け、必須役割トークンとCSS依存の欠落を検出する。customは完全契約CSSか標準への差分上書きかを明文化し1つに統一。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 114
+          },
+          "finding_id": "L3"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "display_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "ケースを新規/既存 × standard/custom × 完全/欠落で整理。現行scaffold試験は標準refreshと上書き抑止を扱うがcustom保持・custom不完全・book CSS欠落の設計境界が未網羅。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:54",
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:66",
+            "plugins/system-briefing-book/tests/test_single_source.py:142"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:54",
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:66",
+            "plugins/system-briefing-book/tests/test_single_source.py:142"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:54",
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:66",
+            "plugins/system-briefing-book/tests/test_single_source.py:142"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:54",
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:66",
+            "plugins/system-briefing-book/tests/test_single_source.py:142"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "custom CSSはファイル存在のみ確認し、同名トークンを揃える文書契約を検証しない。1変数だけのCSSでもinit成功し共通部品の色・フォントが未解決になる。",
+          "recommended_intervention": "scaffold/render/bookで共有するデザイン契約を設け、必須役割トークンとCSS依存の欠落を検出する。customは完全契約CSSか標準への差分上書きかを明文化し1つに統一。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 114
+          },
+          "finding_id": "L3"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "display_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "ユーザー影響×変更範囲で優先度化。既存customを静かにstandardへ変えるL1は影響大・修正小で最優先。bookのfallback削除と共通契約検査は影響中・修正小。全面UI置換は範囲大で今回根拠なし。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "book.htmlの約25色フォールバックがtokens-standard.cssと異なる第二の配色定義。tokens欠落時に別配色が使われ、buildはTOKENS-MISSING警告のみで出力する。",
+          "recommended_intervention": "bookの役割トークン参照から色リテラルのfallbackを除く。必須CSS欠落時は共通契約で停止するか、正本CSSを明示的に読込む。案件custom欠落をstandardと誤認させない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "finding_id": "L2"
+        }
+      ],
+      "score": 0.45
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "display_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "actual_analyst": "design_logical",
+      "observations": [
+        "新規生成→編集→refresh→再render→bookの運用を追う。CSS更新で画像の再生成が必要というreceipt設計は存在する。起点のrefreshでmetadataを尊重し、末端bookで欠落を停止すれば宣言から成果物まで同じデザインになる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:157",
+            "plugins/system-briefing-book/scripts/render-board-png.mjs:605",
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存案件の配色設定と実CSSがrefreshで分離する。custom指定init後、palette省略のinit --refresh-cssはexit0だがtokens.cssがstandardになりbriefing.jsonはcustomのまま。",
+          "recommended_intervention": "再initは既存briefing.json.paletteを既定として解決する。明示指定が既存設定と違う場合は、設定更新を伴う明示的移行か書込み前エラーに統一する。custom保持・省略refresh・指定変更の回帰テストを追加。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "finding_id": "L1"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "book.htmlの約25色フォールバックがtokens-standard.cssと異なる第二の配色定義。tokens欠落時に別配色が使われ、buildはTOKENS-MISSING警告のみで出力する。",
+          "recommended_intervention": "bookの役割トークン参照から色リテラルのfallbackを除く。必須CSS欠落時は共通契約で停止するか、正本CSSを明示的に読込む。案件custom欠落をstandardと誤認させない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "finding_id": "L2"
+        }
+      ],
+      "score": 0.45
+    }
+  ]
+}

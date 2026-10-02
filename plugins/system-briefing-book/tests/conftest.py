@@ -265,7 +265,11 @@ PAGES = [
 # phone / pc のボードに置く要件の札 (要件定義 6 章で最初の版 ○ の行)
 REQ_TAGS = {"S01": ("F01", "写真を送る"), "S02": ("F02", "一覧で直す")}
 KICKERS = {"overview": "はじめに", "phone": "画面 1 / 2 ・ スマホ", "pc": "画面 2 / 2 ・ PC"}
-TOKENS_CSS = ":root { --text: #1F2937; --text-brand: #1747B5; --bg-page: #F4F6F9; }\n"
+# 標準の _src/tokens.css と同じ中身 (ボードの言葉 + 標準カラー、案件の上書きなし)。説明の冒頭は付けない
+TOKENS_CSS = "\n".join(
+    (PLUGIN_ROOT / "assets" / "css" / name).read_text(encoding="utf-8")
+    for name in ("board-tokens.css", "vendor/standard-color-system.css")
+)
 
 
 def _require_node() -> str:

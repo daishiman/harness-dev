@@ -455,3 +455,19 @@ try {
 } finally { await session.close(); }
 '''.replace("BOOK_URL", json.dumps(Path(out["out"]).as_uri())), timeout=180)
     assert facts == [2, 2]
+
+
+def test_missing_or_partial_tokens_preserve_existing_book(case_with_png: Path) -> None:
+    target = case_with_png / OUT_NAME
+    target.write_text('previous published book', encoding='utf-8')
+    tokens = case_with_png / '_src' / 'tokens.css'
+    tokens.unlink()
+    rc, out, _ = build(case_with_png, '--allow-stale')
+    assert rc == 1 and out['written'] is False
+    assert 'TOKENS-MISSING' in codes(out['errors'])
+    assert target.read_text(encoding='utf-8') == 'previous published book'
+    tokens.write_text(':root { --text: #123456; }', encoding='utf-8')
+    rc, out, _ = build(case_with_png, '--allow-stale')
+    assert rc == 1 and out['written'] is False
+    assert 'TOKENS-INVALID' in codes(out['errors'])
+    assert target.read_text(encoding='utf-8') == 'previous published book'

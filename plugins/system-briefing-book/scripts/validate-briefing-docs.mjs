@@ -45,6 +45,7 @@ import {
 } from "./lib/briefing-files.mjs";
 import { EXIT, UsageError, emitResult, isEntryPoint, parseOptions, runCli } from "./lib/cli-contract.mjs";
 import { tokenizeHtml } from "./lib/html-tokens.mjs";
+import { HEARING_QUESTIONS, HEARING_SECTIONS } from "./lib/hearing-catalog.mjs";
 
 export { DATA_POLICIES, DEVICE_TYPES, FILE_RE, PAGE_TYPES, SCREEN_ID };
 
@@ -57,7 +58,7 @@ export const STAGES = Object.freeze(["hearing", "requirements", "spec", "pages",
 const VERSION_RE = /^版\s*[:：]\s*(v\d+\.\d+)\s*$/;
 const DATE_RE = /^更新日\s*[:：]\s*(\d{4}-\d{2}-\d{2})\s*$/;
 
-const HEARING_H2 = ["1. 目的と範囲", "2. 画面の共通ルール", "3. しくみと基盤", "4. 運用", "5. あとで相談すること"];
+const HEARING_H2 = [...HEARING_SECTIONS.map((section) => section.title), "5. あとで相談すること"];
 const HEARING_TABLE = ["番号", "質問", "回答", "出どころ"];
 const REQ_H2 = ["1. 目的", "2. 今の困りごと", "3. 範囲", "4. 使う人と端末", "5. 業務の流れ",
   "6. できること", "7. 守ること", "8. 用語", "9. 決めること"];
@@ -86,9 +87,12 @@ const SCREEN_FIELDS = ["目的", "使う人", "端末", "開き方", "ボード"
 // Reproduction details live in the existing sections; legacy documents remain readable.
 export const SPEC_DETAIL_FIELDS = Object.freeze({
   "2.1 骨組み": ["共通配置", "画面区分"],
-  "2.3 メニュー": ["アイコン"],
-  "2.4 フッター": ["ボタン"],
+  "2.2 ヘッダー": ["表示内容"],
+  "2.3 メニュー": ["項目と順序", "アイコン"],
+  "2.4 フッター": ["固定領域", "ボタン"],
+  "2.5 色の役割": ["色と意味"],
   "2.6 モーダル": ["モーダル"],
+  "2.7 メッセージ": ["結果と直し方"],
   "2.8 空のときと読み込み中": ["状態表示"],
   "6. しくみと基盤": ["処理境界", "安全対策", "稼働構成"],
   "7.2 運用": ["監視と復旧"],
@@ -247,6 +251,11 @@ function cell(cells, i) {
   return i < cells.length ? cells[i] : "";
 }
 
+function hasRecordedValue(raw) {
+  const value = raw.replace(/<!--[\s\S]*?-->/g, "").trim();
+  return Boolean(value) && !/^(?:[-—]|未定|要確認|TBD|TODO|\{\{.*\}\}|<[^>]+>)$/i.test(value);
+}
+
 function sameList(a, b) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
@@ -300,6 +309,8 @@ class Context {
     this.version = null;
     this.date = null;
     this.hearingIds = new Set();
+    this.undecidedHearing = new Map();
+    this.userRoles = new Set();
     /** ヒアリングの出どころが 要望 の行 [番号, 行] */
     this.requests = [];
     this.questionIds = new Set();
@@ -598,18 +609,27 @@ function checkHearing(ctx) {
   const requests = [];
   let items = 0;
   let undecided = 0;
+  let wrongSection = 0;
+  const fixed = new Map(HEARING_QUESTIONS.map((question) => [question.id, question]));
   for (const title of HEARING_H2.slice(0, 4)) {
     const table = findTable(ctx, doc, doc.section(2, title), HEARING_TABLE, `「## ${title}」`);
     if (table === null) continue;
     for (const [value, idx] of checkIds(ctx, doc, table, "H")) {
       if (seen.has(value)) ctx.report.err("ID-DUP", doc.name, ln(idx), `番号 ${value} がほかの章と重複しています`);
       seen.add(value);
+      const question = fixed.get(value);
+      const expected = question && HEARING_SECTIONS.find((section) => section.id === question.section);
+      if (expected && expected.title !== title) {
+        wrongSection += 1;
+        ctx.report.warn("HEARING-SECTION", doc.name, ln(idx), `${value} は「${expected.title}」の表へ移します。番号は変えません`);
+      }
     }
     for (const [idx, cells] of table.rows) {
       items += 1;
       const source = cell(cells, 3);
       if (source === "未定") {
         undecided += 1;
+        if (/^H\d{2,}$/.test(cell(cells, 0))) ctx.undecidedHearing.set(cell(cells, 0), idx);
       } else if (/^素材\s*[:：]\s*\S.*$/.test(source)) {
         ctx.useMaterial(source.replace(/^素材\s*[:：]\s*/, ""));
       } else if (!SOURCE_LABELS.has(source)) {
@@ -624,7 +644,29 @@ function checkHearing(ctx) {
   }
   ctx.hearingIds = seen;
   ctx.requests = requests;
-  Object.assign(ctx.counts, { hearing_items: items, hearing_undecided: undecided, requests: requests.length });
+  const missing = HEARING_QUESTIONS.filter((question) => !seen.has(question.id));
+  for (const question of missing) {
+    ctx.report.warn("HEARING-REQUIRED-MISSING", doc.name, null,
+      `${question.id}「${question.question}」がありません。素材・回答・既定案・未定のいずれかで記録してください`);
+  }
+  const pending = doc.section(2, "5. あとで相談すること");
+  const listed = new Set();
+  for (const [idx, text] of pending ? doc.bullets(...pending) : []) {
+    const match = /^(H\d{2,})\s*[:：]/.exec(text);
+    if (!match) continue;
+    listed.add(match[1]);
+    if (!ctx.undecidedHearing.has(match[1])) {
+      ctx.report.warn("HEARING-PENDING-STALE", doc.name, ln(idx), `${match[1]} は出どころが 未定 の回答にありません。確認済みなら5章から除き、番号違いなら直してください`);
+    }
+  }
+  let pendingUnlisted = 0;
+  for (const [hid, idx] of ctx.undecidedHearing) {
+    if (listed.has(hid)) continue;
+    pendingUnlisted += 1;
+    ctx.report.warn("HEARING-PENDING-MISSING", doc.name, ln(idx), `${hid} は 未定 です。5章へ「- ${hid}: 確かめること」を残してください`);
+  }
+  Object.assign(ctx.counts, { hearing_items: items, hearing_undecided: undecided, requests: requests.length,
+    hearing_required_missing: missing.length, hearing_wrong_section: wrongSection, hearing_pending_unlisted: pendingUnlisted });
 }
 
 // ── 要件定義.md ───────────────────────────────
@@ -661,6 +703,7 @@ function checkRequirements(ctx) {
   }
   const users = tables["4. 使う人と端末"];
   if (users !== null && !users.rows.length) ctx.report.err("TABLE-EMPTY", doc.name, ln(users.line), "使う人の表が空です");
+  ctx.userRoles = new Set((users?.rows ?? []).map(([, cells]) => cell(cells, 0)).filter(Boolean));
 
   const features = tables["6. できること"];
   /** 要望の番号 → [[できることの番号, 行, 最初の版], ...] */
@@ -708,6 +751,33 @@ function checkRequirements(ctx) {
     ctx.questionIds = new Set(checkIds(ctx, doc, questions, "Q").map(([value]) => value));
     ctx.counts.questions = ctx.questionIds.size;
   }
+  const questionSources = new Set();
+  const decidedSources = new Set();
+  let incompleteQuestions = 0;
+  for (const [idx, cells] of questions?.rows ?? []) {
+    const missing = REQ_TABLES["9. 決めること"].slice(1).filter((_, i) => !hasRecordedValue(cell(cells, i + 1)));
+    if (missing.length) {
+      incompleteQuestions += 1;
+      ctx.report.warn("QUESTION-CELL-EMPTY", doc.name, ln(idx), `${cell(cells, 0)} の ${missing.join("・")} が空です。確認事項・案または案が作れない理由・確認先を残してください`);
+      continue;
+    }
+    const target = /^決定(?:$|\s|[(（])/.test(cell(cells, 3)) ? decidedSources : questionSources;
+    for (const match of cells.slice(1, 3).join(" ").matchAll(/(?<![A-Za-z0-9_])H\d{2,}(?![A-Za-z0-9_])/g)) target.add(match[0]);
+  }
+  let pendingWithoutQuestion = 0;
+  for (const [hid] of ctx.undecidedHearing) {
+    if (questionSources.has(hid)) continue;
+    pendingWithoutQuestion += 1;
+    if (decidedSources.has(hid)) {
+      ctx.report.warn("HEARING-PENDING-DECIDED-Q", doc.name, questions ? ln(questions.line) : null,
+        `${hid} はヒアリングで 未定 ですが、対応するQは 決定 です。回答済みならHを更新し、残る確認事項があれば未決のQへつないでください`);
+      continue;
+    }
+    ctx.report.warn("HEARING-PENDING-NO-Q", doc.name, questions ? ln(questions.line) : null,
+      `${hid} の未定事項を9章へ移し、Q行の「決めること」または「案」に元の ${hid} を明記してください`);
+  }
+  ctx.counts.hearing_pending_without_question = pendingWithoutQuestion;
+  ctx.counts.question_rows_incomplete = incompleteQuestions;
   if (features !== null) checkRequests(ctx, doc, requested, questions);
 }
 
@@ -787,19 +857,66 @@ function checkChanges(ctx) {
 // ── 仕様書.md ───────────────────────────────
 
 function checkDetailFields(ctx, doc, span, fields, where) {
-  if (!span) return;
-  const text = doc.lines.slice(...span).join("\n").replace(/<!--[\s\S]*?-->/g, "");
+  const text = span ? doc.lines.slice(...span).join("\n").replace(/<!--[\s\S]*?-->/g, "") : "";
   for (const field of fields) {
     const values = [...text.matchAll(new RegExp(`^[-*+][ \t]+${field}[ \t]*[:：][ \t]*(.*)$`, "gm"))].map((m) => m[1].trim());
-    if (!values.some((value) => value && !/^(?:[-—]|未定|要確認|TBD|TODO|\{\{.*\}\})$/i.test(value))) {
-      ctx.report.warn("SPEC-DETAIL-MISSING", doc.name, ln(span[0]), `${where} の「${field}」が未記入です。具体的な内容、使わない理由、または案と決めることの番号を仕様書に残してください`);
+    if (!values.some(hasRecordedValue)) {
+      ctx.counts.spec_detail_missing += 1;
+      ctx.report.warn("SPEC-DETAIL-MISSING", doc.name, span ? ln(span[0]) : null, `${where} の「${field}」が未記入です。具体的な内容、使わない理由、または案と決めることの番号を仕様書に残してください`);
     }
   }
+}
+
+/** 本文のQ参照。コード例・コメント・URL中の製品名は参照に数えない。根拠列は既存checkEvidenceで検査する。 */
+function checkQuestionReferences(ctx, doc) {
+  const lines = doc.lines.join("\n").replace(/<!--[\s\S]*?-->/g, (comment) => comment.replace(/[^\n]/g, " ")).split("\n");
+  let fenced = false;
+  lines.forEach((raw, idx) => {
+    if (/^\s*(```|~~~)/.test(raw)) { fenced = !fenced; return; }
+    if (fenced) return;
+    const line = raw.replace(/`[^`]*`|https?:\/\/\S+/g, "");
+    const seen = new Set();
+    for (const match of line.matchAll(/(?<![A-Za-z0-9_./-])Q\d{2,}(?![A-Za-z0-9_./-])/g)) {
+      const qid = match[0];
+      if (seen.has(qid) || ctx.questionIds.has(qid)) continue;
+      seen.add(qid);
+      // Structured evidence already produces EVIDENCE-REF-UNKNOWN. Keep one diagnostic per source.
+      if (/決めること\s*[:：]\s*$/.test(line.slice(0, match.index))) continue;
+      ctx.counts.question_refs_unknown += 1;
+      ctx.report.err("QUESTION-REF-UNKNOWN", doc.name, ln(idx), `${qid} が要件定義.md 9章にありません。番号を直すか、案・確認先を持つQ行を追加してください`);
+    }
+  });
+}
+
+function checkRoles(ctx, doc) {
+  const roles = findTable(ctx, doc, doc.section(3, "7.1 権限"), SPEC_ROLE_TABLE, "「### 7.1 権限」");
+  const names = (roles?.rows ?? []).map(([, cells]) => cell(cells, 0)).filter(Boolean);
+  // Explicit groups such as 「使う人 (配車の担当者・請求の担当者)」 cover named members.
+  // Compare complete names, never substrings (「担当者」 must not cover 「外部の担当者」).
+  const covered = new Set(names.flatMap((name) => {
+    const group = /^(.+?)\s*[(（]([^()（）]+)[)）]$/.exec(name);
+    return group ? [name, group[1].trim(), ...group[2].split(/[・、,]/).map((member) => member.trim())] : [name];
+  }));
+  const missing = [...ctx.userRoles].filter((role) => !covered.has(role));
+  const duplicates = duplicatesOf(names);
+  if (roles && !roles.rows.length) ctx.report.warn("ROLE-TABLE-EMPTY", doc.name, ln(roles.line), "権限表が空です。要件定義4章の役割ごとに、操作と見えるデータの範囲を記録してください");
+  for (const role of missing) ctx.report.warn("ROLE-MISSING", doc.name, roles ? ln(roles.line) : null, `要件定義4章の「${role}」が権限表にありません。閲覧・登録・変更・削除・管理と対象範囲を記録してください`);
+  for (const role of duplicates) ctx.report.warn("ROLE-DUP", doc.name, roles ? ln(roles.line) : null, `権限表の「${role}」が重複しています。同じ役割の操作と範囲を1行へまとめてください`);
+  let empty = 0;
+  for (const [idx, cells] of roles?.rows ?? []) {
+    const fields = SPEC_ROLE_TABLE.filter((_, i) => !hasRecordedValue(cell(cells, i)));
+    if (!fields.length) continue;
+    empty += 1;
+    ctx.report.warn("ROLE-CELL-EMPTY", doc.name, ln(idx), `権限表の ${fields.join("・")} が空です。該当しない操作は「なし」、未確認なら案とQ番号を記録してください`);
+  }
+  Object.assign(ctx.counts, { roles_missing: missing.length, roles_duplicate: duplicates.length, role_rows_incomplete: empty });
 }
 
 function checkSpec(ctx) {
   const doc = ctx.loadDoc("仕様書.md");
   if (doc === null) return;
+  ctx.counts.spec_detail_missing = 0;
+  ctx.counts.question_refs_unknown = 0;
   checkTitle(ctx, doc, "仕様書");
   const [version, vidx] = findHeadValue(doc, VERSION_RE);
   if (version === null) {
@@ -959,7 +1076,8 @@ function checkSpec(ctx) {
   }
 
   checkHeadings(ctx, doc, 3, SPEC_OPS_H3, doc.section(2, "7. 権限と運用"));
-  findTable(ctx, doc, doc.section(3, "7.1 権限"), SPEC_ROLE_TABLE, "「### 7.1 権限」");
+  checkRoles(ctx, doc);
+  checkQuestionReferences(ctx, doc);
   const running = doc.section(3, "7.2 運用");
   if (running && !doc.bullets(...running).length) ctx.report.warn("LIST-EMPTY", doc.name, ln(running[0] - 1), "「7.2 運用」が空です");
   const later = doc.section(2, "8. 最初の版に入れないもの");

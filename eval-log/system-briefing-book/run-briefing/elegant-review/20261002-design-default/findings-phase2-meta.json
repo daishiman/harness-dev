@@ -1,0 +1,517 @@
+{
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "display_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "名称検索のゼロ件と、実成果物のデザイン再現性は異なる検査である。静的名称・新規生成・再生成・token異常の4経路を分けて証拠を残す必要がある。",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 は欠落した色をwarn扱いとし、検査を通ることが同じ配色の証拠にならない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 は欠落した色をwarn扱いとし、検査を通ることが同じ配色の証拠にならない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 は欠落した色をwarn扱いとし、検査を通ることが同じ配色の証拠にならない。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M02: book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。 (plugins/system-briefing-book/assets/templates/book.html:15)"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 は欠落した色をwarn扱いとし、検査を通ることが同じ配色の証拠にならない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。",
+          "recommended_intervention": "bookの色は案件トークンの役割参照に一本化し、必要トークン欠落を検査する。黙って異なる色を使わず生成を停止するか明示的に正本を利用する契約にする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "issue_id": "M02"
+        }
+      ],
+      "score": 0.375,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "display_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/references/page-patterns.md:4 の色/部品/型という既存分割は適切。案件の業務文言と視覚の役割を混ぜず、値を一箇所に置く構造を維持する。",
+        "plugins/system-briefing-book/references/page-patterns.md:16 の余白までvar必須という記述は、型固有の座標・寸法と競合する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M04: page-patternsは色・文字・余白をvarだけと規定するが、common.cssと型の配置調整は数値寸法/文字サイズを持ち、雛形にもstyle座標がある。禁止対象の抽象度が曖昧。 (plugins/system-briefing-book/references/page-patterns.md:16)"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "M01: 色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。 (plugins/system-briefing-book/references/page-patterns.md:4)"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/page-patterns.md:16 の余白までvar必須という記述は、型固有の座標・寸法と競合する。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/page-patterns.md:16 の余白までvar必須という記述は、型固有の座標・寸法と競合する。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "page-patternsは色・文字・余白をvarだけと規定するが、common.cssと型の配置調整は数値寸法/文字サイズを持ち、雛形にもstyle座標がある。禁止対象の抽象度が曖昧。",
+          "recommended_intervention": "色・フォントなど共通役割はトークン、部品の見た目はcommon.css、型固有配置は雛形に置くと責務を明記する。全寸法の機械的トークン化はしない。",
+          "location": {
+            "file": "plugins/system-briefing-book/references/page-patterns.md",
+            "line": 16
+          },
+          "issue_id": "M04"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。",
+          "recommended_intervention": "既存のpage-patternsまたは単一参照文書に、同梱の標準デザインを指定なしの既定とする契約を置く。値やCSSを再掲せず正本と生成経路をリンクし入口/boards/bookから参照する。",
+          "location": {
+            "file": "plugins/system-briefing-book/references/page-patterns.md",
+            "line": 4
+          },
+          "issue_id": "M01"
+        }
+      ],
+      "score": 0.5,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "display_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "aidd-agent-kit/skills/jp-web-design/references/catalog-default-contract.md:3 は可視Webアプリの部品/操作契約。今回の成果物はREADMEでアプリ実装をしないと定義しており、固定PNGボードへappの画面階層やLiquid Glassを全面導入する前提は採らない。",
+        "配色派生とボードの共通部品を標準として明文化し、外部アプリへの実装引継ぎ時に元skillを参照する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "配色派生とボードの共通部品を標準として明文化し、外部アプリへの実装引継ぎ時に元skillを参照する。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M01: 色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。 (plugins/system-briefing-book/references/page-patterns.md:4)"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "配色派生とボードの共通部品を標準として明文化し、外部アプリへの実装引継ぎ時に元skillを参照する。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "配色派生とボードの共通部品を標準として明文化し、外部アプリへの実装引継ぎ時に元skillを参照する。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。",
+          "recommended_intervention": "既存のpage-patternsまたは単一参照文書に、同梱の標準デザインを指定なしの既定とする契約を置く。値やCSSを再掲せず正本と生成経路をリンクし入口/boards/bookから参照する。",
+          "location": {
+            "file": "plugins/system-briefing-book/references/page-patterns.md",
+            "line": 4
+          },
+          "issue_id": "M01"
+        }
+      ],
+      "score": 0.625,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "display_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "候補を比較: A短い正本契約+役割値の一本化、B upstream CSS全体を実行時読込、C全UIの再デザイン。Aは単体配布/固定ボードを維持し最小の修正で目的を満たす。Bは別skill導入依存、Cは不必要な大幅変更を増やすため採用しない。",
+        "plugins/system-briefing-book/assets/css/standard-attribution.md:16 に示すボード拡張色を保ちながら、book固有fallbackは排除できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/standard-attribution.md:16 に示すボード拡張色を保ちながら、book固有fallbackは排除できる。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "M01: 色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。 (plugins/system-briefing-book/references/page-patterns.md:4)"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M02: book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。 (plugins/system-briefing-book/assets/templates/book.html:15)"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/standard-attribution.md:16 に示すボード拡張色を保ちながら、book固有fallbackは排除できる。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。",
+          "recommended_intervention": "既存のpage-patternsまたは単一参照文書に、同梱の標準デザインを指定なしの既定とする契約を置く。値やCSSを再掲せず正本と生成経路をリンクし入口/boards/bookから参照する。",
+          "location": {
+            "file": "plugins/system-briefing-book/references/page-patterns.md",
+            "line": 4
+          },
+          "issue_id": "M01"
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。",
+          "recommended_intervention": "bookの色は案件トークンの役割参照に一本化し、必要トークン欠落を検査する。黙って異なる色を使わず生成を停止するか明示的に正本を利用する契約にする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "issue_id": "M02"
+        }
+      ],
+      "score": 0.625,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "display_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "デザイン名の言い換えでなく、誰が生成しても同じ経路を使う制約として解く。利用者は配色名を選ばず、scaffoldの既定・common部品・型を利用するだけにする。",
+        "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106 と135,157行では再生成時の設定とCSSが別々に扱われるため、利用者の選択を増やさず一貫した再生成に直す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106 と135,157行では再生成時の設定とCSSが別々に扱われるため、利用者の選択を増やさず一貫した再生成に直す。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106 と135,157行では再生成時の設定とCSSが別々に扱われるため、利用者の選択を増やさず一貫した再生成に直す。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106 と135,157行では再生成時の設定とCSSが別々に扱われるため、利用者の選択を増やさず一貫した再生成に直す。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M03: init --refresh-cssは既存briefing.paletteを読まず、--palette未指定ならstandardを選ぶ一方、briefing.jsonは上書きしない。カスタム案件の設定と実CSSが食い違う。 (plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106)"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "init --refresh-cssは既存briefing.paletteを読まず、--palette未指定ならstandardを選ぶ一方、briefing.jsonは上書きしない。カスタム案件の設定と実CSSが食い違う。",
+          "recommended_intervention": "再実行では既存paletteを優先し、明示変更を受ける場合は設定とCSSの一致を保証する。カスタム→refreshと明示変更の回帰検査を加える。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "issue_id": "M03"
+        }
+      ],
+      "score": 0.125,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "display_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "壊れた入力でも見た目を整えて出せるという親切なfallbackが、再現性を損なう。色が欠けた時ほど成功扱いを抑えた方が完成品の一貫性が高まる。",
+        "plugins/system-briefing-book/assets/templates/book.html:15 の--book-ink #1F2937はstandardの#14233Bと異なり、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 のTOKENS-MISSINGで第二配色が発動する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15 の--book-ink #1F2937はstandardの#14233Bと異なり、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 のTOKENS-MISSINGで第二配色が発動する。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15 の--book-ink #1F2937はstandardの#14233Bと異なり、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 のTOKENS-MISSINGで第二配色が発動する。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M02: book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。 (plugins/system-briefing-book/assets/templates/book.html:15)"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/templates/book.html:15 の--book-ink #1F2937はstandardの#14233Bと異なり、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593 のTOKENS-MISSINGで第二配色が発動する。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。",
+          "recommended_intervention": "bookの色は案件トークンの役割参照に一本化し、必要トークン欠落を検査する。黙って異なる色を使わず生成を停止するか明示的に正本を利用する契約にする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "issue_id": "M02"
+        }
+      ],
+      "score": 0.0,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "display_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "同梱トークンは依存ライブラリの固定版のように扱える。値を各所へ手写しするのではなく、正本の出典と互換インターフェースを維持し、コピーには検査を付ける。",
+        "plugins/system-briefing-book/assets/css/standard-attribution.md:3 の出典/改変通知は保存すべき情報であり、利用者向けの独自デザイン呼称と混同しない。plugins/system-briefing-book/tests/test_single_source.py:140 にはplugin→example一致検査が既にある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/standard-attribution.md:3 の出典/改変通知は保存すべき情報であり、利用者向けの独自デザイン呼称と混同しない。plugins/system-briefing-book/tests/test_single_source.py:140 にはplugin→example一致検査が既にある。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/standard-attribution.md:3 の出典/改変通知は保存すべき情報であり、利用者向けの独自デザイン呼称と混同しない。plugins/system-briefing-book/tests/test_single_source.py:140 にはplugin→example一致検査が既にある。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/assets/css/standard-attribution.md:3 の出典/改変通知は保存すべき情報であり、利用者向けの独自デザイン呼称と混同しない。plugins/system-briefing-book/tests/test_single_source.py:140 にはplugin→example一致検査が既にある。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "M05: 出典版と同値とされる原色は手作業の写しで、現テストはplugin内のサンプルと正本の一致だけを見る。将来の出典更新や転記誤りの対応範囲を検知する契約が弱い。 (plugins/system-briefing-book/assets/css/standard-attribution.md:16)"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "出典版と同値とされる原色は手作業の写しで、現テストはplugin内のサンプルと正本の一致だけを見る。将来の出典更新や転記誤りの対応範囲を検知する契約が弱い。",
+          "recommended_intervention": "実行時の別skill依存は増やさず、同梱版に対応する原色の出典対応を開発時テストまたはdigest付き更新手順で検証する。案件固有/ボード拡張色との境界を残す。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/standard-attribution.md",
+            "line": 16
+          },
+          "issue_id": "M05"
+        }
+      ],
+      "score": 0.75,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "display_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "もしカスタムpaletteで初回生成した後、--refresh-cssだけで更新すると: 既存JSONのcustomパスは残り、_src/tokens.cssはstandardへ変わる。もしtokens.cssを失うと: bookはwarn後、古いfallbackで完成する。",
+        "根拠: plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106–157、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593–603。これらの境界に正常/異常の回帰検査を置く。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "根拠: plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106–157、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593–603。これらの境界に正常/異常の回帰検査を置く。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "根拠: plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106–157、plugins/system-briefing-book/scripts/build-briefing-book.mjs:593–603。これらの境界に正常/異常の回帰検査を置く。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M02: book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。 (plugins/system-briefing-book/assets/templates/book.html:15)"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M03: init --refresh-cssは既存briefing.paletteを読まず、--palette未指定ならstandardを選ぶ一方、briefing.jsonは上書きしない。カスタム案件の設定と実CSSが食い違う。 (plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106)"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "init --refresh-cssは既存briefing.paletteを読まず、--palette未指定ならstandardを選ぶ一方、briefing.jsonは上書きしない。カスタム案件の設定と実CSSが食い違う。",
+          "recommended_intervention": "再実行では既存paletteを優先し、明示変更を受ける場合は設定とCSSの一致を保証する。カスタム→refreshと明示変更の回帰検査を加える。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          },
+          "issue_id": "M03"
+        },
+        {
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "book.htmlの色フォールバックはtokens-standard.cssとは異なる旧値を保持し、tokens欠落時にwarnだけでその第二配色を公開成果物へ使う。",
+          "recommended_intervention": "bookの色は案件トークンの役割参照に一本化し、必要トークン欠落を検査する。黙って異なる色を使わず生成を停止するか明示的に正本を利用する契約にする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          },
+          "issue_id": "M02"
+        }
+      ],
+      "score": 0.0,
+      "actual_analyst": "design_meta"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "display_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "『指定しなければこの標準デザイン』とREADMEからすぐ分かる説明が必要。現READMEには出力と工程は明確だが、標準デザインの入口説明がない。",
+        "active sourceの名称検索では旧配色名のヒットなし。Hiraginoはフォント名なので変更対象に含めない。公開説明は『標準デザイン』『このプラグインのオリジナル』で足りる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "active sourceの名称検索では旧配色名のヒットなし。Hiraginoはフォント名なので変更対象に含めない。公開説明は『標準デザイン』『このプラグインのオリジナル』で足りる。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "M01: 色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。 (plugins/system-briefing-book/references/page-patterns.md:4)"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "active sourceの名称検索では旧配色名のヒットなし。Hiraginoはフォント名なので変更対象に含めない。公開説明は『標準デザイン』『このプラグインのオリジナル』で足りる。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "active sourceの名称検索では旧配色名のヒットなし。Hiraginoはフォント名なので変更対象に含めない。公開説明は『標準デザイン』『このプラグインのオリジナル』で足りる。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "色・共通部品・7型・まとめ表示の正本を結ぶ既定デザイン契約がない。page-patternsはtokens.cssだけを示し、既定のstandardと案件変更・再生成の規則を一箇所で辿れない。",
+          "recommended_intervention": "既存のpage-patternsまたは単一参照文書に、同梱の標準デザインを指定なしの既定とする契約を置く。値やCSSを再掲せず正本と生成経路をリンクし入口/boards/bookから参照する。",
+          "location": {
+            "file": "plugins/system-briefing-book/references/page-patterns.md",
+            "line": 4
+          },
+          "issue_id": "M01"
+        }
+      ],
+      "score": 0.75,
+      "actual_analyst": "design_meta"
+    }
+  ]
+}

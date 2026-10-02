@@ -21,6 +21,7 @@ manifest: workflow-manifest.json
 schema_refs:
   - ../../schemas/briefing.schema.json
 reference_refs:
+  - ../../references/design-contract.md
   - ../../references/workflow.md
   - ../../references/execution-contract.md
 script_refs:
@@ -89,7 +90,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 
 ## Purpose & Output Contract
 
-資料フォルダの文書とボード PNG を、先方に渡す 1 ファイルの HTML にまとめる。
+資料フォルダの文書とボード PNG を、先方に渡す 1 ファイルの HTML にまとめる。配色の受け渡しと欠落時の扱いは [design-contract.md](../../references/design-contract.md) に従う。
 
 - 先方に渡すのはこの 1 ファイルだけ。画像ははめ込み済みなので、素材フォルダやボードの PNG を一緒に送らなくてよい。ファイルや外部への参照が残ると LOCAL-REF・EXTERNAL-REF で止まり、書かない。
 - 左の目次で選んだページが出る。前へ/次へ、拡大、印刷 (1 ボード 1 ページ横向き) に対応し、JavaScript が動かなくても全ページを縦に読める。
@@ -109,7 +110,8 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-briefing-book.mjs" --d
 
 | book.json の errors | 直す担当 |
 | --- | --- |
-| BRIEFING-JSON (briefing.json が読めない) | run-briefing-boards (init のあとで briefing.json に書くのは、pages を書く boards だけ) |
+| BRIEFING-JSON (briefing.json が読めない) | 壊れた鍵を書いた担当。pages は run-briefing-boards、palette と data_policy は run-briefing ([workflow.md](../../references/workflow.md) の「出力フォルダ」にある書いてよいスキルの表) |
+| TOKENS-MISSING、TOKENS-INVALID | run-briefing (`palette` を確かめて init を `--refresh-css` で回し直し、`tokens.css` を作り直す。そのあと run-briefing-boards の「3. PNG にして検査する」から通し直す。[design-contract.md](../../references/design-contract.md)) |
 | TEMPLATE-PLACEHOLDER (まとめの雛形が壊れている) | 直さずに plugin の入れ直しを伝えて止まる |
 | VERSION-MISMATCH (版が 要件定義.md と 仕様書.md でずれている)、VERSION-MISSING (「版:」の行が無い) | run-briefing-docs (version-up) |
 | DOC-MISSING (要件定義.md か 仕様書.md が無い) | run-briefing-docs |

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>06 紙の欄と画面の項目</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.board-body > .stage { flex: 1; min-width: 0; gap: 36px; }
+.src-col { width: 600px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+.src-col .photo { flex: 1; min-height: 0; padding: 20px; background: var(--bg-page); }
+.src-col .photo img { object-fit: contain; object-position: center top; box-shadow: var(--shadow-soft); }
+.map-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.map-col .mrow { grid-template-columns: 1fr 44px 1.2fr 200px; }
+.map-col .mrow > div { padding: 8px 16px; font-size: 16px; }
+.map-col .mrow > .ev { font-size: 13px; }
+.map-col .notes { flex: none; align-self: stretch; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="board" data-board="06" data-type="data-map">
+  <header class="board-head">
+    <div>
+      <div class="kicker">見えない部分</div>
+      <h1>紙の欄と画面の項目</h1>
+      <div class="lead">紙のどの欄が、画面とデータのどこに入るか。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="src-col">
+        <h2 class="sec-label">素材<small>今使っている配車表 (例)</small></h2>
+        <div class="photo anchor" data-source="配車表_例.svg">
+          <img src="assets/haisha-paper.svg" alt="">
+          <i class="mk" style="left:12px;top:12px">1</i>
+        </div>
+      </div>
+      <div class="map-col">
+        <h2 class="sec-label">画面とデータ<small>左の欄が、どこに入るか</small></h2>
+        <div class="dmap">
+          <div class="mrow head"><div>紙の欄</div><div></div><div>画面の項目 (データ)</div><div>根拠</div></div>
+          <div class="mrow"><div class="src">日付<small>右上</small></div><div class="to">→</div><div class="dst">日付<small>D01 配車表</small></div><div class="ev">素材:配車表_例.svg#右上</div></div>
+          <div class="mrow anchor"><div class="src">車番・運転者<small>1・2 列目</small></div><div class="to">→</div><div class="dst">車番・運転者<small>D02 配車の行</small></div><div class="ev">素材:配車表_例.svg#1列目</div><i class="mk" style="left:-12px;top:-10px">2</i></div>
+          <div class="mrow anchor"><div class="src">受注先・発地・着地<small>3〜5 列目</small></div><div class="to">→</div><div class="dst">受注先・発地・着地<small>D02 配車の行。名前は候補から選ぶ</small></div><div class="ev">素材:配車表_例.svg#3列目</div><i class="mk" style="left:-12px;top:-10px">4</i></div>
+          <div class="mrow"><div class="src">品名・数量<small>6・7 列目</small></div><div class="to">→</div><div class="dst">品名・数量<small>D02 配車の行</small></div><div class="ev">素材:配車表_例.svg#6列目</div></div>
+          <div class="mrow"><div class="src">備考・高速料<small>9・10 列目</small></div><div class="to">→</div><div class="dst">備考・高速料<small>D02 配車の行</small></div><div class="ev">素材:配車表_例.svg#9列目</div></div>
+          <div class="mrow warn anchor"><div class="src">請求金額<small>8 列目</small></div><div class="to">→</div><div class="dst">読み取らない<small>時刻やメモが書かれることが多い</small></div><div class="ev">決めること:Q03</div><i class="mk" style="left:-12px;top:-10px">3</i></div>
+        </div>
+        <h2 class="sec-label">書き出す列<small>取り込み列の見本の 10 列</small></h2>
+        <div class="bar"><span class="seg" data-kind="auto" style="flex:1">しくみ 1</span><span class="seg" data-kind="paper" style="flex:9">紙から 9</span></div>
+        <ul class="legend"><li data-kind="auto">しくみが入れる: 日付 (右上の日付を、どの行にも入れる)</li><li data-kind="paper">紙から読む: 車番から備考までの 9 列</li></ul>
+        <aside class="notes strip">
+          <ol class="marks">
+            <li data-mark="1" data-kind="can"><b>紙の書き方は今のまま</b><span class="sub">新しい書き方を覚えてもらう必要はない。</span></li>
+            <li data-mark="2" data-kind="how"><b>「〃」には、上の行の値を入れる</b><span class="sub">入れた欄は黄色にして、人が確かめる (Q01)。</span></li>
+            <li data-mark="3" data-kind="ask"><b>「請求金額」の欄を使わないでよいか</b><span class="q">Q03</span><span class="sub">案: 読み取らない。運賃は取り込み先のシステムで決める。</span></li>
+            <li data-mark="4" data-kind="ask"><b>対応表の中身を、最初にどこから入れるか</b><span class="q">Q07</span><span class="sub">案: 取り込み先のシステムの一覧を、作る側が最初に入れる。</span></li>
+          </ol>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,1009 @@
+{
+  "phase": "2-parallel-analysis",
+  "scope": "plugins/system-briefing-book",
+  "source_edits": false,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "display_name": "システム思考",
+      "category": "E-system",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "palette→tokens→common/templates→PNG→book の連鎖で、bookだけ欠落時に別経路へ分岐する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        },
+        {
+          "id": "DS-3",
+          "severity": "medium",
+          "condition": "C3",
+          "file": "plugins/system-briefing-book/assets/templates/book.html",
+          "line": 15,
+          "description": "まとめテンプレートに標準とは異なる色の literal fallback が重複している。",
+          "recommendation": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "bucket": "other",
+          "recommended_intervention": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "display_name": "因果関係分析",
+      "category": "E-system",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "再初期化時の既定値選択＋既存manifest保護＋CSS強制更新の組合せが、保存されたcustom選択と実表示をずらす。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "display_name": "因果ループ",
+      "category": "E-system",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "PNGには依存ハッシュがありCSS変更→再描画要求の帰還がある(resource-refs:108)。tokens欠落のwarn通過は見た目のずれを正常系へ戻すため検知を弱める。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "display_name": "トレードオン思考",
+      "category": "F-strategic",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "一つの小さなトークン契約検査をscaffold/render/bookで使えば、custom自由度と既定再現性を同時に保てる。全アプリcatalogの取り込みは資料の固定サイズ構造と衝突し得る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        },
+        {
+          "id": "DS-5",
+          "severity": "medium",
+          "condition": "C2",
+          "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+          "line": 7,
+          "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+          "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "bucket": "other",
+          "recommended_intervention": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+            "line": 7
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "display_name": "プラスサム思考",
+      "category": "F-strategic",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "完全な役割トークンを提供するcustomは維持し、不完全customを早く検出すれば作成者・閲覧者・保守担当の手戻りを同時に減らす。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "display_name": "価値提案思考",
+      "category": "F-strategic",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "利用者への価値は名称変更だけでなく同じ案件を再生成して同じ色が届くこと。名前の検索ではpluginに旧配色名の表現なし、Hiraginoは正しいフォント名である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-5",
+          "severity": "medium",
+          "condition": "C2",
+          "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+          "line": 7,
+          "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+          "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "bucket": "other",
+          "recommended_intervention": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+            "line": 7
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "display_name": "戦略的思考",
+      "category": "F-strategic",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "出典CSSをruntime必須にするとstandalone plugin配布が壊れる。同梱snapshot＋repo検査の責務分離が小さく保守可能。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-4",
+          "severity": "medium",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/tests/test_single_source.py",
+          "line": 142,
+          "description": "サンプルとplugin CSS一致は検査するが、出典に値が追従するという表示の検査がない。現時点で共有原色の差異は検出していない。",
+          "recommendation": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "bucket": "other",
+          "recommended_intervention": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "location": {
+            "file": "plugins/system-briefing-book/tests/test_single_source.py",
+            "line": 142
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "display_name": "why思考",
+      "category": "G-problem",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "なぜ再生成で色が変わるか→選択paletteとCSSが違う。なぜ違うか→refreshがstandardを選ぶ。なぜ選ぶか→既存manifestを読まない。なぜmanifestはcustomのままか→writeNewが既存ファイルを保護する。なぜ検出されないか→既存refreshテストはdefaultだけ。この五段はコード/再現/テストで観測できる原因に限定し、作者の意図は推測しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "display_name": "改善思考",
+      "category": "G-problem",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "まずpalette refreshと欠落検出を修正し、次にfallback除去と正本の説明・同期検査を追加すれば、大きな構造変更なしで故障経路を閉じられる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        },
+        {
+          "id": "DS-3",
+          "severity": "medium",
+          "condition": "C3",
+          "file": "plugins/system-briefing-book/assets/templates/book.html",
+          "line": 15,
+          "description": "まとめテンプレートに標準とは異なる色の literal fallback が重複している。",
+          "recommendation": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "bucket": "other",
+          "recommended_intervention": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          }
+        },
+        {
+          "id": "DS-4",
+          "severity": "medium",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/tests/test_single_source.py",
+          "line": 142,
+          "description": "サンプルとplugin CSS一致は検査するが、出典に値が追従するという表示の検査がない。現時点で共有原色の差異は検出していない。",
+          "recommendation": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "bucket": "other",
+          "recommended_intervention": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "location": {
+            "file": "plugins/system-briefing-book/tests/test_single_source.py",
+            "line": 142
+          }
+        },
+        {
+          "id": "DS-5",
+          "severity": "medium",
+          "condition": "C2",
+          "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+          "line": 7,
+          "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+          "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "bucket": "other",
+          "recommended_intervention": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+            "line": 7
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "display_name": "仮説思考",
+      "category": "G-problem",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "「再initはcustomを保つ」は一時ディレクトリ実験で反証された(initial rc0,refresh rc0,manifest custom,実CSS standard)。欠落・未定義role・参照cycle・古いCSSを負例に含める仮説検証が必要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "display_name": "論点思考",
+      "category": "G-problem",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "本質論点は既定デザインの指定が全成果物へ安定伝達されるか。無関係なアプリUI再設計ではなく、選択/依存/失敗時の契約へ集中する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "当該観点で追加の相反・欠落は確認せず。全体PASSを意味しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        },
+        {
+          "id": "DS-5",
+          "severity": "medium",
+          "condition": "C2",
+          "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+          "line": 7,
+          "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+          "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "bucket": "other",
+          "recommended_intervention": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+            "line": 7
+          }
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "display_name": "KJ法",
+      "category": "G-problem",
+      "agent": "design_system",
+      "actual_analyst": "design_system",
+      "observations": [
+        "観測を①選択保持(refresh) ②値の正本(fallback/upstream) ③境界の完全性(custom/missing) ④伝達契約(部品/型/まとめ) に分類した。同じ故障を複数改善へ重複計上しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "DS-1 plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs:106",
+            "DS-2 plugins/system-briefing-book/scripts/build-briefing-book.mjs:602",
+            "DS-3 plugins/system-briefing-book/assets/templates/book.html:15",
+            "DS-4 plugins/system-briefing-book/tests/test_single_source.py:142",
+            "DS-5 plugins/system-briefing-book/assets/css/tokens-standard.css:7"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "DS-1",
+          "severity": "high",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+          "line": 106,
+          "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+          "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "bucket": "other",
+          "recommended_intervention": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+            "line": 106
+          }
+        },
+        {
+          "id": "DS-2",
+          "severity": "high",
+          "condition": "C1",
+          "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+          "line": 602,
+          "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+          "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "bucket": "other",
+          "recommended_intervention": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+            "line": 602
+          }
+        },
+        {
+          "id": "DS-3",
+          "severity": "medium",
+          "condition": "C3",
+          "file": "plugins/system-briefing-book/assets/templates/book.html",
+          "line": 15,
+          "description": "まとめテンプレートに標準とは異なる色の literal fallback が重複している。",
+          "recommendation": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "bucket": "other",
+          "recommended_intervention": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/templates/book.html",
+            "line": 15
+          }
+        },
+        {
+          "id": "DS-4",
+          "severity": "medium",
+          "condition": "C4",
+          "file": "plugins/system-briefing-book/tests/test_single_source.py",
+          "line": 142,
+          "description": "サンプルとplugin CSS一致は検査するが、出典に値が追従するという表示の検査がない。現時点で共有原色の差異は検出していない。",
+          "recommendation": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "bucket": "other",
+          "recommended_intervention": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。",
+          "location": {
+            "file": "plugins/system-briefing-book/tests/test_single_source.py",
+            "line": 142
+          }
+        },
+        {
+          "id": "DS-5",
+          "severity": "medium",
+          "condition": "C2",
+          "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+          "line": 7,
+          "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+          "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "bucket": "other",
+          "recommended_intervention": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。",
+          "location": {
+            "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+            "line": 7
+          }
+        }
+      ],
+      "score": 0.65
+    }
+  ],
+  "unique_issues": [
+    {
+      "id": "DS-1",
+      "severity": "high",
+      "condition": "C4",
+      "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+      "line": 106,
+      "description": "既存案件の --refresh-css が既存 briefing.palette を読まず standard を選び、manifest は writeNew により旧 custom のまま残る。実再現済み。",
+      "recommendation": "既存 manifest があればそこから palette を解決する。明示 CLI と既存値が不一致なら副作用前に停止。refresh は選択済み palette を更新。"
+    },
+    {
+      "id": "DS-2",
+      "severity": "high",
+      "condition": "C1",
+      "file": "plugins/system-briefing-book/scripts/build-briefing-book.mjs",
+      "line": 602,
+      "description": "tokens.css 欠落を警告だけで通し、book.html の旧色 fallback で公開可能。既定デザイン再現条件に反する。",
+      "recommendation": "欠落・空・必須役割不足・未解決参照を共通 helper で検証し、scaffold/render/book が同じ契約で停止する。"
+    },
+    {
+      "id": "DS-3",
+      "severity": "medium",
+      "condition": "C3",
+      "file": "plugins/system-briefing-book/assets/templates/book.html",
+      "line": 15,
+      "description": "まとめテンプレートに標準とは異なる色の literal fallback が重複している。",
+      "recommendation": "必須トークン検証と同時に literal fallback を削除し役割参照だけにする。"
+    },
+    {
+      "id": "DS-4",
+      "severity": "medium",
+      "condition": "C4",
+      "file": "plugins/system-briefing-book/tests/test_single_source.py",
+      "line": 142,
+      "description": "サンプルとplugin CSS一致は検査するが、出典に値が追従するという表示の検査がない。現時点で共有原色の差異は検出していない。",
+      "recommendation": "repoで出典がある時の共有原色/影の一致検査を追加。standalone runtimeはplugin資産で完結させ、upstreamを実行時必須にしない。"
+    },
+    {
+      "id": "DS-5",
+      "severity": "medium",
+      "condition": "C2",
+      "file": "plugins/system-briefing-book/assets/css/tokens-standard.css",
+      "line": 7,
+      "description": "既定デザインの説明がpalette中心で、色・共通部品・ボード型・まとめを組み合わせる境界が一か所に定義されていない。",
+      "recommendation": "短い既定デザイン契約を正本にし、入口から参照。ボード説明と実アプリcatalogは用途が異なるため丸ごと統合しない。"
+    }
+  ],
+  "reproduction": {
+    "scenario": "custom init then init --refresh-css without --palette",
+    "initial_rc": 0,
+    "refresh_rc": 0,
+    "manifest_palette": "custom CSS path retained",
+    "before_custom": true,
+    "after_custom": false,
+    "after_standard": true,
+    "source_mutation": false
+  },
+  "boundaries": [
+    "同梱CSSの契約検査は小さく共有し、CSS一般構文解析器を自作しない。少なくとも必須役割、推移的var参照、循環参照を検出。",
+    "解析はコメント/文字列/宣言境界を考慮し、fallback付きvarの合法性を誤拒否しない。既存CSSが動くことと契約準拠は別に説明する。",
+    "Liquid Glass app catalogを資料boardへ丸ごと移植する必要はない。既定の色/部品/型/まとめを短い契約として明示する。",
+    "出典ライセンスと既存歴史証跡は保持。Hiragino font名は名称除去の対象でない。"
+  ],
+  "limitations": [
+    "12観点のread-only分析。修正後の四条件PASSは未判定。",
+    "共有原色は現時点で一致。upstream末尾のprefers-contrast overrideを根本値の差異と誤判定しない。"
+  ]
+}

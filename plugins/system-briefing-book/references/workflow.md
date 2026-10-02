@@ -3,6 +3,7 @@
 各スキルが共通で使う決まり (出力フォルダ、書いてよいスキル、既定のページ構成、版) をまとめる。入口は skills/run-briefing。
 
 - L1 の選択所有と L2 の通常生成: [execution-contract.md](execution-contract.md) の「6. 通常生成と確認の選択所有」が正本。
+- 標準デザインの正本とCSSの再生成: [design-contract.md](design-contract.md) に従う。
 - 工程の順番と止まる所: [run-briefing の SKILL.md](../skills/run-briefing/SKILL.md) の「工程 (new)」を読む。
 - 確認点と確認の深さ: 同じファイルの「確認点の進め方」を読む。深さごとに見る観点は [assign-briefing-evaluator の SKILL.md](../skills/assign-briefing-evaluator/SKILL.md) の「深さ」を読む。
 - 打ち合わせのあとの直し (revise): 同じく run-briefing の SKILL.md の「工程 (revise)」を読む。
