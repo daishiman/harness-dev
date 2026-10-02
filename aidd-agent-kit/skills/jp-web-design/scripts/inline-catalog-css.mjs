@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// assets/reference/catalog.html へ styles.css・平賀CSS・共通操作helperを埋め込み、HTML 1ファイルで共有できるようにする(手で貼らない)。
-// 正本は styles.css / hiraga-color-system.css / reference-interactions.js。catalog.html の埋め込み部分は生成物。
+// assets/reference/catalog.html へ styles.css・標準カラーCSS・共通操作helperを埋め込み、HTML 1ファイルで共有できるようにする(手で貼らない)。
+// 正本は styles.css / standard-color-system.css / reference-interactions.js。catalog.html の埋め込み部分は生成物。
 // 使い方: node scripts/inline-catalog-css.mjs [--check]
 //   --check: 埋め込み済みの CSS が正本と一致するかだけを確認する(CI用)
 // 終了コード: 0=成功・一致 / 1=不一致 / 2=読込エラー
 
 import { readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { defaultCssPath } from './hiraga-tokens.mjs'
+import { defaultCssPath } from './standard-tokens.mjs'
 
 const refPath = (name) => fileURLToPath(new URL(`../assets/reference/${name}`, import.meta.url))
 const htmlPath = refPath('catalog.html')
@@ -15,11 +15,11 @@ const START = '<!-- inline-css:start (node scripts/inline-catalog-css.mjs で生
 const END = '<!-- inline-css:end -->'
 const JS_START = '<!-- inline-reference-interactions:start (node scripts/inline-catalog-css.mjs で生成。直接編集しない) -->'
 const JS_END = '<!-- inline-reference-interactions:end -->'
-const IMPORT = '@import url("../hiraga/hiraga-color-system.css");'
+const IMPORT = '@import url("../standard/standard-color-system.css");'
 
-let html, styles, hiraga, interactions
+let html, styles, standard, interactions
 try {
-  ;[html, styles, hiraga, interactions] = await Promise.all([
+  ;[html, styles, standard, interactions] = await Promise.all([
     readFile(htmlPath, 'utf8'),
     readFile(refPath('styles.css'), 'utf8'),
     readFile(defaultCssPath, 'utf8'),
@@ -35,7 +35,7 @@ if (!styles.includes(IMPORT)) {
 }
 
 // </style> を含むと埋め込みが壊れるので拒否する
-const css = styles.replace(IMPORT, hiraga.trim())
+const css = styles.replace(IMPORT, standard.trim())
 if (/<\/style/i.test(css)) {
   console.error('ERROR CSS に </style が含まれています')
   process.exit(2)

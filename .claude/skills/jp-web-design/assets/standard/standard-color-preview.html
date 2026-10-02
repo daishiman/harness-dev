@@ -1,0 +1,260 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>標準カラー｜暫定カラーパレット・配色デモ</title><!-- BEGIN GENERATED: standard-metadata --><meta name="standard-schema-version" content="1"><meta name="standard-version" content="0.3"><meta name="standard-date" content="2026-09-28"><meta name="standard-status" content="暫定提案。正式に承認された配色ではない"><!-- END GENERATED: standard-metadata --><style data-generated-source="standard-color-system.css">/* BEGIN GENERATED: standard-color-system.css */
+/*
+ * @standard-meta {"schema_version":1,"name":"標準の暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。正式に承認された配色ではない","theme":"light-only"}
+ * 今回の変更(v0.3): 紫・マゼンタ系をブルー系に置き換え、補助面・罫線・文字も青みのグレーへ。赤字(損失)表示のみ明るい赤で残す。
+ * 前回の変更: 画面背景を白にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相へ寄せた。青系(情報・車両ネイビー)は据え置き。
+ * 全HEXはシステム向け提案値。正式に承認された配色ではありません。
+ * 正式な配色が決まったら、基本色 --p-* だけを差し替える。
+ * ライトテーマのみ。暗背景には inverse 系トークンを明示的に使用してください。
+ * brand-indigo はブランドの軸(ブルー)、brand-accent は主操作のアクセント(明るいブルー)。別の役割です。
+ * 命名の規律: 基本色の名前は「ブランド対の中の位置」を表し、色相は表さない。色相を名前にすると
+ * 値を差し替えたときに名前が嘘になり、名前を語彙にした規範文まで指示対象を失う。v0.3 で
+ * --p-brand-magenta 系を --p-brand-accent 系へ改名したのはこのため (値だけ青くして名前を残すと嘘が残る)。
+ * --p-brand-indigo は値と名前が一致しているので据え置き。次に色相が動くときは名前も見直す。
+ */
+:root {
+  color-scheme: light;
+
+  /* 基本色（すべて暫定提案） */
+  --p-brand-indigo: #1747B5;
+  --p-brand-indigo-hover: #123B99;
+  --p-brand-indigo-active: #0E2F7A;
+  --p-brand-vehicle-navy: #163A5F;
+  --p-brand-accent: #1465E1;
+  --p-brand-accent-hover: #1A5ED0;
+  --p-brand-accent-active: #154DAB;
+  --p-brand-accent-soft: #E8F1FF;
+  --p-brand-indigo-soft: #DCE9FC;
+  --p-white: #FFFFFF;
+  --p-canvas: #FFFFFF;
+  --p-surface-subtle: #F3F7FD;
+  --p-surface-stripe: #F9FBFE;
+  --p-ink: #14233B;
+  --p-ink-secondary: #45576F;
+  --p-ink-muted: #506279;
+  --p-line: #D5E1F0;
+  --p-line-strong: #7189A8;
+  --p-disabled-bg: #E9EEF4;
+  --p-nav-muted: #D2DEEE;
+  --p-focus-on-dark: #AFCBFF;
+  --p-info: #0369A1;
+  --p-info-bg: #E6F4FB;
+  --p-success: #166534;
+  --p-success-bg: #ECFDF3;
+  --p-warning: #92400E;
+  --p-warning-bg: #FFF7E6;
+  --p-danger: #D03047;
+  --p-danger-hover: #B42A3F;
+  --p-danger-active: #962234;
+  --p-danger-bg: #FFF1F3;
+  /* グラフ系列専用の色。UIの面・文字には使わない (§1 の面積比の外)。意味色 (--p-info / --p-warning /
+     --p-success) をここへ流用しない。同じ色が「状態」と「カテゴリ」の二つを指すと読み手が取り違える。
+     カテゴリの見分けは色相差で作るので、v0.3 のブルー化から外して 60 度前後の間隔で色相を確保している。
+     値を変えるときは scripts/check-standard-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
+  --p-chart-amber: #92400E;   /* H23  */
+  --p-chart-lime: #4D7C0F;    /* H86  */
+  --p-chart-teal: #0F766E;    /* H175 */
+  --p-chart-purple: #6D28D9;  /* H263 */
+  --p-chart-magenta: #A81B6B; /* H326 — マゼンタはUIから退いたが、色相の間隔が要るグラフでだけ残す */
+  --p-scale-1: #DCE9FC;
+  --p-scale-2: #B7D0F4;
+  --p-scale-3: #7FA6DE;
+  --p-scale-4: #3B6FC4;
+  --p-scale-5: #1747B5;
+
+  /* 役割別トークン：コンポーネントではこちらを使用 */
+  --app-background: var(--p-canvas);
+  --surface: var(--p-white);
+  --surface-alt: var(--p-surface-subtle);
+  --surface-hover: var(--p-surface-subtle);
+  --surface-selected: var(--p-brand-indigo-soft);
+  --surface-accent: var(--p-brand-accent-soft);
+  --text-primary: var(--p-ink);
+  --text-secondary: var(--p-ink-secondary);
+  --text-muted: var(--p-ink-muted);
+  --text-heading: var(--p-brand-indigo);
+  --text-inverse: var(--p-white);
+  --border-subtle: var(--p-line);
+  --border-control: var(--p-line-strong);
+  --nav-background: var(--p-surface-subtle);
+  --nav-text: var(--p-ink);
+  --nav-text-muted: var(--p-ink-secondary);
+  --nav-hover: var(--p-brand-indigo-soft);
+  --nav-selected-bg: var(--p-white);
+  --nav-selected-text: var(--p-brand-indigo);
+  --nav-selected-indicator: var(--p-brand-indigo);
+  --action-primary-bg: var(--p-brand-accent);
+  --action-primary-text: var(--p-white);
+  --action-primary-hover: var(--p-brand-accent-hover);
+  --action-primary-active: var(--p-brand-accent-active);
+  --action-secondary-bg: var(--p-white);
+  --action-secondary-text: var(--p-brand-indigo);
+  --action-secondary-border: var(--p-brand-indigo);
+  --action-secondary-hover: var(--p-brand-indigo-soft);
+  --action-secondary-active: var(--p-surface-subtle);
+  --action-quiet-bg: var(--p-white);
+  --action-quiet-text: var(--p-brand-indigo);
+  --action-quiet-hover: var(--p-brand-indigo-soft);
+  --action-danger-bg: var(--p-danger);
+  --action-danger-text: var(--p-white);
+  --action-danger-hover: var(--p-danger-hover);
+  --action-danger-active: var(--p-danger-active);
+  --action-disabled-bg: var(--p-disabled-bg);
+  --action-disabled-text: var(--p-ink-muted);
+  --action-disabled-border: var(--p-line-strong);
+  --link: var(--p-brand-indigo);
+  --link-hover: var(--p-brand-accent);
+  --link-visited: var(--p-brand-indigo);
+  --focus-ring: var(--p-brand-accent);
+  --focus-ring-inverse: var(--p-focus-on-dark);
+  --focus-gap: var(--p-white);
+  --input-bg: var(--p-white);
+  --input-text: var(--p-ink);
+  --input-placeholder: var(--p-ink-muted);
+  --input-border: var(--p-line-strong);
+  --input-border-hover: var(--p-brand-indigo);
+  --input-border-focus: var(--p-brand-accent);
+  --input-readonly-bg: var(--p-surface-subtle);
+  --input-invalid-border: var(--p-danger);
+  --input-invalid-message: var(--p-danger);
+  --required-text: var(--p-brand-accent);
+  --required-bg: var(--p-brand-accent-soft);
+  --control-on: var(--p-brand-accent);
+  --control-on-mark: var(--p-white);
+  --control-off-border: var(--p-line-strong);
+  --table-head-bg: var(--p-surface-subtle);
+  --table-head-text: var(--p-brand-indigo);
+  --table-body-bg: var(--p-white);
+  --table-stripe-bg: var(--p-surface-stripe);
+  --table-hover-bg: var(--p-surface-subtle);
+  --table-selected-bg: var(--p-brand-indigo-soft);
+  --table-selected-indicator: var(--p-brand-indigo);
+  --tab-indicator: var(--p-brand-accent);
+  --tab-text-active: var(--p-brand-indigo);
+  --pagination-active-bg: var(--p-brand-indigo);
+  --pagination-active-text: var(--p-white);
+  --tag-bg: var(--p-brand-accent-soft);
+  --tag-text: var(--p-brand-accent);
+  --badge-unread-bg: var(--p-brand-accent);
+  --badge-unread-text: var(--p-white);
+  --status-neutral-text: var(--p-ink-secondary);
+  --status-neutral-bg: var(--p-surface-subtle);
+  --status-info-text: var(--p-info);
+  --status-info-bg: var(--p-info-bg);
+  --status-success-text: var(--p-success);
+  --status-success-bg: var(--p-success-bg);
+  --status-warning-text: var(--p-warning);
+  --status-warning-bg: var(--p-warning-bg);
+  --status-danger-text: var(--p-danger);
+  --status-danger-bg: var(--p-danger-bg);
+  /* 数値の符号と、その量を表す図形(棒・線・点・濃淡)。赤字(損失)だけ赤、黒字は本文色。状態を表す
+     --status-danger-* とは別の役割なので流用しない。「エラーが起きている」と「マイナスの数字」は
+     読み手にとって別の意味である。-soft は図形の地。線は --number-negative を重ねる */
+  --number-negative: var(--p-danger);
+  --number-negative-soft: var(--p-danger-bg);
+  --number-positive: var(--p-ink);
+  --tooltip-bg: var(--p-brand-indigo);
+  --tooltip-text: var(--p-white);
+  --progress-fill: var(--p-brand-indigo);
+  --progress-track: var(--p-surface-subtle);
+  --skeleton-base: var(--p-surface-subtle);
+  --skeleton-highlight: var(--p-brand-indigo-soft);
+  --selection-bg: var(--p-brand-indigo-soft);
+  --selection-text: var(--p-brand-indigo);
+  /* グラフのカテゴリ系列。順序のない並びなので、見分けは明度ではなく色相差で作る。
+     ブランド色を流すのは主役の --chart-main だけに留め、系列 1〜5 には brand/accent を使わない。
+     v0.3 でブランド軸が H260 台から H222 へ移ったため、アクセント青を系列に流すと main と重なる。
+     下の並びは隣接する系列の色相が 60 度以上離れるよう並べてある (最小の対は main と purple の 41 度)。
+     値や並びを変えたら scripts/check-standard-contrast.mjs の系列分離検査が最小色相差を機械で見る */
+  --chart-main: var(--p-brand-indigo);  /* H222 ブルー — ブランドの軸。主役系列 */
+  --chart-1: var(--p-chart-amber);      /* H23  アンバー */
+  --chart-2: var(--p-chart-lime);       /* H86  ライムグリーン */
+  --chart-3: var(--p-chart-teal);       /* H175 ティール */
+  --chart-4: var(--p-chart-purple);     /* H263 バイオレット */
+  --chart-5: var(--p-chart-magenta);    /* H326 マゼンタ */
+  --chart-grid: var(--p-line);
+  --chart-axis: var(--p-ink-secondary);
+  --chart-threshold: var(--p-danger);
+
+  --overlay: rgba(15, 45, 110, 0.40);
+  --shadow-soft: 0 6px 24px rgba(23, 71, 181, 0.07);
+  --shadow-raised: 0 14px 40px rgba(23, 71, 181, 0.13);
+}
+
+/* 必要な範囲に適用する共通クラス。フレームワークへの組み込み時は既存クラスにマッピング可。 */
+.standard-app { background: var(--app-background); color: var(--text-primary); }
+.standard-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
+.standard-heading { color: var(--text-heading); }
+.standard-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
+.standard-link:visited { color: var(--link-visited); }
+.standard-link:hover { color: var(--link-hover); }
+.standard-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
+.standard-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
+.standard-button--primary:hover { background: var(--action-primary-hover); }
+.standard-button--primary:active { background: var(--action-primary-active); }
+.standard-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
+.standard-button--secondary:hover { background: var(--action-secondary-hover); }
+.standard-button--secondary:active { background: var(--action-secondary-active); }
+.standard-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
+.standard-button--danger:hover { background: var(--action-danger-hover); }
+.standard-button--danger:active { background: var(--action-danger-active); }
+.standard-button:disabled, .standard-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
+/* aria-disabled のみでは操作は止まりません。アプリ側でもイベントを抑止してください。 */
+.standard-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
+.standard-input::placeholder { color: var(--input-placeholder); opacity: 1; }
+.standard-input:hover { border-color: var(--input-border-hover); }
+.standard-input:focus { border-color: var(--input-border-focus); }
+.standard-input[readonly] { background: var(--input-readonly-bg); }
+.standard-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
+.standard-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+.standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
+/* 淡いナビ面では通常のフォーカスリングを使う。inverse は明示した暗色面だけに限定する。 */
+.standard-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
+.standard-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
+.standard-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
+.standard-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+.standard-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
+.standard-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
+.standard-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.standard-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
+/* ステータスには文字とアイコンを併用。薄い背景色だけで情報を伝えない。 */
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: var(--p-line-strong);
+    --text-secondary: var(--p-ink);
+    --text-muted: var(--p-ink);
+    --nav-text-muted: var(--p-ink);
+  }
+}
+@media (forced-colors: active) {
+  .standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .standard-button, .standard-status { border: 1px solid ButtonText; }
+}
+@media print {
+  .standard-app { background: white; color: black; }
+  .standard-card { background: white; border-color: black; box-shadow: none; }
+  .standard-status { color: black; background: white; border: 1px solid black; }
+}
+/* END GENERATED: standard-color-system.css */
+
+/* BEGIN PREVIEW-ONLY STYLES */
+
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;font-family:"Noto Sans CJK JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;line-height:1.75;font-size:14px}button,input{font:inherit}a{color:var(--link);text-underline-offset:3px}button{touch-action:manipulation}.layout{display:grid;grid-template-columns:222px minmax(0,1fr);min-height:100vh}.sidebar{background:var(--nav-background);color:var(--nav-text);padding:30px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:26px}.wordmark{font-size:23px;font-weight:900;letter-spacing:.07em;line-height:1.3;padding:0 14px}.wordmark small{display:block;font-size:10px;letter-spacing:.12em;margin-top:9px;color:var(--nav-text-muted);font-weight:500}.sidebar nav{display:grid;gap:7px}.sidebar nav a{display:flex;gap:14px;align-items:center;padding:11px 14px;color:var(--nav-text);text-decoration:none;border-radius:7px;border-left:4px solid transparent;font-weight:700}.sidebar nav a:hover{background:var(--nav-hover)}.sidebar nav a.active{background:var(--nav-selected-bg);color:var(--nav-selected-text);border-left-color:var(--nav-selected-indicator)}.sidebar nav a span{font:12px monospace;opacity:1}.sidebar-note{margin-top:auto;padding:15px 14px 0;border-top:1px solid var(--nav-text-muted);font-size:11px;line-height:1.9;color:var(--nav-text-muted)}.sidebar-note strong{color:var(--nav-text);display:block}.topbar{background:var(--surface);border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;gap:20px;align-items:center;padding:18px 38px;font-size:12px;color:var(--text-secondary)}.topbar strong{color:var(--text-heading);letter-spacing:.08em}.version{background:var(--tag-bg);color:var(--tag-text);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:700}.main-content{max-width:1460px;padding:32px 38px 64px;margin:auto}.eyebrow{font:700 11px/1.6 monospace;letter-spacing:.16em;color:var(--tag-text);margin:0 0 8px}h1{color:var(--text-heading);font-size:32px;line-height:1.5;letter-spacing:.02em;margin:0 0 10px;font-weight:900}h2{color:var(--text-heading);font-size:21px;margin:0;line-height:1.6}h3{color:var(--text-heading);font-size:15px;margin:0 0 14px}p{margin:0 0 12px}.lead{color:var(--text-secondary);font-size:14px;max-width:910px}.intro{margin-bottom:22px}.notice{padding:14px 18px;background:var(--surface);border:1px solid var(--border-subtle);border-left:4px solid var(--action-primary-bg);border-radius:8px;font-size:12px;color:var(--text-secondary);margin:20px 0 24px}.notice strong{color:var(--text-heading)}.section{margin-top:32px}.section-title{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin-bottom:15px}.section-title small{color:var(--text-muted);font-size:11px}.palette{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.swatch{padding:0;text-align:left;border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer;color:var(--text-primary);box-shadow:var(--shadow-soft);min-width:0}.swatch:hover{border-color:var(--border-control);transform:translateY(-2px)}.swatch-color{display:block;height:84px;border-bottom:1px solid var(--border-subtle)}.swatch-info{display:grid;gap:2px;padding:13px 12px}.swatch-info strong{font-size:10px;letter-spacing:.05em;color:var(--text-heading);white-space:nowrap}.swatch-info code{font:700 17px/1.6 monospace;letter-spacing:.015em}.swatch-info small{font-size:10px;color:var(--text-secondary)}.ratio{display:grid;grid-template-columns:75fr 20fr 5fr;height:10px;border-radius:8px;overflow:hidden;margin:23px 0 8px;border:1px solid var(--border-subtle)}.ratio .base{background:var(--p-surface-subtle)}.ratio .nav{background:var(--p-brand-indigo)}.ratio .accent{background:var(--p-brand-accent)}.ratio-note{font-size:11px;color:var(--text-secondary)}.two-col{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}.panel{padding:22px;border-radius:12px;min-width:0}.panel-sub{font-size:12px;color:var(--text-secondary);margin:-7px 0 17px}.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}.mini-label{display:block;font-size:11px;color:var(--text-secondary);margin:16px 0 8px}.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{font-size:12px;font-weight:700}.field input{width:100%;font-size:12px;min-width:0}.required{color:var(--required-text);background:var(--required-bg);font-size:9px;padding:2px 6px;border-radius:4px;margin-left:5px}.error-message{color:var(--status-danger-text);font-size:11px}.help{color:var(--text-muted);font-size:11px}.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tone-list{display:grid;gap:8px}.tone-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:7px;font-size:11px;color:var(--text-secondary)}.tone-row code{color:var(--text-heading)}.table-wrap{overflow:auto;border:1px solid var(--border-subtle);border-radius:10px;background:var(--surface)}table{border-collapse:collapse;width:100%;text-align:left;font-size:12px}th{background:var(--table-head-bg);color:var(--table-head-text);font-weight:700;padding:12px 16px;border-bottom:1px solid var(--border-subtle)}td{padding:13px 16px;border-bottom:1px solid var(--border-subtle);vertical-align:top}tbody tr:last-child td{border-bottom:0}.demo-table td{vertical-align:middle}.demo-table tbody tr:nth-child(even){background:var(--table-stripe-bg)}.demo-table tbody tr:hover{background:var(--table-hover-bg)}.demo-table tbody tr.selected{background:var(--table-selected-bg)}.demo-table tbody tr.selected td:first-child{box-shadow:inset 4px 0 0 var(--table-selected-indicator)}.check{accent-color:var(--control-on);width:16px;height:16px;vertical-align:middle}.demo-table .mono{font-family:monospace;font-weight:700;color:var(--text-heading)}.table-tabs{display:flex;gap:24px;margin-top:10px}.table-tab{background:transparent;color:var(--text-secondary);border:0;border-bottom:3px solid transparent;padding:8px 2px;font-size:12px;font-weight:700;cursor:pointer}.table-tab[aria-selected=true]{color:var(--tab-text-active);border-bottom-color:var(--tab-indicator)}.table-tab:hover{color:var(--link-hover)}.table-caption{padding:12px 0 0;font-size:11px;color:var(--text-muted)}.contrast-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.contrast-item{display:flex;align-items:center;gap:12px;border:1px solid var(--border-subtle);background:var(--surface);border-radius:9px;padding:14px}.contrast-sample{width:48px;height:48px;border-radius:7px;display:grid;place-items:center;font-size:21px;font-weight:800;border:1px solid var(--border-subtle);flex-shrink:0}.contrast-item>span:last-child{font-size:10px;color:var(--text-secondary)}.contrast-item strong{display:block;font-size:19px;line-height:1.5;color:var(--text-heading)}.rule-box{margin-top:15px;padding:14px 18px;border-radius:8px;background:var(--status-warning-bg);color:var(--status-warning-text);font-size:12px}.details{background:var(--surface);border:1px solid var(--border-subtle);border-radius:10px;padding:16px 20px;margin-top:14px}.details summary{font-weight:700;color:var(--text-heading);cursor:pointer}.details .table-wrap{margin-top:16px}.details p{margin-top:12px;color:var(--text-secondary);font-size:12px}.details table{font-size:11px;min-width:740px}.details td{padding:10px 12px;overflow-wrap:anywhere}.source-list{padding-left:22px;font-size:12px}.source-list li{margin:12px 0}.source-list span{font-size:11px;color:var(--text-secondary)}.footer{padding:26px 0 0;color:var(--text-muted);font-size:11px;border-top:1px solid var(--border-subtle);margin-top:30px}.toast{position:fixed;bottom:24px;right:24px;max-width:min(410px,calc(100vw - 32px));padding:15px 18px;background:var(--tooltip-bg);color:var(--tooltip-text);border:1px solid var(--focus-ring-inverse);border-radius:10px;box-shadow:var(--shadow-raised);z-index:10;font-size:12px;line-height:1.7}.toast[hidden]{display:none}.focus-demo{margin-top:14px;font-size:11px;color:var(--text-secondary)}.focus-demo kbd{border:1px solid var(--border-control);padding:1px 5px;border-radius:4px;background:var(--surface);color:var(--text-heading)}.section-tools{display:flex;align-items:center;gap:12px}.count{font-size:11px;color:var(--text-muted)}.chart-key{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;margin-top:12px}.chart-key span{display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary)}.chart-key i{height:10px;width:10px;display:block;background:var(--chart-1)}.chart-key span:nth-child(2) i{background:var(--chart-2);border-radius:50%}.chart-key span:nth-child(3) i{background:var(--chart-3);transform:rotate(45deg)}.chart-key span:nth-child(4) i{background:var(--chart-4);border-radius:50% 50% 0 0}.chart-key span:nth-child(5) i{background:var(--chart-5);border-radius:2px}
+@media(min-width:1500px){.main-content{padding-top:40px}.swatch-color{height:108px}}
+@media(max-width:1190px){.layout{grid-template-columns:190px minmax(0,1fr)}.sidebar{padding:26px 12px}.main-content{padding:28px 26px 50px}.topbar{padding:18px 26px}.palette{grid-template-columns:repeat(3,1fr)}.contrast-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.wordmark{font-size:20px}}
+@media(max-width:700px){.layout{display:block}.sidebar{position:static;height:auto;padding:18px 20px;gap:16px}.wordmark{padding:0;font-size:22px}.wordmark small{margin-top:4px}.sidebar nav{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.sidebar nav a{flex-shrink:0;font-size:11px;padding:7px 11px;border-left:0;border-bottom:3px solid transparent}.sidebar nav a.active{border-bottom-color:var(--nav-selected-indicator)}.sidebar nav a span{display:none}.sidebar-note{display:none}.topbar{padding:12px 18px;font-size:10px;gap:8px}.version{font-size:9px;padding:3px 8px}.main-content{padding:24px 18px 36px}h1{font-size:25px}h2{font-size:19px}.lead{font-size:12px}.palette{grid-template-columns:repeat(2,1fr);gap:10px}.swatch-color{height:72px}.swatch-info{padding:12px}.swatch-info strong{font-size:9px}.section-title{display:block}.section-title small{display:block;margin-top:6px}.panel{padding:18px}.input-grid{grid-template-columns:1fr}.contrast-grid{gap:10px}.contrast-item{padding:10px;gap:9px}.contrast-sample{width:35px;height:40px;font-size:18px}.contrast-item strong{font-size:16px}.demo-table{min-width:650px}.section-tools{margin-top:10px}.notice{font-size:11px;padding:13px}.source-list{padding-left:18px;overflow-wrap:anywhere}.details{padding:14px}.buttons .standard-button{font-size:12px}.footer{font-size:10px}.eyebrow{font-size:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.swatch:hover{transform:none}}
+@media print{.sidebar,.topbar,.toast{display:none}.layout{display:block}.main-content{padding:0;max-width:none}.details{break-inside:avoid}.panel,.swatch{box-shadow:none}.section{break-inside:avoid}.two-col{display:block}.panel{margin-bottom:18px}.notice{color:black}.palette{grid-template-columns:repeat(3,1fr)}.swatch-color{print-color-adjust:exact}.table-wrap{overflow:visible}.details table{min-width:0}.footer{color:black}}
+</style></head><body class="standard-app"><div class="layout">
+<aside class="sidebar standard-nav"><div class="wordmark">標準カラー<small>COLOR DESIGN / PROPOSAL</small></div><nav aria-label="配色資料のセクション"><a class="active" href="#palette" aria-current="location"><span>01</span>基本パレット</a><a href="#components"><span>02</span>部品の配色</a><a href="#table"><span>03</span>一覧の配色</a><a href="#contrast"><span>04</span>見やすさの確認</a></nav><div class="sidebar-note"><strong>ブランドの軸と、操作の色を分ける。</strong>深いインディゴで統一感。<br>アクセントのブルーで大切な操作を強調。</div></aside>
+<div><header class="topbar"><strong>STANDARD / COLOR SYSTEM</strong><span class="version">暫定提案 v0.3 ・ 公式HEX未検証</span></header><main class="main-content">
+<div id="palette-overview"><div class="intro"><p class="eyebrow">INDIGO · ACCENT · WHITE</p><h1>ブランドの軸を、<br>毎日使う画面の色へ。</h1><p class="lead">濃いインディゴを軸に、明るいブルーを少量のアクセントとして。<br>グレーや色付きの地を敷かず、白を基本に作業領域を整える配色案です。</p></div>
+<div class="notice"><strong>この画面のHEXは、すべてシステム用の提案値です。</strong><br>正式に承認された配色ではありません。正式な配色が決まったら、基本色だけを差し替えます。</div>
+<section id="palette"><div class="section-title"><h2>01　基本パレット（提案）</h2><small>色見本を押すとHEXをコピーできます</small></div><!-- BEGIN GENERATED: standard-palette --><div class="palette"><button class="swatch" data-copy="#1747B5" aria-label="ブランドの軸 #1747B5 をコピー"><span class="swatch-color" style="background:var(--p-brand-indigo)"></span><span class="swatch-info"><strong>INDIGO</strong><code>#1747B5</code><small>ブランドの軸</small></span></button><button class="swatch" data-copy="#1465E1" aria-label="重要操作のアクセント #1465E1 をコピー"><span class="swatch-color" style="background:var(--p-brand-accent)"></span><span class="swatch-info"><strong>ACCENT</strong><code>#1465E1</code><small>重要操作のアクセント</small></span></button><button class="swatch" data-copy="#163A5F" aria-label="車両を連想する補助色 #163A5F をコピー"><span class="swatch-color" style="background:var(--p-brand-vehicle-navy)"></span><span class="swatch-info"><strong>VEHICLE NAVY</strong><code>#163A5F</code><small>車両を連想する補助色</small></span></button><button class="swatch" data-copy="#FFFFFF" aria-label="画面背景・作業領域 #FFFFFF をコピー"><span class="swatch-color" style="background:var(--p-white)"></span><span class="swatch-info"><strong>WHITE</strong><code>#FFFFFF</code><small>画面背景・作業領域</small></span></button><button class="swatch" data-copy="#E8F1FF" aria-label="注目面(1画面1〜2か所) #E8F1FF をコピー"><span class="swatch-color" style="background:var(--surface-accent)"></span><span class="swatch-info"><strong>SOFT ACCENT</strong><code>#E8F1FF</code><small>注目面(1画面1〜2か所)</small></span></button><button class="swatch" data-copy="#F3F7FD" aria-label="補助面・表ヘッダー #F3F7FD をコピー"><span class="swatch-color" style="background:var(--p-surface-subtle)"></span><span class="swatch-info"><strong>SOFT SURFACE</strong><code>#F3F7FD</code><small>補助面・表ヘッダー</small></span></button></div><div class="ratio" aria-label="提案の面積目安：地と面75%、文字・罫線・ナビの骨格20%、操作と状態5%"><span class="base"></span><span class="nav"></span><span class="accent"></span></div><p class="ratio-note">面積の出発点：地と面 75% ／ 文字・罫線・ナビの骨格 20% ／ 操作と状態 5%。サイトの実測比率ではありません。</p><!-- END GENERATED: standard-palette --></section>
+</div><section class="section" id="components"><div class="section-title"><h2>02　部品に、色の役割を与える</h2><small>機能は配色確認用のデモです。データ送信はありません</small></div><div class="two-col"><article class="panel standard-card"><h3>主操作はアクセントのブルー。副操作は白と紺。</h3><p class="panel-sub">重要な操作を絞り、画面全体が強い色で埋まらないようにします。</p><div class="buttons"><button class="standard-button standard-button--primary" data-demo="保存ボタンの配色デモです。データは送信されません。">保存する</button><button class="standard-button standard-button--secondary" data-demo="副操作は白背景・濃紺の文字と枠を使います。">内容を確認</button><button class="standard-button" disabled>操作できません</button></div><div class="input-grid"><div class="field"><label for="sample-name">名称<span class="required">必須</span></label><input class="standard-input" id="sample-name" placeholder="例：管理項目の名称"><span class="help">入力枠は border-control。装飾用の border-subtle とは別のトークンです。</span></div><div class="field"><label for="sample-error">入力エラーの例</label><input class="standard-input" id="sample-error" aria-invalid="true" aria-describedby="sample-error-msg" value="未入力の例" readonly><span class="error-message" id="sample-error-msg">× 必須項目を入力してください（表示例）</span></div></div><p class="focus-demo"><kbd>Tab</kbd> キーでフォーカス色も確認できます。暗いナビでは明るいリングに切り替えます。</p></article><article class="panel standard-card"><h3>会社の色と、状態を伝える色は別。</h3><p class="panel-sub">成功・注意・エラーには専用色を使い、必ず文字を添えます。</p><div class="chip-row"><span class="standard-status standard-status--neutral"><span aria-hidden="true">○</span>未処理</span><span class="standard-status standard-status--info"><span aria-hidden="true">↻</span>処理中</span><span class="standard-status standard-status--success"><span aria-hidden="true">✓</span>完了</span><span class="standard-status standard-status--warning"><span aria-hidden="true">!</span>要確認</span><span class="standard-status standard-status--danger"><span aria-hidden="true">×</span>エラー</span></div><!-- BEGIN GENERATED: standard-tones --><div class="tone-list"><div class="tone-row"><span>通常文字 / 補助文字</span><code>#14233B / #45576F</code></div><div class="tone-row"><span>説明・プレースホルダー</span><code>#506279</code></div><div class="tone-row"><span>装飾罫線 / 入力枠</span><code>#D5E1F0 / #7189A8</code></div></div><!-- END GENERATED: standard-tones --><p class="mini-label">グラフのカテゴリ色候補：ラベル・形を必ず併用</p><div class="chart-key"><span><i></i>系列A</span><span><i></i>系列B</span><span><i></i>系列C</span><span><i></i>系列D</span><span><i></i>系列E</span></div></article></div></section>
+<section class="section" id="table"><div class="section-title"><div><h2>03　一覧は白を基本に、選択と状態を明快に</h2><div class="table-tabs" role="tablist" aria-label="表示するデモデータ"><button id="tab-all" class="table-tab" role="tab" aria-controls="panel-items" aria-selected="true" data-filter="all">すべて</button><button id="tab-warning" class="table-tab" role="tab" aria-controls="panel-items" aria-selected="false" tabindex="-1" data-filter="warning">要確認</button></div></div><div class="section-tools"><span class="count" id="row-count">架空データ 3件</span><button class="standard-button standard-button--primary" data-demo="追加ボタンの配色デモです。データは作成されません。">＋ 新規登録</button></div></div><div id="panel-items" role="tabpanel" aria-labelledby="tab-all"><div class="table-wrap"><table class="demo-table"><thead><tr><th scope="col">選択</th><th scope="col">管理番号</th><th scope="col">項目名（架空）</th><th scope="col">状態</th><th scope="col">操作</th></tr></thead><tbody><tr class="selected" data-state="info"><td><input type="checkbox" class="check" checked aria-label="SAMPLE-001を選択"></td><td class="mono">SAMPLE-001</td><td>一覧画面の選択行サンプル</td><td><span class="standard-status standard-status--info">↻ 処理中</span></td><td><a class="standard-link demo-link" href="#table">詳細</a></td></tr><tr data-state="success"><td><input type="checkbox" class="check" aria-label="SAMPLE-002を選択"></td><td class="mono">SAMPLE-002</td><td>完了状態の表示サンプル</td><td><span class="standard-status standard-status--success">✓ 完了</span></td><td><a class="standard-link demo-link" href="#table">詳細</a></td></tr><tr data-state="warning"><td><input type="checkbox" class="check" aria-label="SAMPLE-003を選択"></td><td class="mono">SAMPLE-003</td><td>注意状態の表示サンプル</td><td><span class="standard-status standard-status--warning">! 要確認</span></td><td><a class="standard-link demo-link" href="#table">詳細</a></td></tr></tbody></table></div></div><p class="table-caption">表ヘッダーはほぼ白のインディゴ。選択行は淡いインディゴと左線・チェックで表示。状態は文字とアイコンを併用します。</p></section>
+<section class="section" id="contrast"><div class="section-title"><h2>04　見た目だけでなく、読める組み合わせに</h2><small>提案した不透明sRGB値からの計算</small></div><!-- BEGIN GENERATED: standard-contrast --><div class="contrast-grid"><div class="contrast-item"><span class="contrast-sample" style="color:var(--text-inverse);background:var(--p-brand-indigo)">Aa</span><span>ブランド軸 × 白文字<strong>8.06:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--action-primary-text);background:var(--action-primary-bg)">Aa</span><span>主ボタン<strong>5.28:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--p-ink);background:var(--p-white)">Aa</span><span>本文 × 白<strong>15.75:1</strong></span></div><div class="contrast-item"><span class="contrast-sample" style="color:var(--text-primary);background:var(--surface);border:2px solid var(--border-control)">枠</span><span>入力枠 × 白<strong>3.59:1</strong></span></div></div><div class="rule-box"><strong>避ける組み合わせ：</strong>ブランド軸の面にアクセント色の小さい文字は約1.53:1で、通常文字の基準(4.5:1)を満たしません。装飾罫線を入力欄の境界に使うは約1.32:1で、識別に必要な境界の基準(3:1)を満たしません。</div><!-- END GENERATED: standard-contrast --><p class="table-caption">通常文字4.5:1以上、識別に必要なUIの境界は隣接色と3:1以上を確認。指定ペアのみの検証であり、実画面・全状態やWCAG全体の適合保証ではありません。根拠：[S8] [S9] [S10]</p></section>
+<footer class="footer">2026.09.28 / 暫定提案 v0.3<br>正式な配色の承認は未了です。確定時には承認済みブランド資料との照合と再検証が必要です。</footer>
+</main></div></div><div class="toast" id="toast" role="status" aria-live="polite" hidden></div><script>
+(()=>{'use strict';let timer;const toast=document.getElementById('toast');function notify(text){toast.textContent=text;toast.hidden=false;clearTimeout(timer);timer=setTimeout(()=>{toast.hidden=true},4500)}document.querySelectorAll('[data-demo]').forEach(el=>el.addEventListener('click',()=>notify(el.dataset.demo)));document.querySelectorAll('.demo-link').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();notify('リンクの配色デモです。実際の詳細画面はありません。')}));document.querySelectorAll('[data-copy]').forEach(el=>el.addEventListener('click',async()=>{const text=el.dataset.copy;try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text);notify(text+' をコピーしました。')}else{notify('HEX：'+text+'（この環境では自動コピーできません。表示コードを選択してコピーしてください）')}}catch(e){notify('HEX：'+text+'（自動コピーを利用できません。表示コードを選択してコピーしてください）')}}));document.querySelectorAll('.demo-table .check').forEach(el=>el.addEventListener('change',()=>el.closest('tr').classList.toggle('selected',el.checked)));const tabs=[...document.querySelectorAll('[data-filter]')];function selectTab(el){tabs.forEach(t=>{const selected=t===el;t.setAttribute('aria-selected',String(selected));t.tabIndex=selected?0:-1});let count=0;document.querySelectorAll('.demo-table tbody tr').forEach(row=>{const visible=el.dataset.filter==='all'||row.dataset.state===el.dataset.filter;row.hidden=!visible;if(visible)count++});document.getElementById('panel-items').setAttribute('aria-labelledby',el.id);document.getElementById('row-count').textContent='架空データ '+count+'件'}tabs.forEach((el,i)=>{el.addEventListener('click',()=>selectTab(el));el.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;else if(e.key==='ArrowLeft')next=(i-1+tabs.length)%tabs.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=tabs.length-1;else return;e.preventDefault();tabs[next].focus();selectTab(tabs[next])})});document.querySelectorAll('.sidebar nav a').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.sidebar nav a').forEach(a=>{a.classList.remove('active');a.removeAttribute('aria-current')});el.classList.add('active');el.setAttribute('aria-current','location')}));})();
+</script></body></html>

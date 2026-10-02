@@ -7,7 +7,7 @@
 
 import { readFile, rename, stat, unlink, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
-import { loadTokens } from './hiraga-tokens.mjs'
+import { loadTokens } from './standard-tokens.mjs'
 import { UsageError, failCli, parseArgs } from './lib/args.mjs'
 import { isT2Spec, projectEligibility, readProjectSources } from './lib/eligibility.mjs'
 import { sha256 as digest } from './lib/provenance.mjs'
@@ -234,7 +234,7 @@ function planFile(path, source, eligibility, hexRoles) {
     }
   }
   for (const match of source.matchAll(TAILWIND_DEFAULT)) {
-    addItem(makeItem({ path, source, index: match.index, type: 'tailwind', oldValue: match[0], automation: 'review-only', status: 'unchanged', reason: '平賀の役割ユーティリティへ手で割り当てる' }))
+    addItem(makeItem({ path, source, index: match.index, type: 'tailwind', oldValue: match[0], automation: 'review-only', status: 'unchanged', reason: '標準カラーの役割ユーティリティへ手で割り当てる' }))
   }
 
   for (const match of source.matchAll(/var\(--([\w-]+)/g)) {
@@ -273,7 +273,7 @@ function planFile(path, source, eligibility, hexRoles) {
           oldValue: declaration.property,
           automation: 'manual',
           status: 'unchanged',
-          reason: '旧トークン定義ブロックはhiraga-color-system.cssの読み込みへ手で差し替える'
+          reason: '旧トークン定義ブロックはstandard-color-system.cssの読み込みへ手で差し替える'
         }))
       }
       continue
@@ -318,7 +318,7 @@ function planFile(path, source, eligibility, hexRoles) {
           status: 'unchanged',
           reason: kind === 'unknown'
             ? `プロパティ ${declaration.property} の色役割を自動判定しない`
-            : '平賀の既知値と一致しないため色の意味を手で決める'
+            : '標準カラーの既知値と一致しないため色の意味を手で決める'
         }))
         continue
       }
@@ -335,7 +335,7 @@ function planFile(path, source, eligibility, hexRoles) {
         confidence: 'high',
         status: safeStatus(safeCandidate),
         reason: eligibility.status === 'eligible'
-          ? `宣言 ${declaration.property} と平賀の既知値から役割が一意`
+          ? `宣言 ${declaration.property} と標準カラーの既知値から役割が一意`
           : `役割候補は一意だが適用資格なし。${eligibility.reason}`
       })
       if (safeCandidate) addEdit(index, index + match[0].length, replacement, item)
@@ -438,7 +438,7 @@ async function rollbackTransaction(records, commitError) {
 
 async function applyTransaction(changes) {
   if (changes.length === 0) return
-  const suffix = `.hiraga-migration-${process.pid}`
+  const suffix = `.standard-migration-${process.pid}`
   const records = changes.map((change) => ({
     ...change,
     staged: join(dirname(change.file), `.${basename(change.file)}${suffix}.staged`),

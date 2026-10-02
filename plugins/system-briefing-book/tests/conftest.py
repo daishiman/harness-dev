@@ -354,7 +354,7 @@ def make_case(root: Path, *, title: str = TITLE, version: str = "v0.1", hearing:
     briefing = {
         "schema": "briefing-v1", "title": title,
         "readers": ["現場の担当者", "発注側の責任者", "開発する人"],
-        "palette": "hiraga", "materials": "..", "data_policy": "source", "book": {"include_hearing": False},
+        "palette": "standard", "materials": "..", "data_policy": "source", "book": {"include_hearing": False},
         "pages": pages,
     }
     (base / "briefing.json").write_text(json.dumps(briefing, ensure_ascii=False, indent=2), encoding="utf-8")

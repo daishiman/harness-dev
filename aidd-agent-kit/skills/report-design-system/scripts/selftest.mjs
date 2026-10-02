@@ -104,7 +104,7 @@ ok(templateFactors.length > 0 && templateFactors.every((tag) => /data-hypotheses
 
 // mirror 区間: キットの .side-nav [aria-current="page"] の宣言を写したもの。キット更新で値がずれたら落とす
 const decls = (block) => block.replace(/\/\*[\s\S]*?\*\//g, "").split(";").map((d) => d.replace(/\s+/g, " ").trim()).filter((d) => d.includes(":"));
-const vendorCss = readFileSync(join(SKILL_DIR, "assets/vendor/hiraga-components.css"), "utf8");
+const vendorCss = readFileSync(join(SKILL_DIR, "assets/vendor/standard-components.css"), "utf8");
 const kitDecls = new Set(
   [...vendorCss.matchAll(/([^{}]*\.side-nav[^{}]*\[aria-current="page"\][^{}]*)\{([^{}]*)\}/g)].flatMap((m) => decls(m[2])),
 );
@@ -118,8 +118,8 @@ if (mirror) {
 }
 ok(cssViolations(reportCss).length === 0, `report.css がトークン規律に反する: ${cssViolations(reportCss).join(" / ")}`);
 // 配色: 値はキット正本 (vendor) だけが持つ。レポート側に上書き層は無い
-const colorCss = readFileSync(join(SKILL_DIR, "assets/vendor/hiraga-color-system.css"), "utf8");
-ok(colorBaseViolations(colorCss).length === 0, `vendor 平賀カラーの基本色が規律に反する: ${colorBaseViolations(colorCss).join(" / ")}`);
+const colorCss = readFileSync(join(SKILL_DIR, "assets/vendor/standard-color-system.css"), "utf8");
+ok(colorBaseViolations(colorCss).length === 0, `vendor 標準カラーの基本色が規律に反する: ${colorBaseViolations(colorCss).join(" / ")}`);
 ok(
   colorBaseViolations(":root{--p-ink:#AAAAAA}").length > 0 &&
   colorBaseViolations(":root{--p-ink:rgb(0,0,0)}").length > 0 &&
@@ -326,11 +326,11 @@ const cases = [
   const composed = source({
     title: "合成テスト",
     parts: [
-      header({ crumb: "平賀運送｜テスト", title: "合成テスト", target: "20台・1ヶ月", created: "2026-05-31" }),
+      header({ crumb: "サンプル運送｜テスト", title: "合成テスト", target: "20台・1ヶ月", created: "2026-05-31" }),
       conclusion({ h2: "実車率は目標を5pt下回る", unit: "万円/月", hero: { label: "目標差", value: "▲5", unit: "pt" }, kpis: [{ label: "台数", value: "20", unit: "台" }], overview: { comparison: "20台を目標75%と比較", finding: "実車率は目標を5pt下回った", interpretation: "下位車両が全体を押し下げている", limitation: "案件配分が原因かは追加確認が必要" }, caution: "給油量が欠損している" }),
       f1, f2,
       actions({ h2: "2つの打ち手で差を縮める", items: [{ title: "下位の車に案件を寄せる", from: "1,2", source: "pending", effect: "+3pt", owner: "要確認", due: "要確認" }, { title: "距離の長い車の運用を広げる", from: "関係", source: "pending", effect: "+1pt", owner: "要確認", due: "要確認" }] }),
-      footer({ crumb: "平賀運送｜テスト", data: "運行日報.csv（2026年5月）" }),
+      footer({ crumb: "サンプル運送｜テスト", data: "運行日報.csv（2026年5月）" }),
     ],
   });
   let r;
@@ -415,7 +415,7 @@ const cases = [
     ok(gen.status === 0, `new-report.mjs が失敗: ${gen.stderr}`);
     const scaffoldSource = readFileSync(join(tmp, "2026-05-kuusha/analysis.mjs"), "utf8");
     const scaffoldBrief = JSON.parse(readFileSync(join(tmp, "2026-05-kuusha/brief.json"), "utf8"));
-    ok(!/REPORT_LABEL\s*=\s*["']平賀運送/.test(scaffoldSource) && scaffoldSource.includes("TODO 組織名"), "雛形の表示ラベルに固定の組織名が残っている");
+    ok(!/REPORT_LABEL\s*=\s*["']サンプル運送/.test(scaffoldSource) && scaffoldSource.includes("TODO 組織名"), "雛形の表示ラベルに固定の組織名が残っている");
     ok(scaffoldSource.includes('hypotheses: ["H1"]'), "雛形の factor 例に仮説 trace がない");
     ok(scaffoldSource.includes("hypothesisClaim(BRIEF, RESULTS") && scaffoldSource.includes("interpretation:"), "雛形に仮説・主張と解釈の入力欄がない");
     ok(scaffoldSource.includes("acts.length ? [actions(") && scaffoldSource.includes(": []),"), "雛形が打ち手0件で action セクションを省略できない");

@@ -4,7 +4,7 @@
 
 ## 1. レイアウト
 
-- **アプリシェル**: `app-background`の地 + `surface/surface-alt`の面 + `nav-background` の半透明ナビmaterial。サイドナビと下部タブは同じ色・状態規則を使い、ブランドの軸(`--p-brand-indigo`)は現在地・アイコン・ブランドの小面積アクセントに限る。装飾罫線は`border-subtle`、入力枠は`input-border`。値と光学構造は `hiraga-color-system.md`。
+- **アプリシェル**: `app-background`の地 + `surface/surface-alt`の面 + `nav-background` の半透明ナビmaterial。サイドナビと下部タブは同じ色・状態規則を使い、ブランドの軸(`--p-brand-indigo`)は現在地・アイコン・ブランドの小面積アクセントに限る。装飾罫線は`border-subtle`、入力枠は`input-border`。値と光学構造は `standard-color-system.md`。
 - **ヘッダー左のアプリ名はホームへのリンクにする(必須仕様)**。クリックでホーム画面に戻る。アプリ名は「いつ使うか」が分かる名前。ナビは3つまで。
 - **コンテンツ幅**: 下記ブレークポイント表に従う。
 - **面の重ね方**: `app-background`の地の上に`surface`カード。影に頼らず罫線で分ける。影はアプリ外枠・モーダル等「浮いている」ことに意味がある要素だけ。

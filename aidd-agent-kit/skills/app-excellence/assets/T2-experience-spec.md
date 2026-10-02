@@ -50,12 +50,12 @@
 
 ## 5. デザインシステム適用
 
-記入規則: 判定語彙・provenance・既存配色の移行手順はjp-web-design `references/catalog-default-contract.md`、色の役割とテーマはjp-web-design `references/hiraga-color-system.md` を正本とする。ここには結果だけを書く。
+記入規則: 判定語彙・provenance・既存配色の移行手順はjp-web-design `references/catalog-default-contract.md`、色の役割とテーマはjp-web-design `references/standard-color-system.md` を正本とする。ここには結果だけを書く。
 catalog-default判定: apply(new) / apply(existing・資格: ____) / REPORT_ONLY(理由: ____) / NON_VISUAL(理由: ____)
 provenance: `docs/product/design-profile.json` / contract ____ / profile id ____ / profile version ____ / digest ____ / 確認日 ____
 採用範囲: 画面 ____ / component ____ / interaction ____ / 明示例外と理由 ____
 参考デザイン(あれば): ____(取り込むのはトーンのみ。操作体系はプラットフォーム慣習優先)
-配色: 平賀カラー(既定。版は `hiraga-color-system.css` の @hiraga-meta version: ____) / Pop(明示指定時のみ・指定者: ____)
+配色: 標準カラー(既定。版は `standard-color-system.css` の @standard-meta version: ____) / Pop(明示指定時のみ・指定者: ____)
 brand_color_status: unspecified / provisional / approved / exception
 brand_color_source: ____
 brand_color_approver: ____
@@ -65,7 +65,7 @@ brand_color_approved_at: ____(ISO 8601。未承認は空欄)
 手修正した対応: 旧 ____ → 新 ____(なければ「なし」)
 フォント: UI ____ / mono・ID・ログ ____ / fallback ____
 ナビ骨格: 上部ナビ / sidebar→icon rail→bottom tabs / その他 ____ (選定理由: ____)
-safe-area: ____ / 44px操作領域: ____ / コントラスト検証(check-hiraga-contrast と実画面): ____
+safe-area: ____ / 44px操作領域: ____ / コントラスト検証(check-standard-contrast と実画面): ____
 
 ## 5-1. 状態とモーション
 

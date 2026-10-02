@@ -14,7 +14,7 @@
 - `scripts/build-report.mjs` と `check-report.mjs` は通常 build の生成・静的検査、`verify-render.mjs` と `build-state.mjs` は依頼時だけの実描画・証跡を担う。
 - `scripts/hearing.mjs` はヒアリングシートを担う (質問 `QUESTIONS`・シートの形式と読み取り・「AI が直すこと」と「ユーザーに聞くこと」の判定・現場向けの言い換え検査・レポートの打ち手と前の月のシートからの下書き)。どの欄をユーザーが決めるかは `QUESTIONS` の `decide` だけで決まる。`scripts/build-handout.mjs` はシートからの資料の生成と検査を担い、並びとチップの文言は `HANDOUT_KINDS` が正本。件数・欄の有無など生成器の形で決まることは検査せず、selftest が確かめる。
 - `assets/` は雛形と埋め込み資産。雛形 (`template.src.html`) の構造契約は `check-report.mjs` が検査し `selftest.mjs` が同期を確かめる。vendor の出所と digest は `assets/vendor/SOURCE.json` が持つ。
-- 配色の基本色はキット正本 `aidd-agent-kit/skills/jp-web-design/assets/hiraga/hiraga-color-system.css` だけが持つ。色を変えるときはキット側を直し、`sync-kit.mjs --kit <キット>` で `assets/vendor/` へ取り込み直す。レポート側に上書き層は置かない (`report.css` にも色の値を書かない)。取り込んだ基本色が文字として白地で読めるかは `check-report.mjs` の E03 が、役割トークン50ペアはキット側の `check-hiraga-contrast.mjs` が検査する。
+- 配色の基本色はキット正本 `aidd-agent-kit/skills/jp-web-design/assets/standard/standard-color-system.css` だけが持つ。色を変えるときはキット側を直し、`sync-kit.mjs --kit <キット>` で `assets/vendor/` へ取り込み直す。レポート側に上書き層は置かない (`report.css` にも色の値を書かない)。取り込んだ基本色が文字として白地で読めるかは `check-report.mjs` の E03 が、役割トークン50ペアはキット側の `check-standard-contrast.mjs` が検査する。
 - 通常変更のゲートは `scripts/smoke-test.mjs`。全変異・統計・図・証跡の回帰ゲートは `scripts/selftest.mjs` に分離し、必要な変更でだけ使う。
 
 ## 変更の流れ

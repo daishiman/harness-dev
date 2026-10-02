@@ -525,9 +525,9 @@ function checkBriefingShape(ctx) {
   }
 
   if (!Object.hasOwn(b, "palette")) {
-    shape("palette がありません (hiraga か、配色の CSS ファイルの場所)");
-  } else if (b.palette !== "hiraga" && !(typeof b.palette === "string" && /\.css$/.test(b.palette))) {
-    shape(`palette は hiraga か、.css で終わるファイルの場所にします: 「${show(b.palette)}」`);
+    shape("palette がありません (standard か、配色の CSS ファイルの場所)");
+  } else if (b.palette !== "standard" && !(typeof b.palette === "string" && /\.css$/.test(b.palette))) {
+    shape(`palette は standard か、.css で終わるファイルの場所にします: 「${show(b.palette)}」`);
   }
 
   if (!Object.hasOwn(b, "materials")) {

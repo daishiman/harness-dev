@@ -12,7 +12,7 @@
 
 - **余白**: 4/8pxグリッド(4,8,12,16,24,32,48,64)。目分量の余白を書かない
 - **タイポ**: jp-web-design `references/typography-numerals.md` §0 の書体・文字サイズ既定(system-first、モバイルでも縮めない)をそのまま使う。値はここへ複製しない
-- **色**: jp-web-design `references/catalog-default-contract.md` が選んだprofileの正本CSSを読み込み、部品は役割トークンだけを参照する。色の使い方・禁止事項・テーマ(ライトのみ)は `references/hiraga-color-system.md`、既存アプリの配色移行手順は同契約を正本とし、ここへ複製しない
+- **色**: jp-web-design `references/catalog-default-contract.md` が選んだprofileの正本CSSを読み込み、部品は役割トークンだけを参照する。色の使い方・禁止事項・テーマ(ライトのみ)は `references/standard-color-system.md`、既存アプリの配色移行手順は同契約を正本とし、ここへ複製しない
 - **角丸・影**: 各3段階まで。トークン外の値を発明しない
 
 ## §2. コンポーネント規律

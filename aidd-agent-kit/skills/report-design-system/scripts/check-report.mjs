@@ -28,7 +28,7 @@ const hasUnsupportedCausalAssertion = (text) => {
 };
 /** 角丸・文字サイズの px 直書き (キットのトークンを使う。999px の丸は可。:root のトークン定義は対象外) */
 const PX_LITERAL = /(?<![-\w])(border-radius|font-size)\s*:\s*([^;}]*)/g;
-/** 旧版の手書き部品と、置き換え先のキットの部品 (部品の正本は assets/vendor/hiraga-components.css。references/maintenance.md「正本と責務」) */
+/** 旧版の手書き部品と、置き換え先のキットの部品 (部品の正本は assets/vendor/standard-components.css。references/maintenance.md「正本と責務」) */
 const LEGACY = [
   [/class="[^"]*\bpill\b/, ".pill → キットの .badge .badge-*"],
   [/class="[^"]*\btblwrap\b/, ".tblwrap → キットの .table-scroll .card"],
@@ -74,10 +74,10 @@ const declsOf = (block) =>
   }));
 
 /**
- * vendor 平賀カラー (キット正本) の基本色の規律違反を返す。
+ * vendor 標準カラー (キット正本) の基本色の規律違反を返す。
  * 色の値はキット正本だけが持つので、検査もその1ファイルに対して行う。値を変えるときはキット側を直し、
  * sync-kit.mjs で取り込み直す (レポート側に上書き層は置かない)。
- * キット側の check-hiraga-contrast.mjs が役割トークン50ペアを見るのに対し、ここは
+ * キット側の check-standard-contrast.mjs が役割トークン50ペアを見るのに対し、ここは
  * 「レポートが文字に使う基本色が白地で読めるか」だけを、取り込んだ現物に対して独立に見る。
  */
 export function colorBaseViolations(colorCss) {
@@ -86,12 +86,12 @@ export function colorBaseViolations(colorCss) {
   for (const name of PALETTE_TEXT) {
     const value = base.get(name);
     if (value === undefined) {
-      out.push(`vendor 平賀カラーに ${name} がありません。キット正本の基本色が変わった可能性があります (sync-kit.mjs で取り込み直してください)`);
+      out.push(`vendor 標準カラーに ${name} がありません。キット正本の基本色が変わった可能性があります (sync-kit.mjs で取り込み直してください)`);
       continue;
     }
-    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) out.push(`vendor 平賀カラーの ${name} が #RRGGBB ではありません (${value})`);
+    if (!/^#[0-9A-Fa-f]{6}$/.test(value)) out.push(`vendor 標準カラーの ${name} が #RRGGBB ではありません (${value})`);
     else if (contrastOnWhite(value) < 4.5) {
-      out.push(`vendor 平賀カラーの ${name} (${value}) は白地とのコントラスト比 ${contrastOnWhite(value).toFixed(2)} で、文字色に使えません (4.5 以上)`);
+      out.push(`vendor 標準カラーの ${name} (${value}) は白地とのコントラスト比 ${contrastOnWhite(value).toFixed(2)} で、文字色に使えません (4.5 以上)`);
     }
   }
   return out;
@@ -167,7 +167,7 @@ export function checkReport(html) {
 
   // E18 ヘッダー・フッターの必須情報 (毎回同じ位置に同じ情報が出るように)
   const header = headerMatch?.[2] || "";
-  if (!/<p class="crumb">[^<]*\S[^<]*<\/p>/.test(header)) E("E18", "文書ヘッダーに所属 (p.crumb。例: 平賀運送｜車両別収支 月次レポート) がありません");
+  if (!/<p class="crumb">[^<]*\S[^<]*<\/p>/.test(header)) E("E18", "文書ヘッダーに所属 (p.crumb。例: サンプル運送｜車両別収支 月次レポート) がありません");
   const sub = textOf((header.match(/<p class="sub">([\s\S]*?)<\/p>/) || [, ""])[1]);
   if (!/対象/.test(sub) || !/\d{4}-\d{2}-\d{2}/.test(sub)) E("E18", `文書ヘッダーの p.sub に「対象: 範囲・件数」と作成日 (YYYY-MM-DD) を書いてください: 「${sub}」`);
   if (!sub.includes(`情報量: ${detail.label}`)) E("E18", `文書ヘッダーの表示「情報量: ${detail.label}」と data-detail を一致させてください`);

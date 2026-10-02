@@ -17,7 +17,7 @@ export const REPORT_JS = join(SKILL_DIR, "assets/report.js");
  * キット部品CSSの先頭にある配色の @import 行。単一HTMLでは配色CSSを直前に埋め込むので、この1行だけを除く。
  * 除去はこの完全一致の1行に限る (別の @import が増えたら除かずに残し、check の E02 で止める)。
  */
-export const KIT_COLOR_IMPORT = '@import url("../hiraga/hiraga-color-system.css");\n';
+export const KIT_COLOR_IMPORT = '@import url("../standard/standard-color-system.css");\n';
 
 /**
  * 埋め込むCSS (vendor 配色 → vendor キット部品 → report.css の順。後ろほど優先)。
@@ -46,7 +46,7 @@ export const pageShell = ({ title, nav, mainClass = "wrap", body }) => [
   embeddedCss(),
   "</style>",
   "</head>",
-  '<body class="hiraga-app">',
+  '<body class="standard-app">',
   '<a class="skip btn btn-secondary" href="#main">本文へ移動</a>',
   ...(nav ? ['<div class="shell">', nav] : []),
   `<main id="main" class="${mainClass}">`,

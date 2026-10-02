@@ -22,7 +22,7 @@ const contracts = [
   },
   {
     path: 'skills/app-excellence/assets/T2-experience-spec.md',
-    required: ['catalog-default判定', 'catalog-default-contract.md', 'docs/product/design-profile.json', 'profile version', 'REPORT_ONLY(理由', 'NON_VISUAL(理由', '@hiraga-meta version']
+    required: ['catalog-default判定', 'catalog-default-contract.md', 'docs/product/design-profile.json', 'profile version', 'REPORT_ONLY(理由', 'NON_VISUAL(理由', '@standard-meta version']
   },
   {
     path: 'skills/app-excellence/assets/T4-release-readiness.md',
@@ -54,7 +54,7 @@ const contracts = [
   },
   {
     path: 'skills/app-excellence/references/04-build-standards.md',
-    required: ['全層traceは内部の受入証拠', '参照カタログの説明文・サンプル固有文言・デバッグ注記をコピーしない', 'references/catalog-default-contract.md', 'references/typography-numerals.md', 'references/hiraga-color-system.md', '役割トークン']
+    required: ['全層traceは内部の受入証拠', '参照カタログの説明文・サンプル固有文言・デバッグ注記をコピーしない', 'references/catalog-default-contract.md', 'references/typography-numerals.md', 'references/standard-color-system.md', '役割トークン']
   },
   {
     path: 'skills/ux-design/SKILL.md',
@@ -62,7 +62,7 @@ const contracts = [
   },
   {
     path: 'agents/app-orchestrator.md',
-    required: ['Evidence → Decide → Draft → Validate → Diff', '事前質問ゼロ', '全層traceと要件フラグ', '文章とフローの認知負荷', '参照カタログの説明文・サンプル固有文言・デバッグ注記', 'catalog-default consumer contract', 'references/catalog-default-contract.md', 'references/hiraga-color-system.md', 'DOM/JSX/HTML', 'v0で同契約のminimum baseline', 'v1でfull conformance']
+    required: ['Evidence → Decide → Draft → Validate → Diff', '事前質問ゼロ', '全層traceと要件フラグ', '文章とフローの認知負荷', '参照カタログの説明文・サンプル固有文言・デバッグ注記', 'catalog-default consumer contract', 'references/catalog-default-contract.md', 'references/standard-color-system.md', 'DOM/JSX/HTML', 'v0で同契約のminimum baseline', 'v1でfull conformance']
   },
   {
     path: 'codex/agents/app-orchestrator.toml',
@@ -117,8 +117,8 @@ const forbidden = [
   ['skills/app-excellence/references/04-build-standards.md', 'ページタイトル19px(SP17px)'],
   ['skills/app-excellence/references/04-build-standards.md', 'IBM Plex Sans'],
   ['skills/app-excellence/references/04-build-standards.md', 'JetBrains Mono'],
-  ['agents/app-orchestrator.md', 'hiraga-color-system.css` をそのままコピー'],
-  ['skills/app-excellence/assets/T2-experience-spec.md', 'hiraga-color-tokens.json の version'],
+  ['agents/app-orchestrator.md', 'standard-color-system.css` をそのままコピー'],
+  ['skills/app-excellence/assets/T2-experience-spec.md', 'standard-color-tokens.json の version'],
   ['skills/app-excellence/assets/T2-experience-spec.md', 'managed-default / explicit-adoption']
 ]
 

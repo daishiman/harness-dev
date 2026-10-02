@@ -12,7 +12,7 @@
  *
  * 使い方:
  *   node scripts/build-briefing-scaffold.mjs init --materials <素材フォルダ> --title <タイトル>
- *        [--out <dir>] [--palette hiraga|<css>] [--data-policy source|masked] [--date YYYY-MM-DD] [--refresh-css] [--quiet]
+ *        [--out <dir>] [--palette standard|<css>] [--data-policy source|masked] [--date YYYY-MM-DD] [--refresh-css] [--quiet]
  *   node scripts/build-briefing-scaffold.mjs boards --dir <打ち合わせ資料> [--quiet]
  *
  * 書く場所: init は --out (既定 <素材フォルダ>/打ち合わせ資料) の配下、boards は --dir/_src の配下だけ。
@@ -48,7 +48,7 @@ import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, 
 
 const USAGE = `
 使い方:
-  build-briefing-scaffold.mjs init --materials <素材フォルダ> --title <タイトル> [--out <dir>] [--palette hiraga|<css>] [--data-policy source|masked] [--date YYYY-MM-DD] [--refresh-css] [--quiet]
+  build-briefing-scaffold.mjs init --materials <素材フォルダ> --title <タイトル> [--out <dir>] [--palette standard|<css>] [--data-policy source|masked] [--date YYYY-MM-DD] [--refresh-css] [--quiet]
   build-briefing-scaffold.mjs boards --dir <打ち合わせ資料> [--quiet]
 `;
 
@@ -106,9 +106,9 @@ function cmdInit(options) {
   if (!palette) throw new ToolMissing(`しきい値 palette_default がありません: ${THRESHOLDS_PATH}`);
   let paletteSrc;
   let paletteValue;
-  if (palette === "hiraga") {
-    paletteSrc = path.join(CSS_DIR, "tokens-hiraga.css");
-    paletteValue = "hiraga";
+  if (palette === "standard") {
+    paletteSrc = path.join(CSS_DIR, "tokens-standard.css");
+    paletteValue = "standard";
   } else {
     paletteSrc = realPath(expandHome(palette));
     if (!isFile(paletteSrc)) throw new UsageError(`配色の CSS がありません: ${palette}`);

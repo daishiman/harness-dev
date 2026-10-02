@@ -24,8 +24,8 @@ export const SOURCE_JSON = join(VENDOR_DIR, "SOURCE.json");
  * kit はキットのルートからの相対パス。vendor は assets/vendor/ 内のファイル名。
  */
 export const VENDOR_FILES = [
-  { vendor: "hiraga-color-system.css", kit: "skills/jp-web-design/assets/hiraga/hiraga-color-system.css" },
-  { vendor: "hiraga-components.css", kit: "skills/jp-web-design/assets/reference/styles.css" },
+  { vendor: "standard-color-system.css", kit: "skills/jp-web-design/assets/standard/standard-color-system.css" },
+  { vendor: "standard-components.css", kit: "skills/jp-web-design/assets/reference/styles.css" },
 ];
 export const vendorPath = (f) => join(VENDOR_DIR, f.vendor);
 
@@ -55,7 +55,7 @@ function kitMeta(kitDir) {
 }
 
 const colorVersion = (css) => {
-  const meta = css.match(/@hiraga-meta\s+(\{.*\})/);
+  const meta = css.match(/@standard-meta\s+(\{.*\})/);
   return meta ? JSON.parse(meta[1]).version : undefined;
 };
 

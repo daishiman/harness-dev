@@ -11,7 +11,7 @@ const styles = await readFile(join(referenceDir, 'styles.css'), 'utf8')
 const appJs = await readFile(join(referenceDir, 'app.js'), 'utf8')
 const interactions = await readFile(join(referenceDir, 'reference-interactions.js'), 'utf8')
 const referenceReadme = await readFile(join(referenceDir, 'README.md'), 'utf8')
-const hiragaCss = await readFile(join(referenceDir, '../hiraga/hiraga-color-system.css'), 'utf8')
+const standardCss = await readFile(join(referenceDir, '../standard/standard-color-system.css'), 'utf8')
 const catalogProfile = JSON.parse(await readFile(join(referenceDir, 'catalog-default-profile.json'), 'utf8'))
 
 function visibleText(source) {
@@ -63,7 +63,7 @@ check(!/\bclass\s*=\s*["'][^"']*\bspec-note\b/i.test(catalog), 'catalog.html: sp
 check(!/<code\b/i.test(catalog.replace(/<style\b[\s\S]*?<\/style>/gi, '')), 'catalog.html: visible code elements are absent')
 
 const headings = [...catalog.matchAll(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/gi)].map((match) => visibleText(match[1]))
-for (const heading of ['部品カタログ', '平賀カラー', 'サイドナビ', 'ボタン', '動き', '状態', '入力', '選択', '一覧', '案内', '用語', '比較', '文字と数字']) {
+for (const heading of ['部品カタログ', '標準カラー', 'サイドナビ', 'ボタン', '動き', '状態', '入力', '選択', '一覧', '案内', '用語', '比較', '文字と数字']) {
   check(headings.includes(heading), `catalog.html: short heading '${heading}' exists`)
 }
 check(headings.every((heading) => !/[（(—+\/]/.test(heading)), 'catalog.html: headings contain no implementation annotations')
@@ -114,7 +114,7 @@ check(!/action-primary-bg|status-info-text|brand-accent/.test(navigationGlass), 
 check(/--navigation-glass-fill:[\s\S]*?var\(--nav-hover\)[\s\S]*?var\(--nav-background\)/.test(styles), 'styles.css: shared navigation material is derived from canonical nav roles')
 check(/:is\(\.side-nav, \.bottom-tabs\) :where\(a, button\)\s*\{[\s\S]*?min-height:\s*var\(--tap\)[\s\S]*?color:\s*var\(--nav-text-muted\)[\s\S]*?font-size:\s*var\(--font-size-control\)/.test(styles), 'styles.css: both navigation variants share 44px and 16px item rules')
 check(!/background-color:\s*var\(--nav-background\)/.test(styles), 'styles.css: legacy solid indigo navigation plane is absent')
-check(/--nav-background:\s*var\(--p-surface-subtle\);[\s\S]*?--nav-text:\s*var\(--p-ink\);[\s\S]*?--nav-text-muted:\s*var\(--p-ink-secondary\);[\s\S]*?--nav-hover:\s*var\(--p-brand-indigo-soft\);[\s\S]*?--nav-selected-indicator:\s*var\(--p-brand-indigo\);/.test(hiragaCss), 'hiraga-color-system.css: navigation roles are light with indigo limited to selection')
+check(/--nav-background:\s*var\(--p-surface-subtle\);[\s\S]*?--nav-text:\s*var\(--p-ink\);[\s\S]*?--nav-text-muted:\s*var\(--p-ink-secondary\);[\s\S]*?--nav-hover:\s*var\(--p-brand-indigo-soft\);[\s\S]*?--nav-selected-indicator:\s*var\(--p-brand-indigo\);/.test(standardCss), 'standard-color-system.css: navigation roles are light with indigo limited to selection')
 check(/@media \(prefers-reduced-transparency: reduce\), \(prefers-contrast: more\)[\s\S]*?:is\(\.side-nav, \.bottom-tabs\)\s*\{[^}]*background:\s*var\(--surface-alt\);[^}]*backdrop-filter:\s*none;/.test(styles), 'styles.css: both navigation variants share an opaque accessibility fallback')
 
 const card = styles.match(/\.card\s*\{([\s\S]*?)\n\}/)?.[1] ?? ''

@@ -25,24 +25,24 @@ node <jp-web-design>/scripts/catalog-default.mjs verify <app-root> --stage=v1
 
 ## 既存アプリの一本化フロー
 
-既存の可視UIへ平賀既定を入れる手順はここだけに書く。他の文書はこの節を参照し、手順を複製しない。
+既存の可視UIへ標準カラーの既定を入れる手順はここだけに書く。他の文書はこの節を参照し、手順を複製しない。
 
 1. `catalog-default.mjs verify <app-root> --stage=v0` — 既に管理下なら drift を先に確認する(「更新」節)。
 2. `migrate-legacy-colors.mjs <app-src-dir> --plan --json` — 適用資格と旧→新の計画を保存する。旧→新の対応はこの出力が正本。
-3. 適用資格が `eligible`(`source_theme` が `legacy-mode-a` / `unspecified` / `hiraga`)なら `--apply` で `automation=safe` だけを置換する。review-only は未変更のまま役割を判断する。
+3. 適用資格が `eligible`(`source_theme` が `legacy-mode-a` / `unspecified` / `standard`)なら `--apply` で `automation=safe` だけを置換する。review-only は未変更のまま役割を判断する。
 4. `catalog-default.mjs plan <app-root> --app-state=existing` — `--eligibility` 未指定時は手順2と同じ共有判定で自動算出する。`--eligibility=eligible|unknown` は証拠を確認したうえでの明示上書き。
 5. `catalog-default.mjs apply <app-root> --app-state=existing` — 画面構成・文言・余白は変えず、色と正本CSSの読み込みだけを揃える。
 6. `verify --stage=v0`。正式版前は `--stage=v1`。
 7. T2へ適用資格・plan JSONの旧→新対応・review-only残件・例外を記録する。
 
-「ライトのみ」「既存は色だけ移行」の不変条件は INV-15 と `hiraga-color-system.md` が正本。
+「ライトのみ」「既存は色だけ移行」の不変条件は INV-15 と `standard-color-system.md` が正本。
 
 ## 生成物と読み込み順
 
 `apply` は正本CSS、版・digestつき `docs/product/design-profile.json`、空の `docs/product/design-runtime-scenarios.json`、v1実測用の待機中証拠だけを生成する。業務DOM、可視文言、サンプルデータ、参照HTMLの説明文はコピーしない。検出できたCSS入口で、正本importをコメントではないactive importの1件に正規化し、Tailwind等のframework importより後ろへ置く。入口が見つからなければ勝手にframework構成を推測せずFAILし、実装者がapp root内の `--entry-css=<relative-path>` を指定する。
 
-- 配置先: `src/styles/aidd/hiraga-color-system.css`(色の値の正本コピー)と `src/styles/aidd/catalog-default.css`(部品CSS。先頭で隣の平賀CSSを import する)。値の書き換え、JS定数への複製、CSSの手動コピーはしない(差分は verify が drift として検出する)。
-- 読み込み順: 入口CSSでは `@import "tailwindcss";` などframework importを先に置き、`catalog-default.css` の import を最後の active `@import` にする。Tailwind v4 の `@theme inline` 橋渡しはこの後ろに書く(`hiraga-color-system.md` §3)。
+- 配置先: `src/styles/aidd/standard-color-system.css`(色の値の正本コピー)と `src/styles/aidd/catalog-default.css`(部品CSS。先頭で隣の標準カラーCSSを import する)。値の書き換え、JS定数への複製、CSSの手動コピーはしない(差分は verify が drift として検出する)。
+- 読み込み順: 入口CSSでは `@import "tailwindcss";` などframework importを先に置き、`catalog-default.css` の import を最後の active `@import` にする。Tailwind v4 の `@theme inline` 橋渡しはこの後ろに書く(`standard-color-system.md` §3)。
 
 各UI sliceの実装後、`design-profile.json` の `adopted_components` に `screen`、app root内の `source_files`、`components`、画面rootと共通の `runtime_marker` を記録し、描画rootに `data-aidd-screen="<runtime_marker>"` を付ける。`screen` と `runtime_marker` は全宣言で一意にし、同じDOMを別画面として二重計上しない。component idはprofileの `component_markers` だけを使う。v0は宣言sourceの存在、コメント/文字列ではない実markupのclassとmarker、consumer source inventory全体の参照サンプル非混入を照合する。空や引用例だけの適用宣言ではPASSしない。
 

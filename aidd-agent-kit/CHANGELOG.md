@@ -2,17 +2,23 @@
 
 AI開発エージェントキットの版ごとの変更点です。現在の版は `VERSION` が正本で、利用者向けの入口は [`START-HERE.md`](START-HERE.md)、開発者向けの説明は [`README.md`](README.md) にあります。
 
+## 未リリース
+
+- 既定の配色の名前を「標準カラー」(`standard`) に改めました。ファイル名・CSS のクラス名・メタ情報の見出し・`--mode` の値などの旧名は、すべて `standard` になります。主な例は `assets/standard/standard-color-system.css`、`@standard-meta`、`.standard-app`、`check-standard-contrast.mjs`、`catalog-default.mjs --mode=standard` です。色の値と役割トークンの名前は変えていません
+- 見本の画面とレポートの例文に使っていた会社名を、架空の「サンプル運送」に置き換えました。配色の見本 (`standard-color-preview.html`) からは、特定の会社のサイトを調べた節を外しました
+- 既存のアプリが旧名の CSS ファイルや `--mode` の値で取り込んでいる場合は、ファイル名と設定値を新しい名前へ読み替えてください
+
 ## 1.11.0
 
 - `catalog.html` を「見るだけの参考」から build-app / improve-app の指定なし既定へ昇格しました。版付き `catalog-default-profile.json` と `catalog-default.mjs` の plan / apply / verify で、正本CSS・適用証跡・v0/v1検収を生成アプリまで接続します。v1は `catalog-runtime-audit.mjs` がChromeの4幅とpointer/keyboard実操作を毎回再実行し、手書き証拠では合格できません。既存ブランドは適用資格が確定するまでreport-onlyとし、参照画面の説明文・架空データはコピーしません
-- UIの既定配色を Mode A(Graphite × Amber)から平賀暫定カラー v0.2(インディゴ×マゼンタ×白・ライトのみ)へ置き換えました。値の正本は `jp-web-design/assets/hiraga/hiraga-color-system.css` の1つだけで、使い方の正本は `references/hiraga-color-system.md`(INV-15)です。Pop は利用者の明示指定時だけ使います
-- 旧 `mode-a-graphite-amber.md` / `color-system.md` / `check-mode-a-contrast.mjs` / `theme.js` を削除し、Dark・テーマ切替・互換エイリアスをやめました。表のヘッダー面と交互行は平賀トークンで使えるようにし、フォーカスは3pxのマゼンタに揃えました
-- `check-hiraga-contrast.mjs`(主要50ペア)、`export-hiraga-tokens.mjs`(CSSからJSONを生成)、`migrate-legacy-colors.mjs`(既存アプリの旧配色を検出し色だけ置換)を追加しました。`/build-app` `/improve-app` は既存アプリで移行を先に実行し、対応表をT2へ残します
+- UIの既定配色を Mode A(Graphite × Amber)から暫定標準カラー v0.2(インディゴ×マゼンタ×白・ライトのみ)へ置き換えました。値の正本は `jp-web-design/assets/standard/standard-color-system.css` の1つだけで、使い方の正本は `references/standard-color-system.md`(INV-15)です。Pop は利用者の明示指定時だけ使います
+- 旧 `mode-a-graphite-amber.md` / `color-system.md` / `check-mode-a-contrast.mjs` / `theme.js` を削除し、Dark・テーマ切替・互換エイリアスをやめました。表のヘッダー面と交互行は標準カラーのトークンで使えるようにし、フォーカスは3pxのマゼンタに揃えました
+- `check-standard-contrast.mjs`(主要50ペア)、`export-standard-tokens.mjs`(CSSからJSONを生成)、`migrate-legacy-colors.mjs`(既存アプリの旧配色を検出し色だけ置換)を追加しました。`/build-app` `/improve-app` は既存アプリで移行を先に実行し、対応表をT2へ残します
 - 参照実装(styles/index/catalog/pop)をすべて役割トークンへ移し、サイドナビ・下タブ・ツールチップ・無効状態・印刷・forced-colors を追加しました
 - 画面の地を白 `#FFFFFF` にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相(補助面 `#F6F5FF` ほか)へ寄せ、お知らせ等の注目面に `--surface-accent`(淡いマゼンタ)を追加しました。青系(情報・車両ネイビー)は据え置きです。移行は無彩色の灰色だけを白との対比で役割トークンへ寄せます
 - 部品カタログ `catalog.html` にCSSを埋め込み、HTML 1ファイルだけで共有・閲覧できるようにしました。埋め込みは `inline-catalog-css.mjs` で生成し、CIで正本との一致を検査します。カタログから見出し下の説明文と他ページへのリンクを外し、見本だけを並べました
 - 既存アプリの配色移行を `catalog-default-contract.md`「既存アプリの一本化フロー」の1か所に集約し、手動のCSSコピー手順と重複記述を正本参照へ置き換えました。`catalog-default.mjs plan/apply` は `--eligibility` 省略時に `migrate-legacy-colors.mjs` と同じ共有判定で適用資格を自動算出します(明示指定は上書き、根拠は plan JSON の `eligibility_basis`)。migrate は未知オプションを入力エラー(終了コード2)にします
-- jp-web-design のスクリプト共通処理を `scripts/lib/`(args / fs-walk / provenance / eligibility / cdp)、テスト共通処理を `tests/_harness.mjs` へまとめました。CI の `! grep` 行が `set -e` 下で失敗を見逃していた不具合を直し、旧トークン禁止の検査対象を `hiraga-color-system.md` と `SKILL.md` にも広げました。成果物先行の文言検査は、値の文言ではなく正本パスの参照を確認する形にしました
+- jp-web-design のスクリプト共通処理を `scripts/lib/`(args / fs-walk / provenance / eligibility / cdp)、テスト共通処理を `tests/_harness.mjs` へまとめました。CI の `! grep` 行が `set -e` 下で失敗を見逃していた不具合を直し、旧トークン禁止の検査対象を `standard-color-system.md` と `SKILL.md` にも広げました。成果物先行の文言検査は、値の文言ではなく正本パスの参照を確認する形にしました
 - 透明感の既定を iPhone の Liquid Glass 風にしました。背景は白地から淡いインディゴ・マゼンタ・青へ移るグラデーション、白い面は半透明+強いぼかし+光る縁、サイドナビ・主操作などの濃色面は光沢付きにして単色のベタ塗りをやめました。境界線は薄い罫線と光る縁で溶け込ませ、角丸とカプセル形を揃えました(入力枠は3:1のため据え置き)。透明を減らす設定・高コントラスト・印刷では不透明に戻します
 
 ## 1.10.5

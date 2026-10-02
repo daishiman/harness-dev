@@ -122,14 +122,14 @@
 
 reduced-motionでも状態変化そのものは消さない。animationを止めた状態で、文言・アイコン・border・DOM順だけで同じ意味が伝わることを確認する。
 
-`prefers-contrast: more` の役割トークン上書きは `assets/hiraga/hiraga-color-system.css` が唯一の正本。ここやアプリ側へ値を複製せず、正本CSSをそのまま読み込む。
+`prefers-contrast: more` の役割トークン上書きは `assets/standard/standard-color-system.css` が唯一の正本。ここやアプリ側へ値を複製せず、正本CSSをそのまま読み込む。
 
 ## 6. アクセシビリティ
 
 - `:focus-visible` は `--focus-ring`(アクセント色)の3px outline + 3px offset + `--focus-gap`(白)の隙間、即時表示。濃色のナビ内では `--focus-ring-inverse`。
 - タップ領域44×44px以上。SPでは主要CTAを原則全幅にする。
 - 状態を色だけで伝えない。文言、border、アイコン、位置のうち少なくとも1つを併用する。
-- `node scripts/check-hiraga-contrast.mjs` でトークンの組を検査し、画面はaxe等で本文・状態色・focusを機械検査する(ライトのみ)。
+- `node scripts/check-standard-contrast.mjs` でトークンの組を検査し、画面はaxe等で本文・状態色・focusを機械検査する(ライトのみ)。
 - スクリーンリーダーのlive regionは必要な結果だけを短く読み上げる。アニメーションの途中経過を連続通知しない。
 - キーボードでpopover / modal / accordion / tabbarを操作し、フォーカスが見え、閉じた要素へ入らず、固定要素の下へ隠れないことを実測する。
 

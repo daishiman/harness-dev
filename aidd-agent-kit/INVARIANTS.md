@@ -18,4 +18,4 @@
 | INV-12 | 依頼者に見せる確認とデプロイ前確認は `pnpm run preview`(Workers ランタイム)。`pnpm dev` で「動いた」と判断しない | `agents/app-orchestrator.md` 絶対原則5 / `skills/mvp-first-development/SKILL.md` §5 |
 | INV-13 | 破壊操作(D1/R2 削除・DROP TABLE・本番 UPDATE/DELETE)・課金拡大・ドメイン変更は利用者確認なしに実行しない | `skills/cloudflare-secure-deploy/SKILL.md` §10 |
 | INV-14 | インストーラは上書き前に backup、失敗時は manifest 単位で rollback、stale 削除は旧 manifest との差分だけ、HOME 外へ書かない | `install-mac.command` / `install-windows.bat` |
-| INV-15 | UI の配色は平賀カラー(`hiraga-color-system.css` の役割トークン)を唯一の既定とし、ライトのみ。Pop は利用者の明示指定時だけ。既存アプリの旧配色は色だけ移行する | `skills/jp-web-design/references/hiraga-color-system.md` §0 |
+| INV-15 | UI の配色は標準カラー(`standard-color-system.css` の役割トークン)を唯一の既定とし、ライトのみ。Pop は利用者の明示指定時だけ。既存アプリの旧配色は色だけ移行する | `skills/jp-web-design/references/standard-color-system.md` §0 |

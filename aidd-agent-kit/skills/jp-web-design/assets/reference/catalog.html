@@ -8,15 +8,15 @@
 <!-- inline-css:start (node scripts/inline-catalog-css.mjs で生成。直接編集しない) -->
 <style>
 /* ============================================================
-   平賀暫定カラー — 色の正本は ../hiraga/hiraga-color-system.css
+   暫定標準カラー — 色の正本は ../standard/standard-color-system.css
    ここでは色の値を定義しない。役割トークンだけを参照する(ライトのみ)
    ============================================================ */
 /*
- * @hiraga-meta {"schema_version":1,"name":"平賀運送向け 暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。公式CI指定値でも現行サイトの実測値でもない","theme":"light-only"}
+ * @standard-meta {"schema_version":1,"name":"標準の暫定カラーデザイン","version":"0.3","date":"2026-09-28","status":"暫定提案。正式に承認された配色ではない","theme":"light-only"}
  * 今回の変更(v0.3): 紫・マゼンタ系をブルー系に置き換え、補助面・罫線・文字も青みのグレーへ。赤字(損失)表示のみ明るい赤で残す。
  * 前回の変更: 画面背景を白にし、補助面・罫線・補助文字を灰青からごく淡いインディゴ色相へ寄せた。青系(情報・車両ネイビー)は据え置き。
- * 全HEXはシステム向け提案値。原サイトCSS/SVGからの実測値でも公式CI指定値でもありません。
- * 根拠: 制作会社の2020年掲載画像・公式車両写真。現行全ページ・全状態は未検証。
+ * 全HEXはシステム向け提案値。正式に承認された配色ではありません。
+ * 正式な配色が決まったら、基本色 --p-* だけを差し替える。
  * ライトテーマのみ。暗背景には inverse 系トークンを明示的に使用してください。
  * brand-indigo はブランドの軸(ブルー)、brand-accent は主操作のアクセント(明るいブルー)。別の役割です。
  * 命名の規律: 基本色の名前は「ブランド対の中の位置」を表し、色相は表さない。色相を名前にすると
@@ -62,7 +62,7 @@
   /* グラフ系列専用の色。UIの面・文字には使わない (§1 の面積比の外)。意味色 (--p-info / --p-warning /
      --p-success) をここへ流用しない。同じ色が「状態」と「カテゴリ」の二つを指すと読み手が取り違える。
      カテゴリの見分けは色相差で作るので、v0.3 のブルー化から外して 60 度前後の間隔で色相を確保している。
-     値を変えるときは scripts/check-hiraga-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
+     値を変えるときは scripts/check-standard-contrast.mjs の系列分離検査 (最小色相差) を必ず通す */
   --p-chart-amber: #92400E;   /* H23  */
   --p-chart-lime: #4D7C0F;    /* H86  */
   --p-chart-teal: #0F766E;    /* H175 */
@@ -177,7 +177,7 @@
      ブランド色を流すのは主役の --chart-main だけに留め、系列 1〜5 には brand/accent を使わない。
      v0.3 でブランド軸が H260 台から H222 へ移ったため、アクセント青を系列に流すと main と重なる。
      下の並びは隣接する系列の色相が 60 度以上離れるよう並べてある (最小の対は main と purple の 41 度)。
-     値や並びを変えたら scripts/check-hiraga-contrast.mjs の系列分離検査が最小色相差を機械で見る */
+     値や並びを変えたら scripts/check-standard-contrast.mjs の系列分離検査が最小色相差を機械で見る */
   --chart-main: var(--p-brand-indigo);  /* H222 ブルー — ブランドの軸。主役系列 */
   --chart-1: var(--p-chart-amber);      /* H23  アンバー */
   --chart-2: var(--p-chart-lime);       /* H86  ライムグリーン */
@@ -194,41 +194,41 @@
 }
 
 /* 必要な範囲に適用する共通クラス。フレームワークへの組み込み時は既存クラスにマッピング可。 */
-.hiraga-app { background: var(--app-background); color: var(--text-primary); }
-.hiraga-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
-.hiraga-heading { color: var(--text-heading); }
-.hiraga-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
-.hiraga-link:visited { color: var(--link-visited); }
-.hiraga-link:hover { color: var(--link-hover); }
-.hiraga-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
-.hiraga-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
-.hiraga-button--primary:hover { background: var(--action-primary-hover); }
-.hiraga-button--primary:active { background: var(--action-primary-active); }
-.hiraga-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
-.hiraga-button--secondary:hover { background: var(--action-secondary-hover); }
-.hiraga-button--secondary:active { background: var(--action-secondary-active); }
-.hiraga-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
-.hiraga-button--danger:hover { background: var(--action-danger-hover); }
-.hiraga-button--danger:active { background: var(--action-danger-active); }
-.hiraga-button:disabled, .hiraga-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
+.standard-app { background: var(--app-background); color: var(--text-primary); }
+.standard-card { background: var(--surface); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-soft); }
+.standard-heading { color: var(--text-heading); }
+.standard-link { color: var(--link); text-decoration: underline; text-underline-offset: .2em; }
+.standard-link:visited { color: var(--link-visited); }
+.standard-link:hover { color: var(--link-hover); }
+.standard-button { border: 1px solid transparent; border-radius: 8px; min-height: 44px; padding: .65em 1.15em; font: inherit; font-weight: 700; cursor: pointer; }
+.standard-button--primary { background: var(--action-primary-bg); color: var(--action-primary-text); }
+.standard-button--primary:hover { background: var(--action-primary-hover); }
+.standard-button--primary:active { background: var(--action-primary-active); }
+.standard-button--secondary { background: var(--action-secondary-bg); color: var(--action-secondary-text); border-color: var(--action-secondary-border); }
+.standard-button--secondary:hover { background: var(--action-secondary-hover); }
+.standard-button--secondary:active { background: var(--action-secondary-active); }
+.standard-button--danger { background: var(--action-danger-bg); color: var(--action-danger-text); }
+.standard-button--danger:hover { background: var(--action-danger-hover); }
+.standard-button--danger:active { background: var(--action-danger-active); }
+.standard-button:disabled, .standard-button[aria-disabled="true"] { background: var(--action-disabled-bg); color: var(--action-disabled-text); border-color: var(--action-disabled-border); cursor: not-allowed; opacity: 1; }
 /* aria-disabled のみでは操作は止まりません。アプリ側でもイベントを抑止してください。 */
-.hiraga-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
-.hiraga-input::placeholder { color: var(--input-placeholder); opacity: 1; }
-.hiraga-input:hover { border-color: var(--input-border-hover); }
-.hiraga-input:focus { border-color: var(--input-border-focus); }
-.hiraga-input[readonly] { background: var(--input-readonly-bg); }
-.hiraga-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
-.hiraga-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
-.hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
+.standard-input { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 8px; padding: .75em; font: inherit; }
+.standard-input::placeholder { color: var(--input-placeholder); opacity: 1; }
+.standard-input:hover { border-color: var(--input-border-hover); }
+.standard-input:focus { border-color: var(--input-border-focus); }
+.standard-input[readonly] { background: var(--input-readonly-bg); }
+.standard-input:disabled { background: var(--action-disabled-bg); color: var(--action-disabled-text); opacity: 1; }
+.standard-input[aria-invalid="true"] { border-color: var(--input-invalid-border); }
+.standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; box-shadow: 0 0 0 3px var(--focus-gap); }
 /* 淡いナビ面では通常のフォーカスリングを使う。inverse は明示した暗色面だけに限定する。 */
-.hiraga-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
-.hiraga-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
-.hiraga-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
-.hiraga-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
-.hiraga-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
-.hiraga-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
-.hiraga-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
-.hiraga-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
+.standard-nav :where(a,button,input,[tabindex]):focus-visible { outline-color: var(--focus-ring); box-shadow: 0 0 0 3px var(--focus-gap); }
+.standard-app ::selection { background: var(--selection-bg); color: var(--selection-text); }
+.standard-status { display: inline-flex; align-items: center; gap: .35em; border-radius: 999px; padding: .3em .65em; font-size: .85em; font-weight: 700; }
+.standard-status--neutral { color: var(--status-neutral-text); background: var(--status-neutral-bg); }
+.standard-status--info { color: var(--status-info-text); background: var(--status-info-bg); }
+.standard-status--success { color: var(--status-success-text); background: var(--status-success-bg); }
+.standard-status--warning { color: var(--status-warning-text); background: var(--status-warning-bg); }
+.standard-status--danger { color: var(--status-danger-text); background: var(--status-danger-bg); }
 /* ステータスには文字とアイコンを併用。薄い背景色だけで情報を伝えない。 */
 @media (prefers-contrast: more) {
   :root {
@@ -239,13 +239,13 @@
   }
 }
 @media (forced-colors: active) {
-  .hiraga-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
-  .hiraga-button, .hiraga-status { border: 1px solid ButtonText; }
+  .standard-app :where(a,button,input,select,textarea,[tabindex]):focus-visible { outline-color: Highlight; box-shadow: none; }
+  .standard-button, .standard-status { border: 1px solid ButtonText; }
 }
 @media print {
-  .hiraga-app { background: white; color: black; }
-  .hiraga-card { background: white; border-color: black; box-shadow: none; }
-  .hiraga-status { color: black; background: white; border: 1px solid black; }
+  .standard-app { background: white; color: black; }
+  .standard-card { background: white; border-color: black; box-shadow: none; }
+  .standard-status { color: black; background: white; border: 1px solid black; }
 }
 
 :root {
@@ -1503,7 +1503,7 @@ th[aria-sort="descending"] .table-sort::after { content: " ↓"; }
 <main>
   <!-- §1-2 カラートークン -->
   <section class="catalog-section">
-    <h2 class="section-heading">平賀カラー</h2>
+    <h2 class="section-heading">標準カラー</h2>
     <!-- 色名と用途だけを表示する。トークン名とコントラスト実測値は正本CSS・検査スクリプトで管理する。 -->
     <div class="swatch-row">
       <div class="swatch" data-token="p-brand-indigo"><div class="sw-color" style="background:var(--p-brand-indigo)"></div><div class="sw-meta"><strong>インディゴ</strong></div></div>

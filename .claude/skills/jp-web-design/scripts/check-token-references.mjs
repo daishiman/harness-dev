@@ -7,11 +7,11 @@
 
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { loadTokens } from './hiraga-tokens.mjs'
+import { loadTokens } from './standard-tokens.mjs'
 
 // 正本のトークンを使う側のファイル。ここに足し忘れると検査の外に出るので、色を使うCSS/HTMLは必ず載せる
 const CONSUMERS = [
-  '../assets/hiraga/hiraga-color-preview.html',
+  '../assets/standard/standard-color-preview.html',
   '../assets/reference/styles.css',
   '../assets/reference/catalog.html',
   '../assets/reference/index.html',

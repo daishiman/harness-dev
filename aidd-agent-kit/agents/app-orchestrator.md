@@ -87,7 +87,7 @@ description: Webアプリの準備→要件定義→設計→実装→公開→�
 
 - **必ずロード**: `design-judgment` → `ux-design` → `jp-web-design` の順(入口 → 実体 → 素材)。先に業務構造、次に操作、最後に見た目の土台を決める。業務構造の診断は `ux-design` §0-1 / §2-3、装飾除去テストは同 §13-1。
   - 可視UIありでは `jp-web-design` の `references/catalog-default-contract.md` を読み、契約が指定するprofileを固定してT2のprovenanceへ記録する。正本profile・適用手順・検査項目は同契約から読み、本書に転記しない。
-  - **3-A で使う `jp-web-design` の範囲は「土台」だけ**: デザイントークン(配置・読み込み順は `references/catalog-default-contract.md` の手順で `catalog-default.mjs apply` に任せ、手でコピーしない。色の使い方は `references/hiraga-color-system.md`)・タイポグラフィ・レイアウト骨格・日本語の折返し規律。**トークン体系は後から入れ替えると全画面の書き直しになる**ため、ここは前倒しする。
+  - **3-A で使う `jp-web-design` の範囲は「土台」だけ**: デザイントークン(配置・読み込み順は `references/catalog-default-contract.md` の手順で `catalog-default.mjs apply` に任せ、手でコピーしない。色の使い方は `references/standard-color-system.md`)・タイポグラフィ・レイアウト骨格・日本語の折返し規律。**トークン体系は後から入れ替えると全画面の書き直しになる**ため、ここは前倒しする。
   - 情報設計の8工程・表示形式の6軸・モーション設計は **3-B で同じスキルを再ロードして通す**。3-A では通さない。
 - **先に体験設計**(誰がどの画面で何を完了するか)を固め、**その後に機能分解**(画面・API・テーブルへの割り付け)を行う。機能一覧から先に作ると1画面複数目的の詰め込みが起きる。
 - **全層の対応と品質フラグは app-excellence `references/03-feature-decomposition.md`「全層traceと要件フラグ」を正本としてT3に記録する**。UIから保存・再読込・更新・失敗回復まで同じtraceで受入確認し、本書では層別規則を複製しない。
@@ -98,7 +98,7 @@ description: Webアプリの準備→要件定義→設計→実装→公開→�
   この3点は mvp-first-development §3「最初に成果物へ明記する(後から変えるとデータ移行が必要になるもの)」の不可逆判断そのものであり、**間違えると既存データごと作り直しになる**。他の設計判断が可逆であるのに対し、ここだけは前倒しする価値がある。
 - **入力作法を1つに決めて全画面へ適用する**: 空欄の意味・自動計算値の入れ方(欄の中に初期値、自動/手入力の区別、自動に戻す)・Enterの挙動を1組だけ決め、標準 `docs/product/T2-experience-spec.md` またはプロジェクトの同等正本に記録する。タブ・ステップごとに作法を分岐させない(ux-design `references/input-patterns.md` §4-4)。**画面ごとに作法が割れてから統一するのは全画面の書き直しになる**ため、これも先に決める。
 - **常時表示要素の適用範囲をMECEに確定する**: 現在地(ステップ・タブ)と退避先(保存・戻る・次へ)を固定表示する画面の一覧を作り、適用しない画面はその理由を残す。実装は共通レイアウト部品1箇所(ux-design §2-2 / jp-web-design `references/layout-responsive.md` §6)。
-- **色は既定値を採用して先へ進む**: 要件にカラー・ロゴ・モードの指定があればT2へ記録し、未指定なら判断せず既定profileを採用する(既定・ライトのみ・Popの扱いは INV-15 と jp-web-design `references/hiraga-color-system.md` が正本)。T2へ `brand_color_status/source/approver/approved_at` を記録し、内部v0は `provisional` でよい。作り込みは 3-B で行う。
+- **色は既定値を採用して先へ進む**: 要件にカラー・ロゴ・モードの指定があればT2へ記録し、未指定なら判断せず既定profileを採用する(既定・ライトのみ・Popの扱いは INV-15 と jp-web-design `references/standard-color-system.md` が正本)。T2へ `brand_color_status/source/approver/approved_at` を記録し、内部v0は `provisional` でよい。作り込みは 3-B で行う。
 - **既存アプリは一本化フローで色だけ移行する**(`/improve-app` / `$improve-app` や既存repoでの build も同じ): jp-web-design `references/catalog-default-contract.md` の既存アプリ手順(verify → `migrate-legacy-colors.mjs --plan --json` → safe適用 → `catalog-default.mjs` plan/apply → verify → T2記録)をそのまま実行する。適用資格・対象外(REPORT_ONLY)・手順の詳細は同契約だけを正本とし、本書へ転記しない。
 - **外部データの取込・マスタ(基準値/対応表)・月次などの締め処理が要件にあれば** app-excellence の `references/data-lifecycle.md` を読み、①取込値と手修正を別枠で持つ ②確定済み期間はマスタ変更で据え置き+差分通知 ③突合は正規化キー、の3点の方針を標準 `docs/product/T2-experience-spec.md` またはプロジェクトの同等正本に1行ずつ書いてから実装に入る。**これはスキーマに直結するため 3-A に置く。**
 - ux-design の `assets/ux-patterns.tsx` は実装時にコピーして使う。

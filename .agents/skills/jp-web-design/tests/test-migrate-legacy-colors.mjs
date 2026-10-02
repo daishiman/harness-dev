@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { cp, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { runScript, skillRoot, withTempDir } from './_harness.mjs'
-import { loadTokens } from '../scripts/hiraga-tokens.mjs'
+import { loadTokens } from '../scripts/standard-tokens.mjs'
 
 const script = join(skillRoot, 'scripts', 'migrate-legacy-colors.mjs')
 const fixtures = join(skillRoot, 'tests', 'fixtures', 'migrate-legacy-colors')
@@ -32,13 +32,13 @@ async function assertFixtureHexesMatchPalette() {
   assert.deepEqual(
     stale,
     [],
-    `fixture のHEXが現行パレットに無くなっています。正本 assets/hiraga/hiraga-color-system.css の値へ更新してください:\n  ${stale.join('\n  ')}`
+    `fixture のHEXが現行パレットに無くなっています。正本 assets/standard/standard-color-system.css の値へ更新してください:\n  ${stale.join('\n  ')}`
   )
 }
 await assertFixtureHexesMatchPalette()
 
 async function withFixture(name, callback) {
-  await withTempDir(`hiraga-migration-${name}-`, async (temp) => {
+  await withTempDir(`standard-migration-${name}-`, async (temp) => {
     const root = join(temp, name)
     await cp(join(fixtures, name), root, { recursive: true })
     await callback(root)
@@ -183,7 +183,7 @@ await withFixture('transaction', async (root) => {
   assert.doesNotMatch(failed.stderr, /rollback incomplete/)
   assert.equal(await readFile(aPath, 'utf8'), aBefore)
   assert.equal(await readFile(bPath, 'utf8'), bBefore)
-  assert.ok((await readdir(root)).every((name) => !name.includes('.hiraga-migration-')))
+  assert.ok((await readdir(root)).every((name) => !name.includes('.standard-migration-')))
 })
 
 await withFixture('transaction', async (root) => {
@@ -196,7 +196,7 @@ await withFixture('transaction', async (root) => {
   assert.match(failed.stderr, /backups preserved:/)
   assert.doesNotMatch(failed.stderr, /ERROR transaction rolled back:/)
   const entries = await readdir(root)
-  const backup = entries.find((name) => name.startsWith('.a.css.hiraga-migration-') && name.endsWith('.backup'))
+  const backup = entries.find((name) => name.startsWith('.a.css.standard-migration-') && name.endsWith('.backup'))
   assert.ok(backup, 'rollback失敗時はpreimage backupを保持する')
   assert.equal(await readFile(join(root, backup), 'utf8'), aBefore)
   assert.equal(await readFile(bPath, 'utf8'), bBefore)

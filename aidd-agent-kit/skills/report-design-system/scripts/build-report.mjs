@@ -6,7 +6,7 @@
 // ソースに書くのは <title> / <header class="doc"> / <section data-kind=…>… / <footer> だけ。
 // <style> <script> 目次 .sec-head .secno .why .cta-row .doc-tools .act-head .act-links は書かない (書くと入力エラー)。
 // ここで次を機械的に付与する:
-//   1. vendor (平賀カラー) → vendor (キット部品CSS) → report.css を <style> に埋め込む
+//   1. vendor (標準カラー) → vendor (キット部品CSS) → report.css を <style> に埋め込む
 //      (vendor はハッシュ検証済みのものだけ)
 //   2. セクションの並び (結論 → 要因 1..n → 必要な場合だけ打ち手) を検証し、見出し帯 (.sec-head = 番号チップ .secno + h2) を付ける
 //   3. 要因セクションの data-impact から、結論セクションの「要因ランキング」(.why) と、打ち手がある場合だけ CTA を生成する

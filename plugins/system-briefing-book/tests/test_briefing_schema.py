@@ -12,7 +12,7 @@ SCHEMA = json.loads((PLUGIN_ROOT / "schemas" / "briefing.schema.json").read_text
 VALID = {
     "schema": "briefing-v1", "title": "写真で記録",
     "readers": ["現場の担当者", "発注側の責任者", "開発する人"],
-    "palette": "hiraga", "materials": "..", "data_policy": "masked", "book": {"include_hearing": False},
+    "palette": "standard", "materials": "..", "data_policy": "masked", "book": {"include_hearing": False},
     "pages": PAGES,
 }
 

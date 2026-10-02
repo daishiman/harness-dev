@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 export const skillRoot = fileURLToPath(new URL('../../', import.meta.url))
 export const canonicalPaths = Object.freeze({
   profile: join(skillRoot, 'assets/reference/catalog-default-profile.json'),
-  token: join(skillRoot, 'assets/hiraga/hiraga-color-system.css'),
+  token: join(skillRoot, 'assets/standard/standard-color-system.css'),
   component: join(skillRoot, 'assets/reference/styles.css'),
   catalog: join(skillRoot, 'assets/reference/catalog.html'),
   interaction: join(skillRoot, 'assets/reference/reference-interactions.js')

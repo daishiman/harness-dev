@@ -9,7 +9,7 @@ import { walkSources } from './lib/fs-walk.mjs'
 import { canonicalPaths, evidenceDigest, isInsideRoot, loadCanonicalSources, sha256, skillRoot } from './lib/provenance.mjs'
 
 const runtimeAuditPath = join(skillRoot, 'scripts/catalog-runtime-audit.mjs')
-const usage = 'usage: catalog-default.mjs <plan|apply|verify> <app-root> [--app-state=new|existing] [--mode=hiraga|pop|external-brand] [--eligibility=eligible|unknown] [--reviewed-upgrade] [--entry-css=path] [--stage=v0|v1] [--base-url=url] [--scenarios=path] [--json]'
+const usage = 'usage: catalog-default.mjs <plan|apply|verify> <app-root> [--app-state=new|existing] [--mode=standard|pop|external-brand] [--eligibility=eligible|unknown] [--reviewed-upgrade] [--entry-css=path] [--stage=v0|v1] [--base-url=url] [--scenarios=path] [--json]'
 const entryCandidates = [
   'src/app/globals.css', 'app/globals.css', 'src/index.css', 'src/main.css',
   'src/App.css', 'src/app.css', 'styles/globals.css', 'styles.css'
@@ -163,7 +163,7 @@ async function exists(path) {
 // 配置先では部品CSSと色CSSが同じフォルダに並ぶため、import だけ書き換える。
 async function readSources() {
   const { profile, token, component, digest } = await loadCanonicalSources()
-  return { profile, token, component: component.replace('@import url("../hiraga/hiraga-color-system.css");', '@import url("./hiraga-color-system.css");'), digest }
+  return { profile, token, component: component.replace('@import url("../standard/standard-color-system.css");', '@import url("./standard-color-system.css");'), digest }
 }
 
 function parseArgs(argv) {
@@ -173,9 +173,9 @@ function parseArgs(argv) {
     values: { '--app-state': 'appState', '--mode': 'mode', '--eligibility': 'eligibility', '--entry-css': 'entryCss', '--stage': 'stage', '--base-url': 'baseUrl', '--scenarios': 'scenarios' }
   })
   oneOf('command', command, ['plan', 'apply', 'verify'])
-  const parsed = { appState: 'existing', mode: 'hiraga', reviewedUpgrade: false, stage: 'v0', json: false, ...options, command, root: resolve(rootArg) }
+  const parsed = { appState: 'existing', mode: 'standard', reviewedUpgrade: false, stage: 'v0', json: false, ...options, command, root: resolve(rootArg) }
   oneOf('--app-state', parsed.appState, ['new', 'existing'])
-  oneOf('--mode', parsed.mode, ['hiraga', 'pop', 'external-brand'])
+  oneOf('--mode', parsed.mode, ['standard', 'pop', 'external-brand'])
   if (parsed.eligibility !== undefined) oneOf('--eligibility', parsed.eligibility, ['eligible', 'unknown'])
   oneOf('--stage', parsed.stage, ['v0', 'v1'])
   return parsed
@@ -228,7 +228,7 @@ async function consumerSourceFiles(root, adoption) {
 }
 
 function applyEligible(options) {
-  if (options.mode !== 'hiraga') return false
+  if (options.mode !== 'standard') return false
   return options.appState === 'new' || options.eligibility === 'eligible'
 }
 
@@ -280,7 +280,7 @@ async function plan(options, sources) {
     decision: eligible ? (entry && !driftBlocksApply ? 'apply' : 'blocked') : 'report-only',
     entry_css: entry ? relative(options.root, entry).split(sep).join('/') : null,
     blockers: [
-      ...(options.mode !== 'hiraga' ? ['alternate-design-mode'] : []),
+      ...(options.mode !== 'standard' ? ['alternate-design-mode'] : []),
       ...(options.appState === 'existing' && options.eligibility !== 'eligible' ? ['existing-app-eligibility-unconfirmed'] : []),
       ...(driftBlocksApply ? ['existing-managed-artifact-drift'] : []),
       ...(!entry ? ['css-entry-not-found'] : [])
