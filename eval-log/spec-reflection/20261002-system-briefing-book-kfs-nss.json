@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-02",
+  "branch": "devgraph/harness-kfs",
+  "base_branch": "main",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/82",
+  "beads": ["harness-kfs", "harness-nss"],
+  "dev_graph_node_id": null,
+  "dev_graph_note": ".dev-graph は render だけで graph.json を持たない。対応する node は無いので、ブランチ名には Beads ID を使った。",
+  "scope": [
+    "plugins/system-briefing-book",
+    "doc/system-briefing-book-設計ノート.md",
+    "tests/test_system_briefing_book_design_note.py",
+    "eval-log/system-briefing-book/run-briefing/elegant-review/20261002-design-default",
+    "eval-log/system-briefing-book/run-briefing/elegant-review/20261002-requirements-refactor",
+    ".gitignore"
+  ],
+  "canonical_spec_locations_probe": {
+    "docs/": "absent",
+    "features/": "absent",
+    "system-spec/": "absent",
+    "specs/": "absent",
+    "architecture/": "absent",
+    "tasks/": "absent"
+  },
+  "design_notes_dir": "doc/",
+  "decision": "reflected-in-plugin-canonical-sources",
+  "rationale": "このリポジトリは plugin の集まりで、docs/・features/・system-spec/・specs/・architecture/・tasks/ のどれも持たない。仕様の正本は各 plugin の SKILL.md・references/*.md・assets/data/*.json・scripts の先頭の説明に置き、なぜその形にしたかは doc/ の設計ノートに残す。この PR はその正本を直接直したので、ほかの場所へ写す仕様の文書は無い。新しい置き場所は作らなかった。正本が 2 か所になり、片方だけが古くなるためである。",
+  "changes": [
+    {
+      "id": "harness-kfs",
+      "summary": "配色の CSS を書く前に確かめ、不正なら何も書かずに止める。描画とまとめは tokens.css が無いか不正なら TOKENS-MISSING / TOKENS-INVALID で止め、直し先を run-briefing にした。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/references/design-contract.md (新規。正本、作る順番、配色の検査、案件の配色の指定、出典)",
+        "plugins/system-briefing-book/references/workflow.md",
+        "plugins/system-briefing-book/references/page-patterns.md",
+        "plugins/system-briefing-book/references/resource-map.yaml (design-contract.md を載せた)",
+        "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md (まとめの表の直し先)",
+        "plugins/system-briefing-book/skills/run-briefing-boards/SKILL.md",
+        "plugins/system-briefing-book/scripts/lib/design-tokens.mjs (新規。検査の本体と先頭の説明)",
+        "plugins/system-briefing-book/README.md",
+        "doc/system-briefing-book-設計ノート.md 11 章 (書く前に確かめる理由、止める 3 か所、配った tokens.css を残す理由)"
+      ]
+    },
+    {
+      "id": "harness-nss",
+      "summary": "ヒアリングの質問、選択肢、聞く回、行き先、既定案の正本を hearing-catalog.json の 1 か所にし、要件定義と仕様書の章立てと検査をそれに合わせた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/assets/data/hearing-catalog.json (新規。質問の正本)",
+        "plugins/system-briefing-book/scripts/lib/hearing-catalog.mjs (新規。読み込みと雛形の行の組み立て)",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md (聞き方と答えの扱いだけにした)",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/SKILL.md",
+        "plugins/system-briefing-book/references/document-structure.md",
+        "plugins/system-briefing-book/references/quality-rules.md",
+        "plugins/system-briefing-book/skills/run-briefing-docs/references/writing-patterns.md",
+        "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs (HEARING-PENDING-*、ROLE-*、SPEC-DETAIL-MISSING)",
+        "plugins/system-briefing-book/README.md",
+        "doc/system-briefing-book-設計ノート.md (冒頭の正本の指し先と 6 章。質問の数は tests/test_system_briefing_book_design_note.py が hearing-catalog.json から確かめる)"
+      ]
+    },
+    {
+      "id": "eval-log-runtime-and-gitignore",
+      "summary": "elegant-review の実行時のファイル 54 個と変更点.md 2 個を記録に足し、作業前の控えの tar.gz を .gitignore で外した。",
+      "spec_impact": false,
+      "reason": "審査の記録と、追跡しないファイルの決まりの追加だけで、plugin の動き・入出力・決まりは変えていない。.gitignore は既にある eval-log/*/*/elegant-review/*/baseline/ の決まりを、同じ控えを固めた tar.gz にも広げただけである。"
+    }
+  ],
+  "excluded_from_commit": [
+    "eval-log/system-briefing-book/run-briefing/elegant-review/*/baseline.tar.gz と pre-phase3-backup.tar.gz (git の履歴から作り直せる控え。無視している plugins/**/.claude/handoff/ のメモも入っていた)"
+  ],
+  "remaining_work": [
+    "harness-r4p: run-briefing の工程5と工程6に、boards から返る「案件の色が要る」と、まとめの TOKENS-* を受ける手順を足す。",
+    "harness-hbg: 原資料 v0.4 の 6 画面を正規の入力から作り直し、見た目の再現を受け入れ検証する。",
+    "お手本の _check/docs.json に検査を回した場所の絶対パスが入ることと、作業コピーの改行が CRLF になると fingerprint がずれること。どちらも main に前からある。",
+    "content-review の low の指摘 (各 skill の verdict の negative_feedback に残した)。"
+  ],
+  "verification": {
+    "pytest plugins/system-briefing-book/tests": "353 passed (ブラウザで描くテストを含む)",
+    "tests/test_system_briefing_book_*.py": "13 passed",
+    "tests/test_system_briefing_book_design_note.py (11 章を足したあと)": "8 passed",
+    "governance と同じ lint と validate": "PASS (lint-content-review --all、build-plugin-release --check、build-local-marketplace --check、validate-llm-coverage、guard-change-category など)",
+    "content-review": "5 つの skill とも PASS (high 0)",
+    "CI (32143c8)": "change-category-guard、governance、plugin-tests、verify がすべて pass"
+  }
+}
