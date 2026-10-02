@@ -777,12 +777,12 @@ def test_external_dependency_requires_declared_entrypoint_and_package_edge(tmp_p
 
 def test_repo_all_compositions_pass_as_one_fleet():
     compositions = sorted((ROOT / "plugins").glob("*/plugin-composition.yaml"))
-    assert len(compositions) == 21
+    assert len(compositions) == 22
 
     proc = run_cli(*(str(path) for path in compositions))
 
     assert proc.returncode == 0, proc.stderr
-    assert "OK: 21 composition file(s) passed" in proc.stdout
+    assert "OK: 22 composition file(s) passed" in proc.stdout
 
 
 # --------------------------------------------------------------------------
