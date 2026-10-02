@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing",
+    "skill_md_sha256": "26950221e6cc453d66da9edc29a4832633430bd31a85fefa2a64f5434da52096"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 1,
+    "smell": 0
+  },
+  "reviewer": "cr-briefing-goal-seek-v1 (focused combined content review, incremental profile, goal_seek 宣言の差分)",
+  "reviewed_at": "2026-10-02T08:03:06Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "iteration 1 の medium (goal_seek に activation_state が無い) は解消した。goal_seek (:9-12) は activation_state: semantic_evaluator_started / engine: inline / fork: subagent の 3 キーになり、前例 plugins/dev-graph/skills/run-dev-graph-init/SKILL.md:48-51 と同じ形。分離した文脈 (fork=subagent) を使うのが利用者の選んだあと (semantic_evaluator_started) だけだと frontmatter から読め、artifact_delivery.state_machine (:76 の light|standard|detailed → semantic_evaluator_started) と pre_choice_forbidden (:78 の subagent・task-fork)、feedback_contract.activation_state (:43) と同じ状態にそろった。",
+      "差分は iteration 1 で評価した版 (sha256 f9bc23b0…) に対して :10 の 1 行だけ。今の SKILL.md から :10 を除くと sha256 が f9bc23b0… に一致することを確かめた。git diff HEAD でも run-briefing は goal_seek の 4 行の追加だけで、削除 0・ほかの行の変更なし。ほかの 4 skill の SKILL.md の sha256 は iteration 1 の verdict のまま変わっていない。",
+      "engine=inline / fork=subagent の値は iteration 1 の判断のまま妥当。allowed-tools (:19) に Skill と Task があり、独立レビューは確認点の手順 5 (:223) と工程5 (:182) で、light / standard / detailed を選んだときだけ Skill `assign-briefing-evaluator` (`context: fork` / `agent: briefing-reviewer`) へ渡す。直す反復はこのスキルの文脈に残る (:226-228、同じ確認点で 3 回まで = feedback_contract.max_iterations 3 (:44))。accept-as-is (:222) は評価者・改善者の文脈 0 で進む (accept_contexts :79)。",
+      "Post-choice の節 (:91) の「light / standard / detailed が記録されて `semantic_evaluator_started` へ進んだ確認点だけ、独立レビューとその指摘に基づく改善を行う」は、goal_seek.activation_state と同じ状態を指すようになり、このスキルでは主語 (run-briefing が評価者へ渡して直す) も本文 (:182・:223) で決まっている。iteration 1 で任意とした :91 への 1 文の追加は、宣言と本文が食い違っていないので指摘には数えない (ほかの 4 skill の同じ節の low は、fork=inline と並んで主語が読み違えられることが理由で、run-briefing には当たらない)。",
+      "検査: `python3 scripts/lint-entrypoint-artifact-first.py --repo-root .` は exit 0 (OK: 126 inventory, 100 enforced, 26 mechanically exempt。system-briefing-book の行は 0)。`python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --plugin system-briefing-book` は exit 0 (run-briefing=inline/subagent、enforced 0、unlisted 0、stale 0)、CI と同じ `--repo-root .` の全体実行も exit 0 (skills=126、enforced=0、unlisted=0、stale=0)。coordinator の報告どおりであることを自分で走らせて確かめた。"
+    ],
+    "negative_feedback": [
+      "[low / 漏れ。前回 low の持ち越し、今回の差分とは無関係] :122 は参考を再現するときの版・全機能の対応・初版範囲・画像比較の結果を「既存の確認点と最終報告に残す」とし、workflow.md:88 も確認点の報告に残すとするが、確認点の手順 1 (:194-203) の見せるものにその行が無く、どの確認点で何を見せるかが読み手しだいになる。最終報告 (:258) の側は前回直っている。参考の再現は通常生成では起きず、中身は正本 (workflow.md:85-88) で決まるので low。直し方: :203 の「どの確認点でも」の行の次に「参考を再現するときは、参考版と対応表の今の状態を添える (workflow.md の「再現の測り方」)」を足す。",
+      "[low / 依存関係。前回 low の持ち越し、今回の差分とは無関係] :181 (boards が仕様書の足りない章と画面番号を返したら run-briefing-docs に書き足してもらう) の受け手は工程5 にだけある。run-briefing-boards/SKILL.md:112 の「仕様書に足りない章や画面があれば、その章と画面番号を呼び出し元へ返す」は Purpose 節にあり pages モードにも掛かるが、工程4 (:173-174) が受けるのは「ボード:」行の番号のずれだけ。pages は仕様書 1・3・8 章の画面一覧から並びを決めるだけで、不足が出るのは主に boards なので low。直し方: :174 の次に「仕様書の足りない章と画面番号が返ってきたら、工程5 と同じく run-briefing-docs にその箇所だけ書き足してもらい、pages を通し直す」を足すか、:181 を工程4・5 に共通の書き方にする。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価は iteration 2 (incremental の再評価、上限 2 の最後の 1 回)。対象は iteration 1 の medium を直すために goal_seek に足した 1 行 (:10 `activation_state: semantic_evaluator_started`)。今の SKILL.md (sha256 26950221e6cc453d66da9edc29a4832633430bd31a85fefa2a64f5434da52096) を読み直して判定した。iteration 1 の FAIL の理由 (reviewed_at 2026-10-02T08:00:13Z、sha256 f9bc23b0…): goal_seek (:9-11) が fork: subagent を宣言しながら activation_state を持たず、frontmatter の上では分離した文脈が選ぶ前でも使えると読めて pre_choice_forbidden (旧 :77) と食い違い、scripts/lint-entrypoint-artifact-first.py の _lint_frontmatter_control_flow (:191-212。fork が inline 以外なら goal_seek.activation_state == semantic_evaluator_started を求める :197-201) が exit 1 になって、CI (.github/workflows/governance-check.yml:150) が落ちる状態だった (medium / 矛盾)。解消と判断した根拠: (1) 今の SKILL.md から :10 を除いた sha256 が iteration 1 の f9bc23b0… と一致し、差分はこの 1 行だけ。git diff HEAD でも run-briefing は goal_seek の 4 行の追加だけ。(2) goal_seek は activation_state / engine / fork の 3 キーで、前例 run-dev-graph-init/SKILL.md:48-51 と同じ形。値は feedback_contract.activation_state (:43) と state_machine の遷移先 (:76) と同じ semantic_evaluator_started。(3) lint-entrypoint-artifact-first --repo-root . が exit 0 (126 inventory, 100 enforced)、lint-skill-runtime-profiles は --plugin system-briefing-book と --repo-root . のどちらも exit 0 (enforced=0、unlisted=0、stale=0) で、coordinator の報告を自分で走らせて確かめた。(4) 1 行増えたので :10 より下の行番号は iteration 1 から +1 ずれた。本文の該当行 (:19・:43・:76・:78・:79・:91・:122・:173-174・:181-182・:194-203・:222-228・:258・:261) を読み直し、中身が iteration 1 と同じであることを確かめた。読んだもの: run-briefing の今の SKILL.md、git diff HEAD、上の 2 つの lint の出力、前回 (iteration 1) の verdict 2 件。iteration 1 で読んだ assign-briefing-evaluator/SKILL.md・agents/briefing-reviewer.md・lint の判定行・goal-seek-paradigm.md:81・前例の結論はそのまま使い、それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で iteration 1 の medium が解消したかと、新しい行が別の食い違いを生んでいないかを見た。30 種の思考法は使っていない。数値の score は出していない。SKILL.md・score.jsonl・ほかの 8 件の verdict には手を付けていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: iteration 1 の negative_feedback のうち low 2 件 (確認点で参考版と対応表を見せる行が無い、工程4 に仕様の不足の受け手が無い) は、今回の差分と無関係でまだ直っていないので、行番号を今の版 (+1) に合わせて negative_feedback に残した。iteration 1 で任意とした Post-choice の節 (:91) への 1 文は、goal_seek.activation_state が入って宣言と本文がそろったので low としても数えない。判定: PASS。high 0、medium 0、low 2。next_action=none。"
+}

@@ -1,0 +1,365 @@
+/* ============================================================
+   レポート用デザインシステム — レポート固有の骨格だけを持つCSS
+   部品の見た目 (角丸・影・ボタン・バッジ・カード・表・開閉・ナビの質感・書体・文字サイズ) は
+   assets/vendor/standard-components.css (jp-web-design の styles.css の無改変コピー) が正本。
+   ここではキットのクラスを並べる骨格と、キットに無いレポート専用部品だけを書く。
+   - 色の値を書かない (HEX・rgb・hsl は check-report.mjs の E03 で不合格)
+   - 角丸と文字サイズに px を直書きしない。--radius-glass / --radius-glass-sm / 999px と
+     --font-size-* / em / % だけを使う (E03 で不合格)。新しい寸法は :root のトークンに1回だけ定義する
+   - build-report.mjs が 配色 → キット部品 → 本ファイル の順に <style> へ埋め込む。手で貼らない
+   ============================================================ */
+
+:root{
+  --toc-width:240px;
+  --topbar-h:56px;
+  /* ページの最大幅 = 16インチ MacBook Pro の標準の画面幅。これより広い画面では中央に寄せる */
+  --page-max:1728px;
+  /* 実行部隊向け資料は文章が中心なので、読みやすい幅に留める */
+  --handout-max:880px;
+  /* 図の最大幅。viewBox 760 の図をこれ以上拡大すると、文字が本文より大きくなる */
+  --chart-max:960px;
+  /* 表の文字列セルの最小幅。大きくしすぎると、文章の長い列へ幅を回す余地が無くなる */
+  --cell-min:5em;
+  /* 6列以上の表の最小幅。狭い画面では列を潰さず横にスクロールさせる */
+  --table-wide-min:1200px;
+  /* SVG の文字 (viewBox 760 を 1〜1.26 倍で描く前提。上限は --chart-max) */
+  --chart-text:14px;
+  --chart-text-sm:13px;
+  /* キットに無い役割はここで1回だけ別名を与える (部品は --p-* を直接参照しない) */
+  --chart-sub:var(--p-scale-3);   /* 比較対象・前年・脇役の系列 */
+}
+html{scroll-padding-top:24px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+:where(a){color:var(--link);text-underline-offset:.2em}
+:where(a):hover{color:var(--link-hover)}
+a.btn{text-decoration:none}
+
+/* ---- 骨格: 左サイドバー目次 (キットの .side-nav) + 本文 ---- */
+/* 本文は画面の余りをすべて使う (表・根拠のカードを広く並べる)。文章の行長は section p の max-width、図は --chart-max で抑える。
+   キットの main の max-width (1024px) は、ここで none にしないと残る */
+.shell{display:grid;grid-template-columns:var(--toc-width) minmax(0,1fr);gap:32px;max-width:var(--page-max);margin:0 auto;padding:0 24px}
+main.wrap{min-width:0;max-width:none;margin:0;padding:40px 0 96px}
+main.wrap.handout{max-width:var(--handout-max)}
+.skip{position:absolute;left:-9999px;top:8px;z-index:60}
+.skip:focus{left:8px}
+
+/* ---- 目次 (build-report.mjs が生成。手で書かない) ----
+   面・リンクの寸法・hover はキットの .side-nav のまま。ここは配置と番号チップだけ */
+.toc.side-nav{position:sticky;top:16px;align-self:start;width:auto;margin:16px 0;
+  max-height:calc(100vh - 32px);overflow-y:auto;border-radius:var(--radius-glass);padding:16px 10px}
+.toc summary{display:none}
+.toc-title{margin:0;padding:4px 12px 8px;color:var(--nav-text-muted);font-size:var(--font-size-label);font-weight:700}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.toc li{margin:0}
+.toc .toc-no{flex:none;font-family:var(--font-num);font-size:.8125em;font-weight:700;line-height:1.8;
+  color:var(--kind);background:color-mix(in srgb,var(--kind) 12%,var(--surface));border-radius:999px;padding:0 8px;white-space:nowrap}
+.toc .toc-label{min-width:0;padding:8px 0;line-height:1.4}
+.toc ol ol a{padding-left:28px;font-weight:400}
+/* mirror:side-nav-current — キットの .side-nav [aria-current="page"] と同じ宣言。
+   本文内の現在地は aria-current="location" が正しいので、値だけ替えて同じ見た目にする。
+   selftest.mjs が、この区間の宣言がすべて vendor の部品CSSに存在することを検査する */
+.toc a[aria-current="location"]{
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface) 92%, transparent), color-mix(in srgb, var(--surface-selected) 84%, transparent)) padding-box, var(--glass-specular-rim-hover) border-box;
+  color: var(--text-heading);
+  font-weight: 700;
+  box-shadow:
+    inset 4px 0 0 var(--nav-selected-indicator),
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, var(--nav-background) 6%, transparent);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more){
+  .toc a[aria-current="location"] { background: var(--surface); }
+}
+/* /mirror */
+.toc a[aria-current="location"] .toc-no{background:var(--surface)}
+
+/* ---- 1024px未満: 目次は上部に浮くガラスのバー (キットの .app-header と同じ置き方) ---- */
+@media (max-width:1023px){
+  html{scroll-padding-top:calc(var(--topbar-h) + 24px)}
+  .shell{display:block;padding:0}
+  main.wrap{margin:0 auto;padding:24px 24px 96px}
+  .toc.side-nav{top:8px;z-index:40;margin:8px 12px 0;max-height:none;overflow:visible;padding:0 8px}
+  .toc summary{display:flex;align-items:center;gap:10px;min-height:var(--topbar-h);padding:0 12px;cursor:pointer;
+    font-weight:700;color:var(--text-heading);list-style:none}
+  .toc summary::-webkit-details-marker{display:none}
+  .toc summary::after{content:"開く";margin-left:auto;font-weight:400;color:var(--text-secondary)}
+  .toc details[open] summary::after{content:"閉じる"}
+  .toc .toc-current{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;color:var(--text-secondary)}
+  .toc-title{display:none}
+  .toc details > ol{max-height:calc(100vh - var(--topbar-h) - 32px);overflow-y:auto;padding:8px 0 12px;border-top:1px solid var(--glass-line)}
+}
+@media (max-width:639px){main.wrap{padding:20px 16px 88px}}
+@media (min-width:1024px){.toc .toc-current{display:none}}
+
+/* ---- 文書ヘッダー (h1 はキットの .page-title。印刷ボタンは build が付ける) ---- */
+header.doc{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:24px;align-items:end;
+  padding-bottom:20px;border-bottom:1px solid var(--border-subtle)}
+header.doc > :not(.doc-tools){grid-column:1}
+.doc-tools{grid-column:2;grid-row:1 / span 3;align-self:end}
+.crumb{margin:0 0 4px;color:var(--text-secondary);font-size:var(--font-size-label)}
+header.doc h1{text-wrap:balance;word-break:auto-phrase}
+.sub{margin:0;color:var(--text-secondary)}
+@media (max-width:639px){
+  header.doc{grid-template-columns:minmax(0,1fr)}
+  .doc-tools{grid-column:1;grid-row:auto;margin-top:12px}
+}
+
+/* ---- セクション: 1つ = 枠線で囲んだ1枚のパネル。上端に見出し帯 (.sec-head = 番号チップ .secno + h2。build-report.mjs が付与) ----
+   種類 (結論・要因・打ち手) の色は --kind の1変数で決め、番号チップの地・見出し帯の下線と淡い地・目次の番号に流す。
+   色だけに頼らず、チップの文言 (結論 / 要因 n / 打ち手) でも種類が分かる。カード左端の色帯は使わない (キットの規律) */
+:is(section,.toc li)[data-kind]{--kind:var(--text-heading)}
+:is(section,.toc li)[data-kind="factor"]{--kind:var(--text-secondary)}
+:is(section,.toc li)[data-kind="action"]{--kind:var(--status-success-text)}
+section{margin-top:40px;padding:0 24px 28px;background:var(--surface);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-glass);box-shadow:var(--shadow-soft);overflow:clip}
+.sec-head{margin:0 -24px 24px;padding:16px 24px 14px;border-bottom:2px solid var(--kind);
+  background:color-mix(in srgb,var(--kind) 6%,var(--surface))}
+section h2,section h3{scroll-margin-top:24px}
+.secno{display:inline-flex;align-items:center;font-family:var(--font-num);font-size:var(--font-size-label);font-weight:700;
+  line-height:1.6;color:var(--surface);background:var(--kind);border-radius:999px;padding:1px 12px}
+section h2{font-family:var(--font-display);font-size:var(--font-size-section);font-weight:700;line-height:1.5;margin:8px 0 0;text-wrap:balance;word-break:auto-phrase}
+@media (max-width:639px){
+  section{margin-top:28px;padding:0 16px 20px}
+  .sec-head{margin:0 -16px 20px;padding:14px 16px 12px}
+}
+/* 結論の1文はページの主張。ページ見出しと同じ段にする (これより大きくしない) */
+section[data-kind="conclusion"] h2{font-size:var(--font-size-page);color:var(--text-heading)}
+section h3{font-size:var(--font-size-body);font-weight:700;margin:28px 0 10px}
+section p{margin:0 0 14px;max-width:46em}
+.loss{color:var(--number-negative);font-weight:700}
+.profit{color:var(--status-success-text);font-weight:700}
+
+/* ---- 結論: 主数字 (.hero-number) → 前提ストリップ (.kpi-strip) を1枚のカードに ---- */
+.hero{overflow:hidden;margin:0 0 20px}
+.hero .hero-number{padding:32px 20px 20px}
+.hero .hn-value .unit,.kpi .unit{color:var(--text-secondary)}
+.hero .hn-sub{margin-top:8px}
+.hero .kpi-strip{margin:0 20px;padding:16px 0 20px;border-bottom:0;
+  grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.kpi .kpi-sub{color:var(--text-secondary)}
+@media (max-width:639px){
+  .hero .kpi-strip{grid-auto-flow:row}
+  .hero .kpi + .kpi{border-left:0;border-top:1px solid var(--border-subtle);margin-top:12px;padding-top:12px}
+}
+section .caution-panel{margin:0 0 20px}
+
+/* ---- 要因ランキング (build-report.mjs が data-impact から生成。手で書かない)
+   1行 = 番号・要因の1文・影響値 (キットの .badge)・影響の棒 (キットの .bar-track)。行ごと該当セクションへのリンク ---- */
+.why{overflow:hidden}
+.why-head{display:flex;justify-content:space-between;gap:12px;padding:12px 20px;font-weight:700;
+  color:var(--table-head-text);background:var(--table-head-bg);border-bottom:1px solid var(--border-subtle)}
+.why ol{list-style:none;margin:0;padding:0}
+.why li{margin:0;border-bottom:1px solid var(--border-subtle)}
+.why li:last-child{border-bottom:none}
+.why a{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(96px,24%);gap:8px 16px;align-items:center;
+  min-height:var(--tap);padding:14px 20px;color:var(--text-primary);text-decoration:none;
+  transition:background-color var(--motion-fast) var(--ease-standard)}
+.why a:hover{background:var(--table-hover-bg)}
+.why-no{display:grid;place-items:center;width:32px;height:32px;border-radius:999px;font-family:var(--font-num);font-weight:700;
+  color:var(--text-heading);background:var(--surface-selected)}
+.why-text{font-weight:700;line-height:1.5}
+.why-bar .bar-fill{display:block}
+.bar-fill.is-loss{background:var(--number-negative)}
+@media (max-width:639px){
+  .why a{grid-template-columns:auto minmax(0,1fr) auto;padding:12px 16px}
+  .why-bar{grid-column:2 / -1}
+}
+
+/* ---- 結論の CTA (build が打ち手セクションへのボタンを付ける。SPでは全幅) ---- */
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
+
+/* ---- 図 (figure はキットの .card .card-pad) ---- */
+figure{margin:0}
+figcaption{font-weight:700}
+figcaption small{display:block;font-weight:400;font-size:var(--font-size-label);color:var(--text-secondary)}
+.chartbox{overflow-x:auto;margin-top:12px;
+  /* 狭い画面で図が横にはみ出すとき、続きのある側に影を出す (端までスクロールすると面の色で隠れる) */
+  --fade:color-mix(in srgb,var(--text-heading) 35%,transparent);
+  background:
+    linear-gradient(to right,var(--surface) 40%,transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left,var(--surface) 40%,transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%,var(--fade),transparent) left center / 16px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%,var(--fade),transparent) right center / 16px 100% no-repeat scroll}
+svg.chart{width:100%;min-width:560px;max-width:var(--chart-max);margin-inline:auto;display:block}
+svg .ax{font-size:var(--chart-text-sm);fill:var(--chart-axis);font-family:var(--font-num)}
+svg .lb{font-size:var(--chart-text);fill:var(--text-primary)}
+svg .vl{font-size:var(--chart-text);font-weight:700;fill:var(--text-primary);font-family:var(--font-num)}
+svg .vl2{font-size:var(--chart-text-sm);font-weight:700;fill:var(--text-secondary);font-family:var(--font-num)}
+svg .vl-danger{font-size:var(--chart-text);font-weight:700;fill:var(--number-negative);font-family:var(--font-num)}
+svg .an{font-size:var(--chart-text-sm);font-weight:700;fill:var(--text-primary)}
+/* 値と注記は線 (基準線・折れ線) の上に乗っても読めるよう、面の色で縁取る */
+svg :is(.vl,.vl2,.vl-danger,.an){paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+/* SVGの色はこのクラスだけで塗る。fill="#..." / stroke="#..." の直書きは禁止 */
+svg .c-main{fill:var(--chart-main)}          /* 主役・今期・対象 */
+svg .c-sub{fill:var(--chart-sub)}            /* 比較対象・前年・脇役 */
+svg .c-base{fill:var(--surface-selected)}    /* 現状・トラック(中立面) */
+svg .c-danger{fill:var(--number-negative)}/* 悪化・赤字 */
+svg .c-ok{fill:var(--status-success-text)}   /* 改善・黒字(多用しない) */
+svg .c-1{fill:var(--chart-1)} svg .c-2{fill:var(--chart-2)} svg .c-3{fill:var(--chart-3)}
+svg .c-4{fill:var(--chart-4)} svg .c-5{fill:var(--chart-5)}
+svg .s-main{stroke:var(--chart-main);fill:none;stroke-width:2.5}
+svg .s-sub{stroke:var(--chart-sub);fill:none;stroke-width:2}
+svg .s-danger{stroke:var(--number-negative);fill:none;stroke-width:2.5}
+svg .s-axis{stroke:var(--chart-axis);fill:none}
+svg .s-grid{stroke:var(--chart-grid);fill:none}
+svg .s-threshold{stroke:var(--chart-threshold);fill:none;stroke-dasharray:4 3}
+svg .s-dash{stroke:var(--chart-axis);fill:none;stroke-dasharray:4 3}   /* 出来事・4象限の基準・想定のつながり */
+svg .s-1{stroke:var(--chart-1);fill:none;stroke-width:2.5} svg .s-2{stroke:var(--chart-2);fill:none;stroke-width:2.5}
+svg .s-3{stroke:var(--chart-3);fill:none;stroke-width:2.5} svg .s-4{stroke:var(--chart-4);fill:none;stroke-width:2.5}
+svg .s-5{stroke:var(--chart-5);fill:none;stroke-width:2.5}
+svg .c-axis{fill:var(--chart-axis)}
+svg .vl-inv{font-size:var(--chart-text-sm);font-weight:700;fill:var(--surface);font-family:var(--font-num)}
+/* ヒートマップの5段階 (h-0 = 0、負の値は赤の系統 h-n*) */
+svg .h-0{fill:var(--surface-alt)}
+svg .h-1{fill:color-mix(in srgb,var(--chart-main) 12%,var(--surface))} svg .h-2{fill:color-mix(in srgb,var(--chart-main) 35%,var(--surface))}
+svg .h-3{fill:color-mix(in srgb,var(--chart-main) 65%,var(--surface))} svg .h-4{fill:var(--chart-main)}
+svg .h-n1{fill:color-mix(in srgb,var(--number-negative) 12%,var(--surface))} svg .h-n2{fill:color-mix(in srgb,var(--number-negative) 35%,var(--surface))}
+svg .h-n3{fill:color-mix(in srgb,var(--number-negative) 65%,var(--surface))} svg .h-n4{fill:var(--number-negative)}
+/* 図解 (flow) の箱 */
+svg .n-box{fill:var(--surface-alt);stroke:var(--border-subtle)}
+svg .n-main{fill:var(--surface);stroke:var(--chart-main);stroke-width:2}
+svg .n-danger{fill:var(--number-negative-soft);stroke:var(--number-negative)}
+svg [data-tip]{cursor:default}
+svg [data-tip]:hover{opacity:.82}
+
+/* ---- 表 (容器はキットの .table-scroll .card、数値列は .col-num) ---- */
+figure + .table-scroll,.table-scroll + figure,.table-scroll + .table-scroll{margin-top:12px}
+td.col-num{font-family:var(--font-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 列幅は中身の長さに比例して配る。キットの見出しは折り返さないため、見出しの長い列が幅を取り、
+   文章の長い列が細く残る。レポートの表では見出しを語の切れ目で折り返し、幅を中身へ回す */
+.table-scroll thead th:not(.col-num){white-space:normal;word-break:auto-phrase}
+.table-scroll td:not(.col-num){min-width:var(--cell-min)}
+.table-scroll table:has(thead th:nth-child(6)){min-width:var(--table-wide-min)}
+/* 表の説明 (charts.mjs の table が付ける caption)。キットに見た目が無いので、図の見出しと同じく左から読ませる。
+   表が横にスクロールするときも、説明は見えている幅で折り返す (100cqi = .table-scroll の幅) */
+.table-scroll{container-type:inline-size}
+.table-scroll caption{max-width:100cqi;padding:14px 16px 10px;text-align:left;line-height:1.6;color:var(--text-primary)}
+
+/* ---- 統計の要約 (charts.mjs の statStrip。キットの .card + .kpi-strip。n・中央値・ばらつき・効果量など) ---- */
+.stats{margin-top:12px}
+.stats-title{margin:0;padding:12px 20px 0;font-size:var(--font-size-label);font-weight:700;color:var(--text-secondary)}
+.stats .kpi-strip{margin:0 20px;padding:8px 0 16px;border-bottom:0;
+  grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+@media (max-width:639px){
+  .stats .kpi-strip{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr));row-gap:12px}
+  .stats .kpi:nth-child(odd){border-left:0}
+  /* 2列だと「13台 対 36台」などが列幅を超える。.num の禁則 (折り返さない) を語の切れ目だけ緩め、字も一段下げる */
+  .stats .kpi .kpi-value{font-size:var(--font-size-section);white-space:normal}
+}
+
+/* ---- 結論の初心者向け概要。4行だけで対象・結果・読み方・限界を示す ---- */
+.overview{margin-top:12px;padding:16px 20px}
+.overview-title{font-size:var(--font-size-body);font-weight:700;color:var(--text-heading)}
+.overview-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.overview-list li{display:grid;grid-template-columns:minmax(8rem,auto) 1fr;gap:12px;margin:0;line-height:1.5}
+.overview-label{font-size:var(--font-size-label);font-weight:700;color:var(--text-secondary)}
+.overview-text{min-width:0;color:var(--text-primary)}
+@media (max-width:639px){
+  .overview-list li{grid-template-columns:1fr;gap:2px}
+}
+
+/* ---- 要因の根拠: 統計的事実 → 解釈 → 仮説・主張を明示的に分ける ---- */
+.facts-h,.causes-h{margin:16px 0 8px;font-size:var(--font-size-body);color:var(--text-secondary)}
+.facts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:12px}
+.facts li{margin:0;padding:14px 16px;line-height:1.6;background:var(--surface);border:1px solid var(--border-subtle);
+  border-radius:var(--radius-glass-sm);box-shadow:var(--shadow-soft)}
+.facts b{font-weight:700;color:var(--text-heading)}
+.facts b.num{font-size:1.125em}
+.facts b.loss{color:var(--number-negative)}
+.facts b.profit{color:var(--status-success-text)}
+.statement{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-top:10px;padding:10px 12px;border:1px solid var(--border-subtle);border-radius:var(--radius-glass-sm);line-height:1.6}
+.statement-h{flex:none;font-weight:700;color:var(--text-heading)}
+.statement-text{flex:1 1 24rem;min-width:0;color:var(--text-primary)}
+.interpretation{background:var(--surface-alt)}
+.claim{background:var(--surface)}
+
+/* ---- なぜ起きたか (背景の説明仮説)。1行 = 根拠の強さのバッジ (キットの .badge) + 1文 + 出典名 ---- */
+.causes{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:8px}
+.causes li{display:flex;align-items:baseline;gap:8px;margin:0;line-height:1.6}
+.causes .badge{flex:none}
+.causes small{display:block;color:var(--text-secondary)}
+/* ---- 判断への意味: 仕組みのあとに1文。読み手が何を前提に・何を変えるか ---- */
+.meaning{display:flex;align-items:baseline;gap:8px;margin:0 0 16px;padding:8px 12px;border-radius:var(--radius-glass-sm);background:var(--surface-alt);line-height:1.6}
+.meaning-h{flex:none;font-size:var(--font-size-body);color:var(--text-secondary)}
+.meaning-text{color:var(--text-primary)}
+
+/* ---- 根拠のデータと計算 (キットの details.disclosure + .def-list) ---- */
+details.disclosure{margin-top:12px}
+.disclosure .def-list{margin:0}
+.disclosure .def-list dd{color:var(--text-primary);overflow-wrap:anywhere}
+
+/* ---- 打ち手: 1件 = 1枚のカード (build が番号・出所バッジ・根拠へのボタンを付ける) ---- */
+.actions{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.act{margin:0}
+.act-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px}
+.act-no{font-family:var(--font-num);font-size:var(--font-size-section);font-weight:700;color:var(--text-heading)}
+.act-title{flex:1 1 16rem;min-width:0;font-size:var(--font-size-section);font-weight:700;line-height:1.5}
+.act-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 20px;margin:14px 0 0;padding-top:14px;border-top:1px solid var(--border-subtle)}
+.act-meta > div{min-width:0}
+.act-meta dt{color:var(--text-secondary);font-size:var(--font-size-label)}
+.act-meta dd{margin:0;font-weight:700}
+.act-meta > div:first-child dd{color:var(--text-heading)}
+.act-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+@media (max-width:639px){
+  .act-meta{grid-template-columns:minmax(0,1fr)}
+  .act-links .btn{width:100%}
+}
+
+/* ---- 実行部隊向け資料 (build-handout.mjs): 目次なしの1段。目的 → ゴール → やること → 困ったら ----
+   種類の色は上のセクションと同じ --kind の1変数。チップの文言 (目的 / ゴール / やること / 困ったら) でも種類が分かる。
+   上の既定 :is(section,.toc li)[data-kind] と詳細度をそろえるため同じ形で書く (section[data-kind=…] だと既定に負ける) */
+:is(section,.toc li)[data-kind="goal"]{--kind:var(--action-primary-bg)}
+:is(section,.toc li)[data-kind="todo"]{--kind:var(--status-success-text)}
+:is(section,.toc li)[data-kind="help"]{--kind:var(--text-secondary)}
+@media (min-width:1024px){main.wrap.handout{margin:0 auto}}
+/* 目的の1文は資料の主張。結論の h2 と同じ段 */
+section[data-kind="purpose"] h2{font-size:var(--font-size-page);color:var(--text-heading)}
+.why-now{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0;max-width:none}
+.why-now b{flex:none;color:var(--text-secondary);font-size:var(--font-size-label)}
+.goals{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.goal{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:16px;align-items:baseline;margin:0}
+.goal-no{grid-row:1 / span 2;font-family:var(--font-num);font-size:var(--font-size-section);font-weight:700;color:var(--kind)}
+.goal-text{margin:0;font-size:var(--font-size-section);font-weight:700;line-height:1.5}
+.goal-due{margin:6px 0 0;font-weight:700;color:var(--text-heading)}
+.goal-due-h{margin-right:8px;color:var(--text-secondary);font-size:var(--font-size-label);font-weight:400}
+/* 担当 (キットの .badge-tag) は番号の隣。行を折り返しても担当だけは割らない */
+.act-who{flex:none;align-self:center}
+/* 「いつまでに」と「できたかの目安」。目安は文が長いので広く取る */
+.handout .act-meta{grid-template-columns:minmax(0,1fr) minmax(0,3fr)}
+.handout .def-list{margin:0}
+@media (max-width:639px){.handout .act-meta{grid-template-columns:minmax(0,1fr)}}
+
+/* ---- 用語UIの見た目は vendor の部品CSS。レポートでは書体と狭い画面の並びだけ変える ---- */
+.term-q{font-family:var(--font-num)}
+@media (max-width:639px){
+  .gl-list{grid-template-columns:minmax(0,1fr);gap:2px}
+  .gl-list dd{margin-bottom:10px}
+}
+
+/* ---- 図の値だけをマウスに追従させる。用語は共通UIの別の説明箱 ---- */
+#tip{position:fixed;z-index:50;pointer-events:none;opacity:0;max-width:320px;line-height:1.5;font-family:var(--font-num);
+  transition:opacity var(--motion-instant) linear}
+
+/* ---- フッター (出所) ---- */
+footer{margin-top:64px;padding-top:16px;border-top:1px solid var(--border-subtle);color:var(--text-secondary);font-size:var(--font-size-label)}
+
+/* ---- 入場: 結論のブロックを上から順に (キットの rise-in) ----
+   動きを減らす設定ではキットが duration だけを 0 にし delay は残すため、fill:both の遅延中に透明のまま止まる。
+   入場そのものを no-preference に限る */
+@media (prefers-reduced-motion:no-preference){
+  section[data-kind="conclusion"] > :is(.hero,.why,.cta-row){animation:rise-in var(--motion-base) var(--ease-standard) both}
+  section[data-kind="conclusion"] > .why{animation-delay:var(--motion-fast)}
+  section[data-kind="conclusion"] > .cta-row{animation-delay:var(--motion-slow)}
+}
+
+/* ---- 印刷: 目次・操作を消し、本文だけを1段で出す (開閉は report.js が印刷前に開く) ---- */
+@media print{
+  .toc,#tip,#term-pop,.skip,.doc-tools,.cta-row,.act-links{display:none!important}
+  .shell{display:block;padding:0;max-width:none}
+  main.wrap,main.wrap.handout{max-width:none;padding:0}
+  section{break-inside:auto;box-shadow:none}
+  .sec-head{break-after:avoid}
+  /* 背景を印刷しない設定でも、白抜きの番号チップと見出し帯の色を残す */
+  .secno,.sec-head{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  figure,.hero,.why,.stats,.act,.goal,.facts li,table{break-inside:avoid}
+}

@@ -1,0 +1,71 @@
+# CI: 壊れたコードが main に入るのを防ぐ。何も壊せない（デプロイもDB操作もしない）。
+# 実行時間の目安: 2〜4分。public リポジトリなら完全無料。
+#
+# npm / yarn / pnpm のどれでもそのまま動く（ロックファイルから自動判別する）。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # 手で流したいときのため
+  workflow_dispatch:
+
+# 同じブランチに続けて push したとき、古い実行を打ち切る。
+# 無料枠の節約と、結果が前後して混乱するのを防ぐ両方の意味がある。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# 既定を読み取り専用にする。CI はリポジトリに何も書き込まない。
+permissions:
+  contents: read
+
+jobs:
+  # このジョブ名（verify）を、ブランチ保護の必須チェックに指定する。
+  # ワークフロー名（CI）ではないので注意。
+  verify:
+    # ubuntu 以外は課金倍率が上がる（Windows 2倍 / macOS 10倍）。理由なく変えない。
+    runs-on: ubuntu-latest
+    # 暴走したジョブが無料枠を食い潰さないための安全弁。短縮目的ではない。
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # assets/detect-pm.ymlを `.github/actions/detect-pm/action.yml` へ置く。
+      # CI・Deploy・Migrateで同じNode.js準備処理を共有し、修正漏れを防ぐ。
+      - name: Node.jsと依存関係を準備
+        id: pm
+        uses: ./.github/actions/detect-pm
+
+      # 型チェックの前に、生成物の型定義を作る。
+      # Cloudflare の cloudflare-env.d.ts は .gitignore されているのが普通で、
+      # CI のまっさらなチェックアウトには存在しない。手元では通るのに CI だけ
+      # 「Property 'DB' does not exist on type 'CloudflareEnv'」で落ちるのはこれが原因。
+      # wrangler.jsonc から作るだけなので Cloudflare の認証情報は要らない。
+      # cf-typegen スクリプトが無いプロジェクトでは、このステップを削ること。
+      - name: Cloudflare の型定義を生成
+        run: ${{ steps.pm.outputs.run }} cf-typegen
+
+      # 型チェックとテストは分けない。1つのジョブに入れるほうが
+      # チェックアウトとインストールの重複がなく、結果的に安く速い。
+      - name: 型チェック
+        run: ${{ steps.pm.outputs.run }} typecheck
+
+      - name: テスト
+        run: ${{ steps.pm.outputs.run }} test
+
+# 意図的に入れていないもの（入れたくなったら理由を書いてから入れること）
+#
+# - 本番ビルド
+#     重い。しかも deploy.yml が必ずビルドするので、ここで通っても
+#     デプロイが通る保証にはならない。二重に払う意味がない。
+# - E2E / ブラウザテスト
+#     時間と維持コストの割に、単体テスト＋デプロイ後のスモークで足りることが多い。
+# - matrix（複数 Node バージョン）
+#     実行数がそのまま本数分増える。動かす環境が1つなら1つでよい。
+# - 自動 fix コミット（lint --fix して push する類）
+#     CI がリポジトリに書き込むと、人が見ていない変更が main に入る。
+# - schedule（定期実行）
+#     誰も見ていない時間に無料枠だけ減る。

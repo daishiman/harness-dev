@@ -1,0 +1,88 @@
+name: system-briefing-book
+description: 業務システムの打ち合わせ資料(ヒアリング結果、要件定義書、仕様書、画面ボード PNG、まとめ HTML)を、素材と短いヒアリングから同じ工程・型・品質で作るときに使う plugin bundle。
+kind: plugin-composition
+version: 0.2.5
+owner: harness maintainers
+
+contract:
+  intent: 素材と要望とヒアリングから、何をするか(要件定義書)、どう動くか(仕様書)、どう見えて裏で何が動くか(画面ボード)を、最初の版はシンプルに絞って 1 ファイルの打ち合わせ資料にし、打ち合わせ後の修正で版を上げる。
+  interface:
+    inputs: [materials-folder, user-request, hearing-answers, meeting-notes, briefing.json]
+    outputs: [ヒアリング.md, 要件定義.md, 仕様書.md, 変更点.md, board-html, board-png, briefing-book-html, check-reports]
+  invariant:
+    - "版番号の正は 要件定義.md 先頭の「版: vX.Y」1 か所で、仕様書・変更点・まとめ HTML はそれに従う (enforcement: scripts/validate-briefing-docs.mjs, scripts/build-briefing-book.mjs)"
+    - "画面番号・画面名・用語は 要件定義書・仕様書・ボードで一致する (enforcement: scripts/validate-briefing-docs.mjs --stage pages)"
+    - "素材に根拠のない値は「例」と書き、根拠欄を空にしない (enforcement: scripts/validate-briefing-docs.mjs)"
+    - "ボードは assets/data/quality-thresholds.json の board の大きさに収まり、はみ出し・重なり・小さすぎる文字が無い。文字と注記の量は報告 (notices) だけで止めない (enforcement: scripts/render-board-png.mjs)"
+    - "ボードの色は共通 CSS のトークンだけを使い、生の色を書かない (enforcement: scripts/render-board-png.mjs RAW-COLOR)"
+    - "既定の見た目は aidd-agent-kit の jp-web-design (標準カラーとその規範) で、配色の正本は assets/css/vendor/ の写し 1 つ。案件の配色は基本色 --p-* の上書きだけで変える (enforcement: scripts/extract-kit-palette.mjs --verify, tests/test_palette.py)"
+    - "まとめ HTML は画像をはめ込んだ外部参照ゼロの 1 ファイルで、先方にそれだけを渡せば全部が伝わり、JavaScript なしでも全ページを読める (enforcement: scripts/build-briefing-book.mjs LOCAL-REF / EXTERNAL-REF)"
+    - "最初の版でやることは 3 から 5 個に絞り、広げる案は 要件定義 6 章の あとで と 仕様書 8 章の 次に広げる候補 へ回す (enforcement: scripts/validate-briefing-docs.mjs の warn + agents/briefing-reviewer.md のシンプルさ観点)"
+    - "名前を挙げて頼まれた機能 (要望) は黙って外さず、あとで に回すなら 決めること で聞く (enforcement: scripts/validate-briefing-docs.mjs REQUEST-MISSING / REQUEST-DEFERRED-NO-Q)"
+    - "独立レビューは確認点で利用者が深さを選んだあとだけ動き、資料を編集しない (enforcement: manual + skills/assign-briefing-evaluator)"
+    - "素材の名前と値をそのまま載せるかは briefing.json の data_policy (source / masked) で決め、masked のボードにだけ例の札を置く (enforcement: scripts/render-board-png.mjs NO-SAMPLE-FLAG / SAMPLE-FLAG-UNNEEDED)"
+    - "まとめ HTML を先方に渡すのはよいが、公開リンクを作るサービスや関係のない外部サービスへ資料を上げない (enforcement: manual)"
+
+capabilities:
+  - { kind: skill, ref: skills/assign-briefing-evaluator, tier: core }
+  - { kind: skill, ref: skills/run-briefing, tier: core }
+  - { kind: skill, ref: skills/run-briefing-boards, tier: core }
+  - { kind: skill, ref: skills/run-briefing-book, tier: core }
+  - { kind: skill, ref: skills/run-briefing-docs, tier: core }
+  - { kind: skill, ref: skills/run-briefing-hearing, tier: core }
+  - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: agent, ref: agents/briefing-reviewer, tier: core }
+  - { kind: command, ref: commands/briefing-build, tier: core }
+  - { kind: command, ref: commands/briefing-revise, tier: core }
+
+  - {kind: script, ref: scripts/build-briefing-scaffold.mjs, tier: core}
+  - {kind: script, ref: scripts/extract-source-crop.mjs, tier: core}
+  - {kind: script, ref: scripts/render-board-png.mjs, tier: core}
+  - {kind: script, ref: scripts/validate-briefing-docs.mjs, tier: core}
+  - {kind: script, ref: scripts/build-briefing-book.mjs, tier: core}
+  - {kind: script, ref: scripts/compare-briefing-profile.mjs, tier: core}
+  - {kind: script, ref: scripts/count-csv-columns.mjs, tier: core}
+  - {kind: script, ref: scripts/extract-kit-palette.mjs, tier: core}
+
+dependencies:
+  - {from: commands/briefing-build.md, to: skills/run-briefing, type: calls}
+  - {from: commands/briefing-revise.md, to: skills/run-briefing, type: calls}
+  - {from: skills/run-briefing, to: scripts/build-briefing-scaffold.mjs, type: calls}
+  - {from: skills/run-briefing, to: scripts/validate-briefing-docs.mjs, type: calls}
+  - {from: skills/run-briefing, to: scripts/compare-briefing-profile.mjs, type: calls}
+  - {from: skills/run-briefing, to: skills/run-briefing-hearing, type: calls}
+  - {from: skills/run-briefing, to: skills/run-briefing-docs, type: calls}
+  - {from: skills/run-briefing, to: skills/run-briefing-boards, type: calls}
+  - {from: skills/run-briefing, to: skills/run-briefing-book, type: calls}
+  - {from: skills/run-briefing, to: skills/assign-briefing-evaluator, type: calls}
+  - {from: skills/run-briefing-hearing, to: scripts/validate-briefing-docs.mjs, type: calls}
+  - {from: skills/run-briefing-docs, to: scripts/validate-briefing-docs.mjs, type: calls}
+  - {from: skills/run-briefing-boards, to: scripts/build-briefing-scaffold.mjs, type: calls}
+  - {from: skills/run-briefing-boards, to: scripts/extract-source-crop.mjs, type: calls}
+  - {from: skills/run-briefing-boards, to: scripts/render-board-png.mjs, type: calls}
+  - {from: skills/run-briefing-boards, to: scripts/validate-briefing-docs.mjs, type: calls}
+  - {from: skills/run-briefing-boards, to: scripts/count-csv-columns.mjs, type: calls}
+  - {from: skills/run-briefing-book, to: scripts/build-briefing-book.mjs, type: calls}
+  - {from: skills/assign-briefing-evaluator, to: agents/briefing-reviewer.md, type: calls}
+  - {from: skills/assign-briefing-evaluator, to: scripts/validate-briefing-docs.mjs, type: calls}
+  - {from: skills/assign-briefing-evaluator, to: scripts/render-board-png.mjs, type: calls}
+
+external_dependencies:
+  harness-creator:
+    version: ">=1.4.0 <2.0.0"
+    relation: skill-feedback-ssot-provider
+    required_entry_points: [run-skill-feedback]
+
+eval_sinks: [EVALS.json, eval-log/]
+governance:
+  merge_strategy: deep-merge
+  conflict_policy: most-specific-wins
+  proposer_not_approver: true
+  quality_gates:
+    - scripts/validate-briefing-docs.mjs
+    - scripts/render-board-png.mjs
+    - scripts/build-briefing-book.mjs
+  harness_eval: EVALS.json
+observability:
+  hooks: []
+  metrics: [docs_errors, board_errors, stale_png, external_refs, review_findings]

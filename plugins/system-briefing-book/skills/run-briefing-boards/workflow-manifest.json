@@ -1,0 +1,188 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-briefing-boards",
+  "skill": "run-briefing-boards",
+  "description": "main context がページ構成の表を briefing.json に書いて --stage pages を通し、確認点3 のあと型からボードを組み、PNG 化と検査を error と warn が 0 になるまで進めて PNG を目で確かめる。",
+  "phases": [
+    {
+      "id": "B1-pages",
+      "step": 1,
+      "title": "ページ構成を決め briefing.json の pages と表を --stage pages で検査する",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "B2-scaffold",
+      "step": 2,
+      "title": "型からボード HTML の雛形を作る",
+      "gate": "IN2",
+      "dependsOn": [
+        "B1-pages"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-scaffold"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "B3-compose",
+      "step": 3,
+      "title": "素材を切り出しボードに画面と注記を組む",
+      "gate": "IN2",
+      "dependsOn": [
+        "B2-scaffold"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-crop",
+        "script-csv-columns"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "B4-render-check",
+      "step": 4,
+      "title": "PNG 化と検査を error と warn が 0 になるまで進め PNG を目視する",
+      "gate": "IN3",
+      "dependsOn": [
+        "B3-compose"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-render",
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "script-scaffold",
+      "kind": "script",
+      "path": "../../scripts/build-briefing-scaffold.mjs",
+      "phaseIds": [
+        "B2-scaffold"
+      ]
+    },
+    {
+      "id": "script-validate",
+      "kind": "script",
+      "path": "../../scripts/validate-briefing-docs.mjs",
+      "phaseIds": [
+        "B1-pages",
+        "B4-render-check"
+      ]
+    },
+    {
+      "id": "script-crop",
+      "kind": "script",
+      "path": "../../scripts/extract-source-crop.mjs",
+      "phaseIds": [
+        "B3-compose"
+      ]
+    },
+    {
+      "id": "script-csv-columns",
+      "kind": "script",
+      "path": "../../scripts/count-csv-columns.mjs",
+      "phaseIds": [
+        "B3-compose"
+      ]
+    },
+    {
+      "id": "script-render",
+      "kind": "script",
+      "path": "../../scripts/render-board-png.mjs",
+      "phaseIds": [
+        "B4-render-check"
+      ]
+    }
+  ]
+}

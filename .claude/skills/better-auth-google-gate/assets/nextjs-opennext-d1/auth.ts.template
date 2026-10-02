@@ -1,0 +1,106 @@
+import "server-only";
+
+import { cache } from "react";
+import { headers } from "next/headers";
+import { APIError } from "better-auth/api";
+import { betterAuth } from "better-auth/minimal";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { drizzle } from "drizzle-orm/d1";
+import * as authSchema from "@/lib/auth-schema";
+import { getRuntimeEnv, type AppEnv } from "@/lib/cf-runtime";
+
+const APP_NAME = "__APP_NAME__";
+const WORKSPACE_DOMAIN = "__WORKSPACE_DOMAIN__";
+const LOCAL_ORIGIN = "__LOCAL_ORIGIN__";
+const PRODUCTION_ORIGIN = "__PRODUCTION_ORIGIN__";
+
+type AuthEnv = AppEnv & {
+  BETTER_AUTH_SECRET: string;
+  BETTER_AUTH_URL: string;
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+};
+
+function requireAuthEnv(env: AppEnv): AuthEnv {
+  const keys = [
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+  ] as const;
+  const missing = keys.filter((key) => !env[key]);
+  if (missing.length) throw new Error(`認証設定が不足しています: ${missing.join(", ")}`);
+  if ((env.BETTER_AUTH_SECRET?.length ?? 0) < 32) {
+    throw new Error("BETTER_AUTH_SECRETは32文字以上が必要です");
+  }
+  if (![LOCAL_ORIGIN, PRODUCTION_ORIGIN].includes(env.BETTER_AUTH_URL!)) {
+    throw new Error("BETTER_AUTH_URLが許可originと一致しません");
+  }
+  return env as AuthEnv;
+}
+
+function createAuth(env: AuthEnv) {
+  const db = drizzle(env.DB, { schema: authSchema });
+  return betterAuth({
+    appName: APP_NAME,
+    baseURL: env.BETTER_AUTH_URL,
+    secret: env.BETTER_AUTH_SECRET,
+    trustedOrigins: [env.BETTER_AUTH_URL],
+    database: drizzleAdapter(db, {
+      provider: "sqlite",
+      schema: authSchema,
+      transaction: false,
+    }),
+    socialProviders: {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        hd: WORKSPACE_DOMAIN,
+        prompt: "select_account",
+      },
+    },
+    databaseHooks: {
+      user: {
+        create: {
+          before: async (user) => {
+            if (!user.emailVerified) {
+              throw new APIError("FORBIDDEN", { message: "ACCESS_DENIED" });
+            }
+            return { data: user };
+          },
+        },
+      },
+    },
+    session: {
+      expiresIn: 60 * 60 * 8,
+      updateAge: 60 * 60,
+      cookieCache: { enabled: false },
+    },
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+      window: 60,
+      max: 100,
+      customRules: {
+        "/sign-in/social": { window: 60, max: 10 },
+      },
+    },
+    advanced: {
+      ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
+    },
+  });
+}
+
+export const getAuth = cache(async () => createAuth(requireAuthEnv(await getRuntimeEnv())));
+
+export const getSession = cache(async () =>
+  (await getAuth()).api.getSession({ headers: await headers() }),
+);
+
+export async function requireUser() {
+  const session = await getSession();
+  if (!session?.user?.id || !session.user.emailVerified) {
+    throw new Error("AUTHENTICATION_REQUIRED");
+  }
+  return session.user;
+}

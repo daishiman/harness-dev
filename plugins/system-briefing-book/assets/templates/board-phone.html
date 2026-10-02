@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+</style>
+</head>
+<body>
+<!-- 型: phone (スマホの画面 1〜2 台)
+     - 2 台並べるときは .phone-wrap を写す (例: 入力 → 送ったあと)。3 台以上にしない。
+     - 画面一覧 (screen-map) などで使う端末には data-export="s02-send" のように名前を付ける (英小文字・数字・-)。
+     - 注記は 5 個まで。.anchor の中の <i class="mk"> の番号と、注記の data-mark をそろえる。
+     - 要件の札 (.reqs の .req) は注記の先頭 (ol.marks の前) に置く。要件定義 6 章で、この画面に当たる行をすべて。data-req は F 番号。あとで の行は文の終わりに「(あとで)」と書く。
+     - 注記の種類は data-kind: can=できること / how=しくみ / ask=決めること (Q 番号を .q に)。
+     - 文字と数字は例。素材にある値か、仕様書の項目表に合わせて置きかえる。 -->
+<div class="board" data-board="{{NO}}" data-type="phone" data-screens="{{SCREENS}}">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="phone-wrap">
+        <div class="phone-cap">{{SCREENS}} ・ スマホ</div>
+        <div class="phone">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span>5G<i class="bat"></i></span></div>
+          <div class="mbar"><div class="url">example.app</div></div>
+          <div class="site-head anchor">
+            <span class="brand">アプリ名</span><span class="who">担当 A さん</span>
+            <i class="mk" style="left:96px;top:12px">1</i>
+          </div>
+          <div class="app-body">
+            <div class="ptitle anchor">今日の記録<i class="mk" style="right:0;top:0">4</i></div>
+            <div class="field anchor">
+              <div class="lab">日付 <span class="tag">必須</span></div>
+              <div class="input"><span class="num">2026/10/01</span><span class="unit">今日</span></div>
+              <i class="mk" style="left:36px;top:-3px">2</i>
+            </div>
+            <div class="field">
+              <div class="lab">種類</div>
+              <div class="input">ふつう<span class="unit">▾</span></div>
+            </div>
+            <div class="field">
+              <div class="lab">数</div>
+              <div class="input warn"><span class="num">12</span><span class="unit">個</span></div>
+              <div class="why">いつもより多いときは黄色で知らせる</div>
+            </div>
+            <div class="field">
+              <div class="lab">メモ <span class="tag">任意</span></div>
+              <div class="input"><span class="ph">気づいたことがあれば</span></div>
+            </div>
+          </div>
+          <div class="app-foot anchor">
+            <div class="btn btn-primary">送る</div>
+            <div class="hint">送ったあとは事務所の PC で確かめる</div>
+            <i class="mk" style="right:8px;top:4px">3</i>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F01">F01 スマホで記録して送る</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>上の帯に、アプリ名と使っている人</b><span class="sub">どの画面でも同じ場所に出す。迷ったらここで確かめる。</span></li>
+        <li data-mark="2" data-kind="can"><b>入れる項目は 4 つだけ</b><span class="sub">日付は今日が最初から入る。打つ量をできるだけ減らす。</span></li>
+        <li data-mark="3" data-kind="how"><b>「送る」で、しくみが自動で保存</b><span class="sub">送ると上に「送りました」と出て、事務所の一覧に並ぶ。</span></li>
+        <li data-mark="4" data-kind="ask"><b>入れる項目はこの 4 つでよいか</b><span class="q">Q01</span><span class="sub">案: 日付・相手先・数・メモ。足りない項目は次の版で足す。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

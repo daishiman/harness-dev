@@ -1,0 +1,111 @@
+# CD: main のCIが成功したものだけを本番に配る。
+#
+# 手元からの `wrangler deploy` と決定的に違う点:
+#   wrangler は git のコミットではなく「その場の作業ツリー」をビルドする。
+#   手元から流すと、コミットしていない実験コードが本番に出たり、
+#   「main にマージしたつもり」のものが実は出ていなかったりする。
+#   CI のランナーは毎回まっさらなチェックアウトしか持たないため、
+#   作業ツリー = コミット が常に一致する。この問題が構造的に消える。
+#
+# CLOUDFLARE_*はGitHubのproduction Environment secret、APP_URLはRepository variableを使う。
+# npm / yarn / pnpm のどれでもそのまま動く（ロックファイルから自動判別する）。
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # 再デプロイしたいときのため。main以外はjob条件とEnvironmentで止める。
+  workflow_dispatch:
+
+concurrency:
+  # デプロイの途中で打ち切ると配布が中途半端に残りうるので、待たせる（打ち切らない）
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # CLOUDFLARE_*はRepository secretではなく、このEnvironmentへ登録する。
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      APP_URL: ${{ vars.APP_URL }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # workflow_runではCIが検査したmainのcommitそのものをcheckoutする。
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: 本番設定を検証
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::productionのCLOUDFLARE_API_TOKENが未登録です"; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::productionのCLOUDFLARE_ACCOUNT_IDが未登録です"; exit 1; }
+          test -n "$APP_URL" || { echo "::error::Repository VariableのAPP_URLが未登録です"; exit 1; }
+
+      - name: Node.jsと依存関係を準備
+        id: pm
+        uses: ./.github/actions/detect-pm
+
+      # Cloudflare のバインディング（DB接続など）の型定義を生成する。
+      # このファイルは Git 管理外なので、まっさらなチェックアウトには存在しない。
+      # これを飛ばすと「手元では通るのに CI のビルドだけ型エラーで落ちる」になる。
+      # cf-typegen スクリプトがないプロジェクトではこのステップごと削除してよい。
+      - name: 型定義の生成
+        run: ${{ steps.pm.outputs.run }} cf-typegen
+
+      # デプロイ前にもう一度だけ確認する。CI が通っていても、
+      # マージ結果の組み合わせで壊れることがある。
+      - name: 型チェック
+        run: ${{ steps.pm.outputs.run }} typecheck
+
+      # workflow_dispatchでも品質検査を迂回しない。自動経路は直前のCI成功で検査済み。
+      - name: テスト（手動実行時）
+        if: github.event_name == 'workflow_dispatch'
+        run: ${{ steps.pm.outputs.run }} test
+
+      - name: デプロイ
+        run: ${{ steps.pm.outputs.run }} deploy
+
+      # --- ここから配ったあとの確認 ---
+      #
+      # Cloudflare Workers は新しいコードを配った後も、すでに起動している
+      # 古いプロセス（アイソレータ）がしばらく残る。数十秒〜1〜2分。
+      # だから「1回叩いて 200 が返った」では反映の確認にならない。
+      # 時間を空けて2回叩き、2回とも通って初めて合格とする。
+
+      - name: 1回目までの待機
+        run: sleep 30
+
+      - name: スモークテスト（1回目）
+        run: bash .github/scripts/smoke.sh
+
+      - name: 2回目までの待機
+        run: sleep 90
+
+      - name: スモークテスト（2回目）
+        run: bash .github/scripts/smoke.sh
+
+      - name: 失敗したときの案内
+        if: failure()
+        run: |
+          echo "::error::デプロイ後の確認に失敗しました。"
+          echo "自動では元に戻していません。以下で状況を確認し、人が判断してください。"
+          echo "  プロジェクトで使っているWranglerコマンドで deployments list を確認"
+          echo "  必要なら所有者判断で rollback [deployment-id]"
+          echo "『本当に壊れている』のか『まだ古いプロセスが残っているだけ』なのかを"
+          echo "機械は区別できないため、ロールバックは自動実行していません。"
+
+# 注意: マイグレーション（DBの形の変更）はこのワークフローに含めない。
+# 壊せる範囲が違うものを同じ引き金にまとめないため。migrate.yml を手動で先に流すこと。
+# 順番は「マイグレーション → デプロイ」で固定。

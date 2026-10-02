@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>00 全体図</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.board-body.col > .stage { gap: 14px; }
+.can { padding: 18px 20px; }
+.steps .step .vis { height: 170px; padding: 10px; }
+</style>
+</head>
+<body>
+<div class="board" data-board="00" data-type="overview">
+  <header class="board-head">
+    <div>
+      <div class="kicker">はじめに</div>
+      <h1>全体図</h1>
+      <div class="lead">紙の書き方は変えずに、撮って送るだけで、取り込み先のシステムへ渡せるようにする。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <h2 class="sec-label">今の手間<small>聞き取りから</small></h2>
+      <div class="facts">
+        <div class="fact"><b>2〜4 枚</b><span>1 日に打ち直す配車表。1 枚に 10 行くらい</span><small>聞き取り:H02</small></div>
+        <div class="fact"><b>1 時間</b><span>毎日の打ち直しにかかる時間</span><small>聞き取り:H02</small></div>
+        <div class="fact"><b>月に何回か</b><span>車番や数量の打ちまちがい</span><small>聞き取り:H02</small></div>
+      </div>
+      <h2 class="sec-label">最初の版でできること<small>まずはこの 5 つだけ</small></h2>
+      <div class="cans">
+        <div class="can anchor">
+          <div class="h"><span class="no">1</span><b>スマホで撮って送る</b></div>
+          <p>手書きの配車表を、そのまま撮って送る。打ち直しはしない。</p>
+          <div class="dev"><span class="chip neutral">スマホ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">2</span><b>しくみが行ごとに読み取る</b></div>
+          <p>届いた写真を 1 行ずつ読み取り、自信がない欄に黄色を付ける。</p>
+          <div class="dev"><span class="chip system">しくみ</span></div>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">3</span><b>PC で紙と見比べて確かめ直す</b></div>
+          <p>紙の写真と並べて、黄色の欄だけを確かめて直す。</p>
+          <div class="dev"><span class="chip neutral">PC</span></div>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">4</span><b>名前を候補から選ぶ</b></div>
+          <p>受注先・発地・着地は、対応表から近い名前を候補に出す。</p>
+          <div class="dev"><span class="chip neutral">PC</span></div>
+        </div>
+        <div class="can">
+          <div class="h"><span class="no">5</span><b>確かめた行を CSV で書き出す</b></div>
+          <p>取り込み先のシステムが読める形で書き出す。</p>
+          <div class="dev"><span class="chip neutral">PC</span></div>
+        </div>
+      </div>
+      <h2 class="sec-label">1 日の流れ<small>白い段は人、青い段はしくみが自動で</small></h2>
+      <div class="steps">
+        <div class="step">
+          <div class="h"><span class="no">1</span><b>撮って送る</b></div>
+          <div class="vis"><img src="assets/export/s01-send.png" alt=""></div>
+          <p>配車の担当者が、スマホで紙を撮って送る。</p>
+          <div class="who"><span class="chip person">人</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">2</span><b>行ごとに読み取る</b></div>
+          <div class="vis"><img src="assets/haisha-paper.svg" alt="" data-source="配車表_例.svg"></div>
+          <p>しくみが 1 行ずつ読み取り、確認待ちにする。</p>
+          <div class="who"><span class="chip system">しくみ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step">
+          <div class="h"><span class="no">3</span><b>見比べて確かめる</b></div>
+          <div class="vis"><img src="assets/export/s03-check.png" alt=""></div>
+          <p>請求の担当者が、紙の写真と見比べて直す。名前は候補から選ぶ。</p>
+          <div class="who"><span class="chip person">人</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step anchor">
+          <div class="h"><span class="no">4</span><b>書き出して取り込む</b></div>
+          <div class="vis"><img src="assets/export/s04-export.png" alt=""></div>
+          <p>確かめた行を書き出し、取り込み先のシステムで取り込む。</p>
+          <div class="who"><span class="chip person">人</span></div>
+          <i class="mk" style="right:-10px;top:-10px">3</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>紙の書き方は変えない</b><span class="sub">今の紙をそのまま撮る。新しい書き方を覚える必要はない。</span></li>
+        <li data-mark="2" data-kind="how"><b>読み取りは、しくみが自動で</b><span class="sub">名前の候補も、しくみが対応表から出す。人は確かめて選ぶだけ。</span></li>
+        <li data-mark="3" data-kind="ask"><b>書き出すファイルの列の並び</b><span class="q">Q02</span><span class="sub">案: 取り込み列の見本と同じ並び。試して決める。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

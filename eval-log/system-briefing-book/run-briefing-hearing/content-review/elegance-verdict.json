@@ -1,0 +1,47 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-hearing",
+    "skill_md_sha256": "318798990063a5c2295635df94b1885073105aeb3a4fc882cc1f3afc826350ec"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 2,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "cr-briefing-hearing-coverage-v1 (focused combined content review, incremental profile, ヒアリング網羅化の差分)",
+  "reviewed_at": "2026-10-02T09:11:10Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "1 回目の medium M1 (要件定義 7 章に受け皿が無い) は直った。document-structure.md:89 と writing-patterns.md:28 に 量 (H30)・止まったとき (H35)・使う時間帯 (H36) の行ができ、お手本の要件定義.md 7 章に 3 行が写った。C8・D5・D6 (hearing-guide.md:182・:196・:197) と :210 の行き先「要件定義 7 章」に書く場所ができた。雛形 requirements.md.tmpl の 7 章は空の見出しで、validator は空かどうかだけを見るので、ここも食い違わない。",
+      "1 回目の medium M2 (人の追加・取消の入口が、ヒアリングでは決まり、要件定義と仕様書では未決) は直った。仕様書.md 2.1 画面区分 (:19) は H26・H28 を根拠に管理のメニューを案として書き、2.3 に「管理」の行が入り、S01・S02 の画面区分は 2.3 を指す。H40・5 章・Q09 (要件定義.md:108) は「管理のメニューの中身と置き場所」に絞られ、同じことに既定案の答えと未定の答えが並ばなくなった。7.1 の見える範囲「使う人の一覧」とも合う。",
+      "1 回目の medium M3 (B11 と D1 の重複) は直った。hearing-guide.md:167 の組の決まりで、B11 の答えで人まで分かれば D1 は聞かずに埋め、「作った会社に頼む」なら窓口の人を既定案で埋める、と決まった。お手本の H28 (既定案。人は D1 から来た) と H21 (既定案) の関係も、この決まりに合う。",
+      "1 回目の low 4 件も直った。H25 に今の流れが入り、要件定義 5.1 の 3 段と一致した。:55 の例外は C5 を聞かない側へ移した。C9 の行き先 (:183) は :208 と同じ「4 章、6 章 稼働構成」になった。H30 は素材のままの値と見積もり (平日 22 日 × 40 行 = 880、900 行まで) に書き分けた。",
+      "数と番号は一致したまま。IN2 (6 回・核心の 5 問 A1・A2・A3・A6・A7・聞き足し 2 回まで)、2 章、5 章が一致する。回の列の 24 問と、聞かない 12 問 (:229) で 36 問になる。H 番号の固定 (4 章 :122-123)、要望の H37 (3 章)、document-structure.md:19 も同じ番号を使う。仕様書・要件定義・変更点の H25/H26→H37/H38 の付け替えに漏れは無く、run-briefing-docs/SKILL.md:157 の `Q01=H25` は H25=A7 として成り立つ。"
+    ],
+    "negative_feedback": [
+      "[low / 食い違い] hearing-guide.md:55 は例外を「1 つの選択肢で両方に答えられる組だけ: C3・B10・C10」と言い切るが、B7 (:161、H13「保存したときと、まちがいがあるときの知らせ方」) が入っていない。B7 は 4 回目に聞き、1 つの選択肢で両方に答える同じ形なので、この文の上では規則違反に見える (B8 は聞かないので影響しない)。直し方: 列挙に B7 を足すか、「例: C3・B10・C10・B7」と例示の形にする。",
+      "[low / 漏れ] B9 の 3 つ目「管理の画面は作らず、作った会社に頼む」(:163) と B11 の先頭「アプリの中の管理のメニューで (おすすめ)」(:165) は同じ 2 回目に聞く。このため両方を選ぶと答えが食い違うが、:167 の組の決まりは B9 を含まない。B の質問は聞き足しの対象外なので、食い違いを拾う手順も無い。直し方: :167 に「B9 で 3 つ目を選んだら、B11 も『作った会社に頼む』として扱う。B11 と食い違ったら 未定 にして 決めること に回す」を 1 文足す。",
+      "[low / 食い違い] お手本 ヒアリング.md の H19 (:44、C5) と H34 (:51、C12) は、5 章 :229 では聞かない質問なのに出どころが 聞き取り で、素材 (聞き取りメモ.md) にも答えが無い。:229 の「聞かなかった質問も 既定案 か 素材 の行として必ず書く」と合わない。H34 は今回足した行で、H19 は C5 を聞かない側へ移したことで食い違うようになった (H05・H23 は HEAD から同じ形)。3 章の「自由入力」で別の質問の答えの中に出たと読めば成り立つので low。直し方: :229 に「ほかの質問の答えの中で話に出たら 聞き取り、決められなければ 未定」と足すか、お手本の H19・H34 を既定案にして、既定案を越える部分を決めること へ回す。",
+      "[low / 漏れ] 仕様書側の受け皿と写しが薄い。C8・C9 (:182-183、:208) は 6 章 `稼働構成:` へ、D5・D6 (:196-197、:210) は 7.2 `監視と復旧:` へ写すことになっている。しかし document-structure.md の記入先の表 :173 と :175 は「件数の目安・移すデータの範囲」「止まってよい時間・使う時間帯」を名指ししていない。お手本の仕様書.md 6 章 (:254-255) と 7.2 (:268) にも H29〜H36 の参照が 1 つも無い (要件定義 7 章には写った)。稼働構成 の自由記述と 7.2 の「戻せる時点と復旧時間の目標」で受けられるので low。直し方: :173 に「件数の目安 (H30)・移すデータの範囲 (H31)」、:175 に「止まってよい時間と使う時間帯 (H35・H36)」を足し、お手本の 6 章 稼働構成 と 7.2 に案として写す。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は run-briefing-hearing のヒアリング網羅化の差分。対象は A7・B9〜B11・C7〜C12・D5〜D6 を足して H25〜H36 に固定した質問、6 回の組み方と核心の 5 問、それに合わせた規約・雛形・テスト・お手本の変更。iteration 1 (同じ reviewer id、同じ sha) では medium 3 件 (M1 要件定義 7 章の受け皿、M2 お手本の入口の食い違い、M3 B11 と D1 の重複) と low 4 件を返し、verdict は書かなかった。作り手がその 7 件を直したので、iteration 2 として再評価した。sha だけを書き換えたのではなく、今の SKILL.md (sha256 318798990063a5c2295635df94b1885073105aeb3a4fc882cc1f3afc826350ec。iteration 1 から変わっていないことを shasum で確かめた) と、`git -C <repo> diff HEAD -- plugins/system-briefing-book` の今の差分を読み直して判定した。読んだもの: SKILL.md、hearing-guide.md (2〜5 章と「回答に残す設計情報」)、document-structure.md (H 番号の行、要件定義 7 章の行、根拠の書き方、記入先の表)、writing-patterns.md の 6・7 章の行、assets/templates/requirements.md.tmpl の 7 章、お手本の ヒアリング.md・要件定義.md (5〜7 章と 9 章)・仕様書.md (2.1・2.3・S01・S02・6 章・7 章)・変更点.md と 素材/聞き取りメモ.md、validate-briefing-docs.mjs の 7 章の検査行、scripts/lint-content-review.py の schema 検査。それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を 1 つの文脈で同時に判定した。直した所が 1 回目の指摘をふさいだかに加え、直したことで新しい矛盾や漏れが出ていないか (2.3 のメニュー数と B3、7.1 と 2.1、要件定義 7 章の行数と writing-patterns、H30 の数と要件定義 7 章の量、組の決まりとお手本の H21・H28) も見た。30 種の思考法は使っていない。数値の score は出していない。SKILL.md・hearing-guide.md・そのほかの成果物には手を付けていない。実行した検査: `node scripts/validate-briefing-docs.mjs --dir examples/sample-haisha/打ち合わせ資料 --stage all` は exit 0 (status ok、errors 0、warnings 0。_check/docs.json の内容は実行の前後で同じ)。`python3 -m pytest -q tests/test_build_briefing_scaffold.py tests/test_validate_briefing_docs.py` は exit 0 (35 passed)。この verdict を書いたあとに `python3 scripts/lint-content-review.py --all` を実行する。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前の verdict (cr-briefing-goal-seek-v1、sha 59d88e30…、PASS) の low 4 件は、iteration 1 で直っていることを確かめている。判定: PASS。high 0、medium 0。low 4 件 (B7 が例外の列挙に無い、B9 と B11 の同じ回での食い違い、お手本の H19・H34 の出どころ、仕様書 6 章 稼働構成と 7.2 の受け皿と写し) を findings に残す。"
+}

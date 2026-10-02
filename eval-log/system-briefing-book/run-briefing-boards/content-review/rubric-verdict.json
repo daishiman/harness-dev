@@ -1,0 +1,49 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-boards",
+    "skill_md_sha256": "1222d9e00d1164c318534a8a1b0cea5edb872c91d53706fc1f65c46bc3743d5f"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 3,
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 2
+  },
+  "reviewer": "cr-briefing-jp-web-design-v2 (focused combined content review, incremental profile, 配色の正を briefing.json にした差分)の rubric 投影",
+  "reviewed_at": "2026-10-02T11:31:46Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "前回の high (依存関係の切れ) は (a) で解消した。init は既にある briefing.json の palette を正として tokens.css を作る (build-briefing-scaffold.mjs:100-139 の resolvePalette・normalizePalette・recordedPalette を :154 で使う)。一時フォルダ (scratchpad/cr-tmp) で init を実際に回して確かめた: `--palette case.css` で作ると briefing.json に記録され、tokens.css の最後に上書きが入る / `--palette` を省いた `--refresh-css` でも上書きが残る / 記録と違う `--palette standard` は exit 2 (usage-error) で止まり、tokens.css は変わらない / briefing.json の palette を資料フォルダからの相対 (mine.css) に直して `--refresh-css` すると新しい上書きに替わる (冒頭が「3. 案件の上書き: mine.css (sha256 …)」になる) / 記録が standard なら `--palette standard` は通る / 記録した CSS が無ければ exit 2。test_palette_follows_briefing_json (test_build_briefing_scaffold.py:78-106) も同じ流れを押さえ、test_build_briefing_scaffold.py と test_palette.py の 19 件が通る。これで SKILL.md:187 のリンク先 standard-attribution.md:26、palette.mjs:70-71 が tokens.css の冒頭に書く注記、スクリプト冒頭の説明 (:13-18)、設計ノート (doc/system-briefing-book-設計ノート.md:158) が、スクリプトの動きと 1 つにそろった。使われていなかった overlayCssPath は消え、repository のどこからも参照されていない (残るのは前回の verdict の文だけ)。",
+      "SKILL.md:187 は前回の medium (持ち場) と low 2 件 (palette に書くのは場所、init の引数) をふさいだ。持ち場の外のことを「呼び出し元へ返す (… のは run-briefing)」で扱い、:112・:129・:147 と同じ形になった。:106-111 の表 (boards が書くのは `_src/NN_<slug>.html`・`_src/assets/`・PNG、pages が書くのは briefing.json の pages だけ) と合い、workflow.md:34 に足した行 (run-briefing が palette と data_policy を書き、palette を変えたら init を `--refresh-css` で回し直す) が持ち主の正本になった。data_policy を run-briefing の行に入れたのも run-briefing/SKILL.md:146 (あとで変えるときは briefing.json の data_policy を直す) と合う。「palette に配色の CSS の場所を書いて」は briefing.schema.json:27-33 の値の形どおり。「init の引数は execution-contract.md の表」は「2. スクリプトと引数」の表 (:43-45) に `[--out]` `[--palette]` `[--refresh-css]` まで載っている。リンク ../../assets/css/standard-attribution.md と節「案件の配色に合わせるとき」(:24) は実在する。本文は 117 行のままで 300 行以下。ほかの Gotchas (:185 mechanism、:186 Windows) と Additional Resources とは重ならない。",
+      "init の比べ方がよい。--palette は今のフォルダから、briefing.json の palette は briefing.json のあるフォルダから解き、どちらも実パスに直してから比べるので、同じファイルを別のフォルダから別の相対パスで渡しても止まらない (cr-tmp の別フォルダから `--palette ../case.css --refresh-css` で rc 0)。止めるときのメッセージが直し方 (briefing.json の palette を直し、`--refresh-css` を付けて回し直す) まで言う。tokens.css の冒頭には上書きのファイル名とハッシュの頭だけを書き、絶対パスや日時を入れない (palette.mjs:56-65) ので、同じ入力から同じバイト列になる。記録を正にして入口を 1 つに絞り、記録と違う入力は黙って直さずに止める形は、ほかの雛形の作り直しにも使える。"
+    ],
+    "negative_feedback": [
+      "[medium / 漏れ。今回の差分の受け手] :187 が呼び出し元へ返す「案件の色が要る」を受ける手順が run-briefing に無い。run-briefing/SKILL.md の工程5 (:176-182) は、boards から返るもの (3 回直しても残る error と warn、9 章に無い 決めること、仕様書の足りない章と画面番号) を 1 つずつ受けて次の手を書いているが、配色はそこに無い。run-briefing/SKILL.md には palette・配色・standard-attribution の語が 1 つも無く、工程0 の init (:150-151) も `--palette` を渡さず色を聞かない (run-briefing-hearing も配色を聞かない)。workflow.md:34 で run-briefing を palette の持ち主にしたが、だれに色を聞くか (色は利用者か先方が決めること)、どの CSS を使うか、作り直したあと何を通し直すか (tokens.css が新しくなると build-briefing-book.mjs:463-480 が STALE-PNG で止めるので、boards の「3. PNG にして検査する」から通し直す) を決める手順がどこにも無く、返事が受け流されうる。このスキルの本文は正しく、持ち主と手順は workflow.md と standard-attribution.md からたどれ、古い PNG は book が捕まえるので high にはしない。直し方: run-briefing/SKILL.md の工程5 に 1 行足す。例「boards が案件の色が要ると返したら、色を変えるかを利用者に聞き、変えるなら standard-attribution.md の『案件の配色に合わせるとき』どおりに CSS を用意して briefing.json の palette を直し、工程0 と同じ引数に `--refresh-css` を付けて init を回し直してから、boards を通し直す」。run-briefing の SKILL.md の sha が変わるので、そちらの verdict の再評価が要る。",
+      "[low / 依存関係。今回の差分] init は palette を絶対パスで記録する (normalizePalette :124-125 が realPath を toPosix して value にする)。CSS が資料フォルダの中にあっても絶対パスになる (cr-tmp で `--out inner2 --palette inner2/colors.css` を回して確かめた)。前は記録を読み返さなかったので害が無かったが、今は init が読み返すので、資料フォルダを動かしたり別の PC で作り直したり (execution-contract.md の「4. Mac と Windows」) すると、init が exit 2「配色の CSS がありません: <絶対パス>」で止まる。このメッセージは値が briefing.json から来たことを言わない。同じ briefing.json の materials は資料フォルダからの相対で書いている (:167、schema の materials の説明) ので、場所を持つ 2 つの鍵で書き方が違う。briefing.schema.json:27-33 の palette の説明にも、相対なら briefing.json のあるフォルダから解くことが書かれていない。直し方: 記録するときは資料フォルダからの相対 (relPosix(overlay, outResolved)) で書く。recordedPalette から来た値で止めるときは「(briefing.json の palette)」と添える。schema の説明に「相対は briefing.json のあるフォルダから」を足す。",
+      "[low / 漏れ。今回の差分] palette を直して `--refresh-css` を付け忘れると、init は exit 0 で tokens.css を skipped に並べるだけで、記録と実物のずれが黙って残る (cr-tmp で確かめた)。手順の文 (:187 のリンク先、workflow.md:34、エラーメッセージ) はどれも `--refresh-css` を付けるよう書いているので、文としては正しい。ずれを捕まえる検査はまだ無い (tokens.css の冒頭の「3. 案件の上書き: <名前> (sha256 …)」を briefing.json の palette と照らすものが無い)。直し方: init で tokens.css があり `--refresh-css` が無いとき、組み立てた中身と今のファイルが違えば注意を出す。または validate-briefing-docs.mjs で冒頭の 3 行目と palette を照らす。",
+      "[low / 食い違い。今回の差分] workflow.md:37 は run-briefing-boards に `_src/` をまるごと任せており、`_src/tokens.css` と `_src/common.css` も含む。一方 :21 は tokens.css を「init が作る。手で直さない」とし、:34 は init の回し直しを run-briefing に任せ、SKILL.md:109・:187 は boards の持ち場を `_src/NN_<slug>.html`・`_src/assets/` に絞っている。表だけを読むと boards が tokens.css を書いてよいと読める。直し方: workflow.md:37 を「`_src/` (tokens.css と common.css は除く。init が作る)、PNG、briefing.json の pages」にする。",
+      "[low / 前々回から持ち越し・未解決。今回の差分とは無関係] Post-choice の節 (:85-87) の主語の無い「独立レビューとその指摘に基づく改善を行う」(cr-briefing-goal-seek-v1 の指摘)。行番号は変わっていない。",
+      "[low / 前々回から持ち越し・未解決。今回の差分とは無関係] :176 で最後に通す `--stage all` の exit 1 と warn をどうするかが書かれていない (cr-briefing-batch-v4 から)。行番号は変わっていない。",
+      "[low / 前々回から持ち越し・未解決。今回の差分とは無関係] :112 の「4〜7章の…詳細は転記しない」が、:157 (data-map の区分は仕様書 4 章を読んで決める) と page-patterns.md の「mechanism しくみ」の節 (5 章の R 番号を描く。今は :137-138) と、文だけ読むと食い違って見える (cr-briefing-batch-v4 から)。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は、前回の verdict (cr-briefing-jp-web-design-v1、sha d3f0f356…、FAIL) の negative_feedback 0〜3 番を直した差分。呼び出し元は 0 番の直し方に (a) スクリプトを直す を選んだ。この差分について iteration 2 (上限 2)。sha だけを書き換えたのではなく、今の SKILL.md を shasum -a 256 で取り直し (1222d9e00d1164c318534a8a1b0cea5edb872c91d53706fc1f65c46bc3743d5f。依頼の値と一致)、読み直して判定した。`git diff` では SKILL.md の差分は :187 の 1 行追加だけで、HEAD の SKILL.md の sha256 は 443fa1a9… (前々回に評価した版) と一致したので、ほかの行は評価済みの版のまま。読んだもの: 今の SKILL.md 全体、前回の verdict 2 件、content-review-protocol.md の incremental の節、content-review-verdict.schema.json、scripts/lint-content-review.py の判定部。直した所として build-briefing-scaffold.mjs の全体と git diff、scripts/lib/palette.mjs の全体、tests/test_build_briefing_scaffold.py の git diff、assets/css/standard-attribution.md、references/workflow.md (出力フォルダ) と execution-contract.md (2 と 4 の節) の git diff と本文。依存先として run-briefing/SKILL.md (工程0 と工程5・工程6)、briefing.schema.json の palette と materials、validate-briefing-docs.mjs の palette の検査、build-briefing-book.mjs の STALE-PNG と tokens.css の読み方、お手本の briefing.json の palette、page-patterns.md の mechanism の節、plugin 内の palette・配色・data_policy・--palette の出てくる所 (grep)。それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 直した行が事実として正しいか (スクリプトの実際の動き、リンクと節の実在) (b) 既存の本文と持ち場の表との重複と矛盾 (c) 依存関係整合 (d) rubric の high 0 を同時に判定した。30 種の思考法は使っていない。数値の score は出していない。実際に動かして確かめた: scratchpad/cr-tmp/r2 (repository の外) に素材フォルダを作り、init を 10 通り回した (相対の --palette で作る、--palette 無しの --refresh-css、別フォルダから同じファイル、記録と違う --palette、palette を直して --refresh-css 無し・有り、記録した CSS が無い、standard 同士、--out の付け忘れ、資料フォルダの中の CSS の記録の形)。結果は positive_feedback と negative_feedback に書いたとおり。`python3 -m pytest -q test_build_briefing_scaffold.py test_palette.py` は 19 passed。plugin のテスト一式は 280 秒で打ち切ったが、そこまで失敗は 0。SKILL.md、スクリプト、そのほかの成果物には手を付けていない (書き換えたのはこの verdict 2 件だけ。pytest が tests/ に作る .pytest_cache と __pycache__ は .gitignore の対象)。rubric 投影: 構造の観点は 1 行の書き換えでは変わらない (BD-002 の ## Gotchas はある。BD-003 の本文は 117 行で 300 行以下。FM・NM・PD・RG は frontmatter と名前に触れていないので前々回のまま。L2 の BND-001・REG-001 は plugin 単位の観点で、本文 1 行の書き換えでは変わらないので回し直していない)。意味の観点の high は 0 で、protocol の (e) rubric の high 0 を満たす。指摘は elegance 投影と同じものを載せた。判定: PASS。前回の high・medium・low 2 件は解消。新しい指摘は medium 1 と low 3 で、どれもこのスキルの SKILL.md の外を直すもの。前々回から持ち越しの low 3 件は短く引き継いだ。next_action は none (残る medium は run-briefing の SKILL.md を直すもので、直せばそちらの verdict の再評価になる)。"
+}

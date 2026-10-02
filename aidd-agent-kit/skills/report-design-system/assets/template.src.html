@@ -1,0 +1,275 @@
+<title>車両収支の目標差分析</title>
+<!--
+  スキル内部の回帰テストと構造同期に使う見本。コピー・直接編集・個別ビルドはしない。
+  実レポートは SKILL.md の Quickstart から init し、analysis.mjs が .src.html を生成する。
+  書くのは title / header.doc / section / footer だけ。スタイル・スクリプト・目次・セクションの見出し帯 (.sec-head = 番号チップ + h2)・
+  要因ランキング・打ち手への CTA・印刷ボタン・打ち手の番号/出所バッジ/根拠ボタンはビルドが付ける。
+  部品は aidd-agent-kit (jp-web-design) のクラスをそのまま使う (.card .badge .btn .kpi-strip .hero-number .disclosure …)。
+  型は固定: 結論 (conclusion) → 要因 (factor) を影響の大きい順に1つ以上 → 必要な場合だけ打ち手 (action) 1つ。
+  文章の上限: 見出し40字 / 段落はセクションに1つまで / 段落・箇条書き・凡例・打ち手の指示は1項目60字。補足説明は書かない。
+  色は部品クラスと SVG の c-* / s-* クラスだけで付ける。HEX を書かない。配色の基本色はキット正本 (assets/vendor/standard-color-system.css) が持つ。
+-->
+
+<header class="doc" data-detail="standard">
+  <p class="crumb">サンプル運送｜車両別収支 月次レポート</p>
+  <h1 class="page-title">2026年4〜9月 営業利益の目標差</h1>
+  <p class="sub">対象: 48台・6ヶ月｜作成 2026-10-05｜情報量: 標準</p>
+</header>
+
+<!-- 結論: h2 = 結論の1文。主数字 (.hero-number) は1つ、前提ストリップ (.kpi) は1〜3個。
+     分析結果の概要は、初心者向けの固定4項目を各48字までで書く。data-unit = 要因の影響の単位 -->
+<section data-kind="conclusion" data-toc="結論" data-unit="万円/月">
+  <h2>営業利益は目標を月280万円下回り、半分が実車率の低さと対応</h2>
+  <div class="hero card">
+    <div class="hero-number">
+      <div class="hn-label">目標との差（営業利益）</div>
+      <div class="hn-value num">▲280<span class="unit">万円/月</span></div>
+      <div class="hn-sub"><span class="delta-chip">目標 1,200万円/月 に対して</span></div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-label">赤字の車両</div><div class="kpi-value num loss">12<span class="unit">/ 48台</span></div></div>
+      <div class="kpi"><div class="kpi-label">実車率</div><div class="kpi-value num">67<span class="unit">%</span></div><div class="kpi-sub">目標 75%</div></div>
+      <div class="kpi"><div class="kpi-label">修繕費</div><div class="kpi-value num">180<span class="unit">万円/月</span></div><div class="kpi-sub">前年 +90</div></div>
+    </div>
+  </div>
+  <div class="overview card">
+    <div class="overview-title">分析結果の概要</div>
+    <ul class="overview-list">
+      <li><span class="overview-label">対象・比較</span><span class="overview-text">2026年4〜9月の48台を、目標と前年同期で比較</span></li>
+      <li><span class="overview-label">数字で分かったこと</span><span class="overview-text">営業利益は目標を月280万円下回った</span></li>
+      <li><span class="overview-label">どう読むか</span><span class="overview-text">実車率の低さが差の半分以上を占める</span></li>
+      <li><span class="overview-label">言えないこと</span><span class="overview-text">関連は確認したが、原因の確定には追加確認が必要</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 要因: h2 = 観測した差・関連の1文。背景分析時は説明仮説を慎重に書く。data-impact = 結論の指標への影響 (悪化はマイナス)。
+     data-hypotheses = 仮説を使う場合だけ、この要因を支える仮説 ID (複数はカンマ区切り、少なくとも1は採用済み)。
+     背景は結果から「なぜ」をたどって探索し、原因 → 中間 → 結果の向きで表示する。
+     背景の説明仮説 (div.causes-h + ul.causes 2〜4項目、想定は半分以下) → 判断への意味 (div.meaning) →
+     図 (figure.card.card-pad。必須) → 表 (.table-scroll.card。任意) → 統計の要約 (div.stats.card。n を含む2〜5項目) →
+     統計的事実 (div.facts-h + ul.facts 2〜5項目) → 解釈 (div.statement.interpretation) → 仮説採用時だけ仮説・主張 (div.statement.claim) → データと計算 (details.disclosure)。
+     情報量は header.doc の data-detail で concise / standard / detailed。図と統計の要約は analysis.mjs で作る -->
+<section data-kind="factor" data-toc="実車率" data-impact="-150" data-hypotheses="H1">
+  <h2>小型の空車42便と実車率58%が対応し、影響は月150万円</h2>
+  <div class="causes-h">背景の説明仮説</div>
+  <ul class="causes">
+    <li><span class="badge badge-success">データで確認</span><span class="cause-text">小型の帰り便の空車は月42便で、4月の荷主変更の後に2倍になった</span></li>
+    <li><span class="badge badge-warning">想定</span><span class="cause-text">変更後の荷主の出荷が午前に集中し、帰りの積み合わせが組めないと考えられる</span></li>
+  </ul>
+  <div class="meaning"><span class="meaning-h">判断への意味</span><span class="meaning-text">荷主の出荷時刻が変わらない限り、小型の帰り荷は増えない前提で配車を組む</span></div>
+  <figure class="card card-pad">
+    <figcaption>車種別の実車率<small>赤=目標から最も遠い車種、破線=目標 75%</small></figcaption>
+    <div class="chartbox">
+      <svg viewBox="0 0 760 200" class="chart" data-chart="hbar" role="img" aria-label="車種別の実車率。小型が58%で最も低く、全車種が目標75%を下回る">
+        <line x1="530" y1="10" x2="530" y2="180" class="s-threshold"/>
+        <text x="534" y="194" class="an">目標 75%</text>
+        <text x="100" y="38" text-anchor="end" class="lb">大型</text>
+        <rect x="110" y="20" width="403.2" height="26" rx="3" class="c-main" data-tip="大型: 72%"/>
+        <text x="546" y="38" class="vl">72%</text>
+        <text x="100" y="80" text-anchor="end" class="lb">中型</text>
+        <rect x="110" y="62" width="380.8" height="26" rx="3" class="c-main" data-tip="中型: 68%"/>
+        <text x="546" y="80" class="vl">68%</text>
+        <text x="100" y="122" text-anchor="end" class="lb">小型</text>
+        <rect x="110" y="104" width="324.8" height="26" rx="3" class="c-danger" data-tip="小型: 58%（目標差 ▲17pt）"/>
+        <text x="546" y="122" class="vl-danger">58%</text>
+        <text x="100" y="164" text-anchor="end" class="lb">全体</text>
+        <rect x="110" y="146" width="375.2" height="26" rx="3" class="c-sub" data-tip="全体: 67%（目標差 ▲8pt）"/>
+        <text x="546" y="164" class="vl">67%</text>
+      </svg>
+    </div>
+  <details class="howto">
+    <summary>この図の読み方</summary>
+    <p>横棒が長いほど値が大きく、上から並んでいます。赤は特に注意して見る項目、破線は目標の位置です。</p>
+  </details>
+  </figure>
+  <div class="stats card">
+    <div class="stats-title">統計の要約</div>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-label">n</div><div class="kpi-value num">48台</div></div>
+      <div class="kpi"><div class="kpi-label">中央値</div><div class="kpi-value num">66%</div><div class="kpi-sub">半数の車両は66%以下</div></div>
+      <div class="kpi"><div class="kpi-label">標準偏差</div><div class="kpi-value num">7.2pt</div><div class="kpi-sub">車両ごとの差は平均から約7pt</div></div>
+      <div class="kpi"><div class="kpi-label">小型と他の差</div><div class="kpi-value num">▲11pt</div><div class="kpi-sub">d=1.4で差は大きい・p&lt;0.001</div></div>
+    </div>
+  </div>
+  <div class="facts-h">統計的事実</div>
+  <ul class="facts">
+    <li>全体 <b class="num">67%</b> は前年 <b class="num">71%</b> から <b class="num loss">▲4pt</b></li>
+    <li>小型が <b class="num loss">58%</b> で最低。帰り便の空車が月 <b class="num">42</b> 便</li>
+    <li>1pt あたりの利益 <b class="num">18.8</b> 万円/月 × 8pt = <b class="num">150</b> 万円/月</li>
+  </ul>
+  <div class="statement interpretation"><span class="statement-h">解釈</span><span class="statement-text">小型車の空車増加が、全体の実車率低下に最も強く関係している</span></div>
+  <div class="statement claim" data-hypothesis-id="H1" data-verdict="採用"><span class="statement-h">仮説・主張</span><span class="badge badge-success">採用</span><span class="statement-text">小型の帰り荷不足が実車率低下の説明と最も整合する</span></div>
+  <details class="disclosure">
+    <summary>データと計算</summary>
+    <div class="disclosure-body"><dl class="def-list"><dt>データ</dt><dd>運行日報 2026年4〜9月（6,240運行）</dd><dt>計算</dt><dd>実車距離 ÷ 総走行距離</dd></dl></div>
+  </details>
+</section>
+
+<section data-kind="factor" data-toc="修繕費" data-impact="-90" data-hypotheses="H2">
+  <h2>車齢8年超の大型増加と、修繕費の前年比月90万円増が対応</h2>
+  <div class="causes-h">背景の説明仮説</div>
+  <ul class="causes">
+    <li><span class="badge badge-success">データで確認</span><span class="cause-text">更新を2年見送り、車齢8年超の大型が12台から19台に増えた</span></li>
+    <li><span class="badge badge-warning">想定</span><span class="cause-text">車齢8年を超えるとエンジンとタイヤの交換周期が重なり、修理が集中すると考えられる</span></li>
+  </ul>
+  <div class="meaning"><span class="meaning-h">判断への意味</span><span class="meaning-text">更新を見送るほど修繕費は増えるので、更新の時期と修繕費を並べて判断する</span></div>
+  <figure class="card card-pad">
+    <figcaption>修繕費の前年比較（万円/月）<small>薄色=前年、赤=今年</small></figcaption>
+    <div class="chartbox">
+      <svg viewBox="0 0 760 220" class="chart" data-chart="columns" role="img" aria-label="修繕費の前年比較。タイヤ30から62、エンジン40から78、車体20から40に増加">
+        <line x1="60" y1="180" x2="740" y2="180" class="s-axis"/>
+        <rect x="125" y="132" width="50" height="48" rx="3" class="c-sub" data-tip="タイヤ 前年: 30万円"/>
+        <rect x="185" y="80.8" width="50" height="99.2" rx="3" class="c-danger" data-tip="タイヤ 今年: 62万円（+32）"/>
+        <text x="150" y="126" text-anchor="middle" class="vl2">30</text>
+        <text x="210" y="74.8" text-anchor="middle" class="vl-danger">62</text>
+        <rect x="325" y="116" width="50" height="64" rx="3" class="c-sub" data-tip="エンジン 前年: 40万円"/>
+        <rect x="385" y="55.2" width="50" height="124.8" rx="3" class="c-danger" data-tip="エンジン 今年: 78万円（+38）"/>
+        <text x="350" y="110" text-anchor="middle" class="vl2">40</text>
+        <text x="410" y="49.2" text-anchor="middle" class="vl-danger">78</text>
+        <rect x="525" y="148" width="50" height="32" rx="3" class="c-sub" data-tip="車体 前年: 20万円"/>
+        <rect x="585" y="116" width="50" height="64" rx="3" class="c-danger" data-tip="車体 今年: 40万円（+20）"/>
+        <text x="550" y="142" text-anchor="middle" class="vl2">20</text>
+        <text x="610" y="110" text-anchor="middle" class="vl-danger">40</text>
+        <text x="180" y="202" text-anchor="middle" class="lb">タイヤ</text>
+        <text x="380" y="202" text-anchor="middle" class="lb">エンジン</text>
+        <text x="580" y="202" text-anchor="middle" class="lb">車体</text>
+      </svg>
+    </div>
+  <details class="howto">
+    <summary>この図の読み方</summary>
+    <p>縦棒の高さが値の大きさです。隣り合う棒どうしを見比べます。薄い色が比較対象 (前年など) です。</p>
+  </details>
+  </figure>
+  <div class="table-scroll card">
+    <table>
+      <thead><tr><th>部位</th><th class="col-num">前年（万円/月）</th><th class="col-num">今年（万円/月）</th><th class="col-num">増減</th></tr></thead>
+      <tbody>
+        <tr><td>エンジン</td><td class="col-num">40</td><td class="col-num">78</td><td class="col-num">+38</td></tr>
+        <tr><td>タイヤ</td><td class="col-num">30</td><td class="col-num">62</td><td class="col-num">+32</td></tr>
+        <tr><td>車体</td><td class="col-num">20</td><td class="col-num">40</td><td class="col-num">+20</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="stats card">
+    <div class="stats-title">統計の要約</div>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-label">n</div><div class="kpi-value num">48台</div></div>
+      <div class="kpi"><div class="kpi-label">ジニ係数</div><div class="kpi-value num">0.52</div><div class="kpi-sub">0=均等 / 1=1台に集中</div></div>
+      <div class="kpi"><div class="kpi-label">A区分（累積80%）</div><div class="kpi-value num">11台</div><div class="kpi-sub">全体の23%</div></div>
+      <div class="kpi"><div class="kpi-label">車齢との相関</div><div class="kpi-value num">r=0.61</div><div class="kpi-sub">一緒に動く傾向。原因とは限らない</div></div>
+    </div>
+  </div>
+  <div class="facts-h">統計的事実</div>
+  <ul class="facts">
+    <li>エンジン <b class="num loss">+38</b>・タイヤ <b class="num loss">+32</b> 万円/月で増加分の <b class="num">78%</b></li>
+    <li>増加の <b class="num">7</b> 割が車齢10年超の <b class="num">9</b> 台に集中</li>
+  </ul>
+  <div class="statement interpretation"><span class="statement-h">解釈</span><span class="statement-text">修繕費の増加は一部の高車齢車へ集中しており、全車共通の増加ではない</span></div>
+  <div class="statement claim" data-hypothesis-id="H2" data-verdict="採用"><span class="statement-h">仮説・主張</span><span class="badge badge-success">採用</span><span class="statement-text">高車齢の大型車増加は、修繕費上昇の説明と整合する</span></div>
+  <details class="disclosure">
+    <summary>データと計算</summary>
+    <div class="disclosure-body"><dl class="def-list"><dt>データ</dt><dd>整備記録・請求書 2025〜2026年4〜9月</dd><dt>計算</dt><dd>部位別の月平均を前年同期と比較</dd></dl></div>
+  </details>
+</section>
+
+<section data-kind="factor" data-toc="燃料単価" data-impact="-40" data-hypotheses="H3">
+  <h2>補助金縮小後に軽油が半年で14円/L上がり、負担は月40万円増</h2>
+  <div class="causes-h">背景の説明仮説</div>
+  <ul class="causes">
+    <li><span class="badge badge-active">公表資料</span><span class="cause-text">燃料価格の補助金が段階的に縮小された<small>資源エネルギー庁 石油製品価格調査</small></span></li>
+    <li><span class="badge badge-success">データで確認</span><span class="cause-text">給油単価の上昇と支出増が同時に観測され、使用量は前年並み</span></li>
+  </ul>
+  <div class="meaning"><span class="meaning-h">判断への意味</span><span class="meaning-text">単価は自社で動かせないので、運賃の燃料サーチャージの交渉材料にする</span></div>
+  <figure class="card card-pad">
+    <figcaption>軽油の購入単価（円/L）<small>破線=前年平均 155円/L</small></figcaption>
+    <div class="chartbox">
+      <svg viewBox="0 0 760 220" class="chart" data-chart="line" role="img" aria-label="軽油単価の推移。4月158円から9月172円へ上昇し、前年平均155円を上回り続ける">
+        <line x1="60" y1="150" x2="740" y2="150" class="s-threshold"/>
+        <text x="736" y="166" text-anchor="end" class="an">前年平均 155</text>
+        <line x1="60" y1="190" x2="740" y2="190" class="s-axis"/>
+        <polyline points="100,132 220,108 340,90 460,72 580,60 700,48" class="s-main"/>
+        <circle cx="100" cy="132" r="5" class="c-main" data-tip="4月: 158円/L"/>
+        <circle cx="220" cy="108" r="5" class="c-main" data-tip="5月: 162円/L"/>
+        <circle cx="340" cy="90" r="5" class="c-main" data-tip="6月: 165円/L"/>
+        <circle cx="460" cy="72" r="5" class="c-main" data-tip="7月: 168円/L"/>
+        <circle cx="580" cy="60" r="5" class="c-main" data-tip="8月: 170円/L"/>
+        <circle cx="700" cy="48" r="5" class="c-danger" data-tip="9月: 172円/L（前年平均 +17）"/>
+        <text x="100" y="120" text-anchor="middle" class="vl">158</text>
+        <text x="220" y="96" text-anchor="middle" class="vl">162</text>
+        <text x="340" y="78" text-anchor="middle" class="vl">165</text>
+        <text x="460" y="60" text-anchor="middle" class="vl">168</text>
+        <text x="580" y="48" text-anchor="middle" class="vl">170</text>
+        <text x="700" y="36" text-anchor="middle" class="vl-danger">172</text>
+        <text x="100" y="210" text-anchor="middle" class="lb">4月</text>
+        <text x="220" y="210" text-anchor="middle" class="lb">5月</text>
+        <text x="340" y="210" text-anchor="middle" class="lb">6月</text>
+        <text x="460" y="210" text-anchor="middle" class="lb">7月</text>
+        <text x="580" y="210" text-anchor="middle" class="lb">8月</text>
+        <text x="700" y="210" text-anchor="middle" class="lb">9月</text>
+      </svg>
+    </div>
+  <details class="howto">
+    <summary>この図の読み方</summary>
+    <p>左から右へ時間が進みます。線が上がれば増え、下がれば減っています。破線は比べる基準の高さです。</p>
+  </details>
+  </figure>
+  <div class="stats card">
+    <div class="stats-title">統計の要約</div>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-label">n</div><div class="kpi-value num">1,284件</div><div class="kpi-sub">給油明細</div></div>
+      <div class="kpi"><div class="kpi-label">単価の傾き</div><div class="kpi-value num">+2.8円/L/月</div><div class="kpi-sub">直線で98%を説明。原因は未確認</div></div>
+      <div class="kpi"><div class="kpi-label">使用量の変動係数</div><div class="kpi-value num">0.03</div><div class="kpi-sub">月 3.0万L でほぼ一定</div></div>
+    </div>
+  </div>
+  <div class="facts-h">統計的事実</div>
+  <ul class="facts">
+    <li>4月 <b class="num">158</b> → 9月 <b class="num loss">172</b> 円/L（<b class="num loss">+14</b>）</li>
+    <li>使用量は月 <b class="num">3.0</b> 万L、変動係数 <b class="num">0.03</b></li>
+  </ul>
+  <div class="statement interpretation"><span class="statement-h">解釈</span><span class="statement-text">使用量が安定しているため、燃料費増加は主に購入単価の上昇と整合する</span></div>
+  <div class="statement claim" data-hypothesis-id="H3" data-verdict="採用"><span class="statement-h">仮説・主張</span><span class="badge badge-success">採用</span><span class="statement-text">補助金縮小後の単価上昇は、燃料費増加の説明と整合する</span></div>
+  <details class="disclosure">
+    <summary>データと計算</summary>
+    <div class="disclosure-body"><dl class="def-list"><dt>データ</dt><dd>燃料カード明細 2026年4〜9月</dd><dt>計算</dt><dd>（今年単価 − 前年平均）× 使用量</dd><dt>出典</dt><dd>資源エネルギー庁 石油製品価格調査 https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/</dd></dl></div>
+  </details>
+</section>
+
+<!-- 打ち手: 要因から導いた次の行動を1〜5件。li.act 1件 = 動詞で始まる指示 (b.act-title) + 効果・担当・期限 (dl.act-meta、この順)。
+       data-from   = 根拠の要因番号 (例 "1" / "1,3")。ビルドが「要因 n の根拠を見る」ボタンにする
+       data-source = data (データと既存の決まりで決まった) / hearing (ユーザーに聞いて確定した) /
+                     pending (聞いても未確定。該当項目に「要確認」と書く。検査は警告 W04)
+     効果は必ず数字で書く。担当・期限・実行可否がデータで決まらないときは推測で埋めず、ユーザーに聞く (SKILL.md の Quickstart) -->
+<section data-kind="action" data-toc="打ち手">
+  <h2>3つの打ち手で、目標差のうち月120万円を取り戻す</h2>
+  <ol class="actions">
+    <li class="act" data-from="1" data-source="data">
+      <b class="act-title">小型車の帰り便に混載案件を割り当てる</b>
+      <dl class="act-meta">
+        <div><dt>効果</dt><dd>空車 42→20便/月で +80万円/月</dd></div>
+        <div><dt>担当</dt><dd>配車</dd></div>
+        <div><dt>期限</dt><dd>2026年11月の配車から</dd></div>
+      </dl>
+    </li>
+    <li class="act" data-from="2" data-source="hearing">
+      <b class="act-title">車齢10年超の9台を更新計画に載せる</b>
+      <dl class="act-meta">
+        <div><dt>効果</dt><dd>修繕費の増加 90万円/月の7割が対象</dd></div>
+        <div><dt>担当</dt><dd>整備・経営</dd></div>
+        <div><dt>期限</dt><dd>2027年度予算（2月決定）</dd></div>
+      </dl>
+    </li>
+    <li class="act" data-from="3" data-source="hearing">
+      <b class="act-title">燃料サーチャージを荷主と再交渉する</b>
+      <dl class="act-meta">
+        <div><dt>効果</dt><dd>+14円/L の転嫁で +40万円/月</dd></div>
+        <div><dt>担当</dt><dd>営業</dd></div>
+        <div><dt>期限</dt><dd>2026年12月の契約更新</dd></div>
+      </dl>
+    </li>
+  </ol>
+</section>
+
+<footer>
+サンプル運送｜車両別収支 月次レポート｜データ: 運行日報・整備記録・燃料カード明細（2026年4〜9月）｜数値はすべて実データからの計算結果
+</footer>

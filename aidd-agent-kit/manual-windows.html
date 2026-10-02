@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<!-- このファイルは manual-*.md から scripts/gen-manual-html.mjs で生成しています。直接編集せず md を直してください。 -->
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI開発エージェントキット セットアップマニュアル【Windows版】</title>
+<style>
+  :root {
+    --primary: #2456E5;
+    --primary-tint: #EEF3FE;
+    --ink: #1A1E27;
+    --sub: #5A616E;
+    --line: #E4E7EC;
+    --warn-bg: #FFF7E8;
+    --warn-line: #F0C36A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.9;
+    font-size: 16px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+  .os-badge {
+    display: inline-block; background: var(--primary); color: #fff;
+    font-weight: 700; font-size: 14px; padding: 4px 14px; border-radius: 999px;
+    letter-spacing: 0.05em; margin-bottom: 16px;
+  }
+  h1 { font-size: 26px; line-height: 1.5; margin-bottom: 8px; }
+  h2 {
+    font-size: 20px; margin: 56px 0 16px; padding-left: 14px;
+    border-left: 5px solid var(--primary); line-height: 1.5;
+  }
+  h3 { font-size: 16px; margin: 28px 0 8px; }
+  h3.faq-q { color: var(--primary); }
+  p { margin: 12px 0; }
+  a { color: var(--primary); }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 40px 0; }
+  .box {
+    background: var(--primary-tint); border-radius: 12px;
+    padding: 20px 24px; margin: 20px 0;
+  }
+  .box .big { font-size: 17px; font-weight: 700; margin: 0 0 8px; }
+  .warn {
+    background: var(--warn-bg); border: 1px solid var(--warn-line);
+    border-radius: 12px; padding: 18px 22px; margin: 18px 0;
+  }
+  .warn p:first-child, .box p:first-child { margin-top: 0; }
+  .warn p:last-child, .box p:last-child { margin-bottom: 0; }
+  ol, ul { padding-left: 24px; margin: 10px 0; }
+  li { margin: 6px 0; }
+  code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: #F1F3F6; border-radius: 5px; padding: 2px 7px; font-size: 14px;
+  }
+  pre {
+    background: #1A1E27; color: #E9EDF5; border-radius: 10px;
+    padding: 16px 20px; margin: 14px 0; font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 14px; line-height: 1.7; overflow-x: auto; white-space: pre-wrap;
+  }
+  pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--line); padding: 10px 14px; text-align: left; vertical-align: top; }
+  th { background: #F7F8FA; white-space: nowrap; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  details { margin: 16px 0; }
+  summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+  .footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--sub); font-size: 13px; }
+  @media (max-width: 480px) {
+    body { font-size: 15px; }
+    .wrap { padding: 32px 16px 64px; }
+    h1 { font-size: 22px; }
+    td:first-child { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="os-badge">Windows版</div>
+  <h1>AI開発エージェントキット セットアップマニュアル【Windows版】</h1>
+
+<p>最初の3手順は <a href="START-HERE.md"><code>START-HERE.md</code></a> にあります。このマニュアルは、各手順の詳しい説明と、つまずいたときの対処です。所要時間は約5分で、難しい操作はありません。</p>
+<div class="box">
+<p class="big">このキットはユーザー全体(グローバル)に入ります</p>
+<p>インストール先はあなたのユーザーフォルダ(<code>C:\Users\(あなたの名前)\</code>)の <code>.claude</code>、<code>.agents\skills</code>、<code>.codex</code> です。<br><strong>どのフォルダで作業していても使えます。プロジェクトごとに入れ直す必要はありません。</strong><br>特定のプロジェクトの中には何も置きません。インストーラーは最後に、実際に入った場所と件数をその場で表示します。</p>
+</div>
+<div class="warn">
+<p><strong>手順は STEP 2 と STEP 3 の2本立てです。</strong> STEP 2 の <code>install-windows.bat</code> が終わればキット本体は導入済みです。STEP 3 の <code>setup-env-windows.bat</code> で Cloudflare 連携の登録まで済むと基本セットアップ完了です。STEP 2 の最後に <code>Enter</code> を押すと、そのまま STEP 3 を実行できます。</p>
+</div>
+<h2>事前に必要なもの</h2>
+<table>
+<thead><tr><th>必要なもの</th><th>確認方法</th></tr></thead>
+<tbody>
+<tr><td>Claude Code または OpenAI Codex がインストールされた Windows PC</td><td>どちらかのアプリでチャットが使える</td></tr>
+<tr><td>利用するツールへのサインイン</td><td>Claude Code または Codex を開いてチャットが使える状態になっている</td></tr>
+</tbody>
+</table>
+<p>インストーラーは両方の設定を用意するので、片方だけを使っている場合でも実行できます。</p>
+<hr>
+<h2>STEP 1: ZIPファイルを展開する</h2>
+<p><strong>展開前に「ブロックの解除」をするのが最も簡単です。</strong> 解除せずに展開しても導入はやり直せます。</p>
+<ol>
+<li>受け取った <code>aidd-agent-kit.zip</code> を <strong>右クリック</strong> し、<strong>「プロパティ」</strong> を選びます。</li>
+<li>一番下に <strong>「セキュリティ: このファイルは他のコンピューターから取得したものです。…」</strong> という行があれば、その右の <strong>「ブロックの解除」</strong> にチェックを入れて <strong>OK</strong> をクリックします。
+<ul>
+<li>この行が無ければ、すでに解除済みです。そのまま次へ進んでください。</li>
+</ul></li>
+<li>あらためて ZIP を <strong>右クリック</strong> し、<strong>「すべて展開…」</strong> を選びます。</li>
+<li>「展開」ボタンをクリックします。</li>
+<li><code>aidd-agent-kit</code> というフォルダができるので、開きます。</li>
+</ol>
+<div class="warn">
+<p><strong>なぜ展開前なのか</strong></p>
+<p>インターネット経由で受け取ったファイルには、Windows が「他のコンピューターから来た」という印を付けます。ZIP を展開すると、この印は <strong>中の全ファイルに1つずつコピーされます</strong>。展開後に解除しようとすると、ファイルの数だけ同じ操作を繰り返すことになります。</p>
+<p>展開前の ZIP で1回解除しておけば、中身には印が付きません。以降の警告画面もほとんど出なくなります。</p>
+<p>展開後でも、インストーラーが自動解除を試みます。自動解除できなかった場合は、画面に記録の場所と手動解除コマンドが表示されます。</p>
+</div>
+<div class="warn">
+<p>ZIPをダブルクリックして「中を見ているだけ」の状態では、インストールできません。必ず「すべて展開」してからにしてください。</p>
+</div>
+<h2>STEP 2: インストーラーをダブルクリックする</h2>
+<ol>
+<li>フォルダの中の <strong><code>install-windows.bat</code></strong> をダブルクリックします。
+<ul>
+<li>ファイル名が <code>install-windows</code> とだけ表示されている場合もあります(同じものです)。</li>
+</ul></li>
+<li>黒い画面が開き、自動でインストールが進みます。</li>
+<li><strong>「両方へのインストールが完了しました!」</strong> と表示されたら成功です。
+<ul>
+<li>続けて <strong>「どこに何が入ったか」</strong>(実際のフォルダの場所と件数)が表示されます。「ユーザー全体に入りました」と出ていることを確認してください。</li>
+<li>最後に <strong>「続けて開発環境セットアップを実行しますか?」</strong> と聞かれます。<code>Enter</code> を押せば、そのまま STEP 3 が始まります。</li>
+</ul></li>
+</ol>
+<div class="warn">
+<p><strong>「WindowsによってPCが保護されました」という青い画面が出たら</strong></p>
+<ol>
+<li>画面の中の <strong>「詳細情報」</strong> をクリックします。</li>
+<li>右下に現れる <strong>「実行」</strong> ボタンをクリックします。</li>
+</ol>
+<p>これは「配布元がMicrosoftに登録されていないファイル」に必ず出る標準の確認画面で、このキットに問題があるわけではありません。</p>
+</div>
+<h3>コマンドプロンプトでコマンド実行してインストールする方法(上級者向け)</h3>
+<p>ダブルクリックの代わりに、コマンドプロンプトから実行することもできます。インストールされる内容は同じです。こちらの経路ではセキュリティの警告画面が出ません。</p>
+<pre><code>cd aidd-agent-kit フォルダのパス
+install-windows.bat</code></pre>
+<h3>コマンドの補足</h3>
+<ul>
+<li>配置だけ診断する場合は、Git Bash または WSL で対象リポジトリのルートから <code>./aidd-agent-kit/doctor-codex-layout.sh</code> を実行します。診断はファイルを削除・移動しません。</li>
+<li>Codex の旧 <code>/prompts:build-app</code> 形式は非推奨で、標準インストールには含まれません。移行期間だけ必要な場合は <code>install-windows.bat --legacy-prompts</code> を実行します。新しい利用方法では <code>$build-app</code> を使ってください。</li>
+</ul>
+<h2>STEP 3: 開発環境と Cloudflare 連携を設定する(必須・初回のみ)</h2>
+<p><strong>STEP 2 だけでは終わりません。</strong> アプリ開発には <strong>Node.js 22 以上</strong> と <strong>pnpm</strong> という2つの道具が必要で、さらに Cloudflare(アプリの公開先)との連携(MCP: AI開発ツールと外部サービスをつなぐ仕組み)もここで設定します。付属のスクリプトでまとめて入ります。</p>
+<p>STEP 2 の最後に <code>Enter</code> を押した場合も、最後に表示された状態を確認してください。そうでない場合は次のように実行します。</p>
+<ol>
+<li>フォルダの中の <strong><code>setup-env-windows.bat</code></strong> をダブルクリックします。
+<ul>
+<li>ファイル名が <code>setup-env-windows</code> とだけ表示されている場合もあります(同じものです)。</li>
+</ul></li>
+<li>黒い画面が開き、自動でインストールが進みます(2〜5分)。</li>
+<li>最後の表示で結果を確認します。
+<ul>
+<li><strong>「セットアップが完全に完了しました！」</strong> — Node.js・pnpm に加え、登録した3つの連携すべての接続確認まで完了しています。</li>
+<li><strong>「基本セットアップ完了 / 変更系MCPは必要時に認証」</strong> — 通常はこの表示です。認証不要の docs 接続まで完了しており、今すぐの認証は不要です。変更系MCPは必要時に認証します(初めて使う時にエージェントが対象1件を案内します)。</li>
+<li><strong>「基本セットアップ完了 / 一部の連携は未設定」</strong> — Claude Code または Codex CLI が見つからず、そのクライアントへの登録を行えていません。使う予定があれば導入後にもう一度実行します。</li>
+<li><strong>失敗表示</strong> — キット本体は導入済みでも、環境と連携は未完了です。問題を直してこのスクリプトを再実行します(Q10 参照)。</li>
+</ul></li>
+</ol>
+<p>登録される連携は <code>cloudflare-bindings</code>(リソース操作)、<code>cloudflare-docs</code>(公式ドキュメント検索、認証不要)、<code>cloudflare-observability</code>(公開後のログ・エラー確認)の3つで、いずれもユーザー全体に入ります。OAuth 画面が開いた場合は、利用する操作に必要な最小権限だけを認可してください。MCP と wrangler のどちらを使うかの裁定は <a href="skills/wrangler/references/mcp-vs-cli-routing.md"><code>skills/wrangler/references/mcp-vs-cli-routing.md</code></a> にあります(利用者が読む必要はありません)。</p>
+<div class="warn">
+<p>すでに入っている場合は「インストール済みです」と表示されるだけなので、何度実行しても問題ありません。<br>「WindowsによってPCが保護されました」という青い画面が出たときは、STEP 2 と同じ方法(詳細情報 → 実行)で開いてください。</p>
+</div>
+<h3>「古い形式の MCP 設定が見つかりました」と表示されたとき</h3>
+<p>作業中のフォルダに <code>.mcp.json</code> というファイルが残っていると、そのプロジェクト用の設定がユーザー全体の設定より優先され、キットが登録した設定が隠れることがあります。スクリプトは該当ファイルの場所と直し方を表示しますが、自動では書き換えません。エージェントに「<code>.mcp.json</code> を直して」と頼めば差分を提示するので、承認して直してください。詳しい分岐は上の裁定書にあります。</p>
+<h2>STEP 4: 動作確認する</h2>
+<ol>
+<li>Claude Code と Codex を <strong>一度終了して、起動し直します</strong>。</li>
+<li>Claude Code は <strong><code>/build-app</code></strong>、Codex は <strong><code>$build-app</code></strong> と入力します。</li>
+<li>入力候補に <strong>build-app</strong> が表示されればインストール成功です。Codex では <code>/skills</code> からも確認できます。</li>
+</ol>
+<hr>
+<h2>上手に頼むコツ</h2>
+<p><code>/build-app</code>(Codex は <code>$build-app</code>)に続けて、次の3点を普通の言葉で書くと、AIが迷わず一発で作ります。</p>
+<ol>
+<li><strong>誰が使うか</strong>(例: 社員だけ / 取引先も / 誰でも)</li>
+<li><strong>何ができるか</strong>(例: 予約できる、一覧が見られる、承認できる)</li>
+<li><strong>公開範囲</strong>(例: 社内限定 / ログインが必要 / 一般公開)</li>
+</ol>
+<pre><code>Claude Code: /build-app 会議室の予約アプリ。社員だけが使える。Googleアカウントでログイン。
+Codex: $build-app 会議室の予約アプリ。社員だけが使える。Googleアカウントでログイン。</code></pre>
+<p>公開した後は <code>/improve-app</code>(<code>$improve-app</code>)に要望を書くと1件ずつ安全に追加され、要望を書かなければ残課題リストから選べます。問題があれば <code>/undo-app</code>(<code>$undo-app</code>)で1つ前の状態に戻せます。コマンドを使わず「在庫管理のアプリを作りたい」と話しかけるだけでも動きますが、確実に動かしたいときはコマンドを使ってください。</p>
+<hr>
+<h2>うまくいかないとき</h2>
+<h3 class="faq-q">Q1. 「開いているファイル - セキュリティの警告」「発行元を確認できませんでした」と出る</h3>
+<p>展開前の「ブロックの解除」を行っていないと表示されることがあります。インストーラーはキット全体の自動解除を試みますが、警告が残る場合は次の手順でまとめて解除できます。</p>
+<p>まとめて解除したい場合は、キットのフォルダで <strong>アドレスバーに <code>powershell</code> と入力して Enter</strong> し、開いた画面で次を実行してください。</p>
+<pre><code>Get-ChildItem -Recurse -Force -File | Unblock-File</code></pre>
+<h3 class="faq-q">Q1-1. 「インストールを開始できません」と表示されて、すぐ終了する</h3>
+<p>インストーラーが実行前の点検で問題を見つけた状態です。画面に理由が出ています。</p>
+<ul>
+<li><strong>「PowerShell が見つかりません」</strong> — Windows 標準の PowerShell が無効化・削除されています。社内 PC の場合は情報システム部門にご確認ください。</li>
+<li><strong>「PowerShell が制限モードで動作しています」</strong> — 組織のセキュリティポリシー(AppLocker / WDAC)による制限です。この制限はキット側では解除できません。管理者にご相談ください。</li>
+</ul>
+<p>詳しい記録は <code>%TEMP%\aidd-agent-kit-install.log</code> に残ります。このファイルを導入支援の担当者にお送りください。</p>
+<h3 class="faq-q">Q1-2. インストーラーがどうしても開けない</h3>
+<p><strong>手動でコピーする方法</strong>があります。</p>
+<ol>
+<li>エクスプローラー(フォルダのアイコン)を開きます。</li>
+<li>上部の <strong>アドレスバー</strong> をクリックし、次のとおり入力して Enter を押します。
+<pre><code>%USERPROFILE%\.claude</code></pre></li>
+<li>Claude Code 用の <code>skills</code>・<code>agents</code>・<code>commands</code> を <code>.claude</code> の対応するフォルダへコピーします。</li>
+<li>Codex 用は、共通 <code>skills</code> と <code>codex\workflow-skills</code> を <code>.agents\skills</code>、<code>codex\agents</code> を <code>.codex\agents</code> へコピーします。さらに <code>agents\app-orchestrator.md</code> を <code>.agents\skills\app-orchestrator\SKILL.md</code>、<code>codex\app-orchestrator-openai.yaml</code> を <code>.agents\skills\app-orchestrator\agents\openai.yaml</code> として配置します。非推奨の旧互換が必要な場合だけ <code>codex\prompts</code> を <code>.codex\prompts</code> へコピーします。</li>
+</ol>
+<h3 class="faq-q">Q2. <code>/build-app</code> または <code>$build-app</code> が候補に出てこない</h3>
+<ul>
+<li>利用中の Claude Code / Codex を<strong>完全に終了</strong>して起動し直してください。</li>
+<li>新しいチャット(新しいセッション)を開いてから入力してください。</li>
+</ul>
+<h3 class="faq-q">Q3. 「インストールを確認できませんでした」と表示された</h3>
+<p>画面に<strong>入らなかったものの一覧</strong>が表示されます。その内容を控えたうえで、次をお試しください。</p>
+<ul>
+<li>ZIPを展開してできた <code>aidd-agent-kit</code> フォルダの<strong>中の</strong> <code>install-windows.bat</code> を実行しているか確認してください(ZIPの中から直接実行すると失敗します)。</li>
+<li>解決しない場合は Q1-2 の手動コピーをお試しください。</li>
+</ul>
+<h3 class="faq-q">Q4. Codex でスキルが表示されない</h3>
+<ol>
+<li>Codex を完全に終了して起動し直します。</li>
+<li>新しいチャットで <code>/skills</code> を開き、<code>build-app</code> を確認します。</li>
+<li>見つからない場合は <code>%USERPROFILE%\.agents\skills\build-app\SKILL.md</code> があるか確認します。</li>
+<li>AIDDのSkillは <code>%USERPROFILE%\.agents\skills</code> を確認します。<code>%CODEX_HOME%\skills</code> はCodex組込installer/plugin等の管理領域なので、AIDDのファイルを手動で追加・移動しないでください。</li>
+</ol>
+<h3 class="faq-q">Q5. <code>.codex\agents</code> と <code>.toml</code> は何に使う?</h3>
+<p><code>.codex\agents\app-orchestrator.toml</code> は、Codexが仕事を委譲するcustom agentの定義です。スキルの置き場所ではありません。実際の作業手順は <code>.agents\skills\app-orchestrator\SKILL.md</code> から読みます。配置の詳細は <code>CODEX-PLACEMENT.md</code> にあります。</p>
+<h3 class="faq-q">Q5-1. userとprojectの両方に同じAIDDスキルがある</h3>
+<p>Codexは同名Skillを自動統合しないため、二重導入は推奨しません。<code>./aidd-agent-kit/doctor-codex-layout.sh</code> で非破壊診断し、表示されたmanifestを確認して、どちらのscopeを使うか決めてください。doctorは自動削除しません。なお、<code>%CODEX_HOME%\skills</code> はCodex組込installer/plugin等の管理領域なので、存在するだけで誤配置ではありません。</p>
+<h3 class="faq-q">Q6. 「別の場所への『近道(リンク)』になっています」と表示された</h3>
+<p>Claude Code または Codex の書き込み先が、別の場所を指すリンクとして設定されています。リンク先を意図せず書き換えないため、インストーラーが停止しました。</p>
+<p>心当たりがない場合は、<strong>この画面のまま導入支援の担当者にお見せください</strong>。</p>
+<p>ご自身で設定された方は、画面に表示されたコマンドでリンクを一時的に退避してから、もう一度インストーラーを実行してください。</p>
+<h3 class="faq-q">Q7. 「以前のファイルは次の場所に保存してあります」と表示された</h3>
+<p>Claude Code または Codex に同じ名前の項目があったため、<strong>上書き前に自動でバックアップ</strong>したという意味です。インストール自体は成功しています。</p>
+<pre><code>C:\Users\(あなたの名前)\.claude\backup-20260726-143000\
+C:\Users\(あなたの名前)\.codex\backup-20260726-143000\</code></pre>
+<p>元に戻したいときは、このフォルダの中身を元の場所へ戻してください。不要になったら、フォルダごと削除して構いません。</p>
+<h3 class="faq-q">Q8. 「ファイルのコピー中に問題が発生しました」と表示された</h3>
+<ul>
+<li>ディスクの空き容量を確認してください(50MB程度必要です)。</li>
+<li>ウイルス対策ソフトがコピーを止めている場合があります。一時的に停止できないか、社内のIT担当者にご相談ください。</li>
+<li>解決しない場合は Q1-2 の手動コピーをお試しください。</li>
+</ul>
+<h3 class="faq-q">Q9. 黒い画面の日本語が文字化けしている</h3>
+<ul>
+<li>表示が崩れていてもインストール自体は正常に行われます。STEP 4 で <code>/build-app</code> または <code>$build-app</code> が出れば問題ありません。</li>
+</ul>
+<h3 class="faq-q">Q10. セットアップスクリプトが「インストールに失敗しました」と表示する</h3>
+<p>社内ネットワークの通信制限(必要なファイルのダウンロード先がブロックされている)が原因の場合があります。</p>
+<p><strong>この画面を閉じずに、そのまま社内のIT担当者・導入支援の担当者にお見せください。</strong> どの通信が止められているかが画面に出ているため、担当者側で対応できます。</p>
+<h3 class="faq-q">Q11. <code>auth_pending</code> や <code>[Conflicting scopes]</code> と表示された</h3>
+<ul>
+<li><strong><code>auth_pending</code></strong> は、実際に必要になった変更系の連携1件だけが認証待ちという意味です。エージェントが示した対象だけへ最小権限を認可すれば <code>ready</code> になります。先回りして全部を認証する必要はありません。</li>
+<li><strong><code>[Conflicting scopes]</code></strong>(<code>claude mcp list</code> の表示)は、作業中のフォルダの <code>.mcp.json</code> とユーザー全体の設定が競合しています。STEP 3 の「古い形式の MCP 設定が見つかりました」の対処をしてください。</li>
+</ul>
+<hr>
+<h2>更新するとき</h2>
+<p>新しいバージョンを受け取ったら、<strong>STEP 1 から同じ手順を繰り返すだけ</strong>です。古いファイルは自動でバックアップされてから置き換わり、<strong>後から入れた新しいキットの内容が常に正</strong>になります。</p>
+<ul>
+<li>新しいキットで<strong>なくなった古いスキルやコマンドは、自動で整理</strong>されます(バックアップフォルダへ移動します)。ご自身で何かを削除する必要はありません。</li>
+<li>整理の対象は<strong>このキットが入れたものだけ</strong>です。ご自身で追加されたスキルやコマンド、使いながら貯まったノウハウ(ナレッジ)は消えません。</li>
+</ul>
+<p>更新後は Claude Code と Codex を再起動してください。</p>
+<h2>アンインストールしたいとき</h2>
+<p>エクスプローラーで <code>.claude</code>、<code>.agents\skills</code>、<code>.codex</code> を開き、次のキット項目だけを削除します(入っているものの一覧は <code>README.md</code> の「収録内容」にあります)。</p>
+<ol>
+<li><code>.claude\skills</code> と <code>.agents\skills</code> の中の、共通スキル20個のフォルダ</li>
+<li><code>.claude\agents\app-orchestrator.md</code> と <code>.agents\skills\app-orchestrator</code></li>
+<li><code>.claude\commands</code> の4ファイルと <code>.agents\skills</code> の4コマンドスキル</li>
+<li><code>.codex\agents\app-orchestrator.toml</code>。<code>--legacy-prompts</code> を使った場合だけ <code>.codex\prompts</code> の4ファイル</li>
+<li><code>.claude</code> と <code>.codex</code> の <strong><code>aidd-agent-kit.version</code></strong> / <strong><code>aidd-agent-kit.manifest</code></strong></li>
+</ol>
+<div class="warn">
+<p><code>skills</code>・<code>agents</code>・<code>commands</code> フォルダ自体は削除しないでください。Claude Code が使う他のファイルが入っている場合があります。</p>
+</div>
+<p>インストール時に作られた <code>backup-(日時)</code> フォルダが残っている場合、その中に元のファイルが入っています。必要なら戻したうえで、フォルダごと削除してください。</p>
+<hr>
+<h2>管理者の方へ(セットアップ後の運用に必要なもの)</h2>
+<p>エージェントがアプリを<strong>インターネットに公開する</strong>ところまで自動で行うため、利用する環境によって以下が必要です。非エンジニアの方は、導入支援の担当者にご相談ください。</p>
+<ul>
+<li><strong>Claude Code または OpenAI Codex を利用できるプラン</strong></li>
+<li><strong>Cloudflare アカウント</strong>(アプリの公開先。無料プランで開始可能)と <code>wrangler login</code> によるログイン</li>
+<li><strong>GitHub アカウント</strong>(アプリの変更履歴の保存先。<strong>プライベートリポジトリ</strong>=自社の関係者だけが見られる保管場所を使用します)</li>
+<li><strong>GitHub CLI (<code>gh</code>)</strong> のインストールと <code>gh auth login</code> によるサインイン。プルリクエストの作成・確認・反映はGitHub MCPではなく <code>gh</code> を使います</li>
+<li><strong>Cloudflare との連携設定(MCP)</strong>。付属のセットアップスクリプトがClaude Code／Codexの両方へ自動で設定します(STEP 3)</li>
+<li>Googleログイン機能を使う場合: <strong>Google Cloud</strong> の OAuth 設定(手順はスキル内に日本語で収録済み)</li>
+<li><code>sync-project-windows.bat</code> は、<strong>キットを内包するリポジトリ自身へ反映する管理者専用の手段です。通常は使いません。</strong> 反映先はキットの親ディレクトリに固定されており、任意のプロジェクトを指定することはできません。実行すると project scope へ入るため、user scope と合わせて二重導入にならないよう注意してください</li>
+<li>AI機能を使う場合: <strong>OpenAI / Anthropic 等の APIキー</strong></li>
+</ul>
+
+  <div class="footer">
+    AI開発エージェントキット
+  </div>
+
+</div>
+</body>
+</html>

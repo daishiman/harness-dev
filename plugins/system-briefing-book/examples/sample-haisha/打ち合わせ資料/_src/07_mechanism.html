@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>07 読み取りの学習のしくみ</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.board-body.col > .stage { justify-content: center; gap: 20px; }
+.steps .step { gap: 12px; padding: 20px 22px; }
+.steps .step .vis { height: 320px; padding: 22px; }
+.steps .step:last-child .vis { flex-direction: column; align-items: stretch; gap: 10px; }
+.io { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--text-2); }
+.io span b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="board" data-board="07" data-type="mechanism">
+  <header class="board-head">
+    <div>
+      <div class="kicker">次の版の候補</div>
+      <h1>読み取りの学習のしくみ</h1>
+      <div class="lead">選んだ名前を覚えて、次から候補の 1 番目に出す。最初の版に入れるかを、今日決めたい。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <h2 class="sec-label">選んだ名前を覚える流れ<small>1・2 は最初の版。3・4 が次の版の候補</small></h2>
+      <div class="steps">
+        <div class="step system">
+          <div class="h"><span class="no">1</span><b>候補を出す</b></div>
+          <div class="vis"><img src="assets/haisha-paper.svg" alt="" data-source="配車表_例.svg"></div>
+          <div class="io"><span><b>入る:</b> 紙の受注先・発地・着地</span><span><b>出る:</b> 近い名前の候補 3 つ</span></div>
+          <div class="who"><span class="chip system">しくみ</span><span class="chip brand">最初の版</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step anchor">
+          <div class="h"><span class="no">2</span><b>人が選ぶ</b></div>
+          <div class="vis"><img src="assets/export/s03-check.png" alt=""></div>
+          <div class="io"><span><b>入る:</b> 候補 3 つ</span><span><b>出る:</b> 選んだ名前 (記録に残す)</span></div>
+          <div class="who"><span class="chip person">人</span><span class="chip brand">最初の版</span></div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">3</span><b>書き方ごとに覚える</b></div>
+          <div class="vis">
+            <table class="grid">
+              <thead><tr><th>紙の書き方</th><th>選んだ名前</th></tr></thead>
+              <tbody>
+                <tr><td>取引先Y</td><td>取引先Y 東</td></tr>
+                <tr><td>港倉庫</td><td>港の倉庫</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="io"><span><b>入る:</b> 紙の書き方と、選んだ名前</span><span><b>出る:</b> 覚えた組み合わせ</span></div>
+          <div class="who"><span class="chip system">しくみ</span><span class="chip neutral">次の版</span></div>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">4</span><b>次から 1 番目に出す</b></div>
+          <div class="vis">
+            <div class="btn btn-secondary sm">取引先Y 東</div>
+            <div class="btn btn-quiet sm">取引先Y</div>
+            <div class="btn btn-quiet sm">取引先V</div>
+          </div>
+          <div class="io"><span><b>入る:</b> 同じ書き方</span><span><b>出る:</b> 覚えた名前が、候補の 1 番目</span></div>
+          <div class="who"><span class="chip system">しくみ</span><span class="chip neutral">次の版</span></div>
+          <i class="mk" style="right:-10px;top:-10px">3</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <div class="reqs"><span class="req" data-req="F09">F09 名前を候補から選ぶ</span><span class="req" data-req="F05">F05 読み取りの学習 (あとで)</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>人がやるのは、今と同じく選ぶだけ</b><span class="sub">覚えさせるための画面や作業は無い。</span></li>
+        <li data-mark="2" data-kind="how"><b>選んだ名前を、紙の書き方ごとに覚える</b><span class="sub">同じ書き方なら、次から候補の 1 番目に出す。</span></li>
+        <li data-mark="3" data-kind="ask"><b>読み取りの学習を、最初の版に入れるか</b><span class="q">Q06</span><span class="sub">案: 入れない。最初の版で、候補から選んだ記録を残し、次の版で足す。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

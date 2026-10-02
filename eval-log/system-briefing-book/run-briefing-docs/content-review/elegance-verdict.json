@@ -1,0 +1,47 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-docs",
+    "skill_md_sha256": "ec6d4410545b82058d64f7e8486347b49489a6c5022463fe224cadd04dfa5ee9"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 1,
+    "dependency_break": 1,
+    "smell": 2
+  },
+  "reviewer": "cr-briefing-goal-seek-v1 (focused combined content review, incremental profile, goal_seek 宣言の差分)",
+  "reviewed_at": "2026-10-02T08:00:13Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "差分は frontmatter の :9-11 (goal_seek: engine: inline / fork: inline) の 3 行だけで、HEAD の SKILL.md の sha256 は前回 verdict の eff9f10c… と一致した。本文・feedback_contract・artifact_delivery は前回 iteration 2 で評価した版のまま。",
+      "engine=inline / fork=inline は正しい。allowed-tools (:18) は Read・Write・Edit・Bash・Glob・Grep で Task/Agent/Skill を持たず、:112 が「確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ」と決めている。4 つのモード (:102-107) はどれも呼び出し元から頼まれて文書を書き、`--stage` を exit0 まで通すだけで、分離した文脈を使わない。run-goal-seek・task-graph への参照も無い。lint-skill-runtime-profiles で inline/inline、enforced finding 0。",
+      "fork=inline は分離しないので、pre_choice_forbidden (:70) の subagent・task-fork と食い違わない。feedback_contract.activation_state (:35) は semantic_evaluator_started で、lint-entrypoint-artifact-first もこのスキルには何も出さない。"
+    ],
+    "negative_feedback": [
+      "[low / 書き方。今回の差分で目立つようになった] Post-choice selected improvement execution の節 (:81-83) の「独立レビューとその指摘に基づく改善を行う」は主語が無く、goal_seek.fork=inline (:11) と Task/Agent/Skill の無い allowed-tools (:18) と並ぶと、このスキル自身が分離した文脈でレビューを回すとも読める。Purpose の :112 (確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ) が持ち主を決めており、lint-skill-runtime-profiles の「本文が分離委譲を必須化」の検査にも掛からないので、矛盾ではなく low。直し方: 見出しと既存の 1 文は lint-entrypoint-artifact-first が見る共通の文なので変えずに、その次に 1 文を足す。足す 1 文の例: 「このスキルは分離した文脈を使わない (goal_seek.fork=inline)。独立レビューは呼び出し元 run-briefing が assign-briefing-evaluator へ渡し、このスキルは頼まれた指摘の行だけを直す」。",
+      "[low / 不整合。前回 low の持ち越し、今回の差分とは無関係] :178「呼び出し元はこれを run-briefing-hearing の followup に渡す」が、:144 (ボードを組む途中で頼まれてその Q だけを足す) と、呼び出し元 run-briefing/SKILL.md:179 (確認点は過ぎているので、その Q は打ち合わせで聞く)・:203 (followup は確認点1・2 だけ) と食い違ったまま。部分の頼み (:141・:144) のときに何を返すかも書かれていない。呼び出し元の側で扱いが決まっているので low。直し方: :178 を「呼び出し元は確認点でこれを followup に渡す (確認点のあとに頼まれて足した Q は打ち合わせで聞く)」とし、「部分の頼み: 直した行と足した Q 番号と 1 行を返す」を 1 行足す。",
+      "[low / 書き方。前回 low の持ち越し、今回の差分とは無関係] :121「迷ったら書かないほうを選ぶ」が、:142 (本文ラベルと既存表を埋め、空ラベル・コメントでは記入済みとしない) と document-structure.md:177 (空ラベル・`未定` の一語は埋まったとしない。未確認は `案: <仮の内容> (Qxx)` で残す) と並ぶと、ラベルを空けてよいと読まれうる。直し方: :121 に「本文ラベルを空ける意味ではない。未確認の細部は `案: … (Qxx)` で残す」を添える。",
+      "[low / 漏れ。前回 low の持ち越し、今回の差分とは無関係] :195 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :79 (6. 通常生成と確認の選択所有) と :90 (1. どちらのホストでも同じ呼び方) の利用を示さない。直し方は run-briefing-hearing と同じ。",
+      "[low / 依存関係。前回 low の持ち越し、今回の差分とは無関係] run-briefing/SKILL.md:180 が「boards が仕様書の足りない章と画面番号を返したら、run-briefing-docs にその箇所だけ書き足してもらう」と頼むが、spec モードが部分の頼みとして挙げるのは「ボード:」行 (:141) と 9 章の Q (:144) だけで、仕様の足りない章を書き足す頼みが並んでいない。spec モードの手順 (章立てどおりに埋めて `--stage spec`) で受けられるので動かなくはないが、雛形から埋め直すのか、その節だけ足すのかが読み手しだい。直し方: :144 の次に「ボードを組む途中で仕様の足りない章と画面番号を頼まれたら、その節だけを書き足して `--stage spec` を通す」を 1 行足す。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は goal_seek 宣言の差分 (frontmatter :9-11 の engine/fork)。CI の lint-skill-runtime-profiles が loop 型に求める goal_seek block を書き足したことで SKILL.md の sha256 が変わり、前回の verdict が stale-sha になったための再評価 (iteration 1)。sha だけを書き換えたのではなく、今の SKILL.md (sha256 ec6d4410545b82058d64f7e8486347b49489a6c5022463fe224cadd04dfa5ee9) を読み直して判定した。読んだもの: 5 つの SKILL.md の今の版、`git diff HEAD -- plugins/system-briefing-book/skills/` (5 ファイルとも frontmatter の :9-11 に goal_seek の 3 行を足しただけで、削除 0・ほかの行の変更なし)、HEAD の SKILL.md の sha256 (5 件とも前回 verdict の sha と一致したので、goal_seek 以外は前回 iteration 2 で評価した版と同じ)、assign-briefing-evaluator/SKILL.md、agents/briefing-reviewer.md、前回の verdict 10 件、content-review-protocol.md の「incremental: unresolved semantic batch」。宣言値の意味と検査を確かめるために、plugins/harness-creator/scripts/lint-skill-runtime-profiles.py の engine/fork の判定 (:39-41・:228-253・:373-402・:440-495)、scripts/lint-entrypoint-artifact-first.py の _lint_frontmatter_control_flow (:191-212)、run-build-skill/references/goal-seek-paradigm.md:81、前例 plugins/dev-graph/skills/run-dev-graph-init/SKILL.md の goal_seek (:48-51) と :156、.github/workflows/governance-check.yml の lint 呼び出し行 (:40・:150・:213) だけを追加で読んだ。それ以外の repository は読んでいない。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で 5 skill の差分をまとめて見て、(a) 宣言値と本文・allowed-tools・委譲の仕方の矛盾 (b) feedback_contract.activation_state と artifact_delivery.state_machine.pre_choice_forbidden との食い違い (c) 差分が goal_seek block だけか (d) 依存関係整合 (e) rubric の high 0 を同時に判定した。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、SKILL.md と eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。実行した検査: `python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --plugin system-briefing-book` は exit 0 (run-briefing=inline/subagent、ほかの 4 つ=inline/inline、5 つとも enforced finding 0。残る legacy は配布複製の run-skill-feedback だけ)、CI と同じ `--repo-root .` の全体実行も exit 0 (enforced=0、unlisted=0、stale=0)。`python3 scripts/lint-entrypoint-artifact-first.py` は exit 1 で、`[ERROR] plugins/system-briefing-book/skills/run-briefing/SKILL.md: goal_seek heavy control must activate post-choice at semantic_evaluator_started` の 1 件。git archive で取り出した HEAD の plugin では同じ lint が exit 0 なので、この 1 件は今回の差分で生じた。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: 前回 verdict (cr-briefing-batch-v4、iteration 2、旧 sha eff9f10caabdc4ea23aaf2e74c940a26b44c8564aeffa3331645fa9a9fd5f7fc、PASS) の low 4 件 (followup と部分の頼みの返し方、「迷ったら書かない」の書き方、Additional Resources、仕様の不足を書き足す頼みの受け側) は、今回の差分と無関係でまだ直っていないので、SKILL.md と run-briefing/SKILL.md の行番号を今の版 (どちらも +3) に合わせて negative_feedback に引き継いだ。判定: PASS。high 0、medium 0。low 5 件 (新しく 1 件、引き継ぎ 4 件) を findings に残す。宣言値 engine=inline / fork=inline は妥当で、変える必要は無い。"
+}

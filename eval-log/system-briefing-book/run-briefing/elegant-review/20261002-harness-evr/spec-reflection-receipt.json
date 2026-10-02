@@ -1,0 +1,152 @@
+{
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-02",
+  "branch": "devgraph/harness-evr",
+  "updated_at": "2026-10-02",
+  "beads": [
+    "harness-evr",
+    "harness-hbg",
+    "harness-a49"
+  ],
+  "dev_graph_node_id": null,
+  "dev_graph_note": "この repository は dev-graph 未初期化 (.dev-graph/render のみ) のため node は無い。branch 名は Beads ID で代替した。",
+  "canonical_spec_dirs": {
+    "checked": [
+      "system-spec/",
+      "specs/",
+      "architecture/",
+      "docs/",
+      "features/",
+      "tasks/"
+    ],
+    "present": [],
+    "decision": "いずれも repository に存在しない (2026-10-02 の origin/main でも同じ)。この repository の仕様の正本は plugin 内の SKILL.md / references と script の docstring で、利用者向けの説明は README.md が担う。新しい仕様ディレクトリを作ると正本が二重になるため作らず、既存の正本と README へ反映した。",
+    "design_notes_dir": "doc/ (単数形) は repository の設計記録の置き場で、plugin ごとの設計ノート (例: doc/x-longpost-creator-設計ノート.md) がある。docs/ への反映の依頼には、ここへ doc/system-briefing-book-設計ノート.md を足して応えた。規則は写さず「なぜその形にしたか」と正本の場所だけを書く。"
+  },
+  "changes": [
+    {
+      "id": "system-briefing-book",
+      "summary": "業務システムの打ち合わせ資料を作る plugin (0.2.0) を新規追加。harness-evr の 30 観点レビュー 3 サイクルの改善を含む。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/references/*.md (plugin 仕様の正本。改善サイクル内で更新済み)",
+        "plugins/system-briefing-book/skills/*/SKILL.md (Runtime root contract の定型 5 行を復元し CI の capability parity 監査に適合)",
+        "最終レビューの medium 3 件: boards の不足の返し先を呼び出し元へ統一 (boards SKILL.md・board-copy.md・run-briefing 工程5)、book の振り分け表へ PNG-HASH、hearing-guide.md の H 番号を足してよい場合の食い違いを解消",
+        "eval-log/system-briefing-book/*/content-review/*-verdict.json (6 スキルとも現行 SKILL.md の SHA で PASS、low は findings に保持)",
+        "README.md (plugin 数 21→22・公開 17→18、用途別の入口に system-briefing-book を追記)",
+        ".claude-plugin/marketplace.json / .claude-plugin/bundles.json / .agents/plugins/marketplace.json / marketplaces/local/ (目録登録)",
+        "tests/criteria/criteria_roster.py / eval-log/llm-coverage.json (派生物の再生成)"
+      ],
+      "not_reflected": "原資料 v0.4 の 6 画面を正規入力から再生成する受入検証は未完了。harness-hbg で追跡する。"
+    },
+    {
+      "id": "aidd-agent-kit-and-lint",
+      "summary": "外部キット aidd-agent-kit 1.11.0 を .claude/.agents/.codex へ実ファイルで導入し、lint-skill-description が manifest に載ったキット所有の実ファイルを検査対象から外すよう変更 (symlink 経由のハーネス投影は除外しない)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/lint-skill-description.py と plugins/skill-governance-lint/scripts/lint-skill-description.py の docstring「対象外」節 (lint 契約の正本)",
+        "tests/scripts-plugins/test_skill_governance_lint__lint_skill_description.py (除外条件を固定するテスト 5 件)",
+        "README.md 4.4 節 (キット所有の実ファイルの置き場所と lint 対象外の扱い)",
+        ".gitignore (キット再インストール時の退避ディレクトリ .claude/backup-*/ .codex/backup-*/)"
+      ],
+      "not_reflected": null
+    },
+    {
+      "id": "ci-fixes",
+      "summary": "PR #81 の CI 失敗の修正。plugin 数 22 への固定値追従、lint-legacy-plugin-name の外部キット除外、system-briefing-book の goal_seek 宣言と command 契約テスト (0.2.1)、CRLF 作業コピー由来の fingerprint ずれ (0.2.2)、harness-creator 1.4.36。",
+      "spec_impact": false,
+      "reason": "仕様の中身は変えていない。CI ゲートが要求する宣言・固定値・fingerprint を、すでにある正本へ合わせただけである。lint-legacy-plugin-name の除外範囲の変更は、その script の docstring とテストが正本で、両方を同じ commit で直した。",
+      "reflected_in": [
+        "scripts/lint-legacy-plugin-name.py と tests/scripts-root/test_root__lint_legacy_plugin_name.py",
+        "doc/harness-creator-完全解剖.md (対象版を 1.4.36 に追従)"
+      ],
+      "not_reflected": "CRLF の再発防止 (.gitattributes で改行を固定) は未着手。doc/system-briefing-book-設計ノート.md の 9 章に残した。"
+    },
+    {
+      "id": "hearing-coverage-0.2.3",
+      "summary": "system-briefing-book 0.2.3。ヒアリングの質問を 24 から 36 へ (聞くのは 24 問・6 回まで、残り 12 問は既定案)。使う人・仕事の流れ・管理の画面・直す/消す・人の出し入れ・データの欄・量・データの移行・見られると困る情報・外からの利用・操作記録・止まったとき・使う時間帯を、非エンジニアの言葉で集める。H 番号を質問ごとに固定し (H01〜H24 不変、新しい質問は H25〜H36、補足は H37 から)、答えの受け皿を要件定義 7 章と仕様書 6 章 稼働構成・7.2 に足した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/SKILL.md と references/hearing-guide.md (質問・選択肢・既定案・行き先の正本)",
+        "plugins/system-briefing-book/references/document-structure.md (H 番号の決まり、要件定義 7 章、仕様書 6 章 稼働構成・7.2 監視と復旧の記入先)",
+        "plugins/system-briefing-book/skills/run-briefing-docs/references/writing-patterns.md (要件定義 7 章の行数)",
+        "plugins/system-briefing-book/examples/sample-haisha/打ち合わせ資料/ (お手本のヒアリング・要件定義・仕様書を新しい質問に追従)",
+        "eval-log/system-briefing-book/run-briefing-hearing/content-review/*-verdict.json (独立評価が iteration 2 で PASS。SKILL.md sha256 318798990063a5c2295635df94b1885073105aeb3a4fc882cc1f3afc826350ec)",
+        "doc/system-briefing-book-設計ノート.md (設計判断の記録)"
+      ],
+      "not_reflected": "plugin の README のヒアリングの説明は 1 行のままで、36 問と 6 回の聞き方には触れていない。手順の正本は SKILL.md と hearing-guide.md にあるため、今回は README を変えていない。"
+    },
+    {
+      "id": "palette-rename-standard",
+      "summary": "取引先の会社名を含んでいた配色の名前を、標準カラー (standard) に改めた。aidd-agent-kit (jp-web-design・report-design-system・app-excellence ほか) の 3 つの写し (aidd-agent-kit/、.claude/、.agents/) と system-briefing-book、ubm-goal-setting の例文から、日本語とローマ字の両方を外した。見本 HTML からは、その会社のサイトを調べた節と会社に依存する文を外した。system-briefing-book 0.2.4、ubm-goal-setting 0.3.46。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/schemas/briefing.schema.json (palette は \"standard\" か CSS ファイルの場所)",
+        "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs と validate-briefing-docs.mjs (--palette standard、palette の検査)",
+        "plugins/system-briefing-book/assets/data/quality-thresholds.json (palette_default)、assets/css/tokens-standard.css と standard-attribution.md",
+        "plugins/system-briefing-book/examples/sample-haisha/打ち合わせ資料/briefing.json と _src/tokens.css",
+        "aidd-agent-kit/skills/jp-web-design/ (assets/standard/、references/standard-color-system.md、scripts/*-standard-*.mjs)。tokens.json と見本 HTML は export-standard-tokens.mjs で作り直した",
+        "aidd-agent-kit/skills/report-design-system/assets/vendor/SOURCE.json (改名した 2 つの CSS の sha256)",
+        ".claude/aidd-agent-kit.manifest と .codex/aidd-agent-kit.manifest (パスと sha256 の 43 行)",
+        "aidd-agent-kit/CHANGELOG.md の「未リリース」節 (キットの VERSION 1.11.0 は据え置き)",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md と scripts/validate-goal-output.py (例文の会社名をサンプル運送に)",
+        "doc/system-briefing-book-設計ノート.md 9 章 (名前を変えた理由と、旧名の互換を置かない判断)"
+      ],
+      "not_reflected": "旧名は公開済みの commit の履歴に残る (利用者の判断で履歴は書き換えない)。旧名を palette に書いた既存の briefing.json は検査で止まるため、standard への書き換えが要る。"
+    },
+    {
+      "id": "jp-web-design-default",
+      "summary": "system-briefing-book 0.2.5。まとめ HTML と画面ボードの既定の見た目を、aidd-agent-kit の jp-web-design (標準カラーとその規範) に合わせた。_src/tokens.css は、ボードの言葉 (assets/css/board-tokens.css)・標準カラーの写し (assets/css/vendor/standard-color-system.css、1 バイトも変えない)・案件の上書きの順につないで作る。案件の配色は基本色 --p-* だけを上書きし、役割はそれに付いてくる。カード縁の色帯と自作アイコンをやめた。キットの jp-web-design と report-design-system は、利用者が指定した版へ追従した (term-ui.js、test-color-contracts.mjs ほか)。 配色の正は briefing.json の palette の 1 か所にした。init は既にある briefing.json の palette で tokens.css を作り、記録と違う --palette は exit 2 で止める。palette は materials と同じく出力フォルダからの相対で記録し、--refresh-css の付け忘れで記録と合わない CSS は stale_css で知らせる。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-briefing-book/scripts/lib/palette.mjs (組み立ての正本) と scripts/extract-kit-palette.mjs (写しの検証と取り込み)",
+        "plugins/system-briefing-book/assets/css/board-tokens.css (旧 tokens-standard.css を置き換え)、assets/css/vendor/ (standard-color-system.css と SOURCE.json)、common.css、assets/templates/ (book.html・board-pc.html・board-data-map.html)",
+        "plugins/system-briefing-book/assets/css/standard-attribution.md (出典・組み立て・案件の配色の合わせ方)",
+        "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs と build-briefing-book.mjs (docstring と tokens.css の組み立て)",
+        "plugins/system-briefing-book/schemas/briefing.schema.json (palette の説明を「標準カラーへの上書き」に)",
+        "plugins/system-briefing-book/references/ (page-patterns.md の規範、quality-rules.md の目視、workflow.md・execution-contract.md・case-haisha.md)、README.md、skills/run-briefing-boards/SKILL.md の Gotchas",
+        "plugins/system-briefing-book/plugin-composition.yaml (invariant と capability に extract-kit-palette)",
+        "plugins/system-briefing-book/tests/test_palette.py (新規 8 件) と test_single_source.py",
+        "plugins/system-briefing-book/examples/sample-haisha/打ち合わせ資料/_src/ (tokens.css を組み立て直し、色帯を外した)",
+        "aidd-agent-kit/skills/ (jp-web-design・report-design-system) の 3 つの写しと 2 つの manifest、aidd-agent-kit/CHANGELOG.md の「未リリース」",
+        "doc/system-briefing-book-設計ノート.md 9 章 (jp-web-design に合わせた理由) と、前回レビューの指摘 10 件の修正。tests/test_system_briefing_book_design_note.py (ノートの数と名前を正本と突き合わせる)",
+        "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs (resolvePalette・normalizePalette・recordedPalette と stale_css) と tests/test_build_briefing_scaffold.py (配色の記録の 2 件)。scripts/lib/palette.mjs の使われていない overlayCssPath を削除",
+        "plugins/system-briefing-book/references/workflow.md の「書いてよいスキル」の表 (palette と data_policy は run-briefing、tokens.css と common.css は boards の持ち場から除く)",
+        "eval-log/system-briefing-book/run-briefing-boards/content-review/ (iteration 1 FAIL の high 1 件をスクリプトで直し、iteration 2 で PASS。PASS のあとに low 3 件 (palette の絶対パス、--refresh-css の付け忘れ、_src/ の持ち場) をスクリプトと参照の文書で直した。SKILL.md は変えていないので sha は PASS の版のまま)",
+        "eval-log/coverage/docs/system-briefing-book------.md.json (設計ノートの llm_eval PASS)"
+      ],
+      "not_reflected": "案件の配色の約束は基本色だけの上書きに変わった。役割まで書いた古い形の CSS も上書きとして効くが、キットの版が上がっても追従しない。すでに利用者の手元に入れたキットの写しには旧名が残る。 run-briefing の工程5 に、boards から返る「案件の色が要る」を受ける手順が無い (content-review iteration 2 の medium。run-briefing の SKILL.md の変更と再評価が要るので残課題として起票する)。"
+    }
+  ],
+  "excluded_from_commit": {
+    "paths": [
+      "plugins/system-briefing-book/ の README.md・agents/briefing-reviewer.md・assets/templates/hearing.md.tmpl・references/(document-structure.md・quality-rules.md・resource-map.yaml)・scripts/(build-briefing-scaffold.mjs・validate-briefing-docs.mjs)・skills/run-briefing-docs と run-briefing-hearing の SKILL.md と references・workflow-manifest.json・tests/(test_build_briefing_scaffold.py・test_validate_briefing_docs.py)・examples の要件定義.md と仕様書.md の未コミット差分",
+      "plugins/system-briefing-book/assets/data/hearing-catalog.json、scripts/lib/hearing-catalog.mjs、tests/test_hearing_catalog.py (未追跡)",
+      "eval-log/system-briefing-book/run-briefing/elegant-review/20261002-requirements-refactor/"
+    ],
+    "reason": "2026-10-02 時点で、別のセッションが同じ作業コピーで進めている requirements-refactor の途中の差分。この PR の範囲ではないので commit しない。配色の改名は、HEAD を一時 worktree に取り出して行い、品質ゲートもそこで回した。"
+  },
+  "verification": [
+    "python3 -m pytest -q tests/scripts-plugins/test_skill_governance_lint__lint_skill_description.py",
+    "python3 -m pytest -q tests/criteria",
+    "python3 scripts/lint-content-review.py --all",
+    "python3 plugins/harness-creator/scripts/audit-capability-parity.py --repo-root . --all",
+    "python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check",
+    "python3 scripts/validate-llm-coverage.py --all --check",
+    "node plugins/system-briefing-book/scripts/validate-briefing-docs.mjs --dir plugins/system-briefing-book/examples/sample-haisha/打ち合わせ資料 --stage all (HEAD 38f3cdd の一時 worktree で status ok)",
+    "python3 -m pytest -q plugins/system-briefing-book/tests (同 241 passed)",
+    "python3 scripts/build-plugin-release.py --check (同 OK 22 plugins)",
+    "python3 scripts/build-local-marketplace.py --check (同 22 plugin, no drift)",
+    "python3 scripts/lint-legacy-plugin-name.py (doc/ の設計ノートを足したあと OK)",
+    "GitHub Actions on 38f3cdd: change-category-guard / governance / plugin-tests / verify すべて pass",
+    "配色の改名 (一時 worktree): node aidd-agent-kit/skills/jp-web-design/scripts/export-standard-tokens.mjs --check、inline-catalog-css.mjs --check、check-standard-contrast.mjs、check-token-references.mjs がすべて PASS",
+    "node --test aidd-agent-kit/skills/jp-web-design/tests/test-*.mjs (4 pass)、report-design-system の selftest.mjs 合格、app-excellence の check-artifact-first-contract.mjs rc 0",
+    "node aidd-agent-kit/skills/report-design-system/scripts/sync-kit.mjs --verify と --kit aidd-agent-kit --check が OK。キットの 3 つの写しは同一で、2 つの manifest の sha256 は全行一致",
+    "python3 -m pytest -q plugins/system-briefing-book/tests (241 passed)、validate-briefing-docs.mjs --stage all (errors 0 warnings 0)、ubm-goal-setting の test_validate_goal_output (53 passed)",
+    "python3 scripts/lint-legacy-plugin-name.py、lint-skill-description.py (OK=187)、lint-content-review.py --all (OK 89)、build-plugin-release.py --check (22 plugins)、build-local-marketplace.py --check (no drift)",
+    "git grep で旧名 (日本語・ローマ字) が repository に 0 件 (「ひらがな」の英語表記は別語なので除く)",
+    "0.2.5: python3 -m pytest plugins/system-briefing-book/tests (250 passed、その後の配色の記録のテスト追加で test_build_briefing_scaffold.py と test_palette.py は 20 passed)、tests/test_system_briefing_book_design_note.py (8 passed)",
+    "0.2.5: lint-content-review.py --all (89 skill verified。run-briefing-boards は sha 1222d9e0 で PASS)、lint-legacy-plugin-name.py (OK)、lint-skill-description.py (OK=187)、sync-plugin-platforms.py --all --check (rc 0)、audit-capability-parity.py --all (PASS)、validate-llm-coverage.py --all --check (最新)",
+    "0.2.5: validate-harness-coverage.py --ratchet (RATCHET OK。docs llm_eval 70.2→70.7、ほかの軸は下がらない)、build-plugin-release.py --check (OK 22 plugins)、build-local-marketplace.py --check (no drift)"
+  ]
+}

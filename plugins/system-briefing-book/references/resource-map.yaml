@@ -1,0 +1,169 @@
+# plugin-level resource-map (system-briefing-book)
+#
+# skill 横断 references と、各スキルの references/ にある専用の reference を「いつ読むか / 誰が読むか」で機械可読にする。
+# 各スキルは必要な工程でだけ該当 reference を読み、context を増やしすぎない。
+# skills/run-skill-feedback/references/notion-submit-contract.md は repo 共通の写し (lint-feedback-protocol.py R7 が配備を確かめる) なので載せない。
+#
+# schema:
+#   id           : kebab-case 一意 ID
+#   path         : plugin ルート相対パス
+#   kind         : reference | pattern | rubric | schema
+#   read_when    : 読み込み条件
+#   produced_by  : この reference の正本責任者
+#   consumed_by  : この reference を読む skill / agent
+#   relates_to   : 関連 reference ID
+
+version: 1
+plugin: system-briefing-book
+
+references:
+  - id: workflow
+    path: references/workflow.md
+    kind: reference
+    read_when:
+      - "出力フォルダのどのファイルをどのスキルが書くか迷った時"
+      - "既定のページ構成 (型と並び) を決める時、仕様書の「ボード:」に番号を振る時"
+      - "版と更新日をそろえる時、版を上げる時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+      - run-briefing-docs
+      - run-briefing-boards
+      - run-briefing-book
+    relates_to: [document-structure, execution-contract, page-patterns, board-copy]
+
+  - id: hearing-guide
+    path: skills/run-briefing-hearing/references/hearing-guide.md
+    kind: pattern
+    read_when:
+      - "工程1 でヒアリングの質問と既定案を選ぶ時"
+      - "利用者が「わからない」「全部おすすめ」と答えた時"
+      - "核心の 5 問の答えがあいまいで、促しながら聞き足す時"
+      - "確認点で増えた 決めること を followup で聞く時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-hearing
+    relates_to: [document-structure, plain-language, quality-rules]
+
+  - id: writing-patterns
+    path: skills/run-briefing-docs/references/writing-patterns.md
+    kind: pattern
+    read_when:
+      - "要件定義.md と 仕様書.md の欄を埋める時 (文の型・長さ・お手本)"
+      - "画面・できること・データ・ルール・決めることの番号を振る時"
+      - "独立レビューで、言葉と正確さを書き方の型と突き合わせる時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-docs
+      - briefing-reviewer
+    relates_to: [document-structure, plain-language, quality-rules]
+
+  - id: board-copy
+    path: skills/run-briefing-boards/references/board-copy.md
+    kind: pattern
+    read_when:
+      - "工程4 で画面のボードを置き、file・title・message を決める時"
+      - "工程5 で注記・画面の中の文字・future の言葉を書く時"
+      - "独立レビューで、注記と見出しの言葉を型と突き合わせる時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-boards
+      - briefing-reviewer
+    relates_to: [page-patterns, plain-language, quality-rules]
+
+  - id: document-structure
+    path: references/document-structure.md
+    kind: schema
+    read_when:
+      - "ヒアリング.md・要件定義.md・仕様書.md・変更点.md を書く時"
+      - "validate-briefing-docs.mjs が HEADING-* や TABLE-MISSING を出した時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+      - run-briefing-hearing
+      - run-briefing-docs
+    relates_to: [quality-rules, plain-language]
+
+  - id: page-patterns
+    path: references/page-patterns.md
+    kind: pattern
+    read_when:
+      - "工程4 でページ構成を決める時"
+      - "工程5 でボードを型どおりに組む時"
+      - "判断材料の部品 (.facts、.reqs、.bar と .legend、data-source) を置く時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-boards
+    relates_to: [quality-rules, board-copy, case-haisha, workflow]
+
+  - id: quality-rules
+    path: references/quality-rules.md
+    kind: rubric
+    read_when:
+      - "検査スクリプトが error か warn を出し、メッセージだけでは直し方が決まらない時"
+      - "確認点で独立レビューの 4 観点と重さを決める時"
+      - "最初の版に入れるか 次に広げる候補 に回すか迷った時"
+      - "briefing.json の data_policy で、名前と値をどう載せるかを決める時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+      - run-briefing-hearing
+      - run-briefing-docs
+      - run-briefing-boards
+      - assign-briefing-evaluator
+      - briefing-reviewer
+    relates_to: [plain-language, page-patterns, document-structure, workflow, execution-contract]
+
+  - id: plain-language
+    path: references/plain-language.md
+    kind: reference
+    read_when:
+      - "文書やボードの言葉を書く時"
+      - "validate-briefing-docs.mjs が PLAIN-TERM を出した時"
+      - "ヒアリングの選択肢の説明を書く時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-hearing
+      - run-briefing-docs
+      - run-briefing-boards
+      - assign-briefing-evaluator
+      - briefing-reviewer
+    relates_to: [quality-rules]
+
+  - id: execution-contract
+    path: references/execution-contract.md
+    kind: reference
+    read_when:
+      - "スクリプトを呼ぶ前に PLUGIN_ROOT を決める時"
+      - "スクリプトが exit 2 か exit 3 を返した時"
+      - "Windows や Codex で動かす時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+      - run-briefing-hearing
+      - run-briefing-docs
+      - run-briefing-boards
+      - run-briefing-book
+      - assign-briefing-evaluator
+    relates_to: [workflow]
+
+  - id: case-haisha
+    path: references/case-haisha.md
+    kind: pattern
+    read_when:
+      - "はじめて資料を作る時、できあがりの姿を先に見たい時"
+      - "ページの数と並びや、注記の書き方をまねたい時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+    relates_to: [page-patterns, document-structure, workflow]
+
+  - id: target-profile
+    path: assets/data/target-profile.json
+    kind: rubric
+    read_when:
+      - "確認点3 と報告で、2 本目の基準点との差の表を見せる時 (compare-briefing-profile.mjs が読む)"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+    relates_to: [case-haisha, workflow]

@@ -57,8 +57,16 @@ eval-log/intake-locks/
 .build/
 # .claude/{agents,skills,commands} は build-claude-symlinks.py が
 # plugins/ から生成する symlink を含むため tracked。ignore しない。
+# aidd-agent-kit のインストーラが再インストール時に作る退避ディレクトリ。
+# 中身は直前の .claude / .codex そのもので、git 履歴から復元できるため追跡しない。
+.claude/backup-*/
+.codex/backup-*/
 
 # Eval-log: 一時生成物 (再現性 schema 正本は plugins/ 配下)
+# elegant-review の改善前スナップショット (手元で diff を取るための作業コピー)。
+# plugin 一式 (tests 含む) の丸写しで、追跡すると test discovery が孤立テストとして拾う。
+# 改善の結論は同じ run の findings*.json / approval-iteration*.json に残る。
+eval-log/*/*/elegant-review/*/baseline/
 eval-log/skill-brief.json
 eval-log/skill-brief*.json
 !eval-log/skill-brief-prompt-creator.json

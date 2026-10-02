@@ -1,0 +1,152 @@
+{
+  "artifact_delivery_contract": {
+    "contract": "artifact-delivery-v1",
+    "state_machine": {
+      "initial": "artifact_created",
+      "states": [
+        "artifact_created",
+        "minimal_guard_passed",
+        "artifact_presented",
+        "user_choice_recorded",
+        "semantic_evaluator_started",
+        "handoff_complete"
+      ],
+      "transitions": [
+        {
+          "from": "artifact_created",
+          "event": "minimum_guard_pass",
+          "to": "minimal_guard_passed"
+        },
+        {
+          "from": "minimal_guard_passed",
+          "event": "present_actual_artifact",
+          "to": "artifact_presented"
+        },
+        {
+          "from": "artifact_presented",
+          "event": "record_user_choice",
+          "to": "user_choice_recorded"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "accept-as-is",
+          "to": "handoff_complete"
+        },
+        {
+          "from": "user_choice_recorded",
+          "event": "light|standard|detailed",
+          "to": "semantic_evaluator_started"
+        },
+        {
+          "from": "semantic_evaluator_started",
+          "event": "improvement_complete",
+          "to": "handoff_complete"
+        }
+      ],
+      "pre_choice_forbidden": [
+        "semantic-evaluator",
+        "task-fork",
+        "subagent",
+        "multi-worker",
+        "revise-loop"
+      ],
+      "accept_contexts": {
+        "evaluator": 0,
+        "improver": 0
+      }
+    },
+    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "release": "explicit-only",
+    "exhaustive": "explicit-only"
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "schemaVersion": 1,
+  "workflowId": "run-briefing-docs",
+  "skill": "run-briefing-docs",
+  "description": "main context が要件定義.md を章立てどおりに書いて --stage requirements を通し、確認点1 のあと仕様書.md を書いて --stage spec を通す。どちらも、その工程で増えた決めることを見せる。確認点で答えが出た Q と H の組を受けたら決めることを閉じて本文の根拠を直す。版上げの指示があれば両方の版行をそろえる。",
+  "phases": [
+    {
+      "id": "D1-requirements",
+      "step": 1,
+      "title": "要件定義.md を書き --stage requirements を通す",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "D2-spec",
+      "step": 2,
+      "title": "仕様書.md を書き --stage spec を通す",
+      "gate": "IN2",
+      "dependsOn": [
+        "D1-requirements"
+      ],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "D3-version",
+      "step": 3,
+      "title": "版上げの指示で要件定義.md と仕様書.md の版行をそろえる",
+      "gate": "IN3",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "id": "D4-answers",
+      "step": 4,
+      "title": "確認点で答えが出た Q と H の組で決めることを閉じ、本文の根拠を 聞き取り に直して検査を通す",
+      "gate": "IN1",
+      "dependsOn": [],
+      "entryHook": null,
+      "exitHook": null,
+      "resourceIds": [
+        "script-validate"
+      ],
+      "fatal_exit_codes": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "script-validate",
+      "kind": "script",
+      "path": "../../scripts/validate-briefing-docs.mjs",
+      "phaseIds": [
+        "D1-requirements",
+        "D2-spec",
+        "D3-version",
+        "D4-answers"
+      ]
+    }
+  ]
+}

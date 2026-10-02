@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+.board-body.col > .stage { justify-content: center; }
+</style>
+</head>
+<body>
+<!-- 型: screen-map (画面の一覧と流れ)
+     - 仕様書「1. 画面一覧」と同じ画面番号・画面名・端末を、使う順に左から並べる。6 画面まで。
+     - 矢印の上の小さな文字は、次の画面へ進むきっかけ (例: 送る)。
+     - スマホの画面は <div class="tile sp">、PC の画面は <div class="tile">。高さは画面の形にまかせる。
+     - .shot の中の .thumb-ph は仮の絵。端末のボードに data-export を付けて PNG 化すると
+       _src/assets/export/<name>.png ができるので、<img src="assets/export/<name>.png" alt=""> に置きかえる。
+       (render-board-png.mjs は、このボードを端末のボードより後に描く) -->
+<div class="board" data-board="{{NO}}" data-type="screen-map">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <div class="smap">
+        <div class="tile sp">
+          <div class="h"><span class="sno">S01</span><b>記録する</b><span class="chip neutral">スマホ</span></div>
+          <div class="shot"><div class="thumb-ph sp"><i class="head"></i><i></i><i class="short"></i><i></i><i class="short"></i><i class="box"></i><i class="btn"></i></div></div>
+          <p>現場で 4 項目を入れて送る。</p>
+          <div class="act">主な操作: 送る</div>
+        </div>
+        <div class="arrow-lab">送る<i class="arrow-r"></i></div>
+        <div class="tile anchor">
+          <div class="h"><span class="sno">S02</span><b>一覧</b><span class="chip brand">PC</span></div>
+          <div class="shot"><div class="thumb-ph pc"><i class="head"></i><i></i><i></i><i class="short"></i><i></i><i></i><i class="short"></i></div></div>
+          <p>送られた記録が並ぶ。確認待ちが上。</p>
+          <div class="act">主な操作: 開く</div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <div class="arrow-lab">開く<i class="arrow-r"></i></div>
+        <div class="tile">
+          <div class="h"><span class="sno">S03</span><b>確かめる</b><span class="chip brand">PC</span></div>
+          <div class="shot"><div class="thumb-ph pc"><i class="head"></i><i class="short"></i><i class="box"></i><i class="btn"></i></div></div>
+          <p>1 件ずつ見比べて、必要なら直す。</p>
+          <div class="act">主な操作: 確かめた</div>
+        </div>
+        <div class="arrow-lab">まとめる<i class="arrow-r"></i></div>
+        <div class="tile anchor">
+          <div class="h"><span class="sno">S04</span><b>書き出す</b><span class="chip brand">PC</span></div>
+          <div class="shot"><div class="thumb-ph pc"><i class="head"></i><i></i><i></i><i></i><i class="btn"></i></div></div>
+          <p>確かめた記録を、今のソフトの形にする。</p>
+          <div class="act">主な操作: 書き出す</div>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>スマホは 1 画面、ほかは PC</b><span class="sub">どの画面も、主な操作は 1 つだけ。</span></li>
+        <li data-mark="2" data-kind="how"><b>矢印の上は、次へ進むボタン</b><span class="sub">戻るときは、上の帯のアプリ名から最初の画面へ。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

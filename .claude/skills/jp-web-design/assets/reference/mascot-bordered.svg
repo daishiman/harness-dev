@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="49 40 1155 1194">
+  <title>マスコット(縁あり) — ヒーロー・空状態・完了画面用</title>
+  <style>
+    :root {
+      --border-light: #eef6ff;
+      --border-mid:   #dcedfe;
+      --border-dark:  #c8e3fc;
+
+      --body-light:   #5db4f8;
+      --body-main:    #43a4f5;
+      --body-dark:    #3892e0;
+
+      --eye-white:    #FFFFFF;
+      --pupil-light:  #6A6A6A;
+      --pupil-dark:   #515151;
+      --highlight:    #FFFFFF;
+      --pupil-gloss:  rgba(255,255,255,0.24);
+    }
+  </style>
+
+  <defs>
+    <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="var(--border-light)"/>
+      <stop offset="48%"  stop-color="var(--border-mid)"/>
+      <stop offset="100%" stop-color="var(--border-dark)"/>
+    </linearGradient>
+
+    <radialGradient id="bodyGradient" cx="35%" cy="28%" r="85%">
+      <stop offset="0%"   stop-color="var(--body-light)"/>
+      <stop offset="58%"  stop-color="var(--body-main)"/>
+      <stop offset="100%" stop-color="var(--body-dark)"/>
+    </radialGradient>
+
+    <linearGradient id="pupilGradient" x1="20%" y1="10%" x2="80%" y2="100%">
+      <stop offset="0%"   stop-color="var(--pupil-light)"/>
+      <stop offset="100%" stop-color="var(--pupil-dark)"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur"/>
+      <feOffset dy="2" result="offsetBlur"/>
+      <feColorMatrix in="offsetBlur" type="matrix"
+        values="0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0 0
+                0 0 0 0.08 0" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect id="outer-frame"
+        x="59" y="50" width="1135" height="1174" rx="315"
+        fill="url(#borderGradient)"/>
+
+  <rect id="blue-body"
+        x="130" y="126" width="989" height="1024" rx="258"
+        fill="url(#bodyGradient)"/>
+
+  <g id="eyes" filter="url(#softShadow)">
+    <ellipse id="left-eye"  cx="486" cy="574" rx="173" ry="180" fill="var(--eye-white)"/>
+    <ellipse id="right-eye" cx="770" cy="576" rx="170" ry="177" fill="var(--eye-white)"/>
+  </g>
+
+  <g id="pupils">
+    <g id="left-pupil" transform="rotate(8 491 570)">
+      <ellipse cx="491" cy="570" rx="73" ry="88" fill="url(#pupilGradient)"/>
+      <ellipse cx="472" cy="527" rx="20" ry="18" fill="var(--highlight)"/>
+      <path d="M458 621 Q490 638 523 615"
+            fill="none" stroke="var(--pupil-gloss)"
+            stroke-width="17" stroke-linecap="round"/>
+    </g>
+    <g id="right-pupil" transform="rotate(8 766 574)">
+      <ellipse cx="766" cy="574" rx="72" ry="86" fill="url(#pupilGradient)"/>
+      <ellipse cx="747" cy="532" rx="19" ry="18" fill="var(--highlight)"/>
+      <path d="M733 625 Q764 640 798 618"
+            fill="none" stroke="var(--pupil-gloss)"
+            stroke-width="17" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
