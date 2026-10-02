@@ -67,6 +67,9 @@ eval-log/intake-locks/
 # plugin 一式 (tests 含む) の丸写しで、追跡すると test discovery が孤立テストとして拾う。
 # 改善の結論は同じ run の findings*.json / approval-iteration*.json に残る。
 eval-log/*/*/elegant-review/*/baseline/
+# 同じ控えを tar.gz に固めたもの (baseline.tar.gz、pre-phase3-backup.tar.gz など) も追跡しない。
+# 中身は git 履歴から作り直せ、無視している plugins/**/.claude/handoff/ のメモも入りうる。
+eval-log/*/*/elegant-review/*/*.tar.gz
 eval-log/skill-brief.json
 eval-log/skill-brief*.json
 !eval-log/skill-brief-prompt-creator.json

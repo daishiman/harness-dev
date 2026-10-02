@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>04 読み取り結果の確認</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.admin-body { gap: 12px; padding: 18px 26px; }
+.photo.strip { flex: none; height: 250px; position: relative; display: block; background: var(--bg-surface); }
+.photo.strip img { position: absolute; left: 0; top: -332px; width: 100%; height: auto; }
+.photo.strip .hl { position: absolute; left: 0; right: 0; top: 86px; height: 74px; border: 3px solid var(--text-link); background: var(--bg-accent-soft); opacity: .45; border-radius: 4px; }
+table.grid th { padding: 7px 9px; }
+table.grid td { padding: 9px 9px; }
+td.low { background: var(--status-warning-bg) !important; box-shadow: inset 0 0 0 2px var(--status-warning-line); }
+.act-bar { display: flex; align-items: center; gap: 16px; margin-top: auto; }
+.act-bar .now { font-size: 14px; color: var(--text-2); }
+.act-bar .btn-primary { margin-left: auto; min-width: 180px; }
+</style>
+</head>
+<body>
+<div class="board" data-board="04" data-type="pc" data-screens="S03">
+  <header class="board-head">
+    <div>
+      <div class="kicker">画面 3 / 4 ・ PC</div>
+      <h1>読み取り結果の確認</h1>
+      <div class="lead">紙の写真と見比べて、黄色の欄だけを確かめて直す。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="browser" data-export="s03-check">
+        <div class="browser-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><div class="url">example.app/sheet/1024</div></div>
+        <div class="browser-body">
+          <div class="admin-head">
+            <div class="brand">配車表の読み取り<small>事務所用</small></div>
+            <div class="who">請求 B さん<span class="link">ログアウト</span></div>
+          </div>
+          <div class="app-frame">
+            <nav class="side-nav">
+              <a class="on"><i class="ico"></i>一覧</a>
+              <a><i class="ico"></i>書き出し</a>
+            </nav>
+            <div class="app-main">
+              <div class="admin-body">
+                <div class="page-title">
+                  <div><h2>読み取り結果の確認</h2><p><span class="num">10/01</span> ・ 配車 A さん ・ <span class="num">6</span> 行のうち確認待ち <span class="num">3</span> 行</p></div>
+                  <span class="link">← 一覧へ戻る</span>
+                </div>
+                <div class="photo strip anchor" data-source="配車表_例.svg" data-clip-ok data-overlap-ok>
+                  <img src="assets/haisha-paper.svg" alt="">
+                  <i class="hl"></i>
+                  <i class="mk" style="left:10px;top:10px">1</i>
+                </div>
+                <div class="panel anchor">
+                  <table class="grid">
+                    <thead><tr><th class="r">行</th><th>車番</th><th>運転者</th><th>受注先</th><th>発地</th><th>着地</th><th>品名</th><th class="r">数量</th><th class="r">高速料</th><th>備考</th><th>確かめた</th></tr></thead>
+                    <tbody>
+                      <tr><td class="r num">1</td><td class="num">0101</td><td>A</td><td>取引先X</td><td>第一倉庫</td><td>北工場</td><td>資材</td><td class="r num">12</td><td class="r num"></td><td></td><td><i class="sel on"></i></td></tr>
+                      <tr><td class="r num">2</td><td class="num low">0101</td><td class="low">A</td><td class="low anchor">取引先X<i class="mk" style="right:4px;top:-14px">3</i></td><td>北工場</td><td>南倉庫</td><td>資材</td><td class="r num">8</td><td class="r num">1,200</td><td></td><td><i class="sel"></i></td></tr>
+                      <tr><td class="r num">3</td><td class="num">0102</td><td>B</td><td>取引先Y</td><td>港の倉庫</td><td>東工場</td><td>部品</td><td class="r num">20</td><td class="r num"></td><td>急ぎ</td><td><i class="sel on"></i></td></tr>
+                      <tr class="cur"><td class="r num">4</td><td class="num">0215</td><td>C</td><td class="low">取引先Y</td><td>東工場</td><td>第一倉庫</td><td>空箱</td><td class="r num low anchor">30<i class="mk" style="right:-14px;top:-12px">2</i></td><td class="r num">800</td><td></td><td><i class="sel"></i></td></tr>
+                      <tr><td class="r num">5</td><td class="num">0215</td><td>C</td><td>取引先Z</td><td>第一倉庫</td><td>西倉庫</td><td>資材</td><td class="r num">6</td><td class="r num"></td><td></td><td><i class="sel on"></i></td></tr>
+                      <tr><td class="r num">6</td><td class="num">0330</td><td>D</td><td>取引先X</td><td>南倉庫</td><td>北工場</td><td>部品</td><td class="r num">15</td><td class="r num">1,200</td><td class="low">2回目</td><td><i class="sel"></i></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="act-bar">
+                  <span class="now"><b class="num">4</b> 行目 ・ 受注先の候補:</span>
+                  <div class="btn btn-secondary sm anchor">取引先Y<i class="mk" style="right:-12px;top:-12px">5</i></div>
+                  <div class="btn btn-quiet sm">取引先Y 東</div>
+                  <div class="btn btn-quiet sm">取引先V</div>
+                  <div class="btn btn-primary anchor">確かめた<i class="mk" style="right:-12px;top:-12px">4</i></div>
+                </div>
+              </div>
+              <div class="app-footer"><span>配車表の読み取り ・ v0.2</span><span>困ったときの連絡先: 開発の担当</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F03">F03 見比べて確かめて直す</span><span class="req" data-req="F09">F09 名前を候補から選ぶ</span><span class="req" data-req="F05">F05 読み取りの学習 (あとで)</span><span class="req" data-req="F07">F07 運賃の案 (あとで)</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>上に紙の写真。選んだ行が光る</b><span class="sub">紙を探しに行かなくても、ここで見比べられる。</span></li>
+        <li data-mark="2" data-kind="how"><b>自信がない欄は黄色になる</b><span class="sub">読み取りのときに付く。直すと消える。</span></li>
+        <li data-mark="3" data-kind="ask"><b>「〃」は上の行と同じか</b><span class="q">Q01</span><span class="sub">案: 上の行の値を入れて、黄色で知らせる。人が見て確かめる。</span></li>
+        <li data-mark="4" data-kind="can"><b>「確かめた」で次の行へ</b><span class="sub">次の確認待ちの行へ。全部終わると確認済み。</span></li>
+        <li data-mark="5" data-kind="can"><b>名前は、候補から選ぶ</b><span class="sub">受注先・発地・着地は、対応表から近い名前を 3 つまで出す。選ぶと黄色が消える。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

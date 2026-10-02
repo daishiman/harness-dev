@@ -1,0 +1,97 @@
+{
+  "schema": "briefing-v1",
+  "title": "配車表の読み取り",
+  "readers": [
+    "現場の担当者",
+    "発注側の責任者",
+    "開発する人"
+  ],
+  "palette": "standard",
+  "data_policy": "masked",
+  "materials": "../素材",
+  "book": {
+    "include_hearing": false
+  },
+  "pages": [
+    {
+      "no": "00",
+      "file": "00_overview.html",
+      "type": "overview",
+      "title": "全体図",
+      "reader": "発注側の責任者",
+      "screens": [],
+      "message": "紙の書き方は変えずに、撮って送るだけで、取り込み先のシステムへ渡せるようにする。"
+    },
+    {
+      "no": "01",
+      "file": "01_screen-map.html",
+      "type": "screen-map",
+      "title": "画面の一覧と流れ",
+      "reader": "現場の担当者",
+      "screens": [],
+      "message": "画面は 4 つ。スマホで送り、PC で確かめて書き出す。"
+    },
+    {
+      "no": "02",
+      "file": "02_s01-send.html",
+      "type": "phone",
+      "title": "配車表を送る",
+      "reader": "現場の担当者",
+      "screens": [
+        "S01"
+      ],
+      "message": "紙を撮って送るだけ。入れるのは日付だけで、それも最初から入っている。"
+    },
+    {
+      "no": "03",
+      "file": "03_s02-list.html",
+      "type": "pc",
+      "title": "配車表の一覧",
+      "reader": "現場の担当者",
+      "screens": [
+        "S02"
+      ],
+      "message": "送られた配車表が並び、確認待ちが上に来る。"
+    },
+    {
+      "no": "04",
+      "file": "04_s03-check.html",
+      "type": "pc",
+      "title": "読み取り結果の確認",
+      "reader": "現場の担当者",
+      "screens": [
+        "S03"
+      ],
+      "message": "紙の写真と見比べて、黄色の欄だけを確かめて直す。"
+    },
+    {
+      "no": "05",
+      "file": "05_s04-export.html",
+      "type": "pc",
+      "title": "書き出し",
+      "reader": "現場の担当者",
+      "screens": [
+        "S04"
+      ],
+      "message": "確かめた行だけを、取り込み先のシステムが読める形で書き出す。"
+    },
+    {
+      "no": "06",
+      "file": "06_data-map.html",
+      "type": "data-map",
+      "title": "紙の欄と画面の項目",
+      "reader": "現場の担当者",
+      "screens": [],
+      "message": "紙のどの欄が、画面とデータのどこに入るか。"
+    },
+    {
+      "no": "07",
+      "file": "07_mechanism.html",
+      "type": "mechanism",
+      "title": "読み取りの学習のしくみ",
+      "reader": "発注側の責任者",
+      "screens": [],
+      "message": "選んだ名前を覚えて、次から候補の 1 番目に出す。最初の版に入れるかを、今日決めたい。"
+    }
+  ]
+}
