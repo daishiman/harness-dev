@@ -28,6 +28,7 @@ responsibility_refs:
 schema_refs:
   - ../../schemas/briefing.schema.json
 reference_refs:
+  - ../../references/design-contract.md
   - ../../references/workflow.md
   - ../../references/quality-rules.md
   - ../../references/execution-contract.md
@@ -113,6 +114,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 | new | `<素材フォルダ> [要望]` | `<素材フォルダ>/打ち合わせ資料/` 一式 (v0.1) |
 | revise | `<資料フォルダ> <打ち合わせメモ>` | 同じフォルダで版を上げた一式と 変更点.md |
 
+- 指定のない配色とデザインは [design-contract.md](../../references/design-contract.md) に従う。
 - 出力フォルダの中身と各ファイルの役割は [workflow.md](../../references/workflow.md) にある。
 - このスキルが自分で書くのは 変更点.md、`_check/choices.json`、`_check/review-<確認点>.json` だけ。ほかのファイルは担当スキルに任せる。
 - 最初の版は「こういうことがやれます」が伝わる最小構成にする。広げる案は 決めること と 次に広げる候補 へ回す ([quality-rules.md](../../references/quality-rules.md) の「1. シンプルさ」を読む)。

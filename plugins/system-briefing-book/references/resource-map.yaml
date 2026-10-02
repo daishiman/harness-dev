@@ -32,6 +32,21 @@ references:
       - run-briefing-book
     relates_to: [document-structure, execution-contract, page-patterns, board-copy]
 
+  - id: hearing-catalog
+    path: assets/data/hearing-catalog.json
+    kind: reference
+    read_when:
+      - "業務質問・選択肢・既定案・回答の観点・記入先を参照する時"
+      - "固定H番号の雛形を生成する時、回答の欠落と参照を検査する時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing-hearing
+      - run-briefing-docs
+      - briefing-reviewer
+      - build-briefing-scaffold.mjs
+      - validate-briefing-docs.mjs
+    relates_to: [hearing-guide, document-structure]
+
   - id: hearing-guide
     path: skills/run-briefing-hearing/references/hearing-guide.md
     kind: pattern
@@ -43,7 +58,7 @@ references:
     produced_by: harness maintainers
     consumed_by:
       - run-briefing-hearing
-    relates_to: [document-structure, plain-language, quality-rules]
+    relates_to: [hearing-catalog, document-structure, plain-language, quality-rules]
 
   - id: writing-patterns
     path: skills/run-briefing-docs/references/writing-patterns.md
@@ -77,6 +92,7 @@ references:
     read_when:
       - "ヒアリング.md・要件定義.md・仕様書.md・変更点.md を書く時"
       - "validate-briefing-docs.mjs が HEADING-* や TABLE-MISSING を出した時"
+      - "業務回答を仕様へ変換する時、網羅領域と元H・確認先Qを確かめる時"
     produced_by: harness maintainers
     consumed_by:
       - run-briefing
@@ -146,6 +162,20 @@ references:
       - run-briefing-book
       - assign-briefing-evaluator
     relates_to: [workflow]
+
+  - id: design-contract
+    path: references/design-contract.md
+    kind: reference
+    read_when:
+      - "案件の配色を指定するか、briefing.json の palette を変える時"
+      - "render か book が TOKENS-MISSING か TOKENS-INVALID を出した時"
+      - "init が配色の CSS の検査で止まった時"
+    produced_by: harness maintainers
+    consumed_by:
+      - run-briefing
+      - run-briefing-boards
+      - run-briefing-book
+    relates_to: [workflow, execution-contract, page-patterns]
 
   - id: case-haisha
     path: references/case-haisha.md

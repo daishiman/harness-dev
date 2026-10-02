@@ -1,0 +1,1285 @@
+--- before/plugins/system-briefing-book/README.md
++++ after/plugins/system-briefing-book/README.md
+@@ -9,6 +9,8 @@
+ | 仕様書.md | どう動くか。画面ごとの項目と動き、データの形、処理のルール、しくみと基盤、権限と運用 |
+ | 画面ボード (PNG) | 全体図、画面の一覧と流れ、画面ごとに 1 枚。必要なときだけ、データの対応、しくみ、将来の広げ方。決めることは、話の出てくるボードの右に置く |
+ | `<タイトル>_打ち合わせ資料.html` | 上の全部を目次つきで 1 ファイルにしたもの。先方に渡すのはこれ 1 つです ([skills/run-briefing-book/SKILL.md](skills/run-briefing-book/SKILL.md) の「Purpose & Output Contract」) |
++
++指定がなければ、同梱のオリジナルの標準デザインを使います。色・共通部品・ボード・まとめHTMLの正本と再生成の約束は [design-contract.md](references/design-contract.md) にあります。
+ 
+ 最初の版は「こういうことがやれます」が伝わる最小限に絞ります。広げたい案は仕様書の「次に広げる候補」に回し、打ち合わせで深掘りします。
+ 
+--- before/plugins/system-briefing-book/assets/templates/book.html
++++ after/plugins/system-briefing-book/assets/templates/book.html
+@@ -10,142 +10,118 @@
+ {{TOKENS_CSS}}
+ </style>
+ <style>
+-/* まとめ HTML の見た目。色は案件の配色を受け、無ければ () の中の値を使う。 */
++/* まとめの配置と文書部品。色・文字・影は検証済みの案件トークンを直接参照する。 */
+ :root {
+-  --book-brand: var(--text-brand, #1747B5);
+-  --book-ink: var(--text, #1F2937);
+-  --book-ink-2: var(--text-2, #4B5563);
+-  --book-muted: var(--text-muted, #6B7280);
+-  --book-link: var(--text-link, #1747B5);
+-  --book-line: var(--line, #E3E7EE);
+-  --book-line-strong: var(--line-strong, #C5CCD8);
+-  --book-page: var(--bg-page, #F4F6F9);
+-  --book-surface: var(--bg-surface, #FFFFFF);
+-  --book-stripe: var(--bg-stripe, #F8FAFC);
+-  --book-brand-soft: var(--bg-brand-soft, #EAF0FB);
+-  --book-inverse: var(--text-inverse, #FFFFFF);
+-  --book-can-ink: var(--note-can-ink, #1F6B3A);
+-  --book-can-bg: var(--note-can-bg, #E6F4EA);
+-  --book-how-ink: var(--note-how-ink, #1F4E8C);
+-  --book-how-bg: var(--note-how-bg, #E7EEF9);
+-  --book-ask-ink: var(--note-ask-ink, #8A4B00);
+-  --book-ask-bg: var(--note-ask-bg, #FDF0DC);
+-  --book-anno: var(--anno, #C2185B);
+-  --book-anno-ink: var(--anno-ink, #FFFFFF);
+-  --book-overlay: var(--overlay, rgba(15, 23, 42, .86));
+-  --book-shadow: var(--shadow-soft, 0 1px 3px rgba(15, 23, 42, .08));
+-  --book-font: var(--font-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif);
+-  --book-num: var(--font-num, var(--book-font));
+   --bar-h: 52px;
+   --toc-w: 264px;
+ }
+ * { box-sizing: border-box; }
+ html { scroll-padding-top: calc(var(--bar-h) + 12px); }
+-body { margin: 0; font-family: var(--book-font); color: var(--book-ink); background: var(--book-page); line-height: 1.75; font-size: 15.5px; -webkit-font-smoothing: antialiased; }
+-a { color: var(--book-link); }
++body { margin: 0; font-family: var(--font-ui); color: var(--text); background: var(--bg-page); line-height: 1.75; font-size: 15.5px; -webkit-font-smoothing: antialiased; }
++a { color: var(--text-link); }
+ .skip { position: absolute; left: -999px; top: 0; }
+-.skip:focus { left: 12px; top: 12px; z-index: 100; background: var(--book-surface); padding: 6px 12px; }
++.skip:focus { left: 12px; top: 12px; z-index: 100; background: var(--bg-surface); padding: 6px 12px; }
+ 
+ /* 上のバー */
+-.topbar { position: sticky; top: 0; z-index: 30; height: var(--bar-h); display: flex; align-items: center; gap: 18px; padding: 0 20px; background: var(--book-surface); border-bottom: 1px solid var(--book-line); }
++.topbar { position: sticky; top: 0; z-index: 30; height: var(--bar-h); display: flex; align-items: center; gap: 18px; padding: 0 20px; background: var(--bg-surface); border-bottom: 1px solid var(--line); }
+ .tb-title { min-width: 0; display: flex; align-items: baseline; gap: 12px; white-space: nowrap; overflow: hidden; }
+-.tb-title b { font-size: 16px; color: var(--book-brand); overflow: hidden; text-overflow: ellipsis; }
+-.tb-title span { font-size: 13px; color: var(--book-muted); }
++.tb-title b { font-size: 16px; color: var(--text-brand); overflow: hidden; text-overflow: ellipsis; }
++.tb-title span { font-size: 13px; color: var(--text-muted); }
+ .tb-pager { margin-left: auto; display: none; align-items: center; gap: 10px; font-size: 14px; }
+ .js .tb-pager { display: flex; }
+-.tb-pager a { text-decoration: none; font-weight: 700; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--book-line); background: var(--book-surface); }
++.tb-pager a { text-decoration: none; font-weight: 700; padding: 5px 12px; border-radius: var(--radius-btn); border: 1px solid var(--line); background: var(--bg-surface); }
+ .tb-pager a.off { pointer-events: none; opacity: .35; }
+-.tb-count { font-family: var(--book-num); color: var(--book-ink-2); min-width: 64px; text-align: center; }
++.tb-count { font-family: var(--font-num); color: var(--text-2); min-width: 64px; text-align: center; }
+ .tb-pager a, .tb-count { white-space: nowrap; }
+ 
+ /* 目次と本文 */
+ .layout { display: grid; grid-template-columns: var(--toc-w) minmax(0, 1fr); align-items: start; }
+-.toc { position: sticky; top: var(--bar-h); max-height: calc(100vh - var(--bar-h)); overflow-y: auto; padding: 18px 14px 28px; border-right: 1px solid var(--book-line); background: var(--book-surface); font-size: 14px; line-height: 1.5; }
++.toc { position: sticky; top: var(--bar-h); max-height: calc(100vh - var(--bar-h)); overflow-y: auto; padding: 18px 14px 28px; border-right: 1px solid var(--line); background: var(--bg-surface); font-size: 14px; line-height: 1.5; }
+ .toc ol { list-style: none; margin: 0; padding: 0; }
+ .toc li { margin: 0; }
+-.toc a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--book-ink-2); text-decoration: none; }
+-.toc a:hover { background: var(--book-stripe); }
+-.toc a.p { font-weight: 700; color: var(--book-ink); }
+-.toc a.on { background: var(--book-brand-soft); color: var(--book-brand); }
++.toc a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--text-2); text-decoration: none; }
++.toc a:hover { background: var(--bg-stripe); }
++.toc a.p { font-weight: 700; color: var(--text); }
++.toc a.on { background: var(--bg-brand-soft); color: var(--text-brand); }
+ .toc ol ol a { padding-left: 24px; font-size: 13px; }
+ /* 文書の小見出しは、開いている文書の分だけ出す (JS が動かないときは全部) */
+ .js .toc li > ol { display: none; }
+ .js .toc li.cur > ol { display: block; }
+-.toc .grp { margin: 14px 10px 4px; font-size: 12px; font-weight: 800; color: var(--book-muted); letter-spacing: .06em; }
+-.toc .no { font-family: var(--book-num); color: var(--book-brand); margin-right: 6px; }
+-.toc-foot { margin: 18px 10px 0; font-size: 12px; color: var(--book-muted); }
++.toc .grp { margin: 14px 10px 4px; font-size: 12px; font-weight: 800; color: var(--text-muted); letter-spacing: .06em; }
++.toc .no { font-family: var(--font-num); color: var(--text-brand); margin-right: 6px; }
++.toc-foot { margin: 18px 10px 0; font-size: 12px; color: var(--text-muted); }
+ main { min-width: 0; padding: 28px clamp(16px, 4vw, 56px) 64px; }
+-.page { max-width: 1180px; margin: 0 auto 56px; background: var(--book-surface); border: 1px solid var(--book-line); border-radius: 14px; padding: 32px clamp(18px, 3vw, 44px) 28px; box-shadow: var(--book-shadow); }
++.page { max-width: 1180px; margin: 0 auto 56px; background: var(--bg-surface); border: 1px solid var(--line); border-radius: 14px; padding: 32px clamp(18px, 3vw, 44px) 28px; box-shadow: var(--shadow-soft); }
+ .js main > .page { display: none; margin-bottom: 0; }
+ .js main > .page.on { display: block; }
+-.page-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; border-bottom: 1px solid var(--book-line); padding-bottom: 12px; margin-bottom: 18px; }
+-.page-head .kind { font-size: 13px; font-weight: 800; color: var(--book-brand); letter-spacing: .05em; }
++.page-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 18px; }
++.page-head .kind { font-size: 13px; font-weight: 800; color: var(--text-brand); letter-spacing: .05em; }
+ .page-head h2 { margin: 0; font-size: 26px; line-height: 1.35; }
+-.page-head .reader { margin-left: auto; font-size: 13px; color: var(--book-muted); }
++.page-head .reader { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+ 
+ /* 表紙 */
+ .cover h1 { margin: 6px 0 4px; font-size: 34px; line-height: 1.3; }
+-.cover .sub { color: var(--book-ink-2); font-size: 16px; }
+-.cover .facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 18px 0 24px; padding: 14px 18px; border-radius: 10px; background: var(--book-stripe); font-size: 15px; }
+-.cover .facts b { font-family: var(--book-num); }
++.cover .sub { color: var(--text-2); font-size: 16px; }
++.cover .facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 18px 0 24px; padding: 14px 18px; border-radius: 10px; background: var(--bg-stripe); font-size: 15px; }
++.cover .facts b { font-family: var(--font-num); }
+ .cover h3 { margin: 26px 0 8px; font-size: 18px; }
+ .cover ol.howto { margin: 0; padding-left: 1.4em; }
+ .readers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+-.reader-card { border: 1px solid var(--book-line); border-radius: 10px; padding: 14px 16px; }
+-.reader-card h4 { margin: 0 0 6px; font-size: 16px; color: var(--book-brand); }
++.reader-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
++.reader-card h4 { margin: 0 0 6px; font-size: 16px; color: var(--text-brand); }
+ .reader-card ul { margin: 0; padding-left: 1.2em; font-size: 14.5px; }
+ 
+ /* ボード */
+-.board-page .message { margin: -6px 0 16px; font-size: 17px; font-weight: 700; color: var(--book-ink-2); }
++.board-page .message { margin: -6px 0 16px; font-size: 17px; font-weight: 700; color: var(--text-2); }
+ figure.shot { margin: 0; }
+-figure.shot > a.zoom { display: block; border: 1px solid var(--book-line); border-radius: 10px; overflow: hidden; cursor: zoom-in; background: var(--book-page); }
++figure.shot > a.zoom { display: block; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: zoom-in; background: var(--bg-page); }
+ figure.shot img { display: block; width: 100%; height: auto; }
+-figure.shot figcaption { margin-top: 6px; font-size: 12.5px; color: var(--book-muted); text-align: right; }
++figure.shot figcaption { margin-top: 6px; font-size: 12.5px; color: var(--text-muted); text-align: right; }
+ figure.shot .close { display: none; }
+-figure.shot:target { position: fixed; inset: 0; z-index: 60; background: var(--book-overlay); overflow: auto; padding: 56px 20px 20px; }
++figure.shot:target { position: fixed; inset: 0; z-index: 60; background: var(--overlay); overflow: auto; padding: 56px 20px 20px; }
+ figure.shot:target > a.zoom { width: max-content; max-width: none; margin: 0 auto; cursor: default; border: 0; }
+ figure.shot:target img { width: min(1680px, calc(100vw - 40px)); max-width: none; }
+ figure.shot:target figcaption { display: none; }
+-figure.shot:target .close { display: block; position: fixed; top: 12px; right: 16px; padding: 6px 14px; border-radius: 8px; background: var(--book-surface); color: var(--book-ink); font-weight: 700; text-decoration: none; }
++figure.shot:target .close { display: block; position: fixed; top: 12px; right: 16px; padding: 6px 14px; border-radius: var(--radius-btn); background: var(--bg-surface); color: var(--text); font-weight: 700; text-decoration: none; }
+ .board-notes { margin-top: 20px; }
+-.board-notes h3 { margin: 18px 0 10px; font-size: 14px; font-weight: 800; color: var(--book-muted); letter-spacing: .04em; }
++.board-notes h3 { margin: 18px 0 10px; font-size: 14px; font-weight: 800; color: var(--text-muted); letter-spacing: .04em; }
+ .board-notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+ .board-notes li { display: grid; grid-template-columns: 30px auto 1fr; align-items: baseline; gap: 4px 10px; }
+-.board-notes .mark { width: 24px; height: 24px; border-radius: 50%; background: var(--book-anno); color: var(--book-anno-ink); font: 800 13px/24px var(--book-num); text-align: center; }
++.board-notes .mark { width: 24px; height: 24px; border-radius: 50%; background: var(--anno); color: var(--anno-ink); font: 800 13px/24px var(--font-num); text-align: center; }
+ .board-notes .mark.none { background: transparent; }
+ .board-notes .kind { font-size: 12px; font-weight: 800; padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+-.board-notes .kind.can { color: var(--book-can-ink); background: var(--book-can-bg); }
+-.board-notes .kind.how { color: var(--book-how-ink); background: var(--book-how-bg); }
+-.board-notes .kind.ask { color: var(--book-ask-ink); background: var(--book-ask-bg); }
++.board-notes .kind.can { color: var(--note-can-ink); background: var(--note-can-bg); }
++.board-notes .kind.how { color: var(--note-how-ink); background: var(--note-how-bg); }
++.board-notes .kind.ask { color: var(--note-ask-ink); background: var(--note-ask-bg); }
+ .board-notes .txt b { font-weight: 800; }
+-.board-notes .txt .q { margin-left: 6px; font: 700 12px/1.6 var(--book-num); color: var(--book-ask-ink); background: var(--book-ask-bg); padding: 0 6px; border-radius: 4px; }
+-.board-notes .txt .sub { display: block; color: var(--book-ink-2); font-size: 14.5px; }
++.board-notes .txt .q { margin-left: 6px; font: 700 12px/1.6 var(--font-num); color: var(--note-ask-ink); background: var(--note-ask-bg); padding: 0 6px; border-radius: 4px; }
++.board-notes .txt .sub { display: block; color: var(--text-2); font-size: 14.5px; }
+ 
+ /* 文書 (Markdown から) */
+ .doc h2 { font-size: 26px; margin: 0 0 6px; line-height: 1.35; }
+-.doc h3 { font-size: 20px; margin: 34px 0 10px; padding-top: 14px; border-top: 1px solid var(--book-line); }
+-.doc h4 { font-size: 17px; margin: 24px 0 8px; color: var(--book-brand); }
++.doc h3 { font-size: 20px; margin: 34px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
++.doc h4 { font-size: 17px; margin: 24px 0 8px; color: var(--text-brand); }
+ .doc h5, .doc h6 { font-size: 15.5px; margin: 18px 0 6px; }
+ .doc p { margin: 8px 0; }
+ .doc ul, .doc ol { margin: 8px 0; padding-left: 1.5em; }
+ .doc li { margin: 3px 0; }
+-.doc code { font-family: var(--book-num); font-size: .92em; background: var(--book-stripe); padding: 1px 5px; border-radius: 4px; }
+-.doc pre { background: var(--book-stripe); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+-.doc blockquote { margin: 10px 0; padding: 6px 14px; border-left: 4px solid var(--book-line-strong); color: var(--book-ink-2); }
+-.tw { overflow-x: auto; margin: 12px 0 18px; border: 1px solid var(--book-line); border-radius: 8px; }
++.doc code { font-family: var(--font-num); font-size: .92em; background: var(--bg-stripe); padding: 1px 5px; border-radius: 4px; }
++.doc pre { background: var(--bg-stripe); padding: 12px 14px; border-radius: var(--radius-btn); overflow-x: auto; }
++.doc blockquote { margin: 10px 0; padding: 6px 14px; border-left: 4px solid var(--line-strong); color: var(--text-2); }
++.tw { overflow-x: auto; margin: 12px 0 18px; border: 1px solid var(--line); border-radius: var(--radius-btn); }
+ .tw table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.6; }
+-.tw th, .tw td { padding: 8px 12px; border-bottom: 1px solid var(--book-line); text-align: left; vertical-align: top; }
+-.tw th { background: var(--book-stripe); font-weight: 800; white-space: nowrap; }
++.tw th, .tw td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
++.tw th { background: var(--bg-stripe); font-weight: 800; white-space: nowrap; }
+ .tw tr:last-child td { border-bottom: 0; }
+ 
+ /* ページ送り (JS なしでも動く) */
+-.pg-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--book-line); font-size: 14px; }
++.pg-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; }
+ .pg-nav a { text-decoration: none; font-weight: 700; max-width: 48%; }
+ .pg-nav .next { margin-left: auto; text-align: right; }
+ 
+ @media (max-width: 900px) {
+   .layout { display: block; }
+-  .toc { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--book-line); }
++  .toc { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+   .js .toc { display: none; }
+   .js .toc.open { display: block; }
+   .tb-title span { display: none; }
+@@ -182,151 +158,151 @@
+ /* 文書のレポート形 (scripts/lib/doc-report.mjs の部品)。淡い灰の地に、題の帯と章ごとの白いカードを並べる。 */
+ .page.doc { background: transparent; border: 0; box-shadow: none; padding: 0; }
+ .page.doc > .pg-nav { margin-top: 8px; padding: 14px 6px 0; }
+-.d-hero, .d-sec { background: var(--book-surface); border: 1px solid var(--book-line); border-radius: 14px; box-shadow: var(--book-shadow); padding: 24px clamp(16px, 3vw, 36px); margin: 0 0 18px; }
+-.d-hero { border-top: 4px solid var(--book-brand); }
+-.doc .d-kind { margin: 0; font-size: 13px; font-weight: 800; color: var(--book-brand); letter-spacing: .06em; }
++.d-hero, .d-sec { background: var(--bg-surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-soft); padding: 24px clamp(16px, 3vw, 36px); margin: 0 0 18px; }
++.d-hero { border-top: 4px solid var(--text-brand); }
++.doc .d-kind { margin: 0; font-size: 13px; font-weight: 800; color: var(--text-brand); letter-spacing: .06em; }
+ .doc .d-hero h2.doc-title { font-size: 28px; margin: 2px 0 6px; }
+-.doc .d-meta-line { display: flex; margin: 0; flex-wrap: wrap; gap: 4px 18px; color: var(--book-muted); font-size: 13.5px; }
+-.d-meta-line b { font-family: var(--book-num); color: var(--book-ink-2); }
++.doc .d-meta-line { display: flex; margin: 0; flex-wrap: wrap; gap: 4px 18px; color: var(--text-muted); font-size: 13.5px; }
++.d-meta-line b { font-family: var(--font-num); color: var(--text-2); }
+ .d-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 10px; margin: 18px 0 0; }
+-.d-kpi { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 4px; padding: 10px 14px; border-radius: 10px; background: var(--book-stripe); border: 1px solid var(--book-line); }
+-.d-kpi span { grid-column: 1 / -1; font-size: 12.5px; font-weight: 700; color: var(--book-muted); }
+-.d-kpi b { font: 800 28px/1.25 var(--book-num); color: var(--book-ink); }
+-.d-kpi small { font-size: 13px; color: var(--book-ink-2); }
++.d-kpi { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 4px; padding: 10px 14px; border-radius: 10px; background: var(--bg-stripe); border: 1px solid var(--line); }
++.d-kpi span { grid-column: 1 / -1; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
++.d-kpi b { font: 800 28px/1.25 var(--font-num); color: var(--text); }
++.d-kpi small { font-size: 13px; color: var(--text-2); }
+ .d-hero > :last-child { margin-bottom: 0; }
+ 
+ /* 章 */
+-.d-head { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--book-line); }
+-.d-no { flex: none; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; background: var(--book-brand); color: var(--book-inverse); font: 800 16px/34px var(--book-num); text-align: center; }
++.d-head { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
++.d-no { flex: none; min-width: 34px; height: 34px; padding: 0 8px; border-radius: 10px; background: var(--text-brand); color: var(--text-inverse); font: 800 16px/34px var(--font-num); text-align: center; }
+ .doc .d-head h3 { margin: 0; padding: 0; border: 0; font-size: 20px; line-height: 1.4; }
+ .d-body > :first-child { margin-top: 0; }
+ .d-body > :last-child { margin-bottom: 0; }
+-.doc .d-sub h4, .doc .d-pane h4, .doc .d-mini h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 16px; color: var(--book-ink); }
+-.d-subno { flex: none; padding: 3px 7px; border-radius: 6px; background: var(--book-brand-soft); color: var(--book-brand); font: 800 12.5px/1.2 var(--book-num); }
++.doc .d-sub h4, .doc .d-pane h4, .doc .d-mini h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 16px; color: var(--text); }
++.d-subno { flex: none; padding: 3px 7px; border-radius: 6px; background: var(--bg-brand-soft); color: var(--text-brand); font: 800 12.5px/1.2 var(--font-num); }
+ .d-sub + .d-sub { margin-top: 22px; }
+ .d-body > p + .d-sub, .d-body > div + .d-sub { margin-top: 22px; }
+-.d-item-card { border: 1px solid var(--book-line); border-radius: 12px; padding: 16px 18px; }
++.d-item-card { border: 1px solid var(--line); border-radius: var(--radius-card); padding: 16px 18px; }
+ .d-sub.d-item-card + .d-sub.d-item-card { margin-top: 14px; }
+-.d-item-card h4 .d-subno { background: var(--book-brand); color: var(--book-inverse); }
+-.d-lead { padding: 12px 18px; border-left: 4px solid var(--book-brand); border-radius: 0 10px 10px 0; background: var(--book-brand-soft); font-size: 16.5px; font-weight: 600; }
++.d-item-card h4 .d-subno { background: var(--text-brand); color: var(--text-inverse); }
++.d-lead { padding: 12px 18px; border-left: 4px solid var(--text-brand); border-radius: 0 10px 10px 0; background: var(--bg-brand-soft); font-size: 16.5px; font-weight: 600; }
+ .doc .d-lead p { margin: 4px 0; }
+-.doc .d-unit { display: inline-block; margin: 0 0 12px; padding: 4px 14px; border-radius: 999px; background: var(--book-brand-soft); color: var(--book-brand); font-weight: 700; font-size: 14.5px; }
+-.doc .d-cap { margin: 18px 0 6px; font-size: 13px; font-weight: 800; color: var(--book-muted); letter-spacing: .04em; }
++.doc .d-unit { display: inline-block; margin: 0 0 12px; padding: 4px 14px; border-radius: 999px; background: var(--bg-brand-soft); color: var(--text-brand); font-weight: 700; font-size: 14.5px; }
++.doc .d-cap { margin: 18px 0 6px; font-size: 13px; font-weight: 800; color: var(--text-muted); letter-spacing: .04em; }
+ .d-body .tw { margin: 0 0 4px; }
+ /* 項目表の短い列は折り返さない (説明の列に幅を回す) */
+ @media (min-width: 561px) {
+   .d-fields td[data-k="種類"], .d-fields td[data-k="型"], .d-fields td[data-k="必須"] { white-space: nowrap; }
+   .d-fields td[data-k="初期値"] { width: 8em; } /* 表のセルは min-width が効かないので width で下限を与える (余白込みで 6 文字) */
+ }
+-.d-muted { color: var(--book-muted); font-size: 13.5px; }
++.d-muted { color: var(--text-muted); font-size: 13.5px; }
+ 
+ /* 札・番号 */
+ a.ref:not(.d-chip) { text-decoration: none; border-bottom: 1px dotted currentColor; }
+-.d-chip { display: inline-block; padding: 0 9px; border: 1px solid var(--book-line); border-radius: 999px; background: var(--book-stripe); color: var(--book-ink-2); font-size: 12.5px; font-weight: 700; line-height: 1.8; white-space: nowrap; text-decoration: none; }
+-a.d-chip:hover { border-color: var(--book-link); }
+-.d-chip.t-src, .d-chip.t-yes { border-color: transparent; background: var(--book-can-bg); color: var(--book-can-ink); }
+-.d-chip.t-heard { border-color: transparent; background: var(--book-how-bg); color: var(--book-how-ink); }
+-.d-chip.t-ask { border-color: transparent; background: var(--book-ask-bg); color: var(--book-ask-ink); }
+-.d-chip.t-want { background: var(--book-surface); border-color: var(--book-anno); color: var(--book-anno); }
+-.d-chip.t-screen { border-color: transparent; background: var(--book-brand-soft); color: var(--book-brand); font-family: var(--book-num); }
+-.d-chip.t-phone { background: var(--book-brand); border-color: var(--book-brand); color: var(--book-inverse); }
+-.d-chip.t-pc { background: var(--book-surface); border-color: var(--book-brand); color: var(--book-brand); }
++.d-chip { display: inline-block; padding: 0 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-stripe); color: var(--text-2); font-size: 12.5px; font-weight: 700; line-height: 1.8; white-space: nowrap; text-decoration: none; }
++a.d-chip:hover { border-color: var(--text-link); }
++.d-chip.t-src, .d-chip.t-yes { border-color: transparent; background: var(--note-can-bg); color: var(--note-can-ink); }
++.d-chip.t-heard { border-color: transparent; background: var(--note-how-bg); color: var(--note-how-ink); }
++.d-chip.t-ask { border-color: transparent; background: var(--note-ask-bg); color: var(--note-ask-ink); }
++.d-chip.t-want { background: var(--bg-surface); border-color: var(--anno); color: var(--anno); }
++.d-chip.t-screen { border-color: transparent; background: var(--bg-brand-soft); color: var(--text-brand); font-family: var(--font-num); }
++.d-chip.t-phone { background: var(--text-brand); border-color: var(--text-brand); color: var(--text-inverse); }
++.d-chip.t-pc { background: var(--bg-surface); border-color: var(--text-brand); color: var(--text-brand); }
+ .d-src { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; }
+-.d-src-at { font-size: 12.5px; color: var(--book-muted); overflow-wrap: anywhere; }
+-.d-id { flex: none; display: inline-block; min-width: 46px; padding: 1px 8px; border-radius: 6px; background: var(--book-brand-soft); color: var(--book-brand); font: 800 13px/1.75 var(--book-num); text-align: center; }
+-.d-id.t-ask { background: var(--book-ask-bg); color: var(--book-ask-ink); }
+-.d-must { display: inline-block; padding: 0 7px; border: 1px solid var(--book-anno); border-radius: 4px; color: var(--book-anno); font-size: 12px; font-weight: 800; white-space: nowrap; }
+-.d-label { display: inline-block; margin-right: 8px; font-size: 12px; font-weight: 800; color: var(--book-muted); letter-spacing: .03em; }
++.d-src-at { font-size: 12.5px; color: var(--text-muted); overflow-wrap: anywhere; }
++.d-id { flex: none; display: inline-block; min-width: 46px; padding: 1px 8px; border-radius: 6px; background: var(--bg-brand-soft); color: var(--text-brand); font: 800 13px/1.75 var(--font-num); text-align: center; }
++.d-id.t-ask { background: var(--note-ask-bg); color: var(--note-ask-ink); }
++.d-must { display: inline-block; padding: 0 7px; border: 1px solid var(--anno); border-radius: 4px; color: var(--anno); font-size: 12px; font-weight: 800; white-space: nowrap; }
++.d-label { display: inline-block; margin-right: 8px; font-size: 12px; font-weight: 800; color: var(--text-muted); letter-spacing: .03em; }
+ 
+ /* カード */
+ .d-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+ .d-cards.d-wide { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+-.d-card { border: 1px solid var(--book-line); border-radius: 12px; padding: 14px 16px; background: var(--book-surface); }
++.d-card { border: 1px solid var(--line); border-radius: var(--radius-card); padding: 14px 16px; background: var(--bg-surface); }
+ .doc .d-card p { margin: 4px 0; }
+ .d-card-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 8px; margin-bottom: 6px; }
+ .doc .d-card-top .d-name { margin: 0; }
+ .d-name { font-size: 16px; font-weight: 800; line-height: 1.5; }
+-.d-count { color: var(--book-ink-2); }
+-.d-count b { font: 800 26px/1.2 var(--book-num); color: var(--book-brand); }
+-.d-meta { font-size: 13px; color: var(--book-muted); }
++.d-count { color: var(--text-2); }
++.d-count b { font: 800 26px/1.2 var(--font-num); color: var(--text-brand); }
++.d-meta { font-size: 13px; color: var(--text-muted); }
+ .d-line { font-size: 14.5px; }
+-.d-q.is-open { border-left: 4px solid var(--book-ask-ink); }
+-.d-q.is-done { border-left: 4px solid var(--book-can-ink); background: var(--book-stripe); }
++.d-q.is-open { border-left: 4px solid var(--note-ask-ink); }
++.d-q.is-done { border-left: 4px solid var(--note-can-ink); background: var(--bg-stripe); }
+ .d-role .d-label { display: block; margin: 0; }
+-.d-role .t-can .d-label { color: var(--book-can-ink); }
++.d-role .t-can .d-label { color: var(--note-can-ink); }
+ .d-role .t-can .d-label::before { content: "✓ "; }
+ .d-role .t-cannot .d-label::before { content: "✕ "; }
+ .d-role .d-line + .d-line { margin-top: 10px; }
+-.d-future { border-top: 4px solid var(--book-how-ink); }
++.d-future { border-top: 4px solid var(--note-how-ink); }
+ 
+ /* 行の並び */
+ .d-groups { display: grid; gap: 14px; }
+-.d-group { border: 1px solid var(--book-line); border-radius: 12px; overflow: hidden; }
++.d-group { border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
+ .doc .d-group-h { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 10px 16px; font-weight: 800; }
+-.d-group.t-yes .d-group-h { background: var(--book-can-bg); color: var(--book-can-ink); }
+-.d-group.t-later .d-group-h { background: var(--book-stripe); color: var(--book-ink-2); }
+-.d-n { font: 700 13px/1.8 var(--book-num); }
++.d-group.t-yes .d-group-h { background: var(--note-can-bg); color: var(--note-can-ink); }
++.d-group.t-later .d-group-h { background: var(--bg-stripe); color: var(--text-2); }
++.d-n { font: 700 13px/1.8 var(--font-num); }
+ .doc .d-items, .doc .d-rows, .doc .d-qa, .doc .d-ops { list-style: none; margin: 0; padding: 0; }
+-.d-rows, .d-qa, .d-ops { border: 1px solid var(--book-line); border-radius: 12px; overflow: hidden; }
+-.d-items > li, .d-rows > li, .d-qa > li, .d-ops > li { display: flex; align-items: baseline; gap: 12px; margin: 0; padding: 10px 16px; border-top: 1px solid var(--book-line); }
++.d-rows, .d-qa, .d-ops { border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
++.d-items > li, .d-rows > li, .d-qa > li, .d-ops > li { display: flex; align-items: baseline; gap: 12px; margin: 0; padding: 10px 16px; border-top: 1px solid var(--line); }
+ .d-rows > li:first-child, .d-qa > li:first-child, .d-ops > li:first-child { border-top: 0; }
+-.d-group.t-later .d-items > li { color: var(--book-ink-2); }
++.d-group.t-later .d-items > li { color: var(--text-2); }
+ .d-text, .d-qa > li > div { flex: 1; min-width: 0; }
+ .d-tags { flex: 0 1 auto; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; max-width: 44%; }
+ .doc .d-qa-q { margin: 0; font-weight: 700; }
+-.doc .d-qa-a { margin: 2px 0 0; color: var(--book-ink-2); }
+-.d-btn { flex: none; padding: 2px 12px; border: 1px solid var(--book-line-strong); border-radius: 8px; background: var(--book-surface); box-shadow: 0 1px 0 var(--book-line-strong); font-size: 14px; font-weight: 700; }
++.doc .d-qa-a { margin: 2px 0 0; color: var(--text-2); }
++.d-btn { flex: none; padding: 2px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-btn); background: var(--bg-surface); box-shadow: 0 1px 0 var(--line-strong); font-size: 14px; font-weight: 700; }
+ .d-to { flex: none; }
+ .d-sub-lines { flex: 0 1 36%; display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; }
+ 
+ /* 定義 */
+-.doc .d-dl { display: grid; grid-template-columns: minmax(5em, max-content) 1fr; margin: 0; border: 1px solid var(--book-line); border-radius: 12px; overflow: hidden; }
+-.d-dl > div { display: grid; grid-column: 1 / -1; grid-template-columns: minmax(7em, 24%) 1fr; grid-template-columns: subgrid; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--book-line); }
++.doc .d-dl { display: grid; grid-template-columns: minmax(5em, max-content) 1fr; margin: 0; border: 1px solid var(--line); border-radius: var(--radius-card); overflow: hidden; }
++.d-dl > div { display: grid; grid-column: 1 / -1; grid-template-columns: minmax(7em, 24%) 1fr; grid-template-columns: subgrid; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--line); }
+ .d-dl > div:first-child { border-top: 0; }
+-.d-dl dt { max-width: 15em; font-weight: 800; color: var(--book-ink-2); }
++.d-dl dt { max-width: 15em; font-weight: 800; color: var(--text-2); }
+ .d-dl dd { margin: 0; }
+-.d-why { display: block; margin-top: 2px; color: var(--book-muted); font-size: 13.5px; }
++.d-why { display: block; margin-top: 2px; color: var(--text-muted); font-size: 13.5px; }
+ .doc .d-terms { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 10px; margin: 0; }
+-.d-terms > div { padding: 10px 14px; border: 1px solid var(--book-line); border-radius: 10px; }
+-.d-terms dt { font-weight: 800; color: var(--book-brand); }
++.d-terms > div { padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; }
++.d-terms dt { font-weight: 800; color: var(--text-brand); }
+ .d-terms dd { margin: 2px 0 0; font-size: 14.5px; }
+ 
+ /* 画面・データのカードの中の短い札 (目的・使う人・端末・開き方・ボード) */
+ .doc .d-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); grid-auto-flow: row dense; gap: 8px; margin: 0 0 4px; }
+-.d-facts > div { padding: 7px 12px; border-radius: 8px; background: var(--book-stripe); }
++.d-facts > div { padding: 7px 12px; border-radius: var(--radius-btn); background: var(--bg-stripe); }
+ .d-facts > .is-wide { grid-column: 1 / -1; }
+-.d-facts dt { font-size: 12px; font-weight: 800; color: var(--book-muted); }
++.d-facts dt { font-size: 12px; font-weight: 800; color: var(--text-muted); }
+ .d-facts dd { margin: 0; }
+ 
+ /* 対比・格子 */
+ .d-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+ .d-pair.is-flow { grid-template-columns: 1fr auto 1fr; }
+-.d-arrow { align-self: center; color: var(--book-muted); font-size: 22px; font-weight: 800; }
+-.d-pane, .d-mini { padding: 14px 16px; border: 1px solid var(--book-line); border-radius: 12px; }
+-.d-pane.t-yes, .d-pane.t-after { border-top: 4px solid var(--book-can-ink); }
+-.d-pane.t-after { border-top-color: var(--book-brand); }
+-.d-pane.t-no, .d-pane.t-before { border-top: 4px solid var(--book-line-strong); background: var(--book-stripe); }
++.d-arrow { align-self: center; color: var(--text-muted); font-size: 22px; font-weight: 800; }
++.d-pane, .d-mini { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-card); }
++.d-pane.t-yes, .d-pane.t-after { border-top: 4px solid var(--note-can-ink); }
++.d-pane.t-after { border-top-color: var(--text-brand); }
++.d-pane.t-no, .d-pane.t-before { border-top: 4px solid var(--line-strong); background: var(--bg-stripe); }
+ .d-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+ .d-mini .d-list > li { font-size: 14.5px; }
+ 
+ /* 箇条書き */
+ .doc .d-list, .doc .d-steps { list-style: none; margin: 0; padding: 0; }
+-.d-list > li { position: relative; margin: 0; padding: 6px 0 6px 22px; border-top: 1px dashed var(--book-line); }
++.d-list > li { position: relative; margin: 0; padding: 6px 0 6px 22px; border-top: 1px dashed var(--line); }
+ .d-list > li:first-child { border-top: 0; }
+-.d-list > li::before { content: ""; position: absolute; left: 6px; top: calc(6px + .62em); width: 7px; height: 7px; border-radius: 50%; background: var(--book-brand); }
+-.d-pane.t-yes .d-list > li::before, .d-pane.t-no .d-list > li::before { content: "✓"; top: 6px; left: 2px; width: auto; height: auto; border-radius: 0; background: none; color: var(--book-can-ink); font-weight: 800; }
+-.d-pane.t-no .d-list > li::before { content: "✕"; color: var(--book-muted); }
+-.d-pane.t-no .d-list > li { color: var(--book-ink-2); }
++.d-list > li::before { content: ""; position: absolute; left: 6px; top: calc(6px + .62em); width: 7px; height: 7px; border-radius: 50%; background: var(--text-brand); }
++.d-pane.t-yes .d-list > li::before, .d-pane.t-no .d-list > li::before { content: "✓"; top: 6px; left: 2px; width: auto; height: auto; border-radius: 0; background: none; color: var(--note-can-ink); font-weight: 800; }
++.d-pane.t-no .d-list > li::before { content: "✕"; color: var(--text-muted); }
++.d-pane.t-no .d-list > li { color: var(--text-2); }
+ .d-steps { counter-reset: st; }
+ .d-steps > li { position: relative; margin: 0; padding: 3px 0 14px 40px; counter-increment: st; }
+ .d-steps > li:last-child { padding-bottom: 0; }
+-.d-steps > li::before { content: counter(st); position: absolute; left: 0; top: 1px; width: 28px; height: 28px; border-radius: 50%; background: var(--book-brand); color: var(--book-inverse); font: 800 14px/28px var(--book-num); text-align: center; }
+-.d-steps > li::after { content: ""; position: absolute; left: 13px; top: 32px; bottom: 2px; width: 2px; background: var(--book-line); }
++.d-steps > li::before { content: counter(st); position: absolute; left: 0; top: 1px; width: 28px; height: 28px; border-radius: 50%; background: var(--text-brand); color: var(--text-inverse); font: 800 14px/28px var(--font-num); text-align: center; }
++.d-steps > li::after { content: ""; position: absolute; left: 13px; top: 32px; bottom: 2px; width: 2px; background: var(--line); }
+ .d-steps > li:last-child::after { display: none; }
+-.t-before .d-steps > li::before { background: var(--book-muted); }
++.t-before .d-steps > li::before { background: var(--text-muted); }
+ 
+ @media (max-width: 560px) {
+-  .d-hero, .d-sec { padding: 18px 16px; border-radius: 12px; }
++  .d-hero, .d-sec { padding: 18px 16px; border-radius: var(--radius-card); }
+   .doc .d-hero h2.doc-title { font-size: 22px; }
+   .d-pair, .d-pair.is-flow { grid-template-columns: 1fr; }
+   .d-arrow { justify-self: center; transform: rotate(90deg); }
+@@ -340,9 +316,9 @@
+   .d-fields { border: 0; overflow: visible; }
+   .d-fields thead { display: none; }
+   .d-fields table, .d-fields tbody, .d-fields tr, .d-fields td { display: block; }
+-  .d-fields tr { margin: 0 0 8px; padding: 8px 12px; border: 1px solid var(--book-line); border-radius: 10px; }
++  .d-fields tr { margin: 0 0 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; }
+   .d-fields td { padding: 2px 0; border: 0; }
+-  .d-fields td + td::before { content: attr(data-k); display: inline-block; min-width: 4.5em; margin-right: 8px; font-size: 12px; font-weight: 800; color: var(--book-muted); }
++  .d-fields td + td::before { content: attr(data-k); display: inline-block; min-width: 4.5em; margin-right: 8px; font-size: 12px; font-weight: 800; color: var(--text-muted); }
+ }
+ 
+ @media print {
+--- before/plugins/system-briefing-book/references/design-contract.md
++++ after/plugins/system-briefing-book/references/design-contract.md
+@@ -0,0 +1,40 @@
++# 標準デザインの使い方
++
++指定がなければ、このプラグインに同梱したオリジナルの標準デザイン (`standard`) を使う。青系の配色、明るい面、共通部品、7種類のボードを組み合わせ、案件ごとにデザインを作り直さない。配色名の聞き取りは追加しない。
++
++## 正本と責務
++
++| 対象 | 正本 | 使い方 |
++| --- | --- | --- |
++| 既定の選択 | [quality-thresholds.json](../assets/data/quality-thresholds.json) の `palette_default` | scaffold が指定なしの新規案件へ適用 |
++| 色・フォント・影・共通の角丸 | [tokens-standard.css](../assets/css/tokens-standard.css) | 部品は役割トークンを使う。原色 `--p-*` や色の値を部品へ写さない |
++| ボードの共通部品 | [common.css](../assets/css/common.css) | スマホとPCの画面、ボタン、入力欄、注記などを共用 |
++| 7種類の構成と型固有の配置 | [page-patterns.md](page-patterns.md)、`assets/templates/board-*.html` | 雛形から組み、必要な位置・幅・間隔だけを調整 |
++| まとめHTMLの構成と表示 | [book.html](../assets/templates/book.html) | ボードと同じ案件のトークンを使い、文書・目次・画像を表示 |
++
++余白や寸法をすべて変数へ置き換える必要はない。共通する部品の変更は `common.css`、型だけに必要な配置はその雛形に置く。同じ部品を案件のHTMLへ複製して別管理しない。ボードとまとめは用途が異なるため、各々の構成を保ち、色やフォントの値だけを二重に持たない。
++
++## 生成と再生成
++
++1. `build-briefing-scaffold.mjs init` が選択した配色を `_src/tokens.css`、共通部品を `_src/common.css` に写す。
++2. `boards` が7種類の雛形からボードHTMLを作る。各ボードはこの2つのCSSを読む。
++3. `render-board-png.mjs` が同じCSSで描画・検査し、PNGとまとめ用画像を作る。
++4. `build-briefing-book.mjs` が案件の `_src/tokens.css` をまとめHTMLへ埋め込む。文書の表示も同じ配色になる。
++
++通常の再実行は既存ファイルを保つ。`init --refresh-css` でCSSを更新するときも、既存の `briefing.json` の `palette` を使う。既存設定と異なる `--palette` を同時に渡すと停止する。配色を変える場合は案件の `palette` を変更してから `--refresh-css` を実行し、PNGとまとめHTMLを作り直す。CSSだけを変えて古いPNGを完成品に混ぜない。
++
++トークンが欠けた、空、必要な役割を持たない場合は描画・まとめを停止する。まとめだけ別の色へフォールバックして成功扱いにしない。検査コードと復旧は検査結果のメッセージを読み、同じ配色の正本からCSSを復元して再描画する。
++
++## 案件の配色を指定する場合
++
++明示された配色を使う場合だけ、標準の役割トークンをすべて備えたCSSを指定する。`tokens-standard.css` を元に原色を調整し、役割名を保つ。コメントとトップレベルの `:root` 宣言だけで完結させる。`@import`、条件付きの定義、特定の要素だけに効く定義は使わない。変数の参照先も同じCSS内で解決できるようにし、空値や循環参照を残さない。配置・業務内容・画面の共通部品は配色変更のために作り直さない。
++
++CLIの `--palette <css>` は実行時の作業フォルダから解決する。既存の `briefing.json` に書いた相対パスは、そのファイルのある資料フォルダから解決する。通常のスキル実行では [execution-contract.md](execution-contract.md) に従い、CLIに絶対パスを渡す。
++
++## 出典と配布の境界
++
++配色の出典・取り込んだ版・ボード用の拡張・変更の記録は [standard-attribution.md](../assets/css/standard-attribution.md) に残す。利用者向けには「標準デザイン」と表現し、出典や著作権の記録をデザイン名として表示しない。
++
++実行に別のスキルや開発キットの配置は不要。同梱資産を使うので、単体で同じ生成経路を再現できる。出典を更新するときは、開発用の `tests/test_design_source.py` で共有する原色の一致を確認し、同梱資産・出典の版・お手本を一緒に更新する。別スキルのインストール先へ個別に手修正しない。
++
++これは打ち合わせ資料の表示契約。実装アプリの操作・レスポンシブ設計は実装側で扱い、アプリ用カタログの画面構成を固定サイズのボードへそのまま適用しない。
+--- before/plugins/system-briefing-book/references/page-patterns.md
++++ after/plugins/system-briefing-book/references/page-patterns.md
+@@ -1,7 +1,7 @@
+ # ページの型とボードの部品
+ 
+ 打ち合わせ資料のボード (1 枚 = 1 ページ) は、下の 7 種類の型だけで組む。
+-雛形は plugin の `assets/templates/board-<型>.html`、部品の見た目は `assets/css/common.css`、色は `tokens.css` にある。
++標準デザインの正本と生成経路は [design-contract.md](design-contract.md) に従う。ここでは型と部品の組み方を定める。
+ 
+ ## 1 枚のボードの決まり
+ 
+@@ -13,7 +13,7 @@
+   - h1: ページの題。phone / pc は仕様書の画面名と同じにする。
+   - lead: briefing.json の `message` をそのまま使う (雛形が入れる)。言い換えたくなったら message のほうを直す。
+ - meta に案件名を置く。briefing.json の `data_policy` が `masked` のときだけ、続けて `<span class="sample-flag">画面の中の名前と値は例です</span>` を置く。雛形 (`build-briefing-scaffold.mjs boards`) が `{{SAMPLE_FLAG}}` を埋める。名前と値の扱いは [quality-rules.md](quality-rules.md) の「名前と値の扱い (data_policy)」を読む。
+-- 色・文字・余白は `var(--...)` だけ。`#1a2b3c` や `rgb()` を書くと RAW-COLOR で止まる。
++- 色・フォント・影は `tokens.css` の役割トークンを使う。`#1a2b3c` や `rgb()` を書くと RAW-COLOR で止まる。共通の見た目は `common.css`、型固有の位置・幅・間隔は雛形で調整する。
+ - 外の URL (画像、フォント、スクリプト) を読まない。画像は `_src/assets/` に置く。
+ - スクリプトを書かない。PNG にするとき動かないため。
+ 
+--- before/plugins/system-briefing-book/references/quality-rules.md
++++ after/plugins/system-briefing-book/references/quality-rules.md
+@@ -118,6 +118,8 @@
+ 
+ ## 4. 見た目
+ 
++配色と共通部品の正本は [design-contract.md](design-contract.md) に従う。
++
+ 検査は `render-board-png.mjs` (結果は `_check/boards.json`)。BOARD-ATTR と BOARD-SCREENS-MISMATCH は validate-briefing-docs.mjs も調べる。検査を通ったあと、PNG を目で見る。
+ 
+ | コード | 重さ | 直し方 |
+--- before/plugins/system-briefing-book/references/workflow.md
++++ after/plugins/system-briefing-book/references/workflow.md
+@@ -3,6 +3,7 @@
+ 各スキルが共通で使う決まり (出力フォルダ、書いてよいスキル、既定のページ構成、版) をまとめる。入口は skills/run-briefing。
+ 
+ - L1 の選択所有と L2 の通常生成: [execution-contract.md](execution-contract.md) の「6. 通常生成と確認の選択所有」が正本。
++- 標準デザインの正本とCSSの再生成: [design-contract.md](design-contract.md) に従う。
+ - 工程の順番と止まる所: [run-briefing の SKILL.md](../skills/run-briefing/SKILL.md) の「工程 (new)」を読む。
+ - 確認点と確認の深さ: 同じファイルの「確認点の進め方」を読む。深さごとに見る観点は [assign-briefing-evaluator の SKILL.md](../skills/assign-briefing-evaluator/SKILL.md) の「深さ」を読む。
+ - 打ち合わせのあとの直し (revise): 同じく run-briefing の SKILL.md の「工程 (revise)」を読む。
+--- before/plugins/system-briefing-book/scripts/build-briefing-book.mjs
++++ after/plugins/system-briefing-book/scripts/build-briefing-book.mjs
+@@ -60,6 +60,7 @@
+ import { imageSize, imageSizeOfFile } from "./lib/image-size.mjs";
+ import { dependencyReceipt, htmlRefs, localRef, externalRef } from "./lib/resource-refs.mjs";
+ import { convertDoc, resolveRefs } from "./lib/doc-report.mjs";
++import { validateDesignTokens } from "./lib/design-tokens.mjs";
+ 
+ const USAGE = `
+ 使い方:
+@@ -599,7 +600,11 @@
+       tokensCss = tokensCss.replace(/<\/style/gi, "");
+     }
+   } else {
+-    rep.warn("TOKENS-MISSING", "_src/tokens.css", "tokens.css が無いため、まとめは既定の色で表示します");
++    rep.err("TOKENS-MISSING", "_src/tokens.css", "tokens.css がありません。選択した配色を復元してください");
++  }
++
++  if (isFile(tokensPath)) {
++    for (const message of validateDesignTokens(tokensCss)) rep.err("TOKENS-INVALID", "_src/tokens.css", message);
+   }
+ 
+   const built = buildTime();
+--- before/plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs
++++ after/plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs
+@@ -9,6 +9,7 @@
+  *          data_policy が masked なら meta に「例です」の札 (.sample-flag) を置き、source なら置かない。
+  *
+  * どちらも既存ファイルは上書きしない (skipped に並べる)。init の --refresh-css だけは CSS 2 つを上書きする。
++ * 再 init の配色は既存 briefing.json を使う。配色の変更は briefing.json を直してから --refresh-css を実行する。
+  *
+  * 使い方:
+  *   node scripts/build-briefing-scaffold.mjs init --materials <素材フォルダ> --title <タイトル>
+@@ -46,6 +47,7 @@
+ } from "./lib/briefing-files.mjs";
+ import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, runCli } from "./lib/cli-contract.mjs";
+ import { hearingTemplateValues } from "./lib/hearing-catalog.mjs";
++import { validateDesignTokens } from "./lib/design-tokens.mjs";
+ 
+ const USAGE = `
+ 使い方:
+@@ -103,17 +105,43 @@
+   const dataPolicy = options["data-policy"] ?? "source";
+   if (!DATA_POLICIES.includes(dataPolicy)) throw new UsageError(`--data-policy は source か masked で指定します: ${dataPolicy}`);
+   const out = options.out ? expandHome(options.out) : path.join(materials, OUT_DIR_NAME);
+-  const palette = options.palette || loadThresholds().palette_default;
+-  if (!palette) throw new ToolMissing(`しきい値 palette_default がありません: ${THRESHOLDS_PATH}`);
+-  let paletteSrc;
+-  let paletteValue;
+-  if (palette === "standard") {
+-    paletteSrc = path.join(CSS_DIR, "tokens-standard.css");
+-    paletteValue = "standard";
+-  } else {
+-    paletteSrc = realPath(expandHome(palette));
+-    if (!isFile(paletteSrc)) throw new UsageError(`配色の CSS がありません: ${palette}`);
+-    paletteValue = toPosix(paletteSrc);
++  const briefingPath = path.join(out, "briefing.json");
++  let existing;
++  if (existsSync(briefingPath)) {
++    try {
++      existing = JSON.parse(readText(briefingPath));
++    } catch (error) {
++      throw new UsageError(`briefing.json が JSON として読めません: ${error.message}`);
++    }
++    if (!existing || typeof existing !== "object" || Array.isArray(existing)) {
++      throw new UsageError("briefing.json は案件の設定を持つオブジェクトにします");
++    }
++  }
++  // CLI の相対パスは現在のフォルダ、保存済みの相対パスは briefing.json のあるフォルダが基準。
++  const resolvePalette = (value, base) => {
++    if (value === "standard") return { src: path.join(CSS_DIR, "tokens-standard.css"), value };
++    if (typeof value !== "string" || !value.endsWith(".css")) {
++      throw new UsageError("palette は standard か、.css で終わる配色ファイルの場所にします");
++    }
++    const src = realPath(path.resolve(base, expandHome(value)));
++    return { src, value: toPosix(src) };
++  };
++  const selected = existing ? existing.palette : options.palette ?? loadThresholds().palette_default;
++  if (!existing && selected === undefined) throw new ToolMissing(`しきい値 palette_default がありません: ${THRESHOLDS_PATH}`);
++  const { src: paletteSrc, value: paletteValue } = resolvePalette(selected, existing ? out : process.cwd());
++  if (existing && options.palette !== undefined && resolvePalette(options.palette, process.cwd()).value !== paletteValue) {
++    throw new UsageError("--palette が既存の briefing.json と違います。配色を変える場合は briefing.json の palette を編集してから --palette を付けずに --refresh-css を実行してください");
++  }
++  const tokensDest = path.join(out, "_src", "tokens.css");
++  const copyTokens = Boolean(options["refresh-css"]) || !existsSync(tokensDest);
++  let tokensText;
++  // 配布済みの資料を再 init するだけなら、コピー元が移動していても既存 CSS を維持する。
++  // コピーする場合は全書込みの前に検証し、不正な配色で既存成果物を変更しない。
++  if (copyTokens) {
++    if (!isFile(paletteSrc)) throw new UsageError(`配色の CSS がありません: ${selected}`);
++    tokensText = readText(paletteSrc);
++    const errors = validateDesignTokens(tokensText);
++    if (errors.length) throw new UsageError(`配色の CSS を確認してください: ${errors.join("; ")}`);
+   }
+ 
+   const created = [];
+@@ -146,15 +174,19 @@
+   }
+ 
+   const cssPairs = [
+-    [paletteSrc, path.join(out, "_src", "tokens.css")],
++    [paletteSrc, tokensDest],
+     [path.join(CSS_DIR, "common.css"), path.join(out, "_src", "common.css")],
+   ];
+   for (const [src, dest] of cssPairs) {
++    if (existsSync(dest) && !options["refresh-css"]) {
++      skipped.push(relPosix(dest, out));
++      continue;
++    }
+     if (!isFile(src)) {
+       missing.push(pluginRelative(src));
+       continue;
+     }
+-    writeNew(dest, readText(src), created, skipped, out, Boolean(options["refresh-css"]));
++    writeNew(dest, dest === tokensDest ? tokensText : readText(src), created, skipped, out, Boolean(options["refresh-css"]));
+   }
+ 
+   const report = scanMaterials(materials, out);
+--- before/plugins/system-briefing-book/scripts/lib/design-tokens.mjs
++++ after/plugins/system-briefing-book/scripts/lib/design-tokens.mjs
+@@ -0,0 +1,102 @@
++/**
++ * 配色の共通契約。案件CSSはコメントとトップレベルの :root 宣言だけで定義する。
++ * 必須の役割名は同梱標準CSSから得る。原色名・値は案件で変更できる。
++ * CSS一般の構文検査ではなく、空値・不足・var参照切れ・循環を生成前に止める。
++ */
++import { readFileSync } from "node:fs";
++
++// Strings/comments are kept whole so quoted punctuation is not a declaration boundary.
++const PARTS = /\/\*[\s\S]*?\*\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^]/g;
++function parts(text) { return [...text.matchAll(PARTS)].map(([p]) => p.startsWith("/*") ? " " : p); }
++
++function declarations(css) {
++  const tokens = parts(css);
++  const values = new Map();
++  const priorities = new Map();
++  let selector = "", body = "", inside = false;
++  function add(text) {
++    if (!text.trim()) return;
++    const match = /^\s*(--[\w-]+|color-scheme)\s*:\s*([\s\S]*)$/.exec(text);
++    if (!match) throw new Error("配色は :root のカスタムプロパティ宣言で定義してください");
++    const important = /\s*!\s*important\s*$/i.test(match[2]);
++    if (match[1] !== "color-scheme" && (important || !priorities.get(match[1]))) {
++      values.set(match[1], match[2].trim().replace(/\s*!\s*important\s*$/i, ""));
++      priorities.set(match[1], important);
++    }
++  }
++  for (const token of tokens) {
++    if (!inside) {
++      if (token === "{") {
++        if (selector.trim() !== ":root") throw new Error("配色はトップレベルの :root に定義してください (import・条件付き宣言は使いません)");
++        inside = true; selector = "";
++      } else selector += token;
++    } else if (token === "{") throw new Error("配色の :root に入れ子は使えません");
++    else if (token === ";" || token === "}") {
++      add(body); body = "";
++      if (token === "}") inside = false;
++    } else body += token;
++  }
++  if (inside || selector.trim()) throw new Error("配色の :root 宣言が閉じていないか、宣言以外の文字があります");
++  return values;
++}
++
++const standard = declarations(readFileSync(new URL("../../assets/css/tokens-standard.css", import.meta.url), "utf8"));
++export const REQUIRED_DESIGN_TOKENS = Object.freeze([...standard.keys()].filter((key) => !key.startsWith("--p-")));
++
++/** Return error messages; an empty array means the supported token contract is complete. */
++export function validateDesignTokens(css) {
++  let values;
++  try { values = declarations(css); } catch (error) { return [error.message]; }
++  const errors = new Set();
++  const resolved = new Map();
++  const active = new Set();
++  const checked = new Set();
++  // CSS cycles include references in fallback branches, even if the first branch exists.
++  function checkCycles(name, trail = new Set()) {
++    if (trail.has(name)) throw new Error(`トークン参照が循環しています: ${name}`);
++    if (checked.has(name) || !values.has(name)) return;
++    trail.add(name);
++    const unquoted = parts(values.get(name)).map((p) => /^["']/.test(p) ? " " : p).join("");
++    for (const [, dependency] of unquoted.matchAll(/\bvar\(\s*(--[\w-]+)/g)) checkCycles(dependency, trail);
++    trail.delete(name);
++    checked.add(name);
++  }
++  function resolve(name) {
++    if (active.has(name)) throw new Error(`トークン参照が循環しています: ${name}`);
++    if (!values.has(name)) throw new Error(`トークンがありません: ${name}`);
++    if (resolved.has(name)) return resolved.get(name);
++    active.add(name);
++    try {
++      const value = expand(values.get(name));
++      if (!value.trim() || /^(initial|inherit|unset|revert|revert-layer)$/i.test(value.trim())) throw new Error(`トークンの値が空か未確定です: ${name}`);
++      resolved.set(name, value);
++      return value;
++    } finally { active.delete(name); }
++  }
++  function expand(value) {
++    const tokens = parts(value);
++    let result = "";
++    for (let i = 0; i < tokens.length; i++) {
++      if (tokens.slice(i, i + 4).join("") !== "var(") { result += tokens[i]; continue; }
++      let depth = 1, argument = "", fallback = null;
++      i += 4;
++      for (; i < tokens.length; i++) {
++        const t = tokens[i];
++        if (t === "(") depth++;
++        if (t === ")" && --depth === 0) break;
++        if (t === "," && depth === 1 && fallback === null) fallback = "";
++        else if (fallback === null) argument += t;
++        else fallback += t;
++      }
++      if (depth !== 0) throw new Error("var() が閉じていません");
++      const name = argument.trim();
++      if (!/^--[\w-]+$/.test(name)) throw new Error(`var() の参照名が不正です: ${name}`);
++      result += values.has(name) ? resolve(name) : fallback !== null ? expand(fallback) : resolve(name);
++    }
++    return result;
++  }
++  for (const name of REQUIRED_DESIGN_TOKENS) {
++    try { checkCycles(name); resolve(name); } catch (error) { errors.add(error.message); }
++  }
++  return [...errors];
++}
+--- before/plugins/system-briefing-book/scripts/render-board-png.mjs
++++ after/plugins/system-briefing-book/scripts/render-board-png.mjs
+@@ -44,6 +44,7 @@
+ import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, runCli } from "./lib/cli-contract.mjs";
+ import { dependencyReceipt, htmlRefs, externalRef } from "./lib/resource-refs.mjs";
+ import { imageSize } from "./lib/image-size.mjs";
++import { validateDesignTokens } from "./lib/design-tokens.mjs";
+ 
+ export { findBrowser };
+ 
+@@ -731,7 +732,11 @@
+   if (!isDir(base)) throw new UsageError(`フォルダがありません: ${base}`);
+   const only = options.only?.length ? new Set(options.only) : null;
+   const { boards, runErrors, dataPolicy } = loadBoards(base, only);
+-  const browser = findBrowser(options.browser);
++  const tokensPath = path.join(base, "_src", "tokens.css");
++  const tokenErrors = isFile(tokensPath)
++    ? validateDesignTokens(readFileSync(tokensPath, "utf8"))
++    : ["tokens.css がありません。選択した配色を復元してください"];
++  const browser = tokenErrors.length ? null : findBrowser(options.browser);
+ 
+   const thresholds = boardThresholds();
+   const exportDir = path.join(base, "_src", "assets", "export");
+@@ -740,43 +745,50 @@
+   selectWithSources(boards, deps);
+   const providers = new Set(boards.flatMap((b) => b.exports));
+ 
+-  let session;
+-  try {
+-    session = await launchBrowser(browser);
+-  } catch (error) {
+-    if (error instanceof ToolMissing) throw error;
+-    throw new ToolMissing(`ブラウザを起動できません: ${error.message}`);
+-  }
+-  const ctx = {
+-    session,
+-    thresholds,
+-    dataPolicy,
+-    checkOnly,
+-    timeoutMs: Math.round(timeoutSec * 1000),
+-    outDir: base,
+-    exportDir,
+-    providers,
+-    exclusive: makeExclusive(),
+-  };
+-  try {
+-    for (const level of levels) {
+-      const todo = level.filter((b) => b.selected);
+-      await runPool(todo, jobs, async (board) => {
+-        try {
+-          await processBoard(board, ctx);
+-        } catch (error) {
+-          // 1 枚の失敗で全体を止めない
+-          board.errors.push(issue("RENDER-FAILED", `処理中に失敗しました: ${error.message}`));
++  if (tokenErrors.length) {
++    for (const board of boards.filter((b) => b.selected)) {
++      board.errors.push(...tokenErrors.map((message) => issue("TOKENS-INVALID", message, "_src/tokens.css")));
++    }
++    if (!boards.some((b) => b.selected)) runErrors.push(...tokenErrors.map((message) => issue("TOKENS-INVALID", message, "_src/tokens.css")));
++  } else {
++    let session;
++    try {
++      session = await launchBrowser(browser);
++    } catch (error) {
++      if (error instanceof ToolMissing) throw error;
++      throw new ToolMissing(`ブラウザを起動できません: ${error.message}`);
++    }
++    const ctx = {
++      session,
++      thresholds,
++      dataPolicy,
++      checkOnly,
++      timeoutMs: Math.round(timeoutSec * 1000),
++      outDir: base,
++      exportDir,
++      providers,
++      exclusive: makeExclusive(),
++    };
++    try {
++      for (const level of levels) {
++        const todo = level.filter((b) => b.selected);
++        await runPool(todo, jobs, async (board) => {
++          try {
++            await processBoard(board, ctx);
++          } catch (error) {
++            // 1 枚の失敗で全体を止めない
++            board.errors.push(issue("RENDER-FAILED", `処理中に失敗しました: ${error.message}`));
++          }
++        });
++        for (const board of todo) {
++          process.stderr.write(
++            `[${board.no}] ${board.file}: ${boardStatus(board)} (error ${board.errors.length} / warn ${board.warnings.length})\n`,
++          );
+         }
+-      });
+-      for (const board of todo) {
+-        process.stderr.write(
+-          `[${board.no}] ${board.file}: ${boardStatus(board)} (error ${board.errors.length} / warn ${board.warnings.length})\n`,
+-        );
+-      }
+-    }
+-  } finally {
+-    await session.close();
++      }
++    } finally {
++      await session.close();
++    }
+   }
+ 
+   const report = buildReport(base, boards, runErrors, browser, checkOnly);
+--- before/plugins/system-briefing-book/skills/run-briefing-boards/SKILL.md
++++ after/plugins/system-briefing-book/skills/run-briefing-boards/SKILL.md
+@@ -21,6 +21,7 @@
+ schema_refs:
+   - ../../schemas/briefing.schema.json
+ reference_refs:
++  - ../../references/design-contract.md
+   - references/board-copy.md
+   - ../../references/workflow.md
+   - ../../references/page-patterns.md
+@@ -133,6 +134,8 @@
+ 
+ ### 1. 雛形を作る
+ 
++[design-contract.md](../../references/design-contract.md) の標準デザインと共通部品を使う。CSSの更新や案件の配色変更も同じ契約に従う。
++
+ ```bash
+ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-briefing-scaffold.mjs" boards --dir "<資料フォルダ>"
+ ```
+--- before/plugins/system-briefing-book/skills/run-briefing-book/SKILL.md
++++ after/plugins/system-briefing-book/skills/run-briefing-book/SKILL.md
+@@ -21,6 +21,7 @@
+ schema_refs:
+   - ../../schemas/briefing.schema.json
+ reference_refs:
++  - ../../references/design-contract.md
+   - ../../references/workflow.md
+   - ../../references/execution-contract.md
+ script_refs:
+@@ -89,7 +90,7 @@
+ 
+ ## Purpose & Output Contract
+ 
+-資料フォルダの文書とボード PNG を、先方に渡す 1 ファイルの HTML にまとめる。
++資料フォルダの文書とボード PNG を、先方に渡す 1 ファイルの HTML にまとめる。配色の受け渡しと欠落時の扱いは [design-contract.md](../../references/design-contract.md) に従う。
+ 
+ - 先方に渡すのはこの 1 ファイルだけ。画像ははめ込み済みなので、素材フォルダやボードの PNG を一緒に送らなくてよい。ファイルや外部への参照が残ると LOCAL-REF・EXTERNAL-REF で止まり、書かない。
+ - 左の目次で選んだページが出る。前へ/次へ、拡大、印刷 (1 ボード 1 ページ横向き) に対応し、JavaScript が動かなくても全ページを縦に読める。
+@@ -110,6 +111,7 @@
+ | book.json の errors | 直す担当 |
+ | --- | --- |
+ | BRIEFING-JSON (briefing.json が読めない) | run-briefing-boards (init のあとで briefing.json に書くのは、pages を書く boards だけ) |
++| TOKENS-MISSING、TOKENS-INVALID | run-briefing-boards ([design-contract.md](../../references/design-contract.md) に従い配色を復元して再描画) |
+ | TEMPLATE-PLACEHOLDER (まとめの雛形が壊れている) | 直さずに plugin の入れ直しを伝えて止まる |
+ | VERSION-MISMATCH (版が 要件定義.md と 仕様書.md でずれている)、VERSION-MISSING (「版:」の行が無い) | run-briefing-docs (version-up) |
+ | DOC-MISSING (要件定義.md か 仕様書.md が無い) | run-briefing-docs |
+--- before/plugins/system-briefing-book/skills/run-briefing/SKILL.md
++++ after/plugins/system-briefing-book/skills/run-briefing/SKILL.md
+@@ -28,6 +28,7 @@
+ schema_refs:
+   - ../../schemas/briefing.schema.json
+ reference_refs:
++  - ../../references/design-contract.md
+   - ../../references/workflow.md
+   - ../../references/quality-rules.md
+   - ../../references/execution-contract.md
+@@ -113,6 +114,7 @@
+ | new | `<素材フォルダ> [要望]` | `<素材フォルダ>/打ち合わせ資料/` 一式 (v0.1) |
+ | revise | `<資料フォルダ> <打ち合わせメモ>` | 同じフォルダで版を上げた一式と 変更点.md |
+ 
++- 指定のない配色とデザインは [design-contract.md](../../references/design-contract.md) に従う。
+ - 出力フォルダの中身と各ファイルの役割は [workflow.md](../../references/workflow.md) にある。
+ - このスキルが自分で書くのは 変更点.md、`_check/choices.json`、`_check/review-<確認点>.json` だけ。ほかのファイルは担当スキルに任せる。
+ - 最初の版は「こういうことがやれます」が伝わる最小構成にする。広げる案は 決めること と 次に広げる候補 へ回す ([quality-rules.md](../../references/quality-rules.md) の「1. シンプルさ」を読む)。
+--- before/plugins/system-briefing-book/tests/conftest.py
++++ after/plugins/system-briefing-book/tests/conftest.py
+@@ -265,7 +265,7 @@
+ # phone / pc のボードに置く要件の札 (要件定義 6 章で最初の版 ○ の行)
+ REQ_TAGS = {"S01": ("F01", "写真を送る"), "S02": ("F02", "一覧で直す")}
+ KICKERS = {"overview": "はじめに", "phone": "画面 1 / 2 ・ スマホ", "pc": "画面 2 / 2 ・ PC"}
+-TOKENS_CSS = ":root { --text: #1F2937; --text-brand: #1747B5; --bg-page: #F4F6F9; }\n"
++TOKENS_CSS = (PLUGIN_ROOT / "assets" / "css" / "tokens-standard.css").read_text(encoding="utf-8")
+ 
+ 
+ def _require_node() -> str:
+--- before/plugins/system-briefing-book/tests/test_build_briefing_book.py
++++ after/plugins/system-briefing-book/tests/test_build_briefing_book.py
+@@ -455,3 +455,19 @@
+ } finally { await session.close(); }
+ '''.replace("BOOK_URL", json.dumps(Path(out["out"]).as_uri())), timeout=180)
+     assert facts == [2, 2]
++
++
++def test_missing_or_partial_tokens_preserve_existing_book(case_with_png: Path) -> None:
++    target = case_with_png / OUT_NAME
++    target.write_text('previous published book', encoding='utf-8')
++    tokens = case_with_png / '_src' / 'tokens.css'
++    tokens.unlink()
++    rc, out, _ = build(case_with_png, '--allow-stale')
++    assert rc == 1 and out['written'] is False
++    assert 'TOKENS-MISSING' in codes(out['errors'])
++    assert target.read_text(encoding='utf-8') == 'previous published book'
++    tokens.write_text(':root { --text: #123456; }', encoding='utf-8')
++    rc, out, _ = build(case_with_png, '--allow-stale')
++    assert rc == 1 and out['written'] is False
++    assert 'TOKENS-INVALID' in codes(out['errors'])
++    assert target.read_text(encoding='utf-8') == 'previous published book'
+--- before/plugins/system-briefing-book/tests/test_build_briefing_scaffold.py
++++ after/plugins/system-briefing-book/tests/test_build_briefing_scaffold.py
+@@ -73,6 +73,109 @@
+     assert rc == 0
+     assert "古い" not in (base / "_src" / "tokens.css").read_text(encoding="utf-8")
+     assert (base / "仕様書.md").read_text(encoding="utf-8") == "書きかけ\n"
++
++
++def custom_palette(root: Path) -> Path:
++    css = root / "custom.css"
++    standard = (PLUGIN_ROOT / "assets/css/tokens-standard.css").read_text(encoding="utf-8")
++    css.write_text(standard.replace("#1747B5", "#345678"), encoding="utf-8")
++    return css
++
++
++def test_refresh_uses_existing_custom_palette(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    custom = custom_palette(tmp_path)
++    assert init(materials, "--palette", str(custom))[0] == 0
++    base = materials / "打ち合わせ資料"
++    manifest = (base / "briefing.json").read_bytes()
++    tokens = base / "_src/tokens.css"
++    tokens.write_text("/* outdated */", encoding="utf-8")
++    rc, out, err = init(materials, "--refresh-css")
++    assert rc == 0, (out, err)
++    assert tokens.read_bytes() == custom.read_bytes()
++    assert (base / "briefing.json").read_bytes() == manifest
++
++
++def test_palette_paths_use_cli_cwd_and_manifest_directory(tmp_path: Path, monkeypatch) -> None:
++    materials = make_materials(tmp_path)
++    custom = custom_palette(tmp_path)
++    monkeypatch.chdir(tmp_path)
++    assert init(materials, "--palette", "custom.css")[0] == 0
++    base = materials / "打ち合わせ資料"
++    manifest_path = base / "briefing.json"
++    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
++    assert manifest["palette"] == str(custom.resolve())
++    manifest["palette"] = "../../custom.css"
++    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
++    # CLI と保存済みパスの基準は違うが同じ原本を指すので衝突しない。
++    rc, out, err = init(materials, "--palette", "custom.css", "--refresh-css")
++    assert rc == 0, (out, err)
++    assert (base / "_src/tokens.css").read_bytes() == custom.read_bytes()
++    assert json.loads(manifest_path.read_text(encoding="utf-8"))["palette"] == "../../custom.css"
++
++
++def test_conflicting_palette_is_rejected_before_any_writes(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    init(materials)
++    custom = custom_palette(tmp_path)
++    base = materials / "打ち合わせ資料"
++    (base / "仕様書.md").unlink()
++    before = {p.relative_to(base): p.read_bytes() for p in base.rglob("*") if p.is_file()}
++    rc, out, err = init(materials, "--palette", str(custom), "--refresh-css")
++    assert rc == 2 and out["status"] == "usage-error", (out, err)
++    assert "briefing.json" in err and "--refresh-css" in err
++    assert {p.relative_to(base): p.read_bytes() for p in base.rglob("*") if p.is_file()} == before
++
++
++def test_palette_change_follows_edited_manifest(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    init(materials)
++    custom = custom_palette(tmp_path)
++    base = materials / "打ち合わせ資料"
++    manifest_path = base / "briefing.json"
++    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
++    manifest["palette"] = str(custom)
++    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
++    assert init(materials, "--refresh-css")[0] == 0
++    assert (base / "_src/tokens.css").read_bytes() == custom.read_bytes()
++
++
++def test_reinit_keeps_custom_css_when_original_is_missing(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    custom = custom_palette(tmp_path)
++    init(materials, "--palette", str(custom))
++    base = materials / "打ち合わせ資料"
++    before = (base / "_src/tokens.css").read_bytes()
++    custom.unlink()
++    rc, out, err = init(materials)
++    assert rc == 0, (out, err)
++    assert "_src/tokens.css" in out["skipped"]
++    assert (base / "_src/tokens.css").read_bytes() == before
++    rc, out, _ = init(materials, "--refresh-css")
++    assert rc == 2 and out["status"] == "usage-error"
++    assert (base / "_src/tokens.css").read_bytes() == before
++
++
++def test_incomplete_palette_is_rejected_before_output_creation(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    custom = tmp_path / "incomplete.css"
++    custom.write_text(":root { --text-brand: #123456; }", encoding="utf-8")
++    rc, out, err = init(materials, "--palette", str(custom))
++    assert rc == 2 and out["status"] == "usage-error", (out, err)
++    assert not (materials / "打ち合わせ資料").exists()
++
++
++def test_invalid_refresh_preserves_all_existing_files(tmp_path: Path) -> None:
++    materials = make_materials(tmp_path)
++    custom = custom_palette(tmp_path)
++    init(materials, "--palette", str(custom))
++    base = materials / "打ち合わせ資料"
++    (base / "仕様書.md").unlink()
++    before = {p.relative_to(base): p.read_bytes() for p in base.rglob("*") if p.is_file()}
++    custom.write_text(":root { --text-brand: #123456; }", encoding="utf-8")
++    rc, out, err = init(materials, "--refresh-css")
++    assert rc == 2 and out["status"] == "usage-error", (out, err)
++    assert {p.relative_to(base): p.read_bytes() for p in base.rglob("*") if p.is_file()} == before
+ 
+ 
+ def test_init_usage_errors(tmp_path: Path) -> None:
+--- before/plugins/system-briefing-book/tests/test_design_rendering.py
++++ after/plugins/system-briefing-book/tests/test_design_rendering.py
+@@ -0,0 +1,54 @@
++"""案件の配色がボードと単独配布のまとめで同じ役割に届くことを実ブラウザで確認する。"""
++from __future__ import annotations
++
++import json
++import os
++from pathlib import Path
++
++import pytest
++
++from conftest import PLUGIN_ROOT, needs_browser, node_eval, run_script
++
++
++@needs_browser
++@pytest.mark.parametrize("custom", [False, True])
++def test_board_and_standalone_book_share_design(case_with_png: Path, tmp_path: Path, custom: bool) -> None:
++    css = (PLUGIN_ROOT / "assets/css/tokens-standard.css").read_text(encoding="utf-8")
++    if custom:
++        css = css.replace("#1747B5", "#56338A").replace("#14233B", "#30243D")
++    (case_with_png / "_src/tokens.css").write_text(css, encoding="utf-8")
++    (case_with_png / "_src/common.css").write_bytes((PLUGIN_ROOT / "assets/css/common.css").read_bytes())
++    # This test covers CSS delivery; fixture images carry no renderer receipt.
++    for png in case_with_png.glob("*.png"):
++        os.utime(png, None)
++    rc, result, err = run_script("build-briefing-book", "--dir", str(case_with_png))
++    assert rc == 0, (result, err)
++    standalone = tmp_path / "delivery.html"
++    standalone.write_bytes(Path(result["out"]).read_bytes())
++    urls = [(case_with_png / "_src/02_phone-send.html").as_uri(), standalone.as_uri()]
++    styles = node_eval('''
++import {launchBrowser, findBrowser} from "./lib/browser-session.mjs";
++const browser = await launchBrowser(findBrowser());
++try {
++  const page = await browser.newPage({width: 1440, height: 1000});
++  const results = [];
++  for (const [i, url] of URLS.entries()) {
++    await page.goto(url);
++    results.push(await page.evaluate(`(() => {
++      const style = selector => getComputedStyle(document.querySelector(selector));
++      return {
++        ink: style('body').color,
++        font: style('body').fontFamily,
++        brand: style('${i === 0 ? '.board-head .kicker' : '.tb-title b'}').color,
++        secondary: style('${i === 0 ? '.board-head .lead' : '.cover .sub'}').color,
++        scheme: style(':root').colorScheme
++      };
++    })()`));
++  }
++  console.log(JSON.stringify(results));
++} finally { await browser.close(); }
++'''.replace("URLS", json.dumps(urls)), timeout=180)
++    assert styles[0] == styles[1]
++    assert styles[1]["brand"] == ("rgb(86, 51, 138)" if custom else "rgb(23, 71, 181)")
++    assert styles[1]["ink"] == ("rgb(48, 36, 61)" if custom else "rgb(20, 35, 59)")
++    assert styles[1]["scheme"] == "light"
+--- before/plugins/system-briefing-book/tests/test_design_source.py
++++ after/plugins/system-briefing-book/tests/test_design_source.py
+@@ -0,0 +1,68 @@
++"""標準デザインの出典、配色の単一正本、利用者向け名称の回帰検査。"""
++from __future__ import annotations
++
++import re
++import pytest
++
++from conftest import PLUGIN_ROOT
++
++CSS = PLUGIN_ROOT / "assets" / "css"
++BOARD_EXTENSIONS = {
++    "--p-board", "--p-anno", "--p-warning-line", "--p-device", "--p-device-island",
++    "--p-browser-bar", "--p-browser-line", "--p-browser-edge", "--p-browser-dot", "--p-url-field",
++}
++
++
++def uncomment(text: str) -> str:
++    return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
++
++
++def declarations(text: str) -> dict[str, str]:
++    return {
++        name: " ".join(value.split()).lower()
++        for name, value in re.findall(r"(--[\w-]+)\s*:\s*([^;{}]+);", uncomment(text))
++    }
++
++
++def test_standard_primitives_match_bundled_source() -> None:
++    # 開発ワークツリーにある出典を比較する。配布pluginの実行時依存にはしない。
++    source = PLUGIN_ROOT.parents[1] / "aidd-agent-kit/skills/jp-web-design/assets/standard/standard-color-system.css"
++    if not source.is_file():
++        pytest.skip("開発用の同梱キットがない単体plugin環境では出典の比較は対象外")
++    original = declarations(source.read_text(encoding="utf-8"))
++    plugin = declarations((CSS / "tokens-standard.css").read_text(encoding="utf-8"))
++    primitives = {name: value for name, value in plugin.items() if name.startswith("--p-")}
++    assert set(primitives) - set(original) == BOARD_EXTENSIONS, "出典にない原色はボード拡張として明示する"
++    shared = {name: value for name, value in primitives.items() if name not in BOARD_EXTENSIONS}
++    assert len(shared) >= 21, "原色が削られて比較対象が空になることを防ぐ"
++    assert shared == {name: original[name] for name in shared}, "出典の値と取り込んだ原色を同時に更新する"
++
++
++def test_book_and_boards_use_semantic_tokens_without_second_palette() -> None:
++    tokens = declarations((CSS / "tokens-standard.css").read_text(encoding="utf-8"))
++    consumers = [CSS / "common.css", PLUGIN_ROOT / "assets/templates/book.html"]
++    consumers.extend(sorted((PLUGIN_ROOT / "assets/templates").glob("board-*.html")))
++    for path in consumers:
++        text = uncomment(path.read_text(encoding="utf-8"))
++        styles = text if path.suffix == ".css" else "\n".join(re.findall(r"<style\b[^>]*>(.*?)</style>", text, re.S | re.I))
++        assert not re.search(r"#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\s*\(", styles, re.I), path
++        used = set(re.findall(r"var\(\s*(--[\w-]+)", styles))
++        assert not any(name.startswith("--p-") for name in used), path
++        assert used <= tokens.keys() | declarations(styles).keys(), (path, sorted(used - tokens.keys() - declarations(styles).keys()))
++        if path.name == "book.html":
++            assert "--book-" not in styles, "同じ役割の別名と色fallbackをまとめ側に増やさない"
++
++
++def test_active_plugin_has_no_retired_design_names() -> None:
++    # テスト用の禁止語と過去の評価記録は走査しない。フォントの Hiragino は別名。
++    retired = re.compile(r"<旧配色名>", re.I)
++    suffixes = {".md", ".mjs", ".json", ".yaml", ".yml", ".html", ".css", ".tmpl"}
++    roots = [PLUGIN_ROOT / part for part in ("assets", "references", "scripts", "skills", "schemas", "agents", "examples")]
++    paths = [PLUGIN_ROOT / "README.md", PLUGIN_ROOT / "setup.md"]
++    for directory in roots:
++        paths.extend(p for p in directory.rglob("*") if p.is_file() and p.suffix in suffixes and "_check" not in p.parts)
++    found = []
++    for path in paths:
++        if retired.search(path.relative_to(PLUGIN_ROOT).as_posix()) or retired.search(path.read_text(encoding="utf-8")):
++            found.append(path.relative_to(PLUGIN_ROOT).as_posix())
++    assert found == []
+--- before/plugins/system-briefing-book/tests/test_design_tokens.py
++++ after/plugins/system-briefing-book/tests/test_design_tokens.py
+@@ -0,0 +1,56 @@
++"""Semantic token completeness is shared by scaffold, renderer and book."""
++from __future__ import annotations
++
++import json
++import pytest
++from conftest import TOKENS_CSS, node_eval
++
++
++def validate(css: str) -> list[str]:
++    return node_eval(
++        'import { validateDesignTokens } from "./lib/design-tokens.mjs";\n'
++        f'console.log(JSON.stringify(validateDesignTokens({json.dumps(css)})));'
++    )
++
++
++def test_standard_and_custom_primitive_names_are_complete() -> None:
++    assert validate(TOKENS_CSS) == []
++    assert validate(TOKENS_CSS.replace('--p-', '--company-').replace('#1747B5', '#123456')) == []
++
++
++@pytest.mark.parametrize('css, marker', [
++    ('', '--bg-board'),
++    (':root { --text: #123456; }', '--bg-board'),
++    (TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: ;'), '--p-ink'),
++    (TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--missing);'), '--missing'),
++    (TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--loop); --loop: var(--p-ink);'), '循環'),
++    (TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: initial;'), '--p-ink'),
++    (TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--missing;'), '閉じ'),
++    ('@media print {' + TOKENS_CSS + '}', 'トップレベル'),
++    (TOKENS_CSS + '@import "other.css";', '宣言以外'),
++], ids=['empty', 'partial', 'empty-value', 'undefined', 'cycle', 'initial', 'unclosed-var', 'conditional', 'import'])
++def test_invalid_contracts(css: str, marker: str) -> None:
++    assert any(marker in error for error in validate(css))
++
++
++def test_nested_fallback_and_quoted_delimiters() -> None:
++    custom = TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--absent, var(--also-absent, rgb(20, 35, 59)));')
++    custom += ':root { --font-ui: "Font; with { punctuation } and var(--unused)"; }'
++    assert validate(custom) == []
++
++
++def test_empty_or_broken_fallback_does_not_hide_missing_value() -> None:
++    assert validate(TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--absent,);'))
++    assert validate(TOKENS_CSS.replace('--p-ink: #14233B;', '--p-ink: var(--absent, var(--also-absent));'))
++
++
++@pytest.mark.parametrize("priority", ["!important", "! important", "!/**/important"])
++def test_important_declaration_cannot_be_hidden_by_later_plain_value(priority: str) -> None:
++    css = TOKENS_CSS + f':root {{ --text: var(--missing) {priority}; --text: #123456; }}'
++    assert any('--missing' in error for error in validate(css))
++    assert validate(css + ':root { --text: #123456 !important; }') == []
++
++
++def test_cycles_in_unused_fallback_are_invalid_but_undefined_fallback_is_allowed() -> None:
++    assert any('循環' in error for error in validate(TOKENS_CSS + ':root { --text: var(--p-ink, var(--text)); }'))
++    assert validate(TOKENS_CSS + ':root { --text: var(--p-ink, var(--unused)); }') == []
+--- before/plugins/system-briefing-book/tests/test_render_board_png.py
++++ after/plugins/system-briefing-book/tests/test_render_board_png.py
+@@ -313,8 +313,7 @@
+         '<div class="phone">', '<div class="phone" data-export="s01-send">'), encoding="utf-8")
+     # 番号の印 (.mk) をはっきりした緑にして、切り出しに写っていないことを数えて確かめる
+     with (scaffolded / "_src" / "tokens.css").open("a", encoding="utf-8") as handle:
+-        handle.write("\n.mk { background: #00ff00 !important; color: #00ff00 !important; "
+-                     "border-color: #00ff00 !important; box-shadow: none !important; }\n")
++        handle.write("\n:root { --anno: #00ff00; --anno-ink: #00ff00; --anno-ring: #00ff00; }\n")
+     rc, out, err = run_script(SCRIPT, "--dir", str(scaffolded), "--only", "01")
+     assert rc == 0, err
+     (entry,) = out["boards"]
+@@ -400,3 +399,19 @@
+     errors = out["boards"][0]["errors"]
+     assert ("MARK-MISMATCH" in codes(errors)) is expected, errors
+     assert "BOARD-ATTR" not in codes(errors), errors
++
++
++@pytest.mark.parametrize('css', [None, ':root { --text: #123456; }'])
++def test_bad_tokens_stop_before_browser_and_preserve_images(case: Path, css: str | None) -> None:
++    tokens = case / '_src' / 'tokens.css'
++    if css is None:
++        tokens.unlink()
++    else:
++        tokens.write_text(css, encoding='utf-8')
++    image = case / '00_overview.png'
++    image.write_bytes(b'previous image')
++    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--browser', '/missing/browser')
++    assert rc == 1 and out['status'] == 'ng'
++    assert any('TOKENS-INVALID' in codes(board['errors']) for board in out['boards'])
++    assert image.read_bytes() == b'previous image'
++    assert not (case / '02_phone-send.png').exists()

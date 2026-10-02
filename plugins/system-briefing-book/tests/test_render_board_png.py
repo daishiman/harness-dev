@@ -313,8 +313,7 @@ def test_render_png_webp_and_export(scaffolded: Path) -> None:
         '<div class="phone">', '<div class="phone" data-export="s01-send">'), encoding="utf-8")
     # 番号の印 (.mk) をはっきりした緑にして、切り出しに写っていないことを数えて確かめる
     with (scaffolded / "_src" / "tokens.css").open("a", encoding="utf-8") as handle:
-        handle.write("\n.mk { background: #00ff00 !important; color: #00ff00 !important; "
-                     "border-color: #00ff00 !important; box-shadow: none !important; }\n")
+        handle.write("\n:root { --anno: #00ff00; --anno-ink: #00ff00; --anno-ring: #00ff00; }\n")
     rc, out, err = run_script(SCRIPT, "--dir", str(scaffolded), "--only", "01")
     assert rc == 0, err
     (entry,) = out["boards"]
@@ -400,3 +399,20 @@ def test_list_only_note_numbers_and_marker_contract(scaffolded: Path, variant: s
     errors = out["boards"][0]["errors"]
     assert ("MARK-MISMATCH" in codes(errors)) is expected, errors
     assert "BOARD-ATTR" not in codes(errors), errors
+
+
+@pytest.mark.parametrize('css', [None, ':root { --text: #123456; }'])
+def test_bad_tokens_stop_before_browser_and_preserve_images(case: Path, css: str | None) -> None:
+    tokens = case / '_src' / 'tokens.css'
+    if css is None:
+        tokens.unlink()
+    else:
+        tokens.write_text(css, encoding='utf-8')
+    image = case / '00_overview.png'
+    image.write_bytes(b'previous image')
+    rc, out, _ = run_script(SCRIPT, '--dir', str(case), '--browser', '/missing/browser')
+    assert rc == 1 and out['status'] == 'ng'
+    code = 'TOKENS-MISSING' if css is None else 'TOKENS-INVALID'
+    assert any(code in codes(board['errors']) for board in out['boards'])
+    assert image.read_bytes() == b'previous image'
+    assert not (case / '02_phone-send.png').exists()

@@ -44,6 +44,7 @@ import {
 import { EXIT, ToolMissing, UsageError, emitResult, isEntryPoint, parseOptions, runCli } from "./lib/cli-contract.mjs";
 import { dependencyReceipt, htmlRefs, externalRef } from "./lib/resource-refs.mjs";
 import { imageSize } from "./lib/image-size.mjs";
+import { validateDesignTokens } from "./lib/design-tokens.mjs";
 
 export { findBrowser };
 
@@ -731,7 +732,12 @@ export async function main(argv) {
   if (!isDir(base)) throw new UsageError(`フォルダがありません: ${base}`);
   const only = options.only?.length ? new Set(options.only) : null;
   const { boards, runErrors, dataPolicy } = loadBoards(base, only);
-  const browser = findBrowser(options.browser);
+  const tokensPath = path.join(base, "_src", "tokens.css");
+  const tokenCode = isFile(tokensPath) ? "TOKENS-INVALID" : "TOKENS-MISSING";
+  const tokenErrors = isFile(tokensPath)
+    ? validateDesignTokens(readFileSync(tokensPath, "utf8"))
+    : ["tokens.css がありません。build-briefing-scaffold.mjs init --refresh-css で briefing.json の palette から作り直してください"];
+  const browser = tokenErrors.length ? null : findBrowser(options.browser);
 
   const thresholds = boardThresholds();
   const exportDir = path.join(base, "_src", "assets", "export");
@@ -740,43 +746,50 @@ export async function main(argv) {
   selectWithSources(boards, deps);
   const providers = new Set(boards.flatMap((b) => b.exports));
 
-  let session;
-  try {
-    session = await launchBrowser(browser);
-  } catch (error) {
-    if (error instanceof ToolMissing) throw error;
-    throw new ToolMissing(`ブラウザを起動できません: ${error.message}`);
-  }
-  const ctx = {
-    session,
-    thresholds,
-    dataPolicy,
-    checkOnly,
-    timeoutMs: Math.round(timeoutSec * 1000),
-    outDir: base,
-    exportDir,
-    providers,
-    exclusive: makeExclusive(),
-  };
-  try {
-    for (const level of levels) {
-      const todo = level.filter((b) => b.selected);
-      await runPool(todo, jobs, async (board) => {
-        try {
-          await processBoard(board, ctx);
-        } catch (error) {
-          // 1 枚の失敗で全体を止めない
-          board.errors.push(issue("RENDER-FAILED", `処理中に失敗しました: ${error.message}`));
-        }
-      });
-      for (const board of todo) {
-        process.stderr.write(
-          `[${board.no}] ${board.file}: ${boardStatus(board)} (error ${board.errors.length} / warn ${board.warnings.length})\n`,
-        );
-      }
+  if (tokenErrors.length) {
+    for (const board of boards.filter((b) => b.selected)) {
+      board.errors.push(...tokenErrors.map((message) => issue(tokenCode, message, "_src/tokens.css")));
     }
-  } finally {
-    await session.close();
+    if (!boards.some((b) => b.selected)) runErrors.push(...tokenErrors.map((message) => issue(tokenCode, message, "_src/tokens.css")));
+  } else {
+    let session;
+    try {
+      session = await launchBrowser(browser);
+    } catch (error) {
+      if (error instanceof ToolMissing) throw error;
+      throw new ToolMissing(`ブラウザを起動できません: ${error.message}`);
+    }
+    const ctx = {
+      session,
+      thresholds,
+      dataPolicy,
+      checkOnly,
+      timeoutMs: Math.round(timeoutSec * 1000),
+      outDir: base,
+      exportDir,
+      providers,
+      exclusive: makeExclusive(),
+    };
+    try {
+      for (const level of levels) {
+        const todo = level.filter((b) => b.selected);
+        await runPool(todo, jobs, async (board) => {
+          try {
+            await processBoard(board, ctx);
+          } catch (error) {
+            // 1 枚の失敗で全体を止めない
+            board.errors.push(issue("RENDER-FAILED", `処理中に失敗しました: ${error.message}`));
+          }
+        });
+        for (const board of todo) {
+          process.stderr.write(
+            `[${board.no}] ${board.file}: ${boardStatus(board)} (error ${board.errors.length} / warn ${board.warnings.length})\n`,
+          );
+        }
+      }
+    } finally {
+      await session.close();
+    }
   }
 
   const report = buildReport(base, boards, runErrors, browser, checkOnly);

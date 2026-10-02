@@ -1,0 +1,584 @@
+{
+  "version": 1,
+  "phase": 2,
+  "target": "plugins/system-briefing-book",
+  "scope": "9方法の独立分析。ソース変更なし。",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答に設計情報を残す指示と plugins/system-briefing-book/references/document-structure.md:153 記入先を照合。仕様側の項目の多さを、利用者から必要情報を収集できることの証拠にしてはいけない。大まかな業務制約→設計案→未決点の変換を評価単位にする。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。",
+            "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。",
+          "recommended_intervention": "A4/A7/C8/C6/D5の既存質問へ業務場面の補助観点を割り当て、判明事項は回答へ、未確認はH/Qへ残す。技術値の全質問化はしない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 180
+          }
+        }
+      ],
+      "score": 0.68,
+      "negative_cases": []
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:155-161 UI形状の判断と plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:180-185 データ/安全の業務判断を比較。共通化すべき単位は「質問→業務上の意味→仕様記入先」であり、全技術設定を1つの巨大フォームへ集めることではない。",
+        "plugins/system-briefing-book/assets/templates/hearing.md.tmpl と plugins/system-briefing-book/tests/test_single_source.py の写し管理を確認。36件の固定ID/質問は小さな正本へ寄せる価値があるが例文・成果物本文は文脈が異なり機械的削除対象ではない。",
+        "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "固定質問の全文はguideとhearing templateの2か所に手書きされ、test_hearing_template_matches_guide がID・全文・順序の同期を既に保証している。現在の欠陥は同期保証の不在ではなく、scaffoldとvalidatorが同じ実行時質問定義を共有しないため質問変更の保守点が残ること。",
+          "recommended_intervention": "既存同期テストの保証を維持し、質問正本を小さなカタログとしてscaffoldとvalidatorで共有する。検証済みの写しを即時不整合とは扱わず、変更点削減の改善として実施する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py",
+            "line": 160
+          }
+        }
+      ],
+      "score": 0.84,
+      "negative_cases": []
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:2 「最小」を選ぶ前提を再検討。最小は機能数/質問数の少なさではなく必要な業務が閉じること。控え不要や社内ログインなしを単にシンプルな選択として出すより、守る必要のある仕事・情報を先に把握する。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:193 2役割という既定案を実際の閲覧/編集範囲の十分性と分ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。",
+            "役割を「使う人/管理する人」の2つで既定化すると、会社内の担当部署別閲覧や承認者だけ削除不可など業務上の役割を取り逃す。A1で外部の人がいる場合の補足しか明示されない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "役割を「使う人/管理する人」の2つで既定化すると、会社内の担当部署別閲覧や承認者だけ削除不可など業務上の役割を取り逃す。A1で外部の人がいる場合の補足しか明示されない。",
+          "recommended_intervention": "D4とB10の記録時に、他部署・本人分・担当分・承認前後の違いを業務語で整理し、不明な対象範囲をQへ残す。役割数を増やすこと自体を必須にしない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 193
+          }
+        }
+      ],
+      "score": 0.7,
+      "negative_cases": [
+        "同一会社の経理と現場で給与情報の閲覧範囲が違う。外部利用者なしでも2役割の一律既定では不十分。"
+      ]
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md を対象に代替案5つ: (1)質問を追加して全項目を直接聞く、(2)固定質問を業務語へ書き換える、(3)業種別質問分岐を設ける、(4)既存の聞き取り/技術仕様pluginへ全面移管する、(5)業務質問と設計記入先の小さな対応表にまとめる。",
+        "収束: (2)+(5)を採用候補にする。1は回答負荷、3は分岐保守、4は異なる成果物と実行契約の統合コストが大きい。固定H ID/章構造を保つので既存参照を壊さず plugins/system-briefing-book/assets/templates/hearing.md.tmpl の同期も小さな検査で扱える。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。",
+            "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。",
+          "recommended_intervention": "固定H番号は保ち、質問と選択肢を利用場面、探す仕事、取り消せない操作、失敗に気づく方法へ変更する。レイアウト等は回答からの設計案として別記する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 49
+          }
+        }
+      ],
+      "score": 0.74,
+      "negative_cases": []
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:155 第4回を「どう描くか」でなく、最近の仕事の一場面の再現から聞く。例えば「急いでいるとき最初に見る情報」「間違えたら誰へ戻すか」から、一覧順・編集導線・確認とエラーを引き出せる。",
+        "plugins/system-briefing-book/references/document-structure.md:160-167 の共通UI仕様は設計側が補う受け皿として維持。UI仕様そのものを消す必要はない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。",
+            "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。",
+          "recommended_intervention": "固定H番号は保ち、質問と選択肢を利用場面、探す仕事、取り消せない操作、失敗に気づく方法へ変更する。レイアウト等は回答からの設計案として別記する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 49
+          }
+        }
+      ],
+      "score": 0.73,
+      "negative_cases": []
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:107 「全部おすすめ」で完了した案件を逆から検査。日次件数も誰が使うかも曖昧なのに、控え1日・保存1年・平日日中の欄が埋まるだけで収集済みと見え得る。文書の完成と業務の確認済みを分けることが漏れ検出になる。",
+        "plugins/system-briefing-book/references/document-structure.md:177 未確認を案/Qとする既存規則は有効。これを固定の既定案から補った業務制約にも適用すれば新しい状態管理は不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。",
+            "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。",
+          "recommended_intervention": "A4/A7/C8/C6/D5の既存質問へ業務場面の補助観点を割り当て、判明事項は回答へ、未確認はH/Qへ残す。技術値の全質問化はしない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 180
+          }
+        }
+      ],
+      "score": 0.7,
+      "negative_cases": [
+        "全回答おすすめの夜間現場サービスで、平日日中のみ利用が既定案として埋まる。"
+      ]
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-spec-harness/README.md:15 技術要件のカテゴリ×プラットフォーム網羅表と、plugins/skill-intake/README.md:3 スキル作成の非技術者ヒアリングを比較。対象と出力契約が異なり、同名の質問を理由に全面統合すべきではない。",
+        "診療の問診と検査記録のように、回答者の業務語と実装者の設計語は役割を分ける。plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md が質問正本、plugins/system-briefing-book/references/document-structure.md が設計記入先の正本という既存分担を明確にし、短い対応表でつなぐのが最小。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.84,
+      "negative_cases": []
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:175-198 を利用者別に当てる。現場作業者=電波なし/手袋、管理担当=退職者取消、外部取引先=他社情報不可、経営者=短い判断指標。現在は端末や社外の有無があっても利用場面と役割別データ範囲が十分に出るとは限らない。",
+        "plugins/system-briefing-book/references/document-structure.md:172-175 の安全・復旧ラベルはこれらの答えを受けられるので、質問側に補助観点と未知を残す規則を足すだけで改善できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。",
+            "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。",
+            "役割を「使う人/管理する人」の2つで既定化すると、会社内の担当部署別閲覧や承認者だけ削除不可など業務上の役割を取り逃す。A1で外部の人がいる場合の補足しか明示されない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。",
+          "recommended_intervention": "A4/A7/C8/C6/D5の既存質問へ業務場面の補助観点を割り当て、判明事項は回答へ、未確認はH/Qへ残す。技術値の全質問化はしない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 180
+          }
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "役割を「使う人/管理する人」の2つで既定化すると、会社内の担当部署別閲覧や承認者だけ削除不可など業務上の役割を取り逃す。A1で外部の人がいる場合の補足しか明示されない。",
+          "recommended_intervention": "D4とB10の記録時に、他部署・本人分・担当分・承認前後の違いを業務語で整理し、不明な対象範囲をQへ残す。役割数を増やすこと自体を必須にしない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 193
+          }
+        }
+      ],
+      "score": 0.66,
+      "negative_cases": [
+        "スマホと答えた工事担当が地下で利用する。社外利用の有無だけでは通信不能の要件が出ない。",
+        "日次100件でも締切前の5分に集中する。日次件数から同時処理量は決められない。"
+      ]
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:157 「メニューはいくつ」は、利用者が実装者の都合を決める質問。「よく使う仕事はどれ」「最初に見たいものは何」なら経験から答えられる。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:177 「ログインの方式」は、会社で普段使う入口があるか/会社外の人も使うかを聞けば案へ変換できる。plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:180 控え頻度は「何日前まで戻っても仕事をやり直せるか」へ寄せる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。",
+            "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+            "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。",
+          "recommended_intervention": "固定H番号は保ち、質問と選択肢を利用場面、探す仕事、取り消せない操作、失敗に気づく方法へ変更する。レイアウト等は回答からの設計案として別記する。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 49
+          }
+        }
+      ],
+      "score": 0.68,
+      "negative_cases": []
+    }
+  ],
+  "observations": [
+    "設計記入先の広さは十分な方向にある。主な改善点は業務質問と設計案の境界、未知の扱い、固定質問の正本管理。",
+    "既存pluginを横断する大幅統合は不要。複製が必要な成果物と、手書きで同期する必要がない質問定義を分ける。"
+  ],
+  "issues": [
+    {
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "doc",
+      "description": "「大きな流れだけ」を聞く原則に対し、第4回が骨組み・メニュー数・小窓・通知配置の実装選択になっている。現場利用者が課題は話せても設計選択を判断できない。",
+      "recommended_intervention": "固定H番号は保ち、質問と選択肢を利用場面、探す仕事、取り消せない操作、失敗に気づく方法へ変更する。レイアウト等は回答からの設計案として別記する。",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "line": 49
+      }
+    },
+    {
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "doc",
+      "description": "日次件数、端末、控え頻度だけでは、同時に忙しくなる場面、電波が届かない場所、どれだけ待てるか、失うと困る作業の期間を抽出できない。大まかな業務制約を聞く導線がない。",
+      "recommended_intervention": "A4/A7/C8/C6/D5の既存質問へ業務場面の補助観点を割り当て、判明事項は回答へ、未確認はH/Qへ残す。技術値の全質問化はしない。",
+      "condition_signal": "omission",
+      "location": {
+        "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "line": 180
+      }
+    },
+    {
+      "condition": "C3",
+      "severity": "low",
+      "bucket": "doc",
+      "description": "固定質問の全文はguideとhearing templateの2か所に手書きされ、test_hearing_template_matches_guide がID・全文・順序の同期を既に保証している。現在の欠陥は同期保証の不在ではなく、scaffoldとvalidatorが同じ実行時質問定義を共有しないため質問変更の保守点が残ること。",
+      "recommended_intervention": "既存同期テストの保証を維持し、質問正本を小さなカタログとしてscaffoldとvalidatorで共有する。検証済みの写しを即時不整合とは扱わず、変更点削減の改善として実施する。",
+      "condition_signal": "smell",
+      "location": {
+        "file": "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py",
+        "line": 160
+      }
+    },
+    {
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "doc",
+      "description": "役割を「使う人/管理する人」の2つで既定化すると、会社内の担当部署別閲覧や承認者だけ削除不可など業務上の役割を取り逃す。A1で外部の人がいる場合の補足しか明示されない。",
+      "recommended_intervention": "D4とB10の記録時に、他部署・本人分・担当分・承認前後の違いを業務語で整理し、不明な対象範囲をQへ残す。役割数を増やすこと自体を必須にしない。",
+      "condition_signal": "omission",
+      "location": {
+        "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "line": 193
+      }
+    }
+  ],
+  "condition_matrix": {
+    "C1": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:49 大きな流れの原則はあるがB群が表示設計を尋ねる。"
+      ]
+    },
+    "C2": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "plugins/system-briefing-book/references/document-structure.md:153 設計記入先は広いが、業務制約を得る質問の粒度は未充足。"
+      ]
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": [
+        "plugins/system-briefing-book/tests/test_build_briefing_scaffold.py:160 test_hearing_template_matches_guide は36問のID・文言・順序と旧H01〜H24の維持を検査している。同期保証は既にある。",
+        "手書きの保守点と実行時定義の未共有は改善余地であり、現行同期不整合の証拠ではない。"
+      ]
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": [
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:201 回答の行き先が既存仕様章へ接続され、既存H番号を保持する規則がある。"
+      ]
+    }
+  },
+  "score": 0.73,
+  "corrections": [
+    "初版では test_single_source.py のみから質問の同期保証なしと誤認した。test_build_briefing_scaffold.py:160を確認し、C3はPASS、指摘は保守性のsmellへ訂正した。"
+  ]
+}

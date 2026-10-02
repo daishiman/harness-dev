@@ -1,0 +1,657 @@
+{
+  "phase": 2,
+  "scope": "logical-structural",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "「平易な質問なら非技術者向け」という前提を具体質問B1/B6/C3で反証した。専門語を平易にしても設計判断は必要。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:151 — 非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。",
+          "recommended_intervention": "H番号を維持して質問を業務場面・困ること・役割/見てよい相手・使える会社アカウント・失われると困る期間に置換し、画面配置や認証方式/バックアップ頻度は回答から設計者が案として導く。誰でも見てよいとは既定しない。質問雛形を同時更新して同期を検査。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 151
+          },
+          "root_cause": "平易な単語への言い換えと、業務知識だけで答えられる問いの区別が曖昧。",
+          "finding_id": "F-1003"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "全固定質問を必ず書く、未定をQへ移すという仕様から必要検査を導き、実装に期待集合/未定ID追跡が無いことを確認した。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:592 — 固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:610 — 未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。",
+          "recommended_intervention": "hearing-guideの固定H番号を正本として共有定義または同期検査で固定質問を管理し、欠落・別章への移動を検出する。旧文書はwarn、新規の収集完了では欠落解消または未定と確認先の記録を要求。H37以降の追加要望を妨げない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 592
+          },
+          "root_cause": "ID形式・重複の検査に留まり、期待される質問集合との比較がない。",
+          "finding_id": "F-1001"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。",
+          "recommended_intervention": "既存のHxx表記を使い未定Hの一覧と5章の対応を検査し、要件定義のQ行に元Hxxを明記する軽量な契約を追加する。重い第二の状態管理は導入せず、互換性を保つwarnから始める。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 610
+          },
+          "root_cause": "要望H→F/Qの追跡はあるが、未定H→Qの追跡が対称に定義されていない。",
+          "finding_id": "F-1004"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "独立した2種の欠落変異（H35削除と結果と直し方削除）がともにexit0/warnings0。全体の完全性を否定するのに十分な反例であり、他項目まで無検証と一般化はしない。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:592 — 固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:86 — 正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。",
+          "recommended_intervention": "hearing-guideの固定H番号を正本として共有定義または同期検査で固定質問を管理し、欠落・別章への移動を検出する。旧文書はwarn、新規の収集完了では欠落解消または未定と確認先の記録を要求。H37以降の追加要望を妨げない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 592
+          },
+          "root_cause": "ID形式・重複の検査に留まり、期待される質問集合との比較がない。",
+          "finding_id": "F-1001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。",
+          "recommended_intervention": "既存SPEC_DETAIL_FIELDSへ不足ラベルを統合し、雛形の空ラベル集合との一致と欠落時warnを回帰検査する。意味充足まで機械判定したとは報告しない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 86
+          },
+          "root_cause": "ラベル契約を文書/雛形/validatorで別々に列挙し、同期テストは見出しと表だけを対象にしている。",
+          "finding_id": "F-1002"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "詳細記入ラベルだけ検査対象から抜ける現象は、複数手書き一覧と見出し中心の同期テストで説明できる。巨大新スキーマより既存定数と雛形の同期が小さい修正。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:86 — 正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。",
+          "recommended_intervention": "既存SPEC_DETAIL_FIELDSへ不足ラベルを統合し、雛形の空ラベル集合との一致と欠落時warnを回帰検査する。意味充足まで機械判定したとは報告しない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 86
+          },
+          "root_cause": "ラベル契約を文書/雛形/validatorで別々に列挙し、同期テストは見出しと表だけを対象にしている。",
+          "finding_id": "F-1002"
+        }
+      ],
+      "score": 0.8,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "ログイン方式を選ぶ→利用対象の確認→対象データの閲覧範囲→未確認権限のQ化まで掘り下げ、認証と認可を混ぜない必要性を確認した。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:151 — 非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:610 — 未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。",
+          "recommended_intervention": "H番号を維持して質問を業務場面・困ること・役割/見てよい相手・使える会社アカウント・失われると困る期間に置換し、画面配置や認証方式/バックアップ頻度は回答から設計者が案として導く。誰でも見てよいとは既定しない。質問雛形を同時更新して同期を検査。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 151
+          },
+          "root_cause": "平易な単語への言い換えと、業務知識だけで答えられる問いの区別が曖昧。",
+          "finding_id": "F-1003"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。",
+          "recommended_intervention": "既存のHxx表記を使い未定Hの一覧と5章の対応を検査し、要件定義のQ行に元Hxxを明記する軽量な契約を追加する。重い第二の状態管理は導入せず、互換性を保つwarnから始める。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 610
+          },
+          "root_cause": "要望H→F/Qの追跡はあるが、未定H→Qの追跡が対称に定義されていない。",
+          "finding_id": "F-1004"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "収集質問/回答の出どころ/仕様記入先/画面/検査へ分解。配置・色・結果表示の記入先はある一方、その最小存在検査が欠ける。大幅な章立て変更は不要。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:86 — 正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。",
+          "recommended_intervention": "既存SPEC_DETAIL_FIELDSへ不足ラベルを統合し、雛形の空ラベル集合との一致と欠落時warnを回帰検査する。意味充足まで機械判定したとは報告しない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 86
+          },
+          "root_cause": "ラベル契約を文書/雛形/validatorで別々に列挙し、同期テストは見出しと表だけを対象にしている。",
+          "finding_id": "F-1002"
+        }
+      ],
+      "score": 0.8,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "役割・流れ・画面・情報・安全・運用の受け皿は存在。被覆集合としてH01-H36と全ラベルを照合すると漏れを見つけられ、章をさらに足す必要はない。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:592 — 固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:86 — 正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "schema",
+          "description": "固定36問の欠落が無警告で通る。サンプル一時コピーからH35行を削除してhearing検査を実行した結果、exit0/errors0/warnings0。停止許容・復旧情報が消えても収集完了扱いになる。",
+          "recommended_intervention": "hearing-guideの固定H番号を正本として共有定義または同期検査で固定質問を管理し、欠落・別章への移動を検出する。旧文書はwarn、新規の収集完了では欠落解消または未定と確認先の記録を要求。H37以降の追加要望を妨げない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 592
+          },
+          "root_cause": "ID形式・重複の検査に留まり、期待される質問集合との比較がない。",
+          "finding_id": "F-1001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "正本と雛形が要求する表示内容/項目と順序/固定領域/色と意味/結果と直し方がSPEC_DETAIL_FIELDSに無い。サンプルの結果と直し方行を削除してall検査を実行しexit0/warnings0を再現。",
+          "recommended_intervention": "既存SPEC_DETAIL_FIELDSへ不足ラベルを統合し、雛形の空ラベル集合との一致と欠落時warnを回帰検査する。意味充足まで機械判定したとは報告しない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 86
+          },
+          "root_cause": "ラベル契約を文書/雛形/validatorで別々に列挙し、同期テストは見出しと表だけを対象にしている。",
+          "finding_id": "F-1002"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "回答主体（業務担当/設計担当）×確度（確認済/仮案）で分類。業務担当が説明できる閲覧者や停止時の困りごとは前者、小窓/認証方式は後者。既定案を確認済に混ぜない設計が有効。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md:151 — 非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "非エンジニアから大きな流れを聞く目的に対し、B1骨組み/B3メニュー個数/B6小窓/B9画面分割/C3ログイン方式/C6バックアップ頻度を先に設計選択させる。業務上の必要性の把握より設計案への同意が回答になる。C10の既定案はログインしていれば機微情報を見られる範囲になり、閲覧範囲を確認しないまま進めやすい。",
+          "recommended_intervention": "H番号を維持して質問を業務場面・困ること・役割/見てよい相手・使える会社アカウント・失われると困る期間に置換し、画面配置や認証方式/バックアップ頻度は回答から設計者が案として導く。誰でも見てよいとは既定しない。質問雛形を同時更新して同期を検査。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+            "line": 151
+          },
+          "root_cause": "平易な単語への言い換えと、業務知識だけで答えられる問いの区別が曖昧。",
+          "finding_id": "F-1003"
+        }
+      ],
+      "score": 0.65,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "素材→H回答→Q未決→仕様→ボードの順を追い、未定HからQへの機械追跡だけが欠けることを確認。追加状態ファイルを作らず既存文書の識別子で接続できる。",
+        "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+        "plugins/system-briefing-book/tests/test_single_source.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json は別目的の詳細技術情報収集。概念の再利用は有効だが大規模統合や丸写しは今回不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/references/document-structure.md — この観点の担当範囲で当該条件を破る追加反例は見つからない。全体PASSの主張ではない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs:610 — 未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "schema",
+          "description": "未定Hは件数集計だけで、hearing5章→要件定義9章Qへの引き渡しを検査していない。document-structureには必ずQへ移すとあるが、ID存在を保証するデータがContextに保存されないため未決事項が途中で落ちうる。",
+          "recommended_intervention": "既存のHxx表記を使い未定Hの一覧と5章の対応を検査し、要件定義のQ行に元Hxxを明記する軽量な契約を追加する。重い第二の状態管理は導入せず、互換性を保つwarnから始める。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+            "line": 610
+          },
+          "root_cause": "要望H→F/Qの追跡はあるが、未定H→Qの追跡が対称に定義されていない。",
+          "finding_id": "F-1004"
+        }
+      ],
+      "score": 0.8,
+      "reuse_surface": "reference",
+      "negative_cases": [
+        "追加要望H37以降を固定質問集合に誤って閉じ込めない。",
+        "過去の短い資料を一律errorにせず不足箇所を可視化する。"
+      ]
+    }
+  ],
+  "reproduction": {
+    "removed_H35": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    "removed_result_and_correction_label": {
+      "exit": 0,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "minimal_order": [
+    "業務質問の正本と雛形を揃える",
+    "質問集合と仕様ラベルを既存契約に接続する",
+    "未定H→Qの追跡を追加する",
+    "欠落変異と既存サンプルの回帰検査"
+  ],
+  "source_edits": false
+}

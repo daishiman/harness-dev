@@ -4,7 +4,7 @@
 毎回同じ工程・同じ型・同じ品質で作る plugin の設計記録。
 利用手順は [plugins/system-briefing-book/README.md](../plugins/system-briefing-book/README.md)、
 章立てと番号の決まりは [references/document-structure.md](../plugins/system-briefing-book/references/document-structure.md)、
-質問・選択肢・既定案・行き先は [run-briefing-hearing の hearing-guide.md](../plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md) が正本である。
+質問・選択肢・聞く回・既定案・行き先は [hearing-catalog.json](../plugins/system-briefing-book/assets/data/hearing-catalog.json)、聞き方と答えの扱いは [run-briefing-hearing の hearing-guide.md](../plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md) が正本である。
 本ノートは「なぜその形にしたか」を残す。規則は理由の説明に要る分だけ引き、細かい決まりは正本へのリンクにする。
 引いた数や名前が正本とずれていないかは [tests/test_system_briefing_book_design_note.py](../tests/test_system_briefing_book_design_note.py) が確かめる。
 
@@ -101,7 +101,7 @@ H26 を案として残し、H28 を `未定` にして決めることへ回す�
 ## 6. 答えの受け皿を先に用意した話
 
 質問を足しても、答えを書く場所が無ければ資料に出てこない。0.2.3 で質問を足したときは、
-質問ごとの行き先を hearing-guide.md の表に書き、受け皿の側も合わせて確かめた。
+質問ごとの行き先を質問の表 (今は hearing-catalog.json の `destinations`) に書き、受け皿の側も合わせて確かめた。
 
 仕様書の `画面区分:`・`稼働構成:`・`監視と復旧:` は前からある欄なので、そこに書く中身
 (件数の見込み、止まったときのしのぎ方など) を足すだけにした。新しく足したのは、要件定義書 7 章 (守ること) の

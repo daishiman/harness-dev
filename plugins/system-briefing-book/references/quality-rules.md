@@ -2,7 +2,7 @@
 
 打ち合わせ資料を 4 つの観点で確かめる: シンプルさ・正確さ・言葉・見た目。
 数で決まるものは検査スクリプトが調べる。数で決まらないものは、作る人が目で確かめ、確認点では briefing-reviewer が別の目で確かめる。
-いちばん大事なのはシンプルさ。読む人が考える量を減らすことを、ほかの観点より先に置く。
+シンプルさは、必要な業務・安全・運用の条件を保ちながら、重複と読む人が考える量を減らすこと。正確さや必要情報の保持を犠牲にしない。
 ここに載せる検査コードは、判断が要るものだけ (メッセージだけでは直し方が決まらないもの)。ほかのコードは、スクリプトが出すメッセージが正本。
 
 ## しきい値
@@ -40,7 +40,7 @@ render-board-png.mjs は warn でも exit 1 になる。[execution-contract.md](
 
 | 決まり | 数 | どこで確かめるか |
 | --- | --- | --- |
-| 最初の版でやること | 3 個から `docs.first_version_items_warn` 個まで | 要件定義 3.1、overview のボード (FIRST-VERSION-MANY) |
+| 最初の版でやること | 3 個から `docs.first_version_items_warn` 個を目安 | 要件定義 3.1、overview のボード (FIRST-VERSION-MANY) |
 | 1 画面の主なボタン | 1 つ | phone / pc のボード (`.btn-primary` が 1 つ) |
 | メニュー | 5 個まで | 仕様書 2.3、pc のボード |
 | 1 ボードの注記 | `board.notes_note` 個を目安に | 全ボード (NOTES-MANY。報告だけ) |
@@ -56,7 +56,7 @@ render-board-png.mjs は warn でも exit 1 になる。[execution-contract.md](
 - 先々への備えは データだけ にする (消さずに残す / 分けて置く / 印を付ける)。備えのために、最初の版に画面・ボタン・メニューを足さない。
 - 項目は打つ量を減らす方向で選ぶ。初期値で埋まる項目は初期値を入れておく。
 - 収まらないときは、文字を小さくしない (FONT-SMALL)。文を短くするか、注記を減らすか、ページを分ける。
-- 機能を足すか迷ったら、足さないほうを選ぶ。ただし `要望` の機能は黙って外さない (上の決まり)。
+- 機能を足すか迷ったら目的と必要性を確かめる。必須の認証・権限・情報保護・復旧や明示の要望を、見た目の件数だけで外さない。画面で伝える量はまとめ方で減らし、仕様の必要条件は残す。
 
 ## 2. 正確さ
 
@@ -90,7 +90,7 @@ render-board-png.mjs は warn でも exit 1 になる。[execution-contract.md](
 | コード | 重さ | 直し方 |
 | --- | --- | --- |
 | EVIDENCE-EMPTY / EVIDENCE-FORMAT | error | 根拠を `素材:<ファイル名>` / `聞き取り:Hxx` / `例` / `決めること:Qxx` のどれかに。書き方は [document-structure.md](document-structure.md) の「根拠の書き方」を読む |
-| FIRST-VERSION-MANY / SCREENS-MANY / PAGES-MANY | warn | 足さずに削る。外した話は 要件定義 6 章の `あとで` と 仕様書 8 章へ回す。`要望` を外すときは 9 章に Q を置く |
+| FIRST-VERSION-MANY / SCREENS-MANY / PAGES-MANY | warn | 重複をまとめ、優先順位と画面分割を確認する。必須の業務・安全・運用は残し、保留の理由を報告する。外す合意がある話だけ6章の `あとで` と8章へ回し、`要望` は9章のQで確認する |
 | SCREEN-BOARD-MISSING | warn | 仕様書 1 章の画面ごとに phone か pc のボードを 1 枚置く。置けないほど多いときは、画面を減らす相談をする ([workflow.md](workflow.md) の「既定のページ構成」) |
 | DATA-MAP-MISSING | warn | data-map のボードを足す |
 | MATERIAL-UNUSED | warn | 素材フォルダの PDF・画像・CSV・文字のうち、どの根拠 (`素材:`) にもボードの `data-source` にも出ていないもの。使ったなら、使った所の根拠に `素材:<ファイル名>` を書く。使わないなら、ヒアリング.md 1 章に理由を書いた行を足し、出どころを `素材:<ファイル名>` にする (Excel は CSV に書き出したほうを見る) |
@@ -105,7 +105,7 @@ render-board-png.mjs は warn でも exit 1 になる。[execution-contract.md](
 | BOARD-LEAD-MISMATCH | warn | ボードの `.lead` を pages の message と同じ文にする。直すときは両方を直す ([board-copy.md](../skills/run-briefing-boards/references/board-copy.md)) |
 | PLAIN-TERM | 語ごとに warn か error | 言い換えるか、要件定義 8 章に意味を書く。下の「3. 言葉」を読む |
 
-SPEC-DETAIL-MISSING は記載の不足を調べるだけで、意味の充足はレビューで確かめる。warnが0でも、同じ配置・操作・状態を再現できることや、基盤・安全対策が確定したことを保証しない。未確定の案とQは最終報告にも残す。
+SPEC-DETAIL-MISSING は記載の不足を調べるだけで、exit0やwarnが0でも内容の網羅性を保証しない。業務条件の変換と網羅性の正本は [document-structure.md](document-structure.md) の「業務回答から仕様へ変換する契約」と「実装へ渡す情報の記入先」。レビューでは回答1件から仕様・画面まで追い、根拠、案、未定、確認先Qが混ざらないかを確かめる。未確定の案とQは最終報告にも残す。
 
 ## 3. 言葉
 
@@ -117,6 +117,8 @@ SPEC-DETAIL-MISSING は記載の不足を調べるだけで、意味の充足は
 - 製品名やサービス名は役割で書く (「会社の Google アカウント」は役割として扱ってよい)。`source` のときだけ、素材に写っている既存ソフトの名前は書いてよい (「2. 正確さ」の表)。
 
 ## 4. 見た目
+
+配色と共通部品の正本は [design-contract.md](design-contract.md) に従う。
 
 検査は `render-board-png.mjs` (結果は `_check/boards.json`)。BOARD-ATTR と BOARD-SCREENS-MISMATCH は validate-briefing-docs.mjs も調べる。検査を通ったあと、PNG を目で見る。
 
@@ -152,7 +154,7 @@ SPEC-DETAIL-MISSING は記載の不足を調べるだけで、意味の充足は
 
 | 重さ | 目安 | 例 |
 | --- | --- | --- |
-| high | このまま渡すと誤解や手戻りが起きる | 最初の版でやることが 7 個ある、素材と違う数字、`masked` なのに実名が写っている、名前を挙げて頼まれた機能が黙って落ちている |
+| high | このまま渡すと誤解や手戻りが起きる | 件数を減らすため必須の業務や安全条件を落としている、素材と違う数字、`masked` なのに実名が写っている、名前を挙げて頼まれた機能が黙って落ちている |
 | medium | 読む人が迷う | 注記の説明が 3 行、画面名がボードと文書で違う、専門用語が説明なしで残る、伝えることの根拠 (実物・数字・要件の札) が無いボード |
 | low | 好みの範囲 | 言い回しの好み、余白の少しの片寄り |
 

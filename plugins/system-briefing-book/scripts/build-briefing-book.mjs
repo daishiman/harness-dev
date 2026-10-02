@@ -60,7 +60,7 @@ import { classesOf, iterNodes, parseHtmlTree, textOf } from "./lib/html-tokens.m
 import { imageSize, imageSizeOfFile } from "./lib/image-size.mjs";
 import { dependencyReceipt, htmlRefs, localRef, externalRef } from "./lib/resource-refs.mjs";
 import { convertDoc, resolveRefs } from "./lib/doc-report.mjs";
-import { composeStandardTokens } from "./lib/palette.mjs";
+import { validateDesignTokens } from "./lib/design-tokens.mjs";
 
 const USAGE = `
 使い方:
@@ -596,8 +596,12 @@ export function build(base, { out = null, allowStale = false } = {}) {
   if (isFile(tokensPath)) {
     tokensCss = readText(tokensPath);
   } else {
-    rep.warn("TOKENS-MISSING", "_src/tokens.css", "tokens.css が無いため、まとめは既定の配色 (standard) で表示します");
-    tokensCss = composeStandardTokens();
+    rep.err("TOKENS-MISSING", "_src/tokens.css", "tokens.css がありません。build-briefing-scaffold.mjs init --refresh-css で briefing.json の palette から作り直してください");
+    tokensCss = "";
+  }
+  // ボードの PNG と同じ配色でなければ、まとめだけ別の色で成功扱いにしない
+  if (isFile(tokensPath)) {
+    for (const message of validateDesignTokens(tokensCss)) rep.err("TOKENS-INVALID", "_src/tokens.css", message);
   }
   if (/<\/style/i.test(tokensCss)) {
     rep.warn("TOKENS-CSS", "_src/tokens.css", "tokens.css に </style が含まれていたので取り除きました");

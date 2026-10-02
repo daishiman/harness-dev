@@ -12,7 +12,13 @@
 
 最初の版は「こういうことがやれます」が伝わる最小限に絞ります。広げたい案は仕様書の「次に広げる候補」に回し、打ち合わせで深掘りします。
 
-見た目は、AI開発エージェントキットの jp-web-design (標準カラーとその規範) を既定にしています。色の正本はキットから写した 1 ファイルなので、どの案件でも同じ見た目になります。案件の色に合わせるときは、基本色だけを上書きします ([assets/css/standard-attribution.md](assets/css/standard-attribution.md))。
+見た目は、AI開発エージェントキットの jp-web-design (標準カラーとその規範) を既定にしています。色の正本はキットから写した 1 ファイルなので、どの案件でも同じ見た目になります。案件の色に合わせるときは、基本色だけを上書きします ([assets/css/standard-attribution.md](assets/css/standard-attribution.md))。色・共通部品・ボード・まとめHTMLの正本と再生成の約束は [design-contract.md](references/design-contract.md) にあります。
+
+聞くのは、使う人、仕事の流れ、見られると困る情報、止まったときの困りごとなど、経験から答えられることです。AIが回答を画面・データ・権限・運用の案へ変換します。技術製品や細かな設計値を回答者に選んでもらう必要はありません。未確認は元の回答と「誰に何を確認するか」につないで残し、「全部おすすめ」でも設計確定とは扱いません。
+
+質問の正本は [hearing-catalog.json](assets/data/hearing-catalog.json)、回答から仕様への変換と網羅領域は [document-structure.md](references/document-structure.md) にまとめています。検査に通ることと、必要な内容が揃ったことは分けて確認します。
+
+このプラグインは打ち合わせ資料と実装への入力を整えます。system-spec-harness は技術要件の詳細な収集・選定・確定、app-excellence や /build-app は実装とアプリの品質確認を担います。それらの手順や技術定義をここへ複製せず、必要なら元H・未決Q・仕様書を引き渡します。利用にそれらの導入は必須ではありません。
 
 ## やらないこと
 

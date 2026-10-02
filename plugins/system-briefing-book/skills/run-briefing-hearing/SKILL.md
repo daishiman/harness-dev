@@ -20,6 +20,7 @@ context: inherit
 manifest: workflow-manifest.json
 reference_refs:
   - references/hearing-guide.md
+  - ../../assets/data/hearing-catalog.json
   - ../../references/document-structure.md
   - ../../references/plain-language.md
   - ../../references/quality-rules.md
@@ -34,19 +35,19 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
   criteria:
     - id: IN1
       loop_scope: inner
-      text: "ヒアリング.md が 1〜5 章の見出しどおりで、H 番号が重複せず、出どころが 聞き取り/素材:<ファイル名>/既定案/未定/要望 のどれかで埋まり、validate-briefing-docs.mjs --stage hearing が exit0 する"
+      text: "ヒアリング.md が 1〜5 章の見出しどおりで、固定H01〜H36が揃いH番号が重複せず、未定Hの確認対象と確認先が5章に残り、出どころが 聞き取り/素材:<ファイル名>/既定案/未定/要望 のどれかで埋まり、validate-briefing-docs.mjs --stage hearing が exit0 する"
       verify_by: script
     - id: IN2
       loop_scope: inner
-      text: "1 回の質問は 4 問以内で、選択肢を出す質問は先頭が「(おすすめ)」つきの既定案になっており、聞いた回数は 6 回と聞き足しの 2 回以内に収まり、聞き足しが核心の 5 問 (A1・A2・A3・A6・A7) だけで 1 問 2 回以内であること、followup は聞き足しを除いて 1 回・4 問まで (初めのヒアリングの回数には数えない) で最後の選択肢が「打ち合わせで聞く」になっており、返した組の H が ヒアリング.md にあって、もとからある H 番号が変わっていないことを、実際の聞き取りで確かめる"
+      text: "1 回の質問は 4 問以内で、選択肢を出す質問は素材に合わせた具体的な選択肢の先頭が「(おすすめ)」つきになっており、聞いた回数は 6 回と聞き足しの 2 回以内に収まり、聞き足しが核心の 5 問 (A1・A2・A3・A6・A7) だけで 1 問 2 回以内であること、followup は聞き足しを除いて 1 回・4 問まで (初めのヒアリングの回数には数えない) で最後の選択肢が「打ち合わせで聞く」になっており、返した組の H が ヒアリング.md にあって、もとからある H 番号が変わっていないことを、実際の聞き取りで確かめる"
       verify_by: live-trial
     - id: OUT1
       loop_scope: outer
-      text: "仕事の流れ、画面の共通ルール (骨組み・ヘッダー・メニュー・フッター・色・モーダル・メッセージ・空/読み込み中)、管理の画面と直す・消す・人の出し入れ、しくみと基盤 (動かす場所・データの置き場所・ログイン・外部とのつなぎ・自動処理・バックアップ・通知)、残す情報と量と見られると困る情報、止まったときの答えが、要件定義 5・7 章と仕様書 1〜4・6・7 章へそのまま写せる粒度で残っていると briefing-reviewer が確認する"
+      text: "仕事の流れ、画面の共通ルール (骨組み・ヘッダー・メニュー・フッター・色・モーダル・メッセージ・空/読み込み中)、管理の画面と直す・消す・人の出し入れ、しくみと基盤 (動かす場所・データの置き場所・ログイン・外部とのつなぎ・自動処理・バックアップ・通知)、残す情報と量と見られると困る情報、止まったときの答えが、catalogのcaptureとdestinationsに沿って要件定義と仕様書へつながり、聞いた事実・設計の案・確認先付きの未定が分かれていると briefing-reviewer が確認する"
       verify_by: evaluator
     - id: OUT2
       loop_scope: outer
-      text: "技術に詳しくない利用者が質問を読んで迷わず答えられ、「全部おすすめ」の 1 回の返事でも最後まで進むことを実際の聞き取りで確かめる"
+      text: "技術に詳しくない利用者が質問を読んで迷わず答えられ、「全部おすすめ」の1回の返事でも案の作成まで進み、未確認の業務条件・安全・保持・復旧が未定Hと確認先に残ることを実際の聞き取りで確かめる"
       verify_by: live-trial
 artifact_delivery:
   contract: artifact-delivery-v1
@@ -91,7 +92,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 
 ## Purpose & Output Contract
 
-文書とボードを書く前に、素材だけでは分からないことを短く聞く。使う人や困りごとのような核心は、答えがあいまいなら促して聞き足す。画面と基盤は既定案つきで短く聞く。
+文書とボードを書く前に、素材だけでは分からないことを短く聞く。使う人や困りごとのような核心は、答えがあいまいなら促して聞き足す。画面や基盤の設計は、業務の答えから案を作る。
 確認点で 決めること が増えたら、今答えられるものだけを聞いて ヒアリング.md に足す。
 
 | 入口 | 引数 | すること |
@@ -101,7 +102,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 
 - 出力: `<資料フォルダ>/ヒアリング.md` だけを書く。ほかのファイルは書かない。
 - 共通UIと実装の前提は hearing-guide.md の「回答に残す設計情報」に沿って既存の回答に残す。未確認の詳細を既定案から確定した事実へ置き換えない。
-- 聞く質問・既定案・聞き方・答えの扱い・欄ごとの書き方の正本は [hearing-guide.md](references/hearing-guide.md)。ここに無い質問を足すのは、素材から必要だと分かったときだけ。
+- 質問・選択肢・聞く回・行き先・収集観点・設計の案の正本は [hearing-catalog.json](../../assets/data/hearing-catalog.json)。聞き方と回答の扱いは [hearing-guide.md](references/hearing-guide.md)。固定質問を増やさず、素材由来の補足・追加要望・未定だけ末尾H番号で足す。
 - 確認の深さを選ぶのと独立レビューは、呼び出し元の run-briefing が持つ。単独で呼ばれたときは結果を見せて終わる。
 
 ## 手順 (新しいヒアリング)
@@ -109,7 +110,7 @@ light / standard / detailed が記録されて `semantic_evaluator_started` へ�
 ### 1. 素材から先に埋める
 
 1. `_check/materials.json`、素材、要望を読む。
-2. hearing-guide.md の質問ごとに、素材で答えが分かるものを先に埋める。出どころは `素材:<ファイル名>`。目安は hearing-guide.md の「6. 素材から先に埋めるときの目安」を読む。
+2. hearing-catalog.json の質問ごとに、素材で答えが分かるものを先に埋める。出どころは `素材:<ファイル名>`。目安は hearing-guide.md の「6. 素材から先に埋めるときの目安」を読む。
 3. 要望や素材で、名前を挙げて頼まれた機能があれば、出どころ `要望` の行にする (hearing-guide.md の「3. 答えの扱い」)。
 4. 埋まらなかった質問だけを聞く。
 
@@ -131,6 +132,7 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" 
 
 - exit 1 なら `_check/docs.json` の errors を見て ヒアリング.md を直し、exit0 になるまで通し直す。
 - exit 2 と exit 3 は、[execution-contract.md](../../references/execution-contract.md) の「3. 終了コード」を読み、そこに書かれたとおりにする。
+- exit0でも固定Hの欠落、空の回答、未定の確認先・引き渡しの不足は修正する。案と未定を含む資料の完成を、すべての設計が確定したとは報告しない。
 - 終わったら次を見せる: ヒアリング.md の場所、聞き取り・既定案・素材・未定・要望 の件数、あとで相談すること の一覧。
 
 ## 手順 (followup)
@@ -152,7 +154,8 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" 
 
 ## Additional Resources
 
-- [hearing-guide.md](references/hearing-guide.md): 質問と既定案の一覧、聞き方と聞き足し、答えの扱い、回の組み方、ヒアリング.md の欄ごとの書き方 (7 章)
+- [hearing-catalog.json](../../assets/data/hearing-catalog.json): 固定質問・選択肢・聞く回・行き先・収集観点・設計案の正本
+- [hearing-guide.md](references/hearing-guide.md): 聞き方と聞き足し、答えの扱い、catalogの使い方、記録の書き方
 - [document-structure.md](../../references/document-structure.md): ヒアリング.md の章立て
 - [plain-language.md](../../references/plain-language.md): 言い換え
 - [quality-rules.md](../../references/quality-rules.md): 既定案の向き (1. シンプルさ)

@@ -1,0 +1,311 @@
+{
+  "schema": "independent-approval-v1",
+  "iteration": 1,
+  "reviewed_at": "2026-10-02T09:46:50.150713+00:00",
+  "reviewer": "independent_approver",
+  "independence": "初期改善提案と実装に参加していない独立レビュー担当。実装を編集していない。",
+  "target": "plugins/system-briefing-book",
+  "verdict": "PASS",
+  "approval_scope": "今回の質問・抽出/引継ぎ契約・生成/検査のリファクタリング。任意業種の全条件が初回面談で確定することを保証しない。",
+  "four_conditions": {
+    "C1": {
+      "name": "矛盾なし",
+      "verdict": "PASS",
+      "evidence": [
+        "catalog全36問とhearing-guideを照合。B1/B6/B9/C3/C6は作業順・誤操作・管理業務・会社アカウント・許容損失の問いに変わり、技術方式はdesign_defaultへ分離。",
+        "document-structure:153-161は回答事実と推論した方式を分け、全部おすすめを未確認条件の合意にしない。"
+      ]
+    },
+    "C2": {
+      "name": "漏れなし",
+      "verdict": "PASS",
+      "evidence": [
+        "以下coverage_mapの必須領域がcaptureと既存記入先に対応。未確認をH/Qへ残す契約を含む。",
+        "固定36IDの全削除変異、未定引継ぎ、空ラベル等の回帰を独立実行。102 passed。"
+      ]
+    },
+    "C3": {
+      "name": "整合性あり",
+      "verdict": "PASS",
+      "evidence": [
+        "質問本文・選択肢・観点・行先・仮案はhearing-catalog.jsonに集約。guideと雛形の手書き36行を削減。",
+        "scaffold:48,137とvalidator:48,613,647が同じcatalog APIを実行時使用。従来ID/章順を保ちH37以降も許容。",
+        "5不足ラベルの同期・空値検出をtest_single_source/test_validateで検証。"
+      ]
+    },
+    "C4": {
+      "name": "依存関係整合",
+      "verdict": "PASS",
+      "evidence": [
+        "未定H→5章→未決Qと確認先→仕様Q、利用者→権限、仕様のQ実在を検査。決定済Qだけでは未定Hが解消しない。",
+        "同一論点H/Qの再利用とhearing/docsの書込所有者をdocument-structure:157-159に規定。"
+      ]
+    }
+  },
+  "coverage_map": [
+    {
+      "domain": "要件・業務フロー・受入",
+      "questions": [
+        "H01",
+        "H02",
+        "H03",
+        "H05",
+        "H25"
+      ],
+      "destination": "要件定義1〜7章",
+      "facts": "役割、現状負担、最初に必要な仕事、範囲外、受渡し/例外、成功判断と担当"
+    },
+    {
+      "domain": "UI/UX・アクセシビリティ",
+      "questions": [
+        "H04",
+        "H07",
+        "H08",
+        "H09",
+        "H10",
+        "H11",
+        "H12",
+        "H13",
+        "H14"
+      ],
+      "destination": "仕様2.1〜2.8と各Sxx",
+      "facts": "端末/場所、操作順、頻度、誤操作、見え方、待機/失敗時の次操作"
+    },
+    {
+      "domain": "ユーザー管理・編集・権限・認証",
+      "questions": [
+        "H01",
+        "H17",
+        "H21",
+        "H24",
+        "H26",
+        "H27",
+        "H28",
+        "H32"
+      ],
+      "destination": "要件定義4、仕様1/3/6安全対策/7.1/7.2",
+      "facts": "立場別の対象範囲、編集/削除の分離、開始/停止/異動/退職、共有端末、会社アカウント"
+    },
+    {
+      "domain": "DB・移行・データ保持",
+      "questions": [
+        "H16",
+        "H23",
+        "H29",
+        "H30",
+        "H31",
+        "H34"
+      ],
+      "destination": "仕様4データ表と本文、6稼働構成、7.2",
+      "facts": "1件の単位、項目/関係/識別、重複、量/増加、移行/照合/戻し、保管条件/履歴"
+    },
+    {
+      "domain": "非機能・セキュリティ・運用",
+      "questions": [
+        "H04",
+        "H15",
+        "H16",
+        "H20",
+        "H22",
+        "H23",
+        "H30",
+        "H32",
+        "H33",
+        "H34",
+        "H35",
+        "H36"
+      ],
+      "destination": "要件定義7、仕様6安全対策/稼働構成、7.2監視と復旧",
+      "facts": "通信、同時利用/待てる時間、会社規則、公開/閲覧、監視担当、許容損失/停止、保持/復元確認"
+    },
+    {
+      "domain": "連携・処理・将来",
+      "questions": [
+        "H06",
+        "H18",
+        "H19",
+        "H25"
+      ],
+      "destination": "仕様5ルール/6処理境界/8、要件定義6",
+      "facts": "方向/頻度/責任、締切、二重送信/失敗、依存と優先順"
+    }
+  ],
+  "initial_findings_resolution": [
+    {
+      "findings": [
+        "F-1001",
+        "H36欠落",
+        "正常例だけの検証"
+      ],
+      "status": "resolved",
+      "evidence": "36ID削除の全変異と章違い/H37の検査を確認。旧資料互換のwarnでありexit0を収集完了としない。"
+    },
+    {
+      "findings": [
+        "F-1002"
+      ],
+      "status": "resolved",
+      "evidence": "表示内容/項目と順序/固定領域/色と意味/結果と直し方をSPEC_DETAIL_FIELDSと同期し空欄/コメント/未定を検出。"
+    },
+    {
+      "findings": [
+        "F-1003",
+        "第4回技術選択",
+        "非機能/役割の抜け"
+      ],
+      "status": "resolved",
+      "evidence": "全36問を業務場面として読み、captureとcoverage_mapで不足観点を確認。2役割固定/全員公開の既定なし。"
+    },
+    {
+      "findings": [
+        "F-1004",
+        "権限表空/未対応",
+        "本文Q参照切れ"
+      ],
+      "status": "resolved",
+      "evidence": "未定H/5章/Q、Qセル未充足/決定済み、役割完全一致/空行/重複、未知Qの回帰を確認。"
+    },
+    {
+      "findings": [
+        "質問/雛形二重管理",
+        "回答と仮案の混同",
+        "章追加での冗長化",
+        "チェックリスト分散",
+        "形式成功と意味充足の混同"
+      ],
+      "status": "resolved",
+      "evidence": "catalogの実行時共有とdocument-structureの既存記入先/変換契約へ共通化。各skillは参照し、exit0と意味レビューを分離。"
+    }
+  ],
+  "scenario_reviews": [
+    {
+      "name": "部署/社外範囲・共有スマホ・退職",
+      "kind": "机上レビュー（実ユーザー実験ではない）",
+      "questions": [
+        "H01 どんな立場の人が関わるか",
+        "H24 立場ごとの見てよいもの/作業",
+        "H17 会社アカウントの有無",
+        "H28 利用開始/終了時の手順",
+        "H27 直せる人/消せる人"
+      ],
+      "possible_facts": "営業・経理・協力会社の各立場と閲覧範囲、共有スマホ、退職時の担当を回答として別々に記録できる。",
+      "proposal": "管理画面の共用/専用、既存アカウント利用、サーバー側の範囲検証は設計者の案。",
+      "handoff": "要件4→仕様7.1に3役割。退職取消時点不明ならH28未定/5章→Q01(H28、確認先:利用管理責任者)→仕様6安全対策と7.2。",
+      "verdict": "PASS"
+    },
+    {
+      "name": "通信が弱い倉庫・締め時刻集中・二重送信・消失",
+      "kind": "机上レビュー（実ユーザー実験ではない）",
+      "questions": [
+        "H04 操作する場所/端末",
+        "H30 忙しいときの人数/仕事量",
+        "H13 結果や直し方",
+        "H18 別ソフトへの受渡し",
+        "H20 消えた記録の戻したい時点",
+        "H35 停止時に困る仕事"
+      ],
+      "possible_facts": "通信断の場面、締め前集中、再送時に困ること、再入力できる期間を業務の言葉で拾える。",
+      "proposal": "下書き/再試行/重複防止/監視復旧を設計案にし、方式や性能値を利用者に選ばせない。",
+      "handoff": "H04/H13/H33→仕様2.7/2.8、H18→5/6処理境界、H30→要件7/仕様6、H20/H35→7.2。不明な許容損失はH20未定→5章→Q02(H20、確認先:倉庫責任者)→復旧案。",
+      "verdict": "PASS"
+    },
+    {
+      "name": "素材なし・全部おすすめ・新規業種",
+      "kind": "机上レビュー（実ユーザー実験ではない）",
+      "questions": [
+        "H01 使う立場",
+        "H02 最近の困る場面",
+        "H03 最初に必要な仕事",
+        "H25 仕事の受渡し"
+      ],
+      "possible_facts": "全部おすすめから得られるのは仮案で進む意思だけ。特定の役割・件数・保持期間・許容停止は事実として得られない。",
+      "proposal": "catalogの選択肢を仮の例として示し、核心は自由入力でも聞ける。回答できなければ仮案と不明を分離して全H行を残す。",
+      "handoff": "H17/H20/H23/H24等を未定と確認先付きで残し5章→Qへ。同じHの一部だけ分かった場合は補足Hを次番号で付け元事実を保持。方式は案(Qxx)。scaffoldは回答空欄/未定で生成し事実を埋めない。",
+      "verdict": "PASS"
+    }
+  ],
+  "tests": {
+    "command": "python -m pytest -q plugins/system-briefing-book/tests/test_hearing_catalog.py plugins/system-briefing-book/tests/test_single_source.py plugins/system-briefing-book/tests/test_validate_briefing_docs.py",
+    "exit_code": 0,
+    "result": "102 passed in 47.14s",
+    "scope": "独立実行した対象3 suites。親の全体suite結果とは別。"
+  },
+  "open_findings": [],
+  "limits": [
+    "意味内容はcatalogと手順の机上レビューで確認。実ユーザーの回答しやすさは実験していない。",
+    "警告なし/exit0は具体的な業務事実や安全条件の合意を証明しない。新規生成物ごとに元Hと案/Qの意味を確認する必要がある。",
+    "初期のfinding_idがない重複指摘は内容で集約して解消を判定した。"
+  ],
+  "source_snapshot": [
+    {
+      "file": "plugins/system-briefing-book/assets/data/hearing-catalog.json",
+      "sha256": "9f9546d730f18800d487993b4d1e62ec3c63481353e1df86f32c9d2077581e79",
+      "mtime_ns": 1790934009089500640
+    },
+    {
+      "file": "plugins/system-briefing-book/assets/templates/hearing.md.tmpl",
+      "sha256": "0f4ded9f6504496986f591b59b3519afe8a8aead20fcda2361181678f09f06ef",
+      "mtime_ns": 1790933745049711663
+    },
+    {
+      "file": "plugins/system-briefing-book/assets/templates/spec.md.tmpl",
+      "sha256": "88831ffd78662ef58639be284f9efcc5fc20faef8d9d48b26690ba38434e2520",
+      "mtime_ns": 1790903341317867560
+    },
+    {
+      "file": "plugins/system-briefing-book/scripts/lib/hearing-catalog.mjs",
+      "sha256": "96faa86036992184d6662662ace84fd22549a19fb7d296933c2dc217e95a0b91",
+      "mtime_ns": 1790933744770619219
+    },
+    {
+      "file": "plugins/system-briefing-book/scripts/build-briefing-scaffold.mjs",
+      "sha256": "71f14f4f443fcda9bd184b28a7ecdf72426e28c47fe528275d864c722e2923be",
+      "mtime_ns": 1790933744771335517
+    },
+    {
+      "file": "plugins/system-briefing-book/scripts/validate-briefing-docs.mjs",
+      "sha256": "33335bd895906fed6da2fdb9a5f0eea4de01b6ef0095d96310394165090d39ea",
+      "mtime_ns": 1790934110198377904
+    },
+    {
+      "file": "plugins/system-briefing-book/references/document-structure.md",
+      "sha256": "bdb76cd2b21b15d69d032ae4ac26856e8d06f445ff344fe288c3da0ef86fb93b",
+      "mtime_ns": 1790933618349605567
+    },
+    {
+      "file": "plugins/system-briefing-book/skills/run-briefing-hearing/references/hearing-guide.md",
+      "sha256": "3aab5d0297d9e8d022e8701bb893874b3db816e31adc5dda1143f47bfe4b167e",
+      "mtime_ns": 1790934009089994020
+    },
+    {
+      "file": "plugins/system-briefing-book/skills/run-briefing-hearing/SKILL.md",
+      "sha256": "b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd",
+      "mtime_ns": 1790934073157674661
+    },
+    {
+      "file": "plugins/system-briefing-book/skills/run-briefing-docs/SKILL.md",
+      "sha256": "b511ff269786710f355c12c9adca96327502ad351203078b70383a48829b2b3a",
+      "mtime_ns": 1790933845671878929
+    },
+    {
+      "file": "plugins/system-briefing-book/skills/run-briefing-docs/references/writing-patterns.md",
+      "sha256": "cefa5e9609b0720a0597c78158b1f3f7c3039528b492f8b7567422affdabf172",
+      "mtime_ns": 1790933716857232709
+    },
+    {
+      "file": "plugins/system-briefing-book/tests/test_hearing_catalog.py",
+      "sha256": "5c0bc15b188e17bfd57afecf727d92a559742846dd9a406e25abefd70014c112",
+      "mtime_ns": 1790934144317966175
+    },
+    {
+      "file": "plugins/system-briefing-book/tests/test_single_source.py",
+      "sha256": "18e5df6e90b8035f5805de0f447e1e6ccaa2ccc7df9f3320862cb73885336447",
+      "mtime_ns": 1790893116750845287
+    },
+    {
+      "file": "plugins/system-briefing-book/tests/test_validate_briefing_docs.py",
+      "sha256": "a5d06c04e5da0bc5ff6378ec35e40a88d70e76dce13ee1e04dba2fa235b74178",
+      "mtime_ns": 1790934110259875244
+    }
+  ]
+}

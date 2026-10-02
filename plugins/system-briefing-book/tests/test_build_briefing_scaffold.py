@@ -5,6 +5,8 @@ import json
 import re
 from pathlib import Path
 
+import pytest
+
 from conftest import PLUGIN_ROOT, node_eval, run_script
 
 SCRIPT = "build-briefing-scaffold"
@@ -134,6 +136,89 @@ def test_palette_is_recorded_relative_and_survives_a_move(tmp_path: Path) -> Non
     assert "briefing.json の palette" in json.dumps(out, ensure_ascii=False) + err, "どこから来た値かを言う"
 
 
+def overlay(root: Path, css: str = ":root { --p-brand-indigo: #345678; }\n", name: str = "custom.css") -> Path:
+    path = root / name
+    path.write_text(css, encoding="utf-8")
+    return path
+
+
+def snapshot(base: Path) -> dict:
+    return {p.relative_to(base): p.read_bytes() for p in base.rglob("*") if p.is_file()}
+
+
+def test_palette_paths_use_cli_cwd_and_manifest_directory(tmp_path: Path, monkeypatch) -> None:
+    """--palette の相対は今いるフォルダ、記録した palette の相対は briefing.json のフォルダから数える。同じ CSS なら衝突しない。"""
+    materials = make_materials(tmp_path)
+    overlay(tmp_path)
+    monkeypatch.chdir(tmp_path)
+    assert init(materials, "--palette", "custom.css")[0] == 0
+    manifest_path = materials / "打ち合わせ資料" / "briefing.json"
+    assert json.loads(manifest_path.read_text(encoding="utf-8"))["palette"] == "../../custom.css"
+    rc, out, err = init(materials, "--palette", "custom.css", "--refresh-css")
+    assert rc == 0, (out, err)
+    assert "#345678" in (materials / "打ち合わせ資料/_src/tokens.css").read_text(encoding="utf-8")
+    assert json.loads(manifest_path.read_text(encoding="utf-8"))["palette"] == "../../custom.css"
+
+
+def test_conflicting_palette_is_rejected_before_any_writes(tmp_path: Path) -> None:
+    materials = make_materials(tmp_path)
+    init(materials)
+    custom = overlay(tmp_path)
+    base = materials / "打ち合わせ資料"
+    (base / "仕様書.md").unlink()
+    before = snapshot(base)
+    rc, out, err = init(materials, "--palette", str(custom), "--refresh-css")
+    assert rc == 2 and out["status"] == "usage-error", (out, err)
+    assert "briefing.json" in out["message"] and "--refresh-css" in out["message"]
+    assert snapshot(base) == before, "止めるときは、消した雛形も作り直さない"
+
+
+def test_reinit_keeps_tokens_when_original_is_missing(tmp_path: Path) -> None:
+    """配った資料を再 init するだけなら、配色の CSS が動いていても tokens.css を守る。作り直すときは止める。"""
+    materials = make_materials(tmp_path)
+    custom = overlay(tmp_path)
+    init(materials, "--palette", str(custom))
+    tokens = materials / "打ち合わせ資料/_src/tokens.css"
+    before = tokens.read_bytes()
+    custom.unlink()
+    rc, out, err = init(materials)
+    assert rc == 0, (out, err)
+    assert "_src/tokens.css" in out["skipped"] and out["stale_css"] == []
+    assert tokens.read_bytes() == before
+    rc, out, _ = init(materials, "--refresh-css")
+    assert rc == 2 and out["status"] == "usage-error" and "briefing.json の palette" in out["message"]
+    assert tokens.read_bytes() == before
+
+
+INVALID_OVERLAYS = {
+    "cycle": ":root { --text-heading: var(--text-brand); }\n",
+    "undefined": ":root { --p-brand-indigo: var(--nai); }\n",
+    "import": '@import "other.css";\n',
+}
+
+
+@pytest.mark.parametrize("css", INVALID_OVERLAYS.values(), ids=INVALID_OVERLAYS.keys())
+def test_invalid_palette_is_rejected_before_output_creation(tmp_path: Path, css: str) -> None:
+    materials = make_materials(tmp_path)
+    rc, out, err = init(materials, "--palette", str(overlay(tmp_path, css)))
+    assert rc == 2 and out["status"] == "usage-error", (out, err)
+    assert "配色の CSS を確認してください" in out["message"]
+    assert not (materials / "打ち合わせ資料").exists()
+
+
+def test_invalid_refresh_preserves_all_existing_files(tmp_path: Path) -> None:
+    materials = make_materials(tmp_path)
+    custom = overlay(tmp_path)
+    init(materials, "--palette", str(custom))
+    base = materials / "打ち合わせ資料"
+    (base / "仕様書.md").unlink()
+    before = snapshot(base)
+    custom.write_text(INVALID_OVERLAYS["cycle"], encoding="utf-8")
+    rc, out, err = init(materials, "--refresh-css")
+    assert rc == 2 and out["status"] == "usage-error", (out, err)
+    assert snapshot(base) == before
+
+
 def test_init_usage_errors(tmp_path: Path) -> None:
     rc, out, _ = run_script(SCRIPT, "init", "--materials", str(tmp_path / "なし"), "--title", "x")
     assert rc == 2 and out["status"] == "usage-error"
@@ -216,18 +301,28 @@ def test_boards_sample_flag_follows_data_policy(tmp_path: Path) -> None:
     }, "札は masked のときだけ置く。値が違えば置換子を残して知らせる"
 
 
-def test_hearing_template_matches_guide() -> None:
-    guide = (PLUGIN_ROOT / "skills/run-briefing-hearing/references/hearing-guide.md").read_text(encoding="utf-8")
-    section = guide.split("## 4. 質問の一覧", 1)[1].split("\n## 5.", 1)[0]
-    asked = re.findall(r"^\| ([A-D]\d+) \| (H\d{2}) \| ([^|]+?) \|", section, re.M)
-    numbers = sorted(no for _, no, _ in asked)
-    assert numbers == [f"H{i:02d}" for i in range(1, len(asked) + 1)], "番号は H01 から欠けも重なりもない"
-    legacy = [f"{c}{i}" for c, n in (("A", 6), ("B", 8), ("C", 6), ("D", 4)) for i in range(1, n + 1)]
-    by_symbol = {sym: no for sym, no, _ in asked}
-    assert [by_symbol[s] for s in legacy] == [f"H{i:02d}" for i in range(1, 25)], "もとからある H01〜H24 は変えない"
-    template = (PLUGIN_ROOT / "assets/templates/hearing.md.tmpl").read_text(encoding="utf-8")
-    rows = re.findall(r"^\| (H\d{2}) \| ([^|]+?) \|", template, re.M)
-    assert rows == [(no, q) for _, no, q in asked], "雛形の行は hearing-guide 4 章の表と同じ順・同じ番号・同じ文"
+def test_hearing_scaffold_uses_catalog_without_turning_proposals_into_answers(tmp_path: Path) -> None:
+    catalog = json.loads((PLUGIN_ROOT / "assets/data/hearing-catalog.json").read_text(encoding="utf-8"))
+    materials = make_materials(tmp_path)
+    rc, _, err = init(materials)
+    assert rc == 0, err
+    document = materials / "打ち合わせ資料" / "ヒアリング.md"
+    text = document.read_text(encoding="utf-8")
+    assert "{{" not in text
+    found = re.findall(r"^\| (H\d{2}) \| ([^|]+?) \| ([^|]*) \| ([^|]+?) \|$", text, re.M)
+    assert found == [(q["id"], q["question"], "", "未定") for q in catalog["questions"]]
+    for section in catalog["sections"]:
+        body = text.split(f"## {section['title']}\n", 1)[1].split("\n## ", 1)[0]
+        assert re.findall(r"^\| (H\d{2}) \|", body, re.M) == [
+            q["id"] for q in catalog["questions"] if q["section"] == section["id"]
+        ]
+    # Answers in an existing interview remain authoritative on a second init.
+    edited = text.replace("|  | 未定 |", "| 実際の聞き取り結果 | 聞き取り |", 1)
+    document.write_text(edited, encoding="utf-8")
+    rc, out, err = init(materials)
+    assert rc == 0, err
+    assert "ヒアリング.md" in out["skipped"]
+    assert document.read_text(encoding="utf-8") == edited
 
 
 def test_kicker_for_single_hidden_page_has_no_number() -> None:

@@ -21,6 +21,7 @@ manifest: workflow-manifest.json
 schema_refs:
   - ../../schemas/briefing.schema.json
 reference_refs:
+  - ../../references/design-contract.md
   - references/board-copy.md
   - ../../references/workflow.md
   - ../../references/page-patterns.md
@@ -132,6 +133,8 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" 
 ## boards: ボードを組んで PNG にする
 
 ### 1. 雛形を作る
+
+[design-contract.md](../../references/design-contract.md) の標準デザインと共通部品を使う。CSSの更新や案件の配色変更も同じ契約に従う。
 
 ```bash
 node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/build-briefing-scaffold.mjs" boards --dir "<資料フォルダ>"

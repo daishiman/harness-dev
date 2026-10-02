@@ -5,8 +5,8 @@
 引用は書いた時点では正しくても、正本が動けば静かに古くなる。ここでは散文のうち
 **正本から導出できる主張だけ** を突き合わせ、乖離を落として気づけるようにする。
 
-期待値はこのテストに直書きせず、hearing-guide.md・SKILL.md・document-structure.md・
-schema から組み立てる。直書きすると正本とテストを一緒に直すだけで緑になり、
+期待値はこのテストに直書きせず、hearing-catalog.json・hearing-guide.md・SKILL.md・
+document-structure.md・schema から組み立てる。直書きすると正本とテストを一緒に直すだけで緑になり、
 ノートだけが古いまま取り残される。
 """
 
@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "plugins" / "system-briefing-book"
 DOC = ROOT / "doc" / "system-briefing-book-設計ノート.md"
 HEARING = PLUGIN / "skills" / "run-briefing-hearing"
+CATALOG = PLUGIN / "assets" / "data" / "hearing-catalog.json"
 
 
 def _doc_text() -> str:
@@ -29,15 +30,13 @@ def _doc_text() -> str:
 
 
 def _question_rows() -> list[dict[str, str]]:
-    """hearing-guide.md 4 章の質問表を読む (記号・番号・質問・選択肢・聞く回・行き先)。"""
-    guide = (HEARING / "references" / "hearing-guide.md").read_text(encoding="utf-8")
-    rows = []
-    for line in guide.splitlines():
-        if not re.match(r"^\| [A-D]\d+ \| H\d{2} \|", line):
-            continue
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        rows.append({"id": cells[0], "h": cells[1], "round": cells[4]})
-    assert rows, "hearing-guide.md の質問表が読み取れなかった (表の書式が変わった可能性)"
+    """質問の正本 hearing-catalog.json を読む (記号・番号・聞く回)。聞かない質問の回は空にする。"""
+    catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+    rows = [
+        {"id": q["key"], "h": q["id"], "round": "" if q["round"] is None else str(q["round"])}
+        for q in catalog["questions"]
+    ]
+    assert rows, "hearing-catalog.json の questions が読み取れなかった (形が変わった可能性)"
     return rows
 
 
@@ -86,11 +85,11 @@ def test_h_number_ranges_follow_hearing_guide() -> None:
     total = len(rows)
 
     numbers = sorted(int(r["h"][1:]) for r in rows)
-    assert numbers == list(range(1, total + 1)), "質問表の H 番号が H01 から連番になっていない"
+    assert numbers == list(range(1, total + 1)), "質問の H 番号が H01 から連番になっていない"
 
-    # もとからの質問の範囲は正本の文から読む。足した質問の範囲と続きの番号は、
+    # もとからの質問の範囲は hearing-guide.md の文から読む。足した質問の範囲と続きの番号は、
     # その範囲と質問の総数から導く。
-    m = re.search(r"は H01〜H(\d{2})、あとから足した", guide)
+    m = re.search(r"H01〜H(\d{2})を含む既存の番号", guide)
     assert m, "hearing-guide.md から、もとからの質問の H 番号の範囲が読み取れなかった"
     orig = int(m.group(1))
     assert f"H01〜H{orig:02d}" in text
