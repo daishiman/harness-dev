@@ -2,19 +2,19 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "a659099d131b8c0511c65a85e71435490a894e419b8159416eabd2b7d77d3865"
+    "skill_md_sha256": "8c4d4c3128842df7c7114490fec6cd1df60829911a40590858131c4f63431513"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 4
   },
   "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-08-24T13:10:00Z",
+  "reviewed_at": "2026-10-04T10:17:03Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,16 +26,25 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "本ブランチの diff は見出し「目的と出力契約」→「Purpose & Output Contract」の改名 1 点のみで、他 4 skill と同一の見出し規約へ揃える純粋な整合変更である。本文への参照 (アンカー・目次的言及) に断絶が生じていないことを実読で確認した。",
-      "既存の goal_seek block・feedback_contract IN1/IN2/OUT1/OUT2・pair skill (assign-plugin-plan-evaluator) との contract 語彙 (evaluated_inputs[]・鮮度台帳・fingerprint/PASS receipt) は変更されておらず、前回 review で確認済みの宣言↔実装 parity が維持されている。"
+      "install の既定値を specfm.default_install_contract() に、値域を specfm.INSTALL_* に、P13 条項を specfm.install_release_obligations() に集約している。gate (check-spec-gates.check_install)、skeleton (render-spec-skeleton.py が check_install を importlib で再利用)、P13 条項の 3 者が同じ正本から派生する構造で、2 つ目の validator を作っていない。",
+      "check-spec-gates.py は P13 本文の記載ではなく、既存 producer の derive() が生成する P13 実行 leaf と、保存済み task-graph の両方を index 宣言と突合する。これにより「書いたが consumer が実行しない」「古い graph が新しい条項を隠す」という 2 つの抜け道を機械的に塞いでいる (主要ルール 4・io-contract・plugin-creator-contract・R3 prompt の記述が一致)。",
+      "Codex を opt-out しても実導入先 (platforms) が絞られるだけで、両 manifest と両 catalog (harness-local / codex-repo) は維持される。この非対称を gate が registries 両方必須として強制しており、SKILL.md の配布注記・plugin-creator-contract の非配布行・validate-plugin-completeness.py の NEVER_DISTRIBUTE (plugin-dev-planner を含む) と矛盾しない。local catalog 登録も実在を確認した (harness-local と codex-repo の両方に plugin-dev-planner がある)。",
+      "旧 symlink / make sync の記述を sync-native-surfaces.py と make native-surfaces-{check,apply} へ置き換え、Gotchas と配置先の 2 箇所を同期している。Makefile のターゲットと script の実在も確認した。",
+      "ゴールデン例 examples/sample-plan に install 契約・受入確認行・P13 の 5 条項を追加している。check-spec-gates / check-spec-frontmatter / check-spec-matrix-coverage (--self-test と PLAN) / check-build-handoff / validate-task-graph がすべて exit0 で、derive() の結果と保存済み task-graph.json は 212 nodes で一致した。skill の tests も 911 passed / 2 skipped。"
     ],
     "negative_feedback": [
-      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記 (上限であって規定回数ではない) がゴールシークループ節のみにあり、局面 R4 節の同語には無い非対称が残存する。今回の見出し改名 diff では解消も悪化もしていないため、前回 verdict の low finding をそのまま引き継ぐ。"
+      "[low / omission] SKILL.md の goal-seek 完了チェックリストには install 契約が明示されていない。L233 は plugin_meta の中身を「manifest / marketplace / cachebuster / validate_plugin」と列挙するだけで、新しく core になった plugin_meta.install も、install 義務が P13 の実行 leaf へ届いていることも書かれていない。ゴール節・Purpose の完了条件・L304 の check-spec-gates コメント (quality_gates + harness 深掘り) も同様で、記述は主要ルール 4 と R3 prompt にしかない。L240 の core gate exit0 で機械的には担保されるため low とした。直し方: L233 の列挙に install を加えるか、「P13 実行 leaf (fixed-13-phase は checklist、task-graph-derived は direct-task) へ install 義務が届いていることを check-spec-gates が確認した」という 1 行を足し、L304 のコメントも更新する。",
+      "[low / omission (移行方針)] install を core に昇格したことで、既存の tracked plan 16 件のうち 15 件 (dogfood の plugin-plans/plugin-dev-planner を含む) が check-spec-gates で「plugin_meta.install が非空 dict でない」として exit1 になる。前回 feedback_deploy を core に昇格したときは既存 plan も移行済みで、今回はその前例と揃っていない。ただし CI は plugin-plans/ を gate しておらず、主要ルール 4 の「新規・改善とも」により次回の --mode update で回収されるため low とした。直し方: legacy plan の扱い (次回 update で install、P13 条項、task-graph 再生成を Edit 差分で追加する、または一括移行する) を SKILL.md か io-contract に 1 文で明記する。",
+      "[low / inconsistency] 主要ルール 4 の「fixed13」は、shape marker の正式値 fixed-13-phase (specfm.SHAPE_MARKERS / derive-task-graph._FIXED_SHAPE) の略記である。SKILL.md には shape_marker の定義や言及が他に無いため、読み手が task-graph-derived との対を正式値と結び付けられない。直し方: 「index の shape_marker が fixed-13-phase のときは…、task-graph-derived のときは…」と正式値で書く。",
+      "[low / smell] fixed-13-phase の derive() は P13 チェックリストの各項目を entities_covered の component ごとに複製する。そのため P13 に component を載せた plan では、plugin 単位の install 義務 (実環境 install を含む) が N 個の verification-claim leaf に増え、route_ref も component に誤って帰属する。現行の gate は集合包含で判定するため重複を許してしまう。sample は entities_covered: [] なので表面化していない。直し方: R3 か主要ルール 4 に「install 義務を持つ P13 は entities_covered: [] (plugin 単位)」と明記するか、gate で P13 install leaf の entity_ref=None を要求する。",
+      "[low / smell / 依存] check-spec-gates.py は target_plugin_slug を handoff-run-plugin-dev-plan.json から読む。このため index/inventory の値域 gate が handoff の生成順序に暗黙に依存する。R3 prompt には書かれているが、SKILL.md の L304 コメントや IN2 からは読み取れない。slug の正本は R1 が固定する goal-spec で、handoff はその派生である。直し方: SKILL.md に依存を明記するか、gate 側で goal-spec の target_plugin_slug を優先し、handoff と一致しなければエラーにする。",
+      "[low / smell] P13 の義務条項 (specfm.install_release_obligations) は script を名前だけで参照している。実体は 2 つのディレクトリに分かれており (install-local-plugins.py と sync-plugin-platforms.py は plugins/harness-creator/scripts/、build-plugin-release.py と build-local-marketplace.py は scripts/)、acceptance_criterion だけを読む consumer には実行パスが一意に決まらない。CLI 引数 (--plugin/--platform/--claude-config-dir/--codex-home、--only/--check、--repo-root/--all/--check) が実在することは確認済み。直し方: 条項に repo-root 相対パスを含める。",
+      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記 (上限であって規定回数ではない) は依然ゴールシークループ節 (L253) にしかなく、局面 R4 節 (L350) の同じ語には付いていない。今回の diff では解消も悪化もしていないため、前回 verdict の low finding をそのまま引き継ぐ。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が current SKILL.md 全文・git diff origin/main (見出し改名のみ)・feedback_contract IN1/IN2/OUT1/OUT2 を 1 回の focused combined review で読み、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を同時判定して elegance/rubric の 2 verdict へ分離投影した。30 思考法は実施しておらず、実施も申告しない。実確認: sha256 が期待値と一致、主要参照パス (verification-obligation-protocol.md ほか) の実在 spot-check。新規 finding 0、既存 low 1 件 (最大 3 周注記の非対称) を引き継ぎ、high/medium 0。PASS の射程は design claim (静的設計 adequacy) に限る。"
+  "notes": "ブランチ変更で stale になった verdict の refresh。builder とは別 context の独立 evaluator が 1 回の focused combined review を行い、(a)矛盾 (b)漏れ (c)記述規約整合 (d)依存関係整合 (e)rubric high severity を同時に判定して elegance/rubric の 2 verdict へ分けて投影した。30 思考法は実施しておらず、実施したとも申告しない。読んだもの: 現行 SKILL.md 全文 (sha256 8c4d4c31…1513 を書込直前に再確認)、git diff origin/main (分岐元 = origin/main 先端 c99049a、SKILL.md の 4 hunk = 配布注記、主要ルール 4 の install 契約、Gotchas と配置先の native surface 同期)、関連する差分 (prompts R1/R3、references の component-domain / io-contract / phase-lifecycle / plugin-creator-contract、scripts の specfm / check-spec-gates / render-spec-skeleton、examples/sample-plan の index / P13 / task-graph)、derive-task-graph.py の checklist 射影部。実施した確認: 参照パスの実在 spot-check (sync-native-surfaces / install-local-plugins / sync-plugin-platforms / build-plugin-release / build-local-marketplace / validate-plugin-completeness / 両 catalog / Codex manifest / verification-obligation-protocol / pipeline-boundary-contract / goal-seek-paradigm / render-spec-browser / project-task-status / lint-sibling-coupling / run-plugin-validate-strict.sh / Makefile の native-surfaces ターゲット)、条項中 CLI 引数の実在、sample-plan への決定論 gate 実行 (全 exit0)、skill tests 実行 (911 passed / 2 skipped)、既存 plugin-plans への check-spec-gates 実行 (15/16 件が install 起因で exit1)。結果は high/medium 0 件、low 7 件 (新規 6、引き継ぎ 1)。PASS の射程は design claim (SKILL.md と参照契約の静的設計 adequacy) に限る。実環境・隔離環境の install 実行や consumer 側の P13 leaf 実行は検証していない。"
 }

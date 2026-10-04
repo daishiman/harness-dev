@@ -2,41 +2,50 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "d7294684aea546c190e27e84fd2bdba14b856433bd03da19cecceca9d35010c7"
+    "skill_md_sha256": "1100232479c0cde8c9c5e0eec724e8d0efd1de8f1951f24c76518f45c4379a0a"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 1,
-    "dependency_break": 0,
-    "smell": 2
+    "omission": 3,
+    "inconsistency": 6,
+    "dependency_break": 1,
+    "smell": 3
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-09-10T09:01:45Z",
-  "iterations": 2,
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T10:35:38Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1", "OUT2"],
+    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
     "positive_feedback": [
-      "origin/main と PR ブランチの合流が、同一 SKILL.md の別々の層で衝突なく成立している。git diff origin/main -- 当該 SKILL.md の実測差分は PR 側の変更（fork: subagent → inline / script_refs 追加 / Task への plugin_root 引き渡し規定 / Phase3-dialogue の所有者付け替え / ゴールシーク配線の親所有化 / 検証 bash 追加）だけで、main 側の IN1 記述（--type <weekly|monthly|quarterly>・bimonthly alias・title-label 照合・任意 --peer）は無傷。実行体の所有権と検証器の契約が別の関心事に分離されているため両立している。",
-      "fork: inline への変更が宣言だけで終わらず検証器まで揃っている。validate-inline-goal-seek-anchor.py を実走し、正常 rc=0 / progress 不在 rc=1「absence-as-violation」/ original_goal drift rc=1 を確認した。inline goal-seek が失う SubAgent 境界の隔離を SHA-256 アンカーで補っており、inline 化する他 skill へ横展開する価値がある。",
-      "SKILL.md 記載の検証コマンドが実 path で走る形になっている。${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py は script_refs の ../../scripts/... と同一実体を指し、引数は frontmatter goal_seek の同名キーの値と文字列一致する。${CLAUDE_PROJECT_DIR:?...} で caller root 未設定を即失敗させ、literal placeholder が shell へ漏れる経路も塞いである（runtime_root_policy: host-skill-path に整合）。",
-      "IN1 の停止条件が実行で裏取りできる。golden-sample-weekly.md の複製に対し --type weekly rc=0 / --type quarterly rc=1（種別取り違えを名指しで検出）/ --type bimonthly rc=1（後方互換 alias が抜け道になっていない）/ --peer 付きでも rc=0（「rc には影響しない」と実挙動が一致）。",
-      "責務の付け替えが下流成果物まで追従している。agents/phase3-coordinator.md は tools: Read のみで親 context の所有権を明記し、prompts/R1・R2・R3・R5 の入力表も『親 context が受領』へ揃った（R4 は該当記述なし）。grep -rn 'coordinator 経由' plugins/ubm-goal-setting/ はヒット 0 で、workflow-manifest.json の phase3-dialogue も同じ所有権モデル。宣言・agent・prompt・manifest の 4 箇所が一致し、単一責務の境界が文書側でも保たれている。",
-      "前回 low findings への対応が文面合わせでなく実体を伴っている。追記された 2 資源はいずれも実在し、resource-map.yaml は read_when 付きの Progressive Disclosure 索引で注記と中身が合う。加えて現 SKILL.md から当該 2 行だけを旧文へ戻した文字列の sha256 が前 iteration の対象 sha 2130c7cb… と厳密一致することを確認しており、修正が申告どおり 2 行に限定され便乗変更が無いことを暗号学的に裏取りできている。"
+      "feedback_contract IN3 が判定可能になった。『期報と月報が揃っている場合…(週報があれば --weekly も渡して三層で照合する)』と書き、除外条件を『期報か月報のどちらかが無い場合だけこの基準を適用しない』に限定している。適用するかどうかが入力ファイルの有無だけで一意に決まる。本文 IN3・Gotchas・Phase5 の行・output-formatter の Step 3 と完了条件・output-formats の Step E も同じ条件で、評価者と実行者が同じ基準で判定できる。rc=3 を PASS としないことと、抽出不可を rc=1 にすることも criterion 本文に残っている。",
+      "frontmatter の manifest: で宣言した workflow-manifest.json が本文の手順に追随した。phase5-validate の gate は IN1・IN2・（条件付きで）IN3 の 3 本の rc=0 を要求し、rc=3 を失敗と明記した。fatal_exit_codes は [1,2,3]。phase4b-submission（monthly のときだけ）が追加された。phase4-format の gate は件数を書かない形に、phase2b は 13 観点になった。lint-skill-runtime-profiles は rc=0 で、resourceIds 22 件はすべて実在した。宣言した機械可読の manifest と本文の食い違い（前回の medium）は、gate の面では解消した。",
+      "script_refs の 4 件・reference_refs の 6 件・schema_refs の 2 件・responsibility_refs の 5 件・subagent_refs の 4 件は、すべて実在するファイルに解決した。Additional Resources のテストパスは ../../tests/ に直り、実体を指す。改名後の名前（validate-goal-linkage.py / validate-cross-level.py）は frontmatter・本文・manifest・実ファイル・テストで一致している。lint-script-naming は VIOLATION=0。",
+      "criteria の 5 件はどれもこのスキル固有の内容で、verify_by（script / script / script / test / live-trial）が付いている。lint-feedback-contract --all は rc=0 で当該スキルへの指摘はない。description は『〜したいときに使う』の形式で、lint-skill-description は OK=187 / VIOLATION=0。本文は 251 行で上限内。Key Rules は内容規則を references/output-formats.md の節へ名指しで外出ししていて、Progressive Disclosure を満たす。",
+      "artifact_delivery の state machine と external-mutation-guard ブロックが frontmatter・本文・manifest の 3 箇所にそろっている。external-mutation-guard の CLI も実在した。3 本の検査器の受け入れテストは pytest で 125 passed。"
     ],
     "negative_feedback": [
-      "[inconsistency/low・本 PR の主題外] scripts/validate-goal-output.py のヘッダ `# version:` が 0.2.3 のまま据え置き。SKILL.md は script_refs でこの script を宣言し IN1 の停止条件がその挙動に依存するため、どの版の検査規則を指しているかが追えない。本 merge 以前からの持ち越しのため今回は意図的に未着手（team-lead 判断）。未解決 finding として保持する。",
-      "[smell/low・本 PR の主題外] 同 script L1139 のコメントが、存在しない `--version` フラグを argparse が SystemExit(0) を投げる契機として挙げている（実測では rc=2、rc=0 は --help のみ）。持ち越しのため未着手、未解決として保持。",
-      "[smell/low・本 PR の主題外] 同 script L301 のコメントに `prefix_any` という識別子様のトークンが残るが、コード側に実体が無い（grep 1 件＝当該コメントのみ）。持ち越しのため未着手、未解決として保持。"
+      "[low / inconsistency] IN3 を統一した後も、『3本揃っている場合』を起点にした旧い言い回しが 4 箇所に残っている。output-formats.md L466、data-contract.md §4.4 L488-489（『3本同時に当てて』）、validate-cross-level.py ヘッダの purpose（『3ファイルを同時に読み』）、SKILL.md 本文 IN3 の『三層で並記して照合し』の 4 つ。どれも直後に『週報が無ければ --weekly を省略』があるので criterion の決定可能性は損なわない。ただ、書き出しの一文だけでは 3 本必須に読める。直し方: 『期報と月報が揃っている場合（週報があれば --weekly も渡して三層で）』に置き換える。",
+      "[low / inconsistency・前回から一部未解消] Phase の名前がそろっていない。SKILL.md と manifest は Phase4-format / Phase4b-submission / Phase5-validate / Phase6-daily-update だが、data-contract §4.4 は『Phase 4 完了時』『Phase 4 の最後に validate-cross-level.py』と書く。execution-prompts.md のフロー図も Phase 4 に検証と保存をまとめていて、Phase4b・5・6 を持たない。manifest の phase5-validate の resourceIds が data-contract.md を指すので、参照先で Phase 名が違う。origin/main 時点からある食い違い。直し方: data-contract §4.4 を Phase 5 表記に直すか、SKILL.md に対応関係を 1 行書く。",
+      "[low / omission・前回から一部未解消] 出力契約とゴールが validate-goal-output と validate-goal-linkage の 2 本の rc しか挙げておらず、IN3（該当時の validate-cross-level.py の rc と引数）が無い。Phase5 の行には足された。直し方: 出力契約に『期報と月報が揃っている場合は validate-cross-level.py の rc と引数（揃っていなければ不適用と記録）』を足す。",
+      "[low / inconsistency] manifest の phase5-validate の command が 3 本を && でつないでいる。このため 1 つの終了コードしか得られず、どの検査器の rc かを区別できない。IN3 を適用しないときに返る 0 も、cross-level の rc=0 と区別できない。同じ phase の output（each script の raw rc）と SKILL.md の『各 rc の値そのものと引数を記録』に、command が応えられない。gate の合否は正しく出るので low。直し方: 3 本を別々の command にするか、『> file 2>&1; echo rc=$?』の形にそろえ、IN3 不適用は not_applicable と記録する。",
+      "[low / inconsistency・前回から未解消（前回 medium の残り）] manifest の phase4-format の output が『21-item hybrid structure』のまま。同じ manifest の phase4b の『21 official blocks』や、このブランチで直した resource-map.yaml の『公式21ブロック』と語がそろわない。直し方: 『hybrid structure with the 21 official blocks』にする。",
+      "[low / dependency_break] data-contract.md L329・L332 の『tests/test_validate_cross_level.py』が、同じファイルのパスの書き方（スキル基準）では実在しない skills/run-ubm-goal-setting/tests/ を指す。SKILL.md 側は直ったが、references 側に同じ形が残っている。直し方: ../../tests/... にするか、『plugin 直下』と注記する。",
+      "[low / omission] IN3 の適用範囲の変更と manifest の phase4b・phase5 の更新が version-history.md に記録されていない。最新行 26.0.1 は『改名・判定は不変』としか書いていないので、criterion の適用範囲が広がったことを履歴から追えない。",
+      "[low / omission・前回から未解消（前回の記述を訂正）] （提出）付きの既存ファイルを archive/ へ移すことは、output-formatter Step 4 項目4に割り当てがある。ただし SKILL.md の境界・出力契約・manifest の phase・external mutation preview の対象には出てこない。vault 上のファイル移動が宣言した境界の外にある。",
+      "[low / inconsistency・前回から未解消] validate-goal-output.py のヘッダが version 0.2.3 のまま。このブランチで C4/C5/S3 の対象範囲（（提出）を除外）を変えたのに、版数が上がっていない。",
+      "[low / inconsistency・前回から未解消・diff 外] Gotchas の『書き込み保護…許可は目標設定/ 保存と Daily.md embed 更新のみ』が、hook の実際の許可範囲（05_Project/ 全体・02_Configs/Daily/・02_Configs/Templates/Daily.md）より狭く書かれている。",
+      "[smell / low・前回から未解消] validate-goal-linkage.py だけが『# /// script』メタデータヘッダを持たない。",
+      "[smell / low・前回から未解消] validate-goal-output.py L1143 のコメントが、存在しない --version を SystemExit(0) の契機として挙げている（実測は rc=2）。",
+      "[smell / low・前回から未解消] validate-goal-output.py L301 のコメントに、実体のない識別子 prefix_any が残っている。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual (前 iteration の low findings 1-3 を修正した結果 SKILL.md の sha が 2130c7cb… → d7294684… へ変わり verdict が stale-sha 化)",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / focused combined review・iteration 2】前 iteration（対象 sha 2130c7cb…）の low findings 1-3 が修正されたため新 sha d7294684… に対して再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。1 context で (a)-(e) を一度に判定し、その結合レビュー結果を elegance / rubric の 2 verdict へ分離投影した。本ファイルは rubric 側（ref-skill-design-rubric の規範採点）の投影で、elegance 側は同ディレクトリの elegance-verdict.json。両者は同一の観測に基づく。 【本 iteration で実行したこと】(1) shasum -a 256 = d7294684aea546c190e27e84fd2bdba14b856433bd03da19cecceca9d35010c7 を実測（team-lead 提示値と一致・手書換なし）。(2) 変更範囲の暗号学的限定: 現 SKILL.md の Additional Resources 2 行のみを旧文へ戻した文字列の sha256 が 2130c7cb… と厳密一致。前 iteration で検証済みの全事項が有効なため、再検証は変更 2 行と prompts に限定した。(3) 追記 2 資源の実在と内容整合を確認。(4) prompts/R1・R2・R3・R5 の置換完了と R4 の非該当、grep 'coordinator 経由' ヒット 0 を確認。(5) 4-6 の現存を再実測し未解決として保持。(6) lint 再実行: lint-goal-seek rc=0 / lint-feedback-contract --all OK(74) / lint-skill-description OK=187 VIOLATION=0 / lint-artifact-delivery 21 plugins OK / lint-script-naming VIOLATION=0。 【rubric 採点の要点】high severity 該当項目を照合し違反 0。description は「〜したいときに使う」形式・trigger 2 件で VIOLATION 0。本文 229 行（上限内）かつ references/ を備え PD-001 充足。frontmatter は disable-model-invocation / user-invocable / argument-hint（weekly|monthly|quarterly へ追従済み） / kind / prefix / effect / owner / since / version / manifest を備え、artifact-delivery state machine と external-mutation-guard block も本文に存在する。Purpose & Output Contract・Gotchas・Additional Resources の必須節が揃い、End-to-End Flow 表で Phase と実行体が 1:1 に割り当てられ責務越境なし。goal_seek / feedback_contract は両 lint とも OK で、criteria 3 件（IN1/OUT1/OUT2）はいずれも per-skill 固有かつ verify_by（script / test / live-trial）付き。Progressive Disclosure の索引（resource-map.yaml）が本文からも辿れるようになり、前 iteration の omission 2 件は解消。未解決 finding は low 3 件のみで medium 以上は 0。 【PASS の射程】design claim（静的設計 adequacy）に限る。verify_by: live-trial を持つ OUT2 の behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
+  "notes": "【profile=incremental / stale-verdict-refresh の focused combined review・1 回】SKILL.md の sha が 1100232479c0… に変わったため（IN3 と manifest を直す未 commit 変更）、builder とは別の context の独立 evaluator として再評価した。30 思考法は行っておらず、行ったとも申告しない。1 回のレビューで (a)〜(e) を同時に判定し、その結果を elegance と rubric の 2 つの verdict に分けて書いている。このファイルは rubric 側（規範に照らした採点）で、elegance 側は同じディレクトリの elegance-verdict.json。どちらも同じ観測に基づく。 【読んだもの・確認したこと】SKILL.md 全文（251 行。criteria の id は IN1/IN2/IN3/OUT1/OUT2）。git diff origin/main --stat と未 commit の git diff（output-formatter.md・SKILL.md・output-formats.md・workflow-manifest.json）。差分が参照する範囲として、workflow-manifest.json の全文、data-contract.md の §3.1.3 と §4.4、output-formats.md の三層横断照合の節、output-formatter.md の Step 3 と Step 4、execution-prompts.md のフロー図、resource-map.yaml、version-history の差分、3 本の検査器のヘッダと argparse、ubm-write-path-guard.py の許可範囲。実測の結果: shasum 1100232479c0cde8c9c5e0eec724e8d0efd1de8f1951f24c76518f45c4379a0a、pytest（3 本の検査器の受け入れテスト）125 passed、lint-skill-runtime-profiles rc=0、manifest の resourceIds 22 件と SKILL.md の参照 29 パスがすべて実在、lint-script-naming VIOLATION=0、lint-feedback-contract --all rc=0、lint-skill-description OK=187 / VIOLATION=0。data-contract §4.4 と manifest の整合を特に確認した。§4.4 は『週報が無い（期報と月報だけ作った）時点では --weekly を省略』として 2 本での実行を明示しており、manifest の gate や新しい IN3 とは中身で一致する。残るのは書き出しの言い回しと Phase 名のずれだけ。 【rubric 採点の要点】high severity に当たる違反は 0 件（description の形式・行数・必須節・frontmatter の必須キー・artifact-delivery・external-mutation-guard・goal_seek / feedback_contract の構造はいずれも充足）。前回の medium 2 件（criterion IN3 を決定できない件と、manifest と本文の食い違い）はどちらも解消し、medium は 0 件。low 10 件と smell 3 件だけなので verdict=PASS、next_action=none。前回から残る low と smell は『前回から未解消』と明記した。 【PASS の射程】この PASS の射程は design claim（静的な設計の adequacy）に限る。IN1〜IN3（verify_by: script）は実際の生成物に検査器を当てた rc で確認する。OUT1（verify_by: test）と OUT2（verify_by: live-trial）の behavioral acceptance には、受け入れテストと run-skill-live-trial の実走証拠が別に要る。この verdict をそれらの証拠として流用しない。"
 }
