@@ -48,7 +48,7 @@ class MarketplaceRegisterCommandTest(unittest.TestCase):
         self.assertEqual(tools, {"Read", "Bash"})
 
     def test_referenced_scripts_exist(self) -> None:
-        for rel in re.findall(r"\$\{HARNESS_ROOT:-\.\}/([\w./-]+\.py)", self.text):
+        for rel in re.findall(r"(?:\$\{HARNESS_ROOT:-\.\}|/absolute/path/to/harness)/([\w./-]+\.py)", self.text):
             self.assertTrue((ROOT / rel).is_file(), f"本文が参照する {rel} が無い")
 
     def test_marketplace_names_match_reality(self) -> None:
@@ -78,9 +78,44 @@ class MarketplaceRegisterCommandTest(unittest.TestCase):
         for token in ("MK-004", "NEVER_DISTRIBUTE"):
             self.assertIn(token, guard, f"本文が名指しする {token} が実体に無い")
 
+    def test_local_entry_uses_shared_user_installer(self) -> None:
+        local = self.text.split("## ローカル clone:", 1)[1].split("## Codex:", 1)[0]
+        commands = re.findall(r"^python3 (.+)$", local, re.M)
+        self.assertEqual(len(commands), 2)
+        for command in commands:
+            self.assertIn("/absolute/path/to/harness/plugins/harness-creator/scripts/install-local-plugins.py", command)
+            self.assertIn("--all --platform both", command)
+        self.assertNotIn("--check", commands[0])
+        self.assertIn("--check", commands[1])
+        self.assertNotIn("--scope project", self.text)
+
+    def test_platform_sync_examples_pass_required_repo_root(self) -> None:
+        commands = re.findall(r"^python3 .*sync-plugin-platforms\.py (.+)$", self.text, re.M)
+        self.assertTrue(commands)
+        for args in commands:
+            self.assertIn("--repo-root /absolute/path/to/harness", args)
+            self.assertIn("--all --check", args)
+
+    def test_package_scope_and_runtime_scope_are_distinct(self) -> None:
+        self.assertIn("manifest と両製品の repository catalog", self.text)
+        self.assertIn("実導入する製品だけ", self.text)
+        self.assertNotRegex(self.text, r"非配布[^\n]*[0-9]+ plugin")
+        self.assertIn("NEVER_DISTRIBUTE", self.text)
+
+    def test_native_surface_owner_and_activation_scope(self) -> None:
+        planner = ROOT / "plugins/plugin-dev-planner/skills/run-plugin-dev-plan"
+        docs = [self.text, (planner / "SKILL.md").read_text(),
+                (planner / "references/io-contract.md").read_text()]
+        for text in docs:
+            self.assertIn("sync-native-surfaces.py", text)
+            self.assertIn("enabledPlugins", text)
+            self.assertIn("make native-surfaces-check", text)
+            self.assertIn("make native-surfaces-apply", text)
+            self.assertNotRegex(text, r"`make sync(?:`| )")
+
     def test_release_script_supports_documented_flags(self) -> None:
         release = (ROOT / "scripts" / "build-plugin-release.py").read_text(encoding="utf-8")
-        for flag in ("--install", "--project-dir", "--check", "--only"):
+        for flag in ("--check", "--only"):
             self.assertIn(flag, release, f"本文が案内する {flag} が script に無い")
 
 

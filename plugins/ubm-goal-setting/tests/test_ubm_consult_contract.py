@@ -241,6 +241,37 @@ def test_out1_detector_positive_fixture():
     assert all(result.values()), f"正例で未検出要素: {result}"
 
 
+def test_out1_detector_positive_reflection_lane():
+    # reflection lane で締めた transcript も 4 要素を満たす (次の一歩を引き出し続けない)
+    transcript = [
+        {"id": "a1", "role": "assistant", "content": "いま一番引っかかっているのはどこですか？"},
+        {"id": "u1", "role": "user", "content": "転職するかどうか、まだ自分の言葉にできていません。"},
+        {
+            "id": "a2",
+            "role": "assistant",
+            "content": "考え方として、価値観の棚卸しという見方があります。どの価値が一番大事そうですか？",
+        },
+        {"id": "u2", "role": "user", "content": "今は決めないで、家族と話してから考えると決めました。"},
+        {
+            "id": "a3",
+            "role": "assistant",
+            "content": "見えてきたこと: 家族の意見が判断軸。まだ決めないこと: 転職の可否。再開条件: 家族と話した後。",
+        },
+    ]
+    result = detect_transcript_elements(transcript)
+    assert all(result.values()), f"reflection 正例で未検出要素: {result}"
+
+
+def test_out1_detector_reflection_needs_its_frame():
+    # 「再開条件」の語だけでは締めにならない (見えてきたこと/まだ決めないことの整理が要る)
+    transcript = [
+        {"id": "a1", "role": "assistant", "content": "考え方を一つ置きます。どう感じますか？"},
+        {"id": "u1", "role": "user", "content": "自分で決めます。"},
+        {"id": "a2", "role": "assistant", "content": "再開条件はまた今度にしましょう。"},
+    ]
+    assert detect_transcript_elements(transcript)["next_step"] is False
+
+
 def test_out1_detector_negative_prescriptive():
     # 処方的で引き出しもユーザー言語化も無い transcript は不合格
     transcript = [

@@ -1,0 +1,272 @@
+{
+  "status": "PASS",
+  "reviewer": "reset (independent of planner/docs authors)",
+  "scope": "planner install defaults, P13 consumer graph, opt-out, create/update, read-only CLI error handling, marketplace documentation",
+  "reviewed_files": [
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py",
+      "sha256": "234710fa461eec16221971b3ca4d17a78417a902dd16326ddd397cb4203d3d47",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+      "sha256": "5dc9d8a44cea128bd770752007ed1cd57a2ad016be7c4ce49159fb6b21d7aaf2",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-spec-skeleton.py",
+      "sha256": "e848f8b4aa33d4eda636b99f6d8d6a54950c48da6a6bdbb94222349294d6e65e",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py",
+      "sha256": "7011cf902539e9c7fc7b72ae090643cf842e2dbe04fd546f3fb49fa6c5a014ff",
+      "snapshot_available": true,
+      "changed_from_snapshot": false
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md",
+      "sha256": "0beee5101d8cbdcf06df92fc1496f4de429d73214beb71bf0cac950cdf41043b",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+      "sha256": "8c4d4c3128842df7c7114490fec6cd1df60829911a40590858131c4f63431513",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md",
+      "sha256": "933fe44cb6a5efc7f45691cacef2f5fe71e2be7c4d07f97492853d0d941c3ae5",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md",
+      "sha256": "19fb0d935fd8bf7d1325f20d3526feb4b0c2f4bd69caf581860c7d5b0b9da953",
+      "snapshot_available": true,
+      "changed_from_snapshot": true
+    },
+    {
+      "path": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md",
+      "sha256": "bb3dfee880cd029d25ee39f7f59078d1dc67036958f0b4c67e1581320a2d1d3a",
+      "snapshot_available": false,
+      "changed_from_snapshot": null
+    }
+  ],
+  "snapshot_limitations": [
+    "marketplace-register.md was not present in /tmp/harness-f11-before; reviewed current file against actual CLI/catalog contracts instead of claiming a before/after diff."
+  ],
+  "resolved_findings": [
+    {
+      "id": "LOG-01",
+      "status": "PASS",
+      "evidence": "check_install_release asks the existing derive-task-graph producer for actual P13 verification-claim/direct-task acceptance_criterion nodes. 8 positive and 40 removal cases passed independently."
+    },
+    {
+      "id": "LOG-02",
+      "status": "PASS",
+      "evidence": "SKILL and io-contract name sync-native-surfaces owner and enabledPlugins scope; no make sync directive. Docs tests passed."
+    },
+    {
+      "id": "LOG-03",
+      "status": "PASS",
+      "evidence": "plugin-creator-contract separates public registry non-distribution from local catalogs and preserves local install."
+    },
+    {
+      "id": "LOG-04",
+      "status": "PASS",
+      "evidence": "default_install_contract derives platform, registry, manifest and release values from INSTALL constants; minimal index uses the factory."
+    },
+    {
+      "id": "META-001",
+      "status": "PASS",
+      "evidence": "marketplace-register main local commands use absolute shared installer with explicit --all --platform both; runtime check uses --check; named scripts exist; stale counts and project-scope update replaced."
+    },
+    {
+      "id": "META-002",
+      "status": "PASS",
+      "evidence": "R3 identifies factory and obligations function as canonical; examples/documentation describe generated values rather than independently specifying runtime defaults."
+    },
+    {
+      "id": "META-003",
+      "status": "PASS",
+      "evidence": "Runtime opt-out retains both manifests/catalogs; generated actual install argv switches to --platform claude; create/update and both graph shapes independently checked."
+    }
+  ],
+  "review_discoveries_resolved": [
+    {
+      "id": "REVIEW-PL-01",
+      "initial_status": "FAIL",
+      "description": "Generated and documented sync-plugin-platforms command omitted required --repo-root. Real read-only CLI returned exit2.",
+      "resolution": "Generated command now contains --repo-root .; documentation contains absolute root. Both were parsed successfully by actual build_parser with mode=check and all=true."
+    },
+    {
+      "id": "REVIEW-PL-02",
+      "initial_status": "FAIL",
+      "description": "P13 policy is not an execution leaf in task-graph-derived shape; policy-only or blanket refusal would not satisfy existing shape support.",
+      "resolution": "Gate now checks existing producer actual execution leaves for both shapes. Derived policy-only is rejected; actual task-spec obligations accepted; every removed obligation rejected."
+    }
+  ],
+  "independent_matrix": [
+    {
+      "shape": "fixed-13-phase",
+      "mode": "create",
+      "variant": "both",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": null
+    },
+    {
+      "shape": "fixed-13-phase",
+      "mode": "create",
+      "variant": "claude-skip-live",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": null
+    },
+    {
+      "shape": "fixed-13-phase",
+      "mode": "update",
+      "variant": "both",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": null
+    },
+    {
+      "shape": "fixed-13-phase",
+      "mode": "update",
+      "variant": "claude-skip-live",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": null
+    },
+    {
+      "shape": "task-graph-derived",
+      "mode": "create",
+      "variant": "both",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": true
+    },
+    {
+      "shape": "task-graph-derived",
+      "mode": "create",
+      "variant": "claude-skip-live",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": true
+    },
+    {
+      "shape": "task-graph-derived",
+      "mode": "update",
+      "variant": "both",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": true
+    },
+    {
+      "shape": "task-graph-derived",
+      "mode": "update",
+      "variant": "claude-skip-live",
+      "metadata_errors": 0,
+      "gate_errors": 0,
+      "obligations": 5,
+      "all_reach_consumer_graph": true,
+      "removed_obligations_rejected": 5,
+      "read_only_plan_hashes_unchanged": true,
+      "policy_only_rejected": true
+    }
+  ],
+  "cli_error_checks": [
+    {
+      "case": "invalid install contract JSON",
+      "exit": 2,
+      "stdout_empty": true,
+      "traceback": false
+    },
+    {
+      "case": "invalid plugin slug",
+      "exit": 2,
+      "stdout_empty": true,
+      "traceback": false
+    }
+  ],
+  "docs_tests": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_marketplace_register_command.py -p no:cacheprovider",
+    "passed": 11,
+    "exit": 0
+  },
+  "remaining_findings": [],
+  "four_conditions": {
+    "no_contradictions": "PASS",
+    "no_omissions": "PASS",
+    "consistency": "PASS",
+    "dependency_consistency": "PASS"
+  },
+  "limitations": [
+    "PASS applies to reviewed code/documentation contract scope, not release/install execution.",
+    "No git, global install, release/version bump, or target edits performed by this review.",
+    "Temporary fixture files were used for independent positive/negative graph tests; actual install/trust activation was not performed."
+  ],
+  "final_frozen_revision_validation": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_specfm.py plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_skeleton_gate_parity.py -p no:cacheprovider",
+    "passed": 124,
+    "exit": 0,
+    "stored_consumer_graph": "Independently read final implementation: if a graph artifact exists, handoff-selected graph actual P13 clauses are checked in addition to fresh derive. Tests verify stale isolated clause removal is rejected and malformed path returns a clean error. Legacy fixed graph title fallback retained."
+  },
+  "final_documentation_reread": {
+    "status": "PASS",
+    "files": [
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+        "prior_sha256": "87d6a10b52a5e0b0c4ac264459ecbd01724f9d83b2ddfaeab221ff9636be96ab",
+        "sha256": "8c4d4c3128842df7c7114490fec6cd1df60829911a40590858131c4f63431513"
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md",
+        "prior_sha256": "0caef412a90b1a03b022691a353be69a13a109be23ab6b49c3cbc58b795859bc",
+        "sha256": "933fe44cb6a5efc7f45691cacef2f5fe71e2be7c4d07f97492853d0d941c3ae5"
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md",
+        "prior_sha256": "b26277eae49055bf48d3831970c0a1071e6e90ab10d345a30190f4837fc13b26",
+        "sha256": "19fb0d935fd8bf7d1325f20d3526feb4b0c2f4bd69caf581860c7d5b0b9da953"
+      }
+    ],
+    "evidence": "Read final SKILL:201, io-contract:209 and plugin-creator-contract:53-75. All consistently describe fixed13 checklist -> verification-claim and task-graph-derived direct-task acceptance_criterion, existing derive() plus stored graph validation, policy text alone insufficient, runtime-only platform opt-out and common local installer ownership. Matches independently reviewed implementation.",
+    "validation_reuse": "Prior 124 planner + 11 docs tests and independent 8 positive/40 negative graph checks reused; only documentation changed after pinned review."
+  }
+}

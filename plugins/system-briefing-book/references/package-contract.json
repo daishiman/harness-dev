@@ -1,0 +1,133 @@
+{
+  "$schema": "../../harness-creator/skills/ref-pkg-contract/schemas/package-contract.schema.json",
+  "package_mode": "bundle",
+  "plugin_name": "system-briefing-book",
+  "entry_points": {
+    "skills": [
+      "assign-briefing-evaluator",
+      "run-briefing",
+      "run-briefing-boards",
+      "run-briefing-book",
+      "run-briefing-docs",
+      "run-briefing-hearing",
+      "run-skill-feedback"
+    ],
+    "agents": [
+      "briefing-reviewer"
+    ],
+    "commands": [
+      "briefing-build",
+      "briefing-revise"
+    ],
+    "hooks": []
+  },
+  "distribution": {
+    "distributable": true,
+    "bundle_targets": [
+      "skills-full"
+    ],
+    "category": "Productivity",
+    "tags": [
+      "requirements",
+      "specification",
+      "screen-design",
+      "briefing",
+      "html",
+      "meeting"
+    ]
+  },
+  "depends_on": [
+    "harness-creator"
+  ],
+  "pkg_checks": {},
+  "runtime_dependencies": [
+    {
+      "capability": "run-skill-feedback",
+      "owner": "harness-creator",
+      "classification": "owned-vendored",
+      "local_path": "skills/run-skill-feedback",
+      "owner_route": "skills/run-skill-feedback",
+      "required_entry_point": "run-skill-feedback",
+      "purpose": "Keep the current plugin-local bytes discoverable while declaring the harness-owned runtime and repository references required by the feedback workflow."
+    }
+  ],
+  "codex_alternatives": {
+    "commands": {
+      "briefing-build": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command briefing-build through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-briefing"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-briefing-book",
+          "entry_points": [
+            "run-briefing"
+          ]
+        }
+      },
+      "briefing-revise": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude command briefing-revise through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "run-briefing"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-briefing-book",
+          "entry_points": [
+            "run-briefing"
+          ]
+        }
+      }
+    },
+    "agents": {
+      "briefing-reviewer": {
+        "relation": "semantic-equivalent",
+        "purpose": "Expose Claude agent briefing-reviewer through the owning Codex skill route.",
+        "arguments": {
+          "policy": "preserve",
+          "notes": "Preserve the user request and translate only host-specific invocation syntax."
+        },
+        "effect": {
+          "policy": "equivalent",
+          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
+        },
+        "discovery": {
+          "kind": "skill",
+          "entry_points": [
+            "assign-briefing-evaluator"
+          ]
+        },
+        "owner_route": {
+          "plugin": "system-briefing-book",
+          "entry_points": [
+            "assign-briefing-evaluator"
+          ]
+        }
+      }
+    },
+    "hook_omissions": {}
+  }
+}

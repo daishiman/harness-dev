@@ -1,0 +1,237 @@
+{
+  "meta": {
+    "schema_version": "1.0",
+    "currency": "USD",
+    "unit": "per_1M_tokens",
+    "description": "LLM API pricing table for llm-cost-simulator. All prices are USD per 1,000,000 tokens unless a model overrides 'unit'. Multipliers (cache/batch) are applied to the relevant base price. ALWAYS verify non-Anthropic prices against the official pricing page before trusting a cost estimate — see 'refresh' below. Add new models/providers by appending entries; the engine reads this file at runtime.",
+    "confidence_levels": {
+      "authoritative": "Sourced from a first-party reference bundled with this environment (e.g. the claude-api skill). Trust as-is.",
+      "verify": "Best-known public price at as_of date; provider may have changed it. Refresh before a real ROI decision.",
+      "estimate": "Approximate / placeholder. MUST be refreshed from the official page before use."
+    },
+    "refresh": {
+      "how": "Use WebFetch on the provider pricing URL, extract input/output/cached prices per 1M tokens, then edit this file. Re-run the simulation afterwards.",
+      "anthropic": "https://platform.claude.com/docs/en/pricing  (or the bundled claude-api skill: shared/models.md)",
+      "openai": "https://openai.com/api/pricing/  (and https://platform.openai.com/docs/pricing)",
+      "google": "https://ai.google.dev/gemini-api/docs/pricing",
+      "openrouter_aggregator": "https://openrouter.ai/models  (cross-provider sanity check)"
+    }
+  },
+
+  "provider_defaults": {
+    "anthropic": {
+      "cache_read_mult": 0.1,
+      "cache_write_5m_mult": 1.25,
+      "cache_write_1h_mult": 2.0,
+      "batch_mult": 0.5,
+      "notes": "Cache read ~0.1x base input; 5m write 1.25x, 1h write 2.0x. Batch API = 50% off. Extended-thinking / reasoning tokens are billed at the OUTPUT rate."
+    },
+    "openai": {
+      "cache_read_mult": 0.5,
+      "cache_write_5m_mult": 1.0,
+      "cache_write_1h_mult": 1.0,
+      "batch_mult": 0.5,
+      "notes": "Automatic prompt caching: cached input tokens ~50% off, no write premium. Batch API = 50% off. Reasoning (o-series / gpt-5 thinking) tokens billed at OUTPUT rate. Confirm per-model 'cached_input' when present."
+    },
+    "google": {
+      "cache_read_mult": 0.25,
+      "cache_write_5m_mult": 1.0,
+      "cache_write_1h_mult": 1.0,
+      "batch_mult": 0.5,
+      "notes": "Context caching ~75% off cached tokens, plus a separate storage charge per token-hour NOT modeled here. Some models use tiered pricing above a context threshold (see context_tiers). Batch API = 50% off. Verify."
+    },
+    "generic": {
+      "cache_read_mult": 0.5,
+      "cache_write_5m_mult": 1.0,
+      "cache_write_1h_mult": 1.0,
+      "batch_mult": 1.0,
+      "notes": "Conservative defaults for providers without modeled caching/batch."
+    }
+  },
+
+  "models": [
+    {
+      "provider": "anthropic",
+      "id": "claude-opus-4-8",
+      "display_name": "Claude Opus 4.8",
+      "input": 5.0,
+      "output": 25.0,
+      "context_window": 1000000,
+      "max_output": 128000,
+      "reasoning": true,
+      "as_of": "2026-05-26",
+      "confidence": "authoritative",
+      "source": "claude-api skill / shared/models.md",
+      "notes": "1M context at standard pricing, no long-context premium. Adaptive thinking; thinking tokens billed as output."
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-opus-4-7",
+      "display_name": "Claude Opus 4.7",
+      "input": 5.0,
+      "output": 25.0,
+      "context_window": 1000000,
+      "max_output": 128000,
+      "reasoning": true,
+      "as_of": "2026-05-26",
+      "confidence": "authoritative",
+      "source": "claude-api skill"
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-opus-4-6",
+      "display_name": "Claude Opus 4.6",
+      "input": 5.0,
+      "output": 25.0,
+      "context_window": 1000000,
+      "max_output": 128000,
+      "reasoning": true,
+      "as_of": "2026-05-26",
+      "confidence": "authoritative",
+      "source": "claude-api skill"
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-sonnet-4-6",
+      "display_name": "Claude Sonnet 4.6",
+      "input": 3.0,
+      "output": 15.0,
+      "context_window": 1000000,
+      "max_output": 64000,
+      "reasoning": true,
+      "as_of": "2026-05-26",
+      "confidence": "authoritative",
+      "source": "claude-api skill"
+    },
+    {
+      "provider": "anthropic",
+      "id": "claude-haiku-4-5",
+      "display_name": "Claude Haiku 4.5",
+      "input": 1.0,
+      "output": 5.0,
+      "context_window": 200000,
+      "max_output": 64000,
+      "reasoning": false,
+      "as_of": "2026-05-26",
+      "confidence": "authoritative",
+      "source": "claude-api skill"
+    },
+
+    {
+      "provider": "openai",
+      "id": "gpt-5",
+      "display_name": "GPT-5",
+      "input": 1.25,
+      "output": 10.0,
+      "cached_input": 0.125,
+      "context_window": 400000,
+      "max_output": 128000,
+      "reasoning": true,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "OpenAI pricing page (launch pricing); confirm before use",
+      "notes": "Reasoning tokens billed at output rate. Verify current price."
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-5-mini",
+      "display_name": "GPT-5 mini",
+      "input": 0.25,
+      "output": 2.0,
+      "cached_input": 0.025,
+      "context_window": 400000,
+      "max_output": 128000,
+      "reasoning": true,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "OpenAI pricing page; confirm before use"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o",
+      "display_name": "GPT-4o",
+      "input": 2.5,
+      "output": 10.0,
+      "cached_input": 1.25,
+      "context_window": 128000,
+      "max_output": 16384,
+      "reasoning": false,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "OpenAI pricing page"
+    },
+    {
+      "provider": "openai",
+      "id": "gpt-4o-mini",
+      "display_name": "GPT-4o mini",
+      "input": 0.15,
+      "output": 0.6,
+      "cached_input": 0.075,
+      "context_window": 128000,
+      "max_output": 16384,
+      "reasoning": false,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "OpenAI pricing page"
+    },
+    {
+      "provider": "openai",
+      "id": "o3-mini",
+      "display_name": "o3-mini",
+      "input": 1.1,
+      "output": 4.4,
+      "cached_input": 0.55,
+      "context_window": 200000,
+      "max_output": 100000,
+      "reasoning": true,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "OpenAI pricing page",
+      "notes": "Reasoning tokens billed at output rate and can dominate cost. Measure them."
+    },
+
+    {
+      "provider": "google",
+      "id": "gemini-2.5-pro",
+      "display_name": "Gemini 2.5 Pro",
+      "input": 1.25,
+      "output": 10.0,
+      "context_window": 1000000,
+      "max_output": 65536,
+      "reasoning": true,
+      "context_tiers": [
+        { "min_input_tokens": 200001, "input": 2.5, "output": 15.0 }
+      ],
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "Google AI pricing page",
+      "notes": "Tiered: >200K input tokens uses the higher tier. Thinking tokens billed at output rate."
+    },
+    {
+      "provider": "google",
+      "id": "gemini-2.5-flash",
+      "display_name": "Gemini 2.5 Flash",
+      "input": 0.3,
+      "output": 2.5,
+      "context_window": 1000000,
+      "max_output": 65536,
+      "reasoning": true,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "Google AI pricing page"
+    },
+    {
+      "provider": "google",
+      "id": "gemini-2.0-flash",
+      "display_name": "Gemini 2.0 Flash",
+      "input": 0.1,
+      "output": 0.4,
+      "context_window": 1000000,
+      "max_output": 8192,
+      "reasoning": false,
+      "as_of": "2026-01",
+      "confidence": "verify",
+      "source": "Google AI pricing page"
+    }
+  ]
+}

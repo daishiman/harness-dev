@@ -153,6 +153,50 @@ def test_manual_version_record_repairs_release_surfaces(mod, tmp_path, monkeypat
     assert recorded["probe"]["fingerprint"] == mod.fingerprint(plugin)
 
 
+@pytest.mark.parametrize("failed_step", ["marketplace", "config_lock"])
+@pytest.mark.parametrize("release_state", ["changed", "new", "released"])
+def test_downstream_failure_keeps_release_pending_and_retry_repairs(
+    mod, tmp_path, monkeypatch, failed_step, release_state
+):
+    # This exercises release state transitions without requiring or touching Git.
+    plugin = tmp_path / "plugins" / "probe"
+    manifest = plugin / ".claude-plugin" / "plugin.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps({"name": "probe", "version": "0.1.0"}))
+    (plugin / "SKILL.md").write_text("original")
+    _isolate(mod, monkeypatch, tmp_path)
+    monkeypatch.setattr(mod, "content_paths", lambda root: sorted(root.rglob("*")))
+    if release_state != "new":
+        assert mod.main([]) == 0
+        (plugin / "SKILL.md").write_text("changed")
+        if release_state == "released":
+            mod.write_version(plugin, "1.0.0")
+    ledger_before = mod.load_fingerprints()
+    calls = []
+    fail_next = True
+
+    def regenerate(step):
+        nonlocal fail_next
+        calls.append(step)
+        if step == failed_step and fail_next:
+            fail_next = False
+            raise SystemExit("injected downstream failure")
+
+    monkeypatch.setattr(mod, "regenerate_local_marketplace", lambda: regenerate("marketplace"))
+    monkeypatch.setattr(mod, "regenerate_config_version_lock", lambda: regenerate("config_lock"))
+    with pytest.raises(SystemExit, match="injected downstream failure"):
+        mod.main([])
+    version_after_failure = mod.read_version(plugin)
+    assert mod.load_fingerprints() == ledger_before
+    assert mod.main(["--check"]) == 1
+
+    calls.clear()
+    assert mod.main([]) == 0
+    assert calls == ["marketplace", "config_lock"]
+    assert mod.read_version(plugin) == version_after_failure
+    assert mod.main(["--check"]) == 0
+
+
 def test_removed_plugin_is_pruned_from_fingerprint_state(mod, tmp_path, monkeypatch):
     plugin = _fake_plugin(tmp_path, "retired", "0.1.0")
     keep = _fake_plugin(tmp_path, "keep", "0.1.0")

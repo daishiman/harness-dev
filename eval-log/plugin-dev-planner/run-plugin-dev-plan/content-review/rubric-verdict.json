@@ -2,19 +2,19 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "a659099d131b8c0511c65a85e71435490a894e419b8159416eabd2b7d77d3865"
+    "skill_md_sha256": "8c4d4c3128842df7c7114490fec6cd1df60829911a40590858131c4f63431513"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 4
   },
   "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
-  "reviewed_at": "2026-08-24T13:10:00Z",
+  "reviewed_at": "2026-10-04T10:17:03Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,16 +26,24 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "見出し改名は他 skill 群と同一の Purpose & Output Contract 規約への追従であり、記述規約整合の観点でむしろ横断一貫性を高めている。",
-      "feedback_contract criteria (IN1/IN2/OUT1/OUT2) の対象 (index topsort・frontmatter/gates lint・elegant-review C1-C4・skill-brief 写像粒度) は今回の見出し改名で意味が変わらず、criteria 本文と本文記述の間に新たな乖離は生じていない。"
+      "IN2 (check-spec-frontmatter / check-spec-gates / check-spec-matrix-coverage の exit0) の検査対象に plugin_meta.install の値域と P13 install 義務の到達が加わった。それでもゴールデン例は 3 gate とも exit0 で通り、criteria の文言を変えずに検査力だけが上がっている。",
+      "OUT1 (harness-creator ネイティブ規律を漏れなく伝播) の観点では、install 義務を P13 本文の注記で終わらせず、consumer が実際に実行する leaf (fixed-13-phase では verification-claim、task-graph-derived では direct-task の acceptance_criterion) へ原文のまま焼く契約になっている。宣言 → 実行の伝播経路が機械検査で閉じている。",
+      "主要ルール 4、R1/R3 prompt、io-contract、plugin-creator-contract、phase-lifecycle の P13 行の 5 箇所が、platforms と manifest/catalog 維持の区別、--platform both|claude の導出、verify.live:false + live_skip_reason という同じ語彙で一致しており、規約間で語彙の drift が無い。",
+      "PR / feature→main を soft note に留める既存境界 (SKILL.md L365、io-contract L247) と、install を build 側の完了条件にする新境界を、P13 sample の目的・背景・スコープ外で書き分けている。責務境界の記述は矛盾していない。"
     ],
     "negative_feedback": [
-      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記がゴールシークループ節のみで、局面 R4 節の同語には反映されていない表記の非対称。矛盾ではなく、今回 diff の対象外。"
+      "[low / omission] 完了チェックリスト L233 は plugin_meta を「manifest / marketplace / cachebuster / validate_plugin」としか列挙しておらず、core 昇格した install と、P13 実行 leaf への到達が書かれていない。ゴール節・完了条件・L304 のコメントも同様で、IN2 の gate exit0 によって間接的に担保されているだけである。直し方: チェックリストに install 項目を 1 行足し、L304 のコメントを更新する。",
+      "[low / omission (移行方針)] install の core 昇格で既存 tracked plan 15/16 件 (dogfood の plugin-plans/plugin-dev-planner を含む) が check-spec-gates で exit1 になる。legacy plan の扱いが SKILL.md / io-contract に書かれていない。CI 対象外で、次回 --mode update (主要ルール 4「新規・改善とも」) で回収されるため low とした。",
+      "[low / inconsistency] 主要ルール 4 の「fixed13」は shape marker の正式値 fixed-13-phase の略記で、SKILL.md 内に定義が無い。記述規約 (正本値で書く) からずれている。",
+      "[low / smell] fixed-13-phase の derive() は P13 checklist を entities_covered の数だけ複製する。そのため P13 に component を載せると、plugin 単位の install 義務が N 個の leaf に増え、component へ誤帰属する。R3 にも gate にも、P13 の entities_covered を [] に保つ制約が無い。",
+      "[low / smell / 依存] check-spec-gates が target_plugin_slug を handoff から読むため、index/inventory gate が handoff の生成順序に暗黙に依存する。SKILL.md からはこの依存が読めず、slug の正本 (goal-spec) とも別経路になっている。",
+      "[low / smell] P13 の義務条項は script を名前だけで参照しており、実体が plugins/harness-creator/scripts/ と scripts/ に分かれているため、consumer には実行パスが一意に決まらない。",
+      "[low / smell / 引き継ぎ] 「最大 3 周」の上限注記がゴールシークループ節 (L253) にしかなく、局面 R4 節 (L350) と表記が揃っていない。前回 verdict から未解消のまま引き継ぐ。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側 verdict と同一の focused combined review (独立 evaluator context) の rubric 投影。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の全 rule を機械実行して数値 score を算出したのではなく、変更 (見出し改名 1 点) に対して構造規範 (記述規約整合・アンカー断絶なし・criteria との整合) を実読で確認し、combined review の単一判断として medium 以上 finding 0 件 (low 1 件の引き継ぎのみ) を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 4 件。"
+  "notes": "elegance 側 verdict と同じ focused combined review (独立 evaluator context) を rubric 観点へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。採点の扱いを正確に述べる。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではない。ブランチの変更 (install を Claude/Codex 両製品への既定の実行義務にし、check-spec-gates が P13 実行 leaf と保存済み graph への到達を検査する) について、構造規範 (criteria IN1/IN2/OUT1/OUT2 との整合、記述規約、参照パスの実在、責務境界) を実読と決定論 gate・tests の実行で確認した。そのうえで combined review の単一判断として、high/medium の finding 0 件 (low 7 件のみ) を根拠に PASS とした。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 4 件。PASS の射程は design claim (静的設計 adequacy) に限る。install の実行結果 (receipt verified=true) は評価対象外。"
 }

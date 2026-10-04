@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+.board-body > .stage { flex: 1; min-width: 0; gap: 36px; }
+.src-col { width: 440px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+.src-col .photo { flex: 1; min-height: 0; padding: 24px; background: var(--bg-well); }
+.map-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.map-col .mrow { grid-template-columns: 1fr 44px 1.2fr 200px; }
+.map-col .mrow > div { padding: 12px 16px; font-size: 16px; }
+.map-col .mrow > .ev { font-size: 13px; }
+.map-col .notes { flex: none; align-self: stretch; margin-top: 10px; }
+</style>
+</head>
+<body>
+<!-- 型: data-map (紙や CSV の項目 → 画面とデータ)
+     - 左: 素材の画像 (extract-source-crop.mjs で切り出した _src/assets/<name>.png)。仮の絵は .thumb-ph.paper。枠に data-source="<素材のファイル名>"。
+     - 右: 1 行に 1 項目。素材の欄 → 画面の項目 (データ名.項目) と根拠。仕様書「3. 画面ごとの項目」「4. データの形」と同じ言葉。
+     - 読めない・決まっていない行は .mrow.warn にして、根拠を「決めること:Qxx」にする。8 行まで。
+     - 列の区分の棒 (.bar と .legend): 書き出す列 (取り込む列) が、どこから来るかの内訳。data-kind は paper (紙から読む) / auto (しくみが入れる) / fixed (いつも同じ値) / blank (空欄のまま) / ask (決めること)。
+       .seg の style は flex:<列の数> だけ。空欄と同じ値の列は count-csv-columns.mjs の blank / fixed を見て数える。.legend には使った区分だけを並べる。
+     - 注記は表のすぐ下に置く (欄と説明を近くに)。 -->
+<div class="board" data-board="{{NO}}" data-type="data-map">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="src-col">
+        <h2 class="sec-label">素材<small>今使っている紙 (例)</small></h2>
+        <div class="photo anchor" data-source="例.pdf">
+          <div class="thumb-ph paper"><i class="head"></i><i></i><i></i><i class="short"></i><i></i><i></i><i class="short"></i><i></i><i></i><i class="short"></i></div>
+          <i class="mk" style="left:12px;top:12px">1</i>
+        </div>
+      </div>
+      <div class="map-col">
+        <h2 class="sec-label">画面とデータ<small>左の欄が、どこに入るか</small></h2>
+        <div class="dmap">
+          <div class="mrow head"><div>素材の欄</div><div></div><div>画面の項目 (データ)</div><div>根拠</div></div>
+          <div class="mrow"><div class="src">日付<small>左上</small></div><div class="to">→</div><div class="dst">日付<small>D01 記録</small></div><div class="ev">素材:例.pdf#左上</div></div>
+          <div class="mrow"><div class="src">相手先<small>1 列目</small></div><div class="to">→</div><div class="dst">相手先<small>D01 記録</small></div><div class="ev">素材:例.pdf#1列目</div></div>
+          <div class="mrow anchor"><div class="src">数<small>3 列目</small></div><div class="to">→</div><div class="dst">数<small>D01 記録</small></div><div class="ev">素材:例.pdf#3列目</div><i class="mk" style="left:-12px;top:-10px">2</i></div>
+          <div class="mrow"><div class="src">メモ<small>右の余白</small></div><div class="to">→</div><div class="dst">メモ<small>D01 記録</small></div><div class="ev">例</div></div>
+          <div class="mrow warn anchor"><div class="src">丸の印<small>右端</small></div><div class="to">→</div><div class="dst">状態 (済み / 確認待ち)<small>読めないときは確認待ち</small></div><div class="ev">決めること:Q03</div><i class="mk" style="left:-12px;top:-10px">3</i></div>
+        </div>
+        <h2 class="sec-label">書き出す列の内訳<small>取り込み先の 10 列</small></h2>
+        <div class="bar"><span class="seg" data-kind="paper" style="flex:5">紙から 5</span><span class="seg" data-kind="auto" style="flex:2">しくみ 2</span><span class="seg" data-kind="fixed" style="flex:1">同じ値 1</span><span class="seg" data-kind="blank" style="flex:1">空欄 1</span><span class="seg" data-kind="ask" style="flex:1">決める 1</span></div>
+        <ul class="legend"><li data-kind="paper">紙から読む</li><li data-kind="auto">しくみが入れる</li><li data-kind="fixed">いつも同じ値</li><li data-kind="blank">空欄のまま</li><li data-kind="ask">決めること</li></ul>
+        <aside class="notes strip">
+          <ol class="marks">
+            <li data-mark="1" data-kind="can"><b>紙の書き方は今のまま</b><span class="sub">新しい書き方を覚えてもらう必要はない。</span></li>
+            <li data-mark="2" data-kind="how"><b>欄の位置で、どの項目かを決める</b><span class="sub">紙の形が変わったら、この表を直す。</span></li>
+            <li data-mark="3" data-kind="ask"><b>丸の印の意味</b><span class="q">Q03</span><span class="sub">案: 「済み」の意味。現場の人に確かめる。</span></li>
+          </ol>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

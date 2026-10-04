@@ -1,0 +1,29 @@
+........................................................................ [ 21%]
+........................................................................ [ 42%]
+F....................................................................... [ 63%]
+........................................................................ [ 84%]
+.....................................................                    [100%]
+=================================== FAILURES ===================================
+_______________________ test_render_png_webp_and_export ________________________
+
+scaffolded = PosixPath('/private<tmp>/pytest-of-dm/pytest-261/test_render_png_webp_and_expor0/素材/打ち合わせ資料')
+
+    @needs_browser
+    def test_render_png_webp_and_export(scaffolded: Path) -> None:
+        path = scaffolded / "_src" / "01_phone-send.html"
+        path.write_text(path.read_text(encoding="utf-8").replace(
+            '<div class="phone">', '<div class="phone" data-export="s01-send">'), encoding="utf-8")
+        # 番号の印 (.mk) をはっきりした緑にして、切り出しに写っていないことを数えて確かめる
+        with (scaffolded / "_src" / "tokens.css").open("a", encoding="utf-8") as handle:
+            handle.write("\n:root { --anno: #00ff00; --anno-ink: #00ff00; --anno-ring: #00ff00; }\n")
+        rc, out, err = run_script(SCRIPT, "--dir", str(scaffolded), "--only", "01")
+        assert rc == 0, err
+>       (entry,) = out["boards"]
+E       AssertionError: error TOKENS-INVALID _src/01_phone-send.html 配色はトップレベルの :root に定義してください (import・条件付き宣言は使いません) @ _src/tokens.css
+E         
+E       assert 1 == 0
+
+plugins/system-briefing-book/tests/test_render_board_png.py:319: AssertionError
+=========================== short test summary info ============================
+FAILED plugins/system-briefing-book/tests/test_render_board_png.py::test_render_png_webp_and_export
+1 failed, 340 passed in 391.08s (0:06:31)

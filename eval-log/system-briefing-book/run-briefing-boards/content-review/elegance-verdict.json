@@ -1,0 +1,47 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-boards",
+    "skill_md_sha256": "758372b36ab4c0dbba8a2b46a75259fdc122097431c34f0d0ba3ad88bd31bf6e"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)",
+  "reviewed_at": "2026-10-02T13:56:38Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      ":24 と :137 で design-contract.md を指し、:190 で tokens.css と common.css を書き換えないこと、init を回し直すのは run-briefing であることを書いた。これは workflow.md:35・:38 と design-contract.md:25 と合う。前回の low「workflow.md:37 の `_src/`」は、workflow.md:38 の「`_src/` (init が作る tokens.css と common.css を除く)」で解消した。",
+      "配色の検査が実装と合う。design-tokens.mjs はトップレベルの :root だけを読み (:29-47)、必須の役割を composeStandardTokens から得る (:54-56)。node で確かめると、必須の役割は 154 個で、標準の組み立てとお手本の tokens.css はどちらも指摘 0 件だった。render は tokens.css が不正ならブラウザを起こさずに止める (render-board-png.mjs:736-739)。test_render_board_png.py 34 件と test_design_tokens.py などが通った。",
+      "前回の low 2 件も解消した。palette は資料フォルダからの相対で記録する (build-briefing-scaffold.mjs:19-20、design-contract.md:39)。--refresh-css を付け忘れると、作り直さなかった CSS を stale_css に並べて注意を出す (:240・:255)。"
+    ],
+    "negative_feedback": [
+      "[medium / 漏れ。前回の medium の持ち越し・未解決。直す場所は run-briefing] :190 が呼び出し元へ返す「案件の色が要る」を受ける手順が run-briefing に無い。このスキルの本文は正しい。今回 run-briefing-book/SKILL.md:114 が TOKENS-MISSING・TOKENS-INVALID の担当をこのスキルにしたが、このスキルの手順に init は無い (init には --materials と --title が要る)。そのため、返す先の無い返事が 1 つ増えた。詳しい根拠と直し方は run-briefing と run-briefing-book の判定に書いた。",
+      "[low / 食い違い。今回の差分] design-contract.md:32 は、描画とまとめが止まるときのコードを TOKENS-MISSING と TOKENS-INVALID とする。しかし render は、tokens.css が無いときもメッセージを作り (render-board-png.mjs:736-738)、TOKENS-INVALID のコードで出す (:750・:752)。book は無いときに TOKENS-MISSING を出す (build-briefing-book.mjs:599)。このため、render の結果をコードだけで読むと、ファイルが無いのに「不正」と読める。メッセージには「tokens.css がありません」と出るので、直し方は分かる。よって low。直し方: render でも、無いときは TOKENS-MISSING を出す。または design-contract.md:32 を「描画は無いときも TOKENS-INVALID、まとめは TOKENS-MISSING か TOKENS-INVALID」とする。",
+      "[low / 書き方。前々回から持ち越し・未解決] Post-choice の節 (:86-88) の、主語の無い「独立レビューとその指摘に基づく改善を行う」。",
+      "[low / 漏れ。前々回から持ち越し・未解決] :179 で最後に通す `--stage all` の exit 1 と warn をどうするかが書かれていない。",
+      "[low / 書き方。前々回から持ち越し・未解決] :113 の「4〜7章の…詳細は転記しない」が、:160 (data-map の区分は仕様書 4 章と素材を読んで決める) と page-patterns.md の mechanism の節と、文だけ読むと食い違って見える。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-jp-web-design-v2、iteration 2) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (758372b36ab4c0dbba8a2b46a75259fdc122097431c34f0d0ba3ad88bd31bf6e)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (reference_refs の design-contract.md と :137 の 1 行)、:190 の Gotcha、design-contract.md、page-patterns.md の差分、workflow.md:33-40、design-tokens.mjs、render-board-png.mjs:730-755、build-briefing-scaffold.mjs の init の説明。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。判定: PASS。high は 0。前回の low 3 件 (palette の絶対パス、--refresh-css の付け忘れ、workflow.md の `_src/`) は解消した。前回の medium (run-briefing に配色の返事の受け手が無い) は持ち越し・未解決で、今回 book から TOKENS-* も回ってくるようになった。新しい指摘は low 1 (design-contract.md:32 と render のコード名の食い違い)。前々回から持ち越しの low 3 件 (:86-88、:179、:113) は今回の差分と関係なく、まだ直っていない (findings_summary の omission 2 は medium と :179、inconsistency 1 はコード名、smell 2 は :86-88 と :113)。next_action は none。medium を直す場所は run-briefing の SKILL.md。"
+}

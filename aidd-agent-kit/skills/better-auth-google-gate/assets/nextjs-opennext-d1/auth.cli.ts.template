@@ -1,0 +1,36 @@
+import type { D1Database } from "@cloudflare/workers-types";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { drizzle } from "drizzle-orm/d1";
+
+const cliDb = drizzle({} as D1Database);
+
+export const auth = betterAuth({
+  appName: "__APP_NAME__",
+  baseURL: "__LOCAL_ORIGIN__",
+  secret: "schema-generation-only-secret-0000000000000000",
+  database: drizzleAdapter(cliDb, {
+    provider: "sqlite",
+    transaction: false,
+  }),
+  socialProviders: {
+    google: {
+      clientId: "schema-generation-only",
+      clientSecret: "schema-generation-only",
+      hd: "__WORKSPACE_DOMAIN__",
+      prompt: "select_account",
+    },
+  },
+  session: {
+    expiresIn: 60 * 60 * 8,
+    updateAge: 60 * 60,
+    cookieCache: { enabled: false },
+  },
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    customRules: {
+      "/sign-in/social": { window: 60, max: 10 },
+    },
+  },
+});

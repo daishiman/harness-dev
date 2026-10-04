@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 from pathlib import Path
 from types import ModuleType
 
@@ -164,18 +165,32 @@ def test_phase_spec_schema_enum_pattern_parity(specfm_mod):
     )
 
 
-def test_no_codex_plugin_token_remains():
-    """生成規約が Claude Code(.claude-plugin) に統一され .codex-plugin 残存が無い(CRIT-1)。"""
+def test_codex_plugin_never_used_as_manifest_path():
+    """manifest の正本 path は .claude-plugin のみで、.codex-plugin を manifest path に書かない (CRIT-1)。
+
+    CRIT-1 は manifest.path に .codex-plugin を書いて正本を取り違えた事故。その後 Codex は
+    .claude-plugin から sync-plugin-platforms.py が投影する二次 manifest として plugin_meta.install に
+    入ったため、token の全面禁止でなく「path キーの値として現れる」形だけを禁じる。
+    """
     root = Path(__file__).resolve().parents[1]  # run-plugin-dev-plan/
     self_name = Path(__file__).name  # 本ガードは検索リテラルとして token を含むため自身を除外
+    as_manifest_path = re.compile(r"""["']?\bpath["']?\s*[:=]\s*["'`]?\.codex-plugin""")
     offenders = []
     for p in root.rglob("*"):
         if p.name == self_name:
             continue
         if p.suffix in {".py", ".md", ".yaml", ".json"} and "__pycache__" not in p.parts:
             try:
-                if ".codex-plugin" in p.read_text(encoding="utf-8"):
-                    offenders.append(p.name)
+                text = p.read_text(encoding="utf-8")
             except (UnicodeDecodeError, OSError):
-                pass
-    assert not offenders, f".codex-plugin が残存: {offenders} (.claude-plugin へ統一すること)"
+                continue
+            offenders.extend(
+                f"{p.name}:{n}" for n, line in enumerate(text.splitlines(), 1) if as_manifest_path.search(line)
+            )
+    assert not offenders, f".codex-plugin を manifest path に使っている: {offenders} (正本は .claude-plugin)"
+
+
+def test_codex_manifest_ssot_is_projection_path(specfm_mod):
+    """install 契約の Codex manifest は投影先 .codex-plugin/plugin.json で、正本 manifest とは別物。"""
+    assert specfm_mod.INSTALL_CODEX_MANIFEST == ".codex-plugin/plugin.json"
+    assert "claude" in specfm_mod.INSTALL_REQUIRED_PLATFORMS

@@ -1,0 +1,719 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "plugins/system-briefing-book",
+    "reviewed_at": "2026-10-01T23:59:44.585350+00:00"
+  },
+  "scope": "Phase2 meta/divergent担当の9思考法のみ。対象編集・Git操作・bd操作・他担当の中間結果参照なし。自身のJSON以外は書き込んでいない。",
+  "independence": "shared_stateは目的と対象の確認だけに使用。既存結論・既存評価ログを根拠としていない。",
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "再現の基準が型の模倣と数の比較に分かれ、参考資料の機能・初版範囲を保持する基準がない。参考は6画面で学習を含むが、お手本は4画面で学習を次版候補に変更している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing/SKILL.md:114",
+            "plugins/system-briefing-book/references/case-haisha.md:26",
+            "plugins/system-briefing-book/assets/data/target-profile.json",
+            "<参考資料>/要件定義.md:53",
+            "<参考資料>/要件定義.md:82"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-10",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "doc",
+          "description": "再現の基準が型の模倣と数の比較に分かれ、参考資料の機能・初版範囲を保持する基準がない。参考は6画面で学習を含むが、お手本は4画面で学習を次版候補に変更している。",
+          "recommended_intervention": "既存のお手本は維持し、参考を再現する場合だけログイン・照合マスタ・学習の扱いを対応表で照合する。型を学ぶお手本と意味を保つ再現基準の責務を明記し、対象参考の版を記録する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing/SKILL.md"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/skills/run-briefing/SKILL.md:114",
+            "plugins/system-briefing-book/references/case-haisha.md:26",
+            "plugins/system-briefing-book/assets/data/target-profile.json",
+            "<参考資料>/要件定義.md:53",
+            "<参考資料>/要件定義.md:82"
+          ],
+          "impact": "お手本どおりに生成してもユーザーが示した参考の機能と画面が欠落する。",
+          "auto_fixable": false,
+          "reproduction": {
+            "method": "compareProfileをimportしてサンプルに適用（書込を行うmainは未実行）",
+            "result": {
+              "screens": {
+                "target": 6,
+                "current": 4
+              },
+              "status": "diff",
+              "missing": []
+            }
+          }
+        }
+      ],
+      "score": 0.5,
+      "evidence_paths": [
+        "plugins/system-briefing-book/skills/run-briefing/SKILL.md:114",
+        "plugins/system-briefing-book/references/case-haisha.md:26",
+        "plugins/system-briefing-book/assets/data/target-profile.json",
+        "<参考資料>/要件定義.md:53",
+        "<参考資料>/要件定義.md:82"
+      ],
+      "improvement": "既存のお手本は維持し、参考を再現する場合だけログイン・照合マスタ・学習の扱いを対応表で照合する。型を学ぶお手本と意味を保つ再現基準の責務を明記し、対象参考の版を記録する。"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "run-briefing-bookの共通Pre/Post-choice節は選択を要求して後続工程を制限する一方、固有契約は選択を親に集約し単独呼出しは報告で終わると定める。manifestにも全legacy phaseを選択後に限定する記述が重複する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:66",
+            "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:93",
+            "plugins/system-briefing-book/skills/run-briefing-book/workflow-manifest.json"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-11",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "run-briefing-bookの共通Pre/Post-choice節は選択を要求して後続工程を制限する一方、固有契約は選択を親に集約し単独呼出しは報告で終わると定める。manifestにも全legacy phaseを選択後に限定する記述が重複する。",
+          "recommended_intervention": "L1が選択を所有しL2は通常生成を実行する旨を共通契約の正本に置き、L2のPre/Post節とmanifestを同じ適用範囲にする。runtime rootや終了コードは既存execution-contractへの参照に寄せる。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:66",
+            "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:93",
+            "plugins/system-briefing-book/skills/run-briefing-book/workflow-manifest.json"
+          ],
+          "impact": "単独bookが不要な確認で停止し、親経由でも自動工程6の解釈が実行者で変わる。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.7,
+      "evidence_paths": [
+        "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:66",
+        "plugins/system-briefing-book/skills/run-briefing-book/SKILL.md:93",
+        "plugins/system-briefing-book/skills/run-briefing-book/workflow-manifest.json"
+      ],
+      "improvement": "L1が選択を所有しL2は通常生成を実行する旨を共通契約の正本に置き、L2のPre/Post節とmanifestを同じ適用範囲にする。runtime rootや終了コードは既存execution-contractへの参照に寄せる。"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "profileの判断材料判定はクラス名・data-source属性・mechanism型の有無のみ。空の札や存在しない素材名でも存在扱いになり、学習が現在機能か次版候補かも区別しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:85",
+            "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:161",
+            "plugins/system-briefing-book/assets/data/target-profile.json"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-12",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "doc",
+          "description": "profileの判断材料判定はクラス名・data-source属性・mechanism型の有無のみ。空の札や存在しない素材名でも存在扱いになり、学習が現在機能か次版候補かも区別しない。",
+          "recommended_intervention": "現行の構造比較は残して構造指標と明記する。素材との対応・表示内容・初版/次版区分を別の意味照合項目にし、空要素・参照先不在をmissingと区別して記録する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:85",
+            "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:161",
+            "plugins/system-briefing-book/assets/data/target-profile.json"
+          ],
+          "impact": "見かけ上の指標が揃うことで、根拠や中身のない資料を高再現と誤認する。",
+          "auto_fixable": false,
+          "reproduction": {
+            "input": "<div class=\"fact req bar\" data-source=\"missing.png\"></div>",
+            "observed": "boardTraitsはfact/req/barを検出しsource:true。サンプルもmissing:[]だが画面数は6対4。"
+          }
+        }
+      ],
+      "score": 0.7,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:85",
+        "plugins/system-briefing-book/scripts/compare-briefing-profile.mjs:161",
+        "plugins/system-briefing-book/assets/data/target-profile.json"
+      ],
+      "improvement": "現行の構造比較は残して構造指標と明記する。素材との対応・表示内容・初版/次版区分を別の意味照合項目にし、空要素・参照先不在をmissingと区別して記録する。"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "既存テストは表型の対応、未知表のフォールバック、決定性、参照、長い候補名を検証するが、変換前後の人数・限定条件・深い子要素・題名の保存を確かめていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/tests/test_doc_report.py",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-13",
+          "condition": "C2",
+          "severity": "low",
+          "bucket": "doc",
+          "description": "既存テストは表型の対応、未知表のフォールバック、決定性、参照、長い候補名を検証するが、変換前後の人数・限定条件・深い子要素・題名の保存を確かめていない。",
+          "recommended_intervention": "候補は①変換前後のセル内容照合②数値完全一致時のみ集計③未対応階層の通常Markdown退避④サンプルと参考の機能対応表⑤人数範囲/注記/多段リスト/複数コロン/字下げの回帰入力。最小対応は②③⑤で、UI刷新や新依存は不要。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/system-briefing-book/tests/test_doc_report.py"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/tests/test_doc_report.py",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          ],
+          "impact": "部品が生成されたことだけでは意味の欠落を検出できない。具体的な実害はMETA-14〜18に記録。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.7,
+      "evidence_paths": [
+        "plugins/system-briefing-book/tests/test_doc_report.py",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+      ],
+      "improvement": "候補は①変換前後のセル内容照合②数値完全一致時のみ集計③未対応階層の通常Markdown退避④サンプルと参考の機能対応表⑤人数範囲/注記/多段リスト/複数コロン/字下げの回帰入力。最小対応は②③⑤で、UI刷新や新依存は不要。"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "人数をparseIntで読んだ結果を本文にも使うため、概数や範囲が確定数に変わる。表計算の集計と原文表示を分離する原則が適用されていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:263",
+            "plugins/system-briefing-book/references/document-structure.md:86",
+            "<参考資料>/要件定義.md:48"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-14",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "人数をparseIntで読んだ結果を本文にも使うため、概数や範囲が確定数に変わる。表計算の集計と原文表示を分離する原則が適用されていない。",
+          "recommended_intervention": "人数本文は原文を保持する。集計用値はセル全体が整数と一致するときだけ採用し、範囲・概数なら集計を省くか役割数表示にする。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:263",
+            "plugins/system-briefing-book/references/document-structure.md:86",
+            "<参考資料>/要件定義.md:48"
+          ],
+          "impact": "利用者規模を誤表示する。参考自体の2〜3名という情報にも影響する。",
+          "auto_fixable": false,
+          "reproduction": {
+            "input": "使う人/人数/端末/主にすること の表に人数2〜3と1,000",
+            "observed": "convertDocの表示は2人と1人になる。",
+            "execution": "Nodeのimportとメモリ内変換のみ"
+          }
+        }
+      ],
+      "score": 0.5,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:263",
+        "plugins/system-briefing-book/references/document-structure.md:86",
+        "<参考資料>/要件定義.md:48"
+      ],
+      "improvement": "人数本文は原文を保持する。集計用値はセル全体が整数と一致するときだけ採用し、範囲・概数なら集計を省くか役割数表示にする。"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "カード化せず原文を保持した方が正確な入力がある。候補カードが孫の条件を捨て、画面札が画面番号以外の注記を捨てる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:102",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-15",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "カード化せず原文を保持した方が正確な入力がある。候補カードが孫の条件を捨て、画面札が画面番号以外の注記を捨てる。",
+          "recommended_intervention": "候補カードは子要素に更なる階層があると通常のリストへ戻すか再帰表示する。画面欄は全体が画面番号の列挙に一致するときだけ札へ変換し、それ以外は原文を残す。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:102",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443"
+          ],
+          "impact": "承認条件や管理者限定が受け渡しHTMLから消え、仕様の意味が変わる。",
+          "auto_fixable": false,
+          "reproduction": {
+            "inputs": [
+              "- 学習: 候補を改善\n  - 時期: 次期\n    - 条件: 承認後のみ\n  - 根拠: H01",
+              "画面欄: S01（管理者のみ）"
+            ],
+            "observed": [
+              "候補カードから条件:承認後のみが消失",
+              "機能表で画面欄はS01のみになり管理者のみが消失"
+            ]
+          }
+        }
+      ],
+      "score": 0.5,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:102",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443"
+      ],
+      "improvement": "候補カードは子要素に更なる階層があると通常のリストへ戻すか再帰表示する。画面欄は全体が画面番号の列挙に一致するときだけ札へ変換し、それ以外は原文を残す。"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "同梱markdown-liteは基準インデントを使ってリストを読むがdoc-reportは開始判定<4と項目判定<2が異なる。文法処理を二重に持つことが互換性の差を生んでいる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+            "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:214"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-16",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "同梱markdown-liteは基準インデントを使ってリストを読むがdoc-reportは開始判定<4と項目判定<2が異なる。文法処理を二重に持つことが互換性の差を生んでいる。",
+          "recommended_intervention": "全面的なパーサ統合は後回しとし、doc-reportのリスト開始・項目判定を同じ基準インデントに合わせる。将来の共通化は表分割に続きリスト読取単位に限定する。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+            "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:214"
+          ],
+          "impact": "二重実装の説明整理だけでは直らない。実際の変換停止はMETA-17にまとめる。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.7,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+        "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:214"
+      ],
+      "improvement": "全面的なパーサ統合は後回しとし、doc-reportのリスト開始・項目判定を同じ基準インデントに合わせる。将来の共通化は表分割に続きリスト読取単位に限定する。"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "既存文書の先頭箇条書きに半角空白を2つ付けるだけで、convertDocがTypeErrorになる。3つでも同じ分岐に入る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:204"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-17",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "既存文書の先頭箇条書きに半角空白を2つ付けるだけで、convertDocがTypeErrorになる。3つでも同じ分岐に入る。",
+          "recommended_intervention": "最初の項目のindentを記録し同じ深さを兄弟として処理する。itemsが空のままchildrenへアクセスしない。0〜3字下げを同じ内容として確認する。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:204"
+          ],
+          "impact": "まとめ生成が止まり、文書の軽微な書式変更で単一HTMLを渡せなくなる。",
+          "auto_fixable": false,
+          "reproduction": {
+            "input": "# 仕様書\n\n## 1 内容\n\n  - 注意事項\n",
+            "observed": "TypeError: Cannot read properties of undefined (reading 'children')",
+            "execution": "convertDoc(input,\"spec\",new Set())。ファイル変更なし。"
+          }
+        }
+      ],
+      "score": 0.5,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:177",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:204"
+      ],
+      "improvement": "最初の項目のindentを記録し同じ深さを兄弟として処理する。itemsが空のままchildrenへアクセスしない。0〜3字下げを同じ内容として確認する。"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "文書タイトルをコロンでsplit(...,2)するため、題名に2つ目のコロンがあるとその後の語が表示から消える。初見読者が案件・対象範囲を誤認する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:572"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "この思考法では当該条件全体を検証していない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "META-18",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "文書タイトルをコロンでsplit(...,2)するため、題名に2つ目のコロンがあるとその後の語が表示から消える。初見読者が案件・対象範囲を誤認する。",
+          "recommended_intervention": "最初のコロンの位置だけで種別と残り全体を分ける。titleメタデータだけでなく表示h2にも全文が残る回帰確認を加える。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/system-briefing-book/scripts/lib/doc-report.mjs"
+          },
+          "evidence_paths": [
+            "plugins/system-briefing-book/scripts/lib/doc-report.mjs:572"
+          ],
+          "impact": "「配車: 夜間便」が「配車」になり、資料の対象を限定する情報が消失する。",
+          "auto_fixable": false,
+          "reproduction": {
+            "input": "# 仕様書: 配車: 夜間便\n\n## 1 内容\n本文",
+            "observed": "convertDoc.bodyの題名は配車のみ。戻り値titleは元の全文であり、表示との不一致。"
+          }
+        }
+      ],
+      "score": 0.7,
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:572"
+      ],
+      "improvement": "最初のコロンの位置だけで種別と残り全体を分ける。titleメタデータだけでなく表示h2にも全文が残る回帰確認を加える。"
+    }
+  ],
+  "thought_method_coverage": {
+    "used": [
+      "メタ思考",
+      "抽象化思考",
+      "ダブル・ループ思考",
+      "ブレインストーミング",
+      "水平思考",
+      "逆説思考",
+      "類推思考",
+      "if思考",
+      "素人思考"
+    ],
+    "skipped_with_reason": [],
+    "total": 30,
+    "assigned": 9,
+    "used_in_this_file": 9,
+    "remaining_methods": "他担当の21種は本ファイルの評価対象外。全30種完了を主張しない。"
+  },
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "META-11: 共通選択契約とbook固有の単独・自動実行契約が矛盾。"
+      ],
+      "violation_count": 1
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "META-12: profileに内容・範囲の照合がない。",
+        "META-15: 条件文・注記の欠落。",
+        "META-17: 字下げリストの停止。",
+        "META-18: タイトル末尾の欠落。"
+      ],
+      "violation_count": 4
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "META-10: 参考の6画面/現行学習とお手本の4画面/次版学習のズレ。",
+        "META-14: 人数原文とHTMLの不一致。"
+      ],
+      "violation_count": 2
+    },
+    "C4": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "読んだbookのK1→K2依存は循環なし。importしたdoc-report/compareProfileとその依存の読取実行は成功。",
+        "対象plugin全体の依存DAG・ブラウザ・PDF実行は本担当では未検証。参照パスの実行成功だけで全PASSにしない。"
+      ]
+    }
+  },
+  "variable_abstraction": [],
+  "minimal_fix_priority": [
+    "META-17: 字下げによる変換停止",
+    "META-14/META-15: 人数と条件の意味保存",
+    "META-18: 表示タイトルの保存",
+    "META-10/META-12: 参考と生成物の範囲照合を補完",
+    "META-11: L1/L2の選択契約の適用範囲を統一",
+    "META-13/META-16: 上記の回帰確認と文法読取の最小共通化"
+  ],
+  "positive_observations": [
+    {
+      "observation": "ボード画像はdata URIへ変換する実装がある。",
+      "path": "plugins/system-briefing-book/scripts/build-briefing-book.mjs:568"
+    },
+    {
+      "observation": "目次とhashでページを切り替える実装、JS無効時の全ページ表示、静的な前後リンクを備える。上部pagerだけの非表示を機能欠落とは扱わない。",
+      "paths": [
+        "plugins/system-briefing-book/assets/templates/book.html:80",
+        "plugins/system-briefing-book/assets/templates/book.html:399",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:211"
+      ]
+    },
+    {
+      "observation": "Markdown正本を保持し、未知表をgenericTableへ戻す構成は既存レポートの意味保存に適する。",
+      "path": "plugins/system-briefing-book/scripts/lib/doc-report.mjs:420"
+    }
+  ],
+  "validation_limits": [
+    "実施は静的読取およびexport関数のメモリ内呼出し。CLI mainは_checkへ書くので実行していない。",
+    "ブラウザ目視・PNG比較・配布HTMLの全ページ実操作は未実施。UIの視覚的再現性を保証しない。",
+    "指摘の再現入力は最小単位。全入力をvalidate済みの資料一式として通した実証ではない。",
+    "既存サンプルやユーザー参考を変更せず、UI新規デザイン提案を行っていない。"
+  ]
+}

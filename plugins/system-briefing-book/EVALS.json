@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "system_briefing_book_version": "0.1.0",
+  "evaluations": [
+    {
+      "date": "2026-10-01",
+      "skill": "run-briefing",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。新規 (雛形→ヒアリング→要件定義書★→仕様書★→ページ構成★→ボードと PNG→まとめ) と修正 (打ち合わせメモ→変更点→影響する工程だけやり直して版上げ) の 2 入口。確認点は artifact-first で、独立レビューは利用者が深さを選んだあとだけ動く。"
+    },
+    {
+      "date": "2026-10-01",
+      "skill": "run-briefing-hearing",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。目的と範囲、画面の共通ルール、しくみと基盤、運用を、既定案つきで 1 回 4 問まで聞き、ヒアリング.md に残す。"
+    },
+    {
+      "date": "2026-10-01",
+      "skill": "run-briefing-docs",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。要件定義.md と 仕様書.md を決まった章立てで書く。根拠のない値は「例」、未決は Q 番号で 決めること へ。"
+    },
+    {
+      "date": "2026-10-01",
+      "skill": "run-briefing-boards",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。10 種類のページの型からボードを作り、1680x1050 の 2 倍で PNG 化し、はみ出し・重なり・注記数・生の色を検査する。"
+    },
+    {
+      "date": "2026-10-01",
+      "skill": "run-briefing-book",
+      "kind": "run",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。外部参照ゼロ、JavaScript なしでも読める 1 ファイルのまとめ HTML を作る。版の一致と古い PNG を検査する。"
+    },
+    {
+      "date": "2026-10-01",
+      "skill": "assign-briefing-evaluator",
+      "kind": "assign",
+      "verdict": "baseline",
+      "findings": [],
+      "note": "初版。正確さ・言葉・見た目・シンプルさの 4 観点を、独立 context の briefing-reviewer へ委譲する。編集しない。"
+    },
+    {
+      "date": "2026-10-02",
+      "skill": "run-briefing",
+      "kind": "run",
+      "verdict": "updated",
+      "findings": [],
+      "note": "再現の測り方を 構造と判断材料 に変えた。基準点は 2 本 (お手本 = 形、assets/data/target-profile.json = 数と形) で、compare-briefing-profile.mjs の差の表を確認点3 と報告で見せる。OUT2 に「素材にある判断材料 (今の手間の数字・本物の紙・CSV の列の区分・要件の札・あとで に回した要望のしくみ) がそろって判断できる」を足した。データの方針 (data_policy) を工程0 で 1 回だけ聞く。文字と注記の量は報告 (notices) だけで止めない。最初の版の画面は 1 枚ずつボードにする。名前を挙げて頼まれた機能 (要望) は黙って外さない。node とテストは呼び出し元がまとめて流す。"
+    }
+  ],
+  "mechanical": {
+    "suites": [
+      {
+        "target": "scripts/",
+        "tests": "tests/",
+        "runner": "python3 -m pytest plugins/system-briefing-book/tests -q",
+        "last_run": "2026-10-01",
+        "result": "OK",
+        "count": 100
+      }
+    ]
+  }
+}

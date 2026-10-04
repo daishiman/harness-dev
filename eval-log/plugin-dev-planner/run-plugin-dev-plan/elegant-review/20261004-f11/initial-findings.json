@@ -1,0 +1,2067 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-04T04:05:58.942478+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "「値域ゲートPASSならinstall既定が後段へ伝わる」を反証した。宣言と消費者実行義務は異なる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256-265",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:459-500"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256-265",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:459-500"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256-265",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:459-500"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256-265",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:459-500"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "批判的思考"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "全planは両platform install契約を持つ、consumerはtask graphを実行する、よって契約に対応したrelease義務の存在が必要。現行gateにはその含意の検査が無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "演繹"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "R1 default指示、R3 default指示、index default、sample P13はいずれも両製品を記述する一方、installテスト群は値域単位に集中。複数artifactの整合は人手文面に依存する傾向を観測。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py:225-322",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py:225-322",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py:225-322",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py:225-322",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        },
+        {
+          "source_finding_id": "LOG-04",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "INSTALL_PLATFORMS/INSTALL_CODEX_MANIFEST/INSTALL_REGISTRY_BY_PLATFORM/INSTALL_RELEASE_ORDERを値域SSOTと宣言しているが、render_minimal_index内のdefaultは同じ文字列を手書き重複。platformやregistry変更時に生成既定と検証器が離れる。",
+          "recommended_intervention": "default_install_contract()等の小さなfactoryで既存INSTALL定数から新規dictを返し、skeleton生成とrelease obligation生成が共用する。文書は生成例として維持し、別の値域SSOTにしない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py"
+          }
+        }
+      ],
+      "score": 0.5,
+      "display_name": "帰納"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "既定キーとsampleは更新済みでもconsumer到達gateが無い最良説明は、install追加がplugin_meta値域と散文生成指示までで閉じていること。既存task graph射影の仕組みを再利用する修正が最小。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:433-500"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:433-500"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:433-500"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:433-500"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "アブダクション"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "R1→R3→index/P13→derive→handoff.task_graph_ref→consumerの一本の経路を追跡。handoffはgraph pathとroute coverageを検査するがinstall obligationを検査しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py:395-465",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py:395-465",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py:395-465",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py:395-465",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "垂直思考"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "installをplatform/manifest/registry/strict/release/isolated/liveの7要素へ分解。値域検査は揃うがtask実体化との接合が未検証。project projectionは別ownerでありmake sync推奨が逸脱。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:391"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:391"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:391"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:391"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        },
+        {
+          "source_finding_id": "LOG-02",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "SKILL.mdのGotcha(372)と同期手順(391)はmake syncを要求するが、現行Makefileとsync-native-surfaces.pyのowner契約はenabled plugin scopeを守るnative-surfaces-apply/check。旧指示はscope外全pluginへのprojectionを促す。",
+          "recommended_intervention": "2箇所を現行ownerのnative-surfaces手順に置換し、local user installとproject discovery projectionを区別する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md"
+          }
+        }
+      ],
+      "score": 0.5,
+      "display_name": "要素分解"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "registryを公開Claude/local Claude/Codex repoの3集合に分解。非配布の除外条件は公開集合だけへ適用すべきだが文書はmarketplace全体へ適用している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37-61"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37-61"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37-61"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37-61"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-03",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "marketplace契約表はroot .claude-plugin/marketplace.jsonを個人/チーム共有の唯一経路と宣言する一方、同文書57行は非配布pluginを含む全pluginのharness-localとcodex-repoをinstall経路にする。45行の非配布=marketplace非登録も公開側という限定がなく、SKILL.md158行も同様。新旧説明が同じ契約内で衝突する。",
+          "recommended_intervention": "公開distribution registry、Claude local install registry、Codex repo install registryを明示し、非配布は公開marketplace/bundlesだけ非登録と限定する。fleet全件を公開側に追加する修正は不要。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "MECE"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "create/update × Claude/Codexの4セルを確認。共通R1/R3 defaultsで全セルの宣言は存在する。ただしconsumer build-steps Phase Gの外側は新規plugin限定、内側step4は新規/既存両方とするためupdate登録手順の読み違い余地。中心問題は全セル共通のrelease義務検証欠落。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:86-118"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:86-118"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:86-118"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:86-118"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "2軸思考"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "logical",
+      "observations": [
+        "ユーザー要求→default選択→index検証→P13射影→実install receiptの流れで、index→P13で消失可能と実験確認。新たな手書きルール列挙より共通factory/obligation射影でこの接合を閉じる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657-661",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333-1340",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657-661",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333-1340",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657-661",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333-1340",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657-661",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333-1340",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "LOG-01",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+          "recommended_intervention": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py"
+          }
+        },
+        {
+          "source_finding_id": "LOG-04",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "INSTALL_PLATFORMS/INSTALL_CODEX_MANIFEST/INSTALL_REGISTRY_BY_PLATFORM/INSTALL_RELEASE_ORDERを値域SSOTと宣言しているが、render_minimal_index内のdefaultは同じ文字列を手書き重複。platformやregistry変更時に生成既定と検証器が離れる。",
+          "recommended_intervention": "default_install_contract()等の小さなfactoryで既存INSTALL定数から新規dictを返し、skeleton生成とrelease obligation生成が共用する。文書は生成例として維持し、別の値域SSOTにしない。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py"
+          }
+        }
+      ],
+      "score": 0.5,
+      "display_name": "プロセス思考"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "計画を作る責務と、package投影・user installを行う責務を区別し、入口docがどのexecutorへ導くかを観測。plannerは名前参照のみで再実装しない方針は適切だがcommandの旧経路が分岐を再導入する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:46",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:46",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:46",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:46",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-001",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+          "recommended_intervention": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "メタ思考"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "platform名/manifest path/registry/release orderを変数と、repo inventoryを事実とに分離。specfmの同ファイル内リテラル再保持は定数由来のfactoryへ畳める。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-002",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "INSTALL_* が値域のSSOTと宣言される一方、同じファイルの index skeleton は platforms/codex_manifest/registries/release を文字列で再保持している。R3 prose・golden index・契約表にも同じ値を保持し、二重保持台帳に INSTALL_* とその parity がない。現時点の値は一致するが次の変更で生成器とvalidatorがずれる余地がある。",
+          "recommended_intervention": "specfm.default_install_contract() を小さな純関数として設け、INSTALL_* から skeleton の install 値を導出する。R3はこの生成器を正本として参照し、golden default と generator の parityを既存 test_check_spec_gates に加える。cross-plugin importや新しい汎用フレームワークは不要。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py"
+          }
+        }
+      ],
+      "score": 1.0,
+      "display_name": "抽象化思考"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "install未達を手順追加で直す前に「公開不可=localでも導入不可」という前提を検証。local22/public18は意図的で、denylistを除去する必要はなく文書の公開範囲と導入範囲の混同を除くべき。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-local-marketplace.py:195",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:169"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-local-marketplace.py:195",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:169"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-local-marketplace.py:195",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:169"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-local-marketplace.py:195",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:169"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-001",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+          "recommended_intervention": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "ダブルループ思考"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "A:全docへ最新値をコピー、B:巨大cross-plugin共通schema、C:既存specfm内factory+共通installer入口に集約を比較。Aは次のdriftを残しBはinstall自己完結境界を拡大する。Cが最小変更で既存責務を守る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:27",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:27",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:27",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:27",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-001",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+          "recommended_intervention": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md"
+          }
+        },
+        {
+          "source_finding_id": "META-002",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "INSTALL_* が値域のSSOTと宣言される一方、同じファイルの index skeleton は platforms/codex_manifest/registries/release を文字列で再保持している。R3 prose・golden index・契約表にも同じ値を保持し、二重保持台帳に INSTALL_* とその parity がない。現時点の値は一致するが次の変更で生成器とvalidatorがずれる余地がある。",
+          "recommended_intervention": "specfm.default_install_contract() を小さな純関数として設け、INSTALL_* から skeleton の install 値を導出する。R3はこの生成器を正本として参照し、golden default と generator の parityを既存 test_check_spec_gates に加える。cross-plugin importや新しい汎用フレームワークは不要。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "ブレインストーミング"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "公開marketplaceの差分を直す代わりに、利用者が最初に見る入口commandを調べると既にREADMEにある全件helperがcommandへ反映されていなかった。機能追加より導線一本化を優先。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/README.md:18",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:68"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/README.md:18",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:68"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/README.md:18",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:68"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/README.md:18",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:68"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-001",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+          "recommended_intervention": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "水平思考"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "両製品対応の安全な既定と理由付き除外の柔軟性は単独では妥当だが、除外済み計画がdefault=bothのhelperを呼ぶと「除外が正しいほど実行に失敗」する。gateとexecution契約を同じ範囲へ戻す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:898"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:898"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:898"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:898"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-003",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "plannerは理由付きcodex除外を許可し、check_install にClaude-only契約を渡すと空errorsで合格する。しかし契約表・R3の隔離/実環境コマンドは --platform なしで常に両製品を選ぶ。さらに install-local-plugins.py は platformsを見る前にload_catalogを呼び、常にCodex catalogと全Codex manifestを要求する。codexを除外した計画をそのまま履行すると除外製品の導入か入力不足エラーになる。",
+          "recommended_intervention": "最小整合は「platform除外はinstall対象からの除外であり、repository packageは両製品へ投影する」を明記し、計画の実行argvに選択platformを伝える。完全にCodex packageも省くopt-outを維持するなら installer.load_catalog を選択platform-awareにする必要がある。今回の全plugin両製品対応という目的では前者を推奨。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "逆説思考"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "manifest正本→Codex投影のcompiler構造を、INSTALL_*→default contract→golden outputにも適用する。生成元と複製成果物の区別を揃えれば新しいSSOT形式は不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:16",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:16",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:16",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:16",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-002",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "description": "INSTALL_* が値域のSSOTと宣言される一方、同じファイルの index skeleton は platforms/codex_manifest/registries/release を文字列で再保持している。R3 prose・golden index・契約表にも同じ値を保持し、二重保持台帳に INSTALL_* とその parity がない。現時点の値は一致するが次の変更で生成器とvalidatorがずれる余地がある。",
+          "recommended_intervention": "specfm.default_install_contract() を小さな純関数として設け、INSTALL_* から skeleton の install 値を導出する。R3はこの生成器を正本として参照し、golden default と generator の parityを既存 test_check_spec_gates に加える。cross-plugin importや新しい汎用フレームワークは不要。",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py"
+          }
+        }
+      ],
+      "score": 1.0,
+      "display_name": "類推思考"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "もし明示的にClaude-onlyを求めてcodex除外理由を記せばcheck_installは合格するが、helperはload_catalogでCodex manifestを依然要求する。gateを実メモリ入力で実行しerrors=[]を確認。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:170",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:110",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:822"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:170",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:110",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:822"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:170",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:110",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:822"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:170",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:110",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:822"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-003",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "plannerは理由付きcodex除外を許可し、check_install にClaude-only契約を渡すと空errorsで合格する。しかし契約表・R3の隔離/実環境コマンドは --platform なしで常に両製品を選ぶ。さらに install-local-plugins.py は platformsを見る前にload_catalogを呼び、常にCodex catalogと全Codex manifestを要求する。codexを除外した計画をそのまま履行すると除外製品の導入か入力不足エラーになる。",
+          "recommended_intervention": "最小整合は「platform除外はinstall対象からの除外であり、repository packageは両製品へ投影する」を明記し、計画の実行argvに選択platformを伝える。完全にCodex packageも省くopt-outを維持するなら installer.load_catalog を選択platform-awareにする必要がある。今回の全plugin両製品対応という目的では前者を推奨。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "if思考"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "source_agent": "meta",
+      "observations": [
+        "「どこからでも全pluginを使う」利用者がmarketplace-registerの手順だけをコピペした場合、Codexはharness-creatorしか入り得ずClaudeの例はcwd依存project scope。READMEの絶対パスcommon helper例へ揃えれば前提知識を減らせる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:23",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:149",
+            "/Users/dm/dev/dev/個人開発/harness/README.md:24"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:23",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:149",
+            "/Users/dm/dev/dev/個人開発/harness/README.md:24"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:23",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:149",
+            "/Users/dm/dev/dev/個人開発/harness/README.md:24"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:23",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:149",
+            "/Users/dm/dev/dev/個人開発/harness/README.md:24"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "META-001",
+          "condition": "C3",
+          "severity": "high",
+          "bucket": "other",
+          "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+          "recommended_intervention": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "素人思考"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "Claude正本→Codex投影→catalog→version/fingerprint→CLI install→runtime receiptの鎖を確認。platform syncはtransaction/lockを持つがrelease台帳と下流生成に完了境界の不一致がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/sync-plugin-platforms.py:655",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/sync-plugin-platforms.py:655",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/sync-plugin-platforms.py:655",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/sync-plugin-platforms.py:655",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "システム"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "後段marketplace生成を例外化すると台帳保存が先に終わるためsurveyがcleanとなる。再試行でno-pending分岐へ進み修復しないという因果を現物関数のメモリmockで再現した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "因果関係"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "handoff更新→copy digest差→stale_runtime→release bump要求→releaseはhandoffを無視し変更なし、という回復不能ループを発見。実在handoffへの仮想本文変更で両検出器の違いを再現した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:103",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:861"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:103",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:861"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:103",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:861"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:103",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:861"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "因果ループ"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "非配送内容だけを共通除外すれば本物の古い実装検出を維持しつつhandoff起因の誤検出を減らせる。symlink着地点の正規化とCLI marker除外は既存実装を維持し、粗いdigest無効化は不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:520"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:520"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:520"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:520"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "トレードオン"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "Codex mutationにも既存source検証を共用すればClaude/checkとの重複分岐を減らし、通常の同source再実行と別source保護を同時に満たせる。既存_assert_marketplace_sourceが受け皿。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:559",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:700",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:559",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:700",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:559",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:700",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:559",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:700",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-03",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+          "recommended_intervention": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "プラスサム"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "ユーザーの価値は『両方へ入れられた』こと。manifest22件一致から実環境receiptまで確認した結果、Codex22件verified、Claudeはsystem-spec-harnessの同hook複数有効化1件で未verified。構造検証PASSと導入・有効化PASSを混同しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:577",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:630",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:577",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:630",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:577",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:630",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:577",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:630",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0,
+      "display_name": "価値提案"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "全pluginへ個別のinstall分岐を追加せず共通installer/releaseの2つの完了境界を優先修正する。fleet全件に効く3所見へ絞り、UBM等の業務機能には波及させない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:662"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:662"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:662"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:662"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-03",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+          "recommended_intervention": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.25,
+      "display_name": "戦略的"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "なぜ再試行成功なのに未生成か→pendingが0。なぜ0か→保存済みfingerprintと現物が一致。なぜ未生成前に保存済みか→saveが生成前。なぜ後段失敗をcheckが検出しないか→checkが台帳/内容だけ見る。なぜ修復されないか→clean経路が下流再生成を呼ばない。完了印を最後へ移しreleased経路でも随伴生成を回すのが根本処置。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:682",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:682",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:682",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:682",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "why(5回)"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "最小改善は台帳保存順序とconfig lock再生成条件、digest除外の整合、Codex source preflight。既存の関数・transaction・receipt・SCC依存順序を活用し、別のinstall frameworkは作らない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-03",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+          "recommended_intervention": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.25,
+      "display_name": "改善"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "『release除外とinstaller除外が等しい』を実在handoffのメモリ変更で棄却。『Codex installはcheckと同じsource preflightを通る』を呼出列mockで棄却。『CLI自体が同名別sourceを上書きする』は未検証として保留した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:43",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "reproductions"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:43",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "reproductions"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:43",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "reproductions"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:43",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "reproductions"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-03",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+          "recommended_intervention": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.5,
+      "display_name": "仮説"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "論点を導入可能性・再実行性・完了宣言の正確さに絞った。CLI読取ではCodex22件導入確認、Claudeの二重activationはソース欠陥と別の環境状態。global mutationを避け、既存有効化を勝手に解除しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:437",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:625",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:437",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:625",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:437",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:625",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:437",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:625",
+            "runtime_check"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        }
+      ],
+      "score": 0.75,
+      "display_name": "論点"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "source_agent": "systems",
+      "observations": [
+        "観察を『完了境界』(台帳先行保存)、『内容境界』(handoff差)、『登録identity境界』(Codex source)、『環境状態』(Claude二重activation)に群化。前三者は共通コード修正、最後はユーザー環境の整理判断と分けた。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "runtime_check"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "runtime_check"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "runtime_check"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+            "runtime_check"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "source_finding_id": "SYS-01",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+          "recommended_intervention": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-02",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+          "recommended_intervention": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        },
+        {
+          "source_finding_id": "SYS-03",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+          "recommended_intervention": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py"
+          }
+        }
+      ],
+      "score": 0.25,
+      "display_name": "KJ"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/eval-log/plugin-dev-planner/run-plugin-dev-plan/elegant-review/20261004-f11/analysis-summary.json"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/eval-log/plugin-dev-planner/run-plugin-dev-plan/elegant-review/20261004-f11/analysis-summary.json"
+      ],
+      "violation_count": 1
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/eval-log/plugin-dev-planner/run-plugin-dev-plan/elegant-review/20261004-f11/analysis-summary.json"
+      ],
+      "violation_count": 4
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/eval-log/plugin-dev-planner/run-plugin-dev-plan/elegant-review/20261004-f11/analysis-summary.json"
+      ],
+      "violation_count": 2
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "scope": "fleet packaging/install and plugin-dev-planner default contracts",
+  "assignment_note": "source_agent records actual user-requested 9/9/12 contributor; agent/category are catalog responsibilities. why is integrated by logical reviewer."
+}

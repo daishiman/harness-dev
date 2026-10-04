@@ -627,3 +627,17 @@ def test_too_many_action_items_fails(tmp_path: Path, golden_text: str):
     r = run(p, "weekly")
     assert r.returncode == 1
     assert "上限8件" in r.stdout
+
+
+def test_submission_action_section_is_outside_group_checks(tmp_path: Path, golden_text: str):
+    # 月報の提出用セクションの行動目標（`（提出）` 付き）はグループ見出しを持たない
+    # 1行1行動の規定。所属の検査（C4/C5）と件数（S3）の対象から外れることを確かめる。
+    flat = "".join(f"- 事業者様へ連絡を{n}件出す　期日7/{n % 5 + 1}\n" for n in range(1, 10))
+    head = "## 【今週の行動目標（行動管理・優先順位付き）】"
+    assert head in golden_text
+    text = golden_text.replace(head, "## 【今週の行動目標（提出）】\n" + flat + "\n" + head, 1)
+    p = write(tmp_path, WEEKLY_NAME, text)
+    r = run(p, "weekly")
+    assert r.returncode == 0, r.stdout
+    assert "どの成果目標に属するか" not in r.stdout
+    assert "行動目標 8 件（上限8件）" in r.stdout

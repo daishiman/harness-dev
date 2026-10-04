@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import component_entry, write_all_phases, write_inventory, write_phase_index
+from conftest import SPECFM, component_entry, write_all_phases, write_inventory, write_phase_index
 
 _PLAN = Path(__file__).resolve().parent.parent / "examples" / "sample-plan"
 
@@ -25,6 +25,12 @@ def _write_minimal_plan(tmp_path):
     inventory = write_inventory(tmp_path, [component_entry("C01", "skill", skill_kind="run")])
     write_all_phases(tmp_path, entities_by_phase={2: ["C01"], 5: ["C01"]})
     write_phase_index(tmp_path, plugin_meta=True)
+    (tmp_path / "phase-13-release.md").write_text(
+        SPECFM.render_minimal_phase(13, plugin_slug="sample-plugin"), encoding="utf-8"
+    )
+    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(
+        json.dumps({"target_plugin_slug": "sample-plugin"}), encoding="utf-8"
+    )
     return tmp_path, inventory
 
 

@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-04",
+  "branch": "devgraph/harness-f11",
+  "base_branch": "main",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/83",
+  "beads": ["harness-f11", "harness-y2l"],
+  "dev_graph_node_id": null,
+  "dev_graph_note": ".dev-graph は render だけで graph.json を持たない。対応する node は無いので、先例 (devgraph/harness-kfs) と同じくブランチ名には Beads ID を使った。",
+  "scope": [
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan",
+    "plugins/plugin-dev-planner/.claude-plugin/plugin.json と .codex-plugin/plugin.json と plugin-composition.yaml (0.1.19)",
+    "plugins/harness-creator/scripts/install-local-plugins.py",
+    "plugins/harness-creator/tests/test_install_local_plugins.py",
+    "plugins/harness-creator/commands/marketplace-register.md",
+    "plugins/harness-creator/CHANGELOG.md と .claude-plugin/plugin.json と .codex-plugin/plugin.json と plugin-composition.yaml (1.4.38)",
+    "scripts/build-plugin-release.py",
+    "tests/scripts-root/test_root__build_plugin_release.py",
+    "tests/test_marketplace_register_command.py",
+    "marketplaces/local/.claude-plugin/marketplace.json と plugin-fingerprints.json",
+    "eval-log/plugin-dev-planner/run-plugin-dev-plan/elegant-review/20261004-f11",
+    ".beads/interactions.jsonl",
+    ".artifact-delivery/external-mutation (この PR を出すときのガードの受領書)"
+  ],
+  "canonical_spec_locations_probe": {
+    "docs/": "absent",
+    "features/": "absent",
+    "system-spec/": "absent",
+    "specs/": "absent",
+    "architecture/": "absent",
+    "tasks/": "absent"
+  },
+  "design_notes_dir": "doc/",
+  "decision": "reflected-in-plugin-canonical-sources",
+  "rationale": "このリポジトリは plugin の集まりで、docs/・features/・system-spec/・specs/・architecture/・tasks/ のどれも持たない。仕様の正本は各 plugin の SKILL.md・references/*.md・scripts の先頭の説明と定数に置き、なぜその形にしたかは doc/ の設計ノートか elegant-review の記録に残す。この PR はその正本 (plugin-creator-contract.md、io-contract.md、specfm.py、check-spec-gates.py、marketplace-register.md、install-local-plugins.py、build-plugin-release.py) を直接直したので、ほかの場所へ写す仕様の文書は無い。新しい置き場所は作らなかった。正本が 2 か所になり、片方だけが古くなるためである。ルートの README.md は既に共通入口 install-local-plugins.py --all を案内しており、直す箇所は無かった。設計の理由は review-repo.md (30 思考法の記録) に残したので、doc/ に新しい設計ノートは足していない。",
+  "changes": [
+    {
+      "id": "harness-f11/planner-install-obligations",
+      "summary": "plugin_meta.install の既定値を default_install_contract() の 1 か所で作るようにした。P13 の完了チェックリストと task-graph の受け入れ条件に、install の義務 (CHANGELOG→bump、両 catalog の維持、strict 検証、隔離 install、実環境 install) が入っているかを check-spec-gates が確かめる。保存済みの task-graph に古い義務が残っていても止める。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py (default_install_contract、install_release_obligations。義務の文面の正本)",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py (義務の到達検査)",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-spec-skeleton.py",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md (install 契約表)",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md と task-graph.json"
+      ]
+    },
+    {
+      "id": "harness-f11/codex-opt-out-keeps-packages",
+      "summary": "Codex への導入を外す opt-out は、実際に入れる先だけを絞る。両製品の manifest と catalog は残し、--platform を生成するコマンドへそのまま渡す。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py (install_release_obligations の platform 引数)",
+        "plugins/harness-creator/commands/marketplace-register.md (--platform claude / codex の説明)"
+      ]
+    },
+    {
+      "id": "harness-f11/release-ledger-after-downstream",
+      "summary": "build-plugin-release.py は、marketplace と config lock の再生成が終わってから fingerprint の台帳を保存する。途中で失敗しても台帳は古いまま残るので、再実行すれば余分な採番なしで直る。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/build-plugin-release.py (_run の順序と、その理由のコメント)",
+        "tests/scripts-root/test_root__build_plugin_release.py (後段の失敗 6 ケース)",
+        "plugins/harness-creator/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "harness-f11/install-digest-and-codex-source",
+      "summary": "install 受領書の digest から .DS_Store・.claude/handoff/・通常の directory を除いた。release が内容と見なさない差で stale_runtime になり、版を上げても直らない状態を防ぐ。Codex の install でも、変更の前に既存の marketplace source を確かめ、別の source を指す同名の登録を上書きしない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/scripts/install-local-plugins.py (_TREE_IGNORED_FILES、_TREE_IGNORED_PREFIXES、_install_codex。先頭のコメント)",
+        "plugins/harness-creator/tests/test_install_local_plugins.py",
+        "plugins/harness-creator/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "harness-f11/marketplace-register-single-entry",
+      "summary": "/marketplace-register を、両製品へ全 plugin を入れる共通入口 install-local-plugins.py --all --platform both に一本化した。旧 make sync の案内と、重複していた配布件数を消した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/harness-creator/commands/marketplace-register.md",
+        "tests/test_marketplace_register_command.py"
+      ]
+    },
+    {
+      "id": "release-bump",
+      "summary": "harness-creator を 1.4.38、plugin-dev-planner を 0.1.19 に上げた (CHANGELOG を書いてから bump)。Codex の manifest、composition、local marketplace、fingerprint を追随させた。",
+      "spec_impact": false,
+      "reason": "版番号と生成物の追随だけで、動き・入出力・決まりは変えていない。版を上げないと Claude CLI がキャッシュを取り直さないため、配布するのに必要な作業である。"
+    },
+    {
+      "id": "evidence-and-receipts",
+      "summary": "elegant-review の記録 (20261004-f11)、この受領書、Beads のやり取りの記録、外部変更ガードの受領書を足した。",
+      "spec_impact": false,
+      "reason": "審査と操作の記録だけで、plugin の動き・入出力・決まりは変えていない。"
+    }
+  ],
+  "excluded_from_commit": [
+    "stash@{0} (pre-merge-local-changes-20261004)。前回 main を取り込むときに退避した控えで、この PR の内容ではない。drop もしていない。"
+  ],
+  "remaining_work": [
+    "harness-y2l: /Users/dm/orca/workspaces/affiliate-hub/task20-3 に project scope の system-spec-harness@harness-local が残り、user scope と合わせて同じ hook が 2 回発火する。そのディレクトリで claude plugin uninstall system-spec-harness@harness-local --scope project を実行するかは利用者が決める。",
+    "prompt-creator・ubm-goal-setting・guide-doc-generator・system-spec-harness の README は、開発用の make sync (.claude/ への投影) を案内している。導入の共通入口 install-local-plugins.py への誘導は足していない。直すなら各 plugin の版上げが要る。",
+    "CI の lint-content-review と lint-live-trial-verdict は、前の PR (system-spec-harness・ubm-goal-setting・dev-graph) から続く stale-sha で赤になる見込み。LLM による評価を回し直す必要があり、verdict を手で書き換えない。",
+    "plugin-dev-planner には CHANGELOG.md が無い。版の履歴は manifest と git の履歴だけで追っている。"
+  ],
+  "verification": {
+    "pytest plugin-dev-planner (run-plugin-dev-plan と assign-plugin-plan-evaluator)": "932 passed, 2 skipped",
+    "pytest harness-creator tests/test_install_local_plugins.py": "35 passed",
+    "pytest tests/scripts-root/test_root__build_plugin_release.py と tests/test_marketplace_register_command.py (版上げ後)": "53 passed",
+    "build-plugin-release.py --check": "OK (22 plugins)",
+    "build-local-marketplace.py --check": "OK (22 plugins, no drift)",
+    "sync-plugin-platforms.py --all --check": "22 件 noop",
+    "claude plugin validate --strict (harness-creator, plugin-dev-planner)": "passed",
+    "install-local-plugins.py --all (実環境)": "Codex 22/22 verified、Claude 21/22 verified。harness-creator 1.4.38 と plugin-dev-planner 0.1.19 は両方で verified。残る 1 件は system-spec-harness の同じ hook の二重有効化で、原因はリポジトリの外 (harness-y2l)。",
+    "評価の深さ": "MVP なので最小限にした。30 思考法の審査と独立した再検証は harness-f11 の作業の中で済ませ、ここでは版上げの後の決定論ゲートと実環境 install だけを回した。"
+  }
+}

@@ -28,7 +28,7 @@
 - 非担当: 総合判定 (R1)、監査ロジックそのもの (各 agent)、仕様書修正。
 
 ### 2.2 ドメインルール (観点↔評価主体)
-- **matrix_coverage (primary C07 `system-spec-matrix-auditor` + sub-input C06 `system-spec-hearing-auditor`)**: C07 に `spec-state.json` を入力し、未収集セル放置 / 対象外理由妥当性 / 確定 qa_ref トレーサビリティ / 集約真理値表整合 / canonical platform 行全存在を監査させ、`validate-coverage-matrix.py` の両モード exit code を根拠に含める。C06 には同じ `spec-state.json` を入力しヒアリング品質 4 軸 (聞き漏れ / 誘導質問 / 早期停止 / トレーサビリティ) を監査させ、設計判断が誘導なく漏れなく引き出され Q&A に遡れることを **matrix_coverage の sub-input (網羅性・トレース補助根拠)** として併せる。
+- **matrix_coverage (primary C07 `system-spec-matrix-auditor` + sub-input C06 `system-spec-hearing-auditor`)**: C07 に `spec-state.json` を入力し、未収集セル放置 / 対象外理由妥当性 / 確定 qa_ref トレーサビリティ / 集約真理値表整合 / canonical platform 行全存在を監査させ、`validate-coverage-matrix.py` の両モード exit code を根拠に含める。C06 には同じ `spec-state.json` を入力しR6-audit-hearing の監査 5 軸 (軸の定義と数は `../../run-system-spec-elicit/prompts/R6-audit-hearing.md` が正本)で監査させ、重大度付きの検出を R6 Layer 6 の JSON 形で受け取る。設計判断が誘導なく漏れなく引き出され Q&A に遡れることを **matrix_coverage の sub-input (網羅性・トレース補助根拠)** として併せる。C06 の JSON は書き換えずに R1 へ渡す (sub-input の判定は R1 が `aspect-criteria.md` 1a と `aggregate-completeness.py --hearing` で導く)。
 - **design_knowledge_reflection (独立 auditor なし・C05 R1-score 自前評価)**: 本観点に監査 sub-agent を立てない。C06 は `system-spec/*.md` を読まず設計知識を監査できないため、design_knowledge へ束縛しない (虚偽対応の撤去)。R2 は `spec_docs` (system-spec/*.md) を R1 へ渡し、R1-score が各章の設計知識ポインタ存在 (機械層) + 原則の具体適用 (意味層) を自前評価する (存在確認だけで PASS にしない = Goodhart 防止)。
 - **doc_freshness (C08 `system-spec-doc-freshness-auditor`)**: `fetched-references.json` + target 一覧を入力に、形式層と内容鮮度層を監査させる。
 - **R1 self-evaluated inputs**: `requirements_foundation`/`decisions[]`/deep knowledge validator結果/全prompt validator結果を改変せずR1へ渡し、foundation_trace/decision_guidance/design_knowledge_reflection/prompt_qualityを埋めさせる。
@@ -80,7 +80,7 @@
 
 ### 5.3 完了チェックリスト
 - [ ] matrix_coverage にC07の独立verdictと根拠が存在する
-- [ ] C06の4軸結果がmatrix_coverageのsub-inputとして存在し、独立観点には昇格していない
+- [ ] C06のヒアリング監査結果 (R6の監査5軸・重大度付きの検出・閉じた検出) がmatrix_coverageのsub-inputとして書き換えずに存在し、独立観点には昇格していない
 - [ ] doc_freshness にC08の独立verdictと根拠が存在する
 - [ ] design_knowledge_reflectionの入力が`spec_docs`としてR1-scoreへ渡り、重複auditorが存在しない
 - [ ] foundation/decision/deep-knowledge/prompt validator evidenceが欠落なくR1-scoreへ渡っている
@@ -109,4 +109,4 @@
 
 ## 出力指示
 
-Task tool で `system-spec-matrix-auditor` (C07) / `system-spec-doc-freshness-auditor` (C08) / `system-spec-hearing-auditor` (C06) をそれぞれ独立 context (fork) で起動する。C07 を matrix_coverage の一次根拠、C08 を doc_freshness の一次根拠とし、C06 のヒアリング品質 4 軸は matrix_coverage の sub-input として併せる (独立観点に昇格させない)。**design_knowledge_reflection には監査 sub-agent を立てず** (C06 は system-spec/*.md を読めない)、`spec_docs` を R1-score へ渡して自前評価に委ねる。監査ロジックは各 agent の SSOT に委ね、R2 は結果を書き換えず集約するだけにする。INDETERMINATE は隠さず明示し、集約結果を R1-score へ渡す。余計な前置きは禁止。
+Task tool で `system-spec-matrix-auditor` (C07) / `system-spec-doc-freshness-auditor` (C08) / `system-spec-hearing-auditor` (C06) をそれぞれ独立 context (fork) で起動する。C07 を matrix_coverage の一次根拠、C08 を doc_freshness の一次根拠とし、C06 のヒアリング監査 (R6 の監査 5 軸・重大度付きの検出) は matrix_coverage の sub-input として併せる (独立観点に昇格させない。判定への対応は `aspect-criteria.md` 1a)。**design_knowledge_reflection には監査 sub-agent を立てず** (C06 は system-spec/*.md を読めない)、`spec_docs` を R1-score へ渡して自前評価に委ねる。監査ロジックは各 agent の SSOT に委ね、R2 は結果を書き換えず集約するだけにする。INDETERMINATE は隠さず明示し、集約結果を R1-score へ渡す。余計な前置きは禁止。

@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "app_name": "SupportCopilot",
+    "flow_name": "ユーザー質問1件の回答生成",
+    "analyzed_at": "2026-06-10",
+    "measurement_tier": "T1(count_tokens) + T2(Claude sample)",
+    "notes": "RAG + ツール使用エージェントの例示シナリオ。代表値。"
+  },
+
+  "compare_models": [
+    "claude-opus-4-8", "claude-sonnet-4-6", "claude-haiku-4-5",
+    "gpt-5", "gpt-4o", "gpt-4o-mini", "gemini-2.5-pro", "gemini-2.5-flash"
+  ],
+
+  "calls": [
+    {
+      "id": "c1",
+      "label": "intent classification",
+      "model": "claude-haiku-4-5",
+      "source_ref": "src/router.ts:31",
+      "confidence": "counted",
+      "tokens": { "system": 350, "user_input": 220, "output": 40 },
+      "runs_per_flow": 1,
+      "assumptions": ["分類出力は単一ラベル ~40tok と想定 (T1で入力をexact計測)"]
+    },
+    {
+      "id": "c2",
+      "label": "RAG answer generation",
+      "model": "claude-opus-4-8",
+      "source_ref": "src/answer.ts:88",
+      "confidence": "measured",
+      "tokens": {
+        "context": 6000,
+        "user_input": 220,
+        "cacheable_prefix": 2300,
+        "cache_write_ttl": "5m",
+        "output": 700,
+        "thinking": 500
+      },
+      "runs_per_flow": 1,
+      "assumptions": [
+        "context = 検索チャンク6件 x ~1000tok",
+        "安定prefix(system+tools=2300tok)は cacheable_prefix に集約 (component側には入れない)",
+        "出力700tok + 思考500tok は T2 で代表サンプルを実測"
+      ]
+    },
+    {
+      "id": "c3",
+      "label": "tool-use agent loop",
+      "model": "claude-opus-4-8",
+      "source_ref": "src/agent.ts:120",
+      "confidence": "estimated",
+      "tokens": { "user_input": 120, "output": 350 },
+      "agent_loop": {
+        "iterations": 4,
+        "history_growth_per_iter": 900,
+        "cached_prefix_tokens": 2300,
+        "history_cached": false
+      },
+      "assumptions": [
+        "平均4反復 (tool_use→tool_result のラウンドトリップ)",
+        "各反復で会話履歴が ~900tok 増加 (full price, キャッシュ未設定の上限ケース)",
+        "system+tools=2300tok を prefix としてキャッシュ"
+      ]
+    }
+  ],
+
+  "projection": {
+    "volumes": [1, 100, 1000, 10000, 100000, 1000000],
+    "monthly_volume": 30000,
+    "dau_scenarios": [100, 1000, 10000],
+    "flows_per_user_per_day": 3,
+    "cache_hit_rate": 0.7
+  }
+}

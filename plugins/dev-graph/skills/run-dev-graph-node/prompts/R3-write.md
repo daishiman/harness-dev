@@ -13,7 +13,7 @@
 
 ### 入力契約
 
-- containment receipt、classification decision、artifactまたはfeature package、graph revision。
+- containment receipt、classification decision、artifactまたはfeature package、R2 preview の `graph_revision_before`。apply の入力 JSON には必ず `expected_graph_revision` として渡し、省略しない (省略すると writer が `missing_expected_graph_revision` で拒否する)。
 
 ### 出力契約
 
@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: `register-package.py`と`validate-graph-schema.py`。
+- 使用資産: 通常 artifact の add/update は`build-graph-node.py`、exact-13 package は`register-package.py`、両者の書込み前検証は`validate-graph-schema.py`。graph・content・receipt を Write/Edit や自作 script で直接書かない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

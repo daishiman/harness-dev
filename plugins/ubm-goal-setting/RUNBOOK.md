@@ -20,10 +20,12 @@
 
 `hooks/ubm-write-path-guard.py` は `UBM_VAULT_ROOT` 配下の Write/Edit/MultiEdit だけを検査する。
 
-許可する vault write:
+許可する vault write (正本は `hooks/ubm-write-path-guard.py` の `ALLOWED_PREFIXES` / `ALLOWED_EXACT`):
 
-- `05_Project/UBM/目標設定/` 配下の目標設定ファイル保存
-- `02_Configs/Templates/Daily.md` の embed 参照更新
+- prefix 7 件: `05_Project/`・`02_Configs/Daily/`・`.claude/{skills,agents,commands,rules,prompts}/`
+- 完全一致 1 件: `02_Configs/Templates/Daily.md`
+
+各 skill が実際に書く範囲はこれより狭く、その境界は各 skill の規則が守る (例: 目標設定は `05_Project/UBM/目標設定/` と Daily.md の embed 行だけ、相談記録は vault へ書かない)。
 
 保護対象外:
 
@@ -32,6 +34,16 @@
 - Read など非 write tool
 
 ## Verification
+
+repo root から実行する。`python3` は**どれを指しているかで結果が変わる**。pytest が入っていないインタプリタでは `No module named pytest` で `rc=1` になり、テストが1件も走らない（この環境では `/usr/bin/python3` がそれに当たる）。先に次を確認し、`rc=0` を返すインタプリタのパスを以降の `python3` の位置に使う。
+
+```bash
+python3 -c "import pytest" ; echo $?   # 0 なら以降の python3 をそのまま使える
+# 0 以外なら pytest が入っている別インタプリタを探して、そのパスを以降の python3 の位置に置く
+# （例: /usr/local/bin/python3 -c "import pytest" ; echo $?）
+```
+
+exit code は値そのものを読む。pytest は `0`=全通過 / `3`=収集エラー / `5`=収集0件。`| tail` `| grep` を挟むとパイプ末尾の rc しか読めないので、`cmd > out.txt 2>&1; rc=$?` の形で取る。件数はこの出力に出たものを正とし、README などの本文に書き写さない。
 
 ```bash
 python3 -m pytest plugins/ubm-goal-setting/tests -q

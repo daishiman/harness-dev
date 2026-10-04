@@ -31,7 +31,7 @@
         "対象外セルに具体的 reason、確定セルに qa_log/approval_log へ遡れる qa_ref がある",
         "category_aggregate が真理値表 (未着手/収集中/確定/対象外) と一致し宣言欠落が無い",
         "goal-spec 例示カテゴリを最低含むか excluded_categories の根拠がある",
-        "sub-input: C06 (hearing-auditor) の 4 軸 (聞き漏れ/誘導質問/早期停止/トレーサビリティ) が健全で、確定セルが誘導なく漏れなく Q&A に遡れる (ヒアリング品質を網羅性・トレースの補助根拠に併せる)",
+        "sub-input: C06 (hearing-auditor) の監査 (軸は R6-audit-hearing の監査 5 軸が正本) を aspect-criteria.md 1a の対応表で判定して FAIL/INDETERMINATE が無く、確定セルが誘導なく漏れなく Q&A に遡れる (C06 の verdict はそのまま使わず aggregate-completeness.py --hearing で導く。注記と閉じた検出は findings に残す)",
         "C16 必須情報被覆 (機械層): validate-knowledge-graph.py --profile required-info が exit0 (全 in-scope domain 被覆・item 最低形状・収集順序・coverage certificate)。missing_effect=block の item が未回答のまま確定 (confirmed) に進んだ確定セルは C01 R5 収集ゲート素通り (C14 は blocking_items を列挙するのみで runtime 施行はせず、決定論 writer 施行 = apply-spec-transition への block 検査組込は follow-up) として FAIL に寄せる"
       ]
     },

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>05 書き出し</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.out { display: flex; align-items: center; gap: 28px; padding: 22px 24px; }
+.out .count { display: flex; flex-direction: column; gap: 2px; }
+.out .count small { font-size: 13px; font-weight: 700; color: var(--text-2); }
+.out .count b { font-size: 44px; font-weight: 800; line-height: 1.1; }
+.out .count b span { font-size: 20px; margin-left: 6px; }
+.out .file { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--text-2); }
+.out .file b { align-self: flex-start; font-size: 16px; color: var(--text); }
+.out .btn { margin-left: auto; min-width: 200px; }
+table.grid td { padding: 11px 14px; }
+table.grid td.muted { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="board" data-board="05" data-type="pc" data-screens="S04">
+  <header class="board-head">
+    <div>
+      <div class="kicker">画面 4 / 4 ・ PC</div>
+      <h1>書き出し</h1>
+      <div class="lead">確かめた行だけを、取り込み先のシステムが読める形で書き出す。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="browser" data-export="s04-export">
+        <div class="browser-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><div class="url">example.app/export</div></div>
+        <div class="browser-body">
+          <div class="admin-head">
+            <div class="brand">配車表の読み取り<small>事務所用</small></div>
+            <div class="who">請求 B さん<span class="link">ログアウト</span></div>
+          </div>
+          <div class="app-frame">
+            <nav class="side-nav">
+              <a><i class="ico"></i>一覧</a>
+              <a class="on"><i class="ico"></i>書き出し</a>
+            </nav>
+            <div class="app-main">
+              <div class="admin-body">
+                <div class="page-title">
+                  <div><h2>書き出し</h2><p>確かめた行を、取り込み先のシステムが読める CSV にする。</p></div>
+                </div>
+                <div class="notice warn">確認待ちが <b class="num">4</b> 行あります。この行は書き出しに入りません。一覧から確かめると、次の書き出しに入ります。</div>
+                <div class="panel out">
+                  <div class="count anchor"><small>書き出す行</small><b class="num">21<span>行</span></b><i class="mk" style="left:-38px;top:-8px">1</i></div>
+                  <div class="file anchor"><span>できるファイル</span><b class="num anchor">配車_20261001.csv<i class="mk" style="right:-36px;top:-2px">4</i></b><span>列の並びは、取り込み列の見本と同じ</span></div>
+                  <div class="btn btn-primary anchor">書き出す<i class="mk" style="right:-12px;top:-12px">3</i></div>
+                </div>
+                <div class="panel anchor">
+                  <div class="panel-head">前の書き出し<span class="aside">新しい順</span></div>
+                  <table class="grid">
+                    <thead><tr><th>書き出した日時</th><th>書き出した人</th><th class="r">行の数</th><th>ファイル名</th></tr></thead>
+                    <tbody>
+                      <tr><td class="num">09/30 18:05</td><td>請求 B さん</td><td class="r num">23</td><td class="num">配車_20260930.csv</td></tr>
+                      <tr><td class="num">09/29 17:52</td><td>請求 D さん</td><td class="r num">20</td><td class="num">配車_20260929.csv</td></tr>
+                      <tr><td class="num">09/28 18:10</td><td>請求 B さん</td><td class="r num">19</td><td class="num">配車_20260928.csv</td></tr>
+                      <tr><td class="num">09/27 17:46</td><td>請求 D さん</td><td class="r num">22</td><td class="num">配車_20260927.csv</td></tr>
+                      <tr><td class="num">09/26 18:02</td><td>請求 B さん</td><td class="r num">18</td><td class="num">配車_20260926.csv</td></tr>
+                    </tbody>
+                  </table>
+                  <i class="mk" style="left:-12px;top:-12px">2</i>
+                </div>
+              </div>
+              <div class="app-footer"><span>配車表の読み取り ・ v0.2</span><span>困ったときの連絡先: 開発の担当</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F04">F04 CSV で書き出す</span><span class="req" data-req="F08">F08 直接つなぐ (あとで)</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>確かめた行だけを書き出す</b><span class="sub">確認待ちの行は入らず、上に黄色で知らせる。</span></li>
+        <li data-mark="2" data-kind="how"><b>書き出した行は、次に入らない</b><span class="sub">同じ行を 2 回取り込んで、請求が重なるのを防ぐ。</span></li>
+        <li data-mark="3" data-kind="how"><b>押すと、確かめの小窓が出る</b><span class="sub">「21 行を書き出しますか」。小窓はここだけ。</span></li>
+        <li data-mark="4" data-kind="ask"><b>ファイルの列の並び</b><span class="q">Q02</span><span class="sub">案: 取り込み列の見本と同じ並び。試して決める。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

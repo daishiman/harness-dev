@@ -7,6 +7,10 @@ deny 対象は固有名 3 変形のみ (一般語 skill/スキル は意味論�
 
 allowlist は凍結層 (履歴・別実体・エディタ状態) と、改名の説明として旧名を意図的に
 言及するファイルに限定する。allowlist 追加時は reason を必ず書くこと。
+
+外部キット (aidd-agent-kit) の原本と、その installer manifest が所有する配置済み実ファイルは
+検査しない。キット内の skill-creator は Claude/Codex 組込の同名別物を指し、manifest の
+SHA と一致させるため書き換えられない。symlink 経由の harness 投影は除外しない。
 """
 from __future__ import annotations
 
@@ -26,6 +30,7 @@ FROZEN_PREFIXES = (
     ".obsidian/",               # エディタ状態
     ".claude/changelog/",       # append-only governance 履歴
     "installers/harness-creator-kit/migrate-log/",  # 移行履歴
+    "aidd-agent-kit/",          # 外部キットの原本 (逐語の外部由来。同名別物の skill-creator を含む)
 )
 
 # 歴史記録ファイル (path 部品一致): CHANGELOG / changelog / lessons-learned
@@ -62,19 +67,60 @@ ALLOWLIST = {
 }
 
 
+# 外部キットの installer manifest (行形式 "<sha256>|<相対パス>") と、相対パスの配置先。
+# 所有境界の正本は manifest で、ここでファイル名を二重定義しない。
+# Codex 側は skills/ を .agents/skills/ へ、それ以外を .codex/ へ置く (CODEX-PLACEMENT.md)。
+EXTERNAL_KIT_MANIFESTS = {
+    ".claude/aidd-agent-kit.manifest": {"": ".claude"},
+    ".codex/aidd-agent-kit.manifest": {"skills": ".agents", "": ".codex"},
+}
+
+
 def is_frozen(rel: str) -> bool:
     if rel.startswith(FROZEN_PREFIXES):
         return True
     return bool(FROZEN_PARTS & set(rel.split("/")))
 
 
+def load_external_owned(root: Path) -> set[str]:
+    """外部キット manifest が所有する配置済み実ファイルの root 相対パス集合を返す。
+
+    manifest 不在は「キット未導入」として空集合。不正行は読み飛ばす。経路上に symlink を
+    含むパスは harness の投影なので除外対象にしない (manifest の誤記で素通りさせない)。
+    """
+    owned: set[str] = set()
+    for manifest, bases in EXTERNAL_KIT_MANIFESTS.items():
+        path = root / manifest
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            relative = line.rpartition("|")[2].strip()
+            parts = relative.split("/")
+            if not relative or relative.startswith("/") or ".." in parts:
+                continue
+            rel = "/".join([bases.get(parts[0], bases[""]), *parts])
+            if not _passes_symlink(root, rel):
+                owned.add(rel)
+    return owned
+
+
+def _passes_symlink(root: Path, rel: str) -> bool:
+    current = root
+    for part in rel.split("/"):
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
+
+
 def main() -> int:
     files = subprocess.run(
         ["git", "ls-files"], capture_output=True, text=True, cwd=ROOT, check=True
     ).stdout.splitlines()
+    external_owned = load_external_owned(ROOT)
     violations: list[str] = []
     for rel in files:
-        if is_frozen(rel) or rel in ALLOWLIST:
+        if is_frozen(rel) or rel in ALLOWLIST or rel in external_owned:
             continue
         p = ROOT / rel
         if p.is_symlink() or not p.is_file():

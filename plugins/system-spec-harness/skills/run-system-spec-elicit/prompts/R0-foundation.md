@@ -25,6 +25,7 @@
 ### 1.2 倫理ガード
 - ユーザー発言の原文を改変しない。推測を確定として書かない (不明は空のまま `confirmed: false` で残す)。
 - 表層要望 (「何を作るか」) を鵜呑みにせず、その奥の真の動機 (「なぜ」) を掘る。
+- 深掘りの問も `references/neutral-question-criteria.md` の N1-N4 に従う。AI が推測した動機や背景を前提として問に書き込まない (N3)。U1-U9 は R6 の軸 5 で「ユーザー発言へ遡れるか」を監査される。
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
@@ -64,6 +65,7 @@
 |---|---|---|
 | framework | ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/docs/requirements-foundation-framework.md | 上位概念フレームワーク (U1-U9・anchor 機構) の正本を確認するとき |
 | contract | references/spec-state-contract.md | requirements_foundation 形状・set-foundation 契約の確認時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 
 ### 3.2 外部ツール
 - `AskUserQuestion` / `Task`: 深掘りヒアリング + U1-U9 要約提示による承認取得。

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import hashlib
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -13,6 +14,14 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "install-local-plugin
 SPEC = importlib.util.spec_from_file_location("install_local_plugins", SCRIPT)
 mod = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(mod)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_git_provenance(monkeypatch):
+    # These are CLI/artifact unit tests; temporary copies need no Git provenance.
+    monkeypatch.setattr(mod, "_git_snapshot", lambda root: {
+        "repository": None, "commit": None, "dirty": None,
+    })
 
 
 def _write_catalogs(
@@ -78,6 +87,11 @@ def _write_runtime_manifest(root: Path, platform: str, name: str, version="1.0.0
     (manifest_dir / "plugin.json").write_text(
         json.dumps({"name": name, "version": version}), encoding="utf-8"
     )
+
+
+def _write_runtime_copy(repo: Path, root: Path, name: str) -> None:
+    """Mirror the source plugin the way a CLI copy install delivers it."""
+    shutil.copytree(repo / "plugins" / name, root, dirs_exist_ok=True)
 
 
 def _write_hook(root: Path, command: str = "true") -> str:
@@ -149,7 +163,7 @@ def test_install_both_registers_absolute_roots_and_user_scope(monkeypatch, tmp_p
     codex_cache = tmp_path / "codex-cache"
     for root in (claude_cache, codex_cache):
         for name in ("alpha", "beta"):
-            _write_runtime_manifest(root / name, "claude" if root == claude_cache else "codex", name)
+            _write_runtime_copy(repo, root / name, name)
     _fake_cli_identities(monkeypatch)
     calls: list[list[str]] = []
     state = {"claude_installed": False, "codex_installed": False}
@@ -183,6 +197,8 @@ def test_install_both_registers_absolute_roots_and_user_scope(monkeypatch, tmp_p
                 }
                 for name in ("alpha", "beta")
             ]
+        if bare == ["codex", "plugin", "marketplace", "list", "--json"]:
+            return {"marketplaces": []}
         if bare[:4] == ["codex", "plugin", "marketplace", "add"]:
             assert bare[4] == str(repo.resolve())
             assert bare[5:] == ["--json"]
@@ -254,7 +270,7 @@ def test_check_mode_is_read_only_and_accepts_single_platform(monkeypatch, tmp_pa
     repo = tmp_path / "repo"
     _write_catalogs(repo, ("alpha",))
     cache = tmp_path / "cache" / "alpha"
-    _write_runtime_manifest(cache, "claude", "alpha")
+    _write_runtime_copy(repo, cache, "alpha")
     _fake_cli_identities(monkeypatch)
     calls: list[list[str]] = []
 
@@ -295,6 +311,154 @@ def test_check_mode_is_read_only_and_accepts_single_platform(monkeypatch, tmp_pa
 
     assert report["status"] == "verified"
     assert not any("add" in command or "install" in command for command in calls)
+
+
+def test_same_version_runtime_with_older_content_is_stale(monkeypatch, tmp_path):
+    repo = tmp_path / "repo"
+    _write_catalogs(repo, ("alpha",))
+    cache = tmp_path / "cache" / "alpha"
+    _write_runtime_copy(repo, cache, "alpha")
+    (repo / "plugins" / "alpha" / "references" / "rules.md").write_text("new", encoding="utf-8")
+    (cache / "references" / "rules.md").write_text("old", encoding="utf-8")
+    _fake_cli_identities(monkeypatch)
+
+    def fake_execute(command, *, env, expect_json):
+        bare = _bare_command(command)
+        if bare[:4] == ["claude", "plugin", "validate", "--strict"]:
+            return "valid"
+        if bare == ["claude", "plugin", "marketplace", "list", "--json"]:
+            return [{
+                "name": "harness-local",
+                "source": "directory",
+                "path": str((repo / "marketplaces" / "local").resolve()),
+            }]
+        if bare == ["claude", "plugin", "list", "--json"]:
+            return [{
+                "id": "alpha@harness-local",
+                "scope": "user",
+                "enabled": True,
+                "installPath": str(cache.resolve()),
+                "version": "1.0.0",
+            }]
+        raise AssertionError(command)
+
+    monkeypatch.setattr(mod, "_execute", fake_execute)
+    report = mod.install_local_plugins(
+        repo_root=repo,
+        platforms=("claude",),
+        requested=("alpha",),
+        check=True,
+        claude_config_dir=None,
+        codex_home=None,
+    )
+
+    plugin = report["plugins"][0]
+    assert report["verified"] is False
+    assert report["status"] == "stale_runtime"
+    assert "alpha@harness-local" in report["next_action"]
+    assert "build-plugin-release.py" in report["next_action"]
+    assert plugin["verification_status"] == "stale_runtime"
+    assert plugin["activation"]["runtime"] == "stale"
+    assert plugin["source_digest"] != plugin["runtime_digest"]
+
+
+def test_tree_digest_ignores_cli_markers_and_symlink_spelling(tmp_path):
+    source = tmp_path / "source"
+    (source / "fw" / "Versions" / "7").mkdir(parents=True)
+    (source / "fw" / "Versions" / "7" / "lib").write_text("bin", encoding="utf-8")
+    (source / "fw" / "Versions" / "Current").symlink_to("7")
+    (source / "fw" / "lib").symlink_to("Versions/Current/lib")
+    (source / "outside").symlink_to("/usr/bin/env")
+    runtime = tmp_path / "runtime"
+    shutil.copytree(source, runtime, symlinks=True)
+    (runtime / "fw" / "lib").unlink()
+    (runtime / "fw" / "lib").symlink_to("Versions/7/lib")
+    (runtime / ".in_use").mkdir()
+    (runtime / ".orphaned_at").write_text("1759000000", encoding="utf-8")
+
+    assert mod._tree_digest(source) == mod._tree_digest(runtime)
+
+    (runtime / "outside").unlink()
+    (runtime / "outside").symlink_to("/bin/sh")
+    assert mod._tree_digest(source) != mod._tree_digest(runtime)
+
+
+def test_handoff_and_desktop_metadata_do_not_make_runtime_stale(tmp_path):
+    repo = tmp_path / "repo"
+    _write_catalogs(repo, ("alpha",))
+    runtime = tmp_path / "runtime"
+    _write_runtime_copy(repo, runtime, "alpha")
+    source = repo / "plugins" / "alpha"
+    handoff = source / ".claude" / "handoff" / "session.md"
+    handoff.parent.mkdir(parents=True)
+    handoff.write_text("local session notes")
+    (source / ".DS_Store").write_bytes(b"desktop metadata")
+    (runtime / "references" / ".DS_Store").write_bytes(b"different desktop metadata")
+    catalog = mod.load_catalog(repo)
+
+    def receipt():
+        return mod._artifact_receipt(
+            catalog=catalog, platform="claude", name="alpha",
+            plugin_id="alpha@harness-local", runtime_value=str(runtime),
+            reported_version="1.0.0",
+        )
+
+    assert receipt()["verified"] is True
+    handoff.write_text("updated session notes")
+    assert receipt()["verified"] is True
+    # The similarly named delivery asset is not a session-note exclusion.
+    asset = source / "references" / "handoff" / "guide.md"
+    asset.parent.mkdir()
+    asset.write_text("real delivered content")
+    assert receipt()["verification_status"] == "stale_runtime"
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_codex_wrong_marketplace_source_fails_before_mutation(monkeypatch, tmp_path, check):
+    repo = tmp_path / "repo"
+    _write_catalogs(repo, ("alpha",))
+    catalog = mod.load_catalog(repo)
+    _fake_cli_identities(monkeypatch)
+    calls = []
+
+    def fake_execute(command, **kwargs):
+        calls.append(_bare_command(command))
+        return {"marketplaces": [{"name": "harness", "path": str(tmp_path / "other")}]}
+
+    monkeypatch.setattr(mod, "_execute", fake_execute)
+    with pytest.raises(mod.InstallError, match="different source"):
+        mod._install_codex(catalog=catalog, requested=("alpha",), env={}, check=check)
+    assert calls == [["codex", "plugin", "marketplace", "list", "--json"]]
+
+
+def test_codex_same_source_reinstall_keeps_registration_and_verifies(monkeypatch, tmp_path):
+    repo = tmp_path / "repo"
+    _write_catalogs(repo, ("alpha",))
+    catalog = mod.load_catalog(repo)
+    _fake_cli_identities(monkeypatch)
+    calls = []
+
+    def fake_execute(command, **kwargs):
+        bare = _bare_command(command)
+        calls.append(bare)
+        if bare == ["codex", "plugin", "marketplace", "list", "--json"]:
+            return {"marketplaces": [{"name": "harness", "path": str(repo)}]}
+        if bare[:4] == ["codex", "plugin", "marketplace", "add"]:
+            return {"marketplaceName": "harness", "alreadyAdded": True}
+        if bare[:3] == ["codex", "plugin", "add"]:
+            return {"pluginId": "alpha@harness", "alreadyInstalled": True}
+        if bare == ["codex", "plugin", "list", "--json"]:
+            return {"installed": [{
+                "pluginId": "alpha@harness", "installed": True, "enabled": True,
+                "version": "1.0.0", "source": {"path": str(repo / "plugins" / "alpha")},
+            }]}
+        raise AssertionError(command)
+
+    monkeypatch.setattr(mod, "_execute", fake_execute)
+    for _ in range(2):
+        _, plugins = mod._install_codex(catalog=catalog, requested=("alpha",), env={}, check=False)
+        assert plugins[0]["verified"] is True
+    assert calls[0] == calls[4] == ["codex", "plugin", "marketplace", "list", "--json"]
 
 
 def test_claude_nonempty_list_errors_are_pending_activation_not_verified(

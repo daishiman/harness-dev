@@ -1,0 +1,416 @@
+{
+  "version": 1,
+  "phase": 2,
+  "analysis_type": "independent-read-only-audit",
+  "agent": "elegant-logical-structural-analyst",
+  "target": {
+    "path": "plugins/system-briefing-book",
+    "scope": [
+      "scripts/lib/doc-report.mjs",
+      "scripts/lib/markdown-lite.mjs"
+    ],
+    "reviewed_date": "2026-10-02"
+  },
+  "constraints": {
+    "target_edited": false,
+    "git_executed": false,
+    "other_analyst_findings_read": false,
+    "intermediate_shared_with_other_analysts": false,
+    "existing_conclusions_used_as_evidence": false,
+    "writes": "このJSONのみ。Beads操作はread-only指示を優先して実行しない。"
+  },
+  "thought_method_coverage": {
+    "assigned_total": 9,
+    "used": [
+      "批判的思考",
+      "演繹思考",
+      "帰納的思考",
+      "アブダクション",
+      "垂直思考",
+      "要素分解",
+      "MECE",
+      "2軸思考",
+      "プロセス思考"
+    ],
+    "skipped_with_reason": [],
+    "global_total": 30,
+    "note": "この担当の9種のみ。残り21種を実施したとは主張しない。"
+  },
+  "paradigm_findings": [
+    {
+      "paradigm_name": "批判的思考",
+      "method_id": "critical",
+      "observation": "「見せ方だけを変える」という宣言に反し、人数の範囲が確定値に変わる。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:2",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:266"
+      ],
+      "issue_ids": [
+        "L04"
+      ],
+      "recommended_intervention": "見た目の変換では原文保持を不変条件にし、派生統計だけを厳密な入力から作る。"
+    },
+    {
+      "paradigm_name": "演繹思考",
+      "method_id": "deduction",
+      "observation": "内容保持の契約を候補カードと画面チップへ適用すると、孫要素と利用条件が保持されていない。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:97"
+      ],
+      "issue_ids": [
+        "L03",
+        "L05"
+      ],
+      "recommended_intervention": "部品化の成立条件を限定し、情報を保持できない場合は汎用描画に戻す。"
+    },
+    {
+      "paradigm_name": "帰納的思考",
+      "method_id": "induction",
+      "observation": "人数・画面条件・タイトル・孫要素の独立した4事例で内容欠落を再現した。既存3テストはすべて成功する。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:268",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:573",
+        "plugins/system-briefing-book/tests/test_doc_report.py:1"
+      ],
+      "issue_ids": [
+        "L03",
+        "L04",
+        "L05",
+        "L06"
+      ],
+      "recommended_intervention": "変換前後の意味ある文字列の保持を調べる境界ケースを、現在の構造検査へ追加する。"
+    },
+    {
+      "paradigm_name": "アブダクション",
+      "method_id": "abduction",
+      "observation": "不具合はMarkdown入力そのものではなく、別実装のブロック解析と原文を捨てる専用部品への変換に集中している。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:150",
+        "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:219",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:446"
+      ],
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L07"
+      ],
+      "recommended_intervention": "まず終了保証と非破壊フォールバックを修正し、その後ブロック解析を共通化する。原因の一般化はこの再現集合に限定する。"
+    },
+    {
+      "paradigm_name": "垂直思考",
+      "method_id": "vertical",
+      "observation": "blocksの開始条件は字下げ4未満、親登録は2未満で不一致。4以上では段落処理も同じITEM_REで拒否しiが進まない。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:174",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:181",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:226"
+      ],
+      "issue_ids": [
+        "L01",
+        "L02"
+      ],
+      "recommended_intervention": "開始行の深さを共通基準にし、全分岐で入力位置が進むことを保証する。"
+    },
+    {
+      "paradigm_name": "要素分解",
+      "method_id": "decomposition",
+      "observation": "画像・文書部品・参照解決・ページ切替を別に確認。ボードのdata URI生成は実装され、文書画像は削除される。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:568",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:600",
+        "plugins/system-briefing-book/assets/templates/book.html:390",
+        "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:80"
+      ],
+      "issue_ids": [
+        "L08"
+      ],
+      "recommended_intervention": "文書画像とボード画像の責務を区別して対応範囲を確定し、参照解決とページ切替を結合検査する。"
+    },
+    {
+      "paradigm_name": "MECE",
+      "method_id": "mece",
+      "observation": "既定表の形の網羅はテストされるが、字下げ境界・リスト深さ・値の範囲・未知表の寄せ・タイトル区切りの入力区分は検査されていない。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/tests/test_doc_report.py:10",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:421"
+      ],
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L06",
+        "L07"
+      ],
+      "recommended_intervention": "入力構文と表示変換を別軸にした境界テスト表を設ける。同じ列定義の検査だけを内容保全の保証にしない。"
+    },
+    {
+      "paradigm_name": "2軸思考",
+      "method_id": "two-axis",
+      "observation": "実害×修正範囲で評価すると、全体停止と条件欠落は局所修正で先に直せる。全面パーサー置換はより広い変更になる。",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:174",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:97"
+      ],
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L05"
+      ],
+      "recommended_intervention": "P1の停止・意味改変を先に修正し、P2の表示差分を次に直す。大規模共通化は回帰ケース確保後に行う。"
+    },
+    {
+      "paradigm_name": "プロセス思考",
+      "method_id": "process",
+      "observation": "現物要件定義は14章を変換できたが、表8個はすべて汎用表となり専用d-cardは0個。生成成功だけではレポート化の高再現を証明しない。サンプル要件定義はd-card10個・汎用表0個。",
+      "evidence_paths": [
+        "<参考資料>/要件定義.md",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:421",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:583",
+        "plugins/system-briefing-book/assets/templates/book.html:398"
+      ],
+      "issue_ids": [],
+      "recommended_intervention": "現物資料→変換→画像・内容保持→サイドバー遷移→表示比較の受け入れ検査を設ける。列名の対応が必要なら入力側の明示的な正規化として扱う。"
+    }
+  ],
+  "issues": [
+    {
+      "id": "L01",
+      "priority": "P1",
+      "severity": "high",
+      "condition_signal": "dependency_break",
+      "title": "2〜3字下げのリストで全体の生成が例外停止",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:174",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:181",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:197",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:583"
+      ],
+      "reproduction": {
+        "input": "  - 内容",
+        "observed": "Cannot read properties of undefined (reading 'children')"
+      },
+      "impact": "通常の字下げを含む文書1つで単一HTML生成が止まる。",
+      "minimal_fix": "リスト開始行のbaseIndentを保存し、同じ深さを親項目として認識する。子追加前に親項目の存在を保証する。",
+      "validation": "0〜3字下げの先頭項目、順序付き項目、子項目をそれぞれ検査する。"
+    },
+    {
+      "id": "L02",
+      "priority": "P1",
+      "severity": "high",
+      "condition_signal": "dependency_break",
+      "title": "4字以上字下げのリストでカーソルが進まず無限ループ",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:174",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:225",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:230"
+      ],
+      "reproduction": {
+        "input": "    - 内容",
+        "execution": "node --max-old-space-size=64 の子プロセスをPython subprocess.run(timeout=1)で実行",
+        "observed": "1秒でTimeoutExpired。blocksのリスト分岐に入らず、段落whileもITEM_REで不成立となりiが不変。子プロセスは打ち切り済み。"
+      },
+      "impact": "HTML生成が完了せず空段落を蓄積し続ける。タイムアウトなしではメモリ消費が増える。",
+      "minimal_fix": "認識しない行にも必ず1行消費するフォールバックを設け、4字以上の字下げを共通Markdown処理へ渡す。",
+      "validation": "4字・8字字下げ、空項目、タブ混在を有限時間で終了するか検査する。"
+    },
+    {
+      "id": "L03",
+      "priority": "P1",
+      "severity": "high",
+      "condition_signal": "omission",
+      "title": "候補カードへの変換が孫要素を捨てる",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:432",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:443",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:446"
+      ],
+      "reproduction": {
+        "input": "- 候補: 自動化\n  - 備え: 記録\n    - 保持期限: 30日\n  - 時期: 次の版",
+        "observed": "convertDocの出力から「保持期限: 30日」が消える。renderMarkdownでは残る。"
+      },
+      "impact": "保持期限などの業務制約が原本にあるのに閲覧資料から黙って消える。",
+      "minimal_fix": "カード化は子項目が葉の場合だけ許可し、孫がある場合は通常のリストへフォールバックする。",
+      "validation": "孫リスト、子の段落、コードを含む候補で全内容を保持すること。"
+    },
+    {
+      "id": "L04",
+      "priority": "P1",
+      "severity": "high",
+      "condition_signal": "contradiction",
+      "title": "人数の範囲や注記をparseIntで確定人数へ改変",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:266",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:268",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:273"
+      ],
+      "reproduction": {
+        "input": "|使う人|人数|端末|主にすること|\n|---|---|---|---|\n|配車|2〜3名（繁忙期5名）|PC|確認|",
+        "observed": "表示は「2 人」になり、範囲と繁忙期の人数が消える。"
+      },
+      "impact": "人数表示および他の統計とともに表示するKPIが誤った確定値となり、利用規模の判断を誤らせる。",
+      "minimal_fix": "表示は原文を保持し、集計だけを厳密な非負整数文字列に限定する。不確定な人数は人数合計から除外して役割数表示にする。",
+      "validation": "2、2〜3名、約10人、1,000、未定を比較する。"
+    },
+    {
+      "id": "L05",
+      "priority": "P1",
+      "severity": "high",
+      "condition_signal": "omission",
+      "title": "画面番号のチップ化が利用条件を消す",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:97",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:100",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:294"
+      ],
+      "reproduction": {
+        "input": "|番号|できること|画面|最初の版|\n|---|---|---|---|\n|F01|確認|S01（管理者のみ）|○|",
+        "observed": "S01リンクだけになり「管理者のみ」が消える。"
+      },
+      "impact": "画面の利用制限・説明が閲覧者へ伝わらない。",
+      "minimal_fix": "セル全体の番号だけを置換して残りの原文を保持する。既存inl/linkCodesの境界判定を再利用する。",
+      "validation": "S01（管理者のみ）、S01とS02（参照専用）、XS01を検査する。"
+    },
+    {
+      "id": "L06",
+      "priority": "P2",
+      "severity": "medium",
+      "condition_signal": "omission",
+      "title": "見出し中の2個目以降のコロンでタイトル末尾が欠落",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:573",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:598"
+      ],
+      "reproduction": {
+        "input": "# 仕様書: 配車: 第2版",
+        "observed": "戻り値titleは全文だが画面のh2は「配車」になり「第2版」が消える。"
+      },
+      "impact": "版や対象名が表示から欠落し、原本と表示タイトルが一致しない。",
+      "minimal_fix": "最初の区切り位置だけで前後をsliceする。",
+      "validation": "半角・全角コロンを複数含むタイトルが全文保持されること。"
+    },
+    {
+      "id": "L07",
+      "priority": "P2",
+      "severity": "medium",
+      "condition_signal": "inconsistency",
+      "title": "汎用表フォールバックでMarkdownの列寄せ情報を喪失",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:161",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:414",
+        "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:180"
+      ],
+      "reproduction": {
+        "input": "|価格|\n|---:|\n|100|",
+        "observed": "renderMarkdownにはtext-align:rightがあるがconvertDocにはない。"
+      },
+      "impact": "独自表の数値列が原本指定どおりに並ばず、フォールバック間で表示契約が異なる。",
+      "minimal_fix": "区切り行の寄せ情報をblockへ保持するか、汎用表は共通Markdownレンダラーへ委譲する。",
+      "validation": "左・中央・右の寄せを両描画経路で比較する。"
+    },
+    {
+      "id": "L08",
+      "priority": "P2",
+      "severity": "medium",
+      "condition_signal": "omission",
+      "title": "Markdown文書内の画像はdata URIでも説明文のみになる",
+      "evidence_paths": [
+        "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:80",
+        "plugins/system-briefing-book/scripts/lib/doc-report.mjs:62",
+        "plugins/system-briefing-book/scripts/build-briefing-book.mjs:568"
+      ],
+      "reproduction": {
+        "input": "![参考](data:image/png;base64,AAAA)",
+        "observed": "出力は<p>参考</p>でimg要素なし。AAAAは画像構文の分岐を確かめるダミー値で、画像デコードの検証ではない。"
+      },
+      "impact": "仕様文書に埋めた図は単一HTMLに残らない。ボード画像のdata埋込経路は存在するため、全画像が失われるという指摘ではない。",
+      "minimal_fix": "文書画像をサポートする範囲を明示し、必要ならビルダーで検証・解決した画像だけを渡せる画像フックを追加する。無差別な外部URL許可は不要。",
+      "validation": "実PNGのdata URIと許可したローカル図がオフラインで表示されることを検査する。",
+      "qualification": "現行markdown-liteの明記済み制約。画像要件がボードだけなら改善要望に留まり、欠陥扱いは不要。"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "name": "矛盾なし",
+      "verdict": "FAIL",
+      "evidence": [
+        "doc-report.mjs:2の表示のみ変更という契約に対し、L03〜L06は意味内容を改変・欠落させる。L04の人数範囲は確定人数へ変わる。"
+      ]
+    },
+    "C2": {
+      "name": "漏れなし",
+      "verdict": "FAIL",
+      "evidence": [
+        "L03/L05/L06で必要な本文情報の消失を再現。L08は文書画像も要件に含む場合の追加未達。"
+      ]
+    },
+    "C3": {
+      "name": "整合性あり",
+      "verdict": "PARTIAL",
+      "evidence": [
+        "ユーザー目的の忠実な仕様レポート化に対してL03〜L07は未達。",
+        "4-conditions.jsonの厳密定義にある24章正本・parent rubricとの全件差分は今回のコード担当範囲では未実施。上位規範全体のPASSは宣言しない。"
+      ]
+    },
+    "C4": {
+      "name": "依存関係整合",
+      "verdict": "FAIL",
+      "evidence": [
+        "build-briefing-book.mjs:583がconvertDocを同期呼出しし、L01/L02により後続のページ組立・参照解決へ進めない。",
+        "resolveRefsとhashchangeによる切替実装は確認。参照DAG全体・ブラウザー遷移の実行検査は未実施。"
+      ]
+    }
+  },
+  "commonization": {
+    "observation": "見出し・フェンス・表・リストの解析が2モジュールに重複し、字下げと列寄せに実際の挙動差がある。",
+    "minimal_sequence": [
+      "終了保証、葉限定の部品化、原文保持を局所修正する。",
+      "表のraw/align、リストのchildren/baseIndentを保持する共通ブロック表現を導入する。",
+      "doc-reportは共通ブロック表現から部品を選び、未対応部分はmarkdown-liteへ委譲する。"
+    ],
+    "evidence_paths": [
+      "plugins/system-briefing-book/scripts/lib/doc-report.mjs:17",
+      "plugins/system-briefing-book/scripts/lib/doc-report.mjs:150",
+      "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:18",
+      "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:180",
+      "plugins/system-briefing-book/scripts/lib/markdown-lite.mjs:219"
+    ]
+  },
+  "validation": {
+    "existing_tests": {
+      "command": "python3 -B -m pytest -p no:cacheprovider plugins/system-briefing-book/tests/test_doc_report.py -q",
+      "result": "3 passed in 1.03s"
+    },
+    "in_memory_probes": [
+      "2字下げ例外",
+      "4字下げ1秒タイムアウト",
+      "候補の孫要素消失",
+      "人数範囲の改変",
+      "画面条件消失",
+      "コロンを含む題名の末尾消失",
+      "右寄せ消失",
+      "文書画像削除"
+    ],
+    "real_document_probe": {
+      "path": "<参考資料>/要件定義.md",
+      "sections": 14,
+      "generic_tables": 8,
+      "d_card_articles": 0,
+      "note": "この数だけで視覚品質や全テキスト保持を合格判定しない。"
+    },
+    "sample_probe": "同梱4文書をメモリ内でconvertDocし、すべて終了を確認。",
+    "not_performed": [
+      "対象編集・修正",
+      "単一HTML成果物の生成",
+      "ブラウザーでの視覚比較",
+      "全30思考法の集約判定",
+      "24章正本とrubricの全面照合"
+    ]
+  },
+  "handoff": "P1のL01〜L05を優先。再現入力はいずれもメモリ内で評価しており対象ファイルは未変更。修正と再検証は親担当へ渡す。"
+}

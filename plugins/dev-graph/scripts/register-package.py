@@ -2,7 +2,7 @@
 # /// script
 # name: register-package
 # purpose: Validate and atomically register one promoted exact-13 system-dev-planner package in the dev graph.
-# inputs: ["argv: register --package/--graph/--output/--receipt", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
+# inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
 # outputs: ["stdout: JSON preview/receipt/preflight report"]
 # requires-python = ">=3.10"
 # dependencies: [_common.py]
@@ -266,6 +266,20 @@ def _validate_registration(registration: dict[str, Any], package: dict[str, Any]
     return copy.deepcopy(nodes)
 
 
+def _tracker_mode(root: Path, config: str, declared: str | None) -> str:
+    """The repo's execution_tracker.mode decides every binding intent; a flag may restate it, never override it."""
+    candidate = Path(config) if Path(config).is_absolute() else root / config
+    configured = None
+    if candidate.is_file():
+        configured = (_json_object(contained(candidate, root, must_exist=True)).get("execution_tracker") or {}).get("mode")
+    if declared is not None and configured is not None and declared != configured:
+        raise ContractError(f"--tracker-mode {declared} contradicts execution_tracker.mode {configured} in {config}")
+    mode = declared or configured
+    if mode is None:
+        raise ContractError(f"tracker mode is unknown: set execution_tracker.mode in {config} or pass --tracker-mode")
+    return mode
+
+
 def _resolve_binding(intent: str, mode: str) -> str:
     if intent == "auto":
         if mode == "both": raise ContractError("tracker mode both requires an explicit binding intent for every node")
@@ -357,7 +371,8 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
     registration = _json_object(registration_path)
     incoming = _validate_registration(registration, package, node_schema)
     _promotion_matches(root, registration_path, registration)
-    resolved = _resolved_nodes(incoming, registration["binding_intents"], args.tracker_mode, node_schema)
+    mode = _tracker_mode(root, args.config, args.tracker_mode)
+    resolved = _resolved_nodes(incoming, registration["binding_intents"], mode, node_schema)
 
     def perform() -> dict[str, Any]:
         current = _json_object(output_path)
@@ -500,7 +515,9 @@ def _parser() -> argparse.ArgumentParser:
     register.add_argument("--graph", required=True, help="dev-graph-registration JSON")
     register.add_argument("--output", required=True, help="existing dev graph JSON containing parent feature")
     register.add_argument("--receipt", required=True, help="immutable registration receipt output")
-    register.add_argument("--tracker-mode", choices=("beads", "github", "both", "none"), default="none")
+    register.add_argument("--tracker-mode", choices=("beads", "github", "both", "none"), default=None,
+                          help="defaults to execution_tracker.mode in --config; a different value is rejected")
+    register.add_argument("--config", default=".dev-graph/config.json", help="repo config, relative to --repo-root")
     register.add_argument("--dry-run", action="store_true")
     register.add_argument("--system-planner-root", default=str(DEFAULT_SYSTEM_ROOT))
     register.add_argument("--required-version", default=None)

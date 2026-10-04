@@ -35,6 +35,7 @@
 ### 2.2 ドメインルール
 - reopen 後のセルは `未収集`。以後 R2/R3 の対象に戻る。
 - 再オープンは影響カテゴリ集約を writer が真理値表で再計算 (`確定`→`収集中` 等)。
+- **誘導の疑いがある問が主根拠のとき**: 確定セルの `qa_ref` の問が N1-N4 (`references/neutral-question-criteria.md`) に違反していたら、reopen → 同じ論点を中立に問い直して回答を取り直す → 新しい qa で再確定 → `supersede-qa` op (`{"action":"supersede-qa","qa_id":"<旧>","superseded_by":"<新>","superseded_at":"<実測値>","note":"<旧い問のどの基準の違反を、どう問い直したか>"}`) で旧 entry に置き換えを記録する。旧 entry が主根拠のままでは writer が `supersede-qa` を拒否し、置き換え済みの entry を主根拠に戻す `confirm` も拒否する。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |
@@ -53,6 +54,7 @@
 |---|---|---|
 | contract | references/spec-state-contract.md | reopen 契約/ログ形状の確認時 |
 | question_bank | references/elicit-question-bank.md | 追加質問設計時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 
 ### 3.2 外部ツール
 - `Bash`: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" apply --state spec-state.json --op '{"action":"reopen","category":"<c>","platform":"<p>","reason":"<why>","reopened_at":"<date -u +%Y-%m-%dT%H:%M:%SZ の実測値>"}'`

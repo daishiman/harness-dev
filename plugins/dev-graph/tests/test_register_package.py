@@ -115,6 +115,8 @@ class RegisterPackageTest(unittest.TestCase):
             "registration_manifest": self.registration.name,
         })
         self.write(self.output, {"schema_version": "1.0.0", "graph_revision": 4, "nodes": [feature_node()]})
+        # These fixtures have no repo config, so the mode is stated on the command line.
+        self.tracker: tuple[str, ...] = ("--tracker-mode", "none")
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -127,14 +129,14 @@ class RegisterPackageTest(unittest.TestCase):
         return subprocess.run([
             sys.executable, str(SCRIPT), "register", "--repo-root", str(self.root),
             "--package", self.package.name, "--graph", self.registration.name,
-            "--output", self.output.name, "--receipt", self.receipt.name, *extra,
+            "--output", self.output.name, "--receipt", self.receipt.name, *self.tracker, *extra,
         ], text=True, capture_output=True, check=False)
 
     def args(self, *extra: str):
         return RP._parser().parse_args([
             "register", "--repo-root", str(self.root), "--package", self.package.name,
             "--graph", self.registration.name, "--output", self.output.name,
-            "--receipt", self.receipt.name, *extra,
+            "--receipt", self.receipt.name, *self.tracker, *extra,
         ])
 
     def test_registers_exact_13_atomically_and_is_idempotent(self) -> None:
@@ -362,6 +364,29 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
         intents[nodes[0]["graph_node_id"]] = "github"
         with self.assertRaisesRegex(RP.ContractError, "not allowed"):
             RP._resolved_nodes(nodes, intents, "beads", node_schema)
+
+    def test_tracker_mode_comes_from_repo_config_and_a_contradicting_flag_is_rejected(self) -> None:
+        config = self.root / ".dev-graph" / "config.json"
+        self.tracker = ()
+        result = self.invoke("--dry-run")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("tracker mode is unknown", result.stdout + result.stderr)
+        config.parent.mkdir()
+        self.write(config, {"execution_tracker": {"mode": "both"}})
+        result = self.invoke("--dry-run")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("both requires an explicit binding intent", result.stdout + result.stderr)
+        self.write(config, {"execution_tracker": {"mode": "beads"}})
+        for flag in ("none", "github", "both"):
+            result = self.invoke("--dry-run", "--tracker-mode", flag)
+            self.assertEqual(result.returncode, 2, flag)
+            self.assertIn(f"--tracker-mode {flag} contradicts execution_tracker.mode beads", result.stdout + result.stderr)
+        self.assertFalse(self.receipt.exists())
+        for extra in ((), ("--tracker-mode", "beads")):
+            result = self.invoke(*extra)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        graph = json.loads(self.output.read_text())
+        self.assertEqual({n["tracker_binding"] for n in graph["nodes"][1:]}, {"beads"})
 
     def test_schema_engine_covers_ref_condition_arrays_and_objects(self) -> None:
         schema = {

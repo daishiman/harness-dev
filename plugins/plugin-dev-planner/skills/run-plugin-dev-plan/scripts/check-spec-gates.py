@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: check-spec-gates
-# purpose: component-inventory.json の各 component の quality_gates(p0_lint網羅/build_trace/elegant_review C1-C4/content_review verdict/evaluator>=80,high0) と harness_coverage(min>=80/kind_pass) を specfm で値域検証し、index.plugin_meta の plugin 階層規律を値域検証する決定論ゲート。
+# purpose: component-inventory.json の各 component の quality_gates(p0_lint網羅/build_trace/elegant_review C1-C4/content_review verdict/evaluator>=80,high0) と harness_coverage(min>=80/kind_pass) を specfm で値域検証し、index.plugin_meta の plugin 階層規律 (Claude/Codex 両 platform への install 契約を含む) を値域検証する決定論ゲート。
 # inputs:
 #   - argv: <md ...> | --specs-dir DIR [--inventory FILE]
 # outputs:
@@ -19,11 +19,12 @@
 per-phase 転換 (凍結契約 §4/§8): 旧 C*.md frontmatter の quality_gates/harness は
 component-inventory.json の components[] へ載せ替わったため、値域検証を inventory 単位へ移す
 (specfm.validate_component_quality_gates + validate_component_harness_coverage)。index の
-plugin 階層規律 (plugin_meta) 検査は現状維持。
+plugin 階層規律 (plugin_meta) に加え、install 義務が既存 graph producer の P13 実行leafへ到達することを検査する。
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -139,6 +140,93 @@ def check_plugin_meta(pm: dict) -> list[str]:
                 errs.append(f"feedback_deploy.portability は repo-bundled|vendored のみ (現値 {port!r})")
             elif isinstance(dist, dict) and dist.get("distributable") is True and port != "vendored":
                 errs.append("distributable:true は feedback_deploy.portability=vendored を要求 (単独 install 携帯性)")
+    inst = pm.get("install")
+    if isinstance(inst, dict) and inst:
+        errs.extend(check_install(inst))
+    return errs
+
+
+def check_install(inst: dict) -> list[str]:
+    """plugin_meta.install (Claude/Codex 両 platform への install 契約) を値域検証する。
+
+    plan が「作れば install できる」と黙って仮定しないよう、登録先・strict 検証・release 順序・
+    隔離/実環境 install 検証を宣言させる。opt-out は platform 除外と実環境 install 省略だけで、
+    どちらも理由の明示を要する (feedback_deploy の enabled:false+reason と同型)。
+    """
+    errs: list[str] = []
+    platforms = inst.get("platforms")
+    if not isinstance(platforms, list) or not all(isinstance(x, str) for x in platforms):
+        errs.append(f"install.platforms は platform 名の list であること (現値 {platforms!r})")
+        platforms = []
+    unknown = sorted(set(platforms) - set(specfm.INSTALL_PLATFORMS))
+    if unknown:
+        errs.append(f"install.platforms に未知の platform {unknown!r} (許容 {list(specfm.INSTALL_PLATFORMS)!r})")
+    for req in specfm.INSTALL_REQUIRED_PLATFORMS:
+        if req not in platforms:
+            errs.append(f"install.platforms は {req} を含むこと (manifest 正本の platform は除外不可)")
+    excluded = inst.get("excluded_platforms") or {}
+    if not isinstance(excluded, dict):
+        errs.append("install.excluded_platforms は {platform: 除外理由} の dict であること")
+        excluded = {}
+    for plat in specfm.INSTALL_PLATFORMS:
+        if plat in platforms:
+            if plat in excluded:
+                errs.append(f"install.platforms と excluded_platforms の両方に {plat} がある (どちらか一方に決める)")
+            continue
+        if plat in specfm.INSTALL_REQUIRED_PLATFORMS:
+            continue
+        reason = excluded.get(plat)
+        if not (isinstance(reason, str) and reason.strip()):
+            errs.append(
+                f"install.platforms に {plat} が無いのに excluded_platforms.{plat} の理由が無い"
+                " (両 platform への install が既定。外すなら理由を明示する)"
+            )
+
+    if str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
+        errs.append(
+            f"install.codex_manifest は {specfm.INSTALL_CODEX_MANIFEST} であること"
+            f" (現値 {inst.get('codex_manifest')!r}・sync-plugin-platforms.py が .claude-plugin から投影する)"
+        )
+    registries = inst.get("registries")
+    if not isinstance(registries, list):
+        errs.append(f"install.registries は登録先の list であること (現値 {registries!r})")
+        registries = []
+    # Runtime opt-out never removes either product package/catalog.
+    for plat in specfm.INSTALL_PLATFORMS:
+        reg = specfm.INSTALL_REGISTRY_BY_PLATFORM.get(plat)
+        if reg and reg not in registries:
+            errs.append(f"install.registries に {reg} が無い ({plat} へ install する経路の登録先)")
+
+    if inst.get("strict_validate") is not True:
+        errs.append(
+            "install.strict_validate は true であること (claude plugin validate --strict を通す。"
+            'hook command の plugin root は "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/..." とクォートする)'
+        )
+    if str(inst.get("release", "")).strip() != specfm.INSTALL_RELEASE_ORDER:
+        errs.append(
+            f"install.release は {specfm.INSTALL_RELEASE_ORDER!r} であること"
+            f" (現値 {inst.get('release')!r}・CHANGELOG を先に書き build-plugin-release.py --only <slug> で bump する)"
+        )
+
+    verify = inst.get("verify")
+    if not isinstance(verify, dict):
+        errs.append("install.verify が dict でない (隔離 install と実環境 install の検証宣言が必須)")
+    else:
+        if verify.get("isolated") is not True:
+            errs.append(
+                "install.verify.isolated は true であること (install-local-plugins.py を"
+                " --claude-config-dir/--codex-home 付きで回し verified=true を確認する)"
+            )
+        live = verify.get("live")
+        if live is False:
+            reason = verify.get("live_skip_reason")
+            if not (isinstance(reason, str) and reason.strip()):
+                errs.append("install.verify.live:false は live_skip_reason 非空必須 (実環境 install を省く根拠)")
+        elif live is not True:
+            errs.append(
+                f"install.verify.live は bool であること (現値 {live!r}・既定 true。autoUpdate は"
+                " 新規 plugin を入れないため install-local-plugins.py --plugin <slug> で実環境へ入れる)"
+            )
     return errs
 
 
@@ -163,6 +251,73 @@ def check_inventory(inventory_path: Path) -> tuple[list[str], str | None]:
     return errors, None
 
 
+def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
+    """Require canonical P13 install claims in the existing producer's execution leaves."""
+    phase = plan_dir / "phase-13-release.md"
+    if not phase.is_file():
+        return ["install 契約の実行義務を持つ phase-13-release.md が無い"]
+    handoff = plan_dir / "handoff-run-plugin-dev-plan.json"
+    try:
+        data = json.loads(handoff.read_text(encoding="utf-8"))
+        slug = data.get("target_plugin_slug") if isinstance(data, dict) else None
+        obligations = specfm.install_release_obligations(inst, slug if isinstance(slug, str) else "")
+    except (OSError, ValueError) as exc:
+        return [f"install 義務の target_plugin_slug を handoff から解決できない: {exc}"]
+    try:
+        # Ask the existing producer what the consumer actually executes. In fixed
+        # shape this is P13's checklist; target shape consumes task-specs instead.
+        loader = importlib.util.spec_from_file_location(
+            "install_obligation_producer", Path(__file__).with_name("derive-task-graph.py")
+        )
+        producer = importlib.util.module_from_spec(loader)
+        loader.loader.exec_module(producer)
+        graph = producer.derive(plan_dir)
+    except (OSError, ValueError) as exc:
+        return [f"install release obligations を実行 graph へ導出できない: {exc}"]
+    clauses = {
+        node.get("acceptance_criterion")
+        for node in graph["nodes"]
+        if node.get("phase_ref") == "P13"
+        and node.get("execution_kind") in {"verification-claim", "direct-task"}
+    }
+    errors = [
+        f"P13 install obligation {key} が欠落または契約と不一致 (render-spec-skeleton.py --phase 13 --plugin-slug {slug} で正本から生成): {clause}"
+        for key, clause in obligations.items() if clause not in clauses
+    ]
+    # Generation may not have emitted the artifact yet. When it exists, also
+    # check the handoff's consumer input so a stale graph cannot hide new claims.
+    graph_ref = data.get("task_graph_ref")
+    graph_rel = graph_ref.get("path", "task-graph.json") if isinstance(graph_ref, dict) else "task-graph.json"
+    if not isinstance(graph_rel, str) or not graph_rel.strip():
+        return errors + ["install 義務の handoff.task_graph_ref.path が非空stringでない"]
+    graph_path = plan_dir / graph_rel
+    if graph_path.is_file():
+        try:
+            stored = json.loads(graph_path.read_text(encoding="utf-8"))
+            if not isinstance(stored, dict) or not isinstance(stored.get("nodes"), list):
+                raise ValueError("task graph must contain nodes[]")
+            stored_clauses = set()
+            for node in stored["nodes"]:
+                if not isinstance(node, dict) or node.get("phase_ref") != "P13":
+                    continue
+                kind = node.get("execution_kind")
+                if kind not in (None, "verification-claim", "direct-task"):
+                    continue
+                clause = node.get("acceptance_criterion")
+                # Legacy fixed graphs carry the claim in title until migration.
+                if kind is None:
+                    clause = node.get("title")
+                if isinstance(clause, str):
+                    stored_clauses.add(clause)
+            errors.extend(
+                f"task-graph install obligation {key} が欠落または古い (derive-task-graph.py で再生成): {graph_path}"
+                for key, clause in obligations.items() if clause not in stored_clauses
+            )
+        except (OSError, ValueError) as exc:
+            errors.append(f"install 義務の task graph を読めない: {exc}")
+    return errors
+
+
 def collect_md(specs_dir: Path) -> list[Path]:
     return sorted(specs_dir.glob("*.md"))
 
@@ -172,8 +327,12 @@ def run(md_paths: list[Path], inventory_path: Path | None) -> tuple[int, list[st
     for p in md_paths:
         fm = specfm.parse_frontmatter(p.read_text(encoding="utf-8"))
         if isinstance(fm.get("plugin_meta"), dict):
-            for e in check_plugin_meta(fm["plugin_meta"]):
+            pm = fm["plugin_meta"]
+            for e in check_plugin_meta(pm):
                 errors.append(f"{p.name}: {e}")
+            inst = pm.get("install")
+            if isinstance(inst, dict) and not check_install(inst):
+                errors.extend(f"{p.name}: {e}" for e in check_install_release(p.parent, inst))
         # phase ファイル等 (plugin_meta 無し) は本 gate 対象外 (frontmatter は check-spec-frontmatter が担う)
     if inventory_path is not None and inventory_path.is_file():
         inv_errors, fatal = check_inventory(inventory_path)

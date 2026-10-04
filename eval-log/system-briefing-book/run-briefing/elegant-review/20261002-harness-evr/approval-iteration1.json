@@ -1,0 +1,727 @@
+{
+  "schema": "system-briefing-book-independent-approval-v1",
+  "iteration": 1,
+  "reviewed_at": "2026-10-02T01:08:08.699909+00:00",
+  "approver": "independent-code-auditor",
+  "target": "plugins/system-briefing-book",
+  "baseline": "eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline",
+  "scope": "Original iteration1: standalone HTML, sidebar page switching, image embedding, meaning-preserving document cards, minimal commonization; compare all 30 phase2 paradigms and regressions against baseline.",
+  "excluded_scope": "Later request to enrich templates for layout/modal/buttons/management-user screens/icons/backend/security/infra; Laplace investigating, evaluate separately later.",
+  "decision": {
+    "approved": false,
+    "verdict": "CHANGES_REQUIRED",
+    "blocking_findings": [
+      "REG-01",
+      "REG-02"
+    ],
+    "reason": "Previously valid baseline inputs regress (REG-01/REG-02). Parent standalone HTML/navigation/image tests passed; that does not remove compatibility failures or remaining partial resolutions.",
+    "high_fidelity": "NOT_ESTABLISHED",
+    "four_conditions_all_pass": false
+  },
+  "independence": {
+    "code_edited": false,
+    "git_executed": false,
+    "browser_executed": false,
+    "writes": "approval-iteration1.json only",
+    "beads": "Read skill and bd prime only; no task mutation under single-output constraint.",
+    "parent_evidence": "Runtime MARK-MISMATCH and blank-looking screenshot report explicitly attributed; no parent all-tests PASS assumed."
+  },
+  "coverage": {
+    "phase2_json_files": 3,
+    "paradigms_reviewed": 30,
+    "unique_issue_ids_reviewed": 27,
+    "note": "30 thought paradigms across 3 JSON files, not 30 separate files."
+  },
+  "four_conditions": {
+    "C1": {
+      "name": "矛盾なし",
+      "verdict": "PARTIAL",
+      "evidence": [
+        "L04/META-14 population contradiction and META-11 choice ownership contradiction resolved.",
+        "SYS-05 quality warnings no longer reported ok, but warning-only HTML still written/exit0. Runtime permissiveness is documented; it is not a clean-delivery guarantee."
+      ]
+    },
+    "C2": {
+      "name": "漏れなし",
+      "verdict": "FAIL",
+      "evidence": [
+        "REG-01/REG-02 omit compatibility for previously valid baseline inputs.",
+        "L08/SYS-10 do not cover original data-URI Markdown image case.",
+        "SYS-06 legacy receipt-free image decode remains unverified."
+      ]
+    },
+    "C3": {
+      "name": "整合性あり",
+      "verdict": "FAIL",
+      "evidence": [
+        "Unchanged baseline sample passes baseline validate but fails current validate with 3 PAGE-TYPE errors.",
+        "META-10 guidance improved, but 4-screen sample and 6-screen reference remain distinct; high-fidelity acceptance is not demonstrated."
+      ],
+      "limits": [
+        "Upper chapter-24/rubric comprehensive audit is not performed. Additional user template/backend/security/infra scope is expressly excluded from iteration1."
+      ]
+    },
+    "C4": {
+      "name": "依存関係整合",
+      "verdict": "FAIL",
+      "evidence": [
+        "HTML/CSS resource commonization and SHA receipts improve SYS-03/04/08.",
+        "Shared PAGE_TYPES contraction causes validator/schema compatibility failure (REG-02); unconditional marker check blocks existing render (REG-01)."
+      ],
+      "limits": [
+        "No browser or whole dependency-DAG proof by approver."
+      ]
+    }
+  },
+  "phase2_issue_dispositions": [
+    {
+      "id": "L01",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "L02",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "SYS-01",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "META-17",
+      "verdict": "RESOLVED",
+      "evidence": "doc-report blocks delegates to markdown-lite.readList; paragraph consumes its first line. Independent in-memory 2-space/4-space inputs terminate and preserve 内容; added tests cover 0–8 spaces, tabs and empty items."
+    },
+    {
+      "id": "L03",
+      "verdict": "RESOLVED",
+      "evidence": "Candidate decoration only accepts unordered leaf children; fallback renders raw list with shared Markdown. Independent nested 保持期限: 30日 probe retained it. META-15 screen condition also retained."
+    },
+    {
+      "id": "META-15",
+      "verdict": "RESOLVED",
+      "evidence": "Candidate decoration only accepts unordered leaf children; fallback renders raw list with shared Markdown. Independent nested 保持期限: 30日 probe retained it. META-15 screen condition also retained."
+    },
+    {
+      "id": "L04",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "SYS-02",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "META-14",
+      "verdict": "RESOLVED",
+      "evidence": "Population display keeps source string; aggregation requires an entire safe integer. Independent 2〜3名（繁忙期5名） probe retained exact value."
+    },
+    {
+      "id": "L05",
+      "verdict": "RESOLVED",
+      "evidence": "screenChips decorates links produced from complete inline text. Independent S01（管理者のみ） probe retained 管理者のみ."
+    },
+    {
+      "id": "L06",
+      "verdict": "RESOLVED",
+      "evidence": "Title slices at the first colon; independent # 仕様書: 配車: 第2版 retained 第2版."
+    },
+    {
+      "id": "META-18",
+      "verdict": "RESOLVED",
+      "evidence": "Title slices at the first colon; independent # 仕様書: 配車: 第2版 retained 第2版."
+    },
+    {
+      "id": "L07",
+      "verdict": "RESOLVED",
+      "evidence": "Unknown tables delegate their raw Markdown to renderMarkdown, retaining alignment; independent right-alignment probe passed."
+    },
+    {
+      "id": "L08",
+      "verdict": "PARTIAL",
+      "evidence": "Builder image hook embeds local inline PNG/JPEG/WebP and warns on missing/unsupported local files. localRef(data:image/...) returns null, and image hook returns null before validation.",
+      "limits": "Original L08 data URI example still becomes alt only; reference-style images and SVG are also outside implemented scope. Do not claim all Markdown images supported. Existing board data embedding is separate and unaffected by this limitation."
+    },
+    {
+      "id": "SYS-10",
+      "verdict": "PARTIAL",
+      "evidence": "Builder image hook embeds local inline PNG/JPEG/WebP and warns on missing/unsupported local files. localRef(data:image/...) returns null, and image hook returns null before validation.",
+      "limits": "Original L08 data URI example still becomes alt only; reference-style images and SVG are also outside implemented scope. Do not claim all Markdown images supported. Existing board data embedding is separate and unaffected by this limitation."
+    },
+    {
+      "id": "META-10",
+      "verdict": "PARTIAL",
+      "evidence": "workflow.md distinguishes sample v0.2/4 screens from reference v0.4/6 screens and requires mapping meaning, version, scope and visual evidence. case-haisha adds login/master/learning mapping.",
+      "limits": "This fixes misleading criteria, not reproduction itself. No completed six-screen mapping or independent visual acceptance in this audit. target-profile intended_additions changed; that is a comparison-condition change, not fidelity evidence."
+    },
+    {
+      "id": "META-11",
+      "verdict": "RESOLVED",
+      "evidence": "execution-contract section 6 owns L1 choices and L2 normal execution. book SKILL and manifest point to that contract and no longer gate normal generation behind independent review selection.",
+      "limits": "Static contract assessment only; no skill live trial."
+    },
+    {
+      "id": "META-12",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "boardTraits excludes explicit hidden/empty content and missing sources; profile requires current dependency receipts and measurements; result explicitly says structure-only/fidelity not-assessed. Independent hidden fact/req/bar probe returned no classes and four invalid records.",
+      "limits": "Static CSS visibility and semantic equivalence remain intentionally unassessed; this cannot establish high fidelity."
+    },
+    {
+      "id": "SYS-09",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "boardTraits excludes explicit hidden/empty content and missing sources; profile requires current dependency receipts and measurements; result explicitly says structure-only/fidelity not-assessed. Independent hidden fact/req/bar probe returned no classes and four invalid records.",
+      "limits": "Static CSS visibility and semantic equivalence remain intentionally unassessed; this cannot establish high fidelity."
+    },
+    {
+      "id": "META-13",
+      "verdict": "RESOLVED",
+      "evidence": "Added doc_report regressions directly cover original quantities, conditions, nested children, title, indentation, and alignment. The approver inspected assertions and independently probed L01–L07.",
+      "limits": "Full test execution remains parent responsibility and was pending at handoff."
+    },
+    {
+      "id": "META-16",
+      "verdict": "RESOLVED",
+      "evidence": "readList and isTableStart are exported/shared; generic table and list fallbacks delegate to markdown-lite. This is localized commonization without a new parser dependency."
+    },
+    {
+      "id": "SYS-03",
+      "verdict": "RESOLVED",
+      "evidence": "render/book share resource-refs HTML token attributes and CSS reference parsing. Independent escaped code-example scan returned []; image-set external URL and unquoted src were both detected.",
+      "limits": "No browser network audit was performed; no claim of exhaustive CSS/HTML grammar compliance."
+    },
+    {
+      "id": "SYS-08",
+      "verdict": "RESOLVED",
+      "evidence": "render/book share resource-refs HTML token attributes and CSS reference parsing. Independent escaped code-example scan returned []; image-set external URL and unquoted src were both detected.",
+      "limits": "No browser network audit was performed; no claim of exhaustive CSS/HTML grammar compliance."
+    },
+    {
+      "id": "SYS-04",
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "evidence": "dependencyReceipt follows CSS imports/backgrounds and srcset resources and stores SHA; render produces receipt, book/profile compare dependencies. Independent srcset probe returned two paths.",
+      "limits": "Legacy receipt-free book inputs retain mtime behavior. No full filesystem dependency mutation test was run by approver; parent owns integration tests."
+    },
+    {
+      "id": "SYS-05",
+      "verdict": "PARTIAL",
+      "evidence": "BOARD-CHECK-WARN and status=warn propagate recorded quality warnings, so prior false status=ok is fixed.",
+      "limits": "Book still writes HTML and exits 0 for warning-only input, as execution-contract says and test_quality_warnings_survive_book_assembly asserts. Missing/old checks also remain permissive. Phase2 proposed final-delivery enforcement is not implemented; workflow must not treat exit 0 as clean delivery."
+    },
+    {
+      "id": "SYS-06",
+      "verdict": "PARTIAL",
+      "evidence": "WebP expected dimensions and receipt hashes are checked, mismatched WebP falls back to PNG; PNG receipt hash detects modification.",
+      "limits": "Independent 24-byte PNG signature/IHDR-only buffer is still accepted by imageSize as 3360x2100. Receipt-free legacy images and local document images are header-checked, not decoded. Parent reports image decode succeeded for current generated artifact, which does not remove this legacy limitation."
+    },
+    {
+      "id": "SYS-07",
+      "verdict": "RESOLVED",
+      "evidence": "Template activates first/current page before #toc early return and catches malformed decodeURIComponent. Added navigation test inspects direct links and fallback.",
+      "limits": "Code independently inspected; runtime corroborated by parent standalone test PASS including direct hash initialization, all sidebar links, images, 390px and no-JS. No browser run by approver."
+    }
+  ],
+  "paradigm_assessments": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L04"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L04=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L03",
+        "L05"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L03=RESOLVED; L05=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L03",
+        "L04",
+        "L05",
+        "L06"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L03=RESOLVED; L04=RESOLVED; L05=RESOLVED; L06=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L07"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L07=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L08"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "L08=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L06",
+        "L07"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L04=RESOLVED; L06=RESOLVED; L07=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [
+        "L01",
+        "L02",
+        "L03",
+        "L04",
+        "L05"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "L01=RESOLVED; L02=RESOLVED; L03=RESOLVED; L04=RESOLVED; L05=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "phase2_source": "findings-phase2-logical.json",
+      "issue_ids": [],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "Real reference document in phase2 produced 14 sections/8 generic tables/0 d-card; current pattern dispatch still matches exact headers. No current reference card/visual acceptance performed. Sample card count cannot prove reference conversion fidelity.",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "メタ思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-10"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "META-10=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "抽象化思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-11"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-11=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "ダブル・ループ思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-12"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "META-12=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "ブレインストーミング",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-13"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-13=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "水平思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-14"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-14=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "逆説思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-15"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-15=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "類推思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-16"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-16=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-17"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-17=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "素人思考",
+      "phase2_source": "findings-phase2-meta.json",
+      "issue_ids": [
+        "META-18"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "META-18=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "システム思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-04"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-04=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "因果関係分析",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-01=RESOLVED",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "因果ループ",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-05"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "SYS-05=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "トレードオン思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-06"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "SYS-06=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "プラスサム思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-03",
+        "SYS-08"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-03=RESOLVED; SYS-08=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "価値提案思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-02"
+      ],
+      "verdict": "RESOLVED",
+      "independent_assessment": "SYS-02=RESOLVED",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "戦略的思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-09"
+      ],
+      "verdict": "RESOLVED_WITH_LIMITS",
+      "independent_assessment": "SYS-09=RESOLVED_WITH_LIMITS",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-10"
+      ],
+      "verdict": "PARTIAL",
+      "independent_assessment": "SYS-10=PARTIAL",
+      "new_regression_ids": []
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "改善思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-07"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-07=RESOLVED (parent runtime corroborated)",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "仮説思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-03",
+        "SYS-06",
+        "SYS-07"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-03=RESOLVED; SYS-06=PARTIAL; SYS-07=RESOLVED (parent runtime corroborated)",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "論点思考",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-02",
+        "SYS-03",
+        "SYS-04",
+        "SYS-05",
+        "SYS-06",
+        "SYS-07",
+        "SYS-08",
+        "SYS-09",
+        "SYS-10"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-02=RESOLVED; SYS-03=RESOLVED; SYS-04=RESOLVED_WITH_LIMITS; SYS-05=PARTIAL; SYS-06=PARTIAL; SYS-07=RESOLVED (parent runtime corroborated); SYS-08=RESOLVED; SYS-09=RESOLVED_WITH_LIMITS; SYS-10=PARTIAL",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "KJ法",
+      "phase2_source": "findings-phase2-system.json",
+      "issue_ids": [
+        "SYS-01",
+        "SYS-03",
+        "SYS-04",
+        "SYS-05",
+        "SYS-08"
+      ],
+      "verdict": "FAIL_REGRESSION",
+      "independent_assessment": "SYS-01=RESOLVED; SYS-03=RESOLVED; SYS-04=RESOLVED_WITH_LIMITS; SYS-05=PARTIAL; SYS-08=RESOLVED",
+      "new_regression_ids": [
+        "REG-01",
+        "REG-02"
+      ]
+    }
+  ],
+  "new_regressions": [
+    {
+      "id": "REG-01",
+      "severity": "high",
+      "verdict": "FAIL",
+      "title": "Existing numbered notes-only board now fails rendering",
+      "evidence_paths": [
+        "scripts/render-board-png.mjs:257"
+      ],
+      "baseline_behavior": "listOnly (no .mk and no .anchor) bypassed reverse MARK-MISMATCH check.",
+      "current_behavior": "Reverse note-to-marker check is unconditional.",
+      "minimal_reproduction": {
+        "input": "baseline/examples/sample-haisha/打ち合わせ資料/_src/10_decisions.html from the unchanged 11-board baseline fixture",
+        "steps": [
+          "Use a scratch copy of the baseline sample and current render-board-png.mjs.",
+          "Render existing 10_decisions without changing markup or page scope."
+        ],
+        "observed": "Parent/user integration report: baseline 11 boards ok; iteration1 current render produced 5 MARK-MISMATCH errors on 10_decisions.",
+        "verification": "Independent baseline/current code comparison plus explicitly attributed parent runtime evidence; no browser executed by approver."
+      },
+      "impact": "Existing previously accepted artifact cannot pass render. Replacing sample with fewer pages does not repair compatibility.",
+      "minimal_fix": "Restore notes-only behavior or introduce an explicit compatible distinction; validate unchanged baseline fixture.",
+      "followup": "Parent has requested Pascal iteration2; not assumed fixed in iteration1."
+    },
+    {
+      "id": "REG-02",
+      "severity": "high",
+      "verdict": "FAIL",
+      "title": "Existing page types rejected by unchanged validator through changed shared enum",
+      "evidence_paths": [
+        "scripts/lib/briefing-files.mjs:24",
+        "schemas/briefing.schema.json:79",
+        "scripts/validate-briefing-docs.mjs:1073"
+      ],
+      "minimal_reproduction": {
+        "operation": "Call exported validate(sameBaselineSampleAbsolutePath, \"all\") in memory using baseline module and current module. No CLI main and no file writes.",
+        "baseline": {
+          "errors": 0,
+          "warnings": 0
+        },
+        "current": {
+          "errors": 3,
+          "warnings": 0,
+          "codes": [
+            "PAGE-TYPE: pages[6] ui-rules",
+            "PAGE-TYPE: pages[7] platform",
+            "PAGE-TYPE: pages[10] decisions"
+          ]
+        },
+        "verification": "Independently executed by approver."
+      },
+      "impact": "Previously valid briefing.json no longer validates. Schema remains briefing-v1; no compatible migration demonstrated.",
+      "minimal_fix": "Keep legacy input types accepted while limiting new generation, or provide an explicit verified migration that preserves meaning; do not just remove baseline pages from test input."
+    }
+  ],
+  "parent_pending": {
+    "all_tests": "Running at last user update; not independently claimed passed.",
+    "board_screenshot": "RESOLVED: parent confirms normal image after all image.decode() plus two animation frames; screenshot /tmp/result-board.png. Blank observation was capture timing, not product regression.",
+    "iteration2": "Pascal requested to repair REG-01; this file records iteration1 rejection, not iteration2 acceptance."
+  },
+  "commonization": {
+    "verdict": "LOCALLY_APPROPRIATE",
+    "evidence": [
+      "readList/isTableStart reused by document and Markdown renderers.",
+      "Unknown tables/lists delegate raw content to common renderer.",
+      "resource-refs reused by render/book/profile; profile no longer scans unrelated assets.",
+      "L1/L2 execution ownership centralized in execution-contract section6."
+    ],
+    "limits": "Does not excuse compatibility regressions or justify claiming all grammar/resources supported."
+  },
+  "validation": {
+    "independent_executed": [
+      "In-memory L01–L07 minimal probes: all expected preservation/termination/alignment checks true.",
+      "SYS-03 escaped code example produces no reference error.",
+      "SYS-08 image-set external URL and unquoted src both detected.",
+      "SYS-04 srcset split into assets/a.png and assets/b.png.",
+      "SYS-09 hidden/empty material rejects all three classes/source.",
+      "Baseline/current exported validate on identical baseline sample: 0 errors versus 3 PAGE-TYPE errors.",
+      "24-byte truncated PNG still recognized as 3360x2100 header.",
+      "data:image localRef returns null, confirming builder image-hook fallback branch."
+    ],
+    "not_executed": [
+      "All pytest tests",
+      "Browser screenshots/navigation/decode",
+      "Six-screen reference visual comparison",
+      "Generated CLI artifacts",
+      "Iteration2 or added template scope acceptance"
+    ]
+  },
+  "snapshot_sha256_at_save": {
+    "scripts/lib/doc-report.mjs": "696da3296e4e2a693b7bfbb0a3d7bc430d9eb1aefbe9fc7f621d553954d550a8",
+    "scripts/lib/markdown-lite.mjs": "919ef5db8fe2ae1ee07e74f1194859fc6d82fa8c740d6422f98b5dba04a4eed7",
+    "scripts/lib/resource-refs.mjs": "42daf5b6717d8799bcfe7489a0d515da905cd84a55c3458dffe779f698e6800c",
+    "scripts/build-briefing-book.mjs": "3182f06976a260c764ff6836765b07c8e89aadef3b69e9d9877c4846f8ad9400",
+    "scripts/render-board-png.mjs": "44b1821e6dc9a31da2bac3861c17443f77768acbebcf0adf141a6dc882ffa0d1",
+    "scripts/compare-briefing-profile.mjs": "b08b6b84606e35a5e9f10d0be1b9455520684d64f8e6ba647be1f91c699b2dd3",
+    "scripts/lib/briefing-files.mjs": "8de0112598670b834bfdcb95d85ee20a34f7499e3ecea116b8ba24cc29fd6c75",
+    "schemas/briefing.schema.json": "15851702a6ae28ef2a4afa006fe013efcf28ada9af85ab8dfffbb3b3676a273c",
+    "assets/templates/book.html": "ee49d7f8196da2aa693bb9f91f10ff74c965a610cea15a5cbe5a0a13588c7371",
+    "assets/data/target-profile.json": "ffe9ea4641496099b412129cd85721863b2409c67324795f2c93cd6cd0c0e6da",
+    "references/workflow.md": "ff7ac767405cb4c5d0d3cf32c0e2c2e8044f203e0c4e5801594bf6441470fba5",
+    "references/execution-contract.md": "7e8875e385b81b3aa7e84330d780eff907247ca09c7da07c305ca1d785bf6dfd"
+  },
+  "input_sha256": {
+    "findings-phase2-system.json": "c42cfed260b86ca3543bd9116188f8cdd14644884955e6998eb037313b1196bd",
+    "findings-phase2-logical.json": "82547133d7dcf4088ac4e5459e6b39704603c48c4b679c89394b628a82a044c7",
+    "findings-phase2-meta.json": "2d8d00e9b776165461490a5442801f0a9648343ef92caef4a368dc1ca6c90d9d"
+  },
+  "handoff": "Repair and verify REG-01/REG-02 using unchanged baseline fixtures. Re-evaluate SYS-05/06/10 limits ; parent screenshot timing concern is resolved. Treat new 8-board/4-screen sample, reference 10-board/6-screen target, and baseline 11-board/4-screen sample as separate fixtures; do not replace acceptance evidence by changing reference conditions.",
+  "parent_validation": {
+    "source": "User/parent runtime report after initial approval file saved",
+    "standalone_navigation": "test_book_navigation.py PASS: standalone HTML in separate directory, all sidebar links, all images, 390px width and no-JS fallback.",
+    "screenshot": "All image decode plus two animation frames produced normal /tmp/result-board.png. Approver did not inspect or capture browser.",
+    "test_fix": "Initial failure came from test waiting for load after hash-only goto; test corrected. Not a product regression.",
+    "all_tests": "Full suite completion not yet reported."
+  }
+}

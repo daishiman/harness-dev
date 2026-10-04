@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>{{NO}} {{TITLE}}</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+/* このボードだけの配置調整。色は var(--...) だけ。#hex や rgb() を書かない */
+.board-body.col > .stage { justify-content: center; gap: 20px; }
+.steps .step { gap: 12px; padding: 20px 22px; }
+.steps .step .vis { height: 300px; padding: 22px; }
+.steps .step .vis .thumb-ph.pc { height: 200px; }
+.steps .step .vis .thumb-ph.paper { width: 180px; height: 236px; }
+.io { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--text-2); }
+.io span b { color: var(--text); }
+</style>
+</head>
+<body>
+<!-- 型: mechanism (1 つの処理のしくみ)
+     - 1 つの処理だけを 3〜5 段で見せる。2 つ目の処理は別のボードにする。
+     - 段ごとに「誰が」(人 / しくみ) と「入るもの → 出るもの」を書く。
+     - 最初の版の処理を描くときは、仕様書「5. 処理のルール」の番号 (R01..) と言葉をそろえる。
+     - 名前を挙げて頼まれた機能 (要望) を あとで に回したときは、次の版の候補を描く。段は仕様書 8 章の候補の動きにそろえ、
+       決めること (ask) を置いてよい。kicker は「次の版の候補」にする。下の例はこの形。
+     - 要件の札 (.reqs) は注記の先頭に置いてよい。その機能の F 番号を書く。 -->
+<div class="board" data-board="{{NO}}" data-type="mechanism">
+  <header class="board-head">
+    <div>
+      <div class="kicker">{{KICKER}}</div>
+      <h1>{{TITLE}}</h1>
+      <div class="lead">{{LEAD}}</div>
+    </div>
+    <div class="meta">{{PROJECT}}{{SAMPLE_FLAG}}</div>
+  </header>
+  <main class="board-body col">
+    <div class="stage">
+      <div class="steps">
+        <div class="step anchor">
+          <div class="h"><span class="no">1</span><b>人が選ぶ</b></div>
+          <div class="vis"><div class="thumb-ph pc"><i class="head"></i><i class="short"></i><i class="box"></i><i class="btn"></i></div></div>
+          <div class="io"><span><b>入る:</b> 候補の中から 1 つ</span><span><b>出る:</b> 選んだ答え</span></div>
+          <div class="who"><span class="chip person">人</span></div>
+          <i class="mk" style="right:-10px;top:-10px">1</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system">
+          <div class="h"><span class="no">2</span><b>しくみが覚える</b></div>
+          <div class="vis"><div class="thumb-ph paper"><i class="head"></i><i></i><i></i><i class="short"></i><i></i></div></div>
+          <div class="io"><span><b>入る:</b> 書き方と選んだ答え</span><span><b>出る:</b> 対応の表に 1 行</span></div>
+          <div class="who"><span class="chip system">しくみ</span></div>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">3</span><b>次から 1 番目に出す</b></div>
+          <div class="vis"><div class="thumb-ph pc"><i class="head"></i><i class="btn"></i><i></i><i class="short"></i></div></div>
+          <div class="io"><span><b>入る:</b> 同じ書き方</span><span><b>出る:</b> 候補の 1 番目</span></div>
+          <div class="who"><span class="chip system">しくみ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">2</i>
+        </div>
+        <i class="arrow-r"></i>
+        <div class="step system anchor">
+          <div class="h"><span class="no">4</span><b>続けば自動で入る</b></div>
+          <div class="vis"><div class="thumb-ph pc"><i class="head"></i><i></i><i></i><i></i><i class="short"></i></div></div>
+          <div class="io"><span><b>入る:</b> 3 回同じ答え</span><span><b>出る:</b> 最初から入った状態</span></div>
+          <div class="who"><span class="chip system">しくみ</span></div>
+          <i class="mk" style="right:-10px;top:-10px">3</i>
+        </div>
+      </div>
+    </div>
+    <aside class="notes strip">
+      <div class="reqs"><span class="req" data-req="F05">F05 選んだ答えを覚える (あとで)</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>人がやるのは、最初に選ぶだけ</b><span class="sub">登録の画面や作業は無い。</span></li>
+        <li data-mark="2" data-kind="how"><b>選んだ答えを、書き方ごとに覚える</b><span class="sub">次からは選ぶ手間が減っていく。</span></li>
+        <li data-mark="3" data-kind="ask"><b>何回同じなら自動にするか</b><span class="q">Q06</span><span class="sub">案: 3 回。まちがいが続くときは人に戻す。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

@@ -743,10 +743,11 @@ def _run(args) -> int:
         print("[build-plugin-release] --dry-run のため書き込みなし")
         return 0
 
-    save_fingerprints(state)
     regenerate_local_marketplace()
-    if bumped:
-        regenerate_config_version_lock()
+    # A failed downstream step leaves the old ledger in place. On retry the
+    # already-bumped manifests are `released`, so repair their lock as well.
+    regenerate_config_version_lock()
+    save_fingerprints(state)
     print(f"[build-plugin-release] {len(bumped)} 件 bump / marketplace 再生成 完了")
 
     if args.install:

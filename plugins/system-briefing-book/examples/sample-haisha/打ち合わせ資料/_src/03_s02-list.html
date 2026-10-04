@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>03 配車表の一覧</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+table.grid td { padding: 12px 14px; }
+table.grid td.muted { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="board" data-board="03" data-type="pc" data-screens="S02">
+  <header class="board-head">
+    <div>
+      <div class="kicker">画面 2 / 4 ・ PC</div>
+      <h1>配車表の一覧</h1>
+      <div class="lead">送られた配車表が並び、確認待ちが上に来る。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="browser" data-export="s02-list">
+        <div class="browser-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><div class="url">example.app/list</div></div>
+        <div class="browser-body">
+          <div class="admin-head">
+            <div class="brand">配車表の読み取り<small>事務所用</small></div>
+            <div class="who anchor">請求 B さん<span class="link">ログアウト</span><i class="mk" style="left:-32px;top:-4px">4</i></div>
+          </div>
+          <div class="app-frame">
+            <nav class="side-nav">
+              <a class="on">一覧</a>
+              <a>書き出し</a>
+            </nav>
+            <div class="app-main">
+              <div class="admin-body">
+                <div class="page-title">
+                  <div><h2>配車表の一覧</h2><p>確認待ち <span class="num">4</span> 行 ・ 読み取り中 <span class="num">1</span> 枚</p></div>
+                </div>
+                <div class="panel anchor">
+                  <div class="panel-head">送られた配車表<span class="aside">確認待ちが上</span></div>
+                  <table class="grid">
+                    <thead><tr><th>日付</th><th>送った人</th><th class="r">行の数</th><th class="r">確認待ち</th><th>状態</th><th></th></tr></thead>
+                    <tbody>
+                      <tr><td class="num">10/01</td><td>配車 A さん</td><td class="r num">6</td><td class="r num">3</td><td><span class="chip warn">確認待ち</span></td><td class="r"><span class="link anchor">開く<i class="mk" style="right:-38px;top:-6px">3</i></span></td></tr>
+                      <tr><td class="num">10/01</td><td>配車 E さん</td><td class="r num">10</td><td class="r num">1</td><td><span class="chip warn">確認待ち</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">10/01</td><td>配車 A さん</td><td class="r muted">—</td><td class="r muted">—</td><td><span class="chip info anchor">読み取り中<i class="mk" style="right:-34px;top:-6px">2</i></span></td><td class="r muted">—</td></tr>
+                      <tr><td class="num">09/30</td><td>配車 A さん</td><td class="r num">9</td><td class="r num">0</td><td><span class="chip ok">確認済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">09/30</td><td>配車 E さん</td><td class="r num">11</td><td class="r num">0</td><td><span class="chip neutral">書き出し済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">09/29</td><td>配車 A さん</td><td class="r num">12</td><td class="r num">0</td><td><span class="chip neutral">書き出し済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">09/29</td><td>配車 E さん</td><td class="r num">8</td><td class="r num">0</td><td><span class="chip neutral">書き出し済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">09/28</td><td>配車 A さん</td><td class="r num">12</td><td class="r num">0</td><td><span class="chip neutral">書き出し済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                      <tr><td class="num">09/28</td><td>配車 E さん</td><td class="r num">10</td><td class="r num">0</td><td><span class="chip neutral">書き出し済み</span></td><td class="r"><span class="link">開く</span></td></tr>
+                    </tbody>
+                  </table>
+                  <i class="mk" style="left:-12px;top:-12px">1</i>
+                </div>
+              </div>
+              <div class="app-footer"><span>配車表の読み取り ・ v0.2</span><span>困ったときの連絡先: 開発の担当</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F02">F02 行ごとに読み取る</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>配車表が 1 枚 1 行で並ぶ</b><span class="sub">確認待ちが残っているものが上に来る。</span></li>
+        <li data-mark="2" data-kind="how"><b>読み取っている間は「読み取り中」</b><span class="sub">終わると、確認待ちの数が出る。</span></li>
+        <li data-mark="3" data-kind="can"><b>「開く」で、紙と見比べる画面へ</b><span class="sub">確かめるのは、黄色の欄だけでよい。</span></li>
+        <li data-mark="4" data-kind="ask"><b>ログインする人と方式</b><span class="q">Q04</span><span class="sub">案: 全員が、会社のメールのアカウントで入る。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

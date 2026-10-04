@@ -326,6 +326,33 @@ def test_references_unassigned_go_to_index():
     assert "https://example.com/docs" in index  # 未割当参照が index 全体出典へ
 
 
+def test_references_also_categories_appear_in_each_declared_chapter():
+    """also_categories で宣言した章にも、主たる章と同じ出典の行が載る。
+
+    category を 1 つしか持てないと、同じ公式文書を根拠にした別の章の判断を章から
+    出典へ辿れなかった。宣言の無い章 (ここでは auth) へは載せない。
+    """
+    spec = _spec()
+    for t in spec["targets"]:
+        if t["target_id"] == "postgres":
+            t["also_categories"] = ["backend", "infrastructure"]
+    refs = _refs()
+    pg_url = next(r["source_url"] for r in refs["references"] if r["target_id"] == "postgres")
+    assert mod._target_category_map(spec)["postgres"] == ["database", "backend", "infrastructure"]
+    by_cat, unassigned = mod.references_by_category(spec, refs)
+    assert [r["target_id"] for r in by_cat["database"]] == ["postgres"]
+    # 章内の並びは fetched-references の記録順 (決定論)。主章か宣言章かで並べ替えない。
+    assert [r["target_id"] for r in by_cat["backend"]] == ["postgres", "nodejs"]
+    assert [r["target_id"] for r in by_cat["infrastructure"]] == ["postgres"]
+    assert "auth" not in by_cat
+    assert unassigned == []
+    docset = mod.compile_docset(spec, refs)
+    for chapter in ("database.md", "backend.md", "infrastructure.md"):
+        citations = docset[chapter].split("## 最新ドキュメント出典", 1)[1]
+        assert pg_url in citations, chapter
+    assert pg_url not in docset["auth.md"].split("## 最新ドキュメント出典", 1)[1]
+
+
 def test_ref_host_fallback_from_url():
     ref = {"source_url": "https://fallback.example/x", "version": "1"}
     assert mod._ref_host(ref) == "fallback.example"

@@ -4,7 +4,7 @@
 # version: 0.1.0
 # purpose: C05 完成度評価レポートの形状検証と全 6 観点スコア→総合 PASS/FAIL の決定論集約 (Goodhart 防止の fail-closed 集約器)
 # inputs:
-#   - argv: --report FILE / --matrix FILE [--require-complete]
+#   - argv: --report FILE / --matrix FILE [--require-complete] / --knowledge-graph / --hearing FILE --state FILE
 # outputs:
 #   - stdout: OK/violation 一覧 or gate 結果 JSON
 #   - exit: 0=OK / 1=violation or gate fail / 2=usage error
@@ -26,6 +26,10 @@
    の verdict と high severity finding 数から総合 PASS/FAIL を導出する。
    fail-closed: 全観点 PASS かつ high 0 のときだけ PASS。1 観点でも FAIL/INDETERMINATE、
    または high finding が 1 件でもあれば FAIL。観点の取りこぼし (観点未充足) も FAIL。
+
+3. `derive_hearing_verdict(audit, spec_state)` — C06 (hearing-auditor) の重大度付き検出から、
+   matrix_coverage の sub-input 判定を `references/aspect-criteria.md` の対応表どおりに導く。
+   C06 自身の verdict は使わない (low 1 件で観点が FAIL になっていた不整合の是正)。
 
 `run_coverage_gate(...)` は plugin-root の `validate-coverage-matrix.py` (C05 の
 deterministic_check) を独立 context で実行し、マトリクス網羅性観点の一次根拠を回収する薄い wrapper。
@@ -190,6 +194,156 @@ def validate_report(report: dict) -> list[str]:
     return v
 
 
+# --------------------------------------------------------------------------- #
+# C06 (hearing-auditor) の検出 → matrix_coverage の sub-input 判定             #
+# --------------------------------------------------------------------------- #
+# 軸の id は R6-audit-hearing.md の監査 5 軸と 1 対 1 (番号は R6 の軸番号)。
+HEARING_AXES: dict[str, int] = {
+    "missed-collection": 1,
+    "leading-question": 2,
+    "premature-stop": 3,
+    "traceability": 4,
+    "foundation-trace": 5,
+}
+HEARING_SEVERITIES = {"high", "medium", "low", "info"}
+
+
+def _primary_qa_refs(spec_state: dict) -> set[str]:
+    """確定セルの主たる接地根拠 (qa_ref) の集合。裏付け (qa_refs) と対象外セルは含めない。"""
+    out: set[str] = set()
+    for row in (spec_state.get("matrix") or {}).values():
+        if not isinstance(row, dict):
+            continue
+        for cell in row.values():
+            if isinstance(cell, dict) and cell.get("state") == "確定" and isinstance(cell.get("qa_ref"), str):
+                out.add(cell["qa_ref"])
+    return out
+
+
+def _supersession_gap(qa_id: str, finding: dict, entries: dict, primary: set[str], findings: list) -> str | None:
+    """置き換えが有効なら None、無効ならその理由を返す。
+
+    有効の条件 (neutral-question-criteria.md): (a) 新しい問が中立 (b) 同じ論点
+    (c) 利用者の回答が記録されている。(a)(b) は意味の判定なので C06 の
+    ``supersession_valid`` を要し、(a) はさらに置き換え先に medium 以上の
+    誘導の検出が無いことで裏を取る。(c) はここで決定論に再検査する。
+    """
+    if finding.get("supersession_valid") is not True:
+        return "C06 が置き換えの有効性 (a)(b) を認めていない (supersession_valid が true でない)"
+    if qa_id in primary:
+        return "旧い問が確定セルの主たる接地根拠 (qa_ref) のまま"
+    seen = {qa_id}
+    current = qa_id
+    while True:
+        nxt = entries[current].get("superseded_by")
+        if nxt is None:
+            break
+        if nxt not in entries:
+            return f"置き換え先 {nxt!r} が qa_log に無い"
+        if nxt in seen:
+            return f"置き換えが循環している ({nxt!r})"
+        seen.add(nxt)
+        current = nxt
+    retired_primary = sorted((seen - {current}) & primary)
+    if retired_primary:
+        return f"置き換え済みの問 {retired_primary} が確定セルの主たる接地根拠 (qa_ref) のまま"
+    final = entries[current]
+    if not str(final.get("answer") or "").strip() or final.get("basis") != "user-decision" or not final.get("answered_at"):
+        return f"置き換え先 {current!r} に利用者の回答 (answer / basis=user-decision / answered_at) が揃っていない"
+    for other in findings:
+        if (
+            other.get("axis") == "leading-question"
+            and other.get("qa_id") == current
+            and other.get("severity") in ("high", "medium")
+        ):
+            return f"置き換え先 {current!r} にも {other.get('severity')} の誘導の検出がある (中立な問でない)"
+    return None
+
+
+def derive_hearing_verdict(audit, spec_state) -> dict:
+    """C06 の検出と重大度から matrix_coverage の sub-input 判定を導く (副作用なし)。
+
+    対応の正本は ``references/aspect-criteria.md`` の「ヒアリング監査 (C06) の重大度と
+    判定の対応」。ここはその表の決定論実装で、表と食い違ったら表を正とする。
+
+    - 置き換えが有効な問への誘導の検出 → closed (閉じた検出。判定に数えず報告に残す)
+    - high → blocking
+    - medium → 誘導の検出 (軸 2) は、その問が確定セルの主たる接地根拠 (qa_ref) の
+      ときだけ blocking。それ以外の軸の medium は blocking (問に限った緩和である)
+    - low / info → notes (PASS に残す注記)
+    - C06 が INDETERMINATE、入力の形が不正 → INDETERMINATE (C06 の再実行・入力補完)
+
+    C06 自身が返した verdict は判定に使わない (``declared`` として返すだけ)。以前は
+    C06 が「1 軸以上に検出があれば FAIL」としていたため、low 1 件で matrix_coverage が
+    FAIL になり、総合判定まで落ちていた。
+    """
+    result = {
+        "verdict": "INDETERMINATE",
+        "declared": audit.get("verdict") if isinstance(audit, dict) else None,
+        "blocking": [],
+        "notes": [],
+        "closed": [],
+        "errors": [],
+    }
+    if not isinstance(audit, dict):
+        result["errors"].append("C06 の出力がオブジェクトでない")
+        return result
+    if audit.get("verdict") == "INDETERMINATE":
+        result["errors"].append("C06 が INDETERMINATE (監査不能) を返した")
+        return result
+    if not isinstance(spec_state, dict) or not isinstance(spec_state.get("qa_log"), list) \
+            or not isinstance(spec_state.get("matrix"), dict):
+        result["errors"].append("spec-state に qa_log (配列) と matrix (オブジェクト) が無い")
+        return result
+    findings = audit.get("findings")
+    if not isinstance(findings, list):
+        result["errors"].append("findings が配列でない")
+        return result
+
+    entries = {e["id"]: e for e in spec_state["qa_log"] if isinstance(e, dict) and isinstance(e.get("id"), str)}
+    for i, f in enumerate(findings):
+        if not isinstance(f, dict):
+            result["errors"].append(f"findings[{i}]: オブジェクトでない")
+            continue
+        if f.get("axis") not in HEARING_AXES:
+            result["errors"].append(f"findings[{i}].axis={f.get('axis')!r} が {sorted(HEARING_AXES)} 外")
+        if f.get("severity") not in HEARING_SEVERITIES:
+            result["errors"].append(f"findings[{i}].severity={f.get('severity')!r} が {sorted(HEARING_SEVERITIES)} 外")
+        if not str(f.get("observation") or "").strip():
+            result["errors"].append(f"findings[{i}].observation が空")
+        if f.get("axis") == "leading-question":
+            if f.get("qa_id") not in entries:
+                result["errors"].append(f"findings[{i}].qa_id={f.get('qa_id')!r} が qa_log に無い (誘導の検出は問を指す)")
+        elif not any(f.get(k) for k in ("qa_id", "cell", "u_item", "field")):
+            result["errors"].append(f"findings[{i}]: 対象 (qa_id / cell / u_item / field) が無い")
+    if result["errors"]:
+        return result
+
+    primary = _primary_qa_refs(spec_state)
+    for f in findings:
+        item = dict(f)
+        qa_id = f.get("qa_id")
+        if f["axis"] == "leading-question" and entries[qa_id].get("superseded_by") is not None:
+            gap = _supersession_gap(qa_id, f, entries, primary, findings)
+            if gap is None:
+                item["superseded_by"] = entries[qa_id]["superseded_by"]
+                result["closed"].append(item)
+                continue
+            item["supersession_rejected"] = gap
+        severity = f["severity"]
+        if severity == "high":
+            blocking = True
+        elif severity == "medium":
+            blocking = qa_id in primary if f["axis"] == "leading-question" else True
+        else:
+            blocking = False
+        if f["axis"] == "leading-question":
+            item["primary_ground"] = qa_id in primary
+        (result["blocking"] if blocking else result["notes"]).append(item)
+    result["verdict"] = "FAIL" if result["blocking"] else "PASS"
+    return result
+
+
 def _plugin_root() -> Path:
     """.../skills/<skill>/scripts/aggregate-completeness.py -> plugin root (parents[3])。"""
     return Path(__file__).resolve().parents[3]
@@ -266,10 +420,14 @@ def main(argv: list | None = None) -> int:
     ap.add_argument("--require-complete", action="store_true", help="ゲートを未収集 0 必須モードで実行")
     ap.add_argument("--knowledge-graph", action="store_true",
                     help="出荷 3 カタログを validate-knowledge-graph.py 4 profile で独立再実行 (C13-C16 機械層)")
+    ap.add_argument("--hearing", help="C06 (hearing-auditor) の出力 JSON。--state と併用し sub-input 判定を導く")
+    ap.add_argument("--state", help="--hearing の判定に使う spec-state.json (確定セルの qa_ref と置き換えを読む)")
     args = ap.parse_args(argv)
 
-    if not args.report and not args.matrix and not args.knowledge_graph:
-        ap.error("--report / --matrix / --knowledge-graph のいずれかが必要")
+    if not args.report and not args.matrix and not args.knowledge_graph and not args.hearing:
+        ap.error("--report / --matrix / --knowledge-graph / --hearing のいずれかが必要")
+    if bool(args.hearing) != bool(args.state):
+        ap.error("--hearing と --state は併用する")
 
     rc = 0
     if args.matrix:
@@ -281,6 +439,22 @@ def main(argv: list | None = None) -> int:
         kg_result = run_knowledge_graph_gate()
         print(json.dumps(kg_result, ensure_ascii=False, indent=2))
         if kg_result["exit_code"] != 0:
+            rc = 1
+    if args.hearing:
+        loaded = []
+        for label, raw in (("hearing", args.hearing), ("state", args.state)):
+            path = Path(raw)
+            if not path.is_file():
+                print(f"{label} ファイルが存在しない: {raw}", file=sys.stderr)
+                return 2
+            try:
+                loaded.append(json.loads(path.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                print(f"{label} の JSON parse 失敗: {exc}", file=sys.stderr)
+                return 2
+        hearing = derive_hearing_verdict(loaded[0], loaded[1])
+        print(json.dumps(hearing, ensure_ascii=False, indent=2))
+        if hearing["verdict"] != "PASS":
             rc = 1
     if args.report:
         path = Path(args.report)

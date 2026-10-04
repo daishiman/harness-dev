@@ -18,10 +18,11 @@
 ### 1.1 不変ルール
 - 状態書込は writer (`scripts/apply-spec-transition.py`) の一経路のみ。直接 JSON 編集禁止。
 - `確定` は `qa_ref` (qa_log entry) 必須、`対象外` は `reason` か `approval_ref` 必須。
-- 確定/対象外済みセルを再質問しない (未収集セルのみ対象)。
+- 確定/対象外済みセルの要件を聞き直さない (未収集セルのみ対象。セルの論点を補う問は確定前に聞き終える)。
 
 ### 1.2 倫理ガード
 - ユーザー回答原文を改変しない。推測を確定として書かない。
+- 問は `references/neutral-question-criteria.md` の N1-N4 を満たす形で投げる。問の文面は qa_log に凍結され、後から直せない。
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
@@ -33,7 +34,8 @@
 - **platform 一括判断を優先**: 非対象 platform は一括承認 (approval_log) で列を `対象外` にし turn 数を圧縮する。
 - 対象 platform だけ各カテゴリ要件を確定する。
 - 1 turn = 質問→回答→反映。反映は writer の `chunk` / `apply` で行う。
-- **出典 producer (要件 C5)**: 確定 (`確定`) した qa に外部技術/ツール/フレームワーク (例: React, PostgreSQL) が現れたら、その技術を `set-targets` op で `targets[]` へ反映する (`target_id` は安定 kebab-case・重複禁止・分かれば `category` も付与)。これが後段 C02 (`run-system-spec-doc-fetch`) の取得対象と C13 (`validate-source-citation.py`) の全件突合の発生源になる。
+- **問の単位は論点**: セルの要件は開いた 1 問で聞いてよく、回答に欠けた論点だけを 1 論点ずつ別の問で補う (`references/elicit-question-bank.md`)。補った論点の問は qa だけを記録する turn (ops なし) にし、論点が揃った turn で `confirm` して、同じ turn の ops に `add-qa-ref` (補った論点の qa_id) を続けて同じセルへ結ぶ。結ばない qa は required-info の接地にも章の根拠にも数えられない。
+- **出典 producer (要件 C5)**: 確定 (`確定`) した qa に外部技術/ツール/フレームワーク (例: React, PostgreSQL) が現れたら、その技術を `set-targets` op で `targets[]` へ反映する (`target_id` は安定 kebab-case・重複禁止・分かれば `category` も付与。同じ公式文書が別の章の判断も支えるなら、その章を `also_categories` で宣言する)。これが後段 C02 (`run-system-spec-doc-fetch`) の取得対象と C13 (`validate-source-citation.py`) の全件突合の発生源になる。
 - **未知知識 producer (要件 open-world)**: ヒアリング中に既知 seed (clean-arch / DDD 等 C04 の 6 枚) に無い未知の設計領域・技術・パターンを検出したら、`set-knowledge-candidate` op で `status=discovered` として `spec-state` へ記録する (id は安定 kebab-case・`topic`・`problem`・実在 goal を指す `serves_goals` を付与)。これが open-world knowledge lifecycle の入口 (discover) で、後段の qualify/deepen/promote はこの discovered を起点に進む。
 
 ### 2.3 入力契約
@@ -46,7 +48,8 @@
 
 | key | required | 説明 |
 |---|---|---|
-| `id` / `question` / `answer` | yes | qa_log entry の本体。確定後の問答本文の変更は writer が拒否する。 |
+| `qa_id` / `question` / `answer` | yes | qa_log entry の本体 (`qa_id` が entry の `id` になる)。確定後の問答本文の変更は writer が拒否する。 |
+| `ops` | 任意 | セル op の列 (`confirm` / `exclude` / `add-qa-ref` など)。`confirm` の `qa_ref` と、`qa_refs` を省いた `add-qa-ref` は turn の `qa_id` で補完される。論点を補うだけの turn は省く。 |
 | `basis` | yes (確定に紐づく turn) | `user-decision` / `observed-fact` / `agent-inference` の enum。設計判断は `user-decision`、検証可能な観測は `observed-fact`、未確認の推定は `agent-inference` を正直に付ける (推定を観測と偽らない)。 |
 | `required_info_items` | yes (block item を答える turn) | `references/required-info-catalog.json` の `item_id` 配列。この turn がどの必須情報を回答したかを**機械可読**に結び付ける唯一の手段で、未指定の回答はどの item も接地させない。 |
 | `provenance` / `answered_at` | 任意 | 出所と回答時刻 (RFC3339・未来時刻は拒否)。 |
@@ -60,6 +63,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | question_bank | references/elicit-question-bank.md | 質問設計時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 | contract | references/spec-state-contract.md | セル/ログ形状の確認時 |
 
 ### 3.2 外部ツール
@@ -95,7 +99,7 @@
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] 非対象platformの全セルがapproval_refまたは具体的reason付きの`対象外`である
-- [ ] 対象platformの回答済みセルがqa_ref付きの`確定`である
+- [ ] 対象platformの回答済みセルがqa_ref付きの`確定`であり、補った論点の qa が `add-qa-ref` で同じセルの `qa_refs` に結ばれている
 - [ ] `確定`/`対象外` の付帯 (qa_ref / reason) が全て埋まっている
 - [ ] 確定へ紐づく qa_log entry に `basis` (enum 3値) が付いている (`validate-coverage-matrix.py --require-basis` が exit0)
 - [ ] `missing_effect=block` の必須情報を答えた turn に `required_info_items` が付き、`validate-knowledge-graph.py --profile required-info --state <spec-state>` の `ungrounded_blocking_items` が空である
@@ -126,4 +130,4 @@
 
 ## 出力指示
 
-references/elicit-question-bank.md に沿って未収集セルへ質問し、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。
+references/elicit-question-bank.md の論点に沿って未収集セルへ質問し (問の文面は references/neutral-question-criteria.md の N1-N4 を満たす形にする。この基準が question bank より上位)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。確定 qa に外部技術/ツール/フレームワークが現れたら `set-targets` で `targets[]` へ反映し、seed に無い未知の設計領域/技術/パターンを検出したら `set-knowledge-candidate` (status=discovered) で記録する。反映後 `validate-coverage-matrix.py` (loop) の exit0 を確認する。確定セルの変更が要るときは R4-reopen を使う。余計な前置き・思考過程出力は禁止。

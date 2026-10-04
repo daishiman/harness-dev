@@ -1,0 +1,1 @@
+現物を再読込。22 plugin全てにClaude/Codex manifestがありidentity一致。両ローカルcatalogも22件。plannerの両環境install既定・値域検証は実装済み。次は既存release/install/CIの接続と旧記述を精査。実導入成功は未検証。

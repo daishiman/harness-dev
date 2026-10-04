@@ -1,0 +1,204 @@
+{
+  "methods": [
+    {
+      "id": "critical",
+      "name": "批判的思考",
+      "observation": "「値域ゲートPASSならinstall既定が後段へ伝わる」を反証した。宣言と消費者実行義務は異なる。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256-265",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:459-500"
+      ],
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    {
+      "id": "deduction",
+      "name": "演繹",
+      "observation": "全planは両platform install契約を持つ、consumerはtask graphを実行する、よって契約に対応したrelease義務の存在が必要。現行gateにはその含意の検査が無い。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461"
+      ],
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    {
+      "id": "induction",
+      "name": "帰納",
+      "observation": "R1 default指示、R3 default指示、index default、sample P13はいずれも両製品を記述する一方、installテスト群は値域単位に集中。複数artifactの整合は人手文面に依存する傾向を観測。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py:225-322",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md"
+      ],
+      "findings": [
+        "LOG-01",
+        "LOG-04"
+      ]
+    },
+    {
+      "id": "abduction",
+      "name": "アブダクション",
+      "observation": "既定キーとsampleは更新済みでもconsumer到達gateが無い最良説明は、install追加がplugin_meta値域と散文生成指示までで閉じていること。既存task graph射影の仕組みを再利用する修正が最小。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:433-500"
+      ],
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    {
+      "id": "vertical",
+      "name": "垂直思考",
+      "observation": "R1→R3→index/P13→derive→handoff.task_graph_ref→consumerの一本の経路を追跡。handoffはgraph pathとroute coverageを検査するがinstall obligationを検査しない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-build-handoff.py:395-465",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+      ],
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    {
+      "id": "decomposition",
+      "name": "要素分解",
+      "observation": "installをplatform/manifest/registry/strict/release/isolated/liveの7要素へ分解。値域検査は揃うがtask実体化との接合が未検証。project projectionは別ownerでありmake sync推奨が逸脱。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148-228",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:391"
+      ],
+      "findings": [
+        "LOG-01",
+        "LOG-02"
+      ]
+    },
+    {
+      "id": "mece",
+      "name": "MECE",
+      "observation": "registryを公開Claude/local Claude/Codex repoの3集合に分解。非配布の除外条件は公開集合だけへ適用すべきだが文書はmarketplace全体へ適用している。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37-61"
+      ],
+      "findings": [
+        "LOG-03"
+      ]
+    },
+    {
+      "id": "two-axis",
+      "name": "2軸思考",
+      "observation": "create/update × Claude/Codexの4セルを確認。共通R1/R3 defaultsで全セルの宣言は存在する。ただしconsumer build-steps Phase Gの外側は新規plugin限定、内側step4は新規/既存両方とするためupdate登録手順の読み違い余地。中心問題は全セル共通のrelease義務検証欠落。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:40",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md:60",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:86-118"
+      ],
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    {
+      "id": "process",
+      "name": "プロセス思考",
+      "observation": "ユーザー要求→default選択→index検証→P13射影→実install receiptの流れで、index→P13で消失可能と実験確認。新たな手書きルール列挙より共通factory/obligation射影でこの接合を閉じる。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657-661",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333-1340",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py:461-500"
+      ],
+      "findings": [
+        "LOG-01",
+        "LOG-04"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "LOG-01",
+      "severity": "high",
+      "condition_signal": "omission",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+      "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+      "recommendation": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。"
+    },
+    {
+      "id": "LOG-02",
+      "severity": "medium",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+      "description": "SKILL.mdのGotcha(372)と同期手順(391)はmake syncを要求するが、現行Makefileとsync-native-surfaces.pyのowner契約はenabled plugin scopeを守るnative-surfaces-apply/check。旧指示はscope外全pluginへのprojectionを促す。",
+      "recommendation": "2箇所を現行ownerのnative-surfaces手順に置換し、local user installとproject discovery projectionを区別する。"
+    },
+    {
+      "id": "LOG-03",
+      "severity": "medium",
+      "condition_signal": "contradiction",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37",
+      "description": "marketplace契約表はroot .claude-plugin/marketplace.jsonを個人/チーム共有の唯一経路と宣言する一方、同文書57行は非配布pluginを含む全pluginのharness-localとcodex-repoをinstall経路にする。45行の非配布=marketplace非登録も公開側という限定がなく、SKILL.md158行も同様。新旧説明が同じ契約内で衝突する。",
+      "recommendation": "公開distribution registry、Claude local install registry、Codex repo install registryを明示し、非配布は公開marketplace/bundlesだけ非登録と限定する。fleet全件を公開側に追加する修正は不要。"
+    },
+    {
+      "id": "LOG-04",
+      "severity": "low",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333",
+      "description": "INSTALL_PLATFORMS/INSTALL_CODEX_MANIFEST/INSTALL_REGISTRY_BY_PLATFORM/INSTALL_RELEASE_ORDERを値域SSOTと宣言しているが、render_minimal_index内のdefaultは同じ文字列を手書き重複。platformやregistry変更時に生成既定と検証器が離れる。",
+      "recommendation": "default_install_contract()等の小さなfactoryで既存INSTALL定数から新規dictを返し、skeleton生成とrelease obligation生成が共用する。文書は生成例として維持し、別の値域SSOTにしない。"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "status": "FAIL",
+      "signal": "contradiction",
+      "findings": [
+        "LOG-03"
+      ]
+    },
+    "C2": {
+      "status": "FAIL",
+      "signal": "omission",
+      "findings": [
+        "LOG-01"
+      ]
+    },
+    "C3": {
+      "status": "FAIL",
+      "signal": "inconsistency",
+      "findings": [
+        "LOG-02",
+        "LOG-04"
+      ]
+    },
+    "C4": {
+      "status": "FAIL",
+      "signal": "dependency_break",
+      "findings": [
+        "LOG-01"
+      ],
+      "note": "宣言からconsumer実行義務への依存接合が未保証。graph自体のDAG cycleは本分析で主張していない。"
+    }
+  },
+  "read_only_experiment": {
+    "method": "ReadProxy.read_text monkeypatch in memory; PYTHONDONTWRITEBYTECODE=1; target files unchanged",
+    "fixture": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan",
+    "mutation": "P13完了チェックリストからCHANGELOG/strict validation/isolated install/live installの4 checkboxのみ除去",
+    "baseline_spec_gate": [
+      0,
+      []
+    ],
+    "mutant_spec_gate": [
+      0,
+      []
+    ],
+    "mutant_phase_structure_errors": [],
+    "before_P13_claims": 7,
+    "after_P13_claims": 3,
+    "install_claims_after": 0
+  },
+  "scope_note": "対象編集・git操作・install操作は実施していない。証拠出力ファイルだけ作成。"
+}

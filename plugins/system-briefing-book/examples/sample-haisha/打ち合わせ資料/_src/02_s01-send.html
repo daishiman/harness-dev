@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>02 配車表を送る</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="common.css">
+<style>
+.phone .photo { flex: none; height: 380px; }
+.under-photo { display: flex; justify-content: space-between; align-items: center; margin: -4px 2px 0; font-size: 14px; }
+.under-photo .count { color: var(--text-muted); }
+.under-photo .count b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="board" data-board="02" data-type="phone" data-screens="S01">
+  <header class="board-head">
+    <div>
+      <div class="kicker">画面 1 / 4 ・ スマホ</div>
+      <h1>配車表を送る</h1>
+      <div class="lead">紙を撮って送るだけ。入れるのは日付だけで、それも最初から入っている。</div>
+    </div>
+    <div class="meta">配車表の読み取り<br><span class="sample-flag">画面の中の名前と値は例です</span></div>
+  </header>
+  <main class="board-body">
+    <div class="stage">
+      <div class="phone-wrap">
+        <div class="phone-cap">S01 配車表を送る ・ スマホ</div>
+        <div class="phone" data-export="s01-send">
+          <div class="island"></div>
+          <div class="status"><span>9:41</span><span>5G<i class="bat"></i></span></div>
+          <div class="mbar"><div class="url">example.app</div></div>
+          <div class="site-head">
+            <span class="brand">配車表の読み取り</span><span class="who">配車 A さん</span>
+          </div>
+          <div class="app-body">
+            <div class="ptitle">配車表を送る</div>
+            <div class="photo anchor">
+              <img src="assets/haisha-paper.svg" alt="">
+              <i class="mk" style="left:12px;bottom:12px">1</i>
+            </div>
+            <div class="under-photo"><span class="link">撮り直す</span><span class="count">今日送った <b class="num">2</b> 枚</span></div>
+            <div class="field anchor">
+              <div class="lab">日付 <span class="tag">必須</span></div>
+              <div class="input"><span class="num">2026/10/01</span><span class="unit">今日</span></div>
+              <i class="mk" style="left:36px;top:-3px">2</i>
+            </div>
+          </div>
+          <div class="app-foot anchor">
+            <div class="btn btn-primary">送る</div>
+            <div class="hint">送ると、事務所の PC の一覧に並ぶ</div>
+            <i class="mk" style="right:8px;top:4px">3</i>
+          </div>
+          <div class="homebar"></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <div class="reqs"><span class="req" data-req="F01">F01 撮って送る</span></div>
+      <ol class="marks">
+        <li data-mark="1" data-kind="can"><b>紙を撮るだけ。書き方は今のまま</b><span class="sub">1 回に 1 枚。写りが悪いときは「撮り直す」。</span></li>
+        <li data-mark="2" data-kind="how"><b>日付は、最初から今日が入る</b><span class="sub">紙の右上の日付と違うときだけ直す。</span></li>
+        <li data-mark="3" data-kind="how"><b>「送る」で、しくみが読み取りを始める</b><span class="sub">上に「送りました」と出る。1 分ほどで、事務所の一覧に並ぶ。</span></li>
+      </ol>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

@@ -332,6 +332,65 @@ def test_set_targets_rejects_missing_id_and_duplicates():
         mod.set_targets(state, [123])  # str でも dict でもない
 
 
+def test_set_targets_keeps_also_categories():
+    """主たる章 (category) に加えて出典を載せる章 (also_categories) を保つ。
+
+    0.1.15 までは target の未知キーを黙って捨てていたため、宣言しても章割当に届かなかった。
+    """
+    state = mod.init_state(_taxonomy())
+    mod.set_targets(
+        state,
+        [
+            {
+                "target_id": "cloudflare-d1",
+                "category": "database",
+                "also_categories": ["backend", "infrastructure"],
+            },
+            {"target_id": "react", "category": "frontend"},
+        ],
+    )
+    assert state["targets"] == [
+        {
+            "target_id": "cloudflare-d1",
+            "category": "database",
+            "also_categories": ["backend", "infrastructure"],
+        },
+        {"target_id": "react", "category": "frontend"},
+    ]
+
+
+def test_set_targets_rejects_also_categories_without_category():
+    # 主従を残すため、主たる章 (category) を持たない target には指定できない。
+    state = mod.init_state(_taxonomy())
+    with pytest.raises(mod.TransitionError, match="category"):
+        mod.set_targets(state, [{"target_id": "d1", "also_categories": ["backend"]}])
+    assert state["targets"] == []
+
+
+def test_set_targets_rejects_duplicate_also_categories():
+    state = mod.init_state(_taxonomy())
+    with pytest.raises(mod.TransitionError, match="重複"):
+        mod.set_targets(
+            state,
+            [{"target_id": "d1", "category": "database", "also_categories": ["backend", "backend"]}],
+        )
+
+
+def test_set_targets_rejects_also_categories_equal_to_category():
+    state = mod.init_state(_taxonomy())
+    with pytest.raises(mod.TransitionError, match="主たる章"):
+        mod.set_targets(
+            state,
+            [{"target_id": "d1", "category": "database", "also_categories": ["database"]}],
+        )
+    # 空配列・非文字列の要素も宣言として成り立たないので拒否する。
+    for bad in ([], [""], [1], "backend"):
+        with pytest.raises(mod.TransitionError):
+            mod.set_targets(
+                state, [{"target_id": "d1", "category": "database", "also_categories": bad}]
+            )
+
+
 def test_cli_set_targets_string_and_file(tmp_path):
     state_path = tmp_path / "spec-state.json"
     assert mod.main(["init", "--taxonomy", str(TAXONOMY), "--out", str(state_path)]) == 0

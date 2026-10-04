@@ -1,0 +1,42 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-hearing",
+    "skill_md_sha256": "b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)の rubric 投影",
+  "reviewed_at": "2026-10-02T13:56:38Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "質問の正本を assets/data/hearing-catalog.json の 1 つにした (:23、:105、:157)。hearing-catalog.mjs は同じ JSON から HEARING_QUESTIONS と雛形の行 (:14、:23-24) を作る。python で数えると、schema は briefing-hearing-catalog-v1、4 章・36 問で、H01〜H36 がそろい、重複は無い。round 1〜6 に各 4 問、聞かない質問が 12 問。これは IN1 の「固定H01〜H36」と、IN2 の「6 回、1 回 4 問以内」と合う。workflow-manifest.json の hearing-catalog の resource (path ../../assets/data/hearing-catalog.json) も実在する。",
+      "前回の low 3 件が解消した。hearing-guide.md の聞き足しの規則 (:46-60) から例外の列挙がなくなり、B7 との食い違いが消えた。B9 と B11 の答えが食い違ったら未定へ回すと :88 に書いた。document-structure.md の記入先の表 (:186・:188) が H30・H31・H35・H36 を名前で挙げ、お手本の仕様書.md 6 章 (:254) と 7.2 (:267) に写った。",
+      ":78 に「このスキルは分離した文脈を使わない」の 1 文がある。:113・:119・:125・:143・:145 が指す hearing-guide.md の節 (「6. 素材から先に埋めるときの目安」「5. 回の組み方」「7. ヒアリング.md の書き方」「2. 聞き方」「確認点で出た答えの書き方」) はすべて実在する。お手本の写しで --stage all が exit 0、warn 0。test_hearing_catalog.py を含むテストが通った。"
+    ],
+    "negative_feedback": [
+      "[low / 食い違い。持ち越し・未解決] お手本の ヒアリング.md の H19 (:44) と H34 (:51) は、hearing-catalog.json では聞かない質問 (round が null) なのに、出どころが 聞き取り になっている。hearing-guide.md:75 の「聞かなかった項目にも固定H行を残す。素材で埋まれば素材、具体的な仮案なら既定案、不明なら未定」と合わない。validate は出どころと round を照らさないので exit 0 (お手本の写しで確かめた)。3 章の「自由入力」で、別の質問の答えの中に出たと読めば成り立つので low。直し方: お手本の H19・H34 を既定案にする。または、ほかの答えの中で出たことを回答の欄に添える。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-hearing-coverage-v1、iteration 2) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (reference_refs の hearing-catalog.json、IN1・IN2・OUT1・OUT2 の文、:78、:104-105、:113、:135、:147、:157)、hearing-guide.md (組み直し後の全体)、assets/data/hearing-catalog.json、scripts/lib/hearing-catalog.mjs、workflow-manifest.json、document-structure.md の記入先の表、お手本の ヒアリング.md と 仕様書.md。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。rubric 投影: 構造の観点: ## Gotchas は :149 にある。ファイル全体で 162 行で 300 行以下。frontmatter の変更は reference_refs に 1 行足したことと criteria の文で、criteria の id はそろっている。validate-frontmatter.py と lint-skill-description.py は exit 0。意味の観点の high は 0 で、(e) の「rubric の high が 0」を満たす。指摘は elegance 投影と同じものを載せた。判定: PASS。high は 0。前回の low 4 件のうち 3 件 (hearing-guide.md の B7、B9 と B11、document-structure.md とお手本の仕様書の写し) は解消した。残る 1 件 (お手本の H19・H34 の出どころ) は持ち越し・未解決 (findings_summary の inconsistency 1)。新しい指摘は無い。お手本の問いの文が今の catalog と違うことは、hearing-guide.md:110 (過去資料の質問文は当時の記録として残す) で決まっているので、指摘にしない。next_action は none。"
+}

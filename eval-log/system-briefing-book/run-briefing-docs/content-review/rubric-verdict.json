@@ -1,0 +1,50 @@
+{
+  "target": {
+    "plugin": "system-briefing-book",
+    "skill": "run-briefing-docs",
+    "skill_md_sha256": "b511ff269786710f355c12c9adca96327502ad351203078b70383a48829b2b3a"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 2,
+    "dependency_break": 3,
+    "smell": 1
+  },
+  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)の rubric 投影",
+  "reviewed_at": "2026-10-02T13:56:38Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      ":121 の書き換えで、前回の low「迷ったら書かないほうを選ぶ」が解消した (重複は参照にまとめ、必須の業務・安全・運用の条件を件数だけで外さない、と書いた)。:186 の Gotcha と quality-rules.md:93 も同じ向きになった。",
+      ":124 が指す document-structure.md の「業務回答から仕様へ変換する契約」と「実装へ渡す情報の記入先」は実在する。answers の手順 2・3 (:162-163) は、業務条件だけ答えが出て方式が決まらないときに Q を閉じない形になり、OUT2 (未確定の案・元H・確認先Q を見分けられる) と合う。",
+      "お手本の写しで --stage all が exit 0 (error 0、warn 0)。お手本の仕様書.md の 6 章 稼働構成 (:254) と 7.2 監視と復旧 (:267) に H30・H31・H35・H36 が写っている。test_validate_briefing_docs.py を含むテストが通った。"
+    ],
+    "negative_feedback": [
+      "[low / 食い違い。今回の差分で目立つようになった] FIRST-VERSION-MANY のメッセージ (validate-briefing-docs.mjs:695-696 の「${limit} 個までに絞り、残りは「あとで」に回します」) が、新しい方針と逆に読める。新しい方針は、:121 の「必須の業務・安全・運用の条件を件数だけで外さない」、:186、quality-rules.md:93 の「必須の業務・安全・運用は残し、保留の理由を報告する」、IN1 の「件数の警告は…判断材料として報告する」。warn なので exit は変わらない (validate-briefing-docs.mjs:1477)。本文と quality-rules.md が正しい扱いを書いているので low。直し方: メッセージを「重複をまとめ、優先順位を見直します。必須の業務・安全・運用は残し、保留の理由を報告します」に合わせる。",
+      "[low / 依存関係。今回の差分] IN1 は verify_by が script で、「3.1 と6章の最初の版の項目が対応し」を含む。しかし validate には、3.1 と 6 章を照らす検査が無い。counts の first_version_items (:690) と features_first (:734) を出すだけ。今は counts を比べるか、レビューで見て代わりにするしかない。直し方: validate で 3.1 の件数と 6 章の「最初の版」の数のずれを warn にする。または、IN1 のその部分を evaluator で見る基準に移す。",
+      "[low / 依存関係。今回の差分] :124 は assets/data/hearing-catalog.json を名前で指すが、frontmatter の reference_refs (:24-29) に無く、リンクにもなっていない。resource-map.yaml の hearing-catalog の consumed_by には run-briefing-docs が入っている。直し方: reference_refs に ../../assets/data/hearing-catalog.json を足し、:124 をリンクにする。",
+      "[low / 漏れ。今回の差分] :146 の「元Hの未定記録が不足する場合はhearing担当へ返す」には受け手が無い。このスキルのほかの所は「呼び出し元へ返す」と書き、run-briefing の工程2・3 と確認点 (run-briefing/SKILL.md:165-172・:196-220) にも、この返事を受ける手順は無い。確認点の followup で H を足す流れで代わりにできるので low。直し方: 「呼び出し元へ返す (run-briefing が確認点で run-briefing-hearing の followup に渡す)」と書く。",
+      "[low / 書き方。持ち越し・未解決] Post-choice の節 (:81-83) の、主語の無い「独立レビューとその指摘に基づく改善を行う」。",
+      "[low / 食い違い。持ち越し・未解決] :180「呼び出し元はこれを run-briefing-hearing の followup に渡す」が、:146 (ボードを組む途中で頼まれてその Q だけを足す) と、run-briefing/SKILL.md:182 (確認点は過ぎているので、その Q は打ち合わせで聞く) と食い違ったまま (前回は :178)。",
+      "[low / 漏れ。持ち越し・未解決] :197 の Additional Resources が execution-contract.md を「スクリプトの終了コード (exit 2・3)」としか示さず、本文 :79 と :90 での使い方を示さない (前回は :195)。",
+      "[low / 依存関係。持ち越し・未解決] run-briefing/SKILL.md:183 が仕様書の足りない章を書き足すよう頼むが、spec モードの部分の頼み (:143 の「ボード:」行、:146 の Q) に、その頼みが並んでいない。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 2,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-goal-seek-v1、iteration 1) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (b511ff269786710f355c12c9adca96327502ad351203078b70383a48829b2b3a)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (IN1 と OUT2 の文、:121・:124、spec の手順 :145-146、answers の手順 :162-163、報告 :179、Gotchas :186)、writing-patterns.md の差分、document-structure.md の「業務回答から仕様へ変換する契約」と「実装へ渡す情報の記入先」、quality-rules.md の表、validate-briefing-docs.mjs の 3.1 と件数の検査 (:687-697・:734)、resource-map.yaml の hearing-catalog のエントリ。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。rubric 投影: 構造の観点: ## Gotchas は :184 にある。ファイル全体で 197 行で 300 行以下。frontmatter の変更は IN1 と OUT2 の文で、criteria の id はそろっている。validate-frontmatter.py と lint-skill-description.py は exit 0。意味の観点の high は 0 で、(e) の「rubric の high が 0」を満たす。指摘は elegance 投影と同じものを載せた。判定: PASS。high は 0。前回の low 1 件 (:121 の「迷ったら書かないほう」) は解消した。新しい指摘は low 4 (FIRST-VERSION-MANY のメッセージ、IN1 の 3.1 と 6 章の対応を見る検査が無い、:124 の hearing-catalog.json が reference_refs に無い、:146 の「hearing担当へ返す」の受け手が無い)。前回の low 4 件 (Post-choice の主語、:180 の followup、:197、部分の頼み) は今回の差分と関係なく、持ち越し・未解決 (findings_summary の inconsistency 2 は FIRST-VERSION-MANY と :180、dependency_break 3 は IN1・:124・部分の頼み、omission 2 は :146 と :197、smell 1 は Post-choice)。next_action は none。"
+}

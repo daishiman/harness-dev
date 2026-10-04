@@ -427,4 +427,13 @@ def valid_plugin_meta(distributable: bool = False) -> dict:
             },
             "portability": "vendored" if distributable else "repo-bundled",
         },
+        # Claude/Codex 両 platform への install 契約 (core)。opt-out 無しの既定形。
+        "install": {
+            "platforms": ["claude", "codex"],
+            "codex_manifest": ".codex-plugin/plugin.json",
+            "registries": ["harness-local", "codex-repo"],
+            "strict_validate": True,
+            "release": "changelog-then-bump",
+            "verify": {"isolated": True, "live": True},
+        },
     }

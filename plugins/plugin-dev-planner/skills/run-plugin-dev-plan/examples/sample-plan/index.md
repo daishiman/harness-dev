@@ -36,6 +36,15 @@ plugin_meta:
       schema_ref: doc/notion-schema/improvement-request.schema.json
       resolution: notion_config
     portability: vendored
+  install:
+    platforms: [claude, codex]
+    codex_manifest: .codex-plugin/plugin.json
+    registries: [harness-local, codex-repo]
+    strict_validate: true
+    release: changelog-then-bump
+    verify:
+      isolated: true
+      live: true
   harness_eval:
     evals_json: EVALS.json
     mechanical: required
@@ -74,6 +83,7 @@ plugin_meta:
   | harness/eval | required | `EVALS.json` + `plugin_meta.harness_eval` |
   | references/config/assets | required | `plugin_meta.ssot_dedup` |
   | notion_config | required | inventory `plugin_level_surfaces.notion_config` (DB キーのみ宣言・ID は設置先 `.notion-config.json` 供給) + `plugin_meta.feedback_deploy.notion_sink` |
+  | install (Claude/Codex) | required | `plugin_meta.install` (`.codex-plugin/plugin.json` 投影・harness-local/codex-repo 登録・strict 検証・隔離/実環境 install) |
   | MCP/app connector | omitted | component inventory の omitted_reason |
 
 ## 環境ポリシー
@@ -120,5 +130,6 @@ plugin_meta:
 | 過去分が取りこぼしなく移行される | 初期一括投入後に台帳全件が Notion に存在 | backfill skill (C03) の OUT criterion |
 | 発行漏れが網羅的に検出される | 既知の発行漏れを注入し reconcile が全件検出 | reconcile skill (C02) の OUT criterion |
 | 破壊的操作で消えない | guard hook が物理削除を fail-closed で阻む | guard hook (C11) |
+| Claude Code と Codex の両方で使える | `install-local-plugins.py` を隔離環境で回して両 platform が verified=true、続けて `--plugin notion-task-sync` で手元の Claude/Codex へ入れ、skill 一覧に出る | `plugin_meta.install.verify` |
 
 build 後、各 component の `feedback_contract.criteria` が criteria-test として実行され、上表の受入が PASS して初めて「purpose を満たすプラグインが出来た」と確定する。`EVALS.json` の `llm_eval` はこの受入が評価系に配線されていることを宣言する。
