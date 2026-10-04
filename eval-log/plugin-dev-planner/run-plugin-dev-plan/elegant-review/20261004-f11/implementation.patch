@@ -1,0 +1,1026 @@
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md
+@@ -155,7 +155,7 @@
+ 
+ # run-plugin-dev-plan
+ 
+-> **配布注記**: 本 skill の cross-skill `reference_refs` (`../../../harness-creator/...goal-seek-paradigm.md`) は repo-bundled 前提。plugin-dev-planner は `distributable:false` フラグで marketplace/bundles へ登録しない (`scripts/validate-plugin-completeness.py` が distributable:false プラグインの非登録を機械強制)。加えて plugin-dev-planner は `NEVER_DISTRIBUTE` denylist (`validate-plugin-completeness.py`) にも登録済みで、フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する二重ロック。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。また standalone 配布時は repo 側の schema parity テスト網 (upstream 突合) が skip され drift を検知しないため、repo-bundled 運用を既定とする。
++> **配布注記**: 本 skill の cross-skill `reference_refs` (`../../../harness-creator/...goal-seek-paradigm.md`) は repo-bundled 前提。plugin-dev-planner は `distributable:false` フラグで公開 marketplace/bundles へ登録しない (`scripts/validate-plugin-completeness.py` が公開側の非登録を機械強制)。ローカルの `harness-local` / `codex-repo` catalog には登録し、両製品へ install できる。加えて plugin-dev-planner は `NEVER_DISTRIBUTE` denylist (`validate-plugin-completeness.py`) にも登録済みで、フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する二重ロック。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。また standalone 配布時は repo 側の schema parity テスト網 (upstream 突合) が skip され drift を検知しないため、repo-bundled 運用を既定とする。
+ 
+ ## Purpose & Output Contract
+ 
+@@ -198,7 +198,7 @@
+ 1. **目的ドリブン (単語置換でない)**: UBM 機能開発固有物 (IPC/Cloudflare/スクショ/PR) のみ除外し、harness-creator ネイティブ規律 (TDD/評価/goal-seek/feedback-contract) は漏れなく後段へ伝播する。**DROP 列挙の正本は `references/phase-lifecycle.md` §7 読替表**、目的ドリブン精神の正本は `references/purpose-driven-requirements.md`。
+ 2. **5 種の component_kind × N 実体を inventory へ分解 (skill 偏重を解消)**: 各 buildable 実体を skill/sub-agent/slash-command/hook/script の 5 種のいずれかへ写像し `component-inventory.json` の `components[]` に `component_kind` 宣言 + kind 別構造キーで載せる。**同一 kind の複数実体 (skill 複数・agent 複数 等) はそれぞれ独立 component** にする (1 実体 = 1 component = 1 build_target の shadow-tree 同型)。加えて plugin-level surface として harness/eval、plugin manifest、plugin-composition、references/config/assets の要否を index の `plugin_meta` と inventory の `plugin_level_surfaces` に記録する。buildable 実体数 N は対象プラグインが持つ実体の数に依存して変動し (13 フェーズ数とは独立)、実プラグインでは自然に 10 実体超になる。正本 `references/component-domain.md` / `references/io-contract.md`。
+ 3. **2 軸を二重に持たない (正規化)**: ライフサイクル軸=13 phase ファイル (人間向け・上から順に読める)、成果物実体軸=`component-inventory.json` (機械 SSOT・build routing/DAG/品質機構)。build_target/depends_on は inventory のみが持ち、phase ファイルは再記述せず `entities_covered: [C01, ...]` の id 参照だけで component に紐づく。plugin 階層の横断規律は `index.md` の `plugin_meta` に集約する。
+-4. **plugin-creator 物理契約を index に集約**: `.claude-plugin/plugin.json`、manifest name と folder name の一致、TODO placeholder 禁止、personal marketplace default、policy.installation/authentication/category、update cachebuster、`validate-plugin-completeness.py` 実行を `plugin_meta` に焼く。正本 `references/plugin-creator-contract.md`。
++4. **plugin-creator 物理契約を index に集約**: `.claude-plugin/plugin.json`、manifest name と folder name の一致、TODO placeholder 禁止、personal marketplace default、policy.installation/authentication/category、update cachebuster、`validate-plugin-completeness.py` 実行を `plugin_meta` に焼く。正本 `references/plugin-creator-contract.md`。新規・改善とも `plugin_meta.install` は `specfm.default_install_contract()` を既定とし、両製品の manifest/catalog を維持する。理由付き Codex 除外は実導入対象 (`platforms`) のみで、P13 の installer argv に `--platform both` または `--platform claude` を伝える。P13 の義務は `specfm.install_release_obligations()` から導出する。fixed13 は P13 チェックリスト、task-graph-derived は P13 direct-task の `acceptance_criterion` へ条項を焼き、`check-spec-gates.py` が既存 `derive()` の実行 leaf と保存済み graph の両方を突合する。
+ 5. **評価基準を inventory component エントリへ operationalize**: 全 buildable component が core 規律 `quality_gates`(p0_lint(kind別)/build_trace/elegant_review C1-C4/content_review verdict/evaluator≥80,high0) + `harness_coverage`(block: min≥80/kind_pass) を携帯し `check-spec-gates.py` が inventory を走査して機械検証する。参照ポインタでなく具体キーへ焼く。条件付き規律 (feedback_contract criteria/goal_seek/prompt_layer/knowledge_loop/combinators) は kind/feature でゲート、plugin 階層規律 (manifest/marketplace/配布/bundles/PKG/governance/CI/SSOT) は index の `plugin_meta` へ焼く。焼き先正本は `references/harness-creator-spec-reflection.md` の 46 行マトリクス (operationalize 状況は `check-spec-matrix-coverage.py` が検査)。**品質ゲートだけでなく成果物評価 (purpose-acceptance) も焼く**: skill loop kind の `feedback_contract.criteria` は当該 component の goal/checklist 由来 (汎用ゲート言い換えへの退化を `check-spec-frontmatter.py` の purpose-traceability が機械検出)、index に「受入確認 (build 後の見方)」章を持たせ build 後に「組み上がった実プラグインが purpose を満たすか」を確認できる trace を通す (実行は L4・plan は契約として焼くのみ)。正本 `references/io-contract.md` §10「成果物評価の境界」。**quality_gates は「何を証明するか」の claim 集合**であり、実行頻度は consumer (harness-creator) 側 `verification-obligation-protocol.md` の fingerprint 再利用が決めるため、頻度指示 (「毎周回フル再実行」の含意) を plan 本文へ焼かない。
+ 6. **現状数値非焼込**: 「≥80% を満たす設計」を要件化し、harness 現状未達数値は component エントリへ焼かない (Goodhart 回避)。
+ 7. **schema parity**: skill component は `skill-brief.schema.json` 主要 14 フィールド相当へ無加工で写せる粒度にする (`references/io-contract.md`)。
+@@ -369,7 +369,7 @@
+ 
+ - **実プラグインを作らない**: 成果物は計画 (index + 13 phase ファイル + component-inventory.json) のみ。実コード/実プラグイン生成と混同しない (build は `run-skill-create` へ委譲)。
+ - **cwd 前提**: lint・同梱スクリプト起動は repo-root cwd 前提。skill 資産は self-relative / `$CLAUDE_PLUGIN_ROOT` で参照し、具体値を直書きしない。
+-- **symlink 同期**: `.claude/skills/run-plugin-dev-plan` は symlink 派生。build/更新後に `make sync` を忘れると古い版が動く。
++- **native surface 同期**: repository の `.claude/` projection は `sync-native-surfaces.py` が所有する。build/更新後は `make native-surfaces-check` で検査し、drift 時に `make native-surfaces-apply` で `.claude/settings.json` の `enabledPlugins` 完全 identity に一致する scope のみ反映する。user install は `install-local-plugins.py` が別途担う。
+ - **非配布フラグの漂流**: `distributable:false` に加え `validate-plugin-completeness.py` の `NEVER_DISTRIBUTE` denylist へ登録済み (二重ロック)。フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する。配布化する正当な決定時のみ両方を外す。
+ - **scripts 規約**: Python 標準ライブラリのみ (.sh/.js 新規禁止・scripts 内 `yaml` import 禁止)。
+ - **全書き換え禁止**: `--mode update` は Edit 差分のみ。
+@@ -388,7 +388,7 @@
+ | 計画成果物 (index + 13 phase ファイル + inventory) | 既定 **`plugin-plans/<plugin-slug>/`** (repo-root/`$CLAUDE_PROJECT_DIR` 相対・可視/永続の tracked deliverable)。`<plugin-slug>` は R1 が `goal-spec.target_plugin_slug` に固定し全周回で不変。`--out-dir <path>` で上書き。解決の正本 = `specfm.plan_output_dir()` / 規約は `references/io-contract.md` §9。goal-seek transient (progress/intermediate) のみ gitignore |
+ | goal-seek 作業領域 | `<PLAN_DIR>/goal-spec.json` / `<PLAN_DIR>/run-plugin-dev-plan-{progress.json,intermediate.jsonl}` / `<PLAN_DIR>/handoff-run-plugin-dev-plan.json` / `<PLAN_DIR>/plan-findings.json`。plugin ごとに同一ディレクトリへ閉じ込め、global `eval-log/` 直下へ散らさない |
+ 
+-`.claude/skills/run-plugin-dev-plan` は symlink 派生。build/更新後は `make sync` で `.claude/` へ展開する。
++repository の discovery surface は `sync-native-surfaces.py` が activation scope に従って投影する。build/更新後は `make native-surfaces-check`、drift 時のみ `make native-surfaces-apply` を使う。未有効化 plugin を無条件に `.claude/` へ展開しない。
+ 
+ ## 追加リソース
+ 
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/io-contract.md
+@@ -194,9 +194,9 @@
+       resolution: notion_config  # B4 解決器の名前参照 (実体 plugins/harness-creator/scripts/notion_config.py)
+     portability: repo-bundled  # repo-bundled | vendored。distributable:true → vendored 強制
+   install:                   # Claude Code / Codex 両 platform への install 契約・コア(常に必須)
+-    platforms: [claude, codex]                 # claude は除外不可。codex を外すなら excluded_platforms: {codex: <理由>}
+-    codex_manifest: .codex-plugin/plugin.json  # sync-plugin-platforms.py が .claude-plugin から投影 (手書きしない)
+-    registries: [harness-local, codex-repo]    # platform ごとの install 経路。公開 marketplace は distribution.marketplace
++    platforms: [claude, codex]                 # 実導入対象。claude は必須、codex を外すなら excluded_platforms: {codex: <理由>}
++    codex_manifest: .codex-plugin/plugin.json  # 常時必須。sync-plugin-platforms.py が投影 (手書きしない)
++    registries: [harness-local, codex-repo]    # 両登録先を常時維持。公開 marketplace は distribution.marketplace
+     strict_validate: true                      # claude plugin validate --strict (hook command の plugin root はクォート)
+     release: changelog-then-bump               # CHANGELOG 先行 → build-plugin-release.py --only <slug> → --check drift 0
+     verify: {isolated: true, live: true}       # install-local-plugins.py の receipt verified=true。live:false は live_skip_reason 必須
+@@ -206,7 +206,7 @@
+   # 空 dict / 欠落は不可 (省略は必ず根拠付き明示=plugin_level_surfaces.<surface>.omitted_reason 原則と同型)。
+ ```
+ 
+-`check-spec-gates.py` が plugin_meta を**値域検証**する (存在チェックでない): `manifest.path` は `.claude-plugin/plugin.json`、`manifest.validate_plugin` は true。`marketplace.policy.installation` は `NOT_AVAILABLE` / `AVAILABLE` / `INSTALLED_BY_DEFAULT`、`marketplace.policy.authentication` は `ON_INSTALL` / `ON_USE`、`category` は非空。`distributable` は bool 必須。`distributable:false` なら `bundles` は空 (=非登録を明示) かつ `marketplace` は false/不在 (非配布整合)。`distributable:true` なら `bundles` に最低 1 件。**コア** `manifest`/`marketplace`/`ci`/`feedback_deploy`/`install` は常に非空 dict (正本 `specfm.PLUGIN_META_CORE_DICTS`)。`install` は `platforms` が claude を含み、含まない platform は `excluded_platforms.<platform>` に理由を要する。codex を含むなら `codex_manifest==.codex-plugin/plugin.json`、各 platform の登録先 (claude→`harness-local` / codex→`codex-repo`) が `registries` に在ること、`strict_validate:true`、`release==changelog-then-bump`、`verify.isolated:true`、`verify.live` は bool で false なら `live_skip_reason` 非空 (値域の正本 `specfm.INSTALL_*`)。`feedback_deploy` は enabled:true なら `notion_sink` 値域 (config_key 非空 / schema_ref パス / resolution==`notion_config`) + `portability`∈{repo-bundled, vendored} を検証し、**`distributable:true` → `portability==vendored` を強制**、opt-out は `{enabled: false, reason: <非空>}` のみ許す。**条件付き** `pkg_contract`/`governance`/`ssot_dedup` は非空 dict だが、該当しない構想では `{applicable: false, reason: <非空>}` で明示 N/A 可 (reason 空はエラー)。matrix-coverage は焼き先スロットの addressed (空コンテナ・`{applicable:false}` 含む)、gates は値域、と責務分離する。
++`check-spec-gates.py` が plugin_meta を**値域検証**する (存在チェックでない): `manifest.path` は `.claude-plugin/plugin.json`、`manifest.validate_plugin` は true。`marketplace.policy.installation` は `NOT_AVAILABLE` / `AVAILABLE` / `INSTALLED_BY_DEFAULT`、`marketplace.policy.authentication` は `ON_INSTALL` / `ON_USE`、`category` は非空。`distributable` は bool 必須。`distributable:false` なら `bundles` は空 (=非登録を明示) かつ `marketplace` は false/不在 (公開側の非配布整合。local catalog は維持)。`distributable:true` なら `bundles` に最低 1 件。**コア** `manifest`/`marketplace`/`ci`/`feedback_deploy`/`install` は常に非空 dict (正本 `specfm.PLUGIN_META_CORE_DICTS`)。`install` は `platforms` が claude を含み、含まない platform は `excluded_platforms.<platform>` に理由を要する。実導入対象から codex を除いても `codex_manifest==.codex-plugin/plugin.json` と両登録先 (`harness-local` / `codex-repo`) は常時必須で、`strict_validate:true`、`release==changelog-then-bump`、`verify.isolated:true`、`verify.live` は bool で false なら `live_skip_reason` 非空 (値域の正本 `specfm.INSTALL_*`、既定値の生成元 `specfm.default_install_contract()`)。`platforms` は実導入の対象だけを表し、P13 の installer argv は両製品なら `--platform both`、Codex 除外時は `--platform claude` を明示する。P13 の必須義務は `specfm.install_release_obligations(install, plugin_slug)` から導出する。fixed13 は P13 チェックリスト、task-graph-derived は P13 direct-task の `acceptance_criterion` へ原文条項を焼く。`check-spec-gates.py` は既存 producer の `derive()` が生成する P13 実行 leaf と保存済み graph の両方を index 宣言と突合し、欠落・古い条項を検出する。P13 policy 本文への記載だけでは実行 leaf への到達を満たさない。`feedback_deploy` は enabled:true なら `notion_sink` 値域 (config_key 非空 / schema_ref パス / resolution==`notion_config`) + `portability`∈{repo-bundled, vendored} を検証し、**`distributable:true` → `portability==vendored` を強制**、opt-out は `{enabled: false, reason: <非空>}` のみ許す。**条件付き** `pkg_contract`/`governance`/`ssot_dedup` は非空 dict だが、該当しない構想では `{applicable: false, reason: <非空>}` で明示 N/A 可 (reason 空はエラー)。matrix-coverage は焼き先スロットの addressed (空コンテナ・`{applicable:false}` 含む)、gates は値域、と責務分離する。
+ 
+ ### plugin-level surface: notion_config (per-project Notion DB の解決宣言・B4/B5)
+ 
+@@ -251,7 +251,7 @@
+ 計画が焼く plugin-root 資産 (schema / references / scripts / vendor) を巡る 2 つの問いへの回答を成文化する。
+ 
+ **(1) plugin-root の schema/references/scripts/vendor を `.claude/` へ反映する必要は無い (正しい)。**
+-`.claude/` は discovery surface (agents/skills/commands の 3 kind) 専用で、`build-claude-symlinks.py` が唯一の SSOT (`VALID_KINDS` 3 種) として展開する。runtime asset (schema/references/scripts/vendor) は install 時に **plugin dir 全体がコピー**され、実行時は `$CLAUDE_PLUGIN_ROOT` / self-relative で plugin 内解決されるため、`.claude/` への別途反映は不要。全反映は二重管理 / drift / 絶対パス混入で有害 (反映すべきは discovery surface のみ)。
++`.claude/{agents,skills,commands}` は discovery surface の projection で、owner は `plugins/harness-creator/scripts/sync-native-surfaces.py`。`build-claude-symlinks.py` はその adapter として呼び出される。`make native-surfaces-check` で検査し、drift 時のみ `make native-surfaces-apply` を使う。`.claude/settings.json` の `enabledPlugins` と repository marketplace の完全 identity が一致する scope だけを反映し、低位 generator を直接呼んで全 plugin を展開しない。runtime asset (schema/references/scripts/vendor) は plugin 内に保持し、Claude install は plugin dir をコピー、Codex local install は `live-source` を読む。実行時は host が与える skill path から runtime root を解決する (`ref-cross-platform-runtime` の共通契約)。`.claude/` に runtime asset を重ねて配置する必要は無い。
+ 
+ **(2) 「install→plugin-root 資産まで実行できる」担保は 3 点で行う。**
+ (a) inventory component の `placement_scope` (`skill` | `plugin-root`) で配置境界を宣言する、(b) `check-runtime-portability.py` が「>=2 skill consumer の共有 script は plugin-root 必須」「build_target は plugin 内自己完結 (`plugins/` 始まり・`..` 不在)」を fail-closed 検査する、(c) install-portability 規律 (`harness-creator-spec-reflection.md` の F8) が cross-plugin SSOT は vendoring (byte 一致) または self-derive fail-soft loader で携帯性を担保することを規定する (先行事例 skill-intake / harness-creator)。これにより plugin dir コピー後、第二 consumer 側からも共有 script が dangling せず解決できる。
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md
+@@ -11,7 +11,7 @@
+ # plugin-creator 物理契約 (Claude Code / Codex)
+ 
+ `run-plugin-dev-plan` は計画成果物のみを作るが、各計画は最終 build と `run-skill-create` /
+-`validate-plugin-completeness.py` が満たすべき **Claude Code プラグインの物理契約** を携帯する必要がある。
++`validate-plugin-completeness.py` が満たすべき **Claude Code / Codex プラグインの物理契約** を携帯する必要がある。
+ 
+ > 注: manifest の正本は **Claude Code** 規約 (`.claude-plugin/plugin.json`)。Codex 側の
+ > `.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` は手書きせず、
+@@ -34,31 +34,45 @@
+ 
+ | 契約 | 要件 |
+ |---|---|
+-| marketplace 正本 | repo ルートの `.claude-plugin/marketplace.json` (`plugins[]`)。個人/チーム共有はこの 1 経路 |
++| 公開 marketplace 正本 | repo ルートの `.claude-plugin/marketplace.json` (`plugins[]`)。公開配布の判定を保持する。非配布を含む local install は下記の両製品 catalog が担う |
+ | bundles | `.claude-plugin/bundles.json` (`harness-full` 等)。cross-plugin 一括 install は `install-bundle` が担う |
+ | source path | marketplace エントリは `./plugins/<plugin-name>` を指す |
+ | 必須 policy | 各エントリは `policy.installation` / `policy.authentication` / `category` を持つ |
+ | 既定 policy | `installation: AVAILABLE`、`authentication: ON_INSTALL` |
+ | 並び順 | 明示要求が無ければ追記(append-only)。並べ替えない |
+ | update flow | 既存 plugin の更新は cachebuster flow を使い、marketplace 手編集をしない |
+-| 非配布 | `distributable:false` は marketplace/bundles 非登録で実体保持。harness-creator/prompt-creator は `NEVER_DISTRIBUTE` denylist で二重ロック |
++| 非配布 | `distributable:false` は公開 marketplace/bundles 非登録で実体保持。`validate-plugin-completeness.py` の `NEVER_DISTRIBUTE` denylist が二重ロックする。local catalog への登録・install は継続する |
+ 
+ ## install 契約 (Claude Code / Codex)
+ 
+-plugin を作っても install されなければ使えない。harness の install 経路は 3 つあり、どれも新規 plugin を
+-自動では入れない: Claude の `harness-local` marketplace は `autoUpdate` で**導入済み** plugin の版しか上げず、
+-定期同期ジョブは main かつ clean な clone でしか全件 install を回さない。よって計画は install を build 側の
+-完了条件として携帯する。実装は既存スクリプトの名前参照のみで、planner で再実装しない。
++plugin を作っても install されなければ使えない。Claude の marketplace `autoUpdate` は
++導入済み plugin の版を更新する機能で、新規 plugin の導入を保証しない。よって計画は
++install を build 側の完了条件として携帯する。実装は既存スクリプトの名前参照のみで、
++planner で再実装しない。
+ 
+ | 契約 | 要件 | 実体 |
+ |---|---|---|
+-| platforms | 既定は `[claude, codex]`。claude は manifest 正本ゆえ除外不可。codex を外すときだけ `excluded_platforms.codex` に理由 | — |
+-| Codex manifest | `.codex-plugin/plugin.json` を正本から投影する (手書きしない・Codex 固有値は `.codex-plugin-overrides.json`) | `sync-plugin-platforms.py --plugin plugins/<slug> --apply` / `--all --check` |
+-| 登録先 | claude → `harness-local` (`marketplaces/local/.claude-plugin/marketplace.json`。非配布 plugin を含む全 plugin の install 経路)、codex → `codex-repo` (`.agents/plugins/marketplace.json`)。公開 marketplace は `distribution.marketplace` が担う | `build-local-marketplace.py --check` / `sync-plugin-platforms.py --all --check` |
++| platforms | 実導入対象の既定は `[claude, codex]`。claude は必須。codex を外すときだけ `excluded_platforms.codex` に理由。除外しても両 manifest/catalog は維持する | `specfm.default_install_contract()` |
++| Codex manifest | 実導入対象にかかわらず `.codex-plugin/plugin.json` を正本から投影する (手書きしない・Codex 固有値は `.codex-plugin-overrides.json`) | `sync-plugin-platforms.py --repo-root <repo> --plugin <repo>/plugins/<slug> --apply` / `--repo-root <repo> --all --check` |
++| 登録先 | 両登録先を常時維持する。claude → `harness-local` (`marketplaces/local/.claude-plugin/marketplace.json`。非配布 plugin を含む全 plugin の install 経路)、codex → `codex-repo` (`.agents/plugins/marketplace.json`)。公開 marketplace は `distribution.marketplace` が担う | `build-local-marketplace.py --check` / `sync-plugin-platforms.py --repo-root <repo> --all --check` |
+ | strict 検証 | `claude plugin validate --strict` を通す。hook command の plugin root は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/x.py"` とクォートする (未クォートの `${CLAUDE_PLUGIN_ROOT}` は strict で落ち、installer は最初の失敗で全件を止める) | `run-plugin-validate-strict.sh` (PKG-001) |
+ | release 順序 | CHANGELOG を先に書き、`build-plugin-release.py --only <slug>` で bump、`--check` が drift 0 (CHANGELOG は fingerprint に入るので後から書くと二重 bump になる) | `scripts/build-plugin-release.py` |
+-| 隔離 install | `install-local-plugins.py --plugin <slug> --claude-config-dir <tmp> --codex-home <tmp>` の receipt が両 platform で `verified=true`。手元の設定を汚さないので opt-out 不可 | `plugins/harness-creator/scripts/install-local-plugins.py` |
+-| 実環境 install | `install-local-plugins.py --plugin <slug>` で手元の Claude Code (user scope) と Codex へ入れ、receipt が `verified=true`。省くときだけ `verify.live:false` + `live_skip_reason` | 同上 |
++| 隔離 install | `install-local-plugins.py --plugin <slug> --platform <both\|claude> --claude-config-dir <tmp> --codex-home <tmp>` の receipt が選択 platform で `verified=true`。手元の設定を汚さないので opt-out 不可 | `plugins/harness-creator/scripts/install-local-plugins.py` |
++| 実環境 install | `install-local-plugins.py --plugin <slug> --platform <both\|claude>` で選択製品の user 領域へ入れ、receipt が `verified=true`。省くときだけ `verify.live:false` + `live_skip_reason` | 同上 |
++
++新規・改善とも同じ既定契約を使う。`--platform` は `[claude, codex]` なら `both`、
++`[claude]` なら `claude` に解決し、隔離・実環境の両コマンドへ渡す。
++P13 の義務は `specfm.install_release_obligations(install, plugin_slug)` を正本として生成し、
++返る各条項を、fixed13 では P13 の完了チェックリスト、task-graph-derived では
++P13 direct-task の `acceptance_criterion` へ原文のまま挿入する (固有項目の追加は可)。
++`render-spec-skeleton.py --phase 13 --plugin-slug <slug>` で生成でき、opt-out 時は
++index と同じ install オブジェクトの JSON を `--install-contract <path>` へ渡す。
++`check-spec-gates.py` は既存 producer の `derive()` から得た P13 実行 leaf と保存済み graph
++の両方を index 宣言と突合する。P13 policy 本文への記載だけでは合格しない。
++計画の宣言と実行は別責務であり、
++両製品への local user install は既存の依頼・承認範囲で共通 helper
++`install-local-plugins.py` が実行する。`run-codex-plugin-install` はその案内・実行入口で、
++Codex 単独の local/Git 導入は `install-codex-plugin.py` に委譲する。
+ 
+ ## 計画への含意 (index.plugin_meta)
+ 
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_specfm.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_specfm.py
+@@ -557,3 +557,35 @@
+     comp = _skill_component(specfm_mod)
+     del comp["feedback_contract"]
+     assert any("criteria 必須" in e for e in specfm_mod.validate_inventory_component(comp))
++
++
++def test_install_defaults_derive_from_constants_and_are_fresh(specfm_mod):
++    first = specfm_mod.default_install_contract()
++    second = specfm_mod.default_install_contract()
++    assert first["platforms"] == list(specfm_mod.INSTALL_PLATFORMS)
++    assert first["registries"] == [specfm_mod.INSTALL_REGISTRY_BY_PLATFORM[p] for p in specfm_mod.INSTALL_PLATFORMS]
++    assert first["codex_manifest"] == specfm_mod.INSTALL_CODEX_MANIFEST
++    assert first["release"] == specfm_mod.INSTALL_RELEASE_ORDER
++    rendered = specfm_mod.parse_frontmatter(specfm_mod.render_minimal_index())
++    assert rendered["plugin_meta"]["install"] == second
++    first["platforms"].clear()
++    first["verify"]["live"] = False
++    assert second["platforms"] and second["verify"]["live"] is True
++
++
++def test_p13_skeleton_cli_propagates_opt_out(tmp_path, skeleton, specfm_mod, capsys):
++    import json
++    inst = specfm_mod.default_install_contract()
++    inst["platforms"] = ["claude"]
++    inst["excluded_platforms"] = {"codex": "runtime not needed"}
++    inst["verify"] = {"isolated": True, "live": False, "live_skip_reason": "CI"}
++    contract = tmp_path / "install.json"
++    contract.write_text(json.dumps(inst), encoding="utf-8")
++    assert skeleton.main(["--phase", "13", "--plugin-slug", "demo", "--install-contract", str(contract)]) == 0
++    text = capsys.readouterr().out
++    for clause in specfm_mod.install_release_obligations(inst, "demo").values():
++        assert "- [ ] " + clause in text
++    assert "--platform claude" in text and "--platform both" not in text
++    del inst["verify"]["live_skip_reason"]
++    contract.write_text(json.dumps(inst), encoding="utf-8")
++    assert skeleton.main(["--phase", "13", "--install-contract", str(contract)]) == 2
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_spec_gates.py
+@@ -5,13 +5,31 @@
+ """
+ from __future__ import annotations
+ 
++import json
++
++import pytest
++
+ from conftest import (
++    SPECFM,
+     component_entry,
+     write_inventory,
+-    write_phase_index,
++    write_phase_index as _write_phase_index,
+     valid_quality_gates,
+     valid_plugin_meta,
+ )
++
++
++
++def write_phase_index(directory, **kwargs):
++    index = _write_phase_index(directory, **kwargs)
++    if kwargs.get("plugin_meta"):
++        (directory / "phase-13-release.md").write_text(
++            SPECFM.render_minimal_phase(13, plugin_slug="test-plugin"), encoding="utf-8"
++        )
++        (directory / "handoff-run-plugin-dev-plan.json").write_text(
++            json.dumps({"target_plugin_slug": "test-plugin", "mode": "create"}), encoding="utf-8"
++        )
++    return index
+ 
+ 
+ def _inv_errs(tmp_path, gates, comp) -> list[str]:
+@@ -240,10 +258,9 @@
+ 
+ 
+ def test_install_codex_excluded_with_reason_ok(gates):
+-    """codex 除外は excluded_platforms に理由を書いたときだけ許す (codex 用の登録先も要求しない)。"""
++    """runtime Codex除外には理由を要求し、両製品package/catalogは維持する。"""
+     pm = valid_plugin_meta()
+     pm["install"]["platforms"] = ["claude"]
+-    pm["install"]["registries"] = ["harness-local"]
+     pm["install"]["excluded_platforms"] = {"codex": "Claude 専用 hook event だけで成り立つため"}
+     assert gates.check_plugin_meta(pm) == []
+ 
+@@ -408,3 +425,122 @@
+     )
+     assert gates.main(["--specs-dir", str(tmp_path)]) == 1
+     assert "bundles 非空" in capsys.readouterr().err
++
++
++@pytest.mark.parametrize("mode", ["create", "update"])
++def test_install_release_contract_reaches_p13(tmp_path, gates, mode):
++    write_phase_index(tmp_path, plugin_meta=True)
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(
++        json.dumps({"target_plugin_slug": "test-plugin", "mode": mode}), encoding="utf-8"
++    )
++    assert gates.main(["--specs-dir", str(tmp_path)]) == 0
++    (tmp_path / "phase-13-release.md").unlink()
++    assert gates.main(["--specs-dir", str(tmp_path)]) == 1
++
++
++@pytest.mark.parametrize("obligation", ["release", "registries", "strict_validate", "isolated", "live"])
++def test_install_release_each_missing_clause_fails(tmp_path, gates, obligation):
++    write_phase_index(tmp_path, plugin_meta=True)
++    inst = SPECFM.default_install_contract()
++    phase = tmp_path / "phase-13-release.md"
++    clause = SPECFM.install_release_obligations(inst, "test-plugin")[obligation]
++    phase.write_text(phase.read_text().replace("- [ ] " + clause, ""), encoding="utf-8")
++    errors = gates.check_install_release(tmp_path, inst)
++    assert len(errors) == 1 and f"obligation {obligation}" in errors[0]
++
++
++def test_install_runtime_opt_out_keeps_packages(gates):
++    inst = SPECFM.default_install_contract()
++    inst["platforms"] = ["claude"]
++    inst["excluded_platforms"] = {"codex": "runtime hooks are Claude-only"}
++    assert gates.check_install(inst) == []
++    del inst["codex_manifest"]
++    inst["registries"] = ["harness-local"]
++    errors = gates.check_install(inst)
++    assert any("codex_manifest" in e for e in errors)
++    assert any("codex-repo" in e for e in errors)
++
++
++def test_install_opt_out_changes_actual_p13_commands(tmp_path, gates):
++    write_phase_index(tmp_path, plugin_meta=True)
++    inst = SPECFM.default_install_contract()
++    inst["platforms"] = ["claude"]
++    inst["excluded_platforms"] = {"codex": "runtime not used here"}
++    inst["verify"] = {"isolated": True, "live": False, "live_skip_reason": "CI run"}
++    assert gates.check_install(inst) == []
++    assert gates.check_install_release(tmp_path, inst)  # default both/live clauses cannot satisfy opt-out
++    text = SPECFM.render_minimal_phase(13, plugin_slug="test-plugin", install=inst)
++    (tmp_path / "phase-13-release.md").write_text(text, encoding="utf-8")
++    assert "--platform claude" in text and "--platform both" not in text
++    assert "codex-home" in text  # isolated storage remains explicit
++    assert gates.check_install_release(tmp_path, inst) == []
++    del inst["verify"]["live_skip_reason"]
++    assert gates.check_install(inst)
++
++
++def test_install_clause_outside_p13_checklist_is_not_execution(tmp_path, gates):
++    write_phase_index(tmp_path, plugin_meta=True)
++    phase = tmp_path / "phase-13-release.md"
++    clause = SPECFM.install_release_obligations(SPECFM.default_install_contract(), "test-plugin")["isolated"]
++    phase.write_text(phase.read_text().replace("- [ ] " + clause, "") + "\n- [ ] " + clause, encoding="utf-8")
++    assert any("isolated" in e for e in gates.check_install_release(tmp_path, SPECFM.default_install_contract()))
++
++
++
++def test_install_unknown_shape_fails_closed(tmp_path, gates):
++    index = write_phase_index(tmp_path, plugin_meta=True)
++    index.write_text(index.read_text().replace("id: IDX0", "id: IDX0\nshape_marker: unknown-shape"), encoding="utf-8")
++    assert gates.main(["--specs-dir", str(tmp_path)]) == 1
++    assert any("unknown shape_marker" in e for e in gates.check_install_release(tmp_path, SPECFM.default_install_contract()))
++
++
++@pytest.mark.parametrize("mode", ["create", "update"])
++def test_install_target_shape_requires_actual_task_specs(tmp_path, gates, mode):
++    index = write_phase_index(tmp_path, plugin_meta=True)
++    index.write_text(index.read_text().replace("id: IDX0", "id: IDX0\nshape_marker: task-graph-derived"), encoding="utf-8")
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(
++        json.dumps({"target_plugin_slug": "test-plugin", "mode": mode}), encoding="utf-8"
++    )
++    inst = SPECFM.default_install_contract()
++    assert gates.check_install_release(tmp_path, inst)  # policy P13 alone cannot execute
++    tasks = tmp_path / "task-specs"
++    tasks.mkdir()
++    obligations = SPECFM.install_release_obligations(inst, "test-plugin")
++    for key, clause in obligations.items():
++        fm = {
++            "id": "install-" + key, "title": "verify install " + key,
++            "phase_ref": "P13", "execution_kind": "direct-task",
++            "write_scope": "eval-log/install", "acceptance_criterion": clause,
++            "produces": ["eval-log/install/" + key + ".json"], "depends_on": [],
++        }
++        (tasks / (fm["id"] + ".md")).write_text(
++            "---\n" + "\n".join(SPECFM.yaml_lines(fm)) + "\n---\n# release verification\n", encoding="utf-8"
++        )
++    assert gates.check_install_release(tmp_path, inst) == []
++    (tasks / "install-isolated.md").unlink()
++    assert any("obligation isolated" in e for e in gates.check_install_release(tmp_path, inst))
++
++
++def test_install_stale_handoff_graph_cannot_hide_obligations(tmp_path, gates, derive_task_graph):
++    write_phase_index(tmp_path, plugin_meta=True)
++    inst = SPECFM.default_install_contract()
++    graph = derive_task_graph.derive(tmp_path)
++    target = tmp_path / "consumer-graph.json"
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(json.dumps({
++        "target_plugin_slug": "test-plugin", "task_graph_ref": {"path": target.name}
++    }), encoding="utf-8")
++    target.write_text(json.dumps(graph), encoding="utf-8")
++    assert gates.check_install_release(tmp_path, inst) == []
++    clause = SPECFM.install_release_obligations(inst, "test-plugin")["isolated"]
++    graph["nodes"] = [n for n in graph["nodes"] if n.get("acceptance_criterion") != clause]
++    target.write_text(json.dumps(graph), encoding="utf-8")
++    errors = gates.check_install_release(tmp_path, inst)
++    assert any("task-graph install obligation isolated" in e for e in errors)
++
++
++def test_install_malformed_graph_reference_fails_cleanly(tmp_path, gates):
++    write_phase_index(tmp_path, plugin_meta=True)
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(json.dumps({
++        "target_plugin_slug": "test-plugin", "task_graph_ref": {"path": None}
++    }), encoding="utf-8")
++    assert any("task_graph_ref.path" in e for e in gates.check_install_release(tmp_path, SPECFM.default_install_contract()))
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_minimal_omission_and_roundtrip.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_minimal_omission_and_roundtrip.py
+@@ -15,7 +15,7 @@
+ 
+ import pytest
+ 
+-from conftest import component_entry, write_all_phases, write_inventory, write_phase_index
++from conftest import SPECFM, component_entry, write_all_phases, write_inventory, write_phase_index
+ 
+ _PLAN = Path(__file__).resolve().parent.parent / "examples" / "sample-plan"
+ 
+@@ -25,6 +25,12 @@
+     inventory = write_inventory(tmp_path, [component_entry("C01", "skill", skill_kind="run")])
+     write_all_phases(tmp_path, entities_by_phase={2: ["C01"], 5: ["C01"]})
+     write_phase_index(tmp_path, plugin_meta=True)
++    (tmp_path / "phase-13-release.md").write_text(
++        SPECFM.render_minimal_phase(13, plugin_slug="sample-plugin"), encoding="utf-8"
++    )
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(
++        json.dumps({"target_plugin_slug": "sample-plugin"}), encoding="utf-8"
++    )
+     return tmp_path, inventory
+ 
+ 
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_skeleton_gate_parity.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_skeleton_gate_parity.py
+@@ -18,6 +18,8 @@
+     """render_minimal_index の出力が check-spec-gates を exit0 で通る (plugin_meta 値域=F3 distribution 含む)。"""
+     index = tmp_path / "index.md"
+     index.write_text(specfm_mod.render_minimal_index(plugin_slug="demo"), encoding="utf-8")
++    (tmp_path / "phase-13-release.md").write_text(specfm_mod.render_minimal_phase(13, plugin_slug="demo"), encoding="utf-8")
++    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text('{"target_plugin_slug":"demo"}', encoding="utf-8")
+     assert gates.main([str(index)]) == 0, (
+         "render_minimal_index 出力が check-spec-gates を通らない (生成器↔ゲートの plugin_meta 契約 drift)"
+     )
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/phase-13-release.md
+@@ -41,10 +41,12 @@
+ - [ ] P01-P12 の完了チェックリストが全て満たされている。
+ - [ ] リリースに向けた残タスクが soft note として整理されている (PR 自体はゲート化しない)。
+ - [ ] ドメイン外項目 (IPC/Cloudflare 等) が写像対象外として DROP 記録されている。
+-- [ ] CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` と `build-local-marketplace.py --check` と `sync-plugin-platforms.py --all --check` が drift 0 で通っている (`plugin_meta.install.release` / `registries`)。
+-- [ ] `claude plugin validate --strict plugins/notion-task-sync` が通っている (hook command の plugin root は `"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/..."` とクォートする・`plugin_meta.install.strict_validate`)。
+-- [ ] `install-local-plugins.py --plugin notion-task-sync --claude-config-dir <tmp> --codex-home <tmp>` の receipt が Claude/Codex とも verified=true (`plugin_meta.install.verify.isolated`)。
+-- [ ] `install-local-plugins.py --plugin notion-task-sync` で手元の Claude Code と Codex へ導入し、receipt が verified=true (`plugin_meta.install.verify.live`)。
++
++- [ ] CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` が drift 0 で通っている。
++- [ ] 両製品の package を維持し、`build-local-marketplace.py --check` と `sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。
++- [ ] `claude plugin validate --strict plugins/notion-task-sync` が通っている。
++- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。
++- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both` の実環境 install receipt が指定 platform のすべてで verified=true。
+ 
+ ## 参照情報
+ - `references/phase-lifecycle.md` §7 (DROP 読替表)。
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/task-graph.json (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan/task-graph.json
+@@ -1659,7 +1659,7 @@
+     },
+     {
+       "id": "P13-x-04",
+-      "title": "CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` と `build-local-marketplace.py --check` と `sync-plugin-platforms.py --all --check` が drift 0 で通っている (`plugin_meta.install.release` / `registries`)。",
++      "title": "CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` が drift 0 で通っている。",
+       "phase_ref": "P13",
+       "entity_ref": null,
+       "state": "pending",
+@@ -1667,7 +1667,7 @@
+     },
+     {
+       "id": "P13-x-05",
+-      "title": "`claude plugin validate --strict plugins/notion-task-sync` が通っている (hook command の plugin root は `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` とクォートする・`plugin_meta.install.strict_validate`)。",
++      "title": "両製品の package を維持し、`build-local-marketplace.py --check` と `sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。",
+       "phase_ref": "P13",
+       "entity_ref": null,
+       "state": "pending",
+@@ -1675,7 +1675,7 @@
+     },
+     {
+       "id": "P13-x-06",
+-      "title": "`install-local-plugins.py --plugin notion-task-sync --claude-config-dir <tmp> --codex-home <tmp>` の receipt が Claude/Codex とも verified=true (`plugin_meta.install.verify.isolated`)。",
++      "title": "`claude plugin validate --strict plugins/notion-task-sync` が通っている。",
+       "phase_ref": "P13",
+       "entity_ref": null,
+       "state": "pending",
+@@ -1683,11 +1683,19 @@
+     },
+     {
+       "id": "P13-x-07",
+-      "title": "`install-local-plugins.py --plugin notion-task-sync` で手元の Claude Code と Codex へ導入し、receipt が verified=true (`plugin_meta.install.verify.live`)。",
++      "title": "`install-local-plugins.py --plugin notion-task-sync --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。",
+       "phase_ref": "P13",
+       "entity_ref": null,
+       "state": "pending",
+       "write_scope": "P13-x-07"
++    },
++    {
++      "id": "P13-x-08",
++      "title": "`install-local-plugins.py --plugin notion-task-sync --platform both` の実環境 install receipt が指定 platform のすべてで verified=true。",
++      "phase_ref": "P13",
++      "entity_ref": null,
++      "state": "pending",
++      "write_scope": "P13-x-08"
+     }
+   ],
+   "edges": [
+@@ -12498,6 +12506,11 @@
+     },
+     {
+       "type": "depends_on",
++      "from": "P13",
++      "to": "P13-x-08"
++    },
++    {
++      "type": "depends_on",
+       "from": "P13-x-01",
+       "to": "P12"
+     },
+@@ -12532,6 +12545,11 @@
+       "to": "P12"
+     },
+     {
++      "type": "depends_on",
++      "from": "P13-x-08",
++      "to": "P12"
++    },
++    {
+       "type": "parent_of",
+       "from": "P01",
+       "to": "P01-x-01"
+@@ -13520,6 +13538,11 @@
+       "type": "parent_of",
+       "from": "P13",
+       "to": "P13-x-07"
++    },
++    {
++      "type": "parent_of",
++      "from": "P13",
++      "to": "P13-x-08"
+     },
+     {
+       "type": "produces",
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py
+@@ -19,11 +19,12 @@
+ per-phase 転換 (凍結契約 §4/§8): 旧 C*.md frontmatter の quality_gates/harness は
+ component-inventory.json の components[] へ載せ替わったため、値域検証を inventory 単位へ移す
+ (specfm.validate_component_quality_gates + validate_component_harness_coverage)。index の
+-plugin 階層規律 (plugin_meta) 検査は現状維持。
++plugin 階層規律 (plugin_meta) に加え、install 義務が既存 graph producer の P13 実行leafへ到達することを検査する。
+ """
+ from __future__ import annotations
+ 
+ import argparse
++import importlib.util
+ import json
+ import sys
+ from pathlib import Path
+@@ -181,7 +182,7 @@
+                 " (両 platform への install が既定。外すなら理由を明示する)"
+             )
+ 
+-    if "codex" in platforms and str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
++    if str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
+         errs.append(
+             f"install.codex_manifest は {specfm.INSTALL_CODEX_MANIFEST} であること"
+             f" (現値 {inst.get('codex_manifest')!r}・sync-plugin-platforms.py が .claude-plugin から投影する)"
+@@ -190,7 +191,8 @@
+     if not isinstance(registries, list):
+         errs.append(f"install.registries は登録先の list であること (現値 {registries!r})")
+         registries = []
+-    for plat in platforms:
++    # Runtime opt-out never removes either product package/catalog.
++    for plat in specfm.INSTALL_PLATFORMS:
+         reg = specfm.INSTALL_REGISTRY_BY_PLATFORM.get(plat)
+         if reg and reg not in registries:
+             errs.append(f"install.registries に {reg} が無い ({plat} へ install する経路の登録先)")
+@@ -249,6 +251,73 @@
+     return errors, None
+ 
+ 
++def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
++    """Require canonical P13 install claims in the existing producer's execution leaves."""
++    phase = plan_dir / "phase-13-release.md"
++    if not phase.is_file():
++        return ["install 契約の実行義務を持つ phase-13-release.md が無い"]
++    handoff = plan_dir / "handoff-run-plugin-dev-plan.json"
++    try:
++        data = json.loads(handoff.read_text(encoding="utf-8"))
++        slug = data.get("target_plugin_slug") if isinstance(data, dict) else None
++        obligations = specfm.install_release_obligations(inst, slug if isinstance(slug, str) else "")
++    except (OSError, ValueError) as exc:
++        return [f"install 義務の target_plugin_slug を handoff から解決できない: {exc}"]
++    try:
++        # Ask the existing producer what the consumer actually executes. In fixed
++        # shape this is P13's checklist; target shape consumes task-specs instead.
++        loader = importlib.util.spec_from_file_location(
++            "install_obligation_producer", Path(__file__).with_name("derive-task-graph.py")
++        )
++        producer = importlib.util.module_from_spec(loader)
++        loader.loader.exec_module(producer)
++        graph = producer.derive(plan_dir)
++    except (OSError, ValueError) as exc:
++        return [f"install release obligations を実行 graph へ導出できない: {exc}"]
++    clauses = {
++        node.get("acceptance_criterion")
++        for node in graph["nodes"]
++        if node.get("phase_ref") == "P13"
++        and node.get("execution_kind") in {"verification-claim", "direct-task"}
++    }
++    errors = [
++        f"P13 install obligation {key} が欠落または契約と不一致 (render-spec-skeleton.py --phase 13 --plugin-slug {slug} で正本から生成): {clause}"
++        for key, clause in obligations.items() if clause not in clauses
++    ]
++    # Generation may not have emitted the artifact yet. When it exists, also
++    # check the handoff's consumer input so a stale graph cannot hide new claims.
++    graph_ref = data.get("task_graph_ref")
++    graph_rel = graph_ref.get("path", "task-graph.json") if isinstance(graph_ref, dict) else "task-graph.json"
++    if not isinstance(graph_rel, str) or not graph_rel.strip():
++        return errors + ["install 義務の handoff.task_graph_ref.path が非空stringでない"]
++    graph_path = plan_dir / graph_rel
++    if graph_path.is_file():
++        try:
++            stored = json.loads(graph_path.read_text(encoding="utf-8"))
++            if not isinstance(stored, dict) or not isinstance(stored.get("nodes"), list):
++                raise ValueError("task graph must contain nodes[]")
++            stored_clauses = set()
++            for node in stored["nodes"]:
++                if not isinstance(node, dict) or node.get("phase_ref") != "P13":
++                    continue
++                kind = node.get("execution_kind")
++                if kind not in (None, "verification-claim", "direct-task"):
++                    continue
++                clause = node.get("acceptance_criterion")
++                # Legacy fixed graphs carry the claim in title until migration.
++                if kind is None:
++                    clause = node.get("title")
++                if isinstance(clause, str):
++                    stored_clauses.add(clause)
++            errors.extend(
++                f"task-graph install obligation {key} が欠落または古い (derive-task-graph.py で再生成): {graph_path}"
++                for key, clause in obligations.items() if clause not in stored_clauses
++            )
++        except (OSError, ValueError) as exc:
++            errors.append(f"install 義務の task graph を読めない: {exc}")
++    return errors
++
++
+ def collect_md(specs_dir: Path) -> list[Path]:
+     return sorted(specs_dir.glob("*.md"))
+ 
+@@ -258,8 +327,12 @@
+     for p in md_paths:
+         fm = specfm.parse_frontmatter(p.read_text(encoding="utf-8"))
+         if isinstance(fm.get("plugin_meta"), dict):
+-            for e in check_plugin_meta(fm["plugin_meta"]):
++            pm = fm["plugin_meta"]
++            for e in check_plugin_meta(pm):
+                 errors.append(f"{p.name}: {e}")
++            inst = pm.get("install")
++            if isinstance(inst, dict) and not check_install(inst):
++                errors.extend(f"{p.name}: {e}" for e in check_install_release(p.parent, inst))
+         # phase ファイル等 (plugin_meta 無し) は本 gate 対象外 (frontmatter は check-spec-frontmatter が担う)
+     if inventory_path is not None and inventory_path.is_file():
+         inv_errors, fatal = check_inventory(inventory_path)
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py
+@@ -659,6 +659,51 @@
+ INSTALL_CODEX_MANIFEST = ".codex-plugin/plugin.json"
+ INSTALL_REGISTRY_BY_PLATFORM = {"claude": "harness-local", "codex": "codex-repo"}
+ INSTALL_RELEASE_ORDER = "changelog-then-bump"
++
++
++def default_install_contract() -> dict:
++    """Return a fresh runtime-install contract; both product packages stay available."""
++    return {
++        "platforms": list(INSTALL_PLATFORMS),
++        "codex_manifest": INSTALL_CODEX_MANIFEST,
++        "registries": [INSTALL_REGISTRY_BY_PLATFORM[p] for p in INSTALL_PLATFORMS],
++        "strict_validate": True,
++        "release": INSTALL_RELEASE_ORDER,
++        "verify": {"isolated": True, "live": True},
++    }
++
++
++def install_release_obligations(inst: dict, plugin_slug: str) -> dict[str, str]:
++    """Canonical P13 clauses shared by the renderer and gate (create/update).
++
++    Callers validate install metadata first. Runtime opt-out never removes either
++    manifest/catalog. These clauses are ordinary checklist items, so the existing
++    task-graph writer and consumer carry them without a second execution layer.
++    """
++    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", plugin_slug):
++        raise ValueError("install release plugin_slug must be a lowercase kebab name")
++    platform = "both" if set(inst["platforms"]) == set(INSTALL_PLATFORMS) else inst["platforms"][0]
++    install = f"install-local-plugins.py --plugin {plugin_slug} --platform {platform}"
++    obligations = {
++        "release": (
++            f"CHANGELOG を先に書き、`build-plugin-release.py --only {plugin_slug}` で版を上げ、"
++            "`build-plugin-release.py --check` が drift 0 で通っている。"
++        ),
++        "registries": (
++            "両製品の package を維持し、`build-local-marketplace.py --check` と "
++            "`sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。"
++        ),
++        "strict_validate": f"`claude plugin validate --strict plugins/{plugin_slug}` が通っている。",
++        "isolated": (
++            f"`{install} --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が"
++            "指定 platform のすべてで verified=true。"
++        ),
++    }
++    if inst["verify"]["live"]:
++        obligations["live"] = f"`{install}` の実環境 install receipt が指定 platform のすべてで verified=true。"
++    else:
++        obligations["live_skip"] = "実環境 install は `plugin_meta.install.verify.live_skip_reason` の明示理由により省略する。"
++    return obligations
+ # conditional = 該当しない構想では {applicable: false, reason: <非空>} で明示 N/A 可。
+ # reflection.md A7「skill-only は PKG 一部 N/A」と gate 実装を一致させる (無条件強制を緩和)。
+ # 空/欠落は不可 (省略は必ず根拠付き明示=「不要なら plugin_level_surfaces.<surface>.omitted_reason に理由」原則と同型)。
+@@ -1281,12 +1326,19 @@
+ }
+ 
+ 
+-def render_minimal_phase(phase_number: int) -> str:
++def render_minimal_phase(phase_number: int, *, plugin_slug: str = "sample-plugin", install: dict | None = None) -> str:
+     """§5 本文 section 床 (PHASE_BODY_SECTIONS = 宣言型 8 節) を満たす phase Markdown skeleton を返す。"""
+     fm = minimal_phase_frontmatter(phase_number)
+     parts = [f"\n# {fm['id']} — {fm['phase_name']} ({fm['category']})\n"]
+     for sec in PHASE_BODY_SECTIONS:
+-        parts.append(f"\n{sec}\n{_PHASE_SECTION_HINT[sec]}\n")
++        body = _PHASE_SECTION_HINT[sec]
++        if phase_number == 13 and sec == "## 完了チェックリスト":
++            body = "\n".join(
++                f"- [ ] {clause}" for clause in install_release_obligations(
++                    default_install_contract() if install is None else install, plugin_slug
++                ).values()
++            )
++        parts.append(f"\n{sec}\n{body}\n")
+     return "---\n" + "\n".join(yaml_lines(fm)) + "\n---\n" + "".join(parts)
+ 
+ 
+@@ -1330,14 +1382,7 @@
+             # (実 plan では deploy/notion_sink/portability の拡張形へ確定する)。
+             "feedback_deploy": {"enabled": False, "reason": "skeleton (実 plan で確定)"},
+             # install は opt-out を既定にしない (両 platform への install が既定値そのもの)。
+-            "install": {
+-                "platforms": ["claude", "codex"],
+-                "codex_manifest": ".codex-plugin/plugin.json",
+-                "registries": ["harness-local", "codex-repo"],
+-                "strict_validate": True,
+-                "release": "changelog-then-bump",
+-                "verify": {"isolated": True, "live": True},
+-            },
++            "install": default_install_contract(),
+         },
+     }
+     lines = [f"\n# {meta['title']}\n"]
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-spec-skeleton.py (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/render-spec-skeleton.py
+@@ -3,7 +3,7 @@
+ # name: render-spec-skeleton
+ # purpose: specfm の実行可能契約から phase ファイル(--phase N)/index(--index)の Markdown skeleton または inventory component(--kind KIND)の JSON skeleton を生成する。
+ # inputs:
+-#   - argv: --phase N | --index [--plugin-slug SLUG] | --kind KIND [--skill-kind run|ref|wrap|assign|delegate] [--id C01]
++#   - argv: --phase N [--plugin-slug SLUG] [--install-contract JSON] | --index [--plugin-slug SLUG] | --kind KIND [--skill-kind run|ref|wrap|assign|delegate] [--id C01]
+ # outputs:
+ #   - stdout: Markdown skeleton または JSON object skeleton
+ #   - exit: 0=OK / 2=usage error
+@@ -16,12 +16,14 @@
+ """静的ひな形ファイルを増やさず、specfm の正本から skeleton を生成する。
+ 
+ per-phase 転換: 主用途は `--phase N` (1-13) で phase-NN-<kebab>.md の §5 床付き Markdown skeleton を出す。
++`--phase 13 --plugin-slug SLUG` は install 完了条項も生成する。opt-out は `--install-contract JSON` で同じ契約を渡す。
+ `--index` は index(main) の §9 基盤層+全体制御 section 床付き Markdown skeleton を出す。
+ `--kind` は component-inventory.json の components[] に入れる JSON object skeleton を出す。
+ """
+ from __future__ import annotations
+ 
+ import argparse
++import json
+ import sys
+ from pathlib import Path
+ 
+@@ -36,14 +38,31 @@
+     ap.add_argument("--kind", default=None, choices=specfm.COMPONENT_KINDS, help="component_kind → component skeleton")
+     ap.add_argument("--skill-kind", default="run", choices=specfm.SKILL_KINDS, help="skill kind (--kind skill 用)")
+     ap.add_argument("--id", default="C01", help="component id (--kind 用)")
+-    ap.add_argument("--plugin-slug", default="sample-plugin", help="index skeleton の plugin slug (--index 用)")
++    ap.add_argument("--plugin-slug", default="sample-plugin", help="index/P13 skeleton の target plugin slug")
++    ap.add_argument("--install-contract", type=Path, help="P13用install契約JSON (省略時は両製品既定)")
+     args = ap.parse_args(argv)
+ 
+     if args.phase is not None:
+         if not (1 <= args.phase <= 13):
+             sys.stderr.write("--phase は 1-13 の範囲であること\n")
+             return 2
+-        sys.stdout.write(specfm.render_minimal_phase(args.phase))
++        try:
++            install = json.loads(args.install_contract.read_text(encoding="utf-8")) if args.install_contract else None
++            if install is not None:
++                # Share the existing value-domain gate; no second contract validator.
++                import importlib.util
++                script = Path(__file__).with_name("check-spec-gates.py")
++                loader = importlib.util.spec_from_file_location("install_gate", script)
++                gate = importlib.util.module_from_spec(loader)
++                loader.loader.exec_module(gate)
++                errors = gate.check_install(install) if isinstance(install, dict) else ["install contract must be an object"]
++                if errors:
++                    raise ValueError("; ".join(errors))
++            rendered = specfm.render_minimal_phase(args.phase, plugin_slug=args.plugin_slug, install=install)
++        except (OSError, ValueError) as exc:
++            sys.stderr.write(str(exc) + "\n")
++            return 2
++        sys.stdout.write(rendered)
+         return 0
+     if args.index:
+         sys.stdout.write(specfm.render_minimal_index(plugin_slug=args.plugin_slug))
+--- plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md (before)
++++ plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R3-emit-specs.md
+@@ -57,7 +57,7 @@
+ **(C) index(main)**: P01..P13 を **phase_number 昇順**で列挙した目次 + 各 status + コンポーネント目録の所在 (buildable 実体は inventory が SSOT) + Plugin-level surfaces 表 + 全体完了条件 + 受入確認 (build 後の見方) + `plugin_meta`(manifest/marketplace/distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy/install = plugin-creator + F3/F4/F5/F6/A10/A7/F7/D6/B4/B5 を焼く。feedback_deploy と install はコア=常時・notion_sink 契約は io-contract §9) を保持する。受入確認には consumer TG-C09 が生成する `task-execution-report.html` (図解付き実行記録) を第一導線、`task-progress.md` を差分確認導線、`task-graph-status.json` を機械導線として明記する。plugin 階層横断規律は index の `plugin_meta` に集約する (phase/component に加算しない)。
+ - `plugin_meta.manifest`: `required:true`、`path:.claude-plugin/plugin.json`、`name_matches_folder:true`、`no_unresolved_placeholders:true`、`validate_plugin:true` を必須にする。
+ - `plugin_meta.marketplace`: `default_personal` は bool、`policy.installation` は `AVAILABLE` 既定、`policy.authentication` は `ON_INSTALL` 既定、`policy.category` は非空、`cachebuster_for_update:true` を必須にする。
+-- `plugin_meta.install`: ユーザーが何も言わなくても Claude Code と Codex の両方へ install する計画を既定にする。`platforms: [claude, codex]`、`codex_manifest: .codex-plugin/plugin.json`、`registries: [harness-local, codex-repo]`、`strict_validate: true`、`release: changelog-then-bump`、`verify: {isolated: true, live: true}` を焼き、P13 の完了チェックリストに CHANGELOG→bump→drift 0、`claude plugin validate --strict`、隔離 install と実環境 install の receipt `verified=true` を入れる。codex を外す・実環境 install を省くのは、構想にその理由があるときだけ `excluded_platforms.codex` / `verify.live_skip_reason` に書く (契約は `plugin-creator-contract.md` の install 契約)。hook component の command は plugin root 変数を二重引用符で囲む前提で設計する (書き方は `component-domain.md` の hook 行。未クォートは strict 検証で落ちる)。
++- `plugin_meta.install`: `specfm.default_install_contract()` を既定に使う。`platforms` は実際に導入する製品を表し、codex の実導入を省く場合だけ `excluded_platforms.codex` に理由を書く。両製品の package は常に維持するため、`codex_manifest` と両登録先 `registries` は opt-out で削除しない。P13 の完了チェックリストには `specfm.install_release_obligations(install, target_plugin_slug)` の全条項を原文のまま焼く (固有項目の追加可)。既存生成器 `render-spec-skeleton.py --phase 13 --plugin-slug <slug>` が既定条項を生成し、opt-out 時は同じ install dict を JSON に保存して `--install-contract <file>` で渡す。`fixed-13-phase` は P13 checklist を実行へ射影する。`task-graph-derived` では同じ条項ごとに `task-specs/*.md` の P13 `direct-task` leaf を作り、`acceptance_criterion` に条項を原文のまま焼く (title/write_scope/produces/depends_on 等は既存task-spec契約どおり)。P13 policyだけに書いてもconsumerは実行しないため不十分。create/update 共通で、`check-spec-gates.py` が handoff の `target_plugin_slug` と index 契約から P13 を突合するため、P13 不在・条項欠落・古い導入対象のままでは完了しない。実環境 install を省く場合は `verify.live:false` と `verify.live_skip_reason` が必要。隔離/実環境の command は `--platform both|claude` を契約から導出する。hook command の plugin root は二重引用符で囲む (契約は `plugin-creator-contract.md`)。
+ - 焼き先の正本キーは io-contract.md の表 (「焼き先はマトリクスに従う」総称ポインタでなく具体キー)。条件付き規律 (prompt_layer/knowledge_loop/combinators/goal_seek) は kind/feature/階層ゲートに従い盲目的に全 component へ焼かない。
+ 
+ **(D) task-graph-derived の task spec** (`index.md` frontmatter の `shape_marker: task-graph-derived` 時のみ):
+--- plugins/harness-creator/scripts/install-local-plugins.py (before)
++++ plugins/harness-creator/scripts/install-local-plugins.py
+@@ -41,6 +41,10 @@
+ 
+ DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[3]
+ _TREE_IGNORES = {".git", ".build", ".pytest_cache", "__pycache__", "node_modules"}
++# Match release's non-content exclusions while keeping this installed plugin
++# self-contained (the repository's release script is not shipped with it).
++_TREE_IGNORED_FILES = {".DS_Store"}
++_TREE_IGNORED_PREFIXES = (".claude/handoff",)
+ # Claude CLI drops these bookkeeping markers at the top of a cached version dir
+ # (.in_use while a session holds it, .orphaned_at once superseded). They are
+ # not plugin content, so they must not make a faithful copy look stale.
+@@ -352,6 +356,12 @@
+         relative = path.relative_to(root)
+         if any(part in _TREE_IGNORES for part in relative.parts):
+             continue
++        if path.name in _TREE_IGNORED_FILES or any(
++            relative.as_posix() == prefix
++            or relative.as_posix().startswith(prefix + "/")
++            for prefix in _TREE_IGNORED_PREFIXES
++        ):
++            continue
+         if relative.parts[0] in _RUNTIME_MARKERS:
+             continue
+         encoded = relative.as_posix().encode("utf-8")
+@@ -364,8 +374,8 @@
+             digest.update(b"L\0" + encoded + b"\0" + target.encode("utf-8"))
+         elif path.is_file():
+             digest.update(b"F\0" + encoded + b"\0" + path.read_bytes())
+-        elif path.is_dir():
+-            digest.update(b"D\0" + encoded + b"\0")
++        # Ordinary directories carry no release content. In particular a
++        # parent created solely for ignored handoff files must not cause drift.
+     return digest.hexdigest()
+ 
+ 
+@@ -763,20 +773,20 @@
+ ) -> tuple[dict, list[dict]]:
+     cli_identity = _cli_identity("codex", env)
+     cli_path = cli_identity["cli_path"]
+-    if check:
+-        payload = _execute(
+-            [cli_path, "plugin", "marketplace", "list", "--json"],
+-            env=env,
+-            expect_json=True,
+-        )
+-        entries = payload.get("marketplaces") if isinstance(payload, dict) else None
+-        if not isinstance(entries, list):
+-            raise InstallError("Codex marketplace list JSON requires marketplaces[]")
+-        if not _assert_marketplace_source(
+-            entries, name=catalog.codex_marketplace, expected=catalog.codex_root
+-        ):
+-            raise InstallError(f"Codex marketplace is not registered: {catalog.codex_marketplace}")
+-    else:
++    payload = _execute(
++        [cli_path, "plugin", "marketplace", "list", "--json"],
++        env=env,
++        expect_json=True,
++    )
++    entries = payload.get("marketplaces") if isinstance(payload, dict) else None
++    if not isinstance(entries, list):
++        raise InstallError("Codex marketplace list JSON requires marketplaces[]")
++    exists = _assert_marketplace_source(
++        entries, name=catalog.codex_marketplace, expected=catalog.codex_root
++    )
++    if check and not exists:
++        raise InstallError(f"Codex marketplace is not registered: {catalog.codex_marketplace}")
++    if not check:
+         added = _execute(
+             [
+                 cli_path, "plugin", "marketplace", "add",
+--- plugins/harness-creator/tests/test_install_local_plugins.py (before)
++++ plugins/harness-creator/tests/test_install_local_plugins.py
+@@ -14,6 +14,14 @@
+ SPEC = importlib.util.spec_from_file_location("install_local_plugins", SCRIPT)
+ mod = importlib.util.module_from_spec(SPEC)
+ SPEC.loader.exec_module(mod)
++
++
++@pytest.fixture(autouse=True)
++def _isolate_git_provenance(monkeypatch):
++    # These are CLI/artifact unit tests; temporary copies need no Git provenance.
++    monkeypatch.setattr(mod, "_git_snapshot", lambda root: {
++        "repository": None, "commit": None, "dirty": None,
++    })
+ 
+ 
+ def _write_catalogs(
+@@ -189,6 +197,8 @@
+                 }
+                 for name in ("alpha", "beta")
+             ]
++        if bare == ["codex", "plugin", "marketplace", "list", "--json"]:
++            return {"marketplaces": []}
+         if bare[:4] == ["codex", "plugin", "marketplace", "add"]:
+             assert bare[4] == str(repo.resolve())
+             assert bare[5:] == ["--json"]
+@@ -373,6 +383,84 @@
+     assert mod._tree_digest(source) != mod._tree_digest(runtime)
+ 
+ 
++def test_handoff_and_desktop_metadata_do_not_make_runtime_stale(tmp_path):
++    repo = tmp_path / "repo"
++    _write_catalogs(repo, ("alpha",))
++    runtime = tmp_path / "runtime"
++    _write_runtime_copy(repo, runtime, "alpha")
++    source = repo / "plugins" / "alpha"
++    handoff = source / ".claude" / "handoff" / "session.md"
++    handoff.parent.mkdir(parents=True)
++    handoff.write_text("local session notes")
++    (source / ".DS_Store").write_bytes(b"desktop metadata")
++    (runtime / "references" / ".DS_Store").write_bytes(b"different desktop metadata")
++    catalog = mod.load_catalog(repo)
++
++    def receipt():
++        return mod._artifact_receipt(
++            catalog=catalog, platform="claude", name="alpha",
++            plugin_id="alpha@harness-local", runtime_value=str(runtime),
++            reported_version="1.0.0",
++        )
++
++    assert receipt()["verified"] is True
++    handoff.write_text("updated session notes")
++    assert receipt()["verified"] is True
++    # The similarly named delivery asset is not a session-note exclusion.
++    asset = source / "references" / "handoff" / "guide.md"
++    asset.parent.mkdir()
++    asset.write_text("real delivered content")
++    assert receipt()["verification_status"] == "stale_runtime"
++
++
++@pytest.mark.parametrize("check", [False, True])
++def test_codex_wrong_marketplace_source_fails_before_mutation(monkeypatch, tmp_path, check):
++    repo = tmp_path / "repo"
++    _write_catalogs(repo, ("alpha",))
++    catalog = mod.load_catalog(repo)
++    _fake_cli_identities(monkeypatch)
++    calls = []
++
++    def fake_execute(command, **kwargs):
++        calls.append(_bare_command(command))
++        return {"marketplaces": [{"name": "harness", "path": str(tmp_path / "other")}]}
++
++    monkeypatch.setattr(mod, "_execute", fake_execute)
++    with pytest.raises(mod.InstallError, match="different source"):
++        mod._install_codex(catalog=catalog, requested=("alpha",), env={}, check=check)
++    assert calls == [["codex", "plugin", "marketplace", "list", "--json"]]
++
++
++def test_codex_same_source_reinstall_keeps_registration_and_verifies(monkeypatch, tmp_path):
++    repo = tmp_path / "repo"
++    _write_catalogs(repo, ("alpha",))
++    catalog = mod.load_catalog(repo)
++    _fake_cli_identities(monkeypatch)
++    calls = []
++
++    def fake_execute(command, **kwargs):
++        bare = _bare_command(command)
++        calls.append(bare)
++        if bare == ["codex", "plugin", "marketplace", "list", "--json"]:
++            return {"marketplaces": [{"name": "harness", "path": str(repo)}]}
++        if bare[:4] == ["codex", "plugin", "marketplace", "add"]:
++            return {"marketplaceName": "harness", "alreadyAdded": True}
++        if bare[:3] == ["codex", "plugin", "add"]:
++            return {"pluginId": "alpha@harness", "alreadyInstalled": True}
++        if bare == ["codex", "plugin", "list", "--json"]:
++            return {"installed": [{
++                "pluginId": "alpha@harness", "installed": True, "enabled": True,
++                "version": "1.0.0", "source": {"path": str(repo / "plugins" / "alpha")},
++            }]}
++        raise AssertionError(command)
++
++    monkeypatch.setattr(mod, "_execute", fake_execute)
++    for _ in range(2):
++        _, plugins = mod._install_codex(catalog=catalog, requested=("alpha",), env={}, check=False)
++        assert plugins[0]["verified"] is True
++    assert calls[0] == calls[4] == ["codex", "plugin", "marketplace", "list", "--json"]
++
++
+ def test_claude_nonempty_list_errors_are_pending_activation_not_verified(
+     monkeypatch, tmp_path
+ ):
+--- scripts/build-plugin-release.py (before)
++++ scripts/build-plugin-release.py
+@@ -743,10 +743,11 @@
+         print("[build-plugin-release] --dry-run のため書き込みなし")
+         return 0
+ 
++    regenerate_local_marketplace()
++    # A failed downstream step leaves the old ledger in place. On retry the
++    # already-bumped manifests are `released`, so repair their lock as well.
++    regenerate_config_version_lock()
+     save_fingerprints(state)
+-    regenerate_local_marketplace()
+-    if bumped:
+-        regenerate_config_version_lock()
+     print(f"[build-plugin-release] {len(bumped)} 件 bump / marketplace 再生成 完了")
+ 
+     if args.install:
+--- tests/scripts-root/test_root__build_plugin_release.py (before)
++++ tests/scripts-root/test_root__build_plugin_release.py
+@@ -153,6 +153,50 @@
+     assert recorded["probe"]["fingerprint"] == mod.fingerprint(plugin)
+ 
+ 
++@pytest.mark.parametrize("failed_step", ["marketplace", "config_lock"])
++@pytest.mark.parametrize("release_state", ["changed", "new", "released"])
++def test_downstream_failure_keeps_release_pending_and_retry_repairs(
++    mod, tmp_path, monkeypatch, failed_step, release_state
++):
++    # This exercises release state transitions without requiring or touching Git.
++    plugin = tmp_path / "plugins" / "probe"
++    manifest = plugin / ".claude-plugin" / "plugin.json"
++    manifest.parent.mkdir(parents=True)
++    manifest.write_text(json.dumps({"name": "probe", "version": "0.1.0"}))
++    (plugin / "SKILL.md").write_text("original")
++    _isolate(mod, monkeypatch, tmp_path)
++    monkeypatch.setattr(mod, "content_paths", lambda root: sorted(root.rglob("*")))
++    if release_state != "new":
++        assert mod.main([]) == 0
++        (plugin / "SKILL.md").write_text("changed")
++        if release_state == "released":
++            mod.write_version(plugin, "1.0.0")
++    ledger_before = mod.load_fingerprints()
++    calls = []
++    fail_next = True
++
++    def regenerate(step):
++        nonlocal fail_next
++        calls.append(step)
++        if step == failed_step and fail_next:
++            fail_next = False
++            raise SystemExit("injected downstream failure")
++
++    monkeypatch.setattr(mod, "regenerate_local_marketplace", lambda: regenerate("marketplace"))
++    monkeypatch.setattr(mod, "regenerate_config_version_lock", lambda: regenerate("config_lock"))
++    with pytest.raises(SystemExit, match="injected downstream failure"):
++        mod.main([])
++    version_after_failure = mod.read_version(plugin)
++    assert mod.load_fingerprints() == ledger_before
++    assert mod.main(["--check"]) == 1
++
++    calls.clear()
++    assert mod.main([]) == 0
++    assert calls == ["marketplace", "config_lock"]
++    assert mod.read_version(plugin) == version_after_failure
++    assert mod.main(["--check"]) == 0
++
++
+ def test_removed_plugin_is_pruned_from_fingerprint_state(mod, tmp_path, monkeypatch):
+     plugin = _fake_plugin(tmp_path, "retired", "0.1.0")
+     keep = _fake_plugin(tmp_path, "keep", "0.1.0")

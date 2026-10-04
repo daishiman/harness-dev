@@ -647,12 +647,68 @@ def as_int(v) -> int | None:
 # feedback_deploy は conditional→core へ昇格 (評価フィードバックループは全構想の既定装備)。
 # opt-out は {enabled: false, reason: <非空>} の明示例外のみ (applicable:false 形は不可)。
 # 値域 (deploy/notion_sink/portability) は check-spec-gates.py が検証する。
-PLUGIN_META_CORE_DICTS = ("manifest", "marketplace", "ci", "feedback_deploy")
+# install は Claude/Codex 両 platform への install 契約 (登録先・strict 検証・release 順序・
+# 隔離/実環境 install の検証)。作っただけで install されない plugin を計画段階で出さないため core。
+PLUGIN_META_CORE_DICTS = ("manifest", "marketplace", "ci", "feedback_deploy", "install")
+# install の値域 (check-spec-gates.check_plugin_meta が参照する SSOT)。
+# claude は manifest 正本 (.claude-plugin) ゆえ除外不可。codex は .claude-plugin から
+# sync-plugin-platforms.py が投影する。登録先 harness-local は非配布 plugin を含む全 plugin の
+# install 経路 (公開 marketplace は distribution.marketplace が担い、ここへ重複させない)。
+INSTALL_PLATFORMS = ("claude", "codex")
+INSTALL_REQUIRED_PLATFORMS = ("claude",)
+INSTALL_CODEX_MANIFEST = ".codex-plugin/plugin.json"
+INSTALL_REGISTRY_BY_PLATFORM = {"claude": "harness-local", "codex": "codex-repo"}
+INSTALL_RELEASE_ORDER = "changelog-then-bump"
+
+
+def default_install_contract() -> dict:
+    """Return a fresh runtime-install contract; both product packages stay available."""
+    return {
+        "platforms": list(INSTALL_PLATFORMS),
+        "codex_manifest": INSTALL_CODEX_MANIFEST,
+        "registries": [INSTALL_REGISTRY_BY_PLATFORM[p] for p in INSTALL_PLATFORMS],
+        "strict_validate": True,
+        "release": INSTALL_RELEASE_ORDER,
+        "verify": {"isolated": True, "live": True},
+    }
+
+
+def install_release_obligations(inst: dict, plugin_slug: str) -> dict[str, str]:
+    """Canonical P13 clauses shared by the renderer and gate (create/update).
+
+    Callers validate install metadata first. Runtime opt-out never removes either
+    manifest/catalog. These clauses are ordinary checklist items, so the existing
+    task-graph writer and consumer carry them without a second execution layer.
+    """
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", plugin_slug):
+        raise ValueError("install release plugin_slug must be a lowercase kebab name")
+    platform = "both" if set(inst["platforms"]) == set(INSTALL_PLATFORMS) else inst["platforms"][0]
+    install = f"install-local-plugins.py --plugin {plugin_slug} --platform {platform}"
+    obligations = {
+        "release": (
+            f"CHANGELOG を先に書き、`build-plugin-release.py --only {plugin_slug}` で版を上げ、"
+            "`build-plugin-release.py --check` が drift 0 で通っている。"
+        ),
+        "registries": (
+            "両製品の package を維持し、`build-local-marketplace.py --check` と "
+            "`sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。"
+        ),
+        "strict_validate": f"`claude plugin validate --strict plugins/{plugin_slug}` が通っている。",
+        "isolated": (
+            f"`{install} --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が"
+            "指定 platform のすべてで verified=true。"
+        ),
+    }
+    if inst["verify"]["live"]:
+        obligations["live"] = f"`{install}` の実環境 install receipt が指定 platform のすべてで verified=true。"
+    else:
+        obligations["live_skip"] = "実環境 install は `plugin_meta.install.verify.live_skip_reason` の明示理由により省略する。"
+    return obligations
 # conditional = 該当しない構想では {applicable: false, reason: <非空>} で明示 N/A 可。
 # reflection.md A7「skill-only は PKG 一部 N/A」と gate 実装を一致させる (無条件強制を緩和)。
 # 空/欠落は不可 (省略は必ず根拠付き明示=「不要なら plugin_level_surfaces.<surface>.omitted_reason に理由」原則と同型)。
 PLUGIN_META_CONDITIONAL_DICTS = ("pkg_contract", "governance", "ssot_dedup")
-# 後方互換: plugin 階層キー全体 (core + conditional)。集合として従来 7 キーと等価。
+# 後方互換: plugin 階層キー全体 (core + conditional)。
 PLUGIN_META_REQUIRED_DICTS = PLUGIN_META_CORE_DICTS + PLUGIN_META_CONDITIONAL_DICTS
 
 
@@ -1270,12 +1326,19 @@ _PHASE_SECTION_HINT = {
 }
 
 
-def render_minimal_phase(phase_number: int) -> str:
+def render_minimal_phase(phase_number: int, *, plugin_slug: str = "sample-plugin", install: dict | None = None) -> str:
     """§5 本文 section 床 (PHASE_BODY_SECTIONS = 宣言型 8 節) を満たす phase Markdown skeleton を返す。"""
     fm = minimal_phase_frontmatter(phase_number)
     parts = [f"\n# {fm['id']} — {fm['phase_name']} ({fm['category']})\n"]
     for sec in PHASE_BODY_SECTIONS:
-        parts.append(f"\n{sec}\n{_PHASE_SECTION_HINT[sec]}\n")
+        body = _PHASE_SECTION_HINT[sec]
+        if phase_number == 13 and sec == "## 完了チェックリスト":
+            body = "\n".join(
+                f"- [ ] {clause}" for clause in install_release_obligations(
+                    default_install_contract() if install is None else install, plugin_slug
+                ).values()
+            )
+        parts.append(f"\n{sec}\n{body}\n")
     return "---\n" + "\n".join(yaml_lines(fm)) + "\n---\n" + "".join(parts)
 
 
@@ -1318,6 +1381,8 @@ def render_minimal_index(*, plugin_slug: str = "sample-plugin") -> str:
             # feedback_deploy は core 昇格につき opt-out 形 (enabled:false+reason) で床を満たす
             # (実 plan では deploy/notion_sink/portability の拡張形へ確定する)。
             "feedback_deploy": {"enabled": False, "reason": "skeleton (実 plan で確定)"},
+            # install は opt-out を既定にしない (両 platform への install が既定値そのもの)。
+            "install": default_install_contract(),
         },
     }
     lines = [f"\n# {meta['title']}\n"]

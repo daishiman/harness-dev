@@ -25,11 +25,11 @@
 
 ### 受入条件
 
-- decision sourceがautomatic/user_confirmedの一方で候補とpreview digestが一致する。
+- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。
 
 ## Layer 3: インフラ層
 
-- 使用資産: AskUserQuestionとRead。
+- 使用資産: AskUserQuestionとRead、preview は `build-graph-node.py add|update --dry-run` (write 0)。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -55,7 +55,7 @@
 - [ ] 宣言した入力が全て検証済みである
 - [ ] 出力が宣言した shape と authority を満たす
 - [ ] 責務境界に反する read/write/delegation が0件である
-- [ ] decision sourceがautomatic/user_confirmedの一方で候補とpreview digestが一致する
+- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する
 
 ### 5.4 実行方式
 

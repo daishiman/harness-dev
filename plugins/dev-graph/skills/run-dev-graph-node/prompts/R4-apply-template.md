@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- artifact kind、architecture subtype集合、API変更判定、既存Markdown、template contract。
+- artifact kind、architecture subtype集合、API変更判定、既存Markdown、template contract、既存 node の `implementation_readiness.missing_sections`。
 
 ### 出力契約
 
-- 不足sectionのみ加えたbody patchとtemplate metadata。
+- 不足sectionのみ加えたbody patchとtemplate metadata。writer は不足 section を自動では補わないので、R4 は writer が返す `readiness_fill[]` の `via` と `key` をそのまま使って本文を渡す (placeholder の見出しは `set_sections`、見出しが無い section は `append_sections` の末尾 H2、API block が無ければ `add_api_contracts`、feature の projection は `macro_patch` の field か `node_patch.depends_on`)。placeholder とは全行が template の雛形行か placeholder だけの行である section を指し、`<` や `未定` を含むだけの本文は埋まっている扱いになる。`via=null` は埋める経路が無いので停止して報告し、readiness の項目名を見出しキーに使わない。subtype/API の追加は `add_subtypes`/`add_api_contracts` で渡し、block の位置と生成 section の再生成は writer に任せる。
 
 ### 責務境界
 
@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: Read/Editとtemplate contract。
+- 使用資産: template contract と`build-graph-node.py`の合成 (add は kind template、update は `set_sections`/`append_sections`/`add_subtypes`/`add_api_contracts` の差分 patch)。本文を Write/Edit で直接書き換えない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

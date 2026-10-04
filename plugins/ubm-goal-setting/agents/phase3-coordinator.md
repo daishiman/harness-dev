@@ -190,9 +190,11 @@ Phase 3 は親が順次進める対話フローである。本 coordinator が�
 | Step 2 | prompts/R2-step2-gap-analysis.md | 差分分析 + 原因深掘り | 根本原因が1つ特定されている | 差分、根本原因、ボトルネック箇所 |
 | Step 3 | prompts/R3-step3-goal-setting.md | 前提検証 + 目標設定 | 売上目標・成果目標が具体的な数値で確定 | 売上目標、成果目標、目標文脈（月報・期報） |
 | Step 4 | prompts/R4-step4-action-plan.md | 行動計画 | 行動目標3つ以上+やらないこと3つ以上+判断基準1文+projects（月報=必須・週報=任意/方式2）+habit_check（weeklyのみ） | 行動目標、やらないこと、判断基準、projects、habit_check |
-| Step 5 | prompts/R5-step5-final-check.md | 最終確認 | 8項目チェック全通過 + ユーザー承認 | interview_data（全データ統合）→ output-formatter |
+| Step 5 | prompts/R5-step5-final-check.md | 最終確認 | 最終確認チェック全通過 + ユーザー承認 | interview_data（全データ統合）→ output-formatter |
 
 (パスは `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/` からの相対)
+
+**Step 5 の最終確認チェックの正本は `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md`**（「2.2 ドメインルール」節の最終確認チェック）。本ファイルは Step の遷移条件だけを持ち、検査項目とその件数は写さない。本ファイルの記述が R5 と矛盾した場合は R5 が勝つ。
 
 ### フェーズ間遷移
 
@@ -202,7 +204,7 @@ Phase 3 は親が順次進める対話フローである。本 coordinator が�
 | Step 2 → Step 3 | 根本原因が1つ特定されている（初回の場合はStep 2スキップ） |
 | Step 3 → Step 4 | 売上目標・成果目標が具体的な数値で確定 |
 | Step 4 → Step 5 | 行動目標3つ以上+やらないこと3つ以上+判断基準1文+projects確定（月報=必須・週報=任意/方式2）+habit_check確定（weeklyのみ） |
-| Step 5 → 完了 | 8項目チェック全通過 + ユーザー承認 |
+| Step 5 → 完了 | 最終確認チェック全通過 + ユーザー承認 |
 
 ### 自己評価
 

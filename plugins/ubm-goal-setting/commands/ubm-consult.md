@@ -32,7 +32,7 @@ owner: harness-maintainers
 ## 責務境界
 
 - 週報/月報/期報の**目標そのものを作りたい**相談は本コマンドの対象外。`run-ubm-goal-setting`（`/ubm-goal-setting`）へ誘導する。相談の帰結（次の一歩）を正式な目標に発展させたい場合も同様に目標設定側へ橋渡しする。
-- 相談記録は eval-log 配下の handoff（vault 外）に置き、vault へは書かない（`ubm-write-path-guard` の許可 2 パスに該当しないため）。
+- 相談記録は eval-log 配下の handoff（vault 外）に置き、vault へは書かない。この境界は `run-ubm-consult` の規則が守り、`ubm-write-path-guard` には頼らない（guard の許可範囲はこれより広い。詳細は同スキルの Gotchas）。
 
 ## 推奨タイミング
 

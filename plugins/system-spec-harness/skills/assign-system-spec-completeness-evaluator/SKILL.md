@@ -78,7 +78,7 @@ runtime_root_policy: host-skill-path
 
 | 観点 (aspect id) | ラベル | 評価主体 (component) | 一次根拠 |
 |---|---|---|---|
-| `matrix_coverage` | マトリクス網羅性 | `system-spec-matrix-auditor` (C07) + sub-input `system-spec-hearing-auditor` (C06) | `validate-coverage-matrix.py --require-complete` の exit0 + 意味層。C06 の 4 軸 (聞き漏れ/誘導/早期停止/トレーサビリティ) を網羅性・トレースの補助根拠に併せる |
+| `matrix_coverage` | マトリクス網羅性 | `system-spec-matrix-auditor` (C07) + sub-input `system-spec-hearing-auditor` (C06) | `validate-coverage-matrix.py --require-complete` の exit0 + 意味層。C06 のヒアリング監査 (R6 の監査 5 軸) を網羅性・トレースの補助根拠に併せる。判定への対応は `references/aspect-criteria.md` 1a (決定論実装 `aggregate-completeness.py --hearing ... --state ...`) |
 | `design_knowledge_reflection` | 設計知識反映 | C05 R1-score が自前評価 (**独立 auditor なし**) | 機械層=各章の設計知識ポインタ存在 (compile 注入) + 意味層=そのポインタ原則の確定セルへの具体適用 (存在確認だけで PASS にしない = Goodhart 防止) |
 | `doc_freshness` | 最新ドキュメント出典 | `system-spec-doc-freshness-auditor` (C08) | 二層監査 (形式=`validate-source-citation.py` / 内容鮮度=公式再照合) |
 
@@ -137,7 +137,7 @@ runtime_root_policy: host-skill-path
 正本責務は `prompts/R1-score.md` (スコアリング) と `prompts/R2-delegate.md` (監査 fork 集約)。要約:
 
 ### Step 1: 観点別監査を独立 context で集約 (R2-delegate)
-Task tool で監査 sub-agent (`system-spec-matrix-auditor` (C07) / `system-spec-hearing-auditor` (C06) / `system-spec-doc-freshness-auditor` (C08)) をそれぞれ fork する。C07 は matrix_coverage、C08 は doc_freshness の一次根拠。C06 はヒアリング品質を監査し matrix_coverage の sub-input として併せる。design_knowledge_reflection は独立 auditor を立てず Step 3 で C05 自身が評価する。
+Task tool で監査 sub-agent (`system-spec-matrix-auditor` (C07) / `system-spec-hearing-auditor` (C06) / `system-spec-doc-freshness-auditor` (C08)) をそれぞれ fork する。C07 は matrix_coverage、C08 は doc_freshness の一次根拠。C06 はヒアリング品質を監査し matrix_coverage の sub-input として併せる。C06 の verdict はそのまま使わず、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --hearing <C06 出力> --state <spec-state.json>` で sub-input の判定を導く (注記と閉じた検出は findings に残し gaps に入れない)。design_knowledge_reflection は独立 auditor を立てず Step 3 で C05 自身が評価する。
 
 ### Step 2: マトリクス網羅性の決定論ゲート
 ```bash

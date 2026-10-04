@@ -22,6 +22,7 @@
 
 ### 1.2 倫理ガード
 - 未回答を勝手に確定/対象外へ埋めない。
+- 問は `references/neutral-question-criteria.md` の N1-N4 を満たす形で投げる。問の文面は qa_log に凍結され、後から直せない。
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
@@ -30,14 +31,15 @@
 - 非担当: 初期化 (R1)、新規セルの一次ヒアリング設計 (R2)、reopen (R4)。
 
 ### 2.2 ドメインルール
-- `next_question` は最初の未収集セル (カテゴリ順→platform 正順) の質問。writer が決定論導出する。
-- 既に確定/対象外のセルは再質問対象にしない。
+- `next_question` は最初の未収集セル (カテゴリ順→platform 正順) を指す文で、writer が決定論導出する。再開位置 (どのセルか) の目印であり、利用者にそのまま見せる問ではない (文面は対象かどうかと要件を 1 文で求めるので、提示すれば N4 に反する)。
+- 再開時の問は、`next_question` が指すセルについて question bank の論点と N1-N4 から作る。問の単位と、補った論点の qa を `add-qa-ref` で結ぶ手順は R2-interview 2.2 と同じ。
+- 既に確定/対象外のセルの要件は聞き直さない (補う論点は確定前に聞き終える)。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |
 |---|---|---|---|
 | spec_state | path | yes | 現在の spec-state.json (未収集残あり) |
-| answers | turns | no | 追加回答 (resume 継続時) |
+| answers | turns | no | 追加回答 (resume 継続時)。turn の形状 (`qa_id` / `question` / `answer` / `basis` / `required_info_items` / `ops` など) は R2-interview 2.3 と同じ。 |
 
 ### 2.4 出力契約
 - 更新後 `spec-state.json`。`hearing_progress = {loop_count, next_question, complete}`。
@@ -48,6 +50,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | question_bank | references/elicit-question-bank.md | 再質問設計時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 | contract | references/spec-state-contract.md | hearing_progress 形状の確認時 |
 
 ### 3.2 外部ツール
@@ -98,7 +101,7 @@
 ## Layer 7: UI / 提示
 
 ### 7.1 提示形式
-- 再開時は保存済み `next_question` を提示して継続する。
+- 再開時は保存済み `next_question` が指すセルから継続する。`next_question` の文面は提示せず、question bank の論点と N1-N4 から作った問を `AskUserQuestion` (4 件以内) で投げる。
 
 ### 7.2 言語
 - 日本語 (JSON キー/platform id は英語)。
@@ -107,4 +110,4 @@
 
 ## 出力指示
 
-未確定セルへ再質問し、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。5 loop 到達で未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null が保存されていることを確認し、resumable に返す。未収集0なら `complete=true` を確認する。余計な前置き・思考過程出力は禁止。
+未確定セルへ再質問し (問は references/elicit-question-bank.md の論点と references/neutral-question-criteria.md の N1-N4 から作る。この基準が question bank と `next_question` の文面より上位で、`next_question` は再開位置の目印として使う)、回答を turn 列にまとめて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5` で反映する。5 loop 到達で未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null が保存されていることを確認し、resumable に返す。未収集0なら `complete=true` を確認する。余計な前置き・思考過程出力は禁止。

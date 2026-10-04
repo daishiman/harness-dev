@@ -40,5 +40,5 @@ C07 は **knowledge graph 必須 / harness artifact graph 任意** で、consume
 
 ## 非後退
 
-- 本契約は既存 capability A（目標設定 21 項目）/ B（knowledge-sync 6 カテゴリ）の成果物・knowledge 実データを変更しない（additive）。
+- 本契約は既存 capability A（目標設定 公式21ブロック）/ B（knowledge-sync 6 カテゴリ）の成果物・knowledge 実データを変更しない（additive）。
 - グラフ実ファイル（`knowledge-graph.json` / `harness-artifact-graph.json`）の**正は運用時再生成**（`validate-knowledge-graph.py`（C06）/ `index-harness-artifact-graph.py`（C05）の実行）であり、git には同梱しない（再生成可能な派生 snapshot のため .gitignore で誤コミットを遮断済み）。`knowledge/*.json` の変更後は再生成して鮮度を保つ。なお辺の永続ストア `knowledge-relations.json`（レビュー昇格の編集先=正本）は派生でないため追跡対象。

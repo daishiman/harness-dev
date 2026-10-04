@@ -1,7 +1,7 @@
 name: dev-graph
 description: macro feature graph、tracker projection、worktree lifecycleを構成するときに使うlocal-first plugin bundle。
 kind: plugin-composition
-version: 0.1.11
+version: 0.1.14
 owner: harness maintainers
 
 contract:
@@ -46,6 +46,7 @@ capabilities:
   - {kind: script, ref: scripts/render-graph-html.py, tier: core}
   - {kind: script, ref: scripts/schedule-graph.py, tier: core}
   - {kind: script, ref: scripts/register-package.py, tier: core}
+  - {kind: script, ref: scripts/build-graph-node.py, tier: core}
 
 internal_support:
   - ref: scripts/_common.py
@@ -91,6 +92,7 @@ dependencies:
   - {from: skills/run-dev-graph-init, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/validate-graph-schema.py, type: calls}
   - {from: skills/run-dev-graph-node, to: scripts/register-package.py, type: calls}
+  - {from: skills/run-dev-graph-node, to: scripts/build-graph-node.py, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/resolve-repo-context.py, type: calls}
   - {from: skills/run-dev-graph-system-spec, to: scripts/validate-graph-schema.py, type: calls}
   - {from: "hook:PreToolUse-Bash/guard-graph-schema", to: scripts/validate-graph-schema.py, type: calls}

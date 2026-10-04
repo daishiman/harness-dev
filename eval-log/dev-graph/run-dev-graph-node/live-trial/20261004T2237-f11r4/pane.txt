@@ -1,0 +1,490 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261004T2237-f11r4/task.md
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node" && ls -la && git status && git log --oneline | head)
+  ⎿  total 8
+     drwxr-xr-x@  4 dm  staff   128 Oct  4 21:43 .
+     drwxr-xr-x@ 54 dm  staff  1728 Oct  4 21:43 ..
+     … +5 lines (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-init)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && ls scripts skills/run-dev-graph-init skills/run-dev-graph-init/* skills/run-dev-graph-node skills/run-d…)
+  ⎿  skills/run-dev-graph-init/SKILL.md
+     skills/run-dev-graph-node/SKILL.md
+     … +58 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && cat skills/run-dev-graph-init/prompts/*.md; python3 scripts/resolve-repo-context.py --help; python3 scr…)
+  ⎿  # Prompt: R1-elicit
+
+     > C24でcaller repository rootとrepo-local configを解決し、symlink sourceとcontent authorityを分離する。保存先は質問しない
+     … +395 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node; python3 scripts/res…)
+  ⎿  {
+       "branch": "main",
+       "content_roots": {
+     … +208 lines (ctrl+o to expand)
+
+⏺ fixture 解決 OK。init は専用スクリプトがないため skill 手順どおり Write で config/graph/template を作ります。スキーマを確認します。
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && cat schemas/repo-config.schema.json | python3 -c "import json,sys;d=json.load(sys.stdin);print(json.dum…)
+  ⎿  {
+      "required": [
+       "schema_version",
+     … +203 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && cat skills/run-dev-graph-node/SKILL.md; python3 scripts/build-graph-node.py --help)
+  ⎿  ---
+     name: run-dev-graph-node
+     description: dev-graph artifact を正規 path へ atomic 追加・差分更新したいとき、system-dev-planner の exact 13 phase task package を all-or-none 登録したいときに使う。
+     … +206 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && grep -n "graph_revision\|def load_graph\|config.json\|\"nodes\"\|templates_root\|\.dev-graph/templates\…)
+  ⎿  11:# write-scope: caller repository content roots, the C24-resolved graph, and immutable receipts beside that graph
+     976:    receipts = contained(graph_path.parent / "receipts", root, must_exist=False)
+     983:        nodes = VGS.nodes_of(current) if isinstance(current, dict) and "nodes" in current else None
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && sed -n 950,1112p scripts/build-graph-node.py)
+  ⎿  def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], changed: set[str],
+                   staging: Path, root: Path, schema: dict[str, Any], contract: dict[str, Any]) -> list[dict[str, str]]:
+         def collect(nodes: list[dict[str, Any]], staged: set[str]) -> list[dict[str, str]]:
+     … +160 lines (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && python3 -c "
+      import json;d=json.load(open('schemas/repo-config.schema.json'));print(json.dumps(d['prope…)
+  ⎿  {"type": "object", "additionalProperties": false, "required": ["mode"], "description": "repo単位の実行トラッカー選択。既定・repoプロファイル別の選択基準はreferences/execution-tracker-contract.md
+     §1の決定表を正本
+     とする。", "properties": {"mode": {"type": "string", "enum": ["beads", "github", "both"]}, "beads": {"type": "object", "additionalProperties": false, "required": ["issue_prefix", "server_mode", "github_mirror"
+     , "board"], "properties": {"issue_prefix": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}, "server_mode": {"type": "boolean", "description": "bd を server モードで運用するか。strandkanban 0.5.x (旧称 beads-
+     … +12 lines (ctrl+o to expand)
+
+⏺ R1/R2 完了 (receipt と plan 確定)。R3/R4 として config・graph・6 root・templates を作成します。
+
+⏺ Bash(F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node; P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cd $F && for d in issues…)
+  ⎿  created config
+     21
+     templates-identical
+     … +9 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261004T2237-f11r4/poll-state.json (+1 -1)
+      1 -{"elapsed": 30, "stall": 0, "settle": 0, "prev": "tui|lt-node-f11r4:802 tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 45, "stall": 0, "settle": 0, "prev": "tui|lt-node-f11r4:1.9k tokens", "gate_ticks": 0, "warned80": 0}
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+⏺ Bash(F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node; P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cd $F
+      python3 -c "…)
+  ⎿  config schema OK
+     second-init planned_changes=0
+     no .claude (plugin hook source; no fallback write)
+     no absolute paths
+
+⏺ init 完了 (config schema OK、validate exit 0、二回目 planned changes 0)。次に run-dev-graph-node を起動します。
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/prompts && for f in R0-context R1-classify R2-preview R3-write R4-apply-template;…)
+  ⎿  === R0-context
+     ## Layer 2: ドメイン層
+     … +100 lines (ctrl+o to expand)
+
+⏺ プロンプト R0–R4 を読み終えました。add の入力形式を確認します。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph && grep -n "def _plan_add" -A80 scripts/build-graph-node.py | head -130)
+  ⎿  640:def _plan_add(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+     641-              composer: Composer, now: str) -> list[dict[str, Any]]:
+     642-    entries = payload.get("artifacts")
+     … +78 lines (ctrl+o to expand)
+
+⏺ R1/R2 の分類 (全件 confidence≥0.80・margin≥0.15 で auto) を入力 JSON に整形します。
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node/.dev-graph/cache/inputs/add-5kinds.json)
+  ⎿  Wrote 70 lines to ../../eval-log/dev-graph/live-trial-fixtures/f11r4-node/.dev-graph/cache/inputs/add-5kinds.json
+       1 {
+       2   "artifacts": [
+       3     {
+       4       "artifact_kind": "issue",
+       5       "slug": "login-timeout",
+       7       "project_id": "f11r4",
+       8       "domain": "auth",
+       9       "tracker_binding": "none",
+      10       "classification": {"reason": "現在の挙動と期待する挙動の差分を報告する不具合票", "candidates": [{"artifact_kind": "issue", "confidence": 0.92}, {"artifact_kind": "task", "confidence": 0.05}], "decis
+         ion": "auto"},
+     … +64 lines (ctrl+o to expand)
+
+⏺ Bash(F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node; P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 $P/scripts/build…)
+  ⎿  {'status': 'preview', 'code': None, 'error': None, 'graph_revision_before': 0, 'planned_count': 5, 'node_ids': ['issue-login-timeout', 'task-add-auth-retry', 'spec-session-policy', 'arch-auth-service', 'doc-aut
+     h-runbook']}
+     null
+
+⏺ R2 preview OK (revision 0、5 件)。expected_graph_revision: 0 を付けて apply します。
+
+⏺ Bash(F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/f11r4-node; P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cd $F && python3 - <<'PY…)
+  ⎿  exit=0
+     {'status': 'applied', 'code': None, 'graph_revision_after': 1, 'applied_count': 5, 'receipt_path': '.dev-graph/state/receipts/node-r000001-add.json', 'node_ids': ['issue-login-timeout', 'task-add-auth-retry', '
+     spec-session-policy', 'arch-auth-service', 'doc-auth-runbook']}
+     … +16 lines (ctrl+o to expand)
+
+⏺ 5 kind 登録完了 (revision 1)。本題 1: 更新前スナップショットを取り、issue に 1 section 追記する update を投入します。
+
+⏺ Bash(mkdir -p .dev-graph/cache/snap-r1 && cp issues/login-timeout.md tasks/add-auth-retry.md specs/session-policy.md architecture/auth-service.md docs/auth-runbook.m…)
+  ⎿  50:# 概要
+     54:## 背景と問題
+     58:## 現在の挙動
+     … +8 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/inputs/update-issue-append-preview.json (+1 -0)
+      1 +{"updates": [{"graph_node_id": "issue-login-timeout", "append_sections": {"暫定回避策": "再ログインで解消するまでの間、認証 API のタイムアウトを 10 秒に短縮して即時エラー表示させる。"}}]}
+  ⎿  Created .dev-graph/cache/inputs/update-issue-append.json (+11 -0)
+       1 +{
+       2 +  "expected_graph_revision": 1,
+       3 +  "updates": [
+       4 +    {
+       5 +      "graph_node_id": "issue-login-timeout",
+       6 +      "append_sections": {
+       7 +        "暫定回避策": "再ログインで解消するまでの間、認証 API のタイムアウトを 10 秒に短縮して即時エラー表示させる。"
+       8 +      }
+       9 +    }
+      10 +  ]
+      11 +}
+  ⎿  Created .dev-graph/cache/snap-r1/add-auth-retry.md (+122 -0)
+        1 +---
+        2 +graph_node_id: "task-add-auth-retry"
+        3 +artifact_kind: "task"
+        4 +artifact_subtypes: []
+        5 +title: "認証 API 呼出しに再試行を追加する"
+        6 +project_id: "f11r4"
+        7 +domain: "auth"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "tasks/add-auth-retry.md"
+       16 +template_id: "task"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-10-04T13:39:25.033023Z"
+       23 +updated_at: "2026-10-04T13:39:25.033023Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.9
+       37 +classification_reason: "実装対象と受入条件を持つ作業単位"
+       38 +classification_candidates: [{"artifact_kind": "task", "candidate_path": "tasks/add-auth-retry.md", "confidence": 0.9}, {"artifact_kind": "issue", "candidate_path": "issues/add-auth-retry.md", "confidenc
+          +e": 0.06}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 82 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/snap-r1/auth-runbook.md (+85 -0)
+       1 +---
+       2 +graph_node_id: "doc-auth-runbook"
+       3 +artifact_kind: "document"
+       4 +artifact_subtypes: []
+       5 +title: "認証障害対応手順"
+       6 +project_id: "f11r4"
+       7 +domain: "auth"
+       8 +status: "draft"
+       9 +priority: null
+      10 +start_date: null
+      11 +target_date: null
+      12 +iteration: null
+      13 +owners: []
+      14 +tags: []
+      15 +file_path: "docs/auth-runbook.md"
+      16 +template_id: "document"
+      17 +template_version: "1.0.0"
+      18 +confirmation_status: "draft"
+      19 +evaluation_status: "pending"
+      20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22 +created_at: "2026-10-04T13:39:25.033023Z"
+      23 +updated_at: "2026-10-04T13:39:25.033023Z"
+      24 +depends_on: []
+      25 +related_nodes: []
+      26 +resource_scope: []
+      27 +purpose: null
+      28 +goal: null
+      29 +scope_in: []
+      30 +scope_out: []
+      31 +acceptance: []
+      32 +architecture_refs: []
+      33 +parent_feature: null
+      34 +feature_package_id: null
+      35 +phase_ref: null
+      36 +classification_confidence: 0.89
+      37 +classification_reason: "運用者向けの手順と参照情報をまとめた文書"
+      38 +classification_candidates: [{"artifact_kind": "document", "candidate_path": "docs/auth-runbook.md", "confidence": 0.89}, {"artifact_kind": "specification", "candidate_path": "specs/auth-runbook.md", "con
+         +fidence": 0.06}]
+      39 +tracker_binding: "none"
+      40 +beads_linkage: null
+     … 45 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/snap-r1/auth-service.md (+153 -0)
+        1 +---
+        2 +graph_node_id: "arch-auth-service"
+        3 +artifact_kind: "architecture"
+        4 +artifact_subtypes: ["backend"]
+        5 +title: "認証サービス構成"
+        6 +project_id: "f11r4"
+        7 +domain: "auth"
+        8 +status: "draft"
+        9 +priority: null
+       10 +start_date: null
+       11 +target_date: null
+       12 +iteration: null
+       13 +owners: []
+       14 +tags: []
+       15 +file_path: "architecture/auth-service.md"
+       16 +template_id: "architecture"
+       17 +template_version: "1.0.0"
+       18 +confirmation_status: "draft"
+       19 +evaluation_status: "pending"
+       20 +confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+       21 +source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+       22 +created_at: "2026-10-04T13:39:25.033023Z"
+       23 +updated_at: "2026-10-04T13:39:25.033023Z"
+       24 +depends_on: []
+       25 +related_nodes: []
+       26 +resource_scope: []
+       27 +purpose: null
+       28 +goal: null
+       29 +scope_in: []
+       30 +scope_out: []
+       31 +acceptance: []
+       32 +architecture_refs: []
+       33 +parent_feature: null
+       34 +feature_package_id: null
+       35 +phase_ref: null
+       36 +classification_confidence: 0.9
+       37 +classification_reason: "コンポーネント境界と設計判断を記述する構成文書"
+       38 +classification_candidates: [{"artifact_kind": "architecture", "candidate_path": "architecture/auth-service.md", "confidence": 0.9}, {"artifact_kind": "specification", "candidate_path": "specs/auth-servi
+          +ce.md", "confidence": 0.07}]
+       39 +tracker_binding: "none"
+       40 +beads_linkage: null
+     … 113 more lines (ctrl+o to expand)
+  ⎿  … 3 more files changed
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; F=$PWD
+      python3 $P/scripts/build-graph-node.py update --repo-root $F --input .dev-graph/cache/inputs/update-i…)
+  ⎿  exit=0
+     {'status': 'applied', 'code': None, 'error': None, 'graph_revision_before': 1, 'graph_revision_after': 2, 'applied_count': 1, 'receipt_path': '.dev-graph/state/receipts/node-r000002-update.json', 'node_ids': ['
+     issue-login-timeout']}
+     … +30 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/update-result.json (+94 -0)
+       1 +{
+       2 +  "applied_count": 1,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "api_contracts_added": [],
+       6 +      "file_path": "issues/login-timeout.md",
+       7 +      "graph_node_id": "issue-login-timeout",
+       8 +      "implementation_readiness": "incomplete",
+       9 +      "macro_fields_patched": [],
+      10 +      "missing_sections": [
+      11 +        "背景と問題",
+      12 +        "再現手順またはユースケース",
+      13 +        "影響と優先度",
+      14 +        "スコープ",
+      15 +        "関連グラフ",
+      16 +        "受入条件",
+      17 +        "検証証跡"
+      18 +      ],
+      19 +      "node_fields_patched": [],
+      20 +      "readiness_fill": [
+      21 +        {
+      22 +          "item": "背景と問題",
+      23 +          "key": "背景と問題",
+      24 +          "via": "set_sections"
+      25 +        },
+      26 +        {
+      27 +          "item": "再現手順またはユースケース",
+      28 +          "key": "再現手順またはユースケース",
+      29 +          "via": "set_sections"
+      30 +        },
+      31 +        {
+      32 +          "item": "影響と優先度",
+      33 +          "key": "影響と優先度",
+      34 +          "via": "set_sections"
+      35 +        },
+      36 +        {
+      37 +          "item": "スコープ",
+      38 +          "key": "スコープ",
+      39 +          "via": "set_sections"
+      40 +        },
+     … 54 more lines (ctrl+o to expand)
+  ⎿  Updated .dev-graph/state/graph.json (+3 -3)
+      1  {
+      2 -  "graph_revision": 1,
+      2 +  "graph_revision": 2,
+      3    "nodes": [
+      4      {
+      5        "acceptance": [],
+     ...
+      52        "goal": null,
+      53        "graph_node_id": "issue-login-timeout",
+      54        "implementation_readiness": {
+      55 -        "checked_at": "2026-10-04T13:39:25.033023Z",
+      55 +        "checked_at": "2026-10-04T13:39:42.975228Z",
+      56          "missing_sections": [
+      57            "背景と問題",
+      58            "再現手順またはユースケース",
+     ...
+      93        "template_version": "1.0.0",
+      94        "title": "ログイン画面がタイムアウトする",
+      95        "tracker_binding": "none",
+      96 -      "updated_at": "2026-10-04T13:39:25.033023Z"
+      96 +      "updated_at": "2026-10-04T13:39:42.975228Z"
+      97      },
+      98      {
+      99        "acceptance": [],
+  ⎿  Created .dev-graph/state/receipts/node-r000002-update.json (+91 -0)
+       1 +{
+       2 +  "applied_count": 1,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "api_contracts_added": [],
+       6 +      "file_path": "issues/login-timeout.md",
+       7 +      "graph_node_id": "issue-login-timeout",
+       8 +      "implementation_readiness": "incomplete",
+       9 +      "macro_fields_patched": [],
+      10 +      "missing_sections": [
+      11 +        "背景と問題",
+      12 +        "再現手順またはユースケース",
+      13 +        "影響と優先度",
+      14 +        "スコープ",
+      15 +        "関連グラフ",
+      16 +        "受入条件",
+      17 +        "検証証跡"
+      18 +      ],
+      19 +      "node_fields_patched": [],
+      20 +      "readiness_fill": [
+      21 +        {
+      22 +          "item": "背景と問題",
+      23 +          "key": "背景と問題",
+      24 +          "via": "set_sections"
+      25 +        },
+      26 +        {
+      27 +          "item": "再現手順またはユースケース",
+      28 +          "key": "再現手順またはユースケース",
+      29 +          "via": "set_sections"
+      30 +        },
+      31 +        {
+      32 +          "item": "影響と優先度",
+      33 +          "key": "影響と優先度",
+      34 +          "via": "set_sections"
+      35 +        },
+      36 +        {
+      37 +          "item": "スコープ",
+      38 +          "key": "スコープ",
+      39 +          "via": "set_sections"
+      40 +        },
+     … 51 more lines (ctrl+o to expand)
+  ⎿  Updated issues/login-timeout.md (+6 -2)
+      20  confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
+      21  source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-10-04T13:39:25.033023Z"
+      23 -updated_at: "2026-10-04T13:39:25.033023Z"
+      23 +updated_at: "2026-10-04T13:39:42.975228Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: []
+     ...
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46  completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
+      47 -implementation_readiness: {"checked_at": "2026-10-04T13:39:25.033023Z", "missing_sections": ["背景と問題", "再現手順またはユースケース", "影響と優先度", "スコープ", "関連グラフ", "受入条件", "検証証跡"],
+         - "status": "incomplete"}
+      47 +implementation_readiness: {"checked_at": "2026-10-04T13:39:42.975228Z", "missing_sections": ["背景と問題", "再現手順またはユースケース", "影響と優先度", "スコープ", "関連グラフ", "受入条件", "検証証跡"],
+         + "status": "incomplete"}
+      48  ---
+      49
+      50  # 概要
+     ...
+       94  - コマンド/テスト: <how-to-verify>
+       95  - 証跡 path: <path-or-url>
+       96
+       97 +## 暫定回避策
+       98 +
+       99 +再ログインで解消するまでの間、認証 API のタイムアウトを 10 秒に短縮して即時エラー表示させる。
+      100 +
+
+⏺ 本題 1 成立 (revision 1→2、receipt r000002、id/path 不変、本文は追記 section のみ増加、他 4 kind 無変更)。本題 2: feature を通常入力で C02 へ投入します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; F=$PWD
+      cp .dev-graph/state/graph.json .dev-graph/cache/graph-before-feature.json…)
+  ⎿  {
+       "applied_count": 0,
+       "code": "feature_requires_c14_macro_contract",
+     … +15 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/feature-reject.json (+9 -0)
+      1 +{
+      2 +  "applied_count": 0,
+      3 +  "code": "feature_requires_c14_macro_contract",
+      4 +  "error": "feature nodes are declared by the C14 macro contract (add with artifact_kind=feature and macro{...}); R1/R2 routing never yields them",
+      5 +  "findings": [],
+      6 +  "status": "rejected",
+      7 +  "valid": false,
+      8 +  "write_count": 0
+      9 +}
+  ⎿  Created .dev-graph/cache/inputs/add-feature-direct.json (+15 -0)
+       1 +{
+       2 +  "expected_graph_revision": 2,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "artifact_kind": "feature",
+       6 +      "slug": "sso-login",
+       7 +      "title": "SSO ログイン機能",
+       8 +      "project_id": "f11r4",
+       9 +      "domain": "auth",
+      10 +      "tracker_binding": "none",
+      11 +      "classification": {"reason": "利用者価値単位の機能記述", "candidates": [{"artifact_kind": "feature", "confidence": 0.9}, {"artifact_kind": "specification", "confidence": 0.05}], "decision": "auto"}
+         +,
+      12 +      "sections": {"目的": "外部 IdP による SSO ログインを提供する。"}
+      13 +    }
+      14 +  ]
+      15 +}
+  ⎿  … 1 more file changed
+
+⏺ zsh で exit code が取れなかったので、拒否の exit code と validate の exit code を取り直します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; F=$PWD
+      python3 $P/scripts/build-graph-node.py add --repo-root $F --input .dev-graph/cache/inputs/add-feature…)
+  ⎿  feature add exit=1
+     graph-unchanged
+     .gitkeep
+     validate exit=0
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-node/live-trial/20261004T2237-f11r4/out/status.json)
+  ⎿  Wrote 1 line to ../../run-dev-graph-node/live-trial/20261004T2237-f11r4/out/status.json
+      1 {"status":"PASS","scenario":"C02-OUT1-positive-mixed-artifacts"}
+
+⏺ DONE: PASS
+
+✻ Churned for 2m 9s · done 10:40 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle) · PR #83
+

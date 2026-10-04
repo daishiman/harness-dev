@@ -208,7 +208,7 @@ def test_contract_tables_present(specfm_mod):
     assert set(specfm_mod.COMPONENT_KINDS) == {"skill", "sub-agent", "slash-command", "hook", "script"}
     assert "lint-agent-prompt-section" in specfm_mod.P0_LINT_BY_KIND["sub-agent"]
     assert set(specfm_mod.PLUGIN_META_REQUIRED_DICTS) == {
-        "manifest", "marketplace", "ci", "governance", "pkg_contract", "ssot_dedup", "feedback_deploy"
+        "manifest", "marketplace", "ci", "governance", "pkg_contract", "ssot_dedup", "feedback_deploy", "install"
     }
 
 
@@ -317,10 +317,10 @@ def test_validate_component_skill_placement_script_needs_scripts_dir(specfm_mod)
 
 
 def test_plugin_meta_core_conditional_partition(specfm_mod):
-    """core/conditional が従来 7 キーを重複なく分割する (feedback_deploy は core 昇格・和集合不変)。"""
+    """core/conditional が plugin 階層キーを重複なく分割する (feedback_deploy・install は core)。"""
     core = set(specfm_mod.PLUGIN_META_CORE_DICTS)
     cond = set(specfm_mod.PLUGIN_META_CONDITIONAL_DICTS)
-    assert core == {"manifest", "marketplace", "ci", "feedback_deploy"}
+    assert core == {"manifest", "marketplace", "ci", "feedback_deploy", "install"}
     assert cond == {"pkg_contract", "governance", "ssot_dedup"}
     assert core.isdisjoint(cond)
     assert core | cond == set(specfm_mod.PLUGIN_META_REQUIRED_DICTS)
@@ -557,3 +557,35 @@ def test_validate_inventory_component_loop_needs_criteria(specfm_mod):
     comp = _skill_component(specfm_mod)
     del comp["feedback_contract"]
     assert any("criteria 必須" in e for e in specfm_mod.validate_inventory_component(comp))
+
+
+def test_install_defaults_derive_from_constants_and_are_fresh(specfm_mod):
+    first = specfm_mod.default_install_contract()
+    second = specfm_mod.default_install_contract()
+    assert first["platforms"] == list(specfm_mod.INSTALL_PLATFORMS)
+    assert first["registries"] == [specfm_mod.INSTALL_REGISTRY_BY_PLATFORM[p] for p in specfm_mod.INSTALL_PLATFORMS]
+    assert first["codex_manifest"] == specfm_mod.INSTALL_CODEX_MANIFEST
+    assert first["release"] == specfm_mod.INSTALL_RELEASE_ORDER
+    rendered = specfm_mod.parse_frontmatter(specfm_mod.render_minimal_index())
+    assert rendered["plugin_meta"]["install"] == second
+    first["platforms"].clear()
+    first["verify"]["live"] = False
+    assert second["platforms"] and second["verify"]["live"] is True
+
+
+def test_p13_skeleton_cli_propagates_opt_out(tmp_path, skeleton, specfm_mod, capsys):
+    import json
+    inst = specfm_mod.default_install_contract()
+    inst["platforms"] = ["claude"]
+    inst["excluded_platforms"] = {"codex": "runtime not needed"}
+    inst["verify"] = {"isolated": True, "live": False, "live_skip_reason": "CI"}
+    contract = tmp_path / "install.json"
+    contract.write_text(json.dumps(inst), encoding="utf-8")
+    assert skeleton.main(["--phase", "13", "--plugin-slug", "demo", "--install-contract", str(contract)]) == 0
+    text = capsys.readouterr().out
+    for clause in specfm_mod.install_release_obligations(inst, "demo").values():
+        assert "- [ ] " + clause in text
+    assert "--platform claude" in text and "--platform both" not in text
+    del inst["verify"]["live_skip_reason"]
+    contract.write_text(json.dumps(inst), encoding="utf-8")
+    assert skeleton.main(["--phase", "13", "--install-contract", str(contract)]) == 2

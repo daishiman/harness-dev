@@ -575,8 +575,12 @@ class Validator:
         """
         # 期間語は種別ごとに1語へ固定する（成果・売上側と同じ理由）。`今(週|月|期)` の
         # 緩いマッチだと、週報ファイル内の期アンカー見出しを行動目標として掴みうる。
+        # 月報の提出用セクション（`## 【今月の行動目標（提出）】`）はグループ見出しを
+        # 持たない1行1行動の規定なので、所属の検査（C4/C5）と件数（S3）から外す。
+        # 成果・売上側の抽出が `】` 直前一致で `（提出）` を拾わないのと揃える。
         def pred(line: str) -> bool:
             return ("行動目標" in line and self._period_word() in line
+                    and "（提出）" not in line
                     and not re.search(r"差分|実績", line))
 
         groups: list[tuple[str, int | None, list[list[str]]]] = [("", None, [])]

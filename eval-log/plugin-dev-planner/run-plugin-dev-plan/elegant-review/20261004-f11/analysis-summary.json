@@ -1,0 +1,142 @@
+{
+  "phase": "phase2-complete",
+  "recorded_at": "2026-10-04T04:02:20.345647+00:00",
+  "coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped": [],
+    "total": 30
+  },
+  "findings": [
+    {
+      "id": "LOG-01",
+      "severity": "high",
+      "condition_signal": "omission",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:256",
+      "description": "installの値域契約はindexで検査するが、consumerが実行するP13 checklistへの到達を検査しない。sample-planのrelease/strict/isolated/liveの4 checkboxをメモリ上で除去してもgate exit0、phase構造検査もPASS。derive結果から4 install claimが消える。したがって両platform既定という宣言があってもbuildがinstallを省略可能。",
+      "recommendation": "install契約から必要なrelease obligationを1か所で導出し、P13/task-graphへ決定論射影または必須IDで突合する。platform opt-out/live opt-outをその契約に従って反映し、欠落をfail-closedで検出する。consumerに同じ語彙を手書き複製しない。"
+    },
+    {
+      "id": "LOG-02",
+      "severity": "medium",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md:372",
+      "description": "SKILL.mdのGotcha(372)と同期手順(391)はmake syncを要求するが、現行Makefileとsync-native-surfaces.pyのowner契約はenabled plugin scopeを守るnative-surfaces-apply/check。旧指示はscope外全pluginへのprojectionを促す。",
+      "recommendation": "2箇所を現行ownerのnative-surfaces手順に置換し、local user installとproject discovery projectionを区別する。"
+    },
+    {
+      "id": "LOG-03",
+      "severity": "medium",
+      "condition_signal": "contradiction",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:37",
+      "description": "marketplace契約表はroot .claude-plugin/marketplace.jsonを個人/チーム共有の唯一経路と宣言する一方、同文書57行は非配布pluginを含む全pluginのharness-localとcodex-repoをinstall経路にする。45行の非配布=marketplace非登録も公開側という限定がなく、SKILL.md158行も同様。新旧説明が同じ契約内で衝突する。",
+      "recommendation": "公開distribution registry、Claude local install registry、Codex repo install registryを明示し、非配布は公開marketplace/bundlesだけ非登録と限定する。fleet全件を公開側に追加する修正は不要。"
+    },
+    {
+      "id": "LOG-04",
+      "severity": "low",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333",
+      "description": "INSTALL_PLATFORMS/INSTALL_CODEX_MANIFEST/INSTALL_REGISTRY_BY_PLATFORM/INSTALL_RELEASE_ORDERを値域SSOTと宣言しているが、render_minimal_index内のdefaultは同じ文字列を手書き重複。platformやregistry変更時に生成既定と検証器が離れる。",
+      "recommendation": "default_install_contract()等の小さなfactoryで既存INSTALL定数から新規dictを返し、skeleton生成とrelease obligation生成が共用する。文書は生成例として維持し、別の値域SSOTにしない。"
+    },
+    {
+      "id": "META-001",
+      "severity": "high",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17",
+      "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+      "recommendation": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。"
+    },
+    {
+      "id": "META-002",
+      "severity": "low",
+      "condition_signal": "smell",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333",
+      "description": "INSTALL_* が値域のSSOTと宣言される一方、同じファイルの index skeleton は platforms/codex_manifest/registries/release を文字列で再保持している。R3 prose・golden index・契約表にも同じ値を保持し、二重保持台帳に INSTALL_* とその parity がない。現時点の値は一致するが次の変更で生成器とvalidatorがずれる余地がある。",
+      "recommendation": "specfm.default_install_contract() を小さな純関数として設け、INSTALL_* から skeleton の install 値を導出する。R3はこの生成器を正本として参照し、golden default と generator の parityを既存 test_check_spec_gates に加える。cross-plugin importや新しい汎用フレームワークは不要。"
+    },
+    {
+      "id": "META-003",
+      "severity": "high",
+      "condition_signal": "dependency_break",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:55",
+      "description": "plannerは理由付きcodex除外を許可し、check_install にClaude-only契約を渡すと空errorsで合格する。しかし契約表・R3の隔離/実環境コマンドは --platform なしで常に両製品を選ぶ。さらに install-local-plugins.py は platformsを見る前にload_catalogを呼び、常にCodex catalogと全Codex manifestを要求する。codexを除外した計画をそのまま履行すると除外製品の導入か入力不足エラーになる。",
+      "recommendation": "最小整合は「platform除外はinstall対象からの除外であり、repository packageは両製品へ投影する」を明記し、計画の実行argvに選択platformを伝える。完全にCodex packageも省くopt-outを維持するなら installer.load_catalog を選択platform-awareにする必要がある。今回の全plugin両製品対応という目的では前者を推奨。"
+    },
+    {
+      "id": "SYS-01",
+      "severity": "high",
+      "condition_signal": "dependency_consistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+      "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+      "recommendation": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。"
+    },
+    {
+      "id": "SYS-02",
+      "severity": "medium",
+      "condition_signal": "no_contradictions",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+      "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+      "recommendation": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。"
+    },
+    {
+      "id": "SYS-03",
+      "severity": "medium",
+      "condition_signal": "consistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+      "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+      "recommendation": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。"
+    }
+  ],
+  "implementation_groups": {
+    "planner": [
+      "LOG-01",
+      "LOG-04",
+      "META-002",
+      "META-003"
+    ],
+    "release-install": [
+      "SYS-01",
+      "SYS-02",
+      "SYS-03"
+    ],
+    "docs": [
+      "LOG-02",
+      "LOG-03",
+      "META-001",
+      "META-003"
+    ]
+  },
+  "max_improvement_cycles": 3
+}

@@ -61,7 +61,7 @@
       "actor": "goal-reviewer",
       "condition": "review mode or existing goal is present",
       "input": "existing goal file and collected context",
-      "output": "8-point review summary",
+      "output": "13-item review summary (basics 2 + camp alignment 3 + relationship building 3 + three-layer separation 5)",
       "gate": "review summary is present or condition is not applicable",
       "resourceIds": ["../../agents/goal-reviewer.md"]
     },
@@ -91,21 +91,33 @@
       "actor": "output-formatter",
       "input": "draft goal-setting content",
       "output": "Markdown file candidate in the 21-item hybrid structure",
-      "gate": "15 content quality checks are satisfied before deterministic validation",
+      "gate": "every item of the output-formatter Layer 4 quality checklist is satisfied before deterministic validation (the item count lives only in that checklist and is not restated here)",
       "resourceIds": ["../../agents/output-formatter.md", "references/output-formats.md"]
+    },
+    {
+      "id": "phase4b-submission",
+      "title": "Submission section (monthly only)",
+      "dependsOn": ["phase4-format"],
+      "parallel": false,
+      "actor": "output-formatter",
+      "condition": "goal_type == monthly",
+      "input": "formatted monthly management section",
+      "output": "the same single monthly file opens with the submission section (all 21 official blocks, headings suffixed with （提出）) followed by the management section; no separate submission file is created",
+      "gate": "submission headings carry （提出）; submission action goals are one action per line without group headings; due dates equal the values back-calculated in the management section; or condition is not applicable",
+      "resourceIds": ["../../agents/output-formatter.md", "references/output-formats.md", "references/data-contract.md"]
     },
     {
       "id": "phase5-validate",
       "title": "Deterministic validation",
-      "dependsOn": ["phase4-format"],
+      "dependsOn": ["phase4-format", "phase4b-submission"],
       "parallel": false,
-      "actor": "validate-goal-output.py",
-      "input": "Markdown file candidate and goal_type",
-      "output": "PASS/FAIL validation report",
-      "gate": "validate-goal-output.py exits 0 within 3 formatter repair attempts",
-      "command": "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type>",
-      "fatal_exit_codes": [1, 2],
-      "resourceIds": ["scripts/validate-goal-output.py", "references/data-contract.md"]
+      "actor": "output-formatter + scripts",
+      "input": "Markdown file candidate and goal_type; the quarterly / monthly / weekly files when they exist",
+      "output": "the raw rc of each script and the arguments used",
+      "gate": "validate-goal-output.py exits 0 and validate-goal-linkage.py exits 0 (rc=3 means nothing was checked and is a failure); when the quarterly and monthly files both exist, validate-cross-level.py also exits 0 (rc=3 is a failure; pass --weekly only when the weekly file exists); all within 3 formatter repair attempts",
+      "command": "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type> && python3 scripts/validate-goal-linkage.py --file <candidate> && { [ -z \"<quarterly>\" ] || [ -z \"<monthly>\" ] || python3 scripts/validate-cross-level.py --quarterly <quarterly> --monthly <monthly> [--weekly <weekly>]; }",
+      "fatal_exit_codes": [1, 2, 3],
+      "resourceIds": ["scripts/validate-goal-output.py", "scripts/validate-goal-linkage.py", "scripts/validate-cross-level.py", "references/data-contract.md"]
     },
     {
       "id": "phase6-daily-update",

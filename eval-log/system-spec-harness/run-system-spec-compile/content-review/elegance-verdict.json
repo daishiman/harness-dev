@@ -2,20 +2,20 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-compile",
-    "skill_md_sha256": "4f03a9ba2459c922cb05dbe3bd0fd0dc2e7a74a8036c5ed0b05e824480f3de21"
+    "skill_md_sha256": "1a3b2e2023eeec0bd905f23dce272cb686ec328bf5a5112a6f62f3113064f09b"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
-  "iterations": 1,
+  "reviewer": "stale-verdict-refresh focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T10:55:11Z",
+  "iterations": 2,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 3,
+    "inconsistency": 3,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,18 +24,24 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "前回の medium 指摘は解消している。この指摘は、出所 (provenance) が関わる移行で漏れの片付けが rc=1 で止まる回帰だった。scripts/compile-spec-doc.py の spec_derived_lines は、描いた要素を行に割ってから strip するようになった。旧書式の付帯行 (出所をフェンスに入れず括弧書きへ埋め込む行) も、_qa_meta_line(entry, fence_structured=False) で derived に入る。この旧書式の字面が origin/main (旧 compile) の _render_qa_entry の付帯行と一致することを、両版を読み合わせて確かめた。scratchpad では、テストの monkeypatch による模擬ではなく origin/main の実物の compile で章を作り、HEAD 版と作業ツリー版にかけた。前回の 2 経路はどちらも rc=0・漏れ 0・2 回目も固定点になった。2 経路とは、(1) 出所が構造を持たない 2 行の qa が参照から外れた場合、(2) 出所そのものに `###` の行がある場合である。同じ方法で、複数行の訂正 note と承認 note から漏れた見出しも rc=0 で片付くことを確かめた。",
+      "_render_qa_entry から _qa_meta_line を切り出したリファクタは、描画の挙動を変えていない。付帯行の字面も、出所をフェンスへ出す条件も、変更前と同じである。fixture の期待出力と比べるテストを含め、既存のテストは通る。章を描く側と、漏れを見分ける側 (spec_derived_lines) が同じ関数を共有している。そのため、付帯行の書式を将来変えても、判定側は書き直さずに追随する。「生成器と判定器が同じ描画関数を使う」この型は、他の skill に横展開してよい。",
+      "前回の low 指摘 (逐語と同じ字面の人の節が引き継がれずに止まるのに、エラーが原因を示さない) は、実質的に解消している。Rule 8 は、括弧書きで「逐語と同じ字面の見出しは人の節としても引き継げない」と、実装 (_MergeContext.skip) どおりの挙動を書くようになった。write_docset の CompileError は、衝突した見出しを名指しし、逐語に無い見出しへ改めるよう促す。scratchpad の再現では、このエラー文が出て、章ファイルが 1 byte も変わらないことを確かめた (逐語の答に `### 補足` がある spec で、章に人が `### 補足` と本文を書いた場合)。",
+      "追加された回帰テスト 2 件は、前回指摘の 2 経路を CLI (main) を通して検査している。先に fixture が漏れた章になっていることを assert で確かめ、そのあとで結論 (終了コード 0・漏れ 0) を見る形である。この前提 assert の型を使うと、描き方が変わって fixture が黙って無効になる事故を防げるので、他のスキルにも広げてよい。",
+      "frontmatter の *_refs と本文が名指す参照を確かめた。prompts 3 件、references 2 件、scripts 3 件、schemas 2 件、tests 2 件、ref-system-design-knowledge/references、hooks/guard-confirmed-chapter-overwrite.py で、すべて実在する。IN1 の CLI 引数 (--matrix / --targets / --references) は、2 つの validator の argparse と一致する。plugins/system-spec-harness 配下のテストは 394 件すべて通った (バイトコードとキャッシュは書いていない)。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / 漏れ] 漏れの片付けが rc=1 で止まる経路が、まだ 1 つ狭く残っている。spec_derived_lines が導出可能と認めるのは、逐語の行と _render_qa_entry が描く行だけである。render_confirmed_content が描く「- 裏付け質疑 `<id>` — 本章の上掲に既出」の行は、今回の再生成 (fresh) に同じ行があるときしか認められない。scratchpad の再現では、HEAD 版は rc=0 で片付き、作業ツリー版は rc=1 (CompileError) で止まった。再現の手順は次のとおり。origin/main の実物の compile で、漏れる答を持つ qa を 2 番目の platform の主根拠にし、その直後に 1 番目の platform で既出の裏付け質疑を置いた章を作った。漏れた `### U9 …` の直下に、この既出の行が並ぶ。次に、その platform の qa_refs から既出の質疑を外して再 compile した。既出の行が再生成で描かれ続ける対照条件では、作業ツリー版も rc=0 になる。Rule 8 は導ける行を「逐語の行と、compile が各 qa を描く行」と定めており、既出の行は qa の参照を描く行として spec-state から導けるので、文言と実装がずれている。同じ型の行は他にもある。参照先が qa_log / approval_log に無いときの「参照先が…に存在しない」の行で、こちらは異常状態に限られる。エラー文のヒントも、この経路では原因を取り違える。「人の節なら逐語に無い見出しへ改めること」とだけ示すので、漏れの残骸を改名して人の節として固定してしまう対処へ誘いうる。今回の修正で生じた回帰ではなく、前回 (iteration 1) の絞り込みから残る取りこぼしである。low とした理由: 3 つの条件が同時に要る (漏れた qa が 2 番目以降の platform で全文描画される、その直後が既出の裏付け質疑である、再生成でその既出の行が章のどこにも描かれなくなる)。また fail-closed なので本文は失われず、エラーは見出しを名指しする。前回 medium の 2 経路は、Rule 6 が列挙する出所で、既存の移行テストと同じ形で起きた。こちらはそれより明確に狭い。直し方: spec_derived_lines に、qa_log の全 id について既出の行を加え、セルと承認の参照から導ける「存在しない」の行も加える。Rule 8 の括弧書きを「compile が qa・承認とその参照を描く行」に揃える。エラー文のヒントに「旧 compile の漏れなら、その見出しの節を消せば通る」も加える。回帰テストを 1 件足す。",
+      "[low / 不整合] 前回 low 指摘の文言だけが残っている。Rule 8 の冒頭は「人の節の引き継ぎと消失判定の対象から外す。ただし外すのは…に限る」と書いている。この「限る」は引き継ぎにも係るので、直下に spec-state に無い行を持つ見出しは引き継ぎの対象に戻る、と読める。ところが同じ Rule の括弧書きは「人の節としても引き継げない」と言い、実装 (_MergeContext.skip は字面だけで外す) も括弧書きのほうに一致する。括弧書きを読めば実際の挙動は分かるので low とする。直し方: 冒頭を「引き継ぎの境界からは字面だけで外す。消失判定から外すのは…に限る」と、2 つの判定に分けて書く。",
+      "[low / 漏れ] 前回から未解消。黙って消える経路が、まだ 1 つ狭く残っている。人の節の本文の全行が、derived (spec-state 全体の逐語と、全 qa の描画行) か今回の再生成のどこかの行と字面で一致すると、漏れと判定される。その場合は rc=0 のまま見出しごと消える。scratchpad で再現した例: qa の答に `### 補足` がある spec で、章に人が `### 補足` を書き、その本文を別の qa の答の 1 行の引用だけにすると、rc=0 で節が消える。今回 derived に旧書式の付帯行と全 qa の描画行が加わり、一致の母集合はわずかに広がったが、狭さは変わらない。人が逐語を引用する節に限られるので low とする。閉じ方は次のどちらか。(a) 見出しの後ろの行が、同じ逐語の連続する行と一致するときだけ漏れとみなす。(b) verbatim と derived を、章が描く qa・承認・適用記述に絞る。",
+      "[low / 不整合] 前回から未解消。also_categories は prompts/R2-render.md の Layer 4 にだけ書かれ、SKILL.md (Purpose の入力記述・Key Rules) には無い。逆に Key Rules 6-8 は SKILL.md にだけあり、SKILL.md が手順の正本とする R2-render の共通ポリシー層には無い。直し方: Key Rules 3 に also_categories の一文を足し、R2-render の Layer 4 から Key Rules 6-8 を参照する。",
+      "[low / 漏れ] 前回から未解消。Key Rules 6 が保護する範囲 (qa の問・答・出所、承認 note、章の適用記述) は、規則の題「逐語は章の構造を壊さない」より狭い。保護されない逐語が 3 種類ある。To-Be/Delta 節の requirements_foundation.goals / concrete_intents の text と、decisions の question は、箇条書きへそのまま入る。対象外セルの reason は、改行とパイプを潰されずに状態表のセルへ入る。これらが複数行で行頭に `###` を含めば、同じ経路で章の見出しになる。直し方: _verbatim を通すか、改行とパイプを潰す。",
+      "[low / 不整合 (既存)] 前回から未解消。references/chapter-template.md の frontmatter 例には serves_goals が無い。本文の節も 4 節のままで、確定内容 (質疑録)・承認・To-Be/Delta の節と、also_categories による複数章への掲載が書かれていない。SKILL.md の確定マーカー仕様と食い違う。このブランチより前からある drift で、ファイル冒頭で「実体は render_chapter が生成する」と断っているため low に留める。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+27 行) は残差 0 で、共通 injection (artifact_delivery frontmatter / feedback_contract.activation_state / Pre-choice・Post-choice section) だけで完全に説明できる。既存本文への書き換えは無く、Purpose & Output Contract・workflow・feedback_contract.criteria は変更前と同一である。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。"
+  "notes": "builder とは別 context の独立 evaluator が、stale-verdict-refresh として content-review-protocol §incremental の focused combined review を 1 回だけ行った (iteration 2)。(a) 矛盾 (b) 漏れ (c) 記述規約整合 (d) 依存関係整合 (e) rubric の high severity を同時に判定した。30 思考法は実施しておらず、実施したとも申告しない。読んだもの: 前回 (iteration 1・FAIL) の elegance / rubric verdict と negative_feedback 6 件、SKILL.md 全文 (sha256 1a3b2e20…f09b)、`git diff -- plugins/system-spec-harness` のうち対象 skill とテストの未 commit 差分全体。差分の内訳は、SKILL.md の Rule 8、scripts/compile-spec-doc.py の _verbatim_texts / spec_derived_lines / _qa_meta_line / _render_qa_entry / _headings_with_underived_body / _lost_headings / write_docset、tests/test_qa_supersession.py の回帰テスト 3 件である。あわせて、同じ script の _MergeContext・merge_preserving・_refresh_preserved_block・render_confirmed_content・render_approvals・render_to_be_delta と、origin/main (旧 compile) 版の _render_qa_entry / _render_corrections / render_approvals / _render_design_application を、旧書式の照合用に読んだ。さらに prompts/R2-render.md、references/chapter-template.md、content-review-verdict の schema を読んだ。確かめたこと: builder の申告 (_qa_meta_line の切り出し、行への分割、旧書式の付帯行の追加、エラー文のヒント、回帰テスト 2 件、Rule 8 の文言更新) が実際の差分と一致すること。参照 13 件と hooks の guard が実在すること。IN1 の CLI 引数が validator と一致すること。テスト 394 件が通ること。scratchpad (リポジトリの外。書いたのは scratchpad だけ) では、origin/main の実物の compile で作った章を HEAD 版と作業ツリー版に同じ入力でかけ、7 条件を比べた: 前回の 2 経路、複数行の訂正 note、承認 note、既出の行が再生成で消える経路とその対照、逐語と衝突する人の節、逐語を引用する人の節。判定理由: 前回の medium (出所が関わる移行の rc=1 回帰) は、実物の旧 compile で作った章でも rc=0・漏れ 0・固定点まで片付くことを確かめ、解消と判断した。前回の low のうち、エラー文が原因を示さない点は実質解消し、文言の係りだけが low として残る。残りの low 3 件 (黙って消える狭い経路、置き場所の非対称、Rule 6 の保護範囲) と既存の chapter-template の drift は未解消のまま残した。新たに見つけたのは、既出の行が再生成で消える狭い経路で rc=1 に止まる取りこぼし 1 件である。fail-closed で本文は失われず、3 つの条件が同時に要るため low とした。今回の修正 (iteration 2) で生じた新しい矛盾や回帰は見つからなかった。high / medium は 0 件で low だけが残るので、verdict は PASS、next_action=none とし、low は negative_feedback に残した。点数は出さない。本 verdict の PASS の射程は、design claim (静的な設計の adequacy) に限る。実行挙動の受け入れには、live-trial 系 criterion の実走の証拠が別途要る。"
 }

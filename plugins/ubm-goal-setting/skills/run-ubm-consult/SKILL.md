@@ -71,7 +71,7 @@ feedback_contract:
       verify_by: test
     - id: OUT1
       loop_scope: outer
-      text: 相談セッション transcript で考え方提示・引き出し質問・ユーザー自身の言葉での解決策言語化・ゴール指向の次の一歩の 4 要素を検出する。
+      text: 相談セッション transcript で考え方提示・引き出し質問・ユーザー自身の言葉での解決策言語化・ゴール指向の次の一歩（reflection lane では再開条件）の 4 要素を検出する。
       verify_by: test
     - id: OUT2
       loop_scope: outer
@@ -107,6 +107,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-ubm-consult
 
+月間目標・目標設定以外も含む相談に、**具体解を処方せず「考え方（思考フレーム）」を提示するコーチング型 orchestrator**。引き出し質問でユーザーの文脈・制約・価値観を外在化し、解決策の言語化はユーザー主導とし、AI は構造化と検証を担う。目標設定以外の相談にもゴール指向の締めを適用し、締め方（行動化の action lane か整理・内省の reflection lane か）はユーザーが選ぶ。既存 capability A（`run-ubm-goal-setting` Phase3 対話原則「愛情ある厳しさ」・引き出し型）と knowledge 基盤（原則/マインドセット/事例）、C06/C07 の read-only グラフ consult を非後退（additive）で再利用する。
+
 ## Runtime root contract
 
 - `runtime_root_policy: host-skill-path` を適用する。
@@ -115,13 +117,11 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 
-月間目標・目標設定以外も含む相談に、**具体解を処方せず「考え方（思考フレーム）」を提示するコーチング型 orchestrator**。引き出し質問でユーザーの文脈・制約・価値観を外在化し、解決策の言語化はユーザー主導とし、AI は構造化と検証を担う。目標設定以外の相談にもゴール指向（現状→ゴール→ギャップ→次の一歩）を適用する。既存 capability A（`run-ubm-goal-setting` Phase3 対話原則「愛情ある厳しさ」・引き出し型）と knowledge 基盤（原則/マインドセット/事例）、C06/C07 の read-only グラフ consult を非後退（additive）で再利用する。
-
 ## Purpose & Output Contract
 
-- **ゴール**: 相談に対し考え方/思考フレームを選択肢として提示し、ユーザー自身の言葉で言語化された解決策と、現状→ゴール→ギャップ→次の一歩の行動計画へ帰結した状態。`feedback_contract` の IN1（非処方スタンス）/ OUT1（transcript 4要素）を満たす。
-- **出力契約**: 相談セッション記録（相談種別・引き出したユーザー文脈/制約/価値観/既試行・提示した考え方/思考フレーム（選択肢＋適用視点・出典 ID 付き）・ユーザー自身の言葉で言語化した解決策・現状→ゴール→ギャップ→次の一歩の行動計画）。**処方的な単一解は出力しない**。記録の形式と置き場は `references/session-record-format.md` が正本。
-- **境界**: knowledge graph / harness artifact graph は read-only consult（C06/C07 経由・書込なし）。相談記録は eval-log 配下の handoff（vault 外・`ubm-write-path-guard` の対象外）へ書く。既存 capability A（21項目）/ B（6カテゴリ）の契約を破壊しない（非後退・additive）。**目標設定そのものの生成は `run-ubm-goal-setting` へ委譲する**。
+- **ゴール**: 相談に対し考え方/思考フレームを選択肢として提示し、ユーザー自身の言葉で言語化された解決策と、ユーザーが選んだ収束 lane（action: 現状→ゴール→ギャップ→次の一歩 / reflection: 見えてきたこと→まだ決めないこと→再開条件）へ帰結した状態。`feedback_contract` の IN1（非処方スタンス）/ OUT1（transcript 4要素）を満たす。
+- **出力契約**: 相談セッション記録（相談種別・引き出したユーザー文脈/制約/価値観/既試行・提示した考え方/思考フレーム（選択肢＋適用視点・出典 ID 付き）・ユーザー自身の言葉で言語化した解決策・ユーザーが選んだ収束 lane の締め（action: 現状→ゴール→ギャップ→次の一歩 / reflection: 見えてきたこと→まだ決めないこと→再開条件））。**処方的な単一解は出力しない**。記録の形式と置き場は `references/session-record-format.md` が正本。
+- **境界**: knowledge graph / harness artifact graph は read-only consult（C06/C07 経由・書込なし）。相談記録は eval-log 配下の handoff（vault 外・`ubm-write-path-guard` の対象外）へ書く。既存 capability A（公式21ブロック）/ B（6カテゴリ）の契約を破壊しない（非後退・additive）。**目標設定そのものの生成は `run-ubm-goal-setting` へ委譲する**。
 - **正本**: 思考フレーム カタログ=`references/consult-frames.md`、セッション記録形式と置き場=`references/session-record-format.md`。
 
 ## End-to-End Flow
@@ -133,7 +133,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 | R1-intake-issue | 相談を受理し相談種別を判定・本質課題の言語化を支援する（具体解を出さない）。目標設定相談なら `run-ubm-goal-setting` へ誘導 | 本 skill（`prompts/R1-intake-issue.md`） |
 | R2-elicit | 引き出し質問でユーザーの文脈・制約・価値観・既試行を外在化する | 本 skill（`prompts/R2-elicit.md`） |
 | R3-frame-consult | 考え方/思考フレームを選定・提示する（`consult-harness-artifact-graph.py` + `router.json` デュアルパス + 既存 knowledge の原則/マインドセット/事例）。処方でなく選択肢＋適用視点 | 本 skill（`prompts/R3-frame-consult.md`）＋ script |
-| R4-cocreate-converge | 共創・収束。ユーザー自身の言葉で解決策を言語化させ、現状→ゴール→ギャップ→次の一歩の行動計画へ落とし記録する | 本 skill（`prompts/R4-cocreate-converge.md`） |
+| R4-cocreate-converge | 共創・収束。ユーザー自身の言葉で解決策を言語化させ、ユーザーが選んだ収束 lane（action / reflection）で締め、保存同意に従って記録する | 本 skill（`prompts/R4-cocreate-converge.md`） |
 
 ## スタンス不変条件
 
@@ -151,7 +151,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ### ゴール (Goal)
 
-相談種別が特定され、ユーザー文脈が引き出しで外在化され、考え方/思考フレームが**選択肢＋適用視点**（出典付き）で提示され、ユーザー自身の言葉で解決策が言語化され、現状→ゴール→ギャップ→次の一歩の行動計画へ帰結・記録された状態。
+相談種別が特定され、ユーザー文脈が引き出しで外在化され、考え方/思考フレームが**選択肢＋適用視点**（出典付き）で提示され、ユーザー自身の言葉で解決策が言語化され、ユーザーが選んだ収束 lane（action: 現状→ゴール→ギャップ→次の一歩 / reflection: 見えてきたこと→まだ決めないこと→再開条件）へ帰結し、保存同意 true なら記録され、false なら ephemeral 検証の後に破棄された状態。
 
 ### 目的・背景 (Why)
 
@@ -162,7 +162,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - [ ] 相談種別が判定され、本質課題がユーザーの言葉で1文に言語化されている（R1）。目標設定相談は `run-ubm-goal-setting` へ誘導した。
 - [ ] collaboration_mode に必要な文脈だけが外在化され、停止・要約要求が尊重されている（R2）。
 - [ ] 考え方/思考フレームが**複数の選択肢＋適用視点**として出典 ID（PR-xxx / MS-xxx / 事例）付きで提示され、具体解の処方をしていない（R3・IN1）。
-- [ ] ユーザー自身の言葉で解決策が言語化され、現状→ゴール→ギャップ→次の一歩の行動計画へ帰結し記録された（R4・OUT1）。
+- [ ] ユーザー自身の言葉で解決策が言語化され、ユーザーが選んだ収束 lane（action: 現状→ゴール→ギャップ→次の一歩 / reflection: 見えてきたこと→まだ決めないこと→再開条件）へ帰結した。保存同意 true なら記録し、false なら ephemeral 検証の後に破棄した（R4・OUT1）。
 - [ ] persistence_consent=false でも ephemeral record を組み立て `validate-consult-session.py --ephemeral`（consent 要求のみ免除・他検査は同一）を exit 0 で通し、通過後に破棄した（sessions/ 配下へ書き込まない。一時検証ファイルは scratch に置く）。
 
 ### ゴールシークループ
@@ -172,7 +172,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 保存同意時だけ session-id 配下の progress/intermediate/handoff を書く。非同意時は会話内状態だけで進め、ファイルを作らない。完了 record は `references/session-record-format.md` に従い C11 で検証する。
 - ループ本体は user-facing 親 context で実行する。SubAgent を使う場合も knowledge 検索・非処方チェックだけを委譲し、質問と回答の往復は親が所有する。
 - **inner ループ (IN1)**: 各周回で「具体解を処方していないか（スタンス不変条件1）」「考え方/フレームを1件以上提示したか」を自己検証し、逸脱を検出したら R3 を再実行する。
-- **outer ループ (OUT1)**: 相談セッション transcript に考え方提示・引き出し質問・ユーザー自身の言葉での解決策言語化・ゴール指向の次の一歩の4要素が揃うまで反復し、受入テストで確認する。
+- **outer ループ (OUT1)**: 相談セッション transcript に考え方提示・引き出し質問・ユーザー自身の言葉での解決策言語化・ゴール指向の次の一歩（reflection lane では再開条件）の4要素が揃うまで反復し、受入テストで確認する。
 - `max_loops` 到達時は PASS 扱いせず、残チェックを `open_issues` に残して human review へ差し戻す。
 
 ## Key Rules
@@ -181,14 +181,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **協働契約を最初に選ぶ**: R1 で `question-led`（問い中心）/ `framework-led`（考え方の説明中心）/ `hypothesis-example`（例を答えでなく検討材料として少量提示）/ `reflect-only`（整理だけ）の希望を確認する。AI がモードを一方的に決めない。
 - **安全分岐を先に行う**: 自傷・他害・緊急危機は通常コーチングを止め、地域の緊急窓口や信頼できる人への即時連絡を優先する。医療・法律・金融など高 stakes は一般的な考え方の整理に限定し、個別判断は有資格者へ委ねる。
 - **保存は同意制**: セッション記録は既定では保存しない。ユーザーが保存に同意した場合だけ session-id 別の handoff を書き、秘匿情報を要約・redact する。
-- **引き出しファースト**: 情報提供の前後どちらでも、各ターンに引き出し質問を最低1つ置く。深掘りは1項目につき2回まで（追い詰めない）。
+- **引き出しファースト**: 情報提供の前後どちらでも、共同判断が残るターンには引き出し質問を最低1つ置く（停止・要約のみ・安全分岐・最終確認のターンでは強制しない。スタンス不変条件 2）。深掘りは1項目につき2回まで（追い詰めない）。
 - **解決策はユーザーの言葉で**: 収束時、解決策は必ずユーザーの発話を引用・構造化して確定する。AI が代わりに解を書き下さない。長文回答は「つまり○○ということですね？」と1文へ要約確認する。
-- **ゴール指向の締め**: 相談種別を問わず現状→ゴール→ギャップ→次の一歩で締める。次の一歩は「誰に・何を・いつまで・何件」を含む物理的行動にする。
+- **ゴール指向の締め**: 相談種別を問わず、ユーザーが選んだ収束 lane で締める（スタンス不変条件 4）。action lane は現状→ゴール→ギャップ→次の一歩で締め、次の一歩は「誰に・何を・いつまで・何件」を含む物理的行動にする。reflection lane は見えてきたこと→まだ決めないこと→再開条件で締め、次の一歩を引き出し続けない。
 - **read-only consult**: `consult-harness-artifact-graph.py`（C07）と knowledge/*.json は参照のみ。起動条件と fallback は `../../references/graph-consult-fallback-contract.md` が正本（knowledge graph があれば consult / harness graph は存在時のみ併用・不在なら knowledge 単独 / knowledge graph 不在は skip / exit2 破損は WARN skip → `router.json` デュアルパス。zero-hit は正常）。
 
 ## Gotchas
 
-- **相談記録は vault へ書かない**: `ubm-write-path-guard` は vault 内書込を `05_Project/UBM/目標設定/` と `02_Configs/Templates/Daily.md` のみ許可する。相談記録はそれらに該当しないため、正本は eval-log 配下の handoff（vault 外）に置く。vault へ相談メモを残したいときはユーザー自身の操作に委ね、本 skill は書き込まない（`references/session-record-format.md` 参照）。
+- **相談記録は vault へ書かない**: 相談記録の正本は eval-log 配下の handoff（vault 外）に置き、vault へは一切書かない。この制約は本 skill の規則（`references/session-record-format.md`）が守るもので、`ubm-write-path-guard` には頼らない — guard の許可範囲（正本は plugin 直下 `hooks/ubm-write-path-guard.py` の `ALLOWED_PREFIXES` / `ALLOWED_EXACT`）は `05_Project/` 全体などを含み、vault への相談メモの混入を止めないためである。vault へ相談メモを残したいときはユーザー自身の操作に委ねる。
 - **固定ファイルを直接上書きしない**: 保存同意時は `sessions/<session_id>/handoff.json` を原子的に作成し、`latest.json` は最新 session へのポインタとして更新する。並行相談を同じ progress/intermediate/handoff へ混在させない。
 - **グラフは運用時生成**: `knowledge/knowledge-graph.json`（C06）と `knowledge/harness-artifact-graph.json`（C05）は本 build では作らない。R3 の consult は harness graph だけ不在なら `--harness-artifact-graph` を省いて knowledge 単独 consult に落とし、knowledge graph も不在のときだけ `router.json` → `knowledge/*.json` の Read デュアルパスへ skip する（AND 前提にしない。正本＝`../../references/graph-consult-fallback-contract.md`）。
 - **目標設定との棲み分け**: 「今月の目標を作りたい」は本 skill の対象外。R1 で判定したら `run-ubm-goal-setting` を案内して終える（責務境界）。
@@ -197,7 +197,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Additional Resources
 
-- **prompts**: `prompts/R{1..4}-*.md` — 責務単位 7 層プロンプト正本（verify-completeness.py で 7 層+l5-contract 検証）。
+- **prompts**: `prompts/R{1..4}-*.md` — 責務単位 7 層プロンプト正本（prompt-creator plugin の `skills/run-prompt-creator-7layer/scripts/verify-completeness.py` で 7 層+l5-contract 検証。本 plugin には同梱しない）。
 - **agents**: `phase3-coordinator`（対話原則「愛情ある厳しさ」引き出し型の前例。R3/R4 の翻訳3ステップと回答パターン対応を参照）。plugin 直下 `agents/`。
 - **scripts**: `../../scripts/consult-harness-artifact-graph.py`（C07・read-only グラフ consult）/ `../../scripts/validate-consult-session.py`（role/source/同意/分岐を検証する R4 completion gate）。C06 は C07 の upstream producer であり、本 skill から直接呼ばない。
 - **references**: `references/consult-frames.md`（思考フレーム カタログ正本）/ `references/session-record-format.md`（OUT1 4要素の記録形式＋置き場契約）/ `references/resource-map.yaml`（Progressive Disclosure 索引）。
