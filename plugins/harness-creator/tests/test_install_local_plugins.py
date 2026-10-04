@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import hashlib
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -80,6 +81,11 @@ def _write_runtime_manifest(root: Path, platform: str, name: str, version="1.0.0
     )
 
 
+def _write_runtime_copy(repo: Path, root: Path, name: str) -> None:
+    """Mirror the source plugin the way a CLI copy install delivers it."""
+    shutil.copytree(repo / "plugins" / name, root, dirs_exist_ok=True)
+
+
 def _write_hook(root: Path, command: str = "true") -> str:
     path = root / "hooks" / "hooks.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -149,7 +155,7 @@ def test_install_both_registers_absolute_roots_and_user_scope(monkeypatch, tmp_p
     codex_cache = tmp_path / "codex-cache"
     for root in (claude_cache, codex_cache):
         for name in ("alpha", "beta"):
-            _write_runtime_manifest(root / name, "claude" if root == claude_cache else "codex", name)
+            _write_runtime_copy(repo, root / name, name)
     _fake_cli_identities(monkeypatch)
     calls: list[list[str]] = []
     state = {"claude_installed": False, "codex_installed": False}
@@ -254,7 +260,7 @@ def test_check_mode_is_read_only_and_accepts_single_platform(monkeypatch, tmp_pa
     repo = tmp_path / "repo"
     _write_catalogs(repo, ("alpha",))
     cache = tmp_path / "cache" / "alpha"
-    _write_runtime_manifest(cache, "claude", "alpha")
+    _write_runtime_copy(repo, cache, "alpha")
     _fake_cli_identities(monkeypatch)
     calls: list[list[str]] = []
 
@@ -295,6 +301,76 @@ def test_check_mode_is_read_only_and_accepts_single_platform(monkeypatch, tmp_pa
 
     assert report["status"] == "verified"
     assert not any("add" in command or "install" in command for command in calls)
+
+
+def test_same_version_runtime_with_older_content_is_stale(monkeypatch, tmp_path):
+    repo = tmp_path / "repo"
+    _write_catalogs(repo, ("alpha",))
+    cache = tmp_path / "cache" / "alpha"
+    _write_runtime_copy(repo, cache, "alpha")
+    (repo / "plugins" / "alpha" / "references" / "rules.md").write_text("new", encoding="utf-8")
+    (cache / "references" / "rules.md").write_text("old", encoding="utf-8")
+    _fake_cli_identities(monkeypatch)
+
+    def fake_execute(command, *, env, expect_json):
+        bare = _bare_command(command)
+        if bare[:4] == ["claude", "plugin", "validate", "--strict"]:
+            return "valid"
+        if bare == ["claude", "plugin", "marketplace", "list", "--json"]:
+            return [{
+                "name": "harness-local",
+                "source": "directory",
+                "path": str((repo / "marketplaces" / "local").resolve()),
+            }]
+        if bare == ["claude", "plugin", "list", "--json"]:
+            return [{
+                "id": "alpha@harness-local",
+                "scope": "user",
+                "enabled": True,
+                "installPath": str(cache.resolve()),
+                "version": "1.0.0",
+            }]
+        raise AssertionError(command)
+
+    monkeypatch.setattr(mod, "_execute", fake_execute)
+    report = mod.install_local_plugins(
+        repo_root=repo,
+        platforms=("claude",),
+        requested=("alpha",),
+        check=True,
+        claude_config_dir=None,
+        codex_home=None,
+    )
+
+    plugin = report["plugins"][0]
+    assert report["verified"] is False
+    assert report["status"] == "stale_runtime"
+    assert "alpha@harness-local" in report["next_action"]
+    assert "build-plugin-release.py" in report["next_action"]
+    assert plugin["verification_status"] == "stale_runtime"
+    assert plugin["activation"]["runtime"] == "stale"
+    assert plugin["source_digest"] != plugin["runtime_digest"]
+
+
+def test_tree_digest_ignores_cli_markers_and_symlink_spelling(tmp_path):
+    source = tmp_path / "source"
+    (source / "fw" / "Versions" / "7").mkdir(parents=True)
+    (source / "fw" / "Versions" / "7" / "lib").write_text("bin", encoding="utf-8")
+    (source / "fw" / "Versions" / "Current").symlink_to("7")
+    (source / "fw" / "lib").symlink_to("Versions/Current/lib")
+    (source / "outside").symlink_to("/usr/bin/env")
+    runtime = tmp_path / "runtime"
+    shutil.copytree(source, runtime, symlinks=True)
+    (runtime / "fw" / "lib").unlink()
+    (runtime / "fw" / "lib").symlink_to("Versions/7/lib")
+    (runtime / ".in_use").mkdir()
+    (runtime / ".orphaned_at").write_text("1759000000", encoding="utf-8")
+
+    assert mod._tree_digest(source) == mod._tree_digest(runtime)
+
+    (runtime / "outside").unlink()
+    (runtime / "outside").symlink_to("/bin/sh")
+    assert mod._tree_digest(source) != mod._tree_digest(runtime)
 
 
 def test_claude_nonempty_list_errors_are_pending_activation_not_verified(

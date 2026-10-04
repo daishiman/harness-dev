@@ -24,7 +24,7 @@ C11 hook (guard-confirmed-chapter-overwrite) はこのマーカー + spec-state.
 
 入力形状 (plugin 共有契約・apply-spec-transition.py / validate-coverage-matrix.py と一致):
   spec-state.json: categories / platforms / matrix / qa_log / approval_log /
-                   category_aggregate / targets(target_id[, category])
+                   category_aggregate / targets(target_id[, category[, also_categories]])
   fetched-references.json: references[{target_id, source_url, official_host,
                    official_publisher, version|last_updated, retrieved_at, latest_checked_at, summary}]
 
@@ -261,20 +261,30 @@ def chapter_serves_goals(spec: dict, cat_id: str) -> list[str]:
 # --------------------------------------------------------------------------- #
 # 出典記録 (fetched-references) の章割り当て                                    #
 # --------------------------------------------------------------------------- #
-def _target_category_map(spec: dict) -> dict[str, str]:
-    """targets[{target_id, category}] から target_id -> category を作る (category 任意)。"""
-    out: dict[str, str] = {}
+def _target_category_map(spec: dict) -> dict[str, list[str]]:
+    """targets から target_id -> 出典を載せる章の列を作る (先頭が主たる category)。
+
+    category を持たない target は含めない (その参照は未割当として index へ回る)。
+    also_categories は category を持つ target にだけ意味を持ち、主章の後ろに宣言順で並ぶ。
+    """
+    out: dict[str, list[str]] = {}
     for t in spec.get("targets", []) or []:
-        if isinstance(t, dict) and t.get("target_id") and t.get("category"):
-            out[t["target_id"]] = t["category"]
+        if not (isinstance(t, dict) and t.get("target_id") and t.get("category")):
+            continue
+        cats = [t["category"]]
+        for c in t.get("also_categories") or []:
+            if isinstance(c, str) and c and c not in cats:
+                cats.append(c)
+        out[t["target_id"]] = cats
     return out
 
 
 def references_by_category(spec: dict, refs_data: dict) -> tuple[dict[str, list[dict]], list[dict]]:
     """fetched-references を章 (カテゴリ) 別に振り分ける。
 
-    target の category が解決できる参照は該当章へ、解決できない参照は
-    未割当 (index の全体出典一覧へ) として返す。戻り値は (章別 dict, 未割当 list)。
+    target の category が解決できる参照は該当章へ、also_categories で宣言した章にも
+    同じ参照を載せる。解決できない参照は未割当 (index の全体出典一覧へ) として返す。
+    戻り値は (章別 dict, 未割当 list)。
     """
     cat_map = _target_category_map(spec)
     by_cat: dict[str, list[dict]] = {}
@@ -285,9 +295,10 @@ def references_by_category(spec: dict, refs_data: dict) -> tuple[dict[str, list[
     for ref in refs:
         if not isinstance(ref, dict) or not ref.get("target_id"):
             continue
-        cat = cat_map.get(ref["target_id"])
-        if cat:
-            by_cat.setdefault(cat, []).append(ref)
+        cats = cat_map.get(ref["target_id"])
+        if cats:
+            for cat in cats:
+                by_cat.setdefault(cat, []).append(ref)
         else:
             unassigned.append(ref)
     return by_cat, unassigned
@@ -468,7 +479,7 @@ def _render_design_application(spec: dict | None, cat_id: str) -> list[str]:
         meta.append(f"根拠の性質: {BASIS_LABELS.get(record['basis'], record['basis'])}")
     if record.get("recorded_at"):
         meta.append(f"記録時刻: {record['recorded_at']}")
-    body = heading + [str(record["text"]).strip(), ""]
+    body = heading + [*_verbatim(str(record["text"]).strip()), ""]
     if meta:
         body.extend([f"- ({' / '.join(meta)})", ""])
     return body
@@ -671,6 +682,132 @@ BASIS_LABELS = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# 逐語の差し込み — spec-state の文字列を章の構造にしない                        #
+# --------------------------------------------------------------------------- #
+# qa の問・答や承認 note は利用者に見せた文面の逐語で、markdown の見出し (`### U1 …`)
+# やフェンスを含むことがある。そのまま章へ流し込むと、逐語の一部が章の見出しになり、
+# 保存則 (_split_blocks → _preserved_blocks) がそれを「章に蓄積された節」と取り違えて
+# 永久に引き継ぐ。逐語を章の構造から切り離すのが本節の役割。
+_STRUCTURAL_LINE = re.compile(
+    r"^ {0,3}(?:#{1,6}(?:[ \t]|$)|`{3,}|~{3,}|=+[ \t]*$|-+[ \t]*$)"
+)
+_HEADING_LINE = re.compile(r"^ {0,3}(#{1,6})[ \t]+\S")
+_FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}|~{3,})")
+
+
+def _has_structure(value: str) -> bool:
+    """章の構造として解釈される行 (ATX 見出し・フェンス・setext の下線) を含むか。"""
+    return any(_STRUCTURAL_LINE.match(line) for line in value.splitlines())
+
+
+def _fence(value: str) -> list[str]:
+    """value を 1 つのフェンスに逐語で閉じ込める。
+
+    フェンス長は本文中のバッククォート連の最長 + 1 (最低 3)。本文にフェンス行があっても
+    外側のフェンスが先に閉じない。
+    """
+    runs = [len(m) for m in re.findall(r"`+", value)]
+    fence = "`" * max(3, (max(runs) + 1) if runs else 3)
+    return [f"{fence}text", *value.splitlines(), fence]
+
+
+def _verbatim(value: str, *, force_fence: bool = False) -> list[str]:
+    """spec-state の逐語を章本文へ置く。構造を持つ (または強制された) ときだけフェンスで囲む。
+
+    構造を持たない逐語は従来どおりそのまま置く (太字・箇条書きの表示を保ち、既存章の差分を
+    最小にする)。行頭の `#` をエスケープする案は採らない: 逐語が変わり、利用者に見せた文面と
+    章の文面が一致しなくなる。
+    """
+    if force_fence or _has_structure(value):
+        return _fence(value)
+    return [value]
+
+
+def _fence_mask(lines: list[str]) -> list[bool]:
+    """各行がフェンス (開閉行を含む) の内側かを返す。
+
+    閉じていないフェンスはフェンスとみなさない。CommonMark では文書末まで続くが、
+    旧 compile が逐語を生で流し込んだ既存章には閉じないフェンスが残りうる。それを
+    文書末までの 1 ブロックと読むと後続の節がすべて見えなくなり、保存則の判定が崩れる。
+    本 compile が出すフェンスは常に閉じている。
+    """
+    mask = [False] * len(lines)
+    i = 0
+    while i < len(lines):
+        m = _FENCE_OPEN.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        mark = m.group(1)
+        close = re.compile(r"^ {0,3}" + re.escape(mark[0]) + "{" + str(len(mark)) + r",}[ \t]*$")
+        j = next((k for k in range(i + 1, len(lines)) if close.match(lines[k])), None)
+        if j is None:
+            i += 1
+            continue
+        for k in range(i, j + 1):
+            mask[k] = True
+        i = j + 1
+    return mask
+
+
+def _heading_spans(
+    text: str, level: str, skip: frozenset[str] = frozenset()
+) -> list[tuple[int, int, str]]:
+    """フェンスの外にある見出し行を (行頭 offset, 行末 offset, strip 済み見出し) で返す。
+
+    level は `##` / `###` / `####` のいずれか (その階層ちょうどに一致する)。
+    skip に含まれる見出し (qa の逐語から漏れた見出し) は境界として数えない。
+    """
+    pattern = re.compile(rf"^{level}\s+\S")
+    out: list[tuple[int, int, str]] = []
+    offset = 0
+    lines = text.split("\n")
+    for line, fenced in zip(lines, _fence_mask(lines)):
+        if not fenced and pattern.match(line) and line.strip() not in skip:
+            out.append((offset, offset + len(line), line.strip()))
+        offset += len(line) + 1
+    return out
+
+
+def _all_heading_lines(text: str, *, outside_fence_only: bool) -> list[str]:
+    """## 〜 ##### の見出し行 (strip 済み) を出現順に返す。"""
+    lines = text.split("\n")
+    mask = _fence_mask(lines) if outside_fence_only else [False] * len(lines)
+    pattern = re.compile(r"^#{2,5}\s+.+?\s*$")
+    return [line.strip() for line, fenced in zip(lines, mask) if not fenced and pattern.match(line)]
+
+
+def verbatim_headings(spec: dict | None) -> frozenset[str]:
+    """spec-state の逐語 (qa の問・答・出所、承認 note、章の適用記述) に行として現れる見出し。
+
+    旧 compile は逐語を生で流し込んでいたため、これらの行が既存章の見出しとして残って
+    いる。章に人が書き足した節と区別する根拠は「spec-state の逐語の中にその行がある」
+    という機械的に確かめられる事実だけで、見出しの字面や位置からは推測しない。
+    """
+    if not isinstance(spec, dict):
+        return frozenset()
+    texts: list[str] = []
+    for entry in spec.get("qa_log", []) or []:
+        if isinstance(entry, dict):
+            texts += [entry[k] for k in ("question", "answer", "provenance") if isinstance(entry.get(k), str)]
+            for c in entry.get("corrections") or []:
+                if isinstance(c, dict) and isinstance(c.get("note"), str):
+                    texts.append(c["note"])
+    for entry in spec.get("approval_log", []) or []:
+        if isinstance(entry, dict) and isinstance(entry.get("note"), str):
+            texts.append(entry["note"])
+    for record in (spec.get("design_applications") or {}).values():
+        if isinstance(record, dict) and isinstance(record.get("text"), str):
+            texts.append(record["text"])
+    found = set()
+    for text in texts:
+        for line in text.splitlines():
+            if _HEADING_LINE.match(line):
+                found.add(line.strip())
+    return frozenset(found)
+
+
 def _render_corrections(entry: dict) -> list[str]:
     """凍結された答の本文に対する訂正を、本文の直後へ出す。
 
@@ -692,7 +829,11 @@ def _render_corrections(entry: dict) -> list[str]:
             continue
         when = str(c.get("corrected_at") or "(時刻不明)")
         note = str(c.get("note") or "").strip() or "(内容未記入)"
-        lines.append(f"> - `{when}` — {note}")
+        # 複数行の note は 2 行目以降も引用の中に置く。引用の外へ出た行は、行頭が `#` なら
+        # 章の見出しになる (逐語の見出しの漏れと同じ経路)。
+        first, *rest = note.splitlines()
+        lines.append(f"> - `{when}` — {first}")
+        lines.extend(f">   {line}".rstrip() for line in rest)
         # 計測値時刻の訂正はフィールド自体を書き換える (誤値を機械可読な位置に残さない)。
         # 何をどう変えたかを散文任せにせず、旧値と新値をそのまま出す。
         field = c.get("corrected_field")
@@ -707,18 +848,46 @@ def _render_corrections(entry: dict) -> list[str]:
     return lines
 
 
+QA_ROLES = ("主たる接地根拠", "裏付け質疑", "この承認を名指ししている質疑")
+# compile が qa を描くときの見出し。旧版の印 (` — 旧版（…）`) が付いても同じ (役割, id) と読む。
+_QA_ROLE_HEADING = re.compile(
+    r"^####\s+(" + "|".join(QA_ROLES) + r"):\s+`([^`]+)`(?:\s+—\s+旧版.*)?\s*$"
+)
+
+
 def _render_qa_entry(entry: dict | None, ref_id: str, *, role: str) -> list[str]:
-    """1 質疑を章本文へ実体化する。不在参照は隠さず欠落として明示する。"""
+    """1 質疑を章本文へ実体化する。不在参照は隠さず欠落として明示する。
+
+    問・答は逐語で、見出しやフェンスを含むときはフェンスに閉じ込める (_verbatim)。
+    置き換え済み (superseded_by を持つ) entry は、見出しに「旧版（置き換え先: <qa_id>）」の
+    印を付け、問・答を常にフェンスに入れる。旧版の文面を現行の根拠と同じ見た目で出すと、
+    章だけを読む人には、欠陥が見つかって問い直された問と現役の問の区別が付かない。
+    """
     if entry is None:
         return [
             f"- **{role}** `{ref_id}` — **参照先が qa_log に存在しない** "
             "(接地根拠を辿れない。elicit 側で質疑を復元すること)",
             "",
         ]
-    lines = [f"#### {role}: `{ref_id}`", ""]
+    superseded_by = entry.get("superseded_by")
+    heading = f"#### {role}: `{ref_id}`"
+    if isinstance(superseded_by, str) and superseded_by:
+        heading += f" — 旧版（置き換え先: `{superseded_by}`）"
+    lines = [heading, ""]
+    if isinstance(superseded_by, str) and superseded_by:
+        when = entry.get("superseded_at") or "(時刻不明)"
+        why = str(entry.get("superseded_note") or "").strip() or "(理由未記入)"
+        first, *rest = why.splitlines()
+        lines += [
+            f"> **旧版** — この問答は `{superseded_by}` で置き換えられた (`{when}`)。",
+            "> 下の問・答は凍結された記録の逐語で、現行の接地根拠ではない。現行の問答は置き換え先を参照すること。",
+            f"> - 置き換えの理由: {first}",
+            *(f">   {line}".rstrip() for line in rest),
+            "",
+        ]
     for label, key in (("問", "question"), ("答", "answer")):
         value = str(entry.get(key) or "").strip() or "(未記入)"
-        lines.extend([f"**{label}**", "", value, ""])
+        lines.extend([f"**{label}**", "", *_verbatim(value, force_fence=bool(superseded_by)), ""])
         if key == "answer":
             lines.extend(_render_corrections(entry))
     # provenance は writer が任意項目として保持する (出所不明の回答を確定根拠にしないため)。
@@ -728,15 +897,19 @@ def _render_qa_entry(entry: dict | None, ref_id: str, *, role: str) -> list[str]
     prov = entry.get("provenance")
     answered_at = entry.get("answered_at")
     basis = entry.get("basis")
+    # 出所が構造を持つ (複数行で見出し等を含む) ときは、1 行の括弧書きへ埋め込まずフェンスへ出す。
+    prov_fenced = isinstance(prov, str) and _has_structure(prov)
     if prov or answered_at or basis:
         meta = []
         if basis:
             meta.append(f"根拠の性質: {BASIS_LABELS.get(basis, basis)}")
         if prov:
-            meta.append(f"出所: {prov}")
+            meta.append("出所: 下のフェンス内の逐語" if prov_fenced else f"出所: {prov}")
         if answered_at:
             meta.append(f"回答時刻: {answered_at}")
         lines.extend([f"- ({' / '.join(meta)})", ""])
+        if prov_fenced:
+            lines.extend([*_fence(prov.strip()), ""])
     return lines
 
 
@@ -763,23 +936,72 @@ def _approval_index(spec: dict) -> dict[str, dict]:
     }
 
 
+def _referenced_qa_ids(spec: dict) -> set[str]:
+    """決着済み (確定 / 対象外) セルが接地根拠として指している qa id の集合。
+
+    qa_log は追記専用で、R4-reopen で主根拠から外れた qa や、supersede-qa で置き換えられた
+    qa もそのまま残る。残ること自体は監査可能性のための設計だが、「今どの qa がセルを
+    接地しているか」はセル側の qa_ref / qa_refs だけが正本であり、qa_log に在ることは
+    現役であることを意味しない。
+    """
+    live: set[str] = set()
+    for row in (spec.get("matrix") or {}).values():
+        if not isinstance(row, dict):
+            continue
+        for cell in row.values():
+            if not isinstance(cell, dict) or cell.get("state") not in ("確定", "対象外"):
+                continue
+            for ref in [cell.get("qa_ref"), *(cell.get("qa_refs") or [])]:
+                if isinstance(ref, str) and ref:
+                    live.add(ref)
+    return live
+
+
 def _qa_entries_naming(spec: dict, approval_id: str) -> list[tuple[str, dict]]:
-    """その承認 id を逐語で名指ししている質疑を拾う。
+    """その承認 id を逐語で名指ししている質疑を、qa_log の順に拾う。
 
     approval_log の entry は {id, note} だけで、どの質疑がその承認の実体かを指すキーを
     持たない。writer が承認と質疑を同じ turn で作る運用上、note か質疑側の本文の
     どちらかが相手の id を名指ししているのが常態なので、その名指しを関係として使う。
     推測で結び付けているのではなく「名指ししている」という検証可能な事実だけを根拠に
     する (節見出しでもそう呼ぶ)。
+
+    セルから参照されているか・置き換え済みかで選別しない。選別すると、承認の実体である
+    問答の本文が章から消える。どちらの状態かは描画側 (_render_named_qa) が事実として書く。
     """
-    out = []
+    named: list[tuple[str, dict]] = []
     for entry in spec.get("qa_log", []) or []:
         if not isinstance(entry, dict) or not isinstance(entry.get("id"), str):
             continue
         blob = "\n".join(str(v) for v in entry.values() if isinstance(v, str))
         if approval_id in blob:
-            out.append((entry["id"], entry))
-    return out
+            named.append((entry["id"], entry))
+    return named
+
+
+def _render_named_qa(entry: dict, qa_id: str, live: set[str]) -> list[str]:
+    """承認を名指ししている質疑 1 件を描く。
+
+    どの決着済みセルからも参照されていない qa について、以前の実装は一律に
+    「R4-reopen で差し替えられた旧版」と書いていた。しかし reopen_log は外した qa の id を
+    持たず (from は状態名)、reopen で外れたのか、初めから裏付けに入っていなかったのかを
+    記録から区別できない。証明できない来歴は書かず、確かめられる事実 (置き換えの記録の
+    有無と、参照されていないこと) だけを書く。
+    """
+    lines = _render_qa_entry(entry, qa_id, role="この承認を名指ししている質疑")
+    if qa_id not in live and not entry.get("superseded_by"):
+        lines += [
+            "- (参照状況: この質疑は現在どの決着済みセルの `qa_ref` / `qa_refs` からも参照されていない。"
+            "置き換えの記録 (`superseded_by`) も無い。この承認を名指ししているという事実だけで本節に載せている)",
+            "",
+        ]
+    return lines
+
+
+def _render_approval_head(ref: str, entry: dict) -> list[str]:
+    """承認ブロックの見出しと note (逐語) を描く。"""
+    note = str(entry.get("note") or "").strip() or "(承認範囲が未記入)"
+    return [f"### 承認: `{ref}`", "", *_verbatim(note), ""]
 
 
 def render_approvals(spec: dict, ref_ids: list[str], *, heading: str, intro: str) -> str:
@@ -797,6 +1019,7 @@ def render_approvals(spec: dict, ref_ids: list[str], *, heading: str, intro: str
         lines.append("- (本章が引用している承認記録なし)")
         return "\n".join(lines)
     index = _approval_index(spec)
+    live = _referenced_qa_ids(spec)
     for ref in ref_ids:
         entry = index.get(ref)
         if entry is None:
@@ -806,12 +1029,9 @@ def render_approvals(spec: dict, ref_ids: list[str], *, heading: str, intro: str
                 "",
             ]
             continue
-        note = str(entry.get("note") or "").strip() or "(承認範囲が未記入)"
-        lines += [f"### 承認: `{ref}`", "", note, ""]
+        lines += _render_approval_head(ref, entry)
         for qa_id, qa_entry in _qa_entries_naming(spec, ref):
-            lines.extend(
-                _render_qa_entry(qa_entry, qa_id, role="この承認を名指ししている質疑")
-            )
+            lines.extend(_render_named_qa(qa_entry, qa_id, live))
     return "\n".join(lines)
 
 
@@ -1261,34 +1481,54 @@ def compile_docset(spec: dict, refs_data: dict) -> dict[str, str]:
     return docset
 
 
-def _split_preamble(text: str) -> tuple[str, list[tuple[str, str]]]:
+def _split_preamble(
+    text: str, skip: frozenset[str] = frozenset()
+) -> tuple[str, list[tuple[str, str]]]:
     """本文を (前置き, [(## 見出し, 節本文), ...]) へ分ける。
 
     前置きは frontmatter + H1 + 集約サマリ (最初の ## より前) を指す。節は出現順を保つ。
     _markdown_sections が dict を返すのに対し、本関数は**順序**を保つため list を返す。
     章の構成 (節の並び) は既存章が権威、節の内容は compile が権威、という分離のため。
+
+    フェンスの内側の行と skip (qa の逐語から漏れた見出し) は節の境界にしない。
     """
-    matches = list(re.finditer(r"^##\s+(.+?)\s*$", text, re.M))
-    if not matches:
+    spans = _heading_spans(text, "##", skip)
+    if not spans:
         return text, []
-    preamble = text[: matches[0].start()]
+    preamble = text[: spans[0][0]]
     sections: list[tuple[str, str]] = []
-    for index, match in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        sections.append((match.group(1).strip(), text[match.end() : end].strip("\n")))
+    for index, (_, line_end, heading) in enumerate(spans):
+        end = spans[index + 1][0] if index + 1 < len(spans) else len(text)
+        sections.append((re.sub(r"^##\s+", "", heading).strip(), text[line_end:end].strip("\n")))
     return preamble, sections
 
 
-def _split_blocks(body: str) -> list[tuple[str, str]]:
-    """節本文を [(### 見出し行, ブロック本文)] へ分ける。### が無ければ空リスト。"""
-    matches = list(re.finditer(r"^###\s+.+?\s*$", body, re.M))
-    if not matches:
-        return []
+def _split_blocks(body: str, skip: frozenset[str] = frozenset()) -> list[tuple[str, str]]:
+    """節本文を [(### 見出し行, ブロック本文)] へ分ける。### が無ければ空リスト。
+
+    フェンスの内側の行と skip (qa の逐語から漏れた見出し) はブロックの境界にしない。
+    旧 compile が逐語を生で流し込んだ章では、漏れた `### U1 …` がブロックを途中で切り、
+    元の質疑の続きと後続の質疑が「見出しの違う別ブロック」として _preserved_blocks に
+    引き継がれていた。境界にしないことで、漏れた行は元の質疑を含むブロックへ戻る。
+    """
+    spans = _heading_spans(body, "###", skip)
     blocks: list[tuple[str, str]] = []
-    for index, match in enumerate(matches):
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(body)
-        blocks.append((match.group(0).strip(), body[match.start() : end].strip("\n")))
+    for index, (start, _, heading) in enumerate(spans):
+        end = spans[index + 1][0] if index + 1 < len(spans) else len(body)
+        blocks.append((heading, body[start:end].strip("\n")))
     return blocks
+
+
+def _split_subblocks(block: str, skip: frozenset[str] = frozenset()) -> tuple[str, list[tuple[str, str]]]:
+    """### ブロックを (前置き, [(#### 見出し行, 小節本文)]) へ分ける (フェンス・skip は境界にしない)。"""
+    spans = _heading_spans(block, "####", skip)
+    if not spans:
+        return block, []
+    subs: list[tuple[str, str]] = []
+    for index, (start, _, heading) in enumerate(spans):
+        end = spans[index + 1][0] if index + 1 < len(spans) else len(block)
+        subs.append((heading, block[start:end].strip("\n")))
+    return block[: spans[0][0]], subs
 
 
 def _card_source_file(block: str) -> str | None:
@@ -1330,24 +1570,24 @@ def _preserved_blocks(
     return keep
 
 
-def _carry_subblocks(new_block: str, old_block: str) -> str:
+def _carry_subblocks(new_block: str, old_block: str, skip: frozenset[str] = frozenset()) -> str:
     """同一カードの新旧ブロック間で、章固有の追記 (#### 小節) を引き継ぐ。
 
     ### カードブロックには、再生成される内容 (カード本文) と章に蓄積される内容
     (「本章での適用」= 確定要件・原則の採否・トレードオフ・資するゴール) が同居する。
     カード更新で前者を差し替えるとき、後者まで巻き添えで消さないための引き継ぎ。
     """
-    heads = list(re.finditer(r"^####\s+.+?\s*$", old_block, re.M))
+    heads = _heading_spans(old_block, "####", skip)
     if not heads:
         return new_block
-    new_heads = {m.group(0).strip() for m in re.finditer(r"^####\s+.+?\s*$", new_block, re.M)}
+    new_heads = {h for _, _, h in _heading_spans(new_block, "####")}
     carried: list[str] = []
-    for index, match in enumerate(heads):
-        if match.group(0).strip() in new_heads:
+    for index, (head_start, _, heading) in enumerate(heads):
+        if heading in new_heads:
             continue
-        end = heads[index + 1].start() if index + 1 < len(heads) else len(old_block)
+        end = heads[index + 1][0] if index + 1 < len(heads) else len(old_block)
         # 小節の直前にある水平線 (`---`) は章の視覚的な区切りなので引き継ぎ範囲へ含める。
-        start = match.start()
+        start = head_start
         before = re.search(r"(?:^|\n)(---\s*\n\s*)\Z", old_block[:start])
         if before:
             start = before.start(1)
@@ -1402,15 +1642,84 @@ def _carry_prose(new_body: str, old_body: str) -> str:
     return "\n\n".join([new_body.strip("\n")] + carried)
 
 
-def _merge_managed_section(new_body: str, old_body: str) -> str:
+class _MergeContext:
+    """既存章の片付けに使う spec-state の索引 (merge_preserving に spec が渡されたときだけ作る)。
+
+    skip は「qa の逐語から漏れた見出し」のうち、再生成本文がフェンスの外に同じ見出しを
+    持たないもの。再生成本文の構造見出し (例: `### Web (web)`) と同じ字面の逐語行まで
+    境界から外すと、本物の見出しで章を分けられなくなるため除く。
+    """
+
+    def __init__(self, spec: dict, new_text: str):
+        self.qa = _qa_index(spec)
+        self.approvals = _approval_index(spec)
+        self.live = _referenced_qa_ids(spec)
+        structural = set(_all_heading_lines(new_text, outside_fence_only=True))
+        self.skip = frozenset(h for h in verbatim_headings(spec) if h not in structural)
+
+
+def _qa_role_keys(text: str) -> set[tuple[str, str]]:
+    """フェンスの外にある compile 生成の質疑見出しを (役割, qa id) の集合で返す。"""
+    keys: set[tuple[str, str]] = set()
+    for _, _, heading in _heading_spans(text, "####"):
+        m = _QA_ROLE_HEADING.match(heading)
+        if m:
+            keys.add((m.group(1), m.group(2)))
+    return keys
+
+
+def _refresh_preserved_block(
+    block: str, managed_keys: set[tuple[str, str]], ctx: "_MergeContext | None"
+) -> str:
+    """引き継ぐ既存ブロックの中の compile 生成部分を、重複除去と再描画で片付ける。
+
+    1. 重複の除去 (spec 不要): 管轄節の再生成本文が同じ (役割, qa id) の質疑見出しを
+       持つ #### 小節は引き継がない。同じ質疑が節内に 2 度出るのは、旧 compile が漏れ
+       見出しの後ろにあった質疑ごとブロックを引き継いだ結果で、章の蓄積ではない。
+       対象は compile が出す質疑見出しの形 (QA_ROLES) だけで、人が書いた #### 小節は
+       見出しが管轄節と同じでも消さない (カードの `#### 目的` などと衝突しうるため)。
+    2. 再描画 (spec がある時): 残る質疑小節と承認ブロックの見出し・note は、現在の
+       spec-state から描き直す。過去の compile が生で流し込んだ逐語 (漏れ見出し) や、
+       後から入った訂正・置き換えの印が、引き継いだブロックにも反映される。再描画に
+       現れない散文行は _carry_prose の規則で残す。
+    """
+    skip = ctx.skip if ctx else frozenset()
+    preamble, subs = _split_subblocks(block, skip)
+    head_line = preamble.split("\n", 1)[0].strip()
+    appr = re.match(r"^###\s+承認:\s+`([^`]+)`\s*$", head_line)
+    if ctx is not None and appr and appr.group(1) in ctx.approvals:
+        fresh = "\n".join(_render_approval_head(appr.group(1), ctx.approvals[appr.group(1)]))
+        preamble = _carry_prose(fresh.strip("\n"), preamble)
+    parts = [preamble.strip("\n")]
+    for heading, sub in subs:
+        role = _QA_ROLE_HEADING.match(heading)
+        if role:
+            key = (role.group(1), role.group(2))
+            if key in managed_keys:
+                continue
+            entry = ctx.qa.get(key[1]) if ctx is not None else None
+            if entry is not None:
+                if key[0] == "この承認を名指ししている質疑":
+                    fresh_lines = _render_named_qa(entry, key[1], ctx.live)
+                else:
+                    fresh_lines = _render_qa_entry(entry, key[1], role=key[0])
+                sub = _carry_prose("\n".join(fresh_lines).strip("\n"), sub)
+        parts.append(sub.strip("\n"))
+    return "\n\n".join(p for p in parts if p)
+
+
+def _merge_managed_section(
+    new_body: str, old_body: str, ctx: "_MergeContext | None" = None
+) -> str:
     """compile 管轄節の内部を ### ブロック単位で統合する。
 
     ### を持たない節 (収集状態表・出典表など) は再生成内容をそのまま採る。
     ### を持つ節 (適用された設計知識) は、再生成ブロックを本体としつつ、
     _preserved_blocks が選んだ既存ブロックを後ろへ残す。
     """
+    skip = ctx.skip if ctx else frozenset()
     new_blocks = _split_blocks(new_body)
-    old_blocks = _split_blocks(old_body)
+    old_blocks = _split_blocks(old_body, skip)
     if not old_blocks:
         return _carry_prose(new_body, old_body)
     # 再生成側にブロックが 1 つも無い場合 (カード割当が外れた等) は、既存ブロックを
@@ -1430,17 +1739,20 @@ def _merge_managed_section(new_body: str, old_body: str) -> str:
         source = _card_source_file(block)
         if not source or source not in old_by_file:
             continue
-        carried = _carry_subblocks(block, old_by_file[source])
+        carried = _carry_subblocks(block, old_by_file[source], skip)
         if carried != block:
             body = body.replace(block, carried, 1)
 
     keep = _preserved_blocks(new_blocks, old_blocks)
-    if not keep:
+    managed_keys = _qa_role_keys(new_body)
+    kept = [_refresh_preserved_block(b, managed_keys, ctx) for _, b in keep]
+    kept = [b for b in kept if b.strip()]
+    if not kept:
         return body
-    return "\n\n".join([body.strip("\n")] + [b for _, b in keep])
+    return "\n\n".join([body.strip("\n")] + kept)
 
 
-def merge_preserving(new_text: str, old_text: str) -> str:
+def merge_preserving(new_text: str, old_text: str, *, spec: dict | None = None) -> str:
     """再生成本文 new_text へ、既存章 old_text の構成と契約外の節を保存して統合する。
 
     compile が担当する節 (spec-state / fetched-references から導出できる節) は new_text の
@@ -1456,9 +1768,17 @@ def merge_preserving(new_text: str, old_text: str) -> str:
 
     これは「compile は節の内容の権威だが、章に蓄積された記述の権威ではない」という切り分けの
     実装で、SKILL.md が謳う「確定済み章の確定状態は保全され、勝手な巻き戻しをしない」を満たす。
+
+    **spec (任意)**: 渡されたときは、旧 compile が qa の逐語を生で流し込んだために章へ
+    漏れた見出し (verbatim_headings) を節・ブロックの境界にせず、引き継ぐブロックの中の
+    質疑と承認を現在の spec-state から描き直す (_refresh_preserved_block)。漏れた見出しは
+    元の質疑を含むブロックへ戻り、そのブロックが再生成されれば一緒に置き換わる。
+    省略時は境界の判定と引き継ぎを spec に依らず行う (重複した質疑小節の除去だけは行う)。
     """
+    ctx = _MergeContext(spec, new_text) if isinstance(spec, dict) else None
+    skip = ctx.skip if ctx else frozenset()
     new_pre, new_secs = _split_preamble(new_text)
-    old_pre, old_secs = _split_preamble(old_text)
+    old_pre, old_secs = _split_preamble(old_text, skip)
     if not old_secs:
         return new_text
     old_by_heading = dict(old_secs)
@@ -1476,7 +1796,7 @@ def merge_preserving(new_text: str, old_text: str) -> str:
     for heading, body in new_secs:
         old_body = old_by_heading.get(heading)
         merged.append(
-            (heading, _merge_managed_section(body, old_body) if old_body is not None else body)
+            (heading, _merge_managed_section(body, old_body, ctx) if old_body is not None else body)
         )
         merged.extend(trailing.get(heading, []))
     # 前置き (frontmatter + H1 + 集約サマリ) にも手書きの注記が足される (index の
@@ -1490,7 +1810,9 @@ def merge_preserving(new_text: str, old_text: str) -> str:
     return "\n".join(parts).rstrip("\n") + "\n"
 
 
-def _lost_headings(merged_text: str, old_text: str) -> list[str]:
+def _lost_headings(
+    merged_text: str, old_text: str, verbatim: frozenset[str] = frozenset()
+) -> list[str]:
     """マージ結果から消えた既存見出し (## 〜 #####) を列挙する (保存則の検査)。
 
     ### の改題 (見出しは変わるが同じ出典カードを指す) は消失に数えない。見出し文字列で
@@ -1500,16 +1822,28 @@ def _lost_headings(merged_text: str, old_text: str) -> list[str]:
     走査範囲を compile が出力する階層 (## / ###) ではなく人が書き足しうる階層
     (##### まで) に取るのは、カード内へ蓄積された「本章での適用」(#### / #####) の
     消失を実際に見逃したため。守る範囲は書き手側の粒度で決める。
-    """
-    def headings(text: str) -> list[str]:
-        return [m.group(0).strip() for m in re.finditer(r"^#{2,5}\s+.+?\s*$", text, re.M)]
 
-    present = set(headings(merged_text))
+    既存章の見出しはフェンスの内外を問わず全て走査する (閉じないフェンスなどで節が
+    見えなくなっても、消失の検査からは漏らさない)。結果側では、フェンスの外の見出しを
+    「残っている」とみなす。例外は 2 つだけ:
+      - 既存章でもフェンスの内側にあった行が、結果でもどこかに (フェンス内でも) 残る
+      - verbatim (spec-state の qa・承認の逐語に行として現れる見出し) に含まれる。
+        旧 compile の漏れであって章の節ではなく、逐語の正本は spec-state に残っている。
+        これを除かないと、逐語をフェンスに入れた再生成は漏れ見出しの「消失」で必ず
+        止まり、その章は二度と再生成できない。
+    """
+    present = set(_all_heading_lines(merged_text, outside_fence_only=True))
+    present_anywhere = set(_all_heading_lines(merged_text, outside_fence_only=False))
+    old_outside = set(_all_heading_lines(old_text, outside_fence_only=True))
     present_labels = {lab for lab in map(_heading_label, present) if lab}
-    old_block_by_heading = dict(_split_blocks(old_text))
+    old_block_by_heading = dict(_split_blocks(old_text, verbatim))
     lost: list[str] = []
-    for heading in headings(old_text):
+    for heading in _all_heading_lines(old_text, outside_fence_only=False):
         if heading in present:
+            continue
+        if heading not in old_outside and heading in present_anywhere:
+            continue
+        if heading in verbatim:
             continue
         if heading.startswith("###"):
             source = _card_source_file(old_block_by_heading.get(heading, ""))
@@ -1536,22 +1870,26 @@ def _heading_label(heading: str) -> str:
     return m.group(1).strip() if m else ""
 
 
-def write_docset(docset: dict[str, str], out_dir: Path) -> list[Path]:
+def write_docset(docset: dict[str, str], out_dir: Path, *, spec: dict | None = None) -> list[Path]:
     """組み立てた docset を out_dir へ書き出す。書き出したパス一覧を返す。
 
     既存章がある場合は上書きせず merge_preserving で統合し、統合後に既存見出しが
     1 つでも消えていれば書き込まず CompileError で異常終了する (保存則 / fail-closed)。
     再生成が章の蓄積を黙って削る事故を、書き込みの手前で止めるのが目的。
+
+    spec (docset の生成元の spec-state) を渡すと、旧 compile が章へ漏らした逐語の見出しを
+    片付ける (merge_preserving / _lost_headings の verbatim)。CLI は常に渡す。
     """
     out_dir.mkdir(parents=True, exist_ok=True)
+    verbatim = verbatim_headings(spec)
     written: list[Path] = []
     for name, content in docset.items():
         p = out_dir / name
         text = content if content.endswith("\n") else content + "\n"
         if p.exists():
             old_text = p.read_text(encoding="utf-8")
-            text = merge_preserving(text, old_text)
-            lost = _lost_headings(text, old_text)
+            text = merge_preserving(text, old_text, spec=spec)
+            lost = _lost_headings(text, old_text, verbatim)
             if lost:
                 raise CompileError(
                     f"再生成で既存章の見出しが失われる: {p.name}: {lost}. "
@@ -1584,7 +1922,7 @@ def main(argv: list[str]) -> int:
         spec = load_json(args.spec)
         refs_data = load_json(args.references)
         docset = compile_docset(spec, refs_data)
-        written = write_docset(docset, Path(args.out_dir))
+        written = write_docset(docset, Path(args.out_dir), spec=spec)
     except (OSError, json.JSONDecodeError) as exc:
         print(f"IO/JSON error: {exc}", file=sys.stderr)
         return 1

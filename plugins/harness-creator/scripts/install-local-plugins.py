@@ -41,6 +41,10 @@ class Catalog(NamedTuple):
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[3]
 _TREE_IGNORES = {".git", ".build", ".pytest_cache", "__pycache__", "node_modules"}
+# Claude CLI drops these bookkeeping markers at the top of a cached version dir
+# (.in_use while a session holds it, .orphaned_at once superseded). They are
+# not plugin content, so they must not make a faithful copy look stale.
+_RUNTIME_MARKERS = {".in_use", ".orphaned_at"}
 
 
 def _read_json(path: Path) -> dict:
@@ -336,15 +340,28 @@ def _absolute_existing_path(value, *, label: str) -> str:
 
 
 def _tree_digest(root: Path) -> str:
-    """Digest the delivered tree without following or hiding symlinks."""
+    """Digest the delivered tree without following or hiding symlinks.
+
+    An in-tree symlink is recorded by where it lands inside the tree, not by
+    its literal target: Claude CLI rewrites chains such as Versions/Current/X
+    to Versions/<n>/X when it copies, and both spellings deliver the same file.
+    """
     digest = hashlib.sha256()
+    resolved_root = root.resolve()
     for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
         relative = path.relative_to(root)
         if any(part in _TREE_IGNORES for part in relative.parts):
             continue
+        if relative.parts[0] in _RUNTIME_MARKERS:
+            continue
         encoded = relative.as_posix().encode("utf-8")
         if path.is_symlink():
-            digest.update(b"L\0" + encoded + b"\0" + os.readlink(path).encode("utf-8"))
+            landing = Path(os.path.realpath(path))
+            if landing.is_relative_to(resolved_root):
+                target = "@" + landing.relative_to(resolved_root).as_posix()
+            else:
+                target = os.readlink(path)
+            digest.update(b"L\0" + encoded + b"\0" + target.encode("utf-8"))
         elif path.is_file():
             digest.update(b"F\0" + encoded + b"\0" + path.read_bytes())
         elif path.is_dir():
@@ -495,6 +512,12 @@ def _artifact_receipt(
             f"runtime={runtime_version}, reported={reported_version}"
         )
     artifact_mode = "live-source" if runtime_path == source_root else "copy"
+    source_digest = _tree_digest(source_root)
+    runtime_digest = _tree_digest(runtime_path)
+    # Same version but different content means the CLI kept an older copy that
+    # was published under this version number; it will not re-copy until the
+    # version moves, so only a release bump repairs it.
+    stale = artifact_mode == "copy" and source_digest != runtime_digest
     return {
         "platform": platform,
         "plugin": name,
@@ -506,18 +529,18 @@ def _artifact_receipt(
         # Backward-compatible alias; callers should prefer runtime_path.
         "installed_path": str(runtime_path),
         "artifact_mode": artifact_mode,
-        "source_digest": _tree_digest(source_root),
-        "runtime_digest": _tree_digest(runtime_path),
+        "source_digest": source_digest,
+        "runtime_digest": runtime_digest,
         "git_snapshot": _git_snapshot(source_root),
         "enabled": True,
-        "verified": True,
-        "verification_status": "verified",
+        "verified": not stale,
+        "verification_status": "stale_runtime" if stale else "verified",
         "activation": {
             "installed": "verified",
             "enabled": "verified",
             "trust": "pending_user_gate",
             "new_session": "pending_user_gate",
-            "runtime": "verified",
+            "runtime": "stale" if stale else "verified",
         },
     }
 
@@ -832,8 +855,21 @@ def install_local_plugins(
         name = plugin_report["plugin"]
         plugin_report["scc_members"] = cycle_members.get(name, [name])
     verified = all(item.get("verified") is True for item in plugin_reports)
+    stale = sorted(
+        item["plugin_id"] for item in plugin_reports
+        if item.get("verification_status") == "stale_runtime"
+    )
+    if stale:
+        status = "stale_runtime"
+        next_action = (
+            "Bump the version of " + ", ".join(stale)
+            + " with scripts/build-plugin-release.py, then reinstall."
+        )
+    else:
+        status = ("verified" if check else "installed") if verified else "pending_user_gate"
+        next_action = "Review plugin hooks, then start a new Claude Code/Codex session."
     return {
-        "status": ("verified" if check else "installed") if verified else "pending_user_gate",
+        "status": status,
         "verified": verified,
         "repo_root": str(catalog.repo_root),
         "cwd_independent": True,
@@ -846,7 +882,7 @@ def install_local_plugins(
         "platforms": platform_reports,
         "plugins": plugin_reports,
         "hook_trust": "user-review-required",
-        "next_action": "Review plugin hooks, then start a new Claude Code/Codex session.",
+        "next_action": next_action,
     }
 
 

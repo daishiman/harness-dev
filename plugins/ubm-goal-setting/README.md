@@ -12,7 +12,7 @@ UBM（北原さん式ゴールセッティング）の**目標設定・振り返
 
 1. **目標設定・振り返り対話** (`/ubm-goal-setting`)
    - 「1 週間（週報）・1 ヶ月（月報）・3 ヶ月（期報）」の目標を、AI との短い対話で作ります。
-   - できあがった目標は決まった型（**21 項目**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、「誰に・何を・いつまでに・何件」まで具体化させます。
+   - できあがった目標は決まった型（**公式21ブロック**）のチェックに**合格しないと保存されません**。「頑張る」「意識する」のようなあいまいな言葉は機械が弾き、「誰に・何を・いつまでに・何件」まで具体化させます。
    - 目標には「**やらないこと**」も 3 つ以上書きます。やることを増やすより、迷いを減らすほうが行動につながるからです。
 
 2. **ナレッジ同期** (`/ubm-knowledge-sync`)
@@ -238,13 +238,13 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 |---|---|---|
 | Phase0-init | 種別（weekly/monthly/quarterly）と実行日を確定 | 本 skill / AskUserQuestion |
 | Phase1-2-collect | 過去目標・合宿情報・ナレッジ・journal を並列収集 | `info-collector` sub-agent |
-| Phase2b-review | 振り返り時に既存目標を 8 項目で再評価 | `goal-reviewer` sub-agent |
+| Phase2b-review | 振り返り時に既存目標を再評価（検査項目は `agents/goal-reviewer.md` の「レビューフレームワーク」節が正本。件数・内訳は本 README に書かず、その節を見てください） | `goal-reviewer` sub-agent |
 | Phase3-dialogue | step1〜5 対話（現状振り返り→ギャップ→目標→行動計画→最終確認） | `phase3-coordinator` + 責務プロンプト `prompts/R1-R5` |
-| Phase4-format | テンプレート整形 + 15 項目コンテンツ品質チェック | `output-formatter` sub-agent |
-| Phase5-validate | `validate-goal-output.py` で **21 項目**を決定論検証（最大 3 回改善） | script |
+| Phase4-format | テンプレート整形 + コンテンツ品質チェック（項目は `agents/output-formatter.md` の品質チェックリスト節が正本） | `output-formatter` sub-agent |
+| Phase5-validate | `validate-goal-output.py` で **公式21ブロック**を決定論検証（最大 3 回改善） | script |
 | Phase6-daily-update | `Daily.md` の種別該当 embed のみ最新目標へ置換 | 本 skill |
 
-21 項目（出力構造）の定義正本は `skills/run-ubm-goal-setting/references/output-formats.md` + `data-contract.md`、15 項目（保存前コンテンツ検証）は `output-formatter` prompt の品質チェックリスト節です。
+公式 21 ブロック（出力構造）の定義正本は `skills/run-ubm-goal-setting/references/output-formats.md` + `data-contract.md`、保存前コンテンツ検証の項目は `agents/output-formatter.md` の品質チェックリスト節が正本です（件数は本 README に書かず、その節を見てください）。
 
 ### 日次ジャーナルの末尾ブロック（`/ubm-journal`）
 
@@ -277,8 +277,10 @@ consult は zero-hit を正常終了（exit 0）とします。`--knowledge-grap
 
 ### 品質ゲート
 
-- `validate-goal-output.py`: 統一ハイブリッド構造 21 項目・NG 表現・やらないこと 3 項目以上（月報・期報の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
-- `tests/`（pytest 44 件）: script×3 / hook×1 の機能テスト + knowledge 台帳整合 + golden-sample 回帰。
+- `validate-goal-output.py`: 統一ハイブリッド構造の公式21ブロック・NG 表現・やらないこと 3 項目以上（月報・期報の独立セクション）・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）を保存前に決定論検証。
+- `validate-goal-linkage.py`: 一本筋（成果目標 ↔ 行動目標のグループ見出し）を両方向で照合する。照合規則は `validate-goal-output.py` と共用して二重に実装せず、上乗せするのは「1つの行動が複数の成果目標を指す `・` 区切りと、支える行動の無い成果目標を rc=1 にする」「免除を `（土台）`／`（関係維持）` に限る」「月報の管理用グループだけを照合する」「分母0を rc=3 にする」だけ（正本は `references/output-formats.md`「一本筋の照合は validate-goal-output.py と validate-goal-linkage.py で分担する」）。
+- `validate-cross-level.py`: 期報・月報・週報を同時に読み、期アンカー8種が三層で一致しているかを照合する（rc=1 で停止。単一ファイルの検査では層をまたぐズレを検出できないため）。
+- `tests/`（pytest）: script / hook の機能テスト + knowledge 台帳整合 + golden-sample 回帰。**件数は本 README に書きません。** `RUNBOOK.md` の Verification 節の手順で実行し、その出力の件数と exit code を見てください（`0`=全通過 / `3`=収集エラー / `5`=収集0件）。
 - `EVALS.json`: mechanical lint 13 本と受入基準（criteria-test）の配線宣言。実行手順は `RUNBOOK.md` の Verification 節。
 
 ### YouTube 取込パイプライン（取込→正規化→抽出→辺→検証）— v0.2.0
@@ -319,7 +321,7 @@ plugins/ubm-goal-setting/
 ├── commands/                        # /ubm-goal-setting, /ubm-knowledge-sync, /ubm-youtube-ingest, /ubm-consult, /ubm-journal
 ├── hooks/ubm-write-path-guard.py    # 書き込み保護 (PreToolUse)
 ├── knowledge/                       # L1 curated 28 JSON + router/schema/registry/sync-log
-├── tests/                           # pytest 249 件
+├── tests/                           # pytest（件数は RUNBOOK.md の手順の出力で見る）
 ├── EVALS.json / plugin-composition.yaml / RUNBOOK.md / CHANGELOG.md
 ├── .claude-plugin/plugin.json       # 公式 plugin manifest (hooks 配線)
 └── references/package-contract.json # harness metadata (distributable:true, entry_points)

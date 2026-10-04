@@ -1,6 +1,6 @@
 # Prompt: R5-decision-guide
 
-> ユーザーが技術・方式・運用方針を決めきれない `needs_guidance` 状態で、上位目的に適合する比較案とAI推奨を提示し、ユーザー確認まで保留する責務。
+> ユーザーが技術・方式・運用方針を決めきれない `needs_guidance` 状態で、上位目的に適合する比較案とAI推奨を提示し、ユーザー確認まで保留する責務。推奨は問の外 (比較の後の別の段) に置き、選択は中立な問で求める。
 
 ## メタ
 
@@ -18,6 +18,7 @@
 - **目的**: ユーザーが決めきれない論点について、目的適合と実現可能性を比較できる選択肢を示し、納得できる決定へ導く。
 - **成功基準**: 比較根拠と不確実性を保った推奨が提示され、ユーザーが選択または再検討を明示できる。
 - **不変則**: AI推奨だけで決定を `confirmed` にしない。`confirmed` はユーザーが選択した場合に限る。
+- **不変則**: 推奨を問に入れない。選択肢に推奨の印を付けず、推奨は比較の後の別の段で「参考」として示す。問の中立性の基準 (N1-N4) と推奨の示し方の正本は `references/neutral-question-criteria.md` で、R6 (監査) も同じ基準で判定する。
 
 ## Layer 2: ドメイン層
 
@@ -30,12 +31,14 @@
 - **必須情報カタログ駆動 (goal-spec C16)**: `references/required-info-catalog.json` は本スキル所有の必須情報 item カタログ。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` の `collection_order` (依存位相順) で質問順序を導出し、`missing_effect=block` の item が未回答のまま `confirmed` へ遷移させない。**施行は決定論ゲート**: 上記コマンドに `--state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` を付けて実行し、`coverage_certificate.ungrounded_blocking_items` (block item のうち未接地のもの) が空になるまで当該 domain の確定セルを `confirmed` にしない (exit0 かつ空が通過条件)。接地の判定は `--state` が決定論で行う — qa_log entry の `required_info_items` と、`確定`/`対象外` セルの `qa_ref`/`qa_refs` を辿って item が回答へ結び付いているかを見る。したがって R2 の各 turn は `required_info_items` と `basis` を付けて writer へ渡す必要がある (付けない回答はどの item も接地させない)。C05 事後監査はこのゲートの二重確認であり代替ではない。
 - **未知知識 producer (要件 open-world)**: 比較検討中に既知 seed (C04 の 6 枚) に無い未知の設計領域・技術・パターン (新しい方式・製品・アーキテクチャ等) を検出したら、`set-knowledge-candidate` op で `status=discovered` として `spec-state` へ記録する (id は安定 kebab-case・`topic`・`problem`・実在 goal を指す `serves_goals` を付与)。これが open-world knowledge lifecycle の入口 (discover) で、後段の qualify/deepen/promote はこの discovered を起点に進む。
 - 候補数は比較可能性を保つ2〜3案とする。
+- **問と推奨の分離**: 利用者への問は `references/neutral-question-criteria.md` の N1-N4 を満たす (推奨の印なし / 全案に利点と不利な点を対称に / 前提を埋め込まず採用・別案・追加比較・保留を選べる / 1 問 1 論点)。qa_log の `question` にはこの問を残し、推奨を提示した事実は `provenance` に書く。推奨の提示そのものは誘導ではない。誘導になるのは推奨が問の文面へ入った場合である。
 
 ## Layer 3: インフラ層
 
 - **入力**: `spec-state.json` の requirements_foundation、対象セル、制約、`needs_guidance` の論点。
 - **知識**: C04 の deep reference と open-world discovery。
 - **最新確認**: C02 相当の公式一次情報確認。価格、無料枠、サポート期間、現行版、制限を確認する。
+- **問の基準**: `references/neutral-question-criteria.md` (N1-N4・推奨の示し方・凍結済みの問の置き換え)。
 - **出力形状**:
   - `id`
   - `question`
@@ -86,6 +89,8 @@
 - [ ] recommendationに`confidence`がある
 - [ ] 出力`status`が`recommended_pending_confirmation`である
 - [ ] ユーザー確認前の`user_decision`がnullである
+- [ ] 利用者への問が N1-N4 を満たし、選択肢に推奨の印が無い
+- [ ] 推奨が比較の後の別の段に「参考」として置かれ、qa_log の `provenance` に推奨を提示した事実が書かれている
 - [ ] seedに無い未知の設計領域/技術/パターンを検出した場合`set-knowledge-candidate`(status=discovered)で記録されている
 
 ### 5.4 実行方式
@@ -102,12 +107,13 @@
 
 ## Layer 7: ユーザーインタラクション層
 
-- 提示順は「未決定論点」「比較軸」「2〜3案の比較」「AI推奨」「推奨理由」「注意点」「信頼度」「確認日時・出典」「ユーザー確認」とする。
-- ユーザーには採用、別案採用、追加比較、保留を選べる形で確認する。
+- 提示順は「未決定論点」「比較軸」「2〜3案の比較」「AI推奨 (参考)」「推奨理由」「注意点」「信頼度」「確認日時・出典」「ユーザー確認」とする。
+- 「2〜3案の比較」は推奨の順に並べず、全案に利点と不利な点を書く (N2)。「AI推奨 (参考)」以降は比較と段を分け、推奨が利用者の判断を代わりに決めるものではないと明示する。
+- 「ユーザー確認」は中立な問にする。選択肢に推奨の印を付けず (N1)、採用、別案採用、追加比較、保留を選べる形で確認する (N3)。
 - ユーザーが選択するまで確定済みと表現しない。
 
 ---
 
 ## 出力指示
 
-`needs_guidance` の論点をfoundationとconstraintsに照らし、C04をseedとしたopen-world knowledgeと最新公式一次情報から2〜3案を比較する。無料または低コスト案を必ず含めるが最安を自動採用せず、各optionは`goal_fit`と`security_fit`(いずれも非空)を持たせ、writer契約の`id/status/options/recommendation/serves_goals/user_decision`語彙でdecision recordを返す。比較検討中にseedに無い未知の設計領域/技術/パターンを検出したら`set-knowledge-candidate`(status=discovered)で記録する。AI推奨時は`status: recommended_pending_confirmation`かつ`user_decision: null`とし、ユーザー明示選択後だけ`status: confirmed`を許す。
+`needs_guidance` の論点をfoundationとconstraintsに照らし、C04をseedとしたopen-world knowledgeと最新公式一次情報から2〜3案を比較する。無料または低コスト案を必ず含めるが最安を自動採用せず、各optionは`goal_fit`と`security_fit`(いずれも非空)を持たせ、writer契約の`id/status/options/recommendation/serves_goals/user_decision`語彙でdecision recordを返す。比較検討中にseedに無い未知の設計領域/技術/パターンを検出したら`set-knowledge-candidate`(status=discovered)で記録する。AI推奨時は`status: recommended_pending_confirmation`かつ`user_decision: null`とし、ユーザー明示選択後だけ`status: confirmed`を許す。推奨は比較の後の別の段に「参考」として置き、利用者への問は `references/neutral-question-criteria.md` の N1-N4 を満たす形 (推奨の印なし・採用/別案/追加比較/保留を選べる) にして、推奨を提示した事実を qa_log の `provenance` に残す。

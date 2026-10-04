@@ -33,6 +33,16 @@
 
 ## Verification
 
+repo root から実行する。`python3` は**どれを指しているかで結果が変わる**。pytest が入っていないインタプリタでは `No module named pytest` で `rc=1` になり、テストが1件も走らない（この環境では `/usr/bin/python3` がそれに当たる）。先に次を確認し、`rc=0` を返すインタプリタのパスを以降の `python3` の位置に使う。
+
+```bash
+python3 -c "import pytest" ; echo $?   # 0 なら以降の python3 をそのまま使える
+# 0 以外なら pytest が入っている別インタプリタを探して、そのパスを以降の python3 の位置に置く
+# （例: /usr/local/bin/python3 -c "import pytest" ; echo $?）
+```
+
+exit code は値そのものを読む。pytest は `0`=全通過 / `3`=収集エラー / `5`=収集0件。`| tail` `| grep` を挟むとパイプ末尾の rc しか読めないので、`cmd > out.txt 2>&1; rc=$?` の形で取る。件数はこの出力に出たものを正とし、README などの本文に書き写さない。
+
 ```bash
 python3 -m pytest plugins/ubm-goal-setting/tests -q
 python3 plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py --dir plugins/ubm-goal-setting/knowledge

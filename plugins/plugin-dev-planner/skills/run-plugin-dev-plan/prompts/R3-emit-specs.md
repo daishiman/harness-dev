@@ -54,9 +54,10 @@
 - **hook**: `event`(PreToolUse|PostToolUse|Stop|UserPromptSubmit|SessionEnd)/`matcher`/`exit_semantics`(fail-closed=exit2)/`settings_wiring`/`fail_closed: true` + core 規律。
 - **script**: `script_name`/`purpose`/`inputs`/`outputs`/`exit_codes`/`network`/`write_scope` + `stdlib_only: true` + `tests_min: 12 以上` + core 規律。tests_min は「テスト 1 本だけの見せかけ」を落とすための本数の床であって網羅性の指標ではない。網羅性は `harness_coverage.min` (80%) が持つので、本数を水増しして床へ合わせない。
 
-**(C) index(main)**: P01..P13 を **phase_number 昇順**で列挙した目次 + 各 status + コンポーネント目録の所在 (buildable 実体は inventory が SSOT) + Plugin-level surfaces 表 + 全体完了条件 + 受入確認 (build 後の見方) + `plugin_meta`(manifest/marketplace/distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy = plugin-creator + F3/F4/F5/F6/A10/A7/F7/D6/B4/B5 を焼く。feedback_deploy はコア=常時・notion_sink 契約は io-contract §9) を保持する。受入確認には consumer TG-C09 が生成する `task-execution-report.html` (図解付き実行記録) を第一導線、`task-progress.md` を差分確認導線、`task-graph-status.json` を機械導線として明記する。plugin 階層横断規律は index の `plugin_meta` に集約する (phase/component に加算しない)。
+**(C) index(main)**: P01..P13 を **phase_number 昇順**で列挙した目次 + 各 status + コンポーネント目録の所在 (buildable 実体は inventory が SSOT) + Plugin-level surfaces 表 + 全体完了条件 + 受入確認 (build 後の見方) + `plugin_meta`(manifest/marketplace/distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy/install = plugin-creator + F3/F4/F5/F6/A10/A7/F7/D6/B4/B5 を焼く。feedback_deploy と install はコア=常時・notion_sink 契約は io-contract §9) を保持する。受入確認には consumer TG-C09 が生成する `task-execution-report.html` (図解付き実行記録) を第一導線、`task-progress.md` を差分確認導線、`task-graph-status.json` を機械導線として明記する。plugin 階層横断規律は index の `plugin_meta` に集約する (phase/component に加算しない)。
 - `plugin_meta.manifest`: `required:true`、`path:.claude-plugin/plugin.json`、`name_matches_folder:true`、`no_unresolved_placeholders:true`、`validate_plugin:true` を必須にする。
 - `plugin_meta.marketplace`: `default_personal` は bool、`policy.installation` は `AVAILABLE` 既定、`policy.authentication` は `ON_INSTALL` 既定、`policy.category` は非空、`cachebuster_for_update:true` を必須にする。
+- `plugin_meta.install`: ユーザーが何も言わなくても Claude Code と Codex の両方へ install する計画を既定にする。`platforms: [claude, codex]`、`codex_manifest: .codex-plugin/plugin.json`、`registries: [harness-local, codex-repo]`、`strict_validate: true`、`release: changelog-then-bump`、`verify: {isolated: true, live: true}` を焼き、P13 の完了チェックリストに CHANGELOG→bump→drift 0、`claude plugin validate --strict`、隔離 install と実環境 install の receipt `verified=true` を入れる。codex を外す・実環境 install を省くのは、構想にその理由があるときだけ `excluded_platforms.codex` / `verify.live_skip_reason` に書く (契約は `plugin-creator-contract.md` の install 契約)。hook component の command は plugin root 変数を二重引用符で囲む前提で設計する (書き方は `component-domain.md` の hook 行。未クォートは strict 検証で落ちる)。
 - 焼き先の正本キーは io-contract.md の表 (「焼き先はマトリクスに従う」総称ポインタでなく具体キー)。条件付き規律 (prompt_layer/knowledge_loop/combinators/goal_seek) は kind/feature/階層ゲートに従い盲目的に全 component へ焼かない。
 
 **(D) task-graph-derived の task spec** (`index.md` frontmatter の `shape_marker: task-graph-derived` 時のみ):
@@ -132,6 +133,7 @@
 - [ ] index(main) に「受入確認 (build 後の見方)」章を持ち、goal-spec.purpose 由来の受入観点と確認の見方を平易語で記した
 - [ ] 条件付き規律 (prompt_layer/knowledge_loop/combinators/goal_seek) を kind/feature/階層ゲートに従って焼いた
 - [ ] index(main) を P01..P13 phase_number 昇順で全列挙し、完了条件・コンポーネント目録の所在・`plugin_meta`(manifest/marketplace/cachebuster/validation を含む plugin 階層規律) を記載した
+- [ ] `plugin_meta.install` で Claude Code と Codex の両方への install (登録先・strict 検証・release 順序・隔離/実環境 install の verified=true) を既定で宣言し、P13 の完了チェックリストに反映した
 - [ ] index `## 基本定義` に仕様駆動の大前提 (harness-creator 仕様基点・spec-first・要件正本=goal-spec) を宣言し、goal-spec checklist の全 id を 完了チェックリスト/受入確認 で引用した (`check-requirements-coverage.py` が exit0)
 - [ ] 各 inventory component が ≥1 phase の `entities_covered` に出現 (orphan 0 件)
 - [ ] `check-spec-frontmatter.py` / `check-spec-gates.py` / `verify-index-topsort.py` / `detect-unassigned.py` が exit0 になった

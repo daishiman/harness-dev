@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-04 install receipt の stale runtime 検出)
+
+- `install-local-plugins.py` が copy install の `source_digest` と `runtime_digest` を記録するだけで比べておらず、同じ版番号のまま中身の古いキャッシュが残っていても `verified=true` を返していた。両者が食い違うときは `verification_status=stale_runtime`・`activation.runtime=stale` とし、receipt 全体の `status` と `next_action` で該当 plugin の版上げ (`scripts/build-plugin-release.py`) を指示する。CLI は版が動かない限りキャッシュを取り直さないため、修復手段は版上げだけである。
+- digest は Claude CLI がキャッシュ直下に置く `.in_use` / `.orphaned_at` を除外し、ツリー内を指す symlink は字面ではなく着地点で記録する。CLI はコピー時に `Versions/Current/X` のような連鎖を `Versions/<n>/X` へ書き換えるため、字面で比べると忠実なコピーまで stale と誤判定する。
+
 ### Changed (2026-08-20 usable-first build)
 
 - 既存の `draft / release` stage を再利用し、`/capability-build` と `run-build-skill` の既定を `draft` に変更。新たなMVP modeは増やさず、まず試せる実体+決定論ゲートで `usable-draft` として引き渡す。

@@ -121,7 +121,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 - **ゴール**: 相談に対し考え方/思考フレームを選択肢として提示し、ユーザー自身の言葉で言語化された解決策と、現状→ゴール→ギャップ→次の一歩の行動計画へ帰結した状態。`feedback_contract` の IN1（非処方スタンス）/ OUT1（transcript 4要素）を満たす。
 - **出力契約**: 相談セッション記録（相談種別・引き出したユーザー文脈/制約/価値観/既試行・提示した考え方/思考フレーム（選択肢＋適用視点・出典 ID 付き）・ユーザー自身の言葉で言語化した解決策・現状→ゴール→ギャップ→次の一歩の行動計画）。**処方的な単一解は出力しない**。記録の形式と置き場は `references/session-record-format.md` が正本。
-- **境界**: knowledge graph / harness artifact graph は read-only consult（C06/C07 経由・書込なし）。相談記録は eval-log 配下の handoff（vault 外・`ubm-write-path-guard` の対象外）へ書く。既存 capability A（21項目）/ B（6カテゴリ）の契約を破壊しない（非後退・additive）。**目標設定そのものの生成は `run-ubm-goal-setting` へ委譲する**。
+- **境界**: knowledge graph / harness artifact graph は read-only consult（C06/C07 経由・書込なし）。相談記録は eval-log 配下の handoff（vault 外・`ubm-write-path-guard` の対象外）へ書く。既存 capability A（公式21ブロック）/ B（6カテゴリ）の契約を破壊しない（非後退・additive）。**目標設定そのものの生成は `run-ubm-goal-setting` へ委譲する**。
 - **正本**: 思考フレーム カタログ=`references/consult-frames.md`、セッション記録形式と置き場=`references/session-record-format.md`。
 
 ## End-to-End Flow

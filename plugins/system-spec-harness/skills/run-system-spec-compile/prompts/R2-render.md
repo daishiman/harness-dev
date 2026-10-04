@@ -30,7 +30,7 @@
 ## Layer 4: 共通ポリシー層
 - 各章 frontmatter に確定マーカー (status/category/aggregate/spec_cells) と `serves_goals` (上位概念トレース) を付与する。
 - 本文に (a) カテゴリ別収集状態表、(b) 設計知識cardの目的・解決問題・適用/非適用条件・トレードオフ/失敗モード・goal寄与、(c) 最新ドキュメント出典表を並べる。参照pathだけでは完了しない。
-- 出典は target の category で該当章へ割り当て、未割当は index へ回す (章に無理に重複させない)。
+- 出典は target の category (主たる章) で該当章へ割り当て、target が `also_categories` で宣言した章にも同じ出典を載せる。未割当は index へ回す。宣言の無い章へは推測で重複させない (複数章に載せるのは spec-state が宣言したときだけ)。
 - card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)

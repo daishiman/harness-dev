@@ -1656,6 +1656,38 @@
       "entity_ref": null,
       "state": "pending",
       "write_scope": "P13-x-03"
+    },
+    {
+      "id": "P13-x-04",
+      "title": "CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` と `build-local-marketplace.py --check` と `sync-plugin-platforms.py --all --check` が drift 0 で通っている (`plugin_meta.install.release` / `registries`)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-04"
+    },
+    {
+      "id": "P13-x-05",
+      "title": "`claude plugin validate --strict plugins/notion-task-sync` が通っている (hook command の plugin root は `\"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` とクォートする・`plugin_meta.install.strict_validate`)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-05"
+    },
+    {
+      "id": "P13-x-06",
+      "title": "`install-local-plugins.py --plugin notion-task-sync --claude-config-dir <tmp> --codex-home <tmp>` の receipt が Claude/Codex とも verified=true (`plugin_meta.install.verify.isolated`)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-06"
+    },
+    {
+      "id": "P13-x-07",
+      "title": "`install-local-plugins.py --plugin notion-task-sync` で手元の Claude Code と Codex へ導入し、receipt が verified=true (`plugin_meta.install.verify.live`)。",
+      "phase_ref": "P13",
+      "entity_ref": null,
+      "state": "pending",
+      "write_scope": "P13-x-07"
     }
   ],
   "edges": [
@@ -12446,6 +12478,26 @@
     },
     {
       "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-05"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-06"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13",
+      "to": "P13-x-07"
+    },
+    {
+      "type": "depends_on",
       "from": "P13-x-01",
       "to": "P12"
     },
@@ -12457,6 +12509,26 @@
     {
       "type": "depends_on",
       "from": "P13-x-03",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-04",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-05",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-06",
+      "to": "P12"
+    },
+    {
+      "type": "depends_on",
+      "from": "P13-x-07",
       "to": "P12"
     },
     {
@@ -13428,6 +13500,26 @@
       "type": "parent_of",
       "from": "P13",
       "to": "P13-x-03"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-04"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-05"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-06"
+    },
+    {
+      "type": "parent_of",
+      "from": "P13",
+      "to": "P13-x-07"
     },
     {
       "type": "produces",

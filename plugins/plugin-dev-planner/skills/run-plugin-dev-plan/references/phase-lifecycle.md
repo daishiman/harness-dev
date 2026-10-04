@@ -52,7 +52,7 @@ Electron IPC・safeInvoke / Cloudflare・D1・Workers / Phase 11 スクリーン
 | 10 | P10 | final-review | 最終レビューゲート | レビュー | final-gate | elegant-review C1-C4 (final) + governance + unassigned 0 | final レビュー verdict | C1-C4 全 PASS・unassigned 0・governance PASS |
 | 11 | P11 | evidence | 手動テスト検証 | 検証 | evidence | スクショ DROP→Markdown evidence 5 要素 | evidence 5 要素 | lint exit0 / schema parity / build-trace coverage / content-review verdict / coverage JSON が観測可能 |
 | 12 | P12 | documentation | ドキュメント | 文書 | none | 6 タスク雛形 (中学生説明 Part1 概念+Part2 技術)・反映先=`feedback_contract_ssot`/`lessons-learned`/`bundles.json`・**distribution/install 手順** | doc + install 手順 (+ feedback 受け皿の `.notion-config.json` セットアップの宣言的注記=plan は DB キーのみ宣言し DB ID は設置先供給) | 6 タスク充足・反映先明示 |
-| 13 | P13 | release | 完了(PR/リリース) | 完了 | none | IPC/Cloudflare 全 DROP・PR は責務外 soft note のみ (評価ゲート化しない) | feature→main soft note | (評価ゲートなし)・PR 言及は note 留め |
+| 13 | P13 | release | 完了(PR/リリース) | 完了 | none | IPC/Cloudflare 全 DROP・PR は責務外 soft note のみ (評価ゲート化しない)。Claude/Codex への install は `plugin_meta.install` の build 側完了条件として完了チェックリストに載せる | feature→main soft note + install receipt | (評価ゲートなし)・PR 言及は note 留め・install は receipt `verified=true` |
 
 - gate_type enum: `none | design-gate | final-gate | tdd-red | tdd-green | tdd-refactor | qa | evidence` (`specfm.GATE_TYPES`)。
 - category は日本語ラベル (enum 緩め・上表の値・`specfm.PHASE_CATEGORY`)。

@@ -47,7 +47,7 @@ plugin が生成し得る**buildable な capability 種別**。`skill-brief.sche
 | **skill** | `SKILL.md` 入口の能力単位 (kind ∈ run/ref/wrap/assign/delegate) | `run-skill-create` |
 | **sub-agent** | `agents/*.md`、独立 context | `assign-skill-design-evaluator` |
 | **slash-command** | `commands/*.md` | `/install-bundle` |
-| **hook** | `plugin.json`/`settings.json` 配線スクリプト | `preflight-git-commit.py` |
+| **hook** | `plugin.json`/`settings.json` 配線スクリプト。`hooks/hooks.json` の command は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/<file>.py"` とクォートする (未クォートは `claude plugin validate --strict` で落ちる・`plugin_meta.install.strict_validate`) | `preflight-git-commit.py` |
 | **script** | `scripts/*.py`、決定論処理 | `validate-build-trace.py` |
 
 → §8 P02 (設計・phase-lifecycle.md) で構想に対しこの 5 種を検討し、必要な**各実体**を component として kind/prefix/hierarchy/pattern 確定する。実体数が N であり、N は固定 (13 等) でも「5 種を 1 本ずつ」でもなく、対象プラグインの実体数に依存して変動する。

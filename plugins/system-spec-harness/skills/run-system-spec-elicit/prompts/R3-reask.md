@@ -48,6 +48,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | question_bank | references/elicit-question-bank.md | 再質問設計時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 | contract | references/spec-state-contract.md | hearing_progress 形状の確認時 |
 
 ### 3.2 外部ツール

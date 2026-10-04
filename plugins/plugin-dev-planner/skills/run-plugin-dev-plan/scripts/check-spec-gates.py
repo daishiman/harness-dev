@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: check-spec-gates
-# purpose: component-inventory.json の各 component の quality_gates(p0_lint網羅/build_trace/elegant_review C1-C4/content_review verdict/evaluator>=80,high0) と harness_coverage(min>=80/kind_pass) を specfm で値域検証し、index.plugin_meta の plugin 階層規律を値域検証する決定論ゲート。
+# purpose: component-inventory.json の各 component の quality_gates(p0_lint網羅/build_trace/elegant_review C1-C4/content_review verdict/evaluator>=80,high0) と harness_coverage(min>=80/kind_pass) を specfm で値域検証し、index.plugin_meta の plugin 階層規律 (Claude/Codex 両 platform への install 契約を含む) を値域検証する決定論ゲート。
 # inputs:
 #   - argv: <md ...> | --specs-dir DIR [--inventory FILE]
 # outputs:
@@ -139,6 +139,92 @@ def check_plugin_meta(pm: dict) -> list[str]:
                 errs.append(f"feedback_deploy.portability は repo-bundled|vendored のみ (現値 {port!r})")
             elif isinstance(dist, dict) and dist.get("distributable") is True and port != "vendored":
                 errs.append("distributable:true は feedback_deploy.portability=vendored を要求 (単独 install 携帯性)")
+    inst = pm.get("install")
+    if isinstance(inst, dict) and inst:
+        errs.extend(check_install(inst))
+    return errs
+
+
+def check_install(inst: dict) -> list[str]:
+    """plugin_meta.install (Claude/Codex 両 platform への install 契約) を値域検証する。
+
+    plan が「作れば install できる」と黙って仮定しないよう、登録先・strict 検証・release 順序・
+    隔離/実環境 install 検証を宣言させる。opt-out は platform 除外と実環境 install 省略だけで、
+    どちらも理由の明示を要する (feedback_deploy の enabled:false+reason と同型)。
+    """
+    errs: list[str] = []
+    platforms = inst.get("platforms")
+    if not isinstance(platforms, list) or not all(isinstance(x, str) for x in platforms):
+        errs.append(f"install.platforms は platform 名の list であること (現値 {platforms!r})")
+        platforms = []
+    unknown = sorted(set(platforms) - set(specfm.INSTALL_PLATFORMS))
+    if unknown:
+        errs.append(f"install.platforms に未知の platform {unknown!r} (許容 {list(specfm.INSTALL_PLATFORMS)!r})")
+    for req in specfm.INSTALL_REQUIRED_PLATFORMS:
+        if req not in platforms:
+            errs.append(f"install.platforms は {req} を含むこと (manifest 正本の platform は除外不可)")
+    excluded = inst.get("excluded_platforms") or {}
+    if not isinstance(excluded, dict):
+        errs.append("install.excluded_platforms は {platform: 除外理由} の dict であること")
+        excluded = {}
+    for plat in specfm.INSTALL_PLATFORMS:
+        if plat in platforms:
+            if plat in excluded:
+                errs.append(f"install.platforms と excluded_platforms の両方に {plat} がある (どちらか一方に決める)")
+            continue
+        if plat in specfm.INSTALL_REQUIRED_PLATFORMS:
+            continue
+        reason = excluded.get(plat)
+        if not (isinstance(reason, str) and reason.strip()):
+            errs.append(
+                f"install.platforms に {plat} が無いのに excluded_platforms.{plat} の理由が無い"
+                " (両 platform への install が既定。外すなら理由を明示する)"
+            )
+
+    if "codex" in platforms and str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
+        errs.append(
+            f"install.codex_manifest は {specfm.INSTALL_CODEX_MANIFEST} であること"
+            f" (現値 {inst.get('codex_manifest')!r}・sync-plugin-platforms.py が .claude-plugin から投影する)"
+        )
+    registries = inst.get("registries")
+    if not isinstance(registries, list):
+        errs.append(f"install.registries は登録先の list であること (現値 {registries!r})")
+        registries = []
+    for plat in platforms:
+        reg = specfm.INSTALL_REGISTRY_BY_PLATFORM.get(plat)
+        if reg and reg not in registries:
+            errs.append(f"install.registries に {reg} が無い ({plat} へ install する経路の登録先)")
+
+    if inst.get("strict_validate") is not True:
+        errs.append(
+            "install.strict_validate は true であること (claude plugin validate --strict を通す。"
+            'hook command の plugin root は "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/..." とクォートする)'
+        )
+    if str(inst.get("release", "")).strip() != specfm.INSTALL_RELEASE_ORDER:
+        errs.append(
+            f"install.release は {specfm.INSTALL_RELEASE_ORDER!r} であること"
+            f" (現値 {inst.get('release')!r}・CHANGELOG を先に書き build-plugin-release.py --only <slug> で bump する)"
+        )
+
+    verify = inst.get("verify")
+    if not isinstance(verify, dict):
+        errs.append("install.verify が dict でない (隔離 install と実環境 install の検証宣言が必須)")
+    else:
+        if verify.get("isolated") is not True:
+            errs.append(
+                "install.verify.isolated は true であること (install-local-plugins.py を"
+                " --claude-config-dir/--codex-home 付きで回し verified=true を確認する)"
+            )
+        live = verify.get("live")
+        if live is False:
+            reason = verify.get("live_skip_reason")
+            if not (isinstance(reason, str) and reason.strip()):
+                errs.append("install.verify.live:false は live_skip_reason 非空必須 (実環境 install を省く根拠)")
+        elif live is not True:
+            errs.append(
+                f"install.verify.live は bool であること (現値 {live!r}・既定 true。autoUpdate は"
+                " 新規 plugin を入れないため install-local-plugins.py --plugin <slug> で実環境へ入れる)"
+            )
     return errs
 
 

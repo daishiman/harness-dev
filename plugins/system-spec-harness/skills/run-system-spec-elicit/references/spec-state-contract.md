@@ -77,6 +77,9 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 | `answered_at` | 任意 | 回答時刻 (RFC3339・未来不可)。実測値のみ。 |
 | `required_info_items` | 任意 | この回答が満たす `required-info-catalog.json` の `item_id` 配列。追記のみ (和集合)。 |
 | `basis` | 任意 | 回答の性質。`user-decision` / `observed-fact` / `agent-inference` のいずれか。 |
+| `superseded_by` | 任意 | この entry を置き換えた新しい entry の `id`。`supersede-qa` op だけが書く (write-once)。 |
+| `superseded_at` | 任意 | 置き換えを記録した時刻 (RFC3339・未来不可・置き換え先の `answered_at` 以後)。実測値のみ。 |
+| `superseded_note` | 任意 | 旧い問のどの基準 (N1-N4) の違反を、同じ論点でどう問い直したか。C06 が置き換えの有効性を照合する材料。 |
 
 `basis` は「その確定が誰の判断か」を機械可読にする。`user-decision` は利用者が代替案を見た上で
 明示選択したもの、`observed-fact` はコード・設定・公式ドキュメントで検証できる観測事実、
@@ -96,6 +99,20 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 `id` を発行する。`provenance` / `answered_at` は**未設定のときに限り**後から追記でき、既に値が
 ある項目の上書きは拒否される (追記は冪等)。C03 compile はこれらを章の「確定内容 (質疑録)」節へ
 併記する。
+
+### 置き換え (supersession)
+
+問の設計に欠陥があった entry (中立な問の基準 N1-N4 の違反。正本は
+`neutral-question-criteria.md`) は、`question` を凍結したままでは監査の検出が毎周再発する。
+その entry は消さず、同じ論点を中立に問い直した新しい entry で**置き換えた**ことを記録する。
+記録は旧 entry への `superseded_*` の追記だけで、旧 entry の本文・`corrections`・他の項目は変わらない。
+
+- `superseded_*` は turn からは書けない (turn の未知キーは読み飛ばされ、書いたつもりで失われるため拒否する)。
+- 置き換えが有効になるのは (a) 置き換え先が中立な問 (b) 同じ論点 (c) 利用者の回答が記録されている、を
+  全て満たすときだけである。writer は (c) だけを決定論で検査し、(a)(b) は C06 が判定する。
+  writer が通したことは置き換えの正当性を意味しない。
+- C06 は置き換え済みの entry を誘導性の判定の対象から外し、有効な置き換えを「閉じた検出」として報告に残す。
+- C03 compile は置き換え済みの entry を「旧版（置き換え先: <qa_id>）」の印付きで描く。
 
 ## 時刻項目の検証 (書式 + 単調性)
 
@@ -123,7 +140,8 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 
 `targets[]` は外部技術ドキュメントの取得対象一覧で、C02 (`run-system-spec-doc-fetch`) の取得対象と C13 (`validate-source-citation.py`) の全件突合、C03 (`compile-spec-doc.py`) の章割当に使う共有データである。
 
-- **形状**: 各要素は `{"target_id": "<id>"[, "category": "<category_id>"]}`。`target_id` 必須・重複禁止、`category` 任意 (指定時は該当章へ出典を割り当てる)。
+- **形状**: 各要素は `{"target_id": "<id>"[, "category": "<category_id>"][, "also_categories": ["<category_id>", ...]]}`。`target_id` 必須・重複禁止、`category` 任意 (指定時は該当章へ出典を割り当てる)。
+- **also_categories** (任意): 1 つの技術の公式文書が複数の章の判断を支えるとき、主たる章 (`category`) に加えて出典を載せる章を宣言する。`category` を持つ target にだけ指定でき、非空文字列の非空配列で、要素の重複と `category` との一致は拒否する。C03 は主章と宣言した各章の出典表に同じ行を載せる。C02 の取得と C13 の全件突合は `target_id` 単位のままで、record は 1 件に束ねる (章ごとに複製しない)。
 - **単一 writer**: `targets[]` も `scripts/apply-spec-transition.py` の `set-targets` op が唯一の書込経路。`init` は空配列で初期化するだけで、対象は `set-targets` で追加する。
 
 ```bash
@@ -273,6 +291,17 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scr
   1 回目「時刻が実測できないから埋めない」は端的に**偽**だった (reopen の適用はトランスクリプトに時刻付きで残っており、探せば読める)。
   2 回目「既存 entry を書き換える op を置かないため埋めない」は結論こそ維持すべきだが、**禁止対象を取り違えていた** — 守るべきは既存フィールドの改変であって、新しいフィールドの追記ではない。
   `append-only` の下では「訂正 (既存事実の修正)」と「補記 (新しい事実の追加)」は別物であり、後者は改竄経路にならない (独立ヒアリング監査 2026-09-05 の指摘)。
+- **`supersede-qa` (追記専用)**: 凍結済みの qa entry を新しい entry で置き換えたことを記録する唯一の経路。
+  op は `{"action": "supersede-qa", "qa_id": <旧>, "superseded_by": <新>, "superseded_at": <実測値>, "note": <非空>}`。
+  turn に含めた場合、`superseded_by` を省くと turn の `qa_id` (いま問い直した entry) で補完する。
+  拒否する条件: 旧・新 entry の不在、自分自身への置き換え、`note` の空、`superseded_at` の書式違反・未来値・置き換え先の
+  `answered_at` より前、置き換え先の `answer` が空・`basis` が `user-decision` でない・`answered_at` が無いか旧 entry の
+  `answered_at` より後でない (以上が (c))、置き換え先自身が置き換え済み (循環を原理的に作れない)、旧 entry が確定セルの
+  主たる接地根拠 (`qa_ref`) のまま (先に R4-reopen し新しい entry で再確定する)、既に別の値で置き換え済み (write-once)。
+  同値の再適用は冪等。裏付け (`qa_refs`) からの参照は残してよい。
+- **置き換え済みの entry を主たる接地根拠にしない**: `confirm` の `qa_ref` が置き換え済みの entry なら拒否する。
+  置き換えは「旧い問を確定の根拠から外した」ことの記録であり、後から同じ entry で確定し直せると、その記録が偽になる。
+  確定は置き換え先の entry で行う。
 - **goal-seek chunk**: `chunk` は 1 invocation で最大 `max_loops` (5) turn を適用。未収集が残れば `hearing_progress.complete=false`・`next_question` 非 null を保存 (resumable)。未収集0のときだけ `complete=true`。
 - **set-targets**: `targets[]` の唯一の書込経路 (上記「targets と set-targets op」)。
 - **set-foundation / set-serves / set-decision / set-knowledge-candidate**: `requirements_foundation`、確定セルの `serves_goals`、`decisions[]`、`knowledge_candidates[]` の唯一の書込経路。

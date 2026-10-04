@@ -170,7 +170,7 @@ quality_gates:
 harness_coverage: {min: 80, kind_pass: <kind別>}
 ```
 
-index(main) は `plugin_meta`(manifest / marketplace / cachebuster / validate_plugin + distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy)を携帯。feedback_deploy はコア(常時・opt-out は `{enabled:false, reason}`)で、Notion 受け皿は `notion_sink{config_key, schema_ref, resolution}` を宣言し DB ID は設置先 `.notion-config.json` が供給する(契約は `references/io-contract.md` §9)。
+index(main) は `plugin_meta`(manifest / marketplace / cachebuster / validate_plugin + distribution/pkg_contract/governance/ci/ssot_dedup/feedback_deploy/install)を携帯。install はコアで、Claude Code と Codex の両方への install (登録先・strict 検証・release 順序・隔離/実環境 install) を既定にする。feedback_deploy はコア(常時・opt-out は `{enabled:false, reason}`)で、Notion 受け皿は `notion_sink{config_key, schema_ref, resolution}` を宣言し DB ID は設置先 `.notion-config.json` が供給する(契約は `references/io-contract.md` §9)。
 
 ---
 

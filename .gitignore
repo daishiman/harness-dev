@@ -51,6 +51,11 @@ dist/
 .run/
 # spec-drift-guardian の issue 別 triage 作業ディレクトリ (run-spec-drift-triage が生成)
 .spec-drift/
+# external-mutation guard は hook の cwd を project root にするため、plugin 配下で
+# セッションを開くと guard 状態 (.guard-key を含む) がそこへ作られる。正本は repo
+# 直下の .artifact-delivery/ だけで、plugin 配下のものは install copy と
+# fingerprint に混ぜない。
+plugins/*/.artifact-delivery/
 # skill-intake 実行中フラグ lock (hook-guard-skillgen.py が生成・解除する揮発状態)
 eval-log/intake-locks/
 # C05 auto-sync-on-session-start.py の write-scope 全体 (lock/state/log の揮発状態)

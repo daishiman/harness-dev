@@ -31,7 +31,7 @@
 
 ### 2.2 ドメインルール
 - **観点↔評価主体**: マトリクス網羅性→C07 (`system-spec-matrix-auditor`) + sub-input C06 (`system-spec-hearing-auditor`) / 設計知識反映→C05 R1-score が自前評価 (**独立 auditor なし**) / 最新ドキュメント出典→C08 (`system-spec-doc-freshness-auditor`)。matrix/doc の一次根拠は対応監査結果 (R2-delegate が集約) + 決定論ゲート、設計知識は R1 の自前照合。
-- **マトリクス網羅性**: `validate-coverage-matrix.py --require-complete` の exit0 を一次根拠にし、matrix-auditor の意味層 (対象外理由の具体性 / qa_ref が確定を裏付けるか) を重ねる。C06 のヒアリング品質 4 軸 (聞き漏れ / 誘導質問 / 早期停止 / トレーサビリティ) を網羅性・トレースの sub-input として併せる。
+- **マトリクス網羅性**: `validate-coverage-matrix.py --require-complete` の exit0 を一次根拠にし、matrix-auditor の意味層 (対象外理由の具体性 / qa_ref が確定を裏付けるか) を重ねる。C06 のヒアリング監査 (R6-audit-hearing の監査 5 軸 (軸の定義と数は `../../run-system-spec-elicit/prompts/R6-audit-hearing.md` が正本)) を網羅性・トレースの sub-input として併せる。C06 の検出が本観点をどう動かすかは `aspect-criteria.md` の「ヒアリング監査 (C06) の重大度と判定の対応」だけが決め、C06 自身の verdict はそのまま使わない。
 - **設計知識反映 (C05 自前評価)**: `system-spec/*.md` 各章が `ref-system-design-knowledge`/`resource-map.yaml` 由来の設計知識ポインタを持つか (機械層=存在) に加え、その原則が当該カテゴリの確定セル要件へ具体適用されているか (意味層) を自前照合する。ポインタは compile が機械注入するため**存在確認だけで PASS にしない** (機械注入→存在確認の自己循環を禁じる = Goodhart 防止)。具体適用が無く汎用ポインタだけの章は medium 以上で拾う。C06 は設計知識を読まないため本観点へ束縛しない。
 - **最新ドキュメント出典**: doc-freshness-auditor の二層 (形式=`validate-source-citation.py` / 内容鮮度=公式サイト再照合) を一次根拠にする。C13 形式 PASS でも非公式 host・世代落ちは FAIL。
 - 総合判定は `scripts/aggregate-completeness.py` の `aggregate_verdict` で再導出でき、レポートの `verdict` と一致すること (整合検査)。high severity finding が 1 件でもあれば FAIL。
@@ -66,7 +66,8 @@
 ## Layer 4: 共通ポリシー
 
 ### 4.1 失敗時
-- 監査 verdict FAIL/INDETERMINATE → 該当観点 FAIL、不足事項一覧に差し戻し先 (elicit/doc-fetch/compile または監査再実行) を記す。
+- C07/C08 の監査 verdict FAIL/INDETERMINATE → 該当観点 FAIL、不足事項一覧に差し戻し先 (elicit/doc-fetch/compile または監査再実行) を記す。
+- C06 (matrix_coverage の sub-input) は、C06 の verdict ではなく `python3 scripts/aggregate-completeness.py --hearing <C06 出力 JSON> --state <spec-state.json>` の `derive_hearing_verdict` の値で扱う (`aspect-criteria.md` 1a の決定論実装)。FAIL/INDETERMINATE なら matrix_coverage を FAIL にし、`blocking` の検出を gaps に記す。`notes` (medium の非接地・low・info) と `closed` (閉じた検出) は gaps に入れず、`findings[]` に `bucket: matrix_coverage` で残す。
 - 決定論ゲート exit != 0 → マトリクス網羅性観点を FAIL、high finding を記録。
 
 ### 4.2 観測
@@ -88,6 +89,7 @@
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 - [ ] 評価結果が `scoring-rubric.json` と `aspect-criteria.md` の全観点を被覆している
 - [ ] C07/C08/C06 の独立監査結果が根拠付きで存在し、C06 は matrix_coverage の sub-input に限定されている
+- [ ] C06 の sub-input 判定が `aggregate-completeness.py --hearing ... --state ...` の再導出値と一致し、注記と閉じた検出が findings[] に残っている (gaps には入れていない)
 - [ ] matrix_coverage verdict が `validate-coverage-matrix.py --require-complete` の exit code と一致する
 - [ ] design_knowledge_reflection verdict が、ポインタ存在ではなく確定セルへの具体適用を根拠にしている
 - [ ] doc_freshness verdict が形式検査と公式サイト上の内容鮮度判定の両方を反映している

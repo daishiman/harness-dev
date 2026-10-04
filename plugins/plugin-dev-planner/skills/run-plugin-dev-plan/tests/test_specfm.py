@@ -208,7 +208,7 @@ def test_contract_tables_present(specfm_mod):
     assert set(specfm_mod.COMPONENT_KINDS) == {"skill", "sub-agent", "slash-command", "hook", "script"}
     assert "lint-agent-prompt-section" in specfm_mod.P0_LINT_BY_KIND["sub-agent"]
     assert set(specfm_mod.PLUGIN_META_REQUIRED_DICTS) == {
-        "manifest", "marketplace", "ci", "governance", "pkg_contract", "ssot_dedup", "feedback_deploy"
+        "manifest", "marketplace", "ci", "governance", "pkg_contract", "ssot_dedup", "feedback_deploy", "install"
     }
 
 
@@ -317,10 +317,10 @@ def test_validate_component_skill_placement_script_needs_scripts_dir(specfm_mod)
 
 
 def test_plugin_meta_core_conditional_partition(specfm_mod):
-    """core/conditional が従来 7 キーを重複なく分割する (feedback_deploy は core 昇格・和集合不変)。"""
+    """core/conditional が plugin 階層キーを重複なく分割する (feedback_deploy・install は core)。"""
     core = set(specfm_mod.PLUGIN_META_CORE_DICTS)
     cond = set(specfm_mod.PLUGIN_META_CONDITIONAL_DICTS)
-    assert core == {"manifest", "marketplace", "ci", "feedback_deploy"}
+    assert core == {"manifest", "marketplace", "ci", "feedback_deploy", "install"}
     assert cond == {"pkg_contract", "governance", "ssot_dedup"}
     assert core.isdisjoint(cond)
     assert core | cond == set(specfm_mod.PLUGIN_META_REQUIRED_DICTS)

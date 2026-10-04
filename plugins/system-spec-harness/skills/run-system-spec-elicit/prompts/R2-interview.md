@@ -22,6 +22,7 @@
 
 ### 1.2 倫理ガード
 - ユーザー回答原文を改変しない。推測を確定として書かない。
+- 問は `references/neutral-question-criteria.md` の N1-N4 を満たす形で投げる。問の文面は qa_log に凍結され、後から直せない。
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
@@ -33,7 +34,7 @@
 - **platform 一括判断を優先**: 非対象 platform は一括承認 (approval_log) で列を `対象外` にし turn 数を圧縮する。
 - 対象 platform だけ各カテゴリ要件を確定する。
 - 1 turn = 質問→回答→反映。反映は writer の `chunk` / `apply` で行う。
-- **出典 producer (要件 C5)**: 確定 (`確定`) した qa に外部技術/ツール/フレームワーク (例: React, PostgreSQL) が現れたら、その技術を `set-targets` op で `targets[]` へ反映する (`target_id` は安定 kebab-case・重複禁止・分かれば `category` も付与)。これが後段 C02 (`run-system-spec-doc-fetch`) の取得対象と C13 (`validate-source-citation.py`) の全件突合の発生源になる。
+- **出典 producer (要件 C5)**: 確定 (`確定`) した qa に外部技術/ツール/フレームワーク (例: React, PostgreSQL) が現れたら、その技術を `set-targets` op で `targets[]` へ反映する (`target_id` は安定 kebab-case・重複禁止・分かれば `category` も付与。同じ公式文書が別の章の判断も支えるなら、その章を `also_categories` で宣言する)。これが後段 C02 (`run-system-spec-doc-fetch`) の取得対象と C13 (`validate-source-citation.py`) の全件突合の発生源になる。
 - **未知知識 producer (要件 open-world)**: ヒアリング中に既知 seed (clean-arch / DDD 等 C04 の 6 枚) に無い未知の設計領域・技術・パターンを検出したら、`set-knowledge-candidate` op で `status=discovered` として `spec-state` へ記録する (id は安定 kebab-case・`topic`・`problem`・実在 goal を指す `serves_goals` を付与)。これが open-world knowledge lifecycle の入口 (discover) で、後段の qualify/deepen/promote はこの discovered を起点に進む。
 
 ### 2.3 入力契約
@@ -60,6 +61,7 @@
 | id | path | when_to_read |
 |---|---|---|
 | question_bank | references/elicit-question-bank.md | 質問設計時 |
+| neutral | references/neutral-question-criteria.md | 利用者への問を作るとき (N1-N4: 推奨の印なし・利点と不利な点の対称・前提を埋め込まず決めない道を残す・1 問 1 論点) |
 | contract | references/spec-state-contract.md | セル/ログ形状の確認時 |
 
 ### 3.2 外部ツール

@@ -193,13 +193,20 @@ plugin_meta:
       schema_ref: doc/notion-schema/improvement-request.schema.json  # B5 受け皿 schema (パス参照・複製しない)
       resolution: notion_config  # B4 解決器の名前参照 (実体 plugins/harness-creator/scripts/notion_config.py)
     portability: repo-bundled  # repo-bundled | vendored。distributable:true → vendored 強制
+  install:                   # Claude Code / Codex 両 platform への install 契約・コア(常に必須)
+    platforms: [claude, codex]                 # claude は除外不可。codex を外すなら excluded_platforms: {codex: <理由>}
+    codex_manifest: .codex-plugin/plugin.json  # sync-plugin-platforms.py が .claude-plugin から投影 (手書きしない)
+    registries: [harness-local, codex-repo]    # platform ごとの install 経路。公開 marketplace は distribution.marketplace
+    strict_validate: true                      # claude plugin validate --strict (hook command の plugin root はクォート)
+    release: changelog-then-bump               # CHANGELOG 先行 → build-plugin-release.py --only <slug> → --check drift 0
+    verify: {isolated: true, live: true}       # install-local-plugins.py の receipt verified=true。live:false は live_skip_reason 必須
   # 条件付き 3 キー (pkg_contract/governance/ssot_dedup) は該当しない構想では
   #   <key>: {applicable: false, reason: "<N/A の根拠>"}
   # と明示宣言できる (例 skill のみ・非配布構想で PKG packaging が不要 → A7「skill-only は PKG 一部 N/A」と整合)。
   # 空 dict / 欠落は不可 (省略は必ず根拠付き明示=plugin_level_surfaces.<surface>.omitted_reason 原則と同型)。
 ```
 
-`check-spec-gates.py` が plugin_meta を**値域検証**する (存在チェックでない): `manifest.path` は `.claude-plugin/plugin.json`、`manifest.validate_plugin` は true。`marketplace.policy.installation` は `NOT_AVAILABLE` / `AVAILABLE` / `INSTALLED_BY_DEFAULT`、`marketplace.policy.authentication` は `ON_INSTALL` / `ON_USE`、`category` は非空。`distributable` は bool 必須。`distributable:false` なら `bundles` は空 (=非登録を明示) かつ `marketplace` は false/不在 (非配布整合)。`distributable:true` なら `bundles` に最低 1 件。**コア** `manifest`/`marketplace`/`ci`/`feedback_deploy` は常に非空 dict (正本 `specfm.PLUGIN_META_CORE_DICTS`)。`feedback_deploy` は enabled:true なら `notion_sink` 値域 (config_key 非空 / schema_ref パス / resolution==`notion_config`) + `portability`∈{repo-bundled, vendored} を検証し、**`distributable:true` → `portability==vendored` を強制**、opt-out は `{enabled: false, reason: <非空>}` のみ許す。**条件付き** `pkg_contract`/`governance`/`ssot_dedup` は非空 dict だが、該当しない構想では `{applicable: false, reason: <非空>}` で明示 N/A 可 (reason 空はエラー)。matrix-coverage は焼き先スロットの addressed (空コンテナ・`{applicable:false}` 含む)、gates は値域、と責務分離する。
+`check-spec-gates.py` が plugin_meta を**値域検証**する (存在チェックでない): `manifest.path` は `.claude-plugin/plugin.json`、`manifest.validate_plugin` は true。`marketplace.policy.installation` は `NOT_AVAILABLE` / `AVAILABLE` / `INSTALLED_BY_DEFAULT`、`marketplace.policy.authentication` は `ON_INSTALL` / `ON_USE`、`category` は非空。`distributable` は bool 必須。`distributable:false` なら `bundles` は空 (=非登録を明示) かつ `marketplace` は false/不在 (非配布整合)。`distributable:true` なら `bundles` に最低 1 件。**コア** `manifest`/`marketplace`/`ci`/`feedback_deploy`/`install` は常に非空 dict (正本 `specfm.PLUGIN_META_CORE_DICTS`)。`install` は `platforms` が claude を含み、含まない platform は `excluded_platforms.<platform>` に理由を要する。codex を含むなら `codex_manifest==.codex-plugin/plugin.json`、各 platform の登録先 (claude→`harness-local` / codex→`codex-repo`) が `registries` に在ること、`strict_validate:true`、`release==changelog-then-bump`、`verify.isolated:true`、`verify.live` は bool で false なら `live_skip_reason` 非空 (値域の正本 `specfm.INSTALL_*`)。`feedback_deploy` は enabled:true なら `notion_sink` 値域 (config_key 非空 / schema_ref パス / resolution==`notion_config`) + `portability`∈{repo-bundled, vendored} を検証し、**`distributable:true` → `portability==vendored` を強制**、opt-out は `{enabled: false, reason: <非空>}` のみ許す。**条件付き** `pkg_contract`/`governance`/`ssot_dedup` は非空 dict だが、該当しない構想では `{applicable: false, reason: <非空>}` で明示 N/A 可 (reason 空はエラー)。matrix-coverage は焼き先スロットの addressed (空コンテナ・`{applicable:false}` 含む)、gates は値域、と責務分離する。
 
 ### plugin-level surface: notion_config (per-project Notion DB の解決宣言・B4/B5)
 

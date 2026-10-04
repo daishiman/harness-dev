@@ -121,7 +121,7 @@ def test_runtime_manifests_wire_shared_plan_validation_hook_once():
         if "hooks/hook-validate-plugin-plan.py" in command
     ]
     assert validation_commands == [
-        "python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-validate-plugin-plan.py"
+        'python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/hook-validate-plugin-plan.py"'
     ]
 
 

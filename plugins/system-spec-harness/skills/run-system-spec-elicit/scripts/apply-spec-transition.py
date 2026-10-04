@@ -260,6 +260,11 @@ def apply_cell_op(state: dict, op: dict) -> None:
         _correct_qa_timestamp(state, op)
         return
 
+    if action == "supersede-qa":
+        # qa_log entry どうしの置き換え関係の記録専用 op。同じくログを対象にする。
+        _supersede_qa(state, op)
+        return
+
     cell = _cell(state, cat, pf)
     cur = cell.get("state")
 
@@ -346,6 +351,15 @@ def apply_cell_op(state: dict, op: dict) -> None:
         qa_ref = op.get("qa_ref")
         if not qa_ref:
             raise TransitionError(f"confirm には qa_ref が必須: {cat}/{pf}")
+        retired = _qa_entry(state, qa_ref)
+        if retired is not None and retired.get("superseded_by") is not None:
+            # supersede-qa は「主たる接地根拠のままでは置き換えない」を課すが、置き換えた後に
+            # 旧 entry を主根拠へ戻せると、その条件は reopen → confirm の 2 手で抜けられる。
+            raise TransitionError(
+                f"confirm 不可: {cat}/{pf} の qa_ref={qa_ref!r} は "
+                f"{retired.get('superseded_by')!r} で置き換え済み "
+                "(置き換え済みの問は主たる接地根拠にしない。置き換え先で確定すること)"
+            )
         newcell: dict = {"state": "確定", "qa_ref": qa_ref}
         serves = _normalize_serves(op.get("serves_goals"))
         if serves:
@@ -374,24 +388,56 @@ def apply_cell_op(state: dict, op: dict) -> None:
         raise TransitionError(f"未知 action: {action!r}")
 
 
+def _normalize_also_categories(tid: str, cat, also) -> list[str]:
+    """target の also_categories (主章に加えて出典を載せる章) を検査して返す。"""
+    label = f"target {tid!r} の also_categories"
+    if not cat:
+        raise TransitionError(
+            f"{label} は category (主たる章) を持つ target にだけ指定できる"
+        )
+    if not isinstance(also, list) or not also:
+        raise TransitionError(f"{label} は非空の配列でなければならない: {also!r}")
+    out: list[str] = []
+    for c in also:
+        if not isinstance(c, str) or not c.strip():
+            raise TransitionError(f"{label} の要素は非空文字列: {c!r}")
+        if c == cat:
+            raise TransitionError(
+                f"{label} に主たる章 category={cat!r} と同じ章は指定できない"
+            )
+        if c in out:
+            raise TransitionError(f"{label} に {c!r} が重複している")
+        out.append(c)
+    return out
+
+
 def set_targets(state: dict, targets: list) -> None:
     """取得対象一覧 targets[] を設定する (単一 writer の唯一の targets 書込経路)。
 
     consumer (validate-source-citation.py / compile-spec-doc.py) が期待する形状へ正規化する。
-    各 target は ``{"target_id": str[, "category": str]}`` または str (target_id) を受け付け、
-    target_id 欠落/空・重複は TransitionError。category は任意 (compile の章割当に使う)。
-    apply-spec-transition.py 以外は spec-state を書き換えない不変則を保つため、targets も
-    本経路経由でのみ設定する。
+    各 target は ``{"target_id": str[, "category": str][, "also_categories": [str]]}`` または
+    str (target_id) を受け付け、target_id 欠落/空・重複は TransitionError。category は任意
+    (compile の章割当に使う)。apply-spec-transition.py 以外は spec-state を書き換えない
+    不変則を保つため、targets も本経路経由でのみ設定する。
+
+    also_categories は、1 つの技術が複数の章の判断を支えるときに、主たる章 (category) に
+    加えて出典を載せる章を宣言する任意キー。category を 1 つしか持てないと、たとえば
+    D1 の公式文書が database 章にしか出ず、同じ文書を根拠にした backend 章の判断
+    (一括書込の上限など) を章から出典へ辿れなかった。主従を残すため category を主とし、
+    also_categories は category を持つ target にだけ許す。要素は非空文字列で、重複と
+    category との一致は拒否する (同じ章へ同じ出典を二度載せる宣言は誤記でしかない)。
     """
     if not isinstance(targets, list):
         raise TransitionError(f"targets は配列でない: {targets!r}")
     normalized: list[dict] = []
     seen: set[str] = set()
     for t in targets:
+        also = None
         if isinstance(t, str):
             tid, cat = t, None
         elif isinstance(t, dict):
             tid, cat = t.get("target_id"), t.get("category")
+            also = t.get("also_categories")
         else:
             raise TransitionError(f"target は str か object でない: {t!r}")
         if not tid:
@@ -402,6 +448,8 @@ def set_targets(state: dict, targets: list) -> None:
         entry: dict = {"target_id": tid}
         if cat:
             entry["category"] = cat
+        if also is not None:
+            entry["also_categories"] = _normalize_also_categories(tid, cat, also)
         normalized.append(entry)
     state["targets"] = normalized
 
@@ -840,6 +888,13 @@ def _upsert_qa_entry(state: dict, qa_id: str, turn: dict) -> None:
     問答本文の変更は TransitionError で拒否する。追記は冪等 (同値の再適用は無変更)。
     """
     entry = next((e for e in state["qa_log"] if e.get("id") == qa_id), None)
+    stray = sorted(k for k in QA_SUPERSESSION_KEYS if k in turn)
+    if stray:
+        # turn の未知キーは読み飛ばされるため、置き換えを書いたつもりで黙って失われる。
+        raise TransitionError(
+            f"qa_log {qa_id}: {stray} は turn では書けない "
+            "(置き換えは supersede-qa op で、条件を検査したうえで記録する)"
+        )
     answered_at = turn.get("answered_at")
     if answered_at is not None:
         _require_past_rfc3339(answered_at, f"qa_log {qa_id}: answered_at")
@@ -1139,6 +1194,157 @@ def _correct_qa_timestamp(state: dict, op: dict) -> None:
     )
 
 
+def _as_utc(value: str) -> datetime:
+    """RFC3339 文字列を tz 付き datetime にする (検証済みの値にだけ使う)。"""
+    when = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return when if when.tzinfo else when.replace(tzinfo=timezone.utc)
+
+
+QA_SUPERSESSION_KEYS = ("superseded_by", "superseded_at", "superseded_note")
+
+
+def _qa_entry(state: dict, qa_id) -> dict | None:
+    return next(
+        (e for e in state.get("qa_log", []) or [] if isinstance(e, dict) and e.get("id") == qa_id),
+        None,
+    )
+
+
+def _supersede_qa(state: dict, op: dict) -> None:
+    """凍結済みの qa entry を、同じ論点を中立に問い直した新しい entry で置き換えたと記録する。
+
+    背景。qa_log は append-only で question/answer を凍結している。これは記録を証跡に
+    保つために正しいが、問の設計に欠陥 (推奨の印・片側だけの不利益など、
+    ``neutral-question-criteria.md`` の N1-N4 違反) があった場合、その欠陥は永久に
+    残る。C06 (hearing-auditor) は全 qa を誘導性評価の対象にするため、問い直して利用者の
+    回答を取り直しても、旧 entry の検出は毎周同じ形で再発し、閉じる手段が無かった。
+
+    本 op は旧 entry の本文に一切触れず、旧 entry へ ``superseded_by`` / ``superseded_at``
+    / ``superseded_note`` を **1 度だけ** 追記する。本文も corrections も残るので、
+    欠陥のあった問を記録から消すことにはならない。C06 は置き換え済みの entry を判定の
+    対象から外し、報告に「閉じた検出」として残す。
+
+    置き換えが有効になる条件は 3 つある:
+      (a) 新しい qa が中立な問である — 判定は C06 (意味の判定で、writer には判定できない)
+      (b) 旧 qa と同じ論点を扱う — 同じく C06 が判定する。writer は note を必須にして
+          「何の論点をどう問い直したか」を C06 が照合できる形で残させる
+      (c) 利用者の回答が記録されている — writer が決定論で検査する:
+          新 entry の answer が非空・basis が user-decision・answered_at があり、
+          旧 entry に answered_at があるならそれより後であること
+    (a)(b) を満たさない置き換えは、C06 が無効と判定し旧 entry を対象へ戻す。writer が
+    通したことは置き換えの正当性を意味しない。
+
+    corrections を拡張せず別 op にした理由は 2 つ。corrections は ``{corrected_at, note}``
+    以外のキーを拒否する契約とテストを持ち、そこへ機械が読む参照キーを混ぜると
+    「未知キーは黙って失われる前に拒否する」という防御が崩れる。また、訂正は 1 つの
+    entry の誤りの修正であり、置き換えは 2 つの entry の関係である — 意味が違うものを
+    同じ場所に置くと、読む側 (C06・compile) が note の散文から区別するしかなくなる。
+
+    書込の規則:
+      - 旧 entry の superseded_by は write-once。同値の再適用は冪等、別値は拒否する。
+      - 新 entry 自身が置き換え済みなら拒否する (置き換え済みへ向けない。これで循環も
+        原理的に作れない — A→B の後に B→A を書こうとすると A は置き換え済みである)。
+      - 旧 entry が確定セルの主たる接地根拠 (qa_ref) である間は拒否する。確定の根拠が
+        旧版のままでは置き換えた意味が無い。先に R4-reopen → 新 qa で再確定すること。
+        裏付け (qa_refs) からの参照は残してよい (compile が旧版の印付きで描く)。
+    """
+    label = "supersede-qa"
+    old_id = op.get("qa_id")
+    if not isinstance(old_id, str) or not old_id.strip():
+        raise TransitionError(f"{label}: qa_id (置き換えられる旧 entry) が必須")
+    new_id = op.get("superseded_by")
+    if not isinstance(new_id, str) or not new_id.strip():
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by (置き換える新 entry の qa_id) が必須"
+        )
+    if new_id == old_id:
+        raise TransitionError(f"{label} {old_id}: superseded_by に自分自身は指定できない")
+    old = _qa_entry(state, old_id)
+    if old is None:
+        raise TransitionError(f"{label}: qa_log に qa_id={old_id!r} が存在しない")
+    new = _qa_entry(state, new_id)
+    if new is None:
+        raise TransitionError(
+            f"{label} {old_id}: qa_log に superseded_by={new_id!r} が存在しない "
+            "(置き換える問と回答を先に登録すること)"
+        )
+    note = op.get("note")
+    if not isinstance(note, str) or not note.strip():
+        raise TransitionError(
+            f"{label} {old_id}: note は非空文字列必須 "
+            "(旧 entry の問の欠陥と、同じ論点をどう問い直したかを書く。C06 が照合する)"
+        )
+    superseded_at = op.get("superseded_at")
+    _require_past_rfc3339(superseded_at, f"{label} {old_id}.superseded_at")
+
+    current = old.get("superseded_by")
+    if current is not None:
+        if (
+            current == new_id
+            and old.get("superseded_at") == superseded_at
+            and old.get("superseded_note") == note.strip()
+        ):
+            return  # 同値の再適用 (冪等)
+        raise TransitionError(
+            f"{label} {old_id}: 既に superseded_by={current!r} が記録されている "
+            "(置き換えの記録は書換不可。さらに置き換えるなら新しい entry を置き換えること)"
+        )
+    if new.get("superseded_by") is not None:
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by={new_id!r} 自体が "
+            f"{new.get('superseded_by')!r} で置き換え済み (置き換え済みの entry へは向けない)"
+        )
+
+    # (c) 利用者の回答が記録されていること。
+    if not str(new.get("answer") or "").strip():
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by={new_id!r} の answer が空 "
+            "(利用者の回答が記録された entry でなければ置き換えにならない)"
+        )
+    if new.get("basis") != "user-decision":
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by={new_id!r} の basis は "
+            f"{new.get('basis')!r} (user-decision 必須。推定や観測事実は利用者の回答の"
+            "取り直しにならない。未設定なら同じ qa_id の turn で basis を追記できる)"
+        )
+    new_at = new.get("answered_at")
+    if not _is_rfc3339(new_at):
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by={new_id!r} の answered_at が無い "
+            "(問い直しが旧 entry より後であることを検査できない)"
+        )
+    old_at = old.get("answered_at")
+    if _is_rfc3339(old_at) and _as_utc(new_at) <= _as_utc(old_at):
+        raise TransitionError(
+            f"{label} {old_id}: superseded_by={new_id!r} の answered_at ({new_at}) が "
+            f"旧 entry の answered_at ({old_at}) より後でない (問い直しは後でなければならない)"
+        )
+    if _as_utc(superseded_at) < _as_utc(new_at):
+        raise TransitionError(
+            f"{label} {old_id}: superseded_at ({superseded_at}) が新 entry の "
+            f"answered_at ({new_at}) より前 (回答を得る前に置き換えは記録できない)"
+        )
+
+    primary = sorted(
+        f"{cat}/{pf}"
+        for cat, row in (state.get("matrix") or {}).items()
+        if isinstance(row, dict)
+        for pf, cell in row.items()
+        if isinstance(cell, dict)
+        and cell.get("state") == "確定"
+        and cell.get("qa_ref") == old_id
+    )
+    if primary:
+        raise TransitionError(
+            f"{label} {old_id}: 確定セル {primary} の主たる接地根拠 (qa_ref) のまま。"
+            "先に R4-reopen し、新しい qa で再確定してから置き換えること"
+        )
+
+    old["superseded_by"] = new_id
+    old["superseded_at"] = superseded_at
+    old["superseded_note"] = note.strip()
+
+
 def _normalize_for_reuse(text: str) -> str:
     """転記の同一判定用に、意味を変えない表層差を落とす。
 
@@ -1184,7 +1390,8 @@ def apply_turn(state: dict, turn: dict) -> None:
 
     turn.qa_id があれば qa_log へ、turn.approval_id があれば approval_log へ
     エントリを登録し、confirm op に qa_ref を、approval を伴う exclude op に
-    approval_ref を補完してから各セル op を適用する。適用後に集約を再計算する。
+    approval_ref を、supersede-qa op に superseded_by (= turn.qa_id) を補完してから
+    各セル op を適用する。適用後に集約を再計算する。
     """
     qa_id = turn.get("qa_id")
     if qa_id:
@@ -1215,6 +1422,14 @@ def apply_turn(state: dict, turn: dict) -> None:
             op["approval_ref"] = appr_id
         if op.get("action") == "exclude" and not op.get("qa_ref") and qa_id:
             op["qa_ref"] = qa_id
+        if (
+            op.get("action") == "supersede-qa"
+            and not op.get("superseded_by")
+            and qa_id
+            and op.get("qa_id") != qa_id
+        ):
+            # turn の qa (いま問い直した entry) が置き換える側。op.qa_id は旧 entry。
+            op["superseded_by"] = qa_id
         apply_cell_op(state, op)
 
     recompute_aggregates(state)

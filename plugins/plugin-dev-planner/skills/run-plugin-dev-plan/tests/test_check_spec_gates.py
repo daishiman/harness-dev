@@ -222,6 +222,106 @@ def test_plugin_meta_missing_required_dict(gates):
     assert any("plugin_meta.governance" in e for e in errs)
 
 
+# ─────────────────── install 値域検証 (Claude/Codex 両 platform・core) ───────────────────
+def test_install_missing_is_core_violation(gates):
+    """install は core。欠落すると plugin 階層コア規律の未充足になる。"""
+    pm = valid_plugin_meta()
+    del pm["install"]
+    assert any("plugin_meta.install が非空 dict でない" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_codex_dropped_without_reason_fails(gates):
+    """両 platform が既定。codex を黙って外すと理由欠落で落ちる。"""
+    pm = valid_plugin_meta()
+    pm["install"]["platforms"] = ["claude"]
+    pm["install"]["registries"] = ["harness-local"]
+    errs = gates.check_plugin_meta(pm)
+    assert any("excluded_platforms.codex の理由が無い" in e for e in errs)
+
+
+def test_install_codex_excluded_with_reason_ok(gates):
+    """codex 除外は excluded_platforms に理由を書いたときだけ許す (codex 用の登録先も要求しない)。"""
+    pm = valid_plugin_meta()
+    pm["install"]["platforms"] = ["claude"]
+    pm["install"]["registries"] = ["harness-local"]
+    pm["install"]["excluded_platforms"] = {"codex": "Claude 専用 hook event だけで成り立つため"}
+    assert gates.check_plugin_meta(pm) == []
+
+
+def test_install_claude_cannot_be_excluded(gates):
+    """manifest 正本 (.claude-plugin) の platform は理由があっても外せない。"""
+    pm = valid_plugin_meta()
+    pm["install"]["platforms"] = ["codex"]
+    pm["install"]["excluded_platforms"] = {"claude": "x"}
+    errs = gates.check_plugin_meta(pm)
+    assert any("platforms は claude を含むこと" in e for e in errs)
+
+
+def test_install_platform_listed_and_excluded_conflict(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["excluded_platforms"] = {"codex": "迷い"}
+    assert any("両方に codex がある" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_unknown_platform(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["platforms"] = ["claude", "codex", "cursor"]
+    assert any("未知の platform" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_registry_missing_for_platform(gates):
+    """platform ごとの登録先が無いと、作っても install 経路が無い (harness-local / codex-repo)。"""
+    pm = valid_plugin_meta()
+    pm["install"]["registries"] = ["codex-repo"]
+    errs = gates.check_plugin_meta(pm)
+    assert any("registries に harness-local が無い" in e for e in errs)
+    pm["install"]["registries"] = ["harness-local"]
+    errs = gates.check_plugin_meta(pm)
+    assert any("registries に codex-repo が無い" in e for e in errs)
+
+
+def test_install_codex_manifest_path(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["codex_manifest"] = ".codex/plugin.json"
+    assert any("codex_manifest は .codex-plugin/plugin.json" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_strict_validate_and_release_order(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["strict_validate"] = False
+    pm["install"]["release"] = "bump-then-changelog"
+    errs = gates.check_plugin_meta(pm)
+    assert any("strict_validate は true" in e for e in errs)
+    assert any("install.release は 'changelog-then-bump'" in e for e in errs)
+
+
+def test_install_verify_isolated_required(gates):
+    """隔離 install は副作用が無いので opt-out を設けない。"""
+    pm = valid_plugin_meta()
+    pm["install"]["verify"] = {"isolated": False, "live": True}
+    assert any("verify.isolated は true" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_verify_live_opt_out_needs_reason(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["verify"] = {"isolated": True, "live": False}
+    assert any("live_skip_reason 非空必須" in e for e in gates.check_plugin_meta(pm))
+    pm["install"]["verify"]["live_skip_reason"] = "CI 専用 plugin で手元の Claude/Codex に入れない"
+    assert gates.check_plugin_meta(pm) == []
+
+
+def test_install_verify_live_not_bool(gates):
+    pm = valid_plugin_meta()
+    pm["install"]["verify"] = {"isolated": True, "live": "yes"}
+    assert any("verify.live は bool" in e for e in gates.check_plugin_meta(pm))
+
+
+def test_install_verify_missing(gates):
+    pm = valid_plugin_meta()
+    del pm["install"]["verify"]
+    assert any("install.verify が dict でない" in e for e in gates.check_plugin_meta(pm))
+
+
 # ─────────────────── feedback_deploy 値域検証 (core 昇格) ───────────────────
 def test_feedback_deploy_applicable_false_form_rejected(gates):
     """core 昇格後は {applicable: false} 形の N/A を許さない (opt-out は enabled:false+reason のみ)。"""

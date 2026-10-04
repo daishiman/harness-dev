@@ -38,6 +38,7 @@ reference_refs:
   - references/elicit-question-bank.md
   - references/spec-state-contract.md
   - references/required-info-catalog.json
+  - references/neutral-question-criteria.md
 script_refs:
   - scripts/apply-spec-transition.py
   - ../../scripts/validate-knowledge-graph.py
@@ -170,7 +171,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 | R2-interview | `prompts/R2-interview.md` | 未収集セルを対象に 質問→回答→仕様反映 の往復で各セルを `確定` か `対象外+理由` へ遷移。 |
 | R3-reask | `prompts/R3-reask.md` | 未確定セルを再質問。1 invocation の 5 loop 到達時は未完了状態と next_question を保存し resumable な結果を返す。未収集を完了扱いしない。 |
 | R4-reopen | `prompts/R4-reopen.md` | 確定済みセルを根拠付きで再オープンし追加質問サイクルへ戻す。reopen 非経由の確定直接変更は writer が遮断する。 |
-| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` (`missing_effect=block` の未接地 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
+| R5-decision-guide | `prompts/R5-decision-guide.md` | `needs_guidance` を最新公式情報とC04 deep knowledgeから2〜3案へ展開し、無料/低コスト案を含めgoal fit/TCO/security/operations/lock-inで比較。AI推奨は`recommended_pending_confirmation`、ユーザー選択だけを`confirmed`にする。推奨は問に入れず、比較の後の別の段で「参考」として示し、最後に中立な問で選択を求める (N1-N4 と推奨の示し方の正本は `references/neutral-question-criteria.md`)。加えて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` の `coverage_certificate.ungrounded_blocking_items` (`missing_effect=block` の未接地 item) が空になるまで当該 domain の確定セルの `confirmed` を禁じる収集ゲートを課し、`--profile knowledge --order` の topo_order (上位概念→下位概念) 順で知識を消費する。 |
 
 ## ゴールシーク実行
 
@@ -193,7 +194,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 1. **bootstrap**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" bootstrap --out $CLAUDE_PROJECT_DIR/system-spec/spec-state.json` で空foundation/decisions/targets/logsを持つstate envelopeを用意する (`init` は taxonomy から matrix を初期化する別subコマンドで、envelope 生成は `bootstrap`)。
 2. **R0-foundation**: 技術ヒアリングの手前で上位概念 U1-U9 を深掘りし、U1/U2/U3 は値必須・U4-U9 は値または明示N/A理由で埋め、U1-U9 要約をユーザーへ提示して承認 `approval_ref` を得て確定する。
 3. **R1-init**: taxonomy を Readしてmatrixをpopulateする。既存foundation/decisionsを保持する。
-4. **R2/R3/R5**: 未収集セルをヒアリングし、不明・未決定ならR5で根拠付き候補と推奨を提示する。確定セル/decisionはgoalへトレースし、5 loop超でresume保存。
+4. **R2/R3/R5**: 未収集セルをヒアリングし、不明・未決定ならR5で根拠付き候補と推奨を提示する。問は `references/neutral-question-criteria.md` の N1-N4 に従い、推奨は問と別の段に置く。確定セル/decisionはgoalへトレースし、5 loop超でresume保存。
 5. **R4-reopen**: 確定セルの見直しが要るときのみ reopen。
 6. **検証**: 各周回でvalidator、最終で`--require-complete --require-basis --require-foundation`。
 
@@ -204,12 +205,14 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. 5 loop 到達で未収集が残るなら未完了として保存する。未収集を勝手に確定/対象外にしない。
 4. `category_aggregate` は writer が真理値表から再計算する (手書きしない)。
 5. platform id は canonical 6 種のみ (別名を作らない)。
+6. 問は `references/neutral-question-criteria.md` の N1-N4 に従う。凍結済みの問に違反が見つかったら、同じ論点を中立に問い直して回答を取り直し、`supersede-qa` op で旧 entry に置き換えを記録する (本文は書き換えない。旧 entry が確定セルの `qa_ref` なら R4-reopen が先)。
 
 ## Additional Resources
 
 - `references/spec-state-contract.md` — spec-state.json 形状 + 真理値表 + writer 契約の正本。
 - `references/elicit-question-bank.md` — カテゴリ×platform 質問テンプレ集。
 - `references/resource-map.yaml` — Progressive Disclosure 索引。
+- `references/neutral-question-criteria.md` — 中立な問の基準 N1-N4 と推奨の示し方の正本 (問を作る R0/R2/R3/R5 と監査する R6/C06 が共有)。
 - `scripts/apply-spec-transition.py` — 単一 transition writer (init/apply/chunk/aggregate)。
 - `../../scripts/validate-coverage-matrix.py` — 網羅性の決定論ゲート (IN1/OUT1)。
 - `references/required-info-catalog.json` — C16 必須情報カタログ (domain 別 block/degrade/warn item・収集順序 depends_on・coverage certificate の正本)。
