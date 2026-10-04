@@ -1,0 +1,145 @@
+{
+  "reviewer": "meta (not implementation author)",
+  "verdict": "PASS",
+  "scope": [
+    "scripts/build-plugin-release.py",
+    "plugins/harness-creator/scripts/install-local-plugins.py"
+  ],
+  "baseline_root": "/tmp/harness-f11-before",
+  "findings": [],
+  "checks": {
+    "SYS-02": {
+      "before_metadata_same_digest": false,
+      "after_metadata_same_digest": true,
+      "after_real_asset_change_detected": true
+    },
+    "SYS-03": {
+      "before": {
+        "error": null,
+        "calls": [
+          [
+            "codex",
+            "plugin",
+            "marketplace",
+            "add",
+            "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/f11-independent-gn9zot9u",
+            "--json"
+          ],
+          [
+            "codex",
+            "plugin",
+            "add",
+            "probe@codex",
+            "--json"
+          ]
+        ],
+        "mutations": 2
+      },
+      "after": {
+        "error": "marketplace codex is already registered with a different source: expected=/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/f11-independent-gn9zot9u, actual=/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/f11-independent-gn9zot9u/other",
+        "calls": [
+          [
+            "codex",
+            "plugin",
+            "marketplace",
+            "list",
+            "--json"
+          ]
+        ],
+        "mutations": 0
+      }
+    },
+    "SYS-01": {
+      "before": [
+        {
+          "state": "changed",
+          "failure": "marketplace",
+          "outcome": "FAIL",
+          "detail": "ledger changed before downstream completion"
+        },
+        {
+          "state": "changed",
+          "failure": "config_lock",
+          "outcome": "FAIL",
+          "detail": "ledger changed before downstream completion"
+        },
+        {
+          "state": "new",
+          "failure": "marketplace",
+          "outcome": "FAIL",
+          "detail": "ledger changed before downstream completion"
+        },
+        {
+          "state": "new",
+          "failure": "config_lock",
+          "outcome": "FAIL",
+          "detail": "DID NOT RAISE <class 'SystemExit'>"
+        },
+        {
+          "state": "released",
+          "failure": "marketplace",
+          "outcome": "FAIL",
+          "detail": "ledger changed before downstream completion"
+        },
+        {
+          "state": "released",
+          "failure": "config_lock",
+          "outcome": "FAIL",
+          "detail": "DID NOT RAISE <class 'SystemExit'>"
+        }
+      ],
+      "after": [
+        {
+          "state": "changed",
+          "failure": "marketplace",
+          "outcome": "PASS",
+          "detail": null
+        },
+        {
+          "state": "changed",
+          "failure": "config_lock",
+          "outcome": "PASS",
+          "detail": null
+        },
+        {
+          "state": "new",
+          "failure": "marketplace",
+          "outcome": "PASS",
+          "detail": null
+        },
+        {
+          "state": "new",
+          "failure": "config_lock",
+          "outcome": "PASS",
+          "detail": null
+        },
+        {
+          "state": "released",
+          "failure": "marketplace",
+          "outcome": "PASS",
+          "detail": null
+        },
+        {
+          "state": "released",
+          "failure": "config_lock",
+          "outcome": "PASS",
+          "detail": null
+        }
+      ]
+    }
+  },
+  "regression": {
+    "command": "python3 -m pytest -q plugins/harness-creator/tests/test_install_local_plugins.py tests/scripts-root/test_root__build_plugin_release.py -k \"not test_checked_in_state_has_no_drift and (install_local or next_version or unparseable or cache_dir or downstream_failure)\"",
+    "passed": 52,
+    "deselected": 25
+  },
+  "self_containment": {
+    "verdict": "PASS",
+    "evidence": "installer adds only local exclusion values and reuses _assert_marketplace_source; no cross-plugin/repo imports. Release retains existing root-owned generators. Empty directories are not release payload; symlink and real-file identity remain hashed."
+  },
+  "limitations": [
+    "No real release, Git command, global config change, or live CLI mutation; CLI calls mocked.",
+    "Review covers SYS-01/02/03, not existing unrelated runtime activation state."
+  ],
+  "write_scope": "Only this evidence JSON and ephemeral temporary test directories; target implementation unchanged."
+}

@@ -1,0 +1,186 @@
+{
+  "methods": [
+    {
+      "id": "meta",
+      "name": "メタ思考",
+      "observation": "計画を作る責務と、package投影・user installを行う責務を区別し、入口docがどのexecutorへ導くかを観測。plannerは名前参照のみで再実装しない方針は適切だがcommandの旧経路が分岐を再導入する。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:46",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17"
+      ],
+      "findings": [
+        "META-001"
+      ]
+    },
+    {
+      "id": "abstraction",
+      "name": "抽象化思考",
+      "observation": "platform名/manifest path/registry/release orderを変数と、repo inventoryを事実とに分離。specfmの同ファイル内リテラル再保持は定数由来のfactoryへ畳める。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:657",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+      ],
+      "findings": [
+        "META-002"
+      ]
+    },
+    {
+      "id": "double-loop",
+      "name": "ダブルループ思考",
+      "observation": "install未達を手順追加で直す前に「公開不可=localでも導入不可」という前提を検証。local22/public18は意図的で、denylistを除去する必要はなく文書の公開範囲と導入範囲の混同を除くべき。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-local-marketplace.py:195",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:169"
+      ],
+      "findings": [
+        "META-001"
+      ]
+    },
+    {
+      "id": "brainstorming",
+      "name": "ブレインストーミング",
+      "observation": "A:全docへ最新値をコピー、B:巨大cross-plugin共通schema、C:既存specfm内factory+共通installer入口に集約を比較。Aは次のdriftを残しBはinstall自己完結境界を拡大する。Cが最小変更で既存責務を守る。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:27",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+      ],
+      "findings": [
+        "META-001",
+        "META-002"
+      ]
+    },
+    {
+      "id": "lateral",
+      "name": "水平思考",
+      "observation": "公開marketplaceの差分を直す代わりに、利用者が最初に見る入口commandを調べると既にREADMEにある全件helperがcommandへ反映されていなかった。機能追加より導線一本化を優先。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/README.md:18",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:68"
+      ],
+      "findings": [
+        "META-001"
+      ]
+    },
+    {
+      "id": "paradox",
+      "name": "逆説思考",
+      "observation": "両製品対応の安全な既定と理由付き除外の柔軟性は単独では妥当だが、除外済み計画がdefault=bothのhelperを呼ぶと「除外が正しいほど実行に失敗」する。gateとexecution契約を同じ範囲へ戻す。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:148",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:898"
+      ],
+      "findings": [
+        "META-003"
+      ]
+    },
+    {
+      "id": "analogy",
+      "name": "類推思考",
+      "observation": "manifest正本→Codex投影のcompiler構造を、INSTALL_*→default contract→golden outputにも適用する。生成元と複製成果物の区別を揃えれば新しいSSOT形式は不要。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:16",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333"
+      ],
+      "findings": [
+        "META-002"
+      ]
+    },
+    {
+      "id": "if",
+      "name": "if思考",
+      "observation": "もし明示的にClaude-onlyを求めてcodex除外理由を記せばcheck_installは合格するが、helperはload_catalogでCodex manifestを依然要求する。gateを実メモリ入力で実行しerrors=[]を確認。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:170",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:110",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:822"
+      ],
+      "findings": [
+        "META-003"
+      ]
+    },
+    {
+      "id": "naive",
+      "name": "素人思考",
+      "observation": "「どこからでも全pluginを使う」利用者がmarketplace-registerの手順だけをコピペした場合、Codexはharness-creatorしか入り得ずClaudeの例はcwd依存project scope。READMEの絶対パスcommon helper例へ揃えれば前提知識を減らせる。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:23",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:149",
+        "/Users/dm/dev/dev/個人開発/harness/README.md:24"
+      ],
+      "findings": [
+        "META-001"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "META-001",
+      "severity": "high",
+      "condition_signal": "inconsistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/commands/marketplace-register.md:17",
+      "description": "ユーザー入口 marketplace-register が共通 fleet installer に追従していない。Codex は harness-creator 単独例、Claude は project scope の旧 update 手順を独立保持し、現物は公開18/local22・非公開4なのに「非配布8、うち5公開可能」と記す。planner の物理契約にも marketplace を共有の唯一経路とする旧説明と2名だけの NEVER_DISTRIBUTE 列挙が残る。",
+      "recommendation": "marketplace-register の local 主導線を install-local-plugins.py --all / --check の絶対パスへ統一し、Git単独Codexは既存helperへの参照に限定する。古い件数/固有名一覧を削除し catalog と validate-plugin-completeness.py を正本とする。planner contract の配布/ローカルinstall説明も同じ責務境界へ揃える。"
+    },
+    {
+      "id": "META-002",
+      "severity": "low",
+      "condition_signal": "smell",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py:1333",
+      "description": "INSTALL_* が値域のSSOTと宣言される一方、同じファイルの index skeleton は platforms/codex_manifest/registries/release を文字列で再保持している。R3 prose・golden index・契約表にも同じ値を保持し、二重保持台帳に INSTALL_* とその parity がない。現時点の値は一致するが次の変更で生成器とvalidatorがずれる余地がある。",
+      "recommendation": "specfm.default_install_contract() を小さな純関数として設け、INSTALL_* から skeleton の install 値を導出する。R3はこの生成器を正本として参照し、golden default と generator の parityを既存 test_check_spec_gates に加える。cross-plugin importや新しい汎用フレームワークは不要。"
+    },
+    {
+      "id": "META-003",
+      "severity": "high",
+      "condition_signal": "dependency_break",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/plugin-creator-contract.md:55",
+      "description": "plannerは理由付きcodex除外を許可し、check_install にClaude-only契約を渡すと空errorsで合格する。しかし契約表・R3の隔離/実環境コマンドは --platform なしで常に両製品を選ぶ。さらに install-local-plugins.py は platformsを見る前にload_catalogを呼び、常にCodex catalogと全Codex manifestを要求する。codexを除外した計画をそのまま履行すると除外製品の導入か入力不足エラーになる。",
+      "recommendation": "最小整合は「platform除外はinstall対象からの除外であり、repository packageは両製品へ投影する」を明記し、計画の実行argvに選択platformを伝える。完全にCodex packageも省くopt-outを維持するなら installer.load_catalog を選択platform-awareにする必要がある。今回の全plugin両製品対応という目的では前者を推奨。"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "status": "FAIL",
+      "reason": "理由付きplatform除外と既定both install手順が矛盾 (META-003)"
+    },
+    "C2": {
+      "status": "PASS",
+      "reason": "担当9思考法をすべて具体適用。既定両platformの計画ゲート自体は存在"
+    },
+    "C3": {
+      "status": "FAIL",
+      "reason": "marketplace-register の共有入口と公開範囲説明が現物およびREADMEと不整合 (META-001)"
+    },
+    "C4": {
+      "status": "FAIL",
+      "reason": "opt-outを許す上流契約が除外platform必須の下流loaderと接続不可能 (META-003)"
+    }
+  },
+  "validation": {
+    "read_only_target": true,
+    "catalog_counts": {
+      "public": 18,
+      "local": 22
+    },
+    "non_public_plugins": [
+      "harness-creator",
+      "plugin-dev-planner",
+      "prompt-creator",
+      "x-longpost-creator"
+    ],
+    "claude_only_contract_errors": []
+  },
+  "reusable_abstraction": "specfm INSTALL_* -> default_install_contract() -> skeleton/golden、実installは既存 common helperへ集約",
+  "template_variables": [
+    "plugin slug",
+    "platform set",
+    "repository root",
+    "isolated Claude config dir",
+    "isolated Codex home"
+  ],
+  "negative_cases": [
+    "codex excluded with valid reason but installer defaults both",
+    "public catalog omits internal-only plugins while local catalog must still expose them",
+    "changing INSTALL_* without updating skeleton literals"
+  ]
+}

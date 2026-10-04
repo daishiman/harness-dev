@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-04 配布経路の完了境界と導入入口の一本化, harness-f11)
+
+- `install-local-plugins.py` の digest から `.DS_Store`・`.claude/handoff/`・通常 directory を除外した。release 側が内容として扱わない差分だけで `stale_runtime` になり、版上げしても解消しない状態から抜け出せなくなっていたため。本体ファイルの差は今までどおり検出する。
+- Codex への install も、変更する前に既存の marketplace source を `--check` と同じ手順で確かめるようにした。別の source を指す同名の登録は上書きしない。
+- `/marketplace-register` を、両製品へ全 plugin を入れる共通入口 `install-local-plugins.py --all --platform both` に一本化した。旧 `make sync` の案内と、重複して書かれていた配布件数を削除した。
+
 ### Fixed (2026-10-04 install receipt の stale runtime 検出)
 
 - `install-local-plugins.py` が copy install の `source_digest` と `runtime_digest` を記録するだけで比べておらず、同じ版番号のまま中身の古いキャッシュが残っていても `verified=true` を返していた。両者が食い違うときは `verification_status=stale_runtime`・`activation.runtime=stale` とし、receipt 全体の `status` と `next_action` で該当 plugin の版上げ (`scripts/build-plugin-release.py`) を指示する。CLI は版が動かない限りキャッシュを取り直さないため、修復手段は版上げだけである。

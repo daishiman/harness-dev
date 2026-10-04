@@ -18,6 +18,8 @@ def test_skeleton_index_passes_spec_gates(tmp_path, specfm_mod, gates):
     """render_minimal_index の出力が check-spec-gates を exit0 で通る (plugin_meta 値域=F3 distribution 含む)。"""
     index = tmp_path / "index.md"
     index.write_text(specfm_mod.render_minimal_index(plugin_slug="demo"), encoding="utf-8")
+    (tmp_path / "phase-13-release.md").write_text(specfm_mod.render_minimal_phase(13, plugin_slug="demo"), encoding="utf-8")
+    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text('{"target_plugin_slug":"demo"}', encoding="utf-8")
     assert gates.main([str(index)]) == 0, (
         "render_minimal_index 出力が check-spec-gates を通らない (生成器↔ゲートの plugin_meta 契約 drift)"
     )

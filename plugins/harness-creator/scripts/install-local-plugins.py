@@ -41,6 +41,10 @@ class Catalog(NamedTuple):
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[3]
 _TREE_IGNORES = {".git", ".build", ".pytest_cache", "__pycache__", "node_modules"}
+# Match release's non-content exclusions while keeping this installed plugin
+# self-contained (the repository's release script is not shipped with it).
+_TREE_IGNORED_FILES = {".DS_Store"}
+_TREE_IGNORED_PREFIXES = (".claude/handoff",)
 # Claude CLI drops these bookkeeping markers at the top of a cached version dir
 # (.in_use while a session holds it, .orphaned_at once superseded). They are
 # not plugin content, so they must not make a faithful copy look stale.
@@ -352,6 +356,12 @@ def _tree_digest(root: Path) -> str:
         relative = path.relative_to(root)
         if any(part in _TREE_IGNORES for part in relative.parts):
             continue
+        if path.name in _TREE_IGNORED_FILES or any(
+            relative.as_posix() == prefix
+            or relative.as_posix().startswith(prefix + "/")
+            for prefix in _TREE_IGNORED_PREFIXES
+        ):
+            continue
         if relative.parts[0] in _RUNTIME_MARKERS:
             continue
         encoded = relative.as_posix().encode("utf-8")
@@ -364,8 +374,8 @@ def _tree_digest(root: Path) -> str:
             digest.update(b"L\0" + encoded + b"\0" + target.encode("utf-8"))
         elif path.is_file():
             digest.update(b"F\0" + encoded + b"\0" + path.read_bytes())
-        elif path.is_dir():
-            digest.update(b"D\0" + encoded + b"\0")
+        # Ordinary directories carry no release content. In particular a
+        # parent created solely for ignored handoff files must not cause drift.
     return digest.hexdigest()
 
 
@@ -763,20 +773,20 @@ def _install_codex(
 ) -> tuple[dict, list[dict]]:
     cli_identity = _cli_identity("codex", env)
     cli_path = cli_identity["cli_path"]
-    if check:
-        payload = _execute(
-            [cli_path, "plugin", "marketplace", "list", "--json"],
-            env=env,
-            expect_json=True,
-        )
-        entries = payload.get("marketplaces") if isinstance(payload, dict) else None
-        if not isinstance(entries, list):
-            raise InstallError("Codex marketplace list JSON requires marketplaces[]")
-        if not _assert_marketplace_source(
-            entries, name=catalog.codex_marketplace, expected=catalog.codex_root
-        ):
-            raise InstallError(f"Codex marketplace is not registered: {catalog.codex_marketplace}")
-    else:
+    payload = _execute(
+        [cli_path, "plugin", "marketplace", "list", "--json"],
+        env=env,
+        expect_json=True,
+    )
+    entries = payload.get("marketplaces") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        raise InstallError("Codex marketplace list JSON requires marketplaces[]")
+    exists = _assert_marketplace_source(
+        entries, name=catalog.codex_marketplace, expected=catalog.codex_root
+    )
+    if check and not exists:
+        raise InstallError(f"Codex marketplace is not registered: {catalog.codex_marketplace}")
+    if not check:
         added = _execute(
             [
                 cli_path, "plugin", "marketplace", "add",

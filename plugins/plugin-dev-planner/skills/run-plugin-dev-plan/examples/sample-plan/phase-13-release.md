@@ -41,10 +41,12 @@ PR は本 planner の責務外 (責務は計画の生成のみ)。UBM 固有の 
 - [ ] P01-P12 の完了チェックリストが全て満たされている。
 - [ ] リリースに向けた残タスクが soft note として整理されている (PR 自体はゲート化しない)。
 - [ ] ドメイン外項目 (IPC/Cloudflare 等) が写像対象外として DROP 記録されている。
-- [ ] CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` と `build-local-marketplace.py --check` と `sync-plugin-platforms.py --all --check` が drift 0 で通っている (`plugin_meta.install.release` / `registries`)。
-- [ ] `claude plugin validate --strict plugins/notion-task-sync` が通っている (hook command の plugin root は `"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/..."` とクォートする・`plugin_meta.install.strict_validate`)。
-- [ ] `install-local-plugins.py --plugin notion-task-sync --claude-config-dir <tmp> --codex-home <tmp>` の receipt が Claude/Codex とも verified=true (`plugin_meta.install.verify.isolated`)。
-- [ ] `install-local-plugins.py --plugin notion-task-sync` で手元の Claude Code と Codex へ導入し、receipt が verified=true (`plugin_meta.install.verify.live`)。
+
+- [ ] CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` が drift 0 で通っている。
+- [ ] 両製品の package を維持し、`build-local-marketplace.py --check` と `sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。
+- [ ] `claude plugin validate --strict plugins/notion-task-sync` が通っている。
+- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。
+- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both` の実環境 install receipt が指定 platform のすべてで verified=true。
 
 ## 参照情報
 - `references/phase-lifecycle.md` §7 (DROP 読替表)。

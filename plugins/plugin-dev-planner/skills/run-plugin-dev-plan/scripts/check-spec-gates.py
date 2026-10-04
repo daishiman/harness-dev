@@ -19,11 +19,12 @@
 per-phase 転換 (凍結契約 §4/§8): 旧 C*.md frontmatter の quality_gates/harness は
 component-inventory.json の components[] へ載せ替わったため、値域検証を inventory 単位へ移す
 (specfm.validate_component_quality_gates + validate_component_harness_coverage)。index の
-plugin 階層規律 (plugin_meta) 検査は現状維持。
+plugin 階層規律 (plugin_meta) に加え、install 義務が既存 graph producer の P13 実行leafへ到達することを検査する。
 """
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
@@ -181,7 +182,7 @@ def check_install(inst: dict) -> list[str]:
                 " (両 platform への install が既定。外すなら理由を明示する)"
             )
 
-    if "codex" in platforms and str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
+    if str(inst.get("codex_manifest", "")).strip() != specfm.INSTALL_CODEX_MANIFEST:
         errs.append(
             f"install.codex_manifest は {specfm.INSTALL_CODEX_MANIFEST} であること"
             f" (現値 {inst.get('codex_manifest')!r}・sync-plugin-platforms.py が .claude-plugin から投影する)"
@@ -190,7 +191,8 @@ def check_install(inst: dict) -> list[str]:
     if not isinstance(registries, list):
         errs.append(f"install.registries は登録先の list であること (現値 {registries!r})")
         registries = []
-    for plat in platforms:
+    # Runtime opt-out never removes either product package/catalog.
+    for plat in specfm.INSTALL_PLATFORMS:
         reg = specfm.INSTALL_REGISTRY_BY_PLATFORM.get(plat)
         if reg and reg not in registries:
             errs.append(f"install.registries に {reg} が無い ({plat} へ install する経路の登録先)")
@@ -249,6 +251,73 @@ def check_inventory(inventory_path: Path) -> tuple[list[str], str | None]:
     return errors, None
 
 
+def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
+    """Require canonical P13 install claims in the existing producer's execution leaves."""
+    phase = plan_dir / "phase-13-release.md"
+    if not phase.is_file():
+        return ["install 契約の実行義務を持つ phase-13-release.md が無い"]
+    handoff = plan_dir / "handoff-run-plugin-dev-plan.json"
+    try:
+        data = json.loads(handoff.read_text(encoding="utf-8"))
+        slug = data.get("target_plugin_slug") if isinstance(data, dict) else None
+        obligations = specfm.install_release_obligations(inst, slug if isinstance(slug, str) else "")
+    except (OSError, ValueError) as exc:
+        return [f"install 義務の target_plugin_slug を handoff から解決できない: {exc}"]
+    try:
+        # Ask the existing producer what the consumer actually executes. In fixed
+        # shape this is P13's checklist; target shape consumes task-specs instead.
+        loader = importlib.util.spec_from_file_location(
+            "install_obligation_producer", Path(__file__).with_name("derive-task-graph.py")
+        )
+        producer = importlib.util.module_from_spec(loader)
+        loader.loader.exec_module(producer)
+        graph = producer.derive(plan_dir)
+    except (OSError, ValueError) as exc:
+        return [f"install release obligations を実行 graph へ導出できない: {exc}"]
+    clauses = {
+        node.get("acceptance_criterion")
+        for node in graph["nodes"]
+        if node.get("phase_ref") == "P13"
+        and node.get("execution_kind") in {"verification-claim", "direct-task"}
+    }
+    errors = [
+        f"P13 install obligation {key} が欠落または契約と不一致 (render-spec-skeleton.py --phase 13 --plugin-slug {slug} で正本から生成): {clause}"
+        for key, clause in obligations.items() if clause not in clauses
+    ]
+    # Generation may not have emitted the artifact yet. When it exists, also
+    # check the handoff's consumer input so a stale graph cannot hide new claims.
+    graph_ref = data.get("task_graph_ref")
+    graph_rel = graph_ref.get("path", "task-graph.json") if isinstance(graph_ref, dict) else "task-graph.json"
+    if not isinstance(graph_rel, str) or not graph_rel.strip():
+        return errors + ["install 義務の handoff.task_graph_ref.path が非空stringでない"]
+    graph_path = plan_dir / graph_rel
+    if graph_path.is_file():
+        try:
+            stored = json.loads(graph_path.read_text(encoding="utf-8"))
+            if not isinstance(stored, dict) or not isinstance(stored.get("nodes"), list):
+                raise ValueError("task graph must contain nodes[]")
+            stored_clauses = set()
+            for node in stored["nodes"]:
+                if not isinstance(node, dict) or node.get("phase_ref") != "P13":
+                    continue
+                kind = node.get("execution_kind")
+                if kind not in (None, "verification-claim", "direct-task"):
+                    continue
+                clause = node.get("acceptance_criterion")
+                # Legacy fixed graphs carry the claim in title until migration.
+                if kind is None:
+                    clause = node.get("title")
+                if isinstance(clause, str):
+                    stored_clauses.add(clause)
+            errors.extend(
+                f"task-graph install obligation {key} が欠落または古い (derive-task-graph.py で再生成): {graph_path}"
+                for key, clause in obligations.items() if clause not in stored_clauses
+            )
+        except (OSError, ValueError) as exc:
+            errors.append(f"install 義務の task graph を読めない: {exc}")
+    return errors
+
+
 def collect_md(specs_dir: Path) -> list[Path]:
     return sorted(specs_dir.glob("*.md"))
 
@@ -258,8 +327,12 @@ def run(md_paths: list[Path], inventory_path: Path | None) -> tuple[int, list[st
     for p in md_paths:
         fm = specfm.parse_frontmatter(p.read_text(encoding="utf-8"))
         if isinstance(fm.get("plugin_meta"), dict):
-            for e in check_plugin_meta(fm["plugin_meta"]):
+            pm = fm["plugin_meta"]
+            for e in check_plugin_meta(pm):
                 errors.append(f"{p.name}: {e}")
+            inst = pm.get("install")
+            if isinstance(inst, dict) and not check_install(inst):
+                errors.extend(f"{p.name}: {e}" for e in check_install_release(p.parent, inst))
         # phase ファイル等 (plugin_meta 無し) は本 gate 対象外 (frontmatter は check-spec-frontmatter が担う)
     if inventory_path is not None and inventory_path.is_file():
         inv_errors, fatal = check_inventory(inventory_path)

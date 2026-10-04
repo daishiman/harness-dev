@@ -1,0 +1,269 @@
+{
+  "phase": "phase2",
+  "scope": "fleet packaging/release/install and planner; no target edits, no git operations, no global install mutation",
+  "methods": [
+    {
+      "id": "systems",
+      "name": "システム",
+      "observation": "Claude正本→Codex投影→catalog→version/fingerprint→CLI install→runtime receiptの鎖を確認。platform syncはtransaction/lockを持つがrelease台帳と下流生成に完了境界の不一致がある。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/sync-plugin-platforms.py:655",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812"
+      ],
+      "findings": [
+        "SYS-01"
+      ]
+    },
+    {
+      "id": "causal",
+      "name": "因果関係",
+      "observation": "後段marketplace生成を例外化すると台帳保存が先に終わるためsurveyがcleanとなる。再試行でno-pending分岐へ進み修復しないという因果を現物関数のメモリmockで再現した。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+      ],
+      "findings": [
+        "SYS-01"
+      ]
+    },
+    {
+      "id": "causal-loop",
+      "name": "因果ループ",
+      "observation": "handoff更新→copy digest差→stale_runtime→release bump要求→releaseはhandoffを無視し変更なし、という回復不能ループを発見。実在handoffへの仮想本文変更で両検出器の違いを再現した。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:103",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:861"
+      ],
+      "findings": [
+        "SYS-02"
+      ]
+    },
+    {
+      "id": "trade-on",
+      "name": "トレードオン",
+      "observation": "非配送内容だけを共通除外すれば本物の古い実装検出を維持しつつhandoff起因の誤検出を減らせる。symlink着地点の正規化とCLI marker除外は既存実装を維持し、粗いdigest無効化は不要。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:520"
+      ],
+      "findings": [
+        "SYS-02"
+      ]
+    },
+    {
+      "id": "plus-sum",
+      "name": "プラスサム",
+      "observation": "Codex mutationにも既存source検証を共用すればClaude/checkとの重複分岐を減らし、通常の同source再実行と別source保護を同時に満たせる。既存_assert_marketplace_sourceが受け皿。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:559",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:700",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+      ],
+      "findings": [
+        "SYS-03"
+      ]
+    },
+    {
+      "id": "value-proposition",
+      "name": "価値提案",
+      "observation": "ユーザーの価値は『両方へ入れられた』こと。manifest22件一致から実環境receiptまで確認した結果、Codex22件verified、Claudeはsystem-spec-harnessの同hook複数有効化1件で未verified。構造検証PASSと導入・有効化PASSを混同しない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:577",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:630",
+        "runtime_check"
+      ],
+      "findings": []
+    },
+    {
+      "id": "strategic",
+      "name": "戦略的",
+      "observation": "全pluginへ個別のinstall分岐を追加せず共通installer/releaseの2つの完了境界を優先修正する。fleet全件に効く3所見へ絞り、UBM等の業務機能には波及させない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:812",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:662"
+      ],
+      "findings": [
+        "SYS-01",
+        "SYS-02",
+        "SYS-03"
+      ]
+    },
+    {
+      "id": "why",
+      "name": "why(5回)",
+      "observation": "なぜ再試行成功なのに未生成か→pendingが0。なぜ0か→保存済みfingerprintと現物が一致。なぜ未生成前に保存済みか→saveが生成前。なぜ後段失敗をcheckが検出しないか→checkが台帳/内容だけ見る。なぜ修復されないか→clean経路が下流再生成を呼ばない。完了印を最後へ移しreleased経路でも随伴生成を回すのが根本処置。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:682",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:706",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746"
+      ],
+      "findings": [
+        "SYS-01"
+      ]
+    },
+    {
+      "id": "kaizen",
+      "name": "改善",
+      "observation": "最小改善は台帳保存順序とconfig lock再生成条件、digest除外の整合、Codex source preflight。既存の関数・transaction・receipt・SCC依存順序を活用し、別のinstall frameworkは作らない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761"
+      ],
+      "findings": [
+        "SYS-01",
+        "SYS-02",
+        "SYS-03"
+      ]
+    },
+    {
+      "id": "hypothesis",
+      "name": "仮説",
+      "observation": "『release除外とinstaller除外が等しい』を実在handoffのメモリ変更で棄却。『Codex installはcheckと同じsource preflightを通る』を呼出列mockで棄却。『CLI自体が同名別sourceを上書きする』は未検証として保留した。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:43",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+        "reproductions"
+      ],
+      "findings": [
+        "SYS-02",
+        "SYS-03"
+      ]
+    },
+    {
+      "id": "issue",
+      "name": "論点",
+      "observation": "論点を導入可能性・再実行性・完了宣言の正確さに絞った。CLI読取ではCodex22件導入確認、Claudeの二重activationはソース欠陥と別の環境状態。global mutationを避け、既存有効化を勝手に解除しない。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:437",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:625",
+        "runtime_check"
+      ],
+      "findings": [
+        "SYS-01"
+      ]
+    },
+    {
+      "id": "kj",
+      "name": "KJ",
+      "observation": "観察を『完了境界』(台帳先行保存)、『内容境界』(handoff差)、『登録identity境界』(Codex source)、『環境状態』(Claude二重activation)に群化。前三者は共通コード修正、最後はユーザー環境の整理判断と分けた。",
+      "evidence": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+        "runtime_check"
+      ],
+      "findings": [
+        "SYS-01",
+        "SYS-02",
+        "SYS-03"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SYS-01",
+      "severity": "high",
+      "condition_signal": "dependency_consistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/scripts/build-plugin-release.py:746",
+      "description": "release台帳を保存してからmarketplace/config lockを生成する。marketplace生成失敗を現物関数のメモリmockで再現すると、2回目実行と--checkがexit0になり後段再生成を呼ばない。台帳が未完了処理を完了として表す。",
+      "recommendation": "全派生物の生成成功後にfingerprint台帳を保存する。再試行のreleased/new経路でもconfig lockを回復させ、後段失敗→check非zero→再実行回復を検証する。"
+    },
+    {
+      "id": "SYS-02",
+      "severity": "medium",
+      "condition_signal": "no_contradictions",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:342",
+      "description": "releaseは.claude/handoff/と.DS_Storeを非内容として除外するがinstaller digestは含める。実在planner handoff本文だけをメモリ上で変更した再現でrelease_excluded=trueかつinstaller_digest_changes=true。copy install後のhandoff更新がstale_runtimeとなりbumpを促してもreleaseは変更なしとなる。",
+      "recommendation": "配送内容の除外規則を既存正本へ統合するか、最小限でhandoff/DS_Store除外を揃える。ファイルだけでなく生成された空ディレクトリ差も検討し、非配送内容のみ変わったcopyをverifiedに保つ回帰検証を加える。"
+    },
+    {
+      "id": "SYS-03",
+      "severity": "medium",
+      "condition_signal": "consistency",
+      "location": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/install-local-plugins.py:761",
+      "description": "Claude installとCodex checkは既存marketplaceのname/source一致を検証するがCodex installはmarketplace listなしでaddする。メモリmockによる現物経路の呼出順はmarketplace add→plugin add。既存の同名別sourceに対する拒否がこの経路では未実施。CLI自体が衝突を拒否するか上書きするかは未確認であり、既存sourceが実際に上書きされたとは主張しない。",
+      "recommendation": "Codex install/check双方で既存listと_assert_marketplace_sourceを共用する。別sourceの同名登録がある場合はmutation前にfail-closedにし、同sourceの再実行性を維持する。"
+    }
+  ],
+  "four_conditions": {
+    "no_contradictions": {
+      "status": "FAIL",
+      "findings": [
+        "SYS-02"
+      ]
+    },
+    "no_omissions": {
+      "status": "FAIL",
+      "findings": [
+        "SYS-03"
+      ],
+      "note": "CLI-side conflict behavior remains unverified; code-level preflight omission is verified"
+    },
+    "consistency": {
+      "status": "FAIL",
+      "findings": [
+        "SYS-02",
+        "SYS-03"
+      ]
+    },
+    "dependency_consistency": {
+      "status": "FAIL",
+      "findings": [
+        "SYS-01"
+      ]
+    }
+  },
+  "runtime_check": {
+    "method": "Imported installer without bytecode; replaced only _git_snapshot with no-op in memory to honor no-git instruction; called check=True separately per platform; no global install mutations",
+    "claude": {
+      "count": 22,
+      "verified": false,
+      "status": "pending_user_gate",
+      "failures": [
+        {
+          "plugin": "system-spec-harness",
+          "same_hook_multiple_activation": true,
+          "activation_errors": []
+        }
+      ]
+    },
+    "codex": {
+      "count": 22,
+      "verified": true,
+      "status": "verified"
+    }
+  },
+  "reproductions": {
+    "release_downstream_failure": {
+      "technique": "in-memory function mocks only",
+      "first_error": "injected downstream failure",
+      "second_exit": 0,
+      "check_exit": 0,
+      "calls": [
+        "write_version",
+        "save_fingerprints",
+        "regenerate_marketplace"
+      ],
+      "state": {
+        "version": "1.0.1",
+        "fingerprint": "new"
+      }
+    },
+    "handoff_digest": {
+      "technique": "Path.read_bytes in-memory patch; filesystem unchanged",
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/.claude/handoff/20261004T121753.md",
+      "release_excluded": true,
+      "installer_digest_changes": true
+    },
+    "codex_mutation_sequence": {
+      "technique": "mock _execute and verification only; no CLI mutation",
+      "commands": [
+        "codex plugin marketplace add <repo> --json",
+        "codex plugin add plugin-dev-planner@harness-dev --json"
+      ]
+    }
+  }
+}
