@@ -82,7 +82,7 @@ feedback_contract:
       verify_by: script
     - id: IN3
       loop_scope: inner
-      text: 期報・月報・週報が揃っている場合、validate-cross-level.py が期アンカー8種を三層で照合し rc=0 であることを確認する。rc=3(抽出0件)は PASS として扱わない。抽出不可は不一致と別枠で列挙され rc=1 になる。3本揃っていない場合はこの基準を適用しない(--weekly は省略可)。
+      text: 期報と月報が揃っている場合、validate-cross-level.py が期アンカー8種を層をまたいで照合し rc=0 であることを確認する(週報があれば --weekly も渡して三層で照合する)。rc=3(抽出0件)は PASS として扱わない。抽出不可は不一致と別枠で列挙され rc=1 になる。期報か月報のどちらかが無い場合だけこの基準を適用しない。
       verify_by: script
     - id: OUT1
       loop_scope: outer
@@ -172,7 +172,7 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 | Phase3-dialogue | 親が steps1-5 を参照し、現状振り返り〜最終確認の対話を進行。必要な場合だけ coordinator から読取専用の次問案を受ける | 本 skill（親対話）+ `phase3-coordinator`（任意の助言Task） |
 | Phase4-format | 目標設定テンプレートへ整形し、`agents/output-formatter.md` Layer 4 の品質チェックリスト（件数は正本側で増減するためここに書かない）を全項目確認する。行動目標は採否基準で1行ずつ判定する | `output-formatter`（Task） |
 | Phase4b-submission | **月報のときだけ**、同じファイルの先頭に提出用セクション（公式21ブロックを全件・見出しに「（提出）」を付ける・人数集約・本文に具体日を埋めない・行動目標はグループ見出しを置かず1行1行動・期日は管理用で逆算した値と同値）を置き、その後に管理用セクションを続ける | `output-formatter`（Task） |
-| Phase5-validate | `validate-goal-output.py`（公式21ブロック・逆算チェーン C1〜C6）→ `validate-goal-linkage.py`（一本筋の両方向照合）の順で検証、最大3回まで改善してファイル保存。月報も1ファイルなので各スクリプトは1回ずつ | `output-formatter` + scripts |
+| Phase5-validate | `validate-goal-output.py`（公式21ブロック・逆算チェーン C1〜C6）→ `validate-goal-linkage.py`（一本筋の両方向照合）→ 期報と月報が揃っていれば `validate-cross-level.py`（層をまたぐ値の照合・IN3。週報があれば `--weekly`）の順で検証、最大3回まで改善してファイル保存。月報も1ファイルなので各スクリプトは1回ずつ。各 rc の値そのものと引数を記録する | `output-formatter` + scripts |
 | Phase6-daily-update | 保存後、`02_Configs/Templates/Daily.md` の Obsidian embed 参照を最新目標へ更新（種別該当箇所のみ） | 本 skill |
 
 **所要時間目安**: 週報 5〜8分 / 月報 10〜15分 / 期報 15〜20分。
@@ -202,7 +202,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 progress/intermediate の不在、必須キー欠落、空または途中変更された `original_goal`、SHA-256 不一致は exit 非0で完了を阻止する。
 - **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造の公式21ブロック・NG表現・やらないこと3項目以上・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）に加え、**`--type` と本文タイトル見出しラベルの一致**（不一致は rc=1 で FAIL。種別の取り違えを止める停止条件）を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を WARN で併せて報告する（任意・rc には影響しない）。
 - **inner ループ (IN2)**: 続けて `validate-goal-linkage.py --file <保存先>` を実行する。IN1 の C4（所属不明）・C5（参照先の実在）は FAIL だが、**C6（支える行動の無い成果目標）は WARN で rc を上げず、括弧で始まる見出し名はすべて免除する**。IN2 は同じ照合規則（成果目標名の切り出し・空白を落とした完全一致・グループ見出しの解釈）を validator から読み込んで使い、支える行動の無い成果目標・`・` で複数の成果目標を指す見出し・`（土台）`／`（関係維持）` 以外の括弧名・月報のグループ見出しのラベルずれを rc=1 で止める。rc=0（未解決0件・分母あり）になるまで改善する。**rc=3 は「照合対象が1件も無い」= 判定していないので PASS として扱わない**。両スクリプトの rc は**値そのものと引数**を記録する（パイプを挟むと検査器の rc が読めなくなるので、出力をファイルへ落として `$?` を直後に取る）。
-- **inner ループ (IN3)**: 期報・月報・週報が揃っている場合、`validate-cross-level.py --quarterly <期報> --monthly <月報> [--weekly <週報>]` を実行する。**IN1 / IN2 はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ追随させ忘れても rc=0 で通る**（層をまたぐ値を突き合わせる口が存在しない＝分母0件）。この穴を IN3 が埋める。期アンカー8種（今期の売上目標／当月の売上目標／無料相談の延べ回数／1回目の実人数／月額継続コンサルの累積件数／現在事業パートナー数／現在のグリッドパートナー数／次回の壁打ち予定日）を三層で並記して照合し、**抽出不可は不一致と別枠で列挙して rc=1** にする。**rc=3 は抽出0件＝何も判定していないので PASS として扱わない**。週報がまだ無ければ `--weekly` を省略する。対象一覧の正本は `references/data-contract.md` §3.1.3。
+- **inner ループ (IN3)**: 期報と月報が揃っている場合（週報があれば `--weekly` も渡す）、`validate-cross-level.py --quarterly <期報> --monthly <月報> [--weekly <週報>]` を実行する。**IN1 / IN2 はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ追随させ忘れても rc=0 で通る**（層をまたぐ値を突き合わせる口が存在しない＝分母0件）。この穴を IN3 が埋める。期アンカー8種（今期の売上目標／当月の売上目標／無料相談の延べ回数／1回目の実人数／月額継続コンサルの累積件数／現在事業パートナー数／現在のグリッドパートナー数／次回の壁打ち予定日）を三層で並記して照合し、**抽出不可は不一致と別枠で列挙して rc=1** にする。**rc=3 は抽出0件＝何も判定していないので PASS として扱わない**。週報がまだ無ければ `--weekly` を省略する。対象一覧の正本は `references/data-contract.md` §3.1.3。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
 - **behavioral acceptance (OUT2)**: 静的 content-review とは分離し、`run-skill-live-trial` で AskUserQuestion gate → Phase3 対話 → Phase5 検証 → Phase6 Daily.md embed 更新と目標設定ファイル実生成までを実走証拠として確認する。
 
@@ -232,7 +232,7 @@ progress/intermediate の不在、必須キー欠落、空または途中変更�
 - **出力ファイル命名**: 週報 `UBM - 1-週報 - {期間}.md` / 月報 `UBM - 2-月報（１ヶ月） - {期間}.md` / 期報 `UBM - 3-月報（３ヶ月） - {期間}.md`（`{期間}` は `YYYY-MM-DD〜YYYY-MM-DD`）の3本のみ。`（提出）` 付きのファイル名は新規作成しない。旧名 `UBM - 3-月報（２ヶ月） - …` と `UBM - 3-期報 - …` は読み取り・過去参照では受理し続ける（新規作成では使わない）。
 - **「（提出）」は validator を通すための規約**: 重複見出し検査は `## 【…】` 行の**完全一致**で数えるため、`## 【今月の売上目標（提出）】` は `## 【今月の売上目標】` と衝突しない。必須見出し検査も完全一致なので管理用セクション側で満たす。したがって**管理用セクションの見出しには文字を足さない**（素の `## 【今月の売上目標】` のまま。「（管理）」等を足すと必須見出しが満たされず FAIL）。`## 【今月の行動目標（提出）】` はグループ見出しを持たない1行1行動なので、所属の検査（C4/C5）と件数の上限（S3）から外れる。行動目標系の検査（NG表現 FAIL / 数値・期日・固有名詞 WARN）は見出しの部分一致で両セクションを1プールにするため、提出用セクションにも精神論を書かない（固有名詞 WARN は管理用セクション側で満たされる）。
 - **validator だけでは止まらない一本筋の切れ**: `validate-goal-output.py` は支える行動の無い成果目標を C6 の WARN に留め、括弧で始まる見出し名（`### → （準備）` など）をすべて免除する。どちらも rc=0 で通るので、`validate-goal-linkage.py` を**必ず併走**させる（rc=3 は分母0で判定していない状態なので PASS にしない）。
-- **単一ファイル検査の穴（三層のズレ）**: `validate-goal-output.py` と `validate-goal-linkage.py` は**どちらも1本のファイルしか見ない**。期報の数字を直して月報・週報へ降ろし忘れても両方 rc=0 で通る。`--peer` の層間一致は WARN のみ・3アンカーで rc を上げない。3本揃ったら `validate-cross-level.py` を回す（rc=1 で落ちる）。**期報を先に直し、そこから月報・週報へ降ろす。下から上へは直さない。**
+- **単一ファイル検査の穴（三層のズレ）**: `validate-goal-output.py` と `validate-goal-linkage.py` は**どちらも1本のファイルしか見ない**。期報の数字を直して月報・週報へ降ろし忘れても両方 rc=0 で通る。`--peer` の層間一致は WARN のみ・3アンカーで rc を上げない。期報と月報が揃ったら `validate-cross-level.py` を回す（週報があれば `--weekly` も渡す。rc=1 で落ちる）。**期報を先に直し、そこから月報・週報へ降ろす。下から上へは直さない。**
 - **経緯の記述を現在値と読み違える**: 「以前は500,000だった」のような履歴は【仮置き事項】【衝突】【確定済み・解消済みの記録】【来月以降に対応すること】の中に置く。アンカーの節の本文に混ぜると、人も検査器も現在値として読む（`validate-cross-level.py` はこれらの節を抽出範囲から外している）。
 - **ファイル名に全角カッコ付き期間表記を本文へ書かない**: 本文で他ファイルを参照するときは `（１ヶ月）`・`（３ヶ月）` を含むファイル名を引用せず期間表記で書く（validator の全角数字チェックで rc=1 になる）。
 - **期報の期間**: UBM の目標期間は月の最終月曜日起点。期報は対象3ヶ月分の月報期間の連結で、開始日=1ヶ月目の月報開始日 / 終了日=3ヶ月目の月報終了日（例: 7月・8月・9月分 → `2026-06-29〜2026-09-27`）。期報は月報3件をロールアップして作る。
@@ -245,7 +245,7 @@ progress/intermediate の不在、必須キー欠落、空または途中変更�
 
 - **agents**: `info-collector` / `goal-reviewer` / `phase3-coordinator` / `output-formatter`（plugin 直下 `agents/`。coordinator は必要時に `prompts/R1-R5` を Read して次問案だけを返し、ユーザー対話と状態更新は親が行う）。
 - **prompts**: `prompts/R{1..5}-<slug>.md` — Phase3 対話 Step1-5 の責務単位 7 層プロンプト正本（prompt-placement-convention 準拠、verify-completeness.py で 7 層+l5-contract 検証）。
-- **scripts**: `scripts/validate-goal-output.py`（出力バリデーション・決定論ゲート）/ `scripts/validate-goal-linkage.py`（一本筋の両方向照合・照合規則は validator と共用・rc=0/1/2/3。受け入れテストは `tests/test_validate_goal_linkage.py`）/ `scripts/validate-cross-level.py`（期報・月報・週報の期アンカー8種の横断照合・rc=0/1/2/3。受け入れテストは `tests/test_validate_cross_level.py`）/ `../../scripts/validate-inline-goal-seek-anchor.py`（plugin 直下。inline goal-seek の progress/intermediate anchor 検証・fail-closed）。
+- **scripts**: `scripts/validate-goal-output.py`（出力バリデーション・決定論ゲート）/ `scripts/validate-goal-linkage.py`（一本筋の両方向照合・照合規則は validator と共用・rc=0/1/2/3。受け入れテストは plugin 直下の `../../tests/test_validate_goal_linkage.py`）/ `scripts/validate-cross-level.py`（期報・月報・週報の期アンカー8種の横断照合・rc=0/1/2/3。受け入れテストは plugin 直下の `../../tests/test_validate_cross_level.py`）/ `../../scripts/validate-inline-goal-seek-anchor.py`（plugin 直下。inline goal-seek の progress/intermediate anchor 検証・fail-closed）。
 - **references**: `references/selection-focus-goal-frame.md`（北原さん 2026-08-12 コメント由来の選択と集中フレーム・期間別検査・運用カレンダー）/ `references/thinking-guide.md`（思考法）/ `references/output-formats.md`（テンプレートの公式21ブロック・提出用/管理用セクションの粒度・三層分離・行動目標の採否基準・一本筋・継続売上と単発の分離の単一正本）/ `references/data-contract.md`（Phase 間 I/O）/ `references/thinking-methods-toolkit.md` / `references/thinking-process.md` / `references/version-history.md` / `references/resource-map.yaml`（資源一覧の機械可読正本）。
 - **assets**: `assets/execution-prompts.md`（フロー参照）/ `assets/interview-quick-templates.md` / `assets/action-goals-best-practices.md` / `assets/golden-sample-weekly.md`（Few-shot）。
 - **knowledge**: plugin 直下 `knowledge/`（`router.json` → `*.json` を info-collector がデュアルパス検索。L1 curated vendor 同梱でfresh-install 直後から機能）。

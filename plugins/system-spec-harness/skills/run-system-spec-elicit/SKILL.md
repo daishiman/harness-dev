@@ -138,7 +138,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **bootstrap** サブコマンドが空のstate envelope (`$CLAUDE_PROJECT_DIR/system-spec/spec-state.json`) を作り、**R0-foundation** が `set-foundation` op で `requirements_foundation` (U1-U9) を確定してから **R1-init** (`init` サブコマンド) がtaxonomyをpopulateする。R1は既存foundation/decisionsを保持し、上位概念が曖昧なまま技術ヒアリングへ進まない。
 - 各 `確定` セルに `serves_goals: [<goal_id>, ...]` を付与 (confirm 同時付与 or `set-serves` op) し、どの上位概念に資するかを明示する。
 - C03 (`run-system-spec-compile`) は `requirements_foundation` を `system-spec/00-requirements-definition.md` (要件定義書=憲法) として先頭章に生成し、各技術章 frontmatter に `serves_goals` を持たせて全章を貫通させる。
-- 検証: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --require-foundation` が U1-U5 非空・各確定セルの serves_goals トレース・drift 候補を機械検証する (opt-in)。
+- 検証: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --require-foundation` が U1-U9 (U1/U2/U3 は値必須、他は値または理由付きの明示 N/A)・decisions 契約・各確定セルの serves_goals トレース・drift 候補を機械検証する (opt-in)。
 
 ## Purpose & Output Contract
 
@@ -182,7 +182,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## feedback-contract (with-feedback-contract)
 
-- **IN1 (inner / script)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json` が exit0 (loop 中の網羅性)。R0-foundation 完了後は `--require-foundation` を付けて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json --require-foundation` も exit0 とし、上位概念 U1-U9・decisions 契約・serves_goals トレースを段階的に課す (foundation 未確定の R0 完了前には課さない)。
+- **IN1 (inner / script)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json` が exit0 (loop 中の網羅性)。R0-foundation 完了後は `--require-foundation` を付けて `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix spec-state.json --require-foundation` も exit0 とし、上位概念 U1-U9・decisions 契約・serves_goals トレースを段階的に課す (foundation 未確定の R0 完了前には課さない)。確定セルを作った後は `--require-basis` も付け、確定へ紐づく qa の `basis` 宣言を課す。
 - **OUT1 (outer / test)**: 最終 `spec-state.json` を `--require-complete --require-basis --require-foundation` が exit0 で受理し (未収集0・全確定セルの `basis` 宣言・U1-U9 と serves_goals トレースを最終条件に含める)、下の収集ゲートも `ungrounded_blocking_items` が空で通る。受入テスト (`tests/`) が resume 保存を含めてこの最終状態を再現する。
 - **収集ゲート (C16 / IN1 補完)**: `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py" --profile required-info --input "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json" --state "$CLAUDE_PROJECT_DIR/system-spec/spec-state.json"` が exit0 かつ `coverage_certificate.ungrounded_blocking_items` が空。`missing_effect=block` の必須情報 (product-goal / context-of-use / target-platforms / domain-model / auth-model / security-posture) が確定に接地するまで当該 domain の確定セルの `confirmed` を許さない (接地の判定は qa_log entry の `required_info_items` と**決着済みセル (`確定` または `対象外`) の** `qa_ref`/`qa_refs` を辿って `--state` が決定論検査する。除外もまた「収集した結論」であり、たとえば target-platforms は何を外すかという答えそのものが根拠になるため `対象外` も接地元に数える — 詳細は `references/spec-state-contract.md`)。R2 の各 turn には `basis` と `required_info_items` を付けて writer へ渡す (付けない回答はどの item も接地させない)。
 - **情報優先度の責務境界 (ui-ux / `information-priority` item)**: 本 skill が確定させるのは**方針まで** — 表現物ごとに何を残し・落とし・加工するか、束の順位とその根拠 (task 頻度 × 失敗コスト) — であり、`spec-state.json` の該当セルへ qa_ref 付きで記録する (`missing_effect=degrade`。非適用なら理由を記録する)。この方針を `information-priority-map.json` として具体化し `validate-information-priority.py` で機械検証するのは**下流の生成工程**の責務であり、要件段階で成果物の生成は求めない。下流の現状は 2 系統に分かれる — **map ゲートまで実装済み**なのは slide-report-generator の構成設計 (`structure-designer` / `report-structure-designer` が構成着手前に exit 0 を要求) のみ。**C03 仕様書生成は原理カードの注入まで**で、`../run-system-spec-compile/scripts/compile-spec-doc.py` の `category_design_refs()` が C04 `resource-map.yaml` の `read_when` から ui-ux / frontend 章へ `information-design.md` を自動で引く (map ゲートの C03 への組込は follow-up)。原理の正本は C04 `../ref-system-design-knowledge/references/information-design.md`。
@@ -205,14 +205,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 3. 5 loop 到達で未収集が残るなら未完了として保存する。未収集を勝手に確定/対象外にしない。
 4. `category_aggregate` は writer が真理値表から再計算する (手書きしない)。
 5. platform id は canonical 6 種のみ (別名を作らない)。
-6. 問は `references/neutral-question-criteria.md` の N1-N4 に従う。凍結済みの問に違反が見つかったら、同じ論点を中立に問い直して回答を取り直し、`supersede-qa` op で旧 entry に置き換えを記録する (本文は書き換えない。旧 entry が確定セルの `qa_ref` なら R4-reopen が先)。
+6. 問は `references/neutral-question-criteria.md` の N1-N4 に従う。凍結済みの問に違反が見つかったら、同じ論点を中立に問い直して回答を取り直し、`supersede-qa` op で旧 entry に置き換えを記録する (本文は書き換えない)。旧 entry が確定セルの `qa_ref` なら、R4-reopen で reopen → 問い直し → 新しい qa で再確定してから `supersede-qa` を記録する (旧 entry が主根拠のままだと writer が拒否し、置き換え済みの entry を `qa_ref` にした `confirm` も拒否する)。
 
 ## Additional Resources
 
 - `references/spec-state-contract.md` — spec-state.json 形状 + 真理値表 + writer 契約の正本。
-- `references/elicit-question-bank.md` — カテゴリ×platform 質問テンプレ集。
+- `references/elicit-question-bank.md` — カテゴリ×platform で確認する論点の一覧 (聞き漏れを確かめるチェックリスト。問の文面の雛形ではない)。
 - `references/resource-map.yaml` — Progressive Disclosure 索引。
-- `references/neutral-question-criteria.md` — 中立な問の基準 N1-N4 と推奨の示し方の正本 (問を作る R0/R2/R3/R5 と監査する R6/C06 が共有)。
+- `references/neutral-question-criteria.md` — 中立な問の基準 N1-N4 と推奨の示し方の正本 (問を作る R0/R2/R3/R4/R5 と監査する R6/C06 が共有)。
+- `prompts/R6-audit-hearing.md` — 往復ヒアリング監査 (C06 `system-spec-hearing-auditor`) の判定観点の正本。C06 が読む監査 SSOT で、本 skill の実行責務ではない。
 - `scripts/apply-spec-transition.py` — 単一 transition writer (init/apply/chunk/aggregate)。
 - `../../scripts/validate-coverage-matrix.py` — 網羅性の決定論ゲート (IN1/OUT1)。
 - `references/required-info-catalog.json` — C16 必須情報カタログ (domain 別 block/degrade/warn item・収集順序 depends_on・coverage certificate の正本)。

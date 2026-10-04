@@ -578,6 +578,48 @@ def test_cli_keeps_a_still_referenced_leaky_answer_once_inside_its_fenced_block(
     assert not any(OLD_I7 in line for line in _outside_fence(merged))
 
 
+def _old_compile_chapter(spec: dict, monkeypatch) -> str:
+    """旧 compile の描き方 (逐語も出所も、構造を見ずに生で流し込む) で章を作る。"""
+    with monkeypatch.context() as m:
+        m.setattr(c, "_has_structure", lambda value: False)
+        return c.render_chapter(spec, "backend", {})
+
+
+def test_cli_cleans_a_leak_whose_qa_has_a_multiline_provenance(tmp_path, monkeypatch):
+    """出所が複数行の qa の漏れも片付ける (描いた要素は行に割ってから比べる)。
+
+    旧 compile は出所を付帯行の括弧書きへそのまま埋め込んだので、出所が 2 行なら付帯行も
+    2 行に割れて章に出る。描いた要素を割らずに比べると、2 行目が spec-state から導けない行に
+    見え、漏れた見出しを人の節と取り違えて移行が止まる。
+    """
+    spec = _chapter_spec()  # qa-leaky を参照していた頃
+    spec["qa_log"][1]["provenance"] = "会話ログ\n2 行目の補足"
+    old = _old_compile_chapter(spec, monkeypatch)
+    assert _leaked(old, spec), "fixture が漏れた章になっていない"
+    spec["matrix"]["backend"]["web"]["qa_refs"] = ["qa-main", "qa-after"]  # 参照から外れた
+    argv, chapter_path = _write_inputs(tmp_path, spec, old)
+
+    assert c.main(argv) == 0
+    assert _leaked(chapter_path.read_text(encoding="utf-8"), spec) == []
+
+
+def test_cli_cleans_a_heading_leaked_from_a_structured_provenance(tmp_path, monkeypatch):
+    """出所そのものの見出しが旧 compile で漏れた章も、人の節と取り違えずに片付ける。
+
+    旧 compile は構造を持つ出所も付帯行へ埋め込んだので、漏れた見出しの直下には
+    「最終行 / 回答時刻: …)」という旧書式の付帯行の断片が並ぶ。今の compile は出所を
+    フェンスへ出すのでこの行を描かない。旧書式も導ける行に含めないと移行が止まる。
+    """
+    spec = _chapter_spec(refs=("qa-main", "qa-after"))
+    spec["qa_log"][0]["provenance"] = "利用者回答の要約\n### 出所の見出し\n会話ログの 3 行目"
+    old = _old_compile_chapter(spec, monkeypatch)
+    assert "\n### 出所の見出し\n" in old, "fixture が漏れた章になっていない"
+    argv, chapter_path = _write_inputs(tmp_path, spec, old)
+
+    assert c.main(argv) == 0
+    assert _leaked(chapter_path.read_text(encoding="utf-8"), spec) == []
+
+
 def test_duplicate_qa_subblock_is_dropped_even_without_spec():
     """管轄節と同じ (役割, qa id) の質疑小節は、spec が無くても重複として引き継がない。
 
@@ -614,6 +656,24 @@ status: confirmed
 
 本文
 """
+
+
+def test_human_block_sharing_a_heading_with_the_verbatim_still_fails_closed(tmp_path):
+    """逐語と同じ字面の見出しでも、人が書いた本文を伴う節は漏れとして片付けない。
+
+    qa の答に `### 補足` の行があるとき、章に人が書いた `### 補足` ブロックを字面だけで
+    漏れと判定すると、本文ごと黙って消える (終了コード 0)。見出しの直下に spec-state から
+    導けない行があれば人の節なので、消失として止める (書き込まない)。
+    """
+    spec = _chapter_spec(refs=("qa-main", "qa-after"))
+    spec["qa_log"][0]["answer"] = "主の答の本文\n### 補足\n逐語の補足"
+    fresh = c.render_chapter(spec, "backend", {})
+    head, sep, tail = fresh.partition("\n## To-Be / Delta")
+    assert sep, "確定内容節の次の節が見つからない (fixture の前提)"
+    old = head.rstrip("\n") + "\n\n### 補足\n\n人が書いた補足の本文。\n" + sep + tail
+    argv, chapter_path = _write_inputs(tmp_path, spec, old)
+    assert c.main(argv) == 1
+    assert chapter_path.read_text(encoding="utf-8") == old, "人の節を消す再生成を書き込んでいる"
 
 
 def test_removing_a_human_heading_still_fails_closed(tmp_path):

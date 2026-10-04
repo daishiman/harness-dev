@@ -195,7 +195,7 @@ OUTPUT_007 以降の**内容規則の正本は `skills/run-ubm-goal-setting/refe
 
 4. monthly も**1ファイル**なので各スクリプトは1回ずつ（`--type monthly`）。提出用セクションの見出しに「（提出）」が付いていることで重複見出し検査（完全一致）を通り、`## 【今月の行動目標（提出）】` は所属の検査（C4/C5）と件数の上限（S3）からも外れる（提出用はグループ見出しを持たない1行1行動のため）
 5. `validate-goal-linkage.py` の rc 意味: `0`=PASS / `1`=未解決の参照あり（FAIL）/ `2`=引数・ファイル不備 / `3`=照合対象0件。**rc=3 を PASS として扱わない**（分母が0なら「検査して0件」ではなく「当てる対象が無かった」）
-6. 保存先に**期報・月報・週報が揃っている場合は3本目の検査を実行する**。上の2本はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ降ろし忘れても rc=0 で通る（層をまたぐ値を突き合わせる口が無い＝分母0件）
+6. 保存先に**期報と月報が揃っている場合は3本目の検査を実行する**（週報があれば `--weekly` も渡す。週報がまだ無い月報作成直後が、期報と月報のズレが一番入りやすい時点なので飛ばさない）。上の2本はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ降ろし忘れても rc=0 で通る（層をまたぐ値を突き合わせる口が無い＝分母0件）
 
 ```bash
 /usr/bin/python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \
@@ -207,7 +207,7 @@ OUTPUT_007 以降の**内容規則の正本は `skills/run-ubm-goal-setting/refe
 8. FAIL時: エラー箇所を修正して再実行（最大3回）
 9. 報告時は「PASS」ではなく**各 rc の値そのもの**と実行した引数を記録する
 
-**完了条件**: 品質チェック全項目OK + validate-goal-output.py rc=0 + validate-goal-linkage.py rc=0 ＋（3本揃っている場合）validate-cross-level.py rc=0
+**完了条件**: 品質チェック全項目OK + validate-goal-output.py rc=0 + validate-goal-linkage.py rc=0 ＋（期報と月報が揃っている場合）validate-cross-level.py rc=0
 
 **Step 4: ファイル保存**
 

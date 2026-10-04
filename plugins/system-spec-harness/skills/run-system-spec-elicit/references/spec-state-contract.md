@@ -66,6 +66,16 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 あり、どの質疑で外したのかを機械で辿れるようにするための項目である。`apply_turn` は `confirm`
 と同じく turn の `qa_id` を `exclude` op へ補完する。
 
+`確定` セルの `qa_ref` は主たる接地根拠の 1 件で、セルの論点を別の問で補ったときの質疑は
+`qa_refs` (裏付け) へ結ぶ。書込経路は `add-qa-ref` op
+(`{"action": "add-qa-ref", "category": <id>, "platform": <id>, "qa_refs": [<qa_id>, ...]}`) だけである。
+`確定` セルにだけ追記でき (確定前は拒否)、`qa_log` に無い id は拒否し、既にある id は重ねない
+(冪等)。`state=確定` を変えないので確定巻き戻し防御に抵触せず、reopen→confirm と違って
+`required_info` / `required_info_checks` を落とさない。turn に含めて `qa_refs` を省くと turn の `qa_id`
+で補完される。ops は順に適用されるので、論点が揃った turn の ops に `confirm` → `add-qa-ref`
+(先行 turn で補った論点の qa_id) と並べれば、確定と結び付けを 1 turn で行える。
+結ばれない qa は、必須情報の接地 (下記の鎖) にも C03 の章の根拠にも数えられない。
+
 ## qa_log entry の項目
 
 | 項目 | 必須 | 意味 |

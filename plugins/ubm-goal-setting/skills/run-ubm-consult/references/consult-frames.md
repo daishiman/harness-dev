@@ -11,7 +11,7 @@ intent/background を出典として確認する。
 
 capability A（`run-ubm-goal-setting`）は思考法カタログ `thinking-methods-toolkit.md` を `thinking-guide.md` へ統合済み（前者は tombstone）。本 `consult-frames.md`（GF-01..10）は類似カタログに見えるが**用途軸が異なる**ため別置きにする:
 
-- **thinking-guide.md**: 目標設定 Phase 3 の **Step 1〜5 に紐付いた**思考法適用ガイド（「この Step で何の思考法をどう使うか」）。正本＝`$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/thinking-guide.md`。
+- **thinking-guide.md**: 目標設定 Phase 3 の **Step 1〜5 に紐付いた**思考法適用ガイド（「この Step で何の思考法をどう使うか」）。正本＝`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/thinking-guide.md`。
 - **consult-frames.md（本ファイル）**: Step に縛られない **相談（壁打ち）向けの適用視点**カタログ。相談種別ごとに「どの見方を選択肢として並べるか」を `frame_id`（GF-xxx）＋出典 ID 付きで管理する。相談は固定 Step を持たないため、Step 紐付けの thinking-guide とは索引軸が違う。
 
 重複する上位概念（ゴール指向分解・逆算・フェーズ適合・前提検証・やらないこと設計・関係構築ファースト）は **thinking-guide 側の該当節を正本として参照**し、本カタログでは相談適用視点（核となる問い）だけを持つ。完全統合はしない（相談と目標設定で提示文脈・粒度が異なるため）。
@@ -29,7 +29,7 @@ capability A（`run-ubm-goal-setting`）は思考法カタログ `thinking-metho
 
 1. **原則を引き出す**: フレームの核となる普遍原則を、対応 knowledge の intent/background から取り出す。
 2. **ユーザー状況に翻訳する**: R2 でユーザーが話すことに同意した relevant_context にだけ当てはめ、「あなたの場合はどう現れていますか？」と問う。
-3. **行動の問いに落とす**: 「誰に・何を・いつ・何件」の粒度で、次の一歩を考えさせる問いにする。
+3. **行動の問いに落とす**: 「誰に・何を・いつ・何件」の粒度で、次の一歩を考えさせる問いにする（reflection lane を選んだ相談では、行動を迫らず再開条件を考えさせる問いにする）。
 
 R3 は**2件以上のフレームを並べ**、どれが当てはまるかはユーザーに選ばせる（具体解の押し付けゼロ）。
 
@@ -37,7 +37,7 @@ R3 は**2件以上のフレームを並べ**、どれが当てはまるかはユ
 
 | frame_id | 名称 | 核となる問い（適用視点） | 向く相談 | related_knowledge |
 |---|---|---|---|---|
-| GF-01 | ゴール指向分解 | 現状は？ ありたい姿（ゴール）は？ その差（ギャップ）は？ 埋める次の一歩は？ | 漠然とした行き詰まり全般。全相談の収束枠 | 原則: principles-business-strategy / mindset: mindset-goal-strategy |
+| GF-01 | ゴール指向分解 | 現状は？ ありたい姿（ゴール）は？ その差（ギャップ）は？ 埋める次の一歩は？ | 漠然とした行き詰まり全般。action lane の収束枠 | 原則: principles-business-strategy / mindset: mindset-goal-strategy |
 | GF-02 | 前提検証 | それは事実ですか、思い込みですか？「できない」の前提を1つ外すと何が変わりますか？ | 「無理」「うちの業種は特殊」等の固定観念 | mindset: mindset-self（MS-007 恐れの転換 等） |
 | GF-03 | トレードオフ二軸 | 何を得るために何を手放しますか？ 2つの軸で並べると選択肢はどこに位置しますか？ | 複数案で迷う意思決定 | 原則: principles-business-execution |
 | GF-04 | 因果深掘り | なぜそれが起きる？ そのまた原因は？（浅い対症でなく根っこへ） | 症状は見えるが原因が曖昧 | 原則: principles-mindset（PR-032 / PR-035 等） |

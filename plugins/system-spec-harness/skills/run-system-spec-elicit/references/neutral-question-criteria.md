@@ -1,7 +1,7 @@
 # 中立な問の基準 (N1-N4) と、推奨の示し方
 
 利用者に投げる問の中立性の**正本**はこのファイルにある。問を作る側 (R0-foundation /
-R2-interview / R3-reask / R5-decision-guide) と、問を監査する側 (R6-audit-hearing の軸 2 と、
+R2-interview / R3-reask / R4-reopen / R5-decision-guide) と、問を監査する側 (R6-audit-hearing の軸 2 と、
 その起動アダプタである C06 `system-spec-hearing-auditor`) は、どちらもここを参照する。
 各プロンプトに基準を書き写さない。写した記述どうしがずれると、作る側が基準どおりに書いた
 問を監査側が誘導と判定する、という衝突がまた起きる。
@@ -65,7 +65,7 @@ qa_log は append-only で、question と answer は書き換えられない。�
 - (a) 新しい問が N1-N4 を満たす (R6 が判定する)
 - (b) 旧い問と同じ論点を扱う (R6 が `superseded_note` と両方の問を照合して判定する)
 - (c) 利用者の回答が記録されている (writer が `answer` 非空・`basis: user-decision`・
-  旧 entry より後の `answered_at` を決定論で検査する)
+  `answered_at` があること、旧 entry に `answered_at` があればそれより後であることを決定論で検査する)
 
 writer が `supersede-qa` を通しても、それは (c) を満たしたという意味しか持たない。
 (a) か (b) を満たさない置き換えは、R6 が無効と判定し、旧い問を判定の対象へ戻す。

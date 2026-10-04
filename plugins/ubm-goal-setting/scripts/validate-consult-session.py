@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-consult-session
-# version: 0.3.0
+# version: 0.3.1
 # purpose: run-ubm-consult の分岐別 record と role=user provenance、保存同意、closure、非処方スタンスを決定論検証し (--ephemeral は非永続前提で consent 要求のみ免除)、--gc で retention 超過/orphan session を回収する。
 # inputs: ["--record JSON", "--transcript JSON (consult_completed のみ)", "--ephemeral", "--gc SESSIONS_ROOT [--apply]"]
 # outputs: ["stdout JSON verdict", "exit 0=valid / 1=invalid / 2=usage"]
@@ -28,6 +28,10 @@ SECRET = re.compile(r"(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9
 PRESCRIPTION = re.compile(r"すべきです|しなさい|が正解|以上が正解|実行してください|従ってください")
 FRAME = re.compile(r"考え方|思考フレーム|見方|フレーム")
 VERBALIZED = re.compile(r"解決|やる|する|決め|言葉")
+ACTION_CLOSE = re.compile(r"次の一歩")
+ACTION_FRAME = re.compile(r"現状|ゴール|ギャップ")
+REFLECTION_CLOSE = re.compile(r"再開条件")
+REFLECTION_FRAME = re.compile(r"見えてきたこと|まだ決めないこと")
 
 
 def _load(path: str) -> object:
@@ -47,14 +51,18 @@ def detect_transcript_elements(transcript: list[dict]) -> dict[str, bool]:
 
     user_verbalized は role=user の turn 本文のみを根拠とする
     (assistant 発話内の「ユーザー:」文字列は provenance にならない)。
+    next_step は 4 要素目「ユーザーが選んだ収束 lane の締め」を表す。action lane は
+    次の一歩と現状/ゴール/ギャップ、reflection lane は再開条件と見えてきたこと/まだ決めないことで満たす。
     """
     assistant_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "assistant")
     user_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "user")
+    action_closed = bool(ACTION_CLOSE.search(assistant_text) and ACTION_FRAME.search(assistant_text))
+    reflection_closed = bool(REFLECTION_CLOSE.search(assistant_text) and REFLECTION_FRAME.search(assistant_text))
     return {
         "frame_presented": bool(FRAME.search(assistant_text)),
         "elicit_question": ("？" in assistant_text) or ("?" in assistant_text),
         "user_verbalized": bool(VERBALIZED.search(user_text)),
-        "next_step": bool(re.search(r"次の一歩", assistant_text) and re.search(r"現状|ゴール|ギャップ", assistant_text)),
+        "next_step": action_closed or reflection_closed,
     }
 
 

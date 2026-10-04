@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.2 - 2026-10-04
+
+相談 (`/ubm-consult`) の締め方を、ユーザーが選ぶ 2 つの lane に揃えた。あわせて目標設定の層またぎ検査の適用条件を、実際にズレが入りやすい時点に合わせた。
+
+- **相談の収束 lane**: 締めは「行動化 (action: 現状→ゴール→ギャップ→次の一歩)」と「整理・内省 (reflection: 見えてきたこと→まだ決めないこと→再開条件)」のどちらかをユーザーが選ぶ。`SKILL.md` の OUT1・Purpose・R4 表、`prompts/R4-cocreate-converge.md`、`references/consult-frames.md` (GF-01 は action lane の収束枠)、`references/resource-map.yaml`、`workflow-manifest.json`、`README.md` をこの 2 lane の書き方に揃えた。
+- **`validate-consult-session.py` 0.3.1**: OUT1 の 4 要素目 `next_step` を「選んだ lane の締め」として判定する。action lane は「次の一歩」と現状/ゴール/ギャップ、reflection lane は「再開条件」と見えてきたこと/まだ決めないことで満たす。受け入れテスト `tests/test_ubm_consult_contract.py` に reflection lane の正例と、片方の語だけでは満たさない負例を足した。
+- **R3 の参照パス**: router / schema の置き場を `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` で書き、Codex でも解決できるようにした。
+- **vault 書込の許可範囲の説明**: `RUNBOOK.md` と `plugin-composition.yaml` が、guard の正本 (`hooks/ubm-write-path-guard.py` の `ALLOWED_PREFIXES` / `ALLOWED_EXACT`) を名指しし、各 skill が実際に書く範囲はそれより狭いことを書く形にした。guard 自体は変えていない。
+- **層またぎ検査 (`validate-cross-level.py`) の適用条件**: 「期報・月報・週報の 3 本が揃ったとき」から「期報と月報が揃ったとき (週報があれば `--weekly` も渡す)」へ改めた。週報がまだ無い月報作成直後が、期報と月報のズレが一番入りやすい時点のため。`SKILL.md` の IN3、Phase5 表、`references/output-formats.md`、`agents/output-formatter.md` の完了条件を揃えた。
+- **`run-ubm-goal-setting/workflow-manifest.json`**: 見直しの項目数を 13 項目に、品質チェックは件数を書かず output-formatter のチェックリストを正とする書き方に改めた。月報の提出用セクション (phase4b-submission) を独立した step として足し、validate step は 3 本の検査の rc と引数を記録する形にした (rc=3 は検査ゼロ件なので失敗として扱う)。
+
 ## 0.6.1 - 2026-10-04
 
 スクリプト名をリポジトリの命名規約（`lint-script-naming` が許す動詞は build / diff / extract / format / guard / lint / render / validate）に合わせた。判定・rc 体系・引数・出力は変えていない。

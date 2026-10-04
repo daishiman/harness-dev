@@ -20,10 +20,12 @@
 
 `hooks/ubm-write-path-guard.py` は `UBM_VAULT_ROOT` 配下の Write/Edit/MultiEdit だけを検査する。
 
-許可する vault write:
+許可する vault write (正本は `hooks/ubm-write-path-guard.py` の `ALLOWED_PREFIXES` / `ALLOWED_EXACT`):
 
-- `05_Project/UBM/目標設定/` 配下の目標設定ファイル保存
-- `02_Configs/Templates/Daily.md` の embed 参照更新
+- prefix 7 件: `05_Project/`・`02_Configs/Daily/`・`.claude/{skills,agents,commands,rules,prompts}/`
+- 完全一致 1 件: `02_Configs/Templates/Daily.md`
+
+各 skill が実際に書く範囲はこれより狭く、その境界は各 skill の規則が守る (例: 目標設定は `05_Project/UBM/目標設定/` と Daily.md の embed 行だけ、相談記録は vault へ書かない)。
 
 保護対象外:
 

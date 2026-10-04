@@ -67,7 +67,7 @@
 
 ### 4.1 失敗時
 - C07/C08 の監査 verdict FAIL/INDETERMINATE → 該当観点 FAIL、不足事項一覧に差し戻し先 (elicit/doc-fetch/compile または監査再実行) を記す。
-- C06 (matrix_coverage の sub-input) は、C06 の verdict ではなく `python3 scripts/aggregate-completeness.py --hearing <C06 出力 JSON> --state <spec-state.json>` の `derive_hearing_verdict` の値で扱う (`aspect-criteria.md` 1a の決定論実装)。FAIL/INDETERMINATE なら matrix_coverage を FAIL にし、`blocking` の検出を gaps に記す。`notes` (medium の非接地・low・info) と `closed` (閉じた検出) は gaps に入れず、`findings[]` に `bucket: matrix_coverage` で残す。
+- C06 (matrix_coverage の sub-input) は、C06 の verdict ではなく `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --hearing <C06 出力 JSON> --state <spec-state.json>` の `derive_hearing_verdict` の値で扱う (`aspect-criteria.md` 1a の決定論実装)。FAIL/INDETERMINATE なら matrix_coverage を FAIL にし、`blocking` の検出を gaps に記す。`notes` (medium の非接地・low・info) と `closed` (閉じた検出) は gaps に入れず、`findings[]` に `bucket: matrix_coverage` で残す。
 - 決定論ゲート exit != 0 → マトリクス網羅性観点を FAIL、high finding を記録。
 
 ### 4.2 観測

@@ -22,6 +22,9 @@ LIVE_TRIAL_ROOT = (
 LIVE_TRIAL_SCHEMA = LIVE_TRIAL_ROOT / "schemas" / "live-trial-verdict.schema.json"
 LIVE_TRIAL_VERDICT = LIVE_TRIAL_ROOT / "scripts" / "live-trial-verdict.py"
 POSITIVE_SCENARIOS = PLUGIN / "tests" / "fixtures" / "live-trial-positive-scenarios.json"
+# content-review-protocol stops at 3 iterations and hands the loop to a human; a limit above 3 exists only
+# where that human chose to continue. run-dev-graph-node: iteration 3 FAILed and the user raised it to 5 (PR #83).
+CONTENT_REVIEW_ITERATION_LIMIT = {"run-dev-graph-node": 5}
 
 
 def _load_content_lint():
@@ -206,5 +209,6 @@ def test_canonical_content_reviews_are_current_and_complete(
         loop = verdict["feedback_loop"]
         assert set(loop["criteria_evaluated"]) == criteria_ids
         assert loop["loop_scope"] == "both"
-        assert loop["iteration_limit"] == 3
+        assert loop["iteration_limit"] == CONTENT_REVIEW_ITERATION_LIMIT.get(skill_name, 3)
+        assert loop["iteration"] <= loop["iteration_limit"]
         assert loop["next_action"] == "none"

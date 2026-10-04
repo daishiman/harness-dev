@@ -785,8 +785,18 @@ def verbatim_headings(spec: dict | None) -> frozenset[str]:
     いる。章に人が書き足した節と区別する根拠は「spec-state の逐語の中にその行がある」
     という機械的に確かめられる事実だけで、見出しの字面や位置からは推測しない。
     """
+    found = set()
+    for text in _verbatim_texts(spec):
+        for line in text.splitlines():
+            if _HEADING_LINE.match(line):
+                found.add(line.strip())
+    return frozenset(found)
+
+
+def _verbatim_texts(spec: dict | None) -> list[str]:
+    """spec-state の逐語 (qa の問・答・出所と訂正 note、承認 note、章の適用記述)。"""
     if not isinstance(spec, dict):
-        return frozenset()
+        return []
     texts: list[str] = []
     for entry in spec.get("qa_log", []) or []:
         if isinstance(entry, dict):
@@ -800,12 +810,30 @@ def verbatim_headings(spec: dict | None) -> frozenset[str]:
     for record in (spec.get("design_applications") or {}).values():
         if isinstance(record, dict) and isinstance(record.get("text"), str):
             texts.append(record["text"])
-    found = set()
-    for text in texts:
-        for line in text.splitlines():
-            if _HEADING_LINE.match(line):
-                found.add(line.strip())
-    return frozenset(found)
+    return texts
+
+
+def spec_derived_lines(spec: dict | None) -> frozenset[str]:
+    """spec-state だけから導ける行 (strip 済み): 逐語の各行と、compile が各 qa を描く行。
+
+    旧 compile が漏らした見出しの直下に並ぶのは、流し込まれた逐語の続きと、compile 自身が
+    qa ごとに描く行 (訂正・根拠の性質・回答時刻) だけである。見出しの字面が逐語と同じでも、
+    直下にここに無い行があればそれは人が書いた節で、漏れとして片付けてはならない
+    (_lost_headings)。
+
+    描いた要素は複数行を含みうる (複数行の出所を埋め込んだ付帯行など) ので、行に割ってから
+    比べる。付帯行は旧書式 (構造を持つ出所も括弧書きへ埋め込む) も含める。旧 compile は
+    出所を 1 行へ埋め込んで描いたため、漏れた見出しの直下にはその書式の行が並ぶ。
+    """
+    lines = {line.strip() for text in _verbatim_texts(spec) for line in text.splitlines()}
+    qa_log = spec.get("qa_log", []) if isinstance(spec, dict) else []
+    for entry in qa_log or []:
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str):
+            rendered = _render_qa_entry(entry, entry["id"], role="質疑")
+            rendered.append(_qa_meta_line(entry, fence_structured=False) or "")
+            lines.update(line.strip() for item in rendered for line in item.splitlines())
+    lines.discard("")
+    return frozenset(lines)
 
 
 def _render_corrections(entry: dict) -> list[str]:
@@ -890,27 +918,41 @@ def _render_qa_entry(entry: dict | None, ref_id: str, *, role: str) -> list[str]
         lines.extend([f"**{label}**", "", *_verbatim(value, force_fence=bool(superseded_by)), ""])
         if key == "answer":
             lines.extend(_render_corrections(entry))
-    # provenance は writer が任意項目として保持する (出所不明の回答を確定根拠にしないため)。
-    # basis は「その回答が誰の判断か」(利用者決定 / 観測事実 / アシスタントの推定) を
-    # 機械可読に宣言する。章に出さないと、利用者が選んだ結論とアシスタントの推定が
-    # 読者にとって同じ見た目になる。
+    meta = _qa_meta_line(entry)
+    if meta is not None:
+        lines.extend([meta, ""])
+        prov = entry.get("provenance")
+        if isinstance(prov, str) and _has_structure(prov):
+            lines.extend([*_fence(prov.strip()), ""])
+    return lines
+
+
+def _qa_meta_line(entry: dict, *, fence_structured: bool = True) -> str | None:
+    """qa の付帯行 (根拠の性質・出所・回答時刻)。どれも無ければ None。
+
+    provenance は writer が任意項目として保持する (出所不明の回答を確定根拠にしないため)。
+    basis は「その回答が誰の判断か」(利用者決定 / 観測事実 / アシスタントの推定) を
+    機械可読に宣言する。章に出さないと、利用者が選んだ結論とアシスタントの推定が
+    読者にとって同じ見た目になる。
+
+    出所が構造を持つ (複数行で見出し等を含む) ときは、1 行の括弧書きへ埋め込まずフェンスへ
+    出す (_render_qa_entry)。fence_structured=False は埋め込んでいた旧 compile の書式で、
+    旧 compile の漏れを見分ける spec_derived_lines だけが使う。
+    """
     prov = entry.get("provenance")
     answered_at = entry.get("answered_at")
     basis = entry.get("basis")
-    # 出所が構造を持つ (複数行で見出し等を含む) ときは、1 行の括弧書きへ埋め込まずフェンスへ出す。
-    prov_fenced = isinstance(prov, str) and _has_structure(prov)
-    if prov or answered_at or basis:
-        meta = []
-        if basis:
-            meta.append(f"根拠の性質: {BASIS_LABELS.get(basis, basis)}")
-        if prov:
-            meta.append("出所: 下のフェンス内の逐語" if prov_fenced else f"出所: {prov}")
-        if answered_at:
-            meta.append(f"回答時刻: {answered_at}")
-        lines.extend([f"- ({' / '.join(meta)})", ""])
-        if prov_fenced:
-            lines.extend([*_fence(prov.strip()), ""])
-    return lines
+    if not (prov or answered_at or basis):
+        return None
+    prov_fenced = fence_structured and isinstance(prov, str) and _has_structure(prov)
+    meta = []
+    if basis:
+        meta.append(f"根拠の性質: {BASIS_LABELS.get(basis, basis)}")
+    if prov:
+        meta.append("出所: 下のフェンス内の逐語" if prov_fenced else f"出所: {prov}")
+    if answered_at:
+        meta.append(f"回答時刻: {answered_at}")
+    return f"- ({' / '.join(meta)})"
 
 
 def _chapter_approval_refs(spec: dict, cat_id: str) -> list[str]:
@@ -1810,8 +1852,36 @@ def merge_preserving(new_text: str, old_text: str, *, spec: dict | None = None) 
     return "\n".join(parts).rstrip("\n") + "\n"
 
 
+def _headings_with_underived_body(
+    text: str, verbatim: frozenset[str], derived: frozenset[str]
+) -> set[str]:
+    """verbatim の見出しのうち、直下に derived に無い行を 1 行でも持つ出現があるもの。
+
+    直下 = 次の見出し行まで (見出しがフェンスの外なら、フェンスの中の見出し風の行では
+    止めない)。空行とフェンスの開閉行は内容ではないので数えない。
+    """
+    lines = text.split("\n")
+    mask = _fence_mask(lines)
+    found: set[str] = set()
+    for i, line in enumerate(lines):
+        heading = line.strip()
+        if heading not in verbatim or not _HEADING_LINE.match(line):
+            continue
+        for j in range(i + 1, len(lines)):
+            if _HEADING_LINE.match(lines[j]) and (mask[i] or not mask[j]):
+                break
+            body = lines[j].strip()
+            if body and not _FENCE_OPEN.match(body) and body not in derived:
+                found.add(heading)
+                break
+    return found
+
+
 def _lost_headings(
-    merged_text: str, old_text: str, verbatim: frozenset[str] = frozenset()
+    merged_text: str,
+    old_text: str,
+    verbatim: frozenset[str] = frozenset(),
+    derived: frozenset[str] = frozenset(),
 ) -> list[str]:
     """マージ結果から消えた既存見出し (## 〜 #####) を列挙する (保存則の検査)。
 
@@ -1827,23 +1897,26 @@ def _lost_headings(
     見えなくなっても、消失の検査からは漏らさない)。結果側では、フェンスの外の見出しを
     「残っている」とみなす。例外は 2 つだけ:
       - 既存章でもフェンスの内側にあった行が、結果でもどこかに (フェンス内でも) 残る
-      - verbatim (spec-state の qa・承認の逐語に行として現れる見出し) に含まれる。
-        旧 compile の漏れであって章の節ではなく、逐語の正本は spec-state に残っている。
-        これを除かないと、逐語をフェンスに入れた再生成は漏れ見出しの「消失」で必ず
-        止まり、その章は二度と再生成できない。
+      - verbatim (spec-state の qa・承認の逐語に行として現れる見出し) に含まれ、かつ
+        既存章でその見出しの直下 (次の見出しまで) の行がすべて derived (spec-state から
+        導ける行) である。旧 compile の漏れであって章の節ではなく、逐語の正本は spec-state
+        に残っている。これを除かないと、逐語をフェンスに入れた再生成は漏れ見出しの
+        「消失」で必ず止まり、その章は二度と再生成できない。直下に derived に無い行が
+        1 行でもあれば人が書いた節なので、字面が逐語と同じでも消失として止める。
     """
     present = set(_all_heading_lines(merged_text, outside_fence_only=True))
     present_anywhere = set(_all_heading_lines(merged_text, outside_fence_only=False))
     old_outside = set(_all_heading_lines(old_text, outside_fence_only=True))
     present_labels = {lab for lab in map(_heading_label, present) if lab}
     old_block_by_heading = dict(_split_blocks(old_text, verbatim))
+    human_bodied = _headings_with_underived_body(old_text, verbatim, derived)
     lost: list[str] = []
     for heading in _all_heading_lines(old_text, outside_fence_only=False):
         if heading in present:
             continue
         if heading not in old_outside and heading in present_anywhere:
             continue
-        if heading in verbatim:
+        if heading in verbatim and heading not in human_bodied:
             continue
         if heading.startswith("###"):
             source = _card_source_file(old_block_by_heading.get(heading, ""))
@@ -1882,6 +1955,7 @@ def write_docset(docset: dict[str, str], out_dir: Path, *, spec: dict | None = N
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     verbatim = verbatim_headings(spec)
+    derived = spec_derived_lines(spec)
     written: list[Path] = []
     for name, content in docset.items():
         p = out_dir / name
@@ -1889,11 +1963,21 @@ def write_docset(docset: dict[str, str], out_dir: Path, *, spec: dict | None = N
         if p.exists():
             old_text = p.read_text(encoding="utf-8")
             text = merge_preserving(text, old_text, spec=spec)
-            lost = _lost_headings(text, old_text, verbatim)
+            # 今回の再生成が描いた行も spec-state から導ける行である。
+            fresh = frozenset(line.strip() for line in content.split("\n") if line.strip())
+            lost = _lost_headings(text, old_text, verbatim, derived | fresh)
             if lost:
+                # 逐語と同じ字面の人の見出しは、引き継ぎの境界 (_MergeContext.skip) が逐語の
+                # 漏れとして扱うので、本文があっても引き継げない。原因と抜け道を示す。
+                collided = sorted({h.strip() for h in lost} & verbatim)
+                hint = (
+                    f" 見出し {collided} は spec-state の逐語にも行として現れるため、人の節としては"
+                    "引き継げない。人の節なら逐語に無い見出しへ改めること。"
+                    if collided else ""
+                )
                 raise CompileError(
                     f"再生成で既存章の見出しが失われる: {p.name}: {lost}. "
-                    "compile は節の内容のみを更新する。消失を伴う再生成は書き込まない"
+                    "compile は節の内容のみを更新する。消失を伴う再生成は書き込まない。" + hint
                 )
         p.write_text(text, encoding="utf-8")
         written.append(p)

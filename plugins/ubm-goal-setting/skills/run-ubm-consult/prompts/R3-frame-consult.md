@@ -57,8 +57,8 @@
 | id | path | when_to_read |
 |---|---|---|
 | frames-catalog | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-consult/references/consult-frames.md` | 思考フレーム GF-xxx と対応原則を選ぶとき（最初に読む） |
-| router | `$CLAUDE_PLUGIN_ROOT/knowledge/router.json` | 原則/マインドセット/事例をデュアルパスで引くとき |
-| schema | `$CLAUDE_PLUGIN_ROOT/knowledge/schema.json` | entry 構造（id/intent/background）を確認するとき |
+| router | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/knowledge/router.json` | 原則/マインドセット/事例をデュアルパスで引くとき |
+| schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/knowledge/schema.json` | entry 構造（id/intent/background）を確認するとき |
 
 ### 3.2 外部ツール / API
 - `../../scripts/consult-harness-artifact-graph.py`（C07・read-only グラフ consult・stdlib）。呼び出し例（knowledge graph 存在時・path traversal ガード適合の絶対パス。`--harness-artifact-graph` は存在時のみ付ける）:

@@ -6,7 +6,7 @@
 name: ubm-goal-setting
 description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。
 kind: plugin-composition
-version: 0.6.1
+version: 0.6.2
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
@@ -23,7 +23,7 @@ contract:
     - 「やらないこと」3項目以上 + 判断基準1文で迷いを排除すること
     - capability A (goal-setting) と capability B (knowledge-sync) は knowledge/*.json を plugin-root 共有 SSOT (schema契約) として整合し、skill 間の実行時 depends_on は張らないこと
     - knowledge L1 curated (28JSON+router) は vendor 同梱シード / L2 raw vault は UBM_VAULT_ROOT で外部解決 / L3 bookkeeping (registry=実台帳/sync-log=空) は plugin 同梱 knowledge/ への直書きで更新すること (writeback-config という別機構は不要と build で確定)
-    - 移植元 vault (~/dev/dev/ObsidianMemo/.claude/) は読み取り専用ソースであり ubm-write-path-guard hook が目標設定/ 保存と Daily.md 更新以外の vault 書込を fail-closed で阻むこと
+    - 移植元 vault (~/dev/dev/ObsidianMemo) のノート/設定領域 (01_Notes/・02_Configs/ の許可外ファイル・03_Sources/・logs/・.obsidian/ 等) は読み取り専用ソースであり ubm-write-path-guard hook が許可範囲 (prefix 7 件 = 05_Project/・02_Configs/Daily/・.claude/{skills,agents,commands,rules,prompts}/、完全一致 1 件 = 02_Configs/Templates/Daily.md。正本は hooks/ubm-write-path-guard.py の ALLOWED_PREFIXES / ALLOWED_EXACT) 以外の vault 書込を fail-closed で阻むこと。各 skill が実際に書く範囲はこれより狭く、その境界は各 skill の規則が守る。UBM_VAULT_ROOT 未設定時は検査しない
     - scripts は Python 標準ライブラリのみ (旧 .sh 3本の契約移植・逐語移植ではない)
     - 成果物本文・対話は日本語、CLI 引数・JSON キーは英語のままとすること
     - 配布は個人利用前提で distributable:false (marketplace 非掲載)
