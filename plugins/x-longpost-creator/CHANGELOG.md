@@ -3,7 +3,7 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
-## 1.3.2 — 2026-10-05
+## 1.3.3 — 2026-10-05
 
 install した環境でも、外部への変更 (Notion への改善要望の起票など) の前に通す確認手順が動くようにした。本 plugin の機能変更はない。
 
@@ -12,6 +12,16 @@ install した環境でも、外部への変更 (Notion への改善要望の起
 - `skills/run-skill-feedback/SKILL.md` の確認手順で、guard を持つ `skill-governance-adapters` plugin の場所を `<plugin root>/..` から推測せず、同梱の `scripts/extract-plugin-root.py` で解決するようにした。install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`..` では隣の plugin に届かない。見つからないときは外部への変更をせずに止まる
 - `scripts/extract-plugin-root.py` を同梱した (正本は repo の `scripts/extract-plugin-root.py`。`lint-vendored-ssot.py` が byte 一致を検査する)
 - goal-seek の正本への参照を、harness-creator plugin のパスを示す出典表記にした
+
+## 1.3.2 — 2026-10-05
+
+external-mutation guard の runtime が更新されたことに伴う投影の追従版である。本 plugin 固有の機能変更はない。
+
+guard runtime は全 plugin の `artifact-delivery.json` に `runner_sha256` として固定されている。runtime の遮断対象から `gh pr` が外れたため、その固定値を更新した 21 plugin のひとつとして版が上がった。
+
+### 変更
+
+- `artifact-delivery.json` の guard runtime 固定値 (`runner_sha256`) を更新した
 
 ## 1.3.1 — 2026-10-04
 

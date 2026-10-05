@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.3 - 2026-10-05
+## 0.6.4 - 2026-10-05
 
 PR #83 の content-review で残った low (相談 5 件、目標設定 13 件) を直した (harness-9pg)。判定の rc 体系と書込みの許可範囲 (hook) は変えていない。
 
@@ -13,6 +13,12 @@ PR #83 の content-review で残った low (相談 5 件、目標設定 13 件) 
 - **書込みの範囲**: Gotchas で、hook の許可範囲 (正本) と本 skill が実際に書く範囲を書き分けた。`（提出）` 付きファイルの archive への移動を境界と external mutation preview の範囲に書いた。
 - **scripts**: `validate-goal-output.py` を 0.2.4 に上げ、`validate-goal-linkage.py` に `# /// script` ヘッダを足した。Phase 名の対応表記、テストパス、コメントの古い引数名を直した。
 - **install 先での兄弟 plugin の解決**: 外部変更の確認手順を持つ 5 skill (`run-ubm-goal-setting`・`run-ubm-journal`・`run-ubm-knowledge-sync`・`run-ubm-youtube-ingest`・`run-skill-feedback`) で、guard を持つ `skill-governance-adapters` の場所を `<plugin root>/..` から推測せず、新たに同梱した `scripts/extract-plugin-root.py` で解決する。install 先 (`<cache>/<marketplace>/<plugin>/<version>/`) では `..` が隣の plugin に届かないため。見つからないときは外部への変更をせずに止まる。
+
+## 0.6.3 - 2026-10-05
+
+external-mutation guard の runtime が更新されたことに伴う投影の追従版である (PR #80)。本 plugin 固有の機能変更はない。
+
+- `artifact-delivery.json` の guard runtime 固定値 (`runner_sha256`) を更新した。runtime の遮断対象から `gh pr` が外れたため
 
 ## 0.6.2 - 2026-10-04
 
