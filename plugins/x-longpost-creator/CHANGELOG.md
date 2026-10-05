@@ -3,6 +3,16 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.3.2 — 2026-10-05
+
+external-mutation guard の runtime が更新されたことに伴う投影の追従版である。本 plugin 固有の機能変更はない。
+
+guard runtime は全 plugin の `artifact-delivery.json` に `runner_sha256` として固定されている。runtime の遮断対象から `gh pr` が外れたため、その固定値を更新した 21 plugin のひとつとして版が上がった。
+
+### 変更
+
+- `artifact-delivery.json` の guard runtime 固定値 (`runner_sha256`) を更新した
+
 ## 1.3.1 — 2026-10-04
 
 1.3.0 の内容を、インストール済みの Claude Code へ確実に届けるための再リリースである。本 plugin の機能変更はない。
