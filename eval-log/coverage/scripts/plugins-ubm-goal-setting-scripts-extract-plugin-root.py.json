@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/scripts/extract-plugin-root.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "正本 scripts/extract-plugin-root.py と byte 一致（sha256: 5a3474b7d67c255990481e41726bc4a173283a00b5b8619d53e3737afcf00223）。正本のレビュー結果を適用。cmp で一致を確認し、このコピーも個別に py_compile OK。正本の要点: 兄弟 plugin の root を、自 plugin、`<root>/../<name>`、installed_plugins.json、cache の順に探し、manifest の name が一致した候補だけを返す。見つからなければ exit 1 (fail-closed)、不正な名前は exit 2、読取りだけ。`# /// script` frontmatter あり。TESTS: tests/scripts-root/test_root__extract_plugin_root.py 10 件全 PASS (vendor コピーから自 plugin を起点に解決するケースを含む)。scripts/lint-vendored-ssot.py が、manifest を持つ全 plugin への同梱と byte 一致を強制する。指摘は正本と同じ (いずれも low): prerelease の version dir が semver より後ろに並ぶ。最後の fallback が、uninstall 後も cache に残った古い version を拾いうる。別の marketplace にある同名 plugin も候補になる。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

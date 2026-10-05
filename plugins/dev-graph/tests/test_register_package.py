@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import importlib.util
@@ -115,8 +116,11 @@ class RegisterPackageTest(unittest.TestCase):
             "registration_manifest": self.registration.name,
         })
         self.write(self.output, {"schema_version": "1.0.0", "graph_revision": 4, "nodes": [feature_node()]})
-        # These fixtures have no repo config, so the mode is stated on the command line.
-        self.tracker: tuple[str, ...] = ("--tracker-mode", "none")
+        # The repo config is the only source of the tracker mode; a flag can restate it but never stand in for it.
+        self.config = self.root / ".dev-graph" / "config.json"
+        self.config.parent.mkdir()
+        self.write(self.config, {"execution_tracker": {"mode": "beads"}})
+        self.tracker: tuple[str, ...] = ()
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -145,7 +149,7 @@ class RegisterPackageTest(unittest.TestCase):
         graph = json.loads(self.output.read_text())
         self.assertEqual(len(graph["nodes"]), 14)
         self.assertEqual(graph["graph_revision"], 5)
-        self.assertEqual({n["tracker_binding"] for n in graph["nodes"][1:]}, {"none"})
+        self.assertEqual({n["tracker_binding"] for n in graph["nodes"][1:]}, {"beads"})
         receipt_before = self.receipt.read_bytes()
         second = self.invoke()
         self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
@@ -366,27 +370,179 @@ class RegisterPackageInProcessCoverageTest(RegisterPackageTest):
             RP._resolved_nodes(nodes, intents, "beads", node_schema)
 
     def test_tracker_mode_comes_from_repo_config_and_a_contradicting_flag_is_rejected(self) -> None:
-        config = self.root / ".dev-graph" / "config.json"
-        self.tracker = ()
-        result = self.invoke("--dry-run")
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("tracker mode is unknown", result.stdout + result.stderr)
-        config.parent.mkdir()
+        config = self.config
+        before = self.output.read_bytes()
+        config.unlink()
+        # Without the config a flag alone must not decide the mode: cwd or a mistyped --config would split from C24.
+        for extra in ((), ("--tracker-mode", "beads")):
+            result = self.invoke("--dry-run", *extra)
+            self.assertEqual(result.returncode, 2, extra)
+            self.assertIn("repo config is not found", result.stdout)
+            self.assertEqual(json.loads(result.stdout)["applied_count"], 0)
+        for raw in ({}, {"execution_tracker": {}}, {"execution_tracker": {"mode": "none"}}):
+            self.write(config, raw)
+            result = self.invoke("--dry-run")
+            self.assertEqual(result.returncode, 2, raw)
+            self.assertIn("tracker mode is unknown", result.stdout)
         self.write(config, {"execution_tracker": {"mode": "both"}})
         result = self.invoke("--dry-run")
         self.assertEqual(result.returncode, 2)
         self.assertIn("both requires an explicit binding intent", result.stdout + result.stderr)
         self.write(config, {"execution_tracker": {"mode": "beads"}})
-        for flag in ("none", "github", "both"):
+        for flag in ("github", "both"):
             result = self.invoke("--dry-run", "--tracker-mode", flag)
             self.assertEqual(result.returncode, 2, flag)
             self.assertIn(f"--tracker-mode {flag} contradicts execution_tracker.mode beads", result.stdout + result.stderr)
+        # none is a binding intent, not a tracker mode (repo-config schema enum is beads/github/both).
+        result = self.invoke("--dry-run", "--tracker-mode", "none")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid choice", result.stderr)
         self.assertFalse(self.receipt.exists())
+        self.assertEqual(self.output.read_bytes(), before)
         for extra in ((), ("--tracker-mode", "beads")):
             result = self.invoke(*extra)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         graph = json.loads(self.output.read_text())
         self.assertEqual({n["tracker_binding"] for n in graph["nodes"][1:]}, {"beads"})
+
+    def test_out3_injected_packages_are_rejected_without_any_write(self) -> None:
+        """OUT3: exact-13 の崩れた package はどれも exit 2・applied_count=0 で、graph と receipt に触れない。"""
+        def drop(nodes: list) -> None:
+            del nodes[-1]
+
+        def extra(nodes: list) -> None:
+            nodes.append({**task_node(12), "graph_node_id": "task-P14", "phase_ref": "P14"})
+
+        def missing_phase(nodes: list) -> None:
+            nodes[5]["phase_ref"] = None
+
+        def duplicate_phase(nodes: list) -> None:
+            nodes[5]["phase_ref"] = "P05"
+
+        def swapped(nodes: list) -> None:
+            nodes[3], nodes[4] = nodes[4], nodes[3]
+
+        def mixed_parent(nodes: list) -> None:
+            nodes[3]["parent_feature"] = "feature-2"
+
+        def mixed_package(nodes: list) -> None:
+            nodes[3]["feature_package_id"] = "feature-package/other"
+
+        def cross_feature(nodes: list) -> None:
+            nodes[3]["depends_on"] = ["task-other-P01"]
+
+        cases = {
+            "12 tasks": (drop, "exactly 13 objects"), "14 tasks": (extra, "exactly 13 objects"),
+            "phase missing": (missing_phase, "phase exact-set mismatch"),
+            "phase duplicated": (duplicate_phase, "phase exact-set mismatch"),
+            "phase order swapped": (swapped, "phase exact-set mismatch"),
+            "mixed parent": (mixed_parent, "mixed parent/package"),
+            "mixed package": (mixed_package, "mixed parent/package"),
+            "cross-feature edge": (cross_feature, "cross-package dependency rejected: task-other-P01"),
+        }
+        original = self.registration.read_bytes()
+        before = self.output.read_bytes()
+        for name, (inject, message) in cases.items():
+            with self.subTest(name):
+                registration = json.loads(original)
+                inject(registration["nodes"])
+                self.write(self.registration, registration)
+                result = self.invoke()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertIn(message, report["error"])
+                self.assertEqual((report["valid"], report["applied_count"]), (False, 0))
+                self.assertEqual(self.output.read_bytes(), before)
+                self.assertFalse(self.receipt.exists())
+
+    def invoke_with_tracker_spies(self) -> tuple[subprocess.CompletedProcess[str], Path]:
+        """Run with bd/gh on PATH replaced by spies that log every call, so an external write would leave a trace."""
+        bin_dir = self.root / "spy-bin"
+        calls = self.root / "tracker-calls.log"
+        bin_dir.mkdir(exist_ok=True)
+        for name in ("bd", "gh"):
+            spy = bin_dir / name
+            spy.write_text(f'#!/bin/sh\necho "{name} $*" >> "{calls}"\n', encoding="utf-8")
+            spy.chmod(0o755)
+        env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"}
+        result = subprocess.run([
+            sys.executable, str(SCRIPT), "register", "--repo-root", str(self.root),
+            "--package", self.package.name, "--graph", self.registration.name,
+            "--output", self.output.name, "--receipt", self.receipt.name,
+        ], text=True, capture_output=True, check=False, env=env)
+        return result, calls
+
+    def test_out4_publication_authority_conflicts_fail_closed_without_any_write(self) -> None:
+        """OUT4: mode=both+auto、github+local_only、beads (と none)+Issue publication は exit 2 で、graph・receipt・bd・gh に触れない。"""
+        def publish(registration: dict, intent: str, mode: str) -> None:
+            node = registration["nodes"][0]
+            registration["binding_intents"][node["graph_node_id"]] = intent
+            node["github_publication"]["mode"] = mode
+
+        cases = {
+            "both+auto": ("both", lambda r: None, "both requires an explicit binding intent"),
+            "github+local_only": ("github", lambda r: publish(r, "github", "local_only"),
+                                  "binding github with github_publication.mode local_only is a publication authority conflict"),
+            "beads+Issue publication": ("beads", lambda r: publish(r, "beads", "issue"),
+                                        "binding beads with github_publication.mode issue is a publication authority conflict"),
+            "none+Issue publication": ("github", lambda r: publish(r, "none", "issue_and_projects"),
+                                       "binding none with github_publication.mode issue_and_projects is a publication authority conflict"),
+        }
+        original = self.registration.read_bytes()
+        before = self.output.read_bytes()
+        for name, (mode, inject, message) in cases.items():
+            with self.subTest(name):
+                self.write(self.config, {"execution_tracker": {"mode": mode}})
+                registration = json.loads(original)
+                inject(registration)
+                self.write(self.registration, registration)
+                result, calls = self.invoke_with_tracker_spies()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertIn(message, report["error"])
+                self.assertEqual((report["valid"], report["applied_count"]), (False, 0))
+                self.assertEqual(self.output.read_bytes(), before)
+                self.assertFalse(self.receipt.exists())
+                self.assertFalse(calls.exists(), calls.read_text() if calls.exists() else "")
+
+    def test_auto_intent_aligns_publication_to_the_resolved_binding(self) -> None:
+        """auto は repo config で binding が決まるので、planner が決められなかった publication をここで揃える。"""
+        registration = json.loads(self.registration.read_text())
+        registration["nodes"][0]["github_publication"].update(mode="issue_and_projects", project_aliases=["roadmap"])
+        self.write(self.registration, registration)
+        result = self.invoke()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        node = json.loads(self.output.read_text())["nodes"][1]
+        self.assertEqual(node["tracker_binding"], "beads")
+        self.assertEqual((node["github_publication"]["mode"], node["github_publication"]["project_aliases"]), ("local_only", []))
+
+    def test_out2_none_and_github_bindings_register_one_local_set_and_rerun_as_noop(self) -> None:
+        """OUT2 (register 段): none も github も 1 回目に 13 node を一組だけ登録し、2 回目は graph・receipt とも byte 不変の no-op。"""
+        original = json.loads(self.registration.read_text())
+        before = self.output.read_bytes()
+        for mode, intent, binding, publication in (("beads", "none", "none", "local_only"),
+                                                   ("github", "auto", "github", "issue")):
+            with self.subTest(binding):
+                self.output.write_bytes(before)
+                if self.receipt.exists(): self.receipt.unlink()
+                self.write(self.config, {"execution_tracker": {"mode": mode}})
+                registration = copy.deepcopy(original)
+                registration["binding_intents"] = {node_id: intent for node_id in registration["binding_intents"]}
+                self.write(self.registration, registration)
+                first = self.invoke()
+                self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+                graph = json.loads(self.output.read_text())
+                tasks = graph["nodes"][1:]
+                self.assertEqual(len(tasks), 13)
+                self.assertEqual(len({n["graph_node_id"] for n in tasks}), 13)
+                self.assertEqual({n["tracker_binding"] for n in tasks}, {binding})
+                self.assertEqual({n["github_publication"]["mode"] for n in tasks}, {publication})
+                self.assertEqual({n["beads_linkage"] is None for n in tasks}, {True})
+                graph_after, receipt_after = self.output.read_bytes(), self.receipt.read_bytes()
+                second = self.invoke()
+                self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+                self.assertTrue(json.loads(second.stdout)["idempotent"])
+                self.assertEqual((self.output.read_bytes(), self.receipt.read_bytes()), (graph_after, receipt_after))
 
     def test_schema_engine_covers_ref_condition_arrays_and_objects(self) -> None:
         schema = {

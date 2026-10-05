@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "assign-blueprint-fidelity-evaluator",
-    "skill_md_sha256": "b0c2b513de43880c984d05c4fbbff06687d4dce2f80007d5f08d8e8b0363c132"
+    "skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:16:43Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:32:19Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,16 +24,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "前回 FAIL とした L128 `recount-palette-orphans.py` と L140 `emit-verdict.py` が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-blueprint-fidelity-evaluator/scripts/...` へ是正され、bare `$CLAUDE_SKILL_DIR` は本文から消滅した。共有ゲート側 (L119/L120) と同一の解決形になり、CL-9 (IN1) と CL-10 の実行経路が両ホストで解決可能になっている。",
-      "L60 の役割 blockquote も『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ更新され、散文層と実行層の表記が一致した (本群では珍しく doc 層 drift ゼロ)。",
-      "IN1 の存在理由である『共有ゲートだけに依存せず非共有の再計数を 1 本通す (common-mode 破り)』が Key Rules 3・Gotchas 2・完了条件・CL-9 で反復固定され、OUT1 の三値排他/ペルソナ偽装/anti-overfit が Key Rules 4-6 と CL-7/CL-8 へ漏れなく対応する。",
-      "proposer≠approver が `context: fork` + Write/Edit 非保持 + 禁則節の三重で担保され、Gotchas 7 が『recount のゼロ件は被覆の証明ではない』と Goodhart 経路を名指しで塞いでいる。"
+      "差分は L87 の 1 行で、親ディレクトリ起点の兄弟参照 `../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` を『harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)』へ書き換えた。参照先は実在し、引用している節『評価系 (assign-*-evaluator) の扱い』も同ファイル L158 に実在する。",
+      "『本 plugin には同梱しない』と明記したことで、install 先でこの文書が読めなくても実行時の依存ではない (出典の表示に過ぎない) ことが読み手に伝わる。同じ plugin の run-extract-blueprint・run-blueprint-apply・run-skill-feedback も同じ書式で揃っている。",
+      "差分は引用の書き方だけで、Runtime root contract・`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点の shell 行・Key Rules 1-7・完了チェックリスト CL-1..CL-10 の意味は変わっていない。IN1 (共有ゲートの再実行と非共有の再計数) と OUT1 (三値排他・接地・粒度の独立判定) の判定根拠は無傷。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-fix-rereview",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (bare `$CLAUDE_SKILL_DIR` による同梱 script 起動 2 件) の解消を確認して PASS へ転じた。"
+  "notes": "install 先での兄弟 plugin 解決 (PR #83 follow-up) の incremental focused combined review。`git diff HEAD` の SKILL.md 差分 (L87 の引用書き換え 1 行) を読み、SKILL.md の frontmatter・Runtime root contract・Key Rules・ゴールシーク節を再読して (a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。引用先 plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md と節見出しの実在を確認し、skill 配下 (SKILL.md・prompts・references) に親ディレクトリ起点の兄弟参照が残っていないことを grep と scripts/lint-sibling-plugin-paths.py (exit 0) で確認した。この skill の scripts と references は今回変更されていない。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
 }

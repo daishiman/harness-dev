@@ -69,7 +69,7 @@
 |---|---|---|
 | purpose_driven | references/purpose-driven-requirements.md | 目的ドリブン要件定義の規約確認時 |
 | plugin_contract | references/plugin-creator-contract.md | plugin packaging / marketplace 境界の分類時 |
-| goal_seek | ../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md | ゴール推定方針の確認時 |
+| goal_seek | plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md | ゴール推定方針の確認時 |
 
 ### 3.2 外部ツール / API
 - Read / Write / Glob / Grep (CLI / MCP 不使用)

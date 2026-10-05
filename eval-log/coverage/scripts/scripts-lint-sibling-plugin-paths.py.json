@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-sibling-plugin-paths.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 83,
+    "notes": "実コードを読み、実テスト、実 repo での実行、境界の実測で検証した。plugins/*/.claude-plugin/plugin.json を持つ plugin 名を自動で集め、dotdot / dirname / pyparent / osjoin の 4 つの形で、親ディレクトリ起点で兄弟 plugin を指すパスを全文に照合する (改行をまたぐ書き方も検出)。自 plugin の名前、$schema の行、rubric_refs 直下のリスト項目、README/CHANGELOG/EVALS、tests/ と eval-log/ は除外する。名前は長い順に alternation を組むので部分一致しない。該当ありは exit 1、plugins/ が無ければ exit 2。読取りだけ。py_compile OK。TESTS: tests/test_lint_sibling_plugin_paths.py 18 件全 PASS (1.85s)。実 repo では exit 0 (該当なし)。指摘 (いずれも low): (1) `# /// script` frontmatter が無い。docstring に目的、Usage、exit code はあり、repo 直下の lint 群の既存 PASS 記録と同じ扱いにした。(2) パターン照合なので、ROOT を含まない変数を dirname に渡す形 (PLUGIN_DIR など)、`.joinpath('<name>')`、`str(root.parent) + '/<name>'` のような文字列連結は検出しない (実測)。拡張子の無いファイルも走査しない。(3) UTF-8 で読めないファイルは黙って skip する。(4) plugin の一覧は .claude-plugin の manifest だけから作るので、Codex 専用の plugin は走査されない (現時点で該当する plugin は 0)。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

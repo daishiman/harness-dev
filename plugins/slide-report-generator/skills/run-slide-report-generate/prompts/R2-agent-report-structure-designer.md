@@ -137,7 +137,7 @@ last-audited: 2026-07-05
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる条件で記述する。全項目が YES になった時点でゴール到達とみなす。
-- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が強弱・装飾の宣言に先行していることの機械証明）
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が強弱・装飾の宣言に先行していることの機械証明）
 - [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく読者 task の頻度 × 失敗コストで書かれている。map の group と `sections[]` の並び・分量配分が一致し、reportType の骨格順を無条件に採っていない
 - [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
 - [ ] 節形式（散文/表/手順/コード）の選定が map の `form_selection` に候補と不採用理由つきで記録されている

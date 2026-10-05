@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "assign-blueprint-fidelity-evaluator",
-    "skill_md_sha256": "b0c2b513de43880c984d05c4fbbff06687d4dce2f80007d5f08d8e8b0363c132"
+    "skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -13,8 +13,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "focused-combined-review",
-  "reviewed_at": "2026-08-20T07:16:43Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:32:19Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -24,16 +24,15 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "前回 FAIL とした L128 `recount-palette-orphans.py` と L140 `emit-verdict.py` が `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-blueprint-fidelity-evaluator/scripts/...` へ是正され、bare `$CLAUDE_SKILL_DIR` は本文から消滅した。共有ゲート側 (L119/L120) と同一の解決形になり、CL-9 (IN1) と CL-10 の実行経路が両ホストで解決可能になっている。",
-      "L60 の役割 blockquote も『パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ更新され、散文層と実行層の表記が一致した (本群では珍しく doc 層 drift ゼロ)。",
-      "IN1 の存在理由である『共有ゲートだけに依存せず非共有の再計数を 1 本通す (common-mode 破り)』が Key Rules 3・Gotchas 2・完了条件・CL-9 で反復固定され、OUT1 の三値排他/ペルソナ偽装/anti-overfit が Key Rules 4-6 と CL-7/CL-8 へ漏れなく対応する。",
-      "proposer≠approver が `context: fork` + Write/Edit 非保持 + 禁則節の三重で担保され、Gotchas 7 が『recount のゼロ件は被覆の証明ではない』と Goodhart 経路を名指しで塞いでいる。"
+      "記述規約: 兄弟 plugin の文書の引用が、本文引用の規約『<name> plugin の `<path>` (出典表記)』に沿っている。参照先と引用した節見出しはどちらも実在する。",
+      "依存整合: 引用は実行時の依存ではなく出典の表示であり、skill の実行経路 (mermaid-validate.py / doc-emit.py / recount-palette-orphans.py / emit-verdict.py) はすべて自 plugin 内で `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決される。runtime_root_policy: host-skill-path と Runtime root contract 節も揃っている。",
+      "proposer != approver (context: fork、Write/Edit 非保持) と draft_hash 束縛 verdict の設計は差分の影響を受けていない。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:pr-ci-fix-rereview",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental / 指摘修正後の再評価)。修正後の SKILL.md 本文を全文再読し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を再判定した。sha256/criteria は再評価時点の現行値。 前回 FAIL 事由 (bare `$CLAUDE_SKILL_DIR` による同梱 script 起動 2 件) の解消を確認して PASS へ転じた。"
+  "notes": "rubric 観点 (single responsibility、fail-closed、記述規約整合、依存関係整合、L0 rubric の high severity) で、現行 SKILL.md と今回の差分 (L87 の引用書き換え 1 行) を照合した。引用先の実在と、skill 配下に親ディレクトリ起点の兄弟参照が無いこと (scripts/lint-sibling-plugin-paths.py exit 0) を確認した。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。high/medium/low の finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import io
 import json
@@ -409,8 +410,10 @@ class BuildGraphNodeTest(unittest.TestCase):
     def test_explicit_binding_must_be_allowed_by_tracker_mode(self) -> None:
         # Same rule as register-package._resolve_binding: none always, beads/github only where the mode allows.
         entry = {**BASE, "title": "I", "artifact_kind": "issue", "classification": candidates("issue")}
+        # none は repo-config の mode ではない (beads/github/both)。binding none へ黙って倒さず、repo-config-default を解決不能にする。
         cases = [("none", "beads", "tracker_binding_not_allowed"), ("github", "beads", "tracker_binding_not_allowed"),
-                 ("beads", "github", "tracker_binding_not_allowed"), ("both", "repo-config-default", "tracker_binding_unresolved")]
+                 ("beads", "github", "tracker_binding_not_allowed"), ("both", "repo-config-default", "tracker_binding_unresolved"),
+                 ("none", "repo-config-default", "tracker_binding_unresolved")]
         for index, (mode, binding, expected) in enumerate(cases):
             self.set_tracker_mode(mode)
             code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": f"m{index}", "tracker_binding": binding}]})
@@ -421,6 +424,114 @@ class BuildGraphNodeTest(unittest.TestCase):
             code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": f"ok{index}", "tracker_binding": binding}]})
             self.assertEqual(code, 0, (mode, binding, report))
         self.assertEqual([node["tracker_binding"] for node in self.graph_state()["nodes"]], ["beads", "none", "none"])
+
+    def test_bind_github_switches_a_passed_issue_and_keeps_the_body(self) -> None:
+        self.set_tracker_mode("github")
+        issue = {**BASE, "title": "I", "artifact_kind": "issue", "slug": "pub", "classification": candidates("issue"),
+                 "sections": filled("issue")}
+        doc = {**BASE, "title": "D", "artifact_kind": "document", "slug": "pub-doc", "classification": candidates("document")}
+        self.assertEqual(self.run_cli("add", {"artifacts": [issue, doc]})[0], 0)
+        bind = {"bindings": [{"graph_node_id": "issue-pub"}]}
+        code, report = self.run_cli("bind-github", bind)
+        self.assertEqual((code, report["code"], report["write_count"]), (1, "github_binding_requires_confirmed_node", 0))
+        self.mark_passed("issue-pub")
+        code, report = self.run_cli("bind-github", {"bindings": [{"graph_node_id": "doc-pub-doc"}]})
+        self.assertEqual((code, report["code"]), (1, "bind_github_requires_issue_or_task"))
+        code, report = self.run_cli("bind-github", {**bind, "extra": True})
+        self.assertEqual((code, report["code"]), (1, "invalid_input"))
+        path = self.root / "issues" / "pub.md"
+        body = BGN._split_frontmatter(path.read_text(encoding="utf-8"), "issues/pub.md")[1]
+        code, report = self.run_cli("bind-github", bind)
+        self.assertEqual(code, 0, report)
+        self.assertEqual(report["artifacts"][0]["tracker_binding"], {"before": "none", "after": "github"})
+        node = next(item for item in self.graph_state()["nodes"] if item["graph_node_id"] == "issue-pub")
+        self.assertEqual((node["tracker_binding"], node["github_publication"]["mode"], node["beads_linkage"], node["evaluation_status"]),
+                         ("github", "issue", None, "pass"))
+        self.assertEqual(BGN.VGS.frontmatter_of(path)["tracker_binding"], "github")
+        self.assertEqual(BGN._split_frontmatter(path.read_text(encoding="utf-8"), "issues/pub.md")[1], body)
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        code, report = self.run_cli("bind-github", bind)
+        self.assertEqual((code, report["status"], report["write_count"]), (0, "noop", 0))
+        self.set_tracker_mode("beads")
+        code, report = self.run_cli("bind-github", bind)
+        self.assertEqual((code, report["code"]), (1, "tracker_binding_not_allowed"))
+
+    def test_github_mirrored_fields_import_into_an_active_published_node_without_going_stale(self) -> None:
+        # C03 imports a remote Issue title / Project field through update; the schema keeps a published or active node
+        # at pass, so only a body change (which needs re-evaluation) may be refused.
+        self.set_tracker_mode("github")
+        issue = {**BASE, "title": "I", "artifact_kind": "issue", "slug": "pub", "classification": candidates("issue"),
+                 "sections": filled("issue")}
+        self.assertEqual(self.run_cli("add", {"artifacts": [issue]})[0], 0)
+        self.mark_passed("issue-pub")
+        self.assertEqual(self.run_cli("bind-github", {"bindings": [{"graph_node_id": "issue-pub"}]})[0], 0)
+        update = {"graph_node_id": "issue-pub", "node_patch": {"status": "active"}}
+        self.assertEqual(self.run_cli("update", {"updates": [update]})[0], 0)
+        imported = {"title": "I (remote revision 2)", "priority": "high", "target_date": "2026-11-30"}
+        code, report = self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": imported}]})
+        self.assertEqual(code, 0, report)
+        node = next(item for item in self.graph_state()["nodes"] if item["graph_node_id"] == "issue-pub")
+        self.assertEqual((node["status"], node["evaluation_status"], node["title"]), ("active", "pass", imported["title"]))
+        self.assertEqual(BGN.VGS.frontmatter_of(self.root / "issues" / "pub.md")["title"], imported["title"])
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        before = (self.root / "issues" / "pub.md").read_bytes()
+        code, report = self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "set_sections": {"背景と問題": "remote body"}}]})
+        self.assertEqual((code, report["code"], report["write_count"]), (1, "pre_write_validation_failed", 0))
+        self.assertIn("active_not_ready", {finding["code"] for finding in report["findings"]})
+        self.assertEqual((self.root / "issues" / "pub.md").read_bytes(), before)
+
+    def test_system_spec_lineage_must_resolve_before_add(self) -> None:
+        source = self.root / "system-spec" / "auth.md"
+        source.write_text("# 認証仕様\n", encoding="utf-8")
+        lineage = {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/auth.md",
+                   "source_version": "1.0.0", "source_digest": hashlib.sha256(source.read_bytes()).hexdigest(),
+                   "imported_at": "2026-10-01T00:00:00Z"}
+        entry = {**BASE, "title": "S", "artifact_kind": "specification", "classification": candidates("specification")}
+        rejected = [({**lineage, "source_digest": "0" * 64}, "lineage_digest_mismatch"),
+                    ({**lineage, "source_path": "system-spec/gone.md"}, "lineage_source_missing")]
+        for index, (bad, expected) in enumerate(rejected):
+            code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": f"bad-{index}", "source_lineage": bad}]})
+            self.assertEqual((code, report["code"], report["write_count"]), (1, "source_lineage_unverified", 0), expected)
+            self.assertEqual([item["code"] for item in report["findings"]], [expected])
+        self.assertEqual(self.graph_state()["nodes"], [])
+        code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": "auth", "source_lineage": lineage}]})
+        self.assertEqual(code, 0, report)
+        self.assertEqual(self.validate().returncode, 0)
+
+    def test_system_spec_import_confirms_only_with_pass_evidence(self) -> None:
+        source = self.root / "system-spec" / "index.md"
+        source.write_text("# 仕様書\n", encoding="utf-8")
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        lineage = {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md",
+                   "source_version": "0.1.0", "source_digest": digest, "imported_at": "2026-10-01T00:00:00Z"}
+        (self.root / "eval-log").mkdir()
+        (self.root / "eval-log" / "pass.json").write_text(json.dumps({"verdict": "PASS", "spec_dir": "system-spec"}), encoding="utf-8")
+        (self.root / "eval-log" / "fail.json").write_text(json.dumps({"verdict": "FAIL", "spec_dir": "system-spec"}), encoding="utf-8")
+        (self.root / "eval-log" / "other.json").write_text(json.dumps({"verdict": "PASS", "spec_dir": "docs"}), encoding="utf-8")
+        evidence = {"evaluator": BGN.SPEC_EVALUATOR, "evidence_ref": "eval-log/pass.json", "evaluated_digest": digest}
+        entry = {**BASE, "title": "S", "artifact_kind": "specification", "classification": candidates("specification"),
+                 "sections": filled("specification"), "source_lineage": lineage}
+        rejected = [
+            ({**evidence, "evidence_ref": "eval-log/fail.json"}, entry, "confirmation_evidence_not_pass"),
+            ({**evidence, "evidence_ref": "eval-log/other.json"}, entry, "invalid_confirmation_evidence"),
+            ({**evidence, "evaluated_digest": "0" * 64}, entry, "invalid_confirmation_evidence"),
+            ({**evidence, "evaluator": "someone-else"}, entry, "invalid_confirmation_evidence"),
+            (evidence, {**entry, "sections": {}}, "confirmed_import_requires_complete_readiness"),
+            (evidence, {k: v for k, v in entry.items() if k != "source_lineage"}, "confirmation_requires_spec_import"),
+        ]
+        for index, (bad, base, expected) in enumerate(rejected):
+            code, report = self.run_cli("add", {"artifacts": [{**base, "slug": f"bad-{index}", "confirmation_evidence": bad}]})
+            self.assertEqual((code, report["code"], report["write_count"]), (1, expected, 0), report)
+        self.assertEqual(self.graph_state()["nodes"], [])
+        code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": "system", "confirmation_evidence": evidence}]})
+        self.assertEqual(code, 0, report)
+        node = self.graph_state()["nodes"][0]
+        self.assertEqual((node["status"], node["confirmation_status"], node["evaluation_status"]), ("done", "confirmed", "pass"))
+        self.assertEqual(node["confirmation_evidence"], evidence)
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     # ------------------------------------------------------------ readiness fill, CAS, C14 architecture, frontmatter bytes
 
@@ -475,6 +586,65 @@ class BuildGraphNodeTest(unittest.TestCase):
         self.assertEqual(code, 0, report)
         self.assertEqual(report["artifacts"][0]["readiness_fill"],
                          [{"item": name, "via": "set_sections", "key": name} for name in ("影響と優先度", "受入条件", "検証証跡")])
+
+    def test_autolink_fills_a_section_but_label_or_na_placeholders_do_not(self) -> None:
+        names = CONTRACT["artifacts"]["issue"]["required_sections"]
+        entry = {**BASE, "title": "I", "artifact_kind": "issue", "classification": candidates("issue")}
+        sections = {**filled("issue"), names[0]: "<https://example.com/spec/42>", names[1]: "N/A: <reason>", names[2]: "- メモ: <TBD>"}
+        code, report = self.run_cli("add", {"artifacts": [{**entry, "slug": "links", "sections": sections}]})
+        self.assertEqual(code, 0, report)
+        self.assertEqual([item["item"] for item in report["artifacts"][0]["readiness_fill"]], [names[1], names[2]])
+        # 理由や中身を 1 行書けば、同じ形の行でも充足する。
+        code, report = self.run_cli("update", {"updates": [{"graph_node_id": "issue-links", "set_sections": {
+            names[1]: "N/A: 社内ツールのため外部影響なし", names[2]: "- メモ: Safari でだけ再現する"}}]})
+        self.assertEqual((code, report["artifacts"][0]["readiness_fill"]), (0, []), report)
+
+    def test_all_architecture_subtypes_compose_in_canonical_order_and_spec_without_api_has_no_api_block(self) -> None:
+        arch = {**BASE, "title": "A", "artifact_kind": "architecture", "slug": "all",
+                "artifact_subtypes": list(reversed(BGN.ARCH_SUBTYPES)), "classification": candidates("architecture")}
+        spec = {**BASE, "title": "S", "artifact_kind": "specification", "slug": "plain", "artifact_subtypes": [],
+                "classification": candidates("specification")}
+        code, report = self.run_cli("add", {"artifacts": [arch, spec]})
+        self.assertEqual(code, 0, report)
+        nodes = {node["graph_node_id"]: node for node in self.graph_state()["nodes"]}
+        self.assertEqual((nodes["arch-all"]["artifact_subtypes"], nodes["spec-plain"]["artifact_subtypes"]), (BGN.ARCH_SUBTYPES, []))
+        blocks = [f"{subtype.capitalize()} architecture" for subtype in BGN.ARCH_SUBTYPES]
+        self.assertEqual([title for level, title in self.headings("architecture/all.md") if level == 3 and title in blocks], blocks)
+        spec_titles = [title for _, title in self.headings("specs/plain.md")]
+        self.assertFalse([title for title in spec_titles if title.startswith("API: ")], spec_titles)
+        self.assertNotIn("api-contract", nodes["spec-plain"]["implementation_readiness"]["missing_sections"])
+        self.assertEqual(self.validate().returncode, 0)
+
+    def test_update_of_a_node_missing_required_keys_names_the_keys(self) -> None:
+        self.add_five()
+        graph = self.graph_state()
+        node = next(item for item in graph["nodes"] if item["graph_node_id"] == "doc-runbook")
+        del node["tags"], node["resource_scope"]
+        self.graph.write_text(json.dumps(graph), encoding="utf-8")
+        before = (self.graph.read_bytes(), (self.root / "docs" / "runbook.md").read_bytes())
+        code, report = self.run_cli("update", {"updates": [{"graph_node_id": "doc-runbook", "set_sections": {"要約": "更新。"}}]})
+        self.assertEqual((code, report["status"], report["code"], report["write_count"]), (1, "rejected", "node_missing_required_keys", 0))
+        self.assertEqual({(item["node"], item["code"], item["detail"]) for item in report["findings"]},
+                         {("doc-runbook", "missing_required_key", "tags"), ("doc-runbook", "missing_required_key", "resource_scope")})
+        self.assertIn("tags", report["error"])
+        self.assertEqual((self.graph.read_bytes(), (self.root / "docs" / "runbook.md").read_bytes()), before)
+
+    def test_validator_reports_graph_validation_apart_from_node_readiness(self) -> None:
+        self.add_five()
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["graph_validation"], {"status": "pass", "violation_count": 0})
+        # 互換キーは graph 全体の結果のまま残す。node 単位の未完了は node_readiness に出る。
+        self.assertEqual((report["valid"], report["implementation_readiness"]), (True, "complete"))
+        readiness = report["node_readiness"]
+        self.assertEqual(sum(readiness[key] for key in ("complete", "incomplete", "not_applicable", "unknown")), 5)
+        incomplete = {item["graph_node_id"]: item for item in readiness["incomplete_nodes"]}
+        self.assertIn("task-fix-timeout", incomplete)
+        self.assertNotIn("issue-login-timeout", incomplete)
+        self.assertEqual(incomplete["task-fix-timeout"]["status"], "incomplete")
+        self.assertTrue(incomplete["task-fix-timeout"]["missing_sections"])
+        self.assertEqual(readiness["incomplete"], len(incomplete))
 
     def test_feature_projection_is_filled_and_restored_from_macro(self) -> None:
         self.add_five()
@@ -537,6 +707,16 @@ class BuildGraphNodeTest(unittest.TestCase):
         self.assertEqual([item["classification"]["decision"] for item in report["artifacts"]], ["c14_macro_contract"] * 2)
         result = self.validate()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        # 既存 feature へ後から architecture を足す 2 段手順: candidates で分類して add し、macro_patch で参照を足す。
+        late = {**BASE, "title": "Late", "artifact_kind": "architecture", "slug": "late", "artifact_subtypes": ["data"],
+                "classification": candidates("architecture")}
+        self.assertEqual(self.run_cli("add", {"artifacts": [late]})[0], 0)
+        code, report = self.run_cli("update", {"updates": [{"graph_node_id": "feature-pay",
+                                                            "macro_patch": {"architecture_refs": ["arch-core", "arch-late"]}}]})
+        self.assertEqual(code, 0, report)
+        node = next(item for item in self.graph_state()["nodes"] if item["graph_node_id"] == "feature-pay")
+        self.assertEqual(node["architecture_refs"], ["arch-core", "arch-late"])
+        self.assertEqual(self.validate().returncode, 0)
 
     def test_frontmatter_objects_serialize_independent_of_key_order(self) -> None:
         self.add_five()

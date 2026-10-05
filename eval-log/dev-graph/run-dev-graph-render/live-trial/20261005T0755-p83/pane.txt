@@ -1,0 +1,333 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261005T0755-p83/task.md
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render" && ls -la && git log --oneline | head)
+  ⎿  total 8
+     drwxr-xr-x@  4 dm  staff   128 Oct  5 07:50 .
+     drwxr-xr-x@ 59 dm  staff  1888 Oct  5 07:50 ..
+     … +3 lines (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-init)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph" && ls scripts && python3 scripts/build-init-scaffold.py --help 2>&1 | head -30)
+  ⎿  __pycache__
+     _common.py
+     bd-bridge.py
+     … +25 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render
+      python3 scripts/resolve-…)
+  ⎿  usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]
+                                    [--mode {read,write}]
+     … +75 lines (ctrl+o to expand)
+  ⎿  Created ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T0755-p83/poll-state.json (+1 -0)
+      1 +{"elapsed": 15, "stall": 0, "settle": 0, "prev": "tui|lt-p83-decompose:1.4k tokens", "gate_ticks": 0, "warned80": 0}
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render
+      python3 scripts/build-in…)
+  ⎿  {'content_roots': {'architecture': 'architecture', 'documents': 'docs', 'features': 'features', 'issues': 'issues', 'specifications': 'specs', 'tasks': 'tasks'}, 'dry_run': False, 'hook_source': 'plugin', 'loca
+     l_state': {'cache': '.dev-graph/cache', 'config': '.dev-graph/config.json', 'graph': '.dev-graph/state/graph.json', 'locks': '.dev-graph/locks', 'templates': '.dev-graph/templates'}, 'migration_preview': [], 'o
+     wner': 'C01/run-dev-graph-init', 'planned_changes': 33, 'preserved': [], 'receipt_path': '.dev-graph/state/receipts/init-20261004T225135726556Z.json', 'recorded_at': '2026-10-04T22:51:35.726556Z', 'repository_i
+     … +3 lines (ctrl+o to expand)
+
+⏺ 初期化は完了しました（33 件作成、2 回目は noop で変更 0、schema 検証も PASS）。tooling の選択は accept-as-is とし、次に C02 経由で graph を登録します。
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "prefix\|PREFIX" scripts/build-graph-node.py | head -30; wc -l scripts/register-package.py scripts/…)
+  ⎿  36:KIND_PREFIX = {"issue": "issue", "task": "task", "specification": "spec", "architecture": "arch", "document": "doc",
+     40:ROUTABLE_KINDS = set(KIND_PREFIX) - {"feature"}
+     142:    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+     … +54 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-status/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 15, "stall": 0, "settle": 0, "prev": "tui|lt-p83-status:172 tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 30, "stall": 0, "settle": 0, "prev": "tui|lt-p83-status:929 tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 30,45p scripts/build-graph-node.py; cat skills/run-dev-graph-node/prompts/*.md | head -150)
+  ⎿  from _common import ContractError, atomic_json, contained, dump, load_json, utc_now
+
+     HERE = Path(__file__).resolve().parent
+     … +162 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 1,200p scripts/register-package.py)
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: register-package
+     … +197 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 200,585p scripts/register-package.py)
+  ⎿              "entrypoint_source": "references/package-contract.json",
+                 "schema_versions": schemas, "required_entrypoints": required}
+     … +383 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins; python3 -c "
+      import json;s=json.load(open('dev-graph/schemas/graph-node.schema.json'));p=s['properties']…)
+  ⎿  ['graph_node_id', 'artifact_kind', 'artifact_subtypes', 'title', 'project_id', 'domain', 'status', 'owners', 'tags', 'priority', 'start_date', 'target_date', 'iteration', 'created_at', 'updated_at', 'depends_on
+     ', 'related_nodes', 'resource_scope', 'parent_feature', 'feature_package_id', 'phase_ref', 'file_path', 'template_id', 'template_version', 'confirmation_status', 'evaluation_status', 'confirmation_evidence', 's
+     ource_lineage', 'classification_confidence', 'classification_reason', 'classification_candidates', 'github_publication', 'issue_linkage', 'tracker_binding', 'beads_linkage', 'github_project_linkages', 'pull_req
+     … +30 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 45, "stall": 0, "settle": 0, "prev": "tui|lt-p83-requirements:4.4k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 60, "stall": 0, "settle": 0, "prev": "tui|lt-p83-requirements:5.8k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ 初期化は完了しましたが、C02 writerのfeature ID形式ではLT-FEATURE-001をtitleとして保持する必要があり、exact-13 packageにはsystem-dev-plannerのpromotion成果物が必要だとわかりました。過去のtrialでの準備方法を確認します。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph; ls run-dev-graph-render/live-trial/; ls live-trial-fixtures/ | head -80)
+  ⎿  20260713T071500-r1
+     20260713T081000-r2
+     20260713T090000-r3
+     … +73 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph; ls gm4b-render gm4b-render/.dev-graph gm4b-render/.dev-graph/state gm4b-render/.dev-graph/state/receipts 2…)
+  ⎿  ls: gm4b-render: No such file or directory
+     ls: gm4b-render/.dev-graph: No such file or directory
+     ls: gm4b-render/.dev-graph/state: No such file or directory
+     … +6 lines (ctrl+o to expand)
+  ⎿  Updated run-dev-graph-decompose/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 60, "stall": 0, "settle": 0, "prev": "tui|lt-p83-decompose:4.4k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 75, "stall": 0, "settle": 0, "prev": "tui|lt-p83-decompose:5.6k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures; F=gm4b-render; ls -a $F; find $F -type f -not -path "*/templates/*" -not -path "*/.git…)
+  ⎿  .
+     ..
+     .dev-graph
+     … +60 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.dev-graph/cache/system-dev-planner-handoff; cat handoff-provenance.json at…)
+  ⎿  {
+       "bundle": "system-dev-planner exact-13 handoff (dev-graph 側の import 入力)",
+       "consumed_by": "dev-graph C02 register-package.py",
+     … +194 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts; grep -n "done\|completion\|/13\|progress" render-graph-html.py | head -40; grep -n "node_patch\|PAT…)
+  ⎿  61:        node["progress"] = (
+     62:            {"done": sum(child["status"] == "done" for child in children), "total": len(children)}
+     65:    progress_by_feature = {
+     … +34 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts; sed -n 60,82p build-graph-node.py; sed -n 680,780p build-graph-node.py; sed -n 820,860p build-graph…)
+  ⎿  MACRO_TEXT_KEYS = ("purpose", "goal")
+     MACRO_LIST_KEYS = ("scope_in", "scope_out", "acceptance", "architecture_refs")
+     # feature body sections that are projections of frontmatter: callers change them through macro_patch/node_patch only.
+     … +162 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render; python3 -c "
+      import json;g=json.load(open('.dev-graph/state/graph.json'))…)
+  ⎿  ARCH-LT-001 active not_applicable None
+     LT-FEATURE-001 active not_applicable None
+     LT-FEATURE-001-P01 done done manual
+     … +77 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rn "\"done\"" scripts/*.py | grep -v render | head -20; grep -rln "completion" skills/*/SKILL.md)
+  ⎿  scripts/validate-graph-schema.py:270:        if node.get("status") not in {"draft", "active", "blocked", "done", "closed", "tombstoned"}:
+     scripts/validate-graph-schema.py:325:        if members or feature.get("status") == "done":
+     scripts/validate-graph-schema.py:336:        if feature.get("status") == "done":
+     … +17 lines (ctrl+o to expand)
+
+⏺ 完了状態への更新経路に問題があるとわかりました。C02 writerはpackage
+  memberのupdateを拒否し、register-packageはactiveなnodeしか受け付けないため、以前使えたR5-completion経路も今はありません。この結論を確かめるため、feature/packageを正規経路で登録し、完了更新をdry-runで試してみます。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "def _macro\b" -A30 scripts/build-graph-node.py | head -45; grep -n "def _macro_edges" -A15 scripts…)
+  ⎿  525:def _macro(raw: Any, label: str, *, partial: bool) -> dict[str, Any]:
+     526-    """C14 macro contract: purpose/goal text and non-empty unique single-line lists (graph-node schema allOf[3])."""
+     527-    keys = set(MACRO_TEXT_KEYS) | set(MACRO_LIST_KEYS)
+     … +156 lines (ctrl+o to expand)
+
+⏺ Feature と architecture を C02 writer で登録します（入力 JSON は repo 内の cache に整形します）。
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; mkdir -p $R/.dev-graph/cache/node-input; cat > $R/.dev-graph/cache/node-inpu…)
+  ⎿  {
+       "applied_count": 0,
+       "artifacts": [
+     … +157 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-status/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 120, "stall": 30, "settle": 0, "prev": "tui|lt-p83-status:3.1k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 135, "stall": 45, "settle": 0, "prev": "tui|lt-p83-status:3.1k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Preview は通りました（finding 0）。expected_graph_revision=0 を付けて適用します。
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; cd $R/.dev-graph/cache/node-input; python3 -c "
+      import json;d=json.load(open…)
+  ⎿  applied 2 1 .dev-graph/state/receipts/node-r000001-add.json None
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 135, "stall": 0, "settle": 0, "prev": "tui|lt-p83-decompose:1.7k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 150, "stall": 0, "settle": 1, "prev": "tui|lt-p83-decompose:", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(G=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.dev-graph/cache/system-dev-planner-handoff; ls -R $G | head; python3 -c "
+      i…)
+  ⎿  atomic-promotion-receipt.json
+     dev-graph-registration.json
+     feature-execution-package.json
+     … +37 lines (ctrl+o to expand)
+
+⏺ Bash(G=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/gm4b-render/.dev-graph/cache/system-dev-planner-handoff
+      R=/Users/dm/dev/dev/個人開発/harness…)
+  ⎿  490646509c4d96b08c5fb8547250689acf513b803c16ab4e7baba90dd436694c
+  ⎿  Created ~/dev/dev/個人開発/harness/eval-log/coverage/scripts/plugins-harness-creator-scripts-compose-rubrics.py.json (+18 -0)
+       1 +{
+       2 +  "artifact": "plugins/harness-creator/scripts/compose-rubrics.py",
+       3 +  "type": "scripts",
+       4 +  "mechanical": true,
+       5 +  "llm_eval": {
+       6 +    "verdict": "PASS",
+       7 +    "score": 85,
+       8 +    "notes": "実コードを読み、実テストと実測で検証した。plugins/skill-governance-automation/scripts/compose-rubrics.py と byte 一致する (sha256: 2ca6fb18667d93eabc881b1a78f84acaac3a22c35c43674d6b2d16188f
+         +335983)。scripts/lint-vendored-ssot.py が一致を強制している同梱コピーで、assign-skill-design-evaluator の render-findings-score.py が subprocess で起動する。L0/L1/L2 の rubric を layer 順と引数順に並べ、
+         +rules が list であること、id が必須で重複しないこと、extends が循環しないことを検査してから、deep-merge / strict / override / layered の戦略と most-specific-wins / error / warn-and-merge の衝突方針で合成
+         +する。エラーは exit 1。書き込みもネットワークも無い。`# /// script` frontmatter あり。py_compile OK。TESTS: tests/scripts-plugins/test_skill_governance_automation__compose_rubrics.py 48 件全 PASS (2.10s
+         +。byte 一致の正本が対象)。指摘 (いずれも low): (1) _composition_hash は解決後の絶対パスを入力に含むので、同じ内容でも置き場所が違えばハッシュが変わる (別のディレクトリへのコピーで実測)。今の消費者である
+         +render-findings-score.py は値を記録するだけで比較しないので、実害は無い。(2) `ref-*` の名前は cwd 起点 (plugins/harness-creator/skills、.claude/skills) で解決するので、install 先では見つからず exit 1 に
+         +なる (fail-closed。呼び出し側は絶対パスを渡すので通らない経路)。(3) root が object でない JSON (文字列など) は TypeError の traceback で終わる。extends が文字列だと 1 文字ずつ照合され、黙って無視される。
+         +(4) frontmatter に requires-python が無い。"
+       9 +  },
+      10 +  "reviewed_by": "coverage-reviewer-pr83-20261005",
+      11 +  "checked": [
+      12 +    "soundness",
+      13 +    "responsibility",
+      14 +    "error-handling",
+      15 +    "side-effect-safety",
+      16 +    "frontmatter"
+      17 +  ]
+      18 +}
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 150, "stall": 0, "settle": 0, "prev": "tui|lt-p83-render:7.3k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 165, "stall": 0, "settle": 0, "prev": "tui|lt-p83-render:8.2k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; H=.dev-graph/cache/system-dev-planner-handoff
+      cd /Users/dm/dev/dev/個人開発/harn…)
+  ⎿  {
+       "applied_count": 13,
+       "dry_run": true,
+     … +44 lines (ctrl+o to expand)
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; H=.dev-graph/cache/system-dev-planner-handoff
+      cd /Users/dm/dev/dev/個人開発/harn…)
+  ⎿  registered 13 2 None
+     usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 scripts/validat…)
+  ⎿  {
+       "graph_validation": {
+         "status": "fail",
+     … +37 lines (ctrl+o to expand)
+
+⏺ パッケージの登録は完了しました（receipt 13/13、revision 2）が、register-package は graph と receipt のみを書き込み13件のtask
+  Markdown本文を作成しないため、C11はfailとなっています。次に、taskをdone状態にする更新をdry-runで確認します。
+
+⏺ Bash(R=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83-render; cat > $R/.dev-graph/cache/node-input/complete-p01.json <<'EOF'
+      {"updates":[{…)
+  ⎿  rejected package_member_requires_register_package updates[0]: exact-13 package members are owned by system-dev-planner 0 0
+
+⏺ Preparation can't be finished through the allowed paths, so I'm stopping before render and recording FAIL.
+
+⏺ Bash(echo '{"status":"FAIL","scenario":"render-feature-progress-positive"}' > "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/2026…)
+  ⎿  {
+       "status": "FAIL",
+       "scenario": "render-feature-progress-positive"
+     }
+  ⎿  Created ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-render/live-trial/20261005T0755-p83/out/status.json (+1 -0)
+      1 +{"status":"FAIL","scenario":"render-feature-progress-positive"}
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --help 2>&1 | head -20)
+  ⎿  usage: build-external-intelligence-runtime.py [-h]
+                                                   (--request REQUEST | --request-json REQUEST_JSON)
+     … +7 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{"operation":"finish…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "request keys mismatch: missing=['context_id', 'contract_id', 'runtime', 'schema_version', 'state'], extra=[]",
+     … +3 lines (ctrl+o to expand)
+  ⎿  Updated eval-log/dev-graph/run-dev-graph-init/content-review/rubric-verdict.json (+18 -16)
+       5      "skill_md_sha256": "5fd9f5f43cfccb32a8f6eb406b40b24b35f6086fdb904d146ff32d82faea9a1b"
+       6    },
+       7    "review_kind": "rubric",
+       8 -  "verdict": "FAIL",
+       9 -  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+      10 -  "reviewed_at": "2026-10-04T22:38:05Z",
+      11 -  "iterations": 1,
+       8 +  "verdict": "PASS",
+       9 +  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context, iteration 2)",
+      10 +  "reviewed_at": "2026-10-04T22:53:58Z",
+      11 +  "iterations": 2,
+      12    "human_review_required": false,
+      13    "feedback_loop": {
+      14      "loop_scope": "both",
+     ...
+      21        "OUT5"
+      22      ],
+      23      "positive_feedback": [
+      24 -      "frontmatter の *_refs はすべて実在する。script_refs 3 件 (今回追加した build-init-scaffold.py を含む)、schema_refs 2 件、reference_refs 4 件 (prompt-common-layers.md を含む)、responsibility_refs 5
+         - 件で、responsibilities の id と responsibility_refs は 1 対 1 に対応している。",
+      25 -      "SKILL.md の出力・Execution contract・完了チェックリストの 3 か所で、graph の path が `.dev-graph/state/graph.json` にそろい、C24 の既定とも一致している。",
+      26 -      "新規 script の status と exit の説明が SKILL.md と R3 の Layer 3 で同じ内容になっており、実装とも一致した。",
+      27 -      "prompts の Layer 4-7 を共通層へ集約しても、7 層構造の lint は dev-graph の 41 本すべてで OK だった。"
+      24 +      "前回の medium (SKILL.md と prompts/R4-template.md の矛盾) は解消した。R4 の使用資産・出力契約・達成ゴール・Layer 6 が build-init-scaffold.py への委譲にそろい、R4 が template を Write する経路と自
+         +前の receipt を作る経路が無くなった。",
+      25 +      "R3 と R5 の Layer 6 から「最終 receipt へ合流する」が消え、init receipt の書き手が script ただ 1 つであることが SKILL.md:134-136 と R3・R4・R5 の 4 か所でそろった。R4 が引く出力キー (created・pres
+         +erved・migration_preview) と R5 が引く hook_source は script の実際の出力と一致する。",
+      26 +      "frontmatter の *_refs はすべて実在し、responsibilities の id と responsibility_refs は 1 対 1 に対応している。SKILL.md は前回から変わっていない。",
+      27 +      "lint-prompt-contract-drift.py --strict-tools は fatal 0 / warn 0、lint-prompt-placement.py と lint-sibling-plugin-paths.py は OK で、dev-graph の pytest で script の振る舞いの失敗は 0 件だった。"
+      28      ],
+      29      "negative_feedback": [
+      30 -      "[medium / 矛盾] SKILL.md:134 は手順 3 (template の copy) を build-init-scaffold.py に委譲し、skill が scaffold を Write/Edit で直接書くことを禁じた。しかし prompts/R4-template.md は「使用資産: Rea
+         -d/Writeとtemplate contract」(32 行目) のままで、自前の scaffold receipt (20 行目) と「R3 receiptへtemplate counts/digestsを合流する」(59 行目) を求めている。R3 の receipt は script が create-only で書く
+         -ので合流はできず、R4 が template を Write すれば `--dry-run` の write 0 にも反しうる。SKILL.md と責務 prompt の間の矛盾で、今回の差分が持ち込んだ。",
+      31 -      "[low / smell] build-init-scaffold.py の rollback は、_create_file が親として作る `.dev-graph/state/` と `.dev-graph/state/receipts/` を記録しないので、書込み途中の失敗で空の directory が残る。file
+         - は残らず再実行も妨げない。"
+      30 +      "[low / smell] 前回から残る。build-init-scaffold.py の rollback は _create_file が親として作る `.dev-graph/state/` と `.dev-graph/state/receipts/` を記録しないので、書込み途中の失敗で空の directory
+         + が残る。file は残らず再実行も妨げない。",
+      31 +      "[low / 不整合] R4 の出力契約は同 digest の保持を `preserved` と対応させるが、script の `preserved` には利用者編集済みの template も入る。同 digest は「`preserved` のうち `migration_preview` に無い
+         +もの」である。",
+      32 +      "[low / 漏れ] R4 の Layer 6 は R3 の script 結果を検証の入力にするが、Layer 2 の入力契約にその結果が無い。",
+      33 +      "[low / 不整合] R2 の Layer 6 は R3/R4/R5 が同一 plan digest を消費すると書くが、build-init-scaffold.py は plan を入力に取らない。R2 の plan と script の `--dry-run` preview を突き合わせる手順が書
+         +かれていない。"
+      34      ],
+      33 -    "iteration": 1,
+      35 +    "iteration": 2,
+      36      "iteration_limit": 3,
+      37      "hook_trigger": "manual:install-portability",
+      36 -    "next_action": "improve"
+      38 +    "next_action": "none"
+     … 13 more lines (ctrl+o to expand)
+  ⎿  Updated eval-log/dev-graph/run-dev-graph-render/live-trial/20261005T0755-p83/poll-state.json (+1 -1)
+      1 -{"elapsed": 195, "stall": 0, "settle": 0, "prev": "tui|lt-p83-render:10.6k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 210, "stall": 0, "settle": 0, "prev": "tui|lt-p83-render:11.6k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ DONE: FAIL
+
+  I stopped before running render. With only the run-dev-graph-node writer allowed, the preparation can't be finished:
+  1. Tasks can't be marked done. Updating a P01..P13 task is rejected (package_member_requires_register_package; tried as a dry run). register-package.py also only accepts tasks with status=active. So X/13 would stay
+     at 0.
+  2. The graph fails the schema check. register-package.py writes the graph and receipt but not the 13 task Markdown files. validate-graph-schema.py then fails with 13 violations because
+     tasks/feature-lt-feature-001/phase-*.md don't exist, and the writer has no way to create them for package tasks.
+  3. The feature can't be named LT-FEATURE-001. The writer always assigns IDs as feature-<lowercase slug>, so the feature is feature-lt-feature-001 with LT-FEATURE-001 as its title.
+
+  These parts did work through the allowed paths:
+  - Setup: setup created 33 items, and a second run changed nothing.
+  - Feature and architecture: both were added (graph revision 1).
+  - Task package: all 13 tasks were registered, and the receipt says 13 of 13 with source_digest sha256:4906…694c (revision 2).
+
+  To make the package input, I copied the previous trial's (gm4b) system-dev-planner handoff bundle and changed it to point at this feature. That bundle was a stand-in fixture there too, not output from a real
+  system-dev-planner run.
+
+  The fixture now holds a half-prepared graph at revision 2, and the graph check still fails on it. The previous trial marked tasks done through a completion step the writer no longer has, so this scenario can't pass
+  until that path comes back or the task is changed.
+
+✻ Brewed for 4m 9s · done 7:54 AM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)
+

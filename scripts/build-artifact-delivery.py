@@ -24,12 +24,19 @@ SCHEMA_ID = "https://harness.local/schemas/artifact-delivery.schema.json"
 EXTERNAL_MUTATION_FLOW = "preview-confirm-authorize-execute-v1"
 EXTERNAL_GUARD_BLOCK_BEGIN = "<!-- external-mutation-guard-cli:v1 -->"
 EXTERNAL_GUARD_BLOCK_END = "<!-- /external-mutation-guard-cli:v1 -->"
-# dual-root 形。Codex には CLAUDE_PLUGIN_ROOT が無いので、bare の
-# ${CLAUDE_PLUGIN_ROOT} を撒くと Codex 側で空文字に展開され、guard CLI が
-# 見つからないまま「実行できなかった」ではなく別 path を叩きに行く。
+# guard CLI は skill-governance-adapters plugin にある。`<plugin root>/../skill-governance-adapters`
+# は repo の plugins/ でしか兄弟に届かず、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
+# では同じ plugin の別 version 群を指す。そこで自 plugin に vendor した resolver
+# (scripts/extract-plugin-root.py) で guard plugin の絶対 root を preview の前に 1 回だけ得て、
+# 以後の guard 呼び出しはその値を埋めた単一コマンドにする。`$(...)` で埋め込むと
+# PreToolUse enforcer の canonical 判定を通らず、pending 中は resolver 自体も遮断される。
+# resolver の path は dual-root 形。Codex には CLAUDE_PLUGIN_ROOT が無いので、bare の
+# ${CLAUDE_PLUGIN_ROOT} を撒くと Codex 側で空文字に展開され、別 path を叩きに行く。
+EXTERNAL_GUARD_PLUGIN = "skill-governance-adapters"
+EXTERNAL_GUARD_ROOT_RESOLVER = "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py"
+EXTERNAL_GUARD_ROOT_PLACEHOLDER = "<GUARD_PLUGIN_ROOT>"
 EXTERNAL_GUARD_SHELL_RUNNER = (
-    "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/"
-    "build-external-mutation-guard.py"
+    f"{EXTERNAL_GUARD_ROOT_PLACEHOLDER}/scripts/build-external-mutation-guard.py"
 )
 RUNTIME_ROOT_POLICY = "host-skill-path"
 RUNTIME_ROOT_CONTRACT_HEADING = "## Runtime root contract"
@@ -652,6 +659,18 @@ def _canonical_external_guard_block() -> str:
 Never execute the external mutation argv directly. Replace every angle-bracket placeholder
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
+Resolve the guard plugin root once, before `preview`. An installed plugin cannot reach a sibling
+plugin as `<plugin root>/..`, so never guess that path:
+
+```bash
+python3 "{EXTERNAL_GUARD_ROOT_RESOLVER}" {EXTERNAL_GUARD_PLUGIN}
+```
+
+Use the printed absolute path as `{EXTERNAL_GUARD_ROOT_PLACEHOLDER}` in `preview`, `authorize` and `execute`
+(other Bash is blocked while the confirmation is pending, so do not resolve it again).
+If the resolver exits non-zero, stop without any external mutation and tell the user to install
+the `{EXTERNAL_GUARD_PLUGIN}` plugin.
+
 ```bash
 python3 "{runner}" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
@@ -862,6 +881,7 @@ def _validate_external_guard_wiring(path: pathlib.Path) -> None:
         raise ContractError(f"{path}: canonical CLI wiring must be in post-choice execution")
     runner = f'python3 "{EXTERNAL_GUARD_SHELL_RUNNER}"'
     required = (
+        f'python3 "{EXTERNAL_GUARD_ROOT_RESOLVER}" {EXTERNAL_GUARD_PLUGIN}',
         f'{runner} preview --project-root "$PWD" '
         '--entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" '
         '--target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" '

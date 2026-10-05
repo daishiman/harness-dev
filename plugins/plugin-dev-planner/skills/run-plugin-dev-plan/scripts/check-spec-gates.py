@@ -251,18 +251,49 @@ def check_inventory(inventory_path: Path) -> tuple[list[str], str | None]:
     return errors, None
 
 
+def resolve_install_slug(plan_dir: Path) -> tuple[str | None, dict, list[str]]:
+    """install 義務の target_plugin_slug を解決する (slug, handoff, errors)。
+
+    slug の正本は R1 が固定する goal-spec で、handoff はその派生。goal-spec を優先し、
+    handoff にも slug があれば一致を要求する (handoff の生成順序への暗黙依存と別経路の drift を塞ぐ)。
+    goal-spec に slug が無い旧形 plan だけ handoff へ fallback する。
+    """
+    loaded: dict[str, dict] = {}
+    for name in ("goal-spec.json", "handoff-run-plugin-dev-plan.json"):
+        path = plan_dir / name
+        if not path.is_file():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            return None, {}, [f"install 義務の target_plugin_slug を {name} から読めない: {exc}"]
+        loaded[name] = data if isinstance(data, dict) else {}
+    handoff = loaded.get("handoff-run-plugin-dev-plan.json", {})
+    goal_slug = loaded.get("goal-spec.json", {}).get("target_plugin_slug")
+    handoff_slug = handoff.get("target_plugin_slug")
+    if goal_slug is not None and handoff_slug is not None and goal_slug != handoff_slug:
+        return None, handoff, [
+            f"target_plugin_slug が goal-spec ({goal_slug!r}) と handoff ({handoff_slug!r}) で不一致"
+            " (goal-spec が正本。handoff を goal-spec から再生成する)"
+        ]
+    slug = goal_slug if goal_slug is not None else handoff_slug
+    if not isinstance(slug, str):
+        return None, handoff, ["install 義務の target_plugin_slug を goal-spec からも handoff からも解決できない"]
+    return slug, handoff, []
+
+
 def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
     """Require canonical P13 install claims in the existing producer's execution leaves."""
     phase = plan_dir / "phase-13-release.md"
     if not phase.is_file():
         return ["install 契約の実行義務を持つ phase-13-release.md が無い"]
-    handoff = plan_dir / "handoff-run-plugin-dev-plan.json"
+    slug, data, slug_errors = resolve_install_slug(plan_dir)
+    if slug_errors:
+        return slug_errors
     try:
-        data = json.loads(handoff.read_text(encoding="utf-8"))
-        slug = data.get("target_plugin_slug") if isinstance(data, dict) else None
-        obligations = specfm.install_release_obligations(inst, slug if isinstance(slug, str) else "")
-    except (OSError, ValueError) as exc:
-        return [f"install 義務の target_plugin_slug を handoff から解決できない: {exc}"]
+        obligations = specfm.install_release_obligations(inst, slug)
+    except ValueError as exc:
+        return [f"install 義務の target_plugin_slug が不正: {exc}"]
     try:
         # Ask the existing producer what the consumer actually executes. In fixed
         # shape this is P13's checklist; target shape consumes task-specs instead.
@@ -274,16 +305,28 @@ def check_install_release(plan_dir: Path, inst: dict) -> list[str]:
         graph = producer.derive(plan_dir)
     except (OSError, ValueError) as exc:
         return [f"install release obligations を実行 graph へ導出できない: {exc}"]
-    clauses = {
-        node.get("acceptance_criterion")
-        for node in graph["nodes"]
+    leaves = [
+        node for node in graph["nodes"]
         if node.get("phase_ref") == "P13"
         and node.get("execution_kind") in {"verification-claim", "direct-task"}
-    }
+    ]
+    clauses = {node.get("acceptance_criterion") for node in leaves}
     errors = [
         f"P13 install obligation {key} が欠落または契約と不一致 (render-spec-skeleton.py --phase 13 --plugin-slug {slug} で正本から生成): {clause}"
         for key, clause in obligations.items() if clause not in clauses
     ]
+    # install 義務は plugin 単位。fixed-13-phase は P13 の entities_covered ごとに条項を複製するため、
+    # component に帰属した leaf は N 重の実行と route_ref の誤帰属になる。集合包含では見逃すので拒否する。
+    attributed = sorted({
+        key for key, clause in obligations.items()
+        for node in leaves
+        if node.get("acceptance_criterion") == clause and node.get("entity_ref") is not None
+    })
+    errors.extend(
+        f"P13 install obligation {key} が component に帰属している (plugin 単位の義務。"
+        "P13 の entities_covered は [] にし、task-spec には entity_ref を付けない)"
+        for key in attributed
+    )
     # Generation may not have emitted the artifact yet. When it exists, also
     # check the handoff's consumer input so a stale graph cannot hide new claims.
     graph_ref = data.get("task_graph_ref")

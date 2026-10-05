@@ -11,9 +11,9 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "<want|--package PATH> [--repo-root PATH] [--manual-plan] [--dry-run]"
 allowed-tools: [Read, Write, Bash, Skill, AskUserQuestion, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/build-github-projection.py]
 schema_refs: [../../schemas/graph-node.schema.json]
-reference_refs: [../../../system-dev-planner/references/feature-execution-package-contract.md, ../../references/execution-tracker-contract.md]
+reference_refs: [../../references/feature-execution-package-contract.md, ../../references/execution-tracker-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
   - prompts/R1-elicit.md
   - prompts/R2-plan.md
@@ -142,9 +142,9 @@ dev-graph はマクロ層: purpose/goal/scope/acceptance を持つ feature、共
 3. C02 preview/atomic writer で macro graph を登録する。draft/unconfirmed/readiness incomplete は tracker 投影しない。
 4. feature 間依存が満たされた ready feature ごとに `run-system-dev-plan` を Skill 呼出しする。`--manual-plan`/`/system-dev-plan` 結果も同じ package gate へ入れる。
 5. P01..P13 exact 13、共通 parent/package、13-node DAG、source digest を検証し、C02 `register-package` へ渡す。`graph_node_id+source_digest` で自動/手動の二重登録を防ぐ。
-6. `beads` は C28 create/dep-add、`github` は C12 Issue/任意 Projects、`none` は local only。mode=both+auto、github+local_only、beads+GitHub Issue mutation は fail-closed。
+6. `beads` は C28 create/dep-add、`github` は `build-github-projection.py` (gh 操作はすべて C12 gh-bridge 経由) で本文 marker `dev-graph:<graph_node_id>` を同一性とする Issue 一つと任意 Projects item 一つ、`none` は local only。mode=both+auto、github+local_only、beads+GitHub Issue mutation は fail-closed。
 
-local commit 後の外部失敗は rollback せず node/operation 単位 pending_retry。`--dry-run` は local/Beads/GitHub write 0。出力は macro report、per-feature package receipt、publication report。
+local commit 後の外部失敗は rollback せず node/operation 単位 pending_retry とし、`build-github-projection.py --retry-from <report>` でその operation だけを再実行する。`--dry-run` は local/Beads/GitHub write 0。出力は macro report、per-feature package receipt、publication report。
 
 ## ゴールシーク実行
 

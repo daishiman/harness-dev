@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: validate-goal-output
-# version: 0.2.3
+# version: 0.2.4
 # purpose: 目標設定・振り返り対話の出力 Markdown を保存前に検証する決定論ゲート。
 #          未展開プレースホルダ/ファイル名日付パターン/全角数字/差分+-表記/種別別必須見出し/
 #          見出し重複/NG表現/やらないこと3項目以上/プロジェクト別タスク種別方針 等を検査。
@@ -298,7 +298,7 @@ class Validator:
             self.fail(f"必須見出し「## 【{label}】」がありません（完全一致）")
 
     # 旧 check_require_prefix は check_title_matches_type に統合した。
-    # prefix_any は「3ヶ月」「2ヶ月」の両方を無条件に受理するため、--type の取り違えを
+    # 旧 check_require_prefix の prefix_any 引数は「3ヶ月」「2ヶ月」の両方を無条件に受理するため、--type の取り違えを
     # 検出できなかった（同じ3ヶ月期報が quarterly でも bimonthly でも PASS していた）。
 
     def has_title(self, label: str) -> bool:
@@ -1140,7 +1140,7 @@ def main(argv: list[str]) -> int:
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
-        # --help / --version は argparse が SystemExit(0) を投げる。これを 2 に潰すと
+        # --help は argparse が SystemExit(0) を投げる。これを 2 に潰すと
         # 「usage は正常に出たのに異常終了」になり、rc で成否を見る側が誤判定する。
         return 0 if e.code == 0 else 2
 

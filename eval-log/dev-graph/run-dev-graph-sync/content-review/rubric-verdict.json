@@ -2,12 +2,12 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-sync",
-    "skill_md_sha256": "68450bb8e1f10d52749417ddd0c26eb0c77f26ee300c64d3e4aab53cbb87d79a"
+    "skill_md_sha256": "fb75a58ab892aa0338d1eee1699001ed6ed0b38fb2d5492a925b6eb3eeabbf12"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-merge-guard-migration-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-21T00:00:00Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T22:38:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,25 +25,26 @@
       "OUT9"
     ],
     "positive_feedback": [
-      "frontmatter の構造規範が完備している: name / description / version / kind / effect / prefix / hierarchy / allowed-tools / *_refs / responsibilities (R1-R8, 全件 prompt_required) / combinators / goal_seek / feedback_contract / artifact_delivery。responsibility_refs 8 件と responsibilities 8 件の id が 1:1 対応している。",
-      "feedback_contract.criteria の 10 件 (IN1 + OUT1-OUT9) が本文 `## Criteria acceptance` の 10 項目および `### 完了チェックリスト` の受入観点と語彙レベルで対応しており、今回の差分でこの対応が崩れていない。",
-      "effect: external-mutation の規範 (guard frontmatter + canonical receipt flow block の双方保持) と runtime_root_policy: host-skill-path の規範 (専用節 + fallback 形 shell 起動行) がいずれも充足されており、宣言と本文の双方向対応が成立している。",
-      "artifact_delivery が 6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive=explicit-only の共通契約どおりで、今回の差分による退行がない。"
+      "frontmatter の *_refs はすべて実在する。script_refs 6 件、schema_refs 2 件、reference_refs 3 件 (今回追加した references/prompt-common-layers.md を含む)、responsibility_refs 8 件で、responsibilities の id と responsibility_refs は 1 対 1 に対応している。",
+      "effect=external-mutation と external_mutation_guard の宣言、external-mutation-guard-cli:v1 の guard block が今回の差し替え後もそろっている。guard block は 35 skill で byte 一致しており、宣言と本文の対応が崩れていない。",
+      "feedback_contract.criteria の 10 件 (IN1、OUT1-OUT9) と本文の Criteria acceptance、完了チェックリストの対応は差分で変わっていない。artifact_delivery の state machine も変わっていない。",
+      "prompts の Layer 4-7 を共通層へ集約しても、7 層構造の lint (lint-agent-prompt-content.py --mode prompt) は dev-graph の 41 本すべてで OK だった。参照の書き方 (skill root 起点の `../../references/prompt-common-layers.md` と「Layer N」) は 8 本で同じ形になっている。"
     ],
     "negative_feedback": [
-      "[low / smell] `## Runtime root contract` の PLUGIN_ROOT 解決手順が散文どまりで、Codex 側の manifest 祖先探索を行う実コマンドが本文に無い。fallback `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` により実行不能にはならず、移行テンプレート共通の記述上 smell として low に留める。"
+      "[low / smell] 前回からの持ち越し。`## Runtime root contract` (SKILL.md:133-139) は Codex で PLUGIN_ROOT を解決する手順を散文でしか示していない。今回の resolver 行 (SKILL.md:159) も `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` に依存する。実行不能にはならないので low に留める。",
+      "[low / smell] guard block が呼ぶ scripts/extract-plugin-root.py は script_refs に入っておらず、lint-skill-completeness の参照実在検査はこの resolver を見ない。guard block を持つ 35 skill で一貫した扱いであり、実在と byte 一致は lint-vendored-ssot.py が担保している。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "elegance verdict と同一 context の focused combined review を rubric 面へ投影したもの。30 思考法は実施しておらず、実施も申告しない。採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule を機械実行してはおらず、機械的に確認したのは構造規範に限る — frontmatter 必須キーの完備、script_refs 6 / schema_refs 2 / reference_refs 2 / responsibility_refs 8 の実在 file test、responsibilities id と responsibility_refs の 1:1 対応、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、runtime_root_policy 宣言と `## Runtime root contract` 節・shell 起動行 fallback 形の対応 (skill ディレクトリ全体の grep で bare `${CLAUDE_PLUGIN_ROOT}` 起動行 0 件・prompts/ 配下 hit 0 件)、artifact_delivery state machine の完備、feedback_contract.criteria 10 件と本文 Criteria acceptance 10 項目の対応。よって数値 score は算出せず、verdict は combined review の単一判断に従う。high severity は 0 件、medium 以上の未解決 finding も 0 件であるため PASS。残る low 1 件は Codex 側 PLUGIN_ROOT 解決手順が散文どまりという記述上の smell。PASS の射程は静的設計 adequacy に限り、OUT 系 criterion の実行受け入れは別途 live-trial/test の実走証拠を要する。",
+  "notes": "elegance verdict と同じ context で行った focused combined review を rubric の面へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。ref-skill-design-rubric の rule を機械的にすべて実行したわけではない。機械的に確かめたのは構造の規範に限る: frontmatter の必須キー、*_refs の実在、responsibilities と responsibility_refs の対応、effect=external-mutation と guard 宣言・guard block の対応、guard block の 35 skill での byte 一致、resolver の実行 (exit 0)、lint-sibling-plugin-paths.py・lint-vendored-ssot.py・prompt の 7 層 lint の OK。数値の score は算出しておらず、verdict は combined review の単一の判断に従う。high severity は 0 件、medium 以上も 0 件で、low 2 件は記述上の smell のため PASS とした。PASS の射程は design claim (静的設計 adequacy) に限り、OUT 系 criterion の実行時の受け入れには live-trial や test の実走証拠が別に要る。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   }
 }

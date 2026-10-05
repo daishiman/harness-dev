@@ -32,7 +32,7 @@
 
 ### 2.2 ドメインルール
 - `next_question` は最初の未収集セル (カテゴリ順→platform 正順) を指す文で、writer が決定論導出する。再開位置 (どのセルか) の目印であり、利用者にそのまま見せる問ではない (文面は対象かどうかと要件を 1 文で求めるので、提示すれば N4 に反する)。
-- 再開時の問は、`next_question` が指すセルについて question bank の論点と N1-N4 から作る。問の単位と、補った論点の qa を `add-qa-ref` で結ぶ手順は R2-interview 2.2 と同じ。
+- 再開時の問は、`next_question` が指すセルについて question bank の論点と N1-N4 から作る。問の単位と、補った論点の qa を `add-qa-ref` で結ぶ手順は R2-interview 2.2 と同じ。前の invocation で補いの qa だけを記録して未確定のまま止まったセルは、確定する turn でそれらの qa も結ぶ (どのセルにも結ばれていない qa の拾い方は `references/elicit-question-bank.md` の手順 4)。
 - 既に確定/対象外のセルの要件は聞き直さない (補う論点は確定前に聞き終える)。
 
 ### 2.3 入力契約

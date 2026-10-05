@@ -1,8 +1,8 @@
 # 情報優先度設計規約（slide/report 共通・生成前ゲート）
 
-> **正本の所在**: 情報設計の**原理そのもの**は本ファイルに書かない。正本は
-> `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`
-> (deep knowledge card `information-design`)。本ファイルは **SRG 固有の写像**、すなわち
+> **正本の所在**: 情報設計の**原理そのもの**は本ファイルに書かない。正本は system-spec-harness plugin の
+> `skills/ref-system-design-knowledge/references/information-design.md` (deep knowledge card `information-design`)
+> で、本 plugin には同梱しない (出典表記であって実行時に読む path ではない)。本ファイルは **SRG 固有の写像**、すなわち
 > 「その原理を slide/report のどの成果物・どの工程・どの既存規約へ対応させるか」だけの逐語正本である。
 > 原理を再掲すると二重定義になり、片側だけ更新されて乖離する。
 
@@ -34,12 +34,13 @@ SRG の品質検査は S1〜S26 (ui-quality-reviewer)・RQ1〜RQ37 (report-quali
 ## 成果物と決定論ゲート
 
 - **成果物**: `information-priority-map.json` (1 deck / 1 report につき 1 件)。
-  schema = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/schemas/information-priority-map.schema.json`。
+  schema = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/information-priority-map.schema.json`
+  (system-spec-harness の正本を byte 一致で同梱した複製。`scripts/lint-vendored-ssot.py` が一致を強制する)。
   `artifact_kind` は slide なら `"slide-deck"`、report なら `"report"`。
 - **ゲート** (構成承認より前・fail-closed):
 
 ```bash
-python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py \
+python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-information-priority.py \
   <出力先>/information-priority-map.json
 ```
 

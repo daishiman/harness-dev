@@ -679,19 +679,26 @@ def install_release_obligations(inst: dict, plugin_slug: str) -> dict[str, str]:
     Callers validate install metadata first. Runtime opt-out never removes either
     manifest/catalog. These clauses are ordinary checklist items, so the existing
     task-graph writer and consumer carry them without a second execution layer.
+    script の実体は scripts/ と plugins/harness-creator/scripts/ に分かれるため、条項だけを読む
+    consumer が実行パスを一意に決められるよう repo-root 相対パスのコマンドで書く。
     """
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", plugin_slug):
         raise ValueError("install release plugin_slug must be a lowercase kebab name")
     platform = "both" if set(inst["platforms"]) == set(INSTALL_PLATFORMS) else inst["platforms"][0]
-    install = f"install-local-plugins.py --plugin {plugin_slug} --platform {platform}"
+    release = "python3 scripts/build-plugin-release.py"
+    install = (
+        "python3 plugins/harness-creator/scripts/install-local-plugins.py"
+        f" --plugin {plugin_slug} --platform {platform}"
+    )
     obligations = {
         "release": (
-            f"CHANGELOG を先に書き、`build-plugin-release.py --only {plugin_slug}` で版を上げ、"
-            "`build-plugin-release.py --check` が drift 0 で通っている。"
+            f"CHANGELOG を先に書き、`{release} --only {plugin_slug}` で版を上げ、"
+            f"`{release} --check` が drift 0 で通っている。"
         ),
         "registries": (
-            "両製品の package を維持し、`build-local-marketplace.py --check` と "
-            "`sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。"
+            "両製品の package を維持し、`python3 scripts/build-local-marketplace.py --check` と "
+            "`python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check`"
+            " が drift 0 で通っている。"
         ),
         "strict_validate": f"`claude plugin validate --strict plugins/{plugin_slug}` が通っている。",
         "isolated": (

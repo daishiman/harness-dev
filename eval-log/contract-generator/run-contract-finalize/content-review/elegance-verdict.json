@@ -2,19 +2,19 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "88695d78bb1283e1f99d3243699d4aaa7245878ef44e5916a0ae2655cf5d233a"
+    "skill_md_sha256": "54d332144f885a83eb8cecb08bebd2ce5afdbc07fd0f6eebcfd895cd011a1eec"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,21 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline が契約ドラフト確定・決定論検査・人間承認境界に一致し、不要な委譲を追加していない。"
+      "guard block は scripts/build-artifact-delivery.py の _canonical_external_guard_block() 正本から生成され、contract-generator と skill-intake の担当 6 skill で同一の文面になっている（build-artifact-delivery.py --check は ARTIFACT_DELIVERY_OK）。skill ごとの手書きの揺れが無く、今後の修正も正本 1 箇所で済む。",
+      "resolver を preview の前に 1 回だけ実行し、その出力を <GUARD_PLUGIN_ROOT> として preview・authorize・execute に使う順序は、pending 中に canonical でない Bash を deny する guard の実装と整合する。resolver が失敗した時点では preview receipt も pending context も無いので、fail-closed で止まっても session が詰まらない。",
+      "guard の呼び出しが resolver の出力した literal の絶対パスになり、pretool の canonical 判定（basename が runner 名と一致し、shell 演算子を含まない 1 回の呼び出し）を確実に通る。install 先で同じ plugin の別 version 群を指してしまう <plugin root>/.. の推測は無くなった。",
+      "依存関係が閉じている。plugin.json の dependencies に skill-governance-adapters が宣言され、frontmatter の runtime_ref は plugin: 記法、同梱の scripts/extract-plugin-root.py は正本と byte 一致（lint-vendored-ssot.py OK）。resolver の exit は 0（解決）/1（見つからない）/2（不正な名前）で、「非 0 なら外部変更せずに止まり install を案内する」という本文の指示と一致する（実測）。",
+      "allowed-tools が Bash(python3 *) に限られるこの skill でも、resolver の呼び出しは python3 で始まる 1 コマンドなので許可範囲に収まる。resolver は読み取り専用で、Slack の確認を発火条件にしない pull 型の確定経路（finalize 実行から guard の receipt flow へ）に新しい発火点を足していない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / omission / 差分由来] 新しい文「other Bash is blocked while the confirmation is pending」は、遮断の続く範囲を実装より狭く読ませる。skill-governance-adapters の guard script の pretool は、completion か cancellation の receipt が付くか TTL 900 秒で失効するまで、canonical でない Bash をすべて deny する。execute が非 0 で終わった場合（completion receipt は作られない）や、preview の後に利用者が確認しなかった場合も遮断は続くが、解除手段の cancel action は block に書かれていない（cancel の記載漏れ自体は差分前から）。resolver を再実行しないという指示は正しく、外部変更の安全性には影響しない。",
+      "[low / inconsistency / 差分外・既存] Pre-choice 節の「remote mutation preview … preview receipt を提示」が、guard の preview（pending context を作る）を指すのか read-only の preview を指すのかが曖昧。Post-choice 節は wrapper を light/standard/detailed の選択後だけ実行すると定めているので、guard の preview と読むと、accept-as-is で終えたときに pending が TTL まで残り Bash が遮断される。今回の差分は「resolver は preview の前に 1 回」とだけ定めており、この曖昧さを新たに作ってはいない。",
+      "[low / smell / 依存先 resolver] scripts/extract-plugin-root.py の探索段階 5・6（他 marketplace の installed 記録、Claude と Codex の cache 全体の最新 version）は、当該 marketplace 外の copy や、いまの host ではない Codex 側 cache の skill-governance-adapters を返しうる。manifest の name 一致確認と guard 側の HMAC receipt 契約で fail-closed は保たれるので安全性は崩れないが、どの copy の guard が使われたかが利用者から見えにくい。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除）、正本テンプレート（scripts/build-artifact-delivery.py）、同梱 resolver（plugins/contract-generator/scripts/extract-plugin-root.py）、skill-governance-adapters の guard script（pretool・pending 判定・cancel・execute）、plugin.json の dependencies を読み、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 を実測、CLAUDE_CONFIG_DIR と CODEX_HOME を差し替えた cache 模擬で同じ marketplace の最新 semver を選ぶことと未 install 時に exit 1 になることを確認、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest（resolver と sibling path lint の 28 件）が pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限る。install 先での live trial や、Drive・Sheets・Slack への実際の外部変更は行っていない。30 思考法は実施しておらず、実施も申告しない。"
 }

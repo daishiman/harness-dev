@@ -2,19 +2,19 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "88695d78bb1283e1f99d3243699d4aaa7245878ef44e5916a0ae2655cf5d233a"
+    "skill_md_sha256": "54d332144f885a83eb8cecb08bebd2ce5afdbc07fd0f6eebcfd895cd011a1eec"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,20 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline が契約ドラフト確定・決定論検査・人間承認境界に一致し、不要な委譲を追加していない。"
+      "IN1: 差分は guard block に限られ、finalize を実行した draft 行だけを completed にする pull 型の判定、--dry-run、台帳観測の記述には触れていない。resolver は読み取り専用で台帳に書かない。",
+      "IN2: PDF の黄色除去と台帳遷移の冪等性を担う scripts と手順は変わっていない。resolver が非 0 のときは preview より前に止まるので、二重書き込みや途中までの確定が起きる経路を足していない。",
+      "OUT1: 「発火は Claude Code での finalize 実行だけ」という中核ゲートは保たれている。外部変更は従来どおり preview・hook-confirm・authorize・execute の receipt flow だけを通り、install 先でも兄弟 plugin の guard に確実に届くようになったことで、常駐デプロイ不要・再入可能という設計がそのまま install 先で成り立つ。",
+      "rubric の high severity に当たる問題（外部変更の無承認実行、guard の迂回、存在しない参照先）は 0。guard の呼び出しは literal の絶対パスで canonical 判定を通り、resolver・guard script・plugin.json の dependencies は実在して整合する。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / omission / 差分由来] 「other Bash is blocked while the confirmation is pending」は、遮断が completion か cancellation の receipt、または TTL 900 秒の失効まで続くこと（execute 失敗時や未確認時も含む）を書いておらず、解除手段の cancel action も載っていない（cancel の漏れは差分前から）。外部変更の安全性には影響しない。elegance 側と同じ finding の投影。",
+      "[low / inconsistency / 差分外・既存] Pre-choice 節の「remote mutation preview … preview receipt」が guard の preview を指すのかが曖昧で、そう読むと accept-as-is のときに pending が TTL まで残る。Post-choice 節は wrapper を選択後だけ実行すると定めている。今回の差分が作った曖昧さではない。",
+      "[low / smell / 依存先 resolver] resolver の探索段階 5・6 は当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と receipt 契約で fail-closed は保たれる。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "elegance 側と同一の focused combined review（独立 evaluator context）の rubric 投影。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではなく、差分（guard block の差し替え）が frontmatter の feedback_contract.criteria 全 3 件（IN1/IN2/OUT1）の対象を崩していないこと、rubric の high severity に当たる問題が 0 であることを、実読と決定論の確認（resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check、lint-sibling-plugin-paths.py、lint-vendored-ssot.py、pytest 28 件 pass）で確かめた。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、live trial や criteria acceptance の証拠を代替しない。30 思考法は実施しておらず、実施も申告しない。"
 }

@@ -12,7 +12,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: temporary sandbox or explicit --sandbox-root only
-# dependencies: []
+# dependencies: [../../../scripts/extract-plugin-root.py]
 # ///
 """Side-effect-free plugin lifecycle smoke harness.
 
@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -34,8 +35,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
-EXTERNAL_LINT = REPO_ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-external-refs.py"
+def _resolve_repo_root() -> Path:
+    """$CLAUDE_PROJECT_DIR → 本ファイル parents[5] → cwd の順 (validate-plugin-permissions.py と同じ)。
+
+    install 先では parents[5] が marketplace のディレクトリになるので、plugins/ を含むときだけ採る。
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env and (Path(env) / "plugins").is_dir():
+        return Path(env)
+    here = Path(__file__).resolve()
+    if len(here.parents) > 5 and (here.parents[5] / "plugins").is_dir():
+        return here.parents[5]
+    return Path.cwd()
+
+
+REPO_ROOT = _resolve_repo_root()
+PLUGIN_ROOT = Path(__file__).resolve().parents[3]
+# PKG-009 SSOT の論理 ID。実体の場所は install 配置で変わるので、記録にはこちらを使う。
+EXTERNAL_LINT_ID = "plugin:skill-governance-lint/scripts/lint-external-refs.py"
 PKG_BY_OPERATION = {"install": "PKG-010", "uninstall": "PKG-011", "upgrade": "PKG-012"}
 
 
@@ -173,11 +190,31 @@ def uninstall(name: str, sandbox: Path) -> dict:
     return {"residues": sorted(set(residues)), "removed_surface_count": len(registration.get("surfaces", []))}
 
 
+def external_lint_path() -> Path:
+    """skill-governance-lint の lint-external-refs.py を install 配置に依存せず解決する。
+
+    repo の plugins/ を前提にした固定パスは、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
+    では兄弟 plugin に届かない。harness-creator に同梱した resolver に任せる。
+    """
+    resolver = PLUGIN_ROOT / "scripts" / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
+    if spec is None or spec.loader is None:
+        raise SystemExit("extract-plugin-root.py is missing from harness-creator/scripts")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    found = module.resolve("skill-governance-lint", PLUGIN_ROOT, Path.cwd())
+    if found is None:
+        raise SystemExit("skill-governance-lint plugin not found; install it to run PKG-009/010")
+    return found / "scripts" / "lint-external-refs.py"
+
+
 def external_ref_result(source: Path) -> dict:
     proc = subprocess.run(
         [
             sys.executable,
-            str(EXTERNAL_LINT),
+            str(external_lint_path()),
             "--skills-dir",
             str(source / "skills"),
             "--fail-on-external",
@@ -220,7 +257,7 @@ def run_install(source: Path, sandbox: Path) -> dict:
         "installed_surface_count": len(installed["surfaces"]),
         "scripts_non_executable": scripts_non_executable,
         "external_reference_gate": {
-            "checker": str(EXTERNAL_LINT.relative_to(REPO_ROOT)),
+            "checker": EXTERNAL_LINT_ID,
             "external_ref_count": external.get("external_ref_count", 0),
             "declared_dependency_ref_count": external.get("declared_dependency_ref_count", 0),
             "contract_errors": external.get("contract_errors", []),

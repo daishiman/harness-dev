@@ -2,19 +2,19 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "18ea37ed9afdf9e156a0fe33e15235b3cb557766aeb91eaa0d434459b5ddcfa9"
+    "skill_md_sha256": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 1,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,21 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline がテンプレート差分の検出・同期・再検査という決定論的な単一writer処理に適合している。"
+      "guard block は scripts/build-artifact-delivery.py の _canonical_external_guard_block() 正本から生成され、同じ plugin の run-contract-finalize・run-contract-generate と同じ文面になっている（build-artifact-delivery.py --check は ARTIFACT_DELIVERY_OK）。",
+      "resolver を preview の前に 1 回だけ実行し、その出力を <GUARD_PLUGIN_ROOT> として preview・authorize・execute に使う順序は、pending 中に canonical でない Bash を deny する guard の実装と整合する。resolver が失敗した時点では pending context が無いので、fail-closed で止まっても session が詰まらない。",
+      "guard の呼び出しが literal の絶対パスになり、pretool の canonical 判定を確実に通る。install 先で届かない <plugin root>/.. の推測は無くなった。",
+      "依存関係が閉じている。plugin.json の dependencies に skill-governance-adapters が宣言され、runtime_ref は plugin: 記法、同梱の scripts/extract-plugin-root.py は正本と byte 一致。resolver の exit 0/1/2 は「非 0 なら外部変更せずに止まる」という本文の指示と一致する（実測）。",
+      "allowed-tools（Read, Edit, Bash(python3 *)）の範囲で resolver を呼べる。resolver は読み取り専用で、--apply による completed 行の差し戻しという外部変更の範囲を広げていない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / omission / 差分由来] 新しい文「other Bash is blocked while the confirmation is pending」は、遮断の続く範囲を実装より狭く読ませる。guard の pretool は completion か cancellation の receipt が付くか TTL 900 秒で失効するまで canonical でない Bash を deny し、execute が非 0 で終わった場合や preview 後に確認されなかった場合も遮断は続く。解除手段の cancel action は block に書かれていない（cancel の漏れ自体は差分前から）。外部変更の安全性には影響しない。",
+      "[low / inconsistency / 差分外・既存] Pre-choice 節の「remote mutation preview … preview receipt を提示」が guard の preview を指すのか read-only の preview を指すのかが曖昧。guard の preview と読むと、accept-as-is で終えたときに pending が TTL まで残り Bash が遮断される。今回の差分が作った曖昧さではない。",
+      "[low / smell / 依存先 resolver] resolver の探索段階 5・6（他 marketplace の installed 記録、Claude と Codex の cache 全体の最新 version）は、当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と HMAC receipt 契約で fail-closed は保たれるが、どの copy の guard が使われたかが利用者から見えにくい。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除。同じ plugin の 2 skill と同一）、正本テンプレート、同梱 resolver、skill-governance-adapters の guard script、plugin.json の dependencies を読み、skill 固有の文脈（scan_template の exit 0/5、--apply と --dry-run の区別、allowed-tools）との整合を確かめたうえで、(a)〜(e) を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest 28 件 pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、install 先での live trial や実際の台帳変更は行っていない。30 思考法は実施しておらず、実施も申告しない。"
 }

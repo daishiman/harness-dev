@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-knowledge-sync",
-    "skill_md_sha256": "d057d9bb89bd4c43596d5ccb4ba9241d9733cb019b0151117e4ef98a0b3f3bd5"
+    "skill_md_sha256": "42eec0312edb109c6624ae60b83e130f58c2b5024dcc3bfde7145a5ae03d3f9c"
   },
   "verdict": "PASS",
   "findings_summary": {
@@ -10,10 +10,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 5
   },
-  "reviewed_at": "2026-09-10T09:14:52Z",
-  "iterations": 2,
+  "reviewed_at": "2026-10-04T22:29:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -22,22 +22,24 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "検証器が申告 ready_set を一切信用せず、checklist・過去 selected_item・available_from_iteration から各周回の ready 全集合を独立再計算して declared との厳密一致を要求している。自己申告 trace を証拠として扱わない設計で、goal-seek trace 検証の横展開パターンとして再利用価値が高い。",
-      "C6 を「番号順で最後」ではなく「他の全 item が消費されるまで effective ready から外す」条件付き gate として実装し、今回さらに『その帰結として C6 へ依存する item は到達不能』という定理を明示検査へ落とした点。gate の意味論から導かれる不変条件を、後段の症状 (pending 残) ではなく原因の位置で検出している。",
-      "共有 template との byte 同一テストを、変更を阻む障害ではなく『skill 固有概念が汎用資産へ漏れた』ことを知らせる設計シグナルとして読み、検査の配置を skill 固有側へ倒した判断。テストが設計判断を導いた良い事例として横展開できる。",
-      "SKILL.md の手順文に『この 2 条件は validator の ready 再計算と同一であり、片方だけを適用すると食い違って FAIL する』と、一致が要求である旨とその破れ方まで書いている。散文と機械検査が二重化する箇所での書き方として再利用価値がある。",
-      "bound 検査を「checklist > max_loops = bound 不足」と「trace rows > max_loops = bound 超過」の両方向で持ち、iteration == len(rows)-1 も突き合わせている。上限を越えていないことだけでなく、そもそも完了しうる上限かも fail-closed で見ている。"
+      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
+      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
+      "『確認待ちの間は他の Bash が遮断されるので再解決しない』という注意は guard の実装 (完了も取消もされていない preview がある間、canonical でない Bash を deny する) と一致し、authorize や execute の直前に resolver を呼び直して遮断される事故を手順の側で先に塞いでいる。",
+      "<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則と、Runtime root contract の『literal placeholder を shell へ渡さない』規則の両方に収まる。本 skill は Purpose & Output Contract が本文先頭にあり guard block がその後に続くため、今回の追記は冒頭 30 行の契約集約 (PD-002) を崩していない。"
     ],
     "negative_feedback": [
-      "F3(low/smell・意図的残置): ready 意味論が実行時 template 複製と検証時 skill 固有 validator の 2 実装に分かれ、一致は散文でしか担保されていない。解消には template 側の設計変更が要るため本 PR 範囲外と合意済み。",
-      "F2 残差(low): build-self-reflection-entry.py は --depends-on C6 を依然 exit 0 で受理し (実測)、不正状態の生成自体は防げない。検出は validator まで遅れるが、completed 確定前に exit 1 で原因を名指しして止まるため fail-closed は成立している。"
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
+      "F3 (low / smell・差分外の既存・継続): ready 意味論が実行時 template 複製と検証時 skill 固有 validator の 2 実装に分かれ、一致は散文でしか担保されていない。",
+      "F2 残差 (low・差分外の既存・継続): build-self-reflection-entry.py は --depends-on C6 を exit 0 で受理し、検出は validator まで遅れる。completed 確定前に exit 1 で止まるため fail-closed は成立している。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual (前回 verdict の F1/F2 修正により SKILL.md が変わり verdict が stale-sha 化したための再評価)",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
   "review_kind": "elegance",
-  "reviewer": "content reviewer (general-purpose subagent, builder とは独立 context)。content-review-protocol.md 「incremental: unresolved semantic batch」に従い focused combined review を 1 context で実施。run-elegant-review の 30 思考法は起動しておらず使用していない。",
-  "notes": "【profile=incremental / focused combined review・第2周】前回 verdict (sha c0fbd2c6…) で挙げた F1/F2 の修正後の現物を独立に再評価した。30 思考法は実施しておらず、実施したとも申告しない。1 context で (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity を判定し、単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影している。 【読んだもの】修正差分 git diff HEAD -- 対象 skill 全文 / SKILL.md 全文 (230 行) / validate-knowledge-sync-task-graph.py 全文 (新 gate 検査を含む) / extract-ready-set-from-checklist.py 全文 / build-self-reflection-entry.py 全文 / workflow-manifest.json / tests/test_knowledge_sync_task_graph_contract.py。 【実行したもの (コマンドと実測結果)】(1) shasum -a 256 で SKILL.md = d057d9bb89bd4c43596d5ccb4ba9241d9733cb019b0151117e4ef98a0b3f3bd5 を実測。依頼の申告値と一致し、verdict の値はこの実測値そのもの。 (2) python3 -m pytest plugins/ubm-goal-setting/tests/ -q = 408 passed in 79.33s (exit 0)。 (3) F1 検証 = SKILL.md の手順文だけを実装した oracle を書き、実行時 extract-ready-set-from-checklist.py の raw ready へ記載の 2 条件だけを適用して各周回の effective ready を実測: iteration5 raw=[C6,C7]→effective=[]、iteration6 raw=[C6,C7]→effective=[C7]、iteration7 raw=[C6]→effective=[C6]。この手順文どおりに構成した trace を validator へ通し exit 0 (knowledge-sync task-graph PASS: iterations=8 checklist=7) を実測。修正前は同じ手順文が iteration5 で [C7] を選ばせ ready_set 不整合で exit 1 になっていたため、記述と実挙動の乖離は解消。 (4) F2 検証 = C7 の depends_on を [C6] にした合成 graph を validator へ通し exit 1 / 「C6 (最終 completion gate) へ依存する item は永久に ready にならない: ['C7']」を実測。修正前は「completed 時の pending 残」として遅れて出るだけだった状態が、原因を名指しする明示検査へ置き換わっている。 (5) 共有資産の不変確認 = template 4 スクリプトを cmp で照合し 4 件とも byte 一致。共有スクリプトへの変更が実際に差し戻されている。 (6) build-self-reflection-entry.py に --depends-on C6 を渡すと依然 exit 0 (append 自体は通る) を実測。 (7) python3 scripts/lint-content-review.py --all を再生成後に実行。 【新 gate 検査の妥当性】C6 は「他の全 item が消費されるまで effective ready から除かれる」ため、C6 へ依存する item は定義上どの周回でも ready にならない。したがって『C6 を depends_on に含む item を一律 exit 1』は過剰でも過小でもなく完全。配置も dangling/cycle 検査の直後・REQUIRED_CHAIN 検査の前で、既存の cycle テスト (C1 depends_on C6 = 循環) は先に cycle 側で捕まるため メッセージが奪われていないことを 408 passed で確認した。 【F2 の設計判断について】汎用 template 側 (byte 同一が機械強制された共有資産) に C6 という skill 固有概念を焼き込まず、skill 固有 validator へ検査を置いた判断は妥当と評価する。共有資産の複製 N 箇所へ特定 skill の語彙が漏れる方が結合度として悪く、byte 同一テストはその漏れを検出するための機構として正しく働いた。 【PASS の射程】design claim (静的設計 adequacy) に限る。behavioral acceptance は Gate D (run-skill-live-trial) の実走証拠を別途要し、本 verdict を流用しない。 【残件 (意図的残置・今回は finding として据え置き)】F3(smell, low): ready 意味論が実行時 (template 共有の extract-ready-set-from-checklist.py: available_from も C6 deferral も知らない汎用資産) と検証時 (skill 固有 validator) の 2 実装に分かれている。今回 SKILL.md 側に「この 2 条件は validator の ready 再計算と同一であり、片方だけを適用すると検証器と食い違って周回が FAIL する」と明記されたことで、乖離が起きたときに読み手が気づける橋渡しは入った。ただし一致は依然として散文が担保しており機械強制ではない。解消には template 側の設計変更 (ready 算出への policy 注入等) が要るため本 PR の範囲外とする判断に同意する。 F2 の残差(low): append gate 自体は --depends-on C6 を exit 0 で受理し続ける (実測(6))。不正状態の生成は防げず、検出は validator まで遅れる。ただし completed を確定させる前に必ず exit 1 で止まり原因が名指しされるため fail-closed は成立しており、共有資産の制約下では妥当な落とし所と評価する。 【criteria 評価】IN1(inner/verify_by=script): detect-knowledge-updates.py による registry.json との MD5 照合が Phase1-detect として manifest の command と fatal_exit_codes:[2]、SKILL.md 本文の inner ループ節、checklist C1 (verify_by:script) の 3 箇所で一貫して配線されていることを再確認。差分 0 件・vault 未接続時も「検知0件レポートを 正常終了」と Gotchas に明記され、no-op 経路が C2-C4 の条件不成立 trace として未選択のまま残らない配線。今回の修正は ready 導出の記述と gate 検査に限られ本経路に影響しない。充足。 OUT1(outer/verify_by=test): 6カテゴリ分類と router.json/registry.json 同期完了の受入は Phase2-extract の gate (1 source ずつ・registry の (file_path,file_hash,status=processed) を唯一の commit point) として manifest に固定され、 tests/test_sync_recovery_and_external_io_boundary_are_explicit が SKILL.md と knowledge-extractor.md の該当文言を 実際に assert している。plugins/ubm-goal-setting/tests/ 全体 408 passed。充足。 【本ファイルの位置づけ】結合レビュー結果の elegance 側 (4 条件 = 矛盾なし/漏れなし/規約整合/依存関係整合) への投影。rubric 側の投影は同ディレクトリの rubric-verdict.json。"
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+15/-3) のみ。guard block の差し替えで、親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う形へ変えた。 【読んだもの】SKILL.md 全文と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、ubm-goal-setting の .claude-plugin/plugin.json。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、どちらも充足することを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = 42eec0312edb109c6624ae60b83e130f58c2b5024dcc3bfde7145a5ae03d3f9c を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。(b) 漏れ 0 (medium 以上): PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: frontmatter の external_mutation_guard.runtime_ref は既に plugin: 記法。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で、前回からの継続分 (F3 と F2 残差) を含めて smell に計上した。criteria IN1 の検証経路 (detect-knowledge-updates.py) は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

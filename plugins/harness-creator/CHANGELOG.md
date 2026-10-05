@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Fixed (2026-10-05 install 先での兄弟 plugin の解決, PR #83)
+
+install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin root>/..` や `Path(__file__).parents[N] / "<sibling>"` では隣の plugin に届かない。repo の `plugins/` でだけ動いていた参照を、install 配置に依存しない形へ直した。
+
+- **実行する参照**: `run-skill-create` の p0-lint と manifest 登録、`run-build-skill` の `GOV_LINT_DIR`、`run-plugin-package-check` の PKG-009/015 は、同梱の `scripts/extract-plugin-root.py` で兄弟の root を解決する。Python 側 (`run-pkg-015.py`、`sandbox-plugin-lifecycle.py`、`lint-knowledge-loop.py`、`build-external-intelligence*.py` の forwarder、`sync-task-state.py`、`inject-task-inputs.py`) も同じ resolver を importlib で読む。見つからないときは、推測したパスへ落ちずに止まるか、既存の未導入時の扱いに任せる。
+- **メタデータと引用**: `resource-map.yaml` の兄弟 bundle を `plugin:<name>/<path>` 記法にし、agents と `SKILL.md` の契約正本への言及を出典表記にした。
+- **同梱**: `assign-skill-design-evaluator` が起動する rubric 合成器 `compose-rubrics.py` を `scripts/` へ同梱した (正本は skill-governance-automation。`lint-vendored-ssot.py` が byte 一致を検査する)。cwd 起点の repo パスへの fallback は削除した。
+- **再発防止**: repo に `scripts/lint-sibling-plugin-paths.py` を足し、CI (`harness-creator-kit-ci.yml`) と `make lint` で、plugin 内の親ディレクトリ起点の兄弟参照を検出する。
+
 ### Fixed (2026-10-04 配布経路の完了境界と導入入口の一本化, harness-f11)
 
 - `install-local-plugins.py` の digest から `.DS_Store`・`.claude/handoff/`・通常 directory を除外した。release 側が内容として扱わない差分だけで `stale_runtime` になり、版上げしても解消しない状態から抜け出せなくなっていたため。本体ファイルの差は今までどおり検出する。

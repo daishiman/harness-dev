@@ -11,13 +11,15 @@
 # contexts: [C, E]
 # network: false
 # write-scope: --out parent only
-# dependencies: []
+# dependencies: [../../../scripts/extract-plugin-root.py]
 # ///
 """Adapter from governance trigger semantics to package-gate semantics."""
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -25,8 +27,46 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
-LINTER = REPO_ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-rubric-violation.py"
+def _resolve_repo_root() -> Path:
+    """$CLAUDE_PROJECT_DIR → 本ファイル parents[5] → cwd の順 (validate-plugin-permissions.py と同じ)。
+
+    install 先では parents[5] が marketplace のディレクトリになるので、plugins/ を含むときだけ採る。
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env and (Path(env) / "plugins").is_dir():
+        return Path(env)
+    here = Path(__file__).resolve()
+    if len(here.parents) > 5 and (here.parents[5] / "plugins").is_dir():
+        return here.parents[5]
+    return Path.cwd()
+
+
+REPO_ROOT = _resolve_repo_root()
+PLUGIN_ROOT = Path(__file__).resolve().parents[3]
+
+
+class LinterUnavailable(RuntimeError):
+    """resolver か兄弟 plugin が無く、lint-rubric-violation.py に届かない。"""
+
+
+def linter_path() -> Path:
+    """skill-governance-lint の lint-rubric-violation.py を install 配置に依存せず解決する。
+
+    repo の plugins/ を前提にした固定パスは、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
+    では兄弟 plugin に届かない。harness-creator に同梱した resolver に任せる。
+    """
+    resolver = PLUGIN_ROOT / "scripts" / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
+    if spec is None or spec.loader is None:
+        raise LinterUnavailable("extract-plugin-root.py is missing from harness-creator/scripts")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    found = module.resolve("skill-governance-lint", PLUGIN_ROOT, Path.cwd())
+    if found is None:
+        raise LinterUnavailable("skill-governance-lint plugin not found; install it to run PKG-015")
+    return found / "scripts" / "lint-rubric-violation.py"
 
 
 def now_iso() -> str:
@@ -35,13 +75,19 @@ def now_iso() -> str:
 
 def run(plugin: str, log_dir: Path, out_path: Path, bootstrap_threshold: int = 20) -> tuple[dict, int]:
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        linter = linter_path()
+    except LinterUnavailable as exc:
+        # 推測 path で lint は呼ばない。停止理由を --out に残し、集約で fail と数えさせる。
+        return {"pkg_id": "PKG-015", "status": "fail", "last_run_at": now_iso(), "plugin": plugin,
+                "findings": [str(exc)]}, 1
     with tempfile.NamedTemporaryFile(prefix="pkg-015-", suffix=".json", dir=out_path.parent, delete=False) as handle:
         raw_path = Path(handle.name)
     try:
         proc = subprocess.run(
             [
                 sys.executable,
-                str(LINTER),
+                str(linter),
                 "--log-dir",
                 str(log_dir),
                 "--out",

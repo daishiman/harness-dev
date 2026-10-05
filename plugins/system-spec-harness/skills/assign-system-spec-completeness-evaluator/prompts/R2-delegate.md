@@ -44,6 +44,7 @@
 
 ### 2.4 出力契約
 - matrix/doc-freshnessの独立監査とC06 sub-inputを渡す。foundation/decision/design-knowledge/prompt-qualityは機械evidenceと入力をR1へ透過し、R1がrubric全aspectsを組み立てる。
+- C06 の Task 結果 JSON は、無改変のまま評価出力先 (R1 の `output` の置き場。省略時 `eval-log/` 配下・仕様書ディレクトリ外) の固定名ファイル `hearing-audit.json` へ Bash で保存し、そのパスを R1 へ渡す (`aggregate-completeness.py --hearing` はファイルパスを取り、C06 は Read のみで自分では書けないため)。
 
 ## Layer 3: インフラ層
 
@@ -67,7 +68,7 @@
 - rubric全観点の入力/evidenceが揃うことを記録する。
 
 ### 4.3 セキュリティ
-- read-only。各監査 sub-agent も read-only (書込・状態更新・再取得を行わない)。
+- 仕様書と監査対象は書き換えない (read-only)。書くのは 2.4 の C06 出力の保存だけ。各監査 sub-agent も read-only (書込・状態更新・再取得を行わない)。
 
 ## Layer 5: エージェント層
 

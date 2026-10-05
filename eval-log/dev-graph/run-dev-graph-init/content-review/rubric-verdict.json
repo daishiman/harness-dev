@@ -2,12 +2,12 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
-    "skill_md_sha256": "936d7ad778d4aade1428c8eef59e8c588e05841bce3dff73353e7fde78544806"
+    "skill_md_sha256": "047b6d1df9e565c5795d3bdb933682ce88c908275d052c110ee894beee9c0778"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "pr83-followups focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-05T01:01:53Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -21,25 +21,35 @@
       "OUT5"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "OUT5 (verify_by: test) が決定論 script と test で裏づけられた。build-project-hook-fallback.py は preview/apply/rollback を持ち、test_build_project_hook_fallback.py の 4 本 (4 passed) が、追記 merge、既存 key/hash の不変、二重登録 0、再実行の noop、byte 単位の rollback、drift の拒否、8 種の拒否診断で書込み 0 になることを確かめている。",
+      "frontmatter の script_refs に追加した `../../scripts/build-project-hook-fallback.py` は実在し、実行ビットがあり、`# /// script` の header を持つ。*_refs はすべて実在し、responsibilities と responsibility_refs は 1 対 1 に対応したままである。SKILL.md:136 と R5 の Layer 3/6 は同じ script と同じ引数を指している。",
+      "receipt の書き手が分かれている。init receipt は build-init-scaffold.py が書き、hook_source だけを記録する。hook の変更は build-project-hook-fallback.py の manifest に残る。この分担が SKILL.md:138、R3・R5 の Layer 6、2 本の script の実装でそろっている。",
+      "lint-prompt-contract-drift.py --strict-tools は fatal 0 / warn 0 だった。lint-prompt-placement.py・lint-sibling-plugin-paths.py・lint-script-naming.py・validate-frontmatter.py も OK だった。",
+      "既存 verdict の low 4 件は、今回の差分では解消していない。R2・R3・R4 の prompt と build-init-scaffold.py は前回の verdict の後に変わっていない。R2 の plan digest の件は、R5 にも広がった。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] 前回から残る。build-init-scaffold.py の rollback は、_create_file が親として作る `.dev-graph/state/` と `.dev-graph/state/receipts/` を記録しない。書込み途中の失敗で空の directory が残る。",
+      "[low / 不整合] 前回から残る。R4 の出力契約は同 digest の保持を `preserved` と対応させるが、script の `preserved` には利用者が編集した template も入る。",
+      "[low / 漏れ] 前回から残る。R4 の Layer 6 は R3 の script の結果を検証の入力にするが、Layer 2 の入力契約にその結果が無い。",
+      "[low / 不整合] 前回から残り、R5 にも広がった。R2 の Layer 6 は R3/R4/R5 が同じ plan digest を消費すると書くが、build-init-scaffold.py も build-project-hook-fallback.py も R2 の plan を入力に取らない。R5 の preview と apply も digest で結ばれていない。",
+      "[low / 漏れ] rollback_drift の後に戻る手段が無い。settings.json と config.json の一方でも apply 後に書き換わると、全体の rollback が拒否される。そのうえ skill は settings を直接書けないので、hooks contract 9 行目の「source=plugin では project 側 dev-graph hook を除去」を満たす道が無い。",
+      "[low / 漏れ] plugin 既定のとき、R5 の出力契約にある plugin-managed 判定を誰が出すかが定まっていない。Layer 3 の「settings に触れない」が Read での診断まで禁じるのかも曖昧である。",
+      "[low / 漏れ] managed 診断は既定の 1 file (macOS/Linux の path) だけを読み、Windows の path、MDM/OS policy、server-managed の設定を見ない。",
+      "[low / smell] rollback manifest が settings.json の全文 (`before_text`) を receipt へ写し、preview が settings 全体を stdout に出す。settings の `env` に認証情報があれば、共通層 Layer 4 の secret 規約と緊張関係になる。",
+      "[low / 不整合] SKILL.md:136 は「`(event, matcher, command)` 単位で追記 merge」と書くが、実装は group 単位で追記し、一部だけ登録済みの group は拒否する。また手順 4 の usage には `--config` が無い (init 側の usage にはある)。",
+      "[low / smell] apply が書込み途中で失敗すると、manifest は `status=applied` のまま disk に残るのに、stdout は `status=error`・`write_count=0` を返す。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr83-followups",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+29 行) には共通 injection 以外の残差 2 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "notes": "elegance verdict と同じ context で行った focused combined review (PR #83 follow-up の変更集合に対する iteration 1) を、rubric の面へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。ref-skill-design-rubric の rule を機械的にすべて実行したわけではない。機械的に確かめたのは構造の規範に限る。具体的には、frontmatter の必須キー (validate-frontmatter.py が OK)、*_refs の実在 (追加した script を含む)、responsibilities と responsibility_refs の対応、script の出力キーと拒否コードが SKILL.md:136 と R5 本文に一致すること、lint-prompt-contract-drift.py・lint-prompt-placement.py・lint-sibling-plugin-paths.py・lint-script-naming.py が OK であること、test_build_project_hook_fallback.py が 4 passed であること、の 6 点である。数値の score は算出しておらず、verdict は combined review の単一の判断に従う。high/medium は 0 件である。low は 10 件で、前回から残る 4 件と今回の 6 件である。low は記録したが判定を変えない。判定の射程は design claim (静的設計 adequacy) に限る。",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 4,
+    "inconsistency": 3,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   }
 }

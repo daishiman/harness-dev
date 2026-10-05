@@ -133,16 +133,28 @@ Purpose & Output Contractの最小の実成果物またはremote mutation previe
 Never execute the external mutation argv directly. Replace every angle-bracket placeholder
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
+Resolve the guard plugin root once, before `preview`. An installed plugin cannot reach a sibling
+plugin as `<plugin root>/..`, so never guess that path:
+
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py" skill-governance-adapters
+```
+
+Use the printed absolute path as `<GUARD_PLUGIN_ROOT>` in `preview`, `authorize` and `execute`
+(other Bash is blocked while the confirmation is pending, so do not resolve it again).
+If the resolver exits non-zero, stop without any external mutation and tell the user to install
+the `skill-governance-adapters` plugin.
+
+```bash
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Present that official preview output to the user. Only the exact user reply printed by `preview`
 may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
 
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
@@ -155,14 +167,14 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 ## Purpose & Output Contract
 
-- **ゴール**: 週報/月報/期報の目標設定・振り返り対話が北原さん式の統一ハイブリッド構造（公式21ブロック）で出力され、`validate-goal-output.py`（形式）と `validate-goal-linkage.py`（一本筋の両方向照合）の両方に PASS した状態。
-- **出力契約**: 統一ハイブリッド構造の公式21ブロックを満たす Markdown 目標設定ファイル**1本**（月報だけはその1ファイルの中が提出用セクション＋管理用セクションの2セクションに分かれる） + `validate-goal-output` と `validate-goal-linkage` の検証結果（それぞれの rc の値）。該当案件名は `tenant` 表記で統一する。
-- **境界**: 入力=過去目標 / 合宿情報 / ナレッジ JSON / 対話回答。出力=目標設定ファイル1本 + `02_Configs/Templates/Daily.md` の embed 参照更新（種別該当分）。ナレッジそのものの更新は `run-ubm-knowledge-sync` へ委譲する。
+- **ゴール**: 週報/月報/期報の目標設定・振り返り対話が北原さん式の統一ハイブリッド構造（公式21ブロック）で出力され、`validate-goal-output.py`（形式）と `validate-goal-linkage.py`（一本筋の両方向照合）の両方に PASS し、期報と月報が揃っている場合は `validate-cross-level.py`（層をまたぐ値の照合・IN3）にも PASS した状態。
+- **出力契約**: 統一ハイブリッド構造の公式21ブロックを満たす Markdown 目標設定ファイル**1本**（月報だけはその1ファイルの中が提出用セクション＋管理用セクションの2セクションに分かれる） + `validate-goal-output` と `validate-goal-linkage` の検証結果（それぞれの rc の値と引数）。期報と月報が揃っている場合は `validate-cross-level.py` の rc と引数も記録し、揃っていない場合は rc ではなく不適用（`not_applicable`）と記録する。該当案件名は `tenant` 表記で統一する。
+- **境界**: 入力=過去目標 / 合宿情報 / ナレッジ JSON / 対話回答。出力=目標設定ファイル1本 + `02_Configs/Templates/Daily.md` の embed 参照更新（種別該当分）。`（提出）` 付きの既存ファイルがある場合だけ、削除せず `05_Project/UBM/目標設定/archive/` へ移す（vault 上のファイル移動なので、external mutation preview の `--target-scope` と `--side-effect-summary` に移動元と移動先を含める）。ナレッジそのものの更新は `run-ubm-knowledge-sync` へ委譲する。
 - **統一ハイブリッド構造・粒度・採否・参照整合の定義正本**: `references/output-formats.md` + `references/data-contract.md`（公式21ブロックの順序）。**「公式21ブロック」は出力テンプレートの固定の見出し集合（21 は不変）。`output-formatter` の品質チェックリストの件数とは別物で、そちらは件数で呼ばない。**提出用セクションと管理用セクションの違い・売上目標/成果目標/行動目標の三層分離・行動目標の採否基準・一本筋の照合・継続売上と単発の分離も `output-formats.md` 内に置く（別ファイルへ散らさない）。`validate-goal-output.py` はこの正本に基づき公式21ブロックを検査する。
 
 ## End-to-End Flow
 
-`assets/execution-prompts.md` でフロー全体を把握し、以下の Phase を順次実行する（依存のないタスクは並列）。
+`assets/execution-prompts.md` でフロー全体を把握し、以下の Phase を順次実行する（依存のないタスクは並列）。`assets/execution-prompts.md` と `references/data-contract.md` は整形・検証・保存をまとめて「Phase 4」と呼ぶ。本表の Phase4-format〜Phase5-validate（Phase4b-submission を含む）がそれに当たる。
 
 | Phase | 責務 | 実行体 |
 |---|---|---|
@@ -172,7 +184,7 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 | Phase3-dialogue | 親が steps1-5 を参照し、現状振り返り〜最終確認の対話を進行。必要な場合だけ coordinator から読取専用の次問案を受ける | 本 skill（親対話）+ `phase3-coordinator`（任意の助言Task） |
 | Phase4-format | 目標設定テンプレートへ整形し、`agents/output-formatter.md` Layer 4 の品質チェックリスト（件数は正本側で増減するためここに書かない）を全項目確認する。行動目標は採否基準で1行ずつ判定する | `output-formatter`（Task） |
 | Phase4b-submission | **月報のときだけ**、同じファイルの先頭に提出用セクション（公式21ブロックを全件・見出しに「（提出）」を付ける・人数集約・本文に具体日を埋めない・行動目標はグループ見出しを置かず1行1行動・期日は管理用で逆算した値と同値）を置き、その後に管理用セクションを続ける | `output-formatter`（Task） |
-| Phase5-validate | `validate-goal-output.py`（公式21ブロック・逆算チェーン C1〜C6）→ `validate-goal-linkage.py`（一本筋の両方向照合）→ 期報と月報が揃っていれば `validate-cross-level.py`（層をまたぐ値の照合・IN3。週報があれば `--weekly`）の順で検証、最大3回まで改善してファイル保存。月報も1ファイルなので各スクリプトは1回ずつ。各 rc の値そのものと引数を記録する | `output-formatter` + scripts |
+| Phase5-validate | `validate-goal-output.py`（公式21ブロック・逆算チェーン C1〜C6）→ `validate-goal-linkage.py`（一本筋の両方向照合）→ 期報と月報が揃っていれば `validate-cross-level.py`（層をまたぐ値の照合・IN3。週報があれば `--weekly`）の順で検証、最大3回まで改善してファイル保存。月報も1ファイルなので各スクリプトは1回ずつ。各 rc の値そのものと引数を記録する（IN3 を適用しないときは `not_applicable`）。保存時に `（提出）` 付きの既存ファイルがある場合だけ、削除せず `archive/` へ移す | `output-formatter` + scripts |
 | Phase6-daily-update | 保存後、`02_Configs/Templates/Daily.md` の Obsidian embed 参照を最新目標へ更新（種別該当箇所のみ） | 本 skill |
 
 **所要時間目安**: 週報 5〜8分 / 月報 10〜15分 / 期報 15〜20分。
@@ -202,7 +214,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 progress/intermediate の不在、必須キー欠落、空または途中変更された `original_goal`、SHA-256 不一致は exit 非0で完了を阻止する。
 - **inner ループ (IN1)**: Phase5 で `validate-goal-output.py --file <保存先> --type <weekly|monthly|quarterly>` を実行（`bimonthly` は後方互換の別名として受理される）。統一ハイブリッド構造の公式21ブロック・NG表現・やらないこと3項目以上・逆算チェーン（C1〜C6）・シンプルさ上限（S1〜S3）に加え、**`--type` と本文タイトル見出しラベルの一致**（不一致は rc=1 で FAIL。種別の取り違えを止める停止条件）を出力前に検証し、違反0件になるまで output-formatter が最大3回改善する。上位層のファイルを `--peer PATH` で渡すと期アンカーの層間整合を WARN で併せて報告する（任意・rc には影響しない）。
 - **inner ループ (IN2)**: 続けて `validate-goal-linkage.py --file <保存先>` を実行する。IN1 の C4（所属不明）・C5（参照先の実在）は FAIL だが、**C6（支える行動の無い成果目標）は WARN で rc を上げず、括弧で始まる見出し名はすべて免除する**。IN2 は同じ照合規則（成果目標名の切り出し・空白を落とした完全一致・グループ見出しの解釈）を validator から読み込んで使い、支える行動の無い成果目標・`・` で複数の成果目標を指す見出し・`（土台）`／`（関係維持）` 以外の括弧名・月報のグループ見出しのラベルずれを rc=1 で止める。rc=0（未解決0件・分母あり）になるまで改善する。**rc=3 は「照合対象が1件も無い」= 判定していないので PASS として扱わない**。両スクリプトの rc は**値そのものと引数**を記録する（パイプを挟むと検査器の rc が読めなくなるので、出力をファイルへ落として `$?` を直後に取る）。
-- **inner ループ (IN3)**: 期報と月報が揃っている場合（週報があれば `--weekly` も渡す）、`validate-cross-level.py --quarterly <期報> --monthly <月報> [--weekly <週報>]` を実行する。**IN1 / IN2 はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ追随させ忘れても rc=0 で通る**（層をまたぐ値を突き合わせる口が存在しない＝分母0件）。この穴を IN3 が埋める。期アンカー8種（今期の売上目標／当月の売上目標／無料相談の延べ回数／1回目の実人数／月額継続コンサルの累積件数／現在事業パートナー数／現在のグリッドパートナー数／次回の壁打ち予定日）を三層で並記して照合し、**抽出不可は不一致と別枠で列挙して rc=1** にする。**rc=3 は抽出0件＝何も判定していないので PASS として扱わない**。週報がまだ無ければ `--weekly` を省略する。対象一覧の正本は `references/data-contract.md` §3.1.3。
+- **inner ループ (IN3)**: 期報と月報が揃っている場合（週報があれば `--weekly` も渡す）、`validate-cross-level.py --quarterly <期報> --monthly <月報> [--weekly <週報>]` を実行する。**IN1 / IN2 はどちらも1本のファイルしか見ないため、期報の数字を直して月報・週報へ追随させ忘れても rc=0 で通る**（層をまたぐ値を突き合わせる口が存在しない＝分母0件）。この穴を IN3 が埋める。期アンカー8種（今期の売上目標／当月の売上目標／無料相談の延べ回数／1回目の実人数／月額継続コンサルの累積件数／現在事業パートナー数／現在のグリッドパートナー数／次回の壁打ち予定日）を期報と月報（週報があれば三層）で並記して照合し、**抽出不可は不一致と別枠で列挙して rc=1** にする。**rc=3 は抽出0件＝何も判定していないので PASS として扱わない**。週報がまだ無ければ `--weekly` を省略する。対象一覧の正本は `references/data-contract.md` §3.1.3。
 - **outer ループ (OUT1)**: 週報/月報/期報を実際に生成し validate-goal-output が PASS することを受入テストで確認する。未達 findings は再実行で反映し、最大5周で収束させる。
 - **behavioral acceptance (OUT2)**: 静的 content-review とは分離し、`run-skill-live-trial` で AskUserQuestion gate → Phase3 対話 → Phase5 検証 → Phase6 Daily.md embed 更新と目標設定ファイル実生成までを実走証拠として確認する。
 
@@ -239,7 +251,7 @@ progress/intermediate の不在、必須キー欠落、空または途中変更�
 - **保存先**: `$UBM_VAULT_ROOT/05_Project/UBM/目標設定/` のみ（`UBM_VAULT_ROOT` 未設定時は self-relative 解決）。
 - **Daily.md 更新（Phase6）**: `$UBM_VAULT_ROOT/02_Configs/Templates/Daily.md` の該当 embed 行のみ正規表現で検出・置換し、他部分は一切変更しない。サマリー見出し（`【1週間の目標】`/`【1ヶ月の目標】`/`【3ヶ月の目標】`）は継続語彙で凍結（今週/今月/今期へ改名しない）。
 - **期報の正本**: `references/output-formats.md` の静的規則を A1 優先で正本化し、動的学習はスタイル参照に限定（見出し集合を上書きしない）。
-- **書き込み保護**: `ubm-write-path-guard` hook が `UBM_VAULT_ROOT` 配下の禁止パスへの Write|Edit|MultiEdit を fail-closed で阻む。許可は目標設定/ 保存と Daily.md embed 更新のみ。vault 外の plugin 同梱 data は保護対象外。
+- **書き込み保護**: `ubm-write-path-guard` hook が `UBM_VAULT_ROOT` 配下の許可範囲外への Write|Edit|MultiEdit を fail-closed で阻む。hook の許可範囲の正本は plugin 直下 `hooks/ubm-write-path-guard.py` の `ALLOWED_PREFIXES` / `ALLOWED_EXACT` で、`05_Project/` 全体・`02_Configs/Daily/` なども含み、本 skill の書き込み範囲より広い。本 skill が書くのは `05_Project/UBM/目標設定/`（`archive/` を含む）と Daily.md の embed 行だけで、その境界は hook ではなく本 skill の規則が守る。vault 外の plugin 同梱 data は保護対象外。
 
 ## Additional Resources
 

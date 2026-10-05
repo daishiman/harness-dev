@@ -25,7 +25,7 @@
       "description": "exact 13 P01..P13 nodes; validate-system-plan enforces phase exact-set and common parent/package",
       "items": {
         "allOf": [
-          {"$ref": "../../dev-graph/schemas/graph-node.schema.json"},
+          {"description": "node の形状は dev-graph plugin の schemas/graph-node.schema.json が正本。別 plugin の schema は install 配置では相対参照で届かないので $ref せず、dev-graph の register-package.py が自分の graph-node schema で検証する"},
           {
             "type": "object",
             "properties": {

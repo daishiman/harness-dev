@@ -2,12 +2,12 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-render",
-    "skill_md_sha256": "7097066208838d291de406e24ed4262ab2881cc9f481a142fcb3a27b78263eba"
+    "skill_md_sha256": "267450c5e5caeb6ac32d4737f9cc0626fc0263c1cdbc97cab636609022f7aa18"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile) の rubric 投影",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
+  "reviewed_at": "2026-10-04T22:31:13Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -17,25 +17,26 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "prompts 3 本 (R1-elicit, R2-plan, R3-render) の共有化で skill 固有行の欠落は 0 件。削除行はすべて prompt-common-layers.md に逐語で存在するか、5.1 行から fork 方針の接尾辞を外しただけで、Layer 1-3 の入力契約・出力契約・責務境界・受入条件、5.2 の目的と達成ゴール、5.3 の固有 checklist は全本に残っている (機械照合で不一致 0)。",
+      "共通層と固有記述の合成規則が prompt 側に明示されている (5.3 は共通項目と固有項目がすべて YES のときに到達)。共通 reference の 5.4 にある最大 5 周は SKILL.md の goal_seek.max_loops=5 と一致し、共通層と skill 固有記述の矛盾は 0 件。",
+      "reference_refs に prompt-common-layers.md を追加したことで、prompts が依存する共通層が SKILL.md 上で宣言され、live-trial-verdict.py の behavior closure (_BEHAVIOR_REF_KEYS が reference_refs を含む) に入る。共通層の書き換えが本 skill の live trial verdict を stale にするという reference の「読み方」節の主張は実装と一致している。",
+      "frontmatter の *_refs はすべて実在し、prompt-common-layers.md を宣言する SKILL.md 9 件と prompts から参照する skill 9 件が双方向に一致する。依存 script のうち validate-graph-schema.py の出力変更は互換キー (最上位の implementation_readiness/missing_sections) を残す加法的変更で exit code の意味も変わらず、render-graph-html.py と resolve-repo-context.py は今回の差分で変更されていないため、本文の記述と衝突しない。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] 各 prompt から `### 5.4 実行方式` の節見出しと本文が消え、Layer 5 の参照行へ委譲された。seven-layer-format.md の l5-contract v2.0.0 は従属者一覧で全 prompts を Layer 5 節構成 (5.1-5.4) の従属者としているため、prompt 単体で読むと 5.4 が欠ける。prompt-common-layers.md の Layer 5 節と合成すれば 4 節がそろい、lint-agent-prompt-content.py --mode prompt も通るため実行不能にはならず low に留める。prompt 側に 5.4 の見出しと参照行だけを残すと、単体で読んでも節構成が閉じる。",
+      "[low / smell] 「(skill root 起点)」の注記が Layer 4 の参照行にだけあり、Layer 5〜7 の参照行には無い。prompt ファイルのある prompts/ を起点に `../../references/` を解くと skills/references/ を指し、実在しない。SKILL.md の reference_refs と Layer 3 の「skill-relative reference から解決」で補えるため low に留める。4 本の参照行で起点の注記をそろえると読み違いの余地が消える。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+28 行) には共通 injection 以外の残差 1 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは FM/BD/PD/NM に相当する構造規範 (frontmatter 完備・*_refs 実在・effect と guard の対応・artifact_delivery の state 完備) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。未解決の medium 以上 finding が 0 件であるため PASS とする。",
+  "notes": "本 verdict は dev-graph prompts の共通層共有化 (未コミット差分) を受けた再束縛であり、content-review-protocol §incremental の focused combined review を独立 evaluator の 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: SKILL.md の差分 (frontmatter に reference_refs を 1 行追加) と prompts 3 本の差分を全行読み、削除行が prompt-common-layers.md に逐語で存在するか、5.1 行の fork 接尾辞を外しただけかを機械照合した (不一致 0)。新規 reference prompt-common-layers.md は全文を読み、frontmatter *_refs の実在と、宣言 skill と参照 skill の双方向一致を検査した。lint-agent-prompt-content.py --mode prompt (dev-graph 41 files)、lint-vendored-ssot.py、lint-sibling-plugin-paths.py はいずれも OK。採点の扱いを正確に述べる: ref-skill-design-rubric の 41 rule は機械実行しておらず、機械的に確認したのは構造規範 (frontmatter *_refs の実在、prompts の Layer 4-7 参照行と 5.3 固有項目の存在) に限る。よって数値 score は算出せず、verdict は combined review の単一判断に従う。high severity は 0 件、未解決の medium 以上 finding も 0 件であるため PASS とする。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。live trial 系の証跡 (criteria-test/scenario-verdict.json など) の target sha は本 review では更新されない。",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 2
   }
 }

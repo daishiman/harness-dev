@@ -82,9 +82,10 @@
 
 - `scripts/run-plugin-validate-strict.sh` (PKG-001)
 - `scripts/smoke-plugin-install.sh` (PKG-010)、`smoke-plugin-uninstall.sh` (PKG-011)、`smoke-plugin-upgrade.sh` (PKG-012)
+- `scripts/lint-pkg-009.py` (PKG-009)
 - `scripts/validate-plugin-permissions.py` (PKG-013a〜d)
 - `scripts/aggregate-pkg-findings.py` (Step 9 集約 + observable emit)
-- 外部 lint: `../../../skill-governance-lint/scripts/lint-external-refs.py` (PKG-009)、`../../../skill-governance-lint/scripts/lint-rubric-violation.py` (PKG-015)
+- 外部 lint: 兄弟 plugin の `skill-governance-lint/scripts/lint-external-refs.py` (PKG-009) と `skill-governance-lint/scripts/lint-rubric-violation.py` (PKG-015)。install 先では `../` で兄弟 plugin に届かないため、root は harness-creator 同梱の resolver `scripts/extract-plugin-root.py` で解決する。解決と起動は skill 内の wrapper `scripts/lint-pkg-009.py` と `scripts/run-pkg-015.py` が持つ
 - delegate: `Skill(assign-plugin-package-evaluator, context=fork)` (PKG-002〜008/014)
 
 ## Layer 4: 共通ポリシー層

@@ -25,13 +25,14 @@
 ## Layer 3: インフラ層
 - **入力**: R1 章立て構成 / `spec-state.json` / `fetched-references.json` / `../ref-system-design-knowledge/references/*.md` (設計知識・C04) / `../ref-system-design-knowledge/references/knowledge-catalog.json` (知識依存グラフ) / `../ref-system-design-knowledge/references/doctrine-anchor-registry.json` (doctrine anchor 写像)。
 - **決定論ヘルパ**: `scripts/compile-spec-doc.py` の `render_frontmatter` / `render_state_table` / `render_design_refs` / `render_citations` / `render_chapter`。知識反映順は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-knowledge-graph.py --profile knowledge --order`、doctrine 上流は `--profile doctrine` の `category_concern_mapping` を参照。
-- **設計知識対応**: カテゴリ→設計知識参照は `CATEGORY_DESIGN_REFS` (resource-map の read_when 対応を写像) を知識グラフ topo_order で並べ替えて反映。例: security→secure-by-design / backend→clean-architecture+api-design-patterns+ddd (depends_on 先の clean-architecture を先に踏まえる)。カテゴリ→concern→authority は doctrine-anchor-registry を正本とする。
+- **設計知識対応**: カテゴリ→設計知識参照は `CATEGORY_DESIGN_REFS` (resource-map の read_when 対応を写像) を知識グラフ topo_order で並べ替えて反映。例: security→secure-by-design / backend→ddd+clean-architecture+api-design-patterns (clean-architecture は ddd に、api-design-patterns は clean-architecture に depends_on するので、ddd → clean-architecture → api-design-patterns の順に踏まえる)。カテゴリ→concern→authority は doctrine-anchor-registry を正本とする。
 
 ## Layer 4: 共通ポリシー層
 - 各章 frontmatter に確定マーカー (status/category/aggregate/spec_cells) と `serves_goals` (上位概念トレース) を付与する。
 - 本文に (a) カテゴリ別収集状態表、(b) 設計知識cardの目的・解決問題・適用/非適用条件・トレードオフ/失敗モード・goal寄与、(c) 最新ドキュメント出典表を並べる。参照pathだけでは完了しない。
 - 出典は target の category (主たる章) で該当章へ割り当て、target が `also_categories` で宣言した章にも同じ出典を載せる。未割当は index へ回す。宣言の無い章へは推測で重複させない (複数章に載せるのは spec-state が宣言したときだけ)。
 - card全文の無目的な転載はしない。章のgoalとカテゴリに対応する深度項目を実体レンダリングし、適用理由を評価可能にする。
+- 逐語の描き方と既存章の片付けは SKILL.md の Key Rules 6-8 に従う (逐語をフェンスに閉じ込める・置き換え済み qa の旧版の印・漏れた見出しの移行)。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
 

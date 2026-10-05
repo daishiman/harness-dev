@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-youtube-ingest",
-    "skill_md_sha256": "212253e82a27a1f603b7d4ed6344f85f3886b2a08ee9c571fabefdf799a979e5"
+    "skill_md_sha256": "a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,26 +11,32 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 5
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-09-10T06:25:20Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:26Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "OUT1"],
     "positive_feedback": [
-      "本 branch の 4 SKILL.md 変更が「宣言を実体へ合わせる」方向で統一されている。combinators は本 branch 以前から 26 skill が持つ既存キーで、本 skill が足した 2 値は実際に持つ goal_seek ブロックと feedback_contract ブロックへ 1:1 に対応する。lint-goal-seek.py も rc=0。",
-      "IN1 の criterion が「exit0 は承認 waiver 込みの ACCOUNTABILITY_PASS も含むため、IN1 の機械判定は content 層（full_backfill_pass）で行い accountability 層とは分離する」と、判定に使ってはいけない信号を明示している。緑の出所を取り違えると全量性が静かに縮む種類の検査で、frontmatter の criterion 本文・本文の完了チェックリスト・inner ループ記述の 3 箇所が同じ分離を繰り返し述べており、携帯される評価基準（frontmatter）だけを読んだ量産先でも誤用しない。"
+      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
+      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
+      "『確認待ちの間は他の Bash が遮断されるので再解決しない』という注意は guard の実装 (完了も取消もされていない preview がある間、canonical でない Bash を deny する) と一致し、authorize や execute の直前に resolver を呼び直して遮断される事故を手順の側で先に塞いでいる。",
+      "<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則と、Runtime root contract の『literal placeholder を shell へ渡さない』規則の両方に収まり、置換規則を新しく増やしていない。allowed-tools は Bash で、resolver の呼び出しを妨げない。"
     ],
     "negative_feedback": [
-      "[smell/low] combinators に with-goal-seek を宣言したが、本文のゴールシーク節の見出しが '### ゴールシークループ' で、combinator が注入する '### ゴールシーク配線' という名前になっていない。そのため lint-goal-seek.py が「'### ゴールシーク配線' が無い」および「機械検証 bash の必須トークン（required_keys / original_goal_hash / hashlib.sha256）が不在」の WARN 2 件を出す（rc=0 なので violation ではない）。中身としては progress / intermediate.jsonl / original_goal / merged_directive_for_next / drift_signal の配線は本文に揃っており実害は小さいが、combinator 名を宣言した以上、見出し名を揃えるか、揃えない理由を本文へ 1 行残すのが筋。姉妹 skill の run-ubm-knowledge-sync は同じ宣言で warning 0 なので、plugin 内で書式が 2 通りに割れている。"
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
+      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 43 行目)、今回の guard block への 12 行追記で本文 55 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。",
+      "[low / 差分外の既存・継続] combinators に with-goal-seek を宣言しているが、本文に『### ゴールシーク配線』見出しが無く、lint-goal-seek.py が WARN を出す (rc=0)。姉妹 skill の run-ubm-knowledge-sync とは書式が割れている。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "CI:change-category-guard (PR #70 の lint-content-review.py --all が stale-sha 8 件で fail)",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "【profile=incremental】前回 verdict の結論を引き継がず独立に再評価した。incremental profile のため 30 思考法は実施しておらず、実施したとも申告しない。4 skill を 1 context で結合評価し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を一度に判定した。その単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側（4条件）の投影である。rubric 側の投影は同ディレクトリの rubric-verdict.json で、両者は同一の観測に基づく。 【読んだもの】content-review-protocol.md 全文 / content-review-verdict.schema.json 全文（実在パスは plugins/harness-creator/skills/run-build-skill/schemas/ 配下）/ scripts/lint-content-review.py 全文 / 評価対象 4 skill の SKILL.md 全文（本 skill は 215 行）/ git diff origin/main...HEAD の当該 4 SKILL.md 差分全文（本 skill の追加分は combinators: [with-goal-seek, with-feedback-contract] のみ）/ plugins/ubm-goal-setting/CHANGELOG.md の 0.3.40・0.3.41・0.3.42 / 新規 tests/test_notation_consistency.py 全文 / references/output-formats.md・references/data-contract.md の該当節 / scripts/validate-goal-output.py の定数と各 check。 【実行したもの（コマンドと実測結果）】(1) shasum -a 256 で本 skill の SKILL.md = 212253e82a27a1f603b7d4ed6344f85f3886b2a08ee9c571fabefdf799a979e5 を実測。本 verdict の skill_md_sha256 はこの実測値そのもので、手書換は一切していない。(2) python3 -m pytest plugins/ubm-goal-setting/ -q = 392 passed in 78.98s（exit 0）。(3) tests/test_notation_consistency.py -q = 24 passed。(4) validate-goal-output.py を importlib で読み込み C1 / C1c / C1e の検出力を合成行で実測（被評価物は変更していない）。(5) golden-sample-weekly.md の scratchpad 複製へ --type weekly = rc=0 / STATUS: PASS / PASS 32 件 / エラー 0・警告 0。(6) 違反注入実測で --type 取り違え・裸の数字（C1）・グループ金額不一致（C4b）がいずれも rc=1。(7) frontmatter 宣言 refs の実在を全件走査。本 skill は 19 件すべて実在、4 skill 合計 64 件で欠損 0。(8) lint 実行。lint-skill-description OK=187 VIOLATION=0、lint-feedback-contract --all = [OK] 74 loop-kind skills（本 skill は WARN 一覧にも live-trial baseline 免除一覧にも不在）、lint-config-version-sync OK、lint-artifact-delivery = 21 plugins OK、lint-entrypoint-artifact-first OK（119 inventory）、lint-runtime-portability OK、lint-script-naming VIOLATION=0、lint-skill-name ok、lint-skill-completeness --skills-dir plugins/ubm-goal-setting/skills = ok（6 skills, completeness）。(9) lint-goal-seek を本 SKILL.md へ実行 = rc=0、ただし WARN 2 件（下記 finding）。同 lint の CI 強制範囲が plugins/harness-creator/skills に限られることを run-ci-checks.sh と governance-check.yml で確認した。(10) combinators が本 branch 以前から 26 skill にある既存キーで値も 2 語に閉じていることを確認した。(11) 配布物 version が 4 箇所すべて 0.3.42 で一致。 【判定理由】(a) 矛盾 0。frontmatter の goal_seek / feedback_contract / artifact_delivery / external_mutation_guard の宣言と本文の記述が一致する。IN1 の「exit0 ではなく content 層 full_backfill_pass で判定する」という分離は frontmatter・完了チェックリスト・inner ループ記述の 3 箇所で同一に述べられており、緑の出所の取り違えを招く記述は無かった。(b) 漏れ 0。本 branch の追加は combinators 1 行のみで、その 2 値はいずれも実体を伴う。(c) 規約整合 = おおむね充足。ただし with-goal-seek を宣言しながら見出し名が combinator の規定名と異なる点を smell/low として記録した（rc=0 の WARN であり violation ではない）。(d) 依存関係整合 = 充足。宣言 refs 19 件全件実在、plugin 全体 392 passed。(e) rubric high severity 0。negative_feedback は low（smell 1 件）のみ。 【PASS の射程】design claim（静的設計 adequacy）に限る。behavioral acceptance は Gate D（run-skill-live-trial）の実走証拠を別途要し、本 verdict を流用しない。 【next_action】medium 以上の未解決 finding が無いため none。"
+  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+15/-3) のみ。guard block の差し替えで、親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う形へ変えた。 【読んだもの】SKILL.md 全文と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、ubm-goal-setting の .claude-plugin/plugin.json。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59 を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。goal_seek の fork が subagent である点と利用者確認の関係は既存設計のままで、本差分は触れていない (判定外)。(b) 漏れ 0 (medium 以上): PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: frontmatter の external_mutation_guard.runtime_ref は既に plugin: 記法。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で、継続分を含めて smell に計上した。criteria IN1 の検証経路は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

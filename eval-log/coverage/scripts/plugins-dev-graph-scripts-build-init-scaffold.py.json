@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/dev-graph/scripts/build-init-scaffold.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "実コードを読み、実テストとロールバックの実測で検証した。C24 (resolve-repo-context.py) で解決した repo の中に、6 つの content root と .dev-graph の config/state/graph/cache/locks/templates を欠けているときだけ作る。全パスを contained() で repo の中に閉じ込め、symlink や非ディレクトリは拒否する。既存の config/graph は、書き込む前に repo-config の schema と validate-graph-schema で検証し、通らなければ 1 件も書かずに exit 1 で止める。ファイルは tempfile と os.link による create-only で作るので、既存ファイル (利用者が編集した template を含む) を上書きしない。編集済みの template は残し、migration_preview に sha256 の差分だけを記録する。変更が 0 件で receipt があれば noop、変更したときだけ immutable な receipt を残す。--dry-run は書き込み 0 件。`# /// script` frontmatter あり。py_compile OK。TESTS: plugins/dev-graph/tests/test_build_init_scaffold.py 4 件全 PASS (8.84s。初回の scaffold と再実行の noop、編集済み template の保持、schema に通らない既存 config で書き込み 0 件)。指摘 (いずれも low): (1) 失敗時のロールバックは、計画した dir と作った file を消すが、_create_file の親 mkdir(parents=True) で作った dir (.dev-graph/state、receipts) は追跡しない。receipt の書き込みを失敗させた実測で、.dev-graph と .dev-graph/state が空のまま残った (データは失われず、再実行で回復する)。(2) ロールバックの経路にテストが無い。(3) receipt の名前は秒単位の時刻なので、同じ秒に並行して init すると path_appeared_during_init で止まる (fail-closed)。(4) frontmatter の requires-python だけが TOML 風の `=` 表記で、他のキーの `key: value` 表記と揃っていない。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

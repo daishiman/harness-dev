@@ -2,12 +2,12 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
-    "skill_md_sha256": "936d7ad778d4aade1428c8eef59e8c588e05841bce3dff73353e7fde78544806"
+    "skill_md_sha256": "047b6d1df9e565c5795d3bdb933682ce88c908275d052c110ee894beee9c0778"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "cr-artifact-delivery-v1 (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-20T00:00:00Z",
+  "reviewer": "pr83-followups focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-05T01:01:53Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -21,25 +21,37 @@
       "OUT5"
     ],
     "positive_feedback": [
-      "artifact_delivery の state machine が 72 skill で完全に同一 (6 state / 6 transition / pre_choice_forbidden 5 種 / accept_contexts evaluator=0,improver=0 / release・exhaustive = explicit-only) で、skill ごとの揺れが 0 件。契約が SSOT として振る舞っている。",
-      "artifact_delivery を持たない 27 skill は全て assign kind (10) と ref kind (17) で、成果物提示→選択の対象にならない kind だけが除外されている。除外規則が例外なく適用されている。",
-      "effect=external-mutation の skill は全て external_mutation_guard frontmatter と canonical receipt flow block の両方を持ち、非 external-mutation の skill には どちらも焼かれていない。双方向の対応が崩れていない。",
-      "frontmatter が宣言した *_refs は 72 件全件で実在を確認した。今回新設された参照 (run-build-skill の R5/R6 prompt・5 schema・4 script 等) も含めて欠損 0 件。"
+      "C01 OUT5 (project hook fallback) が prompt 上の約束から決定論 script に移った。SKILL.md の script_refs (15 行目)、手順 4 を委譲する段落 (136 行目)、R5-hooks の Layer 3 (32 行目) と Layer 6 (59 行目) が、同じ `build-project-hook-fallback.py --repo-root <path> --mode preview|apply|rollback [--manifest <path>]` を指す。どれも `.claude/settings.json` を Write/Edit や heredoc で直接書かないと明記しており、settings の書き手は script だけになった。",
+      "拒否診断の列挙が SKILL.md:136 と script で一致する。enabledPlugins と disableAllHooks は user→project→local→managed の順に畳むので、後の scope ほど強い Claude Code の優先順位どおりに実効値が出る (script 43 行目、149-158 行目)。`allowManagedHooksOnly` は managed scope だけで見る (166 行目)。他 scope の dev-graph hook は、plugin hooks.json の script 名で user/local/managed から探す (168-172 行目)。project 内に配線と異なる dev-graph hook があれば _merge が拒否する (179-182 行目)。link は symlink でないもの・壊れたもの・C24 の plugin_source と realpath が違うものを拒否する (136-146 行目)。どれも FallbackError として書込み 0 / exit 1 / `status=rejected` で返る (367-370 行目)。test は 8 条件 (plugin 有効、disableAllHooks、managed only、local の重複、project の重複、不正 JSON、別 directory を指す link、directory の link) で、settings・config・manifest がどれも変わらないことを確かめている。",
+      "追記だけで merge したことを機械的に確かめている。_verify (202-216 行目) は、hooks 以外の top-level key と既存 hook group (index 単位) の正規化 JSON の sha を前後で比べ、配線する identity の重複も数え、どれか 1 つでも当たれば `merge_not_additive` で拒否する。直列化は key を sort しない (82-84 行目) ので利用者の key 順が残る。test は top_level_keys=2・hook_groups=1・changed=0・duplicate_registrations=0 と key 順の保持を確かめている。",
+      "書込み順と rollback の設計が堅い。manifest は os.link の create-only で書換えより先に残し (234-245 行目、304-305 行目)、settings と config は mkstemp と os.replace で atomic に置き換え、途中で失敗したら書いた file を before へ戻す (306-314 行目)。rollback (325-351 行目) は、どれか 1 file でも書き換える前に、全 file を before 一致 (already_restored)・after 一致 (restore)・それ以外 (rollback_drift) に分ける。だから drift があれば何も書かずに止まり、再実行は noop になる。test は byte 単位の完全復元、2 回目の noop、drift の拒否、settings が無かった場合の新規作成と rollback での削除を確かめている。",
+      "init receipt と hook manifest の書き手が分かれ、4 か所で食い違わない。SKILL.md:138 は init receipt の hook_source を「選んだ値の記録」とし、settings の変更は手順 4 の script が別の manifest として残すと書く。R5 Layer 6 は manifest の置き場 (`.dev-graph/state/receipts/hook-fallback-<UTC>.json`) と、拒否診断として `status=rejected` の `findings` をそのまま返すことを定める。build-init-scaffold.py は settings に触れない (argparse help 245 行目)。script が config に書く `claude_hooks.source=project` は repo-config.schema.json の enum (plugin|project|disabled) にあり、書く前に schema で検証する (274-278 行目)。",
+      "command の写し替えが hooks contract の 8 行目に従っている。`${CLAUDE_PLUGIN_ROOT}` を `${CLAUDE_PROJECT_DIR}/<project_plugin_link>` に置き換え、置き換え残りがあれば `plugin_hook_unmapped` で拒否する (118-129 行目)。hooks/ の 2 script は CLAUDE_PLUGIN_ROOT を参照していない (grep で 0 件) ので、project 経由でも同じに動く。test は写し替えた全 command の script が link 経由で実在することを確かめている。PreToolUse を含む全 4 event を一度にまとめて配線する。",
+      "既存 verdict の low 4 件を確かめた。どれも今回の差分では解消していない。R2-plan.md・R3-init.md・R4-template.md と build-init-scaffold.py は前回の verdict (2026-10-04T22:53:58Z) より前に更新されたまま変わっておらず、指摘した行 (R4 16 行目・20 行目・59 行目、R2 59 行目、scaffold 171 行目と 216-228 行目) はそのまま残る。このうち R2 の plan digest の件は、新しい script も R2 の plan を入力に取らないので、R5 にも広がった (negative_feedback に追記した)。"
     ],
     "negative_feedback": [
-      "[low / smell] Pre-choice section の「accept-as-is は mutation を実行せず handoff 完了」は、成果物そのものが外部 mutation である skill (例: run-ubm-journal の Daily 書き出し) では「最小の実成果物」と「mutation を実行しない」のどちらを取るかが本文だけからは一意に読めない。同 section の「最小の実成果物 *または* remote mutation preview」が分岐の意図を示しており、remote 副作用は preview、ローカル成果物は現物、と読むのが整合的だが、この読み分けは本文に明示されていない。実行不能にはならないため low に留める。"
+      "[low / smell] 前回から残る (今回の差分は触れていない)。build-init-scaffold.py の rollback は plan の directory だけを made_dirs に記録し (216-222 行目)、_create_file が親として作る `.dev-graph/state/` と `.dev-graph/state/receipts/` を記録しない (171 行目)。書込み途中の失敗で空の directory が残る。file は残らず、再実行も妨げない。",
+      "[low / 不整合] 前回から残る。R4 の出力契約 (20 行目) は「同 digest の保持 (`preserved`)」と書くが、script の `preserved` には利用者が編集した template も入る (133 行目)。同 digest の保持は「`preserved` のうち template 配下で `migration_preview` に無いもの」が正確である。",
+      "[low / 漏れ] 前回から残る。R4 の Layer 6 (59 行目) は R3 が起動した script の結果から template の分を検証すると定めるが、Layer 2 の入力契約 (16 行目) にその結果が無い。",
+      "[low / 不整合] 前回から残り、今回 R5 にも広がった。R2 の Layer 6 (59 行目) は「R3/R4/R5 が同一 plan digest を消費する」と書くが、build-init-scaffold.py に続いて build-project-hook-fallback.py も R2 の plan を入力に取らず、自前の preview を作る。R5 の preview と apply は別々に起動され、apply は preview の digest を受け取らずに作り直す (merge の結果は _verify で確かめるので安全性は保たれている)。R2 の plan と script の preview を突き合わせる手順は、どこにも書かれていない。",
+      "[low / 漏れ] rollback_drift から戻る道が無い。rollback は全 file を照合してから書くため (335-344 行目)、apply の後に settings.json と config.json のどちらか一方でも書き換わると、もう一方も含めて何も戻せない。SKILL.md:136 は skill が settings を直接書くことを禁じており、hooks contract の 9 行目は `source=plugin` に戻すとき project 側の dev-graph hook を除去するよう求める。それなのに drift の後でこの要求を満たす手段が定義されていない。settings.json は利用者や他の tool がよく書き換える共有 file なので、drift は実際の運用で起きやすい。fail-closed で失うものは無いので low とする。対案は、追加した group が無変更のときだけそれを外し、残りを group hash で検証する逆 merge の mode を足すか、drift 時の手順を R5 に書くことである。",
+      "[low / 漏れ] plugin 既定のときの「plugin-managed 判定」を誰が出すかが定まっていない。R5 の出力契約 (20 行目) には plugin-managed 判定があり、完了チェックリストは「effective hook は plugin または許可済み fallback の一経路だけ」を求める。一方、今回の Layer 3 (32 行目) は `hook_source=plugin` では script を起動せず「settings に触れない」と書く。これでは、以前の fallback で残った project 側の dev-graph hook (hooks contract 9 行目が除去を求めるもの) を plugin モードで見つける手段が無い。「触れない」を書込みの禁止に限ると明記し、Read での診断を残すか、script に読取り専用の診断を足すと閉じる。",
+      "[low / 漏れ] managed 診断が読むのは既定の 1 file だけである。MANAGED_DEFAULT (40-41 行目) は macOS と Linux の path しか持たず、Windows では `/etc/claude-code/managed-settings.json` を見て「無い」と判定する。MDM/OS policy や server-managed で配られた `allowManagedHooksOnly`・`disableAllHooks` も見ない。その場合 apply は `status=applied` を返すが、hook は実際には動かない。hooks contract の 7 行目 (登録済みと誤報しない) に照らすと、`managed_settings_absent` の note だけでは弱い。SKILL.md:136 の「managed settings を読んで」も、file だけに読める範囲へ絞ると正確になる。",
+      "[low / smell] rollback manifest は settings.json の全文を `before_text` として `.dev-graph/state/receipts/` へ写す (288-290 行目)。preview も merge 後の settings 全体を `after_settings` として stdout に出す (297 行目)。settings.json の `env` に認証情報があれば、それが receipt と出力へ複製される。共通層 Layer 4 (receipt と出力に secret を埋め込まない) と緊張関係にある。settings.json は共有 file なので新たな露出は小さいが、manifest には追加した group と before の sha だけを残して逆 merge で戻すか、`env` を伏せると規約に沿う。",
+      "[low / 不整合] SKILL.md:136 は「全 event を `(event, matcher, command)` 単位で追記 merge」と書くが、script は (event, matcher, command) を同一性の判定に使うだけで、追記は hook group 単位で行い、一部だけ登録済みの group は拒否する (187-198 行目)。今の hooks.json は 1 group に 1 hook なので、挙動の差は出ない。また init 側の usage (134 行目) には `[--config <path>]` があるのに、手順 4 の usage (SKILL.md:136、R5 32 行目) には無い。既定以外の config path で init した repo では `config_missing` で止まる (fail-closed)。",
+      "[low / smell] apply が書込み途中で失敗すると、in-process で files は before へ戻るが、先に書いた manifest は `status=applied` のまま残る。stdout は OSError として `status=error`・`write_count=0` を返す (311-314 行目、371-373 行目) ので、disk 上の manifest 1 件と報告が食い違う。この manifest で rollback すると already_restored の noop になるので害は無い。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:pr83-followups",
     "next_action": "none"
   },
-  "notes": "本 verdict は artifact-delivery-v1 の一律 injection によって 72 skill の SKILL.md が同時に変わったことを受けた再束縛であり、content-review-protocol §incremental のfocused combined review を 1 context で実行し (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: 72 件の差分を共通テンプレートと残差へ機械分類し (46 件は残差0)、残差のある 26 件は残差行を全て読み、差分の大きい 4 件は差分全体を読んだ。(c)(d) は 72 件全件へ機械検査した (frontmatter *_refs の実在、effect=external-mutation と external_mutation_guard 宣言・guard block の双方向対応、artifact_delivery の 6 state 完備、assign/ref kind 27 件の一律除外)。 本 skill の差分 (+29 行) には共通 injection 以外の残差 2 行があり、その全行を読んで判定した。残差は (1) effect frontmatter の補完、(2) 完了条件・description・phase 表を pre-choice / post-choice へ書き分ける usable-first 化、(3) 直書きの外部 mutation argv を <MUTATION_ARGV_JSON> 経由の canonical receipt flow へ差し替え、のいずれかに収まっており、frontmatter・本文・phase 表・完了条件が同じ方向へ揃って更新されている。 未解決の medium 以上は 0 件、残る low 1 件は本文の読み分けが暗黙という記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。",
+  "notes": "builder とは別 context の独立 evaluator が、content-review-protocol の incremental (focused combined review) で PR #83 follow-up の変更集合を評価した。この変更集合に対する最初の review なので iteration は 1 とした。(a) 矛盾なし (b) 漏れなし (c) 記述規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。30 思考法は実施しておらず、実施したとも申告しない。SKILL.md の sha256 は前回 (5fd9f5f4...) から 047b6d1d... に変わった。差分は、script_refs への build-project-hook-fallback.py の追加、手順 4 を委譲する段落、Receipt の段落の括弧書きである。確かめたこと: (1) SKILL.md の全文と HEAD からの差分、R5-hooks.md の全文と差分を読んだ。更新時刻から、前回の verdict の後に変わったのは SKILL.md・R5-hooks.md・新しい script と test だけであることを確かめた。(2) build-project-hook-fallback.py (377 行) を全行読み、SKILL.md:136 と R5 の Layer 2/3/6 に照合した。照合した項目は、拒否診断の種類、追記 merge と自己検証、write-ahead manifest、atomic replace、rollback の 3 分岐、config の source 更新である。(3) 依存先として、resolve-repo-context.py の plugin_source と local_state_paths、_common.py の contained と utc_now、hooks/hooks.json の 4 event、hooks/ の 2 script の環境変数への依存 (CLAUDE_PLUGIN_ROOT は 0 件)、repo-config.schema.json の claude_hooks.source の enum、references/claude-code-hooks-contract.md、build-init-scaffold.py の hook_source の扱いを読んだ。(4) test_build_project_hook_fallback.py (4 本) を読み、`python3 -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_build_project_hook_fallback.py` を実行して 4 passed だった。(5) lint-prompt-contract-drift.py --strict-tools は init の prompt 5 本で fatal 0 / warn 0 だった。lint-prompt-placement.py・lint-sibling-plugin-paths.py・lint-script-naming.py・validate-frontmatter.py (run-dev-graph-init) も OK だった。high/medium は 0 件である。low は 10 件で、内訳は前回から残る 4 件 (うち 1 件は R5 にも広がった) と、今回の script と記述にかかわる 6 件である。どれも fail-closed か記述の精度の問題で、判定は変えない。PASS の射程は design claim (静的設計 adequacy) に限る。実行挙動の受入れは、OUT1 などの live-trial 系 criterion の実走証拠が別に要る。",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 4,
+    "inconsistency": 3,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 3
   }
 }

@@ -45,6 +45,7 @@ script_refs:
   - scripts/smoke-plugin-upgrade.sh
   - scripts/sandbox-plugin-lifecycle.py
   - scripts/validate-plugin-permissions.py
+  - scripts/lint-pkg-009.py
   - scripts/run-pkg-015.py
   - scripts/aggregate-pkg-findings.py
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
@@ -167,7 +168,7 @@ output_dir: "eval-log/<plugin>/"               # 既定値、27章 §3.1 規約
    │     Skill(assign-plugin-package-evaluator, target_plugin=<name>, context=fork)
    ▼
 [Step 3] PKG-009 外部参照ゼロ
-   │     ../../../skill-governance-lint/scripts/lint-external-refs.py --skills-dir plugins/<name>/skills --fail-on-external
+   │     scripts/lint-pkg-009.py --skills-dir plugins/<name>/skills --fail-on-external
    ▼ (phase >= 1)
 [Step 4] PKG-010 install smoke
    │     scripts/smoke-plugin-install.sh
@@ -212,6 +213,7 @@ Phase 別の実行 Step は `workflow-manifest.json phases[].id` 参照。
 3. **PKG-013 sub-check の合算**: 1 件でも fail なら PKG-013 全体を fail として集約。サマリ表記は `PKG-013(a:pass, b:fail, c:pass, d:pass)`
 4. **35章 observable 配線の二重発火禁止**: 1 run につき 1 line。複数 PKG fail でも `pkg_check_failed` event は集約して 1 件
 5. **`eval-log/<plugin>/` の append-only**: 過去ログを上書き禁止（27章 §10 アンチパターン #6 準用）
+6. **兄弟 plugin `skill-governance-lint` が未導入の環境**: PKG-009 (`lint-pkg-009.py`)、PKG-010 (`sandbox-plugin-lifecycle.py`)、PKG-015 (`run-pkg-015.py`) は同梱 resolver で兄弟 plugin を探し、見つからなければ推測 path で lint を呼ばずに止まる。PKG-009/015 は停止理由を `status: fail` のログに残すので、skill-governance-lint を install してから再実行する
 
 ## Additional Resources
 
@@ -224,6 +226,7 @@ Phase 別の実行 Step は `workflow-manifest.json phases[].id` 参照。
 - `scripts/smoke-plugin-upgrade.sh` — PKG-012
 - `scripts/sandbox-plugin-lifecycle.py` — PKG-010〜012 を一時 Claude home で実行する決定論 lifecycle harness
 - `scripts/validate-plugin-permissions.py` — PKG-013a〜d
+- `scripts/lint-pkg-009.py` — skill-governance-lint の外部参照 lint を resolver 経由で起動 (PKG-009)
 - `scripts/run-pkg-015.py` — rubric lint の bootstrap/breach を PKG status へ正規化
 - `scripts/aggregate-pkg-findings.py` — Step 9 集約
 - 子 skill: `assign-plugin-package-evaluator` (PKG-002〜008, PKG-014)

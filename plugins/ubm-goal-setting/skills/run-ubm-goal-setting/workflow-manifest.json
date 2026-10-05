@@ -90,7 +90,7 @@
       "parallel": false,
       "actor": "output-formatter",
       "input": "draft goal-setting content",
-      "output": "Markdown file candidate in the 21-item hybrid structure",
+      "output": "Markdown file candidate in the hybrid structure with the 21 official blocks",
       "gate": "every item of the output-formatter Layer 4 quality checklist is satisfied before deterministic validation (the item count lives only in that checklist and is not restated here)",
       "resourceIds": ["../../agents/output-formatter.md", "references/output-formats.md"]
     },
@@ -113,9 +113,14 @@
       "parallel": false,
       "actor": "output-formatter + scripts",
       "input": "Markdown file candidate and goal_type; the quarterly / monthly / weekly files when they exist",
-      "output": "the raw rc of each script and the arguments used",
+      "output": "the raw rc of each script and the arguments used (not_applicable instead of an rc for validate-cross-level.py when the quarterly or monthly file is missing); the saved goal file, and only when an existing file with （提出） is found, that file moved (not deleted) to 05_Project/UBM/目標設定/archive/",
       "gate": "validate-goal-output.py exits 0 and validate-goal-linkage.py exits 0 (rc=3 means nothing was checked and is a failure); when the quarterly and monthly files both exist, validate-cross-level.py also exits 0 (rc=3 is a failure; pass --weekly only when the weekly file exists); all within 3 formatter repair attempts",
-      "command": "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type> && python3 scripts/validate-goal-linkage.py --file <candidate> && { [ -z \"<quarterly>\" ] || [ -z \"<monthly>\" ] || python3 scripts/validate-cross-level.py --quarterly <quarterly> --monthly <monthly> [--weekly <weekly>]; }",
+      "commands": [
+        "python3 scripts/validate-goal-output.py --file <candidate> --type <goal_type> > <log> 2>&1; echo \"rc=$?\" >> <log>",
+        "python3 scripts/validate-goal-linkage.py --file <candidate> > <log> 2>&1; echo \"rc=$?\" >> <log>",
+        "python3 scripts/validate-cross-level.py --quarterly <quarterly> --monthly <monthly> > <log> 2>&1; echo \"rc=$?\" >> <log>"
+      ],
+      "commands_note": "run every command and record each rc separately (no && chaining, so a failure of the first does not hide the others). Append --weekly <weekly> to the validate-cross-level.py command only when the weekly file exists. Skip validate-cross-level.py when the quarterly or monthly file is missing and record not_applicable instead of an rc.",
       "fatal_exit_codes": [1, 2, 3],
       "resourceIds": ["scripts/validate-goal-output.py", "scripts/validate-goal-linkage.py", "scripts/validate-cross-level.py", "references/data-contract.md"]
     },

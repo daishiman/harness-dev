@@ -61,7 +61,7 @@
 | coordinator | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/agents/phase3-coordinator.md` | 精神論排除・行動具体性の合格基準を確認するとき |
 
 ### 3.2 外部ツール / API
-- 保存同意時のみ Write で session-id 配下へ記録し、`validate-consult-session.py` で検証する。
+- record は同意に依らず `validate-consult-session.py` で検証し（false は `--ephemeral` で検証した後に破棄する）、保存同意時のみ Write で session-id 配下へ記録する。
 
 ## Layer 4: 共通ポリシー層
 

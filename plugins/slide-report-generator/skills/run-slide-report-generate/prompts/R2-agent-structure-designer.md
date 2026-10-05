@@ -144,7 +144,7 @@ last-audited: 2026-07-05
 
 ## 5.3 完了チェックリスト (ゴール到達の停止条件)
 各項目は第三者が客観的に YES/NO を判定できる状態基準として記述する。全項目が YES になった時点でゴール到達とみなす。
-- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が装飾・強弱の宣言に先行していることの機械証明）
+- [ ] 構成着手前に information-priority-map.json を出力し、`python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-information-priority.py <出力先>/information-priority-map.json` が exit 0 である（順位の確定が装飾・強弱の宣言に先行していることの機械証明）
 - [ ] 読者価値ブリーフが map の `context_of_use`（audience / primary_tasks の頻度・失敗コスト / environment / expertise）へ写され、group の rank_rationale が「重要だから」でなく task 頻度 × 失敗コストで書かれている
 - [ ] 落とした素材・加工した素材が map に reason 付きで残り、「検討して落とした素材」と「見落とした素材」が区別できる
 - [ ] slideType の選定が map の `form_selection` に候補と不採用理由つきで記録され、decision-tree を免罪符にした早期形式固定になっていない

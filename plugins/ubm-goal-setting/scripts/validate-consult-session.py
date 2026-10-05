@@ -51,8 +51,9 @@ def detect_transcript_elements(transcript: list[dict]) -> dict[str, bool]:
 
     user_verbalized は role=user の turn 本文のみを根拠とする
     (assistant 発話内の「ユーザー:」文字列は provenance にならない)。
-    next_step は 4 要素目「ユーザーが選んだ収束 lane の締め」を表す。action lane は
+    next_step は 4 要素目「どちらかの lane の締めがあること」を表す。action lane は
     次の一歩と現状/ゴール/ギャップ、reflection lane は再開条件と見えてきたこと/まだ決めないことで満たす。
+    record の closure.type と transcript の締めの lane が一致するかは、本関数も validate() も検査しない。
     """
     assistant_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "assistant")
     user_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "user")

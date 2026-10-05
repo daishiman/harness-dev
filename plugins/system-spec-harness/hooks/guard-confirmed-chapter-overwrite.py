@@ -5,6 +5,7 @@
 # purpose: 確定済み仕様章 (system-spec/ の status:confirmed 章 かつ 正本 spec-state.json の
 #          対応セルが『確定』・非再オープン) と 正本 spec-state.json 自身への Write/Edit/Bash 動的書換を
 #          PreToolUse で遮断する defense-in-depth の層別 fail-closed hook (要件 C3 の派生安全要件)。
+#          Bash はコマンド文字列の字面ではなく書込み先の実パスで判定する。
 #          正本防御は C01/C03 の単一 writer/transition gate。本 hook は二重化の補助防御。
 #          正本位置は spec-state-contract.md「正本位置」節で確定した
 #          $CLAUDE_PROJECT_DIR/system-spec/spec-state.json の 1 経路のみ (配下 rglob 探索は持たない)。
@@ -43,16 +44,25 @@ Write|Edit:
   それ以外 (通常ファイル・未確定/再オープン章・新規章・確定セルなき spec-state) は exit0 で素通し。
 
 Bash:
-  読み取り専用コマンド (cat/grep/ls 等・書込指標なし) は保護パス参照でも exit0。
-  書込コマンド (リダイレクト/sed -i/tee/cp/mv/rm/dd/truncate/python の open(...,'w') 等) が
-    - 正本 spec-state.json (system-spec/spec-state.json) を書換対象にする
-    - 解決可能な確定章を書換対象にする
-    - 保護領域 (system-spec/ 配下・パス境界一致) を参照する曖昧な動的書換 (glob/変数/find 経由) である
-  いずれかなら安全側で exit2。再オープン章・新規章への具体的書込は通す。
-  判定は `system-spec/` をパス境界 (完全なパスセグメント) として扱い、自plugin パスの
-  `system-spec-harness/` 等を部分文字列で誤検出しない。
+  コマンド文字列に保護パスが現れるかではなく、書込み先の実パスで判定する。書込み先として集めるのは
+  出力リダイレクト先、変更系コマンド (sed -i/tee/cp/mv/rm/dd/truncate/install/ln) の対象引数
+  (cp/mv/install/ln の宛先がディレクトリなら <宛先>/<元の basename>)、python (-c と heredoc の本文) の
+  open(...,'w'|'a'|'x'|'+')・Path.write_text・os.remove・shutil.move 等の対象引数。
+  bash -c / eval は中身を同じ規則で再帰的に解析する。heredoc の本文はコードとして実行される
+  (python/bash の stdin) ときだけ解析し、cat > f <<EOF のようなデータ本文は書込み先にしない。
+    - 書込み先が 正本 spec-state.json (system-spec/spec-state.json) か、実パス (symlink 解決後) が
+      確定章なら exit2。
+    - 書込み先を静的に特定できない (変数/glob/コマンド置換/find -exec/xargs 経由) 書込みがあり、
+      かつコマンドが保護領域 (system-spec/ 配下・パス境界一致) を参照するときは安全側で exit2。
+      ただし書込み先の basename が静的に読め、.md でも spec-state.json でもなければ保護対象に
+      なりえないので曖昧扱いしない ("$OUT/progress.json" や rm -rf **/__pycache__ は通す)。
+    - それ以外 (読み取りのみ・保護領域外への書込み・再オープン章・新規章への具体的書込) は exit0。
+  診断のために system-spec/ のパスをデータや読み取り元として書き、書込み先は eval-log/ 等の保護領域外、
+  というコマンドは通す (C19 live trial f11 の誤検知)。`system-spec/` はパス境界 (完全なパスセグメント)
+  として扱い、自plugin パスの `system-spec-harness/` 等を部分文字列で誤検出しない。
+  引用が閉じない等で shell として解析できないときは、書込み指標があれば書込み先不明として扱う。
 
-fail-closed 方針 (層別): 正本 spec-state を参照する危険な動的 Bash 書換 と、正本 spec-state 解決不能な
+fail-closed 方針 (層別): 書込み先を静的に特定できず保護領域を参照する Bash 書換 と、正本 spec-state 解決不能な
 confirmed 章 Write/Edit のみ安全側で拒否する (計画 C11 exit_semantics=fail-closed-exit2)。それ以外の章判定は
 「明確に protected と判定できないなら通す」を基本にする (誤爆回避優先)。全書換経路の正本防御は
 C01/C03 の単一 writer/transition gate が担う。本 hook は補助 (二重化)。
@@ -68,9 +78,11 @@ apply-spec-transition への block 検査組込は required-info 回答スキー
 """
 from __future__ import annotations
 
+import ast
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 
@@ -88,7 +100,7 @@ TERMINAL_STATES = {"確定", "対象外"}
 # (reopened_from/reopen_reason) + 後方互換キー。いずれかがあれば当該セルは R4-reopen 済み。
 _REOPEN_KEYS = ("reopened_from", "reopen_reason", "reopened", "reopen", "reopened_at", "reopened_by")
 
-# system-spec/ を参照する書込で in-place 変更を行うツール群 (対象ファイルを引数で受ける)。
+# shell として解析できないときの字面の書込み指標 (in-place 変更を行うツール群)。
 _MUTATION_TOOLS = (
     (re.compile(r"\bsed\s+(?:-[a-zA-Z]*i|--in-place)\b"), "sed -i"),
     (re.compile(r"\btee\b"), "tee"),
@@ -100,7 +112,7 @@ _MUTATION_TOOLS = (
     (re.compile(r"\binstall\b"), "install"),
     (re.compile(r"\bln\b"), "ln"),
 )
-# python ワンライナ等での書込操作。
+# python のコードを構文解析できないときの字面の書込み指標。
 _PY_WRITE = re.compile(
     r"""open\s*\([^)]*['"][wax]\+?b?['"]"""
     r"""|write_text\s*\("""
@@ -111,11 +123,43 @@ _PY_WRITE = re.compile(
 )
 # 出力リダイレクト (`>`/`>>`) の対象トークン。`2>&1` 等の fd 複製は (?!&) で除外。
 _REDIRECT = re.compile(r"""\d*>>?\s*(?!&)("[^"]*"|'[^']*'|[^\s;|&>]+)""")
-# 曖昧な動的書換 (target を静的に列挙できない) を示す指標。
-_DYNAMIC = re.compile(r"[*?\[]|\$|`|\bfind\b|\bxargs\b")
+# 書込み先トークンが静的に決まらない (変数/コマンド置換/glob/brace 展開) ことを示す文字。
+_DYN_CHARS = re.compile(r"[$`*?\[\]{}]")
 # 保護領域 (system-spec/ ディレクトリ) をパス境界 (完全なパスセグメント) で参照しているか。
 # 前後をデリミタ/末尾で束ねるため、自plugin パスの `system-spec-harness` (直後が '-') には発火しない。
 _PROTECTED_SEG = re.compile(r"""(?:^|[\s;|&<>()'"=/])system-spec(?:/|[\s;|&<>()'"]|$)""")
+
+# ── Bash 書込み先の抽出に使う表 ──
+# heredoc の開始 (`<<EOF` / `<<-'EOF'` / `<<"EOF"`)。here-string `<<<` は除く。
+_HEREDOC_OP = re.compile(r"""(?<!<)<<(-?)[ \t]*(?:'([^'\n]+)'|"([^"\n]+)"|\\?([A-Za-z_][A-Za-z0-9_]*))""")
+_HEREDOC_MARK = re.compile(r"__HEREDOC_(\d+)__")
+_SHELL_PUNCT = "();<>|&\n"
+# 出力リダイレクト演算子 (`>`/`>>`/`&>`/`>|`/`>&`/`<>`)。
+_OUT_REDIRECT_OP = re.compile(r"(?:>>?|>\||>&|<>)$")
+_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+_PYTHON = re.compile(r"^(?:python|pypy)[0-9.]*$")
+_WRAPPERS = {"sudo", "env", "command", "nohup", "time", "exec", "nice"}
+# コマンドの前に置かれる予約語 (`for ...; do sed -i ...` の sed をコマンドとして読むため飛ばす)。
+_KEYWORDS = {"do", "then", "else", "elif", "if", "while", "until", "!", "{"}
+_SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
+# 対象ファイルを引数で受けて変更するコマンド (find -exec / xargs 経由の検出にも使う)。
+_MUTATORS = {"sed", "tee", "cp", "mv", "rm", "dd", "truncate", "install", "ln", "unlink", "shred"}
+# 値を取るオプション (その次のトークンは書込み先ではない)。
+_VALUE_OPTS = {
+    "cp": {"-S"}, "mv": {"-S"}, "ln": {"-S"}, "install": {"-m", "-o", "-g", "-S"},
+    "truncate": {"-s", "-r"},
+}
+# python: builtin open と同じ引数順の open。
+_PY_OPENERS = {"open", "io.open", "codecs.open", "gzip.open", "bz2.open", "lzma.open"}
+# python: 関数名 -> 書込み先になる位置引数の番号。
+_PY_FUNC_WRITERS = {
+    "os.remove": (0,), "os.unlink": (0,), "os.rename": (0, 1), "os.replace": (0, 1),
+    "shutil.copy": (1,), "shutil.copy2": (1,), "shutil.copyfile": (1,),
+    "shutil.move": (0, 1), "shutil.rmtree": (0,),
+}
+_PY_MODE = re.compile(r"^[rwaxbtU+]+$")
+# 入れ子の bash -c / eval を解析する深さの上限 (超えたら書込み先不明として扱う)。
+_MAX_DEPTH = 3
 
 
 # ── パス種別判定 ────────────────────────────────────────────────────────────
@@ -359,8 +403,10 @@ def spec_state_has_confirmed_cell(root: Path) -> bool:
     return False
 
 
-# ── Bash 解析 ───────────────────────────────────────────────────────────────
+# ── Bash 解析 (書込み先の実パスで判定) ─────────────────────────────────────
+# 書込み先候補の列は str (書込み先のパス) と None (書込みはあるが書込み先を静的に特定できない) からなる。
 def _redirect_targets(cmd: str) -> list[str]:
+    """字面の出力リダイレクト先 (shell として解析できないときの代替経路)。"""
     out = []
     for m in _REDIRECT.finditer(cmd):
         t = m.group(1).strip().strip('"').strip("'")
@@ -369,23 +415,331 @@ def _redirect_targets(cmd: str) -> list[str]:
     return out
 
 
-def _system_spec_md_tokens(cmd: str) -> list[str]:
-    """コマンド中の system-spec/ 配下 .md らしきトークンを抽出 (パス境界判定)。
+def _split_heredocs(cmd: str) -> tuple[str, list[str]]:
+    """heredoc の本文を shell 部から切り離す。
 
-    system-spec を完全なパスセグメントとして持つトークンのみを拾い、自plugin パスの
-    `system-spec-harness/...md` (system-spec が独立セグメントでない) は拾わない。
+    区切り語を __HEREDOC_<n>__ に置き換え、本文は n 番目に返す (どのコマンドの stdin かを対応付けるため)。
+    終端行が見つからない `<<` (引用内の演算子など) は heredoc とみなさずそのまま残す。
     """
-    toks = []
-    for raw in re.split(r"[\s;|&<>()'\"]+", cmd):
-        if not raw or not raw.endswith(".md"):
+    lines = cmd.split("\n")
+    shell: list[str] = []
+    bodies: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        i += 1
+        for m in list(_HEREDOC_OP.finditer(line)):
+            delim = m.group(2) or m.group(3) or m.group(4)
+            for j in range(i, len(lines)):
+                end = lines[j].lstrip("\t") if m.group(1) else lines[j]
+                if end.rstrip() == delim:
+                    bodies.append("\n".join(lines[i:j]))
+                    line = line.replace(m.group(0), f"<< __HEREDOC_{len(bodies) - 1}__", 1)
+                    i = j + 1
+                    break
+            else:
+                break
+        shell.append(line)
+    return "\n".join(shell), bodies
+
+
+def _shell_tokens(text: str) -> list[str] | None:
+    """shell 部を引用解除済みのトークン列へ。演算子 (; | & 改行 リダイレクト) は独立トークンになる。
+
+    引用が閉じない等で解析できなければ None。`#` はコメントとして扱わない (`${#x}` や URL を
+    切り落として後続の書込みを見逃さないため)。
+    """
+    lex = shlex.shlex(text.replace("\\\n", " "), posix=True, punctuation_chars=_SHELL_PUNCT)
+    lex.whitespace_split = True
+    lex.whitespace = " \t\r"
+    lex.commenters = ""
+    try:
+        return list(lex)
+    except ValueError:
+        return None
+
+
+def _nonopt_args(args: list[str], value_opts: set[str] = frozenset()) -> list[str]:
+    """オプションとその値を除いた引数 (`--` 以降は全て引数)。"""
+    out: list[str] = []
+    skip = False
+    for idx, a in enumerate(args):
+        if skip:
+            skip = False
             continue
-        if SPEC_DIR in Path(raw).parts:
-            toks.append(raw)
-    return toks
+        if a == "--":
+            out.extend(args[idx + 1:])
+            break
+        if a in value_opts:
+            skip = True
+            continue
+        if a.startswith("-") and a != "-":
+            continue
+        out.append(a)
+    return out
 
 
-def _token_is_protected_chapter(token: str, root: Path) -> bool:
-    return chapter_protected(Path(token), root)
+def _is_dir_target(token: str, root: Path) -> bool:
+    if token.endswith("/"):
+        return True
+    p = Path(token).expanduser()
+    try:
+        return (p if p.is_absolute() else root / p).is_dir()
+    except OSError:
+        return False
+
+
+def _copy_like_targets(name: str, args: list[str], root: Path) -> list[str]:
+    """cp/mv/install/ln の書込み先。宛先がディレクトリなら <宛先>/<元の basename>。mv は元も消える。"""
+    dest = None
+    for idx, a in enumerate(args):
+        if a == "-t" and idx + 1 < len(args):
+            dest = args[idx + 1]
+        elif a.startswith("--target-directory="):
+            dest = a.split("=", 1)[1]
+    pos = [a for a in _nonopt_args(args, _VALUE_OPTS.get(name, set()) | {"-t"}) if a != dest]
+    if dest is None:
+        if len(pos) < 2:
+            return pos  # `ln -s x` のように宛先が cwd になる形。引数自体を候補にしておく
+        dest, pos = pos[-1], pos[:-1]
+        if not _is_dir_target(dest, root):
+            return pos + [dest] if name == "mv" else [dest]
+    joined = [f"{dest.rstrip('/')}/{Path(s).name}" for s in pos]
+    return pos + joined if name == "mv" else joined
+
+
+def _sed_targets(args: list[str]) -> list[str]:
+    """sed の in-place 書込み先 (-i が無ければ stdout へ出すだけなので書込みなし)。"""
+    inplace = False
+    script_given = False
+    files: list[str] = []
+    idx = 0
+    while idx < len(args):
+        a = args[idx]
+        if a in ("-e", "--expression", "-f", "--file"):
+            script_given = True
+            idx += 2
+            continue
+        if a.startswith(("--expression=", "--file=")):
+            script_given = True
+        elif a == "--in-place" or a.startswith("--in-place="):
+            inplace = True
+        elif a.startswith("-") and not a.startswith("--") and len(a) > 1:
+            if "i" in a[1:]:
+                inplace = True
+                # BSD の `sed -i '' ...` は次の空トークンが拡張子。
+                if a == "-i" and idx + 1 < len(args) and args[idx + 1] == "":
+                    idx += 1
+        else:
+            files.append(a)
+        idx += 1
+    if not inplace:
+        return []
+    return files if script_given else files[1:]
+
+
+def _uses_mutator(args: list[str]) -> bool:
+    """xargs / find -exec が起動するコマンドが変更系か (sed は -i を伴うときだけ)。"""
+    names = [os.path.basename(a) for a in args]
+    if any(n in _MUTATORS - {"sed"} or n in _SHELLS or _PYTHON.match(n) for n in names):
+        return True
+    return "sed" in names and any(a.startswith(("--in-place", "-i")) for a in args)
+
+
+def _py_callee(call: ast.Call) -> str:
+    """呼び出し先の dotted 名 (open / os.remove / shutil.move 等)。決まらなければ空文字。"""
+    f = call.func
+    if isinstance(f, ast.Name):
+        return f.id
+    if isinstance(f, ast.Attribute) and isinstance(f.value, ast.Name):
+        return f"{f.value.id}.{f.attr}"
+    return ""
+
+
+def _py_path_pattern(node: ast.AST) -> str:
+    """書込み先の式を文字列へ。静的に決まらない部分は `$` に置く (後段で書込み先不明として扱う)。"""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr):
+        return "".join(
+            v.value if isinstance(v, ast.Constant) and isinstance(v.value, str) else "$" for v in node.values
+        )
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        return f"{_py_path_pattern(node.left)}/{_py_path_pattern(node.right)}"
+    if isinstance(node, ast.Call) and _py_callee(node) in ("Path", "PurePath", "pathlib.Path") and node.args:
+        return "/".join(_py_path_pattern(a) for a in node.args)
+    return "$"
+
+
+def _py_mode_writes(mode: ast.AST | None, *, unknown: bool) -> bool:
+    """open の mode が書込み (w/a/x/+) か。mode が式で決まらないときは unknown を返す。"""
+    if mode is None:
+        return False
+    if isinstance(mode, ast.Constant) and isinstance(mode.value, str):
+        return bool(_PY_MODE.match(mode.value)) and any(c in mode.value for c in "wax+")
+    return unknown
+
+
+def _py_kwarg(call: ast.Call, name: str) -> ast.AST | None:
+    return next((kw.value for kw in call.keywords if kw.arg == name), None)
+
+
+def _python_write_targets(code: str) -> list[str | None]:
+    """python コードの書込み先。file handle の .write/json.dump は open 側で捉える。"""
+    try:
+        tree = ast.parse(code)
+    except (SyntaxError, ValueError, RecursionError):
+        return [None] if _PY_WRITE.search(code) else []
+    out: list[str | None] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        callee = _py_callee(node)
+        f = node.func
+        if callee in _PY_OPENERS:
+            mode = node.args[1] if len(node.args) > 1 else _py_kwarg(node, "mode")
+            if node.args and _py_mode_writes(mode, unknown=True):
+                out.append(_py_path_pattern(node.args[0]))
+        elif callee in _PY_FUNC_WRITERS:
+            out.extend(_py_path_pattern(node.args[k]) for k in _PY_FUNC_WRITERS[callee] if k < len(node.args))
+        elif isinstance(f, ast.Attribute) and f.attr == "open":  # Path(...).open('w')
+            mode = node.args[0] if node.args else _py_kwarg(node, "mode")
+            if _py_mode_writes(mode, unknown=False):
+                out.append(_py_path_pattern(f.value))
+        elif isinstance(f, ast.Attribute) and f.attr in ("write_text", "write_bytes", "unlink"):
+            out.append(_py_path_pattern(f.value))
+    return out
+
+
+def _command_write_targets(
+    args: list[str], stdin_bodies: list[str], root: Path, depth: int
+) -> list[str | None]:
+    """単純コマンド 1 つの書込み先 (リダイレクトは呼び出し側で集める)。"""
+    idx = 0
+    wrapped = False
+    while idx < len(args) and (
+        args[idx] in _WRAPPERS or args[idx] in _KEYWORDS or _ASSIGNMENT.match(args[idx])
+        or (wrapped and args[idx].startswith("-"))
+    ):
+        wrapped = wrapped or args[idx] in _WRAPPERS
+        idx += 1
+    if idx >= len(args):
+        return []
+    name = os.path.basename(args[idx])
+    rest = args[idx + 1:]
+    if _PYTHON.match(name):
+        if "-c" in rest:
+            pos = rest.index("-c") + 1
+            return _python_write_targets(rest[pos]) if pos < len(rest) else []
+        # `python3 -` か script 指定なしなら heredoc 本文がコード。script 指定時は本文はデータ。
+        if "-" in rest or not _nonopt_args(rest):
+            return [t for body in stdin_bodies for t in _python_write_targets(body)]
+        return []
+    if name in _SHELLS or name == "eval":
+        if depth >= _MAX_DEPTH:
+            return [None]
+        if name == "eval":
+            return _bash_write_targets(" ".join(rest), root, depth + 1)
+        if "-c" in rest:
+            pos = rest.index("-c") + 1
+            return _bash_write_targets(rest[pos], root, depth + 1) if pos < len(rest) else []
+        if not _nonopt_args(rest):
+            return [t for body in stdin_bodies for t in _bash_write_targets(body, root, depth + 1)]
+        return []
+    if name == "sed":
+        return _sed_targets(rest)
+    if name in ("cp", "mv", "install", "ln"):
+        return _copy_like_targets(name, rest, root)
+    if name in ("tee", "rm", "truncate", "unlink", "shred"):
+        return _nonopt_args(rest, _VALUE_OPTS.get(name, set()))
+    if name == "dd":
+        return [a[3:] for a in rest if a.startswith("of=")]
+    if name == "xargs":
+        return [None] if _uses_mutator(rest) else []
+    if name == "find":
+        if "-delete" in rest:
+            return [None]
+        for opt in ("-exec", "-execdir", "-ok", "-okdir"):
+            if opt in rest and _uses_mutator(rest[rest.index(opt) + 1:]):
+                return [None]
+    return []
+
+
+def _bash_write_targets(cmd: str, root: Path, depth: int = 0) -> list[str | None]:
+    """Bash コマンドの書込み先候補を集める。"""
+    shell, bodies = _split_heredocs(cmd)
+    toks = _shell_tokens(shell)
+    if toks is None:
+        # shell として解析できない → 字面のリダイレクト先を拾い、書込み指標があれば書込み先不明とする。
+        out: list[str | None] = list(_redirect_targets(shell))
+        if any(pat.search(cmd) for pat, _ in _MUTATION_TOOLS) or _PY_WRITE.search(cmd):
+            out.append(None)
+        return out
+    out = []
+    args: list[str] = []
+    heredocs: list[str] = []
+
+    def flush() -> None:
+        if args:
+            out.extend(_command_write_targets(list(args), list(heredocs), root, depth))
+        args.clear()
+        heredocs.clear()
+
+    idx = 0
+    while idx < len(toks):
+        t = toks[idx]
+        if not t or any(c not in _SHELL_PUNCT for c in t):
+            args.append(t)
+            idx += 1
+            continue
+        if any(c in t for c in ";|\n()") or "&&" in t or t == "&":
+            flush()
+        nxt = toks[idx + 1] if idx + 1 < len(toks) else ""
+        if _OUT_REDIRECT_OP.search(t):
+            if args and args[-1].isdigit():
+                args.pop()  # `2>` の fd 番号
+            if not (t.endswith(">&") and (nxt.isdigit() or nxt == "-")):  # `2>&1` は fd 複製
+                out.append(nxt)
+            idx += 2
+            continue
+        if t.endswith("<"):  # `<` / `<<` / `<<<` の次は入力元
+            m = _HEREDOC_MARK.fullmatch(nxt)
+            if m and int(m.group(1)) < len(bodies):
+                heredocs.append(bodies[int(m.group(1))])
+            idx += 2
+            continue
+        idx += 1
+    flush()
+    return out
+
+
+def _protected_target_reason(token: str, root: Path) -> str:
+    """静的に決まった書込み先 1 件が保護対象なら遮断理由、そうでなければ空文字。
+
+    相対パスは root 起点で解決し、symlink を辿った実パスでも確定章 / 正本 spec-state を判定する。
+    """
+    if _token_is_canonical_spec_state(token):
+        return f"正本 spec-state.json への書込み ('{token}') を遮断"
+    p = Path(token).expanduser()
+    real = p if p.is_absolute() else root / p
+    try:
+        real = real.resolve()
+    except (OSError, RuntimeError):
+        pass
+    if _is_canonical_spec_state(real, root):
+        return f"正本 spec-state.json への書込み ('{token}' の実パス) を遮断"
+    if chapter_protected(p, root) or chapter_protected(real, root):
+        return f"確定章への書込み ('{token}') を遮断"
+    return ""
+
+
+def _may_hit_protected(token: str) -> bool:
+    """静的に決まらない書込み先が保護対象 (章 .md / spec-state.json) でありうるか。
+
+    basename が静的に読めて .md でも spec-state.json でもなければ、変数部分が何であれ保護対象にならない。
+    """
+    base = token.rstrip("/").rsplit("/", 1)[-1]
+    return bool(_DYN_CHARS.search(base)) or base.endswith(".md") or base == SPEC_STATE_NAME
 
 
 def _refs_canonical_spec_state(cmd: str) -> bool:
@@ -402,38 +756,29 @@ def _refs_protected_area(cmd: str) -> bool:
 
 
 def bash_decision(cmd: str, root: Path) -> tuple[int, str]:
-    """Bash コマンドの許可 (0) / 遮断 (2) を判定する。"""
-    redirects = _redirect_targets(cmd)
-    mutation = any(pat.search(cmd) for pat, _ in _MUTATION_TOOLS)
-    py_write = bool(_PY_WRITE.search(cmd))
-    is_write = bool(redirects) or mutation or py_write
-    if not is_write:
-        # 書込指標なし = read-only。保護パス参照でも通す (cat/grep/ls 等)。
-        return 0, ""
+    """Bash コマンドの許可 (0) / 遮断 (2) を書込み先の実パスで判定する。
 
-    refs_spec_state = _refs_canonical_spec_state(cmd)
-
-    # 1) リダイレクト先が保護対象 (正本 spec-state / 確定章)
-    for t in redirects:
-        if _token_is_canonical_spec_state(t):
-            return 2, f"正本 spec-state.json への出力リダイレクト ('{t}') を遮断"
-        if _token_is_protected_chapter(t, root):
-            return 2, f"確定章への出力リダイレクト ('{t}') を遮断"
-
-    # 2) in-place / python 書込が正本 spec-state.json を対象
-    if refs_spec_state and (mutation or py_write):
-        return 2, "正本 spec-state.json への動的書換 (in-place/python) を遮断"
-
-    # 3) in-place / python 書込が解決可能な確定章を対象
-    if mutation or py_write:
-        for t in _system_spec_md_tokens(cmd):
-            if _token_is_protected_chapter(t, root):
-                return 2, f"確定章 '{t}' への動的書換を遮断"
-
-    # 4) 曖昧な動的書換が保護領域 (system-spec/ 配下・パス境界一致) を参照 → 安全側で遮断
-    if (_refs_protected_area(cmd) or refs_spec_state) and _DYNAMIC.search(cmd):
-        return 2, "保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照する曖昧な動的書換を安全側で遮断"
-
+    保護パスがコマンド中に現れても、書込み先でなければ通す (読み取り元・診断データとしての言及)。
+    """
+    try:
+        targets = _bash_write_targets(cmd, root)
+    except Exception:
+        targets = [None]  # 解析器の想定外の失敗は書込み先不明として扱う (保護領域を参照するときだけ遮断)
+    ambiguous = False
+    for t in targets:
+        if t is None or _DYN_CHARS.search(t):
+            ambiguous = ambiguous or t is None or _may_hit_protected(t)
+            continue
+        if t:
+            reason = _protected_target_reason(t, root)
+            if reason:
+                return 2, reason
+    # 書込み先を静的に特定できず、保護領域を参照する → 安全側で遮断 (層別 fail-closed)。
+    if ambiguous and (_refs_protected_area(cmd) or _refs_canonical_spec_state(cmd)):
+        return 2, (
+            "保護領域 (system-spec/ 配下 または 正本 spec-state.json) を参照し、"
+            "書込み先を静的に特定できない書換を安全側で遮断"
+        )
     return 0, ""
 
 

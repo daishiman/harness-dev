@@ -57,12 +57,13 @@ R1-score・R2-delegate・`scoring-rubric.json`・C06 の起動アダプタはこ
 | medium・誘導の検出 (軸 2) で、その問が主たる接地根拠でない (裏付けの `qa_refs` だけ・対象外セルの `qa_ref`・未参照) | PASS に残す注記 | 確定の根拠は別の問にある。問の欠陥は記録に残す |
 | medium・軸 2 以外 (聞き漏れ・早期停止・トレース・上位概念) | **FAIL** | 緩和は問に限る。セルや進捗の欠陥は根拠の有無そのものに関わる |
 | low / info | PASS に残す注記 | 答えを左右したとは読めない偏り。報告から消さない |
-| C06 が INDETERMINATE、または検出の形が不正 (未知の軸・重大度、対象の欠落、存在しない qa_id) | **INDETERMINATE** | 監査の再実行か入力の補完が要る。fail-closed で観点は FAIL に寄せる |
+| C06 が INDETERMINATE、または検出の形が不正 (未知の軸・重大度、対象の欠落、誘導の検出 (軸 2) の qa_id が qa_log に無い) | **INDETERMINATE** | 監査の再実行か入力の補完が要る。fail-closed で観点は FAIL に寄せる |
 
 - **有効な置き換え**: 旧い qa に `superseded_by` があり、次を全て満たすもの。(a) 置き換え先の問が
   中立 — C06 が `supersession_valid: true` と判定し、かつ置き換え先に medium 以上の誘導の検出が無い。
   (b) 同じ論点 — 同じく C06 の `supersession_valid: true` が示す。(c) 利用者の回答 — 置き換え先に
-  `answer`・`basis: user-decision`・`answered_at` が揃っている。加えて旧い問が確定セルの主たる接地根拠で
+  `answer`・`basis: user-decision`・旧 entry より後の `answered_at` が揃っている (順序は writer の
+  `supersede-qa` が記録時に検査し、`derive_hearing_verdict` は揃っていることだけを再検査する)。加えて旧い問が確定セルの主たる接地根拠で
   ないこと。どれかを欠く置き換えは無効で、その検出は重大度どおりに扱う。基準の正本は
   `../../run-system-spec-elicit/references/neutral-question-criteria.md`。
 - **PASS に残す注記**: C05 レポートの `findings[]` に、C06 の重大度のまま (medium / low / info)

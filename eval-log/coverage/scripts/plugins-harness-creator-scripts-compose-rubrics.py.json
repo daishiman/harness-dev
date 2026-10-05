@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/compose-rubrics.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 85,
+    "notes": "実コードを読み、実テストと実測で検証した。plugins/skill-governance-automation/scripts/compose-rubrics.py と byte 一致する (sha256: 2ca6fb18667d93eabc881b1a78f84acaac3a22c35c43674d6b2d16188f335983)。scripts/lint-vendored-ssot.py が一致を強制している同梱コピーで、assign-skill-design-evaluator の render-findings-score.py が subprocess で起動する。L0/L1/L2 の rubric を layer 順と引数順に並べ、rules が list であること、id が必須で重複しないこと、extends が循環しないことを検査してから、deep-merge / strict / override / layered の戦略と most-specific-wins / error / warn-and-merge の衝突方針で合成する。エラーは exit 1。書き込みもネットワークも無い。`# /// script` frontmatter あり。py_compile OK。TESTS: tests/scripts-plugins/test_skill_governance_automation__compose_rubrics.py 48 件全 PASS (2.10s。byte 一致の正本が対象)。指摘 (いずれも low): (1) _composition_hash は解決後の絶対パスを入力に含むので、同じ内容でも置き場所が違えばハッシュが変わる (別のディレクトリへのコピーで実測)。今の消費者である render-findings-score.py は値を記録するだけで比較しないので、実害は無い。(2) `ref-*` の名前は cwd 起点 (plugins/harness-creator/skills、.claude/skills) で解決するので、install 先では見つからず exit 1 になる (fail-closed。呼び出し側は絶対パスを渡すので通らない経路)。(3) root が object でない JSON (文字列など) は TypeError の traceback で終わる。extends が文字列だと 1 文字ずつ照合され、黙って無視される。(4) frontmatter に requires-python が無い。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

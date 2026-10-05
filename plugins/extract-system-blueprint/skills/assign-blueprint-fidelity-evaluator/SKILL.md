@@ -84,7 +84,7 @@ C01 draft (blueprint.json + 章別 md + 5 種 Mermaid + (取得された場合) 
 
 ## ゴールシーク実行
 
-> 本 skill は評価系 (kind=assign)。Goal + 完了チェックリストで採点網羅性を担保するが、達成までの **runtime goal-seek loop は配線しない** (一度の read-only 採点で完結する)。正本: `../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md`「評価系 (assign-*-evaluator) の扱い」。評価→改善のループは C01 の feedback_contract / content-review が回す (評価器自身ではない)。
+> 本 skill は評価系 (kind=assign)。Goal + 完了チェックリストで採点網羅性を担保するが、達成までの **runtime goal-seek loop は配線しない** (一度の read-only 採点で完結する)。正本は harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)「評価系 (assign-*-evaluator) の扱い」。評価→改善のループは C01 の feedback_contract / content-review が回す (評価器自身ではない)。
 
 ### ゴール (Goal)
 

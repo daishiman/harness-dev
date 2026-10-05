@@ -10,7 +10,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
-# dependencies: []
+# dependencies: [../../../scripts/extract-plugin-root.py]
 # requires-python: ">=3.10"
 # ///
 # -*- coding: utf-8 -*-
@@ -56,6 +56,7 @@ exit_code (Claude Code Hook 準拠):
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import re
 import sys
@@ -478,14 +479,30 @@ def _sha256(path: Path) -> str:
 
 
 def canonical_external_intelligence_engine() -> Path:
-    """Return the one distributable engine SSOT, never the HC forwarder."""
+    """Return the one distributable engine SSOT, never the HC forwarder.
+
+    正本は skill-governance-adapters plugin にある。install 先は
+    <cache>/<marketplace>/<plugin>/<version>/ なので親ディレクトリ経由では兄弟に届かず、
+    harness-creator に同梱した resolver で root を解決する。見つからなければ実在しない
+    path を返し、呼び出し側の「正本 engine が見つからない」error に任せる。
+    """
     harness_plugin = Path(__file__).resolve().parents[3]
-    return (
-        harness_plugin.parent
-        / "skill-governance-adapters"
-        / "scripts"
-        / "build-external-intelligence.py"
+    resolver = harness_plugin / "scripts" / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = (
+        importlib.util.spec_from_file_location("_extract_plugin_root", resolver)
+        if resolver.is_file()
+        else None
     )
+    found = None
+    if spec is not None and spec.loader is not None:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        found = module.resolve("skill-governance-adapters", harness_plugin, Path.cwd())
+    if found is None:
+        return Path("plugin:skill-governance-adapters/scripts/build-external-intelligence.py")
+    return found / "scripts" / "build-external-intelligence.py"
 
 
 def check_kl008(skill_dir: Path, store_only: bool) -> list[dict]:

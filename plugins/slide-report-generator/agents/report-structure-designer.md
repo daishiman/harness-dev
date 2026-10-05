@@ -42,7 +42,7 @@ last-audited: 2026-07-05
 書けたら構成設計へ進む前に決定論ゲートを通す（exit 0 以外なら進まない）:
 
 ```bash
-python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/validate-information-priority.py \
+python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-information-priority.py \
   <出力先>/information-priority-map.json
 ```
 

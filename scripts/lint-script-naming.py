@@ -97,6 +97,9 @@ PENDING_RENAME_PATHS = {
     "plugins/skill-governance-automation/scripts/compute-rubric-hash.py",
     "plugins/skill-governance-automation/scripts/doc-to-skill-adapter.py",
     "plugins/skill-governance-automation/scripts/compose-rubrics.py",
+    # 上の正本を harness-creator 単独 install 用に byte 一致で同梱した複製 (lint-vendored-ssot.py)。
+    # 名前を変えると正本との組が崩れるので、正本のリネームと同時に動かす。
+    "plugins/harness-creator/scripts/compose-rubrics.py",
     "plugins/skill-governance-automation/scripts/notify-if-governance-trigger.py",
     "plugins/skill-governance-automation/scripts/write-eval-log.py",
     "plugins/skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py",

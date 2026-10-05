@@ -68,7 +68,7 @@ python3 "$SKILL_DIR/scripts/render-frontmatter.py" \
 ## Phase E: lint
 
 ```bash
-GOV_LINT_DIR="$(dirname "$PLUGIN_ROOT")/skill-governance-lint"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$ROOT/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$ROOT"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$ROOT/SKILL.md"
@@ -542,7 +542,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 全 kind 共通で以下を実行する。
 
 ```bash
-GOV_LINT_DIR="$(dirname "$PLUGIN_ROOT")/skill-governance-lint"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/<kind-relative-path>"
 python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
 

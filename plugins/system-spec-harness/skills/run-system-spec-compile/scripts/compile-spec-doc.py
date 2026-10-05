@@ -119,7 +119,47 @@ def category_design_refs(cat_id: str) -> list[str]:
     for fname, read_when in _resource_map_read_when():
         if fname.endswith(".md") and cat_id in read_when and fname not in refs:
             refs.append(fname)
-    return refs
+    # C14: 章へ反映する順は resource-map の記載順ではなく知識グラフの topo_order
+    # (上位概念→下位概念)。catalog に無い file は記載順のまま後ろに置く (sorted は安定)。
+    rank = {fname: i for i, fname in enumerate(_knowledge_file_topo_order())}
+    return sorted(refs, key=lambda f: rank.get(f, len(rank)))
+
+
+_KNOWLEDGE_FILE_ORDER: list[str] | None = None
+
+
+def _knowledge_file_topo_order() -> list[str]:
+    """knowledge-catalog.json の topo_order を card の file 名の列で返す。
+
+    順序の計算は validate-knowledge-graph.py (C14 の決定論 gate) の validate_knowledge を
+    そのまま読み込んで使い、ここに位相ソートを複製しない。elicit R5 と compile が同じ順を
+    消費するため。catalog が読めない・違反がある場合は空 (= resource-map の記載順) に倒す。
+    """
+    global _KNOWLEDGE_FILE_ORDER
+    if _KNOWLEDGE_FILE_ORDER is None:
+        order: list[str] = []
+        try:
+            import importlib.util
+
+            gate = Path(__file__).resolve().parents[3] / "scripts" / "validate-knowledge-graph.py"
+            spec = importlib.util.spec_from_file_location("_validate_knowledge_graph", gate)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            catalog = json.loads(
+                (_DESIGN_KNOWLEDGE_DIR / "knowledge-catalog.json").read_text(encoding="utf-8")
+            )
+            findings, result = module.validate_knowledge(catalog)
+            if not findings:
+                by_id = {
+                    e.get("knowledge_id"): e.get("file")
+                    for e in catalog.get("entries") or []
+                    if isinstance(e, dict)
+                }
+                order = [by_id[k] for k in result.get("topo_order") or [] if by_id.get(k)]
+        except (OSError, json.JSONDecodeError, AttributeError, ImportError):
+            order = []
+        _KNOWLEDGE_FILE_ORDER = order
+    return _KNOWLEDGE_FILE_ORDER
 
 
 def _canonical_category_ids() -> list[str]:
@@ -372,7 +412,7 @@ def render_state_table(spec: dict, cat_id: str) -> str:
                 basis += "。資するゴール: " + ", ".join(serves)
         elif state == "対象外":
             reason = cell.get("reason") or f"承認: {cell.get('approval_ref', '-')}"
-            basis = f"理由: {reason}"
+            basis = f"理由: {_table_cell(reason)}"
         else:
             basis = "収集中 (未確定)"
         lines.append(f"| {plabel} ({pf}) | {state} | {basis} |")
@@ -643,6 +683,10 @@ def render_doctrine_anchors(cat_id: str, spec: dict | None = None) -> str:
         text = str((record or {}).get("text") or "").strip()
         # 表セルなので改行とパイプを潰す。原文は spec-state 側に残る。
         cell = text.replace("|", "\\|").replace("\n", " ") if text else "**未記入**"
+        # 推定の記述が確定内容のように読めないよう、根拠の性質を本文と同じ表記で併記する。
+        basis = (record or {}).get("basis") if text else None
+        if basis:
+            cell += f" (根拠の性質: {BASIS_LABELS.get(basis, basis)})"
         lines.append(
             "| {cid} | {auth} | {guides} | {src} | {chk} | {cell} |".format(
                 cid=cid,
@@ -656,14 +700,17 @@ def render_doctrine_anchors(cat_id: str, spec: dict | None = None) -> str:
     if any(
         not str((applied.get(cid) or {}).get("text") or "").strip() for cid in concern_ids
     ):
-        lines.extend(
-            [
-                "",
-                "> **未記入** の行は、上流の正本を掲げただけで本章の確定内容へ反映した箇所を"
-                "示せていない。表への出現は反映の証拠ではない。",
-            ]
-        )
+        lines.extend(["", DOCTRINE_BLANK_LEGEND])
     return "\n".join(lines)
+
+
+# compile 自身が条件付きで出す凡例。条件が外れて消える側に回っても手書き注記ではないので、
+# _carry_prose はこれを引き継がない (引き継ぐと、空欄を埋めた後も「未記入」の凡例が残る)。
+DOCTRINE_BLANK_LEGEND = (
+    "> **未記入** の行は、上流の正本を掲げただけで本章の確定内容へ反映した箇所を"
+    "示せていない。表への出現は反映の証拠ではない。"
+)
+GENERATED_PROSE_LINES = frozenset({DOCTRINE_BLANK_LEGEND})
 
 
 def _qa_index(spec: dict) -> dict[str, dict]:
@@ -724,6 +771,30 @@ def _verbatim(value: str, *, force_fence: bool = False) -> list[str]:
     return [value]
 
 
+def _bullet_verbatim(label: str, value) -> list[str]:
+    """箇条 `<label> <逐語>` を描く。逐語が構造を持つときは、箇条の中のフェンスへ置く。
+
+    To-Be / Delta の箇条に入るゴール・やりたいこと・意思決定の問も spec-state の逐語で、
+    行頭 `###` の行を含めば章の見出しになる。フェンスは箇条の続きとして 2 字下げる
+    (CommonMark はフェンスの字下げ分を中身から除くので、表示される逐語は変わらない)。
+    """
+    text = str(value)
+    body = _verbatim(text)
+    if len(body) == 1:
+        return [f"{label} {text}"]
+    return [f"{label} 下のフェンス内の逐語", *(f"  {line}" if line else "" for line in body)]
+
+
+def _table_cell(value) -> str:
+    """表のセルへ逐語を置く。改行は `<br>` に、`|` は `\\|` にして 1 行に収める。
+
+    表の行は 1 行で閉じる。改行がそのまま入ると表が切れ、続く行の行頭 `###` は章の
+    見出しになる (逐語の見出しの漏れと同じ経路)。
+    """
+    lines = str(value).strip().splitlines() or [""]
+    return "<br>".join(line.strip() for line in lines).replace("|", "\\|")
+
+
 def _fence_mask(lines: list[str]) -> list[bool]:
     """各行がフェンス (開閉行を含む) の内側かを返す。
 
@@ -779,7 +850,7 @@ def _all_heading_lines(text: str, *, outside_fence_only: bool) -> list[str]:
 
 
 def verbatim_headings(spec: dict | None) -> frozenset[str]:
-    """spec-state の逐語 (qa の問・答・出所、承認 note、章の適用記述) に行として現れる見出し。
+    """spec-state の逐語 (_verbatim_texts) に行として現れる見出し。
 
     旧 compile は逐語を生で流し込んでいたため、これらの行が既存章の見出しとして残って
     いる。章に人が書き足した節と区別する根拠は「spec-state の逐語の中にその行がある」
@@ -793,8 +864,23 @@ def verbatim_headings(spec: dict | None) -> frozenset[str]:
     return frozenset(found)
 
 
+def _foundation_verbatim_items(spec: dict) -> list[tuple[str, str]]:
+    """To-Be / Delta が箇条に描く逐語 (ゴール・具体的にやりたいこと・意思決定の問) を (id, 文面) で返す。"""
+    foundation = requirements_foundation(spec)
+    items: list[tuple[str, str]] = []
+    for key in ("goals", "concrete_intents"):
+        for item in foundation.get(key) or []:
+            if isinstance(item, dict) and isinstance(item.get("text"), str):
+                items.append((str(item.get("id", "-")), item["text"]))
+    for dec in spec.get("decisions", []) or []:
+        if isinstance(dec, dict) and isinstance(dec.get("question"), str):
+            items.append((str(dec.get("id", "-")), dec["question"]))
+    return items
+
+
 def _verbatim_texts(spec: dict | None) -> list[str]:
-    """spec-state の逐語 (qa の問・答・出所と訂正 note、承認 note、章の適用記述)。"""
+    """spec-state の逐語 (qa の問・答・出所と訂正 note、承認 note、章の適用記述、
+    To-Be / Delta のゴール・具体的にやりたいこと・意思決定の問)。"""
     if not isinstance(spec, dict):
         return []
     texts: list[str] = []
@@ -810,6 +896,7 @@ def _verbatim_texts(spec: dict | None) -> list[str]:
     for record in (spec.get("design_applications") or {}).values():
         if isinstance(record, dict) and isinstance(record.get("text"), str):
             texts.append(record["text"])
+    texts += [text for _, text in _foundation_verbatim_items(spec)]
     return texts
 
 
@@ -817,23 +904,67 @@ def spec_derived_lines(spec: dict | None) -> frozenset[str]:
     """spec-state だけから導ける行 (strip 済み): 逐語の各行と、compile が各 qa を描く行。
 
     旧 compile が漏らした見出しの直下に並ぶのは、流し込まれた逐語の続きと、compile 自身が
-    qa ごとに描く行 (訂正・根拠の性質・回答時刻) だけである。見出しの字面が逐語と同じでも、
+    qa ごとに描く行 (訂正・根拠の性質・回答時刻)、qa・承認の参照を描く定型の行
+    (_REFERENCE_LINE。id を問わず照合する) だけである。見出しの字面が逐語と同じでも、
     直下にここに無い行があればそれは人が書いた節で、漏れとして片付けてはならない
     (_lost_headings)。
 
     描いた要素は複数行を含みうる (複数行の出所を埋め込んだ付帯行など) ので、行に割ってから
     比べる。付帯行は旧書式 (構造を持つ出所も括弧書きへ埋め込む) も含める。旧 compile は
     出所を 1 行へ埋め込んで描いたため、漏れた見出しの直下にはその書式の行が並ぶ。
+    To-Be / Delta の箇条も旧書式 (`- **<id>**: <逐語>` の 1 行目) を含める。
     """
+    if not isinstance(spec, dict):
+        return frozenset()
     lines = {line.strip() for text in _verbatim_texts(spec) for line in text.splitlines()}
-    qa_log = spec.get("qa_log", []) if isinstance(spec, dict) else []
-    for entry in qa_log or []:
+    for entry in spec.get("qa_log", []) or []:
         if isinstance(entry, dict) and isinstance(entry.get("id"), str):
             rendered = _render_qa_entry(entry, entry["id"], role="質疑")
             rendered.append(_qa_meta_line(entry, fence_structured=False) or "")
             lines.update(line.strip() for item in rendered for line in item.splitlines())
+    for item_id, text in _foundation_verbatim_items(spec):
+        lines.update(line.strip() for line in f"- **{item_id}**: {text}".splitlines())
     lines.discard("")
     return frozenset(lines)
+
+
+def verbatim_heading_shapes(spec: dict | None) -> dict[str, frozenset[tuple[tuple[str, ...], bool]]]:
+    """逐語に行として現れる見出しごとに、その直下に続く逐語の行 (漏れの形) を返す。
+
+    値は (続きの行, 逐語の末尾まで続くか) の集合。続きの行は、同じ逐語の中で次の見出しの
+    手前までの行 (strip 済み。空行とフェンスの開閉行は除く)。旧 compile が漏らした見出しの
+    直下には、この続きがそのまま並ぶ。逐語の末尾まで続いたときだけ、その後ろに compile が
+    描く行が並びうる (_headings_with_underived_body)。
+
+    付帯行の旧書式 (構造を持つ出所を括弧書きへ埋め込んだ行) も対象にする。旧 compile は
+    出所をその書式で流し込んだので、出所の見出しの続きは付帯行の残りになる。
+    """
+    if not isinstance(spec, dict):
+        return {}
+    texts = list(_verbatim_texts(spec))
+    for entry in spec.get("qa_log", []) or []:
+        if isinstance(entry, dict):
+            meta = _qa_meta_line(entry, fence_structured=False)
+            if meta:
+                texts.append(meta)
+    shapes: dict[str, set[tuple[tuple[str, ...], bool]]] = {}
+    for text in texts:
+        lines = text.splitlines()
+        mask = _fence_mask(lines)
+        for k, line in enumerate(lines):
+            if not _HEADING_LINE.match(line):
+                continue
+            cont: list[str] = []
+            open_end = True
+            for j in range(k + 1, len(lines)):
+                if _HEADING_LINE.match(lines[j]) and (mask[k] or not mask[j]):
+                    open_end = False
+                    break
+                body = lines[j].strip()
+                if body and not _FENCE_OPEN.match(body):
+                    cont.append(body)
+            shapes.setdefault(line.strip(), set()).add((tuple(cont), open_end))
+    return {h: frozenset(s) for h, s in shapes.items()}
 
 
 def _render_corrections(entry: dict) -> list[str]:
@@ -1032,12 +1163,47 @@ def _render_named_qa(entry: dict, qa_id: str, live: set[str]) -> list[str]:
     """
     lines = _render_qa_entry(entry, qa_id, role="この承認を名指ししている質疑")
     if qa_id not in live and not entry.get("superseded_by"):
-        lines += [
-            "- (参照状況: この質疑は現在どの決着済みセルの `qa_ref` / `qa_refs` からも参照されていない。"
-            "置き換えの記録 (`superseded_by`) も無い。この承認を名指ししているという事実だけで本節に載せている)",
-            "",
-        ]
+        lines += [_UNREFERENCED_NOTE, ""]
     return lines
+
+
+_UNREFERENCED_NOTE = (
+    "- (参照状況: この質疑は現在どの決着済みセルの `qa_ref` / `qa_refs` からも参照されていない。"
+    "置き換えの記録 (`superseded_by`) も無い。この承認を名指ししているという事実だけで本節に載せている)"
+)
+
+
+def _missing_approval_line(ref: str) -> str:
+    """参照先が approval_log に無い承認を、隠さず欠落として示す行。"""
+    return (
+        f"- **承認** `{ref}` — **参照先が approval_log に存在しない** "
+        "(承認範囲を辿れない。elicit 側で承認記録を復元すること)"
+    )
+
+
+def _seen_ref_line(ref: str) -> str:
+    """同じ章の上掲に描いた裏付け質疑を、本文を繰り返さずに指す行。"""
+    return f"- 裏付け質疑 `{ref}` — 本章の上掲に既出"
+
+
+def _reference_line_pattern() -> re.Pattern:
+    """compile が qa・承認の参照を描く定型の行 (上掲に既出・参照先が存在しない・参照状況の注記)。
+
+    これらの行は参照の有無で描かれたり消えたりする。旧 compile が漏らした見出しの直下に
+    並んでいても、参照を外した後の spec-state にはその id が残らないことがあるので、
+    id を問わず定型の字面で照合する (_headings_with_underived_body)。
+    """
+    placeholder = "<id>"
+    templates = [
+        _seen_ref_line(placeholder),
+        _missing_approval_line(placeholder),
+        _UNREFERENCED_NOTE,
+        *(_render_qa_entry(None, placeholder, role=role)[0] for role in QA_ROLES),
+    ]
+    return re.compile("|".join(re.escape(t).replace(re.escape(placeholder), "[^`]+") for t in templates))
+
+
+_REFERENCE_LINE = _reference_line_pattern()
 
 
 def _render_approval_head(ref: str, entry: dict) -> list[str]:
@@ -1065,11 +1231,7 @@ def render_approvals(spec: dict, ref_ids: list[str], *, heading: str, intro: str
     for ref in ref_ids:
         entry = index.get(ref)
         if entry is None:
-            lines += [
-                f"- **承認** `{ref}` — **参照先が approval_log に存在しない** "
-                "(承認範囲を辿れない。elicit 側で承認記録を復元すること)",
-                "",
-            ]
+            lines += [_missing_approval_line(ref), ""]
             continue
         lines += _render_approval_head(ref, entry)
         for qa_id, qa_entry in _qa_entries_naming(spec, ref):
@@ -1118,7 +1280,7 @@ def render_confirmed_content(spec: dict, cat_id: str) -> str:
             if not isinstance(ref, str) or ref == primary:
                 continue
             if ref in seen:
-                lines.extend([f"- 裏付け質疑 `{ref}` — 本章の上掲に既出", ""])
+                lines.extend([_seen_ref_line(ref), ""])
                 continue
             lines.extend(_render_qa_entry(qa.get(ref), ref, role="裏付け質疑"))
             seen.add(ref)
@@ -1174,7 +1336,7 @@ def render_to_be_delta(spec: dict, cat_id: str) -> str:
         ]
     )
     for gid in goals:
-        lines.append(f"- **{gid}**: {goal_text.get(gid, '(要件定義書に該当ゴールなし)')}")
+        lines.extend(_bullet_verbatim(f"- **{gid}**:", goal_text.get(gid, "(要件定義書に該当ゴールなし)")))
 
     objectives = [
         o
@@ -1190,8 +1352,8 @@ def render_to_be_delta(spec: dict, cat_id: str) -> str:
             lines.append(
                 "| {oid} | {text} | {measure} |".format(
                     oid=obj.get("id", "-"),
-                    text=str(obj.get("text", "-")).replace("|", "\\|"),
-                    measure=str(obj.get("measure", "-")).replace("|", "\\|"),
+                    text=_table_cell(obj.get("text", "-")),
+                    measure=_table_cell(obj.get("measure", "-")),
                 )
             )
 
@@ -1203,7 +1365,7 @@ def render_to_be_delta(spec: dict, cat_id: str) -> str:
     if intents:
         lines.extend(["", "### 本章がかなえる具体的やりたいこと (U9)", ""])
         for intent in intents:
-            lines.append(f"- **{intent.get('id', '-')}**: {intent.get('text', '-')}")
+            lines.extend(_bullet_verbatim(f"- **{intent.get('id', '-')}**:", intent.get("text", "-")))
 
     decisions = _chapter_decisions(spec, cat_id, goals)
     lines.extend(["", "### 本章に効く確定意思決定", ""])
@@ -1215,7 +1377,7 @@ def render_to_be_delta(spec: dict, cat_id: str) -> str:
             chosen = next(
                 (o for o in dec.get("options") or [] if o.get("id") == chosen_id), None
             )
-            lines.append(f"- **{dec.get('id', '-')}**: {dec.get('question', '-')}")
+            lines.extend(_bullet_verbatim(f"- **{dec.get('id', '-')}**:", dec.get("question", "-")))
             lines.append(
                 f"  - 採択: {chosen.get('label') if chosen else chosen_id or '-'} "
                 f"(`{chosen_id or '-'}`)"
@@ -1672,7 +1834,7 @@ def _carry_prose(new_body: str, old_body: str) -> str:
     carried = []
     for line in old_body.splitlines():
         stripped = line.strip()
-        if not stripped or stripped in new_body:
+        if not stripped or stripped in new_body or stripped in GENERATED_PROSE_LINES:
             continue
         if line.lstrip().startswith(("|", "#")):
             continue
@@ -1853,13 +2015,28 @@ def merge_preserving(new_text: str, old_text: str, *, spec: dict | None = None) 
 
 
 def _headings_with_underived_body(
-    text: str, verbatim: frozenset[str], derived: frozenset[str]
+    text: str,
+    verbatim: frozenset[str],
+    derived: frozenset[str],
+    shapes: dict[str, frozenset[tuple[tuple[str, ...], bool]]] | None = None,
 ) -> set[str]:
-    """verbatim の見出しのうち、直下に derived に無い行を 1 行でも持つ出現があるもの。
+    """verbatim の見出しのうち、直下が漏れの形をしていない出現があるもの。
 
     直下 = 次の見出し行まで (見出しがフェンスの外なら、フェンスの中の見出し風の行では
     止めない)。空行とフェンスの開閉行は内容ではないので数えない。
+
+    フェンスの外の出現は、直下が漏れの形 (shapes: 同じ逐語の続きの行がそのまま並び、
+    逐語が末尾まで続いたときだけ、その後ろに derived の行が並ぶ) のときだけ漏れとみなす。
+    行ごとに derived と照らすだけだと、人が逐語の 1 行を引用しただけの節まで漏れと
+    判定され、見出しごと黙って消える。shapes を渡さないときは、どの出現も漏れとみなさない
+    (fail-closed)。フェンスの内側の出現は、直下の行がすべて derived であれば漏れとみなす。
+    compile が参照を描く定型の行 (_REFERENCE_LINE) は derived と同じに扱う。
     """
+    shapes = shapes or {}
+
+    def derivable(line: str) -> bool:
+        return line in derived or bool(_REFERENCE_LINE.fullmatch(line))
+
     lines = text.split("\n")
     mask = _fence_mask(lines)
     found: set[str] = set()
@@ -1867,13 +2044,23 @@ def _headings_with_underived_body(
         heading = line.strip()
         if heading not in verbatim or not _HEADING_LINE.match(line):
             continue
+        body: list[str] = []
         for j in range(i + 1, len(lines)):
             if _HEADING_LINE.match(lines[j]) and (mask[i] or not mask[j]):
                 break
-            body = lines[j].strip()
-            if body and not _FENCE_OPEN.match(body) and body not in derived:
-                found.add(heading)
-                break
+            stripped = lines[j].strip()
+            if stripped and not _FENCE_OPEN.match(stripped):
+                body.append(stripped)
+        if mask[i]:
+            leaked = all(derivable(b) for b in body)
+        else:
+            leaked = any(
+                tuple(body[: len(cont)]) == cont
+                and (len(body) == len(cont) or (open_end and all(derivable(b) for b in body[len(cont):])))
+                for cont, open_end in shapes.get(heading, ())
+            )
+        if not leaked:
+            found.add(heading)
     return found
 
 
@@ -1882,6 +2069,7 @@ def _lost_headings(
     old_text: str,
     verbatim: frozenset[str] = frozenset(),
     derived: frozenset[str] = frozenset(),
+    shapes: dict[str, frozenset[tuple[tuple[str, ...], bool]]] | None = None,
 ) -> list[str]:
     """マージ結果から消えた既存見出し (## 〜 #####) を列挙する (保存則の検査)。
 
@@ -1897,19 +2085,20 @@ def _lost_headings(
     見えなくなっても、消失の検査からは漏らさない)。結果側では、フェンスの外の見出しを
     「残っている」とみなす。例外は 2 つだけ:
       - 既存章でもフェンスの内側にあった行が、結果でもどこかに (フェンス内でも) 残る
-      - verbatim (spec-state の qa・承認の逐語に行として現れる見出し) に含まれ、かつ
-        既存章でその見出しの直下 (次の見出しまで) の行がすべて derived (spec-state から
-        導ける行) である。旧 compile の漏れであって章の節ではなく、逐語の正本は spec-state
-        に残っている。これを除かないと、逐語をフェンスに入れた再生成は漏れ見出しの
-        「消失」で必ず止まり、その章は二度と再生成できない。直下に derived に無い行が
-        1 行でもあれば人が書いた節なので、字面が逐語と同じでも消失として止める。
+      - verbatim (spec-state の逐語に行として現れる見出し) に含まれ、かつ既存章でその
+        見出しの直下 (次の見出しまで) が漏れの形をしている (_headings_with_underived_body:
+        同じ逐語の続きの行がそのまま並び、逐語が末尾まで続いたときだけ、その後ろに
+        derived (spec-state から導ける行) が並ぶ)。旧 compile の漏れであって章の節ではなく、
+        逐語の正本は spec-state に残っている。これを除かないと、逐語をフェンスに入れた
+        再生成は漏れ見出しの「消失」で必ず止まり、その章は二度と再生成できない。直下が
+        漏れの形でなければ人が書いた節なので、字面が逐語と同じでも消失として止める。
     """
     present = set(_all_heading_lines(merged_text, outside_fence_only=True))
     present_anywhere = set(_all_heading_lines(merged_text, outside_fence_only=False))
     old_outside = set(_all_heading_lines(old_text, outside_fence_only=True))
     present_labels = {lab for lab in map(_heading_label, present) if lab}
     old_block_by_heading = dict(_split_blocks(old_text, verbatim))
-    human_bodied = _headings_with_underived_body(old_text, verbatim, derived)
+    human_bodied = _headings_with_underived_body(old_text, verbatim, derived, shapes)
     lost: list[str] = []
     for heading in _all_heading_lines(old_text, outside_fence_only=False):
         if heading in present:
@@ -1956,6 +2145,7 @@ def write_docset(docset: dict[str, str], out_dir: Path, *, spec: dict | None = N
     out_dir.mkdir(parents=True, exist_ok=True)
     verbatim = verbatim_headings(spec)
     derived = spec_derived_lines(spec)
+    shapes = verbatim_heading_shapes(spec)
     written: list[Path] = []
     for name, content in docset.items():
         p = out_dir / name
@@ -1965,14 +2155,16 @@ def write_docset(docset: dict[str, str], out_dir: Path, *, spec: dict | None = N
             text = merge_preserving(text, old_text, spec=spec)
             # 今回の再生成が描いた行も spec-state から導ける行である。
             fresh = frozenset(line.strip() for line in content.split("\n") if line.strip())
-            lost = _lost_headings(text, old_text, verbatim, derived | fresh)
+            lost = _lost_headings(text, old_text, verbatim, derived | fresh, shapes)
             if lost:
                 # 逐語と同じ字面の人の見出しは、引き継ぎの境界 (_MergeContext.skip) が逐語の
                 # 漏れとして扱うので、本文があっても引き継げない。原因と抜け道を示す。
+                # 漏れの残骸を改名すると人の節として固定されるので、片付け方も併せて示す。
                 collided = sorted({h.strip() for h in lost} & verbatim)
                 hint = (
                     f" 見出し {collided} は spec-state の逐語にも行として現れるため、人の節としては"
-                    "引き継げない。人の節なら逐語に無い見出しへ改めること。"
+                    "引き継げない。人の節なら逐語に無い見出しへ改めること。旧 compile が漏らした"
+                    "見出しなら、その見出しと直下の行を既存章から消せば通る (逐語の正本は spec-state に残る)。"
                     if collided else ""
                 )
                 raise CompileError(

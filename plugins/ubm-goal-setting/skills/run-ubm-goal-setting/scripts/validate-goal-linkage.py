@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+# /// script
+# name: validate-goal-linkage
+# version: 0.1.0
+# purpose: 目標設定ファイルの一本筋（売上目標 → 成果目標 → 行動目標）を両方向に照合し、
+#          参照の切れ・所属不明・複数参照・許容外の括弧名を rc=1、分母0を rc=3 として返す。
+#          照合規則は同じディレクトリの validate-goal-output.py から読み込んで共用する。
+# inputs:
+#   - argv: --file PATH（複数指定可）
+# outputs:
+#   - stdout: グループごとの両方向の分母 / 未解決の一覧 / STATUS / MEASURED_AT / ARGS
+#   - exit: 0=未解決0件 / 1=未解決あり / 2=引数・ファイルの誤り / 3=分母0（何も照合していない）
+# contexts: [E, C]
+# network: false
+# write-scope: none
+# dependencies: []
+# requires-python: ">=3.9"
+# ///
 """UBM目標設定 一本筋（売上目標 → 成果目標 → 行動目標）の両方向照合.
 
 行動目標は支える成果目標ごとの `### → {成果目標名}：{要約}（{金額}円）` 見出しで

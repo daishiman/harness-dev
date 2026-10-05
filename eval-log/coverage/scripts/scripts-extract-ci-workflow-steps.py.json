@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/extract-ci-workflow-steps.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 84,
+    "notes": "実コードを読み、実テストと合成 workflow での実測で検証した。on に pull_request を持つ workflow の run 段を 1 段 1 ファイルの shell として書き出す。job や段の if、env や run の GitHub 式、bash 以外の shell、--skip-jobs で指定された段は、理由を付けて skipped.tsv に残す。continue-on-error: true の段は mode=soft にし、working-directory は shlex.quote した cd に変換する。PR workflow の段が 0 件なら exit 1、既存の *.sh がある out-dir は混ざらないよう exit 2 で拒否する。`# /// script` frontmatter あり (PyYAML 依存、write-scope は out-dir のみ)。py_compile OK。TESTS: tests/scripts-root/test_root__extract_ci_workflow_steps.py 11 件全 PASS (0.28s。実 workflow の run 段がすべて書き出しか skip のどちらかに入ること、run-ci-checks.sh が書き出した段を実行することを含む)。指摘 (いずれも low。現行の PR workflow では起きないことを確認した): (1) job 単位の `uses:` (reusable workflow) は skipped.tsv にも残らず、黙って落ちる (合成 workflow で実測)。docstring の『黙って捨てない』と食い違う。`uses:` の action 段も記録されない。(2) 取り除くのは `python3 -m pip install` で始まる行だけなので、`pip install` や `npm ci` があればローカル環境を書き換えうる。行末のバックスラッシュで継続した pip 行は、継続行の `-r ...` が孤立して残り、その段は失敗する (fail-closed)。(3) working-directory や defaults の中の `${{ }}` は検出せず、`cd '${{ ... }}'` として書き出す (実行時に失敗する方向)。(4) 常に `set -eo pipefail` を付けるが、GitHub の shell 未指定時の既定は `bash -e {0}` で pipefail を含まない。ローカルが厳しくなる安全側だが、docstring の記述は不正確。(5) YAML の構文エラーや、root が dict でない workflow は未捕捉の例外で終わる (非 0 終了)。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

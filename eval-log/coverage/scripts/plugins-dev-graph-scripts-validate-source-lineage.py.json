@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/dev-graph/scripts/validate-source-lineage.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 86,
+    "notes": "実コードを読み、実テストと境界の実測で検証した。origin_kind=system-spec-harness の node だけを対象にする。source_path を repo 相対に限り (絶対パス、`..`、バックスラッシュを拒否)、contained(must_exist=True) で symlink による repo 外の参照も拒否したうえで、生 bytes の sha256 と source_digest (小文字 64 桁の hex) を照合する。--graph も repo の中に閉じ込める (/etc/hosts を渡すと exit 2 になることを実測)。違反ありは exit 1、入力エラーは exit 2、読取りだけ。`# /// script` frontmatter あり。py_compile OK。TESTS: plugins/dev-graph/tests/test_validate_source_lineage.py 3 件全 PASS (1.89s)。build-graph-node.py が lineage_findings を登録前のゲートとして再利用している。指摘 (いずれも low): (1) source_lineage を持たない node を --node-id で指定すると、checked=0 のまま status=pass、exit 0 になる (実測)。R3-import の完了条件が『lineage 全 field の欠落 0』を別に課しているので実害は抑えられているが、呼び出し側は checked を見る必要がある。(2) lineage_findings の中の target.read_bytes() の OSError (権限不足など) は try の外にあり、JSON を出さずに traceback で終わる (非 0 終了なので fail-closed)。(3) 大文字の hex の digest は lineage_digest_invalid として拒否する (厳しい側)。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

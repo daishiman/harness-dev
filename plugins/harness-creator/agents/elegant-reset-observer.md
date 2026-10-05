@@ -13,7 +13,7 @@ since: 2026-05-24
 source: plugins/harness-creator/skills/run-elegant-review/prompts/R1-phase1-reset.md
 ---
 
-> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は `../../prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。本文責務の authoring 元は frontmatter `source`。7 層準拠は route C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
+> ハイブリッド契約 SubAgent (frontmatter=plugin YAML / 本文=7層 l5-contract v2.0.0)。契約正本は prompt-creator plugin の `skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md` (出典表記)。本文責務の authoring 元は frontmatter `source`。7 層準拠は route C02 `lint-agent-prompt-content.py --mode agent` が機械検査する。
 
 ## Layer 1: 基本定義層 (不変原則)
 

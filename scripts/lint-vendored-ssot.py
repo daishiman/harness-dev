@@ -56,6 +56,44 @@ VENDORED_PAIRS = [
         / "scripts" / "verify-completeness.py",
         ROOT / "plugins" / "harness-creator" / "vendor" / "prompt-creator" / "verify-completeness.py",
     ),
+    # slide-report-generator の IN2 ゲート (情報優先度宣言) は system-spec-harness の
+    # validator/schema を使うが、SRG は system-spec-harness に依存しない配布 plugin なので
+    # install 先に兄弟がある保証が無い。stdlib-only・read-only の validator と schema を同梱する。
+    *[
+        (
+            ROOT / "plugins" / "system-spec-harness" / rel,
+            ROOT / "plugins" / "slide-report-generator" / rel,
+        )
+        for rel in (
+            "scripts/validate-information-priority.py",
+            "schemas/information-priority-map.schema.json",
+        )
+    ],
+    # dev-graph の node/decompose/requirements が reference_refs で読む exact-13 package 契約。
+    # 正本は system-dev-planner (ミクロ層) だが、install 先では `../../../system-dev-planner/` が
+    # 兄弟に届かない。localize せず同じ契約を読ませたいので、doc でも byte 一致を強制する。
+    (
+        ROOT / "plugins" / "system-dev-planner" / "references" / "feature-execution-package-contract.md",
+        ROOT / "plugins" / "dev-graph" / "references" / "feature-execution-package-contract.md",
+    ),
+    # assign-skill-design-evaluator の render-findings-score.py が subprocess で起動する rubric 合成器。
+    # harness-creator は skill-governance-automation に依存しない配布 plugin なので、stdlib-only の
+    # 正本を byte 一致で同梱する。
+    (
+        ROOT / "plugins" / "skill-governance-automation" / "scripts" / "compose-rubrics.py",
+        ROOT / "plugins" / "harness-creator" / "scripts" / "compose-rubrics.py",
+    ),
+    # 兄弟 plugin の root を install 配置に依存せず解決する CLI。external-mutation の
+    # guard block (build-artifact-delivery.py) が自 plugin の scripts/ から呼ぶ。全 plugin が
+    # 外部変更 skill (run-skill-feedback) を持つので、manifest を持つ全 plugin へ vendoring する。
+    # 一覧を手書きしないので、plugin を足して vendor を忘れると存在検査で落ちる。
+    *[
+        (
+            ROOT / "scripts" / "extract-plugin-root.py",
+            manifest.parents[1] / "scripts" / "extract-plugin-root.py",
+        )
+        for manifest in sorted(ROOT.glob("plugins/*/.claude-plugin/plugin.json"))
+    ],
 ]
 
 

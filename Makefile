@@ -2,7 +2,7 @@
 # 二重正本 drift 防止: creator-kit/skills/ 変更後に sync ターゲットを実行すること。
 # CI では --check gate (harness-creator-kit-ci.yml) が走るため二重防護となる。
 
-.PHONY: sync sync-check hook-registry hook-registry-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready artifact-delivery entrypoint-artifact-first lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability prompt-contract-drift config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
+.PHONY: sync sync-check hook-registry hook-registry-check native-surfaces native-surfaces-dry-run native-surfaces-apply native-surfaces-check native-surfaces-pr-ready artifact-delivery entrypoint-artifact-first lint plugin-package-check contract-intake vendored-ssot tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift config-version-lock feedback-contract content-review pytest coverage llm-coverage coverage-gate harness-coverage harness-ratchet test help
 
 # LLM_COV_SINCE: 新規スキルの coverage gate 境界日。これ以降に since された loop-kind スキルは
 # coverage-gate で <80% なら fail-closed。既存スキルは ratchet で段階的に底上げ。
@@ -51,7 +51,7 @@ native-surfaces-pr-ready:
 	git diff -- .claude/skills .claude/agents .claude/commands .claude/settings.json .codex/hooks.json .codex/config.toml .agents/plugins/marketplace.json plugins/harness-creator/.claude-plugin/plugin.json plugins/harness-creator/.codex-plugin/plugin.json plugins/harness-creator/native-surfaces.toml
 
 ## lint: スキル lint 一式 + skill-intake contract test + vendored SSOT + runtime/README ポータビリティ + ローカル marketplace drift 検証を実行する
-lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability prompt-contract-drift local-marketplace install-docs distributable-ssot
+lint: artifact-delivery entrypoint-artifact-first contract-intake vendored-ssot legacy-plugin-name tenant-isolation runtime-portability readme-portability sibling-plugin-paths prompt-contract-drift local-marketplace install-docs distributable-ssot
 	python3 scripts/lint-skill-name.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/lint-skill-description.py --skills-dir plugins/harness-creator/skills
 	python3 scripts/validate-frontmatter.py --skills-dir plugins/harness-creator/skills
@@ -155,6 +155,11 @@ runtime-portability:
 ##   生ターミナル空展開事故の恒久再発を防ぐ (deferred plugin の文書層 lint 回収)。
 readme-portability:
 	python3 scripts/lint-readme-plugin-root-portability.py
+
+## sibling-plugin-paths: plugin 内に親ディレクトリ起点の兄弟 plugin 参照 (`../<sibling>` / `.parents[N] / "<sibling>"`) が無いか静的検査
+##   install 先は <cache>/<marketplace>/<plugin>/<version>/ で `..` が兄弟に届かないため。
+sibling-plugin-paths:
+	python3 scripts/lint-sibling-plugin-paths.py
 
 ## prompt-contract-drift: 7 層プロンプトの契約記述 (参照 schema/reference/script パス・allowed-tools) が
 ##   実装と乖離する再ドリフトを機械検出。Tier1 (参照パス実在) は fail-closed、

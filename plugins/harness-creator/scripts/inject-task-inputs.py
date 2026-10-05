@@ -11,7 +11,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none (read-only・task-state/task-graph/schema を読むのみで一切書き込まない)
-# dependencies: []
+# dependencies: [sync-task-state.py]
 # requires-python: ">=3.10"
 # ///
 """task-graph 駆動 build の consumer 側入力解決器 (TG-C03・read-only)。
@@ -47,16 +47,6 @@ import os
 import sys
 from pathlib import Path
 
-# producer 所有の notes 上限 SSOT (F8): consumer 側で 3/200 を再定義しない。
-# scripts/ の 2 階層上 = plugins/ を起点に producer schema へ解決する。
-DEFAULT_NOTES_SCHEMA = str(
-    Path(__file__).resolve().parents[2]
-    / "plugin-dev-planner"
-    / "skills"
-    / "run-plugin-dev-plan"
-    / "schemas"
-    / "handoff-notes.schema.json"
-)
 
 
 # ── 兄弟 script ローダ (ハイフン名 module の importlib ロード・TG-C02 SSOT 再利用) ──
@@ -71,6 +61,17 @@ def _load_sibling(stem: str):
 
 # edge 方向の共通解決は TG-C02 の resolve_dependency_producers を再利用する。
 _sts = _load_sibling("sync-task-state")
+
+# producer 所有の notes 上限 SSOT (F8): consumer 側で 3/200 を再定義しない。
+# producer root は TG-C02 (sync-task-state.resolve_planner_root) を再利用する。親ディレクトリ起点の
+# 兄弟パスは install 先 (<cache>/<marketplace>/<plugin>/<version>/) で届かないため。
+DEFAULT_NOTES_SCHEMA = str(
+    _sts.resolve_planner_root()
+    / "skills"
+    / "run-plugin-dev-plan"
+    / "schemas"
+    / "handoff-notes.schema.json"
+)
 # produces = producer→artifact (from=producer task, to=artifact id/path)。
 _PRODUCES_EDGE_TYPE = "produces"
 # TG-C02 が producer state node へ書く handoff_notes (dict) の平坦化対象カテゴリ (固定順)。

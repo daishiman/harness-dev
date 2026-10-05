@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-extract-blueprint",
-    "skill_md_sha256": "a7b2edd6b3d03b8f77b4e4eee19f51566ebf0615305c15d374d908a754d26efd"
+    "skill_md_sha256": "827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 4
   },
-  "reviewer": "focused-run-extract-blueprint-content-review (incremental profile, one context)",
-  "reviewed_at": "2026-08-24T05:38:47Z",
-  "iterations": 2,
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,18 +24,21 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "checklist-graph は C1=pre-choice R1証跡再検証、C2=R2分析、C3=R3文書化の依存鎖へ決定論的に写像され、pre-choice成果物を再取得せず選択証跡を残す。max_loops=5 は3基本itemと最大2 self-reflect itemを収容する。",
-      "4つのtask-graph engine scriptはHarness Creator共有templateとbyte一致し、plugin-local schemaはself-reflectが生成するcreated_iteration/available_from_iterationを受理する。完了前 verifier はunknown依存、cycle、依存前選択、未追跡done、未完了completedをfail-closedにする。",
-      "Agent Team境界はC03 factを先行させ、C04/C05/C13を独立write scopeへfan-outし、C06でfan-inする。dependency graph抽出は31 nodes/25 edges/gaps 0で、SSOT参照の切断はない。",
-      "IN1はauthz/fetch/mermaid/docの決定論ゲートへ、OUT1は事実と根拠付き推測の分離およびreconstruction-rehearsalへ追跡できる。"
+      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
+      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。extract-system-blueprint の plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
+      "goal-seek 正本の引用を、install 先で存在しない兄弟 plugin への相対パス (../../../harness-creator/...) から、出典表記 (harness-creator plugin の skills/run-build-skill/references/goal-seek-paradigm.md、本 plugin には同梱しない) に変えた。plugin 名と plugin 内パスが残るので辿れる情報は失われておらず、引用先は harness-creator 側に実在する。『同梱しない』を明記したことで、読み手が本 plugin 内を探して迷うことも無い。ゴールシーク節は 6 ステップ (現状評価/手順生成/実行/検証/Anchor Step/反復) を本文に展開しているため、正本を読めない install 先でも手順は失われない。",
+      "C08 の fetch-authz hook (matcher は Bash と WebFetch) は URL を含まない Bash を通過させるので、新設の resolver 呼び出しに干渉しない。resolver の呼び出しは allowed-tools の範囲に収まり、<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則に収まる。本文の validate-goal-seek-anchor.py への参照 (../../scripts/) は plugin 内で解決し、差分外で有効。"
     ],
     "negative_feedback": [
-      "[medium / PD-002] frontmatter後の本文先頭30行に厳密な『## Purpose』または『## Output Contract』見出しがない。実質契約はPre-choice usable artifact execution直下に存在し、high/required fixではない。"
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
+      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 43 行目)、今回の guard block への 12 行追記で本文 55 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。前回 verdict (2026-08-24) はこれを medium として記録したまま PASS にしていたが、今回は手順の定め (差分外の既存の問題は low として記録し判定の対象外) に従い、判定外の low へ分類を改めた。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:task-graph-runtime-profile-focused-review",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "1 contextのincremental focused review。初回で、C01 inventoryの旧inline/subagent・browser欠測契約・C15依存・criteria drift、plugin schemaによるself-reflect生成field拒否、task-graph消費証跡のfail-closed検査欠落をhigh blockerとして修正した。再reviewでは矛盾/漏れ/不整合/依存破断を各0と確認した。plan task-graphのP06 node/edge順序だけを最小正準化し、graph_hash sha256:1f40c83d700dec5838caed1bfd959b8a94601fb2f134bc9dc23804d6b1312c42・node集合・edge集合を不変のままvalidate-task-graph exit 0へ戻した。focused tests 93 passed、runtime-profile findings 0、goal-seek/capability lints PASS、dependency graph 31 nodes/25 edges/gaps 0。これは静的design claimであり、live/criteria verdictをPASS根拠にせず更新していない。30思考法を使用したとは申告しない。"
+  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+16/-4) のみ。内容は 2 点: (i) guard block の差し替え。親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う。(ii) ゴールシーク実行節の正本の引用を、相対パス (../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md) から『本 plugin には同梱しない』付きの出典表記へ変更。 【読んだもの】SKILL.md 全文 (337 行) と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、本 plugin の C08 fetch-authz hook (Bash の URL 無し呼び出しを通過させることを確認)、extract-system-blueprint の .claude-plugin/plugin.json、引用先 goal-seek-paradigm.md の harness-creator 側での実在、validate-goal-seek-anchor.py の plugin 内での実在。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = 827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7 を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。(b) 漏れ 0 (medium 以上): 引用の変更で辿れる情報は失われておらず、PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: 本文の引用は出典表記、frontmatter の external_mutation_guard.runtime_ref は plugin: 記法で、規約どおり。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で smell に計上した。前回 verdict の task-graph・Agent Team 境界・checklist-graph に関する確認は本差分で変わらない範囲にあり、再判定していない。criteria IN1 の決定論ゲート (authz/fetch/mermaid/doc) の経路は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

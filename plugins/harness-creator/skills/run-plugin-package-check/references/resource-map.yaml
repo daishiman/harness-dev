@@ -10,15 +10,18 @@ machine_readable:
   pkg_catalog: ../ref-pkg-contract/references/pkg-id-catalog.yaml
 
 human_readable:
-  orchestration: prompts/orchestrate.md
-  gate_decide: prompts/gate-decide.md
+  orchestration: prompts/R1-orchestrate.md
+  gate_decide: prompts/R2-gate-decide.md
 
 scripts:
   pkg_001: scripts/run-plugin-validate-strict.sh
+  pkg_009: scripts/lint-pkg-009.py
   pkg_010: scripts/smoke-plugin-install.sh
+  pkg_010_012_lifecycle: scripts/sandbox-plugin-lifecycle.py
   pkg_011: scripts/smoke-plugin-uninstall.sh
   pkg_012: scripts/smoke-plugin-upgrade.sh
   pkg_013: scripts/validate-plugin-permissions.py
+  pkg_015: scripts/run-pkg-015.py
   aggregate: scripts/aggregate-pkg-findings.py
 
 delegate_skills:
@@ -26,8 +29,8 @@ delegate_skills:
   pkg_014: assign-plugin-package-evaluator
 
 external_scripts:
-  pkg_009: ../../../skill-governance-lint/scripts/lint-external-refs.py
-  pkg_015: ../../../skill-governance-lint/scripts/lint-rubric-violation.py
+  pkg_009: plugin:skill-governance-lint/scripts/lint-external-refs.py
+  pkg_015: plugin:skill-governance-lint/scripts/lint-rubric-violation.py
 
 reference_skills:
   - ref-pkg-contract

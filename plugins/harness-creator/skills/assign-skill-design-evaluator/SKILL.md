@@ -21,7 +21,7 @@ reference_refs:
   - references/evaluator-contract.md
 script_refs:
   - scripts/render-findings-score.py
-  - ../../../skill-governance-automation/scripts/compose-rubrics.py
+  - ../../scripts/compose-rubrics.py
 merge_strategy: deep-merge
 conflict_policy: most-specific-wins
 # auto-backfilled by backfill-source-tier.py (doc/21)
@@ -71,7 +71,7 @@ forkコンテキストで動き、生成本体（run-build-skill）と context �
 ## Key Rules
 
 1. **Goodhart対策**: 採点者は被採点物を改変しない（09章）。
-2. **rubric_refs 注入 (append-only)**: runner/orchestrator が L1 ドメイン rubric を CLI `--rubric-refs` で **append** する（順序: L0 → L1 → L2）。evaluator 自身は frontmatter `rubric_refs` を書き換えない（設計書29 §10 アンチパターン）。合成は `plugins/skill-governance-automation/scripts/compose-rubrics.py` に委譲し、`deep-merge / strict / override / layered`、conflict policy、schema検証、循環検出、composition hash を同一実装で扱う。未指定時は L0 + L2 のみで合成する（L1 スキップ）。
+2. **rubric_refs 注入 (append-only)**: runner/orchestrator が L1 ドメイン rubric を CLI `--rubric-refs` で **append** する（順序: L0 → L1 → L2）。evaluator 自身は frontmatter `rubric_refs` を書き換えない（設計書29 §10 アンチパターン）。合成は plugin 同梱の `scripts/compose-rubrics.py` (skill-governance-automation の正本を byte 一致で同梱。`scripts/lint-vendored-ssot.py` が一致を強制) に委譲し、`deep-merge / strict / override / layered`、conflict policy、schema検証、循環検出、composition hash を同一実装で扱う。未指定時は L0 + L2 のみで合成する（L1 スキップ）。
 3. **TODO(human)残置**: 合成 rubric の check に TODO(human) マーカーが残る rule は採点せず `pending_human` に別建てする（score に反映しない）。
 4. **severity weights固定**: high -20 / medium -10 / low -3、初期 100。負値は 0 にクランプ。
 5. **rubric_hash必須**: 出力JSONに rubric.json の sha256 を載せる（再現性、27章）。

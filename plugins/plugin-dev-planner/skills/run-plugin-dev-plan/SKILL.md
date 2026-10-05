@@ -71,8 +71,8 @@ reference_refs:
   - references/purpose-driven-requirements.md
   - references/harness-creator-spec-reflection.md
   - references/task-graph-contract.md
-  - ../../../harness-creator/references/pipeline-boundary-contract.md
-  - ../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
+  - plugins/harness-creator/references/pipeline-boundary-contract.md
+  - plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
 agent_refs:
   - ../../agents/plugin-dev-plan-elicitor.md
   - ../../agents/plugin-dev-plan-architect.md
@@ -155,7 +155,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 # run-plugin-dev-plan
 
-> **配布注記**: 本 skill の cross-skill `reference_refs` (`../../../harness-creator/...goal-seek-paradigm.md`) は repo-bundled 前提。plugin-dev-planner は `distributable:false` フラグで公開 marketplace/bundles へ登録しない (`scripts/validate-plugin-completeness.py` が公開側の非登録を機械強制)。ローカルの `harness-local` / `codex-repo` catalog には登録し、両製品へ install できる。加えて plugin-dev-planner は `NEVER_DISTRIBUTE` denylist (`validate-plugin-completeness.py`) にも登録済みで、フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する二重ロック。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。また standalone 配布時は repo 側の schema parity テスト網 (upstream 突合) が skip され drift を検知しないため、repo-bundled 運用を既定とする。
+> **配布注記**: 本 skill の cross-plugin 参照 (`plugins/harness-creator/...goal-seek-paradigm.md` など) は repo root 起点で書き、repo-bundled 前提とする (install 先では `../` を重ねても兄弟 plugin に届かないので、skill 相対で兄弟 plugin を指す書き方は使わない)。plugin-dev-planner は `distributable:false` フラグで公開 marketplace/bundles へ登録しない (`scripts/validate-plugin-completeness.py` が公開側の非登録を機械強制)。ローカルの `harness-local` / `codex-repo` catalog には登録し、両製品へ install できる。加えて plugin-dev-planner は `NEVER_DISTRIBUTE` denylist (`validate-plugin-completeness.py`) にも登録済みで、フラグが true へ漂流しても固有名検査が fail-closed で配布を阻止する二重ロック。lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative 参照。また standalone 配布時は repo 側の schema parity テスト網 (upstream 突合) が skip され drift を検知しないため、repo-bundled 運用を既定とする。
 
 ## Purpose & Output Contract
 
@@ -198,7 +198,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 1. **目的ドリブン (単語置換でない)**: UBM 機能開発固有物 (IPC/Cloudflare/スクショ/PR) のみ除外し、harness-creator ネイティブ規律 (TDD/評価/goal-seek/feedback-contract) は漏れなく後段へ伝播する。**DROP 列挙の正本は `references/phase-lifecycle.md` §7 読替表**、目的ドリブン精神の正本は `references/purpose-driven-requirements.md`。
 2. **5 種の component_kind × N 実体を inventory へ分解 (skill 偏重を解消)**: 各 buildable 実体を skill/sub-agent/slash-command/hook/script の 5 種のいずれかへ写像し `component-inventory.json` の `components[]` に `component_kind` 宣言 + kind 別構造キーで載せる。**同一 kind の複数実体 (skill 複数・agent 複数 等) はそれぞれ独立 component** にする (1 実体 = 1 component = 1 build_target の shadow-tree 同型)。加えて plugin-level surface として harness/eval、plugin manifest、plugin-composition、references/config/assets の要否を index の `plugin_meta` と inventory の `plugin_level_surfaces` に記録する。buildable 実体数 N は対象プラグインが持つ実体の数に依存して変動し (13 フェーズ数とは独立)、実プラグインでは自然に 10 実体超になる。正本 `references/component-domain.md` / `references/io-contract.md`。
 3. **2 軸を二重に持たない (正規化)**: ライフサイクル軸=13 phase ファイル (人間向け・上から順に読める)、成果物実体軸=`component-inventory.json` (機械 SSOT・build routing/DAG/品質機構)。build_target/depends_on は inventory のみが持ち、phase ファイルは再記述せず `entities_covered: [C01, ...]` の id 参照だけで component に紐づく。plugin 階層の横断規律は `index.md` の `plugin_meta` に集約する。
-4. **plugin-creator 物理契約を index に集約**: `.claude-plugin/plugin.json`、manifest name と folder name の一致、TODO placeholder 禁止、personal marketplace default、policy.installation/authentication/category、update cachebuster、`validate-plugin-completeness.py` 実行を `plugin_meta` に焼く。正本 `references/plugin-creator-contract.md`。新規・改善とも `plugin_meta.install` は `specfm.default_install_contract()` を既定とし、両製品の manifest/catalog を維持する。理由付き Codex 除外は実導入対象 (`platforms`) のみで、P13 の installer argv に `--platform both` または `--platform claude` を伝える。P13 の義務は `specfm.install_release_obligations()` から導出する。fixed13 は P13 チェックリスト、task-graph-derived は P13 direct-task の `acceptance_criterion` へ条項を焼き、`check-spec-gates.py` が既存 `derive()` の実行 leaf と保存済み graph の両方を突合する。
+4. **plugin-creator 物理契約を index に集約**: `.claude-plugin/plugin.json`、manifest name と folder name の一致、TODO placeholder 禁止、personal marketplace default、policy.installation/authentication/category、update cachebuster、`validate-plugin-completeness.py` 実行を `plugin_meta` に焼く。正本 `references/plugin-creator-contract.md`。新規・改善とも `plugin_meta.install` は `specfm.default_install_contract()` を既定とし、両製品の manifest/catalog を維持する。理由付き Codex 除外は実導入対象 (`platforms`) のみで、P13 の installer argv に `--platform both` または `--platform claude` を伝える。P13 の義務は `specfm.install_release_obligations()` から導出する。index の `shape_marker` が `fixed-13-phase` なら P13 チェックリスト、`task-graph-derived` なら P13 direct-task の `acceptance_criterion` へ条項を焼き、`check-spec-gates.py` が既存 `derive()` の実行 leaf と保存済み graph の両方を突合する。install 義務は plugin 単位なので P13 の `entities_covered` は `[]` に保つ (component へ複製された leaf は gate が拒否する)。`install` を持たない既存 plan は一括移行せず、次回 `--mode update` で `plugin_meta.install`・P13 条項・task-graph 再生成を Edit 差分で足す (それまで `check-spec-gates.py` は exit1 のまま)。
 5. **評価基準を inventory component エントリへ operationalize**: 全 buildable component が core 規律 `quality_gates`(p0_lint(kind別)/build_trace/elegant_review C1-C4/content_review verdict/evaluator≥80,high0) + `harness_coverage`(block: min≥80/kind_pass) を携帯し `check-spec-gates.py` が inventory を走査して機械検証する。参照ポインタでなく具体キーへ焼く。条件付き規律 (feedback_contract criteria/goal_seek/prompt_layer/knowledge_loop/combinators) は kind/feature でゲート、plugin 階層規律 (manifest/marketplace/配布/bundles/PKG/governance/CI/SSOT) は index の `plugin_meta` へ焼く。焼き先正本は `references/harness-creator-spec-reflection.md` の 46 行マトリクス (operationalize 状況は `check-spec-matrix-coverage.py` が検査)。**品質ゲートだけでなく成果物評価 (purpose-acceptance) も焼く**: skill loop kind の `feedback_contract.criteria` は当該 component の goal/checklist 由来 (汎用ゲート言い換えへの退化を `check-spec-frontmatter.py` の purpose-traceability が機械検出)、index に「受入確認 (build 後の見方)」章を持たせ build 後に「組み上がった実プラグインが purpose を満たすか」を確認できる trace を通す (実行は L4・plan は契約として焼くのみ)。正本 `references/io-contract.md` §10「成果物評価の境界」。**quality_gates は「何を証明するか」の claim 集合**であり、実行頻度は consumer (harness-creator) 側 `verification-obligation-protocol.md` の fingerprint 再利用が決めるため、頻度指示 (「毎周回フル再実行」の含意) を plan 本文へ焼かない。
 6. **現状数値非焼込**: 「≥80% を満たす設計」を要件化し、harness 現状未達数値は component エントリへ焼かない (Goodhart 回避)。
 7. **schema parity**: skill component は `skill-brief.schema.json` 主要 14 フィールド相当へ無加工で写せる粒度にする (`references/io-contract.md`)。
@@ -209,7 +209,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## ゴールシーク実行
 
-> 本スキルは固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本: `../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md`。
+> 本スキルは固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本: `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md`。
 
 > **形状と手順の直交 (中心原則・「ひな形」論の解)**: goal-seek paradigm が廃するのは**固定手順 (process)** であって**固定出力形状 (output shape)** ではない。両者は直交する。よって本スキルは (a) phase ファイルの **frontmatter 形状 (`PHASE_REQUIRED`) と inventory component の構造 (`STRUCTURAL_REQUIRED`) を `specfm` + lint + ゴールデン例で凍結**し (検査可能な骨格)、(b) phase 本文 prose は判断を要するため**形状を解放**しつつ、(c) 本文にも **§5 の床 (空セクションを弾く)** を敷く。手書きの穴埋め skeleton ファイルは置かない。必要な場合は `scripts/render-spec-skeleton.py` が `specfm` の正本から phase skeleton (`--phase N`) / inventory component skeleton を生成する (形状の正本は frontmatter=specfm、本文は床付きの自由記述)。つまり「ひな形が無い」のでなく「ひな形を実行可能 schema + lint + 生成 skeleton + 例として持つ」のが本方式。正本 `references/io-contract.md` §9/§10。
 
@@ -230,7 +230,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - [ ] R2: 各実体を 5 種の component_kind へ単一責務分解し `component-inventory.json` (N 実体・同一 kind 複数実体可) と依存 DAG (循環なし) + envelope(plugin.json)設計 (Phase02 owner) を導出した
 - [ ] R3: 13 phase ファイル (`phase-01-requirements.md` … `phase-13-release.md`) + index(main) + `component-inventory.json` を生成した
 - [ ] 各 inventory component が `component_kind` を宣言し kind 別構造契約を携帯している (skill 偏重なし)
-- [ ] index が plugin-creator 物理契約 (`manifest` / `marketplace` / cachebuster / validate_plugin) を `plugin_meta` に携帯している
+- [ ] index が plugin-creator 物理契約 (`manifest` / `marketplace` / cachebuster / validate_plugin / `install`) を `plugin_meta` に携帯している
+- [ ] install 義務が P13 の実行 leaf (`fixed-13-phase` はチェックリスト、`task-graph-derived` は direct-task) へ plugin 単位で届いていることを `check-spec-gates.py` が確認した
 - [ ] 各 buildable component が core 規律 quality_gates + harness_coverage(block) を携帯している
 - [ ] skill loop kind の component が feedback_contract criteria を inner+outer 各 1 件以上携帯している (現状値は焼かない)
 - [ ] skill loop kind の criteria が当該 component の goal/checklist 由来 (purpose-acceptance) で汎用ゲート言い換えに退化していない + index に「受入確認 (build 後の見方)」章がある (成果物評価の operationalize)
@@ -301,7 +302,7 @@ python3 "$SKILL_DIR/scripts/derive-task-graph.py" "$PLAN_DIR"                   
 python3 "$SKILL_DIR/scripts/verify-index-topsort.py" "$PLAN_DIR"
 python3 "$SKILL_DIR/scripts/detect-unassigned.py" --inventory "$PLAN_DIR/component-inventory.json" --specs-dir "$PLAN_DIR"
 python3 "$SKILL_DIR/scripts/check-spec-frontmatter.py" --specs-dir "$PLAN_DIR"   # component_kind 別構造 + core 規律
-python3 "$SKILL_DIR/scripts/check-spec-gates.py" --specs-dir "$PLAN_DIR"          # quality_gates + harness 深掘り
+python3 "$SKILL_DIR/scripts/check-spec-gates.py" --specs-dir "$PLAN_DIR"          # quality_gates + harness 深掘り + plugin_meta 値域 + P13 install 義務の到達 (slug は goal-spec が正本・handoff と一致必須)
 python3 "$SKILL_DIR/scripts/check-spec-matrix-coverage.py" --self-test            # 46 行 table drift
 python3 "$SKILL_DIR/scripts/check-spec-matrix-coverage.py" "$PLAN_DIR"            # 適用行の焼き先反映 + OP/conditional/N-A 内訳
 python3 "$SKILL_DIR/scripts/check-surface-inventory.py" "$PLAN_DIR/component-inventory.json" # 5種検討証跡 + surface 採否
@@ -347,7 +348,7 @@ python3 "$SKILL_DIR/scripts/check-plugin-surface-audit.py" --plugins-dir plugins
 
 ### 局面: トレーサビリティ検証 (R4)
 
-`prompts/R4-verify-traceability.md` (評価ロジックの正本は独立 skill `assign-plugin-plan-evaluator` の `prompts/R1-evaluate.md` へ昇格)。**R4 は `assign-plugin-plan-evaluator` (kind=assign・user-invocable:false・context:fork) へ委譲**し、同梱 core 5 scripts / 6 invocations + 拡張ゲート (io-contract §11 表) を実行して index の P01..P13 完全性 + inventory DAG・unassigned 0 件 (orphan 0)・component_kind 別構造・quality_gates/harness・46 行 operationalize 被覆 (OP/conditional/N-A 内訳)・5種検討証跡・L3→L4 routing/build_kind/build_args・manifest draft・install 携帯性を機械検証する (自然言語突合しない)。評価器は plan を書き換えず `<PLAN_DIR>/plan-findings.json` のみ返す (proposer≠approver)。NG は R3 へ差し戻す (最大 3 周)。
+`prompts/R4-verify-traceability.md` (評価ロジックの正本は独立 skill `assign-plugin-plan-evaluator` の `prompts/R1-evaluate.md` へ昇格)。**R4 は `assign-plugin-plan-evaluator` (kind=assign・user-invocable:false・context:fork) へ委譲**し、同梱 core 5 scripts / 6 invocations + 拡張ゲート (io-contract §11 表) を実行して index の P01..P13 完全性 + inventory DAG・unassigned 0 件 (orphan 0)・component_kind 別構造・quality_gates/harness・46 行 operationalize 被覆 (OP/conditional/N-A 内訳)・5種検討証跡・L3→L4 routing/build_kind/build_args・manifest draft・install 携帯性を機械検証する (自然言語突合しない)。評価器は plan を書き換えず `<PLAN_DIR>/plan-findings.json` のみ返す (proposer≠approver)。NG は R3 へ差し戻す (最大 3 周・上限であって規定回数ではない)。
 
 ## ハンドオフ (component_kind でルーティング)
 

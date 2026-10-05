@@ -907,9 +907,9 @@ def test_governance_ci_discovers_all_plugin_compositions_dynamically():
     workflow = (ROOT / ".github" / "workflows" / "governance-check.yml").read_text(
         encoding="utf-8"
     )
-    assert (
-        "find plugins -mindepth 2 -maxdepth 2 -name plugin-composition.yaml -print0"
-        in workflow
-    )
+    # macOS の bash 3.2 でも動くよう mapfile ではなく glob で列挙する (run-ci-checks.sh が同じ段を実行する)。
+    assert "for composition in plugins/*/plugin-composition.yaml; do" in workflow
+    # 1 件も見つからないときは緑にせず落とす。
+    assert 'test "$found" -gt 0' in workflow
     assert "lint-plugin-composition.py \"$composition\"" in workflow
     assert "validate-build-trace.py --bundle \"$composition\"" in workflow

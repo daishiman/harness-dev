@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/slide-report-generator/scripts/validate-information-priority.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "FAIL",
+    "score": 55,
+    "notes": "実コードを読み、実テストと実測で検証した。plugins/system-spec-harness/scripts/validate-information-priority.py と byte 一致する (sha256: 448494eab3b09d3ad4ef34bcfb851450dee8adaa498e76dcc9312e9bde19a3c8)。scripts/lint-vendored-ssot.py が一致を強制している同梱コピーで、slide-report-generator の IN2 ゲート (構成に着手する前の情報優先度) として、SKILL.md と R1-orchestrate.md が exit 0 を停止条件にしている。読取りだけで stdlib のみなので、write-scope: none は実体と一致する。`# /// script` frontmatter あり。py_compile OK。TESTS: plugins/system-spec-harness/tests/test_validate_information_priority.py 29 件全 PASS (0.06s。byte 一致の正本が対象)。FAIL の理由は fail-open: (1) [high] reason、display_value、rank_rationale、why_not を `str(x).strip()` で判定するので、値が null だと文字列 'None' になって検査を素通りする。drop で reason=null、transform で reason=null かつ display_value=null、rank_rationale=null、why_not=null の map が exit 0 (OK) になることを実測した。IN2 の中核の主張である『削減と加工に理由がある』『形式の候補を比べた』が成り立たない。schema の minLength はこれを禁じているが、IN2 は schema 検証を走らせず、この script が唯一の関門になっている。(2) [medium] 色だけの強調を `list(chans) == ['color']` の完全一致で判定するので、channel=['color','color'] は素通りする (実測)。accessibility.color_not_sole_channel=true は自己申告で、他の channel があるかと照合しない。(3) [low] 入力にディレクトリを渡すと IsADirectoryError の traceback で exit 1 になり、宣言している usage error の exit 2 と食い違う (実測)。exemption が数値の場合も未捕捉の TypeError になる。(4) [low] disposition、semantic_intent、channel などの enum を schema と二重に定義している。system-spec-harness 側の既存記録 (FAIL 58) と同じ欠陥を独立に再現した。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

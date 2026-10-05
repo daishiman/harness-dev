@@ -42,11 +42,11 @@ PR は本 planner の責務外 (責務は計画の生成のみ)。UBM 固有の 
 - [ ] リリースに向けた残タスクが soft note として整理されている (PR 自体はゲート化しない)。
 - [ ] ドメイン外項目 (IPC/Cloudflare 等) が写像対象外として DROP 記録されている。
 
-- [ ] CHANGELOG を先に書き、`build-plugin-release.py --only notion-task-sync` で版を上げ、`build-plugin-release.py --check` が drift 0 で通っている。
-- [ ] 両製品の package を維持し、`build-local-marketplace.py --check` と `sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。
+- [ ] CHANGELOG を先に書き、`python3 scripts/build-plugin-release.py --only notion-task-sync` で版を上げ、`python3 scripts/build-plugin-release.py --check` が drift 0 で通っている。
+- [ ] 両製品の package を維持し、`python3 scripts/build-local-marketplace.py --check` と `python3 plugins/harness-creator/scripts/sync-plugin-platforms.py --repo-root . --all --check` が drift 0 で通っている。
 - [ ] `claude plugin validate --strict plugins/notion-task-sync` が通っている。
-- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。
-- [ ] `install-local-plugins.py --plugin notion-task-sync --platform both` の実環境 install receipt が指定 platform のすべてで verified=true。
+- [ ] `python3 plugins/harness-creator/scripts/install-local-plugins.py --plugin notion-task-sync --platform both --claude-config-dir <tmp-claude> --codex-home <tmp-codex>` の receipt が指定 platform のすべてで verified=true。
+- [ ] `python3 plugins/harness-creator/scripts/install-local-plugins.py --plugin notion-task-sync --platform both` の実環境 install receipt が指定 platform のすべてで verified=true。
 
 ## 参照情報
 - `references/phase-lifecycle.md` §7 (DROP 読替表)。

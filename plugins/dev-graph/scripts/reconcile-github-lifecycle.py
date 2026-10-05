@@ -27,6 +27,8 @@ from _common import ContractError, atomic_json, dump, load_json, run, utc_now
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
 EVIDENCE_PHASES = {"P07", "P10", "P11"}
 MARKER = re.compile(r"(?mi)^\s*dev-graph:\s*([^\s#]+)\s*$")
+# 完了判定用なので、C02 (build-graph-node の readiness) より意図して厳しい: 検証節に `<…>` (autolink を含む) や
+# TODO/TBD が 1 つでも残れば done にしない。C02 は section が埋まったかを見るだけなので基準をそろえない。
 PLACEHOLDER = re.compile(r"<[^>]+>|\b(?:TODO|TBD)\b", re.IGNORECASE)
 
 
