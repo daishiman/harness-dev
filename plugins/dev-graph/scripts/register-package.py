@@ -5,7 +5,7 @@
 # inputs: ["argv: register --package/--graph/--output/--receipt [--tracker-mode] [--config]", "argv: execution-context --graph/--graph-node-id/--context-json", "argv: preflight"]
 # outputs: ["stdout: JSON preview/receipt/preflight report"]
 # requires-python = ">=3.10"
-# dependencies: [_common.py]
+# dependencies: [_common.py, extract-plugin-root.py]
 # contexts: [A, B, C, E]
 # network: false
 # write-scope: explicitly selected dev-graph output and immutable receipt
@@ -17,6 +17,7 @@ import argparse
 import copy
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -30,7 +31,6 @@ from _common import ContractError, atomic_json, contained, dump, load_json, utc_
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
-DEFAULT_SYSTEM_ROOT = PLUGIN_ROOT.parent / "system-dev-planner"
 PHASES = [f"P{i:02d}" for i in range(1, 14)]
 SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
 HEX_SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -266,18 +266,22 @@ def _validate_registration(registration: dict[str, Any], package: dict[str, Any]
     return copy.deepcopy(nodes)
 
 
+TRACKER_MODES = ("beads", "github", "both")  # repo-config schema の execution_tracker.mode。binding の none は mode ではない。
+
+
 def _tracker_mode(root: Path, config: str, declared: str | None) -> str:
     """The repo's execution_tracker.mode decides every binding intent; a flag may restate it, never override it."""
     candidate = Path(config) if Path(config).is_absolute() else root / config
-    configured = None
-    if candidate.is_file():
-        configured = (_json_object(contained(candidate, root, must_exist=True)).get("execution_tracker") or {}).get("mode")
-    if declared is not None and configured is not None and declared != configured:
+    if not candidate.is_file():
+        # flag だけで進めると、cwd や --config の誤りで build-graph-node (C24 の config) と解決が分かれる。
+        raise ContractError(f"repo config is not found at {config} (relative to {root}); "
+                            "tracker mode comes from execution_tracker.mode and --tracker-mode cannot replace it")
+    configured = (_json_object(contained(candidate, root, must_exist=True)).get("execution_tracker") or {}).get("mode")
+    if configured not in TRACKER_MODES:
+        raise ContractError(f"tracker mode is unknown: execution_tracker.mode in {config} must be one of {list(TRACKER_MODES)}, got {configured!r}")
+    if declared is not None and declared != configured:
         raise ContractError(f"--tracker-mode {declared} contradicts execution_tracker.mode {configured} in {config}")
-    mode = declared or configured
-    if mode is None:
-        raise ContractError(f"tracker mode is unknown: set execution_tracker.mode in {config} or pass --tracker-mode")
-    return mode
+    return configured
 
 
 def _resolve_binding(intent: str, mode: str) -> str:
@@ -297,11 +301,16 @@ def _resolved_nodes(nodes: list[dict[str, Any]], intents: dict[str, str], mode: 
         binding = _resolve_binding(intents[node_id], mode)
         node["tracker_binding"] = binding
         publication = node["github_publication"]
-        if binding == "github":
-            if publication.get("mode") not in {"issue", "issue_and_projects"}: publication["mode"] = "issue"
-        else:
-            publication["mode"] = "local_only"
-            publication["project_aliases"] = []
+        fitting = {"issue", "issue_and_projects"} if binding == "github" else {"local_only"}
+        if publication.get("mode") not in fitting:
+            # An explicit intent fixed its publication with it: github+local_only leaves an unmanaged task, and
+            # beads/none with an Issue publication splits the publication authority. Only auto, whose binding the
+            # planner could not know, is aligned here.
+            if intents[node_id] != "auto":
+                raise ContractError(f"{node_id}: binding {binding} with github_publication.mode {publication.get('mode')} "
+                                    "is a publication authority conflict")
+            publication["mode"] = "issue" if binding == "github" else "local_only"
+        if binding != "github": publication["project_aliases"] = []
         if binding in {"github", "none"}: node["beads_linkage"] = None
         _validate_schema(node, node_schema, node_schema, f"resolved_nodes[{index}]")
         if node["tracker_binding"] == "repo-config-default": raise ContractError("unresolved binding sentinel")
@@ -359,7 +368,7 @@ def _register(args: argparse.Namespace) -> dict[str, Any]:
     registration_path = _path(root, args.graph, must_exist=True)
     output_path = _path(root, args.output, must_exist=True)
     receipt_path = _path(root, args.receipt, must_exist=False)
-    system_root = Path(args.system_planner_root).resolve(strict=True)
+    system_root = _system_root(args).resolve(strict=True)
     preflight_contract(system_root, args.required_version, args.required_schema_version)
     package_schema = _json_object(system_root / "schemas" / "feature-execution-package.schema.json")
     registration_schema = _json_object(system_root / "schemas" / "dev-graph-registration.schema.json")
@@ -506,6 +515,30 @@ def _project_execution_context(args: argparse.Namespace) -> dict[str, Any]:
         return perform()
 
 
+def _default_system_root() -> Path:
+    """system-dev-planner の root を install 配置に依存せず解決する。
+
+    親ディレクトリ起点で兄弟 plugin を指すパスは、repo の plugins/ でしか兄弟に届かない。
+    install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、同梱の resolver に任せる。
+    """
+    resolver = HERE / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
+    if spec is None or spec.loader is None:
+        raise ContractError("extract-plugin-root.py is missing from dev-graph/scripts")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    found = module.resolve("system-dev-planner", PLUGIN_ROOT, Path.cwd())
+    if found is None:
+        raise ContractError("system-dev-planner plugin not found; install it or pass --system-planner-root")
+    return found
+
+
+def _system_root(args: argparse.Namespace) -> Path:
+    return Path(args.system_planner_root) if args.system_planner_root else _default_system_root()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Register exact-13 packages or preflight system-dev-planner")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -515,15 +548,17 @@ def _parser() -> argparse.ArgumentParser:
     register.add_argument("--graph", required=True, help="dev-graph-registration JSON")
     register.add_argument("--output", required=True, help="existing dev graph JSON containing parent feature")
     register.add_argument("--receipt", required=True, help="immutable registration receipt output")
-    register.add_argument("--tracker-mode", choices=("beads", "github", "both", "none"), default=None,
-                          help="defaults to execution_tracker.mode in --config; a different value is rejected")
+    register.add_argument("--tracker-mode", choices=TRACKER_MODES, default=None,
+                          help="restates execution_tracker.mode in --config (required file); a different value is rejected")
     register.add_argument("--config", default=".dev-graph/config.json", help="repo config, relative to --repo-root")
     register.add_argument("--dry-run", action="store_true")
-    register.add_argument("--system-planner-root", default=str(DEFAULT_SYSTEM_ROOT))
+    register.add_argument("--system-planner-root", default=None,
+                          help="default: resolved by scripts/extract-plugin-root.py")
     register.add_argument("--required-version", default=None)
     register.add_argument("--required-schema-version", default="1.0.0")
     preflight = sub.add_parser("preflight")
-    preflight.add_argument("--system-planner-root", default=str(DEFAULT_SYSTEM_ROOT))
+    preflight.add_argument("--system-planner-root", default=None,
+                          help="default: resolved by scripts/extract-plugin-root.py")
     preflight.add_argument("--required-version", default=None)
     preflight.add_argument("--required-schema-version", default="1.0.0")
     execution = sub.add_parser("execution-context")
@@ -539,13 +574,17 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "preflight":
-            report = preflight_contract(Path(args.system_planner_root), args.required_version, args.required_schema_version)
+            report = preflight_contract(_system_root(args), args.required_version, args.required_schema_version)
         elif args.command == "execution-context":
             report = _project_execution_context(args)
         else: report = _register(args)
         dump(report); return 0
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
-        dump({"valid": False, "error": str(exc)}); return 2
+        report = {"valid": False, "error": str(exc)}
+        if args.command == "register":
+            # 拒否は graph にも receipt にも書かないので、適用件数は 0 と明示する (build-graph-node の拒否出力と同じ)。
+            report["applied_count"] = 0
+        dump(report); return 2
 
 
 if __name__ == "__main__": raise SystemExit(main())

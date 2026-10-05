@@ -17,7 +17,7 @@
 
 ### 出力契約
 
-- 新規copy、同digest保持、利用者編集検出、migration previewを分離したscaffold receipt。
+- `build-init-scaffold.py` の結果のうち template の分。新規 copy (`created` のうち `.dev-graph/templates/` 配下)、同 digest の保持 (`preserved`)、利用者編集の検出 (`migration_preview` の plugin/local sha256) を分けて示す。R4 は自前の receipt を作らない。
 
 ### 責務境界
 
@@ -29,47 +29,38 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: Read/Writeとtemplate contract。
+- 使用資産: `../../scripts/build-init-scaffold.py` (skill root 起点。R3 と同じ 1 回の起動で template も欠落時だけコピーする) と、template contract の Read。template を Write/Edit や heredoc で直接書かない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
 
-- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。
-- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。
-- 同一入力と同一 revision/digest では同じ decision と output shape を返す。
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
 
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
 ### 5.1 担当 agent
 
-- `run-dev-graph-init/R4-template`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-init/R4-template`
 
 ### 5.2 ゴール定義
 
 - 目的: 共通/5kind/architecture 5 subtype/API/system phase/system task overlay/template contractを`.dev-graph/templates/`へ冪等scaffoldし、利用者編集済み版は上書きしない
-- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
-- 達成ゴール: 新規copy、同digest保持、利用者編集検出、migration previewを分離したscaffold receiptが生成され、受入条件を満たした状態になっている。
+- 達成ゴール: `build-init-scaffold.py` の結果で template の新規 copy、同 digest の保持、利用者編集の検出が分かれて確認でき、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] 宣言した入力が全て検証済みである
-- [ ] 出力が宣言した shape と authority を満たす
-- [ ] 責務境界に反する read/write/delegation が0件である
 - [ ] contract列挙templateが欠落0、二回目copy 0、編集済み版hashが不変になる
-
-### 5.4 実行方式
-
-- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。
 
 ## Layer 6: オーケストレーション層
 
-- R3 receiptへtemplate counts/digestsを合流する。
-- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- script を別に起動せず、R3 が起動した `build-init-scaffold.py` の結果から template の分を検証する。init receipt は script が create-only で書くので、後から追記しない。
 
 ## Layer 7: UserInput
 
-- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。
-- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
 
 ## 出力指示
 

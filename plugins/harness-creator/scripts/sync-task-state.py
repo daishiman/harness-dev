@@ -15,7 +15,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: <--task-state> task-state.json + <--events> task-events.jsonl (co-located build dir)
-# dependencies: []
+# dependencies: [extract-plugin-root.py]
 # requires-python: ">=3.10"
 # ///
 """task-state.json への単一 writer (TG-C02)。
@@ -33,6 +33,7 @@ producer 必須キー id/state/started_at/lease_expires_at + blocked 時 blocked
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import sys
@@ -645,10 +646,22 @@ def resolve_build_dir(target_plugin_slug: str, cycle_id: str | None) -> str:
 def resolve_planner_root() -> Path:
     """producer (plugin-dev-planner) の plugin root を返す。C01/C03/C07 が import 再利用する SSOT。
 
-    本 script は plugins/harness-creator/scripts/ 配下のため parents[2] が plugins/ を指し、
-    sibling plugin の producer root は plugins/plugin-dev-planner となる。
+    repo では plugins/plugin-dev-planner だが、install 先は <cache>/<marketplace>/<plugin>/<version>/
+    なので親ディレクトリ経由では兄弟に届かない。同梱の scripts/extract-plugin-root.py で解決する。
+    dispatch-ready-set が import 時に呼ぶので、見つからなくても例外にせず実在しない path を返し、
+    存在検査は呼び出し側に任せる。
     """
-    return Path(__file__).resolve().parents[2] / "plugin-dev-planner"
+    harness_root = Path(__file__).resolve().parents[1]
+    resolver = harness_root / "scripts" / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
+    found = None
+    if spec is not None and spec.loader is not None:
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        found = module.resolve("plugin-dev-planner", harness_root, Path.cwd())
+    return found if found is not None else Path("plugin:plugin-dev-planner")
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────

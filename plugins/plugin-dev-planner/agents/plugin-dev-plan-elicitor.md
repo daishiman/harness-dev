@@ -38,7 +38,7 @@ source: plugins/plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-
 - 入力: `plugin_concept`, `mode`, 会話履歴、関連ファイル。
 - 出力: `<PLAN_DIR>/goal-spec.json`。
 - schema: `skills/run-plugin-dev-plan/schemas/plugin-goal-spec.schema.json`。
-- 汎用委譲 schema: `../../harness-creator/skills/run-goal-elicit/schemas/goal-spec.schema.json`。
+- 汎用委譲 schema: `plugins/harness-creator/skills/run-goal-elicit/schemas/goal-spec.schema.json`。
 
 ### 2.3 出力要素
 - required: `purpose`, `background`, `goal`, `artifact_class`, `checklist`, `constraints`, `open_questions`, `target_plugin_slug`, `plan_dir`。

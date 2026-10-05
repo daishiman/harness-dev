@@ -77,3 +77,15 @@ def test_main_writes_normalized_pkg_result(tmp_path, capsys):
     assert stdout == stored
     assert stored["pkg_id"] == "PKG-015"
     assert stored["status"] == "not_applicable"
+
+
+def test_unreachable_linter_writes_fail_result(monkeypatch, tmp_path, capsys):
+    # resolver が無いときも SystemExit で落ちず、停止理由を --out の fail result に残す。
+    monkeypatch.setattr(MOD, "PLUGIN_ROOT", tmp_path)
+    output = tmp_path / "pkg-015.json"
+    rc = MOD.main(["--plugin", "demo", "--log-dir", str(tmp_path / "missing"), "--out", str(output)])
+    stored = json.loads(output.read_text(encoding="utf-8"))
+    assert rc == 1
+    assert json.loads(capsys.readouterr().out) == stored
+    assert stored["status"] == "fail"
+    assert "extract-plugin-root.py is missing" in stored["findings"][0]

@@ -548,6 +548,18 @@
         }
       }
     },
+    "plan_roots": {
+      "type": "object",
+      "description": "system-dev-planner が非破壊で追記する共存 section (任意)。staging/published/state を repository 相対で持つ。",
+      "required": [
+        "staging",
+        "published",
+        "state"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/repoRelative"
+      }
+    },
     "path_policy": {
       "type": "object",
       "additionalProperties": false,

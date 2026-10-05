@@ -1,7 +1,7 @@
 # /// script
 # name: test-guard-hook
 # version: 0.1.0
-# purpose: C11 guard-confirmed-chapter-overwrite hook の負例/正例を Write/Edit/Bash × 確定章(C03実出力形状)/対象外混在確定章/再オープン章/新規章/正本spec-state.json直接書換/正本位置外spec-state(交差汚染回避)/自pluginパス誤爆回避(system-spec境界)/正本解決不能confirmed章の層別fail-closed/read-only の判定分岐で網羅検証する pytest (in-process decide() + subprocess で stdin→exit を確認)。正本位置は system-spec/spec-state.json の1経路のみ。フィクスチャは C03 実 frontmatter (category + spec_cells list) と writer 正本 reopen キー (reopened_from/reopen_reason) に整合。
+# purpose: C11 guard-confirmed-chapter-overwrite hook の負例/正例を Write/Edit/Bash × 確定章(C03実出力形状)/対象外混在確定章/再オープン章/新規章/正本spec-state.json直接書換/正本位置外spec-state(交差汚染回避)/自pluginパス誤爆回避(system-spec境界)/正本解決不能confirmed章の層別fail-closed/read-only/Bash 書込み先の実パス判定(保護パスをデータ・読み取り元に含むだけの保護領域外書込みは通す・heredoc python/cp/mv/dd/bash -c/symlink 経由の保護対象書込みと書込み先不明の保護領域書換は遮断) の判定分岐で網羅検証する pytest (in-process decide() + subprocess で stdin→exit を確認)。正本位置は system-spec/spec-state.json の1経路のみ。フィクスチャは C03 実 frontmatter (category + spec_cells list) と writer 正本 reopen キー (reopened_from/reopen_reason) に整合。
 # inputs:
 #   - argv: pytest 経由 (直接 argv は取らない)
 # outputs:
@@ -17,6 +17,7 @@
 
 判定分岐 (Write/Edit/Bash × 確定章/対象外混在確定章/再オープン章/新規章/spec-state.json/read-only) を
 in-process の decide()/bash_decision() で網羅し、stdin→exit の end-to-end を subprocess で確認する。
+Bash は書込み先の実パスで判定することを両方向で確かめる (保護領域外への書込みは通し、保護対象への書込みは遮断)。
 
 フィクスチャは C03 (compile-spec-doc.py render_frontmatter) の実出力形状に整合させる:
   frontmatter = status/category/aggregate/spec_cells([<cat>.<pf>, ...] list)。章ファイル名は <category>.md。
@@ -29,6 +30,8 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "guard-confirmed-chapter-overwrite.py"
 
@@ -367,6 +370,112 @@ def test_bash_ls_passes(tmp_path):
     assert code == 0
 
 
+# ── Bash: 書込み先の実パスで判定 ─────────────────────────────────────────────
+# C19 live trial f11 で遮断されたコマンドの形。保護パスはデータと読み取り元にだけ現れ、書込み先は eval-log/ のみ。
+_C19_CMD = """python3 - <<'PY'
+import json
+prog = {"chapters": ["system-spec/backend.md", "system-spec/spec-state.json"]}
+json.dump(prog, open("eval-log/run-dev-graph-system-spec-progress.json", "x"))
+open("eval-log/run-dev-graph-system-spec-intermediate.jsonl", "a").write(json.dumps({"path": "system-spec/backend.md"}) + "\\n")
+PY
+python3 - "$PWD/eval-log/goal-spec.json" "$PWD/eval-log/intermediate.jsonl" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8")))
+PY
+echo "goalseek verify exit $?"; shasum -a 256 system-spec/database.md"""
+
+
+def test_bash_c19_write_outside_protected_area_passes(tmp_path):
+    """保護パスをデータに含んでも、書込み先が保護領域外なら通す (C19 f11 の誤検知の回帰)。"""
+    root = _make_project(tmp_path)
+    code, _ = g.decide(_bash(_C19_CMD), root)
+    assert code == 0
+    assert g._bash_write_targets(_C19_CMD, root) == [
+        "eval-log/run-dev-graph-system-spec-progress.json",
+        "eval-log/run-dev-graph-system-spec-intermediate.jsonl",
+    ]
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        # 確定章を保護領域外へ複製する (書込み先は /tmp)
+        "cp system-spec/database.md /tmp/backup.md",
+        # 確定章を読み、保護領域外へ書く python heredoc
+        "python3 - <<'PY'\nsrc = open('system-spec/database.md').read()\nopen('out/report.md', 'w').write(src)\nPY",
+        # 書込み先に変数を含むが basename が .md / spec-state.json でない
+        'grep -c 確定 system-spec/spec-state.json > "$TMPDIR/count.txt"',
+        # 保護パスは echo の文字列データ
+        'echo "system-spec/database.md を確認 $USER" >> notes.txt',
+        # heredoc のデータ本文に書込みらしい文字列がある (cat の stdin でありコードではない)
+        "cat > notes.md <<'EOF'\necho x > system-spec/database.md は使わない\nEOF",
+    ],
+)
+def test_bash_write_outside_protected_area_passes(tmp_path, cmd):
+    root = _make_project(tmp_path)
+    code, reason = g.decide(_bash(cmd), root)
+    assert code == 0, reason
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "python3 - <<'PY'\nopen('system-spec/database.md', 'w').write('x')\nPY",
+        "python3 -c \"from pathlib import Path; (Path('system-spec') / 'database.md').write_text('x')\"",
+        "python3 - <<'PY'\nimport os\nos.replace('/tmp/new.json', 'system-spec/spec-state.json')\nPY",
+        "x=$(python3 -c \"open('system-spec/spec-state.json', 'w')\")",
+        "cat > system-spec/database.md <<'EOF'\nx\nEOF",
+        "echo x &> system-spec/database.md",
+        "cp /tmp/database.md system-spec/",  # 宛先ディレクトリ → system-spec/database.md
+        "mv system-spec/database.md /tmp/",  # 移動元が消える
+        "dd if=/dev/zero of=system-spec/database.md",
+        'bash -c "echo x > system-spec/database.md"',
+    ],
+)
+def test_bash_write_to_protected_target_blocked(tmp_path, cmd):
+    root = _make_project(tmp_path)
+    code, _ = g.decide(_bash(cmd), root)
+    assert code == 2
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        "python3 - system-spec/database.md <<'PY'\nimport sys\nopen(sys.argv[1], 'w').write('x')\nPY",
+        "for f in system-spec/*.md; do sed -i 's/a/b/' \"$f\"; done",
+        'f=system-spec/database.md; echo x > "$f"',
+        "find system-spec -name '*.md' -delete",
+        # 引用が閉じず shell として解析できない → 字面のリダイレクト先で判定
+        "echo 'x > system-spec/database.md",
+    ],
+)
+def test_bash_unresolvable_write_over_protected_area_blocked(tmp_path, cmd):
+    """書込み先を静的に特定できず保護領域を参照する書換は安全側で遮断する。"""
+    root = _make_project(tmp_path)
+    code, _ = g.decide(_bash(cmd), root)
+    assert code == 2
+
+
+def test_bash_absolute_path_confirmed_chapter_blocked(tmp_path):
+    root = _make_project(tmp_path)
+    code, _ = g.decide(_bash(f"echo x > {root / 'system-spec' / 'database.md'}"), root)
+    assert code == 2
+
+
+def test_bash_symlink_to_confirmed_chapter_blocked(tmp_path):
+    """保護領域外の名前でも、symlink を辿った実パスが確定章なら遮断する。"""
+    root = _make_project(tmp_path)
+    (root / "alias.md").symlink_to(root / "system-spec" / "database.md")
+    code, _ = g.decide(_bash("echo x > alias.md"), root)
+    assert code == 2
+
+
+def test_bash_python_write_reopened_chapter_passes(tmp_path):
+    root = _make_project(tmp_path, reopen="state")
+    code, _ = g.decide(_bash("python3 - <<'PY'\nopen('system-spec/auth.md', 'w').write('x')\nPY"), root)
+    assert code == 0
+
+
 # ── その他ツール ────────────────────────────────────────────────────────────
 def test_unrelated_tool_passes(tmp_path):
     root = _make_project(tmp_path)
@@ -527,9 +636,26 @@ def test_bash_sed_inplace_reopened_chapter_passes(tmp_path):
     assert code == 0
 
 
-def test_system_spec_md_tokens():
-    toks = g._system_spec_md_tokens("sed -i x system-spec/a.md other.txt system-spec/b.md")
-    assert toks == ["system-spec/a.md", "system-spec/b.md"]
+def test_split_heredocs():
+    shell, bodies = g._split_heredocs("python3 - <<'PY'\nprint(1)\nPY\necho done")
+    assert shell == "python3 - << __HEREDOC_0__\necho done"
+    assert bodies == ["print(1)"]
+    # 終端行が無い `<<` は heredoc とみなさない
+    assert g._split_heredocs("cat <<EOF\nx") == ("cat <<EOF\nx", [])
+
+
+def test_python_write_targets():
+    assert g._python_write_targets("open('a.json', 'w')") == ["a.json"]
+    assert g._python_write_targets("open('a.json')") == []  # 読み取り
+    assert g._python_write_targets("from pathlib import Path\n(Path('d') / 'x.md').write_text('')") == ["d/x.md"]
+    assert g._python_write_targets("open(p, mode=m)") == ["$"]  # 書込み先も mode も不明
+    assert g._python_write_targets("open('a.json', 'w'") == [None]  # 構文解析不能
+
+
+def test_sed_targets():
+    assert g._sed_targets(["s/a/b/", "x.md"]) == []  # -i なしは stdout へ出すだけ
+    assert g._sed_targets(["-i", "", "s/a/b/", "x.md"]) == ["x.md"]  # BSD の -i ''
+    assert g._sed_targets(["-i", "-e", "s/a/b/", "x.md", "y.md"]) == ["x.md", "y.md"]
 
 
 def test_project_root_prefers_env(tmp_path, monkeypatch):
@@ -566,6 +692,12 @@ def test_main_block_spec_state_via_stdin(tmp_path):
 def test_main_pass_via_stdin(tmp_path):
     root = _make_project(tmp_path)
     assert _run_main(_bash("cat system-spec/spec-state.json"), root) == 0
+
+
+def test_main_c19_command_passes_via_stdin(tmp_path):
+    root = _make_project(tmp_path)
+    assert _run_main(_bash(_C19_CMD), root) == 0
+    assert _run_main(_bash("python3 - <<'PY'\nopen('system-spec/database.md', 'w')\nPY"), root) == 2
 
 
 def test_main_bad_stdin_passes(tmp_path):

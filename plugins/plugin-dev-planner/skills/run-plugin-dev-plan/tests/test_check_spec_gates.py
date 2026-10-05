@@ -544,3 +544,82 @@ def test_install_malformed_graph_reference_fails_cleanly(tmp_path, gates):
         "target_plugin_slug": "test-plugin", "task_graph_ref": {"path": None}
     }), encoding="utf-8")
     assert any("task_graph_ref.path" in e for e in gates.check_install_release(tmp_path, SPECFM.default_install_contract()))
+
+
+# ─────────────────── install 義務の slug 正本 (goal-spec 優先) ───────────────────
+def _write_goal_spec(directory, slug):
+    (directory / "goal-spec.json").write_text(json.dumps({"target_plugin_slug": slug}), encoding="utf-8")
+
+
+def test_install_slug_prefers_goal_spec_without_handoff(tmp_path, gates):
+    """slug の正本は goal-spec。handoff が未生成でも P13 突合が進む (生成順序に依存しない)。"""
+    write_phase_index(tmp_path, plugin_meta=True)
+    (tmp_path / "handoff-run-plugin-dev-plan.json").unlink()
+    inst = SPECFM.default_install_contract()
+    assert any("解決できない" in e for e in gates.check_install_release(tmp_path, inst))
+    _write_goal_spec(tmp_path, "test-plugin")
+    assert gates.check_install_release(tmp_path, inst) == []
+    _write_goal_spec(tmp_path, "other-plugin")  # P13 は test-plugin の条項のまま
+    assert any("obligation release" in e for e in gates.check_install_release(tmp_path, inst))
+
+
+def test_install_slug_goal_spec_handoff_mismatch_fails(tmp_path, gates):
+    write_phase_index(tmp_path, plugin_meta=True)
+    inst = SPECFM.default_install_contract()
+    _write_goal_spec(tmp_path, "test-plugin")
+    assert gates.check_install_release(tmp_path, inst) == []
+    (tmp_path / "handoff-run-plugin-dev-plan.json").write_text(
+        json.dumps({"target_plugin_slug": "other-plugin"}), encoding="utf-8"
+    )
+    errors = gates.check_install_release(tmp_path, inst)
+    assert len(errors) == 1 and "goal-spec ('test-plugin') と handoff ('other-plugin') で不一致" in errors[0]
+    assert gates.main(["--specs-dir", str(tmp_path)]) == 1
+
+
+def test_install_slug_invalid_goal_spec_fails_cleanly(tmp_path, gates):
+    write_phase_index(tmp_path, plugin_meta=True)
+    inst = SPECFM.default_install_contract()
+    (tmp_path / "goal-spec.json").write_text("{broken", encoding="utf-8")
+    assert any("goal-spec.json から読めない" in e for e in gates.check_install_release(tmp_path, inst))
+    (tmp_path / "handoff-run-plugin-dev-plan.json").unlink()
+    _write_goal_spec(tmp_path, "Not Kebab")
+    assert any("target_plugin_slug が不正" in e for e in gates.check_install_release(tmp_path, inst))
+
+
+# ─────────────────── install 義務は plugin 単位 (component へ複製しない) ───────────────────
+def test_install_obligation_attributed_to_component_fails(tmp_path, gates):
+    """fixed-13-phase で P13 に component を載せると条項が N 個の leaf へ複製・誤帰属するので拒否する。"""
+    write_phase_index(tmp_path, plugin_meta=True)
+    write_inventory(tmp_path, [component_entry("C01", "skill"), component_entry("C02", "hook")])
+    inst = SPECFM.default_install_contract()
+    assert gates.check_install_release(tmp_path, inst) == []
+    phase = tmp_path / "phase-13-release.md"
+    phase.write_text(
+        phase.read_text(encoding="utf-8").replace("entities_covered: []", "entities_covered: [C01, C02]"),
+        encoding="utf-8",
+    )
+    errors = gates.check_install_release(tmp_path, inst)
+    assert {e.split()[3] for e in errors} == set(SPECFM.install_release_obligations(inst, "test-plugin"))
+    assert all("component に帰属" in e for e in errors)
+
+
+def test_install_target_shape_task_spec_with_entity_ref_fails(tmp_path, gates):
+    index = write_phase_index(tmp_path, plugin_meta=True)
+    index.write_text(index.read_text().replace("id: IDX0", "id: IDX0\nshape_marker: task-graph-derived"), encoding="utf-8")
+    inst = SPECFM.default_install_contract()
+    tasks = tmp_path / "task-specs"
+    tasks.mkdir()
+    for key, clause in SPECFM.install_release_obligations(inst, "test-plugin").items():
+        fm = {
+            "id": "install-" + key, "title": "verify install " + key,
+            "phase_ref": "P13", "execution_kind": "direct-task",
+            "write_scope": "eval-log/install", "acceptance_criterion": clause,
+            "produces": ["eval-log/install/" + key + ".json"], "depends_on": [],
+        }
+        if key == "isolated":
+            fm["entity_ref"] = "C01"
+        (tasks / (fm["id"] + ".md")).write_text(
+            "---\n" + "\n".join(SPECFM.yaml_lines(fm)) + "\n---\n# release verification\n", encoding="utf-8"
+        )
+    errors = gates.check_install_release(tmp_path, inst)
+    assert len(errors) == 1 and "obligation isolated が component に帰属" in errors[0]

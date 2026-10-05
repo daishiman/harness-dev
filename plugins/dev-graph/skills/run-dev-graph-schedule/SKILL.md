@@ -13,6 +13,7 @@ argument-hint: "[--repo-root PATH] [--scope ID] [--max-parallel N]"
 allowed-tools: [Read, Bash, AskUserQuestion, Task, Skill, Agent]
 script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py]
 schema_refs: [../../schemas/graph-node.schema.json]
+reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
   - prompts/R1-elicit.md
   - prompts/R2-plan.md

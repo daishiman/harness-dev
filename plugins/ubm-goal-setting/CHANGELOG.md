@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.4 - 2026-10-05
+
+PR #83 の content-review で残った low (相談 5 件、目標設定 13 件) を直した (harness-9pg)。判定の rc 体系と書込みの許可範囲 (hook) は変えていない。
+
+- **相談の 3 ステップ翻訳**: reflect-only や reflection lane の相談では、3 つ目で行動を迫らず再開条件を問う。`SKILL.md` の Key Rules と `references/consult-frames.md` をそろえた。
+- **record の検証**: `prompts/R4-cocreate-converge.md` に、検証は保存同意に依らず行う (同意が無いときは `--ephemeral` で検証してから破棄する) と明記した。
+- **受け入れテスト**: 再開条件が欠けた reflection の締めの負例を足した。`validate-consult-session.py` の説明は「どちらかの lane の締めがあること」に改めた (record の `closure.type` と締めの lane の一致は検査しないと明記)。
+- **composition**: consult → phase3-coordinator の reads edge を足した。
+- **層またぎ検査 (IN3) の書き方**: 「期報と月報が揃っている場合 (週報があれば三層)」にそろえ、出力契約に cross-level の rc と引数を足した。適用しないときは `not_applicable` と記録する。
+- **`workflow-manifest.json` の検証段**: `&&` でつないでいた 3 本の検査を `commands` 配列に分け、検査器ごとに rc を記録する。
+- **書込みの範囲**: Gotchas で、hook の許可範囲 (正本) と本 skill が実際に書く範囲を書き分けた。`（提出）` 付きファイルの archive への移動を境界と external mutation preview の範囲に書いた。
+- **scripts**: `validate-goal-output.py` を 0.2.4 に上げ、`validate-goal-linkage.py` に `# /// script` ヘッダを足した。Phase 名の対応表記、テストパス、コメントの古い引数名を直した。
+- **install 先での兄弟 plugin の解決**: 外部変更の確認手順を持つ 5 skill (`run-ubm-goal-setting`・`run-ubm-journal`・`run-ubm-knowledge-sync`・`run-ubm-youtube-ingest`・`run-skill-feedback`) で、guard を持つ `skill-governance-adapters` の場所を `<plugin root>/..` から推測せず、新たに同梱した `scripts/extract-plugin-root.py` で解決する。install 先 (`<cache>/<marketplace>/<plugin>/<version>/`) では `..` が隣の plugin に届かないため。見つからないときは外部への変更をせずに止まる。
+
+## 0.6.3 - 2026-10-05
+
+external-mutation guard の runtime が更新されたことに伴う投影の追従版である (PR #80)。本 plugin 固有の機能変更はない。
+
+- `artifact-delivery.json` の guard runtime 固定値 (`runner_sha256`) を更新した。runtime の遮断対象から `gh pr` が外れたため
+
 ## 0.6.2 - 2026-10-04
 
 相談 (`/ubm-consult`) の締め方を、ユーザーが選ぶ 2 つの lane に揃えた。あわせて目標設定の層またぎ検査の適用条件を、実際にズレが入りやすい時点に合わせた。

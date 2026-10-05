@@ -63,8 +63,9 @@ planner で再実装しない。
 新規・改善とも同じ既定契約を使う。`--platform` は `[claude, codex]` なら `both`、
 `[claude]` なら `claude` に解決し、隔離・実環境の両コマンドへ渡す。
 P13 の義務は `specfm.install_release_obligations(install, plugin_slug)` を正本として生成し、
-返る各条項を、fixed13 では P13 の完了チェックリスト、task-graph-derived では
-P13 direct-task の `acceptance_criterion` へ原文のまま挿入する (固有項目の追加は可)。
+返る各条項を、index の `shape_marker` が `fixed-13-phase` なら P13 の完了チェックリスト、
+`task-graph-derived` なら P13 direct-task の `acceptance_criterion` へ原文のまま挿入する (固有項目の追加は可)。
+条項のコマンドは repo-root 相対パス (`scripts/` と `plugins/harness-creator/scripts/`) で書かれる。
 `render-spec-skeleton.py --phase 13 --plugin-slug <slug>` で生成でき、opt-out 時は
 index と同じ install オブジェクトの JSON を `--install-contract <path>` へ渡す。
 `check-spec-gates.py` は既存 producer の `derive()` から得た P13 実行 leaf と保存済み graph

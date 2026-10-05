@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "assign-skill-design-evaluator",
-    "skill_md_sha256": "267bfbf75325d5d62d343433aa315f2dfe60a4e92a394a1db69a61ba4d401225"
+    "skill_md_sha256": "6eb1b7a5bc8e6679667607c72c916a4e5b238242bddab4bbc10334abc4d77093"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -10,25 +10,29 @@
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
+    "dependency_break": 1,
+    "smell": 1
   },
-  "reviewer": "independent-rename-review-subagent-a",
-  "reviewed_at": "2026-07-02T22:00:00+09:00",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:32:19Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["C1", "C2", "C3", "C4"],
     "positive_feedback": [
-      "評価器を fork コンテキストの read-only 単発採点に固定し『ループは回さず採点網羅性は完了チェックリストで担保』と明示することで、採点者が被採点物を改変する Goodhart 罠を構造的に封じている (再利用可能な評価系設計パターン)。",
-      "改名追従が self-relative パス解決ロジックまで一貫している: SKILL_DIR 探索の第一候補を plugins/harness-creator/skills/assign-skill-design-evaluator/ に更新し (L106-107)、UPSTREAM/upstream 参照も harness-creator 配下 (L114/148) へ揃え、意味論境界上は『単一 SKILL.md を採点する部品』なので本文の skill 語も正しく維持されている。"
+      "兄弟 plugin への親ディレクトリ起点の参照 (`../../../skill-governance-automation/scripts/compose-rubrics.py`) を、plugin 同梱の `../../scripts/compose-rubrics.py` へ置き換えた。参照先 plugins/harness-creator/scripts/compose-rubrics.py は実在し、skill-governance-automation の正本と byte 一致 (sha256 2ca6fb18...) で、scripts/lint-vendored-ssot.py の L83-84 が一致を検査対象に入れている。install 先 (<cache>/<marketplace>/<plugin>/<version>/) でも自 plugin 内で閉じて解決できる。",
+      "render-findings-score.py の compose_rubrics() は `Path(__file__).resolve().parents[3] / \"scripts\" / \"compose-rubrics.py\"` を使う。scripts -> skill -> skills -> plugin root の 3 段で harness-creator/scripts を指し、段数は正しい。cwd 起点の fallback を削除したため、作業ディレクトリや兄弟 plugin の有無に結果が依存しなくなった。refs は絶対パスで渡るので compose-rubrics 側の `ref-` 解決にも影響しない。",
+      "frontmatter script_refs と Key Rules 2 の記述 (plugin 同梱の compose-rubrics.py に委譲) が一致しており、文書層と実装層の食い違いが無い。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "low (smell): Key Rules 2 の括弧書きで、repo 直下の `scripts/lint-vendored-ssot.py` (plugin には同梱されない repo の lint) を、plugin 同梱の `scripts/compose-rubrics.py` と同じ相対表記で並べている。install 先にも lint が存在するように読めるため、『repo の scripts/lint-vendored-ssot.py』のように所在を書き分けるとよい。",
+      "low (dependency_break, 今回の差分外): 採点フローの L131 `python3 plugins/skill-governance-automation/scripts/write-eval-log.py` と L114 の UPSTREAM 既定値 `plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json` は cwd 起点の repo パスのままで、install 先の利用者 project では解決しない。L134 により書き込み失敗は非 0 exit で止まるので偽の PASS にはならない。判定対象外として記録のみ。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "skill-creator → harness-creator 改名後の現 SKILL.md (sha256=267bfbf75325d5d62d343433aa315f2dfe60a4e92a394a1db69a61ba4d401225 実測) を独立 context で全文精読し C1-C4 で genuine 再評価。旧固有名の残存 0 件 (grep 実測)。C1 矛盾なし: severity weights (high -20/medium -10/low -3、初期 100、負値 0 クランプ) が Key Rules 4・完了チェックリスト・render-findings-score.py と一致し『ループは回さず Goal/Checklist は網羅性担保のみ』の主張が全体で一貫。C2 漏れなし: Purpose/Output Contract・Key Rules・採点フロー・eval-log 永続化経路 (write-eval-log.py 必須・直接 echo>>jsonl 禁止)・Gotchas・Additional Resources が MECE。C3 整合性: rubric L0→L1→L2 合成順序・most-specific-wins・compose-rubrics.py 委譲が採点フローと Key Rules 2 で一致。C4 依存整合: render-findings-score.py / ../../../skill-governance-automation/scripts/compose-rubrics.py / ref-skill-design-rubric L0 rubric / evaluator-output.schema.json / evaluator-contract.md が全て実在 (相対パス resolve 実測)。改名追従漏れ(参照先パス断線)なし。意味論境界違反なし: 本 skill は単一 SKILL.md を採点する部品ゆえ skill 語が正しく、harness 語は plugin 名 harness-creator にのみ出現。high severity 欠陥 0 につき PASS。"
+  "notes": "install 先での兄弟 plugin 解決 (PR #83 follow-up) の incremental focused combined review。`git diff HEAD` の SKILL.md 差分 (script_refs の置換と Key Rules 2 の書き換え) と、差分が触れる scripts/render-findings-score.py、同梱した plugins/harness-creator/scripts/compose-rubrics.py (untracked) を読み、SKILL.md 全文を再読して (a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。compose-rubrics.py は正本と byte 一致、scripts/lint-vendored-ssot.py と scripts/lint-sibling-plugin-paths.py はいずれも exit 0 を実測。references/resource-map.yaml は今回変更されていない。frontmatter に feedback_contract が無いため criteria_evaluated は既存 verdict の C1-C4 を維持した。finding は low 2 件 (うち 1 件は差分外) のみで、high/medium は 0 件のため PASS とする。PASS の射程は design claim (静的設計 adequacy) に限り、install 先での live 実行は検証していない。"
 }

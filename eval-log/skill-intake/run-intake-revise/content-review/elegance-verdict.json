@@ -2,19 +2,19 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-revise",
-    "skill_md_sha256": "fc58cd0564a7beb01ec2afe8653c60409b1ee2001ec6791a2385c9e7ece7ea30"
+    "skill_md_sha256": "fcdc9764089f67a44987eaca0ba2d5dc67e56a795ac1775ae54eb5dd171640b2"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 1,
     "dependency_break": 0,
     "smell": 1
   },
-  "reviewer": "independent-content-review-intake-runtime-v3 (focused incremental review)",
-  "reviewed_at": "2026-08-24T01:52:58Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:05Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,19 +25,22 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "IN1: the revision-log schema requires the six declared fields with revision_no bounded to 1..5, and the skill/prompt keep Japanese content fields distinct from English schema keys and page identifiers.",
-      "IN2: workflow P7 and P8 now encode exit 61 consistently, while the skill and prompt name revision-log and question-bank failure recovery from P7/P8; page-id, Keychain, cancel, and revision-limit codes remain explicit.",
-      "OUT1: the skill remains inline and PATCH-only, retains the canonical external-mutation receipt flow, preserves All-or-Nothing and internal-analysis non-disclosure, and no longer depends on a fictional self-updater or a detached agent.",
-      "Question-bank mutation is correctly separated from Gate R: P8 has machine-readable approved and declined success outcomes, decline records status=skipped plus question_bank_update_declined, exits successfully, and never rolls back the already successful PATCH/revision log.",
-      "The shared updater resolves its default bank from the plugin script path, produces a zero-write dry-run, snapshots only on apply, and keeps explicit apply as a separate approval boundary."
+      "guard block は scripts/build-artifact-delivery.py の _canonical_external_guard_block() 正本から生成され、contract-generator 系や同じ plugin の run-notion-intake-publish・run-skill-intake と同じ文面になっている（build-artifact-delivery.py --check は ARTIFACT_DELIVERY_OK）。",
+      "resolver を guard の preview の前に 1 回だけ実行する順序は、Gate R の apply 承認から PATCH に進む流れ（manifest の P5-gateR から P6-patch）と矛盾しない。pending 中に canonical でない Bash を deny する guard の実装とも整合し、resolver が失敗した時点では pending context が無いので、fail-closed で止まっても session が詰まらない。",
+      "guard の呼び出しが literal の絶対パスになり、pretool の canonical 判定（basename が runner 名と一致し、shell 演算子を含まない 1 回の呼び出し）を確実に通る。install 先で届かない <plugin root>/.. の推測は無くなった。",
+      "依存関係が閉じている。plugin.json の dependencies に skill-governance-adapters が宣言され、frontmatter の external_mutation_guard.runtime_ref は plugin: 記法、同梱の plugins/skill-intake/scripts/extract-plugin-root.py は正本と byte 一致。resolver の exit 0/1/2 は「非 0 なら外部変更せずに止まる」という本文の指示と一致する（実測）。",
+      "resolver の呼び出しは ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}} を使い、cwd 相対の fallback を持たない。plugin root が未設定なら python3 がファイルを開けずに非 0 で終わり、本文の指示どおり外部変更前に止まる。"
     ],
     "negative_feedback": [
-      "[low / smell] The generic goal-seek lint emits three advisory wiring/anchor warnings for this intentionally minimal inline/inline profile. The dedicated runtime-profile lint reports zero findings, so this is not a medium contract break."
+      "[low / omission / 差分由来] 新しい文「other Bash is blocked while the confirmation is pending」は、遮断の続く範囲を実装より狭く読ませる。guard の pretool は completion か cancellation の receipt が付くか TTL 900 秒で失効するまで canonical でない Bash を deny し、execute（PATCH）が非 0 で終わった場合や preview 後に確認されなかった場合も遮断は続く。PATCH が失敗した後にやり直すときも TTL まで待つか cancel が要るが、解除手段の cancel action は block に書かれていない（cancel の漏れ自体は差分前から）。外部変更の安全性には影響しない。",
+      "[low / omission / 差分由来] resolver が非 0 で止まったときに skill がどの exit code で終わるかが、exit code 表（0/2/44/51/60/61）に無い。既存ページに触れる前に止まるので安全側だが、IN2 が求める「失敗条件と exit code の決定論的な対応」の網羅からは外れる。",
+      "[low / inconsistency / 差分外・既存] 例示コマンドの ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}（analyze_user_intent.py、render-intake-final.py、update_question_bank.py、validate-notion-ready.py）は、plugin root が未設定のとき cwd 相対の plugins/skill-intake に落ちる。Runtime root contract（runtime_root_policy: host-skill-path）と食い違い、install 先では解決できない。今回の guard block はこの fallback を持ち込んでいない。",
+      "[low / smell / 依存先 resolver] resolver の探索段階 5・6（他 marketplace の installed 記録、Claude と Codex の cache 全体の最新 version）は、当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と HMAC receipt 契約で fail-closed は保たれるが、どの copy の guard が使われたかが利用者から見えにくい。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "Focused incremental review of the current SKILL.md, prompt, revision-log schema, resource map, workflow manifest, updater, and publish-pipeline regressions. P7/P8 exit-61 parity, decline success/skip, separate approval, root-relative bank selection, dry-run zero writes, PATCH-only routing, dependency closure, and removal of the fictional skill-intake-self-updater were verified. 231 focused tests passed; runtime-profile, tree, completeness, manifest, and diff checks passed. The three generic inline goal-seek warnings are recorded as a low smell; no medium/high findings remain. This was not an exhaustive review and no 30-method claim is made."
+  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除）、正本テンプレート、同梱 resolver、skill-governance-adapters の guard script（pretool・pending 判定・cancel・execute）、plugin.json の dependencies を読み、skill 固有の文脈（Gate R、PATCH 専用、exit code 表、rollback の保存）との整合を確かめたうえで、(a)〜(e) を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest（resolver と sibling path lint の 28 件、tests/test_skill_intake_notion_contract.py と tests/test_skill_intake_guard_skillgen.py の 30 件）が pass。finding は low 4 件だけで high と medium は 0。前回 verdict の low（汎用 goal-seek lint の advisory warning）は今回の差分と関係しないため再検証していない。PASS の射程は design claim（静的設計 adequacy）に限り、install 先での live trial や Notion への実際の PATCH は行っていない。30 思考法は実施しておらず、実施も申告しない。"
 }

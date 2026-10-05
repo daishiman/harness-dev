@@ -463,7 +463,7 @@ rc=0 未解決0件（分母も1件以上） / rc=1 未解決あり / rc=2 引数
 `validate-goal-output.py` も `validate-goal-linkage.py` も、基本は **1本のファイルしか見ない**（`validate-goal-output.py --peer` は期アンカー3値を WARN で並べるだけで、rc は変わらない）。
 期報の数字を直して月報・週報へ追随させ忘れても、**どちらも rc=0 で通る**。
 層をまたぐ値を突き合わせる口が存在しない（分母が0件）ので、「検査して一致していた」ではなく
-「当てる対象が1件も無かった」の形になる。3本が揃っている場合は三層横断照合を回す。
+「当てる対象が1件も無かった」の形になる。期報と月報が揃っている場合は三層横断照合を回す（週報があれば `--weekly` も渡して三層で）。
 
 ```bash
 /usr/bin/python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \

@@ -13,6 +13,7 @@ argument-hint: "[--repo-root PATH] [--id ID] [--kind KIND] [--project ID] [--dom
 allowed-tools: [Read, Bash, AskUserQuestion, Skill, Agent]
 script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py]
 schema_refs: [../../schemas/graph-node.schema.json]
+reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
   - prompts/R1-elicit.md
   - prompts/R2-plan.md

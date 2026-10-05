@@ -10,7 +10,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
-# dependencies: []
+# dependencies: [extract-plugin-root.py]
 # requires-python: ">=3.10"
 # ///
 """Lint plugin-composition.yaml (CapabilityBundle 宣言) の構造整合を検査する。
@@ -45,6 +45,7 @@ Exit 0 = ok (WARN は許容), 1 = violation, 2 = usage/parse error.
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import sys
@@ -66,14 +67,31 @@ VERSION_REQUIREMENT_RE = re.compile(
     r"^(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+)"
     r"(?:\s+(?:[<>=~^]{0,2}[0-9]+\.[0-9]+\.[0-9]+))*$"
 )
-CAPABILITY_SCHEMA_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "harness-creator"
-    / "skills"
-    / "run-build-skill"
-    / "references"
-    / "capability-manifest.schema.json"
-)
+_SCHEMA_REL = Path("skills/run-build-skill/references/capability-manifest.schema.json")
+
+
+def _capability_schema_path() -> Path:
+    """harness-creator の CapabilityManifest schema を install 配置に依存せず解決する。
+
+    親ディレクトリ起点の兄弟パスは install 先 (<cache>/<marketplace>/<plugin>/<version>/)
+    で届かないので、同梱の scripts/extract-plugin-root.py に root を解かせる。
+    見つからなければ実在しないパスを返し、_load_dependency_types() の fallback に任せる。
+    """
+    plugin_root = Path(__file__).resolve().parents[1]
+    resolver = plugin_root / "scripts" / "extract-plugin-root.py"
+    if not resolver.is_file():
+        return Path("plugin:harness-creator") / _SCHEMA_REL
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    found = module.resolve("harness-creator", plugin_root, Path.cwd())
+    if found is None:
+        return Path("plugin:harness-creator") / _SCHEMA_REL
+    return Path(found) / _SCHEMA_REL
+
+
+CAPABILITY_SCHEMA_PATH = _capability_schema_path()
 _DEPENDENCY_TYPE_FALLBACK = {
     "calls", "reads", "extends", "evaluates", "emits", "writes", "delegates", "deploys"
 }

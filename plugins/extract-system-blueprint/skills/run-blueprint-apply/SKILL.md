@@ -130,7 +130,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## ゴールシーク実行
 
-> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本: `../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md`。
+> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本は harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)。
 
 ### ゴール (Goal)
 

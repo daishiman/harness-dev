@@ -1,0 +1,622 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1500-p83m/task.md
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1500-p83m/" && ls -la && cat task.md)
+  ⎿  total 24
+     drwxr-xr-x@  5 dm  staff   160 Oct  5 10:35 .
+     drwxr-xr-x@ 23 dm  staff   736 Oct  5 10:34 ..
+     … +104 lines (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-sync)
+  ⎿  Successfully loaded skill · 7 tools allowed
+
+⏺ Bash(FX=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; cat $FX/README.md; ls -la $FX $FX/tools $FX/.dev-graph $FX/.dev-graph/state;…)
+  ⎿  # r5-sync live-trial fixture
+
+     `dev-graph:run-dev-graph-sync` の C03-OUT1 (二回目 sync 差分0) を検証する封じ込め fixture。
+     … +54 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; cat .dev-graph/config.json github-adapter.json .dev-graph/state/github-sync-…)
+  ⎿  {
+       "claude_hooks": {
+         "post_tool_reconcile": true,
+     … +509 lines (ctrl+o to expand)
+
+⏺ Now the prompts and gh-bridge.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; for f in skills/run-dev-graph-sync/prompts/*.md; do echo "=== $f"; cat $f; done; ls scripts | head -100)
+  ⎿  === skills/run-dev-graph-sync/prompts/R1-elicit.md
+     # Prompt: R1-elicit
+     … +566 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 scripts/gh-bridge.py --help; wc -l scripts/gh-bridge.py; grep -n "add_argument\|def \|adapter\|GH_B…)
+  ⎿  usage: gh-bridge.py [-h] --op
+                         {issue-fetch,issue-create,issue-update,issue-close,lifecycle-facts,project-resolve,project-item-find,project-item-add,project-item-edit}
+                         [--repo REPO] [--number NUMBER] [--title TITLE]
+     … +34 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cat scripts/gh-bridge.py; grep -rn "adapter-fixture\|DEV_GRAPH_GH\|fake-gh" --include=*.py --include=*.md .…)
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: gh-bridge
+     … +182 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; head -40 scripts/build-github-projection.py; python3 scripts/build-github-projection.py --help; FX=/Users/d…)
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: build-github-projection
+     … +542 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rln "github-sync-snapshot" . ; python3 scripts/build-graph-node.py --help; python3 scripts/resolve-re…)
+  ⎿  usage: build-graph-node.py [-h] {add,update,bind-github} ...
+
+     C02 single writer for ordinary dev-graph artifacts
+     … +63 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; python3 scripts/build-g…)
+  ⎿  usage: build-graph-node.py update [-h] --repo-root REPO_ROOT --input INPUT
+                                       [--config CONFIG] [--dry-run]
+     … +68 lines (ctrl+o to expand)
+
+⏺ C24 receipt OK (repo_root matches). Validating schema and inspecting the C02 update input format.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; python3 scripts/validat…)
+  ⎿  {
+       "graph_validation": {
+         "status": "pass",
+     … +96 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 60,90p scripts/build-graph-node.py; grep -n "TRACKER_MIRRORED_KEYS\|tracker_import\|github_import\|d…)
+  ⎿  MACRO_TEXT_KEYS = ("purpose", "goal")
+     MACRO_LIST_KEYS = ("scope_in", "scope_out", "acceptance", "architecture_refs")
+     # feature body sections that are projections of frontmatter: callers change them through macro_patch/node_patch only.
+     … +32 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 1000,1037p scripts/build-graph-node.py; grep -n "updated_at\|utc_now\|graph_revision" scripts/build-…)
+  ⎿              if key in titles:
+                     raise WriterError("duplicate_section", f"{label}: {key} exists; use set_sections to change it")
+                 edits.append((len(lines), len(lines), _tail(lines) + _block(2, key, _section_text(value, key))))
+     … +64 lines (ctrl+o to expand)
+
+⏺ Bash(sed -n 1,180p /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md)
+  ⎿  ---
+     name: run-dev-graph-sync
+     description: tracker_binding に従い dev-graph と Beads を同期したいとき、GitHub Issues/Projects/PR lifecycle を冪等収束したいときに使う。
+     … +177 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; printf '%s' "dev-graph fixture task body. Managed by the offline r5-sync adapter fixture." | shasum -a 256; python3 plugins/d…)
+  ⎿  Error: PreToolUse:Bash hook error: Malformed central guard invocation is blocked: the full Bash command must be exactly one canonical preview, authorize, or execute call with no shell operators.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; printf '%s' "dev-graph fixture task body. Managed by the offline r5-sync adapter fixture." | shasum -a 256; python3 plugins/d…)
+  ⎿  8c88befb323facd46eb1d7c49386511f53873e72f587f45bd8df1afb6268225b  -
+     /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ So far I've confirmed remote issue 101's title change needs importing into T-SYNC-001, and local T-SYNC-002's title change needs exporting to issue 102, with project fields matching on both sides. Now I'll pull the
+  remote state via gh-bridge against fake-gh.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; export DEV_GRAPH_GH=$PWD/tools/fake-gh.py; B=/Users/dm/dev/dev/個人開発/harness/…)
+  ⎿  {
+       "dry_run": false,
+       "op": "issue-fetch",
+     … +102 lines (ctrl+o to expand)
+
+⏺ Remote reads match the 3-way analysis. The dry-run export preview suppressed the mutation (0 writes). I'm writing the pre-choice plan artifact now.
+
+⏺ Write(eval-log/run-dev-graph-sync-pass-1-plan.json)
+  ⎿  Wrote 54 lines to eval-log/run-dev-graph-sync-pass-1-plan.json
+       1 {
+       2   "skill": "run-dev-graph-sync",
+       3   "pass": 1,
+       4   "mode": "dry-run-plan",
+       5   "binding": "github",
+       7   "base": ".dev-graph/state/github-sync-snapshot.json",
+       8   "base_last_synced_at": "2026-08-01T00:00:00Z",
+       9   "c24_receipt": {"repo_root_matches_content_roots_repository": true, "repository_id": "local:sha256:3392565b6f2846f6d0c97d35f0c3bd0135b3982cf2cbeb95d02e8d66801b9979", "head_sha": "fbdcf2ba39d3380575156e1
+         74dc8e8d7e3479756"},
+      10   "c11_schema": {"valid": true, "violation_count": 0},
+     … +47 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; shasum -a 256 eval-log/run-dev-graph-sync-pass-1-plan.json; python3 -c "impo…)
+  ⎿  db79312e295d14c00928806a1635a7850235dd0f7168f7d82fc46928c6d4bbc8  eval-log/run-dev-graph-sync-pass-1-plan.json
+     parse ok
+     0
+     2026-10-05T01:39:45Z
+
+⏺ The pre-choice plan artifact passed all guards (parse, secret, irreversible) with 1 import, 1 export, 0 conflicts. I'm recording standard as the choice since task.md requires the export to be applied, then moving on to
+  write the goal-seek files.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; python3 - <<'PY'
+      import json, hashlib…)
+  ⎿  ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43
+  ⎿  Created eval-log/run-dev-graph-sync-goal-spec.json (+24 -0)
+       1 +{
+       2 +  "skill": "run-dev-graph-sync",
+       3 +  "original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側ta
+         +sk仕様へ収束した状態になっている",
+       4 +  "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43",
+       5 +  "args": "sync --binding github --adapter-fixture github-adapter.json --repeat 2",
+       6 +  "artifact_delivery": {
+       7 +    "state": "semantic_evaluator_started",
+       8 +    "user_choice": "standard",
+       9 +    "choice_source": "caller task directive requires export apply; accept-as-is would skip mutation",
+      10 +    "pre_choice_artifact": {
+      11 +      "path": "eval-log/run-dev-graph-sync-pass-1-plan.json",
+      12 +      "sha256": "db79312e295d14c00928806a1635a7850235dd0f7168f7d82fc46928c6d4bbc8"
+      13 +    }
+      14 +  },
+      15 +  "checklist": [
+      16 +    "3way_classification",
+      17 +    "single_authority",
+      18 +    "dry_run_zero_write",
+      19 +    "conflict_policy",
+      20 +    "tombstone",
+      21 +    "done_policy",
+      22 +    "second_sync_zero"
+      23 +  ]
+      24 +}
+  ⎿  Created eval-log/run-dev-graph-sync-progress.json (+32 -0)
+       1 +{
+       2 +  "items": {
+       3 +    "3way_classification": {
+       4 +      "status": "pass",
+       5 +      "evidence": "pass-1-plan: 2 issue diffs each classified (remote-only/local-only), project fields unchanged"
+       6 +    },
+       7 +    "single_authority": {
+       8 +      "status": "pass",
+       9 +      "evidence": "both nodes tracker_binding=github; C12 gh-bridge only; no bd-bridge"
+      10 +    },
+      11 +    "dry_run_zero_write": {
+      12 +      "status": "pass",
+      13 +      "evidence": "gh-bridge --dry-run mutation_suppressed; adapter mutation_log=[]"
+      14 +    },
+      15 +    "conflict_policy": {
+      16 +      "status": "pass",
+      17 +      "evidence": "no both-changed diff; conflicts=0"
+      18 +    },
+      19 +    "tombstone": {
+      20 +      "status": "pass",
+      21 +      "evidence": "no close/delete; tombstones=0"
+      22 +    },
+      23 +    "done_policy": {
+      24 +      "status": "pass",
+      25 +      "evidence": "no PR linkage; no done transition"
+      26 +    },
+      27 +    "second_sync_zero": {
+      28 +      "status": "pending",
+      29 +      "evidence": null
+      30 +    }
+      31 +  }
+      32 +}
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+⏺ Now in the post-choice phase. I'm forking R2-plan into a separate context so it can independently re-derive the plan.
+
+⏺ dev-graph:dev-graph-sync-conflict-verifier(R2-plan independent 3-way plan)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; cat > eval-log/run-dev-graph-sync-pass-1-import.json <<'EOF'
+      {"expected_grap…)
+  ⎿  {
+       "applied_count": 0,
+       "artifacts": [
+     … +48 lines (ctrl+o to expand)
+  ⎿  Created eval-log/run-dev-graph-sync-pass-1-import.json (+1 -0)
+      1 +{"expected_graph_revision": 3, "updates": [{"graph_node_id": "tasks/T-SYNC-001", "node_patch": {"title": "Sync import target task (remote revision 2)"}}]}
+  ⎿  (another command ran in this repository at the same time; a change made by either may show under either result)
+
+⏺ C02 import dry-run passed (1 planned, 0 writes, schema findings 0). I'll apply it once R2's independent plan comes back.
+
+✻ Waiting for 1 background agent to finish
+
+⏺ Agent "R2-plan independent 3-way plan" finished · 23s
+
+⏺ R2 independently agrees (imports 1, exports 1, conflicts 0). The intent receipt the hook just made came from a background-task notification, not from a person. It grants only github-pr-write, so I won't use it.
+  Applying the C02 import now.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph…)
+  ⎿  {'status': 'applied', 'applied_count': 1, 'write_count': 3, 'graph_revision_after': 4, 'receipt_path': '.dev-graph/state/receipts/node-r000004-update.json', 'valid': True}
+     tasks/T-SYNC-001 Sync import target task (remote revision 2) 2026-10-05T01:40:36.948501Z pass
+     tasks/T-SYNC-002 Sync export target task (local revision 2) 2026-08-10T10:00:00Z pass
+  ⎿  Created .dev-graph/state/.graph.json.register.lock (+0 -0)
+  ⎿  Updated .dev-graph/state/graph.json (+4 -4)
+      1  {
+      2 -  "graph_revision": 3,
+      2 +  "graph_revision": 4,
+      3    "nodes": [
+      4      {
+      5        "acceptance": [],
+     ...
+      64        "goal": null,
+      65        "graph_node_id": "tasks/T-SYNC-001",
+      66        "implementation_readiness": {
+      67 -        "checked_at": "2026-08-01T00:00:00Z",
+      67 +        "checked_at": "2026-10-05T01:40:36.948501Z",
+      68          "missing_sections": [],
+      69          "status": "complete"
+      70        },
+     ...
+      106        "target_date": "2026-08-20",
+      107        "template_id": "task",
+      108        "template_version": "1.0.0",
+      109 -      "title": "Sync import target task",
+      109 +      "title": "Sync import target task (remote revision 2)",
+      110        "tracker_binding": "github",
+      111 -      "updated_at": "2026-08-01T00:00:00Z"
+      111 +      "updated_at": "2026-10-05T01:40:36.948501Z"
+      112      },
+      113      {
+      114        "acceptance": [],
+  ⎿  Created .dev-graph/state/receipts/node-r000004-update.json (+47 -0)
+       1 +{
+       2 +  "applied_count": 1,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "api_contracts_added": [],
+       6 +      "file_path": "tasks/T-SYNC-001.md",
+       7 +      "graph_node_id": "tasks/T-SYNC-001",
+       8 +      "implementation_readiness": "complete",
+       9 +      "macro_fields_patched": [],
+      10 +      "missing_sections": [],
+      11 +      "node_fields_patched": [
+      12 +        "title"
+      13 +      ],
+      14 +      "readiness_fill": [],
+      15 +      "sections_appended": [],
+      16 +      "sections_regenerated": [],
+      17 +      "sections_replaced": [],
+      18 +      "sha256_after": "7fe951a8d74fbb46f620aaffa826673c269e459fe5e6e8aec955a64a44ad59a6",
+      19 +      "sha256_before": "71e52b10b8af896f7883c008e0b26af4c844ec9bcaa82ad16bb910e6c0095f6c",
+      20 +      "subtypes_added": [],
+      21 +      "unmanaged_body_preserved": true,
+      22 +      "unmanaged_frontmatter_kept": []
+      23 +    }
+      24 +  ],
+      25 +  "graph_digest_after": "sha256:5e09ee4cd31b762f2a3b66376896eed296feb12fd344f88d62acd84d18c1e051",
+      26 +  "graph_path": ".dev-graph/state/graph.json",
+      27 +  "graph_revision_after": 4,
+      28 +  "graph_revision_before": 3,
+      29 +  "input_sha256": "ee9330b59ecac95b3975142c9e2e8dba981462bb080ece484677f635ba192fe4",
+      30 +  "node_ids": [
+      31 +    "tasks/T-SYNC-001"
+      32 +  ],
+      33 +  "operation": "update",
+      34 +  "owner": "C02/run-dev-graph-node",
+      35 +  "pre_write_validation": {
+      36 +    "findings": 0,
+      37 +    "validator": "validate-graph-schema.py"
+      38 +  },
+      39 +  "receipt_path": ".dev-graph/state/receipts/node-r000004-update.json",
+      40 +  "recorded_at": "2026-10-05T01:40:36.948501Z",
+     … 7 more lines (ctrl+o to expand)
+  ⎿  Updated tasks/T-SYNC-001.md (+9 -9)
+      2  graph_node_id: "tasks/T-SYNC-001"
+      3  artifact_kind: "task"
+      4  artifact_subtypes: []
+      5 -title: "Sync import target task"
+      5 +title: "Sync import target task (remote revision 2)"
+      6  project_id: "r5-sync"
+      7  domain: "delivery"
+      8  status: "active"
+     ...
+      17  template_version: "1.0.0"
+      18  confirmation_status: "confirmed"
+      19  evaluation_status: "pass"
+      20 -confirmation_evidence: {"evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evaluation.md", "evaluated_digest": "6944c4e81735ebeca22e0797ca87ee8df26ce839b53be63a64b1523a
+         -e85f5a15"}
+      21 -source_lineage: {"origin_kind": "manual", "source_plugin": null, "source_path": null, "source_version": null, "source_digest": null, "imported_at": "2026-07-20T00:00:00Z"}
+      20 +confirmation_evidence: {"evaluated_digest": "6944c4e81735ebeca22e0797ca87ee8df26ce839b53be63a64b1523ae85f5a15", "evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evalu
+         +ation.md"}
+      21 +source_lineage: {"imported_at": "2026-07-20T00:00:00Z", "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-07-20T00:00:00Z"
+      23 -updated_at: "2026-08-01T00:00:00Z"
+      23 +updated_at: "2026-10-05T01:40:36.948501Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: ["src/t-sync-001"]
+     ...
+      38  classification_candidates: []
+      39  tracker_binding: "github"
+      40  beads_linkage: null
+      41 -github_publication: {"mode": "issue_and_projects", "project_aliases": ["delivery"], "labels": ["dev-graph"], "milestone": null}
+      42 -issue_linkage: {"issue_number": 101, "repo": "local-fixture/r5-sync", "linked_at": "2026-08-01T00:00:00Z"}
+      43 -github_project_linkages: [{"project_alias": "delivery", "owner_type": "user", "owner_login": "fixture-owner", "project_number": 1, "project_id": "PVT_kwDOFIXTURE0001", "item_id": "PVTI_lADOFIXTURE0001zgA
+         -0101", "sync_state": "synced", "field_snapshot": {"Status": "In Progress", "Priority": "High", "Target date": "2026-08-20"}, "linked_at": "2026-08-01T00:00:00Z", "last_synced_at": "2026-08-01T00:00:00Z",
+         - "last_error_code": null}]
+      41 +github_publication: {"labels": ["dev-graph"], "milestone": null, "mode": "issue_and_projects", "project_aliases": ["delivery"]}
+      42 +issue_linkage: {"issue_number": 101, "linked_at": "2026-08-01T00:00:00Z", "repo": "local-fixture/r5-sync"}
+      43 +github_project_linkages: [{"field_snapshot": {"Priority": "High", "Status": "In Progress", "Target date": "2026-08-20"}, "item_id": "PVTI_lADOFIXTURE0001zgA0101", "last_error_code": null, "last_synced_at
+         +": "2026-08-01T00:00:00Z", "linked_at": "2026-08-01T00:00:00Z", "owner_login": "fixture-owner", "owner_type": "user", "project_alias": "delivery", "project_id": "PVT_kwDOFIXTURE0001", "project_number": 1
+         +, "sync_state": "synced"}]
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46 -completion_evidence: {"policy": "linked_pr_merged_all", "status": "in_progress", "source": null, "completed_at": null, "reconciled_at": "2026-08-01T00:00:00Z", "evidence_refs": []}
+      47 -implementation_readiness: {"status": "complete", "missing_sections": [], "checked_at": "2026-08-01T00:00:00Z"}
+      46 +completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "linked_pr_merged_all", "reconciled_at": "2026-08-01T00:00:00Z", "source": null, "status": "in_progress"}
+      47 +implementation_readiness: {"checked_at": "2026-10-05T01:40:36.948501Z", "missing_sections": [], "status": "complete"}
+      48  ---
+      49  # 目的
+      50
+
+⏺ Import applied: graph revision 3→4, evaluation_status stays pass. Next I issue the export preview through the canonical guard, rooted at the fixture (the session cwd).
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py preview --project-root /Users/dm/dev/dev/個人開発/…)
+  ⎿  {
+       "contract_id": "external-mutation-guard-v1",
+       "status": "preview-created",
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+  Read 1 file (ctrl+o to expand)
+  ⎿  Read ../../run-dev-graph-sync/live-trial/20261005T1500-p83m/gate-request.json (2 lines)
+  ⎿  Read eval-log/run-dev-graph-sync-pass-1-plan.json (55 lines)
+  ⎿  Referenced file ../../../../plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py
+  ⎿  Referenced file ../../../../plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md
+  ⎿  Skills restored (dev-graph:run-dev-graph-sync)
+
+⏺ Gate cycle 1 (challenge DE0D25539A8B549F9C867D28) is still waiting. I've polled about 831 times and gate-response.json hasn't appeared yet. I'll keep going until I reach 900.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ The gate response arrived, and its challenge matches cycle 1. Running authorize now.
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py authorize --project-root /Users/dm/dev/dev/個人開…)
+  ⎿  {
+       "confirmation_receipt_kind": "confirmation",
+       "contract_id": "external-mutation-guard-v1",
+     … +4 lines (ctrl+o to expand)
+  ⎿  Created .artifact-delivery/external-mutation/authorization-50b865ed7a4b450d975a442c00e02341.json (+1 -0)
+      1 +{"command_sha256":"fba32e9422aade0d3023fe1dfd48cdabf174303e1a31d8f000fad758d7086ef1","confirmation_receipt_id":"cbbc6e62dc6f42fb8086abc99c002350","confirmation_receipt_kind":"confirmation","confirmation_r
+        +eceipt_sha256":"9913f6f6c87ae956d6d72a2a3a57e96e96dae42f8225324514c4260449b8da78","contract_id":"external-mutation-guard-v1","entrypoint_ref":"plugin:dev-graph/skills/run-dev-graph-sync/SKILL.md","expires
+        +_at":1791166130,"issued_at":1791165230,"issued_at_ns":1791165230504156000,"kind":"authorization","preview_receipt_id":"849fa7c2ce1f40fe915be52f806dd28e","preview_receipt_sha256":"05fc63c77cfd64ee3ff1ceafa
+        +6b4be91c35112f8de68cefade6cd1585ff69b46","receipt_id":"50b865ed7a4b450d975a442c00e02341","schema_version":1,"seal":"1a1e6b801bfcda5d6f4cf660a83731d769f2ad4dd469b258f07ddf9b48c0892f","status":"authorized-o
+        +nce","target_scope":"offline adapter fixture local-fixture/r5-sync issue #102 (github-adapter.json via tools/fake-gh.py; no real GitHub)"}
+  ⎿  Created .artifact-delivery/external-mutation/authorization-claim-preview-849fa7c2ce1f40fe915be52f806dd28e.json (+1 -0)
+      1 +{"claimed_at":1791165230,"confirmation_receipt_id":"cbbc6e62dc6f42fb8086abc99c002350","confirmation_receipt_sha256":"9913f6f6c87ae956d6d72a2a3a57e96e96dae42f8225324514c4260449b8da78","contract_id":"extern
+        +al-mutation-guard-v1","kind":"authorization-claim","preview_receipt_id":"849fa7c2ce1f40fe915be52f806dd28e","preview_receipt_sha256":"05fc63c77cfd64ee3ff1ceafa6b4be91c35112f8de68cefade6cd1585ff69b46","sche
+        +ma_version":1,"seal":"e8b7f7b095d6a1b18d7d8106f828376a9949a3f8da10dac65b86264fe55f451f"}
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py execute --project-root /Users/dm/dev/dev/個人開発/…)
+  ⎿  {
+       "dry_run": false,
+       "op": "issue-update",
+     … +6 lines (ctrl+o to expand)
+  ⎿  Created .artifact-delivery/external-mutation/completion-preview-849fa7c2ce1f40fe915be52f806dd28e.json (+1 -0)
+      1 +{"authorization_receipt_id":"50b865ed7a4b450d975a442c00e02341","authorization_receipt_sha256":"f0edd5fb004eb1c79fbb24a0cb495831f1c4c07cfa094afdf015745a8124bd0e","contract_id":"external-mutation-guard-v1",
+        +"expires_at":1791166136,"issued_at":1791165236,"issued_at_ns":1791165236251770000,"kind":"completion","preview_receipt_id":"849fa7c2ce1f40fe915be52f806dd28e","receipt_id":"5760a39292dc454bbcba268155065b6f
+        +","schema_version":1,"seal":"a4cf88df4862f974ed163c24d4f2de9e1d894c922108f818a22dce92bf1bff7d","status":"executed-successfully"}
+  ⎿  Created .artifact-delivery/external-mutation/consumed-50b865ed7a4b450d975a442c00e02341.json (+1 -0)
+      1 +{"authorization_receipt_sha256": "f0edd5fb004eb1c79fbb24a0cb495831f1c4c07cfa094afdf015745a8124bd0e", "consumed_at": 1791165235}
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      3  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      4  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      5  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      6 +{"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+  ⎿  Updated github-adapter.json (+15 -3)
+      33        "id": "I_kwDOFIXTURE00102",
+      34        "number": 102,
+      35        "state": "OPEN",
+      36 -      "title": "Sync export target task",
+      37 -      "updatedAt": "2026-08-01T00:00:00Z",
+      36 +      "title": "Sync export target task (local revision 2)",
+      37 +      "updatedAt": "2026-08-11T12:00:00Z",
+      38        "url": "https://github.invalid/local-fixture/r5-sync/issues/102"
+      39      }
+      40    },
+      41 -  "mutation_log": [],
+      41 +  "mutation_log": [
+      42 +    {
+      43 +      "changed": {
+      44 +        "title": {
+      45 +          "from": "Sync export target task",
+      46 +          "to": "Sync export target task (local revision 2)"
+      47 +        }
+      48 +      },
+      49 +      "number": 102,
+      50 +      "op": "issue-edit",
+      51 +      "updatedAt": "2026-08-11T12:00:00Z"
+      52 +    }
+      53 +  ],
+      54    "network": "disabled",
+      55    "projects": {
+      56      "delivery": {
+
+⏺ The export went through. Next I'll check the remote state the fake adapter holds and how pass 1 read issues, so pass 2 can be done the same way.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; ls eval-log .dev-graph/state .dev-graph/state/receipts; git status --short |…)
+  ⎿  .dev-graph/state:
+     github-sync-snapshot.json
+     graph.json
+     … +141 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; cat github-adapter-calls.jsonl; echo ---; cat eval-log/run-dev-graph-sync-pr…)
+  ⎿  {
+       "detail": {
+         "number": 101
+     … +77 lines (ctrl+o to expand)
+
+⏺ Bash(sed -n 118,175p /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py)
+  ⎿      }
+     … +55 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; python3 -c "import json;d=json.load(open('github-adapter.json'));print({k:d[…)
+  ⎿  {'clock': {'issue_update_updated_at': '2026-08-11T12:00:00Z', 'sync_run_at': '2026-08-11T12:00:00Z'}, 'description': 'Deterministic offline GitHub adapter fixture: one pending import, one pending export.', 'exp
+     ected_scenario': {'pass_1': {'exports': 1, 'imports': 1, 'project_item_adds': 0}, 'pass_2': {'exports': 0, 'imports': 0, 'project_item_adds': 0}, 'scenario_id': 'C03-OUT1-positive-second-sync-zero'}, 'fixture_i
+     d': 'r5-sync-github-adapter', 'mutation_log': [{'changed': {'title': {'from': 'Sync export target task', 'to': 'Sync export target task (local revision 2)'}}, 'number': 102, 'op': 'issue-edit', 'updatedAt': '20
+     … +27 lines (ctrl+o to expand)
+
+⏺ The remote state matches the plan: the mutation log has exactly one issue-edit on #102. Running the pass-2 read-only fetches through C12 with fake-gh:
+
+⏺ Bash(env DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins…)
+  ⎿  {
+       "dry_run": false,
+       "op": "issue-fetch",
+     … +10 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      4  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      5  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      6  {"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+      7 +{"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+
+⏺ Bash(env DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins…)
+  ⎿  {
+       "dry_run": false,
+       "op": "issue-fetch",
+     … +10 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      5  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      6  {"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+      7  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      8 +{"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+
+⏺ Bash(env DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins…)
+  ⎿  {
+       "dry_run": false,
+       "op": "project-resolve",
+     … +54 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      6  {"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+      7  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      8  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+      9 +{"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+
+⏺ Bash(env DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins…)
+  ⎿  {
+       "dry_run": false,
+       "op": "project-item-find",
+     … +15 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+       7  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+       8  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+       9  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      10 +{"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+
+⏺ Bash(env DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins…)
+  ⎿  {
+       "dry_run": false,
+       "op": "project-item-find",
+     … +15 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+       8  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+       9  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      10  {"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+      11 +{"detail": {"alias": "delivery", "items": 2}, "mutation": false, "op": "project-item-find"}
+
+⏺ Now comparing against the local graph and re-running the C11 schema check.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync; grep -n '^title:' tasks/T-SYNC-00*.md; python3 -c "import json;g=json.load(o…)
+  ⎿  tasks/T-SYNC-001.md:5:title: "Sync import target task (remote revision 2)"
+     tasks/T-SYNC-002.md:5:title: "Sync export target task (local revision 2)"
+     4
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py --repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-tri…)
+  ⎿  Error: Exit code 2
+     usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]
+     validate-graph-schema.py: error: the following arguments are required: --graph
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py --graph /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-f…)
+  ⎿  {
+       "graph_validation": {
+         "status": "pass",
+     … +15 lines (ctrl+o to expand)
+
+⏺ Pass 2 shows local and remote identical for both issues, with one Project item each and nothing to add, so imports=0 and exports=0. Writing the goal-seek artifacts the skill requires next.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Write(eval-log/run-dev-graph-sync-pass-1-export.json)
+  ⎿  Wrote 27 lines to eval-log/run-dev-graph-sync-pass-1-export.json
+       1 {
+       2   "skill": "run-dev-graph-sync",
+       3   "pass": 1,
+       4   "direction": "export",
+       5   "graph_node_id": "tasks/T-SYNC-002",
+       6   "issue_number": 102,
+       7   "field": "title",
+       8   "from": "Sync export target task",
+       9   "to": "Sync export target task (local revision 2)",
+      10   "authority": "C12 gh-bridge issue-update via external-mutation-guard (DEV_GRAPH_GH=tools/fake-gh.py)",
+     … +19 lines (ctrl+o to expand)
+
+⏺ Write(eval-log/run-dev-graph-sync-pass-2-plan.json)
+  ⎿  Wrote 27 lines to eval-log/run-dev-graph-sync-pass-2-plan.json
+       1 {
+       2   "skill": "run-dev-graph-sync",
+       3   "pass": 2,
+       4   "mode": "plan",
+       5   "binding": "github",
+       7   "c11_schema": {"valid": true, "violation_count": 0},
+       8   "graph_revision": 4,
+       9   "issues": [
+      10     {"graph_node_id": "tasks/T-SYNC-001", "issue_number": 101, "local_title": "Sync import target task (remote revision 2)", "remote_title": "Sync import target task (remote revision 2)", "remote_updated_
+         at": "2026-08-10T09:00:00Z", "classification": "unchanged (local==remote)", "direction": "none"},
+     … +19 lines (ctrl+o to expand)
+
+⏺ Updating progress and appending the intermediate rows, then running the skill's goal-seek check.
+
+⏺ Bash(python3 - <<'PY'
+      import json…)
+  ⎿  Created eval-log/run-dev-graph-sync-intermediate.jsonl (+2 -0)
+      1 +{"original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側task
+        +仕様へ収束した状態になっている", "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43", "loop": 1, "current_goal_snapshot": "pass-1: 3-way plan (1 import, 1 export), C02
+        + import applied (r3->r4), export pending gate", "delta_from_original": "none", "merged_directive_for_next": "apply export #102 via guard after gate confirmation, then run pass 2", "drift_signal": "none"}
+      2 +{"original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側task
+        +仕様へ収束した状態になっている", "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43", "loop": 2, "current_goal_snapshot": "pass-1 export applied via guard (auth 50b865
+        +ed); pass-2 imports=0 exports=0 project_item_adds=0", "delta_from_original": "none; base snapshot not rewritten (no canonical writer)", "merged_directive_for_next": "complete: all checklist items pass", "
+        +drift_signal": "none"}
+  ⎿  Updated eval-log/run-dev-graph-sync-progress.json (+3 -3)
+      25        "evidence": "no PR linkage; no done transition"
+      26      },
+      27      "second_sync_zero": {
+      28 -      "status": "pending",
+      29 -      "evidence": null
+      28 +      "status": "pass",
+      29 +      "evidence": "pass-2-plan: imports=0 exports=0 project_item_adds=0 changes=0 after pass-1 import (C02 r4) + export (guarded issue-update #102)"
+      30      }
+      31    }
+      32 -}
+      32 +}
+
+⏺ Bash(python3 - eval-log/run-dev-graph-sync-goal-spec.json eval-log/run-dev-graph-sync-intermediate.jsonl <<'PY'
+      import hashlib, json, sys…)
+  ⎿  goal-seek check OK 2
+
+⏺ Bash(mkdir -p /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1500-p83m/out)
+  ⎿  Done
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1500-p83m/out/status.json)
+  ⎿  Wrote 1 line to ../../run-dev-graph-sync/live-trial/20261005T1500-p83m/out/status.json
+      1 {"status":"PASS","scenario":"C03-OUT1-positive-second-sync-zero"}
+
+⏺ The sync ran twice. In pass 2, both imports and exports were 0, so I recorded PASS. The fake GitHub was used throughout, and nothing connected to the real GitHub.
+
+  - Gate: the response arrived during cycle 1 (challenge DE0D25539A8B549F9C867D28). I used that confirmation receipt to authorize and then execute, without a second cycle or re-issuing the preview.
+  - Pass 1 import: I updated the title of T-SYNC-001 (#101) to the remote's newer title through the single writer (C02), moving the graph from revision 3 to 4.
+  - Pass 1 export: I sent the local title of T-SYNC-002 (#102) to GitHub through the guard (preview → authorize → execute) and gh-bridge. In the fake GitHub's change log, the only write is this one title edit to #102.
+  - Pass 2: both issues have identical titles locally and on GitHub. Each has exactly one Project item, and none were added or edited. Imports, exports and conflicts were all 0, and nothing was written either locally or
+    to GitHub. The schema check passed with 0 violations, and the skill's goal-seek check also passed.
+  - Snapshot not updated: the 3-way base .dev-graph/state/github-sync-snapshot.json is still the old one from 2026-08-01. No canonical script writes it, and hand-editing is prohibited. Pass 2 still came out at 0 because
+    local and remote now agree on every field. On a real run, though, the base would lag behind until some proper writer updates it.
+
+  out/status.json is {"status":"PASS","scenario":"C03-OUT1-positive-second-sync-zero"}. Each pass's results are in run-dev-graph-sync-pass-1-export.json and run-dev-graph-sync-pass-2-plan.json, both in the fixture's
+  eval-log/.
+
+  DONE: PASS
+
+✻ Churned for 18m 17s · done 10:55 AM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)
+

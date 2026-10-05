@@ -3,7 +3,7 @@
 # name: validate-graph-schema
 # purpose: Perform side-effect-free fail-closed validation of canonical dev-graph nodes, artifacts, and feature packages.
 # inputs: ["argv: --graph FILE --repo-root PATH?"]
-# outputs: ["stdout: JSON validation report"]
+# outputs: ["stdout: JSON validation report (graph_validation = graph 全体, node_readiness = node 単位)"]
 # requires-python = ">=3.10"
 # dependencies: []
 # contexts: [A, B, C, E]
@@ -374,12 +374,33 @@ def main() -> int:
     })
     dump({
         "valid": not violations,
+        # 互換キー: 最上位の implementation_readiness/missing_sections は graph 全体の検証結果 (violations 0 件か) で、
+        # node の着手準備ではない。新しい読み手は graph_validation と node_readiness を読む。
         "implementation_readiness": "complete" if not violations else "incomplete",
         "missing_sections": missing,
+        "graph_validation": {"status": "pass" if not violations else "fail", "violation_count": len(violations)},
+        "node_readiness": node_readiness(nodes),
         "schema": str(SCHEMA_PATH),
         "violations": violations,
     })
     return 0 if not violations else 1
+
+
+def node_readiness(nodes: list[Any]) -> dict[str, Any]:
+    """各 node の implementation_readiness.status の集計。graph が valid でも node は incomplete でありうる。"""
+    counts = {"complete": 0, "incomplete": 0, "not_applicable": 0, "unknown": 0}
+    incomplete = []
+    for index, node in enumerate(nodes):
+        readiness = node.get("implementation_readiness") if isinstance(node, dict) else None
+        raw = readiness.get("status") if isinstance(readiness, dict) else None
+        status = raw if raw in {"complete", "incomplete", "not_applicable"} else "unknown"
+        counts[status] += 1
+        if status in {"incomplete", "unknown"}:
+            node_id = (node.get("graph_node_id") or node.get("id")) if isinstance(node, dict) else None
+            missing = readiness.get("missing_sections") if isinstance(readiness, dict) else None
+            incomplete.append({"graph_node_id": node_id or f"nodes[{index}]", "status": status,
+                               "missing_sections": missing if isinstance(missing, list) else []})
+    return {**counts, "incomplete_nodes": incomplete}
 
 
 if __name__ == "__main__":

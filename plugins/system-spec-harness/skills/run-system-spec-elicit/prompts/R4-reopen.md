@@ -36,6 +36,8 @@
 - reopen 後のセルは `未収集`。以後 R2/R3 の対象に戻る。
 - 再オープンは影響カテゴリ集約を writer が真理値表で再計算 (`確定`→`収集中` 等)。
 - **誘導の疑いがある問が主根拠のとき**: 確定セルの `qa_ref` の問が N1-N4 (`references/neutral-question-criteria.md`) に違反していたら、reopen → 同じ論点を中立に問い直して回答を取り直す → 新しい qa で再確定 → `supersede-qa` op (`{"action":"supersede-qa","qa_id":"<旧>","superseded_by":"<新>","superseded_at":"<実測値>","note":"<旧い問のどの基準の違反を、どう問い直したか>"}`) で旧 entry に置き換えを記録する。旧 entry が主根拠のままでは writer が `supersede-qa` を拒否し、置き換え済みの entry を主根拠に戻す `confirm` も拒否する。
+- **再確定で参照を結び直す**: reopen はセルを `{state, reopened_from, reopen_reason}` で置き換えるので、`qa_ref`・`qa_refs`・`serves_goals` が落ち、reopen 後の state からは読めない。reopen の前に対象セルのこれらの値を控える。再確定の turn では、(a) 前提が崩れた後も裏付けとして有効な旧参照 (旧 `qa_ref` と `qa_refs`。置き換えた entry は除く) を `confirm` に続く `add-qa-ref` で結び直し、(b) `serves_goals` を `confirm` に同時付与するか `set-serves` で付け直す。再確定が invocation をまたいでも同じである (未結の qa の拾い方は `references/elicit-question-bank.md` の手順 4)。結び直さない qa は required-info の接地にも章の根拠にも数えられず、`serves_goals` の無い確定セルは `--require-foundation` で落ちる。
+- **裏付けの問を置き換えるとき**: 誘導の疑いがある問が `qa_refs` 側だけにあるなら reopen は要らない (writer は主根拠でない entry の `supersede-qa` を通す)。同じ論点を中立に問い直して回答を取り直し、`supersede-qa` で置き換えを記録し、新しい qa を `add-qa-ref` で同じセルへ結ぶ。旧 entry は `qa_refs` に残してよい (compile が旧版の印付きで描く)。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |
@@ -86,6 +88,7 @@
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] reopen対象の直前状態が`確定`である
+- [ ] reopen 前の対象セルの `qa_ref`・`qa_refs`・`serves_goals` を控え、再確定する R2/R3 へ渡している
 - [ ] reopen後の対象状態がreason付きの`未収集`である
 - [ ] `reopen_log` に根拠 entry が残っている (`reason` と実測 `reopened_at` を伴う)
 - [ ] 影響カテゴリの `category_aggregate` が真理値表と一致する

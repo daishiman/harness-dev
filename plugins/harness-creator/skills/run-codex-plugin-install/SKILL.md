@@ -79,16 +79,28 @@ Purpose & Output Contractの最小の実成果物またはremote mutation previe
 Never execute the external mutation argv directly. Replace every angle-bracket placeholder
 with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
 
+Resolve the guard plugin root once, before `preview`. An installed plugin cannot reach a sibling
+plugin as `<plugin root>/..`, so never guess that path:
+
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py" skill-governance-adapters
+```
+
+Use the printed absolute path as `<GUARD_PLUGIN_ROOT>` in `preview`, `authorize` and `execute`
+(other Bash is blocked while the confirmation is pending, so do not resolve it again).
+If the resolver exits non-zero, stop without any external mutation and tell the user to install
+the `skill-governance-adapters` plugin.
+
+```bash
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Present that official preview output to the user. Only the exact user reply printed by `preview`
 may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
 
 ```bash
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
-python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.

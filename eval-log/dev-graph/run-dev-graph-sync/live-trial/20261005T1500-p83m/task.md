@@ -1,0 +1,97 @@
+# タスク: dev-graph:run-dev-graph-sync の実走 (gate 応答あり)
+
+### 入力 (準備済み)
+
+fixture repo-root (以下 `<FX>`) は
+`/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync`
+です。同期前の seed を commit した fixture repo の worktree で、次をすでに持っています。
+
+- `.dev-graph/config.json` (execution_tracker.mode=github、github.enabled=true、issue_repository=local-fixture/r5-sync)
+- tracker_binding=github の confirmed/pass/readiness-complete task 2 件 (`tasks/T-SYNC-001.md`、`tasks/T-SYNC-002.md`) と `.dev-graph/state/graph.json`
+- 3-way base の `.dev-graph/state/github-sync-snapshot.json`
+- remote authority の代わりになる決定論 adapter `<FX>/github-adapter.json` と、それを読む `<FX>/tools/fake-gh.py`
+
+fixture の使い方は `<FX>/README.md` を読んで確かめること。
+**この入力を準備のために書き換えないこと** (init や seed node の追加は不要)。
+fixture へ書いてよいのは、被験 skill 自身が正規経路で行う同期の結果だけです。
+
+### 本題
+
+Skill({skill: "dev-graph:run-dev-graph-sync", args: "sync --repo-root /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync --binding github --adapter-fixture /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83m-sync/github-adapter.json --repeat 2"})
+
+**実在の GitHub へは絶対に接続しないこと。** remote は必ず adapter fixture (`github-adapter.json` と `tools/fake-gh.py`) だけを使うこと。
+
+### external mutation guard の gate 手順 (最重要・厳守)
+
+confirmation receipt は実在の人間の UserPromptSubmit でしか作れないため、あなたには作れません。
+**オペレーターが作ります。** 受け渡しはファイル経由で行います。
+
+作業ディレクトリ (以下 `<GD>`):
+`/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1500-p83m`
+
+**手順 1: preview を出したら即座に challenge をファイルへ Write する**
+
+`<GD>/gate-request.json` へ Write tool で次を書く (Bash は使わない):
+
+```json
+{"challenge": "<24桁の challenge>", "preview_receipt_id": "<preview receipt id>", "issued_at_iso": "<現在時刻>"}
+```
+
+同時に `GATE-CHALLENGE: <24桁>` を 1 行出力する。
+
+**手順 2: `<GD>/gate-response.json` を Read tool だけで待つ**
+
+- Read が失敗する (ファイルが無い) のは **正常な待機**であり、エラーでも失敗でもない。
+- 1 サイクル (1 つの challenge) につき **最低 900 回**繰り返すこと。900 回はおよそ 15 分の TTL に相当する。
+  オペレーターの応答には人間の入力が挟まるため、**10 分以上かかるのが普通**である。
+- 途中の回数 (たとえば 400 回) は区切りではない。**900 回に達する前に preview を出し直したり、
+  authorize を試したりしてはならない**。早すぎる出し直しは、人間が入力中の challenge を無効にする重大な手順違反である。
+- **Bash による待機・polling は絶対に行わないこと** — preview 発行後は pending guard context により
+  canonical guard 呼出し以外の Bash が塞がれるため、Bash で待つと自分自身を詰ませる。
+- 待機中に preview を `cancel` してはならない。
+
+**手順 3: preview が TTL (15分) 切れになった場合**
+
+`authorize` が expired で失敗したら、**諦めずに preview を再発行**し、
+新しい challenge で `<GD>/gate-request.json` を Write し直して手順 2 に戻る。
+これを **最大 3 サイクル**繰り返してよい。
+
+**手順 4: gate-response.json が読めたら**
+
+その `confirmation_receipt_path` を使って `authorize` → `execute` と canonical guard 経路で進める。
+guard 呼出しは shell 演算子を一切含まない単一コマンドで書くこと
+(`&&` や `$PWD` 展開を混ぜると malformed として弾かれる)。
+
+confirmation receipt の自作・hook-confirm への stdin 偽造・guard を迂回した直接実行はいずれも禁止。
+3 サイクル使い切っても応答が無い場合のみ、迂回せず FAIL を記録すること。
+gate 以外では人間に質問せず自走してください。
+
+### 検証
+
+- 1 回目が期待どおりの import / export を適用すること (**export が実際に apply されるまで到達すること**)
+- 2 回目の imports / exports の changes がともに 0 件であること (冪等)
+- stable ID と snapshot が不変であること
+- 3-way の base が保持されていること
+
+処理が終了 (成功 / 失敗 / 中断いずれでも) したら:
+
+1. `<GD>/out/status.json` に完了マーカーを1ファイルだけ Write する。内容: `{"status":"PASS|FAIL|ERROR","scenario":"C03-OUT1-positive-second-sync-zero"}`
+2. `DONE: <status>` と1行だけ報告する。
+
+**status 判定の規則 (厳守):**
+- 1 回目の export が実際に apply され、かつ 2 回目が changes 0 件だったときだけ `PASS`。
+- gate 未成立で 1 回目が未適用のまま終わった場合は `FAIL`。
+  「前提が成立しないので 2 回目を省略した」は PASS の根拠にならない。
+
+制約:
+- gate 待機以外では人間に質問せず最後まで自走すること。
+- skill の手順に忠実に従い、人手の追加判断・省略をしないこと。
+- out/ には status.json 以外を書かないこと。
+
+経路に関する絶対制約 (違反した時点でこの trial は無効):
+- **被験 skill の責務を代行する自作スクリプトを書かないこと。**
+- graph / content への書込みは、被験 skill の正規経路 (skill が定める script と C02 単一 writer) だけで行うこと。
+  入力の graph.json・task・snapshot・config を手で書き換えて状態を作ってはならない。
+- 責務 prompt (`prompts/R*.md`) は、その責務の出力を作る前に必ず読むこと。
+- SKILL.md が独立 verifier subagent の起動を要求している場合は Agent tool で実際に起動すること。
+- 上記が実行不能と判断した場合は、代替実装で回避せず status.json に `FAIL` を書くこと。

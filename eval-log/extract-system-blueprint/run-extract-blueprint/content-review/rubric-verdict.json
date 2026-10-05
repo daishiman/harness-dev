@@ -2,7 +2,7 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-extract-blueprint",
-    "skill_md_sha256": "a7b2edd6b3d03b8f77b4e4eee19f51566ebf0615305c15d374d908a754d26efd"
+    "skill_md_sha256": "827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,11 +11,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 4
   },
-  "reviewer": "focused-run-extract-blueprint-content-review (incremental profile, one context)",
-  "reviewed_at": "2026-08-24T05:38:47Z",
-  "iterations": 2,
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,17 +24,20 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "L0 ref-skill-design-rubricとL2 assign-skill-design-evaluator rubric v1.3.1の合成評価はscore 90/threshold 80、required_fixes 0、high severity 0でPASSした。",
-      "BD-004はdescriptionの2 triggerが、URLからローカルblueprintを生成するpre/post-choice R1-R3手順と、独立fidelity verdictを受けるC02 handoffへそれぞれ対応することを意味確認した。",
-      "PG-001/REG-001を含むtask-graph script・schema・responsibility・dependency配線は、共有templateとのbyte一致、focused tests、runtime/dependency lintで検証済みである。"
+      "依存の宣言と実体が一致している。frontmatter の external_mutation_guard.runtime_ref は plugin:skill-governance-adapters/scripts/... 記法、plugin.json の dependencies は skill-governance-adapters を宣言し、本文はその plugin を同梱 resolver で解決する。install 先で届かない親ディレクトリ経由の参照は skill 配下から消えた。",
+      "fail-closed の規範を満たす。resolver は未検出で exit 1、usage 誤りで exit 2 を返し、本文は非 0 なら外部変更をせずに止まると定めている。外部変更へ進む経路は guard の preview→hook-confirm→authorize→execute だけで、自動承認の抜け道は増えていない。C08 の fetch-authz hook は resolver の呼び出しを通過させ、guard flow と干渉しない。",
+      "参照の規約に沿っている。本文の goal-seek 正本の引用は『本 plugin には同梱しない』付きの出典表記になり、install 先で存在しないファイルを指す相対パスが消えた。6 ステップは本文に展開されており、正本を読めない install 先でも手順は失われない。"
     ],
     "negative_feedback": [
-      "[medium / PD-002] body head 30 lines lack '## Purpose' / '## Output Contract'。score影響は-10で、未解決highまたはrequired fixではない。"
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、resolver 呼び出し自体が PreToolUse で deny される。本文の停止規則は『非 0 で終わる』場合だけを名指ししている。外部変更は起きないため fail-closed は保たれる。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (cancel アクション) が書かれていない。preview を辞退すると TTL (900 秒) まで Bash が使えなくなり、遮断は execute の完了か取消まで続く。repo 共通 block の課題。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (cache 全体の最新 version) は、hook として動いている adapters と別の version を指しうる。通常は installed_plugins.json 経由で一致する。",
+      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD で既にあり (本文 43 行目)、今回の 12 行追記で本文 55 行目へ遠のいた。合否は変わらず、本差分が持ち込んだ問題ではない。前回 verdict は medium として記録したまま PASS にしていたが、今回は判定外の low へ分類を改めた。guard block を Purpose より前に置く repo 共通配置の横断課題。"
     ],
-    "iteration": 2,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:task-graph-runtime-profile-focused-review",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "L0+L2合成rubric v1.3.1。upstream rubric_hash=sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d、composition_hash=sha256:8db50cb62a19267a44bf477e383c70b43ccdffb3e1271f2745461c3a3331763a。applicable 24 / scored 23 / pending_human 1 / unscored 0。BD-004はfocused semantic reviewで解決し、未解決high 0。4条件とIN1/OUT1の静的設計adequacyを修正後sourceで再確認した。plan task-graphは意味とgraph_hashを変えずP06順序だけ正準化しvalidate exit 0。live/criteria verdictは参照・更新していない。30思考法を使用したとは申告しない。"
+  "notes": "【profile=incremental / focused combined review】elegance-verdict.json と同一の結合レビュー結果の rubric 側 (ref-skill-design-rubric の規範照合) への投影。builder とは別 context の独立 evaluator として評価し、30 思考法は実施しておらず、実施したとも申告しない。 【差分と確認内容】SKILL.md 1 件 (+16/-4) で、guard block の差し替えと、ゴールシーク実行節の正本の引用の出典表記化 (『本 plugin には同梱しない』付き) の 2 点。同梱 resolver の実在・正本との sha 一致・実行ビット、repo 上の解決 (exit 0)、未検出 exit 1、usage exit 2、Claude と Codex の install 配置を模擬した解決と adapters 不在時の exit 1、lint-vendored-ssot (33 件 byte 一致)、lint-sibling-plugin-paths (finding 0)、pytest 28 passed (resolver と sibling-path lint の test)、引用先 goal-seek-paradigm.md の harness-creator 側での実在、C08 fetch-authz hook が URL の無い Bash を通過させることを確認した。書き込み直前の shasum -a 256 = 827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7。 【rubric 照合】high severity の該当 0。前回 verdict (2026-08-24、L0+L2 合成 rubric v1.3.1、score 90 / threshold 80) の採点は本差分の範囲外の項目を含むため再採点しておらず、本 verdict は差分に関わる規範の照合に限る。PD-002 (medium) は HEAD の時点で既に不成立で、本差分は見出しまでの距離を 12 行延ばしたが合否を変えていない。前回 verdict はこれを medium のまま記録して PASS にしていた。今回は手順の定め (差分外の既存の問題は low として記録し判定の対象外) に従い、判定外の low として記録した。rubric 定義上の severity は medium のままで、解消には guard block の配置変更が必要。それ以外の findings もすべて low で、smell に計上した。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow と install 先での resolver の実挙動、および OUT1 の受入は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

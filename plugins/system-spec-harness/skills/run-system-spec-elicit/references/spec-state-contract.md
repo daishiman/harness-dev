@@ -73,7 +73,7 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 (冪等)。`state=確定` を変えないので確定巻き戻し防御に抵触せず、reopen→confirm と違って
 `required_info` / `required_info_checks` を落とさない。turn に含めて `qa_refs` を省くと turn の `qa_id`
 で補完される。ops は順に適用されるので、論点が揃った turn の ops に `confirm` → `add-qa-ref`
-(先行 turn で補った論点の qa_id) と並べれば、確定と結び付けを 1 turn で行える。
+(開いた問の qa を含む先行 turn の qa_id。手順は `elicit-question-bank.md` の手順 4) と並べれば、確定と結び付けを 1 turn で行える。
 結ばれない qa は、必須情報の接地 (下記の鎖) にも C03 の章の根拠にも数えられない。
 
 ## qa_log entry の項目
@@ -96,7 +96,7 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 `agent-inference` はアシスタントの推定 (利用者確認も検証可能な出典も経ていない) を指す。
 推定は仕様と矛盾しないため、これを宣言しない限りどの決定論ゲートにも掛からない。
 `validate-coverage-matrix.py` は、確定セルの根拠が `agent-inference` だけの場合を既定で違反とし、
-`--require-basis` を付けると確定セルの根拠に `basis` 宣言そのものを要求する
+`--require-basis` を付けると確定セルごとに根拠 (`qa_ref` / `qa_refs`) の少なくとも 1 件に `basis` 宣言を要求する
 (既存 state への一斉 backfill を強いないため opt-in)。
 
 `required_info_items` は「必須情報が確定へ接地しているか」を決定論で検査するための機械可読な

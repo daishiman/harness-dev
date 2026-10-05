@@ -12,9 +12,9 @@ user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--repo-root PATH] [--hook-source plugin|project-fallback] [--dry-run]"
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-init-scaffold.py, ../../scripts/build-project-hook-fallback.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
-reference_refs: [../../schemas/repo-config.schema.json, ../../templates/template-contract.json, ../../references/claude-code-hooks-contract.md]
+reference_refs: [../../schemas/repo-config.schema.json, ../../templates/template-contract.json, ../../references/claude-code-hooks-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
   - prompts/R1-elicit.md
   - prompts/R2-plan.md
@@ -120,7 +120,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## Input / output
 
 - 入力: `--repo-root` または信頼済み project context、hook source。保存先や node ID は質問しない。
-- 出力: `issues/ tasks/ specs/ architecture/ features/ docs/`、`.dev-graph/{config.json,graph.json,state/,cache/,locks/,templates/}` と初期化 receipt。
+- 出力: `issues/ tasks/ specs/ architecture/ features/ docs/`、`.dev-graph/{config.json,state/graph.json,cache/,locks/,templates/}` と初期化 receipt (`.dev-graph/state/receipts/init-<UTC>.json`)。
 - GitHub は `enabled:false` で初期化し、owner/project number/field name のみ保存する。token と GitHub node ID は保存しない。
 
 ## Execution contract
@@ -131,7 +131,11 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 4. plugin hook を既定とする。`project-fallback` は plain-symlink 導入かつ effective plugin hook 不在時だけ許可し、既存 `.claude/settings.json` を deep-merge preview 後に更新して rollback manifest を残す。二重登録は拒否する。
 5. `validate-graph-schema.py` で config/graph/template readiness を検証する。二回目実行の planned changes が 0 でなければ完了しない。
 
-Receipt は `repository_id`, repo-relative roots, created/preserved/migration_preview, hook_source, schema_result を含む。検証失敗時は部分成功を成功扱いしない。
+手順 1-3 と 5 は実装本体 `../../scripts/build-init-scaffold.py --repo-root <path> [--config <path>] [--hook-source plugin|project-fallback] [--dry-run]` に委譲し、skill は scaffold を Write/Edit や heredoc で直接書かない。script は C24 解決、欠落時だけの作成 (既存の config/graph は検証して保持)、書込み前の repo-config schema と `validate-graph-schema.py` の検査、create-only の init receipt (`.dev-graph/state/receipts/init-<UTC>.json`) を一体で持つ。変更があれば `status=applied` と receipt、planned changes 0 なら `status=noop` (`planned_changes=0`・`write_count=0`・既存 `receipt_path`)、`--dry-run` は `status=preview` で write 0、検証失敗は `status=rejected` (exit 1) で何も作らない。
+
+手順 4 は `../../scripts/build-project-hook-fallback.py --repo-root <path> --mode preview|apply|rollback [--manifest <path>]` に委譲し、skill は `.claude/settings.json` を Write/Edit で直接書かない。script は `.claude/dev-graph-plugin` が C24 の plugin source を指す plain symlink であることを確かめ、user/project/local/managed settings を読んで effective plugin hook・`disableAllHooks`・`allowManagedHooksOnly`・他 scope の dev-graph hook を検出したら書込み 0 で `status=rejected` (exit 1) を返す。通れば plugin `hooks/hooks.json` の全 event を `(event, matcher, command)` 単位で追記 merge し、既存 key と既存 hook group の hash 不変・二重登録 0 を自己検証して、rollback manifest (`.dev-graph/state/receipts/hook-fallback-<UTC>.json`) を書換えより先に create-only で残す。同時に config の `claude_hooks.source` を `project` にする。再実行は `status=noop`、rollback は manifest の after digest と一致する file だけを before へ戻し、apply 後に書き換えられた file は `rollback_drift` で拒否する。
+
+Receipt は `repository_id`, repo-relative roots, created/preserved/migration_preview, hook_source, schema_result を含み、`build-init-scaffold.py` が書く (hook_source は選んだ値の記録で、settings の変更は手順 4 の script が別の manifest として残す)。検証失敗時は部分成功を成功扱いしない。
 
 ## ゴールシーク実行
 
@@ -146,7 +150,7 @@ symlinkで配布された任意の呼出し元repository/worktreeを解決し、
 ### 完了チェックリスト
 
 - [ ] `resolve-repo-context.py` receipt の repository_id/common-dir/content root が caller repo と一致する
-- [ ] `issues/tasks/specs/architecture/features/docs` と `.dev-graph/{config.json,graph.json,state,cache,locks}` が実在する
+- [ ] `issues/tasks/specs/architecture/features/docs` と `.dev-graph/{config.json,state/graph.json,cache,locks}` が実在する
 - [ ] `template-contract.json` 列挙資産が欠落0で、利用者編集済み template の digest が不変である
 - [ ] effective hook は plugin または許可済み fallback の一経路だけで、既存 settings key/hash の変更が0件である
 - [ ] `validate-graph-schema.py` が exit0 で、同じ入力の二回目 init の planned changes が0件である

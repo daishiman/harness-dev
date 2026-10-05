@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/extract-plugin-root.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "実コードを読み、実テストと実測で検証した。兄弟 plugin の root を、自 plugin、`<root>/../<name>`、同じ marketplace の installed_plugins.json、同じ marketplace の cache の最新 version、他の marketplace の install、Claude/Codex の cache 全体の最新 version の順に探し、manifest (.claude-plugin / .codex-plugin) の name が一致した最初の候補だけを返す。見つからなければ exit 1 で止め (fail-closed)、name は `[a-z0-9][a-z0-9-]*` で検証する (`../etc` が exit 2 になることを実測)。他プロジェクト専用 (scope=project/local) の install は候補から外す。読取りだけなので write-scope: none は実体と一致する。`# /// script` frontmatter あり。py_compile OK。TESTS: tests/scripts-root/test_root__extract_plugin_root.py 10 件全 PASS (0.26s。repo 配置、cache 配置、installed_plugins.json の project scope、他 marketplace への fallback、manifest 名の不一致、CLI の exit code、vendor コピーからの解決)。repo 内の vendor コピーから skill-governance-adapters を解決できることも実測した (exit 0)。指摘 (いずれも low): (1) SEMVER_RE は `X.Y.Z` の完全一致だけを見るので、`1.2.3-rc1` のような prerelease の dir は非 semver 扱いになり、すべての semver より後ろに並ぶ。(2) 最後の fallback (cache 全体の最新 version) は、uninstall 後も cache に残った古い version を拾いうる (guard を飛ばす方向ではなく、古い版が走る方向)。(3) 正本を repo 直下から既定の --from (= repo root) で起動すると plugins/ の兄弟が候補に入らず exit 1 になる (fail-closed。正本は vendor 元で、実際の利用は vendor コピー経由)。(4) 別の marketplace にある同名 plugin も段 5・6 で候補になる (docstring に書かれた順序どおり)。"
+  },
+  "reviewed_by": "coverage-reviewer-pr83-20261005",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

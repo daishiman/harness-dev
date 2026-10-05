@@ -326,10 +326,10 @@ rc=0 全一致 / rc=1 不一致または抽出不可あり / rc=2 引数・入�
 この3つを **同値継承の対象**として照合する（三層で同じ時点を書く運用を前提にした指定）。
 **2つの検査器で扱いが逆になっている。** どちらに寄せるかはまだ決めていない。
 片方へ寄せるときは、この節・`--peer` の一覧・`validate-cross-level.py` の `ANCHORS`・
-`tests/test_validate_cross_level.py` を同時に直す。寄せるまでの間、`--peer` は WARN のみ、
+plugin 直下の `../../tests/test_validate_cross_level.py` を同時に直す。寄せるまでの間、`--peer` は WARN のみ、
 `validate-cross-level.py` は rc=1 を返すという非対称が残る。
 
-受け入れテストは `tests/test_validate_cross_level.py`。
+受け入れテストは plugin 直下の `../../tests/test_validate_cross_level.py`。
 
 - 「任意（継承）」: 週報では値を新規ヒアリングせず、現在の月報/期報から継承した値を表示・確認する。継承値が取得できない場合のみヒアリングする。
 - period_sales_cumulative のみ週報でも必須。週次で当該週時点の累計実績に更新する（継承値の更新が前提）。
@@ -411,7 +411,7 @@ output-formatter SubAgent が生成する最終成果物。
 | interview_data | InterviewData | Phase 3 の全35フィールド |
 | past_data | PastSummary | info-collector の構造化サマリー（そのまま引き渡し） |
 
-### 4.4 バリデーション（Phase 4 完了時）
+### 4.4 バリデーション（Phase 4 完了時＝SKILL.md の Phase5-validate）
 
 `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-goal-output.py` による自動チェック:
 
@@ -479,14 +479,15 @@ validator は所属（C4）と参照先の実在（C5）を FAIL で見るが、
 | L4 | 分母0の検出 | 専用rc | 照合対象が0件のとき rc=3 を返し、rc=0（検査して0件）と区別すること |
 | L5 | 照合範囲 | 対象外 | 提出用セクション（`# 北原さん提出用` グループ・`（提出）` 付き見出し）は L1-L3 の対象にしない。提出用の行動目標はグループ見出しを置かない1行1行動の規定。グループ見出しのラベルずれは FAIL |
 
-`$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py --file <絶対パス>` で実行。rc=0 PASS / rc=1 未解決あり / rc=2 引数・ファイルの誤り / rc=3 分母0。Phase 4 では **validate-goal-output.py → validate-goal-linkage.py の順に両方を回し、両方の rc の値をそのまま記録する**。オプションは `--file` だけで、**明示指定で個別に免除する機構は持たない**（`--allow` のような免除オプションを渡すと未知のオプションとして rc=2 になる）。成果が測りにくい行動は、行動目標セクション末尾の `### → （土台）`／`### → （関係維持）` グループへ置く（この2つだけが分母から外れる）。月報は**管理用セクションだけ**を照合する（提出用セクションの行動目標はグループ見出しを持たないため、`# 北原さん提出用` グループは `SKIP` で対象外）。
+`$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py --file <絶対パス>` で実行。rc=0 PASS / rc=1 未解決あり / rc=2 引数・ファイルの誤り / rc=3 分母0。Phase5-validate では **validate-goal-output.py → validate-goal-linkage.py の順に両方を回し、両方の rc の値をそのまま記録する**。オプションは `--file` だけで、**明示指定で個別に免除する機構は持たない**（`--allow` のような免除オプションを渡すと未知のオプションとして rc=2 になる）。成果が測りにくい行動は、行動目標セクション末尾の `### → （土台）`／`### → （関係維持）` グループへ置く（この2つだけが分母から外れる）。月報は**管理用セクションだけ**を照合する（提出用セクションの行動目標はグループ見出しを持たないため、`# 北原さん提出用` グループは `SKIP` で対象外）。
 
 #### 三層横断照合は単一ファイル検査の対象外
 
 `validate-goal-output.py` も `validate-goal-linkage.py` も **1本のファイルしか見ない**。
 期報の数字を直して月報・週報へ追随させ忘れても、どちらも rc=0 で通る（層をまたぐ値を
-突き合わせる口が存在しない＝分母が0件）。期報・月報・週報の3本が揃っている場合は、
-Phase 4 の最後に `validate-cross-level.py` を**3本同時に**当てて rc の値を記録する。
+突き合わせる口が存在しない＝分母が0件）。期報と月報が揃っている場合は、Phase5-validate の最後に
+`validate-cross-level.py` を当てて rc の値を記録する（週報があれば `--weekly` も渡して三層で照合する）。
+期報か月報が無い場合は適用せず、rc ではなく `not_applicable` と記録する。
 
 ```bash
 /usr/bin/python3 "$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/scripts/validate-cross-level.py" \

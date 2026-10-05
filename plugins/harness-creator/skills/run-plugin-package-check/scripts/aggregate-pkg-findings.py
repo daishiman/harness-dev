@@ -16,7 +16,22 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
+
+def _resolve_repo_root() -> Path:
+    """$CLAUDE_PROJECT_DIR → 本ファイル parents[5] → cwd の順 (validate-plugin-permissions.py と同じ)。
+
+    install 先では parents[5] が marketplace のディレクトリになるので、plugins/ を含むときだけ採る。
+    """
+    env = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env and (Path(env) / "plugins").is_dir():
+        return Path(env)
+    here = Path(__file__).resolve()
+    if len(here.parents) > 5 and (here.parents[5] / "plugins").is_dir():
+        return here.parents[5]
+    return Path.cwd()
+
+
+REPO_ROOT = _resolve_repo_root()
 
 
 def now_iso() -> str:

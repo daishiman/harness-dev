@@ -2,7 +2,7 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-codex-plugin-install",
-    "skill_md_sha256": "ef1705c7654e3aba83ae4d99a5127238f57789b93144073ea996a6ab74ba8e7b"
+    "skill_md_sha256": "9e6169e1feb1a81e329a0a9122d81c0336cdb86687a01fb110efdfe928e4be8b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +11,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 4
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:26Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,20 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/subagent がuser-global mutationのpreview→confirm→authorize→execute境界と親context分離に一致し、OUT2は実セッション受入をlive-trialへ明示的に委ねている。"
+      "依存の宣言と実体が一致している。frontmatter の external_mutation_guard.runtime_ref は plugin:skill-governance-adapters/scripts/... 記法、plugin.json の dependencies は skill-governance-adapters を宣言し、本文はその plugin を同梱 resolver で解決する。install 先で届かない親ディレクトリ経由の参照は skill 配下から消えた。",
+      "fail-closed の規範を満たす。resolver は未検出で exit 1、usage 誤りで exit 2 を返し、本文は非 0 なら外部変更をせずに止まると定めている。user-global な Codex install へ進む経路は guard の preview→hook-confirm→authorize→execute だけで、自動承認の抜け道は増えていない。",
+      "resolver の呼び出しは allowed-tools の Bash(python3 *) の範囲に収まり、権限の追加を要しない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、resolver 呼び出し自体が PreToolUse で deny される。本文の停止規則は『非 0 で終わる』場合だけを名指ししている。外部変更は起きないため fail-closed は保たれる。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (cancel アクション) が書かれていない。preview を辞退すると TTL (900 秒) まで Bash が使えなくなり、遮断は execute の完了か取消まで続く。repo 共通 block の課題。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (cache 全体の最新 version) は、hook として動いている adapters と別の version を指しうる。通常は installed_plugins.json 経由で一致する。",
+      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD で既にあり (本文 39 行目)、今回の 12 行追記で本文 51 行目へ遠のいた。合否は変わらず、本差分が持ち込んだ問題ではない。guard block を Purpose より前に置く repo 共通配置の横断課題。"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "【profile=incremental / focused combined review】elegance-verdict.json と同一の結合レビュー結果の rubric 側 (ref-skill-design-rubric の規範照合) への投影。builder とは別 context の独立 evaluator として評価し、30 思考法は実施しておらず、実施したとも申告しない。 【差分と確認内容】SKILL.md 1 件 (+15/-3) の guard block 差し替えのみで、skill 配下の他ファイルに差分は無い。同梱 resolver の実在・正本との sha 一致・実行ビット、repo 上の解決 (exit 0)、未検出 exit 1、usage exit 2、Claude と Codex の install 配置を模擬した解決と adapters 不在時の exit 1、lint-vendored-ssot (33 件 byte 一致)、lint-sibling-plugin-paths (finding 0)、pytest 28 passed (resolver と sibling-path lint の test) を確認した。書き込み直前の shasum -a 256 = 9e6169e1feb1a81e329a0a9122d81c0336cdb86687a01fb110efdfe928e4be8b。 【rubric 照合】high severity の該当 0。PD-002 (medium) は HEAD の時点で既に不成立で、本差分は見出しまでの距離を 12 行延ばしたが合否を変えていない。手順の定め (差分外の既存の問題は low として記録し判定の対象外) に従い、判定外の low として記録した。rubric 定義上の severity は medium のままで、解消には guard block の配置変更が必要。それ以外の findings もすべて low で、smell に計上した。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow と install 先での resolver の実挙動、および OUT1 / OUT2 の受入は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

@@ -455,11 +455,13 @@ def test_category_design_refs_derived_from_resource_map():
     # database の read_when は ddd のみ (clean-architecture は backend/frontend 対応 → 混入しない)。
     assert mod.category_design_refs("database") == ["ddd.md"]
     assert "clean-architecture.md" not in mod.category_design_refs("database")
-    # backend は read_when に "backend" を含む 3 ファイルを resource-map 出現順で導出。
+    # backend は read_when に "backend" を含む 3 ファイルを、知識グラフの topo_order
+    # (C14: ddd → clean-architecture → api-design-patterns) で並べて導出する。
+    # resource-map の出現順 (clean-architecture, api-design-patterns, ddd) ではない。
     assert mod.category_design_refs("backend") == [
+        "ddd.md",
         "clean-architecture.md",
         "api-design-patterns.md",
-        "ddd.md",
     ]
     assert mod.category_design_refs("security") == ["secure-by-design.md"]
     assert mod.category_design_refs("maintenance-ops") == ["clean-code.md"]
@@ -528,3 +530,188 @@ def test_load_json_roundtrip(tmp_path):
     p = tmp_path / "x.json"
     p.write_text(json.dumps({"k": 1}), encoding="utf-8")
     assert mod.load_json(str(p)) == {"k": 1}
+
+
+# --------------------------------------------------------------------------- #
+# 逐語を章の構造にしない範囲と、旧 compile が漏らした見出しの片付け               #
+# --------------------------------------------------------------------------- #
+LEAKY_ANSWER = "主たる答の本文\n### U9 具体的にやりたいこと\n漏れる答の続き"
+LEAKED = "### U9 具体的にやりたいこと"
+FOUNDATION_LEAKS = {"### ゴールの補足", "### やりたいことの補足", "### 問の補足"}
+
+
+def _outside_headings(text: str) -> set[str]:
+    """フェンスの外にある見出し行 (strip 済み)。"""
+    lines = text.split("\n")
+    return {
+        line.strip()
+        for line, fenced in zip(lines, mod._fence_mask(lines))
+        if not fenced and mod._HEADING_LINE.match(line)
+    }
+
+
+def _compile_to(tmp_path: Path, spec: dict) -> tuple[int, Path]:
+    spec_path = tmp_path / "spec-state.json"
+    spec_path.write_text(json.dumps(spec, ensure_ascii=False), encoding="utf-8")
+    out_dir = tmp_path / "docs"
+    rc = mod.main(["compile", "--spec", str(spec_path), "--references", str(REFS), "--out-dir", str(out_dir)])
+    return rc, out_dir
+
+
+def _structured_foundation_spec() -> dict:
+    """To-Be / Delta の箇条に入る逐語 (ゴール・やりたいこと・意思決定の問) が見出しを含む spec。"""
+    spec = _spec()
+    rf = spec["requirements_foundation"]
+    rf["goals"][0]["text"] = "請求データを統合する\n### ゴールの補足\nゴールの補足の本文"
+    rf["concrete_intents"][0]["text"] = "請求データを日次でバックアップする\n### やりたいことの補足\nやりたいことの補足の本文"
+    spec["decisions"][0].update(
+        status="confirmed",
+        serves_goals=["G1"],
+        user_decision={"option_id": "managed-free"},
+        question="認証基盤をどちらにするか\n### 問の補足\n問の補足の本文",
+    )
+    return spec
+
+
+@pytest.mark.parametrize(
+    ("ref", "rendered_line"),
+    [
+        ("qa-after", "- 裏付け質疑 `qa-after` — 本章の上掲に既出"),
+        ("qa-gone", "- **裏付け質疑** `qa-gone` — **参照先が qa_log に存在しない**"),
+    ],
+)
+def test_cli_cleans_a_leak_followed_by_a_reference_line_that_is_no_longer_drawn(
+    tmp_path, monkeypatch, ref, rendered_line
+):
+    # 旧 compile は漏れる答を生で流し込んだ。その答が 2 番目の platform の主根拠で、直後に
+    # compile が参照の行 (上掲に既出 / 参照先が存在しない) を描くと、漏れた見出しの直下に
+    # その行が並ぶ。参照を外した再 compile では、その行はどこにも描かれない。参照の行も
+    # spec-state から導ける行なので、漏れとして片付き、rc=0 で通る。
+    spec = _spec()
+    spec["qa_log"] += [
+        {"id": "qa-leaky", "question": "漏れる答を持つ問", "answer": LEAKY_ANSWER},
+        {"id": "qa-after", "question": "後続の問", "answer": "後続の答の本文"},
+    ]
+    row = spec["matrix"]["security"]
+    row["web"]["qa_refs"] = ["qa-security", "qa-after"]
+    row["mobile"] = {"state": "確定", "qa_ref": "qa-leaky", "qa_refs": ["qa-leaky", ref]}
+    with monkeypatch.context() as m:
+        m.setattr(mod, "_has_structure", lambda value: False)
+        rc, out_dir = _compile_to(tmp_path, spec)
+    assert rc == 0
+    old = (out_dir / "security.md").read_text(encoding="utf-8")
+    assert LEAKED in _outside_headings(old)
+    assert rendered_line in old.split(LEAKED, 1)[1].split("\n#", 1)[0]
+
+    row["mobile"]["qa_refs"] = ["qa-leaky"]
+    rc, out_dir = _compile_to(tmp_path, spec)
+    assert rc == 0
+    new = (out_dir / "security.md").read_text(encoding="utf-8")
+    assert LEAKED not in _outside_headings(new)
+    assert rendered_line not in new
+    assert "漏れる答の続き" in new
+
+
+def test_human_section_quoting_another_verbatim_line_fails_closed(tmp_path, capsys):
+    # 人が逐語と同じ字面の見出しで節を書き、本文を別の qa の答の 1 行の引用だけにした。
+    # 行ごとに spec-state と照らすだけだと漏れと判定され、見出しごと黙って消えていた。
+    # 直下が漏れの形 (同じ逐語の続き) ではないので、消失として止まり、章は変わらない。
+    spec = _spec()
+    spec["qa_log"] += [
+        {"id": "qa-leaky", "question": "漏れる答を持つ問", "answer": "主の答の本文\n### 補足\n逐語の補足"},
+        {"id": "qa-after", "question": "後続の問", "answer": "後続の答の本文"},
+    ]
+    spec["matrix"]["security"]["mobile"] = {
+        "state": "確定",
+        "qa_ref": "qa-leaky",
+        "qa_refs": ["qa-leaky", "qa-after"],
+    }
+    rc, out_dir = _compile_to(tmp_path, spec)
+    assert rc == 0
+    chapter = out_dir / "security.md"
+    edited = chapter.read_text(encoding="utf-8") + "\n### 補足\n\n後続の答の本文\n"
+    chapter.write_text(edited, encoding="utf-8")
+    capsys.readouterr()
+
+    rc, _ = _compile_to(tmp_path, spec)
+    assert rc == 1
+    assert chapter.read_text(encoding="utf-8") == edited
+    err = capsys.readouterr().err
+    assert "### 補足" in err
+    assert "旧 compile が漏らした見出しなら" in err
+
+
+def test_to_be_delta_and_state_table_keep_verbatim_out_of_the_chapter_structure():
+    spec = _structured_foundation_spec()
+    spec["requirements_foundation"]["objectives"][0].update(
+        serves=["G1"], text="請求漏れ検知を自動化する\n### 目標の補足 | x"
+    )
+    spec["matrix"]["security"]["desktop-windows"]["reason"] = "理由の 1 行目\n### 理由の補足 | x"
+    to_be = mod.render_to_be_delta(spec, "security")
+    table = mod.render_state_table(spec, "security")
+
+    assert _outside_headings(to_be) == {
+        "## To-Be / Delta",
+        "### 到達すべき状態 (To-Be)",
+        "### 受入条件 (Delta の判定点)",
+        "### 本章がかなえる具体的やりたいこと (U9)",
+        "### 本章に効く確定意思決定",
+    }
+    assert _outside_headings(table) == {"## カテゴリ別収集状態"}
+    assert "- **G1**: 下のフェンス内の逐語" in to_be
+    assert "  - 採択: 無料枠のあるmanaged認証 (`managed-free`)" in to_be
+    # 表のセルは改行を <br> に、| を \| にして 1 行に収める。
+    assert "| O1 | 請求漏れ検知を自動化する<br>### 目標の補足 \\| x | 請求漏れ 月次0件 |" in to_be.split("\n")
+    rows = [line for line in table.split("\n") if "(desktop-windows)" in line]
+    assert len(rows) == 1
+    assert rows[0].endswith("| 対象外 | 理由: 理由の 1 行目<br>### 理由の補足 \\| x |")
+    # 構造を持たない逐語は従来どおりの 1 行で描く。
+    assert mod._bullet_verbatim("- **G2**:", "単行の文面") == ["- **G2**: 単行の文面"]
+
+
+def test_cli_cleans_headings_leaked_from_to_be_delta_verbatim(tmp_path, monkeypatch):
+    # 旧 compile は To-Be / Delta の箇条へ逐語を生で入れたので、逐語の行頭 ### が章の
+    # 見出しとして残っている。再 compile はそれを逐語の漏れとして片付ける。
+    spec = _structured_foundation_spec()
+    with monkeypatch.context() as m:
+        m.setattr(mod, "_bullet_verbatim", lambda label, value: [f"{label} {value}"])
+        rc, out_dir = _compile_to(tmp_path, spec)
+    assert rc == 0
+    assert FOUNDATION_LEAKS <= _outside_headings((out_dir / "security.md").read_text(encoding="utf-8"))
+
+    rc, out_dir = _compile_to(tmp_path, spec)
+    assert rc == 0
+    new = (out_dir / "security.md").read_text(encoding="utf-8")
+    assert not FOUNDATION_LEAKS & _outside_headings(new)
+    assert "問の補足の本文" in new
+
+
+def test_doctrine_application_cell_shows_basis():
+    # 上流指針表の反映列は、記述の根拠の性質を併記する。推定 (agent-inference) の記述が
+    # 確定内容のように読めると、利用者が確認していない主張が章の確定内容に紛れる。
+    spec = {
+        "doctrine_applications": {
+            "security": {
+                "security": {
+                    "text": "鍵は wrangler secret に置く",
+                    "recorded_at": "2026-10-05T00:00:00Z",
+                    "basis": "agent-inference",
+                }
+            }
+        }
+    }
+    rendered = mod.render_doctrine_anchors("security", spec)
+    row = next(line for line in rendered.splitlines() if line.startswith("| security |"))
+    assert "鍵は wrangler secret に置く (根拠の性質: アシスタントの推定" in row
+    assert mod.DOCTRINE_BLANK_LEGEND not in rendered
+
+
+def test_carry_prose_drops_stale_generated_doctrine_legend():
+    # 空欄だった版の章を、全行を埋めた後に再 compile しても「未記入」の凡例が残らない。
+    # 凡例は compile 自身の条件付き出力で、手書き注記ではないので引き継がない。
+    old_body = "| a | b |\n|---|---|\n| x | **未記入** |\n\n" + mod.DOCTRINE_BLANK_LEGEND
+    new_body = "| a | b |\n|---|---|\n| x | 記述 |"
+    assert mod._carry_prose(new_body, old_body) == new_body
+    # 手書きの引用注記は従来どおり引き継ぐ。
+    hand = "> 手で足した但し書き"
+    assert hand in mod._carry_prose(new_body, old_body + "\n" + hand)

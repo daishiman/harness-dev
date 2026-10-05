@@ -230,12 +230,16 @@ jobs:
       - name: lint and validate every plugin composition (dynamic discovery)
         run: |
           set -euo pipefail
-          mapfile -d '' compositions < <(find plugins -mindepth 2 -maxdepth 2 -name plugin-composition.yaml -print0 | sort -z)
-          test "${#compositions[@]}" -gt 0
-          for composition in "${compositions[@]}"; do
+          # scripts/run-ci-checks.sh がこの段を macOS の bash 3.2 でも実行するため、
+          # mapfile (bash 4) を使わず glob で列挙する (glob は名前順に展開される)。
+          found=0
+          for composition in plugins/*/plugin-composition.yaml; do
+            [ -f "$composition" ] || continue
+            found=$((found + 1))
             python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py "$composition"
             python3 plugins/harness-creator/skills/run-build-skill/scripts/validate-build-trace.py --bundle "$composition"
           done
+          test "$found" -gt 0
         continue-on-error: false
       - name: lint declaration coverage self-test (ratchet 分岐検査)
         run: python3 plugins/skill-governance-lint/scripts/lint-declaration-coverage.py --self-test

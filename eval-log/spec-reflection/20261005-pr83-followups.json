@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "kind": "spec-reflection-receipt",
+  "recorded_at": "2026-10-05",
+  "branch": "devgraph/harness-pr83-followups",
+  "base_branch": "main",
+  "pull_request": "https://github.com/daishiman/harness-dev/pull/84",
+  "beads": [
+    "harness-0bn",
+    "harness-2vq",
+    "harness-e1l",
+    "harness-efd",
+    "harness-f1j",
+    "harness-o2m",
+    "harness-pax",
+    "harness-7mw",
+    "harness-9pg",
+    "harness-c86",
+    "harness-ij3",
+    "harness-pxh"
+  ],
+  "beads_db": "~/.beads-planning (label pr-83。残りは label pr-83-fu で 13 件起票)",
+  "dev_graph_node_id": null,
+  "dev_graph_note": ".dev-graph は render の HTML だけで graph.json を持たない。対応する node は無い。Beads が 12 件あり 1 つの ID に絞れないので、ブランチ名は PR #83 の follow-up であることを表す harness-pr83-followups にした。",
+  "scope": [
+    "plugins/dev-graph (scripts、schemas、templates、references、全 9 skill の SKILL.md と prompts、tests。0.1.17)",
+    "plugins/system-spec-harness (hooks/guard-confirmed-chapter-overwrite.py、compile・elicit・completeness-evaluator)",
+    "plugins/ubm-goal-setting (run-ubm-consult、run-ubm-goal-setting)",
+    "plugins/plugin-dev-planner (run-plugin-dev-plan)",
+    "plugins/harness-creator (run-plugin-package-check の lint-pkg-009.py ほか。1.4.43)",
+    "plugins/slide-report-generator (information priority の schema と validate script)",
+    "plugins/system-dev-planner (check-implementation-readiness.py、dev-graph-registration.schema.json)",
+    "全 22 plugin の scripts/extract-plugin-root.py と run-skill-feedback の SKILL.md、版上げ",
+    "scripts/run-ci-checks.sh、scripts/extract-ci-workflow-steps.py、scripts/lint-sibling-plugin-paths.py、scripts/lint-script-naming.py、scripts/lint-vendored-ssot.py、scripts/build-artifact-delivery.py",
+    ".github/workflows (governance-check.yml、harness-creator-kit-ci.yml)、Makefile",
+    "tests/ (extract-ci-workflow-steps、extract-plugin-root、lint-sibling-plugin-paths、lint-pkg-009、run-pkg-015 ほか)",
+    "README.md (運用メモに sibling plugin の解決方法を追記)",
+    "doc/harness-creator-完全解剖.md (版表記)",
+    "marketplaces/local、config-version-lock.json、.claude-plugin/marketplace.json",
+    "eval-log (dev-graph の live trial・content-review・criteria-test、各 plugin の content-review と coverage)",
+    ".artifact-delivery/external-mutation (Beads の close と起票、PR 作成のガードの受領書)"
+  ],
+  "canonical_spec_locations_probe": {
+    "docs/": "absent",
+    "features/": "absent",
+    "system-spec/": "absent",
+    "specs/": "absent",
+    "architecture/": "absent",
+    "tasks/": "absent"
+  },
+  "design_notes_dir": "doc/",
+  "decision": "reflected-in-plugin-canonical-sources",
+  "rationale": "このリポジトリは plugin の集まりで、docs/・features/・system-spec/・specs/・architecture/・tasks/ のどれも持たない。仕様の正本は各 plugin の SKILL.md・prompts・references・schemas・scripts の先頭の説明と定数にある。この PR は振る舞いと契約の変更を、どれも同じ commit の中でその正本まで直した (下の changes[].reflected_in)。新しい置き場所は作らなかった。正本が 2 か所になり、片方だけが古くなるためである。repo 共通の取り決めでは、install 先で sibling plugin を <plugin root>/.. から推測しない決まりが README.md の運用メモに無かったので追記した。doc/ の設計ノートは plugin 単位の概観で今回の script 群を列挙していないため、harness-creator-完全解剖.md の版表記だけを直した。設計の理由は各 script の先頭の『なぜ』と、content-review・live trial の記録に残している。",
+  "changes": [
+    {
+      "id": "harness-0bn/github-binding-writer",
+      "summary": "confirm/pass 済みの node を tracker_binding=github の Issue と Projects item へ投影する writer を足した。失敗した操作は pending_retry に残し、C14 の linkage_proposal は build-graph-node.py の link-github で node に記録する。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/build-github-projection.py (先頭の説明)",
+        "plugins/dev-graph/scripts/build-graph-node.py (link-github verb)",
+        "plugins/dev-graph/skills/run-dev-graph-node/SKILL.md (『現時点で無い』の記述を実際の経路の説明に置き換えた)",
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md と prompts/R3-sync.md",
+        "plugins/dev-graph/tests/test_build_github_projection.py、test_build_graph_node.py"
+      ]
+    },
+    {
+      "id": "harness-2vq/node-placeholder-and-tracker-mode",
+      "summary": "placeholder の判定で autolink の URL を消さず、『N/A: <reason>』と『- <label>: <TBD>』だけの section を未充足にした。register-package は config を解決できないときに flag だけで mode を決めない。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/build-graph-node.py",
+        "plugins/dev-graph/scripts/register-package.py",
+        "plugins/dev-graph/skills/run-dev-graph-node/SKILL.md と prompts/R2〜R4",
+        "plugins/dev-graph/tests/test_build_graph_node.py、test_register_package.py"
+      ]
+    },
+    {
+      "id": "harness-e1l/chapter-guard-real-path",
+      "summary": "guard-confirmed-chapter-overwrite hook は、command 文字列の一致ではなく書込み先の実パスで判定する。保護領域の外への書込みは止めず、確定章への書込みは従来どおり止める。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py (先頭の説明)",
+        "plugins/system-spec-harness/tests/test_guard_hook.py"
+      ]
+    },
+    {
+      "id": "harness-efd/init-scaffold-and-receipt",
+      "summary": "init の scaffold・二回目の no-op 判定・immutable init receipt を 1 本の決定論 script にまとめた。plain-symlink 導入の repo では hooks.json を .claude/settings.json へ追記 merge し、rollback manifest を残す。SKILL.md の保存先を実 path (.dev-graph/state/graph.json) に揃え、repo-config.example.json を schema に適合させた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/build-init-scaffold.py、build-project-hook-fallback.py (先頭の説明)",
+        "plugins/dev-graph/skills/run-dev-graph-init/SKILL.md と prompts/R1〜R5",
+        "plugins/dev-graph/templates/repo-config.example.json、schemas/repo-config.schema.json",
+        "plugins/dev-graph/tests/test_build_init_scaffold.py、test_build_project_hook_fallback.py"
+      ]
+    },
+    {
+      "id": "harness-f1j/source-lineage-gate",
+      "summary": "origin_kind=system-spec-harness の node について、source_path の実在と source_digest の一致を副作用なしで検査する gate を足し、system-spec の R0 (resume) と R3 の gate にした。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/validate-source-lineage.py (先頭の説明)",
+        "plugins/dev-graph/skills/run-dev-graph-system-spec/SKILL.md と prompts/R0〜R3",
+        "plugins/dev-graph/tests/test_validate_source_lineage.py"
+      ]
+    },
+    {
+      "id": "harness-o2m/ci-steps-parity",
+      "summary": "run-ci-checks.sh は pull_request で起動する workflow から run 段を抽出して実行し、CI とローカルの段の漏れをなくした。",
+      "spec_impact": true,
+      "reflected_in": [
+        "scripts/extract-ci-workflow-steps.py (先頭の説明)",
+        "scripts/run-ci-checks.sh",
+        "tests/scripts-root/test_root__extract_ci_workflow_steps.py"
+      ]
+    },
+    {
+      "id": "harness-pax/node-criteria-negative-tests",
+      "summary": "C02 の注入ケース (12/14 task、phase の欠落・重複・順序入替、mixed parent など) と全 subtype の見出しを test で固定し、必須キーが欠けた node の update を構造化エラーで止める。SKILL.md の receipt のフィールド名を実物に揃えた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/skills/run-dev-graph-node/SKILL.md",
+        "plugins/dev-graph/scripts/build-graph-node.py、register-package.py",
+        "plugins/dev-graph/tests/test_build_graph_node.py、test_register_package.py"
+      ]
+    },
+    {
+      "id": "harness-7mw/validate-readiness-and-layer2",
+      "summary": "validate の出力で graph 全体の検証結果と node 単位の readiness を区別した。R2〜R4 固有の禁止事項を Layer 2 の責務境界へ移した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md、R3-write.md、R4-apply-template.md"
+      ]
+    },
+    {
+      "id": "harness-ij3/prompt-common-layers",
+      "summary": "dev-graph の prompts の Layer 4〜7 の定型文を共有 reference へ切り出し、各 R*.md には責務固有の層だけを置いた。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/references/prompt-common-layers.md",
+        "plugins/dev-graph/skills/*/prompts/R*.md"
+      ]
+    },
+    {
+      "id": "harness-9pg/ubm-low",
+      "summary": "run-ubm-consult と run-ubm-goal-setting の content-review の low を解消した (検証条件、書込み許可範囲、Phase 名、version-history など)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md、prompts/R4-cocreate-converge.md、references/consult-frames.md",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md、references/data-contract.md、output-formats.md、version-history.md",
+        "plugins/ubm-goal-setting/scripts/validate-consult-session.py と run-ubm-goal-setting/scripts/validate-*.py"
+      ]
+    },
+    {
+      "id": "harness-c86/plugin-dev-plan-low",
+      "summary": "run-plugin-dev-plan の content-review の low を解消した (完了チェックリストの install 契約、check-spec-gates.py の target_plugin_slug の読み元、注記位置など)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/SKILL.md、references/io-contract.md、plugin-creator-contract.md",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py、specfm.py",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/examples/sample-plan"
+      ]
+    },
+    {
+      "id": "harness-pxh/system-spec-low",
+      "summary": "compile・elicit・completeness-evaluator の content-review の low を解消した。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/system-spec-harness/skills/run-system-spec-compile/SKILL.md、references/chapter-template.md、scripts/compile-spec-doc.py",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/SKILL.md、prompts、references/spec-state-contract.md ほか",
+        "plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/SKILL.md、references/aspect-criteria.md"
+      ]
+    },
+    {
+      "id": "install-path/sibling-plugin-resolution",
+      "summary": "install 先で sibling plugin を <plugin root>/.. から推測せず、各 plugin に同梱した scripts/extract-plugin-root.py で解決する。親ディレクトリ起点の兄弟パスは lint-sibling-plugin-paths.py で止める。PKG-009 は install 配置から skill-governance-lint を解決する lint-pkg-009.py 経由にした (利用者の判断でこの PR に含めた)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/*/scripts/extract-plugin-root.py (先頭の説明)",
+        "scripts/lint-sibling-plugin-paths.py (先頭の『なぜ』と直し方)",
+        "plugins/harness-creator/skills/run-plugin-package-check/scripts/lint-pkg-009.py、SKILL.md、workflow-manifest.json",
+        "plugins/*/skills/run-skill-feedback/SKILL.md (呼び出し方)",
+        "README.md (運用メモ)",
+        "tests/test_lint_sibling_plugin_paths.py、tests/scripts-root/test_root__extract_plugin_root.py"
+      ]
+    },
+    {
+      "id": "sync/issue-tiebreak-and-project-fields",
+      "summary": "Issue の title・state は updated_at で新しい側を採り、同時刻は書込み 0 の確認フラグにして観測 4 値に束縛した --decisions で解消する。Projects field は github_project_linkages[].field_snapshot を base とする 3-way で計画し、gh-bridge の project-item-edit を single_select・text・number・date・iteration と --clear に広げた。Issue の計画を先に反映し、計画し直したものを Projects planner に渡す。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/dev-graph/scripts/diff-github-issues.py、diff-github-project-fields.py (先頭の説明)",
+        "plugins/dev-graph/scripts/gh-bridge.py",
+        "plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md と prompts/R2〜R6",
+        "plugins/dev-graph/tests/test_runtime_coverage.py"
+      ]
+    },
+    {
+      "id": "other-session/included-by-user-decision",
+      "summary": "別 session がこの作業ツリーに残した変更を、利用者の判断で同梱した (build-graph-node.py の confirmation_evidence、repo-config.schema.json の plan_roots、compile-spec-doc.py、slide-report-generator の information priority、harness-creator の compose-rubrics.py など)。",
+      "spec_impact": true,
+      "reflected_in": [
+        "plugins/slide-report-generator/schemas/information-priority-map.schema.json、scripts/validate-information-priority.py、skills/run-slide-report-generate/references/information-priority-rules.md",
+        "plugins/harness-creator/scripts/compose-rubrics.py (先頭の説明)",
+        "plugins/dev-graph/schemas/repo-config.schema.json",
+        "plugins/system-dev-planner/scripts/check-implementation-readiness.py、schemas/dev-graph-registration.schema.json"
+      ]
+    },
+    {
+      "id": "merge-and-release",
+      "summary": "origin/main (PR #80 と spec cache の自動更新) を取り込み、全 plugin の版を上げて marketplace・fingerprint・config lock を再生成した。",
+      "spec_impact": false,
+      "reason": "版と配布台帳の更新で、plugin の動き・入出力・決まりは変えていない。"
+    },
+    {
+      "id": "evidence-and-receipts",
+      "summary": "live trial・content-review・criteria-test の記録、この受領書、外部変更ガードの受領書を足した。",
+      "spec_impact": false,
+      "reason": "審査と操作の記録だけで、plugin の動き・入出力・決まりは変えていない。"
+    }
+  ],
+  "excluded_from_commit": [
+    "epic harness-bzn (repo の .beads。この branch の 30 思考法レビューと共通化) が作業ツリーに残した未 commit の変更一式。tracked 106 ファイル (plugins/*/scripts/extract-plugin-root.py、dev-graph の scripts・SKILL.md、harness-creator、system-spec-harness の hook、eval-log の verdict など) と、未追跡の plugins/harness-creator/scripts/plugin_resources.py、plugins/dev-graph/tests/test_shared_writer_sync_regressions.py、tests/scripts-plugins/test_harness_creator__plugin_resources.py、eval-log/dev-graph/elegant-review-20261005-harness-bzn4/、eval-log/dev-graph/*/live-trial/20261005T17*-bzn4*/、eval-log/worktree/、.beads/interactions.jsonl。この epic は IN_PROGRESS で、子 .4 の実走受け入れは 5 対象が FAIL、criteria は 42 件中 18 件が FAIL と記録されている。その session 自身も commit・push しないとしている。FAIL の証跡を PR に載せないため外し、作業ツリーには触らずに残した。",
+    "eval-log/dev-graph/.claude/handoff/20261005T103425.md (別 session の引き継ぎメモで、この PR の内容ではない)",
+    "stash@{0}, stash@{1} 以降 (前回までの控え。drop もしていない)"
+  ],
+  "remaining_work": [
+    "epic harness-bzn (repo の .beads、IN_PROGRESS)。共通化した 74 source の取り込みは、子 .4 の dev-graph 9 skill の実走受け入れ (現在 FAIL) と .8 が片付いてから別 PR で行う。",
+    "label pr-83-fu の 13 件 (~/.beads-planning)。P1 は harness-2b9 (UserPromptSubmit hook が task-notification から外部変更の intent を発行する)。",
+    "CONVENTIONS.md の参照規則『A -> A: 別 plugin への直接参照は plugin 間依存 governance が整うまで禁止』は、dependencies 宣言と extract-plugin-root.py による解決を前提にした現状と食い違う。規則を変えるかは利用者が決める。",
+    "plugins/system-briefing-book の test_broken_board_fails が 4 並列の一括実行でだけ失敗する (単独では 34 passed)。"
+  ],
+  "verification": {
+    "pytest tests/ と plugins/skill-governance-lint/tests/ (a4b42fb の時点)": "7896 passed, 4 skipped",
+    "validate-plugin-test-roots.py --workers 4 (0fa4ed2 の時点)": "21 root 中 20 通過。system-briefing-book の 1 件だけ失敗 (単独再実行で 34 passed)",
+    "build-plugin-release.py --check": "OK (22 plugins)",
+    "lint-live-trial-verdict.py --all": "OK (9 verdict verified, 20 missing は record-only)",
+    "dev-graph の live trial (p83x)": "decompose・requirements・sync が goal 判定 PASS (sync は gate 1 回で contractual)",
+    "dev-graph の criteria-test": "C03・C04・C14 を独立評価者が再評価して PASS",
+    "scripts/run-ci-checks.sh": "途中で止めた。作業ツリーに harness-bzn の未 commit の変更が混ざっており、commit する内容の検証にならないため。上の pytest 7896 passed は 15:52〜16:01 (harness-bzn の着手 16:12 より前) の実行。",
+    "commit 後の HEAD (371b7e1) を clean worktree で検査": "pytest tests/ 7890 passed 4 skipped、test_skill_criteria_evidence 19 passed、build-plugin-release --check OK、lint-live-trial-verdict --all OK、lint-script-naming VIOLATION 0、lint-sibling-plugin-paths OK"
+  }
+}

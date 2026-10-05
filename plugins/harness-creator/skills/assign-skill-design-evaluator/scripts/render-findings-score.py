@@ -701,9 +701,9 @@ def _check_bundle_registration(skill_dir: Path, fail) -> dict | None:
 
 
 def compose_rubrics(refs: list[Path], strategy: str, policy: str) -> dict:
+    # harness-creator/scripts/ に同梱した複製 (正本は skill-governance-automation)。
+    # cwd 起点の repo パスへ落とすと install 先で解決しないので、同梱だけを使う。
     script = Path(__file__).resolve().parents[3] / "scripts" / "compose-rubrics.py"
-    if not script.exists():
-        script = Path("plugins/skill-governance-automation/scripts/compose-rubrics.py")
     cmd = [
         sys.executable,
         str(script),

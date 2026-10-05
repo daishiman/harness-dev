@@ -562,3 +562,6 @@ Claude Code セッション起動時:
 - `doc/`, `eval-log/`, `.claude/` は設計・評価・ローカル運用のためのディレクトリで、配布対象には含まれません。
 - pluginのartifact modeに関係なく、plugin rootの外側を`../`で参照しないでください。
 - 他 plugin と共有したい共通ファイルは、marketplace 内の sibling plugin として置くか、同一 plugin 内に取り込んでください。
+- 依存する sibling plugin を実行時に呼ぶときは、`<plugin root>/..` から場所を推測せず、各 plugin に同梱した
+  `scripts/extract-plugin-root.py <name>` で解決してください。install 先 (`<cache>/<marketplace>/<plugin>/<version>/`)
+  では `<plugin root>/..` が同じ plugin の別 version 群を指すためです。`scripts/lint-sibling-plugin-paths.py` が検査します。

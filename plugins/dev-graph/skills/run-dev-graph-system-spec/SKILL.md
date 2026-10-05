@@ -11,8 +11,9 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--resume]"
 allowed-tools: [Read, Bash, Skill, Agent, AskUserQuestion]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-source-lineage.py]
 schema_refs: [../../schemas/graph-node.schema.json]
+reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:
   - prompts/R0-context.md
   - prompts/R1-preflight.md
@@ -100,6 +101,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 4. confirmed 章と evaluator PASS だけを C02 に渡し、`source_lineage={origin_kind,plugin,path,version,digest,imported_at}`, confirmation evidence, readiness を specification/architecture node に保存する。
 
 出力は import report (`system-spec/index.md`, imported node ids, lineage, confirmation_status, readiness)。feature は `architecture_refs` で参照し、内容を複製しない。1 feature→13 task は system-dev-planner の責務であり本 skill は扱わない。
+
+## Resume と lineage gate
+
+`../../scripts/validate-source-lineage.py --repo-root <DEV_GRAPH_ROOT> [--graph <path>] [--node-id <id> ...]` を R0 (resume) と R3 (C02 import の後) の決定論 gate にする。`origin_kind=system-spec-harness` の node だけを対象に、`source_path` が repo 内の通常ファイルとして実在し、その生 bytes の sha256 が `source_digest` と一致するかを副作用なしで検査し、`{status, checked, checked_node_ids, violations[]}` を返す (exit 0=pass、1=violation、2=usage/入力エラー)。C02 (`build-graph-node.py add`) も同じ関数で登録前に検査し、解決しない lineage は `source_lineage_unverified` で拒否される。
+
+- R0 の resume は「取込済み node の lineage が今の `system-spec/` に解決するか」の確認である。`checked=0` (system-spec 由来の node がまだ無い。`system-spec/` 未作成を含む) は再開する対象が無いので、新規作成として手順 3 へ進む。`checked>=1` で exit 0 なら、取込済み node を保持したまま続きから再開する。
+- exit 1 (取込元の削除・移動・編集で lineage が解決しない) と exit 2 は fail-closed にする。取込元の付け替えや digest の書換えで辻褄を合わせず、診断 JSON (`violations[]` の node/code/detail) をそのまま提示して停止する。
+- この fail-closed は最小成果物を作る前の停止なので、artifact_delivery は初期状態 `artifact_created` に留まり `minimum_guard_pass` を発火しない。`artifact_presented`/`user_choice_recorded` へ進まず、semantic evaluator・Agent fork も起動しない。利用者が取込元を戻すか再取込を選んだ後に R0 からやり直す。
+- R3 の import 後に同じ gate が exit 0 にならなければ、import report を完成扱いにせず、同じく診断を提示して停止する。
 
 ## ゴールシーク実行
 

@@ -29,47 +29,38 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: bd-bridgeとgh-bridge。
+- 使用資産: bd-bridgeとgh-bridge。Issue と Projects field の export は各計画の `bridge_args` で gh-bridge (`issue-update`/`issue-close`/`project-item-edit`)、import は計画の `update_input` を run-dev-graph-node の `update` で反映し、export/import の無い周の `link_input` と C14 の `linkage_proposal` は run-dev-graph-node の `link-github` で記録する。confirmations と conflicts (`unsupported-export` を含む) は書かずに R6 へ渡す。Issue の計画を先に反映して計画し直し、その計画を Projects の計画の `--issue-plan` に渡す。`held` の import は Issue 側が片付くまで反映しない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
 
-- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。
-- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。
-- 同一入力と同一 revision/digest では同じ decision と output shape を返す。
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
 
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
 ### 5.1 担当 agent
 
-- `run-dev-graph-sync/R3-sync`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-sync/R3-sync`
 
 ### 5.2 ゴール定義
 
 - 目的: tracker_binding=githubだけをC12経由でIssue/Projects更新し、tracker_binding=beadsはC28でstatus・depends_on edge exact-setを突合する。Beads GitHub mirrorはbd github sync --push-onlyだけを使いC12 mutationを禁止する
-- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
 - 達成ゴール: binding別imports/exports/linkages/parity/pending retryを持つsync reportが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] 宣言した入力が全て検証済みである
-- [ ] 出力が宣言した shape と authority を満たす
-- [ ] 責務境界に反する read/write/delegation が0件である
 - [ ] beads status/depends_on exact-set parity confirmed、github linkage記録、二回目changes=0になる
-
-### 5.4 実行方式
-
-- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。
 
 ## Layer 6: オーケストレーション層
 
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - 部分失敗を次回C03へ渡す。
-- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
 
-- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。
-- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
 
 ## 出力指示
 

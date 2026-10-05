@@ -1,0 +1,339 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T0833-p83s/task.md
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; ls -la "$FX"; git -C "$FX" log --oneline 2>&1 | head; git -C "$FX" status…)
+  ⎿  total 8
+     drwxr-xr-x@  4 dm  staff   128 Oct  5 08:33 .
+     drwxr-xr-x@ 71 dm  staff  2272 Oct  5 08:33 ..
+     … +5 lines (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-init)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-init; ls -R; cat prompts/R*.md)
+  ⎿  prompts
+     SKILL.md
+     … +346 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; python3 scripts/resol…)
+  ⎿  usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]
+                                    [--mode {read,write}]
+     … +45 lines (ctrl+o to expand)
+
+⏺ R1 の context receipt は OK。dry-run → apply → 2回目 noop を確認します。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; python3 scripts/build…)
+  ⎿  preview 33 0
+     rc=0
+     {'content_roots': {'architecture': 'architecture', 'documents': 'docs', 'features': 'features', 'issues': 'issues', 'specifications': 'specs', 'tasks': 'tasks'}, 'created': 32, 'dry_run': False, 'hook_source':
+     … +5 lines (ctrl+o to expand)
+
+⏺ init 完了 (applied 33 → 2回目 noop 0)。次に C02 node skill で seed node を登録します。
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; ls skills/run-dev-graph-node/prompts skills/run-dev-graph-sync skills/run-dev-graph-sync/prompts; cat skill…)
+  ⎿  skills/run-dev-graph-node/prompts:
+     R0-context.md
+     R1-classify.md
+     … +290 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; wc -l scripts/gh-bridge.py scripts/bd-bridge.py scripts/reconcile-github-lifecycle.py; grep -rn "adapter-fi…)
+  ⎿       184 scripts/gh-bridge.py
+          625 scripts/bd-bridge.py
+          687 scripts/reconcile-github-lifecycle.py
+         1496 total
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cat scripts/gh-bridge.py; grep -rln "adapter\|fixture" scripts/ schemas/ references/ | head)
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: gh-bridge
+     … +182 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rln "adapter" . | grep -v node_modules | head -30; ls; ls scripts tests 2>/dev/null | head -80)
+  ⎿  artifact-delivery.json
+     tests/fixtures/live-trial-positive-scenarios.json
+     hooks/reconcile-task-lifecycle.py
+     … +54 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "adapter" skills/run-dev-graph-sync/SKILL.md skills/run-dev-graph-sync/prompts/R3-sync.md artifact-…)
+  ⎿  hooks/reconcile-task-lifecycle.py:4:# purpose: SessionStart/PostToolUse/TaskCompleted を lifecycle reconcile と worktree lease 操作へ安全に配線する薄い adapter。
+     artifact-delivery.json:85:    "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
+     artifact-delivery.json:86:    "schema_ref": "plugin:skill-governance-adapters/schemas/external-mutation-guard.schema.json",
+     … +19 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; cat plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json; ls eval-log/dev-graph/run-dev-graph-sync/live-trial/…)
+  ⎿  {
+       "schema_version": "1.0.0",
+       "scenarios": [
+     … +80 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial; for d in 20260908T1040-gm6s 20260907T0330-gm4 20260904T0745-gm3u; do echo "=…)
+  ⎿  == 20260908T1040-gm6s
+     gate-request.json
+     gate-response.json
+     … +39 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20260908T1040-gm6s; cat verdict.json | head -80; cat gate-request.json gate-r…)
+  ⎿  {
+       "target_skill": "dev-graph:run-dev-graph-sync",
+       "args": "",
+     … +51 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20260908T1040-gm6s; python3 - <<'EOF'
+      import json…)
+  ⎿  Bash {"command": "cd /Users/dm/dev/dev/個人開発/harness && grep -rn \"DEV_GRAPH_GH\" --include=*.py --include=*.md --include=*.json . | head -40", "description": "Find DEV_GRAPH_GH usages"}
+     ---
+     Bash {"command": "grep -rln \"adapter-fixture\\|adapter_fixture\\|github-adapter\" . | head -40", "description": "Find adapter fixture references"}
+     … +135 lines (ctrl+o to expand)
+
+⏺ Bash(sed -n 1,400p /Users/dm/.claude/projects/-Users-dm-dev-dev------harness/b4c27569-fb03-4800-9930-7500e1fd2a58/tool-results/bmdz2vfrg.txt | cut -c1-2500)
+  ⎿  Bash {"command": "cd /Users/dm/dev/dev/個人開発/harness && grep -rn \"DEV_GRAPH_GH\" --include=*.py --include=*.md --include=*.json . | head -40", "description": "Find DEV_GRAPH_GH usages"}
+     ---
+     Bash {"command": "grep -rln \"adapter-fixture\\|adapter_fixture\\|github-adapter\" . | head -40", "description": "Find adapter fixture references"}
+     … +135 lines (ctrl+o to expand)
+
+⏺ 進捗: init 完了。sync 側には --adapter-fixture を実装した script が無いので、過去 trial の扱いを確認しています。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20260908T1040-gm6s; SP=/private/tmp/claude-501/-Users-dm-dev-dev------harness…)
+  ⎿  50
+
+⏺ Bash(SP=/private/tmp/claude-501/-Users-dm-dev-dev------harness/b4c27569-fb03-4800-9930-7500e1fd2a58/scratchpad; grep -n "preview\|execute\|authorize" $SP/gm6s.txt |…)
+  ⎿  13:Bash {"command": "FX=/private/tmp/claude-501/-Users-dm-dev-dev------harness/db90d68a-df9d-458b-a088-c544926112cf/scratchpad/live-trial-fixtures/gm-sync\nPLUGIN_ROOT=/Users/dm/dev/dev/個人開発/harness/plugins
+     /dev-graph\nexport DEV_GRAPH_GH=\"$FX/tools/fake-gh.py\"\necho \"== R2 plan independent recheck against on-disk state\"\npython3 - \"$FX\" <<'PY'\nimport json, sys\nfrom pathlib import Path\nfx = Path(sys.argv[
+     1])\ngraph = json.loads((fx/'.dev-graph/state/graph.json').read_text())\nsnap = json.loads((fx/'.dev-graph/state/github-sync-snapshot.json').read_text())\nremote = json.loads((fx/'github-adapter.json').read_tex
+     … +65 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures; for d in gm4-sync r5-sync r5-sync-wt-fix4; do echo "== $d"; find $d -path '*/.git' -pr…)
+  ⎿  == gm4-sync
+     gm4-sync/README.md
+     gm4-sync/github-adapter-calls.jsonl
+     … +92 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rn "snapshot" references/*.md schemas/repo-config.schema.json schemas/graph-node.schema.json | cut -c…)
+  ⎿  references/github-lifecycle-contract.md:36:- Project field valueの`updatedAt`が取得できる場合は競合hintに使い、削除/欠落/option renameを含むcanonical baseはlast-synced snapshotとする。Status/doneはlocal→Project
+     一方向、その他の許可fieldだけ3-way双方向にできる。
+     schemas/graph-node.schema.json:585:      "description": "1つのtask/issueを複数GitHub Projects v2へ関連付ける永続linkage。field valueのupdatedAtは競合hintに使い、削除/欠落/renameも扱うcanonical 3-way baseはfield
+     … +10 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cat references/github-lifecycle-contract.md; sed -n 540,720p schemas/graph-node.schema.json)
+  ⎿  # GitHub task lifecycle contract
+
+     ## 結論
+     … +223 lines (ctrl+o to expand)
+
+⏺ 進捗: sync の remote は gh-bridge.py の DEV_GRAPH_GH 差し替え点だけで注入できると判明。graph-node schema の GitHub linkage 欄を確認します。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 - <<'EOF'
+      import json…)
+  ⎿  ['graph_node_id', 'artifact_kind', 'artifact_subtypes', 'title', 'project_id', 'domain', 'status', 'owners', 'tags', 'priority', 'start_date', 'target_date', 'iteration', 'created_at', 'updated_at', 'depends_on
+     ', 'related_nodes', 'resource_scope', 'parent_feature', 'feature_package_id', 'phase_ref', 'file_path', 'template_id', 'template_version', 'confirmation_status', 'evaluation_status', 'confirmation_evidence', 's
+     ource_lineage', 'classification_confidence', 'classification_reason', 'classification_candidates', 'github_publication', 'issue_linkage', 'tracker_binding', 'beads_linkage', 'github_project_linkages', 'pull_req
+     … +63 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; wc -l scripts/build-graph-node.py; grep -n "NODE_PATCH\|node_patch\|issue_linkage\|confirmation_status\|eva…)
+  ⎿      1217 scripts/build-graph-node.py
+     62:# feature body sections that are projections of frontmatter: callers change them through macro_patch/node_patch only.
+     67:              "機能間依存": ("node_patch", "depends_on")}
+     … +36 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 55,110p scripts/build-graph-node.py; sed -n 825,860p scripts/build-graph-node.py)
+  ⎿  READINESS_ITEM = re.compile(rf"^(?:api-contract$|(?:{'|'.join(SUBTYPE_ORDER)}):)")
+     SECRET = re.compile(r"(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})")
+     AUTO_CONFIDENCE, AUTO_MARGIN = 0.80, 0.15
+     … +89 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rn '"confirmed"\|confirmation_status.*=\|"pass"' scripts/*.py | grep -v "^scripts/validate" | head -2…)
+  ⎿  scripts/build-graph-node.py:966:        if node.get("evaluation_status") == "pass" and (body != lines or content_fields):
+     scripts/build-graph-node.py:1016:        if state != ("confirmed", "pass", "complete"):
+     scripts/bd-bridge.py:103:        "confirmed": status_match and edges_match,
+     … +6 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20260908T1040-gm6s; python3 - <<'EOF' | cut -c1-1500
+      import json…)
+  ⎿  Bash {"command": "python3 -c \"\nimport json\nd=json.load(open('templates/template-contract.json'))\nprint(json.dumps(d,ensure_ascii=False)[:1500])\n\"; echo \"=== init graph example (r5-init)\"; python3 -c \"\
+     nimport json\nd=json.load(open('/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-init/.dev-graph/state/graph.json'))\nprint(json.dumps(d,ensure_ascii=False,indent=1)[:1200])\n\"", "d
+     escription": "Read template contract and init graph example"}
+     … +67 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -rln "confirmation_status\|evaluation_status" skills agents hooks scripts | head -30; grep -rn "evalua…)
+  ⎿  skills/run-dev-graph-node/SKILL.md
+     skills/run-dev-graph-node/prompts/R3-write.md
+     skills/run-dev-graph-requirements/SKILL.md
+     … +14 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "confirmation_status\|evaluation_status" skills/run-dev-graph-requirements/SKILL.md skills/run-dev-…)
+  ⎿  skills/run-dev-graph-requirements/SKILL.md:34:    summary: "C11の純粋validation reportとC02が保存したimplementation_readiness/evaluation_statusを照合し、不一致またはincomplete/pending/fail/staleならmissing sect
+     ionsをsurfaceしてhandoffを保留する"
+     skills/run-dev-graph-requirements/SKILL.md:55:      text: "C11のreadiness validation digestとC02保存済みimplementation_readiness/evaluation_status/source_digestが一致し、system-dev-plannerのvalidate-system-plan
+     … +15 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 200,330p scripts/register-package.py)
+  ⎿              "entrypoint_source": "references/package-contract.json",
+                 "schema_versions": schemas, "required_entrypoints": required}
+     … +128 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "github_binding_requires_confirmed_node\|def _tracker" -A8 scripts/build-graph-node.py | head -50;…)
+  ⎿  644:def _tracker_mode(ctx: dict[str, Any]) -> Any:
+     645-    config_path = Path(ctx["local_state_paths"]["config"])
+     646-    return ((load_json(config_path) if config_path.is_file() else {}).get("execution_tracker") or {}).get("mode")
+     … +31 lines (ctrl+o to expand)
+
+⏺ 重大な発見です。C02のwriter(build-graph-node.py)はconfirmed/pass状態のノードにしかgithub bindingを許可しないため、そこへ遷移させる正規経路を探します。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; cat skills/run-dev-graph-node/prompts/R0-context.md skills/run-dev-graph-node/prompts/R1-classify.md skills…)
+  ⎿  7:- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+     8:## Layer 2: ドメイン層
+     9-### 入力契約
+     … +147 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; grep -rln "evaluation_status" plugins --include=*.py --include=*.md | grep -v "/tests/" | head -20; grep -rn "def.*confirm\|\…)
+  ⎿  plugins/system-dev-planner/scripts/promote-system-plan.py
+     plugins/dev-graph/scripts/validate-graph-schema.py
+     plugins/dev-graph/scripts/schedule-graph.py
+     … +8 lines (ctrl+o to expand)
+
+⏺ Bash(FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));print(json.dump…)
+  ⎿  {
+      "execution_tracker": {
+       "beads": {
+     … +80 lines (ctrl+o to expand)
+
+⏺ 2つの決定的なブロッカーを確認しました：initのconfigはexecution_tracker.mode=beads・github.enabled=falseで変更する正規writerがなく、github
+  bindingには確認済み/パス状態が必要ですがそこへ遷移させるC02のverbがありません。証跡取得のため、C02でseed nodeを登録してからbind-githubをdry-runします。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "^#" templates/task.md; python3 -c 'import json;d=json.load(open("templates/template-contract.json"…)
+  ⎿  1:# 目的
+     5:## 背景
+     9:## 入力と前提条件
+     … +16 lines (ctrl+o to expand)
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync/.dev-graph/cache/seed-add.json)
+  ⎿  Wrote 39 lines to ../../eval-log/dev-graph/live-trial-fixtures/p83s-sync/.dev-graph/cache/seed-add.json
+       1 {
+       2   "artifacts": [
+       3     {
+       4       "artifact_kind": "task",
+       5       "slug": "sync-export-target",
+       6       "title": "Sync export target task",
+       7       "project_id": "p83s-sync",
+       8       "domain": "delivery",
+       9       "tracker_binding": "none",
+      10       "priority": "high",
+     … +29 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; python3 scripts/build…)
+  ⎿  {
+      "applied_count": 0,
+      "graph_revision_before": 0,
+     … +6 lines (ctrl+o to expand)
+
+⏺ Update(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync/.dev-graph/cache/seed-add.json)
+  ⎿  Added 1 line
+      1  {
+      2 +  "expected_graph_revision": 0,
+      3    "artifacts": [
+      4      {
+      5        "artifact_kind": "task",
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync/.dev-graph/cache/seed-bind.json)
+  ⎿  Wrote 6 lines to ../../eval-log/dev-graph/live-trial-fixtures/p83s-sync/.dev-graph/cache/seed-bind.json
+      1 {
+      2   "expected_graph_revision": 1,
+      3   "bindings": [
+      4     {"graph_node_id": "task-sync-export-target", "publication_mode": "issue"}
+      5   ]
+      6 }
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; S='import json,sys;d=…)
+  ⎿  {
+       "applied_count": 1,
+       "graph_revision_after": 1,
+     … +31 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; sed -i '' 's/"expecte…)
+  ⎿  {
+       "applied_count": 0,
+       "code": "tracker_binding_not_allowed",
+     … +11 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T0833-p83s/poll-state.json (+1 -1)
+      1 -{"elapsed": 240, "stall": 0, "settle": 0, "prev": "tui|lt-p83s-sync:12.4k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 255, "stall": 0, "settle": 0, "prev": "tui|lt-p83s-sync:13.9k tokens", "gate_ticks": 0, "warned80": 0}
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+⏺ seed nodeはC02で登録できましたが、github bindingはadd/bind-github共にtracker_binding_not_allowed(mode=beads)で拒否されました。本題のsync skillを起動し、R1/R2段階での挙動を確認します。
+
+⏺ Skill(dev-graph:run-dev-graph-sync)
+  ⎿  Successfully loaded skill · 7 tools allowed
+
+⏺ Main context では R1/R2 の出力を作る前に、その prompt を読みます。
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts; for f in R1-elicit.md R2-plan.md R3-sync.md; do echo "=== $f"; sed -n '/#…)
+  ⎿  === R1-elicit.md
+     ## Layer 2: ドメイン層
+     … +72 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; FX="/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83s-sync"; python3 scripts/resol…)
+  ⎿  True local:sha256:5c218fb5a433115edcf89cd5ce10f00d66f35af8adf0144ff6de6ca1e3cc24b7 ['default_branch_fallback_main']
+     R1 sync context: tracker_mode= beads github.enabled= False issue_repository= example/example-repository
+     graph_revision= 1
+     … +2 lines (ctrl+o to expand)
+
+⏺ R1/R2の結果、githubターゲットは無効でバインド済みノードも0件のため、3-way planではexport対象がなくgateを開く根拠がありません。規則に従い迂回せずFAILとして記録します。
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T0833-p83s/out/status.json)
+  ⎿  Wrote 1 line to ../../eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T0833-p83s/out/status.json
+      1 {"status":"FAIL","scenario":"C03-OUT1-positive-second-sync-zero"}
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --help 2>&1 | head -30)
+  ⎿  usage: build-external-intelligence-runtime.py [-h]
+                                                   (--request REQUEST | --request-json REQUEST_JSON)
+     … +7 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness; python3 plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{"operation":"finish…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "request keys mismatch: missing=['context_id', 'contract_id', 'runtime', 'schema_version', 'state'], extra=[]",
+     … +3 lines (ctrl+o to expand)
+
+⏺ DONE: FAIL
+
+  The first sync never applied an export, so the gate never opened. I didn't write gate-request.json because there was nothing to preview. Per the task's rules, I recorded FAIL rather than working around it.
+
+  What finished:
+  - init: the scaffold was created (33 changes). A second run made 0 changes, and the schema check passed.
+  - seed node: task-sync-export-target was registered through the single writer (graph revision 0 → 1). It is a draft with tracker_binding=none.
+
+  Why the sync couldn't export anything (all confirmed on the fixture):
+  1. Init writes the repo config with execution_tracker.mode=beads and github.enabled=false, and no writer can change these afterwards. As a result, both add with tracker_binding=github and bind-github are rejected with
+     tracker_binding_not_allowed.
+  2. Even with the right mode, bind-github only accepts nodes that are confirmed, evaluation pass and readiness complete. Nothing can move a standalone task into that state. The only source of such nodes is a full
+     13-task package (the register-package path), which is far outside the preparation step.
+  3. The writer also has no field for issue_linkage. So after an issue is created, the link can't be recorded, and a second sync could not reach 0 changes either.
+
+  At the sync skill's first two steps (reading the config, then building the 3-way plan): GitHub is disabled and 0 nodes are bound to GitHub, so the plan has 0 GitHub exports and nothing to preview.
+
+  Other notes:
+  - I didn't create github-adapter.json. No script reads --adapter-fixture, so its format can't be derived from the plugin's own files. The only remote hook is the DEV_GRAPH_GH variable in gh-bridge.py.
+  - The earlier PASS run (20260908T1040-gm6s) wrote graph.json and the task files directly. That breaks this task's single-writer rule, so it doesn't serve as a precedent.
+  - The input files I used are in <FX>/.dev-graph/cache/: seed-add.json, seed-bind.json, and seed-add-gh.json (the dry-run that shows the rejection).
+  - Recording this gap through the project's runtime notes script failed because my request was missing required fields, so it isn't saved there.
+
+  To make this scenario passable, the plugin needs a supported way to switch the tracker mode to github, move a node to confirmed/pass, and record issue_linkage.
+
+✻ Sautéed for 5m 18s · done 8:40 AM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)                                                                                                                                                     11% until auto-compact
+

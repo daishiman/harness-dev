@@ -1,0 +1,353 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/task.md
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose" && ls -la && git status && git log --oneline | head)
+  ⎿  total 8
+     drwxr-xr-x@  4 dm  staff   128 Oct  5 13:45 .
+     drwxr-xr-x@ 91 dm  staff  2912 Oct  5 13:45 ..
+     … +5 lines (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-init)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose" && python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bu…)
+  ⎿  {
+       "content_roots": {
+         "architecture": "architecture",
+     … +67 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/config.json (+112 -0)
+        1 +{
+        2 +  "claude_hooks": {
+        3 +    "post_tool_reconcile": true,
+        4 +    "project_plugin_link": ".claude/dev-graph-plugin",
+        5 +    "session_start": true,
+        6 +    "source": "plugin",
+        7 +    "task_completed_gate": true
+        8 +  },
+        9 +  "content_roots": {
+       10 +    "architecture": "architecture",
+       11 +    "documents": "docs",
+       12 +    "features": "features",
+       13 +    "issues": "issues",
+       14 +    "specifications": "specs",
+       15 +    "system_spec": "system-spec",
+       16 +    "tasks": "tasks"
+       17 +  },
+       18 +  "execution_tracker": {
+       19 +    "beads": {
+       20 +      "board": "static-render",
+       21 +      "github_mirror": "bd_github_push_only",
+       22 +      "issue_prefix": "p83x-decompose",
+       23 +      "server_mode": false
+       24 +    },
+       25 +    "mode": "beads"
+       26 +  },
+       27 +  "github": {
+       28 +    "completion_policy": {
+       29 +      "closed_unmerged": "keep_active",
+       30 +      "issue_reopened": "reopen_task",
+       31 +      "local_reconciliation": [
+       32 +        "manual_sync",
+       33 +        "claude_hook",
+       34 +        "scheduled_sync"
+       35 +      ],
+       36 +      "required_pull_requests": "all",
+       37 +      "revert": "create_follow_up_unless_issue_reopened",
+       38 +      "scheduled_reconciliation": {
+       39 +        "enabled": true,
+       40 +        "entry_point": "dev-graph sync --reconcile-lifecycle",
+     … 72 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/state/graph.json (+5 -0)
+      1 +{
+      2 +  "graph_revision": 0,
+      3 +  "nodes": [],
+      4 +  "schema_version": "1.0.0"
+      5 +}
+  ⎿  Created .dev-graph/state/receipts/init-20261005T050912288879Z.json (+66 -0)
+       1 +{
+       2 +  "content_roots": {
+       3 +    "architecture": "architecture",
+       4 +    "documents": "docs",
+       5 +    "features": "features",
+       6 +    "issues": "issues",
+       7 +    "specifications": "specs",
+       8 +    "tasks": "tasks"
+       9 +  },
+      10 +  "created": [
+      11 +    ".dev-graph/cache",
+      12 +    ".dev-graph/config.json",
+      13 +    ".dev-graph/locks",
+      14 +    ".dev-graph/state/graph.json",
+      15 +    ".dev-graph/templates",
+      16 +    ".dev-graph/templates/README.md",
+      17 +    ".dev-graph/templates/api-contract.md",
+      18 +    ".dev-graph/templates/architecture-backend.md",
+      19 +    ".dev-graph/templates/architecture-data.md",
+      20 +    ".dev-graph/templates/architecture-frontend.md",
+      21 +    ".dev-graph/templates/architecture-infrastructure.md",
+      22 +    ".dev-graph/templates/architecture-security.md",
+      23 +    ".dev-graph/templates/architecture.md",
+      24 +    ".dev-graph/templates/claude-settings.example.json",
+      25 +    ".dev-graph/templates/common-frontmatter.md",
+      26 +    ".dev-graph/templates/document.md",
+      27 +    ".dev-graph/templates/feature.md",
+      28 +    ".dev-graph/templates/issue.md",
+      29 +    ".dev-graph/templates/repo-config.example.json",
+      30 +    ".dev-graph/templates/specification.md",
+      31 +    ".dev-graph/templates/system-phase-spec.md",
+      32 +    ".dev-graph/templates/system-plan-contract.json",
+      33 +    ".dev-graph/templates/system-task-spec.md",
+      34 +    ".dev-graph/templates/task-graph-node.md",
+      35 +    ".dev-graph/templates/task.md",
+      36 +    ".dev-graph/templates/template-contract.json",
+      37 +    "architecture",
+      38 +    "docs",
+      39 +    "features",
+      40 +    "issues",
+     … 26 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/templates/README.md (+31 -0)
+       1 +# dev-graph artifact templates
+       2 +
+       3 +このディレクトリは、導入先リポジトリへ `dev-graph init` が配置するテンプレート正本の L3 draft である。実装時の配置先は `plugins/dev-graph/templates/`、導入先での編集可能コピーは `.dev-graph/templates/`
+         +とする。
+       4 +
+       5 +共有harness codeはsymlink元から読めるが、content/config/stateは常に呼出し元repositoryが正本である。`repo-config.example.json`を導入先`.dev-graph/config.json`へ初回だけ配置し、保存pathは全てrepository相対
+         +とする。
+       6 +
+       7 +repo-local runtime 契約の共通正本は system-dev-planner の `plugin-plans/system-dev-planner/references/repo-local-runtime-contract.md` を参照する (dev-graph C24 と system-dev-planner C09 は同一契約に従う)
+         +。
+       8 +
+       9 +## 選択規則
+      10 +
+      11 +1. `artifact_kind` から `issue.md` / `task.md` / `document.md` / `specification.md` / `architecture.md` を自動選択する。
+      12 +2. `architecture` は内容から `frontend` / `backend` / `infrastructure` / `data` / `security` を複数選択できる。該当 subtype のテンプレートを基底テンプレートへ合成する。
+      13 +3. API を公開・変更する仕様では `api-contract.md` を `specification.md` の API 契約へ合成する。
+      14 +4. 利用者へ保存先やテンプレート名を質問しない。分類 confidence が閾値未満の場合だけ、分類候補と生成予定 path を確認する。
+      15 +5. 空見出し、`TBD`、`TODO`、`未定` は充足と数えない。非該当は `N/A: <理由>` を必須とする。
+      16 +6. システム計画では1 featureにつきP01..P13のexact 13件の実行task仕様書を生成する。別の13 lifecycle文書や可変N taskは生成しない。仕様書・アーキテクチャは`system-spec-harness`の確定成果物を引用する。**この
+         +実行task仕様を emit する主体は system-dev-planner (ミクロ層) であり、その正本テンプレートは `plugin-plans/system-dev-planner/references/system-task-spec-template.md`**。dev-graph 配下の `templates/system
+         +-task-spec.md` は当該正本への後方互換 pointer であり、dev-graph 自身は runtime task spec を emit せず登録・投影・完了収束のみを担う。
+      17 +7. project rootは`--repo-root`、trusted project env、`git rev-parse --show-toplevel`、cwd markerの順で候補を解決する。候補のrealpathがhost宣言`$CLAUDE_PROJECT_DIR`と一致する場合だけ採用し、symlinkの物理s
+         +ource pathをcontent rootに使わない。
+      18 +
+      19 +## 検証規則
+      20 +
+      21 +- `template-contract.json` が種別ごとの必須セクションと subtype 合成規則の正本である。
+      22 +- `common-frontmatter.md` が全 Markdown 成果物の共通メタデータ正本である。
+      23 +- `validate-graph-schema.py` は frontmatter、見出し、placeholder、参照先、`file_path` parity を fail-closed で検証する。
+      24 +- `implementation_readiness` は必須セクションの `complete / incomplete / not_applicable` と不足一覧から算出する。単なる文字数では判定しない。
+      25 +- テンプレートの変更は `template_version` を更新し、既存文書は自動全書換せず migration preview を生成する。
+      26 +- システム開発task planはplugin固有のcomponent_kind/build_targetを流用せず、system workstreamと実装対象pathへ置換する。
+      27 +- system planは評価前にdraft stagingし、同一digestの決定論検証+独立4条件評価PASS後だけactive/confirmed/passへatomic promotionする。
+      28 +- realpathがrepository root外へ出る設定、content symlink、`..` traversal、repository_id不一致、shared cache/lock pathはfail-closedにする。
+      29 +- `repository_id`はcanonical GitHub remoteから`github:<owner>/<repo>`を再導出して比較する。remoteがない場合はgit common-dir realpathをSHA-256化した`local:sha256:<64hex>`を用い、repo移動時は明示的rebind確
+         +認を要求する。
+      30 +- C24は起動後に検査できるcontent symlinkの壊れ/移動を診断する。harness自身のsymlinkが壊れるとC24を起動できないため、host launcher/installerがentrypoint実在性を起動前検査する。
+      31 +
+  ⎿  Created .dev-graph/templates/api-contract.md (+72 -0)
+       1 +# API: <operation-name>
+       2 +
+       3 +## 識別と目的
+       4 +
+       5 +- Operation ID: `<operation-id>`
+       6 +- Method/Path: `<METHOD /path/{id}>`
+       7 +- Purpose: <business purpose>
+       8 +- Version/Lifecycle: <version, stability, deprecation>
+       9 +
+      10 +## 認証・認可
+      11 +
+      12 +- Authentication: <scheme>
+      13 +- Required scopes/roles: <rules>
+      14 +- Resource ownership check: <rule>
+      15 +
+      16 +## Request
+      17 +
+      18 +- Headers: <name/type/required/meaning>
+      19 +- Path parameters: <name/type/constraints>
+      20 +- Query parameters: <name/type/default/filter/sort/pagination>
+      21 +- Body schema: <field/type/required/nullability/format/constraints>
+      22 +- Example: <valid example>
+      23 +
+      24 +## Response
+      25 +
+      26 +| Status | Meaning | Schema |
+      27 +|---|---|---|
+      28 +| 200 | <success> | <schema> |
+      29 +
+      30 +- Headers: <cache/location/request-id>
+      31 +- Example: <response example>
+      32 +
+      33 +## Validation・ビジネスルール
+      34 +
+      35 +- <field/cross-field rule and failure code>
+      36 +
+      37 +## Error contract
+      38 +
+      39 +| HTTP | Code | Condition | Retryable | Client action |
+      40 +|---|---|---|---|---|
+     … 32 more lines (ctrl+o to expand)
+  ⎿  … 19 more files changed
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+⏺ Pre-choice: present artifact; task says no questions, so accept-as-is. Verify idempotency.
+
+⏺ Bash(cd "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose" && python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bu…)
+  ⎿  noop 0 0
+
+⏺ Init done (accept-as-is). Now decompose.
+
+⏺ Skill(dev-graph:run-dev-graph-decompose)
+  ⎿  Successfully loaded skill · 6 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose && ls -R && head -60 SKILL.md | sed -n 1,40p; for f in prompts/*.md; do echo…)
+  ⎿  prompts
+     SKILL.md
+     … +459 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph && cat references/prompt-common-layers.md | head -80; echo ====; cat skills/run-dev-graph-node/SKILL.md; ls…)
+  ⎿  Error: Exit code 1
+     # dev-graph prompt 共通層 (Layer 4〜7)
+
+     dev-graph の `skills/run-dev-graph-*/prompts/R*.md` が共有する Layer 4〜7 の定型部分の正本。各 prompt は層の見出しと、この reference の該当節を指す 1 行と、責務に固有の行だけを持つ。
+
+     ## 読み方
+
+     - 各 prompt の Layer 4〜7 は、この reference の同名の節と prompt 側の固有行を合わせた内容とする。どちらも適用し、一方で他方を置き換えない。
+     - 節は prompt の見出しと同じ名前で引く (例: 「Layer 5」はこの reference の `## Layer 5: エージェント層 (l5-contract v2.0.0)`)。
+     - この reference は 9 skill の SKILL.md の `reference_refs` に入っており、skill の挙動閉包に含まれる。書き換えると 9 skill すべての live trial verdict が古くなる。
+     … +40 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph && cat skills/run-dev-graph-node/SKILL.md; ls skills/run-dev-graph-node/prompts; ls scripts)
+  ⎿  ---
+     name: run-dev-graph-node
+     description: dev-graph artifact を正規 path へ atomic 追加・差分更新したいとき、system-dev-planner の exact 13 phase task package を all-or-none 登録したいときに使う。
+     … +223 lines (ctrl+o to expand)
+
+⏺ Bash(for f in skills/run-dev-graph-node/prompts/*.md; do echo "=== $f"; sed -n '/## Layer 2/,/## Layer 3/p' "$f"; done; F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev…)
+  ⎿  === skills/run-dev-graph-node/prompts/R0-context.md
+     ## Layer 2: ドメイン層
+     … +218 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/poll-state.json (+1 -1)
+      1 -{"elapsed": 15, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:625 tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 30, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:1.4k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose; python3 scripts/res…)
+  ⎿  usage: resolve-repo-context.py [-h] [--repo-root REPO_ROOT] [--config CONFIG]
+                                    [--mode {read,write}]
+     … +60 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "^BASE\|^    BASE\|BASE = " tests/test_build_graph_node.py | head; sed -n 295,320p tests/test_build…)
+  ⎿  33:BASE = {"project_id": "web", "domain": "auth", "tracker_binding": "none"}
+             self.assertEqual(self.run_cli("add", {"artifacts": [entry]})[1]["code"], "secret_like_content")
+     … +60 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "input" scripts/build-graph-node.py | grep -in "contain\|stdin\|outside\|resolve" | head)
+  ⎿  37:1210:    input_path = contained(Path(args.input) if Path(args.input).is_absolute() else root / args.input, root)
+
+⏺ Init は完了 (applied 33 件、2 回目は noop)。続いて R1/R2 に従いマクロ分解案を C02 入力 JSON に整形します。
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose/.dev-graph/cache/decompose-macro-input.json)
+  ⎿  Wrote 58 lines to ../../eval-log/dev-graph/live-trial-fixtures/p83x-decompose/.dev-graph/cache/decompose-macro-input.json
+       1 {
+       2   "artifacts": [
+       3     {
+       4       "artifact_kind": "architecture",
+       5       "slug": "todo-api",
+       6       "title": "認証付きTODO API アーキテクチャ",
+       7       "project_id": "todo-api",
+       8       "domain": "platform",
+       9       "tracker_binding": "none",
+      10       "artifact_subtypes": ["backend", "security"],
+     … +48 lines (ctrl+o to expand)
+
+⏺ dev-graph:dev-graph-integrity-auditor(Audit macro decomposition proposal)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+⏺ Integrity auditor を起動しました。結果待ちの間に何もせず、判定後に C02 preview へ進みます。
+
+✻ Waiting for 1 background agent to finish
+
+⏺ Agent "Audit macro decomposition proposal" finished · 38s
+
+⏺ Auditor の判定は PASS で、指摘は 0 件でした。続いて C02 単一 writer の dry-run preview を実行します。
+
+⏺ Skill(dev-graph:run-dev-graph-node)
+  ⎿  Successfully loaded skill · 9 tools allowed
+
+⏺ Bash(F=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-decompose; cd $F; find . -path ./.git -prune -o -type f -newer .dev-graph/config.js…)
+  ⎿  27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json
+     EXIT 0
+     27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177  .dev-graph/state/graph.json
+     … +10 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/poll-state.json (+1 -1)
+      1 -{"elapsed": 105, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:12.4k tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 120, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:13.9k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(python3 -c '
+      import json,sys;d=json.load(open(sys.argv[1]))…)
+  ⎿  ['classification', 'file_path', 'graph_node_id', 'implementation_readiness', 'missing_sections', 'readiness_fill', 'sha256_after', 'sha256_before']
+     arch-todo-api {'status': None, 'confirmation_status': None, 'evaluation_status': None, 'tracker_binding': None, 'depends_on': None, 'architecture_refs': None, 'parent_feature': None, 'phase_ref': None}
+     feature-auth {'status': None, 'confirmation_status': None, 'evaluation_status': None, 'tracker_binding': None, 'depends_on': None, 'architecture_refs': None, 'parent_feature': None, 'phase_ref': None}
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n '"confirmation_status"\|"evaluation_status"\|"status": "\(draft\|proposed\)' scripts/build-graph-no…)
+  ⎿  770:            "status": "draft", "owners": entry.get("owners", []), "tags": entry.get("tags", []),
+     778:            "confirmation_status": "draft", "evaluation_status": "pending",
+     812:            node.update({"status": "done", "confirmation_status": "confirmed", "evaluation_status": "pass",
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; sed -n 805,815p scripts/build-graph-node.py)
+  ⎿                                              "missing_sections": missing, "checked_at": now}
+             if evidence is not None:
+                 if missing:
+     … +8 lines (ctrl+o to expand)
+
+⏺ プレビューはvalidで書込み前のfindingsは0、planned 3・write 0、graphのdigestも前後一致しており features/ と architecture/ は空のままです。全ノードがdraft/pendingでready
+  featureが無いため、R2b・R4は対象外となり、結果はaccept-as-isとして記録します。
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/out/status.json)
+  ⎿  Wrote 1 line to ../../eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/out/status.json
+      1 {"status":"PASS","scenario":"decompose-macro-positive"}
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --help 2>&1 | head -15)
+  ⎿  usage: build-external-intelligence-runtime.py [-h]
+                                                   (--request REQUEST | --request-json REQUEST_JSON)
+     … +7 lines (ctrl+o to expand)
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-intelligence-runtime.py --request-json '{"operation":"finish","r…)
+  ⎿  {
+       "contract_id": "external-intelligence-runtime-v1",
+       "error": "request keys mismatch: missing=['context_id', 'contract_id', 'runtime', 'schema_version', 'state'], extra=[]",
+     … +3 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261005T1700-p83x/poll-state.json (+1 -1)
+      1 -{"elapsed": 135, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:969 tokens", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 150, "stall": 0, "settle": 0, "prev": "tui|lt-p83x-decompose:1.7k tokens", "gate_ticks": 0, "warned80": 0}
+
+⏺ DONE: PASS
+
+  - DAG: architecture 1 件と feature 2 件の DAG で、依存は TODO → 認証の 1 本だけです。循環はなく、task 粒度の node も混ざっていません。independent integrity auditor を Agent で実際に起動し、判定は PASS、指摘は 0
+    件でした。
+  - Preview: C02 の dry-run preview は valid で、書込み前検証の findings は 0 件でした。3 node とも draft で、書込みは 0 件です。graph の digest は実行前後で変わっていません。
+  - 外部 write: 0 件です。全 node が tracker_binding=none で、Beads と GitHub の操作は一度も呼んでいません。
+  - feature の登録経路: 2 件とも、分解 skill の macro 契約を通る経路 (c14_macro_contract) で登録しました。通常の分類付き C02 add で直接登録したものはありません。
+  - planner 起動と Projects 追加: draft の node は ready にならないため、planner の起動は対象 0 件です。Projects への追加も binding が none なので対象外です。
+
+  ほかに 3 点あります。
+
+  - writer は repo 内の入力ファイルしか受け付けないため、C02 への入力を .dev-graph/cache/decompose-macro-input.json に置きました。graph と本文は書いていませんが、ファイルは 1 つ増えています。
+  - architecture node は、まだ必須セクションが 22 件埋まっていません。マクロ分解の段階では想定どおりで、判定には影響しません。
+  - 作業終了時の補助スクリプト (external-intelligence の finish 呼び出し) は、リクエスト形式の不一致で受け付けられませんでした。指示どおり続行しています。
+
+✻ Worked for 3m 26s · done 2:11 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)
+

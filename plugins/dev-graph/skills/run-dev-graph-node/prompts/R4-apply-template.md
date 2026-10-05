@@ -22,6 +22,7 @@
 ### 責務境界
 
 - 既存本文を全書換せずsubtypeを間引かずAPI変更なしでoverlayを加えない。
+- 本文を Write/Edit で直接書き換えない。
 
 ### 受入条件
 
@@ -29,47 +30,38 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: template contract と`build-graph-node.py`の合成 (add は kind template、update は `set_sections`/`append_sections`/`add_subtypes`/`add_api_contracts` の差分 patch)。本文を Write/Edit で直接書き換えない。
+- 使用資産: template contract と`build-graph-node.py`の合成 (add は kind template、update は `set_sections`/`append_sections`/`add_subtypes`/`add_api_contracts` の差分 patch)。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
 
-- 入力契約、authority、containment、schema のいずれかが未達なら fail-closed とし、部分成功を PASS にしない。
-- secret と認証情報を prompt 出力、graph、receipt に埋め込まない。
-- 同一入力と同一 revision/digest では同じ decision と output shape を返す。
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
 
 ## Layer 5: エージェント層 (l5-contract v2.0.0)
 
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
 ### 5.1 担当 agent
 
-- `run-dev-graph-node/R4-apply-template`。重い判断または独立検証は `Agent` で分離 context に fork する。
+- `run-dev-graph-node/R4-apply-template`
 
 ### 5.2 ゴール定義
 
 - 目的: 確定したartifact_kind (architectureはsubtype複数選択、specificationはAPI変更有無) からtemplates/template-contract.jsonが示す本文骨格を適用し、template_id/template_version/artifact_subtypesをfrontmatterへ書き込む。既存文書は全書換せず不足セクションのみ差分追記する (要件C18/C19)
-- 背景: この責務を隣接 responsibility から分離し、入力・出力・authority を一意にする。
 - 達成ゴール: 不足sectionのみ加えたbody patchとtemplate metadataが生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] 宣言した入力が全て検証済みである
-- [ ] 出力が宣言した shape と authority を満たす
-- [ ] 責務境界に反する read/write/delegation が0件である
 - [ ] 必須見出し欠落0、既存非管理section digest不変になる
-
-### 5.4 実行方式
-
-- 固定手順を持たない。未達 checklist を評価し、操作を都度立案・実行・検証する。各周回末に `original_goal`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を追記し、最大5周で未達なら上位 skill へ fail-closed で返す。
 
 ## Layer 6: オーケストレーション層
 
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
 - R3 atomic candidateへpatchを渡す。
-- 前段 receipt/digest と後段 input digest を一致させ、stale handoff を拒否する。
 
 ## Layer 7: UserInput
 
-- 不足情報が実行結果を変える場合だけ `AskUserQuestion` を使う。repo policy で決まる値、保存先、secret、node ID は質問しない。
-- ユーザー提示は日本語、schema key/CLI parameter は原語を保つ。
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
 
 ## 出力指示
 

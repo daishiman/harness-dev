@@ -12,7 +12,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
-# dependencies: [resolve-project-context.py]
+# dependencies: [resolve-project-context.py, extract-plugin-root.py]
 # requires-python: ">=3.10"
 # ///
 """Implementation readiness gate (C08).
@@ -56,6 +56,24 @@ def _load_c09():
     sys.modules[spec.name] = module  # dataclass 等が __module__ を解決できるよう登録
     spec.loader.exec_module(module)  # type: ignore[union-attr]
     return module
+
+
+def _default_producer_root() -> Path:
+    """producer (system-spec-harness) の root を install 配置に依存せず解決する。
+
+    install 先は <cache>/<marketplace>/<plugin>/<version>/ なので親ディレクトリ経由では
+    兄弟に届かない。同梱の extract-plugin-root.py に任せ、見つからなければ実在しない path を
+    返して producer probe を fail-closed にする (manifest missing として report に残る)。
+    """
+    resolver = _HERE / "extract-plugin-root.py"
+    if not resolver.is_file():
+        return Path("plugin:system-spec-harness")
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+    found = module.resolve("system-spec-harness", _HERE.parent, Path.cwd())
+    return found if found is not None else Path("plugin:system-spec-harness")
 
 
 @dataclass
@@ -264,7 +282,7 @@ def build_report(
     from becoming a promotion authority.
     """
     repo_root = Path(context["repo_root"])
-    producer = producer_root or (_HERE.parent.parent / "system-spec-harness")
+    producer = producer_root or _default_producer_root()
     c09 = _load_c09()
     try:
         for rel in (

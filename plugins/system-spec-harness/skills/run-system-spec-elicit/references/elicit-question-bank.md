@@ -18,10 +18,11 @@ R2-interview / R3-reask / R4-reopen がセルへの問を設計するときの�
 
 下表は問の文面ではなく、カテゴリごとに確認する論点の一覧である。次の順で使う。
 
-1. 最初は開いた 1 問で聞いてよい (例: 「<カテゴリ>について <platform> で決まっていることを教えてください」)。開いた問は複数の決定を束ねないので N4 に当たらない。
+1. 最初は開いた 1 問で聞いてよい (例: 「<カテゴリ>について <platform> で決まっていることを教えてください」)。開いた問が N4 に当たらない条件は `neutral-question-criteria.md` の「N4 と開いた問」が正本。
 2. 回答に欠けた論点だけを、1 論点ずつ別の問で補う。
 3. 表の論点を並べて 1 問で聞かない (例: 認証方式・認可・セッションをまとめて問う)。複数の決定を 1 問に束ねると N4 違反になり、R6 で誘導として検出される。
-4. 補った論点の問は、qa だけを記録する turn (ops なし) にする。論点が揃った turn で `confirm` し、同じ turn の ops で `confirm` に続けて `add-qa-ref` (補った論点の qa_id) を置き、同じセルへ結ぶ。結ばない qa は、必須情報の接地にも章の根拠にも数えられない (`spec-state-contract.md`)。
+4. **論点が揃った turn** は、表の論点のうちそのセルで決めるものすべてに回答が得られた turn である (補いが要らなければ開いた問の turn、補ったなら最後に補った論点の turn)。それより前の turn (開いた問の turn を含む) は qa だけを記録する (ops なし)。論点が揃った turn で `confirm` し (`qa_ref` は turn の `qa_id` で補完される)、同じ turn の ops で `confirm` に続けて `add-qa-ref` を置き、そのセルのために記録した残りの qa (開いた問の qa と、先に補った論点の qa) をすべて同じセルへ結ぶ。先の qa が前の invocation に記録されていても同じである (5 loop 上限で未確定のまま resume した場合)。再開側は、qa_log のうちどのセルの `qa_ref` / `qa_refs` にも現れない entry を挙げ、問の文面からそのセルのために記録したものを選んで結ぶ。結ばない qa は、必須情報の接地にも章の根拠にも数えられない (`spec-state-contract.md`)。
+5. 確定の後に、収集ゲート (`validate-knowledge-graph.py --profile required-info --state <spec-state>`) の `ungrounded_blocking_items` に item が残ったときは、確定を戻さずに補う。残った item を 1 item ずつ別の問で聞き、その turn に `required_info_items` を付け、ops の `add-qa-ref` で、その item の `domain` (`required-info-catalog.json`) が指すカテゴリの確定セルへ結ぶ。確定済みの論点は問い直さないので、R2-interview 1.1 の「聞き直し」には当たらない。回答が確定の内容と食い違う (前提が崩れる) ときだけ R4-reopen へ回す。
 
 | カテゴリ (id) | 確認する論点 |
 |---|---|

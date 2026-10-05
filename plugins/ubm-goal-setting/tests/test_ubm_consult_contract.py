@@ -132,9 +132,10 @@ def test_adaptive_collaboration_and_safety_contract_present():
 # --------------------------------------------------------------------------- #
 STANCE_MARKERS = [
     "具体解の押し付けゼロ",          # (1) 非処方
-    "引き出し質問",                   # (2) 各ターン引き出し
+    "引き出し質問",                   # (2) 共同判断が残るターンで引き出し
     "ユーザーの発話",                 # (3) 解決策の言語化はユーザー主導
-    "現状→ゴール→ギャップ→次の一歩",  # (4) ゴール指向の締め
+    "現状→ゴール→ギャップ→次の一歩",  # (4) ゴール指向の締め (action lane)
+    "見えてきたこと→まだ決めないこと→再開条件",  # (4) ゴール指向の締め (reflection lane)
     "run-ubm-goal-setting へ誘導",    # (5) 責務境界
 ]
 
@@ -268,6 +269,16 @@ def test_out1_detector_reflection_needs_its_frame():
         {"id": "a1", "role": "assistant", "content": "考え方を一つ置きます。どう感じますか？"},
         {"id": "u1", "role": "user", "content": "自分で決めます。"},
         {"id": "a2", "role": "assistant", "content": "再開条件はまた今度にしましょう。"},
+    ]
+    assert detect_transcript_elements(transcript)["next_step"] is False
+
+
+def test_out1_detector_reflection_needs_resume_condition():
+    # 逆側: 見えてきたこと/まだ決めないことを整理しても、再開条件が無ければ締めにならない
+    transcript = [
+        {"id": "a1", "role": "assistant", "content": "考え方を一つ置きます。どう感じますか？"},
+        {"id": "u1", "role": "user", "content": "自分で決めます。"},
+        {"id": "a2", "role": "assistant", "content": "見えてきたことは家族の意見が判断軸だという点、まだ決めないことは転職の可否です。"},
     ]
     assert detect_transcript_elements(transcript)["next_step"] is False
 

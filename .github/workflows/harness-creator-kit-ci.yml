@@ -123,6 +123,13 @@ jobs:
       - name: Verify README plugin-root portability (no raw-terminal empty-expansion)
         run: python3 scripts/lint-readme-plugin-root-portability.py
 
+      # install 配置ポータビリティ不変条件: install 先は <cache>/<marketplace>/<plugin>/<version>/
+      # なので、`../<sibling>` や `.parents[N] / "<sibling>"` のような親ディレクトリ起点の兄弟
+      # plugin 参照は利用者の環境でだけ壊れる。兄弟の root は extract-plugin-root.py で解決し、
+      # メタデータは plugin:<name>/<path> 記法で書くことを静的検査する。
+      - name: Verify no parent-relative sibling plugin paths
+        run: python3 scripts/lint-sibling-plugin-paths.py
+
       # knowledge/ (JSON/JSONL 蒸留ストア) と lessons-learned/ (散文失敗ログ) の SSOT 役割分担を
       # fail-closed 検査する。散文レッスンを knowledge/ 直下へ .md で直接置いた混在事故
       # (2026-07-11) の恒久再発防止。lessons-index の source.file dangling・lesson 形式

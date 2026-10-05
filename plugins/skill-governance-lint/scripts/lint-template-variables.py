@@ -10,19 +10,18 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
-# dependencies: []
+# dependencies: [extract-plugin-root.py]
 # ///
 """再利用成果物の具体値直書きと未登録 `{{...}}` を検出する。"""
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import sys
 from pathlib import Path
 
 KIT_ROOT = Path(__file__).resolve().parents[1]
-# registry の正本は兄弟プラグイン skill-governance-config/config/ (プラグイン分割で移動)。
-REGISTRY = KIT_ROOT.parent / "skill-governance-config" / "config" / "template-variable-registry.json"
 VAR_RE = re.compile(r"\{\{[A-Z0-9_]+}}")
 ABS_PATH_RE = re.compile(r"(?<![`<])/(Users|home|var|tmp)/[A-Za-z0-9._/\-]+")
 URL_RE = re.compile(r"https?://(?!\{\{)[^\s\"')]+")
@@ -35,8 +34,28 @@ ALLOWED_URL_PREFIXES = (
 )
 
 
+def registry_path() -> Path:
+    """registry の正本は兄弟 plugin skill-governance-config の config/ (plugin 分割で移動)。
+
+    install 先は <cache>/<marketplace>/<plugin>/<version>/ なので親ディレクトリ経由では
+    兄弟に届かない。同梱の scripts/extract-plugin-root.py で root を解決する。
+    """
+    resolver = KIT_ROOT / "scripts" / "extract-plugin-root.py"
+    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
+    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
+    if spec is None or spec.loader is None:
+        raise SystemExit("extract-plugin-root.py is missing from skill-governance-lint/scripts")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    found = module.resolve("skill-governance-config", KIT_ROOT, Path.cwd())
+    if found is None:
+        raise SystemExit("skill-governance-config plugin not found; it holds template-variable-registry.json")
+    return found / "config" / "template-variable-registry.json"
+
+
 def registered_vars() -> set[str]:
-    data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    data = json.loads(registry_path().read_text(encoding="utf-8"))
     return {item["name"] for item in data.get("variables", [])}
 
 

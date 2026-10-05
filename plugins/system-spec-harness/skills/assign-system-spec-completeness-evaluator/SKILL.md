@@ -72,13 +72,13 @@ runtime_root_policy: host-skill-path
 
 各 skill 単独では見えない全体網羅性の欠落を、生成物から独立した context で評価し客観的合否を返す。
 
-## 監査 sub-agent 対応 (全 6 観点中、sub-agent 関与が判定に効く 3 観点)
+## 監査 sub-agent 対応 (全 6 観点中、評価主体の割当に注意が要る 3 観点)
 
-> 本 skill は全 6 観点 (上位概念trace / 意思決定 / マトリクス網羅性 / 設計知識反映 / 最新ドキュメント出典 / prompt品質) を採点する (schema/rubric/aggregate-completeness の正本)。うち foundation_trace / decision_guidance / prompt_quality は C05 R1-score の自前評価。以下は監査 sub-agent の関与が判定に効く 3 観点の対応表。
+> 本 skill は全 6 観点 (上位概念trace / 意思決定 / マトリクス網羅性 / 設計知識反映 / 最新ドキュメント出典 / prompt品質) を採点する (schema/rubric/aggregate-completeness の正本)。うち foundation_trace / decision_guidance / prompt_quality は C05 R1-score の自前評価。以下は評価主体の割当に注意が要る 3 観点 (監査 sub-agent が担う 2 観点と、独立 auditor を立てない設計知識反映) の対応表。
 
 | 観点 (aspect id) | ラベル | 評価主体 (component) | 一次根拠 |
 |---|---|---|---|
-| `matrix_coverage` | マトリクス網羅性 | `system-spec-matrix-auditor` (C07) + sub-input `system-spec-hearing-auditor` (C06) | `validate-coverage-matrix.py --require-complete` の exit0 + 意味層。C06 のヒアリング監査 (R6 の監査 5 軸) を網羅性・トレースの補助根拠に併せる。判定への対応は `references/aspect-criteria.md` 1a (決定論実装 `aggregate-completeness.py --hearing ... --state ...`) |
+| `matrix_coverage` | マトリクス網羅性 | `system-spec-matrix-auditor` (C07) + sub-input `system-spec-hearing-auditor` (C06) | `validate-coverage-matrix.py --require-complete` の exit0 + 意味層。C06 のヒアリング監査 (run-system-spec-elicit の R6-audit-hearing の監査 5 軸) を網羅性・トレースの補助根拠に併せる。判定への対応は `references/aspect-criteria.md` 1a (決定論実装 `aggregate-completeness.py --hearing ... --state ...`) |
 | `design_knowledge_reflection` | 設計知識反映 | C05 R1-score が自前評価 (**独立 auditor なし**) | 機械層=各章の設計知識ポインタ存在 (compile 注入) + 意味層=そのポインタ原則の確定セルへの具体適用 (存在確認だけで PASS にしない = Goodhart 防止) |
 | `doc_freshness` | 最新ドキュメント出典 | `system-spec-doc-freshness-auditor` (C08) | 二層監査 (形式=`validate-source-citation.py` / 内容鮮度=公式再照合) |
 
@@ -143,7 +143,7 @@ Task tool で監査 sub-agent (`system-spec-matrix-auditor` (C07) / `system-spec
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-coverage-matrix.py" --matrix <spec-state.json> --require-complete
 ```
-exit0 をマトリクス網羅性観点の一次根拠にする (`scripts/aggregate-completeness.py --matrix ...` でも回収可)。
+exit0 をマトリクス網羅性観点の一次根拠にする (`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --matrix <spec-state.json> --require-complete` でも回収可)。
 
 続けて C13-C16 の機械層ゲートを `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --knowledge-graph` (出荷 3 カタログを `validate-knowledge-graph.py` の knowledge/doctrine/required-info/cross 4 profile で独立再実行) の全 exit0 で確認する。C13/C14/C15 は design_knowledge_reflection (Step 3)、C16 は matrix_coverage の追加評価次元として意味層採点に併せる。
 
@@ -151,7 +151,7 @@ exit0 をマトリクス網羅性観点の一次根拠にする (`scripts/aggreg
 C05 R1-score が `system-spec/*.md` 各章を直接読み、`ref-system-design-knowledge/references/resource-map.yaml` 由来の設計知識ポインタの (1) 存在 (機械層) と (2) その原則が確定セル要件へ具体適用されているか (意味層) を評価する。**存在確認だけで PASS にしない** (compile が機械注入するポインタを自己循環で肯定しない = Goodhart 防止)。汎用ポインタ (resource-map 索引) のみで具体適用が無い章は medium 以上で拾う。C06 のヒアリング品質監査は本観点でなく matrix_coverage の sub-input として使う。
 
 ### Step 4: レポート出力と整合検査
-`schemas/completeness-findings.schema.json` 準拠で評価レポートを出力。`scripts/aggregate-completeness.py --report <report.json>` で形状 + 総合判定整合 (fail-closed 再導出との一致) を検証する。
+`schemas/completeness-findings.schema.json` 準拠で評価レポートを出力。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/assign-system-spec-completeness-evaluator/scripts/aggregate-completeness.py" --report <report.json>` で形状 + 総合判定整合 (fail-closed 再導出との一致) を検証する。
 
 ## Gotchas
 

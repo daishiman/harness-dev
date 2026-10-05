@@ -214,6 +214,8 @@ def test_gh_bridge_helpers_and_operations(common, tmp_path, monkeypatch, capsys)
     monkeypatch.setattr(mod, "gh_json", lambda argv: seen.append(argv) or {"data": {}})
     mod.graphql("Q", {"z": "2", "a": "1"})
     assert seen[0][-4:] == ["-F", "a=1", "-F", "z=2"]
+    mod.graphql("Q", {"text": "123", "a": "1"}, raw=frozenset({"text"}))  # free text must not become a JSON number
+    assert seen[1][-4:] == ["-F", "a=1", "-f", "text=123"]
 
     monkeypatch.setattr(mod, "gh_json", lambda argv: {"id": "I", "number": 1, "title": "T", "state": "OPEN", "url": "https://github.test/o/r/issues/1", "updatedAt": "2026-07-13T00:00:00Z"})
     monkeypatch.setattr(mod, "run", lambda *a, **k: SimpleNamespace(stdout="https://github.test/o/r/issues/1\n", returncode=0))
@@ -228,6 +230,21 @@ def test_gh_bridge_helpers_and_operations(common, tmp_path, monkeypatch, capsys)
         assert call_main(mod, monkeypatch, capsys, *argv)[0] == 0
     _, out = call_main(mod, monkeypatch, capsys, "--op", "issue-create", "--repo", "o/r", "--dry-run")
     assert out["mutation_suppressed"] is True
+
+    edits = []
+    monkeypatch.setattr(mod, "gh_json", lambda argv: edits.append(argv) or {"data": {}})
+    item = ("--op", "project-item-edit", "--project-id", "P", "--item-id", "I", "--field-id", "F")
+    for value, expected in ((("--text=12",), ("value:{text:$text}", "-f", "text=12")),
+                            (("--number-value=2.5",), ("value:{number:2.5}", "-F", "project=P")),
+                            (("--date=2026-11-01",), ("value:{date:$date}", "-F", "date=2026-11-01")),
+                            (("--iteration-id=IT",), ("value:{iterationId:$iteration}", "-F", "iteration=IT")),
+                            (("--clear",), ("clearProjectV2ItemFieldValue", "-F", "project=P"))):
+        assert call_main(mod, monkeypatch, capsys, *item, *value)[0] == 0
+        query, flag, pair = expected
+        assert query in edits[-1][3] and edits[-1][edits[-1].index(pair) - 1] == flag
+    for bad in (("--text=a", "--clear"), (), ("--date=2026-02-30",), ("--number-value=inf",)):
+        with pytest.raises(common.ContractError):  # refused before the dry-run preview as well
+            call_main(mod, monkeypatch, capsys, *item, *bad, "--dry-run")
 
     monkeypatch.setattr(mod, "graphql", lambda q, v: {"data": {"user": {"projectV2": {"id": "P", "fields": {"nodes": [{"name": "Status"}]}}}, "organization": {"projectV2": None}}})
     _, out = call_main(mod, monkeypatch, capsys, "--op", "project-resolve", "--owner", "o", "--project-number", "1")

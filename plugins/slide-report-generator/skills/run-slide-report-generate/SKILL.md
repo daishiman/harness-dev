@@ -132,7 +132,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 確定 mode に応じて構成を設計し、**仕様確定ゲート**で P3 進入を制御する。
 
-- **情報優先度の確定 (構成着手前・両 mode 共通)**: 構成へ入る前に「誰が・どの文脈で・何の task を」から情報の順位を決め、`information-priority-map.json` (schema=`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/schemas/information-priority-map.schema.json`) へ宣言して下記 IN2 ゲートを exit 0 にする。順位が確定する前に強弱・装飾を宣言していれば fail-closed で差し戻す。SRG への写像は `references/information-priority-rules.md`、原理の正本は `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
+- **情報優先度の確定 (構成着手前・両 mode 共通)**: 構成へ入る前に「誰が・どの文脈で・何の task を」から情報の順位を決め、`information-priority-map.json` (schema=`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/information-priority-map.schema.json`) へ宣言して下記 IN2 ゲートを exit 0 にする。順位が確定する前に強弱・装飾を宣言していれば fail-closed で差し戻す。SRG への写像は `references/information-priority-rules.md`、原理の正本は system-spec-harness plugin の `skills/ref-system-design-knowledge/references/information-design.md` (出典表記)。
 - **slide**: `Task` で **structure-designer** を起動 → `structure.json` (`schemas/structure.schema.json` 準拠) を設計。図解が要る場合は **d3-diagram-designer** (D3) ／ **data-visualizer** (データ可視化) を併用。
 - **report**: `Task` で **report-structure-designer** を起動 → `report-structure.json` (`schemas/report-structure.schema.json` 準拠・`sections[]` 主配列) を設計。各 section のビジュアルは **visual-strategist** が「1 項目 1 ビジュアル」の三択 (`svg`／`mermaid`／`codex-image`／`none`) を決定。
 - **読者中心設計**: 両 mode とも入口は想定読者の共有課題と変化を先に渡し、本論は確認済みの数字・手順・失敗・条件・限界まで掘る。各主要セクションに「兆候・問い・選択肢・次の行動」のいずれかを置き、自分ごと化する。
@@ -168,7 +168,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/setup-playwr
 # 1. 送信前 (IN1): output_mode/reportType 値域検証 (値域外 exit 2・fail-closed)
 python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-output-mode.py" --mode <slide|report> [--report-type <enum>]
 # 2. 構成着手前 (IN2): 情報優先度の宣言検証 (順位が装飾に先行しているか・0=OK/1=違反/2=usage)
-python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json
+python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-information-priority.py" <出力先>/information-priority-map.json
 # 構成の仕様確定ゲート (V_DEFINITIONS 全件・SR-ID 連動)
 node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/validate-structure.js" <structure|report-structure>
 # slide の UI 品質 (テキスト切れ・16:9 比率)
@@ -219,7 +219,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 受入基準 (`feedback_contract.criteria`・frontmatter に焼込済) は当該 skill の goal／checklist 由来の**受入条件 (purpose-acceptance)** であり、汎用品質ゲートの言い換えに退化させない:
 
 - **IN1 (inner・script)**: `validate-output-mode` で `output_mode`(slide／report) と `reportType` の値域を送信前検証し、確定 mode が構成設計へ一貫伝播して仕様確定ゲート入力の欠落が 0 件。
-- **IN2 (inner・script)**: 構成着手前に `<出力先>/information-priority-map.json` を出力し、`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/../system-spec-harness/scripts/validate-information-priority.py" <出力先>/information-priority-map.json` が exit 0 (順位の確定が強弱・装飾の宣言に**先行**していること・削減/加工に理由があること・形式候補を 2 件以上比較したこと・色単独に意味を担わせていないこと)。**このゲートが保証するのは「順位付けをやったこと」であって「順位が正しいこと」ではない** — 後者は OUT1 と人間の未閉塞責務。
+- **IN2 (inner・script)**: 構成着手前に `<出力先>/information-priority-map.json` を出力し、`python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-information-priority.py" <出力先>/information-priority-map.json` が exit 0 (順位の確定が強弱・装飾の宣言に**先行**していること・削減/加工に理由があること・形式候補を 2 件以上比較したこと・色単独に意味を担わせていないこと)。**このゲートが保証するのは「順位付けをやったこと」であって「順位が正しいこと」ではない** — 後者は OUT1 と人間の未閉塞責務。
 - **OUT1 (outer・evaluator)**: 生成後に両 mode が「共有課題→読者の変化→専門的で具体的な解決→自分へ移す行動」を持ち、slide は 1 スライド 1 メッセージ／長文なし・report は読み物／1 項目 1 ビジュアルで、生成後評価が読者フックと視覚崩れ 0 を確認して PASS。
 
 未達は最大 3 周 (inner) / 5 loops (goal-seek) で findings を反映し再実行、超過時は未達指摘一覧として生成レポートへ残す。
@@ -232,7 +232,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 
 ## Gotchas
 
-- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`、資産 = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/…`。repo-root 直書き禁止。**唯一の carve-out が cross-plugin glue** — system-spec-harness の資産だけは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/…` と兄弟相対で引く (IN2 の `validate-information-priority.py` と `information-priority-map.schema.json`)。本 plugin は `distributable: false` で marketplace source が `./plugins/<name>` ゆえ install 後も兄弟配置が保たれる前提であり、`HARNESS_ROOT` などの repo-root 変数へ戻さない。
+- **配置非依存**: 全実行パスは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 起点。vendor script = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/…`、plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…`、資産 = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/…`。repo-root 直書き禁止。兄弟 plugin への相対参照 (`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../<plugin>/…`) も禁止する。install 先は `<cache>/<marketplace>/<plugin>/<version>/` で、`..` の先は同じ plugin の別 version 群になり兄弟に届かないため。IN2 が使う system-spec-harness の `scripts/validate-information-priority.py` と `schemas/information-priority-map.schema.json` は本 plugin へ byte 一致で同梱し、`scripts/lint-vendored-ssot.py` が正本との一致を強制する。`HARNESS_ROOT` などの repo-root 変数へも戻さない。
 - **意匠は共有・mode で重複させない**: 配色／サイズ／レンダラ／schema `$defs` は単一 SSOT。slide／report で意匠を二重定義しない (`output_mode` 分岐契約)。
 - **入口を広げても対象範囲・正確さを壊さない**: audience/reportType は維持し、正式名称・検索語・適用範囲が必要なら主タイトルに残す。読者価値は subtitle/keyMessage/summary で補い、素材にない数字・実績を作らない。
 - **codex は画像生成器ではない**: `ai-image-diagram-producer` 起動時は着手前に実 text-to-image backend を確認する。`meta.source` は実体名 `codex-image2` を記録し plain `codex` は不可。
@@ -260,7 +260,7 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 - `workflow-manifest.json` — phases (R1→R2→R3-generate-minimal-guard→R4-artifact-present-handoff→R5-diagnostic-choice→R6-selected-semantic-review)・dependsOn・resource mappingの正本。
 
 **skill 私有 references (11 本・帰属は `references/resource-map.yaml`)**
-- `references/information-priority-rules.md` — 構成設計に入る前の情報優先度宣言 (文脈→棚卸し→グループ化→順位→削減→加工→形式選定→強弱→意味的装飾) の SRG 写像と生成前ゲート。owner=structure-designer (report-structure-designer も参照)。**原理の正本は本 plugin の外** (`plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`) で、ここは写像のみ。
+- `references/information-priority-rules.md` — 構成設計に入る前の情報優先度宣言 (文脈→棚卸し→グループ化→順位→削減→加工→形式選定→強弱→意味的装飾) の SRG 写像と生成前ゲート。owner=structure-designer (report-structure-designer も参照)。**原理の正本は本 plugin の外** (system-spec-harness plugin の `skills/ref-system-design-knowledge/references/information-design.md`) で、ここは写像のみ。
 - `references/structure-design-rules.md` — slide 構成設計 (1スライド1メッセージ分解・共通仕様セクション・slideType 判定)。owner=structure-designer。
 - `references/report-structure-types.md` — report 4 reportType 骨格 (社内報告分析/顧客提案WP/技術ドキュメント/学習解説)。owner=report-structure-designer。
 - `references/d3-diagram-rules.md` — D3 インタラクティブ図解の意匠/実装規範。owner=d3-diagram-designer。
@@ -280,5 +280,5 @@ python3 "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-sli
 **plugin 共有 scripts**
 - `../../scripts/setup-playwright.py` / `validate-output-mode.py` — plugin-local Chromium復元・検査 + 送信前 mode/reportType 値域検証 (fail-closed exit 2) / 環境 preflight。
 - `../../vendor/scripts/` — 決定論レンダラ・validator 群 13 本 (`render-slide.cjs`/`render-report.js`/`mermaid-render.js`/`validate-structure.js`/`verify-slides.js`/`verify-report-runtime.js`/`evaluate-deck.js`/`validate-print.js`/`build-image-prompts.js`/`generate-images-codex.js`/`build-deck-html.js`/`validate-ai-image-assets.js`/`workflow-manager.js`。byte 携行・書換禁止)。**この列挙は manifest の vendor script 全件と一致させる** — 携行制約を宣言する節が取りこぼすと「携行対象でない」と読み違えられる。
-- `../../../system-spec-harness/scripts/validate-information-priority.py` — 構成着手前の情報優先度宣言ゲート (順位が装飾・強弱に先行しているかの機械検査。0=OK/1=違反/2=usage)。SRG は `distributable: false` の repo 同梱 plugin なので同一 repo 内の他 plugin script を直接起動してよい。原理の正本は `system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md`。
+- `../../scripts/validate-information-priority.py` — 構成着手前の情報優先度宣言ゲート (順位が装飾・強弱に先行しているかの機械検査。0=OK/1=違反/2=usage)。system-spec-harness の正本を byte 一致で同梱した複製で、SRG 単独 install でも動く。原理の正本は system-spec-harness plugin の `skills/ref-system-design-knowledge/references/information-design.md` (出典表記であり、本 plugin には同梱しない)。
 - plugin-root references (本文が参照): `../../references/full-image-deck-method.md` / `post-generation-evaluation.md` / `report-types.md` ほか意匠・生成規範の共有正本。

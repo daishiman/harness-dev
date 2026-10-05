@@ -2,7 +2,7 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-journal",
-    "skill_md_sha256": "3493881c06b89025f048519575dc7d7ce16e7e8db22b6a7901247df61bbed3d0"
+    "skill_md_sha256": "6a36b32ab4667c38a51f505a5e2b49c93423213f796f8e7e38628330fc03f8ed"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,31 +11,34 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 3
+    "smell": 7
   },
-  "reviewer": "assign-skill-design-evaluator",
-  "reviewed_at": "2026-09-10T09:10:14Z",
-  "iterations": 3,
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:29:26Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
     "positive_feedback": [
-      "単一 writer 境界が実ファイルで整合している: SKILL.md Phase4-5 (親は対話・保存可否・入力スナップショットを所有し receipt でのみ完了判定) と agents/journal-composer.md 『出力と検証』(write_mode=blocked なら Write せず差し戻し / output_path へ Write / validate → 最大3回修復) が同じ責務分割を述べており、二重 writer は成立していない。goal-seek が inline 化されても親が書くのは progress/intermediate/handoff の 3 path だけで journal 本文とスコープが交差しない。",
-      "validate-journal-output.py の GOAL_SECTIONS 修正 (L417-431) は候補列を正本先頭順で 1 回の探索に統合し、body とラベルを同一 next() から取る。これにより『正本 3ヶ月目標 の節が空でも本文前方の旧表記 2ヶ月目標 節が検査を通す』fail-open が閉じ、G01/G02/G03 のラベルと検査対象のズレも同時に消えている。別表記の後方互換を残しつつ fail-open を塞ぐ再利用可能なパターン。",
-      "2 つのループの非対称な扱いが横展開に値する: 親周回 (対話で埋められる不足) と composer 内 3 回 (機械違反の修復) を、失敗の種類が違うという理由で明示的に分け、後者の非収束では周回を消費せず停止すると書いた。ループが入れ子になる skill で max_loops の意味が曖昧化する典型を、周回の消費規則を言語化することで防いでいる。",
-      "iteration 3 の test 強化は『退化した test』という検出しにくい欠陥を潰した良い横展開候補: golden の見出しが正本へ移った結果 golden.replace() が空振りし、旧表記の併存 test 2 本が『golden がそのまま通る』だけの無内容な test に退化していた。置換が実際に起きたことのアサート追加と、見出し定数を validator の QUARTERLY_HEADING に縛る test_quarterly_heading_constants_track_validator により、fixture 側の変更で test が黙って無内容化する経路が閉じた。fixture 変形に依存する test 一般へ適用できる。",
-      "PLUGIN_ROOT の fail-closed 受け渡し (SKILL.md L203 と composer L23 / L76 の `${PLUGIN_ROOT:?...}`) が親子で二重に宣言されており、Task 境界を越える runtime root 解決が片側の記述漏れで崩れない。"
+      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出し、結果の絶対パスを埋める形がこの判定と両立する。",
+      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
+      "『確認待ちの間は他の Bash が遮断されるので再解決しない』という注意は guard の実装 (完了も取消もされていない preview がある間、canonical でない Bash を deny する) と一致する。authorize や execute の直前に resolver を呼び直して遮断される事故を、手順の側で先に塞いでいる。",
+      "<GUARD_PLUGIN_ROOT> は既存の『角括弧の placeholder はすべて今回の run で確認した値に置き換える』規則と、Runtime root contract の『literal placeholder を shell へ渡さない』規則の両方に収まり、置換規則を新しく増やしていない。allowed-tools は Bash で、resolver の呼び出しを妨げない。"
     ],
     "negative_feedback": [
-      "[smell/low・継続] frontmatter `completeness_exempt` の理由文が『分岐も並列も再入も無い』のままで、本文に明記された親周回 (Phase1-3 へ戻って Phase4-5 を再委譲) と字面で食い違う。周回は同じ一本道の有界な繰り返しで分岐も並列も増えないため workflow-manifest 免除の実質的根拠は保たれる。次に SKILL.md へ触れる際に『分岐も並列も無く、再入は goal-seek の有界周回のみ』程度へ寄せること。単独では免除判断を変えないため FAIL 事由に数えない。",
-      "[smell/low・新規] tests/test_runtime_simplification_contracts.py:59 が SKILL.md の日本語散文を部分文字列で固定しているため、意味を変えない語順調整でも test が落ちる (iteration 3 の再編集はこれが契機)。契約文を守る意図自体は妥当だが、固定対象を『composer 非収束時に親が Phase4 を再起動しない』という命題単位 (複数キーワードの共起や正規表現) にすると、文体の改善を妨げずに同じ契約を守れる。",
-      "[smell/low・継続] artifact-delivery wrapper (L100-106) の下に Phase0-5 の全工程が置かれ、accept-as-is では『後続 section を実行しない』ため成果物であるジャーナル自体が生成されない読みになる。plugins 配下の run-* 多数に同型で入る repo 共通 governance boilerplate であり本 skill 固有の退行ではないため、横断課題として据え置く。"
+      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
+      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに preview の TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は確認待ちの間に限らず、execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
+      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
+      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 45 行目)、今回の guard block への 12 行追記で本文 57 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。",
+      "[low / 差分外の既存・継続] frontmatter の completeness_exempt の理由文『分岐も並列も再入も無い』が、本文の親周回 (Phase1-3 へ戻って Phase4-5 を再委譲) と字面で食い違う。免除の実質的な根拠は保たれる。",
+      "[low / 差分外の既存・継続] tests/test_runtime_simplification_contracts.py が SKILL.md の散文を部分文字列で固定しており、意味を変えない語順調整でも test が落ちる。",
+      "[low / 差分外の既存・継続] artifact-delivery wrapper の下に Phase0-5 の全工程が置かれ、accept-as-is では成果物自体が生成されない読みになる。repo 共通 boilerplate の横断課題。"
     ],
-    "iteration": 3,
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual",
+    "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "iteration 3 は語順調整と test 強化に対する再確認 (30思考法は未使用)。SKILL.md の差分は『機械違反は対話で埋められない種類の失敗なので』を固定句の前へ移した 1 文の語順のみで、周回の消費規則・停止条件・報告義務の命題は iteration 2 と同一。意味変化なしを差分で確認した。frontmatter は combinators 重複 0 件・解決値 ['with-goal-seek','with-feedback-contract'] を維持。tests/test_runtime_simplification_contracts.py:59 の固定句は現本文に 1 件存在。python3 -m pytest plugins/ubm-goal-setting/tests/ -q は 408 passed を自分で実行して確認済み。iteration 3 で新たに評価対象へ入った test 変更 (旧表記併存 test 2 本の退化修正 + QUARTERLY_HEADING 追従 test 追加) は、iteration 1 で妥当と評価した validator 修正の検査能力を実際に担保する方向の変更で、退行はない。残 findings は low の smell 3 件のみ (うち 1 件は repo 横断 boilerplate)。未解決の contradiction / omission / dependency break は 0 のため PASS。同一評価を rubric-verdict.json へ分離投影済み。"
+  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+15/-3) のみ。guard block の差し替えで、親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う形へ変えた。 【読んだもの】SKILL.md 全文と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、ubm-goal-setting の .claude-plugin/plugin.json。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = 6a36b32ab4667c38a51f505a5e2b49c93423213f796f8e7e38628330fc03f8ed を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas のいずれとも食い違わない。(b) 漏れ 0 (medium 以上): 停止形態のうち PreToolUse 遮断が名指しされていない点は low。(c) 規約整合: frontmatter の external_mutation_guard.runtime_ref は既に plugin: 記法で、本文と揃う。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で、本差分外の継続分を含めて smell に計上した。criteria IN1 / IN2 の検証経路は本差分で変わらず、OUT1 / OUT2 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
 }

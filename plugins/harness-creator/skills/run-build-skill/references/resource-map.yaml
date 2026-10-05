@@ -1,7 +1,9 @@
 # resource-map.yaml — run-build-skill progressive disclosure map
 #
 # Plugin 単位対応 (2026-05-22):
-#   - `bundles:` で plugin-composition.yaml をエイリアス参照
+#   - `bundles:` で plugin-composition.yaml をエイリアス参照。他 plugin の bundle は `plugin:<name>/<path>`
+#     記法で書く (install 先は <cache>/<marketplace>/<plugin>/<version>/ なので、`../` では兄弟 plugin に届かない。
+#     repo では plugins/<name>/<path>、install 先では scripts/extract-plugin-root.py が root を解決する)
 #   - 各 resource entry に `bundle:` を付与し所属 CapabilityBundle を明示
 #   - `edges:` で plugin-composition.yaml の dependencies[] を参照 (DRY — 値の再宣言はしない)
 #   - 依存図は scripts/render-dependency-graph.py で Mermaid に変換 (--self-test で本ファイル下記 bundles をループ)
@@ -11,28 +13,28 @@ bundles:
     path: ../../../plugin-composition.yaml
     role: meta-plugin
   - name: skill-intake
-    path: ../../../../skill-intake/plugin-composition.yaml
+    path: plugin:skill-intake/plugin-composition.yaml
     role: intake-pipeline
   - name: prompt-creator
-    path: ../../../../prompt-creator/plugin-composition.yaml
+    path: plugin:prompt-creator/plugin-composition.yaml
     role: prompt-factory
   - name: skill-governance-automation
-    path: ../../../../skill-governance-automation/plugin-composition.yaml
+    path: plugin:skill-governance-automation/plugin-composition.yaml
     role: governance
   - name: skill-governance-config
-    path: ../../../../skill-governance-config/plugin-composition.yaml
+    path: plugin:skill-governance-config/plugin-composition.yaml
     role: governance
   - name: skill-governance-hooks
-    path: ../../../../skill-governance-hooks/plugin-composition.yaml
+    path: plugin:skill-governance-hooks/plugin-composition.yaml
     role: governance
   - name: skill-governance-lint
-    path: ../../../../skill-governance-lint/plugin-composition.yaml
+    path: plugin:skill-governance-lint/plugin-composition.yaml
     role: governance
   - name: skill-governance-migration
-    path: ../../../../skill-governance-migration/plugin-composition.yaml
+    path: plugin:skill-governance-migration/plugin-composition.yaml
     role: governance
   - name: skill-governance-secrets
-    path: ../../../../skill-governance-secrets/plugin-composition.yaml
+    path: plugin:skill-governance-secrets/plugin-composition.yaml
     role: governance
 
 # edges: plugin-composition.yaml.dependencies[] を集約参照 (値は本ファイルに複写しない)

@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "information-priority-map.schema.json",
+  "title": "Information Priority Map",
+  "description": "任意の表現物 (画面/report/slide/CLI 出力/通知/エラーメッセージ/ドキュメント) について、視覚表現を決める前に確定させる情報設計の宣言。知識正本は ref-system-design-knowledge の references/information-design.md。artifact_kind は enum ではなく自由文字列で、対象領域に依存しない。",
+  "type": "object",
+  "required": [
+    "artifact_id",
+    "artifact_kind",
+    "context_of_use",
+    "inventory",
+    "groups",
+    "form_selection"
+  ],
+  "properties": {
+    "artifact_id": {"type": "string", "minLength": 1},
+    "artifact_kind": {
+      "type": "string",
+      "minLength": 2,
+      "description": "screen / report / slide-deck / cli-output / notification / error-message / document など。語彙を固定しない (未知の表現物にも適用できることが本 schema の要件)。"
+    },
+    "context_of_use": {
+      "type": "object",
+      "description": "ISO 9241-210 の context of use。ここが埋まるまで形式を決めない。",
+      "required": ["audience", "primary_tasks", "environment", "expertise"],
+      "properties": {
+        "audience": {"type": "string", "minLength": 2},
+        "primary_tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["task", "frequency", "failure_cost"],
+            "properties": {
+              "task": {"type": "string", "minLength": 2},
+              "frequency": {"enum": ["high", "medium", "low"]},
+              "failure_cost": {"enum": ["high", "medium", "low"]}
+            },
+            "additionalProperties": false
+          }
+        },
+        "environment": {"type": "string", "minLength": 2},
+        "expertise": {
+          "enum": ["first-time", "occasional", "expert", "mixed"],
+          "description": "expert 主体なら学習容易性より効率性を優先しうる (information-design の非適用条件)。"
+        }
+      },
+      "additionalProperties": false
+    },
+    "inventory": {
+      "type": "array",
+      "minItems": 1,
+      "description": "出せる情報要素の棚卸し。この時点では形式を決めない。",
+      "items": {
+        "type": "object",
+        "required": ["element_id", "source_value", "disposition"],
+        "properties": {
+          "element_id": {"type": "string", "minLength": 1},
+          "source_value": {"type": "string", "minLength": 1},
+          "disposition": {
+            "enum": ["keep", "drop", "transform"],
+            "description": "keep=そのまま出す / drop=削減する / transform=表示形へ加工する"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 5,
+            "description": "drop / transform では必須。理由なき欠落は『漏れ』と区別できない。"
+          },
+          "display_value": {
+            "type": "string",
+            "minLength": 1,
+            "description": "transform では必須。加工後の表示形。"
+          },
+          "group_id": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "description": "意味の束と、束どうしの順位。",
+      "items": {
+        "type": "object",
+        "required": ["group_id", "label", "rank", "rank_rationale"],
+        "properties": {
+          "group_id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "rank": {"type": "integer", "minimum": 1},
+          "rank_rationale": {
+            "type": "string",
+            "minLength": 5,
+            "description": "task 頻度 × 失敗コストで説明する。『重要だから』は理由ではない。"
+          },
+          "member_order": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "group 内順位 (element_id の並び)。"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "form_selection": {
+      "type": "object",
+      "description": "早期形式固定の禁止。2 つ以上の候補を比較した記録を要求する。",
+      "required": ["chosen", "candidates_considered", "rationale"],
+      "properties": {
+        "chosen": {"type": "string", "minLength": 2},
+        "candidates_considered": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["form", "why_not"],
+            "properties": {
+              "form": {"type": "string", "minLength": 2},
+              "why_not": {"type": "string", "minLength": 3}
+            },
+            "additionalProperties": false
+          }
+        },
+        "rationale": {"type": "string", "minLength": 5}
+      },
+      "additionalProperties": false
+    },
+    "emphasis": {
+      "type": "array",
+      "description": "確定した順位の視覚変数への写像。groups の rank が確定していなければ書けない (順序制約)。",
+      "items": {
+        "type": "object",
+        "required": ["target", "channel", "expresses_rank"],
+        "properties": {
+          "target": {"type": "string", "minLength": 1, "description": "group_id または element_id"},
+          "channel": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"enum": ["position", "size", "weight", "color", "spacing", "contrast", "icon", "motion"]}
+          },
+          "expresses_rank": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "styling": {
+      "type": "array",
+      "description": "装飾。各項目は必ず意味を運ぶ。意味に紐づかない装飾は宣言できない。",
+      "items": {
+        "type": "object",
+        "required": ["target", "decoration", "semantic_intent"],
+        "properties": {
+          "target": {"type": "string", "minLength": 1},
+          "decoration": {"type": "string", "minLength": 2},
+          "semantic_intent": {
+            "enum": ["actionable", "selected", "important", "hidden-affordance", "status", "grouping", "disabled"],
+            "description": "『今風にする』『寂しいから色を足す』は列挙に存在しない。"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "color_not_sole_channel": {"type": "boolean"},
+        "notes": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "outcome_metrics": {
+      "type": "array",
+      "description": "『見た目の評価』ではなく outcome で測る (到達率・操作数・誤操作率・問い合わせ件数)。",
+      "items": {"type": "string", "minLength": 3}
+    },
+    "exemption": {
+      "type": "object",
+      "description": "information-design の非適用条件に当たる場合の明示的な逸脱宣言。黙って原則を外さない。",
+      "required": ["reason", "approved_by"],
+      "properties": {
+        "reason": {"type": "string", "minLength": 10},
+        "approved_by": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

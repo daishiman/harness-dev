@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # /// script
 # name: build-graph-node
-# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add or diff-update nodes with an immutable receipt.
-# inputs: ["argv: add|update --repo-root PATH --input JSON [--config PATH] [--dry-run]"]
+# purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, or switch confirmed issue/task nodes to the github binding with an immutable receipt.
+# inputs: ["argv: add|update|bind-github|link-github --repo-root PATH --input JSON [--config PATH] [--dry-run]"]
 # outputs: ["stdout: JSON preview/receipt or rejection report"]
 # requires-python = ">=3.10"
-# dependencies: [_common.py, validate-graph-schema.py, resolve-repo-context.py]
+# dependencies: [_common.py, validate-graph-schema.py, validate-source-lineage.py, resolve-repo-context.py]
 # contexts: [A, B, C, E]
 # network: false
 # write-scope: caller repository content roots, the C24-resolved graph, and immutable receipts beside that graph
 # ///
-"""C02 artifact writer (add/update) that shares the register-package writer lock."""
+"""C02 artifact writer (add/update/bind-github/link-github) that shares the register-package writer lock."""
 from __future__ import annotations
 
 import argparse
@@ -46,6 +46,8 @@ HEADING = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t]*$")
 FENCE = re.compile(r"^\s*(```|~~~)")
 FRONT_KEY = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*)[ \t]*:")
 LIST_MARK = re.compile(r"^(?:[-*+>]\s+|\d+[.)]\s+)?(?:\[[ xX]\]\s+)?")
+# mask 後の placeholder の前に付いた `ラベル:` (`メモ: \0`、`N/A: \0`)。ラベルだけでは slot は埋まらない。
+PLACEHOLDER_LABEL = re.compile(r"^[^:：\0]{1,40}[:：]\s*")
 # Every code point str.splitlines() ends a line on: a key holding one would split into several headings on re-read.
 LINE_BREAK = re.compile(r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]")
 HEADING_MAX = 120
@@ -53,7 +55,8 @@ HEADING_MAX = 120
 READINESS_ITEM = re.compile(rf"^(?:api-contract$|(?:{'|'.join(SUBTYPE_ORDER)}):)")
 SECRET = re.compile(r"(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})")
 AUTO_CONFIDENCE, AUTO_MARGIN = 0.80, 0.15
-TRACKER_FROM_CONFIG = {"beads": "beads", "github": "github", "none": "none"}
+# repo-config schema の execution_tracker.mode は beads/github/both だけ。none は binding intent の語彙で mode ではない。
+TRACKER_FROM_CONFIG = {"beads": "beads", "github": "github"}
 MACRO_TEXT_KEYS = ("purpose", "goal")
 MACRO_LIST_KEYS = ("scope_in", "scope_out", "acceptance", "architecture_refs")
 # feature body sections that are projections of frontmatter: callers change them through macro_patch/node_patch only.
@@ -66,27 +69,36 @@ ADD_KEYS = {
     "artifact_kind", "slug", "title", "project_id", "domain", "tracker_binding", "owners", "tags",
     "priority", "start_date", "target_date", "iteration", "depends_on", "related_nodes", "resource_scope",
     "artifact_subtypes", "classification", "sections", "subtype_sections", "api_contracts", "source_lineage",
-    "macro",
+    "macro", "confirmation_evidence",
 }
+# C19 R3: the only evaluator whose PASS may confirm a system-spec-harness import (the harness completeness evaluator).
+SPEC_EVALUATOR = "system-spec-harness:assign-system-spec-completeness-evaluator"
+SPEC_IMPORT_KINDS = {"specification", "architecture"}
 PATCH_KEYS = {
     "title", "project_id", "domain", "owners", "tags", "priority", "start_date", "target_date",
     "iteration", "depends_on", "related_nodes", "resource_scope", "status",
 }
+# Fields GitHub mirrors both ways for a github-bound node (Issue title, Project schedule fields). They name or schedule
+# the work rather than change what was evaluated, and the schema keeps a published or active node at pass, so a sync
+# import of them must not send pass back to stale. Body and other fields still do; that import stays a manual conflict.
+TRACKER_MIRRORED_KEYS = {"title", "priority", "start_date", "target_date", "iteration"}
 UPDATE_KEYS = {"graph_node_id", "node_patch", "set_sections", "append_sections", "add_subtypes",
                "subtype_sections", "add_api_contracts", "macro_patch"}
 PACKAGE_KEYS = {"parent_feature", "feature_package_id", "phase_ref"}
 
 
-def _load_validator() -> Any:
-    spec = importlib.util.spec_from_file_location("dev_graph_validate_graph_schema", HERE / "validate-graph-schema.py")
+def _load_script(file_name: str, module_name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(module_name, HERE / file_name)
     if spec is None or spec.loader is None:
-        raise ContractError("cannot load validate-graph-schema.py")
+        raise ContractError(f"cannot load {file_name}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 
-VGS = _load_validator()
+VGS = _load_script("validate-graph-schema.py", "dev_graph_validate_graph_schema")
+# C19 の R0/R3 gate と同じ関数で、system-spec-harness 由来の lineage を登録前に検査する。
+LINEAGE = _load_script("validate-source-lineage.py", "dev_graph_validate_source_lineage")
 
 
 class WriterError(ContractError):
@@ -199,13 +211,16 @@ def _own_text(lines: list[str], head: dict[str, Any]) -> str:
 
 
 def _placeholder_mask(tokens: list[str]) -> re.Pattern[str]:
-    """The contract token `<` opens a `<...>` span; a bare `<` (`p95 < 300ms`) is prose, not a placeholder."""
-    return re.compile("|".join(r"<[^<>\n]*>" if token == "<" else re.escape(token) for token in tokens))
+    """The contract token `<` opens a `<...>` span; a bare `<` (`p95 < 300ms`) is prose, not a placeholder.
+    CommonMark の URI autolink (`<https://…>`: scheme と `:` の後に空白なし) は内容なので mask しない。"""
+    span = r"<(?![A-Za-z][A-Za-z0-9+.-]{1,31}:[^\s<>]*>)[^<>\n]*>"
+    return re.compile("|".join(span if token == "<" else re.escape(token) for token in tokens))
 
 
 def _substantive(text: str, template: str, mask: re.Pattern[str]) -> bool:
     """template-contract `placeholder_only_section`: a section stays unfilled only while every line is still a
-    template line or nothing but placeholders, both compared with each placeholder masked."""
+    template line or nothing but placeholders, both compared with each placeholder masked.
+    ラベルと placeholder だけの行 (`- メモ: <TBD>`、理由を書いていない `N/A: <reason>`) も未充足とする。"""
     def shape(line: str) -> str:
         # Adjacent placeholders (`<a> <b>`) are still one unfilled slot.
         return re.sub(r"\0[\s\0]*\0", "\0", mask.sub("\0", line.strip()))
@@ -215,7 +230,12 @@ def _substantive(text: str, template: str, mask: re.Pattern[str]) -> bool:
         if not line.strip():
             continue
         masked = shape(line)
-        if masked not in scaffold and re.sub(r"[\0\s|`]", "", LIST_MARK.sub("", masked, count=1)):
+        if masked in scaffold:
+            continue
+        rest = LIST_MARK.sub("", masked, count=1)
+        if "\0" in rest:
+            rest = PLACEHOLDER_LABEL.sub("", rest, count=1)
+        if re.sub(r"[\0\s|`]", "", rest):
             return True
     return False
 
@@ -243,8 +263,11 @@ def _heading_key(key: Any, label: str) -> str:
     if SECRET.search(key):
         raise WriterError("secret_like_content", f"{label}: section key")
     if READINESS_ITEM.match(key):
+        # 見出し単位で予約を絞ると readiness 名と見出しが衝突しうるので、接頭辞ごと予約したままにする。
         raise WriterError("readiness_item_is_not_a_heading",
-                          f"{label}: {key!r} is a readiness item; fill it with the via/key its readiness_fill entry names")
+                          f"{label}: {key!r} is reserved: subtype prefixes ({', '.join(f'{item}:' for item in SUBTYPE_ORDER)}) "
+                          "and api-contract name readiness items, not headings; fill a reported item with the via/key "
+                          "its readiness_fill entry names, or choose a heading without that prefix")
     return key
 
 
@@ -549,6 +572,17 @@ def _check_keys(entry: dict[str, Any], allowed: set[str], label: str) -> None:
         raise WriterError("writer_owned_or_unknown_field", f"{label}: {sorted(extra)} cannot be supplied")
 
 
+def _require_keys(node: dict[str, Any], keys: list[str], label: str) -> None:
+    """graph 上の node に schema/frontmatter の必須キーが欠けていれば、生の KeyError ではなく欠けたキー名で止める。"""
+    required = list(dict.fromkeys([*load_json(VGS.SCHEMA_PATH).get("required", []), *keys]))
+    missing = [key for key in required if key not in node]
+    if missing:
+        graph_node_id = str(node.get("graph_node_id"))
+        raise WriterError("node_missing_required_keys",
+                          f"{label}: {graph_node_id} lacks required keys {missing}; repair the graph node before changing it",
+                          [{"node": graph_node_id, "code": "missing_required_key", "detail": key} for key in missing])
+
+
 def _subtypes(kind: str, raw: Any, api_count: int) -> list[str]:
     if not isinstance(raw, list) or any(item not in SUBTYPE_ORDER for item in raw) or len(set(raw)) != len(raw):
         raise WriterError("invalid_subtypes", f"artifact_subtypes must be unique values of {SUBTYPE_ORDER}")
@@ -614,6 +648,11 @@ def _classification(raw: Any, kind: str, slug: str) -> dict[str, Any]:
     }
 
 
+def _tracker_mode(ctx: dict[str, Any]) -> Any:
+    config_path = Path(ctx["local_state_paths"]["config"])
+    return ((load_json(config_path) if config_path.is_file() else {}).get("execution_tracker") or {}).get("mode")
+
+
 def _tracker(raw: Any, mode: Any) -> str:
     """register-package._resolve_binding's rule: none always; beads/github only where the repo tracker mode allows."""
     if raw == "repo-config-default":
@@ -631,8 +670,41 @@ def _tracker(raw: Any, mode: Any) -> str:
         # schema allOf[14]+[9]: github binding needs an issue publication mode, which only confirmed/pass/complete
         # issue|task nodes may carry. A writer that creates drafts cannot satisfy it, so it refuses up front.
         raise WriterError("github_binding_requires_confirmed_node",
-                          "register the draft with tracker_binding=none; GitHub publication happens after confirm/pass through C12 (gh-bridge), not this writer")
+                          "register the draft with tracker_binding=none; after confirm/pass switch it with `build-graph-node.py bind-github`, then C12 (gh-bridge) publishes it")
     return binding
+
+
+def _spec_confirmation(raw: Any, kind: str, lineage: dict[str, Any], root: Path, label: str) -> dict[str, str]:
+    """C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。
+
+    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、
+    PASS が別の bytes へ流用されることはない。report は repo 内の通常ファイルで、評価した spec_dir が取込元の
+    ディレクトリと一致し、verdict が PASS のものだけを受ける。
+    """
+    if kind not in SPEC_IMPORT_KINDS or lineage.get("origin_kind") != "system-spec-harness":
+        raise WriterError("confirmation_requires_spec_import",
+                          f"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness")
+    if not isinstance(raw, dict) or set(raw) != {"evaluator", "evidence_ref", "evaluated_digest"}:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}")
+    if raw["evaluator"] != SPEC_EVALUATOR:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evaluator must be {SPEC_EVALUATOR}")
+    if raw["evaluated_digest"] != lineage.get("source_digest"):
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evaluated_digest must equal source_lineage.source_digest")
+    ref = raw["evidence_ref"]
+    if not isinstance(ref, str) or not ref or Path(ref).is_absolute() or ".." in Path(ref).parts:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evidence_ref must be a repo-relative path")
+    try:
+        report = load_json(contained(root / ref, root, must_exist=True))
+    except (ContractError, OSError, ValueError) as exc:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evidence_ref {ref} is unreadable ({exc})") from exc
+    if not isinstance(report, dict) or report.get("verdict") != "PASS":
+        raise WriterError("confirmation_evidence_not_pass", f"{label}: {ref} verdict is not PASS")
+    spec_dir = report.get("spec_dir")
+    source_dir = (root / str(lineage["source_path"])).parent.resolve()
+    evaluated = Path(spec_dir).expanduser() if isinstance(spec_dir, str) and spec_dir else None
+    if evaluated is None or (evaluated if evaluated.is_absolute() else root / evaluated).resolve() != source_dir:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: {ref} evaluated {spec_dir!r}, not the import source directory")
+    return {"evaluator": raw["evaluator"], "evidence_ref": ref, "evaluated_digest": raw["evaluated_digest"]}
 
 
 # ---------------------------------------------------------------- operations
@@ -643,8 +715,7 @@ def _plan_add(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, 
     if not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
         raise WriterError("invalid_input", "add input needs artifacts[] objects")
     keys = list(composer.contract["common_frontmatter"]["required"])
-    config_path = Path(ctx["local_state_paths"]["config"])
-    mode = ((load_json(config_path) if config_path.is_file() else {}).get("execution_tracker") or {}).get("mode")
+    mode = _tracker_mode(ctx)
     taken_ids = {node.get("graph_node_id") for node in nodes}
     taken_paths = {node.get("file_path") for node in nodes}
     plan = []
@@ -718,12 +789,28 @@ def _plan_add(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, 
             "completion_evidence": {"policy": "manual", "status": "not_applicable", "source": None,
                                     "completed_at": None, "reconciled_at": None, "evidence_refs": []},
         }
+        lineage = LINEAGE.lineage_findings([node], root)
+        if lineage:
+            # 取込元が消えた・変わった lineage を登録すると、C19 の resume gate が後から必ず落ちる node になる。
+            raise WriterError("source_lineage_unverified",
+                              f"{label}: source_lineage does not resolve to the current system-spec bytes", lineage)
+        evidence = None
+        if "confirmation_evidence" in entry:
+            evidence = _spec_confirmation(entry["confirmation_evidence"], kind, node["source_lineage"], root, label)
         state = {"subtypes": subtypes, "api_count": len(api_contracts), "node": node}
         body = composer.compose(kind, state, sections, subtype_sections, api_contracts)
         fill = composer.readiness(kind, subtypes, body)
         missing = [item["item"] for item in fill]
         node["implementation_readiness"] = {"status": "incomplete" if missing else "complete",
                                             "missing_sections": missing, "checked_at": now}
+        if evidence is not None:
+            if missing:
+                # schema allOf[7]: pass は readiness complete を要する。確定で取り込む章は全 section を埋めて渡す。
+                raise WriterError("confirmed_import_requires_complete_readiness",
+                                  f"{label}: fill {missing} before importing as confirmed")
+            # 確定した仕様は書き終えた成果物なので done にする。active だと schedule が着手候補として推薦してしまう。
+            node.update({"status": "done", "confirmation_status": "confirmed", "evaluation_status": "pass",
+                         "confirmation_evidence": evidence})
         text = _frontmatter(node, keys) + "\n" + "".join(body)
         taken_ids.add(graph_node_id)
         taken_paths.add(file_path)
@@ -792,6 +879,7 @@ def _plan_update(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Pat
             raise WriterError("invalid_kind", f"{label}: {graph_node_id} has unsupported artifact_kind {kind!r}")
         if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
             raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
+        _require_keys(before_node, keys, label)
         node = copy.deepcopy(before_node)
         patch = entry.get("node_patch") or {}
         if not isinstance(patch, dict):
@@ -926,6 +1014,8 @@ def _plan_update(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Pat
         node["updated_at"] = now
         content_fields = {key for key in node if node.get(key) != before_node.get(key)} - {
             "status", "closed_at", "updated_at", "implementation_readiness"}
+        if node.get("tracker_binding") == "github":
+            content_fields -= TRACKER_MIRRORED_KEYS
         if node.get("evaluation_status") == "pass" and (body != lines or content_fields):
             node["evaluation_status"] = "stale"
         unmanaged = _unmanaged_frontmatter(front, keys)
@@ -945,9 +1035,161 @@ def _plan_update(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Pat
     return plan
 
 
+def _plan_bind_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                      composer: Composer, now: str) -> list[dict[str, Any]]:
+    """confirm/pass 済みの issue/task node を tracker_binding=github へ切り替える (schema allOf[9][14] を満たす形で)。
+
+    本文は変えず frontmatter だけを再生成する。binding は内容ではないので evaluation_status は pass のまま残す。
+    """
+    entries = payload.get("bindings")
+    if set(payload) - {"bindings"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "bind-github input is {bindings:[{graph_node_id, publication_mode?}]}")
+    mode = _tracker_mode(ctx)
+    if mode not in {"github", "both"}:
+        raise WriterError("tracker_binding_not_allowed", f"binding github is not allowed by tracker mode {mode!r}")
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    by_id = {node.get("graph_node_id"): node for node in nodes}
+    seen: set[str] = set()
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"bindings[{index}]"
+        _check_keys(entry, {"graph_node_id", "publication_mode"}, label)
+        graph_node_id = entry.get("graph_node_id")
+        if graph_node_id not in by_id or graph_node_id in seen:
+            raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
+        seen.add(graph_node_id)
+        before_node = by_id[graph_node_id]
+        if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
+            raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
+        _require_keys(before_node, keys, label)
+        if before_node["artifact_kind"] not in {"issue", "task"}:
+            raise WriterError("bind_github_requires_issue_or_task", f"{label}: {graph_node_id} is {before_node['artifact_kind']}; only issue/task publish to GitHub")
+        readiness = (before_node["implementation_readiness"] or {}).get("status")
+        state = (before_node["confirmation_status"], before_node["evaluation_status"], readiness)
+        if state != ("confirmed", "pass", "complete"):
+            raise WriterError("github_binding_requires_confirmed_node",
+                              f"{label}: {graph_node_id} is confirmation/evaluation/readiness={'/'.join(map(str, state))}; confirm and pass it first")
+        publication = before_node["github_publication"] or {}
+        current = publication.get("mode")
+        target = entry.get("publication_mode") or (current if current in {"issue", "issue_and_projects"} else "issue")
+        if target not in {"issue", "issue_and_projects"}:
+            raise WriterError("invalid_input", f"{label}.publication_mode must be issue or issue_and_projects")
+        if before_node["tracker_binding"] == "github" and current == target:
+            continue
+        if before_node["beads_linkage"] is not None:
+            # beads 側に実体がある node を github へ移すと、同じ作業が 2 つの tracker に残る。
+            raise WriterError("beads_linkage_present", f"{label}: {graph_node_id} is linked to beads; unlink it through bd-bridge before switching")
+        node = copy.deepcopy(before_node)
+        node["tracker_binding"] = "github"
+        node["beads_linkage"] = None
+        node["github_publication"] = {**publication, "mode": target}
+        node["updated_at"] = now
+        target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+        before_bytes = target_path.read_bytes()
+        frontmatter = VGS.frontmatter_of(target_path)
+        if frontmatter.get("graph_node_id") != graph_node_id or frontmatter.get("file_path") != before_node["file_path"]:
+            raise WriterError("artifact_parity_error", f"{label}: frontmatter identity differs from the graph node")
+        front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+        plan.append({"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+                     "detail": {"graph_node_id": graph_node_id, "file_path": node["file_path"],
+                                "tracker_binding": {"before": before_node["tracker_binding"], "after": "github"},
+                                "publication_mode": {"before": current, "after": target},
+                                "body_preserved": True}})
+    return plan
+
+
+def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                      composer: Composer, now: str) -> list[dict[str, Any]]:
+    """C14 の linkage_proposal と C03 の同期結果を、github 束縛の issue/task の linkage として記録する。
+
+    linkage は GitHub 側の状態を写すだけで内容でも local の編集でもないので、evaluation_status と updated_at は変えない
+    (updated_at を動かすと、次の C03 が local 側の変更と取り違える)。project linkage は project_alias ごとに置き換え、
+    field_snapshot (C03 の 3-way base) はキーごとに重ねる: 渡されなかったキーは前の観測を残し、値の消去は null で渡す。
+    exact-13 package member も受ける: C14 は package member も投影し、linkage は system-dev-planner が持つ内容
+    (本文・binding・package key) ではなく GitHub 側の状態なので、update/bind-github と違って register-package へ回さない。
+    member は register-package と同じく graph だけに記録する (artifact file と内容 key は求めず、receipt は graph_only)。
+    """
+    entries = payload.get("links")
+    if set(payload) - {"links"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "link-github input is {links:[{graph_node_id, issue_linkage?, github_project_linkages?}]}")
+    config_path = Path(ctx["local_state_paths"]["config"])
+    github = (load_json(config_path) if config_path.is_file() else {}).get("github") or {}
+    projects = {project.get("alias"): project for project in github.get("projects") or [] if isinstance(project, dict)}
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    by_id = {node.get("graph_node_id"): node for node in nodes}
+    seen: set[str] = set()
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"links[{index}]"
+        _check_keys(entry, {"graph_node_id", "issue_linkage", "github_project_linkages"}, label)
+        graph_node_id = entry.get("graph_node_id")
+        if graph_node_id not in by_id or graph_node_id in seen:
+            raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
+        seen.add(graph_node_id)
+        before_node = by_id[graph_node_id]
+        # register-package registers a member to the graph only, without the content keys or an artifact file.
+        member = any(before_node.get(key) is not None for key in PACKAGE_KEYS)
+        _require_keys(before_node, [] if member else keys, label)
+        if before_node["tracker_binding"] != "github":
+            raise WriterError("link_github_requires_github_binding",
+                              f"{label}: {graph_node_id} is tracker_binding={before_node['tracker_binding']}; switch it with bind-github first")
+        node = copy.deepcopy(before_node)
+        issue = entry.get("issue_linkage")
+        if issue is not None:  # a failed issue-create proposes null: nothing to record, and this verb never unlinks.
+            if not isinstance(issue, dict) or issue.get("repo") != github.get("issue_repository"):
+                raise WriterError("issue_linkage_conflict", f"{label}.issue_linkage must name github.issue_repository {github.get('issue_repository')!r}")
+            current = before_node["issue_linkage"]
+            if current and (current.get("repo"), current.get("issue_number")) != (issue.get("repo"), issue.get("issue_number")):
+                raise WriterError("issue_linkage_conflict", f"{label}: {graph_node_id} is already linked to {current.get('repo')}#{current.get('issue_number')}")
+            node["issue_linkage"] = current or issue  # the first link keeps its linked_at
+        links = entry.get("github_project_linkages")
+        if links is not None:
+            if not isinstance(links, list) or not all(isinstance(link, dict) for link in links):
+                raise WriterError("invalid_input", f"{label}.github_project_linkages must be an array of objects")
+            merged = {link.get("project_alias"): link for link in before_node["github_project_linkages"]}
+            aliases: set[str] = set()
+            for link in links:
+                alias = link.get("project_alias")
+                project = projects.get(alias)
+                if alias in aliases or project is None:
+                    raise WriterError("unknown_project_alias", f"{label}: project alias {alias!r} is repeated or not configured in github.projects")
+                aliases.add(alias)
+                if any(link.get(key) != project.get(key) for key in ("owner_type", "owner_login", "project_number")):
+                    raise WriterError("project_identity_mismatch", f"{label}: {alias} owner/project_number differs from github.projects")
+                previous = merged.get(alias) or {}
+                if previous.get("item_id") and link.get("item_id") != previous["item_id"]:
+                    raise WriterError("project_item_conflict", f"{label}: {alias} is already linked to item {previous['item_id']}")
+                snapshot = link.get("field_snapshot", {})
+                if not isinstance(snapshot, dict):
+                    raise WriterError("invalid_input", f"{label}: {alias} field_snapshot must be an object")
+                merged[alias] = {**link, "linked_at": previous.get("linked_at") or link.get("linked_at"),
+                                 "field_snapshot": {**(previous.get("field_snapshot") or {}), **snapshot}}
+            node["github_project_linkages"] = list(merged.values())
+        if node == before_node:
+            continue
+        detail = {"graph_node_id": graph_node_id, "file_path": node["file_path"],
+                  "issue_linked": node["issue_linkage"] != before_node["issue_linkage"],
+                  "project_aliases_linked": sorted(a for a in aliases) if links is not None else [],
+                  "body_preserved": True, "graph_only": member}
+        if member:  # the member's file, if any, is system-dev-planner's; record the linkage in the graph alone.
+            plan.append({"node": node, "before_node": before_node, "path": None, "before": None, "text": None, "detail": detail})
+            continue
+        target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+        before_bytes = target_path.read_bytes()
+        frontmatter = VGS.frontmatter_of(target_path)
+        if frontmatter.get("graph_node_id") != graph_node_id or frontmatter.get("file_path") != before_node["file_path"]:
+            raise WriterError("artifact_parity_error", f"{label}: frontmatter identity differs from the graph node")
+        front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+        plan.append({"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+                     "detail": detail})
+    return plan
+
+
 # ---------------------------------------------------------------- transaction
 
-def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], changed: set[str],
+def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], staged_ids: set[str],
               staging: Path, root: Path, schema: dict[str, Any], contract: dict[str, Any]) -> list[dict[str, str]]:
     def collect(nodes: list[dict[str, Any]], staged: set[str]) -> list[dict[str, str]]:
         found = [item for index, node in enumerate(nodes) for item in VGS.schema_findings(node, schema, index)]
@@ -957,8 +1199,8 @@ def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], ch
         return found
 
     known = {json.dumps(item, sort_keys=True) for item in collect(baseline, set())}
-    return [item for item in collect(proposed, changed)
-            if item["node"] in changed or json.dumps(item, sort_keys=True) not in known]
+    return [item for item in collect(proposed, staged_ids)
+            if item["node"] in staged_ids or json.dumps(item, sort_keys=True) not in known]
 
 
 def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, Any]]]) -> dict[str, Any]:
@@ -1004,7 +1246,9 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         if not plan:
             return {**base, "status": "noop", "valid": True, "dry_run": bool(args.dry_run), "idempotent": True,
                     "applied_count": 0, "write_count": 0, "graph_revision_after": revision_before}
-        changed = {item["node"]["graph_node_id"] for item in plan}
+        # A graph-only entry (path None: a package member's linkage) stages no artifact, so only the findings it
+        # introduces block it; every staged node must come out clean.
+        staged_ids = {item["node"]["graph_node_id"] for item in plan if item["path"] is not None}
         replacements = {item["node"]["graph_node_id"]: item["node"] for item in plan}
         proposed_nodes = [replacements.pop(node.get("graph_node_id"), node) for node in nodes]
         proposed_nodes += [item["node"] for item in plan if item["before_node"] is None]
@@ -1014,10 +1258,12 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         with tempfile.TemporaryDirectory(prefix="dev-graph-node-") as staging_dir:
             staging = Path(staging_dir).resolve()
             for item in plan:
+                if item["path"] is None:
+                    continue
                 staged = staging / item["node"]["file_path"]
                 staged.parent.mkdir(parents=True, exist_ok=True)
                 staged.write_text(item["text"], encoding="utf-8")
-            findings = _findings(proposed_nodes, nodes, changed, staging, root, schema, contract)
+            findings = _findings(proposed_nodes, nodes, staged_ids, staging, root, schema, contract)
         if findings:
             raise WriterError("pre_write_validation_failed", f"{len(findings)} validate-graph-schema finding(s)", findings)
         receipt_path = receipts / f"node-r{revision_before + 1:06d}-{args.command}.json"
@@ -1029,7 +1275,8 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
             "template_sources": sorted(composer.sources),
             "artifacts": [{**item["detail"],
                            "sha256_before": _sha256(item["before"]) if item["before"] is not None else None,
-                           "sha256_after": _sha256(item["text"].encode("utf-8"))} for item in plan],
+                           "sha256_after": _sha256(item["text"].encode("utf-8")) if item["text"] is not None else None}
+                          for item in plan],
             "receipt_path": receipt_path.relative_to(root).as_posix(),
         }
         if args.dry_run:
@@ -1039,6 +1286,8 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         graph_written = False
         try:
             for item in plan:
+                if item["path"] is None:
+                    continue
                 if item["before"] is not None and item["path"].read_bytes() != item["before"]:
                     raise WriterError("artifact_changed_during_write", item["node"]["file_path"])
                 _write_atomic(item["path"], item["text"].encode("utf-8"), create_only=item["before"] is None)
@@ -1079,13 +1328,17 @@ def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
         raise WriterError("immutable_receipt_exists", str(path)) from exc
 
 
+PLANNERS: dict[str, Callable[..., list[dict[str, Any]]]] = {
+    "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github, "link-github": _plan_link_github}
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="C02 single writer for ordinary dev-graph artifacts")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("add", "update"):
+    for name in PLANNERS:
         command = sub.add_parser(name)
         command.add_argument("--repo-root", required=True)
-        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}")
+        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}")
         command.add_argument("--config", default=".dev-graph/config.json")
         command.add_argument("--dry-run", action="store_true")
     return parser
@@ -1094,7 +1347,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        dump(_transact(args, _plan_add if args.command == "add" else _plan_update))
+        dump(_transact(args, PLANNERS[args.command]))
         return 0
     except WriterError as exc:
         broken = exc.code == "rollback_incomplete"
