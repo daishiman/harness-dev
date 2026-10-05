@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: Readとgh-bridge dry-run。
+- 使用資産: Readとgh-bridge dry-run。Issue は `diff-github-issues.py` (read-only) が updated_at の新しい側で exports/imports を、同時刻は書込み 0 の confirmations (手動確認フラグ) を返す。Projects field は `diff-github-project-fields.py` (read-only) が `field_snapshot` を base に exports/imports/conflicts/link_input を返し、`--issue-plan` (同じ graph_revision の Issue の計画) に行が残る node への import は `held` に回す。どちらも option/iteration に無い値は `unsupported-export`、reopen は conflict として write 0 の分類に残す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

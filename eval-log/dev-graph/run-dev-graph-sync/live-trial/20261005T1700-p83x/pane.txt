@@ -1,0 +1,1019 @@
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+❯ 次のファイルに書かれたタスクを読み、その指示どおりに実行してください。余計な確認は返さず即着手: /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1700-p83x/task.md
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Skill(dev-graph:run-dev-graph-sync)
+  ⎿  Successfully loaded skill · 7 tools allowed
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync && cat README.md && ls -la && git log --oneline | head)
+  ⎿  # r5-sync live-trial fixture
+
+     `dev-graph:run-dev-graph-sync` の C03-OUT1 (二回目 sync 差分0) を検証する封じ込め fixture。
+     … +18 lines (ctrl+o to expand)
+  ⎿  Created ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1700-p83x/poll-state.json (+1 -0)
+      1 +{"elapsed": 15, "stall": 0, "settle": 0, "prev": "jsonl:72272:BUSY_TOOL_RUNNING", "gate_ticks": 0, "warned80": 0}
+  ⎿  (what this command changed; a convenience view, not a review or audit of the command)
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync; head -80 SKILL.md | sed -n '1,60p'; for f in prompts/*.md; do echo "=== $f"; cat…)
+  ⎿  ---
+     name: run-dev-graph-sync
+     description: tracker_binding に従い dev-graph と Beads を同期したいとき、GitHub Issues/Projects/PR lifecycle を冪等収束したいときに使う。
+     … +608 lines (ctrl+o to expand)
+
+⏺ Now fixture state and scripts.
+
+⏺ Bash(FX=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync; cat $FX/.dev-graph/config.json $FX/.dev-graph/state/graph.json $FX/.dev-grap…)
+  ⎿  {
+       "claude_hooks": {
+         "post_tool_reconcile": true,
+     … +636 lines (ctrl+o to expand)
+
+⏺ Now the scripts' CLIs.
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts; wc -l resolve-repo-context.py validate-graph-schema.py gh-bridge.py diff-github-issues.py diff-gith…)
+  ⎿       254 resolve-repo-context.py
+          411 validate-graph-schema.py
+          219 gh-bridge.py
+     … +143 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts; cat gh-bridge.py; grep -n "gh-bridge\|GH_\|environ\|subprocess" diff-github-issues.py diff-github-p…)
+  ⎿  #!/usr/bin/env python3
+     # /// script
+     # name: gh-bridge
+     … +233 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts; sed -n 60,204p diff-github-issues.py; sed -n 95,362p diff-github-project-fields.py)
+  ⎿      try:
+             moment = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+         except ValueError:
+     … +410 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; grep -n "ITEM_QUERY =" -A4 scripts/diff-github-project-fields.py; grep -rln "github-sync-snapshot" . | head…)
+  ⎿  58:ITEM_QUERY = ("query($id:ID!){node(id:$id){... on ProjectV2Item{id fieldValues(first:100){nodes{"
+     59-              "... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2FieldCommon{name}}} "
+     60-              "... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2FieldCommon{name}}} "
+     … +8 lines (ctrl+o to expand)
+
+⏺ Bash(cd /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync && P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 $P/scripts/res…)
+  ⎿  {
+       "branch": "p83x-sync",
+       "content_roots": {
+     … +59 lines (ctrl+o to expand)
+  ⎿  Updated ~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1700-p83x/poll-state.json (+1 -1)
+      1 -{"elapsed": 60, "stall": 0, "settle": 0, "prev": "jsonl:408480:BUSY_TOOL_RUNNING", "gate_ticks": 0, "warned80": 0}
+      1 +{"elapsed": 75, "stall": 0, "settle": 0, "prev": "jsonl:498832:BUSY_GENERATING", "gate_ticks": 0, "warned80": 0}
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; export DEV_GRAPH_GH="$PWD/tools/fake-gh.py"; chmod +x tools/fake-gh.py 2>/dev/null; ls -l tools/fake-gh.py;…)
+  ⎿  -rwxr-xr-x@ 1 dm  staff  9466 Oct  5 14:23 tools/fake-gh.py
+     {
+       "changes": 2,
+     … +65 lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1-issue-plan.json (+66 -0)
+       1 +{
+       2 +  "changes": 2,
+       3 +  "confirmations": [],
+       4 +  "conflicts": [],
+       5 +  "counts": {
+       6 +    "confirmations": 0,
+       7 +    "conflicts": 0,
+       8 +    "exports": 1,
+       9 +    "imports": 1
+      10 +  },
+      11 +  "exports": [
+      12 +    {
+      13 +      "bridge_args": [
+      14 +        "--op",
+      15 +        "issue-update",
+      16 +        "--repo",
+      17 +        "local-fixture/r5-sync",
+      18 +        "--number",
+      19 +        "102",
+      20 +        "--title=Sync export target task (local revision 2)"
+      21 +      ],
+      22 +      "field": "title",
+      23 +      "graph_node_id": "tasks/T-SYNC-002",
+      24 +      "issue_number": 102,
+      25 +      "kind": "local-newer",
+      26 +      "local": "Sync export target task (local revision 2)",
+      27 +      "local_updated_at": "2026-08-10T10:00:00Z",
+      28 +      "remote": "Sync export target task",
+      29 +      "remote_updated_at": "2026-08-01T00:00:00Z",
+      30 +      "repo": "local-fixture/r5-sync"
+      31 +    }
+      32 +  ],
+      33 +  "graph_revision": 3,
+      34 +  "imports": [
+      35 +    {
+      36 +      "field": "title",
+      37 +      "graph_node_id": "tasks/T-SYNC-001",
+      38 +      "issue_number": 101,
+      39 +      "kind": "remote-newer",
+      40 +      "local": "Sync import target task",
+     … 26 more lines (ctrl+o to expand)
+  ⎿  Created github-adapter-calls.jsonl (+2 -0)
+      1 +{"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      2 +{"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+
+⏺ 1回目の Issue 計画が出ました（import 1件: T-SYNC-001 の title、export 1件: #102 の title）。次に Projects field 計画を確認します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; export DEV_GRAPH_GH="$PWD/tools/fake-gh.py"; python3 $P/scripts/diff-github-project-fields.py --repo-root "$…)
+  ⎿  command failed (1): /Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync/tools/fake-gh.py api graphql -f query=query($id:ID!){node(id:$id){... on ProjectV2Item{id fieldValues(firs
+     t:100){nodes{... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2FieldCommon{name}}} ... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2FieldCommon{name}}} ... on ProjectV2ItemField
+     NumberValue{number field{... on ProjectV2FieldCommon{name}}} ... on ProjectV2ItemFieldDateValue{date field{... on ProjectV2FieldCommon{name}}} ... on ProjectV2ItemFieldIterationValue{title field{... on ProjectV
+     … +23 lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      1  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      2  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+      3 +{"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+
+⏺ fake-gh が Projects item の fieldValues クエリに未対応だと分かったので、field 定義は gh-bridge project-resolve、item 値は adapter fixture から取得し、Projects planner の --remote 入力としてruntime cache に配置します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; export DEV_GRAPH_GH="$PWD/tools/fake-gh.py"; mkdir -p .dev-graph/cache; python3 $P/scripts/gh-bridge.py --op…)
+  ⎿  {
+      "counts": {
+       "conflicts": 0,
+     … +63 lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/project-resolve-delivery.json (+57 -0)
+       1 +{
+       2 +  "dry_run": false,
+       3 +  "op": "project-resolve",
+       4 +  "result": {
+       5 +    "fields": {
+       6 +      "nodes": [
+       7 +        {
+       8 +          "id": "PVTSSF_status",
+       9 +          "name": "Status",
+      10 +          "options": [
+      11 +            {
+      12 +              "id": "opt_status_todo",
+      13 +              "name": "Todo"
+      14 +            },
+      15 +            {
+      16 +              "id": "opt_status_in_progress",
+      17 +              "name": "In Progress"
+      18 +            },
+      19 +            {
+      20 +              "id": "opt_status_blocked",
+      21 +              "name": "Blocked"
+      22 +            },
+      23 +            {
+      24 +              "id": "opt_status_done",
+      25 +              "name": "Done"
+      26 +            }
+      27 +          ]
+      28 +        },
+      29 +        {
+      30 +          "id": "PVTSSF_priority",
+      31 +          "name": "Priority",
+      32 +          "options": [
+      33 +            {
+      34 +              "id": "opt_priority_high",
+      35 +              "name": "High"
+      36 +            },
+      37 +            {
+      38 +              "id": "opt_priority_medium",
+      39 +              "name": "Medium"
+      40 +            },
+     … 17 more lines (ctrl+o to expand)
+  ⎿  Created .dev-graph/cache/remote-projects-pass1.json (+67 -0)
+       1 +{
+       2 +  "projects": {
+       3 +    "delivery": {
+       4 +      "id": "PVT_kwDOFIXTURE0001",
+       5 +      "fields": {
+       6 +        "nodes": [
+       7 +          {
+       8 +            "id": "PVTSSF_status",
+       9 +            "name": "Status",
+      10 +            "options": [
+      11 +              {
+      12 +                "id": "opt_status_todo",
+      13 +                "name": "Todo"
+      14 +              },
+      15 +              {
+      16 +                "id": "opt_status_in_progress",
+      17 +                "name": "In Progress"
+      18 +              },
+      19 +              {
+      20 +                "id": "opt_status_blocked",
+      21 +                "name": "Blocked"
+      22 +              },
+      23 +              {
+      24 +                "id": "opt_status_done",
+      25 +                "name": "Done"
+      26 +              }
+      27 +            ]
+      28 +          },
+      29 +          {
+      30 +            "id": "PVTSSF_priority",
+      31 +            "name": "Priority",
+      32 +            "options": [
+      33 +              {
+      34 +                "id": "opt_priority_high",
+      35 +                "name": "High"
+      36 +              },
+      37 +              {
+      38 +                "id": "opt_priority_medium",
+      39 +                "name": "Medium"
+      40 +              },
+     … 27 more lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1-project-plan.json (+71 -0)
+       1 +{
+       2 +  "changes": 2,
+       3 +  "conflicts": [],
+       4 +  "counts": {
+       5 +    "conflicts": 0,
+       6 +    "exports": 0,
+       7 +    "held": 0,
+       8 +    "imports": 0,
+       9 +    "links": 2
+      10 +  },
+      11 +  "exports": [],
+      12 +  "graph_revision": 3,
+      13 +  "held": [],
+      14 +  "imports": [],
+      15 +  "link_input": {
+      16 +    "expected_graph_revision": 3,
+      17 +    "links": [
+      18 +      {
+      19 +        "github_project_linkages": [
+      20 +          {
+      21 +            "field_snapshot": {
+      22 +              "priority": "High",
+      23 +              "status": "In Progress",
+      24 +              "target_date": "2026-08-20"
+      25 +            },
+      26 +            "item_id": "PVTI_lADOFIXTURE0001zgA0101",
+      27 +            "last_error_code": null,
+      28 +            "last_synced_at": "2026-10-05T05:30:01.017146Z",
+      29 +            "linked_at": "2026-08-01T00:00:00Z",
+      30 +            "owner_login": "fixture-owner",
+      31 +            "owner_type": "user",
+      32 +            "project_alias": "delivery",
+      33 +            "project_id": "PVT_kwDOFIXTURE0001",
+      34 +            "project_number": 1,
+      35 +            "sync_state": "synced"
+      36 +          }
+      37 +        ],
+      38 +        "graph_node_id": "tasks/T-SYNC-001"
+      39 +      },
+      40 +      {
+     … 31 more lines (ctrl+o to expand)
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      1  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      2  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+      3  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      4 +{"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+
+⏺ Projects側はimport/export対象なしで、残るはsnapshotの再記録（link 2件）のみでした。fixtureのfield_snapshotはproject field名をキーにしていますが、plannerはlocal
+  field名をキーにするため、まずC02によるimport（ローカルのみ）を行い、その後で再計画します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 -c 'import json;json.dump(json.load(open("eval-log/sync-pass1-issue-plan.json"))["update_input"],ope…)
+  ⎿  {
+       "applied_count": 0,
+       "artifacts": [
+     … +49 lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1-issue-update-input.json (+11 -0)
+       1 +{
+       2 +  "expected_graph_revision": 3,
+       3 +  "updates": [
+       4 +    {
+       5 +      "graph_node_id": "tasks/T-SYNC-001",
+       6 +      "node_patch": {
+       7 +        "title": "Sync import target task (remote revision 2)"
+       8 +      }
+       9 +    }
+      10 +  ]
+      11 +}
+
+⏺ Dry-run は問題なし（write_count 0）。改善レベルは standard を選んで記録し、goal-spec を書いてから import を反映します。
+
+⏺ Bash(python3 - <<'PY'
+      import json,hashlib…)
+  ⎿  {'status': 'applied', 'applied_count': 1, 'graph_revision_after': 4, 'receipt_path': '.dev-graph/state/receipts/node-r000004-update.json', 'write_count': 3}
+  ⎿  Created .dev-graph/state/.graph.json.register.lock (+0 -0)
+  ⎿  Updated .dev-graph/state/graph.json (+4 -4)
+      1  {
+      2 -  "graph_revision": 3,
+      2 +  "graph_revision": 4,
+      3    "nodes": [
+      4      {
+      5        "acceptance": [],
+     ...
+      64        "goal": null,
+      65        "graph_node_id": "tasks/T-SYNC-001",
+      66        "implementation_readiness": {
+      67 -        "checked_at": "2026-08-01T00:00:00Z",
+      67 +        "checked_at": "2026-10-05T05:30:29.386368Z",
+      68          "missing_sections": [],
+      69          "status": "complete"
+      70        },
+     ...
+      106        "target_date": "2026-08-20",
+      107        "template_id": "task",
+      108        "template_version": "1.0.0",
+      109 -      "title": "Sync import target task",
+      109 +      "title": "Sync import target task (remote revision 2)",
+      110        "tracker_binding": "github",
+      111 -      "updated_at": "2026-08-01T00:00:00Z"
+      111 +      "updated_at": "2026-10-05T05:30:29.386368Z"
+      112      },
+      113      {
+      114        "acceptance": [],
+  ⎿  Created .dev-graph/state/receipts/node-r000004-update.json (+47 -0)
+       1 +{
+       2 +  "applied_count": 1,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "api_contracts_added": [],
+       6 +      "file_path": "tasks/T-SYNC-001.md",
+       7 +      "graph_node_id": "tasks/T-SYNC-001",
+       8 +      "implementation_readiness": "complete",
+       9 +      "macro_fields_patched": [],
+      10 +      "missing_sections": [],
+      11 +      "node_fields_patched": [
+      12 +        "title"
+      13 +      ],
+      14 +      "readiness_fill": [],
+      15 +      "sections_appended": [],
+      16 +      "sections_regenerated": [],
+      17 +      "sections_replaced": [],
+      18 +      "sha256_after": "aaa4a9674834aa03702959fcc8b29e17f69d6b058b8a85f35047d4c9f43ee71f",
+      19 +      "sha256_before": "71e52b10b8af896f7883c008e0b26af4c844ec9bcaa82ad16bb910e6c0095f6c",
+      20 +      "subtypes_added": [],
+      21 +      "unmanaged_body_preserved": true,
+      22 +      "unmanaged_frontmatter_kept": []
+      23 +    }
+      24 +  ],
+      25 +  "graph_digest_after": "sha256:557369f1516dc5003a35e2bb8cd763892d80a3876a9568f8a0a514cdd65bdb16",
+      26 +  "graph_path": ".dev-graph/state/graph.json",
+      27 +  "graph_revision_after": 4,
+      28 +  "graph_revision_before": 3,
+      29 +  "input_sha256": "68a21df365ba64a3d18f0cad78f5b762f959f8a3313af1c2104da0e14f70d35c",
+      30 +  "node_ids": [
+      31 +    "tasks/T-SYNC-001"
+      32 +  ],
+      33 +  "operation": "update",
+      34 +  "owner": "C02/run-dev-graph-node",
+      35 +  "pre_write_validation": {
+      36 +    "findings": 0,
+      37 +    "validator": "validate-graph-schema.py"
+      38 +  },
+      39 +  "receipt_path": ".dev-graph/state/receipts/node-r000004-update.json",
+      40 +  "recorded_at": "2026-10-05T05:30:29.386368Z",
+     … 7 more lines (ctrl+o to expand)
+  ⎿  Created eval-log/run-dev-graph-sync-goal-spec.json (+10 -0)
+       1 +{
+       2 +  "original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault branch側ta
+         +sk仕様へ収束した状態になっている",
+       3 +  "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43",
+       4 +  "binding": "github",
+       5 +  "remote": "adapter-fixture github-adapter.json via tools/fake-gh.py (DEV_GRAPH_GH)",
+       6 +  "repeat": 2,
+       7 +  "choice": "standard",
+       8 +  "choice_recorded_at": "2026-10-05T05:31:00Z",
+       9 +  "state": "semantic_evaluator_started"
+      10 +}
+  ⎿  Updated tasks/T-SYNC-001.md (+9 -9)
+      2  graph_node_id: "tasks/T-SYNC-001"
+      3  artifact_kind: "task"
+      4  artifact_subtypes: []
+      5 -title: "Sync import target task"
+      5 +title: "Sync import target task (remote revision 2)"
+      6  project_id: "r5-sync"
+      7  domain: "delivery"
+      8  status: "active"
+     ...
+      17  template_version: "1.0.0"
+      18  confirmation_status: "confirmed"
+      19  evaluation_status: "pass"
+      20 -confirmation_evidence: {"evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evaluation.md", "evaluated_digest": "6944c4e81735ebeca22e0797ca87ee8df26ce839b53be63a64b1523a
+         -e85f5a15"}
+      21 -source_lineage: {"origin_kind": "manual", "source_plugin": null, "source_path": null, "source_version": null, "source_digest": null, "imported_at": "2026-07-20T00:00:00Z"}
+      20 +confirmation_evidence: {"evaluated_digest": "6944c4e81735ebeca22e0797ca87ee8df26ce839b53be63a64b1523ae85f5a15", "evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evalu
+         +ation.md"}
+      21 +source_lineage: {"imported_at": "2026-07-20T00:00:00Z", "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-07-20T00:00:00Z"
+      23 -updated_at: "2026-08-01T00:00:00Z"
+      23 +updated_at: "2026-10-05T05:30:29.386368Z"
+      24  depends_on: []
+      25  related_nodes: []
+      26  resource_scope: ["src/t-sync-001"]
+     ...
+      38  classification_candidates: []
+      39  tracker_binding: "github"
+      40  beads_linkage: null
+      41 -github_publication: {"mode": "issue_and_projects", "project_aliases": ["delivery"], "labels": ["dev-graph"], "milestone": null}
+      42 -issue_linkage: {"issue_number": 101, "repo": "local-fixture/r5-sync", "linked_at": "2026-08-01T00:00:00Z"}
+      43 -github_project_linkages: [{"project_alias": "delivery", "owner_type": "user", "owner_login": "fixture-owner", "project_number": 1, "project_id": "PVT_kwDOFIXTURE0001", "item_id": "PVTI_lADOFIXTURE0001zgA
+         -0101", "sync_state": "synced", "field_snapshot": {"Status": "In Progress", "Priority": "High", "Target date": "2026-08-20"}, "linked_at": "2026-08-01T00:00:00Z", "last_synced_at": "2026-08-01T00:00:00Z",
+         - "last_error_code": null}]
+      41 +github_publication: {"labels": ["dev-graph"], "milestone": null, "mode": "issue_and_projects", "project_aliases": ["delivery"]}
+      42 +issue_linkage: {"issue_number": 101, "linked_at": "2026-08-01T00:00:00Z", "repo": "local-fixture/r5-sync"}
+      43 +github_project_linkages: [{"field_snapshot": {"Priority": "High", "Status": "In Progress", "Target date": "2026-08-20"}, "item_id": "PVTI_lADOFIXTURE0001zgA0101", "last_error_code": null, "last_synced_at
+         +": "2026-08-01T00:00:00Z", "linked_at": "2026-08-01T00:00:00Z", "owner_login": "fixture-owner", "owner_type": "user", "project_alias": "delivery", "project_id": "PVT_kwDOFIXTURE0001", "project_number": 1
+         +, "sync_state": "synced"}]
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46 -completion_evidence: {"policy": "linked_pr_merged_all", "status": "in_progress", "source": null, "completed_at": null, "reconciled_at": "2026-08-01T00:00:00Z", "evidence_refs": []}
+      47 -implementation_readiness: {"status": "complete", "missing_sections": [], "checked_at": "2026-08-01T00:00:00Z"}
+      46 +completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "linked_pr_merged_all", "reconciled_at": "2026-08-01T00:00:00Z", "source": null, "status": "in_progress"}
+      47 +implementation_readiness: {"checked_at": "2026-10-05T05:30:29.386368Z", "missing_sections": [], "status": "complete"}
+      48  ---
+      49  # 目的
+      50
+
+⏺ Import を反映しました（graph_revision 4）。次は export を guard 経由で出すため、guard plugin root を解決して export を dry-run で確認します。
+
+⏺ Bash(P=/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph; python3 $P/scripts/extract-plugin-root.py skill-governance-adapters; export DEV_GRAPH_GH="$PWD/tools/fake-gh…)
+  ⎿  /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters
+     {
+       "dry_run": true,
+     … +9 lines (ctrl+o to expand)
+
+⏺ Bash(G=/Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py; wc -l $G; grep -n "def \|add_argument\|env\b\|envir…)
+  ⎿  Error: PreToolUse:Bash hook error: Malformed central guard invocation is blocked: the full Bash command must be exactly one canonical preview, authorize, or execute call with no shell operators.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ guard がコマンド全体を単一の正規呼び出しとして要求するため、fake-gh の環境変数は shell 前置きではなく env を先頭にした mutation argv に組み込みます。続けて export の preview を発行します。
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py preview --project-root /Users/dm/dev/dev/個人開発/…)
+  ⎿  {
+       "contract_id": "external-mutation-guard-v1",
+       "status": "preview-created",
+     … +23 lines (ctrl+o to expand)
+  ⎿  Created .artifact-delivery/external-mutation/.guard-key (+2 -0)
+      1 +"�e%&P0+Ÿ��|�4ʑ�
+      2 +�eͥ,?^�e
+  ⎿  Created .artifact-delivery/external-mutation/preview-d308a0f47dcc4d40b13ae98a04b75792.json (+1 -0)
+      1 +{"action_class":null,"challenge_sha256":"897b14a771e1a6271c5cfc1425c6eb6ec9aa388c5ddafc0994477790bf94e819","command_argv":["env","DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-tr
+        +ial-fixtures/p83x-sync/tools/fake-gh.py","python3","/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py","--op","issue-update","--repo","local-fixture/r5-sync","--number","102","--ti
+        +tle=Sync export target task (local revision 2)"],"command_sha256":"3534d1e63cc75355df060cd8676dbd7712cfe16b1ac39328f329ffd0950a497c","contract_id":"external-mutation-guard-v1","diff_summary":"sync pass 1
+        +export: issue #102 title 'Sync export target task' -> 'Sync export target task (local revision 2)' (local-newer 2026-08-10T10:00Z > remote 2026-08-01Z)","entrypoint_ref":"plugin:dev-graph/skills/run-dev-g
+        +raph-sync/SKILL.md","expires_at":1791179174,"issued_at":1791178274,"issued_at_ns":1791178274355052000,"kind":"preview","receipt_id":"d308a0f47dcc4d40b13ae98a04b75792","schema_version":1,"seal":"69484e57a6
+        +49ef40b3af1fb5df11ac0a75d7f65fc6991fd1b3753d565130bb55","side_effect_summary":"fake-gh.py rewrites github-adapter.json issue 102 title/updatedAt and appends mutation_log + github-adapter-calls.jsonl insid
+        +e the fixture; no network","status":"pending-user-confirmation","target_scope":"adapter-fixture local-fixture/r5-sync issue #102 (offline fake-gh, no real GitHub)"}
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1700-p83x/gate-request.json)
+  ⎿  Wrote 1 line to ../../run-dev-graph-sync/live-trial/20261005T1700-p83x/gate-request.json
+      1 {"challenge": "7E2FC044F05F5FB540AF09B4", "preview_receipt_id": "d308a0f47dcc4d40b13ae98a04b75792", "issued_at_iso": "2026-10-05T05:33:00Z"}
+
+⏺ Preview（gh-bridge issue-update で fake-gh adapter の #102 のタイトルを local revision 2 に更新）を発行しました。ここからはオペレーターの応答を Read で待ちます。
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ まだ応答ファイルがないので待機しつつ、Writeツールでprogressとintermediateの記録を書いておきます。
+ ▐▛███▛█   Claude Code v2.1.289
+▝▜██████▀  Opus 5.5 · Claude Max
+ ▝▝   ▝▝   ~/dev/dev/個人開発/harness
+
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+  Read 1 file (ctrl+o to expand)
+  ⎿  Read eval-log/run-dev-graph-sync-progress.json (13 lines)
+  ⎿  Read ../../run-dev-graph-sync/live-trial/20261005T1700-p83x/gate-request.json (2 lines)
+  ⎿  Referenced file ../../../../plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py
+  ⎿  Skills restored (dev-graph:run-dev-graph-sync)
+
+⏺ まだゲート応答は届いていません（約245回ポーリング済み、ファイル未作成で待機中）。引き続きReadで応答を待ちます。
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ ゲート応答はまだ届いていません（約270回ポーリング済み）。Read による待機を続けます。
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ ゲート応答はまだありません（約300回）。引き続き Read で待機します。
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ ゲート応答が届きました。authorize を実行します。
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py authorize --project-root /Users/dm/dev/dev/個人開…)
+  ⎿  {
+       "confirmation_receipt_kind": "confirmation",
+       "contract_id": "external-mutation-guard-v1",
+     … +4 lines (ctrl+o to expand)
+  ⎿  Created .artifact-delivery/external-mutation/authorization-claim-preview-d308a0f47dcc4d40b13ae98a04b75792.json (+1 -0)
+      1 +{"claimed_at":1791178765,"confirmation_receipt_id":"42fe70d9d27846d3b833ba0a54f745bb","confirmation_receipt_sha256":"4bc84bb051e1f7f32c3700a7b930d8f1d7b2adc3a381acc6159febde0d805198","contract_id":"extern
+        +al-mutation-guard-v1","kind":"authorization-claim","preview_receipt_id":"d308a0f47dcc4d40b13ae98a04b75792","preview_receipt_sha256":"31cfbebb5933968e575776fcbd6f72b970dc196f84aae09c0e4032a925c412d2","sche
+        +ma_version":1,"seal":"79763f665b36651e9aa1917162bda65995f4b1211a39049e7f8c21f4385d3861"}
+  ⎿  Created .artifact-delivery/external-mutation/authorization-e4cf38e29cb94fd1980e6a05ea18349b.json (+1 -0)
+      1 +{"command_sha256":"3534d1e63cc75355df060cd8676dbd7712cfe16b1ac39328f329ffd0950a497c","confirmation_receipt_id":"42fe70d9d27846d3b833ba0a54f745bb","confirmation_receipt_kind":"confirmation","confirmation_r
+        +eceipt_sha256":"4bc84bb051e1f7f32c3700a7b930d8f1d7b2adc3a381acc6159febde0d805198","contract_id":"external-mutation-guard-v1","entrypoint_ref":"plugin:dev-graph/skills/run-dev-graph-sync/SKILL.md","expires
+        +_at":1791179665,"issued_at":1791178765,"issued_at_ns":1791178765726142000,"kind":"authorization","preview_receipt_id":"d308a0f47dcc4d40b13ae98a04b75792","preview_receipt_sha256":"31cfbebb5933968e575776fcb
+        +d6f72b970dc196f84aae09c0e4032a925c412d2","receipt_id":"e4cf38e29cb94fd1980e6a05ea18349b","schema_version":1,"seal":"dedc47280acdd743bfbbdb18545209bce52a9829d24f0db96581eaea921d7e79","status":"authorized-o
+        +nce","target_scope":"adapter-fixture local-fixture/r5-sync issue #102 (offline fake-gh, no real GitHub)"}
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py execute --project-root /Users/dm/dev/dev/個人開発/…)
+  ⎿  {
+       "dry_run": false,
+       "op": "issue-update",
+     … +6 lines (ctrl+o to expand)
+  ⎿  Created .artifact-delivery/external-mutation/completion-preview-d308a0f47dcc4d40b13ae98a04b75792.json (+1 -0)
+      1 +{"authorization_receipt_id":"e4cf38e29cb94fd1980e6a05ea18349b","authorization_receipt_sha256":"9f69b43face5ade50dbe7b594049eb269ab90b408c7f68bf852cafa769fa8c06","contract_id":"external-mutation-guard-v1",
+        +"expires_at":1791179674,"issued_at":1791178774,"issued_at_ns":1791178774674689000,"kind":"completion","preview_receipt_id":"d308a0f47dcc4d40b13ae98a04b75792","receipt_id":"96527bbf6d4a44bf9e46a8e418c83fb9
+        +","schema_version":1,"seal":"bfe6d30dfbe7ad41da93bef1010f0f91208b93f9cdec7f7ccf56bc6f72114b04","status":"executed-successfully"}
+  ⎿  Created .artifact-delivery/external-mutation/consumed-e4cf38e29cb94fd1980e6a05ea18349b.json (+1 -0)
+      1 +{"authorization_receipt_sha256": "9f69b43face5ade50dbe7b594049eb269ab90b408c7f68bf852cafa769fa8c06", "consumed_at": 1791178773}
+  ⎿  Updated github-adapter-calls.jsonl (+1 -0)
+      2  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+      3  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      4  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      5 +{"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+  ⎿  Updated github-adapter.json (+15 -3)
+      33        "id": "I_kwDOFIXTURE00102",
+      34        "number": 102,
+      35        "state": "OPEN",
+      36 -      "title": "Sync export target task",
+      37 -      "updatedAt": "2026-08-01T00:00:00Z",
+      36 +      "title": "Sync export target task (local revision 2)",
+      37 +      "updatedAt": "2026-08-11T12:00:00Z",
+      38        "url": "https://github.invalid/local-fixture/r5-sync/issues/102"
+      39      }
+      40    },
+      41 -  "mutation_log": [],
+      41 +  "mutation_log": [
+      42 +    {
+      43 +      "changed": {
+      44 +        "title": {
+      45 +          "from": "Sync export target task",
+      46 +          "to": "Sync export target task (local revision 2)"
+      47 +        }
+      48 +      },
+      49 +      "number": 102,
+      50 +      "op": "issue-edit",
+      51 +      "updatedAt": "2026-08-11T12:00:00Z"
+      52 +    }
+      53 +  ],
+      54    "network": "disabled",
+      55    "projects": {
+      56      "delivery": {
+
+⏺ エクスポートが適用されました（Issue #102 updated）。再計画で収束を確認します。
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py --help; python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/…)
+  ⎿  usage: diff-github-issues.py [-h] --repo-root REPO_ROOT [--config CONFIG]
+                                  [--graph GRAPH] [--remote REMOTE]
+                                  [--decisions DECISIONS] [--output OUTPUT]
+     … +97 lines (ctrl+o to expand)
+
+⏺ Bash(DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev…)
+  ⎿  {
+       "changes": 0,
+       "confirmations": [],
+     … +17 lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1b-issue-plan.json (+20 -0)
+       1 +{
+       2 +  "changes": 0,
+       3 +  "confirmations": [],
+       4 +  "conflicts": [],
+       5 +  "counts": {
+       6 +    "confirmations": 0,
+       7 +    "conflicts": 0,
+       8 +    "exports": 0,
+       9 +    "imports": 0
+      10 +  },
+      11 +  "exports": [],
+      12 +  "graph_revision": 4,
+      13 +  "imports": [],
+      14 +  "missing_issues": [],
+      15 +  "next": "converged",
+      16 +  "schema_version": "1.0.0",
+      17 +  "stale_decisions": [],
+      18 +  "unused_decisions": [],
+      19 +  "update_input": null
+      20 +}
+  ⎿  Updated github-adapter-calls.jsonl (+2 -0)
+      3  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      4  {"detail": {"alias": "delivery"}, "mutation": false, "op": "project-resolve"}
+      5  {"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+      6 +{"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      7 +{"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+
+⏺ Issue 側は収束しました（changes 0）。次に Projects を再計画します。
+
+⏺ Bash(cat .dev-graph/cache/remote-projects-pass1.json | python3 -c "import json,sys;d=json.load(sys.stdin);print(json.dumps({a:v['items'] for a,v in d['projects'].ite…)
+  ⎿  {
+       "delivery": {
+         "PVTI_lADOFIXTURE0001zgA0101": {
+     … +98 lines (ctrl+o to expand)
+
+⏺ Remote の Project 値は変わっていないので、キャッシュはそのまま使えます。
+
+⏺ Bash(DEV_GRAPH_GH=/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/p83x-sync/tools/fake-gh.py python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev…)
+  ⎿  {
+       "changes": 2,
+       "conflicts": [],
+     … +68 lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1b-project-plan.json (+71 -0)
+       1 +{
+       2 +  "changes": 2,
+       3 +  "conflicts": [],
+       4 +  "counts": {
+       5 +    "conflicts": 0,
+       6 +    "exports": 0,
+       7 +    "held": 0,
+       8 +    "imports": 0,
+       9 +    "links": 2
+      10 +  },
+      11 +  "exports": [],
+      12 +  "graph_revision": 4,
+      13 +  "held": [],
+      14 +  "imports": [],
+      15 +  "link_input": {
+      16 +    "expected_graph_revision": 4,
+      17 +    "links": [
+      18 +      {
+      19 +        "github_project_linkages": [
+      20 +          {
+      21 +            "field_snapshot": {
+      22 +              "priority": "High",
+      23 +              "status": "In Progress",
+      24 +              "target_date": "2026-08-20"
+      25 +            },
+      26 +            "item_id": "PVTI_lADOFIXTURE0001zgA0101",
+      27 +            "last_error_code": null,
+      28 +            "last_synced_at": "2026-10-05T05:40:01.660760Z",
+      29 +            "linked_at": "2026-08-01T00:00:00Z",
+      30 +            "owner_login": "fixture-owner",
+      31 +            "owner_type": "user",
+      32 +            "project_alias": "delivery",
+      33 +            "project_id": "PVT_kwDOFIXTURE0001",
+      34 +            "project_number": 1,
+      35 +            "sync_state": "synced"
+      36 +          }
+      37 +        ],
+      38 +        "graph_node_id": "tasks/T-SYNC-001"
+      39 +      },
+      40 +      {
+     … 31 more lines (ctrl+o to expand)
+
+⏺ No exports or imports remain, so I'll apply link_input through the C02 writer.
+
+⏺ Bash(python3 -c "import json;d=json.load(open('eval-log/sync-pass1b-project-plan.json'));json.dump(d['link_input'],open('eval-log/sync-pass1b-link-input.json','w'),e…)
+  ⎿  {
+       "applied_count": 2,
+       "artifacts": [
+     … +50 lines (ctrl+o to expand)
+  ⎿  Updated .dev-graph/state/graph.json (+11 -5)
+      1  {
+      2 -  "graph_revision": 4,
+      2 +  "graph_revision": 5,
+      3    "nodes": [
+      4      {
+      5        "acceptance": [],
+     ...
+      37            "field_snapshot": {
+      38              "Priority": "High",
+      39              "Status": "In Progress",
+      40 -            "Target date": "2026-08-20"
+      40 +            "Target date": "2026-08-20",
+      41 +            "priority": "High",
+      42 +            "status": "In Progress",
+      43 +            "target_date": "2026-08-20"
+      44            },
+      45            "item_id": "PVTI_lADOFIXTURE0001zgA0101",
+      46            "last_error_code": null,
+      44 -          "last_synced_at": "2026-08-01T00:00:00Z",
+      47 +          "last_synced_at": "2026-10-05T05:40:01.660760Z",
+      48            "linked_at": "2026-08-01T00:00:00Z",
+      49            "owner_login": "fixture-owner",
+      50            "owner_type": "user",
+     ...
+      149            "field_snapshot": {
+      150              "Priority": "Medium",
+      151              "Status": "In Progress",
+      149 -            "Target date": "2026-08-25"
+      152 +            "Target date": "2026-08-25",
+      153 +            "priority": "Medium",
+      154 +            "status": "In Progress",
+      155 +            "target_date": "2026-08-25"
+      156            },
+      157            "item_id": "PVTI_lADOFIXTURE0001zgA0102",
+      158            "last_error_code": null,
+      153 -          "last_synced_at": "2026-08-01T00:00:00Z",
+      159 +          "last_synced_at": "2026-10-05T05:40:01.660760Z",
+      160            "linked_at": "2026-08-01T00:00:00Z",
+      161            "owner_login": "fixture-owner",
+      162            "owner_type": "user",
+  ⎿  Created .dev-graph/state/receipts/node-r000005-link-github.json (+50 -0)
+       1 +{
+       2 +  "applied_count": 2,
+       3 +  "artifacts": [
+       4 +    {
+       5 +      "body_preserved": true,
+       6 +      "file_path": "tasks/T-SYNC-001.md",
+       7 +      "graph_node_id": "tasks/T-SYNC-001",
+       8 +      "graph_only": false,
+       9 +      "issue_linked": false,
+      10 +      "project_aliases_linked": [
+      11 +        "delivery"
+      12 +      ],
+      13 +      "sha256_after": "006a73609214b23ae421e2707abf72bf18131d78d00cabb219090ce0edea25c4",
+      14 +      "sha256_before": "aaa4a9674834aa03702959fcc8b29e17f69d6b058b8a85f35047d4c9f43ee71f"
+      15 +    },
+      16 +    {
+      17 +      "body_preserved": true,
+      18 +      "file_path": "tasks/T-SYNC-002.md",
+      19 +      "graph_node_id": "tasks/T-SYNC-002",
+      20 +      "graph_only": false,
+      21 +      "issue_linked": false,
+      22 +      "project_aliases_linked": [
+      23 +        "delivery"
+      24 +      ],
+      25 +      "sha256_after": "a4344fe62b7f72ae8bbf35ed7e431fe6c6f3a8e1346c6c6d1f71ec57e016e1e6",
+      26 +      "sha256_before": "31be08783b1df3416d4faaed16326d0ef862efc958dff059f8084b2dd2fa7fb9"
+      27 +    }
+      28 +  ],
+      29 +  "graph_digest_after": "sha256:752844719bfa1e73c4600f41889059edcfbeea88b35d286302d51feae063ecf3",
+      30 +  "graph_path": ".dev-graph/state/graph.json",
+      31 +  "graph_revision_after": 5,
+      32 +  "graph_revision_before": 4,
+      33 +  "input_sha256": "992913d27b18d1fc679f33eb7609948314f40a59da61878bb5b32bb99c15bb53",
+      34 +  "node_ids": [
+      35 +    "tasks/T-SYNC-001",
+      36 +    "tasks/T-SYNC-002"
+      37 +  ],
+      38 +  "operation": "link-github",
+      39 +  "owner": "C02/run-dev-graph-node",
+      40 +  "pre_write_validation": {
+     … 10 more lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass1b-link-input.json (+49 -0)
+       1 +{
+       2 +  "expected_graph_revision": 4,
+       3 +  "links": [
+       4 +    {
+       5 +      "github_project_linkages": [
+       6 +        {
+       7 +          "field_snapshot": {
+       8 +            "priority": "High",
+       9 +            "status": "In Progress",
+      10 +            "target_date": "2026-08-20"
+      11 +          },
+      12 +          "item_id": "PVTI_lADOFIXTURE0001zgA0101",
+      13 +          "last_error_code": null,
+      14 +          "last_synced_at": "2026-10-05T05:40:01.660760Z",
+      15 +          "linked_at": "2026-08-01T00:00:00Z",
+      16 +          "owner_login": "fixture-owner",
+      17 +          "owner_type": "user",
+      18 +          "project_alias": "delivery",
+      19 +          "project_id": "PVT_kwDOFIXTURE0001",
+      20 +          "project_number": 1,
+      21 +          "sync_state": "synced"
+      22 +        }
+      23 +      ],
+      24 +      "graph_node_id": "tasks/T-SYNC-001"
+      25 +    },
+      26 +    {
+      27 +      "github_project_linkages": [
+      28 +        {
+      29 +          "field_snapshot": {
+      30 +            "priority": "Medium",
+      31 +            "status": "In Progress",
+      32 +            "target_date": "2026-08-25"
+      33 +          },
+      34 +          "item_id": "PVTI_lADOFIXTURE0001zgA0102",
+      35 +          "last_error_code": null,
+      36 +          "last_synced_at": "2026-10-05T05:40:01.660760Z",
+      37 +          "linked_at": "2026-08-01T00:00:00Z",
+      38 +          "owner_login": "fixture-owner",
+      39 +          "owner_type": "user",
+      40 +          "project_alias": "delivery",
+     … 9 more lines (ctrl+o to expand)
+  ⎿  Updated tasks/T-SYNC-001.md (+1 -1)
+      40  beads_linkage: null
+      41  github_publication: {"labels": ["dev-graph"], "milestone": null, "mode": "issue_and_projects", "project_aliases": ["delivery"]}
+      42  issue_linkage: {"issue_number": 101, "linked_at": "2026-08-01T00:00:00Z", "repo": "local-fixture/r5-sync"}
+      43 -github_project_linkages: [{"field_snapshot": {"Priority": "High", "Status": "In Progress", "Target date": "2026-08-20"}, "item_id": "PVTI_lADOFIXTURE0001zgA0101", "last_error_code": null, "last_synced_at
+         -": "2026-08-01T00:00:00Z", "linked_at": "2026-08-01T00:00:00Z", "owner_login": "fixture-owner", "owner_type": "user", "project_alias": "delivery", "project_id": "PVT_kwDOFIXTURE0001", "project_number": 1
+         -, "sync_state": "synced"}]
+      43 +github_project_linkages: [{"field_snapshot": {"Priority": "High", "Status": "In Progress", "Target date": "2026-08-20", "priority": "High", "status": "In Progress", "target_date": "2026-08-20"}, "item_id
+         +": "PVTI_lADOFIXTURE0001zgA0101", "last_error_code": null, "last_synced_at": "2026-10-05T05:40:01.660760Z", "linked_at": "2026-08-01T00:00:00Z", "owner_login": "fixture-owner", "owner_type": "user", "pro
+         +ject_alias": "delivery", "project_id": "PVT_kwDOFIXTURE0001", "project_number": 1, "sync_state": "synced"}]
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46  completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "linked_pr_merged_all", "reconciled_at": "2026-08-01T00:00:00Z", "source": null, "status": "in_progress"}
+  ⎿  Updated tasks/T-SYNC-002.md (+7 -7)
+      17  template_version: "1.0.0"
+      18  confirmation_status: "confirmed"
+      19  evaluation_status: "pass"
+      20 -confirmation_evidence: {"evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evaluation.md", "evaluated_digest": "3301698bdafd8ac1870cdd9ab4bc7ae83dbf9c75870fa4e83a784fb3
+         -153f62de"}
+      21 -source_lineage: {"origin_kind": "manual", "source_plugin": null, "source_path": null, "source_version": null, "source_digest": null, "imported_at": "2026-07-20T00:00:00Z"}
+      20 +confirmation_evidence: {"evaluated_digest": "3301698bdafd8ac1870cdd9ab4bc7ae83dbf9c75870fa4e83a784fb3153f62de", "evaluator": "dev-graph-fixture-evaluator", "evidence_ref": "eval-log/r5-sync-fixture-evalu
+         +ation.md"}
+      21 +source_lineage: {"imported_at": "2026-07-20T00:00:00Z", "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
+      22  created_at: "2026-07-20T00:00:00Z"
+      23  updated_at: "2026-08-10T10:00:00Z"
+      24  depends_on: []
+     ...
+      38  classification_candidates: []
+      39  tracker_binding: "github"
+      40  beads_linkage: null
+      41 -github_publication: {"mode": "issue_and_projects", "project_aliases": ["delivery"], "labels": ["dev-graph"], "milestone": null}
+      42 -issue_linkage: {"issue_number": 102, "repo": "local-fixture/r5-sync", "linked_at": "2026-08-01T00:00:00Z"}
+      43 -github_project_linkages: [{"project_alias": "delivery", "owner_type": "user", "owner_login": "fixture-owner", "project_number": 1, "project_id": "PVT_kwDOFIXTURE0001", "item_id": "PVTI_lADOFIXTURE0001zgA
+         -0102", "sync_state": "synced", "field_snapshot": {"Status": "In Progress", "Priority": "Medium", "Target date": "2026-08-25"}, "linked_at": "2026-08-01T00:00:00Z", "last_synced_at": "2026-08-01T00:00:00Z
+         -", "last_error_code": null}]
+      41 +github_publication: {"labels": ["dev-graph"], "milestone": null, "mode": "issue_and_projects", "project_aliases": ["delivery"]}
+      42 +issue_linkage: {"issue_number": 102, "linked_at": "2026-08-01T00:00:00Z", "repo": "local-fixture/r5-sync"}
+      43 +github_project_linkages: [{"field_snapshot": {"Priority": "Medium", "Status": "In Progress", "Target date": "2026-08-25", "priority": "Medium", "status": "In Progress", "target_date": "2026-08-25"}, "ite
+         +m_id": "PVTI_lADOFIXTURE0001zgA0102", "last_error_code": null, "last_synced_at": "2026-10-05T05:40:01.660760Z", "linked_at": "2026-08-01T00:00:00Z", "owner_login": "fixture-owner", "owner_type": "user",
+         +"project_alias": "delivery", "project_id": "PVT_kwDOFIXTURE0001", "project_number": 1, "sync_state": "synced"}]
+      44  pull_request_linkages: []
+      45  execution_contexts: []
+      46 -completion_evidence: {"policy": "linked_pr_merged_all", "status": "in_progress", "source": null, "completed_at": null, "reconciled_at": "2026-08-01T00:00:00Z", "evidence_refs": []}
+      47 -implementation_readiness: {"status": "complete", "missing_sections": [], "checked_at": "2026-08-01T00:00:00Z"}
+      46 +completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "linked_pr_merged_all", "reconciled_at": "2026-08-01T00:00:00Z", "source": null, "status": "in_progress"}
+      47 +implementation_readiness: {"checked_at": "2026-08-01T00:00:00Z", "missing_sections": [], "status": "complete"}
+      48  ---
+      49  # 目的
+      50
+
+⏺ Pass 1 is done (graph_revision 5). Now running pass 2, the idempotency check.
+
+⏺ Bash(python3 -c "import json;d=json.load(open('github-adapter.json'));print('mutation_log',len(d['mutation_log']))"; wc -l < github-adapter-calls.jsonl; DEV_GRAPH_GH…)
+  ⎿  mutation_log 1
+     7
+     ISSUE 0 {'confirmations': 0, 'conflicts': 0, 'exports': 0, 'imports': 0} converged 5
+     … +22 lines (ctrl+o to expand)
+  ⎿  Created eval-log/sync-pass2-issue-plan.json (+20 -0)
+       1 +{
+       2 +  "changes": 0,
+       3 +  "confirmations": [],
+       4 +  "conflicts": [],
+       5 +  "counts": {
+       6 +    "confirmations": 0,
+       7 +    "conflicts": 0,
+       8 +    "exports": 0,
+       9 +    "imports": 0
+      10 +  },
+      11 +  "exports": [],
+      12 +  "graph_revision": 5,
+      13 +  "imports": [],
+      14 +  "missing_issues": [],
+      15 +  "next": "converged",
+      16 +  "schema_version": "1.0.0",
+      17 +  "stale_decisions": [],
+      18 +  "unused_decisions": [],
+      19 +  "update_input": null
+      20 +}
+  ⎿  Created eval-log/sync-pass2-project-plan.json (+23 -0)
+       1 +{
+       2 +  "changes": 0,
+       3 +  "conflicts": [],
+       4 +  "counts": {
+       5 +    "conflicts": 0,
+       6 +    "exports": 0,
+       7 +    "held": 0,
+       8 +    "imports": 0,
+       9 +    "links": 0
+      10 +  },
+      11 +  "exports": [],
+      12 +  "graph_revision": 5,
+      13 +  "held": [],
+      14 +  "imports": [],
+      15 +  "link_input": null,
+      16 +  "missing_items": [],
+      17 +  "next": "converged",
+      18 +  "schema_version": "1.0.0",
+      19 +  "skipped": [],
+      20 +  "stale_decisions": [],
+      21 +  "unused_decisions": [],
+      22 +  "update_input": null
+      23 +}
+  ⎿  Updated github-adapter-calls.jsonl (+2 -0)
+      5  {"detail": {"changed": true, "number": 102}, "mutation": true, "op": "issue-edit"}
+      6  {"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      7  {"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+      8 +{"detail": {"number": 101}, "mutation": false, "op": "issue-view"}
+      9 +{"detail": {"number": 102}, "mutation": false, "op": "issue-view"}
+
+⏺ Pass 2 made 0 changes, and mutation_log stayed at 1 (only the pass-1 export). Now checking stable IDs and the diff.
+
+⏺ Bash(git diff -- github-adapter.json .dev-graph/state/graph.json | head -120; tail -3 github-adapter-calls.jsonl | cut -c1-200)
+  ⎿  diff --git a/.dev-graph/state/graph.json b/.dev-graph/state/graph.json
+     index c6c2659..6448c45 100644
+     --- a/.dev-graph/state/graph.json
+     … +116 lines (ctrl+o to expand)
+
+⏺ Stable IDs are unchanged (graph_node_id, item_id, Issue #101/#102, linked_at), and the 3-way base github-sync-snapshot.json has no diff. Next, the goal-seek records and verification.
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(python3 - <<'PY'
+      import json…)
+  ⎿  goal-seek verification OK
+     usage: validate-graph-schema.py [-h] --graph GRAPH [--repo-root REPO_ROOT]
+     … +3 lines (ctrl+o to expand)
+  ⎿  Created eval-log/run-dev-graph-sync-intermediate.jsonl (+1 -0)
+      1 +{"loop": 1, "original_goal": "tracker_binding別のauthorityに従いローカルtask graphとBeadsまたはGitHub Issues/PRを同期し、Projects Statusはローカルから一方向投影、merged evidenceとworktree eventはdefault b
+        +ranch側task仕様へ収束した状態になっている", "original_goal_hash": "ab2f296e0c39c58a4ea7f3a58096f702728aa38be198eaff465ce9d5970b8c43", "current_goal_snapshot": "github binding: pass1 import T-SYNC-001 titl
+        +e (C02 update r4) + export #102 title via guard preview/confirm/authorize/execute; Projects link_input applied (C02 link-github r5); pass2 issue changes=0, project changes=0, adapter mutation_log unchange
+        +d (1)", "delta_from_original": "none; Status projection local->Project unchanged (no Status diff); merge/worktree reconcile not applicable (no PR linkages)", "merged_directive_for_next": "no further loop
+        +required; hand off to independent sync-conflict verifier", "drift_signal": "none"}
+  ⎿  Updated eval-log/run-dev-graph-sync-progress.json (+36 -8)
+       1  {
+       2    "loop": 1,
+       3    "checklist": [
+       4 -    {"item": "全 Issue/Project 差分が3-way planの一分類と snapshot digest を持つ", "status": "pass", "evidence": "eval-log/sync-pass1-issue-plan.json (remote-newer import 1, local-newer export 1), eval-l
+         -og/sync-pass1-project-plan.json (unchanged, link 2)"},
+       5 -    {"item": "task ごとの mutation authority が github/C12 の一経路だけ", "status": "pass", "evidence": "tracker_binding=github x2, beads_linkage=null, Issue export via gh-bridge only"},
+       6 -    {"item": "--dry-run の write count 0", "status": "pass", "evidence": "build-graph-node update --dry-run write_count=0; gh-bridge issue-update --dry-run mutation_suppressed=true"},
+       7 -    {"item": "双方変更は manual conflict、片側変更は mapping どおりの反映 receipt", "status": "in_progress", "evidence": "import applied: .dev-graph/state/receipts/node-r000004-update.json; export pendin
+         -g guard confirmation (preview d308a0f47dcc4d40b13ae98a04b75792)"},
+       8 -    {"item": "close/delete は tombstone/status transition", "status": "not_applicable", "evidence": "no close/delete in this scenario"},
+       9 -    {"item": "default-branch merge evidence を満たす場合だけ done", "status": "not_applicable", "evidence": "no pull_request_linkages; no status change to done"},
+      10 -    {"item": "同一状態の二回目 sync の imports/exports/Project item add が0件", "status": "pending", "evidence": ""}
+       4 +    {
+       5 +      "item": "全 Issue/Project 差分が3-way planの一分類と snapshot digest を持つ",
+       6 +      "status": "pass",
+       7 +      "evidence": "eval-log/sync-pass1-issue-plan.json (remote-newer import 1, local-newer export 1), eval-log/sync-pass1-project-plan.json (unchanged, link 2)"
+       8 +    },
+       9 +    {
+      10 +      "item": "task ごとの mutation authority が github/C12 の一経路だけ",
+      11 +      "status": "pass",
+      12 +      "evidence": "tracker_binding=github x2, beads_linkage=null, Issue export via gh-bridge only"
+      13 +    },
+      14 +    {
+      15 +      "item": "--dry-run の write count 0",
+      16 +      "status": "pass",
+      17 +      "evidence": "build-graph-node update --dry-run write_count=0; gh-bridge issue-update --dry-run mutation_suppressed=true"
+      18 +    },
+      19 +    {
+      20 +      "item": "双方変更は manual conflict、片側変更は mapping どおりの反映 receipt",
+      21 +      "status": "pass",
+      22 +      "evidence": "import receipt .dev-graph/state/receipts/node-r000004-update.json; export authorization-e4cf38e29cb94fd1980e6a05ea18349b.json executed (adapter mutation_log issue-edit #102); project s
+         +napshot link node-r000005-link-github.json"
+      23 +    },
+      24 +    {
+      25 +      "item": "close/delete は tombstone/status transition",
+      26 +      "status": "not_applicable",
+      27 +      "evidence": "no close/delete in this scenario"
+      28 +    },
+      29 +    {
+      30 +      "item": "default-branch merge evidence を満たす場合だけ done",
+      31 +      "status": "not_applicable",
+      32 +      "evidence": "no pull_request_linkages; no status change to done"
+      33 +    },
+     … 8 more lines (ctrl+o to expand)
+
+⏺ Bash(python3 /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py --graph .dev-graph/state/graph.json --repo-root /Users/dm/dev/dev/個人開発…)
+  ⎿    },
+       "schema": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/graph-node.schema.json",
+       "valid": true,
+     … +2 lines (ctrl+o to expand)
+
+⏺ Schema validation passed. Launching the independent verifier.
+
+⏺ dev-graph:dev-graph-sync-conflict-verifier(Independent sync verification)
+  ⎿  Backgrounded agent (↓ to manage · ctrl+o to expand)
+
+⏺ The independent verifier is running. I'll write status.json once its result arrives.
+
+✻ Waiting for 1 background agent to finish
+
+⏺ Agent "Independent sync verification" finished · 48s
+
+⏺ Write(~/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-sync/live-trial/20261005T1700-p83x/out/status.json)
+  ⎿  Wrote 1 line to ../../run-dev-graph-sync/live-trial/20261005T1700-p83x/out/status.json
+      1 {"status":"PASS","scenario":"C03-OUT1-positive-second-sync-zero"}
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Both passes ran against the fake GitHub adapter only, and the result is PASS.
+
+  - Pass 1: applied one import and one export.
+    - Import: the title of Issue #101 was copied into task T-SYNC-001.
+    - Export: the title of T-SYNC-002 was pushed to Issue #102. The person at the gate confirmed it; the guard then authorized and executed it.
+    - The fixture's mutation log shows the edit on #102, so the export was really applied.
+    - Project field snapshots for both tasks were then recorded through the skill's graph writer.
+  - Pass 2: zero changes on both the Issue and Project sides, and the mutation log did not grow.
+  - IDs and snapshot: stable IDs (task IDs, Project item IDs, Issue numbers) are unchanged, and github-sync-snapshot.json has no diff.
+  - Independent check: the verifier subagent rated all 5 claims PASS and confirmed both sides are in sync when it re-ran the two planners. Schema validation and the goal-seek check also passed.
+
+  The verifier raised one point: the timestamps inside github-sync-snapshot.json are still at 2026-08-01 after pass 1. That matches the task's requirement that the 3-way base be preserved. But it's unconfirmed whether
+  the sync is meant to move that base forward. If it is, the next real conflict would be compared against an old starting point.
+
+  out/status.json is the only file in out/.
+
+  DONE: PASS
+
+✻ Churned for 14m 13s · done 2:42 PM
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏵⏵ bypass permissions on (shift+tab to cycle)
+

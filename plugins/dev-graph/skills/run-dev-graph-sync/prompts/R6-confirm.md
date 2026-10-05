@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: AskUserQuestionとSkill run-dev-graph-node。
+- 使用資産: AskUserQuestionとSkill run-dev-graph-node。手動確認フラグは `diff-github-issues.py` の confirmations 行で、その decision は行の local/remote/local_updated_at/remote_updated_at を写して `--decisions` に渡す。Projects field の decision は conflict 行の base/local/remote を写して `diff-github-project-fields.py --decisions` に渡す。どちらも値が変わった decision は stale として使わない。`unsupported-export` は field の option/iteration に無い値なので、local を採っても書けない。`cause` が no-base/both-changed/decided-* なら remote を採る decision を、local-only/local-authority なら Project field に option/iteration を足すか local を戻す手順を提示する。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

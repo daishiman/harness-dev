@@ -103,7 +103,7 @@ def initial_fields(config: dict[str, Any], project: dict[str, Any], node: dict[s
     resolved = []
     for mapping in config.get("field_mappings", []):
         if mapping["direction"] != "local_to_project" or mapping["value_type"] != "single_select":
-            continue  # gh-bridge edits single-select values only; the rest stays with C03 sync.
+            continue  # C14 initializes single-select values only; the other types stay with C03 sync.
         option_name = mapping["option_map"].get(str(node.get(mapping["local_field"])))
         if option_name is None:
             continue

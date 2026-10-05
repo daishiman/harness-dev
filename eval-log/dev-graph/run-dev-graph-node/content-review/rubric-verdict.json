@@ -2,19 +2,19 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-node",
-    "skill_md_sha256": "a8705319a73f32bb916cce4a609ba4e3db4fc9bca15b5ad1cbfcc17658cb60e4"
+    "skill_md_sha256": "a3a66bb349cf09ce8d561a51bb54cb73ed1b327ca5af648580ed835887aa296f"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "pr83-followups focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-05T00:56:24Z",
-  "iterations": 1,
+  "reviewer": "projects-field-3way focused combined content review, iteration 3 (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-05T03:20:54Z",
+  "iterations": 3,
   "human_review_required": false,
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 2,
-    "inconsistency": 5,
-    "dependency_break": 0,
+    "contradiction": 1,
+    "omission": 5,
+    "inconsistency": 8,
+    "dependency_break": 1,
     "smell": 0
   },
   "feedback_loop": {
@@ -26,27 +26,35 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "IN1 (入力の充足判定): harness-2vq の placeholder 判定の端は主要な 3 形について解消した。CommonMark の URI autolink (`<https://…>`) は mask から外れて充足扱いになり、`- メモ: <TBD>` と理由の無い `N/A: <reason>` は PLACEHOLDER_LABEL でラベルを剥がした後に中身が残らないので未充足になる (build-graph-node.py 50 行目、217〜237 行目)。SKILL.md 116 行目の記述と一致し、test_autolink_fills_a_section_but_label_or_na_placeholders_do_not が逆向き (理由を書けば充足) まで固定している。",
-      "IN1 (tracker mode の照合): build-graph-node.py の TRACKER_FROM_CONFIG と register-package.py の TRACKER_MODES が repo-config schema の execution_tracker.mode (beads/github/both) だけを mode と認め、none を binding intent の語彙に分けた。config 不在、mode 不正、flag との食い違いはどれも exit 2・applied_count=0 で止まり、両 script の test が固定している。SKILL.md 123 行目と 128 行目もこの区別を書いている。",
-      "OUT1 (単一 writer と書込み前検証): bind-github は C02 の writer として、前提 (confirmed・pass・readiness complete の issue/task) と 5 種の拒否 code を SKILL.md 124 行目に列挙し、frontmatter だけの再生成で本文 byte を保持し、同じ状態では noop を返す。test_bind_github_switches_a_passed_issue_and_keeps_the_body がこれらを確かめる。TRACKER_MIRRORED_KEYS による github-bound node の import でも、本文変更は pre_write_validation_failed (active_not_ready、write 0、byte 不変) で拒否され、単一 writer の書込み前検証は崩れていない。",
-      "OUT2 (package の登録と冪等性): register 段の OUT2 が test で固定された。none と github でそれぞれ 13 node を一組で登録し、2 回目の実行は graph byte 不変の no-op になる。publication authority の不正な組み合わせ (github+local_only、beads/none+Issue publication) は書込み前に拒否され、auto intent は解決した binding へ揃う (test_out4_publication_authority_conflicts_fail_closed_without_any_write、test_auto_intent_aligns_publication_to_the_resolved_binding)。",
-      "OUT3 (負例の all-or-none): harness-pax の負例は test_out3_injected_packages_are_rejected_without_any_write が 8 通り (12/14 件、phase 欠落・重複・順序入替、mixed parent、mixed package、cross-feature edge) を注入し、exit 2・applied_count=0・graph byte 不変・receipt 不在を確かめる。完了チェックリスト (154 行目) の receipt フィールド名は graph_revision_after と node_ids に直り、package-registration-receipt.schema.json の required と register-package.py の receipt 生成に一致する。",
-      "記述規約と依存関係: frontmatter の script_refs に足した validate-source-lineage.py は実在し、references/prompt-common-layers.md と references/feature-execution-package-contract.md も実在する。lint-prompt-contract-drift.py --strict-tools は R0〜R4 で fatal 0 / warn 0、lint-sibling-plugin-paths.py は OK。node_missing_required_keys、source_lineage_unverified、graph_validation と node_readiness の分離はそれぞれ専用の test を持つ。",
-      "決定論の確認: `python3 -m pytest -q -p no:cacheprovider` で test_build_github_projection.py・test_register_package.py・test_build_graph_node.py は 81 passed。dev-graph の tests 全体は 235 passed / 7 failed で、失敗は test_skill_criteria_evidence.py の content-review の sha 期限切れ (本 verdict で更新する) と criteria-test の scenario receipt (担当外) だけである。"
+      "OUT1・OUT3 (前回の medium の解消): register-package の実際の CLI (github mode、repo-config-default が github・publication issue に解決される auto intent) で exact-13 package を登録し、REGISTRATION_NODE_KEYS だけを持つ member に CLI の link-github を当てた。dry-run は preview・planned_count 1、apply は status applied・applied_count 1・graph_revision 5→6、receipt の artifacts は graph_only true・sha256_before/after null・file_path tasks/feature-1/p01.md で、新しく作られた file は receipt だけ (member の artifact file は作らない)。issue_linkage と project の item_id が記録され、updated_at と evaluation_status は保たれ、他の field は 1 つも変わらない。同じ入力の 2 回目は noop。_plan_link_github が member を PACKAGE_KEYS で判定し (1132 行目)、schema の必須 key だけを求め、path/before/text が None の graph だけの entry を返す (1175〜1177 行目) という設計が、実際の member で成り立つ。これで reconcile-github-lifecycle の closing_reference_verified に要る issue_number と、3-way の base になる field_snapshot を member に記録できる。",
+      "OUT1 (graph だけの entry でも fail-closed が残る): member に新しい finding を持ち込む入力は止まる。sync_state を bogus にすると pre_write_validation_failed (schema_violation)、last_synced_at を欠くと拒否になる。member への update は package_member_requires_register_package のまま、link-github の入力に package key を書いても package_member_requires_register_package で拒否される。",
+      "OUT1 (staged の node の検査は弱まっていない): add (821 行目)・update (1023 行目)・bind-github (1094 行目) の plan entry は必ず path を持つので、staged_ids (1251 行目) は plan の全 node と一致し、_findings (1192〜1203 行目) は従来どおり staged の node のすべての finding で止める。緩めた判定は path が None の entry にしか効かない。",
+      "OUT1 (rollback と receipt の整合): staging と書込みの loop は path が None の entry を飛ばし、receipt の sha256_after は text が None なら null になる。scratchpad で既存の receipt と衝突させると immutable_receipt_exists で止まり、graph は元の revision に戻る。member 2 件を同時に link すると applied_count 2 で、receipt の artifacts 2 行がどちらも graph_only true になる。",
+      "記述: SKILL.md 125 行目と docstring 1111 行目に、member は register-package と同じく graph だけに記録し artifact file と内容 key を求めないこと (receipt の graph_only) が同じ言葉で入った。R2-preview.md の 16・20・29・33・51・55 行目と R3-write.md の 16・20・29・33・51・55 行目に link-github が加わった。",
+      "記述規約と決定論: lint-prompt-contract-drift.py --strict-tools は node の prompts 5 本で fatal 0 / warn 0、lint-sibling-plugin-paths.py は OK、lint-script-naming.py は VIOLATION 0。`python3 -m pytest -q -p no:cacheprovider plugins/dev-graph/tests/test_build_graph_node.py -k \"link_github or project_field or package_member or bind_github or unchanged_update or rollback or pre_write\"` は 10 passed、tests/test_register_package.py は 34 passed。"
     ],
     "negative_feedback": [
-      "[low / 不整合] IN1 の端が 1 つ残る。ラベル自体が placeholder token の行 (`TBD: <reason>`、`- <label>: <TBD>`、`TODO: TBD`) は mask 後に `\\0: \\0` となり、PLACEHOLDER_LABEL (`^[^:：\\0]{1,40}[:：]\\s*`) が先頭の \\0 で一致しないため `:` が残り、充足扱いになる (fail-open)。SKILL.md 116 行目の「ラベルと placeholder だけの行は placeholder のまま扱い」とずれる。雛形が使うラベルではないので実害は小さい。直し方の例: 最後の残り判定で `[:：]` も除き、test に 1 行足す。",
-      "[low / 漏れ、前回から未解消] prompts/R3-write.md の出力契約 (20 行目) と 5.2 (51 行目) は、graph_revision_after が graph_revision_before のままになる noop を bind-github だけに限っている。変更の無い update も同じ noop を返す (test_unchanged_update_is_noop)。",
-      "[low / 不整合、前回から未解消] prompts/R2-preview.md で bind-github の受け渡しの書き方が入力契約 (16 行目)、出力契約 (20 行目)、責務境界 (25 行目) で揃っていない。R3 は bindings[] を直接受けるので実害は無い。",
-      "[low / 不整合、前回から未解消、差分外] SKILL.md 151 行目の完了チェックリスト「classification decision が閾値による自動確定または明示 user confirmation の証跡を持つ」に、decision source を持たない bind-github と c14_macro_contract の例外が書かれていない。",
-      "[low / 漏れ] register-package が新たに拒否する publication authority の不正な組み合わせ (github+local_only、beads/none+Issue publication) と、auto intent の整合が、SKILL.md の Exact-13 package gate 節 (128〜130 行目) に書かれていない。130 行目の「tracker binding を commit 前に検証する」で包括的には読め、C14 側の SKILL.md と test が同じ規則を固定しているので low に留める。",
-      "[low / 不整合] SKILL.md 124 行目の「C12 (`run-dev-graph-sync`)」は component id と名前の組が食い違う。component-inventory.json では C12 は gh-bridge.py、run-dev-graph-sync は C03 である。直し方の例: 「C03 (`run-dev-graph-sync`) が C12 gh-bridge 経由で投影する」。",
-      "[low / 不整合、差分外] Criteria acceptance の OUT3 (192 行目) は「mixed package」だけを挙げ、frontmatter の OUT3 と 130 行目にある「mixed parent」が抜けている。test は mixed parent も拒否を確かめているので、記述だけのずれである。"
+      "[low / 矛盾、OUT1、今回の差分] _findings の緩め方が、artifact の finding だけでなく、graph だけの member が元から持つすべての finding を見逃す。scratchpad (node-r3-carried-findings.py) で、owners を list 以外にした (schema_violation) うえ beads_linkage を持たせた (binding_collision) member に link-github を当てると applied になり、receipt の pre_write_validation は findings 0 と書く。書込み後の validate-graph-schema.py は task-P04 に artifact_missing・binding_collision・schema_violation 数件を返す。SKILL.md 118 行目の「変更した node は finding 0 を要求し」は、graph だけの member については成り立たない。125 行目は「artifact file と内容 key を求めない」としか書いていない。medium にしない理由: C02 が新しい finding を足さないという baseline 差分の保証は保たれ、member は register-package と promote-system-plan の schema 検査を通って入るので、手で壊した member でしか起きず、新しい finding は従来どおり止まる。直し方の例: graph だけの node で見逃す finding を artifact_missing などの artifact 系 code に限る。そうしないなら、SKILL.md 118 行目に graph だけの member は既存 finding を持ち越すと書く。",
+      "[low / 不整合、OUT1、今回の差分] _transact の apply が返す write_count は len(plan) + 2 (1315 行目) で、graph だけの entry も書込みとして数える。member 1 件で 3、2 件で 4 を返すが、実際に書く file は graph と receipt の 2 つだけである。write_count を書いた数として扱う SKILL.md の記述 (122・201 行目) とずれる。path を持つ entry だけを数えると揃う。",
+      "[low / 漏れ (test)、OUT1・OUT3、今回の差分] test_link_github_records_a_registered_package_member_in_the_graph_alone は、tests/test_register_package.py の task_node 形の member (publication issue_and_projects) を graph に直接置いており、register-package の CLI を通していない。いちばん危うい変更である _findings の緩めについて、graph だけの member に新しい finding を持ち込むと止まること、元から持つ artifact 以外の finding をどう扱うか、の test が無い。write_count と sha256_before/after の null も確かめていない。",
+      "[low / 漏れ、OUT1、今回の差分] R2-preview.md と R3-write.md は、member への link-github が graph だけの記録になること (content diff が無く、receipt の artifacts 行は graph_only true で sha が null) に触れていない。R3 の受入条件だけでは、member で artifact file が作られないことが正しい結果だと読み取れない。",
+      "[low / 依存、OUT3、前回の low が再現、差分外] register-package の冪等再実行は、link-github で linkage を記録した後の package で exit 2 (duplicate node ids exist with different content、register-package.py 406〜408 行目) になることを、scratchpad で再現した。二重登録は起きない (fail-closed) が、C14 decompose 手順 5 の graph_node_id+source_digest による二重登録防止は、冪等な receipt を返さずに失敗する形になる。execution-context の投影でも同じことが起きるので既存の問題である。replay の同一性を package が持つ field だけで比べるかを決めると良い。",
+      "[low / 不整合、OUT1、前回から一部未解消] R3-write.md 16 行目の「classification decision (bind-github では不要)」、33 行目の「bind-github も R2 preview の graph_revision_before を expected_graph_revision に渡す」、R2-preview.md 25 行目の分類しない理由は、bind-github だけを挙げ、同じく分類を伴わない link-github を含めていない (他の行には link-github が加わった)。",
+      "[low / 漏れ、OUT1、前回から未解消] SKILL.md 125 行目に、別の repo の issue_linkage も issue_linkage_conflict になること、同じ入力の中で alias が重複したときも unknown_project_alias になること、GitHub 側で削除・detach された item を新しい item へ付け替える回復経路が無く project_item_conflict で止まり続けること、が書かれていない。",
+      "[low / 不整合、OUT1、前回から未解消] build-graph-node.py の metadata の purpose (4 行目) が link-github の linkage 記録を含んでいない (inputs の 5 行目と docstring には入っている)。",
+      "[low / 不整合、IN1、前回から未解消] ラベル自体が placeholder token の行 (`TBD: <reason>`、`- <label>: <TBD>`、`TODO: TBD`) は充足扱いになり (fail-open)、SKILL.md 116 行目の「ラベルと placeholder だけの行は placeholder のまま扱い」とずれる。",
+      "[low / 漏れ、OUT1、前回から未解消] R3-write.md の出力契約 (20 行目) と 5.2 (51 行目) は、graph_revision_before のままになる noop を bind-github と link-github に限り、変更の無い update の noop (test_unchanged_update_is_noop) が抜けている。",
+      "[low / 不整合、OUT1、前回から未解消] R2-preview.md の受け渡しの書き方が 16・20・25 行目で揃っていない (16 行目で links[] を受け、20 行目は graph_node_id と graph_revision_before だけを返し、25 行目は graph_revision_before だけを R3 へ渡す)。R3 は links[] を直接受けるので実害は無い。",
+      "[low / 不整合、OUT2、前回から未解消、差分外] SKILL.md 152 行目の完了チェックリストに、decision source を持たない bind-github・link-github と c14_macro_contract の例外が書かれていない。",
+      "[low / 漏れ、OUT3、前回から未解消] register-package が拒否する publication authority の不正な組み合わせ (github+local_only、beads/none+Issue publication) と auto intent の整合が、SKILL.md の Exact-13 package gate 節に書かれていない。",
+      "[low / 不整合、OUT1、前回から未解消] SKILL.md 124 行目の「C12 (`run-dev-graph-sync`)」は component id と名前の組が食い違う (component-inventory.json では C12 は gh-bridge.py、run-dev-graph-sync は C03)。125 行目は「C03 の同期結果」と書いており、同じ節の中で揃っていない。",
+      "[low / 不整合、OUT3、前回から未解消、差分外] Criteria acceptance の OUT3 (193 行目) に、frontmatter の OUT3 にある「mixed parent」が抜けている。",
+      "[前回の指摘の解消状況] medium (register-package が実際に登録する package member に link-github を使えない): 解消。register-package の CLI で登録した REGISTRATION_NODE_KEYS だけの member に、CLI の link-github で linkage を記録でき、artifact file を作らず、2 回目は noop になることを scratchpad (node-r3-pkg-link-repro.py) で確かめた。前回の node_missing_required_keys と FileNotFoundError の 2 つの関門はどちらも通る。前回の low 11 件はどれも low のまま上に再掲した (register-package の replay は今回再現し、R3-write/R2-preview の bind-github 偏りは一部だけ直った)。今回の差分で生じた low は 4 件 (矛盾 1・不整合 1・漏れ 2) で、high と medium は 0 件。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 5,
-    "hook_trigger": "manual:pr83-followups",
+    "hook_trigger": "manual:projects-field-3way",
     "next_action": "none"
   },
-  "notes": "builder とは別 context の独立 evaluator が行った focused combined content review の rubric 投影である。対象は PR #83 の follow-up (harness-2vq、harness-pax、harness-0bn、TRACKER_MIRRORED_KEYS)。新しい変更集合に対する最初の review なので iteration は 1 から数える。rubric の 41 rule は機械実行しておらず、score も算出していない。frontmatter の criteria (IN1、OUT1〜OUT3) ごとに、SKILL.md の記述、実装 (build-graph-node.py、register-package.py、validate-graph-schema.py)、test の三つが揃っているかを読んで判定し、high severity が 0 件であることを確かめた。30 思考法は実施しておらず、実施したとも申告しない。iteration_limit は plugins/dev-graph/tests/test_skill_criteria_evidence.py の CONTENT_REVIEW_ITERATION_LIMIT に合わせて 5 とした。前回 verdict の low 3 件 (R3 の noop の範囲、R2 の 3 か所の書き方、151 行目のチェックリスト) は今回の差分で触られておらず、未解消として再記録した。high と medium は 0 件で、low 7 件 (うち 2 件は差分外) を記録したため PASS とした。PASS の射程は design claim (静的設計 adequacy) に限り、live trial や runtime の振る舞いを保証しない。criteria-test/scenario-verdict.json は本 review の担当外で、target sha は更新していない。"
+  "notes": "builder とは別 context の独立 evaluator が行った focused combined content review の rubric 投影である。iteration 3 で、iteration 2 の medium (register-package が実際に登録する package member に link-github を使えない) への修正が対象である。修正は、_plan_link_github が member について graph だけの plan entry を返すこと、_transact と _findings が staged_ids で staged の node と graph だけの node を分けて判定すること、docstring と SKILL.md 125 行目の追記、test の置き換えである。rubric の 41 rule は機械実行しておらず、score も算出していない。frontmatter の criteria (IN1、OUT1〜OUT3) ごとに、SKILL.md と prompts/R2-preview.md・R3-write.md の記述、実装 (build-graph-node.py、register-package.py、validate-graph-schema.py)、test が揃っているかを読んで判定した。scratchpad の再現 script (node-r3-pkg-link-repro.py、node-r3-carried-findings.py) で、register-package の CLI で登録した member に CLI の link-github を当て、適用・noop・新しい finding での拒否・rollback・replay を確かめた。30 思考法は実施しておらず、実施したとも申告しない。iteration_limit は plugins/dev-graph/tests/test_skill_criteria_evidence.py の CONTENT_REVIEW_ITERATION_LIMIT に合わせて 5 を維持した。high と medium は 0 件なので PASS とした。low は 15 件 (今回の差分 4 件、前回からの持ち越し 11 件) で、修正はしていない。PASS の射程は design claim (静的設計 adequacy) に限り、live trial や runtime の振る舞いを保証しない。criteria-test/scenario-verdict.json は本 review の担当外で、触れていない。"
 }

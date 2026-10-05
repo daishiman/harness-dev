@@ -24,6 +24,8 @@ BGN = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = BGN
 SPEC.loader.exec_module(BGN)
 CONTRACT = json.loads((PLUGIN / "templates" / "template-contract.json").read_text(encoding="utf-8"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import test_register_package as RPT  # noqa: E402  (exact-13 member nodes shaped as register-package writes them)
 ROOTS = {"issues": "issues", "tasks": "tasks", "specifications": "specs", "architecture": "architecture",
          "features": "features", "documents": "docs", "system_spec": "system-spec"}
 
@@ -40,6 +42,40 @@ def candidates(kind: str, confidence: float = 0.95, runner_up: float = 0.05) -> 
 
 def filled(kind: str) -> dict[str, str]:
     return {name: f"{name} の確定内容。" for name in CONTRACT["artifacts"][kind]["required_sections"]}
+
+
+RECONCILER = PLUGIN / "scripts" / "diff-github-project-fields.py"
+ISSUE_PLANNER = PLUGIN / "scripts" / "diff-github-issues.py"
+STAMP = "2026-10-05T00:00:00Z"
+EARLIER, LATER = "2000-01-01T00:00:00Z", "2999-01-01T00:00:00Z"
+ROADMAP = {"alias": "roadmap", "owner_type": "organization", "owner_login": "acme", "project_number": 7, "default": True,
+           "auto_add": {"artifact_kinds": ["issue", "task"], "confirmation_status": "confirmed", "evaluation_status": "pass",
+                        "implementation_readiness": "complete"},
+           "field_mappings": [
+               {"local_field": "status", "project_field_name": "Status", "value_type": "single_select",
+                "direction": "local_to_project", "option_map": {"draft": "Todo", "active": "In Progress", "done": "Done"}},
+               {"local_field": "priority", "project_field_name": "Priority", "value_type": "single_select",
+                "direction": "bidirectional", "option_map": {"high": "P1", "medium": "P2", "low": "P3"}}]}
+
+
+def roadmap_link(**change: object) -> dict:
+    """The linkage C14 proposes for a fresh roadmap item (snapshot = the Status it initialized)."""
+    return {"project_alias": "roadmap", "owner_type": "organization", "owner_login": "acme", "project_number": 7,
+            "project_id": "PVT_1", "item_id": "PVTI_1", "sync_state": "linked", "field_snapshot": {"status": "Todo"},
+            "linked_at": STAMP, "last_synced_at": STAMP, "last_error_code": None, **change}
+
+
+def issue_remote(title: str, updated_at: str, state: str = "open") -> dict:
+    return {"issues": {"acme/web#12": {"title": title, "state": state, "updated_at": updated_at}}}
+
+
+def roadmap_remote(status: str = "Todo", priority: str = "P1") -> dict:
+    options = {"Status": ["Todo", "In Progress", "Done"], "Priority": ["P1", "P2", "P3"]}
+    fields = [{"id": f"F_{name.lower()}", "name": name,
+               "options": [{"id": "o_" + value.lower().replace(" ", "_"), "name": value} for value in values]}
+              for name, values in options.items()]
+    return {"projects": {"roadmap": {"id": "PVT_1", "fields": {"nodes": fields},
+                                     "items": {"PVTI_1": {"Status": status, "Priority": priority}}}}}
 
 
 class BuildGraphNodeTest(unittest.TestCase):
@@ -456,6 +492,351 @@ class BuildGraphNodeTest(unittest.TestCase):
         self.set_tracker_mode("beads")
         code, report = self.run_cli("bind-github", bind)
         self.assertEqual((code, report["code"]), (1, "tracker_binding_not_allowed"))
+
+    def published_issue(self) -> None:
+        """A passed issue bound to GitHub (Issue + roadmap Project) whose local priority is high."""
+        self.set_tracker_mode("github")
+        config = self.root / ".dev-graph" / "config.json"
+        data = json.loads(config.read_text(encoding="utf-8"))
+        data["github"] = {"enabled": True, "issue_repository": "acme/web", "projects": [ROADMAP]}
+        config.write_text(json.dumps(data), encoding="utf-8")
+        issue = {**BASE, "title": "I", "artifact_kind": "issue", "slug": "pub", "classification": candidates("issue"),
+                 "sections": filled("issue")}
+        self.assertEqual(self.run_cli("add", {"artifacts": [issue]})[0], 0)
+        self.mark_passed("issue-pub")
+        bind = {"bindings": [{"graph_node_id": "issue-pub", "publication_mode": "issue_and_projects"}]}
+        self.assertEqual(self.run_cli("bind-github", bind)[0], 0)
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"priority": "high"}}]})[0], 0)
+
+    def pub_node(self) -> dict:
+        return next(item for item in self.graph_state()["nodes"] if item["graph_node_id"] == "issue-pub")
+
+    def reconcile(self, remote: dict, decisions: list[dict] | None = None, graph: dict | None = None,
+                  planner: Path = RECONCILER, issue_plan: dict | None = None, code: int = 0) -> dict:
+        cache = self.root / ".dev-graph" / "cache"
+        (cache / "remote.json").write_text(json.dumps(remote), encoding="utf-8")
+        argv = [sys.executable, str(planner), "--repo-root", str(self.root), "--remote", str(cache / "remote.json")]
+        if graph is not None:
+            (cache / "graph.json").write_text(json.dumps(graph), encoding="utf-8")
+            argv += ["--graph", str(cache / "graph.json")]
+        if decisions is not None:
+            (cache / "decisions.json").write_text(json.dumps({"decisions": decisions}), encoding="utf-8")
+            argv += ["--decisions", str(cache / "decisions.json")]
+        if issue_plan is not None:
+            (cache / "issue-plan.json").write_text(json.dumps(issue_plan), encoding="utf-8")
+            argv += ["--issue-plan", str(cache / "issue-plan.json")]
+        cp = subprocess.run(argv, text=True, capture_output=True, env=self.env, check=False)
+        self.assertEqual(cp.returncode, code, cp.stderr)
+        return json.loads(cp.stdout) if code == 0 else {"stderr": cp.stderr}
+
+    def apply_plan(self, report: dict) -> None:
+        for command, key in (("update", "update_input"), ("link-github", "link_input")):
+            if report.get(key) is not None:
+                code, applied = self.run_cli(command, report[key])
+                self.assertEqual((code, applied["status"]), (0, "applied"), applied)
+
+    def test_link_github_records_linkages_without_touching_content_state(self) -> None:
+        self.published_issue()
+        link = {"links": [{"graph_node_id": "issue-pub", "issue_linkage": {"issue_number": 12, "repo": "acme/web", "linked_at": STAMP},
+                           "github_project_linkages": [roadmap_link()]}]}
+        before = self.pub_node()
+        body = BGN._split_frontmatter((self.root / "issues" / "pub.md").read_text(encoding="utf-8"), "issues/pub.md")[1]
+        code, report = self.run_cli("link-github", link)
+        self.assertEqual(code, 0, report)
+        node = self.pub_node()
+        self.assertEqual((node["issue_linkage"]["issue_number"], node["github_project_linkages"][0]["item_id"]), (12, "PVTI_1"))
+        self.assertEqual((node["evaluation_status"], node["updated_at"]), (before["evaluation_status"], before["updated_at"]))
+        self.assertEqual(BGN.VGS.frontmatter_of(self.root / "issues" / "pub.md")["github_project_linkages"], node["github_project_linkages"])
+        self.assertEqual(BGN._split_frontmatter((self.root / "issues" / "pub.md").read_text(encoding="utf-8"), "issues/pub.md")[1], body)
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.run_cli("link-github", link)[1]["status"], "noop")
+        # field_snapshot merges per key and the first linked_at survives a later observation.
+        later = roadmap_link(field_snapshot={"priority": "P1"}, sync_state="synced", linked_at="2026-10-06T00:00:00Z")
+        code, report = self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [later]}]})
+        self.assertEqual(code, 0, report)
+        merged = self.pub_node()["github_project_linkages"][0]
+        self.assertEqual((merged["field_snapshot"], merged["sync_state"], merged["linked_at"]),
+                         ({"status": "Todo", "priority": "P1"}, "synced", STAMP))
+        refused = {
+            "issue_linkage_conflict": {"issue_linkage": {"issue_number": 13, "repo": "acme/web"}},
+            "unknown_project_alias": {"github_project_linkages": [roadmap_link(project_alias="other")]},
+            "project_identity_mismatch": {"github_project_linkages": [roadmap_link(owner_login="someone")]},
+            "project_item_conflict": {"github_project_linkages": [roadmap_link(item_id="PVTI_2")]},
+        }
+        for expected, change in refused.items():
+            code, report = self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", **change}]})
+            self.assertEqual((code, report["code"], report["write_count"]), (1, expected, 0))
+        self.assertEqual(self.run_cli("add", {"artifacts": [{**BASE, "title": "D", "artifact_kind": "issue", "slug": "local",
+                                                              "tracker_binding": "none", "classification": candidates("issue"),
+                                                              "sections": filled("issue")}]})[0], 0)
+        code, report = self.run_cli("link-github", {"links": [{"graph_node_id": "issue-local", "github_project_linkages": [roadmap_link()]}]})
+        self.assertEqual((code, report["code"]), (1, "link_github_requires_github_binding"))
+
+    def test_project_field_changed_on_both_sides_is_one_manual_conflict_until_a_bound_decision(self) -> None:
+        self.published_issue()
+        linked = roadmap_link(field_snapshot={"status": "Todo", "priority": "P1"})
+        self.assertEqual(self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [linked]}]})[0], 0)
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"priority": "low"}}]})[0], 0)
+        remote = roadmap_remote(priority="P2")  # base P1, local P3, remote P2
+        report = self.reconcile(remote)
+        self.assertEqual((report["counts"]["exports"], report["counts"]["imports"], report["counts"]["conflicts"]), (0, 0, 1))
+        self.assertEqual((report["conflicts"][0]["kind"], report["update_input"]), ("both-changed", None))
+        self.apply_plan(report)  # only the conflict flag is recorded; neither side is overwritten
+        node = self.pub_node()
+        self.assertEqual((node["priority"], node["github_project_linkages"][0]["sync_state"]), ("low", "conflict"))
+        self.assertEqual(node["github_project_linkages"][0]["field_snapshot"]["priority"], "P1")
+        self.assertEqual(self.reconcile(remote)["changes"], 0)
+        seen = {key: report["conflicts"][0][key] for key in ("base", "local", "remote")}
+        decision = {"graph_node_id": "issue-pub", "project_alias": "roadmap", "local_field": "priority", "choose": "remote"}
+        stale = self.reconcile(remote, [{**decision, **seen, "remote": "P3"}])
+        self.assertEqual((stale["counts"]["conflicts"], len(stale["stale_decisions"])), (1, 1))
+        report = self.reconcile(remote, [{**decision, **seen}])
+        self.assertEqual((report["counts"]["imports"], report["update_input"]["updates"][0]["node_patch"]), (1, {"priority": "medium"}))
+        self.apply_plan(report)
+        report = self.reconcile(remote)
+        self.assertEqual((report["counts"]["links"], report["counts"]["conflicts"]), (1, 0))
+        self.apply_plan(report)
+        link = self.pub_node()["github_project_linkages"][0]
+        self.assertEqual((link["sync_state"], link["field_snapshot"]["priority"]), ("synced", "P2"))
+        self.assertEqual(self.reconcile(remote)["changes"], 0)
+
+    def test_project_field_changed_on_one_side_follows_the_mapping_and_moves_the_snapshot(self) -> None:
+        self.published_issue()
+        linked = roadmap_link(field_snapshot={"status": "Todo", "priority": "P1"})
+        self.assertEqual(self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [linked]}]})[0], 0)
+        report = self.reconcile(roadmap_remote())  # C14's "linked" becomes "synced" once both sides are seen equal
+        self.assertEqual((report["counts"]["links"], report["changes"]), (1, 1))
+        self.apply_plan(report)
+        self.assertEqual(self.reconcile(roadmap_remote())["changes"], 0)
+        # remote-only: imported through C02 update, then the agreed value becomes the base.
+        report = self.reconcile(roadmap_remote(priority="P3"))
+        self.assertEqual((report["counts"]["imports"], report["counts"]["exports"], report["link_input"]), (1, 0, None))
+        self.apply_plan(report)
+        self.assertEqual(self.pub_node()["priority"], "low")
+        report = self.reconcile(roadmap_remote(priority="P3"))
+        self.apply_plan(report)
+        self.assertEqual(self.pub_node()["github_project_linkages"][0]["field_snapshot"]["priority"], "P3")
+        self.assertEqual(self.reconcile(roadmap_remote(priority="P3"))["changes"], 0)
+        # local-only: exported as one gh-bridge single-select edit; the snapshot moves after the remote agrees.
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"priority": "high"}}]})[0], 0)
+        report = self.reconcile(roadmap_remote(priority="P3"))
+        self.assertEqual((report["counts"]["exports"], report["exports"][0]["kind"], report["exports"][0]["value_args"]),
+                         (1, "local-only", ["--option-id=o_p1"]))
+        self.assertIn("project-item-edit", report["exports"][0]["bridge_args"])
+        self.apply_plan(report)
+        report = self.reconcile(roadmap_remote(priority="P1"))
+        self.apply_plan(report)
+        self.assertEqual(self.pub_node()["github_project_linkages"][0]["field_snapshot"]["priority"], "P1")
+        self.assertEqual(self.reconcile(roadmap_remote(priority="P1"))["changes"], 0)
+        # Status is local_to_project: a remote edit is overwritten by the local value, never imported.
+        report = self.reconcile(roadmap_remote(status="Done", priority="P1"))
+        self.assertEqual((report["counts"]["imports"], report["exports"][0]["kind"], report["exports"][0]["value_args"]),
+                         (0, "local-authority", ["--option-id=o_todo"]))
+        missing = roadmap_remote(priority="P1")
+        missing["projects"]["roadmap"]["fields"]["nodes"] = missing["projects"]["roadmap"]["fields"]["nodes"][:1]
+        self.assertEqual([c["kind"] for c in self.reconcile(missing)["conflicts"]], ["remote-field-missing"])
+        self.result_is_valid()
+
+    def test_project_field_of_every_value_type_is_exported_or_cleared_through_gh_bridge(self) -> None:
+        # text / number / date / iteration values and an emptied local value are written, not left to a human.
+        self.published_issue()
+        config = self.root / ".dev-graph" / "config.json"
+        data = json.loads(config.read_text(encoding="utf-8"))
+        data["github"]["projects"][0]["field_mappings"] += [
+            {"local_field": "target_date", "project_field_name": "Due", "value_type": "date", "direction": "local_to_project", "option_map": {}},
+            {"local_field": "start_date", "project_field_name": "Kickoff", "value_type": "text", "direction": "local_to_project", "option_map": {}},
+            {"local_field": "iteration", "project_field_name": "Sprint", "value_type": "iteration", "direction": "bidirectional", "option_map": {}}]
+        data["github"]["projects"][0]["field_mappings"][1].update(value_type="number", project_field_name="Weight", option_map={})
+        config.write_text(json.dumps(data), encoding="utf-8")
+        patch = {"priority": "2", "target_date": "2026-11-01", "start_date": "2026-10-10", "iteration": "Sprint 2"}
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": patch}]})[0], 0)
+        linked = roadmap_link(field_snapshot={"status": "Todo", "priority": 1, "iteration": "Sprint 1"})
+        self.assertEqual(self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [linked]}]})[0], 0)
+
+        def remote(**values: object) -> dict:
+            report = roadmap_remote()
+            nodes = report["projects"]["roadmap"]["fields"]["nodes"][:1]
+            nodes += [{"id": "F_weight", "name": "Weight"}, {"id": "F_due", "name": "Due"}, {"id": "F_kickoff", "name": "Kickoff"},
+                      {"id": "F_sprint", "name": "Sprint", "configuration": {"iterations": [{"id": "it_2", "title": "Sprint 2"}],
+                                                                             "completedIterations": [{"id": "it_1", "title": "Sprint 1"}]}}]
+            report["projects"]["roadmap"]["fields"]["nodes"] = nodes
+            report["projects"]["roadmap"]["items"]["PVTI_1"] = {"Status": "Todo", "Weight": 1, "Due": None, "Kickoff": "old",
+                                                                 "Sprint": "Sprint 1", **values}
+            return report
+
+        report = self.reconcile(remote())
+        self.assertEqual({row["local_field"]: (row["kind"], row["value_args"]) for row in report["exports"]},
+                         {"priority": ("local-only", ["--number-value=2.0"]), "target_date": ("local-authority", ["--date=2026-11-01"]),
+                          "start_date": ("local-authority", ["--text=2026-10-10"]), "iteration": ("local-only", ["--iteration-id=it_2"])})
+        bridge = PLUGIN / "scripts" / "gh-bridge.py"
+        for row in report["exports"]:  # every planned edit passes gh-bridge's own validation
+            cp = subprocess.run([sys.executable, str(bridge), *row["bridge_args"], "--dry-run"], text=True, capture_output=True, check=False)
+            self.assertEqual(cp.returncode, 0, cp.stderr)
+        # Once the remote agrees, typed values become the base; an emptied local date is then a --clear export.
+        agreed = remote(Weight=2, Due="2026-11-01", Kickoff="2026-10-10", Sprint="Sprint 2")
+        self.apply_plan(self.reconcile(agreed))
+        self.assertEqual(self.reconcile(agreed)["changes"], 0)
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"target_date": None}}]})[0], 0)
+        self.assertEqual([row["value_args"] for row in self.reconcile(agreed)["exports"]], [["--clear"]])
+        # Only a title the field lacks stays unsupported; a both-changed iteration decided for local is exported.
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"iteration": "Sprint 9"}}]})[0], 0)
+        self.assertEqual([(row["kind"], row["cause"]) for row in self.reconcile(agreed)["conflicts"]], [("unsupported-export", "local-only")])
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"iteration": "Sprint 1"}}]})[0], 0)
+        both = remote(Weight=2, Kickoff="2026-10-10", Sprint="Sprint 3")  # base Sprint 2, local Sprint 1, remote Sprint 3
+        both["projects"]["roadmap"]["fields"]["nodes"][-1]["configuration"]["iterations"].append({"id": "it_3", "title": "Sprint 3"})
+        seen = next(row for row in self.reconcile(both)["conflicts"] if row["local_field"] == "iteration")
+        self.assertEqual(seen["kind"], "both-changed")
+        decision = {"graph_node_id": "issue-pub", "project_alias": "roadmap", "local_field": "iteration", "choose": "local",
+                    **{key: seen[key] for key in ("base", "local", "remote")}}
+        decided = [row for row in self.reconcile(both, [decision])["exports"] if row["local_field"] == "iteration"]
+        self.assertEqual([(row["kind"], row["value_args"]) for row in decided], [("decided-both-changed", ["--iteration-id=it_1"])])
+        self.result_is_valid()
+
+    def linked_issue(self) -> None:
+        self.published_issue()
+        link = {"links": [{"graph_node_id": "issue-pub", "issue_linkage": {"issue_number": 12, "repo": "acme/web", "linked_at": STAMP}}]}
+        self.assertEqual(self.run_cli("link-github", link)[0], 0)
+
+    def plan_issues(self, remote: dict, decisions: list[dict] | None = None, graph: dict | None = None) -> dict:
+        return self.reconcile(remote, decisions, graph, planner=ISSUE_PLANNER)
+
+    def test_issue_updated_at_conflict_takes_the_newer_side_and_flags_the_same_instant(self) -> None:
+        self.linked_issue()
+        # The Issue is newer: its title is imported through C02 update.
+        report = self.plan_issues(issue_remote("Renamed on GitHub", LATER))
+        self.assertEqual([(row["field"], row["kind"], row["node_patch"]) for row in report["imports"]],
+                         [("title", "remote-newer", {"title": "Renamed on GitHub"})])
+        self.apply_plan(report)
+        self.assertEqual(self.pub_node()["title"], "Renamed on GitHub")
+        # The node is newer: its title is exported through gh-bridge issue-update, nothing is imported.
+        report = self.plan_issues(issue_remote("Old wording", EARLIER))
+        self.assertEqual([(row["kind"], row["bridge_args"][-1]) for row in report["exports"]], [("local-newer", "--title=Renamed on GitHub")])
+        self.assertEqual(report["update_input"], None)
+        # The same instant: no write either way, GitHub's value is the one shown, and a manual confirmation flag stays.
+        same = self.pub_node()["updated_at"]
+        report = self.plan_issues(issue_remote("Edited on GitHub", same))
+        self.assertEqual((report["changes"], report["update_input"], report["exports"]), (0, None, []))
+        self.assertEqual([(row["field"], row["adopted"], row["display_value"], row["local"]) for row in report["confirmations"]],
+                         [("title", "remote", "Edited on GitHub", "Renamed on GitHub")])
+        self.assertEqual(self.pub_node()["title"], "Renamed on GitHub")
+        # State follows the same rule: a newer close is imported as status=closed, a newer local close is exported,
+        # and a newer GitHub reopen of a closed node is left to a human.
+        report = self.plan_issues(issue_remote("Renamed on GitHub", LATER, state="closed"))
+        self.assertEqual([(row["field"], row["node_patch"]) for row in report["imports"]], [("state", {"status": "closed"})])
+        self.apply_plan(report)
+        self.assertEqual((self.pub_node()["status"], self.pub_node()["closed_at"] is not None), ("closed", True))
+        report = self.plan_issues(issue_remote("Renamed on GitHub", EARLIER))
+        self.assertEqual([(row["kind"], row["bridge_args"][:2]) for row in report["exports"]], [("local-newer", ["--op", "issue-close"])])
+        report = self.plan_issues(issue_remote("Renamed on GitHub", LATER))
+        self.assertEqual(([row["kind"] for row in report["conflicts"]], report["changes"]), (["remote-reopen"], 0))
+        # An exact-13 package member keeps its local value even against a newer Issue.
+        graph = {**self.graph_state(), "nodes": self.package_member_nodes()}
+        report = self.plan_issues(issue_remote("Renamed again", LATER, state="closed"), graph=graph)
+        self.assertEqual(([row["kind"] for row in report["exports"]], report["update_input"]), (["local-authority"], None))
+        self.result_is_valid()
+
+    def test_issue_manual_confirmation_flag_clears_once_the_confirmed_side_is_applied(self) -> None:
+        self.linked_issue()
+        remote = issue_remote("Edited on GitHub", self.pub_node()["updated_at"])
+        flagged = self.plan_issues(remote)
+        self.assertEqual((flagged["counts"]["confirmations"], flagged["changes"]), (1, 0))
+        self.assertEqual(self.plan_issues(remote)["confirmations"], flagged["confirmations"])  # the flag stays until confirmed
+        row = flagged["confirmations"][0]
+        decision = {"graph_node_id": "issue-pub", "field": "title", "choose": "remote",
+                    **{key: row[key] for key in ("local", "remote", "local_updated_at", "remote_updated_at")}}
+        stale = self.plan_issues(remote, [{**decision, "remote": "Seen earlier"}])
+        self.assertEqual((stale["counts"]["confirmations"], len(stale["stale_decisions"]), stale["changes"]), (1, 1, 0))
+        report = self.plan_issues(remote, [decision])
+        self.assertEqual([(row["kind"], row["node_patch"]) for row in report["imports"]], [("decided-same-time", {"title": "Edited on GitHub"})])
+        self.apply_plan(report)
+        report = self.plan_issues(remote)
+        self.assertEqual((report["counts"]["confirmations"], report["changes"], report["next"]), (0, 0, "converged"))
+        # Choosing local exports instead; once GitHub carries it, the next sync has no flag and no change.
+        self.assertEqual(self.run_cli("update", {"updates": [{"graph_node_id": "issue-pub", "node_patch": {"title": "Local wording"}}]})[0], 0)
+        remote = issue_remote("GitHub wording", self.pub_node()["updated_at"])
+        row = self.plan_issues(remote)["confirmations"][0]
+        report = self.plan_issues(remote, [{**decision, "choose": "local", **{key: row[key] for key in ("local", "remote", "local_updated_at", "remote_updated_at")}}])
+        self.assertEqual([(row["kind"], row["bridge_args"][-1]) for row in report["exports"]], [("decided-same-time", "--title=Local wording")])
+        report = self.plan_issues(issue_remote("Local wording", LATER))
+        self.assertEqual((report["counts"]["confirmations"], report["changes"], report["next"]), (0, 0, "converged"))
+
+    def test_project_field_import_waits_while_the_linked_issue_is_unsettled(self) -> None:
+        # A Projects import is a C02 update and moves the updated_at the Issue planner compares. Applied first it would
+        # clear a same-instant flag without a decision (and make a newer GitHub title look older), so it is held.
+        self.linked_issue()
+        linked = roadmap_link(field_snapshot={"status": "Todo", "priority": "P1"})
+        self.assertEqual(self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [linked]}]})[0], 0)
+        issues = issue_remote("Edited on GitHub", self.pub_node()["updated_at"])  # the same instant: a flag
+        projects = roadmap_remote(priority="P3")  # base P1, local P1, remote P3: an import
+        flagged = self.plan_issues(issues)
+        self.assertEqual(flagged["counts"]["confirmations"], 1)
+        for issue_plan, reason in ((None, "issue-plan-missing"), (flagged, "issue-unsettled")):
+            report = self.reconcile(projects, issue_plan=issue_plan)
+            self.assertEqual(([(row["local_field"], row["reason"]) for row in report["held"]], report["update_input"],
+                              report["link_input"], report["changes"]), ([("priority", reason)], None, None, 0))
+        self.assertEqual(self.plan_issues(issues)["confirmations"], flagged["confirmations"])  # nothing moved: the flag stays
+        stale = {**flagged, "graph_revision": flagged["graph_revision"] - 1}
+        self.assertIn("graph_revision", self.reconcile(projects, issue_plan=stale, code=2)["stderr"])
+        # Once the confirmed side is applied and the Issues plan clean, the import goes through and nothing reappears.
+        row = flagged["confirmations"][0]
+        decision = {"graph_node_id": "issue-pub", "field": "title", "choose": "remote",
+                    **{key: row[key] for key in ("local", "remote", "local_updated_at", "remote_updated_at")}}
+        self.apply_plan(self.plan_issues(issues, [decision]))
+        settled = self.plan_issues(issues)
+        self.assertEqual(settled["next"], "converged")
+        report = self.reconcile(projects, issue_plan=settled)
+        self.assertEqual((report["counts"]["held"], report["update_input"]["updates"][0]["node_patch"]), (0, {"priority": "low"}))
+        self.apply_plan(report)
+        self.assertEqual((self.pub_node()["title"], self.plan_issues(issues)["changes"]), ("Edited on GitHub", 0))
+
+    def package_member_nodes(self) -> list[dict]:
+        """issue-pub as an exact-13 package member (a lone member never passes the CLI's package check)."""
+        nodes = self.graph_state()["nodes"]
+        member = next(node for node in nodes if node["graph_node_id"] == "issue-pub")
+        member.update(parent_feature="feature-x", feature_package_id="pkg-x", phase_ref="phase-01")
+        return nodes
+
+    def test_link_github_records_a_registered_package_member_in_the_graph_alone(self) -> None:
+        # C14 projects package members too, and the linkage is GitHub state rather than planner-owned content. A member
+        # as register-package leaves it (no content keys, no artifact file) gets the linkage in the graph alone; the
+        # findings it already had do not block that, and update still routes the member to register-package.
+        self.published_issue()
+        state = self.graph_state()
+        publication = {"mode": "issue_and_projects", "project_aliases": [], "labels": [], "milestone": None}
+        state["nodes"] += [RPT.feature_node(), *({**RPT.task_node(index), "tracker_binding": "github",
+                                                  "github_publication": publication} for index in range(13))]
+        self.graph.write_text(json.dumps(state), encoding="utf-8")
+        link = {"links": [{"graph_node_id": "task-P01", "issue_linkage": {"issue_number": 5, "repo": "acme/web", "linked_at": STAMP},
+                           "github_project_linkages": [roadmap_link()]}]}
+        code, report = self.run_cli("link-github", link)
+        self.assertEqual((code, report.get("status"), [a["graph_only"] for a in report.get("artifacts", [])]), (0, "applied", [True]), report)
+        member = next(node for node in self.graph_state()["nodes"] if node["graph_node_id"] == "task-P01")
+        self.assertEqual((member["issue_linkage"]["issue_number"], member["github_project_linkages"][0]["item_id"]), (5, "PVTI_1"))
+        self.assertFalse((self.root / member["file_path"]).exists())
+        self.assertEqual(self.run_cli("link-github", link)[1]["status"], "noop")
+        update = {"updates": [{"graph_node_id": "task-P01", "node_patch": {"priority": "low"}}]}
+        self.assertEqual(self.run_cli("update", update)[1]["code"], "package_member_requires_register_package")
+
+    def test_project_field_of_a_package_member_is_never_imported(self) -> None:
+        # C02 update refuses a package member, so even a bidirectional mapping keeps local authority for it.
+        self.published_issue()
+        linked = roadmap_link(field_snapshot={"status": "Todo", "priority": "P1"})
+        self.assertEqual(self.run_cli("link-github", {"links": [{"graph_node_id": "issue-pub", "github_project_linkages": [linked]}]})[0], 0)
+        graph = {**self.graph_state(), "nodes": self.package_member_nodes()}
+        report = self.reconcile(roadmap_remote(priority="P3"), graph=graph)  # base P1, local P1, remote P3
+        self.assertEqual((report["counts"]["imports"], report["update_input"]), (0, None))
+        self.assertEqual([(row["kind"], row["value_args"]) for row in report["exports"]], [("local-authority", ["--option-id=o_p1"])])
+        # Without the option there is nothing to write; the cause says no decision applies, only aligning by hand.
+        bare = roadmap_remote(priority="P3")
+        priority = bare["projects"]["roadmap"]["fields"]["nodes"][1]
+        priority["options"] = [option for option in priority["options"] if option["name"] != "P1"]
+        report = self.reconcile(bare, graph=graph)
+        self.assertEqual([(row["kind"], row["cause"]) for row in report["conflicts"]], [("unsupported-export", "local-authority")])
+
+    def result_is_valid(self) -> None:
+        result = self.validate()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_github_mirrored_fields_import_into_an_active_published_node_without_going_stale(self) -> None:
         # C03 imports a remote Issue title / Project field through update; the schema keeps a published or active node

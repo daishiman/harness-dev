@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: gh-bridgeとSkill run-dev-graph-node。
+- 使用資産: gh-bridgeとSkill run-dev-graph-node。Issue の close は `diff-github-issues.py` の state import (status=closed) として、取得できない Issue は同計画の `missing_issues` として受け取る。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

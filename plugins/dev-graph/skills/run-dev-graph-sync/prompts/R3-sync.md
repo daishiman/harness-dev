@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: bd-bridgeとgh-bridge。
+- 使用資産: bd-bridgeとgh-bridge。Issue と Projects field の export は各計画の `bridge_args` で gh-bridge (`issue-update`/`issue-close`/`project-item-edit`)、import は計画の `update_input` を run-dev-graph-node の `update` で反映し、export/import の無い周の `link_input` と C14 の `linkage_proposal` は run-dev-graph-node の `link-github` で記録する。confirmations と conflicts (`unsupported-export` を含む) は書かずに R6 へ渡す。Issue の計画を先に反映して計画し直し、その計画を Projects の計画の `--issue-plan` に渡す。`held` の import は Issue 側が片付くまで反映しない。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

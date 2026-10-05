@@ -13,7 +13,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--dry-run] [--resolve-conflicts PATH]"
 allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/manage-worktree-lease.py]
+script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/diff-github-issues.py, ../../scripts/diff-github-project-fields.py, ../../scripts/manage-worktree-lease.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
 reference_refs: [../../references/execution-tracker-contract.md, ../../references/github-lifecycle-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -194,7 +194,10 @@ local graph が正本。`tracker_binding=beads` は C28 の status/depends_on ex
 
 1. schema と repo config を検証し、last-synced snapshot を base に 3-way plan を作る。
 2. beads は `bd-bridge.py` だけを使う。GitHub mutation を併用しない。github は `gh-bridge.py --dry-run` preview 後だけ apply する。
-3. Issue は id+updated_at、Project field は field value updatedAt を conflict hint とする。双方変更は自動上書きせず manual conflict。同時刻は GitHub を表示値に採用し local confirmation flag を残す。Status は local→Project 一方向で、remote Status を done authority にしない。
+3. Issue は id+updated_at、Project field は field value updatedAt を conflict hint とする。Status は local→Project 一方向で、remote Status を done authority にしない。exact-13 package member は内容を system-dev-planner が持ち C02 `update` が拒否するので、Issue も Project field も local 側を採り import しない。
+   - Issue の計画は `diff-github-issues.py` (read-only) が title と state (open/closed) で作る。updated_at が新しい側を採り、node が新しければ gh-bridge `issue-update`/`issue-close` へ export、Issue が新しければ C02 `update` で title か status=closed を import する。同時刻は書込み 0 で GitHub の値を表示値に採り (`adopted: remote`)、`confirmations` に手動確認フラグを残す。フラグは観測値から毎回導くので、R6 の decision (フラグ行の local/remote/updated_at を写したもの) を `--decisions` に渡し、選んだ側を反映した次の計画で消える。reopen はどちら向きも conflict に残す。
+   - Projects field の計画は `diff-github-project-fields.py` (read-only) が `github_project_linkages[].field_snapshot` を base に作る。双方変更は自動上書きせず manual conflict。export は計画の `bridge_args` (型ごとの値か値を消す `--clear`) で gh-bridge `project-item-edit`、import は C02 `update` で反映し、計画し直して両側一致を観測した値だけを C02 `link-github` で snapshot に記録する。manual conflict は R6 の decision (conflict 行の base/local/remote を写したもの) を `--decisions` に渡したときだけ export/import に変わる。field の option や iteration に無い名前は書けないので `unsupported-export` の conflict に残る。その `cause` が manual 由来 (no-base/both-changed と decided-*) なら remote を採る decision (import) で、local-only/local-authority なら Project field に option/iteration を足す (次の計画で export になる) か local を戻すと解消する。
+   - 順序は Issue が先。Projects の import も C02 `update` なので node の updated_at を進め、Issue の新旧比較を傾ける。Issue の計画を反映して計画し直し、その計画を `diff-github-project-fields.py --issue-plan` に渡す。Issue 側に行 (差分・確認フラグ・conflict・取得できない Issue) が残る node への Projects import は `held` に保留され、Issue 側が片付いた次の計画で import になる。`--issue-plan` が無ければ Issue linkage を持つ node の import はすべて保留、別の graph_revision で作った Issue の計画は拒否される。
 4. close/delete は node 物理削除でなく tombstone/status transition。部分的な Project failure は local promotion を戻さず alias 単位 `pending_retry`。
 5. C26 で default-branch merge evidence と C27 pending event を reconcile する。closed-unmerged、dirty/feature worktree、policy/evidence 不足は done にしない。
 

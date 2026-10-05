@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: gh-bridge dry-run。
+- 使用資産: gh-bridge dry-run。反映予定差分は Issue/Projects field 計画の exports・imports・confirmations・conflicts (`unsupported-export` を含む) をそのまま提示する。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

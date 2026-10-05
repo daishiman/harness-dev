@@ -9,13 +9,13 @@ trigger: aggregate-evals (SessionEnd)
 
 ## 集計サマリ
 
-- 評価件数: 273
-- FAIL 率: 1.47%
+- 評価件数: 286
+- FAIL 率: 1.40%
 - 平均スコア: 89.364
 
 ## 検出された異常
 
-- **run-dev-graph-sync**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-09-08", "iterations": null, "negative_feedback_count": 3, "findings_count": 0}, {"date": "2026-10-04", "iterations": 1, "negative_feedback_count": 2, "findings_count": 0}]}
+- **run-dev-graph-sync**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-09-08", "iterations": null, "negative_feedback_count": 3, "findings_count": 0}, {"date": "2026-10-05", "iterations": 2, "negative_feedback_count": 33, "findings_count": 0}]}
 
 ## 主要 finding カテゴリ (top5)
 

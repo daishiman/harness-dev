@@ -2,7 +2,7 @@
 # /// script
 # name: build-graph-node
 # purpose: C02 single writer for ordinary dev-graph artifacts and C14 macro features; compose kind templates, validate the staged graph, then atomically add, diff-update, or switch confirmed issue/task nodes to the github binding with an immutable receipt.
-# inputs: ["argv: add|update|bind-github --repo-root PATH --input JSON [--config PATH] [--dry-run]"]
+# inputs: ["argv: add|update|bind-github|link-github --repo-root PATH --input JSON [--config PATH] [--dry-run]"]
 # outputs: ["stdout: JSON preview/receipt or rejection report"]
 # requires-python = ">=3.10"
 # dependencies: [_common.py, validate-graph-schema.py, validate-source-lineage.py, resolve-repo-context.py]
@@ -10,7 +10,7 @@
 # network: false
 # write-scope: caller repository content roots, the C24-resolved graph, and immutable receipts beside that graph
 # ///
-"""C02 artifact writer (add/update/bind-github) that shares the register-package writer lock."""
+"""C02 artifact writer (add/update/bind-github/link-github) that shares the register-package writer lock."""
 from __future__ import annotations
 
 import argparse
@@ -1099,9 +1099,97 @@ def _plan_bind_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
     return plan
 
 
+def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+                      composer: Composer, now: str) -> list[dict[str, Any]]:
+    """C14 の linkage_proposal と C03 の同期結果を、github 束縛の issue/task の linkage として記録する。
+
+    linkage は GitHub 側の状態を写すだけで内容でも local の編集でもないので、evaluation_status と updated_at は変えない
+    (updated_at を動かすと、次の C03 が local 側の変更と取り違える)。project linkage は project_alias ごとに置き換え、
+    field_snapshot (C03 の 3-way base) はキーごとに重ねる: 渡されなかったキーは前の観測を残し、値の消去は null で渡す。
+    exact-13 package member も受ける: C14 は package member も投影し、linkage は system-dev-planner が持つ内容
+    (本文・binding・package key) ではなく GitHub 側の状態なので、update/bind-github と違って register-package へ回さない。
+    member は register-package と同じく graph だけに記録する (artifact file と内容 key は求めず、receipt は graph_only)。
+    """
+    entries = payload.get("links")
+    if set(payload) - {"links"} or not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "link-github input is {links:[{graph_node_id, issue_linkage?, github_project_linkages?}]}")
+    config_path = Path(ctx["local_state_paths"]["config"])
+    github = (load_json(config_path) if config_path.is_file() else {}).get("github") or {}
+    projects = {project.get("alias"): project for project in github.get("projects") or [] if isinstance(project, dict)}
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    by_id = {node.get("graph_node_id"): node for node in nodes}
+    seen: set[str] = set()
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"links[{index}]"
+        _check_keys(entry, {"graph_node_id", "issue_linkage", "github_project_linkages"}, label)
+        graph_node_id = entry.get("graph_node_id")
+        if graph_node_id not in by_id or graph_node_id in seen:
+            raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
+        seen.add(graph_node_id)
+        before_node = by_id[graph_node_id]
+        # register-package registers a member to the graph only, without the content keys or an artifact file.
+        member = any(before_node.get(key) is not None for key in PACKAGE_KEYS)
+        _require_keys(before_node, [] if member else keys, label)
+        if before_node["tracker_binding"] != "github":
+            raise WriterError("link_github_requires_github_binding",
+                              f"{label}: {graph_node_id} is tracker_binding={before_node['tracker_binding']}; switch it with bind-github first")
+        node = copy.deepcopy(before_node)
+        issue = entry.get("issue_linkage")
+        if issue is not None:  # a failed issue-create proposes null: nothing to record, and this verb never unlinks.
+            if not isinstance(issue, dict) or issue.get("repo") != github.get("issue_repository"):
+                raise WriterError("issue_linkage_conflict", f"{label}.issue_linkage must name github.issue_repository {github.get('issue_repository')!r}")
+            current = before_node["issue_linkage"]
+            if current and (current.get("repo"), current.get("issue_number")) != (issue.get("repo"), issue.get("issue_number")):
+                raise WriterError("issue_linkage_conflict", f"{label}: {graph_node_id} is already linked to {current.get('repo')}#{current.get('issue_number')}")
+            node["issue_linkage"] = current or issue  # the first link keeps its linked_at
+        links = entry.get("github_project_linkages")
+        if links is not None:
+            if not isinstance(links, list) or not all(isinstance(link, dict) for link in links):
+                raise WriterError("invalid_input", f"{label}.github_project_linkages must be an array of objects")
+            merged = {link.get("project_alias"): link for link in before_node["github_project_linkages"]}
+            aliases: set[str] = set()
+            for link in links:
+                alias = link.get("project_alias")
+                project = projects.get(alias)
+                if alias in aliases or project is None:
+                    raise WriterError("unknown_project_alias", f"{label}: project alias {alias!r} is repeated or not configured in github.projects")
+                aliases.add(alias)
+                if any(link.get(key) != project.get(key) for key in ("owner_type", "owner_login", "project_number")):
+                    raise WriterError("project_identity_mismatch", f"{label}: {alias} owner/project_number differs from github.projects")
+                previous = merged.get(alias) or {}
+                if previous.get("item_id") and link.get("item_id") != previous["item_id"]:
+                    raise WriterError("project_item_conflict", f"{label}: {alias} is already linked to item {previous['item_id']}")
+                snapshot = link.get("field_snapshot", {})
+                if not isinstance(snapshot, dict):
+                    raise WriterError("invalid_input", f"{label}: {alias} field_snapshot must be an object")
+                merged[alias] = {**link, "linked_at": previous.get("linked_at") or link.get("linked_at"),
+                                 "field_snapshot": {**(previous.get("field_snapshot") or {}), **snapshot}}
+            node["github_project_linkages"] = list(merged.values())
+        if node == before_node:
+            continue
+        detail = {"graph_node_id": graph_node_id, "file_path": node["file_path"],
+                  "issue_linked": node["issue_linkage"] != before_node["issue_linkage"],
+                  "project_aliases_linked": sorted(a for a in aliases) if links is not None else [],
+                  "body_preserved": True, "graph_only": member}
+        if member:  # the member's file, if any, is system-dev-planner's; record the linkage in the graph alone.
+            plan.append({"node": node, "before_node": before_node, "path": None, "before": None, "text": None, "detail": detail})
+            continue
+        target_path = contained(root / str(before_node["file_path"]), root, must_exist=True)
+        before_bytes = target_path.read_bytes()
+        frontmatter = VGS.frontmatter_of(target_path)
+        if frontmatter.get("graph_node_id") != graph_node_id or frontmatter.get("file_path") != before_node["file_path"]:
+            raise WriterError("artifact_parity_error", f"{label}: frontmatter identity differs from the graph node")
+        front, lines = _split_frontmatter(before_bytes.decode("utf-8"), str(before_node["file_path"]))
+        text = _frontmatter(node, keys, _unmanaged_frontmatter(front, keys)) + "".join(lines)
+        plan.append({"node": node, "before_node": before_node, "path": target_path, "before": before_bytes, "text": text,
+                     "detail": detail})
+    return plan
+
+
 # ---------------------------------------------------------------- transaction
 
-def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], changed: set[str],
+def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], staged_ids: set[str],
               staging: Path, root: Path, schema: dict[str, Any], contract: dict[str, Any]) -> list[dict[str, str]]:
     def collect(nodes: list[dict[str, Any]], staged: set[str]) -> list[dict[str, str]]:
         found = [item for index, node in enumerate(nodes) for item in VGS.schema_findings(node, schema, index)]
@@ -1111,8 +1199,8 @@ def _findings(proposed: list[dict[str, Any]], baseline: list[dict[str, Any]], ch
         return found
 
     known = {json.dumps(item, sort_keys=True) for item in collect(baseline, set())}
-    return [item for item in collect(proposed, changed)
-            if item["node"] in changed or json.dumps(item, sort_keys=True) not in known]
+    return [item for item in collect(proposed, staged_ids)
+            if item["node"] in staged_ids or json.dumps(item, sort_keys=True) not in known]
 
 
 def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, Any]]]) -> dict[str, Any]:
@@ -1158,7 +1246,9 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         if not plan:
             return {**base, "status": "noop", "valid": True, "dry_run": bool(args.dry_run), "idempotent": True,
                     "applied_count": 0, "write_count": 0, "graph_revision_after": revision_before}
-        changed = {item["node"]["graph_node_id"] for item in plan}
+        # A graph-only entry (path None: a package member's linkage) stages no artifact, so only the findings it
+        # introduces block it; every staged node must come out clean.
+        staged_ids = {item["node"]["graph_node_id"] for item in plan if item["path"] is not None}
         replacements = {item["node"]["graph_node_id"]: item["node"] for item in plan}
         proposed_nodes = [replacements.pop(node.get("graph_node_id"), node) for node in nodes]
         proposed_nodes += [item["node"] for item in plan if item["before_node"] is None]
@@ -1168,10 +1258,12 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         with tempfile.TemporaryDirectory(prefix="dev-graph-node-") as staging_dir:
             staging = Path(staging_dir).resolve()
             for item in plan:
+                if item["path"] is None:
+                    continue
                 staged = staging / item["node"]["file_path"]
                 staged.parent.mkdir(parents=True, exist_ok=True)
                 staged.write_text(item["text"], encoding="utf-8")
-            findings = _findings(proposed_nodes, nodes, changed, staging, root, schema, contract)
+            findings = _findings(proposed_nodes, nodes, staged_ids, staging, root, schema, contract)
         if findings:
             raise WriterError("pre_write_validation_failed", f"{len(findings)} validate-graph-schema finding(s)", findings)
         receipt_path = receipts / f"node-r{revision_before + 1:06d}-{args.command}.json"
@@ -1183,7 +1275,8 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
             "template_sources": sorted(composer.sources),
             "artifacts": [{**item["detail"],
                            "sha256_before": _sha256(item["before"]) if item["before"] is not None else None,
-                           "sha256_after": _sha256(item["text"].encode("utf-8"))} for item in plan],
+                           "sha256_after": _sha256(item["text"].encode("utf-8")) if item["text"] is not None else None}
+                          for item in plan],
             "receipt_path": receipt_path.relative_to(root).as_posix(),
         }
         if args.dry_run:
@@ -1193,6 +1286,8 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
         graph_written = False
         try:
             for item in plan:
+                if item["path"] is None:
+                    continue
                 if item["before"] is not None and item["path"].read_bytes() != item["before"]:
                     raise WriterError("artifact_changed_during_write", item["node"]["file_path"])
                 _write_atomic(item["path"], item["text"].encode("utf-8"), create_only=item["before"] is None)
@@ -1234,7 +1329,7 @@ def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
 
 
 PLANNERS: dict[str, Callable[..., list[dict[str, Any]]]] = {
-    "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github}
+    "add": _plan_add, "update": _plan_update, "bind-github": _plan_bind_github, "link-github": _plan_link_github}
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -1243,7 +1338,7 @@ def _parser() -> argparse.ArgumentParser:
     for name in PLANNERS:
         command = sub.add_parser(name)
         command.add_argument("--repo-root", required=True)
-        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}")
+        command.add_argument("--input", required=True, help="repo-relative or absolute JSON inside the repo: add={artifacts:[...]}, update={updates:[...]}, bind-github={bindings:[...]}, link-github={links:[...]}")
         command.add_argument("--config", default=".dev-graph/config.json")
         command.add_argument("--dry-run", action="store_true")
     return parser

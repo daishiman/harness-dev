@@ -13,11 +13,11 @@
 
 ### 入力契約
 
-- containment receipt、classification decision (bind-github では不要)、artifact・feature package・bind-github の `bindings[]` のいずれか、R2 preview の `graph_revision_before`。apply の入力 JSON には必ず `expected_graph_revision` として渡し、省略しない (省略すると writer が `missing_expected_graph_revision` で拒否する)。
+- containment receipt、classification decision (bind-github では不要)、artifact・feature package・bind-github の `bindings[]`・link-github の `links[]` のいずれか、R2 preview の `graph_revision_before`。apply の入力 JSON には必ず `expected_graph_revision` として渡し、省略しない (省略すると writer が `missing_expected_graph_revision` で拒否する)。
 
 ### 出力契約
 
-- atomic node updateまたはimmutable package receiptと`graph_revision_after` (書込み時は新revision、`bind-github` の noop では`graph_revision_before`のまま)。
+- atomic node updateまたはimmutable package receiptと`graph_revision_after` (書込み時は新revision、`bind-github`/`link-github` の noop では`graph_revision_before`のまま)。
 
 ### 責務境界
 
@@ -26,11 +26,11 @@
 
 ### 受入条件
 
-- 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる。
+- 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる。`link-github` は linkage だけを書き換え、本文・`evaluation_status`・`updated_at` を保ち、変化が無ければ noop になる。
 
 ## Layer 3: インフラ層
 
-- 使用資産: 通常 artifact の add/update と、確定済み issue/task の GitHub への切り替え (bind-github) は`build-graph-node.py`、exact-13 package は`register-package.py`、両者の書込み前検証は`validate-graph-schema.py`。bind-github も R2 preview の `graph_revision_before` を `expected_graph_revision` に渡す。
+- 使用資産: 通常 artifact の add/update と、確定済み issue/task の GitHub への切り替え (bind-github) と GitHub linkage・`field_snapshot` の記録 (link-github) は`build-graph-node.py`、exact-13 package は`register-package.py`、両者の書込み前検証は`validate-graph-schema.py`。bind-github も R2 preview の `graph_revision_before` を `expected_graph_revision` に渡す。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -48,11 +48,11 @@
 ### 5.2 ゴール定義
 
 - 目的: artifact_kindからtemplateを選び単一transactionで差分書込みする。feature package登録はexact 13 nodeのP01..P13、共通parent/package、機能内dependency/bindingを検証しpartial 0件のreceiptを生成する
-- 達成ゴール: atomic node updateまたはimmutable package receiptと`graph_revision_after` (`bind-github` の noop では`graph_revision_before`のまま) が生成され、受入条件を満たした状態になっている。
+- 達成ゴール: atomic node updateまたはimmutable package receiptと`graph_revision_after` (`bind-github`/`link-github` の noop では`graph_revision_before`のまま) が生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる
+- [ ] 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる。`link-github` は linkage だけを書き換え、本文・`evaluation_status`・`updated_at` を保ち、変化が無ければ noop になる
 
 ## Layer 6: オーケストレーション層
 

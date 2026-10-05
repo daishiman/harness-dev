@@ -13,24 +13,24 @@
 
 ### 入力契約
 
-- R1候補、confidence/margin閾値、任意user decision。分類を伴わない `bind-github` は R1 候補を持たず、代わりに切り替え対象の確定済み issue/task の `bindings[]` (`graph_node_id` と任意の `publication_mode`) を受け取る。
+- R1候補、confidence/margin閾値、任意user decision。分類を伴わない `bind-github` は R1 候補を持たず、代わりに切り替え対象の確定済み issue/task の `bindings[]` (`graph_node_id` と任意の `publication_mode`) を受け取る。`link-github` も分類を伴わず、`links[]` (`graph_node_id` と任意の `issue_linkage`・`github_project_linkages`) を受け取る。
 
 ### 出力契約
 
-- 自動確定または明示確認済みkind/domain/project/path decision receipt。分類を伴わない `bind-github` は decision receipt を作らず、`graph_node_id` と preview の `graph_revision_before` だけを返す。
+- 自動確定または明示確認済みkind/domain/project/path decision receipt。分類を伴わない `bind-github`/`link-github` は decision receipt を作らず、`graph_node_id` と preview の `graph_revision_before` だけを返す。
 
 ### 責務境界
 
 - 閾値達成時は質問せず未達時だけAskUserQuestionを使い任意pathを要求しない。
-- preview は `build-graph-node.py add|update|bind-github --dry-run` だけで作り、write 0 とする。`bind-github` は確定済みの既存 issue/task の binding を切り替えるだけなので kind/domain/project/path を分類せず、preview の `graph_revision_before` だけを R3 へ渡す。
+- preview は `build-graph-node.py add|update|bind-github|link-github --dry-run` だけで作り、write 0 とする。`bind-github` は確定済みの既存 issue/task の binding を切り替えるだけなので kind/domain/project/path を分類せず、preview の `graph_revision_before` だけを R3 へ渡す。
 
 ### 受入条件
 
-- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。
+- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。
 
 ## Layer 3: インフラ層
 
-- 使用資産: AskUserQuestionとRead、`build-graph-node.py add|update|bind-github --dry-run` (preview)。
+- 使用資産: AskUserQuestionとRead、`build-graph-node.py add|update|bind-github|link-github --dry-run` (preview)。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層
@@ -48,11 +48,11 @@
 ### 5.2 ゴール定義
 
 - 目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
-- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receipt (`bind-github` では `graph_node_id` と `graph_revision_before`) が生成され、受入条件を満たした状態になっている。
+- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receipt (`bind-github`/`link-github` では `graph_node_id` と `graph_revision_before`) が生成され、受入条件を満たした状態になっている。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
 
-- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する
+- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する
 
 ## Layer 6: オーケストレーション層
 
