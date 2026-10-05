@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-10-05T03:59:23Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -136,6 +136,86 @@
+ /verify
+ . This requires Claude Code v2.1.200 or later.
+ Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs. Before v2.1.205, the bundled skill told Claude to fold in anything a run learned, which caused frequent merge conflicts.
++​
++Run your checks before each commit
++When a session starts with a skill named
++verify
++or
++simplify
++in place, Claude Code’s commit instructions tell Claude to run it right before each commit, except for changes to docs or tests. This requires Claude Code v2.1.286 or later. Claude gets that instruction when these conditions hold at the start of the session:
++Location
++: the skill loads from the enterprise, personal, project, or additional-directory
++location
++, or from a
++.claude/commands/
++file with that name. The recipe that
++/verify
++records at your repo root is a project skill, so it counts. The bundled
++/verify
++and
++/simplify
++, plugin skills, and skills from your claude.ai account don’t count.
++Invocation
++: Claude can invoke the skill. If you’ve
++stopped Claude from invoking it
++, for example with
++disable-model-invocation: true
++, Claude doesn’t get the instruction.
++Git instructions
++: you haven’t turned off
++includeGitInstructions
++. Turning it off removes this instruction together with the rest of the built-in commit and PR instructions.
++​
++Work on Claude API projects
++The bundled
++/claude-api
++skill loads
++Claude API
++and
++Managed Agents
++reference material for your project’s language. Claude also activates it automatically when your code imports
++anthropic
++or
++@anthropic-ai/sdk
++.
++To start one of the skill’s workflows, type a subcommand after the skill name at the Claude Code prompt, for example
++/claude-api migrate
++. The table lists what each subcommand does and the earliest Claude Code version that includes it.
++migrate
++and
++managed-agents-onboard
++predate v2.1.221, the oldest version the table tracks.
++Subcommand
++What it does
++Minimum version
++migrate
++Update your existing Claude API code to a newer model
++Earlier than v2.1.221
++upgrade
++Move your project’s Anthropic SDK dependency across a major version, currently the Python
++anthropic
++package from 0.x to 1.x
++v2.1.236 or later
++managed-agents-onboard
++Walk through creating a new Managed Agent
++Earlier than v2.1.221
++prompt-audit
++Flag instructions written for older models in your prompts, skills, and tool descriptions and propose fixes as a diff
++v2.1.221 or later
++cost-optimize
++Profile where your project’s Claude API spend goes and propose savings from options such as prompt caching, trimming unneeded input and output tokens, batch processing, effort, and model choice, one change at a time
++v2.1.247 or later
++build-eval
++Build an eval set for your Claude-powered app
++v2.1.259 or later
++hillclimb
++Iteratively improve your app against an existing eval
+... (2088 more lines)
+```
+
 ## 2026-09-28T03:34:28Z
 
 実仕様ページに変更を検知。
