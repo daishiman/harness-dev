@@ -2,43 +2,40 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565"
+    "skill_md_sha256": "26ad8ff31583e227e32a9e6d1e2886ba55a73e37db964d275a3da50348c24d2f"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 2,
-    "dependency_break": 0,
-    "smell": 1
-  },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
-  "reviewed_at": "2026-10-04T22:30:24Z",
+  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
+  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
   "iterations": 1,
   "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "external-mutation-guard ブロックの規範を満たしている。<!-- external-mutation-guard-cli:v1 --> の範囲は Post-choice selected improvement execution の中にある。文面は生成器（scripts/build-artifact-delivery.py）の canonical block と一致し、`--check` は rc=0（ARTIFACT_DELIVERY_OK: 22 plugins）。_validate_external_guard_wiring が必須とする resolver の行・preview・authorize・execute の 4 行がすべてそろっている。frontmatter の effect: external-mutation と external_mutation_guard（runtime_ref は plugin: 記法、flow は preview-confirm-authorize-execute-v1）は前回のまま、本文と一致する。",
-      "依存関係が整合している（dependency_break 0 件）。本文が呼ぶ `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py` は plugin 直下に実在し、repo 正本と byte 単位で一致する（lint-vendored-ssot は 33 件 OK）。実行すると rc=0 で skill-governance-adapters の絶対パスを返し、そこに guard script が実在する。plugin.json の dependencies は skill-governance-adapters を宣言している。resolver が非 0 のときは外部変更をせずに止まって install を案内し、依存が欠けたときは fail-closed になる。lint-sibling-plugin-paths は OK。",
-      "runtime root contract と矛盾しない。resolver の呼び出しは dual-root 形（`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`）で、Codex 側で空文字に展開されない。guard の 3 呼び出しは `<GUARD_PLUGIN_ROOT>` という山括弧プレースホルダを使うので、『山括弧のプレースホルダはすべて今回の実行で確かめた値に置き換える』という既存の指示の対象に入る。guard script の canonical 判定（コマンド全体が単一の呼び出しで、shell 演算子を含まない）と pending 中の Bash 遮断にも合っている。",
-      "前回の PASS で確認した規範は、変わらずに維持されている。対象は description の形式（lint-skill-description OK=6 / VIOLATION=0）、本文の行数（263 行で上限内）、必須節、Purpose & Output Contract の IN1〜IN3 と not_applicable、workflow-manifest.json の phase5-validate（commands 3 本、fatal_exit_codes [1,2,3]）、criteria 5 件の verify_by（script / script / script / test / live-trial、lint-feedback-contract --all rc=0）、artifact_delivery の state machine。skill 配下の references・scripts・manifest は前回の評価以後に更新されていない。",
-      "実測: pytest（plugins/ubm-goal-setting/tests）484 passed、root テスト（extract_plugin_root・artifact_delivery）59 passed、lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-plugin-composition OK、lint-ssot-duplication --plugin-dir OK。"
+      "Canonical IN1→IN2→conditional IN3 before/after exact staged save; rc3 cannot pass; monthly one file/two sections. Parent owns dialogue,formatter draft only,separate staged Daily publication.",
+      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
+      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
     ],
-    "negative_feedback": [
-      "[low / omission・新規] CHANGELOG.md 0.6.3 の『install 先での兄弟 plugin の解決』の項目が run-skill-feedback だけを挙げている。同じ guard block の差し替えは run-ubm-goal-setting・run-ubm-journal・run-ubm-knowledge-sync・run-ubm-youtube-ingest にも入っている。resolver を同梱したことも追加として読み取れず、skill の version-history.md 26.0.3 にもこの差し替えの記録が無い。直し方: CHANGELOG の主語を『外部変更を行う 5 skill の guard 手順』に広げ、resolver の同梱を書き、version-history.md 26.0.3 に 1 項目足す。",
-      "[low / omission・diff 外（新しい文言で顕在化）] archive への移動を guard に通すときの実行主体と時点が書かれていない。Phase5 の実行体は output-formatter（Task）で、その Step 4 項目 4 は guard に触れずに『archive/ へ分離する』とだけ書く。Task は hook-confirm（ユーザーの返答）を完結できず、mv は guard の直接変更パターンに当たらないので、直接 mv すると preview を経ない。逆に親が Phase5 の前に preview を出すと、pending のあいだ検査 3 本の Bash が遮断される。直し方: 『formatter が保存を終えて親へ戻った後、親が preview→confirm→authorize→execute で移動する』と Phase5 の行と output-formatter Step 4 に書く。",
-      "[low / inconsistency・前回から継続] version-history.md 26.0.3 と CHANGELOG の版は 0.6.3 だが、plugin.json（claude / codex）と marketplace.json は 0.6.2 のまま。直し方: release 時に 3 つの manifest を 0.6.3 に上げる。上げないなら、記録の版を 0.6.2 側へ合わせる。",
-      "[low / inconsistency・前回から継続] manifest の phase5-validate の commands 3 本が同じ `<log>` へ `>` で書くので、同じパスに置くと前の rc が上書きされる。3 本目の条件は commands_note の自由文にしか無い。直し方: ログのプレースホルダを 3 つに分け、3 本目の条件を command 側でも示す。",
-      "[low / omission・前回から継続・diff 外] agents/output-formatter.md の L92・L237・L259 が、IN3 と not_applicable に追随していない。直し方: 3 箇所に『期報と月報が揃っている場合は validate-cross-level.py の rc と引数、揃っていなければ not_applicable』を足す。",
-      "[smell / low・前回から継続] data-contract.md の Version 表（最新 2.6.0）に、§4.4 の契約変更（IN3 の適用範囲の拡大と not_applicable）が載っていない。直し方: 2.6.1 等を足すか、以後は version-history.md へ一本化すると明記する。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / install-portability の focused combined review・1 回】前回の PASS（sha ec1703442576…）の後に、外部変更の guard block の差し替えが入り、SKILL.md の sha が 1e1a31ee4b9c… に変わった。builder とは別の context の独立 evaluator として再評価した。30 思考法は行っておらず、行ったとも申告しない。1 回のレビューで (a)〜(e) を同時に判定し、その結果を elegance と rubric の 2 verdict に分けて書いている。このファイルは rubric 側（規範に照らした採点）で、elegance 側は同じディレクトリの elegance-verdict.json にある。どちらも同じ観測に基づく。 【読んだもの・確認したこと】SKILL.md 全文（criteria の id は IN1/IN2/IN3/OUT1/OUT2）、git diff HEAD の全文。guard block を旧形へ戻した sha が前回値と一致し、前回以後の変化は guard block だけと確定した。同梱 resolver の全文と実行結果、repo 正本との byte 一致、guard script（Read ツールで読んだ）の canonical 判定と pending 判定、build-artifact-delivery.py の diff と --check、plugin.json の dependencies、hooks.json の matcher、output-formatter.md の該当箇所、CHANGELOG.md 0.6.3、version-history.md の diff、manifest 3 つの版数。書き込み直前に shasum で計算した実測値は 1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565。実測: pytest 484 passed、root テスト 59 passed、lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-feedback-contract --all rc=0、lint-skill-description OK=6 / VIOLATION=0、lint-sibling-plugin-paths OK、lint-vendored-ssot OK、artifact-delivery --check rc=0、不可視文字なし。 【rubric 採点の要点】high severity に当たる違反は 0 件である。description の形式・行数・必須節・frontmatter の必須キー・artifact-delivery・external-mutation-guard（生成器と一致し、post-choice の中にある）・goal_seek / feedback_contract の構造は、いずれも満たしている。medium も 0 件。新規の low は 2 件（CHANGELOG の記載範囲、archive 移動の guard の実行主体と時点）で、前回から継続の low は 4 件ある（skill 配下は前回以後に更新が無く、未処置）。verdict=PASS、next_action=none。guard block の文言は、境界の archive 移動の宣言とも Gotchas の書き込み保護とも矛盾しない。 【PASS の射程】この PASS の射程は design claim（静的な設計の adequacy）に限る。install 先で resolver が実際に解決できることは、repo 配置での実行と root テストで確認しただけで、実 install 環境での実走ではない。IN1〜IN3（verify_by: script）は、実際の生成物に検査器を当てた rc で確認する。OUT1（verify_by: test）と OUT2（verify_by: live-trial）の behavioral acceptance には、受け入れテストと run-skill-live-trial の実走証拠が別に要る。この verdict をそれらの証拠として流用しない。"
+  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
 }

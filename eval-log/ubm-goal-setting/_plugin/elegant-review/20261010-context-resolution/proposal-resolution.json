@@ -1,0 +1,216 @@
+{
+  "original_source": "prior-proposals.txt (not executed)",
+  "status": "resolved within the recorded static and semantic review scope; independent four conditions PASS; canonical 62 PASS; all90 content lint rc0",
+  "issue_operations": false,
+  "items": [
+    {
+      "id": 1,
+      "subject": "既存13プラグインの言語",
+      "resolution": "既存言語を維持し、生成時のja/en/auto選択を正本化。翻訳範囲と機械キーを分離。",
+      "evidence_path": "plugins/harness-creator/skills/run-build-skill/references/ja-contract-policy.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 2,
+      "subject": "生成元の日本語対応",
+      "resolution": "build-subagent、combinators、静的テンプレート、Codex明示localeに対応。既存英語の互換性を保持。",
+      "evidence_path": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 3,
+      "subject": "機械ラベルとrubric別名",
+      "resolution": "Layer/構造キー維持。守ることの正規見出しのみ許容、冒頭30行条件維持。説明誤り修正、rubric1.5.0に同期。",
+      "evidence_path": "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 4,
+      "subject": "定型節の生成と検査",
+      "resolution": "runtime管理ブロック化、locale一致、guard全文一致、ubm入口節順と実在リソースを検査。",
+      "evidence_path": "scripts/build-artifact-delivery.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 5,
+      "subject": "runtime_root_policy監査",
+      "resolution": "英日bodyの必須tokenと日本語正本参照を検査。",
+      "evidence_path": "plugins/harness-creator/scripts/audit-capability-parity.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 6,
+      "subject": "担当agentの表記",
+      "resolution": "生成元を担当エージェントに統一。",
+      "evidence_path": "plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-format.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 7,
+      "subject": "rubric編集ガード",
+      "resolution": "正本実パス/実registry/境界/dotsegment/親symlinkをガード。",
+      "evidence_path": "plugins/skill-governance-hooks/scripts/hook-guard-rubric.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 8,
+      "subject": "cooldownと承認対象",
+      "resolution": "P0無条件分類を修正。list/scalarの対象境界、現変更SHA承認、以前のcooldown、承認済incident限定例外。CI全体bypass撤去。",
+      "evidence_path": "scripts/guard-change-category.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 9,
+      "subject": "Skill入口配線",
+      "resolution": "6Skillを呼出可とし、危険操作のguard受領書と完全なcanonicalworkflow検査を必要条件にする。command→Skillも検査。",
+      "evidence_path": "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 10,
+      "subject": "goal-seek配線",
+      "resolution": "共通anchor正本/実validator/6キーと不変hash/次周回入力を整合。",
+      "evidence_path": "plugins/ubm-goal-setting/references/goal-seek-anchor-contract.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 11,
+      "subject": "EVALS/composition/配布",
+      "resolution": "plugin版・journal検証・依存辺・private配布・動的knowledge件数を整合。公開Claudecatalogからprivateentry除去。",
+      "evidence_path": "plugins/ubm-goal-setting/EVALS.json",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 12,
+      "subject": "見出し参照検査",
+      "resolution": "実文書全域、全見出しレベル、コメント、localanchorを検査し古い参照を修正。",
+      "evidence_path": "plugins/ubm-goal-setting/tests/test_heading_references.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 13,
+      "subject": "旧env等の小さな抜け",
+      "resolution": "agent-root正本、未接続縮退、語彙profile、除外root検査、YouTubecomment/notice統一。MD12/--confirmedは現契約不在を確認し不適用判断。",
+      "evidence_path": "plugins/ubm-goal-setting/references/agent-root-contract.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 14,
+      "subject": "consult挑戦誘導",
+      "resolution": "outcome/handoff/schema/prompts/validatorへredirected_challengeを同時追加。",
+      "evidence_path": "plugins/ubm-goal-setting/scripts/validate-consult-session.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 15,
+      "subject": "goal検証ゲートの正本",
+      "resolution": "agent内ゲートをneutralreferenceへ移し、draft/peer由来・保存前後・rc停止条件を定義。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 16,
+      "subject": "挑戦宣言の循環接続",
+      "resolution": "goal収集へ最新挑戦宣言の読み取り専用参照を接続。ユーザー記録のknowledge混入を防止。",
+      "evidence_path": "plugins/ubm-goal-setting/agents/info-collector.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 17,
+      "subject": "9agentの共通骨格とCI",
+      "resolution": "助言役/書込み役の2型で7層化、本文手順保持、ubm9本をCI検査対象に追加。",
+      "evidence_path": "plugins/harness-creator/skills/run-build-skill/scripts/build-subagent.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 18,
+      "subject": "文章literalテスト",
+      "resolution": "構造キー・正本参照・日本語契約へ照合を整理。",
+      "evidence_path": "plugins/ubm-goal-setting/tests/test_runtime_simplification_contracts.py",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 19,
+      "subject": "誘導時保存の同意",
+      "resolution": "全分岐保存false既定。記録希望時だけ説明・同意。安全分岐は論点確認を待たず支援案内。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R1-intake-issue.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 20,
+      "subject": "YouTubeagent必須入力",
+      "resolution": "source_out/dest_root/knowledge_dir/target_files/mode/plugin_rootを明示。dryrunで書手を起動しない。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 21,
+      "subject": "challenge一時パス",
+      "resolution": "Bashで一度解決した絶対パスを下書きと検査に共有。rc2では停止。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 22,
+      "subject": "7群の文書不整合",
+      "resolution": "journal16骨格/保存時点/設問、since strict追加再処理、consult型・分岐数量、YouTubeモード、challenge総試行3回と許可範囲を整合。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 23,
+      "subject": "入力provenance",
+      "resolution": "goal peer/draft、consult role発話/証拠、journalschema/rc2/警告、challenge初回goal/保留handoff/field対応/旧月報、未接続detector出力を定義。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/question-map.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    },
+    {
+      "id": 24,
+      "subject": "重複契約の参照化",
+      "resolution": "journal設問/習慣、consult締め方、challenge書込許可、knowledge除外、goalゲートを単一正本＋参照へ整理。完成例の意図的同文は由来と一致テストを維持。",
+      "evidence_path": "plugins/ubm-goal-setting/skills/run-ubm-journal/references/output-format.md",
+      "implementation_status": "implemented",
+      "verification_scope": "Static contracts + recorded deterministic/fixture checks; not live acceptance."
+    }
+  ],
+  "final_design_gate": "final-verdict.json",
+  "residual_shared_issue": "KL-002 semantic background quality; 5 targets remain FAIL. No fabricated industry/scale. Proposed UBM-domain criterion not approved or applied.",
+  "additional_repairs": [
+    "staged guarded publication across 5 external skills",
+    "real weighted knowledge search and actual parent-owned usage log",
+    "125 evidence-derived missing metadata fields and strict982 schema alignment",
+    "unique YouTube-ID paths and foreign/source symlink overwrite refusal",
+    "active HC/PC seven-layer/Markdown/provenance/optional-agent gates and frontend block-list/comment parser"
+  ],
+  "previous_status": "reported_24_technical_remediations_implemented; final_design_gate_incomplete_pending_quality_contract_approval",
+  "continuation_run": "20261010-context-resolution",
+  "current_validation_evidence": [
+    "validation-final-ubm.json",
+    "validation-final-content-review.json",
+    "validation-final-verdict-projection.json"
+  ],
+  "final_verdict": "final-verdict.json"
+}

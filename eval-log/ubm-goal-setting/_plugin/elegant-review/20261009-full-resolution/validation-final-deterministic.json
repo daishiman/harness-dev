@@ -1,0 +1,148 @@
+[
+  {
+    "name": "artifact_delivery",
+    "argv": [
+      "python3",
+      "scripts/build-artifact-delivery.py",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "ARTIFACT_DELIVERY_OK: 22 plugins\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T13:54:46.535309+00:00"
+  },
+  {
+    "name": "entrypoint",
+    "argv": [
+      "python3",
+      "scripts/lint-entrypoint-artifact-first.py",
+      "--repo-root",
+      "."
+    ],
+    "returncode": 0,
+    "stdout": "OK: artifact-first entrypoints valid (127 inventory, 101 enforced, 26 mechanically exempt)\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:37.370276+00:00"
+  },
+  {
+    "name": "vendored",
+    "argv": [
+      "python3",
+      "scripts/lint-vendored-ssot.py"
+    ],
+    "returncode": 0,
+    "stdout": "[lint-vendored-ssot] OK: vendored SSOT 56 件が正本と byte 一致\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:37.586118+00:00"
+  },
+  {
+    "name": "feedback",
+    "argv": [
+      "python3",
+      "scripts/lint-feedback-protocol.py"
+    ],
+    "returncode": 0,
+    "stdout": "[OK] feedback_protocol SSOT lint: all checks passed\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:37.926784+00:00"
+  },
+  {
+    "name": "goal_seek",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/skills/run-build-skill/scripts/lint-goal-seek.py",
+      "--skills-dir",
+      "plugins/ubm-goal-setting/skills"
+    ],
+    "returncode": 0,
+    "stdout": "OK: 7 skill file(s) passed goal-seek lint\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:38.127899+00:00"
+  },
+  {
+    "name": "agent_layers",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "--plugins-dir",
+      "plugins/ubm-goal-setting",
+      "--mode",
+      "agent"
+    ],
+    "returncode": 0,
+    "stdout": "OK content-lint (--mode agent): scanned=9 files 全て 7 層準拠 (l5-contract v2.0.0) under plugins/ubm-goal-setting\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:43.425256+00:00"
+  },
+  {
+    "name": "step7",
+    "argv": [
+      "python3",
+      "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
+      "--skills-dir",
+      "plugins/ubm-goal-setting/skills"
+    ],
+    "returncode": 0,
+    "stdout": "ok: doc/20 Step 7 全5条件 PASS (7 skills)\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:45.116021+00:00"
+  },
+  {
+    "name": "package",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+      "--check",
+      "all",
+      "--plugin",
+      "ubm-goal-setting",
+      "--plugins-root",
+      "plugins"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"run_id\": \"pkg-validate-ubm-goal-setting-20261009-001\",\n  \"target_plugin\": \"ubm-goal-setting\",\n  \"package_mode\": \"bundle\",\n  \"pkg_checks\": {\n    \"PKG-002\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:45Z\"\n    },\n    \"PKG-003\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-004\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-005\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-006\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-007\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-008\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    },\n    \"PKG-014\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:08:46Z\"\n    }\n  },\n  \"verdict\": {\n    \"total\": 8,\n    \"pass\": 8,\n    \"fail\": 0,\n    \"skip\": 0,\n    \"not_applicable\": 0\n  }\n}\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:46.694994+00:00"
+  },
+  {
+    "name": "capability_parity",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/scripts/audit-capability-parity.py",
+      "--repo-root",
+      ".",
+      "--plugin",
+      "ubm-goal-setting",
+      "--json"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"plugin_count\": 1,\n  \"pass_count\": 1,\n  \"fail_count\": 0,\n  \"dependency_scc\": [\n    {\n      \"members\": [\n        \"dev-graph\",\n        \"system-dev-planner\"\n      ],\n      \"edges\": [\n        {\n          \"from\": \"dev-graph\",\n          \"to\": \"system-dev-planner\"\n        },\n        {\n          \"from\": \"system-dev-planner\",\n          \"to\": \"dev-graph\"\n        }\n      ],\n      \"catalog\": \".agents/plugins/marketplace.json\",\n      \"resolvable\": true\n    },\n    {\n      \"members\": [\n        \"harness-creator\",\n        \"skill-governance-adapters\"\n      ],\n      \"edges\": [\n        {\n          \"from\": \"harness-creator\",\n          \"to\": \"skill-governance-adapters\"\n        },\n        {\n          \"from\": \"skill-governance-adapters\",\n          \"to\": \"harness-creator\"\n        }\n      ],\n      \"catalog\": \".agents/plugins/marketplace.json\",\n      \"resolvable\": true\n    }\n  ],\n  \"plugins\": [\n    {\n      \"plugin\": \"ubm-goal-setting\",\n      \"inventory\": {\n        \"skills\": 7,\n        \"agents\": 9,\n        \"commands\": 6,\n        \"hooks\": 1,\n        \"scripts\": 9,\n        \"mcp\": 0,\n        \"apps\": 0,\n        \"config_assets_references\": 7\n      },\n      \"surfaces\": {\n        \"skills\": [\n          \"run-skill-feedback\",\n          \"run-ubm-challenge\",\n          \"run-ubm-consult\",\n          \"run-ubm-goal-setting\",\n          \"run-ubm-journal\",\n          \"run-ubm-knowledge-sync\",\n          \"run-ubm-youtube-ingest\"\n        ],\n        \"agents\": [\n          \"challenge-advisor\",\n          \"goal-reviewer\",\n          \"info-collector\",\n          \"journal-composer\",\n          \"knowledge-extractor\",\n          \"knowledge-relation-extractor\",\n          \"output-formatter\",\n          \"phase3-coordinator\",\n          \"youtube-transcript-normalizer\"\n        ],\n        \"commands\": [\n          \"ubm-challenge\",\n          \"ubm-consult\",\n          \"ubm-goal-setting\",\n          \"ubm-journal\",\n          \"ubm-knowledge-sync\",\n          \"ubm-youtube-ingest\"\n        ],\n        \"hooks\": [\n          \"ubm-write-path-guard.py\"\n        ]\n      },\n      \"hooks\": {\n        \"claude_events\": [\n          \"PreToolUse\"\n        ],\n        \"codex_events\": [\n          \"PreToolUse\"\n        ],\n        \"omitted_events\": []\n      },\n      \"components\": {\n        \"mcpServers\": {\n          \"claude\": false,\n          \"codex\": false\n        },\n        \"apps\": {\n          \"claude\": false,\n          \"codex\": false\n        }\n      },\n      \"violations\": [],\n      \"verdict\": \"PASS\",\n      \"dependencies\": [\n        \"harness-creator\"\n      ]\n    }\n  ],\n  \"verdict\": \"PASS\"\n}\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:47.409290+00:00"
+  },
+  {
+    "name": "local_marketplace",
+    "argv": [
+      "python3",
+      "scripts/build-local-marketplace.py",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "[build-local-marketplace] OK: 22 plugin(s), no drift\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:08:47.986361+00:00"
+  },
+  {
+    "name": "ssot_duplication",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py",
+      "--plugin-dir",
+      "plugins/ubm-goal-setting"
+    ],
+    "returncode": 0,
+    "stdout": "OK: SSOT 重複チェック通過 (schemas=149, md=90, warnings=1 件は smell。--strict で fail 化)\n",
+    "stderr": "WARN  DUP-PASSAGE: 同一の 6 行パッセージが 2 ファイルに点在 (plugins/ubm-goal-setting/skills/run-ubm-journal/assets/golden-sample.md, plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md)。例: \"- [ ] 月末締め翌月7日までに集計が上がる状態ですか？...\"。正本 1 箇所に置き他は参照化すること\n",
+    "completed_at": "2026-10-09T14:08:49.115442+00:00"
+  }
+]

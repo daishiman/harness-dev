@@ -2,41 +2,37 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-youtube-ingest",
-    "skill_md_sha256": "a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59"
+    "skill_md_sha256": "41ab73b141af565f333b4b029c2a3832cf04bb62145bc0c28c5e4cd2077d3ca5"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
+  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
+  "iterations": 1,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 5
+    "smell": 0
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:26Z",
-  "iterations": 1,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
-      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
-      "『確認待ちの間は他の Bash が遮断されるので再解決しない』という注意は guard の実装 (完了も取消もされていない preview がある間、canonical でない Bash を deny する) と一致し、authorize や execute の直前に resolver を呼び直して遮断される事故を手順の側で先に塞いでいる。",
-      "<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則と、Runtime root contract の『literal placeholder を shell へ渡さない』規則の両方に収まり、置換規則を新しく増やしていない。allowed-tools は Bash で、resolver の呼び出しを妨げない。"
+      "Shared normalized_source_path.py binds valid date,bounded96byteNFC title,full ID UTF8hex suffix across C01/oneshot. Foreign/symlink mismatch refuses write; legacy ledger readonly compatibility. Strict full_backfill_pass retains denominator; dry-run nonpersistent.",
+      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
+      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
     ],
-    "negative_feedback": [
-      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
-      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
-      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
-      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 43 行目)、今回の guard block への 12 行追記で本文 55 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。",
-      "[low / 差分外の既存・継続] combinators に with-goal-seek を宣言しているが、本文に『### ゴールシーク配線』見出しが無く、lint-goal-seek.py が WARN を出す (rc=0)。姉妹 skill の run-ubm-knowledge-sync とは書式が割れている。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+15/-3) のみ。guard block の差し替えで、親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う形へ変えた。 【読んだもの】SKILL.md 全文と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、ubm-goal-setting の .claude-plugin/plugin.json。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = a50b3f35a68f05897e3d3110246d08785e5aeb5cc7d5da0aad2dd92354172d59 を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。goal_seek の fork が subagent である点と利用者確認の関係は既存設計のままで、本差分は触れていない (判定外)。(b) 漏れ 0 (medium 以上): PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: frontmatter の external_mutation_guard.runtime_ref は既に plugin: 記法。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で、継続分を含めて smell に計上した。criteria IN1 の検証経路は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
+  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
 }

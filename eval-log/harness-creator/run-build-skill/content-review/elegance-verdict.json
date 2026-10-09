@@ -2,21 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "d55793868ce635d1abac4e21cb87c5e0fce140f882398075c7799d92290db31e"
+    "skill_md_sha256": "61e337d93067af5fbbe06a970c53a57664a0fb2a5dfa114b050b576a801ff06d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "/root/reset_observer (independent logical/structural analyst)",
+  "reviewed_at": "2026-10-09T14:53:49.784119+00:00",
+  "iterations": 1,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 2,
+    "omission": 0,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 1
+    "smell": 0
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:49:51Z",
-  "iterations": 2,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -27,20 +27,14 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "iteration 1 の high (dependency_break) は解消した。scripts/lint-knowledge-loop.py の `canonical_external_intelligence_engine()` は resolver の実在を `resolver.is_file()` で確かめてから spec_from_file_location を呼び、無ければ実在しない `plugin:skill-governance-adapters/scripts/build-external-intelligence.py` を返す。KL-008 は『照合用の正本 engine が見つからない』finding を返し、例外で落ちない。追跡済みテスト test_kl008_marked_contract_fails_clearly_without_canonical は PASS (同ファイル 53 passed)。",
-      "scripts/build-external-intelligence.py と build-external-intelligence-runtime.py の `_canonical_path()` にも同じ存在確認が入り、iteration 1 の low (smell) も解消した。scratchpad に作った resolver 不在 / 兄弟不在 / 完全配置 / cache 形 (<cache>/<marketplace>/<plugin>/<version>/) の 4 配置で実測し、前 2 つは設計どおり『install skill-governance-adapters or use a standard bundle』の RuntimeError (exit 1)、後 2 つは兄弟の正本へ解決して exit 0 になった。3 つの script で fail-closed の経路と文言が揃った。",
-      "lint-knowledge-loop.py の PEP 723 header の `dependencies: [../../../scripts/extract-plugin-root.py]` は script 位置から plugin root の resolver を正しく指し、lint-script-frontmatter.py でも違反にならない。resolver の vendor 一致 (lint-vendored-ssot.py) と親ディレクトリ起点の兄弟参照ゼロ (lint-sibling-plugin-paths.py) はどちらも exit 0。"
+      "Schema-owned structural identity plus language-inherited display headings avoids duplication and keeps JA/EN consumer parity.",
+      "Separating checked pure content from composite metadata preserves the same body SHA and actual public validator boundaries."
     ],
-    "negative_feedback": [
-      "low (omission, iteration 1 から継続): SKILL.md L330 (および references/build-steps.md L71/L545) は resolver が exit 1 のとき GOV_LINT_DIR が空文字列になり、後続の `python3 \"$GOV_LINT_DIR/scripts/...\"` が `/scripts/...` を開けず exit 2 で落ちる。偽の PASS にはならないが、明示的な停止と skill-governance-lint の install 案内が無い。",
-      "low (smell): resolver を importlib で読み込む処理が、この skill だけで 3 箇所 (lint-knowledge-loop.py と 2 つの forwarder) に複製され、書き方も 2 通り (spec の None ガード形と早期 return 形) ある。今回の不具合はまさにこの複製の 1 つだけが欠けていたことで起きたので、読み込み契約を変えるときに漏れる余地が残る。挙動は 3 箇所とも正しい。",
-      "low (inconsistency, 今回の差分外, iteration 1 から継続): references/resource-map.yaml L133 の `plugins/skill-governance-adapters/references/external-intelligence-runtime-contract.md` は repo パス表記のまま残り、同じファイルの bundles で採用した `plugin:<name>/<path>` 記法と揃っていない (参照先は実在)。",
-      "low (inconsistency, 今回の差分外): SKILL.md L213 の『骨格は `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` を写経』は repo パス表記のままで、L273 で採用した『prompt-creator plugin の `<path>` (出典表記)』と揃っていない。install 先の cwd からはこのパスで届かない。"
-    ],
-    "iteration": 2,
+    "negative_feedback": [],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual: final Cycle3 independent frontend-postfix focused reassessment",
     "next_action": "none"
   },
-  "notes": "iteration 2 (再評価)。iteration 1 の high (lint-knowledge-loop.py の KL-008 が resolver 不在時に FileNotFoundError で落ちる退行) の修正を、コード読解と決定論の実行で確認した。実行したもの: tests/scripts-plugins/test_harness_creator__lint_knowledge_loop_r4.py (53 passed、対象の test_kl008_marked_contract_fails_clearly_without_canonical も PASS)、external_intelligence 系と run_pkg_015・sandbox_plugin_lifecycle 系の関連テスト (190 passed)、`python3 -m pytest plugins/harness-creator/tests -q -p no:cacheprovider` (1193 passed)、lint-sibling-plugin-paths.py と lint-vendored-ssot.py (どちらも exit 0)、scratchpad の 4 配置での挙動確認。SKILL.md は iteration 1 から変わっておらず (sha 不変)、修正は scripts だけ。修正が持ち込んだ矛盾・漏れ・規約違反・依存の破れは見つからず、high/medium は 0 件のため PASS。low 4 件は negative_feedback に残す。criteria_evaluated は frontmatter feedback_contract の IN1/IN2/IN3/OUT1/OUT2 全件。PASS の射程は design claim (静的設計 adequacy) と、実行した決定論テスト・lint・配置実験の結果に限る。"
+  "notes": "PASS is the current incremental static-design content-review projection. Raw rubric=100 findings=0; BD-004 trigger/body mapping was independently judged. All actual feedback IDs assessed at design-contract level. Per-target 30-method audit, real generated full build, live behavioral trial and human approval trial were not performed or claimed; repository method provenance remains separate. Current frontend postfix independently reread and public gate rerun; other source identity confirmed by192 full hashes. UBM criteria approval remains pending, outside review and incomplete."
 }
