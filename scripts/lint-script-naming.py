@@ -512,6 +512,15 @@ PENDING_RENAME_PATHS = {
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-narrative.py",
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-selfcontained.py",
     "plugins/guide-doc-generator/tests/run-handout-extract/fixtures/accept/scripts/verify-handout-selfcontained.py",
+    # ubm-goal-setting 0.7.0 (elegant-review 継続 run): 新設スクリプトは SKILL.md・agent・
+    # tests・content-review verdict の依存 SHA (3,457 件) から名前で参照される。ここで改名
+    # すると独立評価の verdict が全件無効になるため、改名は別 PR で verdict の取り直しと
+    # 一組で行う。normalized_source_path.py は import される Python module。
+    "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
+    "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
+    "plugins/ubm-goal-setting/scripts/search-knowledge.py",
+    "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
 }
 
 VALID_NAME = re.compile(r"^([a-z]+)-[a-z0-9-]+\.py$")
