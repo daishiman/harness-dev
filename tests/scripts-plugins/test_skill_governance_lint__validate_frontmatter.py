@@ -39,12 +39,43 @@ def test_parse_fm_inline_list():
     assert fm["rubric_refs"] == ["a", "b"]
 
 
-def test_parse_fm_block_list_quirk_yields_empty_scalar():
-    # 実挙動の固定: key 行で fm[key]='' を先に設定するため、後続 `- item` の
-    # setdefault が既存 '' と衝突し list 化されない (block list は空スカラに潰れる)。
-    # inline list 形式のみが list を生む。この quirk を回帰として記録する。
+def test_parse_fm_block_list_preserves_required_resources():
     fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-one\n  - ref-two\n---\n")
-    assert fm["rubric_refs"] == ""
+    assert fm["rubric_refs"] == ["ref-one", "ref-two"]
+
+
+def test_frontmatter_list_comments_do_not_become_dependency_paths(tmp_path):
+    skill = tmp_path / 'SKILL.md'
+    (tmp_path / 'scripts').mkdir()
+    (tmp_path / 'scripts/check.py').write_text('pass\n')
+    text = '---\nscript_refs:\n  - scripts/check.py  # why this checker is required\ndescription: "Review #1 output"\nsource: references/policy.md#contract\n---\n'
+    fm = MOD.parse_fm(text)
+    assert fm['script_refs'] == ['scripts/check.py']
+    assert fm['description'] == '"Review #1 output"'
+    assert fm['source'] == 'references/policy.md#contract'
+    assert MOD.check_refs_exist(fm, skill) == []
+
+
+def test_frontmatter_plain_apostrophe_preserves_existing_dependency(tmp_path):
+    skill = tmp_path / 'SKILL.md'
+    (tmp_path / 'scripts').mkdir()
+    (tmp_path / 'scripts' / "owner's-check.py").write_text('pass\n')
+    for value in ("\n  - scripts/owner's-check.py # actual YAML comment", 
+                  "[scripts/owner's-check.py] # actual YAML comment"):
+        fm = MOD.parse_fm(f'---\nscript_refs: {value}\n---\n')
+        assert fm['script_refs'] == ["scripts/owner's-check.py"]
+        assert MOD.check_refs_exist(fm, skill) == []
+    fm = MOD.parse_fm("---\nscript_refs:\n  - scripts/missing's-check.py # comment\n---\n")
+    assert MOD.check_refs_exist(fm, skill)
+
+
+@pytest.mark.parametrize(('value', 'expected'), [
+    ("'owner''s # policy' # comment", "'owner''s # policy'"),
+    ('["policy # one", "policy # two"] # comment', '["policy # one", "policy # two"]'),
+    ('plain "quote # comment', 'plain "quote'),
+])
+def test_yaml_comment_quotes_only_start_at_scalar_boundaries(value, expected):
+    assert MOD._without_yaml_comment(value) == expected
 
 
 def test_parse_fm_no_frontmatter_returns_empty():

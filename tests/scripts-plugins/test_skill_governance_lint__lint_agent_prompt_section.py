@@ -223,6 +223,108 @@ def test_lint_file_read_error(tmp_path):
 
 
 # --------------------------------------------------------------------------
+# lint_file Tier 1 — 日本語の見出し (2つ目の正規形)
+# --------------------------------------------------------------------------
+
+JA_AGENT = """---
+name: sample-agent
+---
+# Sample Agent
+
+## プロンプトの型
+
+### Round 1
+
+> 「あなたは何を達成したいですか？」
+
+## 自己採点
+
+完全性: 全責務を被覆したか自己採点する。
+"""
+
+JA_AUTO_AGENT = """# Auto Agent
+
+## プロンプトの型
+
+(対話なし: 自動実行 agent) なので発話例は不要。
+
+## 自己採点
+
+一貫性 を確認する。
+"""
+
+
+def test_japanese_headings_match_required_headings_pairwise():
+    assert MOD.REQUIRED_HEADINGS == ("## Prompt Templates", "## Self-Evaluation")
+    assert MOD.REQUIRED_HEADINGS_JA == ("## プロンプトの型", "## 自己採点")
+
+
+def test_lint_file_japanese_headings_pass(tmp_path):
+    p = _write(tmp_path, "ja.md", JA_AGENT)
+    assert MOD.lint_file(p) == []
+
+
+def test_lint_file_japanese_auto_agent_marker_pass(tmp_path):
+    p = _write(tmp_path, "ja-auto.md", JA_AUTO_AGENT)
+    assert MOD.lint_file(p) == []
+
+
+def test_lint_file_mixed_language_headings_fail(tmp_path):
+    body = (
+        "## Prompt Templates\n\n> 「q」\n\n"
+        "## 自己採点\n\n簡潔性 を確認\n"
+    )
+    p = _write(tmp_path, "mixed.md", body)
+    assert any("mixed/duplicated languages" in issue for issue in MOD.lint_file(p))
+
+
+def test_lint_file_japanese_subheadings_do_not_count(tmp_path):
+    # 下位見出しや語の付いた見出しは、日本語の必須見出しとして数えない。
+    body = (
+        "## 5. 本文\n\n### プロンプトの型\n\n> 「q」\n\n"
+        "### 5.5 自己採点\n\n完全性\n\n## 自己採点（補足）\n\n深度\n"
+    )
+    p = _write(tmp_path, "sub.md", body)
+    findings = MOD.lint_file(p)
+    assert findings == [
+        f"{p}: missing required heading '## Prompt Templates'",
+        f"{p}: missing required heading '## Self-Evaluation'",
+    ]
+
+
+def test_lint_file_japanese_sections_are_checked_with_japanese_label(tmp_path):
+    body = (
+        "## プロンプトの型\n\n説明だけで発話例が無い\n\n"
+        "## 自己採点\n\n次元の語が無い\n"
+    )
+    p = _write(tmp_path, "ja-bad.md", body)
+    findings = MOD.lint_file(p)
+    assert findings == [
+        f"{p}: プロンプトの型 section needs either a '> ' quote "
+        "or '### Round' subheading, or marker '(対話なし: 自動実行 agent)'",
+        f"{p}: 自己採点 must reference at least one of 完全性/一貫性/深度/検証可能性/簡潔性",
+    ]
+
+
+def test_lint_file_japanese_prompt_section_feeds_tier2(tmp_path):
+    body = (
+        "## プロンプトの型\n\n<!-- responsibility: R1 -->\n> 「具体」\n\n"
+        "## 自己採点\n\n完全性 を確認\n"
+    )
+    p = _write(tmp_path, "ja-agent.md", body)
+    bp = _brief(tmp_path, [{"id": "R1"}, {"id": "R2"}])
+    findings = MOD.lint_file(p, strict_coverage=True, brief_path=bp)
+    assert any("missing responsibility anchors" in f and "R2" in f for f in findings)
+
+
+def test_cli_japanese_agent_ok_exit0(tmp_path):
+    p = _write(tmp_path, "ja.md", JA_AGENT)
+    proc = _run([str(p)], cwd=str(tmp_path))
+    assert proc.returncode == 0, proc.stderr
+    assert "1 agent file(s) passed" in proc.stdout
+
+
+# --------------------------------------------------------------------------
 # _lint_responsibility_coverage (Tier 2)
 # --------------------------------------------------------------------------
 

@@ -22,7 +22,7 @@ jobs:
       - name: install python dependencies
         run: python3 -m pip install --quiet -r requirements-dev.txt
       - name: guard change category (P0/P1 proposal gate)
-        run: python3 scripts/guard-change-category.py --base origin/main --bypass-cooldown
+        run: python3 scripts/guard-change-category.py --base origin/main
       - name: lint script naming (28章 §4)
         run: python3 scripts/lint-script-naming.py
       - name: lint skill description (03章 R1-R5)

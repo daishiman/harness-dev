@@ -16,13 +16,14 @@ runtime_root_policy: host-skill-path
 
 # {{name}}
 
-## Runtime root contract
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
 
 - `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
 ## 目的と出力契約
 {{output_contract}}
@@ -30,7 +31,7 @@ runtime_root_policy: host-skill-path
 ## 境界
 {{boundary}}
 
-## 主要ルール
+## 守ること
 {{key_constraints}}
 
 ## 手順

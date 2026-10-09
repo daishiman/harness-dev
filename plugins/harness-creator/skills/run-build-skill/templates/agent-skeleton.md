@@ -1,22 +1,4 @@
 ---
-# Agent Skeleton (kind: agent)
-#
-# CapabilityManifest schema: definitions/kindAgent
-# 用途: SubAgent 定義 (plugins/*/agents/*.md) の雛形。
-# 親 orchestrator から Task tool 経由で fan-out 起動される単位。
-#
-# TODO: build-skill が以下プレースホルダを置換する
-#   {{CAPABILITY_NAME}}  agent 名 (kebab-case)
-#   {{OWNER}}            governance 担当
-#   {{PHASE}}            親 workflow 内の phase id
-#   {{MODEL}}            sonnet|opus|haiku|inherit
-#   {{ISOLATION}}        fork|worktree|inherit  (評価系は必ず fork)
-#   {{FAN_OUT}}          single|parallel|sequential
-#   {{TOOLS_JSON}}       ["Read", "Write", ...]
-#   {{PURPOSE}}          一行で存在意義
-#   {{TRIGGERS}}         発動条件
-#   {{OUTPUT_CONTRACT}}  返却スキーマ
----
 name: {{CAPABILITY_NAME}}
 description: {{TRIGGERS}}
 kind: agent
@@ -43,44 +25,60 @@ responsibility_refs: []
 
 # {{CAPABILITY_NAME}}
 
-## Purpose
+## Layer 1: 基本定義層
+
 {{PURPOSE}}
 
-## Triggers
-- {{TRIGGER_1}}
-- {{TRIGGER_2}}
+{{OUTPUT_CONTRACT}}
 
-## ゴールシーク実行
-> 固定手順は書かない。毎周「ゴール・チェックリスト」を読み、未達項目を埋める手順をその場で生成して実行する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
+## Layer 2: ドメイン定義層
 
-### ゴール (Goal)
-{{GOAL}}
+{{ROLE_POLICY}}
 
-### 完了チェックリスト (Checklist)
-- [ ] 入力 (`interface.input`) を検証した
-- [ ] {{CHECKLIST_CORE}}
-- [ ] 出力 (`interface.output`) が JSON 契約を満たす
+## Layer 3: インフラストラクチャ定義層
 
-### ゴールシークループ
-1. 未達 `[ ]` を特定 → 2. 手順を都度生成 → 3. 実行 → 4. チェックリスト再評価し `[x]` 更新 → 全 `[x]` まで反復。規定周回で未達なら orchestrator に差し戻す。
+親から入力・解決済み絶対パス・出力契約を受け取る。元スキルの操作制約:
 
-## Output Contract
-```json
-{{OUTPUT_EXAMPLE_JSON}}
-```
+{{OPERATION_CONSTRAINTS}}
 
-## Self-Evaluation
-`plugins/harness-creator/references/quality-rubric.md` の 5 次元で自己採点する。
+## Layer 4: 共通ポリシー層
 
-| 次元 | 本 agent での重点 |
-|---|---|
-| 完全性 | {{COMPLETENESS_FOCUS}} |
-| 一貫性 | {{CONSISTENCY_FOCUS}} |
-| 深度 | {{DEPTH_FOCUS}} |
-| 検証可能性 | {{VERIFIABILITY_FOCUS}} |
-| 簡潔性 | {{CONCISENESS_FOCUS}} |
+{{ROLE_POLICY}}
 
-未達なら自己修正を 1 回試行し、それでも未達なら orchestrator に差し戻す。
+## Layer 5: エージェント定義層
 
-## Handoff
-{{HANDOFF_TARGET}} に `{{HANDOFF_FIELDS}}` を返す。
+### 5.1 担当エージェント
+
+{{CAPABILITY_NAME}} ({{AGENT_ROLE}})
+
+### 5.2 ゴール定義
+
+目的: 上記の目的と出力契約を満たす。背景: 親が独立した役割として委譲した作業を実行する。
+
+達成ゴール: 親が要求した出力が、目的と出力契約を満たし、根拠をたどれる状態になっている。
+
+### 5.3 完了チェックリスト
+
+- [ ] 必須入力とパスの出所を確かめた。
+- [ ] 出力が上の目的と出力契約を満たす。
+- [ ] 役割の許可範囲を守り、検証の成否と根拠を親へ返せる。
+
+### 5.4 実行方式
+
+目的と完了チェックリストを読み、未達を解消する方法を状況に応じて決める。実行後に検証し、original_goal（不変）/ current_goal_snapshot / delta_from_original / merged_directive_for_next / drift_signal を親へ返す。親の反復上限に達した場合は残る未達と根拠を返す。
+
+## Layer 6: オーケストレーション層
+
+親が指定した依存順序と停止条件に従い、最終出力・検証結果・未達だけを返す。
+
+## Layer 7: ユーザーインタラクション層
+
+ユーザーへの対話と保存許可は親が担当する。
+
+## プロンプトの型
+
+(対話なし: 自動実行 agent) — 親が入力・役割・出力契約を渡す。
+
+## 自己採点
+
+検証可能性と簡潔性を上の完了チェックリストで確かめ、未達は親へ返す。

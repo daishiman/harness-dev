@@ -24,6 +24,13 @@ from pathlib import Path
 SEVERITY_WEIGHTS = {"high": -20, "medium": -10, "low": -3}
 PREFIXES = ("run-", "ref-", "assign-", "wrap-", "delegate-")
 
+# BD-001 / BD-002 / PD-002 の見出し。英語は従来どおり部分一致、日本語 (2つ目の正規形) は
+# 行全体の一致 (前後の空白は除く) で受け入れる。
+PURPOSE_HEADING = "## Purpose & Output Contract"
+PURPOSE_HEADING_JA = "## 目的と出力契約"
+GOTCHAS_HEADING = "## Gotchas"
+GOTCHAS_HEADING_JA = "## つまずきやすい点"
+
 # check_rule() が実際に判定する rule id。ここに無い id は「合格」ではなく
 # 「未採点」として出力へ現れる。
 #
@@ -182,10 +189,10 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
             return fail(f"description first phrase '{first}' is not a verb",
                         "frontmatter.description")
     elif rid == "BD-001":
-        if "## Purpose & Output Contract" not in body:
+        if PURPOSE_HEADING not in body and not _has_heading_line(body, PURPOSE_HEADING_JA):
             return fail("missing '## Purpose & Output Contract'", "body")
     elif rid == "BD-002":
-        if "## Gotchas" not in body:
+        if GOTCHAS_HEADING not in body and not _has_heading_line(body, GOTCHAS_HEADING_JA):
             return fail("missing '## Gotchas'", "body")
     elif rid == "BD-003":
         n = len(body.splitlines())
@@ -216,14 +223,17 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
         # 読み手が最初の画面で契約と禁則の両方に当たれるかを見る rule なので、
         # 走査幅を 30 行に固定する (末尾にあっても救済しない)。
         head = "\n".join(body.strip().splitlines()[:30])
-        has_heading = ("## Purpose" in head) or ("## Output Contract" in head)
+        # 日本語の見出しは BD-001 と同じ行全体の一致で受け入れ、BD-001 が認める
+        # 見出し語彙を共有する。PD-002 の冒頭配置と禁則は BD-001 と独立。
+        has_heading = (("## Purpose" in head) or ("## Output Contract" in head)
+                       or _has_heading_line(head, PURPOSE_HEADING_JA))
         # rule 文の列挙は 'e.g.' 付きで例示であり網羅ではない。rule の名前その
         # ものである 'Key Rule' 見出しを禁則の記述と認めないと、'## Key Rules'
         # を持つ skill が語彙不一致だけで落ちる。逆に語彙を広げすぎると
         # 「それらしい単語を 1 語置けば通る」へ退化するので、rubric が名指しした
         # 語とその見出し形だけに留める。
         has_rule = any(k in head for k in
-                       ("MUST", "NEVER", "禁止", "禁則", "必ず", "Key Rule"))
+                       ("MUST", "NEVER", "禁止", "禁則", "必ず", "Key Rule")) or _has_heading_line(head, "## 守ること")
         if not has_heading:
             return fail("body head 30 lines lack '## Purpose' / '## Output Contract'",
                         "progressive-disclosure")
@@ -250,6 +260,11 @@ def check_rule(rule: dict, fm: dict, body: str, skill_dir: Path) -> dict | None:
     return None
 
 
+def _has_heading_line(body: str, heading: str) -> bool:
+    """heading が 1 行まるごと (前後の空白を除いて) 現れるか。"""
+    return any(line.strip() == heading for line in body.splitlines())
+
+
 def _load_json(path: Path) -> object | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -272,9 +287,13 @@ def _knowledge_entries(kdir: Path) -> list[dict]:
         if isinstance(data, list):
             entries.extend(x for x in data if isinstance(x, dict))
         elif isinstance(data, dict):
-            for v in data.values():
-                if isinstance(v, list):
-                    entries.extend(x for x in v if isinstance(x, dict))
+            if isinstance(data.get("entries"), list):
+                entries.extend(x for x in data["entries"] if isinstance(x, dict))
+            else:
+                # Graphs, relation stores and ledgers are derived/index contracts, not category cards.
+                for key, value in data.items():
+                    if key not in {"nodes", "edges", "associations", "relations", "sources", "videos", "runs"} and isinstance(value, list):
+                        entries.extend(x for x in value if isinstance(x, dict))
     return entries
 
 

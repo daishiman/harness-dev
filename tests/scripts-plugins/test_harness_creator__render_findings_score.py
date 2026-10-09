@@ -242,6 +242,40 @@ def test_bd002_fail_missing_gotchas():
     assert "Gotchas" in f["message"]
 
 
+def test_bd001_bd002_pass_with_japanese_headings():
+    body = "\n## 目的と出力契約\nx\n\n## つまずきやすい点\ny\n"
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path(".")) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "### 目的と出力契約\nx\n### つまずきやすい点\ny\n",
+        "## 目的と出力契約（補足）\nx\n## つまずきやすい点の例\ny\n",
+        "本文の途中で ## 目的と出力契約 と ## つまずきやすい点 に触れるだけ。\n",
+    ],
+)
+def test_bd001_bd002_japanese_heading_requires_whole_line(body):
+    # 日本語の見出しは行全体の一致だけを受け入れ、失敗の文言は英語版から変えない。
+    f1 = RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path("."))
+    f2 = RFS.check_rule(_rule("BD-002", "medium", "body"), {}, body, Path("."))
+    assert f1 is not None and f1["message"] == "missing '## Purpose & Output Contract'"
+    assert f2 is not None and f2["message"] == "missing '## Gotchas'"
+
+
+def test_rubric_bd_checks_name_both_heading_forms():
+    rubric = RFS.load_rubric(
+        ROOT / "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    )
+    checks = {rule["id"]: rule["check"] for rule in rubric["rules"]}
+    assert RFS.PURPOSE_HEADING in checks["BD-001"]
+    assert RFS.PURPOSE_HEADING_JA in checks["BD-001"]
+    assert RFS.GOTCHAS_HEADING in checks["BD-002"]
+    assert RFS.GOTCHAS_HEADING_JA in checks["BD-002"]
+    assert RFS.PURPOSE_HEADING_JA in checks["PD-002"]
+
+
 def test_bd003_pass_under_300():
     body = "\n".join(["line"] * 10)
     assert RFS.check_rule(_rule("BD-003"), {}, body, Path(".")) is None
@@ -709,6 +743,26 @@ def test_pd002_ignores_content_past_line_30():
     assert f is not None  # 30 行より後の禁則では救済しない
 
 
+def test_pd002_pass_with_japanese_heading():
+    # BD-001 が認める日本語の見出しは PD-002 も認める (BD-001 ⊂ PD-002)。
+    body = "\n# t\n\n## 目的と出力契約\nx\n\n## Key Rules\n1. 必ず a\n"
+    assert RFS.check_rule(_rule("PD-002"), {}, body, Path(".")) is None
+    assert RFS.check_rule(_rule("BD-001", "high", "body"), {}, body, Path(".")) is None
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "\n# t\n\n### 目的と出力契約\n必ず x\n",
+        "\n# t\n\n## 目的と出力契約（補足）\n必ず x\n",
+        "\n## 概要\n" + "\n".join(f"line {i}" for i in range(40)) + "\n## 目的と出力契約\n必ず x\n",
+    ],
+)
+def test_pd002_japanese_heading_requires_whole_line_in_head(body):
+    f = RFS.check_rule(_rule("PD-002"), {}, body, Path("."))
+    assert f is not None and "## Purpose" in f["message"]
+
+
 def _knowledge_skill(tmp_path, entries, *, plugin_scope=False, declare=True):
     """knowledge loop を持つ skill を組み立てる。"""
     plugin = tmp_path / "plugins" / "kb-plugin"
@@ -1105,3 +1159,26 @@ def test_reg001_existing_invalid_trace_is_high_finding(monkeypatch, tmp_path):
     assert finding is not None
     assert finding["severity"] == "high"
     assert "canonical validate-build-trace.py exit=1" in finding["message"]
+
+@pytest.mark.parametrize('rule_text,expected', [('## 守ること', True), ('守ることを確認する。', False), ('## 守ること（補足）', False)])
+def test_pd002_japanese_key_rule_alias_is_an_exact_heading(rule_text, expected):
+    body = '## 目的と出力契約\n\n成果物を返す。\n\n' + rule_text + '\n制約に従う。\n'
+    assert (RFS.check_rule(_rule('PD-002'), {}, body, Path('.')) is None) is expected
+
+
+def test_bd001_does_not_imply_pd002_after_first30_lines():
+    body = '\n'.join('説明' for _ in range(31)) + '\n## 目的と出力契約\n\n出力を作る。\n必ず条件を守る。\n'
+    assert RFS.check_rule(_rule('BD-001'), {}, body, Path('.')) is None
+    assert RFS.check_rule(_rule('PD-002'), {}, body, Path('.')) is not None
+
+
+def test_knowledge_denominator_excludes_graph_and_relation_indexes(tmp_path):
+    card = {"id": "C1", "title": "Actual knowledge", "intent": "Use it", "background": "Context", "tags": ["topic"], "source": {"file": "source.md"}}
+    (tmp_path / "category.json").write_text(json.dumps({"entries": [card], "sources": [{"id": "SOURCE"}]}))
+    (tmp_path / "knowledge-graph.json").write_text(json.dumps({"nodes": [{"id": "NODE"}], "edges": [{"from": "NODE", "to": "NODE"}], "associations": [{"source": "NODE", "target": "NODE"}]}))
+    (tmp_path / "knowledge-relations.json").write_text(json.dumps({"relations": [{"id": "RELATION"}]}))
+    assert RFS._knowledge_entries(tmp_path) == [card]
+    assert RFS._check_knowledge_loop("KL-002", tmp_path, tmp_path, lambda msg, loc: msg) is None
+    card.pop("source")
+    (tmp_path / "category.json").write_text(json.dumps({"entries": [card]}))
+    assert "source" in RFS._check_knowledge_loop("KL-002", tmp_path, tmp_path, lambda msg, loc: msg)

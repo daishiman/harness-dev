@@ -16,8 +16,8 @@
 """Lint SubAgent markdown files for required sections.
 
 Required sections (agent-template.md):
-  - ## Prompt Templates
-  - ## Self-Evaluation
+  - ## Prompt Templates   (日本語の正規形: ## プロンプトの型)
+  - ## Self-Evaluation    (日本語の正規形: ## 自己採点)
 
 Skip rule:
   If body contains the literal '(対話なし: 自動実行 agent)' then Prompt Templates
@@ -42,6 +42,9 @@ import sys
 from pathlib import Path
 
 REQUIRED_HEADINGS = ("## Prompt Templates", "## Self-Evaluation")
+# 日本語の正規形 (2つ目の正規形)。REQUIRED_HEADINGS と同じ並びで対応し、
+# 行頭 `## ` からの行全体の一致だけを受け入れる。
+REQUIRED_HEADINGS_JA = ("## プロンプトの型", "## 自己採点")
 DIMENSIONS = ("完全性", "一貫性", "深度", "検証可能性", "簡潔性")
 AUTO_AGENT_MARKER = "(対話なし: 自動実行 agent)"
 ANCHOR_RE = re.compile(r"<!--\s*responsibility:\s*(R[0-9]+)\s*-->")
@@ -55,6 +58,25 @@ def find_section(text: str, heading: str) -> str | None:
     )
     m = pattern.search(text)
     return m.group(1) if m else None
+
+
+def has_heading_line(text: str, heading: str) -> bool:
+    return re.search(rf"^{re.escape(heading)}[ \t]*$", text, re.MULTILINE) is not None
+
+
+def find_required_section(text: str, index: int) -> tuple[str, str | None]:
+    """REQUIRED_HEADINGS[index] の (ラベル, 本文) を返す。英語が無ければ日本語の見出しを使う。
+
+    英語を先に見るので、英語のエージェントの報告は今までと変わらない。
+    """
+    heading = REQUIRED_HEADINGS[index]
+    body = find_section(text, heading)
+    if body is None:
+        heading_ja = REQUIRED_HEADINGS_JA[index]
+        body_ja = find_section(text, heading_ja)
+        if body_ja is not None:
+            return heading_ja.removeprefix("## "), body_ja
+    return heading.removeprefix("## "), body
 
 
 def extract_anchor_blocks(prompt_body: str) -> list[tuple[str, str]]:
@@ -90,26 +112,33 @@ def lint_file(
     except OSError as e:
         return [f"{path}: read error: {e}"]
 
-    # Tier 1: 形式検査 (現行ロジック維持)
-    for heading in REQUIRED_HEADINGS:
-        if heading not in text:
+    locales = [
+        {lang for lang, headings in (("en", REQUIRED_HEADINGS), ("ja", REQUIRED_HEADINGS_JA)) if has_heading_line(text, headings[index])}
+        for index in range(2)
+    ]
+    if any(len(item) > 1 for item in locales) or (all(locales) and locales[0] != locales[1]):
+        findings.append(f"{path}: agent canonical section headings are mixed/duplicated languages")
+
+    # Tier 1: 形式検査 (英語は現行ロジック維持、日本語の見出しは行全体の一致で受け入れる)
+    for heading, heading_ja in zip(REQUIRED_HEADINGS, REQUIRED_HEADINGS_JA):
+        if heading not in text and not has_heading_line(text, heading_ja):
             findings.append(f"{path}: missing required heading '{heading}'")
 
-    prompt_body = find_section(text, "## Prompt Templates")
+    prompt_label, prompt_body = find_required_section(text, 0)
     if prompt_body is not None and AUTO_AGENT_MARKER not in prompt_body:
         has_quote = re.search(r"^>\s*", prompt_body, re.MULTILINE) is not None
         has_round = re.search(r"^### ", prompt_body, re.MULTILINE) is not None
         if not (has_quote or has_round):
             findings.append(
-                f"{path}: Prompt Templates section needs either a '> ' quote "
+                f"{path}: {prompt_label} section needs either a '> ' quote "
                 "or '### Round' subheading, or marker '(対話なし: 自動実行 agent)'"
             )
 
-    eval_body = find_section(text, "## Self-Evaluation")
+    eval_label, eval_body = find_required_section(text, 1)
     if eval_body is not None:
         if not any(d in eval_body for d in DIMENSIONS):
             findings.append(
-                f"{path}: Self-Evaluation must reference at least one of "
+                f"{path}: {eval_label} must reference at least one of "
                 f"{'/'.join(DIMENSIONS)}"
             )
 

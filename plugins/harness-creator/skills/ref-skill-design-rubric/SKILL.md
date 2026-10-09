@@ -38,7 +38,7 @@ Skill 設計の評価基準の **正本（upstream rubric）**。
 
 ## 評価軸サマリ
 
-kind 別ディスパッチ (rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow)。共通核 (kind=skill) の FM/BD/NM/PD/RG に加え、1.2.0 で kind 別 area、1.3.0 で KL を追加した全 41 rule。
+kind 別ディスパッチ (rubric.json `supported_kinds` = skill/agent/hook/command/plugin-composition/prompt/workflow)。共通核 (kind=skill) の FM/BD/NM/PD/RG に加え、1.2.0 で kind 別 area、1.3.0 で KL を追加した全 41 rule。1.4.0 で BD-001・BD-002・PD-002 に日本語の正規形の見出しを別名として追加した。1.5.0 は PD-002 の禁則見出しに `## 守ること` の行全体一致を追加し、冒頭30行の要件を維持する。BD-001 の存在検査だけでは PD-002 の冒頭集約と禁則は保証されない。
 
 - **FM (Frontmatter, kind=skill)**: name kebab+prefix / description="Use when" / trigger 2-3 / 動作詳細混入なし / 動詞ベース
 - **BD (Body, kind=skill)**: Output contract / Gotchas 節 / <=300行 / BD-004=description↔body 整合 (LLM judge)

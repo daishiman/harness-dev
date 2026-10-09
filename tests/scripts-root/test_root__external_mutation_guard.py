@@ -361,6 +361,7 @@ def test_pending_guard_context_blocks_unknown_binary(tmp_path):
 
 def test_pretool_blocks_known_entrypoint_mutation_clis_without_central_execute():
     commands = (
+        'python3 "/installed/ubm/scripts/publish-staged-files.py" --manifest staged.json --manifest-sha256 abc',
         'python3 "$CLAUDE_PLUGIN_ROOT/skills/run-notion-gmail-send/scripts/send-campaign.py" '
         "--auto-approve",
         'python3 "$CLAUDE_PLUGIN_ROOT/scripts/gh-bridge.py" apply --plan sync.json',
@@ -623,4 +624,16 @@ def test_all_projections_pin_the_executable_guard_runtime():
                     "runtime_ref": "#/external_mutation_runtime",
                     "flow": "preview-confirm-authorize-execute-v1",
                 }
-    assert external == 35
+    assert external == 36
+
+
+def test_canonical_action_rejects_substitution_but_keeps_json_literals():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("guard_syntax_negative", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for expression in ['$(python3 publish-staged-files.py --manifest plan.json)', '`python3 publish-staged-files.py --manifest plan.json`', '<(python3 publish-staged-files.py --manifest plan.json)']:
+        command = f"""python3 /guard/build-external-mutation-guard.py execute --project-root "{expression}" --authorization-receipt receipt --command-json '["python3","worker.py"]'"""
+        assert module._canonical_guard_action(command) is None
+    command = """python3 /guard/build-external-mutation-guard.py execute --project-root "$PWD" --authorization-receipt receipt --command-json '["python3","worker.py","literal $(value) and `data`"]'"""
+    assert module._canonical_guard_action(command) == "execute"

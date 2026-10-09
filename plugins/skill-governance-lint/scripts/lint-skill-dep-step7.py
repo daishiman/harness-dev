@@ -35,6 +35,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import re
 import sys
 from pathlib import Path
@@ -70,6 +71,37 @@ def skill_exists(name: str, repo: Path) -> bool:
     if (repo / ".claude" / "skills" / name).is_dir():
         return True
     return any(path.is_dir() for path in (repo / "plugins").glob(f"*/skills/{name}"))
+
+
+def _guarded_external_workflow(skill_md: Path, repo: Path) -> bool:
+    """Share the canonical delivery checker; a missing checker never grants access."""
+    checker = repo / "scripts/lint-entrypoint-artifact-first.py"
+    if not checker.is_file():
+        return False
+    try:
+        spec = importlib.util.spec_from_file_location("_step7_artifact_first", checker)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        return not module.lint_guarded_external_entrypoint(skill_md)
+    except Exception:
+        return False
+
+
+def check_command_routes(skills_dir: Path) -> list[str]:
+    """A command using Skill must route to a model-invocable target."""
+    errors = []
+    for command in sorted((skills_dir.parent / "commands").glob("*.md")):
+        text = command.read_text(encoding="utf-8")
+        if "Skill" not in parse_fm(text).get("allowed-tools", ""):
+            continue
+        for name in set(re.findall(r"`(?:[a-z0-9-]+:)?(run-[a-z0-9-]+)`", text)):
+            target = skills_dir / name / "SKILL.md"
+            if not target.is_file():
+                errors.append(f"{command.name}: Skill target {name} does not exist")
+            elif parse_fm(target.read_text(encoding="utf-8")).get("disable-model-invocation", "false").lower() == "true":
+                errors.append(f"{command.name}: Skill target {name} rejects model invocation")
+    return errors
 
 
 def _collect_inbound_refs(repo: Path) -> set[str]:
@@ -156,10 +188,10 @@ def check_skill(
         effect = fm.get("effect", "")
         is_dangerous = danger or effect == "external-mutation"
         dmi = fm.get("disable-model-invocation", "false").lower() == "true"
-        if is_dangerous and not dmi:
+        if is_dangerous and not dmi and not _guarded_external_workflow(skill_md, repo):
             errs.append(
                 f"{name}: dangerous run-* (danger/effect=external-mutation) "
-                f"requires disable-model-invocation: true (doc/20 Step 7-4)"
+                f"requires disable-model-invocation: true or a verified canonical external-mutation workflow (doc/20 Step 7-4)"
             )
 
     # (5) ref-* が到達不能になっていないか
@@ -218,6 +250,8 @@ def main() -> int:
         all_errs.extend(
             check_skill(t, inbound_refs=inbound_refs, allow_partial=args.allow_partial)
         )
+    for skills_dir in {t.parent.parent for t in targets}:
+        all_errs.extend(check_command_routes(skills_dir))
 
     if all_errs:
         for e in all_errs:

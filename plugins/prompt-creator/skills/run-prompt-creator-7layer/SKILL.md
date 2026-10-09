@@ -36,7 +36,7 @@ contract:
     - SKILL.md / SubAgent 各 300 行以下を保つこと
     - brief / hearing-result 供給時 (orchestrator / run-build-skill 呼出) は Phase 1-3 の全ユーザー対話を skip し、導出確認は brief.user_confirmed に委譲すること
     - C1-C4 設計評価を worker 完了条件に内蔵すること (呼出元が同等ゲートを機械証跡で保証する場合のみ免除)
-    - 生成物の注入セクション名 (Prompt Templates / Self-Evaluation) は呼出元非依存の不変契約とすること
+    - 生成物の注入の構造IDは prompt_templates / self_evaluation で不変。表示見出しは対象agentから継承（ja： プロンプトの型 / 自己採点、en： Prompt Templates / Self-Evaluation）とすること
 since: 2026-05-20
 script_refs:
   - scripts/merge-layers.py
@@ -120,6 +120,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## Purpose & Output Contract
 
 ユーザー要求またはヒアリング結果から、**成果物としての 7 層構造プロンプト** を生成する。
+**禁則**: 入力根拠の捏造、必須 Layer の省略、Layer 単位の生成と検証を省いた一括生成は禁止する。
 7 層: L1 基本定義 / L2 ドメイン定義 / L3 インフラストラクチャ / L4 共通ポリシー / L5 エージェント定義 / L6 オーケストレーション / L7 ユーザーインタラクション。
 Layer 5 はゴールシーク型 (達成ゴール+完了チェックリスト+実行方式)。固定手順は書かず、手順はエージェントが実行時に自律生成する。
 
@@ -134,7 +135,7 @@ Layer 5 はゴールシーク型 (達成ゴール+完了チェックリスト+�
 - `eval-log/prompt-build-trace.json` (`run-prompt-create/schemas/build-trace.schema.json` 互換)
 - `eval-log/prompt-creator-trace.json` (worker-local trace。必須フィールド: `path_convention`, `responsibility_id`, `layer_artifact_path`, `sha256`)
 
-**完了条件**: `verify-completeness.py` PASS + `validate-prompt.py` PASS + `lint-agent-prompt-section.py` PASS + **C1-C4 設計評価 PASS** (worker 内蔵ゲート: `assign-prompt-design-evaluator` を fork し findings 出力のみ受領。呼出元が同等ゲートを機械証跡 (design-findings JSON) で保証する場合のみ免除)。run-build-skill Step 7.5 直呼びでも同一の設計保証が成立する (経路非依存)。
+**完了条件**: `verify-completeness.py` PASS + `validate-prompt.py` PASS + owner_agent 指定時の `lint-agent-prompt-section.py` PASS（未指定は理由付きN/A） + **C1-C4 設計評価 PASS** (worker 内蔵ゲート: `assign-prompt-design-evaluator` を fork し findings 出力のみ受領。呼出元が同等ゲートを機械証跡 (design-findings JSON) で保証する場合のみ免除)。run-build-skill Step 7.5 直呼びでも同一の設計保証が成立する (経路非依存)。
 
 ## Key Rules
 
@@ -144,8 +145,8 @@ Layer 5 はゴールシーク型 (達成ゴール+完了チェックリスト+�
 4. **Progressive Disclosure**: `references/` は Phase 直前で必要分のみ読込。
 5. **目的+背景併記**: 全ルール/制約に併記 (`writing-style-principles.md`)。
 6. **300 行制約**: SKILL.md / SubAgent 各 300 行以下。
-7. **ループ整合性**: run-build-skill 呼出時は `lint-agent-prompt-section.py` 通過必須。FAIL 時最大 3 回自律修正→未達なら orchestrator 差戻。
-8. **責務境界**: 担当は Prompt Templates / Self-Evaluation の 2 セクションのみ。9 セクション骨格は run-build-skill 責務。
+7. **ループ整合性**: run-build-skill 呼出でも owner_agent 指定時だけ `lint-agent-prompt-section.py` 通過必須（未指定は理由付きN/A）。FAIL 時最大 3 回自律修正→未達なら orchestrator 差戻。
+8. **責務境界**: 主責務は7層の成果物プロンプト生成。owner_agent 指定時だけ Prompt Templates / Self-Evaluation の2節へ注入する。agentの実行骨格は run-build-skill が担当する。
 9. **Markdown 既定**: prompt 出力は **Markdown 形式 (`.md`) を既定**とする。論理構造の正本は `references/seven-layer-format.md`。内部正規形は YAML (scaffold/merge/verify の前提) とし、最終成果物は `convert-format.py` で Markdown へ変換する。`references/seven-layer-markdown-template.md` は提示形式の補助テンプレ。
 10. **ゴールシーク**: Layer 5 に固定手順 (思考プロセスのステップ列挙) を書かない。達成ゴール+完了チェックリストを宣言し、手順は実行時にエージェントが自律生成する。`verify-completeness.py` が固定手順を検出したら FAIL。
 11. **冪等更新 (重複回避・上書き優先)**: 既存プロンプトを改善するときは闇雲に追加せず、先に既存を原子要素へ分解・分析し、類似要素があれば上書き統合・無ければ新規追加する。同一意図の要素が 2 つ以上残ったら FAIL。正本 `references/idempotent-update-policy.md`。
@@ -186,7 +187,7 @@ Phase 5 戻り検証+設計ゲート (C1-C4)          [script + evaluator fork]
 | 4-B 4 パスレビュー | Pass 0 (動的基準生成)〜Pass 4 の findings が確定 | 全 Pass PASS または修正指示付き findings | `prompt-creator-review-prompt` fork。基準: `references/quality-criteria.md` |
 | 4-C 自律改善 | 完了チェックリスト全充足 or 上限到達 | `verify-completeness.py` (+`--layers` サブセット時) + `validate-prompt.py --phase prompt` exit 0 | 最大 3 回。冪等更新 (`idempotent-update-policy.md`)。各周回末に Anchor 追記 (下記契約) |
 | 4-D 変換+注入 | 最終成果物出力 + (owner_agent 時) 注入完了 | `convert-format.py` exit 0、注入 diff が inject-sections 内 | 注入セクション名は不変契約 (下記) |
-| 5 戻り検証+設計ゲート | 全機械ゲート+C1-C4 設計ゲート PASS | `lint-agent-prompt-section.py` exit 0 + C1-C4 findings PASS + `log-usage.py` 記録 | FAIL は Phase 4-A 再起動 (最大 3 周)。設計ゲート免除は呼出元の機械証跡がある場合のみ |
+| 5 戻り検証+設計ゲート | 全機械ゲート+C1-C4 設計ゲート PASS | `verify-completeness.py` / `validate-prompt.py` exit 0 + owner_agent 指定時だけ `lint-agent-prompt-section.py` exit 0（未指定N/A） + C1-C4 findings PASS + `log-usage.py` 記録 | FAIL は Phase 4-A 再起動 (最大 3 周)。設計ゲート免除は呼出元の機械証跡がある場合のみ |
 
 ### Phase 4-C アンカー契約 (goal-seek-paradigm 準拠)
 
@@ -198,7 +199,7 @@ C1-C4 設計評価は worker の完了条件に内蔵する: `assign-prompt-desi
 
 ### 呼出元非依存の不変契約
 
-- 注入セクション名 `Prompt Templates` / `Self-Evaluation` はどの呼出元でも不変 (`lint-agent-prompt-section.py` の検証契約と 1:1)。
+- 注入の構造ID `prompt_templates` / `self_evaluation` は不変。表示名は明示 `ja` / `en` または対象agentの正規見出しから継承し、日本語では `プロンプトの型` / `自己採点`、英語では `Prompt Templates` / `Self-Evaluation` を使う。同一agent内で混在させない (`lint-agent-prompt-section.py` の検証契約と 1:1)。
 - brief 供給時は Phase 1-3 の全ユーザー対話を skip し、導出確認は brief の `user_confirmed` に委譲する (orchestrator の user_question_budget=1 違反を防ぐ)。
 
 ## Gotchas
@@ -209,7 +210,7 @@ C1-C4 設計評価は worker の完了条件に内蔵する: `assign-prompt-desi
 4. 外部依存不持込 → YAML は python3 標準ライブラリのみで手書きシリアライズ。
 5. doc/prompt-creator/ は deprecated、正本は plugins/。
 6. 自律修正 3 回上限、超過時 orchestrator 差戻。
-7. 9 セクション骨格生成禁止 (run-build-skill 責務)。
+7. 7層本文と発話・自己採点の2節の骨格生成禁止 (run-build-skill 責務)。
 8. Layer 5 固定手順禁止 (「推論手順/思考プロセス/手順/Steps」見出し配下の連番列挙、l5-contract v2.0.0)。ゴール定義+完了チェックリスト+実行方式で宣言。
 9. ヒアリングで固定手順を収集しない (goals/checklist を収集、steps は廃止)。
 10. 既存改善時の重複追加禁止 (分析せず追加で肥大化させない)。類似は上書き統合。
@@ -219,7 +220,7 @@ C1-C4 設計評価は worker の完了条件に内蔵する: `assign-prompt-desi
 
 ## Additional Resources
 
-- `references/seven-layer-format.md` — 7 層 YAML 正本テンプレ (Phase 4-A 直前読込)
+- `references/seven-layer-format.md` — 7層の論理構造の正本 (Phase 4-A 直前読込)
 - `references/workflow-guide.md` — Phase 1-4 詳細
 - `references/quality-criteria.md` — 4 パス評価基準 + §8 冪等更新基準
 - `references/idempotent-update-policy.md` — 既存改善時の重複回避・上書き優先・セッション分離 (Phase 4-B/4-C 直前読込)

@@ -81,6 +81,8 @@ schema_refs:
   - schemas/usable-draft-proof.schema.json
 prompt_format: markdown # 既定: Markdown (.md)。YAML (.yaml) は legacy 許容、新規禁止
 script_refs:
+  - ../../scripts/plugin_resources.py
+  - ../../scripts/extract-plugin-root.py
   - scripts/build-external-intelligence.py
   - scripts/auto-record-lesson.py
   - scripts/render-combinators.py
@@ -159,7 +161,6 @@ artifact_delivery:
   exhaustive: explicit-only
 runtime_root_policy: host-skill-path
 ---
-
 ## Pre-choice usable artifact execution
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
@@ -197,7 +198,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 6. **marketplace install 配置非依存**: plugin 資産の読込は `runtime_root_policy: host-skill-path` に従う。Claude Codeでは `CLAUDE_PLUGIN_ROOT`、Codexではホストが提示したabsolute `SKILL.md` pathからmanifestを持つ祖先を解決し、各shell invocation内の論理 `PLUGIN_ROOT` とする。plugin rootをcwd・repo相対位置から推測せず、literal placeholderをshellへ渡さない。生成物の出力先だけを `$CLAUDE_PROJECT_DIR` / cwd / `$CLAUDE_SKILL_OUT_BASE` で解決する。
 
 ### 責務系 (responsibility)
-7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` 9 セクション固定構造。
+7. R-id 単位の責務分離。生成 SubAgent は `references/agent-template.md` の7層本文と発話・自己採点の2節。
 8. 評価分離: 生成本体は採点しない。machine proof後に未解決のsemantic obligationがある場合だけ、別contextの `assign-skill-design-evaluator` へ最小sliceを渡す (09章 Goodhart)。
 9. 実行レイヤー (Skill/Subagent/Hook/MCP/CLI/script) の配置理由を trace に記録 (01a/05章)。
 10. 横展開候補 (Harness Creator 基盤/hook/lint/adapter/rubric/reference) は plugin 登録判定へ戻す。
@@ -327,7 +328,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 > lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
 
 ```bash
-GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$OUT_BASE/$SKILL_NAME"
@@ -356,7 +357,7 @@ draft は決定論ゲートが通ったら Step 12.4 で `usable-draft` proofを
 
 ### Step 7: subagent 派生 (phase: prompts-emit, `--with-subagent`)
 
-`build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。9 セクション固定構造に準拠。
+`build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。7層本文と発話・自己採点の2節に準拠。
 
 ### Step 7.5: prompt-creator ループ (phase: prompts-emit, `--with-prompts` or `brief.use_prompt_creator`)
 
@@ -455,3 +456,7 @@ validated `improvement-decision.json` の `improvement_authorized=true` かつ `
 
 - frontmatter (`manifest` / `responsibility_refs` / `template_refs` / `schema_refs` / `script_refs` / `reference_refs`) は**起動契約上の主要資産のみ**を列挙する (全資産の網羅索引ではない)。全資産の索引正本はディレクトリ実体 (`scripts/` / `schemas/` / `templates/` / `prompts/` / `references/`) そのもの。`references/resource-map.yaml` は task category → 設計書章選択の progressive disclosure 索引 (+`local_artifacts` に manifest/schemas/prompts の一部) であり、これも全資産列挙ではない。`examples/` = 完成例 (minimal-ref / workflow-with-evaluator)。
 - references/ 主要補助: `design-docs-index.md` (設計書索引) / `build-steps.md` (詳細手順) / `capability-manifest.schema.json` (Capability 7 kind 統一 Manifest 正本)。他の references/ は本文各 Step から個別参照。
+
+### 生成する正規形の言語
+
+生成・更新の言語方針と2型agentの骨格は `references/ja-contract-policy.md` を正本とする。`output_language` と対象の正規見出しから生成言語を決め、schema key・メタ表のkey・Layer/responsibility識別子は維持する。

@@ -100,3 +100,11 @@ def test_cli_real_repo_exit_zero():
     res = subprocess.run([sys.executable, str(SCRIPT)], text=True, capture_output=True)
     assert res.returncode == 0, f"stderr={res.stderr}"
     assert "OK" in res.stdout
+
+
+def test_all_feedback_anchor_validators_are_content_bound():
+    expected = set(MOD.ROOT.glob("plugins/*/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py"))
+    actual = {v for c, v in MOD.VENDORED_PAIRS if c.name == "validate-inline-goal-seek-anchor.py"}
+    assert expected
+    assert actual == expected
+    assert MOD.check_pairs([(c, v) for c, v in MOD.VENDORED_PAIRS if v in expected]) == []

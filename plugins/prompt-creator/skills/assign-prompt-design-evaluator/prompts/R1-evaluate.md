@@ -76,7 +76,7 @@
 
 > L5 サブ構造は `../../run-prompt-creator-7layer/references/seven-layer-format.md`「Layer 5 契約」(l5-contract v2.0.0) に従属する。
 
-### 5.1 担当 agent
+### 5.1 担当エージェント
 - assign-prompt-design-evaluator R1 (context:fork。親 context の解釈バイアスを引き継がない)
 
 ### 5.2 ゴール定義

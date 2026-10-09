@@ -657,3 +657,16 @@ def test_module_guard_runs_main_via_runpy(capsys):
         runpy.run_path(str(SCRIPT), run_name="__main__")
     assert ei.value.code == 0
     assert "## 参照内容" in capsys.readouterr().out
+
+@pytest.mark.parametrize('language', ['ja', 'en'])
+@pytest.mark.parametrize('has_prompts', [True, False])
+def test_localized_runtime_blocks_are_idempotent_and_match_delivery(language, has_prompts):
+    spec = importlib.util.spec_from_file_location('runtime_delivery_template_consumer', ROOT / 'scripts/build-artifact-delivery.py')
+    delivery = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(delivery)
+    template = MOD.normalize_base((TEMPLATES / '_base.md').read_text())
+    localized = MOD.localize_template(template, language, has_prompts=has_prompts)
+    expected = delivery._canonical_runtime_root_block(language, has_prompts=has_prompts)
+    assert localized.count(expected) == 1
+    assert localized.count(delivery.RUNTIME_ROOT_BLOCK_BEGIN) == 1
+    assert MOD.localize_template(localized, language, has_prompts=has_prompts) == localized

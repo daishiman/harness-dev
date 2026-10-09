@@ -91,6 +91,15 @@
 4. `manifest.json` の kit対象なら version bump 必須を提示
 5. 31章 Sink Contract 対象なら adapter 全数を検査
 
+## cooldown と承認の照合（2026-10-09 改訂）
+
+`scripts/guard-change-category.py` は、承認と cooldown を同じ正規化した対象パスで判定する。
+
+- CI（`governance-check.yml`）は `--bypass-cooldown` を付けずに実行する。CI 全体で cooldown を素通りさせない。
+- 承認記録に `target_sha256` があるときは、その値が現物と一致する記録だけを「いま検査している変更の承認」として扱う。古い承認を新しい内容へ流用できない。
+- 以前の変更の cooldown は残る。例外にできるのは、承認済みで `incident_fix=true` を持つ記録だけ。
+- `target_path` は文字列でも配列でも、ファイル・ディレクトリ・glob を同じ規則で照合する。
+
 ## 反パターン
 
 | 反パターン | リスク |

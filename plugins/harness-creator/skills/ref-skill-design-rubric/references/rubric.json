@@ -1,7 +1,7 @@
 {
   "version": 1,
   "rubric_id": "skill-design",
-  "rubric_version": "1.3.0",
+  "rubric_version": "1.5.0",
   "layer": "L0",
   "threshold": 80,
   "max_skill_md_lines": 300,
@@ -74,15 +74,15 @@
       "area": "body",
       "severity": "high",
       "applies_to_kinds": ["skill"],
-      "check": "body contains heading '## Purpose & Output Contract'",
-      "rationale": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提。BD-001は『## Purpose & Output Contract』の厳格一致を要求し、PD-002は『## Purpose』または『## Output Contract』の冒頭30行内出現を許容する緩い条件である（BD-001 ⊂ PD-002 関係）。BD-001 PASS は PD-002 を自動充足するが、heading を分離した場合は BD-001 FAIL / PD-002 PASS の非対称が発生しうる。設計意図は『契約節の存在 (BD-001) と冒頭集約 (PD-002) を直交評価する』こと。"
+      "check": "body contains heading '## Purpose & Output Contract' or '## 目的と出力契約'",
+      "rationale": "出力契約の明示はScript実行モデル(28章)とテスト可能性の前提。英語の ## Purpose & Output Contract は従来の部分一致、日本語の ## 目的と出力契約 は行全体の一致で照合する。BD-001は契約節の存在を検査し、PD-002は冒頭30行への目的・契約・禁則の集約を独立して検査する。BD-001が合格でも契約節が31行目以降、または冒頭の禁則が無ければPD-002は不合格になる。"
     },
     {
       "id": "BD-002",
       "area": "body",
       "severity": "medium",
       "applies_to_kinds": ["skill"],
-      "check": "body contains heading '## Gotchas'",
+      "check": "body contains heading '## Gotchas' or '## つまずきやすい点'",
       "rationale": "反パターン提示が読み手の事故を防ぐ(08章)"
     },
     {
@@ -140,8 +140,8 @@
       "weight": 0.6,
       "classification": "C3",
       "applies_to_kinds": ["skill"],
-      "check": "body lines 1-30 (excluding frontmatter) contain heading '## Purpose' or '## Output Contract' AND at least one Key Rule / 禁則 (e.g. 'MUST', 'NEVER', '禁止', '必ず')",
-      "rationale": "02章 §設計判断4『SKILL.md の冒頭30行に目的・出力契約・禁則を集約する』(compaction lifecycle 対策) の機械強制。BD-001 との関係: BD-001 が『## Purpose & Output Contract』厳格一致 (heading 完全一致) を要求するのに対し、PD-002 は冒頭30行内に『## Purpose』『## Output Contract』のいずれか + Key Rule を要求する補強ルール。BD-001 PASS なら PD-002 も自動 PASS する包含関係 (BD-001 ⊂ PD-002)。"
+      "check": "body lines 1-30 (excluding frontmatter) contain heading '## Purpose' or '## Output Contract' or exact heading line '## 目的と出力契約' AND at least one Key Rule / 禁則 (e.g. 'MUST', 'NEVER', '禁止', '禁則', '必ず', 'Key Rule', or exact heading line '## 守ること')",
+      "rationale": "02章 §設計判断4の冒頭30行に目的・出力契約・禁則を集約する規則を機械検査する。目的節の存在を調べるBD-001とは直交する。英語の目的見出しは従来の部分一致、日本語の目的見出しと禁則の別名 ## 守ること は行全体の一致で照合する。冒頭30行と禁則の両条件を維持し、本文の単語「守ること」だけでは合格させない。"
     },
     {
       "id": "RG-001",

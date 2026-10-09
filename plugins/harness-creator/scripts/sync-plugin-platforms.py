@@ -72,7 +72,7 @@ def _display_name(name: str) -> str:
     return " ".join(part.capitalize() for part in name.replace("_", "-").split("-"))
 
 
-def desired_codex_manifest(claude: dict, overrides: dict) -> dict:
+def desired_codex_manifest(claude: dict, overrides: dict, *, language: str | None = None) -> dict:
     for field in ("name", "version", "description"):
         if not isinstance(claude.get(field), str) or not claude[field].strip():
             raise PlatformSyncError(f"Claude manifest requires non-empty {field}")
@@ -86,7 +86,7 @@ def desired_codex_manifest(claude: dict, overrides: dict) -> dict:
             raise PlatformSyncError("Claude manifest author must be an object")
         if not isinstance(author.get("name"), str) or not author["name"].strip():
             raise PlatformSyncError("Claude manifest author.name must be non-empty")
-    unknown_overrides = sorted(set(overrides) - OVERRIDABLE_FIELDS)
+    unknown_overrides = sorted(set(overrides) - (OVERRIDABLE_FIELDS | {"output_language"}))
     if unknown_overrides:
         raise PlatformSyncError(
             f"unsupported Codex override fields: {', '.join(unknown_overrides)}"
@@ -100,14 +100,17 @@ def desired_codex_manifest(claude: dict, overrides: dict) -> dict:
         if key in claude
     }
     author = claude.get("author") if isinstance(claude.get("author"), dict) else {}
+    language = language or overrides.get("output_language", "en")
+    if language not in {"ja", "en"}:
+        raise PlatformSyncError("Codex output_language must be ja or en")
     default_interface = {
         "displayName": _display_name(claude["name"]),
         "shortDescription": claude["description"][:120],
         "longDescription": claude["description"],
-        "developerName": author.get("name", "Local developer"),
+        "developerName": author.get("name", "ローカル開発者" if language == "ja" else "Local developer"),
         "category": "Development Tools",
         "capabilities": ["Skills"],
-        "defaultPrompt": [f"Help me use {_display_name(claude['name'])}."],
+        "defaultPrompt": [f"{_display_name(claude['name'])}の使い方を手伝って" if language == "ja" else f"Help me use {_display_name(claude['name'])}."],
     }
     interface = dict(default_interface)
     if isinstance(claude.get("interface"), dict):
