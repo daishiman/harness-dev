@@ -107,7 +107,7 @@ def test_redirect_branch_does_not_require_consult_fields():
     # redirect record の永続にも persistence_consent=true が必須 (新契約) のため fixture へ付与
     r = {
         "outcome": "redirected_goal_setting", "handoff_to": "run-ubm-goal-setting",
-        "referral_confirmed": True, "persistence_consent": True,
+        "referral_confirmed": True, "persistence_consent": True, "issue_statement": "月報を作りたい",
     }
     assert MOD.validate(r, None) == []
 
@@ -115,6 +115,32 @@ def test_redirect_branch_does_not_require_consult_fields():
 def test_redirect_record_without_consent_is_invalid():
     r = {"outcome": "redirected_goal_setting", "handoff_to": "run-ubm-goal-setting", "referral_confirmed": True}
     assert any("consent" in e for e in MOD.validate(r, None))
+
+
+def test_challenge_redirect_uses_own_target_and_can_be_ephemeral():
+    r = {"outcome": "redirected_challenge", "handoff_to": "run-ubm-challenge",
+         "referral_confirmed": True, "persistence_consent": False,
+         "issue_statement": "挑戦宣言を作りたい"}
+    assert MOD.validate(r, None, ephemeral=True) == []
+    assert any("consent" in e for e in MOD.validate(r, None))
+    r["handoff_to"] = "run-ubm-goal-setting"
+    assert any("redirect" in e for e in MOD.validate(r, None, ephemeral=True))
+
+
+def test_redirect_requires_confirmed_referral_and_issue():
+    r = {"outcome": "redirected_challenge", "handoff_to": "run-ubm-challenge",
+         "referral_confirmed": False, "persistence_consent": True,
+         "issue_statement": "挑戦宣言を作りたい"}
+    assert MOD.validate(r, None)
+    r["referral_confirmed"] = True
+    r.pop("issue_statement")
+    assert MOD.validate(r, None)
+
+
+def test_empty_solution_text_does_not_pass_provenance_alone():
+    r = base_record()
+    r["user_solution"]["text"] = " "
+    assert any("user_solution.text" in e for e in MOD.validate(r, [{"id": "u1", "role": "user"}]))
 
 
 def test_safety_branch_is_fail_closed():

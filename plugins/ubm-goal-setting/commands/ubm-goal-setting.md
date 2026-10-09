@@ -15,11 +15,11 @@ UBM（北原さん式ゴールセッティング）の目標設定（週報=1週
 
 ## 実行
 
-`run-ubm-goal-setting` スキルを Skill ツールで起動し、その指示に従って実行する。
+`run-ubm-goal-setting` スキルを `Skill` ツールで起動し、その指示に従って実行する。
 
 - 引数 `$ARGUMENTS` に `weekly` / `monthly` / `quarterly` が指定されていればその種別で開始する。
 - 旧値 `bimonthly` が指定された場合も受理し、`quarterly` として開始する（後方互換の別名）。
-- 引数がなければスキルの Phase0（AskUserQuestion）で目標種別を確認する。
+- 引数がなければスキルの Phase0（`AskUserQuestion`）で目標種別を確認する。
 
 ## 引数
 

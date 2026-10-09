@@ -8,6 +8,7 @@
 #          旧 validate-goal-output.sh 474 行の契約移植 (逐語移植ではない)。
 #          --peer 指定時のみ、他層ファイルとの期アンカー3値の層間整合を WARN で報告する。
 # inputs:
+#   - fs: plugin references/action-language-policy.json（欠落・不正は終了コード2）
 #   - argv: --file PATH --type weekly|monthly|quarterly (bimonthly は後方互換の別名)
 #           [--peer PATH ...] (任意・複数可。層間整合の比較相手)
 # outputs:
@@ -36,9 +37,24 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
+
+
+# 行動の精神論の語の唯一正本。プロフィールで既存の判定範囲を保つ。
+ACTION_POLICY_PATH = Path(__file__).resolve().parents[3] / "references/action-language-policy.json"
+try:
+    _action_policy = json.loads(ACTION_POLICY_PATH.read_text(encoding="utf-8"))
+    _action_terms = _action_policy["goal_exact_phrases"]
+    if not isinstance(_action_terms, list) or not _action_terms or any(not isinstance(term, str) or not term for term in _action_terms):
+        raise ValueError("goal_exact_phrases は空でない文字列の配列である必要があります")
+except (OSError, ValueError, KeyError, TypeError) as exc:
+    sys.stderr.write(f"行動の語彙契約を読めません: {exc}\n")
+    raise SystemExit(2)
+
+GOAL_SPIRIT_RE = re.compile("|".join(re.escape(term) for term in _action_terms))
 
 # --type -> kind (分岐キー)。期報=quarterly=3-月報（３ヶ月）。
 # "bimonthly" は期報が2ヶ月だった頃の旧キー。新規は quarterly を正とし、旧キーも受理し続ける。
@@ -1024,7 +1040,7 @@ class Validator:
         action_section = self.capture_awk(action_pred)
         action_items = [l for l in action_section if re.match(r"^([*-] |・)", l)]
         if action_section:
-            ng = [l for l in action_section if re.search(r"頑張る|意識する|気をつける|心がける|努力する", l)]
+            ng = [l for l in action_section if GOAL_SPIRIT_RE.search(l)]
             if not ng:
                 self.ok("NG表現なし（行動目標セクション）")
             else:

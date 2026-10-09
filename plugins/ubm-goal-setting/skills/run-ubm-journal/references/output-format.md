@@ -1,9 +1,7 @@
 # 日次ジャーナル 出力フォーマット正本
 
 `validate-journal-output.py` はこのファイルの骨格定義に基づいて検査する。見出し文字列を変更する
-場合は、このファイル・バリデータ・`assets/golden-sample.md`・`references/principle-checklist.md`・
-`tests/test_validate_journal_output.py` を同時に更新する（4者の一致はテストで固定してあるので、
-1 つだけ直すと必ず落ちる）。
+場合は、このファイル・検査スクリプト・`assets/golden-sample.md`・`references/principle-checklist.md`を同時に更新し、`tests/test_validate_journal_output.py` の一致検査を通す。設問の追加・削除もこの変更契約に従う（機械側は `PRINCIPLE_SECTIONS`）。設問本文だけの変更は `principle-checklist.md` を正本として見本へ反映する。
 
 ## 保存先とファイル名
 
@@ -75,8 +73,7 @@ tags:
 ```
 
 `# 原理原則 チェックシート` 配下の設問本文（チェックボックスと注記行）の正本は
-`references/principle-checklist.md`。設問の増減はそのファイルと
-`validate-journal-output.py` の `PRINCIPLE_SECTIONS` を同時に直す。
+`references/principle-checklist.md`。変更手順は本ファイル冒頭を参照する。
 
 ## 各ブロックの記述規則
 
@@ -92,7 +89,7 @@ tags:
 | 【タスク】 | 対話（週報の当日タスク・成果目標を候補提示） | `### 【{分類}】` で括る。分類はその日の実態に合わせて命名する（固定リストではない） |
 | 行動/時間/お金のジャーナル | 対話 | 各3小節すべてに箇条書き1件以上。「現状＝事実」「効果性＝解釈」「更に良く＝次の打ち手」を混ぜない |
 | フェーズ別課題チェックシート | 前回ジャーナルから継承 | チェック状態を引き継ぎ、対話で変化があった項目だけ更新する |
-| チェックシート（原理原則） | 前回ジャーナルから継承（初回は `references/principle-checklist.md`） | **毎回必ず出力する**。設問文・注記行・階層は改変せず、チェック状態だけ対話の内容に合わせて更新する。水平線 `---` は入れない（継承がそこで打ち切られる） |
+| チェックシート（原理原則） | 前回ジャーナルから継承（初回は `references/principle-checklist.md`） | `principle-checklist.md` の「出力規則」に従う |
 
 ## 目標の期間・残日数
 
@@ -115,9 +112,9 @@ python3 scripts/validate-journal-output.py \
   --expected-number {journal_number} --expected-date {YYYY-MM-DD}
 ```
 
-違反コード: `F*`=ファイル名/見出し整合 / `Y01`=frontmatter の `tags: - review` /
-`Y02`=「人生の究極の目的」の transclusion / `S01`=骨格の存在と順序 / `G*`=目標4階層
-（`G01` ラベル行なし / `G02` 期間が YYYY-MM-DD〜YYYY-MM-DD 形式でない / `G03` 値が空）/
+違反コード: `F*`=ファイル名/見出し整合 / `Y01`=フロントマターの `tags: - review` /
+`Y02`=「人生の究極の目的」の埋め込み表示 / `S01`=骨格の存在と順序 / `G*`=目標4階層
+（`G01` ラベル行なし / `G02` 期間が `YYYY-MM-DD〜YYYY-MM-DD` 形式でない / `G03` 値が空）/
 `C*`=中身が空 / `J*`=3ジャーナルの小節 / `P*`=フェーズ別チェック /
 `K*`=原理原則チェックシート（`K01` 設問セクション欠落 / `K02` チェックボックス行なし）/
 `X01`=未置換プレースホルダ /

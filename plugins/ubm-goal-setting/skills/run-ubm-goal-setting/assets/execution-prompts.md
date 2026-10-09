@@ -1,3 +1,5 @@
+正式保存の実行境界は `../../references/guarded-publication-contract.md` が正本。output-formatterは一時下書きのみ返し、正式目標・archive・Daily.mdは親が承認済みargvの中央executeで反映する。
+
 # UBM目標設定 実行ガイド
 
 **各Phase の実行プロンプトはエージェントファイルに統合済み。**
@@ -12,12 +14,12 @@
 | Phase | 並列実行可能な処理 | 順次実行が必要な処理 |
 |-------|-------------------|---------------------|
 | Phase 0 | — | ユーザーへの質問（1ターン） |
-| Phase 1-2 | Step 1〜3.7 の5ステップを全て並列（Step 3.7はweeklyのみ）。各Step内の複数ファイルReadも並列 | Step 4（サマリー生成）は全Step完了後 |
+| Phase 1-2 | Step 1〜3.9 を全て並列（対象と条件は info-collector.md の Layer 6「実行原則」）。各Step内の複数ファイルReadも並列 | Step 4（サマリー生成）は全Step完了後 |
 | Phase 3 開始時 | 参照ファイル4本を並列Read（thinking-guide/principles/templates/best-practices） | Step 1→2→3→4→5 は対話のため順次 |
 | Phase 4 | テンプレート＋既存ファイルの並列Read（期報時） | データ整形→バリデーション→保存は順次 |
 
 **Phase横断の並列化**:
-- Phase 1-2 SubAgent をバックグラウンド起動し、待機中に Phase 3 の参照ファイルを事前読み込み
+- Phase 1-2 のサブエージェントをバックグラウンド起動し、待機中に Phase 3 の参照ファイルを事前読み込み
 
 ---
 
@@ -31,23 +33,25 @@ Phase 0: 目標種別の確認（AskUserQuestion: 1ターン）
 Phase 1-2: 情報収集 → agents/info-collector.md
     ├── Step 1: 過去目標収集 ──────┐
     ├── Step 2: 合宿情報収集 ──────┤
-    ├── Step 3: ナレッジ参照 ──────┤ ← 5つを並列実行（Step 3.7はweeklyのみ）
+    ├── Step 3: ナレッジ参照 ──────┤ ← 並列実行（対象と条件は info-collector.md の Layer 6「実行原則」）
     ├── Step 3.5: UBMルート確認 ──┤
-    ├── Step 3.7: ジャーナル収集 ──┘
+    ├── Step 3.7: ジャーナル収集 ──┤
+    ├── Step 3.8: 相談の引き継ぎ ──┤
+    ├── Step 3.9: 挑戦宣言の文脈 ──┘
     └── Step 4: サマリー生成（↑全完了後）
     ↓  ※ 待機中に Phase 3 参照ファイルを並列事前読み込み可
-Phase 3: 親contextの高速対話ヒアリング → skills/run-ubm-goal-setting/prompts/R1-R5（必要時のみ agents/phase3-coordinator.md の読取専用助言）
+Phase 3: 親コンテキストの高速対話ヒアリング → skills/run-ubm-goal-setting/prompts/R1-R5（必要時のみ agents/phase3-coordinator.md の読み取り専用助言）
     ├── [並列Read] thinking-guide + principles + templates + best-practices
     ├── Step 1: 現状確認+前回振り返り（要素分解×MECE×経験学習×改善思考）
-    ├── Step 2: 差分分析+原因深掘り（Why思考×ボトルネック×仮説×論点）
+    ├── Step 2: 差分分析+原因深掘り（なぜ思考×ボトルネック×仮説×論点）
     ├── Step 3: 前提検証+目標設定（ダブルループ×批判×逆算×戦略×確率）
     ├── Step 4: 行動計画（GTD×プロセス×2軸）
     └── Step 5: 最終確認+合宿整合性（メタ思考×システム思考）
     ↓
-Phase 4: 出力・保存 → agents/output-formatter.md
+Phase 4: 下書き・検証 → agents/output-formatter.md、正式保存 → 親の中央guard execute
     ├── [並列Read] テンプレート + 既存期報（quarterly時・旧名ファイルも対象）
     ├── データ整形 → バリデーション → 保存（順次）
-    └── ファイル保存
+    └── 検証済み下書きを親へ返し、親が中央guard executeで保存
 ```
 
 ---
@@ -77,24 +81,24 @@ UBMの目標設定を始めます。どの種類の目標を作成・確認し�
 
 **実行プロンプト**: `agents/info-collector.md` の「実行プロンプト」セクションをそのまま使用。
 
-Agent ツールで SubAgent を起動する際の設定:
-- `subagent_type`: general-purpose
+Agent ツールでサブエージェントを起動する際の設定:
+- `subagent_type`: `general-purpose`
 - `prompt`: info-collector.md 内の実行プロンプトを `{{goal_type}}` 等の変数を埋めて渡す
-- `run_in_background`: false（結果を待つ）
+- `run_in_background`: `false`（結果を待つ）
 
-**並列実行**: SubAgent 内部で Step 1〜3.5 を並列実行する（詳細は info-collector.md の並列実行ポリシー参照）。SubAgent 完了待ちの間に Phase 3 の参照ファイルを事前読み込みすることも可能。
+**並列実行**: サブエージェント内部で収集の Step を並列実行する（どの Step を並べるかは、info-collector.md の Layer 6「実行原則」を参照）。サブエージェント完了待ちの間に Phase 3 の参照ファイルを事前読み込みすることも可能。
 
 ---
 
 ## Phase 3: 高速対話ヒアリング
 
-**実行主体**: owner skill の親contextが各 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト正本）を Read して順次対話する。次問の判断が難しい場合だけ `agents/phase3-coordinator.md` を読取専用 advisor Task として起動し、親が回答の受領と状態更新を続ける（step は独立 SubAgent 化しない）。
+**実行主体**: 呼び出し元のスキルの親コンテキストが各 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/prompts/R{1..5}-*.md`（責務単位 7 層プロンプト正本）を Read して順次対話する。次問の判断が難しい場合だけ `agents/phase3-coordinator.md` を読み取り専用の助言役の Task として起動し、親が回答の受領と状態更新を続ける（Step は独立したサブエージェントにしない）。
 
 **開始時の並列Read（4本）**:
-- `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/references/thinking-guide.md`
-- `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md`
-- `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/interview-quick-templates.md`
-- `$CLAUDE_PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md`
+- `$PLUGIN_ROOT/skills/run-ubm-goal-setting/references/thinking-guide.md`
+- `$PLUGIN_ROOT/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md`
+- `$PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/interview-quick-templates.md`
+- `$PLUGIN_ROOT/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md`
 
 **所要時間目安**: 週報 5-8ターン / 月報 8-12ターン / 期報 12-15ターン
 
@@ -104,23 +108,23 @@ Agent ツールで SubAgent を起動する際の設定:
 
 **実行プロンプト**: `agents/output-formatter.md` の「実行プロンプト」セクションをそのまま使用。
 
-Agent ツールで SubAgent を起動する際の設定:
-- `subagent_type`: general-purpose
+Agent ツールでサブエージェントを起動する際の設定:
+- `subagent_type`: `general-purpose`
 - `prompt`: output-formatter.md 内の実行プロンプトを変数を埋めて渡す
-- `run_in_background`: false（結果を待つ）
+- `run_in_background`: `false`（結果を待つ）
 
-**並列実行**: テンプレート読み込み時、output-formats.md と既存ファイル（期報時・旧名ファイルも対象）を並列Readする（詳細は output-formatter.md の並列実行ポリシー参照）。
+**並列実行**: テンプレートの読み込みでは、読むファイルを並列 Read する（対象は output-formatter.md の Layer 6「実行原則」を参照）。
 
 ---
 
 ## 目標レビューフロー（Phase 0 オプション4）
 
-**エージェント**: `agents/goal-reviewer.md` に従い SubAgent を起動する。
+**エージェント**: `agents/goal-reviewer.md` に従いサブエージェントを起動する。
 
-Agent ツールで SubAgent を起動する際の設定:
-- `subagent_type`: general-purpose
+Agent ツールでサブエージェントを起動する際の設定:
+- `subagent_type`: `general-purpose`
 - `prompt`: goal-reviewer.md 内の「実行プロンプト」を変数を埋めて渡す
-- `run_in_background`: false（結果を待つ）
+- `run_in_background`: `false`（結果を待つ）
 
 **対象ファイルの特定**（引数未指定の場合）:
 ```bash
@@ -128,7 +132,7 @@ Agent ツールで SubAgent を起動する際の設定:
 ls -t $UBM_VAULT_ROOT/05_Project/UBM/目標設定/UBM\ -\ *.md | head -1
 ```
 
-**出力内容**: 13項目チェック（基本2＋合宿整合性3＋関係構築3＋三層分離5）+ Top 3 優先改善事項（NG→OK書き直し案付き）+ 北原さんならこう言う + プロジェクト/習慣の運用チェック
+**出力内容**: 13項目チェック（基本2＋合宿整合性3＋関係構築3＋三層分離5）+ 上位3つの優先改善事項（NG→OK書き直し案付き）+ 北原さんならこう言う + プロジェクト/習慣の運用チェック
 
 **起動タイミング**（複数あり）:
 - Phase 0 でオプション4を選択した場合（スタンドアロン実行）
@@ -138,7 +142,7 @@ ls -t $UBM_VAULT_ROOT/05_Project/UBM/目標設定/UBM\ -\ *.md | head -1
 
 ## 回答パターン別の対応（全Phase共通）
 
-詳細は `agents/phase3-coordinator.md` の「回答パターン対応」セクションを参照。
+詳細は `agents/phase3-coordinator.md` の「品質基準（回答パターン別対応ルール）」節を参照。
 
 ---
 
@@ -146,13 +150,13 @@ ls -t $UBM_VAULT_ROOT/05_Project/UBM/目標設定/UBM\ -\ *.md | head -1
 
 ```bash
 # 更新検知（差分確認）
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM
+! python3 $PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM
 
 # 全件再構築
-! python3 $CLAUDE_PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $CLAUDE_PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --all
+! python3 $PLUGIN_ROOT/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py --registry $PLUGIN_ROOT/knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM --all
 
 # ナレッジ同期（検知→抽出→JSON格納を一括実行）
 /ubm-knowledge-sync
 ```
 
-詳細は `agents/knowledge-extractor.md` および `$CLAUDE_PLUGIN_ROOT/commands/ubm-knowledge-sync.md` を参照。
+詳細は `agents/knowledge-extractor.md` および `$PLUGIN_ROOT/commands/ubm-knowledge-sync.md` を参照。

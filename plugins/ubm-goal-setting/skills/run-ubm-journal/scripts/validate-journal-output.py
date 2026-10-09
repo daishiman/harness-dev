@@ -2,7 +2,7 @@
 # /// script
 # name: validate-journal-output
 # version: 0.5.0
-# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・骨格15ブロック・
+# purpose: 生成した日次ジャーナル Markdown が正本フォーマット (frontmatter・REQUIRED_OUTLINE・
 #          目標4階層の期間/残り/目標・3ジャーナル×3小節・フェーズ別課題チェックシート・
 #          毎日固定の習慣) を満たすかを保存前に検査する決定論ゲート。習慣の件数と
 #          検査範囲は references/daily-habits.json が正本 (ここに件数を焼かない)。

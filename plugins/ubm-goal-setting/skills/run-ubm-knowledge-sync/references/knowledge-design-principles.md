@@ -3,13 +3,13 @@
 ### 目的
 ユーザーが抱える経営課題・悩みに対して、北原さんのアドバイスを**的確に・文脈ごと**届けること。「何を言ったか」だけでなく「なぜ言ったか・何を目的として・どういう流れで」まで記録する。
 
-> **核心原則**: 記録するのは「北原さんの知恵・診断・アドバイスの構造」であり、「相談者の個人情報」ではない。相談者の状況は「このアドバイスが有効な典型的なパターン」として一般化する。相談者の実名・会社名・固有業種・特定数値は**ナレッジの雑音**にしかならないため記録しない。
+> **核心原則**: 記録するのは「北原さんの知恵・診断・アドバイスの構造」であり、「相談者の個人情報」ではない。相談者の状況は「このアドバイスが有効な典型的なパターン」として一般化する。背景には相談者の実名・会社名・固有業種・特定数値を含めない。元資料に存在する事実や引用は、出典・原文フィールド・移行監査で保全する。
 
-### 必須フィールド（background・intent は特に重要）
+### 必須フィールド（`background`・`intent` は特に重要）
 
 | フィールド | 役割 | 書き方の目安 |
 |-----------|------|------------|
-| `content` | アドバイスの核心（1〜2文） | 「〜すること」「〜が重要」の形 |
+| `title` または `content` | 原文に基づくアドバイスの核心 | 主語・述語・対象が明確な一文。重要な条件を削らず、引用・詳しい補足は専用フィールドで保全 |
 | `background` | **このアドバイスが有効な典型的な状況パターン・北原さんの診断** | 個人情報を含まず、この種の経営者の構造的な状況を記述（2〜5文） |
 | `intent` | **北原さんの目的・意図** | 「〜させること」「〜を防ぐこと」の形（1〜2文） |
 | `root_cause` | 表面問題の裏の本質 | 構造的・心理的な根本原因（1〜2文） |
@@ -36,14 +36,16 @@ knowledge/
 
 | カテゴリ | 現在のサブトピックファイル |
 |---------|--------------------------|
-| principles | `principles-relationship.json` / `principles-mindset.json` / `principles-business.json` |
-| consultation | `consultation-organization.json` / `consultation-sales.json` / `consultation-business-model.json` |
-| phase-advice | `phase-advice-0to1.json` / `phase-advice-1to10.json` / `phase-advice-10to100.json` |
-| action-guides | `action-guides-relationship.json` / `action-guides-content.json` |
-| mindset | `mindset-self.json` / `mindset-organization.json` / `mindset-goal-strategy.json` / `mindset-growth-habit.json` |
-| case-studies | `case-studies-success.json` / `case-studies-failure.json` / `case-studies-organization.json` |
+| `principles` | `principles-relationship.json` / `principles-mindset.json` / `principles-business.json` |
+| `consultation` | `consultation-organization.json` / `consultation-sales.json` / `consultation-business-model.json` |
+| `phase-advice` | `phase-advice-0to1.json` / `phase-advice-1to10.json` / `phase-advice-10to100.json` |
+| `action-guides` | `action-guides-relationship.json` / `action-guides-content.json` |
+| `mindset` | `mindset-self.json` / `mindset-organization.json` / `mindset-goal-strategy.json` / `mindset-growth-habit.json` |
+| `case-studies` | `case-studies-success.json` / `case-studies-failure.json` / `case-studies-organization.json` |
 
 ※ 最新のファイル一覧は `knowledge/router.json` の `categories[*].files` が正。
+
+JSONはカード・出典のオブジェクトを複数行で読みやすく保ち、短い `tags`・`phase`・`related` などの配列は一行で記述する。整形後も500行の上限を超えるカテゴリは、テーマ別に分割してルーターを更新する。
 
 ### ナレッジ同期コマンド
 

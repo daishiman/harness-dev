@@ -1,20 +1,20 @@
-# Prompt: R3-step3-goal-setting
+# プロンプト: R3-step3-goal-setting
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 3 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 3 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step3-goal-setting |
-| skill | run-ubm-goal-setting |
-| responsibility | R3-step3-goal-setting (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 3 担当フィールド) |
-| reproducible | true (設計順序と検証条件は決定論的) |
+| `name` | step3-goal-setting |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R3-step3-goal-setting (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 3 担当フィールド) |
+| `reproducible` | `true` (設計順序と検証条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,7 +28,7 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 前提の問い直し、合宿アドバイスとの整合確認、売上目標・成果目標の数値確定と interview_data への記録。
 - 非担当: 差分分析 (R2)、行動計画への分解 (R4)、最終確認 (R5)。
 
@@ -57,12 +57,12 @@
 - 壁打ち頻度: 候補生は 6 ヶ月に 1 回／K4 以上は 3 ヶ月に 1 回は必ず厳守。目指す状態・達成事項はアカデミーカリキュラムを参考にする。
 
 ### 2.4 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| root_cause | string | yes (初回スキップ時は null 許容) | 差分の根本原因 (Step 2 から) |
-| bottleneck | string | yes (初回スキップ時は null 許容) | ボトルネック箇所 (Step 2 から) |
-| camp_date | string | no | 直近のアカデミー参加日 (自動取得) |
-| camp_advice_summary | string | no | アカデミーアドバイス要約 (自動取得) |
+| root_cause | string | はい (初回スキップ時は `null` を許容) | 差分の根本原因 (Step 2 から) |
+| bottleneck | string | はい (初回スキップ時は `null` を許容) | ボトルネック箇所 (Step 2 から) |
+| camp_date | string | いいえ | 直近のアカデミー参加日 (自動取得) |
+| camp_advice_summary | string | いいえ | アカデミーアドバイス要約 (自動取得) |
 
 ### 2.5 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
@@ -74,22 +74,23 @@
 | next_sparring_date | string | 次回の壁打ち予定日 (月報・期報は確認／週報は継承) |
 | sparring_target_state | string | 壁打ち予定月までに目指す状態 (月報・期報は確認／週報は継承) |
 | sparring_deliverables | string | 壁打ち予定日までに達成させること (月報・期報は確認／週報は継承) |
-| grid_partner_goal | number/null | 今期は何人にするか (半角数字・未設定 null) (月報・期報は確認／週報は継承) |
+| grid_partner_goal | number/null | 今期は何人にするか (半角数字・未設定は `null`) (月報・期報は確認／週報は継承) |
 
 備考: #22 period_sales_target・#26 grid_partner_goal・#28-31 の取得 Step の契約正本は `references/data-contract.md` §3 (Step 1 起点の継承文脈)。週報は Step 1 の一括確認結果を引き継ぐのみ、月報・期報は本 Step の対話でフル確認して確定値を書き込む。
 
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| ナレッジサマリー | past_summary 内 (info-collector 生成・親 context が受領) | 前提検証の根拠・引用に使うとき |
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| selection-focus-goal-frame | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
+| ナレッジサマリー | past_summary 内 (`info-collector` 生成・親コンテキストが受領) | 前提検証の根拠・引用に使うとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| `selection-focus-goal-frame` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md` | 目標が「人・お金・時間・場所・やること」の5要素で1点に収束しているか検査するとき (§2 共通チェック / §3 期間別) |
 
-ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):
+ナレッジ活用 (`info-collector` から渡された翻訳済みデータを使う):
+- `${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、past_summaryの実検索結果 `knowledge_candidates` に含まれるIDから意味を判断する。親は実際に届けた引用・原則IDだけを記録し、追加IDは先に検索で出所へ解決する。
 - **上位概念 (翻訳済み)**: ユーザー状況に翻訳済みの原則 → 前提検証・前提問い直しの根拠として活用。
-- **引用候補**: 対話の中で北原さんの言葉を届ける際に、ハードコードの引用に加えて活用可。
+- **引用候補**: 対話の中で北原さんの言葉を届ける際に、ハードコードの引用も先にIDを検索へ解決してから活用可。
 - 活用例: ユーザーが同じパターンを繰り返している場合 → 翻訳済み原則「関係構築ファースト = (このユーザーの場合は〇〇)」を使って前提を問い直す。
 
 ### 3.2 外部ツール / API
@@ -98,7 +99,7 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 対話の共通制約 (北原原則の引用は 1〜2 個・3 ステップ翻訳必須等) は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 対話の共通制約 (北原原則の引用は 1〜2 個・3 ステップ翻訳必須等) は `agents/phase3-coordinator.md` の Layer 2「ナレッジ活用原則（重要）」と「プロセス制約」が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
 - 「売上を追う」姿勢の回答: 関係構築ファーストへの組み替えへフォールバックする。
@@ -111,8 +112,8 @@
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 前提検証を経た、逆算根拠のある数値目標を確定する。
@@ -137,10 +138,10 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 3)。
-- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため root_cause / bottleneck を null で受領する。
-- 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (sales_target)、成果目標 (other_targets)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 3)。
+- 前提 Step: R2-step2-gap-analysis — 根本原因とボトルネックの特定結果がなければ、前提検証や目標設定の方向性が定まらない。初回 (前回目標なし) は Step 2 がスキップされるため `root_cause` / `bottleneck` を `null` で受領する。
+- 後続 Step: R4-step4-action-plan — 受け渡し: 売上目標 (`sales_target`)、成果目標 (`other_targets`)。
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: 完了チェックリスト充足後にのみ Step 4 へ遷移する。

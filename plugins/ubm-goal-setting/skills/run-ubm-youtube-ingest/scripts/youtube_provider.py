@@ -2,26 +2,26 @@
 # /// script
 # name: youtube_provider
 # version: 0.1.0
-# purpose: YouTube 取得の provider 中立アダプタ I/F。list_channel_videos(cursor)/fetch_transcript(video_id)
-#          の 2 メソッドと typed error (QuotaExceeded/AuthRequired/TemporaryFailure/TerminalUnavailable)
-#          だけを契約として固定し、実 provider(YouTube Data API / 字幕取得ツール等)は late-bind する。
-#          テスト用に JSON fixture 駆動の FixtureProvider を同梱し、無人 one-shot を疎通確認可能にする。
+# purpose: YouTube 取得の 取得元 中立アダプタ I/F。list_channel_videos(cursor)/fetch_transcript(video_id)
+#          の 2 メソッドと 型付きエラー (QuotaExceeded/AuthRequired/TemporaryFailure/TerminalUnavailable)
+#          だけを契約として固定し、実 取得元(YouTube Data API / 字幕取得ツール等)は 実行時に接続 する。
+#          テスト用に JSON 検証用データ 駆動の FixtureProvider を同梱し、無人 1回きりの実行 を疎通確認可能にする。
 # inputs:
-#   - FixtureProvider: JSON fixture (channels/transcripts/errors) を Path で受ける
+#   - FixtureProvider: JSON 検証用データ (channels/transcripts/errors) を Path で受ける
 # outputs:
 #   - Page(videos, next_cursor) / Transcript(video_id, origin, coverage, spans)
-#   - 取得不能は typed error を raise (one-shot が ledger 状態へ写像する)
+#   - 取得不能は 型付きエラー を raise (1回きりの実行 が 台帳 状態へ写像する)
 # contexts: [E]
-# network: false  (fixture provider のみ同梱。実 provider は late-bind し network はその実装が持つ)
+# network: false  (検証用データ 取得元 のみ同梱。実 取得元 は 実行時に接続 し network はその実装が持つ)
 # write-scope: none
 # dependencies: []
 # requires-python: ">=3.9"
 # ///
-"""provider 中立の YouTube 取得アダプタ契約 + fixture provider。
+"""取得元 中立の YouTube 取得アダプタ契約 + 検証用データ 取得元。
 
-取得契約・自動性・fallback を skill 内で確定し、具体 provider 製品だけを late-bind する
+取得契約・自動性・fallback を skill 内で確定し、具体 取得元 製品だけを 実行時に接続 する
 (boundary 指示)。caption を第一取得源とし、caption 不在で承認済み ASR にフォールバックする
-判断は provider 実装が origin=caption|asr として返し、本 I/F はそれを不変で運ぶ。
+判断は 取得元 実装が origin=caption|asr として返し、本 I/F はそれを不変で運ぶ。
 
 注: `from __future__ import annotations` は使わない。dataclass 定義があるこのモジュールは
 smoke テストが importlib (sys.modules 非登録) でロードするため、文字列アノテーション化すると
@@ -33,21 +33,21 @@ from pathlib import Path
 from typing import Optional
 
 
-# --- typed errors (one-shot が状態へ決定論写像する分類) --------------------
+# --- typed errors (1回きりの実行 が状態へ決定論写像する分類) --------------------
 class ProviderError(Exception):
-    """provider 由来エラーの基底。"""
+    """取得元 由来エラーの基底。"""
 
 
 class QuotaExceeded(ProviderError):
-    """API quota 超過。当該 run は打ち切り、次 cadence で再開する (retryable・run 単位)。"""
+    """API 利用量の上限 超過。当該 実行 は打ち切り、次 実行周期 で再開する (再試行可能・実行 単位)。"""
 
 
 class AuthRequired(ProviderError):
-    """認証/認可が必要。無人継続不可のため run を停止し alert する (要人間対応)。"""
+    """認証/認可が必要。無人継続不可のため 実行 を停止し 警告を通知 する (要人間対応)。"""
 
 
 class TemporaryFailure(ProviderError):
-    """一時取得失敗 (ネットワーク断等)。video を temporary_failure に置き次 run で retry する。"""
+    """一時取得失敗 (ネットワーク断等)。video を temporary_failure に置き次 実行 で 再試行 する。"""
 
 
 class TerminalUnavailable(ProviderError):
@@ -81,9 +81,9 @@ class Transcript:
     spans: list = field(default_factory=list)
 
 
-# --- provider I/F ---------------------------------------------------------
+# --- 取得元 I/F ---------------------------------------------------------
 class YouTubeProvider:
-    """provider 中立契約。実 provider はこの 2 メソッドと typed error 分類だけを満たせばよい。"""
+    """取得元 中立契約。実 取得元 はこの 2 メソッドと 型付きエラー 分類だけを満たせばよい。"""
 
     def list_channel_videos(self, channel: str, cursor: Optional[str] = None) -> Page:  # noqa: D401
         raise NotImplementedError
@@ -93,9 +93,9 @@ class YouTubeProvider:
 
 
 class FixtureProvider(YouTubeProvider):
-    """JSON fixture 駆動の provider。無人 one-shot をネットワークなしで疎通確認するためのもの。
+    """JSON 検証用データ 駆動の 取得元。無人 1回きりの実行 をネットワークなしで疎通確認するためのもの。
 
-    fixture schema (references/provider-adapter-contract.md が正本):
+    検証用データ schema (references/provider-adapter-contract.md が正本):
       {
         "channels": {"<handle>": {"pages": [{"videos": [meta...], "next_cursor": "..."|null}, ...]}},
         "transcripts": {"<video_id>": {"origin": "caption"|"asr", "coverage": 0..1, "spans": [{"t","text"}]}},
@@ -115,7 +115,7 @@ class FixtureProvider(YouTubeProvider):
             )
         chan = self._data.get("channels", {}).get(channel)
         if chan is None:
-            # 未同定 source (第2アカウント pending) は空ページを返し required-primary を止めない。
+            # 未同定 ソース (第2アカウント pending) は空ページを返し required-primary を止めない。
             return Page(videos=[], next_cursor=None)
         pages = chan.get("pages", [])
         idx = 0 if cursor is None else self._page_index_after(pages, cursor)
@@ -149,7 +149,7 @@ class FixtureProvider(YouTubeProvider):
 
 
 def get_provider(name: str, **opts) -> YouTubeProvider:
-    """provider 名から実体を返す。fixture のみ同梱、実 provider は late-bind (未実装は明示 raise)。"""
+    """取得元 名から実体を返す。検証用データ のみ同梱、実 取得元 は 実行時に接続 (未実装は明示 raise)。"""
     if name == "fixture":
         return FixtureProvider(Path(opts["fixture"]))
     raise NotImplementedError(
