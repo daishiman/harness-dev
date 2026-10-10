@@ -1,0 +1,769 @@
+{
+  "version": 1,
+  "iteration": 2,
+  "review_mode": "combined-focused-content-review",
+  "claim_type": "design",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "reviewed_at": "2026-10-05T08:38:49.158703Z",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-sync",
+    "skill_md_sha256": "000dbe4d04c3cc4599b221256a0c25fb1beab5106658a24d54fb682cd0a38fb2"
+  },
+  "slice": "F-4001: add the actual shared import-only _common.py to script_refs; current contract/body preserved, current declared closure now tracks and refuses missing helper.",
+  "norms": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md",
+      "sha256": "35715164bcab2c7a855b85b7043b0008fddd5182a316bd4f716e9ffb907f70af"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json",
+      "sha256": "9edce23b1a0c8c32c5fc53df3394ab493c3a3c0a4a0d9d5b238f99015b4c7cd1"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+      "sha256": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json",
+      "sha256": "3c114e702f600edd895c55c98c78a3eacca002dc06c61da043f8aaec3bf817fd"
+    }
+  ],
+  "current_sources": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+      "sha256": "ef94e1b477a6e4d56e383c1932a78a076bcbce7e7d00c253dc391b3d9420fd87",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+      "sha256": "5e3bdca35bed7872a0b8f3f279e7cfbc1205d3e7fa6311d6f11dceed279987ea",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+      "sha256": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+      "sha256": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+      "sha256": "3fe084f6d2542eae48fbe1448e5f9b1e4bc24e8e87dff0b99d72d1987dabf728",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+      "sha256": "cc77dd2e9152b685aad3e83c5001a964f889bdf2edd3911452b1e74c698b0b74",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+      "sha256": "2d9c53ac09014aa848fb720747c3e59d7e5cf82321c7c058860929029d17cb58",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+      "sha256": "7ef9117aa0e4f030d60c5c5762c7412b688f6992c86ee9225567dbaa63201522",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+      "sha256": "7275d8c11a2b60890f0cd869575af41a0a98de2e9814d35168a2de407c3b6c71",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+      "sha256": "000dbe4d04c3cc4599b221256a0c25fb1beab5106658a24d54fb682cd0a38fb2",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+      "sha256": "9c36ba6a5bbe8e4b361350610119ccf00774bbfecf293dd601b229c893af264c",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+      "sha256": "205c006f710eaf4efb53381b58355628236b5b7da1e6114ef100b2f28022bb86",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+      "sha256": "0afa29fcf8ee82e53490fbcf67302c618539f1d5289f9d7e6a170abc39c72519",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+      "sha256": "6e4daa780ebe1961e249ae50b972d17a252063af596d6320d6b1645699871e8d",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+      "sha256": "54f7fd7066ce09598f9e9a477d52ed31f90c28e6058c8fb44c6f73f00d271584",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+      "sha256": "684a20d9bb08ddf20ebde02df5385be4be25123955d3e9b94380ac485df65ccd",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+      "sha256": "d9d1c62e09c779dcf345f429d36b2a798c8a9bcf07c80f8d58e6b8ccbffdfe7d",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+      "sha256": "19d7f2ac5ddd2bc558a95c6f156b3715ffa309fad31e2524dbf8d6069f103808",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+      "sha256": "882c0dd91144d4a0af0e5c7c146c0289b5ae8067ae5d7c42dda54eedc4e4df8c",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    }
+  ],
+  "exact_change_proof": {
+    "skill_md_sha256": "000dbe4d04c3cc4599b221256a0c25fb1beab5106658a24d54fb682cd0a38fb2",
+    "body_and_other_frontmatter_unchanged": true,
+    "actual_common_callers": [
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "sha256": "7ef9117aa0e4f030d60c5c5762c7412b688f6992c86ee9225567dbaa63201522",
+        "common_imports": [
+          "ContractError",
+          "contained",
+          "dump",
+          "git",
+          "load_json",
+          "stable_id"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "sha256": "7275d8c11a2b60890f0cd869575af41a0a98de2e9814d35168a2de407c3b6c71",
+        "common_imports": [
+          "ContractError",
+          "contained",
+          "dump",
+          "load_json"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "sha256": "3fe084f6d2542eae48fbe1448e5f9b1e4bc24e8e87dff0b99d72d1987dabf728",
+        "common_imports": [
+          "ContractError",
+          "dump",
+          "run"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "sha256": "5e3bdca35bed7872a0b8f3f279e7cfbc1205d3e7fa6311d6f11dceed279987ea",
+        "common_imports": [
+          "ContractError",
+          "dump",
+          "run"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "sha256": "2d9c53ac09014aa848fb720747c3e59d7e5cf82321c7c058860929029d17cb58",
+        "common_imports": [
+          "ContractError",
+          "atomic_json",
+          "dump",
+          "load_json",
+          "run",
+          "utc_now"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "sha256": "1924146f2ef757e7b30507d634b1aa41dedca7b35c4a70a00c173d25607ceeda",
+        "common_imports": [
+          "ContractError",
+          "atomic_json",
+          "contained",
+          "dump",
+          "is_package_member",
+          "load_json",
+          "run"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "sha256": "ec4e36ea0583a135ee7d3641a8960359c57dfca17a588e9ecbc9fb7b6c0f5530",
+        "common_imports": [
+          "ContractError",
+          "atomic_json",
+          "contained",
+          "dump",
+          "is_package_member",
+          "load_json",
+          "run",
+          "utc_now"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "sha256": "cc77dd2e9152b685aad3e83c5001a964f889bdf2edd3911452b1e74c698b0b74",
+        "common_imports": [
+          "ContractError",
+          "atomic_json",
+          "dump",
+          "git",
+          "load_json",
+          "run",
+          "utc_now"
+        ]
+      }
+    ],
+    "helper_present_once": true,
+    "current_behavior_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+    "semantic_helper_mutation_invalidates": true,
+    "mutated_behavior_sha256": "d7df3bd33d3a7a099a598a9586266af93c22ff8af1b06c170733948c0734b4aa",
+    "missing_helper_fails_closed": true
+  },
+  "pre_ref_skill_sha256": "9382c1e76889b5ee3bd2a4845bd260874fc07889622c7ae969f736d21c434005",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "The ref names an existing import-only module; no CLI command, mutation route or criterion contradicts its callers."
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "All nine actual consumer skills include this helper exactly once; every current criterion is listed and its contract impact assessed."
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "Independent text comparison proves exactly one ref added, other frontmatter and whole body unchanged; actual import sources resolve to the same canonical file."
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "Current copied closure changes digest for semantic helper mutation and fails closed when helper is missing; shared helper remains one implementation/authority."
+    }
+  },
+  "criterion_evaluations": [
+    {
+      "id": "IN1",
+      "loop_scope": "inner",
+      "text": "validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/反映の必須キー欠落が 0 件",
+      "verify_by": "script",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "C24/C11 and one bridge/writer authority remain. The two planners and bridge imports now bind their common serialization/process bytes; source cases already prove cross-project conflict cannot create an authoritative C02 patch.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT1",
+      "loop_scope": "outer",
+      "text": "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件で、両GitHub計画の converged が true になることを受入テストが確認する",
+      "verify_by": "live-trial",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Current frontmatter/Purpose/Protocol/R3 still require changes0 and both plans converged=true, with unresolved blockers remaining nonterminal. Current C03 inventory text still exactly matches criteria.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT2",
+      "loop_scope": "outer",
+      "text": "id+updated_at が同時競合するケースを注入した際、規定のタイブレーク規則 (更新が新しい方を採用・同時刻はGitHub優先+ローカル手動確認フラグ) どおりに競合解決されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Issue newer/same-time+flag rules and semantic updated_at preservation remain; heartbeat is coordination only. No timestamp branch changes accompany the dependency ref.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT3",
+      "loop_scope": "outer",
+      "text": "GitHub Issue が close/delete された場合、次回同期でローカルノードが物理削除されず tombstone/status 遷移 (open→closed 等) として双方向伝播されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Protocol4/R4 keep tombstone/status and node identity without physical deletion. Missing Issue remains unresolved rather than a false converged tombstone.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT4",
+      "loop_scope": "outer",
+      "text": "--dry-run 指定時に GitHub 側への書込みが 0 件のまま反映予定差分のみがプレビューされることを受入テストが確認する (暴発防止)",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "R5/Protocol dry-run and external authorize/execute gate remain write0. Listing common does not invoke atomic_json or external mutations.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT5",
+      "loop_scope": "outer",
+      "text": "手動確認フラグが立ったノードについて、確認結果を反映した後の再同期でフラグが解消されることを受入テストが確認する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "R6 snapshot-bound explicit decisions and next-sync flag resolution remain. Confirmation flags count as unresolved; no new confirmation source is introduced.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT6",
+      "loop_scope": "outer",
+      "text": "同一Issue contentを同一Projectへ二回同期してもProject itemが重複せずitem_idが安定し、複数Project targetにはaliasごとに1 itemだけがlinkされる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Alias linkage/item identity and equal import deduplication remain. The declaration tracks existing helper bytes, not a second item-add producer.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT7",
+      "loop_scope": "outer",
+      "text": "Projects fieldのlocal/remote双方変更を3-way fixtureで検出して自動上書き0件・manual conflict 1件となり、片側変更だけはmappingどおり同期されsnapshotが更新される",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "L/R/B 3-way and all-origin conflict join stay unchanged. Earlier three-project permutation proof remains exact isolated planning evidence, not full remote sync.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT8",
+      "loop_scope": "outer",
+      "text": "permission/rate-limit/field削除/option rename/pagination/途中失敗fixtureでローカルtask promotionを維持し、未完了Project writeだけpending_retryとして再実行できる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Local promotion independent of remote failure, alias pending_retry and remaining operation reports remain. No permission/rate-limit/pagination execution is claimed here.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT9",
+      "loop_scope": "outer",
+      "text": "PR closed未mergeではdone 0件、default branchへmergedかつpolicy充足時だけdoneとなり、feature worktreeではpending event、clean default worktreeでのみdurable task spec/graphが更新される",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Protocol5/R7/checklist retain clean default branch merge authority and feature-worktree pending events; shared helper is not a new done or worktree authority.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/manage-worktree-lease.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R4-tombstone.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R5-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R6-confirm.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R7-lifecycle.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R8-scheduled.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    }
+  ],
+  "rubric": {
+    "rubric_hash": "sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+    "composition_hash": "sha256:4dba747802c3f2123e481d72c1257e50174df941abe31ea5653a54bfc781b0ac",
+    "score": 84,
+    "threshold": 80,
+    "high_severity": 0,
+    "machine_report": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dev-graph/run-dev-graph-sync/current-rubric-machine-report.json",
+    "findings": [
+      {
+        "id": "FM-005",
+        "severity": "low",
+        "area": "frontmatter",
+        "message": "description first phrase 'tracker_binding' is not a verb",
+        "loc": "frontmatter.description"
+      },
+      {
+        "id": "PD-001",
+        "severity": "low",
+        "area": "progressive-disclosure",
+        "message": "body>100 lines but references/ empty",
+        "loc": "progressive-disclosure"
+      },
+      {
+        "id": "PD-002",
+        "severity": "medium",
+        "area": "progressive-disclosure",
+        "message": "body head 30 lines lack '## Purpose' / '## Output Contract'",
+        "loc": "progressive-disclosure"
+      }
+    ],
+    "semantic_adjudication": {
+      "BD-004": {
+        "verdict": "PASS",
+        "trigger_to_body_mapping": [
+          "Binding-specific local/tracker sync -> Protocol2 and R3 single mutation authority.",
+          "GitHub Issue/Projects/PR convergence -> Protocol1/3/5, R3/R6/R7 and planner converged=true terminal gate."
+        ]
+      }
+    },
+    "unscored": [],
+    "all_rules_accounted": true,
+    "not_applicable": [
+      {
+        "id": "AG-001",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-002",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-003",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-004",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-001",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-002",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-003",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-004",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-001",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-002",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-003",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-001",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-002",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-003",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-004",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-001",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-002",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-003",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-001",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-002",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-003",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      }
+    ]
+  },
+  "independent_case": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dependency-closure-current-results.json",
+  "proof_boundary": {
+    "static_design_adequacy": "PASS only for new helper declaration, tracked invalidation and current criterion contract preservation.",
+    "behavioral_live_trial": "NOT_CLAIMED. This reviewer did not execute host dialogue, external mutation, browser/rendered artifact, full package handoff or release acceptance. Gate D remains separate.",
+    "unchanged_obligations": "All enumerated criteria were read and assessed statically against current body/prompt ownership; no unchanged verify_by script/test/live behavior is relabelled as executed proof.",
+    "prior_verdicts": "No old PASS or SHA-only verdict replacement used. Exact old source text is a diff baseline only; current judgments and case execution are new.",
+    "method_coverage": "One focused independent context projects into elegance/rubric artifacts; branch 30-method analysis is separate, no per-skill30-method claim."
+  },
+  "warnings_policy": "Inherited scored medium/low layout/wording findings remain disclosed. No high-severity or new dependency defect remains in this focused source slice."
+}

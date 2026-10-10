@@ -1,0 +1,42 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-render",
+  "args": "",
+  "requested_model": "",
+  "actual_model": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "L139 Artifact publish succeeded at L141, violating the task's explicit fixture/proof-dir-only writes and no external service mutation boundary. Functional HTML output cannot excuse an invalid trial.",
+      "The trial did not read R1/R2/R3 responsibility prompts before rendering, contrary to the task's required execution route.",
+      "Second render wrote /tmp/render_test2.html and copied HTML to a scratchpad outside the allowed fixture/proof directory; no actual local browser display proof was collected."
+    ]
+  },
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "FAIL",
+    "verdict": "FAIL"
+  },
+  "skill_dir_tree_sha": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+  "transcript_sha256": "ff9196c3756f0e3a5caf467d798c41f0a13d05338cc187ad95e792907525ad95",
+  "scenario_origin": "replay",
+  "environment": {
+    "claude_version": "2.1.289",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": null
+  },
+  "scenario_id": "render-feature-progress-positive-fixture-standard-v2"
+}

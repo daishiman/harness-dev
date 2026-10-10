@@ -15,7 +15,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: <--task-state> task-state.json + <--events> task-events.jsonl (co-located build dir)
-# dependencies: [extract-plugin-root.py]
+# dependencies: [plugin_resources.py]
 # requires-python: ">=3.10"
 # ///
 """task-state.json への単一 writer (TG-C02)。
@@ -33,13 +33,15 @@ producer 必須キー id/state/started_at/lease_expires_at + blocked 時 blocked
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import os
 import sys
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from plugin_resources import ResolverUnavailable, resolve_root
 
 # ── 状態遷移表 (producer component C16 永続 4 値。done は通常遷移で終端) ───
 # done→pending は accepted graph 再 pin に伴う dependency dirty-closure 再開のみ、
@@ -652,15 +654,10 @@ def resolve_planner_root() -> Path:
     存在検査は呼び出し側に任せる。
     """
     harness_root = Path(__file__).resolve().parents[1]
-    resolver = harness_root / "scripts" / "extract-plugin-root.py"
-    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
-    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
-    found = None
-    if spec is not None and spec.loader is not None:
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = module
-        spec.loader.exec_module(module)
-        found = module.resolve("plugin-dev-planner", harness_root, Path.cwd())
+    try:
+        found = resolve_root("plugin-dev-planner", harness_root)
+    except ResolverUnavailable:
+        found = None
     return found if found is not None else Path("plugin:plugin-dev-planner")
 
 

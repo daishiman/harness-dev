@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--resume]"
 allowed-tools: [Read, Bash, Skill, Agent, AskUserQuestion]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-source-lineage.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/validate-source-lineage.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:

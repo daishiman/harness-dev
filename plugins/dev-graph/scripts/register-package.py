@@ -22,7 +22,6 @@ import json
 import os
 import re
 import sys
-import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
@@ -340,17 +339,10 @@ def _stable_receipt(value: dict[str, Any]) -> dict[str, Any]:
 
 
 def _atomic_create_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n"); stream.flush(); os.fsync(stream.fileno())
-        try: os.link(temp, path)
-        except FileExistsError as exc: raise ContractError(f"immutable receipt already exists: {path}") from exc
-    finally:
-        try: os.unlink(temp)
-        except FileNotFoundError: pass
+        atomic_json(path, value, create_only=True)
+    except FileExistsError as exc:
+        raise ContractError(f"immutable receipt already exists: {path}") from exc
 
 
 @contextmanager
@@ -483,7 +475,8 @@ def _project_execution_context(args: argparse.Namespace) -> dict[str, Any]:
             raise ContractError("node execution_contexts must be an array")
         retained = [row for row in existing if not isinstance(row, dict) or row.get("worktree_id") != context["worktree_id"]]
         node["execution_contexts"] = [*retained, context]
-        node["updated_at"] = context["last_seen_at"]
+        # Lease observations have their own last_seen_at; they are not semantic edits.
+        # C03 compares updated_at to Issue content timestamps, so preserve it here.
         _validate_schema(node, node_schema, node_schema, "$.nodes[target]")
         idempotent = proposed == graph
         revision_before = graph.get("graph_revision")

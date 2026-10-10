@@ -44,6 +44,9 @@ PENDING_RENAME_PATTERNS = [
 # 暫定例外: 個別パス (初回投入時の既存スクリプト群、33章 Change Governance 管理下)
 # リネーム計画は .claude/changelog/governance-log.jsonl 参照
 PENDING_RENAME_PATHS = {
+    # HC consumers import this plugin-local module; kebab-case cannot be used
+    # in the normal Python import that replaces repeated importlib bootstraps.
+    "plugins/harness-creator/scripts/plugin_resources.py",
     # PR #41: Claude/Codex fleet の公開 CLI 名と、既存 Python import/module 名。
     # 利用者向け command・文書・hook・contract が参照するため、この PR では個別 path を
     # Change Governance 管理下へ置く。ALLOWED_VERBS/underscore 規則自体は緩和しない。

@@ -1,0 +1,42 @@
+.F........                                                               [100%]
+=================================== FAILURES ===================================
+_ test_canonical_content_reviews_are_current_and_complete[C02-run-dev-graph-node-skill_path1-criteria_ids1] _
+
+component_id = 'C02', skill_name = 'run-dev-graph-node'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_canonical_content_reviews_are_current_and_complete(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        lint = _load_content_lint()
+        review_dir = REPO / "eval-log" / "dev-graph" / skill_name / "content-review"
+        for filename in ("elegance-verdict.json", "rubric-verdict.json"):
+            error = lint._check_verdict(
+                review_dir / filename,
+                "dev-graph",
+                skill_name,
+                filename,
+            )
+            assert error is None, f"{component_id}/{filename}: {error}"
+            verdict = json.loads((review_dir / filename).read_text(encoding="utf-8"))
+            loop = verdict["feedback_loop"]
+            assert set(loop["criteria_evaluated"]) == criteria_ids
+            assert loop["loop_scope"] == "both"
+>           assert loop["iteration_limit"] == CONTENT_REVIEW_ITERATION_LIMIT.get(skill_name, 3)
+E           AssertionError: assert 3 == 5
+E            +  where 5 = <built-in method get of dict object at 0x1105de780>('run-dev-graph-node', 3)
+E            +    where <built-in method get of dict object at 0x1105de780> = {'run-dev-graph-node': 5}.get
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:212: AssertionError
+=========================== short test summary info ============================
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_canonical_content_reviews_are_current_and_complete[C02-run-dev-graph-node-skill_path1-criteria_ids1]
+1 failed, 9 passed, 9 deselected in 0.96s

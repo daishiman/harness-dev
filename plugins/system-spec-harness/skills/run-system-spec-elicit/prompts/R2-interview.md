@@ -70,6 +70,7 @@
 ### 3.2 外部ツール
 - `AskUserQuestion` / `Task`: 対話ヒアリング。
 - `Bash`: セル反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" chunk --state spec-state.json --turns <turns.json> --max-loops 5`
+- `confirm` を含む `chunk` / `apply` は `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を必ず付ける。writer が候補 state の接地を検証してから書き、失敗時は元 state を保つ。回答だけを蓄積する turn は引数なしでよい (入力未収集 state に事後接地を先に要求しない)。
 - `Bash`: 出典対象反映 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-targets --state spec-state.json --targets '[{"target_id":"<id>","category":"<category_id>"}]'`
 - `Bash`: 未知知識記録 `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/scripts/apply-spec-transition.py" set-knowledge-candidate --state spec-state.json --candidate <candidate.json>` (`status=discovered`)
 
@@ -103,7 +104,7 @@
 - [ ] 対象platformの回答済みセルがqa_ref付きの`確定`であり、そのセルのために記録した他の qa (開いた問の qa と補った論点の qa) が `add-qa-ref` で同じセルの `qa_refs` に結ばれている
 - [ ] `確定`/`対象外` の付帯 (qa_ref / reason) が全て埋まっている
 - [ ] 確定へ紐づく qa_log entry に `basis` (enum 3値) が付いている (`validate-coverage-matrix.py --require-basis` が exit0)
-- [ ] `missing_effect=block` の必須情報を答えた turn に `required_info_items` が付き、`validate-knowledge-graph.py --profile required-info --state <spec-state>` の `ungrounded_blocking_items` が空である
+- [ ] `missing_effect=block` の必須情報を答えた turn に `required_info_items` が付き、confirm を含む writer を `--required-info` 付きで実行し、候補接地検証の exit0 後だけ確定 state が公開された
 - [ ] 確定qaに現れた外部技術/ツール/フレームワークが`set-targets`で`targets[]`へ反映されている
 - [ ] seedに無い未知の設計領域/技術/パターンを検出した場合`set-knowledge-candidate`(status=discovered)で記録されている
 - [ ] `validate-coverage-matrix.py` (loop) が exit0

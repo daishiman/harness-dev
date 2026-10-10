@@ -1,0 +1,1 @@
+対象はPR83 followups・兄弟plugin解決・CI共通化・spec cache更新。安全処理とprompt共有は正本と消費者の境界、hookと文書は失敗時契約を精査する。Windowsは改行のみとして除外。旧verdictは根拠にせず30思考法を全種実使用する。

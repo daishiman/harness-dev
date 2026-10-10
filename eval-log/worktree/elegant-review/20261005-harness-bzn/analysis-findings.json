@@ -1,0 +1,2309 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-05T07:32:46.262799+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "仮説「changes=0なら収束」を未読remote/timestamp欠落の反例で攻撃した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py:165-167 は conflicts/missing をnextへ反映せず、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:307-310 もmissingを考慮しない。3つのin-process反例はすべてnext=convergedで仮説を反証した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md:28-33/54 はchanges=0を停止条件に持つがconflictはR6へ渡す。同じreportで未解決と完了表示が同居するので、停止表示を独立した契約として扱う必要がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0004: unresolved rows と next=converged が同居する。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "missing/conflictをterminal-state分類する分岐が無い。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md:13 の部分成功をPASSにしない契約と不整合。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R6へのconflict接続は宣言済みだが、missingの再試行先をnextが示さない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0004",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+            "line": 166
+          },
+          "description": "Issue planner は conflicts または missing_issues だけが残ると changes=0、next=convergedを返す。Projects plannerも missing_itemsだけのケースで同じ表示を返す（scripts/diff-github-project-fields.py:307-310）。独立再現で unread Issue 1件、timestamp conflict 1件、missing Projects item 2件が各々convergedとなった。sync R3受入/checklistは二回目changes=0を停止条件にしており、未解決blockerを成功と誤読させる。",
+          "recommended_intervention": "共有の純粋な report terminal-state helper または両plannerの同じ優先順で、conflict/confirmations/held/missing/skippedを未解決として先に扱い、それらが0の時だけconvergedにする。syncの完了条件にも unresolved_count=0 を追加し、changes=0と未解決0を別々に判定する。",
+          "regression_test": "Issueのmissing/no-updated-at/reopen conflictとProjectのmissing item/manual conflictを個別に入力し、changes=0でもconverged=false（またはnextがblocked/manual/retry）になることを確認する。完全一致の空blocker planだけがconvergedになる対照例を持つ。"
+        }
+      ],
+      "score": 0.75,
+      "paradigm_label": "批判的思考"
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "入力source bytesが評価bytesと同一で、登録時にも同一なら確定取込が成立する、という前提からC19→C02を演繹した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-source-lineage.py:36-70 はoriginを限定しrepo相対・実在・containment・sha256を順に確認し、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:677-705/792-799 は evaluated_digest==source_digest と同じlineage関数を要求する。重複したhash gateを別実装せず関数共有している。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R0-context.md:21-35 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md:28-33 はresume/import後にも同じgateへ接続する。validate-graph-schemaはartifact/schema担当（/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py:346-359）であり、このC19専用bytes検査と責務を混同しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "source/evaluated digestの前提が一致する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "C19 resume・C02 add・C19 import後の3境界にlineage検査がある。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "C19 promptのsource bytesと確認evidence契約をwriterが実装。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "C02はvalidate-source-lineage.lineage_findingsを直接利用し、import前後で同じ規則。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.94,
+      "paradigm_label": "演繹思考"
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "3 writerの実装を例示比較し、mkstemp/write/fsync/link/unlinkの共通列を帰納した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:169-186、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:147-166、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:342-353 が同じcreate-only原子書込であり、違うのはerror codeとJSON/bytes入口である。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py:55-69 はreplace版のみ。共通化対象は低水準IOとJSON bytesであり、3 writerのworkflowまで同じだという一般化は根拠がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "create-only os.linkとreplace os.replaceは別契約として整合。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "temp cleanup/fsyncは各実装に含まれる。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "F-0005:同じ低水準安全処理が3箇所残り、保守時のdrift余地がある。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "atomic_json importは既存consumerで共有され、create-only receiptへ誤使用されていない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0005",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+            "line": 169
+          },
+          "description": "create-only の低水準実装が build-init-scaffold._create_file、build-graph-node._write_atomic(create_only=True)、register-package._atomic_create_json に残る。いずれも parent mkdir→mkstemp→write/flush/fsync→os.link→temp unlink で、JSON直列化も_common.atomic_jsonと同じ設定を各所で繰り返す。replaceとcreate-onlyの契約差は必要だが、その差を保持したpure IO primitiveの共通化余地がある。",
+          "recommended_intervention": "_commonに json_bytes と atomic_bytes(path,data,create_only) を置き、create-onlyはos.link、replaceはos.replaceを維持する。FileExistsErrorはcallerで既存の責務別codeへ変換し、transaction/lock/rollbackはwriter側に残す。複数writerを巨大共通transactionに統合しない。",
+          "regression_test": "共通primitiveのcreate-only既存targetでbytesが不変かつtempが残らないこと、replaceでbytesが更新されることを検証する。その後各writerのreceipt immutability/rollback既存回帰を実行し、責務別error codeが保持されることを確認する。"
+        }
+      ],
+      "score": 0.88,
+      "reusable_abstraction": "json_bytes + atomic_bytes(create_only flag); writer-owned domain error translation",
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "replace helperをimmutable receiptにそのまま使わない",
+        "multi-file transaction/lockを一般化しない"
+      ],
+      "paradigm_label": "帰納的思考"
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "失敗後にstate/receiptsだけ残る現象の最小説明を推論した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:171 の暗黙mkdirが、:219-222のmade_dirs記録を経由せず、:231-235のrollbackはその親を知らない。receipt os.linkのOSError注入によりこの説明どおり3 directoryが残った。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:227-237 は作成分を消して元へ戻す設計だが、:256は残存directoryがあってもwrite_count=0となる。初期planへ全親directoryを含めるのが小さい修正である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "既存fileをcreate-onlyで保持する原則は守る。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0003:file作成時の親directoryがrollback対象から欠落する。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "失敗時write_count=0と実際の新設directoryが一致しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "C24結果→plan→file→receiptの順序は明確。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0003",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+            "line": 223
+          },
+          "description": "init rollback は made_dirs に明示的な plan dirs だけを記録し、_create_file(path.parent.mkdir) が作る graph/receipt の親 directory を追跡しない。通常設定の初回initでreceiptのos.linkにOSErrorを注入すると、成功済fileは消えるが .dev-graph/state/receipts とその祖先が残る。mainはwrite_count=0を返すため、失敗後の実在pathと報告が一致しない。",
+          "recommended_intervention": "全 file/receipt の親を初期planの directory集合へ含め、mkdir時に実際に新設した directory を記録する。逆順rollbackで作成fileと空directoryを消し、既存directoryは保持する。rollback自身の失敗は成功0件へ丸めず残存pathと不完全rollbackを返す。",
+          "regression_test": "初回initのreceipt creation failureを注入し、事前/事後の相対path集合と既存file bytesが一致することを検証する。既存state directoryを持つ場合はそれを残す対照ケースを加える。Gitは不要で_contextを固定receiptへ置換できる。"
+        }
+      ],
+      "score": 0.8,
+      "paradigm_label": "アブダクション"
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "prompt参照→owner skill→共有reference→固有停止条件を1段ずつ追跡した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md:7-9/28-34 は共通と固有を置換せず結合する規則、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md:38-55 は同じLayerを参照し固有CAS受入を保持する。",
+        "9 owner SKILLと41 R*.mdに対して各Layer4-7に共有pathがあるか、skill rootから実在referenceへ解決するかを静的検査しbad_refs=[]だった。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md:133-139 はpromptsがowner root契約を継承すると定義するのでpromptファイルのdirectoryをpath基準にする必要はない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "共有と固有は双方適用で置換の矛盾がない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "9 skill/41 promptのLayer4-7参照に漏れが無い。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "R2のexpected_graph_revision固有契約が共有checklist合成後も残る。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "skill root起点のpathは全9 ownerで実在する。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.94,
+      "paradigm_label": "垂直思考"
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "writerをauthority/context・plan・validation・lock・IO・receipt・rollbackへ分解した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:1206-1320 はC24→CAS→plan→staging gate→artifact/graph/receipt→逆順復旧、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:365-450 はexact13 package gate→同一graph lock→graph/immutable receiptで、責務差が残る。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:135-144 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:356-362 のlock pathは同一で競合writerを直列化する。共通化候補のIOは分離可能だが、packageのgraph-only登録とnodeのMarkdown同期transactionを1つへ押し込むのは情報を失う。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "責務別transactionとshared lockが両立する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "init rollbackのdirectory追跡問題はF-0003で別法へ割当済み。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "graph-only packageとartifact同期の契約差が実装に残る。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "2つのC02入口が同じ.register.lockを使い直接重複applyしない。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.9,
+      "paradigm_label": "要素分解"
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "fieldごとのequal/export/import/manual/heldは分離されるが、node×fieldごとの複数Project入力の分類が揃うかを検証した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:216-278 の行別分類後、:283-288 が異なるaliasを同じpatchへ無条件に合成するため「複数remoteが同じlocal fieldに異なる値を要求する」集合が落ちる。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/repo-config.schema.json:100-240 は複数projectsとbidirectional priorityを許容する。node/config両schema finding=[]の例でhigh/lowの2importを作り、link順逆転だけでC02 patchがlow/highへ反転した。既存のboth-changed検査は1Project内のL/B/Rなのでこの交差競合を覆わない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "1Project内の3-way各行分類に重複actionは無い。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0001:aliasを跨ぐ同一local fieldの競合caseが未分類。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "双方変更は自動上書きせずmanualとするsync契約に、複数Projectで例外が生じる。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数import→単一C02 node_patchのjoinで情報が脱落。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+            "line": 285
+          },
+          "description": "複数 Project が同一 node の同一 local_field を異なる値へ import すると、patches[node_id].update() が最後の値だけを採用し競合を報告しない。repo-config/node schema を通る2 Project例で priority=medium/base=P2、remote a=P1、b=P3 は imports=[high,low]・conflicts=[]、C02 input=low。github_project_linkages の順序を逆転すると input=high となる。",
+          "recommended_intervention": "C02 input を組み立てる前に (graph_node_id, local_field) ごとに import を集約する。同値だけを1件へ畳み、異値は cross-project conflict としてその field の全 import を外し、双方の project/value を提示する。既存の field-level decision と区別した明示選択を必要とする。",
+          "regression_test": "schema-validな2 Projectから high/low の remote-only import を同時生成し、配列順を逆にしても update_input に当該 field が無く conflict が同じになることを検証する。同値2件は1 patchへ畳む対照ケースも持つ。"
+        }
+      ],
+      "score": 0.74,
+      "paradigm_label": "MECE"
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "「更新方式=create-only/replace」と「内容=JSON/Markdown/graph-only」の2軸でIOを配置した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py:55、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:169、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:147/1175、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:342/445 は、immutable receiptと変更可能graphを異なるセルで扱い、graph-onlyはartifact IOを飛ばす。",
+        "別の「binding=none/beads/github」と「repo mode=beads/github/both」を照合した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:656-674 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:287-317 はnoneを許しbothのautoを拒否する。ただしdraftのgithubはnode addで拒否、confirmed packageは許容という差があるのでbinding coreだけを共有しpublication policyはcallerに残す。invalid/missing modeでnode noneが通る点は宣言「noneは常に可」と一致しており、このbounded auditでは追加不具合と断定しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "2軸の意図的契約差を明示し同名関数だけで統合しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "none/beads/githubと3 modeの通常caseの規則を比較した。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "F-0005の低水準重複は別法で集約。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "draft出版gateとconfirmed package出版gateはそれぞれschemaへ接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.91,
+      "reusable_abstraction": "shared binding resolution core with caller-owned draft/publication policy",
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "bothのautoをgithubやbeadsへ推測しない",
+        "github draft拒否をconfirmed packageへ波及しない"
+      ],
+      "paradigm_label": "2軸思考"
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Issue plan→C02 apply→Issue replan→Projects import→link snapshotという時間順を追った。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:177-195/271-280 と :345-350 は同revisionのIssue plan未解決時にimportをheldにするので、schedule更新がIssue winnerを傾ける依存を理解している。ところが /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:484-490 のlease projectionは同じupdated_atを先に進める。tempのschema-valid taskでremote-newerからlocal-newerへの反転を再現した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:1106-1108 のlink-githubはこの理由でupdated_atを保つので、coordination projectionにも同じ内容時刻の規則が必要。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py:395-421/591-623/626-675 はC02 receiptのrequest/durable graph/Markdown digest検証後にcompletion event→lease release→Beads closeへ進む順序を保持する。外部mutationやGitは実行していない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Issue→Projectsの依存順序とC02 receipt前の外部close禁止は明確。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Issue plan missing/unsettledをheldへ分類する分岐がある。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "lease観測だけで内容updated_atを動かし内容競合の仕様を変える。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0002:C27 coordination projectionがC03の内容winner判定を破損する。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0002",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+            "line": 486
+          },
+          "description": "C27 execution-context projection は内容を変えなくても node.updated_at を context.last_seen_at へ上書きする。一方 Issue planner は node.updated_at と remote updated_at で内容の勝者を決める。schema-valid github task の title が旧値のままでも、remote t1=00:01 > local t0=00:00 の import が、lease observation t2=00:02 の投影後に local-newer export へ反転する。leaseだけでGitHubの新しいtitleを上書きする依存破損がある。",
+          "recommended_intervention": "execution_contexts は各 context の last_seen_at を更新し、内容を編集していない node.updated_at は保持する。graph_revision の増分は継続する。node.updated_at を更新する必要がある別責務は内容変更時刻と coordination 観測時刻を分け、Issue planner を前者だけへ結ぶ。",
+          "regression_test": "同一 github task に remote-newer title がある状態で execution-context を適用し、title/state・node.updated_at が保たれ、再planでも remote-newer import が残ることを確認する。last_seen_at、execution_contexts、graph_revision は更新されることも検証する。"
+        }
+      ],
+      "score": 0.77,
+      "paradigm_label": "プロセス思考"
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_plugin_root.pyと/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_ci_workflow_steps.pyの評価枠を「件数/返値が正しい」から「選択権限/実行環境/起動後の効果が正しい」へ置き換え、48件PASS後も独立fixtureを実行した。結論:既存PASSだけではscopeと環境同等性を保証しない。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:_installedの拒否とcandidatesの再選択を同一pathのauthority追跡で照合し、他projectのcache pathが再採用されることを確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:104-149 scope無効は候補にしないという宣言とcache選択が矛盾。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/tests/scripts-root/test_root__extract_plugin_root.pyのother-project testはcache外pathだけで、cache再選択を被覆しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:137-159 plain envのGitHub実行とローカル実行が一致しない。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.pyの全登録pairがbyte一致・非symlinkでcheck_pairs=[]。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        }
+      ],
+      "score": 0.67,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "scope=projectでinstallPathを実cache配下へ置き別cwdから呼ぶ。",
+        "plain env VALUEを三階層上書きし生成shellを実行する。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "メタ思考"
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyの共通本質はmanifest名で候補を検証するplugin resource locatorである。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/tenant_runtime.py:58はtenants marker、/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.py:75は.git+config markerを探すのでauthorityが異なり再利用には適さない。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.py:18-29ほか7consumerを比較し、探索本体は共通化できているが起動boilerplateが重複。各callerの欠落時契約は用途が異なり一律例外化しないのが適切。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのmanifest名検証とconfig/tenant marker探索は別目的で、無理な統合は不要。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.pyほか7consumerのbootstrap不在/欠損ケースの共有契約は未形成。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py:18-29に同一起動列。機能障害でなく低優先度の重複。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69はsync-task-state.resolve_planner_rootを再利用しprovider notes schemaのSSOTを維持。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+            "line": 18
+          },
+          "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+          "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+          "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。",
+          "id": "F-2006"
+        }
+      ],
+      "score": 0.85,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "resolver欠落時に各callerの本来のsentinel/fail log契約を保てるか。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "抽象化思考"
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyの「workflowを正本にして段数の写し漏れをなくす」という目標を、「受け入れたrun段の実効env/cwd/exit semanticsを保つ」まで問い直した。plain envとcwd式fixtureで、段の存在だけでは同等性が成立しないと確認した。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/run-ci-checks.sh:55-76は評価不能な段のSkippedを可視化するため、CI完全再現そのものを強制する変更は不要。現在の3skipはNotion remote2件と子job結果集約1件であり、基礎チェック112段の抽出を確認した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/run-ci-checks.sh:120のCI-equivalent宣言はSkippedの範囲を含めて解釈すべき。現行skip自体は文書化済みで欠陥扱いしない。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:140 working-directory式が式依存skip判定から漏れる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:137受け入れたenvを保持せず実行環境がCIと違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/.github/workflows/harness-creator-kit-ci.ymlのsibling lintとvendored gateはPR段に入り、Makefileにもentryがある。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 140
+          },
+          "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+          "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+          "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。",
+          "id": "F-2003"
+        }
+      ],
+      "score": 0.72,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "env三層merge、cwd式の三階層、literal overrideを生成shellの挙動で検査。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "ダブル・ループ思考"
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.pyほかの重複について5案を比較した。A:現状7callerを保持(追加依存0・同期箇所7)、B:既存CLIをsubprocessで呼ぶ(import boilerplate削減・lookupごとprocess追加)、C:HC内に汎用bootstrap1個(共有箇所1・module探索設定が追加)、D:正本をunderscore moduleへ移し薄いCLI aliasを残す(normal import可能・全vendor/registry/入口を移行)、E:小resourceをすべてvendor(単独install容易・provider資産が増殖し権限scope解決を代替できない)。",
+        "最小案はAで先に/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのscope修正とshell quote/CIモデル修正を行うこと。重複保守が実際に増えた場合のみCをHC内へ導入する。新しい専用forwarderをconsumerごとに増やす案はCより効果が小さい。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyと既存7consumerを5代替の同じ比較軸(ファイル数/権限/欠落契約/起動費用)で評価した。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence.pyの全エラー型を抽象化する新APIはbounded audit内では設計しない。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.pyの重複は改善余地だが、広域renameは今回の最小修正から外せる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.pyのregistryで現在の単独install可能な配置が担保されている。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+            "line": 18
+          },
+          "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+          "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+          "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。",
+          "id": "F-2006"
+        }
+      ],
+      "score": 0.87,
+      "reusable_abstraction": "既存public CLIの契約を安定させ、追加abstractionは重複した変更が実証された範囲だけ導入する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "A/Cどちらでもprovider未導入に各callerが元のfailure契約を返す。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "ブレインストーミング"
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.pyをpath検索の問題から「metadata exceptionの意味境界」の問題へ見直し、同じデータをmultilineからminified JSONへ表現変更して試した。$schemaとruntime commandが同居すると検出0件になるため、文字列ではなく値の役割に沿って除外すべき。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyも行をコピーする抽出器から、受け入れ可能なrun設定を分類する小さなinterpreterへ見直した。cwd式をskip理由へ送るだけで現在の実行モデルを拡張せずに誤実行を減らせる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.pyでschema注記自体を除外する意図は正当で、runtime値まで除外する必要は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py:116 minified JSONのruntime commandが漏れる。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/tests/test_lint_sibling_plugin_paths.pyはschema専用行の正例を持つが、同一行のruntime値との合成負例を持たない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py:134-136にunsupported fieldを理由付きskipへ送る既存経路がある。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py",
+            "line": 116
+          },
+          "description": "$schemaが行中のどこかにあるだけで全一致を除外するため、JSONを1行へ整形するとruntime commandまで免除される。scan_text('{\"$schema\":\"x\", \"command\":\"python3 ../beta/scripts/x.py\"}', alpha, patterns(alpha,beta))=[]を再現。ROOT.parent / \"beta\" # $schema annotationも[]。editor向けschema値を除外する意図がruntime参照のfail-openに拡大する。",
+          "recommended_intervention": "注記の値そのものだけを除外し、同じ行のcommand/pathなどの別値は走査する。まず$schemaの専用key/value行へ限定し、複数keyのJSON行を丸ごと免除しない最小修正でもよい。回帰: minified JSONのschema+command、Pythonコード後のschema文字列コメント、通常schema専用行の3例を固定する。",
+          "root_cause": "意味単位の例外を行単位のsubstringで実装した。",
+          "id": "F-2004"
+        }
+      ],
+      "score": 0.76,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "minified JSON schema+command、Python path後のschema文字列コメント。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "水平思考"
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:86-96のコピー群について、単独installで実体を持つ要求と正本1個の要求をbyte parityで同時に満たすことを確認した。resolver root版とHC版はbyte一致、全pairのcheck_pairsは[]で、この二重実体を冗長として削除すべきではない。",
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyでは「未registryのCodex/cacheも使える」と「他project専用installは使わない」を両立するには、cache全廃ではなく明示的に不適格なregistered pathだけをcache fallbackへ伝播させればよい。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:128でscopeを拒否し149で同じcache pathを許可する二要求の実装が衝突。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:90-96はmanifestから動的列挙し新pluginのresolver vendor欠落を検出する。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyとHC vendorはbyte一致しSSOT/doc/runtimeの役割が一致。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/lint-vendored-ssot.py:116の非symlink検査はcache移植性と一体である。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        }
+      ],
+      "score": 0.79,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "cache fallbackを維持しつつother-project pathを拒否し、有効user登録も同pathにある場合は許可する。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "逆説思考"
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.py:149-157は明示NOTION_CONFIG_PATH不在時に他configへfall backしない。これを「入力で拒否したauthorityを別経路で再採用しない」という構造として/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyへ類推し、scope拒否をcache経路へ保持すべきと結論した。ただし未registryのcacheを全拒否する点までは類推しない。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69がproducer rootのSSOTを既存sync-task-stateへ委ねる設計を、同目的のHC bootstrap共通化の例として借用した。tenant/notionのroot発見をsibling resolverへ転用するのはauthorityが異なるため不適切。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:149は拒否した登録pathをfallbackで再採用する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのregistry無しcache利用とscope登録付きcache利用を区別する負例が必要。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/inject-task-inputs.py:69はnotes schema root解決の消費者コピーを作らない。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/scripts/notion_config.pyの既存helperはconfig authority用でありlocatorへ強制依存を追加しない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        }
+      ],
+      "score": 0.8,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "explicitly scoped registrationが他cwdの時、一般cache fallbackと別扱いにする。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "類推思考"
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyに「scope専用pathがcache内なら」「providerは同market未導入なら」「Codex側manifestしか無ければ」を当て、既存repo/Claude/Codex/market順序のテスト48件PASSを確認した上で、cache内scopeだけ負例で後退を発見した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79に「installPathに空白があれば」を当て、unquoted commandはexit2、quoted commandはCHECKER_EXECUTED/exit0を得た。/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyの「新段がplain env/cwd式を持てば」も生成shell実行で検証した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.pyのproject-cache fixtureは_installed=[]でもresolve()!=None。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyのcwd式fixtureはskipped=[]でliteral cdを生成。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.pyのplain env fixtureはVALUEがexportされずexit1。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79 provider pathの空白で有効dependencyの起動が失敗。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+            "line": 149
+          },
+          "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+          "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+          "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。",
+          "id": "F-2001"
+        },
+        {
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 137
+          },
+          "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+          "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+          "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。",
+          "id": "F-2002"
+        },
+        {
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+            "line": 140
+          },
+          "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+          "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+          "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。",
+          "id": "F-2003"
+        },
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+            "line": 79
+          },
+          "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+          "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+          "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。",
+          "id": "F-2005"
+        }
+      ],
+      "score": 0.61,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "実cache内other-project登録、plain env precedence、cwd式、space installPathの4fixtureを実行。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "if思考"
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:177-200のCLIはplugin名/--from/検索範囲/exit0/1/2を説明し、既存テストでmissing providerとinvalid nameの診断を確認した。PKG-009/015 consumerもplugin未導入をfail logへ出すので初回導入時の停止理由は追える。",
+        "初見の利用者が/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79の提示commandをそのまま使い、providerを空白を含むinstall先へ置くと、未導入案内ではなくpythonの「providerをopenできない」という分割後の誤pathが出る。導入済みなのに壊れる操作入口としてquote修正が必要。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/build-steps.md:71はresolverとGOV_LINT_DIRをquoteしており、正しい入口表現は既に隣接正本にある。dev-graphの/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md:38も「skill root起点」を明示し、共有reference読込位置の説明は明確。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py:14のexit契約とCLI testのexit0/1/2が一致。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.mdとnode R0/R2のみ補助点検、9skill全promptのclosure再検証は他担当/親の範囲。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79とbuild-steps.md:71で同じresolverのshell quote方針が不一致。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json:79 valid installed providerが空白pathだけで起動不能。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "condition": "C4",
+          "severity": "medium",
+          "bucket": "doc",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+            "line": 79
+          },
+          "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+          "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+          "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。",
+          "id": "F-2005"
+        }
+      ],
+      "score": 0.79,
+      "reusable_abstraction": "候補選択の正しさ、consumer起動、配布後の依存可用性を分けて検証する。",
+      "template_variables": [],
+      "reuse_surface": "script-frontmatter",
+      "negative_cases": [
+        "host rootは空白なし/providerだけ空白ありでもmanifest commandが起動すること。"
+      ],
+      "re_audit_trigger": "resolver候補規則、cache配置、CI抽出モデル、注記例外、workflow command生成の変更時。",
+      "paradigm_label": "素人思考"
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: compile→guard→writer→独立evaluatorの全体で、tool経路を変えてもユーザー確定結果のauthorityは保たれるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py と /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-compile/prompts/R2-render.md を照合。compile の status/category/spec_cells と hook の入力形状は一致するが、ディレクトリ操作とWrite aliasで確定結果を失える。",
+        "隣接consumer: /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R1-score.md はC06 hearingをmatrixのsub-inputに限定し、design knowledgeを自前評価する。promptの責務分離は一致し、hookはその上流状態を保護する補助であるため bypass を正本writerの正常性で正当化できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "rm/mv directory exit0、Write alias exit0。confirmed file direct exit2との差がシステム境界の抜け。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Bash alias exit2とWrite alias exit0は同一実体・異toolの保護不一致。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "システム思考"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 必須回答を集めても最初のconfirmに進めない直接原因は何か。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md:31 の precondition → /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py:231 の terminal限定接地 → 未収集stateのFAIL → /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py:350 のconfirm後だけPASS、という因果鎖をin-processで再現した。",
+        "出荷catalogの6 block itemすべてをqa_log.required_info_itemsに宣言しても未収集では接地されず、同一stateへwriter confirmを適用すると全6件が接地された。原因は回答不足ではなく検証対象stateの時点である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "確定前の通過が確定後の参照到達性に依存する。候補stateが無い。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "因果関係分析"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 正当な再ヒアリングの負帰還は、どの検証ループで停止不能になるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R4-reopen.md は旧参照を控える→reopen→新回答→再confirm→qa_refs/serves_goals再接続を定め、/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md は新問の中立性を独立検査する。誤った問を訂正する負帰還のownershipは明記されている。",
+        "ただし /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md と /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の confirmed→grounded→confirm permission→confirmed の正帰還は、未収集から立ち上がれない。tmpで未収集FAIL/confirm後PASSを確認し、再open時にも候補stateを介さなければ同型の循環が再発するという依存分析に到達した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "groundedの前提がconfirmedで、confirmedの前提がgrounded。候補検査・commitの分離が必要。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "因果ループ"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 確定を守る安全性と非正本fixtureを書く作業性を同時に改善できるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py:721 のsuffix shortcutを検証したところ fixtures/system-spec/spec-state.json のBash書込はexit2、直接確定章fileはexit2、保護外alias経由Writeはexit0だった。広い文字列拒否では両価値を満たさない。",
+        "第三案は既存のroot基準実パス解決とcanonical identityを各toolで再利用し、破壊的directory operationだけsubtree包含を加えること。静的identityを正確化すればfixture誤爆とalias bypassを同時に減らせ、shell全解析器の刷新は不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "正本1経路という定義とsuffixで非正本も拒否する挙動が矛盾。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write/Editの実パスidentityとBash suffix authorityが一致しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "トレードオン思考"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: planner producerとbuild consumerが同じinstall規律の恩恵を得ているか。/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py の default_install_contract/install_release_obligations を /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py とrendererが共用するため、runtime Codex opt-outが製品manifest/catalogの削除へ拡大しない。この共用はprovider/consumer双方のdriftを減らす。",
+        "しかし保存consumer入力は=/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:342 でclause setのみ比較する。正常sampleをtmpコピーし保存graphのP13 leaf 8件にentity_ref=C01を付けるとcheck_install_release=[]、/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py のvalidateも[]だった。既存leaf比較を小helperとして二projectionに適用することが双方の利益になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "同一install義務のentity_ref=null規律が再導出のみで保存graphへ届かない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "プラスサム思考"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 誰の何を保証する契約か。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の利用者価値は合意済み仕様がR4-reopen以外で消されないこと。rm -rf system-spec exit0は構文検出件数でなくこの価値を損なう実例でありhighとした。",
+        "別の利用者価値は相談者の主体性。/Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md と /Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md を fresh照合するとaction/reflectionをユーザーが選び、reflectionは次行動を強制せず再開条件で締める。/Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/scripts/validate-consult-session.py のclosure別必須キーもこの価値に対応している。",
+        "UBMの狭いskill出力先と広い /Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py のvault許可prefixを同じauthorityと扱わないことがSKILLに明記され、consultはvaultへ書かずgoalは目標設定/とDaily embedへ書くという責務差が消費者へ説明されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "確定済み成果物をdirectory delete/moveで失えるためPurposeの保護範囲が欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "価値提案思考"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 継続的な上流仕様更新でconsumerの契約が陳腐化するか。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md はlast_fetched=2026-10-05T03:59:21Z、12 Source節を持ちFETCH_FAILEDは無かった。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/spec-diff-history.md の最新は2026-10-05T03:59:23Zで、追加されたverify/simplifyのprecommit条件(2.1.286以降・plugin skills除外)とclaude-api workflowをcache本文で照合した。",
+        "fetcher /Users/dm/dev/dev/個人開発/harness/scripts/build-yaml-spec-cache.py の .claude 出力と ref skillのplugins consumer pathはresolve()で同一。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/SKILL.md とR1は日時付きcache読取/30日鮮度判定を行う。今回の2ファイルはSHA pinではなく時点snapshotであり、新しいcache記載を全pluginへのruntime義務と誤適用すべきでない。最新差分は先頭80行+2088行省略なので全上流差分の意味互換性は未証明。",
+        "中長期の最小改善は /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の各tool別authority分岐を実パスhelperへ揃え、toolが追加されても同じidentity負例を再使用すること。Write symlinkの現行bypassを根拠として提案し、将来の想像だけで刷新しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "tool横断authorityの回帰がWrite aliasをカバーしていない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "cache最新追加とconsumer path/鮮度は一致。省略された2088diff行の全意味互換性は未検査。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "戦略的思考"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: なぜ確定章を含むdirectory deleteが許可されるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py を使い5whyを実施。Why1: rm -rf system-specがexit0だから→Why2: _command_write_targetsはsystem-spec文字列を返すが_protected_target_reasonが拒否理由を返さないから→Why3: canonicalファイル一致とchapter_protectedだけを調べdirectory自体は.mdでもspec-stateでもないから→Why4: targetの意味が単一fileとして固定され、rm/mvの変更集合を判定へ渡していないから→Why5: /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/tests/test_guard_hook.py の回帰は保護file・読み元・aliasの正負例を持つが、保護fileを含むancestor mutationを同じ不変条件の例として定義していないから。",
+        "最小根因対策は既存real pathとchapter/canonical checkerを使い、破壊的directory targetの保護包含だけを検査すること。shell全挙動の完全解析や全system-spec文字列拒否は根因より大きい。A4担当はユーザー指定overrideであり既存thought-methods.yamlのA2割当を評価対象の不具合として数えない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "fileを含む変更範囲のケースが抜ける。5whyでtarget単位の欠落へ接地。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "why思考 (5 Whys)"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 現行の回帰群を再利用して、小さいPDCAのどこを補えば保護漏れと誤爆を同時に防げるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/tests/test_guard_hook.py のtest_bash_symlink_to_confirmed_chapter_blocked、test_edit_noncanonical_spec_state_passes、rm plugin __pycache__許可等のfixture/関数をfreshに読み、その期待を別経路へ横展開した。過去PASSや旧findingsの再発という根拠は使っていない。",
+        "Doではソースを修正せずtmp decide実験だけ実施。Checkでdirect file exit2 / directory exit0、Bash alias exit2 / Write alias exit0、非正本nested fixture exit2を観測。Act案は三つの負例を既存root fixtureへ追加してからauthority helperを小変更すること。一般化したimplementation-mirroring testは不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "非正本fixtureのBash誤爆を確認。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "既存回帰の近傍にあるdirectory/Write alias負例が欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "改善思考"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説H1: 「system-spec hookは同じ実体への全対象tool書込を同じように扱う」。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py へ同一confirmed章のdirect/aliasをWrite/Bashで与えた反証でH1を棄却: Write aliasのみexit0。",
+        "中心仮説H2: 「P13 producerが正しく保存consumerにも同条項があればinstallはplugin単位の義務になる」。/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py / /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py / /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py でsample-planをtmp再現し、保存graphだけentity_ref=C01にした反証でH2を棄却: install_errors=[]かつgraph_violations=[]。条項の存在は所有単位の証明にならない。",
+        "反証していない範囲: plannerのgoal-spec優先slugとhandoff slug不一致拒否は現行resolve_install_slugコードで確認。全error pathやruntime installを実行したという主張はしない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write alias反証によりtool横断保護の中心仮説は成立しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "保存P13の条項存在とentity ownershipの一致を同一視できない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "仮説思考"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 何を決めれば残りの修正が決まるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py では(1)authorityは文字列末尾でなくroot基準実パス、(2)変更範囲はfileと破壊的directoryで区別、の2点が本質である。suffix誤爆とalias抜けを別々の例外リストにすると同じ論点を再発させる。",
+        "planner /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py ではcanonical install clauseの所有単位を再導出と保存graphで同一にすることが本質。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md / /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の前段gateは候補stateを検証するのかcommit済みstateを検証するのかを決めることが本質。後者のpostconditionをpreconditionと呼ぶだけでは初回confirmの循環は解けない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "canonicalのauthorityが静的BashとWrite/Editで矛盾。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "install leaf ownershipがprojectionによって異なる。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "検証対象stateの時点が未定義でconfirmed/groundedが循環。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "論点思考"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 観測した具体例を先に並べるとどの島にまとまるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の「directory exit0」「Write alias exit0」「nested fixture exit2」を島A=保護対象identity/変更集合、/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py の「再導出PASS・保存P13entity=C01もPASS」を島B=producer/consumer projectionのparity、/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md / /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の「pre-confirmFAIL・post-confirmPASS」を島C=検証時点の依存循環へボトムアップに配置した。",
+        "島を結ぶ上位構造は「同じ契約を異なる境界へ運ぶ際のauthority・owner・時点の欠落」。一つの万能shared helperへまとめるのでなく、Aは既存path checker、Bはinstall leaf comparator、Cはcandidate validation/commit境界を各々再利用する小改善に分ける。UBMのvault広域guardとskill固有出力制限、cache snapshotとruntime義務は別島として維持し、意図的責務差を重複と誤認しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Aに正本suffixの誤認がある。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Aにdirectory/alias漏れがある。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Bに保存projection ownership検査漏れがある。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Cにpre/post state循環がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none",
+      "paradigm_label": "KJ法"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "violation_count": 3,
+      "evidence": [
+        "F-0004: Issue planner は conflicts または missing_issues だけが残ると changes=0、next=convergedを返す。Projects plannerも missing_itemsだけのケースで同じ表示を返す（scripts/diff-github-project-fields.py:307-310）。独立再現で unread Issue 1件、timestamp conflict 1件、missing Projects item 2件が各々convergedとなった。sync R3受入/checklistは二回目changes=0を停止条件にしており、未解決blockerを成功と誤読させる。",
+        "F-2001: 他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+        "F-3003: 正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。"
+      ]
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "violation_count": 6,
+      "evidence": [
+        "F-0001: 複数 Project が同一 node の同一 local_field を異なる値へ import すると、patches[node_id].update() が最後の値だけを採用し競合を報告しない。repo-config/node schema を通る2 Project例で priority=medium/base=P2、remote a=P1、b=P3 は imports=[high,low]・conflicts=[]、C02 input=low。github_project_linkages の順序を逆転すると input=high となる。",
+        "F-0003: init rollback は made_dirs に明示的な plan dirs だけを記録し、_create_file(path.parent.mkdir) が作る graph/receipt の親 directory を追跡しない。通常設定の初回initでreceiptのos.linkにOSErrorを注入すると、成功済fileは消えるが .dev-graph/state/receipts とその祖先が残る。mainはwrite_count=0を返すため、失敗後の実在pathと報告が一致しない。",
+        "F-2003: working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+        "F-2004: $schemaが行中のどこかにあるだけで全一致を除外するため、JSONを1行へ整形するとruntime commandまで免除される。scan_text('{\"$schema\":\"x\", \"command\":\"python3 ../beta/scripts/x.py\"}', alpha, patterns(alpha,beta))=[]を再現。ROOT.parent / \"beta\" # $schema annotationも[]。editor向けschema値を除外する意図がruntime参照のfail-openに拡大する。",
+        "F-3001: 静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+        "F-3002: Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。"
+      ]
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "violation_count": 2,
+      "evidence": [
+        "F-2002: GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+        "F-3004: P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。"
+      ]
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "violation_count": 3,
+      "evidence": [
+        "F-0002: C27 execution-context projection は内容を変えなくても node.updated_at を context.last_seen_at へ上書きする。一方 Issue planner は node.updated_at と remote updated_at で内容の勝者を決める。schema-valid github task の title が旧値のままでも、remote t1=00:01 > local t0=00:00 の import が、lease observation t2=00:02 の投影後に local-newer export へ反転する。leaseだけでGitHubの新しいtitleを上書きする依存破損がある。",
+        "F-2005: 新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+        "F-3005: R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。"
+      ]
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "unique_issues": [
+    {
+      "id": "F-0001",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "other",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "line": 285
+      },
+      "description": "複数 Project が同一 node の同一 local_field を異なる値へ import すると、patches[node_id].update() が最後の値だけを採用し競合を報告しない。repo-config/node schema を通る2 Project例で priority=medium/base=P2、remote a=P1、b=P3 は imports=[high,low]・conflicts=[]、C02 input=low。github_project_linkages の順序を逆転すると input=high となる。",
+      "recommended_intervention": "C02 input を組み立てる前に (graph_node_id, local_field) ごとに import を集約する。同値だけを1件へ畳み、異値は cross-project conflict としてその field の全 import を外し、双方の project/value を提示する。既存の field-level decision と区別した明示選択を必要とする。",
+      "regression_test": "schema-validな2 Projectから high/low の remote-only import を同時生成し、配列順を逆にしても update_input に当該 field が無く conflict が同じになることを検証する。同値2件は1 patchへ畳む対照ケースも持つ。"
+    },
+    {
+      "id": "F-0002",
+      "condition": "C4",
+      "severity": "high",
+      "bucket": "other",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "line": 486
+      },
+      "description": "C27 execution-context projection は内容を変えなくても node.updated_at を context.last_seen_at へ上書きする。一方 Issue planner は node.updated_at と remote updated_at で内容の勝者を決める。schema-valid github task の title が旧値のままでも、remote t1=00:01 > local t0=00:00 の import が、lease observation t2=00:02 の投影後に local-newer export へ反転する。leaseだけでGitHubの新しいtitleを上書きする依存破損がある。",
+      "recommended_intervention": "execution_contexts は各 context の last_seen_at を更新し、内容を編集していない node.updated_at は保持する。graph_revision の増分は継続する。node.updated_at を更新する必要がある別責務は内容変更時刻と coordination 観測時刻を分け、Issue planner を前者だけへ結ぶ。",
+      "regression_test": "同一 github task に remote-newer title がある状態で execution-context を適用し、title/state・node.updated_at が保たれ、再planでも remote-newer import が残ることを確認する。last_seen_at、execution_contexts、graph_revision は更新されることも検証する。"
+    },
+    {
+      "id": "F-0003",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+        "line": 223
+      },
+      "description": "init rollback は made_dirs に明示的な plan dirs だけを記録し、_create_file(path.parent.mkdir) が作る graph/receipt の親 directory を追跡しない。通常設定の初回initでreceiptのos.linkにOSErrorを注入すると、成功済fileは消えるが .dev-graph/state/receipts とその祖先が残る。mainはwrite_count=0を返すため、失敗後の実在pathと報告が一致しない。",
+      "recommended_intervention": "全 file/receipt の親を初期planの directory集合へ含め、mkdir時に実際に新設した directory を記録する。逆順rollbackで作成fileと空directoryを消し、既存directoryは保持する。rollback自身の失敗は成功0件へ丸めず残存pathと不完全rollbackを返す。",
+      "regression_test": "初回initのreceipt creation failureを注入し、事前/事後の相対path集合と既存file bytesが一致することを検証する。既存state directoryを持つ場合はそれを残す対照ケースを加える。Gitは不要で_contextを固定receiptへ置換できる。"
+    },
+    {
+      "id": "F-0004",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "line": 166
+      },
+      "description": "Issue planner は conflicts または missing_issues だけが残ると changes=0、next=convergedを返す。Projects plannerも missing_itemsだけのケースで同じ表示を返す（scripts/diff-github-project-fields.py:307-310）。独立再現で unread Issue 1件、timestamp conflict 1件、missing Projects item 2件が各々convergedとなった。sync R3受入/checklistは二回目changes=0を停止条件にしており、未解決blockerを成功と誤読させる。",
+      "recommended_intervention": "共有の純粋な report terminal-state helper または両plannerの同じ優先順で、conflict/confirmations/held/missing/skippedを未解決として先に扱い、それらが0の時だけconvergedにする。syncの完了条件にも unresolved_count=0 を追加し、changes=0と未解決0を別々に判定する。",
+      "regression_test": "Issueのmissing/no-updated-at/reopen conflictとProjectのmissing item/manual conflictを個別に入力し、changes=0でもconverged=false（またはnextがblocked/manual/retry）になることを確認する。完全一致の空blocker planだけがconvergedになる対照例を持つ。"
+    },
+    {
+      "id": "F-0005",
+      "condition": "C3",
+      "severity": "low",
+      "bucket": "other",
+      "condition_signal": "smell",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+        "line": 169
+      },
+      "description": "create-only の低水準実装が build-init-scaffold._create_file、build-graph-node._write_atomic(create_only=True)、register-package._atomic_create_json に残る。いずれも parent mkdir→mkstemp→write/flush/fsync→os.link→temp unlink で、JSON直列化も_common.atomic_jsonと同じ設定を各所で繰り返す。replaceとcreate-onlyの契約差は必要だが、その差を保持したpure IO primitiveの共通化余地がある。",
+      "recommended_intervention": "_commonに json_bytes と atomic_bytes(path,data,create_only) を置き、create-onlyはos.link、replaceはos.replaceを維持する。FileExistsErrorはcallerで既存の責務別codeへ変換し、transaction/lock/rollbackはwriter側に残す。複数writerを巨大共通transactionに統合しない。",
+      "regression_test": "共通primitiveのcreate-only既存targetでbytesが不変かつtempが残らないこと、replaceでbytesが更新されることを検証する。その後各writerのreceipt immutability/rollback既存回帰を実行し、責務別error codeが保持されることを確認する。"
+    },
+    {
+      "id": "F-2001",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-plugin-root.py",
+        "line": 149
+      },
+      "description": "他project専用のinstalled_plugins.json行を_installed()で除外しても、同一marketplaceのcache探索で同じinstallPathが再採用される。scope=project/localは対象project外では候補にしないという104-109行の契約が、通常のcache install配置で成立しない。fixture: target@marketをscope=project/projectPath=other-project、installPath=<claude>/plugins/cache/market/target/1.0.0としcwd=current-project。_installed()は[]だがresolve()はそのpathを返した。",
+      "recommended_intervention": "installed registryから不適格scope専用pathを記録し、same-marketplace/global cache候補からも除外する。同じpathに有効user/project登録がある場合は許可する。回帰: scope=project/localを実際のcache配下へ置く負例と、同pathにuser登録もある正例を追加する。registryの無いCodex/cache fallbackは別契約として維持する。",
+      "root_cause": "registryの有効性フィルタとcache候補列挙が別経路で、拒否判断が後者へ伝播しない。"
+    },
+    {
+      "id": "F-2002",
+      "condition": "C3",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "inconsistency",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+        "line": 137
+      },
+      "description": "GitHub式を含まないworkflow/job/step envを受け入れるが、Stepはenvを保持せずrender_step()もexportしない。workflow VALUE=workflow→job VALUE=job→step VALUE=stepのfixtureでrun=test \"$VALUE\" = \"step\"をhard段として抽出し、生成shellはexit 1。逆にローカルshellの偶然の同名値でCIと異なる成功も可能。現行PR workflowsのplain env使用例は無いが、新規段の自動追従契約に対する再現可能な欠落。",
+      "recommended_intervention": "workflow→job→stepのenvをmergeしてStepに保持し、値をshell quoteしてexportする。env名/値の許容形式も検証する。回帰:三層上書き、空白/quote/dollarを含むliteral値、ローカル既存envとの差異を生成shell実行で検査する。",
+      "root_cause": "段数の被覆だけを同等性とし、受け入れた段の実行環境が抽出モデルに含まれていない。"
+    },
+    {
+      "id": "F-2003",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/extract-ci-workflow-steps.py",
+        "line": 140
+      },
+      "description": "working-directory (step/job/workflow defaults) にGitHub式がある場合、GitHub-only判定はrun/envのみを見てskipしない。fixtureのworking-directory=${{ github.workspace }}はskipped=[]、hard段としてcd '${{ github.workspace }}'を出し、生成shellはNo such file or directory/exit 1。現在のworkflowはliteral working-directoryだが、入力契約の対応範囲判定に漏れがある。",
+      "recommended_intervention": "実効working-directoryを決定した後にGitHub式を検査し、評価不能なら理由付きskippedへ回す。回帰: step、job defaults、workflow defaultsの各式配置と、step literal overrideで実行可能になる正例を追加する。",
+      "root_cause": "評価不能な式の検査対象がrenderされる全フィールドを被覆していない。"
+    },
+    {
+      "id": "F-2004",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/scripts/lint-sibling-plugin-paths.py",
+        "line": 116
+      },
+      "description": "$schemaが行中のどこかにあるだけで全一致を除外するため、JSONを1行へ整形するとruntime commandまで免除される。scan_text('{\"$schema\":\"x\", \"command\":\"python3 ../beta/scripts/x.py\"}', alpha, patterns(alpha,beta))=[]を再現。ROOT.parent / \"beta\" # $schema annotationも[]。editor向けschema値を除外する意図がruntime参照のfail-openに拡大する。",
+      "recommended_intervention": "注記の値そのものだけを除外し、同じ行のcommand/pathなどの別値は走査する。まず$schemaの専用key/value行へ限定し、複数keyのJSON行を丸ごと免除しない最小修正でもよい。回帰: minified JSONのschema+command、Pythonコード後のschema文字列コメント、通常schema専用行の3例を固定する。",
+      "root_cause": "意味単位の例外を行単位のsubstringで実装した。"
+    },
+    {
+      "id": "F-2005",
+      "condition": "C4",
+      "severity": "medium",
+      "bucket": "doc",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-create/workflow-manifest.json",
+        "line": 79
+      },
+      "description": "新resolverを呼ぶcommandは${PLUGIN_ROOT}とcommand substitutionの戻り値をquoteしない。登録targetの有効installPath=<tmp>/provider pathでmanifestと同じcommandをbash実行すると、resolver自体は正しいrootを返すが外側python3が<tmp>/providerをscript pathとして開きexit 2。quoteした同commandはcheckerを実行してexit 0。178-185行のlint commandsも同形である。",
+      "recommended_intervention": "resolver script引数と戻り値を二重quoteし、例えばpython3 \"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)/scripts/build-manifest-registration-plan.py\"にする。resolver失敗を明示停止する形も合わせて検討する。回帰:host rootとprovider installPathを別々に空白ありへし、scriptが実行されることとmissing providerが成功扱いされないことを実行で検査する。",
+      "root_cause": "絶対path取得というPython側の正しさがshellのword splitting境界で失われる。"
+    },
+    {
+      "id": "F-2006",
+      "condition": "C3",
+      "severity": "low",
+      "bucket": "other",
+      "condition_signal": "smell",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/scripts/build-external-intelligence-runtime.py",
+        "line": 18
+      },
+      "description": "extract-plugin-root.pyを読む同じimportlib→module→sys.modules→exec_module→resolveの起動列がsync-task-state、lint-knowledge-loop、2 intelligence forwarder、PKG-009/015、sandboxの7箇所にある。2 intelligence forwarderはprovider script名以外が同じ。機能上の不具合としては未立証だが、resolver欠損時の表現がsentinel/RuntimeError/custom exception/SystemExitへ散り、同一bootstrap修正を7箇所へ要する。",
+      "recommended_intervention": "機能修正を優先し、この重複だけを理由に全plugin共通フレームワークを追加しない。必要になった時の最小共通単位はharness-creator内のresolver読込/リソースpath取得だけとし、各consumerのsentinel・例外・fail log方針は維持する。既存_load_siblingがある同scripts consumerではそれを再利用できるが、tenant/notion root helperへ統合しない。回帰:正しいprovider、resolver欠落、provider欠落、provider内script欠落、cache配置を同じ負例セットで検証する。",
+      "root_cause": "共有した探索アルゴリズムをdash名CLIとして置き、Python consumer用のimport境界を共有していない。"
+    },
+    {
+      "id": "F-3001",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 716,
+        "section": "_protected_target_reason"
+      },
+      "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+      "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+      "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+      "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3002",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 803,
+        "section": "Write/Edit chapter_verdict"
+      },
+      "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+      "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+      "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+      "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3003",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 721,
+        "section": "_token_is_canonical_spec_state shortcut"
+      },
+      "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+      "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+      "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+      "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3004",
+      "condition": "C3",
+      "severity": "medium",
+      "bucket": "schema",
+      "condition_signal": "inconsistency",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "line": 342,
+        "section": "stored_clauses"
+      },
+      "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+      "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+      "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+      "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3005",
+      "condition": "C4",
+      "severity": "high",
+      "bucket": "dependency-loop",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+        "line": 31,
+        "section": "required-info pre-confirm gate"
+      },
+      "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+      "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+      "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+      "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+      "auto_fixable": false
+    }
+  ],
+  "status": "analysis_complete",
+  "role_allocation_override": {
+    "why": "ユーザー指定に従いA4(system), category G-problem。組込validatorのA2期待のみ実行時にoverride。省略なし。"
+  }
+}

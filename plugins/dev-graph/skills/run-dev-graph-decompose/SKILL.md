@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "<want|--package PATH> [--repo-root PATH] [--manual-plan] [--dry-run]"
 allowed-tools: [Read, Write, Bash, Skill, AskUserQuestion, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/build-github-projection.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/build-github-projection.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/feature-execution-package-contract.md, ../../references/execution-tracker-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:

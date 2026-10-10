@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "plugin": "dev-graph",
+  "profile": "incremental",
+  "policy": {
+    "max_live_trials": 9,
+    "max_concurrency": 2,
+    "effective_concurrency": 2,
+    "evidence_reuse_requires": [
+      "schema-valid PASS live verdict",
+      "matching behavior closure digest",
+      "stable scenario_id (bump when scenario contract changes)",
+      "matching transcript digest"
+    ]
+  },
+  "counts": {
+    "static": 0,
+    "fork": 0,
+    "reuse": 0,
+    "run": 9,
+    "defer": 0
+  },
+  "live_batches": [
+    [
+      "run-dev-graph-decompose",
+      "run-dev-graph-init"
+    ],
+    [
+      "run-dev-graph-node",
+      "run-dev-graph-render"
+    ],
+    [
+      "run-dev-graph-requirements",
+      "run-dev-graph-schedule"
+    ],
+    [
+      "run-dev-graph-status",
+      "run-dev-graph-sync"
+    ],
+    [
+      "run-dev-graph-system-spec"
+    ]
+  ],
+  "skills": [
+    {
+      "skill": "run-dev-graph-decompose",
+      "acceptance_tier": "live",
+      "behavior_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-init",
+      "acceptance_tier": "live",
+      "behavior_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-node",
+      "acceptance_tier": "live",
+      "behavior_sha256": "812c84d22f398b6dd07581112291b71109423cac0f6049a676d7ff224ca4a60e",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-render",
+      "acceptance_tier": "live",
+      "behavior_sha256": "c3ecfcf7c3d2516ae43814838482f285a4cf3848d820aa9e6a5dccad903fd007",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-requirements",
+      "acceptance_tier": "live",
+      "behavior_sha256": "53b673086190f0e45d5ed837faa96dbcf03d996c8e68604b4af18d0da6dc5b81",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-schedule",
+      "acceptance_tier": "live",
+      "behavior_sha256": "9d9e1dd4b268bb8283f7ffd94af53101b774c80f1718906a6cf25ea9d2ef6e8d",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-status",
+      "acceptance_tier": "live",
+      "behavior_sha256": "e81710850e2111bbc78d3ee9a5b0303a4d7dba097d9f9beba2d555ff5a199c84",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-sync",
+      "acceptance_tier": "live",
+      "behavior_sha256": "fdad338528b4dbf212aa4e3d6c6f6b988d8b837c1715a721b0b399018fc846bf",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    },
+    {
+      "skill": "run-dev-graph-system-spec",
+      "acceptance_tier": "live",
+      "behavior_sha256": "9be478fa7e2221c7d7a7e9e69ac694f1b48b2d339fc6064f7ee757f4b9dcc0e9",
+      "action": "run",
+      "reason": "behavior-changed",
+      "reused_evidence": null
+    }
+  ]
+}

@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "<add|update|bind-github|link-github|register-package> [--repo-root PATH] [--input PATH] [--dry-run]"
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-graph-node.py, ../../scripts/register-package.py, ../../scripts/validate-source-lineage.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-graph-node.py, ../../scripts/register-package.py, ../../scripts/validate-source-lineage.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]
 reference_refs: [../../schemas/graph-node.schema.json, ../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:

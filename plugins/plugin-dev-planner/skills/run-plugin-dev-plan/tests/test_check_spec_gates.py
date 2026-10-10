@@ -546,6 +546,31 @@ def test_install_malformed_graph_reference_fails_cleanly(tmp_path, gates):
     assert any("task_graph_ref.path" in e for e in gates.check_install_release(tmp_path, SPECFM.default_install_contract()))
 
 
+@pytest.mark.parametrize("legacy", [False, True])
+def test_stored_install_obligation_cannot_acquire_component_owner(tmp_path, gates, derive_task_graph, legacy):
+    """正常なproducerの条項を保存graphだけ誤帰属させても拒否する (title-only旧形も同じ)。"""
+    write_phase_index(tmp_path, plugin_meta=True)
+    inst = SPECFM.default_install_contract()
+    graph = derive_task_graph.derive(tmp_path)
+    clause = SPECFM.install_release_obligations(inst, "test-plugin")["isolated"]
+    for node in graph["nodes"]:
+        if node.get("acceptance_criterion") == clause:
+            if legacy:
+                node.pop("execution_kind", None)
+                node["title"] = node.pop("acceptance_criterion")
+            node["entity_ref"] = "C01"
+    (tmp_path / "task-graph.json").write_text(json.dumps(graph), encoding="utf-8")
+    errors = gates.check_install_release(tmp_path, inst)
+    assert len(errors) == 1 and "task-graph install obligation isolated が component に帰属" in errors[0]
+    for node in graph["nodes"]:
+        if node.get("entity_ref") == "C01":
+            node["entity_ref"] = None
+    # Component attribution on a different P13 task is legitimate.
+    graph["nodes"].append({"phase_ref": "P13", "execution_kind": "direct-task", "entity_ref": "C01", "acceptance_criterion": "component-specific verification"})
+    (tmp_path / "task-graph.json").write_text(json.dumps(graph), encoding="utf-8")
+    assert gates.check_install_release(tmp_path, inst) == []
+
+
 # ─────────────────── install 義務の slug 正本 (goal-spec 優先) ───────────────────
 def _write_goal_spec(directory, slug):
     (directory / "goal-spec.json").write_text(json.dumps({"target_plugin_slug": slug}), encoding="utf-8")

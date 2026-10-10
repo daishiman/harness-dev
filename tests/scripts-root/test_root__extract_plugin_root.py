@@ -11,6 +11,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import subprocess
 import sys
 
 import pytest
@@ -108,6 +109,37 @@ def test_other_project_install_is_ignored_and_own_project_wins(tmp_path, homes):
     assert MOD.resolve("skill-governance-adapters", me, tmp_path / "other-cwd") == user.resolve()
 
 
+@pytest.mark.parametrize("scope", ["project", "local"])
+@pytest.mark.parametrize("market", ["harness-local", "other-market"])
+def test_other_project_cache_is_not_reselected(tmp_path, homes, scope, market):
+    claude, _ = homes
+    cache = claude / "plugins" / "cache"
+    me = _plugin(cache / "harness-local" / "dev-graph" / "0.1.14", "dev-graph")
+    private = _plugin(cache / market / "skill-governance-adapters" / "1.0.0", "skill-governance-adapters")
+    _installed(claude, {
+        f"skill-governance-adapters@{market}": [{
+            "scope": scope, "projectPath": str(tmp_path / "other-project"),
+            "installPath": str(private),
+        }],
+    })
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "current-project") is None
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "other-project") == private.resolve()
+
+
+def test_cache_shared_with_user_registration_remains_available(tmp_path, homes):
+    claude, _ = homes
+    cache = claude / "plugins" / "cache" / "harness-local"
+    me = _plugin(cache / "dev-graph" / "0.1.14", "dev-graph")
+    shared = _plugin(cache / "skill-governance-adapters" / "1.0.0", "skill-governance-adapters")
+    _installed(claude, {
+        "skill-governance-adapters@harness-local": [
+            {"scope": "project", "projectPath": str(tmp_path / "other-project"), "installPath": str(shared)},
+            {"scope": "user", "installPath": str(shared)},
+        ],
+    })
+    assert MOD.resolve("skill-governance-adapters", me, tmp_path / "current-project") == shared.resolve()
+
+
 def test_codex_cache_layout_resolves_same_marketplace(tmp_path, homes):
     _, codex = homes
     cache = codex / "plugins" / "cache" / "harness-dev"
@@ -157,3 +189,30 @@ def test_vendored_copy_resolves_from_its_own_plugin(tmp_path, homes):
     )
     assert done.returncode == 0, done.stderr
     assert done.stdout.strip() == str(guard.resolve())
+
+
+@pytest.mark.parametrize("host_space", [False, True])
+def test_workflow_resolver_commands_quote_paths_and_stop_when_missing(tmp_path, homes, host_space):
+    claude, _ = homes
+    host = _plugin(tmp_path / ("host path" if host_space else "host"), "harness-creator")
+    (host / "scripts").mkdir()
+    (host / "scripts" / "extract-plugin-root.py").write_bytes(SCRIPT.read_bytes())
+    provider = _plugin(tmp_path / "provider path", "skill-governance-automation")
+    (provider / "scripts").mkdir()
+    checker = provider / "scripts" / "build-manifest-registration-plan.py"
+    checker.write_text("print('CHECKER_EXECUTED')\n", encoding="utf-8")
+    _installed(claude, {"skill-governance-automation@market": [{"scope": "user", "installPath": str(provider)}]})
+    manifest = json.loads((ROOT / "plugins/harness-creator/skills/run-skill-create/workflow-manifest.json").read_text())
+    phase = next(p for p in manifest["phases"] if p["id"] == "manifest-register")
+    env = dict(os.environ, PLUGIN_ROOT=str(host))
+    done = subprocess.run(["bash", "-c", phase["command"]], env=env, cwd=tmp_path,
+                          capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr
+    assert done.stdout.strip() == "CHECKER_EXECUTED"
+    _installed(claude, {})
+    missing = subprocess.run(["bash", "-c", phase["command"]], env=env, cwd=tmp_path,
+                             capture_output=True, text=True, check=False)
+    assert missing.returncode in phase["fatal_exit_codes"]
+    assert "plugin not found: skill-governance-automation" in missing.stderr
+    assert "can't open file" not in missing.stderr
+    assert "CHECKER_EXECUTED" not in missing.stdout

@@ -53,6 +53,7 @@ def _load_mod():
 
 
 mod = _load_mod()
+REQUIRED_INFO = SKILL_DIR / "references" / "required-info-catalog.json"
 
 
 def _taxonomy() -> dict:
@@ -61,6 +62,69 @@ def _taxonomy() -> dict:
 
 def _turns() -> list:
     return json.loads(TURNS.read_text(encoding="utf-8"))
+
+
+def _block_answer_turn(qa_id="qa-block", *, complete=True, answered_at="2026-01-01T00:00:00Z"):
+    catalog = json.loads(REQUIRED_INFO.read_text(encoding="utf-8"))
+    block_items = [it["item_id"] for it in catalog["items"] if it["missing_effect"] == "block"]
+    return {
+        "qa_id": qa_id, "question": "必須論点の確認", "answer": "利用者の確認済み回答",
+        "basis": "user-decision", "answered_at": answered_at,
+        "required_info_items": block_items if complete else block_items[:-1],
+        "ops": [{"action": "confirm", "category": "backend", "platform": "web"}],
+    }
+
+
+@pytest.mark.parametrize("command", ["apply", "chunk"])
+def test_first_confirm_validates_candidate_before_publishing(tmp_path, command):
+    """対象外セルも確定セルも無い初回stateで、揃った回答の候補confirmは循環せず公開できる。"""
+    state = mod.init_state(_taxonomy())
+    turn = _block_answer_turn()
+    state_path = tmp_path / "state.json"
+    if command == "apply":
+        mod.apply_turn(state, {**turn, "ops": []})  # 回答を先に集め、確定はまだ行わない。
+        args = ["apply", "--op", json.dumps({**turn["ops"][0], "qa_ref": turn["qa_id"]})]
+    else:
+        turns_path = tmp_path / "turns.json"
+        turns_path.write_text(json.dumps([turn], ensure_ascii=False))
+        args = ["chunk", "--turns", str(turns_path)]
+    state_path.write_text(json.dumps(state, ensure_ascii=False))
+    assert mod.main(args + ["--state", str(state_path), "--required-info", str(REQUIRED_INFO)]) == 0
+    actual = json.loads(state_path.read_text())
+    assert actual["matrix"]["backend"]["web"]["state"] == "確定"
+    proc = subprocess.run([sys.executable, str(KNOWLEDGE_VALIDATOR), "--profile", "required-info", "--input", str(REQUIRED_INFO), "--state", str(state_path)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+
+
+@pytest.mark.parametrize("separate_output", [False, True])
+def test_missing_block_answer_rejects_without_changing_any_file(tmp_path, separate_output):
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(mod.init_state(_taxonomy()), ensure_ascii=False))
+    before = state_path.read_bytes()
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(json.dumps([_block_answer_turn(complete=False)], ensure_ascii=False))
+    output = tmp_path / "candidate.json"
+    output.write_text("pre-existing output")
+    args = ["chunk", "--state", str(state_path), "--turns", str(turns_path), "--required-info", str(REQUIRED_INFO)]
+    if separate_output:
+        args.extend(["--out", str(output)])
+    assert mod.main(args) == 1
+    assert state_path.read_bytes() == before
+    assert output.read_text() == "pre-existing output"
+
+
+def test_reopen_then_reconfirm_uses_new_candidate_grounding(tmp_path):
+    state = mod.init_state(_taxonomy())
+    mod.apply_turn(state, _block_answer_turn())
+    mod.apply_turn(state, {"ops": [{"action": "reopen", "category": "backend", "platform": "web", "reason": "新しい判断を取り直す", "reopened_at": "2026-01-02T00:00:00Z"}]})
+    state_path = tmp_path / "state.json"
+    state_path.write_text(json.dumps(state, ensure_ascii=False))
+    turns_path = tmp_path / "turns.json"
+    turns_path.write_text(json.dumps([_block_answer_turn("qa-new", answered_at="2026-01-03T00:00:00Z")], ensure_ascii=False))
+    assert mod.main(["chunk", "--state", str(state_path), "--turns", str(turns_path), "--required-info", str(REQUIRED_INFO)]) == 0
+    actual = json.loads(state_path.read_text())
+    assert actual["matrix"]["backend"]["web"]["qa_ref"] == "qa-new"
+    assert actual["reopen_log"][0]["reason"] == "新しい判断を取り直す"
 
 
 def _run_validator(

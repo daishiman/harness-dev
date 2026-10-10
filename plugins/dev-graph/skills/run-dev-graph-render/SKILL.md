@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--scope ID] [--output PATH]"
 allowed-tools: [Read, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/render-graph-html.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/render-graph-html.py]
 schema_refs: [../../schemas/graph-node.schema.json]
 reference_refs: [../../references/prompt-common-layers.md]
 responsibility_refs:

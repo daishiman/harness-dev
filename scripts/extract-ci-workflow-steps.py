@@ -27,12 +27,13 @@
 書き出しの規則:
   - 対象は on に pull_request を持つ workflow の全 job の run 段。schedule /
     workflow_dispatch だけの workflow は PR の合否に関わらないので対象外。
-  - job か段に if がある段と、run / env に GitHub 式 (${{ ... }}) を含む段は、
+  - job か段に if がある段と、run / env / 実効 working-directory に GitHub 式を含む段は、
     ローカルで評価できないので書き出さず、理由を skipped.tsv に残す (黙って捨てない)。
   - `python3 -m pip install` の行は除く。ローカル環境を書き換えないため
     (依存は requirements-dev.txt を事前に入れておく前提)。
   - continue-on-error: true の段は mode=soft、それ以外は mode=hard。
   - working-directory (段 / job の defaults / workflow の defaults) は cd に変換する。
+  - literal env は workflow → job → 段の順で上書きし、shell quote した export に変換する。
   - shell は GitHub の bash 既定 (-eo pipefail) に合わせる。bash 以外の shell の段は
     再現できないので skipped.tsv に残す。
 
@@ -45,15 +46,17 @@ Exit 0 = 書き出し成功, 1 = 対象 workflow が 1 本も無い (検査が�
 from __future__ import annotations
 
 import argparse
+import re
 import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_WORKFLOWS_DIR = ROOT / ".github" / "workflows"
 GITHUB_EXPR = "${{"
 PIP_INSTALL_PREFIX = "python3 -m pip install"
+ENV_NAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 @dataclass(frozen=True)
@@ -62,6 +65,7 @@ class Step:
     mode: str  # "hard" | "soft"
     working_directory: str | None
     body: str
+    env: dict[str, str] = field(default_factory=dict)
 
 
 def _triggers(data: dict) -> set[str]:
@@ -107,6 +111,23 @@ def _strip_local_only(body: str) -> str:
     return "\n".join(kept).strip("\n")
 
 
+def _effective_env(*scopes: dict | None) -> dict[str, str]:
+    env: dict[str, str] = {}
+    for scope in scopes:
+        if scope is None:
+            continue
+        if not isinstance(scope, dict):
+            raise ValueError("env must be a mapping")
+        for name, value in scope.items():
+            if not isinstance(name, str) or not ENV_NAME_RE.fullmatch(name):
+                raise ValueError(f"invalid env name: {name!r}")
+            if isinstance(value, (dict, list)) or value is None:
+                raise ValueError(f"env value must be a scalar: {name}")
+            # YAML boolean/numeric scalars become the strings passed to the shell.
+            env[name] = str(value).lower() if isinstance(value, bool) else str(value)
+    return env
+
+
 def build_steps(
     workflows_dir: Path, skip_jobs: frozenset[str] = frozenset()
 ) -> tuple[list[Step], list[tuple[str, str]]]:
@@ -124,6 +145,11 @@ def build_steps(
                 if "run" not in step:
                     continue
                 label = f"{path.name}:{job_id}: {step.get('name') or f'step {idx}'}"
+                working_directory = (
+                    step.get("working-directory")
+                    or job_run.get("working-directory")
+                    or wf_run.get("working-directory")
+                )
                 shell = step.get("shell") or job_run.get("shell") or wf_run.get("shell") or "bash"
                 if job_id in skip_jobs:
                     reason = "CI_CHECKS_SKIP_JOBS で利用者が除外した"
@@ -131,18 +157,17 @@ def build_steps(
                     reason = f"shell={shell} はローカルで再現しない"
                 else:
                     reason = wf_reason or _github_only_reason(job, step)
+                    if not reason and GITHUB_EXPR in str(working_directory or ""):
+                        reason = "working-directory が GitHub 式 (${{ }}) に依存する"
                 if reason:
                     skipped.append((label, reason))
                     continue
                 steps.append(Step(
                     label=label,
                     mode="soft" if step.get("continue-on-error") is True else "hard",
-                    working_directory=(
-                        step.get("working-directory")
-                        or job_run.get("working-directory")
-                        or wf_run.get("working-directory")
-                    ),
+                    working_directory=working_directory,
                     body=_strip_local_only(str(step["run"])),
+                    env=_effective_env(data.get("env"), job.get("env"), step.get("env")),
                 ))
     return steps, skipped
 
@@ -153,6 +178,10 @@ def render_step(step: Step) -> str:
         f"# mode: {step.mode}",
         "set -eo pipefail",
     ]
+    for name, value in step.env.items():
+        if not ENV_NAME_RE.fullmatch(name):
+            raise ValueError(f"invalid env name: {name!r}")
+        lines.append(f"export {name}={shlex.quote(value)}")
     if step.working_directory:
         lines.append(f"cd {shlex.quote(step.working_directory)}")
     lines.append(step.body)
@@ -187,6 +216,9 @@ def main(argv: list[str] | None = None) -> int:
         steps, skipped = build_steps(args.workflows_dir, frozenset(args.skip_jobs.split()))
     except ImportError:
         print("[ERROR] PyYAML が無い (pip install -r requirements-dev.txt)", file=sys.stderr)
+        return 2
+    except ValueError as exc:
+        print(f"[ERROR] invalid workflow input: {exc}", file=sys.stderr)
         return 2
     if not steps:
         print("[ERROR] pull_request で起動する workflow の段が 1 つも無い (検査が空振りする)",

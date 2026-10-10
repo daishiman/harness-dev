@@ -26,7 +26,7 @@
         "skill_md_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
     },
-    "verdict": {"const": "PASS"},
+    "verdict": {"enum": ["PASS", "FAIL"]},
     "reviewer": {"type": "string", "minLength": 1, "not": {"const": "root"}},
     "loop_scope": {"const": "both"},
     "iteration_limit": {"const": 3},
@@ -44,7 +44,7 @@
         ],
         "additionalProperties": false,
         "properties": {
-          "status": {"const": "PASS"},
+          "status": {"enum": ["PASS", "FAIL"]},
           "verify_by": {"enum": ["script", "test", "live-trial"]},
           "evidence_kind": {
             "enum": ["pytest", "independent-scenario-review", "hybrid", "live-trial"]
@@ -62,8 +62,14 @@
           {
             "if": {"properties": {"verify_by": {"const": "live-trial"}}},
             "then": {
-              "required": ["scenario_id", "live_trial_verdict_ref"],
-              "properties": {"evidence_kind": {"const": "live-trial"}}
+              "required": ["scenario_id"],
+              "properties": {"evidence_kind": {"const": "live-trial"}},
+              "allOf": [
+                {
+                  "if": {"properties": {"status": {"const": "PASS"}}},
+                  "then": {"required": ["live_trial_verdict_ref"]}
+                }
+              ]
             },
             "else": {
               "not": {
@@ -77,5 +83,26 @@
         ]
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"verdict": {"const": "PASS"}}},
+      "then": {
+        "properties": {
+          "criteria_results": {
+            "additionalProperties": {"properties": {"status": {"const": "PASS"}}}
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "criteria_results": {
+            "not": {
+              "additionalProperties": {"properties": {"status": {"const": "PASS"}}}
+            }
+          }
+        }
+      }
+    }
+  ]
 }

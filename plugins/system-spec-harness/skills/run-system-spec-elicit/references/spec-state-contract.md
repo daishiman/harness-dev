@@ -105,6 +105,14 @@ web のみ) は `approval_log` の 1 箇所に置き、`approval_ref` で指す�
 `missing_effect=block` の item が全て接地していることを検証する。qa entry に item_id を書いた
 だけで、どの確定セルからも参照されていない回答は接地の証拠として数えない。
 
+初回の確定前に入力 state 自身をこの検証へ渡すと、まだ確定セルが無いため循環する。
+`confirm` を含む `apply` / `chunk` は `--required-info <required-info-catalog.json>` を付ける。
+writer がメモリ上に作った候補 state に既存 `validate_required_info` を適用し、通過後だけ
+`--state` (または `--out`) へ書く。失敗時は入力ファイルも出力ファイルも変更しない。
+未確定の回答を蓄積するだけの turn / `reopen` はこの引数なしで行い、集めた回答を
+セルへ結び付ける最初の `confirm` から候補検証を行う。`--out` で候補を別pathへ出す場合も
+同じ検証を通し、正本へ直接 JSON をコピーしない。
+
 `question` / `answer` の事後書換は writer が拒否する (記録の改竄防止)。訂正が要る場合は新しい
 `id` を発行する。`provenance` / `answered_at` は**未設定のときに限り**後から追記でき、既に値が
 ある項目の上書きは拒否される (追記は冪等)。C03 compile はこれらを章の「確定内容 (質疑録)」節へ

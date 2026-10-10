@@ -50,11 +50,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from _common import ContractError, atomic_json, contained, dump, load_json, run, utc_now
+from _common import ContractError, atomic_json, contained, dump, is_package_member, load_json, run, utc_now
 
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
 UNLINKED_STATES = {"unlinked", "pending_retry", "detached"}
-PACKAGE_KEYS = ("parent_feature", "feature_package_id", "phase_ref")  # same keys as build-graph-node.PACKAGE_KEYS
 ITEM_QUERY = ("query($id:ID!){node(id:$id){... on ProjectV2Item{id fieldValues(first:100){nodes{"
               "... on ProjectV2ItemFieldSingleSelectValue{name field{... on ProjectV2FieldCommon{name}}} "
               "... on ProjectV2ItemFieldTextValue{text field{... on ProjectV2FieldCommon{name}}} "
@@ -189,7 +188,7 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
         node_id = node.get("graph_node_id")
         if node.get("tracker_binding") != "github":
             continue
-        package_member = any(node.get(key) is not None for key in PACKAGE_KEYS)
+        package_member = is_package_member(node)
         issue_linked = isinstance((node.get("issue_linkage") or {}).get("issue_number"), int)
         hold = (None if not issue_linked else "issue-plan-missing" if unsettled is None
                 else "issue-unsettled" if node_id in unsettled else None)
@@ -278,6 +277,24 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
                     in_conflict = True
             if not waiting:  # a link with a held import is recorded only once that import has been applied
                 candidates.append((node_id, link, observed, in_conflict))
+    # Multiple Projects may mirror one local field. Join their imports before making a C02 patch.
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for entry in imports:
+        grouped.setdefault((entry["graph_node_id"], entry["local_field"]), []).append(entry)
+    imports = []
+    blocked_links: set[tuple[str, str]] = set()
+    for (_, local_field), rows in sorted(grouped.items()):
+        rows.sort(key=lambda row: (row["project_alias"], row["item_id"]))
+        value = rows[0]["node_patch"][local_field]
+        if any(not _same(value, row["node_patch"][local_field]) for row in rows[1:]):
+            values = [{"project_alias": row["project_alias"], "item_id": row["item_id"],
+                       "value": row["node_patch"][local_field]} for row in rows]
+            for row in rows:
+                conflicts.append({**row, "kind": "cross-project-import", "cause": row["kind"], "candidates": values})
+                blocked_links.add((row["graph_node_id"], row["project_alias"]))
+        else:
+            # Keep all origins when equal candidates become one semantic update.
+            imports.append({**rows[0], "source_projects": [row["project_alias"] for row in rows]})
     revision = graph.get("graph_revision")
     update_input = None
     if imports:
@@ -289,6 +306,8 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
     links: dict[str, list[dict[str, Any]]] = {}
     if not exports and not imports:
         for node_id, link, observed, in_conflict in candidates:
+            if (node_id, link.get("project_alias")) in blocked_links:
+                continue  # no snapshot or state write while these Projects disagree
             state = "conflict" if in_conflict else "synced"
             if observed or state != link.get("sync_state"):
                 links.setdefault(node_id, []).append({**link, "field_snapshot": observed, "sync_state": state,
@@ -298,14 +317,19 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
                   if links else None)
     link_count = sum(len(rows) for rows in links.values())
     unused = [{"graph_node_id": k[0], "project_alias": k[1], "local_field": k[2]} for k in sorted(set(decisions) - used)]
+    changes = len(exports) + len(imports) + link_count
+    unresolved = len(held) + len(conflicts) + len(missing_items) + len(skipped)
     return {"schema_version": "1.0.0", "graph_revision": revision, "exports": exports, "imports": imports, "held": held,
             "conflicts": conflicts, "stale_decisions": stale, "unused_decisions": unused, "missing_items": missing_items,
             "skipped": skipped, "update_input": update_input, "link_input": link_input,
             "counts": {"exports": len(exports), "imports": len(imports), "held": len(held), "conflicts": len(conflicts),
-                       "links": link_count},
-            "changes": len(exports) + len(imports) + link_count,
+                       "links": link_count, "missing_items": len(missing_items), "skipped": len(skipped)},
+            "changes": changes, "unresolved_count": unresolved, "converged": changes == 0 and unresolved == 0,
             "next": ("apply exports and imports, then plan again" if exports or imports
                      else "apply link_input" if link_input
+                     else "retry missing Project items, then plan again" if missing_items
+                     else "resolve the reported Project conflicts (R6), then plan again" if conflicts
+                     else "resolve skipped Project linkages (C14), then plan again" if skipped
                      else "settle the linked Issues (apply the Issue plan or confirm its flags), then plan again with the new --issue-plan"
                      if held else "converged")}
 

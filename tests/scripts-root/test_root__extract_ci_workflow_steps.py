@@ -8,8 +8,11 @@ validate-plugin-packages.py (PKG-007) をローカルが持たず、push 後の 
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import pathlib
+import shlex
+import subprocess
 import sys
 import textwrap
 
@@ -141,6 +144,59 @@ def test_render_step_header_and_cd(workflows):
         "set -eo pipefail",
         "cd plugins/x",
     ]
+
+
+def test_literal_env_is_merged_and_shell_quoted_when_executed(tmp_path):
+    wf = tmp_path / "workflows"
+    literal = "it's $HOME $(printf injected) with spaces"
+    body = "import json, os; print(json.dumps({k: os.environ[k] for k in ['VALUE', 'LITERAL', 'NUMBER', 'BOOL']}))"
+    _write(wf / "pr.yml", json.dumps({
+        "on": "pull_request", "env": {"VALUE": "workflow", "LITERAL": literal},
+        "jobs": {"lint": {
+            "env": {"VALUE": "job", "NUMBER": 42, "BOOL": True},
+            "steps": [{"env": {"VALUE": "step"},
+                       "run": f"{shlex.quote(sys.executable)} -c {shlex.quote(body)}"}],
+        }},
+    }))
+    steps, skipped = MOD.build_steps(wf)
+    assert skipped == []
+    env = dict(os.environ, VALUE="local")
+    done = subprocess.run(["bash", "-c", MOD.render_step(steps[0])],
+                          env=env, capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout) == {"VALUE": "step", "LITERAL": literal, "NUMBER": "42", "BOOL": "true"}
+
+
+@pytest.mark.parametrize("name", ["BAD-NAME", "1VALUE", "VALUE; touch injected", ""])
+def test_invalid_env_name_is_an_input_error(tmp_path, name, capsys):
+    wf = tmp_path / "workflows"
+    _write(wf / "pr.yml", json.dumps({
+        "on": "pull_request", "jobs": {"lint": {"steps": [{"env": {name: "value"}, "run": "echo hi"}]}},
+    }))
+    assert MOD.main(["--out-dir", str(tmp_path / "out"), "--workflows-dir", str(wf)]) == 2
+    assert "invalid env name" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("scope", ["workflow", "job", "step"])
+def test_effective_working_directory_expression_is_skipped(tmp_path, scope):
+    wf = tmp_path / "workflows"
+    step = {"run": "echo hi"}
+    job = {"steps": [step]}
+    data = {"on": "pull_request", "jobs": {"lint": job}}
+    target = {"workflow": data, "job": job, "step": step}[scope]
+    if scope == "step":
+        target["working-directory"] = "${{ github.workspace }}"
+    else:
+        target["defaults"] = {"run": {"working-directory": "${{ github.workspace }}"}}
+    _write(wf / "pr.yml", json.dumps(data))
+    steps, skipped = MOD.build_steps(wf)
+    assert steps == []
+    assert len(skipped) == 1 and "working-directory" in skipped[0][1] and "GitHub" in skipped[0][1]
+    step["working-directory"] = "."
+    _write(wf / "pr.yml", json.dumps(data))
+    steps, skipped = MOD.build_steps(wf)
+    assert skipped == [] and steps[0].working_directory == "."
 
 
 def test_main_writes_files_and_skipped_tsv(workflows, tmp_path, capsys):

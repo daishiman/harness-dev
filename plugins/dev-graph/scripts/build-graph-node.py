@@ -19,7 +19,6 @@ import fcntl
 import hashlib
 import importlib.util
 import json
-import os
 import re
 import subprocess
 import sys
@@ -28,7 +27,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-from _common import ContractError, atomic_json, contained, dump, load_json, utc_now
+from _common import (PACKAGE_KEYS, ContractError, atomic_bytes, atomic_json, contained, dump,
+                     is_package_member, json_bytes, load_json, utc_now)
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -84,7 +84,6 @@ PATCH_KEYS = {
 TRACKER_MIRRORED_KEYS = {"title", "priority", "start_date", "target_date", "iteration"}
 UPDATE_KEYS = {"graph_node_id", "node_patch", "set_sections", "append_sections", "add_subtypes",
                "subtype_sections", "add_api_contracts", "macro_patch"}
-PACKAGE_KEYS = {"parent_feature", "feature_package_id", "phase_ref"}
 
 
 def _load_script(file_name: str, module_name: str) -> Any:
@@ -145,25 +144,10 @@ def _single_writer(graph: Path) -> Iterator[None]:
 
 
 def _write_atomic(path: Path, data: bytes, *, create_only: bool) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        if create_only:
-            try:
-                os.link(temp, path)
-            except FileExistsError as exc:
-                raise WriterError("artifact_path_exists", str(path)) from exc
-        else:
-            os.replace(temp, path)
-    finally:
-        try:
-            os.unlink(temp)
-        except FileNotFoundError:
-            pass
+        atomic_bytes(path, data, create_only=create_only)
+    except FileExistsError as exc:
+        raise WriterError("artifact_path_exists", str(path)) from exc
 
 
 def _canonical_digest(value: Any) -> str:
@@ -877,7 +861,7 @@ def _plan_update(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Pat
         kind = before_node.get("artifact_kind")
         if kind not in KIND_PREFIX:
             raise WriterError("invalid_kind", f"{label}: {graph_node_id} has unsupported artifact_kind {kind!r}")
-        if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
+        if is_package_member(before_node):
             raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
         _require_keys(before_node, keys, label)
         node = copy.deepcopy(before_node)
@@ -1059,7 +1043,7 @@ def _plan_bind_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
             raise WriterError("unknown_node", f"{label}: {graph_node_id!r} is absent or repeated")
         seen.add(graph_node_id)
         before_node = by_id[graph_node_id]
-        if any(before_node.get(key) is not None for key in PACKAGE_KEYS):
+        if is_package_member(before_node):
             raise WriterError("package_member_requires_register_package", f"{label}: exact-13 package members are owned by system-dev-planner")
         _require_keys(before_node, keys, label)
         if before_node["artifact_kind"] not in {"issue", "task"}:
@@ -1129,7 +1113,7 @@ def _plan_link_github(payload: dict[str, Any], nodes: list[dict[str, Any]], root
         seen.add(graph_node_id)
         before_node = by_id[graph_node_id]
         # register-package registers a member to the graph only, without the content keys or an artifact file.
-        member = any(before_node.get(key) is not None for key in PACKAGE_KEYS)
+        member = is_package_member(before_node)
         _require_keys(before_node, [] if member else keys, label)
         if before_node["tracker_binding"] != "github":
             raise WriterError("link_github_requires_github_binding",
@@ -1321,7 +1305,7 @@ def _transact(args: argparse.Namespace, planner: Callable[..., list[dict[str, An
 
 
 def _create_receipt(path: Path, receipt: dict[str, Any]) -> None:
-    data = (json.dumps(receipt, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    data = json_bytes(receipt)
     try:
         _write_atomic(path, data, create_only=True)
     except WriterError as exc:

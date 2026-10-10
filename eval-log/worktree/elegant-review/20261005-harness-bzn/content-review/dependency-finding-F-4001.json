@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "finding_id": "F-4001",
+  "category": "dependency_break",
+  "severity": "high",
+  "status": "OPEN",
+  "reviewer": "/root/independent_review",
+  "observed_at": "2026-10-05T08:30:46.004413+00:00",
+  "finding": "The behavior closure excludes the shared dev-graph _common.py used by the declared script entry points. Changing executable helper bytes leaves all nine skill digests unchanged, permitting stale PASS reuse.",
+  "proof": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review/dependency-closure-results.json",
+  "independent_command": "PYTHONDONTWRITEBYTECODE=1 /Users/dm/miniconda3/bin/python3 /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review/dependency-closure-case.py",
+  "source_c4_verdict": "FAIL",
+  "source_c2_verdict": "FAIL_FOR_DEPENDENCY_DECLARATION_OMISSION",
+  "minimal_fix": "Declare ../../scripts/_common.py in all nine consuming SKILL.md script_refs; the current declared-ref resolver already validates and hashes it. Three-only declarations leave six known consumers uncovered.",
+  "alternatives_rejected": "Recursive Python import discovery changes the accepted dependency model and needs handling dynamic imports/packages/namespace modules. Adding nine existing refs closes this concrete shared helper with no new scanner or second source of dependency truth.",
+  "prohibited_operations_performed": {
+    "source_edit": false,
+    "working_repo_git_operation": false,
+    "external_write": false
+  },
+  "proof_limits": "The semantic mutation and proposed declarations were applied only inside a temporary copy. This digest counterexample is not a live host execution trial."
+}
