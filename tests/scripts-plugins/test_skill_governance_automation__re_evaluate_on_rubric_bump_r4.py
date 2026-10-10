@@ -5,7 +5,8 @@
 挙動の要約:
   upstream rubric_version (ref-skill-design-rubric/rubric.json) と eval-log/ 配下の
   過去評価ログの rubric_version を比較し、**major bump** (upstream major > past major)
-  が起きているレコードを再評価対象として列挙する。実行はせず常に exit 0。
+  が起きているレコードを再評価対象として列挙する。実行はせず、走査できれば exit 0、
+  upstream rubric が無い・版を解釈できないときは exit 2。
 
 検証方針:
   - 純関数 (parse_semver / iter_records / extract_version / extract_skill_identity) は
@@ -15,7 +16,8 @@
     に差し替え、全分岐 (rubric 不在 / version 解析不能 / eval-dir 不在 / eval-dir 空 /
     major bump 無 / major bump 有 / .json array / .jsonl 混在 / minor bump 非対象) を
     in-process で網羅し stdout/stderr/戻り値 (int) を assert。
-  - CLI 経路 (__main__ guard 経由 sys.exit) は subprocess(sys.executable) で exit 0 を実測。
+  - CLI 経路 (__main__ guard 経由 sys.exit) は subprocess(sys.executable) で、兄弟 rubric を
+    解決して exit 0 になることを実測。
 
 network: false / keychain: なし / 実 repo 書換: なし (tmp_path + monkeypatch のみ)。
 """
@@ -192,15 +194,15 @@ def _patch(monkeypatch, tmp_path, *, upstream=None, write_upstream=True):
     return rubric, eval_dir
 
 
-def test_main_returns_zero_when_upstream_missing(monkeypatch, tmp_path, capsys):
+def test_main_returns_two_when_upstream_missing(monkeypatch, tmp_path, capsys):
     _patch(monkeypatch, tmp_path, write_upstream=False)
-    assert MOD.main() == 0
+    assert MOD.main() == 2
     assert "upstream rubric not found" in capsys.readouterr().err
 
 
-def test_main_returns_zero_when_upstream_version_unparseable(monkeypatch, tmp_path, capsys):
+def test_main_returns_two_when_upstream_version_unparseable(monkeypatch, tmp_path, capsys):
     _patch(monkeypatch, tmp_path, upstream=None)  # rubric_version キー無し
-    assert MOD.main() == 0
+    assert MOD.main() == 2
     assert "could not parse upstream rubric_version" in capsys.readouterr().err
 
 
@@ -282,7 +284,7 @@ def test_main_files_sorted_and_count_includes_jsonl(monkeypatch, tmp_path, capsy
 
 
 # ── CLI subprocess (exit code 実測 / __main__ guard) ─────────────────────────
-def test_cli_always_exits_zero_and_emits_output():
-    res = subprocess.run([sys.executable, str(SCRIPT)], text=True, capture_output=True)
-    assert res.returncode == 0
-    assert (res.stdout + res.stderr).strip() != ""
+def test_cli_exits_zero_with_resolved_rubric():
+    res = subprocess.run([sys.executable, str(SCRIPT)], text=True, capture_output=True, cwd=ROOT)
+    assert res.returncode == 0, res.stderr
+    assert "# upstream rubric_version:" in res.stdout
