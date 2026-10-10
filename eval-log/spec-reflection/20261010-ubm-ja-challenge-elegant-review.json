@@ -182,6 +182,15 @@
         "plugins/skill-governance-automation/references/package-contract.json (depends_on) と plugin-composition.yaml (external_dependencies: skill-governance-config、relation: governance-policy-provider)"
       ],
       "design_decision": "ubm-goal-setting の skill_dependencies は、7スキルとも harness-creator だけにした。evaluate-design-rubric.py は設計レビュー専用で、対話の実行時の振る舞いには関わらない。そのため、skill-governance-config を live-trial の behavior closure に入れず、既存の live-trial verdict を無効にしないようにした。依存そのものは depends_on と external_dependencies で宣言している。 skill-governance-automation では、.claude-plugin/plugin.json の dependencies を変えなかった。このファイルは P1 承認済みの48件に含まれ、承認後に中身を変えると承認の target_sha256 と合わなくなる。installer は package-contract の depends_on から closure を解くので、宣言はそれで足りる。"
+    },
+    {
+      "id": "ci/bytecode-outside-checkout",
+      "summary": "PR を出した後の CI (run 38012009284) で、governance job の pytest が209件落ちた。run-skill-feedback に初めて .py (scripts/validate-inline-goal-seek-anchor.py) が入り、CI の py_compile が正本と21の配布コピーに別々の .pyc (元ファイルのパス入り) を作った。feedback_contract_ssot.is_vendored_feedback_skill はツリーの内容 hash でコピーを見分けるため、中身が同じコピーが独立したスキルとして数えられ、lint-feedback-contract の21件の違反と、criteria roster・llm-coverage のずれになった。手元は PYTHONDONTWRITEBYTECODE=1 で実行していたので再現しなかった。governance と plugin-tests の2つの job で PYTHONPYCACHEPREFIX を $RUNNER_TEMP に向け、検査するツリーを変えないようにした (eb7b1bc1)。",
+      "spec_impact": false,
+      "no_impact_reason": "CI の実行環境 (bytecode の置き場所) だけの変更で、スキルの振る舞い・契約・lint の規則は変えていない。配布コピーの判定の SSOT (scripts/feedback_contract_ssot.py) とその説明もそのまま。この前提 (検査するツリーに生成物を書かない) は、workflow の step のコメントに記した。",
+      "reflected_in": [
+        ".github/workflows/harness-creator-kit-ci.yml (Keep bytecode caches outside the checkout の step とコメント)"
+      ]
     }
   ],
   "excluded_from_commit": [
@@ -201,7 +210,9 @@
     "scripts/.claude/ と scripts/.artifact-delivery/ の掃除 (利用者が rm で消す)",
     "skill-governance-automation の独立レビューで low として残した点 (8件): SKILL.md に目的と entrypoint の対応表が無い。compute-rubric-hash.py は --dry-run を付けないと rubric.json をその場で書き換えるのに、SKILL.md がこの違いを区別していない。CI (harness-creator-kit-ci.yml) の re-evaluate の step が、受け付けない引数 --skills-dir を渡したうえで `|| true` で握りつぶしている。root の scripts/re-evaluate-on-rubric-bump.py が plugin 版と分かれていて、旧い挙動 (欠落を exit 0) のまま。notify-if-governance-trigger.py が入力の欠落を黙って exit 0 で返す。re-evaluate が EVAL_LOG_DIR を読まない。rollback-to-stable.py の --params の既定値が cwd 基準で、実在しないため ceiling 0.05 に黙って fallback する。Key Rules と IN1 の『receipt』が、この skill の entrypoint 群に対して何を指すか定義されていない。詳細は eval-log/skill-governance-automation/run-governance-automation/content-review/elegance-verdict.json の negative_feedback",
     "run-build-skill の独立レビューで low として残した点: skills/run-build-skill/scripts の4本に PEP 723 の script ブロックが無い。本文が299行で上限300行に近い。ゴールシーク配線の見出しとアンカーが無い (engine=inline なので違反ではない)",
-    "run-skill-intake の独立レビューで low として残した点: schemas/ を持たない phase (P6・P10) の検証方法が Key Rule 3 に書かれていない。references/handoff-contract.md が参照する正本の節名が古い。workflow-sequence.md の「失敗時の戻り先」が自動の巻き戻しと読める。Key Rule 9 の hook の配線先が実際 (hooks/hooks.json) と違う。詳細は eval-log/skill-intake/run-skill-intake/content-review/elegance-verdict.json の negative_feedback"
+    "run-skill-intake の独立レビューで low として残した点: schemas/ を持たない phase (P6・P10) の検証方法が Key Rule 3 に書かれていない。references/handoff-contract.md が参照する正本の節名が古い。workflow-sequence.md の「失敗時の戻り先」が自動の巻き戻しと読める。Key Rule 9 の hook の配線先が実際 (hooks/hooks.json) と違う。詳細は eval-log/skill-intake/run-skill-intake/content-review/elegance-verdict.json の negative_feedback",
+    "Plugin Governance CI の plugin-tests job で plugins/dev-graph の9件が落ち、verify job も failure になる。dev-graph の live-trial の stale と同じ原因で、harness-bzn.4 が扱う",
+    "feedback_contract_ssot.directory_content_sha256 は __pycache__ と .pyc も hash に入れる。CI は eb7b1bc1 で止めたが、手元で PYTHONDONTWRITEBYTECODE を付けずにコピーのスクリプトを import すると同じずれが起こりうる。harness-creator の版上げ (P1、cooldown 3日) が要るので、cooldown が明けてから正規の提案と承認で直す"
   ],
   "verification": {
     "verified_at_commit": "b802732a",
@@ -259,7 +270,28 @@
       "live-trial（run-ubm-challenge は harness-ead、dev-graph の9件は harness-bzn.4）",
       "人による実利用の確認",
       "外部 provider・vault・Notion への書き込み"
-    ]
+    ],
+    "ci": {
+      "run_before_fix": {
+        "run_id": 38012009284,
+        "head": "863d740f",
+        "governance": "failure: 209 failed, 7945 passed, 7 skipped (lint-feedback-contract 205件・criteria roster・llm-coverage・lint-feedback-contract の test 各1件)",
+        "plugin-tests": "failure: plugins/dev-graph の9件 (test_skill_criteria_evidence の stale behavior closure digest。dev-graph の live-trial の stale と同じ原因で harness-bzn.4 が扱う)",
+        "verify": "failure (上の2つの job の結果をまとめる job)"
+      },
+      "fix_commit": "eb7b1bc1",
+      "local_reproduction": {
+        "method": "eb7b1bc1 の fresh な worktree 2つで、CI と同じく scripts と plugins の全 .py を py_compile してから lint-feedback-contract --all を実行した",
+        "without_prefix": "rc=1、[FAIL] 21 violation(s) (CI と同じ)",
+        "with_prefix": "rc=0、ツリーの中の .pyc は0件"
+      },
+      "governance_pytest_with_prefix": {
+        "command": "PYTHONPYCACHEPREFIX=<scratch> python3 -m pytest tests/ plugins/skill-governance-lint/tests/ -q (py_compile の後、PYTHONDONTWRITEBYTECODE なし)",
+        "summary": "8052 passed, 4 skipped in 506.15s (rc=0)"
+      },
+      "gates_after_fix": "42件中41件が rc=0 (FAIL は既知の lint-live-trial-verdict の1件だけ)",
+      "deferred": "SSOT 側で __pycache__ と .pyc を内容 hash から外す強化は、harness-creator の版上げ (plugin.json は P1、cooldown 3日) が要るので follow-up に回した (planned_beads の6)"
+    }
   },
   "planned_beads": {
     "status": "外部変更ガードでユーザーの確認待ち。起票後に PR のコメントで ID を追記する",
@@ -268,7 +300,8 @@
       "re-evaluate-on-rubric-bump: CI の step の引数の誤りと root 版・plugin 版の二重実装を直す",
       "run-governance-automation: content-review の残り low 6件",
       "run-build-skill・run-skill-intake: content-review の残り low",
-      "lint-rubric-refs-exist: 他プラグインの既存14件の rubric_refs 未解決"
+      "lint-rubric-refs-exist: 他プラグインの既存14件の rubric_refs 未解決",
+      "feedback_contract_ssot: 配布コピーの内容 hash から __pycache__ と .pyc を外す"
     ]
   }
 }
