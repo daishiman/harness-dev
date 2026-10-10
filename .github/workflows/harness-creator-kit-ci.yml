@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: '3.11'
 
+      # governance job と同じ理由で、bytecode をツリーの外へ出す。
+      - name: Keep bytecode caches outside the checkout
+        run: echo "PYTHONPYCACHEPREFIX=$RUNNER_TEMP/pycache" >> "$GITHUB_ENV"
+
       - name: Run plugin behavior tests (pytest, all test roots)
         run: |
           python3 -m pip install --quiet -r requirements-dev.txt
@@ -40,6 +44,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      # 後続の lint は checkout したツリーを内容 hash で比べる (run-skill-feedback の配布コピー判定 =
+      # scripts/feedback_contract_ssot.py の is_vendored_feedback_skill)。py_compile や pytest の import が
+      # ツリーへ __pycache__ (元パス入りの .pyc) を書くと、正本と同一のコピーが不一致に化けて
+      # 21 件の重複計上になる (PR #85)。bytecode はツリーの外へ出し、検査対象を変えない。
+      - name: Keep bytecode caches outside the checkout
+        run: echo "PYTHONPYCACHEPREFIX=$RUNNER_TEMP/pycache" >> "$GITHUB_ENV"
 
       - name: Compile migrated Python scripts
         run: |
