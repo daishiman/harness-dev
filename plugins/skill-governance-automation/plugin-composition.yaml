@@ -1,6 +1,6 @@
 name: skill-governance-automation
 kind: plugin-composition
-version: 0.1.14
+version: 0.1.15
 purpose: Public capability inventory and dependency boundary for skill-governance-automation.
 description: Public capability inventory and dependency boundary for skill-governance-automation.
 owner: harness-dev
@@ -14,4 +14,8 @@ external_dependencies:
     version: ">=1.4.0 <2.0.0"
     relation: skill-feedback-ssot-provider
     required_entry_points: [run-skill-feedback]
+  skill-governance-config:
+    version: ">=0.1.0 <1.0.0"
+    relation: governance-policy-provider
+    required_entry_points: [run-governance-config]
 

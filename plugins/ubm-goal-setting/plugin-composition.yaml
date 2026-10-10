@@ -4,37 +4,39 @@
 #       ~/dev/dev/ObsidianMemo/.claude/skills/ubm-goal-setting/ の既存資産を faithful-transfer+adapt した移植 plugin。
 
 name: ubm-goal-setting
-description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。
+description: 北原さん式ゴールセッティングの目標設定・振り返り対話 (capability A) とナレッジ差分同期 (capability B) を提供する移植 plugin。会話で作る日次ジャーナルと挑戦宣言と企画も同じ plugin で扱う。
 kind: plugin-composition
-version: 0.6.4
+version: 0.7.0
 owner: harness-maintainers
 since: 2026-07-04
 last-audited: 2026-07-11
 
 contract:
-  intent: UBM (北原さん式ゴールセッティング) の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract) を継承した 1 plugin へ漏れなく移植する。
+  intent: UBM (北原さん式ゴールセッティング) の目標設定・振り返り対話機能とナレッジ差分同期機能一式を、harness-creator の量産規律 (TDD/評価/goal-seek/feedback-contract) を継承した 1 plugin へ漏れなく移植し、会話で作る日次ジャーナルと挑戦宣言と企画を同じ規律で加える。
   interface:
-    inputs: [目標種別(weekly|monthly|quarterly。bimonthlyは後方互換の別名), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md)]
-    outputs: [統一ハイブリッド構造の公式21ブロックの目標設定ファイル, Daily.md embed更新, knowledge/*.json更新, router.json/registry.json/sync-log.jsonl追記, 同期レポート]
+    inputs: [目標種別(weekly|monthly|quarterly。bimonthlyは後方互換の別名), 過去目標, 合宿情報, ナレッジJSON, 対話回答, ナレッジソース(.md), ジャーナルの日付(YYYY-MM-DD), 挑戦の仮タイトル]
+    outputs: [統一ハイブリッド構造の公式21ブロックの目標設定ファイル, Daily.md embed更新, knowledge/*.json更新, router.json/registry.json/sync-log.jsonl追記, 同期レポート, 日次ジャーナル(02_Configs/Daily/YYYY-MM-DD.md), 挑戦宣言と企画のファイル(05_Project/UBM/挑戦宣言/)と提出用テキスト]
   invariant:
     - 目標設定出力は統一ハイブリッド構造の公式21ブロックを満たし validate-goal-output.py の全チェックに PASS すること
     - 数値は半角のみ・差分は +/- 付き・行動目標は「誰に・何を・いつまで・何件」を含むこと
     - 「頑張る/意識する/気をつける」等の精神論は行動目標として不可 (具体化を要求)
     - 「やらないこと」3項目以上 + 判断基準1文で迷いを排除すること
     - capability A (goal-setting) と capability B (knowledge-sync) は knowledge/*.json を plugin-root 共有 SSOT (schema契約) として整合し、skill 間の実行時 depends_on は張らないこと
-    - knowledge L1 curated (28JSON+router) は vendor 同梱シード / L2 raw vault は UBM_VAULT_ROOT で外部解決 / L3 bookkeeping (registry=実台帳/sync-log=空) は plugin 同梱 knowledge/ への直書きで更新すること (writeback-config という別機構は不要と build で確定)
-    - 移植元 vault (~/dev/dev/ObsidianMemo) のノート/設定領域 (01_Notes/・02_Configs/ の許可外ファイル・03_Sources/・logs/・.obsidian/ 等) は読み取り専用ソースであり ubm-write-path-guard hook が許可範囲 (prefix 7 件 = 05_Project/・02_Configs/Daily/・.claude/{skills,agents,commands,rules,prompts}/、完全一致 1 件 = 02_Configs/Templates/Daily.md。正本は hooks/ubm-write-path-guard.py の ALLOWED_PREFIXES / ALLOWED_EXACT) 以外の vault 書込を fail-closed で阻むこと。各 skill が実際に書く範囲はこれより狭く、その境界は各 skill の規則が守る。UBM_VAULT_ROOT 未設定時は検査しない
+    - knowledge L1 curated (router が列挙する6カテゴリの分割JSON+router) は vendor 同梱シード / L2 raw vault は UBM_VAULT_ROOT で外部解決 / L3 bookkeeping (registry=実台帳/sync-log=空) は 親が承認済みの中央guard executeからplugin同梱knowledge/へ反映すること（抽出Taskは一時コピーだけを更新） (writeback-config という別機構は不要と build で確定)
+    - 移植元 vault (~/dev/dev/ObsidianMemo) のノート/設定領域 (01_Notes/・02_Configs/ の許可外ファイル・03_Sources/・logs/・.obsidian/ 等) は読み取り専用ソースであり ubm-write-path-guard hook が許可範囲の正本 hooks/ubm-write-path-guard.py の ALLOWED_PREFIXES / ALLOWED_EXACT 以外の vault 書込を fail-closed で阻むこと。各 skill が実際に書く範囲はこれより狭く、その境界は各 skill の規則が守る。UBM_VAULT_ROOT 未設定時は検査しない
     - scripts は Python 標準ライブラリのみ (旧 .sh 3本の契約移植・逐語移植ではない)
     - 成果物本文・対話は日本語、CLI 引数・JSON キーは英語のままとすること
     - 配布は個人利用前提で distributable:false (marketplace 非掲載)
 
 capabilities:
   - { kind: skill, ref: skills/run-skill-feedback, tier: core }
+  - { kind: skill, ref: skills/run-ubm-challenge, tier: core }
   - { kind: skill, ref: skills/run-ubm-consult, tier: core }
   - { kind: skill, ref: skills/run-ubm-goal-setting, tier: core }
   - { kind: skill, ref: skills/run-ubm-journal, tier: core }
   - { kind: skill, ref: skills/run-ubm-knowledge-sync, tier: core }
   - { kind: skill, ref: skills/run-ubm-youtube-ingest, tier: core }
+  - { kind: agent, ref: agents/challenge-advisor, tier: core }
   - { kind: agent, ref: agents/goal-reviewer, tier: core }
   - { kind: agent, ref: agents/info-collector, tier: core }
   - { kind: agent, ref: agents/journal-composer, tier: core }
@@ -43,6 +45,7 @@ capabilities:
   - { kind: agent, ref: agents/output-formatter, tier: core }
   - { kind: agent, ref: agents/phase3-coordinator, tier: core }
   - { kind: agent, ref: agents/youtube-transcript-normalizer, tier: core }
+  - { kind: command, ref: commands/ubm-challenge, tier: core }
   - { kind: command, ref: commands/ubm-consult, tier: core }
   - { kind: command, ref: commands/ubm-goal-setting, tier: core }
   - { kind: command, ref: commands/ubm-journal, tier: core }
@@ -86,6 +89,21 @@ capabilities:
   - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py, tier: core }  # imp-C03 (全量 completeness 検査)
   - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py,            tier: core }  # imp-C02-internal (scheduler one-shot・folded)
   - { kind: script,  ref: skills/run-ubm-youtube-ingest/scripts/youtube_provider.py,                    tier: core }  # imp-C02-internal (provider adapter・late-bound・folded)
+  # -- Scripts (run-ubm-challenge skill 配下 · 挑戦宣言と企画の保存前後ゲート) --
+  - { kind: script,  ref: skills/run-ubm-challenge/scripts/validate-challenge-output.py, tier: core }
+
+  - { kind: script, ref: skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py, tier: core }
+  - { kind: script, ref: skills/run-ubm-goal-setting/scripts/validate-cross-level.py, tier: core }
+  - { kind: script, ref: skills/run-ubm-journal/scripts/build-journal-context.py, tier: core }
+  - { kind: script, ref: skills/run-ubm-journal/scripts/validate-journal-output.py, tier: core }
+  - { kind: script, ref: scripts/validate-inline-goal-seek-anchor.py, tier: core }
+  - { kind: script, ref: scripts/evaluate-design-rubric.py, tier: ref }
+
+  - { kind: script, ref: scripts/publish-staged-files.py, tier: core }
+
+  - { kind: script, ref: skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py, tier: core }
+  - { kind: script, ref: scripts/search-knowledge.py, tier: core }
+  - { kind: script, ref: scripts/record-knowledge-usage.py, tier: core }
 
 dependencies:
   # 主要 DAG。lint-dependency-direction.py で循環検出 (skill 間実行時 depends_on は張らない)。
@@ -130,12 +148,86 @@ dependencies:
   - { from: skills/run-ubm-consult, to: scripts/validate-consult-session.py,       type: calls }
   - { from: skills/run-ubm-consult, to: agents/phase3-coordinator, type: reads, note: "R3/R4 が翻訳3ステップと行動具体性の基準を定義ファイルから読む (subagent_refs の対応 edge)" }
   - { from: commands/ubm-consult,   to: skills/run-ubm-consult, type: calls }
+  # [2026-10-08] 挑戦宣言と企画: 親が聞き手、challenge-advisor がユーザーの答えに紐づく北原ナレッジから深掘りの問いか方向の助言を読み取り専用で返し、validator が保存前後を検査する。
+  - { from: skills/run-ubm-challenge, to: agents/challenge-advisor, type: calls }
+  - { from: skills/run-ubm-challenge, to: skills/run-ubm-challenge/scripts/validate-challenge-output.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: agents/phase3-coordinator, type: reads, note: "question-map の「返し方」が回答パターンと3ステップを phase3 の定義ファイルから参照し、差分だけを持つ" }
+  - { from: agents/challenge-advisor, to: knowledge/router.json, type: reads, note: "question-map の各欄のレンズに紐づくものが無いとき quick_lookup.by_issue から辿り、knowledge/*.json で実在を確かめる" }
+  - { from: agents/challenge-advisor, to: skills/run-ubm-challenge/references/question-map.md, type: reads, note: "原則・返し方・欄ごとの問い・戻りゲートを読む" }
+  - { from: agents/challenge-advisor, to: skills/run-ubm-challenge/references/challenge-format.md, type: reads, note: "「各欄の合格条件」の対象欄を読み、答えが足りているか (missing) を決める" }
+  - { from: agents/challenge-advisor, to: agents/phase3-coordinator, type: reads, note: "question-map の「返し方」が指す「ナレッジ活用原則」と「品質基準（回答パターン別対応ルール）」を読む" }
+  - { from: commands/ubm-challenge,   to: skills/run-ubm-challenge, type: calls }
+
+  - { from: commands/ubm-journal, to: skills/run-ubm-journal, type: calls }
+
+  - { from: skills/run-ubm-journal, to: agents/journal-composer, type: calls }
+
+  - { from: skills/run-ubm-journal, to: skills/run-ubm-journal/scripts/build-journal-context.py, type: calls }
+
+  - { from: skills/run-ubm-journal, to: skills/run-ubm-journal/scripts/validate-journal-output.py, type: calls }
+
+  - { from: agents/journal-composer, to: skills/run-ubm-journal/scripts/validate-journal-output.py, type: calls }
+
+  - { from: skills/run-ubm-youtube-ingest, to: agents/knowledge-extractor, type: calls }
+
+  - { from: skills/run-ubm-knowledge-sync, to: agents/knowledge-relation-extractor, type: calls }
+
+  - { from: agents/output-formatter, to: skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py, type: calls }
+
+  - { from: agents/output-formatter, to: skills/run-ubm-goal-setting/scripts/validate-cross-level.py, type: calls }
+
+  - { from: skills/run-ubm-goal-setting, to: skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py, type: calls }
+
+  - { from: skills/run-ubm-goal-setting, to: skills/run-ubm-goal-setting/scripts/validate-cross-level.py, type: calls }
+
+  - { from: skills/run-ubm-goal-setting, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-journal, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-consult, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-challenge, to: scripts/validate-inline-goal-seek-anchor.py, type: calls }
+
+  - { from: skills/run-ubm-goal-setting, to: scripts/publish-staged-files.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/publish-staged-files.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/publish-staged-files.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/publish-staged-files.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/publish-staged-files.py, type: calls }
+
+  - { from: skills/run-ubm-goal-setting, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/record-knowledge-usage.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/search-knowledge.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/record-knowledge-usage.py, type: calls }
+
+  - { from: skills/run-ubm-youtube-ingest, to: skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py, type: calls }
+  - { from: skills/run-ubm-challenge, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-consult, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-goal-setting, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-journal, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-knowledge-sync, to: scripts/evaluate-design-rubric.py, type: calls }
+  - { from: skills/run-ubm-youtube-ingest, to: scripts/evaluate-design-rubric.py, type: calls }
 
 external_dependencies:
   harness-creator:
     version: ">=1.4.0 <2.0.0"
-    relation: skill-feedback-ssot-provider
-    required_entry_points: [run-skill-feedback]
+    relation: skill-feedback-and-content-review-provider
+    required_entry_points: [run-skill-feedback, assign-skill-design-evaluator]
+  skill-governance-config:
+    version: ">=0.1.0 <1.0.0"
+    relation: content-review-rubric-registry
+    required_entry_points: [run-governance-config]
 
 eval_sinks:
   - EVALS.json

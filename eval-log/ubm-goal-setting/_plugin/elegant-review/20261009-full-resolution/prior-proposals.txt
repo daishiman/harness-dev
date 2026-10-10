@@ -1,0 +1,105 @@
+# bd の起票案（実行はしない。利用者が確かめてから実行する）
+# dev-graph の guard が有効なときは bd-bridge 経由になる（bd remember の記録を参照）。
+
+# --- harness 全体（日本語の正規形の展開）---
+bd create --type=feature --priority=2 \
+  --title="他の13プラグインを日本語の正規形へ移すかを決め、移すなら移す" \
+  --description="ubm-goal-setting は日本語の正規形（見出し・ガードブロック・実行時のルートの節・エージェントの見出し）へ移した。他の13プラグインは英語のまま。共通スクリプトは両方を受け入れるので急ぐ必要はないが、プラグインごとに言語が違う状態が続く。移す手順は ubm と同じ（見出しを置き換え → build-artifact-delivery.py --migrate-external-guard → 採点と lint）。"
+
+bd create --type=task --priority=2 \
+  --title="生成元（build-subagent.py・prompt-creator の inject_sections・テンプレート）を日本語の正規形に対応させる" \
+  --description="新しく作るスキルとエージェントは、今も英語の見出し（Prompt Templates・Self-Evaluation・Pre/Post-choice・Runtime root contract）で生成される。日本語のプラグインに足すと、生成直後に言語が混ざる。生成元に言語の引数を足し、訳語表（bd memory の ja-term-table-ubm-2026-10、122組）を正本として置く。package-contract の purpose の定型、### ゴール (Goal) の定型、codex の既定値も同じ対象。"
+
+bd create --type=task --priority=3 \
+  --title="lint が照合する英語のラベル（メタ表の行名・Layer N・Anchor Step など）の日本語の別名を決める" \
+  --description="メタ表の行名（name・skill・responsibility・reproducible）は prompt-rubric.json と render-findings-score が、入出力表の1列目は consult のテストが照合するので、日本語化した ubm でも英語のまま残した。workflow-manifest.json の説明文にも、照合される英語の句を括弧で残している。PD-002 の禁則の判定（has_rule）も、見出しの「Key Rule」は認めるのに、その訳の「守ること」は認めない。別名を足すなら rubric の governance（proposer≠approver）を通す。同じ版上げで、rubric の説明文の誤りも直す: (1)『BD-001 が合格なら PD-002 も合格』とあるが、PD-002 は冒頭30行への配置も求めるので成り立たない (2)『厳格一致』とあるが、英語の見出しは部分一致で照合している。"
+
+bd create --type=task --priority=3 \
+  --title="SKILL.md の定型の節（実行時のルートなど）をマーカー付きの生成ブロックにする" \
+  --description="外部変更ガードはマーカー付きの生成ブロックなので --migrate-external-guard で言語を入れ替えられるが、実行時のルートの節は _ensure_runtime_root_contract がどちらかの言語の見出しを見つけると何もしない。そのため ubm では英語の節を手で日本語に置き換えた。生成ブロックにすれば移行が機械的になり、lint-ssot-duplication の WARN（6ファイルに同じ節）も生成ブロックとして外れる。prompts/ を持たないスキル（challenge・journal・knowledge-sync）に「prompts/ の下のファイルも…」の行を出さないことも、ここで扱う。あわせて次の3つのゲートの穴も塞ぐ: (1) Post-choice の見出しが日本語なのに実行時のルートの節が英語の SKILL.md が、delivery・audit・lint のどれも通る（言語の一致を見ていない） (2) 外部変更ガードのブロックは、マーカーの有無しか見ず、ブロック全体が生成元と一致するかを見ていない (3) 冒頭の節の並び（H1 → 目的と出力契約 → 実行時のルートの決め方 → 選ぶ前 → 選んだ深さ → 全体の流れ）を、ubm では手で6つそろえたが、どの lint も固定していない。"
+
+bd create --type=task --priority=3 \
+  --title="Runtime root の1行目（runtime_root_policy）を parity 監査のトークンに入れる" \
+  --description="audit-capability-parity.py の RUNTIME_ROOT_CONTRACT_TOKENS（英語・日本語とも）に runtime_root_policy の行が入っていない。frontmatter の検査が別にあるので実害は小さいが、節の検査としては1行目が欠けても合格する。正本の参照による逃げ道（RUNTIME_ROOT_CANONICAL_REF）も英語の見出しだけを見る。"
+
+bd create --type=task --priority=4 \
+  --title="prompt-creator の seven-layer-format.md の「### 5.1 担当 agent」を日本語にそろえる" \
+  --description="ubm の prompts とエージェントは「### 5.1 担当エージェント」にそろえた。生成元の prompt-creator 側が「担当 agent」のままなので、新しく生成すると表記が戻る。"
+
+# --- ガバナンスの道具の穴 ---
+bd create --type=bug --priority=1 \
+  --title="hook-guard-rubric.py が正本の rubric.json への直接の編集を止めていない" \
+  --description="GUARDED_SUFFIXES が ref-skill-design-rubric/rubric.json になっていて、実際のパス ref-skill-design-rubric/references/rubric.json と合わない。creator-kit/config/rubric-registry.json も存在しない。そのため Edit を止めず rc=0 で通る（2026-10-09 に確認）。Goodhart 防止の仕組みが働いていない。"
+
+bd create --type=bug --priority=2 \
+  --title="guard-change-category.py: 自分の記録で cooldown に掛かることと、リストの target_path が承認判定に合わないこと" \
+  --description="(1) check_cooldown は、同じカテゴリーの記録が期間内にあると False を返す。PR #83 で変えたファイルを7日以内に再び記録した今回の P0 の記録（render-findings-score.py）が BLOCK された。CI は --bypass-cooldown で通るが、ローカルで実行すると落ちる。(2) has_recent_changelog は target_path.split('/')[0] in entry['target_path'] で判定するので、target_path がリストのときは要素の完全一致になり、承認済みの記録が見つからない。"
+
+# --- ubm-goal-setting の入口の配線（2026-10-09 に見つけた。HEAD から同じ作り）---
+bd create --type=bug --priority=1 \
+  --title="ubm: /ubm-* コマンドが Skill ツールで run-ubm-* を起動するが、スキル側が disable-model-invocation: true なので拒否される" \
+  --description="6つのコマンド（commands/ubm-*.md）は「スキルを Skill ツールで明示起動する」と書き、allowed-tools も Read, Skill。ところが対応する6スキルはすべて disable-model-invocation: true で、Skill ツールで run-ubm-consult を呼ぶと『cannot be used with Skill tool due to disable-model-invocation』で拒否された（2026-10-09、コマンドをモデルが Skill で呼んだ経路で確認。利用者が /ubm-* を直接打った経路は未確認）。根は harness の規約同士の矛盾にある。prefix-axis-matrix.md:49 は『run- + disable-model-invocation: true → 矛盾』とする一方で、ubm の tests/test_ubm_consult_contract.py:74 は『run の種類は Step 7-4 で disable-model-invocation: true が必須』と固定している。そのため、ubm だけを直すと生成元とテストにぶつかる。先に harness 側でどちらの規約を正とするかを決め、その後に ubm の6つのコマンドとスキルを合わせる。直し方の候補: (a) スキルの disable-model-invocation を外し、description で誤発火を抑える (b) コマンドが SKILL.md を Read して従う形に変える（コマンドの本文で \${CLAUDE_PLUGIN_ROOT} が展開されるかと、allowed-tools をスキル側と合わせる必要があるかを先に確かめる）。どちらにするかは、コマンドを唯一の入口にしたい理由（誤発火の防止）と合わせて決める。"
+
+# --- ubm-goal-setting の前からある抜け（Q3 で bd に回したもの）---
+bd create --type=task --priority=3 \
+  --title="ubm: journal・consult・youtube のゴールシーク検証の配線をそろえる" \
+  --description="challenge には ### ゴールシーク検証（original_goal_hash の固定と anchor の検査）を足したが、journal・consult・youtube には無い。lint-goal-seek の WARN 7件が残っている。アンカーの検査の契約（required_keys・original_goal の固定・共通の検査スクリプト validate-inline-goal-seek-anchor.py の範囲）は今、journal と challenge の SKILL.md にそれぞれ書いてある。各スキルに書き写さず、goal-setting（各スキルが正本として指している）か references の1か所にまとめ、各スキルは自分の違い（fork の種類など）だけを書く形にする。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: EVALS.json の version と journal の llm_eval、composition の journal の辺をそろえる" \
+  --description="EVALS.json の version がプラグインの版と合っていない。composition に journal の辺が足りず、youtube・consult の description も古い。distributable の割れと 28個の JSON の扱いも合わせて確かめる。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: 見出しの参照テスト（test_heading_references）を全ファイルの全見出しへ広げる" \
+  --description="今は SKILL.md の ## X の形の参照だけを検査している。今回、RUNBOOK の節名を変えたときに、スクリプトのコメントと共通の参照が切れたのをテストで拾えなかった。references・RUNBOOK・agents の見出しを名前で指す参照も検査する。"
+
+bd create --type=task --priority=4 \
+  --title="ubm: 小さな前からの抜け（古い agents の \$CLAUDE_PLUGIN_ROOT、goal-setting の未設定時の扱い、MD-12 の出所の検査など）" \
+  --description="古い agents 4本の \$CLAUDE_PLUGIN_ROOT の書き方、goal-setting の環境変数が未設定のときに全部を許す扱い、MD-12 の出所の検査（--confirmed。live-trial の後に再検討）、精神論の語の一覧の共通化（goal 側で「なるべく」「できるだけ」が新たに落ちる回帰があるので別に扱う）、EXCLUDED_SUBDIRS の追加漏れの予防、youtube の scripts のコメントの英語（youtube_provider.py・run-youtube-sync-oneshot.py）。プラグインのルートをサブエージェントへ渡す書き方も、\$CLAUDE_PLUGIN_ROOT・\${PLUGIN_ROOT:-\${CLAUDE_PLUGIN_ROOT}}・親が解決した絶対パスの PLUGIN_ROOT の3通りが混ざっている（2026-10-09 に youtube-ingest で、normalizer と knowledge-extractor へ渡す入力の抜けが見つかり、直した）。素の \$CLAUDE_PLUGIN_ROOT は、goal-setting の references（data-contract.md・output-formats.md・thinking-*.md）・info-collector・output-formatter・knowledge-sources.md に残っていて、Codex では未設定なので解けない。正本を1つ決め、agents の入力の項と SKILL の起動箇所をそれに合わせる。ほかに、youtube-transcript-normalizer の例の untrusted_data_notice の値（『untrusted transcript を data として』）は、run-youtube-sync-oneshot.py と normalized-source-schema.md の文言と一緒に訳す。"
+
+# --- ubm-goal-setting の 2026-10-09 の elegant-review 反復2で bd に回したもの ---
+bd create --type=task --priority=2 \
+  --title="ubm: consult から /ubm-challenge への案内を、outcome の enum と一緒に足す" \
+  --description="挑戦宣言（run-ubm-challenge）は 2026-10 に足したが、consult の振り分け（R1 の表・SKILL の責務境界）は目標設定と安全の2つしか知らない。案内の文だけを足すと、validate-consult-session.py の OUTCOMES（redirected_goal_setting・safety_redirect・consult_completed）に対応する値が無く、記録の形式と食い違う。次をまとめて1つの変更で直す: OUTCOMES と handoff_to に redirected_challenge・run-ubm-challenge を足す、session-record-format.md の『分岐別の outcome』、R1 の outcome・handoff_to の enum と表、SKILL の目的と責務境界とチェックリスト、workflow-manifest.json、tests/test_validate_consult_session.py。"
+
+bd create --type=task --priority=4 \
+  --title="ubm: goal-setting の決定論ゲートの表を、エージェントの中から references へ移す" \
+  --description="2026-10-09 に、3つの検査スクリプトの回す条件・引数・rc の意味を output-formatter の Step 3 の『決定論ゲート』の表1つにまとめ、SKILL の IN1〜IN3・Phase5-validate・『つまずきやすい点』はその表を指す形にした（重複は無い）。残るのは置き場で、スキルの契約の正本がエージェントのファイルの中にあり、SKILL がそこを指している。references/validation-gates.md のような中立の場所へ表を移し、output-formatter と SKILL の両方がそこを指す形にするかを決める（output-formatter は独立した context で動くが Read できる）。正本の候補は references/output-formats.md の『一本筋の照合は…で分担する』節の近く。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: 挑戦宣言を、目標設定と日次ジャーナルの流れにつなぐ" \
+  --description="README の全体のループ（目標設定 → 日次ジャーナル → 見直し）に挑戦宣言が入っていない。info-collector は、過去の目標・合宿・ナレッジ・journal は集めるが、vault の挑戦宣言は読まない。挑戦宣言を目標設定の Phase1-2 で読み取り専用で参照する経路を足すか、足さない理由を README に書くかを決める。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: エージェントの骨格を2つの型（読み取り専用の助言役・書き込みと検査をする役）にそろえ、7層の lint の対象に ubm を足す" \
+  --description="9本のエージェントは、節の並びと自己採点の置き場がばらばらで、phase3-coordinator と knowledge-relation-extractor では自己採点が二重になっていた（2026-10-09 に解消）。さらに、7層を検査する lint-agent-prompt-content.py --mode agent は、CI（harness-creator-kit-ci.yml:203）でも手元のゲートでも引数なしで呼ばれ、harness-creator の8本しか見ていない。--plugins-dir plugins/ubm-goal-setting で流すと、challenge-advisor・goal-reviewer・info-collector・knowledge-extractor・output-formatter・phase3-coordinator・journal-composer の7本が不合格になる（前からの違反で、どのゲートにも出ていない）。助言役（challenge-advisor・phase3-coordinator・knowledge-relation-extractor など）と、書き込みと検査をする役（output-formatter・journal-composer・knowledge-extractor など）の2つの骨格を決めて7本を合わせ、生成元（build-subagent.py）のテンプレートにも反映する。そのうえで、CI の検査対象に ubm の agents を足す（先に足すと CI が赤くなるので、骨格をそろえるのと同じ変更で足す）。"
+
+bd create --type=task --priority=4 \
+  --title="ubm: テストが照合する文を、構造のキーか日本語の正規の句に変える" \
+  --description="テストが本文の英語交じりの文をそのまま照合しているため、訳せない箇所が残っている（run-ubm-knowledge-sync の SKILL.md L198 の文、journal の『+ script』、『共通validator』など）。照合を、frontmatter のキーや見出し、または訳語表に沿った日本語の句に変えてから訳す。"
+
+# --- ubm-goal-setting の 2026-10-09 の elegant-review 反復3で bd に回したもの ---
+bd create --type=task --priority=3 \
+  --title="ubm: consult の目標設定への誘導の分岐で、保存の同意を確かめる手順を決める" \
+  --description="R1 の完了チェックリストは『誘導分岐は…保存同意がある場合のみ R4 と同経路で記録』としているが、persistence_consent を確かめるのは consult_continue のときだけで、誘導の分岐には同意を聞く手順が無い（既定 false のままなので、記録は作られない）。一方で、validate-consult-session.py は redirected_goal_setting の記録に referral_confirmed を求め、goal-setting の info-collector の Step 3.8 は相談の記録を読む。誘導の分岐で同意を1問だけ聞くか、誘導の分岐は記録しないと決めて R1・session-record-format.md・検査スクリプトの記述をそろえるかを決める。対話の流れを変える判断なので、利用者に確かめてから直す。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: youtube-ingest で、サブエージェントの必須入力（normalizer の dest_root・relation-extractor の knowledge_dir）を受け渡す" \
+  --description="(1) youtube-transcript-normalizer は入力に dest_root（正規化ソースの出力ルート）を求めるが、R1 の出力契約にも R2 の入力契約にも出力先の欄が無く、R2 の出力指示は normalizer に dest_root を渡していない。決定論の経路（run-youtube-sync-oneshot.py）は --source-out を持つ（既定は登録簿と同じディレクトリ）。R1 の出力に source_out（--source-out の解決結果）を足し、R2 の入力と出力指示で normalizer の dest_root に渡す。--dry-run のときに書き込まないこととの関係も R2 の出力指示に書く。2026-10-09 の反復3で plugin_root だけを R2・R3 に足したときに見つかった。(2) 同じ型で、R3 の出力指示は knowledge-relation-extractor の必須入力 knowledge_dir を渡す指示を持たず、knowledge-extractor の target_files・mode と normalized_paths の対応も書いていない（HEAD から。同じ文中の --knowledge-dir から推測できるので止まりはしない。prompts/R3-extract-graph.md:116、agents/knowledge-relation-extractor.md:70、agents/knowledge-extractor.md:640-642）。2026-10-09 の content-review の取り直しで見つかった。"
+
+# --- ubm-goal-setting の 2026-10-09 の content-review の取り直しで見つかった、前からの指摘（反復の上限に達したので直していない）---
+bd create --type=bug --priority=2 \
+  --title="ubm: challenge の C6 で、下書きの一時パスを Bash で一度解決してから Write と検査の両方に使う" \
+  --description="C6 は一時パス \${TMPDIR:-/tmp}/ubm-challenge/ へ Write で下書きを書き、同じ文字列を validate-challenge-output.py の --file に渡す。Write ツールはシェル変数を展開しないので、書き込み先と検査先がずれると検査スクリプトが終了コード 2 で止まる。C6 には終了コード 2 のときの扱いも無い。手順を『Bash で一時ディレクトリを1回解決し、その絶対パスを Write と --file の両方に使う』に変え、終了コード 2 のときは直さずに止めて理由を伝えると書く（run-ubm-challenge/SKILL.md:210,214）。実際の試行では /var/folders/…/T/ に解決できていたので、今は動いている。"
+
+bd create --type=bug --priority=2 \
+  --title="ubm: 文書どうし・文書と実装で食い違っている記述（前から）を直す" \
+  --description="どれも動作は誤らないが、読む人が迷う。1件ずつ、どちらが正しいかを実装か正本で確かめてから、もう片方を直すか参照にする。(1) journal: 骨格のブロック数が IN1 と resource-map では15、正本の REQUIRED_OUTLINE は16。数を書かずに REQUIRED_OUTLINE を指す（SKILL.md:65、references/resource-map.yaml:6、scripts/validate-journal-output.py:160-177）。(2) journal: 『保存前の検証』（SKILL.md:286、IN1、journal-composer の description）と、手順の『保存してから検証し、最大3回直す』が食い違う。3回で収束しないと違反の入ったファイルが Daily に残ることも書く（description を変えると Codex 側の同期も要る）。(3) journal: 原理原則の設問を増減するときに直すファイルの組が箇所ごとに2つ・3つ・4つ＋テストと違う。output-format.md:3-6 を正本にして他は参照にする（SKILL.md:292-293、resource-map.yaml:13、principle-checklist.md:4-6）。(4) knowledge-sync: --since は文書では『指定した日以降』だが、実装は厳密な大なりで、しかも絞り込みではなくハッシュが一致するファイルを MODIFIED に加える（SKILL.md:219、detect-knowledge-updates.py:105,167）。(5) consult: R4 の 2.4 の user_solution が string だが、記録のスキーマは {text, source_turn_ids}（R4-cocreate-converge.md:51、session-record-format.md:41-44）。R4 の 2.4 の session_record が『保存同意時のみ』だが、2.3 は同意が無くても組み立てて検査の後に破棄するとしている（同 46,53）。manifest の r1 の output に consult_type が無い（workflow-manifest.json:36、R2-elicit.md:42）。SKILL.md の『複数の選択肢』と正本の『reflect-only は1件以上』（SKILL.md:163,179、R3-frame-consult.md:38）。(6) youtube: モード未指定のとき、command は『--sync を既定候補として提示』、R1 は『既定を --sync とせず1問で確定』（commands/ubm-youtube-ingest.md:38、prompts/R1-source-mode.md:70）。(7) challenge: 周回は最大3周だが iteration は初回の1に3周を足して最大4になり、max_iterations: 3 と数え方がずれる（SKILL.md:65,229,242）。plugin-composition.yaml の辺は advisor が phase3-coordinator の『ナレッジ活用原則』だけを読むと書くが、実際は『品質基準』も読む（plugin-composition.yaml:145、agents/challenge-advisor.md:28）。書き込み許可範囲の正本の書き方が completeness_exempt と本文・composition で違う（SKILL.md:62,222、plugin-composition.yaml:26）。SKILL.md を直すスキルは content-review を取り直す。"
+
+bd create --type=task --priority=3 \
+  --title="ubm: 入力や扱いの出どころが書かれていない箇所（前から）を埋める" \
+  --description="(1) goal: 決定論ゲートの表の {{quarterly_path}}・{{monthly_path}}・{{weekly_path}} の出所が無い。Step 3 は保存前なので、作成中の層に一時ファイルを渡すのか、保存先の既存ファイルを渡すのかも決まっていない（agents/output-formatter.md:188-197,226-231）。表を references へ移す件と一緒に扱える。(2) consult: R4 の 2.3 入力契約に collaboration_mode と consult_evidence が無く、reflect-only での締め方の判断と記録の必須項目の出どころが辿れない（R4-cocreate-converge.md:41-46、session-record-format.md:9,52）。(3) journal: 検査スクリプトが終了コード 2 で終わったときの journal-composer の扱いが無い（journal-composer.md:80）。build-journal-context.py の SCHEMA が previous_journal の principle_checklist を挙げていない（:51,735）。interview-map の『前日分が無いと警告』は、実装では前回が1件も無いときだけ（interview-map.md:85、build-journal-context.py:741-746）。(4) challenge: C1 の時点で仮タイトルが無いときの original_goal の決め方（後から変えられないハッシュになる。SKILL.md:234,241）、保留の欄を残す引き継ぎファイルの形とパスの起点（question-map.md:35）、advisor の field 10種と question-map の節の対応表、C0 の月報の Glob と旧名の扱い（SKILL.md:189）。(5) knowledge-sync: sources が未接続のときの出力（print_empty_result）に『除外: N 件』の行が無く、通常時と行の構成が違う（detect-knowledge-updates.py:83-95,175）。"
+
+bd create --type=task --priority=4 \
+  --title="ubm: 内容は一致しているが何か所にも書かれている記述を、正本1か所と参照に寄せる" \
+  --description="食い違ってはいないが、変えるときに直し漏れが起きる。(1) journal: 『原理原則の本文に --- を入れない』『11設問を毎回出し、対話では読み上げない』が SKILL.md・journal-composer・output-format・principle-checklist・interview-map の5か所にある。journal-composer は独立した context で動くので自分の手順を持ってよいが、残りは正本を1つに決めて指す。固定習慣の問い・落とす先が daily-habits.json と interview-map.md:79-86 の表に同文で並ぶ（一致を固定するテストも無い）。(2) consult: 締め方の定義（action と reflection の連鎖）が SKILL.md と R4 に計9か所ある。(3) challenge: hook の許可範囲より本スキルの書き込み範囲が狭いことの説明が completeness_exempt と C7 の2か所にある。(4) knowledge-sync: 除外の説明が SKILL.md と knowledge-extractor の中でそれぞれ2回ずつある。(5) goal: data-contract §4.4 に、linkage の rc の意味と cross-level の回す条件・コマンド例がゲートの表と重ねて残っている（rc の取り方の書き方も2通り）。『省略しても照合対象の件数は変わらない（…週報分だけ減る）』は、分母は変わらず減るのは比べる層の数だけ、と書き分ける（data-contract.md:482-499、output-formatter.md:197）。"

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/skill-governance-config/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "FAIL",
+    "score": 82,
+    "notes": "plugins/harness-creator/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py と byte 一致（sha256: be89aacb88f1db33a29700e93128e51a5d2c76c59163564c444c1cd8dde0e521）。plugins/harness-creator/skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py のレビュー結果を適用。sha256 で一致を確かめ、このコピーも個別に compile OK。代表の所見: 再レビュー（前回 sha 87b5dddb… で PASS 80 → 今回 sha be89aacb…）。26 本（正本テンプレート run-build-skill/templates/goal-seek-runtime 1 本、ubm・spec-drift-guardian・slide-report-generator の scripts/ 3 本、run-skill-feedback 22 本）が byte 一致することを shasum で実測した。責務は goal-seek の不変ゴールアンカーの検証に閉じている。全行に REQUIRED_KEYS があること、rows[0].original_goal を基準に全周回が同じであること、sha256(anchor) と progress.original_goal_hash が一致することを確かめる。progress/intermediate が無いときに exit 1 にする fail-closed も妥当。frontmatter は network:false・write-scope:none・exit 0/1/2・requires-python まで揃い、実際に読み取りしかしない。前回の減点(1)は解消した：49-50 行の isinstance ガードにより、progress が []・null・文字列のとき『progress が object でない』を出して exit 1 で止まることを実測。intermediate の行が object でない場合、jsonl が空の場合、JSON が壊れている場合（exit 2）、引数が足りない場合（exit 2）も、実測で期待どおりだった。test は byte 一致の正本テンプレートを読み込み、non-object のケースも含む。lint_vendored_ssot は配布コピーの一致を検査する。DEDUCTION(-10, blocking): 47 行の except が (OSError, json.JSONDecodeError) だけで、UnicodeDecodeError（ValueError の子だが JSONDecodeError ではない）を捕まえない。UTF-16（Windows PowerShell 5 の > の既定）や 0xff で始まる progress.json / intermediate.jsonl を渡すと traceback を出して exit 1 になることを実測した。frontmatter の『2=IO/JSON error』『stderr に契約違反』に反し、前回の減点と同じ種類の穴が残っている。DEDUCTION(-2): 20 万段の入れ子の JSON で RecursionError の traceback（exit 1）。上と同じ修正で消える。DEDUCTION(-5): 前回の(2)は未解消。rows[0] を基準にするため、0 周目と progress の hash が同時に汚れていれば検出できない。iteration の連番・単調性も見ない。DEDUCTION(-1): original_goal が文字列でないときに『original_goal が空』と出て、原因が分かりにくい。 TESTS: plugins/harness-creator/tests/test_validate_goal_seek_anchor.py, tests/scripts-root/test_root__lint_vendored_ssot.py（4 passed in 0.04s (test_validate_goal_seek_anchor.py) / 9 passed in 0.24s (test_root__lint_vendored_ssot.py)）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

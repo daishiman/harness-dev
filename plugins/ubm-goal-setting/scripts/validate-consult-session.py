@@ -22,7 +22,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 MODES = {"question-led", "framework-led", "hypothesis-example", "reflect-only"}
-OUTCOMES = {"redirected_goal_setting", "safety_redirect", "consult_completed"}
+REDIRECT_TARGETS = {
+    "redirected_goal_setting": "run-ubm-goal-setting",
+    "redirected_challenge": "run-ubm-challenge",
+}
+OUTCOMES = {*REDIRECT_TARGETS, "safety_redirect", "consult_completed"}
 SECRET = re.compile(r"(sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})")
 # IN1/OUT1 の決定論マーカー正本 (tests/test_ubm_consult_contract.py はここから import する)
 PRESCRIPTION = re.compile(r"すべきです|しなさい|が正解|以上が正解|実行してください|従ってください")
@@ -51,9 +55,9 @@ def detect_transcript_elements(transcript: list[dict]) -> dict[str, bool]:
 
     user_verbalized は role=user の turn 本文のみを根拠とする
     (assistant 発話内の「ユーザー:」文字列は provenance にならない)。
-    next_step は 4 要素目「どちらかの lane の締めがあること」を表す。action lane は
-    次の一歩と現状/ゴール/ギャップ、reflection lane は再開条件と見えてきたこと/まだ決めないことで満たす。
-    record の closure.type と transcript の締めの lane が一致するかは、本関数も validate() も検査しない。
+    next_step は 4 要素目「どちらかの締め方で締めていること」を表す。action の締め方は
+    次の一歩と現状/ゴール/ギャップ、reflection の締め方は再開条件と見えてきたこと/まだ決めないことで満たす。
+    record の closure.type と transcript の締め方が一致するかは、本関数も validate() も検査しない。
     """
     assistant_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "assistant")
     user_text = "\n".join(str(t.get("content", "")) for t in transcript if t.get("role") == "user")
@@ -78,9 +82,11 @@ def validate(record: dict, transcript: list[dict] | None, *, ephemeral: bool = F
     # ephemeral=True (非永続前提・通過後破棄) は consent 要求のみ免除し、他の検査は一切緩めない。
     if not ephemeral and record.get("persistence_consent") is not True:
         errors.append("record 永続には persistence_consent=true が必須 (outcome に依らず)")
-    if outcome == "redirected_goal_setting":
-        if record.get("handoff_to") != "run-ubm-goal-setting" or record.get("referral_confirmed") is not True:
-            errors.append("goal-setting redirect 契約不備")
+    if outcome in REDIRECT_TARGETS:
+        if (record.get("handoff_to") != REDIRECT_TARGETS[outcome]
+                or record.get("referral_confirmed") is not True
+                or not record.get("issue_statement")):
+            errors.append(f"{outcome} redirect 契約不備 (issue_statement / handoff_to / referral_confirmed)")
         return errors
     if outcome == "safety_redirect":
         for key in ("risk_class", "handoff_to", "referral_message"):
@@ -98,6 +104,8 @@ def validate(record: dict, transcript: list[dict] | None, *, ephemeral: bool = F
     elif any(not isinstance(f, dict) or not f.get("source_ids") for f in frames):
         errors.append("frames_presented[*].source_ids が空 (出典 ID 必須)")
     solution = record.get("user_solution")
+    if not isinstance(solution, dict) or not isinstance(solution.get("text"), str) or not solution["text"].strip():
+        errors.append("user_solution.text 欠落")
     turn_ids = solution.get("source_turn_ids") if isinstance(solution, dict) else None
     if not isinstance(turn_ids, list) or not turn_ids:
         errors.append("user_solution.source_turn_ids 欠落")

@@ -83,6 +83,7 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("system-spec-harness", "run-system-spec-compile", ("IN1", "OUT1")),
     ("system-spec-harness", "run-system-spec-doc-fetch", ("IN1", "OUT1")),
     ("system-spec-harness", "run-system-spec-elicit", ("IN1", "OUT1", "OUT2")),
+    ("ubm-goal-setting", "run-ubm-challenge", ("IN1", "IN2", "OUT1", "OUT2")),
     ("ubm-goal-setting", "run-ubm-consult", ("IN1", "OUT1", "OUT2")),
     ("ubm-goal-setting", "run-ubm-goal-setting", ("IN1", "IN2", "IN3", "OUT1", "OUT2")),
     ("ubm-goal-setting", "run-ubm-journal", ("IN1", "IN2", "OUT1", "OUT2")),

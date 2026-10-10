@@ -1,0 +1,603 @@
+{
+  "version": 1,
+  "iteration": 2,
+  "review_mode": "combined-focused-content-review",
+  "claim_type": "design",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "reviewed_at": "2026-10-05T08:38:49.158703Z",
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-decompose",
+    "skill_md_sha256": "4769780d0abecaa0cafb139ce121869a854dd7e7d736a12d6138f79b97363e25"
+  },
+  "slice": "F-4001: add the actual shared import-only _common.py to script_refs; current contract/body preserved, current declared closure now tracks and refuses missing helper.",
+  "norms": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md",
+      "sha256": "35715164bcab2c7a855b85b7043b0008fddd5182a316bd4f716e9ffb907f70af"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json",
+      "sha256": "9edce23b1a0c8c32c5fc53df3394ab493c3a3c0a4a0d9d5b238f99015b4c7cd1"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json",
+      "sha256": "6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d"
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json",
+      "sha256": "3c114e702f600edd895c55c98c78a3eacca002dc06c61da043f8aaec3bf817fd"
+    }
+  ],
+  "current_sources": [
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+      "sha256": "35cea6ec649a5460388ab021fbd764a84e5b3a5af5052b4c4ccaca74086129ea",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+      "sha256": "ef94e1b477a6e4d56e383c1932a78a076bcbce7e7d00c253dc391b3d9420fd87",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+      "sha256": "5e3bdca35bed7872a0b8f3f279e7cfbc1205d3e7fa6311d6f11dceed279987ea",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+      "sha256": "fe2a4a9451528a2b938ca29a44286bcec27315abfe1e27d71d4ac98d75333ae7",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+      "sha256": "3fe084f6d2542eae48fbe1448e5f9b1e4bc24e8e87dff0b99d72d1987dabf728",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+      "sha256": "7ef9117aa0e4f030d60c5c5762c7412b688f6992c86ee9225567dbaa63201522",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+      "sha256": "7275d8c11a2b60890f0cd869575af41a0a98de2e9814d35168a2de407c3b6c71",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+      "sha256": "4769780d0abecaa0cafb139ce121869a854dd7e7d736a12d6138f79b97363e25",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+      "sha256": "a30df8bf17e2c15d0ac5ad222853329d9f07e13589db0fd2780269d003bcbd2a",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+      "sha256": "fb90298f3fe319805850a1cabf759121619a77a523ca0b798609e945a23963ed",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+      "sha256": "5f4662e9f205285af2e4533ad056ad7eadb55ea7abf706744da65320aca77d48",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+      "sha256": "2e6fb9f2eebde2845bdb403db37d879ee2c8cfd0754231dbe5bd5e75f72a81e1",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+      "sha256": "96cc075fe0a13a94f77c82ed2dfe902220e06afe08684c9e4f9addf78b8ae27a",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+      "sha256": "31ecf6e949eddeb3fa6c8408f4d8ea5351df90b5fc544b793535e1d6dd2ec9c9",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    },
+    {
+      "file": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+      "sha256": "882c0dd91144d4a0af0e5c7c146c0289b5ae8067ae5d7c42dda54eedc4e4df8c",
+      "review_scope": "Current SKILL declaration/body; prompt Layer2/3/6 contract slices; actual caller imports; whole common helper; declared behavior-closure implementation. Not an all-runtime-path audit."
+    }
+  ],
+  "exact_change_proof": {
+    "skill_md_sha256": "4769780d0abecaa0cafb139ce121869a854dd7e7d736a12d6138f79b97363e25",
+    "body_and_other_frontmatter_unchanged": true,
+    "actual_common_callers": [
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "sha256": "7ef9117aa0e4f030d60c5c5762c7412b688f6992c86ee9225567dbaa63201522",
+        "common_imports": [
+          "ContractError",
+          "contained",
+          "dump",
+          "git",
+          "load_json",
+          "stable_id"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "sha256": "7275d8c11a2b60890f0cd869575af41a0a98de2e9814d35168a2de407c3b6c71",
+        "common_imports": [
+          "ContractError",
+          "contained",
+          "dump",
+          "load_json"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "sha256": "3fe084f6d2542eae48fbe1448e5f9b1e4bc24e8e87dff0b99d72d1987dabf728",
+        "common_imports": [
+          "ContractError",
+          "dump",
+          "run"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "sha256": "5e3bdca35bed7872a0b8f3f279e7cfbc1205d3e7fa6311d6f11dceed279987ea",
+        "common_imports": [
+          "ContractError",
+          "dump",
+          "run"
+        ]
+      },
+      {
+        "path": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "sha256": "fe2a4a9451528a2b938ca29a44286bcec27315abfe1e27d71d4ac98d75333ae7",
+        "common_imports": [
+          "ContractError",
+          "atomic_json",
+          "contained",
+          "dump",
+          "load_json",
+          "run",
+          "utc_now"
+        ]
+      }
+    ],
+    "helper_present_once": true,
+    "current_behavior_sha256": "e14ba9e2ed242b5f0639a4fff8b985b8385eeeb57c3c17bf1454b131c72cf869",
+    "semantic_helper_mutation_invalidates": true,
+    "mutated_behavior_sha256": "308a7f744b8d8041b9ca6f6e8c97a9c1c32de28a1068832e22a63a83332426a2",
+    "missing_helper_fails_closed": true
+  },
+  "pre_ref_skill_sha256": "5306e85ec1b988fca1bbb2c57bf7521c810d1a73579897f7baf7c2c454b2928d",
+  "four_conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "The ref names an existing import-only module; no CLI command, mutation route or criterion contradicts its callers."
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "All nine actual consumer skills include this helper exactly once; every current criterion is listed and its contract impact assessed."
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "Independent text comparison proves exactly one ref added, other frontmatter and whole body unchanged; actual import sources resolve to the same canonical file."
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "Current copied closure changes digest for semantic helper mutation and fails closed when helper is missing; shared helper remains one implementation/authority."
+    }
+  },
+  "criterion_evaluations": [
+    {
+      "id": "IN1",
+      "loop_scope": "inner",
+      "text": "validate-graph-schema.py で分解生成ノードを送信前検証しスキーマの必須キー欠落が 0 件",
+      "verify_by": "script",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow3/5 retains C11 validation before C02 and tracker projection; R3 accepts validated packages. Declaring the imported helper brings validator/bridge behavior bytes into the same closure.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT1",
+      "loop_scope": "outer",
+      "text": "マクロ分解結果 (feature+architecture+機能間depends_on) のDAGが循環なし・粒度閾値内で、評価前draftはIssue起票0件、confirmed/pass/readiness completeへの昇格後だけ起票対象になる",
+      "verify_by": "live-trial",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Hard boundary and Macro flow2/3 distinguish feature/architecture DAG from phase tasks, forbid draft publication and require confirmed/pass/complete before projection. R2 keeps cyclic/task-granularity rejection. No macro elicitation live result is inferred.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT2",
+      "loop_scope": "outer",
+      "text": "同一入力を二回実行してもbinding=beadsはbd issue/blocks edge、binding=githubはIssue/Project item、binding=noneはlocal nodeだけを各1組維持する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow5/6 and R3/R4 keep source-key registration and binding-specific existing linkage/item identity. New helper ref creates no second writer or idempotency key.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT3",
+      "loop_scope": "outer",
+      "text": "--dry-run時にlocal graph/Beads/GitHub/Projects writeが0件のままbinding解決と投影差分だけがpreviewされる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow6 and R6 require local/Beads/GitHub/Projects write0 preview. The added import-only ref is not a new command invocation.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT4",
+      "loop_scope": "outer",
+      "text": "mode=both+auto、github+local_only、beads+Issue publicationを各fixtureでfail-closedし、外部write 0件となる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow6 and Gotchas preserve mode=both+auto, github+local_only, beads+GitHub rejection and single binding authority.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT5",
+      "loop_scope": "outer",
+      "text": "local batch成功後の外部mutation失敗でlocal taskを維持し、失敗node/operationだけpending_retryから冪等再実行できる",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Post-flow failure rule and R3/R4 keep committed local nodes and operation-specific pending_retry. No rollback authority moves into the shared ref.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT6",
+      "loop_scope": "outer",
+      "text": "同一ready featureへの自動起動を二回実行してもP01..P13 exact 13 taskが一組だけ維持され、全taskのparent_feature/feature_package_idが一致する",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow4/5 and R2b accept only one exact P01..P13 set per source key with common parent/package and internal DAG.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    },
+    {
+      "id": "OUT7",
+      "loop_scope": "outer",
+      "text": "同一featureに対する自動起動結果と手動`/system-dev-plan`実行結果は同じparent_featureで登録され、経路の違いによる二重登録が生じない",
+      "verify_by": "test",
+      "static_design_verdict": "PASS_FOR_DEPENDENCY_CHANGE_AND_CONTRACT_PRESERVATION",
+      "evidence": "Macro flow4/5 and R2b use the same package gate and graph_node_id+source_digest for automatic/manual origins; the dependency declaration does not split that authority.",
+      "current_evidence_files": [
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/bd-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-github-projection.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/gh-bridge.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/resolve-repo-context.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R1-elicit.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2-plan.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R2b-feature-planning.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R3-decompose.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R4-project.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/prompts/R6-dryrun.md",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py"
+      ],
+      "behavioral_claim_accepted": false
+    }
+  ],
+  "rubric": {
+    "rubric_hash": "sha256:6e1843e5204accb8c76c96bf0d8189dafff6d51f2d182096424fcb6c6bfd3d0d",
+    "composition_hash": "sha256:4dba747802c3f2123e481d72c1257e50174df941abe31ea5653a54bfc781b0ac",
+    "score": 84,
+    "threshold": 80,
+    "high_severity": 0,
+    "machine_report": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dev-graph/run-dev-graph-decompose/current-rubric-machine-report.json",
+    "findings": [
+      {
+        "id": "FM-005",
+        "severity": "low",
+        "area": "frontmatter",
+        "message": "description first phrase '大きな自然文構想を' is not a verb",
+        "loc": "frontmatter.description"
+      },
+      {
+        "id": "PD-001",
+        "severity": "low",
+        "area": "progressive-disclosure",
+        "message": "body>100 lines but references/ empty",
+        "loc": "progressive-disclosure"
+      },
+      {
+        "id": "PD-002",
+        "severity": "medium",
+        "area": "progressive-disclosure",
+        "message": "body head 30 lines lack a Key Rule / 禁則 (MUST / NEVER / 禁止 / 必ず)",
+        "loc": "progressive-disclosure"
+      }
+    ],
+    "semantic_adjudication": {
+      "BD-004": {
+        "verdict": "PASS",
+        "trigger_to_body_mapping": [
+          "Large natural-language want -> Hard boundary/Macro flow1-3 and R1/R2 macro brief/DAG.",
+          "Ready feature package registration and binding projection -> Macro flow4-6, R2b package gate, R3/R4/R6."
+        ]
+      }
+    },
+    "unscored": [],
+    "all_rules_accounted": true,
+    "not_applicable": [
+      {
+        "id": "AG-001",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-002",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-003",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "AG-004",
+        "applies_to_kinds": [
+          "agent"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-001",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-002",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-003",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "HK-004",
+        "applies_to_kinds": [
+          "hook"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-001",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-002",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "CM-003",
+        "applies_to_kinds": [
+          "command"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-001",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-002",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-003",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PC-004",
+        "applies_to_kinds": [
+          "plugin-composition"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-001",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-002",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "PR-003",
+        "applies_to_kinds": [
+          "prompt"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-001",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-002",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      },
+      {
+        "id": "WF-003",
+        "applies_to_kinds": [
+          "workflow"
+        ],
+        "target_kind": "skill"
+      }
+    ]
+  },
+  "independent_case": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/dependency-closure-current-results.json",
+  "proof_boundary": {
+    "static_design_adequacy": "PASS only for new helper declaration, tracked invalidation and current criterion contract preservation.",
+    "behavioral_live_trial": "NOT_CLAIMED. This reviewer did not execute host dialogue, external mutation, browser/rendered artifact, full package handoff or release acceptance. Gate D remains separate.",
+    "unchanged_obligations": "All enumerated criteria were read and assessed statically against current body/prompt ownership; no unchanged verify_by script/test/live behavior is relabelled as executed proof.",
+    "prior_verdicts": "No old PASS or SHA-only verdict replacement used. Exact old source text is a diff baseline only; current judgments and case execution are new.",
+    "method_coverage": "One focused independent context projects into elegance/rubric artifacts; branch 30-method analysis is separate, no per-skill30-method claim."
+  },
+  "warnings_policy": "Inherited scored medium/low layout/wording findings remain disclosed. No high-severity or new dependency defect remains in this focused source slice."
+}

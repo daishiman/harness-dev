@@ -1,14 +1,16 @@
 """skill-governance-automation/scripts/re-evaluate-on-rubric-bump.py の genuine 機能テスト。
 
 upstream rubric_version と eval-log/ 配下の過去評価ログの rubric_version を比較し、
-major bump 発生時に再評価が必要なスキル一覧を列挙するスクリプト。常に exit 0。
+major bump 発生時に再評価が必要なスキル一覧を列挙するスクリプト。走査できれば exit 0、
+upstream rubric が無い・読めない・版を解釈できないときは exit 2 (入力欠落を成功に畳まない)。
 
 純関数 (parse_semver / iter_records / extract_version / extract_skill_identity) は
 実ファイルパスから importlib でロードして実入力で assert。main は module グローバル
 (UPSTREAM_RUBRIC / EVAL_LOG_DIR) を monkeypatch で tmp_path fixture に差し替え、
-全分岐(rubric 不在 / version 解析不能 / eval-log 不在 / eval-log 空 / major bump 無 /
+全分岐(rubric 不在 / 読めない / version 解析不能 / eval-log 不在 / eval-log 空 / major bump 無 /
 major bump 有)を in-process で網羅し stdout/stderr/exit code を assert。
-さらに実 repo に対する subprocess 起動で rubric 不在の早期 return 経路を実測。
+さらに実 repo に対する subprocess 起動で、兄弟 harness-creator の rubric を解決できることと
+--help・--rubric 欠落の終了コードを実測。
 
 network: false, keychain: なし, 実 repo 書換: なし (tmp_path / monkeypatch のみ)。
 """
@@ -168,15 +170,22 @@ def _run_main(monkeypatch):
     return MOD.main()
 
 
-def test_main_upstream_missing_returns_0(monkeypatch, tmp_path, capsys):
+def test_main_upstream_missing_returns_2(monkeypatch, tmp_path, capsys):
     _setup(monkeypatch, tmp_path, write_upstream=False)
-    assert _run_main(monkeypatch) == 0
+    assert _run_main(monkeypatch) == 2
     assert "upstream rubric not found" in capsys.readouterr().err
 
 
-def test_main_upstream_version_unparseable_returns_0(monkeypatch, tmp_path, capsys):
+def test_main_upstream_unreadable_returns_2(monkeypatch, tmp_path, capsys):
+    rubric, _ = _setup(monkeypatch, tmp_path, write_upstream=False)
+    _write(rubric, "{not json")
+    assert _run_main(monkeypatch) == 2
+    assert "could not read upstream rubric" in capsys.readouterr().err
+
+
+def test_main_upstream_version_unparseable_returns_2(monkeypatch, tmp_path, capsys):
     _setup(monkeypatch, tmp_path, upstream_version=None)  # version キー無し
-    assert _run_main(monkeypatch) == 0
+    assert _run_main(monkeypatch) == 2
     assert "could not parse upstream rubric_version" in capsys.readouterr().err
 
 
@@ -249,14 +258,82 @@ def test_main_major_bump_json_array(monkeypatch, tmp_path, capsys):
     assert "bob (from batch.json)\tpast=2.0.0\tcurrent=4.0.0" in out
 
 
-# ── subprocess: 実 repo に対する早期 return 経路 (exit 0 必ず) ────────────────
-def test_cli_runs_and_exits_0():
-    # 実 repo では UPSTREAM_RUBRIC が REPO_ROOT(=parents[2]=plugins) 解決で
-    # 不在のため early-return するが、いずれにせよ常に exit 0。
+# ── score ログ (eval-log/<plugin>/*-score.jsonl) ─────────────────────────────
+def test_extract_version_prefers_nested_rubric_version():
+    rec = {"rubric": {"rubric_version": "1.5.0"}, "version": "9.9.9"}
+    assert MOD.extract_version(rec) == (1, 5, 0)
+
+
+def test_extract_version_nested_without_version_falls_back_to_top_level():
+    assert MOD.extract_version({"rubric": {"name": "x"}, "rubric_version": "2.0.0"}) == (2, 0, 0)
+
+
+def test_read_score_log_counts_broken_and_versionless_lines(tmp_path):
+    p = tmp_path / "s-score.jsonl"
+    _write(
+        p,
+        '{"rubric": {"rubric_version": "1.0.0"}, "skill_name": "ok"}\n'
+        "\n"
+        "{broken\n"
+        '["not", "object"]\n'
+        '{"skill_name": "no-version"}\n',
+    )
+    records, unreadable = MOD.read_score_log(p)
+    assert [r["skill_name"] for r in records] == ["ok"]
+    assert unreadable == 3
+
+
+def test_main_detects_major_bump_from_nested_score_log(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(
+        eval_dir / "plugin-a" / "2026-01-01-score.jsonl",
+        '{"rubric": {"rubric_version": "1.5.0"}, "skill_name": "run-nested"}\n',
+    )
+    assert _run_main(monkeypatch) == 0
+    out = capsys.readouterr().out
+    assert "eval-log files scanned: 1" in out
+    assert "run-nested (from 2026-01-01-score.jsonl)\tpast=1.5.0\tcurrent=2.0.0" in out
+
+
+def test_main_unreadable_score_record_lists_targets_then_exits_2(monkeypatch, tmp_path, capsys):
+    _, eval_dir = _setup(monkeypatch, tmp_path, upstream_version="2.0.0")
+    _write(
+        eval_dir / "plugin-a" / "2026-01-01-score.jsonl",
+        '{"rubric": {"rubric_version": "1.0.0"}, "skill_name": "run-old"}\n'
+        '{"skill_name": "run-versionless"}\n',
+    )
+    assert _run_main(monkeypatch) == 2
+    captured = capsys.readouterr()
+    assert "run-old (from 2026-01-01-score.jsonl)\tpast=1.0.0" in captured.out
+    assert "1 score record(s) had no readable rubric_version" in captured.err
+
+
+# ── subprocess: 実 repo に対する CLI 経路 ─────────────────────────────────────
+def test_cli_resolves_sibling_rubric_and_exits_0():
+    # 兄弟 plugin harness-creator の references/rubric.json を extract-plugin-root.py で解決する。
+    # 以前は parents[2]=plugins を repo root と取り違えて常に rubric 不在で exit 0 になっていた。
     res = subprocess.run(
-        [sys.executable, str(SCRIPT)], text=True, capture_output=True
+        [sys.executable, str(SCRIPT)], text=True, capture_output=True, cwd=ROOT
+    )
+    assert res.returncode == 0, res.stderr
+    assert "# upstream rubric_version:" in res.stdout
+    assert "upstream rubric not found" not in res.stderr
+
+
+def test_cli_help_exits_0_without_scanning():
+    res = subprocess.run(
+        [sys.executable, str(SCRIPT), "--help"], text=True, capture_output=True
     )
     assert res.returncode == 0
-    # rubric 不在 (stderr) か eval-log 系メッセージ (stdout) のいずれか
-    combined = res.stdout + res.stderr
-    assert combined.strip() != ""
+    assert res.stdout.startswith("usage:")
+    assert "upstream rubric_version" not in res.stdout
+
+
+def test_cli_missing_explicit_rubric_exits_2(tmp_path):
+    res = subprocess.run(
+        [sys.executable, str(SCRIPT), "--rubric", str(tmp_path / "absent.json")],
+        text=True,
+        capture_output=True,
+    )
+    assert res.returncode == 2
+    assert "upstream rubric not found" in res.stderr

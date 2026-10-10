@@ -110,7 +110,7 @@ frontmatter（plugin YAML）+ 本文 7 層のハイブリッド形式で生成�
 
 > L5 サブ構造は付録 A「Layer 5 契約」に従属。**固定手順を書かない**。
 
-- **5.1 担当 agent**: `prompt-creator-generate-prompt` / `prompt-creator-review-prompt`（ヒアリングは `run-prompt-elicit` へ委譲。brief 供給時は Phase 1 skip）。Phase 4-A の Layer 別生成・Phase 4-C の改善反復は分離 context (context-fork)。
+- **5.1 担当エージェント**: `prompt-creator-generate-prompt` / `prompt-creator-review-prompt`（ヒアリングは `run-prompt-elicit` へ委譲。brief 供給時は Phase 1 skip）。Phase 4-A の Layer 別生成・Phase 4-C の改善反復は分離 context (context-fork)。
 - **5.2 ゴール定義**:
   - 目的: skill-brief / ヒアリング結果を、呼出元非依存の品質保証つき 7 層プロンプトへ変換する。
   - 背景: 生成物は配布先で単独動作するため、生成時点で構造と設計品質が機械証跡つきで検証済みである必要がある。
@@ -140,7 +140,7 @@ Phase 5 戻り検証+設計ゲート (C1-C4)             [script + evaluator for
 ```
 
 - **並列性**: Layer 内は並列可、Layer 間は依存方向 (L7→L1) を保持して逐次。同一 responsibility-id への同時実行は排他（trace 競合回避）。
-- **呼出元非依存の不変契約**: 注入セクション名 `Prompt Templates` / `Self-Evaluation` はどの呼出元でも不変（`lint-agent-prompt-section.py` の検証契約と 1:1）。brief 供給時は Phase 1-3 の全ユーザー対話を skip し、導出確認は brief.user_confirmed に委譲（orchestrator の user_question_budget=1 違反防止）。
+- **呼出元非依存の不変契約**: 注入の構造ID `prompt_templates` / `self_evaluation` は不変。表示名は明示 `ja` / `en` または対象agentの正規見出しから継承し、日本語では `プロンプトの型` / `自己採点`、英語では `Prompt Templates` / `Self-Evaluation` を使う。同一agent内で混在させない（`lint-agent-prompt-section.py` の検証契約と 1:1）。brief 供給時は Phase 1-3 の全ユーザー対話を skip し、導出確認は brief.user_confirmed に委譲（orchestrator の user_question_budget=1 違反防止）。
 - **worker 内蔵ゲート（経路非依存）**: C1-C4 設計評価は worker 完了条件に内蔵。run-build-skill Step 7.5 直呼び・orchestrator 経由・手動起動のどの経路でも同一の設計保証が成立。
 
 ### Layer 7: ユーザーインタラクション層
@@ -183,7 +183,7 @@ L5 サブ構造は `seven-layer-format.md`「Layer 5 契約」が唯一の正本
 
 | ブロック | 意味 | Markdown 節 |
 |---|---|---|
-| 実行主体 | 担当 agent / context-fork 要否 | `### 5.1 担当 agent` |
+| 実行主体 | 担当エージェント / context-fork 要否 | `### 5.1 担当エージェント` |
 | ゴール定義 | 目的・背景・達成ゴール（到達すべき**状態**の宣言） | `### 5.2 ゴール定義` |
 | 完了チェックリスト | ゴール到達の判定基準=ループ停止条件 | `### 5.3 完了チェックリスト` |
 | 実行方式 | 固定手順を持たない動的手順生成ループの宣言 | `### 5.4 実行方式` |

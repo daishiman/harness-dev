@@ -11,7 +11,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--feature-id ID] [--handoff-target PATH]"
 allowed-tools: [Read, Write, Bash, Skill, AskUserQuestion, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/package-registration-receipt.schema.json]
 reference_refs: [../../templates/template-contract.json, ../../references/feature-execution-package-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:

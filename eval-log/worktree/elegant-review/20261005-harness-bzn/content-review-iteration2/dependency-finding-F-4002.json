@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "finding_id": "F-4002",
+  "beads_issue": "harness-bzn.5",
+  "category": "dependency_break",
+  "severity": "high",
+  "status": "OPEN",
+  "reviewer": "/root/independent_review",
+  "observed_at": "2026-10-05T08:42:21.096869+00:00",
+  "finding": "New shared HC loader and its dynamic bundled root resolver are absent from the behavior closure of the two containing skills despite six actual local importing callers. Each executable dependency mutation permits stale digest reuse.",
+  "proof": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/hc-dependency-closure-results.json",
+  "independent_command": "PYTHONDONTWRITEBYTECODE=1 /Users/dm/miniconda3/bin/python3 /Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/content-review-iteration2/hc-dependency-closure-case.py",
+  "source_C2": "FAIL",
+  "source_C4": "FAIL",
+  "minimal_fix": "Add ../../scripts/plugin_resources.py and ../../scripts/extract-plugin-root.py to script_refs for run-build-skill and run-plugin-package-check.",
+  "proof_limits": "Copy-only digest proof against actual target local callers and dynamic bundled resolver dependency; not a live host execution.",
+  "source_edits": false
+}

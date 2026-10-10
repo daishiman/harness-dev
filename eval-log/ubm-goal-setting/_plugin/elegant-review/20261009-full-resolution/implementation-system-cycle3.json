@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "author": "system_analyst",
+  "cycle": 3,
+  "recorded_at": "2026-10-09T13:51:05.442988+00:00",
+  "status": "source_frozen_for_independent_review",
+  "self_verdict": null,
+  "findings_resolved": [
+    {
+      "id": "KL003",
+      "finding": "Deterministic field-weighted knowledge retrieval missing",
+      "changes": [
+        "Real readonly search of router-declared category entries only; size/query/limit/entry bounds; invalid input exits2",
+        "NFKC/casefold normalization, one hit per term/field, domain-specific weights including legacy problem/advice/key_question/before/after; original entry/source retained",
+        "Stable score descending/id/source_ref ties; explicit zero-hit; corpus SHA and weights-bound search_id",
+        "SSOT retrieval contract referenced by all6skills; search before semantic consumption; per-result receipts passed to agents/prompts"
+      ],
+      "evidence": [
+        "weights tags8 > repeated content3; stable ties despite file entry reorder",
+        "Real 982entry readonly search returned 227 hits for 組織 and top3 CP-009/MS-056/CS-016 at current metadata snapshot",
+        "Bounds/invalid router/path/bookkeeping/symlink/duplicate ID/field shape and CLI failure fixture checks"
+      ]
+    },
+    {
+      "id": "KL004",
+      "finding": "Actual candidate adoption and user feedback usage loop missing",
+      "changes": [
+        "Real recorder writes matched_ids/used_ids/unused_ids/satisfaction plus source search_id/receiptSHA to caller eval-log JSONL only",
+        "Candidate ID consistency and used subset required; null satisfaction explicit when unknown; positive/negative/mixed requires unique nonempty actual user role turn reference",
+        "No transcript/query/quote content logged; semantic interpretation of actual feedback remains parent responsibility",
+        "Stable usage_id idempotence; conflicting same-ID/corrupt/incomplete log fails without append; flock append; official knowledge root and symlink sinks rejected",
+        "6entry parent owns recording, agent returns actually consumed IDs; zero-hit/all-rejected logs emptyused; consult no-consent and all dry-run ephemeral no log creation"
+      ],
+      "evidence": [
+        "Actual subprocess search stdout consumed by record CLI and observed JSONL matched/used/unused/null fields",
+        "Actual fixture transcript role/source negatives and valid user feedback receipt",
+        "OfficialKB/symlink, subset, missing satisfaction, list bounds, duplicate usage conflict and incomplete JSONL negative checks"
+      ]
+    }
+  ],
+  "validation": [
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests -q",
+      "result": "713 passed in 85.91s; before final official-KB/symlink negative test addition"
+    },
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py -q",
+      "result": "30 passed at final script freeze, includes actual CLI to CLI to JSONL fixture"
+    },
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests/test_challenge_contract.py plugins/ubm-goal-setting/tests/test_heading_references.py plugins/ubm-goal-setting/tests/test_ubm_consult_contract.py -q",
+      "result": "64 passed after final semantic contract wiring"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py --skills-dir plugins/ubm-goal-setting/skills",
+      "result": "PASS 7skills"
+    },
+    {
+      "command": "python3 plugins/skill-governance-lint/scripts/lint-plugin-composition.py plugins/ubm-goal-setting/plugin-composition.yaml",
+      "result": "PASS, 5 pre-existing ungenerated-output warnings"
+    },
+    {
+      "command": "python3 scripts/lint-entrypoint-artifact-first.py",
+      "result": "PASS 127inventory/101enforced/26exempt after opening-order heading repair"
+    },
+    {
+      "command": "python3 -m pytest tests/scripts-root/test_root__entrypoint_artifact_first.py::test_every_current_normal_entrypoint_has_machine_checked_artifact_first_contract -q",
+      "result": "1 passed"
+    },
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests/test_heading_references.py plugins/ubm-goal-setting/tests/test_challenge_contract.py -q",
+      "result": "29 passed after final heading repair"
+    }
+  ],
+  "limitations": [
+    "No bd/Git/release/live-trial/network ingestion or real user session executed",
+    "Fixture satisfaction is test data, not a real user-satisfaction observation",
+    "Recorder validates transcript role/id/content existence; parent must judge whether the observed user content actually expresses the recorded satisfaction",
+    "Search receipts are script stdout consumed by the workflow; the recorder does not claim cryptographic user/source authentication",
+    "Caller local usage log does not authorize formal vault/KB writes and never substitutes for central guard execute",
+    "Concurrent corpus metadata migration is owned by logical agent; no KB data file edited by this author",
+    "Final whole-tree freeze/description synchronization and independent evaluator belong to root; this is implementation evidence, not self-PASS"
+  ],
+  "preserved": [
+    "Root PD002/FM005 first-layer edits and descriptions ownership",
+    "Cycle2 guarded publication helper and external formal-save boundaries",
+    "Meta oneshot flock/lease implementation",
+    "Original knowledge entry domain fields and raw meanings",
+    "Root chmod+x for3 newly published CLI scripts; file byte hashes unchanged by mode-only fix"
+  ],
+  "source_sha256": {
+    "plugins/ubm-goal-setting/agents/challenge-advisor.md": "58c60916a8f915bb5d430db6928c4a4248138be91574888b02d766d733f34fbb",
+    "plugins/ubm-goal-setting/agents/goal-reviewer.md": "b315c83b9b64b573c24460404ebfc6a8143075c0b796b9f6362bc64e0a7b4854",
+    "plugins/ubm-goal-setting/agents/info-collector.md": "645714d3f922d88d819da874f7b71c919bc94d002723ea489c89b31ac01724f9",
+    "plugins/ubm-goal-setting/agents/knowledge-extractor.md": "d2f14a668f4c4acddc8a28d8a4251f764c21dd2b0b471ab9af0569c967940563",
+    "plugins/ubm-goal-setting/agents/knowledge-relation-extractor.md": "fab8bdcd7e2feab4bbe490ee0ee3255393febff75dd3aeb05589977ffc887594",
+    "plugins/ubm-goal-setting/agents/phase3-coordinator.md": "57c902015ebdc07e342f54fb15fec2a47f1cf11307240e93c94e9c37ff514440",
+    "plugins/ubm-goal-setting/plugin-composition.yaml": "12632deaa34566498d17871342cb3508bdd42cbe5a2e2b6e1d36ad78e84793c3",
+    "plugins/ubm-goal-setting/references/knowledge-retrieval-contract.md": "5ebe985ea206fc3b711bcb4dfef2bc2f0af1effca9fe7b831e32dc4295aa2110",
+    "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py": "25f843694b8301ca94bd4032e0e0ad22287cfdccf51330dd1b3954c98eaec975",
+    "plugins/ubm-goal-setting/scripts/search-knowledge.py": "b78ab3f50d1b9757a16b38d1a5f5efca1ddd6a81f3dc0ef73f9ae51ff2cff633",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md": "dcaa0e642a5534a73f9e055de75195aab6b698805f81f4cbece119f940e0d8df",
+    "plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md": "5e62c7efb378b124120afa05be3cac0c60f90d789555c9e95820a5a696f00553",
+    "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R3-frame-consult.md": "00bca1aa3fb38abcaf74cc221c89f00efd432895f6cffe19a60249103059cab9",
+    "plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md": "756437584f1d26e0131cd384124b9187562769b023fef0f08df300309993b4ea",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md": "c32f1f38c4dacd9518be037a7df9721a81e5d93217c5a4615e899868496f60e8",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md": "a64cd87c1408f570421c19835f3dec8e8c7e3cbb268c7d1c60bc3d80e5c50f03",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md": "3692c90cfad9f8e66714867c9562c684620a370874a54ccdf245e95b42f91dd9",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md": "c582ff73faade659934774204b7e848495d0a4bdea138b0c511ae637cea651a1",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md": "41c8a7a1f3a9786b1d8e1adc5fa1b314a6edeba000cef4969d2563237770a5a7",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/SKILL.md": "01394bf9297efd1505a9ebc8437570ad7b27cdd4e76a0c3073ffa62fc3774e0a",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md": "7cb2fcd7c134dfa08484723df5356301b4cc27ec3ed6d9de09400f73ee7a2af5",
+    "plugins/ubm-goal-setting/tests/test_challenge_contract.py": "f99bfb806c90220ad5b91678fc71d1530162c59687df6a4faeaf3e9ad092eb78",
+    "plugins/ubm-goal-setting/tests/test_knowledge_retrieval.py": "3c39e4ff9e281f61d39f12e1fbf44525488719128ce12b2b61258812c74d4b81"
+  },
+  "source_snapshot_sha256": "1ab949dba50832b51c48631597be1b48246bd977dd39416b96f0aad6cf0fd179",
+  "source_count": 23,
+  "opening_order_repair": "Cycle2 formal-publication boundary heading in5external skills demoted H2 toH3 under post-choice; canonical first6 H1/H2 order restored without changing purpose/prechoice/gate semantics."
+}

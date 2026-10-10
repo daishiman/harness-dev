@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "dev-graph",
+    "skill": "run-dev-graph-requirements",
+    "skill_md_sha256": "29d5bd6441176e29b9d08263ca76d0d5c388442782562ac2c8164c5ba5d2aecd"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
+  "reviewed_at": "2026-10-04T22:31:13Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "prompts 4 本 (R1-elicit, R2-plan, R2b-readiness, R3-handoff) の共有化で skill 固有行の欠落は 0 件。削除行はすべて prompt-common-layers.md に逐語で存在するか、5.1 行から fork 方針の接尾辞を外しただけで、Layer 1-3 の入力契約・出力契約・責務境界・受入条件、5.2 の目的と達成ゴール、5.3 の固有 checklist は全本に残っている (機械照合で不一致 0)。",
+      "共通層と固有記述の合成規則が prompt 側に明示されている (5.3 は共通項目と固有項目がすべて YES のときに到達)。共通 reference の 5.4 にある最大 5 周は SKILL.md の goal_seek.max_loops=5 と一致し、共通層と skill 固有記述の矛盾は 0 件。",
+      "reference_refs の旧 `../../../system-dev-planner/references/feature-execution-package-contract.md` (install 先 `<cache>/<marketplace>/<plugin>/<version>/` では兄弟 plugin に届かない) を同梱の `../../references/feature-execution-package-contract.md` へ移した。同梱 copy は system-dev-planner 正本と byte 一致で、scripts/lint-vendored-ssot.py が一致を強制し、component-inventory.json の references_config_assets にも登録されている。IN1 と本文が引く P01..P13 exact 13・共通 parent_feature/feature_package_id の検査は同 contract と一致し、検証自体を system-dev-planner の validate-system-plan.py へ委ねる記述も保たれている。",
+      "依存先の変更とも整合する。validate-graph-schema.py の出力に graph_validation と node_readiness が加わったが、最上位の implementation_readiness/missing_sections を互換キーとして残す加法的変更で exit code の意味も変わらないため、C11 照合と missing_sections の surface を述べる本文と衝突しない。frontmatter の *_refs はすべて実在し、prompt-common-layers.md を宣言する SKILL.md 9 件と prompts から参照する skill 9 件が双方向に一致する。"
+    ],
+    "negative_feedback": [
+      "[low / smell] 各 prompt から `### 5.4 実行方式` の節見出しと本文が消え、Layer 5 の参照行へ委譲された。seven-layer-format.md の l5-contract v2.0.0 は従属者一覧で全 prompts を Layer 5 節構成 (5.1-5.4) の従属者としているため、prompt 単体で読むと 5.4 が欠ける。prompt-common-layers.md の Layer 5 節と合成すれば 4 節がそろい、lint-agent-prompt-content.py --mode prompt も通るため実行不能にはならず low に留める。prompt 側に 5.4 の見出しと参照行だけを残すと、単体で読んでも節構成が閉じる。",
+      "[low / smell] 「(skill root 起点)」の注記が Layer 4 の参照行にだけあり、Layer 5〜7 の参照行には無い。prompt ファイルのある prompts/ を起点に `../../references/` を解くと skills/references/ を指し、実在しない。SKILL.md の reference_refs と Layer 3 の「skill-relative reference から解決」で補えるため low に留める。4 本の参照行で起点の注記をそろえると読み違いの余地が消える。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:install-portability",
+    "next_action": "none"
+  },
+  "notes": "本 verdict は install 先での兄弟 plugin 解決と dev-graph prompts の共通層共有化 (未コミット差分) を受けた再束縛であり、content-review-protocol §incremental の focused combined review を独立 evaluator の 1 context で実行し、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定した結果を elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。評価方法: SKILL.md の差分 (frontmatter reference_refs の 1 行) と prompts 4 本の差分を全行読み、削除行が prompt-common-layers.md に逐語で存在するか、5.1 行の fork 接尾辞を外しただけかを機械照合した (不一致 0)。新規 references 2 件 (prompt-common-layers.md、feature-execution-package-contract.md) は全文を読み、同梱 copy と system-dev-planner 正本の byte 一致、frontmatter *_refs の実在、prompt-common-layers.md の宣言 skill と参照 skill の双方向一致を検査した。依存 script validate-graph-schema.py の差分も読み、本文の記述と衝突しないことを確認した。lint-agent-prompt-content.py --mode prompt (dev-graph 41 files)、lint-vendored-ssot.py、lint-sibling-plugin-paths.py はいずれも OK。未解決の medium 以上は 0 件、low 2 件は記述上の smell で実行不能にはならないため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、実行挙動の受け入れは live-trial 系 criterion の実走証拠を別途要する。prompt-common-layers.md が reference_refs に入ったため、live trial 系の証跡 (criteria-test/scenario-verdict.json など) の target sha は本 review では更新されず、別途再束縛を要する。前回 verdict の low (pre-choice の accept-as-is 読み分け) は本差分と無関係のため再記録していない。",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  }
+}

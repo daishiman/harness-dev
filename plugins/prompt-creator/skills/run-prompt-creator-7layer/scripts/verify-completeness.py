@@ -196,12 +196,12 @@ def main():
     layer5 = sections[5] or ""
     if 5 in required_layers:
         goal_seek_required = [
-            {"key": "ゴール定義", "label": "ゴール定義（目的・背景・達成ゴール）"},
-            {"key": "完了チェックリスト", "label": "完了チェックリスト（停止条件）"},
-            {"key": "達成ゴール", "label": "達成ゴール（成果状態）"},
+            {"key": ("ゴール定義", "Goal definition"), "label": "ゴール定義（目的・背景・達成ゴール）"},
+            {"key": ("完了チェックリスト", "Completion checklist"), "label": "完了チェックリスト（停止条件）"},
+            {"key": ("達成ゴール", "Achievement goal"), "label": "達成ゴール（成果状態）"},
         ]
         for r in goal_seek_required:
-            if sections[5] is not None and r["key"] not in layer5:
+            if sections[5] is not None and not any(key in layer5 for key in r["key"]):
                 problems.append(f"Layer 5: {r['label']} がない（ゴールシーク必須要素）")
 
     # 3a. 固定手順の不在 (legacy): 「思考プロセス」+「ステップN」列挙はゴールシーク違反

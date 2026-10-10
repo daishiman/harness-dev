@@ -8,7 +8,7 @@
 # dependencies: []
 # contexts: [A, B, C, E]
 # network: false
-# write-scope: caller-defined atomic JSON target only
+# write-scope: caller-defined atomic bytes/JSON target only
 # ///
 """Shared stdlib-only safety primitives for dev-graph scripts."""
 from __future__ import annotations
@@ -52,21 +52,40 @@ def dump(value: Any) -> None:
     print(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2))
 
 
-def atomic_json(path: Path, value: Any) -> None:
+def json_bytes(value: Any) -> bytes:
+    """Canonical readable JSON used by graph files and immutable receipts."""
+    return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+
+
+def atomic_bytes(path: Path, data: bytes, *, create_only: bool = False) -> None:
+    """Write complete bytes; create-only preserves an existing target and raises FileExistsError."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=2)
-            stream.write("\n")
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temp, path)
+        if create_only:
+            os.link(temp, path)
+        else:
+            os.replace(temp, path)
     finally:
         try:
             os.unlink(temp)
         except FileNotFoundError:
             pass
+
+
+def atomic_json(path: Path, value: Any, *, create_only: bool = False) -> None:
+    atomic_bytes(path, json_bytes(value), create_only=create_only)
+
+
+PACKAGE_KEYS = frozenset({"parent_feature", "feature_package_id", "phase_ref"})
+
+
+def is_package_member(node: dict[str, Any]) -> bool:
+    return any(node.get(key) is not None for key in PACKAGE_KEYS)
 
 
 def contained(path: Path, root: Path, *, must_exist: bool = True) -> Path:

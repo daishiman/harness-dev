@@ -78,6 +78,20 @@ def test_list_after_other_key_is_still_reported():
     assert kinds(text) == [("dotdot", "beta")]
 
 
+@pytest.mark.parametrize("text", [
+    '{"$schema":"../beta/schema.json", "command":"python3 ../beta/scripts/run.py"}',
+    '{"command":"python3 ../beta/scripts/run.py", "$schema":"../beta/schema.json"}',
+    'ROOT.parent / "beta" # $schema annotation',
+    'ROOT.parent / "beta" # 正本スキーマ: annotation',
+])
+def test_schema_metadata_does_not_exempt_runtime_references(text):
+    assert kinds(text) == [("dotdot" if text.startswith("{") else "pyparent", "beta")]
+
+
+def test_minified_schema_metadata_alone_remains_allowed():
+    assert kinds('{"$schema":"../beta/schema.json","title":"metadata"}') == []
+
+
 def _make_repo(tmp_path: Path) -> Path:
     for name in ("alpha", "beta"):
         manifest = tmp_path / "plugins" / name / ".claude-plugin" / "plugin.json"

@@ -539,11 +539,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     # 退化セルの可視化: 辺 0 本の graph は zero-hit 正常だが consult 価値が出ないため WARN で表面化する
-    # (exit0 維持・stderr のみ。既存 corpus への初回適用は RUNBOOK の初回 edge backfill 手順)。
+    # (exit0 維持・stderr のみ。既存のコーパスへの初回適用は RUNBOOK の「辺の過去分の初回埋め戻し」の手順)。
     if graph["edge_count"] == 0:
         print(
             "WARN: knowledge graph の edges=0 (辺が1本も無い退化グラフ)。"
-            "既存 corpus への初回適用は RUNBOOK の「初回 edge backfill」手順を参照",
+            "既存のコーパスへの初回適用は RUNBOOK の「辺の過去分の初回埋め戻し」の手順を参照",
             file=sys.stderr,
         )
     if rel_status == "absent":

@@ -6,9 +6,11 @@ import argparse
 import ast
 import copy
 import hashlib
+import importlib.util
 import json
 import pathlib
 import re
+import shlex
 import sys
 from typing import Any
 
@@ -24,6 +26,17 @@ SCHEMA_ID = "https://harness.local/schemas/artifact-delivery.schema.json"
 EXTERNAL_MUTATION_FLOW = "preview-confirm-authorize-execute-v1"
 EXTERNAL_GUARD_BLOCK_BEGIN = "<!-- external-mutation-guard-cli:v1 -->"
 EXTERNAL_GUARD_BLOCK_END = "<!-- /external-mutation-guard-cli:v1 -->"
+# 日本語の正規形は 2 つ目の正規形で、英語の正規形は変えない。どちらを使うかは
+# SKILL.md の Post-choice 見出しの言語で決まる (_skill_language)。
+EXTERNAL_GUARD_BLOCK_BEGIN_JA = "<!-- external-mutation-guard-cli-ja:v1 -->"
+EXTERNAL_GUARD_BLOCK_END_JA = "<!-- /external-mutation-guard-cli-ja:v1 -->"
+EXTERNAL_GUARD_BLOCK_MARKERS = {
+    "en": (EXTERNAL_GUARD_BLOCK_BEGIN, EXTERNAL_GUARD_BLOCK_END),
+    "ja": (EXTERNAL_GUARD_BLOCK_BEGIN_JA, EXTERNAL_GUARD_BLOCK_END_JA),
+}
+POST_CHOICE_HEADING = "## Post-choice selected improvement execution"
+POST_CHOICE_HEADING_JA = "## 選んだ深さでの改善の実行"
+POST_CHOICE_HEADINGS = {"en": POST_CHOICE_HEADING, "ja": POST_CHOICE_HEADING_JA}
 # guard CLI は skill-governance-adapters plugin にある。`<plugin root>/../skill-governance-adapters`
 # は repo の plugins/ でしか兄弟に届かず、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
 # では同じ plugin の別 version 群を指す。そこで自 plugin に vendor した resolver
@@ -39,6 +52,8 @@ EXTERNAL_GUARD_SHELL_RUNNER = (
     f"{EXTERNAL_GUARD_ROOT_PLACEHOLDER}/scripts/build-external-mutation-guard.py"
 )
 RUNTIME_ROOT_POLICY = "host-skill-path"
+RUNTIME_ROOT_BLOCK_BEGIN = "<!-- runtime-root-contract:v1 -->"
+RUNTIME_ROOT_BLOCK_END = "<!-- /runtime-root-contract:v1 -->"
 RUNTIME_ROOT_CONTRACT_HEADING = "## Runtime root contract"
 RUNTIME_ROOT_CONTRACT_SECTION = f"""{RUNTIME_ROOT_CONTRACT_HEADING}
 
@@ -48,6 +63,19 @@ RUNTIME_ROOT_CONTRACT_SECTION = f"""{RUNTIME_ROOT_CONTRACT_HEADING}
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 """
+RUNTIME_ROOT_CONTRACT_HEADING_JA = "## 実行時のルートの決め方"
+RUNTIME_ROOT_CONTRACT_SECTION_JA = f"""{RUNTIME_ROOT_CONTRACT_HEADING_JA}
+
+- `runtime_root_policy: {RUNTIME_ROOT_POLICY}` を適用する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+- `prompts/` の下のファイルも、このスキルの決まりに従う。
+"""
+RUNTIME_ROOT_CONTRACT_SECTIONS = {
+    "en": RUNTIME_ROOT_CONTRACT_SECTION,
+    "ja": RUNTIME_ROOT_CONTRACT_SECTION_JA,
+}
 EXPECTED_EXTERNAL_MUTATION_RUNTIME = {
     "contract_id": "external-mutation-guard-v1",
     "runner_ref": "plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py",
@@ -651,8 +679,56 @@ def _external_guard_contradiction(path: pathlib.Path) -> str | None:
     return None
 
 
-def _canonical_external_guard_block() -> str:
+def _skill_language(text: str) -> str:
+    """SKILL.md の正規形の言語を Post-choice 見出しで決める。
+
+    日本語の Post-choice 見出しが行全体で一致すれば (前後の空白は無視) "ja"、
+    なければ従来どおり "en"。Runtime root 節の挿入・ガードブロックの移行・
+    wiring の検査はすべてこの 1 つの判定に従う。
+    """
+    lines = (line.strip() for line in text.splitlines())
+    return "ja" if POST_CHOICE_HEADING_JA in lines else "en"
+
+
+def _canonical_external_guard_block(language: str = "en") -> str:
+    if language not in EXTERNAL_GUARD_BLOCK_MARKERS:
+        raise ContractError(f"unknown canonical guard block language: {language!r}")
     runner = EXTERNAL_GUARD_SHELL_RUNNER
+    if language == "ja":
+        # 散文だけを日本語にする。コマンド行は英語版とバイト単位で同じにし、
+        # _validate_external_guard_wiring の必須コマンドの検査を両方の言語に効かせる。
+        return f"""{EXTERNAL_GUARD_BLOCK_BEGIN_JA}
+### 外部変更の受領書の手順（必須）
+
+外部変更のコマンドを直接実行しない。山括弧のプレースホルダは、すべてこの実行で確かめた値に置き換える。
+値が欠けていたり正しくなかったりすれば、中央の CLI が止める（fail-closed）。
+
+`preview` の前に、ガードを持つプラグインのルートを1回だけ解決する。インストールされたプラグインからは、
+隣のプラグインに `<プラグインのルート>/..` では届かないので、このパスを推測しない:
+
+```bash
+python3 "{EXTERNAL_GUARD_ROOT_RESOLVER}" {EXTERNAL_GUARD_PLUGIN}
+```
+
+表示された絶対パスを、`preview`・`authorize`・`execute` の `{EXTERNAL_GUARD_ROOT_PLACEHOLDER}` に使う
+（確認を待つあいだはほかの Bash が止められるので、解決し直さない）。
+解決のスクリプトが 0 以外で終わったら、外部変更をせずに止まり、`{EXTERNAL_GUARD_PLUGIN}` プラグインを入れるようユーザーに伝える。
+
+```bash
+python3 "{runner}" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+この正規の `preview` の出力をユーザーに見せる。登録済みの `hook-confirm` を動かせるのは、`preview` が表示したとおりのユーザーの返答だけ。
+そのあと、返ってきた2つの受領書のパスを使う:
+
+```bash
+python3 "{runner}" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
+python3 "{runner}" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
+```
+
+自動承認のフラグを使わない。この受領書の手順の外で外部変更のコマンドを実行しない。
+{EXTERNAL_GUARD_BLOCK_END_JA}
+"""
     return f"""{EXTERNAL_GUARD_BLOCK_BEGIN}
 ### Canonical external mutation receipt flow (mandatory)
 
@@ -760,48 +836,86 @@ def _migrate_external_direct_examples(text: str) -> str:
     return text
 
 
-def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
-    """Declare the host-skill-path policy the injected dual-root runner depends on.
+def _canonical_runtime_root_block(language: str, *, has_prompts: bool) -> str:
+    """Render only resource contracts that actually exist for the owner skill."""
+    section = RUNTIME_ROOT_CONTRACT_SECTIONS[language]
+    if not has_prompts:
+        section = "\n".join(line for line in section.splitlines() if "`prompts/`" not in line) + "\n"
+    return RUNTIME_ROOT_BLOCK_BEGIN + "\n" + section + RUNTIME_ROOT_BLOCK_END + "\n"
 
-    guard block を撒くと owner skill は「plugin root を shell で解決する skill」に
-    なる。宣言と本文契約を同じ migration で置かないと、注入だけが進んで policy が
-    無いという drift を毎回手作業で追いかけることになる。
-    """
+
+def _ensure_runtime_root_contract(text: str, path: pathlib.Path) -> str:
     if not text.startswith("---"):
         raise ContractError(f"{path}: SKILL.md frontmatter missing")
     _, front, body = text.split("---", 2)
     if f"runtime_root_policy: {RUNTIME_ROOT_POLICY}" not in front:
-        lines = front.rstrip("\n").split("\n")
-        anchor = next(
-            (i for i, line in enumerate(lines) if line.startswith("effect:")),
-            len(lines) - 1,
-        )
-        lines.insert(anchor + 1, f"runtime_root_policy: {RUNTIME_ROOT_POLICY}")
-        front = "\n".join(lines) + "\n"
-    if RUNTIME_ROOT_CONTRACT_HEADING not in body:
-        match = re.search(r"^## ", body, re.MULTILINE)
-        if match is None:
-            raise ContractError(f"{path}: no section to anchor the runtime root contract")
-        body = (
-            body[: match.start()]
-            + RUNTIME_ROOT_CONTRACT_SECTION
-            + "\n"
-            + body[match.start() :]
-        )
+        line = f"runtime_root_policy: {RUNTIME_ROOT_POLICY}"
+        if re.search(r"^runtime_root_policy:", front, re.M):
+            front = re.sub(r"^runtime_root_policy:[^\n]*", line, front, flags=re.M)
+        else:
+            front = front.rstrip("\n") + "\n" + line + "\n"
+    language = _skill_language(text)
+    block = _canonical_runtime_root_block(language, has_prompts=(path.parent / "prompts").is_dir())
+    markers = (RUNTIME_ROOT_BLOCK_BEGIN, RUNTIME_ROOT_BLOCK_END)
+    if any(marker in body for marker in markers):
+        if any(body.count(marker) != 1 for marker in markers):
+            raise ContractError(f"{path}: runtime root block missing/duplicated marker")
+        start, end = body.index(markers[0]), body.index(markers[1])
+        if end < start:
+            raise ContractError(f"{path}: runtime root block markers out of order")
+        body = body[:start] + body[end + len(markers[1]):].lstrip("\n")
+    # Convert either legacy locale; relocate the managed block directly after purpose.
+    headings = "|".join(re.escape(h) for h in (RUNTIME_ROOT_CONTRACT_HEADING, RUNTIME_ROOT_CONTRACT_HEADING_JA))
+    body = re.sub(rf"^(?:{headings})[ \t]*\n.*?(?=^## |\Z)", "", body, flags=re.M | re.S)
+    purpose = re.search(r"^## (?:Purpose & Output Contract|目的と出力契約)[ \t]*$", body, re.M)
+    if purpose:
+        following = re.search(r"^## ", body[purpose.end():], re.M)
+        at = purpose.end() + following.start() if following else len(body)
+    else:
+        first = re.search(r"^## ", body, re.M)
+        if first is None:
+            raise ContractError(f"{path}: no section to anchor runtime root contract")
+        at = first.start()
+    body = body[:at].rstrip("\n") + "\n\n" + block + "\n" + body[at:].lstrip("\n")
     return "---" + front + "---" + body
 
 
-def migrate_external_guard_blocks(root: pathlib.Path) -> int:
+def _validate_runtime_root_wiring(path: pathlib.Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    language = _skill_language(text)
+    other = "en" if language == "ja" else "ja"
+    if re.search(rf"^{re.escape(RUNTIME_ROOT_CONTRACT_SECTIONS[other].splitlines()[0])}[ \t]*$", text, re.M):
+        raise ContractError(f"{path}: runtime root contract language mismatch")
+    begin, end = RUNTIME_ROOT_BLOCK_BEGIN, RUNTIME_ROOT_BLOCK_END
+    if begin in text or end in text:
+        if text.count(begin) != 1 or text.count(end) != 1 or text.index(end) < text.index(begin):
+            raise ContractError(f"{path}: runtime root block markers invalid")
+        actual = text[text.index(begin):text.index(end) + len(end)]
+        expected = _canonical_runtime_root_block(language, has_prompts=(path.parent / "prompts").is_dir()).rstrip("\n")
+        if actual != expected:
+            raise ContractError(f"{path}: runtime root canonical block drift")
+    elif language == "ja":
+        raise ContractError(f"{path}: Japanese runtime root requires a managed block; run migration")
+
+
+def migrate_external_guard_blocks(root: pathlib.Path, plugin_names: set[str] | None = None, skill_names: set[str] | None = None) -> int:
     """Mechanically place the canonical CLI contract in every external entrypoint."""
     logical_entrypoints = 0
     seen_inodes: set[tuple[int, int]] = set()
+    # 既存のブロックは言語を問わず取り除き、ファイルの言語の正規形だけを入れ直す。
     block_pattern = re.compile(
-        rf"\n?{re.escape(EXTERNAL_GUARD_BLOCK_BEGIN)}.*?"
-        rf"{re.escape(EXTERNAL_GUARD_BLOCK_END)}\n?",
+        "|".join(
+            rf"\n?{re.escape(begin)}.*?{re.escape(end)}\n?"
+            for begin, end in EXTERNAL_GUARD_BLOCK_MARKERS.values()
+        ),
         re.DOTALL,
     )
     for plugin_dir in discover_plugin_dirs(root):
+        if plugin_names is not None and plugin_dir.name not in plugin_names:
+            continue
         for path in sorted((plugin_dir / "skills").glob("*/SKILL.md")):
+            if skill_names is not None and path.parent.name not in skill_names:
+                continue
             if _frontmatter(path).get("effect") != "external-mutation":
                 continue
             logical_entrypoints += 1
@@ -812,7 +926,8 @@ def migrate_external_guard_blocks(root: pathlib.Path) -> int:
             text = block_pattern.sub("\n", path.read_text(encoding="utf-8"))
             text = _migrate_external_direct_examples(text)
             text = _ensure_runtime_root_contract(text, path)
-            heading = "## Post-choice selected improvement execution"
+            language = _skill_language(text)
+            heading = POST_CHOICE_HEADINGS[language]
             heading_at = text.find(heading)
             if heading_at < 0:
                 raise ContractError(f"{path}: canonical post-choice execution section missing")
@@ -820,7 +935,7 @@ def migrate_external_guard_blocks(root: pathlib.Path) -> int:
             paragraph_end = text.find("\n\n", paragraph_start + 2)
             if paragraph_start < 0 or paragraph_end < 0:
                 raise ContractError(f"{path}: post-choice execution paragraph malformed")
-            block = _canonical_external_guard_block()
+            block = _canonical_external_guard_block(language)
             updated = (
                 text[: paragraph_end + 2]
                 + block
@@ -830,6 +945,23 @@ def migrate_external_guard_blocks(root: pathlib.Path) -> int:
             if updated != path.read_text(encoding="utf-8"):
                 path.write_text(updated, encoding="utf-8")
     return logical_entrypoints
+
+
+_SHELL_EXPANSION_CHECKER = None
+
+
+def _guard_shell_expansion(command: str) -> bool:
+    """Use the executable guard's parser as the single syntax contract."""
+    global _SHELL_EXPANSION_CHECKER
+    if _SHELL_EXPANSION_CHECKER is None:
+        source = pathlib.Path(__file__).resolve().parents[1] / "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py"
+        spec = importlib.util.spec_from_file_location("artifact_guard_shell_contract", source)
+        if spec is None or spec.loader is None:
+            raise ContractError("canonical shell syntax checker unavailable")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _SHELL_EXPANSION_CHECKER = module.has_unsafe_shell_expansion
+    return _SHELL_EXPANSION_CHECKER(command)
 
 
 def _direct_external_mutation_instruction(text: str) -> str | None:
@@ -851,8 +983,23 @@ def _direct_external_mutation_instruction(text: str) -> str | None:
     )
     for raw_line in text.splitlines():
         line = raw_line.strip()
-        if not line or line.startswith("#") or "build-external-mutation-guard.py" in line:
+        if not line or line.startswith("#"):
             continue
+        if "build-external-mutation-guard.py" in line:
+            if _guard_shell_expansion(line):
+                return f"shell expansion executes before canonical guard: {line[:160]}"
+            try:
+                tokens = list(shlex.shlex(line, posix=True, punctuation_chars=True))
+            except ValueError:
+                tokens = []
+            canonical = (len(tokens) >= 3 and tokens[0] in {"python3", "/usr/bin/python3"}
+                         and pathlib.PurePosixPath(tokens[1]).name == "build-external-mutation-guard.py"
+                         and tokens[2] in {"preview", "authorize", "execute", "cancel"})
+            operators = [token for token in tokens if token and set(token) <= set("&|;<>()")]
+            if canonical and not operators:
+                continue
+            if operators:
+                return f"compound guard command bypasses canonical execute: {line[:160]}"
         if line.startswith("MUTATION_ARGV_JSON="):
             continue
         if re.match(r"^(?:Construct|Set) <MUTATION_ARGV_JSON>", line):
@@ -871,12 +1018,24 @@ def _direct_external_mutation_instruction(text: str) -> str | None:
 
 def _validate_external_guard_wiring(path: pathlib.Path) -> None:
     text = path.read_text(encoding="utf-8")
-    if text.count(EXTERNAL_GUARD_BLOCK_BEGIN) != 1 or text.count(EXTERNAL_GUARD_BLOCK_END) != 1:
+    language = _skill_language(text)
+    # もう一方の言語のマーカーは 1 つでも残っていれば不合格 (言語の不一致・両言語の併存)。
+    for other, markers in EXTERNAL_GUARD_BLOCK_MARKERS.items():
+        if other != language and any(marker in text for marker in markers):
+            raise ContractError(
+                f"{path}: external-mutation canonical CLI wiring block language mismatch: "
+                f"{other} block in {language} SKILL.md"
+            )
+    begin_marker, end_marker = EXTERNAL_GUARD_BLOCK_MARKERS[language]
+    if text.count(begin_marker) != 1 or text.count(end_marker) != 1:
         raise ContractError(f"{path}: external-mutation canonical CLI wiring block missing/duplicated")
-    start = text.index(EXTERNAL_GUARD_BLOCK_BEGIN)
-    end = text.index(EXTERNAL_GUARD_BLOCK_END, start)
-    block = text[start : end + len(EXTERNAL_GUARD_BLOCK_END)]
-    post_choice = text.find("## Post-choice selected improvement execution")
+    start = text.index(begin_marker)
+    # 終わりのマーカーが始まりより前にあると index は ValueError を投げる。契約違反として報告する。
+    end = text.find(end_marker, start)
+    if end < 0:
+        raise ContractError(f"{path}: external-mutation canonical CLI wiring block markers out of order")
+    block = text[start : end + len(end_marker)]
+    post_choice = text.find(POST_CHOICE_HEADINGS[language])
     if post_choice < 0 or start < post_choice:
         raise ContractError(f"{path}: canonical CLI wiring must be in post-choice execution")
     runner = f'python3 "{EXTERNAL_GUARD_SHELL_RUNNER}"'
@@ -900,6 +1059,9 @@ def _validate_external_guard_wiring(path: pathlib.Path) -> None:
     direct = _direct_external_mutation_instruction(text)
     if direct is not None:
         raise ContractError(f"{path}: {direct}")
+    if block != _canonical_external_guard_block(language).rstrip("\n"):
+        raise ContractError(f"{path}: canonical CLI wiring block content drift")
+    _validate_runtime_root_wiring(path)
 
 
 def _external_guard_contract(
@@ -1113,6 +1275,8 @@ def lint_repository(root: pathlib.Path) -> list[str]:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo-root", type=pathlib.Path, default=pathlib.Path.cwd())
+    parser.add_argument("--skill", action="append", help="limit migration to named skill (repeatable)")
+    parser.add_argument("--plugin", action="append", help="limit migration to named plugin (repeatable)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--write", action="store_true", help="write every projection")
     group.add_argument("--check", action="store_true", help="read-only parity check (default)")
@@ -1128,7 +1292,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.migrate_external_guard:
         try:
-            changed = migrate_external_guard_blocks(args.repo_root.resolve())
+            changed = migrate_external_guard_blocks(args.repo_root.resolve(), set(args.plugin) if args.plugin else None, set(args.skill) if args.skill else None)
         except ContractError as exc:
             print(f"ARTIFACT_DELIVERY_ERROR: {exc}", file=sys.stderr)
             return 1

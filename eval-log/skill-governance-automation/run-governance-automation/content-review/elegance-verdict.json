@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-governance-automation",
     "skill": "run-governance-automation",
-    "skill_md_sha256": "3329d6fc08578d29d0a8f2c9ee5d74edb6c0769374951479c3cacfd7d4a9ebd0"
+    "skill_md_sha256": "e19eb26609c8d478e3e0a6290df7c8335c06f7722616152e97479c530c9875a1"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
+  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
+  "reviewed_at": "2026-10-10T00:52:13Z",
+  "iterations": 2,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 2,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 4
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-08-24T00:00:00Z",
-  "iterations": 1,
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -24,13 +24,29 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline の最小 profile は help→read-only preflight→承認後 apply/rollback という直列責務に合い、不要な context fork を増やさない。scripts entrypoint と plugin-composition の公開 ref は解決する。"
+      "前回の dependency_break（medium）は解決した。commit 44b8bbbe で package-contract の depends_on と plugin-composition の external_dependencies に skill-governance-config を足した。installer の resolve_dependency_order を実測すると、closure は (harness-creator, skill-governance-adapters, skill-governance-config) になる。修正前の depends_on を in-memory で差し替えて比べると config が入っておらず、この修正で closure に加わったことを確かめた",
+      "新しい循環は無い。skill-governance-config の depends_on は [harness-creator] だけ。cycle_groups に出る harness-creator↔skill-governance-adapters の SCC は修正前から同じで、installer はこれを scc_members として扱い、エラーにはしない。lint-dependency-direction も no cycles",
+      "plugin.json の dependencies は [skill-governance-adapters] のままで、package-contract の depends_on とは食い違う。これは repo の規約どおり。validate-plugin-completeness の DEP-001 は、manifest に runtime provider（adapters）だけを書かせ、harness の依存は sidecar の package-contract に分けている。22 plugin のうち harness-creator 以外の全てが同じ形で、ubm-goal-setting は skill-governance-config の宣言（version 範囲・required_entry_points）まで同じ形の前例になっている。version 範囲 >=0.1.0 <1.0.0 は実際の 0.1.14 を満たし、run-governance-config も実在する",
+      "F1 は解決済みのまま。guard は plugin 版と root 版で byte 一致している（cmp exit 0）。--base no-such-ref-xyz、相対パスの --policy、存在しない policy、引数の無い --policy は、いずれも exit 2 で止まる。--base HEAD で差分が空のときは exit 0 で、report は空になる",
+      "F2 は解決済みのまま。re-evaluate に --rubric /nonexistent.json を渡すと exit 2。既定の実行では、extract-plugin-root で harness-creator の rubric 1.5.0 を解決し、36 ファイルを走査して exit 0 になる",
+      "兄弟 plugin を ../ で辿らず、extract-plugin-root.py で manifest の name を照合し、見つからなければ exit 1 で止める作りになっている。そのため、host 標準の marketplace 経由で config が入っていない場合も、--policy の解決に失敗して guard が exit 2 で止まり、成功扱いにならない。lint-sibling-plugin-paths と lint-vendored-ssot（56 件が byte 一致）も OK",
+      "IN1（script）: 主要な entrypoint 7本は --help が exit 0。read-only の preflight を実測した。registration-plan は --apply なしで提案だけを出して exit 0。compose-rubrics は正常系が exit 0、存在しない入力で exit 1。rollback-to-stable の --dry-run は versions-md が無いと exit 1。非0を成功扱いにする経路は無かった",
+      "OUT1（evaluator、静的）: Key Rules の『apply/rollback/通知は明示承認なしに実行しない』と、検証節の『command・exit code・changed paths・残リスクを報告』が、OUT1 の文言と1対1で対応している。build-manifest-registration-plan は既定では提案だけを出し、--apply を承認ゲートの後に置く設計で、この方針と整合している"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "low（既知・PR 残課題）omission: SKILL.md に、目的（登録・rubric 合成・再評価・rollback）と entrypoint（build-manifest-registration-plan / compose-rubrics / re-evaluate-on-rubric-bump / rollback-to-stable）の対応表が無い。選択は汎用の手順（--help → read-only → 承認）に任されている",
+      "low（新規）omission: compute-rubric-hash.py は --dry-run を付けないと rubric.json と rubric.normalized.json をその場で書き換える。registration-plan のように --apply が要る設計とは逆の既定値なのに、SKILL.md はこの違いを区別していない。対応表を作るときに『既定で書き込む entrypoint』の印を付けることを推奨する",
+      "low（既知）inconsistency: CI（.github/workflows/harness-creator-kit-ci.yml:271-272）が re-evaluate に受け付けない引数 --skills-dir を渡し、その argparse エラー（exit 2）を `|| true` で握りつぶしている。CI 上の再評価通知は実質的に動いていない",
+      "low（既知）inconsistency: scripts/re-evaluate-on-rubric-bump.py（root 版）が plugin 版と分かれている（cmp で line 6 から差分）",
+      "low（既知）smell: notify-if-governance-trigger.py は、trigger.json が無いときや JSON が壊れているときも、何も言わずに exit 0 で返す",
+      "low（既知）smell: re-evaluate の EVAL_LOG_DIR は module 定数（None）のままで、環境変数を読まない",
+      "low（新規）smell: rollback-to-stable.py の --params の既定値 references/governance-params.json は consumer の cwd 基準になっている。実在するのは .example だけなので、ceiling 0.05 に黙って fallback する。また、このスクリプトは書き込みをしないので --dry-run は効果が無く、header の write-scope: output-dir も実態と合わない",
+      "low（新規）smell: Key Rules と IN1 にある『receipt』が何を指すのか、この skill の entrypoint 群に対して定義されていない"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual:20261010-pr-final-review",
     "next_action": "none"
   },
-  "notes": "現行 SKILL.md 全文、diff、composition、scripts 配置、criteria を fresh review。runtime-profile/frontmatter/tree lint は exit 0。legacy goal-seek の wiring/anchor 推奨 warning 3件は exit 0で非ブロッキング。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "HEAD 44b8bbbe、SKILL.md の sha256 は指定値と一致した。手順の正本どおり、1つの context で focused combined review を行った（矛盾なし・漏れなし・規約整合・依存関係整合 + rubric の high が0件）。30種の思考法は使っていない。前回の medium（dependency_break）は、installer の closure の実測と、修正前の状態との in-memory 比較で解決を確認した。plugin.json の dependencies との食い違いは、DEP-001 の規約と ubm-goal-setting の前例から、許容される分離だと判断した。F1 と F2 は再確認の3点がすべて期待どおりだった（cmp 0、exit 2、exit 2）。medium 以上の新たな finding は無い。low は8件（既知5件、新規3件）。OUT1 は静的な設計主張として評価した。apply・rollback・通知・install は実行していない。pytest は、一時ファイルを作るのを避けるため実行していない（F1 と F2 のテストによる確認は前回の独立レビューの結果に依拠している）。validate-plugin-package は exit 1 だったが、原因は advisory 扱いの PKG-004 と PKG-014 だけで、fleet 全体で同じ状態にある。全体の validate-plugin-packages は exit 0。review の後、worktree に変更が無いこと（git status --ignored が0行）を確認した。"
 }

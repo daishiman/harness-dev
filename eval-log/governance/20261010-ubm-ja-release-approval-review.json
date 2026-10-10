@@ -1,0 +1,94 @@
+{
+  "kind": "independent-approval-review",
+  "proposal_id": "PROP-2026-10-10-UBM-JA-RELEASE",
+  "review_scope": "guard-change-category.py --base origin/main が P1_structural として止めた48件（plugin.json 44件・docs 2件・run-ubm-challenge/SKILL.md・run-ubm-knowledge-sync の L1 rubric.json）",
+  "target_manifest_sha256": "f4d5e5c383a6f66e80624e22eacaf383d2695dd0fd9e395208867fee6d2e739d",
+  "target_manifest_format": "対象パスの昇順で '<path> <sha256>' を改行区切りにし末尾改行を付けた UTF-8 バイト列の sha256",
+  "review": {
+    "reviewer": "independent-approval-reviewer (Claude subagent, read-only)",
+    "reviewed_head": "c6ef6df720c2666a03b9aa95735173c92808f933",
+    "groups": {
+      "G1_plugin_json": {
+        "verdict": "approve",
+        "checked": [
+          "22プラグイン44件の plugin.json について、origin/main との差分をフィールド単位で比べた（git show と python3）。",
+          "21プラグインは version だけが変わっている。ubm-goal-setting だけは version に加えて description と、codex 側の interface（displayName、shortDescription、longDescription、defaultPrompt）を日本語化している。",
+          "全22プラグインで .claude-plugin、.codex-plugin、plugin-composition.yaml の version が一致する。.claude-plugin/marketplace.json の version もすべて一致する。",
+          "bump の種類: ubm-goal-setting は 0.6.4 から 0.7.0 への minor。新スキル run-ubm-challenge を足しており、CHANGELOG.md に 0.7.0 の記載がある。残り21件は patch（+1）。",
+          "各プラグインに plugin.json 以外の実際の変更があることを git diff --stat で確かめた。全件に run-skill-feedback/SKILL.md と validate-inline-goal-seek-anchor.py の vendor 更新、artifact-delivery.json の runner_sha256 更新、composition の version 更新がある。harness-creator は42ファイル、ubm-goal-setting は248ファイル変わっている。どのプラグインにも bump の根拠がある。",
+          "build-plugin-release.py の --check が書き込みをしない経路であることをソースで確かめてから実行した。結果は `[build-plugin-release] OK (22 plugins)`、exit 0。HEAD が c6ef6df7 に進んだ後に再実行しても OK だった。",
+          "ubm-goal-setting の .codex-plugin の displayName と defaultPrompt は .codex-plugin-overrides.json と一致する。description は claude 側と codex 側で同じ。"
+        ],
+        "findings": [
+          "版の食い違いはない。semver の上げ方も妥当である。patch に固定しているのは build-plugin-release.py の next_version の規約どおり。",
+          "ubm-goal-setting の plugin.json は version だけの変更ではない。表示文の日本語化も含んでいて、内容は manifest 間とオーバーライドで整合している。"
+        ]
+      },
+      "G2_docs": {
+        "verdict": "approve",
+        "checked": [
+          "27-rubric-governance-runbook.md の追記7行を読んだ。1.4.0 と 1.5.0 の記述を次のものと照合した: L0 rubric.json（rubric_version 1.5.0、BD-001/BD-002/PD-002 の check と rationale）、render-findings-score.py の日本語見出しの照合（*_HEADING_JA と _has_heading_line による行全体の一致。`## 守ること` も行一致）、2つの governance-log.jsonl（PROP-2026-10-09-001 は 1.3.0→1.4.0、flip_rate 0.0、minor。PROP-2026-10-09-ELEGANT-PD002 は 1.4.0→1.5.0）。",
+          "proposal ファイル plugins/harness-creator/skills/run-skill-rubric-governance/proposals/2026-10-09-ja-heading-alias.md が実在する。",
+          "L2 の同期を確かめた。assign-skill-design-evaluator の rubric.json は upstream_version_pin 1.5.0、rubric_hash 9bd1769f… で、L0 の sha256 と一致する。check-rubric-sync.py の結果は OK、exit 0。",
+          "33-change-governance.md の追記4項目を scripts/guard-change-category.py と照合した。承認と cooldown が同じ _matches_target を使うこと、target_sha256 と現物の一致を見る _approved_current_content、incident_fix=true だけが例外になること、文字列（' + ' で分割）と配列の両方でファイル・ディレクトリ・fnmatch glob を同じ規則で照合すること、をそれぞれ確かめた。",
+          ".github/workflows/governance-check.yml は `guard-change-category.py --base origin/main` を実行しており、--bypass-cooldown は付いていない。"
+        ],
+        "findings": [
+          "実装と事実が食い違っている記述はない。"
+        ]
+      },
+      "G3_run_ubm_challenge": {
+        "verdict": "approve",
+        "checked": [
+          "frontmatter の name は run-ubm-challenge で、ディレクトリ名と一致する。description は「〜作りたいとき」「〜仕上げたいとき」の2条件で書かれている。",
+          "SKILL.md は294行で、300行以下。",
+          "日本語の正規見出しを確かめた。`## 目的と出力契約` は本文8行目にあり、冒頭30行以内に `**禁則**` もある。`## 守ること`、`## つまずきやすい点`、`## 実行時のルートの決め方`、`## 選ぶ前の実成果物の作成`、`## 選んだ深さでの改善の実行` は ja-contract-policy.md の対応表と一致する。",
+          "参照24件の実在を確かめ、すべて存在した。対象は frontmatter の responsibility_refs、script_refs、reference_refs、rubric_refs、schema_refs、knowledge_loop.index と、本文が参照する output-formats.md、hooks/ubm-write-path-guard.py、extract-plugin-root.py、tests/test_validate_challenge_output.py、examples/golden-sample.md。commands/ubm-challenge.md、agents/challenge-advisor.md、skill-governance-adapters 側の外部変更ガードのスクリプトも実在する。本文が参照する節名（question-map.md の「原則」「返し方（phase3 との差分）」「欄ごとの問い」「戻りゲート」、challenge-format.md の「各欄の合格条件」、challenge-advisor.md の「入力」）も実在する。",
+          "個人情報の検査: SKILL.md、challenge-advisor.md、commands/ubm-challenge.md と run-ubm-challenge 配下を、メールアドレス、電話番号、/Users/、氏名系のパターンで grep した。該当はなかった。「北原さん」は main の時点ですでにプラグイン名と説明に使われている名称で、今回新しく入ったものではない。",
+          "lint-skill-description.py の結果は summary OK=189 VIOLATION=0、exit 0。",
+          "lint-skill-tree.py（plugins/skill-governance-lint にある同じ内容のコピーでも確認）を run-ubm-challenge に実行した結果は exit 1。内容は「P1-2違反: references/ に 3 ファイルあるが resource-map.yaml が不在」。",
+          "lint-skill-dep-step7.py はルートの scripts/ には無く、plugins/skill-governance-lint/scripts/ にある。そちらを --skills-dir plugins/ubm-goal-setting/skills で実行した結果は `ok: doc/20 Step 7 全5条件 PASS (7 skills)`、exit 0。",
+          "validate-challenge-output.py に examples/golden-sample.md を渡した結果は PASS、exit 0。",
+          "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py（write-scope: none）をこの SKILL.md に実行した結果: score 100、threshold 80、passed true、findings なし。意味判断が要る BD-004 と KL-002 は pending_human に残っている。"
+        ],
+        "findings": [
+          "参照切れ、name の不一致、行数の超過、個人情報の混入はない。",
+          "lint-skill-tree の P1-2（references/ に3ファイル以上あるのに resource-map.yaml が無い）に当たる。設計書06 第13条ではこれは「推奨」で、警告扱いになっている。CI は harness-creator のスキルだけに lint-skill-tree をかけている。このため承認は止めない。"
+        ]
+      },
+      "G4_l1_rubric": {
+        "verdict": "approve",
+        "checked": [
+          "L1 の rubric.json の rules は KL-002 の1件で、キーは id と check だけ。weight、severity、area、applies_to_kinds、threshold、severity_weights の上書きはない。",
+          "L0 の KL-002 は origin/main から変わっていない。L0 で変わった規則は BD-001、BD-002、PD-002 と rubric_version だけで、これらは既存の PROP-2026-10-09-001 と ELEGANT-PD002 で承認・記録済み。",
+          "compose-rubrics.py（write-scope: none）で L0+L1 を合成した。規則は41件で L0 と同じ数。L0 と違うのは KL-002 だけで、違うフィールドは check だけ。severity medium、area、applies_to_kinds ['*'] は L0 のまま、threshold 80、severity_weights も変わらない。合成の警告はない。",
+          "upstream（L0 のリポジトリ相対パス）、merge_strategy deep-merge、conflict_policy most-specific-wins、layer L1 は、ref-domain-rubric-template、ref-domain-task-spec-rubric の L1、compose-rubrics.py の STRATEGIES と POLICIES、rubric-registry.json に今回追加された ubm-goal-setting L1 の登録と一致する。",
+          "continuation-authority.json を読んだ。ユーザーの発言「成功するまで続けてください。」を解釈した採用であると明記している。提示した proposal の sha256 6f25956b… は現物（tracked）と一致する。global_l0_modification_authorized は false。",
+          "independent-knowledge-field-normative-arbitration.json を読んだ。reviewer は /root/meta_analyst、proposer は /root で別人。verdict は PASS_SCOPED_TABLE_CLARIFICATION。current_actual_L1_sha256 5f2c7451… は現物の L1 と一致する。記録された run-ubm-challenge SKILL.md の sha256 ada351fd… も現物と一致する。L0 の sha256 9bd1769f… も一致する。",
+          "記録された composition_hash 3410c863… を確かめた。worktree のパスで計算すると 4bd46276… になって一致しない。元のリポジトリの絶対パスを ref と path に入れて hash の入力を組み直すと 3410c863… と完全に一致した。違いはパスだけによるもので、内容は一致している。",
+          "check-rubric-sync.py（plugins/skill-governance-lint/scripts/）の結果は OK、exit 0。"
+        ],
+        "findings": [
+          "L0 は変えていない。L1 は KL-002 の check だけを特化する差分で、weight、threshold、severity は変えていない。合成ルールとも整合している。",
+          "採用の権限の根拠（ユーザーの継続指示の解釈と、proposal の hash）と、提案者とは別の裁定がそろっていて、現物の hash に結び付いている。"
+        ]
+      }
+    },
+    "blocking_findings": [],
+    "non_blocking_findings": [
+      "lint-skill-tree の P1-2 に、run-ubm-challenge と run-ubm-knowledge-sync の2件が当たる。後者は今回の rubric.json の追加で references/ が2件から3件になったため。全127スキルのうち違反はこの2件だけで、どちらも今回のブランチで新しく生じた。設計書06 第13条では推奨（警告）扱いなので承認は止めないが、references/resource-map.yaml を足すことを勧める。追加先は references/ 配下で P2_content に分類され、48件の target_sha256 には影響しない。",
+      "harness-creator は 1.4.43 から 1.4.44 への patch。ただし内容には rubric の minor（1.4.0、1.5.0。日本語見出しの受理の追加）が含まれる。build-plugin-release.py の patch 固定の規約どおりなので誤りではない。",
+      "extract-system-blueprint、harness-creator、prompt-creator、skill-intake の CHANGELOG.md には新しい版の記載がない。どれも main の時点で版ごとの記載が止まっていたもので、今回の退行ではない。",
+      "33章の追記は「target_sha256 があるときは現物との一致を求める」と書いている。実装は --proposal-id を付けない実行では target_sha256 の無い記録を承認として一切扱わず、記述より厳しい。矛盾ではなく記述が足りないだけ。",
+      "check-rubric-sync.py が見るのは L0 と L2（assign-skill-design-evaluator）の同期だけで、L1 は検査しない。L1 の整合は compose-rubrics.py で別に確かめた。",
+      "compose-rubrics.py と evaluate-design-rubric.py の composition_hash は、絶対パスを hash の入力に含むので、worktree が変わると値が変わる。証跡の hash を再現するには元のリポジトリのパスが要る。",
+      "eval-log の証跡（continuation-authority.json、arbitration.json など）には /Users/dm/... というローカルの絶対パスが入っている。main にも同じ書き方のファイルが568件あり、既存の慣行である。48件の対象にはこのパスは含まれない。",
+      "golden-sample.md には具体的な金額と日付がある。識別子は入っていない。ただ、実在するユーザーのデータから作ったものかどうかは判定できない（48件の対象外。P2）。",
+      "rubric-registry.json への L1 登録は、ガバナンス上は重要な変更だが、guard では P2_content に分類され、承認の対象になっていない。内容は L1 ファイルと整合している。",
+      "依頼文が示したパスのうち scripts/lint-skill-dep-step7.py と scripts/check-rubric-sync.py はルートに無い。実体は plugins/skill-governance-lint/scripts/ にあり、そちらを実行した。",
+      "審査中に HEAD が 86b63384 から c6ef6df7 に進んだ。提案者のコミットで、変わったのは run-governance-automation/SKILL.md と plugin-fingerprints.json の2件だけ。48件の対象はバイト単位で同じで、48件の『path sha256』行を並べた manifest の sha256 は f4d5e5c383a6f66e80624e22eacaf383d2695dd0fd9e395208867fee6d2e739d。追記する承認記録の target_sha256 は、現物から計算した値を使うこと。",
+      "c6ef6df7 の時点で未追跡ファイル eval-log/spec-reflection/20261010-ubm-ja-challenge-elegant-review.json がある。審査者が作ったものではない。"
+    ],
+    "limitations": "審査したのは、guard がブロックした48件と、その判断に要る周辺（各プラグインの差分の stat、L0/L2 rubric、guard の実装、CI の workflow、2つの証跡 JSON）だけ。P2_content の668件（ナレッジ982件の作り直し、references、scripts、tests など）の中身は見ていない。tests/test_validate_challenge_output.py などの pytest は、キャッシュファイルを作るおそれがあるので実行していない。ナレッジや挑戦宣言の意味的な品質（BD-004、KL-002 の LLM 判定）、run-skill-live-trial、Codex での実行時の挙動も評価していない。外部変更ガードの PreToolUse フックが、ガードのスクリプト名などを含む読み取り専用のコマンドを2回止めた。そのため検査スクリプトを scratchpad（リポジトリの外）に書いて実行した。リポジトリのファイルと git の状態は一切変えていない。"
+  }
+}

@@ -1,0 +1,581 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-05T07:31:11.184683Z"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "批判的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "仮説「changes=0なら収束」を未読remote/timestamp欠落の反例で攻撃した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py:165-167 は conflicts/missing をnextへ反映せず、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:307-310 もmissingを考慮しない。3つのin-process反例はすべてnext=convergedで仮説を反証した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/prompts/R3-sync.md:28-33/54 はchanges=0を停止条件に持つがconflictはR6へ渡す。同じreportで未解決と完了表示が同居するので、停止表示を独立した契約として扱う必要がある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0004: unresolved rows と next=converged が同居する。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "missing/conflictをterminal-state分類する分岐が無い。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md:13 の部分成功をPASSにしない契約と不整合。"
+          ]
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R6へのconflict接続は宣言済みだが、missingの再試行先をnextが示さない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0004",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+            "line": 166
+          },
+          "description": "Issue planner は conflicts または missing_issues だけが残ると changes=0、next=convergedを返す。Projects plannerも missing_itemsだけのケースで同じ表示を返す（scripts/diff-github-project-fields.py:307-310）。独立再現で unread Issue 1件、timestamp conflict 1件、missing Projects item 2件が各々convergedとなった。sync R3受入/checklistは二回目changes=0を停止条件にしており、未解決blockerを成功と誤読させる。",
+          "recommended_intervention": "共有の純粋な report terminal-state helper または両plannerの同じ優先順で、conflict/confirmations/held/missing/skippedを未解決として先に扱い、それらが0の時だけconvergedにする。syncの完了条件にも unresolved_count=0 を追加し、changes=0と未解決0を別々に判定する。",
+          "regression_test": "Issueのmissing/no-updated-at/reopen conflictとProjectのmissing item/manual conflictを個別に入力し、changes=0でもconverged=false（またはnextがblocked/manual/retry）になることを確認する。完全一致の空blocker planだけがconvergedになる対照例を持つ。"
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "演繹思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "入力source bytesが評価bytesと同一で、登録時にも同一なら確定取込が成立する、という前提からC19→C02を演繹した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-source-lineage.py:36-70 はoriginを限定しrepo相対・実在・containment・sha256を順に確認し、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:677-705/792-799 は evaluated_digest==source_digest と同じlineage関数を要求する。重複したhash gateを別実装せず関数共有している。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R0-context.md:21-35 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-system-spec/prompts/R3-import.md:28-33 はresume/import後にも同じgateへ接続する。validate-graph-schemaはartifact/schema担当（/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/validate-graph-schema.py:346-359）であり、このC19専用bytes検査と責務を混同しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "source/evaluated digestの前提が一致する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "C19 resume・C02 add・C19 import後の3境界にlineage検査がある。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "C19 promptのsource bytesと確認evidence契約をwriterが実装。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "C02はvalidate-source-lineage.lineage_findingsを直接利用し、import前後で同じ規則。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.94
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "帰納的思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "3 writerの実装を例示比較し、mkstemp/write/fsync/link/unlinkの共通列を帰納した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:169-186、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:147-166、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:342-353 が同じcreate-only原子書込であり、違うのはerror codeとJSON/bytes入口である。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py:55-69 はreplace版のみ。共通化対象は低水準IOとJSON bytesであり、3 writerのworkflowまで同じだという一般化は根拠がない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "create-only os.linkとreplace os.replaceは別契約として整合。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "temp cleanup/fsyncは各実装に含まれる。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "F-0005:同じ低水準安全処理が3箇所残り、保守時のdrift余地がある。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "atomic_json importは既存consumerで共有され、create-only receiptへ誤使用されていない。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0005",
+          "condition": "C3",
+          "severity": "low",
+          "bucket": "other",
+          "condition_signal": "smell",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+            "line": 169
+          },
+          "description": "create-only の低水準実装が build-init-scaffold._create_file、build-graph-node._write_atomic(create_only=True)、register-package._atomic_create_json に残る。いずれも parent mkdir→mkstemp→write/flush/fsync→os.link→temp unlink で、JSON直列化も_common.atomic_jsonと同じ設定を各所で繰り返す。replaceとcreate-onlyの契約差は必要だが、その差を保持したpure IO primitiveの共通化余地がある。",
+          "recommended_intervention": "_commonに json_bytes と atomic_bytes(path,data,create_only) を置き、create-onlyはos.link、replaceはos.replaceを維持する。FileExistsErrorはcallerで既存の責務別codeへ変換し、transaction/lock/rollbackはwriter側に残す。複数writerを巨大共通transactionに統合しない。",
+          "regression_test": "共通primitiveのcreate-only既存targetでbytesが不変かつtempが残らないこと、replaceでbytesが更新されることを検証する。その後各writerのreceipt immutability/rollback既存回帰を実行し、責務別error codeが保持されることを確認する。"
+        }
+      ],
+      "score": 0.88,
+      "reusable_abstraction": "json_bytes + atomic_bytes(create_only flag); writer-owned domain error translation",
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "replace helperをimmutable receiptにそのまま使わない",
+        "multi-file transaction/lockを一般化しない"
+      ]
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "アブダクション",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "失敗後にstate/receiptsだけ残る現象の最小説明を推論した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:171 の暗黙mkdirが、:219-222のmade_dirs記録を経由せず、:231-235のrollbackはその親を知らない。receipt os.linkのOSError注入によりこの説明どおり3 directoryが残った。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:227-237 は作成分を消して元へ戻す設計だが、:256は残存directoryがあってもwrite_count=0となる。初期planへ全親directoryを含めるのが小さい修正である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "既存fileをcreate-onlyで保持する原則は守る。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0003:file作成時の親directoryがrollback対象から欠落する。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "失敗時write_count=0と実際の新設directoryが一致しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "C24結果→plan→file→receiptの順序は明確。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0003",
+          "condition": "C2",
+          "severity": "medium",
+          "bucket": "other",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+            "line": 223
+          },
+          "description": "init rollback は made_dirs に明示的な plan dirs だけを記録し、_create_file(path.parent.mkdir) が作る graph/receipt の親 directory を追跡しない。通常設定の初回initでreceiptのos.linkにOSErrorを注入すると、成功済fileは消えるが .dev-graph/state/receipts とその祖先が残る。mainはwrite_count=0を返すため、失敗後の実在pathと報告が一致しない。",
+          "recommended_intervention": "全 file/receipt の親を初期planの directory集合へ含め、mkdir時に実際に新設した directory を記録する。逆順rollbackで作成fileと空directoryを消し、既存directoryは保持する。rollback自身の失敗は成功0件へ丸めず残存pathと不完全rollbackを返す。",
+          "regression_test": "初回initのreceipt creation failureを注入し、事前/事後の相対path集合と既存file bytesが一致することを検証する。既存state directoryを持つ場合はそれを残す対照ケースを加える。Gitは不要で_contextを固定receiptへ置換できる。"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "垂直思考",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "prompt参照→owner skill→共有reference→固有停止条件を1段ずつ追跡した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/references/prompt-common-layers.md:7-9/28-34 は共通と固有を置換せず結合する規則、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/prompts/R2-preview.md:38-55 は同じLayerを参照し固有CAS受入を保持する。",
+        "9 owner SKILLと41 R*.mdに対して各Layer4-7に共有pathがあるか、skill rootから実在referenceへ解決するかを静的検査しbad_refs=[]だった。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-sync/SKILL.md:133-139 はpromptsがowner root契約を継承すると定義するのでpromptファイルのdirectoryをpath基準にする必要はない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "共有と固有は双方適用で置換の矛盾がない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "9 skill/41 promptのLayer4-7参照に漏れが無い。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "R2のexpected_graph_revision固有契約が共有checklist合成後も残る。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "skill root起点のpathは全9 ownerで実在する。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.94
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "要素分解",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "writerをauthority/context・plan・validation・lock・IO・receipt・rollbackへ分解した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:1206-1320 はC24→CAS→plan→staging gate→artifact/graph/receipt→逆順復旧、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:365-450 はexact13 package gate→同一graph lock→graph/immutable receiptで、責務差が残る。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:135-144 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:356-362 のlock pathは同一で競合writerを直列化する。共通化候補のIOは分離可能だが、packageのgraph-only登録とnodeのMarkdown同期transactionを1つへ押し込むのは情報を失う。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "責務別transactionとshared lockが両立する。"
+          ]
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "init rollbackのdirectory追跡問題はF-0003で別法へ割当済み。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "graph-only packageとartifact同期の契約差が実装に残る。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "2つのC02入口が同じ.register.lockを使い直接重複applyしない。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "MECE",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "fieldごとのequal/export/import/manual/heldは分離されるが、node×fieldごとの複数Project入力の分類が揃うかを検証した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:216-278 の行別分類後、:283-288 が異なるaliasを同じpatchへ無条件に合成するため「複数remoteが同じlocal fieldに異なる値を要求する」集合が落ちる。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/schemas/repo-config.schema.json:100-240 は複数projectsとbidirectional priorityを許容する。node/config両schema finding=[]の例でhigh/lowの2importを作り、link順逆転だけでC02 patchがlow/highへ反転した。既存のboth-changed検査は1Project内のL/B/Rなのでこの交差競合を覆わない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "1Project内の3-way各行分類に重複actionは無い。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0001:aliasを跨ぐ同一local fieldの競合caseが未分類。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "双方変更は自動上書きせずmanualとするsync契約に、複数Projectで例外が生じる。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "複数import→単一C02 node_patchのjoinで情報が脱落。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+            "line": 285
+          },
+          "description": "複数 Project が同一 node の同一 local_field を異なる値へ import すると、patches[node_id].update() が最後の値だけを採用し競合を報告しない。repo-config/node schema を通る2 Project例で priority=medium/base=P2、remote a=P1、b=P3 は imports=[high,low]・conflicts=[]、C02 input=low。github_project_linkages の順序を逆転すると input=high となる。",
+          "recommended_intervention": "C02 input を組み立てる前に (graph_node_id, local_field) ごとに import を集約する。同値だけを1件へ畳み、異値は cross-project conflict としてその field の全 import を外し、双方の project/value を提示する。既存の field-level decision と区別した明示選択を必要とする。",
+          "regression_test": "schema-validな2 Projectから high/low の remote-only import を同時生成し、配列順を逆にしても update_input に当該 field が無く conflict が同じになることを検証する。同値2件は1 patchへ畳む対照ケースも持つ。"
+        }
+      ],
+      "score": 0.74
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "2軸思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "「更新方式=create-only/replace」と「内容=JSON/Markdown/graph-only」の2軸でIOを配置した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/_common.py:55、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py:169、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:147/1175、/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:342/445 は、immutable receiptと変更可能graphを異なるセルで扱い、graph-onlyはartifact IOを飛ばす。",
+        "別の「binding=none/beads/github」と「repo mode=beads/github/both」を照合した。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:656-674 と /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:287-317 はnoneを許しbothのautoを拒否する。ただしdraftのgithubはnode addで拒否、confirmed packageは許容という差があるのでbinding coreだけを共有しpublication policyはcallerに残す。invalid/missing modeでnode noneが通る点は宣言「noneは常に可」と一致しており、このbounded auditでは追加不具合と断定しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "2軸の意図的契約差を明示し同名関数だけで統合しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "none/beads/githubと3 modeの通常caseの規則を比較した。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "F-0005の低水準重複は別法で集約。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "draft出版gateとconfirmed package出版gateはそれぞれschemaへ接続。"
+          ]
+        }
+      },
+      "issues": [],
+      "score": 0.91,
+      "reusable_abstraction": "shared binding resolution core with caller-owned draft/publication policy",
+      "reuse_surface": "adapter",
+      "negative_cases": [
+        "bothのautoをgithubやbeadsへ推測しない",
+        "github draft拒否をconfirmed packageへ波及しない"
+      ]
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "プロセス思考",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Issue plan→C02 apply→Issue replan→Projects import→link snapshotという時間順を追った。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py:177-195/271-280 と :345-350 は同revisionのIssue plan未解決時にimportをheldにするので、schedule更新がIssue winnerを傾ける依存を理解している。ところが /Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py:484-490 のlease projectionは同じupdated_atを先に進める。tempのschema-valid taskでremote-newerからlocal-newerへの反転を再現した。",
+        "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-graph-node.py:1106-1108 のlink-githubはこの理由でupdated_atを保つので、coordination projectionにも同じ内容時刻の規則が必要。/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/reconcile-github-lifecycle.py:395-421/591-623/626-675 はC02 receiptのrequest/durable graph/Markdown digest検証後にcompletion event→lease release→Beads closeへ進む順序を保持する。外部mutationやGitは実行していない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Issue→Projectsの依存順序とC02 receipt前の外部close禁止は明確。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "Issue plan missing/unsettledをheldへ分類する分岐がある。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "lease観測だけで内容updated_atを動かし内容競合の仕様を変える。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "F-0002:C27 coordination projectionがC03の内容winner判定を破損する。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0002",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+            "line": 486
+          },
+          "description": "C27 execution-context projection は内容を変えなくても node.updated_at を context.last_seen_at へ上書きする。一方 Issue planner は node.updated_at と remote updated_at で内容の勝者を決める。schema-valid github task の title が旧値のままでも、remote t1=00:01 > local t0=00:00 の import が、lease observation t2=00:02 の投影後に local-newer export へ反転する。leaseだけでGitHubの新しいtitleを上書きする依存破損がある。",
+          "recommended_intervention": "execution_contexts は各 context の last_seen_at を更新し、内容を編集していない node.updated_at は保持する。graph_revision の増分は継続する。node.updated_at を更新する必要がある別責務は内容変更時刻と coordination 観測時刻を分け、Issue planner を前者だけへ結ぶ。",
+          "regression_test": "同一 github task に remote-newer title がある状態で execution-context を適用し、title/state・node.updated_at が保たれ、再planでも remote-newer import が残ることを確認する。last_seen_at、execution_contexts、graph_revision は更新されることも検証する。"
+        }
+      ],
+      "score": 0.77
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0004:missing/conflictありでconverged表示。"
+      ]
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0001:複数Project import joinの競合case欠落。",
+        "F-0003:initの暗黙parent mkdirがrollbackから欠落。"
+      ]
+    },
+    "C3": {
+      "verdict": "PARTIAL",
+      "evidence": [
+        "共有promptの9 skill/41 prompt参照は整合。",
+        "F-0005:低水準create-only/serialization重複の改善余地。上位24章全体は本担当では網羅検査しない。"
+      ]
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-0002:execution-context更新がIssue winnerを反転する。",
+        "source-lineageのC19/C02共有とC02 shared lockは現行consumerに接続。"
+      ]
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process"
+    ],
+    "skipped_with_reason": [],
+    "skipped": [],
+    "total": 30
+  },
+  "unique_issues": [
+    {
+      "id": "F-0001",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "other",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-project-fields.py",
+        "line": 285
+      },
+      "description": "複数 Project が同一 node の同一 local_field を異なる値へ import すると、patches[node_id].update() が最後の値だけを採用し競合を報告しない。repo-config/node schema を通る2 Project例で priority=medium/base=P2、remote a=P1、b=P3 は imports=[high,low]・conflicts=[]、C02 input=low。github_project_linkages の順序を逆転すると input=high となる。",
+      "recommended_intervention": "C02 input を組み立てる前に (graph_node_id, local_field) ごとに import を集約する。同値だけを1件へ畳み、異値は cross-project conflict としてその field の全 import を外し、双方の project/value を提示する。既存の field-level decision と区別した明示選択を必要とする。",
+      "regression_test": "schema-validな2 Projectから high/low の remote-only import を同時生成し、配列順を逆にしても update_input に当該 field が無く conflict が同じになることを検証する。同値2件は1 patchへ畳む対照ケースも持つ。"
+    },
+    {
+      "id": "F-0002",
+      "condition": "C4",
+      "severity": "high",
+      "bucket": "other",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/register-package.py",
+        "line": 486
+      },
+      "description": "C27 execution-context projection は内容を変えなくても node.updated_at を context.last_seen_at へ上書きする。一方 Issue planner は node.updated_at と remote updated_at で内容の勝者を決める。schema-valid github task の title が旧値のままでも、remote t1=00:01 > local t0=00:00 の import が、lease observation t2=00:02 の投影後に local-newer export へ反転する。leaseだけでGitHubの新しいtitleを上書きする依存破損がある。",
+      "recommended_intervention": "execution_contexts は各 context の last_seen_at を更新し、内容を編集していない node.updated_at は保持する。graph_revision の増分は継続する。node.updated_at を更新する必要がある別責務は内容変更時刻と coordination 観測時刻を分け、Issue planner を前者だけへ結ぶ。",
+      "regression_test": "同一 github task に remote-newer title がある状態で execution-context を適用し、title/state・node.updated_at が保たれ、再planでも remote-newer import が残ることを確認する。last_seen_at、execution_contexts、graph_revision は更新されることも検証する。"
+    },
+    {
+      "id": "F-0003",
+      "condition": "C2",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+        "line": 223
+      },
+      "description": "init rollback は made_dirs に明示的な plan dirs だけを記録し、_create_file(path.parent.mkdir) が作る graph/receipt の親 directory を追跡しない。通常設定の初回initでreceiptのos.linkにOSErrorを注入すると、成功済fileは消えるが .dev-graph/state/receipts とその祖先が残る。mainはwrite_count=0を返すため、失敗後の実在pathと報告が一致しない。",
+      "recommended_intervention": "全 file/receipt の親を初期planの directory集合へ含め、mkdir時に実際に新設した directory を記録する。逆順rollbackで作成fileと空directoryを消し、既存directoryは保持する。rollback自身の失敗は成功0件へ丸めず残存pathと不完全rollbackを返す。",
+      "regression_test": "初回initのreceipt creation failureを注入し、事前/事後の相対path集合と既存file bytesが一致することを検証する。既存state directoryを持つ場合はそれを残す対照ケースを加える。Gitは不要で_contextを固定receiptへ置換できる。"
+    },
+    {
+      "id": "F-0004",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "other",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/diff-github-issues.py",
+        "line": 166
+      },
+      "description": "Issue planner は conflicts または missing_issues だけが残ると changes=0、next=convergedを返す。Projects plannerも missing_itemsだけのケースで同じ表示を返す（scripts/diff-github-project-fields.py:307-310）。独立再現で unread Issue 1件、timestamp conflict 1件、missing Projects item 2件が各々convergedとなった。sync R3受入/checklistは二回目changes=0を停止条件にしており、未解決blockerを成功と誤読させる。",
+      "recommended_intervention": "共有の純粋な report terminal-state helper または両plannerの同じ優先順で、conflict/confirmations/held/missing/skippedを未解決として先に扱い、それらが0の時だけconvergedにする。syncの完了条件にも unresolved_count=0 を追加し、changes=0と未解決0を別々に判定する。",
+      "regression_test": "Issueのmissing/no-updated-at/reopen conflictとProjectのmissing item/manual conflictを個別に入力し、changes=0でもconverged=false（またはnextがblocked/manual/retry）になることを確認する。完全一致の空blocker planだけがconvergedになる対照例を持つ。"
+    },
+    {
+      "id": "F-0005",
+      "condition": "C3",
+      "severity": "low",
+      "bucket": "other",
+      "condition_signal": "smell",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/scripts/build-init-scaffold.py",
+        "line": 169
+      },
+      "description": "create-only の低水準実装が build-init-scaffold._create_file、build-graph-node._write_atomic(create_only=True)、register-package._atomic_create_json に残る。いずれも parent mkdir→mkstemp→write/flush/fsync→os.link→temp unlink で、JSON直列化も_common.atomic_jsonと同じ設定を各所で繰り返す。replaceとcreate-onlyの契約差は必要だが、その差を保持したpure IO primitiveの共通化余地がある。",
+      "recommended_intervention": "_commonに json_bytes と atomic_bytes(path,data,create_only) を置き、create-onlyはos.link、replaceはos.replaceを維持する。FileExistsErrorはcallerで既存の責務別codeへ変換し、transaction/lock/rollbackはwriter側に残す。複数writerを巨大共通transactionに統合しない。",
+      "regression_test": "共通primitiveのcreate-only既存targetでbytesが不変かつtempが残らないこと、replaceでbytesが更新されることを検証する。その後各writerのreceipt immutability/rollback既存回帰を実行し、責務別error codeが保持されることを確認する。"
+    }
+  ],
+  "audit_scope": {
+    "independent_fresh_read": true,
+    "prior_verdicts_used": false,
+    "source_edits": false,
+    "git_commands_executed": false,
+    "external_writes": false,
+    "python": "/Users/dm/miniconda3/bin/python3",
+    "approach": "G1/G2 changed-boundary consumers and existing shared primitives; short temp/in-process adversarial cases; no full plugin suite",
+    "verified_reproductions": [
+      "schema-valid multi-project priority conflict, link-order reversal",
+      "schema-valid execution-context/Issue title winner reversal",
+      "init receipt link failure and remaining directory inventory",
+      "Issue missing/timestamp conflict and Project missing items return converged",
+      "9 skill/41 prompt Layer4-7 shared path static inventory"
+    ],
+    "not_exhaustively_examined": [
+      "Markdown Composer/body regeneration全入力space",
+      "register-packageの全JSON-schema fallback keyword",
+      "reconcile remote facts取得・Git/default worktree・外部close実行",
+      "41 promptの全ドメイン固有文（共有参照構造とnode/init/sync/system-spec固有契約を優先）",
+      "G3-G6 sibling resolver/hooks/CI/spec cacheは他担当scope"
+    ]
+  }
+}

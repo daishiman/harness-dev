@@ -108,7 +108,7 @@ Pass 強化マッピングも同 enum に従属する。**本書では値を再�
 ## Phase 5: 戻り検証 + 設計ゲート
 
 - **ゴール**: 全機械ゲートと C1-C4 設計ゲートが PASS し、利用記録が残った状態。
-- **完了条件**: `lint-agent-prompt-section.py` exit 0 + C1-C4 設計評価 (`assign-prompt-design-evaluator` fork・findings 出力のみ) PASS + `log-usage.py` で LOGS.md 記録。
+- **完了条件**: `verify-completeness.py` / `validate-prompt.py` exit 0、owner_agent 指定時だけ `lint-agent-prompt-section.py` exit 0（未指定は理由付きN/A） + C1-C4 設計評価 (`assign-prompt-design-evaluator` fork・findings 出力のみ) PASS + `log-usage.py` で LOGS.md 記録。
 - **判断基準**:
   - FAIL は Phase 4-A 再起動 (最大 3 周)。超過時は orchestrator へ差し戻す。
   - 設計ゲートの免除は、呼出元が同等ゲート (例: run-prompt-create Step 3b) を機械証跡 (design-findings JSON パス) で保証する場合のみ。

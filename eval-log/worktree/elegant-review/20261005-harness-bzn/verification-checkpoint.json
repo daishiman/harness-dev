@@ -1,0 +1,92 @@
+{
+  "checked_at": "2026-10-05T08:10:45.733579+00:00",
+  "source_files_checked": 62,
+  "drift": [],
+  "integration_runs": [
+    {
+      "name": "harness-creator-remaining",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--import-mode=importlib",
+        "tests",
+        "--ignore=tests/test_sync_task_state.py",
+        "--ignore=tests/test_inject_task_inputs.py",
+        "--ignore=tests/test_dispatch_ready_set.py",
+        "--ignore=tests/test_manage_build_lease.py"
+      ],
+      "cwd": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator",
+      "exit_code": 0,
+      "log": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/harness-creator-remaining.log"
+    },
+    {
+      "name": "system-spec-remaining",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--import-mode=importlib",
+        "tests",
+        "skills/run-system-spec-elicit/tests",
+        "skills/run-system-spec-compile/tests",
+        "skills/assign-system-spec-completeness-evaluator/tests",
+        "--ignore=tests/test_guard_hook.py",
+        "--ignore=skills/run-system-spec-elicit/tests/test_spec_transition.py"
+      ],
+      "cwd": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness",
+      "exit_code": 0,
+      "log": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/system-spec-remaining.log"
+    },
+    {
+      "name": "planner-remaining",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests",
+        "--ignore=tests/test_check_spec_gates.py"
+      ],
+      "cwd": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan",
+      "exit_code": 0,
+      "log": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/planner-remaining.log"
+    },
+    {
+      "name": "root-contracts",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_lint_prompt_contract_drift.py",
+        "tests/test_feedback_contract_parity.py",
+        "tests/test_feedback_contract_ssot.py",
+        "tests/scripts-root/test_root__lint_content_review.py",
+        "tests/scripts-root/test_root__lint_content_review_s2.py"
+      ],
+      "cwd": "/Users/dm/dev/dev/個人開発/harness",
+      "exit_code": 0,
+      "log": "/Users/dm/dev/dev/個人開発/harness/eval-log/worktree/elegant-review/20261005-harness-bzn/root-contracts.log"
+    }
+  ],
+  "independent_case_results_ref": "eval-log/worktree/elegant-review/20261005-harness-bzn/content-review/independent-case-results.json",
+  "evidence_gate": {
+    "exit_code": 1,
+    "failed": 10,
+    "passed": 9,
+    "root_cause": "9 behavioral closures stale + changed sync content verdict stale",
+    "resolution": "genuine current behavioral rerun + independent static reviews; never hash-only update"
+  },
+  "no_work_repo_git_operations": true
+}

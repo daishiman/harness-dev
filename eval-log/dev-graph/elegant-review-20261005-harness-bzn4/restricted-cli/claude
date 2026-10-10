@@ -1,0 +1,13 @@
+#!/Users/dm/miniconda3/bin/python3
+import json,os,sys
+from pathlib import Path
+run=Path(os.environ['BZN4_RUN_DIR']).resolve()
+fixture=Path(os.environ['BZN4_FIXTURE_DIR']).resolve()
+state=run/'session-state'; temp=run/'session-tmp'
+state.mkdir(exist_ok=True);temp.mkdir(exist_ok=True)
+profile=run/'sandbox.sb'
+profile.write_text('(version 1)\n(allow default)\n(deny file-write*)\n'+''.join('(allow file-write* (subpath '+json.dumps(str(p),ensure_ascii=False)+'))\n' for p in (run,fixture))+'(allow file-write* (literal "/dev/null") (literal "/dev/tty") (regex #"^/dev/ttys[0-9]+$"))\n')
+env=dict(os.environ);env['CLAUDE_CONFIG_DIR']=str(state);env['CLAUDE_CODE_TMPDIR']=str(temp);env['TMPDIR']=str(temp);env['PYTHONDONTWRITEBYTECODE']='1'
+argv=['/usr/bin/sandbox-exec','-f',str(profile),'/Users/dm/.local/bin/claude','--disallowedTools','Write,Edit,Artifact,ArtifactComments',*sys.argv[1:]]
+(run/'actual-launch.json').write_text(json.dumps({'argv':argv,'CLAUDE_CONFIG_DIR':str(state),'CLAUDE_CODE_TMPDIR':str(temp),'TMPDIR':str(temp),'write_allow_subtrees':[str(run),str(fixture)],'read':'all','model_override':None},ensure_ascii=False,indent=2)+'\n')
+os.execve(argv[0],argv,env)

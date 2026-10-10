@@ -53,8 +53,20 @@ import discover_repo_tests as drt  # noqa: E402
 
 # 例外宣言: {repo-relative posix パス: 理由 (非空必須)}。
 # 「なぜ CI で実行しない/到達集合の外に置くのか」と検出日を残し後日是正を追跡する。
-# 現状は空 (orphan=0)。将来 tests/・plugins/ 外に test を置く正当な理由が生じたときのみ追加。
-ALLOWLIST: dict[str, str] = {}
+# tests/・plugins/ 外に test を置く正当な理由が生じたときのみ追加する。
+_BZN_RUN = "eval-log/worktree/elegant-review/20261005-harness-bzn"
+ALLOWLIST: dict[str, str] = {
+    f"{_BZN_RUN}/test_skill_criteria_evidence.before-iteration3.py": (
+        "2026-10-10 検出。elegant-review iteration3 の改善前の test をバイト単位で写した証跡で、"
+        "実行対象ではない。phase3-test-contract-iteration3*.json の before_bytes_path と "
+        "content-review-iteration3/independent-receipt-contract-case.py がこのパスで参照する"
+    ),
+    f"{_BZN_RUN}/test_skill_criteria_evidence.failure-contract-before-iteration3.py": (
+        "2026-10-10 検出。elegant-review iteration3 の失敗受領書契約の改善前の test を写した証跡で、"
+        "実行対象ではない。phase3-failure-receipt-contract-iteration3*.json の before_bytes_path が"
+        "このパスで参照する"
+    ),
+}
 
 # 各到達 top-level が CI で実際に実行されている証跡 (harness-creator-kit-ci.yml 内の耐久的部分文字列)。
 # 二次ガード: orphan=0 (test が root 配下にある) を満たしても、その root を CI が実行

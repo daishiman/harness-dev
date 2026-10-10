@@ -1,0 +1,27 @@
+{
+  "observations": [
+    {
+      "condition": "C2",
+      "signal": "omission",
+      "file": "plugins/skill-governance-hooks/scripts/hook-guard-rubric.py",
+      "description": "L0 canonical path references/rubric.json differs from guarded suffix; registry moved to skill-governance-config and old path remains."
+    },
+    {
+      "condition": "C3",
+      "signal": "inconsistency",
+      "file": "scripts/guard-change-category.py",
+      "description": "Every plugins/ edit is classified P0, so documented P1/P2 paths never execute; path approval differs for string/list and matches unrelated plugin paths."
+    },
+    {
+      "condition": "C4",
+      "signal": "dependency_break",
+      "file": ".github/workflows/governance-check.yml",
+      "description": "CI globally bypasses cooldown; local validation counts current approved proposal as previous change and cannot distinguish current approval from earlier operations."
+    }
+  ],
+  "interventions": [
+    "Use canonical path and registry discovery from actual repo/plugin root; normalize guarded paths including dot segments.",
+    "Use explicit file/directory/glob target matching for both approval and cooldown; existing content P2/new skill P1/new plugin manifest P0.",
+    "Identify current approved proposal explicitly; exclude only that entry and retain older cooldown; allow only approved incident override; enforce same policy in CI."
+  ]
+}

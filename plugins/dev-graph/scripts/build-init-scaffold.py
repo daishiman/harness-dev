@@ -18,15 +18,13 @@ import argparse
 import hashlib
 import importlib.util
 import json
-import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
-from _common import ContractError, contained, dump, load_json, utc_now
+from _common import ContractError, atomic_bytes, contained, dump, json_bytes as _json_bytes, load_json, utc_now
 
 HERE = Path(__file__).resolve().parent
 PLUGIN_ROOT = HERE.parent
@@ -71,11 +69,6 @@ def _context(repo_root: str, config: str) -> dict[str, Any]:
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
-
-
-def _json_bytes(value: Any) -> bytes:
-    # atomic_json と同じ直列化にして、init が作った file と writer が書き直した file の差を出さない。
-    return (json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
 
 
 def _issue_prefix(name: str) -> str:
@@ -168,22 +161,10 @@ def _plan(ctx: dict[str, Any], root: Path) -> dict[str, Any]:
 
 def _create_file(path: Path, data: bytes) -> None:
     """create-only: 既にある file は決して上書きしない (receipt の不変性もこれで守る)。"""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, temp = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
     try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        try:
-            os.link(temp, path)
-        except FileExistsError as exc:
-            raise InitError("path_appeared_during_init", str(path)) from exc
-    finally:
-        try:
-            os.unlink(temp)
-        except FileNotFoundError:
-            pass
+        atomic_bytes(path, data, create_only=True)
+    except FileExistsError as exc:
+        raise InitError("path_appeared_during_init", str(path)) from exc
 
 
 def scaffold(args: argparse.Namespace) -> dict[str, Any]:
@@ -216,23 +197,39 @@ def scaffold(args: argparse.Namespace) -> dict[str, Any]:
     made_dirs: list[Path] = []
     made_files: list[Path] = []
     try:
-        for path in plan["dirs"]:
+        # Include parents that atomic file/receipt creation would otherwise create implicitly.
+        directories = [*plan["dirs"], *(path.parent for path, _ in plan["files"]), receipt_path.parent]
+        for path in dict.fromkeys(directories):
             missing = [parent for parent in [path, *path.parents] if not parent.exists()]
-            path.mkdir(parents=True, exist_ok=True)
-            made_dirs += reversed(missing)
+            for directory in reversed(missing):
+                try:
+                    directory.mkdir()
+                except FileExistsError:
+                    if not directory.is_dir():
+                        raise
+                else:
+                    made_dirs.append(directory)
         for path, data in plan["files"]:
             _create_file(path, data)
             made_files.append(path)
         _create_file(receipt_path, _json_bytes(receipt))
-    except BaseException:
+    except BaseException as exc:
         # init は作るだけなので、作ったものを逆順に消せば元の状態に戻る。
+        failures = []
         for path in reversed(made_files):
-            path.unlink(missing_ok=True)
+            try:
+                path.unlink(missing_ok=True)
+            except OSError as error:
+                failures.append({"node": rel(path), "code": "rollback_failed", "detail": str(error)})
         for path in reversed(made_dirs):
             try:
                 path.rmdir()
-            except OSError:
+            except FileNotFoundError:
                 pass
+            except OSError as error:
+                failures.append({"node": rel(path), "code": "rollback_failed", "detail": str(error)})
+        if failures:
+            raise InitError("rollback_incomplete", f"{type(exc).__name__}: {exc}", failures) from exc
         raise
     return {**receipt, "valid": True, "dry_run": False, "write_count": len(changes) + 1}
 
@@ -250,7 +247,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except InitError as exc:
         dump({"valid": False, "status": "rejected", "code": exc.code, "error": exc.detail, "findings": exc.findings,
-              "planned_changes": None, "write_count": 0})
+              "planned_changes": None, "write_count": None if exc.code == "rollback_incomplete" else 0})
         return 1
     except (ContractError, OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
         dump({"valid": False, "status": "error", "code": type(exc).__name__, "error": str(exc), "write_count": 0})

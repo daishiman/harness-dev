@@ -119,6 +119,68 @@ def checklist_region(body: str) -> str | None:
     return body[start:end]
 
 
+
+ANCHOR_CONTRACT_REQUIRED_TOKENS = (INTERMEDIATE_REQUIRED_TOKENS + VERIFICATION_REQUIRED_TOKENS
+                                   + ("iteration", "current_goal_snapshot", "delta_from_original",
+                                      "drift_signal", "UTF-8", "validate-inline-goal-seek-anchor.py"))
+
+ANCHOR_REFERENCE_RE = re.compile(r"`([^`\s]*goal-seek-anchor-contract\.md)`")
+ANCHOR_COMMAND_RE = re.compile(
+    r'^\s*(?:python3|/usr/bin/python3)\s+["\']?\$'
+    r'(?:PLUGIN_ROOT|\{PLUGIN_ROOT(?::[?][^}]+)?\}|\{PLUGIN_ROOT:-\$\{CLAUDE_PLUGIN_ROOT\}\})'
+    r'/scripts/validate-inline-goal-seek-anchor\.py["\']?'
+    r'\s+(?:"[^"\n]+"|[^\s\n]+)\s+(?:"[^"\n]+"|[^\s\n]+)\s*$',
+    re.MULTILINE,
+)
+
+
+def canonical_anchor_reference(path: Path, wiring_text: str) -> tuple[str, list[str]]:
+    """Resolve a declared local SSOT inside the owning plugin; reject an invalid escape.
+
+    A reference supplies shared contract tokens only. The caller still needs its own
+    executable validator command with both progress and intermediate arguments.
+    """
+    references = ANCHOR_REFERENCE_RE.findall(wiring_text)
+    if not references:
+        return "", []
+    errors: list[str] = []
+    root = next((parent for parent in path.resolve().parents
+                 if (parent / ".claude-plugin/plugin.json").is_file()
+                 or (parent / ".codex-plugin/plugin.json").is_file()), None)
+    if root is None:
+        return "", [f"{path}: 共通アンカー参照の plugin root を特定できない"]
+    canonical = (root / "references/goal-seek-anchor-contract.md").resolve()
+    content = ""
+    for declared in sorted(set(references)):
+        target = (path.parent / declared).resolve()
+        if target != canonical or not target.is_relative_to(root) or not target.is_file():
+            errors.append(f"{path}: 共通アンカー参照が正規パスでない・root 外・不在: {declared}")
+            continue
+        try:
+            candidate = target.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            errors.append(f"{path}: 共通アンカー正本を読めない: {exc}")
+            continue
+        missing = [token for token in ANCHOR_CONTRACT_REQUIRED_TOKENS
+                   if token not in candidate]
+        if missing:
+            errors.append(f"{path}: 共通アンカー正本の必須契約が不足: {missing}")
+        else:
+            content = candidate
+    validator = root / "scripts/validate-inline-goal-seek-anchor.py"
+    try:
+        implementation = validator.read_text(encoding="utf-8")
+        if any(token not in implementation for token in ("REQUIRED_KEYS", "original_goal_hash", "sha256")):
+            errors.append(f"{path}: 共通アンカー validator の検査契約が不足")
+    except (OSError, UnicodeError):
+        errors.append(f"{path}: 共通アンカー validator が不在または読めない")
+    joined = re.sub(r"\\\n\s*", " ", wiring_text)
+    # Require the command inside a Bash fence, not a quoted sentence or comment.
+    commands = "\n".join(re.findall(r"```(?:bash|sh)\s*\n(.*?)```", joined, re.DOTALL))
+    if not ANCHOR_COMMAND_RE.search(commands):
+        errors.append(f"{path}: 共通アンカー validator の実行コマンドに progress/intermediate 両引数が無い")
+    return (content if not errors else ""), errors
+
 def lint_file(path: Path) -> tuple[list[str], list[str]]:
     """(findings=exit1 違反, warnings=exit0 助言) を返す。"""
     findings: list[str] = []
@@ -193,7 +255,10 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
         # 中間成果物トークンは「配線サブセクション内に AND で全 3 トークン揃う」ことを要件化する。
         # 配線サブが無くても (上記 warning とは別系統で) 中間成果物欠落を独立に警告する。
         wiring_text = wiring_match.group(0) if wiring_match else body
-        missing_tokens = [t for t in INTERMEDIATE_REQUIRED_TOKENS if t not in wiring_text]
+        canonical_text, reference_errors = canonical_anchor_reference(path, wiring_text)
+        findings.extend(reference_errors)
+        contract_text = wiring_text + "\n" + canonical_text
+        missing_tokens = [t for t in INTERMEDIATE_REQUIRED_TOKENS if t not in contract_text]
         if missing_tokens:
             warnings.append(
                 f"{path}: ゴールシーク配線に中間成果物アンカー必須トークン {missing_tokens} "
@@ -203,7 +268,7 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
         # 量産スキルにも機械検証 bash が注入されているか検査 (run-goal-seek/SKILL.md と同型 SSOT)。
         # WIRING_SECTION_RE が ## level まで拡張されたため `### ゴールシーク検証` も同 scope に含まれる。
         # wiring_text 限定 AND 検査により body 全体 scope の偽陰性/偽陽性を排除する。
-        missing_verify = [t for t in VERIFICATION_REQUIRED_TOKENS if t not in wiring_text]
+        missing_verify = [t for t in VERIFICATION_REQUIRED_TOKENS if t not in contract_text]
         if missing_verify:
             warnings.append(
                 f"{path}: ゴールシーク配線に機械検証 bash 必須トークン {missing_verify} "

@@ -13,7 +13,7 @@ hierarchy: L1
 user-invocable: true
 argument-hint: "[--repo-root PATH] [--dry-run] [--resolve-conflicts PATH]"
 allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/diff-github-issues.py, ../../scripts/diff-github-project-fields.py, ../../scripts/manage-worktree-lease.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/gh-bridge.py, ../../scripts/bd-bridge.py, ../../scripts/reconcile-github-lifecycle.py, ../../scripts/diff-github-issues.py, ../../scripts/diff-github-project-fields.py, ../../scripts/manage-worktree-lease.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
 reference_refs: [../../references/execution-tracker-contract.md, ../../references/github-lifecycle-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:
@@ -78,7 +78,7 @@ feedback_contract:
       verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件になることを受入テストが確認する"
+      text: "同一状態を二回同期し 2 回目のGitHubからの取込/ローカルからの反映が 0 件で、両GitHub計画の converged が true になることを受入テストが確認する"
       verify_by: live-trial
     - id: OUT2
       loop_scope: outer
@@ -186,13 +186,13 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 - 入力: C24/C11 検証済み local graph/config、last-synced snapshot、binding 別 remote state、任意の dry-run/confirmation。
 - 出力: 3-way imports/exports/conflicts/tombstones/pending-retry plan、binding 別 linkage、更新済み snapshot receipt。
-- 完了条件: binding ごとの mutation authority が一意で、同一状態の2回目 changes=0、done は default-branch merge evidence 満足時にだけ反映される。
+- 完了条件: binding ごとの mutation authority が一意で、同一状態の2回目 changes=0。GitHub の両計画は `converged=true` を確認する。done は default-branch merge evidence 満足時にだけ反映される。
 
 local graph が正本。`tracker_binding=beads` は C28 の status/depends_on exact-set parity と push-only viewer mirror、`github` は C12 の Issue/Projects、`none` は external write なし。authority の混在は拒否する。
 
 ## Protocol
 
-1. schema と repo config を検証し、last-synced snapshot を base に 3-way plan を作る。
+1. schema と repo config を検証し、last-synced snapshot を base に 3-way plan を作る。GitHub 計画の `changes=0` は書込み予定がないことだけを示す。同期の完了は両計画の `converged=true` で判定し、`unresolved_count` が残る場合は計画の `next` に従って確認・競合解決・再取得を行う。
 2. beads は `bd-bridge.py` だけを使う。GitHub mutation を併用しない。github は `gh-bridge.py --dry-run` preview 後だけ apply する。
 3. Issue は id+updated_at、Project field は field value updatedAt を conflict hint とする。Status は local→Project 一方向で、remote Status を done authority にしない。exact-13 package member は内容を system-dev-planner が持ち C02 `update` が拒否するので、Issue も Project field も local 側を採り import しない。
    - Issue の計画は `diff-github-issues.py` (read-only) が title と state (open/closed) で作る。updated_at が新しい側を採り、node が新しければ gh-bridge `issue-update`/`issue-close` へ export、Issue が新しければ C02 `update` で title か status=closed を import する。同時刻は書込み 0 で GitHub の値を表示値に採り (`adopted: remote`)、`confirmations` に手動確認フラグを残す。フラグは観測値から毎回導くので、R6 の decision (フラグ行の local/remote/updated_at を写したもの) を `--decisions` に渡し、選んだ側を反映した次の計画で消える。reopen はどちら向きも conflict に残す。
@@ -257,7 +257,7 @@ PY
 ## Criteria acceptance
 
 - `criteria:IN1`: `validate-graph-schema.py` と `gh-bridge.py` の送信前検証で必須キー欠落が0件である。
-- `criteria:OUT1`: 同一状態を二回同期し、2回目のimports/exportsは`changes=0`になる。
+- `criteria:OUT1`: 同一状態を二回同期し、2回目のimports/exportsは`changes=0`、両GitHub計画は`converged=true`になる。
 - `criteria:OUT2`: Issue `updated_at`競合は新しい方を採用し、同時刻はGitHub優先と手動確認フラグを残す。
 - `criteria:OUT3`: close/deleteは物理削除せず`tombstone/status`遷移として反映する。
 - `criteria:OUT4`: `--dry-run`ではGitHub/Beadsを含む外部write 0件である。

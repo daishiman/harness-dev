@@ -110,6 +110,22 @@ Gotchas（落とし穴）は、実運用で LLM が踏んだ落とし穴を書�
 - 具体的・検証可能。
 - 古くなったら削る。
 
+### 日本語で書くスキルの正規見出し（rubric 1.5.0）
+
+本文を日本語で書くスキルは、次の日本語の見出しを正規形として使える。rubric は日本語を行全体の一致で照合する。
+
+| 英語の見出し | 日本語の正規形 | 照合する rubric |
+|---|---|---|
+| `## Purpose & Output Contract` | `## 目的と出力契約` | BD-001・PD-002 |
+| `## Gotchas` | `## つまずきやすい点` | BD-002 |
+| `## Key Rules` | `## 守ること` | PD-002（冒頭30行の禁則） |
+
+- 1つのファイルで英語と日本語の定型見出しを混ぜない。
+- schema のキー、Layer 番号、responsibility ID、frontmatter のキーは訳さない。
+- 既存プラグインを一括で翻訳しない。新しく生成するときに `--language ja|en|auto` で選ぶ。
+
+対応表の正本は `plugins/harness-creator/skills/run-build-skill/references/ja-contract-policy.md`。
+
 ## Gotchas（落とし穴）から決定論へ
 
 | 段階 | 仕組み | 検出 |

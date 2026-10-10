@@ -2,44 +2,40 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565"
+    "skill_md_sha256": "26ad8ff31583e227e32a9e6d1e2886ba55a73e37db964d275a3da50348c24d2f"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 2,
-    "dependency_break": 0,
-    "smell": 1
-  },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:30:24Z",
+  "reviewer": "independent-final-evaluator (/root/final_evaluator; no source authoring)",
+  "reviewed_at": "2026-10-09T16:50:44.393402+00:00",
   "iterations": 1,
   "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "IN3", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
-      "変更が局所的で、範囲を検証できる。現行 SKILL.md（sha 1e1a31ee…）から resolver の段落を除き、guard の 3 呼び出しを旧い形（`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/../skill-governance-adapters/scripts/...`）へ戻して sha256 を計算すると、前回 verdict の ec1703442576… と一致した。前回の評価以後に SKILL.md で変わったのは guard block の差し替えだけである。skill 配下の references・scripts・workflow-manifest.json は、前回の評価時刻（2026-10-04T21:20:15Z）以後に更新されていない（mtime で確認）。前回 PASS とした G1〜G13 の処置はそのまま残っている。",
-      "resolver で解決できることを実測で確かめた。plugin に同梱した scripts/extract-plugin-root.py は、repo 正本の scripts/extract-plugin-root.py と byte 単位で一致する（cmp で一致、lint-vendored-ssot では 33 件すべて OK）。`python3 plugins/ubm-goal-setting/scripts/extract-plugin-root.py skill-governance-adapters` は rc=0 で、plugins/skill-governance-adapters の絶対パスを返す。存在しない名前を渡すと rc=1 になり、探した場所を stderr に出す（fail-closed）。plugin.json（claude）の dependencies は skill-governance-adapters を宣言している。このため、resolver が非 0 で終わったときに出す『skill-governance-adapters plugin を install する』という案内は、依存の宣言と食い違わない。install 先の配置（<cache>/<marketplace>/<plugin>/<version>/）について、resolver は同じ marketplace の installed_plugins.json と cache の version 群を順に探す。repo の兄弟 dir に頼らない。",
-      "guard block の文言が guard script の実装と合っている。build-external-mutation-guard の pretool は、Bash コマンド全体が 1 つの canonical 呼び出し（tokens[1] の basename が runner と一致し、shell 演算子を含まない）の場合だけ通す。それ以外の Bash は、未解決の preview があるあいだ deny する（_has_pending_guard_context）。preview の前に resolver を 1 回だけ実行し、絶対パスを埋めた単一コマンドで preview・authorize・execute を呼ぶ形はこの判定を通る。『pending のあいだは他の Bash が遮断されるので再解決しない』という注意も実装と一致する。guard 呼び出しから `${PLUGIN_ROOT:-...}` が消えたことで、Codex で PLUGIN_ROOT を shell ごとに設定する必要があるのは、pending より前に走る resolver の 1 回だけになった。",
-      "生成器と照合した。guard block は scripts/build-artifact-delivery.py の canonical block と同じ文面である。`--check` は rc=0（ARTIFACT_DELIVERY_OK: 22 plugins）で、_validate_external_guard_wiring は resolver の行を必須として検査している。frontmatter の external_mutation_guard.runtime_ref は `plugin:skill-governance-adapters/...` 記法のまま本文と矛盾しない。lint-sibling-plugin-paths は OK（親ディレクトリ起点の兄弟参照なし）。",
-      "external mutation preview の範囲と Gotchas の書き込み保護に矛盾は無い。resolver は write-scope: none で、読むのは vault の外（installed_plugins.json と cache）だけなので、『本 skill が書くのは 05_Project/UBM/目標設定/（archive/ を含む）と Daily.md の embed 行だけ』という記述の外に書き込みを持ち込まない。ubm-write-path-guard の matcher は Write|Edit|MultiEdit（hooks.json で確認）なので、Bash で行う archive への移動はこの hook の対象外である。この移動は preview の --target-scope と --side-effect-summary で宣言する、という境界の記述と整合する。『境界は hook ではなく本 skill の規則が守る』という責任の所在の書き方とも合う。",
-      "実測: pytest（plugins/ubm-goal-setting/tests）484 passed、resolver と artifact-delivery の root テスト（tests/scripts-root/test_root__extract_plugin_root.py・test_root__artifact_delivery.py）59 passed。lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-feedback-contract --all rc=0、lint-skill-description OK=6 / VIOLATION=0、lint-plugin-composition OK（WARN 3 件はいずれも生成前の出力パスで、本変更とは関係ない）、lint-ssot-duplication --plugin-dir OK（guard block の重複は指摘されない）。SKILL.md・CHANGELOG.md・resolver に不可視文字は無い。SKILL.md は 263 行。"
+      "Canonical IN1→IN2→conditional IN3 before/after exact staged save; rc3 cannot pass; monthly one file/two sections. Parent owns dialogue,formatter draft only,separate staged Daily publication.",
+      "Resolved staged draft→SHA/expected-existing-SHA receipt→parent command-bound guard execute→same saved-file validation. Real weighted search and parent usage only use actual matched/consumed IDs and user-role feedback; dry-run/consult no-consent stays ephemeral.",
+      "Approved registered UBM L1 KL-002.check is actually injected L0→L1→L2, most-specific-wins. Background source-grounded structural context replaces conflicting general recipe only for UBM; five other groups retain §4.3 level2 forms. All current982 meaning judgments bound by exact values,129 fullJSON files preserved,max492/unchanged500; no schema-only inference."
     ],
-    "negative_feedback": [
-      "[low / omission・新規] plugins/ubm-goal-setting/CHANGELOG.md の 0.6.3 にある『install 先での兄弟 plugin の解決』の項目は、`run-skill-feedback` の外部変更の確認手順だけを挙げている。実際には、同じ guard block の差し替えが run-ubm-goal-setting（SKILL.md L136-146）・run-ubm-journal・run-ubm-knowledge-sync・run-ubm-youtube-ingest にも入っており、5 skill すべてが同梱の resolver を呼ぶ。scripts/extract-plugin-root.py を plugin に新しく同梱したことも『同梱の』とだけ書かれていて、追加したことが読み取れない。また、skill 側の version-history.md 26.0.3 にもこの差し替えの記録が無い。直し方: CHANGELOG の項目の主語を『外部変更を行う 5 skill の guard 手順』に広げ、resolver の同梱を 1 句で書く。version-history.md 26.0.3 には、guard block を差し替えたことを 1 項目足す（判定規則は変わらない旨も添える）。",
-      "[low / omission・diff 外（新しい文言で顕在化）] guard block に『pending のあいだは他の Bash が遮断される』と書かれたことで、archive への移動を guard に通すときの実行主体と時点が、この skill では未記述だと分かるようになった。Phase5-validate の実行体は『output-formatter + scripts』で、agents/output-formatter.md の Step 4 項目 4 は『archive/ へ分離する』とだけ書き、guard の手順には触れていない。output-formatter は Task なので、preview の出力をユーザーへ見せて返答を受ける hook-confirm を自分では完結できない。一方で mv は guard の DIRECT_MUTATION_PATTERNS に当たらないので、formatter が直接 mv すれば preview を経ないまま移動が通る。逆に、親が Phase5 の前に preview を出すと、pending のあいだ formatter の検査 3 本（Bash）が遮断され、execute が終わるか TTL 900 秒で失効するまで進まない。移動は削除を伴わず、移動先も宣言された範囲の内側にあるため low とした。直し方: Phase5-validate の行と output-formatter Step 4 項目 4 に次の 1 句を足す。『archive への移動は、formatter が検査の rc を記録して保存を終えて親へ戻った後、親が preview→confirm→authorize→execute で行う（formatter は移動しない）』。",
-      "[low / inconsistency・前回から継続（未処置）] references/version-history.md の 26.0.3 行の末尾が『plugin 0.6.3』となっている。CHANGELOG にも今回 `## 0.6.3` の見出しが入ったので、履歴と CHANGELOG は揃った。しかし .claude-plugin/plugin.json・.codex-plugin/plugin.json・.claude-plugin/marketplace.json の ubm-goal-setting はいずれも 0.6.2 のままである。x-longpost-creator も CHANGELOG 1.3.2 / plugin.json 1.3.1 の同じ形なので、release 時にまとめて上げる運用と思われる。直し方: release の手順（scripts/build-plugin-release.py 等）で 3 つの manifest を 0.6.3 に上げる。上げないまま出すなら、26.0.3 行と CHANGELOG の版を 0.6.2 側へ合わせる。",
-      "[low / inconsistency・前回から継続（未処置）] workflow-manifest.json の phase5-validate にある commands 3 本が、どれも同じ `<log>` プレースホルダへ `>` で書き込む。同じパスに置き換えると、後のコマンドが前の出力と rc の行を上書きする。3 本目の実行条件（期報と月報が揃っている場合だけ）と --weekly の付け方は、commands_note の自由文にしか書かれていない。直し方: `<log_output>` / `<log_linkage>` / `<log_cross>` に分け、3 本目の条件を command の側でも示す。",
-      "[low / omission・前回から継続（未処置・diff 外）] agents/output-formatter.md の 3 箇所（L92 の Bash の用途『2本を実行する』、L237 の保存結果レポートのバリデーション結果が 2 本の rc だけ、L259 の Layer 6 Step 3 完了条件が 2 本だけ）が、IN3 の 3 本目と `not_applicable` に追随していない。同じファイルの Step 3 項目 6・項目 9・L210 とも揃っていない。直し方: この 3 箇所に『期報と月報が揃っている場合は validate-cross-level.py の rc と引数、揃っていなければ not_applicable』を足す。",
-      "[smell / low・前回から継続（未処置）] references/data-contract.md の自前の Version 表（最新 2.6.0）に、このブランチで入れた §4.4 の契約変更（IN3 の適用範囲の拡大と、not_applicable の記録）が載っていない。version-history.md には記録がある。直し方: 2.6.1 等の行を足すか、以後の変更は version-history.md へ一本化すると明記する。"
-    ],
+    "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:user-success-continuation / approved-L1 / final-source-freeze",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / install-portability の focused combined review・1 回】前回の PASS（sha ec1703442576…）の後に、外部変更の guard block の差し替え（resolver scripts/extract-plugin-root.py で <GUARD_PLUGIN_ROOT> を得てから preview / authorize / execute を呼ぶ形）が入り、SKILL.md の sha が 1e1a31ee4b9c… に変わって前回の verdict が stale-sha になった。builder とは別の context の独立 evaluator として、1 回で再評価した。incremental profile なので 30 思考法は行っておらず、行ったとも申告しない。1 回のレビューで (a) 矛盾 (b) 漏れ (c) 記述規約との整合 (d) 依存関係の整合（resolver と guard script の実在、解決結果を含む） (e) rubric の high severity を同時に判定し、結果を elegance と rubric の 2 verdict に分けて書いた。このファイルは elegance 側で、rubric 側は同じディレクトリの rubric-verdict.json にある。どちらも同じ観測に基づく。 【読んだもの・確認したこと】(1) 書き込み直前に shasum -a 256 で計算した実測値は 1e1a31ee4b9cb7daa86b1c56ceee7470c963d46c5928ebc1ab2e390433f69565。手で書き換えていない。(2) SKILL.md 全文（263 行。feedback_contract.criteria の id は IN1/IN2/IN3/OUT1/OUT2）と git diff HEAD の全文。G1〜G13 の処置と今回の変更が混ざっているので、前回 verdict の notes と照合して切り分けた。guard block を旧形へ戻した sha が前回値と一致したので、前回以後の SKILL.md の変化は guard block だけと確定した。(3) 同梱 resolver の全文（引数・探索順・exit 0/1/2）、repo 正本との byte 一致、resolver の実行結果（skill-governance-adapters は rc=0、存在しない名前は rc=1）。(4) guard script（Read ツールで読んだ）の pretool・_canonical_guard_action・_has_pending_guard_context と CANONICAL_ACTION_FLAGS。(5) scripts/build-artifact-delivery.py の diff と --check の結果、lint-sibling-plugin-paths、lint-vendored-ssot。(6) plugin.json の dependencies、plugin-composition.yaml、hooks/hooks.json の matcher、agents/output-formatter.md の Step 3・Step 4・L92・L237・L259、data-contract.md の Version 表、version-history.md の diff、CHANGELOG.md 0.6.3、manifest 3 つの版数。(7) 実測: pytest（plugins/ubm-goal-setting/tests）484 passed、root テスト 59 passed、lint-skill-runtime-profiles rc=0、lint-manifest-contents OK、lint-feedback-contract --all rc=0、lint-skill-description OK=6 / VIOLATION=0、lint-plugin-composition OK、lint-ssot-duplication OK、不可視文字なし。 【前回の low 4 件】前回以後、skill 配下の references・scripts・manifest と agents/output-formatter.md は更新されていないので、4 件はすべて未処置のまま継続している（negative_feedback の 3〜6 件目）。 【判定理由】high 0 件・medium 0 件。新規の low は 2 件で、CHANGELOG の記載範囲の漏れと、archive 移動を guard に通す実行主体と時点の未記述（diff 外。新しい文言で顕在化した）である。これに前回から継続の low 4 件を加えても、verdict=PASS、next_action=none とした。guard block の文言は、resolver の実挙動・guard script の canonical 判定と pending 判定・frontmatter の runtime_ref・境界の archive 移動の宣言・Gotchas の書き込み保護のいずれとも矛盾しない。 【PASS の射程】この PASS の射程は design claim（静的な設計の adequacy）に限る。install 先（~/.claude/plugins/cache・~/.codex/plugins/cache）で resolver が実際に解決できることは、repo 配置での実行と root テストで確認しただけで、実 install 環境での実走ではない。verify_by: script の IN1〜IN3 は、実際の生成物に検査器を当てた rc で別に確認する。verify_by: test の OUT1 と verify_by: live-trial の OUT2 の behavioral acceptance には、受け入れテストと run-skill-live-trial の実走証拠が別に要る。この verdict をそれらの証拠として流用しない。"
+  "notes": "Independent static content/design verdict for UBM plus changed common generation/inspection/distribution dependencies only. All6 complete SKILL read; all declared criterion IDs reviewed as design. All982 cards without sample: unchanged values reused by exact equality, repaired values fresh independently reviewed. Raw100/returned passed unchanged; BD-004/KL-002 machine pending preserved and independently judged separately. Live user/vault/Notion/provider/human acceptance NOT_RUN. Repository Phase2 provides30-method evidence; individual evaluator did not execute30. Supplemental authorized run iteration1/max3; old3 incomplete histories retained.14 pre-existing global-default rubricref failures and unrelated unreleased work excluded; not unconditional whole-repo PASS."
 }

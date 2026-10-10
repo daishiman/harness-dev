@@ -89,6 +89,24 @@ def _mk_skill_md(
 # ---------------------------------------------------------------------------
 # parse_fm
 # ---------------------------------------------------------------------------
+def test_skill_command_rejects_disabled_target(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    target = _mk_skill_md(repo, "run-test", "name: run-test\ndisable-model-invocation: true")
+    command = target.parent.parent.parent / "commands/test.md"
+    command.parent.mkdir()
+    command.write_text("---\nallowed-tools: Read, Skill\n---\n`run-test` を Skill で起動する。\n")
+    assert "rejects model invocation" in MOD.check_command_routes(target.parent.parent)[0]
+    target.write_text(target.read_text().replace("invocation: true", "invocation: false"))
+    assert not MOD.check_command_routes(target.parent.parent)
+
+
+def test_guard_metadata_without_checker_does_not_grant_access(MOD, tmp_path):
+    repo = _mk_repo(tmp_path)
+    target = _mk_skill_md(repo, "run-test", "name: run-test\neffect: external-mutation\ndisable-model-invocation: false\nexternal_mutation_guard: enabled")
+    errors = MOD.check_skill(target, inbound_refs=set())
+    assert any("verified canonical" in e for e in errors)
+
+
 def test_parse_fm_scalar_and_quotes(MOD):
     text = (
         "---\n"

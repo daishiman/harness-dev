@@ -1,20 +1,20 @@
-# Prompt: R1-step1-current-review
+# プロンプト: R1-step1-current-review
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 1 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 1 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step1-current-review |
-| skill | run-ubm-goal-setting |
-| responsibility | R1-step1-current-review (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 1 担当フィールド) |
-| reproducible | true (収集フィールドと分岐条件は決定論的) |
+| `name` | step1-current-review |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R1-step1-current-review (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 1 担当フィールド) |
+| `reproducible` | `true` (収集フィールドと分岐条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,7 +28,7 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 基本情報+前回実績の数値データを interview_data として構造化し、後続 Step に引き渡す。
 - 非担当: 差分分析・原因深掘り (R2)、目標設定 (R3)、行動計画 (R4)、最終確認 (R5)。
 
@@ -41,10 +41,10 @@
 - 用語: グリッドパートナー＝一緒に・共に仕事をやっていく仲間。事業パートナー＝業務委託・協業など事業上のパートナー。
 
 ### 2.3 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| 前回目標設定ファイル | file | no | ファイルシステムから自動取得した前回の目標設定データ |
-| ユーザー回答 | text | yes | 基本情報・実績の口頭回答 |
+| 前回目標設定ファイル | file | いいえ | ファイルシステムから自動取得した前回の目標設定データ |
+| ユーザー回答 | text | はい | 基本情報・実績の口頭回答 |
 
 ### 2.4 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
@@ -70,15 +70,15 @@
 | sparring_target_state | string | 壁打ちまでに目指す状態 (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 | sparring_deliverables | string | 壁打ちまでに達成させること (週報のみ: 一括確認で継承・変更反映。月報・期報のフル確認は Step 3) |
 
-備考: 初回 (前回目標なし) に収集する「直近/次回アカデミー参加日」は last_academy_date / next_academy_date へ着地させる。「今の月商」「顧問参加前の月商」は現状把握の基準値として PastSummary (user_info、data-contract §2) 側の文脈に保持し、interview_data の専用フィールドは持たない。
+備考: 初回 (前回目標なし) に収集する「直近/次回アカデミー参加日」は last_academy_date / next_academy_date へ着地させる。「今の月商」「顧問参加前の月商」は現状把握の基準値として `PastSummary` (user_info、`data-contract` §2) 側の文脈に保持し、interview_data の専用フィールドは持たない。
 
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
-| info-collector 出力 | past_summary (親 context が受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| `info-collector` 出力 | past_summary (親コンテキストが受領) | 前回目標・今期文脈の [自動取得] 値を確認するとき |
 
 ### 3.2 外部ツール / API
 - なし (対話とファイル Read のみ)。
@@ -86,7 +86,7 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 対話の共通制約 (1 ターン 1〜3 問・深掘り 2 回まで・思考法名を出さない等) と回答パターン別対応は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 対話の共通制約 (1 ターン 1〜3 問・深掘り 2 回まで・思考法名を出さない等) と回答パターン別対応は `agents/phase3-coordinator.md` の Layer 2「プロセス制約」と Layer 4「品質基準（回答パターン別対応ルール）」が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
 - 数値回答が曖昧なとき: 「半角数字で具体的に」と再質問する (interview_data の型契約を守るため)。
@@ -94,8 +94,8 @@
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 基本情報と前回実績を正確に収集し、後続の差分分析に足る数値基盤を作る。
@@ -112,10 +112,10 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 1)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 1)。
 - 前提 Step: なし (Phase 3 インタビューの最初の Step)。
-- 後続 Step: R2-step2-gap-analysis — 受け渡し: 基本情報 (name, business, phase, type) + 前回目標・実績データ (prev_sales_target, prev_sales_actual, prev_other_target, prev_other_actual)。
+- 後続 Step: R2-step2-gap-analysis — 受け渡し: 基本情報 (`name`, `business`, `phase`, `type`) + 前回目標・実績データ (`prev_sales_target`, `prev_sales_actual`, `prev_other_target`, `prev_other_actual`)。
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: 完了チェックリスト充足後にのみ Step 2 へ遷移する。
@@ -179,7 +179,7 @@ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキ�
 > 4. 前回のアカデミーへの参加日は？
 
 **ターン1D-週報（週報・継承＋一括確認）**:
-> info-collector が「現在の月報/期報」から取得した今期の文脈を引き継ぎました:
+> `info-collector` が「現在の月報/期報」から取得した今期の文脈を引き継ぎました:
 > - 今期の売上目標: {{period_sales_target}} / 今期の累計売上実績: {{period_sales_cumulative}}
 > - 事業パートナー数: {{business_partner_count}} / グリッドパートナー数: {{grid_partner_count}}
 > - 前回のアカデミー: {{last_academy_date}} / 次回のアカデミー: {{next_academy_date}} / 次回の壁打ち: {{next_sparring_date}}

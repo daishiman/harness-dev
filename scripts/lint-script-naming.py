@@ -44,6 +44,9 @@ PENDING_RENAME_PATTERNS = [
 # 暫定例外: 個別パス (初回投入時の既存スクリプト群、33章 Change Governance 管理下)
 # リネーム計画は .claude/changelog/governance-log.jsonl 参照
 PENDING_RENAME_PATHS = {
+    # HC consumers import this plugin-local module; kebab-case cannot be used
+    # in the normal Python import that replaces repeated importlib bootstraps.
+    "plugins/harness-creator/scripts/plugin_resources.py",
     # PR #41: Claude/Codex fleet の公開 CLI 名と、既存 Python import/module 名。
     # 利用者向け command・文書・hook・contract が参照するため、この PR では個別 path を
     # Change Governance 管理下へ置く。ALLOWED_VERBS/underscore 規則自体は緩和しない。
@@ -512,6 +515,15 @@ PENDING_RENAME_PATHS = {
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-narrative.py",
     "plugins/guide-doc-generator/tests/run-handout-build/fixtures/accept/scripts/verify-handout-selfcontained.py",
     "plugins/guide-doc-generator/tests/run-handout-extract/fixtures/accept/scripts/verify-handout-selfcontained.py",
+    # ubm-goal-setting 0.7.0 (elegant-review 継続 run): 新設スクリプトは SKILL.md・agent・
+    # tests・content-review verdict の依存 SHA (3,457 件) から名前で参照される。ここで改名
+    # すると独立評価の verdict が全件無効になるため、改名は別 PR で verdict の取り直しと
+    # 一組で行う。normalized_source_path.py は import される Python module。
+    "plugins/ubm-goal-setting/scripts/record-knowledge-usage.py",
+    "plugins/ubm-goal-setting/scripts/evaluate-design-rubric.py",
+    "plugins/ubm-goal-setting/scripts/search-knowledge.py",
+    "plugins/ubm-goal-setting/scripts/publish-staged-files.py",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
 }
 
 VALID_NAME = re.compile(r"^([a-z]+)-[a-z0-9-]+\.py$")

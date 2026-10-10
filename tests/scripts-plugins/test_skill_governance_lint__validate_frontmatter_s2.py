@@ -33,11 +33,8 @@ def _write_skill(tmp_path, fm: str, body: str = "本文\n"):
 # --------------------------------------------------------------------------
 
 def test_parse_fm_block_list_appends_items():
-    # key 行に値が無く list ブロックが続く形 → setdefault で list 化され append される
     fm = MOD.parse_fm("---\nrubric_refs:\n  - ref-one\n  - ref-two\n---\n")
-    # 実装上 key 行で fm[key]='' を入れるが、setdefault は '' を保持するため
-    # block-list 経路 (line 123-126) を踏むこと自体を確認する
-    assert "rubric_refs" in fm
+    assert fm["rubric_refs"] == ["ref-one", "ref-two"]
 
 
 def test_parse_fm_comment_line_resets_list_context():

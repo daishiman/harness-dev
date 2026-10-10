@@ -736,3 +736,80 @@ def test_subprocess_clean_exits_0(tmp_path):
     proc = _run([str(p)])
     assert proc.returncode == 0
     assert "passed goal-seek lint" in proc.stdout
+
+
+# A canonical local reference supplies shared tokens, but cannot replace execution.
+def _canonical_plugin(tmp_path, *, reference_text=None, command=None):
+    plugin = tmp_path / "plugin"
+    (plugin / ".claude-plugin").mkdir(parents=True)
+    (plugin / ".claude-plugin/plugin.json").write_text('{}')
+    (plugin / "references").mkdir()
+    (plugin / "scripts").mkdir()
+    skill = plugin / "skills/run-test"
+    skill.mkdir(parents=True)
+    contract = plugin / "references/goal-seek-anchor-contract.md"
+    contract.write_text(reference_text if reference_text is not None else
+                        "intermediate.jsonl original_goal merged_directive_for_next required_keys original_goal_hash hashlib.sha256 "
+                        "iteration current_goal_snapshot delta_from_original drift_signal UTF-8 validate-inline-goal-seek-anchor.py")
+    (plugin / "scripts/validate-inline-goal-seek-anchor.py").write_text(
+        "REQUIRED_KEYS original_goal_hash sha256")
+    body = CLEAN_RUN.split("### ゴールシーク配線")[0] + "### ゴールシーク配線\n"
+    body += "`../../references/goal-seek-anchor-contract.md` が正本。\n```bash\n"
+    body += command if command is not None else 'python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"'
+    body += "\n```\n"
+    path = skill / "SKILL.md"
+    path.write_text(body)
+    return path, contract
+
+
+def test_canonical_local_anchor_reference_is_resolved_and_executed(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    assert MOD.lint_file(path) == ([], [])
+
+
+@pytest.mark.parametrize("reference_text", ["", "required_keys original_goal_hash"])
+def test_empty_or_incomplete_canonical_reference_is_not_an_escape(MOD, tmp_path, reference_text):
+    path, _ = _canonical_plugin(tmp_path, reference_text=reference_text)
+    findings, warnings = MOD.lint_file(path)
+    assert any("必須契約が不足" in finding for finding in findings)
+    assert warnings
+
+
+@pytest.mark.parametrize("command", ["# python3 $PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py progress intermediate",
+                                     'python3 "$PLUGIN_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path"'])
+def test_reference_needs_real_command_and_both_arguments(MOD, tmp_path, command):
+    path, _ = _canonical_plugin(tmp_path, command=command)
+    findings, _ = MOD.lint_file(path)
+    assert any("両引数が無い" in finding for finding in findings)
+
+
+def test_missing_reference_is_a_violation(MOD, tmp_path):
+    path, contract = _canonical_plugin(tmp_path)
+    contract.unlink()
+    findings, _ = MOD.lint_file(path)
+    assert any("不在" in finding for finding in findings)
+
+
+def test_symlink_reference_outside_plugin_is_rejected(MOD, tmp_path):
+    path, contract = _canonical_plugin(tmp_path)
+    outside = tmp_path / "foreign-contract.md"
+    outside.write_text(contract.read_text())
+    contract.unlink()
+    contract.symlink_to(outside)
+    findings, _ = MOD.lint_file(path)
+    assert any("root 外" in finding for finding in findings)
+
+
+def test_absolute_foreign_contract_reference_is_rejected(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    path.write_text(path.read_text().replace("../../references/goal-seek-anchor-contract.md",
+                                           "/foreign/goal-seek-anchor-contract.md"))
+    findings, _ = MOD.lint_file(path)
+    assert any("正規パス" in finding for finding in findings)
+
+
+def test_missing_validator_is_a_violation(MOD, tmp_path):
+    path, _ = _canonical_plugin(tmp_path)
+    (path.parents[2] / "scripts/validate-inline-goal-seek-anchor.py").unlink()
+    findings, _ = MOD.lint_file(path)
+    assert any("validator が不在" in finding for finding in findings)

@@ -1,20 +1,20 @@
-# Prompt: R5-step5-final-check
+# プロンプト: R5-step5-final-check
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 5 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 5 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step5-final-check |
-| skill | run-ubm-goal-setting |
-| responsibility | R5-step5-final-check (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 5 担当フィールド) |
-| reproducible | true (最終確認チェックの判定条件は決定論的) |
+| `name` | step5-final-check |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R5-step5-final-check (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 5 担当フィールド) |
+| `reproducible` | `true` (最終確認チェックの判定条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,9 +28,9 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 最終確認チェック (基本+合宿整合性+関係構築。項目は 2.2 に列挙) の実施、修正提案、ユーザー承認の取得。
-- 非担当: 個別データの収集 (R1-R4)、フォーマット出力 (Phase 4 / output-formatter)。
+- 非担当: 個別データの収集 (R1-R4)、フォーマット出力 (Phase 4 / `output-formatter`)。
 
 ### 2.2 ドメインルール (適用思考法と最終確認チェック)
 
@@ -60,11 +60,11 @@
 3. **接点が軸**: 接点の増加→成果→売上の連鎖が設計されているか。
 
 ### 2.3 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| interview_data (全フィールド) | object | yes | Step 1〜4 で収集した全データ |
-| camp_date | string | no | 直近の合宿参加日 (自動取得) |
-| camp_advice_summary | string | no | 合宿アドバイス要約 (自動取得) |
+| interview_data (全フィールド) | object | はい | Step 1〜4 で収集した全データ |
+| camp_date | string | いいえ | 直近の合宿参加日 (自動取得) |
+| camp_advice_summary | string | いいえ | 合宿アドバイス要約 (自動取得) |
 
 ### 2.4 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
@@ -74,10 +74,10 @@
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data 全フィールドの充足を確認するとき |
-| 合宿データ | past_summary 内 (info-collector 生成・親 context が受領) | 合宿整合性チェックを行うとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data 全フィールドの充足を確認するとき |
+| 合宿データ | past_summary 内 (`info-collector` 生成・親コンテキストが受領) | 合宿整合性チェックを行うとき |
 
 ### 3.2 外部ツール / API
 - なし (対話と受領済みデータのみ)。
@@ -85,16 +85,16 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 出力評価基準 (精神論排除・関係構築軸・やらないこと) と最大改善回数 (2 回) は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 出力評価基準 (精神論排除・関係構築軸・やらないこと) と最大改善回数 (2 回) は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
-- チェックに不合格項目があるとき: 修正点を具体的に列挙し、該当 Step に戻って修正する (coordinator の自己評価ループに従う)。
+- チェックに不合格項目があるとき: 修正点を具体的に列挙し、該当 Step に戻って修正する (phase3-coordinator の「自己採点」と Layer 4「最大改善回数」に従う)。
 - 合宿データがないとき: 北原原則整合性の代替チェックへフォールバックする。
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 目標設定全体の整合性を保証し、ユーザーが納得して実行に移れる状態を作る。
@@ -111,13 +111,13 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 5)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 5)。
 - 前提 Step: R4-step4-action-plan — 行動計画が完成していなければ、全体の整合性・連動性を検証できない。
-- 後続 Step: なし — Phase 3 インタビューの最終 Step であり、承認後は Phase 4 (output-formatter によるフォーマット整形・保存) に進む。
+- 後続 Step: なし — Phase 3 インタビューの最終 Step であり、承認後は Phase 4 (`output-formatter` によるフォーマット整形・保存) に進む。
 
 ### 6.2 ハンドオフ / 並列性
-- 直列: ユーザー承認後、interview_data (全データ統合) を output-formatter へ引き渡す。
+- 直列: ユーザー承認後、interview_data (全データ統合) を `output-formatter` へ引き渡す。
 - 並列: ユーザー承認待ちの間に interview_data の構造化と引き渡しデータ準備を先行実行してよい。
 
 ## Layer 7: UI / 提示層
@@ -138,7 +138,7 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-2.2 の最終確認チェックを全項目 interview_data 全体に適用し、7.1 の判断基準でターンを選択し、下記「ターンテンプレート」で結果を提示する。不合格項目は 4.2 に従い該当 Step へ差し戻す。5.3 の完了チェックリスト (全通過+ユーザー承認) を満たしたら interview_data を output-formatter へ引き渡す。余計な前置き・思考過程の出力は禁止。
+2.2 の最終確認チェックを全項目 interview_data 全体に適用し、7.1 の判断基準でターンを選択し、下記「ターンテンプレート」で結果を提示する。不合格項目は 4.2 に従い該当 Step へ差し戻す。5.3 の完了チェックリスト (全通過+ユーザー承認) を満たしたら interview_data を `output-formatter` へ引き渡す。余計な前置き・思考過程の出力は禁止。
 
 ### ターンテンプレート (実行時発話の正本)
 

@@ -1,0 +1,1028 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/dev/dev/個人開発/harness",
+    "reviewed_at": "2026-10-05T07:31:31.049933+00:00"
+  },
+  "loop_count": 0,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "システム思考",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: compile→guard→writer→独立evaluatorの全体で、tool経路を変えてもユーザー確定結果のauthorityは保たれるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py と /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-compile/prompts/R2-render.md を照合。compile の status/category/spec_cells と hook の入力形状は一致するが、ディレクトリ操作とWrite aliasで確定結果を失える。",
+        "隣接consumer: /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/assign-system-spec-completeness-evaluator/prompts/R1-score.md はC06 hearingをmatrixのsub-inputに限定し、design knowledgeを自前評価する。promptの責務分離は一致し、hookはその上流状態を保護する補助であるため bypass を正本writerの正常性で正当化できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "rm/mv directory exit0、Write alias exit0。confirmed file direct exit2との差がシステム境界の抜け。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Bash alias exit2とWrite alias exit0は同一実体・異toolの保護不一致。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "因果関係分析",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 必須回答を集めても最初のconfirmに進めない直接原因は何か。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md:31 の precondition → /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py:231 の terminal限定接地 → 未収集stateのFAIL → /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/scripts/apply-spec-transition.py:350 のconfirm後だけPASS、という因果鎖をin-processで再現した。",
+        "出荷catalogの6 block itemすべてをqa_log.required_info_itemsに宣言しても未収集では接地されず、同一stateへwriter confirmを適用すると全6件が接地された。原因は回答不足ではなく検証対象stateの時点である。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "確定前の通過が確定後の参照到達性に依存する。候補stateが無い。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "因果ループ",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 正当な再ヒアリングの負帰還は、どの検証ループで停止不能になるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R4-reopen.md は旧参照を控える→reopen→新回答→再confirm→qa_refs/serves_goals再接続を定め、/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R6-audit-hearing.md は新問の中立性を独立検査する。誤った問を訂正する負帰還のownershipは明記されている。",
+        "ただし /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md と /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の confirmed→grounded→confirm permission→confirmed の正帰還は、未収集から立ち上がれない。tmpで未収集FAIL/confirm後PASSを確認し、再open時にも候補stateを介さなければ同型の循環が再発するという依存分析に到達した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "groundedの前提がconfirmedで、confirmedの前提がgrounded。候補検査・commitの分離が必要。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "トレードオン思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 確定を守る安全性と非正本fixtureを書く作業性を同時に改善できるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py:721 のsuffix shortcutを検証したところ fixtures/system-spec/spec-state.json のBash書込はexit2、直接確定章fileはexit2、保護外alias経由Writeはexit0だった。広い文字列拒否では両価値を満たさない。",
+        "第三案は既存のroot基準実パス解決とcanonical identityを各toolで再利用し、破壊的directory operationだけsubtree包含を加えること。静的identityを正確化すればfixture誤爆とalias bypassを同時に減らせ、shell全解析器の刷新は不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "正本1経路という定義とsuffixで非正本も拒否する挙動が矛盾。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write/Editの実パスidentityとBash suffix authorityが一致しない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "プラスサム思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: planner producerとbuild consumerが同じinstall規律の恩恵を得ているか。/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/specfm.py の default_install_contract/install_release_obligations を /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py とrendererが共用するため、runtime Codex opt-outが製品manifest/catalogの削除へ拡大しない。この共用はprovider/consumer双方のdriftを減らす。",
+        "しかし保存consumer入力は=/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py:342 でclause setのみ比較する。正常sampleをtmpコピーし保存graphのP13 leaf 8件にentity_ref=C01を付けるとcheck_install_release=[]、/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py のvalidateも[]だった。既存leaf比較を小helperとして二projectionに適用することが双方の利益になる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "同一install義務のentity_ref=null規律が再導出のみで保存graphへ届かない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "価値提案思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 誰の何を保証する契約か。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の利用者価値は合意済み仕様がR4-reopen以外で消されないこと。rm -rf system-spec exit0は構文検出件数でなくこの価値を損なう実例でありhighとした。",
+        "別の利用者価値は相談者の主体性。/Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/skills/run-ubm-consult/SKILL.md と /Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/skills/run-ubm-consult/prompts/R4-cocreate-converge.md を fresh照合するとaction/reflectionをユーザーが選び、reflectionは次行動を強制せず再開条件で締める。/Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/scripts/validate-consult-session.py のclosure別必須キーもこの価値に対応している。",
+        "UBMの狭いskill出力先と広い /Users/dm/dev/dev/個人開発/harness/plugins/ubm-goal-setting/hooks/ubm-write-path-guard.py のvault許可prefixを同じauthorityと扱わないことがSKILLに明記され、consultはvaultへ書かずgoalは目標設定/とDaily embedへ書くという責務差が消費者へ説明されている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "確定済み成果物をdirectory delete/moveで失えるためPurposeの保護範囲が欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "戦略的思考",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 継続的な上流仕様更新でconsumerの契約が陳腐化するか。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md はlast_fetched=2026-10-05T03:59:21Z、12 Source節を持ちFETCH_FAILEDは無かった。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/spec-diff-history.md の最新は2026-10-05T03:59:23Zで、追加されたverify/simplifyのprecommit条件(2.1.286以降・plugin skills除外)とclaude-api workflowをcache本文で照合した。",
+        "fetcher /Users/dm/dev/dev/個人開発/harness/scripts/build-yaml-spec-cache.py の .claude 出力と ref skillのplugins consumer pathはresolve()で同一。/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/ref-yaml-spec-fetcher/SKILL.md とR1は日時付きcache読取/30日鮮度判定を行う。今回の2ファイルはSHA pinではなく時点snapshotであり、新しいcache記載を全pluginへのruntime義務と誤適用すべきでない。最新差分は先頭80行+2088行省略なので全上流差分の意味互換性は未証明。",
+        "中長期の最小改善は /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の各tool別authority分岐を実パスhelperへ揃え、toolが追加されても同じidentity負例を再使用すること。Write symlinkの現行bypassを根拠として提案し、将来の想像だけで刷新しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "tool横断authorityの回帰がWrite aliasをカバーしていない。"
+          ]
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "cache最新追加とconsumer path/鮮度は一致。省略された2088diff行の全意味互換性は未検査。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why思考 (5 Whys)",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: なぜ確定章を含むdirectory deleteが許可されるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py を使い5whyを実施。Why1: rm -rf system-specがexit0だから→Why2: _command_write_targetsはsystem-spec文字列を返すが_protected_target_reasonが拒否理由を返さないから→Why3: canonicalファイル一致とchapter_protectedだけを調べdirectory自体は.mdでもspec-stateでもないから→Why4: targetの意味が単一fileとして固定され、rm/mvの変更集合を判定へ渡していないから→Why5: /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/tests/test_guard_hook.py の回帰は保護file・読み元・aliasの正負例を持つが、保護fileを含むancestor mutationを同じ不変条件の例として定義していないから。",
+        "最小根因対策は既存real pathとchapter/canonical checkerを使い、破壊的directory targetの保護包含だけを検査すること。shell全挙動の完全解析や全system-spec文字列拒否は根因より大きい。A4担当はユーザー指定overrideであり既存thought-methods.yamlのA2割当を評価対象の不具合として数えない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "fileを含む変更範囲のケースが抜ける。5whyでtarget単位の欠落へ接地。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "改善思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 現行の回帰群を再利用して、小さいPDCAのどこを補えば保護漏れと誤爆を同時に防げるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/tests/test_guard_hook.py のtest_bash_symlink_to_confirmed_chapter_blocked、test_edit_noncanonical_spec_state_passes、rm plugin __pycache__許可等のfixture/関数をfreshに読み、その期待を別経路へ横展開した。過去PASSや旧findingsの再発という根拠は使っていない。",
+        "Doではソースを修正せずtmp decide実験だけ実施。Checkでdirect file exit2 / directory exit0、Bash alias exit2 / Write alias exit0、非正本nested fixture exit2を観測。Act案は三つの負例を既存root fixtureへ追加してからauthority helperを小変更すること。一般化したimplementation-mirroring testは不要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "非正本fixtureのBash誤爆を確認。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "既存回帰の近傍にあるdirectory/Write alias負例が欠落。"
+          ]
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "現行の正本/consumerをfreshに読み、観察で挙げた範囲の対応を照合した。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "仮説思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "中心仮説H1: 「system-spec hookは同じ実体への全対象tool書込を同じように扱う」。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py へ同一confirmed章のdirect/aliasをWrite/Bashで与えた反証でH1を棄却: Write aliasのみexit0。",
+        "中心仮説H2: 「P13 producerが正しく保存consumerにも同条項があればinstallはplugin単位の義務になる」。/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py / /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/derive-task-graph.py / /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/validate-task-graph.py でsample-planをtmp再現し、保存graphだけentity_ref=C01にした反証でH2を棄却: install_errors=[]かつgraph_violations=[]。条項の存在は所有単位の証明にならない。",
+        "反証していない範囲: plannerのgoal-spec優先slugとhandoff slug不一致拒否は現行resolve_install_slugコードで確認。全error pathやruntime installを実行したという主張はしない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の限定観察では、明記した契約と根拠の間に追加の矛盾は検出しなかった。全repoの無矛盾は主張しない。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "Write alias反証によりtool横断保護の中心仮説は成立しない。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "保存P13の条項存在とentity ownershipの一致を同一視できない。"
+          ]
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "観察で挙げた依存鎖の範囲で追加のdangling/cycleは検出しなかった。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "論点思考",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 何を決めれば残りの修正が決まるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py では(1)authorityは文字列末尾でなくroot基準実パス、(2)変更範囲はfileと破壊的directoryで区別、の2点が本質である。suffix誤爆とalias抜けを別々の例外リストにすると同じ論点を再発させる。",
+        "planner /Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py ではcanonical install clauseの所有単位を再導出と保存graphで同一にすることが本質。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md / /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の前段gateは候補stateを検証するのかcommit済みstateを検証するのかを決めることが本質。後者のpostconditionをpreconditionと呼ぶだけでは初回confirmの循環は解けない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "canonicalのauthorityが静的BashとWrite/Editで矛盾。"
+          ]
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "担当観察の必要なconsumerと負例を照合した。未検査範囲はroot.coverage_limitsへ明記。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "install leaf ownershipがprojectionによって異なる。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "検証対象stateの時点が未定義でconfirmed/groundedが循環。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "KJ法",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "問い: 観測した具体例を先に並べるとどの島にまとまるか。/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py の「directory exit0」「Write alias exit0」「nested fixture exit2」を島A=保護対象identity/変更集合、/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py の「再導出PASS・保存P13entity=C01もPASS」を島B=producer/consumer projectionのparity、/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md / /Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/scripts/validate-knowledge-graph.py の「pre-confirmFAIL・post-confirmPASS」を島C=検証時点の依存循環へボトムアップに配置した。",
+        "島を結ぶ上位構造は「同じ契約を異なる境界へ運ぶ際のauthority・owner・時点の欠落」。一つの万能shared helperへまとめるのでなく、Aは既存path checker、Bはinstall leaf comparator、Cはcandidate validation/commit境界を各々再利用する小改善に分ける。UBMのvault広域guardとskill固有出力制限、cache snapshotとruntime義務は別島として維持し、意図的責務差を重複と誤認しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Aに正本suffixの誤認がある。"
+          ]
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Aにdirectory/alias漏れがある。"
+          ]
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Bに保存projection ownership検査漏れがある。"
+          ]
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "島Cにpre/post state循環がある。"
+          ]
+        }
+      },
+      "issues": [
+        {
+          "id": "F-3001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 716,
+            "section": "_protected_target_reason"
+          },
+          "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+          "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+          "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+          "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3002",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 803,
+            "section": "Write/Edit chapter_verdict"
+          },
+          "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+          "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+          "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+          "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3003",
+          "condition": "C1",
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+            "line": 721,
+            "section": "_token_is_canonical_spec_state shortcut"
+          },
+          "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+          "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+          "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+          "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3004",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "schema",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+            "line": 342,
+            "section": "stored_clauses"
+          },
+          "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+          "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+          "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+          "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+          "auto_fixable": false
+        },
+        {
+          "id": "F-3005",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "dependency-loop",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+            "line": 31,
+            "section": "required-info pre-confirm gate"
+          },
+          "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+          "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+          "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+          "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.65,
+      "negative_cases": [],
+      "reuse_surface": "none"
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-3003: static Bash suffixが非正本を正本と誤認。"
+      ]
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-3001/F-3002: directory mutation と Write/Edit aliasの保護漏れ。"
+      ]
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-3004: 保存graph install leafのentity ownershipが再導出検査と不一致。"
+      ]
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "F-3005: pre-confirm gateがpost-confirm groundingを要求し循環。"
+      ]
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  },
+  "unique_issues": [
+    {
+      "id": "F-3001",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 716,
+        "section": "_protected_target_reason"
+      },
+      "description": "静的 target がディレクトリである削除/移動を単一ファイル判定へ渡すため、確定章と正本を含む rm -rf system-spec / mv system-spec backup を許可する。tmp fixture では同じ root の rm -f system-spec/database.md は exit2、両ディレクトリ操作は exit0。単一 writer を経由せず確定成果物を消失させられる。",
+      "recommended_intervention": "既存実パス解決と chapter_verdict/canonical_spec_state_path を再利用し、rm/mv 等の再帰的・破壊的ディレクトリ target が保護対象を含む場合のみ遮断する。通常の mkdir/新規出力先とは分け、解析器全体の刷新は行わない。",
+      "root_cause": "target の単位を file に固定しており、ディレクトリ操作の変更範囲を判定へ運んでいない。",
+      "regression_test": "確定章+正本を含む root で rm -rf system-spec と mv system-spec backup が exit2、保護対象なき scratch ディレクトリ操作と plugin の __pycache__ 削除が exit0。fixture 自体は実削除せず decide() を検証。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3002",
+      "condition": "C2",
+      "severity": "high",
+      "bucket": "hook-ci",
+      "condition_signal": "omission",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 803,
+        "section": "Write/Edit chapter_verdict"
+      },
+      "description": "Write/Edit は字面の file_path を chapter_verdict へ渡し、system-spec セグメント有無を symlink 解決前に判断する。確定章を指す root/alias.md への Write は exit0、直接の確定章 Write と alias.md 経由の Bash redirect は exit2 になり、tool によって同じ実体の保護が変わる。",
+      "recommended_intervention": "Write/Edit の入力を root 基準で絶対化し既存 resolve と chapter_verdict を再利用して、字面と実パス両方の確定章判定を一貫させる。Bash と shared helper 化する範囲はパス解決/authority 判定までに限定する。",
+      "root_cause": "Bash の実パス authority 判定が Write/Edit の章分岐へ伝播していない。",
+      "regression_test": "保護領域外の alias.md が confirmed 章を指すと Write/Edit exit2。draft/再open章への alias は exit0。正本 spec-state alias の保護も同時確認。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3003",
+      "condition": "C1",
+      "severity": "medium",
+      "bucket": "hook-ci",
+      "condition_signal": "contradiction",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/hooks/guard-confirmed-chapter-overwrite.py",
+        "line": 721,
+        "section": "_token_is_canonical_spec_state shortcut"
+      },
+      "description": "正本は <root>/system-spec/spec-state.json の1経路という契約に反し、Bash target の末尾構造だけで正本を認定する。echo x > fixtures/system-spec/spec-state.json は非正本であるのに exit2。Write/Edit の _is_canonical_spec_state は実パス一致で別位置 fixture を許可しており契約が分岐する。",
+      "recommended_intervention": "静的に解決できる target は既存 root 基準 resolve と _is_canonical_spec_state を正本認定の根拠に統一する。動的 target の安全側判定は既存 ambiguous 分岐へ残す。",
+      "root_cause": "曖昧参照の補助 suffix 判定を静的 target の authority 判定にも使っている。",
+      "regression_test": "root の system-spec/spec-state.json とその alias は exit2、fixtures/system-spec/spec-state.json と別projectの絶対 system-spec/spec-state.json は exit0。動的 canonical 参照は引き続き安全側 exit2。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3004",
+      "condition": "C3",
+      "severity": "medium",
+      "bucket": "schema",
+      "condition_signal": "inconsistency",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts/check-spec-gates.py",
+        "line": 342,
+        "section": "stored_clauses"
+      },
+      "description": "P13 install は plugin 単位・entity_ref=null とする gate が再導出 graph にしか適用されない。sample-plan を tmp コピーし再導出 graph の P13 verification-claim 8件だけ entity_ref=C01 に変更して保存すると check_install_release=[]。canonicalize 後の validate-task-graph.validate も violations=[]。保存graph consumer は prose が拒否すると宣言した component 帰属を受理し、旧projectionの誤帰属を隠せる。",
+      "recommended_intervention": "既存 install leaf の条項/帰属比較を小 helper にし、再導出 leaves と保存graphの該当 leaves 両方へ適用する。legacy title fallback と clause 集合包含を維持しつつ、canonical install clause の entity_ref 非nullを保存graphでも拒否する。",
+      "root_cause": "二つのprojectionに対する同一義務の検査が片側だけにある。保存済みgraphは条項の集合のみを比較する。",
+      "regression_test": "正常P13 source+保存graphでPASS、保存graphだけ canonical install leaf entity_ref=C01 にした負例でFAIL。legacy title-only graphも同じ帰属規律を適用し、非install P13 taskの正当なcomponent帰属は許容。",
+      "auto_fixable": false
+    },
+    {
+      "id": "F-3005",
+      "condition": "C4",
+      "severity": "high",
+      "bucket": "dependency-loop",
+      "condition_signal": "dependency_break",
+      "location": {
+        "file": "/Users/dm/dev/dev/個人開発/harness/plugins/system-spec-harness/skills/run-system-spec-elicit/prompts/R5-decision-guide.md",
+        "line": 31,
+        "section": "required-info pre-confirm gate"
+      },
+      "description": "R5 は required-info --state の exit0/ungrounded_blocking_items=[] を confirmed への遷移前条件にするが、validator は確定/対象外セルだけから接地を辿る。出荷catalog全6 block itemを回答済みqa_logへ付けた未収集セルでもFAILし、apply_cell_op(confirm)後に初めてPASSになる。全platformが対象で対象外セルを足場にできない初回収集では、接地→確定→接地が循環し、規則どおりには初回confirmできない。",
+      "recommended_intervention": "既存writerで入力stateのコピーへ候補turnを適用し、既存validate_required_infoへその候補stateを渡して通過後のみcommitする前後契約を明記・接続する。未接地のまま元stateを変更せず拒否できることを確認し、単に前段gateを後段へ移すだけにはしない。",
+      "root_cause": "完成stateの事後不変条件を、候補stateを構築せず元stateの遷移前条件として使っている。",
+      "regression_test": "全platformが対象・初期state未収集・block回答を揃えた候補turnは初回confirm可能。block回答欠落の候補turnは拒否かつ元state不変。reopen後の新根拠再confirmも同じ流れで検証。",
+      "auto_fixable": false
+    }
+  ],
+  "runtime": {
+    "python": "/Users/dm/miniconda3/bin/python3",
+    "source_writes": false,
+    "git_commands": false,
+    "external_writes": false,
+    "full_suite_run": false,
+    "adversarial_fixture_tests": "in-process imports with -B; TemporaryDirectory only; directory mutations evaluated, never executed"
+  },
+  "coverage_limits": [
+    "G4 guard本体とcompiler/elicit/evaluatorの必要契約をfresh読込。全 compile/apply/evaluator 実装・全system-spec suiteは検査していない。",
+    "G5 consult/goal/guardとplanner install/slug契約・producer/validatorの必要隣接を読込。runtime install/buildと全UBM suiteは未実行。",
+    "G6最新更新の日時、12source、cache本文の最新追加、consumer path、diff先頭80行を照合。省略2088diff行の全意味評価と全上流API/runtime key parityは未実施。source contentの現在のネットワーク再取得はしていない。",
+    "担当はユーザー指定12法(A4 whyを含む)。既存coverage scriptのA2 why割当差は親の運用overrideへ委ねる。最終30法coverageは他分析者とのfan-inで成立する。"
+  ],
+  "phase": "phase2-read-only",
+  "review_basis": "current files + fresh contract analysis + tmp counterexamples; no historical verdict evidence"
+}

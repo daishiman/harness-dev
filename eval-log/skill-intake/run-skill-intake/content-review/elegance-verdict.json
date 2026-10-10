@@ -2,21 +2,21 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "ea98d05b77aacb99a5619166069a8e3ea201eb5b97843efedd061186c8fa77da"
+    "skill_md_sha256": "364dd503724ac1c24eb24f4933697f95bb3bdbe6cc47605d7093a8edaf290e72"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "findings_summary": {
-    "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 2
-  },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:05Z",
+  "reviewer": "independent focused combined review (Claude subagent, incremental profile)",
+  "reviewed_at": "2026-10-10T00:38:18Z",
   "iterations": 1,
   "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 1,
+    "dependency_break": 0,
+    "smell": 3
+  },
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -25,21 +25,24 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "guard block は scripts/build-artifact-delivery.py の _canonical_external_guard_block() 正本から生成され、同じ plugin の run-intake-revise・run-notion-intake-publish と同じ文面になっている（build-artifact-delivery.py --check は ARTIFACT_DELIVERY_OK）。",
-      "resolver を preview の前に 1 回だけ実行する順序は、pending 中に canonical でない Bash を deny する guard の実装と整合する。resolver が失敗した時点では pending context が無いので、fail-closed で止まっても session が詰まらない。Pre-choice 節の preview は read-only と明記されており、guard の preview と取り違える余地が無い。",
-      "guard の呼び出しが literal の絶対パスになり、pretool の canonical 判定を確実に通る。install 先で届かない <plugin root>/.. の推測は無くなった。",
-      "依存関係が閉じている。plugin.json の dependencies に skill-governance-adapters が宣言され、frontmatter の external_mutation_guard.runtime_ref は plugin: 記法、同梱の plugins/skill-intake/scripts/extract-plugin-root.py は正本と byte 一致。resolver の exit 0/1/2 は「非 0 なら外部変更せずに止まる」という本文の指示と一致する（実測）。",
-      "intake 実行中に Bash を見張る hooks/hook-guard-skillgen.py の DENY_COMMAND_RE は、run-skill-create・run-build-skill・capability-build・run-build-skill-subagent の完全トークン一致なので、resolver の呼び出しは遮断されない。生成スキル起動禁止の hook と新しい手順が両立している（tests/test_skill_intake_guard_skillgen.py が pass）。"
+      "今回の差分で参照切れが直った。validate-frontmatter.py の check_refs_exist を read-only で呼んで比べると、旧値（ref-workflow-sequence / ref-handoff-contract）は ref-* skill 名として解決され、MISSING_REF が2件出る。新値（references/workflow-sequence.md / references/handoff-contract.md）では0件。2ファイルとも skill ディレクトリに実在する。",
+      "参照の書き方が repo の規約と合っている。全 SKILL.md の reference_refs を数えると、パス形式が221件で全件実在する。名前形式は11件で、すべて harness-creator の run-build-skill・run-migrate-audit・run-skill-create・run-skill-rubric-governance にあり、実在する ref-* skill を指している。同じ plugin の run-skill-feedback もパス形式。旧値は workflow-manifest.json の resources[].id（manifest 内部の ID）で、skill 名ではなかった。パス形式へ直すのが正しい。",
+      "同じ2ファイルを指す4か所が一致した。frontmatter の reference_refs、workflow-manifest.json の resources[].path（./references/…）、本文の Additional Resources、references/resource-map.yaml の read_when が、いずれも同じ2ファイルを同じ用途で指す。manifest 内の ID（ref-handoff-contract 等）はそのまま残り、test_runtime_profile_contract.py の resourceIds の検査とも衝突しない。",
+      "差分は frontmatter の2行だけで、本文・manifest・hook には触れていない。manifest を SSOT とする構成（IN1）、生成スキル起動禁止の hook による機械強制（IN2）、業務ロジックを持たない薄い orchestrator（OUT1）はいずれも保たれている。",
+      "参照の向きが手本どおり。skill 内の references/handoff-contract.md は、plugin root の正本を指すだけの pointer で、schema の複製を禁じている。参照を実在ファイルへ向けつつ正本を1つに保つ、横展開できる型になっている。"
     ],
     "negative_feedback": [
-      "[low / omission / 差分由来] 新しい文「other Bash is blocked while the confirmation is pending」は、遮断の続く範囲を実装より狭く読ませる。guard の pretool は completion か cancellation の receipt が付くか TTL 900 秒で失効するまで canonical でない Bash を deny し、P10 の公開が非 0 で終わった場合（completion receipt は作られない）や preview 後に確認されなかった場合も遮断は続く。この間は P11 以降の Bash も動かない。解除手段の cancel action は block に書かれていない（cancel の漏れ自体は差分前から）。外部変更の安全性には影響しない。",
-      "[low / smell / 差分外・既存・前回から継続] Key Rule 9 は hook の配線先を `.claude-plugin/plugin.json` と書くが、plugin.json のキーは name・version・dependencies・description・author だけで hooks は無く、実配線は plugins/skill-intake/hooks/hooks.json にある。hook 本体と回帰テストは実在し pass する。",
-      "[low / smell / 依存先 resolver] resolver の探索段階 5・6（他 marketplace の installed 記録、Claude と Codex の cache 全体の最新 version）は、当該 marketplace 外や Codex 側 cache の copy を返しうる。name 一致確認と HMAC receipt 契約で fail-closed は保たれるが、どの copy の guard が使われたかが利用者から見えにくい。"
+      "[low / omission / 差分外・既存] Key Rule 3 と「handoff 検証」は、各 delegate の `schemas/` 契約で検証すると一般化して書いている。参照先の references/handoff-contract.md も「委譲 skill は各 schemas/output.schema.json」と書く。しかし P6 の run-intake-option-catalog と P10 の run-notion-intake-publish には schemas/ が無い（P10 の SKILL.md は、schemas/ を意図的に持たないと明記）。機械側の validate-task-graph-progress.py は outputSchemaId がある phase だけを検査するので、実行は壊れない。ただ、schema の無い phase をどう検証するか（delegate の SKILL.md にある完了条件。例: options.json の形式 lint、pipeline の exit 0 と notion-url.txt）が一文あれば、読み違いが無くなる。",
+      "[low / inconsistency / reference の内容・既存] skill 内の references/handoff-contract.md は、plugin root の正本の節「harness-creator 入力契約マッピング」を参照している。実際の見出しは「harness-creator 論理マッピング (現行 runtime では未自動射影)」で、名前が古い。正本の場所も repo root からの相対パス（plugins/skill-intake/references/…）で書かれており、install 先では skill ディレクトリから ../../references/handoff-contract.md になる。",
+      "[low / smell / reference の内容・既存] references/workflow-sequence.md の「失敗時の戻り先」列（例: P2→Phase 1）は、自動で巻き戻すと読める。一方 SKILL.md 本文は、fail / fatal exit を trace に記録して停止し、自動再試行しないと定めている（manifest の retry は P8→P4 だけ）。この表は人間向けで manifest が SSOT なので実害は無いが、再開の目安であることを明記するとよい。P11 の入力も「summary.json + notion-log.json」に簡略化されており、run-intake-next-action の実際の入力（summary / purpose / options / kickoff と notion-publish-result.json）と完全には一致しない。",
+      "[low / smell / 差分外・既存・前回から継続、本回で再確認] Key Rule 9 は hook の配線先を `.claude-plugin/plugin.json` と書く。しかし plugin.json には hooks キーが無く、実際の配線は plugins/skill-intake/hooks/hooks.json にある（hook-guard-skillgen.py を5か所で配線）。hook 本体と回帰テストは実在し、pass する。",
+      "[low / omission / 差分外・前回から継続、本回は再検証していない] guard block の「other Bash is blocked while the confirmation is pending」は、遮断が続く範囲（completion か cancellation の receipt が付くか、TTL で失効するまで）と、解除手段の cancel を書いていない。guard block は今回の差分の範囲外で、内容は変わっていない。",
+      "[low / smell / 依存先 resolver・前回から継続、本回は再検証していない] resolver の探索段階5・6は、当該 marketplace の外や Codex 側 cache の copy を返しうる。name の一致確認と receipt 契約により、fail-closed は保たれる。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:20261010-pr-final-review",
     "next_action": "none"
   },
-  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除）、正本テンプレート、同梱 resolver、skill-governance-adapters の guard script（pretool・pending 判定・cancel・execute）、plugin.json の dependencies、hooks/hook-guard-skillgen.py を読み、skill 固有の文脈（P10 の公開、生成スキル起動禁止の hook、read-only の pre-choice preview）との整合を確かめたうえで、(a)〜(e) を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest（resolver と sibling path lint の 28 件、tests/test_skill_intake_notion_contract.py と tests/test_skill_intake_guard_skillgen.py の 30 件）が pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、install 先での live trial や Notion への実際の公開は行っていない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "incremental profile の focused combined review。builder とは別 context の独立 evaluator が、1 context で (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric の high が0件、を判定した。SKILL.md の sha256 が指定値と一致することを最初に確かめ、HEAD e66caf1c で現在の全文を評価した。差分は reference_refs の2行だけ。読んだもの: 参照先2ファイルの内容、workflow-manifest.json、resource-map.yaml、plugin root の handoff-contract.md、各 delegate の schemas/ の有無、hooks.json、plugin.json。repo 全体の reference_refs の書き方も集計した。決定論の確認はすべて exit 0: lint-skill-description（OK=189）、audit-capability-parity --all（22/22 PASS、skill-intake も PASS で violations は0件）、validate-frontmatter（warn 1件のみ）、lint-skill-completeness、lint-skill-dep-step7、lint-skill-name、lint-manifest-contents、build-artifact-delivery --check、pytest 9ファイル237件。finding は low 6件で、high と medium は0件。どれも差分外の既存の問題か、参照先ファイルの書き方の問題。うち2件は前回から継続で、今回は再検証していない。guard script を read-only で grep しようとしたが、PreToolUse hook に遮断されて実行されなかったため。PASS の射程は design claim（静的な設計 adequacy）に限る。live trial は行っていない。30種の思考法は実施しておらず、実施したとも申告しない。出力の一時保存として、worktree の外の scratchpad に2ファイル（parity-out.txt、old-SKILL.md）を書いた。repo 自体は変更しておらず、git status は0件。"
 }

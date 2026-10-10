@@ -41,11 +41,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from _common import ContractError, atomic_json, contained, dump, load_json, run
+from _common import ContractError, atomic_json, contained, dump, is_package_member, load_json, run
 
 BRIDGE = Path(__file__).resolve().parent / "gh-bridge.py"
 CLOSED = {"done", "closed", "tombstoned"}
-PACKAGE_KEYS = ("parent_feature", "feature_package_id", "phase_ref")  # same keys as build-graph-node.PACKAGE_KEYS
 BOUND_KEYS = ("local", "remote", "local_updated_at", "remote_updated_at")
 
 
@@ -111,7 +110,7 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
         if issue is None:
             missing.append({"graph_node_id": node_id, "repo": repo, "issue_number": number, "error": errors.get(f"{repo}#{number}")})
             continue
-        package_member = any(node.get(key) is not None for key in PACKAGE_KEYS)
+        package_member = is_package_member(node)
         local_at, remote_at = _instant(node.get("updated_at")), _instant(issue.get("updated_at"))
         local_state = "closed" if node.get("status") in CLOSED else "open"
         for field, local, remote_value in (("title", node.get("title"), issue.get("title")),
@@ -157,13 +156,17 @@ def plan(graph: dict[str, Any], github: dict[str, Any], remote: dict[str, Any],
                      "updates": [{"graph_node_id": node_id, "node_patch": patch} for node_id, patch in sorted(patches.items())]}
                     if patches else None)
     unused = [{"graph_node_id": key[0], "field": key[1]} for key in sorted(set(decisions) - used)]
+    changes = len(exports) + len(imports)
+    unresolved = len(confirmations) + len(conflicts) + len(missing)
     return {"schema_version": "1.0.0", "graph_revision": revision, "exports": exports, "imports": imports,
             "confirmations": confirmations, "conflicts": conflicts, "stale_decisions": stale, "unused_decisions": unused,
             "missing_issues": missing, "update_input": update_input,
             "counts": {"exports": len(exports), "imports": len(imports), "confirmations": len(confirmations),
-                       "conflicts": len(conflicts)},
-            "changes": len(exports) + len(imports),
+                       "conflicts": len(conflicts), "missing_issues": len(missing)},
+            "changes": changes, "unresolved_count": unresolved, "converged": changes == 0 and unresolved == 0,
             "next": ("apply exports and imports, then plan again" if exports or imports
+                     else "retry missing Issues, then plan again" if missing
+                     else "resolve the reported conflicts (R6), then plan again" if conflicts
                      else "confirm each flagged row (R6), then plan again with --decisions" if confirmations else "converged")}
 
 

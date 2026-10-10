@@ -1,0 +1,122 @@
+{
+  "cases": [
+    {
+      "case": "three_project_order_invariance",
+      "finding_ids": [
+        "F-0001"
+      ],
+      "result": "PASS",
+      "detail": "All six permutations: 3 conflicting origins, no C02 patch or snapshot write."
+    },
+    {
+      "case": "three_equal_project_origins",
+      "finding_ids": [
+        "F-0001"
+      ],
+      "result": "PASS",
+      "detail": "Three equal imports collapse to one semantic update and retain all origins."
+    },
+    {
+      "case": "unresolved_is_never_converged",
+      "finding_ids": [
+        "F-0004"
+      ],
+      "result": "PASS",
+      "detail": "Missing Issue, bad timestamp, same-time flag, missing/skip/held Projects are nonterminal; empty control converges."
+    },
+    {
+      "case": "heartbeat_is_coordination_not_content",
+      "finding_ids": [
+        "F-0002"
+      ],
+      "result": "PASS",
+      "detail": "A later context heartbeat advances graph revision but cannot win content timestamp comparison."
+    },
+    {
+      "case": "shared_io_preserves_authority",
+      "finding_ids": [
+        "F-0005"
+      ],
+      "result": "PASS",
+      "detail": "Shared primitive maintains replace/create-only contracts; three callers keep immutable existing bytes."
+    },
+    {
+      "case": "rollback_restores_full_path_set",
+      "finding_ids": [
+        "F-0003"
+      ],
+      "result": "PASS",
+      "detail": "Receipt link failure restores all paths and bytes while preserving nested preexisting state."
+    },
+    {
+      "case": "guard_same_realpath_same_authority",
+      "finding_ids": [
+        "F-3001",
+        "F-3002",
+        "F-3003"
+      ],
+      "result": "PASS",
+      "detail": "Direct-tool aliases and containing directory mutations share protected authority; nested noncanonical fixtures and scratch pass."
+    },
+    {
+      "case": "first_confirm_candidate_publish_barrier",
+      "finding_ids": [
+        "F-3005"
+      ],
+      "result": "PASS",
+      "detail": "Separated answer accumulation -> first confirm candidate passes; missing last block item changes neither input nor existing output."
+    },
+    {
+      "case": "registry_scope_survives_cache_alias",
+      "finding_ids": [
+        "F-2001"
+      ],
+      "result": "PASS",
+      "detail": "Foreign local registry through alias excludes real cache path; valid shared user registration restores it."
+    },
+    {
+      "case": "ci_environment_and_effective_directory",
+      "finding_ids": [
+        "F-2002",
+        "F-2003"
+      ],
+      "result": "PASS",
+      "detail": "Literal env quote/newline/dollar survives shell; working-directory expression skips only when effective."
+    },
+    {
+      "case": "metadata_exception_is_value_scoped",
+      "finding_ids": [
+        "F-2004"
+      ],
+      "result": "PASS",
+      "detail": "Only actual schema value span is exempt; adjacent command and code comment remain detected."
+    },
+    {
+      "case": "shared_loader_has_no_second_root_truth",
+      "finding_ids": [
+        "F-2006"
+      ],
+      "result": "PASS",
+      "detail": "Two caller roots stay independent and missing resolver cannot inherit a previous successful module."
+    },
+    {
+      "case": "current_shell_consumers_quote_and_stop",
+      "finding_ids": [
+        "F-2005"
+      ],
+      "result": "PASS",
+      "detail": "9 exact current manifest commands succeed with both roots containing spaces and stop on resolver exit2; builder prefix also stops."
+    },
+    {
+      "case": "both_install_projections_enforce_owner",
+      "finding_ids": [
+        "F-3004"
+      ],
+      "result": "PASS",
+      "detail": "All canonical stored install obligations reject component attribution, current and legacy; unrelated component P13 task passes."
+    }
+  ],
+  "passed": 14,
+  "failed": 0,
+  "fixture_policy": "temporary directories only; existing test modules supply schema-valid fixtures, no existing test method was reused"
+}

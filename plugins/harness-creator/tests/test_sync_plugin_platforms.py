@@ -651,3 +651,19 @@ def test_standard_hooks_autoload_is_claude_implicit_and_codex_explicit_for_all_h
             "./hooks/hooks.json",
             "./codex/hooks.json",  # dev-graph filters unsupported TaskCompleted.
         }, plugin.name
+
+
+def test_codex_locale_defaults_are_opt_in_and_keep_structural_values():
+    claude = {'name': 'example-plugin', 'version': '1.0.0', 'description': 'Example plugin'}
+    english = mod.desired_codex_manifest(claude, {})
+    japanese = mod.desired_codex_manifest(claude, {'output_language': 'ja'})
+    assert english['interface']['defaultPrompt'] == ['Help me use Example Plugin.']
+    assert japanese['interface']['defaultPrompt'] == ['Example Pluginの使い方を手伝って']
+    assert japanese['interface']['developerName'] == 'ローカル開発者'
+    assert japanese['interface']['category'] == english['interface']['category']
+    assert japanese['interface']['capabilities'] == english['interface']['capabilities']
+    assert 'output_language' not in japanese
+    explicit = mod.desired_codex_manifest(claude, {'output_language': 'ja', 'interface': {'defaultPrompt': ['既存の明示文']}})
+    assert explicit['interface']['defaultPrompt'] == ['既存の明示文']
+    with pytest.raises(mod.PlatformSyncError, match='output_language'):
+        mod.desired_codex_manifest(claude, {'output_language': 'fr'})

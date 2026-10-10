@@ -4,6 +4,28 @@
 
 ## [Unreleased]
 
+### Changed (2026-10-09 rubric 1.5.0 と、cooldown・承認の照合の修正, ubm-goal-setting の elegant-review 継続 run)
+
+下の 1.4.0 の後に、30思考法のレビューで出た24件を直した。対応表は `eval-log/ubm-goal-setting/_plugin/elegant-review/20261010-context-resolution/proposal-resolution.json`。
+
+- **rubric 1.5.0（PROP-2026-10-09-ELEGANT-PD002、minor、incident_fix）**: PD-002 が冒頭30行の禁則として `## 守ること` の行全体の一致も認める。本文の単語「守ること」だけでは通さず、冒頭30行と禁則の両方の条件は変えていない。あわせて、BD-001 と PD-002 を「包含関係（BD-001 ⊂ PD-002）」と書いていた誤った説明を、「直交する2つの検査」に直した。既存の127件で would_regress 0。L2 の pin と hash、2つの governance-log を同期した。
+- **検査とガードの修理（ELEGANT-2026-10-09-CHECKER-GUARD-REPAIR、P2）**: `render-findings-score.py` が knowledge カードの分母から派生物（graph・index）を外す。`guard-change-category.py`（repo と skill-governance-automation の2つ）は、P0 を無条件に分類していた誤りを直し、承認は `target_sha256` が現物と一致するものだけを有効にした。`target_path` は文字列でも配列でも同じ規則で照合し、以前の変更の cooldown は残す（例外は承認済みで `incident_fix=true` の記録だけ）。CI の `--bypass-cooldown` は外した。
+- **生成側の日本語と2つの型**: `build-subagent.py` が `--language auto|ja|en` と `--role auto|advisor|writer` を取り、助言役と書き込み役の2つの型で7層のエージェントを生成する。`render-combinators.py`・静的テンプレート・Codex の locale 指定も同じ選択に従う。英語の既存の出力は変えていない。言語の選び方と訳さないもの（schema のキー・Layer・responsibility ID・frontmatter のキー）の正本は `skills/run-build-skill/references/ja-contract-policy.md`。
+- **入口の配線の検査**: skill-governance-lint の `lint-skill-dep-step7.py` が、command から `Skill` で呼ぶ先がモデルから起動できること（`disable-model-invocation: false`）と、危険な run-* に外部変更ガードの受領書と正規の workflow があることを検査する。
+- **parity 監査**: `audit-capability-parity.py` が、英語と日本語の本文それぞれで実行時のルートの必須トークンと、日本語の正本への参照を検査する。
+
+### Added (2026-10-09 日本語の正規形を2つ目の正規形として足す, ubm-goal-setting の日本語化)
+
+照合される見出しと定型ブロックは、これまで英語の1組しかなかった。そのため、SKILL.md やエージェントを日本語で書くと、中身が同じでも lint・採点・生成で落ちていた。英語の正規形は1文字も変えずに、日本語の正規形を2つ目として足した。日本語の文字列は scratchpad の仕様ではなく、照合する各モジュールに置いてある。
+
+- **rubric 1.4.0（PROP-2026-10-09-001）**: BD-001・BD-002・PD-002 が、`## 目的と出力契約`・`## つまずきやすい点` を英語の見出しの別名として認める。日本語の見出しは行全体の一致だけを通し、英語の判定は部分一致のまま変えていない。緩和の superset なので minor・猶予0日（`diff-rubric-impact.py` で would_flip 0）。採点は `render-findings-score.py` の `*_HEADING_JA`、説明は `rubric-rationale.md` と `ref-skill-design-rubric` の評価軸の要約に反映した。L2 の `rubric_hash` は `check-rubric-sync.py` で同期した。
+- **外部変更ガードと実行時のルート（repo の `scripts/build-artifact-delivery.py`）**: 日本語のガードブロック `<!-- external-mutation-guard-cli-ja:v1 -->` と、節 `## 実行時のルートの決め方` を足した。どちらの言語を使うかは、SKILL.md の Post-choice の見出しで決まる（`_skill_language`）。日本語のブロックは散文だけを訳し、コマンド行は英語版とバイト単位で同じにしたので、必須コマンドの検査は両方の言語に効く。`--migrate-external-guard` は両方の言語のブロックを取り除き、ファイルの言語の正規形だけを入れ直す。
+- **入口の lint（`scripts/lint-entrypoint-artifact-first.py`）**: `## 選ぶ前の実成果物の作成` → `## 選んだ深さでの改善の実行` の組を受け入れる。組の中で言語を混ぜると落とす。
+- **parity 監査（`audit-capability-parity.py`）**: 実行時のルートの契約を、日本語のトークンの組（`RUNTIME_ROOT_CONTRACT_TOKENS_JA`）でも照合する。どちらかの組が全部揃えば合格。
+- **エージェントの見出し（skill-governance-lint の `lint-agent-prompt-section.py`）**: `## プロンプトの型`・`## 自己採点` を受け入れる。`## 自己採点` は rubric PR-002 がすでに認めていた別名に合わせた。
+- **食い違いの防止**: 日本語の正規形は5つのスクリプトと rubric に分かれて置かれている。値がずれると、あるゲートは通るのに別のゲートで落ちる。そのため `tests/scripts-root/test_root__ja_contract_parity.py` で、等しいことと含まれていることを固定した（見出しの一致、節がトークンをすべて含むこと、ガードブロックが ssot lint の生成ブロックとして除外されること、PR-002・BD-001・BD-002・PD-002 の check が採点の定数を含むこと）。
+- 日本語の正規形へ移したのは ubm-goal-setting だけ。他の13プラグインは英語のままで、移すかどうかは別に扱う。
+
 ### Fixed (2026-10-05 install 先での兄弟 plugin の解決, PR #83)
 
 install 先は `<cache>/<marketplace>/<plugin>/<version>/` なので、`<plugin root>/..` や `Path(__file__).parents[N] / "<sibling>"` では隣の plugin に届かない。repo の `plugins/` でだけ動いていた参照を、install 配置に依存しない形へ直した。

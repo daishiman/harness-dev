@@ -12,7 +12,7 @@
 # contexts: [C, E]
 # network: false
 # write-scope: temporary sandbox or explicit --sandbox-root only
-# dependencies: [../../../scripts/extract-plugin-root.py]
+# dependencies: [../../../scripts/plugin_resources.py]
 # ///
 """Side-effect-free plugin lifecycle smoke harness.
 
@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import importlib.util
 import json
 import os
 import shutil
@@ -33,6 +32,9 @@ import tempfile
 from contextlib import nullcontext
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+from plugin_resources import ResolverUnavailable, resolve_root
 
 
 def _resolve_repo_root() -> Path:
@@ -196,15 +198,10 @@ def external_lint_path() -> Path:
     repo の plugins/ を前提にした固定パスは、install 先 (<cache>/<marketplace>/<plugin>/<version>/)
     では兄弟 plugin に届かない。harness-creator に同梱した resolver に任せる。
     """
-    resolver = PLUGIN_ROOT / "scripts" / "extract-plugin-root.py"
-    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
-    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
-    if spec is None or spec.loader is None:
-        raise SystemExit("extract-plugin-root.py is missing from harness-creator/scripts")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    found = module.resolve("skill-governance-lint", PLUGIN_ROOT, Path.cwd())
+    try:
+        found = resolve_root("skill-governance-lint", PLUGIN_ROOT)
+    except ResolverUnavailable as exc:
+        raise SystemExit(str(exc)) from exc
     if found is None:
         raise SystemExit("skill-governance-lint plugin not found; install it to run PKG-009/010")
     return found / "scripts" / "lint-external-refs.py"

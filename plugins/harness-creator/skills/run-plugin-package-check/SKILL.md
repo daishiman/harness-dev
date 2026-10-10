@@ -39,6 +39,8 @@ schema_refs:
   - schemas/run-report.schema.json
   - ../ref-pkg-contract/schemas/package-contract.schema.json
 script_refs:
+  - ../../scripts/plugin_resources.py
+  - ../../scripts/extract-plugin-root.py
   - scripts/run-plugin-validate-strict.sh
   - scripts/smoke-plugin-install.sh
   - scripts/smoke-plugin-uninstall.sh

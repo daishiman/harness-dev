@@ -26,18 +26,19 @@ runtime_root_policy: host-skill-path
 
 # {{name}}
 
-## Runtime root contract
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
 
 - `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
-## Purpose & Output Contract
+## 目的と出力契約
 {{output_contract}}
 
-## Boundary
+## 境界
 - 入口: {{entry_condition}}
 - 出口: 全 Gate PASS + 成果物が `{{artifact_path}}` に書き出される
 - 非責務: 個別 generator/evaluator の実装ロジック（各 sub-skill に委譲）
@@ -59,7 +60,7 @@ runtime_root_policy: host-skill-path
 - 改善ループ: **最大3周**（evaluator → generator 戻し）
 - 上限到達時: governance フロー (`run-skill-rubric-governance`) にエスカレーション
 
-## Key Rules
+## 守ること
 - 各 Gate 通過を機械的に判定する（自然言語の「完了しました」を信用しない）
 - Phase 3 evaluator は **必ず `context: fork`** で起動する（Sycophancy防止、設計書09章）
 - Phase 間 handoff は JSON ファイル経由（`.claude/handoff/{{name}}-<session>.json`）
@@ -68,10 +69,10 @@ runtime_root_policy: host-skill-path
 ## ゴールシーク実行
 > 固定手順は書かない。Gate を完了チェックリストとし、どの局面をいつ実行するかは AI が都度判断する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
 
-### ゴール (Goal)
+### ゴール
 全 Gate が PASS し、成果物が `{{artifact_path}}` に書き出された状態。
 
-### 完了チェックリスト (Checklist) — これが Gate 群
+### 完了チェックリスト — これが Gate 群
 - [ ] **Gate 1**: brief.json が schema validation を通過した
 - [ ] **Gate 2**: 全 P0 lint が exit 0 + git diff --shortstat が >0 行
 - [ ] **Gate 3**: evaluator JSON が SubagentStop hook 検証を通過 + `passed: true`

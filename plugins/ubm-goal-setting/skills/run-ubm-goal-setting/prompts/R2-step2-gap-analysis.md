@@ -1,20 +1,20 @@
-# Prompt: R2-step2-gap-analysis
+# プロンプト: R2-step2-gap-analysis
 
 > このファイルは 7 層プロンプトの Markdown 表現。`run-prompt-creator-7layer` の
-> seven-layer-format.md を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
-> owner skill の親contextが対話 Step 2 で Read するインタビュープロンプト正本
-> (Task tool による独立 SubAgent 起動は行わない)。
+> `seven-layer-format.md` を正本とする。Layer 番号と依存方向 (L1 ← L7) は不変。
+> 呼び出し元のスキルの親コンテキストが対話 Step 2 で Read するインタビュープロンプト正本
+> (Task ツールによる独立したサブエージェントの起動は行わない)。
 
 ## メタ
 
-| key | value |
+| 項目 | 値 |
 |---|---|
-| name | step2-gap-analysis |
-| skill | run-ubm-goal-setting |
-| responsibility | R2-step2-gap-analysis (1 prompt = 1 責務) |
-| layers_covered | [L1, L2, L3, L4, L5, L6, L7] |
-| output_schema | references/data-contract.md の interview_data 定義 (Step 2 担当フィールド) |
-| reproducible | true (差分計算と分岐条件は決定論的) |
+| `name` | step2-gap-analysis |
+| `skill` | `run-ubm-goal-setting` |
+| `responsibility` | R2-step2-gap-analysis (1 プロンプト = 1 責務) |
+| `layers_covered` | [L1, L2, L3, L4, L5, L6, L7] |
+| `output_schema` | references/data-contract.md の interview_data 定義 (Step 2 担当フィールド) |
+| `reproducible` | `true` (差分計算と分岐条件は決定論的) |
 
 ## Layer 1: 基本定義層 (不変原則)
 
@@ -28,23 +28,23 @@
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
-### 2.1 責務 (Single Responsibility)
+### 2.1 責務 (単一責務)
 - 担当: 差分の数値化、ボトルネック箇所の特定、根本原因の interview_data への記録。
 - 非担当: 基本情報収集 (R1)、目標設定 (R3)、行動計画 (R4)、最終確認 (R5)。
 
 ### 2.2 ドメインルール (適用思考法)
-- **Why思考 (No.35/56)**: 「なぜ？」を 3〜5 回繰り返し、表層→根本原因に到達する。
+- **なぜ思考 (No.35/56)**: 「なぜ？」を 3〜5 回繰り返し、表層→根本原因に到達する。
 - **ボトルネック分析 (No.51)**: 「商品作り→外交→商談→成約→フォロー」のどこが詰まっているか特定する。北原原則「商品があるなら届けて届けて届けていく」。
 - **仮説思考 (No.48)**: 「もし外交を毎日 1 件やったら、月に何件の商談が生まれるか？」の仮説構築。
 - **論点思考 (No.49)**: 今月解くべき問題を 1 つに絞る。北原原則「迷う＝止まる。迷う状況を作らない」。
 
 ### 2.3 入力契約
-| field | type | required | 説明 |
+| フィールド | 型 | 必須 | 説明 |
 |---|---|---|---|
-| prev_sales_target | number | yes | 前回売上目標 (Step 1 から) |
-| prev_sales_actual | number | yes | 前回売上実績 (Step 1 から) |
-| prev_other_target | string | yes | 前回成果目標 (Step 1 から) |
-| prev_other_actual | string | yes | 前回成果実績 (Step 1 から) |
+| prev_sales_target | number | はい | 前回売上目標 (Step 1 から) |
+| prev_sales_actual | number | はい | 前回売上実績 (Step 1 から) |
+| prev_other_target | string | はい | 前回成果目標 (Step 1 から) |
+| prev_other_actual | string | はい | 前回成果実績 (Step 1 から) |
 
 ### 2.4 出力契約 (interview_data への書込フィールド)
 | フィールド | 型 | 説明 |
@@ -59,12 +59,13 @@
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
-| id | path | when_to_read |
+| id | パス | 読むとき |
 |---|---|---|
-| ナレッジサマリー | past_summary 内 (info-collector 生成・親 context が受領) | 原因パターン照合・深掘りの引用に使うとき |
-| data-contract | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
+| ナレッジサマリー | past_summary 内 (`info-collector` 生成・親コンテキストが受領) | 原因パターン照合・深掘りの引用に使うとき |
+| `data-contract` | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-goal-setting/references/data-contract.md` | interview_data のフィールド仕様を確認するとき |
 
-ナレッジ活用 (info-collector から渡された翻訳済みデータを使う):
+ナレッジ活用 (`info-collector` から渡された翻訳済みデータを使う):
+- `${PLUGIN_ROOT}/references/knowledge-retrieval-contract.md` をReadし、past_summaryの実検索結果 `knowledge_candidates` に含まれるIDから意味を判断する。親は実際に届けた引用・原則IDだけを記録し、追加IDは先に検索で出所へ解決する。
 - **上位概念 (翻訳済み)**: ユーザーのフェーズ・業種に翻訳済みの原則 → 原因パターンとの照合に使用。
 - **引用候補**: 「なぜ？」の深掘りで思考転換を促す際の北原さんの言葉として活用。
 - 活用例: ユーザーが「外交が足りなかった」と答えた場合 → 上位概念「先行指標を量で固定する」を参照 →「あなたの場合、具体的に何件/週が目標でしたか？実績は？」と深掘り。
@@ -75,7 +76,7 @@
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 共通ルールへの従属
-- 対話の共通制約 (深掘り 2 回まで・感情的回答への共感先行等) は `agents/phase3-coordinator.md` Layer 4 が正本。本プロンプトでは再定義しない (二重定義 drift 防止のため)。
+- 対話の共通制約 (深掘り 2 回まで・感情的回答への共感先行等) は `agents/phase3-coordinator.md` の Layer 2「プロセス制約」と Layer 4「品質基準（回答パターン別対応ルール）」が正本。本プロンプトでは再定義しない (二重定義によるずれを防ぐため)。
 
 ### 4.2 失敗時挙動 (Step 固有)
 - 「わからない」回答: 4 つの選択肢提示へフォールバックする。
@@ -83,8 +84,8 @@
 
 ## Layer 5: エージェント層 (ゴール駆動の実行主体)
 
-### 5.1 担当 agent
-- `run-ubm-goal-setting` の親contextが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読取専用 advisor であり、対話状態を更新しない。
+### 5.1 担当エージェント
+- `run-ubm-goal-setting` の親コンテキストが本プロンプトを Read して対話を進行する。`phase3-coordinator` は必要時に次問案を返す読み取り専用の助言役であり、対話状態を更新しない。
 
 ### 5.2 ゴール定義
 - 目的: 差分と根本原因を構造レベルで特定し、目標設定の根拠を作る。
@@ -101,10 +102,10 @@
 
 ## Layer 6: オーケストレーション層 (ゴールシーク制御)
 
-### 6.1 上位 skill との接続
-- 呼び出し元: `run-ubm-goal-setting` Phase 3 親context (Step 2)。
+### 6.1 上位スキルとの接続
+- 呼び出し元: `run-ubm-goal-setting` Phase 3 の親コンテキスト (Step 2)。
 - 前提 Step: R1-step1-current-review — 前回目標と実績の数値データがなければ差分分析ができない。
-- 後続 Step: R3-step3-goal-setting — 受け渡し: 売上差分 (prev_sales_diff)、根本原因 (root_cause)、ボトルネック箇所 (bottleneck)、行動変化 (behavior_change)。
+- 後続 Step: R3-step3-goal-setting — 受け渡し: 売上差分 (`prev_sales_diff`)、根本原因 (`root_cause`)、ボトルネック箇所 (`bottleneck`)、行動変化 (`behavior_change`)。
 
 ### 6.2 ハンドオフ / 並列性
 - 直列: 完了チェックリスト充足後にのみ Step 3 へ遷移する。初回ユーザー (前回目標なし) は本 Step をスキップして Step 3 へ進む。

@@ -19,6 +19,7 @@
 - 未収集セルを完了扱いしない (`complete=true` は未収集0のときだけ)。
 - 5 loop (per-invocation chunk limit) 到達で未収集が残れば `complete=false`・`next_question` 非 null を保存し resumable に返す。
 - 状態書込は writer の一経路のみ。
+- 再質問の回答を `confirm` する `apply` / `chunk` は `--required-info "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-system-spec-elicit/references/required-info-catalog.json"` を付け、候補 state の接地検証後だけ公開する。回答のみの蓄積や `reopen` はこの引数なしで行う。
 
 ### 1.2 倫理ガード
 - 未回答を勝手に確定/対象外へ埋めない。

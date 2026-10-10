@@ -95,6 +95,8 @@ CANONICAL_ACTION_FLAGS = {
     "cancel": frozenset({"--project-root", "--preview-receipt"}),
 }
 DIRECT_MUTATION_PATTERNS = (
+    # ubm staged publication is bound to the canonical execute receipt.
+    re.compile(r"\bpublish-staged-files\.py\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b", re.I),
     re.compile(r"\bcurl\b[^\n]*(?:--data(?:-raw|-binary)?|-d)\s", re.I),
     # `pr` を対象から外してある（2026-08-21、利用者の判断）。
@@ -685,8 +687,32 @@ def execute(args: argparse.Namespace) -> int:
     return completed.returncode
 
 
+def has_unsafe_shell_expansion(command: str) -> bool:
+    """Reject evaluation before the guard; single-quoted JSON remains literal data."""
+    quote = None
+    index = 0
+    while index < len(command):
+        char = command[index]
+        if quote == "'":
+            if char == "'":
+                quote = None
+        elif char == "\\":
+            index += 2
+            continue
+        elif char == "'" and quote is None:
+            quote = "'"
+        elif char == '"':
+            quote = None if quote == '"' else '"'
+        elif char == "`" or command.startswith(("$(", "<(", ">("), index):
+            return True
+        index += 1
+    return False
+
+
 def _canonical_guard_action(command: str) -> str | None:
     """Return the action only when the entire shell command is one canonical guard call."""
+    if has_unsafe_shell_expansion(command):
+        return None
     try:
         lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|<>()")
         lexer.whitespace_split = True

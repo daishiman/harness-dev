@@ -101,21 +101,23 @@ def _codex_home() -> Path:
     return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
 
 
-def _installed(name: str, cwd: Path) -> list:
-    """installed_plugins.json の (marketplace, project 一致, installPath) を返す。
+def _installed(name: str, cwd: Path) -> tuple:
+    """有効な (marketplace, project 一致, installPath) と scope 外専用 path を返す。
 
     他プロジェクト専用 (scope=project/local) の install は、そのプロジェクトの外では
-    有効でないので候補にしない。
+    有効でないので cache fallback でも候補にしない。同じ path に有効な登録もある
+    場合は共有 install として許可する。
     """
     path = _claude_home() / "plugins" / "installed_plugins.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return []
+        return [], set()
     plugins = data.get("plugins") if isinstance(data, dict) else None
     if not isinstance(plugins, dict):
-        return []
+        return [], set()
     rows = []
+    blocked = set()
     for key, entries in plugins.items():
         plugin, _, marketplace = str(key).partition("@")
         if plugin != name or not isinstance(entries, list):
@@ -125,28 +127,35 @@ def _installed(name: str, cwd: Path) -> list:
                 continue
             project = entry.get("projectPath")
             in_project = isinstance(project, str) and _is_within(cwd, Path(project))
+            install_path = Path(entry["installPath"])
             if entry.get("scope") in ("project", "local") and not in_project:
+                blocked.add(install_path.resolve())
                 continue
-            rows.append((marketplace, in_project, Path(entry["installPath"])))
+            rows.append((marketplace, in_project, install_path))
     # project 単位の install は user 単位より優先される (host の解決順と同じ)。
     rows.sort(key=lambda row: row[1], reverse=True)
-    return rows
+    return rows, blocked - {path.resolve() for _, _, path in rows}
 
 
 def candidates(name: str, self_root: Path, cwd: Path) -> Iterator[Path]:
     """name の plugin root になりうる場所を、確からしい順に返す (検証は呼び出し側)。"""
     own_name = manifest_name(self_root)
+    installed, blocked = _installed(name, cwd)
     if own_name == name:
         yield self_root
-    yield self_root.parent / name
+    sibling = self_root.parent / name
+    if sibling.resolve() not in blocked:
+        yield sibling
     # cache 配置 (<cache>/<marketplace>/<plugin>/<version>/) なら自分の marketplace が分かる。
     marketplace = self_root.parent.parent.name if self_root.parent.name == own_name else None
-    installed = _installed(name, cwd)
     if marketplace is not None:
         for market, _, path in installed:
             if market == marketplace:
                 yield path
-        yield from _versions(self_root.parent.parent / name)
+        yield from (
+            path for path in _versions(self_root.parent.parent / name)
+            if path.resolve() not in blocked
+        )
     for market, _, path in installed:
         if market != marketplace:
             yield path
@@ -159,7 +168,10 @@ def candidates(name: str, self_root: Path, cwd: Path) -> Iterator[Path]:
             continue
         for market_dir in markets:
             cached.extend(_versions(market_dir / name))
-    yield from sorted(cached, key=_version_key, reverse=True)
+    yield from (
+        path for path in sorted(cached, key=_version_key, reverse=True)
+        if path.resolve() not in blocked
+    )
 
 
 def resolve(name: str, self_root: Path, cwd: Optional[Path] = None) -> Optional[Path]:

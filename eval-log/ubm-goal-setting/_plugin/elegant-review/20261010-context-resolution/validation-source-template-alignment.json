@@ -1,0 +1,31 @@
+[
+  {
+    "name": "agent_layers",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/scripts/lint-agent-prompt-content.py",
+      "--plugins-dir",
+      "plugins/ubm-goal-setting",
+      "--mode",
+      "agent"
+    ],
+    "returncode": 0,
+    "stdout": "OK content-lint (--mode agent): scanned=9 files 全て 7 層準拠 (l5-contract v2.0.0) under plugins/ubm-goal-setting\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T16:20:27.203493+00:00"
+  },
+  {
+    "name": "rubric_routing",
+    "argv": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "plugins/ubm-goal-setting/tests/test_content_review_rubric_routing.py"
+    ],
+    "returncode": 0,
+    "stdout": "................                                                         [100%]\n16 passed in 0.20s\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T16:20:26.408668+00:00"
+  }
+]

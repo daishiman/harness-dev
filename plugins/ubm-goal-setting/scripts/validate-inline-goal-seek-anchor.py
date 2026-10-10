@@ -46,6 +46,8 @@ def validate(progress_path: Path, intermediate_path: Path) -> tuple[int, str]:
         ]
     except (OSError, json.JSONDecodeError) as exc:
         return 2, f"JSON を読めない: {exc}"
+    if not isinstance(progress, dict):
+        return 1, "progress が object でない"
     if not rows:
         return 1, "intermediate.jsonl が空"
     for index, row in enumerate(rows):

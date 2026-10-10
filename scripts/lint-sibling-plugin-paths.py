@@ -15,7 +15,7 @@
 
 検出しない (許容):
   - 自 plugin の名前 (repo root の検出や自己説明で、兄弟参照ではない)
-  - `$schema` を含む行と、plugin-composition.yaml の `# 正本スキーマ:` 注記行
+  - `$schema` の metadata 値と、plugin-composition.yaml の `# 正本スキーマ:` 注記行
     (editor 向けの注記で、runtime は解決しない)
   - `rubric_refs:` 直下のリスト項目 (lint-rubric-refs-exist.py が skill 起点で解決する別契約)
   - README.md / CHANGELOG.md / EVALS.json と、tests/・eval-log/ 配下 (repo での開発・評価用)
@@ -23,7 +23,7 @@
     install 先で使う script がこの形を使っていないかは、この lint では見ない)
 
 直し方 (どれを選ぶかは参照の種類で決まる):
-  - 実行するコマンド: `$(python3 ${PLUGIN_ROOT}/scripts/extract-plugin-root.py <name>)/scripts/...`
+  - 実行するコマンド: `SIBLING_ROOT="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" <name>)" && python3 "$SIBLING_ROOT/scripts/..."`
     Python からは同梱の scripts/extract-plugin-root.py を importlib で読み、resolve() を呼ぶ
   - resource-map などのメタデータ: `plugin:<name>/<path>` 記法
   - 本文の引用: 「<name> plugin の `<path>` (出典表記)」
@@ -52,8 +52,9 @@ SCANNED_SUFFIXES = {
 }
 SKIPPED_DIRS = {"tests", "eval-log", "node_modules", "__pycache__", ".git"}
 SKIPPED_FILES = {"README.md", "CHANGELOG.md", "EVALS.json"}
-# runtime が解決しない注記行。行にこの文字列があれば検出しない。
-ANNOTATION_MARKERS = ("$schema", "# 正本スキーマ:")
+# 値の範囲だけを除外し、同じ JSON 行の runtime command まで免除しない。
+SCHEMA_VALUE_RE = re.compile(r'''(?:^|[,{])\s*["']?\$schema["']?\s*:\s*(?:"(?P<double>(?:\\.|[^"\\])*)"|'(?P<single>[^']*)'|(?P<plain>[^\s,}\n]+))''', re.MULTILINE)
+SCHEMA_COMMENT_RE = re.compile(r"^\s*# 正本スキーマ:")
 RUBRIC_REFS_KEY_RE = re.compile(r"^\s*rubric_refs:\s*(?:#.*)?$")
 LIST_ITEM_RE = re.compile(r"^\s*-\s")
 
@@ -104,6 +105,12 @@ def scan_text(
 ) -> list[Finding]:
     """1 ファイル分の本文を走査する。改行をまたぐ書き方を拾うため、行ではなく全文に照合する。"""
     lines = text.splitlines()
+    schema_values = [
+        match.span(group)
+        for match in SCHEMA_VALUE_RE.finditer(text)
+        for group in ("double", "single", "plain")
+        if match.group(group) is not None
+    ]
     findings: list[Finding] = []
     for kind, pattern in patterns.items():
         for match in pattern.finditer(text):
@@ -113,7 +120,9 @@ def scan_text(
             # 一致の末尾 (兄弟名) がある行を報告する。pyparent は `.parents[N]` の行から始まりうる。
             index = text.count("\n", 0, match.end())
             line = lines[index] if index < len(lines) else ""
-            if any(marker in line for marker in ANNOTATION_MARKERS):
+            if any(start <= match.start() and match.end() <= end for start, end in schema_values):
+                continue
+            if SCHEMA_COMMENT_RE.match(line):
                 continue
             if _in_rubric_refs(lines, index):
                 continue

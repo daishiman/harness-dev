@@ -13,12 +13,14 @@ elegant-review finding (2026-06-30, 3 analyst 収束 LS-F1 / SS-02 / SS-05):
   - group_plugin_tests: 機構B の per-plugin グルーピング (tests/ 配下/colocate 双方)
   - lint check_orphans: orphan で fail / clean で ok / allowlist 空理由・stale で fail
   - lint check_ci_runs_roots: 実行証跡欠落で fail / 揃えば ok / CI yml 不在で skip
-  - 実 repo 統合: 現状 orphan=0 で lint exit 0
+  - 実 repo 統合: ALLOWLIST 以外の orphan=0 で lint exit 0
 """
 import importlib.util
 import subprocess
 import sys
 from pathlib import Path, PurePosixPath
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -201,6 +203,11 @@ class TestEvidenceParity:
 
 
 class TestLintMain:
+    @pytest.fixture(autouse=True)
+    def _synthetic_repo_has_no_allowlist(self, monkeypatch):
+        # 実 repo の ALLOWLIST は架空の repo に存在しないので、stale と判定させない。
+        monkeypatch.setattr(LINTMOD, "ALLOWLIST", {})
+
     def test_main_exit0_on_clean(self, tmp_path):
         root = make_repo(tmp_path, ["tests/test_a.py", "plugins/foo/tests/test_b.py"], ci_yml=GOOD_CI)
         assert LINTMOD.main(["--repo-root", str(root)]) == 0
@@ -230,7 +237,9 @@ class TestRealRepoIntegration:
         assert proc.returncode == 0, f"stderr:\n{proc.stderr}\nstdout:\n{proc.stdout}"
 
     def test_real_repo_module_orphans_empty(self):
-        assert DRT.orphan_test_files(ROOT) == []
+        """ALLOWLIST に理由付きで宣言した証跡以外に orphan が無いこと。"""
+        orphans = {str(rel) for rel in DRT.orphan_test_files(ROOT)}
+        assert orphans - set(LINTMOD.ALLOWLIST) == set()
 
     def test_real_workflow_uses_extracted_bounded_runner(self):
         workflow = (

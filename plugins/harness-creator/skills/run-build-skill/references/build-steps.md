@@ -68,7 +68,7 @@ python3 "$SKILL_DIR/scripts/render-frontmatter.py" \
 ## Phase E: lint
 
 ```bash
-GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$ROOT/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$ROOT"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$ROOT/SKILL.md"
@@ -382,47 +382,18 @@ model: opus  # PF-F3-001: デフォルト opus
 
 ### H.2.5 prompt-creator ループ詳細
 
-`--with-prompts` 指定時、`brief.responsibilities[]` の **R-id 単位** で `plugins/prompt-creator/skills/run-prompt-creator-7layer` を呼び、責務ごとに 7 層 YAML を生成 → 対応 SubAgent の Prompt Templates / Self-Evaluation へ注入する 5 段ループ。SubAgent 単位ループではない (SubAgent の分割/統合で sha256 が壊れるため)。
+起動条件・kind別の resolved policy・provenance は SKILL.md Step 0 / Step 7.5 を正本とする。agent/prompt の本文を生成・更新する場合は prompt-creator を経由する。新規 prompt は Markdown、YAML は既存資産の読み取り互換だけに使う。
 
-```bash
-BRIEF="eval-log/skill-brief.json"
-PROMPTS_DIR="$OUT_BASE/$SKILL_NAME/prompts"
-mkdir -p "$PROMPTS_DIR"
+`brief.responsibilities[]` の対象 R-id ごとに、Skill ツールで `run-prompt-creator-7layer` を呼ぶ。`--responsibility-id <R-id>`、`--skill-brief <解決済brief>`、`--output <OUT_BASE/skill/prompts/R-id.md>`、`--format md` を渡す。owner_agent があれば manifest の実在する agent パスを `--target-agent` で渡し、発話・自己採点の2節を注入する。Skill 呼出しを Bash の実行コマンドとして扱わない。
 
-# brief.responsibilities[] を R-id 単位でループ (python で id, owner_agent 抽出)
-python3 -c "
-import json, sys
-b = json.load(open('$BRIEF'))
-for r in b.get('responsibilities', []):
-    if r.get('prompt_required', True):
-        print(r['id'], r.get('owner_agent') or '')
-" | while read RID OWNER; do
-  TARGET_AGENT="${OWNER:+$OUT_BASE/$SKILL_NAME/agents/${OWNER}.md}"
-  Skill(run-prompt-creator-7layer) \
-    --responsibility-id "$RID" \
-    --skill-brief "$BRIEF" \
-    --output "$PROMPTS_DIR/${RID}.yaml" \
-    ${TARGET_AGENT:+--target-agent "$TARGET_AGENT"} \
-    --inject-sections "Prompt Templates,Self-Evaluation" \
-    --format yaml
-done
+1. SubAgent 骨格は `agent-template.md` の7層+2節を満たす。
+2. responsibility.id と生成ファイルstemを完全一致させ、7層の責務本文を `.md` に保存する。
+3. `lint-agent-prompt-content.py` の agent / prompt 各モードで Layer 5 契約を含む本文を検査する。
+4. `lint-agent-prompt-section.py --strict-coverage --brief <brief>` で必要な responsibility anchor と発話・自己採点の充足を検査する。
+5. `validate-build-trace.py` で per_responsibility のID・path・SHAと prompt_provenance を検証する。`layer_yaml_path` は既存JSONキー名を維持し、値は新規 `.md` とする。
+6. 検査FAILなら原因だけを直し、現契約の反復上限まで再検証する。上限で未達なら停止し、placeholderを成功扱いにしない。
 
-# trace 突合 (id 集合 ↔ ファイル名集合)、SubAgent anchor coverage
-python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py \
-  --agents-dir "$OUT_BASE/$SKILL_NAME/agents" \
-  --strict-coverage --brief "$BRIEF"
-python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
-```
-
-ループ要件:
-1. `run-build-skill` が SubAgent 骨格を生成 (Step 7)
-2. brief.responsibilities[] を R-id 単位で列挙 (`prompt_required: true` のみ対象、`prompt-creator-policy-by-kind` で resolve)
-3. `run-prompt-creator-7layer` が R-id ごとに 7 層 YAML を生成し `prompts/<R-id>.yaml` へ出力 + owner_agent があれば該当 SubAgent .md へ注入
-4. `lint-agent-prompt-section.py --strict-coverage --brief` で `responsibility.id 集合 == prompts/*.yaml ファイル名集合 == SubAgent.md anchor 集合` を検証
-5. `validate-build-trace.py` で `prompt_generation_model.per_responsibility[].layer_yaml_path` 正規表現 + sha256 再現性を検証
-6. FAIL なら prompt-creator を再起動 (max 3 回)
-
-`brief.use_prompt_creator: false` または brief.kind ∈ {ref, wrap, delegate} で `prompt_creator_policy: skip` の場合はループをスキップし、trace に `per_responsibility: []` + `policy_resolution.resolved_policy: "skip"` + 理由を記録する。Step 7 生成物の Prompt Templates / Self-Evaluation は agent-template.md の placeholder のまま残す。
+prompt を生成しないことが現契約で許される build は理由と空の per_responsibility を記録する。生成物があるのに optional/skip へ降格することは禁止する。
 
 ### H.3 Hook 設定の実装詳細
 
@@ -520,7 +491,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 ### I.0 共通事前条件 (全 kind)
 
 1. `brief.kind` (または引数 `kind`) を確定。7 kind 以外なら exit 1。
-2. `references/capability-manifest.schema.json` の `commonCore` を満たす frontmatter (`name` / `kind` / `version` / `owner` / `since` / `source-tier`) を必ず生成する。
+2. `references/capability-manifest.schema.json#/definitions/commonCore.required` を唯一の必須項目集合として frontmatter を生成する。任意項目を必須化する別の表を置かない。
 3. kind 別 skeleton を選択 (下表)。
 4. `validate-build-trace.py` に `capability_kind` フィールドを記録する。
 
@@ -534,7 +505,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 | hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
 | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 | plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` + `validate-build-trace.py --bundle <plugin-composition.yaml>` (SemVer / 実在ref / endpoint / exact重複 / DAGをfail-closed) |
-| prompt | `templates/prompt-skeleton.md` | `plugins/<plugin>/prompts/<name>.md` | `lint-prompt-md.py` (未実装・実体なしのため起動しない) |
+| prompt | `templates/prompt-skeleton.md` のmanifest殻 + prompt-creatorの7層本文 | `plugins/<plugin>/prompts/<name>.md` | 下記のkind=prompt合成検証（本文とmanifestの検査を分離） |
 | workflow | `templates/workflow-skeleton.md` | `plugins/<plugin>/workflows/<name>.md` | `lint-workflow-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 
 ### I.2 共通検証ステップ
@@ -542,7 +513,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 全 kind 共通で以下を実行する。
 
 ```bash
-GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)"
+GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/<kind-relative-path>"
 python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
 
@@ -552,8 +523,17 @@ python3 "$SKILL_DIR/scripts/validate-build-trace.py" --bundle "$OUT_BASE/plugin-
 
 `plugin-composition` は当該kind lintと `--bundle` の両方がexit 0になるまで次phaseへ進まない。実在しないCLI引数へのフォールバックは行わない。
 
+### kind=prompt の合成検証
+
+`templates/prompt-skeleton.md` はmanifestの殻であり、殻だけでは完成したpromptにならない。
+
+- prompt-creatorが生成した純粋な7層Markdown本文を、生成先のskill-local `skills/<skill>/prompts/<R-id>.md` で `lint-agent-prompt-content.py --mode prompt --plugins-dir <生成先plugin>` に通す。このmodeはfrontmatterを拒否するため、manifest付き完成ファイルを直接渡さない。
+- 本文をmanifest殻へ合成する際はLayerの参照先anchorを実在する見出しに対応付ける。authoring本文と合成後本文（manifest除去）のSHAを一致させ、異なれば停止する。
+- 合成後の `plugins/<plugin>/prompts/<name>.md` について、frontmatterを `validate-frontmatter.py <完成ファイル>`（kind=promptを自動判定）、本文をprompt-creatorの `verify-completeness.py --input <完成ファイル>` / `validate-prompt.py --phase prompt --input <完成ファイル>` で検証する。実在するpublic CLIの引数を使い、いずれも非0なら停止する。
+- authoring本文・合成先path・両本文SHA・各検査結果をtraceへ記録する。合成によって本文検査やprompt_provenanceを迂回しない。
+
 ### I.3 既存 skill 手順との関係
 
 - 引数 `kind` を省略、または `kind ∈ {run, ref, assign, wrap, delegate}` の場合は **kind=skill** として Phase 0〜H をそのまま実行する。
-- それ以外 (`agent` / `hook` / `command` / `plugin-composition` / `prompt` / `workflow`) は Phase I.0 → I.1 → I.2 のみを実行し、Phase D 以降の skill 専用手順 (rubric ペア評価、SubAgent 派生、prompt-creator ループ) はスキップ可能。`brief` で明示的に要求された場合のみ部分実行する。
+- skill 以外も Phase I.0 → I.1 → I.2 を実行する。agent/prompt の本文生成・更新では SKILL.md Step 0 と Step 7.5 の prompt-creator 経由と provenance 検証を省略しない。その他の skill 専用手順の適用範囲は現在の kind 契約に従う。
 - 全 kind で `eval-log/skill-build-trace.json` の `capability_kind` フィールドに kind 名を必ず記録する。

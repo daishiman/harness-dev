@@ -641,3 +641,15 @@ def test_submission_action_section_is_outside_group_checks(tmp_path: Path, golde
     assert r.returncode == 0, r.stdout
     assert "どの成果目標に属するか" not in r.stdout
     assert "行動目標 8 件（上限8件）" in r.stdout
+
+
+def test_goal_action_language_profile_keeps_legacy_compatibility():
+    import importlib.util
+    policy_script = Path(__file__).resolve().parents[1] / "skills/run-ubm-goal-setting/scripts/validate-goal-output.py"
+    spec = importlib.util.spec_from_file_location("goal_language_policy", policy_script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    for phrase in ["頑張る", "意識する", "気をつける", "心がける", "努力する"]:
+        assert module.GOAL_SPIRIT_RE.search(phrase)
+    for phrase in ["なるべく", "できるだけ"]:
+        assert module.GOAL_SPIRIT_RE.search(phrase) is None

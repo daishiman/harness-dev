@@ -5,6 +5,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 LINTER = ROOT / "scripts/lint-entrypoint-artifact-first.py"
@@ -315,6 +317,87 @@ Do not publish the artifact until evaluator C1-C4 is PASS.
     assert any("evaluator-before-first-publication contradiction" in error for error in errors)
 
 
+def test_future_temp_japanese_heading_pair_passes(tmp_path: Path):
+    mod = _load_module()
+    _write_temp_entrypoint(
+        tmp_path,
+        """# Future
+
+## 選ぶ前の実成果物の作成
+
+「目的と出力契約」の最小の実成果物を親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
+
+## 選んだ深さでの改善の実行
+
+以下の既存の節（全体の流れ・ゴールシーク・評価・修正）は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
+選んだ深さで semantic evaluator を起動し、成果物を修正する。
+""",
+    )
+    assert mod.lint_repository(tmp_path) == []
+
+
+def test_future_temp_japanese_pre_choice_heavy_loop_fails_like_english(tmp_path: Path):
+    mod = _load_module()
+    _write_temp_entrypoint(
+        tmp_path,
+        """# Future
+
+## 選ぶ前の実成果物の作成
+
+semantic evaluator を起動して評価と修正を繰り返し、その後で作成して提示する。
+
+## 選んだ深さでの改善の実行
+
+選んだ深さで改善を実行する。
+""",
+    )
+    errors = mod.lint_repository(tmp_path)
+    assert not any("body requires one ordered" in error for error in errors)
+    assert any("pre-choice imperative heavy operation" in error for error in errors)
+    assert any("heavy-before-create/present contradiction" in error for error in errors)
+
+
+@pytest.mark.parametrize(
+    ("pre_heading", "post_heading"),
+    [
+        ("## Pre-choice usable artifact execution", "## 選んだ深さでの改善の実行"),
+        ("## 選ぶ前の実成果物の作成", "## Post-choice selected improvement execution"),
+    ],
+)
+def test_future_temp_mixed_language_heading_pair_fails_closed(
+    tmp_path: Path, pre_heading: str, post_heading: str
+):
+    mod = _load_module()
+    _write_temp_entrypoint(
+        tmp_path,
+        f"""# Future
+
+{pre_heading}
+
+Create, minimally guard, and present the actual artifact, then record the choice.
+
+{post_heading}
+
+Run selected improvement only.
+""",
+    )
+    errors = mod.lint_repository(tmp_path)
+    assert any("mixed en/ja pre-choice/post-choice headings are forbidden" in error for error in errors)
+
+
+def test_future_temp_missing_heading_pair_names_both_canonical_pairs(tmp_path: Path):
+    mod = _load_module()
+    _write_temp_entrypoint(tmp_path, "# Future\n\nCreate, minimally guard, and present the actual artifact.\n")
+    errors = mod.lint_repository(tmp_path)
+    message = next(error for error in errors if "body requires one ordered" in error)
+    for pre_heading, post_heading in mod.CHOICE_HEADING_PAIRS.values():
+        assert f"'{pre_heading}' then '{post_heading}'" in message
+    assert mod.CHOICE_HEADING_PAIRS == {
+        "en": ("## Pre-choice usable artifact execution", "## Post-choice selected improvement execution"),
+        "ja": ("## 選ぶ前の実成果物の作成", "## 選んだ深さでの改善の実行"),
+    }
+
+
 def test_known_counterexample_families_are_covered_by_the_dynamic_gate():
     mod = _load_module()
     families = {
@@ -328,3 +411,30 @@ def test_known_counterexample_families_are_covered_by_the_dynamic_gate():
     for entrypoint in discovered:
         if entrypoint.plugin in families:
             assert mod.lint_entrypoint(entrypoint) == []
+
+
+def test_guarded_external_helper_requires_real_contract_not_metadata(tmp_path):
+    mod = _load_module()
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("delivery_for_guard_test", ROOT / "scripts/build-artifact-delivery.py")
+    delivery = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(delivery)
+    source = ROOT / "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md"
+    skill = tmp_path / "SKILL.md"
+    text = delivery._ensure_runtime_root_contract(source.read_text(), skill)
+    skill.write_text(text)
+    assert mod.lint_guarded_external_entrypoint(skill) == []
+    for invalid in (text.replace("effect: external-mutation", "effect: read-only"), text.replace("runtime_root_policy: host-skill-path", "runtime_root_policy: cwd"), text.replace(delivery.EXTERNAL_GUARD_BLOCK_BEGIN_JA, ""), text.replace("external_mutation_guard:", "missing_guard:")):
+        skill.write_text(invalid)
+        assert mod.lint_guarded_external_entrypoint(skill)
+    skill.write_text("---\nbroken: [\n---\n")
+    assert mod.lint_guarded_external_entrypoint(skill)
+
+
+def test_mixed_runtime_locale_and_ubm_order_fail(tmp_path):
+    mod = _load_module()
+    source = ROOT / "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md"
+    skill = tmp_path / "SKILL.md"
+    text = source.read_text()
+    skill.write_text(text.replace("## 実行時のルートの決め方", "## Runtime root contract"))
+    assert any("language mismatch" in e for e in mod.lint_entrypoint(mod.Entrypoint("ubm-goal-setting", skill)))

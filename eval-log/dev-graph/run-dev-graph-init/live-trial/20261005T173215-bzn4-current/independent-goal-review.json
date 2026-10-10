@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "target_skill": "dev-graph:run-dev-graph-init",
+  "run_id": "20261005T173215-bzn4-current",
+  "reviewer": "/root/independent_review",
+  "proposer_is_approver": false,
+  "reviewed_at": "2026-10-05T08:47:48.486358+00:00",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "The real Skill call loaded instructions, but the trial never executed build-init-scaffold, R1-R5/C11 validation or the required second initialization. Six roots/config/state/templates/idempotence are not established."
+    ]
+  },
+  "task_sha256": "fee944e0b51919a9528d76e2b48dc7cfa81e9e32e5968b657ed1ed437bb2ed96",
+  "transcript_sha256": "8f9803c579fdbf55a8b6f06a64cbb2ff20ce16572d9efb3424061e17449d94c8",
+  "source_behavior_sha256": "bf4853bdca8dd66a0d4d05084d9e0052bfdda136c43c83800a90d07ca017f596",
+  "source_snapshot_sha256": "aface522bd8aaa163f967b79eb6865f885ac9d18c2e7e44078c9c7c7a989af74",
+  "source_drift": [],
+  "actual_main_models": [
+    "claude-haiku-4-5-20251001"
+  ],
+  "evidence": [
+    "L38 is one real Skill instruction-loading call. Subsequent Bash calls only ls/find/diagnostics; no initializer writer or C11 command executes.",
+    "L108 marker is FAIL and L113 says DONE: FAIL. This is retained as a genuine failed execution; marker is not overridden.",
+    "Current source closure hashes match start snapshot. Actual model is claude-haiku-4-5-20251001, to be independently considered by the live verdict model gate."
+  ],
+  "limits": "This is an observed failed execution under this trial task/host/model; it is not by itself proof of an implementation source defect. No fallback script run or repaired marker is used."
+}

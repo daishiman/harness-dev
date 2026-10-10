@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "reviewer_or_builder": "system_analyst (cycle2 builder; no self-PASS verdict)",
+  "created_at": "2026-10-09T13:01:04.983383+00:00",
+  "status": "implementation_frozen_pending_independent_review",
+  "trigger_findings": [
+    {
+      "condition": [
+        "C1",
+        "C2"
+      ],
+      "finding": "Direct vault/plugin Write and mutation Bash contradicted command-bound central guard execute.",
+      "resolution": "Temporary-only writers and parent guarded publication or guarded mutation argv."
+    },
+    {
+      "condition": [
+        "C2"
+      ],
+      "finding": "Publisher partial IO failures omitted already-saved targets.",
+      "resolution": "PublicationError carries saved paths and failed_target; CLI includes error and batch_atomic=false."
+    }
+  ],
+  "changes": [
+    "Five external SKILL entrypoints and journal/output/knowledge/youtube writers reference a shared publication contract.",
+    "Journal/output writers return validated temporary draft paths, SHA256, official destination and pre-save receipts only.",
+    "Knowledge extractor receives temporary knowledge_dir, applying Rule A-F and registry/router/log changes only there; principle DB edits return proposals.",
+    "Normalizer receives required temporary dest_root; R2 checks provenance before guarded publication and maps draft paths to formal paths before R3 detector.",
+    "Formal archive moves and Daily edits use hash-bound manifests, while graph/split/bookkeeping/oneshot argv run through parent guard execute.",
+    "New publisher preflights all paths and manifest/new/old hashes, rejects traversal/symlink/duplicate/CAS conflicts, writes exact validated bytes and archives before deleting originals.",
+    "All temporary path examples resolve macOS system aliases before manifest construction.",
+    "Composition declares publisher and five caller edges."
+  ],
+  "validation": [
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests/test_guarded_publication.py -q",
+      "result": "14 passed (including real central guard receipt API integration, argv mismatch, consumed receipt, and second-write IO partial failure)"
+    },
+    {
+      "command": "python3 -m pytest plugins/ubm-goal-setting/tests -q",
+      "result": "681 passed on cycle2 intermediate snapshot; later helper integration/partial-failure additions tested separately; parent must run final full suite"
+    },
+    {
+      "command": "targeted publication/runtime/challenge/consult/taskgraph fixture suite",
+      "result": "85 passed before final partial IO test addition"
+    },
+    {
+      "command": "lint-skill-dep-step7 --skills-dir plugins/ubm-goal-setting/skills",
+      "result": "PASS 7 skills"
+    },
+    {
+      "command": "lint-plugin-composition plugins/ubm-goal-setting/plugin-composition.yaml",
+      "result": "PASS, 5 expected ungenerated output warnings"
+    }
+  ],
+  "limitations": [
+    "No live-trial or actual user/vault/network ingestion executed.",
+    "The helper does not itself cryptographically verify central guard receipts; canonical execute and configured Bash pretool enforce command-bound execution.",
+    "Other existing mutating script names are constrained by this workflow contract; current central pretool does not mechanically deny every one of them.",
+    "Per-file replace is atomic; multi-file batches are not transactional. On failure report saved paths and failed target without automatically retrying or reusing consumed authorization.",
+    "Full latest journal/challenge review must be independent because this agent authored their cycle2 guard repair."
+  ],
+  "root_owned_repairs_preserved": [
+    "R1 consult safety branch issue_statement exemption",
+    "journal-composer Layer1 full output-format path",
+    "goal Phase5 before/after validation wording",
+    "knowledge Phase1 manifest fatal[1,2]",
+    "central pretool publisher direct-call deny"
+  ],
+  "source_sha256": {
+    "plugins/ubm-goal-setting/README.md": "d3b99349c1bcad161a69cba21aa23a69fe5395f2c45663a62618005f0e9e1871",
+    "plugins/ubm-goal-setting/RUNBOOK.md": "ebc144b7bd8b0117a3a1f2214df3870a105278e557d4e5b06906b1257f6bdcc4",
+    "plugins/ubm-goal-setting/agents/journal-composer.md": "8f0020915f21ee7ce2ca9363399862f08e2d4073c6dad779a641e75b1617a14c",
+    "plugins/ubm-goal-setting/agents/knowledge-extractor.md": "9467d96c38a7a02d5fe7a70da2b82f5894d22fc5a272e6821ddbb408143cb441",
+    "plugins/ubm-goal-setting/agents/output-formatter.md": "48ed64624f724bb7d83037ffab38f2dbaf9f09baac92fc5aa6ca24fcb300cef8",
+    "plugins/ubm-goal-setting/agents/youtube-transcript-normalizer.md": "b8d58554c158c907b1d25a6d7f8d89ee15f756a578199e98496bbf0867b4ceac",
+    "plugins/ubm-goal-setting/plugin-composition.yaml": "6d22db8e322004ad178ae48c6abb1c58c6a9c2a010a18bcc7eef967bd2a4e0f9",
+    "plugins/ubm-goal-setting/references/guarded-publication-contract.md": "dcf49137d312f6ca5eb0a75fb877305f01e851e32d015741c82f0cd48c28848d",
+    "plugins/ubm-goal-setting/scripts/publish-staged-files.py": "d904181c1bb233a12ad233cbf2189e5866614d91678ab70cb293f6e4f8b54a34",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/.claude/handoff/20261009T220046.md": "367b1831a9dd5628bfa75be38f8445d6c282770393ec824511cde5e221830f50",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/SKILL.md": "8a1aa8782a1b10b880a20d2b75f7d966ba0810f6a6b7d7a0b6f698b0e9ee364d",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/examples/golden-sample.md": "cca861c1bb9c12a90e07d64229fc21dd16fbef3edb5ed9c73c3071a1356923da",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/challenge-format.md": "35e7a5b68b75dc934f6706fb1722fb5442cfff57b2688b187d470f4ca94b7d51",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/handoff-format.md": "1dda48b36a20253b838d08d0e77a6ece3fb2d09dbd93be0c830443c293b50d47",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/references/question-map.md": "df6c8fb51948e74dcec67baadcb0c8407777052478323bbf207e9bef6dbdcdfb",
+    "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts/validate-challenge-output.py": "68df12efed2850f4d3983276a65adb0a612b3640739189f4f49d5fc479db5803",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md": "4e8ebcc83058616e6820e22fae9b0f33e70576d211cb1e1ca922a4e8eabada4f",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/action-goals-best-practices.md": "b76d900180aac3f5a9a1d11557a97751e5ca73e73a2dc8d6d6a31ad939d60b3e",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/execution-prompts.md": "bbdc69c391d48fca3f4670d2c5ca3e0cbefaba1d25dbdd3d77898d194e2cc280",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md": "7438ea359037fe41c9e669eb16d50c7c476ecefda332f539595ed14ecec14e6a",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md": "00a5d55e8e743e090ef6b375fe239fcfa6b8df2f9f4f7baf6bf4d2527a40507e",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md": "303e53a749b6b97d71216bc3404930bd93ef82bfe4fe9b7b6381b5fd178f5ba0",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md": "d0ed2e4524e927ffaaa15acca491293b17a36563c93a1a693715dd69564734ae",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md": "fa527b505c0420a451a3959de39286dee545812d91969d3ebf56fa175c59ec44",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R4-step4-action-plan.md": "14ff84f7806bedb9653a174ad6cb833ac107542d58ee4703ac323f6fa93b887b",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md": "6314f8abd47fba8b3575f0ba18a902595b7cf4fd0f66e07bf9e021e3dd753d17",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md": "151e8e8c2695cb5d53ff568a4bdf7c037123b94d628a86b1fc598129c73fe931",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md": "ac3c456f4a6f0d4c1c86d657758739318cafbe16ed691997f3ee4f953fb52db7",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml": "979f8366b823d232d6df4fa6046d2aecbd3434babab5b9630cfbc2a20c385fc3",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md": "f611c672d11ef833d89195b07f33d35598513e54e5fd4a25f68e99c7236cfbec",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md": "2fa975c5862f4edaf216957bbc29b42b9add3e7e4853d261a670ab39aa28a3b7",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-methods-toolkit.md": "4a5dc1304a4d0915af0f5ca5e041729df9a0817baee537193084121626e025ff",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-process.md": "66e1be88c7b4439e7ab6a9b01cd8cb8691c1ca6d3b7d1e9666d333141eb68735",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md": "b3d81cfb456b9e4eb0322ba4f832a5c44388a6075e2eb92df76d1d63313aa1c1",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md": "4d390c039ca967d2000cd0ca72b5289b267bcb7994ba701a970e73efe4e04100",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py": "4d7956a1b2bb642698e3428f2f7fdbd73fe54c940fcd869b4621ecb8d9de5020",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py": "7a877ca3dd5acf5c9f9b1101c1c31e40faf5fcc6afe78dd661e6626de96f112d",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py": "653b8d82f9c38278d4fab9c467f212c0f50b2f26081d94cd6355a3ed781149d2",
+    "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/workflow-manifest.json": "b03dd612fbfff0fc59d0bd7a10f3b5d543ae3673ede2d4c7c4c1d70d42feb1d7",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/SKILL.md": "2f2e515ac1dad2436bfdb7cd46c775046931e0d08240124118308738f1219c45",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/assets/golden-sample.md": "7f8907a038ebdc1e09308e1cc8abaa62f8248ac9eb27813a1df9b56eb413e917",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/references/daily-habits.json": "b9f491944d7090ad0edbb9b028048109275f54f5d9568cb3a9208b48d1737b39",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/references/interview-map.md": "c6bcace6f73f24a95616c674c8e7cea7c33eca1a46a495da409f72d44deb1a63",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/references/output-format.md": "766cefbf6b02425cbbe47ed53b9e1b5421f294d952def3d85a7beac335f5d697",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/references/principle-checklist.md": "0ea900da5a9bfef29fb2fe4f1153052c3a6cb6aa7dc75c9591f6a26809bc7d82",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/references/resource-map.yaml": "4b9884daef194fa23d8d168c2133910d8bc924de5b6a6cf5adccea40cd0f904c",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/build-journal-context.py": "5b2f39b852ff39ed2d770706e4203bf6b34505b484278de2b9ec6943be6b0e4e",
+    "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts/validate-journal-output.py": "01a59f485913926486619754e0353a032c469fce72c4cd8f1025da7dbb5f4fc2",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/SKILL.md": "2d80b4b10b3b4a88b4b98c0d24b5b7a286521173e9be3f126f58a996d9280ec3",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md": "d874cf915ca550a16cff1a33cdcce59ac2a503eb178c115c3d13420c3bf750e9",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-design-principles.md": "f894942c993472ae18009f09468bb5696d32169ebbeecde744f6ebcff522d3bc",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/references/knowledge-sources.md": "02b082d696b65df1cdee53d2af2ebe144f84a23725cd02fbfdb969cbccf07014",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/build-capability-graph-knowledge-entry.py": "228c054b8b12c3b9168608a0a3e4e5aee16516068796d8000eecfa72d1600ba6",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/build-self-reflection-entry.py": "67a0f62664173d338b0d24189d0f488aa37ead0801d88b35a87e17901ef096a4",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py": "a6401eaac5c6d849227755881309437d0cb73a9dfea5006b00ea33bb8548174e",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py": "618fe7709d97dbdbc55e2d2aceb148407bec7de13f5a6b82e145c109b3c3a1f1",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/extract-capability-dependency-graph.py": "c6e9bfb50f2bb6ab561e83578738343a029e92f843040e6fc55c688b007ff4b0",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py": "56385ddb2089629596eb60ba3bbc2e9c9440fd77633ed7982b5cfba2faf0ba7d",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts/validate-knowledge-sync-task-graph.py": "77c3fe63190b312d0ffd9871743aac9722e448bb97d4fb0f06e3cf82f6712891",
+    "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/workflow-manifest.json": "29fa0f628970b1ac2e2ca6af5bd82daae1a13c8efe6499c323ced45e5499b257",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/SKILL.md": "9a29797cd820f2a8dfca414f86ea13d88b6b25b614ca483d9f41603e7237e00f",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R1-source-mode.md": "b08d363e71bdb202f1c88ad921d774d47161a36daf8805acfe8b1caf7124c604",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R2-fetch-normalize.md": "a7c5e826c95557854b6dba1f7d39f49021562991b4dec65df6cae675e588e37d",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R3-extract-graph.md": "3fab3d7924f98ee3bfdd8cf1a93bdc52044b26f8e095da7e518a6db6aad1d2db",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/prompts/R4-sync-reconcile.md": "de595fc091deed1df58984439a665b9f972012567f01acd6aebd9c3670fdd130",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/normalized-source-schema.md": "4534f3d20d43fc52d8253de31eb5726ebca8dbb3cf53e96a7949ae65cd3acd99",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/provider-adapter-contract.md": "794e90f3c5ec6d2dc157af3330e75dd2287a2eae60b29ed36663229cca304ba2",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/registry-ledger-schema.md": "0c24e222a1b7105a0601f603f39c49276631ee716f84704120103fe29afc4545",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/resource-map.yaml": "952ea6e079ef716850d9c03b2e48ab1673b710aff8108b489f44a5ad7055756d",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/references/sync-report-format.md": "a2890fdfc3e6de67676130dec7ed7e0ded480089360fbf9c0c877d19af639757",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py": "96db4c574c3d44969544b8302f3ca8cbff8dc5ea7c749f8a5789a891618afe30",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py": "c941ea061a430b6a37097d78b3dc3f8461550340b64008b21a53b708c0d7d89b",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/youtube_provider.py": "034f9d28ba305c2162dd9eb93f24a9cac787446473d39d97cbaf0b55d584248c",
+    "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/workflow-manifest.json": "7e51a9a7b7f32bf733571a839ac3465e47c9ef5501ecd4bc743b638ffe7a0131",
+    "plugins/ubm-goal-setting/tests/test_guarded_publication.py": "5e3f955d662c790e0085f9e6dfedd424cfc9cc510d90cd1adb6f6b88e32848a3"
+  },
+  "snapshot_sha256": "5ee2cab77d165c4d01c3b73444e37d39dcb9e80fa5f92f9ff858b17550a31b60"
+}

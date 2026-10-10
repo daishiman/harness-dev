@@ -3,6 +3,18 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.3.4 — 2026-10-10
+
+`run-skill-feedback` のゴールシーク配線を、同梱の検査で確かめられる形にした。x-longpost の生成機能そのものは変わらない。
+
+### 変更
+
+- `skills/run-skill-feedback/SKILL.md` のゴールシーク配線を書き直した。`original_goal` と、その SHA-256 を progress に固定する。各周回の中間成果物には validator の `REQUIRED_KEYS`（6キー）を必ず入れる。`max_loops: 5` で止まり、達成できなかった条件を完了として扱わない
+- `skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py` を同梱した。生成元は harness-creator の `run-build-skill/templates/goal-seek-runtime/` で、`lint-vendored-ssot.py` が byte 一致を検査する。検査が終了コード0で終わったときだけアンカーの合格とする
+- 本文の見出しと `## Purpose & Output Contract` を frontmatter の直後へ移した。あわせて禁則（利用者の承認なしの Notion 登録、未登録プラグインへの投入、実行していない検証の成功報告）を明記した。description は「いつ呼ぶか」の2条件に絞った
+- `combinators: [with-feedback-contract]` を frontmatter に足した
+- `artifact-delivery.json` の外部変更ガードの runtime 固定値（`runner_sha256`）を、guard runtime の更新に合わせて変えた
+
 ## 1.3.3 — 2026-10-05
 
 install した環境でも、外部への変更 (Notion への改善要望の起票など) の前に通す確認手順が動くようにした。本 plugin の機能変更はない。

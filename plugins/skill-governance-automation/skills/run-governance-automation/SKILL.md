@@ -11,6 +11,7 @@ user-invocable: true
 disable-model-invocation: false
 allowed-tools: Bash, Read, Glob
 effect: local-artifact
+runtime_root_policy: host-skill-path
 owner: team-platform
 since: 2026-08-20
 last-audited: 2026-08-20
@@ -46,6 +47,13 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
+## Runtime root contract
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
+- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。解決できなければ停止する。
+
 ## Pre-choice usable artifact execution
 
 Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
@@ -62,8 +70,10 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## Key Rules
 
-- plugin rootは`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`で解決する。
+- plugin rootは「Runtime root contract」の手順で解決する。
 - 最初に対象scriptの`--help`を実行する。
+- `guard-change-category.py` は consumer の作業ディレクトリを保って実行する。`python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-config` で依存pluginの実在する絶対rootを解決し、`--policy "<解決済config-plugin-root>/config/governance-policy.json"` を渡す。未検出・不正policyはexit2で停止し、repo配置を仮定しない。`--bypass-cooldown` も現物SHAに一致する承認済みincident以外には使わない。
+
 - apply/rollback/通知は明示承認なしに実行しない。
 - exit非0やreceipt欠落を成功へ畳まない。
 
@@ -74,3 +84,8 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ## 検証
 
 実行command、exit code、changed paths、残リスクを報告する。
+
+## Gotchas
+
+- consumerのcwdはpolicyの置き場ではない。解決済みconfig-plugin-rootの実在policyを `--policy` で渡し、未検出や不正JSONを成功にしない。
+- 同じファイルの過去変更はカテゴリーを変えてもcooldown対象になる。現在の承認は一致するSHAまたは明示したproposalに限定し、古い承認を新内容に流用しない。

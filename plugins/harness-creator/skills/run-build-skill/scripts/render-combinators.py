@@ -505,6 +505,9 @@ class ComposeError(RuntimeError):
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--language", choices=("ja", "en", "auto"), default="ja")
+    parser.add_argument("--target-skill", type=Path, help="inherit locale from an existing SKILL.md with --language auto")
+    parser.add_argument("--has-prompts", action="store_true", help="generated skill owns prompts resources")
     parser.add_argument("--kind", choices=["run", "ref", "assign", "wrap", "delegate"])
     parser.add_argument("--role-suffix", choices=["generator", "evaluator", "workflow"], default="")
     parser.add_argument("--with-evaluator", action="store_true")
@@ -837,7 +840,10 @@ def add_section_after(text: str, anchor: str, section: str) -> str:
     if section.splitlines()[0] in text:
         return text
     if anchor not in text:
-        raise ComposeError(f"anchor not found for semantic combinator: {anchor}")
+        alias = anchor.replace("## 主要ルール", "## 守ること")
+        if alias not in text:
+            raise ComposeError(f"anchor not found for semantic combinator: {anchor}")
+        anchor = alias
     return text.replace(anchor, anchor + "\n\n" + section, 1)
 
 
@@ -1011,6 +1017,36 @@ def apply_feedback_loop(target_plugin_dir: Path) -> Path:
     return dest
 
 
+def localize_template(content: str, language: str, *, has_prompts: bool = False) -> str:
+    # A template may already contain a managed block. Re-render its content once.
+    content = content.replace("<!-- runtime-root-contract:v1 -->\n", "").replace("<!-- /runtime-root-contract:v1 -->\n", "")
+    pairs = {
+        "## Purpose & Output Contract": "## 目的と出力契約",
+        "## Boundary": "## 境界",
+        "## Key Rules": "## 守ること",
+        "## 主要ルール": "## 守ること",
+        "## Runtime root contract": "## 実行時のルートの決め方",
+        "## Prompt Templates": "## プロンプトの型",
+        "## Self-Evaluation": "## 自己採点",
+        "## Pre-choice usable artifact execution": "## 選ぶ前の実成果物の作成",
+        "## Post-choice selected improvement execution": "## 選んだ深さでの改善の実行",
+        "### ゴール (Goal)": "### ゴール",
+        "### 目的・背景 (Why)": "### 目的・背景",
+        "### 完了チェックリスト (Checklist)": "### 完了チェックリスト",
+    }
+    for en, ja in pairs.items():
+        source, target = (en, ja) if language == "ja" else (ja, en)
+        content = re.sub(rf"^{re.escape(source)}[ \t]*$", lambda _: target, content, flags=re.M)
+    heading = "## 実行時のルートの決め方" if language == "ja" else "## Runtime root contract"
+    policy = "- `runtime_root_policy: host-skill-path` を適用する。\n"
+    runtime = (policy + "- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。\n- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。\n- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。\n") if language == "ja" else (policy + "- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。\n- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。\n- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。\n")
+    if has_prompts:
+        runtime += "- `prompts/` の下のファイルも、このスキルの決まりに従う。\n" if language == "ja" else "- `prompts/` 配下はこのowner Skill契約を継承する。\n"
+    block = "<!-- runtime-root-contract:v1 -->\n" + heading + "\n\n" + runtime + "<!-- /runtime-root-contract:v1 -->\n\n"
+    content = re.sub(rf"^{re.escape(heading)}\n.*?(?=^## |\Z)", lambda _: block, content, flags=re.M | re.S)
+    return content
+
+
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
     if args.materialize_task_graph_engine is not None:
@@ -1052,6 +1088,13 @@ def main(argv: list[str]) -> int:
             if not patch_path.exists():
                 raise ComposeError(f"missing combinator: {patch_path}")
             content = apply_patch_file(content, patch_path)
+        language = args.language
+        if language == "auto":
+            if args.target_skill is None:
+                raise ComposeError("--language auto requires --target-skill")
+            target = args.target_skill.read_text(encoding="utf-8")
+            language = "ja" if re.search(r"^## (?:目的と出力契約|選んだ深さでの改善の実行)[ \t]*$", target, re.M) else "en"
+        content = localize_template(content, language, has_prompts=args.has_prompts)
         if args.trace:
             print("applied: " + ", ".join(patch_names), file=sys.stderr)
         if args.output:

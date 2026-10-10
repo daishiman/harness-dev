@@ -67,3 +67,11 @@ def test_drift_and_missing_trace_fail_closed(tmp_path: Path) -> None:
         handle.write(json.dumps(row, ensure_ascii=False) + "\n")
     assert MODULE.validate(progress, intermediate)[0] == 1
     assert MODULE.validate(progress, tmp_path / "missing.jsonl")[0] == 1
+
+
+def test_non_object_progress_fails_without_traceback(tmp_path: Path) -> None:
+    progress, intermediate, _goal = _fixture(tmp_path)
+    progress.write_text("[]", encoding="utf-8")
+    code, message = MODULE.validate(progress, intermediate)
+    assert code == 1
+    assert "object" in message

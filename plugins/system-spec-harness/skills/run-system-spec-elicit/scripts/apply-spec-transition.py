@@ -4,7 +4,7 @@
 # version: 0.1.0
 # purpose: run-system-spec-elicit が所有する spec-state.json の単一 transition writer。カテゴリ×platform セルの 未収集/対象外/確定 遷移を規則付きで適用し、確定セルの直接巻き戻し (rollback) を Bash/script 経由でも拒否し、R4-reopen 経由のみ確定変更を許す。goal-seek chunk (per-invocation max_loops) の状態保存/resume も担う。
 # inputs:
-#   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops
+#   - argv: init|apply|chunk|aggregate サブコマンドと --state/--taxonomy/--op/--turns/--out/--max-loops (apply/chunk は --required-info CATALOG で候補state検証)
 # outputs:
 #   - spec-state.json (stdout or --out)
 #   - exit: 0=OK / 1=TransitionError or IO / 2=usage error
@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import importlib.util
 import json
 import re
 import sys
@@ -1644,6 +1645,26 @@ def _emit(state: dict, out: str | None) -> None:
         sys.stdout.write(text)
 
 
+def _validate_candidate_required_info(state: dict, catalog_path: str | None) -> None:
+    """候補 state の既存接地検証を通してからだけ _emit で公開する。
+
+    CLI は入力をメモリへ load して遷移を適用するため、元ファイルの確定を
+    先に変える必要はない。検証器を再実装せず、同じ postcondition を候補へ適用する。
+    """
+    if catalog_path is None:
+        return  # 既存 caller 互換。収集promptは confirm 時にこの引数を必須にする。
+    catalog = load_json(catalog_path)
+    if not isinstance(catalog, dict):
+        raise TransitionError("required-info catalog は object 必須")
+    path = Path(__file__).resolve().parents[3] / "scripts" / "validate-knowledge-graph.py"
+    spec = importlib.util.spec_from_file_location("required_info_candidate_validator", path)
+    validator = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(validator)
+    findings, _ = validator.validate_required_info(catalog, state)
+    if findings:
+        raise TransitionError("required-info 候補state検証失敗: " + "; ".join(findings))
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(
         description="spec-state.json 単一 transition writer (run-system-spec-elicit)"
@@ -1661,12 +1682,14 @@ def main(argv: list[str]) -> int:
     p_apply = sub.add_parser("apply", help="単一セル op を適用")
     p_apply.add_argument("--state", required=True)
     p_apply.add_argument("--op", required=True, help="JSON 文字列の cell op")
+    p_apply.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog")
     p_apply.add_argument("--out")
 
     p_chunk = sub.add_parser("chunk", help="ターン列を 1 invocation ぶん適用")
     p_chunk.add_argument("--state", required=True)
     p_chunk.add_argument("--turns", required=True, help="ターン列 JSON ファイル")
     p_chunk.add_argument("--max-loops", type=int, default=MAX_LOOPS_DEFAULT)
+    p_chunk.add_argument("--required-info", help="候補stateの必須情報接地をcommit前に検証するcatalog")
     p_chunk.add_argument("--out")
 
     p_agg = sub.add_parser("aggregate", help="集約状態を再計算")
@@ -1720,11 +1743,13 @@ def main(argv: list[str]) -> int:
         elif args.cmd == "apply":
             state = load_json(args.state)
             apply_turn(state, {"ops": [json.loads(args.op)]})
+            _validate_candidate_required_info(state, args.required_info)
             _emit(state, args.out or args.state)
         elif args.cmd == "chunk":
             state = load_json(args.state)
             turns = load_json(args.turns)
             run_chunk(state, turns, max_loops=args.max_loops)
+            _validate_candidate_required_info(state, args.required_info)
             _emit(state, args.out or args.state)
         elif args.cmd == "aggregate":
             state = load_json(args.state)

@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine code-review（実行検証あり）。責務は、YouTube の正規化ソースの保存パスを決めることと、そこに既存のファイルがあれば同じ video_id のものかを読み取りだけで確かめることに閉じる。C01 の CLI と、import する run-youtube-sync-oneshot.py の両方が同じ関数を使う。パスは YouTube/<公開日> - <題名> [id-<video_id の UTF-8 hex>].md。hex にすることで、大文字小文字を区別しないファイルシステムでも id が衝突せず、区切り文字や制御文字がパスに入らない。題名は NFC にして禁止文字を _ に置き換え、UTF-8 で 96 byte に切る（ファイル名全体で 255 byte 未満）。公開日は YYYY-MM-DD と実在の日付を確かめる。source-out は絶対パスが必要で、ファイルなら拒否する。経路の symlink と root 外への脱出も拒否する。既存ファイルの video_id は 64KB までのフロントマターから、二重引用（JSON として解釈）・一重引用・素の英数字の 3 形だけを読み、それ以外は読めないとして止まる。write-scope:none・network:false と一致し、source-out が無くても作らない（実測）。test は id の符号化と CLI・oneshot のパスの一致、他の動画のファイルを上書きしないこと、長い日本語の題名の byte 上限、不正なメタデータ、同じ題名の衝突を確かめる。実測（scratchpad）：相対の source-out、メタデータが list、video_id が数値、2026-02-30、UTF-8 でないメタデータ、source-out がファイル、既存ファイルの id が別・コメント付き・UTF-8 でない、はすべて exit 2 で traceback 無し。同じ id（二重引用・一重引用・末尾の空白）は exit 0。DEDUCTION(-3): 20 万段の入れ子のメタデータ JSON で RecursionError の traceback（exit 1）。main の except に RecursionError が無い（D と E にはある）。DEDUCTION(-2): 検査してから、呼び出し側が実際に書くまでの TOCTOU は残る。DEDUCTION(-2): YAML の値の後ろにコメントがある形など、正当な書き方も読めないとして衝突扱いになる（fail-closed なので安全側）。DEDUCTION(-1): frontmatter の name（normalized-source-path）とファイル名（import のために _ 区切り）が一致しない。requires-python も無い。 TESTS: plugins/ubm-goal-setting/tests/test_youtube_sync_oneshot.py（36 passed in 11.51s）。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261010",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

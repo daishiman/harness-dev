@@ -1,0 +1,20 @@
+{
+  "root": "/private/tmp/bzn4-sandbox-probe-bls_4ob1",
+  "profile": "(version 1)\n(allow default)\n(deny file-write*)\n(allow file-write* (subpath \"/private/tmp/bzn4-sandbox-probe-bls_4ob1/allowed\"))\n",
+  "results": [
+    {
+      "label": "allow",
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "exists": true
+    },
+    {
+      "label": "deny",
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/Users/dm/miniconda3/lib/python3.11/pathlib.py\", line 1078, in write_text\n    with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/dm/miniconda3/lib/python3.11/pathlib.py\", line 1044, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 1] Operation not permitted: '/private/tmp/bzn4-sandbox-probe-bls_4ob1/blocked'\n",
+      "exists": false
+    }
+  ]
+}

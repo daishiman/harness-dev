@@ -11,7 +11,7 @@ network/git/changelog 依存は次の境界で stub する:
     CHANGELOG_PATH をモジュール属性 monkeypatch で tmp_path 配下に向け、repo を汚さない。
 
 被覆方針:
-  - classify_change の全分岐 (plugins/ → P0, sink adapter, SKILL.md name diff, A/D/R status,
+  - classify_change の全分岐 (新規plugin → P0, sink adapter, SKILL.md name diff, A/D/R status,
     既存 SKILL.md name 変更 / content, P1 doc paths, plugin.json, rubric.json, P3 suffix,
     doc/ references/ examples/ templates, fallback)
   - load_policy (found / not found → exit 2)
@@ -20,7 +20,7 @@ network/git/changelog 依存は次の境界で stub する:
   - check_cooldown (bypass / なし / 数値抽出失敗 / changelog 無し / 期間内違反 / 期間外OK /
     不正 timestamp / target 不一致)
   - main (report 経路 / block 検出で exit 1 / 全承認で exit 0 / cooldown 違反 block /
-    --base 引数 / --bypass-cooldown / git 失敗で空)
+    --base 引数 / --bypass-cooldown / git 失敗で exit 2)
 すべて実入力で assert し、pass のみの空テストは作らない。
 """
 import importlib.util
@@ -80,9 +80,9 @@ def changelog_file(tmp_path, monkeypatch):
 # classify_change
 # ===========================================================================
 
-def test_classify_plugins_dir_is_p0():
-    assert G.classify_change("plugins/foo/skills/bar/SKILL.md") == "P0_breaking"
-    assert G.classify_change("plugins/new-plugin/anything.txt") == "P0_breaking"
+def test_classify_plugin_content_and_new_plugin_distinct():
+    assert G.classify_change("plugins/foo/skills/bar/SKILL.md", name_changed=False) == "P2_content"
+    assert G.classify_change("plugins/new-plugin/anything.txt", new_plugin=True) == "P0_breaking"
 
 
 def test_classify_sink_adapter_is_p0():
@@ -93,8 +93,6 @@ def test_classify_sink_adapter_is_p0():
 
 
 def test_classify_p1_doc_paths_are_structural():
-    # plugins/ 接頭を持たない doc パスでないと plugins ルールに先取りされる。
-    # _P1_DOC_PATHS は doc/ 配下なので plugins ルールには当たらない。
     assert G.classify_change(
         "doc/ClaudeCodeスキルの設計書/33-change-governance/README.md"
     ) == "P1_structural"
@@ -104,7 +102,7 @@ def test_classify_p1_doc_paths_are_structural():
 
 
 def test_classify_plugin_json_is_structural():
-    # plugins/ 接頭だと P0 が先取りするので、別接頭 (例 kits/) の plugin.json で検証。
+    # 既存 plugin manifest の変更は構造変更。
     assert G.classify_change("kits/foo/.claude-plugin/plugin.json") == "P1_structural"
 
 
@@ -131,36 +129,21 @@ def test_classify_fallback_is_p2_content():
 
 
 def test_classify_skill_md_name_changed_is_p0(monkeypatch):
-    # plugins/ 接頭の SKILL.md は plugins ルールが先取りするので、_SKILL_MD_RE 経路を
-    # 単独検証するには plugins ルールを一時的に無効化して name diff 経路を踏む。
-    path = "plugins/p/skills/s/SKILL.md"
     monkeypatch.setattr(G, "_name_field_changed", lambda p: True)
-    # plugins/ ルールが先に効くため P0 になるが、これは plugins ルール由来。
-    assert G.classify_change(path) == "P0_breaking"
+    assert G.classify_change("plugins/p/skills/s/SKILL.md") == "P0_breaking"
 
 
-def test_classify_skill_md_via_skill_md_re_name_diff(monkeypatch):
-    """plugins/ 接頭以外の SKILL.md パスを使い _SKILL_MD_RE + name diff の P0 経路を踏む。"""
-    # _SKILL_MD_RE は plugins/<plugin>/skills/<skill>/SKILL.md を要求するため、
-    # classify の plugins/ 早期 return を回避できない。よって monkeypatch で
-    # startswith("plugins/") を迂回するラッパは作らず、_SKILL_DIR_RE 経路 (既存 content) で
-    # name diff の structural 分岐を踏む (下記テスト)。
-    # ここでは A/D/R status による P1 を検証。
-    monkeypatch.setattr(G, "_name_field_changed", lambda p: False)
-    # plugins 接頭でない SKILL.md は _SKILL_MD_RE に当たらないため fallback 経路。
+def test_classify_non_plugin_skill_md_is_fallback():
     assert G.classify_change("kits/p/skills/s/SKILL.md", status="A") == "P2_content"
 
 
-def test_classify_skill_dir_content_change_via_re(monkeypatch):
-    """_SKILL_DIR_RE 経路: name 変更ありで P1_structural、無しで P2_content。
-
-    classify の plugins/ 早期 return を踏まないよう、テスト専用に startswith を回避する
-    のではなく、_SKILL_DIR_RE が当たる plugins/ パスは plugins ルールに先取りされるため、
-    この分岐単体は到達不能。実装上の真実 (plugins/ 配下は常に P0) を記録する。
-    """
-    # plugins/ 配下 SKILL.md は何があっても P0 (Phase0 不可逆移行検出)。
+def test_classify_skill_lifecycle_and_name_changes(monkeypatch):
     monkeypatch.setattr(G, "_name_field_changed", lambda p: False)
-    assert G.classify_change("plugins/p/skills/s/SKILL.md", status="A") == "P0_breaking"
+    path = "plugins/p/skills/s/SKILL.md"
+    for status in ("A", "D", "R100"):
+        assert G.classify_change(path, status=status) == "P1_structural"
+    assert G.classify_change(path, name_changed=False) == "P2_content"
+    assert G.classify_change(path, name_changed=True) == "P0_breaking"
 
 
 # ===========================================================================
@@ -183,11 +166,12 @@ def test_name_field_changed_no_name_line(monkeypatch):
     assert G._name_field_changed("p/SKILL.md") is False
 
 
-def test_name_field_changed_git_error_returns_false(monkeypatch):
+def test_name_field_changed_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G._name_field_changed("p/SKILL.md") is False
+    with pytest.raises(G.GitDiffError):
+        G._name_field_changed("p/SKILL.md")
 
 
 # ===========================================================================
@@ -202,11 +186,12 @@ def test_changed_files_parses_lines(monkeypatch):
     assert G.changed_files("origin/main") == ["a.py", "b.txt", "c.md"]
 
 
-def test_changed_files_git_error_returns_empty(monkeypatch):
+def test_changed_files_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_files("origin/main") == []
+    with pytest.raises(G.GitDiffError):
+        G.changed_files("origin/main")
 
 
 def test_changed_file_statuses_parses(monkeypatch):
@@ -222,11 +207,12 @@ def test_changed_file_statuses_parses(monkeypatch):
     assert "bad-line" not in st
 
 
-def test_changed_file_statuses_git_error_returns_empty(monkeypatch):
+def test_changed_file_statuses_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(1, "git")
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_file_statuses("origin/main") == {}
+    with pytest.raises(G.GitDiffError):
+        G.changed_file_statuses("origin/main")
 
 
 # ===========================================================================
@@ -275,12 +261,10 @@ def test_has_recent_changelog_no_file(changelog_file):
 
 
 def test_has_recent_changelog_match(changelog_file):
-    changelog_file.write_text(
-        json.dumps({"target_path": "plugins/foo/skills/bar"}) + "\n",
-        encoding="utf-8",
-    )
-    # target_path.split("/")[0] == "plugins" が entry.target_path に含まれれば True。
-    assert G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md") is True
+    changelog_file.write_text(json.dumps({"target_path": "plugins/foo/skills/bar", "approver": "reviewer", "proposal_id": "selected"}) + "\n", encoding="utf-8")
+    assert not G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md")
+    assert G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md", proposal_id="selected")
+    assert not G.has_recent_changelog("plugins/foo/skills/bar-extra/SKILL.md", proposal_id="selected")
 
 
 def test_has_recent_changelog_no_match(changelog_file):
@@ -292,19 +276,23 @@ def test_has_recent_changelog_no_match(changelog_file):
 
 
 def test_has_recent_changelog_skips_blank_and_bad_lines(changelog_file):
-    changelog_file.write_text(
-        "\n   \n{ not json\n" + json.dumps({"target_path": "plugins/y"}) + "\n",
-        encoding="utf-8",
-    )
-    assert G.has_recent_changelog("plugins/z/x.py") is True
+    changelog_file.write_text("\n   \n{ not json\n" + json.dumps({"target_path": "plugins/y", "approver": "reviewer", "proposal_id": "selected"}) + "\n", encoding="utf-8")
+    assert G.has_recent_changelog("plugins/y/x.py", proposal_id="selected")
+    assert not G.has_recent_changelog("plugins/z/x.py", proposal_id="selected")
 
 
 # ===========================================================================
 # check_cooldown
 # ===========================================================================
 
-def test_check_cooldown_bypass_always_ok(changelog_file):
-    assert G.check_cooldown("any", "P0_breaking", VALID_POLICY, bypass=True) is True
+def test_check_cooldown_bypass_requires_approved_incident(changelog_file):
+    assert not G.check_cooldown("any", "P0_breaking", VALID_POLICY, bypass=True)
+    entry = {"target_path": "any", "approver": "reviewer", "proposal_id": "selected", "incident_fix": True}
+    changelog_file.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+    assert G.check_cooldown("any", "P0_breaking", VALID_POLICY, bypass=True, proposal_id="selected")
+    entry["incident_fix"] = False
+    changelog_file.write_text(json.dumps(entry) + "\n", encoding="utf-8")
+    assert not G.check_cooldown("any", "P0_breaking", VALID_POLICY, bypass=True, proposal_id="selected")
 
 
 def test_check_cooldown_category_none_ok(changelog_file):
@@ -423,25 +411,25 @@ def test_main_clean_p2_only_exit0(policy_file, changelog_file, monkeypatch, caps
 
 
 def test_main_p0_unapproved_blocks_exit1(policy_file, changelog_file, monkeypatch, capsys):
-    # plugins/ 配下 → P0_breaking, proposal_required, changelog 無し → block。
-    _stub_git(monkeypatch, ["plugins/new/x.py"], {"plugins/new/x.py": "A"})
+    # sink adapter interface → P0_breaking、承認なしで block。
+    _stub_git(monkeypatch, ["scripts/adapters/sink_new.py"], {"scripts/adapters/sink_new.py": "A"})
     rc = G.main(["prog"])
     assert rc == 1
     err = capsys.readouterr().err
-    assert "BLOCK plugins/new/x.py (P0_breaking)" in err
+    assert "BLOCK scripts/adapters/sink_new.py (P0_breaking)" in err
     assert "未記録" in err
 
 
 def test_main_p0_approved_passes_exit0(policy_file, changelog_file, monkeypatch, capsys):
-    # changelog に target_path "plugins" 一致を記録すれば approved → cooldown は十分過去で OK。
+    # 明示的に選んだ承認済みproposalに束縛し、以前のcooldownを保持する。
     import datetime
     old = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=30)).isoformat()
     changelog_file.write_text(
-        json.dumps({"target_path": "plugins/new/x.py", "timestamp": old}) + "\n",
+        json.dumps({"target_path": "scripts/adapters/sink_new.py", "timestamp": old, "approver": "reviewer", "proposal_id": "selected"}) + "\n",
         encoding="utf-8",
     )
-    _stub_git(monkeypatch, ["plugins/new/x.py"], {"plugins/new/x.py": "A"})
-    rc = G.main(["prog"])
+    _stub_git(monkeypatch, ["scripts/adapters/sink_new.py"], {"scripts/adapters/sink_new.py": "A"})
+    rc = G.main(["prog", "--proposal-id", "selected"])
     assert rc == 0
     assert "blocked=0" in capsys.readouterr().out
 
@@ -451,11 +439,11 @@ def test_main_cooldown_violation_blocks(policy_file, changelog_file, monkeypatch
     import datetime
     recent = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).isoformat()
     changelog_file.write_text(
-        json.dumps({"target_path": "plugins/new/x.py", "timestamp": recent}) + "\n",
+        json.dumps({"target_path": "scripts/adapters/sink_new.py", "timestamp": recent, "approver": "reviewer", "proposal_id": "previous"}) + "\n" + json.dumps({"target_path": "scripts/adapters/sink_new.py", "approver": "reviewer", "proposal_id": "selected"}) + "\n",
         encoding="utf-8",
     )
-    _stub_git(monkeypatch, ["plugins/new/x.py"], {"plugins/new/x.py": "A"})
-    rc = G.main(["prog"])
+    _stub_git(monkeypatch, ["scripts/adapters/sink_new.py"], {"scripts/adapters/sink_new.py": "A"})
+    rc = G.main(["prog", "--proposal-id", "selected"])
     assert rc == 1
     err = capsys.readouterr().err
     assert "cooldown 違反" in err
@@ -464,28 +452,27 @@ def test_main_cooldown_violation_blocks(policy_file, changelog_file, monkeypatch
 def test_main_bypass_cooldown_passes(policy_file, changelog_file, monkeypatch, capsys):
     import datetime
     recent = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).isoformat()
-    changelog_file.write_text(
-        json.dumps({"target_path": "plugins/new/x.py", "timestamp": recent}) + "\n",
-        encoding="utf-8",
-    )
-    _stub_git(monkeypatch, ["plugins/new/x.py"], {"plugins/new/x.py": "A"})
-    rc = G.main(["prog", "--bypass-cooldown"])
-    assert rc == 0
+    target = "scripts/adapters/sink_new.py"
+    previous = {"target_path": target, "timestamp": recent}
+    current = {"target_path": target, "timestamp": recent, "proposal_id": "selected", "approver": "reviewer", "incident_fix": True}
+    changelog_file.write_text(json.dumps(previous) + "\n" + json.dumps(current) + "\n", encoding="utf-8")
+    _stub_git(monkeypatch, [target], {target: "M"})
+    assert G.main(["prog", "--proposal-id", "selected", "--bypass-cooldown"]) == 0
     assert "blocked=0" in capsys.readouterr().out
 
 
 def test_main_report_mode_emits_json(policy_file, changelog_file, monkeypatch, capsys):
-    _stub_git(monkeypatch, ["plugins/new/x.py", "doc/readme.md"],
-              {"plugins/new/x.py": "A", "doc/readme.md": "M"})
+    _stub_git(monkeypatch, ["scripts/adapters/sink_new.py", "doc/readme.md"],
+              {"scripts/adapters/sink_new.py": "A", "doc/readme.md": "M"})
     rc = G.main(["prog", "--report"])
     assert rc == 1
     data = json.loads(capsys.readouterr().out)
     assert data["base"] == "origin/main"
     cats = {c["path"]: c["category"] for c in data["changes"]}
-    assert cats["plugins/new/x.py"] == "P0_breaking"
+    assert cats["scripts/adapters/sink_new.py"] == "P0_breaking"
     assert cats["doc/readme.md"] == "P2_content"
     assert len(data["blocked"]) == 1
-    assert data["blocked"][0]["path"] == "plugins/new/x.py"
+    assert data["blocked"][0]["path"] == "scripts/adapters/sink_new.py"
 
 
 def test_main_custom_base_arg(policy_file, changelog_file, monkeypatch, capsys):
@@ -509,6 +496,18 @@ def test_main_no_changes_exit0(policy_file, changelog_file, monkeypatch, capsys)
     rc = G.main(["prog"])
     assert rc == 0
     assert "total=0 blocked=0" in capsys.readouterr().out
+
+
+def test_main_git_failure_exits_2_not_empty_pass(policy_file, changelog_file, monkeypatch, capsys):
+    """base が解決できない等で git diff が落ちたら、空の差分として exit 0 にしない。"""
+    def boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+    monkeypatch.setattr(G.subprocess, "check_output", boom)
+    rc = G.main(["prog", "--base", "no-such-ref"])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "ERROR: git diff" in captured.err
+    assert "summary:" not in captured.out
 
 
 # ===========================================================================

@@ -10,7 +10,7 @@
 #   - files: {vault}/02_Configs/Daily/*.md, {vault}/05_Project/UBM/目標設定/*.md
 #   - files: {skill}/references/daily-habits.json (欠落・破損は fail-closed で exit 2)
 # outputs:
-#   - stdout: context JSON (下記 SCHEMA 節)
+#   - stdout: コンテキストの JSON (下記 SCHEMA 節)
 #   - exit: 0=解決成功 / 2=引数不正・vault 解決不能・Daily ディレクトリ不在・
 #           daily-habits.json 欠落/破損 (すべて fail-closed。1 は使わない)
 # contexts: [E]
@@ -49,6 +49,7 @@ stdout は以下の形の JSON オブジェクト 1 個。キーは常に全て�
         "path": str, "file_date": "YYYY-MM-DD", "number": int,
         "heading_date": "YYYY-MM-DD"|null,
         "ultimate_purpose": [str], "prohibitions": [str], "phase_checklist": str,
+        "principle_checklist": str,          # 前回にブロックが無いとき空文字。前回自体が無ければ previous_journal=null
         "goals": { <key>: {"period_start":…, "period_end":…, "goal": str} }
       },
       "goals": {                            # key = yearly|quarterly|monthly|weekly (4 件固定)
@@ -605,10 +606,10 @@ def load_daily_habits() -> list[dict[str, Any]]:
 
 def habit_schema_problems(h: object, i: int) -> list[str]:
     """habit 1件の形の不備を列挙する。validate-journal-output.py と同じ検査を、
-    `id` (context JSON へ載り LLM が習慣を名指しするキー) の分だけ厳しくしたもの。
+    `id` (コンテキストの JSON へ載り LLM が習慣を名指しするキー) の分だけ厳しくしたもの。
     厳しい側が先に立つ配置なので、Phase0 を通った JSON は Phase5 でも必ず通る。
 
-    SKILL.md Gotchas は「Phase0 の exit 2 は daily-habits.json 破損を含む」と宣言している。
+    SKILL.md の「つまずきやすい点」は「Phase0 の終了コード 2 は daily-habits.json 破損を含む」と宣言している。
     ここで id/label しか見ないと、target_section 欠落・keywords が文字列・
     search_scopes[].heading 欠落は Phase0 を通過し、利用者が 5〜10 分の対話を終えた
     Phase5 で初めて壊れが判明する。検知は最初のゲートで済ませる。
@@ -740,8 +741,8 @@ def build_context(vault: Path, target: date) -> dict[str, Any]:
             )
     else:
         warnings.append(
-            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェック・"
-            "原理原則チェックシート (references/principle-checklist.md のテンプレート) は対話で確定し、"
+            "前回ジャーナルが見つかりません。目標本文・究極目的・フェーズ別チェックは対話で確定し、"
+            "原理原則チェックシートは references/principle-checklist.md の未チェックテンプレートを使い、"
             "あわせてジャーナル習慣が途切れていないかも確認してください。"
         )
 

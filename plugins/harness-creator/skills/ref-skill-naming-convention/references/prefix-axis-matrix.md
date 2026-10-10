@@ -46,6 +46,6 @@
 
 ## アンチパターン
 
-- `run-` + `disable-model-invocation: true` → 矛盾、意味なし
+- コマンドが `Skill` ツールで起動する `run-` + `disable-model-invocation: true` → 起動経路と拒否設定の矛盾。危険な直接起動専用スキルは `true` を維持できる。外部変更ガード付きワークフローの例外は設計書20の Step 7 が正本。
 - `assign-` + `context: inline` → 採点者と生成本体が同context、Goodhart罠
 - `ref-` + Write tool → ref は読み専用が原則、編集が必要なら別Skillへ

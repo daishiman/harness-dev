@@ -21,6 +21,17 @@ RUNTIME_ROOT_CONTRACT = """\
 - `prompts/` 配下はこのowner Skill契約を継承する。
 """
 
+# 日本語の正規形 (ja-contract-spec 第2節の5行をそのまま写す)。
+RUNTIME_ROOT_CONTRACT_JA = """\
+## 実行時のルートの決め方
+
+- `runtime_root_policy: host-skill-path` を適用する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+- `prompts/` の下のファイルも、このスキルの決まりに従う。
+"""
+
 RUNTIME_ROOT_CANONICAL_CONTRACT = """\
 # Runtime portability
 
@@ -127,12 +138,36 @@ def codes(report: dict) -> set[str]:
     return {item["code"] for item in report["violations"]}
 
 
-def add_runtime_root_contract(plugin: Path) -> Path:
+def add_runtime_root_contract(plugin: Path, contract: str = RUNTIME_ROOT_CONTRACT) -> Path:
     skill = plugin / "skills" / "run-sample" / "SKILL.md"
     text = skill.read_text(encoding="utf-8")
     text = text.replace("\n---\n", "\nruntime_root_policy: host-skill-path\n---\n", 1)
-    skill.write_text(text + "\n" + RUNTIME_ROOT_CONTRACT, encoding="utf-8")
+    skill.write_text(text + "\n" + contract, encoding="utf-8")
     return skill
+
+
+def write_dual_root_prompt(plugin: Path) -> None:
+    prompt = plugin / "skills" / "run-sample" / "prompts" / "R1-run.md"
+    prompt.parent.mkdir()
+    prompt.write_text(
+        "```bash\npython3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/sample-plugin}}/scripts/run.py\"\n```\n",
+        encoding="utf-8",
+    )
+
+
+def without_line(contract: str, prefix: str) -> str:
+    lines = contract.splitlines(keepends=True)
+    kept = [line for line in lines if not line.startswith(prefix)]
+    assert len(kept) == len(lines) - 1, prefix
+    return "".join(kept)
+
+
+def runtime_contract_messages(report: dict) -> list[str]:
+    return [
+        item["message"]
+        for item in report["violations"]
+        if item["code"] == "runtime_root_contract_missing"
+    ]
 
 
 def add_runtime_root_contract_redirect(plugin: Path, *, write_canonical: bool = True) -> Path:
@@ -357,6 +392,77 @@ def test_runtime_contract_redirect_fails_when_canonical_file_is_missing(tmp_path
     assert "runtime_root_contract_missing" in codes(report)
 
 
+def test_japanese_runtime_root_tokens_are_all_in_canonical_section():
+    mod = load_module()
+
+    assert len(mod.RUNTIME_ROOT_CONTRACT_TOKENS_JA) == 10
+    assert mod.RUNTIME_ROOT_CONTRACT_TOKENS_JA[0] == "## 実行時のルートの決め方"
+    assert [
+        token for token in mod.RUNTIME_ROOT_CONTRACT_TOKENS_JA
+        if token not in RUNTIME_ROOT_CONTRACT_JA
+    ] == []
+
+
+def test_dual_root_owner_with_japanese_runtime_contract_passes(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    add_runtime_root_contract(plugin, RUNTIME_ROOT_CONTRACT_JA)
+    write_dual_root_prompt(plugin)
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "PASS", report
+
+
+@pytest.mark.parametrize(
+    "dropped_line",
+    [
+        "- `runtime_root_policy:",
+        "- Claude Code では",
+        "- Codex では",
+        "- 作業ディレクトリ",
+        "- `prompts/` の下",
+    ],
+)
+def test_japanese_runtime_contract_missing_a_line_fails_with_japanese_gap(
+    tmp_path, dropped_line
+):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    contract = without_line(RUNTIME_ROOT_CONTRACT_JA, dropped_line)
+    add_runtime_root_contract(plugin, contract)
+    write_dual_root_prompt(plugin)
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    expected = [
+        token for token in mod.RUNTIME_ROOT_CONTRACT_TOKENS_JA if token not in contract
+    ]
+    assert expected
+    assert report["verdict"] == "FAIL"
+    # 日本語の組の方が多く揃っているので、日本語の欠けだけを示す。
+    assert runtime_contract_messages(report) == [
+        "owner skill runtime root body contract is incomplete: " + ", ".join(expected)
+    ]
+
+
+def test_english_runtime_contract_gap_still_reports_english_tokens(tmp_path):
+    mod = load_module()
+    plugin = make_plugin(tmp_path, with_command=False)
+    add_runtime_root_contract(
+        plugin, without_line(RUNTIME_ROOT_CONTRACT, "- `prompts/` 配下")
+    )
+    write_dual_root_prompt(plugin)
+
+    report = mod.audit_plugin(tmp_path, plugin)
+
+    assert report["verdict"] == "FAIL"
+    assert runtime_contract_messages(report) == [
+        "owner skill runtime root body contract is incomplete: "
+        "`prompts/` 配下はこのowner Skill契約を継承する"
+    ]
+
+
 def test_host_skill_root_resolver_ignores_unset_env_and_foreign_cwd(
     tmp_path, monkeypatch
 ):
@@ -405,13 +511,15 @@ def test_skill_templates_require_host_skill_path_runtime_contract(template_name)
     ).read_text(encoding="utf-8")
 
     assert "runtime_root_policy: host-skill-path" in template
-    assert "## Runtime root contract" in template
+    assert "## 実行時のルートの決め方" in template
     assert "CLAUDE_PLUGIN_ROOT" in template
-    assert "この `SKILL.md` のabsolute path" in template
+    assert "この `SKILL.md` の絶対パス" in template
     assert "cwd" in template
-    assert "literal placeholder" in template
-    assert "各shell invocation" in template
-    assert "`prompts/` 配下はこのowner Skill契約を継承する" in template
+    assert "置き換える前のプレースホルダ" in template
+    assert "シェルを呼ぶたび" in template
+    assert "<!-- runtime-root-contract:v1 -->" in template
+    # Resources are an explicit generation option, never claimed by every template.
+    assert "`prompts/`" not in template
 
 
 def test_capability_manifest_declares_host_skill_path_runtime_policy():

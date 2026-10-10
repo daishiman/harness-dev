@@ -12,7 +12,7 @@ user-invocable: true
 disable-model-invocation: false
 argument-hint: "[--repo-root PATH] [--hook-source plugin|project-fallback] [--dry-run]"
 allowed-tools: [Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, Skill, Agent]
-script_refs: [../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-init-scaffold.py, ../../scripts/build-project-hook-fallback.py]
+script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/validate-graph-schema.py, ../../scripts/build-init-scaffold.py, ../../scripts/build-project-hook-fallback.py]
 schema_refs: [../../schemas/graph-node.schema.json, ../../schemas/repo-config.schema.json]
 reference_refs: [../../schemas/repo-config.schema.json, ../../templates/template-contract.json, ../../references/claude-code-hooks-contract.md, ../../references/prompt-common-layers.md]
 responsibility_refs:

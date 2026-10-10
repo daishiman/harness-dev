@@ -413,6 +413,7 @@ def test_every_external_mutation_skill_declares_exact_structured_guard_ref():
 
 
 def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
+    mod = _load_generator()
     count = 0
     for manifest in _manifest_plugins(ROOT):
         plugin = manifest.parents[1]
@@ -422,8 +423,12 @@ def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
             if frontmatter.get("effect") != "external-mutation":
                 continue
             count += 1
-            assert text.count("<!-- external-mutation-guard-cli:v1 -->") == 1, skill
-            assert text.count("<!-- /external-mutation-guard-cli:v1 -->") == 1, skill
+            # SKILL.md の言語のマーカーがちょうど1組あり、もう一方の言語のマーカーは無い。
+            language = mod._skill_language(text)
+            for lang, (begin, end) in mod.EXTERNAL_GUARD_BLOCK_MARKERS.items():
+                expected = 1 if lang == language else 0
+                assert text.count(begin) == expected, (skill, lang)
+                assert text.count(end) == expected, (skill, lang)
             assert (
                 '--entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md"'
                 in text
@@ -431,7 +436,7 @@ def test_every_external_mutation_skill_has_one_canonical_cli_wiring_block():
             for action in ("preview", "hook-confirm", "authorize", "execute"):
                 assert action in text, (skill, action)
             assert text.count("build-external-mutation-guard.py") >= 3, skill
-    assert count == 35
+    assert count == 36
 
 
 def test_structured_marker_without_canonical_cli_wiring_fails_closed(tmp_path):
@@ -497,6 +502,194 @@ def test_canonical_block_cannot_authorize_direct_mutation_imperative(tmp_path, c
     )
     with pytest.raises(mod.ContractError, match="direct mutation CLI"):
         mod.write_projections(repo)
+
+
+_EXTERNAL_GUARD_FRONTMATTER = (
+    "---\n"
+    "name: run-future-external\n"
+    "effect: external-mutation\n"
+    "external_mutation_guard: {runtime_ref: "
+    "'plugin:skill-governance-adapters/scripts/build-external-mutation-guard.py', "
+    "flow: 'preview-confirm-authorize-execute-v1'}\n"
+    "---\n"
+)
+
+
+def _external_skill_text(
+    post_choice: str, *, runtime_root: str = "", blocks: tuple[str, ...] = ()
+) -> str:
+    """Post-choice 見出しだけで言語が決まる、外部変更のスキルの最小の SKILL.md。"""
+    return (
+        _EXTERNAL_GUARD_FRONTMATTER
+        + "\n# run-future-external\n\n"
+        + (runtime_root + "\n" if runtime_root else "")
+        + "## 目的と出力契約\n\n外部の記録を1件更新する。\n\n"
+        + f"{post_choice}\n\n以下の節は、軽微・標準・詳細のどれかが記録されたときだけ実行する。\n\n"
+        + "".join(block + "\n" for block in blocks)
+        + "## 全体の流れ\n\n1. 記録を更新する。\n"
+    )
+
+
+def _add_external_skill(repo: pathlib.Path, text: str) -> pathlib.Path:
+    skill = repo / "plugins/contract-generator/skills/run-future-external/SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(text, encoding="utf-8")
+    return skill
+
+
+def _skill_snapshot(repo: pathlib.Path) -> dict[pathlib.Path, bytes]:
+    return {path: path.read_bytes() for path in (repo / "plugins").glob("*/skills/*/SKILL.md")}
+
+
+@pytest.mark.parametrize(
+    "line,language",
+    [
+        ("## 選んだ深さでの改善の実行", "ja"),
+        ("  ## 選んだ深さでの改善の実行  ", "ja"),
+        ("## Post-choice selected improvement execution", "en"),
+        ("## 選んだ深さでの改善の実行（補足）", "en"),
+        ("本文で `## 選んだ深さでの改善の実行` に触れるだけ", "en"),
+    ],
+    ids=["exact", "surrounding-space", "english", "suffixed", "inline-mention"],
+)
+def test_skill_language_is_decided_by_whole_line_japanese_post_choice_heading(line, language):
+    mod = _load_generator()
+    assert mod._skill_language(f"# skill\n\n{line}\n\n本文。\n") == language
+
+
+def test_japanese_guard_block_keeps_english_command_lines_byte_for_byte():
+    mod = _load_generator()
+    english = mod._canonical_external_guard_block()
+    japanese = mod._canonical_external_guard_block("ja")
+    assert english == mod._canonical_external_guard_block("en")
+    assert english.startswith(mod.EXTERNAL_GUARD_BLOCK_BEGIN + "\n")
+    assert english.endswith(mod.EXTERNAL_GUARD_BLOCK_END + "\n")
+    assert japanese.startswith(mod.EXTERNAL_GUARD_BLOCK_BEGIN_JA + "\n")
+    assert japanese.endswith(mod.EXTERNAL_GUARD_BLOCK_END_JA + "\n")
+    assert mod.EXTERNAL_GUARD_BLOCK_BEGIN not in japanese
+    assert mod.EXTERNAL_GUARD_BLOCK_BEGIN_JA not in english
+
+    def commands(block: str) -> list[str]:
+        return [line for line in block.splitlines() if line.startswith("python3 ")]
+
+    assert len(commands(japanese)) == 4
+    assert commands(japanese) == commands(english)
+    with pytest.raises(mod.ContractError, match="unknown canonical guard block language"):
+        mod._canonical_external_guard_block("fr")
+
+
+@pytest.mark.parametrize("language,existing", [("en", None), ("ja", None), ("ja", "en"), ("en", "ja")])
+def test_runtime_root_contract_migrates_locale_and_is_idempotent(tmp_path, language, existing):
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    text = _external_skill_text(mod.POST_CHOICE_HEADINGS[language], runtime_root=mod.RUNTIME_ROOT_CONTRACT_SECTIONS[existing] if existing else "")
+    migrated = mod._ensure_runtime_root_contract(text, path)
+    expected = mod._canonical_runtime_root_block(language, has_prompts=False)
+    assert migrated.count(expected) == 1
+    assert "`prompts/`" not in migrated
+    body = migrated.split("---", 2)[2]
+    assert body.index("## 目的と出力契約") < body.index(mod.RUNTIME_ROOT_BLOCK_BEGIN)
+    assert mod._ensure_runtime_root_contract(migrated, path) == migrated
+
+
+def test_japanese_post_choice_skill_migrates_to_japanese_block_and_runtime_root(tmp_path):
+    mod = _load_generator()
+    repo = _copy_contract_repo(tmp_path)
+    skill = _add_external_skill(repo, _external_skill_text(mod.POST_CHOICE_HEADING_JA))
+    before = _skill_snapshot(repo)
+    mod.migrate_external_guard_blocks(repo)
+
+    text = skill.read_text(encoding="utf-8")
+    front, body = text.split("---", 2)[1:]
+    assert "runtime_root_policy: host-skill-path" in front
+    assert body.count(mod._canonical_runtime_root_block("ja", has_prompts=(skill.parent / "prompts").is_dir())) == 1
+    assert mod.RUNTIME_ROOT_CONTRACT_HEADING not in body
+    assert body.count(mod._canonical_external_guard_block("ja")) == 1
+    assert text.count(mod.EXTERNAL_GUARD_BLOCK_BEGIN_JA) == 1
+    assert text.count(mod.EXTERNAL_GUARD_BLOCK_END_JA) == 1
+    assert mod.EXTERNAL_GUARD_BLOCK_BEGIN not in text
+    assert mod.EXTERNAL_GUARD_BLOCK_END not in text
+    assert text.index(mod.POST_CHOICE_HEADING_JA) < text.index(mod.EXTERNAL_GUARD_BLOCK_BEGIN_JA)
+    # 英語のスキルは 1 バイトも変わらない (日本語の正規形は 2 つ目の正規形として足しただけ)。
+    changed = {path for path, data in before.items() if path.read_bytes() != data}
+    assert skill in changed
+    assert all("runtime-root-contract:v1" in path.read_text() for path in changed)
+
+
+def test_japanese_skill_migration_passes_wiring_and_is_idempotent(tmp_path):
+    mod = _load_generator()
+    repo = _copy_contract_repo(tmp_path)
+    skill = _add_external_skill(repo, _external_skill_text(mod.POST_CHOICE_HEADING_JA))
+    mod.migrate_external_guard_blocks(repo)
+
+    mod._validate_external_guard_wiring(skill)
+    # 禁止パターン (直接実行・ゲート無効化) が日本語の正規の文面を誤検出しないことも含めて通す。
+    assert mod.write_projections(repo) == len(_manifest_plugins(repo))
+    assert mod.lint_repository(repo) == []
+
+    migrated = _skill_snapshot(repo)
+    mod.migrate_external_guard_blocks(repo)
+    assert _skill_snapshot(repo) == migrated
+
+
+def test_japanese_skill_english_guard_block_is_replaced_by_migration(tmp_path):
+    mod = _load_generator()
+    repo = _copy_contract_repo(tmp_path)
+    skill = _add_external_skill(
+        repo,
+        _external_skill_text(
+            mod.POST_CHOICE_HEADING_JA,
+            runtime_root=mod.RUNTIME_ROOT_CONTRACT_SECTION_JA,
+            blocks=(mod._canonical_external_guard_block(),),
+        ),
+    )
+    mod.migrate_external_guard_blocks(repo)
+
+    text = skill.read_text(encoding="utf-8")
+    assert mod.EXTERNAL_GUARD_BLOCK_BEGIN not in text
+    assert mod.EXTERNAL_GUARD_BLOCK_END not in text
+    assert text.count(mod._canonical_external_guard_block("ja")) == 1
+    assert text.count(mod.RUNTIME_ROOT_CONTRACT_HEADING_JA) == 1
+    mod._validate_external_guard_wiring(skill)
+
+
+@pytest.mark.parametrize(
+    "post_choice_language,block_languages",
+    [("ja", ("en",)), ("ja", ("ja", "en")), ("en", ("ja",)), ("en", ("en", "ja"))],
+    ids=["ja-skill-en-block", "ja-skill-both-blocks", "en-skill-ja-block", "en-skill-both-blocks"],
+)
+def test_guard_block_language_mismatch_fails_closed(
+    tmp_path, post_choice_language, block_languages
+):
+    mod = _load_generator()
+    repo = _copy_contract_repo(tmp_path)
+    _add_external_skill(
+        repo,
+        _external_skill_text(
+            mod.POST_CHOICE_HEADINGS[post_choice_language],
+            runtime_root=mod.RUNTIME_ROOT_CONTRACT_SECTIONS[post_choice_language],
+            blocks=tuple(mod._canonical_external_guard_block(lang) for lang in block_languages),
+        ),
+    )
+    with pytest.raises(mod.ContractError, match="canonical CLI wiring block language mismatch"):
+        mod.write_projections(repo)
+
+
+@pytest.mark.parametrize("language", ["en", "ja"])
+def test_guard_block_markers_out_of_order_fail_closed(tmp_path, language):
+    mod = _load_generator()
+    repo = _copy_contract_repo(tmp_path)
+    begin, end = mod.EXTERNAL_GUARD_BLOCK_MARKERS[language]
+    skill = _add_external_skill(
+        repo,
+        _external_skill_text(
+            mod.POST_CHOICE_HEADINGS[language],
+            runtime_root=mod.RUNTIME_ROOT_CONTRACT_SECTIONS[language],
+            blocks=(f"{end}\n{begin}\n",),
+        ),
+    )
+    with pytest.raises(mod.ContractError, match="markers out of order"):
+        mod._validate_external_guard_wiring(skill)
 
 
 def test_external_entrypoint_requires_distributed_guard_dependency(tmp_path):
@@ -653,3 +846,57 @@ def test_legacy_missing_effects_have_explicit_projection_classification(relative
     assert indexed[package_relative] == effect
     skill_text = (ROOT / relative).read_text(encoding="utf-8")
     assert f"effect: {effect}" in skill_text.split("---", 2)[1]
+
+
+def test_canonical_guard_detects_prose_drift(tmp_path):
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA, blocks=(mod._canonical_external_guard_block("ja"),))
+    text = mod._ensure_runtime_root_contract(text, path)
+    path.write_text(text, encoding="utf-8")
+    mod._validate_external_guard_wiring(path)
+    path.write_text(text.replace("解決のスクリプトが 0 以外で終わったら", "解決に失敗しても続けてよい"), encoding="utf-8")
+    with pytest.raises(mod.ContractError, match="content drift"):
+        mod._validate_external_guard_wiring(path)
+
+
+def test_runtime_block_validates_locale_resources_and_content(tmp_path):
+    mod = _load_generator()
+    path = tmp_path / "SKILL.md"
+    text = _external_skill_text(mod.POST_CHOICE_HEADING_JA)
+    path.write_text(mod._ensure_runtime_root_contract(text, path), encoding="utf-8")
+    mod._validate_runtime_root_wiring(path)
+    (tmp_path / "prompts").mkdir()
+    with pytest.raises(mod.ContractError, match="canonical block drift"):
+        mod._validate_runtime_root_wiring(path)
+    path.write_text(mod._ensure_runtime_root_contract(path.read_text(), path), encoding="utf-8")
+    mod._validate_runtime_root_wiring(path)
+    path.write_text(path.read_text().replace("host-skill-path", "cwd-guess"), encoding="utf-8")
+    with pytest.raises(mod.ContractError, match="canonical block drift"):
+        mod._validate_runtime_root_wiring(path)
+
+
+@pytest.mark.parametrize("separator", ["&&", ";", "|", "||"])
+def test_guard_name_does_not_hide_compound_direct_publication(separator):
+    mod = _load_generator()
+    line = f"""python3 "/guard/build-external-mutation-guard.py" execute --command-json '["python3", "worker.py"]' {separator} python3 publish-staged-files.py --manifest plan.json"""
+    assert mod._direct_external_mutation_instruction(line)
+
+
+def test_canonical_guard_can_bind_quoted_mutation_argv():
+    mod = _load_generator()
+    line = """python3 "/guard/build-external-mutation-guard.py" execute --project-root "$PWD" --command-json '["python3", "publish-staged-files.py", "--manifest", "plan.json"]'"""
+    assert mod._direct_external_mutation_instruction(line) is None
+
+
+@pytest.mark.parametrize("expression", ['$(python3 publish-staged-files.py --manifest plan.json)', '`python3 publish-staged-files.py --manifest plan.json`', '<(python3 publish-staged-files.py --manifest plan.json)'])
+def test_guard_substitution_is_rejected_before_execution(expression):
+    mod = _load_generator()
+    line = f"""python3 "/guard/build-external-mutation-guard.py" execute --project-root "{expression}" --command-json '["python3","worker.py"]'"""
+    assert mod._direct_external_mutation_instruction(line)
+
+
+def test_guard_json_literal_substitution_is_data():
+    mod = _load_generator()
+    line = """python3 "/guard/build-external-mutation-guard.py" execute --project-root "$PWD" --command-json '["python3","worker.py","literal $(value) and `data`"]'"""
+    assert mod._direct_external_mutation_instruction(line) is None

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # /// script
 # name: detect-knowledge-updates
-# version: 0.1.0
+# version: 0.2.0
 # purpose: ナレッジソース (.md) を registry.json と MD5 照合し NEW/MODIFIED を検知する決定論ゲート。
 #          旧 detect-knowledge-updates.sh 183 行の契約移植 (bash3.2 declare -A / md5 -q 分岐を stdlib 化)。
-#          検知は sources 配下を再帰スキャンし、consumer 側が 05_Project/UBM/目標設定/ 行を除外する二段構え。
+#          検知は sources 配下を再帰スキャンする。除外の正本は EXCLUDED_SUBDIRS (目標設定/・挑戦宣言/)
+#          で、sources からの相対パスの先頭要素が当たる .md はハッシュも取らずに飛ばす (読む側では除かない)。
 # inputs:
 #   - argv: --registry FILE --sources DIR [--since YYYY-MM-DD] [--all] [--dry-run]
 # outputs:
@@ -20,7 +21,8 @@
 
 旧 detect-knowledge-updates.sh の契約移植。挙動の逐語ではなく「registry と MD5 照合して
 NEW/MODIFIED を漏れなく列挙する」検知ロジックを保存する。--all は全件強制 NEW (mode:full)、
---since は日付フィルタ。registry キーは vault-root 相対 (05_Project/UBM/...) 形式。
+--since は指定日より後の同一ハッシュも再処理する追加条件（差分の期間フィルタではない）。registry キーは vault-root 相対 (05_Project/UBM/...) 形式。
+利用者自身の記録 (EXCLUDED_SUBDIRS) は北原ナレッジではないので、検知の段階で除く。
 """
 from __future__ import annotations
 
@@ -28,8 +30,20 @@ import argparse
 import hashlib
 import json
 import sys
+import unicodedata
 from datetime import datetime
 from pathlib import Path
+
+# 除外の正本: --sources (05_Project/UBM) 直下のサブディレクトリのうち、利用者自身の記録を置くもの。
+# 目標設定/ は run-ubm-goal-setting、挑戦宣言/ は run-ubm-challenge の保存先で、北原ナレッジに当たらない。
+# ここで除かないと、利用者の言葉が北原ナレッジとして抽出・引用される因果ループになる。
+EXCLUDED_SUBDIRS = ("目標設定", "挑戦宣言")
+
+
+def is_excluded(rel_parts: tuple[str, ...]) -> bool:
+    """sources からの相対パスの先頭要素が EXCLUDED_SUBDIRS に当たるか (sources 直下のファイルは除外しない)。"""
+    return len(rel_parts) > 1 and unicodedata.normalize("NFC", rel_parts[0]) in EXCLUDED_SUBDIRS
+
 
 # source_type 判定: パターン→ラベル (先頭一致優先・旧 get_source_type 準拠)
 SOURCE_TYPE_RULES = [
@@ -74,6 +88,7 @@ def print_empty_result(prefix: str, reason: str) -> None:
     print("")
     print("=== 検知結果 ===")
     print("スキャン: 0 件")
+    print("除外: 0 件")
     print("新規: 0 件")
     print("更新: 0 件")
     print("処理対象合計: 0 件")
@@ -88,13 +103,21 @@ def main(argv: list[str]) -> int:
     )
     ap.add_argument("--registry", required=True, help="registry.json のパス")
     ap.add_argument("--sources", required=True, help="ナレッジソースのルート (例: $UBM_VAULT_ROOT/05_Project/UBM)")
-    ap.add_argument("--since", default="", help="YYYY-MM-DD 以降の更新のみ対象")
+    ap.add_argument("--since", default="", help="指定日より後の同一ハッシュも再処理。未登録・ハッシュ変更は日付に関係なく対象")
     ap.add_argument("--all", action="store_true", help="全件を強制 NEW (mode:full・schema変更後の全再構築)")
     ap.add_argument("--dry-run", action="store_true", help="検知のみ。互換フラグとして受理し、このスクリプト自体は常に書き込まない")
     try:
         args = ap.parse_args(argv)
     except SystemExit:
         return 2
+
+    if args.since:
+        try:
+            if datetime.strptime(args.since, "%Y-%m-%d").strftime("%Y-%m-%d") != args.since:
+                raise ValueError("YYYY-MM-DD の形式ではありません")
+        except ValueError:
+            print("エラー: --since は実在する日付 YYYY-MM-DD で指定してください", file=sys.stderr)
+            return 1
 
     registry_file = Path(args.registry)
     sources = Path(args.sources)
@@ -119,15 +142,21 @@ def main(argv: list[str]) -> int:
         print("")
     else:
         print("")
-    print(f"--- ディレクトリスキャン ({prefix}/ 配下を全検索) ---")
+    excluded_label = "・".join(f"{name}/" for name in EXCLUDED_SUBDIRS)
+    print(f"--- ディレクトリスキャン ({prefix}/ 配下を全検索。{excluded_label} は除く) ---")
 
     new_files: list[tuple[str, str, str]] = []       # (registry_key, source_type, hash)
     modified_files: list[tuple[str, str, str]] = []
     total_scanned = 0
+    total_excluded = 0
 
     for md in sorted(sources.rglob("*.md")):
+        rel_path = md.relative_to(sources)
+        if is_excluded(rel_path.parts):
+            total_excluded += 1
+            continue
         total_scanned += 1
-        rel = md.relative_to(sources).as_posix()
+        rel = rel_path.as_posix()
         registry_key = f"{prefix}/{rel}"
         current_hash = md5_of(md)
         source_type = get_source_type(registry_key)
@@ -152,6 +181,7 @@ def main(argv: list[str]) -> int:
     print("")
     print("=== 検知結果 ===")
     print(f"スキャン: {total_scanned} 件")
+    print(f"除外: {total_excluded} 件 ({excluded_label})")
     print(f"新規: {len(new_files)} 件")
     print(f"更新: {len(modified_files)} 件")
     print(f"処理対象合計: {total_target} 件")

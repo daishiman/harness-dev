@@ -46,12 +46,14 @@ MOD = _load_module()
 def _clean_env(monkeypatch):
     monkeypatch.delenv("ALLOW_RUBRIC_EDIT", raising=False)
     monkeypatch.delenv("PROJECT_ROOT", raising=False)
+    monkeypatch.setattr(MOD, "REPO_ROOT", Path("__unused_registry_root__"))
 
 
 def _isolate_cwd(monkeypatch, tmp_path):
     """registry を引かない空の cwd / PROJECT_ROOT に固定 (default suffix のみ残る)。"""
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setattr(MOD, "REPO_ROOT", tmp_path)
 
 
 # --------------------------------------------------------------------------
@@ -123,6 +125,35 @@ def test_is_guarded_default_suffix(tmp_path, monkeypatch):
     _clean_env(monkeypatch)
     _isolate_cwd(monkeypatch, tmp_path)
     assert MOD.is_guarded("/repo/x/ref-skill-design-rubric/rubric.json") is True
+
+
+def test_real_l0_path_and_dot_segments_are_guarded(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    target = "plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json"
+    assert MOD.is_guarded(target)
+    assert MOD.is_guarded("/repo/" + target.replace("/references/", "/references/../references/"))
+    assert not MOD.is_guarded("/repo/skills/not-ref-skill-design-rubric/references/rubric.json")
+
+
+def test_current_registry_path_from_project_root(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    registry = tmp_path / "plugins/skill-governance-config/config/rubric-registry.json"
+    registry.parent.mkdir(parents=True)
+    registry.write_text(json.dumps({"rubrics": [{"rubric": "custom/reference/rubric.json"}]}))
+    assert MOD.is_guarded("/repo/custom/reference/rubric.json")
+
+
+def test_canonical_rubric_through_parent_symlink_is_guarded(tmp_path, monkeypatch):
+    _clean_env(monkeypatch)
+    _isolate_cwd(monkeypatch, tmp_path)
+    references = tmp_path / "ref-skill-design-rubric/references"
+    references.mkdir(parents=True)
+    (references / "rubric.json").write_text("{}")
+    alias = tmp_path / "documents"
+    alias.symlink_to(references, target_is_directory=True)
+    assert MOD.is_guarded(str(alias / "rubric.json"))
 
 
 def test_is_guarded_assign_glob(tmp_path, monkeypatch):

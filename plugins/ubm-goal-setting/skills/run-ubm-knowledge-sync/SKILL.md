@@ -1,7 +1,7 @@
 ---
 name: run-ubm-knowledge-sync
 description: 北原さん式ナレッジソースを同期する。差分を検知したいとき、6カテゴリへ分類・格納したいときに使う。
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 argument-hint: "[--all] [--since YYYY-MM-DD] [--dry-run]"
 arguments: [all, since, dry-run]
@@ -49,6 +49,10 @@ knowledge_loop:
   index: ../../knowledge/router.json
   consult_at: [runtime]
 script_refs:
+  - ../../scripts/evaluate-design-rubric.py
+  - ../../scripts/search-knowledge.py
+  - ../../scripts/record-knowledge-usage.py
+  - ../../scripts/publish-staged-files.py
   - scripts/detect-knowledge-updates.py
   - scripts/check-knowledge-split.py
   - scripts/extract-ready-set-from-checklist.py
@@ -58,7 +62,15 @@ script_refs:
   - scripts/validate-knowledge-sync-task-graph.py
   - ../../scripts/validate-inline-goal-seek-anchor.py
   - ../../scripts/validate-knowledge-graph.py
+domain: ubm-goal-setting
+rubric_refs:
+  - ../run-ubm-knowledge-sync/references/rubric.json
 reference_refs:
+  - ../../references/content-review-rubric.md
+  - ../../references/knowledge-retrieval-contract.md
+  - ../../references/guarded-publication-contract.md
+  - ../../references/goal-seek-anchor-contract.md
+  - ../../references/agent-root-contract.md
   - references/knowledge-sources.md
   - references/knowledge-design-principles.md
 source: ObsidianMemo vault (.claude/commands/ai/ubm-knowledge-sync) の移植
@@ -66,7 +78,7 @@ source-tier: internal
 last-audited: 2026-07-04
 audit-trigger: quarterly
 completeness_exempt:
-  - "prompts: 抽出・6カテゴリ分類という唯一の LLM 責務は plugin 直下 SubAgent knowledge-extractor.md (7層プロンプトを本文に内包・43KB) が単独所有し、他 Phase は決定論スクリプト (detect-knowledge-updates.py / check-knowledge-split.py) が担う。skill ローカルの R-id 単位 prompts は SubAgent 本文との二重定義になるため置かない (二重定義禁止 [[project_ssot_dedup_mechanism]])。責務→実行体の対応は本文 End-to-End Flow 表が正本。(prompts/ ディレクトリは配置しない=本 exempt の宣言と実体が一致)"
+  - "prompts: このスキルでサブエージェントの LLM に任せる仕事は、抽出と6カテゴリへの分類（Phase2・Phase3）と、関係の辺の候補の生成（Phase5）の2つである。前者はプラグイン直下の knowledge-extractor.md（7層プロンプトを本文に含む）、後者は knowledge-relation-extractor.md（同じく7層プロンプトを本文に含む・読み取り専用）が受け持つ。検知・分割の検査・グラフの検証は決定論スクリプト（detect-knowledge-updates.py / check-knowledge-split.py / validate-knowledge-graph.py）が受け持ち、バッチの制御と最終レポートは親コンテキストが本文の手順どおりに行う。スキル内に R-id ごとの prompts を置くと、サブエージェントの本文と二重に定義することになるので置かない（二重定義の禁止 [[project_ssot_dedup_mechanism]]）。仕事と実行体の対応は、本文の「全体の流れ」の表を正本とする。（prompts/ ディレクトリは置かない。この免除の宣言と実際の配置は一致している）"
 feedback_contract:
   activation_state: semantic_evaluator_started
   max_iterations: 5
@@ -97,110 +109,119 @@ artifact_delivery:
   exhaustive: explicit-only
 ---
 
-## Purpose & Output Contract
+# run-ubm-knowledge-sync
 
-- **ゴール**: ナレッジソースの追加・変更差分が registry.json との照合で検知され、knowledge-extractor による6カテゴリ分類と router.json 更新までナレッジ同期が完了した状態。
-- **出力契約**: 検知/抽出/分割/graph 検証の結果レポート（NEW/MODIFIED 件数・格納先・分割要否・graph status）+ `knowledge/*.json` 更新 + `router.json`/`registry.json`/`sync-log.jsonl` 追記 + 差分があるときの `knowledge-relations.json`/`knowledge-graph.json` 再生成。
-- **境界**: vault 内ナレッジソースは read-only 入力。書込先は確認済み target scope 内の `PLUGIN_ROOT/knowledge/`、同 skill の `assets/kitahara-principles-db.md`、`PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/` だけ。それ以外と symlink 経由の scope 外は write 前に停止する。目標設定対話は `run-ubm-goal-setting` へ委譲する。
-- **6カテゴリ**: principles（原則）/ consultation（相談）/ phase-advice（フェーズ）/ action-guides（行動）/ mindset（転換）/ case-studies（事例）。
-- **必須禁則**: `--dry-run` で plugin knowledge や vault を書き換えない。external mutation は canonical receipt flow 外で実行しない。
+UBM のナレッジソース（YouTube の議事録・合宿の記録・月報へのフィードバック・セミナーなど）について、新しく追加されたものと更新された差分を見つけ、**内容別の JSON ファイル**（6カテゴリ）に反映する。北原さんの最新の教えを続けて取り込み、`run-ubm-goal-setting` の品質を底上げする。
 
-## Runtime root contract
+## 目的と出力契約
+
+**禁則**: ユーザーの記録を北原さんのナレッジへ混ぜない。未検証の変更を正式ナレッジへ反映しない。
+
+- **ゴール**: ナレッジソースの追加と変更の差分が `registry.json` との照合で見つかり、`knowledge-extractor` による6カテゴリへの分類と `router.json` の更新まで、ナレッジの同期が終わった状態。
+- **出力契約**: 検知・抽出・分割・グラフ検証の結果の報告（NEW/MODIFIED の件数・格納先・分割の要否・グラフの状態）。あわせて `knowledge/*.json` を更新し、`router.json`/`registry.json`/`sync-log.jsonl` に追記し、差分があるときは `knowledge-relations.json`/`knowledge-graph.json` を作り直す。
+- **境界**: vault 内のナレッジソースは読み取り専用の入力とする。書き込み先は、確認済みの対象範囲（ガードの `--target-scope`）にある `PLUGIN_ROOT/knowledge/`、同じスキルの `assets/kitahara-principles-db.md`、`PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/` だけ。それ以外の場所と、シンボリックリンクを通って範囲の外へ出る場所は、書き込む前に止める。目標設定の対話は `run-ubm-goal-setting` に委譲する。
+- **6カテゴリ**: `principles`（原則）/ `consultation`（相談）/ `phase-advice`（フェーズ）/ `action-guides`（行動）/ `mindset`（転換）/ `case-studies`（事例）。
+- **必須禁則**: `--dry-run` のときは、プラグインのナレッジも vault も書き換えない。外部変更は、正規の受領書の手順の外では実行しない。
+
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
 
 - `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `PROJECT_ROOT` は呼出元が渡すリポジトリ絶対パス（Claude Code では `CLAUDE_PROJECT_DIR`）に固定し、realpath containment を確認する。未解決なら mutation や eval-log write を始めない。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
-## Pre-choice usable artifact execution
+## 選ぶ前の実成果物の作成
 
-Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+「目的と出力契約」の最小の実成果物か、外部変更のプレビューを親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方か、プレビューの受領書を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すなら外部変更を行わずに引き継ぎを完了とし、後続の節を実行しない。
 
-## Post-choice selected improvement execution
+## 選んだ深さでの改善の実行
 
-以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+以下の既存の節（全体の流れ・ゴールシーク・評価・修正）と外部変更の安全手順は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。実際の外部変更は正規の `preview`→`hook-confirm`→`authorize`→`execute` の手順だけを通し、リリースと完全監査は別イベントとして明示されたときだけ行う。
 
-<!-- external-mutation-guard-cli:v1 -->
-### Canonical external mutation receipt flow (mandatory)
+<!-- external-mutation-guard-cli-ja:v1 -->
+### 外部変更の受領書の手順（必須）
 
-Never execute the external mutation argv directly. Replace every angle-bracket placeholder
-with the reviewed value from this run; the central CLI fails closed on missing/invalid values.
+外部変更のコマンドを直接実行しない。山括弧のプレースホルダは、すべてこの実行で確かめた値に置き換える。
+値が欠けていたり正しくなかったりすれば、中央の CLI が止める（fail-closed）。
 
-Resolve the guard plugin root once, before `preview`. An installed plugin cannot reach a sibling
-plugin as `<plugin root>/..`, so never guess that path:
+`preview` の前に、ガードを持つプラグインのルートを1回だけ解決する。インストールされたプラグインからは、
+隣のプラグインに `<プラグインのルート>/..` では届かないので、このパスを推測しない:
 
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/extract-plugin-root.py" skill-governance-adapters
 ```
 
-Use the printed absolute path as `<GUARD_PLUGIN_ROOT>` in `preview`, `authorize` and `execute`
-(other Bash is blocked while the confirmation is pending, so do not resolve it again).
-If the resolver exits non-zero, stop without any external mutation and tell the user to install
-the `skill-governance-adapters` plugin.
+表示された絶対パスを、`preview`・`authorize`・`execute` の `<GUARD_PLUGIN_ROOT>` に使う
+（確認を待つあいだはほかの Bash が止められるので、解決し直さない）。
+解決のスクリプトが 0 以外で終わったら、外部変更をせずに止まり、`skill-governance-adapters` プラグインを入れるようユーザーに伝える。
 
 ```bash
 python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" preview --project-root "$PWD" --entrypoint-ref "plugin:<PLUGIN_NAME>/skills/<SKILL_NAME>/SKILL.md" --target-scope "<TARGET_SCOPE>" --diff-summary "<DIFF_SUMMARY>" --side-effect-summary "<SIDE_EFFECT_SUMMARY>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
-Present that official preview output to the user. Only the exact user reply printed by `preview`
-may trigger the registered `hook-confirm` producer. Then use the two returned receipt paths:
+この正規の `preview` の出力をユーザーに見せる。登録済みの `hook-confirm` を動かせるのは、`preview` が表示したとおりのユーザーの返答だけ。
+そのあと、返ってきた2つの受領書のパスを使う:
 
 ```bash
 python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" authorize --project-root "$PWD" --preview-receipt "<PREVIEW_RECEIPT_PATH>" --confirmation-receipt "<CONFIRMATION_RECEIPT_PATH>"
 python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute --project-root "$PWD" --authorization-receipt "<AUTHORIZATION_RECEIPT_PATH>" --command-json '<MUTATION_ARGV_JSON>'
 ```
 
-Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
-<!-- /external-mutation-guard-cli:v1 -->
+自動承認のフラグを使わない。この受領書の手順の外で外部変更のコマンドを実行しない。
+<!-- /external-mutation-guard-cli-ja:v1 -->
 
 
-# run-ubm-knowledge-sync
+### 正式保存の実行境界
 
-UBM ナレッジソース（YouTube 議事録・合宿記録・月報 FB・セミナー等）の新規追加・更新差分を検知し、**内容別 JSON ファイル**（6カテゴリ）へ反映する。北原さんの最新の教えを継続的に取り込み、`run-ubm-goal-setting` の品質を底上げする。
+`../../references/guarded-publication-contract.md` をReadして適用する。書き手のWriteは一時下書きだけとし、正式保存・archive移動・Daily更新・ナレッジ/台帳/グラフの更新は親がユーザー承認とcommand-bound受領書を揃えた中央guard `execute`だけで実行する。保存可否booleanだけで直接Write/Editしない。
 
-## End-to-End Flow
+`../../references/knowledge-retrieval-contract.md` をReadし、同契約の入力表に従って決定論の重み付き検索→候補の意味選択→親による実利用IDと取得済みユーザー反応の記録を実行する。検索結果を `knowledge_candidates` として担当役へ渡し、返された実使用を実際の出力と照合する。
 
-| Phase | 責務 | 実行体 |
+## 全体の流れ
+
+| 段階 | 責務 | 実行体 |
 |---|---|---|
-| Phase1-detect | `detect-knowledge-updates.py` が registry.json との MD5 照合で NEW/MODIFIED ソースを漏れなく検知。出力から `05_Project/UBM/目標設定/` を含む行を除外したものが Phase2 入力 | script |
-| Phase2-extract | 本 skill が NEW/MODIFIED を最大20ファイルずつのバッチへ分割し、各バッチで `knowledge-extractor` が6カテゴリへ分類して Rule A-F に従い `knowledge/*.json` + `router.json`/`registry.json` を更新 | 本 skill（batch制御）+ `knowledge-extractor`（Task） |
-| Phase3-split-check | `check-knowledge-split.py` がナレッジ JSON の500行閾値超過を機械検査し、knowledge-extractor が25エントリ超過時の意味単位分割を完了して corpus を確定する | script / `knowledge-extractor`（必要時の Task） |
-| Phase5-graph-sync（Phase3 完了後） | 確定済み corpus に対し `knowledge-relation-extractor` が根拠付き有方向辺の**候補 JSON** を read-only で返し（knowledge へ書込しない=幻覚防止）、呼び出し側が候補を eval-log へ materialize、`validate-knowledge-graph.py --merge-relations` が canonical key (source_id,target_id,relation_type) で `knowledge/knowledge-relations.json` へ冪等 merge（既存辺は保持=first-write-wins）する。全検証 PASS 後に relations→`knowledge-graph.json` を正準書込し、途中書込失敗は同じ候補の再実行で冪等修復する（2ファイル跨ぎの atomicity は主張しない）。dry-run 時は write 禁止 | `knowledge-relation-extractor`（Task）/ `validate-knowledge-graph.py --merge-relations`（script） |
-| Phase4-report（Phase5 完了後） | 検知/抽出/分割/graph-sync の結果（NEW/MODIFIED 件数・格納先・分割要否・graph検証）を最終レポートへ統合する | 本 skill |
+| Phase1-detect | `detect-knowledge-updates.py` が `registry.json` と MD5 で照合し、NEW/MODIFIED のソースを漏れなく見つける。利用者自身の記録（`05_Project/UBM/目標設定/`・`05_Project/UBM/挑戦宣言/`）は、スクリプトが検知の段階で除く（除外の正本は同スクリプトの `EXCLUDED_SUBDIRS`）。出力をそのまま Phase2 の入力にする | スクリプト |
+| Phase2-extract | このスキルが NEW/MODIFIED を最大20ファイルずつのバッチに分ける。各バッチで `knowledge-extractor` が親の一時knowledge_dirで6カテゴリへ分類しRule A-Fを適用する。親が検証済み差分を中央guard executeで正式保存する | このスキル（バッチの制御）+ `knowledge-extractor`（Task） |
+| Phase3-split-check | `check-knowledge-split.py` が、ナレッジ JSON が500行の上限を超えていないかを機械的に検査する。`knowledge-extractor` は、25エントリを超えたときの意味のまとまりでの分割を終え、コーパスを確定する | スクリプト / `knowledge-extractor`（必要なときの Task） |
+| Phase5-graph-sync（Phase3 の完了後） | 確定したコーパスについて、`knowledge-relation-extractor` が根拠付きの向きのある辺の**候補 JSON** を読み取り専用で返す（`knowledge/` へは書き込まない。幻覚を防ぐため）。呼び出し側は候補を `eval-log/` にファイルとして書き出す。`validate-knowledge-graph.py --merge-relations` が、正規のキー（`source_id`・`target_id`・`relation_type`）で `knowledge/knowledge-relations.json` へ冪等に統合する（既存の辺は残し、先に書いたものを優先する）。すべての検証に合格（PASS）したあとで、`knowledge-relations.json`→`knowledge-graph.json` の順に正規の書き込みをする。途中で書き込みに失敗したら、同じ候補で再実行して冪等に直す（2つのファイルにまたがる不可分性は主張しない）。試し実行（`--dry-run`）のときは書き込みを禁止する | `knowledge-relation-extractor`（Task）/ `validate-knowledge-graph.py --merge-relations`（スクリプト） |
+| Phase4-report（Phase5 の完了後） | 検知・抽出・分割・グラフ同期の結果（NEW/MODIFIED の件数・格納先・分割の要否・グラフの検証）を最終報告にまとめる | このスキル |
 
-Phase5 は差分 entry 起点で発火するため、**差分ゼロの周回では不発**になる。既存 corpus へ辺が一度も付いていない（`knowledge-relations.json` 不在＝edges=0 の退化グラフ）場合の初回適用は、RUNBOOK（plugin 直下 `RUNBOOK.md`）の「初回 edge backfill」手順を使う。
+Phase5 は差分のエントリをきっかけに動くので、**差分がゼロの周回では動かない**。既存のコーパスに辺が一度も付いていない場合（`knowledge-relations.json` が無く、`edges=0` の退化したグラフ）の初回の適用には、RUNBOOK（プラグイン直下の `RUNBOOK.md`）の「辺の過去分の初回埋め戻し」の手順を使う。
+
+各 Task のルートと停止条件は `../../references/agent-root-contract.md` が正本。`knowledge-extractor` には Phase1 の検知行をそのまま target_files とし、NEW は mode=new、MODIFIED は mode=update に分け、解決済み plugin_root と source_root（Phase1 の --sources）を渡す。--all のときだけ mode=full を使う。relation-extractor には plugin_root と knowledge_dir=plugin_root/knowledge を渡す。--dry-run ではこれらの書き手/統合を起動しない。
 
 ## ゴールシーク実行
 
-`goal_seek.engine: task-graph` / `engine_profile: checklist-graph` / `fork: inline` を使い、同じ corpus を更新・読取する責務を安全な依存順 `Phase1 → Phase2 → Phase3 → Phase5 → Phase4` で1件ずつ消費する。これは checklist の縮小 DAG であり、planner の full task-spec graph ではない (`full_task_spec_graph: false`)。
+`goal_seek.engine: task-graph` / `engine_profile: checklist-graph` / `fork: inline` を使う。同じコーパスを更新したり読んだりする仕事を、安全な依存順 `Phase1 → Phase2 → Phase3 → Phase5 → Phase4` で1件ずつ消費する。これはチェックリストを縮めた有向非巡回グラフであり、計画づくりのスキルが作る完全なタスク仕様のグラフではない（`full_task_spec_graph: false`）。
 
-### 完了チェックリスト (Checklist)
+### 完了チェックリスト
 
-- [ ] C1: Phase1-detect を実行し差分一覧または差分0件の証跡を得る (`depends_on: []`, `verify_by: script`)
-- [ ] C2: Phase2-extract を完了する。dry-run または差分0件なら条件不成立を記録して no-op 完了にする (`depends_on: [C1]`, `verify_by: reasoning`)
-- [ ] C3: Phase3-split-check を完了し、後続が読む corpus を確定する。dry-run なら書込禁止の no-op 完了にする (`depends_on: [C2]`, `verify_by: script`)
-- [ ] C4: Phase5-graph-sync を確定済み corpus に対して完了する。dry-run または差分0件なら no-op 根拠を残す (`depends_on: [C3]`, `verify_by: script`)
-- [ ] C5: Phase4-report に C1〜C4 の結果、skip理由、未解決事項を統合する (`depends_on: [C4]`, `verify_by: reasoning`)
-- [ ] C6: task-graph 消費検証と Anchor 検証が exit 0 で、pending/blocked が残らない (`depends_on: [C5]`, `verify_by: script`)
+- [ ] C1: Phase1-detect を実行し、差分の一覧か、差分が0件だという証跡を得る (`depends_on: []`, `verify_by: script`)
+- [ ] C2: Phase2-extract を終える。試し実行か差分0件なら、条件を満たさないことを記録し、何もせずに完了とする (`depends_on: [C1]`, `verify_by: reasoning`)
+- [ ] C3: Phase3-split-check を終え、後の段階が読むコーパスを確定する。試し実行なら書き込みを禁止し、何もせずに完了とする (`depends_on: [C2]`, `verify_by: script`)
+- [ ] C4: 確定したコーパスに対して Phase5-graph-sync を終える。試し実行か差分0件なら、何もしなかった根拠を残す (`depends_on: [C3]`, `verify_by: script`)
+- [ ] C5: Phase4-report に、C1〜C4 の結果、飛ばした理由、未解決の事項をまとめる (`depends_on: [C4]`, `verify_by: reasoning`)
+- [ ] C6: `task-graph` の消費の検証と Anchor の検証がどちらも終了コード 0 で、pending/blocked が残っていない (`depends_on: [C5]`, `verify_by: script`)
 
 ### ゴールシーク配線
 
-- `goal_seek.progress`: 初回に上の C1〜C6 を `{id,text,status:"pending",depends_on,verify_by}` として `eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json` へ記録し、top-level に `engine:"task-graph"`、iteration、`open_issues`、`status`、`max_loops:9` を置く。 `goal_seek.intermediate`: 各周回末の Anchor Step で `run-ubm-knowledge-sync-intermediate.jsonl` に `original_goal` / `current_goal_snapshot` / `delta_from_original` / `merged_directive_for_next` / `drift_signal` と、その周回の `ready_set` / `selected_item` を append-only で残す。 `goal_seek.handoff`: 完了時に検知件数、更新先、split-check/graph検証結果、dry-run 有無、未解決課題を `handoff-run-ubm-knowledge-sync.json` へ書く。
-- ループ・ready-set・外部mutation guard・ユーザー確認・progress write は親 context が所有する。Phase2 の抽出と Phase5 の関係候補生成だけを対応する `knowledge-extractor` / `knowledge-relation-extractor` へ `Task` 委譲し、各自は個別 surface 成果だけを返す。各 Task input には親が host-skill-path から解決した absolute `PLUGIN_ROOT` を明示し、SubAgent は未指定または非 absolute なら write 前に fail-closed で停止する。preview 後の exact reply は親が受け、confirmation receipt を得てから同じ周回を authorize→execute へ再開する。
-- 各周回は `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py" "$PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json"` で raw ready を算出する。effective `ready_set` は raw ready から 2 種類を除いた集合とする: (a) `C6` 以外の item が1件でも未消費なら最終 completion gate である `C6`、(b) `available_from_iteration` が現在の周回 index より後の追記 item (まだ有効化されていない)。除去後の最小IDだけを選択する。この 2 条件は `validate-knowledge-sync-task-graph.py` の ready 再計算と同一であり、片方だけを適用すると検証器と食い違って周回が FAIL する。実行または条件付きno-opの証跡を残して該当itemを `done` にしてから再計算する。実行中に追加必須作業を発見した場合だけ同じ skill 配下の `build-self-reflection-entry.py` で `C7` 以降のidと実際の先行item（`C6` 以外）への `depends_on` を持つitemを同じ checklist 末尾へ追記する（別 task graph state は作らない）。effective ready が空で将来周回から有効な追記itemがある場合は、その周回を未選択traceとして残し `C6` を先行させない。
-- `--dry-run` 指定時も C1→C2(no-op)→C3(no-op)→C4(no-op)→C5 の順に選択してtraceを残し、Phase2 extraction・Phase3 split repair・Phase5 graph writeを禁止する。condition不成立を「未選択」のまま残さない。
-- C6 は `selected_item` trace を先に追記し、C6をdone・全体をcompleted候補へ更新してから下記検証を最終実行する。exit非0ならcompletedを確定せず `status: handed_off` と `open_issues` へ違反を残す。
-- `max_loops` 到達時は PASS 扱いせず、残チェック項目を `open_issues` に残して human review へ差し戻す。
+- `goal_seek.progress`（進捗ファイル）: 最初に、上の C1〜C6 を `{id,text,status:"pending",depends_on,verify_by}` の形で `eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json` に記録する。最上位には `engine:"task-graph"`、`iteration`、`open_issues`、`status`、`max_loops:9` を置く。 `goal_seek.intermediate`（中間ファイル）: 各周回の終わりの Anchor Step で、`run-ubm-knowledge-sync-intermediate.jsonl` に `original_goal` / `current_goal_snapshot` / `delta_from_original` / `merged_directive_for_next` / `drift_signal` と、その周回の `ready_set` / `selected_item` を、追記だけで残す。 `goal_seek.handoff`（引き継ぎファイル）: 完了したときに、検知した件数、更新先、分割の検査とグラフ検証の結果、試し実行かどうか、未解決の課題を `handoff-run-ubm-knowledge-sync.json` に書く。
+- ループ、実行できる項目の集合（`ready_set`）の計算、外部変更のガード、ユーザーへの確認、進捗ファイルへの書き込みは、親コンテキストが受け持つ。Phase2 の抽出と Phase5 の関係候補の生成だけを、それぞれ `knowledge-extractor` / `knowledge-relation-extractor` に `Task` で委譲する。各サブエージェントは、自分が受け持つ構成要素（スキル・コマンド・エージェント・フック・スクリプトの単位）の成果だけを返す。各 Task input には親が host-skill-path から解決した absolute `PLUGIN_ROOT` を明示する。Phase2には親がコピーした一時knowledge_dirも必須で渡し、Taskは正式knowledge/へ書かない。サブエージェントは、これが指定されていないか絶対パスでないなら、書き込む前に止まる。preview 後の exact reply は親が受ける。確認の受領書を得たら、同じ周回の `authorize`→`execute` を再開する。
+- 各周回では `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py" "$PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/goal-seek-progress.json"` で、絞り込む前の実行できる項目の集合を求める。実際に使う `ready_set` は、そこから次の2種類を除いた集合とする。(a) `C6` 以外の項目がまだ1件でも消費されていないときの、最後の完了ゲートである `C6`。(b) `available_from_iteration` が今の周回番号より後の追記項目（まだ有効になっていないもの）。除いたあとで、いちばん小さい ID だけを選ぶ。この2条件は、`validate-knowledge-sync-task-graph.py` が実行できる項目の集合を計算し直すときの条件と同じである。片方だけを使うと検査スクリプトと食い違い、その周回は不合格（FAIL）になる。実行したか、条件付きで何もしなかった根拠を残し、その項目を `done` にしてから計算し直す。実行中に必須の追加作業を見つけたときだけ、同じスキルの `build-self-reflection-entry.py` で、同じチェックリストの末尾に項目を追記する。この項目は `C7` 以降の id と、実際に先に終わっているべき項目（`C6` 以外）への `depends_on` を持つ（別のタスクグラフの状態は作らない）。実際に使う `ready_set` が空で、後の周回から有効になる追記項目があるときは、その周回を「未選択」の実行記録として残し、`C6` を先に進めない。
+- `--dry-run` のときも、C1→C2（何もしない）→C3（何もしない）→C4（何もしない）→C5 の順に選んで実行記録を残す。Phase2 の抽出、Phase3 の分割の修復、Phase5 のグラフへの書き込みは禁止する。条件を満たさない項目を「未選択」のまま残さない。
+- C6 では、先に `selected_item` の実行記録を追記する。C6 を `done` にし、全体を `completed` の候補に更新してから、最後に下の検証を実行する。終了コードが 0 でなければ `completed` を確定しない。`status: handed_off` にして、違反を `open_issues` に残す。
+- `max_loops` に達したときは合格とみなさない。残ったチェック項目を `open_issues` に残し、人のレビューに差し戻す。
 
-### dependency graph knowledge consult
+### 依存グラフのナレッジ参照（dependency graph knowledge）
 
-各 surface の着手前に `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-capability-dependency-graph.py" "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}"` の出力を `$PROJECT_ROOT/eval-log/` の派生JSONへ保存する。通常実行では dangling/cycle が無いときだけ同じ skill 配下の `build-capability-graph-knowledge-entry.py` へ graph path と `--target-knowledge-dir "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/knowledge"` を渡し、`source_ref` 付き要約をappend/mergeする。`--dry-run` では extract 結果を eval-log 内でのみ consult し、record と plugin `knowledge/` write を no-op trace にする。通常時は `knowledge/knowledge-capability-graph.json` を consult し、未完成依存を先に実行しない。この knowledge は実行順stateではなく派生判断であり、progress checklistだけを唯一のtruthとする。
+各構成要素に取りかかる前に、`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scripts/extract-capability-dependency-graph.py" "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}"` の出力を `$PROJECT_ROOT/eval-log/` の派生 JSON に保存する。通常の実行では、宙に浮いた参照も循環も無いときだけ、同じスキルの `build-capability-graph-knowledge-entry.py` にグラフのパスと `--target-knowledge-dir "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/knowledge"` を渡し、`source_ref` 付きの要約を追記または統合する。`--dry-run` では extract 結果を eval-log 内でのみ consult し、record と plugin `knowledge/` write を no-op trace にする（抽出結果は `eval-log/` の中だけで参照し、記録とプラグインの `knowledge/` への書き込みは行わずに実行記録だけを残す）。通常は `knowledge/knowledge-capability-graph.json` を参照し、依存先が終わっていないものを先に実行しない。このナレッジは実行順の状態ではなく、依存グラフから導いた派生の判断である。唯一の正となる状態は、進捗ファイルのチェックリストだけとする。
 
 ### ゴールシーク検証
 
-Anchor Step と依存順消費を同時に機械検証する。absence-as-violation とし、task-graph なのに `ready_set` / `selected_item` trace が無い場合は失敗させる。申告 `ready_set` は信用せず、checklist・過去の `selected_item`・`available_from_iteration` から各周回の ready 全集合を再計算し、未消費の `C6` 以外itemがある間は completion gate `C6` を effective ready から除く。以下を順に実行し、両方 exit 0 を必須とする。前者の正本は `required_keys` / `original_goal_hash` / `hashlib.sha256` を検査し、後者は追記itemが `C6` より前に全てdoneとなる `self-reflect 完了 gate` を含む依存順消費を検査する。
+Anchor Step と依存順消費を、まとめて機械的に検証する。記録が無いことも違反とみなす。`task-graph` なのに `ready_set` / `selected_item` の実行記録が無ければ失敗にする。記録された `ready_set` は信用しない。チェックリスト・過去の `selected_item`・`available_from_iteration` から、各周回の実行できる項目の全集合を計算し直す。`C6` 以外にまだ消費されていない項目がある間は、完了ゲート `C6` を実際に使う `ready_set` から除く。以下を順に実行し、両方とも終了コード 0 であることを必須とする。共通アンカーの初回固定・必須キー・検査範囲・終了コードは `../../references/goal-seek-anchor-contract.md` が正本。後者は依存順消費を検査する。この検査には、追記した項目がすべて `C6` より前に `done` になることを求める `self-reflect 完了 gate` も含まれる。
 
 ```bash
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek-anchor.py" \
@@ -211,32 +232,32 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/skills/run-ubm-knowledge-sync/scr
   "$PROJECT_ROOT/eval-log/ubm-goal-setting/run-ubm-knowledge-sync/run-ubm-knowledge-sync-intermediate.jsonl"
 ```
 
-- **inner ループ (IN1)**: Phase1 で `detect-knowledge-updates.py --registry knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM [--all|--since]` を実行し、NEW/MODIFIED を registry との MD5 照合で漏れなく検知する。
-- **outer ループ (OUT1)**: 既知の更新済みソースを投入し、knowledge-extractor が6カテゴリへ正しく分類し router.json/registry.json が同期完了することを受入テストで確認する。
+- **内側ループ（IN1）**: Phase1 で `detect-knowledge-updates.py --registry knowledge/registry.json --sources $UBM_VAULT_ROOT/05_Project/UBM [--all|--since]` を実行し、NEW/MODIFIED を登録簿（`registry.json`）との MD5 照合で漏れなく見つける。
+- **外側ループ（OUT1）**: 更新済みだとわかっているソースを入れ、`knowledge-extractor` が6カテゴリへ正しく分類し、`router.json`/`registry.json` の同期が終わることを受け入れテストで確かめる。
 
-## Key Rules
+## 守ること
 
-- **検知対象**: `$UBM_VAULT_ROOT/05_Project/UBM/` 配下の全 `.md`（YouTube/合宿/月報フィードバック/動画教材/ルート直下）。`05_Project/UBM/目標設定/`（ユーザー自身の目標記録＝北原ナレッジ非該当）は **consumer 側で除外**する。
-- **抽出モード**: 引数なし=未処理のみ / `--all`=全件強制 NEW（mode:full 全再構築・knowledge-extractor Rule F）/ `--since YYYY-MM-DD`=指定日以降 / `--dry-run`=検知のみで書込なし。
-- **必須フィールド**: 各エントリに `content`/`background`/`intent`/`root_cause`/`expected_outcome` 等（`schema.json` 準拠）。引用は北原さんの原文を正確に抜き出す（要約でなく引用）。分類はソース種別でなく**内容の種類**で行う。
-- **命名規則（厳守）**: `{category}-{subtopic}.json`。subtopic は内容を英語で表現（relationship/organization/0to1 等）。**連番 `-1`/`-2`/`-a`/`-b` は絶対禁止**（ファイル名だけで対象読者が分かること）。
-- **分割基準の二層化**: 25エントリ超過は意味単位の分割検討トリガー、500行超過は `check-knowledge-split.py` の機械的な肥大ガード。両者が衝突する場合は 25エントリ基準でサブテーマを設計し、500行ガードを必ず解消する。
-- **registry の file_hash**: Bash の md5 由来 32文字ハッシュを記録。日付文字列・偽値の使用は禁止。`extracted_entry_ids` は null 禁止（次回 MODIFIED 検知時の削除に使用）。
-- **MODIFIED 処理**: registry の `extracted_entry_ids` を辿って既存エントリを削除 → 全件再抽出 → registry を上書き（Case A/B は knowledge-extractor の Step U-1〜U-4 を正本とする）。
-- **legacy null の移行**: シード registry の `extracted_entry_ids: null` 7件（`_note: legacy`）は、初回 MODIFIED 検知時に該当ソース由来のエントリを全削除 → 再抽出で `extracted_entry_ids` を backfill し、以後は null 禁止を適用する。
-- **途中失敗の再開**: 最大20ファイルは並列 transaction ではなく1 sourceずつ処理する。source ごとに `knowledge/*.json` → router 再集計 → idempotency key 付き sync-log → registry の順で確定し、registry の `(file_path,file_hash,status=processed)` を唯一の commit point とする。registry 確定前の失敗は同じ source を再実行し、content/source 重複検査と sync-log key で冗等に収束させる。commit 後の source は detect が再選択しない。未 commit source を残したまま次へ進まない。
+- **検知の対象**: `$UBM_VAULT_ROOT/05_Project/UBM/` の下にある `.md`（YouTube/合宿/月報フィードバック/動画教材/`UBM/` 直下）。利用者自身の記録で北原ナレッジに当たらない `05_Project/UBM/目標設定/`（`run-ubm-goal-setting` の保存先）と `05_Project/UBM/挑戦宣言/`（`run-ubm-challenge` の保存先）は、**`detect-knowledge-updates.py` が検知の段階で除く**。除外の正本は同スクリプトの `EXCLUDED_SUBDIRS` で、読む側で出力の行を除く手順は持たない（スクリプトを直接呼んでも同じ結果になる）。利用者の記録を置くディレクトリを増やすときは、この定数に足す。
+- **抽出モード**: 引数なし=未処理のものだけ / `--all`=全件を強制的に `NEW` とする（`mode:full` ですべて作り直す。`knowledge-extractor` の Rule F）/ `--since YYYY-MM-DD`=指定日より後に更新された同一ハッシュも再処理する追加条件（未登録・ハッシュ変更は日付に関係なく対象） / `--dry-run`=検知だけで、書き込まない。
+- **必須フィールド**: 各エントリに `content`/`background`/`intent`/`root_cause`/`expected_outcome` などを持たせる（`schema.json` に従う）。引用は北原さんの原文を正確に抜き出す（要約ではなく引用）。分類はソースの種類ではなく、**内容の種類**で行う。
+- **命名規則（厳守）**: `{category}-{subtopic}.json`。`{subtopic}` は内容を英語で表す（relationship/organization/0to1 など）。**連番 `-1`/`-2`/`-a`/`-b` は絶対禁止**（ファイル名だけで、誰向けの内容かが分かるようにする）。
+- **分割基準は二層**: 25エントリを超えたら、意味のまとまりでの分割を検討するきっかけにする。500行を超えたかどうかは、`check-knowledge-split.py` が肥大を防ぐガードとして機械的に調べる。両者がぶつかるときは、25エントリの基準でサブテーマを設計し、500行のガードを必ず解消する。
+- **登録簿の `file_hash`**: Bash の md5 で求めた32文字のハッシュを記録する。日付の文字列や偽の値を使うのは禁止。`extracted_entry_ids` を `null` にするのは禁止（次に `MODIFIED` を検知したときの削除に使う）。
+- **`MODIFIED` の処理**: 登録簿の `extracted_entry_ids` をたどって既存のエントリを削除 → 全件を再抽出 → 登録簿を上書き（Case A/B は `knowledge-extractor` の Step U-1〜U-4 を正本とする）。
+- **旧形式の `null` の移行**: 初期データの登録簿にある `extracted_entry_ids: null` の7件（`_note: legacy`）は、初めて `MODIFIED` を検知したときに、そのソース由来のエントリをすべて削除 → 再抽出して `extracted_entry_ids` を埋め直す（過去分の埋め戻し）。それ以降は `null` の禁止を適用する。
+- **途中で失敗したときの再開**: 最大20ファイルは、並列のトランザクションにせず、1ソースずつ処理する。ソースごとに `knowledge/*.json` → ルーターの再集計 → 冪等キー付きの `sync-log.jsonl` → 登録簿の順に確定し、registry の `(file_path,file_hash,status=processed)` を唯一の commit point（確定点）とする。登録簿の確定前に失敗したら同じソースを再実行し、`content`/`source` の重複検査と `sync-log.jsonl` のキーで冪等に収束させる。確定したソースは、検知の段階（`detect-knowledge-updates.py`）が選び直さない。確定していないソースを残したまま次へ進まない。
 
-## Gotchas
+## つまずきやすい点
 
-- **schema は plugin-root 共有 surface**: 本 skill の knowledge-extractor は `knowledge/schema.json` 準拠でエントリを書き、`run-ubm-goal-setting` の info-collector は `router.json` 経由でその `knowledge/*.json` を読む。consumer が schema ファイル自体を直接読む契約ではなく、共有データを schema 準拠に保つことで skill 間を整合させる。
-- **初期シードの非対称**: `registry.json` は実台帳（処理済み67ファイル・移植元の dead path 6件は build 時に除去）を初期値として vendor 済み（初回 sync 全件 NEW 誤検知を回避）。`sync-log.jsonl` は空（0エントリ）で開始し append-only で追記する。
-- **L2 vault 未接続時**: sources が空でも検知0件レポートを正常終了として返す（個人利用で vault 未接続でも FAIL 扱いしない）。L1 curated knowledge は vendor 同梱のため疎通不要。
-- **書き込み保護**: vault ソースは常に read-only。plugin 同梱 `knowledge/*.json` / 同 skill asset / 専用 eval-log 以外は書かず、各 Task は解決済み absolute root と realpath containment を write 前に確認する。
+- **スキーマはプラグイン直下で共有するもの**: このスキルの `knowledge-extractor` は `knowledge/schema.json` に従ってエントリを書く。`run-ubm-goal-setting` の `info-collector` は、`router.json` を通してその `knowledge/*.json` を読む。読む側がスキーマのファイルそのものを直接読む約束ではない。共有するデータをスキーマに合わせておくことで、スキルどうしの整合を保つ。
+- **初期データの非対称**: `registry.json` は、実際の台帳（処理済みの67ファイル。移植元に実在しないパス6件はビルドのときに除いた）を初期値として同梱してある（初回の同期で全件を `NEW` と誤って検知しないため）。`sync-log.jsonl` は空（0エントリ）から始め、追記だけで書き足す。
+- **L2 の vault につながっていないとき**: ソースが空でも、検知0件の報告を正常終了として返す（個人で使っていて vault がつながっていなくても、不合格にしない）。L1 の厳選したナレッジは同梱しているので、接続の確認は要らない。
+- **書き込みの保護**: vault のソースは常に読み取り専用とする。プラグイン同梱の `knowledge/*.json`、同じスキルのアセット、専用の `eval-log/` 以外には書かない。各 Task は、解決済みの絶対パスのルートと、書き込み先の実パス（`realpath`）がその範囲に収まることを、書き込む前に確かめる。
 
-## Additional Resources
+## 関連資料
 
-- **agents**: `knowledge-extractor`（6カテゴリ分類・Rule A-F・router/registry 更新）/ `knowledge-relation-extractor`（read-only 候補辺生成）。どちらも plugin 直下 `agents/`。
-- **scripts**: skill 直下の差分検知・分割・ready/self-reflect/capability graph・task-graph trace 検査と、plugin 直下 `validate-knowledge-graph.py` / `validate-inline-goal-seek-anchor.py`。frontmatter `script_refs` が実パスの正本。
-- **references**: `references/knowledge-sources.md`（取得方法・優先順位）/ `references/knowledge-design-principles.md`（記録対象・必須フィールド・命名規則）。
-- **assets**: `assets/kitahara-principles-db.md`（北原さん原則 DB・新原則発見時に追記する L3 mutable asset）。
-- **knowledge**: plugin 直下 `knowledge/`（`schema.json`/`router.json`/`registry.json`/`sync-log.jsonl` + 6カテゴリ `*.json`）。
+- **エージェント**: `knowledge-extractor`（6カテゴリへの分類・Rule A-F・ルーターと登録簿の更新）/ `knowledge-relation-extractor`（読み取り専用で候補の辺を作る）。どちらもプラグイン直下の `agents/` にある。
+- **スクリプト**: スキル直下には、差分の検知・分割・実行できる項目の計算・自己反映・依存グラフ・`task-graph` の実行記録の検査のスクリプトがある。プラグイン直下には `validate-knowledge-graph.py` / `validate-inline-goal-seek-anchor.py` がある。実際のパスの正本は、フロントマターの `script_refs` とする。
+- **参照資料**: `references/knowledge-sources.md`（取得方法・優先順位）/ `references/knowledge-design-principles.md`（記録対象・必須フィールド・命名規則）。
+- **付属資料**: `assets/kitahara-principles-db.md`（北原さんの原則の DB。新しい原則を見つけたときに追記する、書き換えてよい L3 のアセット）。
+- **ナレッジ**: プラグイン直下の `knowledge/`（`schema.json`/`router.json`/`registry.json`/`sync-log.jsonl` と、6カテゴリの `*.json`）。

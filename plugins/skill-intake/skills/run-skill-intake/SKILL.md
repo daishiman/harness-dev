@@ -46,8 +46,8 @@ schema_refs:
   - schemas/phase5-purpose.schema.json
   - schemas/phase8-summary.schema.json
 reference_refs:
-  - ref-workflow-sequence
-  - ref-handoff-contract
+  - references/workflow-sequence.md
+  - references/handoff-contract.md
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
   activation_state: semantic_evaluator_started
   max_iterations: 3

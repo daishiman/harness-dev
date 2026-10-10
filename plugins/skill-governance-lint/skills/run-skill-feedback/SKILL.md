@@ -1,6 +1,6 @@
 ---
 name: run-skill-feedback
-description: 既存スキルへの「こう直してほしい」要望を受け取って Notion 改善要望 DB にプッシュしたいとき、利用者発端のフィードバックループを起動したいときに使う。
+description: 既存スキルへの改善要望を構造化するとき、Notion 改善要望 DB へ登録するときに使う。
 triggers:
   - "スキルや機能を改善したいとき"
   - "プラグイン・スキルへの要望や不満があるとき"
@@ -36,6 +36,7 @@ responsibility_refs:
   - workflow-manifest.json
 script_refs:
   - scripts/notion-submit-improvement.py
+  - scripts/validate-inline-goal-seek-anchor.py
   - plugins/harness-creator/scripts/notion_config.py
   - scripts/lint-feedback-protocol.py
 source: doc/ClaudeCodeスキルの設計書/
@@ -45,6 +46,7 @@ audit-trigger: on-change
 manifest: workflow-manifest.json
 completeness_exempt:
   - "prompts: 対話手順は doc/notion-schema/skill-list.schema.json#feedback_protocol 正本 (Notion §7 と同一) から本文に展開している (初見実行の自己完結性のため)。整合は scripts/lint-feedback-protocol.py で発火条件と参照経路を検証。prompt-creator の R-id 単位 7 層プロンプトは適用外 (二重定義禁止 [[project_ssot_dedup_mechanism]])。"
+combinators: [with-feedback-contract]
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -86,6 +88,20 @@ artifact_delivery:
   release: explicit-only
   exhaustive: explicit-only
 ---
+
+# run-skill-feedback
+
+> **配布注記**: 本 skill の `script_refs` / `schema_refs` は repo-root 配置 (`scripts/`, `doc/notion-schema/`) に依存する。distribution: repo-bundled 前提 (単独配布非対応)。
+
+## Purpose & Output Contract
+
+利用者が既存スキルに対して「こう直してほしい」と感じた瞬間に発火し、構造化フィードバックを Notion 改善要望 DB へ N:1 relation 付きでプッシュする。スキル一覧の `未対応要望数` rollup が自動更新され、優先度判断シグナルになる。
+
+**責務境界**: 本 skill の責務は「要望の**収集**と優先度シグナル化」まで。収集した要望を実際の改善 (plugin-dev-planner の改善計画 → harness 再構築) へ繋ぐのは**人間ブリッジ** (`plugins/harness-creator/references/feedback-to-improvement-runbook.md` Stage 2-3)。本 skill も `未対応要望数` rollup も改善着手を自動発火しない (fail-open 回避のため Notion は機械 SSOT にしない設計)。
+
+**前提**: 利用者はプラグイン名・スキル名を知らない。「何をしようとしていたか」という目的から逆算して対象を同定してから要望を収集する。
+
+**禁則**: 利用者の承認なしの Notion 登録、未登録プラグインへの投入、実行していない検証の成功報告は禁止する。
 
 ## Runtime root contract
 
@@ -136,18 +152,6 @@ python3 "<GUARD_PLUGIN_ROOT>/scripts/build-external-mutation-guard.py" execute -
 Do not use an auto-approval flag or invoke the mutation command outside this receipt flow.
 <!-- /external-mutation-guard-cli:v1 -->
 
-
-# run-skill-feedback
-
-> **配布注記**: 本 skill の `script_refs` / `schema_refs` は repo-root 配置 (`scripts/`, `doc/notion-schema/`) に依存する。distribution: repo-bundled 前提 (単独配布非対応)。
-
-## Purpose & Output Contract
-
-利用者が既存スキルに対して「こう直してほしい」と感じた瞬間に発火し、構造化フィードバックを Notion 改善要望 DB へ N:1 relation 付きでプッシュする。スキル一覧の `未対応要望数` rollup が自動更新され、優先度判断シグナルになる。
-
-**責務境界**: 本 skill の責務は「要望の**収集**と優先度シグナル化」まで。収集した要望を実際の改善 (plugin-dev-planner の改善計画 → harness 再構築) へ繋ぐのは**人間ブリッジ** (`plugins/harness-creator/references/feedback-to-improvement-runbook.md` Stage 2-3)。本 skill も `未対応要望数` rollup も改善着手を自動発火しない (fail-open 回避のため Notion は機械 SSOT にしない設計)。
-
-**前提**: 利用者はプラグイン名・スキル名を知らない。「何をしようとしていたか」という目的から逆算して対象を同定してから要望を収集する。
 
 ## 発火条件 (SSOT)
 
@@ -208,11 +212,22 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ### ゴールシーク配線
 
-- **progress ログ**: `eval-log/run-skill-feedback-intermediate.jsonl`（周回ごとに append）
-- **goal-spec**: `eval-log/goal-spec.json`（初回起動時に original_goal を記録）
-- **コンテキスト分離**: 多フェーズ実行時は SubAgent へ fork（allowed-tools: Agent）
-- **打ち切り**: `max_loops: 5` を超えたら open_issues に記録して human_review へ差し戻す
-- **ドリフト検知**: 各周回末に original_goal_hash と現 goal-spec の hash を比較し乖離 > 閾値なら Anchor Step を発火する
+- **ルート**: host の作業ディレクトリを絶対 `project_root` として固定する。`SKILL_ROOT` は host が示した本 SKILL.md の実在する絶対ディレクトリから解決し、環境変数が空なら連結しない。
+- **progress**: `project_root/eval-log/run-skill-feedback-progress.json`。初回に空でない依頼文 `original_goal` を固定し、UTF-8 の `hashlib.sha256(original_goal.encode("utf-8")).hexdigest()` を `original_goal_hash` に保存する。目標の変更や hash の取り直しで検査を通さない。
+- **中間成果物**: `project_root/eval-log/run-skill-feedback-intermediate.jsonl`。初回 iteration=0 と各周回末に append する。`required_keys` は同梱 validator の `REQUIRED_KEYS`（`iteration`, `original_goal`, `current_goal_snapshot`, `delta_from_original`, `merged_directive_for_next`, `drift_signal`）が正本。
+- **goal-spec**: `project_root/eval-log/goal-spec.json`。初回の依頼とチェックリストを記録する。各周回の手順生成には初回の `original_goal` と直前の `merged_directive_for_next` を必須入力として渡し、単独で再導出しない。
+- **コンテキスト分離**: 必要に応じ SubAgent へ fork し、同じルートとアンカー入力を渡す（allowed-tools: Agent）。
+- **打ち切り**: `max_loops: 5` で必ず停止する。未達条件は progress の `open_issues` に記録しユーザーへ返す。未達を完了として扱わない。
+
+### ゴールシーク検証
+
+毎周回末と完了報告前に、上のルートから絶対 `progress_path` / `intermediate_path` を解決して以下を実行する。validator は生成元 `run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py` と byte 一致で同梱される（`lint-vendored-ssot.py` が一致を強制する）。実行時は兄弟プラグインの存在に依存しない。
+
+```bash
+python3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"
+```
+
+検査範囲は証跡の実在・非空JSONL・全行の必須キー・original_goalの不変性・固定SHA-256一致。本文品質・Notion投入・周回上限・受領書の整合は本スキルの固有検証で確認する。終了コード0だけをアンカー合格とし、1は契約違反、2はIO/JSON/引数の誤りとして停止する。検査を実行せずに合格を宣言しない。
 
 ## 局面カタログ (順序は都度判断)
 

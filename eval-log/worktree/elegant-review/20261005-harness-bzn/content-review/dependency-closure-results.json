@@ -1,0 +1,54 @@
+{
+  "case": "shared_dependency_requires_complete_declarations",
+  "result": "PASS_REPRODUCED_SOURCE_C4_FAILURE",
+  "current_digest_unchanged_after_semantic_common_mutation": [
+    "run-dev-graph-decompose",
+    "run-dev-graph-init",
+    "run-dev-graph-node",
+    "run-dev-graph-render",
+    "run-dev-graph-requirements",
+    "run-dev-graph-schedule",
+    "run-dev-graph-status",
+    "run-dev-graph-sync",
+    "run-dev-graph-system-spec"
+  ],
+  "three_declarations_detect_mutation": [
+    "run-dev-graph-init",
+    "run-dev-graph-node",
+    "run-dev-graph-sync"
+  ],
+  "three_declarations_still_miss_mutation": [
+    "run-dev-graph-decompose",
+    "run-dev-graph-render",
+    "run-dev-graph-requirements",
+    "run-dev-graph-schedule",
+    "run-dev-graph-status",
+    "run-dev-graph-system-spec"
+  ],
+  "all_nine_declarations_detect_mutation": [
+    "run-dev-graph-decompose",
+    "run-dev-graph-init",
+    "run-dev-graph-node",
+    "run-dev-graph-render",
+    "run-dev-graph-requirements",
+    "run-dev-graph-schedule",
+    "run-dev-graph-status",
+    "run-dev-graph-sync",
+    "run-dev-graph-system-spec"
+  ],
+  "minimal_recommended_fix": "Add ../../scripts/_common.py to the existing script_refs of all nine consuming skills.",
+  "scope": "Current closure implementation unchanged; only copied source and copied declarations mutated.",
+  "original_source_edits": false,
+  "source": "/Users/dm/dev/dev/個人開発/harness/plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-verdict.py",
+  "current_behavior_digests": {
+    "run-dev-graph-decompose": "e93f7b20fd0d6d966efb52f4d49caeabd0499e75055563cca29c007720a619c3",
+    "run-dev-graph-init": "b7878028e93c4de9f92135c75b7f455d42e7c6ba5a90dab45cea3aca51e739d6",
+    "run-dev-graph-node": "4902ae63f9feab5287013eea3e1496a430c4faa894faa40d5220618c53be8b41",
+    "run-dev-graph-render": "2d773c4dd38ab2d9c3f68d6bbccbac8cf7ae3bedb882154b5922e227724dbf54",
+    "run-dev-graph-requirements": "9508d103fc4ebe86df6482fc8feaee10f0faa48c0ebc0e9e37181139dcaaf3df",
+    "run-dev-graph-schedule": "d338321384cc5a7cef9ae2acd07ccc5bb204c22be072a0f455ac86e0f422c4ad",
+    "run-dev-graph-status": "a771e3de83c6e82f36375bfa5b35ec6ec3025c611c908c0f9c407697d1e4d412",
+    "run-dev-graph-sync": "7fca0f37d8346eb9866bcf8f9bb959351bb1e2b2e14e6be80fb88d9cad7a78de",
+    "run-dev-graph-system-spec": "81c375b828c248707b381491ce57c7a3802d0f41e9d72a856888f1d9b603f087"
+  }
+}

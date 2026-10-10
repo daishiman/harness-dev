@@ -44,9 +44,12 @@ def no_name_change(monkeypatch):
     monkeypatch.setattr(G, "_name_field_changed", lambda path: False)
 
 
-def test_classify_plugins_dir_is_p0(no_name_change):
-    assert G.classify_change("plugins/foo/skills/bar/SKILL.md") == "P0_breaking"
-    assert G.classify_change("plugins/newplugin/config/x.json") == "P0_breaking"
+def test_existing_plugin_content_is_p2(no_name_change):
+    assert G.classify_change("plugins/foo/skills/bar/SKILL.md") == "P2_content"
+    assert G.classify_change("plugins/foo/config/x.json") == "P2_content"
+
+def test_new_plugin_is_p0(no_name_change):
+    assert G.classify_change("plugins/newplugin/config/x.json", new_plugin=True) == "P0_breaking"
 
 
 def test_classify_sink_adapter_is_p0(no_name_change):
@@ -88,20 +91,14 @@ def test_classify_fallback_is_p2(no_name_change):
 # --- classify_change with name-field diff (SKILL.md under non-plugins root) ---
 def test_classify_skill_md_name_change_is_p0(monkeypatch):
     monkeypatch.setattr(G, "_name_field_changed", lambda path: True)
-    # plugins/ で始まると先に P0 になるので、ロジックの SKILL.md 経路を踏むには
-    # name 変更=True を別途確認。plugins prefix だと無条件 P0 だが、これも P0 で正しい。
+    # 公開nameの変更は既存contentの変更と分離する。
     assert G.classify_change("plugins/p/skills/s/SKILL.md") == "P0_breaking"
 
 
-def test_classify_new_skill_md_status_A_is_p1(monkeypatch):
-    # _SKILL_MD_RE は plugins/ 前提だが、plugins prefix の早期 return が先。
-    # 早期 return を無効化して status 経路を検証する。
-    monkeypatch.setattr(G, "_name_field_changed", lambda path: False)
-    orig_startswith = str.startswith
-
-    # plugins/ 早期 return を回避するため、パスを一時的に非 plugins にできない
-    # (正規表現が plugins/ 前提)。よって早期 return が常に勝つことを明示テスト。
-    assert G.classify_change("plugins/p/skills/s/SKILL.md", status="A") == "P0_breaking"
+@pytest.mark.parametrize("status", ["A", "D", "R100"])
+def test_skill_lifecycle_change_is_p1(monkeypatch, status):
+    monkeypatch.setattr(G, "_name_field_changed", lambda path: True)
+    assert G.classify_change("plugins/p/skills/s/SKILL.md", status=status) == "P1_structural"
 
 
 # --- needs_proposal ----------------------------------------------------------
@@ -123,12 +120,13 @@ def test_needs_proposal_unknown_category_false():
 def test_has_recent_changelog_match(tmp_path, monkeypatch):
     log = tmp_path / "governance-log.jsonl"
     log.write_text(
-        json.dumps({"target_path": "plugins/foo/skills/bar"}) + "\n"
+        json.dumps({"target_path": "plugins/foo/skills/bar", "approver": "solo_operator", "proposal_id": "selected"}) + "\n"
         + "not-json-line\n",  # 不正行は無視される
         encoding="utf-8",
     )
     monkeypatch.setattr(G, "CHANGELOG_PATH", log)
-    assert G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md") is True
+    assert not G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md")
+    assert G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md", proposal_id="selected")
 
 
 def test_has_recent_changelog_no_match(tmp_path, monkeypatch):
@@ -145,7 +143,8 @@ def test_has_recent_changelog_missing_file(tmp_path, monkeypatch):
 
 # --- check_cooldown ----------------------------------------------------------
 def test_check_cooldown_bypass(tmp_path, monkeypatch):
-    assert G.check_cooldown("p", "P0_breaking", PolicyDict, bypass=True) is True
+    monkeypatch.setattr(G, "CHANGELOG_PATH", tmp_path / "absent.jsonl")
+    assert G.check_cooldown("p", "P0_breaking", PolicyDict, bypass=True) is False
 
 
 def test_check_cooldown_none_rule(tmp_path, monkeypatch):
@@ -267,7 +266,7 @@ def test_main_blocks_unapproved_p0(tmp_path):
     # P0_breaking + changelog 未記録 → block → exit 1
     assert r.returncode == 1, (r.stdout, r.stderr)
     assert "BLOCK" in r.stderr
-    assert "P0_breaking" in r.stderr
+    assert "P1_structural" in r.stderr
 
 
 def test_main_missing_policy_exits_2(tmp_path):
@@ -288,12 +287,13 @@ def test_changed_files_parses_output(monkeypatch):
     assert G.changed_files("base") == ["a.py", "b.md"]
 
 
-def test_changed_files_git_error_returns_empty(monkeypatch):
+def test_changed_files_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_files("base") == []
+    with pytest.raises(G.GitDiffError):
+        G.changed_files("base")
 
 
 def test_changed_file_statuses_parses(monkeypatch):
@@ -306,12 +306,13 @@ def test_changed_file_statuses_parses(monkeypatch):
     assert statuses == {"new.py": "A", "mod.py": "M"}
 
 
-def test_changed_file_statuses_git_error_returns_empty(monkeypatch):
+def test_changed_file_statuses_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G.changed_file_statuses("base") == {}
+    with pytest.raises(G.GitDiffError):
+        G.changed_file_statuses("base")
 
 
 def test_name_field_changed_true(monkeypatch):
@@ -331,12 +332,13 @@ def test_name_field_changed_false_when_no_name_line(monkeypatch):
     assert G._name_field_changed("p/SKILL.md") is False
 
 
-def test_name_field_changed_git_error_false(monkeypatch):
+def test_name_field_changed_git_error_raises(monkeypatch):
     def boom(*a, **k):
         raise subprocess.CalledProcessError(128, "git")
 
     monkeypatch.setattr(G.subprocess, "check_output", boom)
-    assert G._name_field_changed("p/SKILL.md") is False
+    with pytest.raises(G.GitDiffError):
+        G._name_field_changed("p/SKILL.md")
 
 
 # --- check_cooldown additional paths ----------------------------------------
@@ -372,6 +374,20 @@ def test_check_cooldown_bad_timestamp_format_skipped(tmp_path, monkeypatch):
 
 
 # --- main() called in-process (deps monkeypatched, no real git) -------------
+def test_main_inprocess_git_failure_exits_2(monkeypatch, capsys):
+    # git diff 失敗は「変更なし」ではなく exit 2 (fail-closed)
+    def boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+
+    monkeypatch.setattr(G, "load_policy", lambda: PolicyDict)
+    monkeypatch.setattr(G.subprocess, "check_output", boom)
+    rc = G.main(["prog"])
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "ERROR: git diff" in captured.err
+    assert "blocked=" not in captured.out
+
+
 def test_main_inprocess_no_changes(monkeypatch, capsys):
     monkeypatch.setattr(G, "load_policy", lambda: PolicyDict)
     monkeypatch.setattr(G, "changed_files", lambda base: [])
@@ -412,3 +428,118 @@ def test_main_inprocess_cooldown_block(monkeypatch, capsys):
     rc = G.main(["prog"])
     assert rc == 1
     assert "cooldown" in capsys.readouterr().err
+
+
+def test_approval_targets_are_scoped_and_scalar_list_equivalent(tmp_path, monkeypatch):
+    log = tmp_path / "governance-log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    for target in ("plugins/foo/skills/bar", ["plugins/foo/skills/bar"]):
+        log.write_text(json.dumps({"target_path": target, "approver": "solo_operator", "proposal_id": "selected"}) + "\n")
+        assert G.has_recent_changelog("plugins/foo/skills/bar/SKILL.md", proposal_id="selected")
+        assert not G.has_recent_changelog("plugins/foo/skills/bar-extra/SKILL.md", proposal_id="selected")
+        assert not G.has_recent_changelog("plugins/unrelated/skills/bar/SKILL.md", proposal_id="selected")
+
+
+def test_unapproved_record_does_not_authorize(tmp_path, monkeypatch):
+    log = tmp_path / "governance-log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    log.write_text(json.dumps({"target_path": "scripts/x.py", "approver": "auto"}) + "\n")
+    assert not G.has_recent_changelog("scripts/x.py")
+
+
+def test_current_proposal_does_not_block_itself_but_prior_change_does(tmp_path, monkeypatch):
+    import datetime
+    log = tmp_path / "governance-log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    current = {"target_path": ["scripts/x.py"], "approver": "solo_operator",
+               "category": "P1_structural", "proposal_id": "current",
+               "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()}
+    log.write_text(json.dumps(current) + "\n")
+    assert G.check_cooldown("scripts/x.py", "P1_structural", PolicyDict, proposal_id="current")
+    assert not G.check_cooldown("scripts/x.py", "P1_structural", PolicyDict)
+    previous = {**current, "proposal_id": "previous"}
+    log.write_text(json.dumps(previous) + "\n" + json.dumps(current) + "\n")
+    assert not G.check_cooldown("scripts/x.py", "P1_structural", PolicyDict, proposal_id="current")
+    current["incident_fix"] = True
+    log.write_text(json.dumps(previous) + "\n" + json.dumps(current) + "\n")
+    assert G.check_cooldown("scripts/x.py", "P1_structural", PolicyDict, proposal_id="current")
+    current["approver"] = "auto"
+    log.write_text(json.dumps(previous) + "\n" + json.dumps(current) + "\n")
+    assert not G.check_cooldown("scripts/x.py", "P1_structural", PolicyDict, proposal_id="current")
+
+
+def test_main_uses_same_base_for_name_diff(monkeypatch):
+    monkeypatch.setattr(G, "load_policy", lambda: PolicyDict)
+    monkeypatch.setattr(G, "changed_files", lambda base: ["plugins/p/skills/run-x/SKILL.md"])
+    monkeypatch.setattr(G, "changed_file_statuses", lambda base: {})
+    observed = []
+    monkeypatch.setattr(G, "_name_field_changed", lambda path, base: observed.append(base) or False)
+    assert G.main(["prog", "--base", "release-base"]) == 0
+    assert observed == ["release-base...HEAD"]
+
+
+def test_current_content_hash_binds_approval_and_self_cooldown(tmp_path, monkeypatch):
+    import datetime
+    import hashlib
+    monkeypatch.chdir(tmp_path)
+    target = tmp_path / "rubric.json"
+    target.write_text("reviewed content")
+    log = tmp_path / "governance-log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    entry = {"target_path": ["rubric.json"], "approver": "solo_operator",
+             "category": "P1_structural", "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+             "target_sha256": {"rubric.json": hashlib.sha256(target.read_bytes()).hexdigest()}}
+    log.write_text(json.dumps(entry) + "\n")
+    assert G.has_recent_changelog("rubric.json")
+    assert G.check_cooldown("rubric.json", "P1_structural", PolicyDict)
+    target.write_text("unreviewed content")
+    assert not G.has_recent_changelog("rubric.json")
+    assert not G.check_cooldown("rubric.json", "P1_structural", PolicyDict)
+
+
+def test_bypass_flag_requires_current_approved_incident_hash(tmp_path, monkeypatch):
+    import hashlib
+    monkeypatch.chdir(tmp_path)
+    path = Path("guarded.json")
+    path.write_text("approved")
+    entry = {"target_path": [str(path)], "approver": "independent-reviewer", "status": "approved", "category": "P1_structural", "proposal_id": "current", "target_sha256": {str(path): hashlib.sha256(path.read_bytes()).hexdigest()}}
+    log = tmp_path / "log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    log.write_text(json.dumps(entry) + "\n")
+    assert not G.check_cooldown(str(path), "P1_structural", PolicyDict, bypass=True, proposal_id="current")
+    entry["incident_fix"] = True
+    log.write_text(json.dumps(entry) + "\n")
+    assert G.check_cooldown(str(path), "P1_structural", PolicyDict, bypass=True, proposal_id="current")
+    path.write_text("changed after approval")
+    assert not G.check_cooldown(str(path), "P1_structural", PolicyDict, bypass=True, proposal_id="current")
+
+
+def test_cooldown_applies_across_categories(tmp_path, monkeypatch):
+    import datetime
+    log = tmp_path / "log.jsonl"
+    monkeypatch.setattr(G, "CHANGELOG_PATH", log)
+    log.write_text(json.dumps({"target_path": ["same.json"], "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(), "category": "P0_breaking", "approver": "reviewer"}) + "\n")
+    assert not G.check_cooldown("same.json", "P1_structural", PolicyDict)
+
+
+def test_installed_explicit_policy_from_consumer_cwd(tmp_path, monkeypatch):
+    consumer = tmp_path / "consumer"
+    consumer.mkdir()
+    config = tmp_path / "installed/config/governance-policy.json"
+    config.parent.mkdir(parents=True)
+    config.write_text(POLICY.read_text())
+    monkeypatch.chdir(consumer)
+    assert G.load_policy(config)["change_categories"]
+    monkeypatch.setattr(G, "changed_files", lambda _base: [])
+    monkeypatch.setattr(G, "changed_file_statuses", lambda _base: {})
+    assert G.main(["--policy", str(config), "--report"]) == 0
+    assert G.main(["--help"]) == 0
+    assert G.main(["--policy"]) == 2
+    for invalid in [Path("relative.json"), tmp_path / "absent.json"]:
+        with pytest.raises(SystemExit) as error:
+            G.load_policy(invalid)
+        assert error.value.code == 2
+    config.write_text("{}")
+    with pytest.raises(SystemExit) as error:
+        G.load_policy(config)
+    assert error.value.code == 2

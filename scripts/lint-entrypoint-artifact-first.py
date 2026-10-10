@@ -77,6 +77,13 @@ STATE_MACHINE_KEYS = {
 }
 PRE_CHOICE_HEADING = "## Pre-choice usable artifact execution"
 POST_CHOICE_HEADING = "## Post-choice selected improvement execution"
+PRE_CHOICE_HEADING_JA = "## 選ぶ前の実成果物の作成"
+POST_CHOICE_HEADING_JA = "## 選んだ深さでの改善の実行"
+# 本文は (pre, post) の組を1つだけ使う。組の中で言語を混ぜてはいけない。
+CHOICE_HEADING_PAIRS = {
+    "en": (PRE_CHOICE_HEADING, POST_CHOICE_HEADING),
+    "ja": (PRE_CHOICE_HEADING_JA, POST_CHOICE_HEADING_JA),
+}
 LEGACY_BOUNDARY_HEADING = "## Artifact delivery boundary (hard gate)"
 
 
@@ -217,13 +224,36 @@ def _lint_body_control_flow(body: str) -> list[str]:
     errors: list[str] = []
     if LEGACY_BOUNDARY_HEADING in body:
         errors.append("legacy prose artifact boundary is forbidden; use the structured state_machine")
-    pre_positions = [index for index, line in enumerate(lines) if line.strip() == PRE_CHOICE_HEADING]
-    post_positions = [index for index, line in enumerate(lines) if line.strip() == POST_CHOICE_HEADING]
-    if len(pre_positions) != 1 or len(post_positions) != 1 or pre_positions[0] >= post_positions[0]:
-        errors.append("body requires one ordered pre-choice usable-artifact section and post-choice selected-improvement section")
-        pre_start, post_start = 0, len(lines)
+    positions = {
+        language: (
+            [index for index, line in enumerate(lines) if line.strip() == pre_heading],
+            [index for index, line in enumerate(lines) if line.strip() == post_heading],
+        )
+        for language, (pre_heading, post_heading) in CHOICE_HEADING_PAIRS.items()
+    }
+    languages = [language for language, (pre, post) in positions.items() if pre or post]
+    pre_start, post_start = 0, len(lines)
+    if len(languages) > 1:
+        errors.append(
+            f"mixed {'/'.join(languages)} pre-choice/post-choice headings are forbidden; use one language pair"
+        )
     else:
-        pre_start, post_start = pre_positions[0] + 1, post_positions[0]
+        pre_positions, post_positions = positions[languages[0]] if languages else ([], [])
+        if len(pre_positions) != 1 or len(post_positions) != 1 or pre_positions[0] >= post_positions[0]:
+            canonical_pairs = ", or ".join(
+                f"'{pre_heading}' then '{post_heading}'" for pre_heading, post_heading in CHOICE_HEADING_PAIRS.values()
+            )
+            errors.append(
+                "body requires one ordered pre-choice usable-artifact section and post-choice selected-improvement section: "
+                + canonical_pairs
+            )
+        else:
+            pre_start, post_start = pre_positions[0] + 1, post_positions[0]
+
+    if languages and len(languages) == 1:
+        other_root = "## Runtime root contract" if languages[0] == "ja" else "## 実行時のルートの決め方"
+        if any(line.strip() == other_root for line in lines):
+            errors.append("runtime root contract language mismatch with pre/post-choice headings")
 
     for index, line in enumerate(lines):
         normalized = line.casefold()
@@ -322,6 +352,33 @@ def _lint_workflow_manifest(path: Path) -> list[str]:
     return errors
 
 
+def lint_guarded_external_entrypoint(skill_md: Path) -> list[str]:
+    """Prove a model-callable external workflow retains its execution guard.
+
+    Fail closed on parsing/import/contract errors; metadata alone is not evidence.
+    """
+    try:
+        fm, body = _frontmatter_and_body(skill_md)
+        errors = []
+        if fm.get("effect") != "external-mutation":
+            errors.append("guarded workflow requires effect: external-mutation")
+        if fm.get("runtime_root_policy") != "host-skill-path":
+            errors.append("guarded workflow requires runtime_root_policy: host-skill-path")
+        errors.extend(_lint_contract(fm.get("artifact_delivery", {})))
+        errors.extend(_lint_frontmatter_control_flow(fm))
+        errors.extend(_lint_body_control_flow(body))
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("artifact_delivery_guard_validation", Path(__file__).with_name("build-artifact-delivery.py"))
+        if spec is None or spec.loader is None:
+            raise LintError("artifact delivery guard validator unavailable")
+        delivery = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(delivery)
+        delivery._external_guard_contract(skill_md, fm, {"effect_guards": {"external-mutation": delivery.EXPECTED_EXTERNAL_GUARD_POLICY}})
+        return errors
+    except Exception as exc:
+        return [f"guarded external workflow validation failed: {exc}"]
+
+
 def lint_entrypoint(entrypoint: Entrypoint) -> list[str]:
     try:
         classification = classify_entrypoint(entrypoint)
@@ -335,6 +392,11 @@ def lint_entrypoint(entrypoint: Entrypoint) -> list[str]:
         )
         errors.extend(_lint_frontmatter_control_flow(frontmatter))
         errors.extend(_lint_body_control_flow(body))
+        if entrypoint.plugin == "ubm-goal-setting" and entrypoint.path.parent.name.startswith("run-ubm-"):
+            headings = [line.strip() for line in body.splitlines() if re.match(r"^#{1,2} ", line)]
+            expected = [f"# {frontmatter.get('name')}", "## 目的と出力契約", "## 実行時のルートの決め方", PRE_CHOICE_HEADING_JA, POST_CHOICE_HEADING_JA, "## 全体の流れ"]
+            if headings[:6] != expected:
+                errors.append("ubm opening heading order must be H1 → purpose → runtime root → pre-choice → post-choice → workflow")
         workflow = entrypoint.path.parent / "workflow-manifest.json"
         if workflow.exists():
             errors.extend(_lint_workflow_manifest(workflow))

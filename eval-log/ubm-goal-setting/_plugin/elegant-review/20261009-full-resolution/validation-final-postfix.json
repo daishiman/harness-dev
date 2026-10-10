@@ -1,0 +1,94 @@
+[
+  {
+    "name": "frontmatter_ubm",
+    "argv": [
+      "python3",
+      "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+      "--skills-dir",
+      "plugins/ubm-goal-setting/skills"
+    ],
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "run-skill-feedback: warn: disable-model-invocation=true + user-invocable=true (unusual)\n",
+    "completed_at": "2026-10-09T14:43:47.554680+00:00"
+  },
+  {
+    "name": "frontmatter_hc",
+    "argv": [
+      "python3",
+      "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+      "plugins/harness-creator/skills/run-build-skill/SKILL.md"
+    ],
+    "returncode": 0,
+    "stdout": "ok: run-build-skill\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:47.762779+00:00"
+  },
+  {
+    "name": "frontmatter_prompt",
+    "argv": [
+      "python3",
+      "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
+      "plugins/prompt-creator/skills/run-prompt-creator-7layer/SKILL.md"
+    ],
+    "returncode": 0,
+    "stdout": "ok: run-prompt-creator-7layer\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:47.961890+00:00"
+  },
+  {
+    "name": "package_final",
+    "argv": [
+      "python3",
+      "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+      "--check",
+      "all",
+      "--plugin",
+      "ubm-goal-setting",
+      "--plugins-root",
+      "plugins"
+    ],
+    "returncode": 0,
+    "stdout": "{\n  \"run_id\": \"pkg-validate-ubm-goal-setting-20261009-001\",\n  \"target_plugin\": \"ubm-goal-setting\",\n  \"package_mode\": \"bundle\",\n  \"pkg_checks\": {\n    \"PKG-002\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-003\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-004\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-005\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-006\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-007\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-008\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    },\n    \"PKG-014\": {\n      \"status\": \"pass\",\n      \"findings\": [],\n      \"last_run_at\": \"2026-10-09T14:43:48Z\"\n    }\n  },\n  \"verdict\": {\n    \"total\": 8,\n    \"pass\": 8,\n    \"fail\": 0,\n    \"skip\": 0,\n    \"not_applicable\": 0\n  }\n}\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:48.692551+00:00"
+  },
+  {
+    "name": "step7_final",
+    "argv": [
+      "python3",
+      "plugins/skill-governance-lint/scripts/lint-skill-dep-step7.py",
+      "--skills-dir",
+      "plugins/ubm-goal-setting/skills"
+    ],
+    "returncode": 0,
+    "stdout": "ok: doc/20 Step 7 全5条件 PASS (7 skills)\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:49.292321+00:00"
+  },
+  {
+    "name": "entrypoint_final",
+    "argv": [
+      "python3",
+      "scripts/lint-entrypoint-artifact-first.py",
+      "--repo-root",
+      "."
+    ],
+    "returncode": 0,
+    "stdout": "OK: artifact-first entrypoints valid (127 inventory, 101 enforced, 26 mechanically exempt)\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:51.718051+00:00"
+  },
+  {
+    "name": "artifact_delivery_final",
+    "argv": [
+      "python3",
+      "scripts/build-artifact-delivery.py",
+      "--check"
+    ],
+    "returncode": 0,
+    "stdout": "ARTIFACT_DELIVERY_OK: 22 plugins\n",
+    "stderr": "",
+    "completed_at": "2026-10-09T14:43:54.407431+00:00"
+  }
+]

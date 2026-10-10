@@ -9,21 +9,23 @@ trigger: aggregate-evals (SessionEnd)
 
 ## 集計サマリ
 
-- 評価件数: 286
-- FAIL 率: 1.40%
+- 評価件数: 297
+- FAIL 率: 3.37%
 - 平均スコア: 89.364
 
 ## 検出された異常
 
-- **run-dev-graph-sync**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-09-08", "iterations": null, "negative_feedback_count": 3, "findings_count": 0}, {"date": "2026-10-05", "iterations": 2, "negative_feedback_count": 33, "findings_count": 0}]}
+- **run-dev-graph-node**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-10-05", "iterations": 2, "negative_feedback_count": 2, "findings_count": 0}, {"date": "2026-10-05", "iterations": null, "negative_feedback_count": 1, "findings_count": 3}]}
+- **run-dev-graph-render**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-10-05", "iterations": 2, "negative_feedback_count": 0, "findings_count": 0}, {"date": "2026-10-05", "iterations": null, "negative_feedback_count": 0, "findings_count": 3}]}
+- **run-dev-graph-sync**: friction_density — {"friction_records": 2, "window": 6, "evidence": [{"date": "2026-09-08", "iterations": null, "negative_feedback_count": 3, "findings_count": 0}, {"date": "2026-10-05", "iterations": 2, "negative_feedback_count": 3, "findings_count": 0}]}
 
 ## 主要 finding カテゴリ (top5)
 
 - goal 判定未実施 (trial が完走せず fresh evaluator を起動できない): 3 件
-- fixture resetの危険なrm permission gateで自走停止: 1 件
-- 本題2の feature 入力が C02 writer ではなくその場で書いた2分岐スタブ (step 27) に渡され、fail-closed の証拠にならない: 1 件
-- step 22/24/27 で R0-R4 の責務を自作 Python 1 本で代行 (R1 confidence を定数 0.95 で埋め R2 閾値判定が常に真): 1 件
-- 被験 skill の責務 R0-R4 を自作 Python heredoc で代行し graph/content をそれで書いた (C02 単一 writer の CLI が無いため): 1 件
+- Not booted: required macOS write-contained native interactive session unavailable in prior schedule host probe. No individual target launch or goal execution is claimed.: 3 件
+- L120 writes graph-before.sha/tree-before.sha and L136 redirects preview.json into the native scratchpad outside the explicit fixture/proof-dir-only write boundary. Authentic macro preview does not excuse an invalid full trial.: 1 件
+- Initialization preparation executed writer at L54 without reading init responsibility prompts before those outputs, contrary to the task's responsibility-prompt-before-output execution rule.: 1 件
+- The real Skill call loaded instructions, but the trial never executed build-init-scaffold, R1-R5/C11 validation or the required second initialization. Six roots/config/state/templates/idempotence are not established.: 1 件
 
 ## 提案アクション (要 human review)
 

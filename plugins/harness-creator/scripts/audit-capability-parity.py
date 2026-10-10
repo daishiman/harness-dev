@@ -47,6 +47,7 @@ LITERAL_ROOT_PLACEHOLDER_RE = re.compile(
 RUNTIME_ROOT_POLICY = "host-skill-path"
 RUNTIME_ROOT_CONTRACT_TOKENS = (
     "## Runtime root contract",
+    "runtime_root_policy: host-skill-path",
     "Claude Code",
     "`CLAUDE_PLUGIN_ROOT`",
     "この `SKILL.md` のabsolute path",
@@ -55,6 +56,19 @@ RUNTIME_ROOT_CONTRACT_TOKENS = (
     "literal placeholder",
     "各shell invocation",
     "`prompts/` 配下はこのowner Skill契約を継承する",
+)
+# 日本語の正規形 (2つ目の正規形)。英語の組と同じ役割で、どちらかの組が全部揃えば合格。
+RUNTIME_ROOT_CONTRACT_TOKENS_JA = (
+    "## 実行時のルートの決め方",
+    "runtime_root_policy: host-skill-path",
+    "Claude Code",
+    "`CLAUDE_PLUGIN_ROOT`",
+    "この `SKILL.md` の絶対パス",
+    "プラグインの定義ファイル",
+    "`cwd`",
+    "置き換える前のプレースホルダ",
+    "シェルを呼ぶたび",
+    "`prompts/` の下のファイルも、このスキルの決まりに従う",
 )
 RUNTIME_ROOT_CANONICAL_REF = (
     "../ref-cross-platform-runtime/references/runtime-portability.md"
@@ -300,15 +314,29 @@ def _owner_skill(path: Path, skills_root: Path) -> Path | None:
     return None
 
 
-def _runtime_root_contract_missing(plugin: Path, owner_body: str) -> list[str]:
-    """Accept a complete inline contract or the complete shared canonical contract."""
+def _runtime_root_contract_missing(plugin: Path, owner_body: str, *, has_prompts: bool = True) -> list[str]:
+    """インラインの契約 (英語か日本語) か、共有の正本の契約が、どれか全部揃っていれば受け入れる。"""
 
+    en_tokens = tuple(t for t in RUNTIME_ROOT_CONTRACT_TOKENS if has_prompts or "`prompts/`" not in t)
+    ja_tokens = tuple(t for t in RUNTIME_ROOT_CONTRACT_TOKENS_JA if has_prompts or "`prompts/`" not in t)
+    body = owner_body.split("---", 2)[-1] if owner_body.startswith("---") else owner_body
     inline_missing = [
-        token for token in RUNTIME_ROOT_CONTRACT_TOKENS if token not in owner_body
+        token for token in en_tokens if token not in body
     ]
     if not inline_missing:
         return []
-    if "## Runtime root contract" not in owner_body:
+    inline_missing_ja = [
+        token for token in ja_tokens if token not in body
+    ]
+    if not inline_missing_ja:
+        return []
+    # どちらの組も揃わないときは、多く含まれている方の欠けを示す (同数なら英語の組)。
+    if (
+        len(RUNTIME_ROOT_CONTRACT_TOKENS_JA) - len(inline_missing_ja)
+        > len(RUNTIME_ROOT_CONTRACT_TOKENS) - len(inline_missing)
+    ):
+        inline_missing = inline_missing_ja
+    if not any(h in body for h in ("## Runtime root contract", "## 実行時のルートの決め方")):
         return inline_missing
     if RUNTIME_ROOT_CANONICAL_REF not in owner_body:
         return inline_missing
@@ -393,7 +421,11 @@ def _portable_root_violations(plugin: Path) -> list[dict]:
             body = owner.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             body = ""
-        missing = _runtime_root_contract_missing(plugin, body)
+        missing = _runtime_root_contract_missing(plugin, body, has_prompts=(owner.parent / "prompts").is_dir())
+        ja_choice = "## 選んだ深さでの改善の実行" in body
+        en_choice = "## Post-choice selected improvement execution" in body
+        if (ja_choice and "## Runtime root contract" in body) or (en_choice and "## 実行時のルートの決め方" in body):
+            missing.append("runtime root contract language mismatch")
         if missing:
             violations.append(
                 _violation(

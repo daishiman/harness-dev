@@ -27,43 +27,63 @@ Reads hook input JSON from stdin (Claude Code hook protocol):
 from __future__ import annotations
 import json
 import os
+import posixpath
 import sys
 from pathlib import Path
 
 
 GUARDED_SUFFIXES = (
     "ref-skill-design-rubric/rubric.json",
+    "ref-skill-design-rubric/references/rubric.json",
 )
-GUARDED_GLOB_HINTS = ("assign-", "/rubric.json")
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def registry_guarded_suffixes() -> set[str]:
     suffixes = set(GUARDED_SUFFIXES)
-    for base in (Path.cwd(), Path(os.environ.get("PROJECT_ROOT", Path.cwd()))):
-        registry = base / "creator-kit" / "config" / "rubric-registry.json"
+    bases = (Path.cwd(), Path(os.environ.get("PROJECT_ROOT", Path.cwd())),
+             REPO_ROOT)
+    registries = dict.fromkeys(
+        base / relative for base in bases for relative in (
+            "plugins/skill-governance-config/config/rubric-registry.json",
+            "creator-kit/config/rubric-registry.json",  # older consumer installs
+        )
+    )
+    for registry in registries:
         if not registry.exists():
             continue
         try:
             data = json.loads(registry.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        for item in data.get("rubrics", []):
+        if not isinstance(data, dict) or not isinstance(data.get("rubrics"), list):
+            continue
+        for item in data["rubrics"]:
+            if not isinstance(item, dict):
+                continue
             rubric = item.get("rubric")
-            if rubric:
-                suffixes.add(str(rubric).replace("\\", "/"))
-        break
+            if isinstance(rubric, str) and rubric:
+                suffixes.add(posixpath.normpath(rubric.replace("\\", "/")))
     return suffixes
 
 
 def is_guarded(path: str) -> bool:
     if not path:
         return False
-    p = path.replace("\\", "/")
-    if any(p.endswith(s) for s in registry_guarded_suffixes()):
+    if not isinstance(path, str):
+        return False
+    p = posixpath.normpath(path.replace("\\", "/"))
+    if any(p == s or p.endswith("/" + s) for s in registry_guarded_suffixes()):
         return True
     # assign-*/rubric.json or assign-*/**/rubric.json
-    if "/assign-" in p and p.endswith("/rubric.json"):
+    if any(part.startswith("assign-") for part in p.split("/")) and p.endswith("/rubric.json"):
         return True
+    try:
+        resolved = str(Path(path).resolve())
+        if resolved != p:
+            return is_guarded(resolved)
+    except (OSError, RuntimeError):
+        return False
     return False
 
 

@@ -1,0 +1,32 @@
+......................................................F................. [ 49%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_run_skill_frontmatter_is_inventory_exact[C03] ______________
+
+component = {'boundary': '入力=ローカルgraph、repo-local GitHub設定、GitHub Issues/Projects v2/出力=双方向反映済みgraph、issue_linkage、github_project_...ild_kind': 'skill', 'build_target': 'plugins/dev-graph/skills/run-dev-graph-sync/', 'builder': 'run-skill-create', ...}
+
+    @pytest.mark.parametrize("component", _components(), ids=lambda item: item["id"])
+    def test_run_skill_frontmatter_is_inventory_exact(component: dict) -> None:
+        text = _skill_text(component)
+        fm = _frontmatter(text)
+    
+        assert fm["combinators"] == component["combinators"]
+        assert fm["goal_seek"] == component["goal_seek"]
+        # activation_state は lint-entrypoint-artifact-first.py が heavy skill へ要求する
+        # 契約キー。inventory を正本にしたまま exact 一致を保つため、期待値も inventory から取る。
+>       assert fm["feedback_contract"] == {
+            "activation_state": component["feedback_contract"]["activation_state"],
+            "max_iterations": 3,
+            "criteria": component["feedback_contract"]["criteria"],
+        }
+E       AssertionError: assert {'activation_...terations': 3} == {'activation_...terations': 3}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'criteria': [{'id': 'IN1', 'loop_scope': 'inner', 'text': 'validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/... 'loop_scope': 'outer', 'text': '手動確認フラグが立ったノードについて、確認結果を反映した後の再同期でフラグが解消されることを受入テストが確認する', 'verify_by': 'test'}, ...]} != {'criteria': [{'id': 'IN1', 'loop_scope': 'inner', 'text': 'validate-graph-schema.py と gh-bridge.py で同期ペイロードを送信前検証し取込/... 'loop_scope': 'outer', 'text': '手動確認フラグが立ったノードについて、確認結果を反映した後の再同期でフラグが解消されることを受入テストが確認する', 'verify_by': 'test'}, ...]}
+E         Use -v to get more diff
+
+tests/test_skill_mass_production_contracts.py:48: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_skill_mass_production_contracts.py::test_run_skill_frontmatter_is_inventory_exact[C03]
+1 failed, 144 passed in 81.22s (0:01:21)

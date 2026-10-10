@@ -342,6 +342,13 @@ evaluator は `rubric_hash` を出力に含める（09 章踏襲）。算出は 
 
 CHANGELOG.md にも同 release エントリを追加する。
 
+実例（2026-10-09、日本語の正規見出し）:
+
+- **1.4.0**（minor・緩和）: BD-001・BD-002・PD-002 の見出し候補に `## 目的と出力契約`・`## つまずきやすい点` を別名として追加した。日本語は行全体の一致だけを認め、英語側の判定は変えていない。過去の合格はすべて合格のまま（flip_rate 0.0）。proposal は `plugins/harness-creator/skills/run-skill-rubric-governance/proposals/2026-10-09-ja-heading-alias.md`。
+- **1.5.0**（minor）: PD-002 の禁則の条件に `## 守ること` の行一致を追加し、BD-001 と PD-002 の関係の説明を訂正した（BD-001 は契約節の有無、PD-002 は冒頭30行への集約を独立に見る）。本文中の単語「守ること」だけでは合格しない。記録は `PROP-2026-10-09-ELEGANT-PD002`。
+
+どちらも `run-skill-rubric-governance/log/governance-log.jsonl` と `.claude/changelog/governance-log.jsonl` に記録し、L2 の `upstream_version_pin` と `rubric_hash` を同期した。
+
 ### 8.4 quality-rubric.md 自動再生成 governance-log (DLOOP-001)
 
 `plugins/skill-intake/references/quality-rubric.md` のような **rubric の派生 markdown** は、`rubric.json` 改訂時に CI で自動再生成する。再生成イベントは `eval-log/<plugin>/rubric-governance-log.jsonl` に 1 行 append し、以下フィールドを必須化する:

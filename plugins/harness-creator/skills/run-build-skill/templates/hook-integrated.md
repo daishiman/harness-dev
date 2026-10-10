@@ -29,15 +29,16 @@ runtime_root_policy: host-skill-path
 
 # {{name}}
 
-## Runtime root contract
+<!-- runtime-root-contract:v1 -->
+## 実行時のルートの決め方
 
 - `runtime_root_policy: host-skill-path` を適用する。
-- Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
-- Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
-- `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
-- `prompts/` 配下はこのowner Skill契約を継承する。
+- Claude Code では、プラグインのルートとして `CLAUDE_PLUGIN_ROOT` を使う。
+- Codex では、ホストが示したこの `SKILL.md` の絶対パスから上の階層へたどり、プラグインの定義ファイル（`.codex-plugin/plugin.json` か `.claude-plugin/plugin.json`）を持つ最も近い祖先を、論理上の `PLUGIN_ROOT` とする。
+- 作業ディレクトリ（`cwd`）からプラグインのルートを推測しない。置き換える前のプレースホルダをそのままシェルへ渡さない。シェルを呼ぶたびに、その中で解決済みの絶対パスを `PLUGIN_ROOT` に入れる。
+<!-- /runtime-root-contract:v1 -->
 
-## Purpose & Output Contract
+## 目的と出力契約
 {{output_contract}}
 
 ## Hook Integration Map
@@ -54,10 +55,10 @@ runtime_root_policy: host-skill-path
 3. `permissions.allow` / ask 判定
 4. tool 実行 → `PostToolUse` hook（副作用後検査）
 
-## Boundary
+## 境界
 {{boundary}}
 
-## Key Rules
+## 守ること
 - 自然言語で「○○してはいけない」と書いて済ませない。**決定論で守れる境界は Hook に移す**
 - `permissions.deny` は access control の最終防衛線。Hook 無効化時も deny は効く
 - 同イベントに複数 hook を登録しない（登録順依存で読み取り困難になる）
@@ -66,10 +67,10 @@ runtime_root_policy: host-skill-path
 ## ゴールシーク実行
 > 固定手順は書かない。Gate を完了チェックリストとし、配線・検証の手順は AI が都度判断する。詳細は run-build-skill `references/goal-seek-paradigm.md`。
 
-### ゴール (Goal)
+### ゴール
 permissions.deny と Hook の二段防御が配線され、危険操作が決定論的に block される状態。
 
-### 完了チェックリスト (Checklist)
+### 完了チェックリスト
 - [ ] `settings.json` の `permissions.deny` に禁止 command/path を列挙した（既存 deny を上書きしていない）
 - [ ] `scripts/hook-{{name}}-guard.py` / `-validate.py` を配置し settings.json に matcher 付きで登録した
 - [ ] dry-run で guard が想定対象に exit 2（block）を返すことを確認した

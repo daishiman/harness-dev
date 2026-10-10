@@ -97,6 +97,40 @@ CONFLICT_POLICY_VALUES = {"most-specific-wins", "error", "warn-and-merge"}
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+def _without_yaml_comment(value: str) -> str:
+    """Keep quoted hashes and plain path fragments; remove actual YAML comments."""
+    quote = None
+    escaped = False
+    scalar_start = True
+    flow_list = value.lstrip().startswith('[')
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if escaped:
+            escaped = False
+            index += 1
+            continue
+        if char == '\\' and quote == '"':
+            escaped = True
+        elif quote:
+            if char == quote:
+                if quote == "'" and value[index:index + 2] == "''":
+                    index += 2
+                    continue
+                quote = None
+        elif char in ('"', "'") and scalar_start:
+            quote = char
+            scalar_start = False
+        elif char == '#' and (index == 0 or value[index - 1].isspace()):
+            return value[:index].rstrip()
+        elif flow_list and char in ('[', ','):
+            scalar_start = True
+        elif not char.isspace():
+            scalar_start = False
+        index += 1
+    return value.strip()
+
+
 def parse_fm(text: str) -> dict:
     """Parse YAML-ish frontmatter. Supports scalar values and `- ` list items.
 
@@ -120,14 +154,15 @@ def parse_fm(text: str) -> dict:
         # list item under current key
         m_item = re.match(r"^\s+-\s+(.+?)\s*$", line)
         if m_item and current_list_key is not None:
-            fm.setdefault(current_list_key, [])
+            if fm.get(current_list_key) == "":
+                fm[current_list_key] = []
             if isinstance(fm[current_list_key], list):
-                fm[current_list_key].append(m_item.group(1).strip())
+                fm[current_list_key].append(_without_yaml_comment(m_item.group(1)))
             continue
         m = re.match(r"^([a-zA-Z_-]+):\s*(.*)$", line)
         if m:
             key = m.group(1)
-            val = m.group(2).split("#", 1)[0].strip()
+            val = _without_yaml_comment(m.group(2))
             if val == "":
                 # may be start of list block
                 fm[key] = ""

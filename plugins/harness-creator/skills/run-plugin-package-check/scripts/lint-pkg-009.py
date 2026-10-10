@@ -10,16 +10,18 @@
 # contexts: [C, E]
 # network: false
 # write-scope: none
-# dependencies: [../../../scripts/extract-plugin-root.py]
+# dependencies: [../../../scripts/plugin_resources.py]
 # ///
 """PKG-009 の外部参照 lint を、install 配置に依存せず起動する。"""
 from __future__ import annotations
 
-import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+from plugin_resources import ResolverUnavailable, resolve_root
 
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[3]
@@ -35,15 +37,10 @@ def linter_path() -> Path:
     install 先 (<cache>/<marketplace>/<plugin>/<version>/) では `../` で兄弟 plugin に届かないので、
     harness-creator に同梱した resolver に任せる。
     """
-    resolver = PLUGIN_ROOT / "scripts" / "extract-plugin-root.py"
-    # spec_from_file_location は実在しない path にも spec を返すので、先に実在を確かめる。
-    spec = importlib.util.spec_from_file_location("_extract_plugin_root", resolver) if resolver.is_file() else None
-    if spec is None or spec.loader is None:
-        raise LinterUnavailable("extract-plugin-root.py is missing from harness-creator/scripts")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    found = module.resolve("skill-governance-lint", PLUGIN_ROOT, Path.cwd())
+    try:
+        found = resolve_root("skill-governance-lint", PLUGIN_ROOT)
+    except ResolverUnavailable as exc:
+        raise LinterUnavailable(str(exc)) from exc
     if found is None:
         raise LinterUnavailable("skill-governance-lint plugin not found; install it to run PKG-009")
     return found / "scripts" / "lint-external-refs.py"

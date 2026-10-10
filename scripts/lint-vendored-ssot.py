@@ -24,6 +24,18 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # (canonical 正本, vendored 複製) のペア。byte 一致を強制する runtime/build-time SSOT のみ。
 VENDORED_PAIRS = [
+    # ガバナンスのローカル/配布実行面は同じ承認・cooldown境界を検査する。
+    (ROOT / "scripts/guard-change-category.py", ROOT / "plugins/skill-governance-automation/scripts/guard-change-category.py"),
+    # 共通フィードバックのアンカー validator。新規配備は skill ディレクトリごとコピーし、
+    # 既存配備も同じ生成元と byte 一致を強制する。兄弟 plugin への実行時依存は増やさない。
+    *[
+        (
+            ROOT / "plugins/harness-creator/skills/run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py",
+            skill.parent / "scripts/validate-inline-goal-seek-anchor.py",
+        )
+        for skill in sorted(ROOT.glob("plugins/*/skills/run-skill-feedback/SKILL.md"))
+        if not skill.is_symlink()
+    ],
     # Tenant selection and credential-reference derivation are shared by every
     # tenant-aware standalone plugin. The repo-root copy is the only edit point.
     *[

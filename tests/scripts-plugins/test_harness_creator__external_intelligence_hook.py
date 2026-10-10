@@ -24,6 +24,7 @@ HC_ADAPTER = (
     / "build-external-intelligence-runtime.py"
 )
 HC_ENGINE = HC_ADAPTER.with_name("build-external-intelligence.py")
+HC_RESOURCES = PLUGIN / "scripts" / "plugin_resources.py"
 HC_CONTRACT = (
     PLUGIN
     / "skills"
@@ -417,8 +418,10 @@ def test_only_distributable_plugin_contains_long_runtime_implementations() -> No
 
     assert HC_ENGINE.stat().st_size < 3_000
     assert HC_ADAPTER.stat().st_size < 3_000
-    assert "skill-governance-adapters" in HC_ENGINE.read_text(encoding="utf-8")
-    assert "skill-governance-adapters" in HC_ADAPTER.read_text(encoding="utf-8")
+    # 2つの互換入口は plugin_resources の共通転送を呼び、転送先は plugin_resources が持つ。
+    assert "forward_external_intelligence(globals())" in HC_ENGINE.read_text(encoding="utf-8")
+    assert "forward_external_intelligence(globals())" in HC_ADAPTER.read_text(encoding="utf-8")
+    assert 'provider = "skill-governance-adapters"' in HC_RESOURCES.read_text(encoding="utf-8")
     assert HC_CONTRACT.stat().st_size < 1_500
     assert "plugin:skill-governance-adapters" in HC_CONTRACT.read_text(encoding="utf-8")
     assert not (PLUGIN / "hooks/build-external-intelligence-context.py").exists()
